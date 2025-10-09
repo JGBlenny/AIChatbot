@@ -17,8 +17,8 @@ class ConfidenceEvaluator:
             config: 配置字典，包含各種閾值設定
         """
         self.config = config or {
-            "high_confidence_threshold": 0.85,
-            "medium_confidence_threshold": 0.70,
+            "high_confidence_threshold": 0.70,
+            "medium_confidence_threshold": 0.50,
             "min_results_for_high": 2,
             "keyword_match_weight": 0.2,
             "similarity_weight": 0.6,
@@ -173,11 +173,8 @@ class ConfidenceEvaluator:
         if confidence_level == "high":
             return "direct_answer"
         elif confidence_level == "medium":
-            # 如果相似度夠高，可以直接回答
-            if metrics['max_similarity'] >= 0.85:
-                return "direct_answer"
-            else:
-                return "needs_enhancement"
+            # 中等信心度：提供參考但需要人工確認
+            return "needs_enhancement"
         else:
             return "unclear"
 

@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 from datetime import datetime
 import time
+import json
 
 router = APIRouter()
 
@@ -82,9 +83,25 @@ async def chat(request: ChatRequest, req: Request):
             answer = f"{best_result['title']}\n\n{best_result['content']}"
 
         elif evaluation['decision'] == 'needs_enhancement' and search_results:
-            # 中等信心度：提示需要優化（Phase 3 實作）
+            # 中等信心度：提供參考答案但建議確認，並記錄以便改善
             best_result = search_results[0]
-            answer = f"根據我們的知識庫，{best_result['content']}\n\n（註：此答案信心度為中等，建議進一步確認）"
+
+            # 記錄為待改善問題
+            unclear_question_id = await unclear_manager.record_unclear_question(
+                question=request.question,
+                user_id=request.user_id,
+                intent_type=intent_result['intent_type'],
+                similarity_score=evaluation['confidence_score'],
+                retrieved_docs={"results": search_results} if search_results else None
+            )
+
+            answer = (
+                f"根據我們的知識庫，以下資訊可能有幫助：\n\n"
+                f"{best_result['content']}\n\n"
+                f"⚠️ 注意：此答案信心度為中等（{evaluation['confidence_score']:.2f}），建議您聯繫客服人員進一步確認。\n"
+                f"您的問題已記錄，我們會持續改善答案品質。"
+            )
+            requires_human = True
 
         elif evaluation['decision'] == 'unclear':
             # 低信心度：記錄未釐清問題
@@ -105,6 +122,11 @@ async def chat(request: ChatRequest, req: Request):
 
         # 5. 記錄對話到資料庫
         processing_time = int((time.time() - start_time) * 1000)
+
+        # 準備 JSON 欄位
+        retrieved_docs_json = json.dumps(
+            {"results": [{"id": r['id'], "title": r['title']} for r in search_results]}
+        )
 
         async with req.app.state.db_pool.acquire() as conn:
             await conn.execute("""
@@ -128,7 +150,7 @@ async def chat(request: ChatRequest, req: Request):
                 intent_result['intent_type'],
                 intent_result.get('sub_category'),
                 intent_result['keywords'],
-                {"results": [{"id": r['id'], "title": r['title']} for r in search_results]},
+                retrieved_docs_json,
                 [r['similarity'] for r in search_results],
                 evaluation['confidence_score'],
                 answer,

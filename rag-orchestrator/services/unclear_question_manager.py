@@ -5,6 +5,7 @@
 from typing import List, Dict, Optional
 from datetime import datetime
 from asyncpg.pool import Pool
+import json
 
 
 class UnclearQuestionManager:
@@ -62,6 +63,9 @@ class UnclearQuestionManager:
                 return existing['id']
             else:
                 # 建立新記錄
+                # 序列化 retrieved_docs 為 JSON 字符串
+                retrieved_docs_json = json.dumps(retrieved_docs) if retrieved_docs else None
+
                 row = await conn.fetchrow("""
                     INSERT INTO unclear_questions (
                         question,
@@ -72,7 +76,7 @@ class UnclearQuestionManager:
                         status
                     ) VALUES ($1, $2, $3, $4, $5, 'pending')
                     RETURNING id
-                """, question, user_id, intent_type, similarity_score, retrieved_docs)
+                """, question, user_id, intent_type, similarity_score, retrieved_docs_json)
                 return row['id']
 
     async def get_unclear_questions(

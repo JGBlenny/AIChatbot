@@ -54,6 +54,9 @@ class RAGEngine:
             return []
 
         # 2. 向量相似度搜尋
+        # 將 Python list 轉換為 PostgreSQL vector 字符串格式
+        vector_str = str(query_embedding)
+
         async with self.db_pool.acquire() as conn:
             results = await conn.fetch("""
                 SELECT
@@ -69,7 +72,7 @@ class RAGEngine:
                     AND (1 - (embedding <=> $1::vector)) >= $2
                 ORDER BY embedding <=> $1::vector
                 LIMIT $3
-            """, query_embedding, similarity_threshold, limit)
+            """, vector_str, similarity_threshold, limit)
 
         # 3. 格式化結果
         search_results = []
