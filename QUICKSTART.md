@@ -69,6 +69,7 @@ docker exec -it aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c "SELE
 | 知識庫管理後台 | http://localhost:8080 | Web 介面管理知識 |
 | 知識管理 API | http://localhost:8000/docs | FastAPI 文件 |
 | Embedding API | http://localhost:5001/docs | 向量生成 API |
+| **RAG Orchestrator** ⭐ | http://localhost:8100/docs | 智能問答 API |
 | pgAdmin | http://localhost:5050 | 資料庫管理工具 |
 | PostgreSQL | localhost:5432 | 資料庫 |
 | Redis | localhost:6379 | 快取 |
@@ -122,6 +123,38 @@ open http://localhost:8080
 - 點擊「🗑️」按鈕
 - 確認刪除
 
+### 4. 測試 RAG 智能問答 ⭐
+
+**健康檢查：**
+```bash
+curl http://localhost:8100/api/v1/health
+```
+
+**發送問題測試：**
+```bash
+# 測試知識查詢
+curl -X POST http://localhost:8100/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "如何申請退租？",
+    "user_id": "test_user"
+  }'
+```
+
+**查看未釐清問題：**
+```bash
+# 取得待處理問題
+curl http://localhost:8100/api/v1/unclear-questions?status=pending
+
+# 取得統計資訊
+curl http://localhost:8100/api/v1/unclear-questions-stats
+```
+
+**開啟 API 文件：**
+```bash
+open http://localhost:8100/docs
+```
+
 ---
 
 ## 🛠️ 本地開發
@@ -160,6 +193,29 @@ npm install
 npm run dev
 
 # 開啟：http://localhost:8080
+```
+
+### RAG Orchestrator
+
+```bash
+cd rag-orchestrator
+
+# 安裝依賴
+pip install -r requirements.txt
+
+# 設定環境變數
+export OPENAI_API_KEY=your-key-here
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_NAME=aichatbot_admin
+export DB_USER=aichatbot
+export DB_PASSWORD=aichatbot_password
+export EMBEDDING_API_URL=http://localhost:5001/api/v1/embeddings
+
+# 啟動
+python app.py
+
+# API 文件：http://localhost:8100/docs
 ```
 
 ---
@@ -315,7 +371,8 @@ docker exec -it aichatbot-postgres psql -U aichatbot -d aichatbot_admin
 ## 📚 下一步
 
 - [系統架構文件](./docs/architecture/SYSTEM_ARCHITECTURE.md)
-- [API 使用文件](./docs/API_USAGE.md)
+- [RAG 系統實作計畫](./docs/rag-system/RAG_IMPLEMENTATION_PLAN.md)
+- [RAG Orchestrator 使用說明](./rag-orchestrator/README.md) ⭐
 - [pgvector 設定說明](./PGVECTOR_SETUP.md)
 - [知識庫管理說明](./knowledge-admin/README.md)
 

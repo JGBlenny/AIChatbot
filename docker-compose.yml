@@ -91,6 +91,25 @@ services:
       - knowledge-admin-api
     restart: unless-stopped
 
+  # RAG Orchestrator (Phase 2)
+  rag-orchestrator:
+    build: ./rag-orchestrator
+    container_name: aichatbot-rag-orchestrator
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: aichatbot_admin
+      DB_USER: aichatbot
+      DB_PASSWORD: aichatbot_password
+      EMBEDDING_API_URL: http://embedding-api:5000/api/v1/embeddings
+    ports:
+      - "8100:8100"
+    depends_on:
+      - postgres
+      - embedding-api
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:

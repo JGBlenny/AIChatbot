@@ -1,0 +1,151 @@
+# 意圖定義配置
+# 用於意圖分類系統
+
+intents:
+  # 知識查詢類
+  - name: "退租流程"
+    type: "knowledge"
+    description: "詢問退租相關流程和規定"
+    keywords:
+      - "退租"
+      - "解約"
+      - "搬離"
+      - "終止合約"
+      - "提前退租"
+    confidence_threshold: 0.80
+    api_required: false
+
+  - name: "合約規定"
+    type: "knowledge"
+    description: "詢問租約合約相關規定"
+    keywords:
+      - "合約"
+      - "規定"
+      - "條款"
+      - "權益"
+      - "義務"
+    confidence_threshold: 0.80
+    api_required: false
+
+  - name: "設備使用"
+    type: "knowledge"
+    description: "詢問 IOT 設備或房屋設備使用方式"
+    keywords:
+      - "設備"
+      - "IOT"
+      - "門鎖"
+      - "智能"
+      - "使用方法"
+      - "操作"
+    confidence_threshold: 0.80
+    api_required: false
+
+  - name: "服務說明"
+    type: "knowledge"
+    description: "詢問 JGB 提供的服務內容"
+    keywords:
+      - "服務"
+      - "包租代管"
+      - "提供"
+      - "包含"
+    confidence_threshold: 0.75
+    api_required: false
+
+  # 資料查詢類
+  - name: "租約查詢"
+    type: "data_query"
+    description: "查詢租約到期日、合約編號等資訊"
+    keywords:
+      - "租約"
+      - "到期"
+      - "期限"
+      - "何時到期"
+      - "合約編號"
+    confidence_threshold: 0.75
+    api_required: true
+    api_endpoint: "lease_system"
+    api_action: "get_contract"
+
+  - name: "帳務查詢"
+    type: "data_query"
+    description: "查詢帳單、費用、繳費記錄"
+    keywords:
+      - "帳單"
+      - "費用"
+      - "繳費"
+      - "金額"
+      - "收據"
+      - "應繳"
+      - "已繳"
+    confidence_threshold: 0.75
+    api_required: true
+    api_endpoint: "billing_system"
+    api_action: "get_invoice"
+
+  - name: "物件資訊"
+    type: "data_query"
+    description: "查詢租賃物件地址、資訊"
+    keywords:
+      - "地址"
+      - "物件"
+      - "房子"
+      - "位置"
+    confidence_threshold: 0.75
+    api_required: true
+    api_endpoint: "property_system"
+    api_action: "get_property"
+
+  # 操作執行類
+  - name: "設備報修"
+    type: "action"
+    description: "報修設備故障"
+    keywords:
+      - "報修"
+      - "壞了"
+      - "故障"
+      - "維修"
+      - "不能用"
+      - "無法使用"
+    confidence_threshold: 0.80
+    api_required: true
+    api_endpoint: "maintenance_system"
+    api_action: "create_ticket"
+
+  - name: "預約看房"
+    type: "action"
+    description: "預約看房或驗屋"
+    keywords:
+      - "預約"
+      - "看房"
+      - "驗屋"
+      - "參觀"
+    confidence_threshold: 0.80
+    api_required: true
+    api_endpoint: "appointment_system"
+    api_action: "create_appointment"
+
+  # 混合類
+  - name: "退租查詢"
+    type: "hybrid"
+    description: "詢問退租流程並查詢租約狀態"
+    keywords:
+      - "退租"
+      - "租約"
+      - "到期"
+    confidence_threshold: 0.75
+    api_required: true
+    requires_both:
+      - knowledge: "退租流程"
+      - api: "lease_system.get_contract"
+
+# 預設設定
+default:
+  confidence_threshold: 0.70
+  fallback_intent: "unclear"
+  max_intents: 3  # 最多返回幾個可能的意圖
+
+# 分類模型設定
+classifier:
+  model: "gpt-4o-mini"
+  temperature: 0.1
+  max_tokens: 500

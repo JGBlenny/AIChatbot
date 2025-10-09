@@ -9,7 +9,11 @@
 - 📝 **知識管理後台**: Web 介面管理知識，支援 Markdown 編輯與即時預覽
 - 🔄 **自動向量更新**: 編輯知識時自動重新生成並更新向量
 - ⚡ **Embedding API**: 統一的向量生成服務，支援 Redis 快取（節省 70-90% API 成本）
-- 🎯 **RAG 就緒**: 向量資料可直接用於 RAG 檢索系統
+- 🤖 **RAG Orchestrator** (Phase 2): 智能問答系統
+  - 🎯 意圖分類 (11 種意圖類型)
+  - 🔍 向量相似度搜尋
+  - 📊 信心度評估
+  - 📝 未釐清問題記錄
 
 ## 🏗️ 系統架構
 
@@ -42,6 +46,7 @@
 | **知識管理前端** | Vue.js 3 | 8080 | Web UI、Markdown 編輯器、知識管理 |
 | **知識管理 API** | FastAPI | 8000 | CRUD API、自動向量更新 |
 | **Embedding API** | FastAPI | 5001 | 統一向量生成、Redis 快取 |
+| **RAG Orchestrator** ⭐ | FastAPI | 8100 | 智能問答、意圖分類、信心度評估 |
 | **PostgreSQL** | pgvector/pgvector | 5432 | 資料庫、向量儲存 |
 | **Redis** | Redis 7 | 6379 | Embedding 快取 |
 | **pgAdmin** | pgAdmin 4 | 5050 | 資料庫管理工具 |
@@ -86,6 +91,7 @@ docker-compose logs -f
 - 🌐 **知識庫管理後台**: http://localhost:8080
 - 📚 **知識管理 API 文件**: http://localhost:8000/docs
 - 🔤 **Embedding API 文件**: http://localhost:5001/docs
+- 🤖 **RAG Orchestrator API 文件**: http://localhost:8100/docs ⭐
 - 🗄️ **pgAdmin**: http://localhost:5050 (帳號: `admin@aichatbot.com` / 密碼: `admin`)
 
 ### 4. (首次使用) 處理 LINE 對話記錄
@@ -121,10 +127,27 @@ AIChatbot/
 │       ├── package.json
 │       └── Dockerfile
 │
+├── rag-orchestrator/        # RAG 協調器 (Phase 2) ⭐
+│   ├── app.py              # FastAPI 主服務
+│   ├── routers/            # API 路由
+│   │   ├── chat.py         # 聊天 API
+│   │   └── unclear_questions.py  # 未釐清問題 API
+│   ├── services/           # 核心服務
+│   │   ├── intent_classifier.py      # 意圖分類
+│   │   ├── rag_engine.py             # RAG 檢索
+│   │   ├── confidence_evaluator.py   # 信心度評估
+│   │   └── unclear_question_manager.py  # 未釐清問題管理
+│   ├── models/             # 資料模型
+│   ├── config/             # 配置檔案
+│   │   └── intents.yaml    # 意圖定義
+│   ├── requirements.txt
+│   └── Dockerfile
+│
 ├── database/                # 資料庫初始化
 │   └── init/
 │       ├── 01-enable-pgvector.sql
-│       └── 02-create-knowledge-base.sql
+│       ├── 02-create-knowledge-base.sql
+│       └── 03-create-rag-tables.sql  # RAG 相關表
 │
 ├── scripts/                 # 資料處理腳本
 │   └── process_line_chats.py  # LINE 對話分析
@@ -134,8 +157,10 @@ AIChatbot/
 │   └── *.xlsx               # 處理結果
 │
 ├── docs/                    # 文件
-│   └── architecture/
-│       └── SYSTEM_ARCHITECTURE.md  # 系統架構詳細文件
+│   ├── architecture/
+│   │   └── SYSTEM_ARCHITECTURE.md
+│   └── rag-system/
+│       └── RAG_IMPLEMENTATION_PLAN.md  # RAG 實作計畫
 │
 ├── docker-compose.yml       # Docker Compose 配置
 ├── .env.example             # 環境變數範例
@@ -168,6 +193,8 @@ AIChatbot/
 
 - 📘 **快速開始指南**: [QUICKSTART.md](./QUICKSTART.md)
 - 🏛️ **系統架構文件**: [docs/architecture/SYSTEM_ARCHITECTURE.md](./docs/architecture/SYSTEM_ARCHITECTURE.md)
+- 🤖 **RAG 系統實作計畫**: [docs/rag-system/RAG_IMPLEMENTATION_PLAN.md](./docs/rag-system/RAG_IMPLEMENTATION_PLAN.md)
+- 🎯 **RAG Orchestrator 使用說明**: [rag-orchestrator/README.md](./rag-orchestrator/README.md)
 - 🔧 **pgvector 設定說明**: [PGVECTOR_SETUP.md](./PGVECTOR_SETUP.md)
 - 📝 **知識管理系統說明**: [knowledge-admin/README.md](./knowledge-admin/README.md)
 
@@ -228,6 +255,52 @@ ORDER BY embedding <=> '[0.1, 0.2, ...]'
 LIMIT 5;
 ```
 
+### 4. RAG 智能問答（Phase 2）⭐
+
+```bash
+# 發送問題到 RAG Orchestrator
+curl -X POST http://localhost:8100/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "如何申請退租？",
+    "user_id": "user123"
+  }'
+
+# 回應範例
+{
+  "question": "如何申請退租？",
+  "answer": "退租流程\n\n1. 提前30天通知...",
+  "confidence_score": 0.92,
+  "confidence_level": "high",
+  "intent": {
+    "intent_type": "knowledge",
+    "intent_name": "退租流程",
+    "keywords": ["退租", "申請"]
+  },
+  "retrieved_docs": [...],
+  "processing_time_ms": 245,
+  "requires_human": false
+}
+```
+
+### 5. 查詢未釐清問題
+
+```bash
+# 取得待處理的未釐清問題
+curl -X GET "http://localhost:8100/api/v1/unclear-questions?status=pending&limit=20"
+
+# 更新問題狀態
+curl -X PUT http://localhost:8100/api/v1/unclear-questions/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "resolved",
+    "resolution_note": "已新增相關知識"
+  }'
+
+# 取得統計資訊
+curl -X GET http://localhost:8100/api/v1/unclear-questions-stats
+```
+
 ## 📊 專案狀態
 
 | 功能 | 狀態 |
@@ -238,8 +311,14 @@ LIMIT 5;
 | 知識管理後台 (前端) | ✅ 完成 |
 | 知識管理 API (後端) | ✅ 完成 |
 | Docker 部署 | ✅ 完成 |
-| RAG 查詢系統 | 🔜 規劃中 |
-| 監控儀表板 | 🔜 規劃中 |
+| **RAG Orchestrator (Phase 2)** | ✅ **完成** |
+| └─ 意圖分類 | ✅ 完成 |
+| └─ RAG 檢索引擎 | ✅ 完成 |
+| └─ 信心度評估 | ✅ 完成 |
+| └─ 未釐清問題記錄 | ✅ 完成 |
+| LLM 答案優化 (Phase 3) | 📋 已規劃 |
+| 外部 API 整合 (Phase 4) | 📋 已規劃 |
+| 監控儀表板 (Phase 5) | 📋 已規劃 |
 
 ## 🤝 開發
 
