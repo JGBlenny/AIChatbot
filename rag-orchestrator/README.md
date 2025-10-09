@@ -22,7 +22,8 @@ RAG Orchestrator 是一個基於 FastAPI 的微服務，整合了以下核心能
 1. **意圖分類**：使用 OpenAI Function Calling 自動識別使用者問題類型
 2. **RAG 檢索**：基於向量相似度搜尋相關知識
 3. **信心度評估**：多維度評估答案品質，決定回應策略
-4. **未釐清問題管理**：記錄和追蹤低信心度問題
+4. **LLM 答案優化** (Phase 3)：使用 GPT-4o-mini 優化答案，提供自然對話體驗
+5. **未釐清問題管理**：記錄和追蹤低/中信心度問題
 
 ### 工作流程
 
@@ -47,11 +48,13 @@ RAG Orchestrator 是一個基於 FastAPI 的微服務，整合了以下核心能
 │  (高/中/低)     │
 └─────────────────┘
     │
-    ├─► 高信心度 (>0.85) ──► 直接回答
+    ├─► 高信心度 (≥0.70) ──► LLM 答案優化 ──► 直接回答 ✨
+    │                      (GPT-4o-mini)
     │
-    ├─► 中信心度 (0.70-0.85) ──► 回答 + 提示
+    ├─► 中信心度 (0.50-0.70) ──► LLM 答案優化 ──► 回答 + 建議聯繫客服 + 記錄 ✨
+    │                           (GPT-4o-mini)
     │
-    └─► 低信心度 (<0.70) ──► 記錄未釐清問題 + 轉人工
+    └─► 低信心度 (<0.50) ──► 記錄未釐清問題 + 轉人工
 ```
 
 ---
@@ -96,15 +99,47 @@ RAG Orchestrator 是一個基於 FastAPI 的微服務，整合了以下核心能
 | 關鍵字匹配率 | 20% | 問題關鍵字與結果的匹配程度 |
 
 **信心等級：**
-- 🟢 **高信心度** (>0.85)：直接使用檢索結果回答
-- 🟡 **中信心度** (0.70-0.85)：回答並提示需要確認
-- 🔴 **低信心度** (<0.70)：記錄未釐清問題，建議轉人工
+- 🟢 **高信心度** (≥0.70)：LLM 優化後直接回答
+- 🟡 **中信心度** (0.50-0.70)：LLM 優化後回答，附加警告並記錄
+- 🔴 **低信心度** (<0.50)：記錄未釐清問題，建議轉人工
 
-### 4. 未釐清問題管理
+### 4. LLM 答案優化 (Phase 3) ✨
 
-自動記錄和追蹤低信心度問題：
+使用 GPT-4o-mini 將知識庫內容優化成自然對話：
 
-- **自動記錄**：信心度 < 0.70 時自動記錄
+**核心功能**：
+- **自動優化**：高/中信心度答案自動經過 LLM 優化
+- **Prompt Engineering**：針對不同意圖類型（知識/資料/操作）使用不同提示詞
+- **Token 控制**：每次請求最多 800 tokens，避免成本失控
+- **錯誤降級**：API 失敗時自動使用原始答案
+- **成本追蹤**：記錄每次優化的 token 使用量
+
+**配置選項**：
+```python
+{
+    "model": "gpt-4o-mini",
+    "temperature": 0.7,
+    "max_tokens": 800,
+    "enable_optimization": True,
+    "optimize_for_confidence": ["high", "medium"],
+    "fallback_on_error": True
+}
+```
+
+**優化效果對比**：
+
+| 項目 | Phase 2 (原始) | Phase 3 (LLM 優化) |
+|------|---------------|------------------|
+| 答案來源 | 直接複製知識庫文字 | GPT-4o-mini 重組優化 |
+| 語氣 | 正式、條列式 | 自然、對話式 |
+| 針對性 | 顯示完整知識庫條目 | 只回答問題相關部分 |
+| 用戶體驗 | ★★★☆☆ | ★★★★★ |
+
+### 5. 未釐清問題管理
+
+自動記錄和追蹤中/低信心度問題：
+
+- **自動記錄**：信心度 < 0.70 時自動記錄（包含中等和低信心度）
 - **頻率統計**：相同問題自動累加計數
 - **狀態管理**：pending → in_progress → resolved/ignored
 - **指派追蹤**：支援指派給特定人員處理
@@ -130,6 +165,7 @@ rag-orchestrator/
 │   ├── intent_classifier.py      # 意圖分類器
 │   ├── rag_engine.py             # RAG 檢索引擎
 │   ├── confidence_evaluator.py   # 信心度評估器
+│   ├── llm_answer_optimizer.py   # LLM 答案優化器 (Phase 3) ✨
 │   └── unclear_question_manager.py  # 未釐清問題管理器
 │
 ├── models/                  # 資料模型
@@ -155,7 +191,8 @@ RAG Orchestrator (Port 8100)
     │   └─ 向量生成服務
     │
     └─► OpenAI API
-        └─ GPT-4o-mini (意圖分類)
+        ├─ GPT-4o-mini (意圖分類)
+        └─ GPT-4o-mini (答案優化 - Phase 3) ✨
 ```
 
 ---
@@ -275,44 +312,50 @@ config = {
 
 ## 使用範例
 
-### 1. 基本問答
+### 1. 基本問答（含 Phase 3 LLM 優化）✨
 
 ```bash
 curl -X POST http://localhost:8100/api/v1/chat \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "如何申請退租？",
+    "question": "退租要怎麼辦理？",
     "user_id": "user123"
   }'
 ```
 
-**回應範例：**
+**回應範例（LLM 優化後的自然對話）：**
 
 ```json
 {
-  "question": "如何申請退租？",
-  "answer": "退租流程\n\n1. 提前30天書面通知...",
-  "confidence_score": 0.92,
-  "confidence_level": "high",
+  "question": "退租要怎麼辦理？",
+  "answer": "退租的流程如下：\n\n### 退租步驟\n\n1. **提前通知**：在預定的退租日期前30天，請以書面方式通知房東。\n2. **繳清費用**：確保所有的租金及水電費已經繳清。\n3. **房屋檢查**：與房東約定一個時間，進行房屋的檢查。\n4. **押金退還**：如果房屋狀況良好，房東應在7個工作天內退還押金。\n\n### 注意事項\n- 記得提前30天通知房東。\n- 所有費用必須繳清。\n- 房屋需恢復至原來的狀態。\n\n如果有其他問題，隨時可以詢問！\n\n⚠️ 注意：此答案信心度為中等（0.53），建議您聯繫客服人員進一步確認。\n您的問題已記錄，我們會持續改善答案品質。",
+  "confidence_score": 0.53,
+  "confidence_level": "medium",
   "intent": {
     "intent_type": "knowledge",
     "intent_name": "退租流程",
-    "confidence": 0.95,
-    "keywords": ["退租", "申請"]
+    "confidence": 0.9,
+    "keywords": ["退租", "辦理"]
   },
   "retrieved_docs": [
     {
-      "id": 5,
-      "title": "退租流程",
+      "id": 2,
+      "title": "退租流程說明",
       "content": "...",
-      "similarity": 0.92
+      "similarity": 0.66
     }
   ],
-  "processing_time_ms": 245,
-  "requires_human": false,
-  "unclear_question_id": null
+  "processing_time_ms": 7725,
+  "requires_human": true,
+  "unclear_question_id": 3
 }
 ```
+
+**Phase 3 優化效果**：
+- ✨ 答案經過 GPT-4o-mini 優化，更加自然流暢
+- 🎯 自動提取關鍵資訊，避免顯示完整知識庫條目
+- 💬 使用對話式語氣，提升用戶體驗
+- ⚠️ 中等信心度自動附加警告訊息並記錄
 
 ### 2. 低信心度問題
 
@@ -613,10 +656,12 @@ python -c "import yaml; yaml.safe_load(open('config/intents.yaml'))"
 
 ## 後續規劃
 
-### Phase 3: LLM 答案優化
-- 使用 GPT 重新組織和優化答案
-- 提供更自然的對話體驗
-- 支援多輪對話
+### ✅ Phase 3: LLM 答案優化（已完成）
+- ✅ 使用 GPT-4o-mini 重新組織和優化答案
+- ✅ 提供更自然的對話體驗
+- ✅ Token 追蹤與成本控制
+- ✅ 錯誤自動降級處理
+- 📋 支援多輪對話（待實作）
 
 ### Phase 4: 外部 API 整合
 - 租約系統整合
@@ -642,5 +687,5 @@ python -c "import yaml; yaml.safe_load(open('config/intents.yaml'))"
 ---
 
 **維護者**: Claude Code
-**最後更新**: 2025-10-09
-**版本**: 1.0.0 (Phase 2)
+**最後更新**: 2025-10-10
+**版本**: 1.1.0 (Phase 2 + Phase 3 LLM 優化)

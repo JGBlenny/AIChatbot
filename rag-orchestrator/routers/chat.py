@@ -53,6 +53,7 @@ async def chat(request: ChatRequest, req: Request):
         rag_engine = req.app.state.rag_engine
         confidence_evaluator = req.app.state.confidence_evaluator
         unclear_manager = req.app.state.unclear_question_manager
+        llm_optimizer = req.app.state.llm_answer_optimizer
 
         # 1. 意圖分類
         intent_result = intent_classifier.classify(request.question)
@@ -76,16 +77,20 @@ async def chat(request: ChatRequest, req: Request):
         answer = ""
         requires_human = False
         unclear_question_id = None
+        optimization_result = None
 
         if evaluation['decision'] == 'direct_answer' and search_results:
-            # 高信心度：直接使用檢索結果
-            best_result = search_results[0]
-            answer = f"{best_result['title']}\n\n{best_result['content']}"
+            # 高信心度：使用 LLM 優化答案 (Phase 3)
+            optimization_result = llm_optimizer.optimize_answer(
+                question=request.question,
+                search_results=search_results,
+                confidence_level=evaluation['confidence_level'],
+                intent_info=intent_result
+            )
+            answer = optimization_result['optimized_answer']
 
         elif evaluation['decision'] == 'needs_enhancement' and search_results:
-            # 中等信心度：提供參考答案但建議確認，並記錄以便改善
-            best_result = search_results[0]
-
+            # 中等信心度：使用 LLM 優化答案，但仍建議確認並記錄以便改善
             # 記錄為待改善問題
             unclear_question_id = await unclear_manager.record_unclear_question(
                 question=request.question,
@@ -95,9 +100,17 @@ async def chat(request: ChatRequest, req: Request):
                 retrieved_docs={"results": search_results} if search_results else None
             )
 
+            # 使用 LLM 優化答案 (Phase 3)
+            optimization_result = llm_optimizer.optimize_answer(
+                question=request.question,
+                search_results=search_results,
+                confidence_level=evaluation['confidence_level'],
+                intent_info=intent_result
+            )
+
+            # 在優化後的答案後附加警告訊息
             answer = (
-                f"根據我們的知識庫，以下資訊可能有幫助：\n\n"
-                f"{best_result['content']}\n\n"
+                f"{optimization_result['optimized_answer']}\n\n"
                 f"⚠️ 注意：此答案信心度為中等（{evaluation['confidence_score']:.2f}），建議您聯繫客服人員進一步確認。\n"
                 f"您的問題已記錄，我們會持續改善答案品質。"
             )

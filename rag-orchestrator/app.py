@@ -14,6 +14,7 @@ from services.intent_classifier import IntentClassifier
 from services.rag_engine import RAGEngine
 from services.confidence_evaluator import ConfidenceEvaluator
 from services.unclear_question_manager import UnclearQuestionManager
+from services.llm_answer_optimizer import LLMAnswerOptimizer
 
 # 導入路由
 from routers import chat, unclear_questions
@@ -24,13 +25,14 @@ intent_classifier: IntentClassifier = None
 rag_engine: RAGEngine = None
 confidence_evaluator: ConfidenceEvaluator = None
 unclear_question_manager: UnclearQuestionManager = None
+llm_answer_optimizer: LLMAnswerOptimizer = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """應用生命週期管理"""
     # 啟動時初始化
-    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager
+    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer
 
     print("🚀 初始化 RAG Orchestrator...")
 
@@ -59,14 +61,18 @@ async def lifespan(app: FastAPI):
     unclear_question_manager = UnclearQuestionManager(db_pool)
     print("✅ 未釐清問題管理器已初始化")
 
+    llm_answer_optimizer = LLMAnswerOptimizer()
+    print("✅ LLM 答案優化器已初始化 (Phase 3)")
+
     # 將服務注入到 app.state
     app.state.db_pool = db_pool
     app.state.intent_classifier = intent_classifier
     app.state.rag_engine = rag_engine
     app.state.confidence_evaluator = confidence_evaluator
     app.state.unclear_question_manager = unclear_question_manager
+    app.state.llm_answer_optimizer = llm_answer_optimizer
 
-    print("🎉 RAG Orchestrator 啟動完成！")
+    print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化）")
     print(f"📝 API 文件: http://localhost:8100/docs")
 
     yield
@@ -125,7 +131,8 @@ async def health_check():
                 "intent_classifier": "ready",
                 "rag_engine": "ready",
                 "confidence_evaluator": "ready",
-                "unclear_question_manager": "ready"
+                "unclear_question_manager": "ready",
+                "llm_answer_optimizer": "ready (Phase 3)"
             }
         }
     except Exception as e:

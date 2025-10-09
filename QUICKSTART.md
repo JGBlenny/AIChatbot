@@ -123,23 +123,38 @@ open http://localhost:8080
 - 點擊「🗑️」按鈕
 - 確認刪除
 
-### 4. 測試 RAG 智能問答 ⭐
+### 4. 測試 RAG 智能問答 ⭐ (含 Phase 3 LLM 優化)
 
 **健康檢查：**
 ```bash
 curl http://localhost:8100/api/v1/health
+
+# 應該看到 Phase 3 服務
+# "llm_answer_optimizer": "ready (Phase 3)"
 ```
 
-**發送問題測試：**
+**發送問題測試（自動 LLM 優化）：**
 ```bash
-# 測試知識查詢
+# 測試知識查詢 - 答案會經過 GPT-4o-mini 優化
 curl -X POST http://localhost:8100/api/v1/chat \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "如何申請退租？",
+    "question": "退租要怎麼辦理？",
     "user_id": "test_user"
-  }'
+  }' | python3 -m json.tool
+
+# 你會看到：
+# - answer: 自然流暢的對話式回答（不是原始知識庫文字）
+# - confidence_score: 信心度評分
+# - requires_human: 是否需要人工處理
+# - unclear_question_id: 中/低信心度問題的記錄 ID
 ```
+
+**Phase 3 LLM 優化特色**:
+- ✨ 自動將知識庫內容轉換成自然對話
+- 🎯 根據信心度自動決定是否優化（高/中信心度）
+- 💰 Token 追蹤與成本控制（每次最多 800 tokens）
+- 🔄 API 失敗時自動降級使用原始答案
 
 **查看未釐清問題：**
 ```bash
@@ -388,4 +403,4 @@ docker exec -it aichatbot-postgres psql -U aichatbot -d aichatbot_admin
 ---
 
 **維護者：** Claude Code
-**最後更新：** 2025-10-09
+**最後更新：** 2025-10-10 (Phase 3 LLM 優化)
