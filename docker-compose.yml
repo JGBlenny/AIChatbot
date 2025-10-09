@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 資料庫 with pgvector
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: aichatbot-postgres
+    environment:
+      POSTGRES_USER: aichatbot
+      POSTGRES_PASSWORD: aichatbot_password
+      POSTGRES_DB: aichatbot_admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d  # 初始化腳本
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aichatbot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis (選用，用於 Celery 任務隊列)
+  redis:
+    image: redis:7-alpine
+    container_name: aichatbot-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin (選用，資料庫管理介面)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: aichatbot-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@aichatbot.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+  # Embedding API Service
+  embedding-api:
+    build: ./embedding-service
+    container_name: aichatbot-embedding-api
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "5001:5000"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # 知識庫管理後台 - API
+  knowledge-admin-api:
+    build: ./knowledge-admin/backend
+    container_name: aichatbot-knowledge-admin-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: aichatbot_admin
+      DB_USER: aichatbot
+      DB_PASSWORD: aichatbot_password
+      EMBEDDING_API_URL: http://embedding-api:5000/api/v1/embeddings
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - embedding-api
+    restart: unless-stopped
+
+  # 知識庫管理後台 - 前端
+  knowledge-admin-web:
+    build: ./knowledge-admin/frontend
+    container_name: aichatbot-knowledge-admin-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - knowledge-admin-api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:
