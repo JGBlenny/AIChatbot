@@ -74,11 +74,19 @@ services:
       DB_USER: aichatbot
       DB_PASSWORD: aichatbot_password
       EMBEDDING_API_URL: http://embedding-api:5000/api/v1/embeddings
+      PROJECT_ROOT: /app
+      RAG_API_URL: http://rag-orchestrator:8100
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
     ports:
       - "8000:8000"
+    volumes:
+      - ./test_scenarios_smoke.xlsx:/app/test_scenarios_smoke.xlsx:ro
+      - ./output:/app/output
+      - ./scripts:/app/scripts:ro
     depends_on:
       - postgres
       - embedding-api
+      - rag-orchestrator
     restart: unless-stopped
 
   # 知識庫管理後台 - 前端
@@ -87,6 +95,10 @@ services:
     container_name: aichatbot-knowledge-admin-web
     ports:
       - "8080:80"
+    volumes:
+      # 掛載編譯後的 dist 目錄（開發時可以本地 npm run build 後自動更新）
+      - ./knowledge-admin/frontend/dist:/usr/share/nginx/html
+      - ./knowledge-admin/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - knowledge-admin-api
     restart: unless-stopped

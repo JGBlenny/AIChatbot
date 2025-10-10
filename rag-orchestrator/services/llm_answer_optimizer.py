@@ -1,8 +1,10 @@
 """
 LLM 答案優化服務
 使用 GPT 模型優化 RAG 檢索結果，生成更自然、更精準的答案
+Phase 1 擴展：支援業者參數動態注入
 """
 import os
+import re
 from typing import List, Dict, Optional
 from openai import OpenAI
 import time
@@ -20,8 +22,11 @@ class LLMAnswerOptimizer:
         """
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+        # 從環境變數讀取模型配置（用於降低測試成本）
+        default_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
         self.config = config or {
-            "model": "gpt-4o-mini",
+            "model": default_model,
             "temperature": 0.7,
             "max_tokens": 800,
             "enable_optimization": True,
@@ -34,7 +39,9 @@ class LLMAnswerOptimizer:
         question: str,
         search_results: List[Dict],
         confidence_level: str,
-        intent_info: Dict
+        intent_info: Dict,
+        vendor_params: Optional[Dict] = None,
+        vendor_name: Optional[str] = None
     ) -> Dict:
         """
         優化答案
@@ -44,6 +51,8 @@ class LLMAnswerOptimizer:
             search_results: RAG 檢索結果列表
             confidence_level: 信心度等級
             intent_info: 意圖資訊
+            vendor_params: 業者參數（Phase 1 擴展）
+            vendor_name: 業者名稱（Phase 1 擴展）
 
         Returns:
             優化結果字典，包含:
@@ -62,12 +71,14 @@ class LLMAnswerOptimizer:
         # 2. 準備原始答案
         original_answer = self._create_original_answer(search_results)
 
-        # 3. 嘗試 LLM 優化
+        # 3. 嘗試 LLM 優化（Phase 1 擴展：加入業者參數注入）
         try:
             optimized_answer, tokens_used = self._call_llm(
                 question=question,
                 search_results=search_results,
-                intent_info=intent_info
+                intent_info=intent_info,
+                vendor_params=vendor_params,
+                vendor_name=vendor_name
             )
 
             processing_time = int((time.time() - start_time) * 1000)
@@ -132,33 +143,112 @@ class LLMAnswerOptimizer:
             "processing_time_ms": processing_time
         }
 
+    def inject_vendor_params(
+        self,
+        content: str,
+        vendor_params: Dict,
+        vendor_name: str
+    ) -> str:
+        """
+        使用 LLM 根據業者參數動態調整知識內容
+        不使用模板變數，而是智能偵測並替換參數
+
+        Args:
+            content: 原始知識內容（可能包含通用數值）
+            vendor_params: 業者參數字典
+            vendor_name: 業者名稱
+
+        Returns:
+            調整後的內容
+        """
+        if not vendor_params:
+            return content
+
+        # 建立參數說明
+        params_description = "\n".join([
+            f"- {key}: {value}" for key, value in vendor_params.items()
+        ])
+
+        system_prompt = f"""你是一個專業的內容調整助理。你的任務是根據業者的具體參數，調整知識庫內容中的數值和資訊。
+
+業者名稱：{vendor_name}
+業者參數：
+{params_description}
+
+調整規則：
+1. 仔細識別內容中提到的參數相關資訊（如日期、金額、時間等）
+2. 如果內容中的數值與業者參數不符，請替換為業者參數中的值
+3. 保持內容的語氣、結構和格式不變
+4. 只調整數值，不要改變其他內容
+5. 如果內容已經符合業者參數，則不需要修改
+6. 業者名稱統一使用 "{vendor_name}"
+
+重要：只輸出調整後的內容，不要加上任何說明或註解。"""
+
+        user_prompt = f"""請根據業者參數調整以下內容：
+
+{content}"""
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.config["model"],
+                temperature=0.3,  # 使用較低溫度確保準確性
+                max_tokens=self.config["max_tokens"],
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ]
+            )
+
+            adjusted_content = response.choices[0].message.content.strip()
+            return adjusted_content
+
+        except Exception as e:
+            print(f"⚠️  參數注入失敗，使用原始內容: {e}")
+            return content
+
     def _call_llm(
         self,
         question: str,
         search_results: List[Dict],
-        intent_info: Dict
+        intent_info: Dict,
+        vendor_params: Optional[Dict] = None,
+        vendor_name: Optional[str] = None
     ) -> tuple[str, int]:
         """
         呼叫 LLM 優化答案
 
+        Args:
+            question: 使用者問題
+            search_results: 檢索結果
+            intent_info: 意圖資訊
+            vendor_params: 業者參數（用於動態注入）
+            vendor_name: 業者名稱
+
         Returns:
             (優化後的答案, 使用的 tokens 數)
         """
-        # 1. 準備檢索結果上下文
+        # 1. 準備檢索結果上下文（先進行參數注入）
         context_parts = []
         for i, result in enumerate(search_results[:3], 1):  # 最多使用前 3 個結果
+            content = result['content']
+
+            # Phase 1 擴展：如果有業者參數，先進行智能參數注入
+            if vendor_params and vendor_name:
+                content = self.inject_vendor_params(content, vendor_params, vendor_name)
+
             context_parts.append(
                 f"【參考資料 {i}】\n"
                 f"標題：{result['title']}\n"
                 f"分類：{result.get('category', 'N/A')}\n"
-                f"內容：{result['content']}\n"
+                f"內容：{content}\n"
                 f"相似度：{result['similarity']:.2f}"
             )
 
         context = "\n\n".join(context_parts)
 
         # 2. 建立優化 Prompt
-        system_prompt = self._create_system_prompt(intent_info)
+        system_prompt = self._create_system_prompt(intent_info, vendor_name)
         user_prompt = self._create_user_prompt(question, context, intent_info)
 
         # 3. 呼叫 OpenAI API
@@ -177,7 +267,7 @@ class LLMAnswerOptimizer:
 
         return optimized_answer, tokens_used
 
-    def _create_system_prompt(self, intent_info: Dict) -> str:
+    def _create_system_prompt(self, intent_info: Dict, vendor_name: Optional[str] = None) -> str:
         """建立系統提示詞"""
         intent_type = intent_info.get('intent_type', 'knowledge')
 
@@ -192,13 +282,17 @@ class LLMAnswerOptimizer:
 6. 保持簡潔，避免冗長
 7. 如果參考資料不足以回答，請誠實說明"""
 
+        # 如果有業者名稱，加入業者資訊
+        if vendor_name:
+            base_prompt += f"\n8. 你代表 {vendor_name}，請使用該業者的資訊回答"
+
         # 根據意圖類型調整提示
         if intent_type == "knowledge":
-            base_prompt += "\n8. 這是知識查詢問題，請提供清楚的說明和步驟"
+            base_prompt += "\n9. 這是知識查詢問題，請提供清楚的說明和步驟"
         elif intent_type == "data_query":
-            base_prompt += "\n8. 這是資料查詢問題，如需查詢具體資料，請說明如何查詢"
+            base_prompt += "\n9. 這是資料查詢問題，如需查詢具體資料，請說明如何查詢"
         elif intent_type == "action":
-            base_prompt += "\n8. 這是操作執行問題，請說明具體操作步驟"
+            base_prompt += "\n9. 這是操作執行問題，請說明具體操作步驟"
 
         return base_prompt
 

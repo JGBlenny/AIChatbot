@@ -15,9 +15,10 @@ from services.rag_engine import RAGEngine
 from services.confidence_evaluator import ConfidenceEvaluator
 from services.unclear_question_manager import UnclearQuestionManager
 from services.llm_answer_optimizer import LLMAnswerOptimizer
+from services.intent_suggestion_engine import IntentSuggestionEngine
 
 # 導入路由
-from routers import chat, unclear_questions
+from routers import chat, unclear_questions, suggested_intents, business_scope, intents, knowledge, vendors, knowledge_import
 
 # 全局變數
 db_pool: Pool = None
@@ -26,13 +27,14 @@ rag_engine: RAGEngine = None
 confidence_evaluator: ConfidenceEvaluator = None
 unclear_question_manager: UnclearQuestionManager = None
 llm_answer_optimizer: LLMAnswerOptimizer = None
+suggestion_engine: IntentSuggestionEngine = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """應用生命週期管理"""
     # 啟動時初始化
-    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer
+    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine
 
     print("🚀 初始化 RAG Orchestrator...")
 
@@ -64,6 +66,9 @@ async def lifespan(app: FastAPI):
     llm_answer_optimizer = LLMAnswerOptimizer()
     print("✅ LLM 答案優化器已初始化 (Phase 3)")
 
+    suggestion_engine = IntentSuggestionEngine()
+    print("✅ 意圖建議引擎已初始化 (Phase B)")
+
     # 將服務注入到 app.state
     app.state.db_pool = db_pool
     app.state.intent_classifier = intent_classifier
@@ -71,8 +76,9 @@ async def lifespan(app: FastAPI):
     app.state.confidence_evaluator = confidence_evaluator
     app.state.unclear_question_manager = unclear_question_manager
     app.state.llm_answer_optimizer = llm_answer_optimizer
+    app.state.suggestion_engine = suggestion_engine
 
-    print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化）")
+    print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化 + Phase B 意圖建議）")
     print(f"📝 API 文件: http://localhost:8100/docs")
 
     yield
@@ -103,6 +109,12 @@ app.add_middleware(
 # 註冊路由
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 app.include_router(unclear_questions.router, prefix="/api/v1", tags=["unclear_questions"])
+app.include_router(suggested_intents.router, prefix="/api/v1", tags=["suggested_intents"])
+app.include_router(business_scope.router, prefix="/api/v1", tags=["business_scope"])
+app.include_router(intents.router, prefix="/api/v1", tags=["intents"])
+app.include_router(knowledge.router, tags=["knowledge"])
+app.include_router(vendors.router, tags=["vendors"])  # Phase 1: Multi-Vendor Support
+app.include_router(knowledge_import.router, tags=["knowledge_import"])  # Knowledge Import from LINE chats
 
 
 @app.get("/")
@@ -132,7 +144,8 @@ async def health_check():
                 "rag_engine": "ready",
                 "confidence_evaluator": "ready",
                 "unclear_question_manager": "ready",
-                "llm_answer_optimizer": "ready (Phase 3)"
+                "llm_answer_optimizer": "ready (Phase 3)",
+                "suggestion_engine": "ready (Phase B)"
             }
         }
     except Exception as e:

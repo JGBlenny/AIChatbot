@@ -28,8 +28,8 @@ class RAGEngine:
     async def search(
         self,
         query: str,
-        limit: int = 5,
-        similarity_threshold: float = 0.7
+        limit: int = None,
+        similarity_threshold: float = 0.6
     ) -> List[Dict]:
         """
         搜尋相關知識
@@ -47,15 +47,25 @@ class RAGEngine:
             - category: 分類
             - similarity: 相似度分數 (0-1)
         """
+        # 從環境變數讀取檢索條數（用於降低成本）
+        if limit is None:
+            limit = int(os.getenv("RAG_RETRIEVAL_LIMIT", "5"))
+
+        print(f"\n🔍 [RAG Engine] 開始搜尋")
+        print(f"   查詢: {query}")
+        print(f"   閾值: {similarity_threshold}, 限制: {limit}")
+
         # 1. 將問題轉換為向量
         query_embedding = await self._get_embedding(query)
 
         if not query_embedding:
+            print(f"   ❌ 向量生成失敗，返回空結果")
             return []
 
         # 2. 向量相似度搜尋
         # 將 Python list 轉換為 PostgreSQL vector 字符串格式
         vector_str = str(query_embedding)
+        print(f"   向量長度: {len(query_embedding)}, 字串長度: {len(vector_str)}")
 
         async with self.db_pool.acquire() as conn:
             results = await conn.fetch("""
@@ -74,9 +84,12 @@ class RAGEngine:
                 LIMIT $3
             """, vector_str, similarity_threshold, limit)
 
+        print(f"   💾 資料庫返回 {len(results)} 個結果")
+
         # 3. 格式化結果
         search_results = []
         for row in results:
+            print(f"      - ID {row['id']}: {row['title'][:40]}... (相似度: {float(row['similarity']):.3f})")
             search_results.append({
                 "id": row['id'],
                 "title": row['title'],
@@ -100,6 +113,9 @@ class RAGEngine:
             向量列表，如果失敗則返回 None
         """
         try:
+            print(f"🔍 [RAG Engine] 呼叫 Embedding API: {self.embedding_api_url}")
+            print(f"   查詢文字: {text[:50]}...")
+
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     self.embedding_api_url,
@@ -107,9 +123,18 @@ class RAGEngine:
                 )
                 response.raise_for_status()
                 data = response.json()
-                return data['embedding']
+                embedding = data.get('embedding')
+
+                if embedding:
+                    print(f"   ✅ 獲得向量: 維度 {len(embedding)}")
+                else:
+                    print(f"   ⚠️  回應中無 embedding 欄位: {data}")
+
+                return embedding
         except Exception as e:
             print(f"❌ Embedding API 呼叫失敗: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
     async def get_knowledge_by_id(self, knowledge_id: int) -> Optional[Dict]:

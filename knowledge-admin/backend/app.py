@@ -10,6 +10,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import requests
 import os
+import pandas as pd
 from datetime import datetime
 
 app = FastAPI(
@@ -125,11 +126,14 @@ async def list_knowledge(
     cur = conn.cursor()
 
     try:
-        # 建立查詢
+        # 建立查詢（加入意圖資訊）
         query = """
-            SELECT id, title, category, audience, answer as content,
-                   keywords, question_summary, created_at, updated_at
-            FROM knowledge_base
+            SELECT
+                kb.id, kb.title, kb.category, kb.audience, kb.answer as content,
+                kb.keywords, kb.question_summary, kb.created_at, kb.updated_at,
+                kb.intent_id, i.name as intent_name
+            FROM knowledge_base kb
+            LEFT JOIN intents i ON kb.intent_id = i.id
             WHERE 1=1
         """
         params = []
@@ -474,6 +478,251 @@ async def get_stats():
     finally:
         cur.close()
         conn.close()
+
+@app.get("/api/backtest/results")
+async def get_backtest_results(
+    status_filter: Optional[str] = Query(None, description="篩選狀態 (all/failed/passed)"),
+    limit: int = Query(50, ge=1, le=200, description="每頁筆數"),
+    offset: int = Query(0, ge=0, description="偏移量")
+):
+    """
+    取得回測結果
+
+    讀取最新的回測結果 Excel 文件，並提供過濾和分頁功能
+    """
+    project_root = os.getenv("PROJECT_ROOT", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+    backtest_path = os.path.join(project_root, "output/backtest/backtest_results.xlsx")
+
+    if not os.path.exists(backtest_path):
+        raise HTTPException(
+            status_code=404,
+            detail="回測結果文件不存在。請先執行回測：python3 scripts/knowledge_extraction/backtest_framework.py"
+        )
+
+    try:
+        # 讀取 Excel 文件
+        df = pd.read_excel(backtest_path, engine='openpyxl')
+
+        # 過濾狀態
+        if status_filter == "failed":
+            df = df[df['passed'] == False]
+        elif status_filter == "passed":
+            df = df[df['passed'] == True]
+        # status_filter == "all" 或 None 則顯示全部
+
+        total = len(df)
+
+        # 分頁
+        df_page = df.iloc[offset:offset+limit]
+
+        # 轉換為 dict
+        import math
+        results = []
+        for _, row in df_page.iterrows():
+            # 處理 NaN 值
+            actual_intent = row['actual_intent']
+            if isinstance(actual_intent, float) and math.isnan(actual_intent):
+                actual_intent = None
+
+            system_answer = row['system_answer']
+            if isinstance(system_answer, float) and math.isnan(system_answer):
+                system_answer = None
+
+            optimization_tips = row.get('optimization_tips', '')
+            if isinstance(optimization_tips, float) and math.isnan(optimization_tips):
+                optimization_tips = ''
+
+            result = {
+                'test_id': int(row['test_id']),
+                'test_question': row['test_question'],
+                'expected_category': row['expected_category'],
+                'actual_intent': actual_intent,
+                'system_answer': system_answer,
+                'confidence': float(row['confidence']),
+                'score': float(row['score']),
+                'passed': bool(row['passed']),
+                'optimization_tips': optimization_tips,
+                'difficulty': row.get('difficulty', 'medium'),
+                'timestamp': row['timestamp']
+            }
+            results.append(result)
+
+        # 計算統計
+        import math
+        total_tests = len(df)
+        passed_tests = len(df[df['passed'] == True])
+        failed_tests = len(df[df['passed'] == False])
+        pass_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
+        avg_score = df['score'].mean() if total_tests > 0 else 0
+        avg_confidence = df['confidence'].mean() if total_tests > 0 else 0
+
+        # 處理 NaN 值
+        if math.isnan(avg_score):
+            avg_score = 0
+        if math.isnan(avg_confidence):
+            avg_confidence = 0
+
+        return {
+            "results": results,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "statistics": {
+                "total_tests": total_tests,
+                "passed_tests": passed_tests,
+                "failed_tests": failed_tests,
+                "pass_rate": round(pass_rate, 2),
+                "avg_score": round(avg_score, 3),
+                "avg_confidence": round(avg_confidence, 3)
+            }
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"讀取回測結果失敗: {str(e)}")
+
+@app.get("/api/backtest/summary")
+async def get_backtest_summary():
+    """取得回測摘要統計"""
+    project_root = os.getenv("PROJECT_ROOT", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+    summary_path = os.path.join(project_root, "output/backtest/backtest_results_summary.txt")
+
+    if os.path.exists(summary_path):
+        try:
+            with open(summary_path, 'r', encoding='utf-8') as f:
+                summary_text = f.read()
+            return {"summary": summary_text}
+        except Exception as e:
+            return {"summary": f"無法讀取摘要：{str(e)}"}
+    else:
+        return {"summary": "尚無回測摘要"}
+
+
+@app.post("/api/backtest/run")
+async def run_backtest():
+    """
+    執行回測腳本
+
+    這會在後台執行回測腳本並返回任務ID
+    """
+    import subprocess
+    import threading
+
+    # 檢查 smoke test scenarios 是否存在
+    # 使用環境變數或相對於專案根目錄的路徑
+    project_root = os.getenv("PROJECT_ROOT", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+    test_scenarios_path = os.path.join(project_root, "test_scenarios_smoke.xlsx")
+
+    if not os.path.exists(test_scenarios_path):
+        raise HTTPException(
+            status_code=404,
+            detail=f"測試場景文件不存在: {test_scenarios_path}。請確認檔案已建立。"
+        )
+
+    # 檢查是否已有回測在運行
+    backtest_lock_file = "/tmp/backtest_running.lock"
+    if os.path.exists(backtest_lock_file):
+        raise HTTPException(
+            status_code=409,
+            detail="回測已在執行中，請等待完成後再試"
+        )
+
+    def run_backtest_script():
+        """在背景執行回測腳本"""
+        try:
+            # 創建鎖文件
+            with open(backtest_lock_file, 'w') as f:
+                f.write(str(datetime.now()))
+
+            # 執行回測腳本
+            script_path = os.path.join(project_root, "scripts/knowledge_extraction/backtest_framework.py")
+            env = os.environ.copy()
+
+            # 設定優化環境變數（用於降低回測成本）
+            env["OPENAI_MODEL"] = "gpt-4o-mini"  # 使用更便宜的模型
+            env["RAG_RETRIEVAL_LIMIT"] = "3"  # 減少檢索條數
+            env["BACKTEST_TYPE"] = "smoke"  # 預設使用 smoke tests
+            env["PROJECT_ROOT"] = project_root  # 傳遞專案根目錄
+            env["BACKTEST_NON_INTERACTIVE"] = "true"  # 非交互模式，不等待用戶輸入
+
+            result = subprocess.run(
+                ["python3", script_path],
+                env=env,
+                capture_output=True,
+                text=True,
+                cwd=project_root,
+                timeout=600  # 10 分鐘超時
+            )
+
+            # 記錄結果
+            log_path = os.path.join(project_root, "output/backtest/backtest_log.txt")
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+            with open(log_path, 'w', encoding='utf-8') as f:
+                f.write(f"=== 回測執行時間: {datetime.now()} ===\n\n")
+                f.write(f"返回碼: {result.returncode}\n\n")
+                f.write("=== STDOUT ===\n")
+                f.write(result.stdout)
+                f.write("\n\n=== STDERR ===\n")
+                f.write(result.stderr)
+
+        except subprocess.TimeoutExpired:
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write("\n\n❌ 錯誤: 回測執行超時 (10 分鐘)")
+        except Exception as e:
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write(f"\n\n❌ 錯誤: {str(e)}")
+        finally:
+            # 移除鎖文件
+            if os.path.exists(backtest_lock_file):
+                os.remove(backtest_lock_file)
+
+    # 在背景線程執行
+    thread = threading.Thread(target=run_backtest_script)
+    thread.daemon = True
+    thread.start()
+
+    return {
+        "success": True,
+        "message": "回測已開始執行，請稍後刷新頁面查看結果",
+        "estimated_time": "約需 3-5 分鐘"
+    }
+
+
+@app.get("/api/backtest/status")
+async def get_backtest_status():
+    """
+    檢查回測執行狀態
+    """
+    project_root = os.getenv("PROJECT_ROOT", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+    backtest_lock_file = "/tmp/backtest_running.lock"
+    backtest_results_file = os.path.join(project_root, "output/backtest/backtest_results.xlsx")
+    log_file = os.path.join(project_root, "output/backtest/backtest_log.txt")
+
+    # 檢查是否正在執行
+    is_running = os.path.exists(backtest_lock_file)
+
+    # 檢查結果文件
+    has_results = os.path.exists(backtest_results_file)
+    last_run_time = None
+    if has_results:
+        last_run_time = datetime.fromtimestamp(
+            os.path.getmtime(backtest_results_file)
+        ).isoformat()
+
+    # 讀取最新日誌
+    log_content = None
+    if os.path.exists(log_file):
+        try:
+            with open(log_file, 'r', encoding='utf-8') as f:
+                log_content = f.read()
+        except:
+            pass
+
+    return {
+        "is_running": is_running,
+        "has_results": has_results,
+        "last_run_time": last_run_time,
+        "log": log_content
+    }
 
 
 if __name__ == "__main__":
