@@ -18,7 +18,7 @@ from services.llm_answer_optimizer import LLMAnswerOptimizer
 from services.intent_suggestion_engine import IntentSuggestionEngine
 
 # 導入路由
-from routers import chat, unclear_questions, suggested_intents, business_scope, intents, knowledge, vendors, knowledge_import
+from routers import chat, unclear_questions, suggested_intents, business_scope, intents, knowledge, vendors, knowledge_import, knowledge_generation
 
 # 全局變數
 db_pool: Pool = None
@@ -63,8 +63,22 @@ async def lifespan(app: FastAPI):
     unclear_question_manager = UnclearQuestionManager(db_pool)
     print("✅ 未釐清問題管理器已初始化")
 
-    llm_answer_optimizer = LLMAnswerOptimizer()
-    print("✅ LLM 答案優化器已初始化 (Phase 3)")
+    # Phase 3 擴展：配置 LLM 答案優化器（含答案合成功能）
+    llm_optimizer_config = {
+        "enable_synthesis": os.getenv("ENABLE_ANSWER_SYNTHESIS", "false").lower() == "true",
+        "synthesis_threshold": float(os.getenv("SYNTHESIS_THRESHOLD", "0.7")),
+        "synthesis_min_results": int(os.getenv("SYNTHESIS_MIN_RESULTS", "2")),
+        "synthesis_max_results": int(os.getenv("SYNTHESIS_MAX_RESULTS", "3"))
+    }
+
+    llm_answer_optimizer = LLMAnswerOptimizer(config=llm_optimizer_config)
+
+    if llm_optimizer_config["enable_synthesis"]:
+        print(f"✅ LLM 答案優化器已初始化 (Phase 3 + 答案合成功能已啟用)")
+        print(f"   合成閾值: {llm_optimizer_config['synthesis_threshold']}")
+        print(f"   合成來源數: {llm_optimizer_config['synthesis_min_results']}-{llm_optimizer_config['synthesis_max_results']}")
+    else:
+        print("✅ LLM 答案優化器已初始化 (Phase 3，答案合成功能停用)")
 
     suggestion_engine = IntentSuggestionEngine()
     print("✅ 意圖建議引擎已初始化 (Phase B)")
@@ -115,6 +129,7 @@ app.include_router(intents.router, prefix="/api/v1", tags=["intents"])
 app.include_router(knowledge.router, tags=["knowledge"])
 app.include_router(vendors.router, tags=["vendors"])  # Phase 1: Multi-Vendor Support
 app.include_router(knowledge_import.router, tags=["knowledge_import"])  # Knowledge Import from LINE chats
+app.include_router(knowledge_generation.router, prefix="/api/v1", tags=["knowledge_generation"])  # AI Knowledge Generation
 
 
 @app.get("/")

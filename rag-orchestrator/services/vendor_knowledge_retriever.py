@@ -84,38 +84,40 @@ class VendorKnowledgeRetriever:
             #
             # 使用 CASE WHEN 設定優先級權重，再根據 priority 欄位排序
 
+            # 使用 knowledge_intent_mapping 進行意圖關聯查詢
             cursor.execute("""
                 SELECT
-                    id,
-                    question_summary,
-                    answer,
-                    scope,
-                    priority,
-                    is_template,
-                    template_vars,
-                    vendor_id,
-                    created_at,
+                    kb.id,
+                    kb.question_summary,
+                    kb.answer,
+                    kb.scope,
+                    kb.priority,
+                    kb.is_template,
+                    kb.template_vars,
+                    kb.vendor_id,
+                    kb.created_at,
                     -- 計算優先級權重
                     CASE
-                        WHEN scope = 'customized' AND vendor_id = %s THEN 1000
-                        WHEN scope = 'vendor' AND vendor_id = %s THEN 500
-                        WHEN scope = 'global' AND vendor_id IS NULL THEN 100
+                        WHEN kb.scope = 'customized' AND kb.vendor_id = %s THEN 1000
+                        WHEN kb.scope = 'vendor' AND kb.vendor_id = %s THEN 500
+                        WHEN kb.scope = 'global' AND kb.vendor_id IS NULL THEN 100
                         ELSE 0
                     END as scope_weight
-                FROM knowledge_base
+                FROM knowledge_base kb
+                INNER JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                 WHERE
-                    intent_id = %s
+                    kim.intent_id = %s
                     AND (
                         -- 業者客製化知識
-                        (vendor_id = %s AND scope IN ('customized', 'vendor'))
+                        (kb.vendor_id = %s AND kb.scope IN ('customized', 'vendor'))
                         OR
                         -- 全域知識
-                        (vendor_id IS NULL AND scope = 'global')
+                        (kb.vendor_id IS NULL AND kb.scope = 'global')
                     )
                 ORDER BY
                     scope_weight DESC,  -- 先按範圍權重排序
-                    priority DESC,      -- 再按優先級排序
-                    created_at DESC     -- 最後按建立時間排序
+                    kb.priority DESC,   -- 再按優先級排序
+                    kb.created_at DESC  -- 最後按建立時間排序
                 LIMIT %s
             """, (vendor_id, vendor_id, intent_id, vendor_id, top_k))
 
@@ -229,57 +231,61 @@ class VendorKnowledgeRetriever:
 
             vector_str = str(query_embedding)
 
+            # Phase 1 擴展：使用 knowledge_intent_mapping 進行多意圖檢索
             cursor.execute("""
                 SELECT
-                    id,
-                    question_summary,
-                    answer,
-                    scope,
-                    priority,
-                    is_template,
-                    template_vars,
-                    vendor_id,
-                    created_at,
-                    intent_id,
+                    kb.id,
+                    kb.question_summary,
+                    kb.answer,
+                    kb.scope,
+                    kb.priority,
+                    kb.is_template,
+                    kb.template_vars,
+                    kb.vendor_id,
+                    kb.created_at,
+                    kim.intent_id,
                     -- 計算向量相似度
-                    1 - (embedding <=> %s::vector) as base_similarity,
+                    1 - (kb.embedding <=> %s::vector) as base_similarity,
                     -- Intent 匹配加成（多 Intent 支援）
                     CASE
-                        WHEN intent_id = %s THEN 1.5          -- 主要 Intent: 1.5x boost
-                        WHEN intent_id = ANY(%s::int[]) THEN 1.2  -- 次要 Intent: 1.2x boost
+                        WHEN kim.intent_id = %s THEN 1.5          -- 主要 Intent: 1.5x boost
+                        WHEN kim.intent_id = ANY(%s::int[]) THEN 1.2  -- 次要 Intent: 1.2x boost
                         ELSE 1.0                              -- 其他: 無加成
                     END as intent_boost,
                     -- 加成後的相似度 (用於排序)
-                    (1 - (embedding <=> %s::vector)) *
+                    (1 - (kb.embedding <=> %s::vector)) *
                     CASE
-                        WHEN intent_id = %s THEN 1.5
-                        WHEN intent_id = ANY(%s::int[]) THEN 1.2
+                        WHEN kim.intent_id = %s THEN 1.5
+                        WHEN kim.intent_id = ANY(%s::int[]) THEN 1.2
                         ELSE 1.0
                     END as boosted_similarity,
                     -- 計算 Scope 權重
                     CASE
-                        WHEN scope = 'customized' AND vendor_id = %s THEN 1000
-                        WHEN scope = 'vendor' AND vendor_id = %s THEN 500
-                        WHEN scope = 'global' AND vendor_id IS NULL THEN 100
+                        WHEN kb.scope = 'customized' AND kb.vendor_id = %s THEN 1000
+                        WHEN kb.scope = 'vendor' AND kb.vendor_id = %s THEN 500
+                        WHEN kb.scope = 'global' AND kb.vendor_id IS NULL THEN 100
                         ELSE 0
                     END as scope_weight
-                FROM knowledge_base
+                FROM knowledge_base kb
+                LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                 WHERE
                     -- 移除硬性 Intent 過濾，改為軟性權重
                     -- Scope 過濾
                     (
-                        (vendor_id = %s AND scope IN ('customized', 'vendor'))
+                        (kb.vendor_id = %s AND kb.scope IN ('customized', 'vendor'))
                         OR
-                        (vendor_id IS NULL AND scope = 'global')
+                        (kb.vendor_id IS NULL AND kb.scope = 'global')
                     )
                     -- 向量存在
-                    AND embedding IS NOT NULL
+                    AND kb.embedding IS NOT NULL
                     -- 相似度閾值（基於原始相似度，不含加成）
-                    AND (1 - (embedding <=> %s::vector)) >= %s
+                    AND (1 - (kb.embedding <=> %s::vector)) >= %s
+                    -- Intent 過濾（多意圖支援）
+                    AND (kim.intent_id = ANY(%s::int[]) OR kim.intent_id IS NULL)
                 ORDER BY
                     scope_weight DESC,        -- 1st: Scope 優先級
                     boosted_similarity DESC,  -- 2nd: 加成後的相似度
-                    priority DESC             -- 3rd: 人工優先級
+                    kb.priority DESC          -- 3rd: 人工優先級
                 LIMIT %s
             """, (
                 vector_str,
@@ -293,6 +299,7 @@ class VendorKnowledgeRetriever:
                 vendor_id,
                 vector_str,
                 similarity_threshold,
+                all_intent_ids,
                 top_k
             ))
 

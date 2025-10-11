@@ -12,6 +12,11 @@ import ChatTestView from './views/ChatTestView.vue';
 import KnowledgeImportView from './views/KnowledgeImportView.vue';
 // Backtest Results
 import BacktestView from './views/BacktestView.vue';
+// Test Scenarios Management
+import TestScenariosView from './views/TestScenariosView.vue';
+import PendingReviewView from './views/PendingReviewView.vue';
+// Unified Review Center
+import ReviewCenterView from './views/ReviewCenterView.vue';
 
 const routes = [
   {
@@ -64,6 +69,27 @@ const routes = [
     path: '/backtest',
     name: 'Backtest',
     component: BacktestView
+  },
+  {
+    path: '/test-scenarios',
+    name: 'TestScenarios',
+    component: TestScenariosView
+  },
+  {
+    path: '/test-scenarios/pending',
+    name: 'PendingReview',
+    component: PendingReviewView
+  },
+  // Unified Review Center (NEW)
+  {
+    path: '/review-center',
+    name: 'ReviewCenter',
+    component: ReviewCenterView
+  },
+  // AI Knowledge Review - redirect to Review Center (功能已合併)
+  {
+    path: '/ai-knowledge-review',
+    redirect: '/review-center'
   }
 ];
 

@@ -6,6 +6,8 @@ from typing import List, Dict, Optional
 from datetime import datetime
 from asyncpg.pool import Pool
 import json
+import os
+import httpx
 
 
 class UnclearQuestionManager:
@@ -19,8 +21,85 @@ class UnclearQuestionManager:
             db_pool: 資料庫連接池
         """
         self.db_pool = db_pool
+        self.embedding_api_url = os.getenv(
+            "EMBEDDING_API_URL",
+            "http://embedding-api:5000/api/v1/embeddings"
+        )
 
     async def record_unclear_question(
+        self,
+        question: str,
+        user_id: Optional[str] = None,
+        intent_type: Optional[str] = None,
+        similarity_score: Optional[float] = None,
+        retrieved_docs: Optional[Dict] = None,
+        semantic_similarity_threshold: float = 0.85
+    ) -> int:
+        """
+        記錄未釐清問題（使用語義相似度去重）
+
+        如果相同或語義相似的問題已存在，則更新頻率和最後詢問時間
+
+        Args:
+            question: 問題內容
+            user_id: 使用者 ID
+            intent_type: 意圖類型
+            similarity_score: 相似度分數
+            retrieved_docs: 檢索到的文件
+            semantic_similarity_threshold: 語義相似度閾值 (default: 0.85)
+
+        Returns:
+            問題 ID
+        """
+        # 1. 生成問題的向量表示
+        question_embedding = await self._get_embedding(question)
+
+        if not question_embedding:
+            print(f"⚠️  無法生成問題向量，回退到精確匹配模式")
+            # Fallback to exact match if embedding fails
+            return await self._record_without_semantics(
+                question, user_id, intent_type, similarity_score, retrieved_docs
+            )
+
+        # 2. 使用資料庫函數進行語義去重
+        async with self.db_pool.acquire() as conn:
+            # 將 embedding 轉換為 PostgreSQL vector 格式
+            # question_embedding is a list of floats, convert to [x,y,z,...] format
+            vector_str = '[' + ','.join(str(x) for x in question_embedding) + ']'
+
+            # 序列化 retrieved_docs 為 JSON 字符串
+            retrieved_docs_json = json.dumps(retrieved_docs) if retrieved_docs else None
+
+            # 呼叫資料庫函數進行語義去重
+            result = await conn.fetchrow("""
+                SELECT * FROM record_unclear_question_with_semantics(
+                    $1::TEXT,
+                    $2::vector,
+                    $3::VARCHAR(100),
+                    $4::DECIMAL
+                )
+            """, question, vector_str, intent_type, semantic_similarity_threshold)
+
+            unclear_question_id = result['unclear_question_id']
+            is_new = result['is_new_question']
+            matched_question = result['matched_similar_question']
+            sim_score = result['sim_score']
+            frequency = result['current_frequency']
+
+            # 記錄結果
+            if is_new:
+                print(f"✅ 記錄新的未釐清問題 (ID: {unclear_question_id}): {question}")
+            elif matched_question == question:
+                print(f"♻️  精確匹配已存在問題 (ID: {unclear_question_id}), 頻率: {frequency}")
+            else:
+                print(f"🔗 語義匹配已存在問題 (ID: {unclear_question_id})")
+                print(f"   新問題: {question}")
+                print(f"   相似問題: {matched_question}")
+                print(f"   相似度: {sim_score:.4f}, 頻率: {frequency}")
+
+            return unclear_question_id
+
+    async def _record_without_semantics(
         self,
         question: str,
         user_id: Optional[str] = None,
@@ -29,19 +108,9 @@ class UnclearQuestionManager:
         retrieved_docs: Optional[Dict] = None
     ) -> int:
         """
-        記錄未釐清問題
+        不使用語義相似度記錄問題（回退方案）
 
-        如果相同問題已存在，則更新頻率和最後詢問時間
-
-        Args:
-            question: 問題內容
-            user_id: 使用者 ID
-            intent_type: 意圖類型
-            similarity_score: 相似度分數
-            retrieved_docs: 檢索到的文件
-
-        Returns:
-            問題 ID
+        僅進行精確文字匹配
         """
         async with self.db_pool.acquire() as conn:
             # 檢查是否已存在相同問題
@@ -66,6 +135,9 @@ class UnclearQuestionManager:
                 # 序列化 retrieved_docs 為 JSON 字符串
                 retrieved_docs_json = json.dumps(retrieved_docs) if retrieved_docs else None
 
+                # Use explicit column values to avoid ambiguity
+                sim_score_value = similarity_score
+
                 row = await conn.fetchrow("""
                     INSERT INTO unclear_questions (
                         question,
@@ -74,10 +146,40 @@ class UnclearQuestionManager:
                         similarity_score,
                         retrieved_docs,
                         status
-                    ) VALUES ($1, $2, $3, $4, $5, 'pending')
+                    ) VALUES ($1, $2, $3, $4::double precision, $5, 'pending')
                     RETURNING id
-                """, question, user_id, intent_type, similarity_score, retrieved_docs_json)
+                """, question, user_id, intent_type, sim_score_value, retrieved_docs_json)
                 return row['id']
+
+    async def _get_embedding(self, text: str) -> Optional[List[float]]:
+        """
+        呼叫 Embedding API 將文字轉換為向量
+
+        Args:
+            text: 要轉換的文字
+
+        Returns:
+            向量列表，如果失敗則返回 None
+        """
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    self.embedding_api_url,
+                    json={"text": text}
+                )
+                response.raise_for_status()
+                data = response.json()
+                embedding = data.get('embedding')
+
+                if embedding:
+                    print(f"   ✅ 獲得問題向量: 維度 {len(embedding)}")
+                    return embedding
+                else:
+                    print(f"   ⚠️  Embedding API 回應中無 embedding 欄位")
+                    return None
+        except Exception as e:
+            print(f"❌ Embedding API 呼叫失敗: {e}")
+            return None
 
     async def get_unclear_questions(
         self,

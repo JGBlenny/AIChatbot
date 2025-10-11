@@ -1,0 +1,29 @@
+# 開發環境配置
+# 使用方式: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# 特點: 掛載本地 dist 目錄，方便快速開發
+
+services:
+  # 知識庫管理後台 - 前端（開發模式）
+  knowledge-admin-web:
+    volumes:
+      # 掛載本地 dist 目錄和 nginx 配置，支援快速開發
+      - ./knowledge-admin/frontend/dist:/usr/share/nginx/html
+      - ./knowledge-admin/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: "no"  # 開發環境不自動重啟
+
+  # 知識庫管理後台 - API（開發模式）
+  knowledge-admin-api:
+    volumes:
+      - ./test_scenarios_smoke.xlsx:/app/test_scenarios_smoke.xlsx:ro
+      - ./output:/app/output
+      - ./scripts:/app/scripts:ro
+      # 可選：掛載後端代碼以支持熱重載（需要配合 watchdog 等工具）
+      # - ./knowledge-admin/backend:/app
+    restart: "no"  # 開發環境不自動重啟
+
+  # RAG Orchestrator（開發模式）
+  rag-orchestrator:
+    restart: "no"  # 開發環境不自動重啟
+    # 可選：如需掛載代碼以支持熱重載，取消下面的註解
+    # volumes:
+    #   - ./rag-orchestrator:/app

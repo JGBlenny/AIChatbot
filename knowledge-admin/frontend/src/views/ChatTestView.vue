@@ -309,8 +309,7 @@ export default {
 
 <style scoped>
 .chat-test-view {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 /* 業者選擇器 */

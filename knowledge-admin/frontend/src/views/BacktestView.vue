@@ -30,6 +30,38 @@
       </div>
     </div>
 
+    <!-- 品質評估統計卡片 -->
+    <div v-if="statistics && statistics.quality" class="quality-stats-section">
+      <h3 class="section-title">🎯 LLM 品質評估統計 ({{ statistics.quality.count }} 個測試)</h3>
+      <div class="stats-cards quality-cards">
+        <div class="stat-card quality">
+          <div class="stat-label">相關性</div>
+          <div class="stat-value">{{ statistics.quality.avg_relevance.toFixed(2) }}</div>
+          <div class="stat-rating">{{ getQualityRating(statistics.quality.avg_relevance) }}</div>
+        </div>
+        <div class="stat-card quality">
+          <div class="stat-label">完整性</div>
+          <div class="stat-value">{{ statistics.quality.avg_completeness.toFixed(2) }}</div>
+          <div class="stat-rating">{{ getQualityRating(statistics.quality.avg_completeness) }}</div>
+        </div>
+        <div class="stat-card quality">
+          <div class="stat-label">準確性</div>
+          <div class="stat-value">{{ statistics.quality.avg_accuracy.toFixed(2) }}</div>
+          <div class="stat-rating">{{ getQualityRating(statistics.quality.avg_accuracy) }}</div>
+        </div>
+        <div class="stat-card quality">
+          <div class="stat-label">意圖匹配</div>
+          <div class="stat-value">{{ statistics.quality.avg_intent_match.toFixed(2) }}</div>
+          <div class="stat-rating">{{ getQualityRating(statistics.quality.avg_intent_match) }}</div>
+        </div>
+        <div class="stat-card quality">
+          <div class="stat-label">綜合評分</div>
+          <div class="stat-value">{{ statistics.quality.avg_quality_overall.toFixed(2) }}</div>
+          <div class="stat-rating">{{ getQualityRating(statistics.quality.avg_quality_overall) }}</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 工具列 -->
     <div class="toolbar">
       <div class="filter-group">
@@ -38,6 +70,23 @@
           <option value="all">全部</option>
           <option value="failed">僅失敗</option>
           <option value="passed">僅通過</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>品質模式：</label>
+        <select v-model="backtestConfig.quality_mode">
+          <option value="basic">Basic - 快速評估</option>
+          <option value="hybrid">Hybrid - 混合評估 (推薦)</option>
+          <option value="detailed">Detailed - LLM 深度評估</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>測試類型：</label>
+        <select v-model="backtestConfig.test_type">
+          <option value="smoke">Smoke - 快速測試</option>
+          <option value="full">Full - 完整測試</option>
         </select>
       </div>
 
@@ -243,6 +292,84 @@ python3 scripts/knowledge_extraction/backtest_framework.py</pre>
             </table>
           </div>
 
+          <!-- 品質評估詳情 -->
+          <div v-if="selectedResult.quality" class="detail-section quality-evaluation">
+            <h3>🎯 LLM 品質評估</h3>
+            <div class="quality-metrics-grid">
+              <div class="quality-metric-item">
+                <div class="metric-label">相關性</div>
+                <div class="metric-score">{{ selectedResult.quality.relevance }}/5</div>
+                <div class="star-rating">
+                  <span v-for="i in 5" :key="i"
+                        :class="['star', i <= selectedResult.quality.relevance ? 'filled' : 'empty']">
+                    ★
+                  </span>
+                </div>
+              </div>
+              <div class="quality-metric-item">
+                <div class="metric-label">完整性</div>
+                <div class="metric-score">{{ selectedResult.quality.completeness }}/5</div>
+                <div class="star-rating">
+                  <span v-for="i in 5" :key="i"
+                        :class="['star', i <= selectedResult.quality.completeness ? 'filled' : 'empty']">
+                    ★
+                  </span>
+                </div>
+              </div>
+              <div class="quality-metric-item">
+                <div class="metric-label">準確性</div>
+                <div class="metric-score">{{ selectedResult.quality.accuracy }}/5</div>
+                <div class="star-rating">
+                  <span v-for="i in 5" :key="i"
+                        :class="['star', i <= selectedResult.quality.accuracy ? 'filled' : 'empty']">
+                    ★
+                  </span>
+                </div>
+              </div>
+              <div class="quality-metric-item">
+                <div class="metric-label">意圖匹配</div>
+                <div class="metric-score">{{ selectedResult.quality.intent_match }}/5</div>
+                <div class="star-rating">
+                  <span v-for="i in 5" :key="i"
+                        :class="['star', i <= selectedResult.quality.intent_match ? 'filled' : 'empty']">
+                    ★
+                  </span>
+                </div>
+              </div>
+              <div class="quality-metric-item overall">
+                <div class="metric-label">綜合評分</div>
+                <div class="metric-score">{{ selectedResult.quality.quality_overall }}/5</div>
+                <div class="star-rating">
+                  <span v-for="i in 5" :key="i"
+                        :class="['star', i <= selectedResult.quality.quality_overall ? 'filled' : 'empty']">
+                    ★
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div v-if="selectedResult.quality.quality_reasoning" class="quality-reasoning">
+              <strong>評分理由：</strong>
+              <p>{{ selectedResult.quality.quality_reasoning }}</p>
+            </div>
+          </div>
+
+          <div v-if="selectedResult.source_ids" class="detail-section knowledge-sources">
+            <h3>📚 知識來源</h3>
+            <div class="knowledge-info">
+              <p><strong>來源摘要:</strong></p>
+              <p class="sources-summary">{{ selectedResult.knowledge_sources || '無來源' }}</p>
+
+              <p v-if="selectedResult.source_ids"><strong>知識 IDs:</strong> {{ selectedResult.source_ids }}</p>
+
+              <div v-if="selectedResult.batch_url" class="knowledge-links-box">
+                <p><strong>🔗 快速訪問:</strong></p>
+                <a :href="selectedResult.batch_url" target="_blank" class="batch-link">
+                  📦 批量查詢所有相關知識 ({{ selectedResult.source_count }} 個)
+                </a>
+              </div>
+            </div>
+          </div>
+
           <div v-if="selectedResult.optimization_tips" class="detail-section optimization-hints">
             <h3>💡 優化建議</h3>
             <div class="optimization-tips-content">
@@ -292,6 +419,10 @@ export default {
       loading: false,
       error: null,
       statusFilter: 'all',
+      backtestConfig: {
+        quality_mode: 'basic',
+        test_type: 'smoke'
+      },
       pagination: {
         limit: 50,
         offset: 0
@@ -396,13 +527,36 @@ export default {
       // 關閉 modal
       this.showDetailModal = false;
 
-      // 跳轉到知識庫頁面並搜尋相關問題
-      this.$router.push({
-        path: '/',
-        query: { search: result.test_question.substring(0, 50) }
-      });
+      // 如果有知識來源 IDs，使用它們導航
+      if (result.source_ids) {
+        const sourceIds = result.source_ids.split(',').map(id => id.trim());
 
-      alert(`💡 提示：請在知識庫中搜尋「${result.test_question.substring(0, 30)}...」相關的知識進行優化`);
+        if (sourceIds.length > 0 && sourceIds[0]) {
+          // 使用第一個知識 ID 進行搜尋
+          this.$router.push({
+            path: '/',
+            query: { search: sourceIds[0] }
+          });
+
+          alert(`💡 已導航到知識 ID: ${sourceIds.join(', ')}\n請檢查並優化這些知識條目`);
+        } else {
+          // 沒有知識來源，使用問題文字搜尋
+          this.$router.push({
+            path: '/',
+            query: { search: result.test_question.substring(0, 50) }
+          });
+
+          alert(`💡 提示：沒有找到相關知識來源\n請新增或搜尋「${result.test_question.substring(0, 30)}...」相關的知識`);
+        }
+      } else {
+        // 沒有知識來源，使用問題文字搜尋
+        this.$router.push({
+          path: '/',
+          query: { search: result.test_question.substring(0, 50) }
+        });
+
+        alert(`💡 提示：請在知識庫中搜尋「${result.test_question.substring(0, 30)}...」相關的知識進行優化`);
+      }
     },
 
     getScoreClass(score) {
@@ -417,13 +571,26 @@ export default {
       return 'confidence-low';
     },
 
+    getQualityRating(score) {
+      if (score >= 4.0) return '🎉 優秀';
+      if (score >= 3.5) return '✅ 良好';
+      if (score >= 3.0) return '⚠️ 中等';
+      return '❌ 需改善';
+    },
+
     async runBacktest() {
-      if (!confirm('確定要執行回測嗎？這將需要 3-5 分鐘時間。')) {
+      const modeText = {
+        'basic': 'Basic 快速評估',
+        'hybrid': 'Hybrid 混合評估（推薦）',
+        'detailed': 'Detailed LLM 深度評估'
+      };
+
+      if (!confirm(`確定要執行回測嗎？\n模式：${modeText[this.backtestConfig.quality_mode]}\n類型：${this.backtestConfig.test_type}`)) {
         return;
       }
 
       try {
-        const response = await axios.post(`${API_BASE}/backtest/run`);
+        const response = await axios.post(`${API_BASE}/backtest/run`, this.backtestConfig);
         alert(`✅ ${response.data.message}\n預計時間：${response.data.estimated_time}`);
 
         // 開始監控狀態
@@ -506,8 +673,7 @@ export default {
 
 <style scoped>
 .backtest-view {
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 /* 統計卡片 */
@@ -547,6 +713,10 @@ export default {
   background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
 }
 
+.stat-card.quality {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
 .stat-label {
   font-size: 14px;
   opacity: 0.9;
@@ -556,6 +726,24 @@ export default {
 .stat-value {
   font-size: 32px;
   font-weight: bold;
+}
+
+.stat-rating {
+  font-size: 14px;
+  margin-top: 5px;
+  opacity: 0.95;
+}
+
+/* 品質統計區塊 */
+.quality-stats-section {
+  margin-bottom: 30px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 15px;
 }
 
 /* 工具列 */
@@ -1033,6 +1221,67 @@ export default {
   color: #303133;
 }
 
+/* 知識來源區塊 */
+.knowledge-sources {
+  background: #f0f9ff;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #91d5ff;
+}
+
+.knowledge-sources h3 {
+  color: #0050b3;
+  margin-top: 0;
+}
+
+.knowledge-info {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.knowledge-info p {
+  margin: 10px 0;
+}
+
+.sources-summary {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  color: #303133;
+  font-size: 13px;
+  border: 1px solid #d9d9d9;
+}
+
+.knowledge-links-box {
+  background: white;
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 15px;
+  border: 1px solid #d9d9d9;
+}
+
+.knowledge-links-box p {
+  margin: 0 0 10px 0;
+  font-weight: 500;
+}
+
+.batch-link {
+  display: inline-block;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white !important;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.batch-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+}
+
 .modal-actions {
   display: flex;
   gap: 10px;
@@ -1078,5 +1327,92 @@ export default {
   line-height: 1.6;
   max-height: 60vh;
   overflow-y: auto;
+}
+
+/* 品質評估詳情 */
+.quality-evaluation {
+  background: #f0f9ff;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #91d5ff;
+}
+
+.quality-evaluation h3 {
+  color: #0050b3;
+  margin-top: 0;
+}
+
+.quality-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.quality-metric-item {
+  background: white;
+  padding: 15px;
+  border-radius: 6px;
+  text-align: center;
+  border: 1px solid #d9d9d9;
+}
+
+.quality-metric-item.overall {
+  border: 2px solid #667eea;
+  background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+}
+
+.metric-label {
+  font-size: 13px;
+  color: #606266;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.metric-score {
+  font-size: 24px;
+  font-weight: bold;
+  color: #303133;
+  margin-bottom: 5px;
+}
+
+.star-rating {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+
+.star {
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+.star.filled {
+  color: #fadb14;
+  text-shadow: 0 0 2px rgba(250, 219, 20, 0.5);
+}
+
+.star.empty {
+  color: #d9d9d9;
+}
+
+.quality-reasoning {
+  background: white;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #d9d9d9;
+}
+
+.quality-reasoning strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #0050b3;
+}
+
+.quality-reasoning p {
+  margin: 0;
+  line-height: 1.6;
+  color: #303133;
+  font-size: 14px;
 }
 </style>

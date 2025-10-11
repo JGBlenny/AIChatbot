@@ -20,19 +20,33 @@ class LLMAnswerOptimizer:
         Args:
             config: 配置字典
         """
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        # 延遲初始化：只有在需要時才檢查 API key
+        api_key = os.getenv("OPENAI_API_KEY")
+        self.client = OpenAI(api_key=api_key) if api_key else None
 
         # 從環境變數讀取模型配置（用於降低測試成本）
         default_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
-        self.config = config or {
+        # 預設配置
+        default_config = {
             "model": default_model,
             "temperature": 0.7,
             "max_tokens": 800,
             "enable_optimization": True,
             "optimize_for_confidence": ["high", "medium"],  # 只優化高/中信心度
-            "fallback_on_error": True  # 錯誤時使用原始答案
+            "fallback_on_error": True,  # 錯誤時使用原始答案
+            # Phase 2 擴展：答案合成功能
+            "enable_synthesis": False,  # 是否啟用答案合成（預設關閉，需測試後啟用）
+            "synthesis_min_results": 2,  # 最少需要幾個結果才考慮合成
+            "synthesis_max_results": 3,  # 最多合成幾個答案
+            "synthesis_threshold": 0.7   # 當最高相似度低於此值時，考慮合成
         }
+
+        # 合併用戶配置與預設配置
+        if config:
+            self.config = {**default_config, **config}
+        else:
+            self.config = default_config
 
     def optimize_answer(
         self,
@@ -41,7 +55,8 @@ class LLMAnswerOptimizer:
         confidence_level: str,
         intent_info: Dict,
         vendor_params: Optional[Dict] = None,
-        vendor_name: Optional[str] = None
+        vendor_name: Optional[str] = None,
+        enable_synthesis_override: Optional[bool] = None
     ) -> Dict:
         """
         優化答案
@@ -53,12 +68,14 @@ class LLMAnswerOptimizer:
             intent_info: 意圖資訊
             vendor_params: 業者參數（Phase 1 擴展）
             vendor_name: 業者名稱（Phase 1 擴展）
+            enable_synthesis_override: 覆蓋答案合成配置（None=使用配置，True=強制啟用，False=強制禁用）
 
         Returns:
             優化結果字典，包含:
             - optimized_answer: 優化後的答案
             - original_answer: 原始答案
             - optimization_applied: 是否使用了優化
+            - synthesis_applied: 是否使用了答案合成
             - tokens_used: 使用的 token 數
             - processing_time_ms: 處理時間
         """
@@ -71,15 +88,36 @@ class LLMAnswerOptimizer:
         # 2. 準備原始答案
         original_answer = self._create_original_answer(search_results)
 
-        # 3. 嘗試 LLM 優化（Phase 1 擴展：加入業者參數注入）
+        # 3. 判斷是否需要答案合成（Phase 2 擴展）
+        # 支援動態覆蓋：如果傳入 enable_synthesis_override，則使用該值
+        should_synthesize = self._should_synthesize(
+            question,
+            search_results,
+            enable_synthesis_override
+        )
+
+        # 4. 嘗試 LLM 優化（Phase 1 擴展：加入業者參數注入；Phase 2 擴展：答案合成）
         try:
-            optimized_answer, tokens_used = self._call_llm(
-                question=question,
-                search_results=search_results,
-                intent_info=intent_info,
-                vendor_params=vendor_params,
-                vendor_name=vendor_name
-            )
+            if should_synthesize:
+                # 使用答案合成模式
+                optimized_answer, tokens_used = self.synthesize_answer(
+                    question=question,
+                    search_results=search_results,
+                    intent_info=intent_info,
+                    vendor_params=vendor_params,
+                    vendor_name=vendor_name
+                )
+                synthesis_applied = True
+            else:
+                # 使用傳統優化模式
+                optimized_answer, tokens_used = self._call_llm(
+                    question=question,
+                    search_results=search_results,
+                    intent_info=intent_info,
+                    vendor_params=vendor_params,
+                    vendor_name=vendor_name
+                )
+                synthesis_applied = False
 
             processing_time = int((time.time() - start_time) * 1000)
 
@@ -87,6 +125,7 @@ class LLMAnswerOptimizer:
                 "optimized_answer": optimized_answer,
                 "original_answer": original_answer,
                 "optimization_applied": True,
+                "synthesis_applied": synthesis_applied,  # 新增：標記是否使用了合成
                 "tokens_used": tokens_used,
                 "processing_time_ms": processing_time,
                 "model": self.config["model"]
@@ -102,6 +141,7 @@ class LLMAnswerOptimizer:
                     "optimized_answer": original_answer,
                     "original_answer": original_answer,
                     "optimization_applied": False,
+                    "synthesis_applied": False,
                     "tokens_used": 0,
                     "processing_time_ms": processing_time,
                     "error": str(e)
@@ -121,6 +161,59 @@ class LLMAnswerOptimizer:
             return False
 
         return True
+
+    def _should_synthesize(
+        self,
+        question: str,
+        search_results: List[Dict],
+        enable_synthesis_override: Optional[bool] = None
+    ) -> bool:
+        """
+        判斷是否需要答案合成
+
+        觸發條件（全部滿足）：
+        1. 啟用合成功能
+        2. 至少有指定數量的檢索結果
+        3. 問題包含複合需求關鍵字（這類問題通常需要多方面資訊）
+        4. 沒有單一高分答案（最高相似度 < 閾值）
+
+        Args:
+            question: 用戶問題
+            search_results: 檢索結果列表
+            enable_synthesis_override: 覆蓋配置（None=使用配置，True=強制啟用，False=強制禁用）
+
+        Returns:
+            是否應該合成答案
+        """
+        # 1. 功能開關（支援動態覆蓋）
+        if enable_synthesis_override is not None:
+            # 如果傳入覆蓋值，使用覆蓋值
+            if not enable_synthesis_override:
+                return False
+        else:
+            # 否則使用配置
+            if not self.config.get("enable_synthesis", False):
+                return False
+
+        # 2. 結果數量
+        min_results = self.config.get("synthesis_min_results", 2)
+        if len(search_results) < min_results:
+            return False
+
+        # 3. 複合問題關鍵字（這類問題通常需要多方面資訊）
+        complex_keywords = ["如何", "怎麼", "流程", "步驟", "需要", "什麼時候", "注意", "準備", "辦理"]
+        has_complex_pattern = any(kw in question for kw in complex_keywords)
+
+        # 4. 沒有單一高分答案（表示可能需要組合多個答案）
+        threshold = self.config.get("synthesis_threshold", 0.7)
+        max_similarity = max(r['similarity'] for r in search_results[:min_results])
+        no_perfect_match = max_similarity < threshold
+
+        # 記錄判斷結果（用於調試）
+        if has_complex_pattern and no_perfect_match:
+            print(f"🔄 答案合成觸發：問題類型={has_complex_pattern}, 最高相似度={max_similarity:.3f} < {threshold}")
+
+        return has_complex_pattern and no_perfect_match
 
     def _create_original_answer(self, search_results: List[Dict]) -> str:
         """建立原始答案（未優化）"""
@@ -190,6 +283,9 @@ class LLMAnswerOptimizer:
 {content}"""
 
         try:
+            if not self.client:
+                raise Exception("OpenAI client not initialized (missing API key)")
+
             response = self.client.chat.completions.create(
                 model=self.config["model"],
                 temperature=0.3,  # 使用較低溫度確保準確性
@@ -206,6 +302,138 @@ class LLMAnswerOptimizer:
         except Exception as e:
             print(f"⚠️  參數注入失敗，使用原始內容: {e}")
             return content
+
+    def synthesize_answer(
+        self,
+        question: str,
+        search_results: List[Dict],
+        intent_info: Dict,
+        vendor_params: Optional[Dict] = None,
+        vendor_name: Optional[str] = None
+    ) -> tuple[str, int]:
+        """
+        合成多個答案為一個完整答案（Phase 2 擴展功能）
+
+        當檢索到的多個答案各有側重時，使用 LLM 將它們合成為一個完整、結構化的答案。
+        這可以提升答案的完整性，特別適用於複雜問題。
+
+        Args:
+            question: 用戶問題
+            search_results: 多個檢索結果
+            intent_info: 意圖資訊
+            vendor_params: 業者參數（用於動態注入）
+            vendor_name: 業者名稱
+
+        Returns:
+            (合成後的答案, 使用的 tokens 數)
+        """
+        # 準備多個答案的上下文（先進行參數注入）
+        max_results = self.config.get("synthesis_max_results", 3)
+        answers_to_synthesize = []
+
+        for i, result in enumerate(search_results[:max_results], 1):
+            content = result['content']
+
+            # 如果有業者參數，先進行智能參數注入
+            if vendor_params and vendor_name:
+                content = self.inject_vendor_params(content, vendor_params, vendor_name)
+
+            answers_to_synthesize.append({
+                "index": i,
+                "title": result['title'],
+                "category": result.get('category', 'N/A'),
+                "content": content,
+                "similarity": result['similarity']
+            })
+
+        # 格式化答案列表
+        formatted_answers = "\n\n".join([
+            f"【答案 {ans['index']}】\n"
+            f"標題：{ans['title']}\n"
+            f"分類：{ans['category']}\n"
+            f"相似度：{ans['similarity']:.2f}\n"
+            f"內容：\n{ans['content']}"
+            for ans in answers_to_synthesize
+        ])
+
+        # 建立合成 Prompt
+        system_prompt = self._create_synthesis_system_prompt(intent_info, vendor_name)
+        user_prompt = self._create_synthesis_user_prompt(question, formatted_answers, intent_info)
+
+        # 檢查 API key
+        if not self.client:
+            raise Exception("OpenAI client not initialized (missing API key)")
+
+        # 呼叫 OpenAI API 進行合成
+        response = self.client.chat.completions.create(
+            model=self.config["model"],
+            temperature=0.5,  # 稍低溫度以確保準確性和結構
+            max_tokens=self.config["max_tokens"],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
+        )
+
+        synthesized_answer = response.choices[0].message.content
+        tokens_used = response.usage.total_tokens
+
+        print(f"✨ 答案合成完成：使用了 {len(answers_to_synthesize)} 個來源，tokens: {tokens_used}")
+
+        return synthesized_answer, tokens_used
+
+    def _create_synthesis_system_prompt(self, intent_info: Dict, vendor_name: Optional[str] = None) -> str:
+        """建立答案合成的系統提示詞"""
+        intent_type = intent_info.get('intent_type', 'knowledge')
+
+        base_prompt = """你是一個專業的知識整合助理。你的任務是將多個相關但各有側重的答案，合成為一個完整、準確、結構化的回覆。
+
+合成要求：
+1. **完整性**：涵蓋所有重要資訊，不遺漏任何關鍵步驟或細節
+2. **準確性**：資訊必須來自提供的答案，不要編造或推測
+3. **結構化**：使用清晰的標題、列表、步驟編號，使答案易於閱讀
+4. **去重**：如果多個答案提到相同資訊，只保留一次，避免重複
+5. **優先級**：優先使用相似度較高的答案內容
+6. **語氣**：保持專業、友善、易懂的繁體中文表達
+7. **Markdown**：適當使用 Markdown 格式（## 標題、- 列表、**粗體**）"""
+
+        # 如果有業者名稱，加入業者資訊
+        if vendor_name:
+            base_prompt += f"\n8. **業者身份**：你代表 {vendor_name}，請使用該業者的資訊回答"
+
+        # 根據意圖類型調整提示
+        if intent_type == "knowledge":
+            base_prompt += "\n9. **知識類型**：這是知識查詢，請提供完整的說明、步驟和注意事項"
+        elif intent_type == "data_query":
+            base_prompt += "\n9. **資料查詢**：如需查詢具體資料，請說明如何查詢和所需資料"
+        elif intent_type == "action":
+            base_prompt += "\n9. **操作指引**：請提供具體、可執行的操作步驟"
+
+        base_prompt += "\n\n重要：只輸出合成後的完整答案，不要加上「根據以上資訊」等元資訊。"
+
+        return base_prompt
+
+    def _create_synthesis_user_prompt(self, question: str, formatted_answers: str, intent_info: Dict) -> str:
+        """建立答案合成的使用者提示詞"""
+        keywords = intent_info.get('keywords', [])
+        keywords_str = "、".join(keywords) if keywords else "無"
+
+        prompt = f"""使用者問題：{question}
+
+意圖類型：{intent_info.get('intent_name', '未知')}
+關鍵字：{keywords_str}
+
+以下是多個相關答案，請將它們合成為一個完整的回覆：
+
+{formatted_answers}
+
+請綜合以上答案，生成一個完整、準確、結構化的回覆。確保：
+- 涵蓋所有重要資訊
+- 使用清晰的結構（標題、列表、步驟）
+- 避免重複
+- 保持準確性"""
+
+        return prompt
 
     def _call_llm(
         self,
@@ -250,6 +478,10 @@ class LLMAnswerOptimizer:
         # 2. 建立優化 Prompt
         system_prompt = self._create_system_prompt(intent_info, vendor_name)
         user_prompt = self._create_user_prompt(question, context, intent_info)
+
+        # 檢查 API key
+        if not self.client:
+            raise Exception("OpenAI client not initialized (missing API key)")
 
         # 3. 呼叫 OpenAI API
         response = self.client.chat.completions.create(

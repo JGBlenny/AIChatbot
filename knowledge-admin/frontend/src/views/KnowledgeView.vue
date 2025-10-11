@@ -4,12 +4,23 @@
 
     <!-- 工具列 -->
     <div class="toolbar">
-      <input
-        v-model="searchQuery"
-        placeholder="🔍 搜尋知識..."
-        @input="searchKnowledge"
-      />
-      <select v-model="selectedCategory" @change="loadKnowledge">
+      <div style="flex: 1; position: relative;">
+        <input
+          v-model="searchQuery"
+          :placeholder="isIdSearch ? `📌 批量查詢 IDs: ${targetIds.join(', ')}` : '🔍 搜尋知識...'"
+          @input="searchKnowledge"
+          :class="{ 'id-search-input': isIdSearch }"
+        />
+        <button
+          v-if="isIdSearch"
+          @click="clearIdSearch"
+          class="btn-clear-search"
+          title="清除 ID 查詢"
+        >
+          ✕
+        </button>
+      </div>
+      <select v-model="selectedCategory" @change="loadKnowledge" :disabled="isIdSearch">
         <option value="">全部分類</option>
         <option v-for="cat in categories" :key="cat">{{ cat }}</option>
       </select>
@@ -79,7 +90,20 @@
             <td>{{ item.id }}</td>
             <td>{{ item.title || item.question_summary || '(無標題)' }}</td>
             <td><span class="badge">{{ item.category }}</span></td>
-            <td><span class="badge badge-intent">{{ item.intent_name || '未分類' }}</span></td>
+            <td>
+              <div v-if="item.intent_mappings && item.intent_mappings.length > 0" class="intent-badges">
+                <span
+                  v-for="mapping in item.intent_mappings"
+                  :key="mapping.intent_id"
+                  :class="['badge', 'badge-intent', mapping.intent_type === 'primary' ? 'badge-primary' : 'badge-secondary']"
+                  :title="`${mapping.intent_type === 'primary' ? '主要' : '次要'}意圖`"
+                >
+                  {{ mapping.intent_name }}
+                  <sup v-if="mapping.intent_type === 'primary'">★</sup>
+                </span>
+              </div>
+              <span v-else class="badge badge-unclassified">未分類</span>
+            </td>
             <td>{{ item.audience }}</td>
             <td>{{ formatDate(item.updated_at) }}</td>
             <td>
@@ -150,6 +174,31 @@
             />
           </div>
 
+          <!-- 多意圖選擇 -->
+          <div class="form-group">
+            <label>意圖關聯（可選擇多個）</label>
+            <div class="intent-selector">
+              <div v-for="intent in availableIntents" :key="intent.id" class="intent-checkbox">
+                <label>
+                  <input
+                    type="checkbox"
+                    :value="intent.id"
+                    v-model="selectedIntents"
+                    @change="updateIntentType(intent.id)"
+                  />
+                  {{ intent.name }}
+                  <span v-if="selectedIntents.includes(intent.id)" class="intent-type-selector">
+                    <select v-model="intentTypes[intent.id]" class="inline-select">
+                      <option value="primary">主要</option>
+                      <option value="secondary">次要</option>
+                    </select>
+                  </span>
+                </label>
+              </div>
+              <p v-if="selectedIntents.length === 0" class="hint-text">💡 未選擇意圖的知識將標記為「未分類」</p>
+            </div>
+          </div>
+
           <div class="form-group">
             <label>內容 (Markdown) *</label>
             <div class="editor-container">
@@ -190,6 +239,7 @@ export default {
     return {
       knowledgeList: [],
       categories: [],
+      availableIntents: [],
       searchQuery: '',
       selectedCategory: '',
       showModal: false,
@@ -208,10 +258,15 @@ export default {
         audience: '',
         content: '',
         keywords: [],
-        question_summary: ''
+        question_summary: '',
+        intent_mappings: []
       },
       keywordsString: '',
-      searchTimeout: null
+      selectedIntents: [],
+      intentTypes: {},
+      searchTimeout: null,
+      isIdSearch: false,
+      targetIds: []
     };
   },
   computed: {
@@ -229,24 +284,80 @@ export default {
     }
   },
   mounted() {
+    // 檢查 URL 查詢參數
+    const urlParams = new URLSearchParams(window.location.hash.split('?')[1]);
+    const idsParam = urlParams.get('ids');
+    const searchParam = urlParams.get('search');
+
+    if (idsParam) {
+      // 如果有 ids 參數，使用逗號分隔的 ID 列表進行搜尋
+      const ids = idsParam.split(',').map(id => id.trim());
+      this.searchQuery = ids.join(' OR ');
+      // 設置一個標記，表示這是 ID 批量查詢
+      this.isIdSearch = true;
+      this.targetIds = ids;
+    } else if (searchParam) {
+      // 如果有 search 參數，使用它作為搜尋關鍵字
+      this.searchQuery = searchParam;
+    }
+
     this.loadKnowledge();
     this.loadCategories();
+    this.loadIntents();
     this.loadStats();
   },
   methods: {
+    async loadIntents() {
+      try {
+        const response = await axios.get(`${API_BASE}/intents`);
+        this.availableIntents = response.data.intents;
+      } catch (error) {
+        console.error('載入意圖失敗', error);
+      }
+    },
+
+    updateIntentType(intentId) {
+      // 當意圖被選中時，如果沒有設定類型，預設為 primary
+      if (this.selectedIntents.includes(intentId) && !this.intentTypes[intentId]) {
+        this.$set(this.intentTypes, intentId, this.selectedIntents.length === 1 ? 'primary' : 'secondary');
+      }
+      // 如果取消選中，移除類型設定
+      if (!this.selectedIntents.includes(intentId)) {
+        delete this.intentTypes[intentId];
+      }
+    },
     async loadKnowledge() {
       this.loading = true;
       try {
-        const params = {
-          limit: this.pagination.limit,
-          offset: this.pagination.offset
-        };
-        if (this.selectedCategory) params.category = this.selectedCategory;
-        if (this.searchQuery) params.search = this.searchQuery;
+        // 如果是 ID 批量查詢，使用特殊處理
+        if (this.isIdSearch && this.targetIds.length > 0) {
+          // 方法：逐個查詢每個 ID
+          const promises = this.targetIds.map(id =>
+            axios.get(`${API_BASE}/knowledge/${id}`).catch(err => {
+              console.warn(`ID ${id} 查詢失敗:`, err);
+              return null;
+            })
+          );
 
-        const response = await axios.get(`${API_BASE}/knowledge`, { params });
-        this.knowledgeList = response.data.items;
-        this.pagination.total = response.data.total;
+          const results = await Promise.all(promises);
+          this.knowledgeList = results
+            .filter(r => r !== null)
+            .map(r => r.data);
+          this.pagination.total = this.knowledgeList.length;
+          this.pagination.offset = 0;
+        } else {
+          // 正常的分頁查詢
+          const params = {
+            limit: this.pagination.limit,
+            offset: this.pagination.offset
+          };
+          if (this.selectedCategory) params.category = this.selectedCategory;
+          if (this.searchQuery && !this.isIdSearch) params.search = this.searchQuery;
+
+          const response = await axios.get(`${API_BASE}/knowledge`, { params });
+          this.knowledgeList = response.data.items;
+          this.pagination.total = response.data.total;
+        }
       } catch (error) {
         console.error('載入失敗', error);
         alert('載入失敗：' + (error.response?.data?.detail || error.message));
@@ -307,24 +418,47 @@ export default {
         audience: '',
         content: '',
         keywords: [],
-        question_summary: ''
+        question_summary: '',
+        intent_mappings: []
       };
       this.keywordsString = '';
+      this.selectedIntents = [];
+      this.intentTypes = {};
       this.showModal = true;
     },
 
-    editKnowledge(item) {
+    async editKnowledge(item) {
       this.editingItem = item;
-      this.formData = {
-        title: item.title || item.question_summary || '',
-        category: item.category || '',
-        audience: item.audience || '',
-        content: item.content || '',
-        keywords: item.keywords || [],
-        question_summary: item.question_summary || ''
-      };
-      this.keywordsString = (item.keywords || []).join(', ');
-      this.showModal = true;
+
+      // Load full knowledge data including intent mappings
+      try {
+        const response = await axios.get(`${API_BASE}/knowledge/${item.id}`);
+        const knowledge = response.data;
+
+        this.formData = {
+          title: knowledge.title || knowledge.question_summary || '',
+          category: knowledge.category || '',
+          audience: knowledge.audience || '',
+          content: knowledge.content || '',
+          keywords: knowledge.keywords || [],
+          question_summary: knowledge.question_summary || '',
+          intent_mappings: knowledge.intent_mappings || []
+        };
+
+        this.keywordsString = (knowledge.keywords || []).join(', ');
+
+        // 設定已選擇的意圖和類型
+        this.selectedIntents = (knowledge.intent_mappings || []).map(m => m.intent_id);
+        this.intentTypes = {};
+        (knowledge.intent_mappings || []).forEach(m => {
+          this.intentTypes[m.intent_id] = m.intent_type;
+        });
+
+        this.showModal = true;
+      } catch (error) {
+        console.error('載入知識詳情失敗', error);
+        alert('載入知識詳情失敗：' + (error.response?.data?.detail || error.message));
+      }
     },
 
     async saveKnowledge() {
@@ -336,6 +470,13 @@ export default {
           .split(',')
           .map(k => k.trim())
           .filter(k => k);
+
+        // 處理意圖關聯
+        this.formData.intent_mappings = this.selectedIntents.map(intentId => ({
+          intent_id: intentId,
+          intent_type: this.intentTypes[intentId] || 'secondary',
+          confidence: 1.0
+        }));
 
         if (this.editingItem) {
           // 更新
@@ -390,12 +531,50 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       });
+    },
+
+    clearIdSearch() {
+      this.isIdSearch = false;
+      this.targetIds = [];
+      this.searchQuery = '';
+      // 清除 URL 參數
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash.split('?')[0]);
+      this.loadKnowledge();
     }
   }
 };
 </script>
 
 <style scoped>
+/* ID 查詢樣式 */
+.id-search-input {
+  background: #f0f9ff !important;
+  border: 2px solid #409EFF !important;
+  font-weight: 500;
+}
+
+.btn-clear-search {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #f56c6c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: all 0.3s;
+}
+
+.btn-clear-search:hover {
+  background: #f78989;
+  transform: translateY(-50%) scale(1.1);
+}
+
 .btn-pagination {
   padding: 8px 16px;
   background: #409EFF;
@@ -429,5 +608,98 @@ export default {
 
 .badge-intent:hover {
   background: #85CE61;
+}
+
+/* 意圖選擇器樣式 */
+.intent-selector {
+  background: #f5f7fa;
+  padding: 15px;
+  border-radius: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.intent-checkbox {
+  margin: 8px 0;
+  padding: 8px;
+  background: white;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.intent-checkbox:hover {
+  background: #ecf5ff;
+}
+
+.intent-checkbox label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.intent-checkbox input[type="checkbox"] {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.intent-type-selector {
+  margin-left: auto;
+  padding-left: 15px;
+}
+
+.inline-select {
+  padding: 4px 8px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 13px;
+  background: white;
+  cursor: pointer;
+}
+
+.inline-select option[value="primary"] {
+  font-weight: bold;
+  color: #409EFF;
+}
+
+.inline-select option[value="secondary"] {
+  color: #67C23A;
+}
+
+.hint-text {
+  color: #909399;
+  font-size: 13px;
+  font-style: italic;
+  margin: 10px 0 0 0;
+}
+
+/* 意圖徽章樣式 */
+.intent-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.badge-primary {
+  background: #409EFF !important;
+  color: white !important;
+  font-weight: bold;
+}
+
+.badge-secondary {
+  background: #67C23A !important;
+  color: white !important;
+}
+
+.badge-unclassified {
+  background: #909399 !important;
+  color: white !important;
+}
+
+.badge sup {
+  font-size: 10px;
+  margin-left: 2px;
 }
 </style>

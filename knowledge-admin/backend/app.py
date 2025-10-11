@@ -13,11 +13,17 @@ import os
 import pandas as pd
 from datetime import datetime
 
+# 導入測試情境路由
+from routes_test_scenarios import router as test_scenarios_router
+
 app = FastAPI(
     title="知識庫管理 API",
     description="管理客服知識庫，自動處理向量生成與更新",
     version="1.0.0"
 )
+
+# 包含測試情境路由
+app.include_router(test_scenarios_router)
 
 # CORS 設定（允許前端跨域請求）
 app.add_middleware(
@@ -61,6 +67,12 @@ class KnowledgeBase(BaseModel):
     question_summary: Optional[str] = None
     source_file: Optional[str] = None
 
+class IntentMapping(BaseModel):
+    """意圖關聯模型"""
+    intent_id: int
+    intent_type: str = 'secondary'  # 'primary' 或 'secondary'
+    confidence: float = 1.0
+
 class KnowledgeUpdate(BaseModel):
     """知識更新模型"""
     title: str
@@ -69,6 +81,7 @@ class KnowledgeUpdate(BaseModel):
     content: str
     keywords: List[str] = []
     question_summary: Optional[str] = None
+    intent_mappings: Optional[List[IntentMapping]] = []  # 多意圖支援
 
 class KnowledgeResponse(BaseModel):
     """知識回應模型"""
@@ -126,34 +139,32 @@ async def list_knowledge(
     cur = conn.cursor()
 
     try:
-        # 建立查詢（加入意圖資訊）
+        # 建立查詢（加入意圖資訊 - 使用 knowledge_intent_mapping）
         query = """
-            SELECT
+            SELECT DISTINCT
                 kb.id, kb.title, kb.category, kb.audience, kb.answer as content,
-                kb.keywords, kb.question_summary, kb.created_at, kb.updated_at,
-                kb.intent_id, i.name as intent_name
+                kb.keywords, kb.question_summary, kb.created_at, kb.updated_at
             FROM knowledge_base kb
-            LEFT JOIN intents i ON kb.intent_id = i.id
             WHERE 1=1
         """
         params = []
 
         if category:
-            query += " AND category = %s"
+            query += " AND kb.category = %s"
             params.append(category)
 
         if search:
-            query += " AND (title ILIKE %s OR answer ILIKE %s)"
+            query += " AND (kb.title ILIKE %s OR kb.answer ILIKE %s)"
             search_pattern = f"%{search}%"
             params.extend([search_pattern, search_pattern])
 
-        query += " ORDER BY updated_at DESC LIMIT %s OFFSET %s"
+        query += " ORDER BY kb.updated_at DESC LIMIT %s OFFSET %s"
         params.extend([limit, offset])
 
         cur.execute(query, params)
         results = cur.fetchall()
 
-        # 轉換日期格式
+        # 轉換日期格式並加載意圖關聯
         items = []
         for row in results:
             item = dict(row)
@@ -162,6 +173,28 @@ async def list_knowledge(
                 item['created_at'] = item['created_at'].isoformat()
             if item.get('updated_at'):
                 item['updated_at'] = item['updated_at'].isoformat()
+
+            # 獲取關聯的意圖
+            cur.execute("""
+                SELECT
+                    kim.intent_id,
+                    i.name as intent_name,
+                    kim.intent_type,
+                    kim.confidence
+                FROM knowledge_intent_mapping kim
+                JOIN intents i ON kim.intent_id = i.id
+                WHERE kim.knowledge_id = %s
+                ORDER BY
+                    CASE kim.intent_type
+                        WHEN 'primary' THEN 1
+                        WHEN 'secondary' THEN 2
+                    END,
+                    kim.confidence DESC
+            """, (item['id'],))
+
+            intents = [dict(intent_row) for intent_row in cur.fetchall()]
+            item['intent_mappings'] = intents
+
             items.append(item)
 
         # 取得總數
@@ -188,13 +221,14 @@ async def list_knowledge(
         cur.close()
         conn.close()
 
-@app.get("/api/knowledge/{knowledge_id}", response_model=KnowledgeResponse)
+@app.get("/api/knowledge/{knowledge_id}")
 async def get_knowledge(knowledge_id: int):
-    """取得單一知識詳情"""
+    """取得單一知識詳情（含關聯意圖）"""
     conn = get_db_connection()
     cur = conn.cursor()
 
     try:
+        # 取得知識基本資訊
         cur.execute("""
             SELECT id, title, category, audience, answer as content,
                    keywords, question_summary, created_at, updated_at
@@ -214,6 +248,27 @@ async def get_knowledge(knowledge_id: int):
         if result.get('updated_at'):
             result['updated_at'] = result['updated_at'].isoformat()
 
+        # 取得關聯的意圖
+        cur.execute("""
+            SELECT
+                kim.intent_id,
+                i.name as intent_name,
+                kim.intent_type,
+                kim.confidence
+            FROM knowledge_intent_mapping kim
+            JOIN intents i ON kim.intent_id = i.id
+            WHERE kim.knowledge_id = %s
+            ORDER BY
+                CASE kim.intent_type
+                    WHEN 'primary' THEN 1
+                    WHEN 'secondary' THEN 2
+                END,
+                kim.confidence DESC
+        """, (knowledge_id,))
+
+        intents = [dict(row) for row in cur.fetchall()]
+        result['intent_mappings'] = intents
+
         return result
 
     finally:
@@ -229,7 +284,8 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
     1. 驗證知識存在
     2. 呼叫 Embedding API 生成新向量
     3. 更新資料庫（包含新向量）
-    4. 回傳結果
+    4. 更新意圖關聯
+    5. 回傳結果
     """
     conn = get_db_connection()
     cur = conn.cursor()
@@ -290,6 +346,28 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
         ))
 
         updated = cur.fetchone()
+
+        # 4. 更新意圖關聯
+        # 如果有提供 intent_mappings，先刪除舊的，再插入新的
+        if data.intent_mappings is not None:
+            # 刪除舊的關聯
+            cur.execute("""
+                DELETE FROM knowledge_intent_mapping
+                WHERE knowledge_id = %s
+            """, (knowledge_id,))
+
+            # 插入新的關聯
+            for mapping in data.intent_mappings:
+                cur.execute("""
+                    INSERT INTO knowledge_intent_mapping
+                    (knowledge_id, intent_id, intent_type, confidence, assigned_by)
+                    VALUES (%s, %s, %s, %s, 'manual')
+                    ON CONFLICT (knowledge_id, intent_id) DO UPDATE
+                    SET intent_type = EXCLUDED.intent_type,
+                        confidence = EXCLUDED.confidence,
+                        updated_at = NOW()
+                """, (knowledge_id, mapping.intent_id, mapping.intent_type, mapping.confidence))
+
         conn.commit()
 
         return {
@@ -318,7 +396,8 @@ async def create_knowledge(data: KnowledgeUpdate):
     流程：
     1. 生成向量
     2. 插入資料庫
-    3. 回傳新建資料
+    3. 插入意圖關聯（如有）
+    4. 回傳新建資料
     """
     conn = get_db_connection()
     cur = conn.cursor()
@@ -360,12 +439,27 @@ async def create_knowledge(data: KnowledgeUpdate):
         ))
 
         new_record = cur.fetchone()
+        new_id = new_record['id']
+
+        # 3. 插入意圖關聯
+        if data.intent_mappings:
+            for mapping in data.intent_mappings:
+                cur.execute("""
+                    INSERT INTO knowledge_intent_mapping
+                    (knowledge_id, intent_id, intent_type, confidence, assigned_by)
+                    VALUES (%s, %s, %s, %s, 'manual')
+                    ON CONFLICT (knowledge_id, intent_id) DO UPDATE
+                    SET intent_type = EXCLUDED.intent_type,
+                        confidence = EXCLUDED.confidence,
+                        updated_at = NOW()
+                """, (new_id, mapping.intent_id, mapping.intent_type, mapping.confidence))
+
         conn.commit()
 
         return {
             "success": True,
             "message": "知識已新增",
-            "id": new_record['id'],
+            "id": new_id,
             "created_at": new_record['created_at'].isoformat()
         }
 
@@ -430,6 +524,111 @@ async def list_categories():
         categories = [row['category'] for row in cur.fetchall()]
 
         return {"categories": categories}
+
+    finally:
+        cur.close()
+        conn.close()
+
+@app.get("/api/intents")
+async def list_intents():
+    """取得所有意圖"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+            SELECT id, name, description
+            FROM intents
+            WHERE is_enabled = TRUE
+            ORDER BY name
+        """)
+
+        intents = [dict(row) for row in cur.fetchall()]
+
+        return {"intents": intents}
+
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/api/knowledge/{knowledge_id}/intents")
+async def add_knowledge_intent(knowledge_id: int, mapping: IntentMapping):
+    """為知識新增意圖關聯"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        # 檢查知識是否存在
+        cur.execute("SELECT id FROM knowledge_base WHERE id = %s", (knowledge_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="知識不存在")
+
+        # 檢查意圖是否存在
+        cur.execute("SELECT id FROM intents WHERE id = %s", (mapping.intent_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="意圖不存在")
+
+        # 新增或更新關聯
+        cur.execute("""
+            INSERT INTO knowledge_intent_mapping
+            (knowledge_id, intent_id, intent_type, confidence, assigned_by)
+            VALUES (%s, %s, %s, %s, 'manual')
+            ON CONFLICT (knowledge_id, intent_id) DO UPDATE
+            SET intent_type = EXCLUDED.intent_type,
+                confidence = EXCLUDED.confidence,
+                updated_at = NOW()
+            RETURNING id
+        """, (knowledge_id, mapping.intent_id, mapping.intent_type, mapping.confidence))
+
+        mapping_id = cur.fetchone()['id']
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": "意圖關聯已新增",
+            "mapping_id": mapping_id
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"新增失敗: {str(e)}")
+
+    finally:
+        cur.close()
+        conn.close()
+
+@app.delete("/api/knowledge/{knowledge_id}/intents/{intent_id}")
+async def remove_knowledge_intent(knowledge_id: int, intent_id: int):
+    """移除知識的意圖關聯"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+            DELETE FROM knowledge_intent_mapping
+            WHERE knowledge_id = %s AND intent_id = %s
+            RETURNING id
+        """, (knowledge_id, intent_id))
+
+        deleted = cur.fetchone()
+
+        if not deleted:
+            raise HTTPException(status_code=404, detail="意圖關聯不存在")
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": "意圖關聯已移除"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"移除失敗: {str(e)}")
 
     finally:
         cur.close()
@@ -532,6 +731,27 @@ async def get_backtest_results(
             if isinstance(optimization_tips, float) and math.isnan(optimization_tips):
                 optimization_tips = ''
 
+            # 處理知識來源欄位
+            knowledge_sources = row.get('knowledge_sources', '')
+            if isinstance(knowledge_sources, float) and math.isnan(knowledge_sources):
+                knowledge_sources = ''
+
+            source_ids = row.get('source_ids', '')
+            if isinstance(source_ids, float) and math.isnan(source_ids):
+                source_ids = ''
+
+            knowledge_links = row.get('knowledge_links', '')
+            if isinstance(knowledge_links, float) and math.isnan(knowledge_links):
+                knowledge_links = ''
+
+            batch_url = row.get('batch_url', '')
+            if isinstance(batch_url, float) and math.isnan(batch_url):
+                batch_url = ''
+
+            source_count = row.get('source_count', 0)
+            if isinstance(source_count, float) and math.isnan(source_count):
+                source_count = 0
+
             result = {
                 'test_id': int(row['test_id']),
                 'test_question': row['test_question'],
@@ -542,9 +762,32 @@ async def get_backtest_results(
                 'score': float(row['score']),
                 'passed': bool(row['passed']),
                 'optimization_tips': optimization_tips,
+                'knowledge_sources': knowledge_sources,
+                'source_ids': source_ids,
+                'source_count': int(source_count) if source_count else 0,
+                'knowledge_links': knowledge_links,
+                'batch_url': batch_url,
                 'difficulty': row.get('difficulty', 'medium'),
                 'timestamp': row['timestamp']
             }
+
+            # 添加品質評估欄位（如果存在）
+            if 'relevance' in row:
+                quality_data = {}
+                for field in ['relevance', 'completeness', 'accuracy', 'intent_match', 'quality_overall']:
+                    val = row.get(field, 0)
+                    quality_data[field] = float(val) if not (isinstance(val, float) and math.isnan(val)) else 0
+
+                quality_reasoning = row.get('quality_reasoning', '')
+                if isinstance(quality_reasoning, float) and math.isnan(quality_reasoning):
+                    quality_reasoning = ''
+                quality_data['quality_reasoning'] = quality_reasoning
+
+                overall_score = row.get('overall_score', row['score'])
+                quality_data['overall_score'] = float(overall_score) if not (isinstance(overall_score, float) and math.isnan(overall_score)) else float(row['score'])
+
+                result['quality'] = quality_data
+
             results.append(result)
 
         # 計算統計
@@ -562,19 +805,42 @@ async def get_backtest_results(
         if math.isnan(avg_confidence):
             avg_confidence = 0
 
+        statistics = {
+            "total_tests": total_tests,
+            "passed_tests": passed_tests,
+            "failed_tests": failed_tests,
+            "pass_rate": round(pass_rate, 2),
+            "avg_score": round(avg_score, 3),
+            "avg_confidence": round(avg_confidence, 3)
+        }
+
+        # 計算品質統計（如果有的話）
+        if 'relevance' in df.columns:
+            quality_df = df[df['relevance'].notna()]
+            if len(quality_df) > 0:
+                quality_stats = {
+                    'count': len(quality_df),
+                    'avg_relevance': round(quality_df['relevance'].mean(), 2),
+                    'avg_completeness': round(quality_df['completeness'].mean(), 2),
+                    'avg_accuracy': round(quality_df['accuracy'].mean(), 2),
+                    'avg_intent_match': round(quality_df['intent_match'].mean(), 2),
+                    'avg_quality_overall': round(quality_df['quality_overall'].mean(), 2)
+                }
+
+                # 添加整體評分（如果有）
+                if 'overall_score' in df.columns:
+                    overall_df = df[df['overall_score'].notna()]
+                    if len(overall_df) > 0:
+                        quality_stats['avg_overall_score'] = round(overall_df['overall_score'].mean(), 3)
+
+                statistics['quality'] = quality_stats
+
         return {
             "results": results,
             "total": total,
             "limit": limit,
             "offset": offset,
-            "statistics": {
-                "total_tests": total_tests,
-                "passed_tests": passed_tests,
-                "failed_tests": failed_tests,
-                "pass_rate": round(pass_rate, 2),
-                "avg_score": round(avg_score, 3),
-                "avg_confidence": round(avg_confidence, 3)
-            }
+            "statistics": statistics
         }
 
     except Exception as e:
@@ -597,20 +863,34 @@ async def get_backtest_summary():
         return {"summary": "尚無回測摘要"}
 
 
+class BacktestRunRequest(BaseModel):
+    """回測執行請求模型"""
+    quality_mode: Optional[str] = "basic"  # basic, detailed, hybrid
+    test_type: Optional[str] = "smoke"  # smoke, full
+
 @app.post("/api/backtest/run")
-async def run_backtest():
+async def run_backtest(request: BacktestRunRequest = None):
     """
     執行回測腳本
 
     這會在後台執行回測腳本並返回任務ID
+
+    參數:
+    - quality_mode: 品質評估模式 (basic/detailed/hybrid)
+    - test_type: 測試類型 (smoke/full)
     """
     import subprocess
     import threading
 
+    # 如果沒有提供 request body，使用預設值
+    if request is None:
+        request = BacktestRunRequest()
+
     # 檢查 smoke test scenarios 是否存在
     # 使用環境變數或相對於專案根目錄的路徑
     project_root = os.getenv("PROJECT_ROOT", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-    test_scenarios_path = os.path.join(project_root, "test_scenarios_smoke.xlsx")
+    test_file_name = f"test_scenarios_{request.test_type}.xlsx"
+    test_scenarios_path = os.path.join(project_root, test_file_name)
 
     if not os.path.exists(test_scenarios_path):
         raise HTTPException(
@@ -640,7 +920,8 @@ async def run_backtest():
             # 設定優化環境變數（用於降低回測成本）
             env["OPENAI_MODEL"] = "gpt-4o-mini"  # 使用更便宜的模型
             env["RAG_RETRIEVAL_LIMIT"] = "3"  # 減少檢索條數
-            env["BACKTEST_TYPE"] = "smoke"  # 預設使用 smoke tests
+            env["BACKTEST_TYPE"] = request.test_type  # 測試類型 (smoke/full)
+            env["BACKTEST_QUALITY_MODE"] = request.quality_mode  # 品質評估模式 (basic/detailed/hybrid)
             env["PROJECT_ROOT"] = project_root  # 傳遞專案根目錄
             env["BACKTEST_NON_INTERACTIVE"] = "true"  # 非交互模式，不等待用戶輸入
 
@@ -680,10 +961,20 @@ async def run_backtest():
     thread.daemon = True
     thread.start()
 
+    # 根據品質模式估計時間
+    time_estimates = {
+        'basic': '約需 2-3 分鐘',
+        'detailed': '約需 5-10 分鐘（使用 LLM 評估）',
+        'hybrid': '約需 4-7 分鐘（混合評估）'
+    }
+    estimated_time = time_estimates.get(request.quality_mode, '約需 3-5 分鐘')
+
     return {
         "success": True,
-        "message": "回測已開始執行，請稍後刷新頁面查看結果",
-        "estimated_time": "約需 3-5 分鐘"
+        "message": f"回測已開始執行（{request.quality_mode} 模式），請稍後刷新頁面查看結果",
+        "quality_mode": request.quality_mode,
+        "test_type": request.test_type,
+        "estimated_time": estimated_time
     }
 
 

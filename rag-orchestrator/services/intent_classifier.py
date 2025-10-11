@@ -323,16 +323,20 @@ class IntentClassifier:
             all_intent_names = [primary_intent] + secondary_intents
             all_intent_ids = []
 
-            # 從資料庫查詢所有意圖的 ID
+            # 從資料庫查詢所有意圖的 ID（保持順序）
             if self.use_database:
                 try:
                     conn = psycopg2.connect(**self.db_config)
                     cursor = conn.cursor()
-                    cursor.execute("""
-                        SELECT id FROM intents
-                        WHERE name = ANY(%s) AND is_enabled = true
-                    """, (all_intent_names,))
-                    all_intent_ids = [row[0] for row in cursor.fetchall()]
+                    # 逐個查詢以保持順序
+                    for intent_name in all_intent_names:
+                        cursor.execute("""
+                            SELECT id FROM intents
+                            WHERE name = %s AND is_enabled = true
+                        """, (intent_name,))
+                        result = cursor.fetchone()
+                        if result:
+                            all_intent_ids.append(result[0])
                     cursor.close()
                     conn.close()
                 except Exception as e:

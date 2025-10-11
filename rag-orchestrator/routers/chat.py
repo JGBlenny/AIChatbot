@@ -386,6 +386,7 @@ class VendorChatRequest(BaseModel):
     user_id: Optional[str] = Field(None, description="使用者 ID（租客 ID 或客服 ID）")
     top_k: int = Field(3, description="返回知識數量", ge=1, le=10)
     include_sources: bool = Field(True, description="是否包含知識來源")
+    disable_answer_synthesis: bool = Field(False, description="禁用答案合成（回測模式專用）")
 
 
 class KnowledgeSource(BaseModel):
@@ -479,7 +480,8 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     confidence_level='medium',  # unclear 但找到知識，設為中等信心度
                     intent_info=intent_result,
                     vendor_params=vendor_params,
-                    vendor_name=vendor_info['name']
+                    vendor_name=vendor_info['name'],
+                    enable_synthesis_override=False if request.disable_answer_synthesis else None
                 )
 
                 answer = optimization_result['optimized_answer']
@@ -597,7 +599,8 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     confidence_level='high',  # RAG 高相似度，設為高信心度
                     intent_info=intent_result,
                     vendor_params=vendor_params,
-                    vendor_name=vendor_info['name']
+                    vendor_name=vendor_info['name'],
+                    enable_synthesis_override=False if request.disable_answer_synthesis else None
                 )
 
                 answer = optimization_result['optimized_answer']
@@ -676,7 +679,8 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             confidence_level='high',  # 從意圖檢索，信心度高
             intent_info=intent_result,
             vendor_params=vendor_params,
-            vendor_name=vendor_info['name']
+            vendor_name=vendor_info['name'],
+            enable_synthesis_override=False if request.disable_answer_synthesis else None
         )
 
         answer = optimization_result['optimized_answer']

@@ -29,15 +29,19 @@ class RAGEngine:
         self,
         query: str,
         limit: int = None,
-        similarity_threshold: float = 0.6
+        similarity_threshold: float = 0.6,
+        intent_ids: Optional[List[int]] = None,
+        primary_intent_id: Optional[int] = None
     ) -> List[Dict]:
         """
-        搜尋相關知識
+        搜尋相關知識（支援多意圖過濾與加成）
 
         Args:
             query: 查詢問題
             limit: 返回結果數量
             similarity_threshold: 相似度閾值
+            intent_ids: 所有相關意圖 IDs（用於過濾）
+            primary_intent_id: 主要意圖 ID（用於加成排序）
 
         Returns:
             檢索結果列表，每個結果包含:
@@ -54,6 +58,8 @@ class RAGEngine:
         print(f"\n🔍 [RAG Engine] 開始搜尋")
         print(f"   查詢: {query}")
         print(f"   閾值: {similarity_threshold}, 限制: {limit}")
+        if intent_ids:
+            print(f"   意圖過濾: {intent_ids}, 主要意圖: {primary_intent_id}")
 
         # 1. 將問題轉換為向量
         query_embedding = await self._get_embedding(query)
@@ -62,34 +68,84 @@ class RAGEngine:
             print(f"   ❌ 向量生成失敗，返回空結果")
             return []
 
-        # 2. 向量相似度搜尋
+        # 2. 向量相似度搜尋（支援多意圖過濾與加成）
         # 將 Python list 轉換為 PostgreSQL vector 字符串格式
         vector_str = str(query_embedding)
         print(f"   向量長度: {len(query_embedding)}, 字串長度: {len(vector_str)}")
 
         async with self.db_pool.acquire() as conn:
-            results = await conn.fetch("""
-                SELECT
-                    id,
-                    title,
-                    answer as content,
-                    category,
-                    audience,
-                    keywords,
-                    1 - (embedding <=> $1::vector) as similarity
-                FROM knowledge_base
-                WHERE embedding IS NOT NULL
-                    AND (1 - (embedding <=> $1::vector)) >= $2
-                ORDER BY embedding <=> $1::vector
-                LIMIT $3
-            """, vector_str, similarity_threshold, limit)
+            if intent_ids and primary_intent_id:
+                # 多意圖模式：JOIN knowledge_intent_mapping 並使用加成策略
+                results = await conn.fetch("""
+                    SELECT DISTINCT ON (kb.id)
+                        kb.id,
+                        kb.title,
+                        kb.answer as content,
+                        kb.category,
+                        kb.audience,
+                        kb.keywords,
+                        1 - (kb.embedding <=> $1::vector) as base_similarity,
+                        -- 意圖加成
+                        CASE
+                            WHEN kim.intent_id = $4 THEN 1.5  -- 主要意圖 1.5x boost
+                            WHEN kim.intent_id = ANY($5::int[]) THEN 1.2  -- 次要意圖 1.2x boost
+                            ELSE 1.0
+                        END as intent_boost,
+                        -- 加成後相似度
+                        (1 - (kb.embedding <=> $1::vector)) *
+                        CASE
+                            WHEN kim.intent_id = $4 THEN 1.5
+                            WHEN kim.intent_id = ANY($5::int[]) THEN 1.2
+                            ELSE 1.0
+                        END as boosted_similarity
+                    FROM knowledge_base kb
+                    LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
+                    WHERE kb.embedding IS NOT NULL
+                        AND (1 - (kb.embedding <=> $1::vector)) >= $2
+                        AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
+                    ORDER BY kb.id, boosted_similarity DESC
+                    LIMIT $3
+                """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids)
+
+                # 去重並按加成後相似度排序
+                seen_ids = set()
+                unique_results = []
+                for row in results:
+                    if row['id'] not in seen_ids:
+                        seen_ids.add(row['id'])
+                        unique_results.append(row)
+                results = sorted(unique_results, key=lambda x: x['boosted_similarity'], reverse=True)[:limit]
+
+            else:
+                # 純向量搜尋模式（向後兼容）
+                results = await conn.fetch("""
+                    SELECT
+                        id,
+                        title,
+                        answer as content,
+                        category,
+                        audience,
+                        keywords,
+                        1 - (embedding <=> $1::vector) as base_similarity
+                    FROM knowledge_base
+                    WHERE embedding IS NOT NULL
+                        AND (1 - (embedding <=> $1::vector)) >= $2
+                    ORDER BY embedding <=> $1::vector
+                    LIMIT $3
+                """, vector_str, similarity_threshold, limit)
 
         print(f"   💾 資料庫返回 {len(results)} 個結果")
 
         # 3. 格式化結果
         search_results = []
         for row in results:
-            print(f"      - ID {row['id']}: {row['title'][:40]}... (相似度: {float(row['similarity']):.3f})")
+            # 使用 base_similarity 作為標準相似度（不含意圖加成）
+            similarity = float(row.get('base_similarity', row.get('similarity', 0)))
+            intent_marker = ""
+            if intent_ids:
+                intent_marker = f" [boost: {float(row.get('intent_boost', 1.0)):.1f}x]"
+            print(f"      - ID {row['id']}: {row['title'][:40]}... (相似度: {similarity:.3f}{intent_marker})")
+
             search_results.append({
                 "id": row['id'],
                 "title": row['title'],
@@ -97,7 +153,7 @@ class RAGEngine:
                 "category": row['category'],
                 "audience": row.get('audience'),
                 "keywords": row.get('keywords', []),
-                "similarity": float(row['similarity'])
+                "similarity": similarity
             })
 
         return search_results

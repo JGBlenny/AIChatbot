@@ -34,7 +34,11 @@
 
 | 文檔 | 說明 | 狀態 |
 |------|------|------|
+| [../TEST_SCENARIOS_QUICK_START.md](../TEST_SCENARIOS_QUICK_START.md) | **測試題庫快速開始** 🚀 **從這裡開始** ⭐ NEW | ✅ 完成 |
+| [../TEST_SCENARIOS_DATABASE_COMPLETE.md](../TEST_SCENARIOS_DATABASE_COMPLETE.md) | 測試題庫完整實施報告 ⭐ NEW | ✅ 完成 |
+| [../TEST_SCENARIOS_MIGRATION_GUIDE.md](../TEST_SCENARIOS_MIGRATION_GUIDE.md) | 測試題庫遷移指南 ⭐ NEW | ✅ 完成 |
 | [../BACKTEST_OPTIMIZATION_GUIDE.md](../BACKTEST_OPTIMIZATION_GUIDE.md) | 回測優化指南 | ✅ 完成 |
+| [../BACKTEST_ANSWER_SYNTHESIS_IMPLEMENTATION_COMPLETE.md](../BACKTEST_ANSWER_SYNTHESIS_IMPLEMENTATION_COMPLETE.md) | 答案合成回測解決方案 | ✅ 完成 |
 | [frontend_usage_guide.md](./frontend_usage_guide.md) | 前端使用指南 | ✅ 完成 |
 
 ### 🛠️ 技術參考
@@ -76,6 +80,16 @@
 2. [KNOWLEDGE_CLASSIFICATION_COMPLETE.md](./KNOWLEDGE_CLASSIFICATION_COMPLETE.md) - 知識分類指南
 3. [BACKTEST_OPTIMIZATION_GUIDE.md](../BACKTEST_OPTIMIZATION_GUIDE.md) - 回測與優化
 
+### 測試題庫系統 ⭐ NEW
+
+**推薦閱讀順序：**
+
+1. [TEST_SCENARIOS_QUICK_START.md](../TEST_SCENARIOS_QUICK_START.md) - **🚀 快速開始指南（從這裡開始）**
+2. [TEST_SCENARIOS_DATABASE_COMPLETE.md](../TEST_SCENARIOS_DATABASE_COMPLETE.md) - 完整實施報告（詳細技術文檔）
+3. [TEST_SCENARIOS_MIGRATION_GUIDE.md](../TEST_SCENARIOS_MIGRATION_GUIDE.md) - 遷移指南與使用說明
+
+**核心功能：** 資料庫管理、用戶問題審核流程、回測框架整合、16 個 API 端點、2 個前端頁面
+
 ### 系統開發
 
 1. [SYSTEM_ARCHITECTURE.md](./architecture/SYSTEM_ARCHITECTURE.md) - 系統架構
@@ -91,7 +105,14 @@
 
 ## 🆕 最新更新
 
-### 2025-10-11
+### 2025-10-11 (最新)
+- ✅ **新增**：[測試題庫資料庫系統](../TEST_SCENARIOS_DATABASE_COMPLETE.md) ⭐
+  - Excel → PostgreSQL 完整遷移
+  - 16 個 REST API 端點
+  - 2 個前端管理頁面（測試題庫管理、待審核）
+  - 用戶問題審核流程
+  - 回測框架資料庫模式整合
+  - 100% 完成，端到端測試通過
 - ✅ **新增**：[多 Intent 分類系統文檔](./MULTI_INTENT_CLASSIFICATION.md)
   - 完整的技術實作說明
   - 回測結果從 40% 提升到 60%
@@ -122,7 +143,8 @@
 
 - **Intent（意圖）**: INTENT_MANAGEMENT_README.md, MULTI_INTENT_CLASSIFICATION.md
 - **Knowledge（知識）**: KNOWLEDGE_EXTRACTION_GUIDE.md, KNOWLEDGE_CLASSIFICATION_COMPLETE.md
-- **Backtest（回測）**: BACKTEST_OPTIMIZATION_GUIDE.md, MULTI_INTENT_CLASSIFICATION.md
+- **Test Scenarios（測試題庫）**: TEST_SCENARIOS_DATABASE_COMPLETE.md, TEST_SCENARIOS_MIGRATION_GUIDE.md ⭐ NEW
+- **Backtest（回測）**: BACKTEST_OPTIMIZATION_GUIDE.md, MULTI_INTENT_CLASSIFICATION.md, TEST_SCENARIOS_DATABASE_COMPLETE.md
 - **API**: API_REFERENCE_PHASE1.md
 - **Architecture（架構）**: SYSTEM_ARCHITECTURE.md
 - **Deployment（部署）**: README_DEPLOYMENT.md, QUICKSTART.md

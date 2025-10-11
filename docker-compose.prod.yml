@@ -1,0 +1,11 @@
+# 生產環境配置
+# 使用方式: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# 特點: 使用 Docker image 內編譯的前端文件，更穩定安全
+
+services:
+  # 知識庫管理後台 - 前端（生產模式）
+  knowledge-admin-web:
+    volumes:
+      # 只掛載 nginx 配置，不掛載 dist（使用 Docker image 內編譯的文件）
+      - ./knowledge-admin/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped

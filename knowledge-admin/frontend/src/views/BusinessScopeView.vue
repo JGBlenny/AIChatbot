@@ -233,102 +233,146 @@ export default {
 <style scoped>
 .scopes-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(550px, 1fr));
+  gap: 25px;
 }
 
 .scope-card {
   background: white;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  padding: 20px;
+  border: 2px solid #e4e7ed;
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.3s;
+}
+
+.scope-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .scope-card.active {
   border-color: #409EFF;
-  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(64, 158, 255, 0.25);
+  background: linear-gradient(to bottom, #ffffff 0%, #f0f7ff 100%);
 }
 
 .scope-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e4e7ed;
+}
+
+.scope-card.active .scope-header {
+  border-bottom-color: #409EFF;
 }
 
 .scope-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
+  color: #303133;
 }
 
 .active-badge {
   background: #67C23A;
   color: white;
+  font-weight: 600;
+  padding: 6px 12px;
 }
 
 .scope-body {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .info-row {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
   font-size: 14px;
 }
 
 .info-row .label {
-  font-weight: bold;
-  color: #666;
+  font-weight: 600;
+  color: #409EFF;
   margin-right: 8px;
 }
 
+.info-row code {
+  background: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  font-size: 13px;
+}
+
 .info-section {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #fafbfc;
+  border-left: 4px solid #409EFF;
+  border-radius: 6px;
 }
 
 .info-section .label {
-  font-weight: bold;
-  color: #666;
+  font-weight: 600;
+  color: #409EFF;
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 10px;
+  font-size: 15px;
 }
 
 .info-section p {
-  margin: 5px 0;
+  margin: 0;
   color: #303133;
-  line-height: 1.6;
+  line-height: 1.7;
+  padding: 8px 0;
 }
 
 .info-section ul {
-  margin: 5px 0;
+  margin: 0;
   padding-left: 20px;
 }
 
 .info-section ul li {
   color: #606266;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  line-height: 1.6;
 }
 
 .info-section pre {
-  background: #f8f9fa;
-  padding: 10px;
-  border-radius: 5px;
+  background: #f0f2f5;
+  padding: 12px;
+  border-radius: 6px;
   font-size: 13px;
   overflow-x: auto;
-  margin: 5px 0;
+  margin: 8px 0 0 0;
+  border: 1px solid #dcdfe6;
+  color: #303133;
 }
 
 .keywords {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 5px;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.keywords .badge {
+  background: #409EFF;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .scope-actions {
   display: flex;
   gap: 10px;
+  padding-top: 15px;
+  border-top: 1px solid #e4e7ed;
 }
 
 .modal-large {

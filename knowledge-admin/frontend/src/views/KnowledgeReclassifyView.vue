@@ -93,19 +93,14 @@
           <div class="qa-badge" v-if="stats">{{ stats.overall.low_confidence_count }} 筆</div>
         </div>
 
-        <div class="quick-action-card" @click="quickActionNeedsReclassify">
-          <div class="qa-icon">🔄</div>
-          <div class="qa-title">處理已標記知識</div>
-          <div class="qa-desc">重新分類所有標記為「需要重新分類」的知識</div>
-          <div class="qa-badge" v-if="stats">{{ stats.overall.needs_reclassify_count }} 筆</div>
-        </div>
-
         <div class="quick-action-card" @click="quickActionUnclassified">
-          <div class="qa-icon">❓</div>
+          <div class="qa-icon">📦</div>
           <div class="qa-title">分類未分類知識</div>
-          <div class="qa-desc">為所有未分類的知識進行分類</div>
+          <div class="qa-desc">自動分類所有尚未指定意圖的知識</div>
           <div class="qa-badge" v-if="stats">{{ stats.overall.unclassified_count }} 筆</div>
         </div>
+
+        <!-- 已隱藏：處理已標記知識 - 功能未完整實作 -->
       </div>
     </div>
 
@@ -334,6 +329,59 @@
         </div>
       </div>
       <p class="result-note">💡 統計資訊已自動更新，可查看上方統計卡片</p>
+
+      <!-- 詳細結果列表 -->
+      <div v-if="result.details && result.details.length > 0" class="result-details-section">
+        <div class="result-details-header">
+          <h4>📋 分類詳情</h4>
+          <button @click="showResultDetails = !showResultDetails" class="btn-toggle-details">
+            {{ showResultDetails ? '▼ 收起' : '▶ 展開詳情' }}
+          </button>
+        </div>
+
+        <div v-if="showResultDetails" class="result-items">
+          <div v-for="item in result.details" :key="item.knowledge_id" class="result-detail-item">
+            <div class="result-item-header">
+              <span class="knowledge-id">ID: {{ item.knowledge_id }}</span>
+              <span v-if="item.classified" class="status-badge success">✅ 成功</span>
+              <span v-else-if="item.intent_name === 'unclear'" class="status-badge unclear">❓ Unclear</span>
+              <span v-else class="status-badge failed">❌ 失敗</span>
+            </div>
+
+            <div v-if="item.classified" class="result-item-intents">
+              <div class="intent-label">分配意圖:</div>
+              <div class="intent-badges">
+                <span class="intent-badge primary">
+                  ★ {{ item.intent_name }}
+                </span>
+                <span
+                  v-for="secondaryIntent in item.secondary_intents || []"
+                  :key="secondaryIntent"
+                  class="intent-badge secondary"
+                >
+                  {{ secondaryIntent }}
+                </span>
+              </div>
+              <div class="result-item-meta">
+                <span class="confidence-badge" :class="getConfidenceClass(item.confidence)">
+                  信心度: {{ item.confidence ? item.confidence.toFixed(2) : 'N/A' }}
+                </span>
+              </div>
+            </div>
+
+            <div v-else-if="item.intent_name === 'unclear'" class="result-item-unclear">
+              <span class="unclear-reason">{{ item.reason || '信心度過低或意圖不明確' }}</span>
+              <span class="confidence-badge confidence-low">
+                信心度: {{ item.confidence ? item.confidence.toFixed(2) : 'N/A' }}
+              </span>
+            </div>
+
+            <div v-else class="result-item-error">
+              <span class="error-reason">❌ {{ item.reason || item.error || '分類失敗' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 按意圖統計 -->
@@ -393,11 +441,13 @@ export default {
         customConfidence: 0.7,
         olderThanDays: null,
         assignedBy: '',
-        needsReclassifyOnly: false
+        needsReclassifyOnly: false,
+        unclassified: false
       },
       batchSize: 100,
       preview: null,
       showPreviewDetails: false,
+      showResultDetails: false,
       loading: false,
       processing: false,
       progress: 0,
@@ -469,12 +519,27 @@ export default {
     },
 
     quickActionUnclassified() {
-      alert('此功能需要知識庫中有 intent_id = NULL 的知識\n\n目前系統會：\n1. 找出所有未分類的知識\n2. 使用 IntentClassifier 自動分類\n3. 更新資料庫');
-      // 實際實作需要修改後端 API
+      this.filters = {
+        selectedIntents: [],
+        confidenceMode: 'all',
+        customConfidence: 0.7,
+        olderThanDays: null,
+        assignedBy: '',
+        needsReclassifyOnly: false,
+        unclassified: true  // 新增：只處理未分類的知識
+      };
+      this.showAdvanced = false;
+      this.currentStep = 2;
+      this.previewReclassify();
     },
 
     buildFilters() {
       const filters = {};
+
+      // 未分類過濾器
+      if (this.filters.unclassified) {
+        filters.unclassified = true;
+      }
 
       if (this.filters.selectedIntents && this.filters.selectedIntents.length > 0) {
         filters.intent_ids = this.filters.selectedIntents.filter(id => id !== '');
@@ -551,7 +616,8 @@ export default {
         total_processed: 0,
         success_count: 0,
         failed_count: 0,
-        unclear_count: 0
+        unclear_count: 0,
+        details: []
       };
 
       try {
@@ -579,6 +645,11 @@ export default {
           accumulatedResult.success_count += batchResult.success_count || 0;
           accumulatedResult.failed_count += batchResult.failed_count || 0;
           accumulatedResult.unclear_count += batchResult.unclear_count || 0;
+
+          // 累積詳細結果
+          if (batchResult.details && Array.isArray(batchResult.details)) {
+            accumulatedResult.details.push(...batchResult.details);
+          }
 
           processedCount += batchResult.total_processed || 0;
 
@@ -622,7 +693,8 @@ export default {
         customConfidence: 0.7,
         olderThanDays: null,
         assignedBy: '',
-        needsReclassifyOnly: false
+        needsReclassifyOnly: false,
+        unclassified: false
       };
       this.batchSize = 100;
       this.preview = null;
@@ -660,9 +732,8 @@ export default {
 
 <style scoped>
 .knowledge-reclassify-container {
-  padding: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
 }
 
 /* 頁面標題 */
@@ -1435,6 +1506,177 @@ export default {
 }
 
 .knowledge-items::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* 結果詳情樣式 */
+.result-details-section {
+  margin-top: 25px;
+  padding-top: 25px;
+  border-top: 2px solid rgba(40, 167, 69, 0.2);
+}
+
+.result-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.result-details-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.result-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.result-detail-item {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 15px;
+  transition: all 0.2s;
+}
+
+.result-detail-item:hover {
+  border-color: #28a745;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
+}
+
+.result-item-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-badge.unclear {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.result-item-intents {
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.intent-label {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.intent-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.intent-badge {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.intent-badge.primary {
+  background: #409EFF;
+  color: white;
+  font-weight: bold;
+}
+
+.intent-badge.secondary {
+  background: #67C23A;
+  color: white;
+}
+
+.result-item-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.confidence-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.result-item-unclear {
+  padding: 10px;
+  background: #fff3cd;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.unclear-reason {
+  color: #856404;
+  font-size: 13px;
+}
+
+.result-item-error {
+  padding: 10px;
+  background: #f8d7da;
+  border-radius: 6px;
+}
+
+.error-reason {
+  color: #721c24;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* 結果詳情滾動條 */
+.result-items::-webkit-scrollbar {
+  width: 8px;
+}
+
+.result-items::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.result-items::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.result-items::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
 </style>
