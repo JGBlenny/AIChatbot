@@ -18,6 +18,7 @@
 - 📝 **未釐清問題記錄** - 自動記錄低信心度問題
 - ✨ **LLM 答案優化** - 使用 GPT-4o-mini 優化答案品質
 - 🧠 **意圖建議引擎** - OpenAI 自動分析未知問題並建議新意圖
+- 🧪 **測試題庫系統** ⭐ NEW - 資料庫管理測試情境，支援用戶問題審核流程
 
 ### 🏢 Phase 1: 多業者支援（Multi-Vendor SaaS）⭐
 - 🏪 **業者管理系統** - 完整的業者 CRUD、啟用/停用控制
@@ -239,10 +240,15 @@ AIChatbot/
 
 ### 核心功能文檔
 - 🎯 **多 Intent 分類系統**: [docs/MULTI_INTENT_CLASSIFICATION.md](./docs/MULTI_INTENT_CLASSIFICATION.md) ⭐ **NEW**
+- 🧪 **測試題庫系統**（推薦閱讀順序）：
+  1. 🚀 [快速開始指南](./TEST_SCENARIOS_QUICK_START.md) - **從這裡開始** ⭐ **NEW**
+  2. 📖 [完整實施報告](./TEST_SCENARIOS_DATABASE_COMPLETE.md) - 詳細技術文檔
+  3. 📝 [遷移指南](./TEST_SCENARIOS_MIGRATION_GUIDE.md) - 使用說明
 - 🏛️ **系統架構文件**: [docs/architecture/SYSTEM_ARCHITECTURE.md](./docs/architecture/SYSTEM_ARCHITECTURE.md)
 - 🏢 **Phase 1 多業者實作**: [docs/PHASE1_MULTI_VENDOR_IMPLEMENTATION.md](./docs/PHASE1_MULTI_VENDOR_IMPLEMENTATION.md)
 - 📋 **Phase 2 規劃**: [docs/PHASE2_PLANNING.md](./docs/PHASE2_PLANNING.md)
 - 🔧 **回測優化指南**: [BACKTEST_OPTIMIZATION_GUIDE.md](./BACKTEST_OPTIMIZATION_GUIDE.md)
+- 🎯 **答案合成回測解決方案**: [BACKTEST_ANSWER_SYNTHESIS_IMPLEMENTATION_COMPLETE.md](./BACKTEST_ANSWER_SYNTHESIS_IMPLEMENTATION_COMPLETE.md)
 
 ### 技術參考
 - 🎯 **Intent 管理指南**: [docs/INTENT_MANAGEMENT_README.md](./docs/INTENT_MANAGEMENT_README.md)
