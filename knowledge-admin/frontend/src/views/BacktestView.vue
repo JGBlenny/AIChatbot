@@ -65,6 +65,17 @@
     <!-- 工具列 -->
     <div class="toolbar">
       <div class="filter-group">
+        <label>📜 歷史記錄：</label>
+        <select v-model="selectedRunId" @change="onRunSelected" class="run-selector">
+          <option :value="null">最新結果 (Excel)</option>
+          <option v-for="run in backtestRuns" :key="run.id" :value="run.id">
+            Run #{{ run.id }} - {{ formatRunDate(run.started_at) }}
+            ({{ run.quality_mode }}, {{ run.executed_scenarios }} 個測試, 通過率 {{ run.pass_rate }}%)
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
         <label>狀態篩選：</label>
         <select v-model="statusFilter" @change="loadResults">
           <option value="all">全部</option>
@@ -433,7 +444,9 @@ export default {
       summaryText: '',
       isRunning: false,
       lastRunTime: null,
-      statusCheckInterval: null
+      statusCheckInterval: null,
+      backtestRuns: [],        // 歷史回測執行記錄列表
+      selectedRunId: null       // 當前選擇的執行 ID (null = Excel)
     };
   },
   computed: {
@@ -443,6 +456,7 @@ export default {
   },
   mounted() {
     this.checkBacktestStatus();
+    this.loadBacktestRuns();  // 載入歷史記錄列表
     this.loadResults();
   },
   beforeUnmount() {
@@ -451,6 +465,24 @@ export default {
     }
   },
   methods: {
+    async loadBacktestRuns() {
+      try {
+        const response = await axios.get(`${API_BASE}/backtest/runs`, {
+          params: { limit: 20, offset: 0 }
+        });
+        this.backtestRuns = response.data.runs;
+      } catch (error) {
+        console.error('載入歷史記錄失敗', error);
+        // 不顯示錯誤，靜默失敗
+      }
+    },
+
+    onRunSelected() {
+      // 切換到第一頁並重新載入結果
+      this.pagination.offset = 0;
+      this.loadResults();
+    },
+
     async loadResults() {
       this.loading = true;
       this.error = null;
@@ -462,16 +494,38 @@ export default {
           offset: this.pagination.offset
         };
 
-        const response = await axios.get(`${API_BASE}/backtest/results`, { params });
+        let response;
 
-        this.results = response.data.results;
-        this.total = response.data.total;
-        this.statistics = response.data.statistics;
+        if (this.selectedRunId === null) {
+          // 從 Excel 載入（向後兼容）
+          response = await axios.get(`${API_BASE}/backtest/results`, { params });
+          this.results = response.data.results;
+          this.total = response.data.total;
+          this.statistics = response.data.statistics;
+        } else {
+          // 從資料庫載入歷史記錄
+          response = await axios.get(`${API_BASE}/backtest/runs/${this.selectedRunId}/results`, { params });
+          this.results = response.data.results;
+          this.total = response.data.total;
+          this.statistics = response.data.statistics;
+
+          // 注意：資料庫結果的欄位名稱可能不同，需要轉換
+          // 資料庫使用 scenario_id 和 tested_at，Excel 使用 test_id 和 timestamp
+          this.results = this.results.map(result => ({
+            ...result,
+            test_id: result.id,  // 使用資料庫的 id 作為 test_id
+            timestamp: result.tested_at  // 使用 tested_at 作為 timestamp
+          }));
+        }
 
       } catch (error) {
         console.error('載入回測結果失敗', error);
         if (error.response?.status === 404) {
-          this.error = '回測結果文件不存在。請先執行回測：\npython3 scripts/knowledge_extraction/backtest_framework.py';
+          if (this.selectedRunId === null) {
+            this.error = '回測結果文件不存在。請先執行回測：\npython3 scripts/knowledge_extraction/backtest_framework.py';
+          } else {
+            this.error = `找不到 Run ID ${this.selectedRunId} 的回測記錄`;
+          }
         } else {
           this.error = '載入失敗：' + (error.response?.data?.detail || error.message);
         }
@@ -639,6 +693,14 @@ export default {
             clearInterval(this.statusCheckInterval);
             this.statusCheckInterval = null;
 
+            // 重新載入歷史記錄列表
+            await this.loadBacktestRuns();
+
+            // 自動切換到最新的資料庫記錄（如果有的話）
+            if (this.backtestRuns.length > 0) {
+              this.selectedRunId = this.backtestRuns[0].id;
+            }
+
             // 自動重新載入結果
             await this.loadResults();
             alert('✅ 回測執行完成！結果已自動刷新。');
@@ -661,6 +723,17 @@ export default {
       if (diffMins < 1440) return `${Math.floor(diffMins / 60)} 小時前`;
       return date.toLocaleString('zh-TW', {
         year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    },
+
+    formatRunDate(isoString) {
+      if (!isoString) return '-';
+      const date = new Date(isoString);
+      return date.toLocaleString('zh-TW', {
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
@@ -772,6 +845,24 @@ export default {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
+}
+
+.run-selector {
+  min-width: 300px;
+  max-width: 500px;
+  padding: 8px 12px;
+  border: 2px solid #667eea;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.run-selector:focus {
+  outline: none;
+  border-color: #5568d3;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .btn-run {
