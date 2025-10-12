@@ -13,6 +13,7 @@ import json
 import os
 import psycopg2
 import psycopg2.extras
+from services.business_scope_utils import get_allowed_audiences_for_scope
 
 router = APIRouter()
 
@@ -42,6 +43,8 @@ def get_vendor_param_resolver():
 class ChatRequest(BaseModel):
     """聊天請求"""
     question: str = Field(..., min_length=1, max_length=1000, description="使用者問題")
+    vendor_id: int = Field(..., description="業者 ID", ge=1)
+    user_role: str = Field(..., description="用戶角色：customer (終端客戶) 或 staff (業者員工/系統商)")
     user_id: Optional[str] = Field(None, description="使用者 ID")
     context: Optional[Dict] = Field(None, description="對話上下文")
 
@@ -85,6 +88,12 @@ async def chat(request: ChatRequest, req: Request):
         llm_optimizer = req.app.state.llm_answer_optimizer
         suggestion_engine = req.app.state.suggestion_engine
 
+        # 0.5 根據用戶角色決定業務範圍，用於 audience 過濾（B2B/B2C 隔離）
+        # customer (終端客戶) -> external (B2C): 用戶對業者
+        # staff (業者員工/系統商) -> internal (B2B): 業者對系統商
+        business_scope = "external" if request.user_role == "customer" else "internal"
+        allowed_audiences = get_allowed_audiences_for_scope(business_scope)
+
         # 1. 意圖分類
         intent_result = intent_classifier.classify(request.question)
 
@@ -98,7 +107,8 @@ async def chat(request: ChatRequest, req: Request):
         search_results = await rag_engine.search(
             query=request.question,
             limit=5,
-            similarity_threshold=similarity_threshold
+            similarity_threshold=similarity_threshold,
+            allowed_audiences=allowed_audiences  # ✅ 添加 audience 過濾
         )
 
         # 3. 信心度評估
@@ -169,9 +179,10 @@ async def chat(request: ChatRequest, req: Request):
                 if request.context:
                     context_text = json.dumps(request.context, ensure_ascii=False)
 
-                # 分析問題
+                # 分析問題（傳遞 vendor_id 以載入對應的業務範圍）
                 analysis = suggestion_engine.analyze_unclear_question(
                     question=request.question,
+                    vendor_id=request.vendor_id,
                     user_id=request.user_id,
                     conversation_context=context_text
                 )
@@ -381,6 +392,7 @@ class VendorChatRequest(BaseModel):
     """多業者聊天請求"""
     message: str = Field(..., description="使用者訊息", min_length=1, max_length=2000)
     vendor_id: int = Field(..., description="業者 ID", ge=1)
+    user_role: str = Field("customer", description="用戶角色：customer (終端客戶) 或 staff (業者員工/系統商)")
     mode: str = Field("tenant", description="模式：tenant (B2C) 或 customer_service (B2B)")
     session_id: Optional[str] = Field(None, description="會話 ID（用於追蹤）")
     user_id: Optional[str] = Field(None, description="使用者 ID（租客 ID 或客服 ID）")
@@ -455,11 +467,16 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         if intent_result['intent_name'] == 'unclear':
             rag_engine = req.app.state.rag_engine
 
+            # 根據用戶角色決定業務範圍進行 audience 過濾
+            business_scope = "external" if request.user_role == "customer" else "internal"
+            allowed_audiences = get_allowed_audiences_for_scope(business_scope)
+
             # 使用更低的相似度閾值嘗試檢索
             rag_results = await rag_engine.search(
                 query=request.message,
                 limit=5,
-                similarity_threshold=0.55
+                similarity_threshold=0.55,
+                allowed_audiences=allowed_audiences  # ✅ 添加 audience 過濾
             )
 
             # 如果 RAG 檢索到相關知識，使用 LLM 優化答案
@@ -511,7 +528,29 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     timestamp=datetime.utcnow().isoformat()
                 )
 
-            # 如果 RAG 也找不到相關知識，才返回兜底回應
+            # 如果 RAG 也找不到相關知識，使用意圖建議引擎分析
+            # Phase B: 使用業務範圍判斷是否為新意圖
+            suggestion_engine = req.app.state.suggestion_engine
+
+            # 分析問題（傳遞 vendor_id 以載入對應的業務範圍）
+            analysis = suggestion_engine.analyze_unclear_question(
+                question=request.message,
+                vendor_id=request.vendor_id,
+                user_id=request.user_id,
+                conversation_context=None
+            )
+
+            # 如果屬於業務範圍，記錄建議意圖
+            if analysis.get('should_record'):
+                suggested_intent_id = suggestion_engine.record_suggestion(
+                    question=request.message,
+                    analysis=analysis,
+                    user_id=request.user_id
+                )
+                if suggested_intent_id:
+                    print(f"✅ 發現新意圖建議 (Vendor {request.vendor_id}): {analysis['suggested_intent']['name']} (建議ID: {suggested_intent_id})")
+
+            # 返回兜底回應
             params = resolver.get_vendor_parameters(request.vendor_id)
             service_hotline = params.get('service_hotline', {}).get('value', '客服')
 
@@ -572,11 +611,16 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         if not knowledge_list:
             print(f"⚠️  意圖 '{intent_result['intent_name']}' (ID: {intent_id}) 沒有關聯知識，嘗試 RAG fallback...")
 
+            # 根據用戶角色決定業務範圍進行 audience 過濾
+            business_scope = "external" if request.user_role == "customer" else "internal"
+            allowed_audiences = get_allowed_audiences_for_scope(business_scope)
+
             rag_engine = req.app.state.rag_engine
             rag_results = await rag_engine.search(
                 query=request.message,
                 limit=request.top_k,
-                similarity_threshold=0.60  # 使用標準閾值
+                similarity_threshold=0.60,  # 使用標準閾值
+                allowed_audiences=allowed_audiences  # ✅ 添加 audience 過濾
             )
 
             # 如果 RAG 檢索到相關知識，使用 LLM 優化答案

@@ -2,26 +2,6 @@
   <div>
     <h2>⚙️ 業務範圍配置</h2>
 
-    <!-- 說明區塊 -->
-    <div class="info-banner">
-      <div class="info-icon">ℹ️</div>
-      <div class="info-content">
-        <strong>📚 此頁面用途：編輯業務範圍的「配置內容」</strong>
-        <p>本頁面用於管理業務範圍類型的<strong>配置資料</strong>（描述、範例問題、判斷 Prompt 等），而<strong>不是</strong>用來切換或指定業務範圍。</p>
-        <div class="info-note">
-          <span class="note-icon">💡</span>
-          <div>
-            <p><strong>如何為業者指定業務範圍？</strong></p>
-            <p>請前往「<strong>業者管理</strong>」頁面，在新增或編輯業者時選擇對應的業務範圍：</p>
-            <ul>
-              <li><code>external</code> - B2C 包租代管服務（租客、房東）</li>
-              <li><code>internal</code> - B2B 系統商內部管理</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div v-if="loading" class="loading"><p>載入中...</p></div>
 
     <div v-else class="scopes-container">

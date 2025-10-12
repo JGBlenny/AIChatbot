@@ -22,10 +22,8 @@ class BusinessScopeUpdate(BaseModel):
     updated_by: str = Field(..., description="更新人員")
 
 
-class BusinessScopeSwitch(BaseModel):
-    """業務範圍切換請求"""
-    scope_name: str = Field(..., description="要啟用的業務範圍")
-    updated_by: str = Field(..., description="操作人員")
+# DEPRECATED: BusinessScopeSwitch model 已不再使用
+# 業務範圍現在綁定到 vendor 層級，不再有全域切換功能
 
 
 def get_db_config():
@@ -56,7 +54,6 @@ async def get_all_business_scopes(req: Request):
                     business_description,
                     example_questions,
                     example_intents,
-                    is_active,
                     updated_at,
                     updated_by
                 FROM business_scope_config
@@ -81,53 +78,21 @@ async def get_all_business_scopes(req: Request):
         )
 
 
-@router.get("/business-scope/active")
-async def get_active_business_scope(req: Request):
-    """取得當前啟用的業務範圍配置"""
-    try:
-        conn = psycopg2.connect(**get_db_config())
+@router.get("/business-scope/for-vendor/{vendor_id}")
+async def get_business_scope_for_vendor(vendor_id: int, req: Request):
+    """
+    [DEPRECATED] 取得指定 Vendor 的業務範圍配置
 
-        try:
-            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cursor.execute("""
-                SELECT
-                    id,
-                    scope_name,
-                    scope_type,
-                    display_name,
-                    business_description,
-                    example_questions,
-                    example_intents,
-                    relevance_prompt,
-                    is_active,
-                    updated_at,
-                    updated_by
-                FROM business_scope_config
-                WHERE is_active = true
-                LIMIT 1
-            """)
+    此端點已廢棄。業務範圍不再綁定到 vendor 層級，而是由請求時的 user_role 決定：
+    - user_role='customer' → business_scope='external'
+    - user_role='staff' → business_scope='internal'
 
-            row = cursor.fetchone()
-            cursor.close()
-
-            if not row:
-                raise HTTPException(
-                    status_code=404,
-                    detail="找不到啟用的業務範圍配置"
-                )
-
-            return dict(row)
-
-        finally:
-            conn.close()
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"取得啟用業務範圍失敗: {str(e)}"
-        )
+    請使用 GET /business-scope 取得所有業務範圍配置。
+    """
+    raise HTTPException(
+        status_code=410,
+        detail="此端點已廢棄。業務範圍現在由 user_role 決定，不再綁定到 vendor。請使用 GET /business-scope 取得所有配置。"
+    )
 
 
 @router.get("/business-scope/{scope_name}")
@@ -148,7 +113,6 @@ async def get_business_scope(scope_name: str, req: Request):
                     example_questions,
                     example_intents,
                     relevance_prompt,
-                    is_active,
                     updated_at,
                     updated_by
                 FROM business_scope_config
@@ -267,20 +231,13 @@ async def update_business_scope(
             conn.commit()
             cursor.close()
 
-            # 如果更新的是當前啟用的業務範圍，重新載入建議引擎
+            # 清空所有 vendor 的 business_scope cache
+            # （因為可能有多個 vendor 使用這個 business_scope）
             suggestion_engine = req.app.state.suggestion_engine
-            cursor2 = conn.cursor()
-            cursor2.execute("""
-                SELECT is_active FROM business_scope_config WHERE scope_name = %s
-            """, (scope_name,))
-            is_active = cursor2.fetchone()[0]
-            cursor2.close()
-
-            if is_active:
-                suggestion_engine.reload_business_scope()
+            suggestion_engine.reload_business_scope_cache()
 
             return {
-                "message": "業務範圍配置已更新",
+                "message": "業務範圍配置已更新（所有 vendor cache 已清空）",
                 "scope_name": scope_name
             }
 
@@ -296,71 +253,8 @@ async def update_business_scope(
         )
 
 
-@router.post("/business-scope/switch")
-async def switch_business_scope(request: BusinessScopeSwitch, req: Request):
-    """
-    切換業務範圍
-
-    將指定的業務範圍設為啟用，其他的設為停用
-    """
-    try:
-        conn = psycopg2.connect(**get_db_config())
-
-        try:
-            cursor = conn.cursor()
-
-            # 檢查目標業務範圍是否存在
-            cursor.execute("""
-                SELECT EXISTS(
-                    SELECT 1 FROM business_scope_config WHERE scope_name = %s
-                )
-            """, (request.scope_name,))
-
-            exists = cursor.fetchone()[0]
-
-            if not exists:
-                cursor.close()
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"找不到業務範圍: {request.scope_name}"
-                )
-
-            # 停用所有業務範圍
-            cursor.execute("""
-                UPDATE business_scope_config
-                SET is_active = false,
-                    updated_by = %s,
-                    updated_at = CURRENT_TIMESTAMP
-            """, (request.updated_by,))
-
-            # 啟用指定業務範圍
-            cursor.execute("""
-                UPDATE business_scope_config
-                SET is_active = true,
-                    updated_by = %s,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE scope_name = %s
-            """, (request.updated_by, request.scope_name))
-
-            conn.commit()
-            cursor.close()
-
-            # 重新載入建議引擎的業務範圍配置
-            suggestion_engine = req.app.state.suggestion_engine
-            suggestion_engine.reload_business_scope()
-
-            return {
-                "message": f"已切換到業務範圍: {request.scope_name}",
-                "active_scope": request.scope_name
-            }
-
-        finally:
-            conn.close()
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"切換業務範圍失敗: {str(e)}"
-        )
+# DEPRECATED: 全域切換業務範圍功能已移除
+# 業務範圍不再綁定到 vendor 層級，而是由請求時的 user_role 動態決定：
+# - user_role='customer' (終端客戶) → business_scope='external' (B2C)
+# - user_role='staff' (業者員工/系統商) → business_scope='internal' (B2B)
+# 每個 vendor 可以同時服務兩種場景，無需預先配置

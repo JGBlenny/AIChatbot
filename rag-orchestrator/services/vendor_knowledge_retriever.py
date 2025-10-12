@@ -8,6 +8,7 @@ import psycopg2
 import psycopg2.extras
 from typing import Dict, List, Optional
 from .vendor_parameter_resolver import VendorParameterResolver
+from .business_scope_utils import get_allowed_audiences_for_scope
 
 
 class VendorKnowledgeRetriever:
@@ -200,6 +201,7 @@ class VendorKnowledgeRetriever:
         2. 再使用向量相似度排序，找出最相關的答案
         3. 考慮 scope 優先級（customized > vendor > global）
         4. 支援多 Intent 檢索（主要 Intent 獲得 1.5x boost，次要 Intent 獲得 1.2x boost）
+        5. 根據業務範圍過濾 audience（B2B/B2C 隔離）
 
         Args:
             query: 使用者問題
@@ -213,6 +215,14 @@ class VendorKnowledgeRetriever:
         Returns:
             知識列表，按相似度和優先級排序
         """
+        # 0. 獲取 vendor 的業務範圍，用於 audience 過濾（B2B/B2C 隔離）
+        vendor_info = self.param_resolver.get_vendor_info(vendor_id)
+        business_scope_name = vendor_info.get('business_scope_name', 'external')
+        allowed_audiences = get_allowed_audiences_for_scope(business_scope_name)
+
+        print(f"   🔒 [Business Scope Filter] Vendor {vendor_id} scope: {business_scope_name}")
+        print(f"   ✅ Allowed audiences: {allowed_audiences}")
+
         # 1. 獲取問題的向量
         query_embedding = await self._get_embedding(query)
 
@@ -232,6 +242,7 @@ class VendorKnowledgeRetriever:
             vector_str = str(query_embedding)
 
             # Phase 1 擴展：使用 knowledge_intent_mapping 進行多意圖檢索
+            # 包含業務範圍 audience 過濾（B2B/B2C 隔離）
             cursor.execute("""
                 SELECT
                     kb.id,
@@ -242,6 +253,7 @@ class VendorKnowledgeRetriever:
                     kb.is_template,
                     kb.template_vars,
                     kb.vendor_id,
+                    kb.audience,
                     kb.created_at,
                     kim.intent_id,
                     -- 計算向量相似度
@@ -269,7 +281,6 @@ class VendorKnowledgeRetriever:
                 FROM knowledge_base kb
                 LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                 WHERE
-                    -- 移除硬性 Intent 過濾，改為軟性權重
                     -- Scope 過濾
                     (
                         (kb.vendor_id = %s AND kb.scope IN ('customized', 'vendor'))
@@ -282,6 +293,11 @@ class VendorKnowledgeRetriever:
                     AND (1 - (kb.embedding <=> %s::vector)) >= %s
                     -- Intent 過濾（多意圖支援）
                     AND (kim.intent_id = ANY(%s::int[]) OR kim.intent_id IS NULL)
+                    -- ✅ Audience 過濾（B2B/B2C 業務範圍隔離）
+                    AND (
+                        kb.audience IS NULL  -- 允許沒有標記受眾的知識
+                        OR kb.audience = ANY(%s::text[])  -- 允許的受眾列表
+                    )
                 ORDER BY
                     scope_weight DESC,        -- 1st: Scope 優先級
                     boosted_similarity DESC,  -- 2nd: 加成後的相似度
@@ -300,6 +316,7 @@ class VendorKnowledgeRetriever:
                 vector_str,
                 similarity_threshold,
                 all_intent_ids,
+                allowed_audiences,  # ✅ 新增 audience 過濾參數
                 top_k
             ))
 
@@ -323,11 +340,12 @@ class VendorKnowledgeRetriever:
                 else:
                     intent_marker = "○"  # 其他
 
+                audience_str = f", audience: {knowledge.get('audience', 'NULL')}"
                 print(f"   {idx}. {intent_marker} ID {knowledge['id']}: {knowledge['question_summary'][:40]}... "
                       f"(原始: {knowledge['base_similarity']:.3f}, "
                       f"boost: {knowledge['intent_boost']:.1f}x, "
                       f"加成後: {knowledge['boosted_similarity']:.3f}, "
-                      f"intent: {knowledge['intent_id']})")
+                      f"intent: {knowledge['intent_id']}{audience_str})")
 
                 # 保留原始答案
                 knowledge['original_answer'] = knowledge['answer']

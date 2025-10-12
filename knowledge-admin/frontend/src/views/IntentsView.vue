@@ -424,10 +424,10 @@ export default {
   color: #909399;
 }
 
-.badge.type-knowledge { background: #409EFF; }
-.badge.type-data_query { background: #E6A23C; }
-.badge.type-action { background: #F56C6C; }
-.badge.type-hybrid { background: #67C23A; }
+.badge.type-knowledge { background: #409EFF; color: white; }
+.badge.type-data_query { background: #E6A23C; color: white; }
+.badge.type-action { background: #F56C6C; color: white; }
+.badge.type-hybrid { background: #67C23A; color: white; }
 
 .btn-sm {
   padding: 4px 8px;

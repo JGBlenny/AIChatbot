@@ -23,7 +23,8 @@
 - ⚙️ **業者參數配置** - 分類管理（帳務、合約、服務、聯絡）
 - 🎨 **LLM 智能參數注入** - 不使用模板變數，AI 自動根據業者參數調整答案
 - 🔐 **多租戶知識隔離** - 三層知識範圍（global, vendor, customized）
-- 💬 **B2C Chat API** - 租客對業者的智能客服對話
+- 🎯 **動態業務範圍** - 基於 user_role 自動決定 B2B/B2C 場景 ⭐ NEW
+- 💬 **雙場景 Chat API** - 同時支援 B2C (客戶) 和 B2B (員工) 對話
 
 ### 📚 知識庫管理
 - 🔍 **向量化知識庫** - PostgreSQL + pgvector 語義搜尋
@@ -302,6 +303,8 @@ AIChatbot/
 - 📐 **系統架構文件**: [docs/architecture/SYSTEM_ARCHITECTURE.md](./docs/architecture/SYSTEM_ARCHITECTURE.md)
 - 🏢 **Phase 1 多業者實作**: [docs/planning/PHASE1_MULTI_VENDOR_IMPLEMENTATION.md](./docs/planning/PHASE1_MULTI_VENDOR_IMPLEMENTATION.md)
 - 📋 **Phase 2 規劃**: [docs/planning/PHASE2_PLANNING.md](./docs/planning/PHASE2_PLANNING.md)
+- 🎯 **Business Scope 重構**: [docs/architecture/BUSINESS_SCOPE_REFACTORING.md](./docs/architecture/BUSINESS_SCOPE_REFACTORING.md) ⭐ NEW
+- 🔐 **認證與業務範圍整合**: [docs/architecture/AUTH_AND_BUSINESS_SCOPE.md](./docs/architecture/AUTH_AND_BUSINESS_SCOPE.md) ⭐ NEW
 
 ### 🧪 回測與測試
 - 🔧 **回測優化指南**: [docs/guides/BACKTEST_OPTIMIZATION_GUIDE.md](./docs/guides/BACKTEST_OPTIMIZATION_GUIDE.md)
@@ -312,6 +315,10 @@ AIChatbot/
 - 🧬 **知識提取**: [docs/guides/KNOWLEDGE_EXTRACTION_GUIDE.md](./docs/guides/KNOWLEDGE_EXTRACTION_GUIDE.md)
 - 📡 **API 參考**: [docs/api/API_REFERENCE_PHASE1.md](./docs/api/API_REFERENCE_PHASE1.md)
 - 🐘 **pgvector 設定**: [docs/guides/PGVECTOR_SETUP.md](./docs/guides/PGVECTOR_SETUP.md)
+- 💻 **前端開發模式**: [docs/guides/FRONTEND_DEV_MODE.md](./docs/guides/FRONTEND_DEV_MODE.md) ⭐ NEW
+
+### 📊 測試與驗證
+- ✅ **Business Scope 測試報告**: [docs/architecture/BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md](./docs/architecture/BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md) ⭐ NEW
 
 ## 🔧 常用指令
 
@@ -397,16 +404,16 @@ curl -X POST http://localhost:8100/api/v1/chat \
 }
 ```
 
-### 2. 多業者 Chat API
+### 2. 多業者 Chat API (雙場景支援) ⭐
 
 ```bash
-# 業者 A 的租客詢問繳費日
-curl -X POST http://localhost:8100/api/v1/v1/message \
+# B2C 場景：租客詢問繳費日
+curl -X POST http://localhost:8100/api/v1/message \
   -H "Content-Type: application/json" \
   -d '{
     "message": "繳費日是幾號？",
     "vendor_id": 1,
-    "mode": "tenant"
+    "user_role": "customer"
   }'
 
 # LLM 自動注入業者 A 的參數
@@ -417,21 +424,27 @@ curl -X POST http://localhost:8100/api/v1/v1/message \
   "vendor_id": 1
 }
 
-# 業者 B 詢問相同問題（自動得到不同參數）
-curl -X POST http://localhost:8100/api/v1/v1/message \
+# B2B 場景：業者員工詢問系統管理問題
+curl -X POST http://localhost:8100/api/v1/message \
   -H "Content-Type: application/json" \
   -d '{
-    "message": "繳費日是幾號？",
-    "vendor_id": 2,
-    "mode": "tenant"
+    "message": "如何管理租約到期提醒？",
+    "vendor_id": 1,
+    "user_role": "staff"
   }'
 
-# 回應：繳費日變成 5 號，逾期費變成 300 元
+# 回應：自動識別為內部管理場景，返回 B2B 知識
 {
-  "answer": "您的租金繳費日為每月 5 號。請務必在這個日期前完成繳費，逾期 3 天後將加收 300 元手續費。",
-  "vendor_id": 2
+  "answer": "管理租約到期提醒的方式如下：\n\n1. **使用系統功能**：系統會自動發送租約到期提醒...",
+  "intent_name": "租約查詢",
+  "confidence": 0.8,
+  "vendor_id": 1
 }
 ```
+
+**重要**: `user_role` 參數決定業務範圍：
+- `"customer"` → B2C 外部場景（租客、房東知識）
+- `"staff"` → B2B 內部場景（管理師、系統管理員知識）
 
 ### 3. 測試情境管理 API ⭐
 
@@ -537,11 +550,14 @@ curl -X POST http://localhost:8000/api/backtest/run \
 | 業者參數配置 | ✅ | 2025-10-11 |
 | LLM 智能參數注入 | ✅ | 2025-10-11 |
 | 多租戶知識隔離 | ✅ | 2025-10-11 |
-| B2C Chat API | ✅ | 2025-10-11 |
-| **系統清理** ⭐ | | |
+| 動態業務範圍（user_role）| ✅ | 2025-10-12 |
+| 雙場景 Chat API（B2B + B2C）| ✅ | 2025-10-12 |
+| **系統清理與重構** ⭐ | | |
+| Business Scope 架構重構 | ✅ | 2025-10-12 |
 | 文檔重組（60+ 文件） | ✅ | 2025-10-12 |
 | Migration 編號修復 | ✅ | 2025-10-12 |
 | 資料庫重複數據清理 | ✅ | 2025-10-12 |
+| 前端開發模式（熱重載）| ✅ | 2025-10-12 |
 
 ### ⏳ 待開發功能（Phase 2）
 
@@ -579,11 +595,15 @@ MIT
 **維護者**: Claude Code
 **專案建立**: 2024
 **最後更新**: 2025-10-12
-**當前版本**: Phase 1 完成 + 測試情境管理系統
-**最新功能**:
-- 🧪 測試情境管理系統（自動轉換 + 智能重試）
-- 📊 審核中心統一介面（4 個審核標籤）
-- 🤖 AI 知識生成器（從測試情境自動生成）
-- 📁 系統清理與重組（60+ 文件整理完成）
+**當前版本**: Phase 1 完成 + 測試情境管理系統 + Business Scope 重構
 
-**下一階段**: Phase 2 (外部 API 整合) 規劃中
+**最新功能** (2025-10-12):
+- 🎯 **Business Scope 重構** - 基於 user_role 動態決定 B2B/B2C 場景
+- 🔄 **雙場景支援** - 每個業者可同時服務客戶和員工
+- 💻 **前端開發模式** - 支援熱重載，提升開發效率
+- 🧪 **測試情境管理** - 自動轉換 + 智能重試機制
+- 📊 **審核中心** - 統一介面審核 4 類候選項目
+- 🤖 **AI 知識生成** - 從測試情境自動生成知識
+- 📁 **系統清理** - 60+ 文件整理完成
+
+**下一階段**: Phase 2 (外部 API 整合 + 認證系統) 規劃中

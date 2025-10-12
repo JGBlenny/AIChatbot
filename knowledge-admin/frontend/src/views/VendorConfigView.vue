@@ -14,6 +14,12 @@
           <strong>代碼：</strong>{{ vendor.code }}
         </div>
         <div class="summary-item">
+          <strong>業務範圍：</strong>
+          <span class="scope-badge" :class="'scope-' + vendor.business_scope_name">
+            {{ getScopeLabel(vendor.business_scope_name) }}
+          </span>
+        </div>
+        <div class="summary-item">
           <strong>訂閱方案：</strong>{{ vendor.subscription_plan }}
         </div>
         <div class="summary-item">
@@ -396,6 +402,14 @@ export default {
       return placeholders[config.param_key] || '';
     },
 
+    getScopeLabel(scope) {
+      const labels = {
+        external: '外部 (B2C 包租代管)',
+        internal: '內部 (B2B 系統商)'
+      };
+      return labels[scope] || scope;
+    },
+
     goBack() {
       this.$router.push('/vendors');
     }
@@ -434,6 +448,22 @@ export default {
 .status-inactive {
   color: #f87171;
   font-weight: bold;
+}
+
+.scope-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: bold;
+  color: white;
+}
+
+.scope-badge.scope-external {
+  background: #67C23A;
+}
+
+.scope-badge.scope-internal {
+  background: #E6A23C;
 }
 
 /* 分類標籤 */

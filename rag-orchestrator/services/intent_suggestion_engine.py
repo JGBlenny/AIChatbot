@@ -28,20 +28,36 @@ class IntentSuggestionEngine:
             'database': os.getenv('DB_NAME', 'aichatbot_admin')
         }
 
-        # 載入業務範圍配置
-        self.business_scope = self._load_active_business_scope()
+        # 業務範圍 cache (vendor_id -> business_scope)
+        self._business_scope_cache = {}
 
         # OpenAI 配置
         self.model = "gpt-4o-mini"
         self.temperature = 0.2
         self.max_tokens = 800
 
-    def _load_active_business_scope(self) -> Dict[str, Any]:
-        """載入當前啟用的業務範圍配置"""
+    def get_business_scope_for_vendor(self, vendor_id: int) -> Dict[str, Any]:
+        """
+        取得指定 Vendor 的業務範圍配置
+
+        Args:
+            vendor_id: Vendor ID
+
+        Returns:
+            業務範圍配置字典
+        """
+        # 檢查 cache
+        if vendor_id in self._business_scope_cache:
+            return self._business_scope_cache[vendor_id]
+
         conn = psycopg2.connect(**self.db_config)
 
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+            # [DEPRECATED] 業務範圍不再綁定到 vendor
+            # 現在使用預設的 external scope，因為 business_scope 由 user_role 決定
+            # 此方法僅用於舊的意圖建議功能，建議未來移除或重構
             cursor.execute("""
                 SELECT
                     scope_name,
@@ -52,7 +68,7 @@ class IntentSuggestionEngine:
                     example_intents,
                     relevance_prompt
                 FROM business_scope_config
-                WHERE is_active = true
+                WHERE scope_name = 'external'
                 LIMIT 1
             """)
 
@@ -60,13 +76,16 @@ class IntentSuggestionEngine:
             cursor.close()
 
             if row:
-                return dict(row)
+                scope = dict(row)
+                # 加入 cache
+                self._business_scope_cache[vendor_id] = scope
+                return scope
             else:
-                # 預設配置
-                return {
+                # 預設配置（如果找不到 vendor 或 business_scope）
+                default_scope = {
                     'scope_name': 'external',
                     'scope_type': 'property_management',
-                    'display_name': '包租代管業者',
+                    'display_name': '包租代管業者（預設）',
                     'business_description': 'JGB 包租代管服務相關業務',
                     'example_questions': [
                         '退租流程怎麼辦理？',
@@ -76,18 +95,32 @@ class IntentSuggestionEngine:
                     'example_intents': ['退租流程', '租約查詢', '設備報修'],
                     'relevance_prompt': None
                 }
+                print(f"⚠️ Vendor ID {vendor_id} 找不到業務範圍配置，使用預設配置")
+                return default_scope
 
         finally:
             conn.close()
 
-    def reload_business_scope(self):
-        """重新載入業務範圍配置"""
-        self.business_scope = self._load_active_business_scope()
-        print(f"✅ 重新載入業務範圍: {self.business_scope['display_name']}")
+    def reload_business_scope_cache(self, vendor_id: Optional[int] = None):
+        """
+        重新載入業務範圍 cache
+
+        Args:
+            vendor_id: 指定 vendor ID 重載，None 則清空所有 cache
+        """
+        if vendor_id is None:
+            self._business_scope_cache.clear()
+            print(f"✅ 已清空業務範圍 cache")
+        elif vendor_id in self._business_scope_cache:
+            del self._business_scope_cache[vendor_id]
+            print(f"✅ 已重新載入 Vendor {vendor_id} 的業務範圍 cache")
+        else:
+            print(f"ℹ️ Vendor {vendor_id} 不在 cache 中")
 
     def analyze_unclear_question(
         self,
         question: str,
+        vendor_id: int,
         user_id: Optional[str] = None,
         conversation_context: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -96,6 +129,7 @@ class IntentSuggestionEngine:
 
         Args:
             question: 使用者問題
+            vendor_id: Vendor ID（用於載入對應的業務範圍）
             user_id: 使用者 ID
             conversation_context: 對話上下文（可選）
 
@@ -113,6 +147,9 @@ class IntentSuggestionEngine:
                 "should_record": bool          # 是否應該記錄為建議
             }
         """
+
+        # 取得該 vendor 的業務範圍
+        business_scope = self.get_business_scope_for_vendor(vendor_id)
 
         # 構建 OpenAI Function Calling
         functions = [
@@ -163,14 +200,14 @@ class IntentSuggestionEngine:
         # 構建系統提示
         system_prompt = f"""你是一個專業的意圖分析助手，專門判斷使用者問題是否屬於特定業務範圍。
 
-當前業務範圍：{self.business_scope['display_name']}
-業務描述：{self.business_scope['business_description']}
+當前業務範圍：{business_scope['display_name']}
+業務描述：{business_scope['business_description']}
 
 業務範圍內的問題範例：
-{chr(10).join([f"- {q}" for q in self.business_scope['example_questions']])}
+{chr(10).join([f"- {q}" for q in business_scope['example_questions']])}
 
 已存在的意圖範例：
-{', '.join(self.business_scope['example_intents'])}
+{', '.join(business_scope['example_intents'])}
 
 你的任務：
 1. 判斷使用者問題是否與上述業務範圍相關
@@ -191,8 +228,8 @@ class IntentSuggestionEngine:
 """
 
         # 如果有自訂的相關性提示，使用它
-        if self.business_scope.get('relevance_prompt'):
-            system_prompt = self.business_scope['relevance_prompt']
+        if business_scope.get('relevance_prompt'):
+            system_prompt = business_scope['relevance_prompt']
 
         # 構建使用者訊息
         user_message = f"問題：{question}"

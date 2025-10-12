@@ -31,10 +31,11 @@ class RAGEngine:
         limit: int = None,
         similarity_threshold: float = 0.6,
         intent_ids: Optional[List[int]] = None,
-        primary_intent_id: Optional[int] = None
+        primary_intent_id: Optional[int] = None,
+        allowed_audiences: Optional[List[str]] = None
     ) -> List[Dict]:
         """
-        搜尋相關知識（支援多意圖過濾與加成）
+        搜尋相關知識（支援多意圖過濾與加成 + 業務範圍 audience 過濾）
 
         Args:
             query: 查詢問題
@@ -42,6 +43,7 @@ class RAGEngine:
             similarity_threshold: 相似度閾值
             intent_ids: 所有相關意圖 IDs（用於過濾）
             primary_intent_id: 主要意圖 ID（用於加成排序）
+            allowed_audiences: 允許的受眾列表（用於 B2B/B2C 業務範圍隔離）
 
         Returns:
             檢索結果列表，每個結果包含:
@@ -60,6 +62,8 @@ class RAGEngine:
         print(f"   閾值: {similarity_threshold}, 限制: {limit}")
         if intent_ids:
             print(f"   意圖過濾: {intent_ids}, 主要意圖: {primary_intent_id}")
+        if allowed_audiences:
+            print(f"   🔒 Audience 過濾: {allowed_audiences}")
 
         # 1. 將問題轉換為向量
         query_embedding = await self._get_embedding(query)
@@ -76,36 +80,72 @@ class RAGEngine:
         async with self.db_pool.acquire() as conn:
             if intent_ids and primary_intent_id:
                 # 多意圖模式：JOIN knowledge_intent_mapping 並使用加成策略
-                results = await conn.fetch("""
-                    SELECT DISTINCT ON (kb.id)
-                        kb.id,
-                        kb.title,
-                        kb.answer as content,
-                        kb.category,
-                        kb.audience,
-                        kb.keywords,
-                        1 - (kb.embedding <=> $1::vector) as base_similarity,
-                        -- 意圖加成
-                        CASE
-                            WHEN kim.intent_id = $4 THEN 1.5  -- 主要意圖 1.5x boost
-                            WHEN kim.intent_id = ANY($5::int[]) THEN 1.2  -- 次要意圖 1.2x boost
-                            ELSE 1.0
-                        END as intent_boost,
-                        -- 加成後相似度
-                        (1 - (kb.embedding <=> $1::vector)) *
-                        CASE
-                            WHEN kim.intent_id = $4 THEN 1.5
-                            WHEN kim.intent_id = ANY($5::int[]) THEN 1.2
-                            ELSE 1.0
-                        END as boosted_similarity
-                    FROM knowledge_base kb
-                    LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
-                    WHERE kb.embedding IS NOT NULL
-                        AND (1 - (kb.embedding <=> $1::vector)) >= $2
-                        AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
-                    ORDER BY kb.id, boosted_similarity DESC
-                    LIMIT $3
-                """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids)
+                # 包含 audience 過濾（B2B/B2C 隔離）
+                if allowed_audiences:
+                    # 有 audience 過濾
+                    results = await conn.fetch("""
+                        SELECT DISTINCT ON (kb.id)
+                            kb.id,
+                            kb.title,
+                            kb.answer as content,
+                            kb.category,
+                            kb.audience,
+                            kb.keywords,
+                            1 - (kb.embedding <=> $1::vector) as base_similarity,
+                            -- 意圖加成
+                            CASE
+                                WHEN kim.intent_id = $4 THEN 1.5  -- 主要意圖 1.5x boost
+                                WHEN kim.intent_id = ANY($5::int[]) THEN 1.2  -- 次要意圖 1.2x boost
+                                ELSE 1.0
+                            END as intent_boost,
+                            -- 加成後相似度
+                            (1 - (kb.embedding <=> $1::vector)) *
+                            CASE
+                                WHEN kim.intent_id = $4 THEN 1.5
+                                WHEN kim.intent_id = ANY($5::int[]) THEN 1.2
+                                ELSE 1.0
+                            END as boosted_similarity
+                        FROM knowledge_base kb
+                        LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
+                        WHERE kb.embedding IS NOT NULL
+                            AND (1 - (kb.embedding <=> $1::vector)) >= $2
+                            AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
+                            AND (kb.audience IS NULL OR kb.audience = ANY($6::text[]))
+                        ORDER BY kb.id, boosted_similarity DESC
+                        LIMIT $3
+                    """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, allowed_audiences)
+                else:
+                    # 無 audience 過濾（向後兼容）
+                    results = await conn.fetch("""
+                        SELECT DISTINCT ON (kb.id)
+                            kb.id,
+                            kb.title,
+                            kb.answer as content,
+                            kb.category,
+                            kb.audience,
+                            kb.keywords,
+                            1 - (kb.embedding <=> $1::vector) as base_similarity,
+                            -- 意圖加成
+                            CASE
+                                WHEN kim.intent_id = $4 THEN 1.5  -- 主要意圖 1.5x boost
+                                WHEN kim.intent_id = ANY($5::int[]) THEN 1.2  -- 次要意圖 1.2x boost
+                                ELSE 1.0
+                            END as intent_boost,
+                            -- 加成後相似度
+                            (1 - (kb.embedding <=> $1::vector)) *
+                            CASE
+                                WHEN kim.intent_id = $4 THEN 1.5
+                                WHEN kim.intent_id = ANY($5::int[]) THEN 1.2
+                                ELSE 1.0
+                            END as boosted_similarity
+                        FROM knowledge_base kb
+                        LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
+                        WHERE kb.embedding IS NOT NULL
+                            AND (1 - (kb.embedding <=> $1::vector)) >= $2
+                            AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
+                        ORDER BY kb.id, boosted_similarity DESC
+                        LIMIT $3
+                    """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids)
 
                 # 去重並按加成後相似度排序
                 seen_ids = set()
@@ -117,22 +157,42 @@ class RAGEngine:
                 results = sorted(unique_results, key=lambda x: x['boosted_similarity'], reverse=True)[:limit]
 
             else:
-                # 純向量搜尋模式（向後兼容）
-                results = await conn.fetch("""
-                    SELECT
-                        id,
-                        title,
-                        answer as content,
-                        category,
-                        audience,
-                        keywords,
-                        1 - (embedding <=> $1::vector) as base_similarity
-                    FROM knowledge_base
-                    WHERE embedding IS NOT NULL
-                        AND (1 - (embedding <=> $1::vector)) >= $2
-                    ORDER BY embedding <=> $1::vector
-                    LIMIT $3
-                """, vector_str, similarity_threshold, limit)
+                # 純向量搜尋模式（向後兼容）+ audience 過濾
+                if allowed_audiences:
+                    # 有 audience 過濾
+                    results = await conn.fetch("""
+                        SELECT
+                            id,
+                            title,
+                            answer as content,
+                            category,
+                            audience,
+                            keywords,
+                            1 - (embedding <=> $1::vector) as base_similarity
+                        FROM knowledge_base
+                        WHERE embedding IS NOT NULL
+                            AND (1 - (embedding <=> $1::vector)) >= $2
+                            AND (audience IS NULL OR audience = ANY($4::text[]))
+                        ORDER BY embedding <=> $1::vector
+                        LIMIT $3
+                    """, vector_str, similarity_threshold, limit, allowed_audiences)
+                else:
+                    # 無 audience 過濾（向後兼容）
+                    results = await conn.fetch("""
+                        SELECT
+                            id,
+                            title,
+                            answer as content,
+                            category,
+                            audience,
+                            keywords,
+                            1 - (embedding <=> $1::vector) as base_similarity
+                        FROM knowledge_base
+                        WHERE embedding IS NOT NULL
+                            AND (1 - (embedding <=> $1::vector)) >= $2
+                        ORDER BY embedding <=> $1::vector
+                        LIMIT $3
+                    """, vector_str, similarity_threshold, limit)
 
         print(f"   💾 資料庫返回 {len(results)} 個結果")
 

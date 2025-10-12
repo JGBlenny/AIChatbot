@@ -45,6 +45,11 @@
       <div class="info-grid">
         <div><strong>代碼：</strong>{{ selectedVendor.code }}</div>
         <div><strong>名稱：</strong>{{ selectedVendor.name }}</div>
+        <div><strong>業務範圍：</strong>
+          <span class="scope-badge" :class="'scope-' + selectedVendor.business_scope_name">
+            {{ getScopeLabel(selectedVendor.business_scope_name) }}
+          </span>
+        </div>
         <div><strong>訂閱方案：</strong>{{ selectedVendor.subscription_plan }}</div>
         <div><strong>狀態：</strong><span :class="selectedVendor.is_active ? 'status-active' : 'status-inactive'">
           {{ selectedVendor.is_active ? '啟用' : '停用' }}
@@ -302,6 +307,14 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       });
+    },
+
+    getScopeLabel(scope) {
+      const labels = {
+        external: 'B2C 外部（包租代管）',
+        internal: 'B2B 內部（系統商）'
+      };
+      return labels[scope] || scope;
     }
   }
 };
@@ -402,6 +415,24 @@ export default {
 .status-inactive {
   color: #f87171;
   font-weight: bold;
+}
+
+.scope-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: bold;
+  color: white;
+  margin-left: 5px;
+}
+
+.scope-badge.scope-external {
+  background: #67C23A;
+}
+
+.scope-badge.scope-internal {
+  background: #E6A23C;
 }
 
 .params-preview {
