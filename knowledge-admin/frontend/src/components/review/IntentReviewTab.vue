@@ -129,7 +129,7 @@ export default {
   data() {
     return {
       suggestionList: [],
-      filterStatus: '',
+      filterStatus: 'pending',  // 預設只顯示待審核
       orderBy: 'frequency',
       loading: false,
       stats: null

@@ -23,7 +23,6 @@
             <th width="120">代碼</th>
             <th>名稱</th>
             <th>簡稱</th>
-            <th width="120">業務範圍</th>
             <th>聯絡電話</th>
             <th>訂閱方案</th>
             <th width="80">狀態</th>
@@ -36,11 +35,6 @@
             <td><code>{{ vendor.code }}</code></td>
             <td><strong>{{ vendor.name }}</strong></td>
             <td>{{ vendor.short_name || '-' }}</td>
-            <td>
-              <span class="badge" :class="'scope-' + vendor.business_scope_name">
-                {{ getScopeLabel(vendor.business_scope_name) }}
-              </span>
-            </td>
             <td>{{ vendor.contact_phone || '-' }}</td>
             <td>
               <span class="badge" :class="'plan-' + vendor.subscription_plan">
@@ -104,26 +98,13 @@
             <input v-model="formData.address" placeholder="台北市信義區..." />
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>業務範圍 *</label>
-              <select v-model="formData.business_scope_name" required>
-                <option value="external">external - 業者對終端用戶（租客、房東）</option>
-                <option value="internal">internal - 系統商對業者（後台管理）</option>
-              </select>
-              <small style="color: #909399; display: block; margin-top: 5px;">
-                💡 大部分業者使用 external（對外服務），internal 用於系統商內部管理功能
-              </small>
-            </div>
-
-            <div class="form-group">
-              <label>訂閱方案</label>
-              <select v-model="formData.subscription_plan">
-                <option value="basic">Basic - 基礎方案</option>
-                <option value="standard">Standard - 標準方案</option>
-                <option value="premium">Premium - 進階方案</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label>訂閱方案</label>
+            <select v-model="formData.subscription_plan">
+              <option value="basic">Basic - 基礎方案</option>
+              <option value="standard">Standard - 標準方案</option>
+              <option value="premium">Premium - 進階方案</option>
+            </select>
           </div>
 
           <div v-if="editingItem" class="form-row">
@@ -220,7 +201,6 @@ export default {
         contact_phone: '',
         contact_email: '',
         address: '',
-        business_scope_name: 'external',
         subscription_plan: 'basic',
         is_active: true
       }
@@ -257,7 +237,6 @@ export default {
         contact_phone: '',
         contact_email: '',
         address: '',
-        business_scope_name: 'external',
         subscription_plan: 'basic',
         is_active: true
       };
@@ -273,7 +252,6 @@ export default {
         contact_phone: vendor.contact_phone || '',
         contact_email: vendor.contact_email || '',
         address: vendor.address || '',
-        business_scope_name: vendor.business_scope_name || 'external',
         subscription_plan: vendor.subscription_plan,
         is_active: vendor.is_active
       };
@@ -291,7 +269,6 @@ export default {
             contact_phone: this.formData.contact_phone,
             contact_email: this.formData.contact_email,
             address: this.formData.address,
-            business_scope_name: this.formData.business_scope_name,
             subscription_plan: this.formData.subscription_plan,
             is_active: this.formData.is_active,
             updated_by: 'admin'
@@ -361,14 +338,6 @@ export default {
       return labels[plan] || plan;
     },
 
-    getScopeLabel(scope) {
-      const labels = {
-        external: '對外服務',
-        internal: '內部管理'
-      };
-      return labels[scope] || scope;
-    },
-
     getCategoryLabel(category) {
       const labels = {
         payment: '帳務',
@@ -415,14 +384,6 @@ export default {
 
 .badge.plan-premium {
   background: #F56C6C;
-}
-
-.badge.scope-external {
-  background: #67C23A;
-}
-
-.badge.scope-internal {
-  background: #E6A23C;
 }
 
 .btn-sm {

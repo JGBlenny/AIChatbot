@@ -147,14 +147,25 @@
 
             <div class="form-group">
               <label>對象 *</label>
-              <select v-model="formData.audience" required>
+              <select v-model="formData.audience" required @change="onAudienceChange">
                 <option value="">請選擇</option>
-                <option>房東</option>
-                <option>租客</option>
-                <option>管理師</option>
-                <option>業者</option>
-                <option>全部</option>
+                <optgroup label="🏠 B2C - 終端用戶（External）">
+                  <option value="租客">租客</option>
+                  <option value="房東">房東</option>
+                  <option value="租客|管理師">租客|管理師</option>
+                  <option value="房東|租客">房東|租客</option>
+                  <option value="房東|租客|管理師">房東|租客|管理師</option>
+                </optgroup>
+                <optgroup label="🏢 B2B - 內部管理（Internal）">
+                  <option value="管理師">管理師</option>
+                  <option value="系統管理員">系統管理員</option>
+                  <option value="房東/管理師">房東/管理師</option>
+                </optgroup>
+                <optgroup label="📌 通用">
+                  <option value="general">所有人（通用）</option>
+                </optgroup>
               </select>
+              <small class="audience-hint">💡 {{ audienceHint }}</small>
             </div>
           </div>
 
@@ -266,7 +277,8 @@ export default {
       intentTypes: {},
       searchTimeout: null,
       isIdSearch: false,
-      targetIds: []
+      targetIds: [],
+      audienceHint: '選擇對象後將顯示適用場景'
     };
   },
   computed: {
@@ -307,6 +319,23 @@ export default {
     this.loadStats();
   },
   methods: {
+    onAudienceChange() {
+      // 根據選擇的 audience 更新提示文字
+      const audienceHints = {
+        '租客': 'B2C - 租客使用業者 AI 客服時可見（user_role=customer + external scope）',
+        '房東': 'B2C - 房東使用業者 AI 客服時可見（user_role=customer + external scope）',
+        '租客|管理師': 'B2C + B2B - 租客和管理師都可見（混合場景）',
+        '房東|租客': 'B2C - 房東和租客都可見（user_role=customer + external scope）',
+        '房東|租客|管理師': 'B2C + B2B - 所有終端用戶和管理師都可見',
+        '管理師': 'B2B - 業者員工使用內部系統時可見（user_role=staff + internal scope）',
+        '系統管理員': 'B2B - 系統管理員專用（user_role=staff + internal scope）',
+        '房東/管理師': 'B2B - 房東相關的內部管理（user_role=staff + internal scope）',
+        'general': '通用 - 所有業務範圍都可見（B2C 和 B2B）'
+      };
+
+      this.audienceHint = audienceHints[this.formData.audience] || '選擇對象後將顯示適用場景';
+    },
+
     async loadIntents() {
       try {
         const response = await axios.get(`${API_BASE}/intents`);
@@ -453,6 +482,9 @@ export default {
         (knowledge.intent_mappings || []).forEach(m => {
           this.intentTypes[m.intent_id] = m.intent_type;
         });
+
+        // 更新 audience 提示
+        this.onAudienceChange();
 
         this.showModal = true;
       } catch (error) {
@@ -701,5 +733,19 @@ export default {
 .badge sup {
   font-size: 10px;
   margin-left: 2px;
+}
+
+/* Audience 提示樣式 */
+.audience-hint {
+  display: block;
+  margin-top: 6px;
+  color: #409EFF;
+  font-size: 12px;
+  line-height: 1.5;
+  font-style: italic;
+  padding: 6px 10px;
+  background: #ecf5ff;
+  border-radius: 4px;
+  border-left: 3px solid #409EFF;
 }
 </style>
