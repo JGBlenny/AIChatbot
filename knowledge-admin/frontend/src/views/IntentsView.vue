@@ -186,7 +186,7 @@
 <script>
 import axios from 'axios';
 
-const RAG_API = 'http://localhost:8100/api/v1';
+const RAG_API = '/rag-api/v1';
 
 export default {
   name: 'IntentsView',

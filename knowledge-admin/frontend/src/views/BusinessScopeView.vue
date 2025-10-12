@@ -2,14 +2,33 @@
   <div>
     <h2>⚙️ 業務範圍配置</h2>
 
+    <!-- 說明區塊 -->
+    <div class="info-banner">
+      <div class="info-icon">ℹ️</div>
+      <div class="info-content">
+        <strong>📚 此頁面用途：編輯業務範圍的「配置內容」</strong>
+        <p>本頁面用於管理業務範圍類型的<strong>配置資料</strong>（描述、範例問題、判斷 Prompt 等），而<strong>不是</strong>用來切換或指定業務範圍。</p>
+        <div class="info-note">
+          <span class="note-icon">💡</span>
+          <div>
+            <p><strong>如何為業者指定業務範圍？</strong></p>
+            <p>請前往「<strong>業者管理</strong>」頁面，在新增或編輯業者時選擇對應的業務範圍：</p>
+            <ul>
+              <li><code>external</code> - B2C 包租代管服務（租客、房東）</li>
+              <li><code>internal</code> - B2B 系統商內部管理</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div v-if="loading" class="loading"><p>載入中...</p></div>
 
     <div v-else class="scopes-container">
-      <div v-for="scope in scopes" :key="scope.id" class="scope-card" :class="{ active: scope.is_active }">
+      <div v-for="scope in scopes" :key="scope.id" class="scope-card">
         <div class="scope-header">
           <h3>{{ scope.display_name }}</h3>
-          <span v-if="scope.is_active" class="badge active-badge">✓ 當前使用</span>
-          <button v-else @click="switchScope(scope.scope_name)" class="btn-secondary btn-sm">切換使用</button>
+          <span class="badge scope-type-badge">{{ scope.scope_type }}</span>
         </div>
 
         <div class="scope-body">
@@ -147,22 +166,6 @@ export default {
       }
     },
 
-    async switchScope(scopeName) {
-      if (!confirm(`確定要切換到「${scopeName}」業務範圍嗎？`)) return;
-
-      try {
-        await axios.post(`${RAG_API}/business-scope/switch`, {
-          scope_name: scopeName,
-          updated_by: 'admin'
-        });
-
-        alert('✅ 業務範圍已切換！意圖建議引擎已自動重載。');
-        this.loadScopes();
-      } catch (error) {
-        alert('切換失敗：' + (error.response?.data?.detail || error.message));
-      }
-    },
-
     editScope(scope) {
       this.editingScope = scope;
       this.formData = {
@@ -231,6 +234,82 @@ export default {
 </script>
 
 <style scoped>
+/* 資訊橫幅 */
+.info-banner {
+  display: flex;
+  gap: 15px;
+  background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 25px;
+  align-items: flex-start;
+}
+
+.info-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.info-content {
+  flex: 1;
+}
+
+.info-content strong {
+  color: #1e40af;
+  display: block;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.info-content p {
+  margin: 6px 0;
+  color: #1e3a8a;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.info-content code {
+  background: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  color: #7c3aed;
+  font-weight: bold;
+}
+
+.info-note {
+  display: flex;
+  gap: 12px;
+  background: white;
+  border: 1px solid #93c5fd;
+  border-radius: 6px;
+  padding: 15px;
+  margin-top: 12px;
+  align-items: flex-start;
+}
+
+.note-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.info-note p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+.info-note ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+}
+
+.info-note li {
+  margin: 4px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .scopes-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(550px, 1fr));
@@ -249,12 +328,6 @@ export default {
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
-.scope-card.active {
-  border-color: #409EFF;
-  box-shadow: 0 4px 20px rgba(64, 158, 255, 0.25);
-  background: linear-gradient(to bottom, #ffffff 0%, #f0f7ff 100%);
-}
-
 .scope-header {
   display: flex;
   justify-content: space-between;
@@ -264,21 +337,19 @@ export default {
   border-bottom: 2px solid #e4e7ed;
 }
 
-.scope-card.active .scope-header {
-  border-bottom-color: #409EFF;
-}
-
 .scope-header h3 {
   margin: 0;
   font-size: 20px;
   color: #303133;
 }
 
-.active-badge {
-  background: #67C23A;
+.scope-type-badge {
+  background: #909399;
   color: white;
   font-weight: 600;
   padding: 6px 12px;
+  font-size: 12px;
+  text-transform: uppercase;
 }
 
 .scope-body {
