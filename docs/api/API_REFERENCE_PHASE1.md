@@ -75,6 +75,9 @@ Content-Type: application/json
   "intent_name": "帳務查詢",
   "intent_type": "knowledge",
   "confidence": 0.95,
+  "all_intents": ["帳務查詢"],
+  "secondary_intents": [],
+  "intent_ids": [5],
   "sources": [
     {
       "id": 123,
@@ -102,9 +105,12 @@ Content-Type: application/json
 | 欄位 | 類型 | 說明 |
 |------|------|------|
 | `answer` | string | AI 回答（已替換模板變數） |
-| `intent_name` | string | 意圖名稱 |
+| `intent_name` | string | 主要意圖名稱 |
 | `intent_type` | string | 意圖類型（knowledge, data_query, action, hybrid） |
 | `confidence` | float | 意圖分類信心度 (0-1) |
+| `all_intents` | array[string] | 所有匹配的意圖名稱（包含主要 + 次要） ⭐ NEW |
+| `secondary_intents` | array[string] | 次要意圖名稱列表 ⭐ NEW |
+| `intent_ids` | array[integer] | 所有意圖的 ID 列表 ⭐ NEW |
 | `sources` | array | 知識來源列表 |
 | `sources[].id` | integer | 知識 ID |
 | `sources[].question_summary` | string | 問題摘要 |
@@ -889,9 +895,17 @@ chmod +x test-api.sh
 ## 版本資訊
 
 - **API 版本：** v1
-- **文件版本：** 2.0
-- **最後更新：** 2025-10-10
-- **適用系統版本：** Phase 1（LLM 智能參數注入）
+- **文件版本：** 2.1
+- **最後更新：** 2025-10-13
+- **適用系統版本：** Phase 1（LLM 智能參數注入 + 多意圖分類）
 - **變更紀錄：**
+  - v2.1 (2025-10-13): 新增多意圖分類欄位（all_intents, secondary_intents, intent_ids）
   - v2.0 (2025-10-10): 更新為 LLM 智能參數注入系統
   - v1.0 (2025-01-XX): 初始版本（模板變數系統）
+
+## 相關文檔
+
+- [知識匯入 API 參考](KNOWLEDGE_IMPORT_API.md) - 批量匯入知識 API
+- [系統架構文檔](../architecture/SYSTEM_ARCHITECTURE.md)
+- [多意圖分類文檔](../features/MULTI_INTENT_CLASSIFICATION.md)
+- [開發工作流程](../guides/DEVELOPMENT_WORKFLOW.md)

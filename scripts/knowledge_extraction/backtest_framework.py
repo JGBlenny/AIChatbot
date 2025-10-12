@@ -70,6 +70,172 @@ class BacktestFramework:
         """建立資料庫連線"""
         return psycopg2.connect(**self.db_config, cursor_factory=RealDictCursor)
 
+    def load_test_scenarios_by_strategy(
+        self,
+        strategy: str = 'full',
+        limit: int = None
+    ) -> List[Dict]:
+        """根據測試選擇策略載入測試情境
+
+        Args:
+            strategy: 測試策略
+                - 'incremental': 增量測試（新測試 + 失敗測試 + 長期未測試）
+                - 'full': 完整測試（所有已批准測試）
+                - 'failed_only': 僅失敗測試（低分或高失敗率）
+            limit: 限制數量（incremental 模式預設 100）
+
+        Returns:
+            測試情境列表
+        """
+        print(f"📖 從資料庫載入測試情境（策略: {strategy}）...")
+
+        conn = self.get_db_connection()
+        cur = conn.cursor()
+
+        try:
+            if strategy == 'incremental':
+                # 增量測試：新測試 + 失敗測試 + 長期未測試
+                incremental_limit = limit or int(os.getenv('BACKTEST_INCREMENTAL_LIMIT', '100'))
+                print(f"   策略: 增量測試（新測試 + 失敗測試 + 長期未測試）")
+                print(f"   限制: {incremental_limit} 個")
+
+                query = """
+                    SELECT
+                        ts.id,
+                        ts.test_question,
+                        ts.expected_category,
+                        ts.expected_keywords,
+                        ts.difficulty,
+                        ts.notes,
+                        ts.priority,
+                        ts.total_runs,
+                        ts.pass_count,
+                        ts.fail_count,
+                        ts.avg_score,
+                        ts.last_run_at,
+                        CASE
+                            WHEN ts.total_runs = 0 THEN 100  -- 新測試優先級最高
+                            WHEN ts.total_runs > 0 AND ts.fail_count::float / ts.total_runs > 0.5 THEN 90  -- 失敗率 > 50%%
+                            WHEN ts.avg_score < 0.6 THEN 85  -- 低分測試
+                            WHEN ts.last_run_at < NOW() - INTERVAL '7 days' THEN 70  -- 長期未測試
+                            ELSE 50
+                        END as selection_priority
+                    FROM test_scenarios ts
+                    WHERE ts.is_active = TRUE
+                      AND ts.status = 'approved'
+                      AND (
+                        ts.total_runs = 0  -- 新測試
+                        OR (ts.total_runs > 0 AND ts.fail_count::float / ts.total_runs > 0.5)  -- 失敗率 > 50%%
+                        OR ts.avg_score < 0.6  -- 低分測試
+                        OR ts.last_run_at < NOW() - INTERVAL '7 days'  -- 長期未測試
+                        OR ts.last_run_at IS NULL  -- 從未測試
+                      )
+                    ORDER BY selection_priority DESC, ts.priority DESC, ts.id
+                    LIMIT %s
+                """
+                cur.execute(query, (incremental_limit,))
+
+            elif strategy == 'failed_only':
+                # 僅失敗測試：平均分數 < 0.6 或失敗率 > 50%
+                failed_limit = limit or int(os.getenv('BACKTEST_FAILED_LIMIT', '50'))
+                print(f"   策略: 僅失敗測試（avg_score < 0.6 或失敗率 > 50%）")
+                print(f"   限制: {failed_limit} 個")
+
+                query = """
+                    SELECT
+                        ts.id,
+                        ts.test_question,
+                        ts.expected_category,
+                        ts.expected_keywords,
+                        ts.difficulty,
+                        ts.notes,
+                        ts.priority,
+                        ts.total_runs,
+                        ts.pass_count,
+                        ts.fail_count,
+                        ts.avg_score,
+                        ts.last_run_at,
+                        CASE
+                            WHEN ts.total_runs > 0
+                            THEN 1.0 - (ts.pass_count::float / ts.total_runs)
+                            ELSE 0.5
+                        END as fail_rate
+                    FROM test_scenarios ts
+                    WHERE ts.is_active = TRUE
+                      AND ts.status = 'approved'
+                      AND ts.total_runs > 0  -- 必須已測試過
+                      AND (
+                        ts.avg_score < 0.6  -- 低分測試
+                        OR (ts.fail_count::float / ts.total_runs) > 0.5  -- 失敗率 > 50%%
+                      )
+                    ORDER BY fail_rate DESC, COALESCE(ts.avg_score, 0) ASC, ts.priority DESC
+                    LIMIT %s
+                """
+                cur.execute(query, (failed_limit,))
+
+            else:  # 'full' 或其他
+                # 完整測試：所有已批准測試
+                print(f"   策略: 完整測試（所有已批准且啟用的測試）")
+                if limit:
+                    print(f"   限制: {limit} 個")
+
+                query = """
+                    SELECT
+                        ts.id,
+                        ts.test_question,
+                        ts.expected_category,
+                        ts.expected_keywords,
+                        ts.difficulty,
+                        ts.notes,
+                        ts.priority,
+                        ts.total_runs,
+                        ts.pass_count,
+                        ts.fail_count,
+                        ts.avg_score,
+                        ts.last_run_at
+                    FROM test_scenarios ts
+                    WHERE ts.is_active = TRUE
+                      AND ts.status = 'approved'
+                    ORDER BY ts.priority DESC, ts.id
+                """
+                if limit:
+                    query += " LIMIT %s"
+                    cur.execute(query, (limit,))
+                else:
+                    cur.execute(query)
+
+            rows = cur.fetchall()
+
+            # 轉換為字典列表
+            scenarios = []
+            for row in rows:
+                scenario = dict(row)
+                # 轉換關鍵字陣列為逗號分隔字串（與 Excel 格式一致）
+                if scenario.get('expected_keywords') and isinstance(scenario['expected_keywords'], list):
+                    scenario['expected_keywords'] = ', '.join(scenario['expected_keywords'])
+                scenarios.append(scenario)
+
+            print(f"   ✅ 載入 {len(scenarios)} 個測試情境")
+
+            # 顯示選擇統計
+            if strategy == 'incremental' and scenarios:
+                new_tests = sum(1 for s in scenarios if s.get('total_runs', 0) == 0)
+                failed_tests = sum(1 for s in scenarios if s.get('total_runs', 0) > 0 and
+                                 (s.get('avg_score', 1.0) < 0.6 or
+                                  (s.get('fail_count', 0) / max(s.get('total_runs', 1), 1)) > 0.5))
+                stale_tests = sum(1 for s in scenarios
+                                 if s.get('last_run_at') is not None and
+                                 isinstance(s.get('last_run_at'), datetime) and
+                                 (datetime.now() - s['last_run_at']).days > 7)
+
+                print(f"   📊 組成：新測試 {new_tests} | 失敗測試 {failed_tests} | 長期未測試 {stale_tests}")
+
+            return scenarios
+
+        finally:
+            cur.close()
+            conn.close()
+
     def load_test_scenarios_from_db(
         self,
         difficulty: str = None,
@@ -77,7 +243,7 @@ class BacktestFramework:
         min_avg_score: float = None,
         prioritize_failed: bool = True
     ) -> List[Dict]:
-        """從資料庫載入測試情境
+        """從資料庫載入測試情境（向後相容方法）
 
         Args:
             difficulty: 難度篩選 (easy, medium, hard)
@@ -171,26 +337,36 @@ class BacktestFramework:
         excel_path: str = None,
         difficulty: str = None,
         limit: int = None,
-        prioritize_failed: bool = True
+        prioritize_failed: bool = True,
+        strategy: str = None
     ) -> List[Dict]:
         """載入測試情境（支援資料庫與 Excel 兩種模式）
 
         Args:
             excel_path: Excel 檔案路徑（向後相容）
-            difficulty: 難度篩選
+            difficulty: 難度篩選（向後相容）
             limit: 限制數量
-            prioritize_failed: 優先選擇失敗率高的測試（僅資料庫模式）
+            prioritize_failed: 優先選擇失敗率高的測試（向後相容）
+            strategy: 測試策略（incremental/full/failed_only）優先於其他參數
 
         Returns:
             測試情境列表
         """
         if self.use_database:
             # 使用資料庫模式
-            return self.load_test_scenarios_from_db(
-                difficulty=difficulty,
-                limit=limit,
-                prioritize_failed=prioritize_failed
-            )
+            if strategy:
+                # 優先使用策略模式
+                return self.load_test_scenarios_by_strategy(
+                    strategy=strategy,
+                    limit=limit
+                )
+            else:
+                # 向後相容模式
+                return self.load_test_scenarios_from_db(
+                    difficulty=difficulty,
+                    limit=limit,
+                    prioritize_failed=prioritize_failed
+                )
         elif excel_path:
             # 使用 Excel 模式（向後相容）
             print(f"📖 載入測試情境: {excel_path}")
@@ -1033,15 +1209,31 @@ def main():
 
     # 載入測試情境
     if use_database:
-        # 資料庫模式：基於評分和難度篩選
+        # 資料庫模式：支援智能測試策略
+        selection_strategy = os.getenv("BACKTEST_SELECTION_STRATEGY", "full")  # incremental, full, failed_only
+
+        # 向後相容參數
         difficulty = os.getenv("BACKTEST_DIFFICULTY")  # easy, medium, hard, or None for all
         prioritize_failed = os.getenv("BACKTEST_PRIORITIZE_FAILED", "true").lower() == "true"
+        limit = os.getenv("BACKTEST_LIMIT")  # 限制數量
+        limit = int(limit) if limit else None
+
+        print(f"\n🎯 測試選擇策略: {selection_strategy}")
 
         try:
-            scenarios = backtest.load_test_scenarios(
-                difficulty=difficulty,
-                prioritize_failed=prioritize_failed
-            )
+            # 優先使用策略模式
+            if selection_strategy in ['incremental', 'full', 'failed_only']:
+                scenarios = backtest.load_test_scenarios(
+                    strategy=selection_strategy,
+                    limit=limit
+                )
+            else:
+                # 向後相容模式（使用難度篩選）
+                scenarios = backtest.load_test_scenarios(
+                    difficulty=difficulty,
+                    prioritize_failed=prioritize_failed,
+                    limit=limit
+                )
         except Exception as e:
             print(f"❌ 從資料庫載入測試情境失敗: {e}")
             print("💡 提示：請確認資料庫連線正常，且已執行測試題庫遷移")

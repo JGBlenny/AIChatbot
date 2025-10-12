@@ -520,6 +520,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     intent_name="unclear",
                     intent_type="unclear",
                     confidence=intent_result['confidence'],
+                    all_intents=intent_result.get('all_intents', []),
+                    secondary_intents=intent_result.get('secondary_intents', []),
+                    intent_ids=intent_result.get('intent_ids', []),
                     sources=sources if request.include_sources else None,
                     source_count=len(rag_results),
                     vendor_id=request.vendor_id,
@@ -530,6 +533,65 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
 
             # 如果 RAG 也找不到相關知識，使用意圖建議引擎分析
             # Phase B: 使用業務範圍判斷是否為新意圖
+
+            # 資料庫配置
+            db_config = {
+                'host': os.getenv('DB_HOST', 'postgres'),
+                'port': int(os.getenv('DB_PORT', 5432)),
+                'user': os.getenv('DB_USER', 'aichatbot'),
+                'password': os.getenv('DB_PASSWORD', 'aichatbot_password'),
+                'database': os.getenv('DB_NAME', 'aichatbot_admin')
+            }
+
+            # 1. 記錄到測試場景庫（主要目的：補充測試案例）
+            try:
+                test_scenario_conn = psycopg2.connect(**db_config)
+                test_scenario_cursor = test_scenario_conn.cursor()
+
+                # 檢查是否已存在相同問題（避免重複）
+                test_scenario_cursor.execute(
+                    "SELECT id FROM test_scenarios WHERE test_question = %s AND status = 'pending_review'",
+                    (request.message,)
+                )
+                existing_scenario = test_scenario_cursor.fetchone()
+
+                if not existing_scenario:
+                    test_scenario_cursor.execute("""
+                        INSERT INTO test_scenarios (
+                            test_question,
+                            expected_category,
+                            status,
+                            source,
+                            difficulty,
+                            priority,
+                            notes,
+                            test_purpose,
+                            created_by
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (
+                        request.message,
+                        'unclear',  # 意圖不明確
+                        'pending_review',
+                        'user_question',
+                        'hard',  # unclear 問題通常更難處理
+                        80,  # 優先級更高，需要特別關注
+                        f"用戶問題意圖不明確（Vendor {request.vendor_id}），系統無法識別並提供答案",
+                        "追蹤意圖識別缺口，改善分類器",
+                        request.user_id or 'system'
+                    ))
+                    scenario_id = test_scenario_cursor.fetchone()[0]
+                    test_scenario_conn.commit()
+                    print(f"✅ 記錄unclear問題到測試場景庫 (Scenario ID: {scenario_id})")
+                else:
+                    print(f"ℹ️  測試場景已存在 (ID: {existing_scenario[0]})")
+
+                test_scenario_cursor.close()
+                test_scenario_conn.close()
+            except Exception as e:
+                print(f"⚠️ 記錄測試場景失敗: {e}")
+
+            # 2. 使用意圖建議引擎分析（次要目的：發現新意圖）
             suggestion_engine = req.app.state.suggestion_engine
 
             # 分析問題（傳遞 vendor_id 以載入對應的業務範圍）
@@ -558,6 +620,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 answer=f"抱歉，我不太理解您的問題。請您換個方式描述，或撥打客服專線 {service_hotline} 尋求協助。",
                 intent_name="unclear",
                 confidence=intent_result['confidence'],
+                all_intents=intent_result.get('all_intents', []),
+                secondary_intents=intent_result.get('secondary_intents', []),
+                intent_ids=intent_result.get('intent_ids', []),
                 sources=None,
                 source_count=0,
                 vendor_id=request.vendor_id,
@@ -666,6 +731,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     intent_name=intent_result['intent_name'],
                     intent_type=intent_result.get('intent_type'),
                     confidence=intent_result['confidence'],
+                    all_intents=intent_result.get('all_intents', []),
+                    secondary_intents=intent_result.get('secondary_intents', []),
+                    intent_ids=intent_result.get('intent_ids', []),
                     sources=sources if request.include_sources else None,
                     source_count=len(rag_results),
                     vendor_id=request.vendor_id,
@@ -674,8 +742,80 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     timestamp=datetime.utcnow().isoformat()
                 )
 
-            # 如果 RAG 也找不到，才返回兜底回應
+            # 如果 RAG 也找不到，記錄問題並分析是否需要新意圖建議
             print(f"   ❌ RAG fallback 也沒有找到相關知識")
+
+            # 1. 記錄到測試場景庫（主要目的：補充測試案例）
+            try:
+                test_scenario_conn = psycopg2.connect(**db_config)
+                test_scenario_cursor = test_scenario_conn.cursor()
+
+                # 檢查是否已存在相同問題（避免重複）
+                test_scenario_cursor.execute(
+                    "SELECT id FROM test_scenarios WHERE test_question = %s AND status = 'pending_review'",
+                    (request.message,)
+                )
+                existing_scenario = test_scenario_cursor.fetchone()
+
+                if not existing_scenario:
+                    test_scenario_cursor.execute("""
+                        INSERT INTO test_scenarios (
+                            test_question,
+                            expected_category,
+                            expected_intent_id,
+                            status,
+                            source,
+                            difficulty,
+                            priority,
+                            notes,
+                            test_purpose,
+                            created_by
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (
+                        request.message,
+                        intent_result['intent_name'],
+                        intent_id,
+                        'pending_review',
+                        'user_question',
+                        'medium',
+                        70,  # 用戶真實問題，優先級較高
+                        f"用戶真實問題（Vendor {request.vendor_id}），系統無法提供答案",
+                        "驗證知識庫覆蓋率，追蹤用戶真實需求",
+                        request.user_id or 'system'
+                    ))
+                    scenario_id = test_scenario_cursor.fetchone()[0]
+                    test_scenario_conn.commit()
+                    print(f"✅ 記錄到測試場景庫 (Scenario ID: {scenario_id})")
+                else:
+                    print(f"ℹ️  測試場景已存在 (ID: {existing_scenario[0]})")
+
+                test_scenario_cursor.close()
+                test_scenario_conn.close()
+            except Exception as e:
+                print(f"⚠️ 記錄測試場景失敗: {e}")
+
+            # 2. 使用意圖建議引擎分析（次要目的：發現新意圖）
+            suggestion_engine = req.app.state.suggestion_engine
+
+            # 分析問題（傳遞 vendor_id 以載入對應的業務範圍）
+            analysis = suggestion_engine.analyze_unclear_question(
+                question=request.message,
+                vendor_id=request.vendor_id,
+                user_id=request.user_id,
+                conversation_context=None
+            )
+
+            # 如果屬於業務範圍，記錄建議意圖
+            if analysis.get('should_record'):
+                suggested_intent_id = suggestion_engine.record_suggestion(
+                    question=request.message,
+                    analysis=analysis,
+                    user_id=request.user_id
+                )
+                if suggested_intent_id:
+                    print(f"✅ 發現知識缺口建議 (Vendor {request.vendor_id}): {analysis['suggested_intent']['name']} (建議ID: {suggested_intent_id})")
+
             params = resolver.get_vendor_parameters(request.vendor_id)
             service_hotline = params.get('service_hotline', {}).get('value', '客服')
 
@@ -684,6 +824,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 intent_name=intent_result['intent_name'],
                 intent_type=intent_result.get('intent_type'),
                 confidence=intent_result['confidence'],
+                all_intents=intent_result.get('all_intents', []),
+                secondary_intents=intent_result.get('secondary_intents', []),
+                intent_ids=intent_result.get('intent_ids', []),
                 sources=None,
                 source_count=0,
                 vendor_id=request.vendor_id,

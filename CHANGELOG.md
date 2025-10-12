@@ -17,6 +17,137 @@
 
 ---
 
+## [1.5.0] - 2025-10-13
+
+### 新增 ⭐
+- **系統審計與清理**
+  - 完整系統盤查報告，涵蓋架構、代碼質量、文檔結構
+  - 文檔中心創建（docs/README.md），統一導覽 90+ 文檔
+  - 遺留代碼歸檔（backend → docs/archive/legacy/）
+  - 配置文件清理，移除重複的 .env 文件
+
+### 改進
+- **主 README 更新**
+  - 新增文檔中心入口
+  - 新增系統報告區塊
+  - 更新專案狀態表（新增系統審計任務）
+  - 更新最新功能說明
+
+### 文檔
+- 新增 [系統盤查報告 (2025-10-13)](docs/SYSTEM_AUDIT_REPORT_2025-10-13.md)
+- 新增 [文檔中心](docs/README.md) - 完整文檔導覽與分類索引
+- 新增 [DEPRECATED.md](docs/archive/legacy/backend/DEPRECATED.md) - 遺留代碼說明
+
+### 系統健康狀況
+- ✅ 7 個服務正常運行
+- ✅ 代碼質量良好（僅 3 個 TODO）
+- ✅ 架構清晰，無重複路由
+- ✅ 文檔已重組完成
+
+---
+
+## [1.4.0] - 2025-10-12
+
+### 新增 ⭐
+- **知識匯入系統**
+  - 支援 Excel/JSON/TXT 批量匯入知識
+  - 雙層去重機制：文字精確匹配 + 向量語意相似度（閾值 0.85）
+  - AI 自動處理：問題生成、向量嵌入、意圖推薦
+  - 自動創建測試情境（B2C 知識）
+  - 所有知識進入審核佇列，需人工審核
+  - 背景任務處理，支援大量數據匯入
+
+- **測試情境管理系統**
+  - 測試題庫資料庫（test_scenarios 表）
+  - 測試情境 CRUD API
+  - 用戶問題自動轉換（頻率 ≥2 自動創建測試情境）
+  - 智能重試機制（被拒絕情境達高頻 ≥5 自動重試）
+  - 審核中心統一介面（測試情境、用戶問題、意圖建議、AI 知識候選）
+  - AI 知識生成器（從測試情境自動生成知識）
+
+- **Business Scope 重構**
+  - 基於 `user_role` 動態決定 B2B/B2C 業務範圍
+  - 雙場景支援（customer / staff）
+  - 每個業者可同時服務客戶（B2C）和員工（B2B）
+  - 移除 `vendor_parameters` 中的 `business_scope` 欄位（簡化架構）
+
+- **回測框架 Phase 2 - 智能測試策略** 📊
+  - 三種測試選擇策略：
+    - **Incremental（增量）**: 自動選擇新測試、失敗測試、長期未測試（預設 100 個）
+    - **Full（完整）**: 測試所有已批准測試（無限制）
+    - **Failed Only（僅失敗）**: 只測試低分或高失敗率測試（預設 50 個）
+  - 優先級評分系統（新測試 100 分、高失敗率 90 分、低分 85 分、長期未測試 70 分）
+  - 統計資訊展示（組成分布、選擇原因）
+  - 環境變數配置（BACKTEST_SELECTION_STRATEGY、BACKTEST_INCREMENTAL_LIMIT）
+  - 向後相容性（保留所有舊環境變數）
+  - 詳見：[回測 Phase 2 變更日誌](docs/backtest/BACKTEST_PHASE2_CHANGELOG.md)
+
+- **回測框架 Phase 3 - 趨勢分析與視覺化** 📈
+  - 趨勢分析 API：
+    - `/api/backtest/trends/overview` - 趨勢總覽（7/30/90天/全部）
+    - `/api/backtest/trends/comparison` - 期間對比分析
+    - `/api/backtest/trends/alerts` - 自動品質警報（critical / warning / info）
+    - `/api/backtest/trends/metrics/{metric_name}` - 特定指標詳情
+  - 前端視覺化界面（/backtest/trends）：
+    - 🚨 警報區塊（即時顯示 critical 和 warning）
+    - 📊 趨勢摘要卡片（通過率、分數、信心度）
+    - 📈 互動式圖表（Chart.js）：通過率趨勢圖、分數與信心度雙軸圖
+    - 📊 期間對比分析（當前 vs 前一期間）
+  - 自動警報系統：
+    - 可配置閾值（通過率、分數、信心度）
+    - 三個警報級別（critical / warning / info）
+    - 智能建議（根據警報類型提供優化建議）
+  - 詳見：[回測 Phase 3 變更日誌](docs/backtest/BACKTEST_PHASE3_CHANGELOG.md)
+
+### 改進
+- **前端開發模式**
+  - 支援熱重載（Vite HMR）
+  - 前端代碼掛載到容器
+  - 開發效率大幅提升
+
+- **RAG 問題記錄邏輯**
+  - 修復：原先只有 unclear 意圖才記錄問題
+  - 改進：所有知識缺口都記錄（不論意圖是否清楚）
+  - 雙重記錄：
+    - `test_scenarios` 表（主要目的：補充測試案例）
+    - `suggested_intents` 表（次要目的：發現新意圖）
+
+### 修復
+- 修復 multi-intent 欄位在部分返回路徑為 null 的問題
+- 修復 RAG fallback 時未觸發知識缺口記錄的問題
+- 修復測試情境未出現在審核中心的問題
+
+### 資料庫變更
+- 新增 `test_scenarios` 表（測試題庫）
+- 新增 `backtest_runs` 表（回測執行記錄）
+- 新增 `backtest_results` 表（回測結果詳情）
+- 擴展 `ai_generated_knowledge_candidates` 表（新增 source_test_scenario_id）
+- 移除 `vendor_parameters.business_scope` 欄位
+- 新增自動創建測試情境觸發器（頻率 ≥2）
+- 新增拒絕重試機制（頻率 ≥5）
+
+### 效能提升
+- **回測通過率**: 66.67% → 83.33% (+25%)
+- **測試時間**: 日常測試節省 80%（使用 incremental 策略）
+- **Embedding 快取命中率**: 70-90%（Redis 快取）
+
+### 文檔
+- 新增 [知識匯入功能文檔](docs/features/KNOWLEDGE_IMPORT_FEATURE.md)
+- 新增 [知識匯入 API 參考](docs/api/KNOWLEDGE_IMPORT_API.md)
+- 新增 [測試情境狀態管理](docs/features/TEST_SCENARIO_STATUS_MANAGEMENT.md)
+- 新增 [拒絕情境智能重試](docs/features/REJECTED_SCENARIO_RETRY_IMPLEMENTATION.md)
+- 新增 [測試情境遷移指南](docs/guides/TEST_SCENARIOS_MIGRATION_GUIDE.md)
+- 新增 [Business Scope 重構文檔](docs/architecture/BUSINESS_SCOPE_REFACTORING.md)
+- 新增 [認證與業務範圍整合](docs/architecture/AUTH_AND_BUSINESS_SCOPE.md)
+- 新增 [Business Scope 測試報告](docs/architecture/BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md)
+- 新增 [前端開發模式指南](docs/guides/FRONTEND_DEV_MODE.md)
+- 新增 [回測策略指南](docs/backtest/backtest_strategies.md)
+- 新增 [環境變數參考](docs/backtest/backtest_env_vars.md)
+- 新增 [回測 Phase 2 變更日誌](docs/BACKTEST_PHASE2_CHANGELOG.md)
+- 新增 [回測 Phase 3 變更日誌](docs/BACKTEST_PHASE3_CHANGELOG.md)
+
+---
+
 ## [1.3.0] - 2025-10-11
 
 ### 新增 ⭐
@@ -281,4 +412,4 @@
 ---
 
 **維護者**: Claude Code
-**最後更新**: 2025-10-11
+**最後更新**: 2025-10-13

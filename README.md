@@ -292,6 +292,8 @@ AIChatbot/
 
 ## 📚 文件導覽
 
+**📖 文檔中心**: [docs/README.md](./docs/README.md) - 完整文檔導覽與分類索引 ⭐
+
 ### 🚀 快速開始
 - 📘 **快速開始指南**: [QUICKSTART.md](./QUICKSTART.md)
 - 📖 **開發工作流程**: [docs/guides/DEVELOPMENT_WORKFLOW.md](./docs/guides/DEVELOPMENT_WORKFLOW.md)
@@ -327,6 +329,11 @@ AIChatbot/
 
 ### 📊 測試與驗證
 - ✅ **Business Scope 測試報告**: [docs/architecture/BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md](./docs/architecture/BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md) ⭐ NEW
+
+### 📋 系統報告
+- 🔍 **系統盤查報告 (2025-10-13)**: [docs/SYSTEM_AUDIT_REPORT_2025-10-13.md](./docs/SYSTEM_AUDIT_REPORT_2025-10-13.md) - 系統健康檢查與改善建議 ⭐ NEW
+- 📝 **Business Scope 重構總結**: [docs/BUSINESS_SCOPE_REFACTORING_SUMMARY.md](./docs/BUSINESS_SCOPE_REFACTORING_SUMMARY.md)
+- 📝 **文檔更新總結**: [docs/DOCUMENTATION_UPDATE_SUMMARY.md](./docs/DOCUMENTATION_UPDATE_SUMMARY.md)
 
 ## 🔧 常用指令
 
@@ -616,6 +623,11 @@ curl http://localhost:8100/api/v1/knowledge-import/jobs/f87958b1-a660-477f-8725-
 | Migration 編號修復 | ✅ | 2025-10-12 |
 | 資料庫重複數據清理 | ✅ | 2025-10-12 |
 | 前端開發模式（熱重載）| ✅ | 2025-10-12 |
+| **系統審計與清理** ⭐ | | |
+| 系統盤查報告生成 | ✅ | 2025-10-13 |
+| 遺留代碼歸檔（backend → archive）| ✅ | 2025-10-13 |
+| 文檔中心創建（docs/README.md）| ✅ | 2025-10-13 |
+| 重複配置文件清理 | ✅ | 2025-10-13 |
 
 ### ⏳ 待開發功能（Phase 2）
 
@@ -652,17 +664,22 @@ MIT
 
 **維護者**: Claude Code
 **專案建立**: 2024
-**最後更新**: 2025-10-12
-**當前版本**: Phase 1 完成 + 測試情境管理系統 + Business Scope 重構
+**最後更新**: 2025-10-13
+**當前版本**: Phase 1 完成 + 測試情境管理系統 + Business Scope 重構 + 系統審計
 
-**最新功能** (2025-10-12):
-- 📥 **知識匯入系統** - 批量匯入 Excel/JSON/TXT，雙層去重（文字+語意），自動 AI 處理 ⭐ NEW
+**最新更新** (2025-10-13):
+- 🔍 **系統審計完成** - 完整健康檢查，代碼質量良好（僅 3 個 TODO），7 個服務正常運行 ⭐ NEW
+- 📁 **遺留代碼歸檔** - backend 目錄已移至 docs/archive/legacy/ 並標記為廢棄 ⭐ NEW
+- 📖 **文檔中心創建** - 新增 docs/README.md 作為文檔導覽中心 ⭐ NEW
+- 🧹 **配置清理** - 移除重複的 .env 檔案，統一環境變數管理 ⭐ NEW
+
+**近期功能** (2025-10-12):
+- 📥 **知識匯入系統** - 批量匯入 Excel/JSON/TXT，雙層去重（文字+語意），自動 AI 處理
 - 🎯 **Business Scope 重構** - 基於 user_role 動態決定 B2B/B2C 場景
 - 🔄 **雙場景支援** - 每個業者可同時服務客戶和員工
 - 💻 **前端開發模式** - 支援熱重載，提升開發效率
 - 🧪 **測試情境管理** - 自動轉換 + 智能重試機制
 - 📊 **審核中心** - 統一介面審核 4 類候選項目
 - 🤖 **AI 知識生成** - 從測試情境自動生成知識
-- 📁 **系統清理** - 60+ 文件整理完成
 
 **下一階段**: Phase 2 (外部 API 整合 + 認證系統) 規劃中
