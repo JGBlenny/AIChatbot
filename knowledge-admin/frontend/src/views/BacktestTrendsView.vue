@@ -200,9 +200,29 @@
 
 <script>
 import axios from 'axios';
-import { Chart, registerables } from 'chart.js';
+import {
+  Chart,
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
 
-Chart.register(...registerables);
+// 只註冊需要的組件
+Chart.register(
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 const API_BASE = '/api';
 
