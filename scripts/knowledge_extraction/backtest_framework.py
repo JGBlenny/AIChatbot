@@ -37,6 +37,7 @@ class BacktestFramework:
         self.quality_mode = quality_mode
         self.use_database = use_database
         self.results = []
+        self.run_started_at = datetime.now()  # 記錄開始時間
 
         # 資料庫連線配置
         self.db_config = {
@@ -625,14 +626,18 @@ class BacktestFramework:
             # 記錄結果
             result = {
                 'test_id': i,
+                'scenario_id': scenario.get('id'),  # 新增：測試情境 ID（用於資料庫）
                 'test_question': question,
                 'expected_category': scenario.get('expected_category', ''),
                 'actual_intent': system_response.get('intent_name', '') if system_response else '',
+                'all_intents': system_response.get('all_intents', []) if system_response else [],
                 'system_answer': system_response.get('answer', '')[:200] if system_response else '',
                 'confidence': system_response.get('confidence', 0) if system_response else 0,
                 'score': evaluation['score'],
                 'overall_score': overall_score,  # 新增：混合評分
                 'passed': passed,  # 使用混合判定
+                'category_match': evaluation['checks'].get('category_match', False),
+                'keyword_coverage': evaluation['checks'].get('keyword_coverage', 0.0),
                 'evaluation': json.dumps(evaluation['checks'], ensure_ascii=False),
                 'optimization_tips': '\n'.join(evaluation.get('optimization_tips', [])) if isinstance(evaluation.get('optimization_tips'), list) else evaluation.get('optimization_tips', ''),
                 'knowledge_sources': source_summary,
@@ -871,6 +876,135 @@ class BacktestFramework:
 
         return summary_data
 
+    def save_results_to_database(self, results: List[Dict], summary_data: Dict, output_path: str):
+        """儲存回測結果到資料庫"""
+        print(f"\n💾 儲存回測結果到資料庫...")
+
+        if not self.use_database:
+            print("   ⚠️  資料庫模式未啟用，跳過儲存")
+            return None
+
+        conn = self.get_db_connection()
+        cur = conn.cursor()
+
+        try:
+            # 1. 建立 backtest_run 記錄
+            completed_at = datetime.now()
+            duration_seconds = int((completed_at - self.run_started_at).total_seconds())
+
+            cur.execute("""
+                INSERT INTO backtest_runs (
+                    quality_mode, test_type, total_scenarios, executed_scenarios,
+                    status, rag_api_url, vendor_id,
+                    passed_count, failed_count, pass_rate,
+                    avg_score, avg_confidence,
+                    avg_relevance, avg_completeness, avg_accuracy,
+                    avg_intent_match, avg_quality_overall, ndcg_score,
+                    started_at, completed_at, duration_seconds,
+                    output_file_path, summary_file_path, executed_by
+                ) VALUES (
+                    %s, %s, %s, %s, 'completed', %s, %s,
+                    %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s
+                ) RETURNING id
+            """, (
+                self.quality_mode,
+                os.getenv('BACKTEST_TYPE', 'full'),
+                summary_data['total_tests'],
+                summary_data['total_tests'],
+                self.base_url,
+                self.vendor_id,
+                summary_data['passed_tests'],
+                summary_data['total_tests'] - summary_data['passed_tests'],
+                summary_data['pass_rate'],
+                summary_data['avg_score'],
+                summary_data['avg_confidence'],
+                summary_data.get('quality_stats', {}).get('avg_relevance'),
+                summary_data.get('quality_stats', {}).get('avg_completeness'),
+                summary_data.get('quality_stats', {}).get('avg_accuracy'),
+                summary_data.get('quality_stats', {}).get('avg_intent_match'),
+                summary_data.get('quality_stats', {}).get('avg_quality_overall'),
+                summary_data.get('quality_stats', {}).get('ndcg'),
+                self.run_started_at,
+                completed_at,
+                duration_seconds,
+                output_path,
+                output_path.replace('.xlsx', '_summary.txt'),
+                'backtest_framework'
+            ))
+
+            run_id = cur.fetchone()['id']
+            print(f"   ✅ 建立回測執行記錄 (Run ID: {run_id})")
+
+            # 2. 插入每個測試結果
+            inserted_count = 0
+            for result in results:
+                # 準備 all_intents 陣列
+                all_intents = result.get('all_intents', [])
+                if isinstance(all_intents, str):
+                    all_intents = [all_intents] if all_intents else []
+
+                cur.execute("""
+                    INSERT INTO backtest_results (
+                        run_id, scenario_id, test_question, expected_category,
+                        actual_intent, all_intents, system_answer, confidence,
+                        score, overall_score, passed,
+                        category_match, keyword_coverage,
+                        relevance, completeness, accuracy, intent_match,
+                        quality_overall, quality_reasoning,
+                        source_ids, source_count, knowledge_sources, optimization_tips,
+                        evaluation
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    )
+                """, (
+                    run_id,
+                    result.get('scenario_id'),
+                    result['test_question'],
+                    result.get('expected_category'),
+                    result.get('actual_intent'),
+                    all_intents,
+                    result.get('system_answer'),
+                    result.get('confidence', 0),
+                    result.get('score', 0),
+                    result.get('overall_score', result.get('score', 0)),
+                    result.get('passed', False),
+                    result.get('category_match', False),
+                    result.get('keyword_coverage', 0.0),
+                    result.get('relevance'),
+                    result.get('completeness'),
+                    result.get('accuracy'),
+                    result.get('intent_match'),
+                    result.get('quality_overall'),
+                    result.get('quality_reasoning'),
+                    result.get('source_ids'),
+                    result.get('source_count', 0),
+                    result.get('knowledge_sources'),
+                    result.get('optimization_tips'),
+                    result.get('evaluation')
+                ))
+                inserted_count += 1
+
+            conn.commit()
+            print(f"   ✅ 儲存 {inserted_count} 個測試結果到資料庫")
+            print(f"   📊 回測執行 ID: {run_id}")
+            print(f"   ⏱️  執行時間: {duration_seconds} 秒")
+
+            return run_id
+
+        except Exception as e:
+            conn.rollback()
+            print(f"   ❌ 儲存到資料庫失敗: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+
+        finally:
+            cur.close()
+            conn.close()
+
 
 def main():
     """主程式"""
@@ -960,7 +1094,10 @@ def main():
 
     # 生成報告
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    backtest.generate_report(results, output_path)
+    summary_data = backtest.generate_report(results, output_path)
+
+    # 儲存到資料庫
+    backtest.save_results_to_database(results, summary_data, output_path)
 
     print("✅ 回測完成！")
 
