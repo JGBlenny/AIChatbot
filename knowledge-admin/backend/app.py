@@ -15,8 +15,6 @@ from datetime import datetime
 
 # 導入測試情境路由
 from routes_test_scenarios import router as test_scenarios_router
-# 導入回測趨勢分析路由 (Phase 3)
-from routes_backtest_trends import router as backtest_trends_router
 
 app = FastAPI(
     title="知識庫管理 API",
@@ -26,8 +24,6 @@ app = FastAPI(
 
 # 包含測試情境路由
 app.include_router(test_scenarios_router)
-# 包含回測趨勢分析路由
-app.include_router(backtest_trends_router)
 
 # CORS 設定（允許前端跨域請求）
 app.add_middleware(

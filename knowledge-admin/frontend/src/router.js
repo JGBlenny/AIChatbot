@@ -12,8 +12,6 @@ import ChatTestView from './views/ChatTestView.vue';
 import KnowledgeImportView from './views/KnowledgeImportView.vue';
 // Backtest Results
 import BacktestView from './views/BacktestView.vue';
-// Backtest Trends (Phase 3)
-import BacktestTrendsView from './views/BacktestTrendsView.vue';
 // Test Scenarios Management
 import TestScenariosView from './views/TestScenariosView.vue';
 import PendingReviewView from './views/PendingReviewView.vue';
@@ -71,11 +69,6 @@ const routes = [
     path: '/backtest',
     name: 'Backtest',
     component: BacktestView
-  },
-  {
-    path: '/backtest/trends',
-    name: 'BacktestTrends',
-    component: BacktestTrendsView
   },
   {
     path: '/test-scenarios',
