@@ -863,6 +863,235 @@ async def get_backtest_summary():
         return {"summary": "尚無回測摘要"}
 
 
+@app.get("/api/backtest/runs")
+async def list_backtest_runs(
+    limit: int = Query(10, ge=1, le=50, description="每頁筆數"),
+    offset: int = Query(0, ge=0, description="偏移量")
+):
+    """
+    列出歷史回測執行記錄
+
+    從資料庫查詢所有已完成的回測執行，包含統計摘要
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        # 查詢回測執行記錄
+        cur.execute("""
+            SELECT
+                id,
+                quality_mode,
+                test_type,
+                total_scenarios,
+                executed_scenarios,
+                passed_count,
+                failed_count,
+                pass_rate,
+                avg_score,
+                avg_confidence,
+                avg_relevance,
+                avg_completeness,
+                avg_accuracy,
+                avg_intent_match,
+                avg_quality_overall,
+                ndcg_score,
+                started_at,
+                completed_at,
+                duration_seconds,
+                rag_api_url,
+                vendor_id
+            FROM backtest_runs
+            WHERE status = 'completed'
+            ORDER BY started_at DESC
+            LIMIT %s OFFSET %s
+        """, (limit, offset))
+
+        runs = []
+        for row in cur.fetchall():
+            run = dict(row)
+            # 轉換日期格式
+            if run.get('started_at'):
+                run['started_at'] = run['started_at'].isoformat()
+            if run.get('completed_at'):
+                run['completed_at'] = run['completed_at'].isoformat()
+            runs.append(run)
+
+        # 取得總數
+        cur.execute("""
+            SELECT COUNT(*) as total
+            FROM backtest_runs
+            WHERE status = 'completed'
+        """)
+        total = cur.fetchone()['total']
+
+        return {
+            "runs": runs,
+            "total": total,
+            "limit": limit,
+            "offset": offset
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"查詢回測記錄失敗: {str(e)}")
+
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.get("/api/backtest/runs/{run_id}/results")
+async def get_backtest_run_results(
+    run_id: int,
+    status_filter: Optional[str] = Query(None, description="篩選狀態 (all/failed/passed)"),
+    limit: int = Query(50, ge=1, le=200, description="每頁筆數"),
+    offset: int = Query(0, ge=0, description="偏移量")
+):
+    """
+    取得特定回測執行的詳細結果
+
+    從資料庫查詢指定回測執行的所有測試結果
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        # 先檢查 run 是否存在
+        cur.execute("""
+            SELECT id, quality_mode, test_type, started_at, completed_at,
+                   passed_count, failed_count, pass_rate, avg_score, avg_confidence
+            FROM backtest_runs
+            WHERE id = %s
+        """, (run_id,))
+
+        run_info = cur.fetchone()
+        if not run_info:
+            raise HTTPException(status_code=404, detail=f"回測執行 ID {run_id} 不存在")
+
+        run_info = dict(run_info)
+        if run_info.get('started_at'):
+            run_info['started_at'] = run_info['started_at'].isoformat()
+        if run_info.get('completed_at'):
+            run_info['completed_at'] = run_info['completed_at'].isoformat()
+
+        # 建立查詢
+        query = """
+            SELECT
+                id,
+                scenario_id,
+                test_question,
+                expected_category,
+                actual_intent,
+                all_intents,
+                system_answer,
+                confidence,
+                score,
+                overall_score,
+                passed,
+                category_match,
+                keyword_coverage,
+                relevance,
+                completeness,
+                accuracy,
+                intent_match,
+                quality_overall,
+                quality_reasoning,
+                source_ids,
+                source_count,
+                knowledge_sources,
+                optimization_tips,
+                tested_at
+            FROM backtest_results
+            WHERE run_id = %s
+        """
+        params = [run_id]
+
+        # 過濾狀態
+        if status_filter == "failed":
+            query += " AND passed = FALSE"
+        elif status_filter == "passed":
+            query += " AND passed = TRUE"
+
+        # 查詢總數（用於分頁）
+        count_query = f"SELECT COUNT(*) as total FROM backtest_results WHERE run_id = %s"
+        count_params = [run_id]
+        if status_filter == "failed":
+            count_query += " AND passed = FALSE"
+        elif status_filter == "passed":
+            count_query += " AND passed = TRUE"
+
+        cur.execute(count_query, count_params)
+        total = cur.fetchone()['total']
+
+        # 分頁
+        query += " ORDER BY id LIMIT %s OFFSET %s"
+        params.extend([limit, offset])
+
+        cur.execute(query, params)
+        results = []
+        for row in cur.fetchall():
+            result = dict(row)
+            # 轉換日期格式
+            if result.get('tested_at'):
+                result['tested_at'] = result['tested_at'].isoformat()
+            results.append(result)
+
+        # 計算統計（基於過濾後的結果）
+        stats_query = """
+            SELECT
+                COUNT(*) as total_tests,
+                COUNT(*) FILTER (WHERE passed = TRUE) as passed_tests,
+                COUNT(*) FILTER (WHERE passed = FALSE) as failed_tests,
+                AVG(score) as avg_score,
+                AVG(confidence) as avg_confidence,
+                AVG(relevance) as avg_relevance,
+                AVG(completeness) as avg_completeness,
+                AVG(accuracy) as avg_accuracy,
+                AVG(intent_match) as avg_intent_match,
+                AVG(quality_overall) as avg_quality_overall
+            FROM backtest_results
+            WHERE run_id = %s
+        """
+        stats_params = [run_id]
+        if status_filter == "failed":
+            stats_query += " AND passed = FALSE"
+        elif status_filter == "passed":
+            stats_query += " AND passed = TRUE"
+
+        cur.execute(stats_query, stats_params)
+        stats = dict(cur.fetchone())
+
+        # 計算通過率
+        if stats['total_tests'] > 0:
+            stats['pass_rate'] = round((stats['passed_tests'] / stats['total_tests']) * 100, 2)
+        else:
+            stats['pass_rate'] = 0
+
+        # 四捨五入數值
+        for key in ['avg_score', 'avg_confidence', 'avg_relevance', 'avg_completeness',
+                    'avg_accuracy', 'avg_intent_match', 'avg_quality_overall']:
+            if stats.get(key) is not None:
+                stats[key] = round(float(stats[key]), 3)
+
+        return {
+            "run_info": run_info,
+            "results": results,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "statistics": stats
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"查詢回測結果失敗: {str(e)}")
+
+    finally:
+        cur.close()
+        conn.close()
+
+
 class BacktestRunRequest(BaseModel):
     """回測執行請求模型"""
     quality_mode: Optional[str] = "basic"  # basic, detailed, hybrid
