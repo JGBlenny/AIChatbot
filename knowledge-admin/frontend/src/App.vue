@@ -71,6 +71,10 @@
             <span class="nav-icon">📊</span>
             <span class="nav-text" v-if="!sidebarCollapsed">回測結果</span>
           </router-link>
+          <router-link to="/backtest/trends" class="nav-item" :title="sidebarCollapsed ? '趨勢分析' : ''">
+            <span class="nav-icon">📈</span>
+            <span class="nav-text" v-if="!sidebarCollapsed">趨勢分析</span>
+          </router-link>
         </div>
       </nav>
 
@@ -120,7 +124,8 @@ export default {
         '/vendors': '業者管理',
         '/chat-test': 'Chat 測試',
         '/test-scenarios': '測試題庫',
-        '/backtest': '回測結果'
+        '/backtest': '回測結果',
+        '/backtest/trends': '趨勢分析'
       }
     };
   },
