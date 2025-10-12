@@ -303,6 +303,8 @@ class BacktestFramework:
         expected_keywords = test_scenario.get('expected_keywords', [])
         if isinstance(expected_keywords, str):
             expected_keywords = [k.strip() for k in expected_keywords.split(',') if k.strip()]
+        elif expected_keywords is None:
+            expected_keywords = []
 
         answer = system_response.get('answer', '')
         keyword_matches = sum(1 for kw in expected_keywords if kw in answer)
