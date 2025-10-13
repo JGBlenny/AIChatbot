@@ -1,12 +1,17 @@
 """
 未釐清問題管理服務
 負責記錄、查詢和管理低信心度的未釐清問題
+
+增強功能（Migration 34）：
+- 組合策略：語義相似度 ≥ 0.80 OR 編輯距離 ≤ 2
+- 拼音檢測：處理嚴重同音錯誤（語義 0.60-0.80 + 拼音相似度 ≥ 0.80）
 """
 from typing import List, Dict, Optional
 from datetime import datetime
 from asyncpg.pool import Pool
 import json
 import os
+from pypinyin import lazy_pinyin
 from .embedding_utils import get_embedding_client
 
 
@@ -31,12 +36,18 @@ class UnclearQuestionManager:
         intent_type: Optional[str] = None,
         similarity_score: Optional[float] = None,
         retrieved_docs: Optional[Dict] = None,
-        semantic_similarity_threshold: float = 0.85
+        semantic_similarity_threshold: float = 0.80,
+        pinyin_similarity_threshold: float = 0.80
     ) -> int:
         """
-        記錄未釐清問題（使用語義相似度去重）
+        記錄未釐清問題（使用多層檢測去重）
 
-        如果相同或語義相似的問題已存在，則更新頻率和最後詢問時間
+        如果相同或相似的問題已存在，則更新頻率和最後詢問時間
+
+        檢測策略（三層）：
+        1. 精確匹配
+        2. 組合檢測：語義相似度 ≥ 0.80 OR 編輯距離 ≤ 2
+        3. 拼音檢測：語義 0.60-0.80 + 拼音相似度 ≥ 0.80（針對嚴重同音錯誤）
 
         Args:
             question: 問題內容
@@ -44,7 +55,8 @@ class UnclearQuestionManager:
             intent_type: 意圖類型
             similarity_score: 相似度分數
             retrieved_docs: 檢索到的文件
-            semantic_similarity_threshold: 語義相似度閾值 (default: 0.85)
+            semantic_similarity_threshold: 語義相似度閾值 (default: 0.80)
+            pinyin_similarity_threshold: 拼音相似度閾值 (default: 0.80)
 
         Returns:
             問題 ID
@@ -84,13 +96,89 @@ class UnclearQuestionManager:
             sim_score = result['sim_score']
             frequency = result['current_frequency']
 
-            # 記錄結果
+            # 3. 如果是新問題，嘗試拼音檢測（針對嚴重同音錯誤）
             if is_new:
-                print(f"✅ 記錄新的未釐清問題 (ID: {unclear_question_id}): {question}")
+                print(f"🔍 新問題建立，檢查拼音相似度...")
+
+                # 查詢所有現有問題進行拼音比對
+                pinyin_candidates = await conn.fetch("""
+                    SELECT
+                        id,
+                        question,
+                        question_embedding,
+                        frequency
+                    FROM unclear_questions
+                    WHERE id != $1
+                        AND status != 'resolved'
+                        AND question_embedding IS NOT NULL
+                    ORDER BY frequency DESC
+                    LIMIT 100
+                """, unclear_question_id)
+
+                best_pinyin_match = None
+                best_pinyin_score = 0.0
+                best_semantic_score = 0.0
+
+                for candidate in pinyin_candidates:
+                    # 計算拼音相似度
+                    pinyin_sim = self._pinyin_similarity(question, candidate['question'])
+
+                    # 計算語義相似度
+                    # PostgreSQL vector type needs to be converted properly
+                    if candidate['question_embedding'] is not None:
+                        try:
+                            # Try to convert to list if it's not already
+                            if hasattr(candidate['question_embedding'], '__iter__') and not isinstance(candidate['question_embedding'], str):
+                                candidate_emb = [float(x) for x in candidate['question_embedding']]
+                            else:
+                                candidate_emb = list(candidate['question_embedding'])
+                        except (TypeError, ValueError):
+                            # If conversion fails, skip this candidate
+                            continue
+                    else:
+                        continue
+
+                    semantic_sim = self._cosine_similarity(question_embedding, candidate_emb)
+
+                    # 檢查是否符合拼音檢測條件：
+                    # 語義相似度在 0.60-0.80 之間 AND 拼音相似度 >= 閾值
+                    if (0.60 <= semantic_sim < semantic_similarity_threshold and
+                        pinyin_sim >= pinyin_similarity_threshold):
+
+                        if pinyin_sim > best_pinyin_score:
+                            best_pinyin_match = candidate
+                            best_pinyin_score = pinyin_sim
+                            best_semantic_score = semantic_sim
+
+                # 如果找到拼音匹配，合併到該問題
+                if best_pinyin_match:
+                    print(f"🎯 拼音檢測命中！")
+                    print(f"   新問題: {question}")
+                    print(f"   匹配問題: {best_pinyin_match['question']}")
+                    print(f"   語義相似度: {best_semantic_score:.4f}")
+                    print(f"   拼音相似度: {best_pinyin_score:.4f}")
+
+                    # 刪除剛建立的新問題
+                    await conn.execute("""
+                        DELETE FROM unclear_questions WHERE id = $1
+                    """, unclear_question_id)
+
+                    # 更新匹配問題的頻率
+                    await conn.execute("""
+                        UPDATE unclear_questions
+                        SET frequency = frequency + 1,
+                            last_asked_at = NOW()
+                        WHERE id = $1
+                    """, best_pinyin_match['id'])
+
+                    # 返回匹配問題的 ID
+                    return best_pinyin_match['id']
+                else:
+                    print(f"✅ 記錄新的未釐清問題 (ID: {unclear_question_id}): {question}")
             elif matched_question == question:
                 print(f"♻️  精確匹配已存在問題 (ID: {unclear_question_id}), 頻率: {frequency}")
             else:
-                print(f"🔗 語義匹配已存在問題 (ID: {unclear_question_id})")
+                print(f"🔗 語義/編輯距離匹配已存在問題 (ID: {unclear_question_id})")
                 print(f"   新問題: {question}")
                 print(f"   相似問題: {matched_question}")
                 print(f"   相似度: {sim_score:.4f}, 頻率: {frequency}")
@@ -166,6 +254,100 @@ class UnclearQuestionManager:
             print(f"   ✅ 獲得問題向量: 維度 {len(embedding)}")
 
         return embedding
+
+    def _pinyin_similarity(self, text1: str, text2: str) -> float:
+        """
+        計算拼音相似度（用於檢測嚴重同音錯誤）
+
+        使用 Levenshtein 距離比較拼音字符串的相似度
+
+        Args:
+            text1: 第一個文字
+            text2: 第二個文字
+
+        Returns:
+            拼音相似度分數 (0.0-1.0)
+        """
+        # 轉換為拼音（不帶音調）
+        pinyin1 = ''.join(lazy_pinyin(text1))
+        pinyin2 = ''.join(lazy_pinyin(text2))
+
+        # 使用編輯距離計算相似度
+        max_len = max(len(pinyin1), len(pinyin2))
+        if max_len == 0:
+            return 1.0
+
+        # 簡單的編輯距離實現
+        edit_dist = self._levenshtein_distance(pinyin1, pinyin2)
+
+        # 轉換為相似度分數 (0.0-1.0)
+        similarity = 1.0 - (edit_dist / max_len)
+
+        return similarity
+
+    def _levenshtein_distance(self, s1: str, s2: str) -> int:
+        """
+        計算 Levenshtein 編輯距離
+
+        Args:
+            s1: 第一個字符串
+            s2: 第二個字符串
+
+        Returns:
+            編輯距離
+        """
+        if len(s1) < len(s2):
+            return self._levenshtein_distance(s2, s1)
+
+        if len(s2) == 0:
+            return len(s1)
+
+        previous_row = range(len(s2) + 1)
+        for i, c1 in enumerate(s1):
+            current_row = [i + 1]
+            for j, c2 in enumerate(s2):
+                insertions = previous_row[j + 1] + 1
+                deletions = current_row[j] + 1
+                substitutions = previous_row[j] + (c1 != c2)
+                current_row.append(min(insertions, deletions, substitutions))
+            previous_row = current_row
+
+        return previous_row[-1]
+
+    def _cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+        """
+        計算兩個向量的餘弦相似度
+
+        Args:
+            vec1: 第一個向量
+            vec2: 第二個向量
+
+        Returns:
+            餘弦相似度 (0.0-1.0)
+        """
+        import numpy as np
+
+        # 確保向量是 numpy 陣列
+        try:
+            v1 = np.array(vec1, dtype=float)
+            v2 = np.array(vec2, dtype=float)
+        except (TypeError, ValueError) as e:
+            print(f"⚠️  向量轉換錯誤: {e}")
+            print(f"   vec1 type: {type(vec1)}, vec2 type: {type(vec2)}")
+            return 0.0
+
+        # 計算點積
+        dot_product = np.dot(v1, v2)
+
+        # 計算向量長度
+        norm1 = np.linalg.norm(v1)
+        norm2 = np.linalg.norm(v2)
+
+        # 避免除以零
+        if norm1 == 0 or norm2 == 0:
+            return 0.0
+
+        return float(dot_product / (norm1 * norm2))
 
     async def get_unclear_questions(
         self,
