@@ -7,23 +7,19 @@ import asyncpg
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 import os
+from .db_utils import get_db_config
 
 
 class IntentManager:
     """意圖管理服務"""
 
     def __init__(self):
-        self.db_config = {
-            'host': os.getenv('DB_HOST', 'postgres'),
-            'port': int(os.getenv('DB_PORT', 5432)),
-            'user': os.getenv('DB_USER', 'aichatbot'),
-            'password': os.getenv('DB_PASSWORD', 'aichatbot_password'),
-            'database': os.getenv('DB_NAME', 'aichatbot_admin')
-        }
+        pass
 
     async def _get_connection(self):
-        """取得資料庫連接"""
-        return await asyncpg.connect(**self.db_config)
+        """取得資料庫連接（使用共用配置）"""
+        db_config = get_db_config()
+        return await asyncpg.connect(**db_config)
 
     # ========================================
     # 查詢操作

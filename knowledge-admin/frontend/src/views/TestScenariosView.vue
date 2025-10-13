@@ -398,7 +398,7 @@ export default {
     },
 
     async generateKnowledge(scenario) {
-      if (!confirm(`確定要為「${scenario.test_question}」生成知識嗎？\n\n這將使用 AI (${process.env.KNOWLEDGE_GEN_MODEL || 'gpt-3.5-turbo'}) 生成 1-3 個候選答案供您審核。`)) {
+      if (!confirm(`確定要為「${scenario.test_question}」生成知識嗎？\n\n這將使用 AI 生成 1-3 個候選答案供您審核。`)) {
         return;
       }
 
@@ -408,7 +408,7 @@ export default {
       try {
         // 先檢查是否已有知識
         const checkResponse = await axios.post(
-          `http://localhost:8100/api/v1/test-scenarios/${scenario.id}/check-knowledge`
+          `/rag-api/v1/test-scenarios/${scenario.id}/check-knowledge`
         );
 
         if (checkResponse.data.has_knowledge) {
@@ -420,7 +420,7 @@ export default {
 
         // 生成知識候選
         const generateResponse = await axios.post(
-          `http://localhost:8100/api/v1/test-scenarios/${scenario.id}/generate-knowledge`,
+          `/rag-api/v1/test-scenarios/${scenario.id}/generate-knowledge`,
           { num_candidates: 2 }
         );
 

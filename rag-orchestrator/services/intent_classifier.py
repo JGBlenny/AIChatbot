@@ -10,6 +10,7 @@ from typing import Dict, List, Optional
 from pathlib import Path
 from openai import OpenAI
 from datetime import datetime
+from .db_utils import get_db_config
 
 
 class IntentClassifier:
@@ -26,15 +27,6 @@ class IntentClassifier:
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.use_database = use_database
         self.last_reload = None
-
-        # 資料庫配置
-        self.db_config = {
-            'host': os.getenv('DB_HOST', 'postgres'),
-            'port': int(os.getenv('DB_PORT', 5432)),
-            'user': os.getenv('DB_USER', 'aichatbot'),
-            'password': os.getenv('DB_PASSWORD', 'aichatbot_password'),
-            'database': os.getenv('DB_NAME', 'aichatbot_admin')
-        }
 
         # YAML 配置路徑（fallback）
         if config_path is None:
@@ -89,14 +81,9 @@ class IntentClassifier:
 
     def _load_intents_from_db_sync(self) -> List[Dict]:
         """從資料庫載入啟用的意圖（同步版本）"""
-        # 建立資料庫連接
-        conn = psycopg2.connect(
-            host=self.db_config['host'],
-            port=self.db_config['port'],
-            user=self.db_config['user'],
-            password=self.db_config['password'],
-            database=self.db_config['database']
-        )
+        # 建立資料庫連接（使用共用的配置）
+        db_config = get_db_config()
+        conn = psycopg2.connect(**db_config)
 
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -164,13 +151,9 @@ class IntentClassifier:
             return
 
         try:
-            conn = psycopg2.connect(
-                host=self.db_config['host'],
-                port=self.db_config['port'],
-                user=self.db_config['user'],
-                password=self.db_config['password'],
-                database=self.db_config['database']
-            )
+            # 使用共用的資料庫配置
+            db_config = get_db_config()
+            conn = psycopg2.connect(**db_config)
 
             try:
                 cursor = conn.cursor()
@@ -326,7 +309,9 @@ class IntentClassifier:
             # 從資料庫查詢所有意圖的 ID（保持順序）
             if self.use_database:
                 try:
-                    conn = psycopg2.connect(**self.db_config)
+                    # 使用共用的資料庫配置
+                    db_config = get_db_config()
+                    conn = psycopg2.connect(**db_config)
                     cursor = conn.cursor()
                     # 逐個查詢以保持順序
                     for intent_name in all_intent_names:

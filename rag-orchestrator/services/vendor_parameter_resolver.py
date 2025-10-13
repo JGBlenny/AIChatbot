@@ -9,6 +9,7 @@ import psycopg2
 import psycopg2.extras
 from typing import Dict, List, Optional, Set
 from decimal import Decimal
+from .db_utils import get_db_config
 
 
 class VendorParameterResolver:
@@ -16,27 +17,13 @@ class VendorParameterResolver:
 
     def __init__(self):
         """初始化參數解析器"""
-        # 資料庫配置
-        self.db_config = {
-            'host': os.getenv('DB_HOST', 'postgres'),
-            'port': int(os.getenv('DB_PORT', 5432)),
-            'user': os.getenv('DB_USER', 'aichatbot'),
-            'password': os.getenv('DB_PASSWORD', 'aichatbot_password'),
-            'database': os.getenv('DB_NAME', 'aichatbot_admin')
-        }
-
         # 參數快取（避免重複查詢）
         self._cache: Dict[int, Dict[str, any]] = {}
 
     def _get_db_connection(self):
-        """建立資料庫連接"""
-        return psycopg2.connect(
-            host=self.db_config['host'],
-            port=self.db_config['port'],
-            user=self.db_config['user'],
-            password=self.db_config['password'],
-            database=self.db_config['database']
-        )
+        """建立資料庫連接（使用共用配置）"""
+        db_config = get_db_config()
+        return psycopg2.connect(**db_config)
 
     def get_vendor_parameters(
         self,

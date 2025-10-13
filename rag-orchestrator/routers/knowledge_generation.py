@@ -6,6 +6,8 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 import json
+import os
+from services.embedding_utils import generate_embedding_with_pgvector
 
 router = APIRouter()
 
@@ -20,6 +22,9 @@ def get_knowledge_generator():
         from services.knowledge_generator import KnowledgeGenerator
         _knowledge_generator = KnowledgeGenerator()
     return _knowledge_generator
+
+
+# 已移至 services/embedding_utils.py，統一使用共用函數
 
 
 # ============================================================
@@ -251,6 +256,15 @@ async def generate_knowledge_for_scenario(
                 context=context
             )
 
+            # 5.5. 為問題生成 embedding（一次性生成，所有候選共用）
+            print(f"🔮 為問題生成 embedding...")
+            question_embedding = await generate_embedding_with_pgvector(scenario['test_question'], verbose=True)
+
+            if question_embedding:
+                print(f"✅ Embedding 已生成並轉換為 PostgreSQL vector 格式")
+            else:
+                print(f"⚠️ 未能生成 embedding，候選將不含向量（可能影響後續檢索）")
+
             # 6. 儲存候選到資料庫
             candidate_ids = []
             for candidate in candidates:
@@ -258,6 +272,7 @@ async def generate_knowledge_for_scenario(
                     INSERT INTO ai_generated_knowledge_candidates (
                         test_scenario_id,
                         question,
+                        question_embedding,
                         generated_answer,
                         confidence_score,
                         generation_prompt,
@@ -266,11 +281,12 @@ async def generate_knowledge_for_scenario(
                         suggested_sources,
                         warnings,
                         status
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending_review')
+                    ) VALUES ($1, $2, $3::vector, $4, $5, $6, $7, $8, $9, $10, 'pending_review')
                     RETURNING id
                 """,
                     scenario_id,
                     scenario['test_question'],
+                    question_embedding,  # 🔧 新增：embedding 向量（已轉換為字串格式）
                     candidate['answer'],
                     candidate.get('confidence_score', 0.7),
                     None,  # generation_prompt（可選）
@@ -662,58 +678,3 @@ async def review_candidate(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"審核候選失敗: {str(e)}")
-
-
-@router.get("/knowledge-candidates/stats")
-async def get_generation_stats(req: Request):
-    """
-    取得 AI 知識生成統計資訊
-
-    Returns:
-        Dict: 統計資料（通過率、編輯率等）
-    """
-    try:
-        db_pool = req.app.state.db_pool
-
-        async with db_pool.acquire() as conn:
-            stats = await conn.fetchrow("""
-                SELECT * FROM v_ai_knowledge_generation_stats
-            """)
-
-            if not stats:
-                return {
-                    "pending_count": 0,
-                    "needs_revision_count": 0,
-                    "approved_count": 0,
-                    "rejected_count": 0,
-                    "avg_confidence_approved": 0.0,
-                    "avg_confidence_rejected": 0.0,
-                    "approved_with_edits": 0,
-                    "approved_without_edits": 0,
-                    "total_generated": 0,
-                    "approval_rate": 0.0,
-                    "edit_rate": 0.0
-                }
-
-            total = (stats['approved_count'] or 0) + (stats['rejected_count'] or 0)
-            approval_rate = (stats['approved_count'] / total * 100) if total > 0 else 0.0
-            edit_rate = ((stats['approved_with_edits'] or 0) / (stats['approved_count'] or 1) * 100) if stats['approved_count'] > 0 else 0.0
-
-            return {
-                "pending_count": stats['pending_count'] or 0,
-                "needs_revision_count": stats['needs_revision_count'] or 0,
-                "approved_count": stats['approved_count'] or 0,
-                "rejected_count": stats['rejected_count'] or 0,
-                "avg_confidence_approved": float(stats['avg_confidence_approved'] or 0.0),
-                "avg_confidence_rejected": float(stats['avg_confidence_rejected'] or 0.0),
-                "approved_with_edits": stats['approved_with_edits'] or 0,
-                "approved_without_edits": stats['approved_without_edits'] or 0,
-                "total_generated": total + (stats['pending_count'] or 0) + (stats['needs_revision_count'] or 0),
-                "approval_rate": round(approval_rate, 2),
-                "edit_rate": round(edit_rate, 2)
-            }
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"取得統計資料失敗: {str(e)}")

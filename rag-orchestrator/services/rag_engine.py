@@ -3,10 +3,10 @@ RAG 檢索引擎
 負責向量相似度搜尋，從知識庫中檢索相關內容
 """
 import os
-import httpx
 from typing import List, Dict, Optional
 import asyncpg
 from asyncpg.pool import Pool
+from .embedding_utils import get_embedding_client
 
 
 class RAGEngine:
@@ -20,10 +20,8 @@ class RAGEngine:
             db_pool: 資料庫連接池
         """
         self.db_pool = db_pool
-        self.embedding_api_url = os.getenv(
-            "EMBEDDING_API_URL",
-            "http://embedding-api:5000/api/v1/embeddings"
-        )
+        # 使用共用的 embedding 客戶端
+        self.embedding_client = get_embedding_client()
 
     async def search(
         self,
@@ -228,30 +226,16 @@ class RAGEngine:
         Returns:
             向量列表，如果失敗則返回 None
         """
-        try:
-            print(f"🔍 [RAG Engine] 呼叫 Embedding API: {self.embedding_api_url}")
-            print(f"   查詢文字: {text[:50]}...")
+        # 使用共用的 embedding 客戶端（verbose=True 保持詳細日誌）
+        print(f"🔍 [RAG Engine] 呼叫 Embedding API")
+        print(f"   查詢文字: {text[:50]}...")
 
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
-                    self.embedding_api_url,
-                    json={"text": text}
-                )
-                response.raise_for_status()
-                data = response.json()
-                embedding = data.get('embedding')
+        embedding = await self.embedding_client.get_embedding(text, verbose=True)
 
-                if embedding:
-                    print(f"   ✅ 獲得向量: 維度 {len(embedding)}")
-                else:
-                    print(f"   ⚠️  回應中無 embedding 欄位: {data}")
+        if embedding:
+            print(f"   ✅ 獲得向量: 維度 {len(embedding)}")
 
-                return embedding
-        except Exception as e:
-            print(f"❌ Embedding API 呼叫失敗: {e}")
-            import traceback
-            traceback.print_exc()
-            return None
+        return embedding
 
     async def get_knowledge_by_id(self, knowledge_id: int) -> Optional[Dict]:
         """

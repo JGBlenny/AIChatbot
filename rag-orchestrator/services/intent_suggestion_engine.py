@@ -10,6 +10,7 @@ import psycopg2.extras
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from openai import OpenAI
+from .db_utils import get_db_config
 
 
 class IntentSuggestionEngine:
@@ -18,15 +19,6 @@ class IntentSuggestionEngine:
     def __init__(self):
         """初始化引擎"""
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-        # 資料庫配置
-        self.db_config = {
-            'host': os.getenv('DB_HOST', 'postgres'),
-            'port': int(os.getenv('DB_PORT', 5432)),
-            'user': os.getenv('DB_USER', 'aichatbot'),
-            'password': os.getenv('DB_PASSWORD', 'aichatbot_password'),
-            'database': os.getenv('DB_NAME', 'aichatbot_admin')
-        }
 
         # 業務範圍 cache (vendor_id -> business_scope)
         self._business_scope_cache = {}
@@ -50,7 +42,7 @@ class IntentSuggestionEngine:
         if vendor_id in self._business_scope_cache:
             return self._business_scope_cache[vendor_id]
 
-        conn = psycopg2.connect(**self.db_config)
+        conn = psycopg2.connect(**get_db_config())
 
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -317,10 +309,28 @@ class IntentSuggestionEngine:
         if not suggested:
             return None
 
-        conn = psycopg2.connect(**self.db_config)
+        conn = psycopg2.connect(**get_db_config())
 
         try:
             cursor = conn.cursor()
+
+            # 🔧 新增：檢查是否已有相同名稱的啟用 intent
+            cursor.execute("""
+                SELECT id, name, is_enabled
+                FROM intents
+                WHERE name = %s
+                LIMIT 1
+            """, (suggested['name'],))
+
+            existing_intent = cursor.fetchone()
+
+            if existing_intent:
+                intent_id, intent_name, is_enabled = existing_intent
+                if is_enabled:
+                    print(f"⚠️ 意圖「{intent_name}」已存在且啟用（ID: {intent_id}），跳過建議")
+                    return None
+                else:
+                    print(f"ℹ️ 意圖「{intent_name}」已存在但未啟用（ID: {intent_id}），仍記錄建議")
 
             # 檢查是否已有相似的建議（相同名稱或問題）
             cursor.execute("""
@@ -404,7 +414,7 @@ class IntentSuggestionEngine:
         Returns:
             建議意圖列表
         """
-        conn = psycopg2.connect(**self.db_config)
+        conn = psycopg2.connect(**get_db_config())
 
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -453,7 +463,7 @@ class IntentSuggestionEngine:
         Returns:
             建立的意圖 ID，失敗則返回 None
         """
-        conn = psycopg2.connect(**self.db_config)
+        conn = psycopg2.connect(**get_db_config())
 
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -476,24 +486,50 @@ class IntentSuggestionEngine:
             intent_id = None
 
             if create_intent:
-                # 建立新意圖
+                # 🔧 新增：檢查是否已有相同名稱的 intent
                 cursor.execute("""
-                    INSERT INTO intents (
-                        name, type, description, keywords,
-                        confidence_threshold, is_enabled, priority,
-                        created_by
-                    ) VALUES (%s, %s, %s, %s, 0.75, true, 0, %s)
-                    RETURNING id
-                """, (
-                    suggestion['suggested_name'],
-                    suggestion['suggested_type'],
-                    suggestion['suggested_description'],
-                    suggestion['suggested_keywords'],
-                    reviewed_by
-                ))
+                    SELECT id, name, is_enabled
+                    FROM intents
+                    WHERE name = %s
+                    LIMIT 1
+                """, (suggestion['suggested_name'],))
 
-                intent_id = cursor.fetchone()['id']
-                print(f"✅ 建立新意圖: {suggestion['suggested_name']} (ID: {intent_id})")
+                existing_intent = cursor.fetchone()
+
+                if existing_intent:
+                    intent_id = existing_intent['id']
+                    is_enabled = existing_intent['is_enabled']
+                    if is_enabled:
+                        print(f"⚠️ 意圖「{suggestion['suggested_name']}」已存在且啟用（ID: {intent_id}），使用現有 intent")
+                    else:
+                        print(f"⚠️ 意圖「{suggestion['suggested_name']}」已存在但未啟用（ID: {intent_id}），重新啟用")
+                        # 重新啟用現有 intent
+                        cursor.execute("""
+                            UPDATE intents
+                            SET is_enabled = TRUE,
+                                updated_at = CURRENT_TIMESTAMP,
+                                updated_by = %s
+                            WHERE id = %s
+                        """, (reviewed_by, intent_id))
+                else:
+                    # 建立新意圖
+                    cursor.execute("""
+                        INSERT INTO intents (
+                            name, type, description, keywords,
+                            confidence_threshold, is_enabled, priority,
+                            created_by
+                        ) VALUES (%s, %s, %s, %s, 0.75, true, 0, %s)
+                        RETURNING id
+                    """, (
+                        suggestion['suggested_name'],
+                        suggestion['suggested_type'],
+                        suggestion['suggested_description'],
+                        suggestion['suggested_keywords'],
+                        reviewed_by
+                    ))
+
+                    intent_id = cursor.fetchone()['id']
+                    print(f"✅ 建立新意圖: {suggestion['suggested_name']} (ID: {intent_id})")
 
             # 更新建議狀態
             cursor.execute("""
@@ -537,7 +573,7 @@ class IntentSuggestionEngine:
         Returns:
             是否成功
         """
-        conn = psycopg2.connect(**self.db_config)
+        conn = psycopg2.connect(**get_db_config())
 
         try:
             cursor = conn.cursor()
@@ -595,7 +631,7 @@ class IntentSuggestionEngine:
         Returns:
             建立的意圖 ID，失敗則返回 None
         """
-        conn = psycopg2.connect(**self.db_config)
+        conn = psycopg2.connect(**get_db_config())
 
         try:
             cursor = conn.cursor()
@@ -654,7 +690,7 @@ class IntentSuggestionEngine:
         Returns:
             統計資訊字典
         """
-        conn = psycopg2.connect(**self.db_config)
+        conn = psycopg2.connect(**get_db_config())
 
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)

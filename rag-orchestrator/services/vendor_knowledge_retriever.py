@@ -3,12 +3,13 @@
 根據業者 ID 和意圖檢索知識，自動處理模板變數替換
 """
 import os
-import httpx
 import psycopg2
 import psycopg2.extras
 from typing import Dict, List, Optional
 from .vendor_parameter_resolver import VendorParameterResolver
 from .business_scope_utils import get_allowed_audiences_for_scope
+from .embedding_utils import get_embedding_client
+from .db_utils import get_db_config
 
 
 class VendorKnowledgeRetriever:
@@ -16,33 +17,16 @@ class VendorKnowledgeRetriever:
 
     def __init__(self):
         """初始化知識檢索器"""
-        # 資料庫配置
-        self.db_config = {
-            'host': os.getenv('DB_HOST', 'postgres'),
-            'port': int(os.getenv('DB_PORT', 5432)),
-            'user': os.getenv('DB_USER', 'aichatbot'),
-            'password': os.getenv('DB_PASSWORD', 'aichatbot_password'),
-            'database': os.getenv('DB_NAME', 'aichatbot_admin')
-        }
-
-        # Embedding API 配置
-        self.embedding_api_url = os.getenv(
-            "EMBEDDING_API_URL",
-            "http://embedding-api:5000/api/v1/embeddings"
-        )
+        # 使用共用的 embedding 客戶端
+        self.embedding_client = get_embedding_client()
 
         # 參數解析器
         self.param_resolver = VendorParameterResolver()
 
     def _get_db_connection(self):
-        """建立資料庫連接"""
-        return psycopg2.connect(
-            host=self.db_config['host'],
-            port=self.db_config['port'],
-            user=self.db_config['user'],
-            password=self.db_config['password'],
-            database=self.db_config['database']
-        )
+        """建立資料庫連接（使用共用配置）"""
+        db_config = get_db_config()
+        return psycopg2.connect(**db_config)
 
     def retrieve_knowledge(
         self,
@@ -170,18 +154,8 @@ class VendorKnowledgeRetriever:
         Returns:
             向量列表，如果失敗則返回 None
         """
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
-                    self.embedding_api_url,
-                    json={"text": text}
-                )
-                response.raise_for_status()
-                data = response.json()
-                return data.get('embedding')
-        except Exception as e:
-            print(f"❌ Embedding API 呼叫失敗: {e}")
-            return None
+        # 使用共用的 embedding 客戶端（verbose=False 保持簡潔）
+        return await self.embedding_client.get_embedding(text, verbose=False)
 
     async def retrieve_knowledge_hybrid(
         self,

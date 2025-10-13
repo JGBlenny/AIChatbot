@@ -14,6 +14,7 @@ import os
 import psycopg2
 import psycopg2.extras
 from services.business_scope_utils import get_allowed_audiences_for_scope
+from services.db_utils import get_db_config
 
 router = APIRouter()
 
@@ -534,18 +535,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             # 如果 RAG 也找不到相關知識，使用意圖建議引擎分析
             # Phase B: 使用業務範圍判斷是否為新意圖
 
-            # 資料庫配置
-            db_config = {
-                'host': os.getenv('DB_HOST', 'postgres'),
-                'port': int(os.getenv('DB_PORT', 5432)),
-                'user': os.getenv('DB_USER', 'aichatbot'),
-                'password': os.getenv('DB_PASSWORD', 'aichatbot_password'),
-                'database': os.getenv('DB_NAME', 'aichatbot_admin')
-            }
-
             # 1. 記錄到測試場景庫（主要目的：補充測試案例）
             try:
-                test_scenario_conn = psycopg2.connect(**db_config)
+                test_scenario_conn = psycopg2.connect(**get_db_config())
                 test_scenario_cursor = test_scenario_conn.cursor()
 
                 # 檢查是否已存在相同問題（避免重複）
@@ -632,15 +624,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             )
 
         # Step 2: 獲取意圖 ID
-        db_config = {
-            'host': os.getenv('DB_HOST', 'postgres'),
-            'port': int(os.getenv('DB_PORT', 5432)),
-            'user': os.getenv('DB_USER', 'aichatbot'),
-            'password': os.getenv('DB_PASSWORD', 'aichatbot_password'),
-            'database': os.getenv('DB_NAME', 'aichatbot_admin')
-        }
-
-        conn = psycopg2.connect(**db_config)
+        conn = psycopg2.connect(**get_db_config())
         cursor = conn.cursor()
         cursor.execute(
             "SELECT id FROM intents WHERE name = %s AND is_enabled = true",
@@ -747,7 +731,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
 
             # 1. 記錄到測試場景庫（主要目的：補充測試案例）
             try:
-                test_scenario_conn = psycopg2.connect(**db_config)
+                test_scenario_conn = psycopg2.connect(**get_db_config())
                 test_scenario_cursor = test_scenario_conn.cursor()
 
                 # 檢查是否已存在相同問題（避免重複）

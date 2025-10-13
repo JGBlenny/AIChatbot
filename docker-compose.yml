@@ -144,6 +144,10 @@ services:
       KNOWLEDGE_GEN_MODEL: ${KNOWLEDGE_GEN_MODEL:-gpt-3.5-turbo}  # AI 知識生成專用模型
     ports:
       - "8100:8100"
+    volumes:
+      # 開發模式：動態掛載程式碼以支援熱重載
+      - ./rag-orchestrator/routers:/app/routers
+      - ./rag-orchestrator/services:/app/services
     depends_on:
       - postgres
       - embedding-api
