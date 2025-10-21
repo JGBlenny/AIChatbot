@@ -467,3 +467,936 @@ async def get_vendor_stats(vendor_id: int):
 
     finally:
         conn.close()
+
+
+# ========== SOP 管理 ==========
+
+class SOPCategoryCreate(BaseModel):
+    """建立 SOP 分類"""
+    category_name: str = Field(..., description="分類名稱", min_length=1, max_length=200)
+    description: Optional[str] = Field(None, description="分類說明")
+    display_order: int = Field(0, description="顯示順序", ge=0)
+
+
+class SOPItemCreate(BaseModel):
+    """建立 SOP 項目"""
+    category_id: int = Field(..., description="所屬分類ID")
+    item_number: int = Field(..., description="項次編號", ge=1)
+    item_name: str = Field(..., description="項目名稱", min_length=1, max_length=200)
+    content: str = Field(..., description="項目內容")
+    template_id: Optional[int] = Field(None, description="來源範本ID（記錄從哪個範本複製而來）")
+    related_intent_id: Optional[int] = Field(None, description="關聯意圖ID")
+    priority: int = Field(50, description="優先級（0-100）", ge=0, le=100)
+
+
+class SOPItemUpdate(BaseModel):
+    """更新 SOP 項目"""
+    item_name: str = Field(..., description="項目名稱")
+    content: str = Field(..., description="項目內容")
+    related_intent_id: Optional[int] = Field(None, description="關聯意圖ID")
+    priority: Optional[int] = Field(None, description="優先級（0-100）", ge=0, le=100)
+
+
+@router.get("/{vendor_id}/sop/categories")
+async def get_sop_categories(vendor_id: int):
+    """
+    獲取業者的 SOP 分類列表
+
+    Returns:
+        List[Dict]: SOP 分類列表，包含 id, category_name, description, display_order
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id FROM vendors WHERE id = %s", (vendor_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 獲取 SOP 分類
+        cursor.execute("""
+            SELECT id, category_name, description, display_order
+            FROM vendor_sop_categories
+            WHERE vendor_id = %s
+            ORDER BY display_order
+        """, (vendor_id,))
+
+        categories = cursor.fetchall()
+        cursor.close()
+
+        return [dict(cat) for cat in categories]
+
+    finally:
+        conn.close()
+
+
+@router.get("/{vendor_id}/sop/items")
+async def get_sop_items(vendor_id: int, category_id: Optional[int] = None):
+    """
+    獲取業者的 SOP 項目列表
+
+    Args:
+        vendor_id: 業者ID
+        category_id: 可選的分類ID過濾
+
+    Returns:
+        List[Dict]: SOP 項目列表，包含所有欄位及關聯的意圖名稱
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id FROM vendors WHERE id = %s", (vendor_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 獲取 SOP 項目（包含關聯的意圖名稱和範本來源）
+        query = """
+            SELECT
+                vsi.id,
+                vsi.category_id,
+                vsi.vendor_id,
+                vsi.item_number,
+                vsi.item_name,
+                vsi.content,
+                vsi.template_id,
+                vsi.related_intent_id,
+                vsi.priority,
+                i.name as related_intent_name,
+                pt.item_name as template_item_name,
+                vsi.is_active,
+                vsi.created_at,
+                vsi.updated_at
+            FROM vendor_sop_items vsi
+            LEFT JOIN intents i ON vsi.related_intent_id = i.id
+            LEFT JOIN platform_sop_templates pt ON vsi.template_id = pt.id
+            WHERE vsi.vendor_id = %s AND vsi.is_active = TRUE
+        """
+        params = [vendor_id]
+
+        if category_id:
+            query += " AND vsi.category_id = %s"
+            params.append(category_id)
+
+        query += " ORDER BY vsi.category_id, vsi.item_number"
+
+        cursor.execute(query, params)
+        items = cursor.fetchall()
+        cursor.close()
+
+        return [dict(item) for item in items]
+
+    finally:
+        conn.close()
+
+
+@router.put("/{vendor_id}/sop/items/{item_id}")
+async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpdate):
+    """
+    更新 SOP 項目
+
+    Args:
+        vendor_id: 業者ID
+        item_id: SOP項目ID
+        item_update: 更新資料
+
+    Returns:
+        Dict: 更新後的 SOP 項目
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id FROM vendors WHERE id = %s", (vendor_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 檢查 SOP 項目是否存在且屬於該業者
+        cursor.execute("""
+            SELECT id FROM vendor_sop_items
+            WHERE id = %s AND vendor_id = %s
+        """, (item_id, vendor_id))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="SOP 項目不存在或不屬於該業者")
+
+        # 驗證意圖是否存在（如果有指定）
+        if item_update.related_intent_id:
+            cursor.execute("SELECT id FROM intents WHERE id = %s", (item_update.related_intent_id,))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=400, detail=f"意圖 ID {item_update.related_intent_id} 不存在")
+
+        # 更新 SOP 項目
+        update_fields = []
+        params = []
+
+        update_fields.append("item_name = %s")
+        params.append(item_update.item_name)
+
+        update_fields.append("content = %s")
+        params.append(item_update.content)
+
+        update_fields.append("related_intent_id = %s")
+        params.append(item_update.related_intent_id)
+
+        if item_update.priority is not None:
+            update_fields.append("priority = %s")
+            params.append(item_update.priority)
+
+        update_fields.append("updated_at = CURRENT_TIMESTAMP")
+        params.extend([item_id, vendor_id])
+
+        query = f"""
+            UPDATE vendor_sop_items
+            SET {', '.join(update_fields)}
+            WHERE id = %s AND vendor_id = %s
+            RETURNING *
+        """
+
+        cursor.execute(query, params)
+
+        updated_item = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+
+        return dict(updated_item)
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"更新 SOP 項目失敗: {str(e)}")
+    finally:
+        conn.close()
+
+
+@router.post("/{vendor_id}/sop/categories", status_code=201)
+async def create_sop_category(vendor_id: int, category: SOPCategoryCreate):
+    """
+    建立新的 SOP 分類
+
+    Args:
+        vendor_id: 業者ID
+        category: 分類資料
+
+    Returns:
+        Dict: 新建立的 SOP 分類
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id FROM vendors WHERE id = %s", (vendor_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 插入新分類
+        cursor.execute("""
+            INSERT INTO vendor_sop_categories (
+                vendor_id, category_name, description, display_order
+            )
+            VALUES (%s, %s, %s, %s)
+            RETURNING id, vendor_id, category_name, description, display_order, created_at
+        """, (
+            vendor_id,
+            category.category_name,
+            category.description,
+            category.display_order
+        ))
+
+        new_category = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+
+        return dict(new_category)
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"建立 SOP 分類失敗: {str(e)}")
+    finally:
+        conn.close()
+
+
+@router.post("/{vendor_id}/sop/items", status_code=201)
+async def create_sop_item(vendor_id: int, item: SOPItemCreate):
+    """
+    建立新的 SOP 項目
+
+    Args:
+        vendor_id: 業者ID
+        item: SOP 項目資料
+
+    Returns:
+        Dict: 新建立的 SOP 項目
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id FROM vendors WHERE id = %s", (vendor_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 檢查分類是否存在且屬於該業者
+        cursor.execute("""
+            SELECT id FROM vendor_sop_categories
+            WHERE id = %s AND vendor_id = %s
+        """, (item.category_id, vendor_id))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=400, detail="分類不存在或不屬於該業者")
+
+        # 檢查意圖是否存在（如果有指定）
+        if item.related_intent_id:
+            cursor.execute("SELECT id FROM intents WHERE id = %s", (item.related_intent_id,))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=400, detail=f"意圖 ID {item.related_intent_id} 不存在")
+
+        # 檢查範本是否存在（如果有指定）
+        if item.template_id:
+            cursor.execute("SELECT id FROM platform_sop_templates WHERE id = %s AND is_active = TRUE", (item.template_id,))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=400, detail=f"範本 ID {item.template_id} 不存在或已停用")
+
+        # 插入新 SOP 項目
+        cursor.execute("""
+            INSERT INTO vendor_sop_items (
+                category_id, vendor_id, item_number, item_name, content,
+                template_id, related_intent_id, priority
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING *
+        """, (
+            item.category_id,
+            vendor_id,
+            item.item_number,
+            item.item_name,
+            item.content,
+            item.template_id,
+            item.related_intent_id,
+            item.priority
+        ))
+
+        new_item = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+
+        return dict(new_item)
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"建立 SOP 項目失敗: {str(e)}")
+    finally:
+        conn.close()
+
+
+@router.delete("/{vendor_id}/sop/items/{item_id}")
+async def delete_sop_item(vendor_id: int, item_id: int):
+    """
+    刪除 SOP 項目（軟刪除）
+
+    Args:
+        vendor_id: 業者ID
+        item_id: SOP項目ID
+
+    Returns:
+        Dict: 刪除結果訊息
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id FROM vendors WHERE id = %s", (vendor_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 檢查 SOP 項目是否存在且屬於該業者
+        cursor.execute("""
+            SELECT id FROM vendor_sop_items
+            WHERE id = %s AND vendor_id = %s AND is_active = TRUE
+        """, (item_id, vendor_id))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="SOP 項目不存在或不屬於該業者")
+
+        # 軟刪除（設為不啟用）
+        cursor.execute("""
+            UPDATE vendor_sop_items
+            SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND vendor_id = %s
+        """, (item_id, vendor_id))
+
+        conn.commit()
+        cursor.close()
+
+        return {
+            "message": "SOP 項目已刪除",
+            "vendor_id": vendor_id,
+            "item_id": item_id
+        }
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"刪除 SOP 項目失敗: {str(e)}")
+    finally:
+        conn.close()
+
+
+# ========== SOP 範本管理（簡化架構）==========
+
+class CopyTemplateRequest(BaseModel):
+    """複製範本請求"""
+    template_id: int = Field(..., description="要複製的範本ID")
+    category_id: int = Field(..., description="目標分類ID（業者的分類）")
+    item_number: Optional[int] = Field(None, description="項次編號（不指定則自動分配）")
+
+
+class CopyCategoryTemplatesRequest(BaseModel):
+    """複製整個分類的範本請求"""
+    platform_category_id: int = Field(..., description="平台分類ID（要複製的分類）")
+    vendor_category_id: Optional[int] = Field(None, description="目標業者分類ID（不指定則自動創建同名分類）")
+
+
+class CopyAllTemplatesRequest(BaseModel):
+    """複製整份業種範本請求（所有分類）"""
+    pass  # 不需要參數，根據業者的 business_type 自動複製所有符合的範本
+
+
+@router.get("/{vendor_id}/sop/available-templates")
+async def get_available_templates(vendor_id: int, category_id: Optional[int] = None):
+    """
+    取得業者可用的平台 SOP 範本列表（根據業種過濾）
+
+    此端點使用 v_vendor_available_sop_templates 檢視，
+    只顯示符合業者業種的範本，並標記已複製的範本。
+
+    Args:
+        vendor_id: 業者ID
+        category_id: 可選的分類ID過濾
+
+    Returns:
+        List[Dict]: 範本列表，包含：
+            - 範本資訊（template_id, item_name, content等）
+            - already_copied: 是否已複製
+            - vendor_sop_item_id: 如已複製，對應的 vendor_sop_items.id
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id, business_type FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
+        vendor = cursor.fetchone()
+        if not vendor:
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 取得可用範本（已自動根據業種過濾）
+        query = """
+            SELECT
+                vendor_id,
+                vendor_name,
+                vendor_business_type,
+                category_id,
+                category_name,
+                category_description,
+                template_id,
+                item_number,
+                item_name,
+                content,
+                template_notes,
+                customization_hint,
+                related_intent_id,
+                priority,
+                already_copied,
+                vendor_sop_item_id
+            FROM v_vendor_available_sop_templates
+            WHERE vendor_id = %s
+        """
+        params = [vendor_id]
+
+        if category_id:
+            query += " AND category_id = %s"
+            params.append(category_id)
+
+        query += " ORDER BY category_name, item_number"
+
+        cursor.execute(query, params)
+        templates = cursor.fetchall()
+        cursor.close()
+
+        return [dict(t) for t in templates]
+
+    finally:
+        conn.close()
+
+
+@router.post("/{vendor_id}/sop/copy-template", status_code=201)
+async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
+    """
+    複製平台範本到業者 SOP
+
+    將平台範本的內容複製到業者的 vendor_sop_items 中，
+    業者可以之後自行編輯調整內容。
+
+    Args:
+        vendor_id: 業者ID
+        request: 複製請求（包含 template_id, category_id, item_number）
+
+    Returns:
+        Dict: 新建立的 SOP 項目
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id, business_type FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
+        vendor = cursor.fetchone()
+        if not vendor:
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 檢查範本是否存在且符合業者業種
+        cursor.execute("""
+            SELECT
+                pt.id,
+                pt.item_number,
+                pt.item_name,
+                pt.content,
+                pt.business_type,
+                pt.related_intent_id,
+                pt.priority
+            FROM platform_sop_templates pt
+            WHERE pt.id = %s AND pt.is_active = TRUE
+        """, (request.template_id,))
+        template = cursor.fetchone()
+
+        if not template:
+            raise HTTPException(status_code=404, detail=f"範本 ID {request.template_id} 不存在或已停用")
+
+        # 驗證業種匹配
+        if template['business_type'] and template['business_type'] != vendor['business_type']:
+            raise HTTPException(
+                status_code=400,
+                detail=f"範本業種類型 ({template['business_type']}) 與業者業種 ({vendor['business_type']}) 不符"
+            )
+
+        # 檢查分類是否存在且屬於該業者
+        cursor.execute("""
+            SELECT id FROM vendor_sop_categories
+            WHERE id = %s AND vendor_id = %s AND is_active = TRUE
+        """, (request.category_id, vendor_id))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=400, detail="分類不存在或不屬於該業者")
+
+        # 檢查是否已複製此範本
+        cursor.execute("""
+            SELECT id FROM vendor_sop_items
+            WHERE vendor_id = %s AND template_id = %s AND is_active = TRUE
+        """, (vendor_id, request.template_id))
+        existing = cursor.fetchone()
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"已複製此範本（SOP項目 ID: {existing['id']}），請直接編輯現有項目"
+            )
+
+        # 決定項次編號
+        item_number = request.item_number
+        if item_number is None:
+            # 自動分配：找到該分類下最大的 item_number + 1
+            cursor.execute("""
+                SELECT COALESCE(MAX(item_number), 0) + 1 AS next_number
+                FROM vendor_sop_items
+                WHERE category_id = %s AND vendor_id = %s
+            """, (request.category_id, vendor_id))
+            item_number = cursor.fetchone()['next_number']
+
+        # 插入新 SOP 項目（複製範本內容）
+        cursor.execute("""
+            INSERT INTO vendor_sop_items (
+                category_id,
+                vendor_id,
+                item_number,
+                item_name,
+                content,
+                template_id,
+                related_intent_id,
+                priority
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING *
+        """, (
+            request.category_id,
+            vendor_id,
+            item_number,
+            template['item_name'],
+            template['content'],
+            request.template_id,
+            template['related_intent_id'],
+            template['priority']
+        ))
+
+        new_item = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+
+        return {
+            **dict(new_item),
+            "message": "範本已成功複製，可以進行編輯調整",
+            "template_id": request.template_id
+        }
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"複製範本失敗: {str(e)}")
+    finally:
+        conn.close()
+
+
+@router.post("/{vendor_id}/sop/copy-category-templates", status_code=201)
+async def copy_category_templates_to_vendor(vendor_id: int, request: CopyCategoryTemplatesRequest):
+    """
+    複製整個平台分類的所有範本到業者 SOP
+
+    將平台分類下的所有範本項目複製到業者的 vendor_sop_items 中。
+    如果未指定業者分類，則自動創建同名分類。
+
+    Args:
+        vendor_id: 業者ID
+        request: 複製請求（包含 platform_category_id, vendor_category_id）
+
+    Returns:
+        Dict: 複製結果，包含新建立的分類和所有 SOP 項目
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id, business_type FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
+        vendor = cursor.fetchone()
+        if not vendor:
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 檢查平台分類是否存在
+        cursor.execute("""
+            SELECT id, category_name, description, display_order
+            FROM platform_sop_categories
+            WHERE id = %s AND is_active = TRUE
+        """, (request.platform_category_id,))
+        platform_category = cursor.fetchone()
+
+        if not platform_category:
+            raise HTTPException(status_code=404, detail=f"平台分類 ID {request.platform_category_id} 不存在或已停用")
+
+        # 取得該分類下的所有範本（符合業者業種）
+        cursor.execute("""
+            SELECT
+                pt.id,
+                pt.item_number,
+                pt.item_name,
+                pt.content,
+                pt.business_type,
+                pt.related_intent_id,
+                pt.priority
+            FROM platform_sop_templates pt
+            WHERE pt.category_id = %s
+              AND pt.is_active = TRUE
+              AND (pt.business_type = %s OR pt.business_type IS NULL)
+            ORDER BY pt.item_number
+        """, (request.platform_category_id, vendor['business_type']))
+        templates = cursor.fetchall()
+
+        if not templates:
+            raise HTTPException(
+                status_code=404,
+                detail=f"平台分類 '{platform_category['category_name']}' 下沒有符合業者業種的範本"
+            )
+
+        # 檢查是否已複製該分類的範本
+        template_ids = [t['id'] for t in templates]
+        cursor.execute("""
+            SELECT COUNT(*) as copied_count
+            FROM vendor_sop_items
+            WHERE vendor_id = %s AND template_id = ANY(%s) AND is_active = TRUE
+        """, (vendor_id, template_ids))
+        result = cursor.fetchone()
+
+        if result['copied_count'] > 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"已複製該分類的部分範本（{result['copied_count']} 個），請檢查並刪除後再重新複製整個分類"
+            )
+
+        # 決定業者分類
+        vendor_category_id = request.vendor_category_id
+
+        if not vendor_category_id:
+            # 自動創建同名分類
+            cursor.execute("""
+                INSERT INTO vendor_sop_categories (
+                    vendor_id, category_name, description, display_order
+                )
+                VALUES (%s, %s, %s, %s)
+                RETURNING id, category_name, description, display_order
+            """, (
+                vendor_id,
+                platform_category['category_name'],
+                platform_category['description'],
+                platform_category['display_order']
+            ))
+            new_category = cursor.fetchone()
+            vendor_category_id = new_category['id']
+            category_created = True
+        else:
+            # 檢查指定的業者分類是否存在
+            cursor.execute("""
+                SELECT id, category_name FROM vendor_sop_categories
+                WHERE id = %s AND vendor_id = %s AND is_active = TRUE
+            """, (vendor_category_id, vendor_id))
+            existing_category = cursor.fetchone()
+
+            if not existing_category:
+                raise HTTPException(status_code=400, detail="指定的業者分類不存在或不屬於該業者")
+
+            new_category = existing_category
+            category_created = False
+
+        # 批次複製所有範本項目
+        copied_items = []
+        for template in templates:
+            # 插入新 SOP 項目
+            cursor.execute("""
+                INSERT INTO vendor_sop_items (
+                    category_id,
+                    vendor_id,
+                    item_number,
+                    item_name,
+                    content,
+                    template_id,
+                    related_intent_id,
+                    priority
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING *
+            """, (
+                vendor_category_id,
+                vendor_id,
+                template['item_number'],
+                template['item_name'],
+                template['content'],
+                template['id'],
+                template['related_intent_id'],
+                template['priority']
+            ))
+
+            new_item = cursor.fetchone()
+            copied_items.append(dict(new_item))
+
+        conn.commit()
+        cursor.close()
+
+        return {
+            "message": f"成功複製分類 '{platform_category['category_name']}'，共 {len(copied_items)} 個範本項目",
+            "platform_category": {
+                "id": platform_category['id'],
+                "name": platform_category['category_name']
+            },
+            "vendor_category": {
+                "id": vendor_category_id,
+                "name": new_category['category_name'],
+                "created": category_created
+            },
+            "copied_items_count": len(copied_items),
+            "copied_items": copied_items
+        }
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"複製分類範本失敗: {str(e)}")
+    finally:
+        conn.close()
+
+
+@router.post("/{vendor_id}/sop/copy-all-templates", status_code=201)
+async def copy_all_templates_to_vendor(vendor_id: int):
+    """
+    複製整份業種範本到業者 SOP（一次複製所有分類）
+
+    根據業者的 business_type，自動複製所有符合的平台範本分類和項目。
+    會自動創建與平台同名的分類，並批次複製所有範本項目。
+
+    Args:
+        vendor_id: 業者ID
+
+    Returns:
+        Dict: 複製結果，包含所有新建立的分類和 SOP 項目統計
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id, business_type, name FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
+        vendor = cursor.fetchone()
+        if not vendor:
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 刪除所有現有的 SOP 項目（覆蓋模式）
+        cursor.execute("""
+            DELETE FROM vendor_sop_items
+            WHERE vendor_id = %s
+        """, (vendor_id,))
+        deleted_items_count = cursor.rowcount
+
+        # 刪除所有現有的 SOP 分類
+        cursor.execute("""
+            DELETE FROM vendor_sop_categories
+            WHERE vendor_id = %s
+        """, (vendor_id,))
+        deleted_categories_count = cursor.rowcount
+
+        # 取得所有符合業者業種的平台分類和範本
+        cursor.execute("""
+            SELECT DISTINCT
+                pc.id as category_id,
+                pc.category_name,
+                pc.description,
+                pc.display_order
+            FROM platform_sop_categories pc
+            INNER JOIN platform_sop_templates pt ON pt.category_id = pc.id
+            WHERE pc.is_active = TRUE
+              AND pt.is_active = TRUE
+              AND (pt.business_type = %s OR pt.business_type IS NULL)
+            ORDER BY pc.display_order, pc.category_name
+        """, (vendor['business_type'],))
+        platform_categories = cursor.fetchall()
+
+        if not platform_categories:
+            raise HTTPException(
+                status_code=404,
+                detail=f"沒有找到符合業者業種 ({vendor['business_type']}) 的範本分類"
+            )
+
+        # 統計資訊
+        created_categories = []
+        copied_items_total = 0
+
+        # 逐個分類處理
+        for platform_category in platform_categories:
+            # 創建業者分類
+            cursor.execute("""
+                INSERT INTO vendor_sop_categories (
+                    vendor_id, category_name, description, display_order
+                )
+                VALUES (%s, %s, %s, %s)
+                RETURNING id, category_name
+            """, (
+                vendor_id,
+                platform_category['category_name'],
+                platform_category['description'],
+                platform_category['display_order']
+            ))
+            new_category = cursor.fetchone()
+            vendor_category_id = new_category['id']
+
+            # 取得該分類下的所有範本
+            cursor.execute("""
+                SELECT
+                    pt.id,
+                    pt.item_number,
+                    pt.item_name,
+                    pt.content,
+                    pt.related_intent_id,
+                    pt.priority
+                FROM platform_sop_templates pt
+                WHERE pt.category_id = %s
+                  AND pt.is_active = TRUE
+                  AND (pt.business_type = %s OR pt.business_type IS NULL)
+                ORDER BY pt.item_number
+            """, (platform_category['category_id'], vendor['business_type']))
+            templates = cursor.fetchall()
+
+            # 批次複製範本項目
+            copied_items = []
+            for template in templates:
+                cursor.execute("""
+                    INSERT INTO vendor_sop_items (
+                        category_id,
+                        vendor_id,
+                        item_number,
+                        item_name,
+                        content,
+                        template_id,
+                        related_intent_id,
+                        priority
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                """, (
+                    vendor_category_id,
+                    vendor_id,
+                    template['item_number'],
+                    template['item_name'],
+                    template['content'],
+                    template['id'],
+                    template['related_intent_id'],
+                    template['priority']
+                ))
+                new_item = cursor.fetchone()
+                copied_items.append(new_item['id'])
+
+            # 記錄該分類的複製結果
+            created_categories.append({
+                "category_id": vendor_category_id,
+                "category_name": new_category['category_name'],
+                "items_count": len(copied_items)
+            })
+            copied_items_total += len(copied_items)
+
+        conn.commit()
+        cursor.close()
+
+        # 組合訊息
+        message_parts = []
+        if deleted_items_count > 0 or deleted_categories_count > 0:
+            message_parts.append(f"已刪除現有 SOP（{deleted_categories_count} 個分類、{deleted_items_count} 個項目）")
+        message_parts.append(f"成功為業者「{vendor['name']}」複製整份 SOP 範本")
+
+        return {
+            "message": "，".join(message_parts),
+            "business_type": vendor['business_type'],
+            "deleted_categories": deleted_categories_count,
+            "deleted_items": deleted_items_count,
+            "categories_created": len(created_categories),
+            "total_items_copied": copied_items_total,
+            "categories": created_categories
+        }
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"複製整份範本失敗: {str(e)}")
+    finally:
+        conn.close()

@@ -32,6 +32,10 @@
             <span class="nav-icon">👥</span>
             <span class="nav-text" v-if="!sidebarCollapsed">業者管理</span>
           </router-link>
+          <router-link to="/platform-sop" class="nav-item" :title="sidebarCollapsed ? 'SOP 範本' : ''">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text" v-if="!sidebarCollapsed">SOP 範本</span>
+          </router-link>
         </div>
 
         <!-- AI 功能 -->
@@ -118,6 +122,7 @@ export default {
         '/knowledge-reclassify': '知識重新分類',
         '/knowledge-import': '知識匯入',
         '/vendors': '業者管理',
+        '/platform-sop': 'SOP 範本管理',
         '/chat-test': 'Chat 測試',
         '/test-scenarios': '測試題庫',
         '/backtest': '回測結果'

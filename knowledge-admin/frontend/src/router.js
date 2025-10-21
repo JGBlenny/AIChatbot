@@ -8,6 +8,9 @@ import KnowledgeReclassifyView from './views/KnowledgeReclassifyView.vue';
 import VendorManagementView from './views/VendorManagementView.vue';
 import VendorConfigView from './views/VendorConfigView.vue';
 import ChatTestView from './views/ChatTestView.vue';
+// Platform SOP Template Management
+import PlatformSOPView from './views/PlatformSOPView.vue';
+import PlatformSOPEditView from './views/PlatformSOPEditView.vue';
 // Knowledge Import from LINE chats
 import KnowledgeImportView from './views/KnowledgeImportView.vue';
 // Backtest Results
@@ -59,6 +62,16 @@ const routes = [
     path: '/vendors/:id/configs',
     name: 'VendorConfig',
     component: VendorConfigView
+  },
+  {
+    path: '/platform-sop',
+    name: 'PlatformSOP',
+    component: PlatformSOPView
+  },
+  {
+    path: '/platform-sop/:businessType/edit',
+    name: 'PlatformSOPEdit',
+    component: PlatformSOPEditView
   },
   {
     path: '/chat-test',

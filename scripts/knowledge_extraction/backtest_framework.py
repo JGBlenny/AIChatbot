@@ -717,7 +717,15 @@ class BacktestFramework:
         for result in results:
             if 'quality_eval' in result and result['quality_eval']:
                 # 使用 LLM 評估的相關性分數
-                relevance = result['quality_eval'].get('relevance', 0)
+                # quality_eval 可能是字典或 JSON 字串
+                quality_eval = result['quality_eval']
+                if isinstance(quality_eval, str):
+                    try:
+                        quality_eval = json.loads(quality_eval)
+                    except:
+                        continue
+
+                relevance = quality_eval.get('relevance', 0) if isinstance(quality_eval, dict) else 0
                 if relevance > 0:
                     # 這裡簡化處理，假設每個測試只有一個答案
                     # 實際應用中可以基於多個知識來源計算 NDCG

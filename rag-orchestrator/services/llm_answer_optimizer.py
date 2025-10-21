@@ -56,6 +56,7 @@ class LLMAnswerOptimizer:
         intent_info: Dict,
         vendor_params: Optional[Dict] = None,
         vendor_name: Optional[str] = None,
+        vendor_info: Optional[Dict] = None,
         enable_synthesis_override: Optional[bool] = None
     ) -> Dict:
         """
@@ -68,6 +69,7 @@ class LLMAnswerOptimizer:
             intent_info: 意圖資訊
             vendor_params: 業者參數（Phase 1 擴展）
             vendor_name: 業者名稱（Phase 1 擴展）
+            vendor_info: 完整業者資訊（包含 business_type, cashflow_model 等，Phase 1 SOP 擴展）
             enable_synthesis_override: 覆蓋答案合成配置（None=使用配置，True=強制啟用，False=強制禁用）
 
         Returns:
@@ -105,7 +107,8 @@ class LLMAnswerOptimizer:
                     search_results=search_results,
                     intent_info=intent_info,
                     vendor_params=vendor_params,
-                    vendor_name=vendor_name
+                    vendor_name=vendor_name,
+                    vendor_info=vendor_info
                 )
                 synthesis_applied = True
             else:
@@ -115,7 +118,8 @@ class LLMAnswerOptimizer:
                     search_results=search_results,
                     intent_info=intent_info,
                     vendor_params=vendor_params,
-                    vendor_name=vendor_name
+                    vendor_name=vendor_name,
+                    vendor_info=vendor_info
                 )
                 synthesis_applied = False
 
@@ -309,7 +313,8 @@ class LLMAnswerOptimizer:
         search_results: List[Dict],
         intent_info: Dict,
         vendor_params: Optional[Dict] = None,
-        vendor_name: Optional[str] = None
+        vendor_name: Optional[str] = None,
+        vendor_info: Optional[Dict] = None
     ) -> tuple[str, int]:
         """
         合成多個答案為一個完整答案（Phase 2 擴展功能）
@@ -323,6 +328,7 @@ class LLMAnswerOptimizer:
             intent_info: 意圖資訊
             vendor_params: 業者參數（用於動態注入）
             vendor_name: 業者名稱
+            vendor_info: 完整業者資訊（包含 business_type, cashflow_model 等）
 
         Returns:
             (合成後的答案, 使用的 tokens 數)
@@ -357,7 +363,7 @@ class LLMAnswerOptimizer:
         ])
 
         # 建立合成 Prompt
-        system_prompt = self._create_synthesis_system_prompt(intent_info, vendor_name)
+        system_prompt = self._create_synthesis_system_prompt(intent_info, vendor_name, vendor_info)
         user_prompt = self._create_synthesis_user_prompt(question, formatted_answers, intent_info)
 
         # 檢查 API key
@@ -382,7 +388,12 @@ class LLMAnswerOptimizer:
 
         return synthesized_answer, tokens_used
 
-    def _create_synthesis_system_prompt(self, intent_info: Dict, vendor_name: Optional[str] = None) -> str:
+    def _create_synthesis_system_prompt(
+        self,
+        intent_info: Dict,
+        vendor_name: Optional[str] = None,
+        vendor_info: Optional[Dict] = None
+    ) -> str:
         """建立答案合成的系統提示詞"""
         intent_type = intent_info.get('intent_type', 'knowledge')
 
@@ -397,17 +408,30 @@ class LLMAnswerOptimizer:
 6. **語氣**：保持專業、友善、易懂的繁體中文表達
 7. **Markdown**：適當使用 Markdown 格式（## 標題、- 列表、**粗體**）"""
 
+        rule_number = 8
+
         # 如果有業者名稱，加入業者資訊
         if vendor_name:
-            base_prompt += f"\n8. **業者身份**：你代表 {vendor_name}，請使用該業者的資訊回答"
+            base_prompt += f"\n{rule_number}. **業者身份**：你代表 {vendor_name}，請使用該業者的資訊回答"
+            rule_number += 1
+
+        # 根據業種類型調整語氣（Phase 1 SOP 擴展）
+        if vendor_info:
+            business_type = vendor_info.get('business_type', 'property_management')
+            if business_type == 'full_service':
+                base_prompt += f"\n{rule_number}. **業種特性**：{vendor_name} 是包租型業者，提供全方位服務。語氣應主動告知、確認、承諾。使用「我們會」、「公司將」等主動語句"
+                rule_number += 1
+            elif business_type == 'property_management':
+                base_prompt += f"\n{rule_number}. **業種特性**：{vendor_name} 是代管型業者，協助租客與房東溝通。語氣應協助引導、建議聯繫。使用「請您」、「建議」、「可協助」等引導語句"
+                rule_number += 1
 
         # 根據意圖類型調整提示
         if intent_type == "knowledge":
-            base_prompt += "\n9. **知識類型**：這是知識查詢，請提供完整的說明、步驟和注意事項"
+            base_prompt += f"\n{rule_number}. **知識類型**：這是知識查詢，請提供完整的說明、步驟和注意事項"
         elif intent_type == "data_query":
-            base_prompt += "\n9. **資料查詢**：如需查詢具體資料，請說明如何查詢和所需資料"
+            base_prompt += f"\n{rule_number}. **資料查詢**：如需查詢具體資料，請說明如何查詢和所需資料"
         elif intent_type == "action":
-            base_prompt += "\n9. **操作指引**：請提供具體、可執行的操作步驟"
+            base_prompt += f"\n{rule_number}. **操作指引**：請提供具體、可執行的操作步驟"
 
         base_prompt += "\n\n重要：只輸出合成後的完整答案，不要加上「根據以上資訊」等元資訊。"
 
@@ -441,7 +465,8 @@ class LLMAnswerOptimizer:
         search_results: List[Dict],
         intent_info: Dict,
         vendor_params: Optional[Dict] = None,
-        vendor_name: Optional[str] = None
+        vendor_name: Optional[str] = None,
+        vendor_info: Optional[Dict] = None
     ) -> tuple[str, int]:
         """
         呼叫 LLM 優化答案
@@ -452,6 +477,7 @@ class LLMAnswerOptimizer:
             intent_info: 意圖資訊
             vendor_params: 業者參數（用於動態注入）
             vendor_name: 業者名稱
+            vendor_info: 完整業者資訊（包含 business_type, cashflow_model 等）
 
         Returns:
             (優化後的答案, 使用的 tokens 數)
@@ -476,7 +502,7 @@ class LLMAnswerOptimizer:
         context = "\n\n".join(context_parts)
 
         # 2. 建立優化 Prompt
-        system_prompt = self._create_system_prompt(intent_info, vendor_name)
+        system_prompt = self._create_system_prompt(intent_info, vendor_name, vendor_info)
         user_prompt = self._create_user_prompt(question, context, intent_info)
 
         # 檢查 API key
@@ -499,7 +525,12 @@ class LLMAnswerOptimizer:
 
         return optimized_answer, tokens_used
 
-    def _create_system_prompt(self, intent_info: Dict, vendor_name: Optional[str] = None) -> str:
+    def _create_system_prompt(
+        self,
+        intent_info: Dict,
+        vendor_name: Optional[str] = None,
+        vendor_info: Optional[Dict] = None
+    ) -> str:
         """建立系統提示詞"""
         intent_type = intent_info.get('intent_type', 'knowledge')
 
@@ -514,17 +545,30 @@ class LLMAnswerOptimizer:
 6. 保持簡潔，避免冗長
 7. 如果參考資料不足以回答，請誠實說明"""
 
+        rule_number = 8
+
         # 如果有業者名稱，加入業者資訊
         if vendor_name:
-            base_prompt += f"\n8. 你代表 {vendor_name}，請使用該業者的資訊回答"
+            base_prompt += f"\n{rule_number}. 你代表 {vendor_name}，請使用該業者的資訊回答"
+            rule_number += 1
+
+        # 根據業種類型調整語氣（Phase 1 SOP 擴展）
+        if vendor_info:
+            business_type = vendor_info.get('business_type', 'property_management')
+            if business_type == 'full_service':
+                base_prompt += f"\n{rule_number}. 【業種特性】{vendor_name} 是包租型業者，你們提供全方位服務。語氣應：主動告知、確認、承諾。使用「我們會」、「公司將」等主動語句"
+                rule_number += 1
+            elif business_type == 'property_management':
+                base_prompt += f"\n{rule_number}. 【業種特性】{vendor_name} 是代管型業者，你們協助租客與房東溝通。語氣應：協助引導、建議聯繫。使用「請您」、「建議」、「可協助」等引導語句"
+                rule_number += 1
 
         # 根據意圖類型調整提示
         if intent_type == "knowledge":
-            base_prompt += "\n9. 這是知識查詢問題，請提供清楚的說明和步驟"
+            base_prompt += f"\n{rule_number}. 這是知識查詢問題，請提供清楚的說明和步驟"
         elif intent_type == "data_query":
-            base_prompt += "\n9. 這是資料查詢問題，如需查詢具體資料，請說明如何查詢"
+            base_prompt += f"\n{rule_number}. 這是資料查詢問題，如需查詢具體資料，請說明如何查詢"
         elif intent_type == "action":
-            base_prompt += "\n9. 這是操作執行問題，請說明具體操作步驟"
+            base_prompt += f"\n{rule_number}. 這是操作執行問題，請說明具體操作步驟"
 
         return base_prompt
 

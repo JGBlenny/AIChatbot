@@ -23,7 +23,7 @@ services:
     image: redis:7-alpine
     container_name: aichatbot-redis
     ports:
-      - "6379:6379"
+      - "6381:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -100,7 +100,7 @@ services:
     container_name: aichatbot-knowledge-admin-web
     command: npm run dev
     ports:
-      - "8080:5173"  # Vite 開發伺服器埠
+      - "8087:5173"  # Vite 開發伺服器埠
     volumes:
       # 掛載原始碼以支援熱重載
       - ./knowledge-admin/frontend/src:/app/src

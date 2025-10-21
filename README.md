@@ -203,60 +203,52 @@ AIChatbot/
 │
 ├── database/                # 資料庫
 │   ├── init/               # 初始化腳本
-│   │   ├── 01-enable-pgvector.sql
-│   │   ├── 02-create-knowledge-base.sql
-│   │   ├── 03-create-rag-tables.sql
-│   │   ├── 06-vendors-and-configs.sql
-│   │   ├── 07-extend-knowledge-base.sql
-│   │   ├── 08-remove-templates-use-generic-values.sql
-│   │   └── 09-create-test-scenarios.sql    # 測試題庫表 ⭐
-│   └── migrations/         # 資料庫變更 ⭐
-│       ├── README.md       # Migration 說明文檔
-│       ├── 09-knowledge-multi-intent.sql
-│       ├── 11-add-source-tracking-to-knowledge-candidates.sql
-│       ├── 12-remove-suggested-knowledge.sql
-│       ├── 13-add-auto-scenario-creation-trigger.sql      # 自動創建測試情境 ⭐
-│       ├── 14-add-rejected-scenario-retry-logic.sql       # 拒絕重試機制 ⭐
-│       ├── 15-update-candidates-view-for-rejected-scenarios.sql
-│       ├── 16-fix-candidates-view-filter.sql
-│       ├── 17-fix-candidates-view-check-all-scenarios.sql # 完整情境檢查 ⭐
-│       ├── 18-24-*.sql    # 歷史 migrations
-│       ├── 31-add-embedding-to-review-queue.sql           # 審核佇列語意去重 ⭐ NEW
-│       └── 32-add-test-scenario-similarity-check.sql      # 測試情境語意檢查 ⭐ NEW
+│   │   └── *.sql          # 資料庫初始化 SQL
+│   ├── migrations/         # 資料庫遷移（28 個，按編號順序）⭐
+│   │   ├── README.md       # Migration 說明文檔
+│   │   ├── 09-37-*.sql    # 遷移文件（編號已優化，無衝突）✅
+│   │   ├── 33-fix-knowledge-approval-embedding-intent.sql
+│   │   ├── 37-create-vendor-sop-tables.sql  # SOP 範本系統 ⭐
+│   │   └── ...            # 其他遷移
+│   └── seeds/              # 測試種子數據 ✅ NEW
+│       ├── README.md       # 使用說明
+│       ├── sop_templates.sql
+│       └── *.sql          # 其他種子數據
 │
-├── scripts/                 # 工具腳本
-│   └── knowledge_extraction/
-│       └── backtest_framework.py    # 回測框架 ⭐
+├── scripts/                 # 實用腳本 ✅
+│   ├── README.md           # 腳本使用指南
+│   ├── knowledge_extraction/  # 知識提取工具
+│   │   └── backtest_framework.py    # 回測框架 ⭐
+│   ├── tools/              # 開發工具（預留）
+│   ├── import_sop_from_excel.py      # SOP 匯入工具
+│   └── *.py               # 其他生產腳本
 │
-├── docs/                   # 文件（已重組） ⭐
-│   ├── guides/             # 使用指南 (9 個)
-│   │   ├── BACKTEST_OPTIMIZATION_GUIDE.md
-│   │   ├── DEVELOPMENT_WORKFLOW.md
-│   │   ├── DOCKER_COMPOSE_GUIDE.md
-│   │   ├── KNOWLEDGE_EXTRACTION_GUIDE.md
-│   │   ├── PGVECTOR_SETUP.md
-│   │   └── TEST_SCENARIOS_MIGRATION_GUIDE.md
-│   ├── features/           # 功能文檔 (6 個)
-│   │   ├── INTENT_MANAGEMENT_README.md
-│   │   ├── REJECTED_SCENARIO_RETRY_IMPLEMENTATION.md ⭐
-│   │   └── TEST_SCENARIO_STATUS_MANAGEMENT.md ⭐
-│   ├── api/               # API 參考 (2 個)
-│   ├── backtest/          # 回測文檔 (4 個)
-│   ├── planning/          # 規劃文檔 (2 個)
-│   ├── examples/          # 測試數據
-│   │   ├── test_data/    # 測試情境 Excel
-│   │   └── extracted_data/
-│   └── archive/           # 歷史文檔
-│       ├── completion_reports/    (9 個)
-│       ├── evaluation_reports/    (8 個)
-│       ├── fix_reports/           (1 個)
-│       └── deprecated_guides/     (6 個)
+├── docs/                   # 📚 完整文檔（已重組優化）✅
+│   ├── guides/             # 使用指南（含 DEPLOYMENT, QUICKSTART）
+│   ├── features/           # 功能文檔（含 SOP 架構文檔）
+│   ├── api/               # API 參考文檔
+│   ├── backtest/          # 回測框架文檔
+│   ├── planning/          # 規劃文檔（含待開發功能）
+│   ├── examples/          # 測試數據範例
+│   ├── archive/           # 歷史文檔（已優化 27%）✅
+│   │   ├── README.md      # 歸檔說明
+│   │   ├── completion_reports/  (20 個)
+│   │   ├── evaluation_reports/  (8 個)
+│   │   └── database_migrations/ (舊參考)
+│   ├── FILE_STRUCTURE_ANALYSIS.md   # 項目結構分析
+│   └── FILE_CLEANUP_REPORT.md       # 整理報告
 │
-├── tests/                  # 測試 ⭐
-│   └── integration/       # 整合測試
-│       ├── test_multi_intent.py
-│       ├── test_scoring_quality.py
-│       └── test_classifier_direct.py
+├── tests/                  # 🧪 測試文件（已結構化）✅
+│   ├── integration/        # 整合測試
+│   │   ├── test_business_logic_matrix.py  # 業務邏輯測試
+│   │   ├── test_fallback_mechanism.py
+│   │   └── *.py           # 其他整合測試
+│   ├── deduplication/      # 去重檢測測試 ✅ NEW
+│   │   ├── README.md       # 測試說明
+│   │   ├── test_enhanced_detection.py
+│   │   ├── verify_duplicate_detection.py
+│   │   └── *.py           # 其他去重測試
+│   └── run_*_tests.sh     # 測試執行腳本
 │
 ├── docker-compose.yml      # Docker Compose 配置
 ├── docker-compose.dev.yml  # 開發環境配置
@@ -315,6 +307,7 @@ AIChatbot/
 - 📋 **Phase 2 規劃**: [docs/planning/PHASE2_PLANNING.md](./docs/planning/PHASE2_PLANNING.md)
 - 🎯 **Business Scope 重構**: [docs/architecture/BUSINESS_SCOPE_REFACTORING.md](./docs/architecture/BUSINESS_SCOPE_REFACTORING.md) ⭐ NEW
 - 🔐 **認證與業務範圍整合**: [docs/architecture/AUTH_AND_BUSINESS_SCOPE.md](./docs/architecture/AUTH_AND_BUSINESS_SCOPE.md) ⭐ NEW
+- 🔌 **B2B API 整合框架設計**: [docs/B2B_API_INTEGRATION_DESIGN.md](./docs/B2B_API_INTEGRATION_DESIGN.md) ⭐ NEW
 
 ### 🧪 回測與測試
 - 🔧 **回測優化指南**: [docs/guides/BACKTEST_OPTIMIZATION_GUIDE.md](./docs/guides/BACKTEST_OPTIMIZATION_GUIDE.md)
@@ -635,7 +628,7 @@ curl http://localhost:8100/api/v1/knowledge-import/jobs/f87958b1-a660-477f-8725-
 |---------|-------|---------|
 | **B2B 進階功能** | | |
 | 租客身份識別 | 🔥 高 | Phase 2.1 |
-| 外部 API 整合框架 | 🔥 高 | Phase 2.1 |
+| 外部 API 整合框架 ([設計文檔](./docs/B2B_API_INTEGRATION_DESIGN.md)) | 🔥 高 | Phase 2.1 |
 | 資料查詢 API | 🔥 高 | Phase 2.2 |
 | 操作執行 API | 🔥 高 | Phase 2.2 |
 | **分析與報表** | | |

@@ -43,8 +43,8 @@
         </button>
       </div>
 
-      <!-- 配置表單 -->
-      <div class="config-section">
+      <!-- 配置表單 (非 SOP) -->
+      <div v-if="selectedCategory !== 'sop'" class="config-section">
         <div class="section-header">
           <h3>{{ getCategoryInfo(selectedCategory).label }}</h3>
           <div class="header-actions">
@@ -92,12 +92,17 @@
         </div>
       </div>
 
+      <!-- SOP 管理介面（新架構：範本+覆寫）-->
+      <div v-else class="config-section">
+        <VendorSOPManager :vendorId="vendorId" />
+      </div>
+
       <!-- 儲存按鈕 -->
       <div class="action-bar">
         <button @click="saveConfigs" :disabled="saving" class="btn-primary btn-large">
           {{ saving ? '⏳ 儲存中...' : '💾 儲存所有配置' }}
         </button>
-        <button @click="resetConfigs" class="btn-secondary">↻ 重置</button>
+        <button @click="resetConfigs" class="btn-secondary">🔄 重新整理</button>
       </div>
     </div>
 
@@ -199,16 +204,23 @@
         </form>
       </div>
     </div>
+
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import VendorSOPManager from '../components/VendorSOPManager.vue';
 
 const RAG_API = '/rag-api/v1';
 
 export default {
   name: 'VendorConfigView',
+
+  components: {
+    VendorSOPManager
+  },
+
   data() {
     return {
       vendorId: null,
@@ -231,7 +243,8 @@ export default {
         { value: 'payment', label: '帳務設定', icon: '💰' },
         { value: 'contract', label: '合約設定', icon: '📝' },
         { value: 'service', label: '服務設定', icon: '🛎️' },
-        { value: 'contact', label: '聯絡資訊', icon: '📞' }
+        { value: 'contact', label: '聯絡資訊', icon: '📞' },
+        { value: 'sop', label: 'SOP 管理', icon: '📋' }
       ]
     };
   },
@@ -314,7 +327,7 @@ export default {
     },
 
     resetConfigs() {
-      if (confirm('確定要重置配置嗎？將會重新載入資料庫中的配置。')) {
+      if (confirm('確定要重新整理配置嗎？將會放棄目前的修改，重新載入資料庫中的配置。')) {
         this.loadConfigs();
       }
     },
@@ -409,6 +422,7 @@ export default {
       };
       return labels[scope] || scope;
     },
+
 
     goBack() {
       this.$router.push('/vendors');
@@ -668,4 +682,5 @@ export default {
   color: #666;
   margin-bottom: 20px;
 }
+
 </style>

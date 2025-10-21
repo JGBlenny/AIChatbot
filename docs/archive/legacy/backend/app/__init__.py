@@ -1,3 +1,0 @@
-"""
-AIChatbot Admin Application
-"""

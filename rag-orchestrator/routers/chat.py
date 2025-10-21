@@ -21,6 +21,7 @@ router = APIRouter()
 # Phase 1: 多業者服務實例（懶加載）
 _vendor_knowledge_retriever = None
 _vendor_param_resolver = None
+_vendor_sop_retriever = None
 
 
 def get_vendor_knowledge_retriever():
@@ -39,6 +40,15 @@ def get_vendor_param_resolver():
         from services.vendor_parameter_resolver import VendorParameterResolver
         _vendor_param_resolver = VendorParameterResolver()
     return _vendor_param_resolver
+
+
+def get_vendor_sop_retriever():
+    """獲取業者 SOP 檢索器"""
+    global _vendor_sop_retriever
+    if _vendor_sop_retriever is None:
+        from services.vendor_sop_retriever import VendorSOPRetriever
+        _vendor_sop_retriever = VendorSOPRetriever()
+    return _vendor_sop_retriever
 
 
 class ChatRequest(BaseModel):
@@ -641,8 +651,91 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 detail=f"資料庫中找不到意圖: {intent_result['intent_name']}"
             )
 
-        # Step 3: 檢索知識（Phase 1 擴展：使用混合模式，結合 intent 過濾和向量相似度）
+        # Step 2.5: 嘗試檢索 SOP（SOP 優先於知識庫）
+        # 如果找到 SOP，直接使用 SOP 項目；否則 fallback 到知識庫
+        sop_retriever = get_vendor_sop_retriever()
+        sop_items = []
+
+        # 嘗試從所有相關 intent_ids 中檢索 SOP（包括主要意圖和次要意圖）
+        all_intent_ids = intent_result.get('intent_ids', [intent_id])
+        for intent_id_to_try in all_intent_ids:
+            sop_items = sop_retriever.retrieve_sop_by_intent(
+                vendor_id=request.vendor_id,
+                intent_id=intent_id_to_try,
+                top_k=request.top_k
+            )
+            if sop_items:
+                print(f"✅ 找到 {len(sop_items)} 個 SOP 項目（Intent ID: {intent_id_to_try}）")
+                break
+
+        # 如果找到 SOP，使用 SOP 流程
+        if sop_items:
+            print(f"✅ 找到 {len(sop_items)} 個 SOP 項目，使用 SOP 流程")
+
+            # 獲取業者參數
+            vendor_params_raw = resolver.get_vendor_parameters(request.vendor_id)
+            vendor_params = {
+                key: param_info['value']
+                for key, param_info in vendor_params_raw.items()
+            }
+
+            # 將 SOP 項目轉換為 search_results 格式
+            search_results = []
+            for sop in sop_items:
+                search_results.append({
+                    'id': sop['id'],
+                    'title': sop['item_name'],
+                    'content': sop['content'],
+                    'category': sop['category_name'],
+                    'similarity': 0.95  # SOP 是精準匹配，給予高相似度
+                })
+
+            # 使用 LLM 優化器，傳入 vendor_info（包含 business_type）
+            llm_optimizer = req.app.state.llm_answer_optimizer
+            optimization_result = llm_optimizer.optimize_answer(
+                question=request.message,
+                search_results=search_results,
+                confidence_level='high',  # SOP 是精準答案，高信心度
+                intent_info=intent_result,
+                vendor_params=vendor_params,
+                vendor_name=vendor_info['name'],
+                vendor_info=vendor_info,  # 傳入完整業者資訊（包含 business_type, cashflow_model）
+                enable_synthesis_override=False if request.disable_answer_synthesis else None
+            )
+
+            answer = optimization_result['optimized_answer']
+
+            # 準備來源列表
+            sources = []
+            if request.include_sources:
+                for sop in sop_items:
+                    sources.append(KnowledgeSource(
+                        id=sop['id'],
+                        question_summary=sop['item_name'],
+                        answer=sop['content'],
+                        scope='vendor_sop',  # 標記為 SOP 來源
+                        is_template=False
+                    ))
+
+            return VendorChatResponse(
+                answer=answer,
+                intent_name=intent_result['intent_name'],
+                intent_type=intent_result.get('intent_type'),
+                confidence=intent_result['confidence'],
+                all_intents=intent_result.get('all_intents', []),
+                secondary_intents=intent_result.get('secondary_intents', []),
+                intent_ids=intent_result.get('intent_ids', []),
+                sources=sources if request.include_sources else None,
+                source_count=len(sop_items),
+                vendor_id=request.vendor_id,
+                mode=request.mode,
+                session_id=request.session_id,
+                timestamp=datetime.utcnow().isoformat()
+            )
+
+        # Step 3: 如果沒有 SOP，檢索知識庫（Phase 1 擴展：使用混合模式，結合 intent 過濾和向量相似度）
         # 支援多 Intent 檢索
+        print(f"ℹ️  沒有找到 SOP，使用知識庫檢索")
         retriever = get_vendor_knowledge_retriever()
         all_intent_ids = intent_result.get('intent_ids', [intent_id])
 

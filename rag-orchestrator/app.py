@@ -18,7 +18,7 @@ from services.llm_answer_optimizer import LLMAnswerOptimizer
 from services.intent_suggestion_engine import IntentSuggestionEngine
 
 # 導入路由
-from routers import chat, unclear_questions, suggested_intents, business_scope, intents, knowledge, vendors, knowledge_import, knowledge_generation
+from routers import chat, unclear_questions, suggested_intents, business_scope, intents, knowledge, vendors, knowledge_import, knowledge_generation, platform_sop
 
 # 全局變數
 db_pool: Pool = None
@@ -130,6 +130,7 @@ app.include_router(knowledge.router, tags=["knowledge"])
 app.include_router(vendors.router, tags=["vendors"])  # Phase 1: Multi-Vendor Support
 app.include_router(knowledge_import.router, tags=["knowledge_import"])  # Knowledge Import from LINE chats
 app.include_router(knowledge_generation.router, prefix="/api/v1", tags=["knowledge_generation"])  # AI Knowledge Generation
+app.include_router(platform_sop.router, tags=["platform_sop"])  # Platform SOP Template Management
 
 
 @app.get("/")
