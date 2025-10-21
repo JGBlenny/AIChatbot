@@ -75,6 +75,10 @@
             <span class="nav-icon">📊</span>
             <span class="nav-text" v-if="!sidebarCollapsed">回測結果</span>
           </router-link>
+          <router-link to="/cache-management" class="nav-item" :title="sidebarCollapsed ? '緩存管理' : ''">
+            <span class="nav-icon">⚡</span>
+            <span class="nav-text" v-if="!sidebarCollapsed">緩存管理</span>
+          </router-link>
         </div>
       </nav>
 
@@ -125,7 +129,8 @@ export default {
         '/platform-sop': 'SOP 範本管理',
         '/chat-test': 'Chat 測試',
         '/test-scenarios': '測試題庫',
-        '/backtest': '回測結果'
+        '/backtest': '回測結果',
+        '/cache-management': '緩存管理'
       }
     };
   },

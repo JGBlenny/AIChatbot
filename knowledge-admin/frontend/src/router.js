@@ -20,6 +20,8 @@ import TestScenariosView from './views/TestScenariosView.vue';
 import PendingReviewView from './views/PendingReviewView.vue';
 // Unified Review Center
 import ReviewCenterView from './views/ReviewCenterView.vue';
+// Cache Management
+import CacheManagementView from './views/CacheManagementView.vue';
 
 const routes = [
   {
@@ -103,6 +105,12 @@ const routes = [
   {
     path: '/ai-knowledge-review',
     redirect: '/review-center'
+  },
+  // Cache Management
+  {
+    path: '/cache-management',
+    name: 'CacheManagement',
+    component: CacheManagementView
   }
 ];
 
