@@ -16,9 +16,10 @@ from services.confidence_evaluator import ConfidenceEvaluator
 from services.unclear_question_manager import UnclearQuestionManager
 from services.llm_answer_optimizer import LLMAnswerOptimizer
 from services.intent_suggestion_engine import IntentSuggestionEngine
+from services.vendor_config_service import VendorConfigService
 
 # 導入路由
-from routers import chat, unclear_questions, suggested_intents, business_scope, intents, knowledge, vendors, knowledge_import, knowledge_generation, platform_sop
+from routers import chat, chat_stream, unclear_questions, suggested_intents, business_scope, intents, knowledge, vendors, knowledge_import, knowledge_generation, platform_sop
 
 # 全局變數
 db_pool: Pool = None
@@ -28,13 +29,14 @@ confidence_evaluator: ConfidenceEvaluator = None
 unclear_question_manager: UnclearQuestionManager = None
 llm_answer_optimizer: LLMAnswerOptimizer = None
 suggestion_engine: IntentSuggestionEngine = None
+vendor_config_service: VendorConfigService = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """應用生命週期管理"""
     # 啟動時初始化
-    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine
+    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine, vendor_config_service
 
     print("🚀 初始化 RAG Orchestrator...")
 
@@ -83,6 +85,9 @@ async def lifespan(app: FastAPI):
     suggestion_engine = IntentSuggestionEngine()
     print("✅ 意圖建議引擎已初始化 (Phase B)")
 
+    vendor_config_service = VendorConfigService(db_pool)
+    print("✅ 業者配置服務已初始化 (Vendor Configs 整合)")
+
     # 將服務注入到 app.state
     app.state.db_pool = db_pool
     app.state.intent_classifier = intent_classifier
@@ -90,6 +95,7 @@ async def lifespan(app: FastAPI):
     app.state.confidence_evaluator = confidence_evaluator
     app.state.unclear_question_manager = unclear_question_manager
     app.state.llm_answer_optimizer = llm_answer_optimizer
+    app.state.vendor_config_service = vendor_config_service
     app.state.suggestion_engine = suggestion_engine
 
     print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化 + Phase B 意圖建議）")
@@ -122,6 +128,7 @@ app.add_middleware(
 
 # 註冊路由
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
+app.include_router(chat_stream.router, prefix="/api/v1", tags=["chat_stream"])  # Phase 3: Streaming
 app.include_router(unclear_questions.router, prefix="/api/v1", tags=["unclear_questions"])
 app.include_router(suggested_intents.router, prefix="/api/v1", tags=["suggested_intents"])
 app.include_router(business_scope.router, prefix="/api/v1", tags=["business_scope"])
