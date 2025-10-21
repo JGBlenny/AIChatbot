@@ -51,6 +51,36 @@ def get_vendor_sop_retriever():
     return _vendor_sop_retriever
 
 
+def cache_response_and_return(cache_service, vendor_id: int, question: str, response, user_role: str = "customer"):
+    """
+    緩存響應並返回（輔助函數）
+
+    Args:
+        cache_service: 緩存服務實例
+        vendor_id: 業者 ID
+        question: 用戶問題
+        response: VendorChatResponse 實例
+        user_role: 用戶角色
+
+    Returns:
+        原始 response
+    """
+    try:
+        # 將響應轉換為字典並緩存
+        response_dict = response.dict()
+        cache_service.cache_answer(
+            vendor_id=vendor_id,
+            question=question,
+            answer_data=response_dict,
+            user_role=user_role
+        )
+    except Exception as e:
+        # 緩存失敗不應影響正常響應
+        print(f"⚠️  緩存存儲失敗: {e}")
+
+    return response
+
+
 # ========================================
 # /api/v1/chat 端點已於 2025-10-21 移除
 # ========================================
@@ -267,6 +297,19 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 detail=f"業者未啟用: {request.vendor_id}"
             )
 
+        # 🚀 緩存檢查：嘗試從緩存獲取答案
+        cache_service = req.app.state.cache_service
+        cached_answer = cache_service.get_cached_answer(
+            vendor_id=request.vendor_id,
+            question=request.message,
+            user_role=request.user_role
+        )
+
+        if cached_answer:
+            print(f"⚡ 緩存命中！直接返回答案（跳過 RAG 處理）")
+            # 從緩存構建響應
+            return VendorChatResponse(**cached_answer)
+
         # Step 1: 意圖分類
         intent_classifier = req.app.state.intent_classifier
         intent_result = intent_classifier.classify(request.message)
@@ -324,7 +367,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                             is_template=False
                         ))
 
-                return VendorChatResponse(
+                response = VendorChatResponse(
                     answer=answer,
                     intent_name="unclear",
                     intent_type="unclear",
@@ -339,6 +382,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     session_id=request.session_id,
                     timestamp=datetime.utcnow().isoformat()
                 )
+
+                # 緩存並返回
+                return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
 
             # 如果 RAG 也找不到相關知識，使用意圖建議引擎分析
             # Phase B: 使用業務範圍判斷是否為新意圖
@@ -515,7 +561,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                         is_template=False
                     ))
 
-            return VendorChatResponse(
+            response = VendorChatResponse(
                 answer=answer,
                 intent_name=intent_result['intent_name'],
                 intent_type=intent_result.get('intent_type'),
@@ -530,6 +576,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 session_id=request.session_id,
                 timestamp=datetime.utcnow().isoformat()
             )
+
+            # 緩存並返回
+            return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
 
         # Step 3: 如果沒有 SOP，檢索知識庫（Phase 1 擴展：使用混合模式，結合 intent 過濾和向量相似度）
         # 支援多 Intent 檢索
@@ -601,7 +650,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                             is_template=False
                         ))
 
-                return VendorChatResponse(
+                response = VendorChatResponse(
                     answer=answer,
                     intent_name=intent_result['intent_name'],
                     intent_type=intent_result.get('intent_type'),
@@ -616,6 +665,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     session_id=request.session_id,
                     timestamp=datetime.utcnow().isoformat()
                 )
+
+                # 緩存並返回
+                return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
 
             # 如果 RAG 也找不到，記錄問題並分析是否需要新意圖建議
             print(f"   ❌ RAG fallback 也沒有找到相關知識")
@@ -760,7 +812,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 ))
 
         # Step 5: 返回回應
-        return VendorChatResponse(
+        response = VendorChatResponse(
             answer=answer,
             intent_name=intent_result['intent_name'],
             intent_type=intent_result.get('intent_type'),
@@ -775,6 +827,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             session_id=request.session_id,
             timestamp=datetime.utcnow().isoformat()
         )
+
+        # 緩存並返回
+        return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
 
     except HTTPException:
         raise

@@ -370,6 +370,33 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
 
         conn.commit()
 
+        # 🔥 Phase 3: 緩存失效通知 - 通知 RAG Orchestrator 清除相關緩存
+        try:
+            rag_api_url = os.getenv("RAG_API_URL", "http://rag-orchestrator:8100")
+            invalidation_payload = {
+                "type": "knowledge_update",
+                "knowledge_id": knowledge_id,
+                "intent_ids": [m.intent_id for m in data.intent_mappings or []]
+            }
+
+            invalidation_response = requests.post(
+                f"{rag_api_url}/api/v1/cache/invalidate",
+                json=invalidation_payload,
+                timeout=3
+            )
+
+            if invalidation_response.status_code == 200:
+                result = invalidation_response.json()
+                print(f"✅ 緩存失效通知成功: 清除 {result.get('invalidated_count', 0)} 條緩存")
+            else:
+                print(f"⚠️  緩存失效通知失敗: {invalidation_response.status_code}")
+
+        except requests.exceptions.RequestException as e:
+            # 緩存失效失敗不應阻擋知識更新，僅記錄警告
+            print(f"⚠️  緩存失效通知失敗（網絡錯誤）: {e}")
+        except Exception as e:
+            print(f"⚠️  緩存失效通知失敗: {e}")
+
         return {
             "success": True,
             "message": "知識已更新，向量已重新生成",
@@ -490,6 +517,29 @@ async def delete_knowledge(knowledge_id: int):
             raise HTTPException(status_code=404, detail="知識不存在")
 
         conn.commit()
+
+        # 🔥 Phase 3: 緩存失效通知 - 刪除知識時清除緩存
+        try:
+            rag_api_url = os.getenv("RAG_API_URL", "http://rag-orchestrator:8100")
+            invalidation_payload = {
+                "type": "knowledge_update",
+                "knowledge_id": knowledge_id
+            }
+
+            invalidation_response = requests.post(
+                f"{rag_api_url}/api/v1/cache/invalidate",
+                json=invalidation_payload,
+                timeout=3
+            )
+
+            if invalidation_response.status_code == 200:
+                result = invalidation_response.json()
+                print(f"✅ 緩存失效通知成功（知識刪除）: 清除 {result.get('invalidated_count', 0)} 條緩存")
+            else:
+                print(f"⚠️  緩存失效通知失敗: {invalidation_response.status_code}")
+
+        except Exception as e:
+            print(f"⚠️  緩存失效通知失敗: {e}")
 
         return {
             "success": True,

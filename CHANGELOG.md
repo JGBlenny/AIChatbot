@@ -9,6 +9,20 @@
 
 ## [Unreleased]
 
+### 新增 ⭐
+- **Redis 緩存系統整合** (2025-10-21)
+  - 3 層緩存架構：問題緩存、向量緩存、RAG 結果緩存
+  - 事件驅動 + TTL 混合失效策略
+  - 緩存管理 API：失效、清除、統計、健康檢查
+  - Knowledge Admin 自動觸發緩存失效通知
+  - 環境變量配置 TTL（CACHE_TTL_QUESTION, CACHE_TTL_VECTOR, CACHE_TTL_RAG_RESULT）
+
+### 改進 🔧
+- **RAG Orchestrator 性能優化**
+  - 緩存命中時跳過 RAG 處理，提升響應速度
+  - 關聯追蹤：knowledge、intent、vendor 三維度失效管理
+  - 完整的事件驅動緩存失效流程
+
 ### 規劃中
 - Phase 2: 外部 API 整合框架
 - 租客身份識別系統

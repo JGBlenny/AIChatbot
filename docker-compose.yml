@@ -143,6 +143,13 @@ services:
       DB_PASSWORD: aichatbot_password
       EMBEDDING_API_URL: http://embedding-api:5000/api/v1/embeddings
       KNOWLEDGE_GEN_MODEL: ${KNOWLEDGE_GEN_MODEL:-gpt-3.5-turbo}  # AI 知識生成專用模型
+      # Redis 緩存配置
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_ENABLED: ${CACHE_ENABLED:-true}  # 是否啟用緩存
+      CACHE_TTL_QUESTION: ${CACHE_TTL_QUESTION:-3600}  # 問題緩存 TTL（秒）
+      CACHE_TTL_VECTOR: ${CACHE_TTL_VECTOR:-7200}  # 向量緩存 TTL（秒）
+      CACHE_TTL_RAG_RESULT: ${CACHE_TTL_RAG_RESULT:-1800}  # RAG 結果緩存 TTL（秒）
     ports:
       - "8100:8100"
     volumes:
@@ -152,6 +159,7 @@ services:
     depends_on:
       - postgres
       - embedding-api
+      - redis
     restart: unless-stopped
 
 volumes:

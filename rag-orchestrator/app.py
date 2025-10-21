@@ -17,9 +17,10 @@ from services.unclear_question_manager import UnclearQuestionManager
 from services.llm_answer_optimizer import LLMAnswerOptimizer
 from services.intent_suggestion_engine import IntentSuggestionEngine
 from services.vendor_config_service import VendorConfigService
+from services.cache_service import CacheService
 
 # 導入路由
-from routers import chat, chat_stream, unclear_questions, suggested_intents, business_scope, intents, knowledge, vendors, knowledge_import, knowledge_generation, platform_sop
+from routers import chat, chat_stream, unclear_questions, suggested_intents, business_scope, intents, knowledge, vendors, knowledge_import, knowledge_generation, platform_sop, cache
 
 # 全局變數
 db_pool: Pool = None
@@ -30,13 +31,14 @@ unclear_question_manager: UnclearQuestionManager = None
 llm_answer_optimizer: LLMAnswerOptimizer = None
 suggestion_engine: IntentSuggestionEngine = None
 vendor_config_service: VendorConfigService = None
+cache_service: CacheService = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """應用生命週期管理"""
     # 啟動時初始化
-    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine, vendor_config_service
+    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine, vendor_config_service, cache_service
 
     print("🚀 初始化 RAG Orchestrator...")
 
@@ -88,6 +90,9 @@ async def lifespan(app: FastAPI):
     vendor_config_service = VendorConfigService(db_pool)
     print("✅ 業者配置服務已初始化 (Vendor Configs 整合)")
 
+    # 初始化緩存服務
+    cache_service = CacheService()
+
     # 將服務注入到 app.state
     app.state.db_pool = db_pool
     app.state.intent_classifier = intent_classifier
@@ -97,6 +102,7 @@ async def lifespan(app: FastAPI):
     app.state.llm_answer_optimizer = llm_answer_optimizer
     app.state.vendor_config_service = vendor_config_service
     app.state.suggestion_engine = suggestion_engine
+    app.state.cache_service = cache_service
 
     print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化 + Phase B 意圖建議）")
     print(f"📝 API 文件: http://localhost:8100/docs")
@@ -138,6 +144,7 @@ app.include_router(vendors.router, tags=["vendors"])  # Phase 1: Multi-Vendor Su
 app.include_router(knowledge_import.router, tags=["knowledge_import"])  # Knowledge Import from LINE chats
 app.include_router(knowledge_generation.router, prefix="/api/v1", tags=["knowledge_generation"])  # AI Knowledge Generation
 app.include_router(platform_sop.router, tags=["platform_sop"])  # Platform SOP Template Management
+app.include_router(cache.router, tags=["cache"])  # Cache Management (事件驅動 + TTL 混合策略)
 
 
 @app.get("/")
