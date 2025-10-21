@@ -345,9 +345,10 @@ CREATE TABLE notifications (
    user_id="admin"  # 目前寫死為 "admin"
    ```
 
-2. **拼音去重檢測優化** (`unclear_question_manager.py`)
-   - 向量轉換問題需修復（PostgreSQL vector 類型轉換）
-   - 拼音檢測實際未正常運作（只有 5/6 測試通過）
+2. ~~**拼音去重檢測優化**~~ ✅ **已完成 (2025-10-21)**
+   - ✅ PostgreSQL vector 類型轉換問題已修復
+   - ✅ 拼音檢測正常運作（6/6 測試通過）
+   - 📄 詳見：[修復報告](../fixes/PINYIN_DETECTION_FIX_REPORT.md)
 
 3. **Phase 2 架構準備** (`chat.py:434`)
    ```python
@@ -376,10 +377,10 @@ CREATE TABLE notifications (
 
 ## 💡 功能完善建議
 
-### 1. 修復拼音去重檢測
-- 修復 PostgreSQL vector 類型轉換問題
-- 改進拼音相似度算法
-- 增加測試覆蓋率
+### 1. ~~修復拼音去重檢測~~ ✅ **已完成**
+- ✅ PostgreSQL vector 類型轉換問題已修復 (2025-10-21)
+- ✅ 測試覆蓋率達到 100% (6/6 通過)
+- 📄 [修復報告](../fixes/PINYIN_DETECTION_FIX_REPORT.md)
 
 ### 2. 增強錯誤處理
 - API 超時處理（外部 API）

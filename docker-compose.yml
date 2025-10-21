@@ -135,6 +135,7 @@ services:
     container_name: aichatbot-rag-orchestrator
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: gpt-3.5-turbo  # 預設 LLM 模型（速度快 2-3倍，成本低 70%）
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: aichatbot_admin
