@@ -101,13 +101,6 @@ class VendorSOPRetriever:
                     si.item_number,
                     si.item_name,
                     si.content,
-                    si.requires_cashflow_check,
-                    si.cashflow_through_company,
-                    si.cashflow_direct_to_landlord,
-                    si.cashflow_mixed,
-                    si.requires_business_type_check,
-                    si.business_type_full_service,
-                    si.business_type_management,
                     si.priority
                 FROM vendor_sop_items si
                 INNER JOIN vendor_sop_categories sc ON si.category_id = sc.id
@@ -123,30 +116,17 @@ class VendorSOPRetriever:
             rows = cursor.fetchall()
             cursor.close()
 
-            # 3. 根據金流模式與業種類型調整內容
+            # 3. 處理結果（簡化版：直接返回內容，不做動態調整）
             results = []
             for row in rows:
                 item = dict(row)
-
-                # 調整內容（根據金流模式）
-                adjusted_content = self._adjust_content_by_cashflow(
-                    item, cashflow_model
-                )
-
-                # 調整語氣（根據業種類型）
-                adjusted_content = self._adjust_tone_by_business_type(
-                    adjusted_content, item, business_type
-                )
-
                 results.append({
                     'id': item['id'],
                     'category_name': item['category_name'],
                     'item_number': item['item_number'],
                     'item_name': item['item_name'],
-                    'content': adjusted_content,
-                    'original_content': item['content'],
-                    'applied_cashflow_model': cashflow_model if item['requires_cashflow_check'] else None,
-                    'applied_business_type': business_type if item['requires_business_type_check'] else None
+                    'content': item['content'],
+                    'priority': item['priority']
                 })
 
             return results
@@ -188,13 +168,7 @@ class VendorSOPRetriever:
                     si.item_number,
                     si.item_name,
                     si.content,
-                    si.requires_cashflow_check,
-                    si.cashflow_through_company,
-                    si.cashflow_direct_to_landlord,
-                    si.cashflow_mixed,
-                    si.requires_business_type_check,
-                    si.business_type_full_service,
-                    si.business_type_management
+                    si.priority
                 FROM vendor_sop_items si
                 INNER JOIN vendor_sop_categories sc ON si.category_id = sc.id
                 WHERE
@@ -211,85 +185,19 @@ class VendorSOPRetriever:
             results = []
             for row in rows:
                 item = dict(row)
-
-                adjusted_content = self._adjust_content_by_cashflow(
-                    item, cashflow_model
-                )
-                adjusted_content = self._adjust_tone_by_business_type(
-                    adjusted_content, item, business_type
-                )
-
                 results.append({
                     'id': item['id'],
                     'category_name': item['category_name'],
                     'item_number': item['item_number'],
                     'item_name': item['item_name'],
-                    'content': adjusted_content
+                    'content': item['content'],
+                    'priority': item['priority']
                 })
 
             return results
 
         finally:
             conn.close()
-
-    def _adjust_content_by_cashflow(
-        self,
-        item: Dict,
-        cashflow_model: str
-    ) -> str:
-        """
-        根據金流模式調整內容
-
-        Args:
-            item: SOP 項目
-            cashflow_model: 金流模式（through_company, direct_to_landlord, mixed）
-
-        Returns:
-            調整後的內容
-        """
-        if not item['requires_cashflow_check']:
-            return item['content']
-
-        # 根據金流模式選擇對應的內容
-        if cashflow_model == 'through_company' and item['cashflow_through_company']:
-            return item['cashflow_through_company']
-        elif cashflow_model == 'direct_to_landlord' and item['cashflow_direct_to_landlord']:
-            return item['cashflow_direct_to_landlord']
-        elif cashflow_model in ('mixed', 'hybrid') and item['cashflow_mixed']:
-            return item['cashflow_mixed']
-        else:
-            # 如果沒有對應的版本，使用基礎內容
-            return item['content']
-
-    def _adjust_tone_by_business_type(
-        self,
-        content: str,
-        item: Dict,
-        business_type: str
-    ) -> str:
-        """
-        根據業種類型調整語氣
-
-        Args:
-            content: 當前內容
-            item: SOP 項目
-            business_type: 業種類型（full_service, property_management）
-
-        Returns:
-            調整後的內容
-        """
-        if not item['requires_business_type_check']:
-            return content
-
-        # 根據業種類型選擇語氣調整
-        if business_type == 'full_service' and item['business_type_full_service']:
-            # 使用包租型的語氣覆蓋
-            return item['business_type_full_service']
-        elif business_type == 'property_management' and item['business_type_management']:
-            # 使用代管型的語氣覆蓋
-            return item['business_type_management']
-        else:
-            return content
 
     def get_all_categories(self, vendor_id: int) -> List[Dict]:
         """

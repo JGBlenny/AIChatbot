@@ -2,12 +2,14 @@
 LLM 答案優化服務
 使用 GPT 模型優化 RAG 檢索結果，生成更自然、更精準的答案
 Phase 1 擴展：支援業者參數動態注入
+Phase 3 擴展：條件式優化（快速路徑 + 模板格式化）
 """
 import os
 import re
 from typing import List, Dict, Optional
 from openai import OpenAI
 import time
+from .answer_formatter import AnswerFormatter
 
 
 class LLMAnswerOptimizer:
@@ -25,7 +27,8 @@ class LLMAnswerOptimizer:
         self.client = OpenAI(api_key=api_key) if api_key else None
 
         # 從環境變數讀取模型配置（用於降低測試成本）
-        default_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        # 預設使用 gpt-3.5-turbo（速度快 2-3倍，成本低 70%）
+        default_model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 
         # 預設配置
         default_config = {
@@ -39,8 +42,17 @@ class LLMAnswerOptimizer:
             "enable_synthesis": False,  # 是否啟用答案合成（預設關閉，需測試後啟用）
             "synthesis_min_results": 2,  # 最少需要幾個結果才考慮合成
             "synthesis_max_results": 3,  # 最多合成幾個答案
-            "synthesis_threshold": 0.7   # 當最高相似度低於此值時，考慮合成
+            "synthesis_threshold": 0.7,  # 當最高相似度低於此值時，考慮合成
+            # Phase 3 擴展：條件式優化
+            "enable_fast_path": True,  # 是否啟用快速路徑
+            "fast_path_threshold": 0.75,  # 快速路徑信心度閾值（臨時降低以測試）
+            "enable_template": True,  # 是否啟用模板格式化
+            "template_min_score": 0.55,  # 模板格式化最低信心度（臨時降低以測試）
+            "template_max_score": 0.75   # 模板格式化最高信心度
         }
+
+        # 初始化答案格式化器
+        self.formatter = AnswerFormatter()
 
         # 合併用戶配置與預設配置
         if config:
@@ -54,19 +66,21 @@ class LLMAnswerOptimizer:
         search_results: List[Dict],
         confidence_level: str,
         intent_info: Dict,
+        confidence_score: Optional[float] = None,
         vendor_params: Optional[Dict] = None,
         vendor_name: Optional[str] = None,
         vendor_info: Optional[Dict] = None,
         enable_synthesis_override: Optional[bool] = None
     ) -> Dict:
         """
-        優化答案
+        優化答案（Phase 3 擴展：條件式優化）
 
         Args:
             question: 使用者問題
             search_results: RAG 檢索結果列表
             confidence_level: 信心度等級
             intent_info: 意圖資訊
+            confidence_score: 信心度分數 (0-1)，用於條件式優化判斷
             vendor_params: 業者參數（Phase 1 擴展）
             vendor_name: 業者名稱（Phase 1 擴展）
             vendor_info: 完整業者資訊（包含 business_type, cashflow_model 等，Phase 1 SOP 擴展）
@@ -77,6 +91,7 @@ class LLMAnswerOptimizer:
             - optimized_answer: 優化後的答案
             - original_answer: 原始答案
             - optimization_applied: 是否使用了優化
+            - optimization_method: 優化方法 (fast_path/template/llm/none)
             - synthesis_applied: 是否使用了答案合成
             - tokens_used: 使用的 token 數
             - processing_time_ms: 處理時間
@@ -87,10 +102,63 @@ class LLMAnswerOptimizer:
         if not self._should_optimize(confidence_level, search_results):
             return self._create_fallback_response(search_results, start_time)
 
-        # 2. 準備原始答案
+        # DEBUG: 記錄條件式優化參數
+        print(f"🔧 條件式優化檢查: confidence_score={confidence_score}, confidence_level={confidence_level}")
+
+        # 2. Phase 3 條件式優化：檢查是否可以使用快速路徑
+        if confidence_score is not None and self.config.get("enable_fast_path", True):
+            if self.formatter.should_use_fast_path(
+                confidence_score,
+                search_results,
+                threshold=self.config.get("fast_path_threshold", 0.85)
+            ):
+                # 快速路徑：直接返回格式化答案，無需 LLM
+                print(f"⚡ 快速路徑觸發 (信心度: {confidence_score:.3f})")
+                result = self.formatter.format_simple_answer(search_results)
+                processing_time = int((time.time() - start_time) * 1000)
+
+                return {
+                    "optimized_answer": result["answer"],
+                    "original_answer": search_results[0].get('content', ''),
+                    "optimization_applied": True,
+                    "optimization_method": "fast_path",
+                    "synthesis_applied": False,
+                    "tokens_used": 0,
+                    "processing_time_ms": processing_time,
+                    "model": "none"
+                }
+
+        # 3. Phase 3 條件式優化：檢查是否可以使用模板格式化
+        if confidence_score is not None and self.config.get("enable_template", True):
+            if self.formatter.should_use_template(
+                confidence_score,
+                confidence_level,
+                search_results
+            ):
+                # 模板格式化：使用預定義模板，無需 LLM
+                print(f"📋 模板格式化觸發 (信心度: {confidence_score:.3f})")
+                result = self.formatter.format_with_template(
+                    question,
+                    search_results,
+                    intent_type=intent_info.get('intent_type')
+                )
+                processing_time = int((time.time() - start_time) * 1000)
+
+                return {
+                    "optimized_answer": result["answer"],
+                    "original_answer": search_results[0].get('content', ''),
+                    "optimization_applied": True,
+                    "optimization_method": "template",
+                    "synthesis_applied": False,
+                    "tokens_used": 0,
+                    "processing_time_ms": processing_time,
+                    "model": "none"
+                }
+
+        # 4. 準備原始答案（如果需要完整 LLM 優化）
         original_answer = self._create_original_answer(search_results)
 
-        # 3. 判斷是否需要答案合成（Phase 2 擴展）
+        # 5. 判斷是否需要答案合成（Phase 2 擴展）
         # 支援動態覆蓋：如果傳入 enable_synthesis_override，則使用該值
         should_synthesize = self._should_synthesize(
             question,
@@ -98,10 +166,11 @@ class LLMAnswerOptimizer:
             enable_synthesis_override
         )
 
-        # 4. 嘗試 LLM 優化（Phase 1 擴展：加入業者參數注入；Phase 2 擴展：答案合成）
+        # 6. 執行完整 LLM 優化（Phase 1 擴展：加入業者參數注入；Phase 2 擴展：答案合成）
         try:
             if should_synthesize:
                 # 使用答案合成模式
+                print(f"🔄 答案合成模式 (信心度: {confidence_score:.3f if confidence_score else 'N/A'})")
                 optimized_answer, tokens_used = self.synthesize_answer(
                     question=question,
                     search_results=search_results,
@@ -113,6 +182,7 @@ class LLMAnswerOptimizer:
                 synthesis_applied = True
             else:
                 # 使用傳統優化模式
+                print(f"🤖 完整 LLM 優化 (信心度: {confidence_score:.3f if confidence_score else 'N/A'})")
                 optimized_answer, tokens_used = self._call_llm(
                     question=question,
                     search_results=search_results,
@@ -129,6 +199,7 @@ class LLMAnswerOptimizer:
                 "optimized_answer": optimized_answer,
                 "original_answer": original_answer,
                 "optimization_applied": True,
+                "optimization_method": "synthesis" if synthesis_applied else "llm",
                 "synthesis_applied": synthesis_applied,  # 新增：標記是否使用了合成
                 "tokens_used": tokens_used,
                 "processing_time_ms": processing_time,
@@ -452,6 +523,9 @@ class LLMAnswerOptimizer:
 {formatted_answers}
 
 請綜合以上答案，生成一個完整、準確、結構化的回覆。確保：
+- **優先使用與問題主題最相關的答案**
+- 如果某個答案與當前問題無關，請忽略它
+- 只整合能回答當前問題的內容
 - 涵蓋所有重要資訊
 - 使用清晰的結構（標題、列表、步驟）
 - 避免重複
@@ -585,7 +659,13 @@ class LLMAnswerOptimizer:
 參考資料：
 {context}
 
-請根據以上參考資料，用自然、友善的語氣回答使用者的問題。"""
+請根據以上參考資料，用自然、友善的語氣回答使用者的問題。
+
+⚠️ 重要提醒：
+1. **請仔細閱讀每個參考資料，選擇最能回答當前問題的那個**
+2. 如果某個參考資料的標題/內容與問題不直接相關，請不要使用它
+3. 優先使用與問題主題最匹配的參考資料
+4. 相似度分數僅供參考，請以內容相關性為主"""
 
         return prompt
 

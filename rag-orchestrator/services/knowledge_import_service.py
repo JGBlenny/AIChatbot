@@ -28,7 +28,7 @@ class KnowledgeImportService:
         self.db_pool = db_pool
         self.openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.embedding_model = "text-embedding-3-small"
-        self.llm_model = "gpt-4o-mini"
+        self.llm_model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 
     async def process_import_job(
         self,

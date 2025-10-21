@@ -134,7 +134,9 @@ class ConfidenceEvaluator:
         # 收集所有結果的關鍵字
         result_keywords = set()
         for result in search_results:
-            result_keywords.update(result.get('keywords', []))
+            # 處理 keywords 可能為 None 的情況
+            keywords = result.get('keywords') or []
+            result_keywords.update(keywords)
 
         # 計算匹配的關鍵字數量
         matched = set(question_keywords) & result_keywords

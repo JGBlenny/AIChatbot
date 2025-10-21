@@ -24,7 +24,7 @@ class IntentSuggestionEngine:
         self._business_scope_cache = {}
 
         # OpenAI 配置
-        self.model = "gpt-4o-mini"
+        self.model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
         self.temperature = 0.2
         self.max_tokens = 800
 

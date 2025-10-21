@@ -124,16 +124,23 @@ class UnclearQuestionManager:
                     pinyin_sim = self._pinyin_similarity(question, candidate['question'])
 
                     # 計算語義相似度
-                    # PostgreSQL vector type needs to be converted properly
+                    # PostgreSQL pgvector 返回的是字符串格式 "[0.1,0.2,...]"
                     if candidate['question_embedding'] is not None:
                         try:
-                            # Try to convert to list if it's not already
-                            if hasattr(candidate['question_embedding'], '__iter__') and not isinstance(candidate['question_embedding'], str):
-                                candidate_emb = [float(x) for x in candidate['question_embedding']]
+                            # asyncpg 返回 pgvector 為字符串，需要解析
+                            emb_str = candidate['question_embedding']
+                            if isinstance(emb_str, str):
+                                # 移除首尾的方括號並按逗號分割
+                                candidate_emb = [float(x) for x in emb_str.strip('[]').split(',')]
+                            elif isinstance(emb_str, (list, tuple)):
+                                # 如果已經是列表（某些情況下可能）
+                                candidate_emb = [float(x) for x in emb_str]
                             else:
-                                candidate_emb = list(candidate['question_embedding'])
-                        except (TypeError, ValueError):
-                            # If conversion fails, skip this candidate
+                                # 無法識別的格式，跳過
+                                continue
+                        except (TypeError, ValueError) as e:
+                            # 如果轉換失敗，跳過此候選項
+                            print(f"⚠️  向量轉換失敗 (ID: {candidate['id']}): {e}")
                             continue
                     else:
                         continue
