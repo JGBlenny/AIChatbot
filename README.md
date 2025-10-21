@@ -389,11 +389,25 @@ docker exec -it aichatbot-knowledge-admin-api python scripts/knowledge_extractio
 ### 1. 智能問答 Chat API
 
 ```bash
-# 租客詢問問題（自動意圖分類 + RAG 檢索 + LLM 優化）
-curl -X POST http://localhost:8100/api/v1/chat \
+# 租客詢問問題（多業者支持 + SOP 整合 + RAG 檢索 + LLM 優化）
+curl -X POST http://localhost:8100/api/v1/message \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "退租要怎麼辦理？",
+    "vendor_id": 1,
+    "user_role": "customer",
+    "user_id": "user123",
+    "mode": "tenant",
+    "include_sources": true
+  }'
+
+# 或使用流式端點（即時反饋）
+curl -X POST http://localhost:8100/api/v1/chat/stream \
   -H "Content-Type: application/json" \
   -d '{
     "question": "退租要怎麼辦理？",
+    "vendor_id": 1,
+    "user_role": "customer",
     "user_id": "user123"
   }'
 

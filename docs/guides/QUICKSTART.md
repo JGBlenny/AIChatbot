@@ -133,13 +133,15 @@ curl http://localhost:8100/api/v1/health
 # "llm_answer_optimizer": "ready (Phase 3)"
 ```
 
-**發送問題測試（自動 LLM 優化）：**
+**發送問題測試（多業者 + 自動 LLM 優化）：**
 ```bash
 # 測試知識查詢 - 答案會經過 GPT-4o-mini 優化
-curl -X POST http://localhost:8100/api/v1/chat \
+curl -X POST http://localhost:8100/api/v1/message \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "退租要怎麼辦理？",
+    "message": "退租要怎麼辦理？",
+    "vendor_id": 1,
+    "user_role": "customer",
     "user_id": "test_user"
   }' | python3 -m json.tool
 

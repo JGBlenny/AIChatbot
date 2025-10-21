@@ -238,10 +238,13 @@ RAG Orchestrator (Port 8100)
 
 | 方法 | 端點 | 說明 |
 |------|------|------|
-| POST | `/api/v1/chat` | 處理使用者問題 |
+| POST | `/api/v1/message` | 多業者聊天 (推薦) |
+| POST | `/api/v1/chat/stream` | 流式聊天 (即時反饋) |
 | GET | `/api/v1/conversations` | 取得對話記錄列表 |
 | GET | `/api/v1/conversations/{id}` | 取得特定對話詳情 |
 | POST | `/api/v1/conversations/{id}/feedback` | 提交反饋 |
+
+> ⚠️ **注意**: `/api/v1/chat` 端點已於 2025-10-21 移除。請使用 `/api/v1/message` 或 `/api/v1/chat/stream` 替代。
 | GET | `/api/v1/unclear-questions` | 取得未釐清問題列表 |
 | GET | `/api/v1/unclear-questions/{id}` | 取得問題詳情 |
 | PUT | `/api/v1/unclear-questions/{id}` | 更新問題狀態 |
@@ -312,13 +315,15 @@ config = {
 
 ## 使用範例
 
-### 1. 基本問答（含 Phase 3 LLM 優化）✨
+### 1. 基本問答（含 Phase 3 LLM 優化 + 多業者支持）✨
 
 ```bash
-curl -X POST http://localhost:8100/api/v1/chat \
+curl -X POST http://localhost:8100/api/v1/message \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "退租要怎麼辦理？",
+    "message": "退租要怎麼辦理？",
+    "vendor_id": 1,
+    "user_role": "customer",
     "user_id": "user123"
   }'
 ```
@@ -360,10 +365,12 @@ curl -X POST http://localhost:8100/api/v1/chat \
 ### 2. 低信心度問題
 
 ```bash
-curl -X POST http://localhost:8100/api/v1/chat \
+curl -X POST http://localhost:8100/api/v1/message \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "請問這個月的電費怎麼計算？",
+    "message": "請問這個月的電費怎麼計算？",
+    "vendor_id": 1,
+    "user_role": "customer",
     "user_id": "user456"
   }'
 ```

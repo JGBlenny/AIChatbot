@@ -51,234 +51,32 @@ def get_vendor_sop_retriever():
     return _vendor_sop_retriever
 
 
-class ChatRequest(BaseModel):
-    """聊天請求"""
-    question: str = Field(..., min_length=1, max_length=1000, description="使用者問題")
-    vendor_id: int = Field(..., description="業者 ID", ge=1)
-    user_role: str = Field(..., description="用戶角色：customer (終端客戶) 或 staff (業者員工/系統商)")
-    user_id: Optional[str] = Field(None, description="使用者 ID")
-    context: Optional[Dict] = Field(None, description="對話上下文")
-
-
-class ChatResponse(BaseModel):
-    """聊天回應"""
-    conversation_id: Optional[str] = None
-    question: str
-    answer: str
-    confidence_score: float
-    confidence_level: str
-    intent: Dict
-    retrieved_docs: List[Dict]
-    processing_time_ms: int
-    requires_human: bool
-    unclear_question_id: Optional[int] = None
-    is_new_intent_suggested: bool = False
-    suggested_intent_id: Optional[int] = None
-
-
-@router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest, req: Request):
-    """
-    處理使用者問題
-
-    流程：
-    1. 意圖分類
-    2. RAG 檢索（如果是知識查詢類）
-    3. 信心度評估
-    4. 根據信心度決定回應策略
-    5. 記錄對話
-    """
-    start_time = time.time()
-
-    try:
-        # 取得服務實例
-        intent_classifier = req.app.state.intent_classifier
-        rag_engine = req.app.state.rag_engine
-        confidence_evaluator = req.app.state.confidence_evaluator
-        unclear_manager = req.app.state.unclear_question_manager
-        llm_optimizer = req.app.state.llm_answer_optimizer
-        suggestion_engine = req.app.state.suggestion_engine
-
-        # 0.5 根據用戶角色決定業務範圍，用於 audience 過濾（B2B/B2C 隔離）
-        # customer (終端客戶) -> external (B2C): 用戶對業者
-        # staff (業者員工/系統商) -> internal (B2B): 業者對系統商
-        business_scope = "external" if request.user_role == "customer" else "internal"
-        allowed_audiences = get_allowed_audiences_for_scope(business_scope)
-
-        # 1. 意圖分類
-        intent_result = intent_classifier.classify(request.question)
-
-        # 2. RAG 檢索（對所有問題都嘗試檢索，包括 unclear）
-        # 即使意圖不明確，也可能在知識庫中找到相關答案
-        search_results = []
-
-        # 對於 unclear 意圖，降低相似度閾值，以增加檢索機會
-        similarity_threshold = 0.55 if intent_result['intent_type'] == 'unclear' else 0.65
-
-        search_results = await rag_engine.search(
-            query=request.question,
-            limit=5,
-            similarity_threshold=similarity_threshold,
-            allowed_audiences=allowed_audiences  # ✅ 添加 audience 過濾
-        )
-
-        # 3. 信心度評估
-        evaluation = confidence_evaluator.evaluate(
-            search_results=search_results,
-            question_keywords=intent_result['keywords']
-        )
-
-        # 4. 決定回應策略
-        answer = ""
-        requires_human = False
-        unclear_question_id = None
-        optimization_result = None
-        is_new_intent_suggested = False
-        suggested_intent_id = None
-
-        if evaluation['decision'] == 'direct_answer' and search_results:
-            # 高信心度：使用 LLM 優化答案 (Phase 3)
-            optimization_result = llm_optimizer.optimize_answer(
-                question=request.question,
-                search_results=search_results,
-                confidence_level=evaluation['confidence_level'],
-                intent_info=intent_result
-            )
-            answer = optimization_result['optimized_answer']
-
-        elif evaluation['decision'] == 'needs_enhancement' and search_results:
-            # 中等信心度：使用 LLM 優化答案，但仍建議確認並記錄以便改善
-            # 記錄為待改善問題
-            unclear_question_id = await unclear_manager.record_unclear_question(
-                question=request.question,
-                user_id=request.user_id,
-                intent_type=intent_result['intent_type'],
-                similarity_score=evaluation['confidence_score'],
-                retrieved_docs={"results": search_results} if search_results else None
-            )
-
-            # 使用 LLM 優化答案 (Phase 3)
-            optimization_result = llm_optimizer.optimize_answer(
-                question=request.question,
-                search_results=search_results,
-                confidence_level=evaluation['confidence_level'],
-                intent_info=intent_result
-            )
-
-            # 在優化後的答案後附加警告訊息
-            answer = (
-                f"{optimization_result['optimized_answer']}\n\n"
-                f"⚠️ 注意：此答案信心度為中等（{evaluation['confidence_score']:.2f}），建議您聯繫客服人員進一步確認。\n"
-                f"您的問題已記錄，我們會持續改善答案品質。"
-            )
-            requires_human = True
-
-        elif evaluation['decision'] == 'unclear':
-            # 低信心度：記錄未釐清問題
-            unclear_question_id = await unclear_manager.record_unclear_question(
-                question=request.question,
-                user_id=request.user_id,
-                intent_type=intent_result['intent_type'],
-                similarity_score=evaluation['confidence_score'],
-                retrieved_docs={"results": search_results} if search_results else None
-            )
-
-            # Phase B: 使用 OpenAI 分析是否為業務範圍內的新意圖
-            if intent_result['intent_name'] == 'unclear' or intent_result['intent_type'] == 'unclear':
-                # 取得對話上下文（如果有）
-                context_text = None
-                if request.context:
-                    context_text = json.dumps(request.context, ensure_ascii=False)
-
-                # 分析問題（傳遞 vendor_id 以載入對應的業務範圍）
-                analysis = suggestion_engine.analyze_unclear_question(
-                    question=request.question,
-                    vendor_id=request.vendor_id,
-                    user_id=request.user_id,
-                    conversation_context=context_text
-                )
-
-                # 如果屬於業務範圍，記錄建議意圖
-                if analysis.get('should_record'):
-                    suggested_intent_id = suggestion_engine.record_suggestion(
-                        question=request.question,
-                        analysis=analysis,
-                        user_id=request.user_id
-                    )
-                    if suggested_intent_id:
-                        is_new_intent_suggested = True
-                        print(f"✅ 發現新意圖建議: {analysis['suggested_intent']['name']} (建議ID: {suggested_intent_id})")
-
-            answer = (
-                "抱歉，我對這個問題不太確定如何回答。\n\n"
-                "您的問題已經記錄下來，我們會盡快處理。\n"
-                "如需立即協助，請聯繫客服人員。"
-            )
-            requires_human = True
-
-        # 5. 記錄對話到資料庫
-        processing_time = int((time.time() - start_time) * 1000)
-
-        # 準備 JSON 欄位
-        retrieved_docs_json = json.dumps(
-            {"results": [{"id": r['id'], "title": r['title']} for r in search_results]}
-        )
-
-        async with req.app.state.db_pool.acquire() as conn:
-            await conn.execute("""
-                INSERT INTO conversation_logs (
-                    user_id,
-                    question,
-                    intent_type,
-                    sub_category,
-                    keywords,
-                    retrieved_docs,
-                    similarity_scores,
-                    confidence_score,
-                    final_answer,
-                    answer_source,
-                    processing_time_ms,
-                    escalated_to_human,
-                    suggested_intent_id,
-                    is_new_intent_suggested
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-            """,
-                request.user_id,
-                request.question,
-                intent_result['intent_type'],
-                intent_result.get('sub_category'),
-                intent_result['keywords'],
-                retrieved_docs_json,
-                [r['similarity'] for r in search_results],
-                evaluation['confidence_score'],
-                answer,
-                evaluation['decision'],
-                processing_time,
-                requires_human,
-                suggested_intent_id,
-                is_new_intent_suggested
-            )
-
-        # 6. 返回回應
-        return ChatResponse(
-            question=request.question,
-            answer=answer,
-            confidence_score=evaluation['confidence_score'],
-            confidence_level=evaluation['confidence_level'],
-            intent=intent_result,
-            retrieved_docs=search_results,
-            processing_time_ms=processing_time,
-            requires_human=requires_human,
-            unclear_question_id=unclear_question_id,
-            is_new_intent_suggested=is_new_intent_suggested,
-            suggested_intent_id=suggested_intent_id
-        )
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"處理問題時發生錯誤: {str(e)}"
-        )
+# ========================================
+# /api/v1/chat 端點已於 2025-10-21 移除
+# ========================================
+#
+# 移除原因：功能已由更強大的端點替代
+#
+# 替代方案：
+# 1. /api/v1/message - 多業者通用端點
+#    - 支持 SOP 整合
+#    - 支持業者參數配置
+#    - 支持多 Intent 檢索
+#
+# 2. /api/v1/chat/stream - 流式聊天端點
+#    - 提供即時反饋
+#    - 更好的用戶體驗
+#
+# 詳見：
+# - docs/api/CHAT_ENDPOINT_REMOVAL_AUDIT.md (盤查報告)
+# - docs/api/CHAT_API_MIGRATION_GUIDE.md (遷移指南)
+#
+# 已移除的項目：
+# - class ChatRequest
+# - class ChatResponse
+# - POST /chat 端點函數
+#
+# ========================================
 
 
 @router.get("/conversations")
