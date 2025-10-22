@@ -176,8 +176,28 @@ async def _handle_unclear_with_rag_fallback(
 
 
 async def _record_unclear_question(request: VendorChatRequest, req: Request):
-    """記錄 unclear 問題到測試場景庫 + 意圖建議"""
-    # 1. 記錄到測試場景庫
+    """記錄 unclear 問題到測試場景庫 + 意圖建議（僅記錄相關度高的問題）"""
+    # 1. 使用意圖建議引擎分析問題相關性
+    suggestion_engine = req.app.state.suggestion_engine
+    analysis = suggestion_engine.analyze_unclear_question(
+        question=request.message,
+        vendor_id=request.vendor_id,
+        user_id=request.user_id,
+        conversation_context=None
+    )
+
+    # 獲取相關度評估結果
+    is_relevant = analysis.get('is_relevant', False)
+    relevance_score = analysis.get('relevance_score', 0.0)
+    should_record = analysis.get('should_record', False)
+
+    # 只記錄相關度高的問題 (relevance_score >= 0.7)
+    if not should_record:
+        print(f"⏭️  跳過記錄：問題相關度不足 (score: {relevance_score:.2f}, relevant: {is_relevant})")
+        print(f"   問題: {request.message}")
+        return
+
+    # 2. 記錄到測試場景庫（相關度過濾後）
     try:
         test_scenario_conn = psycopg2.connect(**get_db_config())
         test_scenario_cursor = test_scenario_conn.cursor()
@@ -198,36 +218,27 @@ async def _record_unclear_question(request: VendorChatRequest, req: Request):
             """, (
                 request.message, 'unclear', 'pending_review', 'user_question',
                 'hard', 80,
-                f"用戶問題意圖不明確（Vendor {request.vendor_id}），系統無法識別並提供答案",
+                f"用戶問題意圖不明確（Vendor {request.vendor_id}），相關度: {relevance_score:.2f}",
                 "追蹤意圖識別缺口，改善分類器",
                 request.user_id or 'system'
             ))
             scenario_id = test_scenario_cursor.fetchone()[0]
             test_scenario_conn.commit()
-            print(f"✅ 記錄unclear問題到測試場景庫 (Scenario ID: {scenario_id})")
+            print(f"✅ 記錄unclear問題到測試場景庫 (Scenario ID: {scenario_id}, 相關度: {relevance_score:.2f})")
 
         test_scenario_cursor.close()
         test_scenario_conn.close()
     except Exception as e:
         print(f"⚠️ 記錄測試場景失敗: {e}")
 
-    # 2. 使用意圖建議引擎
-    suggestion_engine = req.app.state.suggestion_engine
-    analysis = suggestion_engine.analyze_unclear_question(
+    # 3. 記錄意圖建議
+    suggested_intent_id = suggestion_engine.record_suggestion(
         question=request.message,
-        vendor_id=request.vendor_id,
-        user_id=request.user_id,
-        conversation_context=None
+        analysis=analysis,
+        user_id=request.user_id
     )
-
-    if analysis.get('should_record'):
-        suggested_intent_id = suggestion_engine.record_suggestion(
-            question=request.message,
-            analysis=analysis,
-            user_id=request.user_id
-        )
-        if suggested_intent_id:
-            print(f"✅ 發現新意圖建議: {analysis['suggested_intent']['name']} (ID: {suggested_intent_id})")
+    if suggested_intent_id:
+        print(f"✅ 發現新意圖建議: {analysis['suggested_intent']['name']} (ID: {suggested_intent_id})")
 
 
 # ==================== 輔助函數：SOP 檢索 ====================
