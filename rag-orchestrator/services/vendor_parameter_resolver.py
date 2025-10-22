@@ -268,7 +268,8 @@ class VendorParameterResolver:
                     contact_phone,
                     contact_email,
                     is_active,
-                    subscription_plan
+                    subscription_plan,
+                    business_type
                 FROM vendors
                 WHERE id = %s
             """, (vendor_id,))

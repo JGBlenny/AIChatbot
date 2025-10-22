@@ -36,6 +36,7 @@ class VendorCreate(BaseModel):
     contact_email: Optional[str] = Field(None, description="聯絡郵箱", max_length=100)
     address: Optional[str] = Field(None, description="公司地址")
     subscription_plan: str = Field("basic", description="訂閱方案")
+    business_type: str = Field("property_management", description="業態類型：full_service 或 property_management")
     created_by: str = Field("admin", description="建立者")
 
 
@@ -47,6 +48,7 @@ class VendorUpdate(BaseModel):
     contact_email: Optional[str] = Field(None, description="聯絡郵箱", max_length=100)
     address: Optional[str] = Field(None, description="公司地址")
     subscription_plan: Optional[str] = Field(None, description="訂閱方案")
+    business_type: Optional[str] = Field(None, description="業態類型：full_service 或 property_management")
     is_active: Optional[bool] = Field(None, description="是否啟用")
     updated_by: str = Field("admin", description="更新者")
 
@@ -61,6 +63,7 @@ class VendorResponse(BaseModel):
     contact_email: Optional[str]
     address: Optional[str]
     subscription_plan: str
+    business_type: str
     subscription_status: str
     is_active: bool
     created_at: datetime
@@ -143,10 +146,10 @@ async def create_vendor(vendor: VendorCreate):
         cursor.execute("""
             INSERT INTO vendors (
                 code, name, short_name, contact_phone, contact_email,
-                address, subscription_plan, subscription_status,
+                address, subscription_plan, business_type, subscription_status,
                 subscription_start_date, created_by
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
         """, (
             vendor.code,
@@ -156,6 +159,7 @@ async def create_vendor(vendor: VendorCreate):
             vendor.contact_email,
             vendor.address,
             vendor.subscription_plan,
+            vendor.business_type,
             'active',
             date.today(),
             vendor.created_by
@@ -236,6 +240,10 @@ async def update_vendor(vendor_id: int, vendor: VendorUpdate):
         if vendor.subscription_plan is not None:
             update_fields.append("subscription_plan = %s")
             params.append(vendor.subscription_plan)
+
+        if vendor.business_type is not None:
+            update_fields.append("business_type = %s")
+            params.append(vendor.business_type)
 
         if vendor.is_active is not None:
             update_fields.append("is_active = %s")
@@ -485,7 +493,7 @@ class SOPItemCreate(BaseModel):
     item_name: str = Field(..., description="項目名稱", min_length=1, max_length=200)
     content: str = Field(..., description="項目內容")
     template_id: Optional[int] = Field(None, description="來源範本ID（記錄從哪個範本複製而來）")
-    related_intent_id: Optional[int] = Field(None, description="關聯意圖ID")
+    intent_ids: Optional[List[int]] = Field(None, description="關聯意圖ID列表")
     priority: int = Field(50, description="優先級（0-100）", ge=0, le=100)
 
 
@@ -493,7 +501,7 @@ class SOPItemUpdate(BaseModel):
     """更新 SOP 項目"""
     item_name: str = Field(..., description="項目名稱")
     content: str = Field(..., description="項目內容")
-    related_intent_id: Optional[int] = Field(None, description="關聯意圖ID")
+    intent_ids: Optional[List[int]] = Field(None, description="關聯意圖ID列表（支援多意圖）")
     priority: Optional[int] = Field(None, description="優先級（0-100）", ge=0, le=100)
 
 
@@ -552,25 +560,31 @@ async def get_sop_items(vendor_id: int, category_id: Optional[int] = None):
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="業者不存在")
 
-        # 獲取 SOP 項目（包含關聯的意圖名稱和範本來源）
+        # 獲取 SOP 項目（包含群組資訊、範本來源、多意圖支援）
         query = """
             SELECT
                 vsi.id,
                 vsi.category_id,
                 vsi.vendor_id,
+                vsi.group_id,
+                vsg.group_name,
                 vsi.item_number,
                 vsi.item_name,
                 vsi.content,
                 vsi.template_id,
-                vsi.related_intent_id,
                 vsi.priority,
-                i.name as related_intent_name,
                 pt.item_name as template_item_name,
                 vsi.is_active,
                 vsi.created_at,
-                vsi.updated_at
+                vsi.updated_at,
+                COALESCE(
+                    (SELECT ARRAY_AGG(vsii.intent_id ORDER BY vsii.intent_id)
+                     FROM vendor_sop_item_intents vsii
+                     WHERE vsii.sop_item_id = vsi.id),
+                    ARRAY[]::INTEGER[]
+                ) as intent_ids
             FROM vendor_sop_items vsi
-            LEFT JOIN intents i ON vsi.related_intent_id = i.id
+            LEFT JOIN vendor_sop_groups vsg ON vsi.group_id = vsg.id
             LEFT JOIN platform_sop_templates pt ON vsi.template_id = pt.id
             WHERE vsi.vendor_id = %s AND vsi.is_active = TRUE
         """
@@ -622,13 +636,14 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="SOP 項目不存在或不屬於該業者")
 
-        # 驗證意圖是否存在（如果有指定）
-        if item_update.related_intent_id:
-            cursor.execute("SELECT id FROM intents WHERE id = %s", (item_update.related_intent_id,))
-            if not cursor.fetchone():
-                raise HTTPException(status_code=400, detail=f"意圖 ID {item_update.related_intent_id} 不存在")
+        # 驗證所有意圖是否存在（如果有指定）
+        if item_update.intent_ids:
+            for intent_id in item_update.intent_ids:
+                cursor.execute("SELECT id FROM intents WHERE id = %s", (intent_id,))
+                if not cursor.fetchone():
+                    raise HTTPException(status_code=400, detail=f"意圖 ID {intent_id} 不存在")
 
-        # 更新 SOP 項目
+        # 更新 SOP 項目基本資訊
         update_fields = []
         params = []
 
@@ -637,9 +652,6 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
 
         update_fields.append("content = %s")
         params.append(item_update.content)
-
-        update_fields.append("related_intent_id = %s")
-        params.append(item_update.related_intent_id)
 
         if item_update.priority is not None:
             update_fields.append("priority = %s")
@@ -656,12 +668,44 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
         """
 
         cursor.execute(query, params)
-
         updated_item = cursor.fetchone()
+
+        # 更新多意圖關聯表
+        if item_update.intent_ids is not None:
+            # 先刪除所有現有關聯
+            cursor.execute("""
+                DELETE FROM vendor_sop_item_intents
+                WHERE sop_item_id = %s
+            """, (item_id,))
+
+            # 插入新的意圖關聯
+            for intent_id in item_update.intent_ids:
+                cursor.execute("""
+                    INSERT INTO vendor_sop_item_intents (sop_item_id, intent_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT DO NOTHING
+                """, (item_id, intent_id))
+
         conn.commit()
+
+        # 查詢更新後的完整資訊（包含 intent_ids）
+        cursor.execute("""
+            SELECT
+                vsi.*,
+                COALESCE(
+                    (SELECT ARRAY_AGG(vsii.intent_id ORDER BY vsii.intent_id)
+                     FROM vendor_sop_item_intents vsii
+                     WHERE vsii.sop_item_id = vsi.id),
+                    ARRAY[]::INTEGER[]
+                ) as intent_ids
+            FROM vendor_sop_items vsi
+            WHERE vsi.id = %s
+        """, (item_id,))
+
+        final_item = cursor.fetchone()
         cursor.close()
 
-        return dict(updated_item)
+        return dict(final_item)
 
     except HTTPException:
         conn.rollback()
@@ -754,10 +798,11 @@ async def create_sop_item(vendor_id: int, item: SOPItemCreate):
             raise HTTPException(status_code=400, detail="分類不存在或不屬於該業者")
 
         # 檢查意圖是否存在（如果有指定）
-        if item.related_intent_id:
-            cursor.execute("SELECT id FROM intents WHERE id = %s", (item.related_intent_id,))
-            if not cursor.fetchone():
-                raise HTTPException(status_code=400, detail=f"意圖 ID {item.related_intent_id} 不存在")
+        if item.intent_ids:
+            for intent_id in item.intent_ids:
+                cursor.execute("SELECT id FROM intents WHERE id = %s", (intent_id,))
+                if not cursor.fetchone():
+                    raise HTTPException(status_code=400, detail=f"意圖 ID {intent_id} 不存在")
 
         # 檢查範本是否存在（如果有指定）
         if item.template_id:
@@ -769,10 +814,10 @@ async def create_sop_item(vendor_id: int, item: SOPItemCreate):
         cursor.execute("""
             INSERT INTO vendor_sop_items (
                 category_id, vendor_id, item_number, item_name, content,
-                template_id, related_intent_id, priority
+                template_id, priority
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING *
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
         """, (
             item.category_id,
             vendor_id,
@@ -780,15 +825,40 @@ async def create_sop_item(vendor_id: int, item: SOPItemCreate):
             item.item_name,
             item.content,
             item.template_id,
-            item.related_intent_id,
             item.priority
         ))
 
         new_item = cursor.fetchone()
+        new_item_id = new_item['id']
+
+        # 插入意圖關聯
+        if item.intent_ids:
+            for intent_id in item.intent_ids:
+                cursor.execute("""
+                    INSERT INTO vendor_sop_item_intents (sop_item_id, intent_id)
+                    VALUES (%s, %s)
+                """, (new_item_id, intent_id))
+
         conn.commit()
+
+        # 查詢完整的項目資訊（包含 intent_ids）
+        cursor.execute("""
+            SELECT
+                vsi.*,
+                COALESCE(
+                    (SELECT ARRAY_AGG(vsii.intent_id ORDER BY vsii.intent_id)
+                     FROM vendor_sop_item_intents vsii
+                     WHERE vsii.sop_item_id = vsi.id),
+                    ARRAY[]::INTEGER[]
+                ) as intent_ids
+            FROM vendor_sop_items vsi
+            WHERE vsi.id = %s
+        """, (new_item_id,))
+
+        final_item = cursor.fetchone()
         cursor.close()
 
-        return dict(new_item)
+        return dict(final_item)
 
     except HTTPException:
         conn.rollback()
@@ -903,7 +973,7 @@ async def get_available_templates(vendor_id: int, category_id: Optional[int] = N
         if not vendor:
             raise HTTPException(status_code=404, detail="業者不存在")
 
-        # 取得可用範本（已自動根據業種過濾）
+        # 取得可用範本（已自動根據業種過濾，包含群組資訊）
         query = """
             SELECT
                 vendor_id,
@@ -912,13 +982,15 @@ async def get_available_templates(vendor_id: int, category_id: Optional[int] = N
                 category_id,
                 category_name,
                 category_description,
+                group_id,
+                group_name,
                 template_id,
                 item_number,
                 item_name,
                 content,
                 template_notes,
                 customization_hint,
-                related_intent_id,
+                intent_ids,
                 priority,
                 already_copied,
                 vendor_sop_item_id
@@ -976,8 +1048,13 @@ async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
                 pt.item_name,
                 pt.content,
                 pt.business_type,
-                pt.related_intent_id,
-                pt.priority
+                pt.priority,
+                COALESCE(
+                    (SELECT ARRAY_AGG(psti.intent_id ORDER BY psti.intent_id)
+                     FROM platform_sop_template_intents psti
+                     WHERE psti.template_id = pt.id),
+                    ARRAY[]::INTEGER[]
+                ) as intent_ids
             FROM platform_sop_templates pt
             WHERE pt.id = %s AND pt.is_active = TRUE
         """, (request.template_id,))
@@ -1033,11 +1110,10 @@ async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
                 item_name,
                 content,
                 template_id,
-                related_intent_id,
                 priority
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING *
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
         """, (
             request.category_id,
             vendor_id,
@@ -1045,16 +1121,41 @@ async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
             template['item_name'],
             template['content'],
             request.template_id,
-            template['related_intent_id'],
             template['priority']
         ))
 
         new_item = cursor.fetchone()
+        new_item_id = new_item['id']
+
+        # 插入意圖關聯（從範本複製）
+        if template['intent_ids']:
+            for intent_id in template['intent_ids']:
+                cursor.execute("""
+                    INSERT INTO vendor_sop_item_intents (sop_item_id, intent_id)
+                    VALUES (%s, %s)
+                """, (new_item_id, intent_id))
+
         conn.commit()
+
+        # 查詢完整資訊
+        cursor.execute("""
+            SELECT
+                vsi.*,
+                COALESCE(
+                    (SELECT ARRAY_AGG(vsii.intent_id ORDER BY vsii.intent_id)
+                     FROM vendor_sop_item_intents vsii
+                     WHERE vsii.sop_item_id = vsi.id),
+                    ARRAY[]::INTEGER[]
+                ) as intent_ids
+            FROM vendor_sop_items vsi
+            WHERE vsi.id = %s
+        """, (new_item_id,))
+
+        final_item = cursor.fetchone()
         cursor.close()
 
         return {
-            **dict(new_item),
+            **dict(final_item),
             "message": "範本已成功複製，可以進行編輯調整",
             "template_id": request.template_id
         }
@@ -1113,8 +1214,13 @@ async def copy_category_templates_to_vendor(vendor_id: int, request: CopyCategor
                 pt.item_name,
                 pt.content,
                 pt.business_type,
-                pt.related_intent_id,
-                pt.priority
+                pt.priority,
+                COALESCE(
+                    (SELECT ARRAY_AGG(psti.intent_id ORDER BY psti.intent_id)
+                     FROM platform_sop_template_intents psti
+                     WHERE psti.template_id = pt.id),
+                    ARRAY[]::INTEGER[]
+                ) as intent_ids
             FROM platform_sop_templates pt
             WHERE pt.category_id = %s
               AND pt.is_active = TRUE
@@ -1190,11 +1296,10 @@ async def copy_category_templates_to_vendor(vendor_id: int, request: CopyCategor
                     item_name,
                     content,
                     template_id,
-                    related_intent_id,
                     priority
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING *
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
             """, (
                 vendor_category_id,
                 vendor_id,
@@ -1202,12 +1307,21 @@ async def copy_category_templates_to_vendor(vendor_id: int, request: CopyCategor
                 template['item_name'],
                 template['content'],
                 template['id'],
-                template['related_intent_id'],
                 template['priority']
             ))
 
             new_item = cursor.fetchone()
-            copied_items.append(dict(new_item))
+            new_item_id = new_item['id']
+
+            # 插入意圖關聯（從範本複製）
+            if template['intent_ids']:
+                for intent_id in template['intent_ids']:
+                    cursor.execute("""
+                        INSERT INTO vendor_sop_item_intents (sop_item_id, intent_id)
+                        VALUES (%s, %s)
+                    """, (new_item_id, intent_id))
+
+            copied_items.append({'id': new_item_id})
 
         conn.commit()
         cursor.close()
@@ -1326,8 +1440,13 @@ async def copy_all_templates_to_vendor(vendor_id: int):
                     pt.item_number,
                     pt.item_name,
                     pt.content,
-                    pt.related_intent_id,
-                    pt.priority
+                    pt.priority,
+                    COALESCE(
+                        (SELECT ARRAY_AGG(psti.intent_id ORDER BY psti.intent_id)
+                         FROM platform_sop_template_intents psti
+                         WHERE psti.template_id = pt.id),
+                        ARRAY[]::INTEGER[]
+                    ) as intent_ids
                 FROM platform_sop_templates pt
                 WHERE pt.category_id = %s
                   AND pt.is_active = TRUE
@@ -1347,10 +1466,9 @@ async def copy_all_templates_to_vendor(vendor_id: int):
                         item_name,
                         content,
                         template_id,
-                        related_intent_id,
                         priority
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
                     vendor_category_id,
@@ -1359,11 +1477,20 @@ async def copy_all_templates_to_vendor(vendor_id: int):
                     template['item_name'],
                     template['content'],
                     template['id'],
-                    template['related_intent_id'],
                     template['priority']
                 ))
                 new_item = cursor.fetchone()
-                copied_items.append(new_item['id'])
+                new_item_id = new_item['id']
+
+                # 插入意圖關聯（從範本複製）
+                if template['intent_ids']:
+                    for intent_id in template['intent_ids']:
+                        cursor.execute("""
+                            INSERT INTO vendor_sop_item_intents (sop_item_id, intent_id)
+                            VALUES (%s, %s)
+                        """, (new_item_id, intent_id))
+
+                copied_items.append(new_item_id)
 
             # 記錄該分類的複製結果
             created_categories.append({

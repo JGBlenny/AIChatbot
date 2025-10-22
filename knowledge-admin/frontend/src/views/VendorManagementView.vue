@@ -24,6 +24,7 @@
             <th>名稱</th>
             <th>簡稱</th>
             <th>聯絡電話</th>
+            <th width="120">業態類型</th>
             <th>訂閱方案</th>
             <th width="80">狀態</th>
             <th width="280">操作</th>
@@ -36,6 +37,11 @@
             <td><strong>{{ vendor.name }}</strong></td>
             <td>{{ vendor.short_name || '-' }}</td>
             <td>{{ vendor.contact_phone || '-' }}</td>
+            <td>
+              <span class="badge" :class="'type-' + vendor.business_type">
+                {{ getBusinessTypeLabel(vendor.business_type) }}
+              </span>
+            </td>
             <td>
               <span class="badge" :class="'plan-' + vendor.subscription_plan">
                 {{ getPlanLabel(vendor.subscription_plan) }}
@@ -98,13 +104,24 @@
             <input v-model="formData.address" placeholder="台北市信義區..." />
           </div>
 
-          <div class="form-group">
-            <label>訂閱方案</label>
-            <select v-model="formData.subscription_plan">
-              <option value="basic">Basic - 基礎方案</option>
-              <option value="standard">Standard - 標準方案</option>
-              <option value="premium">Premium - 進階方案</option>
-            </select>
+          <div class="form-row">
+            <div class="form-group">
+              <label>訂閱方案</label>
+              <select v-model="formData.subscription_plan">
+                <option value="basic">Basic - 基礎方案</option>
+                <option value="standard">Standard - 標準方案</option>
+                <option value="premium">Premium - 進階方案</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>業態類型 *</label>
+              <select v-model="formData.business_type" required>
+                <option value="full_service">包租型 (Full Service)</option>
+                <option value="property_management">代管型 (Property Management)</option>
+              </select>
+              <small>影響 AI 回答的語氣風格</small>
+            </div>
           </div>
 
           <div v-if="editingItem" class="form-row">
@@ -202,6 +219,7 @@ export default {
         contact_email: '',
         address: '',
         subscription_plan: 'basic',
+        business_type: 'property_management',
         is_active: true
       }
     };
@@ -238,6 +256,7 @@ export default {
         contact_email: '',
         address: '',
         subscription_plan: 'basic',
+        business_type: 'property_management',
         is_active: true
       };
       this.showModal = true;
@@ -253,6 +272,7 @@ export default {
         contact_email: vendor.contact_email || '',
         address: vendor.address || '',
         subscription_plan: vendor.subscription_plan,
+        business_type: vendor.business_type || 'property_management',
         is_active: vendor.is_active
       };
       this.showModal = true;
@@ -270,6 +290,7 @@ export default {
             contact_email: this.formData.contact_email,
             address: this.formData.address,
             subscription_plan: this.formData.subscription_plan,
+            business_type: this.formData.business_type,
             is_active: this.formData.is_active,
             updated_by: 'admin'
           });
@@ -338,6 +359,14 @@ export default {
       return labels[plan] || plan;
     },
 
+    getBusinessTypeLabel(type) {
+      const labels = {
+        full_service: '📦 包租型',
+        property_management: '🏢 代管型'
+      };
+      return labels[type] || type;
+    },
+
     getCategoryLabel(category) {
       const labels = {
         payment: '帳務',
@@ -384,6 +413,14 @@ export default {
 
 .badge.plan-premium {
   background: #F56C6C;
+}
+
+.badge.type-full_service {
+  background: #67C23A;
+}
+
+.badge.type-property_management {
+  background: #409EFF;
 }
 
 .btn-sm {
