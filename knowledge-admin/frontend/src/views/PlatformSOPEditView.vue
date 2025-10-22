@@ -18,67 +18,96 @@
       <span class="spinner"></span> 載入中...
     </div>
 
-    <!-- SOP 範本列表（按分類分組） -->
+    <!-- SOP 範本列表（3 層結構：分類 → 群組 → 範本） -->
     <div v-else class="sop-categories">
       <div
         v-for="category in categories"
         :key="category.id"
         class="category-section"
       >
-        <template v-if="getTemplatesByCategory(category.id).length > 0">
+        <template v-if="getGroupsByCategory(category.id).length > 0">
+          <!-- 第 1 層：分類 -->
           <div
             class="category-header-collapsible"
             @click="toggleCategory(category.id)"
           >
             <span class="collapse-icon">{{ isCategoryExpanded(category.id) ? '▼' : '▶' }}</span>
             <h2>{{ category.category_name }}</h2>
-            <span class="category-count">{{ getTemplatesByCategory(category.id).length }} 項</span>
+            <span class="category-count">{{ getGroupsByCategory(category.id).length }} 個群組</span>
           </div>
 
-          <div v-show="isCategoryExpanded(category.id)" class="templates-list">
+          <!-- 第 2 層：群組列表 -->
+          <div v-show="isCategoryExpanded(category.id)" class="groups-list">
             <div
-              v-for="template in getTemplatesByCategory(category.id)"
-              :key="template.id"
-              class="template-card"
+              v-for="group in getGroupsByCategory(category.id)"
+              :key="group.id"
+              class="group-section"
             >
-              <div class="template-header">
-                <span class="template-number">#{{ template.item_number }}</span>
-                <h3>{{ template.item_name }}</h3>
-                <span v-if="template.related_intent_name" class="badge badge-intent">
-                  🎯 {{ template.related_intent_name }}
-                </span>
-                <span class="badge badge-priority" :class="getPriorityClass(template.priority)">
-                  優先級: {{ template.priority }}
-                </span>
+              <div
+                class="group-header-collapsible"
+                @click="toggleGroup(group.id)"
+              >
+                <span class="collapse-icon">{{ isGroupExpanded(group.id) ? '▼' : '▶' }}</span>
+                <h3>{{ group.group_name }}</h3>
+                <span class="group-count">{{ getTemplatesByGroup(group.id).length }} 項</span>
               </div>
 
-              <div class="template-content">
-                <div class="content-section">
-                  <strong>範本內容:</strong>
-                  <p>{{ template.content }}</p>
+              <!-- 第 3 層：範本列表 -->
+              <div v-show="isGroupExpanded(group.id)" class="templates-list">
+                <div
+                  v-for="template in getTemplatesByGroup(group.id)"
+                  :key="template.id"
+                  class="template-card"
+                >
+                  <div class="template-header">
+                    <span class="template-number">#{{ template.item_number }}</span>
+                    <h4>{{ template.item_name }}</h4>
+                    <span
+                      v-for="intentId in (template.intent_ids || [])"
+                      :key="intentId"
+                      class="badge badge-intent"
+                    >
+                      🎯 {{ getIntentName(intentId) }}
+                    </span>
+                    <span class="badge badge-priority" :class="getPriorityClass(template.priority)">
+                      優先級: {{ template.priority }}
+                    </span>
+                  </div>
+
+                  <div class="template-content">
+                    <div class="content-section">
+                      <strong>範本內容:</strong>
+                      <p>{{ template.content }}</p>
+                    </div>
+
+                    <div v-if="template.template_notes" class="content-section template-guide">
+                      <strong>📝 範本說明:</strong>
+                      <p>{{ template.template_notes }}</p>
+                    </div>
+
+                    <div v-if="template.customization_hint" class="content-section template-guide">
+                      <strong>💡 自訂提示:</strong>
+                      <p>{{ template.customization_hint }}</p>
+                    </div>
+                  </div>
+
+                  <div class="template-actions">
+                    <button @click="editTemplate(template)" class="btn btn-sm btn-secondary">
+                      ✏️ 編輯
+                    </button>
+                    <button @click="viewTemplateUsage(template.id)" class="btn btn-sm btn-info">
+                      👥 使用情況
+                    </button>
+                    <button @click="deleteTemplate(template.id)" class="btn btn-sm btn-danger">
+                      🗑️ 刪除
+                    </button>
+                  </div>
                 </div>
 
-                <div v-if="template.template_notes" class="content-section template-guide">
-                  <strong>📝 範本說明:</strong>
-                  <p>{{ template.template_notes }}</p>
+                <!-- 如果群組內沒有範本 -->
+                <div v-if="getTemplatesByGroup(group.id).length === 0" class="no-templates-in-group">
+                  此群組尚未建立任何 SOP 項目
                 </div>
-
-                <div v-if="template.customization_hint" class="content-section template-guide">
-                  <strong>💡 自訂提示:</strong>
-                  <p>{{ template.customization_hint }}</p>
-                </div>
-              </div>
-
-              <div class="template-actions">
-                <button @click="editTemplate(template)" class="btn btn-sm btn-secondary">
-                  ✏️ 編輯
-                </button>
-                <button @click="viewTemplateUsage(template.id)" class="btn btn-sm btn-info">
-                  👥 使用情況
-                </button>
-                <button @click="deleteTemplate(template.id)" class="btn btn-sm btn-danger">
-                  🗑️ 刪除
-                </button>
               </div>
             </div>
           </div>
@@ -138,13 +167,20 @@
             <h3>關聯設定</h3>
 
             <div class="form-group">
-              <label>關聯意圖</label>
-              <select v-model.number="templateForm.related_intent_id" class="form-control">
-                <option :value="null">無</option>
-                <option v-for="intent in intents" :key="intent.id" :value="intent.id">
-                  {{ intent.name }}
-                </option>
-              </select>
+              <label>關聯意圖（可複選）</label>
+              <div class="intent-checkboxes">
+                <label v-for="intent in intents" :key="intent.id" class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    :value="intent.id"
+                    v-model="templateForm.intent_ids"
+                    class="checkbox-input"
+                  />
+                  <span class="checkbox-text">{{ intent.name }}</span>
+                </label>
+              </div>
+              <p class="form-hint" v-if="templateForm.intent_ids.length === 0">未選擇任何意圖</p>
+              <p class="form-hint" v-else>已選擇 {{ templateForm.intent_ids.length }} 個意圖</p>
             </div>
           </div>
 
@@ -216,11 +252,13 @@ export default {
     return {
       loading: false,
       categories: [],
+      groups: [],
       templates: [],
       intents: [],
 
       // Accordion states
       expandedCategories: {},
+      expandedGroups: {},
 
       // Modal states
       showTemplateModal: false,
@@ -236,7 +274,7 @@ export default {
         item_number: 1,
         item_name: '',
         content: '',
-        related_intent_id: null,
+        intent_ids: [],
         priority: 50,
         template_notes: '',
         customization_hint: ''
@@ -295,6 +333,7 @@ export default {
       try {
         await Promise.all([
           this.loadCategories(),
+          this.loadGroups(),
           this.loadTemplates()
         ]);
       } catch (error) {
@@ -308,6 +347,11 @@ export default {
     async loadCategories() {
       const response = await axios.get(`${RAG_API}/api/v1/platform/sop/categories`);
       this.categories = response.data.categories;
+    },
+
+    async loadGroups() {
+      const response = await axios.get(`${RAG_API}/api/v1/platform/sop/groups`);
+      this.groups = response.data.groups;
     },
 
     async loadTemplates() {
@@ -329,6 +373,14 @@ export default {
       return this.filteredTemplates.filter(t => t.category_id === categoryId);
     },
 
+    getGroupsByCategory(categoryId) {
+      return this.groups.filter(g => g.category_id === categoryId);
+    },
+
+    getTemplatesByGroup(groupId) {
+      return this.filteredTemplates.filter(t => t.group_id === groupId);
+    },
+
     // Accordion methods
     toggleCategory(categoryId) {
       this.expandedCategories = {
@@ -339,6 +391,17 @@ export default {
 
     isCategoryExpanded(categoryId) {
       return !!this.expandedCategories[categoryId];
+    },
+
+    toggleGroup(groupId) {
+      this.expandedGroups = {
+        ...this.expandedGroups,
+        [groupId]: !this.expandedGroups[groupId]
+      };
+    },
+
+    isGroupExpanded(groupId) {
+      return !!this.expandedGroups[groupId];
     },
 
     // Template CRUD
@@ -364,7 +427,7 @@ export default {
         item_number: 1,
         item_name: '',
         content: '',
-        related_intent_id: null,
+        intent_ids: [],
         priority: 50,
         template_notes: '',
         customization_hint: ''
@@ -381,7 +444,7 @@ export default {
         item_number: template.item_number,
         item_name: template.item_name,
         content: template.content,
-        related_intent_id: template.related_intent_id,
+        intent_ids: template.intent_ids && template.intent_ids.length > 0 ? [...template.intent_ids] : [],
         priority: template.priority,
         template_notes: template.template_notes || '',
         customization_hint: template.customization_hint || ''
@@ -445,7 +508,7 @@ export default {
         item_number: 1,
         item_name: '',
         content: '',
-        related_intent_id: null,
+        intent_ids: [],
         priority: 50,
         template_notes: '',
         customization_hint: ''
@@ -464,6 +527,11 @@ export default {
     },
 
     // Helper methods
+    getIntentName(intentId) {
+      const intent = this.intents.find(i => i.id === intentId);
+      return intent ? intent.name : `ID:${intentId}`;
+    },
+
     getPriorityClass(priority) {
       if (priority >= 90) return 'priority-high';
       if (priority >= 70) return 'priority-medium';
@@ -644,8 +712,62 @@ export default {
   font-weight: 500;
 }
 
+/* 群組樣式（第 2 層） */
+.groups-list {
+  padding: 10px 20px 20px 20px;
+}
+
+.group-section {
+  background: #f9f9f9;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.group-header-collapsible {
+  background: #ffffff;
+  padding: 12px 16px;
+  border-left: 4px solid #2196F3;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.group-header-collapsible:hover {
+  background: #f5f5f5;
+  border-left-color: #1976D2;
+}
+
+.group-header-collapsible h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #444;
+  font-weight: 600;
+  flex: 1;
+}
+
+.group-count {
+  background: #2196F3;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .templates-list {
-  padding: 20px;
+  padding: 16px;
+}
+
+.no-templates-in-group {
+  text-align: center;
+  padding: 30px 20px;
+  color: #aaa;
+  font-size: 14px;
 }
 
 .template-card {
@@ -673,11 +795,12 @@ export default {
   font-size: 13px;
 }
 
-.template-header h3 {
-  font-size: 18px;
+.template-header h4 {
+  font-size: 15px;
   color: #333;
   margin: 0;
   flex: 1;
+  font-weight: 600;
 }
 
 .badge {
@@ -891,5 +1014,57 @@ export default {
   padding: 40px;
   color: #999;
   font-style: italic;
+}
+
+/* Checkbox styles for multi-intent selection */
+.intent-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.checkbox-label:hover {
+  border-color: #4CAF50;
+  background: #f5f5f5;
+}
+
+.checkbox-label:has(.checkbox-input:checked) {
+  background: #E8F5E9;
+  border-color: #4CAF50;
+}
+
+.checkbox-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4CAF50;
+}
+
+.checkbox-text {
+  font-size: 14px;
+  color: #333;
+  flex: 1;
+}
+
+.checkbox-label:has(.checkbox-input:checked) .checkbox-text {
+  font-weight: 600;
+  color: #2E7D32;
 }
 </style>

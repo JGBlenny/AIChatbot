@@ -36,7 +36,7 @@ class PlatformSOPTemplateCreate(BaseModel):
     item_number: int = Field(..., description="項次編號", ge=1)
     item_name: str = Field(..., description="項目名稱", min_length=1, max_length=200)
     content: str = Field(..., description="範本內容")
-    related_intent_id: Optional[int] = Field(None, description="關聯意圖ID")
+    intent_ids: Optional[List[int]] = Field(None, description="關聯意圖ID列表（支援多意圖）")
     priority: int = Field(50, description="優先級（0-100）", ge=0, le=100)
     template_notes: Optional[str] = Field(None, description="範本說明（解釋此 SOP 的目的）")
     customization_hint: Optional[str] = Field(None, description="自訂提示（建議業者如何調整）")
@@ -49,7 +49,7 @@ class PlatformSOPTemplateUpdate(BaseModel):
     item_number: Optional[int] = Field(None, description="項次編號", ge=1)
     item_name: Optional[str] = Field(None, description="項目名稱", min_length=1, max_length=200)
     content: Optional[str] = Field(None, description="範本內容")
-    related_intent_id: Optional[int] = Field(None, description="關聯意圖ID")
+    intent_ids: Optional[List[int]] = Field(None, description="關聯意圖ID列表（支援多意圖）")
     priority: Optional[int] = Field(None, description="優先級", ge=0, le=100)
     template_notes: Optional[str] = Field(None, description="範本說明")
     customization_hint: Optional[str] = Field(None, description="自訂提示")
@@ -284,6 +284,73 @@ async def delete_platform_sop_category(
 
 
 # ========================================
+# 群組管理 API
+# ========================================
+
+@router.get("/groups", summary="取得所有平台 SOP 群組")
+async def get_platform_sop_groups(
+    request: Request,
+    category_id: Optional[int] = None,
+    include_inactive: bool = False
+):
+    """
+    取得所有平台 SOP 群組（支援 3 層架構）
+
+    **Query Parameters**:
+    - category_id: 過濾特定分類（可選）
+    - include_inactive: 是否包含已停用的群組
+
+    **權限**: 平台管理員
+    """
+    try:
+        async with request.app.state.db_pool.acquire() as conn:
+            query = """
+                SELECT
+                    g.id,
+                    g.category_id,
+                    c.category_name,
+                    c.display_order as category_display_order,
+                    g.group_name,
+                    g.description,
+                    g.display_order,
+                    g.is_active,
+                    g.created_at,
+                    g.updated_at,
+                    COUNT(t.id) as template_count
+                FROM platform_sop_groups g
+                INNER JOIN platform_sop_categories c ON g.category_id = c.id
+                LEFT JOIN platform_sop_templates t ON t.group_id = g.id AND t.is_active = TRUE
+                WHERE (g.is_active = TRUE OR $1 = TRUE)
+                  AND ($2::INTEGER IS NULL OR g.category_id = $2)
+                GROUP BY g.id, g.category_id, c.category_name, c.display_order,
+                         g.group_name, g.description, g.display_order, g.is_active,
+                         g.created_at, g.updated_at
+                ORDER BY c.display_order, g.display_order
+            """
+            rows = await conn.fetch(query, include_inactive, category_id)
+
+            groups = []
+            for row in rows:
+                groups.append({
+                    "id": row["id"],
+                    "category_id": row["category_id"],
+                    "category_name": row["category_name"],
+                    "group_name": row["group_name"],
+                    "description": row["description"],
+                    "display_order": row["display_order"],
+                    "is_active": row["is_active"],
+                    "template_count": row["template_count"],
+                    "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+                    "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None
+                })
+
+            return {"groups": groups}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"取得群組失敗: {str(e)}")
+
+
+# ========================================
 # 範本管理 API
 # ========================================
 
@@ -311,25 +378,32 @@ async def get_platform_sop_templates(
                     t.id,
                     t.category_id,
                     c.category_name,
+                    t.group_id,
+                    g.group_name,
+                    g.display_order as group_display_order,
                     t.business_type,
                     t.item_number,
                     t.item_name,
                     t.content,
-                    t.related_intent_id,
-                    i.name AS related_intent_name,
                     t.priority,
                     t.template_notes,
                     t.customization_hint,
                     t.is_active,
                     t.created_at,
-                    t.updated_at
+                    t.updated_at,
+                    COALESCE(
+                        (SELECT ARRAY_AGG(psti.intent_id ORDER BY psti.intent_id)
+                         FROM platform_sop_template_intents psti
+                         WHERE psti.template_id = t.id),
+                        ARRAY[]::INTEGER[]
+                    ) as intent_ids
                 FROM platform_sop_templates t
                 INNER JOIN platform_sop_categories c ON t.category_id = c.id
-                LEFT JOIN intents i ON t.related_intent_id = i.id
+                LEFT JOIN platform_sop_groups g ON t.group_id = g.id
                 WHERE (t.is_active = TRUE OR $1 = TRUE)
                   AND ($2::INTEGER IS NULL OR t.category_id = $2)
                   AND ($3::VARCHAR IS NULL OR t.business_type = $3 OR ($3 = 'null' AND t.business_type IS NULL))
-                ORDER BY c.display_order, t.item_number
+                ORDER BY c.display_order, g.display_order NULLS LAST, t.item_number
             """
             rows = await conn.fetch(query, include_inactive, category_id, business_type)
 
@@ -339,12 +413,13 @@ async def get_platform_sop_templates(
                     "id": row["id"],
                     "category_id": row["category_id"],
                     "category_name": row["category_name"],
+                    "group_id": row["group_id"],
+                    "group_name": row["group_name"],
                     "business_type": row["business_type"],
                     "item_number": row["item_number"],
                     "item_name": row["item_name"],
                     "content": row["content"],
-                    "related_intent_id": row["related_intent_id"],
-                    "related_intent_name": row["related_intent_name"],
+                    "intent_ids": row["intent_ids"],
                     "priority": row["priority"],
                     "template_notes": row["template_notes"],
                     "customization_hint": row["customization_hint"],
@@ -383,16 +458,17 @@ async def create_platform_sop_template(
                 )
 
             # 驗證意圖是否存在（如果有指定）
-            if template.related_intent_id:
-                intent_exists = await conn.fetchval(
-                    "SELECT EXISTS(SELECT 1 FROM intents WHERE id = $1 AND is_enabled = TRUE)",
-                    template.related_intent_id
-                )
-                if not intent_exists:
-                    raise HTTPException(
-                        status_code=404,
-                        detail=f"意圖 ID {template.related_intent_id} 不存在或已停用"
+            if template.intent_ids:
+                for intent_id in template.intent_ids:
+                    intent_exists = await conn.fetchval(
+                        "SELECT EXISTS(SELECT 1 FROM intents WHERE id = $1 AND is_enabled = TRUE)",
+                        intent_id
                     )
+                    if not intent_exists:
+                        raise HTTPException(
+                            status_code=404,
+                            detail=f"意圖 ID {intent_id} 不存在或已停用"
+                        )
 
             # 驗證 business_type
             if template.business_type and template.business_type not in ['full_service', 'property_management']:
@@ -405,32 +481,54 @@ async def create_platform_sop_template(
             row = await conn.fetchrow("""
                 INSERT INTO platform_sop_templates (
                     category_id, business_type, item_number, item_name, content,
-                    related_intent_id, priority, template_notes, customization_hint
+                    priority, template_notes, customization_hint
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                RETURNING id, category_id, business_type, item_number, item_name, content,
-                          related_intent_id, priority, template_notes, customization_hint,
-                          is_active, created_at, updated_at
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                RETURNING id
             """,
                 template.category_id, template.business_type, template.item_number,
-                template.item_name, template.content, template.related_intent_id,
+                template.item_name, template.content,
                 template.priority, template.template_notes, template.customization_hint
             )
 
+            template_id = row["id"]
+
+            # 插入意圖關聯
+            if template.intent_ids:
+                for intent_id in template.intent_ids:
+                    await conn.execute("""
+                        INSERT INTO platform_sop_template_intents (template_id, intent_id)
+                        VALUES ($1, $2)
+                    """, template_id, intent_id)
+
+            # 查詢完整資訊（包含 intent_ids）
+            final_row = await conn.fetchrow("""
+                SELECT
+                    t.*,
+                    COALESCE(
+                        (SELECT ARRAY_AGG(psti.intent_id ORDER BY psti.intent_id)
+                         FROM platform_sop_template_intents psti
+                         WHERE psti.template_id = t.id),
+                        ARRAY[]::INTEGER[]
+                    ) as intent_ids
+                FROM platform_sop_templates t
+                WHERE t.id = $1
+            """, template_id)
+
             return {
-                "id": row["id"],
-                "category_id": row["category_id"],
-                "business_type": row["business_type"],
-                "item_number": row["item_number"],
-                "item_name": row["item_name"],
-                "content": row["content"],
-                "related_intent_id": row["related_intent_id"],
-                "priority": row["priority"],
-                "template_notes": row["template_notes"],
-                "customization_hint": row["customization_hint"],
-                "is_active": row["is_active"],
-                "created_at": row["created_at"].isoformat() if row["created_at"] else None,
-                "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None
+                "id": final_row["id"],
+                "category_id": final_row["category_id"],
+                "business_type": final_row["business_type"],
+                "item_number": final_row["item_number"],
+                "item_name": final_row["item_name"],
+                "content": final_row["content"],
+                "intent_ids": final_row["intent_ids"],
+                "priority": final_row["priority"],
+                "template_notes": final_row["template_notes"],
+                "customization_hint": final_row["customization_hint"],
+                "is_active": final_row["is_active"],
+                "created_at": final_row["created_at"].isoformat() if final_row["created_at"] else None,
+                "updated_at": final_row["updated_at"].isoformat() if final_row["updated_at"] else None
             }
 
     except HTTPException:
@@ -470,13 +568,14 @@ async def update_platform_sop_template(
                     raise HTTPException(status_code=404, detail=f"分類 ID {template.category_id} 不存在或已停用")
 
             # 驗證意圖是否存在（如果有指定）
-            if template.related_intent_id:
-                intent_exists = await conn.fetchval(
-                    "SELECT EXISTS(SELECT 1 FROM intents WHERE id = $1 AND is_enabled = TRUE)",
-                    template.related_intent_id
-                )
-                if not intent_exists:
-                    raise HTTPException(status_code=404, detail=f"意圖 ID {template.related_intent_id} 不存在或已停用")
+            if template.intent_ids is not None:
+                for intent_id in template.intent_ids:
+                    intent_exists = await conn.fetchval(
+                        "SELECT EXISTS(SELECT 1 FROM intents WHERE id = $1 AND is_enabled = TRUE)",
+                        intent_id
+                    )
+                    if not intent_exists:
+                        raise HTTPException(status_code=404, detail=f"意圖 ID {intent_id} 不存在或已停用")
 
             # 驗證 business_type（如果有指定）
             if template.business_type and template.business_type not in ['full_service', 'property_management']:
@@ -485,36 +584,61 @@ async def update_platform_sop_template(
                     detail="business_type 必須是 full_service, property_management 或 null"
                 )
 
-            # 建立更新欄位
+            # 建立更新欄位（移除 related_intent_id，改用多意圖關聯表）
             update_fields = []
             values = []
             param_count = 1
 
             for field in ["category_id", "business_type", "item_number", "item_name", "content",
-                          "related_intent_id", "priority", "template_notes", "customization_hint"]:
+                          "priority", "template_notes", "customization_hint"]:
                 value = getattr(template, field, None)
                 if value is not None:
                     update_fields.append(f"{field} = ${param_count}")
                     values.append(value)
                     param_count += 1
 
-            if not update_fields:
-                raise HTTPException(status_code=400, detail="沒有提供更新欄位")
+            # 更新意圖關聯（如果有指定）
+            if template.intent_ids is not None:
+                # 刪除現有關聯
+                await conn.execute(
+                    "DELETE FROM platform_sop_template_intents WHERE template_id = $1",
+                    template_id
+                )
 
-            # 更新時間
-            update_fields.append(f"updated_at = NOW()")
+                # 新增新關聯
+                for intent_id in template.intent_ids:
+                    await conn.execute("""
+                        INSERT INTO platform_sop_template_intents (template_id, intent_id)
+                        VALUES ($1, $2)
+                    """, template_id, intent_id)
 
-            # 執行更新
-            values.append(template_id)
-            query = f"""
-                UPDATE platform_sop_templates
-                SET {', '.join(update_fields)}
-                WHERE id = ${param_count}
-                RETURNING id, category_id, business_type, item_number, item_name, content,
-                          related_intent_id, priority, template_notes, customization_hint,
-                          is_active, created_at, updated_at
-            """
-            row = await conn.fetchrow(query, *values)
+            # 如果有欄位需要更新
+            if update_fields:
+                # 更新時間
+                update_fields.append(f"updated_at = NOW()")
+
+                # 執行更新
+                values.append(template_id)
+                query = f"""
+                    UPDATE platform_sop_templates
+                    SET {', '.join(update_fields)}
+                    WHERE id = ${param_count}
+                """
+                await conn.execute(query, *values)
+
+            # 查詢完整資料（包含意圖 ID 陣列）
+            row = await conn.fetchrow("""
+                SELECT
+                    t.*,
+                    COALESCE(
+                        (SELECT ARRAY_AGG(psti.intent_id ORDER BY psti.intent_id)
+                         FROM platform_sop_template_intents psti
+                         WHERE psti.template_id = t.id),
+                        ARRAY[]::INTEGER[]
+                    ) as intent_ids
+                FROM platform_sop_templates t
+                WHERE t.id = $1
+            """, template_id)
 
             return {
                 "id": row["id"],
@@ -523,7 +647,7 @@ async def update_platform_sop_template(
                 "item_number": row["item_number"],
                 "item_name": row["item_name"],
                 "content": row["content"],
-                "related_intent_id": row["related_intent_id"],
+                "intent_ids": row["intent_ids"],
                 "priority": row["priority"],
                 "template_notes": row["template_notes"],
                 "customization_hint": row["customization_hint"],

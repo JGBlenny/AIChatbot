@@ -69,7 +69,7 @@
             </button>
           </div>
 
-          <!-- 分類預覽 -->
+          <!-- 分類預覽（3 層結構） -->
           <div class="categories-preview-section">
             <h5>範本分類預覽</h5>
             <div class="categories-grid">
@@ -80,7 +80,7 @@
                 </div>
                 <p class="category-preview-description">{{ category.categoryDescription }}</p>
                 <div class="category-preview-footer">
-                  <span class="items-count">{{ category.templates.length }} 個項目</span>
+                  <span class="items-count">{{ category.groups.length }} 個群組</span>
                   <button
                     @click="toggleCategoryExpand(category)"
                     class="expand-btn"
@@ -89,11 +89,21 @@
                   </button>
                 </div>
 
-                <!-- 展開的範本列表 -->
-                <div v-if="category.expanded" class="templates-list-compact">
-                  <div v-for="template in category.templates" :key="template.template_id" class="template-item-compact">
-                    <span class="item-num">#{{ template.item_number }}</span>
-                    <span class="item-title">{{ template.item_name }}</span>
+                <!-- 展開的群組列表 -->
+                <div v-if="category.expanded" class="groups-list-compact">
+                  <div v-for="group in category.groups" :key="group.groupId" class="group-item-compact">
+                    <div class="group-item-header">
+                      <span class="group-icon">📂</span>
+                      <span class="group-title">{{ group.groupName }}</span>
+                      <span class="group-item-count">({{ group.templates.length }})</span>
+                    </div>
+                    <!-- 群組內的範本列表 -->
+                    <div class="templates-list-compact">
+                      <div v-for="template in group.templates" :key="template.template_id" class="template-item-compact">
+                        <span class="item-num">#{{ template.item_number }}</span>
+                        <span class="item-title">{{ template.item_name }}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -121,34 +131,43 @@
       </div>
 
       <div v-else>
-        <!-- 按分類分組顯示 -->
+        <!-- 按分類和群組分組顯示（3 層結構） -->
         <div v-for="category in mySOPByCategory" :key="category.category_id" class="category-section">
           <div class="category-section-header">
             <h4>{{ category.category_name }}</h4>
-            <span class="items-count-badge">{{ category.items.length }} 個項目</span>
+            <span class="items-count-badge">{{ category.groups.length }} 個群組</span>
           </div>
 
-          <div class="sop-list">
-            <div v-for="sop in category.items" :key="sop.id" class="sop-card">
-              <div class="sop-header">
-                <span class="sop-number">#{{ sop.item_number }}</span>
-                <h5>{{ sop.item_name }}</h5>
-                <span v-if="sop.template_item_name" class="source-badge" :title="`來源範本: ${sop.template_item_name}`">
-                  📋 範本
-                </span>
-              </div>
+          <!-- 群組列表 -->
+          <div v-for="group in category.groups" :key="group.group_id" class="group-section-mysop">
+            <div class="group-section-header">
+              <span class="group-icon">📂</span>
+              <h5>{{ group.group_name }}</h5>
+              <span class="group-items-count">{{ group.items.length }} 個項目</span>
+            </div>
 
-              <div class="sop-content">
-                <p>{{ sop.content }}</p>
-              </div>
+            <div class="sop-list">
+              <div v-for="sop in group.items" :key="sop.id" class="sop-card">
+                <div class="sop-header">
+                  <span class="sop-number">#{{ sop.item_number }}</span>
+                  <h6>{{ sop.item_name }}</h6>
+                  <span v-if="sop.template_item_name" class="source-badge" :title="`來源範本: ${sop.template_item_name}`">
+                    📋 範本
+                  </span>
+                </div>
 
-              <div class="sop-actions">
-                <button @click="editSOP(sop)" class="btn btn-sm btn-secondary">
-                  ✏️ 編輯
-                </button>
-                <button @click="deleteSOP(sop.id)" class="btn btn-sm btn-danger">
-                  🗑️ 刪除
-                </button>
+                <div class="sop-content">
+                  <p>{{ sop.content }}</p>
+                </div>
+
+                <div class="sop-actions">
+                  <button @click="editSOP(sop)" class="btn btn-sm btn-secondary">
+                    ✏️ 編輯
+                  </button>
+                  <button @click="deleteSOP(sop.id)" class="btn btn-sm btn-danger">
+                    🗑️ 刪除
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -215,13 +234,20 @@
           </div>
 
           <div class="form-group">
-            <label>關聯意圖</label>
-            <select v-model.number="editingForm.related_intent_id" class="form-control">
-              <option :value="null">無</option>
-              <option v-for="intent in intents" :key="intent.id" :value="intent.id">
-                {{ intent.name }}
-              </option>
-            </select>
+            <label>關聯意圖（可複選）</label>
+            <div class="intent-checkboxes">
+              <label v-for="intent in intents" :key="intent.id" class="checkbox-label">
+                <input
+                  type="checkbox"
+                  :value="intent.id"
+                  v-model="editingForm.intent_ids"
+                  class="checkbox-input"
+                />
+                <span class="checkbox-text">{{ intent.name }}</span>
+              </label>
+            </div>
+            <p class="hint" v-if="editingForm.intent_ids.length === 0">未選擇任何意圖</p>
+            <p class="hint" v-else>已選擇 {{ editingForm.intent_ids.length }} 個意圖</p>
           </div>
 
           <div class="form-group">
@@ -271,7 +297,7 @@ export default {
         id: null,
         item_name: '',
         content: '',
-        related_intent_id: null,
+        intent_ids: [],  // 多意圖支援（陣列）
         priority: 50
       }
     };
@@ -280,6 +306,9 @@ export default {
   computed: {
     totalCategories() {
       return this.categoryTemplates.length;
+    },
+    totalGroups() {
+      return this.categoryTemplates.reduce((sum, cat) => sum + cat.groups.length, 0);
     },
     totalTemplates() {
       return this.templates.length;
@@ -332,16 +361,32 @@ export default {
             categoryId: template.category_id,
             categoryName: template.category_name,
             categoryDescription: template.category_description,
-            templates: [],
+            groups: new Map(),
             expanded: false
           });
         }
 
         const category = categoryMap.get(template.category_id);
-        category.templates.push(template);
+
+        // Group by groups within category
+        if (!category.groups.has(template.group_id)) {
+          category.groups.set(template.group_id, {
+            groupId: template.group_id,
+            groupName: template.group_name,
+            templates: [],
+            expanded: false
+          });
+        }
+
+        const group = category.groups.get(template.group_id);
+        group.templates.push(template);
       });
 
-      this.categoryTemplates = Array.from(categoryMap.values()).sort((a, b) =>
+      // Convert groups Map to Array for each category
+      this.categoryTemplates = Array.from(categoryMap.values()).map(cat => ({
+        ...cat,
+        groups: Array.from(cat.groups.values())
+      })).sort((a, b) =>
         a.categoryName.localeCompare(b.categoryName, 'zh-TW')
       );
     },
@@ -365,12 +410,34 @@ export default {
       const response = await axios.get(`${RAG_API}/api/v1/vendors/${this.vendorId}/sop/categories`);
       const categories = response.data;
 
-      // 按分類分組 SOP
-      this.mySOPByCategory = categories.map(cat => ({
-        category_id: cat.id,
-        category_name: cat.category_name,
-        items: this.mySOP.filter(sop => sop.category_id === cat.id).sort((a, b) => a.item_number - b.item_number)
-      })).filter(cat => cat.items.length > 0);
+      // 按分類和群組分組 SOP
+      this.mySOPByCategory = categories.map(cat => {
+        const catItems = this.mySOP.filter(sop => sop.category_id === cat.id);
+
+        // Group items by group_id
+        const groupMap = new Map();
+        catItems.forEach(item => {
+          if (!groupMap.has(item.group_id)) {
+            groupMap.set(item.group_id, {
+              group_id: item.group_id,
+              group_name: item.group_name,
+              items: []
+            });
+          }
+          groupMap.get(item.group_id).items.push(item);
+        });
+
+        // Sort items within each group
+        groupMap.forEach(group => {
+          group.items.sort((a, b) => a.item_number - b.item_number);
+        });
+
+        return {
+          category_id: cat.id,
+          category_name: cat.category_name,
+          groups: Array.from(groupMap.values())
+        };
+      }).filter(cat => cat.groups.length > 0);
     },
 
     async loadIntents() {
@@ -424,7 +491,7 @@ export default {
         id: sop.id,
         item_name: sop.item_name,
         content: sop.content,
-        related_intent_id: sop.related_intent_id,
+        intent_ids: sop.intent_ids && sop.intent_ids.length > 0 ? [...sop.intent_ids] : [],  // 複製陣列
         priority: sop.priority || 50
       };
       this.showEditModal = true;
@@ -436,7 +503,7 @@ export default {
         id: null,
         item_name: '',
         content: '',
-        related_intent_id: null,
+        intent_ids: [],
         priority: 50
       };
     },
@@ -448,7 +515,7 @@ export default {
           {
             item_name: this.editingForm.item_name,
             content: this.editingForm.content,
-            related_intent_id: this.editingForm.related_intent_id,
+            intent_ids: this.editingForm.intent_ids,  // 傳送意圖陣列
             priority: this.editingForm.priority
           }
         );
@@ -1027,6 +1094,84 @@ export default {
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* 群組樣式（概覽標籤） */
+.groups-list-compact {
+  margin-top: 12px;
+  padding-left: 12px;
+  border-left: 3px solid #E3F2FD;
+}
+
+.group-item-compact {
+  margin-bottom: 12px;
+  padding: 8px;
+  background: #F5F5F5;
+  border-radius: 4px;
+}
+
+.group-item-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #1976D2;
+}
+
+.group-icon {
+  font-size: 14px;
+}
+
+.group-title {
+  flex: 1;
+  font-size: 14px;
+}
+
+.group-item-count {
+  font-size: 12px;
+  color: #666;
+  font-weight: normal;
+}
+
+/* 群組樣式（我的 SOP 標籤） */
+.group-section-mysop {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #F8F9FA;
+  border-radius: 8px;
+  border-left: 4px solid #2196F3;
+}
+
+.group-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #E3F2FD;
+}
+
+.group-section-header h5 {
+  margin: 0;
+  font-size: 16px;
+  color: #1976D2;
+  flex: 1;
+}
+
+.group-items-count {
+  font-size: 13px;
+  color: #666;
+  background: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.sop-card h6 {
+  font-size: 15px;
+  margin: 0;
+  color: #333;
+  flex: 1;
+}
+
 .modal-actions {
   display: flex;
   gap: 12px;
@@ -1034,5 +1179,56 @@ export default {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid #eee;
+}
+
+/* 意圖多選框樣式 */
+.intent-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.checkbox-label:hover {
+  background: #e3f2fd;
+  border-color: #2196F3;
+}
+
+.checkbox-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.checkbox-text {
+  font-size: 14px;
+  color: #333;
+  user-select: none;
+}
+
+.checkbox-label:has(.checkbox-input:checked) {
+  background: #E8F5E9;
+  border-color: #4CAF50;
+}
+
+.checkbox-label:has(.checkbox-input:checked) .checkbox-text {
+  font-weight: 600;
+  color: #2E7D32;
 }
 </style>

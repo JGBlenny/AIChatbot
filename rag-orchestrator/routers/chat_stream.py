@@ -106,7 +106,7 @@ async def chat_stream_generator(
                 })
                 return
 
-        # 2. 並行執行意圖分類和檢索（Phase 2 優化）
+        # 2. 並行執行意圖分類和檢索（Phase 2 優化 + Vendor SOP 整合）
         intent_task = asyncio.to_thread(intent_classifier.classify, request.question)
         search_task = rag_engine.search(
             query=request.question,
@@ -116,6 +116,34 @@ async def chat_stream_generator(
         )
 
         intent_result, search_results = await asyncio.gather(intent_task, search_task)
+
+        # 2.5. 如果有明確意圖，也檢索 Vendor SOP（使用共用模組）
+        intent_ids = intent_result.get('intent_ids', [])
+        print(f"🔍 Intent IDs: {intent_ids}, Vendor ID: {request.vendor_id}")
+
+        sop_items = []
+        if intent_ids and request.vendor_id:
+            try:
+                # 使用共用模組的 SOP 檢索函數
+                from routers.chat_shared import retrieve_sop_async, convert_sop_to_search_results
+
+                # 檢索 SOP（異步版本）
+                sop_items = await retrieve_sop_async(
+                    vendor_id=request.vendor_id,
+                    intent_ids=intent_ids,
+                    top_k=5
+                )
+
+                # 如果找到 SOP，轉換為標準格式並優先使用
+                if sop_items:
+                    # 使用共用函數轉換格式（自動設定 similarity=1.0）
+                    sop_search_results = convert_sop_to_search_results(sop_items)
+
+                    # 合併：SOP 在前，一般知識在後
+                    search_results = sop_search_results + search_results[:2]
+                    print(f"✨ 合併後共 {len(search_results)} 個結果（{len(sop_search_results)} SOP + {min(2, len(search_results) - len(sop_search_results))} 知識庫）")
+            except Exception as e:
+                print(f"⚠️  Vendor SOP 檢索失敗: {e}，使用一般知識庫結果")
 
         # 3. 發送意圖分類結果
         yield await generate_sse_event("intent", {
@@ -130,11 +158,25 @@ async def chat_stream_generator(
             "has_results": len(search_results) > 0
         })
 
-        # 5. 信心度評估
-        evaluation = confidence_evaluator.evaluate(
-            search_results=search_results,
-            question_keywords=intent_result['keywords']
-        )
+        # 5. 信心度評估（SOP 檢索時強制使用高信心度）
+        from routers.chat_shared import has_sop_results
+
+        has_sop = has_sop_results(search_results)
+
+        if has_sop:
+            # SOP 精準匹配，強制使用高信心度（與 chat.py 統一）
+            evaluation = {
+                'confidence_score': 0.95,
+                'confidence_level': 'high',
+                'decision': 'direct_answer'
+            }
+            print(f"📋 [SOP] 強制使用高信心度（similarity=1.0）")
+        else:
+            # 正常信心度評估
+            evaluation = confidence_evaluator.evaluate(
+                search_results=search_results,
+                question_keywords=intent_result['keywords']
+            )
 
         yield await generate_sse_event("confidence", {
             "score": evaluation['confidence_score'],
@@ -222,85 +264,75 @@ async def stream_optimized_answer(
     """
     流式輸出優化後的答案
 
-    根據信心度使用不同的策略（Phase 1 條件式優化）:
-    - 極高信心度: 快速路徑（逐字輸出預存答案）
-    - 高信心度: 模板格式化（逐字輸出格式化答案）
-    - 其他: LLM streaming（OpenAI streaming API）
+    Phase 3 擴展：整合答案合成功能
+    - 使用 llm_optimizer.optimize_answer() 統一處理所有優化策略
+    - 支援答案合成（自動合併多個 SOP 項目）
+    - 條件式優化（快速路徑、模板、LLM）由 optimizer 內部決定
     """
     confidence_score = evaluation['confidence_score']
     confidence_level = evaluation['confidence_level']
 
-    # 檢查是否使用快速路徑
-    from services.answer_formatter import AnswerFormatter
-    formatter = AnswerFormatter()
+    try:
+        # 使用 llm_optimizer 進行答案優化（包含答案合成）
+        # 在 asyncio 線程池中執行同步方法
+        optimization_result = await asyncio.to_thread(
+            llm_optimizer.optimize_answer,
+            question=question,
+            search_results=search_results,
+            confidence_level=confidence_level,
+            intent_info=intent_result,
+            confidence_score=confidence_score
+        )
 
-    if confidence_score >= 0.75 and formatter.is_content_complete(search_results[0]):
-        # 快速路徑：逐字輸出預存答案
-        print(f"⚡ [Streaming] 快速路徑觸發 (信心度: {confidence_score:.3f})")
-        result = formatter.format_simple_answer(search_results)
-        answer = result['answer']
+        # 取得優化後的答案
+        answer = optimization_result['optimized_answer']
+        synthesis_applied = optimization_result.get('synthesis_applied', False)
+        optimization_method = optimization_result.get('optimization_method', 'unknown')
 
-        # 模擬逐字輸出（提升用戶體驗）
+        # 記錄優化結果
+        if synthesis_applied:
+            print(f"🔄 [Streaming] 答案合成已應用 ({len(search_results)} 個來源)")
+        else:
+            print(f"📤 [Streaming] 優化方法: {optimization_method} (信心度: {confidence_score:.3f})")
+
+        # 發送合成狀態事件（如果有合成）
+        if synthesis_applied:
+            yield await generate_sse_event("synthesis", {
+                "applied": True,
+                "source_count": len(search_results),
+                "method": optimization_method
+            })
+
+        # 流式輸出答案（逐字輸出以提升用戶體驗）
         words = answer.split()
         for i, word in enumerate(words):
             chunk = word + (" " if i < len(words) - 1 else "")
             yield await generate_sse_event("answer_chunk", {"chunk": chunk})
-            await asyncio.sleep(0.02)  # 20ms 延遲，模擬打字效果
 
-    elif 0.55 <= confidence_score < 0.75 and confidence_level in ['high', 'medium']:
-        # 模板格式化：逐字輸出
-        print(f"📋 [Streaming] 模板格式化觸發 (信心度: {confidence_score:.3f}, 級別: {confidence_level})")
-        result = formatter.format_with_template(
-            question,
-            search_results,
-            intent_type=intent_result.get('intent_type')
-        )
-        answer = result['answer']
+            # 根據優化方法調整輸出速度
+            if optimization_method == "fast_path":
+                await asyncio.sleep(0.015)  # 快速路徑：15ms
+            elif optimization_method == "template":
+                await asyncio.sleep(0.02)   # 模板：20ms
+            else:
+                await asyncio.sleep(0.025)  # LLM/合成：25ms（模擬 LLM 生成）
 
-        # 逐字輸出
-        words = answer.split()
-        print(f"📤 [Streaming] 準備輸出 {len(words)} 個詞塊，預計耗時 {len(words) * 20}ms")
-        for i, word in enumerate(words):
-            chunk = word + (" " if i < len(words) - 1 else "")
-            yield await generate_sse_event("answer_chunk", {"chunk": chunk})
-            await asyncio.sleep(0.02)
+    except Exception as e:
+        # 優化失敗時的降級處理
+        print(f"❌ [Streaming] 答案優化失敗: {e}")
 
-    else:
-        # 完整 LLM 優化 - 使用 OpenAI Streaming API
-        print(f"🤖 [Streaming] LLM 串流觸發 (信心度: {confidence_score:.3f}, 級別: {confidence_level})")
-        import os
-        from openai import AsyncOpenAI
-
-        client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-        # 準備 prompt
-        content = search_results[0].get('content', '') if search_results else ''
-        prompt = f"""請根據以下知識回答用戶問題。
-
-用戶問題: {question}
-
-相關知識:
-{content}
-
-請提供清晰、準確的答案。"""
-
-        # 使用 streaming API
-        stream = await client.chat.completions.create(
-            model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
-            messages=[
-                {"role": "system", "content": "你是一個專業的客服助手。"},
-                {"role": "user", "content": prompt}
-            ],
-            stream=True,
-            temperature=0.7,
-            max_tokens=800
-        )
-
-        async for chunk in stream:
-            if chunk.choices[0].delta.content:
-                yield await generate_sse_event("answer_chunk", {
-                    "chunk": chunk.choices[0].delta.content
-                })
+        # 使用第一個搜尋結果作為降級答案
+        if search_results:
+            answer = search_results[0].get('content', '抱歉，無法生成答案。')
+            words = answer.split()
+            for i, word in enumerate(words):
+                chunk = word + (" " if i < len(words) - 1 else "")
+                yield await generate_sse_event("answer_chunk", {"chunk": chunk})
+                await asyncio.sleep(0.02)
+        else:
+            yield await generate_sse_event("answer_chunk", {
+                "chunk": "抱歉，無法生成答案。"
+            })
 
     # 如果需要添加警告
     if add_warning:

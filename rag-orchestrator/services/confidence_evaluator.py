@@ -4,6 +4,7 @@
 """
 from typing import List, Dict, Tuple
 import statistics
+import os
 
 
 class ConfidenceEvaluator:
@@ -16,9 +17,13 @@ class ConfidenceEvaluator:
         Args:
             config: 配置字典，包含各種閾值設定
         """
+        # 從環境變數讀取配置
+        high_threshold = float(os.getenv("CONFIDENCE_HIGH_THRESHOLD", "0.85"))
+        medium_threshold = float(os.getenv("CONFIDENCE_MEDIUM_THRESHOLD", "0.70"))
+
         self.config = config or {
-            "high_confidence_threshold": 0.70,
-            "medium_confidence_threshold": 0.50,
+            "high_confidence_threshold": high_threshold,
+            "medium_confidence_threshold": medium_threshold,
             "min_results_for_high": 2,
             "keyword_match_weight": 0.2,
             "similarity_weight": 0.6,
@@ -184,10 +189,13 @@ class ConfidenceEvaluator:
         """生成評估理由"""
         reasons = []
 
-        # 相似度評估
-        if metrics['max_similarity'] >= 0.85:
+        # 相似度評估（使用配置閾值）
+        high_threshold = self.config['high_confidence_threshold']
+        medium_threshold = self.config['medium_confidence_threshold']
+
+        if metrics['max_similarity'] >= high_threshold:
             reasons.append(f"最高相似度 {metrics['max_similarity']:.2f} (極高)")
-        elif metrics['max_similarity'] >= 0.70:
+        elif metrics['max_similarity'] >= medium_threshold:
             reasons.append(f"最高相似度 {metrics['max_similarity']:.2f} (中等)")
         else:
             reasons.append(f"最高相似度 {metrics['max_similarity']:.2f} (較低)")

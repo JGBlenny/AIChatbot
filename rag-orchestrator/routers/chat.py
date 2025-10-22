@@ -4,6 +4,8 @@
 
 Phase 1: 新增多業者支援（Multi-Vendor Chat API）
 """
+from __future__ import annotations  # 允許類型提示的前向引用
+
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
@@ -79,6 +81,510 @@ def cache_response_and_return(cache_service, vendor_id: int, question: str, resp
         print(f"⚠️  緩存存儲失敗: {e}")
 
     return response
+
+
+# ==================== 輔助函數：業者驗證與緩存 ====================
+
+def _validate_vendor(vendor_id: int, resolver) -> dict:
+    """驗證業者狀態"""
+    vendor_info = resolver.get_vendor_info(vendor_id)
+
+    if not vendor_info:
+        raise HTTPException(
+            status_code=404,
+            detail=f"業者不存在: {vendor_id}"
+        )
+
+    if not vendor_info['is_active']:
+        raise HTTPException(
+            status_code=403,
+            detail=f"業者未啟用: {vendor_id}"
+        )
+
+    return vendor_info
+
+
+def _check_cache(cache_service, vendor_id: int, question: str, user_role: str):
+    """檢查緩存，如果命中則返回緩存的答案"""
+    cached_answer = cache_service.get_cached_answer(
+        vendor_id=vendor_id,
+        question=question,
+        user_role=user_role
+    )
+
+    if cached_answer:
+        print(f"⚡ 緩存命中！直接返回答案（跳過 RAG 處理）")
+        return VendorChatResponse(**cached_answer)
+
+    return None
+
+
+#==================== 輔助函數：Unclear 意圖處理 ====================
+
+async def _handle_unclear_with_rag_fallback(
+    request: VendorChatRequest,
+    req: Request,
+    intent_result: dict,
+    resolver,
+    vendor_info: dict,
+    cache_service
+):
+    """處理 unclear 意圖：RAG fallback + 測試場景記錄 + 意圖建議"""
+    rag_engine = req.app.state.rag_engine
+
+    # 根據用戶角色決定業務範圍
+    business_scope = "external" if request.user_role == "customer" else "internal"
+    allowed_audiences = get_allowed_audiences_for_scope(business_scope)
+
+    # RAG 檢索（使用較低閾值）
+    rag_results = await rag_engine.search(
+        query=request.message,
+        limit=5,
+        similarity_threshold=0.55,
+        allowed_audiences=allowed_audiences
+    )
+
+    # 如果 RAG 找到結果，優化並返回答案
+    if rag_results:
+        return await _build_rag_response(
+            request, req, intent_result, rag_results,
+            resolver, vendor_info, cache_service,
+            confidence_level='medium',
+            intent_name="unclear"
+        )
+
+    # 如果 RAG 也沒找到，記錄問題並返回兜底回應
+    await _record_unclear_question(request, req)
+
+    params = resolver.get_vendor_parameters(request.vendor_id)
+    service_hotline = params.get('service_hotline', {}).get('value', '客服')
+
+    return VendorChatResponse(
+        answer=f"抱歉，我不太理解您的問題。請您換個方式描述，或撥打客服專線 {service_hotline} 尋求協助。",
+        intent_name="unclear",
+        confidence=intent_result['confidence'],
+        all_intents=intent_result.get('all_intents', []),
+        secondary_intents=intent_result.get('secondary_intents', []),
+        intent_ids=intent_result.get('intent_ids', []),
+        sources=None,
+        source_count=0,
+        vendor_id=request.vendor_id,
+        mode=request.mode,
+        session_id=request.session_id,
+        timestamp=datetime.utcnow().isoformat()
+    )
+
+
+async def _record_unclear_question(request: VendorChatRequest, req: Request):
+    """記錄 unclear 問題到測試場景庫 + 意圖建議"""
+    # 1. 記錄到測試場景庫
+    try:
+        test_scenario_conn = psycopg2.connect(**get_db_config())
+        test_scenario_cursor = test_scenario_conn.cursor()
+
+        test_scenario_cursor.execute(
+            "SELECT id FROM test_scenarios WHERE test_question = %s AND status = 'pending_review'",
+            (request.message,)
+        )
+        existing_scenario = test_scenario_cursor.fetchone()
+
+        if not existing_scenario:
+            test_scenario_cursor.execute("""
+                INSERT INTO test_scenarios (
+                    test_question, expected_category, status, source,
+                    difficulty, priority, notes, test_purpose, created_by
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                request.message, 'unclear', 'pending_review', 'user_question',
+                'hard', 80,
+                f"用戶問題意圖不明確（Vendor {request.vendor_id}），系統無法識別並提供答案",
+                "追蹤意圖識別缺口，改善分類器",
+                request.user_id or 'system'
+            ))
+            scenario_id = test_scenario_cursor.fetchone()[0]
+            test_scenario_conn.commit()
+            print(f"✅ 記錄unclear問題到測試場景庫 (Scenario ID: {scenario_id})")
+
+        test_scenario_cursor.close()
+        test_scenario_conn.close()
+    except Exception as e:
+        print(f"⚠️ 記錄測試場景失敗: {e}")
+
+    # 2. 使用意圖建議引擎
+    suggestion_engine = req.app.state.suggestion_engine
+    analysis = suggestion_engine.analyze_unclear_question(
+        question=request.message,
+        vendor_id=request.vendor_id,
+        user_id=request.user_id,
+        conversation_context=None
+    )
+
+    if analysis.get('should_record'):
+        suggested_intent_id = suggestion_engine.record_suggestion(
+            question=request.message,
+            analysis=analysis,
+            user_id=request.user_id
+        )
+        if suggested_intent_id:
+            print(f"✅ 發現新意圖建議: {analysis['suggested_intent']['name']} (ID: {suggested_intent_id})")
+
+
+# ==================== 輔助函數：SOP 檢索 ====================
+
+def _retrieve_sop(request: VendorChatRequest, intent_result: dict) -> list:
+    """檢索 SOP（SOP 優先於知識庫）- 使用共用模組"""
+    from routers.chat_shared import retrieve_sop_sync
+
+    # 使用共用模組的同步版本
+    all_intent_ids = intent_result.get('intent_ids', [])
+    sop_items = retrieve_sop_sync(
+        vendor_id=request.vendor_id,
+        intent_ids=all_intent_ids,
+        top_k=request.top_k
+    )
+
+    return sop_items
+
+
+async def _build_sop_response(
+    request: VendorChatRequest,
+    req: Request,
+    intent_result: dict,
+    sop_items: list,
+    resolver,
+    vendor_info: dict,
+    cache_service
+):
+    """使用 SOP 構建回應 - 使用共用模組"""
+    from routers.chat_shared import convert_sop_to_search_results, create_sop_optimization_params
+
+    llm_optimizer = req.app.state.llm_answer_optimizer
+
+    # 獲取業者參數
+    vendor_params_raw = resolver.get_vendor_parameters(request.vendor_id)
+    vendor_params = {key: param_info['value'] for key, param_info in vendor_params_raw.items()}
+
+    # 使用共用函數轉換 SOP 為 search_results 格式（自動設定 similarity=1.0）
+    search_results = convert_sop_to_search_results(sop_items)
+
+    # 使用共用函數建立優化參數（自動設定 confidence=high, score=0.95）
+    optimization_params = create_sop_optimization_params(
+        question=request.message,
+        search_results=search_results,
+        intent_result=intent_result,
+        vendor_params=vendor_params,
+        vendor_info=vendor_info,
+        enable_synthesis_override=False if request.disable_answer_synthesis else None
+    )
+
+    # LLM 優化
+    optimization_result = llm_optimizer.optimize_answer(**optimization_params)
+
+    # 構建來源列表
+    sources = []
+    if request.include_sources:
+        sources = [KnowledgeSource(
+            id=sop['id'],
+            question_summary=sop['item_name'],
+            answer=sop['content'],
+            scope='vendor_sop',
+            is_template=False
+        ) for sop in sop_items]
+
+    response = VendorChatResponse(
+        answer=optimization_result['optimized_answer'],
+        intent_name=intent_result['intent_name'],
+        intent_type=intent_result.get('intent_type'),
+        confidence=intent_result['confidence'],
+        all_intents=intent_result.get('all_intents', []),
+        secondary_intents=intent_result.get('secondary_intents', []),
+        intent_ids=intent_result.get('intent_ids', []),
+        sources=sources if request.include_sources else None,
+        source_count=len(sop_items),
+        vendor_id=request.vendor_id,
+        mode=request.mode,
+        session_id=request.session_id,
+        timestamp=datetime.utcnow().isoformat()
+    )
+
+    return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
+
+
+# ==================== 輔助函數：RAG 回應構建 ====================
+
+async def _build_rag_response(
+    request: VendorChatRequest,
+    req: Request,
+    intent_result: dict,
+    rag_results: list,
+    resolver,
+    vendor_info: dict,
+    cache_service,
+    confidence_level: str = 'medium',
+    intent_name: str = None
+):
+    """使用 RAG 結果構建優化回應"""
+    llm_optimizer = req.app.state.llm_answer_optimizer
+
+    # 獲取業者參數
+    vendor_params_raw = resolver.get_vendor_parameters(request.vendor_id)
+    vendor_params = {key: param_info['value'] for key, param_info in vendor_params_raw.items()}
+
+    # 根據 confidence_level 設定 confidence_score
+    confidence_score_map = {
+        'high': 0.85,
+        'medium': 0.70,
+        'low': 0.55
+    }
+    confidence_score = confidence_score_map.get(confidence_level, 0.70)
+
+    # LLM 優化（添加 confidence_score 以確保參數注入）
+    optimization_result = llm_optimizer.optimize_answer(
+        question=request.message,
+        search_results=rag_results,
+        confidence_level=confidence_level,
+        confidence_score=confidence_score,  # 根據 confidence_level 設定分數
+        intent_info=intent_result,
+        vendor_params=vendor_params,
+        vendor_name=vendor_info['name'],
+        vendor_info=vendor_info,  # 傳入完整業者資訊
+        enable_synthesis_override=False if request.disable_answer_synthesis else None
+    )
+
+    # 構建來源列表
+    sources = []
+    if request.include_sources:
+        sources = [KnowledgeSource(
+            id=r['id'],
+            question_summary=r['title'],
+            answer=r['content'],
+            scope='global',
+            is_template=False
+        ) for r in rag_results]
+
+    response = VendorChatResponse(
+        answer=optimization_result['optimized_answer'],
+        intent_name=intent_name or intent_result['intent_name'],
+        intent_type=intent_result.get('intent_type'),
+        confidence=intent_result['confidence'],
+        all_intents=intent_result.get('all_intents', []),
+        secondary_intents=intent_result.get('secondary_intents', []),
+        intent_ids=intent_result.get('intent_ids', []),
+        sources=sources if request.include_sources else None,
+        source_count=len(rag_results),
+        vendor_id=request.vendor_id,
+        mode=request.mode,
+        session_id=request.session_id,
+        timestamp=datetime.utcnow().isoformat()
+    )
+
+    return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
+
+
+# ==================== 輔助函數：知識庫檢索 ====================
+
+async def _retrieve_knowledge(
+    request: VendorChatRequest,
+    intent_id: int,
+    intent_result: dict
+):
+    """檢索知識庫（混合模式：intent + 向量相似度）"""
+    retriever = get_vendor_knowledge_retriever()
+    all_intent_ids = intent_result.get('intent_ids', [intent_id])
+
+    knowledge_list = await retriever.retrieve_knowledge_hybrid(
+        query=request.message,
+        intent_id=intent_id,
+        vendor_id=request.vendor_id,
+        top_k=request.top_k,
+        similarity_threshold=0.6,
+        resolve_templates=False,
+        all_intent_ids=all_intent_ids
+    )
+
+    return knowledge_list
+
+
+async def _handle_no_knowledge_found(
+    request: VendorChatRequest,
+    req: Request,
+    intent_result: dict,
+    resolver,
+    cache_service,
+    vendor_info: dict
+):
+    """處理找不到知識的情況：RAG fallback + 測試場景記錄"""
+    from services.business_scope_utils import get_allowed_audiences_for_scope
+
+    # 根據用戶角色決定業務範圍
+    business_scope = "external" if request.user_role == "customer" else "internal"
+    allowed_audiences = get_allowed_audiences_for_scope(business_scope)
+
+    # RAG fallback
+    rag_engine = req.app.state.rag_engine
+    rag_results = await rag_engine.search(
+        query=request.message,
+        limit=request.top_k,
+        similarity_threshold=0.60,
+        allowed_audiences=allowed_audiences
+    )
+
+    # 如果 RAG 找到結果，返回優化答案
+    if rag_results:
+        print(f"   ✅ RAG fallback 找到 {len(rag_results)} 個相關知識")
+        return await _build_rag_response(
+            request, req, intent_result, rag_results,
+            resolver, vendor_info, cache_service,
+            confidence_level='high'
+        )
+
+    # 如果 RAG 也找不到，記錄測試場景並返回兜底回應
+    print(f"   ❌ RAG fallback 也沒有找到相關知識")
+    await _record_no_knowledge_scenario(request, intent_result, req)
+
+    params = resolver.get_vendor_parameters(request.vendor_id)
+    service_hotline = params.get('service_hotline', {}).get('value', '客服')
+
+    return VendorChatResponse(
+        answer=f"很抱歉，關於「{intent_result['intent_name']}」我目前沒有相關資訊。建議您撥打客服專線 {service_hotline} 獲取協助。",
+        intent_name=intent_result['intent_name'],
+        intent_type=intent_result.get('intent_type'),
+        confidence=intent_result['confidence'],
+        all_intents=intent_result.get('all_intents', []),
+        secondary_intents=intent_result.get('secondary_intents', []),
+        intent_ids=intent_result.get('intent_ids', []),
+        sources=None,
+        source_count=0,
+        vendor_id=request.vendor_id,
+        mode=request.mode,
+        session_id=request.session_id,
+        timestamp=datetime.utcnow().isoformat()
+    )
+
+
+async def _record_no_knowledge_scenario(request: VendorChatRequest, intent_result: dict, req: Request):
+    """記錄找不到知識的場景到測試庫 + 意圖建議"""
+    # 1. 記錄到測試場景庫
+    try:
+        test_scenario_conn = psycopg2.connect(**get_db_config())
+        test_scenario_cursor = test_scenario_conn.cursor()
+
+        test_scenario_cursor.execute(
+            "SELECT id FROM test_scenarios WHERE test_question = %s AND status = 'pending_review'",
+            (request.message,)
+        )
+        existing_scenario = test_scenario_cursor.fetchone()
+
+        if not existing_scenario:
+            intent_id = intent_result.get('intent_ids', [None])[0] if intent_result.get('intent_ids') else None
+            test_scenario_cursor.execute("""
+                INSERT INTO test_scenarios (
+                    test_question, expected_category, expected_intent_id, status, source,
+                    difficulty, priority, notes, test_purpose, created_by
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                request.message, intent_result['intent_name'], intent_id,
+                'pending_review', 'user_question', 'medium', 70,
+                f"用戶真實問題（Vendor {request.vendor_id}），系統無法提供答案",
+                "驗證知識庫覆蓋率，追蹤用戶真實需求",
+                request.user_id or 'system'
+            ))
+            scenario_id = test_scenario_cursor.fetchone()[0]
+            test_scenario_conn.commit()
+            print(f"✅ 記錄到測試場景庫 (Scenario ID: {scenario_id})")
+
+        test_scenario_cursor.close()
+        test_scenario_conn.close()
+    except Exception as e:
+        print(f"⚠️ 記錄測試場景失敗: {e}")
+
+    # 2. 使用意圖建議引擎
+    suggestion_engine = req.app.state.suggestion_engine
+    analysis = suggestion_engine.analyze_unclear_question(
+        question=request.message,
+        vendor_id=request.vendor_id,
+        user_id=request.user_id,
+        conversation_context=None
+    )
+
+    if analysis.get('should_record'):
+        suggested_intent_id = suggestion_engine.record_suggestion(
+            question=request.message,
+            analysis=analysis,
+            user_id=request.user_id
+        )
+        if suggested_intent_id:
+            print(f"✅ 發現知識缺口建議 (Vendor {request.vendor_id}): {analysis['suggested_intent']['name']} (建議ID: {suggested_intent_id})")
+
+
+async def _build_knowledge_response(
+    request: VendorChatRequest,
+    req: Request,
+    intent_result: dict,
+    knowledge_list: list,
+    resolver,
+    vendor_info: dict,
+    cache_service
+):
+    """使用知識庫結果構建優化回應"""
+    llm_optimizer = req.app.state.llm_answer_optimizer
+
+    # 獲取業者參數
+    vendor_params_raw = resolver.get_vendor_parameters(request.vendor_id)
+    vendor_params = {key: param_info['value'] for key, param_info in vendor_params_raw.items()}
+
+    # 準備搜尋結果格式
+    search_results = [{
+        'id': k['id'],
+        'title': k['question_summary'],
+        'content': k['answer'],
+        'category': k.get('category', 'N/A'),
+        'similarity': 0.9
+    } for k in knowledge_list]
+
+    # LLM 優化（添加 confidence_score 以確保參數注入）
+    optimization_result = llm_optimizer.optimize_answer(
+        question=request.message,
+        search_results=search_results,
+        confidence_level='high',
+        confidence_score=0.90,  # 知識庫 intent 匹配，高信心度
+        intent_info=intent_result,
+        vendor_params=vendor_params,
+        vendor_name=vendor_info['name'],
+        vendor_info=vendor_info,  # 傳入完整業者資訊
+        enable_synthesis_override=False if request.disable_answer_synthesis else None
+    )
+
+    # 構建來源列表
+    sources = []
+    if request.include_sources:
+        sources = [KnowledgeSource(
+            id=k['id'],
+            question_summary=k['question_summary'],
+            answer=k['answer'],
+            scope=k['scope'],
+            is_template=k['is_template']
+        ) for k in knowledge_list]
+
+    response = VendorChatResponse(
+        answer=optimization_result['optimized_answer'],
+        intent_name=intent_result['intent_name'],
+        intent_type=intent_result.get('intent_type'),
+        confidence=intent_result['confidence'],
+        all_intents=intent_result.get('all_intents', []),
+        secondary_intents=intent_result.get('secondary_intents', []),
+        intent_ids=intent_result.get('intent_ids', []),
+        sources=sources if request.include_sources else None,
+        source_count=len(knowledge_list),
+        vendor_id=request.vendor_id,
+        mode=request.mode,
+        session_id=request.session_id,
+        timestamp=datetime.utcnow().isoformat()
+    )
+
+    return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
 
 
 # ========================================
@@ -235,7 +741,7 @@ class VendorChatRequest(BaseModel):
     mode: str = Field("tenant", description="模式：tenant (B2C) 或 customer_service (B2B)")
     session_id: Optional[str] = Field(None, description="會話 ID（用於追蹤）")
     user_id: Optional[str] = Field(None, description="使用者 ID（租客 ID 或客服 ID）")
-    top_k: int = Field(3, description="返回知識數量", ge=1, le=10)
+    top_k: int = Field(5, description="返回知識數量", ge=1, le=10)
     include_sources: bool = Field(True, description="是否包含知識來源")
     disable_answer_synthesis: bool = Field(False, description="禁用答案合成（回測模式專用）")
 
@@ -269,567 +775,66 @@ class VendorChatResponse(BaseModel):
 @router.post("/message", response_model=VendorChatResponse)
 async def vendor_chat_message(request: VendorChatRequest, req: Request):
     """
-    多業者通用聊天端點（Phase 1: B2C 模式）
+    多業者通用聊天端點（Phase 1: B2C 模式）- 已重構
 
     流程：
-    1. 驗證業者
-    2. 意圖分類
-    3. 根據意圖 + 業者 ID → 檢索知識
-    4. 模板變數替換
-    5. 返回答案
+    1. 驗證業者狀態
+    2. 檢查緩存
+    3. 意圖分類
+    4. 根據意圖處理：unclear → SOP → 知識庫 → RAG fallback
+    5. LLM 優化並返回答案
 
-    Phase 2 將支援 customer_service 模式（需要租客辨識 + 外部 API）
+    重構：單一職責原則（Single Responsibility Principle）
+    - 主函數作為編排器（Orchestrator）
+    - 各功能模塊獨立為輔助函數
     """
     try:
-        # 驗證業者
+        # Step 1: 驗證業者
         resolver = get_vendor_param_resolver()
-        vendor_info = resolver.get_vendor_info(request.vendor_id)
+        vendor_info = _validate_vendor(request.vendor_id, resolver)
 
-        if not vendor_info:
-            raise HTTPException(
-                status_code=404,
-                detail=f"業者不存在: {request.vendor_id}"
-            )
-
-        if not vendor_info['is_active']:
-            raise HTTPException(
-                status_code=403,
-                detail=f"業者未啟用: {request.vendor_id}"
-            )
-
-        # 🚀 緩存檢查：嘗試從緩存獲取答案
+        # Step 2: 緩存檢查
         cache_service = req.app.state.cache_service
-        cached_answer = cache_service.get_cached_answer(
-            vendor_id=request.vendor_id,
-            question=request.message,
-            user_role=request.user_role
-        )
+        cached_response = _check_cache(cache_service, request.vendor_id, request.message, request.user_role)
+        if cached_response:
+            return cached_response
 
-        if cached_answer:
-            print(f"⚡ 緩存命中！直接返回答案（跳過 RAG 處理）")
-            # 從緩存構建響應
-            return VendorChatResponse(**cached_answer)
-
-        # Step 1: 意圖分類
+        # Step 3: 意圖分類
         intent_classifier = req.app.state.intent_classifier
         intent_result = intent_classifier.classify(request.message)
 
-        # Step 1.5: 對於 unclear 意圖，先嘗試 RAG 檢索
-        # 即使意圖不明確，也可能在知識庫中找到相關答案
+        # Step 4: 處理 unclear 意圖（RAG fallback + 測試場景記錄）
         if intent_result['intent_name'] == 'unclear':
-            rag_engine = req.app.state.rag_engine
-
-            # 根據用戶角色決定業務範圍進行 audience 過濾
-            business_scope = "external" if request.user_role == "customer" else "internal"
-            allowed_audiences = get_allowed_audiences_for_scope(business_scope)
-
-            # 使用更低的相似度閾值嘗試檢索
-            rag_results = await rag_engine.search(
-                query=request.message,
-                limit=5,
-                similarity_threshold=0.55,
-                allowed_audiences=allowed_audiences  # ✅ 添加 audience 過濾
+            return await _handle_unclear_with_rag_fallback(
+                request, req, intent_result, resolver, vendor_info, cache_service
             )
 
-            # 如果 RAG 檢索到相關知識，使用 LLM 優化答案
-            if rag_results:
-                llm_optimizer = req.app.state.llm_answer_optimizer
+        # Step 5: 獲取意圖 ID
+        intent_id = _get_intent_id(intent_result['intent_name'])
 
-                # 獲取業者參數
-                vendor_params_raw = resolver.get_vendor_parameters(request.vendor_id)
-                vendor_params = {
-                    key: param_info['value']
-                    for key, param_info in vendor_params_raw.items()
-                }
-
-                # 使用 LLM 優化答案
-                optimization_result = llm_optimizer.optimize_answer(
-                    question=request.message,
-                    search_results=rag_results,
-                    confidence_level='medium',  # unclear 但找到知識，設為中等信心度
-                    intent_info=intent_result,
-                    vendor_params=vendor_params,
-                    vendor_name=vendor_info['name'],
-                    enable_synthesis_override=False if request.disable_answer_synthesis else None
-                )
-
-                answer = optimization_result['optimized_answer']
-
-                # 準備來源列表
-                sources = []
-                if request.include_sources:
-                    for r in rag_results:
-                        sources.append(KnowledgeSource(
-                            id=r['id'],
-                            question_summary=r['title'],
-                            answer=r['content'],
-                            scope='global',  # RAG 檢索的是全局知識
-                            is_template=False
-                        ))
-
-                response = VendorChatResponse(
-                    answer=answer,
-                    intent_name="unclear",
-                    intent_type="unclear",
-                    confidence=intent_result['confidence'],
-                    all_intents=intent_result.get('all_intents', []),
-                    secondary_intents=intent_result.get('secondary_intents', []),
-                    intent_ids=intent_result.get('intent_ids', []),
-                    sources=sources if request.include_sources else None,
-                    source_count=len(rag_results),
-                    vendor_id=request.vendor_id,
-                    mode=request.mode,
-                    session_id=request.session_id,
-                    timestamp=datetime.utcnow().isoformat()
-                )
-
-                # 緩存並返回
-                return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
-
-            # 如果 RAG 也找不到相關知識，使用意圖建議引擎分析
-            # Phase B: 使用業務範圍判斷是否為新意圖
-
-            # 1. 記錄到測試場景庫（主要目的：補充測試案例）
-            try:
-                test_scenario_conn = psycopg2.connect(**get_db_config())
-                test_scenario_cursor = test_scenario_conn.cursor()
-
-                # 檢查是否已存在相同問題（避免重複）
-                test_scenario_cursor.execute(
-                    "SELECT id FROM test_scenarios WHERE test_question = %s AND status = 'pending_review'",
-                    (request.message,)
-                )
-                existing_scenario = test_scenario_cursor.fetchone()
-
-                if not existing_scenario:
-                    test_scenario_cursor.execute("""
-                        INSERT INTO test_scenarios (
-                            test_question,
-                            expected_category,
-                            status,
-                            source,
-                            difficulty,
-                            priority,
-                            notes,
-                            test_purpose,
-                            created_by
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """, (
-                        request.message,
-                        'unclear',  # 意圖不明確
-                        'pending_review',
-                        'user_question',
-                        'hard',  # unclear 問題通常更難處理
-                        80,  # 優先級更高，需要特別關注
-                        f"用戶問題意圖不明確（Vendor {request.vendor_id}），系統無法識別並提供答案",
-                        "追蹤意圖識別缺口，改善分類器",
-                        request.user_id or 'system'
-                    ))
-                    scenario_id = test_scenario_cursor.fetchone()[0]
-                    test_scenario_conn.commit()
-                    print(f"✅ 記錄unclear問題到測試場景庫 (Scenario ID: {scenario_id})")
-                else:
-                    print(f"ℹ️  測試場景已存在 (ID: {existing_scenario[0]})")
-
-                test_scenario_cursor.close()
-                test_scenario_conn.close()
-            except Exception as e:
-                print(f"⚠️ 記錄測試場景失敗: {e}")
-
-            # 2. 使用意圖建議引擎分析（次要目的：發現新意圖）
-            suggestion_engine = req.app.state.suggestion_engine
-
-            # 分析問題（傳遞 vendor_id 以載入對應的業務範圍）
-            analysis = suggestion_engine.analyze_unclear_question(
-                question=request.message,
-                vendor_id=request.vendor_id,
-                user_id=request.user_id,
-                conversation_context=None
-            )
-
-            # 如果屬於業務範圍，記錄建議意圖
-            if analysis.get('should_record'):
-                suggested_intent_id = suggestion_engine.record_suggestion(
-                    question=request.message,
-                    analysis=analysis,
-                    user_id=request.user_id
-                )
-                if suggested_intent_id:
-                    print(f"✅ 發現新意圖建議 (Vendor {request.vendor_id}): {analysis['suggested_intent']['name']} (建議ID: {suggested_intent_id})")
-
-            # 返回兜底回應
-            params = resolver.get_vendor_parameters(request.vendor_id)
-            service_hotline = params.get('service_hotline', {}).get('value', '客服')
-
-            return VendorChatResponse(
-                answer=f"抱歉，我不太理解您的問題。請您換個方式描述，或撥打客服專線 {service_hotline} 尋求協助。",
-                intent_name="unclear",
-                confidence=intent_result['confidence'],
-                all_intents=intent_result.get('all_intents', []),
-                secondary_intents=intent_result.get('secondary_intents', []),
-                intent_ids=intent_result.get('intent_ids', []),
-                sources=None,
-                source_count=0,
-                vendor_id=request.vendor_id,
-                mode=request.mode,
-                session_id=request.session_id,
-                timestamp=datetime.utcnow().isoformat()
-            )
-
-        # Step 2: 獲取意圖 ID
-        conn = psycopg2.connect(**get_db_config())
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT id FROM intents WHERE name = %s AND is_enabled = true",
-            (intent_result['intent_name'],)
-        )
-        result = cursor.fetchone()
-        intent_id = result[0] if result else None
-        cursor.close()
-        conn.close()
-
-        if not intent_id:
-            raise HTTPException(
-                status_code=500,
-                detail=f"資料庫中找不到意圖: {intent_result['intent_name']}"
-            )
-
-        # Step 2.5: 嘗試檢索 SOP（SOP 優先於知識庫）
-        # 如果找到 SOP，直接使用 SOP 項目；否則 fallback 到知識庫
-        sop_retriever = get_vendor_sop_retriever()
-        sop_items = []
-
-        # 嘗試從所有相關 intent_ids 中檢索 SOP（包括主要意圖和次要意圖）
-        all_intent_ids = intent_result.get('intent_ids', [intent_id])
-        for intent_id_to_try in all_intent_ids:
-            sop_items = sop_retriever.retrieve_sop_by_intent(
-                vendor_id=request.vendor_id,
-                intent_id=intent_id_to_try,
-                top_k=request.top_k
-            )
-            if sop_items:
-                print(f"✅ 找到 {len(sop_items)} 個 SOP 項目（Intent ID: {intent_id_to_try}）")
-                break
-
-        # 如果找到 SOP，使用 SOP 流程
+        # Step 6: 嘗試檢索 SOP（優先級最高）
+        sop_items = _retrieve_sop(request, intent_result)
         if sop_items:
             print(f"✅ 找到 {len(sop_items)} 個 SOP 項目，使用 SOP 流程")
-
-            # 獲取業者參數
-            vendor_params_raw = resolver.get_vendor_parameters(request.vendor_id)
-            vendor_params = {
-                key: param_info['value']
-                for key, param_info in vendor_params_raw.items()
-            }
-
-            # 將 SOP 項目轉換為 search_results 格式
-            search_results = []
-            for sop in sop_items:
-                search_results.append({
-                    'id': sop['id'],
-                    'title': sop['item_name'],
-                    'content': sop['content'],
-                    'category': sop['category_name'],
-                    'similarity': 0.95  # SOP 是精準匹配，給予高相似度
-                })
-
-            # 使用 LLM 優化器，傳入 vendor_info（包含 business_type）
-            llm_optimizer = req.app.state.llm_answer_optimizer
-            optimization_result = llm_optimizer.optimize_answer(
-                question=request.message,
-                search_results=search_results,
-                confidence_level='high',  # SOP 是精準答案，高信心度
-                intent_info=intent_result,
-                vendor_params=vendor_params,
-                vendor_name=vendor_info['name'],
-                vendor_info=vendor_info,  # 傳入完整業者資訊（包含 business_type, cashflow_model）
-                enable_synthesis_override=False if request.disable_answer_synthesis else None
+            return await _build_sop_response(
+                request, req, intent_result, sop_items, resolver, vendor_info, cache_service
             )
 
-            answer = optimization_result['optimized_answer']
-
-            # 準備來源列表
-            sources = []
-            if request.include_sources:
-                for sop in sop_items:
-                    sources.append(KnowledgeSource(
-                        id=sop['id'],
-                        question_summary=sop['item_name'],
-                        answer=sop['content'],
-                        scope='vendor_sop',  # 標記為 SOP 來源
-                        is_template=False
-                    ))
-
-            response = VendorChatResponse(
-                answer=answer,
-                intent_name=intent_result['intent_name'],
-                intent_type=intent_result.get('intent_type'),
-                confidence=intent_result['confidence'],
-                all_intents=intent_result.get('all_intents', []),
-                secondary_intents=intent_result.get('secondary_intents', []),
-                intent_ids=intent_result.get('intent_ids', []),
-                sources=sources if request.include_sources else None,
-                source_count=len(sop_items),
-                vendor_id=request.vendor_id,
-                mode=request.mode,
-                session_id=request.session_id,
-                timestamp=datetime.utcnow().isoformat()
-            )
-
-            # 緩存並返回
-            return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
-
-        # Step 3: 如果沒有 SOP，檢索知識庫（Phase 1 擴展：使用混合模式，結合 intent 過濾和向量相似度）
-        # 支援多 Intent 檢索
+        # Step 7: 檢索知識庫（混合模式：intent + 向量）
         print(f"ℹ️  沒有找到 SOP，使用知識庫檢索")
-        retriever = get_vendor_knowledge_retriever()
-        all_intent_ids = intent_result.get('intent_ids', [intent_id])
+        knowledge_list = await _retrieve_knowledge(request, intent_id, intent_result)
 
-        knowledge_list = await retriever.retrieve_knowledge_hybrid(
-            query=request.message,
-            intent_id=intent_id,
-            vendor_id=request.vendor_id,
-            top_k=request.top_k,
-            similarity_threshold=0.6,
-            resolve_templates=False,  # Phase 1 擴展：不使用模板，改用 LLM
-            all_intent_ids=all_intent_ids  # 傳遞所有相關 Intent IDs
-        )
-
-        # Step 3.5: 如果基於意圖找不到知識，fallback 到 RAG 向量搜尋
+        # Step 8: 如果知識庫沒有結果，嘗試 RAG fallback
         if not knowledge_list:
             print(f"⚠️  意圖 '{intent_result['intent_name']}' (ID: {intent_id}) 沒有關聯知識，嘗試 RAG fallback...")
-
-            # 根據用戶角色決定業務範圍進行 audience 過濾
-            business_scope = "external" if request.user_role == "customer" else "internal"
-            allowed_audiences = get_allowed_audiences_for_scope(business_scope)
-
-            rag_engine = req.app.state.rag_engine
-            rag_results = await rag_engine.search(
-                query=request.message,
-                limit=request.top_k,
-                similarity_threshold=0.60,  # 使用標準閾值
-                allowed_audiences=allowed_audiences  # ✅ 添加 audience 過濾
+            return await _handle_no_knowledge_found(
+                request, req, intent_result, resolver, cache_service, vendor_info
             )
 
-            # 如果 RAG 檢索到相關知識，使用 LLM 優化答案
-            if rag_results:
-                print(f"   ✅ RAG fallback 找到 {len(rag_results)} 個相關知識")
-
-                llm_optimizer = req.app.state.llm_answer_optimizer
-
-                # 獲取業者參數
-                vendor_params_raw = resolver.get_vendor_parameters(request.vendor_id)
-                vendor_params = {
-                    key: param_info['value']
-                    for key, param_info in vendor_params_raw.items()
-                }
-
-                # 使用 LLM 優化答案
-                optimization_result = llm_optimizer.optimize_answer(
-                    question=request.message,
-                    search_results=rag_results,
-                    confidence_level='high',  # RAG 高相似度，設為高信心度
-                    intent_info=intent_result,
-                    vendor_params=vendor_params,
-                    vendor_name=vendor_info['name'],
-                    enable_synthesis_override=False if request.disable_answer_synthesis else None
-                )
-
-                answer = optimization_result['optimized_answer']
-
-                # 準備來源列表
-                sources = []
-                if request.include_sources:
-                    for r in rag_results:
-                        sources.append(KnowledgeSource(
-                            id=r['id'],
-                            question_summary=r['title'],
-                            answer=r['content'],
-                            scope='global',  # RAG 檢索的是全局知識
-                            is_template=False
-                        ))
-
-                response = VendorChatResponse(
-                    answer=answer,
-                    intent_name=intent_result['intent_name'],
-                    intent_type=intent_result.get('intent_type'),
-                    confidence=intent_result['confidence'],
-                    all_intents=intent_result.get('all_intents', []),
-                    secondary_intents=intent_result.get('secondary_intents', []),
-                    intent_ids=intent_result.get('intent_ids', []),
-                    sources=sources if request.include_sources else None,
-                    source_count=len(rag_results),
-                    vendor_id=request.vendor_id,
-                    mode=request.mode,
-                    session_id=request.session_id,
-                    timestamp=datetime.utcnow().isoformat()
-                )
-
-                # 緩存並返回
-                return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
-
-            # 如果 RAG 也找不到，記錄問題並分析是否需要新意圖建議
-            print(f"   ❌ RAG fallback 也沒有找到相關知識")
-
-            # 1. 記錄到測試場景庫（主要目的：補充測試案例）
-            try:
-                test_scenario_conn = psycopg2.connect(**get_db_config())
-                test_scenario_cursor = test_scenario_conn.cursor()
-
-                # 檢查是否已存在相同問題（避免重複）
-                test_scenario_cursor.execute(
-                    "SELECT id FROM test_scenarios WHERE test_question = %s AND status = 'pending_review'",
-                    (request.message,)
-                )
-                existing_scenario = test_scenario_cursor.fetchone()
-
-                if not existing_scenario:
-                    test_scenario_cursor.execute("""
-                        INSERT INTO test_scenarios (
-                            test_question,
-                            expected_category,
-                            expected_intent_id,
-                            status,
-                            source,
-                            difficulty,
-                            priority,
-                            notes,
-                            test_purpose,
-                            created_by
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """, (
-                        request.message,
-                        intent_result['intent_name'],
-                        intent_id,
-                        'pending_review',
-                        'user_question',
-                        'medium',
-                        70,  # 用戶真實問題，優先級較高
-                        f"用戶真實問題（Vendor {request.vendor_id}），系統無法提供答案",
-                        "驗證知識庫覆蓋率，追蹤用戶真實需求",
-                        request.user_id or 'system'
-                    ))
-                    scenario_id = test_scenario_cursor.fetchone()[0]
-                    test_scenario_conn.commit()
-                    print(f"✅ 記錄到測試場景庫 (Scenario ID: {scenario_id})")
-                else:
-                    print(f"ℹ️  測試場景已存在 (ID: {existing_scenario[0]})")
-
-                test_scenario_cursor.close()
-                test_scenario_conn.close()
-            except Exception as e:
-                print(f"⚠️ 記錄測試場景失敗: {e}")
-
-            # 2. 使用意圖建議引擎分析（次要目的：發現新意圖）
-            suggestion_engine = req.app.state.suggestion_engine
-
-            # 分析問題（傳遞 vendor_id 以載入對應的業務範圍）
-            analysis = suggestion_engine.analyze_unclear_question(
-                question=request.message,
-                vendor_id=request.vendor_id,
-                user_id=request.user_id,
-                conversation_context=None
-            )
-
-            # 如果屬於業務範圍，記錄建議意圖
-            if analysis.get('should_record'):
-                suggested_intent_id = suggestion_engine.record_suggestion(
-                    question=request.message,
-                    analysis=analysis,
-                    user_id=request.user_id
-                )
-                if suggested_intent_id:
-                    print(f"✅ 發現知識缺口建議 (Vendor {request.vendor_id}): {analysis['suggested_intent']['name']} (建議ID: {suggested_intent_id})")
-
-            params = resolver.get_vendor_parameters(request.vendor_id)
-            service_hotline = params.get('service_hotline', {}).get('value', '客服')
-
-            return VendorChatResponse(
-                answer=f"很抱歉，關於「{intent_result['intent_name']}」我目前沒有相關資訊。建議您撥打客服專線 {service_hotline} 獲取協助。",
-                intent_name=intent_result['intent_name'],
-                intent_type=intent_result.get('intent_type'),
-                confidence=intent_result['confidence'],
-                all_intents=intent_result.get('all_intents', []),
-                secondary_intents=intent_result.get('secondary_intents', []),
-                intent_ids=intent_result.get('intent_ids', []),
-                sources=None,
-                source_count=0,
-                vendor_id=request.vendor_id,
-                mode=request.mode,
-                session_id=request.session_id,
-                timestamp=datetime.utcnow().isoformat()
-            )
-
-        # Step 4: Phase 1 擴展 - 使用 LLM 動態注入業者參數
-        # 獲取業者參數
-        vendor_params_raw = resolver.get_vendor_parameters(request.vendor_id)
-
-        # 轉換為簡單的 dict（提取 value）
-        vendor_params = {
-            key: param_info['value']
-            for key, param_info in vendor_params_raw.items()
-        }
-
-        # 使用 LLM 優化器進行參數注入
-        llm_optimizer = req.app.state.llm_answer_optimizer
-
-        # 準備搜尋結果格式（與原 RAG 引擎格式一致）
-        search_results = []
-        for k in knowledge_list:
-            search_results.append({
-                'id': k['id'],
-                'title': k['question_summary'],
-                'content': k['answer'],
-                'category': k.get('category', 'N/A'),
-                'similarity': 0.9  # 從意圖檢索，假設高相似度
-            })
-
-        # 使用 LLM 優化並注入參數
-        optimization_result = llm_optimizer.optimize_answer(
-            question=request.message,
-            search_results=search_results,
-            confidence_level='high',  # 從意圖檢索，信心度高
-            intent_info=intent_result,
-            vendor_params=vendor_params,
-            vendor_name=vendor_info['name'],
-            enable_synthesis_override=False if request.disable_answer_synthesis else None
+        # Step 9: 使用知識庫結果構建優化回應
+        return await _build_knowledge_response(
+            request, req, intent_result, knowledge_list, resolver, vendor_info, cache_service
         )
-
-        answer = optimization_result['optimized_answer']
-
-        # 準備來源列表
-        sources = []
-        if request.include_sources:
-            for k in knowledge_list:
-                sources.append(KnowledgeSource(
-                    id=k['id'],
-                    question_summary=k['question_summary'],
-                    answer=k['answer'],
-                    scope=k['scope'],
-                    is_template=k['is_template']
-                ))
-
-        # Step 5: 返回回應
-        response = VendorChatResponse(
-            answer=answer,
-            intent_name=intent_result['intent_name'],
-            intent_type=intent_result.get('intent_type'),
-            confidence=intent_result['confidence'],
-            all_intents=intent_result.get('all_intents', []),
-            secondary_intents=intent_result.get('secondary_intents', []),
-            intent_ids=intent_result.get('intent_ids', []),
-            sources=sources if request.include_sources else None,
-            source_count=len(knowledge_list),
-            vendor_id=request.vendor_id,
-            mode=request.mode,
-            session_id=request.session_id,
-            timestamp=datetime.utcnow().isoformat()
-        )
-
-        # 緩存並返回
-        return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
 
     except HTTPException:
         raise
@@ -840,6 +845,28 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             status_code=500,
             detail=f"處理聊天請求失敗: {str(e)}"
         )
+
+
+def _get_intent_id(intent_name: str) -> int:
+    """獲取意圖 ID"""
+    conn = psycopg2.connect(**get_db_config())
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id FROM intents WHERE name = %s AND is_enabled = true",
+        (intent_name,)
+    )
+    result = cursor.fetchone()
+    intent_id = result[0] if result else None
+    cursor.close()
+    conn.close()
+
+    if not intent_id:
+        raise HTTPException(
+            status_code=500,
+            detail=f"資料庫中找不到意圖: {intent_name}"
+        )
+
+    return intent_id
 
 
 @router.get("/vendors/{vendor_id}/test")
