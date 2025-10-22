@@ -606,7 +606,32 @@ async def review_candidate(
 
         async with db_pool.acquire() as conn:
             if request.action == "approve":
-                # 批准並轉為正式知識
+                # 🔍 批准前檢查是否存在相似知識（提示但不阻止）
+                candidate = await conn.fetchrow("""
+                    SELECT question, question_embedding
+                    FROM ai_generated_knowledge_candidates
+                    WHERE id = $1
+                """, candidate_id)
+
+                similar_knowledge = None
+                if candidate and candidate['question_embedding']:
+                    # 檢查知識庫中是否有相似知識
+                    similar = await conn.fetchrow("""
+                        SELECT * FROM check_knowledge_exists_by_similarity($1::vector, $2)
+                    """, candidate['question_embedding'], 0.85)
+
+                    if similar and (similar['exists_in_knowledge_base'] or similar['exists_in_review_queue']):
+                        similar_knowledge = {
+                            "exists": True,
+                            "source": similar['source_table'],
+                            "matched_question": similar['matched_question'],
+                            "similarity": float(similar['similarity_score']) if similar['similarity_score'] else 0.0
+                        }
+                        print(f"⚠️  警告：發現相似知識（相似度: {similar_knowledge['similarity']:.3f}）")
+                        print(f"   來源: {similar_knowledge['source']}")
+                        print(f"   相似問題: {similar_knowledge['matched_question'][:50]}...")
+
+                # 批准並轉為正式知識（即使發現相似知識仍執行）
                 new_knowledge_id = await conn.fetchval("""
                     SELECT approve_ai_knowledge_candidate($1, $2, $3, $4)
                 """,
@@ -619,12 +644,22 @@ async def review_candidate(
                 print(f"✅ 候選 #{candidate_id} 已批准")
                 print(f"   新知識 ID: {new_knowledge_id}")
 
-                return {
+                result = {
                     "message": "已批准並加入知識庫",
                     "candidate_id": candidate_id,
                     "new_knowledge_id": new_knowledge_id,
                     "action": "approved"
                 }
+
+                # 如果發現相似知識，添加警告信息
+                if similar_knowledge:
+                    result["warning"] = {
+                        "type": "similar_knowledge_exists",
+                        "message": f"警告：知識庫中存在相似問題（相似度: {similar_knowledge['similarity']:.1%}）",
+                        "details": similar_knowledge
+                    }
+
+                return result
 
             elif request.action == "reject":
                 # 拒絕

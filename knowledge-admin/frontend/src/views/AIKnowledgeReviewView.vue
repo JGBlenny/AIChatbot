@@ -247,7 +247,19 @@ export default {
           }
         );
 
-        alert(`✅ 已批准！新知識 ID: ${response.data.new_knowledge_id}\n\n已加入知識庫。`);
+        // 檢查是否有相似知識警告
+        let message = `✅ 已批准！新知識 ID: ${response.data.new_knowledge_id}\n\n已加入知識庫。`;
+
+        if (response.data.warning) {
+          const warning = response.data.warning;
+          const details = warning.details;
+          message += `\n\n⚠️ ${warning.message}\n`;
+          message += `來源: ${details.source}\n`;
+          message += `相似問題: ${details.matched_question}\n`;
+          message += `相似度: ${(details.similarity * 100).toFixed(1)}%`;
+        }
+
+        alert(message);
         this.loadCandidates();
         this.loadStats();
       } catch (error) {
