@@ -17,6 +17,7 @@ import psycopg2
 import psycopg2.extras
 from services.business_scope_utils import get_allowed_audiences_for_scope
 from services.db_utils import get_db_config
+from services.embedding_utils import get_embedding_client
 
 router = APIRouter()
 
@@ -176,7 +177,14 @@ async def _handle_unclear_with_rag_fallback(
 
 
 async def _record_unclear_question(request: VendorChatRequest, req: Request):
-    """記錄 unclear 問題到測試場景庫 + 意圖建議（僅記錄相關度高的問題）"""
+    """
+    記錄 unclear 問題到測試場景庫 + 意圖建議
+
+    功能增強（語義去重）：
+    - 相關度過濾：relevance_score >= 0.7
+    - 語義去重：使用 embedding 檢測相似問題（similarity >= 0.80）
+    - 編輯距離：Levenshtein Distance <= 2（數據庫層）
+    """
     # 1. 使用意圖建議引擎分析問題相關性
     suggestion_engine = req.app.state.suggestion_engine
     analysis = suggestion_engine.analyze_unclear_question(
@@ -197,18 +205,93 @@ async def _record_unclear_question(request: VendorChatRequest, req: Request):
         print(f"   問題: {request.message}")
         return
 
-    # 2. 記錄到測試場景庫（相關度過濾後）
+    # 2. 生成問題的 embedding（用於語義去重）
+    embedding_client = get_embedding_client()
+    question_embedding = await embedding_client.get_embedding(request.message, verbose=False)
+
+    if not question_embedding:
+        print(f"⚠️  無法生成問題向量，回退到精確匹配模式")
+        # 後續仍會進行精確匹配檢查
+
+    # 3. 記錄到測試場景庫（相關度過濾 + 語義去重）
     try:
         test_scenario_conn = psycopg2.connect(**get_db_config())
-        test_scenario_cursor = test_scenario_conn.cursor()
+        test_scenario_cursor = test_scenario_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        test_scenario_cursor.execute(
-            "SELECT id FROM test_scenarios WHERE test_question = %s AND status = 'pending_review'",
-            (request.message,)
-        )
-        existing_scenario = test_scenario_cursor.fetchone()
+        # 3a. 精確匹配檢查（完全相同的問題）
+        test_scenario_cursor.execute("""
+            SELECT id, status FROM test_scenarios
+            WHERE test_question = %s
+              AND status IN ('pending_review', 'draft', 'approved')
+              AND is_active = true
+        """, (request.message,))
+        exact_match = test_scenario_cursor.fetchone()
 
-        if not existing_scenario:
+        if exact_match:
+            scenario_id, existing_status = exact_match
+            print(f"⏭️  跳過記錄：完全相同問題已存在 (Scenario ID: {scenario_id}, 狀態: {existing_status})")
+            print(f"   問題: {request.message}")
+            test_scenario_cursor.close()
+            test_scenario_conn.close()
+            return
+
+        # 3b. 語義相似度檢查（使用 embedding 向量搜索）
+        if question_embedding:
+            vector_str = '[' + ','.join(map(str, question_embedding)) + ']'
+
+            test_scenario_cursor.execute("""
+                SELECT
+                    id,
+                    test_question,
+                    status,
+                    (1 - (question_embedding <=> %s::vector)) AS similarity
+                FROM test_scenarios
+                WHERE question_embedding IS NOT NULL
+                  AND status IN ('pending_review', 'draft', 'approved')
+                  AND is_active = true
+                  AND test_question != %s
+                  AND (1 - (question_embedding <=> %s::vector)) >= 0.80
+                ORDER BY similarity DESC
+                LIMIT 1
+            """, (vector_str, request.message, vector_str))
+
+            similar_match = test_scenario_cursor.fetchone()
+
+            if similar_match:
+                scenario_id = similar_match['id']
+                similar_question = similar_match['test_question']
+                similarity = similar_match['similarity']
+                existing_status = similar_match['status']
+
+                print(f"⏭️  跳過記錄：相似問題已存在 (Scenario ID: {scenario_id}, 狀態: {existing_status})")
+                print(f"   原問題: {request.message}")
+                print(f"   相似問題: {similar_question}")
+                print(f"   相似度: {similarity:.3f}")
+
+                test_scenario_cursor.close()
+                test_scenario_conn.close()
+                return
+
+        # 4. 插入新的測試場景記錄（含 embedding）
+        if question_embedding:
+            vector_str = '[' + ','.join(map(str, question_embedding)) + ']'
+            test_scenario_cursor.execute("""
+                INSERT INTO test_scenarios (
+                    test_question, expected_category, status, source,
+                    difficulty, priority, notes, test_purpose, created_by,
+                    question_embedding
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::vector)
+                RETURNING id
+            """, (
+                request.message, 'unclear', 'pending_review', 'user_question',
+                'hard', 80,
+                f"用戶問題意圖不明確（Vendor {request.vendor_id}），相關度: {relevance_score:.2f}",
+                "追蹤意圖識別缺口，改善分類器",
+                request.user_id or 'system',
+                vector_str
+            ))
+        else:
+            # 無 embedding 時仍插入記錄（但無法做語義去重）
             test_scenario_cursor.execute("""
                 INSERT INTO test_scenarios (
                     test_question, expected_category, status, source,
@@ -222,16 +305,21 @@ async def _record_unclear_question(request: VendorChatRequest, req: Request):
                 "追蹤意圖識別缺口，改善分類器",
                 request.user_id or 'system'
             ))
-            scenario_id = test_scenario_cursor.fetchone()[0]
-            test_scenario_conn.commit()
-            print(f"✅ 記錄unclear問題到測試場景庫 (Scenario ID: {scenario_id}, 相關度: {relevance_score:.2f})")
+
+        scenario_id = test_scenario_cursor.fetchone()[0]
+        test_scenario_conn.commit()
+
+        embedding_status = "✅ 含向量" if question_embedding else "⚠️  無向量"
+        print(f"✅ 記錄unclear問題到測試場景庫 (Scenario ID: {scenario_id}, 相關度: {relevance_score:.2f}, {embedding_status})")
 
         test_scenario_cursor.close()
         test_scenario_conn.close()
     except Exception as e:
         print(f"⚠️ 記錄測試場景失敗: {e}")
+        import traceback
+        traceback.print_exc()
 
-    # 3. 記錄意圖建議
+    # 5. 記錄意圖建議
     suggested_intent_id = suggestion_engine.record_suggestion(
         question=request.message,
         analysis=analysis,
