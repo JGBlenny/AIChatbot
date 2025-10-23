@@ -339,8 +339,8 @@ psql -h localhost -U aichatbot -d aichatbot_admin -c "SELECT 1;"
 ## 下一步
 
 1. **閱讀詳細文檔**
-   - [回測策略指南](./backtest_strategies.md)
-   - [環境變數參考](./backtest_env_vars.md)
+   - [回測策略指南](./BACKTEST_STRATEGIES.md)
+   - [環境變數參考](./BACKTEST_ENV_VARS.md)
    - [Phase 2 更新日誌](./BACKTEST_PHASE2_CHANGELOG.md)
 
 2. **CI/CD 整合**
@@ -375,6 +375,6 @@ grep "通過率" output/backtest/backtest_results_summary.txt
 
 ---
 
-**問題回報：** 如有問題請查閱 [故障排除文檔](./backtest_strategies.md#故障排除)
+**問題回報：** 如有問題請查閱 [故障排除文檔](./BACKTEST_STRATEGIES.md#故障排除)
 
 **最後更新：** 2025-10-12

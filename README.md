@@ -10,6 +10,9 @@
 - 📊 **三級信心度評估** - 高/中/低信心度判斷
 - ✨ **LLM 答案優化** - 使用 GPT-4o-mini 優化答案品質
 - 🧠 **意圖建議引擎** - OpenAI 自動分析未知問題並建議新意圖
+- ⚡ **三層緩存系統** ⭐ NEW - Redis 快取（問題/向量/結果），節省 70-90% API 成本
+- 🌊 **流式聊天 API** ⭐ NEW - Server-Sent Events (SSE)，即時反饋用戶體驗
+- 📋 **SOP 智能整合** ⭐ NEW - 業者 SOP 模板，支援金流模式和業種類型動態調整
 
 ### 🧪 測試情境管理系統 ⭐ NEW
 - 📝 **測試題庫資料庫** - 管理測試問題、預期答案、難度分級
@@ -82,12 +85,13 @@
 
 | 服務 | 技術 | Port | 功能 |
 |------|------|------|------|
-| **知識管理前端** | Vue.js 3 + Vue Router | 8080 | 審核中心、知識管理、業者管理、測試情境管理 |
+| **知識管理前端（開發）** | Vue.js 3 + Vite | 8087 | 審核中心、知識管理、業者管理、測試情境管理（熱重載）|
+| **知識管理前端（正式）** | Vue.js 3 + Nginx | 8081 | 靜態檔案服務（需指定 profile）|
 | **知識管理 API** | FastAPI | 8000 | Knowledge CRUD、測試情境 CRUD、自動向量更新 |
 | **Embedding API** | FastAPI | 5001 | 統一向量生成、Redis 快取 |
-| **RAG Orchestrator** | FastAPI | 8100 | 智能問答、意圖分類、多業者支援、知識生成 |
+| **RAG Orchestrator** | FastAPI | 8100 | 智能問答、意圖分類、緩存管理、知識生成 |
 | **PostgreSQL** | pgvector/pgvector | 5432 | 資料庫、向量儲存、業者資料、測試題庫 |
-| **Redis** | Redis 7 | 6379 | Embedding 快取 |
+| **Redis** | Redis 7 | 6381 | Embedding + RAG 三層快取 |
 | **pgAdmin** | pgAdmin 4 | 5050 | 資料庫管理工具 |
 
 ## 🚀 快速開始
@@ -127,20 +131,27 @@ docker-compose logs -f
 
 ### 3. 存取服務
 
-- 🌐 **審核中心**: http://localhost:8080/review-center
+**開發模式（預設）**:
+- 🌐 **審核中心**: http://localhost:8087/review-center
   - 測試情境審核
   - 用戶問題審核
   - 意圖建議審核
   - AI 知識候選審核
-- 📚 **知識庫管理**: http://localhost:8080/knowledge
-- 🏢 **業者管理**: http://localhost:8080/vendors
-- 🧪 **Chat 測試**: http://localhost:8080/chat-test
-- 📊 **回測執行**: http://localhost:8080/backtest
-- 📘 **API 文件**:
-  - 知識管理 API: http://localhost:8000/docs
-  - Embedding API: http://localhost:5001/docs
-  - RAG Orchestrator: http://localhost:8100/docs
+- 📚 **知識庫管理**: http://localhost:8087/knowledge
+- 🏢 **業者管理**: http://localhost:8087/vendors
+- 🧪 **Chat 測試**: http://localhost:8087/chat-test
+- 📊 **回測執行**: http://localhost:8087/backtest
+- 🔄 **知識意圖分類**: http://localhost:8087/knowledge-reclassify
+
+**API 文件**:
+- 知識管理 API: http://localhost:8000/docs
+- Embedding API: http://localhost:5001/docs
+- RAG Orchestrator: http://localhost:8100/docs
+
+**管理工具**:
 - 🗄️ **pgAdmin**: http://localhost:5050 (帳號: `admin@aichatbot.com` / 密碼: `admin`)
+
+**註**: 正式模式使用 port 8081，需指定 `--profile production`
 
 ## 📖 專案結構
 
@@ -180,7 +191,8 @@ AIChatbot/
 ├── rag-orchestrator/        # RAG 協調器
 │   ├── app.py              # FastAPI 主服務
 │   ├── routers/            # API 路由
-│   │   ├── chat.py                    # 聊天 API (多業者)
+│   │   ├── chat.py                    # 聊天 API (多業者 + 流式)
+│   │   ├── cache.py                   # 緩存管理 API ⭐ NEW
 │   │   ├── vendors.py                 # 業者管理
 │   │   ├── intents.py                 # 意圖管理
 │   │   ├── suggested_intents.py       # 意圖建議
@@ -191,6 +203,7 @@ AIChatbot/
 │   ├── services/           # 核心服務
 │   │   ├── intent_classifier.py           # 意圖分類
 │   │   ├── rag_engine.py                  # RAG 檢索
+│   │   ├── cache_service.py               # 三層緩存服務 ⭐ NEW
 │   │   ├── llm_answer_optimizer.py        # LLM 答案優化 + 參數注入
 │   │   ├── knowledge_generator.py         # AI 知識生成器 ⭐
 │   │   ├── knowledge_import_service.py    # 知識匯入服務 ⭐ NEW
@@ -671,22 +684,26 @@ MIT
 
 **維護者**: Claude Code
 **專案建立**: 2024
-**最後更新**: 2025-10-13
-**當前版本**: Phase 1 完成 + 測試情境管理系統 + Business Scope 重構 + 系統審計
+**最後更新**: 2025-10-22
+**當前版本**: Phase 1 完成 + Phase 3 性能優化 + 文檔重組
 
-**最新更新** (2025-10-13):
-- 🔍 **系統審計完成** - 完整健康檢查，代碼質量良好（僅 3 個 TODO），7 個服務正常運行 ⭐ NEW
-- 📁 **遺留代碼歸檔** - backend 目錄已移至 docs/archive/legacy/ 並標記為廢棄 ⭐ NEW
-- 📖 **文檔中心創建** - 新增 docs/README.md 作為文檔導覽中心 ⭐ NEW
-- 🧹 **配置清理** - 移除重複的 .env 檔案，統一環境變數管理 ⭐ NEW
+**最新更新** (2025-10-22):
+- 📊 **Database Schema + ERD** - 完整資料庫架構文檔，16 個表 + Mermaid 關係圖 ⭐ NEW
+- 📝 **文檔審計報告** - 全面盤查 130+ 文檔，建立更新優先級矩陣 ⭐ NEW
+- 🔄 **術語統一** - 「重新分類」→「意圖分類」（前端 12 處更新） ⭐ NEW
+- ⚙️ **環境變數支援** - 意圖分類器模型可通過 ENV 配置 ⭐ NEW
+- 📘 **README 更新** - 修正 port、補充緩存和流式聊天說明 ⭐ NEW
+
+**Phase 3 功能** (2025-10-21):
+- ⚡ **三層緩存系統** - Redis 快取（問題/向量/結果），節省 70-90% API 成本
+- 🌊 **流式聊天 API** - Server-Sent Events (SSE)，即時反饋用戶體驗
+- 🔧 **條件式優化** - 智能路由策略，依信心度選擇處理路徑
+- 📋 **SOP 系統整合** - 業者 SOP 模板，支援金流模式和業種類型動態調整
 
 **近期功能** (2025-10-12):
-- 📥 **知識匯入系統** - 批量匯入 Excel/JSON/TXT，雙層去重（文字+語意），自動 AI 處理
+- 📥 **知識匯入系統** - 批量匯入 Excel/JSON/TXT，雙層去重（文字+語意）
 - 🎯 **Business Scope 重構** - 基於 user_role 動態決定 B2B/B2C 場景
-- 🔄 **雙場景支援** - 每個業者可同時服務客戶和員工
-- 💻 **前端開發模式** - 支援熱重載，提升開發效率
 - 🧪 **測試情境管理** - 自動轉換 + 智能重試機制
 - 📊 **審核中心** - 統一介面審核 4 類候選項目
-- 🤖 **AI 知識生成** - 從測試情境自動生成知識
 
 **下一階段**: Phase 2 (外部 API 整合 + 認證系統) 規劃中

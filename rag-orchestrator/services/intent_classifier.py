@@ -52,7 +52,7 @@ class IntentClassifier:
             "max_intents": 3
         }
         self.classifier_config = {
-            "model": "gpt-4o-mini",
+            "model": "gpt-3.5-turbo",
             "temperature": 0.1,
             "max_tokens": 500
         }
@@ -68,6 +68,17 @@ class IntentClassifier:
                         self.classifier_config.update(yaml_config['classifier'])
             except:
                 pass
+
+        # 從環境變數覆蓋配置（優先級最高）
+        if os.getenv("INTENT_CLASSIFIER_MODEL"):
+            self.classifier_config["model"] = os.getenv("INTENT_CLASSIFIER_MODEL")
+            print(f"✅ 使用環境變數指定的模型: {self.classifier_config['model']}")
+
+        if os.getenv("INTENT_CLASSIFIER_TEMPERATURE"):
+            self.classifier_config["temperature"] = float(os.getenv("INTENT_CLASSIFIER_TEMPERATURE"))
+
+        if os.getenv("INTENT_CLASSIFIER_MAX_TOKENS"):
+            self.classifier_config["max_tokens"] = int(os.getenv("INTENT_CLASSIFIER_MAX_TOKENS"))
 
     def _load_from_yaml(self):
         """從 YAML 載入意圖配置（fallback）"""

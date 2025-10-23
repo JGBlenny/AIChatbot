@@ -45,7 +45,7 @@ docs/
 |--------|------|------|------|
 | README.md | 29 KB | /根目錄 | ✅ 主要 |
 | SOP_REFACTORING_SUMMARY.md | 11 KB | /根目錄 | 可移動到 docs/features/ |
-| system_pending_features.md | 10 KB | /根目錄 | 可移動到 docs/planning/ |
+| SYSTEM_PENDING_FEATURES.md | 10 KB | /根目錄 | 可移動到 docs/planning/ |
 | QUICKSTART.md | 8 KB | /根目錄 | 🔀 與 docs 有重複 |
 | README_DEPLOYMENT.md | 6.4 KB | /根目錄 | 應移到 docs/guides/ |
 | CHANGELOG.md | 14 KB | /根目錄 | ✅ 根目錄位置合適 |
@@ -53,7 +53,7 @@ docs/
 **建議**:
 - ✅ 保留: README.md, CHANGELOG.md
 - 🔀 移動: SOP_REFACTORING_SUMMARY.md → docs/features/
-- 🔀 移動: system_pending_features.md → docs/planning/
+- 🔀 移動: SYSTEM_PENDING_FEATURES.md → docs/planning/
 - 🔀 移動: README_DEPLOYMENT.md → docs/guides/
 - ✓ 審查: QUICKSTART.md（檢查是否與其他快速開始重複）
 
@@ -409,7 +409,7 @@ output/backtest/                         運行時輸出，不追蹤
 
 ```
 SOP_REFACTORING_SUMMARY.md               → docs/features/
-system_pending_features.md               → docs/planning/
+SYSTEM_PENDING_FEATURES.md               → docs/planning/
 README_DEPLOYMENT.md                     → docs/guides/
 QUICKSTART.md                            → 保留根目錄（入口）或合併到 README.md
 ```
@@ -570,7 +570,7 @@ AIChatbot/
 - [ ] 刪除 docs/archive/legacy/backend/
 - [ ] 移動文件到 docs/ 對應目錄：
   - [ ] SOP_REFACTORING_SUMMARY.md → docs/features/
-  - [ ] system_pending_features.md → docs/planning/
+  - [ ] SYSTEM_PENDING_FEATURES.md → docs/planning/
   - [ ] README_DEPLOYMENT.md → docs/guides/
 
 ### 🔧 Phase 2: 腳本整理（優先級：高）

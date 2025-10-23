@@ -476,14 +476,14 @@ python3 app.py
 - [Phase 1.1 更新日誌](./BACKTEST_PHASE1_CHANGELOG.md)
 - [Phase 1.2 更新日誌](./BACKTEST_PHASE1.2_CHANGELOG.md)
 - [Phase 2 更新日誌](./BACKTEST_PHASE2_CHANGELOG.md)
-- [回測策略指南](./backtest_strategies.md)
-- [環境變數參考](./backtest_env_vars.md)
+- [回測策略指南](../BACKTEST_STRATEGIES.md)
+- [環境變數參考](../BACKTEST_ENV_VARS.md)
 - [文檔索引](./BACKTEST_INDEX.md)
 
 ## 回饋與支援
 
 如有問題或建議，請：
-1. 查閱 [故障排除文檔](./backtest_strategies.md#故障排除)
+1. 查閱 [故障排除文檔](../BACKTEST_STRATEGIES.md#故障排除)
 2. 檢查 [API 文檔](http://localhost:8000/docs)
 3. 提交 Issue 到專案 GitHub
 

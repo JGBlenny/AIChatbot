@@ -155,7 +155,7 @@ semantic_sim = self._cosine_similarity(question_embedding, candidate_emb)
 - ✅ 拼音檢測無法正常運作問題
 
 ### 相關文檔更新
-- 待辦事項 `docs/planning/system_pending_features.md`
+- 待辦事項 `docs/planning/SYSTEM_PENDING_FEATURES.md`
   - **移除**：「拼音去重檢測優化」（已完成）
   - **移除**：「向量轉換問題需修復」（已完成）
   - **移除**：「拼音檢測實際未正常運作（只有 5/6 測試通過）」（已完成）

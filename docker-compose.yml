@@ -136,6 +136,10 @@ services:
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_MODEL: gpt-3.5-turbo  # 預設 LLM 模型（速度快 2-3倍，成本低 70%）
+      # 意圖分類器配置
+      INTENT_CLASSIFIER_MODEL: ${INTENT_CLASSIFIER_MODEL:-gpt-3.5-turbo}  # 意圖分類模型
+      INTENT_CLASSIFIER_TEMPERATURE: ${INTENT_CLASSIFIER_TEMPERATURE:-0.1}  # 意圖分類溫度
+      INTENT_CLASSIFIER_MAX_TOKENS: ${INTENT_CLASSIFIER_MAX_TOKENS:-500}  # 意圖分類最大 tokens
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: aichatbot_admin

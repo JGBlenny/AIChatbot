@@ -13,7 +13,7 @@
    - 資料庫使用情況
    - OpenAI Function Calling 設計
 
-2. **[frontend_usage_guide.md](./frontend_usage_guide.md)** ⭐
+2. **[FRONTEND_USAGE_GUIDE.md](../guides/FRONTEND_USAGE_GUIDE.md)** ⭐
    - 前端頁面使用指南
    - 4 個管理頁面說明
    - 完整測試流程
@@ -172,7 +172,7 @@ docker exec aichatbot-rag-orchestrator python3 /app/tests/test_intent_suggestion
 ```
 
 ### 手動測試流程
-詳見 [frontend_usage_guide.md](./frontend_usage_guide.md) 的「測試流程」章節。
+詳見 [FRONTEND_USAGE_GUIDE.md](../guides/FRONTEND_USAGE_GUIDE.md) 的「測試流程」章節。
 
 ---
 
@@ -250,7 +250,7 @@ curl http://localhost:8100/api/v1/health
 
 如有問題，請參考：
 1. [Phase B 完整報告](./intent_management_phase_b_complete.md)
-2. [前端使用指南](./frontend_usage_guide.md)
+2. [前端使用指南](../guides/FRONTEND_USAGE_GUIDE.md)
 3. API 文檔: http://localhost:8100/docs
 
 ---

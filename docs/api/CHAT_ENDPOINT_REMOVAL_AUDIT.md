@@ -55,7 +55,7 @@
 | `README.md` | 示例代碼使用 `/api/v1/chat` | 🔴 高 |
 | `rag-orchestrator/README.md` | API 文檔和示例 | 🔴 高 |
 | `docs/guides/QUICKSTART.md` | 快速入門示例 | 🔴 高 |
-| `docs/guides/frontend_usage_guide.md` | 前端使用指南 | 🟡 中 |
+| `docs/guides/FRONTEND_USAGE_GUIDE.md` | 前端使用指南 | 🟡 中 |
 | `docs/features/INTENT_MANAGEMENT_README.md` | 意圖管理文檔 | 🟡 中 |
 | `CHANGELOG.md` | 變更日誌 | 🟢 低 |
 
@@ -163,7 +163,7 @@ class ChatResponse(BaseModel):
 
 #### 中優先級（後續更新）
 
-4. **docs/guides/frontend_usage_guide.md**
+4. **docs/guides/FRONTEND_USAGE_GUIDE.md**
 5. **docs/features/INTENT_MANAGEMENT_README.md**
 
 #### 低優先級

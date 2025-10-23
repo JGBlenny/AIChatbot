@@ -219,7 +219,7 @@ RETURNING id;
 
 ## 📚 延伸閱讀
 
-- **完整指南**: `docs/SOP_ADDITION_GUIDE.md` (詳細說明、最佳實踐)
+- **完整指南**: `docs/SOP_COMPLETE_GUIDE.md` (詳細說明、最佳實踐、系統架構)
 - **SQL 範本**: `scripts/sop_templates.sql` (8 種常用範本)
 - **實際範例**: `scripts/add_pet_policy_sop.sql` (寵物規定完整示範)
 
@@ -244,7 +244,7 @@ RETURNING id;
    - 查詢驗證結果
 
 2. **進階使用** (30 分鐘)
-   - 閱讀 `SOP_ADDITION_GUIDE.md`
+   - 閱讀 `SOP_COMPLETE_GUIDE.md`
    - 使用 `sop_templates.sql` 範本
    - 新增自己的 SOP 分類
 

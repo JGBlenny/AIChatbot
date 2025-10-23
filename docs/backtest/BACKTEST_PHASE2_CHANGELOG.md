@@ -201,13 +201,13 @@ def load_test_scenarios(
 
 ### 新增文檔
 
-1. **[回測策略指南](./backtest_strategies.md)**
+1. **[回測策略指南](../BACKTEST_STRATEGIES.md)**
    - 三種策略詳細說明
    - 使用場景與建議
    - CI/CD 整合範例
    - 故障排除
 
-2. **[環境變數參考](./backtest_env_vars.md)**
+2. **[環境變數參考](../BACKTEST_ENV_VARS.md)**
    - 完整變數列表
    - 常用組合
    - Shell 腳本範例
@@ -295,8 +295,8 @@ BACKTEST_SELECTION_STRATEGY=incremental python3 backtest_framework.py
 ## 回饋與支援
 
 如有問題或建議，請：
-1. 查閱 [故障排除文檔](./backtest_strategies.md#故障排除)
-2. 檢查 [環境變數配置](./backtest_env_vars.md)
+1. 查閱 [故障排除文檔](../BACKTEST_STRATEGIES.md#故障排除)
+2. 檢查 [環境變數配置](../BACKTEST_ENV_VARS.md)
 3. 提交 Issue 到專案 GitHub
 
 ---

@@ -1,16 +1,19 @@
 """
 意圖建議引擎
 使用 OpenAI 分析 unclear 問題，判斷是否屬於業務範圍並建議新增意圖
+支援語義相似度去重檢查（閾值 0.80）
 """
 
 import os
 import json
+import asyncio
 import psycopg2
 import psycopg2.extras
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from openai import OpenAI
 from .db_utils import get_db_config
+from .embedding_utils import get_embedding_client
 
 
 class IntentSuggestionEngine:
@@ -20,6 +23,9 @@ class IntentSuggestionEngine:
         """初始化引擎"""
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+        # Embedding 客戶端
+        self.embedding_client = get_embedding_client()
+
         # 業務範圍 cache (vendor_id -> business_scope)
         self._business_scope_cache = {}
 
@@ -27,6 +33,11 @@ class IntentSuggestionEngine:
         self.model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
         self.temperature = 0.2
         self.max_tokens = 800
+
+        # 語義相似度閾值（用於去重）
+        self.semantic_similarity_threshold = float(
+            os.getenv("INTENT_SUGGESTION_SIMILARITY_THRESHOLD", "0.80")
+        )
 
     def get_business_scope_for_vendor(self, vendor_id: int) -> Dict[str, Any]:
         """
@@ -284,6 +295,67 @@ class IntentSuggestionEngine:
                 "openai_response": None
             }
 
+    def check_semantic_duplicates(
+        self,
+        suggested_name: str,
+        embedding: List[float]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        檢查是否有語義相似的建議意圖（閾值 0.80）
+
+        Args:
+            suggested_name: 建議的意圖名稱
+            embedding: 意圖名稱的 embedding 向量
+
+        Returns:
+            如果找到相似建議，返回該建議的資訊字典；否則返回 None
+        """
+        conn = psycopg2.connect(**get_db_config())
+
+        try:
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+            # 使用 pgvector 的餘弦相似度搜尋
+            # 注意：1 - cosine_distance = cosine_similarity
+            embedding_str = '[' + ','.join(map(str, embedding)) + ']'
+
+            query = """
+                SELECT
+                    id,
+                    suggested_name,
+                    frequency,
+                    relevance_score,
+                    status,
+                    1 - (suggested_embedding <=> %s::vector) as similarity
+                FROM suggested_intents
+                WHERE suggested_embedding IS NOT NULL
+                  AND status = 'pending'
+                  AND 1 - (suggested_embedding <=> %s::vector) >= %s
+                ORDER BY similarity DESC
+                LIMIT 1
+            """
+
+            cursor.execute(query, (embedding_str, embedding_str, self.semantic_similarity_threshold))
+            similar = cursor.fetchone()
+            cursor.close()
+
+            if similar:
+                print(f"🔍 發現語義相似的建議意圖:")
+                print(f"   建議名稱: {similar['suggested_name']} (ID: {similar['id']})")
+                print(f"   相似度: {similar['similarity']:.4f} (閾值: {self.semantic_similarity_threshold})")
+                print(f"   頻率: {similar['frequency']}")
+                return dict(similar)
+            else:
+                print(f"✅ 未發現語義相似的建議（閾值: {self.semantic_similarity_threshold}）")
+                return None
+
+        except Exception as e:
+            print(f"⚠️ 語義相似度檢查失敗: {e}")
+            return None
+
+        finally:
+            conn.close()
+
     def record_suggestion(
         self,
         question: str,
@@ -291,7 +363,7 @@ class IntentSuggestionEngine:
         user_id: Optional[str] = None
     ) -> Optional[int]:
         """
-        記錄建議意圖到資料庫
+        記錄建議意圖到資料庫（含語義相似度去重檢查）
 
         Args:
             question: 觸發的問題
@@ -308,6 +380,50 @@ class IntentSuggestionEngine:
         suggested = analysis.get('suggested_intent')
         if not suggested:
             return None
+
+        # 🔧 新增：生成建議意圖名稱的 embedding
+        print(f"🧬 生成意圖名稱 embedding: {suggested['name']}")
+        try:
+            # 使用 asyncio 執行異步函數
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            embedding = loop.run_until_complete(
+                self.embedding_client.get_embedding(suggested['name'], verbose=False)
+            )
+            loop.close()
+
+            if not embedding:
+                print(f"⚠️ Embedding 生成失敗，將繼續執行（不進行語義去重）")
+        except Exception as e:
+            print(f"⚠️ Embedding 生成異常: {e}，將繼續執行")
+            embedding = None
+
+        # 🔧 新增：檢查語義相似度重複
+        if embedding:
+            similar_suggestion = self.check_semantic_duplicates(suggested['name'], embedding)
+
+            if similar_suggestion:
+                # 發現語義相似的建議，更新頻率而非新增
+                print(f"🔄 發現語義相似建議，更新頻率: {similar_suggestion['suggested_name']} (ID: {similar_suggestion['id']})")
+                conn = psycopg2.connect(**get_db_config())
+                try:
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        UPDATE suggested_intents
+                        SET frequency = frequency + 1,
+                            last_suggested_at = CURRENT_TIMESTAMP
+                        WHERE id = %s
+                    """, (similar_suggestion['id'],))
+                    conn.commit()
+                    cursor.close()
+                    print(f"✅ 語義相似建議頻率已更新: {similar_suggestion['suggested_name']} (ID: {similar_suggestion['id']}, 新頻率: {similar_suggestion['frequency'] + 1})")
+                    return similar_suggestion['id']
+                except Exception as e:
+                    print(f"❌ 更新頻率失敗: {e}")
+                    conn.rollback()
+                    return None
+                finally:
+                    conn.close()
 
         conn = psycopg2.connect(**get_db_config())
 
@@ -358,7 +474,12 @@ class IntentSuggestionEngine:
                 return suggestion_id
 
             else:
-                # 插入新建議
+                # 插入新建議（含 embedding）
+                # 準備 embedding 字串
+                embedding_str = None
+                if embedding:
+                    embedding_str = '[' + ','.join(map(str, embedding)) + ']'
+
                 cursor.execute("""
                     INSERT INTO suggested_intents (
                         suggested_name,
@@ -370,8 +491,9 @@ class IntentSuggestionEngine:
                         relevance_score,
                         reasoning,
                         openai_response,
+                        suggested_embedding,
                         status
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::vector, 'pending')
                     RETURNING id
                 """, (
                     suggested['name'],
@@ -382,13 +504,20 @@ class IntentSuggestionEngine:
                     user_id,
                     analysis['relevance_score'],
                     analysis['reasoning'],
-                    json.dumps(analysis.get('openai_response', {}))
+                    json.dumps(analysis.get('openai_response', {})),
+                    embedding_str
                 ))
 
                 suggestion_id = cursor.fetchone()[0]
                 conn.commit()
                 cursor.close()
-                print(f"✅ 記錄新建議意圖: {suggested['name']} (ID: {suggestion_id})")
+
+                if embedding_str:
+                    print(f"✅ 記錄新建議意圖（含 embedding）: {suggested['name']} (ID: {suggestion_id})")
+                else:
+                    print(f"✅ 記錄新建議意圖（無 embedding）: {suggested['name']} (ID: {suggestion_id})")
+                    print(f"   ⚠️ 建議：檢查 embedding API 是否正常運作")
+
                 return suggestion_id
 
         except Exception as e:

@@ -45,9 +45,9 @@
             <span class="nav-icon">🔍</span>
             <span class="nav-text" v-if="!sidebarCollapsed">審核中心</span>
           </router-link>
-          <router-link to="/knowledge-reclassify" class="nav-item" :title="sidebarCollapsed ? '重新分類' : ''">
+          <router-link to="/knowledge-reclassify" class="nav-item" :title="sidebarCollapsed ? '意圖分類' : ''">
             <span class="nav-icon">🔄</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">重新分類</span>
+            <span class="nav-text" v-if="!sidebarCollapsed">意圖分類</span>
           </router-link>
         </div>
 
@@ -123,7 +123,7 @@ export default {
         '/intents': '意圖管理',
         '/review-center': '審核中心',
         '/business-scope': '業務範圍管理',
-        '/knowledge-reclassify': '知識重新分類',
+        '/knowledge-reclassify': '知識意圖分類',
         '/knowledge-import': '知識匯入',
         '/vendors': '業者管理',
         '/platform-sop': 'SOP 範本管理',

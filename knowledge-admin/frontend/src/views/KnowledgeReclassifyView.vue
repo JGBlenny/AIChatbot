@@ -1,7 +1,7 @@
 <template>
   <div class="knowledge-reclassify-container">
     <div class="page-header">
-      <h2>⚙️ 知識庫重新分類工具</h2>
+      <h2>⚙️ 知識庫意圖分類工具</h2>
       <button @click="loadStats" class="btn btn-refresh" :disabled="loading">
         🔄 {{ loading ? '載入中...' : '重新載入統計' }}
       </button>
@@ -56,7 +56,7 @@
           <div class="stat-detail">需要處理</div>
         </div>
         <div class="stat-card highlight-danger">
-          <div class="stat-label">🔄 需重新分類</div>
+          <div class="stat-label">🔄 需意圖分類</div>
           <div class="stat-value">{{ stats.overall.needs_reclassify_count }}</div>
           <div class="stat-detail">已標記</div>
         </div>
@@ -89,7 +89,7 @@
         <div class="quick-action-card" @click="quickActionLowConfidence">
           <div class="qa-icon">📉</div>
           <div class="qa-title">處理低信心度知識</div>
-          <div class="qa-desc">重新分類所有信心度 &lt; 0.7 的知識</div>
+          <div class="qa-desc">意圖分類所有信心度 &lt; 0.7 的知識</div>
           <div class="qa-badge" v-if="stats">{{ stats.overall.low_confidence_count }} 筆</div>
         </div>
 
@@ -183,7 +183,7 @@
           <div class="form-group">
             <label class="checkbox-label">
               <input type="checkbox" v-model="filters.needsReclassifyOnly" />
-              <span>只處理標記為「需要重新分類」的知識</span>
+              <span>只處理標記為「需要意圖分類」的知識</span>
             </label>
           </div>
         </div>
@@ -280,7 +280,7 @@
           🔍 步驟 3.1: 預覽結果
         </button>
         <button @click="startReclassify" class="btn btn-execute" :disabled="loading || !preview">
-          🚀 步驟 3.2: 開始重新分類
+          🚀 步驟 3.2: 開始意圖分類
         </button>
         <button @click="resetAll" class="btn btn-reset" :disabled="loading">
           ↺ 重置所有設定
@@ -397,7 +397,7 @@
               <th>類型</th>
               <th>知識數量</th>
               <th>平均信心度</th>
-              <th>需重新分類</th>
+              <th>需意圖分類</th>
             </tr>
           </thead>
           <tbody>
@@ -603,7 +603,7 @@ export default {
         return;
       }
 
-      if (!confirm(`確定要重新分類 ${this.preview.total_to_process} 筆知識嗎？\n\n預估成本: $${(this.preview.total_to_process * 0.002).toFixed(2)} USD\n預估時間: ${Math.ceil(this.preview.total_to_process / 10)} 分鐘`)) {
+      if (!confirm(`確定要意圖分類 ${this.preview.total_to_process} 筆知識嗎？\n\n預估成本: $${(this.preview.total_to_process * 0.002).toFixed(2)} USD\n預估時間: ${Math.ceil(this.preview.total_to_process / 10)} 分鐘`)) {
         return;
       }
 
@@ -670,7 +670,7 @@ export default {
         this.progress = 100;
         this.processStatus = '處理完成！';
 
-        alert(`✅ 重新分類完成！\n\n總處理數: ${this.result.total_processed}\n成功: ${this.result.success_count}\n失敗: ${this.result.failed_count}\nUnclear: ${this.result.unclear_count}`);
+        alert(`✅ 意圖分類完成！\n\n總處理數: ${this.result.total_processed}\n成功: ${this.result.success_count}\n失敗: ${this.result.failed_count}\nUnclear: ${this.result.unclear_count}`);
 
         // 重新載入統計
         await this.loadStats();
@@ -679,8 +679,8 @@ export default {
         this.preview = null;
 
       } catch (error) {
-        console.error('重新分類失敗:', error);
-        alert('重新分類失敗: ' + (error.response?.data?.detail || error.message));
+        console.error('意圖分類失敗:', error);
+        alert('意圖分類失敗: ' + (error.response?.data?.detail || error.message));
       } finally {
         this.processing = false;
       }

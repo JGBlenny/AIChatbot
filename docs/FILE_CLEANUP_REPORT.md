@@ -48,7 +48,7 @@ verify_duplicate_detection.py
 | 原文件 | 新位置 |
 |--------|--------|
 | `SOP_REFACTORING_SUMMARY.md` | `docs/features/` |
-| `system_pending_features.md` | `docs/planning/` |
+| `SYSTEM_PENDING_FEATURES.md` | `docs/planning/` |
 | `README_DEPLOYMENT.md` | `docs/guides/DEPLOYMENT.md` |
 | `QUICKSTART.md` | `docs/guides/` |
 | `FILE_STRUCTURE_ANALYSIS.md` | `docs/` |
