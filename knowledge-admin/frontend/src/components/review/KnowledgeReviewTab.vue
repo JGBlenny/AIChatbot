@@ -105,6 +105,76 @@
               </ul>
             </div>
 
+            <!-- 推薦意圖 -->
+            <div v-if="candidateIntents[candidate.id]" class="intent-section">
+              <h5>🎯 推薦意圖</h5>
+              <div class="intent-info">
+                <div class="intent-row">
+                  <span class="intent-label">意圖名稱：</span>
+                  <span class="intent-value">{{ candidateIntents[candidate.id].intent_name }}</span>
+                </div>
+                <div class="intent-row">
+                  <span class="intent-label">意圖 ID：</span>
+                  <span class="intent-value">{{ candidateIntents[candidate.id].intent_id }}</span>
+                </div>
+                <div class="intent-row">
+                  <span class="intent-label">信心度：</span>
+                  <span class="intent-confidence" :class="getIntentConfidenceClass(candidateIntents[candidate.id].confidence)">
+                    {{ candidateIntents[candidate.id].confidence }}
+                  </span>
+                </div>
+                <div v-if="candidateIntents[candidate.id].reasoning !== '無'" class="intent-reasoning">
+                  <span class="intent-label">推薦理由：</span>
+                  <span class="intent-reasoning-text">{{ candidateIntents[candidate.id].reasoning }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 來源資訊 -->
+            <div v-if="candidate.suggested_sources && candidate.suggested_sources.length > 0" class="source-section">
+              <h5>📄 來源檔案</h5>
+              <div class="source-info">
+                <span class="source-badge" v-for="(source, idx) in candidate.suggested_sources" :key="idx">
+                  {{ getCleanFileName(source) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- 生成資訊（用於偵錯） -->
+            <div v-if="candidate.generation_prompt" class="generation-info">
+              <details>
+                <summary style="cursor: pointer; color: #6c757d; font-size: 0.9em;">🔍 查看詳細生成資訊</summary>
+                <div class="generation-details">
+                  <p><strong>生成提示：</strong> {{ candidate.generation_prompt }}</p>
+                  <p v-if="candidate.generation_reasoning"><strong>生成推理：</strong></p>
+                  <pre v-if="candidate.generation_reasoning" class="reasoning-text">{{ candidate.generation_reasoning }}</pre>
+                </div>
+              </details>
+            </div>
+
+            <!-- 意圖選擇（編輯模式 - 多選） -->
+            <div v-if="editingCandidates[candidate.id]" class="section">
+              <h5>🎯 選擇意圖（可多選，已選 {{ editForms[candidate.id].intent_ids.length }} 個）</h5>
+              <div class="intent-checkboxes">
+                <label
+                  v-for="intent in intents"
+                  :key="intent.id"
+                  class="intent-checkbox-item"
+                  :class="{ 'checked': editForms[candidate.id].intent_ids.includes(intent.id) }"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="editForms[candidate.id].intent_ids.includes(intent.id)"
+                    @change="toggleIntent(candidate.id, intent.id)"
+                  />
+                  <span class="intent-checkbox-label">
+                    <strong>{{ intent.name }}</strong>
+                    <span class="intent-desc">{{ intent.description }}</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
             <!-- 編輯摘要 -->
             <div v-if="editingCandidates[candidate.id]" class="section">
               <h5>📋 編輯摘要（說明您做了哪些修改）</h5>
@@ -156,13 +226,38 @@ export default {
       editingCandidates: {},
       editForms: {},
 
+      // 意圖列表
+      intents: [],
+
       loading: false
     };
+  },
+
+  computed: {
+    // 解析每個候選的推薦意圖資訊
+    candidateIntents() {
+      const intents = {};
+      this.aiCandidates.forEach(candidate => {
+        if (candidate.generation_reasoning) {
+          const intentMatch = candidate.generation_reasoning.match(/【推薦意圖】\n意圖 ID: (.+?)\n意圖名稱: (.+?)\n信心度: (.+?)\n推薦理由: (.+?)(?:\n\n|$)/s);
+          if (intentMatch) {
+            intents[candidate.id] = {
+              intent_id: intentMatch[1].trim(),
+              intent_name: intentMatch[2].trim(),
+              confidence: intentMatch[3].trim(),
+              reasoning: intentMatch[4].trim()
+            };
+          }
+        }
+      });
+      return intents;
+    }
   },
 
   mounted() {
     this.loadAICandidates();
     this.loadAIStats();
+    this.loadIntents();
   },
 
   methods: {
@@ -171,15 +266,31 @@ export default {
       this.loading = true;
       try {
         const response = await axios.get('http://localhost:8100/api/v1/knowledge-candidates/pending', {
-          params: { limit: 50 }
+          params: { limit: 100 }
         });
-        this.aiCandidates = response.data.candidates;
+
+        // 按建立時間排序，最新的在最上面
+        this.aiCandidates = response.data.candidates.sort((a, b) => {
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
+
         this.updateTotalCount();
       } catch (error) {
         console.error('載入 AI 候選失敗:', error);
         alert('載入 AI 候選失敗');
       } finally {
         this.loading = false;
+      }
+    },
+
+    async loadIntents() {
+      try {
+        const response = await axios.get('http://localhost:8100/api/v1/intents', {
+          params: { enabled_only: true }
+        });
+        this.intents = response.data.intents;
+      } catch (error) {
+        console.error('載入意圖列表失敗:', error);
       }
     },
 
@@ -199,11 +310,39 @@ export default {
       return 'confidence-low';
     },
 
+    getCleanFileName(fullPath) {
+      // 移除 UUID 前綴（格式：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx_filename.ext）
+      const fileName = fullPath.split('/').pop(); // 取得檔名
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_/i;
+      return fileName.replace(uuidPattern, '');
+    },
+
+    getIntentConfidenceClass(confidence) {
+      const score = parseFloat(confidence);
+      if (score >= 0.8) return 'confidence-high';
+      if (score >= 0.6) return 'confidence-medium';
+      return 'confidence-low';
+    },
+
     startAIEdit(candidate) {
       this.editingCandidates[candidate.id] = true;
+
+      // 從推薦意圖中提取 intent_ids（支援多選）
+      let intentIds = [];
+      const intentInfo = this.candidateIntents[candidate.id];
+      if (intentInfo && intentInfo.intent_id !== '未推薦') {
+        intentIds = [parseInt(intentInfo.intent_id)];
+      }
+
+      // 如果候選已經有 intent_ids，使用已儲存的
+      if (candidate.intent_ids && candidate.intent_ids.length > 0) {
+        intentIds = candidate.intent_ids;
+      }
+
       this.editForms[candidate.id] = {
         question: candidate.question,
         answer: candidate.generated_answer,
+        intent_ids: intentIds,
         edit_summary: ''
       };
     },
@@ -220,18 +359,37 @@ export default {
         return;
       }
 
+      if (!form.intent_ids || form.intent_ids.length === 0) {
+        alert('請至少選擇一個意圖');
+        return;
+      }
+
       try {
         await axios.put(`http://localhost:8100/api/v1/knowledge-candidates/${candidateId}/edit`, {
           edited_question: form.question,
           edited_answer: form.answer,
+          intent_ids: form.intent_ids,
           edit_summary: form.edit_summary
         });
-        alert('✅ 編輯已儲存！');
+        alert(`✅ 編輯已儲存！已選擇 ${form.intent_ids.length} 個意圖`);
         this.cancelAIEdit(candidateId);
         this.loadAICandidates();
       } catch (error) {
         console.error('儲存編輯失敗:', error);
         alert('儲存編輯失敗：' + (error.response?.data?.detail || error.message));
+      }
+    },
+
+    toggleIntent(candidateId, intentId) {
+      const form = this.editForms[candidateId];
+      const index = form.intent_ids.indexOf(intentId);
+
+      if (index > -1) {
+        // 已存在，移除
+        form.intent_ids.splice(index, 1);
+      } else {
+        // 不存在，新增
+        form.intent_ids.push(intentId);
       }
     },
 
@@ -349,6 +507,7 @@ export default {
 .top-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   margin-bottom: 20px;
 }
 
@@ -626,6 +785,68 @@ export default {
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* 意圖多選複選框 */
+.intent-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 10px;
+  background: #fafafa;
+  border-radius: 6px;
+  border: 2px solid #e0e0e0;
+}
+
+.intent-checkbox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.intent-checkbox-item:hover {
+  border-color: #9c27b0;
+  background: #f9f5fb;
+}
+
+.intent-checkbox-item.checked {
+  border-color: #9c27b0;
+  background: #f3e5f5;
+  box-shadow: 0 2px 4px rgba(156, 39, 176, 0.2);
+}
+
+.intent-checkbox-item input[type="checkbox"] {
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #9c27b0;
+}
+
+.intent-checkbox-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.intent-checkbox-label strong {
+  color: #7b1fa2;
+  font-size: 14px;
+}
+
+.intent-desc {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .warnings-section {
   background: #fff3cd;
   padding: 15px;
@@ -646,6 +867,148 @@ export default {
 
 .warnings-list li {
   margin-bottom: 5px;
+}
+
+/* 推薦意圖區塊 */
+.intent-section {
+  background: #f3e5f5;
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 4px solid #9c27b0;
+  margin-top: 15px;
+}
+
+.intent-section h5 {
+  color: #7b1fa2;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.intent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.intent-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.intent-label {
+  font-weight: 600;
+  color: #6a1b9a;
+  min-width: 80px;
+}
+
+.intent-value {
+  color: #4a148c;
+  font-weight: 500;
+}
+
+.intent-confidence {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.intent-confidence.confidence-high {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.intent-confidence.confidence-medium {
+  background: #fff9c4;
+  color: #f57f17;
+}
+
+.intent-confidence.confidence-low {
+  background: #ffcdd2;
+  color: #c62828;
+}
+
+.intent-reasoning {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.intent-reasoning-text {
+  color: #6a1b9a;
+  font-size: 13px;
+  line-height: 1.5;
+  padding-left: 80px;
+}
+
+/* 來源資訊區塊 */
+.source-section {
+  background: #e3f2fd;
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 4px solid #2196f3;
+  margin-top: 15px;
+}
+
+.source-section h5 {
+  color: #1565c0;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.source-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.source-badge {
+  background: #2196f3;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* 生成資訊區塊 */
+.generation-info {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.generation-details {
+  margin-top: 10px;
+  padding: 10px;
+  background: white;
+  border-radius: 4px;
+}
+
+.generation-details p {
+  margin: 8px 0;
+  color: #495057;
+  font-size: 13px;
+}
+
+.reasoning-text {
+  background: #f1f3f5;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #495057;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 8px 0;
 }
 
 .candidate-actions {

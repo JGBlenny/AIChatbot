@@ -77,6 +77,7 @@ class EditCandidateRequest(BaseModel):
     """編輯候選請求"""
     edited_question: Optional[str] = None
     edited_answer: str = Field(..., min_length=50, description="編輯後的答案")
+    intent_ids: List[int] = Field(default_factory=list, description="意圖 ID 列表（多選）")
     edit_summary: str = Field(..., min_length=5, description="編輯摘要")
 
 
@@ -551,17 +552,19 @@ async def edit_candidate(
                     detail=f"只能編輯 pending_review 或 needs_revision 狀態的候選，當前狀態: {candidate['status']}"
                 )
 
-            # 更新編輯內容
+            # 更新編輯內容（包含意圖）
             await conn.execute("""
                 UPDATE ai_generated_knowledge_candidates
                 SET edited_question = $1,
                     edited_answer = $2,
-                    edit_summary = $3,
+                    intent_ids = $3,
+                    edit_summary = $4,
                     updated_at = NOW()
-                WHERE id = $4
+                WHERE id = $5
             """,
                 request.edited_question,
                 request.edited_answer,
+                request.intent_ids if request.intent_ids else [],
                 request.edit_summary,
                 candidate_id
             )

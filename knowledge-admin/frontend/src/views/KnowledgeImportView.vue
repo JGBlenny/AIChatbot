@@ -189,11 +189,11 @@
         <div class="result-summary">
           <div class="result-item">
             <span class="result-label">提取問答對：</span>
-            <span class="result-value">{{ jobStatus.extracted_qa_pairs }}</span>
+            <span class="result-value">{{ jobStatus.result?.imported || 0 }}</span>
           </div>
           <div class="result-item">
             <span class="result-label">去重跳過：</span>
-            <span class="result-value">{{ jobStatus.duplicates_skipped }}</span>
+            <span class="result-value">{{ jobStatus.result?.skipped || 0 }}</span>
           </div>
           <div class="result-item">
             <span class="result-label">處理時間：</span>
@@ -201,8 +201,13 @@
           </div>
         </div>
 
+        <div class="info-box" style="margin-top: 20px;">
+          <strong>⚠️ 重要提醒：</strong> 從 LINE 對話匯入的知識需要經過人工審核。
+          請前往 <strong>審核中心（Review Center）</strong> 批准這些知識，才會正式加入知識庫。
+        </div>
+
         <div class="actions">
-          <button @click="viewKnowledge" class="btn-primary">查看知識庫</button>
+          <button @click="goToReviewCenter" class="btn-primary">前往審核中心</button>
           <button @click="resetImport" class="btn-secondary">再次匯入</button>
         </div>
       </div>
@@ -401,7 +406,8 @@ export default {
           );
 
           this.jobStatus = response.data;
-          this.importProgress = response.data.progress;
+          // Fix: Progress is nested in progress object
+          this.importProgress = response.data.progress?.current || 0;
 
           if (response.data.status === 'completed') {
             clearInterval(this.pollingInterval);
@@ -409,7 +415,7 @@ export default {
             this.loadImportJobs();
           } else if (response.data.status === 'failed') {
             clearInterval(this.pollingInterval);
-            alert('匯入失敗：' + response.data.error_message);
+            alert('匯入失敗：' + response.data.error);
             this.currentStep = 1;
           }
         } catch (error) {
@@ -440,6 +446,10 @@ export default {
 
     viewKnowledge() {
       this.$router.push('/knowledge');
+    },
+
+    goToReviewCenter() {
+      this.$router.push('/review-center');
     },
 
     formatFileSize(bytes) {

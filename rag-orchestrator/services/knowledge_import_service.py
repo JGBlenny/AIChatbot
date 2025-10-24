@@ -110,6 +110,10 @@ class KnowledgeImportService:
             await self.update_job_status(job_id, "processing", progress={"current": 76, "total": 100, "stage": "推薦意圖"})
             await self._recommend_intents(knowledge_list)
 
+            # 8.5. 質量評估（自動篩選低質量知識）
+            await self.update_job_status(job_id, "processing", progress={"current": 77, "total": 100, "stage": "質量評估"})
+            await self._evaluate_quality(knowledge_list)
+
             # 9. 建立測試情境建議（需求 2：針對 B2C 知識）
             await self.update_job_status(job_id, "processing", progress={"current": 78, "total": 100, "stage": "建立測試情境建議"})
             test_scenario_count = await self._create_test_scenario_suggestions(knowledge_list, vendor_id)
@@ -311,24 +315,46 @@ class KnowledgeImportService:
         system_prompt = """你是一個專業的知識庫分析師。
 從提供的文字內容中提取客服問答知識。
 
+⚠️ 重要：提取的知識必須是「通用」的、可重複使用的知識。
+
+請遵循以下泛化規則：
+1. 移除特定物業/建物名稱（如：三葉寓所 → 該物業/租處/建物）
+2. 移除特定房號/單位號碼（如：2B5、5A2 → 該房間/該單位/該租處）
+3. 移除特定日期（如：113/12/31 → 到期日/指定日期）
+4. 移除個人姓名、電話、聯絡方式等私人資訊
+5. **公司名稱泛化**：將特定公司名稱（如：興中資產、XX管理公司）改為「物業管理公司」
+6. 保留處理流程、規則、政策、注意事項等通用知識
+7. 如果某條知識過於特定（如：僅適用於某個房間的特殊設備），請在 warnings 中註明
+
+泛化範例：
+❌ 原文：「三葉寓所-2B5有低電度警報，若預計可用電度歸零將會斷電，煩請管理師再聯繫提醒租客盡快進行電錶儲值。」
+✅ 泛化：「當租處出現低電度警報時，若預計可用電度歸零將會斷電，請管理師聯繫租客盡快進行電錶儲值。」
+✅ warnings：["原文包含特定物業名稱和房號"]
+
+❌ 原文：「房東需要將管理費支付給興中資產公司。」
+✅ 泛化：「房東需要將管理費支付給物業管理公司。」
+✅ warnings：["已將特定公司名稱泛化為物業管理公司"]
+
 請以 JSON 格式輸出：
 {
   "knowledge_list": [
     {
-      "question_summary": "問題摘要",
-      "answer": "完整答案",
-      "category": "分類",
+      "question_summary": "問題摘要（15字以內）",
+      "answer": "完整答案（已泛化）",
+      "category": "分類（如：帳務問題、設施使用、合約問題等）",
       "audience": "租客|房東|管理師",
-      "keywords": ["關鍵字1", "關鍵字2"]
+      "keywords": ["關鍵字1", "關鍵字2"],
+      "warnings": ["警告訊息（如果有特定內容被泛化或無法泛化）"]
     }
   ]
 }
 
 注意：
-- 只提取清晰、完整的知識
+- 只提取清晰、完整、可泛化的知識
+- 如果某條資訊過於特定（如：通知某人某事），不要提取
 - 問題摘要要簡潔（15字以內）
 - 答案要完整且實用
-- 避免包含私人資訊
+- warnings 為選填，沒有警告可省略
 """
 
         try:
@@ -345,11 +371,19 @@ class KnowledgeImportService:
             result = json.loads(response.choices[0].message.content)
             knowledge_list = result.get('knowledge_list', [])
 
-            # 添加來源資訊
+            # 添加來源資訊並檢查泛化警告
+            generalized_count = 0
             for knowledge in knowledge_list:
                 knowledge['source_file'] = Path(file_path).name
 
+                # 統計有泛化警告的知識
+                if knowledge.get('warnings'):
+                    generalized_count += 1
+                    print(f"   ⚠️  泛化警告: {knowledge['question_summary'][:30]}... - {knowledge['warnings']}")
+
             print(f"   ✅ 提取出 {len(knowledge_list)} 個知識項目")
+            if generalized_count > 0:
+                print(f"   🔄 其中 {generalized_count} 條知識已自動泛化（移除特定物業/房號/日期）")
             return knowledge_list
 
         except Exception as e:
@@ -690,6 +724,97 @@ class KnowledgeImportService:
 
         print(f"   ✅ 意圖推薦完成")
 
+    async def _evaluate_quality(self, knowledge_list: List[Dict]):
+        """
+        評估知識答案的質量
+
+        使用 LLM 評估答案是否有實用價值，避免空泛、循環邏輯或無意義的內容
+        評估結果儲存到 knowledge['quality_evaluation']
+
+        Args:
+            knowledge_list: 知識列表（會直接修改）
+        """
+        print(f"🔍 評估 {len(knowledge_list)} 條知識的質量...")
+
+        for idx, knowledge in enumerate(knowledge_list, 1):
+            try:
+                prompt = f"""請評估以下問答內容的質量。
+
+問題：{knowledge['question_summary']}
+答案：{knowledge['answer']}
+
+評估標準：
+1. 具體性：答案是否包含具體的操作步驟、細節或說明？
+2. 實用性：答案是否能實際幫助使用者解決問題？
+3. 完整性：答案是否完整回答了問題？
+4. 非循環性：答案是否避免了循環邏輯（如「需要做X時就做X」）？
+5. 深度：答案是否有足夠的深度（不只是重複問題或顯而易見的建議）？
+
+請以 JSON 格式回應：
+{{
+  "quality_score": 質量分數（1-10，10 為最高）,
+  "is_acceptable": 是否可接受（true/false，分數 >= 8 為可接受）,
+  "issues": ["問題1", "問題2"],
+  "reasoning": "評估理由（簡短說明）"
+}}
+
+評分參考：
+- 9-10分：內容詳實、具體、有實用價值，明確說明操作步驟
+- 8分：有實用價值，包含必要細節和具體說明
+- 6-7分：有一定價值，但過於空泛或缺少關鍵細節
+- 4-5分：基本可用，但內容空泛
+- 1-3分：無實用價值，有循環邏輯或重複問題，應該拒絕
+
+⚠️ 注意：只有分數 >= 8 的知識才能進入審核佇列，7 分以下視為質量不足。
+
+只輸出 JSON，不要加其他說明。"""
+
+                response = await self.openai_client.chat.completions.create(
+                    model=self.llm_model,
+                    temperature=0.3,
+                    response_format={"type": "json_object"},
+                    messages=[{"role": "user", "content": prompt}]
+                )
+
+                result = json.loads(response.choices[0].message.content)
+
+                # 儲存評估結果
+                knowledge['quality_evaluation'] = {
+                    'quality_score': result.get('quality_score', 5),
+                    'is_acceptable': result.get('is_acceptable', True),
+                    'issues': result.get('issues', []),
+                    'reasoning': result.get('reasoning', '')
+                }
+
+                # 顯示低質量的知識
+                if not result.get('is_acceptable', True):
+                    print(f"   ⚠️  低質量 (分數: {result.get('quality_score', 0)}): {knowledge['question_summary'][:40]}...")
+                    print(f"      理由: {result.get('reasoning', '')[:80]}")
+                elif idx <= 3:  # 顯示前 3 條的評估
+                    print(f"   ✅ {knowledge['question_summary'][:40]}... → 分數: {result.get('quality_score', 0)}/10")
+
+                # 避免 rate limit
+                await asyncio.sleep(0.1)
+
+            except Exception as e:
+                print(f"   ⚠️  質量評估失敗 (第 {idx} 條): {e}")
+                # 備用方案：預設為可接受
+                knowledge['quality_evaluation'] = {
+                    'quality_score': 6,
+                    'is_acceptable': True,
+                    'issues': [],
+                    'reasoning': '無法自動評估，預設為可接受'
+                }
+
+        # 統計質量分布
+        acceptable_count = sum(1 for k in knowledge_list if k.get('quality_evaluation', {}).get('is_acceptable', True))
+        rejected_count = len(knowledge_list) - acceptable_count
+
+        print(f"   ✅ 質量評估完成")
+        print(f"      可接受: {acceptable_count} 條")
+        if rejected_count > 0:
+            print(f"      低質量: {rejected_count} 條（將自動標記為已拒絕）")
+
     async def _clear_vendor_knowledge(self, vendor_id: int):
         """
         清除業者的現有知識（用於 replace 模式）
@@ -901,6 +1026,7 @@ class KnowledgeImportService:
         print(f"📋 將 {len(knowledge_list)} 條知識匯入審核佇列...")
 
         imported = 0
+        auto_rejected = 0
         errors = 0
 
         async with self.db_pool.acquire() as conn:
@@ -937,8 +1063,20 @@ class KnowledgeImportService:
                             'imported'
                         )
 
-                    # 2. 準備 generation_reasoning（包含意圖推薦）
+                    # 2. 準備 generation_reasoning（包含意圖推薦、泛化警告和質量評估）
                     recommended_intent = knowledge.get('recommended_intent', {})
+                    warnings_list = knowledge.get('warnings', [])
+                    quality_eval = knowledge.get('quality_evaluation', {})
+
+                    # 提取推薦意圖 ID 並建立陣列
+                    intent_ids = []
+                    if recommended_intent and recommended_intent.get('intent_id') not in [None, '未推薦', 'null']:
+                        try:
+                            intent_id = int(recommended_intent.get('intent_id'))
+                            intent_ids = [intent_id]
+                        except (ValueError, TypeError):
+                            pass  # 如果轉換失敗，保持空陣列
+
                     reasoning = f"""分類: {knowledge.get('category')}, 對象: {knowledge.get('audience')}, 關鍵字: {', '.join(knowledge.get('keywords', []))}
 
 【推薦意圖】
@@ -947,13 +1085,31 @@ class KnowledgeImportService:
 信心度: {recommended_intent.get('confidence', 0)}
 推薦理由: {recommended_intent.get('reasoning', '無')}"""
 
+                    # 如果有泛化警告，加到 reasoning 中
+                    if warnings_list:
+                        reasoning += f"\n\n【泛化處理】\n" + "\n".join([f"- {w}" for w in warnings_list])
+
+                    # 決定狀態：根據質量評估結果
+                    is_acceptable = quality_eval.get('is_acceptable', True)
+                    if is_acceptable:
+                        status = 'pending_review'
+                    else:
+                        status = 'rejected'
+                        auto_rejected += 1
+                        # 加入質量評估資訊到 reasoning
+                        reasoning += f"\n\n【質量評估 - 自動拒絕】\n"
+                        reasoning += f"質量分數: {quality_eval.get('quality_score', 0)}/10\n"
+                        reasoning += f"拒絕理由: {quality_eval.get('reasoning', '')}\n"
+                        if quality_eval.get('issues'):
+                            reasoning += f"問題列表: " + ", ".join(quality_eval.get('issues', []))
+
                     # 3. 將 embedding 轉換為 PostgreSQL vector 格式
                     embedding = knowledge.get('embedding')
                     embedding_str = None
                     if embedding:
                         embedding_str = '[' + ','.join(str(x) for x in embedding) + ']'
 
-                    # 4. 建立知識候選記錄（含 embedding）
+                    # 4. 建立知識候選記錄（含 embedding、warnings 和 intent_ids）
                     await conn.execute("""
                         INSERT INTO ai_generated_knowledge_candidates (
                             test_scenario_id,
@@ -966,22 +1122,24 @@ class KnowledgeImportService:
                             generation_reasoning,
                             suggested_sources,
                             warnings,
+                            intent_ids,
                             status,
                             created_at,
                             updated_at
-                        ) VALUES ($1, $2, $3, $4::vector, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                        ) VALUES ($1, $2, $3, $4::vector, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                     """,
                         test_scenario_id,
                         question,
                         answer,
                         embedding_str,  # 向量嵌入（字串格式）
-                        0.95,  # 匯入的知識給予較高的信心分數
+                        0.85,  # 匯入的知識固定信心分數 85%
                         f"從檔案匯入: {knowledge.get('source_file', 'unknown')}",
                         'knowledge_import',  # 標記為知識匯入來源
-                        reasoning,  # 包含推薦意圖的詳細資訊
+                        reasoning,  # 包含推薦意圖、泛化警告和質量評估的詳細資訊
                         [knowledge.get('source_file', 'imported_file')],
-                        [],  # 無警告
-                        'pending_review'  # 待審核狀態
+                        warnings_list,  # 泛化警告（如果有）
+                        intent_ids,  # 推薦意圖 ID 陣列（自動填入）
+                        status  # 根據質量評估動態設定的狀態
                     )
 
                     imported += 1
@@ -993,8 +1151,18 @@ class KnowledgeImportService:
                     print(f"   ⚠️ 匯入到審核佇列失敗 (第 {idx} 條): {e}")
                     errors += 1
 
+        print(f"\n   ✅ 匯入完成:")
+        print(f"      總共: {len(knowledge_list)} 條")
+        print(f"      待審核: {imported - auto_rejected} 條")
+        if auto_rejected > 0:
+            print(f"      自動拒絕: {auto_rejected} 條（質量不足）")
+        if errors > 0:
+            print(f"      錯誤: {errors} 條")
+
         return {
             "imported": imported,
+            "auto_rejected": auto_rejected,
+            "pending_review": imported - auto_rejected,
             "skipped": 0,
             "errors": errors,
             "total": len(knowledge_list),
