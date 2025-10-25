@@ -1255,7 +1255,7 @@ async def run_backtest(request: BacktestRunRequest = None):
         "success": True,
         "message": f"回測已開始執行（{request.quality_mode} 模式），請稍後刷新頁面查看結果",
         "quality_mode": request.quality_mode,
-        "test_type": request.test_type,
+        "test_strategy": request.test_strategy,
         "estimated_time": estimated_time
     }
 

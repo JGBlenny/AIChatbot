@@ -1009,7 +1009,7 @@ class BacktestFramework:
                 ) RETURNING id
             """, (
                 self.quality_mode,
-                os.getenv('BACKTEST_TYPE', 'full'),
+                os.getenv('BACKTEST_SELECTION_STRATEGY', 'full'),
                 summary_data['total_tests'],
                 summary_data['total_tests'],
                 self.base_url,

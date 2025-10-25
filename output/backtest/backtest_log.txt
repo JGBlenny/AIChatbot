@@ -1,12 +1,264 @@
-=== 回測執行時間: 2025-10-16 10:57:40.379686 ===
+=== 回測執行時間: 2025-10-25 13:32:10.794904 ===
 
-返回碼: 1
+返回碼: 0
 
 === STDOUT ===
+============================================================
+知識庫回測框架
+============================================================
+✅ 品質評估模式: detailed
+✅ 測試題庫來源: 資料庫 (aichatbot_admin)
+
+🎯 測試選擇策略: incremental
+📖 從資料庫載入測試情境（策略: incremental）...
+   策略: 增量測試（新測試 + 失敗測試 + 長期未測試）
+   限制: 100 個
+   ✅ 載入 22 個測試情境
+   📊 組成：新測試 15 | 失敗測試 7 | 長期未測試 0
+
+🧪 非交互模式：執行全部 22 個測試
+
+🧪 開始回測...
+   測試情境數：22
+
+[1/22] 測試問題: 我沒有wifi...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (2 個):
+      1. [ID 246] 空調故障：
+      2. [ID 247] 空調無法啟動：
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=246
+      2. http://localhost:8080/#/knowledge?search=247
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=246,247
+
+[2/22] 測試問題: 鄰居很吵我該怎麼辦...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (1 個):
+      1. [ID 504] 鄰居常常打擾我
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=504
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=504
+
+[3/22] 測試問題: 押金怎麼退？...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (5 個):
+      1. [ID 230] 租金支付：
+      2. [ID 234] 租金支付方式
+      3. [ID 236] 收據或發票如何提供
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=230
+      2. http://localhost:8080/#/knowledge?search=234
+      3. http://localhost:8080/#/knowledge?search=236
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=230,234,236,237,240
+
+[4/22] 測試問題: 冷氣壞了怎麼辦？...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (2 個):
+      1. [ID 246] 空調故障：
+      2. [ID 247] 空調無法啟動：
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=246
+      2. http://localhost:8080/#/knowledge?search=247
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=246,247
+
+[5/22] 測試問題: 什麼是租賃契約？...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (4 個):
+      1. [ID 225] 批准與簽約：
+      2. [ID 229] 租期：
+      3. [ID 232] 提前終止：
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=225
+      2. http://localhost:8080/#/knowledge?search=229
+      3. http://localhost:8080/#/knowledge?search=232
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=225,229,232,233
+
+[6/22] 測試問題: 空調無法啟動：...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (2 個):
+      1. [ID 246] 空調故障：
+      2. [ID 247] 空調無法啟動：
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=246
+      2. http://localhost:8080/#/knowledge?search=247
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=246,247
+
+[7/22] 測試問題: 空調無法啟動...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (2 個):
+      1. [ID 246] 空調故障：
+      2. [ID 247] 空調無法啟動：
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=246
+      2. http://localhost:8080/#/knowledge?search=247
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=246,247
+
+[8/22] 測試問題: 我想養寵物可以嗎？...
+   ✅ PASS (分數: 1.00)
+
+[9/22] 測試問題: 客服電話是什麼？...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (5 個):
+      1. [ID 222] 申請步驟：
+      2. [ID 223] 文件要求：
+      3. [ID 224] 申請審核：
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=222
+      2. http://localhost:8080/#/knowledge?search=223
+      3. http://localhost:8080/#/knowledge?search=224
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=222,223,224,225,226
+
+[10/22] 測試問題: 我的租金明細是什麼？...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (5 個):
+      1. [ID 230] 租金支付：
+      2. [ID 234] 租金支付方式
+      3. [ID 236] 收據或發票如何提供
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=230
+      2. http://localhost:8080/#/knowledge?search=234
+      3. http://localhost:8080/#/knowledge?search=236
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=230,234,236,237,240
+
+[11/22] 測試問題: 幫我查詢我的繳費記錄...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (5 個):
+      1. [ID 230] 租金支付：
+      2. [ID 234] 租金支付方式
+      3. [ID 236] 收據或發票如何提供
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=230
+      2. http://localhost:8080/#/knowledge?search=234
+      3. http://localhost:8080/#/knowledge?search=236
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=230,234,236,237,240
+
+[12/22] 測試問題: 我的合約什麼時候到期？...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (1 個):
+      1. [ID 243] 租賃合同管理：
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=243
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=243
+
+[13/22] 測試問題: 停車位怎麼收費？...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (5 個):
+      1. [ID 230] 租金支付：
+      2. [ID 234] 租金支付方式
+      3. [ID 236] 收據或發票如何提供
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=230
+      2. http://localhost:8080/#/knowledge?search=234
+      3. http://localhost:8080/#/knowledge?search=236
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=230,234,236,237,240
+
+[14/22] 測試問題: 借址營登費用及服務內容...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (5 個):
+      1. [ID 230] 租金支付：
+      2. [ID 234] 租金支付方式
+      3. [ID 236] 收據或發票如何提供
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=230
+      2. http://localhost:8080/#/knowledge?search=234
+      3. http://localhost:8080/#/knowledge?search=236
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=230,234,236,237,240
+
+[15/22] 測試問題: 包租代管公司合約補充事項...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (4 個):
+      1. [ID 225] 批准與簽約：
+      2. [ID 229] 租期：
+      3. [ID 232] 提前終止：
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=225
+      2. http://localhost:8080/#/knowledge?search=229
+      3. http://localhost:8080/#/knowledge?search=232
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=225,229,232,233
+
+[16/22] 測試問題: 我可以養寵物嗎...
+   ✅ PASS (分數: 1.00)
+
+[17/22] 測試問題: 可以養寵物嗎...
+   ✅ PASS (分數: 1.00)
+
+[18/22] 測試問題: 鄰居常常打擾我...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (1 個):
+      1. [ID 504] 鄰居常常打擾我
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=504
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=504
+
+[19/22] 測試問題: 新合約的資料申報提醒...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (4 個):
+      1. [ID 225] 批准與簽約：
+      2. [ID 229] 租期：
+      3. [ID 232] 提前終止：
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=225
+      2. http://localhost:8080/#/knowledge?search=229
+      3. http://localhost:8080/#/knowledge?search=232
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=225,229,232,233
+
+[20/22] 測試問題: 請問停車位的租金怎麼算？有包含在租金裡面嗎？...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (4 個):
+      1. [ID 225] 批准與簽約：
+      2. [ID 229] 租期：
+      3. [ID 232] 提前終止：
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=225
+      2. http://localhost:8080/#/knowledge?search=229
+      3. http://localhost:8080/#/knowledge?search=232
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=225,229,232,233
+
+[21/22] 測試問題: 退租要怎麼辦理？...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (1 個):
+      1. [ID 231] 押金：
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=231
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=231
+
+[22/22] 測試問題: 如何使用系統報修功能？...
+   ✅ PASS (分數: 1.00)
+   📚 知識來源 (2 個):
+      1. [ID 246] 空調故障：
+      2. [ID 247] 空調無法啟動：
+   🔗 直接鏈接:
+      1. http://localhost:8080/#/knowledge?search=246
+      2. http://localhost:8080/#/knowledge?search=247
+   📦 批量查詢: http://localhost:8080/#/knowledge?ids=246,247
+
+📊 生成回測報告...
+   ✅ 詳細結果已儲存: /app/output/backtest/backtest_results.xlsx
+   ✅ 摘要報告已儲存: /app/output/backtest/backtest_results_summary.txt
+
+============================================================
+回測摘要
+============================================================
+通過率：77.27% (17/22)
+平均分數（基礎）：1.00
+平均信心度：0.90
+
+🎯 LLM 品質評估統計 (22 個測試):
+   相關性：4.09/5.0
+   完整性：3.45/5.0
+   準確性：4.45/5.0
+   意圖匹配：4.09/5.0
+   綜合評分：3.77/5.0
+   NDCG@3：0.8182
+============================================================
+
+
+💾 儲存回測結果到資料庫...
+   ✅ 建立回測執行記錄 (Run ID: 11)
+   ✅ 儲存 22 個測試結果到資料庫
+   📊 回測執行 ID: 11
+   ⏱️  執行時間: 114 秒
+✅ 回測完成！
 
 
 === STDERR ===
-Traceback (most recent call last):
-  File "/app/scripts/knowledge_extraction/backtest_framework.py", line 21, in <module>
-    from openai import OpenAI
-ModuleNotFoundError: No module named 'openai'
