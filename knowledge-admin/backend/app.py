@@ -1150,8 +1150,8 @@ async def get_backtest_run_results(
 
 class BacktestRunRequest(BaseModel):
     """回測執行請求模型"""
-    quality_mode: Optional[str] = "basic"  # basic, detailed, hybrid
-    test_type: Optional[str] = "smoke"  # smoke, full
+    quality_mode: Optional[str] = "detailed"  # detailed, hybrid
+    test_strategy: Optional[str] = "full"  # full, incremental, failed_only
 
 @app.post("/api/backtest/run")
 async def run_backtest(request: BacktestRunRequest = None):
@@ -1161,8 +1161,8 @@ async def run_backtest(request: BacktestRunRequest = None):
     這會在後台執行回測腳本並返回任務ID
 
     參數:
-    - quality_mode: 品質評估模式 (basic/detailed/hybrid)
-    - test_type: 測試類型 (smoke/full)
+    - quality_mode: 品質評估模式 (detailed/hybrid)
+    - test_strategy: 測試策略 (full/incremental/failed_only)
     """
     import subprocess
     import threading
@@ -1171,17 +1171,8 @@ async def run_backtest(request: BacktestRunRequest = None):
     if request is None:
         request = BacktestRunRequest()
 
-    # 檢查 smoke test scenarios 是否存在
-    # 使用環境變數或相對於專案根目錄的路徑
+    # 使用資料庫模式，不再需要 Excel 文件
     project_root = os.getenv("PROJECT_ROOT", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-    test_file_name = f"test_scenarios_{request.test_type}.xlsx"
-    test_scenarios_path = os.path.join(project_root, test_file_name)
-
-    if not os.path.exists(test_scenarios_path):
-        raise HTTPException(
-            status_code=404,
-            detail=f"測試場景文件不存在: {test_scenarios_path}。請確認檔案已建立。"
-        )
 
     # 檢查是否已有回測在運行
     backtest_lock_file = "/tmp/backtest_running.lock"
@@ -1205,8 +1196,9 @@ async def run_backtest(request: BacktestRunRequest = None):
             # 設定優化環境變數（用於降低回測成本）
             env["OPENAI_MODEL"] = "gpt-4o-mini"  # 使用更便宜的模型
             env["RAG_RETRIEVAL_LIMIT"] = "3"  # 減少檢索條數
-            env["BACKTEST_TYPE"] = request.test_type  # 測試類型 (smoke/full)
-            env["BACKTEST_QUALITY_MODE"] = request.quality_mode  # 品質評估模式 (basic/detailed/hybrid)
+            env["BACKTEST_SELECTION_STRATEGY"] = request.test_strategy  # 測試策略 (full/incremental/failed_only)
+            env["BACKTEST_QUALITY_MODE"] = request.quality_mode  # 品質評估模式 (detailed/hybrid)
+            env["BACKTEST_USE_DATABASE"] = "true"  # 使用資料庫模式
             env["PROJECT_ROOT"] = project_root  # 傳遞專案根目錄
             env["BACKTEST_NON_INTERACTIVE"] = "true"  # 非交互模式，不等待用戶輸入
 
@@ -1246,13 +1238,18 @@ async def run_backtest(request: BacktestRunRequest = None):
     thread.daemon = True
     thread.start()
 
-    # 根據品質模式估計時間
+    # 根據品質模式和測試策略估計時間
     time_estimates = {
-        'basic': '約需 2-3 分鐘',
         'detailed': '約需 5-10 分鐘（使用 LLM 評估）',
         'hybrid': '約需 4-7 分鐘（混合評估）'
     }
     estimated_time = time_estimates.get(request.quality_mode, '約需 3-5 分鐘')
+
+    # 如果是 incremental 策略，時間會更短
+    if request.test_strategy == 'incremental':
+        estimated_time = '約需 2-5 分鐘（僅測試新增和失敗的案例）'
+    elif request.test_strategy == 'failed_only':
+        estimated_time = '約需 1-3 分鐘（僅測試失敗的案例）'
 
     return {
         "success": True,

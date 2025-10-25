@@ -93,10 +93,11 @@
       </div>
 
       <div class="filter-group">
-        <label>測試類型：</label>
-        <select v-model="backtestConfig.test_type">
-          <option value="smoke">Smoke - 快速測試</option>
-          <option value="full">Full - 完整測試</option>
+        <label>測試策略：</label>
+        <select v-model="backtestConfig.test_strategy">
+          <option value="incremental">Incremental - 智能增量（新增+失敗+過時）</option>
+          <option value="full">Full - 完整測試（所有已批准）</option>
+          <option value="failed_only">Failed Only - 僅失敗案例</option>
         </select>
       </div>
 
@@ -405,7 +406,7 @@ export default {
       statusFilter: 'all',
       backtestConfig: {
         quality_mode: 'detailed',
-        test_type: 'smoke'
+        test_strategy: 'incremental'
       },
       pagination: {
         limit: 50,
@@ -611,7 +612,13 @@ export default {
         'hybrid': 'Hybrid 混合評估'
       };
 
-      if (!confirm(`確定要執行回測嗎？\n模式：${modeText[this.backtestConfig.quality_mode]}\n類型：${this.backtestConfig.test_type}`)) {
+      const strategyText = {
+        'incremental': 'Incremental - 智能增量（新增+失敗+過時）',
+        'full': 'Full - 完整測試（所有已批准）',
+        'failed_only': 'Failed Only - 僅失敗案例'
+      };
+
+      if (!confirm(`確定要執行回測嗎？\n模式：${modeText[this.backtestConfig.quality_mode]}\n策略：${strategyText[this.backtestConfig.test_strategy]}`)) {
         return;
       }
 
