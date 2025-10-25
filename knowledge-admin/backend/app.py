@@ -1088,6 +1088,8 @@ async def get_backtest_run_results(
             # 轉換日期格式
             if result.get('tested_at'):
                 result['tested_at'] = result['tested_at'].isoformat()
+            # 添加 expected_category 用於向後兼容（新結果此字段已刪除，設為空字符串）
+            result['expected_category'] = ''
             results.append(result)
 
         # 計算統計（基於過濾後的結果）
