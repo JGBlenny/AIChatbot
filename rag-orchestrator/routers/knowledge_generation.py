@@ -114,7 +114,7 @@ async def check_test_scenario_knowledge(
         async with db_pool.acquire() as conn:
             # 1. 取得測試情境資訊
             scenario = await conn.fetchrow("""
-                SELECT id, test_question, expected_category, status
+                SELECT id, test_question, status
                 FROM test_scenarios
                 WHERE id = $1
             """, scenario_id)
@@ -127,19 +127,10 @@ async def check_test_scenario_knowledge(
                 SELECT * FROM check_test_scenario_has_knowledge($1, $2)
             """, scenario_id, similarity_threshold)
 
-            # 3. 檢查類別狀態
+            # 3. 知識生成狀態（移除分類限制檢查）
             generator = get_knowledge_generator()
-            category = scenario['expected_category']
-
-            if generator.is_restricted_category(category):
-                category_status = "restricted"
-                can_generate = False
-            elif generator.is_safe_category(category):
-                category_status = "safe"
-                can_generate = True
-            else:
-                category_status = "unknown"
-                can_generate = True  # 允許但需謹慎
+            category_status = "allowed"
+            can_generate = True
 
             # 4. 解析相關知識
             related_knowledge_raw = result['related_knowledge']
@@ -190,7 +181,7 @@ async def generate_knowledge_for_scenario(
         async with db_pool.acquire() as conn:
             # 1. 取得測試情境資訊
             scenario = await conn.fetchrow("""
-                SELECT id, test_question, expected_category, status
+                SELECT id, test_question, status
                 FROM test_scenarios
                 WHERE id = $1
             """, scenario_id)
@@ -233,10 +224,9 @@ async def generate_knowledge_for_scenario(
                   AND k.question_summary IS NOT NULL
                   AND (
                       k.question_summary ILIKE '%' || ts.test_question || '%' OR
-                      ts.test_question ILIKE '%' || k.question_summary || '%' OR
-                      k.category = ts.expected_category
+                      ts.test_question ILIKE '%' || k.question_summary || '%'
                   )
-                ORDER BY (k.category = ts.expected_category) DESC
+                ORDER BY k.updated_at DESC
                 LIMIT 5
             """, scenario_id)
 
@@ -247,12 +237,11 @@ async def generate_knowledge_for_scenario(
             # 5. 呼叫 AI 生成
             print(f"📝 開始為測試情境 #{scenario_id} 生成知識候選...")
             print(f"   問題: {scenario['test_question']}")
-            print(f"   類別: {scenario['expected_category']}")
             print(f"   候選數量: {request.num_candidates}")
 
             candidates = await generator.generate_knowledge_candidates(
                 test_question=scenario['test_question'],
-                intent_category=scenario['expected_category'],
+                intent_category=None,  # 不再使用預期分類
                 num_candidates=request.num_candidates,
                 context=context
             )
@@ -404,7 +393,6 @@ async def get_pending_candidates(
                     candidate_id,
                     test_scenario_id,
                     original_test_question,
-                    expected_category,
                     question,
                     generated_answer,
                     confidence_score,
@@ -431,7 +419,6 @@ async def get_pending_candidates(
                     "id": row['candidate_id'],
                     "test_scenario_id": row['test_scenario_id'],
                     "test_question": row['original_test_question'],
-                    "category": row['expected_category'],
                     "question": row['question'],
                     "generated_answer": row['generated_answer'],
                     "confidence_score": float(row['confidence_score']) if row['confidence_score'] else 0.0,
@@ -475,8 +462,7 @@ async def get_candidate_detail(candidate_id: int, req: Request):
             row = await conn.fetchrow("""
                 SELECT
                     kc.*,
-                    ts.test_question as original_test_question,
-                    ts.expected_category
+                    ts.test_question as original_test_question
                 FROM ai_generated_knowledge_candidates kc
                 INNER JOIN test_scenarios ts ON kc.test_scenario_id = ts.id
                 WHERE kc.id = $1
@@ -489,7 +475,6 @@ async def get_candidate_detail(candidate_id: int, req: Request):
                 "id": row['id'],
                 "test_scenario_id": row['test_scenario_id'],
                 "test_question": row['original_test_question'],
-                "category": row['expected_category'],
                 "question": row['question'],
                 "generated_answer": row['generated_answer'],
                 "confidence_score": float(row['confidence_score']) if row['confidence_score'] else 0.0,

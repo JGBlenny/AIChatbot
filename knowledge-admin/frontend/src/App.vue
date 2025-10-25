@@ -16,7 +16,7 @@
         <!-- 核心功能 -->
         <div class="nav-group">
           <div class="nav-group-title" v-if="!sidebarCollapsed">核心功能</div>
-          <router-link to="/" class="nav-item" :title="sidebarCollapsed ? '知識庫' : ''">
+          <router-link to="/knowledge" class="nav-item" :title="sidebarCollapsed ? '知識庫' : ''">
             <span class="nav-icon">📖</span>
             <span class="nav-text" v-if="!sidebarCollapsed">知識庫</span>
           </router-link>
@@ -24,9 +24,17 @@
             <span class="nav-icon">🎯</span>
             <span class="nav-text" v-if="!sidebarCollapsed">意圖管理</span>
           </router-link>
-          <router-link to="/business-scope" class="nav-item" :title="sidebarCollapsed ? '業務範圍' : ''">
+          <router-link to="/audience-config" class="nav-item" :title="sidebarCollapsed ? '受眾配置' : ''">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text" v-if="!sidebarCollapsed">受眾配置</span>
+          </router-link>
+          <router-link to="/business-types-config" class="nav-item" :title="sidebarCollapsed ? '業態類型' : ''">
             <span class="nav-icon">🏢</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">業務範圍</span>
+            <span class="nav-text" v-if="!sidebarCollapsed">業態類型</span>
+          </router-link>
+          <router-link to="/category-config" class="nav-item" :title="sidebarCollapsed ? '分類配置' : ''">
+            <span class="nav-icon">📂</span>
+            <span class="nav-text" v-if="!sidebarCollapsed">分類配置</span>
           </router-link>
           <router-link to="/vendors" class="nav-item" :title="sidebarCollapsed ? '業者管理' : ''">
             <span class="nav-icon">👥</span>
@@ -120,6 +128,7 @@ export default {
       sidebarCollapsed: false,
       pageTitles: {
         '/': '知識庫管理',
+        '/knowledge': '知識庫管理',
         '/intents': '意圖管理',
         '/review-center': '審核中心',
         '/business-scope': '業務範圍管理',
@@ -130,7 +139,10 @@ export default {
         '/chat-test': 'Chat 測試',
         '/test-scenarios': '測試題庫',
         '/backtest': '回測結果',
-        '/cache-management': '緩存管理'
+        '/cache-management': '緩存管理',
+        '/audience-config': '受眾配置',
+        '/business-types-config': '業態類型',
+        '/category-config': '分類配置'
       }
     };
   },

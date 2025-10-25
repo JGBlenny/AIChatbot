@@ -20,7 +20,7 @@ from services.vendor_config_service import VendorConfigService
 from services.cache_service import CacheService
 
 # 導入路由
-from routers import chat, chat_stream, unclear_questions, suggested_intents, business_scope, intents, knowledge, vendors, knowledge_import, knowledge_generation, platform_sop, cache
+from routers import chat, chat_stream, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_generation, platform_sop, cache, audience_config, business_types_config
 
 # 全局變數
 db_pool: Pool = None
@@ -137,7 +137,8 @@ app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 app.include_router(chat_stream.router, prefix="/api/v1", tags=["chat_stream"])  # Phase 3: Streaming
 app.include_router(unclear_questions.router, prefix="/api/v1", tags=["unclear_questions"])
 app.include_router(suggested_intents.router, prefix="/api/v1", tags=["suggested_intents"])
-app.include_router(business_scope.router, prefix="/api/v1", tags=["business_scope"])
+app.include_router(audience_config.router, prefix="/api/v1", tags=["audience_config"])  # Audience Config Management
+app.include_router(business_types_config.router, prefix="/api/v1", tags=["business_types_config"])  # Business Types Config Management
 app.include_router(intents.router, prefix="/api/v1", tags=["intents"])
 app.include_router(knowledge.router, tags=["knowledge"])
 app.include_router(vendors.router, tags=["vendors"])  # Phase 1: Multi-Vendor Support

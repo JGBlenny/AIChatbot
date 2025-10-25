@@ -182,7 +182,6 @@ export default {
         const response = await axios.post(
           `/api/test/unclear-questions/${candidate.unclear_question_id}/convert`,
           {
-            expected_category: candidate.intent_type || '未分類',
             difficulty: this.getDifficultyByFrequency(candidate.frequency)
           }
         );

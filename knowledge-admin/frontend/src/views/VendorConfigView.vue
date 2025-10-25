@@ -80,7 +80,7 @@
               ></textarea>
 
               <span v-if="config.unit" class="unit-label">{{ config.unit }}</span>
-              <button v-if="config.custom" @click="removeCustomParam(index)" class="btn-delete-sm">✕</button>
+              <button v-if="config.custom" @click="removeCustomParam(index)" class="btn-delete btn-sm">✕</button>
             </div>
           </div>
 
@@ -600,16 +600,6 @@ export default {
   color: #666;
   font-size: 13px;
   white-space: nowrap;
-}
-
-.btn-delete-sm {
-  padding: 4px 8px;
-  background: #f87171;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
 }
 
 /* 空狀態 */

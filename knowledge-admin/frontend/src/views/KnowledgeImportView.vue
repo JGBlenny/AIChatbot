@@ -54,46 +54,10 @@
 
       <!-- 匯入選項 -->
       <div class="import-options">
-        <h3>匯入選項</h3>
-
+        <h3>匯入說明</h3>
         <div class="option-group">
-          <label>
-            <input type="radio" v-model="importMode" value="new" />
-            <span class="option-label">
-              <strong>新增知識</strong>
-              <small>提取新的問答對並添加到知識庫</small>
-            </span>
-          </label>
-
-          <label>
-            <input type="radio" v-model="importMode" value="optimize" />
-            <span class="option-label">
-              <strong>優化現有</strong>
-              <small>分析現有知識並優化內容（較少 token 消耗）</small>
-            </span>
-          </label>
-        </div>
-
-        <div class="option-group">
-          <label class="checkbox-label">
-            <input type="checkbox" v-model="enableDeduplication" />
-            <span>
-              <strong>啟用智能去重</strong>
-              <small>自動跳過已存在的知識，避免浪費 token</small>
-            </span>
-          </label>
-        </div>
-
-        <div class="option-group" v-if="vendors.length > 0">
-          <label>
-            業者（可選）:
-            <select v-model="selectedVendor">
-              <option :value="null">通用知識（適用所有業者）</option>
-              <option v-for="vendor in vendors" :key="vendor.id" :value="vendor.id">
-                {{ vendor.name }}
-              </option>
-            </select>
-          </label>
+          <p>📋 從檔案中提取新的問答對並添加到審核佇列</p>
+          <p>🔍 系統會自動進行智能去重，跳過已存在的知識</p>
         </div>
       </div>
 
@@ -260,10 +224,6 @@ export default {
     return {
       currentStep: 1,
       selectedFile: null,
-      importMode: 'new',
-      enableDeduplication: true,
-      selectedVendor: null,
-      vendors: [],
 
       previewing: false,
       preview: {},
@@ -291,7 +251,6 @@ export default {
   },
 
   mounted() {
-    this.loadVendors();
     this.loadImportJobs();
   },
 
@@ -302,15 +261,6 @@ export default {
   },
 
   methods: {
-    async loadVendors() {
-      try {
-        const response = await axios.get(`${API_BASE}/vendors`);
-        this.vendors = response.data;
-      } catch (error) {
-        console.error('載入業者失敗', error);
-      }
-    },
-
     async loadImportJobs() {
       try {
         const response = await axios.get(`${API_BASE}/knowledge-import/jobs`);
@@ -373,11 +323,7 @@ export default {
       try {
         const formData = new FormData();
         formData.append('file', this.selectedFile);
-        formData.append('mode', this.importMode);
-        formData.append('enable_deduplication', this.enableDeduplication);
-        if (this.selectedVendor) {
-          formData.append('vendor_id', this.selectedVendor);
-        }
+        formData.append('enable_deduplication', true);
 
         const response = await axios.post(
           `${API_BASE}/knowledge-import/upload`,
@@ -856,37 +802,5 @@ export default {
   gap: 15px;
   justify-content: center;
   margin-top: 30px;
-}
-
-.btn-primary, .btn-secondary {
-  padding: 12px 30px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-primary {
-  background: #4CAF50;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #45a049;
-}
-
-.btn-primary:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: #f0f0f0;
-  color: #333;
-}
-
-.btn-secondary:hover {
-  background: #e0e0e0;
 }
 </style>

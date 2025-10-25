@@ -36,7 +36,10 @@ class VendorCreate(BaseModel):
     contact_email: Optional[str] = Field(None, description="聯絡郵箱", max_length=100)
     address: Optional[str] = Field(None, description="公司地址")
     subscription_plan: str = Field("basic", description="訂閱方案")
-    business_type: str = Field("property_management", description="業態類型：full_service 或 property_management")
+    business_types: List[str] = Field(
+        default_factory=lambda: ["property_management"],
+        description="業態類型陣列（可多選）：system_provider(系統商)、full_service(包租型)、property_management(代管型)"
+    )
     created_by: str = Field("admin", description="建立者")
 
 
@@ -48,7 +51,10 @@ class VendorUpdate(BaseModel):
     contact_email: Optional[str] = Field(None, description="聯絡郵箱", max_length=100)
     address: Optional[str] = Field(None, description="公司地址")
     subscription_plan: Optional[str] = Field(None, description="訂閱方案")
-    business_type: Optional[str] = Field(None, description="業態類型：full_service 或 property_management")
+    business_types: Optional[List[str]] = Field(
+        None,
+        description="業態類型陣列（可多選）：system_provider(系統商)、full_service(包租型)、property_management(代管型)"
+    )
     is_active: Optional[bool] = Field(None, description="是否啟用")
     updated_by: str = Field("admin", description="更新者")
 
@@ -63,7 +69,7 @@ class VendorResponse(BaseModel):
     contact_email: Optional[str]
     address: Optional[str]
     subscription_plan: str
-    business_type: str
+    business_types: List[str]
     subscription_status: str
     is_active: bool
     created_at: datetime
@@ -104,7 +110,15 @@ async def list_vendors(
     try:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        query = "SELECT * FROM vendors WHERE 1=1"
+        # 明確選擇欄位，避免包含已棄用的 business_type
+        query = """
+            SELECT
+                id, code, name, short_name, contact_phone, contact_email,
+                address, subscription_plan, business_types, subscription_status,
+                is_active, created_at, updated_at
+            FROM vendors
+            WHERE 1=1
+        """
         params = []
 
         if is_active is not None:
@@ -146,7 +160,7 @@ async def create_vendor(vendor: VendorCreate):
         cursor.execute("""
             INSERT INTO vendors (
                 code, name, short_name, contact_phone, contact_email,
-                address, subscription_plan, business_type, subscription_status,
+                address, subscription_plan, business_types, subscription_status,
                 subscription_start_date, created_by
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -159,7 +173,7 @@ async def create_vendor(vendor: VendorCreate):
             vendor.contact_email,
             vendor.address,
             vendor.subscription_plan,
-            vendor.business_type,
+            vendor.business_types,
             'active',
             date.today(),
             vendor.created_by
@@ -241,9 +255,9 @@ async def update_vendor(vendor_id: int, vendor: VendorUpdate):
             update_fields.append("subscription_plan = %s")
             params.append(vendor.subscription_plan)
 
-        if vendor.business_type is not None:
-            update_fields.append("business_type = %s")
-            params.append(vendor.business_type)
+        if vendor.business_types is not None:
+            update_fields.append("business_types = %s")
+            params.append(vendor.business_types)
 
         if vendor.is_active is not None:
             update_fields.append("is_active = %s")
@@ -1035,7 +1049,7 @@ async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # 檢查業者是否存在
-        cursor.execute("SELECT id, business_type FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
+        cursor.execute("SELECT id, business_types FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
         vendor = cursor.fetchone()
         if not vendor:
             raise HTTPException(status_code=404, detail="業者不存在")
@@ -1063,11 +1077,11 @@ async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
         if not template:
             raise HTTPException(status_code=404, detail=f"範本 ID {request.template_id} 不存在或已停用")
 
-        # 驗證業種匹配
-        if template['business_type'] and template['business_type'] != vendor['business_type']:
+        # 驗證業種匹配（使用陣列操作）
+        if template['business_type'] and template['business_type'] not in vendor['business_types']:
             raise HTTPException(
                 status_code=400,
-                detail=f"範本業種類型 ({template['business_type']}) 與業者業種 ({vendor['business_type']}) 不符"
+                detail=f"範本業種類型 ({template['business_type']}) 與業者業種 ({', '.join(vendor['business_types'])}) 不符"
             )
 
         # 檢查分類是否存在且屬於該業者
@@ -1190,7 +1204,7 @@ async def copy_category_templates_to_vendor(vendor_id: int, request: CopyCategor
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # 檢查業者是否存在
-        cursor.execute("SELECT id, business_type FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
+        cursor.execute("SELECT id, business_types FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
         vendor = cursor.fetchone()
         if not vendor:
             raise HTTPException(status_code=404, detail="業者不存在")
@@ -1206,7 +1220,7 @@ async def copy_category_templates_to_vendor(vendor_id: int, request: CopyCategor
         if not platform_category:
             raise HTTPException(status_code=404, detail=f"平台分類 ID {request.platform_category_id} 不存在或已停用")
 
-        # 取得該分類下的所有範本（符合業者業種）
+        # 取得該分類下的所有範本（符合業者業種，使用陣列操作）
         cursor.execute("""
             SELECT
                 pt.id,
@@ -1224,9 +1238,9 @@ async def copy_category_templates_to_vendor(vendor_id: int, request: CopyCategor
             FROM platform_sop_templates pt
             WHERE pt.category_id = %s
               AND pt.is_active = TRUE
-              AND (pt.business_type = %s OR pt.business_type IS NULL)
+              AND (pt.business_type = ANY(%s) OR pt.business_type IS NULL)
             ORDER BY pt.item_number
-        """, (request.platform_category_id, vendor['business_type']))
+        """, (request.platform_category_id, vendor['business_types']))
         templates = cursor.fetchall()
 
         if not templates:
@@ -1370,7 +1384,7 @@ async def copy_all_templates_to_vendor(vendor_id: int):
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # 檢查業者是否存在
-        cursor.execute("SELECT id, business_type, name FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
+        cursor.execute("SELECT id, business_types, name FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
         vendor = cursor.fetchone()
         if not vendor:
             raise HTTPException(status_code=404, detail="業者不存在")
@@ -1389,7 +1403,7 @@ async def copy_all_templates_to_vendor(vendor_id: int):
         """, (vendor_id,))
         deleted_categories_count = cursor.rowcount
 
-        # 取得所有符合業者業種的平台分類和範本
+        # 取得所有符合業者業種的平台分類和範本（使用陣列操作）
         cursor.execute("""
             SELECT DISTINCT
                 pc.id as category_id,
@@ -1400,9 +1414,9 @@ async def copy_all_templates_to_vendor(vendor_id: int):
             INNER JOIN platform_sop_templates pt ON pt.category_id = pc.id
             WHERE pc.is_active = TRUE
               AND pt.is_active = TRUE
-              AND (pt.business_type = %s OR pt.business_type IS NULL)
+              AND (pt.business_type = ANY(%s) OR pt.business_type IS NULL)
             ORDER BY pc.display_order, pc.category_name
-        """, (vendor['business_type'],))
+        """, (vendor['business_types'],))
         platform_categories = cursor.fetchall()
 
         if not platform_categories:
@@ -1450,9 +1464,9 @@ async def copy_all_templates_to_vendor(vendor_id: int):
                 FROM platform_sop_templates pt
                 WHERE pt.category_id = %s
                   AND pt.is_active = TRUE
-                  AND (pt.business_type = %s OR pt.business_type IS NULL)
+                  AND (pt.business_type = ANY(%s) OR pt.business_type IS NULL)
                 ORDER BY pt.item_number
-            """, (platform_category['category_id'], vendor['business_type']))
+            """, (platform_category['category_id'], vendor['business_types']))
             templates = cursor.fetchall()
 
             # 批次複製範本項目
@@ -1511,7 +1525,7 @@ async def copy_all_templates_to_vendor(vendor_id: int):
 
         return {
             "message": "，".join(message_parts),
-            "business_type": vendor['business_type'],
+            "business_types": vendor['business_types'],
             "deleted_categories": deleted_categories_count,
             "deleted_items": deleted_items_count,
             "categories_created": len(created_categories),

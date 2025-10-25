@@ -87,9 +87,8 @@
       <div class="filter-group">
         <label>品質模式：</label>
         <select v-model="backtestConfig.quality_mode">
-          <option value="basic">Basic - 快速評估</option>
-          <option value="hybrid">Hybrid - 混合評估 (推薦)</option>
-          <option value="detailed">Detailed - LLM 深度評估</option>
+          <option value="detailed">Detailed - LLM 深度評估 (推薦)</option>
+          <option value="hybrid">Hybrid - 混合評估</option>
         </select>
       </div>
 
@@ -149,7 +148,6 @@
             <th width="60">ID</th>
             <th width="80">狀態</th>
             <th>測試問題</th>
-            <th width="120">預期分類</th>
             <th width="120">實際意圖</th>
             <th width="100">分數</th>
             <th width="100">信心度</th>
@@ -168,9 +166,6 @@
               <div v-if="result.system_answer" class="answer-preview">
                 {{ result.system_answer.substring(0, 100) }}...
               </div>
-            </td>
-            <td>
-              <span class="badge">{{ result.expected_category || 'N/A' }}</span>
             </td>
             <td>
               <span class="badge" :class="{ 'badge-unclear': result.actual_intent === 'unclear' }">
@@ -279,28 +274,6 @@ python3 scripts/knowledge_extraction/backtest_framework.py</pre>
               <strong>系統回答:</strong>
               <p>{{ selectedResult.system_answer }}</p>
             </div>
-          </div>
-
-          <div class="detail-section">
-            <h3>分類比對</h3>
-            <table class="detail-table">
-              <tr>
-                <td><strong>預期分類:</strong></td>
-                <td>{{ selectedResult.expected_category }}</td>
-              </tr>
-              <tr>
-                <td><strong>實際意圖:</strong></td>
-                <td>{{ selectedResult.actual_intent }}</td>
-              </tr>
-              <tr>
-                <td><strong>是否匹配:</strong></td>
-                <td>
-                  <span v-if="selectedResult.expected_category === selectedResult.actual_intent"
-                        class="badge badge-success">✅ 匹配</span>
-                  <span v-else class="badge badge-fail">❌ 不匹配</span>
-                </td>
-              </tr>
-            </table>
           </div>
 
           <!-- 品質評估詳情 -->
@@ -431,7 +404,7 @@ export default {
       error: null,
       statusFilter: 'all',
       backtestConfig: {
-        quality_mode: 'basic',
+        quality_mode: 'detailed',
         test_type: 'smoke'
       },
       pagination: {
@@ -634,9 +607,8 @@ export default {
 
     async runBacktest() {
       const modeText = {
-        'basic': 'Basic 快速評估',
-        'hybrid': 'Hybrid 混合評估（推薦）',
-        'detailed': 'Detailed LLM 深度評估'
+        'detailed': 'Detailed LLM 深度評估（推薦）',
+        'hybrid': 'Hybrid 混合評估'
       };
 
       if (!confirm(`確定要執行回測嗎？\n模式：${modeText[this.backtestConfig.quality_mode]}\n類型：${this.backtestConfig.test_type}`)) {
@@ -1380,33 +1352,6 @@ export default {
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px solid #f0f0f0;
-}
-
-.btn-primary, .btn-secondary {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.3s;
-}
-
-.btn-primary {
-  background: #409eff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #66b1ff;
-}
-
-.btn-secondary {
-  background: #dcdfe6;
-  color: #606266;
-}
-
-.btn-secondary:hover {
-  background: #c8cdd3;
 }
 
 .summary-text {

@@ -7,14 +7,8 @@
 
     <!-- 操作按鈕區 -->
     <div class="action-bar">
-      <button @click="showCategoryModal = true" class="btn btn-primary">
-        ➕ 新增分類
-      </button>
-      <button @click="loadData" class="btn btn-info">
-        🔄 重新載入
-      </button>
-      <button @click="loadStatistics" class="btn btn-secondary">
-        📊 使用統計
+      <button @click="showCategoryModal = true" class="btn-primary btn-sm">
+        新增分類
       </button>
     </div>
 
@@ -34,8 +28,8 @@
             <p class="business-type-count">共 {{ getTemplateCountByBusinessType('full_service') }} 個 SOP 項目</p>
           </div>
           <div class="business-type-actions" @click.stop>
-            <button @click="navigateToBusinessType('full_service')" class="btn btn-lg btn-primary">
-              📝 管理 SOP
+            <button @click="navigateToBusinessType('full_service')" class="btn-primary btn-sm">
+              管理 SOP
             </button>
           </div>
         </div>
@@ -50,8 +44,8 @@
             <p class="business-type-count">共 {{ getTemplateCountByBusinessType('property_management') }} 個 SOP 項目</p>
           </div>
           <div class="business-type-actions" @click.stop>
-            <button @click="navigateToBusinessType('property_management')" class="btn btn-lg btn-primary">
-              📝 管理 SOP
+            <button @click="navigateToBusinessType('property_management')" class="btn-primary btn-sm">
+              管理 SOP
             </button>
           </div>
         </div>
@@ -66,8 +60,8 @@
             <p class="business-type-count">共 {{ getTemplateCountByBusinessType(null) }} 個 SOP 項目</p>
           </div>
           <div class="business-type-actions" @click.stop>
-            <button @click="navigateToBusinessType('universal')" class="btn btn-lg btn-primary">
-              📝 管理 SOP
+            <button @click="navigateToBusinessType('universal')" class="btn-primary btn-sm">
+              管理 SOP
             </button>
           </div>
         </div>
@@ -94,18 +88,13 @@
           </div>
 
           <div class="form-group">
-            <label>顯示順序</label>
-            <input v-model.number="categoryForm.display_order" type="number" min="0" class="form-control" />
-          </div>
-
-          <div class="form-group">
             <label>範本說明（幫助業者理解此分類）</label>
             <textarea v-model="categoryForm.template_notes" class="form-control" rows="2"></textarea>
           </div>
 
           <div class="modal-actions">
-            <button type="submit" class="btn btn-primary">💾 儲存</button>
-            <button type="button" @click="closeCategoryModal" class="btn btn-secondary">取消</button>
+            <button type="submit" class="btn-primary btn-sm">儲存</button>
+            <button type="button" @click="closeCategoryModal" class="btn-secondary btn-sm">取消</button>
           </div>
         </form>
       </div>
@@ -208,8 +197,8 @@
           </div>
 
           <div class="modal-actions">
-            <button type="submit" class="btn btn-primary">💾 儲存</button>
-            <button type="button" @click="closeTemplateModal" class="btn btn-secondary">取消</button>
+            <button type="submit" class="btn-primary btn-sm">儲存</button>
+            <button type="button" @click="closeTemplateModal" class="btn-secondary btn-sm">取消</button>
           </div>
         </form>
       </div>
@@ -239,54 +228,7 @@
         </div>
 
         <div class="modal-actions">
-          <button @click="showUsageModal = false" class="btn btn-secondary">關閉</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 範本使用統計 Modal -->
-    <div v-if="showStatistics" class="modal-overlay" @click="showStatistics = false">
-      <div class="modal-content modal-large" @click.stop>
-        <h2>📊 範本使用統計</h2>
-
-        <table v-if="statistics.length > 0" class="statistics-table">
-          <thead>
-            <tr>
-              <th>分類</th>
-              <th>業種</th>
-              <th>範本名稱</th>
-              <th>已複製業者數</th>
-              <th>適用業者總數</th>
-              <th>使用率</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="stat in statistics" :key="stat.template_id">
-              <td>{{ stat.category_name }}</td>
-              <td>
-                <span v-if="stat.business_type" class="badge badge-business-type" :class="`business-type-${stat.business_type}`">
-                  {{ getBusinessTypeLabel(stat.business_type) }}
-                </span>
-                <span v-else class="badge badge-universal">通用</span>
-              </td>
-              <td>{{ stat.item_name }}</td>
-              <td>{{ stat.copied_by_vendor_count }}</td>
-              <td>{{ stat.applicable_vendor_count }}</td>
-              <td>
-                <span class="percentage" :class="getPercentageClass(stat.usage_percentage)">
-                  {{ stat.usage_percentage }}%
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div v-else class="no-data">
-          目前沒有統計資料
-        </div>
-
-        <div class="modal-actions">
-          <button @click="showStatistics = false" class="btn btn-secondary">關閉</button>
+          <button @click="showUsageModal = false" class="btn-secondary btn-sm">關閉</button>
         </div>
       </div>
     </div>
@@ -307,7 +249,6 @@ export default {
       categories: [],
       templates: [],
       intents: [],
-      statistics: [],
 
       // Accordion states (track expanded categories)
       expandedCategories: {},
@@ -316,7 +257,6 @@ export default {
       showCategoryModal: false,
       showTemplateModal: false,
       showUsageModal: false,
-      showStatistics: false,
 
       // Editing states
       editingCategory: null,
@@ -397,17 +337,6 @@ export default {
       } catch (error) {
         console.error('載入意圖失敗:', error);
         this.intents = [];
-      }
-    },
-
-    async loadStatistics() {
-      try {
-        const response = await axios.get(`${RAG_API}/api/v1/platform/sop/statistics/usage`);
-        this.statistics = response.data.statistics;
-        this.showStatistics = true;
-      } catch (error) {
-        console.error('載入統計失敗:', error);
-        alert('載入統計失敗: ' + error.message);
       }
     },
 
@@ -645,12 +574,6 @@ export default {
       return labels[type] || type;
     },
 
-    getPercentageClass(percentage) {
-      if (percentage >= 50) return 'percentage-high';
-      if (percentage >= 25) return 'percentage-medium';
-      return 'percentage-low';
-    },
-
     getBusinessTypeLabel(type) {
       const labels = {
         full_service: '🏠 包租型',
@@ -688,56 +611,6 @@ export default {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
-}
-
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: #4CAF50;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #45a049;
-}
-
-.btn-secondary {
-  background: #2196F3;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #0b7dda;
-}
-
-.btn-info {
-  background: #FF9800;
-  color: white;
-}
-
-.btn-info:hover {
-  background: #e68900;
-}
-
-.btn-danger {
-  background: #f44336;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #da190b;
-}
-
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 12px;
 }
 
 .loading {
@@ -1113,54 +986,6 @@ export default {
   font-style: italic;
 }
 
-/* Statistics Table */
-.statistics-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 20px 0;
-}
-
-.statistics-table th,
-.statistics-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-.statistics-table th {
-  background: #f5f5f5;
-  font-weight: 600;
-  color: #555;
-  font-size: 13px;
-}
-
-.statistics-table td {
-  font-size: 14px;
-  color: #666;
-}
-
-.percentage {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-weight: 500;
-}
-
-.percentage-high {
-  background: #FFEBEE;
-  color: #C62828;
-}
-
-.percentage-medium {
-  background: #FFF3E0;
-  color: #EF6C00;
-}
-
-.percentage-low {
-  background: #E8F5E9;
-  color: #388E3C;
-}
-
 /* Business Type Sections */
 .sop-business-types {
   display: flex;
@@ -1222,12 +1047,6 @@ export default {
 .business-type-actions {
   display: flex;
   align-items: center;
-}
-
-.btn-lg {
-  padding: 14px 28px;
-  font-size: 16px;
-  font-weight: 600;
 }
 
 .categories-container {

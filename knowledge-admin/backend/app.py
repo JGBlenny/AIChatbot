@@ -82,6 +82,7 @@ class KnowledgeUpdate(BaseModel):
     keywords: List[str] = []
     question_summary: Optional[str] = None
     intent_mappings: Optional[List[IntentMapping]] = []  # 多意圖支援
+    business_types: Optional[List[str]] = None  # 業態類型（可選，NULL=通用）
 
 class KnowledgeResponse(BaseModel):
     """知識回應模型"""
@@ -143,7 +144,7 @@ async def list_knowledge(
         query = """
             SELECT DISTINCT
                 kb.id, kb.title, kb.category, kb.audience, kb.answer as content,
-                kb.keywords, kb.question_summary, kb.created_at, kb.updated_at
+                kb.keywords, kb.question_summary, kb.business_types, kb.created_at, kb.updated_at
             FROM knowledge_base kb
             WHERE 1=1
         """
@@ -231,7 +232,7 @@ async def get_knowledge(knowledge_id: int):
         # 取得知識基本資訊
         cur.execute("""
             SELECT id, title, category, audience, answer as content,
-                   keywords, question_summary, created_at, updated_at
+                   keywords, question_summary, business_types, created_at, updated_at
             FROM knowledge_base
             WHERE id = %s
         """, (knowledge_id,))
@@ -331,6 +332,7 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
                 keywords = %s,
                 question_summary = %s,
                 embedding = %s,
+                business_types = %s,
                 updated_at = NOW()
             WHERE id = %s
             RETURNING id, title, updated_at
@@ -342,6 +344,7 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
             data.keywords,
             data.question_summary,
             new_embedding,
+            data.business_types,
             knowledge_id
         ))
 
@@ -452,8 +455,8 @@ async def create_knowledge(data: KnowledgeUpdate):
         # 2. 插入資料庫
         cur.execute("""
             INSERT INTO knowledge_base
-            (title, category, audience, answer, keywords, question_summary, embedding)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            (title, category, audience, answer, keywords, question_summary, embedding, business_types)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, created_at
         """, (
             data.title,
@@ -462,7 +465,8 @@ async def create_knowledge(data: KnowledgeUpdate):
             data.content,
             data.keywords,
             data.question_summary,
-            embedding
+            embedding,
+            data.business_types
         ))
 
         new_record = cur.fetchone()
@@ -802,10 +806,13 @@ async def get_backtest_results(
             if isinstance(source_count, float) and math.isnan(source_count):
                 source_count = 0
 
+            # 處理 expected_category（舊結果可能有，新結果為 NULL）
+            expected_category = row.get('expected_category', '') or ''
+
             result = {
                 'test_id': int(row['test_id']),
                 'test_question': row['test_question'],
-                'expected_category': row['expected_category'],
+                'expected_category': expected_category,  # 保留用於向後兼容，新結果為空字符串
                 'actual_intent': actual_intent,
                 'system_answer': system_answer,
                 'confidence': float(row['confidence']),
@@ -1024,13 +1031,12 @@ async def get_backtest_run_results(
         if run_info.get('completed_at'):
             run_info['completed_at'] = run_info['completed_at'].isoformat()
 
-        # 建立查詢
+        # 建立查詢（移除已刪除字段：expected_category, category_match, keyword_coverage）
         query = """
             SELECT
                 id,
                 scenario_id,
                 test_question,
-                expected_category,
                 actual_intent,
                 all_intents,
                 system_answer,
@@ -1038,8 +1044,6 @@ async def get_backtest_run_results(
                 score,
                 overall_score,
                 passed,
-                category_match,
-                keyword_coverage,
                 relevance,
                 completeness,
                 accuracy,
@@ -1293,6 +1297,288 @@ async def get_backtest_status():
         "last_run_time": last_run_time,
         "log": log_content
     }
+
+
+# ==================== Category 配置管理 API ====================
+
+class CategoryConfig(BaseModel):
+    """Category 配置模型"""
+    category_value: str
+    display_name: str
+    description: Optional[str] = None
+    display_order: int = 0
+    is_active: bool = True
+
+
+@app.get("/api/category-config")
+async def get_category_config(
+    include_inactive: bool = Query(False, description="是否包含已停用的分類")
+):
+    """
+    取得所有 Category 配置
+
+    Args:
+        include_inactive: 是否包含已停用的分類（預設 false）
+
+    Returns:
+        categories: Category 配置列表
+    """
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    query = """
+        SELECT
+            id, category_value, display_name, description,
+            display_order, is_active, usage_count,
+            created_at, updated_at
+        FROM category_config
+    """
+
+    if not include_inactive:
+        query += " WHERE is_active = true"
+
+    query += " ORDER BY display_order, display_name"
+
+    cur.execute(query)
+    categories = [dict(row) for row in cur.fetchall()]
+
+    cur.close()
+    conn.close()
+
+    return {"categories": categories}
+
+
+@app.post("/api/category-config")
+async def create_category(category: CategoryConfig):
+    """
+    新增 Category 配置
+
+    Args:
+        category: Category 配置資料
+
+    Returns:
+        id: 新建的 Category ID
+        message: 成功訊息
+    """
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        # 檢查 category_value 是否已存在
+        cur.execute(
+            "SELECT id FROM category_config WHERE category_value = %s",
+            (category.category_value,)
+        )
+
+        if cur.fetchone():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Category '{category.category_value}' 已存在"
+            )
+
+        # 插入新 category
+        cur.execute("""
+            INSERT INTO category_config
+            (category_value, display_name, description, display_order, is_active)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id
+        """, (
+            category.category_value,
+            category.display_name,
+            category.description,
+            category.display_order,
+            category.is_active
+        ))
+
+        category_id = cur.fetchone()['id']
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return {
+            "id": category_id,
+            "message": f"Category '{category.display_name}' 已新增"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.put("/api/category-config/{category_id}")
+async def update_category(category_id: int, category: CategoryConfig):
+    """
+    更新 Category 配置
+
+    Args:
+        category_id: Category ID
+        category: 更新的資料
+
+    Returns:
+        message: 成功訊息
+    """
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        # 檢查 category 是否存在
+        cur.execute("SELECT id FROM category_config WHERE id = %s", (category_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Category 不存在")
+
+        # 更新 category
+        cur.execute("""
+            UPDATE category_config
+            SET display_name = %s,
+                description = %s,
+                display_order = %s,
+                is_active = %s,
+                updated_at = NOW()
+            WHERE id = %s
+        """, (
+            category.display_name,
+            category.description,
+            category.display_order,
+            category.is_active,
+            category_id
+        ))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return {"message": f"Category '{category.display_name}' 已更新"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.delete("/api/category-config/{category_id}")
+async def delete_category(category_id: int):
+    """
+    刪除 Category 配置（軟刪除）
+
+    如果該 category 被知識使用中，則只停用不刪除
+
+    Args:
+        category_id: Category ID
+
+    Returns:
+        message: 操作結果訊息
+    """
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        # 檢查 category 是否存在
+        cur.execute(
+            "SELECT category_value FROM category_config WHERE id = %s",
+            (category_id,)
+        )
+
+        category = cur.fetchone()
+        if not category:
+            raise HTTPException(status_code=404, detail="Category 不存在")
+
+        # 檢查是否有知識使用此 category
+        cur.execute(
+            "SELECT COUNT(*) as count FROM knowledge_base WHERE category = %s",
+            (category['category_value'],)
+        )
+
+        usage = cur.fetchone()['count']
+
+        if usage > 0:
+            # 有使用中的知識，只能停用不能刪除
+            cur.execute(
+                "UPDATE category_config SET is_active = false, updated_at = NOW() WHERE id = %s",
+                (category_id,)
+            )
+            message = f"Category 已停用（有 {usage} 筆知識使用中，無法刪除）"
+        else:
+            # 沒有使用，可以真刪除
+            cur.execute("DELETE FROM category_config WHERE id = %s", (category_id,))
+            message = "Category 已刪除"
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return {"message": message, "usage_count": usage}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.post("/api/category-config/sync-usage")
+async def sync_category_usage():
+    """
+    同步 Category 使用次數
+
+    從 knowledge_base 表統計每個 category 的使用次數，並更新到 category_config
+
+    Returns:
+        message: 操作結果
+        updated_count: 更新的 category 數量
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        # 同步使用次數
+        cur.execute("""
+            UPDATE category_config cc
+            SET usage_count = (
+                SELECT COUNT(*)
+                FROM knowledge_base kb
+                WHERE kb.category = cc.category_value
+            ),
+            updated_at = NOW()
+        """)
+
+        updated_rows = cur.rowcount
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return {
+            "message": f"已同步 {updated_rows} 個 Category 的使用次數",
+            "updated_count": updated_rows
+        }
+
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 
 
 if __name__ == "__main__":

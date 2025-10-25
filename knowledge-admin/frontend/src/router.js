@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router';
 import KnowledgeView from './views/KnowledgeView.vue';
 import IntentsView from './views/IntentsView.vue';
 import SuggestedIntentsView from './views/SuggestedIntentsView.vue';
-import BusinessScopeView from './views/BusinessScopeView.vue';
 import KnowledgeReclassifyView from './views/KnowledgeReclassifyView.vue';
 // Phase 1: Multi-Vendor Support
 import VendorManagementView from './views/VendorManagementView.vue';
@@ -22,10 +21,21 @@ import PendingReviewView from './views/PendingReviewView.vue';
 import ReviewCenterView from './views/ReviewCenterView.vue';
 // Cache Management
 import CacheManagementView from './views/CacheManagementView.vue';
+// Audience Config Management
+import AudienceConfigView from './views/AudienceConfigView.vue';
+// Business Types Config Management
+import BusinessTypesConfigView from './views/BusinessTypesConfigView.vue';
+// Category Config Management
+import CategoryConfigView from './views/CategoryConfigView.vue';
 
 const routes = [
   {
     path: '/',
+    name: 'Home',
+    redirect: '/knowledge'
+  },
+  {
+    path: '/knowledge',
     name: 'Knowledge',
     component: KnowledgeView
   },
@@ -38,11 +48,6 @@ const routes = [
     path: '/suggested-intents',
     name: 'SuggestedIntents',
     component: SuggestedIntentsView
-  },
-  {
-    path: '/business-scope',
-    name: 'BusinessScope',
-    component: BusinessScopeView
   },
   {
     path: '/knowledge-reclassify',
@@ -111,6 +116,24 @@ const routes = [
     path: '/cache-management',
     name: 'CacheManagement',
     component: CacheManagementView
+  },
+  // Audience Config Management
+  {
+    path: '/audience-config',
+    name: 'AudienceConfig',
+    component: AudienceConfigView
+  },
+  // Business Types Config Management
+  {
+    path: '/business-types-config',
+    name: 'BusinessTypesConfig',
+    component: BusinessTypesConfigView
+  },
+  // Category Config Management
+  {
+    path: '/category-config',
+    name: 'CategoryConfig',
+    component: CategoryConfigView
   }
 ];
 

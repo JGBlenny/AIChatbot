@@ -2,10 +2,11 @@
 知識庫回測框架
 測試 RAG 系統對測試問題的回答準確度
 
-支援三種品質評估模式：
-- basic: 快速評估（關鍵字、分類、信心度）
-- detailed: LLM 深度品質評估
-- hybrid: 混合模式（推薦）
+支援兩種品質評估模式：
+- detailed: LLM 深度品質評估（推薦，默認）
+- hybrid: 混合模式（結合 LLM 評估與基礎評估）
+
+注意：basic 模式已移除（依賴已刪除的 expected_category 和 expected_keywords 字段）
 """
 
 import os
@@ -29,7 +30,7 @@ class BacktestFramework:
         self,
         base_url: str = "http://localhost:8100",
         vendor_id: int = 1,
-        quality_mode: str = "basic",  # basic, detailed, hybrid
+        quality_mode: str = "detailed",  # detailed (default), hybrid
         use_database: bool = True  # 是否使用資料庫（預設 True）
     ):
         self.base_url = base_url
@@ -48,17 +49,17 @@ class BacktestFramework:
             'database': os.getenv('DB_NAME', 'aichatbot_admin')
         }
 
-        # 如果使用 detailed 或 hybrid 模式，初始化 OpenAI 客戶端
-        if quality_mode in ['detailed', 'hybrid']:
-            api_key = os.getenv("OPENAI_API_KEY")
-            if not api_key:
-                print("⚠️  警告：未設定 OPENAI_API_KEY，將降級為 basic 模式")
-                self.quality_mode = 'basic'
-            else:
-                self.openai_client = OpenAI(api_key=api_key)
-                print(f"✅ 品質評估模式: {quality_mode}")
-        else:
-            print(f"✅ 品質評估模式: basic（快速模式）")
+        # 初始化 OpenAI 客戶端（所有模式都需要）
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError(
+                "❌ 錯誤：未設定 OPENAI_API_KEY 環境變數\n"
+                "新測試框架僅支援 LLM 評估模式（detailed/hybrid）\n"
+                "請設定 OPENAI_API_KEY 後再執行"
+            )
+
+        self.openai_client = OpenAI(api_key=api_key)
+        print(f"✅ 品質評估模式: {quality_mode}")
 
         # 顯示數據源
         if self.use_database:
@@ -103,8 +104,6 @@ class BacktestFramework:
                     SELECT
                         ts.id,
                         ts.test_question,
-                        ts.expected_category,
-                        ts.expected_keywords,
                         ts.difficulty,
                         ts.notes,
                         ts.priority,
@@ -145,8 +144,6 @@ class BacktestFramework:
                     SELECT
                         ts.id,
                         ts.test_question,
-                        ts.expected_category,
-                        ts.expected_keywords,
                         ts.difficulty,
                         ts.notes,
                         ts.priority,
@@ -183,8 +180,6 @@ class BacktestFramework:
                     SELECT
                         ts.id,
                         ts.test_question,
-                        ts.expected_category,
-                        ts.expected_keywords,
                         ts.difficulty,
                         ts.notes,
                         ts.priority,
@@ -210,9 +205,6 @@ class BacktestFramework:
             scenarios = []
             for row in rows:
                 scenario = dict(row)
-                # 轉換關鍵字陣列為逗號分隔字串（與 Excel 格式一致）
-                if scenario.get('expected_keywords') and isinstance(scenario['expected_keywords'], list):
-                    scenario['expected_keywords'] = ', '.join(scenario['expected_keywords'])
                 scenarios.append(scenario)
 
             print(f"   ✅ 載入 {len(scenarios)} 個測試情境")
@@ -271,8 +263,6 @@ class BacktestFramework:
                 SELECT
                     ts.id,
                     ts.test_question,
-                    ts.expected_category,
-                    ts.expected_keywords,
                     ts.difficulty,
                     ts.notes,
                     ts.priority,
@@ -320,9 +310,6 @@ class BacktestFramework:
             scenarios = []
             for row in rows:
                 scenario = dict(row)
-                # 轉換關鍵字陣列為逗號分隔字串（與 Excel 格式一致）
-                if scenario.get('expected_keywords') and isinstance(scenario['expected_keywords'], list):
-                    scenario['expected_keywords'] = ', '.join(scenario['expected_keywords'])
                 scenarios.append(scenario)
 
             print(f"   ✅ 載入 {len(scenarios)} 個測試情境")
@@ -411,7 +398,11 @@ class BacktestFramework:
         test_scenario: Dict,
         system_response: Dict
     ) -> Dict:
-        """評估答案品質"""
+        """基礎評估（僅用於 hybrid 模式）
+
+        注意：新版本移除了對 expected_category 和 expected_keywords 的依賴
+        僅基於信心度進行基礎評估
+        """
 
         if not system_response:
             return {
@@ -429,107 +420,34 @@ class BacktestFramework:
             "optimization_tips": []
         }
 
-        # 1. 檢查分類是否正確（支援多 Intent）
-        expected_category = test_scenario.get('expected_category', '')
-        actual_intent = system_response.get('intent_name', '')
-        all_intents = system_response.get('all_intents')
-
-        # 確保 all_intents 是列表
-        if all_intents is None or not all_intents:
-            all_intents = [actual_intent] if actual_intent else []
-
-        if expected_category:
-            # 檢查預期分類是否在主要意圖或所有相關意圖中
-            # 支援部分匹配（例如「帳務問題」可以匹配「帳務查詢」）
-            def fuzzy_match(expected: str, actual: str) -> bool:
-                """模糊匹配：檢查是否有共同的關鍵字"""
-                # 直接包含關係
-                if expected in actual or actual in expected:
-                    return True
-                # 提取前兩個字做模糊匹配（例如「帳務」）
-                if len(expected) >= 2 and len(actual) >= 2:
-                    if expected[:2] in actual or actual[:2] in expected:
-                        return True
-                return False
-
-            category_match = (
-                fuzzy_match(expected_category, actual_intent) or
-                any(fuzzy_match(expected_category, intent) for intent in all_intents)
-            )
-
-            evaluation['checks']['category_match'] = category_match
-            evaluation['checks']['matched_intents'] = all_intents if category_match else []
-
-            if category_match:
-                evaluation['score'] += 0.3
-                # 如果匹配的是次要意圖，給予提示
-                if expected_category not in actual_intent and actual_intent not in expected_category:
-                    evaluation['optimization_tips'].append(
-                        f"✅ 多意圖匹配: 預期「{expected_category}」在次要意圖中找到\n"
-                        f"   主要意圖: {actual_intent}，所有意圖: {all_intents}"
-                    )
-            else:
-                # 分類不匹配 - 提供優化建議
-                evaluation['optimization_tips'].append(
-                    f"意圖分類不匹配: 預期「{expected_category}」但識別為「{actual_intent}」\n"
-                    f"   所有意圖: {all_intents}\n"
-                    f"💡 建議: 在意圖管理中編輯「{actual_intent}」意圖，添加更多相關關鍵字"
-                )
-
-        # 2. 檢查是否包含預期關鍵字
-        expected_keywords = test_scenario.get('expected_keywords', [])
-        if isinstance(expected_keywords, str):
-            expected_keywords = [k.strip() for k in expected_keywords.split(',') if k.strip()]
-        elif expected_keywords is None:
-            expected_keywords = []
-
-        answer = system_response.get('answer', '')
-        keyword_matches = sum(1 for kw in expected_keywords if kw in answer)
-        keyword_ratio = keyword_matches / len(expected_keywords) if expected_keywords else 0
-
-        evaluation['checks']['keyword_coverage'] = keyword_ratio
-        evaluation['score'] += keyword_ratio * 0.4
-
-        if keyword_ratio < 0.5 and expected_keywords:
-            missing_keywords = [kw for kw in expected_keywords if kw not in answer]
-            evaluation['optimization_tips'].append(
-                f"答案缺少關鍵字: {', '.join(missing_keywords)}\n"
-                f"💡 建議: 在知識庫中補充相關內容，或優化知識的關鍵字"
-            )
-
-        # 3. 檢查信心度
+        # 檢查信心度（100% 權重）
         confidence = system_response.get('confidence', 0)
         evaluation['checks']['confidence'] = confidence
-        if confidence >= 0.7:
-            evaluation['score'] += 0.3
-        elif confidence < 0.5:
+
+        if confidence >= 0.8:
+            evaluation['score'] = 1.0
+        elif confidence >= 0.6:
+            evaluation['score'] = 0.7
+        elif confidence >= 0.4:
+            evaluation['score'] = 0.5
+        else:
+            evaluation['score'] = 0.3
+
+        if confidence < 0.5:
             evaluation['optimization_tips'].append(
-                f"信心度過低 ({confidence:.2f})\n"
+                f"⚠️ 信心度過低 ({confidence:.2f})\n"
                 f"💡 建議: 系統對答案不確定，可能需要新增更相關的知識"
             )
 
-        # 4. 判定是否通過
-        evaluation['passed'] = evaluation['score'] >= 0.6
-
-        # 5. 生成優化建議摘要
-        if not evaluation['passed']:
-            if not evaluation['optimization_tips']:
-                evaluation['optimization_tips'].append(
-                    f"整體得分過低 ({evaluation['score']:.2f}/1.0)\n"
-                    f"💡 建議: 檢查知識庫是否有相關內容，或優化現有知識的描述"
-                )
-        else:
-            if evaluation['optimization_tips']:
-                # 即使通過，如果有優化建議也保留
-                evaluation['optimization_tips'].insert(0, "✅ 測試通過，但仍有優化空間:")
+        # 判定是否通過（基於信心度）
+        evaluation['passed'] = evaluation['score'] >= 0.5
 
         return evaluation
 
     def llm_evaluate_answer(
         self,
         question: str,
-        answer: str,
-        expected_intent: str
+        answer: str
     ) -> Dict:
         """使用 LLM 評估答案品質
 
@@ -546,14 +464,13 @@ class BacktestFramework:
         prompt = f"""請評估以下問答的品質（1-5分，5分最佳）：
 
 問題：{question}
-預期意圖：{expected_intent}
 答案：{answer}
 
 請從以下維度評分：
 1. 相關性 (Relevance): 答案是否直接回答問題？
 2. 完整性 (Completeness): 答案是否完整涵蓋問題所問？
 3. 準確性 (Accuracy): 答案內容是否準確可靠？
-4. 意圖匹配 (Intent Match): 答案是否符合預期意圖？
+4. 意圖理解 (Intent Match): 答案是否正確理解問題意圖並回應？
 
 請以 JSON 格式回覆：
 {{
@@ -616,7 +533,6 @@ class BacktestFramework:
         # 3. 執行 LLM 評估
         question = test_scenario.get('test_question', '')
         answer = system_response.get('answer', '') if system_response else ''
-        expected_intent = test_scenario.get('expected_category', '')
 
         if not answer:
             # 沒有答案，只使用基礎評估
@@ -626,7 +542,7 @@ class BacktestFramework:
                 'passed': basic_eval['passed']
             }
 
-        quality_eval = self.llm_evaluate_answer(question, answer, expected_intent)
+        quality_eval = self.llm_evaluate_answer(question, answer)
 
         # 4. 計算混合評分
         overall_score = self._calculate_hybrid_score(basic_eval, quality_eval)
@@ -810,18 +726,15 @@ class BacktestFramework:
             # 記錄結果
             result = {
                 'test_id': i,
-                'scenario_id': scenario.get('id'),  # 新增：測試情境 ID（用於資料庫）
+                'scenario_id': scenario.get('id'),  # 測試情境 ID（用於資料庫）
                 'test_question': question,
-                'expected_category': scenario.get('expected_category', ''),
                 'actual_intent': system_response.get('intent_name', '') if system_response else '',
                 'all_intents': system_response.get('all_intents', []) if system_response else [],
                 'system_answer': system_response.get('answer', '')[:200] if system_response else '',
                 'confidence': system_response.get('confidence', 0) if system_response else 0,
                 'score': evaluation['score'],
-                'overall_score': overall_score,  # 新增：混合評分
+                'overall_score': overall_score,  # 混合評分
                 'passed': passed,  # 使用混合判定
-                'category_match': evaluation['checks'].get('category_match', False),
-                'keyword_coverage': evaluation['checks'].get('keyword_coverage', 0.0),
                 'evaluation': json.dumps(evaluation['checks'], ensure_ascii=False),
                 'optimization_tips': '\n'.join(evaluation.get('optimization_tips', [])) if isinstance(evaluation.get('optimization_tips'), list) else evaluation.get('optimization_tips', ''),
                 'knowledge_sources': source_summary,
@@ -1005,12 +918,14 @@ class BacktestFramework:
             if failed:
                 for r in failed[:10]:  # 只顯示前 10 個
                     f.write(f"\n問題：{r['test_question']}\n")
-                    f.write(f"預期分類：{r['expected_category']}\n")
                     f.write(f"實際意圖：{r['actual_intent']}\n")
-                    f.write(f"分數：{r['score']:.2f}\n")
+                    f.write(f"基礎分數：{r['score']:.2f}\n")
+                    if r.get('overall_score') and r['overall_score'] != r['score']:
+                        f.write(f"綜合評分：{r['overall_score']:.2f}\n")
+                    f.write(f"信心度：{r.get('confidence', 0):.2f}\n")
                     f.write(f"知識來源：{r.get('knowledge_sources', '無')}\n")
                     f.write(f"來源IDs：{r.get('source_ids', '無')}\n")
-                    # 新增：知識庫直接鏈接
+                    # 知識庫直接鏈接
                     knowledge_links = r.get('knowledge_links', '無')
                     if knowledge_links and knowledge_links != '無':
                         f.write(f"知識庫鏈接：\n{knowledge_links}\n")
@@ -1131,23 +1046,21 @@ class BacktestFramework:
 
                 cur.execute("""
                     INSERT INTO backtest_results (
-                        run_id, scenario_id, test_question, expected_category,
+                        run_id, scenario_id, test_question,
                         actual_intent, all_intents, system_answer, confidence,
                         score, overall_score, passed,
-                        category_match, keyword_coverage,
                         relevance, completeness, accuracy, intent_match,
                         quality_overall, quality_reasoning,
                         source_ids, source_count, knowledge_sources, optimization_tips,
                         evaluation
                     ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                     )
                 """, (
                     run_id,
                     result.get('scenario_id'),
                     result['test_question'],
-                    result.get('expected_category'),
                     result.get('actual_intent'),
                     all_intents,
                     result.get('system_answer'),
@@ -1155,8 +1068,6 @@ class BacktestFramework:
                     result.get('score', 0),
                     result.get('overall_score', result.get('score', 0)),
                     result.get('passed', False),
-                    result.get('category_match', False),
-                    result.get('keyword_coverage', 0.0),
                     result.get('relevance'),
                     result.get('completeness'),
                     result.get('accuracy'),
@@ -1199,7 +1110,7 @@ def main():
     # 配置
     base_url = os.getenv("RAG_API_URL", "http://localhost:8100")
     vendor_id = int(os.getenv("VENDOR_ID", "1"))
-    quality_mode = os.getenv("BACKTEST_QUALITY_MODE", "basic")  # basic, detailed, hybrid
+    quality_mode = os.getenv("BACKTEST_QUALITY_MODE", "detailed")  # detailed (default), hybrid
 
     # 資料庫模式控制（預設啟用）
     use_database = os.getenv("BACKTEST_USE_DATABASE", "true").lower() == "true"

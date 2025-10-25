@@ -55,21 +55,11 @@ def create_test_scenarios():
             for idx, row in enumerate(results, 1):
                 kb_id, question, category, audience, keywords, intent_name = row
 
-                # 處理關鍵字
-                keyword_str = category
-                if keywords:
-                    if isinstance(keywords, list):
-                        keyword_str = ','.join(keywords[:3])  # 取前3個關鍵字
-                    else:
-                        keyword_str = str(keywords)
-
                 test_scenarios.append({
                     'test_id': idx,
                     'test_question': question,
-                    'expected_category': intent_name,
-                    'expected_keywords': keyword_str,
                     'difficulty': 'medium',
-                    'notes': f'來自知識庫 ID: {kb_id}, 對象: {audience}'
+                    'notes': f'來自知識庫 ID: {kb_id}, 意圖: {intent_name}, 對象: {audience}'
                 })
 
         # 如果沒有足夠的數據，添加示例測試場景
@@ -79,66 +69,50 @@ def create_test_scenarios():
                 {
                     'test_id': len(test_scenarios) + 1,
                     'test_question': '租金如何計算？',
-                    'expected_category': '帳務問題',
-                    'expected_keywords': '租金,計算,費用',
                     'difficulty': 'easy',
-                    'notes': '示例測試 - 租金計算'
+                    'notes': '示例測試 - 租金計算問題'
                 },
                 {
                     'test_id': len(test_scenarios) + 2,
                     'test_question': '如何申請退租？',
-                    'expected_category': '合約問題',
-                    'expected_keywords': '退租,申請,流程',
                     'difficulty': 'medium',
-                    'notes': '示例測試 - 退租流程'
+                    'notes': '示例測試 - 退租流程問題'
                 },
                 {
                     'test_id': len(test_scenarios) + 3,
                     'test_question': '水電費誰負責？',
-                    'expected_category': '帳務問題',
-                    'expected_keywords': '水電費,費用,責任',
                     'difficulty': 'easy',
-                    'notes': '示例測試 - 費用問題'
+                    'notes': '示例測試 - 費用責任問題'
                 },
                 {
                     'test_id': len(test_scenarios) + 4,
                     'test_question': '合約到期後怎麼辦？',
-                    'expected_category': '合約問題',
-                    'expected_keywords': '合約,到期,續約',
                     'difficulty': 'medium',
-                    'notes': '示例測試 - 合約到期'
+                    'notes': '示例測試 - 合約到期問題'
                 },
                 {
                     'test_id': len(test_scenarios) + 5,
                     'test_question': '房屋設備損壞如何報修？',
-                    'expected_category': '物件問題',
-                    'expected_keywords': '設備,損壞,報修',
                     'difficulty': 'medium',
-                    'notes': '示例測試 - 設備報修'
+                    'notes': '示例測試 - 設備報修問題'
                 },
                 {
                     'test_id': len(test_scenarios) + 6,
                     'test_question': '如何聯繫管理師？',
-                    'expected_category': '操作問題',
-                    'expected_keywords': '管理師,聯繫,客服',
                     'difficulty': 'easy',
-                    'notes': '示例測試 - 聯繫方式'
+                    'notes': '示例測試 - 聯繫管理師問題'
                 },
                 {
                     'test_id': len(test_scenarios) + 7,
                     'test_question': '忘記密碼怎麼辦？',
-                    'expected_category': '帳號問題',
-                    'expected_keywords': '密碼,忘記,重設',
                     'difficulty': 'easy',
-                    'notes': '示例測試 - 密碼重設'
+                    'notes': '示例測試 - 密碼重設問題'
                 },
                 {
                     'test_id': len(test_scenarios) + 8,
                     'test_question': 'IOT 設備如何使用？',
-                    'expected_category': 'IOT設備問題',
-                    'expected_keywords': 'IOT,設備,使用',
                     'difficulty': 'medium',
-                    'notes': '示例測試 - IOT 使用'
+                    'notes': '示例測試 - IOT 設備使用問題'
                 }
             ]
             test_scenarios.extend(example_scenarios)
@@ -158,9 +132,9 @@ def create_test_scenarios():
         print("="*60)
         for _, row in df.head(10).iterrows():
             print(f"\n[測試 {row['test_id']}] {row['test_question']}")
-            print(f"  預期分類: {row['expected_category']}")
-            print(f"  關鍵字: {row['expected_keywords']}")
             print(f"  難度: {row['difficulty']}")
+            if row.get('notes'):
+                print(f"  備註: {row['notes']}")
 
         if len(df) > 10:
             print(f"\n... 還有 {len(df) - 10} 個測試場景")

@@ -41,11 +41,6 @@
 
           <div class="info-grid">
             <div class="info-item">
-              <label>預期分類：</label>
-              <span>{{ scenario.expected_category || '-' }}</span>
-            </div>
-
-            <div class="info-item">
               <label>難度：</label>
               <span :class="['badge', 'badge-' + scenario.difficulty]">
                 {{ scenario.difficulty }}
@@ -54,24 +49,15 @@
 
             <div class="info-item">
               <label>優先級：</label>
-              <span>{{ scenario.priority }}</span>
+              <span :class="['badge', priorityBadgeClass(scenario.priority)]">
+                {{ priorityLabel(scenario.priority) }}
+              </span>
             </div>
 
             <div class="info-item" v-if="scenario.question_frequency">
               <label>問題頻率：</label>
               <span class="frequency-badge">{{ scenario.question_frequency }} 次</span>
             </div>
-          </div>
-
-          <div v-if="scenario.expected_keywords && scenario.expected_keywords.length > 0" class="keywords-section">
-            <label>預期關鍵字：</label>
-            <span
-              v-for="(keyword, idx) in scenario.expected_keywords"
-              :key="idx"
-              class="keyword-tag"
-            >
-              {{ keyword }}
-            </span>
           </div>
 
           <div v-if="scenario.notes" class="notes-section">
@@ -161,11 +147,6 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label>預期分類</label>
-              <input v-model="editForm.expected_category" />
-            </div>
-
-            <div class="form-group">
               <label>難度 *</label>
               <select v-model="editForm.difficulty" required>
                 <option value="easy">Easy</option>
@@ -173,24 +154,15 @@
                 <option value="hard">Hard</option>
               </select>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label>預期關鍵字（逗號分隔）</label>
-            <input
-              v-model="editForm.expected_keywords"
-              placeholder="關鍵字1, 關鍵字2"
-            />
-          </div>
-
-          <div class="form-group">
-            <label>優先級（1-100）</label>
-            <input
-              v-model.number="editForm.priority"
-              type="number"
-              min="1"
-              max="100"
-            />
+            <div class="form-group">
+              <label>優先級 *</label>
+              <select v-model.number="editForm.priority" required>
+                <option :value="30">低優先級（30）</option>
+                <option :value="50">中等優先級（50）</option>
+                <option :value="80">高優先級（80）</option>
+              </select>
+            </div>
           </div>
 
           <div class="form-group">
@@ -234,8 +206,6 @@ export default {
       editingScenario: null,
       editForm: {
         test_question: '',
-        expected_category: '',
-        expected_keywords: '',
         difficulty: 'medium',
         priority: 50,
         notes: ''
@@ -310,10 +280,8 @@ export default {
       this.editingScenario = scenario;
       this.editForm = {
         test_question: scenario.test_question,
-        expected_category: scenario.expected_category || '',
-        expected_keywords: scenario.expected_keywords?.join(', ') || '',
         difficulty: scenario.difficulty,
-        priority: scenario.priority,
+        priority: scenario.priority || 50,
         notes: scenario.notes || ''
       };
     },
@@ -321,11 +289,7 @@ export default {
     async saveEdit() {
       try {
         const data = {
-          ...this.editForm,
-          expected_keywords: this.editForm.expected_keywords
-            .split(',')
-            .map(k => k.trim())
-            .filter(k => k)
+          ...this.editForm
         };
 
         await axios.put(`/api/test/scenarios/${this.editingScenario.id}`, data);
@@ -352,6 +316,24 @@ export default {
       if (!dateString) return '-';
       const date = new Date(dateString);
       return date.toLocaleString('zh-TW');
+    },
+
+    priorityLabel(priority) {
+      const labels = {
+        30: '低',
+        50: '中',
+        80: '高'
+      };
+      return labels[priority] || priority;
+    },
+
+    priorityBadgeClass(priority) {
+      const classes = {
+        30: 'badge-easy',      // Green
+        50: 'badge-medium',    // Yellow
+        80: 'badge-hard'       // Red
+      };
+      return classes[priority] || 'badge-medium';
     }
   }
 };

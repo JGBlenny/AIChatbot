@@ -20,17 +20,86 @@
           ✕
         </button>
       </div>
-      <select v-model="selectedCategory" @change="loadKnowledge" :disabled="isIdSearch">
-        <option value="">全部分類</option>
-        <option v-for="cat in categories" :key="cat">{{ cat }}</option>
-      </select>
-      <button @click="showCreateModal" class="btn-primary">
-        ➕ 新增知識
+      <button @click="showCreateModal" class="btn-primary btn-sm">
+        新增知識
       </button>
     </div>
 
+    <!-- 知識列表 -->
+    <div v-if="loading" class="loading">
+      <p>載入中...</p>
+    </div>
+
+    <div v-else-if="knowledgeList.length === 0" class="empty-state">
+      <p>沒有找到知識</p>
+      <button @click="showCreateModal" class="btn-primary btn-sm" style="margin-top: 20px;">
+        新增第一筆知識
+      </button>
+    </div>
+
+    <div v-else class="knowledge-list">
+      <table>
+        <thead>
+          <tr>
+            <th width="60">ID</th>
+            <th>標題</th>
+            <th width="120">分類</th>
+            <th width="120">意圖</th>
+            <th width="100">對象</th>
+            <th width="120">業態類型</th>
+            <th width="180">更新時間</th>
+            <th width="150">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in knowledgeList" :key="item.id">
+            <td>{{ item.id }}</td>
+            <td>{{ item.title || item.question_summary || '(無標題)' }}</td>
+            <td><span class="badge">{{ item.category }}</span></td>
+            <td>
+              <div v-if="item.intent_mappings && item.intent_mappings.length > 0" class="intent-badges">
+                <span
+                  v-for="mapping in item.intent_mappings"
+                  :key="mapping.intent_id"
+                  :class="['badge', 'badge-intent', mapping.intent_type === 'primary' ? 'badge-primary' : 'badge-secondary']"
+                  :title="`${mapping.intent_type === 'primary' ? '主要' : '次要'}意圖`"
+                >
+                  {{ mapping.intent_name }}
+                  <sup v-if="mapping.intent_type === 'primary'">★</sup>
+                </span>
+              </div>
+              <span v-else class="badge badge-unclassified">未分類</span>
+            </td>
+            <td>{{ item.audience }}</td>
+            <td>
+              <div v-if="item.business_types && item.business_types.length > 0" class="business-types-badges">
+                <span
+                  v-for="btype in item.business_types"
+                  :key="btype"
+                  class="badge badge-btype"
+                  :class="'type-' + getBusinessTypeColor(btype)"
+                >
+                  {{ getBusinessTypeDisplay(btype) }}
+                </span>
+              </div>
+              <span v-else class="badge badge-universal">通用</span>
+            </td>
+            <td>{{ formatDate(item.updated_at) }}</td>
+            <td>
+              <button @click="editKnowledge(item)" class="btn-edit btn-sm">
+                編輯
+              </button>
+              <button @click="deleteKnowledge(item.id)" class="btn-delete btn-sm">
+                刪除
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- 統計資訊和分頁控制 -->
-    <div v-if="stats" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+    <div v-if="stats && knowledgeList.length > 0" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
       <div style="color: #606266;">
         總計 {{ pagination.total }} 筆知識，顯示第 {{ pagination.offset + 1 }} - {{ Math.min(pagination.offset + pagination.limit, pagination.total) }} 筆
       </div>
@@ -60,65 +129,6 @@
       </div>
     </div>
 
-    <!-- 知識列表 -->
-    <div v-if="loading" class="loading">
-      <p>載入中...</p>
-    </div>
-
-    <div v-else-if="knowledgeList.length === 0" class="empty-state">
-      <p>沒有找到知識</p>
-      <button @click="showCreateModal" class="btn-primary" style="margin-top: 20px;">
-        新增第一筆知識
-      </button>
-    </div>
-
-    <div v-else class="knowledge-list">
-      <table>
-        <thead>
-          <tr>
-            <th width="60">ID</th>
-            <th>標題</th>
-            <th width="120">分類</th>
-            <th width="120">意圖</th>
-            <th width="100">對象</th>
-            <th width="180">更新時間</th>
-            <th width="150">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in knowledgeList" :key="item.id">
-            <td>{{ item.id }}</td>
-            <td>{{ item.title || item.question_summary || '(無標題)' }}</td>
-            <td><span class="badge">{{ item.category }}</span></td>
-            <td>
-              <div v-if="item.intent_mappings && item.intent_mappings.length > 0" class="intent-badges">
-                <span
-                  v-for="mapping in item.intent_mappings"
-                  :key="mapping.intent_id"
-                  :class="['badge', 'badge-intent', mapping.intent_type === 'primary' ? 'badge-primary' : 'badge-secondary']"
-                  :title="`${mapping.intent_type === 'primary' ? '主要' : '次要'}意圖`"
-                >
-                  {{ mapping.intent_name }}
-                  <sup v-if="mapping.intent_type === 'primary'">★</sup>
-                </span>
-              </div>
-              <span v-else class="badge badge-unclassified">未分類</span>
-            </td>
-            <td>{{ item.audience }}</td>
-            <td>{{ formatDate(item.updated_at) }}</td>
-            <td>
-              <button @click="editKnowledge(item)" class="btn-edit">
-                ✏️ 編輯
-              </button>
-              <button @click="deleteKnowledge(item.id)" class="btn-delete">
-                🗑️
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
     <!-- 編輯/新增 Modal -->
     <div v-if="showModal" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
@@ -135,13 +145,13 @@
               <label>分類 *</label>
               <select v-model="formData.category" required>
                 <option value="">請選擇</option>
-                <option>帳務問題</option>
-                <option>合約問題</option>
-                <option>物件問題</option>
-                <option>帳號問題</option>
-                <option>IOT設備問題</option>
-                <option>操作問題</option>
-                <option>其他</option>
+                <option
+                  v-for="cat in categories"
+                  :key="cat.category_value"
+                  :value="cat.category_value"
+                >
+                  {{ cat.display_name }}
+                </option>
               </select>
             </div>
 
@@ -149,23 +159,56 @@
               <label>對象 *</label>
               <select v-model="formData.audience" required @change="onAudienceChange">
                 <option value="">請選擇</option>
-                <optgroup label="🏠 B2C - 終端用戶（External）">
-                  <option value="租客">租客</option>
-                  <option value="房東">房東</option>
-                  <option value="租客|管理師">租客|管理師</option>
-                  <option value="房東|租客">房東|租客</option>
-                  <option value="房東|租客|管理師">房東|租客|管理師</option>
+                <optgroup label="🏠 B2C - 終端用戶（External）" v-if="availableAudiences.external.length > 0">
+                  <option
+                    v-for="aud in availableAudiences.external"
+                    :key="aud.audience_value"
+                    :value="aud.audience_value"
+                  >
+                    {{ aud.display_name }}
+                  </option>
                 </optgroup>
-                <optgroup label="🏢 B2B - 內部管理（Internal）">
-                  <option value="管理師">管理師</option>
-                  <option value="系統管理員">系統管理員</option>
-                  <option value="房東/管理師">房東/管理師</option>
+                <optgroup label="🏢 B2B - 內部管理（Internal）" v-if="availableAudiences.internal.length > 0">
+                  <option
+                    v-for="aud in availableAudiences.internal"
+                    :key="aud.audience_value"
+                    :value="aud.audience_value"
+                  >
+                    {{ aud.display_name }}
+                  </option>
                 </optgroup>
-                <optgroup label="📌 通用">
-                  <option value="general">所有人（通用）</option>
+                <optgroup label="📌 通用" v-if="availableAudiences.both.length > 0">
+                  <option
+                    v-for="aud in availableAudiences.both"
+                    :key="aud.audience_value"
+                    :value="aud.audience_value"
+                  >
+                    {{ aud.display_name }}
+                  </option>
                 </optgroup>
               </select>
               <small class="audience-hint">💡 {{ audienceHint }}</small>
+            </div>
+          </div>
+
+          <!-- 業態類型選擇 -->
+          <div class="form-group">
+            <label>業態類型（可選擇多個，未選擇=通用）</label>
+            <div class="business-type-selector">
+              <div v-for="btype in availableBusinessTypes" :key="btype.type_value" class="btype-checkbox">
+                <label>
+                  <input
+                    type="checkbox"
+                    :value="btype.type_value"
+                    v-model="selectedBusinessTypes"
+                  />
+                  <span class="btype-icon" v-if="btype.icon">{{ btype.icon }}</span>
+                  {{ btype.display_name }}
+                  <small v-if="btype.description" class="btype-desc">{{ btype.description }}</small>
+                </label>
+              </div>
+              <p v-if="selectedBusinessTypes.length === 0" class="hint-text">💡 未選擇業態=通用知識（適用所有業態）</p>
+              <p v-else class="hint-text">✅ 僅適用於：{{ selectedBusinessTypes.map(v => getBusinessTypeDisplay(v)).join('、') }}</p>
             </div>
           </div>
 
@@ -225,11 +268,11 @@
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn-primary" :disabled="saving">
-              {{ saving ? '⏳ 儲存中...' : '💾 儲存並更新向量' }}
+            <button type="submit" class="btn-primary btn-sm" :disabled="saving">
+              {{ saving ? '儲存中...' : '儲存並更新向量' }}
             </button>
-            <button type="button" @click="closeModal" class="btn-secondary">
-              ❌ 取消
+            <button type="button" @click="closeModal" class="btn-secondary btn-sm">
+              取消
             </button>
           </div>
         </form>
@@ -249,10 +292,14 @@ export default {
   data() {
     return {
       knowledgeList: [],
-      categories: [],
       availableIntents: [],
+      availableAudiences: {
+        external: [],
+        internal: [],
+        both: []
+      },
+      availableBusinessTypes: [],
       searchQuery: '',
-      selectedCategory: '',
       showModal: false,
       editingItem: null,
       saving: false,
@@ -270,11 +317,13 @@ export default {
         content: '',
         keywords: [],
         question_summary: '',
-        intent_mappings: []
+        intent_mappings: [],
+        business_types: []
       },
       keywordsString: '',
       selectedIntents: [],
       intentTypes: {},
+      selectedBusinessTypes: [],
       searchTimeout: null,
       isIdSearch: false,
       targetIds: [],
@@ -314,11 +363,36 @@ export default {
     }
 
     this.loadKnowledge();
-    this.loadCategories();
     this.loadIntents();
+    this.loadAudiences();
+    this.loadBusinessTypes();
     this.loadStats();
   },
   methods: {
+    async loadBusinessTypes() {
+      try {
+        const response = await axios.get('/rag-api/v1/business-types-config');
+        this.availableBusinessTypes = response.data.business_types || [];
+      } catch (error) {
+        console.error('載入業態類型失敗', error);
+        // Fallback
+        this.availableBusinessTypes = [
+          { type_value: 'system_provider', display_name: '系統商', icon: '🖥️' },
+          { type_value: 'full_service', display_name: '包租型', icon: '🏠' },
+          { type_value: 'property_management', display_name: '代管型', icon: '🔑' }
+        ];
+      }
+    },
+
+
+    getBusinessTypeDisplay(typeValue) {
+      const btype = this.availableBusinessTypes.find(b => b.type_value === typeValue);
+      return btype ? btype.display_name : typeValue;
+    },
+    getBusinessTypeColor(typeValue) {
+      const btype = this.availableBusinessTypes.find(b => b.type_value === typeValue);
+      return btype && btype.color ? btype.color : 'gray';
+    },
     onAudienceChange() {
       // 根據選擇的 audience 更新提示文字
       const audienceHints = {
@@ -345,10 +419,32 @@ export default {
       }
     },
 
+    async loadAudiences() {
+      try {
+        const response = await axios.get('/rag-api/v1/audience-config/grouped');
+        this.availableAudiences = response.data;
+      } catch (error) {
+        console.error('載入受眾選項失敗', error);
+        // 如果載入失敗，使用預設選項（fallback）
+        this.availableAudiences = {
+          external: [
+            { audience_value: '租客', display_name: '租客', description: 'B2C - 租客專用知識' },
+            { audience_value: '房東', display_name: '房東', description: 'B2C - 房東專用知識' }
+          ],
+          internal: [
+            { audience_value: '管理師', display_name: '管理師', description: 'B2B - 管理師專用知識' }
+          ],
+          both: [
+            { audience_value: 'general', display_name: '所有人（通用）', description: '所有業務範圍都可見' }
+          ]
+        };
+      }
+    },
+
     updateIntentType(intentId) {
       // 當意圖被選中時，如果沒有設定類型，預設為 primary
       if (this.selectedIntents.includes(intentId) && !this.intentTypes[intentId]) {
-        this.$set(this.intentTypes, intentId, this.selectedIntents.length === 1 ? 'primary' : 'secondary');
+        this.intentTypes[intentId] = this.selectedIntents.length === 1 ? 'primary' : 'secondary';
       }
       // 如果取消選中，移除類型設定
       if (!this.selectedIntents.includes(intentId)) {
@@ -380,7 +476,6 @@ export default {
             limit: this.pagination.limit,
             offset: this.pagination.offset
           };
-          if (this.selectedCategory) params.category = this.selectedCategory;
           if (this.searchQuery && !this.isIdSearch) params.search = this.searchQuery;
 
           const response = await axios.get(`${API_BASE}/knowledge`, { params });
@@ -414,15 +509,6 @@ export default {
       this.loadKnowledge();
     },
 
-    async loadCategories() {
-      try {
-        const response = await axios.get(`${API_BASE}/categories`);
-        this.categories = response.data.categories;
-      } catch (error) {
-        console.error('載入分類失敗', error);
-      }
-    },
-
     async loadStats() {
       try {
         const response = await axios.get(`${API_BASE}/stats`);
@@ -448,11 +534,13 @@ export default {
         content: '',
         keywords: [],
         question_summary: '',
-        intent_mappings: []
+        intent_mappings: [],
+        business_types: []
       };
       this.keywordsString = '';
       this.selectedIntents = [];
       this.intentTypes = {};
+      this.selectedBusinessTypes = [];
       this.showModal = true;
     },
 
@@ -471,7 +559,8 @@ export default {
           content: knowledge.content || '',
           keywords: knowledge.keywords || [],
           question_summary: knowledge.question_summary || '',
-          intent_mappings: knowledge.intent_mappings || []
+          intent_mappings: knowledge.intent_mappings || [],
+          business_types: knowledge.business_types || []
         };
 
         this.keywordsString = (knowledge.keywords || []).join(', ');
@@ -481,6 +570,16 @@ export default {
         this.intentTypes = {};
         (knowledge.intent_mappings || []).forEach(m => {
           this.intentTypes[m.intent_id] = m.intent_type;
+        });
+
+        // 設定已選擇的業態類型
+        this.selectedBusinessTypes = knowledge.business_types || [];
+
+        console.log('📖 載入的知識資料:', {
+          id: knowledge.id,
+          title: knowledge.title,
+          business_types: knowledge.business_types,
+          selectedBusinessTypes: this.selectedBusinessTypes
         });
 
         // 更新 audience 提示
@@ -509,6 +608,17 @@ export default {
           intent_type: this.intentTypes[intentId] || 'secondary',
           confidence: 1.0
         }));
+
+        // 處理業態類型（空陣列或 null 表示通用）
+        this.formData.business_types = this.selectedBusinessTypes.length > 0
+          ? this.selectedBusinessTypes
+          : null;
+
+        console.log('📝 準備儲存的資料:', {
+          title: this.formData.title,
+          business_types: this.formData.business_types,
+          selectedBusinessTypes: this.selectedBusinessTypes
+        });
 
         if (this.editingItem) {
           // 更新
@@ -747,5 +857,94 @@ export default {
   background: #ecf5ff;
   border-radius: 4px;
   border-left: 3px solid #409EFF;
+}
+
+/* 業態類型選擇器樣式 */
+.business-type-selector {
+  background: #f5f7fa;
+  padding: 15px;
+  border-radius: 6px;
+}
+
+.btype-checkbox {
+  margin: 8px 0;
+  padding: 10px;
+  background: white;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.btype-checkbox:hover {
+  background: #ecf5ff;
+}
+
+.btype-checkbox label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  gap: 8px;
+}
+
+.btype-checkbox input[type="checkbox"] {
+  margin-right: 5px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.btype-icon {
+  font-size: 18px;
+}
+
+.btype-desc {
+  display: block;
+  color: #909399;
+  font-size: 12px;
+  margin-left: 30px;
+  margin-top: 4px;
+}
+
+/* 業態類型徽章樣式 */
+.business-types-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.badge-universal {
+  background: #909399 !important;
+  color: white !important;
+  font-style: italic;
+}
+
+/* 業態類型顏色樣式 */
+.type-blue {
+  background: #409eff !important;
+  color: white !important;
+}
+.type-green {
+  background: #67c23a !important;
+  color: white !important;
+}
+.type-orange {
+  background: #e6a23c !important;
+  color: white !important;
+}
+.type-red {
+  background: #f56c6c !important;
+  color: white !important;
+}
+.type-purple {
+  background: #9b59b6 !important;
+  color: white !important;
+}
+.type-teal {
+  background: #20c997 !important;
+  color: white !important;
+}
+.type-gray {
+  background: #909399 !important;
+  color: white !important;
 }
 </style>

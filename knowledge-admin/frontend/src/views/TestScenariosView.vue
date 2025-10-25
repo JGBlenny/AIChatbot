@@ -27,7 +27,6 @@
       <div class="filter-group">
         <label>狀態：</label>
         <select v-model="filters.status" @change="loadScenarios">
-          <option value="">全部狀態</option>
           <option value="approved">已批准</option>
           <option value="pending_review">待審核</option>
           <option value="draft">草稿</option>
@@ -72,23 +71,27 @@
         <thead>
           <tr>
             <th width="5%">ID</th>
-            <th width="25%">測試問題</th>
-            <th width="15%">預期分類</th>
+            <th width="30%">測試問題</th>
             <th width="8%">難度</th>
+            <th width="8%">優先級</th>
             <th width="8%">狀態</th>
             <th width="10%">知識狀態</th>
             <th width="12%">統計</th>
-            <th width="17%">操作</th>
+            <th width="19%">操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="scenario in scenarios" :key="scenario.id">
             <td>{{ scenario.id }}</td>
             <td class="question-cell">{{ scenario.test_question }}</td>
-            <td>{{ scenario.expected_category || '-' }}</td>
             <td>
               <span :class="['badge', 'badge-' + scenario.difficulty]">
                 {{ scenario.difficulty }}
+              </span>
+            </td>
+            <td>
+              <span :class="['badge', priorityBadgeClass(scenario.priority)]">
+                {{ priorityLabels[scenario.priority] }}
               </span>
             </td>
             <td>
@@ -189,14 +192,6 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label>預期分類</label>
-              <input
-                v-model="formData.expected_category"
-                placeholder="例如：帳務問題"
-              />
-            </div>
-
-            <div class="form-group">
               <label>難度 *</label>
               <select v-model="formData.difficulty" required>
                 <option value="easy">Easy</option>
@@ -204,32 +199,23 @@
                 <option value="hard">Hard</option>
               </select>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label>預期關鍵字（逗號分隔）</label>
-            <input
-              v-model="formData.expected_keywords"
-              placeholder="關鍵字1, 關鍵字2, 關鍵字3"
-            />
-          </div>
-
-          <div class="form-group">
-            <label>優先級（1-100）</label>
-            <input
-              v-model.number="formData.priority"
-              type="number"
-              min="1"
-              max="100"
-              placeholder="50"
-            />
+            <div class="form-group">
+              <label>優先級 *</label>
+              <select v-model.number="formData.priority" required>
+                <option :value="30">低優先級（30）</option>
+                <option :value="50">中等優先級（50）</option>
+                <option :value="80">高優先級（80）</option>
+              </select>
+              <small class="hint">優先級影響測試執行順序</small>
+            </div>
           </div>
 
           <div class="form-group">
             <label>備註</label>
             <textarea
               v-model="formData.notes"
-              rows="2"
+              rows="3"
               placeholder="其他說明..."
             ></textarea>
           </div>
@@ -265,7 +251,7 @@ export default {
 
       filters: {
         difficulty: '',
-        status: '',
+        status: 'approved',
         search: ''
       },
 
@@ -275,8 +261,6 @@ export default {
 
       formData: {
         test_question: '',
-        expected_category: '',
-        expected_keywords: '',
         difficulty: 'medium',
         priority: 50,
         notes: ''
@@ -287,6 +271,12 @@ export default {
         'approved': '已批准',
         'rejected': '已拒絕',
         'draft': '草稿'
+      },
+
+      priorityLabels: {
+        30: '低',
+        50: '中',
+        80: '高'
       }
     };
   },
@@ -347,23 +337,28 @@ export default {
       this.editingScenario = scenario;
       this.formData = {
         test_question: scenario.test_question,
-        expected_category: scenario.expected_category || '',
-        expected_keywords: scenario.expected_keywords?.join(', ') || '',
         difficulty: scenario.difficulty,
-        priority: scenario.priority,
+        priority: scenario.priority || 50,
         notes: scenario.notes || ''
       };
+    },
+
+    priorityBadgeClass(priority) {
+      const classes = {
+        30: 'badge-info',
+        50: 'badge-active',
+        80: 'badge-count'
+      };
+      return classes[priority] || 'badge-active';
     },
 
     async saveScenario() {
       try {
         const data = {
-          ...this.formData,
-          expected_keywords: this.formData.expected_keywords
-            .split(',')
-            .map(k => k.trim())
-            .filter(k => k),
-          status: this.editingScenario ? this.editingScenario.status : 'approved'
+          test_question: this.formData.test_question,
+          difficulty: this.formData.difficulty,
+          priority: this.formData.priority,
+          notes: this.formData.notes
         };
 
         if (this.editingScenario) {
@@ -464,8 +459,6 @@ export default {
       this.editingScenario = null;
       this.formData = {
         test_question: '',
-        expected_category: '',
-        expected_keywords: '',
         difficulty: 'medium',
         priority: 50,
         notes: ''
@@ -650,20 +643,7 @@ td {
   white-space: nowrap;
 }
 
-.btn-sm {
-  padding: 4px 8px;
-  margin: 0 2px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 16px;
-  transition: transform 0.2s;
-}
-
-.btn-sm:hover {
-  transform: scale(1.2);
-}
-
+/* 頁面專用按鈕樣式 */
 .btn-ai {
   color: #667eea;
 }
@@ -680,42 +660,6 @@ td {
 
 .btn-pending:hover {
   transform: none;
-}
-
-/* 按鈕樣式 */
-.btn-primary, .btn-secondary {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-primary {
-  background: #667eea;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #5568d3;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-secondary {
-  background: #e9ecef;
-  color: #495057;
-}
-
-.btn-secondary:hover {
-  background: #dee2e6;
-}
-
-.btn-secondary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* 空狀態 */

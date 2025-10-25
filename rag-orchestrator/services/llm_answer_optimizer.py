@@ -3,13 +3,22 @@ LLM 答案優化服務
 使用 GPT 模型優化 RAG 檢索結果，生成更自然、更精準的答案
 Phase 1 擴展：支援業者參數動態注入
 Phase 3 擴展：條件式優化（快速路徑 + 模板格式化）
+Phase 4 擴展：業態語氣配置從資料庫動態載入
 """
 import os
 import re
 from typing import List, Dict, Optional
 from openai import OpenAI
 import time
+import psycopg2
+import psycopg2.extras
 from .answer_formatter import AnswerFormatter
+from .db_utils import get_db_config
+
+# 業態語氣配置快取（避免頻繁查詢資料庫）
+_TONE_CONFIG_CACHE: Optional[Dict[str, Dict]] = None
+_TONE_CACHE_TIMESTAMP: Optional[float] = None
+_TONE_CACHE_TTL = 300  # 5 分鐘快取
 
 
 class LLMAnswerOptimizer:
@@ -65,6 +74,77 @@ class LLMAnswerOptimizer:
             self.config = {**default_config, **config}
         else:
             self.config = default_config
+
+    @staticmethod
+    def _load_tone_configs_from_db() -> Dict[str, str]:
+        """
+        從資料庫載入業態語氣配置（簡化版：只載入 tone_prompt）
+
+        Returns:
+            Dict[business_type, tone_prompt]
+        """
+        try:
+            conn = psycopg2.connect(**get_db_config())
+            try:
+                cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("""
+                    SELECT
+                        type_value,
+                        tone_prompt
+                    FROM business_types_config
+                    WHERE is_active = TRUE
+                      AND tone_prompt IS NOT NULL
+                """)
+
+                rows = cursor.fetchall()
+                cursor.close()
+
+                # 轉換為字典 {type_value: tone_prompt}
+                configs = {row['type_value']: row['tone_prompt'] for row in rows}
+
+                print(f"✅ 從資料庫載入 {len(configs)} 個業態語氣配置")
+                return configs
+
+            finally:
+                conn.close()
+
+        except Exception as e:
+            print(f"⚠️ 載入業態語氣配置失敗: {e}")
+            return {}
+
+    @staticmethod
+    def _get_tone_config(business_type: str) -> Optional[str]:
+        """
+        取得業態語氣配置（含快取機制）
+
+        Args:
+            business_type: 業態類型 (如: 'full_service', 'property_management')
+
+        Returns:
+            語氣 prompt 文字，或 None
+        """
+        global _TONE_CONFIG_CACHE, _TONE_CACHE_TIMESTAMP
+
+        current_time = time.time()
+
+        # 檢查快取是否有效
+        if _TONE_CONFIG_CACHE is not None and _TONE_CACHE_TIMESTAMP is not None:
+            if current_time - _TONE_CACHE_TIMESTAMP < _TONE_CACHE_TTL:
+                return _TONE_CONFIG_CACHE.get(business_type)
+
+        # 重新載入配置
+        _TONE_CONFIG_CACHE = LLMAnswerOptimizer._load_tone_configs_from_db()
+        _TONE_CACHE_TIMESTAMP = current_time
+
+        return _TONE_CONFIG_CACHE.get(business_type)
+
+    @staticmethod
+    def clear_tone_cache():
+        """清空業態語氣配置快取"""
+        global _TONE_CONFIG_CACHE, _TONE_CACHE_TIMESTAMP
+        _TONE_CONFIG_CACHE = None
+        _TONE_CACHE_TIMESTAMP = None
+        print("✅ 業態語氣配置快取已清空")
 
     def optimize_answer(
         self,
@@ -431,37 +511,14 @@ class LLMAnswerOptimizer:
 
 【任務 2 - 語氣調整】"""
 
-        # 根據業種類型添加語氣指示
-        if business_type == 'full_service':
-            system_prompt += """
-業種特性：包租型業者 - 提供全方位服務，直接負責租賃管理
-語氣要求：
-  • 使用主動承諾語氣：「我們會」、「公司將」、「我們負責」
-  • 表達直接負責：「我們處理」、「我們安排」
-  • 避免被動引導：不要用「請您聯繫」、「建議」等
-  • 展現服務能力：強調公司會主動處理問題
-
-範例轉換：
-  ❌ 「請您與房東聯繫處理」
-  ✅ 「我們會立即為您處理」
-
-  ❌ 「建議您先拍照記錄」
-  ✅ 「我們會協助您處理，請先拍照記錄現場狀況」"""
-        elif business_type == 'property_management':
-            system_prompt += """
-業種特性：代管型業者 - 協助租客與房東溝通，居中協調
-語氣要求：
-  • 使用協助引導語氣：「請您」、「建議」、「可協助」
-  • 表達居中協調：「我們可以協助您聯繫」、「我們居中協調」
-  • 避免直接承諾：不要用「我們會處理」、「公司負責」等
-  • 引導租客行動：提供建議和協助選項
-
-範例轉換：
-  ❌ 「我們會為您處理維修」
-  ✅ 「建議您先聯繫房東，我們可協助居中協調維修事宜」
-
-  ❌ 「公司將立即安排」
-  ✅ 「請您先與房東溝通，如需要我們可以協助聯繫」"""
+        # 根據業種類型添加語氣指示（從資料庫載入 - 簡化版：直接使用 prompt）
+        tone_prompt = self._get_tone_config(business_type)
+        if tone_prompt:
+            system_prompt += f"\n{tone_prompt}\n"
+        else:
+            # 如果沒有配置，給予通用提示
+            print(f"⚠️ 業態類型 '{business_type}' 沒有語氣配置，使用通用提示")
+            system_prompt += "\n請根據業態特性調整回答的語氣和表達方式。\n"
 
         system_prompt += """
 
@@ -615,14 +672,13 @@ class LLMAnswerOptimizer:
             base_prompt += f"\n{rule_number}. **業者身份**：你代表 {vendor_name}，請使用該業者的資訊回答"
             rule_number += 1
 
-        # 根據業種類型調整語氣（Phase 1 SOP 擴展）
+        # 根據業種類型調整語氣（Phase 4 擴展：從資料庫載入 - 簡化版）
         if vendor_info:
             business_type = vendor_info.get('business_type', 'property_management')
-            if business_type == 'full_service':
-                base_prompt += f"\n{rule_number}. **業種特性**：{vendor_name} 是包租型業者，提供全方位服務。語氣應主動告知、確認、承諾。使用「我們會」、「公司將」等主動語句"
-                rule_number += 1
-            elif business_type == 'property_management':
-                base_prompt += f"\n{rule_number}. **業種特性**：{vendor_name} 是代管型業者，協助租客與房東溝通。語氣應協助引導、建議聯繫。使用「請您」、「建議」、「可協助」等引導語句"
+            tone_prompt = self._get_tone_config(business_type)
+            if tone_prompt:
+                # 將完整的 tone prompt 加入（簡潔版本，用於答案合成）
+                base_prompt += f"\n{rule_number}. **業種語氣**：{vendor_name} 的語氣調整規範如下：\n{tone_prompt}"
                 rule_number += 1
 
         # 根據意圖類型調整提示
@@ -775,14 +831,13 @@ class LLMAnswerOptimizer:
             base_prompt += f"\n{rule_number}. 你代表 {vendor_name}，請使用該業者的資訊回答"
             rule_number += 1
 
-        # 根據業種類型調整語氣（Phase 1 SOP 擴展）
+        # 根據業種類型調整語氣（Phase 4 擴展：從資料庫載入 - 簡化版）
         if vendor_info:
             business_type = vendor_info.get('business_type', 'property_management')
-            if business_type == 'full_service':
-                base_prompt += f"\n{rule_number}. 【業種特性】{vendor_name} 是包租型業者，你們提供全方位服務。語氣應：主動告知、確認、承諾。使用「我們會」、「公司將」等主動語句"
-                rule_number += 1
-            elif business_type == 'property_management':
-                base_prompt += f"\n{rule_number}. 【業種特性】{vendor_name} 是代管型業者，你們協助租客與房東溝通。語氣應：協助引導、建議聯繫。使用「請您」、「建議」、「可協助」等引導語句"
+            tone_prompt = self._get_tone_config(business_type)
+            if tone_prompt:
+                # 將完整的 tone prompt 加入（簡潔版本，用於答案優化）
+                base_prompt += f"\n{rule_number}. 【業種語氣】{vendor_name} 的語氣調整規範如下：\n{tone_prompt}"
                 rule_number += 1
 
         # 根據意圖類型調整提示

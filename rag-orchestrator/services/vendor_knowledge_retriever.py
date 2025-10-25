@@ -7,7 +7,6 @@ import psycopg2
 import psycopg2.extras
 from typing import Dict, List, Optional
 from .vendor_parameter_resolver import VendorParameterResolver
-from .business_scope_utils import get_allowed_audiences_for_scope
 from .embedding_utils import get_embedding_client
 from .db_utils import get_db_config
 
@@ -58,6 +57,10 @@ class VendorKnowledgeRetriever:
                 }
             ]
         """
+        # 獲取 vendor 的業態類型
+        vendor_info = self.param_resolver.get_vendor_info(vendor_id)
+        vendor_business_types = vendor_info.get('business_types', [])
+
         conn = self._get_db_connection()
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -80,6 +83,7 @@ class VendorKnowledgeRetriever:
                     kb.is_template,
                     kb.template_vars,
                     kb.vendor_id,
+                    kb.business_types,
                     kb.created_at,
                     -- 計算優先級權重
                     CASE
@@ -99,12 +103,17 @@ class VendorKnowledgeRetriever:
                         -- 全域知識
                         (kb.vendor_id IS NULL AND kb.scope = 'global')
                     )
+                    -- ✅ 業態類型過濾（新增）
+                    AND (
+                        kb.business_types IS NULL  -- 通用知識（適用所有業態）
+                        OR kb.business_types && %s::text[]  -- 陣列重疊：知識的業態類型與業者的業態類型有交集
+                    )
                 ORDER BY
                     scope_weight DESC,  -- 先按範圍權重排序
                     kb.priority DESC,   -- 再按優先級排序
                     kb.created_at DESC  -- 最後按建立時間排序
                 LIMIT %s
-            """, (vendor_id, vendor_id, intent_id, vendor_id, top_k))
+            """, (vendor_id, vendor_id, intent_id, vendor_id, vendor_business_types, top_k))
 
             rows = cursor.fetchall()
             cursor.close()
@@ -189,13 +198,11 @@ class VendorKnowledgeRetriever:
         Returns:
             知識列表，按相似度和優先級排序
         """
-        # 0. 獲取 vendor 的業務範圍，用於 audience 過濾（B2B/B2C 隔離）
+        # 0. 獲取 vendor 的業態類型
         vendor_info = self.param_resolver.get_vendor_info(vendor_id)
-        business_scope_name = vendor_info.get('business_scope_name', 'external')
-        allowed_audiences = get_allowed_audiences_for_scope(business_scope_name)
+        vendor_business_types = vendor_info.get('business_types', [])
 
-        print(f"   🔒 [Business Scope Filter] Vendor {vendor_id} scope: {business_scope_name}")
-        print(f"   ✅ Allowed audiences: {allowed_audiences}")
+        print(f"   📋 [Business Types Filter] Vendor {vendor_id} business types: {vendor_business_types}")
 
         # 1. 獲取問題的向量
         query_embedding = await self._get_embedding(query)
@@ -228,6 +235,7 @@ class VendorKnowledgeRetriever:
                     kb.template_vars,
                     kb.vendor_id,
                     kb.audience,
+                    kb.business_types,
                     kb.created_at,
                     kim.intent_id,
                     -- 計算向量相似度
@@ -267,10 +275,10 @@ class VendorKnowledgeRetriever:
                     AND (1 - (kb.embedding <=> %s::vector)) >= %s
                     -- Intent 過濾（多意圖支援）
                     AND (kim.intent_id = ANY(%s::int[]) OR kim.intent_id IS NULL)
-                    -- ✅ Audience 過濾（B2B/B2C 業務範圍隔離）
+                    -- ✅ 業態類型過濾：知識的業態類型與業者的業態類型有交集
                     AND (
-                        kb.audience IS NULL  -- 允許沒有標記受眾的知識
-                        OR kb.audience = ANY(%s::text[])  -- 允許的受眾列表
+                        kb.business_types IS NULL  -- 通用知識（適用所有業態）
+                        OR kb.business_types && %s::text[]  -- 陣列重疊檢查
                     )
                 ORDER BY
                     scope_weight DESC,        -- 1st: Scope 優先級
@@ -290,7 +298,7 @@ class VendorKnowledgeRetriever:
                 vector_str,
                 similarity_threshold,
                 all_intent_ids,
-                allowed_audiences,  # ✅ 新增 audience 過濾參數
+                vendor_business_types,  # ✅ 業態類型過濾參數
                 top_k
             ))
 

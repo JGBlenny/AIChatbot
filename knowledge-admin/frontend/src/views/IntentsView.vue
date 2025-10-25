@@ -16,8 +16,8 @@
         <option value="true">已啟用</option>
         <option value="false">已停用</option>
       </select>
-      <button @click="showCreateModal" class="btn-primary">➕ 新增意圖</button>
-      <button @click="reloadIntents" class="btn-secondary">🔄 重新載入</button>
+      <button @click="showCreateModal" class="btn-primary btn-sm">新增意圖</button>
+      <button @click="reloadIntents" class="btn-secondary btn-sm">重新載入</button>
     </div>
 
     <!-- 統計資訊 -->
@@ -69,11 +69,11 @@
               </span>
             </td>
             <td>
-              <button @click="editIntent(intent)" class="btn-edit btn-sm">✏️</button>
-              <button @click="toggleIntent(intent)" class="btn-sm" :class="intent.is_enabled ? 'btn-warning' : 'btn-success'">
+              <button @click="editIntent(intent)" class="btn-edit btn-sm">編輯</button>
+              <button @click="toggleIntent(intent)" class="btn-sm" :class="intent.is_enabled ? 'btn-delete' : 'btn-success'">
                 {{ intent.is_enabled ? '停用' : '啟用' }}
               </button>
-              <button @click="deleteIntent(intent.id)" class="btn-delete btn-sm">🗑️</button>
+              <button @click="deleteIntent(intent.id)" class="btn-delete btn-sm">刪除</button>
             </td>
           </tr>
         </tbody>
@@ -172,10 +172,10 @@
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn-primary" :disabled="saving">
-              {{ saving ? '⏳ 儲存中...' : '💾 儲存' }}
+            <button type="submit" class="btn-primary btn-sm" :disabled="saving">
+              {{ saving ? '儲存中...' : '儲存' }}
             </button>
-            <button type="button" @click="closeModal" class="btn-secondary">❌ 取消</button>
+            <button type="button" @click="closeModal" class="btn-secondary btn-sm">取消</button>
           </div>
         </form>
       </div>
@@ -428,12 +428,6 @@ export default {
 .badge.type-data_query { background: #E6A23C; color: white; }
 .badge.type-action { background: #F56C6C; color: white; }
 .badge.type-hybrid { background: #67C23A; color: white; }
-
-.btn-sm {
-  padding: 4px 8px;
-  font-size: 12px;
-  margin-right: 5px;
-}
 
 /* 重新分類區塊 */
 .reclassify-section {

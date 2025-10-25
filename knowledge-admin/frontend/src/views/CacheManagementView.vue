@@ -408,40 +408,6 @@ h3 {
   margin-bottom: 20px;
 }
 
-.btn-primary,
-.btn-danger {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-weight: 500;
-}
-
-.btn-primary {
-  background: #007bff;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #0056b3;
-}
-
-.btn-danger {
-  background: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: #c82333;
-}
-
-.btn-primary:disabled,
-.btn-danger:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
 
 /* 配置資訊 */
 .config-info {

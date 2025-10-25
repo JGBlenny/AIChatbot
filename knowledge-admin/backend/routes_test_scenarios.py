@@ -3,7 +3,7 @@
 提供測試情境的 CRUD 操作
 """
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict, Any
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -37,30 +37,40 @@ def get_db_connection():
 class TestScenarioCreate(BaseModel):
     """測試情境創建模型"""
     test_question: str = Field(..., min_length=1)
-    expected_category: Optional[str] = None
-    expected_intent_id: Optional[int] = None
-    expected_keywords: List[str] = []
     difficulty: str = Field("medium", pattern="^(easy|medium|hard)$")
     tags: List[str] = []
-    priority: int = Field(50, ge=1, le=100)
+    priority: int = Field(50, description="優先級：30=低, 50=中, 80=高")
     expected_min_confidence: float = Field(0.6, ge=0.0, le=1.0)
     notes: Optional[str] = None
     test_purpose: Optional[str] = None
+    expected_answer: Optional[str] = Field(None, description="標準答案（可選）用於 LLM 語義對比")
+    min_quality_score: float = Field(3.0, ge=1.0, le=5.0, description="最低質量要求（1-5分）")
+
+    @validator('priority')
+    def validate_priority(cls, v):
+        if v not in [30, 50, 80]:
+            raise ValueError('priority 必須是 30（低）、50（中）或 80（高）')
+        return v
 
 
 class TestScenarioUpdate(BaseModel):
     """測試情境更新模型"""
     test_question: Optional[str] = None
-    expected_category: Optional[str] = None
-    expected_intent_id: Optional[int] = None
-    expected_keywords: Optional[List[str]] = None
     difficulty: Optional[str] = Field(None, pattern="^(easy|medium|hard)$")
     tags: Optional[List[str]] = None
-    priority: Optional[int] = Field(None, ge=1, le=100)
+    priority: Optional[int] = None
     expected_min_confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
     notes: Optional[str] = None
     test_purpose: Optional[str] = None
     is_active: Optional[bool] = None
+    expected_answer: Optional[str] = None
+    min_quality_score: Optional[float] = Field(None, ge=1.0, le=5.0)
+
+    @validator('priority')
+    def validate_priority(cls, v):
+        if v is not None and v not in [30, 50, 80]:
+            raise ValueError('priority 必須是 30（低）、50（中）或 80（高）')
+        return v
 
 
 class TestScenarioReview(BaseModel):
@@ -71,7 +81,6 @@ class TestScenarioReview(BaseModel):
 
 class UnclearQuestionConvert(BaseModel):
     """用戶問題轉換模型"""
-    expected_category: Optional[str] = None
     difficulty: str = Field("medium", pattern="^(easy|medium|hard)$")
 
 
@@ -122,11 +131,12 @@ async def list_test_scenarios(
     try:
         query = """
             SELECT
-                ts.id, ts.test_question, ts.expected_category, ts.difficulty,
+                ts.id, ts.test_question, ts.difficulty,
                 ts.tags, ts.priority, ts.status, ts.source, ts.is_active,
                 ts.total_runs, ts.pass_count, ts.fail_count, ts.avg_score,
                 ts.last_run_at, ts.last_result, ts.created_at,
-                ts.has_knowledge, ts.linked_knowledge_ids
+                ts.has_knowledge, ts.linked_knowledge_ids,
+                ts.notes, ts.expected_answer, ts.min_quality_score
             FROM test_scenarios ts
             WHERE 1=1
         """
@@ -206,11 +216,8 @@ async def get_test_scenario(scenario_id: int):
 
     try:
         cur.execute("""
-            SELECT
-                ts.*,
-                i.name as expected_intent_name
+            SELECT ts.*
             FROM test_scenarios ts
-            LEFT JOIN intents i ON ts.expected_intent_id = i.id
             WHERE ts.id = %s
         """, (scenario_id,))
 
@@ -243,25 +250,24 @@ async def create_test_scenario(data: TestScenarioCreate):
         # 插入測試情境
         cur.execute("""
             INSERT INTO test_scenarios (
-                test_question, expected_category, expected_intent_id,
-                expected_keywords, difficulty, tags, priority,
+                test_question, difficulty, tags, priority,
                 expected_min_confidence, notes, test_purpose,
+                expected_answer, min_quality_score,
                 status, source, created_by
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'draft', 'manual', 'api'
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, 'approved', 'manual', 'api'
             )
             RETURNING id, created_at
         """, (
             data.test_question,
-            data.expected_category,
-            data.expected_intent_id,
-            data.expected_keywords if data.expected_keywords else None,
             data.difficulty,
             data.tags if data.tags else None,
             data.priority,
             data.expected_min_confidence,
             data.notes,
-            data.test_purpose
+            data.test_purpose,
+            data.expected_answer,
+            data.min_quality_score
         ))
 
         result = cur.fetchone()
@@ -299,18 +305,6 @@ async def update_test_scenario(scenario_id: int, data: TestScenarioUpdate):
             update_fields.append("test_question = %s")
             params.append(data.test_question)
 
-        if data.expected_category is not None:
-            update_fields.append("expected_category = %s")
-            params.append(data.expected_category)
-
-        if data.expected_intent_id is not None:
-            update_fields.append("expected_intent_id = %s")
-            params.append(data.expected_intent_id)
-
-        if data.expected_keywords is not None:
-            update_fields.append("expected_keywords = %s")
-            params.append(data.expected_keywords if data.expected_keywords else None)
-
         if data.difficulty is not None:
             update_fields.append("difficulty = %s")
             params.append(data.difficulty)
@@ -338,6 +332,14 @@ async def update_test_scenario(scenario_id: int, data: TestScenarioUpdate):
         if data.is_active is not None:
             update_fields.append("is_active = %s")
             params.append(data.is_active)
+
+        if data.expected_answer is not None:
+            update_fields.append("expected_answer = %s")
+            params.append(data.expected_answer)
+
+        if data.min_quality_score is not None:
+            update_fields.append("min_quality_score = %s")
+            params.append(data.min_quality_score)
 
         if not update_fields:
             raise HTTPException(status_code=400, detail="沒有提供要更新的欄位")
@@ -498,10 +500,9 @@ async def convert_unclear_question_to_scenario(
 
     try:
         cur.execute("""
-            SELECT create_test_scenario_from_unclear_question(%s, %s, %s, %s)
+            SELECT create_test_scenario_from_unclear_question(%s, %s, %s)
         """, (
             question_id,
-            data.expected_category,
             data.difficulty,
             'api_user'
         ))

@@ -1,14 +1,17 @@
 """
 測試題庫資料遷移腳本
 
-功能：
+⚠️  警告：此腳本已過時，不應再使用！
+⚠️  原因：test_scenarios 表結構已變更，不再支持 expected_category, expected_keywords, expected_intent_id 字段
+⚠️  替代方案：使用前端管理界面或新的測試場景創建 API
+
+歷史功能（僅供參考）：
 1. 讀取 Excel 測試題庫（test_scenarios_smoke.xlsx, test_scenarios_full.xlsx）
 2. 遷移到資料庫 test_scenarios 表
 3. 自動建立集合關聯
 4. 驗證遷移完整性
 
-使用方式：
-    python3 database/migrations/migrate_excel_to_db.py
+如需遷移舊數據，請聯繫開發團隊更新此腳本。
 """
 
 import os

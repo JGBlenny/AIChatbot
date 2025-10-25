@@ -974,21 +974,22 @@ class KnowledgeImportService:
 
                 # 建立測試情境建議
                 try:
+                    category_info = knowledge.get('category', '一般問題')
                     await conn.execute("""
                         INSERT INTO test_scenarios (
                             test_question,
-                            expected_category,
                             difficulty,
                             status,
                             source,
+                            notes,
                             created_at
                         ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
                     """,
                         question,
-                        knowledge.get('category', '一般問題'),
                         'medium',  # 預設難度
                         'pending_review',  # 待審核狀態
-                        'imported'
+                        'imported',
+                        f"導入的知識（類別: {category_info}）"
                     )
 
                     created_count += 1
@@ -1045,22 +1046,23 @@ class KnowledgeImportService:
 
                     # 如果沒有測試情境，先建立一個
                     if not test_scenario_id:
+                        category_info = knowledge.get('category', '一般問題')
                         test_scenario_id = await conn.fetchval("""
                             INSERT INTO test_scenarios (
                                 test_question,
-                                expected_category,
                                 difficulty,
                                 status,
                                 source,
+                                notes,
                                 created_at
                             ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
                             RETURNING id
                         """,
                             question,
-                            knowledge.get('category', '一般問題'),
                             'medium',
                             'pending_review',
-                            'imported'
+                            'imported',
+                            f"導入的知識（類別: {category_info}）"
                         )
 
                     # 2. 準備 generation_reasoning（包含意圖推薦、泛化警告和質量評估）

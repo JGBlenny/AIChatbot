@@ -344,32 +344,4 @@ export default {
   display: flex;
   gap: 10px;
 }
-
-.btn-success {
-  background: #67C23A;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  flex: 1;
-}
-
-.btn-success:hover {
-  background: #529e2e;
-}
-
-.btn-danger {
-  background: #F56C6C;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  flex: 1;
-}
-
-.btn-danger:hover {
-  background: #d9534f;
-}
 </style>

@@ -2,7 +2,7 @@
   <div class="knowledge-reclassify-container">
     <div class="page-header">
       <h2>⚙️ 知識庫意圖分類工具</h2>
-      <button @click="loadStats" class="btn btn-refresh" :disabled="loading">
+      <button @click="loadStats" class="btn-info btn-sm" :disabled="loading">
         🔄 {{ loading ? '載入中...' : '重新載入統計' }}
       </button>
     </div>
@@ -229,7 +229,7 @@
               </span>
             </p>
           </div>
-          <button @click="showPreviewDetails = !showPreviewDetails" class="btn-toggle-details">
+          <button @click="showPreviewDetails = !showPreviewDetails" class="btn-primary btn-sm btn-toggle-details">
             {{ showPreviewDetails ? '▼ 收起' : '▶ 展開詳情' }}
           </button>
         </div>
@@ -276,13 +276,13 @@
       </div>
 
       <div class="actions">
-        <button @click="previewReclassify" class="btn btn-preview" :disabled="loading">
+        <button @click="previewReclassify" class="btn-info btn-sm" :disabled="loading">
           🔍 步驟 3.1: 預覽結果
         </button>
-        <button @click="startReclassify" class="btn btn-execute" :disabled="loading || !preview">
+        <button @click="startReclassify" class="btn-primary btn-sm" :disabled="loading || !preview">
           🚀 步驟 3.2: 開始意圖分類
         </button>
-        <button @click="resetAll" class="btn btn-reset" :disabled="loading">
+        <button @click="resetAll" class="btn-secondary btn-sm" :disabled="loading">
           ↺ 重置所有設定
         </button>
       </div>
@@ -749,26 +749,7 @@ export default {
   color: #333;
 }
 
-.btn-refresh {
-  background: #17a2b8;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.btn-refresh:hover:not(:disabled) {
-  background: #138496;
-  transform: translateY(-1px);
-}
-
-.btn-refresh:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+/* btn-refresh 改用全域 .btn-info .btn-sm */
 
 /* 步驟指示 */
 .steps-guide {
@@ -1099,57 +1080,12 @@ export default {
   color: #007bff;
 }
 
-/* 操作按鈕 */
+/* 操作按鈕 - 改用全域 CSS */
 .actions {
   display: flex;
   gap: 15px;
   margin-bottom: 15px;
   flex-wrap: wrap;
-}
-
-.btn {
-  padding: 14px 28px;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-preview {
-  background: #17a2b8;
-  color: white;
-}
-
-.btn-preview:hover:not(:disabled) {
-  background: #138496;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
-}
-
-.btn-execute {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.btn-execute:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-reset {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-reset:hover:not(:disabled) {
-  background: #5a6268;
 }
 
 .action-hints {
@@ -1370,22 +1306,10 @@ export default {
   border-left: 3px solid #28a745;
 }
 
+/* btn-toggle-details 改用全域 .btn-primary .btn-sm */
 .btn-toggle-details {
-  padding: 8px 16px;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s;
   white-space: nowrap;
   flex-shrink: 0;
-}
-
-.btn-toggle-details:hover {
-  background: #0056b3;
-  transform: translateY(-1px);
 }
 
 .knowledge-items {

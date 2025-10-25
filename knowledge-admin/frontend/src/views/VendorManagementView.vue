@@ -4,12 +4,7 @@
 
     <!-- 工具列 -->
     <div class="toolbar">
-      <select v-model="filterActive" @change="loadVendors">
-        <option value="">全部狀態</option>
-        <option value="true">已啟用</option>
-        <option value="false">已停用</option>
-      </select>
-      <button @click="showCreateModal" class="btn-primary">➕ 新增業者</button>
+      <button @click="showCreateModal" class="btn-primary btn-sm">新增業者</button>
     </div>
 
     <!-- 業者列表 -->
@@ -19,15 +14,14 @@
       <table>
         <thead>
           <tr>
-            <th width="60">ID</th>
-            <th width="120">代碼</th>
-            <th>名稱</th>
-            <th>簡稱</th>
-            <th>聯絡電話</th>
-            <th width="120">業態類型</th>
-            <th>訂閱方案</th>
+            <th width="50">ID</th>
+            <th width="110">代碼</th>
+            <th width="180">名稱</th>
+            <th width="120">聯絡電話</th>
+            <th width="150">業態類型</th>
+            <th width="100">訂閱方案</th>
             <th width="80">狀態</th>
-            <th width="280">操作</th>
+            <th width="220">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -35,11 +29,15 @@
             <td>{{ vendor.id }}</td>
             <td><code>{{ vendor.code }}</code></td>
             <td><strong>{{ vendor.name }}</strong></td>
-            <td>{{ vendor.short_name || '-' }}</td>
             <td>{{ vendor.contact_phone || '-' }}</td>
             <td>
-              <span class="badge" :class="'type-' + vendor.business_type">
-                {{ getBusinessTypeLabel(vendor.business_type) }}
+              <span
+                v-for="(type, idx) in vendor.business_types"
+                :key="idx"
+                class="badge"
+                :class="getBusinessTypeColorClass(type)"
+              >
+                {{ getBusinessTypeLabel(type) }}
               </span>
             </td>
             <td>
@@ -53,10 +51,9 @@
               </span>
             </td>
             <td>
-              <button @click="editVendor(vendor)" class="btn-edit btn-sm">✏️ 編輯</button>
-              <button @click="viewConfig(vendor)" class="btn-success btn-sm">⚙️ 配置</button>
-              <button @click="viewStats(vendor)" class="btn-info btn-sm">📊 統計</button>
-              <button @click="deleteVendor(vendor.id)" class="btn-delete btn-sm">🗑️ 停用</button>
+              <button @click="editVendor(vendor)" class="btn-edit btn-sm">編輯</button>
+              <button @click="viewConfig(vendor)" class="btn-success btn-sm">配置</button>
+              <button @click="deleteVendor(vendor.id)" class="btn-delete btn-sm">停用</button>
             </td>
           </tr>
         </tbody>
@@ -65,80 +62,106 @@
 
     <!-- 編輯/新增 Modal -->
     <div v-if="showModal" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop style="max-width: 700px;">
-        <h2>{{ editingItem ? '✏️ 編輯業者' : '➕ 新增業者' }}</h2>
+      <div class="modal-content vendor-modal" @click.stop>
+        <div class="modal-header">
+          <h3>{{ editingItem ? '編輯業者' : '新增業者' }}</h3>
+          <button @click="closeModal" class="btn-close">✕</button>
+        </div>
 
         <form @submit.prevent="saveVendor">
-          <div class="form-row">
-            <div class="form-group">
-              <label>代碼 *</label>
-              <input v-model="formData.code" required placeholder="VENDOR_A" :disabled="editingItem" />
-              <small v-if="!editingItem">業者代碼一旦建立不可修改</small>
+          <div class="modal-body">
+            <!-- 基本資訊 -->
+            <div class="form-section">
+              <h4 class="section-title">基本資訊</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>代碼 *</label>
+                  <input v-model="formData.code" required placeholder="VENDOR_A" :disabled="editingItem" />
+                  <small v-if="!editingItem" class="hint">業者代碼一旦建立不可修改</small>
+                </div>
+
+                <div class="form-group">
+                  <label>名稱 *</label>
+                  <input v-model="formData.name" required placeholder="甲山林包租代管股份有限公司" />
+                </div>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label>簡稱</label>
-              <input v-model="formData.short_name" placeholder="甲山林" />
+            <!-- 聯絡資訊 -->
+            <div class="form-section">
+              <h4 class="section-title">聯絡資訊</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>聯絡電話</label>
+                  <input v-model="formData.contact_phone" placeholder="02-1234-5678" />
+                </div>
+
+                <div class="form-group">
+                  <label>聯絡郵箱</label>
+                  <input v-model="formData.contact_email" type="email" placeholder="service@example.com" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>公司地址</label>
+                <input v-model="formData.address" placeholder="台北市信義區..." />
+              </div>
+            </div>
+
+            <!-- 業務配置 -->
+            <div class="form-section">
+              <h4 class="section-title">業務配置</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>訂閱方案</label>
+                  <select v-model="formData.subscription_plan">
+                    <option value="basic">Basic - 基礎方案</option>
+                    <option value="standard">Standard - 標準方案</option>
+                    <option value="premium">Premium - 進階方案</option>
+                  </select>
+                </div>
+
+                <div v-if="editingItem" class="form-group">
+                  <label>狀態</label>
+                  <select v-model="formData.is_active">
+                    <option :value="true">啟用</option>
+                    <option :value="false">停用</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>業態類型 *</label>
+                <small class="hint">可多選，至少選一項</small>
+                <div class="business-type-checkboxes">
+                  <label
+                    v-for="btype in availableBusinessTypes"
+                    :key="btype.type_value"
+                    class="btype-option"
+                    :class="{ 'checked': formData.business_types.includes(btype.type_value) }"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="btype.type_value"
+                      v-model="formData.business_types"
+                    />
+                    <div class="btype-content">
+                      <div class="btype-text">
+                        <div class="btype-name">{{ btype.display_name }}</div>
+                        <div class="btype-desc-small" v-if="btype.description">{{ btype.description }}</div>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="form-group">
-            <label>名稱 *</label>
-            <input v-model="formData.name" required placeholder="甲山林包租代管股份有限公司" />
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>聯絡電話</label>
-              <input v-model="formData.contact_phone" placeholder="02-1234-5678" />
-            </div>
-
-            <div class="form-group">
-              <label>聯絡郵箱</label>
-              <input v-model="formData.contact_email" type="email" placeholder="service@example.com" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>公司地址</label>
-            <input v-model="formData.address" placeholder="台北市信義區..." />
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>訂閱方案</label>
-              <select v-model="formData.subscription_plan">
-                <option value="basic">Basic - 基礎方案</option>
-                <option value="standard">Standard - 標準方案</option>
-                <option value="premium">Premium - 進階方案</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>業態類型 *</label>
-              <select v-model="formData.business_type" required>
-                <option value="full_service">包租型 (Full Service)</option>
-                <option value="property_management">代管型 (Property Management)</option>
-              </select>
-              <small>影響 AI 回答的語氣風格</small>
-            </div>
-          </div>
-
-          <div v-if="editingItem" class="form-row">
-            <div class="form-group">
-              <label>狀態</label>
-              <select v-model="formData.is_active">
-                <option :value="true">啟用</option>
-                <option :value="false">停用</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn-primary" :disabled="saving">
-              {{ saving ? '⏳ 儲存中...' : '💾 儲存' }}
+          <div class="modal-footer">
+            <button type="button" @click="closeModal" class="btn-secondary btn-sm">取消</button>
+            <button type="submit" class="btn-primary btn-sm" :disabled="saving">
+              {{ saving ? '儲存中...' : '儲存' }}
             </button>
-            <button type="button" @click="closeModal" class="btn-secondary">❌ 取消</button>
           </div>
         </form>
       </div>
@@ -187,7 +210,7 @@
         </div>
 
         <div class="form-actions">
-          <button @click="closeStatsModal" class="btn-secondary">關閉</button>
+          <button @click="closeStatsModal" class="btn-secondary btn-sm">關閉</button>
         </div>
       </div>
     </div>
@@ -204,7 +227,7 @@ export default {
   data() {
     return {
       vendorList: [],
-      filterActive: '',
+      availableBusinessTypes: [],
       showModal: false,
       showStatsModal: false,
       editingItem: null,
@@ -214,29 +237,45 @@ export default {
       formData: {
         code: '',
         name: '',
-        short_name: '',
         contact_phone: '',
         contact_email: '',
         address: '',
         subscription_plan: 'basic',
-        business_type: 'property_management',
+        business_types: [],
         is_active: true
       }
     };
   },
   mounted() {
+    this.loadBusinessTypes();
     this.loadVendors();
   },
   methods: {
+    async loadBusinessTypes() {
+      try {
+        const response = await axios.get(`${RAG_API}/business-types-config`, {
+          params: { is_active: true }
+        });
+        this.availableBusinessTypes = response.data.business_types || [];
+
+        // 設定預設業態類型為第一個
+        if (this.availableBusinessTypes.length > 0 && this.formData.business_types.length === 0) {
+          this.formData.business_types = [this.availableBusinessTypes[0].type_value];
+        }
+      } catch (error) {
+        console.error('載入業態類型失敗:', error);
+        // Fallback: 如果 API 失敗，使用預設值
+        this.availableBusinessTypes = [
+          { type_value: 'property_management', display_name: '代管型', description: 'Property Management' }
+        ];
+        this.formData.business_types = ['property_management'];
+      }
+    },
+
     async loadVendors() {
       this.loading = true;
       try {
-        const params = {};
-        if (this.filterActive !== '') {
-          params.is_active = this.filterActive === 'true';
-        }
-
-        const response = await axios.get(`${RAG_API}/vendors`, { params });
+        const response = await axios.get(`${RAG_API}/vendors`);
         this.vendorList = response.data;
       } catch (error) {
         console.error('載入失敗', error);
@@ -248,15 +287,19 @@ export default {
 
     showCreateModal() {
       this.editingItem = null;
+      // 預設選擇第一個業態類型
+      const defaultBusinessType = this.availableBusinessTypes.length > 0
+        ? [this.availableBusinessTypes[0].type_value]
+        : [];
+
       this.formData = {
         code: '',
         name: '',
-        short_name: '',
         contact_phone: '',
         contact_email: '',
         address: '',
         subscription_plan: 'basic',
-        business_type: 'property_management',
+        business_types: defaultBusinessType,
         is_active: true
       };
       this.showModal = true;
@@ -264,33 +307,42 @@ export default {
 
     editVendor(vendor) {
       this.editingItem = vendor;
+      // 如果業者沒有業態類型，使用第一個可用的業態類型
+      const defaultBusinessType = this.availableBusinessTypes.length > 0
+        ? [this.availableBusinessTypes[0].type_value]
+        : [];
+
       this.formData = {
         code: vendor.code,
         name: vendor.name,
-        short_name: vendor.short_name || '',
         contact_phone: vendor.contact_phone || '',
         contact_email: vendor.contact_email || '',
         address: vendor.address || '',
         subscription_plan: vendor.subscription_plan,
-        business_type: vendor.business_type || 'property_management',
+        business_types: vendor.business_types || defaultBusinessType,
         is_active: vendor.is_active
       };
       this.showModal = true;
     },
 
     async saveVendor() {
+      // 驗證至少選擇一個業態類型
+      if (!this.formData.business_types || this.formData.business_types.length === 0) {
+        alert('❌ 請至少選擇一種業態類型');
+        return;
+      }
+
       this.saving = true;
       try {
         if (this.editingItem) {
           // 更新
           await axios.put(`${RAG_API}/vendors/${this.editingItem.id}`, {
             name: this.formData.name,
-            short_name: this.formData.short_name,
             contact_phone: this.formData.contact_phone,
             contact_email: this.formData.contact_email,
             address: this.formData.address,
             subscription_plan: this.formData.subscription_plan,
-            business_type: this.formData.business_type,
+            business_types: this.formData.business_types,
             is_active: this.formData.is_active,
             updated_by: 'admin'
           });
@@ -360,11 +412,13 @@ export default {
     },
 
     getBusinessTypeLabel(type) {
-      const labels = {
-        full_service: '📦 包租型',
-        property_management: '🏢 代管型'
-      };
-      return labels[type] || type;
+      const businessType = this.availableBusinessTypes.find(bt => bt.type_value === type);
+      return businessType ? businessType.display_name : type;
+    },
+
+    getBusinessTypeColorClass(type) {
+      const businessType = this.availableBusinessTypes.find(bt => bt.type_value === type);
+      return businessType && businessType.color ? `type-${businessType.color}` : 'type-gray';
     },
 
     getCategoryLabel(category) {
@@ -381,9 +435,65 @@ export default {
 </script>
 
 <style scoped>
+/* 業者列表 */
 .vendor-list table {
   width: 100%;
   background: white;
+}
+
+.vendor-list th {
+  padding: 16px 20px;
+  white-space: nowrap;
+}
+
+.vendor-list td {
+  padding: 16px 20px;
+  vertical-align: middle;
+}
+
+.vendor-list td code {
+  font-size: 13px;
+}
+
+.vendor-list td strong {
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+/* 業態類型標籤容器 */
+.vendor-list td .badge {
+  display: inline-block;
+  margin-right: 6px;
+  margin-bottom: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* 編輯業者 Modal 優化 */
+.vendor-modal {
+  max-width: 800px;
+}
+
+.form-section {
+  margin-bottom: 30px;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 20px 0;
+  padding-left: 12px;
+  border-left: 4px solid #409EFF;
 }
 
 .status.active {
@@ -415,18 +525,66 @@ export default {
   background: #F56C6C;
 }
 
-.badge.type-full_service {
-  background: #67C23A;
+/* 業態類型多選 Checkbox - 現代卡片式設計 */
+.business-type-checkboxes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
-.badge.type-property_management {
-  background: #409EFF;
+.btype-option {
+  position: relative;
+  display: block;
+  padding: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
 }
 
-.btn-sm {
-  padding: 4px 8px;
+.btype-option:hover {
+  border-color: #409EFF;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.btype-option.checked {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%);
+  border-color: #409EFF;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+}
+
+.btype-option input[type="checkbox"] {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #409EFF;
+}
+
+.btype-content {
+  display: flex;
+  align-items: center;
+  padding-right: 35px;
+}
+
+.btype-text {
+  flex: 1;
+}
+
+.btype-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 2px;
+}
+
+.btype-desc-small {
   font-size: 12px;
-  margin-right: 5px;
+  color: #95a5a6;
 }
 
 code {

@@ -596,47 +596,6 @@ export default {
   transition: all 0.2s;
 }
 
-.btn-primary {
-  background: #4CAF50;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #45a049;
-}
-
-.btn-secondary {
-  background: #2196F3;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #0b7dda;
-}
-
-.btn-info {
-  background: #FF9800;
-  color: white;
-}
-
-.btn-info:hover {
-  background: #e68900;
-}
-
-.btn-danger {
-  background: #f44336;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #da190b;
-}
-
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 12px;
-}
-
 .loading {
   text-align: center;
   padding: 40px;

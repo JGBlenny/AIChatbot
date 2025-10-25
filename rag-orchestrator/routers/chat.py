@@ -142,7 +142,8 @@ async def _handle_unclear_with_rag_fallback(
         query=request.message,
         limit=5,
         similarity_threshold=0.55,
-        allowed_audiences=allowed_audiences
+        allowed_audiences=allowed_audiences,
+        vendor_id=request.vendor_id
     )
 
     # 如果 RAG 找到結果，優化並返回答案
@@ -277,13 +278,13 @@ async def _record_unclear_question(request: VendorChatRequest, req: Request):
             vector_str = '[' + ','.join(map(str, question_embedding)) + ']'
             test_scenario_cursor.execute("""
                 INSERT INTO test_scenarios (
-                    test_question, expected_category, status, source,
+                    test_question, status, source,
                     difficulty, priority, notes, test_purpose, created_by,
                     question_embedding
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::vector)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::vector)
                 RETURNING id
             """, (
-                request.message, 'unclear', 'pending_review', 'user_question',
+                request.message, 'pending_review', 'user_question',
                 'hard', 80,
                 f"用戶問題意圖不明確（Vendor {request.vendor_id}），相關度: {relevance_score:.2f}",
                 "追蹤意圖識別缺口，改善分類器",
@@ -294,12 +295,12 @@ async def _record_unclear_question(request: VendorChatRequest, req: Request):
             # 無 embedding 時仍插入記錄（但無法做語義去重）
             test_scenario_cursor.execute("""
                 INSERT INTO test_scenarios (
-                    test_question, expected_category, status, source,
+                    test_question, status, source,
                     difficulty, priority, notes, test_purpose, created_by
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """, (
-                request.message, 'unclear', 'pending_review', 'user_question',
+                request.message, 'pending_review', 'user_question',
                 'hard', 80,
                 f"用戶問題意圖不明確（Vendor {request.vendor_id}），相關度: {relevance_score:.2f}",
                 "追蹤意圖識別缺口，改善分類器",
@@ -526,7 +527,8 @@ async def _handle_no_knowledge_found(
         query=request.message,
         limit=request.top_k,
         similarity_threshold=0.60,
-        allowed_audiences=allowed_audiences
+        allowed_audiences=allowed_audiences,
+        vendor_id=request.vendor_id
     )
 
     # 如果 RAG 找到結果，返回優化答案
@@ -576,17 +578,16 @@ async def _record_no_knowledge_scenario(request: VendorChatRequest, intent_resul
         existing_scenario = test_scenario_cursor.fetchone()
 
         if not existing_scenario:
-            intent_id = intent_result.get('intent_ids', [None])[0] if intent_result.get('intent_ids') else None
             test_scenario_cursor.execute("""
                 INSERT INTO test_scenarios (
-                    test_question, expected_category, expected_intent_id, status, source,
+                    test_question, status, source,
                     difficulty, priority, notes, test_purpose, created_by
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """, (
-                request.message, intent_result['intent_name'], intent_id,
+                request.message,
                 'pending_review', 'user_question', 'medium', 70,
-                f"用戶真實問題（Vendor {request.vendor_id}），系統無法提供答案",
+                f"用戶真實問題（Vendor {request.vendor_id}），意圖: {intent_result.get('intent_name', 'unknown')}，系統無法提供答案",
                 "驗證知識庫覆蓋率，追蹤用戶真實需求",
                 request.user_id or 'system'
             ))

@@ -112,7 +112,8 @@ async def chat_stream_generator(
             query=request.question,
             limit=5,
             similarity_threshold=0.60,
-            allowed_audiences=allowed_audiences
+            allowed_audiences=allowed_audiences,
+            vendor_id=request.vendor_id
         )
 
         intent_result, search_results = await asyncio.gather(intent_task, search_task)
@@ -192,7 +193,8 @@ async def chat_stream_generator(
                 search_results,
                 evaluation,
                 intent_result,
-                llm_optimizer
+                llm_optimizer,
+                vendor_id=request.vendor_id
             ):
                 yield chunk
 
@@ -204,6 +206,7 @@ async def chat_stream_generator(
                 evaluation,
                 intent_result,
                 llm_optimizer,
+                vendor_id=request.vendor_id,
                 add_warning=True
             ):
                 yield chunk
@@ -259,6 +262,7 @@ async def stream_optimized_answer(
     evaluation: dict,
     intent_result: dict,
     llm_optimizer,
+    vendor_id: int = None,
     add_warning: bool = False
 ):
     """
@@ -268,12 +272,33 @@ async def stream_optimized_answer(
     - 使用 llm_optimizer.optimize_answer() 統一處理所有優化策略
     - 支援答案合成（自動合併多個 SOP 項目）
     - 條件式優化（快速路徑、模板、LLM）由 optimizer 內部決定
+
+    Phase 4 擴展：業態語氣調整
+    - 根據 vendor_id 取得業者的 business_types
+    - 將 vendor_info 傳遞給優化器以應用語氣調整
     """
     confidence_score = evaluation['confidence_score']
     confidence_level = evaluation['confidence_level']
 
+    # 取得業者資訊（包含 business_types，用於語氣調整）
+    vendor_info = None
+    vendor_name = None
+    if vendor_id:
+        try:
+            from services.vendor_parameter_resolver import VendorParameterResolver
+            param_resolver = VendorParameterResolver()
+            vendor_info = param_resolver.get_vendor_info(vendor_id)
+            if vendor_info:
+                vendor_name = vendor_info.get('name')
+                # 確保 business_type 欄位存在（從 business_types 陣列取第一個）
+                if 'business_types' in vendor_info and vendor_info['business_types']:
+                    vendor_info['business_type'] = vendor_info['business_types'][0]
+                print(f"📋 業者資訊: {vendor_name}, 業態: {vendor_info.get('business_type', 'N/A')}")
+        except Exception as e:
+            print(f"⚠️  取得業者資訊失敗: {e}")
+
     try:
-        # 使用 llm_optimizer 進行答案優化（包含答案合成）
+        # 使用 llm_optimizer 進行答案優化（包含答案合成和語氣調整）
         # 在 asyncio 線程池中執行同步方法
         optimization_result = await asyncio.to_thread(
             llm_optimizer.optimize_answer,
@@ -281,7 +306,9 @@ async def stream_optimized_answer(
             search_results=search_results,
             confidence_level=confidence_level,
             intent_info=intent_result,
-            confidence_score=confidence_score
+            confidence_score=confidence_score,
+            vendor_name=vendor_name,
+            vendor_info=vendor_info
         )
 
         # 取得優化後的答案

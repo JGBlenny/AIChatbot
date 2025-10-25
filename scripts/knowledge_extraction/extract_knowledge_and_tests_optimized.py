@@ -157,7 +157,6 @@ class LineKnowledgeExtractor:
 2. **測試情境（Test Scenarios）**：提取可以作為測試的真實問題
    - 保留問題的原始表達方式
    - 記錄預期答案的關鍵要點
-   - 分類測試場景
 
 請以 JSON 格式輸出：
 {
@@ -174,11 +173,9 @@ class LineKnowledgeExtractor:
   "test_scenarios": [
     {
       "test_question": "測試問題（原始表達）",
-      "expected_category": "預期分類",
-      "expected_keywords": ["預期關鍵字"],
       "expected_answer_points": ["答案要點1", "答案要點2"],
       "difficulty": "easy|medium|hard",
-      "notes": "備註"
+      "notes": "備註（簡要說明問題類型和重點）"
     }
   ]
 }
