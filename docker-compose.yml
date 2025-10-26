@@ -177,6 +177,12 @@ services:
       # 未釐清問題配置
       UNCLEAR_SEMANTIC_THRESHOLD: ${UNCLEAR_SEMANTIC_THRESHOLD:-0.80}  # 語意相似度閾值
       UNCLEAR_PINYIN_THRESHOLD: ${UNCLEAR_PINYIN_THRESHOLD:-0.80}  # 拼音相似度閾值
+      # AWS S3 影片儲存配置
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION:-ap-northeast-1}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      CLOUDFRONT_DOMAIN: ${CLOUDFRONT_DOMAIN:-}
     ports:
       - "8100:8100"
     volumes:

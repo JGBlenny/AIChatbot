@@ -292,6 +292,59 @@
             </div>
           </div>
 
+          <!-- 影片上傳功能 -->
+          <div class="form-group">
+            <label>📹 教學影片（選填）</label>
+
+            <!-- 上傳區域 -->
+            <div v-if="!formData.video_url" class="video-upload-zone">
+              <input
+                type="file"
+                ref="videoInput"
+                accept="video/mp4,video/webm,video/quicktime"
+                @change="handleVideoSelect"
+                style="display: none"
+              />
+
+              <button
+                type="button"
+                @click="$refs.videoInput.click()"
+                class="btn-upload-video"
+                :disabled="uploading"
+              >
+                {{ uploading ? '⏳ 上傳中...' : '📤 選擇影片' }}
+              </button>
+
+              <p class="upload-hint">
+                支援 MP4、WebM、MOV 格式，最大 500MB
+              </p>
+
+              <!-- 上傳進度 -->
+              <div v-if="uploading" class="upload-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{width: uploadProgress + '%'}"></div>
+                </div>
+                <span>{{ uploadProgress }}%</span>
+              </div>
+            </div>
+
+            <!-- 預覽區域 -->
+            <div v-else class="video-preview">
+              <video controls :src="formData.video_url" class="preview-player"></video>
+              <div class="video-info">
+                <span v-if="formData.video_file_size">📦 {{ formatFileSize(formData.video_file_size) }}</span>
+                <span v-if="formData.video_duration">⏱️ {{ formData.video_duration }}秒</span>
+              </div>
+              <button
+                type="button"
+                @click="removeVideo"
+                class="btn-remove-video"
+              >
+                🗑️ 移除影片
+              </button>
+            </div>
+          </div>
+
           <div class="form-actions">
             <button type="submit" class="btn-primary btn-sm" :disabled="saving">
               {{ saving ? '儲存中...' : '儲存並更新向量' }}
@@ -344,7 +397,13 @@ export default {
         keywords: [],
         question_summary: '',
         intent_mappings: [],
-        business_types: []
+        business_types: [],
+        // 影片欄位
+        video_url: null,
+        video_s3_key: null,
+        video_file_size: null,
+        video_duration: null,
+        video_format: null
       },
       keywordsString: '',
       selectedIntents: [],
@@ -359,7 +418,10 @@ export default {
       autoCreateMode: false,
       autoEditMode: false,
       pendingQuestion: null,
-      pendingIntent: null
+      pendingIntent: null,
+      // 影片上傳狀態
+      uploading: false,
+      uploadProgress: 0
     };
   },
   computed: {
@@ -669,7 +731,13 @@ export default {
           keywords: knowledge.keywords || [],
           question_summary: knowledge.question_summary || '',
           intent_mappings: knowledge.intent_mappings || [],
-          business_types: knowledge.business_types || []
+          business_types: knowledge.business_types || [],
+          // 影片欄位
+          video_url: knowledge.video_url || null,
+          video_s3_key: knowledge.video_s3_key || null,
+          video_file_size: knowledge.video_file_size || null,
+          video_duration: knowledge.video_duration || null,
+          video_format: knowledge.video_format || null
         };
 
         this.keywordsString = (knowledge.keywords || []).join(', ');
@@ -857,6 +925,120 @@ export default {
         notification.style.opacity = '0';
         setTimeout(() => notification.remove(), 300);
       }, 3000);
+    },
+
+    // ==================== 影片處理方法 ====================
+
+    async handleVideoSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // 檢查檔案大小（500MB）
+      const MAX_SIZE = 500 * 1024 * 1024;
+      if (file.size > MAX_SIZE) {
+        alert(`檔案過大！最大支援 500MB（目前 ${(file.size / (1024*1024)).toFixed(1)}MB）`);
+        return;
+      }
+
+      // 檢查檔案類型
+      const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('不支援的影片格式。請使用 MP4、WebM 或 MOV 格式');
+        return;
+      }
+
+      this.uploading = true;
+      this.uploadProgress = 0;
+
+      try {
+        // 如果是編輯模式且已有知識ID，直接上傳
+        // 如果是新增模式，需要先儲存知識才能上傳影片
+        if (!this.editingItem?.id) {
+          alert('請先儲存知識後再上傳影片');
+          this.uploading = false;
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('knowledge_id', this.editingItem.id);
+
+        const response = await fetch('/rag-api/v1/videos/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || '上傳失敗');
+        }
+
+        const result = await response.json();
+
+        // 更新表單資料
+        this.formData.video_url = result.data.url;
+        this.formData.video_s3_key = result.data.s3_key;
+        this.formData.video_file_size = result.data.size;
+        this.formData.video_format = result.data.format;
+
+        this.showNotification('✅ 影片上傳成功！', 'success');
+
+      } catch (error) {
+        console.error('上傳錯誤:', error);
+        alert('❌ 上傳失敗：' + error.message);
+      } finally {
+        this.uploading = false;
+        this.uploadProgress = 0;
+        // 清除 input，允許重新選擇同一個檔案
+        if (this.$refs.videoInput) {
+          this.$refs.videoInput.value = '';
+        }
+      }
+    },
+
+    async removeVideo() {
+      if (!confirm('確定要移除影片嗎？')) return;
+
+      if (!this.editingItem?.id) {
+        // 如果是新增模式，只清除前端資料
+        this.formData.video_url = null;
+        this.formData.video_s3_key = null;
+        this.formData.video_file_size = null;
+        this.formData.video_duration = null;
+        this.formData.video_format = null;
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/rag-api/v1/videos/${this.editingItem.id}`,
+          { method: 'DELETE' }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || '刪除失敗');
+        }
+
+        // 清除表單資料
+        this.formData.video_url = null;
+        this.formData.video_s3_key = null;
+        this.formData.video_file_size = null;
+        this.formData.video_duration = null;
+        this.formData.video_format = null;
+
+        this.showNotification('✅ 影片已移除', 'success');
+
+      } catch (error) {
+        console.error('刪除錯誤:', error);
+        alert('❌ 移除失敗：' + error.message);
+      }
+    },
+
+    formatFileSize(bytes) {
+      if (!bytes) return '';
+      const mb = bytes / (1024 * 1024);
+      return mb.toFixed(2) + ' MB';
     }
   }
 };
@@ -1374,5 +1556,122 @@ export default {
 
 .intent-type-select:focus {
   border-color: #409eff;
+}
+
+/* ==================== 影片上傳樣式 ==================== */
+
+.video-upload-zone {
+  border: 2px dashed #dcdfe6;
+  padding: 30px;
+  text-align: center;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: all 0.3s;
+}
+
+.video-upload-zone:hover {
+  border-color: #409eff;
+  background: #ecf5ff;
+}
+
+.btn-upload-video {
+  padding: 12px 24px;
+  background: #409eff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.btn-upload-video:hover:not(:disabled) {
+  background: #66b1ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(64, 158, 255, 0.3);
+}
+
+.btn-upload-video:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.upload-hint {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #909399;
+}
+
+.upload-progress {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #ebeef5;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #409eff, #66b1ff);
+  transition: width 0.3s;
+  animation: progress-animation 1.5s infinite;
+}
+
+@keyframes progress-animation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.video-preview {
+  border: 1px solid #dcdfe6;
+  padding: 15px;
+  border-radius: 8px;
+  background: white;
+}
+
+.preview-player {
+  width: 100%;
+  max-height: 400px;
+  border-radius: 6px;
+  background: #000;
+}
+
+.video-info {
+  display: flex;
+  gap: 20px;
+  margin: 12px 0;
+  color: #606266;
+  font-size: 14px;
+}
+
+.video-info span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-remove-video {
+  padding: 8px 16px;
+  background: #f56c6c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.btn-remove-video:hover {
+  background: #f78989;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(245, 108, 108, 0.3);
 }
 </style>

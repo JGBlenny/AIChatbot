@@ -85,6 +85,10 @@ class VendorKnowledgeRetriever:
                     kb.vendor_id,
                     kb.business_types,
                     kb.created_at,
+                    kb.video_url,
+                    kb.video_file_size,
+                    kb.video_duration,
+                    kb.video_format,
                     -- 計算優先級權重
                     CASE
                         WHEN kb.scope = 'customized' AND kb.vendor_id = %s THEN 1000
@@ -174,7 +178,8 @@ class VendorKnowledgeRetriever:
         top_k: int = 3,
         similarity_threshold: float = 0.6,
         resolve_templates: bool = True,
-        all_intent_ids: Optional[List[int]] = None
+        all_intent_ids: Optional[List[int]] = None,
+        allowed_audiences: Optional[List[str]] = None
     ) -> List[Dict]:
         """
         混合模式檢索：Intent 過濾 + 向量相似度排序
@@ -194,6 +199,7 @@ class VendorKnowledgeRetriever:
             similarity_threshold: 相似度閾值
             resolve_templates: 是否自動解析模板
             all_intent_ids: 所有相關意圖 IDs（包含主要和次要）
+            allowed_audiences: 允許的受眾列表（用於 B2B/B2C 隔離），None 表示不過濾
 
         Returns:
             知識列表，按相似度和優先級排序
@@ -237,6 +243,10 @@ class VendorKnowledgeRetriever:
                     kb.audience,
                     kb.business_types,
                     kb.created_at,
+                    kb.video_url,
+                    kb.video_file_size,
+                    kb.video_duration,
+                    kb.video_format,
                     kim.intent_id,
                     -- 計算向量相似度
                     1 - (kb.embedding <=> %s::vector) as base_similarity,
@@ -280,6 +290,12 @@ class VendorKnowledgeRetriever:
                         kb.business_types IS NULL  -- 通用知識（適用所有業態）
                         OR kb.business_types && %s::text[]  -- 陣列重疊檢查
                     )
+                    -- ✅ Audience 過濾：B2B/B2C 隔離（僅當提供 allowed_audiences 時）
+                    AND (
+                        %s::text[] IS NULL  -- 未提供 allowed_audiences，不過濾
+                        OR kb.audience IS NULL  -- NULL audience 視為通用
+                        OR kb.audience = ANY(%s::text[])  -- audience 在允許列表中
+                    )
                 ORDER BY
                     scope_weight DESC,        -- 1st: Scope 優先級
                     boosted_similarity DESC,  -- 2nd: 加成後的相似度
@@ -299,6 +315,8 @@ class VendorKnowledgeRetriever:
                 similarity_threshold,
                 all_intent_ids,
                 vendor_business_types,  # ✅ 業態類型過濾參數
+                allowed_audiences,      # ✅ Audience 過濾參數（檢查是否為 NULL）
+                allowed_audiences,      # ✅ Audience 過濾參數（實際過濾）
                 top_k
             ))
 

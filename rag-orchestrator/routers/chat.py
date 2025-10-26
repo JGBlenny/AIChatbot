@@ -492,8 +492,14 @@ async def _retrieve_knowledge(
     intent_result: dict
 ):
     """檢索知識庫（混合模式：intent + 向量相似度）"""
+    from services.business_scope_utils import get_allowed_audiences_for_scope
+
     retriever = get_vendor_knowledge_retriever()
     all_intent_ids = intent_result.get('intent_ids', [intent_id])
+
+    # 根據用戶角色決定業務範圍並獲取允許的受眾
+    business_scope = "external" if request.user_role == "customer" else "internal"
+    allowed_audiences = get_allowed_audiences_for_scope(business_scope)
 
     knowledge_list = await retriever.retrieve_knowledge_hybrid(
         query=request.message,
@@ -502,7 +508,8 @@ async def _retrieve_knowledge(
         top_k=request.top_k,
         similarity_threshold=0.6,
         resolve_templates=False,
-        all_intent_ids=all_intent_ids
+        all_intent_ids=all_intent_ids,
+        allowed_audiences=allowed_audiences
     )
 
     return knowledge_list
@@ -670,6 +677,18 @@ async def _build_knowledge_response(
             is_template=k['is_template']
         ) for k in knowledge_list]
 
+    # 提取影片資訊（從第一個知識項目）
+    video_url = None
+    video_file_size = None
+    video_duration = None
+    video_format = None
+    if knowledge_list:
+        first_knowledge = knowledge_list[0]
+        video_url = first_knowledge.get('video_url')
+        video_file_size = first_knowledge.get('video_file_size')
+        video_duration = first_knowledge.get('video_duration')
+        video_format = first_knowledge.get('video_format')
+
     response = VendorChatResponse(
         answer=optimization_result['optimized_answer'],
         intent_name=intent_result['intent_name'],
@@ -683,7 +702,11 @@ async def _build_knowledge_response(
         vendor_id=request.vendor_id,
         mode=request.mode,
         session_id=request.session_id,
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.utcnow().isoformat(),
+        video_url=video_url,
+        video_file_size=video_file_size,
+        video_duration=video_duration,
+        video_format=video_format
     )
 
     return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
@@ -873,6 +896,11 @@ class VendorChatResponse(BaseModel):
     mode: str
     session_id: Optional[str] = None
     timestamp: str
+    # 影片資訊
+    video_url: Optional[str] = Field(None, description="教學影片 URL")
+    video_file_size: Optional[int] = Field(None, description="影片檔案大小（bytes）")
+    video_duration: Optional[int] = Field(None, description="影片長度（秒）")
+    video_format: Optional[str] = Field(None, description="影片格式")
 
 
 @router.post("/message", response_model=VendorChatResponse)

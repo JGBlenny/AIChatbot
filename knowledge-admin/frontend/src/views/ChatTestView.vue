@@ -74,6 +74,16 @@
           </div>
           <div class="message-content">{{ msg.content }}</div>
 
+          <!-- 影片播放器 -->
+          <div v-if="msg.role === 'assistant' && msg.metadata && msg.metadata.video_url" class="message-video">
+            <video controls :src="msg.metadata.video_url" class="video-player"></video>
+            <div class="video-info">
+              <span v-if="msg.metadata.video_file_size">📦 {{ formatFileSize(msg.metadata.video_file_size) }}</span>
+              <span v-if="msg.metadata.video_duration">⏱️ {{ msg.metadata.video_duration }}秒</span>
+              <span v-if="msg.metadata.video_format">🎬 {{ msg.metadata.video_format.toUpperCase() }}</span>
+            </div>
+          </div>
+
           <!-- AI 回應的額外資訊 -->
           <div v-if="msg.role === 'assistant' && msg.metadata" class="message-metadata">
             <div class="metadata-item">
@@ -246,7 +256,12 @@ export default {
             intent_type: response.data.intent_type,
             confidence: response.data.confidence,
             sources: response.data.sources,
-            source_count: response.data.source_count
+            source_count: response.data.source_count,
+            // 影片資訊
+            video_url: response.data.video_url,
+            video_file_size: response.data.video_file_size,
+            video_duration: response.data.video_duration,
+            video_format: response.data.video_format
           }
         });
 
@@ -316,6 +331,12 @@ export default {
         internal: 'B2B 內部（系統商）'
       };
       return labels[scope] || scope;
+    },
+
+    formatFileSize(bytes) {
+      if (!bytes) return '';
+      const mb = bytes / (1024 * 1024);
+      return mb.toFixed(2) + ' MB';
     }
   }
 };
@@ -517,6 +538,39 @@ export default {
 .message.assistant .message-content {
   background: white;
   margin-right: 20%;
+}
+
+/* 訊息影片播放器 */
+.message-video {
+  margin-top: 12px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid #e5e7eb;
+}
+
+.video-player {
+  width: 100%;
+  max-width: 600px;
+  max-height: 400px;
+  display: block;
+  background: #000;
+}
+
+.message-video .video-info {
+  padding: 8px 12px;
+  background: #f9fafb;
+  display: flex;
+  gap: 15px;
+  font-size: 12px;
+  color: #666;
+  border-top: 1px solid #e5e7eb;
+}
+
+.message-video .video-info span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* 訊息元數據 */

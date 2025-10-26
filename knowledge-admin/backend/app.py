@@ -232,7 +232,8 @@ async def get_knowledge(knowledge_id: int):
         # 取得知識基本資訊
         cur.execute("""
             SELECT id, title, category, audience, answer as content,
-                   keywords, question_summary, business_types, created_at, updated_at
+                   keywords, question_summary, business_types, created_at, updated_at,
+                   video_url, video_s3_key, video_file_size, video_duration, video_format
             FROM knowledge_base
             WHERE id = %s
         """, (knowledge_id,))
