@@ -65,9 +65,8 @@
     <!-- 工具列 -->
     <div class="toolbar">
       <div class="filter-group">
-        <label>📜 歷史記錄：</label>
+        <label>📜 回測記錄：</label>
         <select v-model="selectedRunId" @change="onRunSelected" class="run-selector">
-          <option :value="null">最新結果 (Excel)</option>
           <option v-for="run in backtestRuns" :key="run.id" :value="run.id">
             Run #{{ run.id }} - {{ formatRunDate(run.started_at) }}
             ({{ run.quality_mode }}, {{ run.executed_scenarios }} 個測試, 通過率 {{ run.pass_rate }}%)
@@ -150,8 +149,8 @@
             <th width="80">狀態</th>
             <th>測試問題</th>
             <th width="120">實際意圖</th>
-            <th width="100">分數</th>
-            <th width="100">信心度</th>
+            <th width="90">完整性</th>
+            <th width="90">綜合評分</th>
             <th width="150">操作</th>
           </tr>
         </thead>
@@ -174,13 +173,13 @@
               </span>
             </td>
             <td>
-              <span class="score-badge" :class="getScoreClass(result.score)">
-                {{ result.score.toFixed(2) }}
+              <span class="quality-badge" :class="getQualityClass(result.completeness)">
+                {{ formatQualityScore(result.completeness) }}/5.0
               </span>
             </td>
             <td>
-              <span class="confidence-badge" :class="getConfidenceClass(result.confidence)">
-                {{ result.confidence.toFixed(2) }}
+              <span class="quality-badge" :class="getQualityClass(result.quality_overall)">
+                {{ formatQualityScore(result.quality_overall) }}/5.0
               </span>
             </td>
             <td>
@@ -188,7 +187,7 @@
                 👁️ 詳情
               </button>
               <button v-if="!result.passed" @click="optimizeKnowledge(result)" class="btn-optimize">
-                ⚡ 優化
+                {{ getOptimizeButtonText(result) }}
               </button>
             </td>
           </tr>
@@ -251,12 +250,20 @@ python3 scripts/knowledge_extraction/backtest_framework.py</pre>
                 </td>
               </tr>
               <tr>
-                <td><strong>分數:</strong></td>
-                <td>{{ selectedResult.score.toFixed(2) }} / 1.0</td>
+                <td><strong>完整性:</strong></td>
+                <td>
+                  <span class="quality-badge" :class="getQualityClass(selectedResult.completeness)">
+                    {{ formatQualityScore(selectedResult.completeness) }}/5.0
+                  </span>
+                </td>
               </tr>
               <tr>
-                <td><strong>信心度:</strong></td>
-                <td>{{ selectedResult.confidence.toFixed(2) }}</td>
+                <td><strong>綜合評分:</strong></td>
+                <td>
+                  <span class="quality-badge" :class="getQualityClass(selectedResult.quality_overall)">
+                    {{ formatQualityScore(selectedResult.quality_overall) }}/5.0
+                  </span>
+                </td>
               </tr>
               <tr>
                 <td><strong>難度:</strong></td>
@@ -344,12 +351,14 @@ python3 scripts/knowledge_extraction/backtest_framework.py</pre>
               <p><strong>來源摘要:</strong></p>
               <p class="sources-summary">{{ selectedResult.knowledge_sources || '無來源' }}</p>
 
-              <p v-if="selectedResult.source_ids"><strong>知識 IDs:</strong> {{ selectedResult.source_ids }}</p>
-
-              <div v-if="selectedResult.batch_url" class="knowledge-links-box">
-                <p><strong>🔗 快速訪問:</strong></p>
-                <a :href="selectedResult.batch_url" target="_blank" class="batch-link">
-                  📦 批量查詢所有相關知識 ({{ selectedResult.source_count }} 個)
+              <div v-if="selectedResult.source_ids" class="knowledge-links-box">
+                <p><strong>🔗 查看知識:</strong></p>
+                <a
+                  :href="`/knowledge?ids=${selectedResult.source_ids}`"
+                  target="_blank"
+                  class="batch-link"
+                >
+                  📦 查看相關知識 ({{ selectedResult.source_ids }})
                 </a>
               </div>
             </div>
@@ -365,7 +374,7 @@ python3 scripts/knowledge_extraction/backtest_framework.py</pre>
 
         <div class="modal-actions">
           <button @click="optimizeKnowledge(selectedResult)" class="btn-primary" v-if="!selectedResult.passed">
-            ⚡ 前往優化
+            {{ getOptimizeButtonText(selectedResult) }}
           </button>
           <button @click="closeDetailModal" class="btn-secondary">
             關閉
@@ -428,9 +437,16 @@ export default {
       return Math.floor(this.pagination.offset / this.pagination.limit) + 1;
     }
   },
-  mounted() {
+  async mounted() {
     this.checkBacktestStatus();
-    this.loadBacktestRuns();  // 載入歷史記錄列表
+    await this.loadBacktestRuns();  // 載入歷史記錄列表
+
+    // 自動選擇最新的數據庫記錄（而不是 Excel）
+    if (this.backtestRuns.length > 0) {
+      this.selectedRunId = this.backtestRuns[0].id;
+      console.log('自動選擇最新的回測記錄:', this.selectedRunId);
+    }
+
     this.loadResults();
   },
   beforeUnmount() {
@@ -462,44 +478,37 @@ export default {
       this.error = null;
 
       try {
+        // 確保選擇了有效的 Run ID
+        if (!this.selectedRunId) {
+          this.error = '請選擇一個回測記錄';
+          this.loading = false;
+          return;
+        }
+
         const params = {
           status_filter: this.statusFilter,
           limit: this.pagination.limit,
           offset: this.pagination.offset
         };
 
-        let response;
+        // 從資料庫載入回測記錄
+        const response = await axios.get(`${API_BASE}/backtest/runs/${this.selectedRunId}/results`, { params });
 
-        if (this.selectedRunId === null) {
-          // 從 Excel 載入（向後兼容）
-          response = await axios.get(`${API_BASE}/backtest/results`, { params });
-          this.results = response.data.results;
-          this.total = response.data.total;
-          this.statistics = response.data.statistics;
-        } else {
-          // 從資料庫載入歷史記錄
-          response = await axios.get(`${API_BASE}/backtest/runs/${this.selectedRunId}/results`, { params });
-          this.results = response.data.results;
-          this.total = response.data.total;
-          this.statistics = response.data.statistics;
+        this.results = response.data.results;
+        this.total = response.data.total;
+        this.statistics = response.data.statistics;
 
-          // 注意：資料庫結果的欄位名稱可能不同，需要轉換
-          // 資料庫使用 scenario_id 和 tested_at，Excel 使用 test_id 和 timestamp
-          this.results = this.results.map(result => ({
-            ...result,
-            test_id: result.id,  // 使用資料庫的 id 作為 test_id
-            timestamp: result.tested_at  // 使用 tested_at 作為 timestamp
-          }));
-        }
+        // 資料庫使用 id 和 tested_at，前端需要 test_id 和 timestamp
+        this.results = this.results.map(result => ({
+          ...result,
+          test_id: result.id,
+          timestamp: result.tested_at
+        }));
 
       } catch (error) {
         console.error('載入回測結果失敗', error);
         if (error.response?.status === 404) {
-          if (this.selectedRunId === null) {
-            this.error = '回測結果文件不存在。請先執行回測：\npython3 scripts/knowledge_extraction/backtest_framework.py';
-          } else {
-            this.error = `找不到 Run ID ${this.selectedRunId} 的回測記錄`;
-          }
+          this.error = `找不到 Run ID ${this.selectedRunId} 的回測記錄`;
         } else {
           this.error = '載入失敗：' + (error.response?.data?.detail || error.message);
         }
@@ -555,36 +564,97 @@ export default {
       // 關閉 modal
       this.showDetailModal = false;
 
-      // 如果有知識來源 IDs，使用它們導航
-      if (result.source_ids) {
-        const sourceIds = result.source_ids.split(',').map(id => id.trim());
+      const hasSource = result.source_ids && result.source_ids.trim();
+      const sourceCount = result.source_count || 0;
+      const relevance = result.relevance || 0;
+      const completeness = result.completeness || 0;
+      const question = result.test_question;
+      const intent = result.actual_intent;
 
-        if (sourceIds.length > 0 && sourceIds[0]) {
-          // 使用第一個知識 ID 進行搜尋
-          this.$router.push({
-            path: '/',
-            query: { search: sourceIds[0] }
-          });
+      // 構建查詢參數
+      let queryParams = {};
+      let notificationMessage = '';
 
-          alert(`💡 已導航到知識 ID: ${sourceIds.join(', ')}\n請檢查並優化這些知識條目`);
+      // 智能判斷：無知識 OR 相關性很低 OR 完整性不足 → 新增知識
+      if (!hasSource || relevance < 3.0 || completeness < 3.0) {
+        // 類型 A：知識缺失、不相關或不完整 → 引導新增
+        queryParams = {
+          action: 'create',
+          question: question,
+          intent: intent
+        };
+        if (!hasSource) {
+          notificationMessage = `知識庫缺少相關內容，將為您創建新知識`;
+        } else if (relevance < 3.0) {
+          notificationMessage = `檢索到的知識不相關（相關性 ${relevance.toFixed(1)}/5.0），建議新增正確知識`;
         } else {
-          // 沒有知識來源，使用問題文字搜尋
-          this.$router.push({
-            path: '/',
-            query: { search: result.test_question.substring(0, 50) }
-          });
-
-          alert(`💡 提示：沒有找到相關知識來源\n請新增或搜尋「${result.test_question.substring(0, 30)}...」相關的知識`);
+          notificationMessage = `檢索到的知識不完整（完整性 ${completeness.toFixed(1)}/5.0），建議新增完整知識`;
         }
+      } else if (sourceCount > 1) {
+        // 類型 B.1：多個相關且完整的知識來源 → 批量查詢
+        queryParams = {
+          ids: result.source_ids,
+          context: question
+        };
+        notificationMessage = `已定位到 ${sourceCount} 個相關知識，請逐一檢查優化`;
       } else {
-        // 沒有知識來源，使用問題文字搜尋
-        this.$router.push({
-          path: '/',
-          query: { search: result.test_question.substring(0, 50) }
-        });
-
-        alert(`💡 提示：請在知識庫中搜尋「${result.test_question.substring(0, 30)}...」相關的知識進行優化`);
+        // 類型 B.2：單個相關且完整的知識來源 → 直接編輯
+        queryParams = {
+          ids: result.source_ids,
+          edit: 'true'
+        };
+        notificationMessage = `將直接編輯知識 ID: ${result.source_ids}`;
       }
+
+      // 構建完整的 URL（使用新分頁打開）
+      const queryString = new URLSearchParams(queryParams).toString();
+      const url = `/knowledge?${queryString}`;
+      window.open(url, '_blank');
+
+      this.showNotification('info', '已在新分頁打開', notificationMessage);
+    },
+
+    getOptimizeButtonText(result) {
+      if (!result) return '⚡ 優化';
+
+      const hasSource = result.source_ids && result.source_ids.trim();
+      const sourceCount = result.source_count || 0;
+      const relevance = result.relevance || 0;
+      const completeness = result.completeness || 0;
+
+      // 無知識 OR 相關性很低 OR 完整性不足 → 新增
+      if (!hasSource || relevance < 3.0 || completeness < 3.0) {
+        return '➕ 新增知識';
+      } else if (sourceCount > 1) {
+        return `📦 查看 ${sourceCount} 個知識`;
+      } else {
+        return '✏️ 編輯知識';
+      }
+    },
+
+    showNotification(type, title, message) {
+      // 簡單的通知實現，可以後續替換為更好的通知組件
+      const typeEmoji = {
+        'info': 'ℹ️',
+        'success': '✅',
+        'warning': '⚠️',
+        'error': '❌'
+      };
+
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${type}`;
+      notification.innerHTML = `
+        <strong>${typeEmoji[type] || 'ℹ️'} ${title}</strong>
+        <p>${message}</p>
+      `;
+
+      document.body.appendChild(notification);
+
+      // 3秒後自動移除
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
     },
 
     getScoreClass(score) {
@@ -597,6 +667,34 @@ export default {
       if (confidence >= 0.7) return 'confidence-high';
       if (confidence >= 0.5) return 'confidence-medium';
       return 'confidence-low';
+    },
+
+    getQualityClass(score) {
+      if (score === null || score === undefined) return 'quality-na';
+      if (score >= 4.0) return 'quality-excellent';
+      if (score >= 3.0) return 'quality-good';
+      if (score >= 2.0) return 'quality-fair';
+      return 'quality-poor';
+    },
+
+    formatQualityScore(score) {
+      if (score === null || score === undefined) {
+        console.log('formatQualityScore: score is null or undefined', score);
+        return 'N/A';
+      }
+      const num = Number(score);
+      if (isNaN(num)) {
+        console.log('formatQualityScore: score is NaN', score);
+        return 'N/A';
+      }
+      return num.toFixed(1);
+    },
+
+    parseSourceIds(sourceIdsStr) {
+      if (!sourceIdsStr || !sourceIdsStr.trim()) {
+        return [];
+      }
+      return sourceIdsStr.split(',').map(id => id.trim()).filter(id => id);
     },
 
     getQualityRating(score) {
@@ -1041,7 +1139,7 @@ export default {
   color: white;
 }
 
-.score-badge, .confidence-badge {
+.score-badge, .confidence-badge, .quality-badge {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 4px;
@@ -1057,6 +1155,64 @@ export default {
 .score-medium, .confidence-medium {
   background: #e6a23c;
   color: white;
+}
+
+/* 品質評分樣式 */
+.quality-excellent {
+  background: #67c23a;
+  color: white;
+}
+
+.quality-good {
+  background: #409eff;
+  color: white;
+}
+
+.quality-fair {
+  background: #e6a23c;
+  color: white;
+}
+
+.quality-poor {
+  background: #f56c6c;
+  color: white;
+}
+
+.quality-na {
+  background: #909399;
+  color: white;
+}
+
+/* 知識 ID 按鈕樣式 */
+.knowledge-ids-section {
+  margin-top: 12px;
+}
+
+.knowledge-id-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.knowledge-id-btn {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #409eff;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: 1px solid #409eff;
+}
+
+.knowledge-id-btn:hover {
+  background: #66b1ff;
+  border-color: #66b1ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(64, 158, 255, 0.3);
 }
 
 .score-low, .confidence-low {
@@ -1457,5 +1613,62 @@ export default {
   line-height: 1.6;
   color: #303133;
   font-size: 14px;
+}
+
+/* Notification Styles */
+.notification {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  animation: slideIn 0.3s ease-out;
+  transition: opacity 0.3s ease;
+}
+
+.notification strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: #303133;
+}
+
+.notification p {
+  margin: 0;
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.5;
+}
+
+.notification-info {
+  border-left: 4px solid #1890ff;
+}
+
+.notification-success {
+  border-left: 4px solid #52c41a;
+}
+
+.notification-warning {
+  border-left: 4px solid #faad14;
+}
+
+.notification-error {
+  border-left: 4px solid #f5222d;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 </style>

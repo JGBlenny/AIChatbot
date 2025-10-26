@@ -2,6 +2,18 @@
   <div>
     <h2>📚 知識庫管理</h2>
 
+    <!-- 回測優化上下文橫幅 -->
+    <div v-if="backtestContext" class="backtest-context-banner">
+      <div class="banner-content">
+        <span class="banner-icon">🎯</span>
+        <div class="banner-text">
+          <strong>正在優化回測失敗案例：</strong>
+          <span class="context-question">{{ backtestContext }}</span>
+        </div>
+        <button @click="clearContext" class="btn-close-banner" title="關閉提示">✕</button>
+      </div>
+    </div>
+
     <!-- 工具列 -->
     <div class="toolbar">
       <div style="flex: 1; position: relative;">
@@ -134,6 +146,15 @@
       <div class="modal-content" @click.stop>
         <h2>{{ editingItem ? '✏️ 編輯知識' : '➕ 新增知識' }}</h2>
 
+        <!-- Phase 3: 在 Modal 中顯示回測優化上下文 -->
+        <div v-if="backtestContext" class="modal-context-hint">
+          <span class="hint-icon">🎯</span>
+          <div class="hint-text-content">
+            <strong>優化目標：</strong>
+            <span>{{ backtestContext }}</span>
+          </div>
+        </div>
+
         <form @submit.prevent="saveKnowledge">
           <div class="form-group">
             <label>標題 *</label>
@@ -193,23 +214,22 @@
 
           <!-- 業態類型選擇 -->
           <div class="form-group">
-            <label>業態類型（可選擇多個，未選擇=通用）</label>
-            <div class="business-type-selector">
-              <div v-for="btype in availableBusinessTypes" :key="btype.type_value" class="btype-checkbox">
-                <label>
-                  <input
-                    type="checkbox"
-                    :value="btype.type_value"
-                    v-model="selectedBusinessTypes"
-                  />
-                  <span class="btype-icon" v-if="btype.icon">{{ btype.icon }}</span>
-                  {{ btype.display_name }}
-                  <small v-if="btype.description" class="btype-desc">{{ btype.description }}</small>
-                </label>
-              </div>
-              <p v-if="selectedBusinessTypes.length === 0" class="hint-text">💡 未選擇業態=通用知識（適用所有業態）</p>
-              <p v-else class="hint-text">✅ 僅適用於：{{ selectedBusinessTypes.map(v => getBusinessTypeDisplay(v)).join('、') }}</p>
+            <label>業態類型 <span class="field-hint">（點擊標籤選擇，未選擇=通用）</span></label>
+            <div class="tag-selector">
+              <button
+                v-for="btype in availableBusinessTypes"
+                :key="btype.type_value"
+                type="button"
+                class="tag-btn"
+                :class="{ 'selected': selectedBusinessTypes.includes(btype.type_value) }"
+                @click="toggleBusinessType(btype.type_value)"
+              >
+                <span v-if="btype.icon" class="tag-icon">{{ btype.icon }}</span>
+                {{ btype.display_name }}
+              </button>
             </div>
+            <p v-if="selectedBusinessTypes.length === 0" class="hint-text">💡 未選擇=通用知識（適用所有業態）</p>
+            <p v-else class="hint-text">✅ 僅適用於：{{ selectedBusinessTypes.map(v => getBusinessTypeDisplay(v)).join('、') }}</p>
           </div>
 
           <div class="form-group">
@@ -230,27 +250,32 @@
 
           <!-- 多意圖選擇 -->
           <div class="form-group">
-            <label>意圖關聯（可選擇多個）</label>
-            <div class="intent-selector">
-              <div v-for="intent in availableIntents" :key="intent.id" class="intent-checkbox">
-                <label>
-                  <input
-                    type="checkbox"
-                    :value="intent.id"
-                    v-model="selectedIntents"
-                    @change="updateIntentType(intent.id)"
-                  />
+            <label>意圖關聯 <span class="field-hint">（點擊標籤選擇）</span></label>
+            <div class="tag-selector intent-tags">
+              <div v-for="intent in availableIntents" :key="intent.id" class="intent-tag-wrapper">
+                <button
+                  type="button"
+                  class="tag-btn"
+                  :class="{
+                    'selected': selectedIntents.includes(intent.id),
+                    'primary-intent': intentTypes[intent.id] === 'primary'
+                  }"
+                  @click="toggleIntent(intent.id)"
+                >
                   {{ intent.name }}
-                  <span v-if="selectedIntents.includes(intent.id)" class="intent-type-selector">
-                    <select v-model="intentTypes[intent.id]" class="inline-select">
-                      <option value="primary">主要</option>
-                      <option value="secondary">次要</option>
-                    </select>
-                  </span>
-                </label>
+                </button>
+                <select
+                  v-if="selectedIntents.includes(intent.id)"
+                  v-model="intentTypes[intent.id]"
+                  class="intent-type-select"
+                  @click.stop
+                >
+                  <option value="primary">主要</option>
+                  <option value="secondary">次要</option>
+                </select>
               </div>
-              <p v-if="selectedIntents.length === 0" class="hint-text">💡 未選擇意圖的知識將標記為「未分類」</p>
             </div>
+            <p v-if="selectedIntents.length === 0" class="hint-text">💡 未選擇意圖的知識將標記為「未分類」</p>
           </div>
 
           <div class="form-group">
@@ -299,6 +324,7 @@ export default {
         both: []
       },
       availableBusinessTypes: [],
+      categories: [],
       searchQuery: '',
       showModal: false,
       editingItem: null,
@@ -327,7 +353,13 @@ export default {
       searchTimeout: null,
       isIdSearch: false,
       targetIds: [],
-      audienceHint: '選擇對象後將顯示適用場景'
+      audienceHint: '選擇對象後將顯示適用場景',
+      // Phase 2: 回測優化支援
+      backtestContext: null,
+      autoCreateMode: false,
+      autoEditMode: false,
+      pendingQuestion: null,
+      pendingIntent: null
     };
   },
   computed: {
@@ -344,16 +376,38 @@ export default {
       return Math.ceil(this.pagination.total / this.pagination.limit);
     }
   },
-  mounted() {
-    // 檢查 URL 查詢參數
-    const urlParams = new URLSearchParams(window.location.hash.split('?')[1]);
-    const idsParam = urlParams.get('ids');
-    const searchParam = urlParams.get('search');
+  async mounted() {
+    // 使用 Vue Router 的標準方式讀取查詢參數
+    const query = this.$route.query;
+    const idsParam = query.ids;
+    const searchParam = query.search;
+    const actionParam = query.action;
+    const editParam = query.edit;
+    const contextParam = query.context;
+    const questionParam = query.question;
+    const intentParam = query.intent;
+
+    // Phase 2: 處理 context 參數（顯示回測優化橫幅）
+    if (contextParam) {
+      this.backtestContext = contextParam;
+    }
+
+    // Phase 2: 處理 action=create 參數（自動打開新增 Modal）
+    if (actionParam === 'create') {
+      this.autoCreateMode = true;
+      this.pendingQuestion = questionParam || null;
+      this.pendingIntent = intentParam || null;
+    }
+
+    // Phase 2: 處理 edit=true 參數（自動打開編輯 Modal）
+    if (editParam === 'true' && idsParam) {
+      this.autoEditMode = true;
+    }
 
     if (idsParam) {
       // 如果有 ids 參數，使用逗號分隔的 ID 列表進行搜尋
       const ids = idsParam.split(',').map(id => id.trim());
-      this.searchQuery = ids.join(' OR ');
+      this.searchQuery = ids.join(', ');  // 顯示格式：222, 223, 224
       // 設置一個標記，表示這是 ID 批量查詢
       this.isIdSearch = true;
       this.targetIds = ids;
@@ -362,11 +416,28 @@ export default {
       this.searchQuery = searchParam;
     }
 
-    this.loadKnowledge();
-    this.loadIntents();
-    this.loadAudiences();
-    this.loadBusinessTypes();
+    // 載入基礎資料
+    await this.loadIntents();
+    await this.loadAudiences();
+    await this.loadBusinessTypes();
+    await this.loadCategories();
     this.loadStats();
+
+    // 載入知識列表
+    await this.loadKnowledge();
+
+    // Phase 2: 執行自動動作
+    if (this.autoCreateMode) {
+      // 延遲一點打開 Modal，確保所有資料已載入
+      this.$nextTick(() => {
+        this.handleAutoCreate();
+      });
+    } else if (this.autoEditMode && this.knowledgeList.length > 0) {
+      // 自動編輯第一個查詢到的知識
+      this.$nextTick(() => {
+        this.editKnowledge(this.knowledgeList[0]);
+      });
+    }
   },
   methods: {
     async loadBusinessTypes() {
@@ -380,6 +451,24 @@ export default {
           { type_value: 'system_provider', display_name: '系統商', icon: '🖥️' },
           { type_value: 'full_service', display_name: '包租型', icon: '🏠' },
           { type_value: 'property_management', display_name: '代管型', icon: '🔑' }
+        ];
+      }
+    },
+
+    async loadCategories() {
+      try {
+        const response = await axios.get(`${API_BASE}/category-config`);
+        // API返回格式: { categories: [...] }
+        // 数据已经过滤了is_active并按display_order排序
+        this.categories = response.data.categories || [];
+      } catch (error) {
+        console.error('載入分類失敗', error);
+        // Fallback
+        this.categories = [
+          { category_value: '合約問題', display_name: '合約問題' },
+          { category_value: '帳務問題', display_name: '帳務問題' },
+          { category_value: '服務問題', display_name: '服務問題' },
+          { category_value: '設備報修', display_name: '設備報修' }
         ];
       }
     },
@@ -449,6 +538,26 @@ export default {
       // 如果取消選中，移除類型設定
       if (!this.selectedIntents.includes(intentId)) {
         delete this.intentTypes[intentId];
+      }
+    },
+
+    toggleBusinessType(typeValue) {
+      const index = this.selectedBusinessTypes.indexOf(typeValue);
+      if (index > -1) {
+        this.selectedBusinessTypes.splice(index, 1);
+      } else {
+        this.selectedBusinessTypes.push(typeValue);
+      }
+    },
+
+    toggleIntent(intentId) {
+      const index = this.selectedIntents.indexOf(intentId);
+      if (index > -1) {
+        this.selectedIntents.splice(index, 1);
+        delete this.intentTypes[intentId];
+      } else {
+        this.selectedIntents.push(intentId);
+        this.updateIntentType(intentId);
       }
     },
     async loadKnowledge() {
@@ -626,11 +735,11 @@ export default {
             `${API_BASE}/knowledge/${this.editingItem.id}`,
             this.formData
           );
-          alert('✅ 知識已更新，向量已重新生成！');
+          this.showNotification('success', '知識已更新', '向量已重新生成，可以重新執行回測驗證效果');
         } else {
           // 新增
           await axios.post(`${API_BASE}/knowledge`, this.formData);
-          alert('✅ 知識已新增！');
+          this.showNotification('success', '知識已新增', '新知識已加入知識庫，向量已生成');
         }
 
         this.closeModal();
@@ -638,7 +747,7 @@ export default {
         this.loadStats();
       } catch (error) {
         console.error('儲存失敗', error);
-        alert('儲存失敗：' + (error.response?.data?.detail || error.message));
+        this.showNotification('error', '儲存失敗', error.response?.data?.detail || error.message);
       } finally {
         this.saving = false;
       }
@@ -649,12 +758,12 @@ export default {
 
       try {
         await axios.delete(`${API_BASE}/knowledge/${id}`);
-        alert('✅ 已刪除');
+        this.showNotification('success', '刪除成功', '知識已從知識庫中移除');
         this.loadKnowledge();
         this.loadStats();
       } catch (error) {
         console.error('刪除失敗', error);
-        alert('刪除失敗：' + (error.response?.data?.detail || error.message));
+        this.showNotification('error', '刪除失敗', error.response?.data?.detail || error.message);
       }
     },
 
@@ -679,9 +788,75 @@ export default {
       this.isIdSearch = false;
       this.targetIds = [];
       this.searchQuery = '';
-      // 清除 URL 參數
-      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash.split('?')[0]);
+      // 使用 Vue Router 清除所有查詢參數
+      this.$router.replace({ query: {} });
       this.loadKnowledge();
+    },
+
+    // Phase 2: 處理自動創建知識
+    handleAutoCreate() {
+      this.editingItem = null;
+      this.formData = {
+        title: '',
+        category: '',
+        audience: '',
+        content: '',
+        keywords: [],
+        question_summary: this.pendingQuestion || '',
+        intent_mappings: [],
+        business_types: []
+      };
+      this.keywordsString = '';
+      this.selectedIntents = [];
+      this.intentTypes = {};
+      this.selectedBusinessTypes = [];
+
+      // 根據 intent 參數自動選擇意圖
+      if (this.pendingIntent) {
+        const matchedIntent = this.availableIntents.find(
+          intent => intent.name === this.pendingIntent
+        );
+        if (matchedIntent) {
+          this.selectedIntents = [matchedIntent.id];
+          this.intentTypes[matchedIntent.id] = 'primary';
+        }
+      }
+
+      this.showModal = true;
+    },
+
+    // Phase 2: 清除回測上下文
+    clearContext() {
+      this.backtestContext = null;
+      // 使用 Vue Router 清除 context 參數
+      const query = { ...this.$route.query };
+      delete query.context;
+      this.$router.replace({ query });
+    },
+
+    // Phase 3: 通知系統（替代 alert）
+    showNotification(type, title, message) {
+      const typeEmoji = {
+        'info': 'ℹ️',
+        'success': '✅',
+        'warning': '⚠️',
+        'error': '❌'
+      };
+
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${type}`;
+      notification.innerHTML = `
+        <strong>${typeEmoji[type] || 'ℹ️'} ${title}</strong>
+        <p>${message}</p>
+      `;
+
+      document.body.appendChild(notification);
+
+      // 3秒後自動移除
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
     }
   }
 };
@@ -700,21 +875,25 @@ export default {
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  background: #f56c6c;
-  color: white;
+  background: transparent;
+  color: #909399;
   border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
   cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
-  transition: all 0.3s;
+  font-size: 16px;
+  line-height: 28px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-clear-search:hover {
-  background: #f78989;
-  transform: translateY(-50%) scale(1.1);
+  background: #f5f7fa;
+  color: #f56c6c;
+  transform: translateY(-50%) scale(1.05);
 }
 
 .btn-pagination {
@@ -946,5 +1125,254 @@ export default {
 .type-gray {
   background: #909399 !important;
   color: white !important;
+}
+
+/* Phase 2: 回測優化上下文橫幅樣式 */
+.backtest-context-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.banner-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.banner-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.banner-text strong {
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+.context-question {
+  font-size: 16px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 12px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.btn-close-banner {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.btn-close-banner:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+/* Phase 3: Modal 內的回測優化上下文提示 */
+.modal-context-hint {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 12px 16px;
+  margin: -20px -30px 20px -30px;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(245, 87, 108, 0.2);
+}
+
+.hint-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.hint-text-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.hint-text-content strong {
+  opacity: 0.9;
+  font-size: 13px;
+}
+
+.hint-text-content span {
+  font-size: 15px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+/* Phase 3: 通知系統樣式 */
+.notification {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  animation: slideInRight 0.3s ease-out;
+  transition: opacity 0.3s ease;
+}
+
+.notification strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.notification p {
+  margin: 0;
+  color: #606266;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.notification-info {
+  border-left: 4px solid #1890ff;
+}
+
+.notification-success {
+  border-left: 4px solid #67c23a;
+}
+
+.notification-warning {
+  border-left: 4px solid #e6a23c;
+}
+
+.notification-error {
+  border-left: 4px solid #f56c6c;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 現代化標籤選擇器樣式 */
+.field-hint {
+  color: #909399;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.tag-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 6px;
+  min-height: 50px;
+}
+
+.tag-btn {
+  padding: 8px 16px;
+  border: 2px solid #dcdfe6;
+  border-radius: 20px;
+  background: white;
+  color: #606266;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tag-btn:hover {
+  border-color: #409eff;
+  color: #409eff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(64, 158, 255, 0.2);
+}
+
+.tag-btn.selected {
+  background: #409eff;
+  border-color: #409eff;
+  color: white;
+}
+
+.tag-btn.selected.primary-intent {
+  background: #e6a23c;
+  border-color: #e6a23c;
+}
+
+.tag-icon {
+  font-size: 16px;
+}
+
+/* 意圖標籤專用樣式 */
+.intent-tags {
+  gap: 8px;
+}
+
+.intent-tag-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.intent-type-select {
+  padding: 4px 8px;
+  border: 1px solid #dcdfe6;
+  border-radius: 12px;
+  font-size: 12px;
+  background: white;
+  cursor: pointer;
+  outline: none;
+}
+
+.intent-type-select:focus {
+  border-color: #409eff;
 }
 </style>

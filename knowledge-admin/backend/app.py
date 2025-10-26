@@ -960,7 +960,7 @@ async def list_backtest_runs(
                 vendor_id
             FROM backtest_runs
             WHERE status = 'completed'
-            ORDER BY started_at DESC
+            ORDER BY id DESC
             LIMIT %s OFFSET %s
         """, (limit, offset))
 
