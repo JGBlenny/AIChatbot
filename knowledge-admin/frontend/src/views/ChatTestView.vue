@@ -134,6 +134,7 @@
 
 <script>
 import axios from 'axios';
+import { formatAIResponse } from '@/utils/textFormatter';
 
 const RAG_API = '/rag-api';
 
@@ -235,10 +236,10 @@ export default {
           include_sources: true
         });
 
-        // 添加 AI 回應
+        // 添加 AI 回應（使用條件式格式化）
         this.messages.push({
           role: 'assistant',
-          content: response.data.answer,
+          content: formatAIResponse(response.data.answer),
           timestamp: new Date(),
           metadata: {
             intent_name: response.data.intent_name,

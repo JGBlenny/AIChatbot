@@ -4,7 +4,7 @@
 """
 import psycopg2
 import psycopg2.extras
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from .db_utils import get_db_config
 
 
@@ -146,6 +146,102 @@ class VendorSOPRetriever:
 
         finally:
             conn.close()
+
+    async def retrieve_sop_hybrid(
+        self,
+        vendor_id: int,
+        intent_id: int,
+        query: str,
+        top_k: int = 5,
+        similarity_threshold: float = 0.6
+    ) -> List[Tuple[Dict, float]]:
+        """
+        混合模式檢索：Intent 過濾 + 向量相似度排序
+
+        類似 knowledge_base 的 hybrid 檢索，解決純意圖檢索可能的誤匹配問題
+
+        Args:
+            vendor_id: 業者 ID
+            intent_id: 意圖 ID
+            query: 使用者問題（用於計算相似度）
+            top_k: 返回前 K 筆
+            similarity_threshold: 相似度閾值（低於此值的將被過濾）
+
+        Returns:
+            [(sop_item, similarity), ...] 列表，按相似度降序排列
+        """
+        from .embedding_utils import get_embedding_client
+        import numpy as np
+
+        # 1. 使用意圖檢索獲取候選 SOP（檢索更多候選，稍後用相似度過濾）
+        candidate_sops = self.retrieve_sop_by_intent(
+            vendor_id=vendor_id,
+            intent_id=intent_id,
+            top_k=top_k * 2  # 檢索更多候選以便過濾
+        )
+
+        if not candidate_sops:
+            print(f"   ⚠️  [SOP Hybrid] 意圖 {intent_id} 沒有找到任何 SOP")
+            return []
+
+        # 2. 生成 query 的 embedding
+        embedding_client = get_embedding_client()
+        query_embedding = await embedding_client.get_embedding(query)
+
+        if not query_embedding:
+            print(f"   ⚠️  [SOP Hybrid] Query embedding 生成失敗，降級為純意圖檢索")
+            # 降級：返回原始結果但相似度設為 1.0
+            return [(sop, 1.0) for sop in candidate_sops[:top_k]]
+
+        # 3. 為每個 SOP 生成 embedding 並計算相似度
+        results_with_similarity = []
+
+        for sop in candidate_sops:
+            # 使用 content 作為語義匹配的來源
+            sop_text = sop['content']
+            sop_embedding = await embedding_client.get_embedding(sop_text)
+
+            if not sop_embedding:
+                print(f"   ⚠️  [SOP Hybrid] SOP ID {sop['id']} embedding 生成失敗，跳過")
+                continue
+
+            # 計算余弦相似度
+            similarity = self._cosine_similarity(
+                np.array(query_embedding),
+                np.array(sop_embedding)
+            )
+
+            # 過濾低相似度
+            if similarity >= similarity_threshold:
+                results_with_similarity.append((sop, similarity))
+
+        # 4. 按相似度降序排序
+        results_with_similarity.sort(key=lambda x: x[1], reverse=True)
+
+        # 5. 限制返回數量
+        results_with_similarity = results_with_similarity[:top_k]
+
+        # 6. 日誌輸出
+        print(f"\n🔍 [SOP Hybrid Retrieval]")
+        print(f"   Query: {query}")
+        print(f"   Intent ID: {intent_id}, Vendor ID: {vendor_id}")
+        print(f"   候選數: {len(candidate_sops)} → 過濾後: {len(results_with_similarity)}")
+
+        for idx, (sop, sim) in enumerate(results_with_similarity, 1):
+            print(f"   {idx}. [ID {sop['id']}] {sop['item_name'][:40]} (相似度: {sim:.3f})")
+
+        return results_with_similarity
+
+    def _cosine_similarity(self, vec1, vec2):
+        """計算余弦相似度"""
+        dot_product = float(vec1.dot(vec2))
+        norm1 = float((vec1 ** 2).sum() ** 0.5)
+        norm2 = float((vec2 ** 2).sum() ** 0.5)
+
+        if norm1 == 0 or norm2 == 0:
+            return 0.0
+
+        return dot_product / (norm1 * norm2)
 
     def retrieve_sop_by_category(
         self,

@@ -372,7 +372,8 @@ class BacktestFramework:
             "message": question,
             "vendor_id": self.vendor_id,
             "mode": "tenant",
-            "include_sources": True
+            "include_sources": True,
+            "skip_sop": True  # ⭐ 回測專用：跳過 SOP 檢索，僅檢索通用知識庫
         }
 
         # ⭐ 回測專用：檢查是否禁用答案合成
@@ -383,6 +384,11 @@ class BacktestFramework:
             if not hasattr(self, '_synthesis_disabled_logged'):
                 print("   ⚙️  回測模式：答案合成已禁用（BACKTEST_DISABLE_ANSWER_SYNTHESIS=true）")
                 self._synthesis_disabled_logged = True
+
+        # 顯示 skip_sop 提示（只顯示一次）
+        if not hasattr(self, '_skip_sop_logged'):
+            print("   ⚙️  回測模式：已跳過 SOP 檢索，僅檢索通用知識庫（skip_sop=true）")
+            self._skip_sop_logged = True
 
         try:
             response = requests.post(url, json=payload, timeout=30)

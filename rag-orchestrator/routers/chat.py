@@ -332,16 +332,18 @@ async def _record_unclear_question(request: VendorChatRequest, req: Request):
 
 # ==================== 輔助函數：SOP 檢索 ====================
 
-def _retrieve_sop(request: VendorChatRequest, intent_result: dict) -> list:
-    """檢索 SOP（SOP 優先於知識庫）- 使用共用模組"""
-    from routers.chat_shared import retrieve_sop_sync
+async def _retrieve_sop(request: VendorChatRequest, intent_result: dict) -> list:
+    """檢索 SOP（SOP 優先於知識庫）- 使用 Hybrid 模式（Intent + 相似度）"""
+    from routers.chat_shared import retrieve_sop_hybrid
 
-    # 使用共用模組的同步版本
+    # 使用共用模組的 hybrid 版本（intent + 向量相似度過濾）
     all_intent_ids = intent_result.get('intent_ids', [])
-    sop_items = retrieve_sop_sync(
+    sop_items = await retrieve_sop_hybrid(
         vendor_id=request.vendor_id,
         intent_ids=all_intent_ids,
-        top_k=request.top_k
+        query=request.message,  # ← 傳入問題文本用於相似度計算
+        top_k=request.top_k,
+        similarity_threshold=0.6  # 相似度閾值
     )
 
     return sop_items
@@ -844,6 +846,7 @@ class VendorChatRequest(BaseModel):
     top_k: int = Field(5, description="返回知識數量", ge=1, le=10)
     include_sources: bool = Field(True, description="是否包含知識來源")
     disable_answer_synthesis: bool = Field(False, description="禁用答案合成（回測模式專用）")
+    skip_sop: bool = Field(False, description="跳過 SOP 檢索，僅檢索知識庫（回測模式專用）")
 
 
 class KnowledgeSource(BaseModel):
@@ -912,16 +915,19 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         # Step 5: 獲取意圖 ID
         intent_id = _get_intent_id(intent_result['intent_name'])
 
-        # Step 6: 嘗試檢索 SOP（優先級最高）
-        sop_items = _retrieve_sop(request, intent_result)
-        if sop_items:
-            print(f"✅ 找到 {len(sop_items)} 個 SOP 項目，使用 SOP 流程")
-            return await _build_sop_response(
-                request, req, intent_result, sop_items, resolver, vendor_info, cache_service
-            )
+        # Step 6: 嘗試檢索 SOP（優先級最高）- 回測模式可跳過
+        if not request.skip_sop:
+            sop_items = await _retrieve_sop(request, intent_result)
+            if sop_items:
+                print(f"✅ 找到 {len(sop_items)} 個 SOP 項目，使用 SOP 流程")
+                return await _build_sop_response(
+                    request, req, intent_result, sop_items, resolver, vendor_info, cache_service
+                )
+            print(f"ℹ️  沒有找到 SOP，使用知識庫檢索")
+        else:
+            print(f"ℹ️  [回測模式] 跳過 SOP 檢索，僅使用知識庫")
 
         # Step 7: 檢索知識庫（混合模式：intent + 向量）
-        print(f"ℹ️  沒有找到 SOP，使用知識庫檢索")
         knowledge_list = await _retrieve_knowledge(request, intent_id, intent_result)
 
         # Step 8: 如果知識庫沒有結果，嘗試 RAG fallback

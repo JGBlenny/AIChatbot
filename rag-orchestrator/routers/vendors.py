@@ -992,7 +992,7 @@ async def get_available_templates(vendor_id: int, category_id: Optional[int] = N
             SELECT
                 vendor_id,
                 vendor_name,
-                vendor_business_type,
+                vendor_business_types,
                 category_id,
                 category_name,
                 category_description,

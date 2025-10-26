@@ -59,41 +59,58 @@ async def retrieve_sop_async(
     return all_sop_items
 
 
-def retrieve_sop_sync(
+async def retrieve_sop_hybrid(
     vendor_id: int,
     intent_ids: list,
-    top_k: int = 5
+    query: str,
+    top_k: int = 5,
+    similarity_threshold: float = 0.6
 ) -> list:
     """
-    檢索 SOP（同步版本，供 chat 使用）
+    混合檢索 SOP（Async版本，供 chat 使用）
+
+    使用 Intent 過濾 + 向量相似度，解決純意圖檢索的誤匹配問題
 
     Args:
         vendor_id: 業者 ID
         intent_ids: 意圖 ID 列表
+        query: 使用者問題（用於計算相似度）
         top_k: 返回結果數量
+        similarity_threshold: 相似度閾值
 
     Returns:
-        SOP 項目列表（原始格式）
+        SOP 項目列表（包含 similarity 欄位）
     """
     sop_retriever = get_vendor_sop_retriever()
     all_sop_items = []
     seen_ids = set()
 
-    # 檢索所有相關 intent_ids 的 SOP 項目（支援複數意圖）
+    # 檢索所有相關 intent_ids 的 SOP 項目（支援複數意圖，使用 hybrid 模式）
     for intent_id in intent_ids:
-        items = sop_retriever.retrieve_sop_by_intent(
+        # 使用 hybrid 方法：intent + 向量相似度
+        items_with_sim = await sop_retriever.retrieve_sop_hybrid(
             vendor_id=vendor_id,
             intent_id=intent_id,
-            top_k=top_k
+            query=query,
+            top_k=top_k,
+            similarity_threshold=similarity_threshold
         )
-        if items:
-            # 去重：只添加未見過的項目
-            new_items = [item for item in items if item['id'] not in seen_ids]
-            all_sop_items.extend(new_items)
-            seen_ids.update(item['id'] for item in new_items)
-            print(f"📋 檢索到 {len(items)} 個 Vendor SOP 項目（Intent ID: {intent_id}，新增 {len(new_items)} 個）")
+
+        if items_with_sim:
+            # 去重：只添加未見過的項目，並保留相似度信息
+            for item, similarity in items_with_sim:
+                if item['id'] not in seen_ids:
+                    # 將相似度添加到 item dict 中
+                    item_with_sim = {**item, 'similarity': similarity}
+                    all_sop_items.append(item_with_sim)
+                    seen_ids.add(item['id'])
+
+            print(f"📋 檢索到 {len(items_with_sim)} 個 Vendor SOP 項目（Intent ID: {intent_id}，過濾後新增 {len([i for i, s in items_with_sim if i['id'] in seen_ids])} 個）")
 
     if all_sop_items:
+        # 按相似度降序排序（複數意圖時）
+        all_sop_items.sort(key=lambda x: x.get('similarity', 0), reverse=True)
+        all_sop_items = all_sop_items[:top_k]  # 限制總數
         print(f"✨ 複數意圖合併：共 {len(all_sop_items)} 個 SOP 項目（來自 {len(intent_ids)} 個意圖）")
 
     return all_sop_items
@@ -104,11 +121,11 @@ def convert_sop_to_search_results(sop_items: list) -> list:
     將 SOP 項目轉換為標準 search_results 格式
 
     統一規則：
-    - similarity=1.0（SOP 精準匹配）
+    - similarity: 使用 hybrid 檢索的實際相似度（若無則默認 1.0）
     - scope='vendor_sop'
 
     Args:
-        sop_items: SOP 項目列表（原始格式）
+        sop_items: SOP 項目列表（原始格式，可能包含 similarity 欄位）
 
     Returns:
         標準 search_results 格式列表
@@ -117,7 +134,7 @@ def convert_sop_to_search_results(sop_items: list) -> list:
         'id': sop['id'],
         'title': sop.get('item_name', sop.get('title', '')),
         'content': sop['content'],
-        'similarity': 1.0,  # SOP 精準匹配，固定為 1.0
+        'similarity': sop.get('similarity', 1.0),  # 使用實際相似度或默認 1.0
         'scope': 'vendor_sop'
     } for sop in sop_items]
 
