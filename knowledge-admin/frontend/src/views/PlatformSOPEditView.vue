@@ -8,9 +8,17 @@
         <h1>{{ businessTypeTitle }}</h1>
         <p class="subtitle">{{ businessTypeDescription }}</p>
       </div>
-      <button @click="openNewTemplateModal" class="btn btn-primary">
-        ➕ 新增 SOP 項目
-      </button>
+      <div class="header-actions">
+        <button v-if="businessType !== null" @click="showCopyModalHandler" class="btn btn-info">
+          📋 從通用範本複製
+        </button>
+        <button @click="showCategoryModal = true" class="btn btn-secondary">
+          📁 新增分類
+        </button>
+        <button @click="openNewTemplateModal" class="btn btn-primary">
+          ➕ 新增 SOP 項目
+        </button>
+      </div>
     </div>
 
     <!-- 載入中 -->
@@ -18,47 +26,39 @@
       <span class="spinner"></span> 載入中...
     </div>
 
-    <!-- SOP 範本列表（3 層結構：分類 → 群組 → 範本） -->
+    <!-- SOP 範本列表（2 層結構：分類 → 範本） -->
     <div v-else class="sop-categories">
       <div
-        v-for="category in categories"
+        v-for="category in filteredCategories"
         :key="category.id"
         class="category-section"
       >
-        <template v-if="getGroupsByCategory(category.id).length > 0">
-          <!-- 第 1 層：分類 -->
-          <div
-            class="category-header-collapsible"
-            @click="toggleCategory(category.id)"
+        <!-- 第 1 層：分類 -->
+        <div class="category-header-collapsible">
+          <span class="collapse-icon" @click="toggleCategory(category.id)">
+            {{ isCategoryExpanded(category.id) ? '▼' : '▶' }}
+          </span>
+          <h2 @click="toggleCategory(category.id)">{{ category.category_name }}</h2>
+          <span class="category-count" @click="toggleCategory(category.id)">
+            {{ getTemplatesByCategory(category.id).length }} 個項目
+          </span>
+          <!-- 刪除按鈕：所有分類都顯示 -->
+          <button
+            @click.stop="deleteCategory(category.id, category.category_name)"
+            class="btn btn-sm btn-danger category-delete-btn"
+            :title="getCategoryTotalTemplates(category.id) > 0 ? '刪除分類及其下所有範本' : '刪除空分類'"
           >
-            <span class="collapse-icon">{{ isCategoryExpanded(category.id) ? '▼' : '▶' }}</span>
-            <h2>{{ category.category_name }}</h2>
-            <span class="category-count">{{ getGroupsByCategory(category.id).length }} 個群組</span>
-          </div>
+            🗑️ 刪除
+          </button>
+        </div>
 
-          <!-- 第 2 層：群組列表 -->
-          <div v-show="isCategoryExpanded(category.id)" class="groups-list">
-            <div
-              v-for="group in getGroupsByCategory(category.id)"
-              :key="group.id"
-              class="group-section"
-            >
-              <div
-                class="group-header-collapsible"
-                @click="toggleGroup(group.id)"
-              >
-                <span class="collapse-icon">{{ isGroupExpanded(group.id) ? '▼' : '▶' }}</span>
-                <h3>{{ group.group_name }}</h3>
-                <span class="group-count">{{ getTemplatesByGroup(group.id).length }} 項</span>
-              </div>
-
-              <!-- 第 3 層：範本列表 -->
-              <div v-show="isGroupExpanded(group.id)" class="templates-list">
-                <div
-                  v-for="template in getTemplatesByGroup(group.id)"
-                  :key="template.id"
-                  class="template-card"
-                >
+        <!-- 第 2 層：範本列表 -->
+        <div v-show="isCategoryExpanded(category.id)" class="templates-list">
+          <div
+            v-for="template in getTemplatesByCategory(category.id)"
+            :key="template.id"
+            class="template-card"
+          >
                   <div class="template-header">
                     <span class="template-number">#{{ template.item_number }}</span>
                     <h4>{{ template.item_name }}</h4>
@@ -103,19 +103,26 @@
                     </button>
                   </div>
                 </div>
-
-                <!-- 如果群組內沒有範本 -->
-                <div v-if="getTemplatesByGroup(group.id).length === 0" class="no-templates-in-group">
-                  此群組尚未建立任何 SOP 項目
-                </div>
               </div>
-            </div>
-          </div>
-        </template>
+
+        <!-- 如果分類內沒有範本 -->
+        <div v-show="isCategoryExpanded(category.id)" v-if="getTemplatesByCategory(category.id).length === 0" class="no-templates-in-category">
+          <p>此分類尚未建立任何 SOP 項目</p>
+          <button @click="openNewTemplateModalForCategory(category.id)" class="btn btn-sm btn-primary">
+            ➕ 為此分類新增項目
+          </button>
+        </div>
       </div>
 
-      <div v-if="filteredTemplates.length === 0" class="no-templates">
-        此業種尚未建立任何 SOP 項目，請點擊「➕ 新增 SOP 項目」開始建立
+      <div v-if="filteredCategories.length === 0" class="no-templates">
+        <p>📋 此業種尚未建立任何 SOP 項目</p>
+        <div class="hint-box">
+          <p><strong>建立方式：</strong></p>
+          <ul>
+            <li v-if="businessType !== null">方式一：點擊「📋 從通用範本複製」快速複製通用範本</li>
+            <li>方式{{ businessType !== null ? '二' : '一' }}：點擊「📁 新增分類」建立分類，再點擊「➕ 新增 SOP 項目」逐一建立</li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -237,6 +244,84 @@
         </div>
       </div>
     </div>
+
+    <!-- 新增分類 Modal -->
+    <div v-if="showCategoryModal" class="modal-overlay" @click="showCategoryModal = false">
+      <div class="modal-content" @click.stop>
+        <h2>📁 新增分類</h2>
+        <div v-if="businessType !== null" class="info-box">
+          <p><strong>💡 提示：</strong></p>
+          <p>新增的分類需要添加 {{ businessTypeTitle.replace('範本管理', '') }} 的 SOP 項目後才會顯示在列表中。</p>
+          <p>儲存後將自動引導您添加第一個項目。</p>
+        </div>
+        <form @submit.prevent="saveCategory">
+          <div class="form-group">
+            <label>分類名稱 *</label>
+            <input v-model="categoryForm.category_name" type="text" required class="form-control" placeholder="例如：租賃流程相關資訊" />
+          </div>
+
+          <div class="form-group">
+            <label>分類說明</label>
+            <textarea v-model="categoryForm.description" class="form-control" rows="3" placeholder="簡述此分類的用途"></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-primary">💾 儲存並新增項目</button>
+            <button type="button" @click="closeCategoryModal" class="btn btn-secondary">取消</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 從通用範本複製 Modal -->
+    <div v-if="showCopyModal" class="modal-overlay" @click="showCopyModal = false">
+      <div class="modal-content modal-large" @click.stop>
+        <h2>📋 從通用範本複製</h2>
+        <p class="modal-description">將通用範本複製為 {{ businessTypeTitle }}，複製後可自行調整內容</p>
+
+        <div v-if="copyLoading" class="loading">
+          <span class="spinner"></span> 載入通用範本中...
+        </div>
+
+        <div v-else class="copy-options">
+          <div class="select-all-section">
+            <label class="select-all-checkbox">
+              <input type="checkbox" v-model="copyAllCategories" @change="toggleAllCategories" />
+              <strong>✅ 全選所有分類（共 {{ universalTemplateCount }} 個通用範本）</strong>
+            </label>
+          </div>
+
+          <div class="categories-checklist">
+            <div v-for="category in universalCategories" :key="category.id" class="category-checkbox-group">
+              <label class="category-checkbox">
+                <input
+                  type="checkbox"
+                  :value="category.id"
+                  v-model="selectedCategoryIds"
+                  @change="updateCopyAll"
+                />
+                <strong>{{ category.category_name }}</strong>
+                <span class="item-count">({{ getUniversalTemplatesByCategory(category.id).length }} 個項目)</span>
+              </label>
+
+              <div v-if="selectedCategoryIds.includes(category.id)" class="templates-preview">
+                <div v-for="template in getUniversalTemplatesByCategory(category.id)" :key="template.id" class="template-preview-item">
+                  <span class="template-number">#{{ template.item_number }}</span>
+                  <span class="template-name">{{ template.item_name }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button @click="copyUniversalTemplates" :disabled="selectedCategoryIds.length === 0 || copying" class="btn btn-primary">
+            {{ copying ? '⏳ 複製中...' : `📋 複製選中的範本 (${getSelectedTemplateCount()} 個項目)` }}
+          </button>
+          <button @click="closeCopyModal" class="btn btn-secondary">取消</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -252,22 +337,35 @@ export default {
     return {
       loading: false,
       categories: [],
-      groups: [],
       templates: [],
       intents: [],
 
       // Accordion states
       expandedCategories: {},
-      expandedGroups: {},
 
       // Modal states
       showTemplateModal: false,
       showUsageModal: false,
+      showCategoryModal: false,
+      showCopyModal: false,
+
+      // Copy universal templates
+      copyLoading: false,
+      copying: false,
+      universalTemplates: [],
+      universalCategories: [],
+      selectedCategoryIds: [],
+      copyAllCategories: false,
 
       // Editing state
       editingTemplate: null,
 
       // Forms
+      categoryForm: {
+        category_name: '',
+        description: ''
+      },
+
       templateForm: {
         category_id: null,
         business_type: null,
@@ -310,6 +408,19 @@ export default {
 
     filteredTemplates() {
       return this.templates.filter(t => t.business_type === this.businessType);
+    },
+
+    // 只顯示有該業態範本的分類
+    filteredCategories() {
+      return this.categories.filter(category => {
+        // 檢查該分類下是否有該業態的範本
+        return this.filteredTemplates.some(t => t.category_id === category.id);
+      });
+    },
+
+    // 通用範本統計
+    universalTemplateCount() {
+      return this.universalTemplates.length;
     }
   },
 
@@ -333,7 +444,6 @@ export default {
       try {
         await Promise.all([
           this.loadCategories(),
-          this.loadGroups(),
           this.loadTemplates()
         ]);
       } catch (error) {
@@ -347,11 +457,6 @@ export default {
     async loadCategories() {
       const response = await axios.get(`${RAG_API}/api/v1/platform/sop/categories`);
       this.categories = response.data.categories;
-    },
-
-    async loadGroups() {
-      const response = await axios.get(`${RAG_API}/api/v1/platform/sop/groups`);
-      this.groups = response.data.groups;
     },
 
     async loadTemplates() {
@@ -373,12 +478,9 @@ export default {
       return this.filteredTemplates.filter(t => t.category_id === categoryId);
     },
 
-    getGroupsByCategory(categoryId) {
-      return this.groups.filter(g => g.category_id === categoryId);
-    },
-
-    getTemplatesByGroup(groupId) {
-      return this.filteredTemplates.filter(t => t.group_id === groupId);
+    getCategoryTotalTemplates(categoryId) {
+      // 檢查該分類下的所有範本（不分業態）
+      return this.templates.filter(t => t.category_id === categoryId).length;
     },
 
     // Accordion methods
@@ -393,21 +495,12 @@ export default {
       return !!this.expandedCategories[categoryId];
     },
 
-    toggleGroup(groupId) {
-      this.expandedGroups = {
-        ...this.expandedGroups,
-        [groupId]: !this.expandedGroups[groupId]
-      };
-    },
-
-    isGroupExpanded(groupId) {
-      return !!this.expandedGroups[groupId];
-    },
-
     // Template CRUD
     getNextItemNumber(categoryId) {
       if (!categoryId) return 1;
 
+      // 取得該分類下當前業態的範本
+      // 修改後的約束允許不同業態使用相同的 item_number
       const categoryTemplates = this.templates.filter(t =>
         t.category_id === categoryId && t.business_type === this.businessType
       );
@@ -425,6 +518,24 @@ export default {
         category_id: null,
         business_type: this.businessType,
         item_number: 1,
+        item_name: '',
+        content: '',
+        intent_ids: [],
+        priority: 50,
+        template_notes: '',
+        customization_hint: ''
+      };
+
+      this.showTemplateModal = true;
+    },
+
+    openNewTemplateModalForCategory(categoryId) {
+      // 為指定分類打開新增範本 modal
+      this.editingTemplate = null;
+      this.templateForm = {
+        category_id: categoryId,
+        business_type: this.businessType,
+        item_number: this.getNextItemNumber(categoryId),
         item_name: '',
         content: '',
         intent_ids: [],
@@ -536,6 +647,256 @@ export default {
       if (priority >= 90) return 'priority-high';
       if (priority >= 70) return 'priority-medium';
       return 'priority-low';
+    },
+
+    // Category management
+    async saveCategory() {
+      try {
+        const response = await axios.post(`${RAG_API}/api/v1/platform/sop/categories`, this.categoryForm);
+        const newCategory = response.data;
+
+        this.closeCategoryModal();
+        await this.loadCategories(); // 重新載入分類列表
+
+        // 新增分類成功後，自動打開新增 SOP 項目 modal 並預選該分類
+        alert(`✅ 分類「${newCategory.category_name}」已新增\n\n接下來請為此分類添加 SOP 項目`);
+
+        this.editingTemplate = null;
+        this.templateForm = {
+          category_id: newCategory.id, // 預選新建的分類
+          business_type: this.businessType,
+          item_number: 1,
+          item_name: '',
+          content: '',
+          intent_ids: [],
+          priority: 50,
+          template_notes: '',
+          customization_hint: ''
+        };
+        this.showTemplateModal = true;
+      } catch (error) {
+        console.error('新增分類失敗:', error);
+        alert('❌ 新增分類失敗: ' + (error.response?.data?.detail || error.message));
+      }
+    },
+
+    closeCategoryModal() {
+      this.showCategoryModal = false;
+      this.categoryForm = {
+        category_name: '',
+        description: ''
+      };
+    },
+
+    async deleteCategory(categoryId, categoryName) {
+      const currentBusinessTypeTemplates = this.getTemplatesByCategory(categoryId);
+      const totalTemplates = currentBusinessTypeTemplates.length;
+
+      let confirmMessage = '';
+      let businessTypeLabel = '';
+
+      if (this.businessType === null) {
+        businessTypeLabel = '通用';
+      } else if (this.businessType === 'full_service') {
+        businessTypeLabel = '包租業';
+      } else if (this.businessType === 'property_management') {
+        businessTypeLabel = '代管業';
+      }
+
+      if (totalTemplates === 0) {
+        confirmMessage = `確定要從 ${businessTypeLabel} 移除分類「${categoryName}」嗎？\n\n此分類在 ${businessTypeLabel} 下目前沒有任何範本。`;
+      } else {
+        confirmMessage = `⚠️ 警告：確定要永久刪除「${categoryName}」分類下的所有 ${businessTypeLabel} 範本嗎？\n\n`;
+        confirmMessage += `將永久刪除 ${totalTemplates} 個 ${businessTypeLabel} 範本\n`;
+        confirmMessage += `• 其他業態的範本不受影響\n`;
+        confirmMessage += `• 此操作無法復原\n\n`;
+        confirmMessage += `確定要繼續嗎？`;
+      }
+
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+
+      try {
+        // 逐一永久刪除該分類下當前業態的所有範本
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const template of currentBusinessTypeTemplates) {
+          try {
+            // 添加 ?permanent=true 參數進行永久刪除
+            await axios.delete(`${RAG_API}/api/v1/platform/sop/templates/${template.id}?permanent=true`);
+            successCount++;
+          } catch (error) {
+            console.error(`刪除範本 ${template.id} 失敗:`, error);
+            errorCount++;
+          }
+        }
+
+        if (successCount > 0) {
+          alert(`✅ 已永久刪除 ${successCount} 個 ${businessTypeLabel} 範本${errorCount > 0 ? `\n❌ ${errorCount} 個刪除失敗` : ''}`);
+        } else {
+          alert(`✅ 已從 ${businessTypeLabel} 移除此分類`);
+        }
+
+        await this.loadCategories(); // 重新載入分類列表
+        await this.loadTemplates(); // 重新載入範本列表
+      } catch (error) {
+        console.error('刪除失敗:', error);
+        alert('❌ 刪除失敗: ' + (error.response?.data?.detail || error.message));
+      }
+    },
+
+    // Copy universal templates
+    async showCopyModalHandler() {
+      this.showCopyModal = true;
+      this.copyLoading = true;
+
+      try {
+        // 重新載入所有範本（確保 this.templates 是最新的）
+        await this.loadTemplates();
+
+        // 載入通用範本
+        const response = await axios.get(`${RAG_API}/api/v1/platform/sop/templates`);
+        this.universalTemplates = response.data.templates.filter(t => t.business_type === null);
+
+        // 取得有通用範本的分類
+        const categoryIds = [...new Set(this.universalTemplates.map(t => t.category_id))];
+        this.universalCategories = this.categories.filter(c => categoryIds.includes(c.id));
+      } catch (error) {
+        console.error('載入通用範本失敗:', error);
+        alert('載入通用範本失敗: ' + (error.response?.data?.detail || error.message));
+      } finally {
+        this.copyLoading = false;
+      }
+    },
+
+    getUniversalTemplatesByCategory(categoryId) {
+      return this.universalTemplates.filter(t => t.category_id === categoryId);
+    },
+
+    toggleAllCategories() {
+      if (this.copyAllCategories) {
+        this.selectedCategoryIds = this.universalCategories.map(c => c.id);
+      } else {
+        this.selectedCategoryIds = [];
+      }
+    },
+
+    updateCopyAll() {
+      this.copyAllCategories = this.selectedCategoryIds.length === this.universalCategories.length;
+    },
+
+    getSelectedTemplateCount() {
+      return this.universalTemplates.filter(t => this.selectedCategoryIds.includes(t.category_id)).length;
+    },
+
+    async copyUniversalTemplates() {
+      if (this.selectedCategoryIds.length === 0) {
+        alert('請至少選擇一個分類');
+        return;
+      }
+
+      const selectedTemplates = this.universalTemplates.filter(t => this.selectedCategoryIds.includes(t.category_id));
+
+      if (!confirm(`確定要複製 ${selectedTemplates.length} 個範本到 ${this.businessTypeTitle} 嗎？`)) {
+        return;
+      }
+
+      this.copying = true;
+
+      try {
+        let successCount = 0;
+        let errorCount = 0;
+        const errors = [];
+
+        // 按分類分組範本，以便為每個分類計算正確的 item_number
+        const templatesByCategory = {};
+        selectedTemplates.forEach(t => {
+          if (!templatesByCategory[t.category_id]) {
+            templatesByCategory[t.category_id] = [];
+          }
+          templatesByCategory[t.category_id].push(t);
+        });
+
+        // 為每個分類複製範本
+        for (const [categoryId, templates] of Object.entries(templatesByCategory)) {
+          // 取得該分類當前最大的 item_number（檢查所有業態）
+          const categoryIdInt = parseInt(categoryId);
+          let nextItemNumber = this.getNextItemNumber(categoryIdInt);
+
+          console.log(`分類 ${categoryIdInt} 的下一個項次編號:`, nextItemNumber);
+
+          // 按 item_number 排序，保持原有順序
+          templates.sort((a, b) => a.item_number - b.item_number);
+
+          for (const template of templates) {
+            const payload = {
+              category_id: template.category_id,
+              business_type: this.businessType,
+              item_number: nextItemNumber,
+              item_name: template.item_name,
+              content: template.content,
+              intent_ids: template.intent_ids || [],
+              priority: template.priority,
+              template_notes: template.template_notes,
+              customization_hint: template.customization_hint
+            };
+
+            console.log(`準備複製範本「${template.item_name}」:`, payload);
+
+            try {
+              await axios.post(`${RAG_API}/api/v1/platform/sop/templates`, payload);
+              console.log(`✅ 成功複製「${template.item_name}」，item_number: ${nextItemNumber}`);
+              successCount++;
+              nextItemNumber++; // 為下一個範本遞增
+            } catch (error) {
+              console.error(`❌ 複製範本「${template.item_name}」失敗:`, error.response?.data || error.message);
+              errors.push({
+                name: template.item_name,
+                error: error.response?.data?.detail || error.message
+              });
+              errorCount++;
+            }
+          }
+        }
+
+        // 顯示結果
+        let message = `複製完成！\n✅ 成功：${successCount} 個\n❌ 失敗：${errorCount} 個`;
+
+        if (errors.length > 0 && errors.length <= 5) {
+          message += '\n\n失敗項目：';
+          errors.forEach(e => {
+            message += `\n• ${e.name}: ${e.error}`;
+          });
+        } else if (errors.length > 5) {
+          message += '\n\n部分失敗項目：';
+          errors.slice(0, 5).forEach(e => {
+            message += `\n• ${e.name}: ${e.error}`;
+          });
+          message += `\n... 還有 ${errors.length - 5} 個錯誤`;
+        }
+
+        alert(message);
+
+        if (successCount > 0) {
+          this.closeCopyModal();
+          await this.loadTemplates(); // 重新載入範本
+        }
+      } catch (error) {
+        console.error('複製失敗:', error);
+        alert('複製失敗: ' + (error.response?.data?.detail || error.message));
+      } finally {
+        this.copying = false;
+      }
+    },
+
+    closeCopyModal() {
+      this.showCopyModal = false;
+      this.selectedCategoryIds = [];
+      this.copyAllCategories = false;
+      this.universalTemplates = [];
+      this.universalCategories = [];
     }
   }
 };
@@ -554,6 +915,12 @@ export default {
   display: flex;
   align-items: center;
   gap: 20px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
 }
 
 .btn-back {
@@ -596,6 +963,47 @@ export default {
   transition: all 0.2s;
 }
 
+.btn-primary {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #45a049;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+.btn-info {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-info:hover {
+  background: #138496;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
 .loading {
   text-align: center;
   padding: 40px;
@@ -634,7 +1042,6 @@ export default {
   background: #f8f9fa;
   padding: 15px 20px;
   border-left: 4px solid #4CAF50;
-  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -647,12 +1054,26 @@ export default {
   border-left-color: #45a049;
 }
 
+.category-header-collapsible .collapse-icon,
+.category-header-collapsible h2,
+.category-header-collapsible .category-count {
+  cursor: pointer;
+}
+
+.category-delete-btn {
+  margin-left: auto;
+  opacity: 0.7;
+}
+
+.category-delete-btn:hover {
+  opacity: 1;
+}
+
 .category-header-collapsible h2 {
   margin: 0;
   font-size: 20px;
   color: #333;
   font-weight: 600;
-  flex: 1;
 }
 
 .collapse-icon {
@@ -1025,5 +1446,199 @@ export default {
 .checkbox-label:has(.checkbox-input:checked) .checkbox-text {
   font-weight: 600;
   color: #2E7D32;
+}
+
+/* Copy modal styles */
+.modal-description {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #4CAF50;
+}
+
+.copy-options {
+  margin-top: 20px;
+}
+
+.select-all-section {
+  background: #e3f2fd;
+  border: 2px solid #2196F3;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.select-all-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  margin: 0;
+}
+
+.select-all-checkbox input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  accent-color: #2196F3;
+}
+
+.select-all-checkbox strong {
+  color: #1976D2;
+  font-size: 16px;
+}
+
+.categories-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.category-checkbox-group {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+
+.category-checkbox-group:has(input:checked) {
+  border-color: #4CAF50;
+  background: #f1f8f4;
+}
+
+.category-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.category-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #4CAF50;
+}
+
+.category-checkbox strong {
+  flex: 1;
+  color: #333;
+  font-size: 16px;
+}
+
+.item-count {
+  color: #666;
+  font-size: 14px;
+  font-weight: normal;
+  padding: 4px 10px;
+  background: #e8f5e9;
+  border-radius: 12px;
+}
+
+.templates-preview {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.template-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #fafafa;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.template-preview-item .template-number {
+  font-size: 12px;
+  padding: 3px 8px;
+}
+
+.template-preview-item .template-name {
+  color: #555;
+  flex: 1;
+}
+
+.no-templates-in-category {
+  text-align: center;
+  padding: 30px 20px;
+  color: #aaa;
+  font-size: 14px;
+}
+
+.no-templates-in-category p {
+  margin: 0 0 12px 0;
+  font-style: italic;
+}
+
+.no-templates-in-category .btn {
+  margin: 0 auto;
+}
+
+.hint-box {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+  text-align: left;
+}
+
+.hint-box p {
+  margin: 0 0 8px 0;
+  color: #856404;
+  font-size: 14px;
+}
+
+.hint-box ul {
+  margin: 8px 0 0 0;
+  padding-left: 24px;
+  color: #856404;
+}
+
+.hint-box li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.info-box {
+  background: #d1ecf1;
+  border: 1px solid #17a2b8;
+  border-left: 4px solid #17a2b8;
+  border-radius: 6px;
+  padding: 14px;
+  margin-bottom: 20px;
+}
+
+.info-box p {
+  margin: 0 0 6px 0;
+  color: #0c5460;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.info-box p:last-child {
+  margin-bottom: 0;
+}
+
+.info-box strong {
+  color: #0c5460;
 }
 </style>

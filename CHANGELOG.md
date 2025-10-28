@@ -10,6 +10,14 @@
 ## [Unreleased]
 
 ### 新增 ⭐
+- **Target User Config 管理系統** (2025-10-28)
+  - 完整的目標用戶配置 CRUD 管理介面
+  - 軟刪除機制（is_active）
+  - 知識庫可指定多個目標用戶（如：租客、房東、物業管理師）
+  - 支援未來用戶身份過濾（需整合用戶登入系統）
+  - 管理頁面：`/target-users-config`
+  - API 端點：GET/POST/PUT/DELETE `/api/target-users-config`
+
 - **Redis 緩存系統整合** (2025-10-21)
   - 3 層緩存架構：問題緩存、向量緩存、RAG 結果緩存
   - 事件驅動 + TTL 混合失效策略
@@ -18,16 +26,33 @@
   - 環境變量配置 TTL（CACHE_TTL_QUESTION, CACHE_TTL_VECTOR, CACHE_TTL_RAG_RESULT）
 
 ### 改進 🔧
+- **配置管理系統優化** (2025-10-28)
+  - 移除不必要的 `icon` 欄位（前端顯示、表單輸入、資料庫資料）
+  - 移除 `display_order` 排序機制，改用 `ORDER BY id`
+  - 簡化 UI 設計，減少技術債
+  - 影響範圍：Target User Config、Business Types Config、Category Config
+  - 資料庫清理：所有 icon 欄位設為 NULL
+
+- **路由遷移與重定向** (2025-10-28)
+  - `/audience-config` 重定向到 `/target-users-config`
+  - 移除舊的 Audience Config 頁面
+  - 更新導航選單：「受眾配置」→「目標用戶」👥
+
 - **RAG Orchestrator 性能優化**
   - 緩存命中時跳過 RAG 處理，提升響應速度
   - 關聯追蹤：knowledge、intent、vendor 三維度失效管理
   - 完整的事件驅動緩存失效流程
 
+### 文檔
+- 新增 [Target User Config 實作完成報告](docs/archive/completion_reports/TARGET_USER_CONFIG_IMPLEMENTATION.md)
+- 新增 [配置管理更新摘要](docs/CONFIG_MANAGEMENT_UPDATE_SUMMARY.md)
+
 ### 規劃中
+- 整合用戶登入/認證系統（啟用 target_user 過濾功能）
 - Phase 2: 外部 API 整合框架
-- 租客身份識別系統
 - 資料查詢 API（租約、帳務）
 - 操作執行 API（報修、預約）
+- 考慮移除資料庫中不再使用的欄位（icon, display_order）
 
 ---
 
@@ -426,4 +451,4 @@
 ---
 
 **維護者**: Claude Code
-**最後更新**: 2025-10-13
+**最後更新**: 2025-10-28

@@ -27,6 +27,7 @@
         <component
           :is="currentTabComponent"
           @update-count="updateTabCount"
+          :candidate-id="candidateId"
         />
       </keep-alive>
     </div>
@@ -35,6 +36,7 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import IntentReviewTab from '../components/review/IntentReviewTab.vue';
 import ScenarioReviewTab from '../components/review/ScenarioReviewTab.vue';
 import KnowledgeReviewTab from '../components/review/KnowledgeReviewTab.vue';
@@ -51,7 +53,18 @@ export default {
   },
 
   setup() {
+    const route = useRoute();
     const currentTab = ref('intents');
+    const candidateId = ref(null);
+
+    // 檢查 URL 參數
+    onMounted(() => {
+      // 如果有 candidate_id 參數，自動切換到知識庫審核 tab
+      if (route.query.candidate_id) {
+        candidateId.value = parseInt(route.query.candidate_id);
+        currentTab.value = 'knowledge';
+      }
+    });
 
     const tabs = ref([
       {
@@ -111,7 +124,8 @@ export default {
       currentTabComponent,
       switchTab,
       updateTabCount,
-      refreshAll
+      refreshAll,
+      candidateId
     };
   }
 };

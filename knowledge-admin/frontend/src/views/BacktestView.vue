@@ -24,10 +24,6 @@
         <div class="stat-label">平均分數</div>
         <div class="stat-value">{{ statistics.avg_score }}</div>
       </div>
-      <div class="stat-card confidence">
-        <div class="stat-label">平均信心度</div>
-        <div class="stat-value">{{ statistics.avg_confidence }}</div>
-      </div>
     </div>
 
     <!-- 品質評估統計卡片 -->
@@ -151,7 +147,7 @@
             <th width="120">實際意圖</th>
             <th width="90">完整性</th>
             <th width="90">綜合評分</th>
-            <th width="150">操作</th>
+            <th width="100">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -184,10 +180,7 @@
             </td>
             <td>
               <button @click="showDetail(result)" class="btn-detail">
-                👁️ 詳情
-              </button>
-              <button v-if="!result.passed" @click="optimizeKnowledge(result)" class="btn-optimize">
-                {{ getOptimizeButtonText(result) }}
+                詳情
               </button>
             </td>
           </tr>
@@ -1221,32 +1214,81 @@ export default {
 }
 
 /* 按鈕 */
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5568d3 0%, #64398f 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:disabled {
+  background: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: #e9ecef;
+  color: #495057;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #d3d9df;
+  transform: translateY(-1px);
+}
+
 .btn-detail, .btn-optimize {
   padding: 6px 12px;
   margin: 2px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   transition: all 0.2s;
 }
 
 .btn-detail {
-  background: #409eff;
+  background-color: #667eea;
   color: white;
 }
 
 .btn-detail:hover {
-  background: #66b1ff;
+  background-color: #5568d3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .btn-optimize {
-  background: #e6a23c;
+  background-color: #e6a23c;
   color: white;
 }
 
 .btn-optimize:hover {
-  background: #ebb563;
+  background-color: #cf912c;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(230, 162, 60, 0.3);
 }
 
 /* 分頁控制 */
@@ -1261,24 +1303,29 @@ export default {
 
 .btn-pagination {
   padding: 8px 16px;
-  background: #409eff;
+  background: #667eea;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  transition: all 0.3s;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
 .btn-pagination:hover:not(:disabled) {
-  background: #66b1ff;
+  background: #5568d3;
   transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .btn-pagination:disabled {
-  background: #c0c4cc;
+  background: #e9ecef;
+  color: #6c757d;
   cursor: not-allowed;
   opacity: 0.6;
+  transform: none;
+  box-shadow: none;
 }
 
 .page-info {

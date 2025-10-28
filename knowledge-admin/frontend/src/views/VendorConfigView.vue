@@ -49,7 +49,6 @@
           <h3>{{ getCategoryInfo(selectedCategory).label }}</h3>
           <div class="header-actions">
             <button @click="showPreview" class="btn-info">👁️ 預覽效果</button>
-            <button @click="addCustomParam" class="btn-secondary">➕ 自訂參數</button>
           </div>
         </div>
 
@@ -80,14 +79,12 @@
               ></textarea>
 
               <span v-if="config.unit" class="unit-label">{{ config.unit }}</span>
-              <button v-if="config.custom" @click="removeCustomParam(index)" class="btn-delete btn-sm">✕</button>
             </div>
           </div>
 
           <!-- 空狀態 -->
           <div v-if="currentCategoryConfigs.length === 0" class="empty-state-small">
-            <p>此分類尚無配置參數</p>
-            <button @click="addCustomParam" class="btn-secondary">➕ 新增參數</button>
+            <p>此分類尚無系統參數</p>
           </div>
         </div>
       </div>
@@ -102,7 +99,6 @@
         <button @click="saveConfigs" :disabled="saving" class="btn-primary btn-large">
           {{ saving ? '⏳ 儲存中...' : '💾 儲存所有配置' }}
         </button>
-        <button @click="resetConfigs" class="btn-secondary">🔄 重新整理</button>
       </div>
     </div>
 
@@ -154,57 +150,6 @@
       </div>
     </div>
 
-    <!-- 自訂參數 Modal -->
-    <div v-if="showCustomParamModal" class="modal-overlay" @click="closeCustomParam">
-      <div class="modal-content" @click.stop style="max-width: 600px;">
-        <h2>➕ 新增自訂參數</h2>
-
-        <form @submit.prevent="confirmCustomParam">
-          <div class="form-group">
-            <label>參數鍵 *</label>
-            <input v-model="customParam.param_key" required placeholder="例如: min_rent_fee" />
-          </div>
-
-          <div class="form-group">
-            <label>顯示名稱 *</label>
-            <input v-model="customParam.display_name" required placeholder="例如: 最低租金" />
-          </div>
-
-          <div class="form-group">
-            <label>參數值 *</label>
-            <input v-model="customParam.param_value" required placeholder="例如: 10000" />
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>資料型別</label>
-              <select v-model="customParam.data_type">
-                <option value="string">文字</option>
-                <option value="number">數字</option>
-                <option value="boolean">布林值</option>
-                <option value="json">JSON</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>單位</label>
-              <input v-model="customParam.unit" placeholder="元、天、%" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>說明</label>
-            <input v-model="customParam.description" placeholder="參數用途說明" />
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn-primary">新增</button>
-            <button type="button" @click="closeCustomParam" class="btn-secondary">取消</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
   </div>
 </template>
 
@@ -230,15 +175,6 @@ export default {
       loading: false,
       saving: false,
       showPreviewModal: false,
-      showCustomParamModal: false,
-      customParam: {
-        param_key: '',
-        display_name: '',
-        param_value: '',
-        data_type: 'string',
-        unit: '',
-        description: ''
-      },
       categories: [
         { value: 'payment', label: '帳務設定', icon: '💰' },
         { value: 'contract', label: '合約設定', icon: '📝' },
@@ -326,53 +262,12 @@ export default {
       }
     },
 
-    resetConfigs() {
-      if (confirm('確定要重新整理配置嗎？將會放棄目前的修改，重新載入資料庫中的配置。')) {
-        this.loadConfigs();
-      }
-    },
-
-    addCustomParam() {
-      this.customParam = {
-        param_key: '',
-        display_name: '',
-        param_value: '',
-        data_type: 'string',
-        unit: '',
-        description: ''
-      };
-      this.showCustomParamModal = true;
-    },
-
-    confirmCustomParam() {
-      if (!this.configs[this.selectedCategory]) {
-        this.configs[this.selectedCategory] = [];
-      }
-
-      this.configs[this.selectedCategory].push({
-        ...this.customParam,
-        custom: true
-      });
-
-      this.closeCustomParam();
-    },
-
-    removeCustomParam(index) {
-      if (confirm('確定要刪除這個自訂參數嗎？')) {
-        this.configs[this.selectedCategory].splice(index, 1);
-      }
-    },
-
     showPreview() {
       this.showPreviewModal = true;
     },
 
     closePreview() {
       this.showPreviewModal = false;
-    },
-
-    closeCustomParam() {
-      this.showCustomParamModal = false;
     },
 
     resolveTemplate(template) {

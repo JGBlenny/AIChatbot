@@ -240,6 +240,108 @@ async def get_test_scenario(scenario_id: int):
         conn.close()
 
 
+@router.get("/scenarios/{scenario_id}/results")
+async def get_scenario_test_results(scenario_id: int, limit: int = 20):
+    """獲取測試情境的測試結果歷史"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        # 檢查測試情境是否存在
+        cur.execute("SELECT id FROM test_scenarios WHERE id = %s", (scenario_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="測試情境不存在")
+
+        # 獲取測試結果（按時間倒序）
+        cur.execute("""
+            SELECT
+                id,
+                run_id,
+                test_question,
+                actual_intent,
+                system_answer,
+                confidence,
+                score,
+                overall_score,
+                passed,
+                relevance,
+                completeness,
+                accuracy,
+                intent_match,
+                quality_overall,
+                quality_reasoning,
+                source_count,
+                knowledge_sources,
+                tested_at
+            FROM backtest_results
+            WHERE scenario_id = %s
+            ORDER BY tested_at DESC
+            LIMIT %s
+        """, (scenario_id, limit))
+
+        results = cur.fetchall()
+
+        # 轉換為字典列表
+        result_list = []
+        for row in results:
+            result_dict = dict(row)
+            # 轉換時間格式
+            if result_dict.get('tested_at'):
+                result_dict['tested_at'] = result_dict['tested_at'].isoformat()
+            result_list.append(result_dict)
+
+        # 查詢該測試情境的知識候選狀態
+        cur.execute("""
+            SELECT
+                id,
+                status,
+                created_at,
+                reviewed_at
+            FROM ai_generated_knowledge_candidates
+            WHERE test_scenario_id = %s
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (scenario_id,))
+
+        knowledge_candidate = cur.fetchone()
+        knowledge_status = None
+
+        if knowledge_candidate:
+            knowledge_status = {
+                "candidate_id": knowledge_candidate['id'],
+                "status": knowledge_candidate['status'],
+                "created_at": knowledge_candidate['created_at'].isoformat() if knowledge_candidate['created_at'] else None,
+                "reviewed_at": knowledge_candidate['reviewed_at'].isoformat() if knowledge_candidate['reviewed_at'] else None
+            }
+
+            # 如果已批准，查找對應的正式知識
+            if knowledge_candidate['status'] == 'approved':
+                cur.execute("""
+                    SELECT id
+                    FROM knowledge_base
+                    WHERE question_summary = (
+                        SELECT COALESCE(edited_question, question)
+                        FROM ai_generated_knowledge_candidates
+                        WHERE id = %s
+                    )
+                    LIMIT 1
+                """, (knowledge_candidate['id'],))
+
+                approved_knowledge = cur.fetchone()
+                if approved_knowledge:
+                    knowledge_status["knowledge_id"] = approved_knowledge['id']
+
+        return {
+            "results": result_list,
+            "total": len(result_list),
+            "knowledge_status": knowledge_status
+        }
+
+    finally:
+        cur.close()
+        conn.close()
+
+
 @router.post("/scenarios")
 async def create_test_scenario(data: TestScenarioCreate):
     """創建新測試情境"""

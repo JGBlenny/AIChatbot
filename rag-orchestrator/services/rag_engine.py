@@ -100,7 +100,7 @@ class RAGEngine:
                         results = await conn.fetch("""
                             SELECT DISTINCT ON (kb.id)
                                 kb.id,
-                                kb.title,
+                                kb.question_summary,
                                 kb.answer as content,
                                 kb.category,
                                 kb.audience,
@@ -135,7 +135,7 @@ class RAGEngine:
                         results = await conn.fetch("""
                             SELECT DISTINCT ON (kb.id)
                                 kb.id,
-                                kb.title,
+                                kb.question_summary,
                                 kb.answer as content,
                                 kb.category,
                                 kb.audience,
@@ -170,7 +170,7 @@ class RAGEngine:
                         results = await conn.fetch("""
                             SELECT DISTINCT ON (kb.id)
                                 kb.id,
-                                kb.title,
+                                kb.question_summary,
                                 kb.answer as content,
                                 kb.category,
                                 kb.audience,
@@ -204,7 +204,7 @@ class RAGEngine:
                         results = await conn.fetch("""
                             SELECT DISTINCT ON (kb.id)
                                 kb.id,
-                                kb.title,
+                                kb.question_summary,
                                 kb.answer as content,
                                 kb.category,
                                 kb.audience,

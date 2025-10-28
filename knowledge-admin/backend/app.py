@@ -59,12 +59,9 @@ def get_db_connection():
 class KnowledgeBase(BaseModel):
     """知識庫資料模型"""
     id: Optional[int] = None
-    title: str
-    category: str
-    audience: str
+    question_summary: str
     content: str
     keywords: List[str] = []
-    question_summary: Optional[str] = None
     source_file: Optional[str] = None
 
 class IntentMapping(BaseModel):
@@ -75,24 +72,19 @@ class IntentMapping(BaseModel):
 
 class KnowledgeUpdate(BaseModel):
     """知識更新模型"""
-    title: str
-    category: str
-    audience: str
+    question_summary: str
     content: str
     keywords: List[str] = []
-    question_summary: Optional[str] = None
     intent_mappings: Optional[List[IntentMapping]] = []  # 多意圖支援
     business_types: Optional[List[str]] = None  # 業態類型（可選，NULL=通用）
+    target_user: Optional[List[str]] = None  # 目標用戶（可選，NULL=通用）tenant/landlord/property_manager/system_admin
 
 class KnowledgeResponse(BaseModel):
     """知識回應模型"""
     id: int
-    title: str
-    category: str
-    audience: str
+    question_summary: str
     content: str
     keywords: List[str]
-    question_summary: Optional[str]
     created_at: Optional[str]
     updated_at: Optional[str]
 
@@ -123,7 +115,6 @@ async def health_check():
 
 @app.get("/api/knowledge", response_model=dict)
 async def list_knowledge(
-    category: Optional[str] = Query(None, description="篩選分類"),
     search: Optional[str] = Query(None, description="搜尋關鍵字"),
     limit: int = Query(50, ge=1, le=100, description="每頁筆數"),
     offset: int = Query(0, ge=0, description="偏移量")
@@ -131,7 +122,6 @@ async def list_knowledge(
     """
     列出所有知識
 
-    - **category**: 篩選特定分類
     - **search**: 搜尋標題或內容
     - **limit**: 每頁顯示筆數 (1-100)
     - **offset**: 分頁偏移量
@@ -143,19 +133,15 @@ async def list_knowledge(
         # 建立查詢（加入意圖資訊 - 使用 knowledge_intent_mapping）
         query = """
             SELECT DISTINCT
-                kb.id, kb.title, kb.category, kb.audience, kb.answer as content,
-                kb.keywords, kb.question_summary, kb.business_types, kb.created_at, kb.updated_at
+                kb.id, kb.question_summary, kb.answer as content,
+                kb.keywords, kb.business_types, kb.target_user, kb.created_at, kb.updated_at
             FROM knowledge_base kb
             WHERE 1=1
         """
         params = []
 
-        if category:
-            query += " AND kb.category = %s"
-            params.append(category)
-
         if search:
-            query += " AND (kb.title ILIKE %s OR kb.answer ILIKE %s)"
+            query += " AND (kb.question_summary ILIKE %s OR kb.answer ILIKE %s)"
             search_pattern = f"%{search}%"
             params.extend([search_pattern, search_pattern])
 
@@ -201,11 +187,8 @@ async def list_knowledge(
         # 取得總數
         count_query = "SELECT COUNT(*) as total FROM knowledge_base WHERE 1=1"
         count_params = []
-        if category:
-            count_query += " AND category = %s"
-            count_params.append(category)
         if search:
-            count_query += " AND (title ILIKE %s OR answer ILIKE %s)"
+            count_query += " AND (question_summary ILIKE %s OR answer ILIKE %s)"
             count_params.extend([f"%{search}%", f"%{search}%"])
 
         cur.execute(count_query, count_params)
@@ -231,8 +214,8 @@ async def get_knowledge(knowledge_id: int):
     try:
         # 取得知識基本資訊
         cur.execute("""
-            SELECT id, title, category, audience, answer as content,
-                   keywords, question_summary, business_types, created_at, updated_at,
+            SELECT id, question_summary, answer as content,
+                   keywords, business_types, target_user, created_at, updated_at,
                    video_url, video_s3_key, video_file_size, video_duration, video_format
             FROM knowledge_base
             WHERE id = %s
@@ -326,26 +309,22 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
         cur.execute("""
             UPDATE knowledge_base
             SET
-                title = %s,
-                category = %s,
-                audience = %s,
+                question_summary = %s,
                 answer = %s,
                 keywords = %s,
-                question_summary = %s,
                 embedding = %s,
                 business_types = %s,
+                target_user = %s,
                 updated_at = NOW()
             WHERE id = %s
-            RETURNING id, title, updated_at
+            RETURNING id, question_summary, updated_at
         """, (
-            data.title,
-            data.category,
-            data.audience,
+            data.question_summary,
             data.content,
             data.keywords,
-            data.question_summary,
             new_embedding,
             data.business_types,
+            data.target_user,
             knowledge_id
         ))
 
@@ -405,7 +384,7 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
             "success": True,
             "message": "知識已更新，向量已重新生成",
             "id": updated['id'],
-            "title": updated['title'],
+            "question_summary": updated['question_summary'],
             "updated_at": updated['updated_at'].isoformat()
         }
 
@@ -456,18 +435,16 @@ async def create_knowledge(data: KnowledgeUpdate):
         # 2. 插入資料庫
         cur.execute("""
             INSERT INTO knowledge_base
-            (title, category, audience, answer, keywords, question_summary, embedding, business_types)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            (question_summary, answer, keywords, embedding, business_types, target_user)
+            VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id, created_at
         """, (
-            data.title,
-            data.category,
-            data.audience,
+            data.question_summary,
             data.content,
             data.keywords,
-            data.question_summary,
             embedding,
-            data.business_types
+            data.business_types,
+            data.target_user
         ))
 
         new_record = cur.fetchone()
@@ -562,28 +539,6 @@ async def delete_knowledge(knowledge_id: int):
         cur.close()
         conn.close()
 
-@app.get("/api/categories")
-async def list_categories():
-    """取得所有分類"""
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    try:
-        cur.execute("""
-            SELECT DISTINCT category
-            FROM knowledge_base
-            WHERE category IS NOT NULL
-            ORDER BY category
-        """)
-
-        categories = [row['category'] for row in cur.fetchall()]
-
-        return {"categories": categories}
-
-    finally:
-        cur.close()
-        conn.close()
-
 @app.get("/api/intents")
 async def list_intents():
     """取得所有意圖"""
@@ -602,6 +557,220 @@ async def list_intents():
 
         return {"intents": intents}
 
+    finally:
+        cur.close()
+        conn.close()
+
+@app.get("/api/target-users")
+async def list_target_users():
+    """取得所有目標用戶類型（僅啟用）"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+            SELECT user_value, display_name, description, icon, display_order
+            FROM target_user_config
+            WHERE is_active = TRUE
+            ORDER BY id
+        """)
+
+        target_users = [dict(row) for row in cur.fetchall()]
+
+        return {"target_users": target_users}
+
+    finally:
+        cur.close()
+        conn.close()
+
+
+# ==================== Target User Config Management ====================
+
+@app.get("/api/target-users-config")
+async def list_target_users_config(is_active: Optional[bool] = None):
+    """取得目標用戶類型配置（管理介面用）"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        query = """
+            SELECT id, user_value, display_name, description, icon,
+                   display_order, is_active, created_at, updated_at
+            FROM target_user_config
+        """
+        params = []
+
+        if is_active is not None:
+            query += " WHERE is_active = %s"
+            params.append(is_active)
+
+        query += " ORDER BY id"
+
+        cur.execute(query, params)
+        target_users = [dict(row) for row in cur.fetchall()]
+
+        return {"target_users": target_users}
+
+    finally:
+        cur.close()
+        conn.close()
+
+
+class TargetUserConfigCreate(BaseModel):
+    user_value: str
+    display_name: str
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    display_order: int = 0
+
+
+class TargetUserConfigUpdate(BaseModel):
+    display_name: str
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    display_order: int = 0
+    is_active: Optional[bool] = None
+
+
+@app.post("/api/target-users-config")
+async def create_target_user_config(data: TargetUserConfigCreate):
+    """新增目標用戶類型"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        # 檢查 user_value 是否已存在
+        cur.execute(
+            "SELECT user_value FROM target_user_config WHERE user_value = %s",
+            (data.user_value,)
+        )
+        if cur.fetchone():
+            raise HTTPException(status_code=400, detail="此用戶類型值已存在")
+
+        # 新增記錄
+        cur.execute("""
+            INSERT INTO target_user_config
+            (user_value, display_name, description, icon, display_order, is_active)
+            VALUES (%s, %s, %s, %s, %s, TRUE)
+            RETURNING id, user_value, display_name, created_at
+        """, (
+            data.user_value,
+            data.display_name,
+            data.description,
+            data.icon,
+            data.display_order
+        ))
+
+        result = dict(cur.fetchone())
+        conn.commit()
+
+        return {"message": "目標用戶類型已新增", "target_user": result}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.put("/api/target-users-config/{user_value}")
+async def update_target_user_config(user_value: str, data: TargetUserConfigUpdate):
+    """更新目標用戶類型"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        # 檢查是否存在
+        cur.execute(
+            "SELECT id FROM target_user_config WHERE user_value = %s",
+            (user_value,)
+        )
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="目標用戶類型不存在")
+
+        # 更新記錄
+        update_fields = []
+        params = []
+
+        update_fields.append("display_name = %s")
+        params.append(data.display_name)
+
+        if data.description is not None:
+            update_fields.append("description = %s")
+            params.append(data.description)
+
+        if data.icon is not None:
+            update_fields.append("icon = %s")
+            params.append(data.icon)
+
+        update_fields.append("display_order = %s")
+        params.append(data.display_order)
+
+        if data.is_active is not None:
+            update_fields.append("is_active = %s")
+            params.append(data.is_active)
+
+        update_fields.append("updated_at = NOW()")
+        params.append(user_value)
+
+        query = f"""
+            UPDATE target_user_config
+            SET {', '.join(update_fields)}
+            WHERE user_value = %s
+            RETURNING id, user_value, display_name, updated_at
+        """
+
+        cur.execute(query, params)
+        result = dict(cur.fetchone())
+        conn.commit()
+
+        return {"message": "目標用戶類型已更新", "target_user": result}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.delete("/api/target-users-config/{user_value}")
+async def delete_target_user_config(user_value: str):
+    """停用目標用戶類型（軟刪除）"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        # 檢查是否存在
+        cur.execute(
+            "SELECT id, is_active FROM target_user_config WHERE user_value = %s",
+            (user_value,)
+        )
+        result = cur.fetchone()
+        if not result:
+            raise HTTPException(status_code=404, detail="目標用戶類型不存在")
+
+        # 停用（軟刪除）
+        cur.execute("""
+            UPDATE target_user_config
+            SET is_active = FALSE, updated_at = NOW()
+            WHERE user_value = %s
+        """, (user_value,))
+
+        conn.commit()
+
+        return {"message": "目標用戶類型已停用"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
         conn.close()
@@ -712,7 +881,7 @@ async def get_stats():
 
         # 最近更新
         cur.execute("""
-            SELECT id, title, updated_at
+            SELECT id, question_summary, updated_at
             FROM knowledge_base
             ORDER BY updated_at DESC
             LIMIT 5
@@ -1337,7 +1506,7 @@ async def get_category_config(
     if not include_inactive:
         query += " WHERE is_active = true"
 
-    query += " ORDER BY display_order, display_name"
+    query += " ORDER BY id"
 
     cur.execute(query)
     categories = [dict(row) for row in cur.fetchall()]

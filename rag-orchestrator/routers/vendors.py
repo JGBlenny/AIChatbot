@@ -333,10 +333,27 @@ async def delete_vendor(vendor_id: int):
 @router.get("/{vendor_id}/configs")
 async def get_vendor_configs(vendor_id: int, category: Optional[str] = None):
     """
-    獲取業者配置參數
+    獲取業者配置參數（結合系統參數定義和業者設定值）
 
     可選過濾：
     - category: 參數分類（payment, contract, service, contact）
+
+    返回格式：
+    {
+      "payment": [
+        {
+          "param_key": "payment_day",
+          "param_value": "5",  // 業者設定的值或預設值
+          "display_name": "繳費日",
+          "data_type": "number",
+          "unit": "日",
+          "description": "...",
+          "placeholder": "...",
+          "is_required": true,
+          "display_order": 1
+        }
+      ]
+    }
     """
     conn = get_db_connection()
     try:
@@ -347,22 +364,35 @@ async def get_vendor_configs(vendor_id: int, category: Optional[str] = None):
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="業者不存在")
 
-        # 獲取配置
+        # 獲取系統參數定義和業者設定值（LEFT JOIN）
         query = """
             SELECT
-                id, category, param_key, param_value,
-                data_type, display_name, description, unit,
-                is_active, created_at, updated_at
-            FROM vendor_configs
-            WHERE vendor_id = %s AND is_active = true
+                spd.category,
+                spd.param_key,
+                COALESCE(vc.param_value, spd.default_value) as param_value,
+                spd.display_name,
+                spd.data_type,
+                spd.unit,
+                spd.description,
+                spd.placeholder,
+                spd.is_required,
+                spd.display_order,
+                CASE WHEN vc.id IS NOT NULL THEN true ELSE false END as has_custom_value
+            FROM system_param_definitions spd
+            LEFT JOIN vendor_configs vc ON (
+                vc.vendor_id = %s AND
+                vc.param_key = spd.param_key AND
+                vc.is_active = true
+            )
+            WHERE spd.is_active = true
         """
         params = [vendor_id]
 
         if category:
-            query += " AND category = %s"
+            query += " AND spd.category = %s"
             params.append(category)
 
-        query += " ORDER BY category, param_key"
+        query += " ORDER BY spd.category, spd.display_order, spd.param_key"
 
         cursor.execute(query, params)
         configs = cursor.fetchall()
@@ -384,7 +414,14 @@ async def get_vendor_configs(vendor_id: int, category: Optional[str] = None):
 
 @router.put("/{vendor_id}/configs")
 async def update_vendor_configs(vendor_id: int, config_update: VendorConfigUpdate):
-    """批次更新業者配置參數"""
+    """
+    批次更新業者配置參數（只更新值，參數定義來自系統）
+
+    規則：
+    - 只允許更新 param_value
+    - param_key 必須存在於 system_param_definitions
+    - 不允許新增或刪除參數
+    """
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -394,31 +431,36 @@ async def update_vendor_configs(vendor_id: int, config_update: VendorConfigUpdat
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="業者不存在")
 
-        # 批次更新配置
+        # 批次更新配置（只儲存值）
         for config in config_update.configs:
+            # 驗證 param_key 是否為有效的系統參數
+            cursor.execute("""
+                SELECT id, category FROM system_param_definitions
+                WHERE param_key = %s AND is_active = true
+            """, (config.param_key,))
+
+            param_def = cursor.fetchone()
+            if not param_def:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"無效的參數: {config.param_key}（參數不存在於系統定義中）"
+                )
+
+            # 更新或插入業者設定值
             cursor.execute("""
                 INSERT INTO vendor_configs (
-                    vendor_id, category, param_key, param_value,
-                    data_type, display_name, description, unit
+                    vendor_id, category, param_key, param_value
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s)
                 ON CONFLICT (vendor_id, category, param_key)
                 DO UPDATE SET
                     param_value = EXCLUDED.param_value,
-                    data_type = EXCLUDED.data_type,
-                    display_name = EXCLUDED.display_name,
-                    description = EXCLUDED.description,
-                    unit = EXCLUDED.unit,
                     updated_at = CURRENT_TIMESTAMP
             """, (
                 vendor_id,
-                config.category,
+                param_def[1],  # category from system definition
                 config.param_key,
-                config.param_value,
-                config.data_type,
-                config.display_name,
-                config.description,
-                config.unit
+                config.param_value
             ))
 
         conn.commit()

@@ -179,7 +179,7 @@ class VendorKnowledgeRetriever:
         similarity_threshold: float = 0.6,
         resolve_templates: bool = True,
         all_intent_ids: Optional[List[int]] = None,
-        allowed_audiences: Optional[List[str]] = None
+        user_role: str = 'customer'
     ) -> List[Dict]:
         """
         混合模式檢索：Intent 過濾 + 向量相似度排序
@@ -189,7 +189,6 @@ class VendorKnowledgeRetriever:
         2. 再使用向量相似度排序，找出最相關的答案
         3. 考慮 scope 優先級（customized > vendor > global）
         4. 支援多 Intent 檢索（主要 Intent 獲得 1.5x boost，次要 Intent 獲得 1.2x boost）
-        5. 根據業務範圍過濾 audience（B2B/B2C 隔離）
 
         Args:
             query: 使用者問題
@@ -199,16 +198,47 @@ class VendorKnowledgeRetriever:
             similarity_threshold: 相似度閾值
             resolve_templates: 是否自動解析模板
             all_intent_ids: 所有相關意圖 IDs（包含主要和次要）
-            allowed_audiences: 允許的受眾列表（用於 B2B/B2C 隔離），None 表示不過濾
+            user_role: 用戶角色 ('customer' = B2C 終端客戶, 'staff' = B2B 業者員工/系統商)
 
         Returns:
             知識列表，按相似度和優先級排序
         """
-        # 0. 獲取 vendor 的業態類型
-        vendor_info = self.param_resolver.get_vendor_info(vendor_id)
-        vendor_business_types = vendor_info.get('business_types', [])
+        # 0. 根據用戶角色決定業態類型和目標用戶過濾策略
+        is_b2b_mode = (user_role == 'staff')
 
-        print(f"   📋 [Business Types Filter] Vendor {vendor_id} business types: {vendor_business_types}")
+        # 0.1 業態類型過濾（business_types）
+        if is_b2b_mode:
+            # B2B 模式：業者員工/系統商，使用 system_provider 業態
+            vendor_business_types = ['system_provider']
+            # B2B 模式：不允許 NULL（通用知識），只允許明確標記為 system_provider 的知識
+            business_type_filter_sql = "kb.business_types && %s::text[]"
+            print(f"   📋 [B2B Mode] Using system_provider business type (strict filtering)")
+        else:
+            # B2C 模式：終端客戶，使用業者的業態類型
+            vendor_info = self.param_resolver.get_vendor_info(vendor_id)
+            vendor_business_types = vendor_info.get('business_types', [])
+            # B2C 模式：允許 NULL（通用知識）或匹配業者業態
+            business_type_filter_sql = "(kb.business_types IS NULL OR kb.business_types && %s::text[])"
+            print(f"   📋 [B2C Mode] Using vendor {vendor_id} business types: {vendor_business_types}")
+
+        # 0.2 目標用戶過濾（target_user）
+        # 支援角色: tenant(租客), landlord(房東), property_manager(物業管理師), system_admin(系統管理員), staff(B2B員工)
+        target_user_roles = []
+        if user_role in ['tenant', 'landlord', 'property_manager', 'system_admin']:
+            # 細分角色：只顯示該角色或通用知識
+            target_user_roles = [user_role]
+            target_user_filter_sql = "(kb.target_user IS NULL OR kb.target_user && %s::text[])"
+            print(f"   👤 [Target User] Filtering for role: {user_role}")
+        elif user_role == 'staff':
+            # B2B 員工：可能需要看所有後台操作知識
+            target_user_roles = ['property_manager', 'system_admin']
+            target_user_filter_sql = "(kb.target_user IS NULL OR kb.target_user && %s::text[])"
+            print(f"   👤 [Target User] B2B staff mode - showing management knowledge")
+        else:
+            # customer 或其他：顯示通用知識（但不指定特定角色）
+            target_user_roles = None
+            target_user_filter_sql = "TRUE"  # 不過濾
+            print(f"   👤 [Target User] Generic customer mode - no target_user filtering")
 
         # 1. 獲取問題的向量
         query_embedding = await self._get_embedding(query)
@@ -229,8 +259,9 @@ class VendorKnowledgeRetriever:
             vector_str = str(query_embedding)
 
             # Phase 1 擴展：使用 knowledge_intent_mapping 進行多意圖檢索
-            # 包含業務範圍 audience 過濾（B2B/B2C 隔離）
-            cursor.execute("""
+            # 包含 business_types 和 target_user 雙重過濾
+            # 動態構建過濾條件（safe: filter_sql 僅來自預定義值）
+            sql_query = f"""
                 SELECT
                     kb.id,
                     kb.question_summary,
@@ -240,8 +271,8 @@ class VendorKnowledgeRetriever:
                     kb.is_template,
                     kb.template_vars,
                     kb.vendor_id,
-                    kb.audience,
                     kb.business_types,
+                    kb.target_user,
                     kb.created_at,
                     kb.video_url,
                     kb.video_file_size,
@@ -285,23 +316,19 @@ class VendorKnowledgeRetriever:
                     AND (1 - (kb.embedding <=> %s::vector)) >= %s
                     -- Intent 過濾（多意圖支援）
                     AND (kim.intent_id = ANY(%s::int[]) OR kim.intent_id IS NULL)
-                    -- ✅ 業態類型過濾：知識的業態類型與業者的業態類型有交集
-                    AND (
-                        kb.business_types IS NULL  -- 通用知識（適用所有業態）
-                        OR kb.business_types && %s::text[]  -- 陣列重疊檢查
-                    )
-                    -- ✅ Audience 過濾：B2B/B2C 隔離（僅當提供 allowed_audiences 時）
-                    AND (
-                        %s::text[] IS NULL  -- 未提供 allowed_audiences，不過濾
-                        OR kb.audience IS NULL  -- NULL audience 視為通用
-                        OR kb.audience = ANY(%s::text[])  -- audience 在允許列表中
-                    )
+                    -- ✅ 業態類型過濾：B2B 嚴格過濾（只允許 system_provider），B2C 允許通用知識
+                    AND {business_type_filter_sql}
+                    -- ✅ 目標用戶過濾：確保知識適用於當前用戶角色（tenant/landlord/property_manager等）
+                    AND {target_user_filter_sql}
                 ORDER BY
                     scope_weight DESC,        -- 1st: Scope 優先級
                     boosted_similarity DESC,  -- 2nd: 加成後的相似度
                     kb.priority DESC          -- 3rd: 人工優先級
                 LIMIT %s
-            """, (
+            """
+
+            # 構建參數列表
+            query_params = [
                 vector_str,
                 intent_id,
                 all_intent_ids,
@@ -315,10 +342,15 @@ class VendorKnowledgeRetriever:
                 similarity_threshold,
                 all_intent_ids,
                 vendor_business_types,  # ✅ 業態類型過濾參數
-                allowed_audiences,      # ✅ Audience 過濾參數（檢查是否為 NULL）
-                allowed_audiences,      # ✅ Audience 過濾參數（實際過濾）
-                top_k
-            ))
+            ]
+
+            # 如果有 target_user 過濾，添加參數
+            if target_user_roles is not None:
+                query_params.append(target_user_roles)
+
+            query_params.append(top_k)
+
+            cursor.execute(sql_query, tuple(query_params))
 
             rows = cursor.fetchall()
             cursor.close()

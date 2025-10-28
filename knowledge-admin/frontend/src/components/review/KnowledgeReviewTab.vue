@@ -8,6 +8,19 @@
 
     <!-- AI 知識候選區域 -->
     <div class="content-area">
+      <!-- 篩選模式提示 -->
+      <div v-if="isFilterMode" class="filter-mode-banner">
+        <div class="filter-info">
+          <span class="filter-icon">🔍</span>
+          <span class="filter-text">
+            正在顯示 <strong>{{ filteredCandidates.length }}</strong> 個指定的候選知識
+          </span>
+        </div>
+        <button @click="clearFilter" class="btn-clear-filter">
+          查看全部 ({{ aiCandidates.length }})
+        </button>
+      </div>
+
       <!-- 頂部操作 -->
       <div class="top-actions">
         <button @click="loadAICandidates" class="btn-refresh" :disabled="loading">
@@ -42,15 +55,28 @@
       </div>
 
       <!-- 空狀態 -->
-      <div v-else-if="aiCandidates.length === 0" class="empty-state">
+      <div v-else-if="filteredCandidates.length === 0 && !isFilterMode" class="empty-state">
         <div class="empty-icon">🎉</div>
         <h3>目前沒有待審核的 AI 知識候選</h3>
         <p>您可以在「測試題庫管理」頁面為已批准且無知識的測試情境生成知識</p>
       </div>
 
+      <!-- 篩選模式下找不到候選 -->
+      <div v-else-if="filteredCandidates.length === 0 && isFilterMode" class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>找不到指定的候選知識</h3>
+        <p>候選可能已被審核或不存在</p>
+        <button @click="clearFilter" class="btn-primary">查看全部候選</button>
+      </div>
+
       <!-- AI 候選列表 -->
       <div v-else class="candidates-list">
-        <div v-for="candidate in aiCandidates" :key="'ai-' + candidate.id" class="candidate-card">
+        <div
+          v-for="candidate in filteredCandidates"
+          :key="'ai-' + candidate.id"
+          :id="`ai-candidate-${candidate.id}`"
+          :class="['candidate-card', { 'highlighted': highlightCandidateId === candidate.id }]"
+        >
           <div class="candidate-header">
             <div class="candidate-meta">
               <span class="candidate-id">候選 #{{ candidate.id }}</span>
@@ -211,6 +237,13 @@ import axios from 'axios';
 export default {
   name: 'KnowledgeReviewTab',
 
+  props: {
+    candidateId: {
+      type: Number,
+      default: null
+    }
+  },
+
   emits: ['update-count'],
 
   data() {
@@ -229,11 +262,43 @@ export default {
       // 意圖列表
       intents: [],
 
-      loading: false
+      loading: false,
+      highlightCandidateId: null  // 需要高亮的候選 ID
     };
   },
 
+  watch: {
+    candidateId(newId) {
+      if (newId) {
+        this.highlightCandidateId = newId;
+        // 延遲滾動，等待列表載入完成
+        setTimeout(() => {
+          this.scrollToCandidate(newId);
+        }, 800);
+      }
+    }
+  },
+
   computed: {
+    // 過濾後的候選列表
+    filteredCandidates() {
+      if (!this.candidateId) {
+        // 沒有指定 ID，返回所有候選
+        return this.aiCandidates;
+      }
+
+      // 解析候選 ID（支援單個或逗號分隔的多個）
+      const candidateIds = String(this.candidateId).split(',').map(id => parseInt(id.trim()));
+
+      // 過濾候選列表
+      return this.aiCandidates.filter(candidate => candidateIds.includes(candidate.id));
+    },
+
+    // 是否為篩選模式
+    isFilterMode() {
+      return this.candidateId !== null && this.candidateId !== undefined;
+    },
+
     // 解析每個候選的推薦意圖資訊
     candidateIntents() {
       const intents = {};
@@ -468,6 +533,28 @@ export default {
         tab: 'knowledge',
         count: this.aiStats.pending_count
       });
+    },
+
+    scrollToCandidate(candidateId) {
+      // 滾動到指定的候選知識卡片
+      const element = document.getElementById(`ai-candidate-${candidateId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // 3秒後移除高亮
+        setTimeout(() => {
+          this.highlightCandidateId = null;
+        }, 3000);
+      } else {
+        // 找不到該候選，可能不在 pending 列表中
+        console.warn(`候選 #${candidateId} 不在當前列表中`);
+        alert(`候選 #${candidateId} 不在待審核列表中，可能已被審核。`);
+        this.highlightCandidateId = null;
+      }
+    },
+
+    clearFilter() {
+      // 清除篩選，返回審核中心首頁
+      this.$router.push('/review-center');
     }
   }
 };
@@ -476,6 +563,70 @@ export default {
 <style scoped>
 .knowledge-review-tab {
   width: 100%;
+}
+
+/* 篩選模式橫幅 */
+.filter-mode-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  animation: slideDown 0.3s ease-out;
+}
+
+.filter-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+}
+
+.filter-icon {
+  font-size: 24px;
+}
+
+.filter-text {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.filter-text strong {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.btn-clear-filter {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid white;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  backdrop-filter: blur(10px);
+}
+
+.btn-clear-filter:hover {
+  background: white;
+  color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 頁面標題 */
@@ -664,6 +815,12 @@ export default {
   box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
   border-color: #667eea;
   transform: translateY(-2px);
+}
+
+.candidate-card.highlighted {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2), 0 4px 12px rgba(0,0,0,0.1);
+  animation: pulse-highlight 2s ease-in-out;
 }
 
 .candidate-header {
@@ -1109,4 +1266,14 @@ export default {
 .badge-easy { background: #d4edda; color: #155724; }
 .badge-medium { background: #fff3cd; color: #856404; }
 .badge-hard { background: #f8d7da; color: #721c24; }
+
+/* 高亮動畫 */
+@keyframes pulse-highlight {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2), 0 4px 12px rgba(0,0,0,0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(102, 126, 234, 0.4), 0 4px 16px rgba(102, 126, 234, 0.3);
+  }
+}
 </style>

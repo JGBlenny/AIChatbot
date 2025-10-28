@@ -61,10 +61,6 @@ async def chat_stream_generator(
         llm_optimizer = app_state.llm_answer_optimizer
         vendor_config_service = app_state.vendor_config_service
 
-        from services.business_scope_utils import get_allowed_audiences_for_scope
-        business_scope = "external" if request.user_role == "customer" else "internal"
-        allowed_audiences = get_allowed_audiences_for_scope(business_scope)
-
         # 1.5 層級2優先：檢查是否為參數型問題（Vendor Configs 整合）
         param_category = vendor_config_service.is_param_question(request.question)
         if param_category:
@@ -112,7 +108,6 @@ async def chat_stream_generator(
             query=request.question,
             limit=5,
             similarity_threshold=0.60,
-            allowed_audiences=allowed_audiences,
             vendor_id=request.vendor_id
         )
 

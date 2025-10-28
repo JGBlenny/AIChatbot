@@ -15,7 +15,6 @@ import json
 import os
 import psycopg2
 import psycopg2.extras
-from services.business_scope_utils import get_allowed_audiences_for_scope
 from services.db_utils import get_db_config
 from services.embedding_utils import get_embedding_client
 
@@ -133,16 +132,11 @@ async def _handle_unclear_with_rag_fallback(
     """處理 unclear 意圖：RAG fallback + 測試場景記錄 + 意圖建議"""
     rag_engine = req.app.state.rag_engine
 
-    # 根據用戶角色決定業務範圍
-    business_scope = "external" if request.user_role == "customer" else "internal"
-    allowed_audiences = get_allowed_audiences_for_scope(business_scope)
-
     # RAG 檢索（使用較低閾值）
     rag_results = await rag_engine.search(
         query=request.message,
         limit=5,
         similarity_threshold=0.55,
-        allowed_audiences=allowed_audiences,
         vendor_id=request.vendor_id
     )
 
@@ -492,14 +486,8 @@ async def _retrieve_knowledge(
     intent_result: dict
 ):
     """檢索知識庫（混合模式：intent + 向量相似度）"""
-    from services.business_scope_utils import get_allowed_audiences_for_scope
-
     retriever = get_vendor_knowledge_retriever()
     all_intent_ids = intent_result.get('intent_ids', [intent_id])
-
-    # 根據用戶角色決定業務範圍並獲取允許的受眾
-    business_scope = "external" if request.user_role == "customer" else "internal"
-    allowed_audiences = get_allowed_audiences_for_scope(business_scope)
 
     knowledge_list = await retriever.retrieve_knowledge_hybrid(
         query=request.message,
@@ -509,7 +497,7 @@ async def _retrieve_knowledge(
         similarity_threshold=0.6,
         resolve_templates=False,
         all_intent_ids=all_intent_ids,
-        allowed_audiences=allowed_audiences
+        user_role=request.user_role
     )
 
     return knowledge_list
@@ -524,19 +512,12 @@ async def _handle_no_knowledge_found(
     vendor_info: dict
 ):
     """處理找不到知識的情況：RAG fallback + 測試場景記錄"""
-    from services.business_scope_utils import get_allowed_audiences_for_scope
-
-    # 根據用戶角色決定業務範圍
-    business_scope = "external" if request.user_role == "customer" else "internal"
-    allowed_audiences = get_allowed_audiences_for_scope(business_scope)
-
     # RAG fallback
     rag_engine = req.app.state.rag_engine
     rag_results = await rag_engine.search(
         query=request.message,
         limit=request.top_k,
         similarity_threshold=0.60,
-        allowed_audiences=allowed_audiences,
         vendor_id=request.vendor_id
     )
 

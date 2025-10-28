@@ -34,6 +34,8 @@
 - 📝 **Markdown 編輯器** - 即時預覽、版本追蹤
 - 🤖 **AI 知識生成** - OpenAI 自動從測試情境生成知識
 - 🏷️ **知識分類系統** - 意圖分類、業務範圍管理
+- 👥 **Target User Config** ⭐ NEW - 動態配置目標用戶（租客、房東、物業管理師），支援多選過濾
+- ⚙️ **配置管理系統** ⭐ NEW - 業態類型、目標用戶、分類標籤統一管理，簡化 UI 設計
 - ⚡ **Embedding API** - 統一向量生成服務，Redis 快取節省 70-90% 成本
 - 📥 **知識匯入系統** ⭐ NEW - 批量匯入 Excel/JSON/TXT，雙層去重（文字+語意）
 
@@ -139,6 +141,10 @@ docker-compose logs -f
   - AI 知識候選審核
 - 📚 **知識庫管理**: http://localhost:8087/knowledge
 - 🏢 **業者管理**: http://localhost:8087/vendors
+- ⚙️ **配置管理** ⭐ NEW:
+  - 業態類型: http://localhost:8087/business-types-config
+  - 目標用戶: http://localhost:8087/target-users-config
+  - 分類標籤: http://localhost:8087/category-config
 - 🧪 **Chat 測試**: http://localhost:8087/chat-test
 - 📊 **回測執行**: http://localhost:8087/backtest
 - 🔄 **知識意圖分類**: http://localhost:8087/knowledge-reclassify
@@ -304,7 +310,11 @@ AIChatbot/
 - 📖 **開發工作流程**: [docs/guides/DEVELOPMENT_WORKFLOW.md](./docs/guides/DEVELOPMENT_WORKFLOW.md)
 
 ### ⭐ 最新功能文檔
-- 📥 **知識匯入系統** ⭐ NEW:
+- 👥 **Target User Config** ⭐ NEW:
+  - [Target User Config 實作報告](./docs/archive/completion_reports/TARGET_USER_CONFIG_IMPLEMENTATION.md)
+  - [配置管理更新摘要](./docs/CONFIG_MANAGEMENT_UPDATE_SUMMARY.md)
+  - [舊文件清理報告](./docs/archive/CLEANUP_EXECUTION_REPORT_2025-10-28.md)
+- 📥 **知識匯入系統**:
   - [知識匯入功能文檔](./docs/features/KNOWLEDGE_IMPORT_FEATURE.md)
   - [知識匯入 API 參考](./docs/api/KNOWLEDGE_IMPORT_API.md)
 - 🧪 **測試情境系統**:
@@ -648,6 +658,12 @@ curl http://localhost:8100/api/v1/knowledge-import/jobs/f87958b1-a660-477f-8725-
 | 遺留代碼歸檔（backend → archive）| ✅ | 2025-10-13 |
 | 文檔中心創建（docs/README.md）| ✅ | 2025-10-13 |
 | 重複配置文件清理 | ✅ | 2025-10-13 |
+| **配置管理系統** ⭐ | | |
+| Target User Config 實作 | ✅ | 2025-10-28 |
+| 移除 icon/display_order 欄位 | ✅ | 2025-10-28 |
+| 簡化排序機制（改用 id）| ✅ | 2025-10-28 |
+| Audience Config 遷移與清理 | ✅ | 2025-10-28 |
+| 設計研究文檔歸檔 | ✅ | 2025-10-28 |
 
 ### ⏳ 待開發功能（Phase 2）
 
@@ -684,15 +700,21 @@ MIT
 
 **維護者**: Claude Code
 **專案建立**: 2024
-**最後更新**: 2025-10-22
-**當前版本**: Phase 1 完成 + Phase 3 性能優化 + 文檔重組
+**最後更新**: 2025-10-28
+**當前版本**: Phase 1 完成 + Phase 3 性能優化 + 配置管理優化
 
-**最新更新** (2025-10-22):
-- 📊 **Database Schema + ERD** - 完整資料庫架構文檔，16 個表 + Mermaid 關係圖 ⭐ NEW
-- 📝 **文檔審計報告** - 全面盤查 130+ 文檔，建立更新優先級矩陣 ⭐ NEW
-- 🔄 **術語統一** - 「重新分類」→「意圖分類」（前端 12 處更新） ⭐ NEW
-- ⚙️ **環境變數支援** - 意圖分類器模型可通過 ENV 配置 ⭐ NEW
-- 📘 **README 更新** - 修正 port、補充緩存和流式聊天說明 ⭐ NEW
+**最新更新** (2025-10-28):
+- 👥 **Target User Config 系統** - 完整 CRUD 管理，支援多選用戶過濾 ⭐ NEW
+- ⚙️ **配置管理優化** - 移除 icon/display_order，簡化 UI，改用 id 排序 ⭐ NEW
+- 🔄 **Audience → Target User 遷移** - 概念分離，關注點更清晰 ⭐ NEW
+- 📦 **舊文件歸檔** - 清理根目錄，歸檔 14 個研究分析文檔 ⭐ NEW
+- 📝 **文檔完善** - 新增配置管理摘要、清理報告等 6 個新文檔 ⭐ NEW
+
+**近期更新** (2025-10-22):
+- 📊 **Database Schema + ERD** - 完整資料庫架構文檔，16 個表 + Mermaid 關係圖
+- 📝 **文檔審計報告** - 全面盤查 130+ 文檔，建立更新優先級矩陣
+- 🔄 **術語統一** - 「重新分類」→「意圖分類」（前端 12 處更新）
+- ⚙️ **環境變數支援** - 意圖分類器模型可通過 ENV 配置
 
 **Phase 3 功能** (2025-10-21):
 - ⚡ **三層緩存系統** - Redis 快取（問題/向量/結果），節省 70-90% API 成本

@@ -1,5 +1,18 @@
 # 知識庫管理 - Audience 選擇器改進
 
+> ⚠️ **已廢棄 (DEPRECATED)**
+>
+> 此文檔描述的 `audience` 功能已在 2025-10-28 被新的 **Target User Config** 系統取代。
+>
+> **遷移說明**:
+> - 舊的 `audience` 欄位混合了業務範圍 (B2B/B2C) 和用戶角色的概念
+> - 新的 `target_user` 專注於用戶角色識別（租客、房東、物業管理師等）
+> - Business Scope (external/internal) 仍透過 `user_role` 參數處理
+>
+> **參考新文檔**: [Target User Config 實作報告](./TARGET_USER_CONFIG_IMPLEMENTATION.md)
+
+---
+
 ## 概述
 
 基於最近的 Business Scope 重構（基於 user_role 動態決定 B2B/B2C 場景），本次改進優化了知識庫管理頁面的「對象（audience）」選擇器，讓使用者在新增或編輯知識時，能清楚了解該知識將在哪些業務場景中被使用。

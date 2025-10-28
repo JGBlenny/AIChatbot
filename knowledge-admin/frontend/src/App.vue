@@ -24,9 +24,9 @@
             <span class="nav-icon">🎯</span>
             <span class="nav-text" v-if="!sidebarCollapsed">意圖管理</span>
           </router-link>
-          <router-link to="/audience-config" class="nav-item" :title="sidebarCollapsed ? '受眾配置' : ''">
-            <span class="nav-icon">👤</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">受眾配置</span>
+          <router-link to="/target-users-config" class="nav-item" :title="sidebarCollapsed ? '目標用戶' : ''">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text" v-if="!sidebarCollapsed">目標用戶</span>
           </router-link>
           <router-link to="/business-types-config" class="nav-item" :title="sidebarCollapsed ? '業態類型' : ''">
             <span class="nav-icon">🏢</span>
@@ -140,7 +140,7 @@ export default {
         '/test-scenarios': '測試題庫',
         '/backtest': '回測結果',
         '/cache-management': '緩存管理',
-        '/audience-config': '受眾配置',
+        '/target-users-config': '目標用戶',
         '/business-types-config': '業態類型',
         '/category-config': '分類配置'
       }

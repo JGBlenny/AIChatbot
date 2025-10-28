@@ -367,6 +367,111 @@ async def get_generation_stats(req: Request):
         raise HTTPException(status_code=500, detail=f"取得統計資料失敗: {str(e)}")
 
 
+@router.get("/knowledge-candidates")
+async def get_candidates_by_status(
+    req: Request,
+    status: str = "pending_review",
+    limit: int = 20,
+    offset: int = 0
+):
+    """
+    取得指定狀態的 AI 知識候選列表
+
+    Args:
+        status: 候選狀態 (pending_review, approved, rejected, needs_revision)
+        limit: 每頁數量
+        offset: 偏移量
+
+    Returns:
+        List[AIKnowledgeCandidate]: 候選列表
+    """
+    try:
+        db_pool = req.app.state.db_pool
+
+        # 驗證狀態參數
+        valid_statuses = ['pending_review', 'approved', 'rejected', 'needs_revision']
+        if status not in valid_statuses:
+            raise HTTPException(status_code=400, detail=f"無效的狀態值。有效值: {', '.join(valid_statuses)}")
+
+        async with db_pool.acquire() as conn:
+            # 查詢指定狀態的候選
+            rows = await conn.fetch("""
+                SELECT
+                    akc.id,
+                    akc.test_scenario_id,
+                    akc.question,
+                    akc.generated_answer,
+                    akc.confidence_score,
+                    akc.ai_model,
+                    akc.warnings,
+                    akc.status,
+                    akc.created_at,
+                    akc.reviewed_at,
+                    akc.reviewed_by,
+                    akc.review_notes,
+                    akc.edited_question,
+                    akc.edited_answer,
+                    akc.edit_summary,
+                    ts.test_question as original_test_question,
+                    ts.difficulty,
+                    CASE
+                        WHEN akc.edited_question IS NOT NULL OR akc.edited_answer IS NOT NULL
+                        THEN true
+                        ELSE false
+                    END as has_edits
+                FROM ai_generated_knowledge_candidates akc
+                LEFT JOIN test_scenarios ts ON akc.test_scenario_id = ts.id
+                WHERE akc.status = $1
+                ORDER BY akc.created_at DESC
+                LIMIT $2 OFFSET $3
+            """, status, limit, offset)
+
+            # 取得總數
+            total = await conn.fetchval("""
+                SELECT COUNT(*)
+                FROM ai_generated_knowledge_candidates
+                WHERE status = $1
+            """, status)
+
+            candidates = []
+            for row in rows:
+                candidates.append({
+                    "id": row['id'],
+                    "test_scenario_id": row['test_scenario_id'],
+                    "test_question": row['original_test_question'],
+                    "question": row['question'],
+                    "generated_answer": row['generated_answer'],
+                    "confidence_score": float(row['confidence_score']) if row['confidence_score'] else 0.0,
+                    "ai_model": row['ai_model'],
+                    "warnings": row['warnings'] or [],
+                    "status": row['status'],
+                    "created_at": row['created_at'].isoformat(),
+                    "reviewed_at": row['reviewed_at'].isoformat() if row['reviewed_at'] else None,
+                    "reviewed_by": row['reviewed_by'],
+                    "review_notes": row['review_notes'],
+                    "edited_question": row['edited_question'],
+                    "edited_answer": row['edited_answer'],
+                    "edit_summary": row['edit_summary'],
+                    "has_edits": row['has_edits'],
+                    "difficulty": row['difficulty']
+                })
+
+            return {
+                "candidates": candidates,
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+                "status": status
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"取得候選列表失敗: {str(e)}")
+
+
 @router.get("/knowledge-candidates/pending")
 async def get_pending_candidates(
     req: Request,
@@ -374,7 +479,7 @@ async def get_pending_candidates(
     offset: int = 0
 ):
     """
-    取得待審核的 AI 知識候選列表
+    取得待審核的 AI 知識候選列表（舊版端點，保留向後兼容）
 
     Args:
         limit: 每頁數量

@@ -54,10 +54,8 @@
         <thead>
           <tr>
             <th width="60">ID</th>
-            <th>標題</th>
-            <th width="120">分類</th>
+            <th>問題摘要</th>
             <th width="120">意圖</th>
-            <th width="100">對象</th>
             <th width="120">業態類型</th>
             <th width="180">更新時間</th>
             <th width="150">操作</th>
@@ -66,8 +64,7 @@
         <tbody>
           <tr v-for="item in knowledgeList" :key="item.id">
             <td>{{ item.id }}</td>
-            <td>{{ item.title || item.question_summary || '(無標題)' }}</td>
-            <td><span class="badge">{{ item.category }}</span></td>
+            <td>{{ item.question_summary || '(無標題)' }}</td>
             <td>
               <div v-if="item.intent_mappings && item.intent_mappings.length > 0" class="intent-badges">
                 <span
@@ -82,7 +79,6 @@
               </div>
               <span v-else class="badge badge-unclassified">未分類</span>
             </td>
-            <td>{{ item.audience }}</td>
             <td>
               <div v-if="item.business_types && item.business_types.length > 0" class="business-types-badges">
                 <span
@@ -142,8 +138,8 @@
     </div>
 
     <!-- 編輯/新增 Modal -->
-    <div v-if="showModal" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
+    <div v-if="showModal" class="modal-overlay">
+      <div class="modal-content">
         <h2>{{ editingItem ? '✏️ 編輯知識' : '➕ 新增知識' }}</h2>
 
         <!-- Phase 3: 在 Modal 中顯示回測優化上下文 -->
@@ -157,59 +153,8 @@
 
         <form @submit.prevent="saveKnowledge">
           <div class="form-group">
-            <label>標題 *</label>
-            <input v-model="formData.title" required placeholder="例如：租金逾期處理" />
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>分類 *</label>
-              <select v-model="formData.category" required>
-                <option value="">請選擇</option>
-                <option
-                  v-for="cat in categories"
-                  :key="cat.category_value"
-                  :value="cat.category_value"
-                >
-                  {{ cat.display_name }}
-                </option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>對象 *</label>
-              <select v-model="formData.audience" required @change="onAudienceChange">
-                <option value="">請選擇</option>
-                <optgroup label="🏠 B2C - 終端用戶（External）" v-if="availableAudiences.external.length > 0">
-                  <option
-                    v-for="aud in availableAudiences.external"
-                    :key="aud.audience_value"
-                    :value="aud.audience_value"
-                  >
-                    {{ aud.display_name }}
-                  </option>
-                </optgroup>
-                <optgroup label="🏢 B2B - 內部管理（Internal）" v-if="availableAudiences.internal.length > 0">
-                  <option
-                    v-for="aud in availableAudiences.internal"
-                    :key="aud.audience_value"
-                    :value="aud.audience_value"
-                  >
-                    {{ aud.display_name }}
-                  </option>
-                </optgroup>
-                <optgroup label="📌 通用" v-if="availableAudiences.both.length > 0">
-                  <option
-                    v-for="aud in availableAudiences.both"
-                    :key="aud.audience_value"
-                    :value="aud.audience_value"
-                  >
-                    {{ aud.display_name }}
-                  </option>
-                </optgroup>
-              </select>
-              <small class="audience-hint">💡 {{ audienceHint }}</small>
-            </div>
+            <label>問題摘要 *</label>
+            <input v-model="formData.question_summary" required placeholder="例如：租金逾期如何處理？" />
           </div>
 
           <!-- 業態類型選擇 -->
@@ -224,7 +169,6 @@
                 :class="{ 'selected': selectedBusinessTypes.includes(btype.type_value) }"
                 @click="toggleBusinessType(btype.type_value)"
               >
-                <span v-if="btype.icon" class="tag-icon">{{ btype.icon }}</span>
                 {{ btype.display_name }}
               </button>
             </div>
@@ -232,12 +176,23 @@
             <p v-else class="hint-text">✅ 僅適用於：{{ selectedBusinessTypes.map(v => getBusinessTypeDisplay(v)).join('、') }}</p>
           </div>
 
+          <!-- 目標用戶選擇 -->
           <div class="form-group">
-            <label>問題摘要</label>
-            <input
-              v-model="formData.question_summary"
-              placeholder="簡短描述問題（可選）"
-            />
+            <label>目標用戶 <span class="field-hint">（點擊標籤選擇，未選擇=所有人可見）</span></label>
+            <div class="tag-selector">
+              <button
+                v-for="user in availableTargetUsers"
+                :key="user.user_value"
+                type="button"
+                class="tag-btn"
+                :class="{ 'selected': selectedTargetUsers.includes(user.user_value) }"
+                @click="toggleTargetUser(user.user_value)"
+              >
+                {{ user.display_name }}
+              </button>
+            </div>
+            <p v-if="selectedTargetUsers.length === 0" class="hint-text">💡 未選擇=通用知識（所有人可見）</p>
+            <p v-else class="hint-text">✅ 僅顯示給：{{ selectedTargetUsers.map(v => availableTargetUsers.find(u => u.user_value === v)?.display_name).join('、') }}</p>
           </div>
 
           <div class="form-group">
@@ -371,13 +326,8 @@ export default {
     return {
       knowledgeList: [],
       availableIntents: [],
-      availableAudiences: {
-        external: [],
-        internal: [],
-        both: []
-      },
       availableBusinessTypes: [],
-      categories: [],
+      availableTargetUsers: [],  // 從 API 載入
       searchQuery: '',
       showModal: false,
       editingItem: null,
@@ -390,14 +340,12 @@ export default {
         total: 0
       },
       formData: {
-        title: '',
-        category: '',
-        audience: '',
+        question_summary: '',
         content: '',
         keywords: [],
-        question_summary: '',
         intent_mappings: [],
         business_types: [],
+        target_user: [],  // 新增：目標用戶類型
         // 影片欄位
         video_url: null,
         video_s3_key: null,
@@ -409,10 +357,10 @@ export default {
       selectedIntents: [],
       intentTypes: {},
       selectedBusinessTypes: [],
+      selectedTargetUsers: [],
       searchTimeout: null,
       isIdSearch: false,
       targetIds: [],
-      audienceHint: '選擇對象後將顯示適用場景',
       // Phase 2: 回測優化支援
       backtestContext: null,
       autoCreateMode: false,
@@ -480,9 +428,8 @@ export default {
 
     // 載入基礎資料
     await this.loadIntents();
-    await this.loadAudiences();
     await this.loadBusinessTypes();
-    await this.loadCategories();
+    await this.loadTargetUsers();
     this.loadStats();
 
     // 載入知識列表
@@ -517,24 +464,21 @@ export default {
       }
     },
 
-    async loadCategories() {
+    async loadTargetUsers() {
       try {
-        const response = await axios.get(`${API_BASE}/category-config`);
-        // API返回格式: { categories: [...] }
-        // 数据已经过滤了is_active并按display_order排序
-        this.categories = response.data.categories || [];
+        const response = await axios.get(`${API_BASE}/target-users`);
+        this.availableTargetUsers = response.data.target_users || [];
       } catch (error) {
-        console.error('載入分類失敗', error);
+        console.error('載入目標用戶類型失敗', error);
         // Fallback
-        this.categories = [
-          { category_value: '合約問題', display_name: '合約問題' },
-          { category_value: '帳務問題', display_name: '帳務問題' },
-          { category_value: '服務問題', display_name: '服務問題' },
-          { category_value: '設備報修', display_name: '設備報修' }
+        this.availableTargetUsers = [
+          { user_value: 'tenant', display_name: '租客', icon: '👤' },
+          { user_value: 'landlord', display_name: '房東', icon: '🏠' },
+          { user_value: 'property_manager', display_name: '物業管理師', icon: '👔' },
+          { user_value: 'system_admin', display_name: '系統管理員', icon: '⚙️' }
         ];
       }
     },
-
 
     getBusinessTypeDisplay(typeValue) {
       const btype = this.availableBusinessTypes.find(b => b.type_value === typeValue);
@@ -544,22 +488,6 @@ export default {
       const btype = this.availableBusinessTypes.find(b => b.type_value === typeValue);
       return btype && btype.color ? btype.color : 'gray';
     },
-    onAudienceChange() {
-      // 根據選擇的 audience 更新提示文字
-      const audienceHints = {
-        '租客': 'B2C - 租客使用業者 AI 客服時可見（user_role=customer + external scope）',
-        '房東': 'B2C - 房東使用業者 AI 客服時可見（user_role=customer + external scope）',
-        '租客|管理師': 'B2C + B2B - 租客和管理師都可見（混合場景）',
-        '房東|租客': 'B2C - 房東和租客都可見（user_role=customer + external scope）',
-        '房東|租客|管理師': 'B2C + B2B - 所有終端用戶和管理師都可見',
-        '管理師': 'B2B - 業者員工使用內部系統時可見（user_role=staff + internal scope）',
-        '系統管理員': 'B2B - 系統管理員專用（user_role=staff + internal scope）',
-        '房東/管理師': 'B2B - 房東相關的內部管理（user_role=staff + internal scope）',
-        'general': '通用 - 所有業務範圍都可見（B2C 和 B2B）'
-      };
-
-      this.audienceHint = audienceHints[this.formData.audience] || '選擇對象後將顯示適用場景';
-    },
 
     async loadIntents() {
       try {
@@ -567,28 +495,6 @@ export default {
         this.availableIntents = response.data.intents;
       } catch (error) {
         console.error('載入意圖失敗', error);
-      }
-    },
-
-    async loadAudiences() {
-      try {
-        const response = await axios.get('/rag-api/v1/audience-config/grouped');
-        this.availableAudiences = response.data;
-      } catch (error) {
-        console.error('載入受眾選項失敗', error);
-        // 如果載入失敗，使用預設選項（fallback）
-        this.availableAudiences = {
-          external: [
-            { audience_value: '租客', display_name: '租客', description: 'B2C - 租客專用知識' },
-            { audience_value: '房東', display_name: '房東', description: 'B2C - 房東專用知識' }
-          ],
-          internal: [
-            { audience_value: '管理師', display_name: '管理師', description: 'B2B - 管理師專用知識' }
-          ],
-          both: [
-            { audience_value: 'general', display_name: '所有人（通用）', description: '所有業務範圍都可見' }
-          ]
-        };
       }
     },
 
@@ -609,6 +515,15 @@ export default {
         this.selectedBusinessTypes.splice(index, 1);
       } else {
         this.selectedBusinessTypes.push(typeValue);
+      }
+    },
+
+    toggleTargetUser(userValue) {
+      const index = this.selectedTargetUsers.indexOf(userValue);
+      if (index > -1) {
+        this.selectedTargetUsers.splice(index, 1);
+      } else {
+        this.selectedTargetUsers.push(userValue);
       }
     },
 
@@ -699,19 +614,18 @@ export default {
     showCreateModal() {
       this.editingItem = null;
       this.formData = {
-        title: '',
-        category: '',
-        audience: '',
+        question_summary: '',
         content: '',
         keywords: [],
-        question_summary: '',
         intent_mappings: [],
-        business_types: []
+        business_types: [],
+        target_user: []
       };
       this.keywordsString = '';
       this.selectedIntents = [];
       this.intentTypes = {};
       this.selectedBusinessTypes = [];
+      this.selectedTargetUsers = [];
       this.showModal = true;
     },
 
@@ -724,14 +638,12 @@ export default {
         const knowledge = response.data;
 
         this.formData = {
-          title: knowledge.title || knowledge.question_summary || '',
-          category: knowledge.category || '',
-          audience: knowledge.audience || '',
+          question_summary: knowledge.question_summary || '',
           content: knowledge.content || '',
           keywords: knowledge.keywords || [],
-          question_summary: knowledge.question_summary || '',
           intent_mappings: knowledge.intent_mappings || [],
-          business_types: knowledge.business_types || [],
+          business_types: knowledge.business_types || '',
+          target_user: knowledge.target_user || [],
           // 影片欄位
           video_url: knowledge.video_url || null,
           video_s3_key: knowledge.video_s3_key || null,
@@ -752,15 +664,15 @@ export default {
         // 設定已選擇的業態類型
         this.selectedBusinessTypes = knowledge.business_types || [];
 
+        // 設定已選擇的目標用戶
+        this.selectedTargetUsers = knowledge.target_user || [];
+
         console.log('📖 載入的知識資料:', {
           id: knowledge.id,
-          title: knowledge.title,
+          question_summary: knowledge.question_summary,
           business_types: knowledge.business_types,
           selectedBusinessTypes: this.selectedBusinessTypes
         });
-
-        // 更新 audience 提示
-        this.onAudienceChange();
 
         this.showModal = true;
       } catch (error) {
@@ -791,10 +703,17 @@ export default {
           ? this.selectedBusinessTypes
           : null;
 
+        // 處理目標用戶（空陣列或 null 表示通用/所有人可見）
+        this.formData.target_user = this.selectedTargetUsers.length > 0
+          ? this.selectedTargetUsers
+          : null;
+
         console.log('📝 準備儲存的資料:', {
-          title: this.formData.title,
+          question_summary: this.formData.question_summary,
           business_types: this.formData.business_types,
-          selectedBusinessTypes: this.selectedBusinessTypes
+          target_user: this.formData.target_user,
+          selectedBusinessTypes: this.selectedBusinessTypes,
+          selectedTargetUsers: this.selectedTargetUsers
         });
 
         if (this.editingItem) {
@@ -865,19 +784,18 @@ export default {
     handleAutoCreate() {
       this.editingItem = null;
       this.formData = {
-        title: '',
-        category: '',
-        audience: '',
+        question_summary: this.pendingQuestion || '',
         content: '',
         keywords: [],
-        question_summary: this.pendingQuestion || '',
         intent_mappings: [],
-        business_types: []
+        business_types: [],
+        target_user: []
       };
       this.keywordsString = '';
       this.selectedIntents = [];
       this.intentTypes = {};
       this.selectedBusinessTypes = [];
+      this.selectedTargetUsers = [];
 
       // 根據 intent 參數自動選擇意圖
       if (this.pendingIntent) {
@@ -1204,20 +1122,6 @@ export default {
 .badge sup {
   font-size: 10px;
   margin-left: 2px;
-}
-
-/* Audience 提示樣式 */
-.audience-hint {
-  display: block;
-  margin-top: 6px;
-  color: #409EFF;
-  font-size: 12px;
-  line-height: 1.5;
-  font-style: italic;
-  padding: 6px 10px;
-  background: #ecf5ff;
-  border-radius: 4px;
-  border-left: 3px solid #409EFF;
 }
 
 /* 業態類型選擇器樣式 */

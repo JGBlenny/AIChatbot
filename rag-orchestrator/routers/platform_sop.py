@@ -665,10 +665,14 @@ async def update_platform_sop_template(
 @router.delete("/templates/{template_id}", summary="刪除平台 SOP 範本")
 async def delete_platform_sop_template(
     request: Request,
-    template_id: int
+    template_id: int,
+    permanent: bool = False
 ):
     """
-    軟刪除平台 SOP 範本（設置 is_active = FALSE）
+    刪除平台 SOP 範本
+
+    **Query Parameters**:
+    - permanent: 是否永久刪除（預設 False，執行軟刪除）
 
     **權限**: 平台管理員
     """
@@ -682,13 +686,20 @@ async def delete_platform_sop_template(
             if not exists:
                 raise HTTPException(status_code=404, detail=f"範本 ID {template_id} 不存在")
 
-            # 軟刪除範本
-            await conn.execute(
-                "UPDATE platform_sop_templates SET is_active = FALSE, updated_at = NOW() WHERE id = $1",
-                template_id
-            )
-
-            return {"message": "範本已刪除", "template_id": template_id}
+            if permanent:
+                # 永久刪除範本
+                await conn.execute(
+                    "DELETE FROM platform_sop_templates WHERE id = $1",
+                    template_id
+                )
+                return {"message": "範本已永久刪除", "template_id": template_id, "permanent": True}
+            else:
+                # 軟刪除範本
+                await conn.execute(
+                    "UPDATE platform_sop_templates SET is_active = FALSE, updated_at = NOW() WHERE id = $1",
+                    template_id
+                )
+                return {"message": "範本已刪除", "template_id": template_id, "permanent": False}
 
     except HTTPException:
         raise

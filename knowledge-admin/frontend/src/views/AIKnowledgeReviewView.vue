@@ -36,7 +36,12 @@
         <p>您可以在「測試題庫管理」頁面為已批准且無知識的測試情境生成知識</p>
       </div>
 
-      <div v-for="candidate in candidates" :key="candidate.id" class="candidate-card">
+      <div
+        v-for="candidate in candidates"
+        :key="candidate.id"
+        :id="`candidate-${candidate.id}`"
+        :class="['candidate-card', { 'highlighted': highlightCandidateId === candidate.id }]"
+      >
         <div class="candidate-header">
           <div class="candidate-meta">
             <span class="candidate-id">候選 #{{ candidate.id }}</span>
@@ -151,13 +156,24 @@ export default {
       stats: null,
       loading: false,
       editingCandidates: {},
-      editForms: {}
+      editForms: {},
+      highlightCandidateId: null  // 需要高亮的候選 ID
     };
   },
 
   mounted() {
     this.loadStats();
     this.loadCandidates();
+
+    // 檢查 URL 參數
+    const candidateId = this.$route.query.candidate_id;
+    if (candidateId) {
+      this.highlightCandidateId = parseInt(candidateId);
+      // 延遲滾動，等待列表載入完成
+      setTimeout(() => {
+        this.scrollToCandidate(this.highlightCandidateId);
+      }, 500);
+    }
   },
 
   methods: {
@@ -294,6 +310,23 @@ export default {
     refreshData() {
       this.loadStats();
       this.loadCandidates();
+    },
+
+    scrollToCandidate(candidateId) {
+      // 滾動到指定的候選知識卡片
+      const element = document.getElementById(`candidate-${candidateId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // 3秒後移除高亮
+        setTimeout(() => {
+          this.highlightCandidateId = null;
+        }, 3000);
+      } else {
+        // 找不到該候選，可能不在 pending 列表中
+        console.warn(`候選 #${candidateId} 不在當前列表中`);
+        alert(`候選 #${candidateId} 不在待審核列表中，可能已被審核。`);
+        this.highlightCandidateId = null;
+      }
     }
   }
 };
@@ -364,6 +397,12 @@ export default {
   overflow: hidden;
   border: 2px solid #e9ecef;
   transition: all 0.3s;
+}
+
+.candidate-card.highlighted {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2), 0 4px 12px rgba(0,0,0,0.1);
+  animation: pulse-highlight 2s ease-in-out;
 }
 
 .candidate-card:hover {
@@ -549,5 +588,15 @@ export default {
   font-size: 20px;
   color: #28a745;
   margin-bottom: 10px;
+}
+
+/* 高亮動畫 */
+@keyframes pulse-highlight {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2), 0 4px 12px rgba(0,0,0,0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(102, 126, 234, 0.4), 0 4px 16px rgba(102, 126, 234, 0.3);
+  }
 }
 </style>

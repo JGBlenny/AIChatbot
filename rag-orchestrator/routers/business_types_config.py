@@ -68,7 +68,7 @@ async def get_all_business_types(is_active: Optional[bool] = True):
                     updated_at
                 FROM business_types_config
                 WHERE {where_clause}
-                ORDER BY display_order, id
+                ORDER BY id
             """
 
             cursor.execute(query)

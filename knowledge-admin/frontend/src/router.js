@@ -21,10 +21,10 @@ import PendingReviewView from './views/PendingReviewView.vue';
 import ReviewCenterView from './views/ReviewCenterView.vue';
 // Cache Management
 import CacheManagementView from './views/CacheManagementView.vue';
-// Audience Config Management
-import AudienceConfigView from './views/AudienceConfigView.vue';
 // Business Types Config Management
 import BusinessTypesConfigView from './views/BusinessTypesConfigView.vue';
+// Target User Config Management
+import TargetUserConfigView from './views/TargetUserConfigView.vue';
 // Category Config Management
 import CategoryConfigView from './views/CategoryConfigView.vue';
 
@@ -117,23 +117,28 @@ const routes = [
     name: 'CacheManagement',
     component: CacheManagementView
   },
-  // Audience Config Management
-  {
-    path: '/audience-config',
-    name: 'AudienceConfig',
-    component: AudienceConfigView
-  },
   // Business Types Config Management
   {
     path: '/business-types-config',
     name: 'BusinessTypesConfig',
     component: BusinessTypesConfigView
   },
+  // Target User Config Management
+  {
+    path: '/target-users-config',
+    name: 'TargetUsersConfig',
+    component: TargetUserConfigView
+  },
   // Category Config Management
   {
     path: '/category-config',
     name: 'CategoryConfig',
     component: CategoryConfigView
+  },
+  // Audience Config - Redirect to Target Users (舊功能已遷移)
+  {
+    path: '/audience-config',
+    redirect: '/target-users-config'
   }
 ];
 

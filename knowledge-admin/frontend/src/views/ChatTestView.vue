@@ -239,10 +239,16 @@ export default {
       });
 
       try {
+        // 根據模式設定用戶角色
+        // B2B (customer_service) = staff (業者員工/系統商)
+        // B2C (tenant) = customer (終端客戶)
+        const userRole = this.chatMode === 'customer_service' ? 'staff' : 'customer';
+
         const response = await axios.post(`${RAG_API}/v1/message`, {
           message: message,
           vendor_id: parseInt(this.selectedVendorId),
           mode: this.chatMode,
+          user_role: userRole,
           include_sources: true
         });
 
@@ -547,12 +553,12 @@ export default {
   overflow: hidden;
   background: #000;
   border: 1px solid #e5e7eb;
+  max-width: 480px;  /* 限制容器最大寬度 */
 }
 
 .video-player {
   width: 100%;
-  max-width: 600px;
-  max-height: 400px;
+  max-height: 360px;  /* 調整最大高度，保持 4:3 比例 */
   display: block;
   background: #000;
 }
