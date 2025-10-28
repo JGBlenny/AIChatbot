@@ -2,6 +2,9 @@
   <div class="backtest-view">
     <h2>🧪 回測結果與優化</h2>
 
+    <!-- 說明區塊 -->
+    <InfoPanel :config="helpTexts.backtest" />
+
     <!-- 統計卡片 -->
     <div v-if="statistics" class="stats-cards">
       <div class="stat-card">
@@ -393,13 +396,19 @@ python3 scripts/knowledge_extraction/backtest_framework.py</pre>
 
 <script>
 import axios from 'axios';
+import InfoPanel from '@/components/InfoPanel.vue';
+import helpTexts from '@/config/help-texts.js';
 
 const API_BASE = '/api';
 
 export default {
   name: 'BacktestView',
+  components: {
+    InfoPanel
+  },
   data() {
     return {
+      helpTexts,
       results: [],
       statistics: null,
       total: 0,
@@ -816,7 +825,7 @@ export default {
 
 <style scoped>
 .backtest-view {
-  width: 100%;
+  /* width 由 app-main 統一管理 */
 }
 
 /* 統計卡片 */

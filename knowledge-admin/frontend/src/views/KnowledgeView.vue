@@ -2,17 +2,8 @@
   <div>
     <h2>📚 知識庫管理</h2>
 
-    <!-- 回測優化上下文橫幅 -->
-    <div v-if="backtestContext" class="backtest-context-banner">
-      <div class="banner-content">
-        <span class="banner-icon">🎯</span>
-        <div class="banner-text">
-          <strong>正在優化回測失敗案例：</strong>
-          <span class="context-question">{{ backtestContext }}</span>
-        </div>
-        <button @click="clearContext" class="btn-close-banner" title="關閉提示">✕</button>
-      </div>
-    </div>
+    <!-- 說明區塊 -->
+    <InfoPanel :config="helpTexts.knowledge" />
 
     <!-- 工具列 -->
     <div class="toolbar">
@@ -35,6 +26,18 @@
       <button @click="showCreateModal" class="btn-primary btn-sm">
         新增知識
       </button>
+    </div>
+
+    <!-- 回測優化上下文橫幅 -->
+    <div v-if="backtestContext" class="backtest-context-banner">
+      <div class="banner-content">
+        <span class="banner-icon">🎯</span>
+        <div class="banner-text">
+          <strong>正在優化回測失敗案例：</strong>
+          <span class="context-question">{{ backtestContext }}</span>
+        </div>
+        <button @click="clearContext" class="btn-close-banner" title="關閉提示">✕</button>
+      </div>
     </div>
 
     <!-- 知識列表 -->
@@ -107,7 +110,7 @@
     </div>
 
     <!-- 統計資訊和分頁控制 -->
-    <div v-if="stats && knowledgeList.length > 0" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+    <div v-if="knowledgeList.length > 0 && pagination.total > 0" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
       <div style="color: #606266;">
         總計 {{ pagination.total }} 筆知識，顯示第 {{ pagination.offset + 1 }} - {{ Math.min(pagination.offset + pagination.limit, pagination.total) }} 筆
       </div>
@@ -317,13 +320,19 @@
 <script>
 import axios from 'axios';
 import { marked } from 'marked';
+import InfoPanel from '@/components/InfoPanel.vue';
+import helpTexts from '@/config/help-texts.js';
 
 const API_BASE = '/api';
 
 export default {
   name: 'KnowledgeView',
+  components: {
+    InfoPanel
+  },
   data() {
     return {
+      helpTexts,
       knowledgeList: [],
       availableIntents: [],
       availableBusinessTypes: [],

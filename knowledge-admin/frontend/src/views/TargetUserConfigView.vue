@@ -2,22 +2,8 @@
   <div>
     <h2>👥 目標用戶管理</h2>
 
-    <div class="info-box">
-      <p><strong>📝 說明：</strong></p>
-      <ul>
-        <li>目標用戶用於定義知識庫針對的用戶類型（如：租客、房東、物業管理師）</li>
-        <li>每筆知識可以選擇一種或多種目標用戶</li>
-        <li>未指定目標用戶的知識視為「通用知識」，對所有用戶可見</li>
-        <li>⚠️ 停用目標用戶前，請確認相關知識的可見性設定</li>
-      </ul>
-    </div>
-
-    <div class="warning-box">
-      <p><strong>⚠️ 目前此功能尚未生效</strong></p>
-      <p>由於系統缺少用戶登入機制，無法識別用戶身份（tenant/landlord/property_manager 等），因此 <code>target_user</code> 過濾功能暫時無作用。</p>
-      <p>當前所有用戶都能看到所有知識，不受 target_user 設定限制。</p>
-      <p><strong>待整合：</strong>當您的應用系統接入並在聊天請求中傳入正確的 <code>user_role</code> 參數時，此功能將自動生效。</p>
-    </div>
+    <!-- 說明區塊 -->
+    <InfoPanel :config="helpTexts.targetUsers" />
 
     <!-- 工具列 -->
     <div class="toolbar">
@@ -136,13 +122,19 @@
 
 <script>
 import axios from 'axios';
+import InfoPanel from '@/components/InfoPanel.vue';
+import helpTexts from '@/config/help-texts.js';
 
 const API_BASE = '/api';
 
 export default {
   name: 'TargetUserConfigView',
+  components: {
+    InfoPanel
+  },
   data() {
     return {
+      helpTexts,
       targetUsersList: [],
       loading: false,
       showModal: false,

@@ -1,12 +1,14 @@
 <template>
   <div class="test-scenarios-view">
-    <div class="page-header">
-      <h2>🧪 測試題庫管理</h2>
-      <div class="header-actions">
-        <button @click="showCreateDialog = true" class="btn-primary">
-          ➕ 新增測試情境
-        </button>
-      </div>
+    <h2>🧪 測試題庫管理</h2>
+
+    <!-- 說明區塊 -->
+    <InfoPanel :config="helpTexts.testScenarios" />
+
+    <div class="toolbar">
+      <button @click="showCreateDialog = true" class="btn-primary btn-sm">
+        ➕ 新增測試情境
+      </button>
     </div>
 
     <!-- 篩選區域 -->
@@ -295,12 +297,18 @@
 
 <script>
 import axios from 'axios';
+import InfoPanel from '@/components/InfoPanel.vue';
+import helpTexts from '@/config/help-texts.js';
 
 export default {
   name: 'TestScenariosView',
 
+  components: {
+    InfoPanel
+  },
   data() {
     return {
+      helpTexts,
       scenarios: [],
       stats: null,
       loading: false,
@@ -630,7 +638,7 @@ export default {
 
 <style scoped>
 .test-scenarios-view {
-  width: 100%;
+  /* width 由 app-main 統一管理 */
 }
 
 .page-header {

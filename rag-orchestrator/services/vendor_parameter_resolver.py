@@ -269,7 +269,7 @@ class VendorParameterResolver:
                     contact_email,
                     is_active,
                     subscription_plan,
-                    business_type
+                    business_types
                 FROM vendors
                 WHERE id = %s
             """, (vendor_id,))

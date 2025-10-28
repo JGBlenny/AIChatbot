@@ -1,9 +1,9 @@
 <template>
   <div class="platform-sop-view">
-    <div class="page-header">
-      <h1>🏢 平台 SOP 範本管理</h1>
-      <p class="subtitle">管理全平台通用的 SOP 範本，業者可選擇性覆寫</p>
-    </div>
+    <h2>🏢 平台 SOP 範本管理</h2>
+
+    <!-- 說明區塊 -->
+    <InfoPanel :config="helpTexts.platformSOP" />
 
     <!-- 操作按鈕區 -->
     <div class="action-bar">
@@ -237,14 +237,20 @@
 
 <script>
 import axios from 'axios';
+import InfoPanel from '@/components/InfoPanel.vue';
+import helpTexts from '@/config/help-texts.js';
 
 const RAG_API = import.meta.env.VITE_RAG_API || 'http://localhost:8100';
 
 export default {
   name: 'PlatformSOPView',
 
+  components: {
+    InfoPanel
+  },
   data() {
     return {
+      helpTexts,
       loading: false,
       categories: [],
       templates: [],
@@ -410,6 +416,9 @@ export default {
     navigateToBusinessType(businessType) {
       this.$router.push({
         name: 'PlatformSOPEdit',
+  components: {
+    InfoPanel
+  },
         params: { businessType }
       });
     },
@@ -587,9 +596,7 @@ export default {
 
 <style scoped>
 .platform-sop-view {
-  padding: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
+  /* 寬度和內邊距由 app-main 統一管理 */
 }
 
 .page-header {

@@ -16,11 +16,43 @@ body {
   height: 100vh;
 }
 
-/* 標題 */
+/* 頁面標題美化 */
 h1 {
   color: #2c3e50;
   margin-bottom: 30px;
   font-size: 28px;
+}
+
+h2 {
+  position: relative;
+  color: #2c3e50;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 25px;
+  padding-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -0.5px;
+}
+
+/* 標題底部裝飾線 */
+h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, transparent 100%);
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* 標題 emoji 圖標樣式 */
+h2::first-letter {
+  font-size: 38px;
+  margin-right: 8px;
 }
 
 /* 工具列 */

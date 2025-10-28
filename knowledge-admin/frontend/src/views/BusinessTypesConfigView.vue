@@ -2,15 +2,8 @@
   <div>
     <h2>🏢 業態類型管理</h2>
 
-    <div class="info-box">
-      <p><strong>📝 說明：</strong></p>
-      <ul>
-        <li>業態類型用於定義業者的經營模式（如：系統商、包租型、代管型）</li>
-        <li>每個業者可以選擇一種或多種業態類型</li>
-        <li>不同業態類型可能對應不同的業務流程和知識內容</li>
-        <li>⚠️ 停用業態類型前，請確保沒有業者正在使用</li>
-      </ul>
-    </div>
+    <!-- 說明區塊 -->
+    <InfoPanel :config="helpTexts.businessTypes" />
 
     <!-- 工具列 -->
     <div class="toolbar">
@@ -177,13 +170,19 @@
 
 <script>
 import axios from 'axios';
+import InfoPanel from '@/components/InfoPanel.vue';
+import helpTexts from '@/config/help-texts.js';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100/api/v1';
 
 export default {
   name: 'BusinessTypesConfigView',
+  components: {
+    InfoPanel
+  },
   data() {
     return {
+      helpTexts,
       businessTypesList: [],
       filterActive: 'true',
       loading: false,

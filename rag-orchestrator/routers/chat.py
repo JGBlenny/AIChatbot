@@ -453,7 +453,7 @@ async def _build_rag_response(
     if request.include_sources:
         sources = [KnowledgeSource(
             id=r['id'],
-            question_summary=r['title'],
+            question_summary=r['question_summary'],
             answer=r['content'],
             scope='global',
             is_template=False
@@ -628,9 +628,8 @@ async def _build_knowledge_response(
     # 準備搜尋結果格式
     search_results = [{
         'id': k['id'],
-        'title': k['question_summary'],
+        'question_summary': k['question_summary'],
         'content': k['answer'],
-        'category': k.get('category', 'N/A'),
         'similarity': 0.9
     } for k in knowledge_list]
 

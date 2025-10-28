@@ -414,6 +414,7 @@ body {
   width: calc(100% - 260px);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: #f5f7fa;
+  margin-bottom: 80px;
 }
 
 .main-container.expanded {
@@ -489,8 +490,18 @@ body {
 .app-main {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 0;
   background: #f5f7fa;
+  display: flex;
+  justify-content: center;
+}
+
+/* 統一內容寬度容器 */
+.app-main > * {
+  width: 100%;
+  max-width: 1600px;
+  padding: 30px 40px;
+  margin: 0 auto;
 }
 
 .app-main::-webkit-scrollbar {
@@ -542,8 +553,9 @@ body {
     padding: 10px 15px;
   }
 
-  .app-main {
-    padding: 15px;
+  /* 移動設備上調整內邊距 */
+  .app-main > * {
+    padding: 20px 15px;
   }
 }
 </style>

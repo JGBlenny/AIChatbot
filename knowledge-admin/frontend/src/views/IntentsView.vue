@@ -2,6 +2,9 @@
   <div>
     <h2>🎯 意圖管理</h2>
 
+    <!-- 說明區塊 - 使用共用組件 -->
+    <InfoPanel :config="helpTexts.intents" />
+
     <!-- 工具列 -->
     <div class="toolbar">
       <select v-model="filterType" @change="loadIntents">
@@ -185,11 +188,16 @@
 
 <script>
 import axios from 'axios';
+import InfoPanel from '@/components/InfoPanel.vue';
+import helpTexts from '@/config/help-texts.js';
 
 const RAG_API = '/rag-api/v1';
 
 export default {
   name: 'IntentsView',
+  components: {
+    InfoPanel
+  },
   data() {
     return {
       intentList: [],
@@ -212,7 +220,8 @@ export default {
         api_action: '',
         created_by: 'admin'
       },
-      keywordsString: ''
+      keywordsString: '',
+      helpTexts
     };
   },
   mounted() {

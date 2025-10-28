@@ -2,6 +2,9 @@
   <div>
     <h2>🏢 業者管理</h2>
 
+    <!-- 說明區塊 -->
+    <InfoPanel :config="helpTexts.vendors" />
+
     <!-- 工具列 -->
     <div class="toolbar">
       <button @click="showCreateModal" class="btn-primary btn-sm">新增業者</button>
@@ -219,13 +222,19 @@
 
 <script>
 import axios from 'axios';
+import InfoPanel from '@/components/InfoPanel.vue';
+import helpTexts from '@/config/help-texts.js';
 
 const RAG_API = '/rag-api/v1';
 
 export default {
   name: 'VendorManagementView',
+  components: {
+    InfoPanel
+  },
   data() {
     return {
+      helpTexts,
       vendorList: [],
       availableBusinessTypes: [],
       showModal: false,

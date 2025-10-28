@@ -1,11 +1,9 @@
 <template>
   <div class="knowledge-reclassify-container">
-    <div class="page-header">
-      <h2>⚙️ 知識庫意圖分類工具</h2>
-      <button @click="loadStats" class="btn-info btn-sm" :disabled="loading">
-        🔄 {{ loading ? '載入中...' : '重新載入統計' }}
-      </button>
-    </div>
+    <h2>⚙️ 知識庫意圖分類工具</h2>
+
+    <!-- 說明區塊 -->
+    <InfoPanel :config="helpTexts.knowledgeReclassify" />
 
     <!-- 步驟指示 -->
     <div class="steps-guide">
@@ -20,7 +18,7 @@
       <div class="step" :class="{ active: currentStep >= 2 }">
         <div class="step-number">2</div>
         <div class="step-content">
-          <div class="step-title">選擇條件或快捷操作</div>
+          <div class="step-title">選擇快捷操作</div>
           <div class="step-desc">決定要處理哪些知識</div>
         </div>
       </div>
@@ -55,11 +53,6 @@
           <div class="stat-value">{{ stats.overall.unclassified_count }}</div>
           <div class="stat-detail">需要處理</div>
         </div>
-        <div class="stat-card highlight-danger">
-          <div class="stat-label">🔄 需意圖分類</div>
-          <div class="stat-value">{{ stats.overall.needs_reclassify_count }}</div>
-          <div class="stat-detail">已標記</div>
-        </div>
         <div class="stat-card highlight-info">
           <div class="stat-label">📉 低信心度</div>
           <div class="stat-value">{{ stats.overall.low_confidence_count }}</div>
@@ -81,8 +74,8 @@
     <!-- 快捷操作 -->
     <div class="section-card">
       <div class="section-header">
-        <h3>⚡ 步驟 2A: 快捷操作（推薦）</h3>
-        <p class="section-desc">一鍵處理常見場景，不需要手動設定條件</p>
+        <h3>⚡ 步驟 2: 快捷操作</h3>
+        <p class="section-desc">一鍵處理常見場景</p>
       </div>
 
       <div class="quick-actions">
@@ -99,96 +92,9 @@
           <div class="qa-desc">自動分類所有尚未指定意圖的知識</div>
           <div class="qa-badge" v-if="stats">{{ stats.overall.unclassified_count }} 筆</div>
         </div>
-
-        <!-- 已隱藏：處理已標記知識 - 功能未完整實作 -->
       </div>
     </div>
 
-    <!-- 進階設定 -->
-    <div class="section-card" :class="{ collapsed: !showAdvanced }">
-      <div class="section-header clickable" @click="showAdvanced = !showAdvanced">
-        <h3>🔧 步驟 2B: 進階設定（可選）</h3>
-        <p class="section-desc">自訂過濾條件</p>
-        <span class="toggle-icon">{{ showAdvanced ? '▼' : '▶' }}</span>
-      </div>
-
-      <div v-if="showAdvanced" class="advanced-settings">
-        <div class="form-row">
-          <div class="form-group">
-            <label>📋 意圖範圍:</label>
-            <select v-model="filters.selectedIntents" multiple class="intent-select">
-              <option v-for="intent in intents" :key="intent.id" :value="intent.id">
-                {{ intent.name }} ({{ typeLabels[intent.type] }})
-              </option>
-            </select>
-            <small>💡 不選 = 所有意圖 | 按住 Cmd/Ctrl 可多選</small>
-          </div>
-
-          <div class="form-group">
-            <label>📊 信心度條件:</label>
-            <select v-model="filters.confidenceMode">
-              <option value="all">所有知識</option>
-              <option value="low">低信心度 (&lt; 0.7)</option>
-              <option value="custom">自訂閾值</option>
-            </select>
-            <input
-              v-if="filters.confidenceMode === 'custom'"
-              type="number"
-              v-model.number="filters.customConfidence"
-              min="0"
-              max="1"
-              step="0.1"
-              placeholder="0.7"
-              class="mt-1"
-            />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>📅 分類時間:</label>
-            <select v-model="filters.olderThanDays">
-              <option :value="null">所有時間</option>
-              <option :value="7">7 天前分類的</option>
-              <option :value="30">30 天前分類的</option>
-              <option :value="90">90 天前分類的</option>
-            </select>
-            <small>💡 處理很久以前分類的，可能配置已改變</small>
-          </div>
-
-          <div class="form-group">
-            <label>🏷️ 分類來源:</label>
-            <select v-model="filters.assignedBy">
-              <option value="">全部</option>
-              <option value="auto">僅自動分類</option>
-              <option value="manual">僅手動分類</option>
-            </select>
-            <small>💡 手動分類通常較準確</small>
-          </div>
-
-          <div class="form-group">
-            <label>📦 批次大小:</label>
-            <input
-              type="number"
-              v-model.number="batchSize"
-              min="1"
-              max="1000"
-              placeholder="100"
-            />
-            <small>💡 建議 50-200</small>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="filters.needsReclassifyOnly" />
-              <span>只處理標記為「需要意圖分類」的知識</span>
-            </label>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- 預估資訊 -->
     <div class="section-card preview-card" v-if="preview">
@@ -397,7 +303,6 @@
               <th>類型</th>
               <th>知識數量</th>
               <th>平均信心度</th>
-              <th>需意圖分類</th>
             </tr>
           </thead>
           <tbody>
@@ -414,7 +319,6 @@
                   {{ item.avg_confidence ? item.avg_confidence.toFixed(2) : 'N/A' }}
                 </span>
               </td>
-              <td>{{ item.needs_reclassify_count }}</td>
             </tr>
           </tbody>
         </table>
@@ -425,13 +329,19 @@
 
 <script>
 import axios from 'axios';
+import InfoPanel from '@/components/InfoPanel.vue';
+import helpTexts from '@/config/help-texts.js';
 
 const RAG_API = 'http://localhost:8100/api/v1';
 
 export default {
   name: 'KnowledgeReclassifyView',
+  components: {
+    InfoPanel
+  },
   data() {
     return {
+      helpTexts,
       currentStep: 1,
       stats: null,
       intents: [],
@@ -441,7 +351,6 @@ export default {
         customConfidence: 0.7,
         olderThanDays: null,
         assignedBy: '',
-        needsReclassifyOnly: false,
         unclassified: false
       },
       batchSize: 100,
@@ -453,7 +362,6 @@ export default {
       progress: 0,
       processStatus: '',
       result: null,
-      showAdvanced: false,
       typeLabels: {
         knowledge: '知識',
         data_query: '資料查詢',
@@ -497,23 +405,8 @@ export default {
         customConfidence: 0.7,
         olderThanDays: null,
         assignedBy: '',
-        needsReclassifyOnly: false
+        unclassified: false
       };
-      this.showAdvanced = false;
-      this.currentStep = 2;
-      this.previewReclassify();
-    },
-
-    quickActionNeedsReclassify() {
-      this.filters = {
-        selectedIntents: [],
-        confidenceMode: 'all',
-        customConfidence: 0.7,
-        olderThanDays: null,
-        assignedBy: '',
-        needsReclassifyOnly: true
-      };
-      this.showAdvanced = false;
       this.currentStep = 2;
       this.previewReclassify();
     },
@@ -525,10 +418,8 @@ export default {
         customConfidence: 0.7,
         olderThanDays: null,
         assignedBy: '',
-        needsReclassifyOnly: false,
-        unclassified: true  // 新增：只處理未分類的知識
+        unclassified: true
       };
-      this.showAdvanced = false;
       this.currentStep = 2;
       this.previewReclassify();
     },
@@ -557,10 +448,6 @@ export default {
 
       if (this.filters.assignedBy) {
         filters.assigned_by = this.filters.assignedBy;
-      }
-
-      if (this.filters.needsReclassifyOnly) {
-        filters.needs_reclassify = true;
       }
 
       return filters;
@@ -693,14 +580,12 @@ export default {
         customConfidence: 0.7,
         olderThanDays: null,
         assignedBy: '',
-        needsReclassifyOnly: false,
         unclassified: false
       };
       this.batchSize = 100;
       this.preview = null;
       this.result = null;
       this.currentStep = 1;
-      this.showAdvanced = false;
     },
 
     getPercentage(value, total) {
@@ -732,8 +617,7 @@ export default {
 
 <style scoped>
 .knowledge-reclassify-container {
-  max-width: 100%;
-  margin: 0;
+  /* width 和 margin 由 app-main 統一管理 */
 }
 
 /* 頁面標題 */
@@ -837,19 +721,6 @@ export default {
   color: #666;
   font-size: 14px;
   margin: 5px 0 0 0;
-}
-
-.section-header.clickable {
-  cursor: pointer;
-  user-select: none;
-}
-
-.toggle-icon {
-  position: absolute;
-  right: 0;
-  top: 0;
-  font-size: 20px;
-  color: #666;
 }
 
 /* 統計卡片 */
@@ -966,90 +837,6 @@ export default {
   border-radius: 20px;
   font-size: 12px;
   font-weight: bold;
-}
-
-/* 進階設定 */
-.advanced-settings {
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  font-weight: 500;
-  margin-bottom: 8px;
-  color: #555;
-  font-size: 14px;
-}
-
-.form-group input[type="number"],
-.form-group select {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #667eea;
-}
-
-.intent-select {
-  min-height: 120px;
-}
-
-.form-group small {
-  color: #888;
-  font-size: 12px;
-  margin-top: 5px;
-}
-
-.mt-1 {
-  margin-top: 10px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  padding: 10px;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
-
-.checkbox-label:hover {
-  background: #f8f9fa;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
 }
 
 /* 預覽卡片 */

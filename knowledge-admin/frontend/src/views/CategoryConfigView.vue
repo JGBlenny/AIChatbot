@@ -1,23 +1,14 @@
 <template>
   <div class="category-config-view">
-    <div class="header">
-      <h2>📂 分類配置管理</h2>
-      <div class="header-actions">
-        <button @click="showAddModal" class="btn-primary btn-sm">
-          新增分類
-        </button>
-      </div>
-    </div>
+    <h2>📂 分類配置管理</h2>
 
-    <div class="info-box">
-      <p><strong>📝 說明：</strong></p>
-      <ul>
-        <li><strong>主要作用：</strong>幫助組織和管理知識庫內容（如：合約問題、帳務問題、服務問題等）</li>
-        <li><strong>對話中的作用：</strong>分類標籤會提供給 AI 作為參考，幫助它更有條理地組織答案（如：「關於合約問題...」、「從帳務角度...」）</li>
-        <li><strong>注意：</strong>分類不影響知識檢索結果（AI 仍透過語義相似度、意圖、受眾等條件找資料），主要是輔助 AI 理解知識主題</li>
-        <li><strong>介面顯示：</strong>分類會顯示在知識管理介面的下拉選單和列表中</li>
-        <li>⚠️ 停用分類前，請確保沒有知識正在使用該分類</li>
-      </ul>
+    <!-- 說明區塊 -->
+    <InfoPanel :config="helpTexts.categories" />
+
+    <div class="toolbar">
+      <button @click="showAddModal" class="btn-primary btn-sm">
+        新增分類
+      </button>
     </div>
 
     <div v-if="loading" class="loading">載入中...</div>
@@ -146,13 +137,19 @@
 
 <script>
 import axios from 'axios';
+import InfoPanel from '@/components/InfoPanel.vue';
+import helpTexts from '@/config/help-texts.js';
 
 const API_BASE = '/api';
 
 export default {
   name: 'CategoryConfigView',
+  components: {
+    InfoPanel
+  },
   data() {
     return {
+      helpTexts,
       categories: [],
       showModal: false,
       editingCategory: null,
@@ -268,7 +265,7 @@ export default {
 
 <style scoped>
 .category-config-view {
-  padding: 20px;
+  /* padding 由 app-main 統一管理 */
 }
 
 /* 分類列表 */

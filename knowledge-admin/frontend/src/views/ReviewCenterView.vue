@@ -1,8 +1,12 @@
 <template>
   <div class="review-center">
-    <div class="page-header">
-      <h2>🔍 審核中心</h2>
-      <button @click="refreshAll" class="btn-secondary">
+    <h2>🔍 審核中心</h2>
+
+    <!-- 說明區塊 -->
+    <InfoPanel :config="helpTexts.reviewCenter" />
+
+    <div class="toolbar">
+      <button @click="refreshAll" class="btn-secondary btn-sm">
         🔄 重新整理全部
       </button>
     </div>
@@ -41,6 +45,8 @@ import IntentReviewTab from '../components/review/IntentReviewTab.vue';
 import ScenarioReviewTab from '../components/review/ScenarioReviewTab.vue';
 import KnowledgeReviewTab from '../components/review/KnowledgeReviewTab.vue';
 import UnclearQuestionReviewTab from '../components/review/UnclearQuestionReviewTab.vue';
+import InfoPanel from '@/components/InfoPanel.vue';
+import helpTexts from '@/config/help-texts.js';
 
 export default {
   name: 'ReviewCenterView',
@@ -49,7 +55,8 @@ export default {
     IntentReviewTab,
     ScenarioReviewTab,
     KnowledgeReviewTab,
-    UnclearQuestionReviewTab
+    UnclearQuestionReviewTab,
+    InfoPanel
   },
 
   setup() {
@@ -125,7 +132,8 @@ export default {
       switchTab,
       updateTabCount,
       refreshAll,
-      candidateId
+      candidateId,
+      helpTexts
     };
   }
 };
@@ -133,7 +141,7 @@ export default {
 
 <style scoped>
 .review-center {
-  width: 100%;
+  /* width 由 app-main 統一管理 */
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -233,7 +241,6 @@ export default {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   padding: 30px;
-  overflow-y: auto;
 }
 
 /* 響應式設計 */

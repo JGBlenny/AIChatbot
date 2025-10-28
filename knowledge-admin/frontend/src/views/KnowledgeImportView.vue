@@ -1,7 +1,11 @@
 <template>
   <div class="knowledge-import">
     <h2>📤 知識庫匯入</h2>
-    <p class="subtitle">上傳 LINE 聊天記錄 txt 文件，自動提取知識庫並智能去重</p>
+
+    <!-- 說明區塊 -->
+    <InfoPanel :config="helpTexts.knowledgeImport" />
+
+    <p class="subtitle">上傳知識庫文件，支援多種格式，自動提取知識並智能去重</p>
 
     <!-- 步驟指示器 -->
     <div class="steps">
@@ -29,7 +33,7 @@
         <input
           ref="fileInput"
           type="file"
-          accept=".txt"
+          accept=".txt,.xlsx,.xls,.json"
           @change="handleFileSelect"
           style="display: none"
         />
@@ -37,7 +41,7 @@
         <div v-if="!selectedFile" class="upload-placeholder" @click="$refs.fileInput.click()">
           <div class="upload-icon">📁</div>
           <p><strong>點擊或拖曳文件至此</strong></p>
-          <p class="hint">支援 .txt 格式的 LINE 聊天記錄</p>
+          <p class="hint">支援格式：Excel (.xlsx, .xls)、純文字 (.txt)、JSON (.json)</p>
         </div>
 
         <div v-else class="file-selected">
@@ -49,15 +53,6 @@
             </div>
             <button @click="clearFile" class="btn-remove">✕</button>
           </div>
-        </div>
-      </div>
-
-      <!-- 匯入選項 -->
-      <div class="import-options">
-        <h3>匯入說明</h3>
-        <div class="option-group">
-          <p>📋 從檔案中提取新的問答對並添加到審核佇列</p>
-          <p>🔍 系統會自動進行智能去重，跳過已存在的知識</p>
         </div>
       </div>
 
@@ -214,14 +209,20 @@
 
 <script>
 import axios from 'axios';
+import InfoPanel from '@/components/InfoPanel.vue';
+import helpTexts from '@/config/help-texts.js';
 
 const API_BASE = '/rag-api/v1';
 
 export default {
   name: 'KnowledgeImportView',
 
+  components: {
+    InfoPanel
+  },
   data() {
     return {
+      helpTexts,
       currentStep: 1,
       selectedFile: null,
 
@@ -425,8 +426,7 @@ export default {
 
 <style scoped>
 .knowledge-import {
-  max-width: 900px;
-  margin: 0 auto;
+  /* 寬度和內邊距由 app-main 統一管理 */
 }
 
 .subtitle {
@@ -563,45 +563,7 @@ export default {
   cursor: pointer;
 }
 
-/* 匯入選項 */
-.import-options {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  margin-bottom: 30px;
-}
-
-.option-group {
-  margin-bottom: 20px;
-}
-
-.option-group label {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 10px;
-}
-
-.option-group label:hover {
-  background: #f5f5f5;
-  border-color: #4CAF50;
-}
-
-.option-label {
-  display: flex;
-  flex-direction: column;
-}
-
-.option-label small {
-  color: #666;
-  margin-top: 5px;
-}
+/* 匯入選項樣式已移除（說明已整合到 InfoPanel） */
 
 /* 預覽 */
 .preview-summary {
