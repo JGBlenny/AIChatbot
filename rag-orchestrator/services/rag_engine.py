@@ -102,8 +102,7 @@ class RAGEngine:
                                 kb.id,
                                 kb.question_summary,
                                 kb.answer as content,
-                                kb.category,
-                                kb.audience,
+                                kb.target_user,
                                 kb.keywords,
                                 kb.business_types,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
@@ -125,7 +124,7 @@ class RAGEngine:
                             WHERE kb.embedding IS NOT NULL
                                 AND (1 - (kb.embedding <=> $1::vector)) >= $2
                                 AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
-                                AND (kb.audience IS NULL OR kb.audience = ANY($6::text[]))
+                                AND (kb.target_user IS NULL OR kb.target_user && $6::text[])
                                 AND (kb.business_types IS NULL OR kb.business_types && $7::text[])
                             ORDER BY kb.id, boosted_similarity DESC
                             LIMIT $3
@@ -138,7 +137,7 @@ class RAGEngine:
                                 kb.question_summary,
                                 kb.answer as content,
                                 kb.category,
-                                kb.audience,
+                                kb.target_user,
                                 kb.keywords,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
@@ -159,7 +158,7 @@ class RAGEngine:
                             WHERE kb.embedding IS NOT NULL
                                 AND (1 - (kb.embedding <=> $1::vector)) >= $2
                                 AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
-                                AND (kb.audience IS NULL OR kb.audience = ANY($6::text[]))
+                                AND (kb.target_user IS NULL OR kb.target_user && $6::text[])
                             ORDER BY kb.id, boosted_similarity DESC
                             LIMIT $3
                         """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, allowed_audiences)
@@ -172,8 +171,7 @@ class RAGEngine:
                                 kb.id,
                                 kb.question_summary,
                                 kb.answer as content,
-                                kb.category,
-                                kb.audience,
+                                kb.target_user,
                                 kb.keywords,
                                 kb.business_types,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
@@ -207,7 +205,7 @@ class RAGEngine:
                                 kb.question_summary,
                                 kb.answer as content,
                                 kb.category,
-                                kb.audience,
+                                kb.target_user,
                                 kb.keywords,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
@@ -250,17 +248,16 @@ class RAGEngine:
                         results = await conn.fetch("""
                             SELECT
                                 id,
-                                title,
+                                question_summary,
                                 answer as content,
-                                category,
-                                audience,
+                                target_user,
                                 keywords,
                                 business_types,
                                 1 - (embedding <=> $1::vector) as base_similarity
                             FROM knowledge_base
                             WHERE embedding IS NOT NULL
                                 AND (1 - (embedding <=> $1::vector)) >= $2
-                                AND (audience IS NULL OR audience = ANY($4::text[]))
+                                AND (target_user IS NULL OR target_user && $4::text[])
                                 AND (business_types IS NULL OR business_types && $5::text[])
                             ORDER BY embedding <=> $1::vector
                             LIMIT $3
@@ -270,16 +267,15 @@ class RAGEngine:
                         results = await conn.fetch("""
                             SELECT
                                 id,
-                                title,
+                                question_summary,
                                 answer as content,
-                                category,
-                                audience,
+                                target_user,
                                 keywords,
                                 1 - (embedding <=> $1::vector) as base_similarity
                             FROM knowledge_base
                             WHERE embedding IS NOT NULL
                                 AND (1 - (embedding <=> $1::vector)) >= $2
-                                AND (audience IS NULL OR audience = ANY($4::text[]))
+                                AND (target_user IS NULL OR target_user && $4::text[])
                             ORDER BY embedding <=> $1::vector
                             LIMIT $3
                         """, vector_str, similarity_threshold, limit, allowed_audiences)
@@ -290,10 +286,9 @@ class RAGEngine:
                         results = await conn.fetch("""
                             SELECT
                                 id,
-                                title,
+                                question_summary,
                                 answer as content,
-                                category,
-                                audience,
+                                target_user,
                                 keywords,
                                 business_types,
                                 1 - (embedding <=> $1::vector) as base_similarity
@@ -309,10 +304,9 @@ class RAGEngine:
                         results = await conn.fetch("""
                             SELECT
                                 id,
-                                title,
+                                question_summary,
                                 answer as content,
-                                category,
-                                audience,
+                                target_user,
                                 keywords,
                                 1 - (embedding <=> $1::vector) as base_similarity
                             FROM knowledge_base
@@ -335,14 +329,13 @@ class RAGEngine:
             business_types_marker = ""
             if row.get('business_types'):
                 business_types_marker = f" [業態: {row.get('business_types')}]"
-            print(f"      - ID {row['id']}: {row['title'][:40]}... (相似度: {similarity:.3f}{intent_marker}{business_types_marker})")
+            print(f"      - ID {row['id']}: {row['question_summary'][:40]}... (相似度: {similarity:.3f}{intent_marker}{business_types_marker})")
 
             search_results.append({
                 "id": row['id'],
-                "title": row['title'],
+                "question_summary": row['question_summary'],
                 "content": row['content'],
-                "category": row['category'],
-                "audience": row.get('audience'),
+                "target_user": row.get('target_user'),
                 "keywords": row.get('keywords', []),
                 "business_types": row.get('business_types'),
                 "similarity": similarity
@@ -385,9 +378,8 @@ class RAGEngine:
             row = await conn.fetchrow("""
                 SELECT
                     id,
-                    title,
+                    question_summary,
                     answer as content,
-                    category,
                     audience,
                     keywords,
                     created_at,
@@ -401,10 +393,9 @@ class RAGEngine:
 
             return {
                 "id": row['id'],
-                "title": row['title'],
+                "question_summary": row['question_summary'],
                 "content": row['content'],
-                "category": row['category'],
-                "audience": row.get('audience'),
+                "target_user": row.get('target_user'),
                 "keywords": row.get('keywords', []),
                 "created_at": row['created_at'].isoformat() if row['created_at'] else None,
                 "updated_at": row['updated_at'].isoformat() if row['updated_at'] else None
@@ -429,7 +420,7 @@ class RAGEngine:
             results = await conn.fetch("""
                 SELECT
                     id,
-                    title,
+                    question_summary,
                     answer as content,
                     category,
                     audience,
@@ -452,10 +443,9 @@ class RAGEngine:
 
             search_results.append({
                 "id": row['id'],
-                "title": row['title'],
+                "question_summary": row['question_summary'],
                 "content": row['content'],
-                "category": row['category'],
-                "audience": row.get('audience'),
+                "target_user": row.get('target_user'),
                 "keywords": row.get('keywords', []),
                 "matched_keywords": list(matched_keywords),
                 "match_score": match_score
@@ -465,26 +455,14 @@ class RAGEngine:
 
     async def get_category_stats(self) -> Dict:
         """
-        取得分類統計
+        取得分類統計（已停用，因資料庫無 category 欄位）
 
         Returns:
-            分類統計資訊
+            空字典
         """
-        async with self.db_pool.acquire() as conn:
-            results = await conn.fetch("""
-                SELECT
-                    category,
-                    COUNT(*) as count
-                FROM knowledge_base
-                WHERE category IS NOT NULL
-                GROUP BY category
-                ORDER BY count DESC
-            """)
-
-        return {
-            row['category']: row['count']
-            for row in results
-        }
+        # 注意：knowledge_base 表已不使用 category 欄位
+        # 改用 intent_id 進行分類
+        return {}
 
 
 # 使用範例
@@ -511,8 +489,7 @@ if __name__ == "__main__":
         results = await engine.search("如何退租？", limit=3)
 
         for i, result in enumerate(results, 1):
-            print(f"\n{i}. {result['title']} (相似度: {result['similarity']:.2f})")
-            print(f"   分類: {result['category']}")
+            print(f"\n{i}. {result['question_summary']} (相似度: {result['similarity']:.2f})")
             print(f"   內容: {result['content'][:100]}...")
 
         # 測試關鍵字搜尋
@@ -520,7 +497,7 @@ if __name__ == "__main__":
         results = await engine.search_by_keywords(["退租", "合約"], limit=3)
 
         for i, result in enumerate(results, 1):
-            print(f"\n{i}. {result['title']} (匹配度: {result['match_score']:.2f})")
+            print(f"\n{i}. {result['question_summary']} (匹配度: {result['match_score']:.2f})")
             print(f"   匹配關鍵字: {', '.join(result['matched_keywords'])}")
 
         # 關閉連接池

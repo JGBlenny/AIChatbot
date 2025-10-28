@@ -430,7 +430,7 @@ class LLMAnswerOptimizer:
             return ""
 
         best_result = search_results[0]
-        return f"{best_result['title']}\n\n{best_result['content']}"
+        return f"{best_result['question_summary']}\n\n{best_result['content']}"
 
     def _create_fallback_response(self, search_results: List[Dict], start_time: float) -> Dict:
         """建立備用回應（不優化）"""
@@ -602,8 +602,7 @@ class LLMAnswerOptimizer:
 
             answers_to_synthesize.append({
                 "index": i,
-                "title": result['title'],
-                "category": result.get('category', 'N/A'),
+                "question_summary": result['question_summary'],
                 "content": content,
                 "similarity": result['similarity']
             })
@@ -611,8 +610,7 @@ class LLMAnswerOptimizer:
         # 格式化答案列表
         formatted_answers = "\n\n".join([
             f"【答案 {ans['index']}】\n"
-            f"標題：{ans['title']}\n"
-            f"分類：{ans['category']}\n"
+            f"標題：{ans['question_summary']}\n"
             f"相似度：{ans['similarity']:.2f}\n"
             f"內容：\n{ans['content']}"
             for ans in answers_to_synthesize
@@ -772,8 +770,7 @@ class LLMAnswerOptimizer:
 
             context_parts.append(
                 f"【參考資料 {i}】\n"
-                f"標題：{result['title']}\n"
-                f"分類：{result.get('category', 'N/A')}\n"
+                f"標題：{result['question_summary']}\n"
                 f"內容：{content}\n"
                 f"相似度：{result['similarity']:.2f}"
             )

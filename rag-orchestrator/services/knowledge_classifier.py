@@ -147,17 +147,47 @@ class KnowledgeClassifier:
                 WHERE knowledge_id = %s
             """, (knowledge_id,))
 
-            # 3. 插入新的 knowledge_intent_mapping 記錄
-            for i, intent_id in enumerate(all_intent_ids):
-                intent_type = 'primary' if i == 0 else 'secondary'  # 第一個是主要意圖
-                cursor.execute("""
-                    INSERT INTO knowledge_intent_mapping (knowledge_id, intent_id, intent_type, assigned_by)
-                    VALUES (%s, %s, %s, %s)
-                    ON CONFLICT (knowledge_id, intent_id)
-                    DO UPDATE SET intent_type = EXCLUDED.intent_type,
-                                  assigned_by = EXCLUDED.assigned_by,
-                                  updated_at = CURRENT_TIMESTAMP
-                """, (knowledge_id, intent_id, intent_type, assigned_by))
+            # 3. 插入新的 knowledge_intent_mapping 記錄（使用每個意圖的獨立信心度）
+            # 使用新的 all_intents_with_confidence 結構（如果可用）
+            intents_with_conf = classification.get('all_intents_with_confidence', [])
+
+            if intents_with_conf:
+                # 新格式：使用 LLM 為每個意圖返回的獨立信心度
+                for i, intent_id in enumerate(all_intent_ids):
+                    # 從 all_intents_with_confidence 中查找對應的信心度
+                    if i < len(intents_with_conf):
+                        intent_conf_obj = intents_with_conf[i]
+                        intent_type = intent_conf_obj.get('type', 'primary' if i == 0 else 'secondary')
+                        mapping_confidence = intent_conf_obj.get('confidence', classification['confidence'])
+                    else:
+                        # Fallback：如果索引超出範圍
+                        intent_type = 'primary' if i == 0 else 'secondary'
+                        mapping_confidence = classification['confidence'] if i == 0 else classification['confidence'] * 0.85
+
+                    cursor.execute("""
+                        INSERT INTO knowledge_intent_mapping (knowledge_id, intent_id, intent_type, confidence, assigned_by)
+                        VALUES (%s, %s, %s, %s, %s)
+                        ON CONFLICT (knowledge_id, intent_id)
+                        DO UPDATE SET intent_type = EXCLUDED.intent_type,
+                                      confidence = EXCLUDED.confidence,
+                                      assigned_by = EXCLUDED.assigned_by,
+                                      updated_at = CURRENT_TIMESTAMP
+                    """, (knowledge_id, intent_id, intent_type, mapping_confidence, assigned_by))
+            else:
+                # 向後兼容：舊格式處理（如果 all_intents_with_confidence 不存在）
+                for i, intent_id in enumerate(all_intent_ids):
+                    intent_type = 'primary' if i == 0 else 'secondary'
+                    mapping_confidence = classification['confidence'] if i == 0 else classification['confidence'] * 0.85
+
+                    cursor.execute("""
+                        INSERT INTO knowledge_intent_mapping (knowledge_id, intent_id, intent_type, confidence, assigned_by)
+                        VALUES (%s, %s, %s, %s, %s)
+                        ON CONFLICT (knowledge_id, intent_id)
+                        DO UPDATE SET intent_type = EXCLUDED.intent_type,
+                                      confidence = EXCLUDED.confidence,
+                                      assigned_by = EXCLUDED.assigned_by,
+                                      updated_at = CURRENT_TIMESTAMP
+                    """, (knowledge_id, intent_id, intent_type, mapping_confidence, assigned_by))
 
             # 4. 更新所有相關意圖的 knowledge_count
             cursor.execute("""

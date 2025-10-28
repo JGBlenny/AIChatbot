@@ -200,33 +200,52 @@ class IntentClassifier:
             - api_endpoint: API 端點 (如果需要)
             - api_action: API 動作 (如果需要)
         """
-        # 構建 Function Calling 定義（支援多 Intent）
+        # 構建 Function Calling 定義（支援多 Intent + 獨立信心度）
         functions = [
             {
                 "name": "classify_intent",
-                "description": "分類使用者問題的意圖類型，可返回多個相關意圖",
+                "description": "分類使用者問題的意圖類型，可返回多個相關意圖，每個意圖都有獨立的信心度評分",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "primary_intent": {
-                            "type": "string",
-                            "description": f"主要意圖名稱，選項: {', '.join([i['name'] for i in self.intents])}",
-                            "enum": [i['name'] for i in self.intents] + ["unclear"]
+                            "type": "object",
+                            "description": "主要意圖及其信心度",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": f"主要意圖名稱，選項: {', '.join([i['name'] for i in self.intents])}",
+                                    "enum": [i['name'] for i in self.intents] + ["unclear"]
+                                },
+                                "confidence": {
+                                    "type": "number",
+                                    "description": "主要意圖的信心度分數 (0-1)，表示你有多確定這是正確的分類",
+                                    "minimum": 0,
+                                    "maximum": 1
+                                }
+                            },
+                            "required": ["name", "confidence"]
                         },
                         "secondary_intents": {
                             "type": "array",
                             "items": {
-                                "type": "string",
-                                "enum": [i['name'] for i in self.intents]
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "enum": [i['name'] for i in self.intents]
+                                    },
+                                    "confidence": {
+                                        "type": "number",
+                                        "description": "此次要意圖的信心度 (0-1)，通常應低於主要意圖",
+                                        "minimum": 0,
+                                        "maximum": 1
+                                    }
+                                },
+                                "required": ["name", "confidence"]
                             },
-                            "description": "次要相關意圖（如果問題涉及多個類別）",
+                            "description": "次要相關意圖及其信心度（如果問題涉及多個類別）",
                             "maxItems": 2
-                        },
-                        "confidence": {
-                            "type": "number",
-                            "description": "主要意圖的信心度分數 (0-1)",
-                            "minimum": 0,
-                            "maximum": 1
                         },
                         "keywords": {
                             "type": "array",
@@ -238,7 +257,7 @@ class IntentClassifier:
                             "description": "分類理由"
                         }
                     },
-                    "required": ["primary_intent", "confidence", "keywords"]
+                    "required": ["primary_intent", "keywords"]
                 }
             }
         ]
@@ -251,13 +270,26 @@ class IntentClassifier:
 
 **分類策略：**
 1. 識別主要意圖（primary_intent）：問題的核心目的
+   - 返回意圖名稱和信心度（0-1）
+   - 信心度表示：你有多確定這是正確的分類
+
 2. 識別次要意圖（secondary_intents）：問題可能涉及的其他相關類別
    - 例如「租金如何計算？」可能同時涉及「合約規定」和「帳務查詢」
    - 例如「退租押金如何退還？」可能同時涉及「退租流程」和「帳務查詢」
-3. 如果問題明確只屬於一個類別，可不填 secondary_intents
-4. 如果無法確定或信心度低於 0.7，primary_intent 返回 "unclear"
+   - **每個次要意圖都需要獨立的信心度評分**
+   - 次要意圖的信心度通常應低於主要意圖
 
-請仔細分析問題的語義，返回所有相關的意圖。
+3. 信心度評分標準：
+   - 0.9-1.0：非常確定，問題明確屬於此意圖
+   - 0.7-0.9：較為確定，問題很可能屬於此意圖
+   - 0.5-0.7：不太確定，問題可能屬於此意圖
+   - < 0.5：不確定，可能不屬於此意圖
+
+4. 如果問題明確只屬於一個類別，可不填 secondary_intents
+
+5. 如果無法確定或主要意圖信心度低於 0.7，primary_intent.name 返回 "unclear"
+
+請仔細分析問題的語義，為每個意圖提供精確的信心度評分。
 """
 
         # 呼叫 OpenAI API
@@ -279,27 +311,35 @@ class IntentClassifier:
             import json
             result = json.loads(function_call.arguments)
 
-            primary_intent = result['primary_intent']
-            secondary_intents = result.get('secondary_intents', [])
-            confidence = result['confidence']
+            # 解析主要意圖（新格式：對象包含 name 和 confidence）
+            primary_intent_obj = result['primary_intent']
+            primary_intent_name = primary_intent_obj['name']
+            primary_confidence = primary_intent_obj['confidence']
+
+            # 解析次要意圖（新格式：對象數組，每個包含 name 和 confidence）
+            secondary_intents_objs = result.get('secondary_intents', [])
+            secondary_intent_names = [s['name'] for s in secondary_intents_objs]
+
             keywords = result['keywords']
             reasoning = result.get('reasoning', '')
 
             # 如果是 unclear，直接返回
-            if primary_intent == "unclear" or confidence < self.default_config['confidence_threshold']:
+            if primary_intent_name == "unclear" or primary_confidence < self.default_config['confidence_threshold']:
                 return {
                     "intent_name": "unclear",
                     "intent_type": "unclear",
-                    "confidence": confidence,
+                    "confidence": primary_confidence,
                     "keywords": keywords,
                     "reasoning": reasoning,
                     "requires_api": False,
                     "all_intents": [],
+                    "all_intents_with_confidence": [],
+                    "secondary_intents": [],
                     "intent_ids": []
                 }
 
             # 查找主要意圖配置
-            intent_config = next((i for i in self.intents if i['name'] == primary_intent), None)
+            intent_config = next((i for i in self.intents if i['name'] == primary_intent_name), None)
 
             if not intent_config:
                 return {
@@ -310,12 +350,31 @@ class IntentClassifier:
                     "reasoning": "找不到匹配的意圖配置",
                     "requires_api": False,
                     "all_intents": [],
+                    "all_intents_with_confidence": [],
+                    "secondary_intents": [],
                     "intent_ids": []
                 }
 
             # 收集所有相關意圖（主要 + 次要）
-            all_intent_names = [primary_intent] + secondary_intents
+            all_intent_names = [primary_intent_name] + secondary_intent_names
             all_intent_ids = []
+
+            # 構建完整的意圖信心度列表（包含主意圖和副意圖）
+            all_intents_with_confidence = [
+                {
+                    "name": primary_intent_name,
+                    "confidence": primary_confidence,
+                    "type": "primary"
+                }
+            ]
+
+            # 添加次要意圖及其信心度
+            for sec_intent in secondary_intents_objs:
+                all_intents_with_confidence.append({
+                    "name": sec_intent['name'],
+                    "confidence": sec_intent['confidence'],
+                    "type": "secondary"
+                })
 
             # 從資料庫查詢所有意圖的 ID（保持順序）
             if self.use_database:
@@ -330,9 +389,9 @@ class IntentClassifier:
                             SELECT id FROM intents
                             WHERE name = %s AND is_enabled = true
                         """, (intent_name,))
-                        result = cursor.fetchone()
-                        if result:
-                            all_intent_ids.append(result[0])
+                        db_result = cursor.fetchone()
+                        if db_result:
+                            all_intent_ids.append(db_result[0])
                     cursor.close()
                     conn.close()
                 except Exception as e:
@@ -340,17 +399,19 @@ class IntentClassifier:
 
             # 構建完整結果
             classification = {
-                "intent_name": primary_intent,
+                "intent_name": primary_intent_name,
                 "intent_type": intent_config['type'],
-                "confidence": confidence,
+                "confidence": primary_confidence,
                 "sub_category": intent_config.get('description', ''),
                 "keywords": keywords,
                 "reasoning": reasoning,
                 "requires_api": intent_config.get('api_required', False),
-                # 新增多 Intent 支援
+                # 多 Intent 支援（向後兼容）
                 "all_intents": all_intent_names,
-                "secondary_intents": secondary_intents,
-                "intent_ids": all_intent_ids
+                "secondary_intents": secondary_intent_names,
+                "intent_ids": all_intent_ids,
+                # 新增：完整的意圖信心度資訊
+                "all_intents_with_confidence": all_intents_with_confidence
             }
 
             # 如果需要 API，加入 API 資訊
@@ -363,8 +424,8 @@ class IntentClassifier:
                     classification['requires_both'] = intent_config.get('requires_both', {})
 
             # 增加使用次數
-            if self.use_database and primary_intent != "unclear":
-                self.increment_usage_count(primary_intent)
+            if self.use_database and primary_intent_name != "unclear":
+                self.increment_usage_count(primary_intent_name)
 
             return classification
 
