@@ -103,11 +103,14 @@ async def chat_stream_generator(
                 return
 
         # 2. 並行執行意圖分類和檢索（Phase 2 優化 + Vendor SOP 整合）
+        import os
         intent_task = asyncio.to_thread(intent_classifier.classify, request.question)
+        fallback_similarity_threshold = float(os.getenv("FALLBACK_SIMILARITY_THRESHOLD", "0.55"))
+        rag_top_k = int(os.getenv("RAG_TOP_K", "5"))
         search_task = rag_engine.search(
             query=request.question,
-            limit=5,
-            similarity_threshold=0.60,
+            limit=rag_top_k,
+            similarity_threshold=fallback_similarity_threshold,
             vendor_id=request.vendor_id
         )
 
@@ -127,7 +130,7 @@ async def chat_stream_generator(
                 sop_items = await retrieve_sop_async(
                     vendor_id=request.vendor_id,
                     intent_ids=intent_ids,
-                    top_k=5
+                    top_k=rag_top_k
                 )
 
                 # 如果找到 SOP，轉換為標準格式並優先使用

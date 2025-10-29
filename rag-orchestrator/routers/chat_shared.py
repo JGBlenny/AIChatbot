@@ -8,6 +8,7 @@
 """
 from typing import Optional, Dict
 import asyncio
+import os
 
 
 # ==================== SOP 檢索共用邏輯 ====================
@@ -64,7 +65,7 @@ async def retrieve_sop_hybrid(
     intent_ids: list,
     query: str,
     top_k: int = 5,
-    similarity_threshold: float = 0.6
+    similarity_threshold: float = None
 ) -> list:
     """
     混合檢索 SOP（Async版本，供 chat 使用）
@@ -81,6 +82,10 @@ async def retrieve_sop_hybrid(
     Returns:
         SOP 項目列表（包含 similarity 欄位）
     """
+    # 如果沒有傳入閾值，從環境變數讀取
+    if similarity_threshold is None:
+        similarity_threshold = float(os.getenv("SOP_SIMILARITY_THRESHOLD", "0.75"))
+
     sop_retriever = get_vendor_sop_retriever()
     all_sop_items = []
     seen_ids = set()

@@ -133,10 +133,12 @@ async def _handle_unclear_with_rag_fallback(
     rag_engine = req.app.state.rag_engine
 
     # RAG 檢索（使用較低閾值）
+    fallback_similarity_threshold = float(os.getenv("FALLBACK_SIMILARITY_THRESHOLD", "0.55"))
+    rag_top_k = int(os.getenv("RAG_TOP_K", "5"))
     rag_results = await rag_engine.search(
         query=request.message,
-        limit=5,
-        similarity_threshold=0.55,
+        limit=rag_top_k,
+        similarity_threshold=fallback_similarity_threshold,
         vendor_id=request.vendor_id
     )
 
@@ -332,12 +334,13 @@ async def _retrieve_sop(request: VendorChatRequest, intent_result: dict) -> list
 
     # 使用共用模組的 hybrid 版本（intent + 向量相似度過濾）
     all_intent_ids = intent_result.get('intent_ids', [])
+    sop_similarity_threshold = float(os.getenv("SOP_SIMILARITY_THRESHOLD", "0.75"))
     sop_items = await retrieve_sop_hybrid(
         vendor_id=request.vendor_id,
         intent_ids=all_intent_ids,
         query=request.message,  # ← 傳入問題文本用於相似度計算
         top_k=request.top_k,
-        similarity_threshold=0.6  # 相似度閾值
+        similarity_threshold=sop_similarity_threshold
     )
 
     return sop_items
@@ -488,13 +491,14 @@ async def _retrieve_knowledge(
     """檢索知識庫（混合模式：intent + 向量相似度）"""
     retriever = get_vendor_knowledge_retriever()
     all_intent_ids = intent_result.get('intent_ids', [intent_id])
+    kb_similarity_threshold = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.65"))
 
     knowledge_list = await retriever.retrieve_knowledge_hybrid(
         query=request.message,
         intent_id=intent_id,
         vendor_id=request.vendor_id,
         top_k=request.top_k,
-        similarity_threshold=0.6,
+        similarity_threshold=kb_similarity_threshold,
         resolve_templates=False,
         all_intent_ids=all_intent_ids,
         user_role=request.user_role
@@ -514,10 +518,12 @@ async def _handle_no_knowledge_found(
     """處理找不到知識的情況：RAG fallback + 測試場景記錄"""
     # RAG fallback
     rag_engine = req.app.state.rag_engine
+    fallback_similarity_threshold = float(os.getenv("FALLBACK_SIMILARITY_THRESHOLD", "0.55"))
+    rag_top_k = int(os.getenv("RAG_TOP_K", str(request.top_k)))
     rag_results = await rag_engine.search(
         query=request.message,
-        limit=request.top_k,
-        similarity_threshold=0.60,
+        limit=rag_top_k,
+        similarity_threshold=fallback_similarity_threshold,
         vendor_id=request.vendor_id
     )
 

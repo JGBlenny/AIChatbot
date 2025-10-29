@@ -212,9 +212,9 @@ class KnowledgeGenerator:
                 {"role": "system", "content": self._get_system_prompt()},
                 {"role": "user", "content": prompt}
             ],
-            "temperature": 0.7,  # 適度創造性
+            "temperature": float(os.getenv("KNOWLEDGE_GEN_TEMPERATURE", "0.7")),
             "n": num_candidates,  # 生成多個候選
-            "max_tokens": 800,
+            "max_tokens": int(os.getenv("KNOWLEDGE_GEN_MAX_TOKENS", "800")),
             "response_format": {"type": "json_object"}  # 強制 JSON 輸出（GPT-4 支援）
         }
 

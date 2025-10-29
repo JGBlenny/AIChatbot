@@ -31,8 +31,8 @@ class IntentSuggestionEngine:
 
         # OpenAI 配置
         self.model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
-        self.temperature = 0.2
-        self.max_tokens = 800
+        self.temperature = float(os.getenv("INTENT_SUGGESTION_TEMP", "0.2"))
+        self.max_tokens = int(os.getenv("INTENT_SUGGESTION_MAX_TOKENS", "800"))
 
         # 語義相似度閾值（用於去重）
         self.semantic_similarity_threshold = float(

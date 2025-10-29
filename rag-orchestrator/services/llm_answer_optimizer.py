@@ -48,8 +48,8 @@ class LLMAnswerOptimizer:
         # 預設配置
         default_config = {
             "model": default_model,
-            "temperature": 0.7,
-            "max_tokens": 800,
+            "temperature": float(os.getenv("LLM_ANSWER_TEMPERATURE", "0.7")),
+            "max_tokens": int(os.getenv("LLM_ANSWER_MAX_TOKENS", "800")),
             "enable_optimization": True,
             "optimize_for_confidence": ["high", "medium"],  # 只優化高/中信心度
             "fallback_on_error": True,  # 錯誤時使用原始答案

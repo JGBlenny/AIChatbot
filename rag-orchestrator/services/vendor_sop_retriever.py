@@ -153,7 +153,7 @@ class VendorSOPRetriever:
         intent_id: int,
         query: str,
         top_k: int = 5,
-        similarity_threshold: float = 0.6
+        similarity_threshold: float = None
     ) -> List[Tuple[Dict, float]]:
         """
         混合模式檢索：Intent 過濾 + 向量相似度排序
@@ -172,6 +172,11 @@ class VendorSOPRetriever:
         """
         from .embedding_utils import get_embedding_client
         import numpy as np
+        import os
+
+        # 如果沒有傳入閾值，從環境變數讀取
+        if similarity_threshold is None:
+            similarity_threshold = float(os.getenv("SOP_SIMILARITY_THRESHOLD", "0.75"))
 
         # 1. 使用意圖檢索獲取候選 SOP（檢索更多候選，稍後用相似度過濾）
         candidate_sops = self.retrieve_sop_by_intent(
