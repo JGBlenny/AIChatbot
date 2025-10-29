@@ -67,6 +67,13 @@
               <span class="group-count" @click="toggleGroup(group.id)">
                 {{ getTemplatesByGroup(group.id).length }} 個項目
               </span>
+              <button
+                @click.stop="deleteGroup(group.id, group.group_name, category.id)"
+                class="btn btn-sm btn-danger group-delete-btn"
+                :title="getTemplatesByGroup(group.id).length > 0 ? '刪除群組（可選擇移動模板）' : '刪除空群組'"
+              >
+                🗑️ 刪除
+              </button>
             </div>
 
             <!-- 第 3 層：範本列表 -->
@@ -943,6 +950,89 @@ export default {
       };
     },
 
+    async deleteGroup(groupId, groupName, categoryId) {
+      const templatesInGroup = this.getTemplatesByGroup(groupId);
+      const templateCount = templatesInGroup.length;
+
+      let confirmMessage = '';
+      let moveToGroupId = null;
+
+      if (templateCount === 0) {
+        // 空群組，直接刪除
+        confirmMessage = `確定要刪除空群組「${groupName}」嗎？`;
+      } else {
+        // 有模板的群組，詢問是否移動
+        const otherGroups = this.getGroupsByCategory(categoryId).filter(g => g.id !== groupId);
+
+        if (otherGroups.length > 0) {
+          confirmMessage = `群組「${groupName}」包含 ${templateCount} 個模板。\n\n您可以：\n`;
+          confirmMessage += `1. 將這些模板移動到其他群組\n`;
+          confirmMessage += `2. 將這些模板設為「未分組」\n\n`;
+          confirmMessage += `是否要將模板移動到其他群組？\n`;
+          confirmMessage += `（點「確定」選擇目標群組，點「取消」設為未分組）`;
+
+          const shouldMove = confirm(confirmMessage);
+
+          if (shouldMove) {
+            // 讓用戶選擇目標群組
+            let groupOptions = '請輸入目標群組編號：\n\n';
+            otherGroups.forEach((g, index) => {
+              groupOptions += `${index + 1}. ${g.group_name} (${this.getTemplatesByGroup(g.id).length} 個項目)\n`;
+            });
+
+            const selection = prompt(groupOptions);
+            if (selection === null) {
+              return; // 用戶取消
+            }
+
+            const selectedIndex = parseInt(selection) - 1;
+            if (selectedIndex >= 0 && selectedIndex < otherGroups.length) {
+              moveToGroupId = otherGroups[selectedIndex].id;
+            } else {
+              alert('無效的選擇，將設為未分組');
+              moveToGroupId = null;
+            }
+          }
+          // 如果 shouldMove 為 false，moveToGroupId 保持為 null（未分組）
+        } else {
+          // 沒有其他群組，只能設為未分組
+          confirmMessage = `群組「${groupName}」包含 ${templateCount} 個模板。\n\n`;
+          confirmMessage += `刪除後，這些模板將設為「未分組」。\n\n`;
+          confirmMessage += `確定要繼續嗎？`;
+
+          if (!confirm(confirmMessage)) {
+            return;
+          }
+        }
+      }
+
+      // 最後確認
+      if (templateCount === 0 && !confirm(confirmMessage)) {
+        return;
+      }
+
+      try {
+        const url = moveToGroupId
+          ? `${RAG_API}/api/v1/platform/sop/groups/${groupId}?move_to_group_id=${moveToGroupId}`
+          : `${RAG_API}/api/v1/platform/sop/groups/${groupId}`;
+
+        await axios.delete(url);
+
+        const moveMsg = moveToGroupId
+          ? `，模板已移動到其他群組`
+          : templateCount > 0 ? `，${templateCount} 個模板已設為未分組` : '';
+
+        alert(`✅ 群組「${groupName}」已刪除${moveMsg}`);
+
+        // 重新載入資料
+        await this.loadAllGroups();
+        await this.loadTemplates();
+      } catch (error) {
+        console.error('刪除群組失敗:', error);
+        alert('❌ 刪除群組失敗: ' + (error.response?.data?.detail || error.message));
+      }
+    },
+
     async deleteCategory(categoryId, categoryName) {
       const currentBusinessTypeTemplates = this.getTemplatesByCategory(categoryId);
       const totalTemplates = currentBusinessTypeTemplates.length;
@@ -1417,6 +1507,15 @@ export default {
   color: #444;
   font-weight: 600;
   flex: 1;
+}
+
+.group-delete-btn {
+  margin-left: auto;
+  opacity: 0.7;
+}
+
+.group-delete-btn:hover {
+  opacity: 1;
 }
 
 .group-count {
