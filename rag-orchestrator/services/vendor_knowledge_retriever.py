@@ -188,7 +188,7 @@ class VendorKnowledgeRetriever:
         1. 先根據 intent_id(s) 過濾出相關類別的知識
         2. 再使用向量相似度排序，找出最相關的答案
         3. 考慮 scope 優先級（customized > vendor > global）
-        4. 支援多 Intent 檢索（主要 Intent 獲得 1.5x boost，次要 Intent 獲得 1.2x boost）
+        4. 支援多 Intent 檢索（主要 Intent 獲得 1.3x boost，次要 Intent 獲得 1.1x boost）
 
         Args:
             query: 使用者問題
@@ -281,17 +281,17 @@ class VendorKnowledgeRetriever:
                     kim.intent_id,
                     -- 計算向量相似度
                     1 - (kb.embedding <=> %s::vector) as base_similarity,
-                    -- Intent 匹配加成（多 Intent 支援）
+                    -- Intent 匹配加成（多 Intent 支援，調整為 1.3x 以平衡意圖與內容相似度）
                     CASE
-                        WHEN kim.intent_id = %s THEN 1.5          -- 主要 Intent: 1.5x boost
-                        WHEN kim.intent_id = ANY(%s::int[]) THEN 1.2  -- 次要 Intent: 1.2x boost
+                        WHEN kim.intent_id = %s THEN 1.3          -- 主要 Intent: 1.3x boost
+                        WHEN kim.intent_id = ANY(%s::int[]) THEN 1.1  -- 次要 Intent: 1.1x boost
                         ELSE 1.0                              -- 其他: 無加成
                     END as intent_boost,
                     -- 加成後的相似度 (用於排序)
                     (1 - (kb.embedding <=> %s::vector)) *
                     CASE
-                        WHEN kim.intent_id = %s THEN 1.5
-                        WHEN kim.intent_id = ANY(%s::int[]) THEN 1.2
+                        WHEN kim.intent_id = %s THEN 1.3
+                        WHEN kim.intent_id = ANY(%s::int[]) THEN 1.1
                         ELSE 1.0
                     END as boosted_similarity,
                     -- 計算 Scope 權重
@@ -397,8 +397,11 @@ class VendorKnowledgeRetriever:
                     except Exception as e:
                         print(f"⚠️  Template resolution failed for knowledge {knowledge['id']}: {e}")
 
-                # 移除內部欄位，並將 base_similarity 作為標準 similarity
-                knowledge['similarity'] = knowledge['base_similarity']
+                # 保留原始相似度和加成後相似度
+                # similarity: 加成後相似度（用於排序）
+                # original_similarity: 原始相似度（用於完美匹配判斷）
+                knowledge['similarity'] = knowledge['boosted_similarity']
+                knowledge['original_similarity'] = knowledge['base_similarity']
                 knowledge.pop('scope_weight', None)
                 knowledge.pop('base_similarity', None)
                 knowledge.pop('boosted_similarity', None)

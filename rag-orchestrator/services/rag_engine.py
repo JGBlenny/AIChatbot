@@ -108,15 +108,15 @@ class RAGEngine:
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
-                                    WHEN kim.intent_id = $4 THEN 1.5  -- 主要意圖 1.5x boost
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.2  -- 次要意圖 1.2x boost
+                                    WHEN kim.intent_id = $4 THEN 1.3  -- 主要意圖 1.3x boost
+                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
                                     ELSE 1.0
                                 END as intent_boost,
                                 -- 加成後相似度
                                 (1 - (kb.embedding <=> $1::vector)) *
                                 CASE
-                                    WHEN kim.intent_id = $4 THEN 1.5
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.2
+                                    WHEN kim.intent_id = $4 THEN 1.3
+                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
                                     ELSE 1.0
                                 END as boosted_similarity
                             FROM knowledge_base kb
@@ -142,15 +142,15 @@ class RAGEngine:
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
-                                    WHEN kim.intent_id = $4 THEN 1.5  -- 主要意圖 1.5x boost
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.2  -- 次要意圖 1.2x boost
+                                    WHEN kim.intent_id = $4 THEN 1.3  -- 主要意圖 1.3x boost
+                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
                                     ELSE 1.0
                                 END as intent_boost,
                                 -- 加成後相似度
                                 (1 - (kb.embedding <=> $1::vector)) *
                                 CASE
-                                    WHEN kim.intent_id = $4 THEN 1.5
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.2
+                                    WHEN kim.intent_id = $4 THEN 1.3
+                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
                                     ELSE 1.0
                                 END as boosted_similarity
                             FROM knowledge_base kb
@@ -177,15 +177,15 @@ class RAGEngine:
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
-                                    WHEN kim.intent_id = $4 THEN 1.5  -- 主要意圖 1.5x boost
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.2  -- 次要意圖 1.2x boost
+                                    WHEN kim.intent_id = $4 THEN 1.3  -- 主要意圖 1.3x boost
+                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
                                     ELSE 1.0
                                 END as intent_boost,
                                 -- 加成後相似度
                                 (1 - (kb.embedding <=> $1::vector)) *
                                 CASE
-                                    WHEN kim.intent_id = $4 THEN 1.5
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.2
+                                    WHEN kim.intent_id = $4 THEN 1.3
+                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
                                     ELSE 1.0
                                 END as boosted_similarity
                             FROM knowledge_base kb
@@ -210,15 +210,15 @@ class RAGEngine:
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
-                                    WHEN kim.intent_id = $4 THEN 1.5  -- 主要意圖 1.5x boost
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.2  -- 次要意圖 1.2x boost
+                                    WHEN kim.intent_id = $4 THEN 1.3  -- 主要意圖 1.3x boost
+                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
                                     ELSE 1.0
                                 END as intent_boost,
                                 -- 加成後相似度
                                 (1 - (kb.embedding <=> $1::vector)) *
                                 CASE
-                                    WHEN kim.intent_id = $4 THEN 1.5
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.2
+                                    WHEN kim.intent_id = $4 THEN 1.3
+                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
                                     ELSE 1.0
                                 END as boosted_similarity
                             FROM knowledge_base kb
