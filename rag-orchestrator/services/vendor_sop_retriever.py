@@ -150,92 +150,217 @@ class VendorSOPRetriever:
     async def retrieve_sop_hybrid(
         self,
         vendor_id: int,
-        intent_id: int,
         query: str,
+        intent_ids: List[int] = None,
+        primary_intent_id: int = None,
         top_k: int = 5,
         similarity_threshold: float = None
     ) -> List[Tuple[Dict, float]]:
         """
-        混合模式檢索：Intent 過濾 + 向量相似度排序
+        混合模式檢索（優化版）：預存 Embedding + 意圖加成策略
 
-        類似 knowledge_base 的 hybrid 檢索，解決純意圖檢索可能的誤匹配問題
+        策略：
+        1. 優先使用預存 primary_embedding (group_name + item_name) - 精準匹配
+        2. 降級使用 fallback_embedding (content) - 細節查詢
+        3. 意圖加成：匹配主要意圖 1.5x，次要意圖 1.2x（對齊 KB 設計）
+        4. 最後降級為即時生成（< 5% 情況）
 
         Args:
             vendor_id: 業者 ID
-            intent_id: 意圖 ID
             query: 使用者問題（用於計算相似度）
+            intent_ids: 所有相關意圖 IDs（用於加成）
+            primary_intent_id: 主要意圖 ID（用於 1.3x 加成）
             top_k: 返回前 K 筆
             similarity_threshold: 相似度閾值（低於此值的將被過濾）
 
         Returns:
-            [(sop_item, similarity), ...] 列表，按相似度降序排列
+            [(sop_item, similarity), ...] 列表，按加成後相似度降序排列
         """
         from .embedding_utils import get_embedding_client
         import numpy as np
         import os
 
-        # 如果沒有傳入閾值，從環境變數讀取
+        # 閾值配置
         if similarity_threshold is None:
-            similarity_threshold = float(os.getenv("SOP_SIMILARITY_THRESHOLD", "0.75"))
+            similarity_threshold = float(os.getenv("SOP_SIMILARITY_THRESHOLD", "0.60"))
 
-        # 1. 使用意圖檢索獲取候選 SOP（檢索更多候選，稍後用相似度過濾）
-        candidate_sops = self.retrieve_sop_by_intent(
-            vendor_id=vendor_id,
-            intent_id=intent_id,
-            top_k=top_k * 2  # 檢索更多候選以便過濾
-        )
+        primary_threshold = 0.60  # Primary embedding 閾值（較高，確保精準）
+        fallback_threshold = 0.50  # Fallback embedding 閾值（較低，確保召回）
 
-        if not candidate_sops:
-            print(f"   ⚠️  [SOP Hybrid] 意圖 {intent_id} 沒有找到任何 SOP")
-            return []
-
-        # 2. 生成 query 的 embedding
+        # 1. 生成 query 的 embedding
         embedding_client = get_embedding_client()
         query_embedding = await embedding_client.get_embedding(query)
 
         if not query_embedding:
             print(f"   ⚠️  [SOP Hybrid] Query embedding 生成失敗，降級為純意圖檢索")
-            # 降級：返回原始結果但相似度設為 1.0
-            return [(sop, 1.0) for sop in candidate_sops[:top_k]]
+            if intent_ids and len(intent_ids) > 0:
+                candidate_sops = self.retrieve_sop_by_intent(vendor_id, intent_ids[0], top_k)
+                return [(sop, 1.0) for sop in candidate_sops]
+            else:
+                return []
 
-        # 3. 為每個 SOP 生成 embedding 並計算相似度
+        # 轉換為 pgvector 格式
+        query_vector_str = embedding_client.to_pgvector_format(query_embedding)
+
+        # 2. 使用預存 embeddings 進行向量搜索（PostgreSQL vector search）
+        conn = self._get_db_connection()
         results_with_similarity = []
 
-        for sop in candidate_sops:
-            # 使用 content 作為語義匹配的來源
-            sop_text = sop['content']
-            sop_embedding = await embedding_client.get_embedding(sop_text)
+        try:
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-            if not sop_embedding:
-                print(f"   ⚠️  [SOP Hybrid] SOP ID {sop['id']} embedding 生成失敗，跳過")
-                continue
+            # 查詢：使用預存 primary 和 fallback embeddings + 意圖加成策略
+            # 準備 intent 參數
+            intent_filter = intent_ids if intent_ids else []
+            primary_intent = primary_intent_id if primary_intent_id else -1
 
-            # 計算余弦相似度
-            similarity = self._cosine_similarity(
-                np.array(query_embedding),
-                np.array(sop_embedding)
-            )
+            cursor.execute("""
+                WITH sop_candidates AS (
+                    SELECT DISTINCT ON (si.id)
+                        si.*,
+                        sg.group_name,
+                        -- Primary embedding 相似度（1 - 餘弦距離）
+                        CASE
+                            WHEN si.primary_embedding IS NOT NULL
+                            THEN 1 - (si.primary_embedding <=> %s::vector)
+                            ELSE NULL
+                        END as primary_similarity,
+                        -- Fallback embedding 相似度
+                        CASE
+                            WHEN si.fallback_embedding IS NOT NULL
+                            THEN 1 - (si.fallback_embedding <=> %s::vector)
+                            ELSE NULL
+                        END as fallback_similarity,
+                        -- 意圖加成策略（調整為 1.3x 以平衡意圖與內容相似度）
+                        CASE
+                            WHEN sii.intent_id = %s THEN 1.3  -- 主要意圖 1.3x
+                            WHEN sii.intent_id = ANY(%s::int[]) THEN 1.1  -- 次要意圖 1.1x
+                            ELSE 1.0  -- 其他意圖 1.0x（軟過濾）
+                        END as intent_boost,
+                        sii.intent_id as matched_intent_id
+                    FROM vendor_sop_items si
+                    LEFT JOIN vendor_sop_groups sg ON si.group_id = sg.id
+                    LEFT JOIN vendor_sop_item_intents sii ON si.id = sii.sop_item_id
+                    WHERE
+                        si.vendor_id = %s
+                        AND si.is_active = TRUE
+                        AND (
+                            si.primary_embedding IS NOT NULL
+                            OR si.fallback_embedding IS NOT NULL
+                        )
+                        -- 軟過濾：允許無意圖標籤或匹配任一相關意圖的 SOP
+                        AND (
+                            sii.intent_id IS NULL
+                            OR sii.intent_id = ANY(%s::int[])
+                            OR array_length(%s::int[], 1) IS NULL
+                        )
+                )
+                SELECT *,
+                    -- 計算加成後的最終相似度
+                    GREATEST(
+                        COALESCE(primary_similarity, 0),
+                        COALESCE(fallback_similarity, 0)
+                    ) * intent_boost as boosted_similarity
+                FROM sop_candidates
+                WHERE
+                    (primary_similarity >= %s OR fallback_similarity >= %s)
+                ORDER BY boosted_similarity DESC
+                LIMIT %s
+            """, (
+                query_vector_str, query_vector_str,   # Query vector for both embeddings
+                primary_intent,                        # Primary intent for 1.5x boost
+                intent_filter,                         # Secondary intents for 1.2x boost
+                vendor_id,                             # Vendor filter
+                intent_filter,                         # Intent soft filter
+                intent_filter,                         # Check if intent_filter is empty
+                primary_threshold, fallback_threshold, # Thresholds
+                top_k * 2                              # Fetch more for filtering
+            ))
 
-            # 過濾低相似度
-            if similarity >= similarity_threshold:
-                results_with_similarity.append((sop, similarity))
+            sops_with_precomputed = cursor.fetchall()
 
-        # 4. 按相似度降序排序
+            # 3. 處理有預存 embedding 的 SOP（已包含意圖加成）
+            for sop in sops_with_precomputed:
+                # SQL 已經計算好 boosted_similarity（包含意圖加成）
+                boosted_sim = sop.get('boosted_similarity', 0)
+                primary_sim = sop.get('primary_similarity')
+                fallback_sim = sop.get('fallback_similarity')
+                intent_boost = sop.get('intent_boost', 1.0)
+
+                # 確定使用的策略和原始相似度
+                strategy = 'primary' if (primary_sim and primary_sim >= (fallback_sim or 0)) else 'fallback'
+                original_sim = primary_sim if strategy == 'primary' else fallback_sim
+
+                # 使用加成後的相似度
+                if boosted_sim >= similarity_threshold:
+                    # 將原始相似度添加到 sop dict 中
+                    sop_with_original = dict(sop)
+                    sop_with_original['original_similarity'] = original_sim
+                    results_with_similarity.append((sop_with_original, boosted_sim, strategy, intent_boost))
+
+            # 4. 如果結果不足，降級為即時生成（極少發生）
+            if len(results_with_similarity) < top_k:
+                print(f"   ⚠️  [SOP Hybrid] 預存結果不足 ({len(results_with_similarity)}/{top_k})，嘗試即時生成補充")
+
+                # 查詢沒有 embedding 的 SOP（使用軟過濾）
+                cursor.execute("""
+                    SELECT DISTINCT ON (si.id) si.*, sg.group_name
+                    FROM vendor_sop_items si
+                    LEFT JOIN vendor_sop_groups sg ON si.group_id = sg.id
+                    LEFT JOIN vendor_sop_item_intents sii ON si.id = sii.sop_item_id
+                    WHERE
+                        si.vendor_id = %s
+                        AND si.is_active = TRUE
+                        AND si.primary_embedding IS NULL
+                        AND si.fallback_embedding IS NULL
+                        -- 軟過濾：允許無意圖或匹配相關意圖
+                        AND (
+                            sii.intent_id IS NULL
+                            OR sii.intent_id = ANY(%s::int[])
+                            OR array_length(%s::int[], 1) IS NULL
+                        )
+                    LIMIT %s
+                """, (vendor_id, intent_filter, intent_filter, top_k * 2))
+
+                sops_without_embedding = cursor.fetchall()
+
+                # 即時生成 embedding 並計算相似度（預設無意圖加成）
+                for sop in sops_without_embedding:
+                    sop_text = sop['content']
+                    sop_embedding = await embedding_client.get_embedding(sop_text)
+
+                    if sop_embedding:
+                        similarity = self._cosine_similarity(
+                            np.array(query_embedding),
+                            np.array(sop_embedding)
+                        )
+
+                        if similarity >= similarity_threshold:
+                            # Realtime 生成的 SOP 無意圖加成（1.0x）
+                            sop_with_original = dict(sop)
+                            sop_with_original['original_similarity'] = similarity
+                            results_with_similarity.append((sop_with_original, similarity, 'realtime', 1.0))
+
+        finally:
+            conn.close()
+
+        # 5. 按相似度降序排序並限制數量
         results_with_similarity.sort(key=lambda x: x[1], reverse=True)
-
-        # 5. 限制返回數量
         results_with_similarity = results_with_similarity[:top_k]
 
         # 6. 日誌輸出
-        print(f"\n🔍 [SOP Hybrid Retrieval]")
+        print(f"\n🔍 [SOP Hybrid Retrieval - Intent Boosting]")
         print(f"   Query: {query}")
-        print(f"   Intent ID: {intent_id}, Vendor ID: {vendor_id}")
-        print(f"   候選數: {len(candidate_sops)} → 過濾後: {len(results_with_similarity)}")
+        print(f"   Intent IDs: {intent_ids}, Primary: {primary_intent_id}, Vendor ID: {vendor_id}")
+        print(f"   結果數: {len(results_with_similarity)}")
 
-        for idx, (sop, sim) in enumerate(results_with_similarity, 1):
-            print(f"   {idx}. [ID {sop['id']}] {sop['item_name'][:40]} (相似度: {sim:.3f})")
+        for idx, (sop, sim, strategy, boost) in enumerate(results_with_similarity, 1):
+            strategy_emoji = {'primary': '🎯', 'fallback': '🔄', 'realtime': '⚡'}
+            boost_indicator = f"×{boost:.1f}" if boost > 1.0 else ""
+            print(f"   {idx}. {strategy_emoji.get(strategy, '')} [ID {sop['id']}] {sop['item_name'][:40]} (相似度: {sim:.3f}{boost_indicator}, {strategy})")
 
-        return results_with_similarity
+        # 返回格式轉換（移除 strategy 和 boost）
+        return [(sop, sim) for sop, sim, _, _ in results_with_similarity]
 
     def _cosine_similarity(self, vec1, vec2):
         """計算余弦相似度"""

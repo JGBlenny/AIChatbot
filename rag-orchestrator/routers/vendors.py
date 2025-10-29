@@ -2,13 +2,14 @@
 Vendors API Router
 業者管理 API - 管理包租代管業者及其配置參數
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 from datetime import datetime, date
 import os
 import psycopg2
 import psycopg2.extras
+import asyncio
 
 
 router = APIRouter(prefix="/api/v1/vendors", tags=["vendors"])
@@ -663,14 +664,19 @@ async def get_sop_items(vendor_id: int, category_id: Optional[int] = None):
 
 
 @router.put("/{vendor_id}/sop/items/{item_id}")
-async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpdate):
+async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpdate, request: Request):
     """
     更新 SOP 項目
+
+    智能檢測邏輯：
+    - 只在 item_name、content、group_id 變更時才重新生成 embeddings
+    - 其他欄位變更不觸發重新生成
 
     Args:
         vendor_id: 業者ID
         item_id: SOP項目ID
         item_update: 更新資料
+        request: Request 對象（用於訪問 db_pool）
 
     Returns:
         Dict: 更新後的 SOP 項目
@@ -684,12 +690,14 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="業者不存在")
 
-        # 檢查 SOP 項目是否存在且屬於該業者
+        # 🔍 查詢當前值（用於智能檢測變更）
         cursor.execute("""
-            SELECT id FROM vendor_sop_items
+            SELECT item_name, content, group_id
+            FROM vendor_sop_items
             WHERE id = %s AND vendor_id = %s
         """, (item_id, vendor_id))
-        if not cursor.fetchone():
+        current = cursor.fetchone()
+        if not current:
             raise HTTPException(status_code=404, detail="SOP 項目不存在或不屬於該業者")
 
         # 驗證所有意圖是否存在（如果有指定）
@@ -698,6 +706,13 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
                 cursor.execute("SELECT id FROM intents WHERE id = %s", (intent_id,))
                 if not cursor.fetchone():
                     raise HTTPException(status_code=400, detail=f"意圖 ID {intent_id} 不存在")
+
+        # 🧠 智能檢測：判斷是否需要重新生成 embeddings
+        need_regenerate = (
+            (item_update.item_name and item_update.item_name != current['item_name']) or
+            (item_update.content and item_update.content != current['content']) or
+            (hasattr(item_update, 'group_id') and item_update.group_id is not None and item_update.group_id != current['group_id'])
+        )
 
         # 更新 SOP 項目基本資訊
         update_fields = []
@@ -712,6 +727,10 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
         if item_update.priority is not None:
             update_fields.append("priority = %s")
             params.append(item_update.priority)
+
+        # 如果需要重新生成，標記為 pending
+        if need_regenerate:
+            update_fields.append("embedding_status = 'pending'")
 
         update_fields.append("updated_at = CURRENT_TIMESTAMP")
         params.extend([item_id, vendor_id])
@@ -760,6 +779,17 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
 
         final_item = cursor.fetchone()
         cursor.close()
+
+        # 🚀 背景重新生成 embeddings（如果需要）
+        if need_regenerate and hasattr(request.app.state, 'db_pool'):
+            from services.sop_embedding_generator import generate_sop_embeddings_async
+            asyncio.create_task(
+                generate_sop_embeddings_async(
+                    db_pool=request.app.state.db_pool,
+                    sop_item_id=item_id
+                )
+            )
+            print(f"🚀 [SOP Update] 已觸發背景 embedding 重新生成 (ID: {item_id})")
 
         return dict(final_item)
 
@@ -825,13 +855,14 @@ async def create_sop_category(vendor_id: int, category: SOPCategoryCreate):
 
 
 @router.post("/{vendor_id}/sop/items", status_code=201)
-async def create_sop_item(vendor_id: int, item: SOPItemCreate):
+async def create_sop_item(vendor_id: int, item: SOPItemCreate, request: Request):
     """
     建立新的 SOP 項目
 
     Args:
         vendor_id: 業者ID
         item: SOP 項目資料
+        request: Request 對象（用於訪問 db_pool）
 
     Returns:
         Dict: 新建立的 SOP 項目
@@ -866,13 +897,13 @@ async def create_sop_item(vendor_id: int, item: SOPItemCreate):
             if not cursor.fetchone():
                 raise HTTPException(status_code=400, detail=f"範本 ID {item.template_id} 不存在或已停用")
 
-        # 插入新 SOP 項目
+        # 插入新 SOP 項目（標記 embedding_status 為 'pending'）
         cursor.execute("""
             INSERT INTO vendor_sop_items (
                 category_id, vendor_id, item_number, item_name, content,
-                template_id, priority
+                template_id, priority, embedding_status
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
             RETURNING id
         """, (
             item.category_id,
@@ -913,6 +944,17 @@ async def create_sop_item(vendor_id: int, item: SOPItemCreate):
 
         final_item = cursor.fetchone()
         cursor.close()
+
+        # 🚀 背景生成 embeddings（不阻塞回應）
+        if hasattr(request.app.state, 'db_pool'):
+            from services.sop_embedding_generator import generate_sop_embeddings_async
+            asyncio.create_task(
+                generate_sop_embeddings_async(
+                    db_pool=request.app.state.db_pool,
+                    sop_item_id=new_item_id
+                )
+            )
+            print(f"🚀 [SOP Create] 已觸發背景 embedding 生成 (ID: {new_item_id})")
 
         return dict(final_item)
 
@@ -1072,7 +1114,7 @@ async def get_available_templates(vendor_id: int, category_id: Optional[int] = N
 
 
 @router.post("/{vendor_id}/sop/copy-template", status_code=201)
-async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
+async def copy_template_to_vendor(vendor_id: int, copy_request: CopyTemplateRequest, request: Request):
     """
     複製平台範本到業者 SOP
 
@@ -1113,11 +1155,11 @@ async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
                 ) as intent_ids
             FROM platform_sop_templates pt
             WHERE pt.id = %s AND pt.is_active = TRUE
-        """, (request.template_id,))
+        """, (copy_request.template_id,))
         template = cursor.fetchone()
 
         if not template:
-            raise HTTPException(status_code=404, detail=f"範本 ID {request.template_id} 不存在或已停用")
+            raise HTTPException(status_code=404, detail=f"範本 ID {copy_request.template_id} 不存在或已停用")
 
         # 驗證業種匹配（使用陣列操作）
         if template['business_type'] and template['business_type'] not in vendor['business_types']:
@@ -1130,7 +1172,7 @@ async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
         cursor.execute("""
             SELECT id FROM vendor_sop_categories
             WHERE id = %s AND vendor_id = %s AND is_active = TRUE
-        """, (request.category_id, vendor_id))
+        """, (copy_request.category_id, vendor_id))
         if not cursor.fetchone():
             raise HTTPException(status_code=400, detail="分類不存在或不屬於該業者")
 
@@ -1138,7 +1180,7 @@ async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
         cursor.execute("""
             SELECT id FROM vendor_sop_items
             WHERE vendor_id = %s AND template_id = %s AND is_active = TRUE
-        """, (vendor_id, request.template_id))
+        """, (vendor_id, copy_request.template_id))
         existing = cursor.fetchone()
         if existing:
             raise HTTPException(
@@ -1147,17 +1189,17 @@ async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
             )
 
         # 決定項次編號
-        item_number = request.item_number
+        item_number = copy_request.item_number
         if item_number is None:
             # 自動分配：找到該分類下最大的 item_number + 1
             cursor.execute("""
                 SELECT COALESCE(MAX(item_number), 0) + 1 AS next_number
                 FROM vendor_sop_items
                 WHERE category_id = %s AND vendor_id = %s
-            """, (request.category_id, vendor_id))
+            """, (copy_request.category_id, vendor_id))
             item_number = cursor.fetchone()['next_number']
 
-        # 插入新 SOP 項目（複製範本內容）
+        # 插入新 SOP 項目（複製範本內容，標記 embedding_status 為 'pending'）
         cursor.execute("""
             INSERT INTO vendor_sop_items (
                 category_id,
@@ -1166,17 +1208,18 @@ async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
                 item_name,
                 content,
                 template_id,
-                priority
+                priority,
+                embedding_status
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
             RETURNING id
         """, (
-            request.category_id,
+            copy_request.category_id,
             vendor_id,
             item_number,
             template['item_name'],
             template['content'],
-            request.template_id,
+            copy_request.template_id,
             template['priority']
         ))
 
@@ -1192,6 +1235,17 @@ async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
                 """, (new_item_id, intent_id))
 
         conn.commit()
+
+        # 🚀 背景生成 embeddings（不阻塞回應）
+        if hasattr(request.app.state, 'db_pool'):
+            from services.sop_embedding_generator import generate_sop_embeddings_async
+            asyncio.create_task(
+                generate_sop_embeddings_async(
+                    db_pool=request.app.state.db_pool,
+                    sop_item_id=new_item_id
+                )
+            )
+            print(f"🚀 [SOP Copy Template] 已觸發背景 embedding 生成 (ID: {new_item_id})")
 
         # 查詢完整資訊
         cursor.execute("""
@@ -1213,7 +1267,7 @@ async def copy_template_to_vendor(vendor_id: int, request: CopyTemplateRequest):
         return {
             **dict(final_item),
             "message": "範本已成功複製，可以進行編輯調整",
-            "template_id": request.template_id
+            "template_id": copy_request.template_id
         }
 
     except HTTPException:
