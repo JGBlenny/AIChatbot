@@ -201,18 +201,45 @@ class LLMAnswerOptimizer:
             process_keywords = ["流程", "步驟", "如何", "怎麼", "程序", "過程"]
             is_process_question = any(kw in question for kw in process_keywords)
 
-            # 檢查是否有完美匹配（similarity >= 0.95）
-            max_similarity = max(r['similarity'] for r in high_quality_results)
+            # 檢測廣泛查詢（涵蓋多個主題的問題）
+            broad_keywords = ["條款", "規定", "說明", "內容", "包括", "有哪些", "什麼", "包含"]
+            is_broad_query = any(kw in question for kw in broad_keywords)
+
+            # 檢查結果多樣性（不同主題數量）
+            topics = set()
+            for r in high_quality_results[:5]:  # 檢查前 5 個結果
+                # 支援 SOP (item_name)、KB (question_summary)、和標準格式 (title)
+                if 'item_name' in r:
+                    topics.add(r['item_name'])
+                elif 'question_summary' in r:
+                    topics.add(r['question_summary'])
+                elif 'title' in r:
+                    topics.add(r['title'])
+            has_diverse_topics = len(topics) >= 3  # 至少 3 個不同主題
+
+            # 檢查是否有完美匹配（使用原始相似度，不含意圖加成）
+            # 意圖加成只用於排序，不應影響完美匹配判斷
+            max_similarity = max(
+                r.get('original_similarity', r['similarity'])
+                for r in high_quality_results
+            )
             perfect_match_threshold = self.config.get("perfect_match_threshold", 0.95)
             has_perfect_match = max_similarity >= perfect_match_threshold
 
-            # 只在以下情況強制合成：
-            # 1. 流程問題（需要完整步驟） OR
-            # 2. 沒有完美匹配（需要組合多個答案）
+            # 強制合成的條件（優先級從高到低）：
+            # 1. 流程問題（需要完整步驟）
+            # 2. 廣泛查詢 + 主題多樣（涵蓋多個子主題）- 優先於完美匹配檢查
+            # 3. 沒有完美匹配（需要組合多個答案）
             if is_process_question:
                 force_synthesis = True
                 print(f"🔄 檢測到 {len(high_quality_results)} 個高品質結果（流程問題），強制使用答案合成")
                 print(f"   相似度範圍: {min(r['similarity'] for r in high_quality_results):.3f}-{max_similarity:.3f}")
+            elif is_broad_query and has_diverse_topics:
+                # 廣泛查詢優先於完美匹配（即使 SOP similarity=1.0 也要合成）
+                force_synthesis = True
+                print(f"🔄 檢測到 {len(high_quality_results)} 個高品質結果（廣泛查詢 + {len(topics)} 個不同主題），強制使用答案合成")
+                print(f"   主題: {', '.join(list(topics)[:5])}")
+                print(f"   相似度: {max_similarity:.3f} (忽略完美匹配，因為是廣泛查詢)")
             elif not has_perfect_match:
                 force_synthesis = True
                 print(f"🔄 檢測到 {len(high_quality_results)} 個高品質結果（無完美匹配: max={max_similarity:.3f} < {perfect_match_threshold}），強制使用答案合成")
@@ -424,13 +451,33 @@ class LLMAnswerOptimizer:
 
         return has_complex_pattern and no_perfect_match
 
+    def _get_result_title(self, result: Dict) -> str:
+        """
+        獲取檢索結果的標題（支援 KB 和 SOP 格式）
+
+        Args:
+            result: 檢索結果
+
+        Returns:
+            標題字串（KB 使用 question_summary，SOP 使用 item_name）
+        """
+        if 'question_summary' in result:
+            return result['question_summary']
+        elif 'item_name' in result:
+            return result['item_name']
+        else:
+            return "（無標題）"
+
     def _create_original_answer(self, search_results: List[Dict]) -> str:
         """建立原始答案（未優化）"""
         if not search_results:
             return ""
 
         best_result = search_results[0]
-        return f"{best_result['question_summary']}\n\n{best_result['content']}"
+        title = self._get_result_title(best_result)
+        content = best_result.get('content', '')
+
+        return f"{title}\n\n{content}"
 
     def _create_fallback_response(self, search_results: List[Dict], start_time: float) -> Dict:
         """建立備用回應（不優化）"""
@@ -602,7 +649,7 @@ class LLMAnswerOptimizer:
 
             answers_to_synthesize.append({
                 "index": i,
-                "question_summary": result['question_summary'],
+                "title": self._get_result_title(result),
                 "content": content,
                 "similarity": result['similarity']
             })
@@ -610,7 +657,7 @@ class LLMAnswerOptimizer:
         # 格式化答案列表
         formatted_answers = "\n\n".join([
             f"【答案 {ans['index']}】\n"
-            f"標題：{ans['question_summary']}\n"
+            f"標題：{ans['title']}\n"
             f"相似度：{ans['similarity']:.2f}\n"
             f"內容：\n{ans['content']}"
             for ans in answers_to_synthesize
@@ -770,7 +817,7 @@ class LLMAnswerOptimizer:
 
             context_parts.append(
                 f"【參考資料 {i}】\n"
-                f"標題：{result['question_summary']}\n"
+                f"標題：{self._get_result_title(result)}\n"
                 f"內容：{content}\n"
                 f"相似度：{result['similarity']:.2f}"
             )
