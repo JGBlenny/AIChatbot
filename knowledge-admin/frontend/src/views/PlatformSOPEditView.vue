@@ -26,7 +26,7 @@
       <span class="spinner"></span> 載入中...
     </div>
 
-    <!-- SOP 範本列表（2 層結構：分類 → 範本） -->
+    <!-- SOP 範本列表（3 層結構：分類 → 群組 → 範本） -->
     <div v-else class="sop-categories">
       <div
         v-for="category in filteredCategories"
@@ -52,60 +52,150 @@
           </button>
         </div>
 
-        <!-- 第 2 層：範本列表 -->
-        <div v-show="isCategoryExpanded(category.id)" class="templates-list">
+        <!-- 第 2 層：群組列表 -->
+        <div v-show="isCategoryExpanded(category.id)" class="groups-list">
           <div
-            v-for="template in getTemplatesByCategory(category.id)"
-            :key="template.id"
-            class="template-card"
+            v-for="group in getGroupsByCategory(category.id)"
+            :key="group.id"
+            class="group-section"
           >
-                  <div class="template-header">
-                    <span class="template-number">#{{ template.item_number }}</span>
-                    <h4>{{ template.item_name }}</h4>
-                    <span
-                      v-for="intentId in (template.intent_ids || [])"
-                      :key="intentId"
-                      class="badge badge-intent"
-                    >
-                      🎯 {{ getIntentName(intentId) }}
-                    </span>
-                    <span class="badge badge-priority" :class="getPriorityClass(template.priority)">
-                      優先級: {{ template.priority }}
-                    </span>
+            <div class="group-header-collapsible">
+              <span class="collapse-icon" @click="toggleGroup(group.id)">
+                {{ isGroupExpanded(group.id) ? '▼' : '▶' }}
+              </span>
+              <h3 @click="toggleGroup(group.id)">{{ group.group_name }}</h3>
+              <span class="group-count" @click="toggleGroup(group.id)">
+                {{ getTemplatesByGroup(group.id).length }} 個項目
+              </span>
+            </div>
+
+            <!-- 第 3 層：範本列表 -->
+            <div v-show="isGroupExpanded(group.id)" class="templates-list">
+              <div
+                v-for="template in getTemplatesByGroup(group.id)"
+                :key="template.id"
+                class="template-card"
+              >
+                <div class="template-header">
+                  <span class="template-number">#{{ template.item_number }}</span>
+                  <h4>{{ template.item_name }}</h4>
+                  <span
+                    v-for="intentId in (template.intent_ids || [])"
+                    :key="intentId"
+                    class="badge badge-intent"
+                  >
+                    🎯 {{ getIntentName(intentId) }}
+                  </span>
+                  <span class="badge badge-priority" :class="getPriorityClass(template.priority)">
+                    優先級: {{ template.priority }}
+                  </span>
+                </div>
+
+                <div class="template-content">
+                  <div class="content-section">
+                    <strong>範本內容:</strong>
+                    <p>{{ template.content }}</p>
                   </div>
 
-                  <div class="template-content">
-                    <div class="content-section">
-                      <strong>範本內容:</strong>
-                      <p>{{ template.content }}</p>
-                    </div>
-
-                    <div v-if="template.template_notes" class="content-section template-guide">
-                      <strong>📝 範本說明:</strong>
-                      <p>{{ template.template_notes }}</p>
-                    </div>
-
-                    <div v-if="template.customization_hint" class="content-section template-guide">
-                      <strong>💡 自訂提示:</strong>
-                      <p>{{ template.customization_hint }}</p>
-                    </div>
+                  <div v-if="template.template_notes" class="content-section template-guide">
+                    <strong>📝 範本說明:</strong>
+                    <p>{{ template.template_notes }}</p>
                   </div>
 
-                  <div class="template-actions">
-                    <button @click="editTemplate(template)" class="btn btn-sm btn-secondary">
-                      ✏️ 編輯
-                    </button>
-                    <button @click="viewTemplateUsage(template.id)" class="btn btn-sm btn-info">
-                      👥 使用情況
-                    </button>
-                    <button @click="deleteTemplate(template.id)" class="btn btn-sm btn-danger">
-                      🗑️ 刪除
-                    </button>
+                  <div v-if="template.customization_hint" class="content-section template-guide">
+                    <strong>💡 自訂提示:</strong>
+                    <p>{{ template.customization_hint }}</p>
                   </div>
                 </div>
-              </div>
 
-        <!-- 如果分類內沒有範本 -->
+                <div class="template-actions">
+                  <button @click="editTemplate(template)" class="btn btn-sm btn-secondary">
+                    ✏️ 編輯
+                  </button>
+                  <button @click="viewTemplateUsage(template.id)" class="btn btn-sm btn-info">
+                    👥 使用情況
+                  </button>
+                  <button @click="deleteTemplate(template.id)" class="btn btn-sm btn-danger">
+                    🗑️ 刪除
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 如果群組內沒有範本 -->
+            <div v-show="isGroupExpanded(group.id)" v-if="getTemplatesByGroup(group.id).length === 0" class="no-templates-in-group">
+              <p>此群組尚未建立任何 SOP 項目</p>
+            </div>
+          </div>
+
+          <!-- 未分組的範本 -->
+          <div v-if="getUngroupedTemplates(category.id).length > 0" class="group-section">
+            <div class="group-header-collapsible ungrouped">
+              <span class="collapse-icon" @click="toggleGroup('ungrouped_' + category.id)">
+                {{ isGroupExpanded('ungrouped_' + category.id) ? '▼' : '▶' }}
+              </span>
+              <h3 @click="toggleGroup('ungrouped_' + category.id)">（未分組）</h3>
+              <span class="group-count" @click="toggleGroup('ungrouped_' + category.id)">
+                {{ getUngroupedTemplates(category.id).length }} 個項目
+              </span>
+            </div>
+
+            <!-- 未分組的範本列表 -->
+            <div v-show="isGroupExpanded('ungrouped_' + category.id)" class="templates-list">
+              <div
+                v-for="template in getUngroupedTemplates(category.id)"
+                :key="template.id"
+                class="template-card"
+              >
+                <div class="template-header">
+                  <span class="template-number">#{{ template.item_number }}</span>
+                  <h4>{{ template.item_name }}</h4>
+                  <span
+                    v-for="intentId in (template.intent_ids || [])"
+                    :key="intentId"
+                    class="badge badge-intent"
+                  >
+                    🎯 {{ getIntentName(intentId) }}
+                  </span>
+                  <span class="badge badge-priority" :class="getPriorityClass(template.priority)">
+                    優先級: {{ template.priority }}
+                  </span>
+                </div>
+
+                <div class="template-content">
+                  <div class="content-section">
+                    <strong>範本內容:</strong>
+                    <p>{{ template.content }}</p>
+                  </div>
+
+                  <div v-if="template.template_notes" class="content-section template-guide">
+                    <strong>📝 範本說明:</strong>
+                    <p>{{ template.template_notes }}</p>
+                  </div>
+
+                  <div v-if="template.customization_hint" class="content-section template-guide">
+                    <strong>💡 自訂提示:</strong>
+                    <p>{{ template.customization_hint }}</p>
+                  </div>
+                </div>
+
+                <div class="template-actions">
+                  <button @click="editTemplate(template)" class="btn btn-sm btn-secondary">
+                    ✏️ 編輯
+                  </button>
+                  <button @click="viewTemplateUsage(template.id)" class="btn btn-sm btn-info">
+                    👥 使用情況
+                  </button>
+                  <button @click="deleteTemplate(template.id)" class="btn btn-sm btn-danger">
+                    🗑️ 刪除
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 如果分類內沒有任何範本 -->
         <div v-show="isCategoryExpanded(category.id)" v-if="getTemplatesByCategory(category.id).length === 0" class="no-templates-in-category">
           <p>此分類尚未建立任何 SOP 項目</p>
           <button @click="openNewTemplateModalForCategory(category.id)" class="btn btn-sm btn-primary">
@@ -399,6 +489,7 @@ export default {
 
       // Accordion states
       expandedCategories: {},
+      expandedGroups: {},
 
       // Modal states
       showTemplateModal: false,
@@ -509,6 +600,7 @@ export default {
   mounted() {
     this.loadData();
     this.loadIntents();
+    this.loadAllGroups();
   },
 
   methods: {
@@ -547,6 +639,16 @@ export default {
       }
     },
 
+    async loadAllGroups() {
+      try {
+        const response = await axios.get(`${RAG_API}/api/v1/platform/sop/groups`);
+        this.groups = response.data.groups || [];
+      } catch (error) {
+        console.error('載入所有群組失敗:', error);
+        this.groups = [];
+      }
+    },
+
     async loadGroupsByCategory(categoryId) {
       try {
         const response = await axios.get(`${RAG_API}/api/v1/platform/sop/groups?category_id=${categoryId}`);
@@ -559,6 +661,18 @@ export default {
 
     getTemplatesByCategory(categoryId) {
       return this.filteredTemplates.filter(t => t.category_id === categoryId);
+    },
+
+    getGroupsByCategory(categoryId) {
+      return this.groups.filter(g => g.category_id === categoryId && g.is_active);
+    },
+
+    getTemplatesByGroup(groupId) {
+      return this.filteredTemplates.filter(t => t.group_id === groupId);
+    },
+
+    getUngroupedTemplates(categoryId) {
+      return this.filteredTemplates.filter(t => t.category_id === categoryId && !t.group_id);
     },
 
     getCategoryTotalTemplates(categoryId) {
@@ -576,6 +690,17 @@ export default {
 
     isCategoryExpanded(categoryId) {
       return !!this.expandedCategories[categoryId];
+    },
+
+    toggleGroup(groupId) {
+      this.expandedGroups = {
+        ...this.expandedGroups,
+        [groupId]: !this.expandedGroups[groupId]
+      };
+    },
+
+    isGroupExpanded(groupId) {
+      return !!this.expandedGroups[groupId];
     },
 
     // Template CRUD
@@ -795,7 +920,9 @@ export default {
 
         this.closeCreateGroupModal();
 
-        // 重新載入該分類的群組
+        // 重新載入所有群組（用於列表顯示）
+        await this.loadAllGroups();
+        // 重新載入該分類的群組（用於表單選擇）
         await this.loadGroupsByCategory(this.templateForm.category_id);
 
         // 自動選擇新建的群組
@@ -1267,6 +1394,21 @@ export default {
 .group-header-collapsible:hover {
   background: #f5f5f5;
   border-left-color: #1976D2;
+}
+
+.group-header-collapsible.ungrouped {
+  border-left-color: #9E9E9E;
+  background: #fafafa;
+}
+
+.group-header-collapsible.ungrouped:hover {
+  background: #f0f0f0;
+  border-left-color: #757575;
+}
+
+.group-header-collapsible.ungrouped h3 {
+  color: #999;
+  font-style: italic;
 }
 
 .group-header-collapsible h3 {
