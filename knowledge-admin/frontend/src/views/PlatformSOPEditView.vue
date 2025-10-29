@@ -145,6 +145,27 @@
               </select>
             </div>
 
+            <div class="form-group" v-if="templateForm.category_id">
+              <label>
+                所屬群組（說明）
+                <button
+                  type="button"
+                  @click="showCreateGroupModal = true"
+                  class="btn-inline btn-sm"
+                  title="為此分類新增群組"
+                >
+                  ➕ 新增群組
+                </button>
+              </label>
+              <select v-model.number="templateForm.group_id" class="form-control">
+                <option :value="null">（未分組）</option>
+                <option v-for="group in availableGroups" :key="group.id" :value="group.id">
+                  {{ group.group_name }} ({{ group.template_count || 0 }} 個項目)
+                </option>
+              </select>
+              <small class="form-hint">群組用於將同類型的 SOP 項目分組顯示（對應 Excel 的「說明」欄位）</small>
+            </div>
+
             <div class="form-row">
               <div class="form-group">
                 <label>項次編號 *</label>
@@ -273,6 +294,40 @@
       </div>
     </div>
 
+    <!-- 新增群組 Modal -->
+    <div v-if="showCreateGroupModal" class="modal-overlay" @click="showCreateGroupModal = false">
+      <div class="modal-content" @click.stop>
+        <h2>➕ 新增群組（說明）</h2>
+        <div class="info-box">
+          <p><strong>💡 提示：</strong></p>
+          <p>群組用於將同類型的 SOP 項目分組顯示，對應 Excel 檔案的「說明」欄位。</p>
+          <p>例如：「租賃流程」分類下可建立「承租流程」「退租流程」等群組。</p>
+        </div>
+        <form @submit.prevent="saveGroup">
+          <div class="form-group">
+            <label>群組名稱 *</label>
+            <input v-model="groupForm.group_name" type="text" required class="form-control" placeholder="例如：承租流程" />
+          </div>
+
+          <div class="form-group">
+            <label>群組說明</label>
+            <textarea v-model="groupForm.description" class="form-control" rows="2" placeholder="簡述此群組的用途"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>顯示順序</label>
+            <input v-model.number="groupForm.display_order" type="number" min="1" class="form-control" />
+            <small class="form-hint">數字越小越靠前</small>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-primary">💾 儲存</button>
+            <button type="button" @click="closeCreateGroupModal" class="btn btn-secondary">取消</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- 從通用範本複製 Modal -->
     <div v-if="showCopyModal" class="modal-overlay" @click="showCopyModal = false">
       <div class="modal-content modal-large" @click.stop>
@@ -339,6 +394,8 @@ export default {
       categories: [],
       templates: [],
       intents: [],
+      groups: [],
+      availableGroups: [],
 
       // Accordion states
       expandedCategories: {},
@@ -348,6 +405,7 @@ export default {
       showUsageModal: false,
       showCategoryModal: false,
       showCopyModal: false,
+      showCreateGroupModal: false,
 
       // Copy universal templates
       copyLoading: false,
@@ -366,8 +424,16 @@ export default {
         description: ''
       },
 
+      groupForm: {
+        category_id: null,
+        group_name: '',
+        description: '',
+        display_order: 1
+      },
+
       templateForm: {
         category_id: null,
+        group_id: null,
         business_type: null,
         item_number: 1,
         item_name: '',
@@ -430,6 +496,13 @@ export default {
       if (!this.editingTemplate && newCategoryId) {
         this.templateForm.item_number = this.getNextItemNumber(newCategoryId);
       }
+      // 載入該分類的群組
+      if (newCategoryId) {
+        this.loadGroupsByCategory(newCategoryId);
+        this.templateForm.group_id = null;
+      } else {
+        this.availableGroups = [];
+      }
     }
   },
 
@@ -471,6 +544,16 @@ export default {
       } catch (error) {
         console.error('載入意圖失敗:', error);
         this.intents = [];
+      }
+    },
+
+    async loadGroupsByCategory(categoryId) {
+      try {
+        const response = await axios.get(`${RAG_API}/api/v1/platform/sop/groups?category_id=${categoryId}`);
+        this.availableGroups = response.data.groups || [];
+      } catch (error) {
+        console.error('載入群組失敗:', error);
+        this.availableGroups = [];
       }
     },
 
@@ -516,6 +599,7 @@ export default {
       this.editingTemplate = null;
       this.templateForm = {
         category_id: null,
+        group_id: null,
         business_type: this.businessType,
         item_number: 1,
         item_name: '',
@@ -534,6 +618,7 @@ export default {
       this.editingTemplate = null;
       this.templateForm = {
         category_id: categoryId,
+        group_id: null,
         business_type: this.businessType,
         item_number: this.getNextItemNumber(categoryId),
         item_name: '',
@@ -544,6 +629,8 @@ export default {
         customization_hint: ''
       };
 
+      // 載入該分類的群組
+      this.loadGroupsByCategory(categoryId);
       this.showTemplateModal = true;
     },
 
@@ -551,6 +638,7 @@ export default {
       this.editingTemplate = template;
       this.templateForm = {
         category_id: template.category_id,
+        group_id: template.group_id || null,
         business_type: template.business_type || null,
         item_number: template.item_number,
         item_name: template.item_name,
@@ -560,6 +648,10 @@ export default {
         template_notes: template.template_notes || '',
         customization_hint: template.customization_hint || ''
       };
+      // 載入該分類的群組
+      if (template.category_id) {
+        this.loadGroupsByCategory(template.category_id);
+      }
       this.showTemplateModal = true;
     },
 
@@ -615,6 +707,7 @@ export default {
       this.editingTemplate = null;
       this.templateForm = {
         category_id: null,
+        group_id: null,
         business_type: null,
         item_number: 1,
         item_name: '',
@@ -624,6 +717,7 @@ export default {
         template_notes: '',
         customization_hint: ''
       };
+      this.availableGroups = [];
     },
 
     async viewTemplateUsage(templateId) {
@@ -685,6 +779,40 @@ export default {
       this.categoryForm = {
         category_name: '',
         description: ''
+      };
+    },
+
+    // Group management
+    async saveGroup() {
+      try {
+        // 設定群組所屬的分類
+        this.groupForm.category_id = this.templateForm.category_id;
+
+        const response = await axios.post(`${RAG_API}/api/v1/platform/sop/groups`, this.groupForm);
+        const newGroup = response.data;
+
+        alert(`✅ 群組「${newGroup.group_name}」已新增`);
+
+        this.closeCreateGroupModal();
+
+        // 重新載入該分類的群組
+        await this.loadGroupsByCategory(this.templateForm.category_id);
+
+        // 自動選擇新建的群組
+        this.templateForm.group_id = newGroup.id;
+      } catch (error) {
+        console.error('新增群組失敗:', error);
+        alert('❌ 新增群組失敗: ' + (error.response?.data?.detail || error.message));
+      }
+    },
+
+    closeCreateGroupModal() {
+      this.showCreateGroupModal = false;
+      this.groupForm = {
+        category_id: null,
+        group_name: '',
+        description: '',
+        display_order: 1
       };
     },
 
@@ -1002,6 +1130,25 @@ export default {
 .btn-sm {
   padding: 6px 12px;
   font-size: 13px;
+}
+
+.btn-inline {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 8px;
+  transition: all 0.2s;
+  vertical-align: middle;
+}
+
+.btn-inline:hover {
+  background: #45a049;
+  transform: translateY(-1px);
 }
 
 .loading {

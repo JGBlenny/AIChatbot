@@ -29,9 +29,25 @@ class PlatformSOPCategoryUpdate(BaseModel):
     template_notes: Optional[str] = Field(None, description="範本說明")
 
 
+class PlatformSOPGroupCreate(BaseModel):
+    """建立平台 SOP 群組"""
+    category_id: int = Field(..., description="所屬分類ID")
+    group_name: str = Field(..., description="群組名稱（說明）", min_length=1, max_length=500)
+    description: Optional[str] = Field(None, description="詳細描述")
+    display_order: int = Field(1, description="顯示順序", ge=1)
+
+
+class PlatformSOPGroupUpdate(BaseModel):
+    """更新平台 SOP 群組"""
+    group_name: Optional[str] = Field(None, description="群組名稱", min_length=1, max_length=500)
+    description: Optional[str] = Field(None, description="詳細描述")
+    display_order: Optional[int] = Field(None, description="顯示順序", ge=1)
+
+
 class PlatformSOPTemplateCreate(BaseModel):
     """建立平台 SOP 範本"""
     category_id: int = Field(..., description="所屬分類ID")
+    group_id: Optional[int] = Field(None, description="所屬群組ID（可選，對應 Excel 的「說明」）")
     business_type: Optional[str] = Field(None, description="業種類型（full_service=包租, property_management=代管, NULL=通用）")
     item_number: int = Field(..., description="項次編號", ge=1)
     item_name: str = Field(..., description="項目名稱", min_length=1, max_length=200)
@@ -45,6 +61,7 @@ class PlatformSOPTemplateCreate(BaseModel):
 class PlatformSOPTemplateUpdate(BaseModel):
     """更新平台 SOP 範本"""
     category_id: Optional[int] = Field(None, description="所屬分類ID")
+    group_id: Optional[int] = Field(None, description="所屬群組ID")
     business_type: Optional[str] = Field(None, description="業種類型")
     item_number: Optional[int] = Field(None, description="項次編號", ge=1)
     item_name: Optional[str] = Field(None, description="項目名稱", min_length=1, max_length=200)
@@ -350,6 +367,205 @@ async def get_platform_sop_groups(
         raise HTTPException(status_code=500, detail=f"取得群組失敗: {str(e)}")
 
 
+@router.post("/groups", status_code=201, summary="建立平台 SOP 群組")
+async def create_platform_sop_group(
+    request: Request,
+    group: PlatformSOPGroupCreate
+):
+    """
+    建立新的平台 SOP 群組
+
+    **權限**: 平台管理員
+    """
+    try:
+        async with request.app.state.db_pool.acquire() as conn:
+            # 驗證分類是否存在
+            category_exists = await conn.fetchval(
+                "SELECT EXISTS(SELECT 1 FROM platform_sop_categories WHERE id = $1 AND is_active = TRUE)",
+                group.category_id
+            )
+            if not category_exists:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"分類 ID {group.category_id} 不存在或已停用"
+                )
+
+            # 插入新群組
+            row = await conn.fetchrow("""
+                INSERT INTO platform_sop_groups (
+                    category_id, group_name, description, display_order
+                )
+                VALUES ($1, $2, $3, $4)
+                RETURNING id, category_id, group_name, description, display_order, is_active, created_at, updated_at
+            """,
+                group.category_id, group.group_name, group.description, group.display_order
+            )
+
+            return {
+                "id": row["id"],
+                "category_id": row["category_id"],
+                "group_name": row["group_name"],
+                "description": row["description"],
+                "display_order": row["display_order"],
+                "is_active": row["is_active"],
+                "template_count": 0,
+                "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+                "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"建立群組失敗: {str(e)}")
+
+
+@router.put("/groups/{group_id}", summary="更新平台 SOP 群組")
+async def update_platform_sop_group(
+    request: Request,
+    group_id: int,
+    group: PlatformSOPGroupUpdate
+):
+    """
+    更新平台 SOP 群組
+
+    **權限**: 平台管理員
+    """
+    try:
+        async with request.app.state.db_pool.acquire() as conn:
+            # 驗證群組是否存在
+            exists = await conn.fetchval(
+                "SELECT EXISTS(SELECT 1 FROM platform_sop_groups WHERE id = $1)",
+                group_id
+            )
+            if not exists:
+                raise HTTPException(status_code=404, detail=f"群組 ID {group_id} 不存在")
+
+            # 構建動態更新語句
+            updates = []
+            params = []
+            param_count = 1
+
+            if group.group_name is not None:
+                updates.append(f"group_name = ${param_count}")
+                params.append(group.group_name)
+                param_count += 1
+
+            if group.description is not None:
+                updates.append(f"description = ${param_count}")
+                params.append(group.description)
+                param_count += 1
+
+            if group.display_order is not None:
+                updates.append(f"display_order = ${param_count}")
+                params.append(group.display_order)
+                param_count += 1
+
+            if not updates:
+                raise HTTPException(status_code=400, detail="沒有提供任何更新欄位")
+
+            updates.append("updated_at = CURRENT_TIMESTAMP")
+            params.append(group_id)
+
+            query = f"""
+                UPDATE platform_sop_groups
+                SET {', '.join(updates)}
+                WHERE id = ${param_count}
+                RETURNING id, category_id, group_name, description, display_order, is_active, created_at, updated_at
+            """
+
+            row = await conn.fetchrow(query, *params)
+
+            # 查詢模板數量
+            template_count = await conn.fetchval(
+                "SELECT COUNT(*) FROM platform_sop_templates WHERE group_id = $1 AND is_active = TRUE",
+                group_id
+            )
+
+            return {
+                "id": row["id"],
+                "category_id": row["category_id"],
+                "group_name": row["group_name"],
+                "description": row["description"],
+                "display_order": row["display_order"],
+                "is_active": row["is_active"],
+                "template_count": template_count,
+                "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+                "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"更新群組失敗: {str(e)}")
+
+
+@router.delete("/groups/{group_id}", summary="刪除平台 SOP 群組")
+async def delete_platform_sop_group(
+    request: Request,
+    group_id: int,
+    move_to_group_id: Optional[int] = None
+):
+    """
+    刪除平台 SOP 群組
+
+    **Query Parameters**:
+    - move_to_group_id: 將關聯模板移動到指定群組（可選，若未指定則設為 NULL）
+
+    **權限**: 平台管理員
+    """
+    try:
+        async with request.app.state.db_pool.acquire() as conn:
+            # 驗證群組是否存在
+            group_row = await conn.fetchrow(
+                "SELECT id, group_name FROM platform_sop_groups WHERE id = $1",
+                group_id
+            )
+            if not group_row:
+                raise HTTPException(status_code=404, detail=f"群組 ID {group_id} 不存在")
+
+            # 查詢關聯的模板數量
+            template_count = await conn.fetchval(
+                "SELECT COUNT(*) FROM platform_sop_templates WHERE group_id = $1 AND is_active = TRUE",
+                group_id
+            )
+
+            # 如果有指定move_to_group_id，驗證目標群組是否存在
+            if move_to_group_id is not None:
+                target_exists = await conn.fetchval(
+                    "SELECT EXISTS(SELECT 1 FROM platform_sop_groups WHERE id = $1 AND is_active = TRUE)",
+                    move_to_group_id
+                )
+                if not target_exists:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"目標群組 ID {move_to_group_id} 不存在或已停用"
+                    )
+
+            # 更新關聯的模板（移動到目標群組或設為 NULL）
+            await conn.execute(
+                "UPDATE platform_sop_templates SET group_id = $1, updated_at = CURRENT_TIMESTAMP WHERE group_id = $2",
+                move_to_group_id, group_id
+            )
+
+            # 刪除群組（軟刪除）
+            await conn.execute(
+                "UPDATE platform_sop_groups SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = $1",
+                group_id
+            )
+
+            return {
+                "message": f"群組「{group_row['group_name']}」已刪除",
+                "deleted_group_id": group_id,
+                "affected_templates_count": template_count,
+                "moved_to_group_id": move_to_group_id
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"刪除群組失敗: {str(e)}")
+
+
 # ========================================
 # 範本管理 API
 # ========================================
@@ -477,16 +693,28 @@ async def create_platform_sop_template(
                     detail="business_type 必須是 full_service, property_management 或 null（通用）"
                 )
 
+            # 驗證群組是否存在（如果有指定）
+            if template.group_id is not None:
+                group_exists = await conn.fetchval(
+                    "SELECT EXISTS(SELECT 1 FROM platform_sop_groups WHERE id = $1 AND is_active = TRUE)",
+                    template.group_id
+                )
+                if not group_exists:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"群組 ID {template.group_id} 不存在或已停用"
+                    )
+
             # 插入新範本
             row = await conn.fetchrow("""
                 INSERT INTO platform_sop_templates (
-                    category_id, business_type, item_number, item_name, content,
+                    category_id, group_id, business_type, item_number, item_name, content,
                     priority, template_notes, customization_hint
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING id
             """,
-                template.category_id, template.business_type, template.item_number,
+                template.category_id, template.group_id, template.business_type, template.item_number,
                 template.item_name, template.content,
                 template.priority, template.template_notes, template.customization_hint
             )
@@ -584,12 +812,24 @@ async def update_platform_sop_template(
                     detail="business_type 必須是 full_service, property_management 或 null"
                 )
 
-            # 建立更新欄位（移除 related_intent_id，改用多意圖關聯表）
+            # 驗證群組是否存在（如果有指定）
+            if template.group_id is not None:
+                group_exists = await conn.fetchval(
+                    "SELECT EXISTS(SELECT 1 FROM platform_sop_groups WHERE id = $1 AND is_active = TRUE)",
+                    template.group_id
+                )
+                if not group_exists:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"群組 ID {template.group_id} 不存在或已停用"
+                    )
+
+            # 建立更新欄位（包含 group_id）
             update_fields = []
             values = []
             param_count = 1
 
-            for field in ["category_id", "business_type", "item_number", "item_name", "content",
+            for field in ["category_id", "group_id", "business_type", "item_number", "item_name", "content",
                           "priority", "template_notes", "customization_hint"]:
                 value = getattr(template, field, None)
                 if value is not None:
