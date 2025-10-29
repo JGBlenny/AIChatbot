@@ -30,12 +30,12 @@ class AnswerFormatter:
         best_result = search_results[0]
         content = best_result.get('content', '')
 
-        # 簡單格式化：確保有適當的段落和標點
+        # 簡單格式化：保留 Markdown 結構，只清理多餘空白
         formatted_content = AnswerFormatter._clean_content(content)
 
-        # 如果內容很短，添加來源說明
+        # 如果內容很短，添加來源說明（使用 Markdown 粗體）
         if len(formatted_content) < 50:
-            answer = f"{formatted_content}\n\n📚 此資訊來自知識庫：{best_result.get('title', '相關知識')}"
+            answer = f"{formatted_content}\n\n---\n📚 **此資訊來自知識庫**：{best_result.get('title', '相關知識')}"
         else:
             answer = formatted_content
 
@@ -82,11 +82,12 @@ class AnswerFormatter:
             # 預設模板
             answer = AnswerFormatter._format_default_template(question, content, best_result)
 
-        # 如果有多個相關結果，添加參考資訊
+        # 如果有多個相關結果，添加參考資訊（使用 Markdown 列表）
         if len(search_results) > 1:
-            related_titles = [r.get('title', '') for r in search_results[1:3]]
+            related_titles = [r.get('title', '') for r in search_results[1:3] if r.get('title')]
             if related_titles:
-                answer += f"\n\n💡 相關資訊：{', '.join(related_titles)}"
+                related_list = '\n'.join([f"- {title}" for title in related_titles])
+                answer += f"\n\n💡 **相關資訊**：\n{related_list}"
 
         return {
             "answer": answer,
@@ -98,38 +99,86 @@ class AnswerFormatter:
 
     @staticmethod
     def _clean_content(content: str) -> str:
-        """清理和格式化內容"""
+        """
+        清理和格式化內容，保留 Markdown 結構
+
+        改進：
+        - 保留換行符號（Markdown 需要）
+        - 保留列表結構（- 和數字列表）
+        - 保留粗體、斜體等標記
+        - 只清理多餘的連續空格和空行
+        """
         if not content:
             return ""
 
-        # 移除多餘空白
-        content = ' '.join(content.split())
+        # 分行處理，保留換行結構
+        lines = content.split('\n')
+        cleaned_lines = []
 
-        # 確保結尾有句號
-        if content and not content.endswith(('。', '！', '？', '.', '!', '?')):
+        for line in lines:
+            # 移除每行內部的多餘空白（但保留行首縮排）
+            # 先檢查是否為列表項（保留列表格式）
+            stripped_line = line.strip()
+            if stripped_line:  # 非空行
+                # 保留 Markdown 列表、標題、粗體等結構
+                # 只壓縮行內多餘空格（多個空格變一個）
+                cleaned_line = ' '.join(line.split())
+                cleaned_lines.append(cleaned_line)
+            elif cleaned_lines:  # 空行（但不在開頭）
+                # 保留段落之間的空行（最多一行）
+                if cleaned_lines[-1] != '':
+                    cleaned_lines.append('')
+
+        # 重新組合，保留 Markdown 結構
+        content = '\n'.join(cleaned_lines)
+
+        # 移除開頭和結尾的多餘換行
+        content = content.strip()
+
+        # 不要自動添加句號，因為 Markdown 內容可能以列表結束
+        # 只在明確是單行文字時才添加
+        if '\n' not in content and content and not content.endswith(('。', '！', '？', '.', '!', '?', '：', ':')):
             content += '。'
 
         return content
 
     @staticmethod
     def _format_action_template(question: str, content: str, result: Dict) -> str:
-        """行動類問題模板（例如：怎麼辦、如何做）"""
-        return f"關於「{question}」，以下是處理方式：\n\n{content}\n\n📋 資料來源：{result.get('title', '知識庫')}"
+        """
+        行動類問題模板（例如：怎麼辦、如何做）
+        使用 Markdown 結構化格式
+        """
+        # 如果 content 已經有標題，就不再添加
+        if content.strip().startswith('#'):
+            formatted_content = content
+        else:
+            formatted_content = f"## 關於「{question}」的處理方式\n\n{content}"
+
+        return f"{formatted_content}\n\n---\n📋 **資料來源**：{result.get('title', '知識庫')}"
 
     @staticmethod
     def _format_data_query_template(question: str, content: str, result: Dict) -> str:
-        """資料查詢類模板（例如：多少錢、什麼時候）"""
-        return f"{content}\n\n📊 資料來源：{result.get('title', '知識庫')}"
+        """
+        資料查詢類模板（例如：多少錢、什麼時候）
+        保留 Markdown 格式，添加資料來源
+        """
+        return f"{content}\n\n---\n📊 **資料來源**：{result.get('title', '知識庫')}"
 
     @staticmethod
     def _format_knowledge_template(question: str, content: str, result: Dict) -> str:
-        """知識類問題模板（例如：是什麼、為什麼）"""
-        return f"{content}\n\n💡 了解更多：{result.get('title', '相關知識')}"
+        """
+        知識類問題模板（例如：是什麼、為什麼）
+        保留 Markdown 格式，添加參考資訊
+        """
+        return f"{content}\n\n---\n💡 **了解更多**：{result.get('title', '相關知識')}"
 
     @staticmethod
     def _format_default_template(question: str, content: str, result: Dict) -> str:
-        """預設模板"""
-        return f"{content}\n\n📚 資料來源：{result.get('title', '知識庫')}"
+        """
+        預設模板
+        保留原始 Markdown 格式，只添加來源標註
+        """
+        return f"{content}\n\n---\n📚 **資料來源**：{result.get('title', '知識庫')}"
 
     @staticmethod
     def is_content_complete(result: Dict) -> bool:
