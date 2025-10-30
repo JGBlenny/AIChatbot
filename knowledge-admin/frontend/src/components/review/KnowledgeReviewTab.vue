@@ -233,6 +233,7 @@
 
 <script>
 import axios from 'axios';
+import { API_ENDPOINTS } from '@/config/api';
 
 export default {
   name: 'KnowledgeReviewTab',
@@ -330,7 +331,7 @@ export default {
     async loadAICandidates() {
       this.loading = true;
       try {
-        const response = await axios.get('http://localhost:8100/api/v1/knowledge-candidates/pending', {
+        const response = await axios.get(API_ENDPOINTS.knowledgeCandidatesPending, {
           params: { limit: 100 }
         });
 
@@ -350,7 +351,7 @@ export default {
 
     async loadIntents() {
       try {
-        const response = await axios.get('http://localhost:8100/api/v1/intents', {
+        const response = await axios.get(API_ENDPOINTS.intents, {
           params: { enabled_only: true }
         });
         this.intents = response.data.intents;
@@ -361,7 +362,7 @@ export default {
 
     async loadAIStats() {
       try {
-        const response = await axios.get('http://localhost:8100/api/v1/knowledge-candidates/stats');
+        const response = await axios.get(API_ENDPOINTS.knowledgeCandidatesStats);
         this.aiStats = response.data;
         this.updateTotalCount();
       } catch (error) {
@@ -430,7 +431,7 @@ export default {
       }
 
       try {
-        await axios.put(`http://localhost:8100/api/v1/knowledge-candidates/${candidateId}/edit`, {
+        await axios.put(API_ENDPOINTS.knowledgeCandidateEdit(candidateId), {
           edited_question: form.question,
           edited_answer: form.answer,
           intent_ids: form.intent_ids,
@@ -468,7 +469,7 @@ export default {
 
       try {
         const response = await axios.post(
-          `http://localhost:8100/api/v1/knowledge-candidates/${candidate.id}/review`,
+          API_ENDPOINTS.knowledgeCandidateReview(candidate.id),
           {
             action: 'approve',
             reviewer_name: 'admin',
@@ -493,7 +494,7 @@ export default {
 
       try {
         await axios.post(
-          `http://localhost:8100/api/v1/knowledge-candidates/${candidate.id}/review`,
+          API_ENDPOINTS.knowledgeCandidateReview(candidate.id),
           {
             action: 'reject',
             reviewer_name: 'admin',

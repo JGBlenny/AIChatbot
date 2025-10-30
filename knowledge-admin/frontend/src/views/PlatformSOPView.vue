@@ -239,8 +239,9 @@
 import axios from 'axios';
 import InfoPanel from '@/components/InfoPanel.vue';
 import helpTexts from '@/config/help-texts.js';
+import { API_BASE_URL } from '@/config/api';
 
-const RAG_API = import.meta.env.VITE_RAG_API || 'http://localhost:8100';
+const RAG_API = API_BASE_URL;  // 使用統一的 API 配置
 
 export default {
   name: 'PlatformSOPView',

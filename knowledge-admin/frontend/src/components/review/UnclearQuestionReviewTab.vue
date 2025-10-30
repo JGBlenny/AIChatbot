@@ -132,6 +132,7 @@
 
 <script>
 import axios from 'axios';
+import { API_ENDPOINTS } from '@/config/api';
 
 export default {
   name: 'UnclearQuestionReviewTab',
@@ -205,7 +206,7 @@ export default {
 
       try {
         await axios.put(
-          `http://localhost:8100/api/v1/unclear-questions/${candidate.unclear_question_id}`,
+          API_ENDPOINTS.unclearQuestionById(candidate.unclear_question_id),
           { status: 'ignored' }
         );
 
