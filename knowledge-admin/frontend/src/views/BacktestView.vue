@@ -95,7 +95,7 @@
         <select v-model="backtestConfig.test_strategy">
           <option value="incremental">Incremental - 智能增量（新增+失敗+過時）</option>
           <option value="full">Full - 完整測試（所有已批准）</option>
-          <option value="failed_only">Failed Only - 僅失敗案例</option>
+          <option value="failed_only">Failed + Untested - 失敗 + 未測試</option>
         </select>
       </div>
 
@@ -715,7 +715,7 @@ export default {
       const strategyText = {
         'incremental': 'Incremental - 智能增量（新增+失敗+過時）',
         'full': 'Full - 完整測試（所有已批准）',
-        'failed_only': 'Failed Only - 僅失敗案例'
+        'failed_only': 'Failed + Untested - 失敗 + 未測試'
       };
 
       if (!confirm(`確定要執行回測嗎？\n模式：${modeText[this.backtestConfig.quality_mode]}\n策略：${strategyText[this.backtestConfig.test_strategy]}`)) {

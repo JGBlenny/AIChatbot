@@ -156,8 +156,9 @@
 <script>
 import axios from 'axios';
 import VendorSOPManager from '../components/VendorSOPManager.vue';
+import { API_BASE_URL } from '@/config/api';
 
-const RAG_API = '/rag-api/v1';
+const RAG_API = `${API_BASE_URL}/rag-api/v1`;
 
 export default {
   name: 'VendorConfigView',

@@ -135,9 +135,9 @@ class BacktestFramework:
                 cur.execute(query, (incremental_limit,))
 
             elif strategy == 'failed_only':
-                # 僅失敗測試：平均分數 < 0.6 或失敗率 > 50%
+                # 失敗 + 未測試：平均分數 < 0.6 或失敗率 > 50% 或從未測試過
                 failed_limit = limit or int(os.getenv('BACKTEST_FAILED_LIMIT', '50'))
-                print(f"   策略: 僅失敗測試（avg_score < 0.6 或失敗率 > 50%）")
+                print(f"   策略: 失敗 + 未測試（avg_score < 0.6 或失敗率 > 50% 或未測試）")
                 print(f"   限制: {failed_limit} 個")
 
                 query = """
@@ -160,9 +160,9 @@ class BacktestFramework:
                     FROM test_scenarios ts
                     WHERE ts.is_active = TRUE
                       AND ts.status = 'approved'
-                      AND ts.total_runs > 0  -- 必須已測試過
                       AND (
-                        ts.avg_score < 0.6  -- 低分測試
+                        ts.total_runs = 0  -- 未測試過
+                        OR ts.avg_score < 0.6  -- 低分測試
                         OR (ts.fail_count::float / ts.total_runs) > 0.5  -- 失敗率 > 50%%
                       )
                     ORDER BY fail_rate DESC, COALESCE(ts.avg_score, 0) ASC, ts.priority DESC

@@ -58,12 +58,12 @@ PROJECT_ROOT=/path/to/project \
 python3 scripts/knowledge_extraction/backtest_framework.py
 ```
 
-### 3. Failed Only（僅失敗測試）
+### 3. Failed + Untested（失敗 + 未測試）
 
-**用途：** 快速驗證修復效果
+**用途：** 快速驗證修復效果並涵蓋未測試案例
 
 **選擇邏輯：**
-- 必須已測試過（total_runs > 0）
+- 從未測試過（total_runs = 0）**或**
 - 平均分數 < 0.6 **或** 失敗率 > 50%
 - 按失敗率降序、分數升序排序
 
@@ -73,6 +73,7 @@ python3 scripts/knowledge_extraction/backtest_framework.py
 - ✅ 修復 bug 後快速驗證
 - ✅ 知識庫優化後驗證效果
 - ✅ 意圖調整後測試影響
+- ✅ 涵蓋新增但尚未測試的案例
 
 **範例：**
 ```bash
@@ -114,7 +115,7 @@ python3 scripts/knowledge_extraction/backtest_framework.py
 # 1. 每日早上 - 增量測試（快速）
 BACKTEST_SELECTION_STRATEGY=incremental python3 scripts/knowledge_extraction/backtest_framework.py
 
-# 2. 修復失敗案例後 - 僅失敗測試驗證
+# 2. 修復失敗案例後 - 失敗 + 未測試驗證
 BACKTEST_SELECTION_STRATEGY=failed_only python3 scripts/knowledge_extraction/backtest_framework.py
 
 # 3. 每週五 - 完整測試（全面）
@@ -175,11 +176,11 @@ jobs:
 - **失敗測試**：之前失敗過，需要持續關注
 - **長期未測試**：可能因需求變更需要重新測試
 
-### 失敗測試輸出範例
+### 失敗 + 未測試輸出範例
 
 ```
 📖 從資料庫載入測試情境（策略: failed_only）...
-   策略: 僅失敗測試（avg_score < 0.6 或失敗率 > 50%）
+   策略: 失敗 + 未測試（avg_score < 0.6 或失敗率 > 50% 或未測試）
    限制: 50 個
    ✅ 載入 12 個測試情境
 ```

@@ -145,8 +145,9 @@
 <script>
 import axios from 'axios';
 import { formatAIResponse } from '@/utils/textFormatter';
+import { API_BASE_URL } from '@/config/api';
 
-const RAG_API = '/rag-api';
+const RAG_API = `${API_BASE_URL}/rag-api`;
 
 export default {
   name: 'ChatTestView',

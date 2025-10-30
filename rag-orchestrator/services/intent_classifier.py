@@ -108,11 +108,10 @@ class IntentClassifier:
                     confidence_threshold,
                     api_required,
                     api_endpoint,
-                    api_action,
-                    priority
+                    api_action
                 FROM intents
                 WHERE is_enabled = true
-                ORDER BY priority DESC, name
+                ORDER BY name
             """)
 
             rows = cursor.fetchall()
@@ -339,13 +338,13 @@ class IntentClassifier:
 
             # 解析次要意圖（新格式：對象數組，每個包含 name 和 confidence）
             secondary_intents_objs = result.get('secondary_intents', [])
-            secondary_intent_names = [s['name'] for s in secondary_intents_objs]
 
             keywords = result['keywords']
             reasoning = result.get('reasoning', '')
 
-            # 如果是 unclear，直接返回
-            if primary_intent_name == "unclear" or primary_confidence < self.default_config['confidence_threshold']:
+            # 如果 AI 返回 unclear，直接返回
+            if primary_intent_name == "unclear":
+                print(f"⚠️ AI classified as unclear: {question[:50]}...")
                 return {
                     "intent_name": "unclear",
                     "intent_type": "unclear",
@@ -363,6 +362,7 @@ class IntentClassifier:
             intent_config = next((i for i in self.intents if i['name'] == primary_intent_name), None)
 
             if not intent_config:
+                print(f"⚠️ Intent config not found: {primary_intent_name}")
                 return {
                     "intent_name": "unclear",
                     "intent_type": "unclear",
@@ -376,8 +376,87 @@ class IntentClassifier:
                     "intent_ids": []
                 }
 
-            # 收集所有相關意圖（主要 + 次要）
-            all_intent_names = [primary_intent_name] + secondary_intent_names
+            # 【方案 B 改進 1】：使用意圖獨立閾值檢查主要意圖
+            primary_threshold = intent_config.get('confidence_threshold', self.default_config['confidence_threshold'])
+            primary_passed = primary_confidence >= primary_threshold
+
+            if not primary_passed:
+                print(f"⚠️ Primary intent failed threshold: {primary_intent_name} "
+                      f"(confidence={primary_confidence:.3f} < threshold={primary_threshold:.3f})")
+
+            # 【方案 B 改進 2+3】：過濾次要意圖 + 嘗試降級機制
+            valid_secondary_intents = []
+            for sec_intent in secondary_intents_objs:
+                sec_config = next((i for i in self.intents if i['name'] == sec_intent['name']), None)
+                if not sec_config:
+                    continue
+
+                sec_threshold = sec_config.get('confidence_threshold', self.default_config['confidence_threshold'])
+                sec_confidence = sec_intent['confidence']
+
+                # 只保留通過閾值的次要意圖
+                if sec_confidence >= sec_threshold:
+                    valid_secondary_intents.append({
+                        'name': sec_intent['name'],
+                        'confidence': sec_confidence,
+                        'threshold': sec_threshold,
+                        'config': sec_config
+                    })
+                else:
+                    print(f"   ❌ Filtered secondary intent: {sec_intent['name']} "
+                          f"(confidence={sec_confidence:.3f} < threshold={sec_threshold:.3f})")
+
+            # 【方案 B 改進 3】：次要意圖降級機制
+            # 如果主意圖未通過閾值，但有次要意圖通過，則將最高分的次要意圖升級為主意圖
+            if not primary_passed and valid_secondary_intents:
+                # 按信心度排序，取最高分
+                best_secondary = max(valid_secondary_intents, key=lambda x: x['confidence'])
+                print(f"✅ Promoting secondary to primary: {best_secondary['name']} "
+                      f"(confidence={best_secondary['confidence']:.3f} >= threshold={best_secondary['threshold']:.3f})")
+
+                # 將原主意圖降為次要（如果它還有一定信心度）
+                original_primary_valid = primary_confidence >= (primary_threshold * 0.8)  # 放寬 20% 作為次要意圖
+                if original_primary_valid:
+                    print(f"   → Demoting original primary to secondary: {primary_intent_name} "
+                          f"(confidence={primary_confidence:.3f})")
+
+                # 重新分配
+                promoted_intent_config = best_secondary['config']
+                valid_secondary_intents.remove(best_secondary)
+
+                # 如果原主意圖還有效，加回次要意圖列表
+                if original_primary_valid:
+                    valid_secondary_intents.insert(0, {
+                        'name': primary_intent_name,
+                        'confidence': primary_confidence,
+                        'threshold': primary_threshold,
+                        'config': intent_config
+                    })
+
+                # 更新主意圖
+                primary_intent_name = best_secondary['name']
+                primary_confidence = best_secondary['confidence']
+                intent_config = promoted_intent_config
+
+            # 如果主意圖仍未通過閾值且沒有有效次要意圖，返回 unclear
+            elif not primary_passed:
+                print(f"❌ No valid intents found → unclear")
+                return {
+                    "intent_name": "unclear",
+                    "intent_type": "unclear",
+                    "confidence": primary_confidence,
+                    "keywords": keywords,
+                    "reasoning": f"主要意圖信心度不足 ({primary_confidence:.3f} < {primary_threshold:.3f})",
+                    "requires_api": False,
+                    "all_intents": [],
+                    "all_intents_with_confidence": [],
+                    "secondary_intents": [],
+                    "intent_ids": []
+                }
+
+            # 收集所有相關意圖（主要 + 已過濾的次要）
+            valid_secondary_names = [s['name'] for s in valid_secondary_intents]
+            all_intent_names = [primary_intent_name] + valid_secondary_names
             all_intent_ids = []
 
             # 構建完整的意圖信心度列表（包含主意圖和副意圖）
@@ -389,8 +468,8 @@ class IntentClassifier:
                 }
             ]
 
-            # 添加次要意圖及其信心度
-            for sec_intent in secondary_intents_objs:
+            # 添加已過濾的次要意圖及其信心度
+            for sec_intent in valid_secondary_intents:
                 all_intents_with_confidence.append({
                     "name": sec_intent['name'],
                     "confidence": sec_intent['confidence'],
@@ -427,9 +506,9 @@ class IntentClassifier:
                 "keywords": keywords,
                 "reasoning": reasoning,
                 "requires_api": intent_config.get('api_required', False),
-                # 多 Intent 支援（向後兼容）
+                # 多 Intent 支援（向後兼容）- 現在只包含已過濾的次要意圖
                 "all_intents": all_intent_names,
-                "secondary_intents": secondary_intent_names,
+                "secondary_intents": valid_secondary_names,
                 "intent_ids": all_intent_ids,
                 # 新增：完整的意圖信心度資訊
                 "all_intents_with_confidence": all_intents_with_confidence

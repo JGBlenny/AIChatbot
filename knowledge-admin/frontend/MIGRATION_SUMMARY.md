@@ -1,6 +1,6 @@
 # 前端 API URL 遷移總結
 
-## ✅ 已完成的文件 (12個 - 100% 完成)
+## ✅ 已完成的文件 (16個 - 100% 完成)
 
 ### 第一批 (已提交)
 1. ✅ `src/config/api.js` (新建 - 統一 API 配置)
@@ -10,13 +10,19 @@
 5. ✅ `src/components/review/IntentReviewTab.vue`
 6. ✅ `src/views/PlatformSOPView.vue`
 
-### 第二批 (本次提交)
+### 第二批 (已提交)
 7. ✅ `src/views/PlatformSOPEditView.vue`
 8. ✅ `src/views/BusinessTypesConfigView.vue`
 9. ✅ `src/views/AIKnowledgeReviewView.vue` (5個引用)
 10. ✅ `src/views/KnowledgeReclassifyView.vue`
 11. ✅ `src/views/SuggestedIntentsView.vue`
 12. ✅ `src/views/CacheManagementView.vue` (3個引用)
+
+### 第三批 (補充遺漏 - 2025-01-31)
+13. ✅ `src/views/IntentsView.vue`
+14. ✅ `src/views/VendorManagementView.vue`
+15. ✅ `src/views/VendorConfigView.vue`
+16. ✅ `src/views/ChatTestView.vue`
 
 ## 📝 快速修復腳本
 
@@ -54,8 +60,8 @@ grep -r "localhost:8100\|localhost:8000" dist/
 
 ## 📊 遷移狀態
 
-- ✅ 已完成: 12/12 (100%)
-- ⚠️ 待處理: 0/12 (0%)
+- ✅ 已完成: 16/16 (100%)
+- ⚠️ 待處理: 0/16 (0%)
 - 🎯 目標: 100% ✅ **已完成**
 
 ## 🎉 遷移完成總結
@@ -65,7 +71,17 @@ grep -r "localhost:8100\|localhost:8000" dist/
 - **開發環境**: 自動使用 localhost 或空字符串（通過 Vite proxy）
 - **生產環境**: 使用相對路徑（通過 Nginx proxy）
 
-**總共處理的 localhost 引用數**: 約 18 個
-**涉及的文件數**: 12 個 (6 components + 6 views)
+**總共處理的 localhost 引用數**: 約 22 個
+**涉及的文件數**: 16 個 (5 components + 11 views)
 
 現在系統可以順利部署到 EC2 生產環境，無需擔心硬編碼 URL 問題。
+
+### ⚠️ 2025-01-31 補充修復
+
+在用戶訪問 `/intents` 頁面時發現 4 個文件被遺漏：
+- `IntentsView.vue` - 意圖管理頁面
+- `VendorManagementView.vue` - 業者管理頁面
+- `VendorConfigView.vue` - 業者配置頁面
+- `ChatTestView.vue` - 對話測試頁面
+
+已全部修復並更新此文檔。

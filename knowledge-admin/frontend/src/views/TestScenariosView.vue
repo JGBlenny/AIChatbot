@@ -14,12 +14,12 @@
     <!-- 篩選區域 -->
     <div class="filter-section">
       <div class="filter-group">
-        <label>難度：</label>
-        <select v-model="filters.difficulty" @change="loadScenarios">
-          <option value="">全部難度</option>
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
+        <label>測試結果：</label>
+        <select v-model="filters.testResult" @change="loadScenarios">
+          <option value="">全部</option>
+          <option value="passed">✅ 通過</option>
+          <option value="failed">❌ 未通過</option>
+          <option value="not_tested">⚪ 未測驗</option>
         </select>
       </div>
     </div>
@@ -323,7 +323,7 @@ export default {
       knowledgeStatus: null,   // 知識候選狀態
 
       filters: {
-        difficulty: '',
+        testResult: '',  // 測試結果篩選：'' = 全部, 'passed' = 通過, 'failed' = 未通過, 'not_tested' = 未測驗
         status: 'approved'  // 固定只顯示已批准的測試情境
       },
 
@@ -383,7 +383,7 @@ export default {
           status: this.filters.status  // 固定傳遞 status 參數
         };
 
-        if (this.filters.difficulty) params.difficulty = this.filters.difficulty;
+        if (this.filters.testResult) params.last_result = this.filters.testResult;
 
         const response = await axios.get('/api/test/scenarios', { params });
         this.scenarios = response.data.scenarios;

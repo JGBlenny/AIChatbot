@@ -20,7 +20,6 @@ class IntentCreate(BaseModel):
     api_required: bool = Field(False, description="是否需要 API")
     api_endpoint: Optional[str] = Field(None, description="API 端點")
     api_action: Optional[str] = Field(None, description="API 動作")
-    priority: int = Field(0, description="優先級")
     created_by: str = Field("admin", description="建立人員")
 
 
@@ -31,7 +30,6 @@ class IntentUpdate(BaseModel):
     description: Optional[str] = Field(None, description="意圖描述")
     keywords: Optional[List[str]] = Field(None, description="關鍵字列表")
     confidence_threshold: Optional[float] = Field(None, ge=0.0, le=1.0, description="信心度閾值")
-    priority: Optional[int] = Field(None, description="優先級")
     api_required: Optional[bool] = Field(None, description="是否需要 API")
     api_endpoint: Optional[str] = Field(None, description="API 端點")
     api_action: Optional[str] = Field(None, description="API 動作")
@@ -50,7 +48,7 @@ async def get_all_intents(
     req: Request,
     enabled_only: bool = False,
     intent_type: Optional[str] = None,
-    order_by: str = 'priority'
+    order_by: str = 'name'
 ):
     """
     取得所有意圖
@@ -58,7 +56,7 @@ async def get_all_intents(
     Args:
         enabled_only: 只取得啟用的意圖
         intent_type: 過濾意圖類型（knowledge/data_query/action/hybrid）
-        order_by: 排序方式（priority/name/usage_count）
+        order_by: 排序方式（name/usage_count）
     """
     try:
         async with req.app.state.db_pool.acquire() as conn:
@@ -77,11 +75,10 @@ async def get_all_intents(
 
             # 排序
             order_mapping = {
-                'priority': 'priority DESC, name',
                 'name': 'name',
                 'usage_count': 'usage_count DESC, name'
             }
-            query += f" ORDER BY {order_mapping.get(order_by, 'priority DESC, name')}"
+            query += f" ORDER BY {order_mapping.get(order_by, 'name')}"
 
             rows = await conn.fetch(query, *params)
 
@@ -212,10 +209,10 @@ async def create_intent(request: IntentCreate, req: Request):
             intent_id = await conn.fetchval("""
                 INSERT INTO intents (
                     name, type, description, keywords,
-                    confidence_threshold, is_enabled, priority,
+                    confidence_threshold, is_enabled,
                     api_required, api_endpoint, api_action,
                     created_by
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 RETURNING id
             """,
                 request.name,
@@ -224,7 +221,6 @@ async def create_intent(request: IntentCreate, req: Request):
                 request.keywords,
                 request.confidence_threshold,
                 True,  # 預設啟用
-                request.priority,
                 request.api_required,
                 request.api_endpoint,
                 request.api_action,
@@ -299,11 +295,6 @@ async def update_intent(
                 param_count += 1
                 updates.append(f"confidence_threshold = ${param_count}")
                 params.append(request.confidence_threshold)
-
-            if request.priority is not None:
-                param_count += 1
-                updates.append(f"priority = ${param_count}")
-                params.append(request.priority)
 
             if request.api_required is not None:
                 param_count += 1

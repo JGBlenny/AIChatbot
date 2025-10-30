@@ -51,7 +51,6 @@
             <th width="100">類型</th>
             <th>描述</th>
             <th width="80">閾值</th>
-            <th width="80">優先級</th>
             <th width="80">使用次數</th>
             <th width="60">狀態</th>
             <th width="200">操作</th>
@@ -64,7 +63,6 @@
             <td><span class="badge" :class="'type-' + intent.type">{{ getTypeLabel(intent.type) }}</span></td>
             <td>{{ intent.description }}</td>
             <td>{{ intent.confidence_threshold }}</td>
-            <td>{{ intent.priority }}</td>
             <td>{{ intent.usage_count || 0 }}</td>
             <td>
               <span class="status" :class="intent.is_enabled ? 'enabled' : 'disabled'">
@@ -76,7 +74,6 @@
               <button @click="toggleIntent(intent)" class="btn-sm" :class="intent.is_enabled ? 'btn-delete' : 'btn-success'">
                 {{ intent.is_enabled ? '停用' : '啟用' }}
               </button>
-              <button @click="deleteIntent(intent.id)" class="btn-delete btn-sm">刪除</button>
             </td>
           </tr>
         </tbody>
@@ -122,19 +119,12 @@
             <input v-model="keywordsString" placeholder="退租, 解約, 搬離" />
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>優先級</label>
-              <input v-model.number="formData.priority" type="number" />
-            </div>
-
-            <div class="form-group">
-              <label>是否需要 API</label>
-              <select v-model="formData.api_required">
-                <option :value="false">否</option>
-                <option :value="true">是</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label>是否需要 API</label>
+            <select v-model="formData.api_required">
+              <option :value="false">否</option>
+              <option :value="true">是</option>
+            </select>
           </div>
 
           <div v-if="formData.api_required" class="form-row">
@@ -146,31 +136,6 @@
             <div class="form-group">
               <label>API 動作</label>
               <input v-model="formData.api_action" placeholder="get_contract" />
-            </div>
-          </div>
-
-          <!-- 重新分類選項（僅編輯模式） -->
-          <div v-if="editingItem" class="reclassify-section">
-            <h3>🔄 知識庫重新分類</h3>
-            <p class="help-text">更新意圖後，可以選擇重新分類此意圖下的知識</p>
-
-            <div class="form-group">
-              <label>
-                <input type="checkbox" v-model="formData.reclassify_knowledge" />
-                更新後重新分類知識庫
-              </label>
-            </div>
-
-            <div v-if="formData.reclassify_knowledge" class="form-group">
-              <label>重新分類模式</label>
-              <select v-model="formData.reclassify_mode">
-                <option value="none">不重新分類</option>
-                <option value="low_confidence">只重新分類低信心度 (&lt;0.7) 的知識</option>
-                <option value="all">重新分類此意圖的所有知識</option>
-              </select>
-              <small class="help-text">
-                ⚠️ 「全部」模式會消耗較多 OpenAI API 額度
-              </small>
             </div>
           </div>
 
@@ -190,8 +155,9 @@
 import axios from 'axios';
 import InfoPanel from '@/components/InfoPanel.vue';
 import helpTexts from '@/config/help-texts.js';
+import { API_BASE_URL } from '@/config/api';
 
-const RAG_API = '/rag-api/v1';
+const RAG_API = `${API_BASE_URL}/rag-api/v1`;
 
 export default {
   name: 'IntentsView',
@@ -214,7 +180,6 @@ export default {
         description: '',
         keywords: [],
         confidence_threshold: 0.80,
-        priority: 0,
         api_required: false,
         api_endpoint: '',
         api_action: '',
@@ -291,13 +256,10 @@ export default {
         description: item.description || '',
         keywords: item.keywords || [],
         confidence_threshold: item.confidence_threshold,
-        priority: item.priority,
         api_required: item.api_required,
         api_endpoint: item.api_endpoint || '',
         api_action: item.api_action || '',
-        updated_by: 'admin',
-        reclassify_knowledge: false,
-        reclassify_mode: 'none'
+        updated_by: 'admin'
       };
       this.keywordsString = (item.keywords || []).join(', ');
       this.showModal = true;
@@ -315,19 +277,7 @@ export default {
         if (this.editingItem) {
           const response = await axios.put(`${RAG_API}/intents/${this.editingItem.id}`, this.formData);
 
-          let message = '✅ 意圖已更新！';
-
-          // 如果有重新分類結果，顯示詳細信息
-          if (response.data.reclassify_result) {
-            const result = response.data.reclassify_result;
-            if (result.error) {
-              message += `\n\n⚠️ 重新分類失敗: ${result.error}`;
-            } else {
-              message += `\n\n📊 重新分類完成:\n處理: ${result.processed} 筆\n成功: ${result.success} 筆`;
-            }
-          }
-
-          alert(message);
+          alert('✅ 意圖已更新！');
         } else {
           await axios.post(`${RAG_API}/intents`, this.formData);
           alert('✅ 意圖已新增！');
@@ -354,19 +304,6 @@ export default {
         this.loadStats();
       } catch (error) {
         alert('操作失敗：' + (error.response?.data?.detail || error.message));
-      }
-    },
-
-    async deleteIntent(id) {
-      if (!confirm('確定要刪除這個意圖嗎？（軟刪除）')) return;
-
-      try {
-        await axios.delete(`${RAG_API}/intents/${id}`);
-        alert('✅ 已刪除');
-        this.loadIntents();
-        this.loadStats();
-      } catch (error) {
-        alert('刪除失敗：' + (error.response?.data?.detail || error.message));
       }
     },
 
@@ -437,40 +374,4 @@ export default {
 .badge.type-data_query { background: #E6A23C; color: white; }
 .badge.type-action { background: #F56C6C; color: white; }
 .badge.type-hybrid { background: #67C23A; color: white; }
-
-/* 重新分類區塊 */
-.reclassify-section {
-  margin-top: 30px;
-  padding: 20px;
-  background: #f0f8ff;
-  border-radius: 8px;
-  border-left: 4px solid #409EFF;
-}
-
-.reclassify-section h3 {
-  margin: 0 0 10px 0;
-  font-size: 16px;
-  color: #409EFF;
-}
-
-.help-text {
-  font-size: 13px;
-  color: #666;
-  margin: 5px 0;
-}
-
-.reclassify-section .form-group {
-  margin-top: 15px;
-}
-
-.reclassify-section label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.reclassify-section input[type="checkbox"] {
-  width: auto;
-  margin: 0;
-}
 </style>

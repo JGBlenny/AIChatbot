@@ -118,7 +118,7 @@ async def list_pending_scenarios():
 @router.get("/scenarios")
 async def list_test_scenarios(
     status: Optional[str] = Query(None, description="篩選狀態"),
-    difficulty: Optional[str] = Query(None, description="篩選難度"),
+    last_result: Optional[str] = Query(None, description="篩選測試結果：passed, failed, not_tested"),
     is_active: Optional[bool] = Query(None, description="篩選活躍狀態"),
     search: Optional[str] = Query(None, description="搜尋問題文字"),
     limit: int = Query(50, ge=1, le=200),
@@ -146,9 +146,12 @@ async def list_test_scenarios(
             query += " AND ts.status = %s"
             params.append(status)
 
-        if difficulty:
-            query += " AND ts.difficulty = %s"
-            params.append(difficulty)
+        if last_result:
+            if last_result == "not_tested":
+                query += " AND ts.last_result IS NULL"
+            else:
+                query += " AND ts.last_result = %s"
+                params.append(last_result)
 
         if is_active is not None:
             query += " AND ts.is_active = %s"
@@ -183,9 +186,12 @@ async def list_test_scenarios(
         if status:
             count_query += " AND ts.status = %s"
             count_params.append(status)
-        if difficulty:
-            count_query += " AND ts.difficulty = %s"
-            count_params.append(difficulty)
+        if last_result:
+            if last_result == "not_tested":
+                count_query += " AND ts.last_result IS NULL"
+            else:
+                count_query += " AND ts.last_result = %s"
+                count_params.append(last_result)
         if is_active is not None:
             count_query += " AND ts.is_active = %s"
             count_params.append(is_active)
