@@ -331,8 +331,9 @@
 import axios from 'axios';
 import InfoPanel from '@/components/InfoPanel.vue';
 import helpTexts from '@/config/help-texts.js';
+import { API_BASE_URL } from '@/config/api';
 
-const RAG_API = 'http://localhost:8100/api/v1';
+const RAG_API = `${API_BASE_URL}/rag-api/v1`;
 
 export default {
   name: 'KnowledgeReclassifyView',

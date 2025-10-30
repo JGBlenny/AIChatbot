@@ -146,6 +146,7 @@
 
 <script>
 import axios from 'axios';
+import { API_ENDPOINTS } from '@/config/api';
 
 export default {
   name: 'AIKnowledgeReviewView',
@@ -179,7 +180,7 @@ export default {
   methods: {
     async loadStats() {
       try {
-        const response = await axios.get('http://localhost:8100/api/v1/knowledge-candidates/stats');
+        const response = await axios.get(API_ENDPOINTS.knowledgeCandidatesStats);
         this.stats = response.data;
       } catch (error) {
         console.error('載入統計失敗:', error);
@@ -189,7 +190,7 @@ export default {
     async loadCandidates() {
       this.loading = true;
       try {
-        const response = await axios.get('http://localhost:8100/api/v1/knowledge-candidates/pending', {
+        const response = await axios.get(API_ENDPOINTS.knowledgeCandidatesPending, {
           params: { limit: 50 }
         });
         this.candidates = response.data.candidates;
@@ -230,7 +231,7 @@ export default {
       }
 
       try {
-        await axios.put(`http://localhost:8100/api/v1/knowledge-candidates/${candidateId}/edit`, {
+        await axios.put(API_ENDPOINTS.knowledgeCandidateEdit(candidateId), {
           edited_question: form.question,
           edited_answer: form.answer,
           edit_summary: form.edit_summary
@@ -255,7 +256,7 @@ export default {
 
       try {
         const response = await axios.post(
-          `http://localhost:8100/api/v1/knowledge-candidates/${candidate.id}/review`,
+          API_ENDPOINTS.knowledgeCandidateReview(candidate.id),
           {
             action: 'approve',
             reviewer_name: 'admin',
@@ -290,7 +291,7 @@ export default {
 
       try {
         await axios.post(
-          `http://localhost:8100/api/v1/knowledge-candidates/${candidateId}/review`,
+          API_ENDPOINTS.knowledgeCandidateReview(candidateId),
           {
             action: 'reject',
             reviewer_name: 'admin',

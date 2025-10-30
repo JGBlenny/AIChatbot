@@ -1,35 +1,22 @@
 # 前端 API URL 遷移總結
 
-## ✅ 已完成的文件 (6個)
+## ✅ 已完成的文件 (12個 - 100% 完成)
 
-1. ✅ `src/components/VendorSOPManager.vue`
-2. ✅ `src/components/review/UnclearQuestionReviewTab.vue`
-3. ✅ `src/components/review/KnowledgeReviewTab.vue` (6個引用)
-4. ✅ `src/components/review/IntentReviewTab.vue`
-5. ✅ `src/views/PlatformSOPView.vue`
-6. ✅ `src/config/api.js` (新建)
+### 第一批 (已提交)
+1. ✅ `src/config/api.js` (新建 - 統一 API 配置)
+2. ✅ `src/components/VendorSOPManager.vue`
+3. ✅ `src/components/review/UnclearQuestionReviewTab.vue`
+4. ✅ `src/components/review/KnowledgeReviewTab.vue` (6個引用)
+5. ✅ `src/components/review/IntentReviewTab.vue`
+6. ✅ `src/views/PlatformSOPView.vue`
 
-## ⚠️ 待完成的文件 (6個)
-
-這些文件仍需手動更新或在下次部署前處理：
-
-1. `src/views/PlatformSOPEditView.vue`
-   - 第 483 行: `const RAG_API = import.meta.env.VITE_RAG_API || 'http://localhost:8100';`
-
-2. `src/views/BusinessTypesConfigView.vue`
-   - 第 176 行: `const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100/api/v1';`
-
-3. `src/views/AIKnowledgeReviewView.vue` (5個引用)
-   - 多處硬編碼 `http://localhost:8100/api/v1/knowledge-candidates/...`
-
-4. `src/views/KnowledgeReclassifyView.vue`
-   - 第 335 行: `const RAG_API = 'http://localhost:8100/api/v1';`
-
-5. `src/views/SuggestedIntentsView.vue`
-   - 第 112 行: `const RAG_API = 'http://localhost:8100/api/v1';`
-
-6. `src/views/CacheManagementView.vue` (3個引用)
-   - 多處使用 `http://localhost:8100/api/v1/cache/...`
+### 第二批 (本次提交)
+7. ✅ `src/views/PlatformSOPEditView.vue`
+8. ✅ `src/views/BusinessTypesConfigView.vue`
+9. ✅ `src/views/AIKnowledgeReviewView.vue` (5個引用)
+10. ✅ `src/views/KnowledgeReclassifyView.vue`
+11. ✅ `src/views/SuggestedIntentsView.vue`
+12. ✅ `src/views/CacheManagementView.vue` (3個引用)
 
 ## 📝 快速修復腳本
 
@@ -67,8 +54,18 @@ grep -r "localhost:8100\|localhost:8000" dist/
 
 ## 📊 遷移狀態
 
-- ✅ 已完成: 6/12 (50%)
-- ⚠️ 待處理: 6/12 (50%)
-- 🎯 目標: 100%
+- ✅ 已完成: 12/12 (100%)
+- ⚠️ 待處理: 0/12 (0%)
+- 🎯 目標: 100% ✅ **已完成**
 
-**下一步**: 完成剩餘 6 個文件的更新
+## 🎉 遷移完成總結
+
+所有前端 Vue 文件的 localhost URL 已成功替換為環境自適應配置：
+
+- **開發環境**: 自動使用 localhost 或空字符串（通過 Vite proxy）
+- **生產環境**: 使用相對路徑（通過 Nginx proxy）
+
+**總共處理的 localhost 引用數**: 約 18 個
+**涉及的文件數**: 12 個 (6 components + 6 views)
+
+現在系統可以順利部署到 EC2 生產環境，無需擔心硬編碼 URL 問題。

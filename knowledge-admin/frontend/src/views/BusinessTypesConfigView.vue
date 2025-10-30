@@ -172,8 +172,9 @@
 import axios from 'axios';
 import InfoPanel from '@/components/InfoPanel.vue';
 import helpTexts from '@/config/help-texts.js';
+import { API_BASE_URL } from '@/config/api';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100/api/v1';
+const API_BASE = `${API_BASE_URL}/rag-api/v1`;  // 使用統一的 API 配置
 
 export default {
   name: 'BusinessTypesConfigView',

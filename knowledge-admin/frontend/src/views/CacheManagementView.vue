@@ -121,6 +121,10 @@
 </template>
 
 <script>
+import { API_BASE_URL } from '@/config/api';
+
+const RAG_API = `${API_BASE_URL}/rag-api/v1`;
+
 export default {
   name: 'CacheManagementView',
   data() {
@@ -172,7 +176,7 @@ export default {
     async fetchCacheStats() {
       this.loading = true;
       try {
-        const response = await fetch('http://localhost:8100/api/v1/cache/stats');
+        const response = await fetch(`${RAG_API}/cache/stats`);
         if (response.ok) {
           this.stats = await response.json();
         } else {
@@ -187,7 +191,7 @@ export default {
     },
     async fetchCacheHealth() {
       try {
-        const response = await fetch('http://localhost:8100/api/v1/cache/health');
+        const response = await fetch(`${RAG_API}/cache/health`);
         if (response.ok) {
           this.health = await response.json();
         } else {
@@ -206,7 +210,7 @@ export default {
     async clearAllCache() {
       this.loading = true;
       try {
-        const response = await fetch('http://localhost:8100/api/v1/cache/clear', {
+        const response = await fetch(`${RAG_API}/cache/clear`, {
           method: 'DELETE'
         });
         if (response.ok) {
