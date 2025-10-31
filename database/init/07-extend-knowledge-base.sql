@@ -92,20 +92,20 @@ INSERT INTO knowledge_base (question_summary, answer, intent_id, is_template, te
 VALUES
     (
         '客服專線是多少',
-        '我們的客服專線是 {{service_hotline}}，服務時間為 {{service_hours}}。如有緊急維修需求，我們承諾 {{emergency_repair_hours}} 內回應。',
+        '我們的客服專線是 {{service_hotline}}，服務時間為 {{service_hours}}。如有緊急維修需求，我們承諾 {{repair_response_time}} 小時內回應。',
         (SELECT id FROM intents WHERE name = '報修問題' LIMIT 1),
         true,
-        '["service_hotline", "service_hours", "emergency_repair_hours"]',
+        '["service_hotline", "service_hours", "repair_response_time"]',
         'global',
         1,
         'system'
     ),
     (
         '如何報修',
-        '您可以透過以下方式報修：\n1. 撥打客服專線：{{service_hotline}}\n2. LINE 官方帳號：{{line_id}}\n3. 前往公司辦公室：{{office_address}}\n\n緊急報修我們會在 {{emergency_repair_hours}} 內處理。',
+        '您可以透過以下方式報修：\n1. 撥打客服專線：{{service_hotline}}\n2. LINE 官方帳號：{{line_id}}\n3. 前往公司辦公室：{{office_address}}\n\n緊急報修我們會在 {{repair_response_time}} 小時內處理。',
         (SELECT id FROM intents WHERE name = '報修問題' LIMIT 1),
         true,
-        '["service_hotline", "line_id", "office_address", "emergency_repair_hours"]',
+        '["service_hotline", "line_id", "office_address", "repair_response_time"]',
         'global',
         1,
         'system'

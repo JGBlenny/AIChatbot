@@ -94,7 +94,7 @@ INSERT INTO vendor_configs (vendor_id, category, param_key, param_value, data_ty
 VALUES
     (1, 'service', 'service_hotline', '02-2345-6789', 'string', '客服專線', '24小時客服專線', NULL),
     (1, 'service', 'service_hours', '週一至週日 09:00-21:00', 'string', '服務時間', '客服服務時間', NULL),
-    (1, 'service', 'emergency_repair_hours', '24小時', 'string', '緊急報修時效', '緊急報修處理時效', NULL);
+    (1, 'service', 'repair_response_time', '24', 'number', '報修回應時間', '報修後的預期回應時間', '小時');
 
 -- 聯絡資訊類別
 INSERT INTO vendor_configs (vendor_id, category, param_key, param_value, data_type, display_name, description, unit)
@@ -123,7 +123,7 @@ INSERT INTO vendor_configs (vendor_id, category, param_key, param_value, data_ty
 VALUES
     (2, 'service', 'service_hotline', '02-8765-4321', 'string', '客服專線', '客服專線', NULL),
     (2, 'service', 'service_hours', '週一至週五 09:00-18:00', 'string', '服務時間', '客服服務時間', NULL),
-    (2, 'service', 'emergency_repair_hours', '2小時內回應', 'string', '緊急報修時效', '緊急報修處理時效', NULL);
+    (2, 'service', 'repair_response_time', '2', 'number', '報修回應時間', '報修後的預期回應時間', '小時');
 
 -- 聯絡資訊類別
 INSERT INTO vendor_configs (vendor_id, category, param_key, param_value, data_type, display_name, description, unit)

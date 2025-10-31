@@ -492,6 +492,97 @@ class LLMAnswerOptimizer:
             "processing_time_ms": processing_time
         }
 
+    def _replace_params_deterministic(
+        self,
+        content: str,
+        vendor_params: Dict,
+        vendor_name: str
+    ) -> str:
+        """
+        階段 1：確定性參數替換（不使用 LLM）
+
+        使用正則表達式和字符串匹配，100% 可靠地替換參數值
+
+        Args:
+            content: 原始內容
+            vendor_params: 業者參數字典
+            vendor_name: 業者名稱
+
+        Returns:
+            參數替換後的內容
+        """
+        result = content
+        replacements_made = []
+
+        # 1. 替換明確的模板變數 {{xxx}}
+        for key, value in vendor_params.items():
+            pattern = f"{{{{{key}}}}}"
+            if pattern in result:
+                result = result.replace(pattern, str(value))
+                replacements_made.append(f"{{{{{{key}}}}}} → {value}")
+
+        # 2. 智能匹配常見模式並替換
+
+        # 2a. 電話號碼模式（如 0800-123-456, 02-1234-5678）
+        if 'service_hotline' in vendor_params:
+            phone_patterns = [
+                r'\d{4}-\d{3}-\d{3}',  # 0800-123-456
+                r'\d{2}-\d{4}-\d{4}',  # 02-1234-5678
+                r'\d{4}-\d{6}',        # 0800-123456
+            ]
+            for pattern in phone_patterns:
+                matches = re.findall(pattern, result)
+                for match in matches:
+                    # 排除緊急專線等特定號碼
+                    if '0911' not in match and '119' not in match:
+                        result = result.replace(match, vendor_params['service_hotline'])
+                        replacements_made.append(f"{match} → {vendor_params['service_hotline']} (電話)")
+                        break  # 只替換第一個匹配
+
+        # 2b. 工作天數模式（如 "3個工作天"）- 暫時停用
+        # 原因：repair_response_time 的單位是「小時」，無法直接替換「天」
+        # 如果需要替換天數，應該在資料庫中新增 repair_response_days 參數
+        # if 'repair_response_days' in vendor_params:
+        #     time_pattern = r'(\d+)\s*(個)?工作天'
+        #     matches = re.finditer(time_pattern, result)
+        #     for match in matches:
+        #         old_value = match.group(1)
+        #         if int(old_value) <= 7:
+        #             full_match = match.group(0)
+        #             new_text = f"{vendor_params['repair_response_days']}個工作天"
+        #             result = result.replace(full_match, new_text, 1)
+        #             replacements_made.append(f"{full_match} → {new_text} (時效)")
+
+        # 2c. 小時數模式（如 "24小時"）- 針對 repair_response_time
+        if 'repair_response_time' in vendor_params:
+            hour_pattern = r'(\d+)\s*小時'
+            # 只在提到"回應"或"處理"的上下文中替換
+            if '回應' in result or '處理' in result:
+                matches = list(re.finditer(hour_pattern, result))
+                for match in matches:
+                    old_value = match.group(1)
+                    # 只替換合理範圍內的小時數
+                    if 12 <= int(old_value) <= 72:
+                        full_match = match.group(0)
+                        # 檢查前後文，確保是維修相關
+                        start = max(0, match.start() - 20)
+                        end = min(len(result), match.end() + 20)
+                        context = result[start:end]
+                        if '緊急' not in context:  # 不替換緊急專線的24小時
+                            new_text = f"{vendor_params['repair_response_time']} 小時"
+                            result = result.replace(full_match, new_text, 1)
+                            replacements_made.append(f"{full_match} → {new_text} (時效)")
+                            break
+
+        if replacements_made:
+            print(f"      ✅ 確定性替換完成：{len(replacements_made)} 項")
+            for r in replacements_made:
+                print(f"         - {r}")
+        else:
+            print(f"      ℹ️  無需確定性替換")
+
+        return result
+
     def inject_vendor_params(
         self,
         content: str,
@@ -500,13 +591,13 @@ class LLMAnswerOptimizer:
         vendor_info: Optional[Dict] = None
     ) -> str:
         """
-        使用 LLM 根據業者參數動態調整知識內容，並同時調整業種語氣
+        使用兩階段方法進行參數注入和語氣調整（方案 C）
 
-        Phase 1: 參數注入 - 智能偵測並替換參數值
-        Phase 2: 語氣調整 - 根據業種類型調整表達方式（方案 A）
+        階段 1: 確定性參數替換 - 使用正則和字符串匹配，100% 可靠
+        階段 2: 語氣調整 - 使用 LLM 調整表達方式（不做參數替換）
 
         Args:
-            content: 原始知識內容（可能包含通用數值）
+            content: 原始知識內容
             vendor_params: 業者參數字典
             vendor_name: 業者名稱
             vendor_info: 完整業者資訊（包含 business_type 等）
@@ -517,64 +608,48 @@ class LLMAnswerOptimizer:
         if not vendor_params:
             return content
 
-        print(f"      🔍 開始參數注入 + 語氣調整 - 原始內容長度: {len(content)} 字元")
+        print(f"      🔍 兩階段參數注入 + 語氣調整 - 原始內容長度: {len(content)} 字元")
         print(f"      📋 業者參數: {list(vendor_params.keys())}")
 
-        # 獲取業種類型
+        # === 階段 1：確定性參數替換（不用 LLM）===
+        content = self._replace_params_deterministic(content, vendor_params, vendor_name)
+
+        # === 階段 2：語氣調整（使用 LLM）===
+        # 檢查是否需要語氣調整
         business_type = 'property_management'  # 預設值
         if vendor_info:
             business_type = vendor_info.get('business_type', 'property_management')
             print(f"      🏢 業種類型: {business_type}")
 
-        # 建立參數說明
-        params_description = "\n".join([
-            f"- {key}: {value}" for key, value in vendor_params.items()
-        ])
+        # 根據業種類型調整語氣
+        tone_prompt = self._get_tone_config(business_type)
 
-        system_prompt = f"""你是一個專業的內容調整助理。你的任務是：
-1. 根據業者的具體參數，調整知識庫內容中的數值和資訊
-2. 根據業種類型，調整回答的語氣和表達方式
+        # 如果沒有語氣配置，直接返回（跳過階段 2）
+        if not tone_prompt:
+            print(f"      ℹ️  業態類型 '{business_type}' 無語氣配置，跳過 LLM 調整")
+            return content
+
+        # 有語氣配置，使用 LLM 調整
+        system_prompt = f"""你是一個專業的語氣調整助理。
+
+**重要原則**：
+1. ❌ **禁止修改任何數值**（電話、日期、金額、時間等）
+2. ❌ **禁止輸出模板變數格式**（如 {{{{service_hotline}}}}、@vendorA 等）
+3. ✅ **只調整語氣和表達方式**（使內容更符合業態風格）
+4. ✅ **保持內容結構和格式**（標題、列表、段落）
 
 業者名稱：{vendor_name}
 業種類型：{business_type}
-業者參數：
-{params_description}
 
-【任務 1 - 參數調整】
-1. 仔細識別內容中提到的參數相關資訊（如日期、金額、時間等）
-2. 如果內容中的數值與業者參數不符，請替換為業者參數中的值
-3. **如果內容已經符合業者參數，請完全保留原文，不要做任何修改**
-4. 只調整數值，不要改變其他內容（尤其是量詞、連接詞等）
-5. 絕對不可替換同音字或近音字（例如：個→倌、月→曰等）
-6. 業者名稱統一使用 "{vendor_name}"
+【語氣調整規範】
+{tone_prompt}
 
-特別注意 - 繳費日期處理：
-- payment_day：應繳日期（每月幾號應該繳費）
-- grace_period：逾期寬限天數（如果應繳日未繳，允許延遲的天數）
+注意：
+- 內容中的所有數值都已經是正確的業者參數，請勿修改
+- 只調整用詞、語氣、表達方式
+- 只輸出調整後的內容，不要加上任何說明"""
 
-如果內容提到「X日至Y日」的日期範圍，請按以下邏輯調整：
-1. 繳費日應該是 payment_day（不是範圍）
-2. 如果有 grace_period，表示逾期後的寬限天數
-
-【任務 2 - 語氣調整】"""
-
-        # 根據業種類型添加語氣指示（從資料庫載入 - 簡化版：直接使用 prompt）
-        tone_prompt = self._get_tone_config(business_type)
-        if tone_prompt:
-            system_prompt += f"\n{tone_prompt}\n"
-        else:
-            # 如果沒有配置，給予通用提示
-            print(f"⚠️ 業態類型 '{business_type}' 沒有語氣配置，使用通用提示")
-            system_prompt += "\n請根據業態特性調整回答的語氣和表達方式。\n"
-
-        system_prompt += """
-
-重要：
-1. 保持內容的結構和格式
-2. 調整數值和語氣表達
-3. 只輸出調整後的內容，不要加上任何說明或註解"""
-
-        user_prompt = f"""請根據業者參數和業種語氣調整以下內容：
+        user_prompt = f"""請根據業種語氣調整以下內容（請勿修改任何數值）：
 
 {content}"""
 
@@ -582,11 +657,11 @@ class LLMAnswerOptimizer:
             if not self.client:
                 raise Exception("OpenAI client not initialized (missing API key)")
 
-            # 方案 A: 調整 temperature 從 0.1 → 0.3，平衡參數準確度和語氣自然度
-            param_injection_temp = float(os.getenv("LLM_PARAM_INJECTION_TEMP", "0.3"))
+            # 方案 C: 語氣調整專用，temperature 0.3 足夠（不做參數替換）
+            tone_adjustment_temp = float(os.getenv("LLM_TONE_ADJUSTMENT_TEMP", "0.3"))
             response = self.client.chat.completions.create(
                 model=self.config["model"],
-                temperature=param_injection_temp,  # 預設 0.3（方案 A 優化）
+                temperature=tone_adjustment_temp,  # 預設 0.3
                 max_tokens=self.config["max_tokens"],
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -598,16 +673,16 @@ class LLMAnswerOptimizer:
 
             # 檢查內容是否有變化
             if adjusted_content != content:
-                print(f"      ✅ 參數注入完成 - 內容已調整")
+                print(f"      ✅ 語氣調整完成 - 內容已調整")
                 print(f"         原始: {content[:100]}...")
                 print(f"         調整: {adjusted_content[:100]}...")
             else:
-                print(f"      ℹ️  內容未變化（LLM 認為已符合參數）")
+                print(f"      ℹ️  內容未變化（無需語氣調整）")
 
             return adjusted_content
 
         except Exception as e:
-            print(f"      ⚠️  參數注入失敗，使用原始內容: {e}")
+            print(f"      ⚠️  語氣調整失敗，使用原始內容: {e}")
             return content
 
     def synthesize_answer(
@@ -824,8 +899,8 @@ class LLMAnswerOptimizer:
 
         context = "\n\n".join(context_parts)
 
-        # 2. 建立優化 Prompt
-        system_prompt = self._create_system_prompt(intent_info, vendor_name, vendor_info)
+        # 2. 建立優化 Prompt（加入業者參數）
+        system_prompt = self._create_system_prompt(intent_info, vendor_name, vendor_info, vendor_params)
         user_prompt = self._create_user_prompt(question, context, intent_info)
 
         # 檢查 API key
@@ -852,7 +927,8 @@ class LLMAnswerOptimizer:
         self,
         intent_info: Dict,
         vendor_name: Optional[str] = None,
-        vendor_info: Optional[Dict] = None
+        vendor_info: Optional[Dict] = None,
+        vendor_params: Optional[Dict] = None
     ) -> str:
         """建立系統提示詞"""
         intent_type = intent_info.get('intent_type', 'knowledge')
@@ -873,6 +949,53 @@ class LLMAnswerOptimizer:
         # 如果有業者名稱，加入業者資訊
         if vendor_name:
             base_prompt += f"\n{rule_number}. 你代表 {vendor_name}，請使用該業者的資訊回答"
+            rule_number += 1
+
+        # 【新增】如果有業者參數，明確列出所有參數供 AI 參考
+        if vendor_params:
+            base_prompt += f"\n{rule_number}. **重要：業者特定參數** - 當參考資料不夠具體時，請優先使用以下資訊補充回答：\n"
+
+            # 將參數按類別組織，更易讀
+            payment_params = {}
+            service_params = {}
+            contract_params = {}
+            other_params = {}
+
+            for key, value in vendor_params.items():
+                if 'payment' in key or 'fee' in key or 'late' in key or 'grace' in key:
+                    payment_params[key] = value
+                elif 'service' in key or 'hotline' in key or 'hours' in key or 'repair' in key or 'line' in key or 'address' in key:
+                    service_params[key] = value
+                elif 'lease' in key or 'deposit' in key or 'termination' in key or 'notice' in key:
+                    contract_params[key] = value
+                else:
+                    other_params[key] = value
+
+            # 繳費相關參數
+            if payment_params:
+                base_prompt += "   【繳費相關】\n"
+                for key, value in payment_params.items():
+                    base_prompt += f"   - {key}: {value}\n"
+
+            # 服務相關參數
+            if service_params:
+                base_prompt += "   【客服聯絡】\n"
+                for key, value in service_params.items():
+                    base_prompt += f"   - {key}: {value}\n"
+
+            # 合約相關參數
+            if contract_params:
+                base_prompt += "   【合約條款】\n"
+                for key, value in contract_params.items():
+                    base_prompt += f"   - {key}: {value}\n"
+
+            # 其他參數
+            if other_params:
+                base_prompt += "   【其他資訊】\n"
+                for key, value in other_params.items():
+                    base_prompt += f"   - {key}: {value}\n"
+
+            base_prompt += "   **注意**：如果參考資料中的資訊籠統或缺失，請主動使用上述參數提供具體資訊。\n"
             rule_number += 1
 
         # 根據業種類型調整語氣（Phase 4 擴展：從資料庫載入 - 簡化版）

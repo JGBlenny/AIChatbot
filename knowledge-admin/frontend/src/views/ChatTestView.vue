@@ -22,10 +22,6 @@
             </option>
           </select>
         </div>
-
-        <button @click="loadVendors" class="btn-secondary">
-          🔄 重新載入業者
-        </button>
       </div>
 
       <!-- 模式說明 -->

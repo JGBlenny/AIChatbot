@@ -241,7 +241,8 @@ export default {
             allConfigs.push({
               category: category,
               param_key: config.param_key,
-              param_value: config.param_value,
+              // 確保 param_value 是字符串（後端 Pydantic 模型要求）
+              param_value: String(config.param_value || ''),
               data_type: config.data_type || 'string',
               display_name: config.display_name,
               description: config.description,
@@ -257,7 +258,27 @@ export default {
         alert('✅ 配置已儲存！');
       } catch (error) {
         console.error('儲存失敗', error);
-        alert('儲存失敗：' + (error.response?.data?.detail || error.message));
+
+        // 改進錯誤處理：正確顯示 Pydantic 驗證錯誤
+        let errorMessage = '未知錯誤';
+        if (error.response?.data?.detail) {
+          const detail = error.response.data.detail;
+          if (Array.isArray(detail)) {
+            // Pydantic 驗證錯誤格式：[{loc: [...], msg: "..."}]
+            errorMessage = detail.map(err => {
+              const field = err.loc?.join('.') || '未知欄位';
+              return `${field}: ${err.msg}`;
+            }).join('\n');
+          } else if (typeof detail === 'string') {
+            errorMessage = detail;
+          } else {
+            errorMessage = JSON.stringify(detail);
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        alert('儲存失敗：\n' + errorMessage);
       } finally {
         this.saving = false;
       }

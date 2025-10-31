@@ -83,6 +83,41 @@ def cache_response_and_return(cache_service, vendor_id: int, question: str, resp
     return response
 
 
+# ==================== 輔助函數：答案清理與模板替換 ====================
+
+def _clean_answer(answer: str, vendor_id: int, resolver) -> str:
+    """
+    清理答案並替換模板變數（兜底保護）
+
+    處理兩種情況：
+    1. 模板變數格式：{{service_hotline}} → 02-2345-6789
+    2. 異常格式：@vendorA, @vendor_name 等 → 移除
+
+    Args:
+        answer: 原始答案
+        vendor_id: 業者 ID
+        resolver: 參數解析器
+
+    Returns:
+        清理後的答案
+    """
+    import re
+
+    # 1. 替換明確的模板變數 {{xxx}}
+    cleaned = resolver.resolve_template(answer, vendor_id, raise_on_missing=False)
+
+    # 2. 清理異常格式
+    # 移除 @vendorA, @vendor_name 等格式
+    cleaned = re.sub(r'@vendor[A-Za-z0-9_]*', '', cleaned)
+
+    # 3. 如果仍有未替換的模板變數，記錄警告
+    if '{{' in cleaned:
+        remaining_vars = re.findall(r'\{\{(\w+)\}\}', cleaned)
+        print(f"⚠️  警告：答案中仍有未替換的模板變數: {remaining_vars}")
+
+    return cleaned
+
+
 # ==================== 輔助函數：業者驗證與緩存 ====================
 
 def _validate_vendor(vendor_id: int, resolver) -> dict:
@@ -157,8 +192,12 @@ async def _handle_unclear_with_rag_fallback(
     params = resolver.get_vendor_parameters(request.vendor_id)
     service_hotline = params.get('service_hotline', {}).get('value', '客服')
 
+    # 清理答案並替換模板變數（兜底保護）
+    fallback_answer = f"抱歉，我不太理解您的問題。請您換個方式描述，或撥打客服專線 {service_hotline} 尋求協助。"
+    final_answer = _clean_answer(fallback_answer, request.vendor_id, resolver)
+
     return VendorChatResponse(
-        answer=f"抱歉，我不太理解您的問題。請您換個方式描述，或撥打客服專線 {service_hotline} 尋求協助。",
+        answer=final_answer,
         intent_name="unclear",
         confidence=intent_result['confidence'],
         all_intents=intent_result.get('all_intents', []),
@@ -391,8 +430,11 @@ async def _build_sop_response(
             is_template=False
         ) for sop in sop_items]
 
+    # 清理答案並替換模板變數（兜底保護）
+    final_answer = _clean_answer(optimization_result['optimized_answer'], request.vendor_id, resolver)
+
     response = VendorChatResponse(
-        answer=optimization_result['optimized_answer'],
+        answer=final_answer,
         intent_name=intent_result['intent_name'],
         intent_type=intent_result.get('intent_type'),
         confidence=intent_result['confidence'],
@@ -462,8 +504,11 @@ async def _build_rag_response(
             is_template=False
         ) for r in rag_results]
 
+    # 清理答案並替換模板變數（兜底保護）
+    final_answer = _clean_answer(optimization_result['optimized_answer'], request.vendor_id, resolver)
+
     response = VendorChatResponse(
-        answer=optimization_result['optimized_answer'],
+        answer=final_answer,
         intent_name=intent_name or intent_result['intent_name'],
         intent_type=intent_result.get('intent_type'),
         confidence=intent_result['confidence'],
@@ -543,8 +588,12 @@ async def _handle_no_knowledge_found(
     params = resolver.get_vendor_parameters(request.vendor_id)
     service_hotline = params.get('service_hotline', {}).get('value', '客服')
 
+    # 清理答案並替換模板變數（兜底保護）
+    fallback_answer = f"很抱歉，關於「{intent_result['intent_name']}」我目前沒有相關資訊。建議您撥打客服專線 {service_hotline} 獲取協助。"
+    final_answer = _clean_answer(fallback_answer, request.vendor_id, resolver)
+
     return VendorChatResponse(
-        answer=f"很抱歉，關於「{intent_result['intent_name']}」我目前沒有相關資訊。建議您撥打客服專線 {service_hotline} 獲取協助。",
+        answer=final_answer,
         intent_name=intent_result['intent_name'],
         intent_type=intent_result.get('intent_type'),
         confidence=intent_result['confidence'],
@@ -675,8 +724,11 @@ async def _build_knowledge_response(
         video_duration = first_knowledge.get('video_duration')
         video_format = first_knowledge.get('video_format')
 
+    # 清理答案並替換模板變數（兜底保護）
+    final_answer = _clean_answer(optimization_result['optimized_answer'], request.vendor_id, resolver)
+
     response = VendorChatResponse(
-        answer=optimization_result['optimized_answer'],
+        answer=final_answer,
         intent_name=intent_result['intent_name'],
         intent_type=intent_result.get('intent_type'),
         confidence=intent_result['confidence'],
