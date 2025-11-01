@@ -20,7 +20,6 @@
         <option value="false">已停用</option>
       </select>
       <button @click="showCreateModal" class="btn-primary btn-sm">新增意圖</button>
-      <button @click="reloadIntents" class="btn-secondary btn-sm">重新載入</button>
     </div>
 
     <!-- 統計資訊 -->
@@ -217,16 +216,6 @@ export default {
         this.stats = response.data;
       } catch (error) {
         console.error('載入統計失敗', error);
-      }
-    },
-
-    async reloadIntents() {
-      try {
-        await axios.post(`${RAG_API}/intents/reload`);
-        alert('✅ 意圖配置已重新載入！');
-        this.loadIntents();
-      } catch (error) {
-        alert('重新載入失敗：' + (error.response?.data?.detail || error.message));
       }
     },
 
