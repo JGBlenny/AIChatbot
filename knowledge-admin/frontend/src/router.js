@@ -33,12 +33,28 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    redirect: '/knowledge'
+    redirect: '/knowledge/universal'
   },
   {
     path: '/knowledge',
     name: 'Knowledge',
     component: KnowledgeView
+  },
+  // 知識庫分類路由（重定向到主頁面但帶過濾參數）
+  {
+    path: '/knowledge/industry',
+    name: 'IndustryKnowledge',
+    redirect: to => ({ path: '/knowledge', query: { filter: 'b2c' }})
+  },
+  {
+    path: '/knowledge/jgb',
+    name: 'JGBKnowledge',
+    redirect: to => ({ path: '/knowledge', query: { filter: 'b2b' }})
+  },
+  {
+    path: '/knowledge/universal',
+    name: 'UniversalKnowledge',
+    redirect: to => ({ path: '/knowledge', query: { filter: 'universal' }})
   },
   {
     path: '/intents',

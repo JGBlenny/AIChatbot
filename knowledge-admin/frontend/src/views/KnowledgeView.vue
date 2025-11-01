@@ -1,6 +1,9 @@
 <template>
   <div>
-    <h2>📚 知識庫管理</h2>
+    <h2>{{ pageTitle }}</h2>
+    <p v-if="pageDescription" style="color: #909399; font-size: 14px; margin-bottom: 20px;">
+      {{ pageDescription }}
+    </p>
 
     <!-- 說明區塊 -->
     <InfoPanel :config="helpTexts.knowledge" />
@@ -333,6 +336,8 @@ export default {
   data() {
     return {
       helpTexts,
+      pageTitle: '📚 知識庫管理',
+      pageDescription: '',
       knowledgeList: [],
       availableIntents: [],
       availableBusinessTypes: [],
@@ -343,6 +348,7 @@ export default {
       saving: false,
       loading: false,
       stats: null,
+      filterMode: null, // 'b2c', 'b2b', 'universal', null
       pagination: {
         limit: 50,
         offset: 0,
@@ -395,6 +401,15 @@ export default {
       return Math.ceil(this.pagination.total / this.pagination.limit);
     }
   },
+
+  watch: {
+    '$route.query.filter'(newFilter) {
+      // 當過濾參數改變時，更新頁面並重新加載
+      this.updateFilterMode(newFilter);
+      this.pagination.offset = 0; // 重置到第一頁
+      this.loadKnowledge();
+    }
+  },
   async mounted() {
     // 使用 Vue Router 的標準方式讀取查詢參數
     const query = this.$route.query;
@@ -405,6 +420,10 @@ export default {
     const contextParam = query.context;
     const questionParam = query.question;
     const intentParam = query.intent;
+    const filterParam = query.filter;
+
+    // 處理過濾模式
+    this.updateFilterMode(filterParam);
 
     // Phase 2: 處理 context 參數（顯示回測優化橫幅）
     if (contextParam) {
@@ -458,6 +477,23 @@ export default {
     }
   },
   methods: {
+    updateFilterMode(filterParam) {
+      this.filterMode = filterParam || null;
+      if (filterParam === 'b2c') {
+        this.pageTitle = '🏢 產業知識庫 (B2C)';
+        this.pageDescription = '包租型、代管型業態專用知識';
+      } else if (filterParam === 'b2b') {
+        this.pageTitle = '💼 JGB知識庫 (B2B)';
+        this.pageDescription = '系統商業態專用知識';
+      } else if (filterParam === 'universal') {
+        this.pageTitle = '🌐 通用知識庫';
+        this.pageDescription = '適用所有業態的通用知識';
+      } else {
+        this.pageTitle = '📚 知識庫管理';
+        this.pageDescription = '';
+      }
+    },
+
     async loadBusinessTypes() {
       try {
         const response = await axios.get('/rag-api/v1/business-types-config');
@@ -572,6 +608,15 @@ export default {
             offset: this.pagination.offset
           };
           if (this.searchQuery && !this.isIdSearch) params.search = this.searchQuery;
+
+          // 根據過濾模式添加業態過濾
+          if (this.filterMode === 'b2c') {
+            params.business_types = 'full_service,property_management';
+          } else if (this.filterMode === 'b2b') {
+            params.business_types = 'system_provider';
+          } else if (this.filterMode === 'universal') {
+            params.universal_only = 'true';
+          }
 
           const response = await axios.get(`${API_BASE}/knowledge`, { params });
           this.knowledgeList = response.data.items;

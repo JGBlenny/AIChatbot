@@ -116,6 +116,8 @@ async def health_check():
 @app.get("/api/knowledge", response_model=dict)
 async def list_knowledge(
     search: Optional[str] = Query(None, description="搜尋關鍵字"),
+    business_types: Optional[str] = Query(None, description="業態類型過濾（逗號分隔）"),
+    universal_only: Optional[str] = Query(None, description="只顯示通用知識"),
     limit: int = Query(50, ge=1, le=100, description="每頁筆數"),
     offset: int = Query(0, ge=0, description="偏移量")
 ):
@@ -123,6 +125,8 @@ async def list_knowledge(
     列出所有知識
 
     - **search**: 搜尋標題或內容
+    - **business_types**: 業態類型過濾（如：full_service,property_management）
+    - **universal_only**: 只顯示通用知識（true/false）
     - **limit**: 每頁顯示筆數 (1-100)
     - **offset**: 分頁偏移量
     """
@@ -144,6 +148,17 @@ async def list_knowledge(
             query += " AND (kb.question_summary ILIKE %s OR kb.answer ILIKE %s)"
             search_pattern = f"%{search}%"
             params.extend([search_pattern, search_pattern])
+
+        # 業態類型過濾
+        if business_types:
+            type_list = [t.strip() for t in business_types.split(',')]
+            # 使用 @> 運算符檢查陣列包含關係
+            query += " AND kb.business_types && %s"
+            params.append(type_list)
+
+        # 只顯示通用知識（business_types 為 NULL 或空陣列）
+        if universal_only and universal_only.lower() == 'true':
+            query += " AND (kb.business_types IS NULL OR kb.business_types = '{}')"
 
         query += " ORDER BY kb.updated_at DESC LIMIT %s OFFSET %s"
         params.extend([limit, offset])
@@ -190,6 +205,16 @@ async def list_knowledge(
         if search:
             count_query += " AND (question_summary ILIKE %s OR answer ILIKE %s)"
             count_params.extend([f"%{search}%", f"%{search}%"])
+
+        # 業態類型過濾（總數查詢也要包含）
+        if business_types:
+            type_list = [t.strip() for t in business_types.split(',')]
+            count_query += " AND business_types && %s"
+            count_params.append(type_list)
+
+        # 只顯示通用知識
+        if universal_only and universal_only.lower() == 'true':
+            count_query += " AND (business_types IS NULL OR business_types = '{}')"
 
         cur.execute(count_query, count_params)
         total = cur.fetchone()['total']

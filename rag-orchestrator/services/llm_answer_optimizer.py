@@ -78,36 +78,16 @@ class LLMAnswerOptimizer:
     @staticmethod
     def _load_tone_configs_from_db() -> Dict[str, str]:
         """
-        從資料庫載入業態語氣配置（簡化版：只載入 tone_prompt）
+        從配置文件載入業態語氣配置
 
         Returns:
             Dict[business_type, tone_prompt]
         """
         try:
-            conn = psycopg2.connect(**get_db_config())
-            try:
-                cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                cursor.execute("""
-                    SELECT
-                        type_value,
-                        tone_prompt
-                    FROM business_types_config
-                    WHERE is_active = TRUE
-                      AND tone_prompt IS NOT NULL
-                """)
-
-                rows = cursor.fetchall()
-                cursor.close()
-
-                # 轉換為字典 {type_value: tone_prompt}
-                configs = {row['type_value']: row['tone_prompt'] for row in rows}
-
-                print(f"✅ 從資料庫載入 {len(configs)} 個業態語氣配置")
-                return configs
-
-            finally:
-                conn.close()
-
+            from config.business_types import get_all_tone_prompts
+            configs = get_all_tone_prompts()
+            print(f"✅ 從配置文件載入 {len(configs)} 個業態語氣配置")
+            return configs
         except Exception as e:
             print(f"⚠️ 載入業態語氣配置失敗: {e}")
             return {}

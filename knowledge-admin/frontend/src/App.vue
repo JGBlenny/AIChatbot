@@ -5,92 +5,114 @@
       <div class="sidebar-header">
         <div class="logo">
           <span class="logo-icon">📚</span>
-          <span class="logo-text" v-if="!sidebarCollapsed">AI 知識庫</span>
+          <span class="logo-text">AI 知識庫</span>
         </div>
-        <button class="collapse-btn" @click="toggleSidebar" :title="sidebarCollapsed ? '展開' : '收起'">
-          {{ sidebarCollapsed ? '☰' : '✕' }}
-        </button>
       </div>
 
       <nav class="sidebar-nav">
-        <!-- 核心功能 -->
-        <div class="nav-group">
-          <div class="nav-group-title" v-if="!sidebarCollapsed">核心功能</div>
-          <router-link to="/knowledge" class="nav-item" :title="sidebarCollapsed ? '知識庫' : ''">
-            <span class="nav-icon">📖</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">知識庫</span>
-          </router-link>
-          <router-link to="/intents" class="nav-item" :title="sidebarCollapsed ? '意圖管理' : ''">
-            <span class="nav-icon">🎯</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">意圖管理</span>
-          </router-link>
-          <router-link to="/target-users-config" class="nav-item" :title="sidebarCollapsed ? '目標用戶' : ''">
-            <span class="nav-icon">👥</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">目標用戶</span>
-          </router-link>
-          <router-link to="/business-types-config" class="nav-item" :title="sidebarCollapsed ? '業態類型' : ''">
-            <span class="nav-icon">🏢</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">業態類型</span>
-          </router-link>
-          <router-link to="/category-config" class="nav-item" :title="sidebarCollapsed ? '分類配置' : ''">
-            <span class="nav-icon">📂</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">分類配置</span>
-          </router-link>
-          <router-link to="/vendors" class="nav-item" :title="sidebarCollapsed ? '業者管理' : ''">
-            <span class="nav-icon">👥</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">業者管理</span>
-          </router-link>
-          <router-link to="/platform-sop" class="nav-item" :title="sidebarCollapsed ? 'SOP 範本' : ''">
-            <span class="nav-icon">📋</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">SOP 範本</span>
-          </router-link>
+        <!-- 對話邏輯層 -->
+        <div class="nav-layer">
+          <div class="layer-title">對話邏輯層</div>
+
+          <!-- 知識庫管理 -->
+          <div class="nav-group">
+            <div class="nav-group-header" @click="toggleGroup('knowledge')">
+              <span class="group-icon">{{ expandedGroups.knowledge ? '▼' : '▶' }}</span>
+              <span class="group-title">知識庫管理</span>
+            </div>
+            <div class="nav-group-items" v-if="expandedGroups.knowledge">
+              <router-link to="/knowledge/universal" class="nav-item nav-item-sub">
+                <span class="nav-icon">🌐</span>
+                <span class="nav-text">通用知識庫</span>
+              </router-link>
+              <router-link to="/knowledge/industry" class="nav-item nav-item-sub">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-text">產業知識庫</span>
+              </router-link>
+              <router-link to="/knowledge/jgb" class="nav-item nav-item-sub">
+                <span class="nav-icon">💼</span>
+                <span class="nav-text">JGB知識庫</span>
+              </router-link>
+              <router-link to="/intents" class="nav-item nav-item-sub">
+                <span class="nav-icon">🎯</span>
+                <span class="nav-text">意圖設定</span>
+              </router-link>
+              <router-link to="/category-config" class="nav-item nav-item-sub">
+                <span class="nav-icon">📂</span>
+                <span class="nav-text">分類設定</span>
+              </router-link>
+              <router-link to="/target-users-config" class="nav-item nav-item-sub">
+                <span class="nav-icon">👥</span>
+                <span class="nav-text">目標設定</span>
+              </router-link>
+            </div>
+          </div>
+
+          <!-- 業者管理 -->
+          <div class="nav-group">
+            <div class="nav-group-header" @click="toggleGroup('vendor')">
+              <span class="group-icon">{{ expandedGroups.vendor ? '▼' : '▶' }}</span>
+              <span class="group-title">業者管理</span>
+            </div>
+            <div class="nav-group-items" v-if="expandedGroups.vendor">
+              <router-link to="/business-types-config" class="nav-item nav-item-sub">
+                <span class="nav-icon">🏢</span>
+                <span class="nav-text">業態設定</span>
+              </router-link>
+              <router-link to="/platform-sop" class="nav-item nav-item-sub">
+                <span class="nav-icon">📋</span>
+                <span class="nav-text">範本設定</span>
+              </router-link>
+            </div>
+          </div>
         </div>
 
-        <!-- AI 功能 -->
-        <div class="nav-group">
-          <div class="nav-group-title" v-if="!sidebarCollapsed">AI 功能</div>
-          <router-link to="/review-center" class="nav-item nav-item-highlight" :title="sidebarCollapsed ? '審核中心' : ''">
-            <span class="nav-icon">🔍</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">審核中心</span>
-          </router-link>
-          <router-link to="/knowledge-reclassify" class="nav-item" :title="sidebarCollapsed ? '意圖分類' : ''">
-            <span class="nav-icon">🔄</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">意圖分類</span>
-          </router-link>
-        </div>
-
-        <!-- 數據管理 -->
-        <div class="nav-group">
-          <div class="nav-group-title" v-if="!sidebarCollapsed">數據管理</div>
-          <router-link to="/knowledge-import" class="nav-item" :title="sidebarCollapsed ? '知識匯入' : ''">
-            <span class="nav-icon">📥</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">知識匯入</span>
-          </router-link>
-        </div>
-
-        <!-- 測試與監控 -->
-        <div class="nav-group">
-          <div class="nav-group-title" v-if="!sidebarCollapsed">測試與監控</div>
-          <router-link to="/chat-test" class="nav-item" :title="sidebarCollapsed ? 'Chat 測試' : ''">
+        <!-- 對話測試層 -->
+        <div class="nav-layer">
+          <div class="layer-title">對話測試層</div>
+          <router-link to="/chat-test" class="nav-item">
             <span class="nav-icon">💬</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">Chat 測試</span>
+            <span class="nav-text">Chat測試</span>
           </router-link>
-          <router-link to="/test-scenarios" class="nav-item" :title="sidebarCollapsed ? '測試題庫' : ''">
+        </div>
+
+        <!-- 資料匯入層 -->
+        <div class="nav-layer">
+          <div class="layer-title">資料匯入層</div>
+          <router-link to="/knowledge-import" class="nav-item">
+            <span class="nav-icon">📥</span>
+            <span class="nav-text">匯入管理</span>
+          </router-link>
+        </div>
+
+        <!-- 知識優化層 -->
+        <div class="nav-layer">
+          <div class="layer-title">知識優化層</div>
+          <router-link to="/review-center" class="nav-item">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-text">審核管理</span>
+          </router-link>
+          <router-link to="/test-scenarios" class="nav-item">
             <span class="nav-icon">🧪</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">測試題庫</span>
+            <span class="nav-text">測試管理</span>
           </router-link>
-          <router-link to="/backtest" class="nav-item" :title="sidebarCollapsed ? '回測結果' : ''">
+          <router-link to="/backtest" class="nav-item">
             <span class="nav-icon">📊</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">回測結果</span>
+            <span class="nav-text">回測管理</span>
           </router-link>
-          <router-link to="/cache-management" class="nav-item" :title="sidebarCollapsed ? '緩存管理' : ''">
+        </div>
+
+        <!-- 系統設定層 -->
+        <div class="nav-layer">
+          <div class="layer-title">系統設定層</div>
+          <router-link to="/cache-management" class="nav-item">
             <span class="nav-icon">⚡</span>
-            <span class="nav-text" v-if="!sidebarCollapsed">緩存管理</span>
+            <span class="nav-text">緩存管理</span>
           </router-link>
         </div>
       </nav>
 
-      <div class="sidebar-footer" v-if="!sidebarCollapsed">
+      <div class="sidebar-footer">
         <div class="footer-info">
           <div class="footer-version">v1.0.0</div>
           <div class="footer-copyright">© 2025 AI Chatbot</div>
@@ -99,7 +121,7 @@
     </aside>
 
     <!-- 主內容區 (VendorChatDemo 使用獨立容器) -->
-    <div v-if="!isStandalonePage" class="main-container" :class="{ expanded: sidebarCollapsed }">
+    <div v-if="!isStandalonePage" class="main-container">
       <header class="app-header">
         <h1 class="page-title">{{ currentPageTitle }}</h1>
         <div class="header-actions">
@@ -130,10 +152,16 @@ export default {
 
   data() {
     return {
-      sidebarCollapsed: false,
+      expandedGroups: {
+        knowledge: true,  // 預設展開知識庫管理
+        vendor: true      // 預設展開業者管理
+      },
       pageTitles: {
-        '/': '知識庫管理',
+        '/': '產業知識庫',
         '/knowledge': '知識庫管理',
+        '/knowledge/industry': '產業知識庫 (B2C)',
+        '/knowledge/jgb': 'JGB知識庫 (B2B)',
+        '/knowledge/universal': '通用知識庫',
         '/intents': '意圖管理',
         '/review-center': '審核中心',
         '/business-scope': '業務範圍管理',
@@ -145,8 +173,8 @@ export default {
         '/test-scenarios': '測試題庫',
         '/backtest': '回測結果',
         '/cache-management': '緩存管理',
-        '/target-users-config': '目標用戶',
-        '/business-types-config': '業態類型',
+        '/target-users-config': '目標用戶配置',
+        '/business-types-config': '業態類型配置',
         '/category-config': '分類配置'
       }
     };
@@ -164,17 +192,22 @@ export default {
   },
 
   methods: {
-    toggleSidebar() {
-      this.sidebarCollapsed = !this.sidebarCollapsed;
-      localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed);
+    toggleGroup(groupName) {
+      this.expandedGroups[groupName] = !this.expandedGroups[groupName];
+      // 儲存展開狀態到 localStorage
+      localStorage.setItem('expandedGroups', JSON.stringify(this.expandedGroups));
     }
   },
 
   mounted() {
-    // 恢復側邊欄狀態
-    const collapsed = localStorage.getItem('sidebarCollapsed');
-    if (collapsed !== null) {
-      this.sidebarCollapsed = collapsed === 'true';
+    // 恢復群組展開狀態
+    const expandedGroups = localStorage.getItem('expandedGroups');
+    if (expandedGroups !== null) {
+      try {
+        this.expandedGroups = JSON.parse(expandedGroups);
+      } catch (e) {
+        console.error('Failed to parse expandedGroups from localStorage:', e);
+      }
     }
   }
 };
@@ -205,28 +238,37 @@ body {
 /* ==================== 側邊欄樣式 ==================== */
 .sidebar {
   width: 260px;
-  background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+  background: linear-gradient(180deg, #1e293b 0%, #334155 50%, #1e293b 100%);
   color: white;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.25);
   position: relative;
   z-index: 1000;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.sidebar.collapsed {
-  width: 70px;
+.sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.08) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 /* 側邊欄頭部 */
 .sidebar-header {
-  padding: 15px;
+  padding: 18px 15px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  min-height: 60px;
+  min-height: 65px;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 1;
 }
 
 .logo {
@@ -242,7 +284,7 @@ body {
   transition: transform 0.3s;
 }
 
-.sidebar:not(.collapsed) .logo-icon:hover {
+.logo-icon:hover {
   transform: rotate(10deg) scale(1.1);
 }
 
@@ -250,26 +292,6 @@ body {
   white-space: nowrap;
   overflow: hidden;
   animation: fadeIn 0.3s;
-}
-
-.collapse-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.collapse-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.1);
 }
 
 /* 側邊欄導航 */
@@ -293,8 +315,96 @@ body {
   border-radius: 3px;
 }
 
+/* 層級容器 */
+.nav-layer {
+  margin-bottom: 20px;
+}
+
+/* 層級標題 */
+.layer-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 10px 15px 10px 12px;
+  font-weight: 700;
+  border-left: 3px solid rgba(102, 126, 234, 0.8);
+  margin: 12px 0 8px 0;
+  background: linear-gradient(90deg, rgba(102, 126, 234, 0.15), transparent);
+  animation: fadeIn 0.3s;
+  position: relative;
+}
+
 .nav-group {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+}
+
+/* 可展開的群組標題 */
+.nav-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  margin: 0 8px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 13px;
+  font-weight: 600;
+  user-select: none;
+  border-radius: 8px;
+  position: relative;
+}
+
+.nav-group-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  border-radius: 0 2px 2px 0;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.nav-group-header:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateX(2px);
+}
+
+.nav-group-header:hover::before {
+  opacity: 1;
+}
+
+.group-icon {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  transition: transform 0.3s;
+  font-weight: bold;
+}
+
+.group-title {
+  flex: 1;
+  letter-spacing: 0.3px;
+}
+
+/* 群組項目容器 */
+.nav-group-items {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .nav-group-title {
@@ -310,52 +420,78 @@ body {
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 15px;
-  color: rgba(255, 255, 255, 0.8);
+  gap: 12px;
+  padding: 11px 15px;
+  margin: 2px 8px;
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
-  transition: all 0.3s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   font-size: 14px;
   font-weight: 500;
-}
-
-.sidebar.collapsed .nav-item {
-  justify-content: center;
-  padding: 10px 0;
+  border-radius: 8px;
+  letter-spacing: 0.2px;
 }
 
 .nav-item::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
+  bottom: 0;
   width: 3px;
-  height: 0;
-  background: white;
-  border-radius: 0 3px 3px 0;
-  transition: height 0.3s;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  border-radius: 0 2px 2px 0;
+  opacity: 0;
+  transition: opacity 0.25s;
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: white;
+  transform: translateX(2px);
 }
 
 .nav-item:hover::before {
-  height: 70%;
+  opacity: 0.6;
 }
 
 .nav-item.router-link-active {
-  background: rgba(255, 255, 255, 0.15);
+  background: linear-gradient(90deg, rgba(102, 126, 234, 0.2), rgba(102, 126, 234, 0.05));
   color: white;
   font-weight: 600;
 }
 
 .nav-item.router-link-active::before {
-  height: 100%;
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  opacity: 1;
+}
+
+/* 子項目樣式（群組內的項目） */
+.nav-item-sub {
+  padding-left: 38px;
+  font-size: 13px;
+  background: rgba(0, 0, 0, 0.15);
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+.nav-item-sub .nav-icon {
+  font-size: 15px;
+  opacity: 0.9;
+}
+
+.nav-item-sub::before {
+  left: 12px;
+  width: 2px;
+  background: rgba(102, 126, 234, 0.6);
+}
+
+.nav-item-sub:hover {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.nav-item-sub.router-link-active {
+  background: linear-gradient(90deg, rgba(102, 126, 234, 0.25), rgba(102, 126, 234, 0.08));
 }
 
 /* AI 功能特殊高亮 */
@@ -373,17 +509,28 @@ body {
 }
 
 .nav-icon {
-  font-size: 20px;
+  font-size: 18px;
   min-width: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.3s, filter 0.3s;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.15) rotate(-5deg);
+}
+
+.nav-item.router-link-active .nav-icon {
+  filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.5));
 }
 
 .nav-text {
   white-space: nowrap;
   overflow: hidden;
   flex: 1;
+  animation: fadeIn 0.3s;
 }
 
 .nav-badge {
@@ -422,13 +569,8 @@ body {
   display: flex;
   flex-direction: column;
   width: calc(100% - 260px);
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: #f5f7fa;
   margin-bottom: 80px;
-}
-
-.main-container.expanded {
-  width: calc(100% - 70px);
 }
 
 .app-header {
@@ -556,10 +698,6 @@ body {
     top: 0;
     height: 100vh;
     z-index: 1000;
-  }
-
-  .sidebar.collapsed {
-    left: -260px;
   }
 
   .main-container {
