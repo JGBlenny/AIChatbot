@@ -241,7 +241,7 @@ import InfoPanel from '@/components/InfoPanel.vue';
 import helpTexts from '@/config/help-texts.js';
 import { API_BASE_URL } from '@/config/api';
 
-const RAG_API = API_BASE_URL;  // 使用統一的 API 配置
+const RAG_API = `${API_BASE_URL}/rag-api/v1`;  // RAG Orchestrator API
 
 export default {
   name: 'PlatformSOPView',
@@ -328,18 +328,18 @@ export default {
     },
 
     async loadCategories() {
-      const response = await axios.get(`${RAG_API}/api/v1/platform/sop/categories`);
+      const response = await axios.get(`${RAG_API}/platform/sop/categories`);
       this.categories = response.data.categories;
     },
 
     async loadTemplates() {
-      const response = await axios.get(`${RAG_API}/api/v1/platform/sop/templates`);
+      const response = await axios.get(`${RAG_API}/platform/sop/templates`);
       this.templates = response.data.templates;
     },
 
     async loadIntents() {
       try {
-        const response = await axios.get(`${RAG_API}/api/v1/intents`);
+        const response = await axios.get(`${RAG_API}/intents`);
         this.intents = response.data.intents || [];
       } catch (error) {
         console.error('載入意圖失敗:', error);
@@ -441,14 +441,14 @@ export default {
         if (this.editingCategory) {
           // Update
           await axios.put(
-            `${RAG_API}/api/v1/platform/sop/categories/${this.editingCategory.id}`,
+            `${RAG_API}/platform/sop/categories/${this.editingCategory.id}`,
             this.categoryForm
           );
           alert('分類已更新');
         } else {
           // Create
           await axios.post(
-            `${RAG_API}/api/v1/platform/sop/categories`,
+            `${RAG_API}/platform/sop/categories`,
             this.categoryForm
           );
           alert('分類已建立');
@@ -465,7 +465,7 @@ export default {
       if (!confirm('確定要刪除此分類嗎？此操作會同時停用該分類下的所有範本。')) return;
 
       try {
-        await axios.delete(`${RAG_API}/api/v1/platform/sop/categories/${categoryId}`);
+        await axios.delete(`${RAG_API}/platform/sop/categories/${categoryId}`);
         alert('分類已刪除');
         this.loadData();
       } catch (error) {
@@ -507,14 +507,14 @@ export default {
         if (this.editingTemplate) {
           // Update
           await axios.put(
-            `${RAG_API}/api/v1/platform/sop/templates/${this.editingTemplate.id}`,
+            `${RAG_API}/platform/sop/templates/${this.editingTemplate.id}`,
             this.templateForm
           );
           alert('範本已更新');
         } else {
           // Create
           await axios.post(
-            `${RAG_API}/api/v1/platform/sop/templates`,
+            `${RAG_API}/platform/sop/templates`,
             this.templateForm
           );
           alert('範本已建立');
@@ -531,7 +531,7 @@ export default {
       if (!confirm('確定要刪除此範本嗎？')) return;
 
       try {
-        await axios.delete(`${RAG_API}/api/v1/platform/sop/templates/${templateId}`);
+        await axios.delete(`${RAG_API}/platform/sop/templates/${templateId}`);
         alert('範本已刪除');
         this.loadTemplates();
       } catch (error) {
@@ -558,7 +558,7 @@ export default {
 
     async viewTemplateUsage(templateId) {
       try {
-        const response = await axios.get(`${RAG_API}/api/v1/platform/sop/templates/${templateId}/usage`);
+        const response = await axios.get(`${RAG_API}/platform/sop/templates/${templateId}/usage`);
         this.currentTemplateUsage = response.data;
         this.showUsageModal = true;
       } catch (error) {

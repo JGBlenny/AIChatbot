@@ -481,7 +481,7 @@
 import axios from 'axios';
 import { API_BASE_URL } from '@/config/api';
 
-const RAG_API = API_BASE_URL;  // 使用統一的 API 配置
+const RAG_API = `${API_BASE_URL}/rag-api/v1`;  // RAG Orchestrator API
 
 export default {
   name: 'PlatformSOPEditView',
@@ -628,18 +628,18 @@ export default {
     },
 
     async loadCategories() {
-      const response = await axios.get(`${RAG_API}/api/v1/platform/sop/categories`);
+      const response = await axios.get(`${RAG_API}/platform/sop/categories`);
       this.categories = response.data.categories;
     },
 
     async loadTemplates() {
-      const response = await axios.get(`${RAG_API}/api/v1/platform/sop/templates`);
+      const response = await axios.get(`${RAG_API}/platform/sop/templates`);
       this.templates = response.data.templates;
     },
 
     async loadIntents() {
       try {
-        const response = await axios.get(`${RAG_API}/api/v1/intents`);
+        const response = await axios.get(`${RAG_API}/intents`);
         this.intents = response.data.intents || [];
       } catch (error) {
         console.error('載入意圖失敗:', error);
@@ -649,7 +649,7 @@ export default {
 
     async loadAllGroups() {
       try {
-        const response = await axios.get(`${RAG_API}/api/v1/platform/sop/groups`);
+        const response = await axios.get(`${RAG_API}/platform/sop/groups`);
         this.groups = response.data.groups || [];
       } catch (error) {
         console.error('載入所有群組失敗:', error);
@@ -659,7 +659,7 @@ export default {
 
     async loadGroupsByCategory(categoryId) {
       try {
-        const response = await axios.get(`${RAG_API}/api/v1/platform/sop/groups?category_id=${categoryId}`);
+        const response = await axios.get(`${RAG_API}/platform/sop/groups?category_id=${categoryId}`);
         this.availableGroups = response.data.groups || [];
       } catch (error) {
         console.error('載入群組失敗:', error);
@@ -802,14 +802,14 @@ export default {
         if (this.editingTemplate) {
           // Update
           await axios.put(
-            `${RAG_API}/api/v1/platform/sop/templates/${this.editingTemplate.id}`,
+            `${RAG_API}/platform/sop/templates/${this.editingTemplate.id}`,
             this.templateForm
           );
           alert('範本已更新');
         } else {
           // Create
           await axios.post(
-            `${RAG_API}/api/v1/platform/sop/templates`,
+            `${RAG_API}/platform/sop/templates`,
             this.templateForm
           );
           alert('範本已建立');
@@ -826,7 +826,7 @@ export default {
       if (!confirm('確定要刪除此範本嗎？')) return;
 
       try {
-        await axios.delete(`${RAG_API}/api/v1/platform/sop/templates/${templateId}`);
+        await axios.delete(`${RAG_API}/platform/sop/templates/${templateId}`);
         alert('範本已刪除');
         this.loadTemplates();
       } catch (error) {
@@ -855,7 +855,7 @@ export default {
 
     async viewTemplateUsage(templateId) {
       try {
-        const response = await axios.get(`${RAG_API}/api/v1/platform/sop/templates/${templateId}/usage`);
+        const response = await axios.get(`${RAG_API}/platform/sop/templates/${templateId}/usage`);
         this.currentTemplateUsage = response.data;
         this.showUsageModal = true;
       } catch (error) {
@@ -879,7 +879,7 @@ export default {
     // Category management
     async saveCategory() {
       try {
-        const response = await axios.post(`${RAG_API}/api/v1/platform/sop/categories`, this.categoryForm);
+        const response = await axios.post(`${RAG_API}/platform/sop/categories`, this.categoryForm);
         const newCategory = response.data;
 
         this.closeCategoryModal();
@@ -921,7 +921,7 @@ export default {
         // 設定群組所屬的分類
         this.groupForm.category_id = this.templateForm.category_id;
 
-        const response = await axios.post(`${RAG_API}/api/v1/platform/sop/groups`, this.groupForm);
+        const response = await axios.post(`${RAG_API}/platform/sop/groups`, this.groupForm);
         const newGroup = response.data;
 
         alert(`✅ 群組「${newGroup.group_name}」已新增`);
@@ -1014,8 +1014,8 @@ export default {
 
       try {
         const url = moveToGroupId
-          ? `${RAG_API}/api/v1/platform/sop/groups/${groupId}?move_to_group_id=${moveToGroupId}`
-          : `${RAG_API}/api/v1/platform/sop/groups/${groupId}`;
+          ? `${RAG_API}/platform/sop/groups/${groupId}?move_to_group_id=${moveToGroupId}`
+          : `${RAG_API}/platform/sop/groups/${groupId}`;
 
         await axios.delete(url);
 
@@ -1071,7 +1071,7 @@ export default {
         for (const template of currentBusinessTypeTemplates) {
           try {
             // 添加 ?permanent=true 參數進行永久刪除
-            await axios.delete(`${RAG_API}/api/v1/platform/sop/templates/${template.id}?permanent=true`);
+            await axios.delete(`${RAG_API}/platform/sop/templates/${template.id}?permanent=true`);
             successCount++;
           } catch (error) {
             console.error(`刪除範本 ${template.id} 失敗:`, error);
@@ -1103,7 +1103,7 @@ export default {
         await this.loadTemplates();
 
         // 載入通用範本
-        const response = await axios.get(`${RAG_API}/api/v1/platform/sop/templates`);
+        const response = await axios.get(`${RAG_API}/platform/sop/templates`);
         this.universalTemplates = response.data.templates.filter(t => t.business_type === null);
 
         // 取得有通用範本的分類
@@ -1192,7 +1192,7 @@ export default {
             console.log(`準備複製範本「${template.item_name}」:`, payload);
 
             try {
-              await axios.post(`${RAG_API}/api/v1/platform/sop/templates`, payload);
+              await axios.post(`${RAG_API}/platform/sop/templates`, payload);
               console.log(`✅ 成功複製「${template.item_name}」，item_number: ${nextItemNumber}`);
               successCount++;
               nextItemNumber++; // 為下一個範本遞增

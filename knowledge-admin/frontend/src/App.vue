@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <!-- 左側導航欄 -->
-    <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
+    <!-- 左側導航欄 (VendorChatDemo 頁面不顯示) -->
+    <aside v-if="!isStandalonePage" class="sidebar" :class="{ collapsed: sidebarCollapsed }">
       <div class="sidebar-header">
         <div class="logo">
           <span class="logo-icon">📚</span>
@@ -98,8 +98,8 @@
       </div>
     </aside>
 
-    <!-- 主內容區 -->
-    <div class="main-container" :class="{ expanded: sidebarCollapsed }">
+    <!-- 主內容區 (VendorChatDemo 使用獨立容器) -->
+    <div v-if="!isStandalonePage" class="main-container" :class="{ expanded: sidebarCollapsed }">
       <header class="app-header">
         <h1 class="page-title">{{ currentPageTitle }}</h1>
         <div class="header-actions">
@@ -115,6 +115,11 @@
       <main class="app-main">
         <router-view />
       </main>
+    </div>
+
+    <!-- 獨立頁面容器 (VendorChatDemo) -->
+    <div v-if="isStandalonePage" class="standalone-container">
+      <router-view />
     </div>
   </div>
 </template>
@@ -150,6 +155,11 @@ export default {
   computed: {
     currentPageTitle() {
       return this.pageTitles[this.$route.path] || 'AI 知識庫管理系統';
+    },
+
+    isStandalonePage() {
+      // 檢查是否為獨立頁面（不需要側邊欄和 header）
+      return this.$route.name === 'VendorChatDemo';
     }
   },
 
@@ -519,6 +529,13 @@ body {
 
 .app-main::-webkit-scrollbar-thumb:hover {
   background: #a0aec0;
+}
+
+/* ==================== 獨立頁面容器 ==================== */
+.standalone-container {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* ==================== 動畫 ==================== */

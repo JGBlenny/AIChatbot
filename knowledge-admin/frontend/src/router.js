@@ -7,6 +7,7 @@ import KnowledgeReclassifyView from './views/KnowledgeReclassifyView.vue';
 import VendorManagementView from './views/VendorManagementView.vue';
 import VendorConfigView from './views/VendorConfigView.vue';
 import ChatTestView from './views/ChatTestView.vue';
+import VendorChatDemo from './views/VendorChatDemo.vue';
 // Platform SOP Template Management
 import PlatformSOPView from './views/PlatformSOPView.vue';
 import PlatformSOPEditView from './views/PlatformSOPEditView.vue';
@@ -139,6 +140,12 @@ const routes = [
   {
     path: '/audience-config',
     redirect: '/target-users-config'
+  },
+  // Vendor Chat Demo - 業者測試頁面（放在最後以避免路由衝突）
+  {
+    path: '/:vendorCode/chat',
+    name: 'VendorChatDemo',
+    component: VendorChatDemo
   }
 ];
 

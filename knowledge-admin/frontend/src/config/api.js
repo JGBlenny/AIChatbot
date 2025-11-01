@@ -51,9 +51,9 @@ export const API_ENDPOINTS = {
   unclearQuestionById: (id) => `${API_BASE_URL}/rag-api/v1/unclear-questions/${id}`,
 
   // Platform SOP 相關
-  platformSOPCategories: `${API_BASE_URL}/rag-api/v1/platform-sop/categories`,
-  platformSOPGroups: `${API_BASE_URL}/rag-api/v1/platform-sop/groups`,
-  platformSOPTemplates: `${API_BASE_URL}/rag-api/v1/platform-sop/templates`,
+  platformSOPCategories: `${API_BASE_URL}/rag-api/v1/platform/sop/categories`,
+  platformSOPGroups: `${API_BASE_URL}/rag-api/v1/platform/sop/groups`,
+  platformSOPTemplates: `${API_BASE_URL}/rag-api/v1/platform/sop/templates`,
 
   // ==================== Knowledge Admin API ====================
 

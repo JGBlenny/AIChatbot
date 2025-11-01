@@ -148,20 +148,57 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     host: '0.0.0.0',       // 允許容器外部訪問
-    port: 5173,
+    port: 5173,            // 容器內端口（映射到主機 8087）
     strictPort: true,
     watch: {
       usePolling: true     // Docker 環境需要 polling 模式
     },
     proxy: {
+      // ⚠️ 重要：更具體的路徑要放在前面
+
+      // RAG API 路徑（優先匹配）
+      '/api/v1': {
+        target: 'http://rag-orchestrator:8100',
+        changeOrigin: true
+      },
+      '/v1': {
+        target: 'http://rag-orchestrator:8100',
+        changeOrigin: true
+      },
+
+      // Knowledge Admin API 路徑
       '/api': {
         target: 'http://knowledge-admin-api:8000',
         changeOrigin: true
+      },
+
+      // RAG API 別名
+      '/rag-api': {
+        target: 'http://rag-orchestrator:8100/api',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/rag-api/, '')
       }
     }
   }
 })
 ```
+
+**配置說明：**
+
+1. **端口映射**:
+   - 容器內：5173
+   - 主機訪問：8087
+   - Docker Compose: `"8087:5173"`
+
+2. **Proxy 路徑優先級**:
+   - `/api/v1` 必須放在 `/api` 之前
+   - Vite 按順序匹配，第一個匹配的規則生效
+   - 更具體的路徑要先定義
+
+3. **服務名稱**:
+   - ✅ 使用: `http://rag-orchestrator:8100`
+   - ❌ 錯誤: `http://localhost:8100`
+   - Docker 網絡內使用服務名稱通信
 
 ## 常見問題
 
@@ -201,6 +238,88 @@ watch: {
 ```
 
 Docker 環境的檔案系統事件可能無法正常觸發，需要使用 polling 模式。
+
+### Q: 前端無法連接（Connection reset by peer）？
+
+**A: 這通常是端口配置問題：**
+
+**症狀：**
+```bash
+curl http://localhost:8087
+# 輸出：curl: (56) Recv failure: Connection reset by peer
+```
+
+**解決方案：**
+
+1. 檢查 vite.config.js 端口配置：
+   ```javascript
+   server: {
+     port: 5173,  // ✅ 應該是 5173（不是 8087）
+   }
+   ```
+
+2. 檢查 Docker 端口映射：
+   ```bash
+   docker-compose ps knowledge-admin-web
+   # 應該看到：0.0.0.0:8087->5173/tcp
+   ```
+
+3. 如果配置錯誤，修正後重啟：
+   ```bash
+   docker-compose restart knowledge-admin-web
+   ```
+
+### Q: API 請求失敗（500 錯誤或 ECONNREFUSED）？
+
+**A: 這是 Proxy 配置問題：**
+
+**症狀：**
+```
+[vite] http proxy error: /api/v1/vendors
+Error: connect ECONNREFUSED ::1:8000
+```
+
+**原因：**
+- 前端請求 `/api/v1/vendors` 被錯誤地代理到 knowledge-admin-api
+- 實際應該代理到 rag-orchestrator
+
+**解決方案：**
+
+1. 檢查 vite.config.js 的 proxy 配置順序：
+   ```javascript
+   proxy: {
+     // ✅ 正確：/api/v1 在前面
+     '/api/v1': {
+       target: 'http://rag-orchestrator:8100',
+       changeOrigin: true
+     },
+     '/api': {
+       target: 'http://knowledge-admin-api:8000',
+       changeOrigin: true
+     }
+   }
+   ```
+
+2. 確認使用 Docker 服務名稱（不是 localhost）：
+   ```javascript
+   // ✅ 正確
+   target: 'http://rag-orchestrator:8100'
+
+   // ❌ 錯誤（Docker 環境不適用）
+   target: 'http://localhost:8100'
+   ```
+
+3. 修改後重啟前端容器：
+   ```bash
+   docker-compose restart knowledge-admin-web
+   ```
+
+4. 驗證服務連通性：
+   ```bash
+   # 從容器內測試
+   docker exec aichatbot-knowledge-admin-web \
+     wget -q -O - http://rag-orchestrator:8100/api/v1/vendors/1
+   ```
 
 ### Q: 如何在開發模式和生產模式之間切換？
 

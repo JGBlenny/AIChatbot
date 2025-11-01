@@ -186,6 +186,78 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d \
 
 ---
 
+## ✅ 配置檢查清單
+
+部署前請確認以下配置：
+
+### 前端配置 (vite.config.js)
+
+```bash
+# 檢查文件內容
+cat knowledge-admin/frontend/vite.config.js
+```
+
+**必要配置項：**
+
+1. **端口設置**：
+   ```javascript
+   server: {
+     host: '0.0.0.0',
+     port: 5173,  // ⚠️ 必須是 5173（不是 8087）
+     strictPort: true,
+   }
+   ```
+
+2. **Polling 模式**（Docker 環境必須）：
+   ```javascript
+   watch: {
+     usePolling: true
+   }
+   ```
+
+3. **Proxy 配置順序**（重要）：
+   ```javascript
+   proxy: {
+     // ⚠️ /api/v1 必須在 /api 之前
+     '/api/v1': {
+       target: 'http://rag-orchestrator:8100',
+       changeOrigin: true
+     },
+     '/api': {
+       target: 'http://knowledge-admin-api:8000',
+       changeOrigin: true
+     }
+   }
+   ```
+
+### Docker Compose 配置
+
+```bash
+# 檢查端口映射
+docker-compose ps knowledge-admin-web
+# 應該看到：0.0.0.0:8087->5173/tcp
+```
+
+### 環境變數
+
+```bash
+# 檢查 .env 文件
+cat .env | grep OPENAI_API_KEY
+```
+
+### 服務健康檢查
+
+```bash
+# 檢查所有服務狀態
+docker-compose ps
+
+# 檢查關鍵服務日誌
+docker-compose logs --tail=50 knowledge-admin-web
+docker-compose logs --tail=50 rag-orchestrator
+```
+
+---
+
 ## ❓ 常見問題
 
 ### Q: 修改程式碼後沒有變化？
@@ -226,6 +298,122 @@ ls -la knowledge-admin/frontend/dist/
 cd knowledge-admin/frontend
 npm run build
 ```
+
+### Q: 前端無法訪問（Connection reset by peer）？ 🔥
+
+**症狀：**
+```bash
+curl http://localhost:8087
+# 輸出：curl: (56) Recv failure: Connection reset by peer
+```
+
+或瀏覽器顯示：「無法連上這個網站」
+
+**原因：**
+- vite.config.js 中的端口配置錯誤
+- 端口號與 Docker 映射不匹配
+
+**解決方案：**
+
+1. 檢查 `vite.config.js` 配置：
+   ```bash
+   grep "port:" knowledge-admin/frontend/vite.config.js
+   ```
+
+   應該顯示：
+   ```javascript
+   port: 5173,  // ✅ 正確
+   ```
+
+   如果顯示其他端口（如 8087），需要修改為 5173。
+
+2. 檢查 Docker 端口映射：
+   ```bash
+   docker-compose ps knowledge-admin-web
+   # 應該看到：0.0.0.0:8087->5173/tcp
+   ```
+
+3. 修改後重啟容器：
+   ```bash
+   docker-compose restart knowledge-admin-web
+   ```
+
+4. 等待 5-10 秒後測試：
+   ```bash
+   curl -I http://localhost:8087
+   # 應該返回：HTTP/1.1 200 OK
+   ```
+
+### Q: API 請求失敗（500 錯誤）？ 🔥
+
+**症狀：**
+- 前端顯示：「載入失敗：Request failed with status code 500」
+- 日誌顯示：
+  ```
+  [vite] http proxy error: /api/v1/vendors
+  Error: connect ECONNREFUSED ::1:8000
+  ```
+
+**原因：**
+- Proxy 配置路徑順序錯誤
+- `/api/v1` 請求被錯誤地代理到 knowledge-admin-api
+- 實際應該代理到 rag-orchestrator
+
+**解決方案：**
+
+1. 檢查 `vite.config.js` 的 proxy 配置順序：
+   ```javascript
+   proxy: {
+     // ✅ 正確：更具體的路徑在前面
+     '/api/v1': {
+       target: 'http://rag-orchestrator:8100',
+       changeOrigin: true
+     },
+     '/v1': {
+       target: 'http://rag-orchestrator:8100',
+       changeOrigin: true
+     },
+     '/api': {
+       target: 'http://knowledge-admin-api:8000',
+       changeOrigin: true
+     }
+   }
+   ```
+
+2. **重要**：確認使用 Docker 服務名稱，不是 localhost：
+   ```javascript
+   // ✅ 正確
+   target: 'http://rag-orchestrator:8100'
+
+   // ❌ 錯誤（Docker 環境無法使用）
+   target: 'http://localhost:8100'
+   ```
+
+3. 修改後重啟前端容器：
+   ```bash
+   docker-compose restart knowledge-admin-web
+   ```
+
+4. 驗證服務連通性：
+   ```bash
+   # 測試 RAG API
+   curl -s http://localhost:8100/api/v1/vendors/1 | head -5
+
+   # 從容器內測試
+   docker exec aichatbot-knowledge-admin-web \
+     wget -q -O - http://rag-orchestrator:8100/api/v1/vendors/1
+   ```
+
+5. 查看前端日誌確認問題已解決：
+   ```bash
+   docker-compose logs --tail=20 knowledge-admin-web | grep -i error
+   # 應該沒有 proxy error
+   ```
+
+**預防措施：**
+- 定期檢查 vite.config.js 配置
+- 保持文檔更新
+- 參考：[前端開發模式文檔](FRONTEND_DEV_MODE.md)
 
 ### Q: 線上環境應該用哪種方式？
 
