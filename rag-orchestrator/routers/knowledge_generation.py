@@ -216,7 +216,6 @@ async def generate_knowledge_for_scenario(
                     k.id,
                     k.question_summary as question,
                     k.answer,
-                    k.category,
                     0.70 as similarity  -- 預設相似度（簡化版本）
                 FROM knowledge_base k
                 CROSS JOIN test_scenarios ts
