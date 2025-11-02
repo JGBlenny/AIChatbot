@@ -7,9 +7,36 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 import json
 import os
+import re
 from services.embedding_utils import generate_embedding_with_pgvector
 
 router = APIRouter()
+
+
+def parse_intent_from_reasoning(reasoning: str) -> Optional[int]:
+    """
+    從 AI 生成的 reasoning 中解析推薦意圖 ID
+
+    Args:
+        reasoning: AI 生成的推理文本
+
+    Returns:
+        Optional[int]: 推薦的意圖 ID，如果沒有推薦則返回 None
+    """
+    if not reasoning:
+        return None
+
+    # 嘗試匹配【推薦意圖】區塊中的意圖 ID
+    pattern = r'【推薦意圖】.*?意圖 ID:\s*(\d+)'
+    match = re.search(pattern, reasoning, re.DOTALL)
+
+    if match:
+        try:
+            return int(match.group(1))
+        except (ValueError, AttributeError):
+            return None
+
+    return None
 
 # 懶加載 KnowledgeGenerator
 _knowledge_generator = None
@@ -61,9 +88,12 @@ class AIKnowledgeCandidate(BaseModel):
     id: int
     test_scenario_id: int
     test_question: str
-    category: str
     question: str
     generated_answer: str
+    edited_question: Optional[str] = None
+    edited_answer: Optional[str] = None
+    intent_ids: Optional[List[int]] = None
+    edit_summary: Optional[str] = None
     confidence_score: float
     ai_model: str
     warnings: List[str]
@@ -76,9 +106,7 @@ class AIKnowledgeCandidate(BaseModel):
 class EditCandidateRequest(BaseModel):
     """編輯候選請求"""
     edited_question: Optional[str] = None
-    edited_answer: str = Field(..., min_length=50, description="編輯後的答案")
-    intent_ids: List[int] = Field(default_factory=list, description="意圖 ID 列表（多選）")
-    edit_summary: str = Field(..., min_length=5, description="編輯摘要")
+    edited_answer: str = Field(..., description="編輯後的答案")
 
 
 class ReviewCandidateRequest(BaseModel):
@@ -257,6 +285,11 @@ async def generate_knowledge_for_scenario(
             # 6. 儲存候選到資料庫
             candidate_ids = []
             for candidate in candidates:
+                # 解析 AI 推薦意圖
+                reasoning = candidate.get('reasoning', '')
+                intent_id = parse_intent_from_reasoning(reasoning)
+                intent_ids = [intent_id] if intent_id else []
+
                 candidate_id = await conn.fetchval("""
                     INSERT INTO ai_generated_knowledge_candidates (
                         test_scenario_id,
@@ -269,8 +302,9 @@ async def generate_knowledge_for_scenario(
                         generation_reasoning,
                         suggested_sources,
                         warnings,
+                        intent_ids,
                         status
-                    ) VALUES ($1, $2, $3::vector, $4, $5, $6, $7, $8, $9, $10, 'pending_review')
+                    ) VALUES ($1, $2, $3::vector, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review')
                     RETURNING id
                 """,
                     scenario_id,
@@ -280,11 +314,15 @@ async def generate_knowledge_for_scenario(
                     candidate.get('confidence_score', 0.7),
                     None,  # generation_prompt（可選）
                     generator.model,
-                    candidate.get('reasoning', ''),
+                    reasoning,
                     candidate.get('sources_needed', []),
-                    candidate.get('warnings', [])
+                    candidate.get('warnings', []),
+                    intent_ids  # 🔧 新增：從 AI 推薦意圖解析的 intent_ids
                 )
                 candidate_ids.append(candidate_id)
+
+                if intent_ids:
+                    print(f"   ✅ 候選 #{candidate_id} 已自動設定意圖 ID: {intent_ids}")
 
             # 7. 更新測試情境狀態
             await conn.execute("""
@@ -491,22 +529,35 @@ async def get_pending_candidates(
         db_pool = req.app.state.db_pool
 
         async with db_pool.acquire() as conn:
-            # 使用視圖取得待審核候選
+            # 直接查詢表，包含編輯欄位
             rows = await conn.fetch("""
                 SELECT
-                    candidate_id,
-                    test_scenario_id,
-                    original_test_question,
-                    question,
-                    generated_answer,
-                    confidence_score,
-                    ai_model,
-                    warnings,
-                    status,
-                    created_at,
-                    has_edits,
-                    source_question_frequency
-                FROM v_pending_ai_knowledge_candidates
+                    kc.id AS candidate_id,
+                    kc.test_scenario_id,
+                    ts.test_question AS original_test_question,
+                    ts.difficulty,
+                    kc.question,
+                    kc.generated_answer,
+                    kc.edited_question,
+                    kc.edited_answer,
+                    kc.intent_ids,
+                    kc.edit_summary,
+                    kc.confidence_score,
+                    kc.ai_model,
+                    kc.warnings,
+                    kc.status,
+                    kc.created_at,
+                    (kc.edited_answer IS NOT NULL) AS has_edits,
+                    CASE
+                        WHEN ts.source_question_id IS NOT NULL THEN (
+                            SELECT frequency FROM unclear_questions WHERE id = ts.source_question_id
+                        )
+                        ELSE NULL
+                    END AS source_question_frequency
+                FROM ai_generated_knowledge_candidates kc
+                JOIN test_scenarios ts ON kc.test_scenario_id = ts.id
+                WHERE kc.status IN ('pending_review', 'needs_revision')
+                ORDER BY kc.created_at DESC
                 LIMIT $1 OFFSET $2
             """, limit, offset)
 
@@ -523,8 +574,13 @@ async def get_pending_candidates(
                     "id": row['candidate_id'],
                     "test_scenario_id": row['test_scenario_id'],
                     "test_question": row['original_test_question'],
+                    "difficulty": row['difficulty'],
                     "question": row['question'],
                     "generated_answer": row['generated_answer'],
+                    "edited_question": row['edited_question'],
+                    "edited_answer": row['edited_answer'],
+                    "intent_ids": row['intent_ids'] if row['intent_ids'] else [],
+                    "edit_summary": row['edit_summary'],
                     "confidence_score": float(row['confidence_score']) if row['confidence_score'] else 0.0,
                     "ai_model": row['ai_model'],
                     "warnings": row['warnings'] or [],
@@ -646,25 +702,19 @@ async def edit_candidate(
                 UPDATE ai_generated_knowledge_candidates
                 SET edited_question = $1,
                     edited_answer = $2,
-                    intent_ids = $3,
-                    edit_summary = $4,
                     updated_at = NOW()
-                WHERE id = $5
+                WHERE id = $3
             """,
                 request.edited_question,
                 request.edited_answer,
-                request.intent_ids if request.intent_ids else [],
-                request.edit_summary,
                 candidate_id
             )
 
             print(f"✏️ 候選 #{candidate_id} 已編輯")
-            print(f"   編輯摘要: {request.edit_summary}")
 
             return {
                 "message": "編輯成功",
-                "candidate_id": candidate_id,
-                "edit_summary": request.edit_summary
+                "candidate_id": candidate_id
             }
 
     except HTTPException:

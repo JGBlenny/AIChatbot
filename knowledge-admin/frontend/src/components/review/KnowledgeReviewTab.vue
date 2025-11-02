@@ -101,26 +101,26 @@
 
             <!-- AI 生成的問題 -->
             <div class="section">
-              <h5>❓ AI 生成的問題</h5>
+              <h5>❓ AI 生成的問題 <span v-if="candidate.edited_question" class="edit-badge">已編輯</span></h5>
               <textarea
                 v-if="editingCandidates[candidate.id]"
                 v-model="editForms[candidate.id].question"
                 rows="2"
                 class="edit-textarea"
               ></textarea>
-              <p v-else class="generated-question">{{ candidate.question }}</p>
+              <p v-else class="generated-question">{{ candidate.edited_question || candidate.question }}</p>
             </div>
 
             <!-- AI 生成的答案 -->
             <div class="section">
-              <h5>💡 AI 生成的答案</h5>
+              <h5>💡 AI 生成的答案 <span v-if="candidate.edited_answer" class="edit-badge">已編輯</span></h5>
               <textarea
                 v-if="editingCandidates[candidate.id]"
                 v-model="editForms[candidate.id].answer"
                 rows="8"
                 class="edit-textarea"
               ></textarea>
-              <p v-else class="generated-answer">{{ candidate.generated_answer }}</p>
+              <p v-else class="generated-answer">{{ candidate.edited_answer || candidate.generated_answer }}</p>
             </div>
 
             <!-- 警告 -->
@@ -178,39 +178,6 @@
               </details>
             </div>
 
-            <!-- 意圖選擇（編輯模式 - 多選） -->
-            <div v-if="editingCandidates[candidate.id]" class="section">
-              <h5>🎯 選擇意圖（可多選，已選 {{ editForms[candidate.id].intent_ids.length }} 個）</h5>
-              <div class="intent-checkboxes">
-                <label
-                  v-for="intent in intents"
-                  :key="intent.id"
-                  class="intent-checkbox-item"
-                  :class="{ 'checked': editForms[candidate.id].intent_ids.includes(intent.id) }"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="editForms[candidate.id].intent_ids.includes(intent.id)"
-                    @change="toggleIntent(candidate.id, intent.id)"
-                  />
-                  <span class="intent-checkbox-label">
-                    <strong>{{ intent.name }}</strong>
-                    <span class="intent-desc">{{ intent.description }}</span>
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            <!-- 編輯摘要 -->
-            <div v-if="editingCandidates[candidate.id]" class="section">
-              <h5>📋 編輯摘要（說明您做了哪些修改）</h5>
-              <textarea
-                v-model="editForms[candidate.id].edit_summary"
-                rows="2"
-                placeholder="例如：修正了語氣、補充了細節說明..."
-                class="edit-textarea"
-              ></textarea>
-            </div>
           </div>
 
           <div class="candidate-actions">
@@ -259,9 +226,6 @@ export default {
       },
       editingCandidates: {},
       editForms: {},
-
-      // 意圖列表
-      intents: [],
 
       loading: false,
       highlightCandidateId: null  // 需要高亮的候選 ID
@@ -323,7 +287,6 @@ export default {
   mounted() {
     this.loadAICandidates();
     this.loadAIStats();
-    this.loadIntents();
   },
 
   methods: {
@@ -346,17 +309,6 @@ export default {
         alert('載入 AI 候選失敗');
       } finally {
         this.loading = false;
-      }
-    },
-
-    async loadIntents() {
-      try {
-        const response = await axios.get(API_ENDPOINTS.intents, {
-          params: { enabled_only: true }
-        });
-        this.intents = response.data.intents;
-      } catch (error) {
-        console.error('載入意圖列表失敗:', error);
       }
     },
 
@@ -391,25 +343,12 @@ export default {
     },
 
     startAIEdit(candidate) {
-      // 從推薦意圖中提取 intent_ids（支援多選）
-      let intentIds = [];
-      const intentInfo = this.candidateIntents[candidate.id];
-      if (intentInfo && intentInfo.intent_id !== '未推薦') {
-        intentIds = [parseInt(intentInfo.intent_id)];
-      }
-
-      // 如果候選已經有 intent_ids，使用已儲存的
-      if (candidate.intent_ids && candidate.intent_ids.length > 0) {
-        intentIds = candidate.intent_ids;
-      }
-
       // 使用 Object.assign 確保響應式更新
+      // 優先使用已編輯的版本，如果沒有則使用原始版本
       this.editForms = Object.assign({}, this.editForms, {
         [candidate.id]: {
-          question: candidate.question,
-          answer: candidate.generated_answer,
-          intent_ids: intentIds,
-          edit_summary: ''
+          question: candidate.edited_question || candidate.question,
+          answer: candidate.edited_answer || candidate.generated_answer
         }
       });
 
@@ -431,42 +370,38 @@ export default {
 
     async saveAIEdit(candidateId) {
       const form = this.editForms[candidateId];
-      if (!form.edit_summary.trim()) {
-        alert('請填寫編輯摘要，說明您做了哪些修改');
-        return;
-      }
-
-      if (!form.intent_ids || form.intent_ids.length === 0) {
-        alert('請至少選擇一個意圖');
-        return;
-      }
 
       try {
         await axios.put(API_ENDPOINTS.knowledgeCandidateEdit(candidateId), {
           edited_question: form.question,
-          edited_answer: form.answer,
-          intent_ids: form.intent_ids,
-          edit_summary: form.edit_summary
+          edited_answer: form.answer
         });
-        alert(`✅ 編輯已儲存！已選擇 ${form.intent_ids.length} 個意圖`);
+        alert('✅ 編輯已儲存！');
         this.cancelAIEdit(candidateId);
         this.loadAICandidates();
       } catch (error) {
         console.error('儲存編輯失敗:', error);
-        alert('儲存編輯失敗：' + (error.response?.data?.detail || error.message));
-      }
-    },
 
-    toggleIntent(candidateId, intentId) {
-      const form = this.editForms[candidateId];
-      const index = form.intent_ids.indexOf(intentId);
+        // 處理 Pydantic 驗證錯誤（detail 是數組）
+        let errorMsg = '儲存編輯失敗';
+        if (error.response?.data?.detail) {
+          const detail = error.response.data.detail;
+          if (Array.isArray(detail)) {
+            // Pydantic 驗證錯誤
+            errorMsg += '：\n' + detail.map(err => {
+              const field = err.loc ? err.loc[err.loc.length - 1] : 'unknown';
+              return `- ${field}: ${err.msg}`;
+            }).join('\n');
+          } else if (typeof detail === 'string') {
+            errorMsg += '：' + detail;
+          } else {
+            errorMsg += '：' + JSON.stringify(detail);
+          }
+        } else if (error.message) {
+          errorMsg += '：' + error.message;
+        }
 
-      if (index > -1) {
-        // 已存在，移除
-        form.intent_ids.splice(index, 1);
-      } else {
-        // 不存在，新增
-        form.intent_ids.push(intentId);
+        alert(errorMsg);
       }
     },
 
@@ -1287,5 +1222,18 @@ export default {
   50% {
     box-shadow: 0 0 0 8px rgba(102, 126, 234, 0.4), 0 4px 16px rgba(102, 126, 234, 0.3);
   }
+}
+
+/* 已編輯徽章 */
+.edit-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+  vertical-align: middle;
 }
 </style>
