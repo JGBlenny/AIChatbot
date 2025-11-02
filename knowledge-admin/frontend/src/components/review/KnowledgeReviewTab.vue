@@ -391,8 +391,6 @@ export default {
     },
 
     startAIEdit(candidate) {
-      this.editingCandidates[candidate.id] = true;
-
       // 從推薦意圖中提取 intent_ids（支援多選）
       let intentIds = [];
       const intentInfo = this.candidateIntents[candidate.id];
@@ -405,17 +403,30 @@ export default {
         intentIds = candidate.intent_ids;
       }
 
-      this.editForms[candidate.id] = {
-        question: candidate.question,
-        answer: candidate.generated_answer,
-        intent_ids: intentIds,
-        edit_summary: ''
-      };
+      // 使用 Object.assign 確保響應式更新
+      this.editForms = Object.assign({}, this.editForms, {
+        [candidate.id]: {
+          question: candidate.question,
+          answer: candidate.generated_answer,
+          intent_ids: intentIds,
+          edit_summary: ''
+        }
+      });
+
+      this.editingCandidates = Object.assign({}, this.editingCandidates, {
+        [candidate.id]: true
+      });
     },
 
     cancelAIEdit(candidateId) {
-      delete this.editingCandidates[candidateId];
-      delete this.editForms[candidateId];
+      // 使用 Object.assign 確保響應式更新
+      const newEditingCandidates = Object.assign({}, this.editingCandidates);
+      delete newEditingCandidates[candidateId];
+      this.editingCandidates = newEditingCandidates;
+
+      const newEditForms = Object.assign({}, this.editForms);
+      delete newEditForms[candidateId];
+      this.editForms = newEditForms;
     },
 
     async saveAIEdit(candidateId) {
