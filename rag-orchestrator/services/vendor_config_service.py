@@ -105,7 +105,7 @@ class VendorConfigService:
         Returns:
             {
                 'payment_day': {'value': 1, 'display_name': '繳費日期', 'unit': '號'},
-                'payment_method': {'value': '銀行轉帳、超商繳費', ...},
+                'payment_methods': {'value': '銀行轉帳\n超商繳費\n信用卡', ...},
                 ...
             }
         """
@@ -196,13 +196,16 @@ class VendorConfigService:
 
             # 繳費方式問題
             if any(kw in question for kw in ['繳費方式', '如何繳費', '怎麼繳', '付款方式']):
-                if 'payment_method' in params:
-                    methods = params['payment_method']['value']
+                if 'payment_methods' in params:
+                    methods = params['payment_methods']['value']
+                    # 將換行符轉換為中文逗號分隔
+                    methods_list = [m.strip() for m in methods.split('\n') if m.strip()]
+                    methods_text = '、'.join(methods_list)
                     return {
-                        'answer': f"本公司提供以下繳費方式：{methods}。",
+                        'answer': f"本公司提供以下繳費方式：{methods_text}。",
                         'source': 'vendor_config',
                         'config_used': {
-                            'payment_method': methods
+                            'payment_methods': methods_text
                         },
                         'confidence': 1.0
                     }
@@ -221,7 +224,7 @@ class VendorConfigService:
         Returns:
             {
                 'vendor_id': 1,
-                'payment': {'payment_day': 1, 'payment_method': '...'},
+                'payment': {'payment_day': 1, 'payment_methods': '...'},
                 'cashflow': {...},
                 'contract': {...}
             }

@@ -55,6 +55,10 @@
               <span class="group-title">業者管理</span>
             </div>
             <div class="nav-group-items" v-if="expandedGroups.vendor">
+              <router-link to="/vendors" class="nav-item nav-item-sub">
+                <span class="nav-icon">👥</span>
+                <span class="nav-text">業者列表</span>
+              </router-link>
               <router-link to="/business-types-config" class="nav-item nav-item-sub">
                 <span class="nav-icon">🏢</span>
                 <span class="nav-text">業態設定</span>

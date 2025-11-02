@@ -498,8 +498,16 @@ class LLMAnswerOptimizer:
         for key, value in vendor_params.items():
             pattern = f"{{{{{key}}}}}"
             if pattern in result:
-                result = result.replace(pattern, str(value))
-                replacements_made.append(f"{{{{{{key}}}}}} → {value}")
+                # 處理 dict 格式的業者參數（包含 display_name, value, unit）
+                if isinstance(value, dict):
+                    param_value = value.get('value', '')
+                    unit = value.get('unit', '')
+                    full_value = f"{param_value}{unit}" if unit else param_value
+                else:
+                    full_value = str(value)
+
+                result = result.replace(pattern, full_value)
+                replacements_made.append(f"{{{{{{{key}}}}}}} → {full_value}")
 
         # 2. 智能匹配常見模式並替換
 
@@ -553,6 +561,7 @@ class LLMAnswerOptimizer:
                             result = result.replace(full_match, new_text, 1)
                             replacements_made.append(f"{full_match} → {new_text} (時效)")
                             break
+
 
         if replacements_made:
             print(f"      ✅ 確定性替換完成：{len(replacements_made)} 項")
@@ -698,9 +707,15 @@ class LLMAnswerOptimizer:
         for i, result in enumerate(search_results[:max_results], 1):
             content = result['content']
 
+            print(f"   📄 答案 {i} 原始內容（前100字）: {content[:100]}...")
+
             # 如果有業者參數，先進行智能參數注入和語氣調整
             if vendor_params and vendor_name:
+                print(f"   💉 對答案 {i} 執行參數注入...")
                 content = self.inject_vendor_params(content, vendor_params, vendor_name, vendor_info)
+                print(f"   ✅ 答案 {i} 注入後內容（前100字）: {content[:100]}...")
+            else:
+                print(f"   ⚠️  跳過答案 {i} 的參數注入（vendor_params或vendor_name為空）")
 
             answers_to_synthesize.append({
                 "index": i,
@@ -718,8 +733,8 @@ class LLMAnswerOptimizer:
             for ans in answers_to_synthesize
         ])
 
-        # 建立合成 Prompt
-        system_prompt = self._create_synthesis_system_prompt(intent_info, vendor_name, vendor_info)
+        # 建立合成 Prompt（加入業者參數）
+        system_prompt = self._create_synthesis_system_prompt(intent_info, vendor_name, vendor_info, vendor_params)
         user_prompt = self._create_synthesis_user_prompt(question, formatted_answers, intent_info)
 
         # 檢查 API key
@@ -749,10 +764,16 @@ class LLMAnswerOptimizer:
         self,
         intent_info: Dict,
         vendor_name: Optional[str] = None,
-        vendor_info: Optional[Dict] = None
+        vendor_info: Optional[Dict] = None,
+        vendor_params: Optional[Dict] = None
     ) -> str:
         """建立答案合成的系統提示詞"""
         intent_type = intent_info.get('intent_type', 'knowledge')
+
+        # 調試：檢查 vendor_params
+        print(f"   🔍 調試 - vendor_params 類型: {type(vendor_params)}, 是否為空: {not vendor_params}")
+        if vendor_params:
+            print(f"   🔍 調試 - vendor_params 數量: {len(vendor_params)}, 前3個 key: {list(vendor_params.keys())[:3]}")
 
         base_prompt = """你是一個專業的知識整合助理。你的任務是將多個相關但各有側重的答案，合成為一個完整、準確、結構化的回覆。
 
@@ -766,6 +787,38 @@ class LLMAnswerOptimizer:
 7. **Markdown**：適當使用 Markdown 格式（## 標題、- 列表、**粗體**）"""
 
         rule_number = 8
+
+        # 如果有業者參數，加入參數替換指令
+        if vendor_params:
+            print(f"   ✅ 加入業者參數替換指令到合成提示詞")
+            base_prompt += f"\n{rule_number}. **業者參數替換（重要）**：\n"
+            base_prompt += "   - ⚠️ **必須替換通用描述為具體值**：\n"
+            base_prompt += "     * 「依業者規定」、「根據合約規定」→ 使用下方業者參數的具體值\n"
+            base_prompt += "     * 「固定金額」、「具體天數」→ 使用下方業者參數的具體值\n"
+            base_prompt += "     * 「請聯繫我們確認」→ 直接給出具體值，不要保留模糊說法\n\n"
+
+            # 格式化業者參數列表
+            base_prompt += "   - 📋 **可用的業者參數**：\n"
+            params_added = 0
+            for key, value in vendor_params.items():
+                if isinstance(value, dict):
+                    display_name = value.get('display_name', key)
+                    param_value = value.get('value', '')
+                    unit = value.get('unit', '')
+                    full_value = f"{param_value}{unit}" if unit else param_value
+                    base_prompt += f"     * **{display_name}**: {full_value}\n"
+                    params_added += 1
+            print(f"   📋 已加入 {params_added} 個業者參數到提示詞")
+
+            base_prompt += "\n   - 📌 **替換示例（必須遵循）**：\n"
+            base_prompt += "     * ❌ 錯誤：「寬限期依業者規定」\n"
+            base_prompt += "     * ✅ 正確：「寬限期為3天」（使用業者參數）\n"
+            base_prompt += "     * ❌ 錯誤：「逾期費用為固定金額」\n"
+            base_prompt += "     * ✅ 正確：「逾期費用為300元」（使用業者參數）\n"
+
+            rule_number += 1
+        else:
+            print(f"   ⚠️  未加入業者參數（vendor_params 為空）")
 
         # 如果有業者名稱，加入業者資訊
         if vendor_name:
@@ -790,6 +843,10 @@ class LLMAnswerOptimizer:
             base_prompt += f"\n{rule_number}. **操作指引**：請提供具體、可執行的操作步驟"
 
         base_prompt += "\n\n重要：只輸出合成後的完整答案，不要加上「根據以上資訊」等元資訊。"
+
+        # 調試：輸出prompt的前1500字元
+        print(f"   📝 合成提示詞長度: {len(base_prompt)} 字元")
+        print(f"   📝 合成提示詞（前1500字）: {base_prompt[:1500]}...")
 
         return base_prompt
 
@@ -913,12 +970,22 @@ class LLMAnswerOptimizer:
         """建立系統提示詞"""
         intent_type = intent_info.get('intent_type', 'knowledge')
 
-        base_prompt = """你是一個專業、友善的客服助理。你的任務是根據知識庫的資訊，用自然、易懂的語言回答使用者的問題。
+        base_prompt = """你是一個專業、友善的客服助理。
+
+🎯 **核心任務**：用業者的實際參數值回答問題，參考資料僅作為回答架構參考。
 
 回答要求：
 1. 直接回答問題，不要重複問題內容
 2. 使用繁體中文，語氣親切專業
-3. 資訊必須來自提供的參考資料，不要編造
+3. **【重要】參數替換規則 - 業者參數絕對優先**：
+   - ⚠️ 參考資料是通用範本，**所有數值都必須被業者參數覆蓋**
+   - ⚠️ 即使參考資料說「內政部規定」、「通常」、「一般」，仍須使用業者參數
+   - 你**必須替換**以下所有類型的數值：
+     * 明確數值：「每月1號」→ payment_day=5 → 答「每月5號」
+     * 時間描述：「一個月」→ termination_notice_days=60 → 答「60天（兩個月）」
+     * 金額描述：「一個月租金」→ early_termination_fee=5000 → 答「5000元」
+     * 日期範圍：「1日至5日」→ grace_period=3 → 答「3天寬限期」
+     * 數字描述：「兩個月」→ deposit_months=2 → 答「2個月」
 4. 如有步驟或流程，請清楚列出
 5. 適當使用 Markdown 格式（標題、列表）使答案更易讀
 6. 保持簡潔，避免冗長
@@ -933,7 +1000,19 @@ class LLMAnswerOptimizer:
 
         # 【新增】如果有業者參數，明確列出所有參數供 AI 參考
         if vendor_params:
-            base_prompt += f"\n{rule_number}. **重要：業者特定參數** - 當參考資料不夠具體時，請優先使用以下資訊補充回答：\n"
+            base_prompt += f"\n{rule_number}. **【關鍵】業者特定參數 - 絕對優先使用**：\n"
+            base_prompt += "   - ⚠️ **參考資料中的所有數值都是範例**，包括明確數字、通用描述（如「一個月」、「一個月租金」、「1日至5日」）\n"
+            base_prompt += "   - ✅ **必須用以下業者參數覆蓋**參考資料中的任何相關數值\n"
+            base_prompt += "   - 📌 **替換示例（必須遵循）**：\n"
+            base_prompt += "     * 參考資料：「每月1號」→ 使用 payment_day=5 → 答案：「每月5號」\n"
+            base_prompt += "     * 參考資料：「提前一個月通知」→ 使用 termination_notice_days=60 → 答案：「提前60天（兩個月）通知」\n"
+            base_prompt += "     * 參考資料：「違約金一個月租金」→ 使用 early_termination_fee=5000 → 答案：「違約金5000元」\n"
+            base_prompt += "     * 參考資料：「1日至5日寬限期」→ 使用 grace_period=3 → 答案：「3天寬限期」\n"
+            base_prompt += "     * ⚠️ 參考資料：「逾期費用為固定金額」→ 使用 late_fee=300元 → 答案：「逾期費用為300元」（**不可省略具體金額**）\n"
+            base_prompt += "     * ⚠️ 參考資料：「寬限期根據合約規定」→ 使用 grace_period=3天 → 答案：「寬限期為3天」（**不可省略具體天數**）\n"
+            base_prompt += "     * ⚠️ 問題「續約前多久通知」→ **只能**使用 renewal_notice_days（30天），**絕不**使用 termination_notice_days\n"
+            base_prompt += "     * ⚠️ 問題「提前解約/終止」→ **只能**使用 termination_notice_days（60天），**絕不**使用 renewal_notice_days\n"
+            base_prompt += "   - 🎯 以下是該業者的**真實參數值**，請務必使用：\n\n"
 
             # 將參數按類別組織，更易讀
             payment_params = {}
@@ -951,31 +1030,59 @@ class LLMAnswerOptimizer:
                 else:
                     other_params[key] = value
 
+            # 格式化參數顯示的輔助函數
+            def format_param(key, value):
+                """格式化參數顯示，優先使用中文 display_name"""
+                # 特定參數的使用場景說明
+                usage_hints = {
+                    'renewal_notice_days': '← ⚠️ **只用於「續約」問題，不可用於解約**',
+                    'termination_notice_days': '← ⚠️ **只用於「提前解約/終止」問題，不可用於續約**',
+                    'late_fee': '← ⚠️ **必須補充具體金額到答案中**',
+                    'grace_period': '← ⚠️ **必須補充具體天數到答案中**'
+                }
+
+                # 檢查 value 是否為 dict（包含 display_name, unit 等完整資訊）
+                if isinstance(value, dict):
+                    display_name = value.get('display_name', key)
+                    param_value = value.get('value', '')
+                    unit = value.get('unit', '')
+                    full_value = f"{param_value}{unit}" if unit else param_value
+                    hint = usage_hints.get(key, '← 必須使用此值')
+                    return f"   - **{display_name}** ({key}): **{full_value}** {hint}\n"
+                else:
+                    # 向後兼容：如果是簡單字串值
+                    hint = usage_hints.get(key, '← 必須使用此值')
+                    return f"   - {key}: **{value}** {hint}\n"
+
             # 繳費相關參數
             if payment_params:
-                base_prompt += "   【繳費相關】\n"
+                base_prompt += "   【繳費相關】**（覆蓋參考資料中的所有相關數值）**\n"
                 for key, value in payment_params.items():
-                    base_prompt += f"   - {key}: {value}\n"
+                    base_prompt += format_param(key, value)
 
             # 服務相關參數
             if service_params:
-                base_prompt += "   【客服聯絡】\n"
+                base_prompt += "   【客服聯絡】**（覆蓋參考資料中的所有相關數值）**\n"
                 for key, value in service_params.items():
-                    base_prompt += f"   - {key}: {value}\n"
+                    base_prompt += format_param(key, value)
 
             # 合約相關參數
             if contract_params:
-                base_prompt += "   【合約條款】\n"
+                base_prompt += "   【合約條款】**（覆蓋參考資料中的所有相關數值）**\n"
                 for key, value in contract_params.items():
-                    base_prompt += f"   - {key}: {value}\n"
+                    base_prompt += format_param(key, value)
 
             # 其他參數
             if other_params:
-                base_prompt += "   【其他資訊】\n"
+                base_prompt += "   【其他資訊】**（覆蓋參考資料中的所有相關數值）**\n"
                 for key, value in other_params.items():
-                    base_prompt += f"   - {key}: {value}\n"
+                    base_prompt += format_param(key, value)
 
-            base_prompt += "   **注意**：如果參考資料中的資訊籠統或缺失，請主動使用上述參數提供具體資訊。\n"
+            base_prompt += "\n   ⚠️ **最後檢查清單**：\n"
+            base_prompt += "   - [ ] 參考資料中的日期/數字是否已替換？（如「1號」→「5號」、「一個月」→「60天」）\n"
+            base_prompt += "   - [ ] 參考資料中的金額是否已替換？（如「一個月租金」→「5000元」）\n"
+            base_prompt += "   - [ ] 參考資料中的時間範圍是否已替換？（如「1日至5日」→「3天」）\n"
+            base_prompt += "   - [ ] 所有通用描述是否都已用實際參數值覆蓋？\n"
             rule_number += 1
 
         # 根據業種類型調整語氣（Phase 4 擴展：從資料庫載入 - 簡化版）

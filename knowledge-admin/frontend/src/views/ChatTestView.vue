@@ -51,10 +51,10 @@
           {{ selectedVendor.is_active ? '啟用' : '停用' }}
         </span></div>
       </div>
-      <div class="params-preview" v-if="vendorParams && chatMode === 'tenant'">
+      <div class="params-preview" v-if="vendorParamsWithValues && vendorParamsWithValues.length > 0 && chatMode === 'tenant'">
         <strong>業者參數：</strong>
-        <span class="param-badge" v-for="(param, key) in vendorParams" :key="key">
-          {{ param.display_name || key }}: {{ param.value }}
+        <span class="param-badge" v-for="param in vendorParamsWithValues" :key="param.key">
+          {{ param.displayName }}: {{ formatParamValue(param.value, param.unit) }}
         </span>
       </div>
     </div>
@@ -159,10 +159,40 @@ export default {
       loading: false
     };
   },
+  computed: {
+    vendorParamsWithValues() {
+      if (!this.vendorParams) return [];
+
+      return Object.keys(this.vendorParams)
+        .filter(key => {
+          const value = this.vendorParams[key].value;
+          return value !== null && value !== undefined && value !== '';
+        })
+        .map(key => ({
+          key,
+          displayName: this.vendorParams[key].display_name || key,
+          value: this.vendorParams[key].value,
+          unit: this.vendorParams[key].unit
+        }));
+    }
+  },
   mounted() {
     this.loadVendors();
   },
   methods: {
+    formatParamValue(value, unit) {
+      if (!value) return '';
+
+      // 處理換行符（如繳費方式）
+      let formattedValue = value.toString().replace(/\\n/g, '、');
+
+      // 添加單位
+      if (unit) {
+        formattedValue += ` ${unit}`;
+      }
+
+      return formattedValue;
+    },
     async loadVendors() {
       try {
         const response = await axios.get(`${RAG_API}/v1/vendors`);

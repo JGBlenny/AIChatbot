@@ -399,9 +399,8 @@ async def _build_sop_response(
 
     llm_optimizer = req.app.state.llm_answer_optimizer
 
-    # 獲取業者參數
-    vendor_params_raw = resolver.get_vendor_parameters(request.vendor_id)
-    vendor_params = {key: param_info['value'] for key, param_info in vendor_params_raw.items()}
+    # 獲取業者參數（保留完整資訊包含 display_name, unit 等）
+    vendor_params = resolver.get_vendor_parameters(request.vendor_id)
 
     # 使用共用函數轉換 SOP 為 search_results 格式（自動設定 similarity=1.0）
     search_results = convert_sop_to_search_results(sop_items)
@@ -468,9 +467,8 @@ async def _build_rag_response(
     """使用 RAG 結果構建優化回應"""
     llm_optimizer = req.app.state.llm_answer_optimizer
 
-    # 獲取業者參數
-    vendor_params_raw = resolver.get_vendor_parameters(request.vendor_id)
-    vendor_params = {key: param_info['value'] for key, param_info in vendor_params_raw.items()}
+    # 獲取業者參數（保留完整資訊包含 display_name, unit 等）
+    vendor_params = resolver.get_vendor_parameters(request.vendor_id)
 
     # 根據 confidence_level 設定 confidence_score
     confidence_score_map = {
@@ -676,9 +674,8 @@ async def _build_knowledge_response(
     """使用知識庫結果構建優化回應"""
     llm_optimizer = req.app.state.llm_answer_optimizer
 
-    # 獲取業者參數
-    vendor_params_raw = resolver.get_vendor_parameters(request.vendor_id)
-    vendor_params = {key: param_info['value'] for key, param_info in vendor_params_raw.items()}
+    # 獲取業者參數（保留完整資訊包含 display_name, unit 等）
+    vendor_params = resolver.get_vendor_parameters(request.vendor_id)
 
     # 準備搜尋結果格式
     search_results = [{
