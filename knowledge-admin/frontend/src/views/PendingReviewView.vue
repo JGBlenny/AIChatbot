@@ -109,15 +109,6 @@
         </div>
 
         <form @submit.prevent="submitReview">
-          <div class="form-group">
-            <label>審核備註</label>
-            <textarea
-              v-model="reviewForm.notes"
-              rows="3"
-              :placeholder="reviewAction === 'approve' ? '批准原因（選填）' : '拒絕原因（建議填寫）'"
-            ></textarea>
-          </div>
-
           <div class="form-actions">
             <button type="button" @click="closeReviewDialog" class="btn-secondary btn-sm">
               取消

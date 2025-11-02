@@ -155,13 +155,10 @@ export default {
     },
 
     async approve(suggestion) {
-      const note = prompt('審核備註（可選）:');
-      if (note === null) return; // 取消
-
       try {
         await axios.post(`${RAG_API}/suggested-intents/${suggestion.id}/approve`, {
           reviewed_by: 'admin',
-          review_note: note || '已採納',
+          review_note: '已採納',
           create_intent: true
         });
 
