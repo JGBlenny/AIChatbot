@@ -10,6 +10,7 @@ import os
 import psycopg2
 import psycopg2.extras
 import asyncio
+import httpx
 
 
 router = APIRouter(prefix="/api/v1/vendors", tags=["vendors"])
@@ -1492,6 +1493,13 @@ async def copy_all_templates_to_vendor(vendor_id: int):
         """, (vendor_id,))
         deleted_items_count = cursor.rowcount
 
+        # 刪除所有現有的 SOP 群組
+        cursor.execute("""
+            DELETE FROM vendor_sop_groups
+            WHERE vendor_id = %s
+        """, (vendor_id,))
+        deleted_groups_count = cursor.rowcount
+
         # 刪除所有現有的 SOP 分類
         cursor.execute("""
             DELETE FROM vendor_sop_categories
@@ -1524,6 +1532,8 @@ async def copy_all_templates_to_vendor(vendor_id: int):
         # 統計資訊
         created_categories = []
         copied_items_total = 0
+        copied_groups_total = 0
+        all_new_item_ids = []  # 記錄所有新建立的 item ID，用於後續生成 embedding
 
         # 逐個分類處理
         for platform_category in platform_categories:
@@ -1543,10 +1553,45 @@ async def copy_all_templates_to_vendor(vendor_id: int):
             new_category = cursor.fetchone()
             vendor_category_id = new_category['id']
 
-            # 取得該分類下的所有範本
+            # 取得該分類下的所有平台群組
+            cursor.execute("""
+                SELECT DISTINCT
+                    pg.id as platform_group_id,
+                    pg.group_name,
+                    pg.display_order
+                FROM platform_sop_groups pg
+                INNER JOIN platform_sop_templates pt ON pt.group_id = pg.id
+                WHERE pg.category_id = %s
+                  AND pt.is_active = TRUE
+                  AND (pt.business_type = ANY(%s) OR pt.business_type IS NULL)
+                ORDER BY pg.display_order
+            """, (platform_category['category_id'], vendor['business_types']))
+            platform_groups = cursor.fetchall()
+
+            # 創建群組映射 {platform_group_id: vendor_group_id}
+            group_id_mapping = {}
+            for platform_group in platform_groups:
+                cursor.execute("""
+                    INSERT INTO vendor_sop_groups (
+                        vendor_id, category_id, group_name, display_order, created_at, updated_at
+                    )
+                    VALUES (%s, %s, %s, %s, NOW(), NOW())
+                    RETURNING id
+                """, (
+                    vendor_id,
+                    vendor_category_id,
+                    platform_group['group_name'],
+                    platform_group['display_order']
+                ))
+                new_group = cursor.fetchone()
+                group_id_mapping[platform_group['platform_group_id']] = new_group['id']
+                copied_groups_total += 1
+
+            # 取得該分類下的所有範本（包含 group_id）
             cursor.execute("""
                 SELECT
                     pt.id,
+                    pt.group_id,
                     pt.item_number,
                     pt.item_name,
                     pt.content,
@@ -1568,21 +1613,27 @@ async def copy_all_templates_to_vendor(vendor_id: int):
             # 批次複製範本項目
             copied_items = []
             for template in templates:
+                # 從映射中找到對應的 vendor group_id
+                vendor_group_id = group_id_mapping.get(template['group_id']) if template['group_id'] else None
+
                 cursor.execute("""
                     INSERT INTO vendor_sop_items (
                         category_id,
                         vendor_id,
+                        group_id,
                         item_number,
                         item_name,
                         content,
                         template_id,
-                        priority
+                        priority,
+                        embedding_status
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
                     RETURNING id
                 """, (
                     vendor_category_id,
                     vendor_id,
+                    vendor_group_id,
                     template['item_number'],
                     template['item_name'],
                     template['content'],
@@ -1601,6 +1652,7 @@ async def copy_all_templates_to_vendor(vendor_id: int):
                         """, (new_item_id, intent_id))
 
                 copied_items.append(new_item_id)
+                all_new_item_ids.append(new_item_id)
 
             # 記錄該分類的複製結果
             created_categories.append({
@@ -1611,13 +1663,116 @@ async def copy_all_templates_to_vendor(vendor_id: int):
             copied_items_total += len(copied_items)
 
         conn.commit()
-        cursor.close()
+
+        # 為所有新建立的 SOP items 生成 embeddings
+        embedding_api_url = os.getenv('EMBEDDING_API_URL', 'http://embedding-api:5000/api/v1/embeddings')
+        embeddings_generated = 0
+        embeddings_failed = 0
+
+        if all_new_item_ids:
+            # 重新開啟 cursor 來更新 embeddings
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+            for item_id in all_new_item_ids:
+                try:
+                    # 獲取 item 的內容（包含 group_name）
+                    cursor.execute("""
+                        SELECT vsi.item_name, vsi.content, vsg.group_name
+                        FROM vendor_sop_items vsi
+                        LEFT JOIN vendor_sop_groups vsg ON vsi.group_id = vsg.id
+                        WHERE vsi.id = %s
+                    """, (item_id,))
+                    item = cursor.fetchone()
+
+                    if item:
+                        # 準備 primary embedding 文本 (group_name + item_name)
+                        if item['group_name']:
+                            primary_text = f"{item['group_name']}：{item['item_name']}"
+                        else:
+                            primary_text = item['item_name']
+
+                        # 準備 fallback embedding 文本 (content only)
+                        fallback_text = item['content']
+
+                        # 調用 embedding API 生成 primary embedding
+                        with httpx.Client() as client:
+                            primary_response = client.post(
+                                embedding_api_url,
+                                json={"text": primary_text},
+                                headers={"Content-Type": "application/json"},
+                                timeout=30
+                            )
+
+                        if primary_response.status_code != 200:
+                            raise Exception(f"Primary embedding API 錯誤: {primary_response.status_code}")
+
+                        primary_embedding_data = primary_response.json()
+                        primary_embedding = primary_embedding_data.get("embedding")
+
+                        if not primary_embedding:
+                            raise Exception("Primary embedding 為空")
+
+                        # 調用 embedding API 生成 fallback embedding
+                        with httpx.Client() as client:
+                            fallback_response = client.post(
+                                embedding_api_url,
+                                json={"text": fallback_text},
+                                headers={"Content-Type": "application/json"},
+                                timeout=30
+                            )
+
+                        if fallback_response.status_code != 200:
+                            raise Exception(f"Fallback embedding API 錯誤: {fallback_response.status_code}")
+
+                        fallback_embedding_data = fallback_response.json()
+                        fallback_embedding = fallback_embedding_data.get("embedding")
+
+                        if not fallback_embedding:
+                            raise Exception("Fallback embedding 為空")
+
+                        # 準備 embedding_text (for debugging)
+                        embedding_text = f"primary: {primary_text} | fallback: {fallback_text[:100]}"
+
+                        # 更新資料庫（同時更新 primary 和 fallback）
+                        cursor.execute("""
+                            UPDATE vendor_sop_items
+                            SET
+                                primary_embedding = %s,
+                                fallback_embedding = %s,
+                                embedding_text = %s,
+                                embedding_updated_at = %s,
+                                embedding_version = 'text-embedding-3-small',
+                                embedding_status = 'completed'
+                            WHERE id = %s
+                        """, (primary_embedding, fallback_embedding, embedding_text, datetime.now(), item_id))
+                        embeddings_generated += 1
+
+                except Exception as e:
+                    print(f"為 item {item_id} 生成 embedding 失敗: {e}")
+                    try:
+                        cursor.execute("""
+                            UPDATE vendor_sop_items
+                            SET embedding_status = 'failed'
+                            WHERE id = %s
+                        """, (item_id,))
+                        embeddings_failed += 1
+                    except:
+                        pass
+
+            conn.commit()
+            cursor.close()
+
+        conn.close()
 
         # 組合訊息
         message_parts = []
         if deleted_items_count > 0 or deleted_categories_count > 0:
             message_parts.append(f"已刪除現有 SOP（{deleted_categories_count} 個分類、{deleted_items_count} 個項目）")
         message_parts.append(f"成功為業者「{vendor['name']}」複製整份 SOP 範本")
+        if embeddings_generated > 0:
+            message_parts.append(f"已生成 {embeddings_generated} 個 embeddings")
+        if embeddings_failed > 0:
+            message_parts.append(f"{embeddings_failed} 個 embeddings 生成失敗")
 
         return {
             "message": "，".join(message_parts),
@@ -1625,7 +1780,10 @@ async def copy_all_templates_to_vendor(vendor_id: int):
             "deleted_categories": deleted_categories_count,
             "deleted_items": deleted_items_count,
             "categories_created": len(created_categories),
+            "groups_created": copied_groups_total,
             "total_items_copied": copied_items_total,
+            "embeddings_generated": embeddings_generated,
+            "embeddings_failed": embeddings_failed,
             "categories": created_categories
         }
 
@@ -1636,4 +1794,5 @@ async def copy_all_templates_to_vendor(vendor_id: int):
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"複製整份範本失敗: {str(e)}")
     finally:
-        conn.close()
+        if conn and not conn.closed:
+            conn.close()
