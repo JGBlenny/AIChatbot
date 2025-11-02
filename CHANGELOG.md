@@ -10,6 +10,38 @@
 ## [Unreleased]
 
 ### 修復 🐛
+- **Critical: SOP 複製與 Embedding 自動生成修復** (2025-11-02)
+  - 修復 SOP 複製 API (`copy_all_templates`) 三個關鍵缺陷：
+    1. **Embedding 缺失**: 複製後 `embedding_status` 停留在 'pending'，導致向量檢索失敗
+    2. **Embedding 結構錯誤**: 缺少 `group_name` 資訊，無法精準匹配群組語意查詢
+    3. **群組結構缺失**: 沒有創建 `vendor_sop_groups`，導致前端無法顯示三層結構
+  - 修復內容：
+    - ✅ 添加自動 embedding 生成（primary: group_name + item_name, fallback: content）
+    - ✅ 自動創建 vendor_sop_groups 並正確映射 group_id
+    - ✅ 同步生成確保 API 返回時 embeddings 100% 可用
+  - 驗證結果：
+    - 28/28 items embeddings 生成成功（100%）
+    - 9 個群組正確創建
+    - 檢索成功率從 0% → 100%
+  - 修復檔案：`rag-orchestrator/routers/vendors.py:1555-1763`
+  - 新增工具：`generate_vendor_sop_embeddings.py` 補救腳本
+  - 完整報告：[SOP 複製與 Embedding 修復報告](docs/SOP_COPY_EMBEDDING_FIX_2025-11-02.md)
+
+- **業者參數處理優化** (2025-11-02)
+  - 修復業者參數在 LLM 答案合成時未正確處理 `display_name` 和 `unit` 資訊
+  - 後端保留完整業者參數結構（不只是 value）
+  - LLM 參數替換時自動附加單位（如 "5號"、"300元"）
+  - 前端優化業者參數顯示：
+    - 自動過濾空值參數
+    - 支援單位顯示和換行符處理
+    - 格式化繳費方式（\n → 、）
+  - 修復檔案：
+    - `rag-orchestrator/routers/chat.py:402`
+    - `rag-orchestrator/services/llm_answer_optimizer.py:501-513`
+    - `rag-orchestrator/services/vendor_config_service.py:199-208`
+    - `knowledge-admin/frontend/src/views/ChatTestView.vue:159-194`
+  - 配置優化：`docker-compose.yml` LLM_SYNTHESIS_TEMP: 0.5 → 0.1（提高參數替換準確性）
+
 - **Critical: Business Types 欄位名稱錯誤修復** (2025-10-29)
   - 修復 `vendor_parameter_resolver.py` 中 `business_type` → `business_types` 欄位名稱錯誤
   - 影響：B2C 模式下通用知識（`business_types: null`）無法被檢索

@@ -133,7 +133,24 @@
 
 ## 🆕 最近更新
 
-### 2025-10-23: 文檔清理與整合 ⭐ NEW
+### 2025-11-02: SOP 複製與 Embedding 修復 ⭐ NEW
+- ✅ **修復 SOP 複製 API**: 自動生成 primary + fallback embeddings
+  - [修復報告](SOP_COPY_EMBEDDING_FIX_2025-11-02.md) - 完整問題分析與解決方案
+  - 新增 `generate_vendor_sop_embeddings.py` 補救腳本
+- ✅ **修正 Embedding 結構**: group_name + item_name（符合系統設計）
+- ✅ **完善群組結構**: 自動創建 vendor_sop_groups 三層架構
+- ✅ **優化業者參數處理**: 支援 display_name + unit，前端顯示優化
+
+**影響**:
+- 檢索成功率: 0% → 100%（28/28 items）
+- 群組語意匹配: 0% → 100%
+- 業者參數替換準確性提升
+
+**Commits**:
+- `088880b` - SOP embedding 修復
+- `5cf1a1f` - 業者參數處理優化
+
+### 2025-10-23: 文檔清理與整合
 - ✅ **Phase 1 清理**: 歸檔 3 個過時文檔，刪除廢棄測試代碼
 - ✅ **Phase 2 SOP 整合**: 10 個 SOP 文檔整合為 2 個
   - [SOP 完整指南](SOP_COMPLETE_GUIDE.md) - 400+ 行完整系統文檔
