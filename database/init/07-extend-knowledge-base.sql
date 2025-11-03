@@ -2,25 +2,20 @@
 -- Phase 1: 擴展知識庫以支援多業者
 -- ============================================
 
--- 擴展 knowledge_base 表格
+-- 為 knowledge_base 表添加外鍵約束
+-- 注意：所有欄位已在 02 腳本中定義，此處只添加外鍵約束
 ALTER TABLE knowledge_base
-    ADD COLUMN IF NOT EXISTS vendor_id INTEGER REFERENCES vendors(id) ON DELETE SET NULL,
-    ADD COLUMN IF NOT EXISTS is_template BOOLEAN DEFAULT false,
-    ADD COLUMN IF NOT EXISTS template_vars JSONB DEFAULT '[]',
-    ADD COLUMN IF NOT EXISTS scope VARCHAR(20) DEFAULT 'global',
-    ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0;
+ADD CONSTRAINT fk_knowledge_vendor FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE SET NULL;
 
--- 建立索引
+-- 建立索引（大部分已在 02 腳本建立，此處確保完整性）
 CREATE INDEX IF NOT EXISTS idx_knowledge_vendor ON knowledge_base(vendor_id);
-CREATE INDEX IF NOT EXISTS idx_knowledge_scope ON knowledge_base(scope);
-CREATE INDEX IF NOT EXISTS idx_knowledge_template ON knowledge_base(is_template);
 
 -- ============================================
 -- 插入範例知識（包含模板變數）
 -- ============================================
 
 -- 全域知識（適用所有業者，使用模板變數）
-INSERT INTO knowledge_base (question_summary, answer, intent_id, is_template, template_vars, scope, priority, title)
+INSERT INTO knowledge_base (question_summary, answer, intent_id, is_template, template_vars, scope, priority, created_by)
 VALUES
     (
         '每月繳費日期',
@@ -54,7 +49,7 @@ VALUES
     );
 
 -- 合約相關全域知識
-INSERT INTO knowledge_base (question_summary, answer, intent_id, is_template, template_vars, scope, priority, title)
+INSERT INTO knowledge_base (question_summary, answer, intent_id, is_template, template_vars, scope, priority, created_by)
 VALUES
     (
         '最短租期是多久',
@@ -88,7 +83,7 @@ VALUES
     );
 
 -- 服務相關全域知識
-INSERT INTO knowledge_base (question_summary, answer, intent_id, is_template, template_vars, scope, priority, title)
+INSERT INTO knowledge_base (question_summary, answer, intent_id, is_template, template_vars, scope, priority, created_by)
 VALUES
     (
         '客服專線是多少',
@@ -112,7 +107,7 @@ VALUES
     );
 
 -- 業者 A 專屬知識（覆蓋全域知識）
-INSERT INTO knowledge_base (vendor_id, question_summary, answer, intent_id, is_template, template_vars, scope, priority, title)
+INSERT INTO knowledge_base (vendor_id, question_summary, answer, intent_id, is_template, template_vars, scope, priority, created_by)
 VALUES
     (
         1,
@@ -127,7 +122,7 @@ VALUES
     );
 
 -- 業者 B 專屬知識
-INSERT INTO knowledge_base (vendor_id, question_summary, answer, intent_id, is_template, template_vars, scope, priority, title)
+INSERT INTO knowledge_base (vendor_id, question_summary, answer, intent_id, is_template, template_vars, scope, priority, created_by)
 VALUES
     (
         2,
