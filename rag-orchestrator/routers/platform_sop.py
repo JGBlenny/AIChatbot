@@ -3,8 +3,10 @@ Platform SOP 管理 API
 用途：平台管理員管理 SOP 範本（按業種分類的參考範本）
 """
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel, Field
+import pandas as pd
+import io
 
 router = APIRouter(prefix="/api/v1/platform/sop")
 
@@ -1041,3 +1043,179 @@ async def get_template_usage(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"取得使用情況失敗: {str(e)}")
+
+
+# ========================================
+# Excel 匯入功能
+# ========================================
+
+@router.post("/import-excel", summary="匯入 Excel 替換 SOP 資料")
+async def import_sop_from_excel(
+    request: Request,
+    file: UploadFile = File(...),
+    replace_mode: str = "replace",  # replace=完全替換, merge=合併
+    business_type: str = None  # null=通用範本, full_service=包租業, property_management=代管業
+):
+    """
+    從 Excel 匯入 SOP 資料並替換現有資料
+
+    **Excel 格式要求**:
+    - 第1行: 標題（將被忽略）
+    - 第2行: 欄位名稱
+    - 列結構:
+      - 列0: 分類
+      - 列1: 說明（群組）
+      - 列2: 序號
+      - 列3: 應備欄位（項目名稱）
+      - 列4: JGB範本（內容）
+      - 列7: JGB系統操作備註
+
+    **業種選擇**:
+    - null 或 "universal": 通用範本（所有業種共用）
+    - "full_service": 包租業範本
+    - "property_management": 代管業範本
+
+    **替換模式**:
+    - replace: 刪除所有現有資料，完全替換
+    - merge: 保留現有資料，僅更新或新增
+
+    **權限**: 平台管理員
+    """
+    try:
+        # 驗證 business_type 參數
+        if business_type and business_type not in [None, "universal", "full_service", "property_management"]:
+            raise HTTPException(status_code=400, detail=f"不支援的業種類型: {business_type}")
+
+        # 轉換業種參數（"universal" -> NULL）
+        db_business_type = None if business_type in [None, "universal"] else business_type
+
+        # 讀取上傳的 Excel 檔案
+        contents = await file.read()
+        df = pd.read_excel(io.BytesIO(contents), sheet_name='Sheet1', header=1)
+
+        # 重命名欄位
+        df.columns = ['分類', '說明', '序號', '應備欄位', 'JGB範本', '愛租屋管理制度', '空白欄', 'JGB系統操作備註']
+
+        async with request.app.state.db_pool.acquire() as conn:
+            # 開始交易
+            async with conn.transaction():
+                if replace_mode == "replace":
+                    # 完全替換模式：只刪除指定 business_type 的範本資料
+                    print(f"🗑️  刪除 business_type={db_business_type} 的 SOP 範本...")
+
+                    # 先刪除範本的意圖映射（透過 template_id）
+                    await conn.execute("""
+                        DELETE FROM platform_sop_template_intents
+                        WHERE template_id IN (
+                            SELECT id FROM platform_sop_templates
+                            WHERE business_type IS NOT DISTINCT FROM $1
+                        )
+                    """, db_business_type)
+
+                    # 刪除指定 business_type 的範本
+                    result = await conn.execute("""
+                        DELETE FROM platform_sop_templates
+                        WHERE business_type IS NOT DISTINCT FROM $1
+                    """, db_business_type)
+
+                    # 從結果中提取刪除的行數
+                    deleted_count = int(result.split()[-1]) if result else 0
+                    print(f"   已刪除 {deleted_count} 個範本")
+
+                    # 注意：不刪除 categories 和 groups，因為它們可能被其他業種使用
+
+                # 解析 Excel 並建立資料結構
+                categories_created = {}
+                groups_created = {}
+                templates_created = 0
+
+                current_category = None
+                current_category_id = None
+                current_group = None
+                current_group_id = None
+
+                for idx, row in df.iterrows():
+                    # 處理分類
+                    if pd.notna(row['分類']) and str(row['分類']).strip():
+                        category_name = str(row['分類']).replace('\n', '').strip()
+
+                        if category_name not in categories_created:
+                            # 創建新分類
+                            cat_id = await conn.fetchval("""
+                                INSERT INTO platform_sop_categories
+                                (category_name, description, display_order, is_active)
+                                VALUES ($1, $2, $3, TRUE)
+                                ON CONFLICT (category_name) DO UPDATE
+                                SET description = EXCLUDED.description
+                                RETURNING id
+                            """, category_name, f"從 Excel 匯入: {category_name}", len(categories_created) + 1)
+
+                            categories_created[category_name] = cat_id
+                            current_category = category_name
+                            current_category_id = cat_id
+                            print(f"📁 創建分類: {category_name} (ID: {cat_id})")
+
+                    # 處理群組（說明）
+                    if pd.notna(row['說明']) and str(row['說明']).strip():
+                        group_name = str(row['說明']).strip()
+                        group_key = f"{current_category}::{group_name}"
+
+                        if group_key not in groups_created and current_category_id:
+                            # 創建新群組（如果已存在則更新）
+                            grp_id = await conn.fetchval("""
+                                INSERT INTO platform_sop_groups
+                                (category_id, group_name, description, display_order)
+                                VALUES ($1, $2, $3, $4)
+                                ON CONFLICT (category_id, group_name) DO UPDATE
+                                SET description = EXCLUDED.description,
+                                    display_order = EXCLUDED.display_order
+                                RETURNING id
+                            """, current_category_id, group_name, "", len([k for k in groups_created if k.startswith(f"{current_category}::")]) + 1)
+
+                            groups_created[group_key] = grp_id
+                            current_group = group_name
+                            current_group_id = grp_id
+                            print(f"  📂 創建群組: {group_name} (ID: {grp_id})")
+
+                    # 處理範本項目
+                    if pd.notna(row['序號']) and current_category_id:
+                        item_number = int(row['序號']) if not pd.isna(row['序號']) else 0
+                        item_name = str(row['應備欄位']).strip() if pd.notna(row['應備欄位']) else f"項目 {item_number}"
+                        content = str(row['JGB範本']).strip() if pd.notna(row['JGB範本']) else ""
+                        system_note = str(row['JGB系統操作備註']).strip() if pd.notna(row['JGB系統操作備註']) else None
+
+                        # 創建範本
+                        template_id = await conn.fetchval("""
+                            INSERT INTO platform_sop_templates
+                            (category_id, group_id, business_type, item_number, item_name, content,
+                             template_notes, priority, is_active)
+                            VALUES ($1, $2, $3, $4, $5, $6, $7, 50, TRUE)
+                            RETURNING id
+                        """, current_category_id, current_group_id, db_business_type, item_number, item_name, content, system_note)
+
+                        templates_created += 1
+
+                        if templates_created % 10 == 0:
+                            print(f"  ✅ 已創建 {templates_created} 個範本...")
+
+                print(f"\n✅ 匯入完成！")
+                print(f"   • 分類: {len(categories_created)} 個")
+                print(f"   • 群組: {len(groups_created)} 個")
+                print(f"   • 範本: {templates_created} 個")
+
+                return {
+                    "success": True,
+                    "message": "Excel 匯入成功",
+                    "statistics": {
+                        "categories_created": len(categories_created),
+                        "groups_created": len(groups_created),
+                        "templates_created": templates_created
+                    }
+                }
+
+    except pd.errors.ParserError as e:
+        raise HTTPException(status_code=400, detail=f"Excel 格式錯誤: {str(e)}")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"匯入失敗: {str(e)}")

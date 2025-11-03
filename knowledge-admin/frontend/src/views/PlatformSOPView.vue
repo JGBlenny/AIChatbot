@@ -7,8 +7,8 @@
 
     <!-- 操作按鈕區 -->
     <div class="action-bar">
-      <button @click="showCategoryModal = true" class="btn-primary btn-sm">
-        新增分類
+      <button @click="showImportModal = true" class="btn-success btn-sm">
+        📥 匯入 Excel
       </button>
     </div>
 
@@ -95,6 +95,78 @@
           <div class="modal-actions">
             <button type="submit" class="btn-primary btn-sm">儲存</button>
             <button type="button" @click="closeCategoryModal" class="btn-secondary btn-sm">取消</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Excel 匯入 Modal -->
+    <div v-if="showImportModal" class="modal-overlay" @click="showImportModal = false">
+      <div class="modal-content" @click.stop>
+        <h2>📥 匯入 Excel 替換 SOP 資料</h2>
+
+        <div class="import-warning" style="background: #fff3cd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+          <strong>⚠️ 警告：</strong>
+          <p>匯入將會<strong>替換指定業種</strong>的所有現有範本資料。</p>
+          <p>• 會刪除該業種的舊範本，並創建新範本</p>
+          <p>• 不會影響其他業種的範本</p>
+          <p>請確保 Excel 檔案格式正確，否則可能導致資料遺失。</p>
+        </div>
+
+        <form @submit.prevent="importExcel">
+          <div class="form-group">
+            <label>選擇 Excel 檔案 *</label>
+            <input
+              type="file"
+              @change="handleFileSelect"
+              accept=".xlsx,.xls"
+              class="form-control"
+              required
+            />
+            <small style="color: #666; display: block; margin-top: 5px;">
+              支援格式：.xlsx, .xls | 檔案必須包含 Sheet1
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label>選擇業種 *</label>
+            <select v-model="importBusinessType" class="form-control" required>
+              <option value="universal">通用範本（所有業種共用）</option>
+              <option value="full_service">包租業範本</option>
+              <option value="property_management">代管業範本</option>
+            </select>
+            <small style="color: #666; display: block; margin-top: 5px;">
+              選擇此次匯入的 SOP 資料適用的業種類型
+            </small>
+          </div>
+
+          <div v-if="selectedFile" class="file-info" style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+            <strong>已選擇檔案：</strong> {{ selectedFile.name }}<br>
+            <strong>檔案大小：</strong> {{ (selectedFile.size / 1024).toFixed(2) }} KB
+          </div>
+
+          <div v-if="importing" class="importing-progress">
+            <div class="spinner"></div>
+            <p>正在匯入資料，請稍候...</p>
+          </div>
+
+          <div v-if="importResult" class="import-result" :class="{'success': importResult.success, 'error': !importResult.success}">
+            <h4>{{ importResult.success ? '✅ 匯入成功！' : '❌ 匯入失敗' }}</h4>
+            <p>{{ importResult.message }}</p>
+            <div v-if="importResult.statistics" class="statistics">
+              <p>• 分類：{{ importResult.statistics.categories_created }} 個</p>
+              <p>• 群組：{{ importResult.statistics.groups_created }} 個</p>
+              <p>• 範本：{{ importResult.statistics.templates_created }} 個</p>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" :disabled="!selectedFile || importing" class="btn-success btn-sm">
+              {{ importing ? '匯入中...' : '開始匯入' }}
+            </button>
+            <button type="button" @click="closeImportModal" :disabled="importing" class="btn-secondary btn-sm">
+              {{ importResult ? '關閉' : '取消' }}
+            </button>
           </div>
         </form>
       </div>
@@ -264,6 +336,7 @@ export default {
       showCategoryModal: false,
       showTemplateModal: false,
       showUsageModal: false,
+      showImportModal: false,
 
       // Editing states
       editingCategory: null,
@@ -293,7 +366,13 @@ export default {
         template_id: null,
         template_name: '',
         usage: []
-      }
+      },
+
+      // Excel 匯入
+      selectedFile: null,
+      importBusinessType: 'universal',  // 預設為通用範本
+      importing: false,
+      importResult: null
     };
   },
 
@@ -554,6 +633,83 @@ export default {
         template_notes: '',
         customization_hint: ''
       };
+    },
+
+    // Excel 匯入相關方法
+    handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.selectedFile = file;
+        this.importResult = null;  // 重置結果
+      }
+    },
+
+    async importExcel() {
+      if (!this.selectedFile) {
+        alert('請先選擇 Excel 檔案');
+        return;
+      }
+
+      const businessTypeNames = {
+        'universal': '通用範本',
+        'full_service': '包租業範本',
+        'property_management': '代管業範本'
+      };
+      const typeName = businessTypeNames[this.importBusinessType] || this.importBusinessType;
+
+      if (!confirm(`⚠️ 確定要匯入嗎？\n\n這將會替換 "${typeName}" 的所有現有範本。\n其他業種的範本不受影響。\n\n此操作無法復原！`)) {
+        return;
+      }
+
+      this.importing = true;
+      this.importResult = null;
+
+      try {
+        const formData = new FormData();
+        formData.append('file', this.selectedFile);
+
+        const response = await axios.post(
+          `${RAG_API}/platform/sop/import-excel?replace_mode=replace&business_type=${this.importBusinessType}`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          }
+        );
+
+        this.importResult = response.data;
+
+        if (response.data.success) {
+          alert(`✅ 匯入成功！\n\n• 分類：${response.data.statistics.categories_created} 個\n• 群組：${response.data.statistics.groups_created} 個\n• 範本：${response.data.statistics.templates_created} 個`);
+
+          // 重新載入資料
+          await this.loadCategories();
+          await this.loadTemplates();
+
+          // 延遲關閉 modal
+          setTimeout(() => {
+            this.closeImportModal();
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('匯入失敗:', error);
+        this.importResult = {
+          success: false,
+          message: error.response?.data?.detail || error.message || '匯入失敗'
+        };
+        alert(`❌ 匯入失敗：\n${this.importResult.message}`);
+      } finally {
+        this.importing = false;
+      }
+    },
+
+    closeImportModal() {
+      this.showImportModal = false;
+      this.selectedFile = null;
+      this.importBusinessType = 'universal';  // 重置為預設值
+      this.importing = false;
+      this.importResult = null;
     },
 
     async viewTemplateUsage(templateId) {
