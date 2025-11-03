@@ -24,14 +24,29 @@
 
 ---
 
-### `/scripts/deployment/`
-部署和維護腳本：
+### 部署腳本
+
+#### 生產環境部署（根目錄）
+
+- **`deploy_local_build.sh`** - 【方案 A】在本地構建前端並打包
+  - 適用於小規格伺服器（≤ 2GB RAM）
+  - 執行位置：開發機器
+  - 輸出：`dist_YYYYMMDD_HHMMSS.tar.gz`
+
+- **`deploy_server_prebuilt.sh`** - 【方案 A】部署預構建的前端到伺服器
+  - 適用於小規格伺服器
+  - 執行位置：生產伺服器
+  - 自動備份、遷移、驗證
+
+詳細使用指南：[方案 A 部署指南](../docs/DEPLOYMENT_PLAN_A.md)
+
+#### 開發和維護（`/scripts/deployment/`）
 
 詳見 [`deployment/README.md`](./deployment/README.md)
 
 - `setup.sh` - 環境初始化
 - `start_rag_services.sh` - RAG 服務啟動
-- `deploy-frontend.sh` - 前端部署
+- `deploy-frontend.sh` - 前端部署（開發模式）
 
 ---
 
@@ -48,7 +63,30 @@
 
 ## 🚀 使用說明
 
-### 生產腳本
+### 部署腳本
+
+#### 方案 A：本地構建 + 預構建部署（推薦用於小規格伺服器）
+
+```bash
+# 步驟 1: 在開發機器上構建
+cd /path/to/AIChatbot
+bash scripts/deploy_local_build.sh
+# 輸出: dist_20251103_120000.tar.gz
+
+# 步驟 2: 上傳到伺服器
+scp dist_20251103_120000.tar.gz user@server:/path/to/AIChatbot/
+scp docker-compose.prod-prebuilt.yml user@server:/path/to/AIChatbot/
+scp scripts/deploy_server_prebuilt.sh user@server:/path/to/AIChatbot/scripts/
+
+# 步驟 3: 在伺服器上部署
+ssh user@server
+cd /path/to/AIChatbot
+bash scripts/deploy_server_prebuilt.sh dist_20251103_120000.tar.gz
+```
+
+詳細說明請參考：[方案 A 部署指南](../docs/DEPLOYMENT_PLAN_A.md)
+
+### 生產工具腳本
 
 ```bash
 # 生成 SOP Embeddings（批次處理）
@@ -159,5 +197,5 @@ cd rag-orchestrator/tests && python test_answer_synthesis.py
 
 ---
 
-**最後更新：** 2025-10-29
-**版本：** v4.0 - 移除臨時驗證腳本，整合至正式測試框架
+**最後更新：** 2025-11-03
+**版本：** v4.1 - 新增方案 A 部署腳本（適用於小規格伺服器）
