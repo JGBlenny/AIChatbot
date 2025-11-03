@@ -645,3 +645,16 @@ BEGIN
     RAISE NOTICE '   📝 狀態流程: pending_review → approved/rejected';
     RAISE NOTICE '   📥 來源追蹤: manual, user_question, auto_generated, imported';
 END $$;
+
+-- ========================================
+-- 為 knowledge_base 添加外鍵約束
+-- ========================================
+
+-- 添加 source_test_scenario_id 外鍵約束
+ALTER TABLE knowledge_base
+ADD CONSTRAINT fk_knowledge_source_test_scenario
+FOREIGN KEY (source_test_scenario_id)
+REFERENCES test_scenarios(id)
+ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_kb_source_test_scenario ON knowledge_base(source_test_scenario_id);

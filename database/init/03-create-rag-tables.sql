@@ -86,13 +86,7 @@ COMMENT ON COLUMN unclear_questions.frequency IS '問題被問次數';
 COMMENT ON COLUMN unclear_questions.status IS '處理狀態: pending/in_progress/resolved/ignored';
 
 -- 觸發器：更新 updated_at
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
+-- 注意：update_updated_at_column() 函數已在 01 腳本中定義
 
 CREATE TRIGGER update_unclear_questions_updated_at
     BEFORE UPDATE ON unclear_questions
