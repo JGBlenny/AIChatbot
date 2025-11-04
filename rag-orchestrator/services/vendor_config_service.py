@@ -128,7 +128,7 @@ class VendorConfigService:
             intent_type: 意圖類型
 
         Returns:
-            參數類別（'payment', 'cashflow', 'contract'）或 None
+            參數類別（'payment', 'cashflow', 'contract', 'service', 'contact'）或 None
         """
         # 繳費相關參數問題
         payment_keywords = [
@@ -149,6 +149,19 @@ class VendorConfigService:
             '押金', '保證金', '簽約費'
         ]
 
+        # 服務相關參數問題
+        service_keywords = [
+            '客服專線', '客服電話', '聯絡電話', '電話', '專線',
+            '服務時間', '營業時間', '上班時間',
+            '報修', '維修', '回應時間'
+        ]
+
+        # 聯絡資訊相關參數問題
+        contact_keywords = [
+            'line', '官方帳號', '加line',
+            '公司地址', '辦公室', '地址'
+        ]
+
         question_lower = question.lower()
 
         if any(kw in question_lower for kw in payment_keywords):
@@ -157,6 +170,10 @@ class VendorConfigService:
             return 'cashflow'
         elif any(kw in question_lower for kw in contract_keywords):
             return 'contract'
+        elif any(kw in question_lower for kw in service_keywords):
+            return 'service'
+        elif any(kw in question_lower for kw in contact_keywords):
+            return 'contact'
 
         return None
 
@@ -214,6 +231,88 @@ class VendorConfigService:
             params = await self.get_cashflow_params(vendor_id)
             # TODO: 實作金流相關答案生成
             pass
+
+        elif param_category == 'service':
+            params = await self.get_vendor_configs(vendor_id, 'service')
+
+            # 客服專線問題
+            if any(kw in question for kw in ['客服專線', '客服電話', '聯絡電話', '電話', '專線']):
+                if 'service_hotline' in params:
+                    hotline = params['service_hotline']['value']
+                    answer_parts = [f"我們的客服專線是 {hotline}"]
+
+                    # 如果有服務時間，一併提供
+                    if 'service_hours' in params:
+                        hours = params['service_hours']['value']
+                        answer_parts.append(f"服務時間為{hours}")
+
+                    answer = "，".join(answer_parts) + "。"
+
+                    return {
+                        'answer': answer,
+                        'source': 'vendor_config',
+                        'config_used': {
+                            'service_hotline': hotline,
+                            'service_hours': params.get('service_hours', {}).get('value', '')
+                        },
+                        'confidence': 1.0
+                    }
+
+            # 服務時間問題
+            if any(kw in question for kw in ['服務時間', '營業時間', '上班時間']):
+                if 'service_hours' in params:
+                    hours = params['service_hours']['value']
+                    return {
+                        'answer': f"我們的服務時間為{hours}。",
+                        'source': 'vendor_config',
+                        'config_used': {
+                            'service_hours': hours
+                        },
+                        'confidence': 1.0
+                    }
+
+            # 報修回應時間問題
+            if any(kw in question for kw in ['報修', '維修', '回應時間']):
+                if 'repair_response_time' in params:
+                    response_time = params['repair_response_time']['value']
+                    unit = params['repair_response_time'].get('unit', '')
+                    return {
+                        'answer': f"我們承諾在收到報修通知後{response_time}{unit}內回應處理。",
+                        'source': 'vendor_config',
+                        'config_used': {
+                            'repair_response_time': response_time
+                        },
+                        'confidence': 1.0
+                    }
+
+        elif param_category == 'contact':
+            params = await self.get_vendor_configs(vendor_id, 'contact')
+
+            # LINE 官方帳號問題
+            if any(kw in question.lower() for kw in ['line', '官方帳號', '加line']):
+                if 'line_id' in params:
+                    line_id = params['line_id']['value']
+                    return {
+                        'answer': f"我們的 LINE 官方帳號是 {line_id}，歡迎加入以獲得即時服務。",
+                        'source': 'vendor_config',
+                        'config_used': {
+                            'line_id': line_id
+                        },
+                        'confidence': 1.0
+                    }
+
+            # 公司地址問題
+            if any(kw in question for kw in ['公司地址', '辦公室', '地址']):
+                if 'office_address' in params:
+                    address = params['office_address']['value']
+                    return {
+                        'answer': f"我們的公司地址是：{address}。",
+                        'source': 'vendor_config',
+                        'config_used': {
+                            'office_address': address
+                        },
+                        'confidence': 1.0
+                    }
 
         return None
 

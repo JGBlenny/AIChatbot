@@ -5,8 +5,9 @@
 包含：
 - SOP 檢索邏輯
 - 答案優化參數標準化
+- 參數型問題檢測與答案生成
 """
-from typing import Optional, Dict
+from typing import Optional, Dict, Tuple
 import asyncio
 import os
 
@@ -202,3 +203,42 @@ def has_sop_results(search_results: list) -> bool:
         result.get('scope') == 'vendor_sop' and result.get('similarity') == 1.0
         for result in search_results
     )
+
+
+# ==================== 參數型問題檢測共用邏輯 ====================
+
+async def check_param_question(
+    vendor_config_service,
+    question: str,
+    vendor_id: int
+) -> Tuple[Optional[str], Optional[Dict]]:
+    """
+    檢查是否為參數型問題並生成答案（共用函數）
+
+    Args:
+        vendor_config_service: 業者配置服務實例
+        question: 用戶問題
+        vendor_id: 業者 ID
+
+    Returns:
+        (param_category, param_answer) 元組
+        - param_category: 參數類別 ('payment', 'cashflow', 'contract') 或 None
+        - param_answer: 參數型答案字典或 None
+    """
+    # 檢查是否為參數型問題
+    param_category = vendor_config_service.is_param_question(question)
+
+    if not param_category:
+        return None, None
+
+    # 生成參數型答案
+    param_answer = await vendor_config_service.create_param_answer(
+        vendor_id=vendor_id,
+        question=question,
+        param_category=param_category
+    )
+
+    if param_answer:
+        print(f"📋 [參數型答案] category={param_category}, config_used={param_answer.get('config_used', {})}")
+
+    return param_category, param_answer

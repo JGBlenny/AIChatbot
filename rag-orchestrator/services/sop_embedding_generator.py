@@ -79,17 +79,11 @@ async def generate_sop_embeddings_async(
             await conn.execute("""
                 UPDATE vendor_sop_items
                 SET primary_embedding = $1::vector,
-                    fallback_embedding = $2::vector,
-                    embedding_text = $3,
-                    embedding_updated_at = NOW(),
-                    embedding_version = $4,
-                    embedding_status = 'completed'
-                WHERE id = $5
+                    fallback_embedding = $2::vector
+                WHERE id = $3
             """,
                 primary_vector_str,
                 fallback_vector_str,
-                f"primary: {primary_text} | fallback: {content[:100]}",
-                'text-embedding-3-small',
                 sop_item_id
             )
 
@@ -163,13 +157,10 @@ async def generate_batch_sop_embeddings_async(
 
 
 async def _mark_embedding_failed(conn: asyncpg.Connection, sop_item_id: int):
-    """標記 embedding 生成失敗"""
-    await conn.execute("""
-        UPDATE vendor_sop_items
-        SET embedding_status = 'failed',
-            embedding_updated_at = NOW()
-        WHERE id = $1
-    """, sop_item_id)
+    """標記 embedding 生成失敗（記錄日誌）"""
+    # 由於 embedding_status 欄位不存在於資料庫，僅記錄日誌
+    print(f"❌ [SOP Embedding] SOP {sop_item_id} embedding 生成失敗")
+    pass
 
 
 def start_background_embedding_generation(

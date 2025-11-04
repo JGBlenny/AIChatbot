@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS ai_generated_knowledge_candidates (
     generation_reasoning TEXT,
     suggested_sources TEXT[],
     warnings TEXT[],
+    intent_ids INTEGER[],  -- AI 推薦的意圖 ID 列表
 
     -- 審核狀態
     status VARCHAR(20) DEFAULT 'pending_review',  -- pending_review, approved, rejected, needs_revision
@@ -43,6 +44,7 @@ CREATE INDEX idx_ai_candidates_test_scenario ON ai_generated_knowledge_candidate
 CREATE INDEX idx_ai_candidates_status ON ai_generated_knowledge_candidates(status);
 CREATE INDEX idx_ai_candidates_created ON ai_generated_knowledge_candidates(created_at DESC);
 CREATE INDEX idx_ai_candidates_confidence ON ai_generated_knowledge_candidates(confidence_score DESC);
+CREATE INDEX idx_ai_candidates_intent_ids ON ai_generated_knowledge_candidates USING GIN (intent_ids);
 
 CREATE TRIGGER update_ai_candidates_updated_at
     BEFORE UPDATE ON ai_generated_knowledge_candidates

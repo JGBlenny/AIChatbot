@@ -729,10 +729,6 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
             update_fields.append("priority = %s")
             params.append(item_update.priority)
 
-        # 如果需要重新生成，標記為 pending
-        if need_regenerate:
-            update_fields.append("embedding_status = 'pending'")
-
         update_fields.append("updated_at = CURRENT_TIMESTAMP")
         params.extend([item_id, vendor_id])
 
@@ -898,13 +894,13 @@ async def create_sop_item(vendor_id: int, item: SOPItemCreate, request: Request)
             if not cursor.fetchone():
                 raise HTTPException(status_code=400, detail=f"範本 ID {item.template_id} 不存在或已停用")
 
-        # 插入新 SOP 項目（標記 embedding_status 為 'pending'）
+        # 插入新 SOP 項目
         cursor.execute("""
             INSERT INTO vendor_sop_items (
                 category_id, vendor_id, item_number, item_name, content,
-                template_id, priority, embedding_status
+                template_id, priority
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             item.category_id,
@@ -1067,7 +1063,7 @@ async def get_available_templates(vendor_id: int, category_id: Optional[int] = N
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # 檢查業者是否存在
-        cursor.execute("SELECT id, business_type FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
+        cursor.execute("SELECT id, business_types FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
         vendor = cursor.fetchone()
         if not vendor:
             raise HTTPException(status_code=404, detail="業者不存在")
@@ -1089,6 +1085,7 @@ async def get_available_templates(vendor_id: int, category_id: Optional[int] = N
                 content,
                 template_notes,
                 customization_hint,
+                business_type,
                 intent_ids,
                 priority,
                 already_copied,
@@ -1200,7 +1197,7 @@ async def copy_template_to_vendor(vendor_id: int, copy_request: CopyTemplateRequ
             """, (copy_request.category_id, vendor_id))
             item_number = cursor.fetchone()['next_number']
 
-        # 插入新 SOP 項目（複製範本內容，標記 embedding_status 為 'pending'）
+        # 插入新 SOP 項目（複製範本內容）
         cursor.execute("""
             INSERT INTO vendor_sop_items (
                 category_id,
@@ -1209,10 +1206,9 @@ async def copy_template_to_vendor(vendor_id: int, copy_request: CopyTemplateRequ
                 item_name,
                 content,
                 template_id,
-                priority,
-                embedding_status
+                priority
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             copy_request.category_id,
@@ -1462,16 +1458,286 @@ async def copy_category_templates_to_vendor(vendor_id: int, request: CopyCategor
         conn.close()
 
 
-@router.post("/{vendor_id}/sop/copy-all-templates", status_code=201)
-async def copy_all_templates_to_vendor(vendor_id: int):
+@router.post("/{vendor_id}/sop/copy-category/{platform_category_id}", status_code=201)
+async def copy_category_to_vendor(vendor_id: int, platform_category_id: int, overwrite: bool = False):
     """
-    複製整份業種範本到業者 SOP（一次複製所有分類）
+    複製單個平台分類的所有範本到業者 SOP
 
-    根據業者的 business_type，自動複製所有符合的平台範本分類和項目。
+    Args:
+        vendor_id: 業者ID
+        platform_category_id: 平台分類ID
+        overwrite: 如果該分類已存在，是否覆蓋（預設為 False）
+
+    Returns:
+        Dict: 複製結果，包含新建立的分類、群組和 SOP 項目統計
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id, business_types, name FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
+        vendor = cursor.fetchone()
+        if not vendor:
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 檢查平台分類是否存在
+        cursor.execute("""
+            SELECT id, category_name, description, display_order
+            FROM platform_sop_categories
+            WHERE id = %s AND is_active = TRUE
+        """, (platform_category_id,))
+        platform_category = cursor.fetchone()
+        if not platform_category:
+            raise HTTPException(status_code=404, detail="平台分類不存在")
+
+        # 檢查該分類是否已存在於業者 SOP 中
+        cursor.execute("""
+            SELECT id, category_name
+            FROM vendor_sop_categories
+            WHERE vendor_id = %s AND category_name = %s
+        """, (vendor_id, platform_category['category_name']))
+        existing_category = cursor.fetchone()
+
+        deleted_items = 0
+        deleted_groups = 0
+        deleted_category = False
+
+        if existing_category:
+            if not overwrite:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"分類「{platform_category['category_name']}」已存在，如需覆蓋請設定 overwrite=true"
+                )
+
+            # 覆蓋模式：刪除現有的該分類項目
+            vendor_category_id = existing_category['id']
+
+            cursor.execute("""
+                DELETE FROM vendor_sop_items
+                WHERE category_id = %s AND vendor_id = %s
+            """, (vendor_category_id, vendor_id))
+            deleted_items = cursor.rowcount
+
+            cursor.execute("""
+                DELETE FROM vendor_sop_groups
+                WHERE category_id = %s AND vendor_id = %s
+            """, (vendor_category_id, vendor_id))
+            deleted_groups = cursor.rowcount
+
+            cursor.execute("""
+                DELETE FROM vendor_sop_categories
+                WHERE id = %s AND vendor_id = %s
+            """, (vendor_category_id, vendor_id))
+            deleted_category = True
+
+        # 創建業者分類
+        cursor.execute("""
+            INSERT INTO vendor_sop_categories (
+                vendor_id, category_name, description, display_order
+            )
+            VALUES (%s, %s, %s, %s)
+            RETURNING id, category_name
+        """, (
+            vendor_id,
+            platform_category['category_name'],
+            platform_category['description'],
+            platform_category['display_order']
+        ))
+        new_category = cursor.fetchone()
+        vendor_category_id = new_category['id']
+
+        # 取得該分類下的所有平台群組
+        cursor.execute("""
+            SELECT DISTINCT
+                pg.id as platform_group_id,
+                pg.group_name,
+                pg.display_order
+            FROM platform_sop_groups pg
+            INNER JOIN platform_sop_templates pt ON pt.group_id = pg.id
+            WHERE pg.category_id = %s
+              AND pt.is_active = TRUE
+              AND (pt.business_type = ANY(%s) OR pt.business_type IS NULL)
+            ORDER BY pg.display_order
+        """, (platform_category_id, vendor['business_types']))
+        platform_groups = cursor.fetchall()
+
+        # 創建群組映射 {platform_group_id: vendor_group_id}
+        group_id_mapping = {}
+        for platform_group in platform_groups:
+            cursor.execute("""
+                INSERT INTO vendor_sop_groups (
+                    vendor_id, category_id, group_name, display_order, created_at, updated_at
+                )
+                VALUES (%s, %s, %s, %s, NOW(), NOW())
+                RETURNING id
+            """, (
+                vendor_id,
+                vendor_category_id,
+                platform_group['group_name'],
+                platform_group['display_order']
+            ))
+            new_group = cursor.fetchone()
+            group_id_mapping[platform_group['platform_group_id']] = new_group['id']
+
+        # 取得該分類下的所有範本
+        cursor.execute("""
+            SELECT
+                pt.id,
+                pt.group_id,
+                pt.item_number,
+                pt.item_name,
+                pt.content,
+                pt.priority,
+                COALESCE(
+                    (SELECT ARRAY_AGG(psti.intent_id ORDER BY psti.intent_id)
+                     FROM platform_sop_template_intents psti
+                     WHERE psti.template_id = pt.id),
+                    ARRAY[]::INTEGER[]
+                ) as intent_ids
+            FROM platform_sop_templates pt
+            WHERE pt.category_id = %s
+              AND pt.is_active = TRUE
+              AND (pt.business_type = ANY(%s) OR pt.business_type IS NULL)
+            ORDER BY pt.item_number
+        """, (platform_category_id, vendor['business_types']))
+        templates = cursor.fetchall()
+
+        if not templates:
+            raise HTTPException(
+                status_code=404,
+                detail=f"分類「{platform_category['category_name']}」中沒有符合業者業種的範本"
+            )
+
+        # 批次複製範本項目
+        new_item_ids = []
+        for template in templates:
+            # 從映射中找到對應的 vendor group_id
+            vendor_group_id = group_id_mapping.get(template['group_id']) if template['group_id'] else None
+
+            cursor.execute("""
+                INSERT INTO vendor_sop_items (
+                    category_id,
+                    vendor_id,
+                    group_id,
+                    item_number,
+                    item_name,
+                    content,
+                    template_id,
+                    priority
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                vendor_category_id,
+                vendor_id,
+                vendor_group_id,
+                template['item_number'],
+                template['item_name'],
+                template['content'],
+                template['id'],
+                template['priority']
+            ))
+            new_item = cursor.fetchone()
+            new_item_id = new_item['id']
+
+            # 插入意圖關聯（從範本複製）
+            if template['intent_ids']:
+                for intent_id in template['intent_ids']:
+                    cursor.execute("""
+                        INSERT INTO vendor_sop_item_intents (sop_item_id, intent_id)
+                        VALUES (%s, %s)
+                    """, (new_item_id, intent_id))
+
+            new_item_ids.append(new_item_id)
+
+        # 為所有新建立的 SOP 項目生成 embeddings
+        embeddings_generated = 0
+        embeddings_failed = 0
+
+        for item_id in new_item_ids:
+            try:
+                # 取得項目資訊
+                cursor.execute("""
+                    SELECT vsi.id, vsi.content, vsi.item_name,
+                           vsg.group_name
+                    FROM vendor_sop_items vsi
+                    LEFT JOIN vendor_sop_groups vsg ON vsi.group_id = vsg.id
+                    WHERE vsi.id = %s
+                """, (item_id,))
+                item = cursor.fetchone()
+
+                if item:
+                    content = item['content']
+                    item_name = item['item_name']
+                    group_name = item['group_name'] or ''
+
+                    # 生成 primary embedding（使用 group_name + item_name）
+                    primary_text = f"{group_name} {item_name}".strip()
+                    primary_embedding = await generate_embedding(primary_text)
+
+                    # 生成 fallback embedding（使用 content）
+                    fallback_embedding = await generate_embedding(content)
+
+                    # 轉換為 pgvector 格式
+                    primary_vector = str(primary_embedding)
+                    fallback_vector = str(fallback_embedding)
+
+                    # 更新資料庫（同時更新 primary 和 fallback）
+                    cursor.execute("""
+                        UPDATE vendor_sop_items
+                        SET
+                            primary_embedding = %s,
+                            fallback_embedding = %s
+                        WHERE id = %s
+                    """, (primary_embedding, fallback_embedding, item_id))
+                    embeddings_generated += 1
+
+            except Exception as e:
+                print(f"為 item {item_id} 生成 embedding 失敗: {e}")
+                embeddings_failed += 1
+
+        conn.commit()
+        cursor.close()
+
+        return {
+            "message": f"成功複製分類「{platform_category['category_name']}」，共 {len(new_item_ids)} 個項目",
+            "vendor_id": vendor_id,
+            "vendor_name": vendor['name'],
+            "category_id": vendor_category_id,
+            "category_name": platform_category['category_name'],
+            "overwritten": deleted_category,
+            "deleted_items": deleted_items,
+            "deleted_groups": deleted_groups,
+            "groups_created": len(platform_groups),
+            "items_copied": len(new_item_ids),
+            "embeddings_generated": embeddings_generated,
+            "embeddings_failed": embeddings_failed
+        }
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"複製分類失敗: {str(e)}")
+    finally:
+        conn.close()
+
+
+@router.post("/{vendor_id}/sop/copy-all-templates", status_code=201)
+async def copy_all_templates_to_vendor(vendor_id: int, request: Request, business_type: Optional[str] = None):
+    """
+    複製平台範本到業者 SOP（支援全部或單一業態）
+
+    根據業者的 business_types 或指定的 business_type，自動複製所有符合的平台範本分類和項目。
     會自動創建與平台同名的分類，並批次複製所有範本項目。
 
     Args:
         vendor_id: 業者ID
+        request: FastAPI Request 對象（用於訪問 db_pool 生成 embeddings）
+        business_type: 可選，指定單一業態（full_service/property_management/universal/null），
+                      若未指定則複製業者所有業態
 
     Returns:
         Dict: 複製結果，包含所有新建立的分類和 SOP 項目統計
@@ -1507,8 +1773,36 @@ async def copy_all_templates_to_vendor(vendor_id: int):
         """, (vendor_id,))
         deleted_categories_count = cursor.rowcount
 
-        # 取得所有符合業者業種的平台分類和範本（使用陣列操作）
-        cursor.execute("""
+        # 處理 business_type 參數（將 "universal"/"null" 轉為 None）
+        business_type_filter = None
+        if business_type and business_type.lower() not in ['universal', 'null', 'none']:
+            business_type_filter = business_type
+
+        # 構建查詢條件
+        if business_type is not None:
+            # 指定單一業態
+            if business_type_filter is None:
+                # 只查詢通用型（business_type IS NULL）
+                business_type_condition = "pt.business_type IS NULL"
+                query_params = []
+            else:
+                # 查詢特定業態
+                business_type_condition = "pt.business_type = %s"
+                query_params = [business_type_filter]
+
+            business_type_label = {
+                'full_service': '包租型',
+                'property_management': '代管型',
+                None: '通用型'
+            }.get(business_type_filter, business_type_filter)
+        else:
+            # 複製業者所有業態（原邏輯）
+            business_type_condition = "(pt.business_type = ANY(%s) OR pt.business_type IS NULL)"
+            query_params = [vendor['business_types']]
+            business_type_label = f"所有業態 ({', '.join(vendor['business_types'])})"
+
+        # 取得所有符合條件的平台分類和範本
+        cursor.execute(f"""
             SELECT DISTINCT
                 pc.id as category_id,
                 pc.category_name,
@@ -1518,15 +1812,15 @@ async def copy_all_templates_to_vendor(vendor_id: int):
             INNER JOIN platform_sop_templates pt ON pt.category_id = pc.id
             WHERE pc.is_active = TRUE
               AND pt.is_active = TRUE
-              AND (pt.business_type = ANY(%s) OR pt.business_type IS NULL)
+              AND {business_type_condition}
             ORDER BY pc.display_order, pc.category_name
-        """, (vendor['business_types'],))
+        """, query_params)
         platform_categories = cursor.fetchall()
 
         if not platform_categories:
             raise HTTPException(
                 status_code=404,
-                detail=f"沒有找到符合業者業種 ({vendor['business_type']}) 的範本分類"
+                detail=f"沒有找到符合條件 ({business_type_label}) 的範本分類"
             )
 
         # 統計資訊
@@ -1554,7 +1848,8 @@ async def copy_all_templates_to_vendor(vendor_id: int):
             vendor_category_id = new_category['id']
 
             # 取得該分類下的所有平台群組
-            cursor.execute("""
+            group_query_params = [platform_category['category_id']] + query_params
+            cursor.execute(f"""
                 SELECT DISTINCT
                     pg.id as platform_group_id,
                     pg.group_name,
@@ -1563,9 +1858,9 @@ async def copy_all_templates_to_vendor(vendor_id: int):
                 INNER JOIN platform_sop_templates pt ON pt.group_id = pg.id
                 WHERE pg.category_id = %s
                   AND pt.is_active = TRUE
-                  AND (pt.business_type = ANY(%s) OR pt.business_type IS NULL)
+                  AND {business_type_condition}
                 ORDER BY pg.display_order
-            """, (platform_category['category_id'], vendor['business_types']))
+            """, group_query_params)
             platform_groups = cursor.fetchall()
 
             # 創建群組映射 {platform_group_id: vendor_group_id}
@@ -1588,7 +1883,8 @@ async def copy_all_templates_to_vendor(vendor_id: int):
                 copied_groups_total += 1
 
             # 取得該分類下的所有範本（包含 group_id）
-            cursor.execute("""
+            template_query_params = [platform_category['category_id']] + query_params
+            cursor.execute(f"""
                 SELECT
                     pt.id,
                     pt.group_id,
@@ -1605,9 +1901,9 @@ async def copy_all_templates_to_vendor(vendor_id: int):
                 FROM platform_sop_templates pt
                 WHERE pt.category_id = %s
                   AND pt.is_active = TRUE
-                  AND (pt.business_type = ANY(%s) OR pt.business_type IS NULL)
+                  AND {business_type_condition}
                 ORDER BY pt.item_number
-            """, (platform_category['category_id'], vendor['business_types']))
+            """, template_query_params)
             templates = cursor.fetchall()
 
             # 批次複製範本項目
@@ -1625,10 +1921,9 @@ async def copy_all_templates_to_vendor(vendor_id: int):
                         item_name,
                         content,
                         template_id,
-                        priority,
-                        embedding_status
+                        priority
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
                     vendor_category_id,
@@ -1657,133 +1952,50 @@ async def copy_all_templates_to_vendor(vendor_id: int):
             # 記錄該分類的複製結果
             created_categories.append({
                 "category_id": vendor_category_id,
-                "category_name": new_category['category_name'],
+                "category_name": platform_category['category_name'],
                 "items_count": len(copied_items)
             })
             copied_items_total += len(copied_items)
 
         conn.commit()
-
-        # 為所有新建立的 SOP items 生成 embeddings
-        embedding_api_url = os.getenv('EMBEDDING_API_URL', 'http://embedding-api:5000/api/v1/embeddings')
-        embeddings_generated = 0
-        embeddings_failed = 0
-
-        if all_new_item_ids:
-            # 重新開啟 cursor 來更新 embeddings
-            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-            for item_id in all_new_item_ids:
-                try:
-                    # 獲取 item 的內容（包含 group_name）
-                    cursor.execute("""
-                        SELECT vsi.item_name, vsi.content, vsg.group_name
-                        FROM vendor_sop_items vsi
-                        LEFT JOIN vendor_sop_groups vsg ON vsi.group_id = vsg.id
-                        WHERE vsi.id = %s
-                    """, (item_id,))
-                    item = cursor.fetchone()
-
-                    if item:
-                        # 準備 primary embedding 文本 (group_name + item_name)
-                        if item['group_name']:
-                            primary_text = f"{item['group_name']}：{item['item_name']}"
-                        else:
-                            primary_text = item['item_name']
-
-                        # 準備 fallback embedding 文本 (content only)
-                        fallback_text = item['content']
-
-                        # 調用 embedding API 生成 primary embedding
-                        with httpx.Client() as client:
-                            primary_response = client.post(
-                                embedding_api_url,
-                                json={"text": primary_text},
-                                headers={"Content-Type": "application/json"},
-                                timeout=30
-                            )
-
-                        if primary_response.status_code != 200:
-                            raise Exception(f"Primary embedding API 錯誤: {primary_response.status_code}")
-
-                        primary_embedding_data = primary_response.json()
-                        primary_embedding = primary_embedding_data.get("embedding")
-
-                        if not primary_embedding:
-                            raise Exception("Primary embedding 為空")
-
-                        # 調用 embedding API 生成 fallback embedding
-                        with httpx.Client() as client:
-                            fallback_response = client.post(
-                                embedding_api_url,
-                                json={"text": fallback_text},
-                                headers={"Content-Type": "application/json"},
-                                timeout=30
-                            )
-
-                        if fallback_response.status_code != 200:
-                            raise Exception(f"Fallback embedding API 錯誤: {fallback_response.status_code}")
-
-                        fallback_embedding_data = fallback_response.json()
-                        fallback_embedding = fallback_embedding_data.get("embedding")
-
-                        if not fallback_embedding:
-                            raise Exception("Fallback embedding 為空")
-
-                        # 準備 embedding_text (for debugging)
-                        embedding_text = f"primary: {primary_text} | fallback: {fallback_text[:100]}"
-
-                        # 更新資料庫（同時更新 primary 和 fallback）
-                        cursor.execute("""
-                            UPDATE vendor_sop_items
-                            SET
-                                primary_embedding = %s,
-                                fallback_embedding = %s,
-                                embedding_text = %s,
-                                embedding_updated_at = %s,
-                                embedding_version = 'text-embedding-3-small',
-                                embedding_status = 'completed'
-                            WHERE id = %s
-                        """, (primary_embedding, fallback_embedding, embedding_text, datetime.now(), item_id))
-                        embeddings_generated += 1
-
-                except Exception as e:
-                    print(f"為 item {item_id} 生成 embedding 失敗: {e}")
-                    try:
-                        cursor.execute("""
-                            UPDATE vendor_sop_items
-                            SET embedding_status = 'failed'
-                            WHERE id = %s
-                        """, (item_id,))
-                        embeddings_failed += 1
-                    except:
-                        pass
-
-            conn.commit()
-            cursor.close()
-
         conn.close()
+
+        # 🚀 背景批量生成 embeddings（不阻塞回應）
+        if all_new_item_ids and request and hasattr(request.app.state, 'db_pool'):
+            from services.sop_embedding_generator import generate_batch_sop_embeddings_async
+            asyncio.create_task(
+                generate_batch_sop_embeddings_async(
+                    db_pool=request.app.state.db_pool,
+                    sop_item_ids=all_new_item_ids,
+                    batch_size=5
+                )
+            )
+            print(f"🚀 [SOP Copy] 已觸發背景 embedding 批量生成 ({len(all_new_item_ids)} 個項目)")
 
         # 組合訊息
         message_parts = []
         if deleted_items_count > 0 or deleted_categories_count > 0:
             message_parts.append(f"已刪除現有 SOP（{deleted_categories_count} 個分類、{deleted_items_count} 個項目）")
-        message_parts.append(f"成功為業者「{vendor['name']}」複製整份 SOP 範本")
-        if embeddings_generated > 0:
-            message_parts.append(f"已生成 {embeddings_generated} 個 embeddings")
-        if embeddings_failed > 0:
-            message_parts.append(f"{embeddings_failed} 個 embeddings 生成失敗")
+
+        # 根據 business_type 參數顯示不同訊息
+        if business_type is not None:
+            message_parts.append(f"成功為業者「{vendor['name']}」複製 {business_type_label} SOP 範本")
+        else:
+            message_parts.append(f"成功為業者「{vendor['name']}」複製整份 SOP 範本（{business_type_label}）")
+
+        if all_new_item_ids:
+            message_parts.append(f"已觸發背景 embedding 生成（{len(all_new_item_ids)} 個項目）")
 
         return {
             "message": "，".join(message_parts),
-            "business_types": vendor['business_types'],
+            "business_type_copied": business_type_label,
+            "vendor_business_types": vendor['business_types'],
             "deleted_categories": deleted_categories_count,
             "deleted_items": deleted_items_count,
             "categories_created": len(created_categories),
             "groups_created": copied_groups_total,
             "total_items_copied": copied_items_total,
-            "embeddings_generated": embeddings_generated,
-            "embeddings_failed": embeddings_failed,
+            "embedding_generation_triggered": len(all_new_item_ids) if all_new_item_ids else 0,
             "categories": created_categories
         }
 

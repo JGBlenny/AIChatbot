@@ -26,6 +26,9 @@
           ✕
         </button>
       </div>
+      <button @click="regenerateEmbeddings" class="btn-secondary btn-sm" :disabled="regenerating" style="margin-right: 10px;">
+        {{ regenerating ? '生成中...' : '🔄 批量生成向量' }}
+      </button>
       <button @click="showCreateModal" class="btn-primary btn-sm">
         新增知識
       </button>
@@ -63,6 +66,7 @@
             <th>問題摘要</th>
             <th width="120">意圖</th>
             <th width="120">業態類型</th>
+            <th width="90">向量</th>
             <th width="180">更新時間</th>
             <th width="150">操作</th>
           </tr>
@@ -97,6 +101,10 @@
                 </span>
               </div>
               <span v-else class="badge badge-universal">通用</span>
+            </td>
+            <td style="text-align: center;">
+              <span v-if="item.has_embedding" class="badge" style="background: #67c23a; color: white;" title="向量已生成">✓</span>
+              <span v-else class="badge" style="background: #e6a23c; color: white;" title="向量未生成">✗</span>
             </td>
             <td>{{ formatDate(item.updated_at) }}</td>
             <td>
@@ -346,6 +354,7 @@ export default {
       showModal: false,
       editingItem: null,
       saving: false,
+      regenerating: false,
       loading: false,
       stats: null,
       filterMode: null, // 'b2c', 'b2b', 'universal', null
@@ -477,6 +486,33 @@ export default {
     }
   },
   methods: {
+    async regenerateEmbeddings() {
+      if (!confirm('確定要批量生成所有缺失的向量嗎？')) {
+        return;
+      }
+
+      this.regenerating = true;
+      try {
+        const response = await axios.post(`${API_BASE}/knowledge/regenerate-embeddings`);
+
+        if (response.data.success) {
+          this.showNotification(
+            'success',
+            '批量生成完成',
+            `成功生成 ${response.data.generated}/${response.data.total} 個向量`
+          );
+
+          // 重新加載知識列表
+          await this.loadKnowledge();
+        }
+      } catch (error) {
+        console.error('批量生成向量失敗', error);
+        this.showNotification('error', '生成失敗', error.response?.data?.detail || '批量生成向量失敗');
+      } finally {
+        this.regenerating = false;
+      }
+    },
+
     updateFilterMode(filterParam) {
       this.filterMode = filterParam || null;
       if (filterParam === 'b2c') {

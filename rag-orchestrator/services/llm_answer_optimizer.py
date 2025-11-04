@@ -523,8 +523,9 @@ class LLMAnswerOptimizer:
                 for match in matches:
                     # 排除緊急專線等特定號碼
                     if '0911' not in match and '119' not in match:
-                        result = result.replace(match, vendor_params['service_hotline'])
-                        replacements_made.append(f"{match} → {vendor_params['service_hotline']} (電話)")
+                        hotline_value = vendor_params['service_hotline'].get('value', vendor_params['service_hotline']) if isinstance(vendor_params['service_hotline'], dict) else vendor_params['service_hotline']
+                        result = result.replace(match, hotline_value)
+                        replacements_made.append(f"{match} → {hotline_value} (電話)")
                         break  # 只替換第一個匹配
 
         # 2b. 工作天數模式（如 "3個工作天"）- 暫時停用
@@ -557,7 +558,8 @@ class LLMAnswerOptimizer:
                         end = min(len(result), match.end() + 20)
                         context = result[start:end]
                         if '緊急' not in context:  # 不替換緊急專線的24小時
-                            new_text = f"{vendor_params['repair_response_time']} 小時"
+                            response_time_value = vendor_params['repair_response_time'].get('value', vendor_params['repair_response_time']) if isinstance(vendor_params['repair_response_time'], dict) else vendor_params['repair_response_time']
+                            new_text = f"{response_time_value} 小時"
                             result = result.replace(full_match, new_text, 1)
                             replacements_made.append(f"{full_match} → {new_text} (時效)")
                             break

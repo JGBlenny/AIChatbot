@@ -1180,6 +1180,7 @@ export default {
             const payload = {
               category_id: template.category_id,
               business_type: this.businessType,
+              group_id: template.group_id || null,  // 複製群組ID
               item_number: nextItemNumber,
               item_name: template.item_name,
               content: template.content,

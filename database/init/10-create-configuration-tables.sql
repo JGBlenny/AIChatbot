@@ -72,7 +72,52 @@ INSERT INTO target_user_config (user_value, display_name, description, icon, dis
 ON CONFLICT (user_value) DO NOTHING;
 
 -- ========================================
--- 3. 系統參數定義表
+-- 3. 分類配置表
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS category_config (
+    id SERIAL PRIMARY KEY,
+    category_value VARCHAR(50) NOT NULL UNIQUE,
+    display_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    display_order INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    usage_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_category_config_active ON category_config(is_active);
+CREATE INDEX idx_category_config_order ON category_config(display_order);
+CREATE INDEX idx_category_config_value ON category_config(category_value);
+
+CREATE TRIGGER update_category_config_updated_at
+    BEFORE UPDATE ON category_config
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+COMMENT ON TABLE category_config IS '分類配置表：管理知識庫分類選項（目前未使用，保留供未來擴展）';
+COMMENT ON COLUMN category_config.category_value IS '實際儲存值';
+COMMENT ON COLUMN category_config.display_name IS '前端顯示名稱';
+COMMENT ON COLUMN category_config.display_order IS '顯示順序，數字越小越靠前';
+COMMENT ON COLUMN category_config.is_active IS '是否啟用';
+COMMENT ON COLUMN category_config.usage_count IS '使用次數';
+
+-- 插入預設數據
+INSERT INTO category_config (category_value, display_name, display_order, description, usage_count) VALUES
+('合約問題', '合約問題', 1, '租約合約相關規定、簽約流程、合約內容等', 0),
+('帳務問題', '帳務問題', 2, '帳單、費用、繳費記錄等財務相關問題', 0),
+('服務問題', '服務問題', 3, 'JGB 服務內容、申請流程、入住手續等', 0),
+('設備報修', '設備報修', 4, '設備故障報修、維修進度查詢', 0),
+('設施使用', '設施使用', 5, '社區公共設施使用相關問題', 0),
+('設施問題', '設施問題', 6, '設施故障、問題回報', 0),
+('物件問題', '物件問題', 7, '租賃物件地址、資訊相關問題', 0),
+('帳號問題', '帳號問題', 8, '帳號註冊、登入、密碼重設等問題', 0),
+('其他', '其他', 999, '其他未分類問題', 0)
+ON CONFLICT (category_value) DO NOTHING;
+
+-- ========================================
+-- 4. 系統參數定義表
 -- ========================================
 
 CREATE TABLE IF NOT EXISTS system_param_definitions (
@@ -135,4 +180,5 @@ SELECT
     '✅ 配置管理表已建立' AS status,
     (SELECT COUNT(*) FROM business_types_config) AS business_types_count,
     (SELECT COUNT(*) FROM target_user_config) AS target_users_count,
+    (SELECT COUNT(*) FROM category_config) AS category_count,
     (SELECT COUNT(*) FROM system_param_definitions) AS param_definitions_count;

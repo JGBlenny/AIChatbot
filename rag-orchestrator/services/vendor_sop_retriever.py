@@ -43,7 +43,7 @@ class VendorSOPRetriever:
                     id,
                     code,
                     name,
-                    business_type,
+                    business_types[1] as business_type,
                     cashflow_model,
                     is_active
                 FROM vendors

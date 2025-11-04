@@ -61,16 +61,15 @@ async def chat_stream_generator(
         llm_optimizer = app_state.llm_answer_optimizer
         vendor_config_service = app_state.vendor_config_service
 
-        # 1.5 層級2優先：檢查是否為參數型問題（Vendor Configs 整合）
-        param_category = vendor_config_service.is_param_question(request.question)
-        if param_category:
-            param_answer = await vendor_config_service.create_param_answer(
-                vendor_id=request.vendor_id,
-                question=request.question,
-                param_category=param_category
-            )
+        # 1.5 層級2優先：檢查是否為參數型問題（使用共用函數）
+        from routers.chat_shared import check_param_question
+        param_category, param_answer = await check_param_question(
+            vendor_config_service=vendor_config_service,
+            question=request.question,
+            vendor_id=request.vendor_id
+        )
 
-            if param_answer:
+        if param_answer:
                 # 參數型問題直接回答
                 yield await generate_sse_event("config_param", {
                     "category": param_category,
@@ -119,6 +118,10 @@ async def chat_stream_generator(
         # 2.5. 如果有明確意圖，也檢索 Vendor SOP（使用共用模組）
         intent_ids = intent_result.get('intent_ids', [])
         print(f"🔍 Intent IDs: {intent_ids}, Vendor ID: {request.vendor_id}")
+        print(f"🔑 Question Keywords: {intent_result.get('keywords', [])}")
+        print(f"📊 Search Results: {len(search_results)} items")
+        if search_results:
+            print(f"   First Result Keywords: {search_results[0].get('keywords', [])}")
 
         sop_items = []
         if intent_ids and request.vendor_id:

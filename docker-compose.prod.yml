@@ -1,17 +1,185 @@
-# 生產環境配置
-# 使用方式: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-# 特點: 使用 Docker image 內編譯的前端文件，更穩定安全
+# 生產環境完整配置
+# 使用方式: docker-compose -f docker-compose.prod.yml up -d
+#
+# 特點：
+# - 完整的服務定義，不需要合併 docker-compose.yml
+# - knowledge-admin-web 使用預構建的 dist 目錄（僅綁定 80 端口）
+# - 移除開發環境的代碼熱重載
+# - 移除 pgAdmin（生產環境不需要）
+#
+# 前置步驟：
+# 1. 在本地構建前端：
+#    cd knowledge-admin/frontend
+#    npm install
+#    npm run build
+# 2. 上傳整個項目到伺服器（包含 dist 目錄）
+# 3. 設置環境變數（.env 文件）
+# 4. 執行: docker-compose -f docker-compose.prod.yml up -d
 
 services:
+  # PostgreSQL 資料庫 with pgvector
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: aichatbot-postgres
+    environment:
+      POSTGRES_USER: aichatbot
+      POSTGRES_PASSWORD: aichatbot_password
+      POSTGRES_DB: aichatbot_admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aichatbot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis (用於緩存和任務隊列)
+  redis:
+    image: redis:7-alpine
+    container_name: aichatbot-redis
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Embedding API Service
+  embedding-api:
+    build: ./embedding-service
+    container_name: aichatbot-embedding-api
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "5001:5000"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # 知識庫管理後台 - API
+  knowledge-admin-api:
+    build: ./knowledge-admin/backend
+    container_name: aichatbot-knowledge-admin-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: aichatbot_admin
+      DB_USER: aichatbot
+      DB_PASSWORD: aichatbot_password
+      EMBEDDING_API_URL: http://embedding-api:5000/api/v1/embeddings
+      PROJECT_ROOT: /app
+      RAG_API_URL: http://rag-orchestrator:8100
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "8000:8000"
+    volumes:
+      # 生產環境：只掛載必要的數據目錄
+      - ./test_scenarios_smoke.xlsx:/app/test_scenarios_smoke.xlsx:ro
+      - ./test_scenarios_full.xlsx:/app/test_scenarios_full.xlsx:ro
+      - ./output:/app/output
+      - ./scripts:/app/scripts:ro
+    depends_on:
+      - postgres
+      - embedding-api
+      - rag-orchestrator
+    restart: unless-stopped
+
   # 知識庫管理後台 - 前端（生產模式）
   knowledge-admin-web:
-    build:
-      context: ./knowledge-admin/frontend
-      # 不指定 target，使用 Dockerfile 的最終 stage（Nginx）
-    command: ["nginx", "-g", "daemon off;"]  # 運行 Nginx
+    image: nginx:alpine
+    container_name: aichatbot-knowledge-admin-web
+    command: ["nginx", "-g", "daemon off;"]
     ports:
-      - "80:80"  # 映射到 80 端口
+      - "80:80"  # 只映射 80 端口，不再有 8087
     volumes:
-      # 只掛載 nginx 配置，不掛載 dist（使用 Docker image 內編譯的文件）
+      - ./knowledge-admin/frontend/dist:/usr/share/nginx/html:ro
       - ./knowledge-admin/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - knowledge-admin-api
     restart: unless-stopped
+
+  # RAG Orchestrator
+  rag-orchestrator:
+    build: ./rag-orchestrator
+    container_name: aichatbot-rag-orchestrator
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: gpt-3.5-turbo
+      # 意圖分類器配置
+      INTENT_CLASSIFIER_MODEL: ${INTENT_CLASSIFIER_MODEL:-gpt-3.5-turbo}
+      INTENT_CLASSIFIER_TEMPERATURE: ${INTENT_CLASSIFIER_TEMPERATURE:-0.1}
+      INTENT_CLASSIFIER_MAX_TOKENS: ${INTENT_CLASSIFIER_MAX_TOKENS:-500}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: aichatbot_admin
+      DB_USER: aichatbot
+      DB_PASSWORD: aichatbot_password
+      EMBEDDING_API_URL: http://embedding-api:5000/api/v1/embeddings
+      KNOWLEDGE_GEN_MODEL: ${KNOWLEDGE_GEN_MODEL:-gpt-3.5-turbo}
+      # Redis 緩存配置
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_ENABLED: ${CACHE_ENABLED:-true}
+      CACHE_TTL_QUESTION: ${CACHE_TTL_QUESTION:-3600}
+      CACHE_TTL_VECTOR: ${CACHE_TTL_VECTOR:-7200}
+      CACHE_TTL_RAG_RESULT: ${CACHE_TTL_RAG_RESULT:-1800}
+      # LLM 答案合成配置
+      ENABLE_ANSWER_SYNTHESIS: ${ENABLE_ANSWER_SYNTHESIS:-true}
+      SYNTHESIS_THRESHOLD: ${SYNTHESIS_THRESHOLD:-0.99}
+      SYNTHESIS_MIN_RESULTS: ${SYNTHESIS_MIN_RESULTS:-2}
+      SYNTHESIS_MAX_RESULTS: ${SYNTHESIS_MAX_RESULTS:-5}
+      SOP_SIMILARITY_SCORE: ${SOP_SIMILARITY_SCORE:-0.70}
+      # RAG 檢索配置
+      SOP_SIMILARITY_THRESHOLD: ${SOP_SIMILARITY_THRESHOLD:-0.75}
+      KB_SIMILARITY_THRESHOLD: ${KB_SIMILARITY_THRESHOLD:-0.65}
+      FALLBACK_SIMILARITY_THRESHOLD: ${FALLBACK_SIMILARITY_THRESHOLD:-0.55}
+      RAG_SIMILARITY_THRESHOLD: ${RAG_SIMILARITY_THRESHOLD:-0.6}
+      RAG_TOP_K: ${RAG_TOP_K:-5}
+      # 信心度評估配置
+      CONFIDENCE_HIGH_THRESHOLD: ${CONFIDENCE_HIGH_THRESHOLD:-0.85}
+      CONFIDENCE_MEDIUM_THRESHOLD: ${CONFIDENCE_MEDIUM_THRESHOLD:-0.70}
+      # 條件式優化配置
+      FAST_PATH_THRESHOLD: ${FAST_PATH_THRESHOLD:-0.75}
+      TEMPLATE_MIN_SCORE: ${TEMPLATE_MIN_SCORE:-0.55}
+      TEMPLATE_MAX_SCORE: ${TEMPLATE_MAX_SCORE:-0.75}
+      LLM_PARAM_INJECTION_TEMP: ${LLM_PARAM_INJECTION_TEMP:-0.1}
+      LLM_SYNTHESIS_TEMP: ${LLM_SYNTHESIS_TEMP:-0.1}
+      # 意圖建議配置
+      INTENT_SUGGESTION_TEMP: ${INTENT_SUGGESTION_TEMP:-0.2}
+      INTENT_SUGGESTION_MAX_TOKENS: ${INTENT_SUGGESTION_MAX_TOKENS:-800}
+      # 知識生成配置
+      KNOWLEDGE_GEN_TEMPERATURE: ${KNOWLEDGE_GEN_TEMPERATURE:-0.7}
+      KNOWLEDGE_GEN_MAX_TOKENS: ${KNOWLEDGE_GEN_MAX_TOKENS:-800}
+      # LLM 答案優化配置
+      LLM_ANSWER_TEMPERATURE: ${LLM_ANSWER_TEMPERATURE:-0.7}
+      LLM_ANSWER_MAX_TOKENS: ${LLM_ANSWER_MAX_TOKENS:-800}
+      # 未釐清問題配置
+      UNCLEAR_SEMANTIC_THRESHOLD: ${UNCLEAR_SEMANTIC_THRESHOLD:-0.80}
+      UNCLEAR_PINYIN_THRESHOLD: ${UNCLEAR_PINYIN_THRESHOLD:-0.80}
+      # AWS S3 影片儲存配置
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION:-ap-northeast-1}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      CLOUDFRONT_DOMAIN: ${CLOUDFRONT_DOMAIN:-}
+    ports:
+      - "8100:8100"
+    depends_on:
+      - postgres
+      - embedding-api
+      - redis
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

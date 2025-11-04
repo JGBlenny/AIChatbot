@@ -116,7 +116,9 @@ export default {
       inputMessage: '',
       isLoading: false,
       error: null,
-      messageIdCounter: 1
+      messageIdCounter: 1,
+      currentStreamingMessage: null,  // 正在流式輸出的訊息
+      streamingMetadata: {}  // 收集流式過程中的 metadata
     };
   },
 
@@ -175,40 +177,134 @@ export default {
       // 添加用戶訊息
       this.addMessage('user', userMessage);
 
-      // 調用 AI API
+      // 調用 Streaming API
       this.isLoading = true;
+      this.streamingMetadata = {};
+
+      // 創建一個空的 AI 訊息用於流式輸出
+      const messageId = this.messageIdCounter++;
+      this.currentStreamingMessage = {
+        id: messageId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date().toISOString(),
+        metadata: null
+      };
+      this.messages.push(this.currentStreamingMessage);
+
       try {
-        const response = await axios.post(`${RAG_API}/message`, {
-          message: userMessage,
-          vendor_id: this.vendor.id,
-          user_role: 'customer',
-          include_sources: true
+        const response = await fetch(`${RAG_API}/chat/stream`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            question: userMessage,
+            vendor_id: this.vendor.id,
+            user_role: 'customer'
+          })
         });
 
-        // 添加 AI 回應
-        this.addMessage('assistant', response.data.answer, {
-          intent: response.data.intent_name,
-          confidence: response.data.confidence,
-          sources_count: response.data.source_count
-        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-        // 滾動到底部
-        this.$nextTick(() => {
-          this.scrollToBottom();
-        });
+        // 手動解析 SSE 流
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // 保留最後不完整的行
+
+          for (const line of lines) {
+            if (line.startsWith('event:')) {
+              const eventType = line.substring(6).trim();
+              continue;
+            }
+
+            if (line.startsWith('data:')) {
+              const dataStr = line.substring(5).trim();
+              if (!dataStr) continue;
+
+              try {
+                const data = JSON.parse(dataStr);
+                await this.handleStreamEvent(data);
+              } catch (e) {
+                console.error('解析 SSE 數據失敗:', e);
+              }
+            }
+          }
+        }
+
+        // 完成流式輸出，更新 metadata
+        if (this.currentStreamingMessage) {
+          this.currentStreamingMessage.metadata = {
+            intent: this.streamingMetadata.intent_name || 'unknown',
+            confidence: this.streamingMetadata.confidence_score || 0,
+            sources_count: this.streamingMetadata.doc_count || 0
+          };
+        }
 
       } catch (err) {
         console.error('發送訊息失敗', err);
+
+        // 移除未完成的訊息
+        if (this.currentStreamingMessage) {
+          const idx = this.messages.findIndex(m => m.id === this.currentStreamingMessage.id);
+          if (idx !== -1) {
+            this.messages.splice(idx, 1);
+          }
+        }
+
+        // 添加錯誤訊息
         this.addMessage('assistant', '抱歉，系統發生錯誤，請稍後再試。', {
           intent: 'error',
           confidence: 0
         });
       } finally {
         this.isLoading = false;
-      }
+        this.currentStreamingMessage = null;
 
-      // 儲存對話記錄
-      this.saveChatHistory();
+        // 滾動到底部
+        this.$nextTick(() => {
+          this.scrollToBottom();
+        });
+
+        // 儲存對話記錄
+        this.saveChatHistory();
+      }
+    },
+
+    async handleStreamEvent(data) {
+      // 處理不同的 SSE 事件
+      if (data.chunk) {
+        // answer_chunk 事件：逐字追加內容
+        if (this.currentStreamingMessage) {
+          this.currentStreamingMessage.content += data.chunk;
+
+          // 即時滾動到底部
+          this.$nextTick(() => {
+            this.scrollToBottom();
+          });
+        }
+      } else if (data.intent_name) {
+        // intent 事件：儲存意圖信息
+        this.streamingMetadata.intent_name = data.intent_name;
+        this.streamingMetadata.confidence = data.confidence;
+      } else if (data.doc_count !== undefined) {
+        // search 事件：儲存檢索結果數量
+        this.streamingMetadata.doc_count = data.doc_count;
+      } else if (data.confidence_score !== undefined) {
+        // metadata 或 confidence 事件：儲存信心度
+        this.streamingMetadata.confidence_score = data.confidence_score;
+        this.streamingMetadata.confidence_level = data.confidence_level;
+      }
     },
 
     handleEnter(event) {

@@ -31,17 +31,17 @@
         <div class="overview-card">
           <div class="overview-header">
             <div class="business-type-info">
-              <h4>{{ getBusinessTypeLabel(vendor.business_type) }} SOP 範本</h4>
-              <p>為您準備的完整標準作業流程</p>
+              <h4>SOP 範本總覽</h4>
+              <p>按業態選擇並複製您需要的 SOP 範本</p>
             </div>
             <div class="overview-stats">
               <div class="stat-item">
-                <div class="stat-number">{{ totalCategories }}</div>
-                <div class="stat-label">個分類</div>
+                <div class="stat-number">{{ businessTypeTemplates.length }}</div>
+                <div class="stat-label">個業態</div>
               </div>
               <div class="stat-item">
                 <div class="stat-number">{{ totalTemplates }}</div>
-                <div class="stat-label">個項目</div>
+                <div class="stat-label">個範本</div>
               </div>
             </div>
           </div>
@@ -61,47 +61,62 @@
           <div v-else class="status-section status-empty-section">
             <div class="status-icon">📋</div>
             <div class="status-content">
-              <h5>尚未複製 SOP 範本</h5>
-              <p>點擊下方按鈕一次複製完整的 SOP 範本（{{ totalCategories }} 個分類，{{ totalTemplates }} 個項目）</p>
+              <h5>開始建立您的 SOP</h5>
+              <p>請從下方選擇適合的業態，複製對應的 SOP 範本到您的工作區</p>
             </div>
-            <button @click="showCopyAllModal = true" class="btn btn-primary btn-large">
-              📋 複製整份 SOP 範本 ({{ totalTemplates }} 個項目)
-            </button>
           </div>
 
-          <!-- 分類預覽（3 層結構） -->
-          <div class="categories-preview-section">
-            <h5>範本分類預覽</h5>
-            <div class="categories-grid">
-              <div v-for="category in categoryTemplates" :key="category.categoryId" class="category-preview-card">
-                <div class="category-preview-header">
-                  <span class="category-icon">📁</span>
-                  <h6>{{ category.categoryName }}</h6>
+          <!-- 業態預覽 -->
+          <div class="business-types-preview-section">
+            <h5>按業態選擇範本</h5>
+            <div class="business-types-grid">
+              <div v-for="businessType in businessTypeTemplates" :key="businessType.businessType" class="business-type-card">
+                <div class="business-type-header">
+                  <span class="business-type-icon">{{ getBusinessTypeIcon(businessType.businessType) }}</span>
+                  <h6>{{ businessType.businessTypeLabel }}</h6>
+                  <span class="business-type-badge">{{ businessType.totalTemplates }} 個範本</span>
                 </div>
-                <p class="category-preview-description">{{ category.categoryDescription }}</p>
-                <div class="category-preview-footer">
-                  <span class="items-count">{{ category.groups.length }} 個群組</span>
+
+                <div class="business-type-actions">
                   <button
-                    @click="toggleCategoryExpand(category)"
+                    @click="toggleBusinessTypeExpand(businessType)"
                     class="expand-btn"
                   >
-                    {{ category.expanded ? '收起' : '展開' }}
+                    {{ businessType.expanded ? '收起' : '查看詳情' }}
+                  </button>
+                  <button
+                    @click="copyBusinessType(businessType)"
+                    class="copy-business-type-btn"
+                    :disabled="businessType.copying"
+                  >
+                    {{ businessType.copying ? '複製中...' : '📋 複製此業態' }}
                   </button>
                 </div>
 
-                <!-- 展開的群組列表 -->
-                <div v-if="category.expanded" class="groups-list-compact">
-                  <div v-for="group in category.groups" :key="group.groupId" class="group-item-compact">
-                    <div class="group-item-header">
-                      <span class="group-icon">📂</span>
-                      <span class="group-title">{{ group.groupName }}</span>
-                      <span class="group-item-count">({{ group.templates.length }})</span>
+                <!-- 展開的分類列表 -->
+                <div v-if="businessType.expanded" class="categories-list-under-business-type">
+                  <div v-for="category in businessType.categories" :key="category.categoryId" class="category-item-compact">
+                    <div class="category-item-header">
+                      <span class="category-icon-small">📁</span>
+                      <span class="category-title">{{ category.categoryName }}</span>
+                      <span class="category-item-count">({{ category.groups.length }} 個群組)</span>
                     </div>
-                    <!-- 群組內的範本列表 -->
-                    <div class="templates-list-compact">
-                      <div v-for="template in group.templates" :key="template.template_id" class="template-item-compact">
-                        <span class="item-num">#{{ template.item_number }}</span>
-                        <span class="item-title">{{ template.item_name }}</span>
+
+                    <!-- 群組列表 -->
+                    <div class="groups-list-compact">
+                      <div v-for="group in category.groups" :key="group.groupId" class="group-item-compact">
+                        <div class="group-item-header">
+                          <span class="group-icon">📂</span>
+                          <span class="group-title">{{ group.groupName }}</span>
+                          <span class="group-item-count">({{ group.templates.length }})</span>
+                        </div>
+                        <!-- 範本列表 -->
+                        <div class="templates-list-compact">
+                          <div v-for="template in group.templates" :key="template.template_id" class="template-item-compact">
+                            <span class="item-num">#{{ template.item_number }}</span>
+                            <span class="item-title">{{ template.item_name }}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -269,7 +284,8 @@
 import axios from 'axios';
 import { API_ENDPOINTS, API_BASE_URL } from '@/config/api';
 
-const RAG_API = API_BASE_URL;  // 使用統一的 API 配置
+// Vendor SOP API 端點在 RAG Orchestrator 中，必須使用 /rag-api 前綴
+const RAG_API = '/rag-api';
 
 export default {
   name: 'VendorSOPManager',
@@ -287,6 +303,7 @@ export default {
       vendor: {},
       templates: [],
       categoryTemplates: [],
+      businessTypeTemplates: [],  // 按業態分組的範本
       mySOP: [],
       mySOPByCategory: [],
       intents: [],
@@ -332,7 +349,7 @@ export default {
   methods: {
     async loadVendorInfo() {
       try {
-        const response = await axios.get(`${RAG_API}/api/v1/vendors/${this.vendorId}`);
+        const response = await axios.get(`${RAG_API}/v1/vendors/${this.vendorId}`);
         this.vendor = response.data;
       } catch (error) {
         console.error('載入業者資訊失敗:', error);
@@ -342,9 +359,9 @@ export default {
     async loadTemplates() {
       this.loadingTemplates = true;
       try {
-        const response = await axios.get(`${RAG_API}/api/v1/vendors/${this.vendorId}/sop/available-templates`);
+        const response = await axios.get(`${RAG_API}/v1/vendors/${this.vendorId}/sop/available-templates`);
         this.templates = response.data;
-        this.groupTemplatesByCategory();
+        this.groupTemplatesByBusinessType();
       } catch (error) {
         console.error('載入範本失敗:', error);
         alert('載入範本失敗: ' + (error.response?.data?.detail || error.message));
@@ -353,51 +370,77 @@ export default {
       }
     },
 
-    groupTemplatesByCategory() {
-      const categoryMap = new Map();
+    groupTemplatesByBusinessType() {
+      // 按業態分組
+      const businessTypeMap = new Map();
 
       this.templates.forEach(template => {
-        if (!categoryMap.has(template.category_id)) {
-          categoryMap.set(template.category_id, {
-            categoryId: template.category_id,
-            categoryName: template.category_name,
-            categoryDescription: template.category_description,
-            groups: new Map(),
-            expanded: false
+        // 取得業態類型，正確處理 null（通用型）
+        // business_type 可能是 'full_service'、'property_management' 或 null（通用型）
+        const businessType = template.business_type !== undefined ? template.business_type : null;
+
+        if (!businessTypeMap.has(businessType)) {
+          businessTypeMap.set(businessType, {
+            businessType: businessType,
+            businessTypeLabel: this.getBusinessTypeLabel(businessType),
+            categories: new Map(),
+            totalTemplates: 0,
+            expanded: false,
+            copying: false
           });
         }
 
-        const category = categoryMap.get(template.category_id);
+        const businessTypeGroup = businessTypeMap.get(businessType);
 
-        // Group by groups within category
+        // 按分類分組
+        if (!businessTypeGroup.categories.has(template.category_id)) {
+          businessTypeGroup.categories.set(template.category_id, {
+            categoryId: template.category_id,
+            categoryName: template.category_name,
+            categoryDescription: template.category_description,
+            groups: new Map()
+          });
+        }
+
+        const category = businessTypeGroup.categories.get(template.category_id);
+
+        // 按群組分組
         if (!category.groups.has(template.group_id)) {
           category.groups.set(template.group_id, {
             groupId: template.group_id,
             groupName: template.group_name,
-            templates: [],
-            expanded: false
+            templates: []
           });
         }
 
         const group = category.groups.get(template.group_id);
         group.templates.push(template);
+        businessTypeGroup.totalTemplates++;
       });
 
-      // Convert groups Map to Array for each category
-      this.categoryTemplates = Array.from(categoryMap.values()).map(cat => ({
-        ...cat,
-        groups: Array.from(cat.groups.values())
-      })).sort((a, b) =>
-        a.categoryName.localeCompare(b.categoryName, 'zh-TW')
-      );
+      // 轉換為陣列
+      this.businessTypeTemplates = Array.from(businessTypeMap.values()).map(bt => ({
+        ...bt,
+        categories: Array.from(bt.categories.values()).map(cat => ({
+          ...cat,
+          groups: Array.from(cat.groups.values())
+        }))
+      })).sort((a, b) => {
+        // 排序：包租型 > 代管型 > 通用型
+        const order = { 'full_service': 1, 'property_management': 2, null: 3 };
+        return (order[a.businessType] || 99) - (order[b.businessType] || 99);
+      });
+
+      // 保留舊的 categoryTemplates 以兼容其他功能
+      this.categoryTemplates = [];
     },
 
     async loadMySOP() {
       this.loadingMySOP = true;
       try {
-        const response = await axios.get(`${RAG_API}/api/v1/vendors/${this.vendorId}/sop/items`);
+        const response = await axios.get(`${RAG_API}/v1/vendors/${this.vendorId}/sop/items`);
         this.mySOP = response.data;
-        this.groupMYSOPByCategory();
+        await this.groupMYSOPByCategory();  // 添加 await 等待分組完成
       } catch (error) {
         console.error('載入我的 SOP 失敗:', error);
         alert('載入我的 SOP 失敗: ' + (error.response?.data?.detail || error.message));
@@ -408,7 +451,7 @@ export default {
 
     async groupMYSOPByCategory() {
       // 先取得所有分類
-      const response = await axios.get(`${RAG_API}/api/v1/vendors/${this.vendorId}/sop/categories`);
+      const response = await axios.get(`${RAG_API}/v1/vendors/${this.vendorId}/sop/categories`);
       const categories = response.data;
 
       // 按分類和群組分組 SOP
@@ -443,7 +486,7 @@ export default {
 
     async loadIntents() {
       try {
-        const response = await axios.get(`${RAG_API}/api/v1/intents`);
+        const response = await axios.get(`${RAG_API}/v1/intents`);
         this.intents = response.data.intents || [];
       } catch (error) {
         console.error('載入意圖失敗:', error);
@@ -454,7 +497,7 @@ export default {
     async copyAllTemplates() {
       try {
         const response = await axios.post(
-          `${RAG_API}/api/v1/vendors/${this.vendorId}/sop/copy-all-templates`
+          `${RAG_API}/v1/vendors/${this.vendorId}/sop/copy-all-templates`
         );
 
         let message = `✅ ${response.data.message}\n\n`;
@@ -469,7 +512,13 @@ export default {
         // 顯示新建資訊
         message += `已創建:\n`;
         message += `  - ${response.data.categories_created} 個分類\n`;
+        message += `  - ${response.data.groups_created} 個群組\n`;
         message += `  - ${response.data.total_items_copied} 個 SOP 項目`;
+
+        // 顯示 embedding 生成資訊
+        if (response.data.embedding_generation_triggered > 0) {
+          message += `\n\n🚀 已觸發背景生成 ${response.data.embedding_generation_triggered} 個 embeddings`;
+        }
 
         alert(message);
 
@@ -485,6 +534,52 @@ export default {
 
     toggleCategoryExpand(category) {
       category.expanded = !category.expanded;
+    },
+
+    async copySingleCategory(category, overwrite = false) {
+      // 設定複製中狀態
+      category.copying = true;
+
+      try {
+        const url = `${RAG_API}/v1/vendors/${this.vendorId}/sop/copy-category/${category.categoryId}${overwrite ? '?overwrite=true' : ''}`;
+        const response = await axios.post(url);
+
+        let message = `✅ ${response.data.message}\n\n`;
+        message += `分類：${response.data.category_name}\n`;
+        message += `群組數：${response.data.groups_created}\n`;
+        message += `項目數：${response.data.items_copied}\n`;
+        message += `Embeddings：${response.data.embeddings_generated} 個成功`;
+
+        if (response.data.overwritten) {
+          message += `\n\n⚠️ 已覆蓋原有分類（刪除 ${response.data.deleted_items} 個項目）`;
+        }
+
+        alert(message);
+
+        // 重新載入資料
+        this.loadTemplates();
+        this.loadMySOP();
+      } catch (error) {
+        console.error('複製分類失敗:', error);
+
+        // 處理 409 衝突（分類已存在）
+        if (error.response?.status === 409) {
+          const shouldOverwrite = confirm(
+            `分類「${category.categoryName}」已存在。\n\n是否要覆蓋現有的分類？\n（會刪除該分類下的所有現有項目）`
+          );
+
+          if (shouldOverwrite) {
+            // 遞迴調用，設定 overwrite=true
+            await this.copySingleCategory(category, true);
+            return;
+          }
+        } else {
+          alert('複製失敗: ' + (error.response?.data?.detail || error.message));
+        }
+      } finally {
+        // 清除複製中狀態
+        category.copying = false;
+      }
     },
 
     editSOP(sop) {
@@ -512,7 +607,7 @@ export default {
     async saveSOP() {
       try {
         await axios.put(
-          `${RAG_API}/api/v1/vendors/${this.vendorId}/sop/items/${this.editingForm.id}`,
+          `${RAG_API}/v1/vendors/${this.vendorId}/sop/items/${this.editingForm.id}`,
           {
             item_name: this.editingForm.item_name,
             content: this.editingForm.content,
@@ -533,7 +628,7 @@ export default {
       if (!confirm('確定要刪除此 SOP 嗎？')) return;
 
       try {
-        await axios.delete(`${RAG_API}/api/v1/vendors/${this.vendorId}/sop/items/${sopId}`);
+        await axios.delete(`${RAG_API}/v1/vendors/${this.vendorId}/sop/items/${sopId}`);
         alert('✅ SOP 已刪除');
         this.loadMySOP();
       } catch (error) {
@@ -544,10 +639,68 @@ export default {
 
     getBusinessTypeLabel(type) {
       const labels = {
-        full_service: '🏠 包租型',
-        property_management: '🔑 代管型'
+        full_service: '包租型',
+        property_management: '代管型',
+        null: '通用型',
+        'null': '通用型'
       };
-      return labels[type] || type;
+      return labels[type] || '通用型';
+    },
+
+    getBusinessTypeIcon(type) {
+      const icons = {
+        full_service: '🏠',
+        property_management: '🔑',
+        null: '📋',
+        'null': '📋'
+      };
+      return icons[type] || '📋';
+    },
+
+    toggleBusinessTypeExpand(businessType) {
+      businessType.expanded = !businessType.expanded;
+    },
+
+    async copyBusinessType(businessType, overwrite = false) {
+      businessType.copying = true;
+
+      try {
+        // 將 business_type 轉換為 API 參數
+        let businessTypeParam = businessType.businessType;
+        if (businessTypeParam === null || businessTypeParam === 'null') {
+          businessTypeParam = 'universal';
+        }
+
+        // 使用統一的 copy-all-templates 端點，帶上 business_type 參數
+        const url = `${RAG_API}/v1/vendors/${this.vendorId}/sop/copy-all-templates?business_type=${businessTypeParam}`;
+        const response = await axios.post(url);
+
+        let message = `✅ ${response.data.message}\n\n`;
+        message += `業態：${response.data.business_type_copied}\n`;
+        message += `分類數：${response.data.categories_created}\n`;
+        message += `群組數：${response.data.groups_created}\n`;
+        message += `項目數：${response.data.total_items_copied}\n`;
+
+        if (response.data.embedding_generation_triggered > 0) {
+          message += `Embeddings：已觸發背景生成 ${response.data.embedding_generation_triggered} 個項目`;
+        }
+
+        if (response.data.deleted_categories > 0) {
+          message += `\n\n⚠️ 已覆蓋原有內容（刪除 ${response.data.deleted_items} 個項目）`;
+        }
+
+        alert(message);
+
+        // 重新載入資料
+        this.loadTemplates();
+        this.loadMySOP();
+        this.activeTab = 'my-sop';
+      } catch (error) {
+        console.error('複製業態失敗:', error);
+        alert('複製失敗: ' + (error.response?.data?.detail || error.message));
+      } finally {
+        businessType.copying = false;
+      }
     }
   }
 };
@@ -720,7 +873,137 @@ export default {
   background: #FFF3E0;
 }
 
-/* Categories Preview */
+/* Business Types Preview */
+.business-types-preview-section {
+  padding: 30px;
+}
+
+.business-types-preview-section h5 {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
+}
+
+.business-types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.business-type-card {
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+
+.business-type-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+.business-type-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.business-type-icon {
+  font-size: 32px;
+}
+
+.business-type-header h6 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+  flex: 1;
+  font-weight: 600;
+}
+
+.business-type-badge {
+  background: #E3F2FD;
+  color: #1976D2;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.business-type-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.copy-business-type-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.copy-business-type-btn:hover:not(:disabled) {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
+.copy-business-type-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.categories-list-under-business-type {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.category-item-compact {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #2196F3;
+}
+
+.category-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #1976D2;
+  font-size: 14px;
+}
+
+.category-icon-small {
+  font-size: 16px;
+}
+
+.category-title {
+  flex: 1;
+}
+
+.category-item-count {
+  font-size: 12px;
+  color: #666;
+  font-weight: normal;
+}
+
+/* Categories Preview (舊樣式，保留以防需要) */
 .categories-preview-section {
   padding: 30px;
 }
@@ -785,6 +1068,12 @@ export default {
   font-size: 12px;
 }
 
+.category-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .expand-btn {
   background: none;
   border: none;
@@ -797,6 +1086,30 @@ export default {
 
 .expand-btn:hover {
   background: #f0f0f0;
+}
+
+.copy-category-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.copy-category-btn:hover:not(:disabled) {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
+}
+
+.copy-category-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .templates-list-compact {

@@ -54,7 +54,7 @@ VALUES
     (
         '最短租期是多久',
         '我們的最短租期為 {{min_lease_period}} 個月。如果您需要提前解約，請於 {{termination_notice_days}} 天前提出申請。',
-        (SELECT id FROM intents WHERE name = '退租流程' LIMIT 1),
+        (SELECT id FROM intents WHERE name = '租約查詢' LIMIT 1),
         true,
         '["min_lease_period", "termination_notice_days"]',
         'global',
@@ -135,6 +135,21 @@ VALUES
         5,
         'system'
     );
+
+-- ============================================
+-- 遷移資料：knowledge_base.intent_id → knowledge_intent_mapping
+-- ============================================
+-- 將舊的 intent_id 欄位遷移到新的多對多映射表
+INSERT INTO knowledge_intent_mapping (knowledge_id, intent_id, intent_type, confidence, assigned_by)
+SELECT
+    id,
+    intent_id,
+    'primary',
+    1.0,
+    'migration'
+FROM knowledge_base
+WHERE intent_id IS NOT NULL
+ON CONFLICT (knowledge_id, intent_id) DO NOTHING;
 
 -- ============================================
 -- 註解說明

@@ -138,7 +138,8 @@ async def list_knowledge(
         query = """
             SELECT DISTINCT
                 kb.id, kb.question_summary, kb.answer as content,
-                kb.keywords, kb.business_types, kb.target_user, kb.created_at, kb.updated_at
+                kb.keywords, kb.business_types, kb.target_user, kb.created_at, kb.updated_at,
+                (kb.embedding IS NOT NULL) as has_embedding
             FROM knowledge_base kb
             WHERE 1=1
         """
@@ -559,6 +560,88 @@ async def delete_knowledge(knowledge_id: int):
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"刪除失敗: {str(e)}")
+
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/api/knowledge/regenerate-embeddings")
+async def regenerate_all_embeddings():
+    """批量重新生成所有缺失的 embedding"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    try:
+        # 1. 查询所有没有 embedding 的知识
+        cur.execute("""
+            SELECT id, question_summary, answer
+            FROM knowledge_base
+            WHERE embedding IS NULL
+            ORDER BY id
+        """)
+
+        rows = cur.fetchall()
+        total = len(rows)
+
+        if total == 0:
+            return {
+                "success": True,
+                "message": "所有知识已有向量",
+                "total": 0,
+                "generated": 0
+            }
+
+        # 2. 逐笔生成 embedding
+        success_count = 0
+        failed_ids = []
+
+        for row in rows:
+            kb_id = row['id']
+            question = row['question_summary']
+            answer = row['answer']
+
+            # 使用问题摘要生成 embedding
+            text_for_embedding = question if question else answer[:200]
+
+            try:
+                embedding_response = requests.post(
+                    EMBEDDING_API_URL,
+                    json={"text": text_for_embedding},
+                    timeout=30
+                )
+
+                if embedding_response.status_code == 200:
+                    embedding = embedding_response.json()['embedding']
+
+                    # 更新数据库
+                    cur.execute("""
+                        UPDATE knowledge_base
+                        SET embedding = %s, updated_at = NOW()
+                        WHERE id = %s
+                    """, (embedding, kb_id))
+
+                    success_count += 1
+                else:
+                    failed_ids.append(kb_id)
+
+            except Exception as e:
+                print(f"⚠️  生成 embedding 失败 (ID {kb_id}): {e}")
+                failed_ids.append(kb_id)
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": f"批量生成完成：成功 {success_count}/{total}",
+            "total": total,
+            "generated": success_count,
+            "failed": len(failed_ids),
+            "failed_ids": failed_ids
+        }
+
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"批量生成失败: {str(e)}")
 
     finally:
         cur.close()

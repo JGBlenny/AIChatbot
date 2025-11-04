@@ -969,6 +969,33 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         intent_classifier = req.app.state.intent_classifier
         intent_result = intent_classifier.classify(request.message)
 
+        # Step 3.5: 層級2優先 - 檢查是否為參數型問題（使用共用函數）
+        from routers.chat_shared import check_param_question
+        param_category, param_answer = await check_param_question(
+            vendor_config_service=req.app.state.vendor_config_service,
+            question=request.message,
+            vendor_id=request.vendor_id
+        )
+
+        if param_answer:
+            # 參數型問題直接回答（信心度100%）
+            from datetime import datetime
+            response = VendorChatResponse(
+                answer=param_answer['answer'],
+                intent_name="參數查詢",
+                intent_type="config_param",
+                confidence=1.0,
+                sources=[],
+                source_count=0,
+                vendor_id=request.vendor_id,
+                mode=request.mode,
+                timestamp=datetime.utcnow().isoformat() + "Z",
+                video_url=None
+            )
+
+            # 緩存並返回參數型答案
+            return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
+
         # Step 4: 處理 unclear 意圖（RAG fallback + 測試場景記錄）
         if intent_result['intent_name'] == 'unclear':
             return await _handle_unclear_with_rag_fallback(

@@ -135,8 +135,10 @@ async def list_test_scenarios(
                 ts.tags, ts.priority, ts.status, ts.source, ts.is_active,
                 ts.total_runs, ts.pass_count, ts.fail_count, ts.avg_score,
                 ts.last_run_at, ts.last_result, ts.created_at,
-                ts.has_knowledge, ts.linked_knowledge_ids,
-                ts.notes, ts.expected_answer, ts.min_quality_score
+                ts.notes, ts.test_purpose,
+                CASE WHEN ts.related_knowledge_ids IS NOT NULL AND array_length(ts.related_knowledge_ids, 1) > 0
+                     THEN true ELSE false END as has_knowledge,
+                ts.related_knowledge_ids as linked_knowledge_ids
             FROM test_scenarios ts
             WHERE 1=1
         """

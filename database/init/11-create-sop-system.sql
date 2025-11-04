@@ -164,6 +164,129 @@ CREATE INDEX idx_platform_sop_template_intents_intent ON platform_sop_template_i
 COMMENT ON TABLE platform_sop_template_intents IS 'Platform SOP 範本-意圖多對多映射表';
 
 -- ========================================
+-- 6. 業者 SOP 分類表
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS vendor_sop_categories (
+    id SERIAL PRIMARY KEY,
+    vendor_id INTEGER REFERENCES vendors(id) ON DELETE CASCADE,
+    category_name VARCHAR(200) NOT NULL,
+    description TEXT,
+    display_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_vendor_sop_categories_vendor ON vendor_sop_categories(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_sop_categories_active ON vendor_sop_categories(is_active);
+
+CREATE TRIGGER update_vendor_sop_categories_updated_at
+    BEFORE UPDATE ON vendor_sop_categories
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+COMMENT ON TABLE vendor_sop_categories IS '業者 SOP 分類表（如：租賃流程、維護修繕等）';
+
+-- ========================================
+-- 7. 業者 SOP 群組表
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS vendor_sop_groups (
+    id SERIAL PRIMARY KEY,
+    category_id INTEGER REFERENCES vendor_sop_categories(id) ON DELETE CASCADE,
+    vendor_id INTEGER REFERENCES vendors(id) ON DELETE CASCADE,
+    group_name VARCHAR(200) NOT NULL,
+    description TEXT,
+    display_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+
+    CONSTRAINT unique_vendor_category_group UNIQUE(vendor_id, category_id, group_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_vendor_sop_groups_vendor ON vendor_sop_groups(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_sop_groups_category ON vendor_sop_groups(category_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_sop_groups_active ON vendor_sop_groups(is_active);
+
+CREATE TRIGGER update_vendor_sop_groups_updated_at
+    BEFORE UPDATE ON vendor_sop_groups
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+COMMENT ON TABLE vendor_sop_groups IS '業者 SOP 群組表（SOP 的邏輯分組）';
+
+-- ========================================
+-- 8. 業者 SOP 項目表
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS vendor_sop_items (
+    id SERIAL PRIMARY KEY,
+    category_id INTEGER REFERENCES vendor_sop_categories(id) ON DELETE CASCADE,
+    vendor_id INTEGER REFERENCES vendors(id) ON DELETE CASCADE,
+    group_id INTEGER,                             -- 群組 ID（邏輯分組，非外鍵）
+
+    -- 項目基本資訊
+    item_number INTEGER,                          -- 項次（如：1, 2, 3...）
+    item_name VARCHAR(200),                       -- 項目名稱（如：「申請步驟」）
+    content TEXT NOT NULL,                        -- 內容
+
+    -- 向量嵌入（用於語義檢索）
+    primary_embedding vector(1536),               -- 主要 embedding（group_name + item_name）
+    fallback_embedding vector(1536),              -- 備用 embedding（content）
+
+    -- 範本來源（記錄是從哪個範本複製而來）
+    template_id INTEGER REFERENCES platform_sop_templates(id) ON DELETE SET NULL,
+
+    -- 關聯與優先級
+    related_intent_id INTEGER REFERENCES intents(id) ON DELETE SET NULL, -- 關聯意圖
+    priority INTEGER DEFAULT 0,
+
+    -- 狀態與時間
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_vendor_sop_items_vendor ON vendor_sop_items(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_sop_items_category ON vendor_sop_items(category_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_sop_items_template ON vendor_sop_items(template_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_sop_items_intent ON vendor_sop_items(related_intent_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_sop_items_active ON vendor_sop_items(is_active);
+
+CREATE TRIGGER update_vendor_sop_items_updated_at
+    BEFORE UPDATE ON vendor_sop_items
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+COMMENT ON TABLE vendor_sop_items IS '業者 SOP 項目表（從平台範本複製後，業者可自行編輯調整）';
+COMMENT ON COLUMN vendor_sop_items.template_id IS '來源範本ID（記錄此 SOP 是從哪個範本複製而來，可為 NULL）';
+COMMENT ON COLUMN vendor_sop_items.group_id IS '群組 ID（邏輯分組，對應 vendor_sop_groups.id）';
+
+-- ========================================
+-- 9. 業者 SOP 項目-意圖多對多映射表
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS vendor_sop_item_intents (
+    id SERIAL PRIMARY KEY,
+    sop_item_id INTEGER NOT NULL REFERENCES vendor_sop_items(id) ON DELETE CASCADE,
+    intent_id INTEGER NOT NULL REFERENCES intents(id) ON DELETE CASCADE,
+    intent_type VARCHAR(20) NOT NULL DEFAULT 'secondary',
+    confidence FLOAT DEFAULT 1.0,
+    created_at TIMESTAMP DEFAULT NOW(),
+
+    CONSTRAINT unique_sop_item_intent UNIQUE(sop_item_id, intent_id),
+    CONSTRAINT check_sop_item_intent_type CHECK (intent_type IN ('primary', 'secondary')),
+    CONSTRAINT check_sop_item_confidence CHECK (confidence >= 0 AND confidence <= 1)
+);
+
+CREATE INDEX IF NOT EXISTS idx_vendor_sop_item_intents_sop_item ON vendor_sop_item_intents(sop_item_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_sop_item_intents_intent ON vendor_sop_item_intents(intent_id);
+
+COMMENT ON TABLE vendor_sop_item_intents IS '業者 SOP 項目-意圖多對多映射表';
+
+-- ========================================
 -- 顯示統計資訊
 -- ========================================
 

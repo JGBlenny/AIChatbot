@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS vendors (
     contact_email VARCHAR(100),                          -- 聯絡郵箱
     address TEXT,                                        -- 公司地址
 
+    -- 業態類型和金流模式
+    business_types TEXT[] DEFAULT ARRAY['property_management'],  -- 業態類型陣列（可多選）
+    cashflow_model VARCHAR(50) DEFAULT 'direct_to_landlord',     -- 金流模式
+
     -- 訂閱設定
     subscription_plan VARCHAR(50) DEFAULT 'basic',       -- 訂閱方案
     subscription_status VARCHAR(20) DEFAULT 'active',    -- active, suspended, expired
@@ -60,6 +64,7 @@ CREATE INDEX idx_vendor_configs_vendor_id ON vendor_configs(vendor_id);
 CREATE INDEX idx_vendor_configs_category ON vendor_configs(category);
 CREATE INDEX idx_vendors_code ON vendors(code);
 CREATE INDEX idx_vendors_active ON vendors(is_active);
+CREATE INDEX idx_vendors_business_types ON vendors USING GIN(business_types);  -- GIN 索引支援陣列查詢
 
 -- ============================================
 -- 插入測試資料
@@ -138,6 +143,8 @@ COMMENT ON TABLE vendors IS '包租代管業者表（系統商的客戶）';
 COMMENT ON TABLE vendor_configs IS '業者配置參數表（各業者的差異化參數）';
 
 COMMENT ON COLUMN vendors.code IS '業者代碼（唯一識別，用於 API）';
+COMMENT ON COLUMN vendors.business_types IS '業態類型陣列：system_provider=系統商, full_service=包租型, property_management=代管型（可多選）';
+COMMENT ON COLUMN vendors.cashflow_model IS '金流模式：through_company=金流過我家, direct_to_landlord=金流不過我家, mixed=混合型';
 COMMENT ON COLUMN vendors.subscription_plan IS '訂閱方案：basic, standard, premium';
 COMMENT ON COLUMN vendors.settings IS '額外設定（JSONB），如 LINE Bot token 等';
 
