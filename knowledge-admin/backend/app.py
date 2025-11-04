@@ -307,11 +307,11 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
         if not cur.fetchone():
             raise HTTPException(status_code=404, detail="知識不存在")
 
-        # 2. 生成新向量
+        # 2. 生成新向量（使用 question_summary 以提高檢索準確度）
         try:
             embedding_response = requests.post(
                 EMBEDDING_API_URL,
-                json={"text": data.content},
+                json={"text": data.question_summary},
                 timeout=30
             )
 
@@ -439,11 +439,11 @@ async def create_knowledge(data: KnowledgeUpdate):
     cur = conn.cursor()
 
     try:
-        # 1. 生成向量
+        # 1. 生成向量（使用 question_summary 以提高檢索準確度）
         try:
             embedding_response = requests.post(
                 EMBEDDING_API_URL,
-                json={"text": data.content},
+                json={"text": data.question_summary},
                 timeout=30
             )
 

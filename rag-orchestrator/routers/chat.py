@@ -106,9 +106,9 @@ def _clean_answer(answer: str, vendor_id: int, resolver) -> str:
     # 1. 替換明確的模板變數 {{xxx}}
     cleaned = resolver.resolve_template(answer, vendor_id, raise_on_missing=False)
 
-    # 2. 清理異常格式
-    # 移除 @vendorA, @vendor_name 等格式
-    cleaned = re.sub(r'@vendor[A-Za-z0-9_]*', '', cleaned)
+    # 2. 清理異常格式（已停用，因為會誤刪真實 LINE ID）
+    # 注意：@vendorA 可能是真實的 LINE ID，不應該移除
+    # cleaned = re.sub(r'@vendor[A-Za-z0-9_]*', '', cleaned)  # ← 已停用
 
     # 3. 如果仍有未替換的模板變數，記錄警告
     if '{{' in cleaned:
@@ -558,8 +558,33 @@ async def _handle_no_knowledge_found(
     cache_service,
     vendor_info: dict
 ):
-    """處理找不到知識的情況：RAG fallback + 測試場景記錄"""
-    # RAG fallback
+    """處理找不到知識的情況：參數答案 > RAG fallback + 測試場景記錄"""
+    # Step 1: 優先檢查是否為參數型問題（沒有知識庫時的備選方案）
+    from routers.chat_shared import check_param_question
+    param_category, param_answer = await check_param_question(
+        vendor_config_service=req.app.state.vendor_config_service,
+        question=request.message,
+        vendor_id=request.vendor_id
+    )
+
+    if param_answer:
+        print(f"   ℹ️  知識庫無結果，使用參數型答案（category={param_category}）")
+        from datetime import datetime
+        response = VendorChatResponse(
+            answer=param_answer['answer'],
+            intent_name="參數查詢",
+            intent_type="config_param",
+            confidence=1.0,
+            sources=[],
+            source_count=0,
+            vendor_id=request.vendor_id,
+            mode=request.mode,
+            timestamp=datetime.utcnow().isoformat() + "Z",
+            video_url=None
+        )
+        return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
+
+    # Step 2: RAG fallback
     rag_engine = req.app.state.rag_engine
     fallback_similarity_threshold = float(os.getenv("FALLBACK_SIMILARITY_THRESHOLD", "0.55"))
     rag_top_k = int(os.getenv("RAG_TOP_K", str(request.top_k)))
@@ -579,7 +604,7 @@ async def _handle_no_knowledge_found(
             confidence_level='high'
         )
 
-    # 如果 RAG 也找不到，記錄測試場景並返回兜底回應
+    # Step 3: 如果 RAG 也找不到，記錄測試場景並返回兜底回應
     print(f"   ❌ RAG fallback 也沒有找到相關知識")
     await _record_no_knowledge_scenario(request, intent_result, req)
 
@@ -969,33 +994,6 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         intent_classifier = req.app.state.intent_classifier
         intent_result = intent_classifier.classify(request.message)
 
-        # Step 3.5: 層級2優先 - 檢查是否為參數型問題（使用共用函數）
-        from routers.chat_shared import check_param_question
-        param_category, param_answer = await check_param_question(
-            vendor_config_service=req.app.state.vendor_config_service,
-            question=request.message,
-            vendor_id=request.vendor_id
-        )
-
-        if param_answer:
-            # 參數型問題直接回答（信心度100%）
-            from datetime import datetime
-            response = VendorChatResponse(
-                answer=param_answer['answer'],
-                intent_name="參數查詢",
-                intent_type="config_param",
-                confidence=1.0,
-                sources=[],
-                source_count=0,
-                vendor_id=request.vendor_id,
-                mode=request.mode,
-                timestamp=datetime.utcnow().isoformat() + "Z",
-                video_url=None
-            )
-
-            # 緩存並返回參數型答案
-            return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
-
         # Step 4: 處理 unclear 意圖（RAG fallback + 測試場景記錄）
         if intent_result['intent_name'] == 'unclear':
             return await _handle_unclear_with_rag_fallback(
@@ -1020,9 +1018,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         # Step 7: 檢索知識庫（混合模式：intent + 向量）
         knowledge_list = await _retrieve_knowledge(request, intent_id, intent_result)
 
-        # Step 8: 如果知識庫沒有結果，嘗試 RAG fallback
+        # Step 8: 如果知識庫沒有結果，嘗試參數答案或 RAG fallback
         if not knowledge_list:
-            print(f"⚠️  意圖 '{intent_result['intent_name']}' (ID: {intent_id}) 沒有關聯知識，嘗試 RAG fallback...")
+            print(f"⚠️  意圖 '{intent_result['intent_name']}' (ID: {intent_id}) 沒有關聯知識，嘗試參數答案或 RAG fallback...")
             return await _handle_no_knowledge_found(
                 request, req, intent_result, resolver, cache_service, vendor_info
             )

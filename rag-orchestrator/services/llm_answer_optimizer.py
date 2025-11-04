@@ -245,6 +245,9 @@ class LLMAnswerOptimizer:
 
                 processing_time = int((time.time() - start_time) * 1000)
 
+                # DEBUG: 確認返回的答案內容
+                print(f"   🔍 [DEBUG] 快速路徑返回的答案: {repr(answer[:200])}")
+
                 return {
                     "optimized_answer": answer,
                     "original_answer": search_results[0].get('content', ''),
@@ -509,7 +512,7 @@ class LLMAnswerOptimizer:
                 result = result.replace(pattern, full_value)
                 replacements_made.append(f"{{{{{{{key}}}}}}} → {full_value}")
 
-        # 2. 智能匹配常見模式並替換
+        # 2. 智能匹配常見模式並替換（支援多參數）
 
         # 2a. 電話號碼模式（如 0800-123-456, 02-1234-5678）
         if 'service_hotline' in vendor_params:
@@ -528,21 +531,40 @@ class LLMAnswerOptimizer:
                         replacements_made.append(f"{match} → {hotline_value} (電話)")
                         break  # 只替換第一個匹配
 
-        # 2b. 工作天數模式（如 "3個工作天"）- 暫時停用
-        # 原因：repair_response_time 的單位是「小時」，無法直接替換「天」
-        # 如果需要替換天數，應該在資料庫中新增 repair_response_days 參數
-        # if 'repair_response_days' in vendor_params:
-        #     time_pattern = r'(\d+)\s*(個)?工作天'
-        #     matches = re.finditer(time_pattern, result)
-        #     for match in matches:
-        #         old_value = match.group(1)
-        #         if int(old_value) <= 7:
-        #             full_match = match.group(0)
-        #             new_text = f"{vendor_params['repair_response_days']}個工作天"
-        #             result = result.replace(full_match, new_text, 1)
-        #             replacements_made.append(f"{full_match} → {new_text} (時效)")
+        # 2b. LINE ID 模式（如 @example, @vendorA）
+        if 'line_id' in vendor_params:
+            line_pattern = r'@[a-zA-Z0-9_-]+'
+            matches = re.findall(line_pattern, result)
+            for match in matches:
+                # 排除特殊 LINE ID
+                if match not in ['@here', '@all', '@channel']:
+                    line_value = vendor_params['line_id'].get('value', vendor_params['line_id']) if isinstance(vendor_params['line_id'], dict) else vendor_params['line_id']
+                    result = result.replace(match, line_value)
+                    replacements_made.append(f"{match} → {line_value} (LINE)")
+                    break  # 只替換第一個匹配
 
-        # 2c. 小時數模式（如 "24小時"）- 針對 repair_response_time
+        # 2c. 地址模式（台灣地址格式）
+        if 'office_address' in vendor_params:
+            # 匹配台灣地址：縣市 + 區 + 路/街 + 號
+            address_patterns = [
+                r'台北市[^，。\n]+?路\s*\d+\s*號',
+                r'新北市[^，。\n]+?路\s*\d+\s*號',
+                r'台中市[^，。\n]+?路\s*\d+\s*號',
+                r'台南市[^，。\n]+?路\s*\d+\s*號',
+                r'高雄市[^，。\n]+?路\s*\d+\s*號',
+                r'[台新]北市[^，。\n]+?街\s*\d+\s*號',
+            ]
+            for pattern in address_patterns:
+                matches = re.findall(pattern, result)
+                for match in matches:
+                    address_value = vendor_params['office_address'].get('value', vendor_params['office_address']) if isinstance(vendor_params['office_address'], dict) else vendor_params['office_address']
+                    result = result.replace(match, address_value)
+                    replacements_made.append(f"{match} → {address_value} (地址)")
+                    break  # 只替換第一個匹配
+                if matches:
+                    break
+
+        # 2d. 小時數模式（如 "24小時"）- 針對 repair_response_time
         if 'repair_response_time' in vendor_params:
             hour_pattern = r'(\d+)\s*小時'
             # 只在提到"回應"或"處理"的上下文中替換
@@ -564,13 +586,12 @@ class LLMAnswerOptimizer:
                             replacements_made.append(f"{full_match} → {new_text} (時效)")
                             break
 
-
         if replacements_made:
-            print(f"      ✅ 確定性替換完成：{len(replacements_made)} 項")
+            print(f"      ✅ 智能替換完成：{len(replacements_made)} 項")
             for r in replacements_made:
                 print(f"         - {r}")
         else:
-            print(f"      ℹ️  無需確定性替換")
+            print(f"      ℹ️  無需替換")
 
         return result
 
@@ -599,13 +620,23 @@ class LLMAnswerOptimizer:
         if not vendor_params:
             return content
 
-        print(f"      🔍 兩階段參數注入 + 語氣調整 - 原始內容長度: {len(content)} 字元")
+        print(f"      🔍 參數智能替換 - 原始內容長度: {len(content)} 字元")
         print(f"      📋 業者參數: {list(vendor_params.keys())}")
 
         # === 階段 1：確定性參數替換（不用 LLM）===
         content = self._replace_params_deterministic(content, vendor_params, vendor_name)
 
-        # === 階段 2：語氣調整（使用 LLM）===
+        # DEBUG: 輸出替換後的完整內容
+        print(f"      🔍 [DEBUG] 智能替換後的完整內容: {repr(content)}")
+
+        # === 階段 2：語氣調整（暫時停用，因為 LLM 會不穩定地刪除內容）===
+        # 根據用戶反饋：智能替換後不要再用 LLM 調整，避免 LINE ID 等資訊被刪除
+        enable_tone_adjustment = False  # 設為 False 停用語氣調整
+
+        if not enable_tone_adjustment:
+            print(f"      ℹ️  語氣調整已停用（避免 LLM 刪除替換後的參數）")
+            return content
+
         # 檢查是否需要語氣調整
         business_type = 'property_management'  # 預設值
         if vendor_info:
@@ -624,10 +655,11 @@ class LLMAnswerOptimizer:
         system_prompt = f"""你是一個專業的語氣調整助理。
 
 **重要原則**：
-1. ❌ **禁止修改任何數值**（電話、日期、金額、時間等）
-2. ❌ **禁止輸出模板變數格式**（如 {{{{service_hotline}}}}、@vendorA 等）
-3. ✅ **只調整語氣和表達方式**（使內容更符合業態風格）
-4. ✅ **保持內容結構和格式**（標題、列表、段落）
+1. ❌ **禁止修改任何具體資訊**（電話號碼、LINE ID、地址、日期、金額、時間等）
+2. ❌ **禁止輸出雙大括號模板格式**（如 {{{{service_hotline}}}} ← 這種才是模板）
+3. ✅ **必須保留所有實際值**（如 02-1234-5678、@vendorA、台北市信義區... 這些是真實資訊）
+4. ✅ **只調整語氣和表達方式**（使內容更符合業態風格）
+5. ✅ **保持內容結構和格式**（標題、列表、段落）
 
 業者名稱：{vendor_name}
 業種類型：{business_type}
@@ -636,8 +668,8 @@ class LLMAnswerOptimizer:
 {tone_prompt}
 
 注意：
-- 內容中的所有數值都已經是正確的業者參數，請勿修改
-- 只調整用詞、語氣、表達方式
+- 內容中的所有具體資訊（電話、LINE ID、地址等）都必須完整保留
+- 只調整用詞、語氣、表達方式，不要刪除任何資訊
 - 只輸出調整後的內容，不要加上任何說明"""
 
         user_prompt = f"""請根據業種語氣調整以下內容（請勿修改任何數值）：

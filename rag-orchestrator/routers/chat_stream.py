@@ -61,47 +61,8 @@ async def chat_stream_generator(
         llm_optimizer = app_state.llm_answer_optimizer
         vendor_config_service = app_state.vendor_config_service
 
-        # 1.5 層級2優先：檢查是否為參數型問題（使用共用函數）
-        from routers.chat_shared import check_param_question
-        param_category, param_answer = await check_param_question(
-            vendor_config_service=vendor_config_service,
-            question=request.question,
-            vendor_id=request.vendor_id
-        )
-
-        if param_answer:
-                # 參數型問題直接回答
-                yield await generate_sse_event("config_param", {
-                    "category": param_category,
-                    "config_used": param_answer.get('config_used', {})
-                })
-
-                # 流式輸出答案
-                answer = param_answer['answer']
-                words = answer.split()
-                for i, word in enumerate(words):
-                    chunk = word + (" " if i < len(words) - 1 else "")
-                    yield await generate_sse_event("answer_chunk", {"chunk": chunk})
-                    await asyncio.sleep(0.02)
-
-                # 完成事件
-                processing_time = int((time.time() - start_time) * 1000)
-                yield await generate_sse_event("answer_complete", {
-                    "processing_time_ms": processing_time
-                })
-                yield await generate_sse_event("metadata", {
-                    "source": "vendor_config",
-                    "confidence_score": 1.0,
-                    "confidence_level": "high",
-                    "processing_time_ms": processing_time
-                })
-                yield await generate_sse_event("done", {
-                    "message": "處理完成（參數型答案）",
-                    "success": True
-                })
-                return
-
         # 2. 並行執行意圖分類和檢索（Phase 2 優化 + Vendor SOP 整合）
+        # NOTE: 移除了早期參數檢查，改為在找不到知識庫/SOP結果時才使用參數答案
         import os
         intent_task = asyncio.to_thread(intent_classifier.classify, request.question)
         fallback_similarity_threshold = float(os.getenv("FALLBACK_SIMILARITY_THRESHOLD", "0.55"))
@@ -213,16 +174,40 @@ async def chat_stream_generator(
                 yield chunk
 
         else:
-            # 低信心度：unclear
-            yield await generate_sse_event("answer_chunk", {
-                "chunk": "抱歉，我對這個問題不太確定如何回答。\n\n"
-            })
-            yield await generate_sse_event("answer_chunk", {
-                "chunk": "您的問題已經記錄下來，我們會盡快處理。\n"
-            })
-            yield await generate_sse_event("answer_chunk", {
-                "chunk": "如需立即協助，請聯繫客服人員。"
-            })
+            # 低信心度或無結果：嘗試參數答案，否則返回 unclear
+            from routers.chat_shared import check_param_question
+            param_category, param_answer = await check_param_question(
+                vendor_config_service=vendor_config_service,
+                question=request.question,
+                vendor_id=request.vendor_id
+            )
+
+            if param_answer:
+                # 使用參數型答案
+                print(f"   ℹ️  知識庫/SOP無結果，使用參數型答案（category={param_category}）")
+                yield await generate_sse_event("config_param", {
+                    "category": param_category,
+                    "config_used": param_answer.get('config_used', {})
+                })
+
+                # 流式輸出答案
+                answer = param_answer['answer']
+                words = answer.split()
+                for i, word in enumerate(words):
+                    chunk = word + (" " if i < len(words) - 1 else "")
+                    yield await generate_sse_event("answer_chunk", {"chunk": chunk})
+                    await asyncio.sleep(0.02)
+            else:
+                # unclear 答案
+                yield await generate_sse_event("answer_chunk", {
+                    "chunk": "抱歉，我對這個問題不太確定如何回答。\n\n"
+                })
+                yield await generate_sse_event("answer_chunk", {
+                    "chunk": "您的問題已經記錄下來，我們會盡快處理。\n"
+                })
+                yield await generate_sse_event("answer_chunk", {
+                    "chunk": "如需立即協助，請聯繫客服人員。"
+                })
 
         # 7. 發送完成事件
         processing_time = int((time.time() - start_time) * 1000)
