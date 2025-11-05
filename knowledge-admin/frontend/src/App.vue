@@ -96,6 +96,10 @@
             <span class="nav-icon">🔍</span>
             <span class="nav-text">審核管理</span>
           </router-link>
+          <router-link to="/knowledge-reclassify" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">意圖分配</span>
+          </router-link>
           <router-link to="/test-scenarios" class="nav-item">
             <span class="nav-icon">🧪</span>
             <span class="nav-text">測試管理</span>

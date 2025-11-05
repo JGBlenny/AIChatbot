@@ -615,7 +615,7 @@ class KnowledgeImportService:
 
                 # 使用資料庫函數檢查是否已存在相似知識
                 result = await conn.fetchrow("""
-                    SELECT * FROM check_knowledge_exists_by_similarity($1::vector, $2)
+                    SELECT * FROM check_knowledge_exists_by_similarity($1::vector, $2::DECIMAL)
                 """, vector_str, threshold)
 
                 if result and (result['exists_in_knowledge_base'] or result['exists_in_review_queue'] or result.get('exists_in_test_scenarios', False)):
