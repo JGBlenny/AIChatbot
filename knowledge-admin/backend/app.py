@@ -970,22 +970,47 @@ async def remove_knowledge_intent(knowledge_id: int, intent_id: int):
 async def get_stats():
     """取得統計資訊"""
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     try:
         # 總知識數
         cur.execute("SELECT COUNT(*) as total FROM knowledge_base")
         total = cur.fetchone()['total']
 
-        # 各分類數量
+        # 按來源類型統計
         cur.execute("""
-            SELECT category, COUNT(*) as count
+            SELECT
+                COALESCE(source_type, 'manual') as category,
+                COUNT(*) as count
             FROM knowledge_base
-            WHERE category IS NOT NULL
-            GROUP BY category
+            GROUP BY source_type
             ORDER BY count DESC
         """)
         by_category = [dict(row) for row in cur.fetchall()]
+
+        # 按意圖統計（前 10 個）
+        cur.execute("""
+            SELECT
+                COALESCE(i.name, '未分類') as intent_name,
+                COUNT(kb.id) as count
+            FROM knowledge_base kb
+            LEFT JOIN intents i ON kb.intent_id = i.id
+            GROUP BY i.name
+            ORDER BY count DESC
+            LIMIT 10
+        """)
+        by_intent = [dict(row) for row in cur.fetchall()]
+
+        # Embedding 覆蓋率統計
+        cur.execute("""
+            SELECT
+                COUNT(*) as total,
+                COUNT(embedding) as has_embedding,
+                COUNT(*) - COUNT(embedding) as missing_embedding,
+                ROUND(100.0 * COUNT(embedding) / NULLIF(COUNT(*), 0), 2) as coverage_rate
+            FROM knowledge_base
+        """)
+        embedding_stats = dict(cur.fetchone())
 
         # 最近更新
         cur.execute("""
@@ -1003,6 +1028,8 @@ async def get_stats():
         return {
             "total_knowledge": total,
             "by_category": by_category,
+            "by_intent": by_intent,
+            "embedding_stats": embedding_stats,
             "recent_updates": recent_updates
         }
 
