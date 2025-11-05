@@ -25,8 +25,8 @@ class ConfidenceEvaluator:
             "high_confidence_threshold": high_threshold,
             "medium_confidence_threshold": medium_threshold,
             "min_results_for_high": 2,
-            "keyword_match_weight": 0.2,
-            "similarity_weight": 0.6,
+            "keyword_match_weight": 0.1,  # 降低關鍵字權重（因為多數知識缺少 keywords）
+            "similarity_weight": 0.7,     # 提高向量相似度權重（主要依賴語義匹配）
             "result_count_weight": 0.2
         }
 

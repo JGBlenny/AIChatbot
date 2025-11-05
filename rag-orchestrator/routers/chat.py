@@ -698,24 +698,37 @@ async def _build_knowledge_response(
 ):
     """使用知識庫結果構建優化回應"""
     llm_optimizer = req.app.state.llm_answer_optimizer
+    confidence_evaluator = req.app.state.confidence_evaluator
 
     # 獲取業者參數（保留完整資訊包含 display_name, unit 等）
     vendor_params = resolver.get_vendor_parameters(request.vendor_id)
 
-    # 準備搜尋結果格式
+    # 準備搜尋結果格式（使用實際的相似度或預設值）
     search_results = [{
         'id': k['id'],
         'question_summary': k['question_summary'],
         'content': k['answer'],
-        'similarity': 0.9
+        'similarity': k.get('similarity', 0.9),  # 使用實際相似度，沒有則用預設值
+        'keywords': k.get('keywords', [])        # 添加 keywords 供信心度評估
     } for k in knowledge_list]
 
-    # LLM 優化（添加 confidence_score 以確保參數注入）
+    # 使用 ConfidenceEvaluator 評估信心度（與 /v1/chat/stream 統一）
+    evaluation = confidence_evaluator.evaluate(
+        search_results=search_results,
+        question_keywords=intent_result.get('keywords', [])
+    )
+
+    confidence_level = evaluation['confidence_level']
+    confidence_score = evaluation['confidence_score']
+
+    print(f"📊 [知識庫信心度評估] level={confidence_level}, score={confidence_score:.3f}, decision={evaluation['decision']}")
+
+    # LLM 優化（使用評估後的信心度）
     optimization_result = llm_optimizer.optimize_answer(
         question=request.message,
         search_results=search_results,
-        confidence_level='high',
-        confidence_score=0.90,  # 知識庫 intent 匹配，高信心度
+        confidence_level=confidence_level,
+        confidence_score=confidence_score,  # 使用 ConfidenceEvaluator 計算的分數
         intent_info=intent_result,
         vendor_params=vendor_params,
         vendor_name=vendor_info['name'],

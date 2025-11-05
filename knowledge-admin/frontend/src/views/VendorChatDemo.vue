@@ -177,90 +177,34 @@ export default {
       // 添加用戶訊息
       this.addMessage('user', userMessage);
 
-      // 調用 Streaming API
+      // 調用 Message API（改用非串流版本以提升穩定性）
       this.isLoading = true;
-      this.streamingMetadata = {};
-
-      // 創建一個空的 AI 訊息用於流式輸出
-      const messageId = this.messageIdCounter++;
-      this.currentStreamingMessage = {
-        id: messageId,
-        role: 'assistant',
-        content: '',
-        timestamp: new Date().toISOString(),
-        metadata: null
-      };
-      this.messages.push(this.currentStreamingMessage);
 
       try {
-        const response = await fetch(`${RAG_API}/chat/stream`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            question: userMessage,
-            vendor_id: this.vendor.id,
-            user_role: 'customer'
-          })
+        const response = await axios.post(`${RAG_API}/message`, {
+          message: userMessage,
+          vendor_id: this.vendor.id,
+          mode: 'tenant',
+          user_role: 'customer',
+          include_sources: false
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        // 手動解析 SSE 流
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || ''; // 保留最後不完整的行
-
-          for (const line of lines) {
-            if (line.startsWith('event:')) {
-              const eventType = line.substring(6).trim();
-              continue;
-            }
-
-            if (line.startsWith('data:')) {
-              const dataStr = line.substring(5).trim();
-              if (!dataStr) continue;
-
-              try {
-                const data = JSON.parse(dataStr);
-                await this.handleStreamEvent(data);
-              } catch (e) {
-                console.error('解析 SSE 數據失敗:', e);
-              }
-            }
+        // 添加 AI 回應
+        const messageId = this.messageIdCounter++;
+        this.messages.push({
+          id: messageId,
+          role: 'assistant',
+          content: response.data.answer,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            intent: response.data.intent_name || 'unknown',
+            confidence: response.data.confidence || 0,
+            sources_count: response.data.source_count || 0
           }
-        }
-
-        // 完成流式輸出，更新 metadata
-        if (this.currentStreamingMessage) {
-          this.currentStreamingMessage.metadata = {
-            intent: this.streamingMetadata.intent_name || 'unknown',
-            confidence: this.streamingMetadata.confidence_score || 0,
-            sources_count: this.streamingMetadata.doc_count || 0
-          };
-        }
+        });
 
       } catch (err) {
         console.error('發送訊息失敗', err);
-
-        // 移除未完成的訊息
-        if (this.currentStreamingMessage) {
-          const idx = this.messages.findIndex(m => m.id === this.currentStreamingMessage.id);
-          if (idx !== -1) {
-            this.messages.splice(idx, 1);
-          }
-        }
 
         // 添加錯誤訊息
         this.addMessage('assistant', '抱歉，系統發生錯誤，請稍後再試。', {
@@ -269,7 +213,6 @@ export default {
         });
       } finally {
         this.isLoading = false;
-        this.currentStreamingMessage = null;
 
         // 滾動到底部
         this.$nextTick(() => {
