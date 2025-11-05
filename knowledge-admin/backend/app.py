@@ -980,10 +980,21 @@ async def get_stats():
         # 按來源類型統計
         cur.execute("""
             SELECT
-                COALESCE(source_type, 'manual') as category,
+                COALESCE(source_type, 'manual') as source_type,
                 COUNT(*) as count
             FROM knowledge_base
             GROUP BY source_type
+            ORDER BY count DESC
+        """)
+        by_source_type = [dict(row) for row in cur.fetchall()]
+
+        # 按業務分類統計（category 欄位，未來功能）
+        cur.execute("""
+            SELECT
+                COALESCE(category, '未分類') as category,
+                COUNT(*) as count
+            FROM knowledge_base
+            GROUP BY category
             ORDER BY count DESC
         """)
         by_category = [dict(row) for row in cur.fetchall()]
@@ -1027,6 +1038,7 @@ async def get_stats():
 
         return {
             "total_knowledge": total,
+            "by_source_type": by_source_type,
             "by_category": by_category,
             "by_intent": by_intent,
             "embedding_stats": embedding_stats,

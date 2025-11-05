@@ -51,6 +51,9 @@ CREATE TABLE IF NOT EXISTS knowledge_base (
     source_test_scenario_id INTEGER,
     generation_metadata JSONB,
 
+    -- 業務分類（category 外鍵將在 10 腳本執行後可用）
+    category VARCHAR(50),
+
     -- 狀態與審計
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -69,6 +72,7 @@ CREATE INDEX IF NOT EXISTS idx_kb_template ON knowledge_base(is_template);
 CREATE INDEX IF NOT EXISTS idx_kb_created_at ON knowledge_base(created_at);
 CREATE INDEX IF NOT EXISTS idx_kb_is_active ON knowledge_base(is_active);
 CREATE INDEX IF NOT EXISTS idx_kb_source_type ON knowledge_base(source_type);
+CREATE INDEX IF NOT EXISTS idx_kb_category ON knowledge_base(category);
 
 -- 向量索引（IVFFlat 演算法加速向量搜尋）
 -- lists 參數：建議設為 sqrt(總資料筆數)，這裡預估 1000 筆，設為 100
@@ -112,6 +116,7 @@ COMMENT ON COLUMN knowledge_base.priority IS '優先級（數字越大優先級�
 COMMENT ON COLUMN knowledge_base.source_type IS '知識來源類型: manual (人工), ai_generated (AI生成), imported (匯入), ai_assisted (AI輔助)';
 COMMENT ON COLUMN knowledge_base.source_test_scenario_id IS '來源測試情境 ID（如果由測試情境生成）';
 COMMENT ON COLUMN knowledge_base.generation_metadata IS 'AI 生成的詳細資訊: {model, prompt, confidence, reviewed_by, edited}';
+COMMENT ON COLUMN knowledge_base.category IS '業務分類（參考 category_config 表的 category_value）';
 COMMENT ON COLUMN knowledge_base.is_active IS '知識是否啟用';
 
 -- ========================================
