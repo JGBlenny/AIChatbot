@@ -97,8 +97,9 @@
                     </div>
                   </div>
                 </div>
-                <div v-else class="no-test">
+                <div v-else class="no-test clickable" @click="toggleTestDetails(scenario.id)" :title="'點擊展開生成 AI 知識'">
                   <span class="badge badge-no-test">未測試</span>
+                  <span class="expand-icon">{{ expandedScenario === scenario.id ? '▼' : '▶' }}</span>
                 </div>
               </td>
               <td class="actions-cell">
@@ -116,6 +117,53 @@
                 <div v-if="loadingDetails" class="loading-details">
                   <span>⏳ 載入測試詳情...</span>
                 </div>
+
+                <!-- 未測試狀態：直接顯示 AI 生成區域 -->
+                <div v-else-if="!scenario.last_run_at" class="no-test-details">
+                  <div class="info-message">
+                    <p>📝 此測試場景尚未執行測試</p>
+                    <p>如果沒有對應的知識，可以使用 AI 生成知識候選</p>
+                  </div>
+
+                  <!-- AI 生成知識區域（未測試場景專用） -->
+                  <div class="ai-generate-section">
+                    <!-- 狀態 1: 已批准 - 顯示知識連結 -->
+                    <div v-if="knowledgeStatus && knowledgeStatus.status === 'approved' && knowledgeStatus.knowledge_id" class="approved-knowledge">
+                      <div class="status-badge badge-approved">✅ 已批准並建立知識</div>
+                      <router-link :to="`/knowledge?ids=${knowledgeStatus.knowledge_id}`" class="knowledge-link">
+                        <span class="knowledge-icon">📖</span>
+                        <span>查看知識 #{{ knowledgeStatus.knowledge_id }}</span>
+                      </router-link>
+                    </div>
+
+                    <!-- 狀態 2: 審核中 - 顯示審核中狀態 -->
+                    <div v-else-if="knowledgeStatus && knowledgeStatus.status === 'pending_review'" class="pending-review">
+                      <div class="status-badge badge-pending">⏳ 審核中</div>
+                      <router-link :to="`/review-center?candidate_id=${knowledgeStatus.candidate_id}`" class="candidate-link">
+                        前往審核頁面
+                      </router-link>
+                    </div>
+
+                    <!-- 狀態 3: 已拒絕或無候選 - 顯示生成按鈕 -->
+                    <div v-else>
+                      <div v-if="knowledgeStatus && knowledgeStatus.status === 'rejected'" class="status-badge badge-rejected">
+                        ❌ 已拒絕 - 可重新生成
+                      </div>
+                      <button
+                        v-if="!generatingKnowledge[scenario.id]"
+                        @click="generateKnowledge(scenario)"
+                        class="btn-primary btn-ai-generate"
+                      >
+                        🤖 AI 生成知識
+                      </button>
+                      <div v-else class="generating-status">
+                        ⏳ 正在生成知識，請稍後前往 AI 知識審核頁面查看...
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 已測試狀態：顯示測試詳情 -->
                 <div v-else-if="testDetails.length > 0" class="test-details-container">
                   <h4>📊 上次測試詳情</h4>
                   <div class="detail-item">
