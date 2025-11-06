@@ -147,7 +147,7 @@
                       </div>
 
                       <!-- 沒有知識來源時，根據候選狀態顯示不同 UI -->
-                      <div v-if="(!testDetails[0].source_count || testDetails[0].source_count === 0) && scenario.status === 'approved'" class="ai-generate-section">
+                      <div v-if="(!testDetails[0].source_count || testDetails[0].source_count === 0) && (scenario.status === 'approved' || scenario.last_result === 'not_tested')" class="ai-generate-section">
 
                         <!-- 狀態 1: 已批准 - 顯示知識連結 -->
                         <div v-if="knowledgeStatus && knowledgeStatus.status === 'approved' && knowledgeStatus.knowledge_id" class="approved-knowledge">
