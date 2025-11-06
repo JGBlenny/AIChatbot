@@ -611,7 +611,7 @@ async def _handle_no_knowledge_found(
     service_hotline = params.get('service_hotline', {}).get('value', '客服')
 
     # 清理答案並替換模板變數（兜底保護）
-    fallback_answer = f"我目前沒有找到關於「{intent_result['intent_name']}」的相關資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {service_hotline}。請問您方便提供更詳細的內容嗎？"
+    fallback_answer = f"我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {service_hotline}。請問您方便提供更詳細的內容嗎？"
     final_answer = _clean_answer(fallback_answer, request.vendor_id, resolver)
 
     return VendorChatResponse(
