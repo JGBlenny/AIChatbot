@@ -63,6 +63,7 @@ class CheckKnowledgeResponse(BaseModel):
     test_scenario_id: int
     test_question: str
     has_knowledge: bool
+    matched_knowledge_ids: List[int]  # 相符的知識 ID 列表
     match_count: int
     highest_similarity: Optional[float]
     related_knowledge: List[Dict]
@@ -171,6 +172,7 @@ async def check_test_scenario_knowledge(
                 test_scenario_id=scenario_id,
                 test_question=scenario['test_question'],
                 has_knowledge=result['has_knowledge'],
+                matched_knowledge_ids=list(result['matched_knowledge_ids']) if result['matched_knowledge_ids'] else [],
                 match_count=result['match_count'],
                 highest_similarity=float(result['highest_similarity']) if result['highest_similarity'] else None,
                 related_knowledge=related_knowledge if related_knowledge else [],
