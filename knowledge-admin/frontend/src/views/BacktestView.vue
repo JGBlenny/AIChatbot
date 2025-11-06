@@ -108,6 +108,10 @@
         🔄 重新載入
       </button>
 
+      <button @click="forceStopMonitoring" class="btn-stop" v-if="isRunning" style="background-color: #f44336; color: white;">
+        🛑 強制停止監控
+      </button>
+
       <button @click="showSummary" class="btn-summary">
         📊 查看摘要
       </button>
@@ -788,6 +792,27 @@ export default {
           console.error('監控狀態失敗', error);
         }
       }, 5000);
+    },
+
+    forceStopMonitoring() {
+      if (confirm('確定要強制停止監控嗎？\n\n這會清除「執行中」狀態，讓您可以重新載入結果。\n回測本身（如果正在執行）不會被中斷。')) {
+        // 清除定時器
+        if (this.statusCheckInterval) {
+          clearInterval(this.statusCheckInterval);
+          this.statusCheckInterval = null;
+        }
+
+        // 重置狀態
+        this.isRunning = false;
+
+        // 重新檢查狀態
+        this.checkBacktestStatus();
+
+        // 重新載入結果
+        this.loadResults();
+
+        alert('✅ 監控已停止，狀態已重置');
+      }
     },
 
     formatRunTime(isoString) {
