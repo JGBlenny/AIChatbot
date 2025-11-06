@@ -456,7 +456,7 @@ export default {
     },
 
     async generateKnowledge(scenario) {
-      if (!confirm(`確定要為「${scenario.test_question}」生成知識嗎？\n\n這將使用 AI 生成 1-3 個候選答案供您審核。`)) {
+      if (!confirm(`確定要為「${scenario.test_question}」生成知識嗎？\n\n這將使用 AI 生成 1 個候選答案供您審核。`)) {
         return;
       }
 
@@ -479,7 +479,7 @@ export default {
         // 生成知識候選
         const generateResponse = await axios.post(
           `/rag-api/v1/test-scenarios/${scenario.id}/generate-knowledge`,
-          { num_candidates: 2 }
+          { num_candidates: 1 }
         );
 
         const result = generateResponse.data;
