@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS test_scenarios (
     -- 預期結果
     expected_min_confidence FLOAT DEFAULT 0.6,  -- 預期最低信心度
     expected_source_count INTEGER,  -- 預期知識來源數量
+    expected_answer TEXT,  -- 標準答案（可選）用於 LLM 語義對比
+    min_quality_score DECIMAL(2,1) DEFAULT 3.0 CHECK (min_quality_score >= 1.0 AND min_quality_score <= 5.0),  -- 最低質量要求
 
     -- 狀態管理
     status VARCHAR(20) DEFAULT 'pending_review' CHECK (status IN ('pending_review', 'approved', 'rejected', 'draft')),
