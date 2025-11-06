@@ -272,6 +272,9 @@ export default {
           alert('✅ 意圖已新增！');
         }
 
+        // 重新載入 IntentClassifier 的意圖配置
+        await this.reloadIntentClassifier();
+
         this.closeModal();
         this.loadIntents();
         this.loadStats();
@@ -289,10 +292,24 @@ export default {
           is_enabled: !intent.is_enabled
         });
         alert(`✅ 意圖已${!intent.is_enabled ? '啟用' : '停用'}！`);
+
+        // 重新載入 IntentClassifier 的意圖配置
+        await this.reloadIntentClassifier();
+
         this.loadIntents();
         this.loadStats();
       } catch (error) {
         alert('操作失敗：' + (error.response?.data?.detail || error.message));
+      }
+    },
+
+    async reloadIntentClassifier() {
+      try {
+        await axios.post(`${RAG_API}/knowledge/reload`);
+        console.log('✅ IntentClassifier 已重新載入意圖配置');
+      } catch (error) {
+        console.error('⚠️ 重新載入 IntentClassifier 失敗:', error);
+        // 不阻斷主流程，只記錄錯誤
       }
     },
 
