@@ -193,7 +193,7 @@ async def _handle_unclear_with_rag_fallback(
     service_hotline = params.get('service_hotline', {}).get('value', '客服')
 
     # 清理答案並替換模板變數（兜底保護）
-    fallback_answer = f"抱歉，我不太理解您的問題。請您換個方式描述，或撥打客服專線 {service_hotline} 尋求協助。"
+    fallback_answer = f"我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {service_hotline}。請問您方便提供更詳細的內容嗎？"
     final_answer = _clean_answer(fallback_answer, request.vendor_id, resolver)
 
     return VendorChatResponse(
@@ -569,7 +569,6 @@ async def _handle_no_knowledge_found(
 
     if param_answer:
         print(f"   ℹ️  知識庫無結果，使用參數型答案（category={param_category}）")
-        from datetime import datetime
         response = VendorChatResponse(
             answer=param_answer['answer'],
             intent_name="參數查詢",
@@ -612,7 +611,7 @@ async def _handle_no_knowledge_found(
     service_hotline = params.get('service_hotline', {}).get('value', '客服')
 
     # 清理答案並替換模板變數（兜底保護）
-    fallback_answer = f"很抱歉，關於「{intent_result['intent_name']}」我目前沒有相關資訊。建議您撥打客服專線 {service_hotline} 獲取協助。"
+    fallback_answer = f"我目前沒有找到關於「{intent_result['intent_name']}」的相關資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {service_hotline}。請問您方便提供更詳細的內容嗎？"
     final_answer = _clean_answer(fallback_answer, request.vendor_id, resolver)
 
     return VendorChatResponse(
