@@ -44,6 +44,17 @@
       >
         <div :class="['message-bubble', message.role === 'user' ? 'user-message' : 'ai-message']">
           <div class="message-content" v-html="renderMarkdown(message.content)"></div>
+
+          <!-- 影片播放器 -->
+          <div v-if="message.role === 'assistant' && message.metadata && message.metadata.video_url" class="message-video">
+            <video controls :src="message.metadata.video_url" class="video-player"></video>
+            <div class="video-info">
+              <span v-if="message.metadata.video_file_size">📦 {{ formatFileSize(message.metadata.video_file_size) }}</span>
+              <span v-if="message.metadata.video_duration">⏱️ {{ message.metadata.video_duration }}秒</span>
+              <span v-if="message.metadata.video_format">🎬 {{ message.metadata.video_format.toUpperCase() }}</span>
+            </div>
+          </div>
+
           <div class="message-footer">
             <span class="message-time">{{ formatTime(message.timestamp) }}</span>
             <span v-if="message.metadata" class="message-metadata">
@@ -199,7 +210,12 @@ export default {
           metadata: {
             intent: response.data.intent_name || 'unknown',
             confidence: response.data.confidence || 0,
-            sources_count: response.data.source_count || 0
+            sources_count: response.data.source_count || 0,
+            // 影片資訊
+            video_url: response.data.video_url,
+            video_file_size: response.data.video_file_size,
+            video_duration: response.data.video_duration,
+            video_format: response.data.video_format
           }
         });
 
@@ -333,6 +349,13 @@ export default {
       if (container) {
         container.scrollTop = container.scrollHeight;
       }
+    },
+
+    formatFileSize(bytes) {
+      if (!bytes) return '';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
   }
 };
@@ -632,6 +655,35 @@ export default {
 .btn-sm {
   font-size: 0.85rem;
   padding: 0.4rem 0.8rem;
+}
+
+/* 訊息影片播放器 */
+.message-video {
+  margin-top: 0.75rem;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.03);
+}
+
+.video-player {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 8px;
+  display: block;
+}
+
+.message-video .video-info {
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  display: flex;
+  gap: 0.75rem;
+  opacity: 0.7;
+}
+
+.message-video .video-info span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 /* 響應式設計 */
