@@ -198,16 +198,26 @@ async def chat_stream_generator(
                     yield await generate_sse_event("answer_chunk", {"chunk": chunk})
                     await asyncio.sleep(0.02)
             else:
-                # unclear 答案
-                yield await generate_sse_event("answer_chunk", {
-                    "chunk": "抱歉，我對這個問題不太確定如何回答。\n\n"
-                })
-                yield await generate_sse_event("answer_chunk", {
-                    "chunk": "您的問題已經記錄下來，我們會盡快處理。\n"
-                })
-                yield await generate_sse_event("answer_chunk", {
-                    "chunk": "如需立即協助，請聯繫客服人員。"
-                })
+                # unclear 答案：友善回應並提供客服資訊
+                # 獲取客服專線參數
+                service_hotline = "客服"
+                if request.vendor_id:
+                    try:
+                        from services.vendor_parameter_resolver import VendorParameterResolver
+                        resolver = VendorParameterResolver()
+                        params = resolver.get_vendor_parameters(request.vendor_id)
+                        service_hotline = params.get('service_hotline', {}).get('value', '客服')
+                    except Exception as e:
+                        print(f"⚠️  獲取客服專線失敗: {e}")
+
+                fallback_message = f"我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {service_hotline}。請問您方便提供更詳細的內容嗎？"
+
+                # 流式輸出 fallback 訊息
+                words = fallback_message.split()
+                for i, word in enumerate(words):
+                    chunk = word + (" " if i < len(words) - 1 else "")
+                    yield await generate_sse_event("answer_chunk", {"chunk": chunk})
+                    await asyncio.sleep(0.02)
 
         # 7. 發送完成事件
         processing_time = int((time.time() - start_time) * 1000)
