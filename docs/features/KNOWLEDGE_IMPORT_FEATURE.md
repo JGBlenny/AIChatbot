@@ -6,12 +6,13 @@
 
 ### 核心特色
 
-- ✅ **多格式支援**：Excel (.xlsx), JSON, TXT
+- ✅ **多格式支援**：Excel (.xlsx), CSV (.csv), JSON, TXT
 - 🔍 **雙層去重機制**：文字去重 + 語意去重
 - 🤖 **AI 自動處理**：問題生成、向量嵌入、意圖推薦
 - 🧪 **自動測試情境**：B2C 知識自動創建測試情境
 - 📋 **審核佇列**：所有知識需經人工審核
 - 💰 **成本優化**：文字去重在 LLM 前執行，節省 API 成本
+- 🌐 **多語言支援**：CSV 格式支援 JSON 欄位，自動提取繁體中文
 
 ---
 
@@ -86,7 +87,87 @@ SELECT COUNT(*) FROM (
 
 ## 📂 支援的檔案格式
 
-### 1. Excel (.xlsx, .xls)
+### 1. CSV (.csv)
+
+**特色**：
+- ✅ 支援標準 CSV 格式
+- ✅ 支援 JSON 欄位格式（自動解析）
+- ✅ 支援多語言（自動提取 zh-TW）
+- ✅ 自動清理 HTML 標籤
+
+**支援的欄位名稱**（不區分大小寫）：
+
+| 欄位 | 別名 | 必填 | 說明 |
+|------|------|------|------|
+| 問題 | question, 問題摘要, question_summary, title, 標題 | 否* | 若無提供，LLM 自動生成 |
+| 答案 | answer, 回覆, response, content, 內容 | ✅ 是 | 至少 10 字 |
+| 分類 | category, 類別, type | 否 | 預設「一般問題」 |
+| 對象 | audience, 受眾, target_user | 否 | 預設「租客」 |
+| 關鍵字 | keywords, 標籤, tags | 否 | 逗號分隔 |
+
+#### 格式 1：標準 CSV
+
+**範例檔案**：
+
+```csv
+分類,問題,答案,對象,關鍵字
+帳務查詢,如何繳納租金？,請於每月 1 號前透過 ATM 轉帳...,租客,"繳費,租金,ATM"
+寵物規定,可以養寵物嗎？,部分物件允許飼養小型寵物...,租客,"寵物,飼養"
+```
+
+#### 格式 2：JSON 欄位格式（help_datas.csv）
+
+**說明**：欄位值為 JSON 字串，自動提取繁體中文（zh-TW）
+
+**範例檔案**：
+
+```csv
+title,title.1,content
+"{""zh-TW"":""物件"",""en-US"":""Property""}","{""zh-TW"":""如何新增物件？"",""en-US"":""How to add property?""}","{""zh-TW"":""<p>房東可到「物件管理」...</p>""}"
+```
+
+**處理邏輯**：
+1. 自動偵測 JSON 格式（`{` 開頭 `}` 結尾）
+2. 解析 JSON 並提取 `zh-TW` 欄位
+3. 自動清理 HTML 標籤：
+   - 移除 `style` 屬性
+   - 移除 `<span>` 標籤
+   - 將 `<p>` 轉換為換行
+4. 生成向量嵌入
+
+**處理前**：
+```json
+{
+  "zh-TW": "<p><span style=\"font-size:18px\">房東可到「物件管理」中的「物件總表」...</span></p>",
+  "en-US": "<p>The lessor can go to...</p>"
+}
+```
+
+**處理後**：
+```
+房東可到「物件管理」中的「物件總表」...
+```
+
+#### 欄位映射邏輯
+
+**智能偵測**：
+- 如果找不到標準欄位名稱，自動偵測 `help_datas.csv` 格式
+- 第一欄 → 分類（title）
+- 第二欄 → 問題（title.1）
+- 第三欄 → 答案（content）
+
+**日誌範例**：
+```
+📖 解析 CSV 檔案: help_datas.csv
+   讀取 72 行資料
+   欄位: ['title', 'title.1', 'content']
+   偵測到特殊格式 CSV，使用欄位: title, title.1, content
+   ✅ 解析出 72 個有效知識項目
+```
+
+---
+
+### 2. Excel (.xlsx, .xls)
 
 **支援的欄位名稱**（不區分大小寫）：
 
@@ -328,7 +409,7 @@ curl -X POST http://localhost:8100/api/v1/knowledge-import/upload \
 ```
 
 **參數說明**：
-- `file`: 上傳的檔案 (Excel/JSON/TXT)
+- `file`: 上傳的檔案 (CSV/Excel/JSON/TXT)
 - `vendor_id`: 業者 ID（可選，通用知識可不填）
 - `import_mode`: 匯入模式
   - `append`: 追加（預設）
@@ -582,7 +663,7 @@ docker logs aichatbot-rag-orchestrator 2>&1 | grep -A 50 "job_id"
 ### Q5: 匯入失敗如何排查？
 
 **A**: 檢查以下項目：
-1. **檔案格式**：確認是 .xlsx / .json / .txt
+1. **檔案格式**：確認是 .csv / .xlsx / .json / .txt
 2. **必填欄位**：答案欄位至少 10 字
 3. **OpenAI API Key**：確認環境變數已設定
 4. **容器狀態**：`docker-compose ps`
@@ -600,6 +681,6 @@ docker logs aichatbot-rag-orchestrator 2>&1 | grep -A 50 "job_id"
 ---
 
 **建立日期**: 2025-10-12
-**最後更新**: 2025-10-12
-**版本**: 1.0
+**最後更新**: 2025-11-13
+**版本**: 1.1 (新增 CSV 支援)
 **維護者**: Claude Code

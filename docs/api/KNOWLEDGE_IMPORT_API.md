@@ -22,17 +22,31 @@
 
 | 參數 | 類型 | 必填 | 說明 |
 |------|------|------|------|
-| file | File | ✅ | 上傳的檔案（.xlsx, .json, .txt） |
+| file | File | ✅ | 上傳的檔案（.csv, .xlsx, .json, .txt） |
 | vendor_id | Integer | ❌ | 業者 ID（不填為通用知識） |
 | import_mode | String | ❌ | 匯入模式：append/replace/merge（預設：append） |
 | enable_deduplication | Boolean | ❌ | 是否啟用去重（預設：true） |
 
-**cURL 範例**:
+**cURL 範例（Excel）**:
 ```bash
 curl -X POST http://localhost:8100/api/v1/knowledge-import/upload \
   -F "file=@test_knowledge_data.xlsx" \
   -F "vendor_id=1" \
   -F "import_mode=append" \
+  -F "enable_deduplication=true"
+```
+
+**cURL 範例（CSV）**:
+```bash
+# 標準 CSV
+curl -X POST http://localhost:8100/api/v1/knowledge-import/upload \
+  -F "file=@knowledge_data.csv" \
+  -F "vendor_id=1" \
+  -F "enable_deduplication=true"
+
+# 多語言 JSON 欄位格式（如 help_datas.csv）
+curl -X POST http://localhost:8100/api/v1/knowledge-import/upload \
+  -F "file=@help_datas.csv" \
   -F "enable_deduplication=true"
 ```
 
@@ -554,6 +568,6 @@ if candidates['total'] > 0:
 ---
 
 **建立日期**: 2025-10-12
-**最後更新**: 2025-10-12
-**版本**: 1.0
+**最後更新**: 2025-11-13
+**版本**: 1.1 (新增 CSV 支援)
 **維護者**: Claude Code

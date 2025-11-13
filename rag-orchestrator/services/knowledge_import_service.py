@@ -168,12 +168,14 @@ class KnowledgeImportService:
             file_path: 檔案路徑
 
         Returns:
-            檔案類型（excel, pdf, txt, json）
+            檔案類型（excel, csv, pdf, txt, json）
         """
         suffix = Path(file_path).suffix.lower()
 
         if suffix in ['.xlsx', '.xls']:
             return 'excel'
+        elif suffix == '.csv':
+            return 'csv'
         elif suffix == '.pdf':
             return 'pdf'
         elif suffix == '.txt':
@@ -196,6 +198,8 @@ class KnowledgeImportService:
         """
         if file_type == 'excel':
             return await self._parse_excel(file_path)
+        elif file_type == 'csv':
+            return await self._parse_csv(file_path)
         elif file_type == 'txt':
             return await self._parse_txt(file_path)
         elif file_type == 'json':
@@ -287,6 +291,168 @@ class KnowledgeImportService:
                 'keywords': keywords,
                 'source_file': Path(file_path).name
             })
+
+        print(f"   ✅ 解析出 {len(knowledge_list)} 個有效知識項目")
+        return knowledge_list
+
+    async def _parse_csv(self, file_path: str) -> List[Dict]:
+        """
+        解析 CSV 檔案（加強版：支援 JSON 欄位格式）
+
+        支援格式：
+        1. 標準 CSV 格式：
+           - 欄位: 問題 / question / 問題摘要 / title
+           - 欄位: 答案 / answer / 回覆 / content
+           - 欄位: 分類 / category (可選)
+           - 欄位: 對象 / audience (可選)
+           - 欄位: 關鍵字 / keywords (可選)
+
+        2. JSON 欄位格式（如 help_datas.csv）：
+           - 欄位值為 JSON 字串，自動提取 zh-TW 語系
+           - 例如: {"zh-TW":"物件","en-US":"Property"}
+
+        Args:
+            file_path: CSV 檔案路徑
+
+        Returns:
+            知識列表
+        """
+        print(f"📖 解析 CSV 檔案: {file_path}")
+
+        # 讀取 CSV，pandas 會自動處理編碼
+        try:
+            df = pd.read_csv(file_path, encoding='utf-8')
+        except UnicodeDecodeError:
+            # 如果 UTF-8 失敗，嘗試其他編碼
+            df = pd.read_csv(file_path, encoding='utf-8-sig')
+
+        print(f"   讀取 {len(df)} 行資料")
+        print(f"   欄位: {list(df.columns)}")
+
+        # 欄位映射（支援多種欄位名稱）
+        question_cols = ['問題', 'question', '問題摘要', 'question_summary', 'title', '標題']
+        answer_cols = ['答案', 'answer', '回覆', 'response', 'content', '內容']
+        category_cols = ['分類', 'category', '類別', 'type']
+        audience_cols = ['對象', 'audience', '受眾', 'target_user']
+        keywords_cols = ['關鍵字', 'keywords', '標籤', 'tags']
+
+        # 找到對應的欄位
+        question_col = next((col for col in df.columns if col in question_cols), None)
+        answer_col = next((col for col in df.columns if col in answer_cols), None)
+        category_col = next((col for col in df.columns if col in category_cols), None)
+        audience_col = next((col for col in df.columns if col in audience_cols), None)
+        keywords_col = next((col for col in df.columns if col in keywords_cols), None)
+
+        # 如果找不到標準欄位名稱，嘗試使用位置推測
+        # help_datas.csv 格式: title, title.1, content (分類, 問題, 答案)
+        if not answer_col and len(df.columns) >= 3:
+            # 檢查是否為 help_datas.csv 格式（第三欄通常是答案）
+            if 'content' in df.columns:
+                category_col = df.columns[0]  # 第一欄：分類
+                question_col = df.columns[1]  # 第二欄：問題
+                answer_col = 'content'        # 第三欄：答案
+                print(f"   偵測到特殊格式 CSV，使用欄位: {category_col}, {question_col}, {answer_col}")
+
+        if not answer_col:
+            raise Exception(f"找不到答案欄位。支援的欄位名稱: {', '.join(answer_cols)}\n實際欄位: {list(df.columns)}")
+
+        knowledge_list = []
+        current_category = None
+
+        for idx, row in df.iterrows():
+            try:
+                # === 1. 解析分類（支援 JSON 格式） ===
+                category = None
+                if category_col and pd.notna(row[category_col]):
+                    cat_value = str(row[category_col]).strip()
+                    # 檢查是否為 JSON 格式
+                    if cat_value.startswith('{') and cat_value.endswith('}'):
+                        try:
+                            cat_json = json.loads(cat_value)
+                            category = cat_json.get('zh-TW', cat_json.get('zh-tw', cat_value))
+                        except json.JSONDecodeError:
+                            category = cat_value
+                    else:
+                        category = cat_value
+
+                    # 過濾掉非分類的描述性文字
+                    if category and len(category) < 50:
+                        current_category = category
+
+                # === 2. 解析問題（支援 JSON 格式） ===
+                question = None
+                if question_col and pd.notna(row[question_col]):
+                    q_value = str(row[question_col]).strip()
+                    # 檢查是否為 JSON 格式
+                    if q_value.startswith('{') and q_value.endswith('}'):
+                        try:
+                            q_json = json.loads(q_value)
+                            question = q_json.get('zh-TW', q_json.get('zh-tw'))
+                        except json.JSONDecodeError:
+                            question = q_value
+                    else:
+                        question = q_value
+
+                # === 3. 解析答案（支援 JSON 格式） ===
+                answer = None
+                if pd.notna(row[answer_col]):
+                    a_value = str(row[answer_col]).strip()
+                    # 檢查是否為 JSON 格式
+                    if a_value.startswith('{') and a_value.endswith('}'):
+                        try:
+                            a_json = json.loads(a_value)
+                            answer = a_json.get('zh-TW', a_json.get('zh-tw'))
+                        except json.JSONDecodeError:
+                            answer = a_value
+                    else:
+                        answer = a_value
+
+                # 驗證答案有效性
+                if not answer or len(answer.strip()) < 10:
+                    continue
+
+                answer = answer.strip()
+
+                # === 4. 可選：簡易 HTML 清理（保留基本標籤） ===
+                # 移除 style 屬性和多餘的 HTML 標籤
+                if '<' in answer and '>' in answer:
+                    import re
+                    # 移除 style 屬性
+                    answer = re.sub(r'\s*style="[^"]*"', '', answer)
+                    # 移除常見的格式標籤，保留文字
+                    answer = re.sub(r'<span[^>]*>', '', answer)
+                    answer = re.sub(r'</span>', '', answer)
+                    # 將 <p> 轉換為換行
+                    answer = re.sub(r'</p>\s*<p>', '\n\n', answer)
+                    answer = re.sub(r'</?p[^>]*>', '', answer)
+                    # 清理多餘空白
+                    answer = re.sub(r'\n{3,}', '\n\n', answer)
+                    answer = answer.strip()
+
+                # === 5. 解析對象 ===
+                audience = '租客'  # 預設
+                if audience_col and pd.notna(row[audience_col]):
+                    audience = str(row[audience_col]).strip()
+
+                # === 6. 解析關鍵字 ===
+                keywords = []
+                if keywords_col and pd.notna(row[keywords_col]):
+                    keywords_str = str(row[keywords_col])
+                    keywords = [k.strip() for k in keywords_str.split(',') if k.strip()]
+
+                # === 7. 建立知識項目 ===
+                knowledge_list.append({
+                    'question_summary': question,  # 可能為 None，後續用 LLM 生成
+                    'answer': answer,
+                    'category': current_category or '一般問題',
+                    'audience': audience,
+                    'keywords': keywords,
+                    'source_file': Path(file_path).name
+                })
+
+            except Exception as e:
+                print(f"   ⚠️  第 {idx + 1} 行解析失敗: {str(e)}")
+                continue
 
         print(f"   ✅ 解析出 {len(knowledge_list)} 個有效知識項目")
         return knowledge_list

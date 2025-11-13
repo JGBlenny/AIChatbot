@@ -75,7 +75,7 @@ async def upload_knowledge_file(
     print(f"{'='*60}\n")
 
     # 1. 驗證檔案類型
-    allowed_extensions = ['.xlsx', '.xls', '.txt', '.json']
+    allowed_extensions = ['.xlsx', '.xls', '.csv', '.txt', '.json']
     file_ext = Path(file.filename).suffix.lower()
 
     if file_ext not in allowed_extensions:
@@ -308,7 +308,7 @@ async def preview_knowledge_file(file: UploadFile = File(...)):
         Dict: 預覽資訊
     """
     # 驗證檔案類型
-    allowed_extensions = ['.xlsx', '.xls', '.txt', '.json']
+    allowed_extensions = ['.xlsx', '.xls', '.csv', '.txt', '.json']
     file_ext = Path(file.filename).suffix.lower()
 
     if file_ext not in allowed_extensions:
@@ -335,6 +335,24 @@ async def preview_knowledge_file(file: UploadFile = File(...)):
 
         preview_data = {
             "file_type": "excel",
+            "total_rows": len(df),
+            "columns": list(df.columns),
+            "preview_rows": df.head(5).to_dict(orient='records'),
+            "estimated_knowledge": len(df)  # 粗略估算
+        }
+
+    elif file_ext == '.csv':
+        # CSV 預覽
+        import pandas as pd
+        import io
+
+        try:
+            df = pd.read_csv(io.BytesIO(content), encoding='utf-8')
+        except UnicodeDecodeError:
+            df = pd.read_csv(io.BytesIO(content), encoding='utf-8-sig')
+
+        preview_data = {
+            "file_type": "csv",
             "total_rows": len(df),
             "columns": list(df.columns),
             "preview_rows": df.head(5).to_dict(orient='records'),

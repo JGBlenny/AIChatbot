@@ -33,7 +33,7 @@
         <input
           ref="fileInput"
           type="file"
-          accept=".txt,.xlsx,.xls,.json"
+          accept=".txt,.xlsx,.xls,.csv,.json"
           @change="handleFileSelect"
           style="display: none"
         />
@@ -41,7 +41,7 @@
         <div v-if="!selectedFile" class="upload-placeholder" @click="$refs.fileInput.click()">
           <div class="upload-icon">📁</div>
           <p><strong>點擊或拖曳文件至此</strong></p>
-          <p class="hint">支援格式：Excel (.xlsx, .xls)、純文字 (.txt)、JSON (.json)</p>
+          <p class="hint">支援格式：Excel (.xlsx, .xls)、CSV (.csv)、純文字 (.txt)、JSON (.json)</p>
         </div>
 
         <div v-else class="file-selected">
