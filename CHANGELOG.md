@@ -9,6 +9,37 @@
 
 ## [Unreleased]
 
+### 新增 ✨
+- **知識優先級系統重構** (2025-11-17)
+  - 從 0-10 分級制（乘法加成）改為 0/1 開關制（固定加成）
+  - 加成方式：`base_similarity + (priority > 0 ? 0.15 : 0)`
+  - 前端 UI 改進：
+    - ✅ 數字輸入改為 checkbox（更直觀）
+    - ✅ 表格顯示優先級標記（☑/☐）
+    - ✅ 批量匯入時可統一設定優先級
+  - 後端優化：
+    - ✅ 知識管理 API 完整支持 priority 欄位（GET/PUT/POST）
+    - ✅ 知識匯入支持 `default_priority` 參數
+    - ✅ 環境變數：`PRIORITY_BOOST_MULTIPLIER` → `PRIORITY_BOOST`
+  - 數據遷移：
+    - ✅ 所有 priority > 1 的記錄改為 1
+    - ✅ 更新 RAG 引擎公式（4 處 SQL 查詢）
+  - 完整測試驗證：
+    - ✅ 數據庫 priority 值正確
+    - ✅ RAG 加成公式 +0.15 正確應用
+    - ✅ 前端 API 功能完整
+    - ✅ 批量匯入統一優先級功能正常
+  - 修改檔案：
+    - `rag-orchestrator/services/rag_engine.py` - RAG 公式修改
+    - `knowledge-admin/frontend/src/views/KnowledgeView.vue` - 前端 UI
+    - `knowledge-admin/frontend/src/views/KnowledgeImportView.vue` - 匯入優先級選項
+    - `knowledge-admin/backend/app.py` - API priority 支持
+    - `rag-orchestrator/routers/knowledge_import.py` - 匯入參數
+    - `rag-orchestrator/services/knowledge_import_service.py` - 匯入邏輯
+    - `.env` & `.env.example` - 環境變數
+    - `docker-compose.yml` - 容器配置
+  - 完整文檔：[知識優先級系統](docs/features/PRIORITY_SYSTEM.md)
+
 ### 修復 🐛
 - **Critical: SOP 複製與 Embedding 自動生成修復** (2025-11-02)
   - 修復 SOP 複製 API (`copy_all_templates`) 三個關鍵缺陷：

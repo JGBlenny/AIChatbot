@@ -66,6 +66,7 @@
             <th>問題摘要</th>
             <th width="120">意圖</th>
             <th width="120">業態類型</th>
+            <th width="80">優先級</th>
             <th width="90">向量</th>
             <th width="180">更新時間</th>
             <th width="150">操作</th>
@@ -101,6 +102,15 @@
                 </span>
               </div>
               <span v-else class="badge badge-universal">通用</span>
+            </td>
+            <td style="text-align: center;">
+              <span
+                class="priority-badge"
+                :class="item.priority > 0 ? 'priority-enabled' : 'priority-disabled'"
+                :title="item.priority > 0 ? '已啟用優先級加成 (+0.15)' : '一般知識'"
+              >
+                {{ item.priority > 0 ? '☑' : '☐' }}
+              </span>
             </td>
             <td style="text-align: center;">
               <span v-if="item.has_embedding" class="badge" style="background: #67c23a; color: white;" title="向量已生成">✓</span>
@@ -215,6 +225,32 @@
               v-model="keywordsString"
               placeholder="租金, 逾期, 提醒"
             />
+          </div>
+
+          <!-- 優先級設定 -->
+          <div class="form-group">
+            <label>
+              優先級加成
+              <span class="field-hint">（啟用後，搜尋時固定加成 +0.15）</span>
+            </label>
+            <div class="priority-checkbox-wrapper">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  v-model="priorityEnabled"
+                  class="priority-checkbox"
+                />
+                <span class="checkbox-text">
+                  <strong>啟用優先級加成</strong>
+                  <span class="boost-indicator" v-if="priorityEnabled">
+                    ✓ 相似度 +0.15
+                  </span>
+                </span>
+              </label>
+            </div>
+            <p class="hint-text">
+              💡 啟用後，此知識在搜尋結果中會獲得固定的優先排序加成
+            </p>
           </div>
 
           <!-- 多意圖選擇 -->
@@ -370,6 +406,7 @@ export default {
         intent_mappings: [],
         business_types: [],
         target_user: [],  // 新增：目標用戶類型
+        priority: 0,  // 新增：優先級（0-10）
         // 影片欄位
         video_url: null,
         video_s3_key: null,
@@ -408,6 +445,14 @@ export default {
     },
     totalPages() {
       return Math.ceil(this.pagination.total / this.pagination.limit);
+    },
+    priorityEnabled: {
+      get() {
+        return this.formData.priority > 0;
+      },
+      set(value) {
+        this.formData.priority = value ? 1 : 0;
+      }
     }
   },
 
@@ -734,6 +779,7 @@ export default {
           intent_mappings: knowledge.intent_mappings || [],
           business_types: knowledge.business_types || '',
           target_user: knowledge.target_user || [],
+          priority: knowledge.priority || 0,  // 載入優先級
           // 影片欄位
           video_url: knowledge.video_url || null,
           video_s3_key: knowledge.video_s3_key || null,
@@ -1053,6 +1099,65 @@ export default {
 </script>
 
 <style scoped>
+/* 優先級樣式 */
+.priority-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  min-width: 35px;
+}
+
+.priority-enabled {
+  background: #e1f3ff;
+  color: #409eff;
+}
+
+.priority-disabled {
+  background: #f4f4f5;
+  color: #c0c4cc;
+}
+
+.priority-checkbox-wrapper {
+  padding: 12px 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 12px;
+  border: 2px solid #dcdfe6;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.checkbox-label:hover {
+  border-color: #409eff;
+  background: #f5f9ff;
+}
+
+.priority-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.checkbox-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.boost-indicator {
+  color: #67c23a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* ID 查詢樣式 */
 .id-search-input {
   background: #f0f9ff !important;

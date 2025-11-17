@@ -99,6 +99,28 @@
         <div class="info-box">
           <strong>💡 提示：</strong> {{ preview.message }}
         </div>
+
+        <!-- 匯入選項 -->
+        <div class="import-options">
+          <label class="checkbox-option">
+            <input type="checkbox" v-model="skipReview" />
+            <span class="option-text">
+              <strong>直接加入知識庫（跳過審核）</strong>
+              <span class="warning-text">⚠️ 跳過審核將直接影響線上回答，請謹慎使用</span>
+            </span>
+          </label>
+
+          <!-- 優先級選項（僅在跳過審核時顯示） -->
+          <div v-if="skipReview" class="priority-option">
+            <label class="checkbox-option">
+              <input type="checkbox" v-model="enablePriority" />
+              <span class="option-text">
+                <strong>統一啟用優先級</strong>
+                <span class="info-text">✨ 所有匯入的知識將獲得 +0.15 相似度加成</span>
+              </span>
+            </label>
+          </div>
+        </div>
       </div>
 
       <div class="actions">
@@ -233,6 +255,8 @@ export default {
       importProgress: 0,
       jobId: null,
       jobStatus: {},
+      skipReview: false,  // 是否跳過審核
+      enablePriority: false,  // 是否統一啟用優先級
 
       importJobs: [],
       pollingInterval: null
@@ -325,6 +349,12 @@ export default {
         const formData = new FormData();
         formData.append('file', this.selectedFile);
         formData.append('enable_deduplication', true);
+        formData.append('skip_review', this.skipReview);
+
+        // 如果跳過審核且啟用優先級，傳送 priority=1
+        if (this.skipReview && this.enablePriority) {
+          formData.append('default_priority', 1);
+        }
 
         const response = await axios.post(
           `${API_BASE}/knowledge-import/upload`,
@@ -388,6 +418,8 @@ export default {
       this.preview = {};
       this.jobStatus = {};
       this.importProgress = 0;
+      this.skipReview = false;
+      this.enablePriority = false;
       this.clearFile();
     },
 
@@ -554,13 +586,30 @@ export default {
 }
 
 .btn-remove {
-  background: #f44336;
+  background: #ff5252;
   color: white;
   border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-remove:hover {
+  background: #ff1744;
+  transform: scale(1.05);
+  box-shadow: 0 3px 6px rgba(255, 23, 68, 0.3);
+}
+
+.btn-remove:active {
+  transform: scale(0.95);
 }
 
 /* 匯入選項樣式已移除（說明已整合到 InfoPanel） */
@@ -764,5 +813,61 @@ export default {
   gap: 15px;
   justify-content: center;
   margin-top: 30px;
+}
+
+/* 匯入選項 */
+.import-options {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-option input[type="checkbox"] {
+  margin-top: 3px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.option-text strong {
+  color: #2c3e50;
+  font-size: 15px;
+}
+
+.warning-text {
+  color: #e67e22;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.info-text {
+  color: #3498db;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.priority-option {
+  margin-top: 15px;
+  padding: 12px;
+  background-color: #e3f2fd;
+  border-radius: 6px;
+  border: 1px solid #90caf9;
 }
 </style>

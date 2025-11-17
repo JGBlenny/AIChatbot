@@ -78,6 +78,7 @@ class KnowledgeUpdate(BaseModel):
     intent_mappings: Optional[List[IntentMapping]] = []  # 多意圖支援
     business_types: Optional[List[str]] = None  # 業態類型（可選，NULL=通用）
     target_user: Optional[List[str]] = None  # 目標用戶（可選，NULL=通用）tenant/landlord/property_manager/system_admin
+    priority: Optional[int] = 0  # 優先級加成（0=未啟用，1=已啟用）
 
 class KnowledgeResponse(BaseModel):
     """知識回應模型"""
@@ -138,7 +139,7 @@ async def list_knowledge(
         query = """
             SELECT DISTINCT
                 kb.id, kb.question_summary, kb.answer as content,
-                kb.keywords, kb.business_types, kb.target_user, kb.created_at, kb.updated_at,
+                kb.keywords, kb.business_types, kb.target_user, kb.priority, kb.created_at, kb.updated_at,
                 (kb.embedding IS NOT NULL) as has_embedding
             FROM knowledge_base kb
             WHERE 1=1
@@ -241,7 +242,7 @@ async def get_knowledge(knowledge_id: int):
         # 取得知識基本資訊
         cur.execute("""
             SELECT id, question_summary, answer as content,
-                   keywords, business_types, target_user, created_at, updated_at,
+                   keywords, business_types, target_user, priority, created_at, updated_at,
                    video_url, video_s3_key, video_file_size, video_duration, video_format
             FROM knowledge_base
             WHERE id = %s
@@ -341,6 +342,7 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
                 embedding = %s,
                 business_types = %s,
                 target_user = %s,
+                priority = %s,
                 updated_at = NOW()
             WHERE id = %s
             RETURNING id, question_summary, updated_at
@@ -351,6 +353,7 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
             new_embedding,
             data.business_types,
             data.target_user,
+            data.priority,
             knowledge_id
         ))
 
@@ -461,8 +464,8 @@ async def create_knowledge(data: KnowledgeUpdate):
         # 2. 插入資料庫
         cur.execute("""
             INSERT INTO knowledge_base
-            (question_summary, answer, keywords, embedding, business_types, target_user)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            (question_summary, answer, keywords, embedding, business_types, target_user, priority)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING id, created_at
         """, (
             data.question_summary,
@@ -470,7 +473,8 @@ async def create_knowledge(data: KnowledgeUpdate):
             data.keywords,
             embedding,
             data.business_types,
-            data.target_user
+            data.target_user,
+            data.priority
         ))
 
         new_record = cur.fetchone()

@@ -42,24 +42,30 @@ async def upload_knowledge_file(
     file: UploadFile = File(...),
     vendor_id: Optional[int] = Form(None),
     import_mode: str = Form("append"),
-    enable_deduplication: bool = Form(True)
+    enable_deduplication: bool = Form(True),
+    skip_review: bool = Form(False),
+    default_priority: int = Form(0)
 ):
     """
     上傳知識檔案並開始匯入
 
-    ⚠️ 重要：所有匯入的知識都會先進入審核佇列，
-    需經過人工審核通過後才會加入正式知識庫。
+    ⚠️ 重要提醒：
+    - skip_review=False（預設）：知識會先進入審核佇列，需經人工審核後才會加入正式知識庫
+    - skip_review=True：知識會直接加入正式知識庫（跳過審核，請謹慎使用）
 
     支援格式：
     - Excel (.xlsx, .xls)
     - 純文字 (.txt)
     - JSON (.json)
+    - CSV (.csv)
 
     Args:
         file: 上傳的檔案
         vendor_id: 業者 ID（可選，留空表示通用知識）
         import_mode: 匯入模式（append=追加, replace=替換, merge=合併）
         enable_deduplication: 是否啟用去重
+        skip_review: 是否跳過審核直接加入知識庫（預設 False）
+        default_priority: 統一優先級（0=未啟用，1=已啟用，僅在 skip_review=True 時生效）
 
     Returns:
         Dict: 包含 job_id 的回應
@@ -71,7 +77,9 @@ async def upload_knowledge_file(
     print(f"   業者 ID: {vendor_id or '通用知識'}")
     print(f"   匯入模式: {import_mode}")
     print(f"   啟用去重: {enable_deduplication}")
-    print(f"   審核模式: 強制（所有知識都需審核）")
+    print(f"   審核模式: {'跳過審核（直接加入知識庫）' if skip_review else '需要審核'}")
+    if skip_review and default_priority > 0:
+        print(f"   優先級: 統一啟用 (priority={default_priority})")
     print(f"{'='*60}\n")
 
     # 1. 驗證檔案類型
@@ -150,15 +158,26 @@ async def upload_knowledge_file(
         vendor_id=vendor_id,
         import_mode=import_mode,
         enable_deduplication=enable_deduplication,
+        skip_review=skip_review,
+        default_priority=default_priority,
         user_id="admin"  # TODO: 從認證取得真實使用者 ID
     )
+
+    # 根據模式返回不同訊息
+    if skip_review:
+        message = "檔案上傳成功，開始處理中。知識將直接加入正式知識庫（已跳過審核）。"
+        review_mode = "skipped"
+    else:
+        message = "檔案上傳成功，開始處理中。所有知識將進入審核佇列，需經人工審核後才會正式加入知識庫。"
+        review_mode = "mandatory"
 
     return {
         "job_id": job_id,
         "status": "processing",
-        "message": "檔案上傳成功，開始處理中。所有知識將進入審核佇列，需經人工審核後才會正式加入知識庫。",
+        "message": message,
         "file_name": file.filename,
-        "review_mode": "mandatory"
+        "review_mode": review_mode,
+        "skip_review": skip_review
     }
 
 

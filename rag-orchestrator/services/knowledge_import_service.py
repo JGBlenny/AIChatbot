@@ -37,6 +37,8 @@ class KnowledgeImportService:
         vendor_id: Optional[int],
         import_mode: str,
         enable_deduplication: bool,
+        skip_review: bool = False,
+        default_priority: int = 0,
         user_id: str = "admin"
     ) -> Dict:
         """
@@ -51,6 +53,7 @@ class KnowledgeImportService:
             vendor_id: 業者 ID（可選）
             import_mode: 匯入模式（append/replace/merge）
             enable_deduplication: 是否啟用去重
+            skip_review: 是否跳過審核直接加入知識庫
             user_id: 執行者 ID
 
         Returns:
@@ -118,18 +121,32 @@ class KnowledgeImportService:
             await self.update_job_status(job_id, "processing", progress={"current": 78, "total": 100, "stage": "建立測試情境建議"})
             test_scenario_count = await self._create_test_scenario_suggestions(knowledge_list, vendor_id)
 
-            # 10. 匯入到審核佇列（需求 3：所有知識都需要審核）
-            # 知識會先進入 ai_generated_knowledge_candidates 表
-            # 人工審核通過後才會加入正式的 knowledge_base 表
-            await self.update_job_status(job_id, "processing", progress={"current": 85, "total": 100, "stage": "匯入審核佇列"})
-            result = await self._import_to_review_queue(
-                knowledge_list,
-                vendor_id=vendor_id,
-                created_by=user_id
-            )
-            result['test_scenarios_created'] = test_scenario_count
+            # 10. 根據 skip_review 參數決定匯入目標
+            if skip_review:
+                # 直接匯入到正式知識庫
+                await self.update_job_status(job_id, "processing", progress={"current": 85, "total": 100, "stage": "直接匯入知識庫"})
+                result = await self._import_to_database(
+                    knowledge_list,
+                    vendor_id=vendor_id,
+                    import_mode=import_mode,
+                    default_priority=default_priority,
+                    created_by=user_id
+                )
+                result['test_scenarios_created'] = test_scenario_count
+                result['mode'] = 'direct'
+            else:
+                # 匯入到審核佇列（需求 3：所有知識都需要審核）
+                # 知識會先進入 ai_generated_knowledge_candidates 表
+                # 人工審核通過後才會加入正式的 knowledge_base 表
+                await self.update_job_status(job_id, "processing", progress={"current": 85, "total": 100, "stage": "匯入審核佇列"})
+                result = await self._import_to_review_queue(
+                    knowledge_list,
+                    vendor_id=vendor_id,
+                    created_by=user_id
+                )
+                result['test_scenarios_created'] = test_scenario_count
 
-            # 10. 更新作業狀態為完成
+            # 11. 更新作業狀態為完成
             await self.update_job_status(
                 job_id,
                 "completed",
@@ -138,13 +155,17 @@ class KnowledgeImportService:
             )
 
             print(f"\n{'='*60}")
-            print(f"✅ 匯入完成（已進入審核佇列）")
+            if skip_review:
+                print(f"✅ 匯入完成（已直接加入正式知識庫）")
+            else:
+                print(f"✅ 匯入完成（已進入審核佇列）")
             print(f"   匯入知識: {result['imported']} 條")
             print(f"   跳過: {result.get('skipped', 0)} 條")
             print(f"   錯誤: {result.get('errors', 0)} 條")
             if result.get('test_scenarios_created', 0) > 0:
                 print(f"   測試情境建議: {result['test_scenarios_created']} 個")
-            print(f"   ⚠️  所有知識需經人工審核後才會正式加入知識庫")
+            if not skip_review:
+                print(f"   ⚠️  所有知識需經人工審核後才會正式加入知識庫")
             print(f"{'='*60}\n")
 
             return result
@@ -184,6 +205,73 @@ class KnowledgeImportService:
             return 'json'
         else:
             return 'unknown'
+
+    def _clean_html(self, html_text: str) -> str:
+        """
+        清理 HTML 標籤，保留文字內容並維持適當格式
+
+        使用 BeautifulSoup 進行智能 HTML 清理：
+        - 移除所有 style 屬性
+        - 移除 script 和 style 標籤
+        - 保留基本段落結構（<p>、<br> 轉換為換行）
+        - 保留列表結構（<li> 添加項目符號）
+        - 移除所有其他 HTML 標籤
+        - 清理多餘空白
+
+        Args:
+            html_text: 包含 HTML 標籤的文字
+
+        Returns:
+            清理後的純文字
+        """
+        # 如果不包含 HTML 標籤，直接返回
+        if '<' not in html_text or '>' not in html_text:
+            return html_text
+
+        try:
+            from bs4 import BeautifulSoup
+
+            # 解析 HTML
+            soup = BeautifulSoup(html_text, 'lxml')
+
+            # 移除 script 和 style 標籤
+            for tag in soup(['script', 'style']):
+                tag.decompose()
+
+            # 移除所有 style 屬性
+            for tag in soup.find_all(True):
+                if 'style' in tag.attrs:
+                    del tag.attrs['style']
+
+            # 處理段落和換行
+            for p in soup.find_all('p'):
+                p.insert_after(soup.new_string('\n\n'))
+
+            for br in soup.find_all('br'):
+                br.replace_with(soup.new_string('\n'))
+
+            # 處理列表項目
+            for li in soup.find_all('li'):
+                li.insert_before(soup.new_string('• '))
+                li.insert_after(soup.new_string('\n'))
+
+            # 提取純文字
+            text = soup.get_text()
+
+            # 清理多餘空白
+            import re
+            # 移除每行前後的空白
+            lines = [line.strip() for line in text.split('\n')]
+            # 移除空行（但保留單個換行）
+            text = '\n'.join(lines)
+            # 將連續 3 個以上的換行符縮減為 2 個
+            text = re.sub(r'\n{3,}', '\n\n', text)
+
+            return text.strip()
+
+        except Exception as e:
+            print(f"   ⚠️  HTML 清理失敗: {str(e)}，使用原始文字")
+            return html_text
 
     async def _parse_file(self, file_path: str, file_type: str) -> List[Dict]:
         """
@@ -266,6 +354,9 @@ class KnowledgeImportService:
                 continue
 
             answer = str(answer).strip()
+
+            # HTML 清理（使用 BeautifulSoup）
+            answer = self._clean_html(answer)
 
             # 解析問題（可選，如果沒有會用 LLM 生成）
             question = None
@@ -413,21 +504,8 @@ class KnowledgeImportService:
 
                 answer = answer.strip()
 
-                # === 4. 可選：簡易 HTML 清理（保留基本標籤） ===
-                # 移除 style 屬性和多餘的 HTML 標籤
-                if '<' in answer and '>' in answer:
-                    import re
-                    # 移除 style 屬性
-                    answer = re.sub(r'\s*style="[^"]*"', '', answer)
-                    # 移除常見的格式標籤，保留文字
-                    answer = re.sub(r'<span[^>]*>', '', answer)
-                    answer = re.sub(r'</span>', '', answer)
-                    # 將 <p> 轉換為換行
-                    answer = re.sub(r'</p>\s*<p>', '\n\n', answer)
-                    answer = re.sub(r'</?p[^>]*>', '', answer)
-                    # 清理多餘空白
-                    answer = re.sub(r'\n{3,}', '\n\n', answer)
-                    answer = answer.strip()
+                # === 4. HTML 清理（使用 BeautifulSoup） ===
+                answer = self._clean_html(answer)
 
                 # === 5. 解析對象 ===
                 audience = '租客'  # 預設
@@ -733,6 +811,7 @@ class KnowledgeImportService:
                         UNION ALL
                         SELECT 1 FROM test_scenarios
                         WHERE test_question = $1
+                        AND status IN ('approved', 'in_testing')
                     ) AS combined
                 """, knowledge.get('question_summary'), knowledge['answer'])
 
@@ -1004,7 +1083,8 @@ class KnowledgeImportService:
         knowledge_list: List[Dict],
         vendor_id: Optional[int],
         import_mode: str,
-        created_by: str
+        default_priority: int = 0,
+        created_by: str = "admin"
     ) -> Dict:
         """
         匯入知識到資料庫
@@ -1013,6 +1093,7 @@ class KnowledgeImportService:
             knowledge_list: 知識列表
             vendor_id: 業者 ID
             import_mode: 匯入模式
+            default_priority: 統一優先級（0=未啟用，1=已啟用）
             created_by: 建立者
 
         Returns:
@@ -1039,43 +1120,41 @@ class KnowledgeImportService:
 
             for idx, knowledge in enumerate(knowledge_list, 1):
                 try:
+                    # 將 embedding 轉換為 PostgreSQL vector 格式
+                    embedding = knowledge.get('embedding')
+                    embedding_str = None
+                    if embedding:
+                        embedding_str = '[' + ','.join(str(x) for x in embedding) + ']'
+
                     await conn.execute("""
                         INSERT INTO knowledge_base (
                             intent_id,
                             vendor_id,
-                            title,
-                            category,
                             question_summary,
                             answer,
-                            audience,
                             keywords,
                             source_file,
                             source_date,
                             embedding,
                             scope,
                             priority,
-                            created_by,
                             created_at,
                             updated_at
                         ) VALUES (
-                            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+                            $1, $2, $3, $4, $5, $6, $7, $8::vector, $9, $10,
                             CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
                         )
                     """,
                         default_intent_id,
                         vendor_id,
-                        knowledge['question_summary'],  # title
-                        knowledge['category'],
                         knowledge['question_summary'],
                         knowledge['answer'],
-                        knowledge['audience'],
                         knowledge['keywords'],
                         knowledge['source_file'],
                         datetime.now().date(),
-                        knowledge['embedding'],
+                        embedding_str,
                         'global' if not vendor_id else 'vendor',
-                        0,  # priority
-                        created_by
+                        default_priority  # 使用傳入的 default_priority 參數
                     )
 
                     imported += 1
