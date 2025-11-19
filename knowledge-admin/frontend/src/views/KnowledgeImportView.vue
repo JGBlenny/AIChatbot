@@ -27,42 +27,145 @@
       </div>
     </div>
 
-    <!-- Step 1: 上傳文件 -->
+    <!-- Step 1: 檔案管理器 -->
     <div v-if="currentStep === 1" class="step-content">
-      <div class="upload-area" @dragover.prevent @drop.prevent="handleDrop">
+      <!-- 檔案佇列標題 -->
+      <div class="queue-header">
+        <h3>📋 檔案佇列 ({{ fileQueue.length }})</h3>
+        <button @click="addFiles" class="btn-primary btn-add-files">
+          ➕ 添加檔案
+        </button>
         <input
           ref="fileInput"
           type="file"
+          multiple
           accept=".txt,.xlsx,.xls,.csv,.json"
           @change="handleFileSelect"
           style="display: none"
         />
+      </div>
 
-        <div v-if="!selectedFile" class="upload-placeholder" @click="$refs.fileInput.click()">
-          <div class="upload-icon">📁</div>
-          <p><strong>點擊或拖曳文件至此</strong></p>
-          <p class="hint">支援格式：Excel (.xlsx, .xls)、CSV (.csv)、純文字 (.txt)、JSON (.json)</p>
-        </div>
-
-        <div v-else class="file-selected">
-          <div class="file-info">
-            <div class="file-icon">📄</div>
-            <div class="file-details">
-              <div class="file-name">{{ selectedFile.name }}</div>
-              <div class="file-size">{{ formatFileSize(selectedFile.size) }}</div>
+      <!-- 檔案清單 -->
+      <div v-if="fileQueue.length > 0" class="file-queue">
+        <div v-for="(fileItem, index) in fileQueue" :key="index" class="file-item">
+          <div class="file-item-info">
+            <div class="file-icon">
+              📄
             </div>
-            <button @click="clearFile" class="btn-remove">✕</button>
+            <div class="file-details">
+              <div class="file-name">{{ fileItem.name }}</div>
+              <div class="file-meta">
+                <span class="file-size">{{ formatFileSize(fileItem.size) }}</span>
+                <span class="file-type">{{ getFileExtension(fileItem.name) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-item-status">
+            <!-- 狀態標記 -->
+            <span v-if="fileItem.status === 'pending'" class="badge badge-gray">⏳ 待處理</span>
+            <span v-if="fileItem.status === 'processing'" class="badge badge-blue">🔄 處理中</span>
+            <span v-if="fileItem.status === 'completed'" class="badge badge-green">✅ 已完成</span>
+            <span v-if="fileItem.status === 'error'" class="badge badge-red">❌ 失敗</span>
+
+            <!-- 進度條（處理中時顯示） -->
+            <div v-if="fileItem.status === 'processing' && fileItem.progress !== undefined" class="mini-progress">
+              <div class="mini-progress-bar" :style="{width: fileItem.progress + '%'}"></div>
+              <span class="mini-progress-text">{{ fileItem.progress }}%</span>
+            </div>
+
+            <!-- 結果統計（完成時顯示） -->
+            <div v-if="fileItem.status === 'completed' && fileItem.result" class="file-result">
+              <span class="result-stat">新增: {{ fileItem.result.added || 0 }}</span>
+              <span class="result-stat">跳過: {{ fileItem.result.skipped || 0 }}</span>
+            </div>
+
+            <!-- 錯誤訊息 -->
+            <div v-if="fileItem.status === 'error' && fileItem.error" class="file-error">
+              {{ fileItem.error }}
+            </div>
+          </div>
+
+          <div class="file-item-actions">
+            <!-- 待處理：可以處理或移除 -->
+            <button
+              v-if="fileItem.status === 'pending'"
+              @click="processSingleFile(index)"
+              class="btn-small btn-primary"
+              :disabled="isProcessingAny"
+            >
+              處理
+            </button>
+
+            <!-- 處理中：顯示取消按鈕（暫不實現取消功能） -->
+            <button
+              v-if="fileItem.status === 'processing'"
+              class="btn-small btn-secondary"
+              disabled
+            >
+              處理中...
+            </button>
+
+            <!-- 完成：可以查看詳情 -->
+            <button
+              v-if="fileItem.status === 'completed'"
+              @click="viewFileResult(index)"
+              class="btn-small btn-info"
+            >
+              詳情
+            </button>
+
+            <!-- 失敗：可以重試 -->
+            <button
+              v-if="fileItem.status === 'error'"
+              @click="retryFile(index)"
+              class="btn-small btn-warning"
+              :disabled="isProcessingAny"
+            >
+              重試
+            </button>
+
+            <!-- 移除按鈕（處理中不能移除） -->
+            <button
+              v-if="fileItem.status !== 'processing'"
+              @click="removeFile(index)"
+              class="btn-small btn-remove"
+            >
+              ✕
+            </button>
           </div>
         </div>
       </div>
 
-      <div class="actions">
+      <!-- 空狀態提示 -->
+      <div v-else class="empty-queue">
+        <div class="empty-icon">📂</div>
+        <p>檔案佇列為空</p>
+        <p class="hint">點擊上方「➕ 添加檔案」開始上傳</p>
+      </div>
+
+      <!-- 批次操作按鈕 -->
+      <div v-if="fileQueue.length > 0" class="queue-actions">
         <button
-          @click="previewFile"
-          :disabled="!selectedFile || previewing"
+          @click="processAllFiles"
+          :disabled="isProcessingAny || !hasPendingFiles"
           class="btn-primary"
         >
-          {{ previewing ? '⏳ 預覽中...' : '👁️ 預覽文件（不消耗 token）' }}
+          🚀 處理全部待處理檔案 ({{ pendingFilesCount }})
+        </button>
+        <button
+          @click="clearCompleted"
+          :disabled="!hasCompletedFiles"
+          class="btn-secondary"
+        >
+          🗑️ 清除已完成 ({{ completedFilesCount }})
+        </button>
+        <button
+          @click="clearAll"
+          :disabled="isProcessingAny"
+          class="btn-secondary"
+        >
+          清空佇列
         </button>
       </div>
     </div>
@@ -248,6 +351,9 @@ export default {
       currentStep: 1,
       selectedFile: null,
 
+      // 檔案佇列管理
+      fileQueue: [],  // 檔案佇列：[{file, name, size, status, progress, result, error, jobId}]
+
       previewing: false,
       preview: {},
 
@@ -259,7 +365,8 @@ export default {
       enablePriority: false,  // 是否統一啟用優先級
 
       importJobs: [],
-      pollingInterval: null
+      pollingInterval: null,
+      currentProcessingIndex: null,  // 當前處理的檔案索引
     };
   },
 
@@ -272,6 +379,23 @@ export default {
       const minutes = Math.floor(seconds / 60);
       const remainingSeconds = seconds % 60;
       return `${minutes}分${remainingSeconds}秒`;
+    },
+
+    // 檔案佇列統計
+    isProcessingAny() {
+      return this.fileQueue.some(f => f.status === 'processing');
+    },
+    hasPendingFiles() {
+      return this.fileQueue.some(f => f.status === 'pending');
+    },
+    hasCompletedFiles() {
+      return this.fileQueue.some(f => f.status === 'completed');
+    },
+    pendingFilesCount() {
+      return this.fileQueue.filter(f => f.status === 'pending').length;
+    },
+    completedFilesCount() {
+      return this.fileQueue.filter(f => f.status === 'completed').length;
     }
   },
 
@@ -295,27 +419,180 @@ export default {
       }
     },
 
+    // ==================== 檔案佇列管理 ====================
+    addFiles() {
+      this.$refs.fileInput.click();
+    },
+
     handleFileSelect(event) {
-      const file = event.target.files[0];
-      if (file) {
-        this.selectedFile = file;
-      }
-    },
+      const files = Array.from(event.target.files);
+      if (files.length === 0) return;
 
-    handleDrop(event) {
-      const file = event.dataTransfer.files[0];
-      if (file && file.name.endsWith('.txt')) {
-        this.selectedFile = file;
-      } else {
-        alert('請上傳 .txt 文件');
-      }
-    },
+      // 將新檔案加入佇列
+      files.forEach(file => {
+        // 檢查是否已存在（避免重複添加）
+        const exists = this.fileQueue.some(f => f.name === file.name && f.size === file.size);
+        if (!exists) {
+          this.fileQueue.push({
+            file: file,
+            name: file.name,
+            size: file.size,
+            status: 'pending',  // pending, processing, completed, error
+            progress: 0,
+            result: null,
+            error: null,
+            jobId: null
+          });
+        }
+      });
 
-    clearFile() {
-      this.selectedFile = null;
+      // 清空 input，允許重複選擇相同檔案
       this.$refs.fileInput.value = '';
     },
 
+    removeFile(index) {
+      this.fileQueue.splice(index, 1);
+    },
+
+    clearCompleted() {
+      this.fileQueue = this.fileQueue.filter(f => f.status !== 'completed');
+    },
+
+    clearAll() {
+      if (confirm('確定要清空所有檔案嗎？')) {
+        this.fileQueue = [];
+      }
+    },
+
+    getFileExtension(filename) {
+      return filename.split('.').pop().toUpperCase();
+    },
+
+    viewFileResult(index) {
+      const fileItem = this.fileQueue[index];
+      if (fileItem.result) {
+        alert(`處理結果：\n\n新增知識：${fileItem.result.added || 0} 筆\n跳過重複：${fileItem.result.skipped || 0} 筆\n處理失敗：${fileItem.result.failed || 0} 筆`);
+      }
+    },
+
+    retryFile(index) {
+      const fileItem = this.fileQueue[index];
+      fileItem.status = 'pending';
+      fileItem.error = null;
+      fileItem.progress = 0;
+      fileItem.result = null;
+      fileItem.jobId = null;
+    },
+
+    // ==================== 批次處理邏輯 ====================
+    async processSingleFile(index) {
+      await this.processFileByIndex(index);
+    },
+
+    async processAllFiles() {
+      // 取得所有待處理的檔案索引
+      const pendingIndexes = this.fileQueue
+        .map((f, i) => ({index: i, file: f}))
+        .filter(item => item.file.status === 'pending')
+        .map(item => item.index);
+
+      // 逐個處理
+      for (const index of pendingIndexes) {
+        await this.processFileByIndex(index);
+      }
+
+      // 全部完成後顯示通知
+      alert(`✅ 批次處理完成！\n\n成功：${this.completedFilesCount} 個檔案\n失敗：${this.fileQueue.filter(f => f.status === 'error').length} 個檔案`);
+    },
+
+    async processFileByIndex(index) {
+      const fileItem = this.fileQueue[index];
+      if (!fileItem || fileItem.status !== 'pending') return;
+
+      this.currentProcessingIndex = index;
+      fileItem.status = 'processing';
+      fileItem.progress = 0;
+
+      try {
+        // 上傳檔案
+        const formData = new FormData();
+        formData.append('file', fileItem.file);
+        formData.append('skip_review', this.skipReview);
+
+        if (this.skipReview && this.enablePriority) {
+          formData.append('default_priority', 1);
+        }
+
+        const uploadResponse = await axios.post(
+          `${API_BASE}/knowledge-import/upload`,
+          formData,
+          {headers: {'Content-Type': 'multipart/form-data'}}
+        );
+
+        fileItem.jobId = uploadResponse.data.job_id;
+
+        // 輪詢處理進度
+        await this.pollFileProgress(index);
+
+      } catch (error) {
+        fileItem.status = 'error';
+        fileItem.error = error.response?.data?.detail || error.message;
+        console.error(`處理檔案 ${fileItem.name} 失敗:`, error);
+      } finally {
+        this.currentProcessingIndex = null;
+      }
+    },
+
+    async pollFileProgress(index) {
+      const fileItem = this.fileQueue[index];
+      if (!fileItem || !fileItem.jobId) return;
+
+      return new Promise((resolve) => {
+        const pollInterval = setInterval(async () => {
+          try {
+            const response = await axios.get(
+              `${API_BASE}/knowledge-import/jobs/${fileItem.jobId}`
+            );
+
+            const status = response.data.status;
+            const progress = response.data.progress?.current || 0;
+
+            fileItem.progress = progress;
+
+            if (status === 'completed') {
+              clearInterval(pollInterval);
+              fileItem.status = 'completed';
+              fileItem.result = {
+                added: response.data.total_added || 0,
+                skipped: response.data.duplicates_skipped || 0,
+                failed: response.data.total_failed || 0
+              };
+              resolve();
+            } else if (status === 'failed') {
+              clearInterval(pollInterval);
+              fileItem.status = 'error';
+              fileItem.error = response.data.error || '未知錯誤';
+              resolve();
+            }
+          } catch (error) {
+            console.error('輪詢進度失敗:', error);
+            // 繼續輪詢，不中斷
+          }
+        }, 2000);  // 每 2 秒查詢一次
+
+        // 設置超時保護（10 分鐘）
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          if (fileItem.status === 'processing') {
+            fileItem.status = 'error';
+            fileItem.error = '處理超時（超過 10 分鐘）';
+          }
+          resolve();
+        }, 10 * 60 * 1000);
+      });
+    },
+
+    // ==================== 原有方法 ====================
     async previewFile() {
       if (!this.selectedFile) return;
 
@@ -869,5 +1146,276 @@ export default {
   background-color: #e3f2fd;
   border-radius: 6px;
   border: 1px solid #90caf9;
+}
+
+/* ==================== 檔案佇列樣式 ==================== */
+.queue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.queue-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.btn-add-files {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.file-queue {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.file-item {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: all 0.2s;
+}
+
+.file-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.file-item-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.file-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.file-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+.file-type {
+  padding: 2px 6px;
+  background: #e3f2fd;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.file-item-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badge-gray {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.badge-blue {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.badge-green {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+
+.badge-red {
+  background: #ffebee;
+  color: #f44336;
+}
+
+.mini-progress {
+  flex: 1;
+  height: 20px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.mini-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  transition: width 0.3s;
+}
+
+.mini-progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: bold;
+  color: #333;
+}
+
+.file-result {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.result-stat {
+  padding: 2px 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  color: #666;
+}
+
+.file-error {
+  flex: 1;
+  font-size: 12px;
+  color: #f44336;
+  padding: 4px 8px;
+  background: #ffebee;
+  border-radius: 4px;
+}
+
+.file-item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-small.btn-primary {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-small.btn-primary:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.btn-small.btn-secondary {
+  background: #9e9e9e;
+  color: white;
+}
+
+.btn-small.btn-info {
+  background: #2196f3;
+  color: white;
+}
+
+.btn-small.btn-info:hover:not(:disabled) {
+  background: #0b7dda;
+}
+
+.btn-small.btn-warning {
+  background: #ff9800;
+  color: white;
+}
+
+.btn-small.btn-warning:hover:not(:disabled) {
+  background: #e68900;
+}
+
+.btn-small.btn-remove {
+  background: transparent;
+  color: #f44336;
+  border: 1px solid #f44336;
+  font-weight: bold;
+  min-width: 30px;
+  padding: 6px;
+}
+
+.btn-small.btn-remove:hover:not(:disabled) {
+  background: #f44336;
+  color: white;
+}
+
+.empty-queue {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.empty-icon {
+  font-size: 60px;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+.empty-queue p {
+  margin: 8px 0;
+}
+
+.empty-queue .hint {
+  font-size: 14px;
+  color: #bbb;
+}
+
+.queue-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.queue-actions button {
+  padding: 10px 20px;
 }
 </style>

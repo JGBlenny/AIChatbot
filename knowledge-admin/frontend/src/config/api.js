@@ -14,8 +14,9 @@ const getBaseURL = () => {
     return '';  // 空字符串 = 相對路徑，通過 Nginx proxy
   }
 
-  // 開發環境：使用環境變數或默認 localhost
-  return import.meta.env.VITE_RAG_API_BASE_URL || '';
+  // 開發環境：使用空字符串，讓 Vite proxy 處理
+  // Vite proxy 會將 /rag-api/* 路由到 rag-orchestrator:8100/api/*
+  return '';
 };
 
 // API Base URL

@@ -30,6 +30,10 @@ class KnowledgeImportService:
         self.embedding_model = "text-embedding-3-small"
         self.llm_model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 
+        # 質量評估配置
+        self.quality_evaluation_enabled = os.getenv("QUALITY_EVALUATION_ENABLED", "true").lower() == "true"
+        self.quality_evaluation_threshold = int(os.getenv("QUALITY_EVALUATION_THRESHOLD", "6"))
+
     async def process_import_job(
         self,
         job_id: str,
@@ -426,6 +430,7 @@ class KnowledgeImportService:
         category_cols = ['分類', 'category', '類別', 'type']
         audience_cols = ['對象', 'audience', '受眾', 'target_user']
         keywords_cols = ['關鍵字', 'keywords', '標籤', 'tags']
+        intent_id_cols = ['意圖ID', 'intent_id', 'intent', '意圖']
 
         # 找到對應的欄位
         question_col = next((col for col in df.columns if col in question_cols), None)
@@ -433,6 +438,7 @@ class KnowledgeImportService:
         category_col = next((col for col in df.columns if col in category_cols), None)
         audience_col = next((col for col in df.columns if col in audience_cols), None)
         keywords_col = next((col for col in df.columns if col in keywords_cols), None)
+        intent_id_col = next((col for col in df.columns if col in intent_id_cols), None)
 
         # 如果找不到標準欄位名稱，嘗試使用位置推測
         # help_datas.csv 格式: title, title.1, content (分類, 問題, 答案)
@@ -518,13 +524,29 @@ class KnowledgeImportService:
                     keywords_str = str(row[keywords_col])
                     keywords = [k.strip() for k in keywords_str.split(',') if k.strip()]
 
-                # === 7. 建立知識項目 ===
+                # === 7. 解析意圖 ID ===
+                intent_id = None
+                if intent_id_col and pd.notna(row[intent_id_col]):
+                    try:
+                        intent_id_value = row[intent_id_col]
+                        # 處理不同類型的值
+                        if isinstance(intent_id_value, (int, float)):
+                            intent_id = int(intent_id_value)
+                        elif isinstance(intent_id_value, str):
+                            intent_id_value = intent_id_value.strip()
+                            if intent_id_value.isdigit():
+                                intent_id = int(intent_id_value)
+                    except (ValueError, TypeError):
+                        print(f"   ⚠️  第 {idx + 1} 行意圖 ID 格式錯誤: {row[intent_id_col]}")
+
+                # === 8. 建立知識項目 ===
                 knowledge_list.append({
                     'question_summary': question,  # 可能為 None，後續用 LLM 生成
                     'answer': answer,
                     'category': current_category or '一般問題',
                     'audience': audience,
                     'keywords': keywords,
+                    'intent_id': intent_id,  # 預設意圖 ID（可能為 None）
                     'source_file': Path(file_path).name
                 })
 
@@ -979,7 +1001,20 @@ class KnowledgeImportService:
         Args:
             knowledge_list: 知識列表（會直接修改）
         """
-        print(f"🔍 評估 {len(knowledge_list)} 條知識的質量...")
+        # 檢查是否啟用質量評估
+        if not self.quality_evaluation_enabled:
+            print(f"⏭️  質量評估已停用（QUALITY_EVALUATION_ENABLED=false）")
+            # 所有知識預設為可接受
+            for knowledge in knowledge_list:
+                knowledge['quality_evaluation'] = {
+                    'quality_score': 8,
+                    'is_acceptable': True,
+                    'issues': [],
+                    'reasoning': '質量評估已停用，預設為可接受'
+                }
+            return
+
+        print(f"🔍 評估 {len(knowledge_list)} 條知識的質量（門檻: {self.quality_evaluation_threshold}/10）...")
 
         for idx, knowledge in enumerate(knowledge_list, 1):
             try:
@@ -998,7 +1033,7 @@ class KnowledgeImportService:
 請以 JSON 格式回應：
 {{
   "quality_score": 質量分數（1-10，10 為最高）,
-  "is_acceptable": 是否可接受（true/false，分數 >= 8 為可接受）,
+  "is_acceptable": 是否可接受（true/false，分數 >= {self.quality_evaluation_threshold} 為可接受）,
   "issues": ["問題1", "問題2"],
   "reasoning": "評估理由（簡短說明）"
 }}
@@ -1010,7 +1045,7 @@ class KnowledgeImportService:
 - 4-5分：基本可用，但內容空泛
 - 1-3分：無實用價值，有循環邏輯或重複問題，應該拒絕
 
-⚠️ 注意：只有分數 >= 8 的知識才能進入審核佇列，7 分以下視為質量不足。
+⚠️ 注意：只有分數 >= {self.quality_evaluation_threshold} 的知識才能進入審核佇列。
 
 只輸出 JSON，不要加其他說明。"""
 
@@ -1145,7 +1180,7 @@ class KnowledgeImportService:
                             CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
                         )
                     """,
-                        default_intent_id,
+                        knowledge.get('intent_id') or default_intent_id,  # 🔧 優先使用 CSV 中的 intent_id
                         vendor_id,
                         knowledge['question_summary'],
                         knowledge['answer'],
