@@ -20,7 +20,7 @@ from services.vendor_config_service import VendorConfigService
 from services.cache_service import CacheService
 
 # 導入路由
-from routers import chat, chat_stream, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_generation, platform_sop, cache, videos, business_types
+from routers import chat, chat_stream, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_generation, platform_sop, cache, videos, business_types, document_converter
 
 # 全局變數
 db_pool: Pool = None
@@ -146,6 +146,7 @@ app.include_router(knowledge_generation.router, prefix="/api/v1", tags=["knowled
 app.include_router(platform_sop.router, tags=["platform_sop"])  # Platform SOP Template Management
 app.include_router(cache.router, tags=["cache"])  # Cache Management (事件驅動 + TTL 混合策略)
 app.include_router(videos.router, tags=["videos"])  # Video Upload & Management (S3 Storage)
+app.include_router(document_converter.router, tags=["document_converter"])  # Document Converter (Word/PDF -> Q&A)
 
 
 @app.get("/")

@@ -13,6 +13,8 @@ import PlatformSOPView from './views/PlatformSOPView.vue';
 import PlatformSOPEditView from './views/PlatformSOPEditView.vue';
 // Knowledge Import from LINE chats
 import KnowledgeImportView from './views/KnowledgeImportView.vue';
+// Document Converter (Word/PDF to Q&A)
+import DocumentConverterView from './views/DocumentConverterView.vue';
 // Backtest Results
 import BacktestView from './views/BacktestView.vue';
 // Test Scenarios Management
@@ -75,6 +77,11 @@ const routes = [
     path: '/knowledge-import',
     name: 'KnowledgeImport',
     component: KnowledgeImportView
+  },
+  {
+    path: '/document-converter',
+    name: 'DocumentConverter',
+    component: DocumentConverterView
   },
   // Phase 1: Multi-Vendor Routes
   {

@@ -87,6 +87,10 @@
             <span class="nav-icon">📥</span>
             <span class="nav-text">匯入管理</span>
           </router-link>
+          <router-link to="/document-converter" class="nav-item">
+            <span class="nav-icon">🤖</span>
+            <span class="nav-text">規格書轉換</span>
+          </router-link>
         </div>
 
         <!-- 知識優化層 -->
