@@ -28,7 +28,8 @@ from asyncpg.pool import Pool
 class DocumentConverterService:
     def __init__(self, db_pool: Optional[Pool] = None):
         self.openai_api_key = os.getenv('OPENAI_API_KEY')
-        self.model = os.getenv('KNOWLEDGE_GEN_MODEL', 'gpt-4')
+        # 規格書轉換專用模型（需要更強的理解能力和大 context）
+        self.model = os.getenv('DOCUMENT_CONVERTER_MODEL', os.getenv('KNOWLEDGE_GEN_MODEL', 'gpt-4o'))
         self.temp_dir = Path('/tmp/document_converter')
         self.temp_dir.mkdir(exist_ok=True)
         self.db_pool = db_pool
@@ -364,14 +365,16 @@ class DocumentConverterService:
         try:
             client = openai.OpenAI(api_key=self.openai_api_key)
 
+            # 規格書轉換不限制 max_tokens，讓 AI 完整提取所有 Q&A
+            # 使用 gpt-4o 的完整輸出能力（最大 16K output tokens）
             response = client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "你是一個專業的知識庫管理專家，擅長從技術規格書中提取實用的Q&A。請仔細分析文件內容，提取對使用者有實際幫助的問答對。"},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.3,
-                max_tokens=8000  # GPT-4o 可以生成更詳細的答案
+                temperature=0.3
+                # 不設定 max_tokens，讓模型自由輸出完整結果
             )
 
             result_text = response.choices[0].message.content.strip()

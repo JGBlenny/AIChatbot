@@ -209,6 +209,32 @@ INTENT_CLASSIFIER_MAX_TOKENS=500
 KNOWLEDGE_GEN_MODEL=gpt-4o-mini
 ```
 
+---
+
+### 規格書轉換模型
+
+| 變數名 | 說明 | 預設值 | 必需 |
+|--------|------|--------|------|
+| `DOCUMENT_CONVERTER_MODEL` | 規格書轉換使用的模型 | `gpt-4o` | ❌ |
+
+**使用位置**：
+- `rag-orchestrator` - 文件轉換服務 (Word/PDF → Q&A)
+
+**說明**：
+- 用於將 Word 或 PDF 規格書轉換為知識庫 Q&A
+- 需要更強的理解能力和大 context 處理能力
+- 不限制 max_tokens，確保完整提取所有內容
+
+**可選值**：
+- `gpt-4o` （預設，128K context，高品質）
+- `gpt-4` （最高品質，成本高）
+- `gpt-3.5-turbo` （不推薦，context 較小）
+
+**範例**：
+```bash
+DOCUMENT_CONVERTER_MODEL=gpt-4o
+```
+
 ## 🎯 RAG 檢索配置 ⭐ NEW (Phase 3)
 
 ### 相似度閾值
@@ -483,6 +509,9 @@ INTENT_CLASSIFIER_MAX_TOKENS=500
 
 # 知識生成
 KNOWLEDGE_GEN_MODEL=gpt-3.5-turbo
+
+# 規格書轉換
+DOCUMENT_CONVERTER_MODEL=gpt-4o
 
 # ==========================================
 # RAG 檢索配置（Phase 3）

@@ -126,6 +126,7 @@ services:
       DB_PASSWORD: aichatbot_password
       EMBEDDING_API_URL: http://embedding-api:5000/api/v1/embeddings
       KNOWLEDGE_GEN_MODEL: ${KNOWLEDGE_GEN_MODEL:-gpt-3.5-turbo}
+      DOCUMENT_CONVERTER_MODEL: ${DOCUMENT_CONVERTER_MODEL:-gpt-4o}
       # Redis 緩存配置
       REDIS_HOST: redis
       REDIS_PORT: 6379
