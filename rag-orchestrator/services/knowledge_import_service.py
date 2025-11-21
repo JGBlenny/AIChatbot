@@ -627,6 +627,7 @@ class KnowledgeImportService:
             response = await self.openai_client.chat.completions.create(
                 model=self.llm_model,
                 temperature=0.3,
+                max_tokens=2000,  # 提取知識列表需要較長輸出（多個 Q&A 的 JSON）
                 response_format={"type": "json_object"},
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -959,6 +960,7 @@ class KnowledgeImportService:
                 response = await self.openai_client.chat.completions.create(
                     model=self.llm_model,
                     temperature=0.3,
+                    max_tokens=500,  # 意圖推薦只需小量輸出
                     response_format={"type": "json_object"},
                     messages=[{"role": "user", "content": prompt}]
                 )
@@ -1052,6 +1054,7 @@ class KnowledgeImportService:
                 response = await self.openai_client.chat.completions.create(
                     model=self.llm_model,
                     temperature=0.3,
+                    max_tokens=500,  # 質量評估只需小量輸出
                     response_format={"type": "json_object"},
                     messages=[{"role": "user", "content": prompt}]
                 )

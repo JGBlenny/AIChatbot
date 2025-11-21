@@ -16,6 +16,7 @@
 import os
 import uuid
 import json
+import asyncio
 from pathlib import Path
 from typing import List, Dict, Optional
 from datetime import datetime
@@ -26,6 +27,15 @@ from asyncpg.pool import Pool
 
 
 class DocumentConverterService:
+    # OpenAI 模型的 context 限制（tokens）
+    MODEL_CONTEXT_LIMITS = {
+        'gpt-4o': 128000,
+        'gpt-4o-mini': 128000,
+        'gpt-4-turbo': 128000,
+        'gpt-4': 8192,
+        'gpt-3.5-turbo': 16385
+    }
+
     def __init__(self, db_pool: Optional[Pool] = None):
         self.openai_api_key = os.getenv('OPENAI_API_KEY')
         # 規格書轉換專用模型（需要更強的理解能力和大 context）
@@ -217,16 +227,40 @@ class DocumentConverterService:
         try:
             content = job['content']
 
-            # 估算 token 並分段處理（考慮 prompt + 回應的 token 限制）
-            # gpt-4o: 128K context, 可以處理非常大的文件
-            # 中文約 1 字 = 1.5-2 tokens，保守估計用 2
-            # 調整為較小的分段，讓每段能提取更多 Q&A（避免 max_tokens 限制）
-            max_chars = 12000  # 約 24K tokens，AI 能專注提取 10-20 個 Q&A
+            # 估算 token 並分段處理（考慮 context + TPM 限制）
+            # 根據模型動態調整分段大小
+            max_context = self.MODEL_CONTEXT_LIMITS.get(self.model, 16385)
+
+            # TPM (Tokens Per Minute) 考量
+            # gpt-4o 組織 TPM 限制通常為 30K-90K，保守估計使用 30K
+            # 為了避免 rate limit，單次請求應該小於 TPM 限制的 70%
+            tpm_limit = 30000 if self.model == 'gpt-4o' else 90000  # gpt-3.5-turbo 通常更高
+            safe_request_tokens = int(tpm_limit * 0.7)  # 單次請求安全上限
+
+            # 根據模型容量和 TPM 限制計算安全的分段大小
+            # 預留 1000 tokens 給 prompt，4000 tokens 給輸出
+            safe_input_tokens = min(max_context - 5000, safe_request_tokens - 4000)
+            max_chars = int(safe_input_tokens / 2)  # 中文約 1 字 = 2 tokens
+
+            # 限制範圍：最少 3000 字，最多 10000 字（避免單段太大）
+            max_chars = max(3000, min(10000, max_chars))
+
+            print(f"   📏 模型: {self.model} (Context: {max_context}, TPM: ~{tpm_limit})")
+            print(f"   📐 分段大小: {max_chars} 字元 (約 {max_chars * 2} tokens)")
+
             content_chunks = self._split_content(content, max_chars)
 
             print(f"🤖 開始 AI 轉換 (job_id: {job_id})")
             print(f"   內容分為 {len(content_chunks)} 段處理")
             print(f"   使用模型: {self.model}")
+
+            # 計算 TPM 限制下的安全延遲
+            # gpt-4o: 30K TPM，每段約 20K tokens，需要等待 40 秒避免超限
+            if len(content_chunks) > 1:
+                estimated_tokens_per_chunk = max_chars * 2 + 4000  # 輸入 + 輸出
+                delay_seconds = int((estimated_tokens_per_chunk / tpm_limit) * 60 * 1.2)  # 加 20% 緩衝
+                delay_seconds = max(20, min(60, delay_seconds))  # 限制在 20-60 秒之間
+                print(f"   ⏱️  每段間隔: {delay_seconds} 秒 (避免 TPM 超限)")
 
             all_qa = []
             for i, chunk in enumerate(content_chunks, 1):
@@ -246,6 +280,11 @@ class DocumentConverterService:
                             print(f"      ⚠️  {qa['question_summary'][:30]}... → 未分類")
 
                 all_qa.extend(qa_list)
+
+                # 在分段之間添加延遲以避免超過 TPM 限制
+                if i < len(content_chunks) and len(content_chunks) > 1:
+                    print(f"   ⏳ 等待 {delay_seconds} 秒後處理下一段...")
+                    await asyncio.sleep(delay_seconds)
 
             job['qa_list'] = all_qa
             job['status'] = 'completed'
@@ -365,16 +404,30 @@ class DocumentConverterService:
         try:
             client = openai.OpenAI(api_key=self.openai_api_key)
 
-            # 規格書轉換不限制 max_tokens，讓 AI 完整提取所有 Q&A
-            # 使用 gpt-4o 的完整輸出能力（最大 16K output tokens）
+            # 計算安全的 max_tokens
+            # 估算輸入 tokens（中文約 1 字 = 2 tokens，包含 system + prompt + content）
+            estimated_input_tokens = len(content) * 2 + 1000  # +1000 for system and prompt
+
+            # 根據模型動態計算可用的輸出 tokens
+            # gpt-4o: 128K context, gpt-4: 8K context, gpt-4-turbo: 128K context
+            max_context = self.MODEL_CONTEXT_LIMITS.get(self.model, 16385)  # 預設 16K
+
+            # 計算可用的輸出 tokens（保留 10% 緩衝）
+            available_output_tokens = int((max_context - estimated_input_tokens) * 0.9)
+
+            # 限制輸出範圍：最少 1000，最多 4000
+            safe_max_tokens = max(1000, min(4000, available_output_tokens))
+
+            print(f"   📊 Token 估算: 輸入 ~{estimated_input_tokens}, 輸出上限 {safe_max_tokens}")
+
             response = client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "你是一個專業的知識庫管理專家，擅長從技術規格書中提取實用的Q&A。請仔細分析文件內容，提取對使用者有實際幫助的問答對。"},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.3
-                # 不設定 max_tokens，讓模型自由輸出完整結果
+                temperature=0.3,
+                max_tokens=safe_max_tokens  # 設置動態計算的安全上限
             )
 
             result_text = response.choices[0].message.content.strip()
@@ -581,6 +634,7 @@ class DocumentConverterService:
             response = client.chat.completions.create(
                 model=self.model,
                 temperature=0.3,
+                max_tokens=500,  # 意圖推薦只需要小量輸出
                 response_format={"type": "json_object"},
                 messages=[{"role": "user", "content": prompt}]
             )
