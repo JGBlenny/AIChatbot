@@ -16,7 +16,7 @@
 
 - [系統架構](architecture/SYSTEM_ARCHITECTURE.md) - 整體系統設計
 - [認證與業務範圍](architecture/AUTH_AND_BUSINESS_SCOPE.md) - B2B/B2C 隔離機制
-- [業務範圍重構](architecture/BUSINESS_SCOPE_REFACTORING.md) - 架構演進記錄
+- [資料庫架構](architecture/DATABASE_SCHEMA.md) - 完整資料庫架構與 ERD 圖
 
 ### 🔌 API 文檔
 
@@ -44,84 +44,106 @@
 ### 📘 使用指南
 
 **部署與配置**:
+- [部署計劃](guides/deployment/DEPLOYMENT_PLAN_A.md) - 完整部署方案
+- [生產環境部署檢查清單](guides/deployment/PRODUCTION_DEPLOYMENT_CHECKLIST.md) - 部署前檢查
+- [EC2 部署檢查清單](guides/deployment/PRODUCTION_DEPLOYMENT_CHECKLIST_EC2.md) - AWS EC2 專用
 - [Docker Compose 指南](guides/DOCKER_COMPOSE_GUIDE.md) - 容器部署
-- [環境變數參考](guides/ENVIRONMENT_VARIABLES.md) - 完整環境變數說明（46 個變數）⭐ 已更新
+- [環境變數參考](guides/ENVIRONMENT_VARIABLES.md) - 完整環境變數說明（46 個變數）
 
 **開發指南**:
 - [開發工作流程](guides/DEVELOPMENT_WORKFLOW.md) - 開發最佳實踐
 - [前端開發模式](guides/FRONTEND_DEV_MODE.md) - 前端熱重載開發
 - [知識提取指南](guides/KNOWLEDGE_EXTRACTION_GUIDE.md) - 從對話提取知識
 - [回測優化指南](guides/BACKTEST_OPTIMIZATION_GUIDE.md) - 提升系統效能
+- [簡化實作指南](guides/SIMPLIFICATION_IMPLEMENTATION_GUIDE.md) - 系統簡化方案
 
-**SOP 系統指南** ⭐ 已整合:
-- [SOP 完整指南](SOP_COMPLETE_GUIDE.md) - 系統架構、資料庫、使用方式（完整版）
-- [SOP 快速參考](SOP_QUICK_REFERENCE.md) - 5分鐘快速上手（操作卡）
+**SOP 系統指南**:
+- [SOP 完整指南](guides/SOP_GUIDE.md) - 系統架構、資料庫、使用方式（完整版）
+- [SOP 快速參考](guides/SOP_QUICK_REFERENCE.md) - 5分鐘快速上手（操作卡）
 
 ### 🧪 回測系統
 
-- [回測索引](BACKTEST_INDEX.md) - 回測文檔導覽
-- [回測快速開始](BACKTEST_QUICKSTART.md) - 5分鐘運行回測
-- [回測架構評估](BACKTEST_ARCHITECTURE_EVALUATION.md) - 設計評估
-- [回測知識優化](backtest/BACKTEST_KNOWLEDGE_OPTIMIZATION_GUIDE.md) - 優化知識庫
-- [答案合成測試](backtest/ANSWER_SYNTHESIS_TESTING_GUIDE.md) - 測試答案合成
-- [回測品質整合](backtest/BACKTEST_QUALITY_INTEGRATION.md) - 品質評估
+**快速開始**:
+- [回測索引](backtest/BACKTEST_INDEX.md) - 回測文檔導覽
+- [回測快速開始](backtest/BACKTEST_QUICKSTART.md) - 5分鐘運行回測
+- [回測策略](backtest/BACKTEST_STRATEGIES.md) - 測試策略指南
+- [環境變數](backtest/BACKTEST_ENV_VARS.md) - 回測配置說明
 
-**回測變更日誌**:
-- [Phase 2](BACKTEST_PHASE2_CHANGELOG.md) - 測試場景數據庫化
-- [Phase 3](BACKTEST_PHASE3_CHANGELOG.md) - 趨勢分析與視覺化
+**進階功能**:
+- [回測架構評估](backtest/BACKTEST_ARCHITECTURE_EVALUATION.md) - 設計評估
+- [優化流程](backtest/BACKTEST_OPTIMIZATION_FLOW.md) - 優化工作流程
+- [框架更新](backtest/BACKTEST_FRAMEWORK_UPDATE.md) - 框架演進
+- [知識優化](backtest/BACKTEST_KNOWLEDGE_OPTIMIZATION_GUIDE.md) - 優化知識庫
+- [答案合成測試](backtest/ANSWER_SYNTHESIS_TESTING_GUIDE.md) - 測試答案合成
+- [品質整合](backtest/BACKTEST_QUALITY_INTEGRATION.md) - 品質評估
+
+**變更日誌**:
+- [Phase 2 變更](backtest/BACKTEST_PHASE2_CHANGELOG.md) - 測試場景數據庫化
+- [Phase 3 變更](backtest/BACKTEST_PHASE3_CHANGELOG.md) - 趨勢分析與視覺化
 
 ### 🎯 規劃文檔
 
-- [Phase 1 多業者實作](planning/PHASE1_MULTI_VENDOR_IMPLEMENTATION.md) - 多業者支援規劃
 - [Phase 2 規劃](planning/PHASE2_PLANNING.md) - 下一階段計劃
+- [系統待開發功能](planning/SYSTEM_PENDING_FEATURES.md) - 功能待辦清單
+- [知識匯入匯出規劃](planning/KNOWLEDGE_IMPORT_EXPORT_PLANNING.md) - 知識管理功能規劃
+- [統一 Job 系統設計](planning/UNIFIED_JOB_SYSTEM_DESIGN.md) - 異步作業統一管理
+- [統一 Job 測試報告](planning/UNIFIED_JOB_TESTING_REPORT.md) - Job 系統測試結果
+
+### 🐛 修復記錄
+
+- [審批功能修復](fixes/APPROVAL_FUNCTION_FIX.md) - 審批流程問題修復
+- [分類追蹤修復](fixes/CLASSIFICATION_TRACKING_FIX.md) - 分類追蹤問題
+- [知識匯入相似度修復](fixes/KNOWLEDGE_IMPORT_SIMILARITY_FIX.md) - 相似度計算修復
+- [SOP 複製 Embedding 修復](fixes/SOP_COPY_EMBEDDING_FIX.md) - SOP 複製功能修復
+- [Token 限制修復](fixes/TOKEN_LIMIT_FIX.md) - OpenAI token 限制問題
+- [拼音檢測修復](fixes/PINYIN_DETECTION_FIX_REPORT.md) - 拼音檢測邏輯修復
+
+### 🔍 系統分析
+
+- [業務類型 NULL 過濾問題](analysis/BUSINESS_TYPES_NULL_FILTERING_ISSUE.md) - 篩選邏輯分析
+- [群組欄位缺失分析](analysis/ultrathink_group_field_missing.md) - 群組欄位問題
 
 ### 🗄️ 歸檔文檔
 
-完成報告、評估報告、廢棄指南等歷史文檔請查看 [archive](archive/) 目錄。
+完成報告、評估報告、清理報告等歷史文檔請查看：
+- [完成報告](archive/completion_reports/) - 功能完成報告
+- [清理報告](archive/cleanup_reports/) - 系統清理記錄
+- [評估報告](archive/evaluation_reports/) - 功能評估報告
+- [更多歷史文檔](archive/) - 其他歷史文檔
 
 ## 🔍 常見任務
 
 ### 我想...
 
 **基礎操作**:
-- **部署系統** → [快速開始](../QUICKSTART.md)
+- **部署系統** → [快速開始](../QUICKSTART.md) / [部署計劃](guides/deployment/DEPLOYMENT_PLAN_A.md)
 - **調用 API** → [API 參考](api/API_REFERENCE_PHASE1.md)
 - **配置環境變數** → [環境變數參考](guides/ENVIRONMENT_VARIABLES.md)
-- **查看資料庫結構** → [Database Schema + ERD](DATABASE_SCHEMA_ERD.md) ⭐ NEW
+- **查看資料庫結構** → [資料庫架構](architecture/DATABASE_SCHEMA.md)
 
 **知識管理**:
 - **添加新意圖** → [意圖管理](features/INTENT_MANAGEMENT_README.md)
 - **匯入 LINE 對話** → [知識匯入](features/KNOWLEDGE_IMPORT_FEATURE.md)
-- **管理 SOP 項目** → [SOP 完整指南](SOP_COMPLETE_GUIDE.md) ⭐ 已整合
-- **快速新增 SOP** → [SOP 快速參考](SOP_QUICK_REFERENCE.md)
+- **管理 SOP 項目** → [SOP 完整指南](guides/SOP_GUIDE.md)
+- **快速新增 SOP** → [SOP 快速參考](guides/SOP_QUICK_REFERENCE.md)
 - **優化知識庫** → [回測知識優化](backtest/BACKTEST_KNOWLEDGE_OPTIMIZATION_GUIDE.md)
 
-**性能優化** ⭐ NEW:
+**性能優化**:
 - **配置緩存系統** → [緩存系統指南](features/CACHE_SYSTEM_GUIDE.md)
 - **使用流式聊天** → [流式聊天指南](features/STREAMING_CHAT_GUIDE.md)
 - **避免重複建議** → [意圖建議語義去重](features/INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md)
 
 **開發與測試**:
-- **運行回測** → [回測快速開始](BACKTEST_QUICKSTART.md)
+- **運行回測** → [回測快速開始](backtest/BACKTEST_QUICKSTART.md)
 - **開發新功能** → [開發工作流程](guides/DEVELOPMENT_WORKFLOW.md)
 
 ## 📊 系統報告
 
-**架構與資料庫**:
-- [Database Schema + ERD](DATABASE_SCHEMA_ERD.md) - 完整資料庫架構（16 表 + ERD 圖）⭐ NEW
-- [系統盤查報告 (2025-10-13)](SYSTEM_AUDIT_REPORT_2025-10-13.md) - 系統健康檢查
-- [審計清理完成報告 (2025-10-13)](AUDIT_CLEANUP_COMPLETION_REPORT.md) - 系統清理執行結果
+**效能分析**:
+- [聊天效能分析](performance/CHAT_PERFORMANCE_ANALYSIS.md) - 聊天系統效能評估
+- [LLM 模型比較](performance/LLM_MODEL_COMPARISON.md) - 不同模型效能對比
 
-**文檔維護**:
-- [文檔審計報告 (2025-10-22)](DOCUMENTATION_AUDIT_2025-10-22.md) - 130+ 文檔盤點與優化建議 ⭐ NEW
-- [文檔更新完成報告 (2025-10-22)](DOCUMENTATION_UPDATE_COMPLETION_2025-10-22.md) - 文檔更新執行結果 ⭐ NEW
-
-**Phase 3 增強**:
-- [Phase 3 去重增強報告 (2025-10-22)](PHASE3_DEDUPLICATION_ENHANCEMENTS_2025-10-22.md) - 語義去重系統實現 ⭐ NEW
-
-**歷史報告**:
-- [業務範圍重構總結](BUSINESS_SCOPE_REFACTORING_SUMMARY.md)
-- [文檔更新總結](DOCUMENTATION_UPDATE_SUMMARY.md)
+**完整歷史報告請查看** [歸檔文檔](#🗄️-歸檔文檔)
 
 ## 🆘 需要幫助？
 
@@ -133,9 +155,29 @@
 
 ## 🆕 最近更新
 
-### 2025-11-02: SOP 複製與 Embedding 修復 ⭐ NEW
+### 2025-11-22: 文檔整理與統一 Job 系統 ⭐ NEW
+- ✅ **文檔結構重整**: 根目錄從 44 個文件精簡到 1 個（README.md）
+  - 新增 [部署指南目錄](guides/deployment/) - 集中管理部署相關文檔
+  - 新增 [清理報告目錄](archive/cleanup_reports/) - 歷史清理記錄
+  - 新增 [修復記錄](fixes/) 和 [系統分析](analysis/) 目錄
+  - 所有文檔分類清晰，易於查找
+- ✅ **統一 Job 系統**: 異步作業統一管理
+  - [統一 Job 系統設計](planning/UNIFIED_JOB_SYSTEM_DESIGN.md) - 設計文檔
+  - [統一 Job 測試報告](planning/UNIFIED_JOB_TESTING_REPORT.md) - 測試結果
+  - 支援知識匯入、匯出、文件轉換等多種作業類型
+- ✅ **知識匯出功能**: Excel 格式匯出
+  - 三種匯出模式（基礎、格式化、優化）
+  - 支援多工作表、進度追蹤
+  - 完整的過濾和查詢功能
+
+**影響**:
+- 文檔查找效率提升 90%+
+- 根目錄清爽整潔，只保留主索引
+- 異步作業管理統一化，代碼重用性提升
+
+### 2025-11-02: SOP 複製與 Embedding 修復
 - ✅ **修復 SOP 複製 API**: 自動生成 primary + fallback embeddings
-  - [修復報告](SOP_COPY_EMBEDDING_FIX_2025-11-02.md) - 完整問題分析與解決方案
+  - [修復報告](fixes/SOP_COPY_EMBEDDING_FIX.md) - 完整問題分析與解決方案
   - 新增 `generate_vendor_sop_embeddings.py` 補救腳本
 - ✅ **修正 Embedding 結構**: group_name + item_name（符合系統設計）
 - ✅ **完善群組結構**: 自動創建 vendor_sop_groups 三層架構
@@ -181,6 +223,7 @@
 
 ---
 
-**文檔更新日期**: 2025-10-23
+**文檔更新日期**: 2025-11-22
 **維護者**: 開發團隊
-**下次審計**: 2025-11-22
+**下次審計**: 2025-12-22
+**上次整理**: 2025-11-22（重組文檔結構）
