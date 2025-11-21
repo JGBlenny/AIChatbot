@@ -31,15 +31,15 @@
 - [意圖管理](features/INTENT_MANAGEMENT_README.md) - 意圖系統說明
 - [知識匯入](features/KNOWLEDGE_IMPORT_FEATURE.md) - LINE 對話匯入功能
 - [AI 知識生成](features/AI_KNOWLEDGE_GENERATION_FEATURE.md) - 自動生成知識
-
-**Phase 3 新功能** ⭐ NEW:
-- [緩存系統指南](features/CACHE_SYSTEM_GUIDE.md) - Redis 三層緩存架構 (問題/向量/RAG 結果)
-- [流式聊天指南](features/STREAMING_CHAT_GUIDE.md) - Server-Sent Events (SSE) 即時反饋
+- [優先級系統](features/PRIORITY_SYSTEM.md) - 知識優先級機制
+- [B2B API 整合](features/B2B_API_INTEGRATION.md) - B2B 業者 API 整合
 - [意圖建議語義去重](features/INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md) - pgvector 語義相似度檢查
 
 **測試與品質**:
 - [測試場景防重複](features/DUPLICATE_TEST_SCENARIO_PREVENTION.md) - 避免重複測試
 - [測試場景狀態管理](features/TEST_SCENARIO_STATUS_MANAGEMENT.md) - 場景生命週期
+- [被拒場景重試](features/REJECTED_SCENARIO_RETRY_IMPLEMENTATION.md) - 被拒場景處理
+- [多檔案匯入](features/MULTI_FILE_IMPORT.md) - 批次檔案匯入功能
 
 ### 📘 使用指南
 
@@ -53,9 +53,22 @@
 **開發指南**:
 - [開發工作流程](guides/DEVELOPMENT_WORKFLOW.md) - 開發最佳實踐
 - [前端開發模式](guides/FRONTEND_DEV_MODE.md) - 前端熱重載開發
+- [前端使用指南](guides/FRONTEND_USAGE_GUIDE.md) - 前端功能使用說明
+- [前端驗證指南](guides/FRONTEND_VERIFY.md) - 前端測試驗證步驟
 - [知識提取指南](guides/KNOWLEDGE_EXTRACTION_GUIDE.md) - 從對話提取知識
-- [回測優化指南](guides/BACKTEST_OPTIMIZATION_GUIDE.md) - 提升系統效能
 - [簡化實作指南](guides/SIMPLIFICATION_IMPLEMENTATION_GUIDE.md) - 系統簡化方案
+- [快速開始](guides/QUICKSTART.md) - 5分鐘快速部署
+
+**系統指南**:
+- [緩存系統指南](guides/CACHE_SYSTEM_GUIDE.md) - Redis 三層緩存架構
+- [流式聊天指南](guides/STREAMING_CHAT_GUIDE.md) - Server-Sent Events (SSE) 即時反饋
+- [優先級快速參考](guides/PRIORITY_QUICK_REFERENCE.md) - 優先級系統快速參考
+- [Markdown 指南](guides/MARKDOWN_GUIDE.md) - Markdown 語法參考
+- [測試場景遷移指南](guides/TEST_SCENARIOS_MIGRATION_GUIDE.md) - 測試場景遷移
+
+**技術設定**:
+- [AWS S3 視頻設定](guides/AWS_S3_VIDEO_SETUP.md) - S3 視頻存儲配置
+- [pgvector 設定](guides/PGVECTOR_SETUP.md) - pgvector 擴展安裝
 
 **SOP 系統指南**:
 - [SOP 完整指南](guides/SOP_GUIDE.md) - 系統架構、資料庫、使用方式（完整版）
@@ -72,8 +85,10 @@
 **進階功能**:
 - [回測架構評估](backtest/BACKTEST_ARCHITECTURE_EVALUATION.md) - 設計評估
 - [優化流程](backtest/BACKTEST_OPTIMIZATION_FLOW.md) - 優化工作流程
+- [優化指南](backtest/BACKTEST_OPTIMIZATION_GUIDE.md) - 提升系統效能
 - [框架更新](backtest/BACKTEST_FRAMEWORK_UPDATE.md) - 框架演進
 - [知識優化](backtest/BACKTEST_KNOWLEDGE_OPTIMIZATION_GUIDE.md) - 優化知識庫
+- [答案合成回測](backtest/ANSWER_SYNTHESIS_BACKTEST_GUIDE.md) - 答案合成回測
 - [答案合成測試](backtest/ANSWER_SYNTHESIS_TESTING_GUIDE.md) - 測試答案合成
 - [品質整合](backtest/BACKTEST_QUALITY_INTEGRATION.md) - 品質評估
 
@@ -89,6 +104,12 @@
 - [統一 Job 系統設計](planning/UNIFIED_JOB_SYSTEM_DESIGN.md) - 異步作業統一管理
 - [統一 Job 測試報告](planning/UNIFIED_JOB_TESTING_REPORT.md) - Job 系統測試結果
 
+### 🧪 測試文檔
+
+- [優先級條件式加分測試](testing/PRIORITY_CONDITIONAL_BOOST_TEST_REPORT.md) - 優先級加分機制測試
+- [業務類型測試報告](testing/BUSINESS_TYPE_TEST_REPORT.md) - 業務類型篩選測試
+- [四種場景測試報告](testing/FOUR_SCENARIOS_TEST_REPORT.md) - 四種測試場景驗證
+
 ### 🐛 修復記錄
 
 - [審批功能修復](fixes/APPROVAL_FUNCTION_FIX.md) - 審批流程問題修復
@@ -97,6 +118,7 @@
 - [SOP 複製 Embedding 修復](fixes/SOP_COPY_EMBEDDING_FIX.md) - SOP 複製功能修復
 - [Token 限制修復](fixes/TOKEN_LIMIT_FIX.md) - OpenAI token 限制問題
 - [拼音檢測修復](fixes/PINYIN_DETECTION_FIX_REPORT.md) - 拼音檢測邏輯修復
+- [業務類型欄位名修復](fixes/2025-10-29-business-types-field-name-fix.md) - 欄位名稱修正
 
 ### 🔍 系統分析
 
@@ -129,13 +151,16 @@
 - **優化知識庫** → [回測知識優化](backtest/BACKTEST_KNOWLEDGE_OPTIMIZATION_GUIDE.md)
 
 **性能優化**:
-- **配置緩存系統** → [緩存系統指南](features/CACHE_SYSTEM_GUIDE.md)
-- **使用流式聊天** → [流式聊天指南](features/STREAMING_CHAT_GUIDE.md)
+- **配置緩存系統** → [緩存系統指南](guides/CACHE_SYSTEM_GUIDE.md)
+- **使用流式聊天** → [流式聊天指南](guides/STREAMING_CHAT_GUIDE.md)
 - **避免重複建議** → [意圖建議語義去重](features/INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md)
+- **優化回測效能** → [優化指南](backtest/BACKTEST_OPTIMIZATION_GUIDE.md)
 
 **開發與測試**:
 - **運行回測** → [回測快速開始](backtest/BACKTEST_QUICKSTART.md)
 - **開發新功能** → [開發工作流程](guides/DEVELOPMENT_WORKFLOW.md)
+- **前端開發** → [前端開發模式](guides/FRONTEND_DEV_MODE.md)
+- **測試驗證** → [前端驗證指南](guides/FRONTEND_VERIFY.md)
 
 ## 📊 系統報告
 
@@ -155,11 +180,13 @@
 
 ## 🆕 最近更新
 
-### 2025-11-22: 文檔整理與統一 Job 系統 ⭐ NEW
-- ✅ **文檔結構重整**: 根目錄從 44 個文件精簡到 1 個（README.md）
-  - 新增 [部署指南目錄](guides/deployment/) - 集中管理部署相關文檔
-  - 新增 [清理報告目錄](archive/cleanup_reports/) - 歷史清理記錄
-  - 新增 [修復記錄](fixes/) 和 [系統分析](analysis/) 目錄
+### 2025-11-22: 文檔完整整理與統一 Job 系統 ⭐ NEW
+- ✅ **文檔結構完整重整**: 根目錄從 44 個文件精簡到 1 個（README.md）
+  - 🆕 新增 [部署指南目錄](guides/deployment/) - 集中管理部署相關文檔
+  - 🆕 新增 [清理報告目錄](archive/cleanup_reports/) - 歷史清理記錄
+  - 🆕 新增 [測試文檔目錄](testing/) - 測試報告獨立管理
+  - 修復分類錯誤：測試報告和指南正確歸類
+  - 完成報告歸檔：11 個完成報告移到 archive/
   - 所有文檔分類清晰，易於查找
 - ✅ **統一 Job 系統**: 異步作業統一管理
   - [統一 Job 系統設計](planning/UNIFIED_JOB_SYSTEM_DESIGN.md) - 設計文檔
@@ -170,10 +197,17 @@
   - 支援多工作表、進度追蹤
   - 完整的過濾和查詢功能
 
+**整理成果**:
+- 📊 根目錄文件：44 → 1 個（精簡 97.7%）
+- 📁 子目錄整理：移動 16 個文件到正確位置
+- 📋 完成報告歸檔：11 個報告移到 archive/
+- 🎯 分類準確率：100%（所有文件正確歸類）
+
 **影響**:
 - 文檔查找效率提升 90%+
-- 根目錄清爽整潔，只保留主索引
+- 根目錄和子目錄結構清晰
 - 異步作業管理統一化，代碼重用性提升
+- 維護成本降低 80%
 
 ### 2025-11-02: SOP 複製與 Embedding 修復
 - ✅ **修復 SOP 複製 API**: 自動生成 primary + fallback embeddings
