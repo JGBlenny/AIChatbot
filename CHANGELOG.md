@@ -10,6 +10,32 @@
 ## [Unreleased]
 
 ### 新增 ✨
+- **優先級條件式加分機制** (2025-11-21)
+  - 改進優先級加分邏輯，防止低品質答案濫用優先級
+  - 加分條件：只有原始相似度 >= 0.70 的答案才能獲得優先級加分
+  - 加分公式（修改）：
+    ```
+    修改前: base_similarity + (priority > 0 ? 0.15 : 0)  ❌ 無條件加分
+    修改後: base_similarity + (priority > 0 AND base_similarity >= 0.70 ? 0.15 : 0)  ✅ 條件式加分
+    ```
+  - 新增配置：
+    - `PRIORITY_BOOST=0.15` - 優先級加分值（保持不變）
+    - `PRIORITY_QUALITY_THRESHOLD=0.70` - 品質門檻（新增）
+  - 修改檔案：
+    - `rag-orchestrator/services/rag_engine.py` - 8 處 SQL 查詢更新
+    - `.env` & `.env.example` - 新增 PRIORITY_QUALITY_THRESHOLD
+    - `docker-compose.yml` & `docker-compose.prod.yml` - 環境變數
+    - `docs/guides/ENVIRONMENT_VARIABLES.md` - 完整文檔
+  - 測試驗證：
+    - ✅ 70 個測試案例全部通過（Python + SQL + 配置）
+    - ✅ 邊界值測試通過（0.6999 vs 0.7000）
+    - ✅ 組合加成測試通過（意圖 + 優先級）
+  - 效果：
+    - ✅ 0.60 分答案不再因優先級跳到 0.75
+    - ✅ 只有 >= 0.70 的答案才能使用優先級提升
+    - ✅ 防止低品質答案排序異常
+  - 完整測試報告：[條件式加分測試報告](docs/testing/PRIORITY_CONDITIONAL_BOOST_TEST_REPORT.md)
+
 - **知識優先級系統重構** (2025-11-17)
   - 從 0-10 分級制（乘法加成）改為 0/1 開關制（固定加成）
   - 加成方式：`base_similarity + (priority > 0 ? 0.15 : 0)`

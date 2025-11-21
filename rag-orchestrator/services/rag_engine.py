@@ -24,6 +24,8 @@ class RAGEngine:
         self.embedding_client = get_embedding_client()
         # 讀取優先級加成值（固定加成，預設 0.15）
         self.priority_boost = float(os.getenv("PRIORITY_BOOST", "0.15"))
+        # 讀取優先級品質門檻（只對高品質答案加分，預設 0.70）
+        self.priority_quality_threshold = float(os.getenv("PRIORITY_QUALITY_THRESHOLD", "0.70"))
 
     async def search(
         self,
@@ -121,7 +123,11 @@ class RAGEngine:
                                     WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
                                     ELSE 1.0
                                 END +
-                                CASE WHEN kb.priority > 0 THEN $8 ELSE 0 END as boosted_similarity
+                                CASE
+                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $9
+                                    THEN $8
+                                    ELSE 0
+                                END as boosted_similarity
                             FROM knowledge_base kb
                             LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                             WHERE kb.embedding IS NOT NULL
@@ -131,7 +137,7 @@ class RAGEngine:
                                 AND (kb.business_types IS NULL OR kb.business_types && $7::text[])
                             ORDER BY kb.id, boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, allowed_audiences, vendor_business_types, self.priority_boost)
+                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, allowed_audiences, vendor_business_types, self.priority_boost, self.priority_quality_threshold)
                     else:
                         # 無業態過濾
                         results = await conn.fetch("""
@@ -156,7 +162,11 @@ class RAGEngine:
                                     WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
                                     ELSE 1.0
                                 END +
-                                CASE WHEN kb.priority > 0 THEN $7 ELSE 0 END as boosted_similarity
+                                CASE
+                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $8
+                                    THEN $7
+                                    ELSE 0
+                                END as boosted_similarity
                             FROM knowledge_base kb
                             LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                             WHERE kb.embedding IS NOT NULL
@@ -165,7 +175,7 @@ class RAGEngine:
                                 AND (kb.target_user IS NULL OR kb.target_user && $6::text[])
                             ORDER BY kb.id, boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, allowed_audiences, self.priority_boost)
+                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, allowed_audiences, self.priority_boost, self.priority_quality_threshold)
                 else:
                     # 無 audience 過濾（向後兼容）
                     if vendor_business_types:
@@ -192,7 +202,11 @@ class RAGEngine:
                                     WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
                                     ELSE 1.0
                                 END +
-                                CASE WHEN kb.priority > 0 THEN $7 ELSE 0 END as boosted_similarity
+                                CASE
+                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $8
+                                    THEN $7
+                                    ELSE 0
+                                END as boosted_similarity
                             FROM knowledge_base kb
                             LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                             WHERE kb.embedding IS NOT NULL
@@ -201,7 +215,7 @@ class RAGEngine:
                                 AND (kb.business_types IS NULL OR kb.business_types && $6::text[])
                             ORDER BY kb.id, boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, vendor_business_types, self.priority_boost)
+                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, vendor_business_types, self.priority_boost, self.priority_quality_threshold)
                     else:
                         # 無業態過濾
                         results = await conn.fetch("""
@@ -226,7 +240,11 @@ class RAGEngine:
                                     WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
                                     ELSE 1.0
                                 END +
-                                CASE WHEN kb.priority > 0 THEN $6 ELSE 0 END as boosted_similarity
+                                CASE
+                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $7
+                                    THEN $6
+                                    ELSE 0
+                                END as boosted_similarity
                             FROM knowledge_base kb
                             LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                             WHERE kb.embedding IS NOT NULL
@@ -234,7 +252,7 @@ class RAGEngine:
                                 AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
                             ORDER BY kb.id, boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, self.priority_boost)
+                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, self.priority_boost, self.priority_quality_threshold)
 
                 # 去重並按加成後相似度排序
                 seen_ids = set()
@@ -260,7 +278,12 @@ class RAGEngine:
                                 keywords,
                                 business_types,
                                 1 - (embedding <=> $1::vector) as base_similarity,
-                                (1 - (embedding <=> $1::vector)) * (1 + priority * $6) as boosted_similarity
+                                (1 - (embedding <=> $1::vector)) +
+                                CASE
+                                    WHEN priority > 0 AND (1 - (embedding <=> $1::vector)) >= $7
+                                    THEN $6
+                                    ELSE 0
+                                END as boosted_similarity
                             FROM knowledge_base
                             WHERE embedding IS NOT NULL
                                 AND (1 - (embedding <=> $1::vector)) >= $2
@@ -268,7 +291,7 @@ class RAGEngine:
                                 AND (business_types IS NULL OR business_types && $5::text[])
                             ORDER BY boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit, allowed_audiences, vendor_business_types, self.priority_boost)
+                        """, vector_str, similarity_threshold, limit, allowed_audiences, vendor_business_types, self.priority_boost, self.priority_quality_threshold)
                     else:
                         # 無業態過濾
                         results = await conn.fetch("""
@@ -279,14 +302,19 @@ class RAGEngine:
                                 target_user,
                                 keywords,
                                 1 - (embedding <=> $1::vector) as base_similarity,
-                                (1 - (embedding <=> $1::vector)) * (1 + priority * $5) as boosted_similarity
+                                (1 - (embedding <=> $1::vector)) +
+                                CASE
+                                    WHEN priority > 0 AND (1 - (embedding <=> $1::vector)) >= $6
+                                    THEN $5
+                                    ELSE 0
+                                END as boosted_similarity
                             FROM knowledge_base
                             WHERE embedding IS NOT NULL
                                 AND (1 - (embedding <=> $1::vector)) >= $2
                                 AND (target_user IS NULL OR target_user && $4::text[])
                             ORDER BY boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit, allowed_audiences, self.priority_boost)
+                        """, vector_str, similarity_threshold, limit, allowed_audiences, self.priority_boost, self.priority_quality_threshold)
                 else:
                     # 無 audience 過濾（向後兼容）
                     if vendor_business_types:
@@ -300,14 +328,19 @@ class RAGEngine:
                                 keywords,
                                 business_types,
                                 1 - (embedding <=> $1::vector) as base_similarity,
-                                (1 - (embedding <=> $1::vector)) * (1 + priority * $5) as boosted_similarity
+                                (1 - (embedding <=> $1::vector)) +
+                                CASE
+                                    WHEN priority > 0 AND (1 - (embedding <=> $1::vector)) >= $6
+                                    THEN $5
+                                    ELSE 0
+                                END as boosted_similarity
                             FROM knowledge_base
                             WHERE embedding IS NOT NULL
                                 AND (1 - (embedding <=> $1::vector)) >= $2
                                 AND (business_types IS NULL OR business_types && $4::text[])
                             ORDER BY boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit, vendor_business_types, self.priority_boost)
+                        """, vector_str, similarity_threshold, limit, vendor_business_types, self.priority_boost, self.priority_quality_threshold)
                     else:
                         # 無業態過濾
                         results = await conn.fetch("""
@@ -318,13 +351,18 @@ class RAGEngine:
                                 target_user,
                                 keywords,
                                 1 - (embedding <=> $1::vector) as base_similarity,
-                                (1 - (embedding <=> $1::vector)) * (1 + priority * $4) as boosted_similarity
+                                (1 - (embedding <=> $1::vector)) +
+                                CASE
+                                    WHEN priority > 0 AND (1 - (embedding <=> $1::vector)) >= $5
+                                    THEN $4
+                                    ELSE 0
+                                END as boosted_similarity
                             FROM knowledge_base
                             WHERE embedding IS NOT NULL
                                 AND (1 - (embedding <=> $1::vector)) >= $2
                             ORDER BY boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit, self.priority_boost)
+                        """, vector_str, similarity_threshold, limit, self.priority_boost, self.priority_quality_threshold)
 
         print(f"   💾 資料庫返回 {len(results)} 個結果")
 
