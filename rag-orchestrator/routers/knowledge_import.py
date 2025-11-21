@@ -121,33 +121,29 @@ async def upload_knowledge_file(
     # 4. 取得資料庫連接池
     db_pool = request.app.state.db_pool
 
-    # 5. 建立作業記錄（在啟動背景任務前）
-    async with db_pool.acquire() as conn:
-        await conn.execute("""
-            INSERT INTO knowledge_import_jobs (
-                job_id, vendor_id, file_name, file_type, file_size_bytes, file_path,
-                import_mode, enable_deduplication, created_by, status,
-                created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """,
-            uuid.UUID(job_id),
-            vendor_id,
-            file.filename,
-            file_ext[1:],  # Remove the leading dot
-            file_size,
-            temp_file_path,
-            import_mode,
-            enable_deduplication,
-            "admin",  # TODO: 從認證取得真實使用者 ID
-            "pending"
-        )
+    # 5. 使用統一 Job 服務建立作業記錄
+    from services.knowledge_import_service import KnowledgeImportService
+    service = KnowledgeImportService(db_pool)
+
+    job_id = await service.create_job(
+        job_type='knowledge_import',
+        vendor_id=vendor_id,
+        user_id="admin",  # TODO: 從認證取得真實使用者 ID
+        job_config={
+            'import_mode': import_mode,
+            'enable_deduplication': enable_deduplication,
+            'skip_review': skip_review,
+            'default_priority': default_priority,
+            'file_type': file_ext[1:]
+        },
+        file_path=temp_file_path,
+        file_name=file.filename,
+        file_size_bytes=file_size
+    )
 
     print(f"✅ 作業記錄已建立 (job_id: {job_id})")
 
     # 6. 啟動背景任務
-    from services.knowledge_import_service import KnowledgeImportService
-
-    service = KnowledgeImportService(db_pool)
 
     print(f"🚀 啟動背景處理任務 (job_id: {job_id})")
 
@@ -206,7 +202,7 @@ async def get_import_job_status(job_id: str, request: Request):
                 error_message,
                 created_at,
                 updated_at
-            FROM knowledge_import_jobs
+            FROM unified_jobs
             WHERE job_id = $1
         """, uuid.UUID(job_id))
 
@@ -259,13 +255,13 @@ async def list_import_jobs(
                     vendor_id,
                     file_name,
                     status,
-                    imported_count,
-                    skipped_count,
-                    error_count,
+                    success_records,
+                    skipped_records,
+                    failed_records,
                     created_at,
                     completed_at
-                FROM knowledge_import_jobs
-                WHERE vendor_id = $1
+                FROM unified_jobs
+                WHERE vendor_id = $1 AND job_type = 'knowledge_import'
                 ORDER BY created_at DESC
                 LIMIT $2 OFFSET $3
             """, vendor_id, limit, offset)
@@ -276,12 +272,13 @@ async def list_import_jobs(
                     vendor_id,
                     file_name,
                     status,
-                    imported_count,
-                    skipped_count,
-                    error_count,
+                    success_records,
+                    skipped_records,
+                    failed_records,
                     created_at,
                     completed_at
-                FROM knowledge_import_jobs
+                FROM unified_jobs
+                WHERE job_type = 'knowledge_import'
                 ORDER BY created_at DESC
                 LIMIT $1 OFFSET $2
             """, limit, offset)
@@ -289,10 +286,13 @@ async def list_import_jobs(
         # 取得總數
         if vendor_id:
             total = await conn.fetchval("""
-                SELECT COUNT(*) FROM knowledge_import_jobs WHERE vendor_id = $1
+                SELECT COUNT(*) FROM unified_jobs
+                WHERE vendor_id = $1 AND job_type = 'knowledge_import'
             """, vendor_id)
         else:
-            total = await conn.fetchval("SELECT COUNT(*) FROM knowledge_import_jobs")
+            total = await conn.fetchval("""
+                SELECT COUNT(*) FROM unified_jobs WHERE job_type = 'knowledge_import'
+            """)
 
         return {
             "jobs": [
@@ -301,9 +301,9 @@ async def list_import_jobs(
                     "vendor_id": job['vendor_id'],
                     "file_name": job['file_name'],
                     "status": job['status'],
-                    "imported_count": job['imported_count'],
-                    "skipped_count": job['skipped_count'],
-                    "error_count": job['error_count'],
+                    "imported_count": job['success_records'],
+                    "skipped_count": job['skipped_records'],
+                    "error_count": job['failed_records'],
                     "created_at": job['created_at'].isoformat() if job['created_at'] else None,
                     "completed_at": job['completed_at'].isoformat() if job['completed_at'] else None
                 }
@@ -434,7 +434,7 @@ async def delete_import_job(job_id: str, request: Request):
 
     async with db_pool.acquire() as conn:
         deleted = await conn.fetchval("""
-            DELETE FROM knowledge_import_jobs
+            DELETE FROM unified_jobs
             WHERE job_id = $1
             RETURNING job_id
         """, uuid.UUID(job_id))

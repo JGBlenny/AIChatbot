@@ -25,8 +25,11 @@ import openai
 import asyncpg
 from asyncpg.pool import Pool
 
+# 引入統一 Job 服務
+from services.unified_job_service import UnifiedJobService
 
-class DocumentConverterService:
+
+class DocumentConverterService(UnifiedJobService):
     # OpenAI 模型的 context 限制（tokens）
     MODEL_CONTEXT_LIMITS = {
         'gpt-4o': 128000,
@@ -37,31 +40,32 @@ class DocumentConverterService:
     }
 
     def __init__(self, db_pool: Optional[Pool] = None):
+        # 初始化父類（統一 Job 服務）
+        super().__init__(db_pool)
+
         self.openai_api_key = os.getenv('OPENAI_API_KEY')
         # 規格書轉換專用模型（需要更強的理解能力和大 context）
         self.model = os.getenv('DOCUMENT_CONVERTER_MODEL', os.getenv('KNOWLEDGE_GEN_MODEL', 'gpt-4o'))
         self.temp_dir = Path('/tmp/document_converter')
         self.temp_dir.mkdir(exist_ok=True)
-        self.db_pool = db_pool
 
-        # 轉換任務緩存 (生產環境應使用 Redis)
-        self.jobs = {}
+        # ✅ 已移除記憶體存儲 self.jobs = {}，改用資料庫 unified_jobs 表
 
         # 意圖快取（減少資料庫查詢）
         self._cached_intents = None
 
-    async def upload_document(self, file_path: str, original_filename: str) -> Dict:
+    async def upload_document(self, file_path: str, original_filename: str, user_id: str = "admin") -> Dict:
         """
         上傳並驗證文件
 
         Args:
             file_path: 臨時文件路徑
             original_filename: 原始檔名
+            user_id: 使用者 ID
 
         Returns:
             包含 job_id 和文件資訊的字典
         """
-        job_id = str(uuid.uuid4())
         file_size = Path(file_path).stat().st_size
         file_ext = Path(original_filename).suffix.lower()
 
@@ -74,31 +78,34 @@ class DocumentConverterService:
         if file_size > max_size:
             raise ValueError(f"檔案過大: {file_size / 1024 / 1024:.1f}MB。最大限制: 50MB")
 
-        # 保存文件
-        saved_path = self.temp_dir / f"{job_id}_{original_filename}"
+        # 保存文件（先生成臨時 job_id）
+        temp_job_id = str(uuid.uuid4())
+        saved_path = self.temp_dir / f"{temp_job_id}_{original_filename}"
         Path(file_path).rename(saved_path)
 
-        # 創建任務記錄
-        self.jobs[job_id] = {
-            'job_id': job_id,
-            'status': 'uploaded',  # uploaded, parsing, converting, completed, failed
-            'file_path': str(saved_path),
-            'file_name': original_filename,
-            'file_size': file_size,
-            'file_type': file_ext[1:],  # 去掉點
-            'created_at': datetime.now().isoformat(),
-            'updated_at': datetime.now().isoformat(),
-            'content': None,  # 解析後的純文字
-            'qa_list': None,  # AI 提取的 Q&A
-            'error': None
-        }
+        # 使用統一 Job 服務創建作業記錄
+        job_id = await self.create_job(
+            job_type='document_convert',
+            vendor_id=None,  # document converter 通常不指定 vendor
+            user_id=user_id,
+            job_config={
+                'file_name': original_filename,
+                'file_type': file_ext[1:],  # 去掉點
+                'model': self.model
+            },
+            file_path=str(saved_path),
+            file_name=original_filename,
+            file_size_bytes=file_size,
+            expires_days=7  # 7天後自動清理
+        )
 
         print(f"✅ 文件上傳成功 (job_id: {job_id})")
         print(f"   檔名: {original_filename}")
         print(f"   大小: {file_size / 1024:.1f} KB")
         print(f"   格式: {file_ext}")
 
-        return self.jobs[job_id]
+        # 返回 job 資訊
+        return await self.get_job(job_id)
 
     async def parse_document(self, job_id: str) -> Dict:
         """
@@ -110,15 +117,20 @@ class DocumentConverterService:
         Returns:
             包含解析內容的任務資訊
         """
-        if job_id not in self.jobs:
+        # 從資料庫獲取 job
+        job = await self.get_job(job_id)
+        if not job:
             raise ValueError(f"任務不存在: {job_id}")
 
-        job = self.jobs[job_id]
-        job['status'] = 'parsing'
-        job['updated_at'] = datetime.now().isoformat()
+        # 更新狀態為 parsing
+        await self.update_status(
+            job_id,
+            status='processing',
+            progress={'stage': 'parsing', 'message': '正在解析文件內容...'}
+        )
 
         try:
-            file_type = job['file_type']
+            file_type = job['config'].get('file_type')
             file_path = job['file_path']
 
             if file_type == 'docx':
@@ -128,19 +140,27 @@ class DocumentConverterService:
             else:
                 raise ValueError(f"不支援的檔案格式: {file_type}")
 
-            job['content'] = content
-            job['status'] = 'parsed'
-            job['updated_at'] = datetime.now().isoformat()
+            # 將解析的內容保存到 job_result
+            await self.update_status(
+                job_id,
+                status='processing',
+                result={'content': content, 'content_length': len(content)},
+                progress={'stage': 'parsed', 'message': f'文件解析完成，內容長度: {len(content)} 字元'}
+            )
 
             print(f"✅ 文件解析完成 (job_id: {job_id})")
             print(f"   內容長度: {len(content)} 字元")
 
-            return job
+            # 返回更新後的 job
+            return await self.get_job(job_id)
 
         except Exception as e:
-            job['status'] = 'failed'
-            job['error'] = str(e)
-            job['updated_at'] = datetime.now().isoformat()
+            await self.update_status(
+                job_id,
+                status='failed',
+                error_message=str(e),
+                error_details={'stage': 'parsing', 'error': str(e)}
+            )
             print(f"❌ 文件解析失敗: {e}")
             raise
 
@@ -213,19 +233,24 @@ class DocumentConverterService:
         Returns:
             包含 Q&A 列表的任務資訊
         """
-        if job_id not in self.jobs:
+        # 從資料庫獲取 job
+        job = await self.get_job(job_id)
+        if not job:
             raise ValueError(f"任務不存在: {job_id}")
 
-        job = self.jobs[job_id]
+        # 檢查狀態（必須已經解析）
+        if not job.get('result') or 'content' not in job.get('result', {}):
+            raise ValueError(f"任務狀態錯誤。請先解析文件")
 
-        if job['status'] != 'parsed':
-            raise ValueError(f"任務狀態錯誤: {job['status']}。請先解析文件")
-
-        job['status'] = 'converting'
-        job['updated_at'] = datetime.now().isoformat()
+        # 更新狀態為 converting
+        await self.update_status(
+            job_id,
+            status='processing',
+            progress={'stage': 'converting', 'message': '正在使用 AI 轉換為 Q&A...'}
+        )
 
         try:
-            content = job['content']
+            content = job['result']['content']
 
             # 估算 token 並分段處理（考慮 context + TPM 限制）
             # 根據模型動態調整分段大小
@@ -286,22 +311,38 @@ class DocumentConverterService:
                     print(f"   ⏳ 等待 {delay_seconds} 秒後處理下一段...")
                     await asyncio.sleep(delay_seconds)
 
-            job['qa_list'] = all_qa
-            job['status'] = 'completed'
-            job['updated_at'] = datetime.now().isoformat()
+            # 保存 Q&A 列表到資料庫
+            intent_recommended = sum(1 for qa in all_qa if qa.get('recommended_intent', {}).get('intent_id'))
+
+            await self.update_status(
+                job_id,
+                status='completed',
+                result={
+                    'content': content,
+                    'content_length': len(content),
+                    'qa_list': all_qa,
+                    'qa_count': len(all_qa),
+                    'intent_recommended': intent_recommended
+                },
+                success_records=len(all_qa),
+                progress={'stage': 'completed', 'message': f'AI 轉換完成，提取到 {len(all_qa)} 個 Q&A'}
+            )
 
             print(f"✅ AI 轉換完成")
             print(f"   提取到 {len(all_qa)} 個 Q&A")
             if self.db_pool:
-                intent_recommended = sum(1 for qa in all_qa if qa.get('recommended_intent', {}).get('intent_id'))
                 print(f"   已推薦意圖: {intent_recommended}/{len(all_qa)} 個 Q&A")
 
-            return job
+            # 返回更新後的 job
+            return await self.get_job(job_id)
 
         except Exception as e:
-            job['status'] = 'failed'
-            job['error'] = str(e)
-            job['updated_at'] = datetime.now().isoformat()
+            await self.update_status(
+                job_id,
+                status='failed',
+                error_message=str(e),
+                error_details={'stage': 'converting', 'error': str(e)}
+            )
             print(f"❌ AI 轉換失敗: {e}")
             raise
 
@@ -472,29 +513,29 @@ class DocumentConverterService:
         Returns:
             更新後的任務資訊
         """
-        if job_id not in self.jobs:
+        # 從資料庫獲取 job
+        job = await self.get_job(job_id)
+        if not job:
             raise ValueError(f"任務不存在: {job_id}")
 
-        job = self.jobs[job_id]
-        job['qa_list'] = qa_list
-        job['updated_at'] = datetime.now().isoformat()
+        # 更新 result 中的 qa_list
+        current_result = job.get('result', {})
+        current_result['qa_list'] = qa_list
+        current_result['qa_count'] = len(qa_list)
+
+        await self.update_status(
+            job_id,
+            status=job['status'],  # 保持當前狀態
+            result=current_result,
+            success_records=len(qa_list)
+        )
 
         print(f"✅ Q&A 列表已更新 (job_id: {job_id})")
         print(f"   Q&A 數量: {len(qa_list)}")
 
-        return job
+        return await self.get_job(job_id)
 
-    async def get_job(self, job_id: str) -> Optional[Dict]:
-        """
-        獲取任務資訊
-
-        Args:
-            job_id: 任務 ID
-
-        Returns:
-            任務資訊，不存在則返回 None
-        """
-        return self.jobs.get(job_id)
+    # ✅ get_job() 方法已從父類 UnifiedJobService 繼承，無需重複定義
 
     async def estimate_cost(self, content_length: int) -> Dict:
         """
@@ -532,21 +573,14 @@ class DocumentConverterService:
 
     async def cleanup_job(self, job_id: str):
         """
-        清理任務文件
+        清理任務文件（使用統一 Job 服務的 delete_job 方法）
 
         Args:
             job_id: 任務 ID
         """
-        if job_id in self.jobs:
-            job = self.jobs[job_id]
-            file_path = Path(job['file_path'])
-
-            if file_path.exists():
-                file_path.unlink()
-                print(f"🗑️  已刪除文件: {file_path}")
-
-            del self.jobs[job_id]
-            print(f"✅ 任務已清理 (job_id: {job_id})")
+        # 使用父類的 delete_job 方法（會自動刪除檔案和資料庫記錄）
+        await self.delete_job(job_id, delete_file=True)
+        print(f"✅ 任務已清理 (job_id: {job_id})")
 
     async def _get_all_intents(self) -> List[Dict]:
         """

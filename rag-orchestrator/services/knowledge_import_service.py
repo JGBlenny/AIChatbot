@@ -1,6 +1,8 @@
 """
 知識匯入服務
 統一處理各種格式的知識匯入，包括檔案解析、向量生成、資料庫儲存
+
+重構日期：2025-11-21 - 改用統一 Job 系統
 """
 import os
 import json
@@ -14,9 +16,12 @@ from asyncpg.pool import Pool
 from openai import AsyncOpenAI
 import time
 
+# 引入統一 Job 服務
+from services.unified_job_service import UnifiedJobService
 
-class KnowledgeImportService:
-    """知識匯入服務"""
+
+class KnowledgeImportService(UnifiedJobService):
+    """知識匯入服務（已整合到統一 Job 系統）"""
 
     def __init__(self, db_pool: Pool):
         """
@@ -25,7 +30,8 @@ class KnowledgeImportService:
         Args:
             db_pool: 資料庫連接池
         """
-        self.db_pool = db_pool
+        # 初始化父類（統一 Job 服務）
+        super().__init__(db_pool)
         self.openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.embedding_model = "text-embedding-3-small"
         self.llm_model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
@@ -73,14 +79,14 @@ class KnowledgeImportService:
 
         try:
             # 1. 更新作業狀態為處理中
-            await self.update_job_status(job_id, "processing", progress={"current": 0, "total": 100})
+            await self.update_status(job_id, "processing", progress={"current": 0, "total": 100})
 
             # 2. 偵測檔案類型並選擇解析器
             file_type = self._detect_file_type(file_path)
             print(f"📄 檔案類型: {file_type}")
 
             # 3. 解析檔案
-            await self.update_job_status(job_id, "processing", progress={"current": 10, "total": 100, "stage": "解析檔案"})
+            await self.update_status(job_id, "processing", progress={"current": 10, "total": 100, "stage": "解析檔案"})
             knowledge_list = await self._parse_file(file_path, file_type)
 
             if not knowledge_list:
@@ -90,23 +96,23 @@ class KnowledgeImportService:
 
             # 4. 預先去重（文字完全相同）- 在 LLM 前執行，節省成本
             if enable_deduplication:
-                await self.update_job_status(job_id, "processing", progress={"current": 20, "total": 100, "stage": "文字去重"})
+                await self.update_status(job_id, "processing", progress={"current": 20, "total": 100, "stage": "文字去重"})
                 original_count = len(knowledge_list)
                 knowledge_list = await self._deduplicate_exact_match(knowledge_list)
                 text_skipped = original_count - len(knowledge_list)
                 print(f"🔍 文字去重: 跳過 {text_skipped} 條完全相同的項目，剩餘 {len(knowledge_list)} 條")
 
             # 5. 生成問題摘要（使用 LLM）- 只處理去重後的知識
-            await self.update_job_status(job_id, "processing", progress={"current": 35, "total": 100, "stage": "生成問題摘要"})
+            await self.update_status(job_id, "processing", progress={"current": 35, "total": 100, "stage": "生成問題摘要"})
             await self._generate_question_summaries(knowledge_list)
 
             # 6. 生成向量嵌入 - 只處理去重後的知識
-            await self.update_job_status(job_id, "processing", progress={"current": 55, "total": 100, "stage": "生成向量嵌入"})
+            await self.update_status(job_id, "processing", progress={"current": 55, "total": 100, "stage": "生成向量嵌入"})
             await self._generate_embeddings(knowledge_list)
 
             # 7. 語意去重（使用向量相似度）- 二次過濾
             if enable_deduplication:
-                await self.update_job_status(job_id, "processing", progress={"current": 70, "total": 100, "stage": "語意去重"})
+                await self.update_status(job_id, "processing", progress={"current": 70, "total": 100, "stage": "語意去重"})
                 semantic_original = len(knowledge_list)
                 knowledge_list = await self._deduplicate_by_similarity(knowledge_list)
                 semantic_skipped = semantic_original - len(knowledge_list)
@@ -114,21 +120,21 @@ class KnowledgeImportService:
                 print(f"📊 總計跳過: {text_skipped + semantic_skipped} 條（文字: {text_skipped}, 語意: {semantic_skipped}）")
 
             # 8. 推薦意圖（使用 LLM 或分類器）
-            await self.update_job_status(job_id, "processing", progress={"current": 76, "total": 100, "stage": "推薦意圖"})
+            await self.update_status(job_id, "processing", progress={"current": 76, "total": 100, "stage": "推薦意圖"})
             await self._recommend_intents(knowledge_list)
 
             # 8.5. 質量評估（自動篩選低質量知識）
-            await self.update_job_status(job_id, "processing", progress={"current": 77, "total": 100, "stage": "質量評估"})
+            await self.update_status(job_id, "processing", progress={"current": 77, "total": 100, "stage": "質量評估"})
             await self._evaluate_quality(knowledge_list)
 
             # 9. 建立測試情境建議（需求 2：針對 B2C 知識）
-            await self.update_job_status(job_id, "processing", progress={"current": 78, "total": 100, "stage": "建立測試情境建議"})
+            await self.update_status(job_id, "processing", progress={"current": 78, "total": 100, "stage": "建立測試情境建議"})
             test_scenario_count = await self._create_test_scenario_suggestions(knowledge_list, vendor_id)
 
             # 10. 根據 skip_review 參數決定匯入目標
             if skip_review:
                 # 直接匯入到正式知識庫
-                await self.update_job_status(job_id, "processing", progress={"current": 85, "total": 100, "stage": "直接匯入知識庫"})
+                await self.update_status(job_id, "processing", progress={"current": 85, "total": 100, "stage": "直接匯入知識庫"})
                 result = await self._import_to_database(
                     knowledge_list,
                     vendor_id=vendor_id,
@@ -142,7 +148,7 @@ class KnowledgeImportService:
                 # 匯入到審核佇列（需求 3：所有知識都需要審核）
                 # 知識會先進入 ai_generated_knowledge_candidates 表
                 # 人工審核通過後才會加入正式的 knowledge_base 表
-                await self.update_job_status(job_id, "processing", progress={"current": 85, "total": 100, "stage": "匯入審核佇列"})
+                await self.update_status(job_id, "processing", progress={"current": 85, "total": 100, "stage": "匯入審核佇列"})
                 result = await self._import_to_review_queue(
                     knowledge_list,
                     vendor_id=vendor_id,
@@ -150,12 +156,15 @@ class KnowledgeImportService:
                 )
                 result['test_scenarios_created'] = test_scenario_count
 
-            # 11. 更新作業狀態為完成
-            await self.update_job_status(
+            # 11. 更新作業狀態為完成（使用統一 Job 服務的方法）
+            await self.update_status(
                 job_id,
-                "completed",
+                status="completed",
                 progress={"current": 100, "total": 100},
-                result=result
+                result=result,
+                success_records=result.get('imported', 0),
+                failed_records=result.get('errors', 0),
+                skipped_records=result.get('skipped', 0)
             )
 
             print(f"\n{'='*60}")
@@ -175,13 +184,13 @@ class KnowledgeImportService:
             return result
 
         except Exception as e:
-            # 更新作業狀態為失敗
+            # 更新作業狀態為失敗（使用統一 Job 服務的方法）
             error_message = str(e)
             print(f"\n❌ 匯入失敗: {error_message}")
-            await self.update_job_status(
+            await self.update_status(
                 job_id,
-                "failed",
-                error=error_message
+                status="failed",
+                error_message=error_message
             )
             raise
 
@@ -1454,55 +1463,15 @@ class KnowledgeImportService:
             "mode": "review_queue"
         }
 
-    async def update_job_status(
-        self,
-        job_id: str,
-        status: str,
-        progress: Optional[Dict] = None,
-        result: Optional[Dict] = None,
-        error: Optional[str] = None
-    ):
-        """
-        更新作業狀態
-
-        注意：job 記錄必須在呼叫此方法前已存在（由上傳端點建立）
-
-        Args:
-            job_id: 作業 ID
-            status: 狀態（processing/completed/failed）
-            progress: 進度資訊
-            result: 結果統計
-            error: 錯誤訊息
-        """
-        async with self.db_pool.acquire() as conn:
-            import uuid
-            # 更新作業狀態（假設 job 記錄已存在）
-            # 先進行基本更新
-            updated = await conn.fetchval("""
-                UPDATE knowledge_import_jobs
-                SET status = $1::varchar,
-                    progress = $2::jsonb,
-                    result = $3::jsonb,
-                    error_message = $4,
-                    updated_at = CURRENT_TIMESTAMP,
-                    completed_at = CASE WHEN $1::varchar IN ('completed', 'failed')
-                                        THEN CURRENT_TIMESTAMP
-                                        ELSE completed_at
-                                   END
-                WHERE job_id = $5
-                RETURNING job_id
-            """, status, json.dumps(progress) if progress else None,
-                json.dumps(result) if result else None, error, uuid.UUID(job_id))
-
-            if not updated:
-                raise Exception(f"Job {job_id} not found in database")
-
-            # 如果有 result 且狀態是 completed，更新計數欄位
-            if result and status == 'completed':
-                await conn.execute("""
-                    UPDATE knowledge_import_jobs
-                    SET imported_count = ($1::jsonb->>'imported')::integer,
-                        skipped_count = ($1::jsonb->>'skipped')::integer,
-                        error_count = ($1::jsonb->>'errors')::integer
-                    WHERE job_id = $2
-                """, json.dumps(result), uuid.UUID(job_id))
+    # ✅ update_job_status 方法已移除，改用父類 UnifiedJobService 的 update_status() 方法
+    # 新的調用方式：
+    # await self.update_status(
+    #     job_id=job_id,
+    #     status=status,
+    #     progress=progress,
+    #     result=result,
+    #     error_message=error,
+    #     success_records=result.get('imported'),
+    #     failed_records=result.get('errors'),
+    #     skipped_records=result.get('skipped')
+    # )

@@ -60,6 +60,7 @@ class ConvertRequest(BaseModel):
 
 @router.post("/upload")
 async def upload_document(
+    request: Request,
     file: UploadFile = File(...),
 ):
     """
@@ -79,6 +80,9 @@ async def upload_document(
         }
     """
     try:
+        # 獲取服務實例（會自動設置 db_pool）
+        service = _get_service(request)
+
         # 驗證文件格式
         file_ext = Path(file.filename).suffix.lower()
         if file_ext not in ['.docx', '.pdf']:
@@ -93,7 +97,7 @@ async def upload_document(
             shutil.copyfileobj(file.file, buffer)
 
         # 使用服務處理
-        result = await converter_service.upload_document(
+        result = await service.upload_document(
             file_path=str(temp_file),
             original_filename=file.filename
         )
@@ -108,7 +112,7 @@ async def upload_document(
 
 
 @router.post("/{job_id}/parse")
-async def parse_document(job_id: str):
+async def parse_document(request: Request, job_id: str):
     """
     解析文件內容
 
@@ -124,7 +128,8 @@ async def parse_document(job_id: str):
         }
     """
     try:
-        result = await converter_service.parse_document(job_id)
+        service = _get_service(request)
+        result = await service.parse_document(job_id)
         return JSONResponse(content=result)
 
     except ValueError as e:
@@ -182,7 +187,7 @@ async def convert_to_qa(job_id: str, convert_request: ConvertRequest, request: R
 
 
 @router.get("/{job_id}")
-async def get_job_status(job_id: str):
+async def get_job_status(request: Request, job_id: str):
     """
     獲取任務狀態和結果
 
@@ -192,7 +197,8 @@ async def get_job_status(job_id: str):
     Returns:
         完整的任務資訊
     """
-    job = await converter_service.get_job(job_id)
+    service = _get_service(request)
+    job = await service.get_job(job_id)
 
     if not job:
         raise HTTPException(status_code=404, detail=f"任務不存在: {job_id}")
@@ -201,7 +207,7 @@ async def get_job_status(job_id: str):
 
 
 @router.put("/{job_id}/qa-list")
-async def update_qa_list(job_id: str, update: QAListUpdate):
+async def update_qa_list(request: Request, job_id: str, update: QAListUpdate):
     """
     更新 Q&A 列表（人工編輯後）
 
@@ -213,10 +219,11 @@ async def update_qa_list(job_id: str, update: QAListUpdate):
         更新後的任務資訊
     """
     try:
+        service = _get_service(request)
         # 轉換 Pydantic 模型為字典
         qa_list = [qa.model_dump() for qa in update.qa_list]
 
-        result = await converter_service.update_qa_list(
+        result = await service.update_qa_list(
             job_id=job_id,
             qa_list=qa_list
         )

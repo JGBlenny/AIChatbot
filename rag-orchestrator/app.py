@@ -20,7 +20,7 @@ from services.vendor_config_service import VendorConfigService
 from services.cache_service import CacheService
 
 # 導入路由
-from routers import chat, chat_stream, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_generation, platform_sop, cache, videos, business_types, document_converter
+from routers import chat, chat_stream, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, platform_sop, cache, videos, business_types, document_converter
 
 # 全局變數
 db_pool: Pool = None
@@ -142,6 +142,7 @@ app.include_router(business_types.router, prefix="/api/v1", tags=["business_type
 app.include_router(knowledge.router, tags=["knowledge"])
 app.include_router(vendors.router, tags=["vendors"])  # Phase 1: Multi-Vendor Support
 app.include_router(knowledge_import.router, tags=["knowledge_import"])  # Knowledge Import from LINE chats
+app.include_router(knowledge_export.router, tags=["knowledge_export"])  # Knowledge Export to Excel
 app.include_router(knowledge_generation.router, prefix="/api/v1", tags=["knowledge_generation"])  # AI Knowledge Generation
 app.include_router(platform_sop.router, tags=["platform_sop"])  # Platform SOP Template Management
 app.include_router(cache.router, tags=["cache"])  # Cache Management (事件驅動 + TTL 混合策略)
