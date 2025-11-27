@@ -425,8 +425,7 @@ async def _build_sop_response(
             id=sop['id'],
             question_summary=sop['item_name'],
             answer=sop['content'],
-            scope='vendor_sop',
-            is_template=False
+            scope='vendor_sop'
         ) for sop in sop_items]
 
     # 清理答案並替換模板變數（兜底保護）
@@ -498,8 +497,7 @@ async def _build_rag_response(
             id=r['id'],
             question_summary=r['question_summary'],
             answer=r['content'],
-            scope='global',
-            is_template=False
+            scope='global'
         ) for r in rag_results]
 
     # 清理答案並替換模板變數（兜底保護）
@@ -742,8 +740,7 @@ async def _build_knowledge_response(
             id=k['id'],
             question_summary=k['question_summary'],
             answer=k['answer'],
-            scope=k['scope'],
-            is_template=k['is_template']
+            scope=k['scope']
         ) for k in knowledge_list]
 
     # 提取影片資訊（從第一個知識項目）
@@ -950,7 +947,6 @@ class KnowledgeSource(BaseModel):
     question_summary: str
     answer: str
     scope: str
-    is_template: bool
 
 
 class VendorChatResponse(BaseModel):

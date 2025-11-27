@@ -37,10 +37,6 @@
                 <span class="nav-icon">🎯</span>
                 <span class="nav-text">意圖設定</span>
               </router-link>
-              <router-link to="/category-config" class="nav-item nav-item-sub">
-                <span class="nav-icon">📂</span>
-                <span class="nav-text">分類設定</span>
-              </router-link>
               <router-link to="/target-users-config" class="nav-item nav-item-sub">
                 <span class="nav-icon">👥</span>
                 <span class="nav-text">目標設定</span>
@@ -80,12 +76,16 @@
           </router-link>
         </div>
 
-        <!-- 資料匯入層 -->
+        <!-- 資料工具層 -->
         <div class="nav-layer">
-          <div class="layer-title">資料匯入層</div>
+          <div class="layer-title">資料工具層</div>
           <router-link to="/knowledge-import" class="nav-item">
             <span class="nav-icon">📥</span>
-            <span class="nav-text">匯入管理</span>
+            <span class="nav-text">知識庫匯入</span>
+          </router-link>
+          <router-link to="/knowledge-export" class="nav-item">
+            <span class="nav-icon">📤</span>
+            <span class="nav-text">知識庫匯出</span>
           </router-link>
           <router-link to="/document-converter" class="nav-item">
             <span class="nav-icon">🤖</span>
@@ -186,8 +186,7 @@ export default {
         '/backtest': '回測結果',
         '/cache-management': '緩存管理',
         '/target-users-config': '目標用戶配置',
-        '/business-types-config': '業態類型配置',
-        '/category-config': '分類配置'
+        '/business-types-config': '業態類型配置'
       }
     };
   },

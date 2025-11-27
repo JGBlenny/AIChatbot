@@ -198,7 +198,7 @@ async def get_import_job_status(job_id: str, request: Request):
                 file_name,
                 status,
                 progress,
-                result,
+                job_result,
                 error_message,
                 created_at,
                 updated_at
@@ -212,7 +212,7 @@ async def get_import_job_status(job_id: str, request: Request):
         # 解析 JSON 欄位
         import json
         progress = json.loads(job['progress']) if job['progress'] else None
-        result = json.loads(job['result']) if job['result'] else None
+        result = json.loads(job['job_result']) if job['job_result'] else None
 
         return {
             "job_id": str(job['job_id']),
@@ -324,7 +324,7 @@ async def preview_knowledge_file(file: UploadFile = File(...)):
         file: 上傳的檔案
 
     Returns:
-        Dict: 預覽資訊
+        Dict: 預覽資訊（包含來源類型偵測）
     """
     # 驗證檔案類型
     allowed_extensions = ['.xlsx', '.xls', '.csv', '.txt', '.json']
@@ -345,12 +345,36 @@ async def preview_knowledge_file(file: UploadFile = File(...)):
     # 根據檔案類型預覽
     preview_data = {}
 
+    # 初始化來源偵測變數
+    source_type = "external_file"
+    import_source = "external_unknown"
+    detected_source_description = "外部檔案"
+
     if file_ext in ['.xlsx', '.xls']:
         # Excel 預覽
         import pandas as pd
         import io
 
         df = pd.read_excel(io.BytesIO(content), engine='openpyxl')
+
+        # 來源偵測：檢查是否為系統匯出檔案
+        expected_fields = {
+            'question_summary', 'answer', 'scope', 'vendor_id',
+            'business_types', 'target_user', 'intent_names',
+            'keywords', 'priority'
+        }
+        actual_fields = set(df.columns)
+
+        if expected_fields.issubset(actual_fields):
+            # 系統匯出檔案
+            source_type = "external_file"
+            import_source = "system_export"
+            detected_source_description = "系統匯出檔案（可直接匯入）"
+        else:
+            # 一般 Excel 檔案
+            source_type = "external_file"
+            import_source = "external_excel"
+            detected_source_description = "外部 Excel 檔案"
 
         preview_data = {
             "file_type": "excel",
@@ -383,6 +407,17 @@ async def preview_knowledge_file(file: UploadFile = File(...)):
         content_str = content.decode('utf-8', errors='ignore')
         lines = content_str.split('\n')
 
+        # 來源偵測：檢查檔名是否包含對話關鍵字
+        filename_lower = file.filename.lower()
+        if 'chat' in filename_lower or 'conversation' in filename_lower or '對話' in filename_lower or '聊天' in filename_lower:
+            source_type = "line_chat"
+            import_source = "line_chat_txt"
+            detected_source_description = "對話記錄（將創建測試情境）"
+        else:
+            source_type = "external_file"
+            import_source = "external_txt"
+            detected_source_description = "純文字檔案"
+
         preview_data = {
             "file_type": "text",
             "total_lines": len(lines),
@@ -404,6 +439,11 @@ async def preview_knowledge_file(file: UploadFile = File(...)):
         else:
             knowledge_list = []
 
+        # 來源偵測：JSON 檔案預設為外部檔案
+        source_type = "external_file"
+        import_source = "external_json"
+        detected_source_description = "外部 JSON 檔案"
+
         preview_data = {
             "file_type": "json",
             "total_items": len(knowledge_list),
@@ -415,7 +455,87 @@ async def preview_knowledge_file(file: UploadFile = File(...)):
         "filename": file.filename,
         "file_size_kb": file_size / 1024,
         **preview_data,
+        "source_type": source_type,
+        "import_source": import_source,
+        "detected_source_description": detected_source_description,
         "message": "這是預覽模式，尚未消耗任何 OpenAI token"
+    }
+
+
+@router.post("/jobs/{job_id}/confirm")
+async def confirm_test_scenarios(
+    job_id: str,
+    request: Request,
+    body: dict
+):
+    """
+    確認創建選中的測試情境（對話記錄匯入專用）
+
+    Args:
+        job_id: 任務 ID
+        body: 包含 selected_indices（用戶選中的測試情境索引列表）
+
+    Returns:
+        Dict: 創建結果
+    """
+    db_pool = request.app.state.db_pool
+    selected_indices = body.get('selected_indices', [])
+
+    if not selected_indices:
+        raise HTTPException(status_code=400, detail="請至少選擇一個測試情境")
+
+    # 獲取任務信息
+    async with db_pool.acquire() as conn:
+        job = await conn.fetchrow("""
+            SELECT job_id, status, job_result, file_name, user_id
+            FROM unified_jobs
+            WHERE job_id = $1
+        """, uuid.UUID(job_id))
+
+        if not job:
+            raise HTTPException(status_code=404, detail="任務不存在")
+
+        if job['status'] != 'awaiting_confirmation':
+            raise HTTPException(
+                status_code=400,
+                detail=f"任務狀態必須為 awaiting_confirmation（當前: {job['status']}）"
+            )
+
+    # 從 job_result 中獲取 scenarios
+    import json
+    result = job['job_result']
+    if isinstance(result, str):
+        result = json.loads(result)
+    scenarios = result.get('scenarios', [])
+
+    if not scenarios:
+        raise HTTPException(status_code=400, detail="任務中沒有測試情境數據")
+
+    # 創建選中的測試情境
+    from services.knowledge_import_service import KnowledgeImportService
+    service = KnowledgeImportService(db_pool)
+
+    creation_result = await service._create_selected_scenarios(
+        scenarios=scenarios,
+        selected_indices=selected_indices,
+        created_by=job['user_id']
+    )
+
+    # 更新任務狀態為完成
+    await service.update_status(
+        job_id=job_id,
+        status="completed",
+        progress={"current": 100, "total": 100},
+        result=creation_result,
+        success_records=creation_result.get('created', 0),
+        skipped_records=creation_result.get('skipped', 0),
+        failed_records=creation_result.get('errors', 0)
+    )
+
+    return {
+        "message": "測試情境創建完成",
+        "job_id": job_id,
+        **creation_result
     }
 
 

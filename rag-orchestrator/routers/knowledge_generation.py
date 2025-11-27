@@ -532,6 +532,7 @@ async def get_pending_candidates(
 
         async with db_pool.acquire() as conn:
             # 直接查詢表，包含編輯欄位
+            # 使用 LEFT JOIN 以支援沒有 test_scenario_id 的外部匯入知識
             rows = await conn.fetch("""
                 SELECT
                     kc.id AS candidate_id,
@@ -557,7 +558,7 @@ async def get_pending_candidates(
                         ELSE NULL
                     END AS source_question_frequency
                 FROM ai_generated_knowledge_candidates kc
-                JOIN test_scenarios ts ON kc.test_scenario_id = ts.id
+                LEFT JOIN test_scenarios ts ON kc.test_scenario_id = ts.id
                 WHERE kc.status IN ('pending_review', 'needs_revision')
                 ORDER BY kc.created_at DESC
                 LIMIT $1 OFFSET $2

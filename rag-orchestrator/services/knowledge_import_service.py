@@ -7,6 +7,7 @@
 import os
 import json
 import asyncio
+import uuid
 from datetime import datetime
 from typing import List, Dict, Optional, Tuple
 from pathlib import Path
@@ -34,11 +35,18 @@ class KnowledgeImportService(UnifiedJobService):
         super().__init__(db_pool)
         self.openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.embedding_model = "text-embedding-3-small"
-        self.llm_model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+        # 知識匯入使用 DOCUMENT_CONVERTER_MODEL（需要大 context 處理長文本）
+        # 優先順序：DOCUMENT_CONVERTER_MODEL > KNOWLEDGE_GEN_MODEL > gpt-4o
+        self.llm_model = os.getenv("DOCUMENT_CONVERTER_MODEL",
+                                   os.getenv("KNOWLEDGE_GEN_MODEL", "gpt-4o"))
 
         # 質量評估配置
         self.quality_evaluation_enabled = os.getenv("QUALITY_EVALUATION_ENABLED", "true").lower() == "true"
         self.quality_evaluation_threshold = int(os.getenv("QUALITY_EVALUATION_THRESHOLD", "6"))
+
+        # 目標用戶配置緩存（從資料庫動態加載）
+        self._target_user_config_cache = None
+        self._target_user_cache_time = None
 
     async def process_import_job(
         self,
@@ -78,15 +86,22 @@ class KnowledgeImportService(UnifiedJobService):
         print(f"{'='*60}\n")
 
         try:
-            # 1. 更新作業狀態為處理中
-            await self.update_status(job_id, "processing", progress={"current": 0, "total": 100})
+            # 1. 從資料庫獲取原始檔名（用於來源偵測）
+            async with self.db_pool.acquire() as conn:
+                job = await conn.fetchrow("""
+                    SELECT file_name FROM unified_jobs WHERE job_id = $1
+                """, uuid.UUID(job_id))
+                original_filename = job['file_name'] if job else Path(file_path).name
 
-            # 2. 偵測檔案類型並選擇解析器
+            # 2. 更新作業狀態為處理中（uploading 階段由前端處理，後端從 extracting 開始）
+            await self.update_status(job_id, "processing", progress={"current": 0, "total": 100, "stage": "extracting"})
+
+            # 3. 偵測檔案類型並選擇解析器
             file_type = self._detect_file_type(file_path)
             print(f"📄 檔案類型: {file_type}")
 
             # 3. 解析檔案
-            await self.update_status(job_id, "processing", progress={"current": 10, "total": 100, "stage": "解析檔案"})
+            await self.update_status(job_id, "processing", progress={"current": 10, "total": 100, "stage": "extracting"})
             knowledge_list = await self._parse_file(file_path, file_type)
 
             if not knowledge_list:
@@ -94,25 +109,60 @@ class KnowledgeImportService(UnifiedJobService):
 
             print(f"✅ 解析出 {len(knowledge_list)} 條知識")
 
+            # 3.5. 偵測匯入來源類型（使用原始檔名）
+            source_type, import_source = await self._detect_import_source(original_filename, file_type, knowledge_list)
+            print(f"📋 來源類型: {source_type} ({import_source})")
+
+            # ========== 特殊處理：對話記錄 → 等待確認模式 ==========
+            if source_type == 'line_chat':
+                print(f"💬 偵測到對話記錄，解析測試情境並等待用戶確認")
+                await self.update_status(job_id, "processing", progress={"current": 80, "total": 100, "stage": "parsing"})
+
+                # 解析出測試情境列表（但不創建）
+                scenarios = await self._parse_chat_scenarios(knowledge_list, file_name=Path(file_path).name)
+
+                # 設置為等待確認狀態
+                await self.update_status(
+                    job_id,
+                    status="awaiting_confirmation",
+                    progress={"current": 90, "total": 100},
+                    result={
+                        "mode": "test_scenarios_preview",
+                        "total": len(scenarios),
+                        "scenarios": scenarios,
+                        "message": "請勾選要創建的測試情境"
+                    }
+                )
+
+                print(f"✅ 對話記錄解析完成: 共 {len(scenarios)} 個測試情境待確認")
+                return {
+                    "mode": "test_scenarios_preview",
+                    "total": len(scenarios),
+                    "scenarios": scenarios
+                }
+
+            # 根據來源類型決定處理流程
+            is_system_export = (import_source == 'system_export')
+
             # 4. 預先去重（文字完全相同）- 在 LLM 前執行，節省成本
             if enable_deduplication:
-                await self.update_status(job_id, "processing", progress={"current": 20, "total": 100, "stage": "文字去重"})
+                await self.update_status(job_id, "processing", progress={"current": 20, "total": 100, "stage": "extracting"})
                 original_count = len(knowledge_list)
                 knowledge_list = await self._deduplicate_exact_match(knowledge_list)
                 text_skipped = original_count - len(knowledge_list)
                 print(f"🔍 文字去重: 跳過 {text_skipped} 條完全相同的項目，剩餘 {len(knowledge_list)} 條")
 
             # 5. 生成問題摘要（使用 LLM）- 只處理去重後的知識
-            await self.update_status(job_id, "processing", progress={"current": 35, "total": 100, "stage": "生成問題摘要"})
+            await self.update_status(job_id, "processing", progress={"current": 35, "total": 100, "stage": "extracting"})
             await self._generate_question_summaries(knowledge_list)
 
             # 6. 生成向量嵌入 - 只處理去重後的知識
-            await self.update_status(job_id, "processing", progress={"current": 55, "total": 100, "stage": "生成向量嵌入"})
+            await self.update_status(job_id, "processing", progress={"current": 55, "total": 100, "stage": "embedding"})
             await self._generate_embeddings(knowledge_list)
 
             # 7. 語意去重（使用向量相似度）- 二次過濾
             if enable_deduplication:
-                await self.update_status(job_id, "processing", progress={"current": 70, "total": 100, "stage": "語意去重"})
+                await self.update_status(job_id, "processing", progress={"current": 70, "total": 100, "stage": "embedding"})
                 semantic_original = len(knowledge_list)
                 knowledge_list = await self._deduplicate_by_similarity(knowledge_list)
                 semantic_skipped = semantic_original - len(knowledge_list)
@@ -120,21 +170,21 @@ class KnowledgeImportService(UnifiedJobService):
                 print(f"📊 總計跳過: {text_skipped + semantic_skipped} 條（文字: {text_skipped}, 語意: {semantic_skipped}）")
 
             # 8. 推薦意圖（使用 LLM 或分類器）
-            await self.update_status(job_id, "processing", progress={"current": 76, "total": 100, "stage": "推薦意圖"})
+            await self.update_status(job_id, "processing", progress={"current": 76, "total": 100, "stage": "embedding"})
             await self._recommend_intents(knowledge_list)
 
             # 8.5. 質量評估（自動篩選低質量知識）
-            await self.update_status(job_id, "processing", progress={"current": 77, "total": 100, "stage": "質量評估"})
+            await self.update_status(job_id, "processing", progress={"current": 77, "total": 100, "stage": "embedding"})
             await self._evaluate_quality(knowledge_list)
 
             # 9. 建立測試情境建議（需求 2：針對 B2C 知識）
-            await self.update_status(job_id, "processing", progress={"current": 78, "total": 100, "stage": "建立測試情境建議"})
+            await self.update_status(job_id, "processing", progress={"current": 78, "total": 100, "stage": "embedding"})
             test_scenario_count = await self._create_test_scenario_suggestions(knowledge_list, vendor_id)
 
             # 10. 根據 skip_review 參數決定匯入目標
             if skip_review:
                 # 直接匯入到正式知識庫
-                await self.update_status(job_id, "processing", progress={"current": 85, "total": 100, "stage": "直接匯入知識庫"})
+                await self.update_status(job_id, "processing", progress={"current": 85, "total": 100, "stage": "saving"})
                 result = await self._import_to_database(
                     knowledge_list,
                     vendor_id=vendor_id,
@@ -148,11 +198,14 @@ class KnowledgeImportService(UnifiedJobService):
                 # 匯入到審核佇列（需求 3：所有知識都需要審核）
                 # 知識會先進入 ai_generated_knowledge_candidates 表
                 # 人工審核通過後才會加入正式的 knowledge_base 表
-                await self.update_status(job_id, "processing", progress={"current": 85, "total": 100, "stage": "匯入審核佇列"})
+                await self.update_status(job_id, "processing", progress={"current": 85, "total": 100, "stage": "saving"})
                 result = await self._import_to_review_queue(
                     knowledge_list,
                     vendor_id=vendor_id,
-                    created_by=user_id
+                    created_by=user_id,
+                    source_type=source_type,
+                    import_source=import_source,
+                    file_name=Path(file_path).name
                 )
                 result['test_scenarios_created'] = test_scenario_count
 
@@ -218,6 +271,159 @@ class KnowledgeImportService(UnifiedJobService):
             return 'json'
         else:
             return 'unknown'
+
+    async def _detect_import_source(
+        self,
+        original_filename: str,
+        file_type: str,
+        knowledge_list: List[Dict]
+    ) -> Tuple[str, str]:
+        """
+        偵測匯入來源類型
+
+        Args:
+            original_filename: 原始檔案名稱（非臨時路徑）
+            file_type: 檔案類型（excel, csv, json, txt, pdf）
+            knowledge_list: 解析後的知識列表
+
+        Returns:
+            (source_type, import_source) tuple:
+            - source_type: 'ai_generated' | 'spec_import' | 'external_file' | 'line_chat'
+            - import_source: 'system_export' | 'external_excel' | 'external_json' | 'spec_docx' | 'spec_pdf' | 'line_chat_txt'
+        """
+        file_name = original_filename.lower()
+
+        # 1. 檢查是否為系統匯出檔案
+        if file_type == 'excel' and knowledge_list:
+            # 系統匯出檔案有特定的欄位結構（9 個固定欄位）
+            expected_fields = {
+                'question_summary', 'answer', 'scope', 'vendor_id',
+                'business_types', 'target_user', 'intent_names',
+                'keywords', 'priority'
+            }
+            first_item_fields = set(knowledge_list[0].keys())
+
+            # 如果包含所有預期欄位，判定為系統匯出
+            if expected_fields.issubset(first_item_fields):
+                print("🔍 偵測到系統匯出檔案（包含 9 個標準欄位）")
+                return ('external_file', 'system_export')
+
+        # 2. 檢查是否為對話記錄
+        # LINE 對話記錄的主要目的是提取測試情境，而不是提取知識
+        if file_type == 'txt' and ('聊天' in file_name or 'chat' in file_name.lower()):
+            print("🔍 偵測到對話記錄檔案")
+            return ('line_chat', 'line_chat_txt')
+
+        # 3. 檢查是否為規格書
+        if file_type == 'pdf' or '規格' in file_name or 'spec' in file_name or 'specification' in file_name:
+            if file_type == 'pdf':
+                print("🔍 偵測到規格書 PDF 檔案")
+                return ('spec_import', 'spec_pdf')
+            else:
+                print("🔍 偵測到規格書 Word 檔案")
+                return ('spec_import', 'spec_docx')
+
+        # 4. 其他外部檔案
+        if file_type == 'excel':
+            print("🔍 偵測到外部 Excel 檔案")
+            return ('external_file', 'external_excel')
+        elif file_type == 'json':
+            print("🔍 偵測到外部 JSON 檔案")
+            return ('external_file', 'external_json')
+        elif file_type == 'csv':
+            print("🔍 偵測到外部 CSV 檔案")
+            return ('external_file', 'external_csv')
+        else:
+            print(f"🔍 偵測到未知類型檔案（{file_type}），預設為外部檔案")
+            return ('external_file', 'external_unknown')
+
+    async def _load_target_user_config(self) -> Dict[str, str]:
+        """
+        從資料庫加載目標用戶配置
+
+        Returns:
+            映射字典 {中文顯示名稱/英文值: 英文值}
+            例如: {'租客': 'tenant', 'tenant': 'tenant', '房東': 'landlord', ...}
+        """
+        # 使用 5 分鐘緩存
+        if self._target_user_config_cache is not None:
+            if self._target_user_cache_time is not None:
+                cache_age = time.time() - self._target_user_cache_time
+                if cache_age < 300:  # 5 分鐘內使用緩存
+                    return self._target_user_config_cache
+
+        try:
+            async with self.db_pool.acquire() as conn:
+                rows = await conn.fetch("""
+                    SELECT user_value, display_name
+                    FROM target_user_config
+                    WHERE is_active = true
+                    ORDER BY id
+                """)
+
+                # 建立雙向映射（中文 -> 英文，英文 -> 英文）
+                mapping = {}
+                for row in rows:
+                    user_value = row['user_value']
+                    display_name = row['display_name']
+
+                    # 英文值對應自己
+                    mapping[user_value.lower()] = user_value
+
+                    # 中文顯示名稱對應英文值
+                    if display_name:
+                        mapping[display_name.lower()] = user_value
+
+                # 更新緩存
+                self._target_user_config_cache = mapping
+                self._target_user_cache_time = time.time()
+
+                print(f"✅ 已加載 {len(rows)} 個目標用戶配置")
+                return mapping
+
+        except Exception as e:
+            print(f"⚠️  加載目標用戶配置失敗: {e}")
+            # 返回最小默認配置
+            return {
+                'tenant': 'tenant',
+                '租客': 'tenant',
+                'landlord': 'landlord',
+                '房東': 'landlord',
+                'property_manager': 'property_manager',
+                '物業管理師': 'property_manager',
+                'system_admin': 'system_admin',
+                '系統管理員': 'system_admin',
+            }
+
+    async def _normalize_target_user(self, audience: str) -> str:
+        """
+        將中文或英文 audience 轉換為標準的英文 target_user 值
+
+        從資料庫 target_user_config 表動態加載配置
+        支援中文顯示名稱（如「租客」）和英文值（如「tenant」）
+
+        Args:
+            audience: 中文或英文的對象描述
+
+        Returns:
+            標準化的英文值（從資料庫 target_user_config.user_value 取得）
+        """
+        if not audience:
+            return 'tenant'  # 默認值
+
+        # 從資料庫加載配置（帶緩存）
+        mapping = await self._load_target_user_config()
+
+        # 轉換為小寫並去除空白
+        key = audience.strip().lower()
+
+        # 查找映射
+        if key in mapping:
+            return mapping[key]
+
+        # 如果沒有匹配，默認返回 tenant
+        print(f"   ⚠️  未知的目標用戶值: {audience}，使用默認值 tenant")
+        return 'tenant'
 
     def _clean_html(self, html_text: str) -> str:
         """
@@ -317,7 +523,6 @@ class KnowledgeImportService(UnifiedJobService):
         支援格式：
         - 欄位: 問題 / question / 問題摘要
         - 欄位: 答案 / answer / 回覆
-        - 欄位: 分類 / category (可選)
         - 欄位: 對象 / audience (可選)
         - 欄位: 關鍵字 / keywords (可選)
 
@@ -336,14 +541,12 @@ class KnowledgeImportService(UnifiedJobService):
         # 欄位映射（支援多種欄位名稱）
         question_cols = ['問題', 'question', '問題摘要', 'question_summary', 'title', '標題']
         answer_cols = ['答案', 'answer', '回覆', 'response', 'content', '內容']
-        category_cols = ['分類', 'category', '類別', 'type']
         audience_cols = ['對象', 'audience', '受眾']
         keywords_cols = ['關鍵字', 'keywords', '標籤', 'tags']
 
         # 找到對應的欄位
         question_col = next((col for col in df.columns if col in question_cols), None)
         answer_col = next((col for col in df.columns if col in answer_cols), None)
-        category_col = next((col for col in df.columns if col in category_cols), None)
         audience_col = next((col for col in df.columns if col in audience_cols), None)
         keywords_col = next((col for col in df.columns if col in keywords_cols), None)
 
@@ -351,16 +554,8 @@ class KnowledgeImportService(UnifiedJobService):
             raise Exception(f"找不到答案欄位。支援的欄位名稱: {', '.join(answer_cols)}")
 
         knowledge_list = []
-        current_category = None
 
         for idx, row in df.iterrows():
-            # 如果有分類欄位且該行有值，更新當前分類
-            if category_col and pd.notna(row[category_col]):
-                potential_category = str(row[category_col]).strip()
-                # 過濾掉非分類的描述性文字
-                if potential_category and len(potential_category) < 50:
-                    current_category = potential_category
-
             # 解析答案（必填）
             answer = row.get(answer_col)
             if pd.isna(answer) or not str(answer).strip() or len(str(answer).strip()) < 10:
@@ -376,10 +571,13 @@ class KnowledgeImportService(UnifiedJobService):
             if question_col and pd.notna(row[question_col]):
                 question = str(row[question_col]).strip()
 
-            # 解析對象
-            audience = '租客'  # 預設
+            # 解析對象（轉換為標準英文 target_user）
+            audience = 'tenant'  # 預設英文值
             if audience_col and pd.notna(row[audience_col]):
                 audience = str(row[audience_col]).strip()
+                audience = await self._normalize_target_user(audience)
+            else:
+                audience = await self._normalize_target_user(audience)
 
             # 解析關鍵字
             keywords = []
@@ -390,8 +588,7 @@ class KnowledgeImportService(UnifiedJobService):
             knowledge_list.append({
                 'question_summary': question,  # 可能為 None，後續用 LLM 生成
                 'answer': answer,
-                'category': current_category or '一般問題',
-                'audience': audience,
+                'target_user': audience,  # 使用標準化的英文值
                 'keywords': keywords,
                 'source_file': Path(file_path).name
             })
@@ -407,7 +604,6 @@ class KnowledgeImportService(UnifiedJobService):
         1. 標準 CSV 格式：
            - 欄位: 問題 / question / 問題摘要 / title
            - 欄位: 答案 / answer / 回覆 / content
-           - 欄位: 分類 / category (可選)
            - 欄位: 對象 / audience (可選)
            - 欄位: 關鍵字 / keywords (可選)
 
@@ -436,7 +632,6 @@ class KnowledgeImportService(UnifiedJobService):
         # 欄位映射（支援多種欄位名稱）
         question_cols = ['問題', 'question', '問題摘要', 'question_summary', 'title', '標題']
         answer_cols = ['答案', 'answer', '回覆', 'response', 'content', '內容']
-        category_cols = ['分類', 'category', '類別', 'type']
         audience_cols = ['對象', 'audience', '受眾', 'target_user']
         keywords_cols = ['關鍵字', 'keywords', '標籤', 'tags']
         intent_id_cols = ['意圖ID', 'intent_id', 'intent', '意圖']
@@ -444,48 +639,27 @@ class KnowledgeImportService(UnifiedJobService):
         # 找到對應的欄位
         question_col = next((col for col in df.columns if col in question_cols), None)
         answer_col = next((col for col in df.columns if col in answer_cols), None)
-        category_col = next((col for col in df.columns if col in category_cols), None)
         audience_col = next((col for col in df.columns if col in audience_cols), None)
         keywords_col = next((col for col in df.columns if col in keywords_cols), None)
         intent_id_col = next((col for col in df.columns if col in intent_id_cols), None)
 
         # 如果找不到標準欄位名稱，嘗試使用位置推測
-        # help_datas.csv 格式: title, title.1, content (分類, 問題, 答案)
-        if not answer_col and len(df.columns) >= 3:
-            # 檢查是否為 help_datas.csv 格式（第三欄通常是答案）
+        # help_datas.csv 格式: title, title.1, content (問題, 答案)
+        if not answer_col and len(df.columns) >= 2:
+            # 檢查是否為 help_datas.csv 格式（最後一欄通常是答案）
             if 'content' in df.columns:
-                category_col = df.columns[0]  # 第一欄：分類
-                question_col = df.columns[1]  # 第二欄：問題
-                answer_col = 'content'        # 第三欄：答案
-                print(f"   偵測到特殊格式 CSV，使用欄位: {category_col}, {question_col}, {answer_col}")
+                question_col = df.columns[0] if len(df.columns) > 1 else None  # 第一欄：問題
+                answer_col = 'content'        # 答案欄
+                print(f"   偵測到特殊格式 CSV，使用欄位: {question_col}, {answer_col}")
 
         if not answer_col:
             raise Exception(f"找不到答案欄位。支援的欄位名稱: {', '.join(answer_cols)}\n實際欄位: {list(df.columns)}")
 
         knowledge_list = []
-        current_category = None
 
         for idx, row in df.iterrows():
             try:
-                # === 1. 解析分類（支援 JSON 格式） ===
-                category = None
-                if category_col and pd.notna(row[category_col]):
-                    cat_value = str(row[category_col]).strip()
-                    # 檢查是否為 JSON 格式
-                    if cat_value.startswith('{') and cat_value.endswith('}'):
-                        try:
-                            cat_json = json.loads(cat_value)
-                            category = cat_json.get('zh-TW', cat_json.get('zh-tw', cat_value))
-                        except json.JSONDecodeError:
-                            category = cat_value
-                    else:
-                        category = cat_value
-
-                    # 過濾掉非分類的描述性文字
-                    if category and len(category) < 50:
-                        current_category = category
-
-                # === 2. 解析問題（支援 JSON 格式） ===
+                # === 1. 解析問題（支援 JSON 格式） ===
                 question = None
                 if question_col and pd.notna(row[question_col]):
                     q_value = str(row[question_col]).strip()
@@ -522,10 +696,13 @@ class KnowledgeImportService(UnifiedJobService):
                 # === 4. HTML 清理（使用 BeautifulSoup） ===
                 answer = self._clean_html(answer)
 
-                # === 5. 解析對象 ===
-                audience = '租客'  # 預設
+                # === 5. 解析對象（轉換為標準英文 target_user） ===
+                audience = 'tenant'  # 預設英文值
                 if audience_col and pd.notna(row[audience_col]):
                     audience = str(row[audience_col]).strip()
+                    audience = await self._normalize_target_user(audience)
+                else:
+                    audience = await self._normalize_target_user(audience)
 
                 # === 6. 解析關鍵字 ===
                 keywords = []
@@ -552,8 +729,7 @@ class KnowledgeImportService(UnifiedJobService):
                 knowledge_list.append({
                     'question_summary': question,  # 可能為 None，後續用 LLM 生成
                     'answer': answer,
-                    'category': current_category or '一般問題',
-                    'audience': audience,
+                    'target_user': audience,  # 使用標準化的英文值
                     'keywords': keywords,
                     'intent_id': intent_id,  # 預設意圖 ID（可能為 None）
                     'source_file': Path(file_path).name
@@ -570,6 +746,11 @@ class KnowledgeImportService(UnifiedJobService):
         """
         解析純文字檔案（使用 LLM 提取知識）
 
+        支援智能分段處理：
+        - < 50KB: 完整處理
+        - 50KB - 200KB: 單次處理（取前 40,000 字元）
+        - > 200KB: 分段處理（每段 40,000 字元，重疊 2,000）
+
         Args:
             file_path: 文字檔案路徑
 
@@ -584,10 +765,100 @@ class KnowledgeImportService(UnifiedJobService):
         if len(content) < 50:
             raise Exception("檔案內容過短，無法提取知識")
 
-        # 使用 LLM 提取知識
+        # 智能選擇處理策略
+        file_size = len(content)
+        file_size_kb = file_size / 1024
+
+        print(f"   檔案大小: {file_size_kb:.1f} KB")
+
+        # 策略選擇
+        if file_size > 200000:  # 大於 200KB
+            print(f"   📊 採用分段處理策略（檔案較大）")
+            return await self._parse_txt_with_chunking(file_path, content)
+
+        elif file_size > 50000:  # 50KB - 200KB
+            print(f"   📊 採用單次處理策略（取前 40,000 字元）")
+            content_to_process = content[:40000]  # gpt-4o 可以處理
+            max_tokens = 4000
+
+        else:  # 小於 50KB
+            print(f"   📊 採用完整處理策略（檔案較小）")
+            content_to_process = content
+            max_tokens = 4000
+
+        # 使用 LLM 提取知識（帶重試機制）
         print("🤖 使用 LLM 提取知識...")
 
-        system_prompt = """你是一個專業的知識庫分析師。
+        max_retries = 3
+        for retry in range(max_retries):
+            try:
+                response = await self.openai_client.chat.completions.create(
+                    model=self.llm_model,
+                    temperature=0,  # 改為 0，確保一致性
+                    max_tokens=max_tokens,  # 動態設定
+                    response_format={"type": "json_object"},
+                    messages=[
+                        {"role": "system", "content": self._get_extraction_prompt()},
+                        {"role": "user", "content": f"請從以下內容提取知識：\n\n{content_to_process}"}
+                    ]
+                )
+
+                result = json.loads(response.choices[0].message.content)
+                knowledge_list = result.get('knowledge_list', [])
+                break  # 成功則跳出
+
+            except Exception as e:
+                error_str = str(e)
+                if 'rate_limit' in error_str.lower() or '429' in error_str:
+                    wait_time = 10 * (retry + 1)
+                    if retry < max_retries - 1:
+                        print(f"   ⚠️ 速率限制，{wait_time}秒後重試 ({retry + 1}/{max_retries})...")
+                        import asyncio
+                        await asyncio.sleep(wait_time)
+                    else:
+                        print(f"   ❌ LLM 提取失敗（已重試{max_retries}次）: {e}")
+                        raise Exception(f"無法從文字檔案提取知識: {e}")
+                else:
+                    print(f"   ⚠️ LLM 提取失敗: {e}")
+                    raise Exception(f"無法從文字檔案提取知識: {e}")
+
+        try:
+
+            # 調試：顯示 LLM 解析的完整內容
+            print(f"\n📋 LLM 解析結果:")
+            for idx, k in enumerate(knowledge_list, 1):
+                print(f"   {idx}. 問題: {k.get('question_summary', '未提供')}")
+                print(f"      答案: {k.get('answer', '未提供')[:50]}...")
+                if k.get('warnings'):
+                    print(f"      警告: {', '.join(k['warnings'])}")
+
+            # 添加來源資訊並檢查泛化警告
+            generalized_count = 0
+            for knowledge in knowledge_list:
+                knowledge['source_file'] = Path(file_path).name
+
+                # 統計有泛化警告的知識
+                if knowledge.get('warnings'):
+                    generalized_count += 1
+                    print(f"   ⚠️  泛化警告: {knowledge['question_summary'][:30]}... - {knowledge['warnings']}")
+
+            print(f"   ✅ 提取出 {len(knowledge_list)} 個知識項目")
+            if generalized_count > 0:
+                print(f"   🔄 其中 {generalized_count} 條知識已自動泛化（移除特定物業/房號/日期）")
+            return knowledge_list
+
+        except Exception as e:
+            print(f"   ⚠️ LLM 提取失敗: {e}")
+            raise Exception(f"無法從文字檔案提取知識: {e}")
+
+    def _get_extraction_prompt(self) -> str:
+        """
+        獲取知識提取的 system prompt（統一管理）
+
+        Returns:
+            system prompt 內容
+        """
+        return """你是一個專業的知識庫分析師。
 從提供的文字內容中提取客服問答知識。
 
 ⚠️ 重要：提取的知識必須是「通用」的、可重複使用的知識。
@@ -616,8 +887,7 @@ class KnowledgeImportService(UnifiedJobService):
     {
       "question_summary": "問題摘要（15字以內）",
       "answer": "完整答案（已泛化）",
-      "category": "分類（如：帳務問題、設施使用、合約問題等）",
-      "audience": "租客|房東|管理師",
+      "target_user": "tenant|landlord|property_manager",
       "keywords": ["關鍵字1", "關鍵字2"],
       "warnings": ["警告訊息（如果有特定內容被泛化或無法泛化）"]
     }
@@ -629,42 +899,124 @@ class KnowledgeImportService(UnifiedJobService):
 - 如果某條資訊過於特定（如：通知某人某事），不要提取
 - 問題摘要要簡潔（15字以內）
 - 答案要完整且實用
+- target_user 必須使用英文值（tenant=租客, landlord=房東, property_manager=管理師）
 - warnings 為選填，沒有警告可省略
 """
 
-        try:
-            response = await self.openai_client.chat.completions.create(
-                model=self.llm_model,
-                temperature=0.3,
-                max_tokens=2000,  # 提取知識列表需要較長輸出（多個 Q&A 的 JSON）
-                response_format={"type": "json_object"},
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"請從以下內容提取知識：\n\n{content[:4000]}"}
-                ]
-            )
+    def _deduplicate_knowledge(self, knowledge_list: List[Dict]) -> List[Dict]:
+        """
+        知識去重（基於 question_summary）
 
-            result = json.loads(response.choices[0].message.content)
-            knowledge_list = result.get('knowledge_list', [])
+        Args:
+            knowledge_list: 知識列表
 
-            # 添加來源資訊並檢查泛化警告
-            generalized_count = 0
-            for knowledge in knowledge_list:
-                knowledge['source_file'] = Path(file_path).name
+        Returns:
+            去重後的知識列表
+        """
+        seen_questions = set()
+        unique_knowledge = []
 
-                # 統計有泛化警告的知識
-                if knowledge.get('warnings'):
-                    generalized_count += 1
-                    print(f"   ⚠️  泛化警告: {knowledge['question_summary'][:30]}... - {knowledge['warnings']}")
+        for knowledge in knowledge_list:
+            question = knowledge.get('question_summary', '')
 
-            print(f"   ✅ 提取出 {len(knowledge_list)} 個知識項目")
-            if generalized_count > 0:
-                print(f"   🔄 其中 {generalized_count} 條知識已自動泛化（移除特定物業/房號/日期）")
-            return knowledge_list
+            # 基於問題摘要去重
+            if question and question not in seen_questions:
+                seen_questions.add(question)
+                unique_knowledge.append(knowledge)
+            else:
+                print(f"   ⏭️ 跳過重複問題: {question}")
 
-        except Exception as e:
-            print(f"   ⚠️ LLM 提取失敗: {e}")
-            raise Exception(f"無法從文字檔案提取知識: {e}")
+        return unique_knowledge
+
+    async def _parse_txt_with_chunking(self, file_path: str, content: str) -> List[Dict]:
+        """
+        分段解析長文本（用於超過 200KB 的對話記錄）
+
+        Args:
+            file_path: 檔案路徑
+            content: 完整文字內容
+
+        Returns:
+            知識列表
+        """
+        print(f"📄 檔案較大 ({len(content)} 字元)，採用分段處理...")
+
+        # 配置（使用 gpt-4o，上下文限制：128000 tokens）
+        # system_prompt ≈ 800 tokens, max_tokens=4000
+        # 可用輸入 tokens: 128000 - 800 - 4000 = 123200 tokens
+        # 中文 1 字 ≈ 2 tokens，所以: 123200 / 2 ≈ 61600 字元
+        # 保守設定為 40000 字元（足夠安全）
+        chunk_size = 40000  # 每段 40,000 字元（≈80,000 tokens）
+        overlap = 2000      # 重疊 2,000 字元，避免切斷上下文
+
+        # 分段
+        chunks = []
+        for i in range(0, len(content), chunk_size - overlap):
+            chunk = content[i:i + chunk_size]
+            if len(chunk) > 1000:  # 忽略過短的片段
+                chunks.append(chunk)
+
+        print(f"   分為 {len(chunks)} 段處理")
+
+        # 逐段提取知識
+        all_knowledge = []
+        for idx, chunk in enumerate(chunks, 1):
+            print(f"   處理第 {idx}/{len(chunks)} 段...")
+
+            # 速率限制重試機制
+            max_retries = 3
+            for retry in range(max_retries):
+                try:
+                    response = await self.openai_client.chat.completions.create(
+                        model=self.llm_model,
+                        temperature=0,  # 確保一致性
+                        max_tokens=4000,  # 提高到 4000
+                        response_format={"type": "json_object"},
+                        messages=[
+                            {"role": "system", "content": self._get_extraction_prompt()},
+                            {"role": "user", "content": f"請從以下內容提取知識：\n\n{chunk}"}
+                        ]
+                    )
+
+                    result = json.loads(response.choices[0].message.content)
+                    knowledge_list = result.get('knowledge_list', [])
+
+                    print(f"      提取 {len(knowledge_list)} 個知識")
+                    all_knowledge.extend(knowledge_list)
+
+                    # 成功後添加小延遲，避免速率限制
+                    if idx < len(chunks):
+                        import asyncio
+                        await asyncio.sleep(2)
+
+                    break  # 成功則跳出重試循環
+
+                except Exception as e:
+                    error_str = str(e)
+                    if 'rate_limit' in error_str.lower() or '429' in error_str:
+                        # 速率限制錯誤，等待後重試
+                        wait_time = 10 * (retry + 1)  # 遞增等待時間
+                        if retry < max_retries - 1:
+                            print(f"      ⚠️ 速率限制，{wait_time}秒後重試 ({retry + 1}/{max_retries})...")
+                            import asyncio
+                            await asyncio.sleep(wait_time)
+                        else:
+                            print(f"      ❌ 第 {idx} 段提取失敗（已重試{max_retries}次）: {e}")
+                    else:
+                        # 其他錯誤，不重試
+                        print(f"      ⚠️ 第 {idx} 段提取失敗: {e}")
+                        break
+
+        # 去重（基於 question_summary）
+        unique_knowledge = self._deduplicate_knowledge(all_knowledge)
+
+        print(f"✅ 共提取 {len(all_knowledge)} 個知識，去重後 {len(unique_knowledge)} 個")
+
+        # 添加來源資訊
+        for knowledge in unique_knowledge:
+            knowledge['source_file'] = Path(file_path).name
+
+        return unique_knowledge
 
     async def _parse_json(self, file_path: str) -> List[Dict]:
         """
@@ -676,7 +1028,6 @@ class KnowledgeImportService(UnifiedJobService):
             {
               "question": "問題",
               "answer": "答案",
-              "category": "分類",
               "audience": "對象",
               "keywords": ["關鍵字"]
             }
@@ -713,11 +1064,14 @@ class KnowledgeImportService(UnifiedJobService):
             if not answer or len(str(answer).strip()) < 10:
                 continue
 
+            # 獲取並標準化 target_user
+            raw_audience = item.get('audience') or item.get('target_user') or 'tenant'
+            normalized_target_user = await self._normalize_target_user(raw_audience)
+
             knowledge_list.append({
                 'question_summary': question,
                 'answer': str(answer).strip(),
-                'category': item.get('category', '一般問題'),
-                'audience': item.get('audience', '租客'),
+                'target_user': normalized_target_user,  # 使用標準化的英文值
                 'keywords': item.get('keywords', []),
                 'source_file': Path(file_path).name
             })
@@ -757,7 +1111,6 @@ class KnowledgeImportService(UnifiedJobService):
             try:
                 prompt = f"""請根據以下答案，生成一個簡潔的問題摘要（15字以內）。
 
-分類：{knowledge['category']}
 答案：{knowledge['answer'][:200]}
 
 只輸出問題摘要，不要加其他說明。"""
@@ -777,8 +1130,7 @@ class KnowledgeImportService(UnifiedJobService):
 
             except Exception as e:
                 print(f"   ⚠️ 生成問題失敗: {e}")
-                # 備用方案
-                knowledge['question_summary'] = f"{knowledge['category']}相關問題"
+                # 備用方案：保持 question_summary 為 None，後續處理
 
         print(f"   ✅ 問題摘要生成完成")
 
@@ -951,7 +1303,7 @@ class KnowledgeImportService(UnifiedJobService):
 
 問題：{knowledge['question_summary']}
 答案：{knowledge['answer'][:200]}
-分類：{knowledge.get('category', '未分類')}
+
 
 可用的意圖清單：
 {intent_list}
@@ -1173,6 +1525,10 @@ class KnowledgeImportService(UnifiedJobService):
                     if embedding:
                         embedding_str = '[' + ','.join(str(x) for x in embedding) + ']'
 
+                    # 準備 target_user（knowledge_base 使用陣列，需要轉換）
+                    target_user_value = knowledge.get('target_user', 'tenant')
+                    target_user_array = [target_user_value] if target_user_value else ['tenant']
+
                     await conn.execute("""
                         INSERT INTO knowledge_base (
                             intent_id,
@@ -1180,6 +1536,7 @@ class KnowledgeImportService(UnifiedJobService):
                             question_summary,
                             answer,
                             keywords,
+                            target_user,
                             source_file,
                             source_date,
                             embedding,
@@ -1188,7 +1545,7 @@ class KnowledgeImportService(UnifiedJobService):
                             created_at,
                             updated_at
                         ) VALUES (
-                            $1, $2, $3, $4, $5, $6, $7, $8::vector, $9, $10,
+                            $1, $2, $3, $4, $5, $6, $7, $8, $9::vector, $10, $11,
                             CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
                         )
                     """,
@@ -1197,6 +1554,7 @@ class KnowledgeImportService(UnifiedJobService):
                         knowledge['question_summary'],
                         knowledge['answer'],
                         knowledge['keywords'],
+                        target_user_array,  # 轉換為陣列
                         knowledge['source_file'],
                         datetime.now().date(),
                         embedding_str,
@@ -1228,7 +1586,7 @@ class KnowledgeImportService(UnifiedJobService):
         """
         為 B2C 對象的知識建立測試情境建議（需求 2）
 
-        B2C 對象包括：租客、房東（所有外部業務範圍）
+        B2C 對象包括：tenant（租客）、landlord（房東）（所有外部業務範圍）
 
         Args:
             knowledge_list: 知識列表
@@ -1239,17 +1597,17 @@ class KnowledgeImportService(UnifiedJobService):
         """
         print(f"🧪 檢查 B2C 知識並建立測試情境建議...")
 
-        # B2C 對象列表
-        b2c_audiences = ['租客', '房東', 'tenant', 'landlord']
+        # B2C 對象列表（使用英文標準值）
+        b2c_target_users = ['tenant', 'landlord']
 
         created_count = 0
 
         async with self.db_pool.acquire() as conn:
             for knowledge in knowledge_list:
-                audience = knowledge.get('audience', '').lower()
+                target_user = knowledge.get('target_user', '').lower()
 
                 # 檢查是否為 B2C 對象
-                if not any(b2c in audience.lower() for b2c in b2c_audiences):
+                if target_user not in b2c_target_users:
                     continue
 
                 question = knowledge['question_summary']
@@ -1266,7 +1624,6 @@ class KnowledgeImportService(UnifiedJobService):
 
                 # 建立測試情境建議
                 try:
-                    category_info = knowledge.get('category', '一般問題')
                     await conn.execute("""
                         INSERT INTO test_scenarios (
                             test_question,
@@ -1281,7 +1638,7 @@ class KnowledgeImportService(UnifiedJobService):
                         'medium',  # 預設難度
                         'pending_review',  # 待審核狀態
                         'imported',
-                        f"導入的知識（類別: {category_info}）"
+                        f"導入的知識"
                     )
 
                     created_count += 1
@@ -1296,14 +1653,243 @@ class KnowledgeImportService(UnifiedJobService):
 
         return created_count
 
+    async def _parse_chat_scenarios(
+        self,
+        knowledge_list: List[Dict],
+        file_name: str
+    ) -> List[Dict]:
+        """
+        解析對話記錄中的測試情境（不創建到資料庫）
+
+        Args:
+            knowledge_list: 從對話中提取的問答列表
+            file_name: 來源檔案名稱
+
+        Returns:
+            測試情境列表，每個包含 {index, question, difficulty, notes}
+        """
+        print(f"💬 解析 {len(knowledge_list)} 條對話為測試情境...")
+
+        scenarios = []
+
+        for idx, knowledge in enumerate(knowledge_list):
+            question = knowledge.get('question_summary') or knowledge.get('question', '')
+
+            if not question:
+                print(f"   ⚠️ 跳過第 {idx} 條：無問題內容")
+                continue
+
+            scenarios.append({
+                "index": idx,
+                "question": question,
+                "difficulty": "medium",  # 預設難度
+                "notes": f"從對話記錄匯入: {file_name}",
+                "selected": True  # 預設全選
+            })
+
+        print(f"✅ 解析完成，共 {len(scenarios)} 個測試情境")
+        return scenarios
+
+    async def _create_selected_scenarios(
+        self,
+        scenarios: List[Dict],
+        selected_indices: List[int],
+        created_by: str
+    ) -> Dict:
+        """
+        創建用戶選中的測試情境
+
+        Args:
+            scenarios: 測試情境列表（從 _parse_chat_scenarios 返回）
+            selected_indices: 用戶選中的索引列表
+            created_by: 建立者
+
+        Returns:
+            創建結果統計
+        """
+        print(f"💬 創建 {len(selected_indices)}/{len(scenarios)} 個選中的測試情境...")
+
+        created = 0
+        skipped = 0
+        errors = 0
+        created_items = []
+
+        async with self.db_pool.acquire() as conn:
+            for idx in selected_indices:
+                if idx < 0 or idx >= len(scenarios):
+                    print(f"   ⚠️ 索引 {idx} 超出範圍，跳過")
+                    errors += 1
+                    continue
+
+                scenario = scenarios[idx]
+                question = scenario['question']
+
+                try:
+                    # 檢查是否已存在相同的測試問題
+                    existing = await conn.fetchval("""
+                        SELECT id FROM test_scenarios
+                        WHERE test_question = $1
+                        LIMIT 1
+                    """, question)
+
+                    if existing:
+                        print(f"   ⏭️  跳過重複: {question[:30]}...")
+                        skipped += 1
+                        continue
+
+                    # 創建測試情境（狀態為 approved，直接可用）
+                    test_scenario_id = await conn.fetchval("""
+                        INSERT INTO test_scenarios (
+                            test_question,
+                            difficulty,
+                            status,
+                            source,
+                            notes,
+                            created_at
+                        ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+                        RETURNING id
+                    """,
+                        question,
+                        scenario.get('difficulty', 'medium'),
+                        'approved',  # 用戶已確認，直接批准
+                        'imported',
+                        scenario.get('notes', '')
+                    )
+
+                    created += 1
+                    created_items.append({
+                        "id": test_scenario_id,
+                        "question": question
+                    })
+
+                except Exception as e:
+                    print(f"   ⚠️ 創建測試情境失敗: {e}")
+                    errors += 1
+
+        print(f"\n   ✅ 測試情境創建完成:")
+        print(f"      新建: {created} 個")
+        print(f"      跳過: {skipped} 個（重複）")
+        print(f"      失敗: {errors} 個")
+
+        return {
+            "created": created,
+            "skipped": skipped,
+            "errors": errors,
+            "total": len(selected_indices),
+            "mode": "test_scenarios_created",
+            "items": created_items
+        }
+
+    async def _import_chat_as_test_scenarios(
+        self,
+        knowledge_list: List[Dict],
+        vendor_id: Optional[int],
+        file_name: str,
+        created_by: str
+    ) -> Dict:
+        """
+        將對話記錄匯入為測試情境（模式 A：純測試情境模式）
+
+        對話記錄不創建知識，只創建測試情境供後續測試使用
+
+        Args:
+            knowledge_list: 從對話中提取的問答列表
+            vendor_id: 業者 ID
+            file_name: 來源檔案名稱
+            created_by: 建立者
+
+        Returns:
+            匯入結果統計
+        """
+        print(f"💬 將 {len(knowledge_list)} 條對話匯入為測試情境...")
+
+        created = 0
+        skipped = 0
+        errors = 0
+        created_items = []  # 記錄創建的測試情境
+
+        async with self.db_pool.acquire() as conn:
+            for idx, knowledge in enumerate(knowledge_list, 1):
+                try:
+                    question = knowledge.get('question_summary') or knowledge.get('question', '')
+
+                    if not question:
+                        print(f"   ⚠️ 跳過第 {idx} 條：無問題內容")
+                        skipped += 1
+                        continue
+
+                    # 檢查是否已存在相同的測試問題
+                    existing = await conn.fetchval("""
+                        SELECT id FROM test_scenarios
+                        WHERE test_question = $1
+                        LIMIT 1
+                    """, question)
+
+                    if existing:
+                        print(f"   ⏭️  跳過重複: {question[:30]}...")
+                        skipped += 1
+                        continue
+
+                    # 創建測試情境（test_scenarios 表是全域的，不需要 vendor_id）
+                    test_scenario_id = await conn.fetchval("""
+                        INSERT INTO test_scenarios (
+                            test_question,
+                            difficulty,
+                            status,
+                            source,
+                            notes,
+                            created_at
+                        ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+                        RETURNING id
+                    """,
+                        question,
+                        'medium',  # 預設難度
+                        'pending_review',  # 待審核狀態，進入審核中心
+                        'imported',  # 來源：匯入
+                        f"從對話記錄匯入: {file_name}"
+                    )
+
+                    created += 1
+                    created_items.append({
+                        "id": test_scenario_id,
+                        "question": question
+                    })
+
+                    if idx % 10 == 0:
+                        print(f"   進度: {idx}/{len(knowledge_list)}")
+
+                except Exception as e:
+                    print(f"   ⚠️ 創建測試情境失敗 (第 {idx} 條): {e}")
+                    errors += 1
+
+        print(f"\n   ✅ 測試情境創建完成:")
+        print(f"      總共: {len(knowledge_list)} 條對話")
+        print(f"      新建: {created} 個測試情境")
+        print(f"      跳過: {skipped} 個（重複）")
+        if errors > 0:
+            print(f"      錯誤: {errors} 個")
+
+        return {
+            "created": created,
+            "skipped": skipped,
+            "errors": errors,
+            "total": len(knowledge_list),
+            "mode": "test_scenarios_draft",  # 草稿模式
+            "items": created_items,  # 創建的測試情境列表
+            "message": "測試情境已創建為草稿狀態，請前往「測試情境管理」頁面審核"
+        }
+
     async def _import_to_review_queue(
         self,
         knowledge_list: List[Dict],
         vendor_id: Optional[int],
-        created_by: str
+        created_by: str,
+        source_type: str = 'external_file',
+        import_source: str = 'external_unknown',
+        file_name: str = 'unknown'
     ) -> Dict:
         """
-        將知識匯入到審核佇列（需求 3：混合模式）
+        將知識匯入到審核佇列（支援多種來源類型）
 
         知識會先進入 ai_generated_knowledge_candidates 表，
         人工審核通過後才會加入正式的 knowledge_base
@@ -1312,11 +1898,16 @@ class KnowledgeImportService(UnifiedJobService):
             knowledge_list: 知識列表
             vendor_id: 業者 ID
             created_by: 建立者
+            source_type: 來源類型（'ai_generated', 'spec_import', 'external_file', 'line_chat'）
+            import_source: 匯入來源（'system_export', 'external_excel', 'spec_pdf', 'line_chat_txt'等）
+            file_name: 來源檔案名稱
 
         Returns:
             匯入結果統計
         """
         print(f"📋 將 {len(knowledge_list)} 條知識匯入審核佇列...")
+        print(f"   來源類型: {source_type}")
+        print(f"   匯入來源: {import_source}")
 
         imported = 0
         auto_rejected = 0
@@ -1328,34 +1919,37 @@ class KnowledgeImportService(UnifiedJobService):
                     question = knowledge['question_summary']
                     answer = knowledge['answer']
 
-                    # 1. 先檢查或建立對應的測試情境
-                    test_scenario_id = await conn.fetchval("""
-                        SELECT id FROM test_scenarios
-                        WHERE test_question = $1
-                        ORDER BY created_at DESC
-                        LIMIT 1
-                    """, question)
-
-                    # 如果沒有測試情境，先建立一個
-                    if not test_scenario_id:
-                        category_info = knowledge.get('category', '一般問題')
+                    # 1. 條件式創建測試情境（只有對話記錄需要）
+                    test_scenario_id = None
+                    if source_type == 'line_chat':
+                        # 對話記錄 → 創建測試情境
                         test_scenario_id = await conn.fetchval("""
-                            INSERT INTO test_scenarios (
-                                test_question,
-                                difficulty,
-                                status,
-                                source,
-                                notes,
-                                created_at
-                            ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
-                            RETURNING id
-                        """,
-                            question,
-                            'medium',
-                            'pending_review',
-                            'imported',
-                            f"導入的知識（類別: {category_info}）"
-                        )
+                            SELECT id FROM test_scenarios
+                            WHERE test_question = $1
+                            ORDER BY created_at DESC
+                            LIMIT 1
+                        """, question)
+
+                        # 如果沒有測試情境，先建立一個
+                        if not test_scenario_id:
+                            test_scenario_id = await conn.fetchval("""
+                                INSERT INTO test_scenarios (
+                                    test_question,
+                                    difficulty,
+                                    status,
+                                    source,
+                                    notes,
+                                    created_at
+                                ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+                                RETURNING id
+                            """,
+                                question,
+                                'medium',
+                                'pending_review',
+                                'imported',
+                                f"從對話記錄匯入: {file_name}"
+                            )
+                    # 規格書/外部檔案 → 不創建測試情境（test_scenario_id = NULL）
 
                     # 2. 準備 generation_reasoning（包含意圖推薦、泛化警告和質量評估）
                     recommended_intent = knowledge.get('recommended_intent', {})
@@ -1371,7 +1965,7 @@ class KnowledgeImportService(UnifiedJobService):
                         except (ValueError, TypeError):
                             pass  # 如果轉換失敗，保持空陣列
 
-                    reasoning = f"""分類: {knowledge.get('category')}, 對象: {knowledge.get('audience')}, 關鍵字: {', '.join(knowledge.get('keywords', []))}
+                    reasoning = f"""對象: {knowledge.get('target_user', '')}, 關鍵字: {', '.join(knowledge.get('keywords', []))}
 
 【推薦意圖】
 意圖 ID: {recommended_intent.get('intent_id', '未推薦')}
@@ -1403,10 +1997,20 @@ class KnowledgeImportService(UnifiedJobService):
                     if embedding:
                         embedding_str = '[' + ','.join(str(x) for x in embedding) + ']'
 
-                    # 4. 建立知識候選記錄（含 embedding、warnings 和 intent_ids）
+                    # 4. 準備新欄位資料
+                    keywords = knowledge.get('keywords', [])
+                    priority = knowledge.get('priority', 0)
+                    scope = knowledge.get('scope', 'global')
+                    business_types = knowledge.get('business_types', [])
+                    target_user = knowledge.get('target_user')
+
+                    # 5. 建立知識候選記錄（含新欄位）
                     await conn.execute("""
                         INSERT INTO ai_generated_knowledge_candidates (
                             test_scenario_id,
+                            source_type,
+                            import_source,
+                            source_file_name,
                             question,
                             generated_answer,
                             question_embedding,
@@ -1417,23 +2021,41 @@ class KnowledgeImportService(UnifiedJobService):
                             suggested_sources,
                             warnings,
                             intent_ids,
+                            keywords,
+                            priority,
+                            scope,
+                            vendor_id,
+                            business_types,
+                            target_user,
                             status,
                             created_at,
                             updated_at
-                        ) VALUES ($1, $2, $3, $4::vector, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                        ) VALUES (
+                            $1, $2, $3, $4, $5, $6, $7::vector, $8, $9, $10, $11, $12, $13, $14,
+                            $15, $16, $17, $18, $19, $20, $21, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                        )
                     """,
-                        test_scenario_id,
-                        question,
-                        answer,
-                        embedding_str,  # 向量嵌入（字串格式）
-                        0.85,  # 匯入的知識固定信心分數 85%
-                        f"從檔案匯入: {knowledge.get('source_file', 'unknown')}",
-                        'knowledge_import',  # 標記為知識匯入來源
-                        reasoning,  # 包含推薦意圖、泛化警告和質量評估的詳細資訊
-                        [knowledge.get('source_file', 'imported_file')],
-                        warnings_list,  # 泛化警告（如果有）
-                        intent_ids,  # 推薦意圖 ID 陣列（自動填入）
-                        status  # 根據質量評估動態設定的狀態
+                        test_scenario_id,           # $1  - NULL（規格書）或有值（對話記錄）
+                        source_type,                # $2  - 'spec_import', 'external_file', 'line_chat'
+                        import_source,              # $3  - 'spec_pdf', 'external_excel', 'line_chat_txt'
+                        file_name,                  # $4  - 來源檔名
+                        question,                   # $5
+                        answer,                     # $6
+                        embedding_str,              # $7  - 向量嵌入（字串格式）
+                        0.85,                       # $8  - 匯入知識固定信心分數 85%
+                        f"從檔案匯入: {file_name}",  # $9
+                        'knowledge_import',         # $10 - 標記為知識匯入
+                        reasoning,                  # $11 - 包含推薦意圖、泛化警告和質量評估
+                        [file_name],                # $12 - suggested_sources
+                        warnings_list,              # $13 - 泛化警告
+                        intent_ids,                 # $14 - 推薦意圖 ID 陣列
+                        keywords,                   # $15 - 關鍵字
+                        priority,                   # $16 - 優先級
+                        scope,                      # $17 - 適用範圍
+                        vendor_id,                  # $18 - 廠商 ID
+                        business_types,             # $19 - 業務類型
+                        target_user,                # $20 - 目標用戶
+                        status                      # $21 - 根據質量評估動態設定
                     )
 
                     imported += 1

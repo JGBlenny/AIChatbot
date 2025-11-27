@@ -22,6 +22,21 @@ class VendorKnowledgeRetriever:
         # 參數解析器
         self.param_resolver = VendorParameterResolver()
 
+    def _has_template_variables(self, text: str) -> bool:
+        """
+        檢測文本是否包含模板變數 {{variable}}
+
+        Args:
+            text: 要檢測的文本
+
+        Returns:
+            True 如果包含模板變數，否則 False
+        """
+        import re
+        if not text:
+            return False
+        return bool(re.search(r'\{\{.+?\}\}', text))
+
     def _get_db_connection(self):
         """建立資料庫連接（使用共用配置）"""
         db_config = get_db_config()
@@ -41,7 +56,7 @@ class VendorKnowledgeRetriever:
             intent_id: 意圖 ID
             vendor_id: 業者 ID
             top_k: 返回前 K 筆知識
-            resolve_templates: 是否自動解析模板
+            resolve_templates: 是否自動解析模板（自動檢測 {{variable}} 模式）
 
         Returns:
             知識列表，按優先級排序
@@ -49,13 +64,16 @@ class VendorKnowledgeRetriever:
                 {
                     "id": 1,
                     "question_summary": "每月繳費日期",
-                    "answer": "您的租金繳費日為每月 1 號...",  # 已解析
+                    "answer": "您的租金繳費日為每月 1 號...",  # 已解析（自動檢測到 {{payment_day}} 並替換）
                     "original_answer": "您的租金繳費日為每月 {{payment_day}} 號...",  # 原始模板
                     "scope": "global",
-                    "priority": 1,
-                    "is_template": true
+                    "priority": 1
                 }
             ]
+
+        Note:
+            系統會自動檢測答案中的 {{variable}} 模式並進行替換，
+            不再依賴 is_template 欄位
         """
         # 獲取 vendor 的業態類型
         vendor_info = self.param_resolver.get_vendor_info(vendor_id)
@@ -130,15 +148,15 @@ class VendorKnowledgeRetriever:
                 # 保留原始答案
                 knowledge['original_answer'] = knowledge['answer']
 
-                # 如果是模板且需要解析，自動替換變數
-                if resolve_templates and knowledge['is_template']:
+                # 自動檢測模板變數並解析（使用動態檢測替代 is_template 欄位）
+                if resolve_templates and self._has_template_variables(knowledge['answer']):
                     try:
                         knowledge['answer'] = self.param_resolver.resolve_template(
                             knowledge['answer'],
                             vendor_id
                         )
                         # 同時解析問題摘要中的變數
-                        if knowledge['question_summary']:
+                        if knowledge['question_summary'] and self._has_template_variables(knowledge['question_summary']):
                             knowledge['question_summary'] = self.param_resolver.resolve_template(
                                 knowledge['question_summary'],
                                 vendor_id
@@ -382,14 +400,14 @@ class VendorKnowledgeRetriever:
                 # 保留原始答案
                 knowledge['original_answer'] = knowledge['answer']
 
-                # 如果是模板且需要解析，自動替換變數
-                if resolve_templates and knowledge['is_template']:
+                # 自動檢測模板變數並解析（使用動態檢測替代 is_template 欄位）
+                if resolve_templates and self._has_template_variables(knowledge['answer']):
                     try:
                         knowledge['answer'] = self.param_resolver.resolve_template(
                             knowledge['answer'],
                             vendor_id
                         )
-                        if knowledge['question_summary']:
+                        if knowledge['question_summary'] and self._has_template_variables(knowledge['question_summary']):
                             knowledge['question_summary'] = self.param_resolver.resolve_template(
                                 knowledge['question_summary'],
                                 vendor_id
@@ -493,14 +511,14 @@ class VendorKnowledgeRetriever:
                 knowledge = dict(row)
                 knowledge['original_answer'] = knowledge['answer']
 
-                # 自動解析模板
-                if knowledge['is_template']:
+                # 自動檢測模板變數並解析（使用動態檢測替代 is_template 欄位）
+                if self._has_template_variables(knowledge['answer']):
                     try:
                         knowledge['answer'] = self.param_resolver.resolve_template(
                             knowledge['answer'],
                             vendor_id
                         )
-                        if knowledge['question_summary']:
+                        if knowledge['question_summary'] and self._has_template_variables(knowledge['question_summary']):
                             knowledge['question_summary'] = self.param_resolver.resolve_template(
                                 knowledge['question_summary'],
                                 vendor_id
@@ -601,7 +619,10 @@ class VendorKnowledgeRetriever:
 
             knowledge = dict(row)
 
-            if not knowledge['is_template']:
+            # 自動檢測模板變數（使用動態檢測替代 is_template 欄位）
+            has_template = self._has_template_variables(knowledge['answer'])
+
+            if not has_template:
                 return {
                     "is_template": False,
                     "original": knowledge['answer'],
@@ -627,7 +648,7 @@ class VendorKnowledgeRetriever:
                 "resolved_question": self.param_resolver.resolve_template(
                     knowledge['question_summary'],
                     vendor_id
-                ) if knowledge['question_summary'] else None,
+                ) if knowledge['question_summary'] and self._has_template_variables(knowledge['question_summary']) else knowledge['question_summary'],
                 "resolved_answer": resolved_answer,
                 "template_vars": knowledge['template_vars'],
                 "validation": validation

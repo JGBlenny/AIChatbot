@@ -13,6 +13,8 @@ import PlatformSOPView from './views/PlatformSOPView.vue';
 import PlatformSOPEditView from './views/PlatformSOPEditView.vue';
 // Knowledge Import from LINE chats
 import KnowledgeImportView from './views/KnowledgeImportView.vue';
+// Knowledge Export to Excel
+import KnowledgeExportView from './views/KnowledgeExportView.vue';
 // Document Converter (Word/PDF to Q&A)
 import DocumentConverterView from './views/DocumentConverterView.vue';
 // Backtest Results
@@ -28,8 +30,6 @@ import CacheManagementView from './views/CacheManagementView.vue';
 import BusinessTypesConfigView from './views/BusinessTypesConfigView.vue';
 // Target User Config Management
 import TargetUserConfigView from './views/TargetUserConfigView.vue';
-// Category Config Management
-import CategoryConfigView from './views/CategoryConfigView.vue';
 
 const routes = [
   {
@@ -77,6 +77,11 @@ const routes = [
     path: '/knowledge-import',
     name: 'KnowledgeImport',
     component: KnowledgeImportView
+  },
+  {
+    path: '/knowledge-export',
+    name: 'KnowledgeExport',
+    component: KnowledgeExportView
   },
   {
     path: '/document-converter',
@@ -152,12 +157,6 @@ const routes = [
     path: '/target-users-config',
     name: 'TargetUsersConfig',
     component: TargetUserConfigView
-  },
-  // Category Config Management
-  {
-    path: '/category-config',
-    name: 'CategoryConfig',
-    component: CategoryConfigView
   },
   // Audience Config - Redirect to Target Users (舊功能已遷移)
   {

@@ -1,6 +1,6 @@
 """
 知識庫匯出 API
-支援匯出知識庫為 Excel 格式（基礎、進階格式化、效能優化三種模式）
+支援匯出知識庫為 Excel 格式（標準格式，與匯入格式兼容，支援大量資料分批處理）
 """
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Request, Query
@@ -11,6 +11,8 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 import os
+import json
+from urllib.parse import quote
 
 router = APIRouter(prefix="/api/v1/knowledge-export", tags=["Knowledge Export"])
 
@@ -23,7 +25,7 @@ class ExportJobStatus(BaseModel):
     result: Optional[Dict] = None  # {exported: 10000, file_size_kb: 1234, file_path: "..."}
     error: Optional[str] = None
     vendor_id: Optional[int] = None
-    export_mode: Optional[str] = None  # basic, formatted, optimized
+    export_mode: Optional[str] = None  # 統一使用 standard
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
@@ -32,9 +34,9 @@ class ExportJobStatus(BaseModel):
 class ExportRequest(BaseModel):
     """匯出請求"""
     vendor_id: Optional[int] = None
-    export_mode: str = "formatted"  # basic, formatted, optimized
-    include_intents: bool = True  # 是否包含意圖對照表
-    include_metadata: bool = True  # 是否包含匯出資訊工作表
+    export_mode: str = "standard"  # 統一使用 standard 標準格式
+    include_intents: bool = False  # 保留參數但不使用（標準格式不需要多工作表）
+    include_metadata: bool = False  # 保留參數但不使用（標準格式不需要多工作表）
 
 
 @router.post("/export")
@@ -46,17 +48,16 @@ async def create_export_job(
     """
     創建匯出任務
 
-    支援三種匯出模式：
-    1. basic: 基礎匯出（單工作表，基本格式）
-    2. formatted: 進階格式化（多工作表，專業格式，推薦使用）
-    3. optimized: 效能優化（支援 10 萬+ 筆資料，分批處理）
+    統一使用標準匯出格式：
+    - 與匯入格式完全兼容
+    - 支援大量資料分批處理（10萬+ 筆）
+    - 單工作表，標準欄位結構
+    - 匯出的檔案可直接用於匯入功能
 
     Args:
         export_request: 匯出請求參數
             - vendor_id: 業者 ID（可選，留空表示匯出通用知識）
-            - export_mode: 匯出模式（basic, formatted, optimized）
-            - include_intents: 是否包含意圖對照表
-            - include_metadata: 是否包含匯出資訊
+            - export_mode: 匯出模式（統一使用 'standard'）
 
     Returns:
         Dict: 包含 job_id 的回應
@@ -64,18 +65,14 @@ async def create_export_job(
     print(f"\n{'='*60}")
     print(f"📥 收到匯出請求")
     print(f"   業者 ID: {export_request.vendor_id or '通用知識'}")
-    print(f"   匯出模式: {export_request.export_mode}")
-    print(f"   包含意圖: {export_request.include_intents}")
-    print(f"   包含資訊: {export_request.include_metadata}")
+    print(f"   匯出格式: 標準格式（與匯入兼容）")
     print(f"{'='*60}\n")
 
-    # 1. 驗證匯出模式
-    allowed_modes = ['basic', 'formatted', 'optimized']
-    if export_request.export_mode not in allowed_modes:
-        raise HTTPException(
-            status_code=400,
-            detail=f"不支援的匯出模式: {export_request.export_mode}. 支援的模式: {', '.join(allowed_modes)}"
-        )
+    # 1. 驗證匯出模式（只允許 standard）
+    if export_request.export_mode != 'standard':
+        # 自動轉換為 standard（向後兼容）
+        print(f"⚠️  匯出模式 '{export_request.export_mode}' 已棄用，自動轉換為 'standard'")
+        export_request.export_mode = 'standard'
 
     # 2. 驗證業者 ID（如果提供）
     db_pool = request.app.state.db_pool
@@ -118,18 +115,11 @@ async def create_export_job(
         user_id="admin"  # TODO: 從認證取得真實使用者 ID
     )
 
-    # 根據模式返回不同訊息
-    mode_descriptions = {
-        'basic': '基礎匯出模式（單工作表，快速匯出）',
-        'formatted': '進階格式化模式（多工作表，專業格式）',
-        'optimized': '效能優化模式（支援大量資料，分批處理）'
-    }
-
     return {
         "job_id": job_id,
         "status": "processing",
-        "message": f"匯出任務已建立，開始處理中。{mode_descriptions[export_request.export_mode]}",
-        "export_mode": export_request.export_mode,
+        "message": "匯出任務已建立，開始處理中。使用標準格式（與匯入格式兼容，支援大量資料分批處理）",
+        "export_mode": "standard",
         "vendor_id": export_request.vendor_id
     }
 
@@ -154,9 +144,7 @@ async def get_export_job_status(job_id: str, request: Request):
     if not job:
         raise HTTPException(status_code=404, detail="任務不存在")
 
-    # 從 config 中提取 export_mode
-    export_mode = job.get('config', {}).get('export_mode', 'formatted')
-
+    # 統一返回 standard 模式
     return {
         "job_id": str(job['job_id']),
         "status": job['status'],
@@ -164,7 +152,7 @@ async def get_export_job_status(job_id: str, request: Request):
         "result": job.get('result'),
         "error": job.get('error_message'),
         "vendor_id": job.get('vendor_id'),
-        "export_mode": export_mode,
+        "export_mode": "standard",  # 統一使用標準格式
         "created_at": job['created_at'],
         "updated_at": job['updated_at'],
         "completed_at": job.get('completed_at')
@@ -197,18 +185,31 @@ async def download_export_file(job_id: str, request: Request):
             detail=f"任務尚未完成（狀態: {job['status']}），無法下載"
         )
 
-    # 從 result 取得檔案路徑
-    result = job.get('result', {})
-    file_path = result.get('file_path')
+    # 從多個來源嘗試取得檔案路徑
+    # 優先順序: 1. 直接的 file_path 欄位  2. result 中的 file_path
+    file_path = job.get('file_path')
+    if not file_path:
+        result = job.get('result', {})
+        if isinstance(result, dict):
+            file_path = result.get('file_path')
 
-    if not file_path or not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="匯出檔案不存在")
+    print(f"🔍 檢查檔案路徑: {file_path}")
+    print(f"   Job 資料: status={job['status']}, file_path欄位={job.get('file_path')}, result={job.get('result')}")
+
+    if not file_path:
+        raise HTTPException(status_code=404, detail="找不到匯出檔案路徑")
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail=f"匯出檔案不存在於路徑: {file_path}")
 
     # 生成下載檔名
     vendor_id = job.get('vendor_id')
     vendor_name = "通用知識" if vendor_id is None else f"業者{vendor_id}"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     download_filename = f"知識庫匯出_{vendor_name}_{timestamp}.xlsx"
+
+    # URL 編碼檔名（支援中文）
+    encoded_filename = quote(download_filename.encode('utf-8'))
 
     print(f"📥 下載匯出檔案: {download_filename} (job_id: {job_id})")
 
@@ -217,7 +218,7 @@ async def download_export_file(job_id: str, request: Request):
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         filename=download_filename,
         headers={
-            "Content-Disposition": f'attachment; filename="{download_filename}"'
+            "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
         }
     )
 
@@ -250,6 +251,7 @@ async def list_export_jobs(
                     vendor_id,
                     job_config,
                     status,
+                    progress,
                     success_records,
                     file_size_bytes,
                     created_at,
@@ -271,6 +273,7 @@ async def list_export_jobs(
                     vendor_id,
                     job_config,
                     status,
+                    progress,
                     success_records,
                     file_size_bytes,
                     created_at,
@@ -290,8 +293,9 @@ async def list_export_jobs(
                 {
                     "job_id": str(job['job_id']),
                     "vendor_id": job['vendor_id'],
-                    "export_mode": job['job_config'].get('export_mode', 'formatted') if job['job_config'] else 'formatted',
+                    "export_mode": "standard",  # 統一使用標準格式
                     "status": job['status'],
+                    "progress": (json.loads(job['progress']) if isinstance(job['progress'], str) else job['progress']).get('current', 0) if job['progress'] else 0,
                     "exported_count": job['success_records'],
                     "file_size_kb": round(job['file_size_bytes'] / 1024, 2) if job['file_size_bytes'] else None,
                     "created_at": job['created_at'].isoformat() if job['created_at'] else None,
@@ -321,23 +325,20 @@ async def delete_export_job(job_id: str, request: Request):
     async with db_pool.acquire() as conn:
         # 取得檔案路徑
         job = await conn.fetchrow("""
-            SELECT result FROM unified_jobs WHERE job_id = $1
+            SELECT file_path FROM unified_jobs WHERE job_id = $1
         """, uuid.UUID(job_id))
 
         if not job:
             raise HTTPException(status_code=404, detail="任務不存在")
 
         # 刪除實體檔案
-        if job['result']:
-            import json
-            result = json.loads(job['result'])
-            file_path = result.get('file_path')
-            if file_path and os.path.exists(file_path):
-                try:
-                    os.remove(file_path)
-                    print(f"✅ 已刪除匯出檔案: {file_path}")
-                except Exception as e:
-                    print(f"⚠️ 無法刪除檔案: {e}")
+        file_path = job['file_path']
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+                print(f"✅ 已刪除匯出檔案: {file_path}")
+            except Exception as e:
+                print(f"⚠️ 無法刪除檔案: {e}")
 
         # 刪除資料庫記錄
         deleted = await conn.fetchval("""
@@ -385,8 +386,8 @@ async def get_export_statistics(
                 FROM unified_jobs
                 WHERE vendor_id = $1
                   AND job_type = 'knowledge_export'
-                  AND created_at > CURRENT_TIMESTAMP - ($2 || ' days')::INTERVAL
-            """, vendor_id, days)
+                  AND created_at > CURRENT_TIMESTAMP - CAST($2 || ' days' AS INTERVAL)
+            """, vendor_id, str(days))
         else:
             stats = await conn.fetchrow("""
                 SELECT
@@ -399,8 +400,8 @@ async def get_export_statistics(
                     COALESCE(AVG(success_records) FILTER (WHERE status = 'completed'), 0) as avg_exported_per_job
                 FROM unified_jobs
                 WHERE job_type = 'knowledge_export'
-                  AND created_at > CURRENT_TIMESTAMP - ($1 || ' days')::INTERVAL
-            """, days)
+                  AND created_at > CURRENT_TIMESTAMP - CAST($1 || ' days' AS INTERVAL)
+            """, str(days))
 
         # 計算成功率
         total_jobs = stats['total_jobs'] or 0
@@ -417,10 +418,10 @@ async def get_export_statistics(
                 FROM unified_jobs
                 WHERE vendor_id = $1
                   AND job_type = 'knowledge_export'
-                  AND created_at > CURRENT_TIMESTAMP - ($2 || ' days')::INTERVAL
+                  AND created_at > CURRENT_TIMESTAMP - CAST($2 || ' days' AS INTERVAL)
                   AND status = 'completed'
                 GROUP BY job_config->>'export_mode'
-            """, vendor_id, days)
+            """, vendor_id, str(days))
         else:
             mode_stats = await conn.fetch("""
                 SELECT
@@ -429,10 +430,10 @@ async def get_export_statistics(
                     COALESCE(AVG(success_records), 0) as avg_exported
                 FROM unified_jobs
                 WHERE job_type = 'knowledge_export'
-                  AND created_at > CURRENT_TIMESTAMP - ($1 || ' days')::INTERVAL
+                  AND created_at > CURRENT_TIMESTAMP - CAST($1 || ' days' AS INTERVAL)
                   AND status = 'completed'
                 GROUP BY job_config->>'export_mode'
-            """, days)
+            """, str(days))
 
         return {
             "total_jobs": total_jobs,
@@ -475,43 +476,40 @@ async def preview_export(
         # 統計知識數量
         if vendor_id is not None:
             knowledge_count = await conn.fetchval("""
-                SELECT COUNT(*) FROM knowledge WHERE vendor_id = $1
+                SELECT COUNT(*) FROM knowledge_base WHERE vendor_id = $1
             """, vendor_id)
 
             intent_count = await conn.fetchval("""
-                SELECT COUNT(*) FROM intents WHERE vendor_id = $1
-            """, vendor_id)
+                SELECT COUNT(*) FROM intents WHERE is_enabled = TRUE
+            """)
         else:
             knowledge_count = await conn.fetchval("""
-                SELECT COUNT(*) FROM knowledge WHERE vendor_id IS NULL
+                SELECT COUNT(*) FROM knowledge_base WHERE vendor_id IS NULL
             """)
 
             intent_count = await conn.fetchval("""
-                SELECT COUNT(*) FROM intents WHERE vendor_id IS NULL
+                SELECT COUNT(*) FROM intents WHERE is_enabled = TRUE
             """)
 
         # 估算檔案大小（粗略計算）
         # 假設每筆知識約 500 bytes，加上格式化開銷
         estimated_size_kb = (knowledge_count * 0.5) + (intent_count * 0.2)
 
-        # 推薦匯出模式
+        # 提供資料量說明
         if knowledge_count < 10000:
-            recommended_mode = "formatted"
-            recommendation = "推薦使用進階格式化模式，提供最佳閱讀體驗"
+            data_size_info = "資料量較小，匯出速度快"
         elif knowledge_count < 50000:
-            recommended_mode = "formatted"
-            recommendation = "資料量適中，推薦使用進階格式化模式"
+            data_size_info = "資料量適中，匯出時間約數秒"
         else:
-            recommended_mode = "optimized"
-            recommendation = "資料量較大，推薦使用效能優化模式"
+            data_size_info = "資料量較大，將使用分批處理確保效能"
 
         return {
             "knowledge_count": knowledge_count,
             "intent_count": intent_count,
             "estimated_file_size_kb": round(estimated_size_kb, 2),
             "estimated_file_size_mb": round(estimated_size_kb / 1024, 2),
-            "recommended_mode": recommended_mode,
-            "recommendation": recommendation,
+            "export_mode": "standard",
+            "data_size_info": data_size_info,
             "vendor_id": vendor_id,
-            "message": "這是預覽模式，尚未實際執行匯出"
+            "message": "這是預覽模式，尚未實際執行匯出。統一使用標準格式（與匯入兼容，支援大量資料分批處理）"
         }

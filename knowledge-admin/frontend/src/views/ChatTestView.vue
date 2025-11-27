@@ -2,6 +2,13 @@
   <div class="chat-test-view">
     <h2>💬 Chat API 測試</h2>
 
+    <!-- ✅ 新增：顯示當前用戶角色 -->
+    <div v-if="userRole && userRole !== 'customer'" class="user-role-badge">
+      <span class="role-icon">👤</span>
+      <span class="role-text">當前角色: <strong>{{ getUserRoleLabel(userRole) }}</strong></span>
+      <span class="role-value">({{ userRole }})</span>
+    </div>
+
     <!-- 模式與業者選擇器 -->
     <div class="vendor-selector">
       <div class="selector-row">
@@ -156,7 +163,9 @@ export default {
       vendorParams: null,
       messages: [],
       userInput: '',
-      loading: false
+      loading: false,
+      userRole: 'customer',  // ✅ 新增：從 URL 讀取的用戶角色
+      targetUserConfig: []   // ✅ 新增：從 API 獲取的目標用戶配置
     };
   },
   computed: {
@@ -178,6 +187,34 @@ export default {
   },
   mounted() {
     this.loadVendors();
+    this.loadTargetUserConfig();  // ✅ 新增：載入目標用戶配置
+
+    // ✅ 新增：從 URL 讀取參數
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // 讀取 user_role 參數
+    const urlUserRole = urlParams.get('user_role');
+    const validRoles = ['tenant', 'landlord', 'property_manager', 'system_admin', 'staff', 'customer'];
+
+    if (urlUserRole && validRoles.includes(urlUserRole)) {
+      this.userRole = urlUserRole;
+      console.log('🔑 從 URL 設定 user_role:', this.userRole);
+    } else if (urlUserRole) {
+      console.warn('⚠️  無效的 user_role 參數:', urlUserRole, '使用預設值: customer');
+    }
+
+    // 讀取 vendor_id 參數（自動選擇業者）
+    const vendorId = urlParams.get('vendor_id');
+    if (vendorId) {
+      this.selectedVendorId = vendorId;
+      console.log('🏢 從 URL 設定 vendor_id:', vendorId);
+      // 等業者列表載入後再載入業者資訊
+      this.$nextTick(() => {
+        setTimeout(() => {
+          this.loadVendorInfo();
+        }, 500);
+      });
+    }
   },
   methods: {
     formatParamValue(value, unit) {
@@ -200,6 +237,24 @@ export default {
       } catch (error) {
         console.error('載入業者失敗', error);
         alert('載入業者失敗：' + (error.response?.data?.detail || error.message));
+      }
+    },
+
+    // ✅ 新增：從 API 載入目標用戶配置
+    async loadTargetUserConfig() {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/target-users-config`);
+        this.targetUserConfig = response.data;
+        console.log('✅ 已載入目標用戶配置:', this.targetUserConfig);
+      } catch (error) {
+        console.error('⚠️  載入目標用戶配置失敗', error);
+        // 如果 API 失敗，使用預設配置
+        this.targetUserConfig = [
+          { user_value: 'tenant', display_name: '租客' },
+          { user_value: 'landlord', display_name: '房東' },
+          { user_value: 'property_manager', display_name: '物業管理師' },
+          { user_value: 'system_admin', display_name: '系統管理員' }
+        ];
       }
     },
 
@@ -266,10 +321,16 @@ export default {
       });
 
       try {
-        // 根據模式設定用戶角色
-        // B2B (customer_service) = staff (業者員工/系統商)
-        // B2C (tenant) = customer (終端客戶)
-        const userRole = this.chatMode === 'customer_service' ? 'staff' : 'customer';
+        // ✅ 修改：優先使用從 URL 讀取的 userRole
+        // 如果沒有從 URL 設定，則根據 chatMode 決定
+        let userRole = this.userRole;
+
+        // 如果是預設值 'customer'，且 chatMode 是 B2B，則使用 'staff'
+        if (userRole === 'customer' && this.chatMode === 'customer_service') {
+          userRole = 'staff';
+        }
+
+        console.log('📤 發送訊息，user_role:', userRole, 'mode:', this.chatMode);
 
         const response = await axios.post(`${RAG_API}/v1/message`, {
           message: message,
@@ -370,6 +431,26 @@ export default {
       if (!bytes) return '';
       const mb = bytes / (1024 * 1024);
       return mb.toFixed(2) + ' MB';
+    },
+
+    // ✅ 新增：從配置中獲取角色的中文標籤
+    getUserRoleLabel(role) {
+      // 先從 API 配置中查找
+      const config = this.targetUserConfig.find(c => c.user_value === role);
+      if (config && config.display_name) {
+        return config.display_name;
+      }
+
+      // 特殊角色
+      if (role === 'staff') {
+        return 'B2B 員工/系統商';
+      }
+      if (role === 'customer') {
+        return '通用客戶';
+      }
+
+      // 如果都找不到，返回原始值
+      return role;
     }
   }
 };
@@ -378,6 +459,49 @@ export default {
 <style scoped>
 .chat-test-view {
   width: 100%;
+}
+
+/* ✅ 新增：用戶角色標籤 */
+.user-role-badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-role-badge .role-icon {
+  font-size: 20px;
+}
+
+.user-role-badge .role-text {
+  font-size: 15px;
+  flex: 1;
+}
+
+.user-role-badge .role-value {
+  font-size: 13px;
+  opacity: 0.8;
+  font-family: 'Courier New', monospace;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
 /* 業者選擇器 */

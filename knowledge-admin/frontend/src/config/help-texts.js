@@ -559,6 +559,101 @@ export default {
   },
 
   /**
+   * 知識匯出
+   */
+  knowledgeExport: {
+    title: "💡 什麼是知識匯出？",
+    lastUpdated: "2025-11-22",
+    sections: [
+      {
+        icon: "📤",
+        title: "核心功能",
+        content: "<strong>知識匯出（Knowledge Export）</strong> 用於將知識庫資料匯出為 Excel 格式，方便備份或人工審閱。",
+        items: [
+          "<strong>Excel 匯出</strong>：生成格式化的 Excel 文件",
+          "<strong>三種模式</strong>：基本、格式化、優化模式",
+          "<strong>篩選匯出</strong>：可按業者、業態、狀態篩選",
+          "<strong>包含元數據</strong>：可選擇是否包含 ID、時間戳等資訊",
+          "<strong>背景處理</strong>：大量資料在背景處理，完成後下載"
+        ]
+      },
+      {
+        icon: "📋",
+        title: "匯出格式",
+        important: true,
+        content: "<strong>標準匯出格式</strong> - 與匯入功能完全兼容",
+        items: [
+          "使用與匯入相同的欄位結構",
+          "匯出的 Excel 可直接用於匯入功能",
+          "包含所有必要欄位：問題、答案、作用域、業態、目標用戶、意圖、關鍵字等",
+          "確保資料完整性與一致性"
+        ]
+      },
+      {
+        icon: "📁",
+        title: "匯出內容",
+        content: "匯出的 Excel 文件包含以下欄位：",
+        items: [
+          "<strong>問題摘要</strong>：知識的問題描述",
+          "<strong>標準答案</strong>：知識的答案內容",
+          "<strong>意圖標籤</strong>：關聯的意圖（主要/次要）",
+          "<strong>業態類型</strong>：適用的業態",
+          "<strong>目標用戶</strong>：適用的用戶角色",
+          "<strong>分類</strong>：知識所屬分類",
+          "<strong>作用域</strong>：global/vendor/customized",
+          "<strong>優先級</strong>：知識的優先級",
+          "<strong>啟用狀態</strong>：是否已啟用",
+          "<strong>元數據</strong>（可選）：ID、建立時間、更新時間等"
+        ]
+      },
+      {
+        icon: "⚙️",
+        title: "匯出流程",
+        items: [
+          "1️⃣ <strong>選擇供應商</strong>：選擇要匯出的業者",
+          "2️⃣ <strong>開始匯出</strong>：點擊「開始匯出」按鈕",
+          "3️⃣ <strong>背景處理</strong>：系統在背景處理匯出任務",
+          "4️⃣ <strong>查看進度</strong>：在匯出歷史中監控進度",
+          "5️⃣ <strong>下載檔案</strong>：處理完成後點擊下載按鈕"
+        ]
+      },
+      {
+        icon: "📊",
+        title: "匯出歷史",
+        content: "系統會保留所有匯出記錄，包含：",
+        items: [
+          "<strong>任務狀態</strong>：等待中、處理中、已完成、失敗",
+          "<strong>處理進度</strong>：實時顯示處理百分比",
+          "<strong>匯出數量</strong>：成功匯出的知識筆數",
+          "<strong>建立時間</strong>：任務建立的時間",
+          "<strong>下載功能</strong>：隨時重新下載已完成的檔案"
+        ]
+      },
+      {
+        icon: "⚠️",
+        title: "注意事項",
+        type: "warning",
+        items: [
+          "⚠️ <strong>大量資料</strong>：匯出大量資料需要較長時間，請耐心等待",
+          "⚠️ <strong>檔案保留</strong>：匯出檔案會保留 7 天，請及時下載",
+          "⚠️ <strong>資料安全</strong>：匯出檔案包含完整知識內容，請妥善保管",
+          "⚠️ <strong>格式相容</strong>：建議使用 Excel 2016 或更新版本開啟"
+        ]
+      }
+    ],
+    tips: {
+      title: "使用建議",
+      items: [
+        "✅ <strong>定期備份</strong>：建議每週或每月匯出一次作為備份",
+        "✅ <strong>匯出後可匯入</strong>：匯出的檔案可直接用於匯入功能",
+        "✅ <strong>分業者匯出</strong>：分別匯出不同業者的知識，便於管理",
+        "✅ <strong>資料遷移</strong>：可用於跨環境的資料遷移",
+        "⚠️ <strong>檢查完整性</strong>：匯出後檢查筆數是否正確"
+      ]
+    }
+  },
+
+  /**
    * 知識匯入
    */
   knowledgeImport: {

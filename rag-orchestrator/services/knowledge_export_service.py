@@ -80,25 +80,35 @@ class KnowledgeExportService(UnifiedJobService):
 
         return sanitized
 
-    # ==================== Phase 1: 基礎匯出功能 ====================
+    # ==================== 標準匯出功能（匯出/匯入兼容 + 支援大量資料分批處理）====================
 
-    async def export_knowledge_basic(
+    async def export_knowledge_standard(
         self,
         knowledge_list: List[Dict],
-        output_filename: str = None
+        output_filename: str = None,
+        progress_callback: callable = None
     ) -> str:
         """
-        Phase 1: 基礎 Excel 匯出
+        標準 Excel 匯出（與匯入格式完全兼容 + 支援大量資料分批處理）
 
-        功能：
-        - 單工作表匯出
-        - 基本格式化（標題加粗）
-        - 凍結首列
-        - 自動篩選
+        使用與 knowledge_import 相同的格式，確保匯出的資料可以直接匯入。
+        支援分批處理大量資料（10萬+ 筆），避免記憶體溢出。
+
+        標準欄位：
+        - question_summary (問題摘要) - 必填
+        - answer (答案) - 必填
+        - scope (作用域) - global/vendor/customized
+        - vendor_id (業者ID) - 可選
+        - business_types (業態類型) - 逗號分隔
+        - target_user (目標用戶) - 逗號分隔
+        - intent_names (意圖名稱) - 逗號分隔
+        - keywords (關鍵字) - 逗號分隔
+        - priority (優先級) - 0 或 1
 
         Args:
             knowledge_list: 知識列表
             output_filename: 輸出檔名（可選）
+            progress_callback: 進度回調函數（可選）
 
         Returns:
             str: 匯出檔案路徑
@@ -108,269 +118,41 @@ class KnowledgeExportService(UnifiedJobService):
             output_filename = f"knowledge_export_{timestamp}.xlsx"
 
         output_path = self.export_dir / output_filename
+        total_count = len(knowledge_list)
 
-        print(f"📤 開始基礎 Excel 匯出...")
-        print(f"   總筆數: {len(knowledge_list)}")
+        print(f"📤 開始標準格式匯出...")
+        print(f"   總筆數: {total_count}")
+        if total_count > self.batch_size:
+            batch_count = (total_count + self.batch_size - 1) // self.batch_size
+            print(f"   批次大小: {self.batch_size}")
+            print(f"   批次數量: {batch_count}")
 
         # 使用 openpyxl 建立工作簿
         wb = Workbook()
         ws = wb.active
-        ws.title = "知識列表"
+        ws.title = "知識庫"
 
-        # 寫入標題行
+        # 標準欄位標題（與匯入格式完全一致）
         headers = [
-            'ID', '問題摘要', '答案', '意圖', '優先級',
-            '關鍵字', '業態', '目標用戶', '來源', '建立時間'
+            'question_summary',  # 問題摘要
+            'answer',            # 答案
+            'scope',             # 作用域
+            'vendor_id',         # 業者ID
+            'business_types',    # 業態類型
+            'target_user',       # 目標用戶
+            'intent_names',      # 意圖名稱
+            'keywords',          # 關鍵字
+            'priority'           # 優先級
         ]
         ws.append(headers)
 
-        # 格式化標題（加粗）
+        # 格式化標題行
         for cell in ws[1]:
-            cell.font = Font(bold=True)
+            cell.font = Font(bold=True, color='FFFFFF')
+            cell.fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
+            cell.alignment = Alignment(horizontal='center', vertical='center')
 
-        # 寫入資料
-        for knowledge in knowledge_list:
-            ws.append([
-                knowledge.get('id'),
-                self.sanitize_for_excel(knowledge.get('question_summary')),
-                self.sanitize_for_excel(knowledge.get('answer')),
-                self.sanitize_for_excel(knowledge.get('intent_name', '')),
-                '✅' if knowledge.get('priority') else '❌',
-                self.sanitize_for_excel(';'.join(knowledge.get('keywords', []))),
-                self.sanitize_for_excel(';'.join(knowledge.get('business_types', [])) if knowledge.get('business_types') else ''),
-                self.sanitize_for_excel(knowledge.get('target_user', '')),
-                self.sanitize_for_excel(knowledge.get('source_type', '')),
-                self.sanitize_for_excel(str(knowledge.get('created_at', '')))
-            ])
-
-        # 凍結首列
-        ws.freeze_panes = 'A2'
-
-        # 自動篩選
-        ws.auto_filter.ref = ws.dimensions
-
-        # 儲存檔案
-        wb.save(output_path)
-
-        file_size = os.path.getsize(output_path) / 1024  # KB
-        print(f"✅ 基礎匯出完成")
-        print(f"   檔案: {output_filename}")
-        print(f"   大小: {file_size:.2f} KB")
-
-        return str(output_path)
-
-    # ==================== Phase 2: 進階格式化 ====================
-
-    async def export_knowledge_formatted(
-        self,
-        knowledge_list: List[Dict],
-        intents: List[Dict],
-        export_info: Dict,
-        output_filename: str = None
-    ) -> str:
-        """
-        Phase 2: 進階格式化 Excel 匯出
-
-        功能：
-        - 多工作表（知識列表、意圖對照、匯出資訊）
-        - 專業格式化（標題背景色、字體顏色、置中）
-        - 自動調整欄寬
-        - 答案欄自動換行
-        - 條件格式化（優先級顏色標記）
-
-        Args:
-            knowledge_list: 知識列表
-            intents: 意圖列表
-            export_info: 匯出資訊
-            output_filename: 輸出檔名（可選）
-
-        Returns:
-            str: 匯出檔案路徑
-        """
-        if not output_filename:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            output_filename = f"knowledge_export_formatted_{timestamp}.xlsx"
-
-        output_path = self.export_dir / output_filename
-
-        print(f"📤 開始進階格式化 Excel 匯出...")
-        print(f"   總筆數: {len(knowledge_list)}")
-        print(f"   意圖數: {len(intents)}")
-
-        wb = Workbook()
-
-        # === 工作表 1: 知識列表 ===
-        ws1 = wb.active
-        ws1.title = "知識列表"
-
-        # 標題行
-        headers = [
-            'ID', '問題摘要', '答案', '意圖', '優先級',
-            '關鍵字', '業態', '目標用戶', '來源', '建立時間'
-        ]
-        ws1.append(headers)
-
-        # 格式化標題
-        for cell in ws1[1]:
-            cell.fill = self.header_fill
-            cell.font = self.header_font
-            cell.alignment = self.header_alignment
-
-        # 寫入資料
-        for knowledge in knowledge_list:
-            ws1.append([
-                knowledge.get('id'),
-                self.sanitize_for_excel(knowledge.get('question_summary')),
-                self.sanitize_for_excel(knowledge.get('answer')),
-                self.sanitize_for_excel(knowledge.get('intent_name', '')),
-                '✅' if knowledge.get('priority') else '❌',
-                self.sanitize_for_excel(';'.join(knowledge.get('keywords', []))),
-                self.sanitize_for_excel(';'.join(knowledge.get('business_types', [])) if knowledge.get('business_types') else ''),
-                self.sanitize_for_excel(knowledge.get('target_user', '')),
-                self.sanitize_for_excel(knowledge.get('source_type', '')),
-                self.sanitize_for_excel(str(knowledge.get('created_at', '')))
-            ])
-
-        # 凍結首列
-        ws1.freeze_panes = 'A2'
-
-        # 自動篩選
-        ws1.auto_filter.ref = ws1.dimensions
-
-        # 調整欄寬
-        column_widths = {
-            'A': 8,   # ID
-            'B': 30,  # 問題摘要
-            'C': 60,  # 答案
-            'D': 15,  # 意圖
-            'E': 10,  # 優先級
-            'F': 25,  # 關鍵字
-            'G': 15,  # 業態
-            'H': 12,  # 目標用戶
-            'I': 15,  # 來源
-            'J': 20   # 建立時間
-        }
-
-        for col, width in column_widths.items():
-            ws1.column_dimensions[col].width = width
-
-        # 答案欄自動換行
-        for row in ws1.iter_rows(min_row=2, max_row=ws1.max_row, min_col=3, max_col=3):
-            for cell in row:
-                cell.alignment = Alignment(wrap_text=True, vertical='top')
-
-        # === 工作表 2: 意圖對照表 ===
-        ws2 = wb.create_sheet("意圖對照表")
-        ws2.append(['意圖ID', '意圖名稱', '描述'])
-
-        for cell in ws2[1]:
-            cell.fill = self.header_fill
-            cell.font = self.header_font
-            cell.alignment = self.header_alignment
-
-        for intent in intents:
-            ws2.append([
-                intent.get('id'),
-                self.sanitize_for_excel(intent.get('name')),
-                self.sanitize_for_excel(intent.get('description', ''))
-            ])
-
-        ws2.column_dimensions['A'].width = 10
-        ws2.column_dimensions['B'].width = 20
-        ws2.column_dimensions['C'].width = 50
-
-        # === 工作表 3: 匯出資訊 ===
-        ws3 = wb.create_sheet("匯出資訊")
-
-        info_data = [
-            ['匯出時間', export_info.get('timestamp', datetime.now().isoformat())],
-            ['匯出者', export_info.get('exported_by', 'system')],
-            ['篩選條件', str(export_info.get('filters', {}))],
-            ['總筆數', export_info.get('total_count', len(knowledge_list))],
-            ['本次匯出', export_info.get('exported_count', len(knowledge_list))],
-            ['格式版本', '2.0']
-        ]
-
-        for row in info_data:
-            ws3.append(row)
-            ws3[f'A{ws3.max_row}'].font = Font(bold=True)
-
-        ws3.column_dimensions['A'].width = 15
-        ws3.column_dimensions['B'].width = 50
-
-        # 儲存檔案
-        wb.save(output_path)
-
-        file_size = os.path.getsize(output_path) / 1024  # KB
-        print(f"✅ 進階格式化匯出完成")
-        print(f"   檔案: {output_filename}")
-        print(f"   大小: {file_size:.2f} KB")
-        print(f"   工作表: 3 個")
-
-        return str(output_path)
-
-    # ==================== Phase 3: 效能優化 ====================
-
-    async def export_knowledge_optimized(
-        self,
-        knowledge_list: List[Dict],
-        intents: List[Dict],
-        export_info: Dict,
-        output_filename: str = None,
-        progress_callback: callable = None
-    ) -> str:
-        """
-        Phase 3: 效能優化 Excel 匯出
-
-        功能：
-        - 分批處理（支援 10 萬+ 筆資料）
-        - 進度追蹤與回調
-        - 記憶體優化（逐批寫入）
-        - 自動垃圾回收
-        - 超大資料集自動分檔
-
-        Args:
-            knowledge_list: 知識列表
-            intents: 意圖列表
-            export_info: 匯出資訊
-            output_filename: 輸出檔名（可選）
-            progress_callback: 進度回調函數
-
-        Returns:
-            str: 匯出檔案路徑
-        """
-        if not output_filename:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            output_filename = f"knowledge_export_optimized_{timestamp}.xlsx"
-
-        output_path = self.export_dir / output_filename
-        total_count = len(knowledge_list)
-
-        print(f"📤 開始效能優化 Excel 匯出...")
-        print(f"   總筆數: {total_count}")
-        print(f"   批次大小: {self.batch_size}")
-        print(f"   預估批次數: {(total_count + self.batch_size - 1) // self.batch_size}")
-
-        wb = Workbook()
-
-        # === 工作表 1: 知識列表（分批寫入）===
-        ws1 = wb.active
-        ws1.title = "知識列表"
-
-        # 標題行
-        headers = [
-            'ID', '問題摘要', '答案', '意圖', '優先級',
-            '關鍵字', '業態', '目標用戶', '來源', '建立時間'
-        ]
-        ws1.append(headers)
-
-        # 格式化標題
-        for cell in ws1[1]:
-            cell.fill = self.header_fill
-            cell.font = self.header_font
-            cell.alignment = self.header_alignment
-
-        # 分批寫入資料
+        # 分批寫入資料（支援大量資料）
         batch_count = (total_count + self.batch_size - 1) // self.batch_size
 
         for batch_num in range(batch_count):
@@ -380,97 +162,76 @@ class KnowledgeExportService(UnifiedJobService):
 
             # 寫入當前批次
             for knowledge in batch:
-                ws1.append([
-                    knowledge.get('id'),
-                    knowledge.get('question_summary'),
-                    knowledge.get('answer'),
-                    knowledge.get('intent_name', ''),
-                    '✅' if knowledge.get('priority') else '❌',
-                    ';'.join(knowledge.get('keywords', [])),
-                    ';'.join(knowledge.get('business_types', [])) if knowledge.get('business_types') else '',
-                    knowledge.get('target_user', ''),
-                    knowledge.get('source_type', ''),
-                    str(knowledge.get('created_at', ''))
+                # 處理陣列欄位：轉換為逗號分隔字串
+                business_types = ','.join(knowledge.get('business_types', [])) if knowledge.get('business_types') else ''
+                target_user_list = knowledge.get('target_user', [])
+                if isinstance(target_user_list, str):
+                    target_user = target_user_list
+                else:
+                    target_user = ','.join(target_user_list) if target_user_list else ''
+
+                keywords = ','.join(knowledge.get('keywords', [])) if knowledge.get('keywords') else ''
+                intent_names = knowledge.get('intent_name', '')  # 從 JOIN 取得的主要意圖
+
+                ws.append([
+                    self.sanitize_for_excel(knowledge.get('question_summary', '')),
+                    self.sanitize_for_excel(knowledge.get('answer', '')),
+                    knowledge.get('scope', 'global'),
+                    knowledge.get('vendor_id') or '',  # 可能是 None
+                    business_types,
+                    target_user,
+                    intent_names,
+                    keywords,
+                    knowledge.get('priority', 0)
                 ])
 
             # 進度回調
-            progress = int((end_idx / total_count) * 100)
-            print(f"   ⏳ 進度: {end_idx}/{total_count} ({progress}%)")
+            if batch_count > 1:  # 只在分批處理時顯示進度
+                progress = int((end_idx / total_count) * 100)
+                print(f"   ⏳ 進度: {end_idx}/{total_count} ({progress}%)")
 
-            if progress_callback:
-                await progress_callback(progress, end_idx, total_count)
+                if progress_callback:
+                    await progress_callback(progress, end_idx, total_count)
 
             # 讓出 CPU（避免阻塞）
-            await asyncio.sleep(0.01)
-
-        # 凍結首列
-        ws1.freeze_panes = 'A2'
-
-        # 自動篩選
-        ws1.auto_filter.ref = ws1.dimensions
+            if batch_count > 1:
+                await asyncio.sleep(0.01)
 
         # 調整欄寬
         column_widths = {
-            'A': 8, 'B': 30, 'C': 60, 'D': 15, 'E': 10,
-            'F': 25, 'G': 15, 'H': 12, 'I': 15, 'J': 20
+            'A': 40,  # question_summary
+            'B': 60,  # answer
+            'C': 12,  # scope
+            'D': 10,  # vendor_id
+            'E': 25,  # business_types
+            'F': 15,  # target_user
+            'G': 20,  # intent_names
+            'H': 20,  # keywords
+            'I': 10   # priority
         }
         for col, width in column_widths.items():
-            ws1.column_dimensions[col].width = width
+            ws.column_dimensions[col].width = width
 
         # 答案欄自動換行
-        for row in ws1.iter_rows(min_row=2, max_row=ws1.max_row, min_col=3, max_col=3):
+        for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=2, max_col=2):
             for cell in row:
                 cell.alignment = Alignment(wrap_text=True, vertical='top')
 
-        # === 工作表 2: 意圖對照表 ===
-        ws2 = wb.create_sheet("意圖對照表")
-        ws2.append(['意圖ID', '意圖名稱', '描述'])
+        # 凍結首列
+        ws.freeze_panes = 'A2'
 
-        for cell in ws2[1]:
-            cell.fill = self.header_fill
-            cell.font = self.header_font
-            cell.alignment = self.header_alignment
-
-        for intent in intents:
-            ws2.append([
-                intent.get('id'),
-                self.sanitize_for_excel(intent.get('name')),
-                self.sanitize_for_excel(intent.get('description', ''))
-            ])
-
-        ws2.column_dimensions['A'].width = 10
-        ws2.column_dimensions['B'].width = 20
-        ws2.column_dimensions['C'].width = 50
-
-        # === 工作表 3: 匯出資訊 ===
-        ws3 = wb.create_sheet("匯出資訊")
-
-        info_data = [
-            ['匯出時間', export_info.get('timestamp', datetime.now().isoformat())],
-            ['匯出者', export_info.get('exported_by', 'system')],
-            ['篩選條件', str(export_info.get('filters', {}))],
-            ['總筆數', export_info.get('total_count', total_count)],
-            ['本次匯出', export_info.get('exported_count', total_count)],
-            ['批次處理', f'{batch_count} 批次，每批 {self.batch_size} 筆'],
-            ['格式版本', '2.0 (Optimized)']
-        ]
-
-        for row in info_data:
-            ws3.append(row)
-            ws3[f'A{ws3.max_row}'].font = Font(bold=True)
-
-        ws3.column_dimensions['A'].width = 15
-        ws3.column_dimensions['B'].width = 50
+        # 自動篩選
+        ws.auto_filter.ref = ws.dimensions
 
         # 儲存檔案
         print(f"   💾 儲存檔案中...")
         wb.save(output_path)
 
-        file_size = os.path.getsize(output_path) / 1024 / 1024  # MB
-        print(f"✅ 效能優化匯出完成")
+        file_size = os.path.getsize(output_path) / 1024  # KB
+        print(f"✅ 標準格式匯出完成")
         print(f"   檔案: {output_filename}")
-        print(f"   大小: {file_size:.2f} MB")
-        print(f"   工作表: 3 個")
+        print(f"   大小: {file_size:.2f} KB")
+        print(f"   ℹ️  此檔案可直接用於匯入功能")
 
         return str(output_path)
 
@@ -483,12 +244,13 @@ class KnowledgeExportService(UnifiedJobService):
         """
         從資料庫查詢知識列表
 
+        注意：總是匯出所有知識，不過濾 vendor_id
+
         Args:
-            filters: 篩選條件
+            filters: 篩選條件（保留以兼容舊版，但 vendor_id 會被忽略）
                 - intent_ids: 意圖 ID 列表
                 - priority: 優先級（0/1/null）
                 - is_active: 是否啟用
-                - vendor_id: 業者 ID
 
         Returns:
             List[Dict]: 知識列表
@@ -503,11 +265,12 @@ class KnowledgeExportService(UnifiedJobService):
                 kb.id,
                 kb.question_summary,
                 kb.answer,
-                kb.keywords,
+                kb.scope,
+                kb.vendor_id,
                 kb.business_types,
                 kb.target_user,
+                kb.keywords,
                 kb.priority,
-                kb.is_active,
                 kb.source_type,
                 kb.created_at,
                 kb.updated_at,
@@ -540,11 +303,11 @@ class KnowledgeExportService(UnifiedJobService):
             params.append(filters['is_active'])
             param_idx += 1
 
-        # 業者篩選
-        if filters.get('vendor_id'):
-            query += f" AND kb.vendor_id = ${param_idx}"
-            params.append(filters['vendor_id'])
-            param_idx += 1
+        # ⚠️ 不再過濾 vendor_id - 總是匯出所有知識
+        # if filters.get('vendor_id'):
+        #     query += f" AND kb.vendor_id = ${param_idx}"
+        #     params.append(filters['vendor_id'])
+        #     param_idx += 1
 
         query += " ORDER BY kb.id DESC"
 
@@ -561,7 +324,6 @@ class KnowledgeExportService(UnifiedJobService):
                     'business_types': row['business_types'] or [],
                     'target_user': row['target_user'],
                     'priority': row['priority'],
-                    'is_active': row['is_active'],
                     'source_type': row['source_type'],
                     'created_at': row['created_at'],
                     'updated_at': row['updated_at'],
@@ -638,7 +400,8 @@ class KnowledgeExportService(UnifiedJobService):
 
             # 2. 從資料庫查詢知識
             print(f"📊 查詢知識資料...")
-            knowledge_list = await self.get_knowledge_from_db(vendor_id)
+            # ⚠️ 注意：總是匯出所有知識，不過濾 vendor_id
+            knowledge_list = await self.get_knowledge_from_db()
             total_count = len(knowledge_list)
 
             if total_count == 0:
@@ -678,54 +441,16 @@ class KnowledgeExportService(UnifiedJobService):
                 total_records=total_count
             )
 
-            # 6. 根據模式呼叫對應的匯出方法
+            # 6. 使用標準匯出方法（與匯入格式完全兼容）
+            # 注意：無論 export_mode 是什麼，統一使用標準格式
             output_filename = f"export_{job_id}.xlsx"
 
-            if export_mode == 'basic':
-                print(f"📤 使用基礎匯出模式...")
-                file_path = await self.export_knowledge_basic(
-                    knowledge_list=knowledge_list,
-                    output_filename=output_filename
-                )
-
-            elif export_mode == 'formatted':
-                print(f"📤 使用進階格式化匯出模式...")
-                file_path = await self.export_knowledge_formatted(
-                    knowledge_list=knowledge_list,
-                    intents=intents if include_intents else [],
-                    export_info=export_info if include_metadata else {},
-                    output_filename=output_filename
-                )
-
-            elif export_mode == 'optimized':
-                print(f"📤 使用效能優化匯出模式...")
-
-                # 定義進度回調函數
-                async def progress_callback(current: int, total: int, stage: str):
-                    percentage = round(current / total * 100, 2) if total > 0 else 0
-                    await self.update_status(
-                        job_id,
-                        status='processing',
-                        progress={
-                            'stage': stage,
-                            'current': current,
-                            'total': total,
-                            'percentage': percentage,
-                            'message': f'已處理 {current}/{total} 筆 ({percentage}%)'
-                        },
-                        processed_records=current
-                    )
-
-                file_path = await self.export_knowledge_optimized(
-                    knowledge_list=knowledge_list,
-                    intents=intents if include_intents else [],
-                    export_info=export_info if include_metadata else {},
-                    output_filename=output_filename,
-                    progress_callback=progress_callback
-                )
-
-            else:
-                raise Exception(f"不支援的匯出模式: {export_mode}")
+            print(f"📤 使用標準匯出格式（可直接匯入）...")
+            print(f"   ℹ️  所有匯出統一使用標準格式，確保匯入兼容性")
+            file_path = await self.export_knowledge_standard(
+                knowledge_list=knowledge_list,
+                output_filename=output_filename
+            )
 
             # 7. 取得檔案大小
             file_size = os.path.getsize(file_path)
@@ -756,7 +481,10 @@ class KnowledgeExportService(UnifiedJobService):
             print(f"{'='*60}\n")
 
         except Exception as e:
+            import traceback
             error_message = str(e)
+            print(f"❌ 完整錯誤堆棧:")
+            traceback.print_exc()
             print(f"❌ 匯出作業失敗: {error_message}")
 
             # 更新為失敗狀態（使用統一 Job 服務的方法）

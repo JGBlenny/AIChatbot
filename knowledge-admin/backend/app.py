@@ -992,16 +992,17 @@ async def get_stats():
         """)
         by_source_type = [dict(row) for row in cur.fetchall()]
 
-        # 按業務分類統計（category 欄位，未來功能）
+        # 按業態類型統計
         cur.execute("""
             SELECT
-                COALESCE(category, '未分類') as category,
+                UNNEST(business_types) as business_type,
                 COUNT(*) as count
             FROM knowledge_base
-            GROUP BY category
+            WHERE business_types IS NOT NULL
+            GROUP BY business_type
             ORDER BY count DESC
         """)
-        by_category = [dict(row) for row in cur.fetchall()]
+        by_business_type = [dict(row) for row in cur.fetchall()]
 
         # 按意圖統計（前 10 個）
         cur.execute("""
@@ -1043,7 +1044,7 @@ async def get_stats():
         return {
             "total_knowledge": total,
             "by_source_type": by_source_type,
-            "by_category": by_category,
+            "by_business_type": by_business_type,
             "by_intent": by_intent,
             "embedding_stats": embedding_stats,
             "recent_updates": recent_updates

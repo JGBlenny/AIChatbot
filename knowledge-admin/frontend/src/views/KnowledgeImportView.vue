@@ -7,28 +7,43 @@
 
     <p class="subtitle">上傳知識庫文件，支援多種格式，自動提取知識並智能去重</p>
 
-    <!-- 步驟指示器 -->
-    <div class="steps">
-      <div class="step" :class="{active: currentStep === 1, completed: currentStep > 1}">
-        <div class="step-number">1</div>
-        <div class="step-title">上傳文件</div>
-      </div>
-      <div class="step" :class="{active: currentStep === 2, completed: currentStep > 2}">
-        <div class="step-number">2</div>
-        <div class="step-title">預覽確認</div>
-      </div>
-      <div class="step" :class="{active: currentStep === 3, completed: currentStep > 3}">
-        <div class="step-number">3</div>
-        <div class="step-title">處理中</div>
-      </div>
-      <div class="step" :class="{active: currentStep === 4}">
-        <div class="step-number">4</div>
-        <div class="step-title">完成</div>
+    <!-- 處理流程說明 -->
+    <div class="process-info">
+      <div class="process-flow">
+        <span class="flow-step">📤 上傳檔案</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">🤖 AI 提取知識</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">🧠 生成向量</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">📋 進入審核佇列</span>
       </div>
     </div>
 
-    <!-- Step 1: 檔案管理器 -->
-    <div v-if="currentStep === 1" class="step-content">
+    <!-- 匯入選項（佇列級別） -->
+    <div class="import-options">
+      <label class="checkbox-option">
+        <input type="checkbox" v-model="skipReview" />
+        <span class="option-text">
+          <strong>直接加入知識庫（跳過審核）</strong>
+          <span class="warning-text">⚠️ 跳過審核將直接影響線上回答，請謹慎使用</span>
+        </span>
+      </label>
+
+      <!-- 優先級選項（僅在跳過審核時顯示） -->
+      <div v-if="skipReview" class="priority-option">
+        <label class="checkbox-option">
+          <input type="checkbox" v-model="enablePriority" />
+          <span class="option-text">
+            <strong>統一啟用優先級</strong>
+            <span class="info-text">✨ 所有匯入的知識將獲得 +0.15 相似度加成</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <!-- 檔案管理器 -->
+    <div class="step-content">
       <!-- 檔案佇列標題 -->
       <div class="queue-header">
         <h3>📋 檔案佇列 ({{ fileQueue.length }})</h3>
@@ -53,7 +68,18 @@
               📄
             </div>
             <div class="file-details">
-              <div class="file-name">{{ fileItem.name }}</div>
+              <div class="file-name">
+                {{ fileItem.name }}
+                <!-- 來源類型 badge -->
+                <span v-if="fileItem.sourceDescription" class="source-badge"
+                      :class="{
+                        'source-system': fileItem.sourceType === 'system_export',
+                        'source-chat': fileItem.sourceType === 'line_chat',
+                        'source-external': fileItem.sourceType === 'external_file'
+                      }">
+                  {{ fileItem.sourceDescription }}
+                </span>
+              </div>
               <div class="file-meta">
                 <span class="file-size">{{ formatFileSize(fileItem.size) }}</span>
                 <span class="file-type">{{ getFileExtension(fileItem.name) }}</span>
@@ -64,20 +90,110 @@
           <div class="file-item-status">
             <!-- 狀態標記 -->
             <span v-if="fileItem.status === 'pending'" class="badge badge-gray">⏳ 待處理</span>
-            <span v-if="fileItem.status === 'processing'" class="badge badge-blue">🔄 處理中</span>
-            <span v-if="fileItem.status === 'completed'" class="badge badge-green">✅ 已完成</span>
             <span v-if="fileItem.status === 'error'" class="badge badge-red">❌ 失敗</span>
 
-            <!-- 進度條（處理中時顯示） -->
-            <div v-if="fileItem.status === 'processing' && fileItem.progress !== undefined" class="mini-progress">
-              <div class="mini-progress-bar" :style="{width: fileItem.progress + '%'}"></div>
-              <span class="mini-progress-text">{{ fileItem.progress }}%</span>
+            <!-- 處理中：顯示階段指示器 -->
+            <div v-if="fileItem.status === 'processing'" class="processing-stages">
+              <div class="stage-indicators">
+                <span class="stage-icon" :class="{active: fileItem.stage === 'uploading', completed: isStageCompleted(fileItem.stage, 'uploading')}">
+                  📤 上傳
+                </span>
+                <span class="stage-icon" :class="{active: fileItem.stage === 'extracting', completed: isStageCompleted(fileItem.stage, 'extracting')}">
+                  🤖 提取
+                </span>
+                <span class="stage-icon" :class="{active: fileItem.stage === 'embedding', completed: isStageCompleted(fileItem.stage, 'embedding')}">
+                  🧠 向量化
+                </span>
+                <span class="stage-icon" :class="{active: fileItem.stage === 'saving', completed: isStageCompleted(fileItem.stage, 'saving')}">
+                  💾 儲存
+                </span>
+              </div>
+              <div class="mini-progress">
+                <div class="mini-progress-bar" :style="{width: (fileItem.progress || 0) + '%'}"></div>
+                <span class="mini-progress-text">{{ fileItem.progress || 0 }}%</span>
+              </div>
             </div>
+
+            <!-- 完成：顯示簡潔標記 -->
+            <span v-if="fileItem.status === 'completed'" class="badge badge-green">✅ 已完成</span>
 
             <!-- 結果統計（完成時顯示） -->
             <div v-if="fileItem.status === 'completed' && fileItem.result" class="file-result">
-              <span class="result-stat">新增: {{ fileItem.result.added || 0 }}</span>
-              <span class="result-stat">跳過: {{ fileItem.result.skipped || 0 }}</span>
+              <!-- 審核模式：顯示詳細統計 -->
+              <template v-if="fileItem.result.mode === 'review_queue'">
+                <span class="result-stat result-success">
+                  ✅ 待審核: {{ fileItem.result.pending_review || 0 }}
+                </span>
+                <span v-if="fileItem.result.auto_rejected > 0" class="result-stat result-rejected">
+                  🚫 自動拒絕: {{ fileItem.result.auto_rejected }}
+                </span>
+                <span v-if="fileItem.result.test_scenarios_created > 0" class="result-stat result-info">
+                  📝 測試情境: {{ fileItem.result.test_scenarios_created }}
+                </span>
+                <button @click="goToReviewCenter" class="btn-goto-review">
+                  前往審核中心 →
+                </button>
+              </template>
+
+              <!-- 直接匯入模式 -->
+              <template v-else-if="fileItem.result.mode === 'direct_import'">
+                <span class="result-stat result-success">
+                  ✅ 已加入知識庫: {{ fileItem.result.imported || 0 }}
+                </span>
+                <span v-if="fileItem.result.skipped > 0" class="result-stat result-skipped">
+                  ⏭️ 跳過: {{ fileItem.result.skipped }}
+                </span>
+              </template>
+
+              <!-- 測試情境模式 -->
+              <template v-else-if="fileItem.result.mode === 'test_scenarios'">
+                <span class="result-stat">
+                  新增測試情境: {{ fileItem.result.added || 0 }}
+                </span>
+                <span class="result-stat">跳過: {{ fileItem.result.skipped || 0 }}</span>
+              </template>
+
+              <!-- 直接模式（後端返回 "direct"） -->
+              <template v-else-if="fileItem.result.mode === 'direct'">
+                <span class="result-stat result-success">
+                  ✅ 已加入知識庫: {{ fileItem.result.imported || 0 }}
+                </span>
+                <span v-if="fileItem.result.test_scenarios_created > 0" class="result-stat result-info">
+                  📝 測試情境: {{ fileItem.result.test_scenarios_created }}
+                </span>
+                <span v-if="fileItem.result.skipped > 0" class="result-stat result-skipped">
+                  ⏭️ 跳過: {{ fileItem.result.skipped }}
+                </span>
+              </template>
+
+              <!-- 舊格式兼容 -->
+              <template v-else>
+                <span class="result-stat">
+                  新增{{ fileItem.result.type || '知識' }}: {{ fileItem.result.added || 0 }}
+                </span>
+                <span class="result-stat">跳過: {{ fileItem.result.skipped || 0 }}</span>
+              </template>
+
+              <!-- 展開/折疊詳情按鈕 -->
+              <button
+                v-if="fileItem.result.items && fileItem.result.items.length > 0"
+                @click="toggleFileDetails(index)"
+                class="btn-details-toggle"
+              >
+                {{ fileItem.showDetails ? '▲ 收起' : '▼ 詳情' }}
+              </button>
+            </div>
+
+            <!-- 展開的詳細結果（測試情境列表） -->
+            <div v-if="fileItem.status === 'completed' && fileItem.showDetails && fileItem.result?.items?.length > 0" class="file-details-expanded">
+              <div class="details-header">創建的測試情境：</div>
+              <ul class="scenario-list">
+                <li v-for="(item, idx) in fileItem.result.items" :key="item.id" class="scenario-item">
+                  <span class="scenario-number">{{ idx + 1 }}.</span>
+                  <span class="scenario-question">{{ item.question }}</span>
+                  <span class="scenario-id">(ID: {{ item.id }})</span>
+                </li>
+              </ul>
             </div>
 
             <!-- 錯誤訊息 -->
@@ -86,7 +202,72 @@
             </div>
           </div>
 
+          <!-- 待確認：顯示測試情境列表供用戶選擇 -->
+          <div v-if="fileItem.status === 'awaiting_confirmation' && fileItem.scenarios" class="scenario-confirmation">
+            <div class="confirmation-header">
+              <span class="badge badge-warning">⏳ 待確認</span>
+              <span class="confirmation-title">請勾選要創建的測試情境（共 {{ fileItem.scenarios.length }} 個）</span>
+            </div>
+
+            <div class="scenarios-selection">
+              <div class="selection-toolbar">
+                <button @click="selectAllScenarios(index)" class="btn-link">全選</button>
+                <span class="separator">|</span>
+                <button @click="deselectAllScenarios(index)" class="btn-link">全不選</button>
+                <span class="selected-count">已選: {{ fileItem.selectedScenarios?.length || 0 }} / {{ fileItem.scenarios.length }}</span>
+              </div>
+
+              <div class="scenarios-list">
+                <div v-for="(scenario, sIdx) in fileItem.scenarios" :key="sIdx" class="scenario-checkbox-item">
+                  <input
+                    type="checkbox"
+                    :id="`scenario-${index}-${sIdx}`"
+                    :value="sIdx"
+                    v-model="fileItem.selectedScenarios"
+                  />
+                  <label :for="`scenario-${index}-${sIdx}`" class="scenario-label">
+                    <span class="scenario-index">{{ sIdx + 1 }}.</span>
+                    <span class="scenario-question-text">{{ scenario.question }}</span>
+                    <span class="scenario-difficulty badge badge-{{ scenario.difficulty }}">{{ scenario.difficulty }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 待處理：顯示預覽確認區塊 -->
+          <div v-if="fileItem.status === 'pending' && fileItem.sourceDescription" class="file-preview-confirm">
+            <div class="preview-info">
+              <div class="preview-row">
+                <span class="preview-label">📋 檔案來源：</span>
+                <span class="preview-value">{{ fileItem.sourceDescription }}</span>
+              </div>
+              <div v-if="fileItem.sourceType === 'line_chat'" class="preview-warning">
+                💬 對話記錄將只創建測試情境，不會生成知識（不經過提取知識、生成向量階段）
+              </div>
+              <div v-else-if="fileItem.importSource === 'system_export' && skipReview" class="preview-tip">
+                ✅ 系統匯出檔案 + 跳過審核 = 直接匯入知識庫
+              </div>
+              <div v-else-if="fileItem.importSource === 'system_export'" class="preview-tip">
+                ℹ️ 系統匯出檔案，建議勾選「直接加入知識庫」跳過審核
+              </div>
+              <div v-else class="preview-tip">
+                ℹ️ 外部檔案，建議進入審核佇列由人工確認
+              </div>
+            </div>
+          </div>
+
           <div class="file-item-actions">
+            <!-- 待確認：可以確認創建或取消 -->
+            <button
+              v-if="fileItem.status === 'awaiting_confirmation'"
+              @click="confirmScenarios(index)"
+              class="btn-small btn-success"
+              :disabled="!fileItem.selectedScenarios || fileItem.selectedScenarios.length === 0"
+            >
+              ✓ 確認創建 ({{ fileItem.selectedScenarios?.length || 0 }})
+            </button>
+
             <!-- 待處理：可以處理或移除 -->
             <button
               v-if="fileItem.status === 'pending'"
@@ -94,7 +275,7 @@
               class="btn-small btn-primary"
               :disabled="isProcessingAny"
             >
-              處理
+              ✓ 確認處理
             </button>
 
             <!-- 處理中：顯示取消按鈕（暫不實現取消功能） -->
@@ -104,15 +285,6 @@
               disabled
             >
               處理中...
-            </button>
-
-            <!-- 完成：可以查看詳情 -->
-            <button
-              v-if="fileItem.status === 'completed'"
-              @click="viewFileResult(index)"
-              class="btn-small btn-info"
-            >
-              詳情
             </button>
 
             <!-- 失敗：可以重試 -->
@@ -170,133 +342,6 @@
       </div>
     </div>
 
-    <!-- Step 2: 預覽確認 -->
-    <div v-if="currentStep === 2" class="step-content">
-      <div class="preview-summary">
-        <h3>文件預覽</h3>
-
-        <div class="summary-grid">
-          <div class="summary-item">
-            <div class="summary-label">文件名稱</div>
-            <div class="summary-value">{{ preview.filename }}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">文件大小</div>
-            <div class="summary-value">{{ preview.file_size_kb?.toFixed(2) }} KB</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">總行數</div>
-            <div class="summary-value">{{ preview.total_lines }}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">預估問答對</div>
-            <div class="summary-value">~{{ preview.estimated_qa_pairs }} 個</div>
-          </div>
-        </div>
-
-        <div class="preview-content">
-          <h4>前 20 行預覽：</h4>
-          <pre>{{ preview.preview_lines?.join('\n') }}</pre>
-        </div>
-
-        <div class="info-box">
-          <strong>💡 提示：</strong> {{ preview.message }}
-        </div>
-
-        <!-- 匯入選項 -->
-        <div class="import-options">
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="skipReview" />
-            <span class="option-text">
-              <strong>直接加入知識庫（跳過審核）</strong>
-              <span class="warning-text">⚠️ 跳過審核將直接影響線上回答，請謹慎使用</span>
-            </span>
-          </label>
-
-          <!-- 優先級選項（僅在跳過審核時顯示） -->
-          <div v-if="skipReview" class="priority-option">
-            <label class="checkbox-option">
-              <input type="checkbox" v-model="enablePriority" />
-              <span class="option-text">
-                <strong>統一啟用優先級</strong>
-                <span class="info-text">✨ 所有匯入的知識將獲得 +0.15 相似度加成</span>
-              </span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button @click="currentStep = 1" class="btn-secondary">← 返回</button>
-        <button @click="startImport" :disabled="importing" class="btn-primary">
-          {{ importing ? '⏳ 開始匯入...' : '🚀 確認匯入（開始消耗 token）' }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Step 3: 處理中 -->
-    <div v-if="currentStep === 3" class="step-content">
-      <div class="processing">
-        <div class="spinner"></div>
-        <h3>正在處理中...</h3>
-
-        <div class="progress-bar">
-          <div class="progress-fill" :style="{width: importProgress + '%'}"></div>
-        </div>
-        <div class="progress-text">{{ importProgress.toFixed(1) }}%</div>
-
-        <div class="processing-stats">
-          <div class="stat">
-            <div class="stat-label">已處理訊息</div>
-            <div class="stat-value">{{ jobStatus.processed_messages || 0 }} / {{ jobStatus.total_messages || 0 }}</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">提取問答對</div>
-            <div class="stat-value">{{ jobStatus.extracted_qa_pairs || 0 }}</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">去重跳過</div>
-            <div class="stat-value">{{ jobStatus.duplicates_skipped || 0 }}</div>
-          </div>
-        </div>
-
-        <p class="hint">請保持頁面開啟，處理可能需要數分鐘...</p>
-      </div>
-    </div>
-
-    <!-- Step 4: 完成 -->
-    <div v-if="currentStep === 4" class="step-content">
-      <div class="completion">
-        <div class="success-icon">✅</div>
-        <h3>匯入完成！</h3>
-
-        <div class="result-summary">
-          <div class="result-item">
-            <span class="result-label">提取問答對：</span>
-            <span class="result-value">{{ jobStatus.result?.imported || 0 }}</span>
-          </div>
-          <div class="result-item">
-            <span class="result-label">去重跳過：</span>
-            <span class="result-value">{{ jobStatus.result?.skipped || 0 }}</span>
-          </div>
-          <div class="result-item">
-            <span class="result-label">處理時間：</span>
-            <span class="result-value">{{ processingTime }}</span>
-          </div>
-        </div>
-
-        <div class="info-box" style="margin-top: 20px;">
-          <strong>⚠️ 重要提醒：</strong> 從 LINE 對話匯入的知識需要經過人工審核。
-          請前往 <strong>審核中心（Review Center）</strong> 批准這些知識，才會正式加入知識庫。
-        </div>
-
-        <div class="actions">
-          <button @click="goToReviewCenter" class="btn-primary">前往審核中心</button>
-          <button @click="resetImport" class="btn-secondary">再次匯入</button>
-        </div>
-      </div>
-    </div>
-
     <!-- 匯入歷史 -->
     <div class="import-history" v-if="importJobs.length > 0">
       <h3>匯入歷史</h3>
@@ -348,39 +393,19 @@ export default {
   data() {
     return {
       helpTexts,
-      currentStep: 1,
-      selectedFile: null,
 
       // 檔案佇列管理
-      fileQueue: [],  // 檔案佇列：[{file, name, size, status, progress, result, error, jobId}]
+      fileQueue: [],  // 檔案佇列：[{file, name, size, status, progress, result, error, jobId, stage}]
 
-      previewing: false,
-      preview: {},
-
-      importing: false,
-      importProgress: 0,
-      jobId: null,
-      jobStatus: {},
       skipReview: false,  // 是否跳過審核
       enablePriority: false,  // 是否統一啟用優先級
 
       importJobs: [],
-      pollingInterval: null,
       currentProcessingIndex: null,  // 當前處理的檔案索引
     };
   },
 
   computed: {
-    processingTime() {
-      if (!this.jobStatus.created_at || !this.jobStatus.updated_at) return '-';
-      const start = new Date(this.jobStatus.created_at);
-      const end = new Date(this.jobStatus.updated_at);
-      const seconds = Math.floor((end - start) / 1000);
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-      return `${minutes}分${remainingSeconds}秒`;
-    },
-
     // 檔案佇列統計
     isProcessingAny() {
       return this.fileQueue.some(f => f.status === 'processing');
@@ -401,12 +426,6 @@ export default {
 
   mounted() {
     this.loadImportJobs();
-  },
-
-  beforeUnmount() {
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval);
-    }
   },
 
   methods: {
@@ -433,7 +452,7 @@ export default {
         // 檢查是否已存在（避免重複添加）
         const exists = this.fileQueue.some(f => f.name === file.name && f.size === file.size);
         if (!exists) {
-          this.fileQueue.push({
+          const newFile = {
             file: file,
             name: file.name,
             size: file.size,
@@ -441,13 +460,29 @@ export default {
             progress: 0,
             result: null,
             error: null,
-            jobId: null
-          });
+            jobId: null,
+            stage: null,  // uploading, extracting, embedding, saving
+            sourceType: null,  // 來源類型
+            sourceDescription: null,  // 來源描述
+            showDetails: false  // 詳情展開狀態
+          };
+          this.fileQueue.push(newFile);
+
+          // 異步獲取預覽資訊（不阻塞）
+          this.fetchPreviewInfo(this.fileQueue.length - 1);
         }
       });
 
       // 清空 input，允許重複選擇相同檔案
       this.$refs.fileInput.value = '';
+    },
+
+    // 判斷階段是否已完成
+    isStageCompleted(currentStage, checkStage) {
+      const stages = ['uploading', 'extracting', 'embedding', 'saving'];
+      const currentIndex = stages.indexOf(currentStage);
+      const checkIndex = stages.indexOf(checkStage);
+      return currentIndex > checkIndex;
     },
 
     removeFile(index) {
@@ -468,10 +503,72 @@ export default {
       return filename.split('.').pop().toUpperCase();
     },
 
-    viewFileResult(index) {
+    toggleFileDetails(index) {
       const fileItem = this.fileQueue[index];
-      if (fileItem.result) {
-        alert(`處理結果：\n\n新增知識：${fileItem.result.added || 0} 筆\n跳過重複：${fileItem.result.skipped || 0} 筆\n處理失敗：${fileItem.result.failed || 0} 筆`);
+      if (fileItem) {
+        // 切換展開/折疊狀態
+        fileItem.showDetails = !fileItem.showDetails;
+      }
+    },
+
+    selectAllScenarios(index) {
+      const fileItem = this.fileQueue[index];
+      if (fileItem && fileItem.scenarios) {
+        fileItem.selectedScenarios = fileItem.scenarios.map((s, idx) => idx);
+      }
+    },
+
+    deselectAllScenarios(index) {
+      const fileItem = this.fileQueue[index];
+      if (fileItem) {
+        fileItem.selectedScenarios = [];
+      }
+    },
+
+    async confirmScenarios(index) {
+      const fileItem = this.fileQueue[index];
+      if (!fileItem || !fileItem.jobId || !fileItem.selectedScenarios || fileItem.selectedScenarios.length === 0) {
+        alert('請至少選擇一個測試情境');
+        return;
+      }
+
+      if (!confirm(`確定要創建 ${fileItem.selectedScenarios.length} 個測試情境嗎？`)) {
+        return;
+      }
+
+      try {
+        fileItem.status = 'processing';
+        fileItem.stage = 'saving';
+        fileItem.progress = 50;
+
+        const response = await axios.post(
+          `${API_BASE}/knowledge-import/jobs/${fileItem.jobId}/confirm`,
+          {
+            selected_indices: fileItem.selectedScenarios
+          }
+        );
+
+        // 創建完成，更新為完成狀態
+        fileItem.status = 'completed';
+        fileItem.stage = null;
+        fileItem.progress = 100;
+
+        const resultData = response.data;
+        fileItem.result = {
+          added: resultData.created || 0,
+          skipped: resultData.skipped || 0,
+          failed: resultData.errors || 0,
+          mode: 'test_scenarios',
+          type: '測試情境',
+          items: resultData.items || []
+        };
+
+        alert(`✅ 測試情境創建完成！\n\n新建: ${resultData.created}\n跳過: ${resultData.skipped}\n失敗: ${resultData.errors}`);
+      } catch (error) {
+        fileItem.status = 'error';
+        fileItem.stage = null;
+        fileItem.error = error.response?.data?.detail || error.message;
+        alert('創建測試情境失敗：' + fileItem.error);
       }
     },
 
@@ -486,19 +583,38 @@ export default {
 
     // ==================== 批次處理邏輯 ====================
     async processSingleFile(index) {
+      const fileItem = this.fileQueue[index];
+      // 只處理 pending 狀態的檔案
+      if (!fileItem || fileItem.status !== 'pending') {
+        console.warn(`檔案 ${index} 狀態不是 pending (${fileItem?.status})，跳過處理`);
+        return;
+      }
       await this.processFileByIndex(index);
     },
 
     async processAllFiles() {
-      // 取得所有待處理的檔案索引
+      // 取得所有待處理的檔案索引（快照，避免處理過程中狀態變化）
       const pendingIndexes = this.fileQueue
         .map((f, i) => ({index: i, file: f}))
         .filter(item => item.file.status === 'pending')
         .map(item => item.index);
 
+      if (pendingIndexes.length === 0) {
+        alert('沒有待處理的檔案');
+        return;
+      }
+
+      console.log(`開始批次處理 ${pendingIndexes.length} 個檔案:`, pendingIndexes);
+
       // 逐個處理
       for (const index of pendingIndexes) {
-        await this.processFileByIndex(index);
+        // 再次檢查狀態（避免處理過程中狀態被改變）
+        const fileItem = this.fileQueue[index];
+        if (fileItem && fileItem.status === 'pending') {
+          await this.processFileByIndex(index);
+        } else {
+          console.warn(`檔案 ${index} 狀態已變更 (${fileItem?.status})，跳過`);
+        }
       }
 
       // 全部完成後顯示通知
@@ -512,6 +628,7 @@ export default {
       this.currentProcessingIndex = index;
       fileItem.status = 'processing';
       fileItem.progress = 0;
+      fileItem.stage = 'uploading';  // 初始階段
 
       try {
         // 上傳檔案
@@ -555,22 +672,56 @@ export default {
             );
 
             const status = response.data.status;
-            const progress = response.data.progress?.current || 0;
+            const progressData = response.data.progress || {};
 
-            fileItem.progress = progress;
+            // 更新進度和階段
+            fileItem.progress = progressData.current || 0;
+            fileItem.stage = progressData.stage || 'uploading';  // 從後端獲取階段
 
-            if (status === 'completed') {
+            if (status === 'awaiting_confirmation') {
+              // 等待用戶確認測試情境
+              clearInterval(pollInterval);
+              fileItem.status = 'awaiting_confirmation';
+              fileItem.stage = null;
+
+              const resultData = response.data.result || {};
+              fileItem.scenarios = resultData.scenarios || [];
+              fileItem.selectedScenarios = fileItem.scenarios.map((s, idx) => idx);  // 預設全選
+
+              console.log(`📝 待確認: ${fileItem.scenarios.length} 個測試情境`);
+              resolve();
+            } else if (status === 'completed') {
               clearInterval(pollInterval);
               fileItem.status = 'completed';
+              fileItem.stage = null;  // 完成後清除階段
+
+              // 處理不同模式的結果格式
+              const resultData = response.data.result || {};
+
+              // 直接使用後端返回的完整數據結構
               fileItem.result = {
-                added: response.data.total_added || 0,
-                skipped: response.data.duplicates_skipped || 0,
-                failed: response.data.total_failed || 0
+                mode: resultData.mode || 'unknown',
+                // 審核模式的字段
+                pending_review: resultData.pending_review || 0,
+                auto_rejected: resultData.auto_rejected || 0,
+                test_scenarios_created: resultData.test_scenarios_created || 0,
+                imported: resultData.imported || 0,
+                total: resultData.total || 0,
+                skipped: resultData.skipped || 0,
+                errors: resultData.errors || 0,
+                // 測試情境模式的字段
+                added: resultData.created || resultData.added || 0,
+                failed: resultData.failed || 0,
+                items: resultData.items || [],
+                // 舊格式兼容
+                type: resultData.mode === 'test_scenarios' ? '測試情境' : '知識'
               };
+
               resolve();
             } else if (status === 'failed') {
               clearInterval(pollInterval);
               fileItem.status = 'error';
+              fileItem.stage = null;
               fileItem.error = response.data.error || '未知錯誤';
               resolve();
             }
@@ -592,92 +743,6 @@ export default {
       });
     },
 
-    // ==================== 原有方法 ====================
-    async previewFile() {
-      if (!this.selectedFile) return;
-
-      this.previewing = true;
-
-      try {
-        const formData = new FormData();
-        formData.append('file', this.selectedFile);
-
-        const response = await axios.post(
-          `${API_BASE}/knowledge-import/preview`,
-          formData,
-          {headers: {'Content-Type': 'multipart/form-data'}}
-        );
-
-        this.preview = response.data;
-        this.currentStep = 2;
-      } catch (error) {
-        alert('預覽失敗：' + (error.response?.data?.detail || error.message));
-      } finally {
-        this.previewing = false;
-      }
-    },
-
-    async startImport() {
-      if (!this.selectedFile) return;
-
-      this.importing = true;
-
-      try {
-        const formData = new FormData();
-        formData.append('file', this.selectedFile);
-        formData.append('enable_deduplication', true);
-        formData.append('skip_review', this.skipReview);
-
-        // 如果跳過審核且啟用優先級，傳送 priority=1
-        if (this.skipReview && this.enablePriority) {
-          formData.append('default_priority', 1);
-        }
-
-        const response = await axios.post(
-          `${API_BASE}/knowledge-import/upload`,
-          formData,
-          {headers: {'Content-Type': 'multipart/form-data'}}
-        );
-
-        this.jobId = response.data.job_id;
-        this.jobStatus = response.data;
-        this.currentStep = 3;
-
-        // 開始輪詢任務狀態
-        this.startPolling();
-      } catch (error) {
-        alert('匯入失敗：' + (error.response?.data?.detail || error.message));
-      } finally {
-        this.importing = false;
-      }
-    },
-
-    startPolling() {
-      this.pollingInterval = setInterval(async () => {
-        try {
-          const response = await axios.get(
-            `${API_BASE}/knowledge-import/jobs/${this.jobId}`
-          );
-
-          this.jobStatus = response.data;
-          // Fix: Progress is nested in progress object
-          this.importProgress = response.data.progress?.current || 0;
-
-          if (response.data.status === 'completed') {
-            clearInterval(this.pollingInterval);
-            this.currentStep = 4;
-            this.loadImportJobs();
-          } else if (response.data.status === 'failed') {
-            clearInterval(this.pollingInterval);
-            alert('匯入失敗：' + response.data.error);
-            this.currentStep = 1;
-          }
-        } catch (error) {
-          console.error('輪詢失敗', error);
-        }
-      }, 2000);  // 每 2 秒查詢一次
-    },
-
     async deleteJob(jobId) {
       if (!confirm('確定要刪除這個匯入記錄嗎？')) return;
 
@@ -687,25 +752,6 @@ export default {
       } catch (error) {
         alert('刪除失敗：' + (error.response?.data?.detail || error.message));
       }
-    },
-
-    resetImport() {
-      this.currentStep = 1;
-      this.selectedFile = null;
-      this.preview = {};
-      this.jobStatus = {};
-      this.importProgress = 0;
-      this.skipReview = false;
-      this.enablePriority = false;
-      this.clearFile();
-    },
-
-    viewKnowledge() {
-      this.$router.push('/knowledge');
-    },
-
-    goToReviewCenter() {
-      this.$router.push('/review-center');
     },
 
     formatFileSize(bytes) {
@@ -728,6 +774,35 @@ export default {
         failed: '失敗'
       };
       return labels[status] || status;
+    },
+
+    // 獲取預覽資訊（異步，不阻塞上傳）
+    async fetchPreviewInfo(index) {
+      const fileItem = this.fileQueue[index];
+      if (!fileItem) return;
+
+      try {
+        const formData = new FormData();
+        formData.append('file', fileItem.file);
+
+        const response = await axios.post(
+          `${API_BASE}/knowledge-import/preview`,
+          formData,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+
+        // 更新來源類型資訊
+        fileItem.sourceType = response.data.source_type;
+        fileItem.sourceDescription = response.data.detected_source_description;
+      } catch (error) {
+        console.error('獲取預覽資訊失敗:', error);
+        // 失敗不影響匯入流程，靜默處理
+      }
+    },
+
+    // 跳轉到審核中心
+    goToReviewCenter() {
+      this.$router.push('/review-center');
     }
   }
 };
@@ -740,64 +815,41 @@ export default {
 
 .subtitle {
   color: #666;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
-/* 步驟指示器 */
-.steps {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 40px;
-  position: relative;
+/* 處理流程說明 */
+.process-info {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 25px;
 }
 
-.steps::before {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 10%;
-  right: 10%;
-  height: 2px;
-  background: #e0e0e0;
-  z-index: 0;
-}
-
-.step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  position: relative;
-  z-index: 1;
-}
-
-.step-number {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #e0e0e0;
-  color: #999;
+.process-flow {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  margin-bottom: 10px;
-  transition: all 0.3s;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.step.active .step-number {
-  background: #4CAF50;
-  color: white;
-}
-
-.step.completed .step-number {
-  background: #2196F3;
-  color: white;
-}
-
-.step-title {
+.flow-step {
   font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.flow-arrow {
   color: #666;
+  font-size: 16px;
+  font-weight: bold;
 }
 
 /* 上傳區域 */
@@ -889,165 +941,6 @@ export default {
   transform: scale(0.95);
 }
 
-/* 匯入選項樣式已移除（說明已整合到 InfoPanel） */
-
-/* 預覽 */
-.preview-summary {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-  margin: 20px 0;
-}
-
-.summary-item {
-  padding: 15px;
-  background: #f5f5f5;
-  border-radius: 8px;
-}
-
-.summary-label {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 5px;
-}
-
-.summary-value {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-}
-
-.preview-content pre {
-  background: #f5f5f5;
-  padding: 15px;
-  border-radius: 8px;
-  overflow: auto;
-  max-height: 300px;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.info-box {
-  background: #e3f2fd;
-  padding: 15px;
-  border-radius: 8px;
-  border-left: 4px solid #2196F3;
-  margin-top: 20px;
-}
-
-/* 處理中 */
-.processing {
-  text-align: center;
-  padding: 40px;
-}
-
-.spinner {
-  width: 60px;
-  height: 60px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #4CAF50;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.progress-bar {
-  width: 100%;
-  height: 30px;
-  background: #f0f0f0;
-  border-radius: 15px;
-  overflow: hidden;
-  margin: 20px 0;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #4CAF50, #8BC34A);
-  transition: width 0.3s;
-}
-
-.progress-text {
-  font-size: 24px;
-  font-weight: bold;
-  color: #4CAF50;
-  margin: 10px 0;
-}
-
-.processing-stats {
-  display: flex;
-  justify-content: center;
-  gap: 30px;
-  margin-top: 30px;
-}
-
-.stat {
-  text-align: center;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 5px;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
-}
-
-/* 完成 */
-.completion {
-  text-align: center;
-  padding: 40px;
-}
-
-.success-icon {
-  font-size: 80px;
-  margin-bottom: 20px;
-}
-
-.result-summary {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  margin: 20px auto;
-  max-width: 500px;
-}
-
-.result-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.result-item:last-child {
-  border-bottom: none;
-}
-
-.result-label {
-  color: #666;
-}
-
-.result-value {
-  font-weight: bold;
-  color: #4CAF50;
-}
-
 /* 匯入歷史 */
 .import-history {
   margin-top: 40px;
@@ -1082,14 +975,6 @@ export default {
 .status-failed {
   background: #f8d7da;
   color: #842029;
-}
-
-/* 按鈕 */
-.actions {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  margin-top: 30px;
 }
 
 /* 匯入選項 */
@@ -1242,6 +1127,45 @@ export default {
   min-width: 200px;
 }
 
+/* 處理階段指示器 */
+.processing-stages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stage-indicators {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.stage-icon {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #f0f0f0;
+  color: #999;
+  white-space: nowrap;
+  transition: all 0.3s;
+  border: 1px solid #e0e0e0;
+}
+
+.stage-icon.active {
+  background: #e3f2fd;
+  color: #1976d2;
+  border-color: #90caf9;
+  font-weight: 500;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+}
+
+.stage-icon.completed {
+  background: #e8f5e9;
+  color: #4caf50;
+  border-color: #a5d6a7;
+}
+
 .badge {
   padding: 4px 12px;
   border-radius: 12px;
@@ -1302,10 +1226,61 @@ export default {
 }
 
 .result-stat {
-  padding: 2px 8px;
+  padding: 4px 10px;
   background: #f0f0f0;
   border-radius: 4px;
   color: #666;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.result-stat.result-success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.result-stat.result-rejected {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+.result-stat.result-info {
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+}
+
+.result-stat.result-skipped {
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffcc80;
+}
+
+.btn-goto-review {
+  padding: 6px 14px;
+  font-size: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  margin-left: 8px;
+}
+
+.btn-goto-review:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.btn-goto-review:active {
+  transform: translateY(0);
 }
 
 .file-error {
@@ -1417,5 +1392,292 @@ export default {
 
 .queue-actions button {
   padding: 10px 20px;
+}
+/* 來源類型 badge 樣式 */
+.source-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.source-badge.source-system {
+  background: #d4edda;
+  color: #155724;
+}
+
+.source-badge.source-chat {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.source-badge.source-external {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+/* 預覽確認區塊樣式 */
+.file-preview-confirm {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-left: 3px solid #007bff;
+  border-radius: 4px;
+}
+
+.preview-info {
+  font-size: 13px;
+}
+
+.preview-row {
+  margin-bottom: 8px;
+}
+
+.preview-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.preview-value {
+  color: #212529;
+  margin-left: 4px;
+}
+
+.preview-warning {
+  margin-top: 8px;
+  padding: 8px;
+  background: #fff3cd;
+  border-left: 3px solid #ffc107;
+  border-radius: 3px;
+  color: #856404;
+  font-size: 12px;
+}
+
+.preview-tip {
+  margin-top: 8px;
+  padding: 8px;
+  background: #e7f3ff;
+  border-left: 3px solid #007bff;
+  border-radius: 3px;
+  color: #004085;
+  font-size: 12px;
+}
+
+/* 測試情境確認區塊 */
+.scenario-confirmation {
+  margin-top: 12px;
+  padding: 16px;
+  background: #fffbf0;
+  border: 2px solid #ffc107;
+  border-radius: 6px;
+}
+
+.confirmation-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ffe599;
+}
+
+.confirmation-title {
+  font-weight: 600;
+  color: #856404;
+  font-size: 14px;
+}
+
+.scenarios-selection {
+  margin-top: 12px;
+}
+
+.selection-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.btn-link:hover {
+  color: #0056b3;
+}
+
+.separator {
+  color: #ccc;
+}
+
+.selected-count {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: #28a745;
+}
+
+.scenarios-list {
+  max-height: 400px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.scenario-checkbox-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.scenario-checkbox-item:hover {
+  background: #f8f9fa;
+}
+
+.scenario-checkbox-item input[type="checkbox"] {
+  margin-right: 10px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.scenario-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.scenario-index {
+  color: #6c757d;
+  font-weight: 600;
+  min-width: 30px;
+}
+
+.scenario-question-text {
+  flex: 1;
+  color: #212529;
+}
+
+.scenario-difficulty {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.badge-medium {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badge-easy {
+  background: #d4edda;
+  color: #155724;
+}
+
+.badge-hard {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #218838;
+}
+
+.btn-success:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 詳情展開/折疊按鈕 */
+.btn-details-toggle {
+  padding: 2px 10px;
+  font-size: 11px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #666;
+  margin-left: 8px;
+}
+
+.btn-details-toggle:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+/* 展開的詳情區域 */
+.file-details-expanded {
+  margin-top: 8px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-left: 3px solid #28a745;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.details-header {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.scenario-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.scenario-item {
+  padding: 6px 0;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scenario-item:last-child {
+  border-bottom: none;
+}
+
+.scenario-number {
+  color: #6c757d;
+  font-weight: 600;
+  min-width: 25px;
+}
+
+.scenario-question {
+  color: #2c3e50;
+  flex: 1;
+}
+
+.scenario-id {
+  color: #999;
+  font-size: 11px;
 }
 </style>
