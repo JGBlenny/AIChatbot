@@ -5,7 +5,7 @@ Phase 3: 用戶體驗優化 - 即時反饋
 """
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional, Dict
 import json
 import asyncio
@@ -13,14 +13,52 @@ import time
 
 router = APIRouter()
 
+# 常量定義
+TARGET_USER_ROLES = ['tenant', 'landlord', 'property_manager', 'system_admin']
+BUSINESS_MODES = ['b2c', 'b2b']
+
 
 class ChatStreamRequest(BaseModel):
     """流式聊天請求"""
     question: str = Field(..., min_length=1, max_length=1000)
     vendor_id: int = Field(..., ge=1)
-    user_role: str = Field(..., description="customer 或 staff")
+
+    # ✅ 新欄位
+    target_user: Optional[str] = Field(
+        None,
+        description="目標用戶角色：tenant, landlord, property_manager, system_admin"
+    )
+    mode: Optional[str] = Field('b2c', description="業務模式：b2c, b2b")
+
+    # ⚠️ 舊欄位（向後兼容）
+    user_role: Optional[str] = Field(None, description="[已廢棄] 請使用 target_user")
+
     user_id: Optional[str] = None
     context: Optional[Dict] = None
+
+    @validator('target_user', always=True)
+    def migrate_user_role(cls, v, values):
+        """自動從舊欄位遷移"""
+        if v:
+            if v not in TARGET_USER_ROLES:
+                raise ValueError(f"target_user 必須是 {TARGET_USER_ROLES} 之一")
+            return v
+        old_user_role = values.get('user_role')
+        if old_user_role:
+            if old_user_role == 'staff':
+                return 'property_manager'
+            elif old_user_role == 'customer':
+                return 'tenant'
+            elif old_user_role in TARGET_USER_ROLES:
+                return old_user_role
+        return 'tenant'
+
+    @validator('mode')
+    def normalize_mode(cls, v):
+        """標準化模式"""
+        if v in ['tenant', 'customer_service']:
+            return 'b2c' if v == 'tenant' else 'b2b'
+        return v if v in BUSINESS_MODES else 'b2c'
 
 
 async def generate_sse_event(event_type: str, data: dict) -> str:
@@ -71,7 +109,8 @@ async def chat_stream_generator(
             query=request.question,
             limit=rag_top_k,
             similarity_threshold=fallback_similarity_threshold,
-            vendor_id=request.vendor_id
+            vendor_id=request.vendor_id,
+            target_users=[request.target_user]  # ✅ 添加 target_user 過濾
         )
 
         intent_result, search_results = await asyncio.gather(intent_task, search_task)

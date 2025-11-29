@@ -7,7 +7,7 @@ Phase 1: 新增多業者支援（Multi-Vendor Chat API）
 from __future__ import annotations  # 允許類型提示的前向引用
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict
 from datetime import datetime
 import time
@@ -19,6 +19,31 @@ from services.db_utils import get_db_config
 from services.embedding_utils import get_embedding_client
 
 router = APIRouter()
+
+# 常量定義
+TARGET_USER_ROLES = ['tenant', 'landlord', 'property_manager', 'system_admin']
+BUSINESS_MODES = ['b2c', 'b2b']
+
+
+def _generate_config_version() -> str:
+    """
+    生成配置版本字符串，用於緩存鍵的區分
+
+    基於當前 LLM 優化器配置生成版本標識
+    格式: pm{perfect_match}_st{synthesis_threshold}
+    例如: pm90_st80 (perfect_match=0.90, synthesis_threshold=0.80)
+
+    Returns:
+        配置版本字符串
+    """
+    perfect_match = float(os.getenv("PERFECT_MATCH_THRESHOLD", "0.90"))
+    synthesis = float(os.getenv("SYNTHESIS_THRESHOLD", "0.80"))
+
+    # 轉換為整數（去掉小數點）
+    pm_val = int(perfect_match * 100)
+    st_val = int(synthesis * 100)
+
+    return f"pm{pm_val}_st{st_val}"
 
 # Phase 1: 多業者服務實例（懶加載）
 _vendor_knowledge_retriever = None
@@ -53,7 +78,7 @@ def get_vendor_sop_retriever():
     return _vendor_sop_retriever
 
 
-def cache_response_and_return(cache_service, vendor_id: int, question: str, response, user_role: str = "customer"):
+def cache_response_and_return(cache_service, vendor_id: int, question: str, response, target_user: str = "tenant"):
     """
     緩存響應並返回（輔助函數）
 
@@ -62,19 +87,23 @@ def cache_response_and_return(cache_service, vendor_id: int, question: str, resp
         vendor_id: 業者 ID
         question: 用戶問題
         response: VendorChatResponse 實例
-        user_role: 用戶角色
+        target_user: 目標用戶角色
 
     Returns:
         原始 response
     """
     try:
+        # 生成配置版本
+        config_version = _generate_config_version()
+
         # 將響應轉換為字典並緩存
         response_dict = response.dict()
         cache_service.cache_answer(
             vendor_id=vendor_id,
             question=question,
             answer_data=response_dict,
-            user_role=user_role
+            target_user=target_user,
+            config_version=config_version
         )
     except Exception as e:
         # 緩存失敗不應影響正常響應
@@ -139,16 +168,20 @@ def _validate_vendor(vendor_id: int, resolver) -> dict:
     return vendor_info
 
 
-def _check_cache(cache_service, vendor_id: int, question: str, user_role: str):
+def _check_cache(cache_service, vendor_id: int, question: str, target_user: str):
     """檢查緩存，如果命中則返回緩存的答案"""
+    # 生成配置版本
+    config_version = _generate_config_version()
+
     cached_answer = cache_service.get_cached_answer(
         vendor_id=vendor_id,
         question=question,
-        user_role=user_role
+        target_user=target_user,
+        config_version=config_version
     )
 
     if cached_answer:
-        print(f"⚡ 緩存命中！直接返回答案（跳過 RAG 處理）")
+        print(f"⚡ 緩存命中！直接返回答案（跳過 RAG 處理）- 配置版本: {config_version}")
         return VendorChatResponse(**cached_answer)
 
     return None
@@ -174,7 +207,8 @@ async def _handle_unclear_with_rag_fallback(
         query=request.message,
         limit=rag_top_k,
         similarity_threshold=fallback_similarity_threshold,
-        vendor_id=request.vendor_id
+        vendor_id=request.vendor_id,
+        target_users=[request.target_user]  # ✅ 添加 target_user 過濾
     )
 
     # 如果 RAG 找到結果，優化並返回答案
@@ -447,7 +481,7 @@ async def _build_sop_response(
         timestamp=datetime.utcnow().isoformat()
     )
 
-    return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
+    return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.target_user)
 
 
 # ==================== 輔助函數：RAG 回應構建 ====================
@@ -497,7 +531,9 @@ async def _build_rag_response(
             id=r['id'],
             question_summary=r['question_summary'],
             answer=r['content'],
-            scope='global'
+            scope=r.get('scope', 'global'),  # ✅ 使用實際 scope
+            vendor_id=r.get('vendor_id'),    # ✅ 添加 vendor_id
+            target_users=r.get('target_user')  # ✅ 添加 target_users
         ) for r in rag_results]
 
     # 清理答案並替換模板變數（兜底保護）
@@ -519,7 +555,7 @@ async def _build_rag_response(
         timestamp=datetime.utcnow().isoformat()
     )
 
-    return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
+    return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.target_user)
 
 
 # ==================== 輔助函數：知識庫檢索 ====================
@@ -542,7 +578,7 @@ async def _retrieve_knowledge(
         similarity_threshold=kb_similarity_threshold,
         resolve_templates=False,
         all_intent_ids=all_intent_ids,
-        user_role=request.user_role
+        target_user=request.target_user  # ✅ 使用新參數名
     )
 
     return knowledge_list
@@ -579,7 +615,7 @@ async def _handle_no_knowledge_found(
             timestamp=datetime.utcnow().isoformat() + "Z",
             video_url=None
         )
-        return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
+        return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.target_user)
 
     # Step 2: RAG fallback
     rag_engine = req.app.state.rag_engine
@@ -589,7 +625,8 @@ async def _handle_no_knowledge_found(
         query=request.message,
         limit=rag_top_k,
         similarity_threshold=fallback_similarity_threshold,
-        vendor_id=request.vendor_id
+        vendor_id=request.vendor_id,
+        target_users=[request.target_user]  # ✅ 添加 target_user 過濾
     )
 
     # 如果 RAG 找到結果，返回優化答案
@@ -740,7 +777,9 @@ async def _build_knowledge_response(
             id=k['id'],
             question_summary=k['question_summary'],
             answer=k['answer'],
-            scope=k['scope']
+            scope=k['scope'],
+            vendor_id=k.get('vendor_id'),
+            target_users=k.get('target_user')
         ) for k in knowledge_list]
 
     # 提取影片資訊（從第一個知識項目）
@@ -778,7 +817,7 @@ async def _build_knowledge_response(
         video_format=video_format
     )
 
-    return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.user_role)
+    return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.target_user)
 
 
 # ========================================
@@ -931,8 +970,23 @@ class VendorChatRequest(BaseModel):
     """多業者聊天請求"""
     message: str = Field(..., description="使用者訊息", min_length=1, max_length=2000)
     vendor_id: int = Field(..., description="業者 ID", ge=1)
-    user_role: str = Field("customer", description="用戶角色：customer (終端客戶) 或 staff (業者員工/系統商)")
-    mode: str = Field("tenant", description="模式：tenant (B2C) 或 customer_service (B2B)")
+
+    # ✅ 新欄位（推薦使用）
+    target_user: Optional[str] = Field(
+        None,
+        description="目標用戶角色：tenant(租客), landlord(房東), property_manager(物管), system_admin(系統管理)"
+    )
+    mode: Optional[str] = Field(
+        'b2c',
+        description="業務模式：b2c(終端用戶), b2b(業者員工)"
+    )
+
+    # ⚠️ 舊欄位（向後兼容，已廢棄）
+    user_role: Optional[str] = Field(
+        None,
+        description="[已廢棄] 請使用 target_user 替代。舊值：customer 或 staff"
+    )
+
     session_id: Optional[str] = Field(None, description="會話 ID（用於追蹤）")
     user_id: Optional[str] = Field(None, description="使用者 ID（租客 ID 或客服 ID）")
     top_k: int = Field(5, description="返回知識數量", ge=1, le=10)
@@ -940,13 +994,55 @@ class VendorChatRequest(BaseModel):
     disable_answer_synthesis: bool = Field(False, description="禁用答案合成（回測模式專用）")
     skip_sop: bool = Field(False, description="跳過 SOP 檢索，僅檢索知識庫（回測模式專用）")
 
+    @validator('target_user', always=True)
+    def migrate_user_role(cls, v, values):
+        """自動從舊欄位遷移到新欄位"""
+        if v:
+            # 已提供新欄位，驗證並返回
+            if v not in TARGET_USER_ROLES:
+                raise ValueError(f"target_user 必須是 {TARGET_USER_ROLES} 之一，當前值：{v}")
+            return v
+
+        # 向後兼容：從舊欄位轉換
+        old_user_role = values.get('user_role')
+        mode = values.get('mode', 'b2c')
+
+        if old_user_role:
+            # 舊值轉換邏輯
+            if old_user_role == 'staff':
+                return 'property_manager'  # B2B 默認為物管
+            elif old_user_role == 'customer':
+                return 'tenant'  # B2C 默認為租客
+            elif old_user_role in TARGET_USER_ROLES:
+                return old_user_role  # 已經是新格式
+
+        # 默認值：根據 mode 判斷
+        if mode in ['b2b', 'customer_service']:
+            return 'property_manager'
+        else:
+            return 'tenant'
+
+    @validator('mode')
+    def normalize_mode(cls, v):
+        """標準化業務模式"""
+        if v == 'tenant':  # 舊值
+            return 'b2c'
+        elif v == 'customer_service':  # 舊值
+            return 'b2b'
+        elif v in BUSINESS_MODES:
+            return v
+        else:
+            return 'b2c'  # 默認 B2C
+
 
 class KnowledgeSource(BaseModel):
     """知識來源"""
     id: int
     question_summary: str
     answer: str
-    scope: str
+    scope: str = Field(..., description="知識範圍：global(全域), vendor(業者專屬), customized(客製化)")
+    vendor_id: Optional[int] = Field(None, description="業者 ID（如為業者專屬知識）")
+    target_users: Optional[List[str]] = Field(None, description="目標用戶列表")
 
 
 class VendorChatResponse(BaseModel):
@@ -994,7 +1090,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
 
         # Step 2: 緩存檢查
         cache_service = req.app.state.cache_service
-        cached_response = _check_cache(cache_service, request.vendor_id, request.message, request.user_role)
+        cached_response = _check_cache(cache_service, request.vendor_id, request.message, request.target_user)
         if cached_response:
             return cached_response
 

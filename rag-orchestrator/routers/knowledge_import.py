@@ -44,7 +44,9 @@ async def upload_knowledge_file(
     import_mode: str = Form("append"),
     enable_deduplication: bool = Form(True),
     skip_review: bool = Form(False),
-    default_priority: int = Form(0)
+    default_priority: int = Form(0),
+    enable_quality_evaluation: bool = Form(True),
+    business_types: Optional[str] = Form(None)  # JSON string of business type values
 ):
     """
     上傳知識檔案並開始匯入
@@ -66,6 +68,7 @@ async def upload_knowledge_file(
         enable_deduplication: 是否啟用去重
         skip_review: 是否跳過審核直接加入知識庫（預設 False）
         default_priority: 統一優先級（0=未啟用，1=已啟用，僅在 skip_review=True 時生效）
+        enable_quality_evaluation: 是否啟用質量評估（預設 True，關閉可加速大量匯入）
 
     Returns:
         Dict: 包含 job_id 的回應
@@ -77,6 +80,7 @@ async def upload_knowledge_file(
     print(f"   業者 ID: {vendor_id or '通用知識'}")
     print(f"   匯入模式: {import_mode}")
     print(f"   啟用去重: {enable_deduplication}")
+    print(f"   質量評估: {'已啟用' if enable_quality_evaluation else '已關閉（快速模式）'}")
     print(f"   審核模式: {'跳過審核（直接加入知識庫）' if skip_review else '需要審核'}")
     if skip_review and default_priority > 0:
         print(f"   優先級: 統一啟用 (priority={default_priority})")
@@ -134,6 +138,7 @@ async def upload_knowledge_file(
             'enable_deduplication': enable_deduplication,
             'skip_review': skip_review,
             'default_priority': default_priority,
+            'enable_quality_evaluation': enable_quality_evaluation,
             'file_type': file_ext[1:]
         },
         file_path=temp_file_path,
@@ -147,6 +152,16 @@ async def upload_knowledge_file(
 
     print(f"🚀 啟動背景處理任務 (job_id: {job_id})")
 
+    # 解析業態類型
+    business_types_list = []
+    if business_types:
+        try:
+            import json
+            business_types_list = json.loads(business_types)
+            print(f"📋 業態類型: {business_types_list}")
+        except Exception as e:
+            print(f"⚠️ 無法解析業態類型: {e}")
+
     background_tasks.add_task(
         service.process_import_job,
         job_id=job_id,
@@ -156,6 +171,8 @@ async def upload_knowledge_file(
         enable_deduplication=enable_deduplication,
         skip_review=skip_review,
         default_priority=default_priority,
+        enable_quality_evaluation=enable_quality_evaluation,
+        business_types=business_types_list,
         user_id="admin"  # TODO: 從認證取得真實使用者 ID
     )
 
@@ -355,33 +372,52 @@ async def preview_knowledge_file(file: UploadFile = File(...)):
         import pandas as pd
         import io
 
-        df = pd.read_excel(io.BytesIO(content), engine='openpyxl')
+        # 先讀取第一行，檢查是否有業者標籤（租管業 QA 格式）
+        df_first_row = pd.read_excel(io.BytesIO(content), engine='openpyxl', header=None, nrows=1)
 
-        # 來源偵測：檢查是否為系統匯出檔案
-        expected_fields = {
-            'question_summary', 'answer', 'scope', 'vendor_id',
-            'business_types', 'target_user', 'intent_names',
-            'keywords', 'priority'
-        }
-        actual_fields = set(df.columns)
+        has_vendor_label = False
+        vendor_label = None
+        if pd.notna(df_first_row.iloc[0, 0]) and '物業' in str(df_first_row.iloc[0, 0]):
+            has_vendor_label = True
+            if pd.notna(df_first_row.iloc[0, 1]):
+                vendor_label = str(df_first_row.iloc[0, 1]).strip()
 
-        if expected_fields.issubset(actual_fields):
-            # 系統匯出檔案
-            source_type = "external_file"
-            import_source = "system_export"
-            detected_source_description = "系統匯出檔案（可直接匯入）"
+        # 根據格式選擇 header 行
+        if has_vendor_label:
+            df = pd.read_excel(io.BytesIO(content), engine='openpyxl', header=1)  # 第 2 行作為標題
+            detected_source_description = f"租管業 QA 格式（業者: {vendor_label}）"
         else:
-            # 一般 Excel 檔案
-            source_type = "external_file"
-            import_source = "external_excel"
-            detected_source_description = "外部 Excel 檔案"
+            df = pd.read_excel(io.BytesIO(content), engine='openpyxl')  # 第 1 行作為標題
+
+            # 來源偵測：檢查是否為系統匯出檔案
+            expected_fields = {
+                'question_summary', 'answer', 'scope', 'vendor_id',
+                'business_types', 'target_user', 'intent_names',
+                'keywords', 'priority'
+            }
+            actual_fields = set(df.columns)
+
+            if expected_fields.issubset(actual_fields):
+                # 系統匯出檔案
+                source_type = "external_file"
+                import_source = "system_export"
+                detected_source_description = "系統匯出檔案（可直接匯入）"
+            else:
+                # 一般 Excel 檔案
+                source_type = "external_file"
+                import_source = "external_excel"
+                detected_source_description = "外部 Excel 檔案"
+
+        # 將 NaN 轉換為空字串，避免 JSON 序列化錯誤
+        preview_df = df.head(5).fillna('')  # 用空字串取代 NaN
 
         preview_data = {
             "file_type": "excel",
             "total_rows": len(df),
             "columns": list(df.columns),
-            "preview_rows": df.head(5).to_dict(orient='records'),
-            "estimated_knowledge": len(df)  # 粗略估算
+            "preview_rows": preview_df.to_dict(orient='records'),
+            "estimated_knowledge": len(df),  # 粗略估算
+            "vendor_label": vendor_label  # 新增：業者標籤
         }
 
     elif file_ext == '.csv':
@@ -394,11 +430,14 @@ async def preview_knowledge_file(file: UploadFile = File(...)):
         except UnicodeDecodeError:
             df = pd.read_csv(io.BytesIO(content), encoding='utf-8-sig')
 
+        # 將 NaN 轉換為空字串，避免 JSON 序列化錯誤
+        preview_df = df.head(5).fillna('')
+
         preview_data = {
             "file_type": "csv",
             "total_rows": len(df),
             "columns": list(df.columns),
-            "preview_rows": df.head(5).to_dict(orient='records'),
+            "preview_rows": preview_df.to_dict(orient='records'),
             "estimated_knowledge": len(df)  # 粗略估算
         }
 

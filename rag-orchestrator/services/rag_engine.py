@@ -34,11 +34,11 @@ class RAGEngine:
         similarity_threshold: float = 0.6,
         intent_ids: Optional[List[int]] = None,
         primary_intent_id: Optional[int] = None,
-        allowed_audiences: Optional[List[str]] = None,
+        target_users: Optional[List[str]] = None,
         vendor_id: Optional[int] = None
     ) -> List[Dict]:
         """
-        搜尋相關知識（支援多意圖過濾與加成 + 業務範圍 audience 過濾 + 業態類型過濾）
+        搜尋相關知識（支援多意圖過濾與加成 + 目標用戶過濾 + 業態類型過濾）
 
         Args:
             query: 查詢問題
@@ -46,7 +46,7 @@ class RAGEngine:
             similarity_threshold: 相似度閾值
             intent_ids: 所有相關意圖 IDs（用於過濾）
             primary_intent_id: 主要意圖 ID（用於加成排序）
-            allowed_audiences: 允許的受眾列表（用於 B2B/B2C 業務範圍隔離）
+            target_users: 目標用戶列表（用於角色隔離）：tenant, landlord, property_manager, system_admin
             vendor_id: 業者 ID（用於業態類型過濾）
 
         Returns:
@@ -76,8 +76,8 @@ class RAGEngine:
         print(f"   閾值: {similarity_threshold}, 限制: {limit}")
         if intent_ids:
             print(f"   意圖過濾: {intent_ids}, 主要意圖: {primary_intent_id}")
-        if allowed_audiences:
-            print(f"   🔒 Audience 過濾: {allowed_audiences}")
+        if target_users:
+            print(f"   🔒 Target User 過濾: {target_users}")
         if vendor_business_types:
             print(f"   🏢 業態過濾: {vendor_business_types}")
 
@@ -96,9 +96,9 @@ class RAGEngine:
         async with self.db_pool.acquire() as conn:
             if intent_ids and primary_intent_id:
                 # 多意圖模式：JOIN knowledge_intent_mapping 並使用加成策略
-                # 包含 audience 過濾（B2B/B2C 隔離）
-                if allowed_audiences:
-                    # 有 audience 過濾
+                # 包含 target_user 過濾（角色隔離）
+                if target_users:
+                    # 有 target_user 過濾
                     if vendor_business_types:
                         # 有業態過濾
                         results = await conn.fetch("""
@@ -109,6 +109,8 @@ class RAGEngine:
                                 kb.target_user,
                                 kb.keywords,
                                 kb.business_types,
+                                kb.scope,
+                                kb.vendor_id,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
@@ -135,9 +137,14 @@ class RAGEngine:
                                 AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
                                 AND (kb.target_user IS NULL OR kb.target_user && $6::text[])
                                 AND (kb.business_types IS NULL OR kb.business_types && $7::text[])
+                                AND (
+                                    $10::int IS NULL OR
+                                    (kb.vendor_id = $10 AND kb.scope IN ('customized', 'vendor')) OR
+                                    (kb.vendor_id IS NULL AND kb.scope = 'global')
+                                )
                             ORDER BY kb.id, boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, allowed_audiences, vendor_business_types, self.priority_boost, self.priority_quality_threshold)
+                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, target_users, vendor_business_types, self.priority_boost, self.priority_quality_threshold, vendor_id)
                     else:
                         # 無業態過濾
                         results = await conn.fetch("""
@@ -173,11 +180,16 @@ class RAGEngine:
                                 AND (1 - (kb.embedding <=> $1::vector)) >= $2
                                 AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
                                 AND (kb.target_user IS NULL OR kb.target_user && $6::text[])
+                                AND (
+                                    $9::int IS NULL OR
+                                    (kb.vendor_id = $9 AND kb.scope IN ('customized', 'vendor')) OR
+                                    (kb.vendor_id IS NULL AND kb.scope = 'global')
+                                )
                             ORDER BY kb.id, boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, allowed_audiences, self.priority_boost, self.priority_quality_threshold)
+                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, target_users, self.priority_boost, self.priority_quality_threshold, vendor_id)
                 else:
-                    # 無 audience 過濾（向後兼容）
+                    # 無 target_user 過濾（向後兼容）
                     if vendor_business_types:
                         # 有業態過濾
                         results = await conn.fetch("""
@@ -188,6 +200,8 @@ class RAGEngine:
                                 kb.target_user,
                                 kb.keywords,
                                 kb.business_types,
+                                kb.scope,
+                                kb.vendor_id,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
@@ -213,9 +227,14 @@ class RAGEngine:
                                 AND (1 - (kb.embedding <=> $1::vector)) >= $2
                                 AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
                                 AND (kb.business_types IS NULL OR kb.business_types && $6::text[])
+                                AND (
+                                    $9::int IS NULL OR
+                                    (kb.vendor_id = $9 AND kb.scope IN ('customized', 'vendor')) OR
+                                    (kb.vendor_id IS NULL AND kb.scope = 'global')
+                                )
                             ORDER BY kb.id, boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, vendor_business_types, self.priority_boost, self.priority_quality_threshold)
+                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, vendor_business_types, self.priority_boost, self.priority_quality_threshold, vendor_id)
                     else:
                         # 無業態過濾
                         results = await conn.fetch("""
@@ -226,6 +245,8 @@ class RAGEngine:
                                 kb.category,
                                 kb.target_user,
                                 kb.keywords,
+                                kb.scope,
+                                kb.vendor_id,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
@@ -250,9 +271,14 @@ class RAGEngine:
                             WHERE kb.embedding IS NOT NULL
                                 AND (1 - (kb.embedding <=> $1::vector)) >= $2
                                 AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
+                                AND (
+                                    $8::int IS NULL OR
+                                    (kb.vendor_id = $8 AND kb.scope IN ('customized', 'vendor')) OR
+                                    (kb.vendor_id IS NULL AND kb.scope = 'global')
+                                )
                             ORDER BY kb.id, boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, self.priority_boost, self.priority_quality_threshold)
+                        """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, self.priority_boost, self.priority_quality_threshold, vendor_id)
 
                 # 去重並按加成後相似度排序
                 seen_ids = set()
@@ -264,9 +290,9 @@ class RAGEngine:
                 results = sorted(unique_results, key=lambda x: x['boosted_similarity'], reverse=True)[:limit]
 
             else:
-                # 純向量搜尋模式（向後兼容）+ audience 過濾
-                if allowed_audiences:
-                    # 有 audience 過濾
+                # 純向量搜尋模式（向後兼容）+ target_user 過濾
+                if target_users:
+                    # 有 target_user 過濾
                     if vendor_business_types:
                         # 有業態過濾
                         results = await conn.fetch("""
@@ -277,6 +303,8 @@ class RAGEngine:
                                 target_user,
                                 keywords,
                                 business_types,
+                                scope,
+                                vendor_id,
                                 1 - (embedding <=> $1::vector) as base_similarity,
                                 (1 - (embedding <=> $1::vector)) +
                                 CASE
@@ -289,9 +317,14 @@ class RAGEngine:
                                 AND (1 - (embedding <=> $1::vector)) >= $2
                                 AND (target_user IS NULL OR target_user && $4::text[])
                                 AND (business_types IS NULL OR business_types && $5::text[])
+                                AND (
+                                    $8::int IS NULL OR
+                                    (vendor_id = $8 AND scope IN ('customized', 'vendor')) OR
+                                    (vendor_id IS NULL AND scope = 'global')
+                                )
                             ORDER BY boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit, allowed_audiences, vendor_business_types, self.priority_boost, self.priority_quality_threshold)
+                        """, vector_str, similarity_threshold, limit, target_users, vendor_business_types, self.priority_boost, self.priority_quality_threshold, vendor_id)
                     else:
                         # 無業態過濾
                         results = await conn.fetch("""
@@ -301,6 +334,8 @@ class RAGEngine:
                                 answer as content,
                                 target_user,
                                 keywords,
+                                scope,
+                                vendor_id,
                                 1 - (embedding <=> $1::vector) as base_similarity,
                                 (1 - (embedding <=> $1::vector)) +
                                 CASE
@@ -312,11 +347,16 @@ class RAGEngine:
                             WHERE embedding IS NOT NULL
                                 AND (1 - (embedding <=> $1::vector)) >= $2
                                 AND (target_user IS NULL OR target_user && $4::text[])
+                                AND (
+                                    $7::int IS NULL OR
+                                    (vendor_id = $7 AND scope IN ('customized', 'vendor')) OR
+                                    (vendor_id IS NULL AND scope = 'global')
+                                )
                             ORDER BY boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit, allowed_audiences, self.priority_boost, self.priority_quality_threshold)
+                        """, vector_str, similarity_threshold, limit, target_users, self.priority_boost, self.priority_quality_threshold, vendor_id)
                 else:
-                    # 無 audience 過濾（向後兼容）
+                    # 無 target_user 過濾（向後兼容）
                     if vendor_business_types:
                         # 有業態過濾
                         results = await conn.fetch("""
@@ -327,6 +367,8 @@ class RAGEngine:
                                 target_user,
                                 keywords,
                                 business_types,
+                                scope,
+                                vendor_id,
                                 1 - (embedding <=> $1::vector) as base_similarity,
                                 (1 - (embedding <=> $1::vector)) +
                                 CASE
@@ -338,9 +380,14 @@ class RAGEngine:
                             WHERE embedding IS NOT NULL
                                 AND (1 - (embedding <=> $1::vector)) >= $2
                                 AND (business_types IS NULL OR business_types && $4::text[])
+                                AND (
+                                    $7::int IS NULL OR
+                                    (vendor_id = $7 AND scope IN ('customized', 'vendor')) OR
+                                    (vendor_id IS NULL AND scope = 'global')
+                                )
                             ORDER BY boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit, vendor_business_types, self.priority_boost, self.priority_quality_threshold)
+                        """, vector_str, similarity_threshold, limit, vendor_business_types, self.priority_boost, self.priority_quality_threshold, vendor_id)
                     else:
                         # 無業態過濾
                         results = await conn.fetch("""
@@ -350,6 +397,8 @@ class RAGEngine:
                                 answer as content,
                                 target_user,
                                 keywords,
+                                scope,
+                                vendor_id,
                                 1 - (embedding <=> $1::vector) as base_similarity,
                                 (1 - (embedding <=> $1::vector)) +
                                 CASE
@@ -360,9 +409,14 @@ class RAGEngine:
                             FROM knowledge_base
                             WHERE embedding IS NOT NULL
                                 AND (1 - (embedding <=> $1::vector)) >= $2
+                                AND (
+                                    $6::int IS NULL OR
+                                    (vendor_id = $6 AND scope IN ('customized', 'vendor')) OR
+                                    (vendor_id IS NULL AND scope = 'global')
+                                )
                             ORDER BY boosted_similarity DESC
                             LIMIT $3
-                        """, vector_str, similarity_threshold, limit, self.priority_boost, self.priority_quality_threshold)
+                        """, vector_str, similarity_threshold, limit, self.priority_boost, self.priority_quality_threshold, vendor_id)
 
         print(f"   💾 資料庫返回 {len(results)} 個結果")
 
@@ -386,6 +440,8 @@ class RAGEngine:
                 "target_user": row.get('target_user'),
                 "keywords": row.get('keywords', []),
                 "business_types": row.get('business_types'),
+                "scope": row.get('scope', 'global'),
+                "vendor_id": row.get('vendor_id'),
                 "similarity": similarity
             })
 

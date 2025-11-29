@@ -60,14 +60,28 @@ class CacheService:
 
     # ==================== 問題緩存 (Layer 1) ====================
 
-    def _make_question_key(self, vendor_id: int, question: str, user_role: str = "customer") -> str:
-        """生成問題緩存 key"""
-        question_hash = hashlib.md5(question.lower().strip().encode()).hexdigest()[:16]
-        return f"rag:question:{vendor_id}:{user_role}:{question_hash}"
+    def _make_question_key(self, vendor_id: int, question: str, target_user: str = "tenant", config_version: str = "default") -> str:
+        """
+        生成問題緩存 key（使用 target_user 支援角色隔離 + config_version 支援多配置並存）
 
-    def get_cached_answer(self, vendor_id: int, question: str, user_role: str = "customer") -> Optional[Dict[str, Any]]:
+        Args:
+            vendor_id: 業者 ID
+            question: 問題文本
+            target_user: 目標用戶角色
+            config_version: 配置版本（如 "pm90_st80"）
+        """
+        question_hash = hashlib.md5(question.lower().strip().encode()).hexdigest()[:16]
+        return f"rag:question:{vendor_id}:{target_user}:{config_version}:{question_hash}"
+
+    def get_cached_answer(self, vendor_id: int, question: str, target_user: str = "tenant", config_version: str = "default") -> Optional[Dict[str, Any]]:
         """
         獲取緩存的答案
+
+        Args:
+            vendor_id: 業者 ID
+            question: 問題文本
+            target_user: 目標用戶角色
+            config_version: 配置版本（用於區分不同配置下的答案）
 
         Returns:
             Dict 包含完整的 RAG 回應，或 None 如果緩存不存在
@@ -76,7 +90,7 @@ class CacheService:
             return None
 
         try:
-            key = self._make_question_key(vendor_id, question, user_role)
+            key = self._make_question_key(vendor_id, question, target_user, config_version)
             cached = self.redis_client.get(key)
 
             if cached:
@@ -95,7 +109,8 @@ class CacheService:
         vendor_id: int,
         question: str,
         answer_data: Dict[str, Any],
-        user_role: str = "customer"
+        target_user: str = "tenant",
+        config_version: str = "default"
     ) -> bool:
         """
         緩存答案
@@ -104,7 +119,8 @@ class CacheService:
             vendor_id: 業者 ID
             question: 用戶問題
             answer_data: 完整的 RAG 回應數據
-            user_role: 用戶角色
+            target_user: 目標用戶類型
+            config_version: 配置版本（用於區分不同配置下的答案）
 
         Returns:
             True if successful
@@ -113,7 +129,7 @@ class CacheService:
             return False
 
         try:
-            key = self._make_question_key(vendor_id, question, user_role)
+            key = self._make_question_key(vendor_id, question, target_user, config_version)
             ttl = self.ttl_config["question_cache"]
 
             # 存儲為 JSON

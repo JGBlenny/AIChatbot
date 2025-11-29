@@ -20,6 +20,55 @@
       </div>
     </div>
 
+    <!-- 業者選擇器 -->
+    <div class="vendor-selector">
+      <label for="vendor-select">
+        <strong>🏢 選擇業者：</strong>
+      </label>
+      <select id="vendor-select" v-model="selectedVendorId" class="vendor-dropdown">
+        <option :value="null">通用知識（所有業者共用）</option>
+        <option v-for="vendor in vendors" :key="vendor.id" :value="vendor.id">
+          {{ vendor.name }} ({{ vendor.code }})
+        </option>
+      </select>
+      <span v-if="selectedVendorId" class="selected-vendor-badge">
+        已選擇: {{ vendors.find(v => v.id === selectedVendorId)?.name }}
+      </span>
+    </div>
+
+    <!-- 業態類型選擇器 -->
+    <div class="business-type-selector">
+      <label>
+        <strong>🏷️ 選擇業態類型（可複選）：</strong>
+        <span class="info-text">選擇此批知識適用的業態類型</span>
+      </label>
+      <div class="business-type-options">
+        <label
+          v-for="type in businessTypes"
+          :key="type.type_value"
+          class="business-type-checkbox"
+          :class="{ selected: selectedBusinessTypes.includes(type.type_value) }"
+        >
+          <input
+            type="checkbox"
+            :value="type.type_value"
+            v-model="selectedBusinessTypes"
+          />
+          <span class="type-icon">{{ type.icon }}</span>
+          <div class="type-info">
+            <div class="type-name">{{ type.display_name }}</div>
+            <div class="type-desc">{{ type.description }}</div>
+          </div>
+        </label>
+      </div>
+      <div v-if="selectedBusinessTypes.length > 0" class="selected-types-summary">
+        已選擇 {{ selectedBusinessTypes.length }} 個業態：
+        <span v-for="typeValue in selectedBusinessTypes" :key="typeValue" class="type-tag">
+          {{ businessTypes.find(t => t.type_value === typeValue)?.display_name }}
+        </span>
+      </div>
+    </div>
+
     <!-- 匯入選項（佇列級別） -->
     <div class="import-options">
       <label class="checkbox-option">
@@ -40,6 +89,24 @@
           </span>
         </label>
       </div>
+
+      <!-- 質量評估選項 -->
+      <label class="checkbox-option quality-eval-option">
+        <input type="checkbox" v-model="enableQualityEvaluation" />
+        <span class="option-text">
+          <strong>啟用質量評估</strong>
+          <span class="info-text">⚡ 大量資料建議關閉以加速匯入（關閉後不會進行問答品質檢查）</span>
+        </span>
+      </label>
+
+      <!-- 去重選項 -->
+      <label class="checkbox-option dedup-option">
+        <input type="checkbox" v-model="enableDeduplication" />
+        <span class="option-text">
+          <strong>啟用去重檢查</strong>
+          <span class="info-text">⚠️ 如果資料已在審核佇列中，建議關閉以強制匯入</span>
+        </span>
+      </label>
     </div>
 
     <!-- 檔案管理器 -->
@@ -394,11 +461,21 @@ export default {
     return {
       helpTexts,
 
+      // 業者選擇
+      vendors: [],
+      selectedVendorId: null,
+
+      // 業態類型選擇
+      businessTypes: [],
+      selectedBusinessTypes: [],
+
       // 檔案佇列管理
       fileQueue: [],  // 檔案佇列：[{file, name, size, status, progress, result, error, jobId, stage}]
 
       skipReview: false,  // 是否跳過審核
       enablePriority: false,  // 是否統一啟用優先級
+      enableQualityEvaluation: true,  // 是否啟用質量評估（預設啟用）
+      enableDeduplication: true,  // 是否啟用去重（預設啟用）
 
       importJobs: [],
       currentProcessingIndex: null,  // 當前處理的檔案索引
@@ -425,10 +502,32 @@ export default {
   },
 
   mounted() {
+    this.loadVendors();
+    this.loadBusinessTypes();
     this.loadImportJobs();
   },
 
   methods: {
+    async loadVendors() {
+      try {
+        const response = await axios.get(`${API_BASE}/vendors`);
+        this.vendors = response.data;
+      } catch (error) {
+        console.error('載入業者失敗', error);
+        alert('載入業者失敗：' + (error.response?.data?.detail || error.message));
+      }
+    },
+
+    async loadBusinessTypes() {
+      try {
+        const response = await axios.get(`${API_BASE}/business-types-config`);
+        this.businessTypes = response.data.business_types || [];
+      } catch (error) {
+        console.error('載入業態類型失敗', error);
+        // 不顯示錯誤提示，因為業態類型是可選的
+      }
+    },
+
     async loadImportJobs() {
       try {
         const response = await axios.get(`${API_BASE}/knowledge-import/jobs`);
@@ -635,6 +734,18 @@ export default {
         const formData = new FormData();
         formData.append('file', fileItem.file);
         formData.append('skip_review', this.skipReview);
+        formData.append('enable_quality_evaluation', this.enableQualityEvaluation);
+        formData.append('enable_deduplication', this.enableDeduplication);
+
+        // 添加業者 ID（如果已選擇）
+        if (this.selectedVendorId) {
+          formData.append('vendor_id', this.selectedVendorId);
+        }
+
+        // 添加業態類型（如果已選擇）
+        if (this.selectedBusinessTypes.length > 0) {
+          formData.append('business_types', JSON.stringify(this.selectedBusinessTypes));
+        }
 
         if (this.skipReview && this.enablePriority) {
           formData.append('default_priority', 1);
@@ -731,15 +842,15 @@ export default {
           }
         }, 2000);  // 每 2 秒查詢一次
 
-        // 設置超時保護（10 分鐘）
+        // 設置超時保護（60 分鐘）- 大批量資料需要更長時間
         setTimeout(() => {
           clearInterval(pollInterval);
           if (fileItem.status === 'processing') {
             fileItem.status = 'error';
-            fileItem.error = '處理超時（超過 10 分鐘）';
+            fileItem.error = '處理超時（超過 60 分鐘）';
           }
           resolve();
-        }, 10 * 60 * 1000);
+        }, 60 * 60 * 1000);
       });
     },
 
@@ -850,6 +961,161 @@ export default {
   color: #666;
   font-size: 16px;
   font-weight: bold;
+}
+
+/* 業者選擇器 */
+.vendor-selector {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f0f8ff;
+  border: 1px solid #b0d4f1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.vendor-selector label {
+  color: #2c3e50;
+  font-size: 15px;
+  margin: 0;
+}
+
+.vendor-dropdown {
+  flex: 1;
+  max-width: 400px;
+  padding: 10px 15px;
+  font-size: 14px;
+  border: 1px solid #c0d4e8;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.vendor-dropdown:hover {
+  border-color: #4CAF50;
+}
+
+.vendor-dropdown:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.selected-vendor-badge {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+/* 業態類型選擇器 */
+.business-type-selector {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 2px solid #dee2e6;
+}
+
+.business-type-selector > label {
+  display: block;
+  color: #2c3e50;
+  font-size: 15px;
+  margin-bottom: 15px;
+}
+
+.business-type-selector .info-text {
+  margin-left: 8px;
+  color: #6c757d;
+  font-size: 13px;
+  font-weight: normal;
+}
+
+.business-type-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.business-type-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.business-type-checkbox:hover {
+  border-color: #4CAF50;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+}
+
+.business-type-checkbox.selected {
+  background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f4 100%);
+  border-color: #4CAF50;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.business-type-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.type-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.type-info {
+  flex: 1;
+}
+
+.type-name {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.type-desc {
+  font-size: 13px;
+  color: #6c757d;
+  line-height: 1.4;
+}
+
+.selected-types-summary {
+  padding: 12px 15px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #4CAF50;
+  color: #2c3e50;
+  font-size: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.type-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 /* 上傳區域 */
@@ -1031,6 +1297,22 @@ export default {
   background-color: #e3f2fd;
   border-radius: 6px;
   border: 1px solid #90caf9;
+}
+
+.quality-eval-option {
+  margin-top: 15px;
+  padding: 12px;
+  background-color: #fff9e6;
+  border-radius: 6px;
+  border: 1px solid #ffe066;
+}
+
+.dedup-option {
+  margin-top: 15px;
+  padding: 12px;
+  background-color: #ffe6e6;
+  border-radius: 6px;
+  border: 1px solid #ffb3b3;
 }
 
 /* ==================== 檔案佇列樣式 ==================== */

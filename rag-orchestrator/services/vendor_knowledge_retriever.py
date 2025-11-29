@@ -197,7 +197,7 @@ class VendorKnowledgeRetriever:
         similarity_threshold: float = 0.6,
         resolve_templates: bool = True,
         all_intent_ids: Optional[List[int]] = None,
-        user_role: str = 'customer'
+        target_user: str = 'tenant'
     ) -> List[Dict]:
         """
         混合模式檢索：Intent 過濾 + 向量相似度排序
@@ -216,13 +216,16 @@ class VendorKnowledgeRetriever:
             similarity_threshold: 相似度閾值
             resolve_templates: 是否自動解析模板
             all_intent_ids: 所有相關意圖 IDs（包含主要和次要）
-            user_role: 用戶角色 ('customer' = B2C 終端客戶, 'staff' = B2B 業者員工/系統商)
+            target_user: 目標用戶角色：tenant(租客), landlord(房東), property_manager(物管), system_admin(系統管理)
 
         Returns:
             知識列表，按相似度和優先級排序
         """
+        # 定義允許的目標用戶角色
+        ALLOWED_TARGET_USERS = ['tenant', 'landlord', 'property_manager', 'system_admin']
+
         # 0. 根據用戶角色決定業態類型和目標用戶過濾策略
-        is_b2b_mode = (user_role == 'staff')
+        is_b2b_mode = (target_user in ['property_manager', 'system_admin'])
 
         # 0.1 業態類型過濾（business_types）
         if is_b2b_mode:
@@ -240,23 +243,18 @@ class VendorKnowledgeRetriever:
             print(f"   📋 [B2C Mode] Using vendor {vendor_id} business types: {vendor_business_types}")
 
         # 0.2 目標用戶過濾（target_user）
-        # 支援角色: tenant(租客), landlord(房東), property_manager(物業管理師), system_admin(系統管理員), staff(B2B員工)
+        # 支援角色: tenant(租客), landlord(房東), property_manager(物業管理師), system_admin(系統管理員)
         target_user_roles = []
-        if user_role in ['tenant', 'landlord', 'property_manager', 'system_admin']:
+        if target_user in ALLOWED_TARGET_USERS:
             # 細分角色：只顯示該角色或通用知識
-            target_user_roles = [user_role]
+            target_user_roles = [target_user]
             target_user_filter_sql = "(kb.target_user IS NULL OR kb.target_user && %s::text[])"
-            print(f"   👤 [Target User] Filtering for role: {user_role}")
-        elif user_role == 'staff':
-            # B2B 員工：可能需要看所有後台操作知識
-            target_user_roles = ['property_manager', 'system_admin']
-            target_user_filter_sql = "(kb.target_user IS NULL OR kb.target_user && %s::text[])"
-            print(f"   👤 [Target User] B2B staff mode - showing management knowledge")
+            print(f"   👤 [Target User] Filtering for role: {target_user}")
         else:
-            # customer 或其他：顯示通用知識（但不指定特定角色）
-            target_user_roles = None
-            target_user_filter_sql = "TRUE"  # 不過濾
-            print(f"   👤 [Target User] Generic customer mode - no target_user filtering")
+            # 未知角色或向後兼容：默認為租客
+            target_user_roles = ['tenant']
+            target_user_filter_sql = "(kb.target_user IS NULL OR kb.target_user && %s::text[])"
+            print(f"   ⚠️  [Target User] Unknown role '{target_user}', defaulting to 'tenant'")
 
         # 1. 獲取問題的向量
         query_embedding = await self._get_embedding(query)

@@ -129,7 +129,8 @@ export default {
       error: null,
       messageIdCounter: 1,
       currentStreamingMessage: null,  // 正在流式輸出的訊息
-      streamingMetadata: {}  // 收集流式過程中的 metadata
+      streamingMetadata: {},  // 收集流式過程中的 metadata
+      targetUser: 'tenant'  // 預設為租客，可透過 URL 參數覆蓋（?target_user=landlord）
     };
   },
 
@@ -144,6 +145,13 @@ export default {
 
   async mounted() {
     this.vendorCode = this.$route.params.vendorCode;
+
+    // 從 URL 查詢參數讀取 target_user（預設為 tenant）
+    const queryTargetUser = this.$route.query.target_user;
+    if (queryTargetUser === 'landlord' || queryTargetUser === 'tenant') {
+      this.targetUser = queryTargetUser;
+    }
+
     await this.loadVendor();
     this.loadChatHistory();
 
@@ -195,8 +203,7 @@ export default {
         const response = await axios.post(`${RAG_API}/message`, {
           message: userMessage,
           vendor_id: this.vendor.id,
-          mode: 'tenant',
-          user_role: 'customer',
+          target_user: this.targetUser,  // 使用統一的 target_user 參數（預設為 tenant）
           include_sources: false
         });
 
@@ -289,13 +296,13 @@ export default {
       if (confirm('確定要清除所有對話記錄嗎？')) {
         this.messages = [];
         this.messageIdCounter = 1;
-        localStorage.removeItem(`chat_${this.vendorCode}`);
+        localStorage.removeItem(`chat_${this.vendorCode}_${this.targetUser}`);
       }
     },
 
     loadChatHistory() {
       try {
-        const saved = localStorage.getItem(`chat_${this.vendorCode}`);
+        const saved = localStorage.getItem(`chat_${this.vendorCode}_${this.targetUser}`);
         if (saved) {
           const data = JSON.parse(saved);
           this.messages = data.messages || [];
@@ -308,7 +315,7 @@ export default {
 
     saveChatHistory() {
       try {
-        localStorage.setItem(`chat_${this.vendorCode}`, JSON.stringify({
+        localStorage.setItem(`chat_${this.vendorCode}_${this.targetUser}`, JSON.stringify({
           messages: this.messages,
           counter: this.messageIdCounter
         }));

@@ -135,13 +135,16 @@ async def list_knowledge(
     cur = conn.cursor()
 
     try:
-        # 建立查詢（加入意圖資訊 - 使用 knowledge_intent_mapping）
+        # 建立查詢（加入意圖資訊 - 使用 knowledge_intent_mapping，並加入業者資訊）
         query = """
             SELECT DISTINCT
                 kb.id, kb.question_summary, kb.answer as content,
                 kb.keywords, kb.business_types, kb.target_user, kb.priority, kb.created_at, kb.updated_at,
-                (kb.embedding IS NOT NULL) as has_embedding
+                (kb.embedding IS NOT NULL) as has_embedding,
+                kb.vendor_id,
+                v.name as vendor_name
             FROM knowledge_base kb
+            LEFT JOIN vendors v ON kb.vendor_id = v.id
             WHERE 1=1
         """
         params = []
@@ -239,13 +242,16 @@ async def get_knowledge(knowledge_id: int):
     cur = conn.cursor()
 
     try:
-        # 取得知識基本資訊
+        # 取得知識基本資訊（加入業者資訊）
         cur.execute("""
-            SELECT id, question_summary, answer as content,
-                   keywords, business_types, target_user, priority, created_at, updated_at,
-                   video_url, video_s3_key, video_file_size, video_duration, video_format
-            FROM knowledge_base
-            WHERE id = %s
+            SELECT kb.id, kb.question_summary, kb.answer as content,
+                   kb.keywords, kb.business_types, kb.target_user, kb.priority, kb.created_at, kb.updated_at,
+                   kb.video_url, kb.video_s3_key, kb.video_file_size, kb.video_duration, kb.video_format,
+                   kb.vendor_id,
+                   v.name as vendor_name
+            FROM knowledge_base kb
+            LEFT JOIN vendors v ON kb.vendor_id = v.id
+            WHERE kb.id = %s
         """, (knowledge_id,))
 
         row = cur.fetchone()

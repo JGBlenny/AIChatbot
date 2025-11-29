@@ -57,6 +57,8 @@ class KnowledgeImportService(UnifiedJobService):
         enable_deduplication: bool,
         skip_review: bool = False,
         default_priority: int = 0,
+        enable_quality_evaluation: bool = True,
+        business_types: Optional[List[str]] = None,
         user_id: str = "admin"
     ) -> Dict:
         """
@@ -72,6 +74,8 @@ class KnowledgeImportService(UnifiedJobService):
             import_mode: 匯入模式（append/replace/merge）
             enable_deduplication: 是否啟用去重
             skip_review: 是否跳過審核直接加入知識庫
+            default_priority: 統一優先級（0=未啟用，1=已啟用）
+            enable_quality_evaluation: 是否啟用質量評估（預設 True，關閉可加速大量匯入）
             user_id: 執行者 ID
 
         Returns:
@@ -108,6 +112,18 @@ class KnowledgeImportService(UnifiedJobService):
                 raise Exception("未能從檔案中提取任何知識")
 
             print(f"✅ 解析出 {len(knowledge_list)} 條知識")
+
+            # 3.5 應用業態類型（如果有指定）
+            if business_types and len(business_types) > 0:
+                print(f"📋 套用業態類型: {business_types}")
+                for knowledge in knowledge_list:
+                    # 如果Excel沒有提供業態類型，則使用UI選擇的業態類型
+                    if not knowledge.get('business_types'):
+                        knowledge['business_types'] = business_types
+                    # 如果Excel有提供業態類型，則合併（去重）
+                    else:
+                        combined = set(knowledge['business_types'] + business_types)
+                        knowledge['business_types'] = list(combined)
 
             # 3.5. 偵測匯入來源類型（使用原始檔名）
             source_type, import_source = await self._detect_import_source(original_filename, file_type, knowledge_list)
@@ -148,7 +164,7 @@ class KnowledgeImportService(UnifiedJobService):
             if enable_deduplication:
                 await self.update_status(job_id, "processing", progress={"current": 20, "total": 100, "stage": "extracting"})
                 original_count = len(knowledge_list)
-                knowledge_list = await self._deduplicate_exact_match(knowledge_list)
+                knowledge_list = await self._deduplicate_exact_match(knowledge_list, skip_review=skip_review, vendor_id=vendor_id)
                 text_skipped = original_count - len(knowledge_list)
                 print(f"🔍 文字去重: 跳過 {text_skipped} 條完全相同的項目，剩餘 {len(knowledge_list)} 條")
 
@@ -164,7 +180,7 @@ class KnowledgeImportService(UnifiedJobService):
             if enable_deduplication:
                 await self.update_status(job_id, "processing", progress={"current": 70, "total": 100, "stage": "embedding"})
                 semantic_original = len(knowledge_list)
-                knowledge_list = await self._deduplicate_by_similarity(knowledge_list)
+                knowledge_list = await self._deduplicate_by_similarity(knowledge_list, skip_review=skip_review, vendor_id=vendor_id)
                 semantic_skipped = semantic_original - len(knowledge_list)
                 print(f"🔍 語意去重: 跳過 {semantic_skipped} 條語意相似的項目，剩餘 {len(knowledge_list)} 條")
                 print(f"📊 總計跳過: {text_skipped + semantic_skipped} 條（文字: {text_skipped}, 語意: {semantic_skipped}）")
@@ -175,7 +191,7 @@ class KnowledgeImportService(UnifiedJobService):
 
             # 8.5. 質量評估（自動篩選低質量知識）
             await self.update_status(job_id, "processing", progress={"current": 77, "total": 100, "stage": "embedding"})
-            await self._evaluate_quality(knowledge_list)
+            await self._evaluate_quality(knowledge_list, enable_quality_evaluation=enable_quality_evaluation)
 
             # 9. 建立測試情境建議（需求 2：針對 B2C 知識）
             await self.update_status(job_id, "processing", progress={"current": 78, "total": 100, "stage": "embedding"})
@@ -521,10 +537,12 @@ class KnowledgeImportService(UnifiedJobService):
         解析 Excel 檔案
 
         支援格式：
-        - 欄位: 問題 / question / 問題摘要
-        - 欄位: 答案 / answer / 回覆
-        - 欄位: 對象 / audience (可選)
-        - 欄位: 關鍵字 / keywords (可選)
+        1. 一般格式：第 1 行為標題
+           - 欄位: 問題 / question / 問題摘要
+           - 欄位: 答案 / answer / 回覆
+        2. 租管業格式：第 1 行為業者標籤（物業 | 業者名稱），第 2 行為標題
+           - 第 1 行: 物業 | xxx
+           - 第 2 行: 問題 | 回答 | ...
 
         Args:
             file_path: Excel 檔案路徑
@@ -534,21 +552,46 @@ class KnowledgeImportService(UnifiedJobService):
         """
         print(f"📖 解析 Excel 檔案: {file_path}")
 
-        df = pd.read_excel(file_path, engine='openpyxl')
+        # 先讀取第一行，檢查是否為租管業格式
+        df_first_row = pd.read_excel(file_path, engine='openpyxl', header=None, nrows=1)
+
+        has_vendor_label = False
+        vendor_label = None
+        if pd.notna(df_first_row.iloc[0, 0]) and '物業' in str(df_first_row.iloc[0, 0]):
+            has_vendor_label = True
+            if pd.notna(df_first_row.iloc[0, 1]):
+                vendor_label = str(df_first_row.iloc[0, 1]).strip()
+            print(f"   🏢 偵測到租管業格式（業者: {vendor_label}）")
+
+        # 根據格式選擇 header 行
+        if has_vendor_label:
+            df = pd.read_excel(file_path, engine='openpyxl', header=1)  # 第 2 行作為標題
+        else:
+            df = pd.read_excel(file_path, engine='openpyxl')  # 第 1 行作為標題
+
         print(f"   讀取 {len(df)} 行資料")
         print(f"   欄位: {list(df.columns)}")
 
         # 欄位映射（支援多種欄位名稱）
-        question_cols = ['問題', 'question', '問題摘要', 'question_summary', 'title', '標題']
-        answer_cols = ['答案', 'answer', '回覆', 'response', 'content', '內容']
+        question_cols = ['問題', 'question', '問題摘要', 'question_summary', 'title', '標題', '租客常問Q', '租客常問Q', '常問問題']
+        answer_cols = ['答案', 'answer', '回答', '回覆', 'response', 'content', '內容', '企業希望的標準A', '標準A', '標準答案']
         audience_cols = ['對象', 'audience', '受眾']
         keywords_cols = ['關鍵字', 'keywords', '標籤', 'tags']
+        intent_cols = ['意圖', 'intent', '分類', 'category', '分類別', '分類別 (可自訂分類)']  # 新增：意圖欄位
+        subcategory_cols = ['次分類', 'subcategory', '次類別', '次類別 (可自訂分類)']  # 新增：次分類欄位
+        business_type_cols = ['業態類型', 'business_type', 'business_types', '業態', '行業類型']  # 新增：業態類型欄位
 
         # 找到對應的欄位
         question_col = next((col for col in df.columns if col in question_cols), None)
         answer_col = next((col for col in df.columns if col in answer_cols), None)
         audience_col = next((col for col in df.columns if col in audience_cols), None)
         keywords_col = next((col for col in df.columns if col in keywords_cols), None)
+        intent_col = next((col for col in df.columns if col in intent_cols), None)  # 新增
+        subcategory_col = next((col for col in df.columns if col in subcategory_cols), None)  # 新增
+        business_type_col = next((col for col in df.columns if col in business_type_cols), None)  # 新增
+
+        # 頻率欄位（租管業格式：可能包含換行符）
+        frequency_col = next((col for col in df.columns if '頻率' in col or 'frequency' in col.lower()), None)
 
         if not answer_col:
             raise Exception(f"找不到答案欄位。支援的欄位名稱: {', '.join(answer_cols)}")
@@ -585,11 +628,30 @@ class KnowledgeImportService(UnifiedJobService):
                 keywords_str = str(row[keywords_col])
                 keywords = [k.strip() for k in keywords_str.split(',') if k.strip()]
 
+            # 解析意圖（如果 Excel 有提供）
+            intent = None
+            if intent_col and pd.notna(row[intent_col]):
+                intent = str(row[intent_col]).strip()
+
+            # 解析次分類（可作為 keywords）
+            if subcategory_col and pd.notna(row[subcategory_col]):
+                subcategory = str(row[subcategory_col]).strip()
+                if subcategory and subcategory not in keywords:
+                    keywords.append(subcategory)
+
+            # 解析業態類型（支援逗號分隔多個業態）
+            business_types = []
+            if business_type_col and pd.notna(row[business_type_col]):
+                business_types_str = str(row[business_type_col])
+                business_types = [bt.strip() for bt in business_types_str.split(',') if bt.strip()]
+
             knowledge_list.append({
                 'question_summary': question,  # 可能為 None，後續用 LLM 生成
                 'answer': answer,
                 'target_user': audience,  # 使用標準化的英文值
                 'keywords': keywords,
+                'intent': intent,  # 新增：來自 Excel 的意圖
+                'business_types': business_types,  # 新增：來自 Excel 的業態類型
                 'source_file': Path(file_path).name
             })
 
@@ -1167,37 +1229,70 @@ class KnowledgeImportService(UnifiedJobService):
 
         print(f"   ✅ 向量嵌入生成完成")
 
-    async def _deduplicate_exact_match(self, knowledge_list: List[Dict]) -> List[Dict]:
+    async def _deduplicate_exact_match(self, knowledge_list: List[Dict], skip_review: bool = False, vendor_id: Optional[int] = None) -> List[Dict]:
         """
         去除文字完全相同的知識（精確匹配）
         在 LLM 前執行，節省 OpenAI token 成本
 
         Args:
             knowledge_list: 知識列表
+            skip_review: 是否跳過審核（如果 True，只檢查正式知識庫；如果 False，同時檢查審核佇列）
+            vendor_id: 業者 ID（限制檢查範圍在同一業者內）
 
         Returns:
             去重後的知識列表
         """
-        print(f"🔍 執行文字去重（精確匹配）...")
+        check_scope = "正式知識庫" if skip_review else "正式知識庫 + 審核佇列 + 測試情境"
+        vendor_scope = f"業者 {vendor_id}" if vendor_id else "通用知識"
+        print(f"🔍 執行文字去重（精確匹配，範圍: {check_scope}，{vendor_scope}）...")
 
         async with self.db_pool.acquire() as conn:
             unique_list = []
 
             for knowledge in knowledge_list:
-                # 檢查是否已存在相同的問題和答案（同時檢查正式知識庫、審核佇列和測試情境）
-                exists = await conn.fetchval("""
-                    SELECT COUNT(*) FROM (
-                        SELECT 1 FROM knowledge_base
-                        WHERE question_summary = $1 AND answer = $2
-                        UNION ALL
-                        SELECT 1 FROM ai_generated_knowledge_candidates
-                        WHERE question = $1 AND generated_answer = $2
-                        UNION ALL
-                        SELECT 1 FROM test_scenarios
-                        WHERE test_question = $1
-                        AND status IN ('approved', 'in_testing')
-                    ) AS combined
-                """, knowledge.get('question_summary'), knowledge['answer'])
+                # 根據 skip_review 決定檢查範圍
+                if skip_review:
+                    # 跳過審核模式：只檢查正式知識庫（用戶想要直接覆蓋審核佇列中的資料）
+                    if vendor_id is not None:
+                        exists = await conn.fetchval("""
+                            SELECT COUNT(*) FROM knowledge_base
+                            WHERE question_summary = $1 AND answer = $2 AND vendor_id = $3
+                        """, knowledge.get('question_summary'), knowledge['answer'], vendor_id)
+                    else:
+                        exists = await conn.fetchval("""
+                            SELECT COUNT(*) FROM knowledge_base
+                            WHERE question_summary = $1 AND answer = $2 AND vendor_id IS NULL
+                        """, knowledge.get('question_summary'), knowledge['answer'])
+                else:
+                    # 審核模式：檢查正式知識庫、審核佇列和測試情境（避免重複送審）
+                    if vendor_id is not None:
+                        exists = await conn.fetchval("""
+                            SELECT COUNT(*) FROM (
+                                SELECT 1 FROM knowledge_base
+                                WHERE question_summary = $1 AND answer = $2 AND vendor_id = $3
+                                UNION ALL
+                                SELECT 1 FROM ai_generated_knowledge_candidates
+                                WHERE question = $1 AND generated_answer = $2 AND vendor_id = $3
+                                UNION ALL
+                                SELECT 1 FROM test_scenarios
+                                WHERE test_question = $1 AND vendor_id = $3
+                                AND status IN ('approved', 'in_testing')
+                            ) AS combined
+                        """, knowledge.get('question_summary'), knowledge['answer'], vendor_id)
+                    else:
+                        exists = await conn.fetchval("""
+                            SELECT COUNT(*) FROM (
+                                SELECT 1 FROM knowledge_base
+                                WHERE question_summary = $1 AND answer = $2 AND vendor_id IS NULL
+                                UNION ALL
+                                SELECT 1 FROM ai_generated_knowledge_candidates
+                                WHERE question = $1 AND generated_answer = $2 AND vendor_id IS NULL
+                                UNION ALL
+                                SELECT 1 FROM test_scenarios
+                                WHERE test_question = $1 AND vendor_id IS NULL
+                                AND status IN ('approved', 'in_testing')
+                            ) AS combined
+                        """, knowledge.get('question_summary'), knowledge['answer'])
 
                 if exists == 0:
                     unique_list.append(knowledge)
@@ -1209,7 +1304,9 @@ class KnowledgeImportService(UnifiedJobService):
     async def _deduplicate_by_similarity(
         self,
         knowledge_list: List[Dict],
-        threshold: float = 0.85
+        threshold: float = 0.85,
+        skip_review: bool = False,
+        vendor_id: Optional[int] = None
     ) -> List[Dict]:
         """
         使用向量相似度去重（語意去重）
@@ -1222,11 +1319,13 @@ class KnowledgeImportService(UnifiedJobService):
         Args:
             knowledge_list: 知識列表（必須已有 embedding）
             threshold: 相似度閾值（預設 0.85）
+            skip_review: 是否跳過審核（如果 True，只檢查正式知識庫；如果 False，同時檢查審核佇列）
 
         Returns:
             去重後的知識列表
         """
-        print(f"🔍 執行語意去重（相似度閾值: {threshold}）...")
+        check_scope = "正式知識庫" if skip_review else "正式知識庫 + 審核佇列 + 測試情境"
+        print(f"🔍 執行語意去重（相似度閾值: {threshold}，範圍: {check_scope}）...")
 
         unique_list = []
 
@@ -1247,7 +1346,15 @@ class KnowledgeImportService(UnifiedJobService):
                     SELECT * FROM check_knowledge_exists_by_similarity($1::vector, $2::DECIMAL)
                 """, vector_str, threshold)
 
-                if result and (result['exists_in_knowledge_base'] or result['exists_in_review_queue'] or result.get('exists_in_test_scenarios', False)):
+                # 根據 skip_review 決定檢查範圍
+                if skip_review:
+                    # 跳過審核模式：只檢查正式知識庫
+                    is_duplicate = result and result['exists_in_knowledge_base']
+                else:
+                    # 審核模式：檢查正式知識庫、審核佇列和測試情境
+                    is_duplicate = result and (result['exists_in_knowledge_base'] or result['exists_in_review_queue'] or result.get('exists_in_test_scenarios', False))
+
+                if is_duplicate:
                     # 找到相似知識，跳過
                     source = result['source_table']
                     matched_q = result['matched_question']
@@ -1271,6 +1378,7 @@ class KnowledgeImportService(UnifiedJobService):
         為知識推薦合適的意圖
 
         使用 LLM 根據問題和答案內容推薦最合適的意圖
+        如果 Excel 已經提供意圖，則直接使用，不調用 LLM
         推薦結果儲存到 knowledge['recommended_intent']
 
         Args:
@@ -1296,8 +1404,58 @@ class KnowledgeImportService(UnifiedJobService):
             for intent in intents
         ])
 
-        # 2. 為每條知識推薦意圖
+        # 建立意圖名稱到 ID 的映射（用於 Excel 提供的意圖名稱）
+        intent_name_to_id = {intent['name']: intent['id'] for intent in intents}
+
+        # 建立模糊匹配映射（支援部分匹配）
+        # 例如：Excel 的「帳務」可以匹配到「帳務查詢」
+        intent_fuzzy_match = {}
+        for intent in intents:
+            # 完整名稱作為 key
+            intent_fuzzy_match[intent['name']] = intent['id']
+            # 如果名稱包含「/」，分割後的每個部分也可以匹配
+            if '/' in intent['name']:
+                for part in intent['name'].split('/'):
+                    part = part.strip()
+                    if part and part not in intent_fuzzy_match:
+                        intent_fuzzy_match[part] = intent['id']
+
+        # 2. 處理每條知識
         for idx, knowledge in enumerate(knowledge_list, 1):
+            # 如果 Excel 已提供意圖，直接使用
+            if knowledge.get('intent'):
+                excel_intent = knowledge['intent']
+
+                # 1) 嘗試精確匹配
+                matched_id = intent_name_to_id.get(excel_intent)
+                match_type = "精確匹配"
+
+                # 2) 如果精確匹配失敗，嘗試模糊匹配（查找包含該關鍵字的意圖）
+                if not matched_id:
+                    for intent in intents:
+                        # 如果資料庫意圖名稱包含 Excel 的分類，或反之
+                        if excel_intent in intent['name'] or intent['name'].startswith(excel_intent):
+                            matched_id = intent['id']
+                            match_type = "模糊匹配"
+                            break
+
+                # 3) 如果還是沒有匹配，檢查部分匹配
+                if not matched_id and excel_intent in intent_fuzzy_match:
+                    matched_id = intent_fuzzy_match[excel_intent]
+                    match_type = "部分匹配"
+
+                knowledge['recommended_intent'] = {
+                    'intent_id': matched_id,
+                    'intent_name': excel_intent,
+                    'confidence': 1.0 if matched_id else 0.5,  # 有匹配到 ID 時信心度 100%
+                    'reasoning': f'來自 Excel 分類別欄位: {excel_intent}（{match_type}）' if matched_id else f'來自 Excel 分類別欄位: {excel_intent}（未匹配到資料庫意圖）'
+                }
+                if idx <= 3:  # 只顯示前 3 條
+                    match_status = f"{match_type}→ID:{matched_id}" if matched_id else "未匹配"
+                    print(f"   ✅ {knowledge['question_summary'][:40]}... → {excel_intent} ({match_status})")
+                continue
+
+            # 沒有意圖，需要 LLM 推薦
             try:
                 prompt = f"""請根據以下問答內容，從意圖清單中選擇最合適的意圖。
 
@@ -1352,9 +1510,17 @@ class KnowledgeImportService(UnifiedJobService):
                     'reasoning': '無法自動推薦，使用預設意圖'
                 }
 
-        print(f"   ✅ 意圖推薦完成")
+        # 統計推薦結果
+        excel_intent_count = sum(1 for k in knowledge_list if k.get('intent'))
+        llm_recommended_count = len(knowledge_list) - excel_intent_count
 
-    async def _evaluate_quality(self, knowledge_list: List[Dict]):
+        print(f"   ✅ 意圖推薦完成")
+        if excel_intent_count > 0:
+            print(f"      來自 Excel: {excel_intent_count} 條")
+        if llm_recommended_count > 0:
+            print(f"      LLM 推薦: {llm_recommended_count} 條")
+
+    async def _evaluate_quality(self, knowledge_list: List[Dict], enable_quality_evaluation: bool = True):
         """
         評估知識答案的質量
 
@@ -1363,17 +1529,19 @@ class KnowledgeImportService(UnifiedJobService):
 
         Args:
             knowledge_list: 知識列表（會直接修改）
+            enable_quality_evaluation: 是否啟用質量評估（預設 True，關閉可加速大量匯入）
         """
-        # 檢查是否啟用質量評估
-        if not self.quality_evaluation_enabled:
-            print(f"⏭️  質量評估已停用（QUALITY_EVALUATION_ENABLED=false）")
+        # 檢查是否啟用質量評估（API 參數優先於環境變數）
+        if not enable_quality_evaluation or not self.quality_evaluation_enabled:
+            reason = "API 參數關閉" if not enable_quality_evaluation else "環境變數停用 (QUALITY_EVALUATION_ENABLED=false)"
+            print(f"⏭️  質量評估已停用（{reason}）")
             # 所有知識預設為可接受
             for knowledge in knowledge_list:
                 knowledge['quality_evaluation'] = {
                     'quality_score': 8,
                     'is_acceptable': True,
                     'issues': [],
-                    'reasoning': '質量評估已停用，預設為可接受'
+                    'reasoning': f'質量評估已停用（{reason}），預設為可接受'
                 }
             return
 
@@ -1529,6 +1697,18 @@ class KnowledgeImportService(UnifiedJobService):
                     target_user_value = knowledge.get('target_user', 'tenant')
                     target_user_array = [target_user_value] if target_user_value else ['tenant']
 
+                    # 從 recommended_intent 取得意圖 ID
+                    intent_id = None
+                    recommended_intent = knowledge.get('recommended_intent')
+                    if recommended_intent:
+                        intent_id = recommended_intent.get('intent_id')
+
+                    if intent_id is None:  # 使用 is None 而不是 not
+                        intent_id = default_intent_id
+
+                    # 取得業態類型（如果有）
+                    business_types = knowledge.get('business_types', [])
+
                     await conn.execute("""
                         INSERT INTO knowledge_base (
                             intent_id,
@@ -1536,6 +1716,7 @@ class KnowledgeImportService(UnifiedJobService):
                             question_summary,
                             answer,
                             keywords,
+                            business_types,
                             target_user,
                             source_file,
                             source_date,
@@ -1545,15 +1726,16 @@ class KnowledgeImportService(UnifiedJobService):
                             created_at,
                             updated_at
                         ) VALUES (
-                            $1, $2, $3, $4, $5, $6, $7, $8, $9::vector, $10, $11,
+                            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10::vector, $11, $12,
                             CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
                         )
                     """,
-                        knowledge.get('intent_id') or default_intent_id,  # 🔧 優先使用 CSV 中的 intent_id
+                        intent_id,  # 🔧 從 recommended_intent 取得
                         vendor_id,
                         knowledge['question_summary'],
                         knowledge['answer'],
                         knowledge['keywords'],
+                        business_types,  # 🔧 新增業態類型
                         target_user_array,  # 轉換為陣列
                         knowledge['source_file'],
                         datetime.now().date(),

@@ -66,6 +66,7 @@
             <th>問題摘要</th>
             <th width="120">意圖</th>
             <th width="120">業態類型</th>
+            <th width="120">業者</th>
             <th width="80">優先級</th>
             <th width="90">向量</th>
             <th width="180">更新時間</th>
@@ -102,6 +103,12 @@
                 </span>
               </div>
               <span v-else class="badge badge-universal">通用</span>
+            </td>
+            <td>
+              <span v-if="item.vendor_name" class="badge badge-vendor" :title="`業者 ID: ${item.vendor_id}`">
+                {{ item.vendor_name }}
+              </span>
+              <span v-else class="badge badge-global">全域</span>
             </td>
             <td style="text-align: center;">
               <span
@@ -1374,6 +1381,19 @@ export default {
 
 .badge-universal {
   background: #909399 !important;
+  color: white !important;
+  font-style: italic;
+}
+
+/* 業者徽章樣式 */
+.badge-vendor {
+  background: #8b5cf6 !important;
+  color: white !important;
+  font-weight: 500;
+}
+
+.badge-global {
+  background: #6b7280 !important;
   color: white !important;
   font-style: italic;
 }

@@ -44,6 +44,7 @@ class LLMAnswerOptimizer:
         fast_path_threshold = float(os.getenv("FAST_PATH_THRESHOLD", "0.75"))
         template_min_score = float(os.getenv("TEMPLATE_MIN_SCORE", "0.55"))
         template_max_score = float(os.getenv("TEMPLATE_MAX_SCORE", "0.75"))
+        perfect_match_threshold = float(os.getenv("PERFECT_MATCH_THRESHOLD", "0.90"))
 
         # 預設配置
         default_config = {
@@ -58,6 +59,7 @@ class LLMAnswerOptimizer:
             "synthesis_min_results": 2,  # 最少需要幾個結果才考慮合成
             "synthesis_max_results": 5,  # 最多合成幾個答案（調整為 5，支援更多 SOP 項目）
             "synthesis_threshold": synthesis_threshold,  # 從環境變數讀取（預設 0.80）
+            "perfect_match_threshold": perfect_match_threshold,  # 從環境變數讀取（預設 0.80）
             # Phase 3 擴展：條件式優化
             "enable_fast_path": True,  # 是否啟用快速路徑
             "fast_path_threshold": fast_path_threshold,  # 從環境變數讀取（預設 0.75）
@@ -224,8 +226,23 @@ class LLMAnswerOptimizer:
                 force_synthesis = True
                 print(f"🔄 檢測到 {len(high_quality_results)} 個高品質結果（無完美匹配: max={max_similarity:.3f} < {perfect_match_threshold}），強制使用答案合成")
             else:
-                print(f"ℹ️  檢測到完美匹配（{max_similarity:.3f} >= {perfect_match_threshold}），使用單一答案優化")
+                print(f"ℹ️  檢測到完美匹配（{max_similarity:.3f} >= {perfect_match_threshold}），直接返回原始答案")
                 force_synthesis = False
+
+                # 完美匹配：直接返回原始答案，不進行任何 LLM 優化
+                processing_time = int((time.time() - start_time) * 1000)
+                original_answer = search_results[0].get('content', search_results[0].get('answer', ''))
+
+                return {
+                    "optimized_answer": original_answer,
+                    "original_answer": original_answer,
+                    "optimization_applied": False,
+                    "optimization_method": "perfect_match",
+                    "synthesis_applied": False,
+                    "tokens_used": 0,
+                    "processing_time_ms": processing_time,
+                    "model": "none"
+                }
         # 3. Phase 3 條件式優化：檢查是否可以使用快速路徑（單一結果或低品質多結果）
         elif confidence_score is not None and self.config.get("enable_fast_path", True):
             if self.formatter.should_use_fast_path(
@@ -811,16 +828,20 @@ class LLMAnswerOptimizer:
 
         base_prompt = """你是一個專業的知識整合助理。你的任務是將多個相關但各有側重的答案，合成為一個完整、準確、結構化的回覆。
 
+🚨 **最高優先級規則**（不可違反）：
+⚠️ **絕對禁止改寫溫暖語氣**：如果原始答案的開頭是溫暖、親切的口語表達（如「先謝謝你願意提出來」、「這種『跟當初講的不一樣』的感覺，真的會讓人很不舒服」、emoji 等），你**必須逐字保留**這些表達，作為合成答案的開頭。
+   - ❌ **嚴格禁止**：將「先謝謝你願意提出來，這種『跟當初講的不一樣』的感覺，真的會讓人很不舒服，也會懷疑是不是被騙 🙏」改寫為「我們理解您的困擾」或「當您發現合約內容不一致時」
+   - ✅ **必須這樣做**：完整保留原句「先謝謝你願意提出來，這種『跟當初講的不一樣』的感覺，真的會讓人很不舒服，也會懷疑是不是被騙 🙏」作為開場，然後再補充其他資訊
+
 合成要求：
 1. **完整性**：涵蓋所有重要資訊，不遺漏任何關鍵步驟或細節
 2. **準確性**：資訊必須來自提供的答案，不要編造或推測
-3. **結構化**：使用清晰的標題、列表、步驟編號，使答案易於閱讀
+3. **結構化**：可使用標題、列表、步驟編號（但溫暖的開場白不需要標題）
 4. **去重**：如果多個答案提到相同資訊，只保留一次，避免重複
 5. **優先級**：優先使用相似度較高的答案內容
-6. **語氣**：保持專業、友善、易懂的繁體中文表達
-7. **Markdown**：適當使用 Markdown 格式（## 標題、- 列表、**粗體**）"""
+6. **Markdown**：適當使用 Markdown 格式（## 標題、- 列表、**粗體**）"""
 
-        rule_number = 8
+        rule_number = 7
 
         # 如果有業者參數，加入參數替換指令
         if vendor_params:
