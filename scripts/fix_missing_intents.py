@@ -203,9 +203,10 @@ def match_knowledge_with_excel(knowledge_list: List[Dict], excel_df: pd.DataFram
     return matches
 
 def update_knowledge_intent(conn, knowledge_id: int, intent_id: int, similarity: float):
-    """更新知識的意圖"""
+    """更新知識的意圖（同時更新 knowledge_base 和 knowledge_intent_mapping）"""
     cur = conn.cursor()
 
+    # 1. 更新 knowledge_base 表（向後兼容）
     cur.execute("""
         UPDATE knowledge_base
         SET
@@ -215,6 +216,21 @@ def update_knowledge_intent(conn, knowledge_id: int, intent_id: int, similarity:
             updated_at = NOW()
         WHERE id = %s
     """, (intent_id, similarity, knowledge_id))
+
+    # 2. 插入到 knowledge_intent_mapping 表（前端顯示）
+    # 先刪除舊的關聯（如果存在）
+    cur.execute("""
+        DELETE FROM knowledge_intent_mapping
+        WHERE knowledge_id = %s
+    """, (knowledge_id,))
+
+    # 插入新的關聯
+    cur.execute("""
+        INSERT INTO knowledge_intent_mapping
+            (knowledge_id, intent_id, intent_type, confidence, assigned_by)
+        VALUES
+            (%s, %s, 'primary', %s, 'excel_match')
+    """, (knowledge_id, intent_id, similarity))
 
     conn.commit()
     cur.close()
