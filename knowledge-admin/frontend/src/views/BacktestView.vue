@@ -108,8 +108,12 @@
         🔄 重新載入
       </button>
 
-      <button @click="forceStopMonitoring" class="btn-stop" v-if="isRunning" style="background-color: #f44336; color: white;">
-        🛑 強制停止監控
+      <button @click="cancelBacktest" class="btn-cancel" v-if="isRunning" style="background-color: #ff4d4f; color: white;">
+        🛑 中斷回測
+      </button>
+
+      <button @click="forceStopMonitoring" class="btn-stop" v-if="isRunning" style="background-color: #fa8c16; color: white; margin-left: 10px;">
+        ⏸️ 停止監控
       </button>
 
       <button @click="showSummary" class="btn-summary">
@@ -124,8 +128,21 @@
     <!-- 執行狀態提示 -->
     <div v-if="isRunning" class="running-status">
       <div class="loading-bar"></div>
-      <p>⏳ 回測執行中，預計需要 3-5 分鐘...</p>
-      <p class="hint">系統會自動刷新結果，請稍候</p>
+      <p>⏳ 回測執行中...</p>
+      <div v-if="runningProgress" class="progress-details">
+        <p class="progress-text">
+          進度: {{ runningProgress.executed_scenarios }}/{{ runningProgress.total_scenarios }}
+          ({{ runningProgress.progress_pct }}%)
+        </p>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" :style="{ width: runningProgress.progress_pct + '%' }"></div>
+        </div>
+        <p class="progress-info">
+          已運行: {{ runningProgress.elapsed }} |
+          預估剩餘: {{ runningProgress.estimated_remaining }}
+        </p>
+      </div>
+      <p class="hint" v-else>系統會自動刷新結果，請稍候</p>
     </div>
 
     <!-- 載入中 -->
@@ -224,9 +241,7 @@
     <!-- 空狀態 -->
     <div v-else class="empty-state">
       <p>📭 尚無回測結果</p>
-      <p>請先執行回測：</p>
-      <pre>cd /Users/lenny/jgb/AIChatbot
-python3 scripts/knowledge_extraction/backtest_framework.py</pre>
+      <p>點擊上方 <strong>🚀 開始回測</strong> 按鈕執行回測</p>
     </div>
 
     <!-- 詳情 Modal -->
@@ -435,7 +450,8 @@ export default {
       lastRunTime: null,
       statusCheckInterval: null,
       backtestRuns: [],        // 歷史回測執行記錄列表
-      selectedRunId: null       // 當前選擇的執行 ID (null = Excel)
+      selectedRunId: null,      // 當前選擇的執行 ID (null = Excel)
+      runningProgress: null     // 正在運行的回測進度信息
     };
   },
   computed: {
@@ -769,9 +785,42 @@ export default {
         try {
           const response = await axios.get(`${API_BASE}/backtest/status`);
 
+          // 如果正在運行，獲取最新的 run 進度
+          if (response.data.is_running) {
+            try {
+              const runsResponse = await axios.get(`${API_BASE}/backtest/runs?limit=1`);
+              if (runsResponse.data.runs && runsResponse.data.runs.length > 0) {
+                const latestRun = runsResponse.data.runs[0];
+
+                // 計算進度信息
+                const progressPct = Math.round((latestRun.executed_scenarios / latestRun.total_scenarios) * 100);
+                const elapsedSeconds = latestRun.duration_seconds || 0;
+                const elapsedMin = Math.floor(elapsedSeconds / 60);
+                const elapsedSec = elapsedSeconds % 60;
+
+                // 預估剩餘時間
+                const remainingTests = latestRun.total_scenarios - latestRun.executed_scenarios;
+                const avgTimePerTest = latestRun.executed_scenarios > 0 ? elapsedSeconds / latestRun.executed_scenarios : 10;
+                const estimatedRemainingSeconds = remainingTests * avgTimePerTest;
+                const estimatedRemainingMin = Math.floor(estimatedRemainingSeconds / 60);
+
+                this.runningProgress = {
+                  executed_scenarios: latestRun.executed_scenarios,
+                  total_scenarios: latestRun.total_scenarios,
+                  progress_pct: progressPct,
+                  elapsed: `${elapsedMin}分${elapsedSec}秒`,
+                  estimated_remaining: `約${estimatedRemainingMin}分鐘`
+                };
+              }
+            } catch (err) {
+              console.error('獲取進度失敗', err);
+            }
+          }
+
           if (!response.data.is_running && this.isRunning) {
             // 回測完成
             this.isRunning = false;
+            this.runningProgress = null;
             this.lastRunTime = response.data.last_run_time;
             clearInterval(this.statusCheckInterval);
             this.statusCheckInterval = null;
@@ -794,8 +843,41 @@ export default {
       }, 5000);
     },
 
+    async cancelBacktest() {
+      if (confirm('⚠️ 確定要中斷當前回測嗎？\n\n中斷後：\n✓ 已完成的測試結果會保留\n✓ 可以在列表中查看部分結果\n✗ 未完成的測試不會繼續執行')) {
+        try {
+          const response = await axios.post(`${API_BASE}/backtest/cancel`);
+
+          if (response.data.success) {
+            alert(`✅ ${response.data.message}`);
+
+            // 停止監控
+            if (this.statusCheckInterval) {
+              clearInterval(this.statusCheckInterval);
+              this.statusCheckInterval = null;
+            }
+
+            // 重置狀態
+            this.isRunning = false;
+            this.runningProgress = null;
+
+            // 重新載入回測記錄列表
+            await this.loadBacktestRuns();
+
+            // 重新載入結果
+            await this.loadResults();
+          } else {
+            alert(`❌ ${response.data.message}`);
+          }
+        } catch (error) {
+          console.error('中斷回測失敗', error);
+          alert('❌ 中斷回測失敗，請稍後再試');
+        }
+      }
+    },
+
     forceStopMonitoring() {
-      if (confirm('確定要強制停止監控嗎？\n\n這會清除「執行中」狀態，讓您可以重新載入結果。\n回測本身（如果正在執行）不會被中斷。')) {
+      if (confirm('確定要停止進度監控嗎？\n\n這只會停止前端的進度更新，不會中斷回測本身。\n\n如果要中斷回測，請使用「🛑 中斷回測」按鈕。')) {
         // 清除定時器
         if (this.statusCheckInterval) {
           clearInterval(this.statusCheckInterval);
@@ -804,6 +886,7 @@ export default {
 
         // 重置狀態
         this.isRunning = false;
+        this.runningProgress = null;
 
         // 重新檢查狀態
         this.checkBacktestStatus();
@@ -811,7 +894,7 @@ export default {
         // 重新載入結果
         this.loadResults();
 
-        alert('✅ 監控已停止，狀態已重置');
+        alert('✅ 監控已停止，回測仍在背景運行');
       }
     },
 
@@ -1041,6 +1124,46 @@ export default {
   font-size: 14px;
   color: #8c8c8c;
   font-weight: normal;
+}
+
+.progress-details {
+  margin-top: 15px;
+}
+
+.progress-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #d46b08;
+  margin-bottom: 10px;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 24px;
+  background: #f0f0f0;
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 10px 0;
+  border: 1px solid #d9d9d9;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #52c41a 0%, #73d13d 100%);
+  transition: width 0.5s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.progress-info {
+  font-size: 14px;
+  color: #595959;
+  margin-top: 8px;
 }
 
 .loading-bar {

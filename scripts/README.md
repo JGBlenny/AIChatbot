@@ -54,10 +54,18 @@
 知識提取和測試場景生成：
 
 - **`extract_knowledge_and_tests.py`** - 從文檔提取知識和測試場景
-- **`backtest_framework.py`** - 回測框架（測試場景批量執行）
 - **`import_excel_to_kb.py`** - Excel 知識庫導入
 - **`reclassify_knowledge_intents.py`** - 重新分類知識意圖
 - **`monitor_and_autorun.sh`** - 監控和自動執行腳本
+
+### `/scripts/backtest/`
+回測框架和測試執行：
+
+- **`backtest_framework_async.py`** - 異步回測框架（並發執行測試場景）
+- **`run_backtest_with_db_progress.py`** - 資料庫整合的回測執行腳本
+- **`README.md`** - 回測框架使用說明
+
+推薦使用管理後台的「回測」頁面執行（開發環境：http://localhost:8087/backtest）
 
 ---
 

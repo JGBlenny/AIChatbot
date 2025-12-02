@@ -1077,7 +1077,7 @@ async def get_backtest_results(
     if not os.path.exists(backtest_path):
         raise HTTPException(
             status_code=404,
-            detail="回測結果文件不存在。請先執行回測：python3 scripts/knowledge_extraction/backtest_framework.py"
+            detail="回測結果文件不存在。請先通過管理後台的「回測」頁面執行回測，或使用 API: POST /api/backtest/run"
         )
 
     try:
@@ -1262,7 +1262,7 @@ async def list_backtest_runs(
     cur = conn.cursor()
 
     try:
-        # 查詢回測執行記錄
+        # 查詢回測執行記錄（包含 completed 和 running 狀態，以及 cancelled）
         cur.execute("""
             SELECT
                 id,
@@ -1283,11 +1283,15 @@ async def list_backtest_runs(
                 ndcg_score,
                 started_at,
                 completed_at,
-                duration_seconds,
+                CASE
+                    WHEN status = 'running' THEN EXTRACT(EPOCH FROM (NOW() - started_at))::int
+                    ELSE duration_seconds
+                END as duration_seconds,
+                status,
                 rag_api_url,
                 vendor_id
             FROM backtest_runs
-            WHERE status = 'completed'
+            WHERE status IN ('completed', 'running', 'cancelled')
             ORDER BY id DESC
             LIMIT %s OFFSET %s
         """, (limit, offset))
@@ -1512,13 +1516,17 @@ async def run_backtest(request: BacktestRunRequest = None):
 
     def run_backtest_script():
         """在背景執行回測腳本"""
+        # 預先定義日誌路徑
+        log_path = os.path.join(project_root, "output/backtest/backtest_log.txt")
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+
         try:
             # 創建鎖文件
             with open(backtest_lock_file, 'w') as f:
                 f.write(str(datetime.now()))
 
-            # 執行回測腳本
-            script_path = os.path.join(project_root, "scripts/knowledge_extraction/backtest_framework.py")
+            # 執行回測腳本 - 使用並發版本
+            script_path = os.path.join(project_root, "scripts/backtest/run_backtest_with_db_progress.py")
             env = os.environ.copy()
 
             # 設定優化環境變數（用於降低回測成本）
@@ -1529,6 +1537,7 @@ async def run_backtest(request: BacktestRunRequest = None):
             env["BACKTEST_USE_DATABASE"] = "true"  # 使用資料庫模式
             env["PROJECT_ROOT"] = project_root  # 傳遞專案根目錄
             env["BACKTEST_NON_INTERACTIVE"] = "true"  # 非交互模式，不等待用戶輸入
+            env["BACKTEST_CONCURRENCY"] = "5"  # 並發數
 
             result = subprocess.run(
                 ["python3", script_path],
@@ -1536,12 +1545,10 @@ async def run_backtest(request: BacktestRunRequest = None):
                 capture_output=True,
                 text=True,
                 cwd=project_root,
-                timeout=600  # 10 分鐘超時
+                timeout=7200  # 2 小時超時（足夠1065條測試）
             )
 
             # 記錄結果
-            log_path = os.path.join(project_root, "output/backtest/backtest_log.txt")
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
             with open(log_path, 'w', encoding='utf-8') as f:
                 f.write(f"=== 回測執行時間: {datetime.now()} ===\n\n")
                 f.write(f"返回碼: {result.returncode}\n\n")
@@ -1552,7 +1559,7 @@ async def run_backtest(request: BacktestRunRequest = None):
 
         except subprocess.TimeoutExpired:
             with open(log_path, 'a', encoding='utf-8') as f:
-                f.write("\n\n❌ 錯誤: 回測執行超時 (10 分鐘)")
+                f.write("\n\n❌ 錯誤: 回測執行超時 (2 小時)")
         except Exception as e:
             with open(log_path, 'a', encoding='utf-8') as f:
                 f.write(f"\n\n❌ 錯誤: {str(e)}")
@@ -1586,6 +1593,70 @@ async def run_backtest(request: BacktestRunRequest = None):
         "test_strategy": request.test_strategy,
         "estimated_time": estimated_time
     }
+
+
+@app.post("/api/backtest/cancel")
+async def cancel_backtest():
+    """
+    中斷當前運行的回測
+
+    功能：
+    1. 更新資料庫狀態為 cancelled
+    2. 清除鎖文件
+    3. 保留已完成的結果
+
+    注意：由於回測運行在子進程中，無法直接終止進程，
+    但更新資料庫狀態後，回測腳本會檢測到並自行停止。
+    """
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # 查找正在運行的回測
+        cur.execute("""
+            SELECT id, executed_scenarios, started_at
+            FROM backtest_runs
+            WHERE status = 'running'
+            ORDER BY started_at DESC
+            LIMIT 1
+        """)
+
+        running_run = cur.fetchone()
+
+        if not running_run:
+            cur.close()
+            conn.close()
+            return {"success": False, "message": "沒有正在運行的回測"}
+
+        run_id = running_run['id']
+        executed = running_run['executed_scenarios']
+
+        # 更新狀態為 cancelled
+        cur.execute("""
+            UPDATE backtest_runs
+            SET status = 'cancelled',
+                completed_at = NOW()
+            WHERE id = %s
+        """, (run_id,))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        # 清除鎖文件
+        backtest_lock_file = "/tmp/backtest_running.lock"
+        if os.path.exists(backtest_lock_file):
+            os.remove(backtest_lock_file)
+
+        return {
+            "success": True,
+            "message": f"回測已中斷 (Run ID: {run_id}, 已完成 {executed} 個測試)",
+            "run_id": run_id,
+            "executed_scenarios": executed
+        }
+
+    except Exception as e:
+        return {"success": False, "message": f"中斷失敗: {str(e)}"}
 
 
 @app.get("/api/backtest/status")

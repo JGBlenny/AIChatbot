@@ -315,7 +315,8 @@ async def main():
 
         print("\n✅ 全部完成！")
         print(f"\n下一步：執行回測驗證")
-        print(f"python3 scripts/knowledge_extraction/backtest_framework.py")
+        print(f"請使用管理後台的「回測」頁面，或執行：")
+        print(f"docker exec aichatbot-rag-orchestrator python3 /app/scripts/backtest/run_backtest_with_db_progress.py")
 
     except Exception as e:
         print(f"\n❌ 執行失敗: {e}")

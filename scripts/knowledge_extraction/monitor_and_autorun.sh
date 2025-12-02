@@ -62,8 +62,8 @@ echo
 # python3 scripts/knowledge_extraction/import_extracted_to_db.py
 
 echo "⚠️  注意：目前需要手動導入知識庫"
-echo "   選項 1: 使用前端頁面 http://localhost:8200/knowledge"
-echo "   選項 2: 使用 import_excel_to_kb.py (需要調整)"
+echo "   選項 1: 使用管理後台的「知識庫」頁面"
+echo "   選項 2: 使用 import_excel_to_kb.py 腳本"
 echo
 
 read -p "知識庫已導入？繼續回測？(y/N): " -n 1 -r
@@ -80,8 +80,10 @@ echo "============================================================"
 echo "步驟 2: 執行回測驗證"
 echo "============================================================"
 echo
-
-python3 scripts/knowledge_extraction/backtest_framework.py
+echo "請使用管理後台的「回測」頁面執行"
+echo "或在 Docker 容器內手動執行："
+echo "   docker exec aichatbot-rag-orchestrator python3 /app/scripts/backtest/run_backtest_with_db_progress.py"
+echo
 
 echo
 echo "============================================================"
@@ -91,5 +93,4 @@ echo
 echo "檢查結果："
 echo "   知識庫: $KNOWLEDGE_FILE"
 echo "   測試情境: $TEST_FILE"
-echo "   回測結果: $OUTPUT_DIR/backtest/backtest_results.xlsx"
-echo "   回測摘要: $OUTPUT_DIR/backtest/backtest_results_summary.txt"
+echo "   回測結果: 請到管理後台查看"
