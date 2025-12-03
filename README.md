@@ -240,7 +240,6 @@ AIChatbot/
 │   ├── knowledge_extraction/  # 知識提取工具
 │   │   └── backtest_framework.py    # 回測框架 ⭐
 │   ├── tools/              # 開發工具（預留）
-│   ├── import_sop_from_excel.py      # SOP 匯入工具
 │   └── *.py               # 其他生產腳本
 │
 ├── docs/                   # 📚 完整文檔（已重組優化）✅

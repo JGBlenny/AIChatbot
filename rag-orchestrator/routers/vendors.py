@@ -2,7 +2,7 @@
 Vendors API Router
 業者管理 API - 管理包租代管業者及其配置參數
 """
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 from datetime import datetime, date
@@ -11,6 +11,7 @@ import psycopg2
 import psycopg2.extras
 import asyncio
 import httpx
+from services.sop_utils import parse_sop_excel, identify_cashflow_sensitive_items
 
 
 router = APIRouter(prefix="/api/v1/vendors", tags=["vendors"])
@@ -2005,6 +2006,216 @@ async def copy_all_templates_to_vendor(vendor_id: int, request: Request, busines
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"複製整份範本失敗: {str(e)}")
+    finally:
+        if conn and not conn.closed:
+            conn.close()
+
+
+# ========== Excel 匯入功能 ==========
+
+@router.post("/{vendor_id}/sop/import-excel", status_code=201)
+async def import_sop_from_excel(
+    vendor_id: int,
+    file: UploadFile = File(...),
+    overwrite: bool = False,
+    request: Request = None
+):
+    """
+    從 Excel 檔案匯入 SOP
+
+    支援的 Excel 格式：
+    - 第一欄：分類名稱
+    - 第二欄：分類說明
+    - 第三欄：項目序號
+    - 第四欄：項目名稱
+    - 第五欄：項目內容
+
+    Args:
+        vendor_id: 業者ID
+        file: 上傳的 Excel 檔案（.xlsx 或 .xls）
+        overwrite: 是否覆蓋現有 SOP（預設為 False）
+        request: FastAPI Request 對象
+
+    Returns:
+        Dict: 匯入結果統計
+    """
+    conn = get_db_connection()
+
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id, name FROM vendors WHERE id = %s AND is_active = TRUE", (vendor_id,))
+        vendor = cursor.fetchone()
+        if not vendor:
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 檢查檔案類型
+        if not file.filename.endswith(('.xlsx', '.xls')):
+            raise HTTPException(
+                status_code=400,
+                detail="不支援的檔案格式，請上傳 .xlsx 或 .xls 檔案"
+            )
+
+        # 讀取檔案內容
+        file_content = await file.read()
+
+        # 解析 Excel
+        try:
+            sop_data = parse_sop_excel(file_content)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+        if not sop_data['categories']:
+            raise HTTPException(status_code=400, detail="Excel 檔案中沒有找到有效的 SOP 資料")
+
+        # 如果需要覆蓋，先刪除現有的 SOP
+        deleted_items = 0
+        deleted_categories = 0
+
+        if overwrite:
+            cursor.execute("DELETE FROM vendor_sop_items WHERE vendor_id = %s", (vendor_id,))
+            deleted_items = cursor.rowcount
+
+            cursor.execute("DELETE FROM vendor_sop_groups WHERE vendor_id = %s", (vendor_id,))
+
+            cursor.execute("DELETE FROM vendor_sop_categories WHERE vendor_id = %s", (vendor_id,))
+            deleted_categories = cursor.rowcount
+        else:
+            # 檢查是否已有 SOP
+            cursor.execute("SELECT COUNT(*) as count FROM vendor_sop_items WHERE vendor_id = %s", (vendor_id,))
+            result = cursor.fetchone()
+            if result['count'] > 0:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"業者已有 {result['count']} 個 SOP 項目，如需覆蓋請設定 overwrite=true"
+                )
+
+        # 匯入 SOP（三層結構：Categories → Groups → Items）
+        created_categories = 0
+        created_groups = 0
+        created_items = 0
+        all_item_ids = []
+
+        for cat_idx, category in enumerate(sop_data['categories'], 1):
+            # 1. 插入分類
+            cursor.execute("""
+                INSERT INTO vendor_sop_categories (
+                    vendor_id, category_name, display_order
+                )
+                VALUES (%s, %s, %s)
+                RETURNING id
+            """, (
+                vendor_id,
+                category['name'],
+                cat_idx
+            ))
+
+            category_id = cursor.fetchone()['id']
+            created_categories += 1
+
+            # 2. 插入群組並處理項目
+            for grp_idx, group in enumerate(category['groups'], 1):
+                # 插入群組
+                cursor.execute("""
+                    INSERT INTO vendor_sop_groups (
+                        vendor_id, category_id, group_name, display_order
+                    )
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING id
+                """, (
+                    vendor_id,
+                    category_id,
+                    group['name'],
+                    grp_idx
+                ))
+
+                group_id = cursor.fetchone()['id']
+                created_groups += 1
+
+                # 3. 插入群組下的所有項目
+                for item in group['items']:
+                    # 識別是否需要金流判斷
+                    cashflow_info = identify_cashflow_sensitive_items(item['name'], item['content'])
+
+                    cursor.execute("""
+                        INSERT INTO vendor_sop_items (
+                            category_id,
+                            vendor_id,
+                            group_id,
+                            item_number,
+                            item_name,
+                            content,
+                            priority,
+                            requires_cashflow_check,
+                            cashflow_through_company,
+                            cashflow_direct_to_landlord
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (
+                        category_id,
+                        vendor_id,
+                        group_id,  # 關聯群組
+                        item['number'],
+                        item['name'],
+                        item['content'],
+                        50,  # 預設優先級
+                        cashflow_info['requires_cashflow'],
+                        cashflow_info['through_company'],
+                        cashflow_info['direct_to_landlord']
+                    ))
+
+                    item_id = cursor.fetchone()['id']
+                    created_items += 1
+                    all_item_ids.append(item_id)
+
+        conn.commit()
+        cursor.close()
+
+        # 🚀 背景批量生成 embeddings（不阻塞回應）
+        if all_item_ids and request and hasattr(request.app.state, 'db_pool'):
+            from services.sop_embedding_generator import generate_batch_sop_embeddings_async
+            asyncio.create_task(
+                generate_batch_sop_embeddings_async(
+                    db_pool=request.app.state.db_pool,
+                    sop_item_ids=all_item_ids,
+                    batch_size=5
+                )
+            )
+            print(f"🚀 [Excel Import] 已觸發背景 embedding 批量生成 ({len(all_item_ids)} 個項目)")
+
+        # 組合回應訊息
+        message_parts = []
+        if deleted_items > 0:
+            message_parts.append(f"已刪除原有 {deleted_categories} 個分類、{deleted_items} 個項目")
+
+        message_parts.append(f"成功從 Excel 匯入 {created_categories} 個分類、{created_groups} 個群組、{created_items} 個 SOP 項目")
+
+        if all_item_ids:
+            message_parts.append(f"已觸發背景 embedding 生成")
+
+        return {
+            "message": "，".join(message_parts),
+            "vendor_id": vendor_id,
+            "vendor_name": vendor['name'],
+            "file_name": file.filename,
+            "deleted_categories": deleted_categories,
+            "deleted_items": deleted_items,
+            "created_categories": created_categories,
+            "created_groups": created_groups,
+            "created_items": created_items,
+            "embedding_generation_triggered": len(all_item_ids)
+        }
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"匯入失敗: {str(e)}")
     finally:
         if conn and not conn.closed:
             conn.close()

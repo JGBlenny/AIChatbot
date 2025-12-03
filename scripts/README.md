@@ -13,11 +13,6 @@
   - Primary: group_name + item_name
   - Fallback: content only
 
-- **`import_sop_from_excel.py`** - 從 Excel 批量導入 SOP 到資料庫
-  - 支援業者 SOP 和平台 SOP
-  - 自動處理意圖關聯
-  - 自動觸發 embedding 生成
-
 - **`process_line_chats.py`** - 處理 LINE 聊天記錄並提取知識
   - 自動分類知識類型
   - 整理為結構化格式
@@ -105,9 +100,6 @@ python scripts/generate_sop_embeddings.py --dry-run
 
 # 從特定 ID 開始處理
 python scripts/generate_sop_embeddings.py --start-id 100
-
-# 從 Excel 導入 SOP
-python scripts/import_sop_from_excel.py --file data/sop.xlsx
 
 # 處理 LINE 聊天記錄
 python scripts/process_line_chats.py

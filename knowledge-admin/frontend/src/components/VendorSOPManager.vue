@@ -132,8 +132,13 @@
     <div v-if="activeTab === 'my-sop'" class="tab-content">
       <div class="section-header">
         <h3>我的 SOP</h3>
-        <p class="hint">管理您的 SOP，可自由編輯調整</p>
+        <div class="header-actions">
+          <button @click="showImportModal = true" class="btn btn-primary">
+            📤 匯入 Excel
+          </button>
+        </div>
       </div>
+      <p class="hint">管理您的 SOP，可自由編輯調整</p>
 
       <div v-if="loadingMySOP" class="loading">載入我的 SOP 中...</div>
 
@@ -231,6 +236,62 @@
       </div>
     </div>
 
+    <!-- 匯入 Excel Modal -->
+    <div v-if="showImportModal" class="modal-overlay" @click="showImportModal = false">
+      <div class="modal-content" @click.stop>
+        <h2>📤 匯入 Excel 檔案</h2>
+        <p class="hint">從 Excel 檔案批量匯入 SOP 項目</p>
+
+        <div class="warning-box" :class="{ 'warning-box-danger': mySOP.length > 0 }">
+          <strong>⚠️ {{ mySOP.length > 0 ? '重要警告' : '注意' }}</strong>
+          <p v-if="mySOP.length > 0" class="warning-text-danger">
+            匯入將<strong>覆蓋所有現有 SOP</strong>（{{ mySOPByCategory.length }} 個分類，{{ mySOP.length }} 個項目）。此操作無法復原！
+          </p>
+          <p v-else>
+            匯入後將自動創建分類並匯入所有 SOP 項目，之後您可以自由編輯調整。
+          </p>
+        </div>
+
+        <div class="excel-format-hint">
+          <h4>📋 支援的 Excel 格式</h4>
+          <ul>
+            <li>第一欄：分類名稱</li>
+            <li>第二欄：分類說明</li>
+            <li>第三欄：項目序號</li>
+            <li>第四欄：項目名稱</li>
+            <li>第五欄：項目內容</li>
+          </ul>
+          <p class="hint">檔案格式：.xlsx 或 .xls</p>
+        </div>
+
+        <form @submit.prevent="uploadExcel">
+          <div class="form-group">
+            <label>選擇 Excel 檔案 *</label>
+            <input
+              type="file"
+              ref="fileInput"
+              accept=".xlsx,.xls"
+              @change="handleFileSelect"
+              class="file-input"
+              required
+            />
+            <p v-if="selectedFile" class="selected-file">
+              已選擇：{{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
+            </p>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-large" :class="mySOP.length > 0 ? 'btn-danger' : 'btn-primary'" :disabled="uploading || !selectedFile">
+              <span v-if="uploading">⏳ 上傳中...</span>
+              <span v-else-if="mySOP.length > 0">⚠️ 確認覆蓋並匯入</span>
+              <span v-else>✅ 確認匯入</span>
+            </button>
+            <button type="button" @click="closeImportModal" class="btn btn-secondary" :disabled="uploading">取消</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- 編輯 SOP Modal -->
     <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
       <div class="modal-content modal-large" @click.stop>
@@ -311,6 +372,9 @@ export default {
       loadingMySOP: false,
       showCopyAllModal: false,
       showEditModal: false,
+      showImportModal: false,  // Excel 匯入 Modal
+      uploading: false,  // 上傳中狀態
+      selectedFile: null,  // 已選擇的檔案
       editingForm: {
         id: null,
         item_name: '',
@@ -701,6 +765,108 @@ export default {
       } finally {
         businessType.copying = false;
       }
+    },
+
+    // ========== Excel 匯入功能 ==========
+
+    handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        // 檢查檔案大小（限制 10MB）
+        if (file.size > 10 * 1024 * 1024) {
+          alert('檔案過大，請選擇小於 10MB 的檔案');
+          this.$refs.fileInput.value = '';
+          this.selectedFile = null;
+          return;
+        }
+
+        // 檢查檔案類型
+        if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+          alert('不支援的檔案格式，請上傳 .xlsx 或 .xls 檔案');
+          this.$refs.fileInput.value = '';
+          this.selectedFile = null;
+          return;
+        }
+
+        this.selectedFile = file;
+      }
+    },
+
+    async uploadExcel() {
+      if (!this.selectedFile) {
+        alert('請選擇要上傳的 Excel 檔案');
+        return;
+      }
+
+      this.uploading = true;
+
+      try {
+        // 創建 FormData
+        const formData = new FormData();
+        formData.append('file', this.selectedFile);
+
+        // 決定是否覆蓋
+        const overwrite = this.mySOP.length > 0;
+
+        // 發送請求
+        const url = `${RAG_API}/v1/vendors/${this.vendorId}/sop/import-excel?overwrite=${overwrite}`;
+        const response = await axios.post(url, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        // 顯示成功訊息
+        let message = `✅ ${response.data.message}\n\n`;
+        message += `檔案名稱：${response.data.file_name}\n`;
+
+        if (response.data.deleted_categories > 0) {
+          message += `已刪除：${response.data.deleted_categories} 個分類、${response.data.deleted_items} 個項目\n`;
+        }
+
+        message += `已創建：${response.data.created_categories} 個分類、${response.data.created_items} 個項目\n`;
+
+        if (response.data.embedding_generation_triggered > 0) {
+          message += `\n🚀 已觸發背景生成 ${response.data.embedding_generation_triggered} 個 embeddings`;
+        }
+
+        alert(message);
+
+        // 關閉 Modal 並重新載入資料
+        this.closeImportModal();
+        this.loadMySOP();
+        this.activeTab = 'my-sop';
+
+      } catch (error) {
+        console.error('匯入 Excel 失敗:', error);
+
+        let errorMessage = '匯入失敗: ';
+        if (error.response?.status === 409) {
+          errorMessage += error.response.data.detail;
+        } else {
+          errorMessage += error.response?.data?.detail || error.message;
+        }
+
+        alert(errorMessage);
+      } finally {
+        this.uploading = false;
+      }
+    },
+
+    closeImportModal() {
+      this.showImportModal = false;
+      this.selectedFile = null;
+      if (this.$refs.fileInput) {
+        this.$refs.fileInput.value = '';
+      }
+    },
+
+    formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
     }
   }
 };
@@ -1544,5 +1710,73 @@ export default {
 .checkbox-label:has(.checkbox-input:checked) .checkbox-text {
   font-weight: 600;
   color: #2E7D32;
+}
+
+/* Excel 匯入 Modal 樣式 */
+.excel-format-hint {
+  background: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.excel-format-hint h4 {
+  margin: 0 0 12px 0;
+  color: #0369A1;
+  font-size: 15px;
+}
+
+.excel-format-hint ul {
+  margin: 8px 0;
+  padding-left: 24px;
+  color: #0C4A6E;
+}
+
+.excel-format-hint li {
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.file-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px dashed #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #FAFAFA;
+}
+
+.file-input:hover {
+  border-color: #667eea;
+  background: #F5F7FF;
+}
+
+.selected-file {
+  margin-top: 12px;
+  padding: 12px;
+  background: #E8F5E9;
+  border: 1px solid #4CAF50;
+  border-radius: 6px;
+  color: #2E7D32;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-header h3 {
+  margin: 0;
 }
 </style>
