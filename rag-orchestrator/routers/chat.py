@@ -112,6 +112,55 @@ def cache_response_and_return(cache_service, vendor_id: int, question: str, resp
     return response
 
 
+# ==================== 輔助函數：SOP 答案格式化 ====================
+
+def _format_sop_answer(sop_items: list, group_name: str = None) -> str:
+    """
+    直接格式化SOP內容，不經過LLM重組
+
+    保持原始的：
+    - item_name（標題）
+    - content（內容）
+    - 順序
+
+    Args:
+        sop_items: SOP項目列表
+        group_name: Group名稱（可選）
+
+    Returns:
+        格式化後的答案字串
+    """
+    if not sop_items:
+        return "未找到相關的SOP資料。"
+
+    # 構建答案
+    parts = []
+
+    # 如果有group_name，添加標題
+    if group_name:
+        parts.append(f"【{group_name}】\n")
+
+    for idx, sop in enumerate(sop_items, 1):
+        item_name = sop.get('item_name', '')
+        content = sop.get('content', '').strip()
+
+        # 格式化每條SOP（保持原始標題和內容）
+        if len(sop_items) == 1:
+            # 只有一條，不需要編號
+            parts.append(f"{item_name}\n{content}")
+        else:
+            # 多條，添加編號方便閱讀
+            parts.append(f"{idx}. {item_name}\n{content}")
+
+    # 組合答案
+    answer = "\n\n".join(parts)
+
+    # 添加友好的結尾
+    answer += "\n\n如有任何疑問，歡迎隨時諮詢！"
+
+    return answer
+
+
 # ==================== 輔助函數：答案清理與模板替換 ====================
 
 def _clean_answer(answer: str, vendor_id: int, resolver) -> str:
@@ -428,29 +477,18 @@ async def _build_sop_response(
     vendor_info: dict,
     cache_service
 ):
-    """使用 SOP 構建回應 - 使用共用模組"""
-    from routers.chat_shared import convert_sop_to_search_results, create_sop_optimization_params
+    """使用 SOP 構建回應 - 直接返回原始SOP，不經過LLM重組"""
 
-    llm_optimizer = req.app.state.llm_answer_optimizer
+    # 提取group_name（Group隔離後所有SOP都來自同一個Group）
+    group_name = None
+    if sop_items and sop_items[0].get('group_name'):
+        group_name = sop_items[0]['group_name']
 
-    # 獲取業者參數（保留完整資訊包含 display_name, unit 等）
-    vendor_params = resolver.get_vendor_parameters(request.vendor_id)
+    # 直接格式化SOP內容，保持原始標題和內容
+    raw_answer = _format_sop_answer(sop_items, group_name)
 
-    # 使用共用函數轉換 SOP 為 search_results 格式（自動設定 similarity=1.0）
-    search_results = convert_sop_to_search_results(sop_items)
-
-    # 使用共用函數建立優化參數（自動設定 confidence=high, score=0.95）
-    optimization_params = create_sop_optimization_params(
-        question=request.message,
-        search_results=search_results,
-        intent_result=intent_result,
-        vendor_params=vendor_params,
-        vendor_info=vendor_info,
-        enable_synthesis_override=False if request.disable_answer_synthesis else None
-    )
-
-    # LLM 優化
-    optimization_result = llm_optimizer.optimize_answer(**optimization_params)
+    # 清理答案並替換模板變數（處理 {{service_hotline}} 等參數）
+    final_answer = _clean_answer(raw_answer, request.vendor_id, resolver)
 
     # 構建來源列表
     sources = []
@@ -461,9 +499,6 @@ async def _build_sop_response(
             answer=sop['content'],
             scope='vendor_sop'
         ) for sop in sop_items]
-
-    # 清理答案並替換模板變數（兜底保護）
-    final_answer = _clean_answer(optimization_result['optimized_answer'], request.vendor_id, resolver)
 
     response = VendorChatResponse(
         answer=final_answer,
@@ -1098,16 +1133,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         intent_classifier = req.app.state.intent_classifier
         intent_result = intent_classifier.classify(request.message)
 
-        # Step 4: 處理 unclear 意圖（RAG fallback + 測試場景記錄）
-        if intent_result['intent_name'] == 'unclear':
-            return await _handle_unclear_with_rag_fallback(
-                request, req, intent_result, resolver, vendor_info, cache_service
-            )
-
-        # Step 5: 獲取意圖 ID
-        intent_id = _get_intent_id(intent_result['intent_name'])
-
-        # Step 6: 嘗試檢索 SOP（優先級最高）- 回測模式可跳過
+        # Step 4: 嘗試檢索 SOP（優先級最高，不管意圖是什麼都先嘗試）- 回測模式可跳過
         if not request.skip_sop:
             sop_items = await _retrieve_sop(request, intent_result)
             if sop_items:
@@ -1115,9 +1141,18 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 return await _build_sop_response(
                     request, req, intent_result, sop_items, resolver, vendor_info, cache_service
                 )
-            print(f"ℹ️  沒有找到 SOP，使用知識庫檢索")
+            print(f"ℹ️  沒有找到 SOP，繼續其他流程")
         else:
             print(f"ℹ️  [回測模式] 跳過 SOP 檢索，僅使用知識庫")
+
+        # Step 5: 處理 unclear 意圖（RAG fallback + 測試場景記錄）
+        if intent_result['intent_name'] == 'unclear':
+            return await _handle_unclear_with_rag_fallback(
+                request, req, intent_result, resolver, vendor_info, cache_service
+            )
+
+        # Step 6: 獲取意圖 ID
+        intent_id = _get_intent_id(intent_result['intent_name'])
 
         # Step 7: 檢索知識庫（混合模式：intent + 向量）
         knowledge_list = await _retrieve_knowledge(request, intent_id, intent_result)
