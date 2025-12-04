@@ -8,22 +8,20 @@ import sys
 import os
 import asyncio
 
-# 添加路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../rag-orchestrator'))
-
+# 已在 rag-orchestrator 目录下，直接导入
 from services.embedding_utils import get_embedding_client
 import psycopg2
 import psycopg2.extras
 
 
 def get_db_connection():
-    """获取数据库连接"""
+    """获取数据库连接（支持环境变量配置）"""
     return psycopg2.connect(
-        host='localhost',
-        port=5432,
-        user='aichatbot',
-        password='aichatbot_password',
-        database='aichatbot_admin'
+        host=os.getenv('DB_HOST', 'localhost'),
+        port=int(os.getenv('DB_PORT', '5432')),
+        user=os.getenv('DB_USER', 'aichatbot'),
+        password=os.getenv('DB_PASSWORD', 'aichatbot_password'),
+        database=os.getenv('DB_NAME', 'aichatbot_admin')
     )
 
 

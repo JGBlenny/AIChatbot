@@ -55,14 +55,14 @@ WHERE is_active = TRUE;
 ### 生成Group Embeddings
 
 ```bash
-# 为所有Group生成
-python3 scripts/generate_group_embeddings.py
+# Docker 环境：为所有Group生成
+docker exec aichatbot-rag-orchestrator python3 /app/generate_group_embeddings.py
 
 # 只为特定vendor生成
-python3 scripts/generate_group_embeddings.py --vendor-id 2
+docker exec aichatbot-rag-orchestrator python3 /app/generate_group_embeddings.py --vendor-id 2
 
 # 重新生成单个Group
-python3 scripts/generate_group_embeddings.py --group-id 244
+docker exec aichatbot-rag-orchestrator python3 /app/generate_group_embeddings.py --group-id 244
 ```
 
 ### 测试SOP检索
@@ -133,7 +133,7 @@ generalization_ratio = 0.7     # 泛化查询判定比例（70%）
 - `test_sop_full_group_return.py` - 完整返回测试
 
 **保留的核心文件：**
-- ✅ `scripts/generate_group_embeddings.py` - Group embedding生成工具
+- ✅ `rag-orchestrator/generate_group_embeddings.py` - Group embedding生成工具
 - ✅ `docs/SOP_Group_Embedding_Optimization.md` - 完整技术文档
 - ✅ `rag-orchestrator/services/vendor_sop_retriever.py` - SOP检索逻辑
 - ✅ `rag-orchestrator/routers/chat.py` - 聊天路由
