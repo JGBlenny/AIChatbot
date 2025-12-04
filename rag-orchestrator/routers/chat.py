@@ -144,6 +144,11 @@ def _format_sop_answer(sop_items: list, group_name: str = None) -> str:
         item_name = sop.get('item_name', '')
         content = sop.get('content', '').strip()
 
+        # 轉義 Markdown 特殊字符（防止誤渲染）
+        # 特別處理波浪號：1~15 不應該被渲染成刪除線
+        content = content.replace('~', '\\~')
+        item_name = item_name.replace('~', '\\~')
+
         # 格式化每條SOP（保持原始標題和內容）
         if len(sop_items) == 1:
             # 只有一條，不需要編號
