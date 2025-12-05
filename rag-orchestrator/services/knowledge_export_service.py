@@ -132,8 +132,9 @@ class KnowledgeExportService(UnifiedJobService):
         ws = wb.active
         ws.title = "知識庫"
 
-        # 標準欄位標題（與匯入格式完全一致）
+        # 標準欄位標題（與匯入格式完全一致，支援 ID 更新）
         headers = [
+            'id',                # 知識ID（用於更新，新增時可留空）
             'question_summary',  # 問題摘要
             'answer',            # 答案
             'scope',             # 作用域
@@ -174,6 +175,7 @@ class KnowledgeExportService(UnifiedJobService):
                 intent_names = knowledge.get('intent_name', '')  # 從 JOIN 取得的主要意圖
 
                 ws.append([
+                    knowledge.get('id', ''),  # 知識ID（用於更新）
                     self.sanitize_for_excel(knowledge.get('question_summary', '')),
                     self.sanitize_for_excel(knowledge.get('answer', '')),
                     knowledge.get('scope', 'global'),
@@ -199,21 +201,22 @@ class KnowledgeExportService(UnifiedJobService):
 
         # 調整欄寬
         column_widths = {
-            'A': 40,  # question_summary
-            'B': 60,  # answer
-            'C': 12,  # scope
-            'D': 10,  # vendor_id
-            'E': 25,  # business_types
-            'F': 15,  # target_user
-            'G': 20,  # intent_names
-            'H': 20,  # keywords
-            'I': 10   # priority
+            'A': 10,  # id
+            'B': 40,  # question_summary
+            'C': 60,  # answer
+            'D': 12,  # scope
+            'E': 10,  # vendor_id
+            'F': 25,  # business_types
+            'G': 15,  # target_user
+            'H': 20,  # intent_names
+            'I': 20,  # keywords
+            'J': 10   # priority
         }
         for col, width in column_widths.items():
             ws.column_dimensions[col].width = width
 
         # 答案欄自動換行
-        for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=2, max_col=2):
+        for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=3, max_col=3):
             for cell in row:
                 cell.alignment = Alignment(wrap_text=True, vertical='top')
 
@@ -303,11 +306,14 @@ class KnowledgeExportService(UnifiedJobService):
             params.append(filters['is_active'])
             param_idx += 1
 
-        # ⚠️ 不再過濾 vendor_id - 總是匯出所有知識
-        # if filters.get('vendor_id'):
-        #     query += f" AND kb.vendor_id = ${param_idx}"
-        #     params.append(filters['vendor_id'])
-        #     param_idx += 1
+        # vendor_id 篩選
+        if filters.get('vendor_id') is not None:
+            query += f" AND kb.vendor_id = ${param_idx}"
+            params.append(filters['vendor_id'])
+            param_idx += 1
+        elif filters.get('vendor_id') is None and 'vendor_id' in filters:
+            # 明確指定 vendor_id=None 時，只匯出通用知識
+            query += " AND kb.vendor_id IS NULL"
 
         query += " ORDER BY kb.id DESC"
 
@@ -320,6 +326,8 @@ class KnowledgeExportService(UnifiedJobService):
                     'id': row['id'],
                     'question_summary': row['question_summary'],
                     'answer': row['answer'],
+                    'scope': row['scope'],
+                    'vendor_id': row['vendor_id'],
                     'keywords': row['keywords'] or [],
                     'business_types': row['business_types'] or [],
                     'target_user': row['target_user'],
@@ -400,8 +408,11 @@ class KnowledgeExportService(UnifiedJobService):
 
             # 2. 從資料庫查詢知識
             print(f"📊 查詢知識資料...")
-            # ⚠️ 注意：總是匯出所有知識，不過濾 vendor_id
-            knowledge_list = await self.get_knowledge_from_db()
+            # 根據 vendor_id 過濾知識
+            # 當 vendor_id=None 時，匯出所有知識（不過濾）
+            # 當 vendor_id=數字 時，只匯出該業者的知識
+            filters = {} if vendor_id is None else {'vendor_id': vendor_id}
+            knowledge_list = await self.get_knowledge_from_db(filters=filters)
             total_count = len(knowledge_list)
 
             if total_count == 0:

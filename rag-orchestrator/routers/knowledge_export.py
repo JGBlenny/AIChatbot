@@ -209,16 +209,17 @@ async def download_export_file(job_id: str, request: Request):
     download_filename = f"知識庫匯出_{vendor_name}_{timestamp}.xlsx"
 
     # URL 編碼檔名（支援中文）
-    encoded_filename = quote(download_filename.encode('utf-8'))
+    encoded_filename = quote(download_filename)
 
     print(f"📥 下載匯出檔案: {download_filename} (job_id: {job_id})")
 
+    # 使用標準的 Content-Disposition 格式，同時提供 filename 和 filename* 以提高相容性
     return FileResponse(
         path=file_path,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         filename=download_filename,
         headers={
-            "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
+            "Content-Disposition": f'attachment; filename="knowledge_export.xlsx"; filename*=UTF-8\'\'{encoded_filename}'
         }
     )
 

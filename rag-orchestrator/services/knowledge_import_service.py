@@ -573,6 +573,7 @@ class KnowledgeImportService(UnifiedJobService):
         print(f"   欄位: {list(df.columns)}")
 
         # 欄位映射（支援多種欄位名稱）
+        id_cols = ['id', 'ID', '知識ID', 'knowledge_id']  # ID 欄位（用於更新）
         question_cols = ['問題', 'question', '問題摘要', 'question_summary', 'title', '標題', '租客常問Q', '租客常問Q', '常問問題']
         answer_cols = ['答案', 'answer', '回答', '回覆', 'response', 'content', '內容', '企業希望的標準A', '標準A', '標準答案']
         audience_cols = ['對象', 'audience', '受眾']
@@ -582,6 +583,7 @@ class KnowledgeImportService(UnifiedJobService):
         business_type_cols = ['業態類型', 'business_type', 'business_types', '業態', '行業類型']  # 新增：業態類型欄位
 
         # 找到對應的欄位
+        id_col = next((col for col in df.columns if col in id_cols), None)  # ID 欄位（可選）
         question_col = next((col for col in df.columns if col in question_cols), None)
         answer_col = next((col for col in df.columns if col in answer_cols), None)
         audience_col = next((col for col in df.columns if col in audience_cols), None)
@@ -599,6 +601,14 @@ class KnowledgeImportService(UnifiedJobService):
         knowledge_list = []
 
         for idx, row in df.iterrows():
+            # 解析 ID（可選，用於更新現有知識）
+            knowledge_id = None
+            if id_col and pd.notna(row[id_col]):
+                try:
+                    knowledge_id = int(row[id_col])
+                except (ValueError, TypeError):
+                    pass  # ID 無效，視為新增
+
             # 解析答案（必填）
             answer = row.get(answer_col)
             if pd.isna(answer) or not str(answer).strip() or len(str(answer).strip()) < 10:
@@ -646,6 +656,7 @@ class KnowledgeImportService(UnifiedJobService):
                 business_types = [bt.strip() for bt in business_types_str.split(',') if bt.strip()]
 
             knowledge_list.append({
+                'id': knowledge_id,  # ID（用於更新，None 表示新增）
                 'question_summary': question,  # 可能為 None，後續用 LLM 生成
                 'answer': answer,
                 'target_user': audience,  # 使用標準化的英文值
@@ -1709,40 +1720,123 @@ class KnowledgeImportService(UnifiedJobService):
                     # 取得業態類型（如果有）
                     business_types = knowledge.get('business_types', [])
 
-                    await conn.execute("""
-                        INSERT INTO knowledge_base (
+                    # 🔧 UPSERT 邏輯：檢查是否有 ID（用於更新）
+                    knowledge_id = knowledge.get('id')
+
+                    if knowledge_id:
+                        # 檢查 ID 是否存在
+                        exists = await conn.fetchval(
+                            "SELECT EXISTS(SELECT 1 FROM knowledge_base WHERE id = $1)",
+                            knowledge_id
+                        )
+
+                        if exists:
+                            # 更新現有知識
+                            await conn.execute("""
+                                UPDATE knowledge_base SET
+                                    intent_id = $1,
+                                    vendor_id = $2,
+                                    question_summary = $3,
+                                    answer = $4,
+                                    keywords = $5,
+                                    business_types = $6,
+                                    target_user = $7,
+                                    source_file = $8,
+                                    source_date = $9,
+                                    embedding = $10::vector,
+                                    scope = $11,
+                                    priority = $12,
+                                    updated_at = CURRENT_TIMESTAMP
+                                WHERE id = $13
+                            """,
+                                intent_id,
+                                vendor_id,
+                                knowledge['question_summary'],
+                                knowledge['answer'],
+                                knowledge['keywords'],
+                                business_types,
+                                target_user_array,
+                                knowledge['source_file'],
+                                datetime.now().date(),
+                                embedding_str,
+                                'global' if not vendor_id else 'vendor',
+                                default_priority,
+                                knowledge_id
+                            )
+                            print(f"   ✏️  更新知識 ID: {knowledge_id}")
+                        else:
+                            # ID 不存在，新增（忽略提供的 ID，使用自動生成）
+                            await conn.execute("""
+                                INSERT INTO knowledge_base (
+                                    intent_id,
+                                    vendor_id,
+                                    question_summary,
+                                    answer,
+                                    keywords,
+                                    business_types,
+                                    target_user,
+                                    source_file,
+                                    source_date,
+                                    embedding,
+                                    scope,
+                                    priority,
+                                    created_at,
+                                    updated_at
+                                ) VALUES (
+                                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10::vector, $11, $12,
+                                    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                                )
+                            """,
+                                intent_id,
+                                vendor_id,
+                                knowledge['question_summary'],
+                                knowledge['answer'],
+                                knowledge['keywords'],
+                                business_types,
+                                target_user_array,
+                                knowledge['source_file'],
+                                datetime.now().date(),
+                                embedding_str,
+                                'global' if not vendor_id else 'vendor',
+                                default_priority
+                            )
+                            print(f"   ⚠️  ID {knowledge_id} 不存在，新增為新知識")
+                    else:
+                        # 沒有 ID，新增知識
+                        await conn.execute("""
+                            INSERT INTO knowledge_base (
+                                intent_id,
+                                vendor_id,
+                                question_summary,
+                                answer,
+                                keywords,
+                                business_types,
+                                target_user,
+                                source_file,
+                                source_date,
+                                embedding,
+                                scope,
+                                priority,
+                                created_at,
+                                updated_at
+                            ) VALUES (
+                                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10::vector, $11, $12,
+                                CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                            )
+                        """,
                             intent_id,
                             vendor_id,
-                            question_summary,
-                            answer,
-                            keywords,
+                            knowledge['question_summary'],
+                            knowledge['answer'],
+                            knowledge['keywords'],
                             business_types,
-                            target_user,
-                            source_file,
-                            source_date,
-                            embedding,
-                            scope,
-                            priority,
-                            created_at,
-                            updated_at
-                        ) VALUES (
-                            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10::vector, $11, $12,
-                            CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                            target_user_array,
+                            knowledge['source_file'],
+                            datetime.now().date(),
+                            embedding_str,
+                            'global' if not vendor_id else 'vendor',
+                            default_priority
                         )
-                    """,
-                        intent_id,  # 🔧 從 recommended_intent 取得
-                        vendor_id,
-                        knowledge['question_summary'],
-                        knowledge['answer'],
-                        knowledge['keywords'],
-                        business_types,  # 🔧 新增業態類型
-                        target_user_array,  # 轉換為陣列
-                        knowledge['source_file'],
-                        datetime.now().date(),
-                        embedding_str,
-                        'global' if not vendor_id else 'vendor',
-                        default_priority  # 使用傳入的 default_priority 參數
-                    )
 
                     imported += 1
 
