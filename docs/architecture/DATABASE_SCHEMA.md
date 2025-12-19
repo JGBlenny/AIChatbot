@@ -314,8 +314,8 @@ erDiagram
 ### 3. 知識庫模組 (Knowledge Base)
 - **knowledge_base** - 核心知識庫
   - 支援 pgvector 向量搜尋
-  - 支援模板變數（如 `{{payment_day}}`）
   - 三層範圍：global → vendor → customized
+  - 注意：知識內容不使用模板變數，模板變數僅用於系統兜底回應
 - **chat_history** - 對話歷史記錄
 
 ### 4. RAG 對話模組 (RAG Orchestrator)
@@ -480,9 +480,9 @@ CREATE TABLE knowledge_base (
     scope VARCHAR(20) DEFAULT 'global',        -- global/vendor/customized
     priority INTEGER DEFAULT 0,                -- 優先級（數字越大越優先）
 
-    -- 模板支援
-    is_template BOOLEAN DEFAULT false,         -- 是否包含變數
-    template_vars JSONB DEFAULT '[]',          -- ['payment_day', 'late_fee']
+    -- 模板欄位（已棄用，保留向後相容）
+    is_template BOOLEAN DEFAULT false,         -- 已棄用：知識不使用模板
+    template_vars JSONB DEFAULT '[]',          -- 已棄用：知識不使用模板
 
     -- 向量搜尋
     embedding vector(1536),                    -- OpenAI text-embedding-3-small
@@ -511,15 +511,10 @@ USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
 
 **查詢優先級**: `customized (priority DESC) > vendor (priority DESC) > global (priority DESC)`
 
-**模板變數範例**:
-```sql
--- 問題：「租金什麼時候要繳？」
--- 模板答案：「您的租金繳費日為每月 {{payment_day}} 日，
---           逾期超過 {{grace_period}} 天將加收 {{late_fee}} 元手續費。」
-
--- 業者 A 回答：「每月 1 號，逾期超過 5 天加收 200 元」
--- 業者 B 回答：「每月 5 號，逾期超過 3 天加收 300 元」
-```
+**已棄用功能**:
+- `is_template` 和 `template_vars` 欄位已不再使用
+- 知識庫內容不使用模板變數替換
+- 模板變數僅用於系統兜底回應（如「請撥打 {{service_hotline}}」）
 
 ---
 
@@ -799,7 +794,7 @@ CREATE TABLE vendor_sop_items (
 vendors (業者)
     ↓
     ├─ vendor_configs (配置參數)
-    │   → 注入模板變數
+    │   → 用於兜底回應的參數替換
     │
     └─ knowledge_base (知識)
         ├─ scope = 'global'     (全域知識，所有業者共用)
@@ -1008,42 +1003,49 @@ WHERE keywords @> ARRAY['租金', '繳費'];
 
 ---
 
-### 2. 模板變數注入
+### 2. 業者參數與兜底回應
 
-知識庫支援模板變數，實現業者差異化回答。
+業者配置參數（vendor_configs）用於系統兜底回應的動態替換。
 
-**範例**:
+**重要說明**:
+- 知識庫（knowledge_base）的內容**不使用**模板變數
+- 模板變數**僅用於**系統兜底回應（如找不到知識時）
+- 業者差異化通過 `scope` 欄位實現（global/vendor/customized）
+
+**範例 - 兜底回應使用參數**:
 ```sql
--- 知識模板
-INSERT INTO knowledge_base (
-    question_summary,
-    answer,
-    is_template,
-    template_vars
-) VALUES (
-    '租金繳費日',
-    '您的租金繳費日為每月 {{payment_day}} 日，逾期 {{grace_period}} 天後加收 {{late_fee}} 元。',
-    true,
-    '["payment_day", "grace_period", "late_fee"]'
-);
-
 -- 業者 A 配置
 INSERT INTO vendor_configs (vendor_id, category, param_key, param_value)
 VALUES
-    (1, 'payment', 'payment_day', '1'),
-    (1, 'payment', 'grace_period', '5'),
-    (1, 'payment', 'late_fee', '200');
+    (1, 'contact', 'service_hotline', '02-1234-5678'),
+    (1, 'payment', 'payment_day', '1');
 
 -- 業者 B 配置
 INSERT INTO vendor_configs (vendor_id, category, param_key, param_value)
 VALUES
-    (2, 'payment', 'payment_day', '5'),
-    (2, 'payment', 'grace_period', '3'),
-    (2, 'payment', 'late_fee', '300');
+    (2, 'contact', 'service_hotline', '04-8765-4321'),
+    (2, 'payment', 'payment_day', '5');
 
--- 查詢時自動注入
--- 業者 A → 「每月 1 日，逾期 5 天後加收 200 元」
--- 業者 B → 「每月 5 日，逾期 3 天後加收 300 元」
+-- 系統兜底回應模板（在程式碼中）
+-- "很抱歉，我找不到相關資訊。請撥打客服專線 {{service_hotline}} 查詢。"
+
+-- 業者 A 看到 → 「請撥打客服專線 02-1234-5678 查詢」
+-- 業者 B 看到 → 「請撥打客服專線 04-8765-4321 查詢」
+```
+
+**業者差異化知識範例**:
+```sql
+-- 全域知識（所有業者共用）
+INSERT INTO knowledge_base (question_summary, answer, scope)
+VALUES ('什麼是押金？', '押金是租賃契約的保證金。', 'global');
+
+-- 業者 A 專屬知識
+INSERT INTO knowledge_base (vendor_id, question_summary, answer, scope)
+VALUES (1, '押金幾個月？', '本公司押金為 2 個月租金。', 'vendor');
+
+-- 業者 B 專屬知識
+INSERT INTO knowledge_base (vendor_id, question_summary, answer, scope)
+VALUES (2, '押金幾個月？', '本公司押金為 1.5 個月租金。', 'vendor');
 ```
 
 ---

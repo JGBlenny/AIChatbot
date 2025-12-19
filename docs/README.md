@@ -40,11 +40,14 @@
 - [測試場景狀態管理](features/TEST_SCENARIO_STATUS_MANAGEMENT.md) - 場景生命週期
 - [被拒場景重試](features/REJECTED_SCENARIO_RETRY_IMPLEMENTATION.md) - 被拒場景處理
 - [多檔案匯入](features/MULTI_FILE_IMPORT.md) - 批次檔案匯入功能
+- [SOP 群組 Embedding 優化](features/SOP_Group_Embedding_Optimization.md) - SOP 向量嵌入優化
 
 ### 📘 使用指南
 
 **部署與配置**:
 - [部署計劃](guides/deployment/DEPLOYMENT_PLAN_A.md) - 完整部署方案
+- [開發環境部署](guides/DEVELOPMENT_DEPLOYMENT.md) - 開發環境部署指南（Volume 掛載 + 熱重載）
+- [生產環境部署](guides/PRODUCTION_DEPLOYMENT.md) - 線上生產環境部署指南
 - [生產環境部署檢查清單](guides/deployment/PRODUCTION_DEPLOYMENT_CHECKLIST.md) - 部署前檢查
 - [EC2 部署檢查清單](guides/deployment/PRODUCTION_DEPLOYMENT_CHECKLIST_EC2.md) - AWS EC2 專用
 - [Docker Compose 指南](guides/DOCKER_COMPOSE_GUIDE.md) - 容器部署
@@ -63,6 +66,7 @@
 - [緩存系統指南](guides/CACHE_SYSTEM_GUIDE.md) - Redis 三層緩存架構
 - [流式聊天指南](guides/STREAMING_CHAT_GUIDE.md) - Server-Sent Events (SSE) 即時反饋
 - [優先級快速參考](guides/PRIORITY_QUICK_REFERENCE.md) - 優先級系統快速參考
+- [知識匯入匯出指南](guides/KNOWLEDGE_IMPORT_EXPORT_GUIDE.md) - 知識庫批量匯入/匯出 (支援 ID 更新)
 - [Markdown 指南](guides/MARKDOWN_GUIDE.md) - Markdown 語法參考
 - [測試場景遷移指南](guides/TEST_SCENARIOS_MIGRATION_GUIDE.md) - 測試場景遷移
 
@@ -73,6 +77,8 @@
 **SOP 系統指南**:
 - [SOP 完整指南](guides/SOP_GUIDE.md) - 系統架構、資料庫、使用方式（完整版）
 - [SOP 快速參考](guides/SOP_QUICK_REFERENCE.md) - 5分鐘快速上手（操作卡）
+- [SOP Excel 匯入指南](guides/SOP_EXCEL_IMPORT_GUIDE.md) - 從 Excel 批量匯入 SOP
+- [SOP 優化指南](guides/SOP_OPTIMIZATION_README.md) - SOP 系統優化與最佳實踐
 
 ### 🧪 回測系統
 
@@ -180,7 +186,33 @@
 
 ## 🆕 最近更新
 
-### 2025-11-22: 文檔完整整理與統一 Job 系統 ⭐ NEW
+### 2025-12-15: 文檔盤查與結構優化 ⭐ NEW
+- ✅ **文檔盤查完成**: 對 306 個文檔進行全面審查
+  - 健康度評分：7.8/10 (良好)
+  - 驗證核心文檔正確性（使用手冊 v2.0 已根據代碼驗證）
+  - 識別並處理文檔分類問題
+- ✅ **文檔結構優化**: 清理 docs 根目錄
+  - docs 根目錄：7 個 → 2 個（只保留 README.md 和使用手冊）
+  - 移動 4 個文檔到 guides/ 和 features/
+  - 重命名部署文檔以明確區分開發/生產環境
+  - 歸檔過時分析報告
+- ✅ **文檔路徑更新**: 更新 docs/README.md 索引
+  - 新增知識匯入匯出指南連結
+  - 新增 SOP Excel 匯入和優化指南連結
+  - 更新部署文檔路徑
+
+**整理成果**:
+- 📊 根目錄文件：7 → 2 個（精簡 71.4%）
+- 📁 文檔分類：100% 準確歸類
+- 🎯 無需刪除的冗餘文件（所有文檔皆有價值）
+- ✅ 所有核心文檔已驗證與代碼一致
+
+**影響**:
+- 文檔查找效率進一步提升
+- 根目錄更簡潔，只保留核心索引文件
+- 部署文檔命名更清晰，避免混淆
+
+### 2025-11-22: 文檔完整整理與統一 Job 系統
 - ✅ **文檔結構完整重整**: 根目錄從 44 個文件精簡到 1 個（README.md）
   - 🆕 新增 [部署指南目錄](guides/deployment/) - 集中管理部署相關文檔
   - 🆕 新增 [清理報告目錄](archive/cleanup_reports/) - 歷史清理記錄
@@ -257,7 +289,7 @@
 
 ---
 
-**文檔更新日期**: 2025-11-22
+**文檔更新日期**: 2025-12-15
 **維護者**: 開發團隊
-**下次審計**: 2025-12-22
-**上次整理**: 2025-11-22（重組文檔結構）
+**下次審計**: 2026-03-15
+**上次整理**: 2025-12-15（文檔盤查與結構優化）
