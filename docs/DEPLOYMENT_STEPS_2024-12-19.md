@@ -76,7 +76,11 @@ docker exec aichatbot-postgres pg_dump \
 echo "✅ 資料庫備份完成"
 ```
 
-### 步驟 3: 更新 Embeddings（方案 A）
+### 步驟 3: 更新 Embeddings（重要！）
+
+本步驟包含兩個子任務：
+
+#### 3.1 更新知識庫 Embeddings（方案 A - Keywords）
 
 **⚠️ 重要**: 此步驟會更新所有現有知識的 embeddings 以包含 keywords
 
@@ -95,6 +99,35 @@ tail -f /tmp/embedding_update.log
 - 處理 1240 筆知識
 - 成功率應為 100%
 - 執行時間約 15-20 分鐘（取決於 embedding API 速度）
+
+#### 3.2 生成意圖 Embeddings（方案 2 - 語義匹配）⭐ **NEW**
+
+**⚠️ 新功能**: 此步驟為意圖生成向量表示，支持語義意圖匹配
+
+```bash
+# 先執行資料庫遷移（添加 intents.embedding 欄位）
+docker-compose up -d postgres
+sleep 5
+
+# 執行遷移腳本
+docker exec -i aichatbot-postgres psql -U postgres -d ai_knowledge_db < database/migrations/add_intent_embedding.sql
+
+# 生成所有意圖的 embeddings
+python3 scripts/generate_intent_embeddings.py --yes
+```
+
+**預期結果**:
+- 處理所有意圖（數量取決於系統中的意圖數量，通常 20-50 個）
+- 成功率應為 100%
+- 執行時間約 1-3 分鐘
+
+**如何驗證**:
+```bash
+# 檢查意圖表的 embedding 欄位
+docker exec aichatbot-postgres psql -U postgres -d ai_knowledge_db -c "SELECT id, name, (embedding IS NOT NULL) as has_embedding FROM intents ORDER BY id;"
+
+# 應該看到所有意圖的 has_embedding 都是 't' (true)
+```
 
 ### 步驟 4: 重建 Docker 映像
 
@@ -228,8 +261,27 @@ docker-compose logs embedding-api
 # 確認資料庫連接
 docker-compose exec postgres psql -U postgres -d ai_knowledge_db -c "SELECT COUNT(*) FROM ai_knowledge;"
 
-# 重新執行更新腳本
+# 重新執行更新腳本（知識庫）
 python3 scripts/update_embeddings_with_keywords.py --yes
+
+# 重新執行更新腳本（意圖）
+python3 scripts/generate_intent_embeddings.py --yes
+```
+
+### 問題 1.5: 意圖 Embedding 欄位不存在
+
+**症狀**: `generate_intent_embeddings.py` 報錯 "column 'embedding' does not exist"
+
+**解決方法**:
+```bash
+# 確認是否執行了遷移腳本
+docker exec aichatbot-postgres psql -U postgres -d ai_knowledge_db -c "\d intents"
+
+# 如果沒有 embedding 欄位，執行遷移
+docker exec -i aichatbot-postgres psql -U postgres -d ai_knowledge_db < database/migrations/add_intent_embedding.sql
+
+# 再次執行生成腳本
+python3 scripts/generate_intent_embeddings.py --yes
 ```
 
 ### 問題 2: 容器無法啟動
@@ -344,19 +396,30 @@ docker-compose up -d
 
 ## ✅ 部署檢查清單
 
+### 部署前準備
 - [ ] 已備份資料庫
-- [ ] 已執行 embedding 更新腳本（成功率 100%）
+- [ ] 已通知用戶維護時間
+
+### Embedding 更新
+- [ ] 已執行資料庫遷移（intents.embedding 欄位）⭐ **NEW**
+- [ ] 已執行知識庫 embedding 更新腳本（成功率 100%）
+- [ ] 已執行意圖 embedding 生成腳本（成功率 100%）⭐ **NEW**
+- [ ] 已驗證意圖 embeddings 生成成功（所有意圖都有 embedding）⭐ **NEW**
+
+### 服務狀態
 - [ ] 所有容器處於 "healthy" 或 "running" 狀態
 - [ ] PostgreSQL health check 通過
 - [ ] Redis health check 通過
 - [ ] API 端點測試通過
 - [ ] 前端可正常訪問
+
+### 功能驗證
 - [ ] Keywords embedding 功能驗證通過
 - [ ] 聊天測試頁 UI 優化驗證通過
 - [ ] 展示頁簡化驗證通過
 - [ ] 業者管理展示頁連結驗證通過
 - [ ] 知識匯入進度顯示驗證通過
-- [ ] 語義意圖匹配測試通過
+- [ ] 語義意圖匹配測試通過⭐ **NEW**
 - [ ] 無錯誤日誌
 
 ---
