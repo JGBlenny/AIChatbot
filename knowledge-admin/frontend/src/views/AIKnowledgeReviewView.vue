@@ -209,17 +209,19 @@ export default {
     },
 
     startEdit(candidate) {
-      this.$set(this.editingCandidates, candidate.id, true);
-      this.$set(this.editForms, candidate.id, {
+      // Vue 3: 直接賦值即可，不需要 $set
+      this.editingCandidates[candidate.id] = true;
+      this.editForms[candidate.id] = {
         question: candidate.question,
         answer: candidate.generated_answer,
         edit_summary: ''
-      });
+      };
     },
 
     cancelEdit(candidateId) {
-      this.$delete(this.editingCandidates, candidateId);
-      this.$delete(this.editForms, candidateId);
+      // Vue 3: 使用 delete 操作符，不需要 $delete
+      delete this.editingCandidates[candidateId];
+      delete this.editForms[candidateId];
     },
 
     async saveEdit(candidateId) {

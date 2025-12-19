@@ -309,28 +309,6 @@
             <textarea v-model="editingForm.content" required class="form-control" rows="6"></textarea>
           </div>
 
-          <div class="form-group">
-            <label>關聯意圖（可複選）</label>
-            <div class="intent-checkboxes">
-              <label v-for="intent in intents" :key="intent.id" class="checkbox-label">
-                <input
-                  type="checkbox"
-                  :value="intent.id"
-                  v-model="editingForm.intent_ids"
-                  class="checkbox-input"
-                />
-                <span class="checkbox-text">{{ intent.name }}</span>
-              </label>
-            </div>
-            <p class="hint" v-if="editingForm.intent_ids.length === 0">未選擇任何意圖</p>
-            <p class="hint" v-else>已選擇 {{ editingForm.intent_ids.length }} 個意圖</p>
-          </div>
-
-          <div class="form-group">
-            <label>優先級 (0-100)</label>
-            <input v-model.number="editingForm.priority" type="number" min="0" max="100" class="form-control" />
-          </div>
-
           <div class="modal-actions">
             <button type="submit" class="btn btn-primary">💾 儲存</button>
             <button type="button" @click="closeEditModal" class="btn btn-secondary">取消</button>
@@ -367,7 +345,6 @@ export default {
       businessTypeTemplates: [],  // 按業態分組的範本
       mySOP: [],
       mySOPByCategory: [],
-      intents: [],
       loadingTemplates: false,
       loadingMySOP: false,
       showCopyAllModal: false,
@@ -378,9 +355,7 @@ export default {
       editingForm: {
         id: null,
         item_name: '',
-        content: '',
-        intent_ids: [],  // 多意圖支援（陣列）
-        priority: 50
+        content: ''
       }
     };
   },
@@ -403,11 +378,22 @@ export default {
     }
   },
 
-  mounted() {
+  async mounted() {
     this.loadVendorInfo();
     this.loadTemplates();
-    this.loadMySOP();
-    this.loadIntents();
+    await this.loadMySOP();
+
+    // 檢查是否有 sop_id 參數，如果有則自動打開編輯
+    const sopId = this.$route.query.sop_id;
+    if (sopId) {
+      // 等待 SOP 列表載入後，找到對應的 SOP 並打開編輯
+      this.$nextTick(() => {
+        const sop = this.mySOP.find(s => s.id === parseInt(sopId));
+        if (sop) {
+          this.editSOP(sop);
+        }
+      });
+    }
   },
 
   methods: {
@@ -548,15 +534,6 @@ export default {
       }).filter(cat => cat.groups.length > 0);
     },
 
-    async loadIntents() {
-      try {
-        const response = await axios.get(`${RAG_API}/v1/intents`);
-        this.intents = response.data.intents || [];
-      } catch (error) {
-        console.error('載入意圖失敗:', error);
-        this.intents = [];
-      }
-    },
 
     async copyAllTemplates() {
       try {
@@ -650,9 +627,7 @@ export default {
       this.editingForm = {
         id: sop.id,
         item_name: sop.item_name,
-        content: sop.content,
-        intent_ids: sop.intent_ids && sop.intent_ids.length > 0 ? [...sop.intent_ids] : [],  // 複製陣列
-        priority: sop.priority || 50
+        content: sop.content
       };
       this.showEditModal = true;
     },
@@ -662,9 +637,7 @@ export default {
       this.editingForm = {
         id: null,
         item_name: '',
-        content: '',
-        intent_ids: [],
-        priority: 50
+        content: ''
       };
     },
 
@@ -674,9 +647,7 @@ export default {
           `${RAG_API}/v1/vendors/${this.vendorId}/sop/items/${this.editingForm.id}`,
           {
             item_name: this.editingForm.item_name,
-            content: this.editingForm.content,
-            intent_ids: this.editingForm.intent_ids,  // 傳送意圖陣列
-            priority: this.editingForm.priority
+            content: this.editingForm.content
           }
         );
         alert('✅ SOP 已更新！');

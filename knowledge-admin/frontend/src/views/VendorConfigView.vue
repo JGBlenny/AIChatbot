@@ -206,6 +206,12 @@ export default {
     this.vendorId = this.$route.params.id;
     this.loadVendor();
     this.loadConfigs();
+
+    // 檢查是否有 category 參數，如果有則自動切換到對應標籤
+    const category = this.$route.query.category;
+    if (category && this.categories.some(c => c.value === category)) {
+      this.selectedCategory = category;
+    }
   },
   methods: {
     async loadVendor() {

@@ -159,7 +159,7 @@
             <span v-if="fileItem.status === 'pending'" class="badge badge-gray">⏳ 待處理</span>
             <span v-if="fileItem.status === 'error'" class="badge badge-red">❌ 失敗</span>
 
-            <!-- 處理中：顯示階段指示器 -->
+            <!-- 處理中：顯示階段指示器和進度 -->
             <div v-if="fileItem.status === 'processing'" class="processing-stages">
               <div class="stage-indicators">
                 <span class="stage-icon" :class="{active: fileItem.stage === 'uploading', completed: isStageCompleted(fileItem.stage, 'uploading')}">
@@ -175,9 +175,29 @@
                   💾 儲存
                 </span>
               </div>
-              <div class="mini-progress">
-                <div class="mini-progress-bar" :style="{width: (fileItem.progress || 0) + '%'}"></div>
-                <span class="mini-progress-text">{{ fileItem.progress || 0 }}%</span>
+              <!-- 🎯 改進：更大更明顯的進度條 -->
+              <div class="enhanced-progress">
+                <div class="progress-header">
+                  <span class="progress-stage-label">
+                    {{ getStageLabel(fileItem.stage) }}
+                  </span>
+                  <span class="progress-percentage">{{ fileItem.progress || 0 }}%</span>
+                </div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-bg">
+                    <div
+                      class="progress-bar-fill"
+                      :class="{'progress-pulsing': fileItem.progress > 0 && fileItem.progress < 100}"
+                      :style="{width: (fileItem.progress || 0) + '%'}"
+                    >
+                      <div class="progress-bar-shine"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- 📊 顯示詳細進度資訊 -->
+                <div v-if="fileItem.progressDetail" class="progress-detail">
+                  處理進度: {{ fileItem.progressDetail.current || 0 }} / {{ fileItem.progressDetail.total || 0 }}
+                </div>
               </div>
             </div>
 
@@ -584,6 +604,18 @@ export default {
       return currentIndex > checkIndex;
     },
 
+    // 🎯 新增：獲取階段的中文標籤
+    getStageLabel(stage) {
+      const stageLabels = {
+        'uploading': '正在上傳檔案...',
+        'extracting': '正在提取知識內容...',
+        'embedding': '正在生成向量嵌入...',
+        'saving': '正在儲存到資料庫...',
+        'processing': '正在處理...'
+      };
+      return stageLabels[stage] || '處理中...';
+    },
+
     removeFile(index) {
       this.fileQueue.splice(index, 1);
     },
@@ -788,6 +820,14 @@ export default {
             // 更新進度和階段
             fileItem.progress = progressData.current || 0;
             fileItem.stage = progressData.stage || 'uploading';  // 從後端獲取階段
+
+            // 🎯 保存詳細進度資訊（current/total）
+            if (progressData.total) {
+              fileItem.progressDetail = {
+                current: progressData.current || 0,
+                total: progressData.total || 100
+              };
+            }
 
             if (status === 'awaiting_confirmation') {
               // 等待用戶確認測試情境
@@ -1476,6 +1516,101 @@ export default {
   color: #f44336;
 }
 
+/* 🎯 改進的進度顯示 */
+.enhanced-progress {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 300px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.progress-stage-label {
+  font-weight: 500;
+  color: #1976d2;
+  font-size: 13px;
+}
+
+.progress-percentage {
+  font-weight: 600;
+  color: #2e7d32;
+  font-size: 15px;
+}
+
+.progress-bar-container {
+  width: 100%;
+}
+
+.progress-bar-bg {
+  height: 32px;
+  background: #e3f2fd;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  border: 2px solid #90caf9;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 50%, #64b5f6 100%);
+  transition: width 0.5s ease-out;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+}
+
+.progress-bar-fill.progress-pulsing {
+  animation: progress-pulse 2s ease-in-out infinite;
+}
+
+@keyframes progress-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.progress-bar-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: progress-shine 2s ease-in-out infinite;
+}
+
+@keyframes progress-shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
+  }
+}
+
+.progress-detail {
+  font-size: 12px;
+  color: #666;
+  text-align: right;
+}
+
+/* 保留舊的 mini-progress 樣式以防需要回退 */
 .mini-progress {
   flex: 1;
   height: 20px;
