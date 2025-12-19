@@ -560,8 +560,8 @@ class SOPItemUpdate(BaseModel):
     """更新 SOP 項目"""
     item_name: str = Field(..., description="項目名稱")
     content: str = Field(..., description="項目內容")
-    intent_ids: Optional[List[int]] = Field(None, description="關聯意圖ID列表（支援多意圖）")
-    priority: Optional[int] = Field(None, description="優先級（0-100）", ge=0, le=100)
+    # intent_ids: DEPRECATED - 已廢棄，SOP 現在使用 Group-based embedding 檢索，不再需要意圖關聯
+    # priority: DEPRECATED - 已廢棄，現代檢索完全基於向量相似度，不使用優先級排序
 
 
 @router.get("/{vendor_id}/sop/categories")
@@ -702,13 +702,6 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
         if not current:
             raise HTTPException(status_code=404, detail="SOP 項目不存在或不屬於該業者")
 
-        # 驗證所有意圖是否存在（如果有指定）
-        if item_update.intent_ids:
-            for intent_id in item_update.intent_ids:
-                cursor.execute("SELECT id FROM intents WHERE id = %s", (intent_id,))
-                if not cursor.fetchone():
-                    raise HTTPException(status_code=400, detail=f"意圖 ID {intent_id} 不存在")
-
         # 🧠 智能檢測：判斷是否需要重新生成 embeddings
         need_regenerate = (
             (item_update.item_name and item_update.item_name != current['item_name']) or
@@ -726,9 +719,7 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
         update_fields.append("content = %s")
         params.append(item_update.content)
 
-        if item_update.priority is not None:
-            update_fields.append("priority = %s")
-            params.append(item_update.priority)
+        # ⚠️ DEPRECATED: priority 欄位已廢棄，不再更新
 
         update_fields.append("updated_at = CURRENT_TIMESTAMP")
         params.extend([item_id, vendor_id])
@@ -743,21 +734,8 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
         cursor.execute(query, params)
         updated_item = cursor.fetchone()
 
-        # 更新多意圖關聯表
-        if item_update.intent_ids is not None:
-            # 先刪除所有現有關聯
-            cursor.execute("""
-                DELETE FROM vendor_sop_item_intents
-                WHERE sop_item_id = %s
-            """, (item_id,))
-
-            # 插入新的意圖關聯
-            for intent_id in item_update.intent_ids:
-                cursor.execute("""
-                    INSERT INTO vendor_sop_item_intents (sop_item_id, intent_id)
-                    VALUES (%s, %s)
-                    ON CONFLICT DO NOTHING
-                """, (item_id, intent_id))
+        # ⚠️ DEPRECATED: 意圖關聯已廢棄，SOP 現在使用 Group-based embedding 檢索
+        # 不再更新 vendor_sop_item_intents 表，現有資料保留但不再使用
 
         conn.commit()
 

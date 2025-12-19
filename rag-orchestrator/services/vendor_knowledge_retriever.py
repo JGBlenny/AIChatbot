@@ -22,20 +22,9 @@ class VendorKnowledgeRetriever:
         # 參數解析器
         self.param_resolver = VendorParameterResolver()
 
-    def _has_template_variables(self, text: str) -> bool:
-        """
-        檢測文本是否包含模板變數 {{variable}}
-
-        Args:
-            text: 要檢測的文本
-
-        Returns:
-            True 如果包含模板變數，否則 False
-        """
-        import re
-        if not text:
-            return False
-        return bool(re.search(r'\{\{.+?\}\}', text))
+        # 意圖語義匹配器（方案2：語義化意圖匹配）
+        from .intent_semantic_matcher import get_intent_semantic_matcher
+        self.intent_matcher = get_intent_semantic_matcher()
 
     def _get_db_connection(self):
         """建立資料庫連接（使用共用配置）"""
@@ -46,17 +35,15 @@ class VendorKnowledgeRetriever:
         self,
         intent_id: int,
         vendor_id: int,
-        top_k: int = 3,
-        resolve_templates: bool = True
+        top_k: int = 3
     ) -> List[Dict]:
         """
-        檢索知識並自動處理模板變數
+        檢索知識
 
         Args:
             intent_id: 意圖 ID
             vendor_id: 業者 ID
             top_k: 返回前 K 筆知識
-            resolve_templates: 是否自動解析模板（自動檢測 {{variable}} 模式）
 
         Returns:
             知識列表，按優先級排序
@@ -64,16 +51,11 @@ class VendorKnowledgeRetriever:
                 {
                     "id": 1,
                     "question_summary": "每月繳費日期",
-                    "answer": "您的租金繳費日為每月 1 號...",  # 已解析（自動檢測到 {{payment_day}} 並替換）
-                    "original_answer": "您的租金繳費日為每月 {{payment_day}} 號...",  # 原始模板
+                    "answer": "您的租金繳費日為每月 1 號...",
                     "scope": "global",
                     "priority": 1
                 }
             ]
-
-        Note:
-            系統會自動檢測答案中的 {{variable}} 模式並進行替換，
-            不再依賴 is_template 欄位
         """
         # 獲取 vendor 的業態類型
         vendor_info = self.param_resolver.get_vendor_info(vendor_id)
@@ -145,26 +127,6 @@ class VendorKnowledgeRetriever:
             for row in rows:
                 knowledge = dict(row)
 
-                # 保留原始答案
-                knowledge['original_answer'] = knowledge['answer']
-
-                # 自動檢測模板變數並解析（使用動態檢測替代 is_template 欄位）
-                if resolve_templates and self._has_template_variables(knowledge['answer']):
-                    try:
-                        knowledge['answer'] = self.param_resolver.resolve_template(
-                            knowledge['answer'],
-                            vendor_id
-                        )
-                        # 同時解析問題摘要中的變數
-                        if knowledge['question_summary'] and self._has_template_variables(knowledge['question_summary']):
-                            knowledge['question_summary'] = self.param_resolver.resolve_template(
-                                knowledge['question_summary'],
-                                vendor_id
-                            )
-                    except Exception as e:
-                        print(f"⚠️  Template resolution failed for knowledge {knowledge['id']}: {e}")
-                        # 解析失敗，保留原始模板
-
                 # 移除內部欄位
                 knowledge.pop('scope_weight', None)
 
@@ -195,9 +157,10 @@ class VendorKnowledgeRetriever:
         vendor_id: int,
         top_k: int = 3,
         similarity_threshold: float = 0.6,
-        resolve_templates: bool = True,
         all_intent_ids: Optional[List[int]] = None,
-        target_user: str = 'tenant'
+        target_user: str = 'tenant',
+        return_debug_info: bool = False,
+        use_semantic_boost: bool = True  # 新增：是否使用語義加成
     ) -> List[Dict]:
         """
         混合模式檢索：Intent 過濾 + 向量相似度排序
@@ -214,9 +177,9 @@ class VendorKnowledgeRetriever:
             vendor_id: 業者 ID
             top_k: 返回前 K 筆知識
             similarity_threshold: 相似度閾值
-            resolve_templates: 是否自動解析模板
             all_intent_ids: 所有相關意圖 IDs（包含主要和次要）
             target_user: 目標用戶角色：tenant(租客), landlord(房東), property_manager(物管), system_admin(系統管理)
+            return_debug_info: 是否返回調試信息（保留 intent_boost, scope_weight 等字段）
 
         Returns:
             知識列表，按相似度和優先級排序
@@ -261,7 +224,7 @@ class VendorKnowledgeRetriever:
 
         if not query_embedding:
             print("⚠️  向量生成失敗，降級使用純 intent-based 檢索")
-            return self.retrieve_knowledge(intent_id, vendor_id, top_k, resolve_templates)
+            return self.retrieve_knowledge(intent_id, vendor_id, top_k)
 
         # 2. 準備 Intent IDs（支援多 Intent）
         if all_intent_ids is None:
@@ -274,9 +237,24 @@ class VendorKnowledgeRetriever:
 
             vector_str = str(query_embedding)
 
-            # Phase 1 擴展：使用 knowledge_intent_mapping 進行多意圖檢索
-            # 包含 business_types 和 target_user 雙重過濾
-            # 動態構建過濾條件（safe: filter_sql 僅來自預定義值）
+            # ✅ 方案5：意圖作為軟過濾器
+            # - 移除硬性意圖過濾，所有知識都參與檢索
+            # - intent_boost 先用簡單邏輯（精確匹配 1.3，其他 1.0）
+            # - 後續在 Python 中使用語義匹配器重新計算 boost（方案2）
+            # ✅ 方案2：語義化意圖匹配（在 Python 中實現）
+            # - SQL 查詢使用較低閾值（考慮最大 boost 1.3x）
+            # - Python 中使用語義相似度重新計算 boost
+            # - 加成後過濾 >= similarity_threshold
+            # - 重新排序後取 top_k
+
+            # 計算 SQL 查詢的最低閾值（考慮最大 boost 1.3x）
+            # 如果 similarity_threshold = 0.65，且最大 boost = 1.3
+            # 那麼 sql_threshold = 0.65 / 1.3 = 0.5
+            sql_threshold = similarity_threshold / 1.3 if use_semantic_boost else similarity_threshold
+
+            # 獲取更多候選以供語義匹配重排序
+            candidate_limit = top_k * 3
+
             sql_query = f"""
                 SELECT
                     kb.id,
@@ -295,21 +273,22 @@ class VendorKnowledgeRetriever:
                     kb.video_duration,
                     kb.video_format,
                     kim.intent_id,
+                    kim.intent_type,
                     -- 計算向量相似度
                     1 - (kb.embedding <=> %s::vector) as base_similarity,
-                    -- Intent 匹配加成（多 Intent 支援，調整為 1.3x 以平衡意圖與內容相似度）
+                    -- Intent 匹配加成（簡化版，將在 Python 中用語義匹配替換）
                     CASE
-                        WHEN kim.intent_id = %s THEN 1.3          -- 主要 Intent: 1.3x boost
-                        WHEN kim.intent_id = ANY(%s::int[]) THEN 1.1  -- 次要 Intent: 1.1x boost
-                        ELSE 1.0                              -- 其他: 無加成
-                    END as intent_boost,
-                    -- 加成後的相似度 (用於排序)
+                        WHEN kim.intent_id = %s THEN 1.3          -- 精確匹配主要 Intent
+                        WHEN kim.intent_id = ANY(%s::int[]) THEN 1.1  -- 精確匹配次要 Intent
+                        ELSE 1.0                                  -- 其他（將用語義相似度替換）
+                    END as sql_intent_boost,
+                    -- 加成後的相似度（臨時，將在 Python 中重新計算）
                     (1 - (kb.embedding <=> %s::vector)) *
                     CASE
                         WHEN kim.intent_id = %s THEN 1.3
                         WHEN kim.intent_id = ANY(%s::int[]) THEN 1.1
                         ELSE 1.0
-                    END as boosted_similarity,
+                    END as sql_boosted_similarity,
                     -- 計算 Scope 權重
                     CASE
                         WHEN kb.scope = 'customized' AND kb.vendor_id = %s THEN 1000
@@ -330,20 +309,21 @@ class VendorKnowledgeRetriever:
                     AND kb.embedding IS NOT NULL
                     -- 相似度閾值（基於原始相似度，不含加成）
                     AND (1 - (kb.embedding <=> %s::vector)) >= %s
-                    -- Intent 過濾（多意圖支援）
-                    AND (kim.intent_id = ANY(%s::int[]) OR kim.intent_id IS NULL)
+                    -- ✅ 方案5：移除硬性意圖過濾！
+                    -- 之前：AND (kim.intent_id = ANY(intent_ids) OR kim.intent_id IS NULL)
+                    -- 現在：所有知識都參與，無論意圖是否匹配
                     -- ✅ 業態類型過濾：B2B 嚴格過濾（只允許 system_provider），B2C 允許通用知識
                     AND {business_type_filter_sql}
                     -- ✅ 目標用戶過濾：確保知識適用於當前用戶角色（tenant/landlord/property_manager等）
                     AND {target_user_filter_sql}
                 ORDER BY
-                    scope_weight DESC,        -- 1st: Scope 優先級
-                    boosted_similarity DESC,  -- 2nd: 加成後的相似度
-                    kb.priority DESC          -- 3rd: 人工優先級
+                    scope_weight DESC,           -- 1st: Scope 優先級
+                    sql_boosted_similarity DESC, -- 2nd: SQL 計算的加成相似度（臨時）
+                    kb.priority DESC             -- 3rd: 人工優先級
                 LIMIT %s
             """
 
-            # 構建參數列表
+            # 構建參數列表（移除了 all_intent_ids 在 WHERE 子句中的使用）
             query_params = [
                 vector_str,
                 intent_id,
@@ -355,8 +335,8 @@ class VendorKnowledgeRetriever:
                 vendor_id,
                 vendor_id,
                 vector_str,
-                similarity_threshold,
-                all_intent_ids,
+                sql_threshold,  # ✅ 使用較低的 SQL 閾值
+                # ❌ 移除：all_intent_ids（之前用於硬性過濾）
                 vendor_business_types,  # ✅ 業態類型過濾參數
             ]
 
@@ -364,22 +344,97 @@ class VendorKnowledgeRetriever:
             if target_user_roles is not None:
                 query_params.append(target_user_roles)
 
-            query_params.append(top_k)
+            query_params.append(candidate_limit)  # 獲取更多候選用於重排序
 
             cursor.execute(sql_query, tuple(query_params))
 
             rows = cursor.fetchall()
             cursor.close()
 
-            print(f"\n🔍 [Hybrid Retrieval] Query: {query}")
+            print(f"\n🔍 [Hybrid Retrieval - Enhanced] Query: {query}")
             print(f"   Primary Intent ID: {intent_id}, All Intents: {all_intent_ids}, Vendor ID: {vendor_id}")
-            print(f"   Found {len(rows)} results:")
+            print(f"   SQL threshold: {sql_threshold:.3f}, Target threshold: {similarity_threshold:.3f}")
+            print(f"   Found {len(rows)} SQL candidates (will rerank and filter):")
 
-            # 處理結果
-            results = []
-            for idx, row in enumerate(rows, 1):
+            # ✅ 方案2：使用語義匹配器重新計算 intent_boost
+            candidates = []
+            filtered_count = 0
+            for row in rows:
                 knowledge = dict(row)
+                knowledge_intent_id = knowledge.get('intent_id')
+                knowledge_intent_type = knowledge.get('intent_type')
 
+                # 使用語義匹配器計算 boost
+                intent_semantic_similarity = None
+                if use_semantic_boost and knowledge_intent_id:
+                    boost, reason, intent_semantic_similarity = self.intent_matcher.calculate_semantic_boost(
+                        intent_id,
+                        knowledge_intent_id,
+                        knowledge_intent_type
+                    )
+                else:
+                    # 沒有意圖標註或不使用語義加成
+                    if knowledge_intent_id == intent_id:
+                        boost = 1.3
+                        reason = "精確匹配"
+                        intent_semantic_similarity = 1.0
+                    elif knowledge_intent_id in all_intent_ids:
+                        boost = 1.1
+                        reason = "次要意圖匹配"
+                        intent_semantic_similarity = 0.8
+                    else:
+                        boost = 1.0
+                        reason = "無意圖匹配"
+                        intent_semantic_similarity = 0.0
+
+                # 重新計算加成後相似度
+                base_similarity = knowledge['base_similarity']
+                boosted_similarity = base_similarity * boost
+
+                # ✅ 在 Python 中過濾：只保留加成後 >= similarity_threshold 的結果
+                if boosted_similarity < similarity_threshold:
+                    filtered_count += 1
+                    continue
+
+                # 更新 boost 和加成後相似度
+                knowledge['intent_boost'] = boost
+                knowledge['boosted_similarity'] = boosted_similarity
+                knowledge['boost_reason'] = reason
+                knowledge['intent_semantic_similarity'] = intent_semantic_similarity
+
+                candidates.append(knowledge)
+
+            print(f"   After semantic boost and filtering: {len(candidates)} candidates (filtered out: {filtered_count})")
+
+            # ✅ 重新排序：scope_weight > boosted_similarity > priority
+            candidates.sort(
+                key=lambda x: (
+                    -x['scope_weight'],           # 降序：scope 優先級高的在前
+                    -x['boosted_similarity'],     # 降序：相似度高的在前
+                    -x.get('priority', 0)         # 降序：人工優先級高的在前
+                )
+            )
+
+            # ✅ 去重：對於多意圖知識，只保留最高分版本
+            seen_ids = set()
+            unique_candidates = []
+            duplicates_removed = 0
+            for candidate in candidates:
+                knowledge_id = candidate['id']
+                if knowledge_id not in seen_ids:
+                    seen_ids.add(knowledge_id)
+                    unique_candidates.append(candidate)
+                else:
+                    duplicates_removed += 1
+
+            if duplicates_removed > 0:
+                print(f"   ℹ️  去重：移除了 {duplicates_removed} 個重複的知識（多意圖知識的較低分版本）")
+
+            # 取 top_k
+            results = unique_candidates[:top_k]
+
+            # 輸出結果
+            for idx, knowledge in enumerate(results, 1):
                 # 標記 Intent 匹配狀態
                 if knowledge['intent_id'] == intent_id:
                     intent_marker = "★"  # 主要 Intent
@@ -388,42 +443,27 @@ class VendorKnowledgeRetriever:
                 else:
                     intent_marker = "○"  # 其他
 
-                audience_str = f", audience: {knowledge.get('audience', 'NULL')}"
                 print(f"   {idx}. {intent_marker} ID {knowledge['id']}: {knowledge['question_summary'][:40]}... "
                       f"(原始: {knowledge['base_similarity']:.3f}, "
-                      f"boost: {knowledge['intent_boost']:.1f}x, "
+                      f"boost: {knowledge['intent_boost']:.2f}x [{knowledge['boost_reason']}], "
                       f"加成後: {knowledge['boosted_similarity']:.3f}, "
-                      f"intent: {knowledge['intent_id']}{audience_str})")
-
-                # 保留原始答案
-                knowledge['original_answer'] = knowledge['answer']
-
-                # 自動檢測模板變數並解析（使用動態檢測替代 is_template 欄位）
-                if resolve_templates and self._has_template_variables(knowledge['answer']):
-                    try:
-                        knowledge['answer'] = self.param_resolver.resolve_template(
-                            knowledge['answer'],
-                            vendor_id
-                        )
-                        if knowledge['question_summary'] and self._has_template_variables(knowledge['question_summary']):
-                            knowledge['question_summary'] = self.param_resolver.resolve_template(
-                                knowledge['question_summary'],
-                                vendor_id
-                            )
-                    except Exception as e:
-                        print(f"⚠️  Template resolution failed for knowledge {knowledge['id']}: {e}")
+                      f"intent: {knowledge['intent_id']})")
 
                 # 保留原始相似度和加成後相似度
                 # similarity: 加成後相似度（用於排序）
                 # original_similarity: 原始相似度（用於完美匹配判斷）
                 knowledge['similarity'] = knowledge['boosted_similarity']
                 knowledge['original_similarity'] = knowledge['base_similarity']
-                knowledge.pop('scope_weight', None)
-                knowledge.pop('base_similarity', None)
-                knowledge.pop('boosted_similarity', None)
-                knowledge.pop('intent_boost', None)
 
-                results.append(knowledge)
+                # 如果不是調試模式，移除內部欄位
+                if not return_debug_info:
+                    knowledge.pop('scope_weight', None)
+                    knowledge.pop('base_similarity', None)
+                    knowledge.pop('boosted_similarity', None)
+                    knowledge.pop('intent_boost', None)
+                    knowledge.pop('sql_intent_boost', None)
+                    knowledge.pop('sql_boosted_similarity', None)
+                    knowledge.pop('boost_reason', None)
 
             return results
 
@@ -507,23 +547,6 @@ class VendorKnowledgeRetriever:
             results = []
             for row in rows:
                 knowledge = dict(row)
-                knowledge['original_answer'] = knowledge['answer']
-
-                # 自動檢測模板變數並解析（使用動態檢測替代 is_template 欄位）
-                if self._has_template_variables(knowledge['answer']):
-                    try:
-                        knowledge['answer'] = self.param_resolver.resolve_template(
-                            knowledge['answer'],
-                            vendor_id
-                        )
-                        if knowledge['question_summary'] and self._has_template_variables(knowledge['question_summary']):
-                            knowledge['question_summary'] = self.param_resolver.resolve_template(
-                                knowledge['question_summary'],
-                                vendor_id
-                            )
-                    except Exception as e:
-                        print(f"⚠️  Template resolution failed: {e}")
-
                 knowledge.pop('scope_weight', None)
                 results.append(knowledge)
 
@@ -553,8 +576,7 @@ class VendorKnowledgeRetriever:
                         COUNT(*) as total_knowledge,
                         COUNT(CASE WHEN scope = 'global' THEN 1 END) as global_count,
                         COUNT(CASE WHEN scope = 'vendor' THEN 1 END) as vendor_count,
-                        COUNT(CASE WHEN scope = 'customized' THEN 1 END) as customized_count,
-                        COUNT(CASE WHEN is_template THEN 1 END) as template_count
+                        COUNT(CASE WHEN scope = 'customized' THEN 1 END) as customized_count
                     FROM knowledge_base
                     WHERE
                         vendor_id = %s OR vendor_id IS NULL
@@ -566,8 +588,7 @@ class VendorKnowledgeRetriever:
                         COUNT(*) as total_knowledge,
                         COUNT(CASE WHEN scope = 'global' THEN 1 END) as global_count,
                         COUNT(CASE WHEN scope = 'vendor' THEN 1 END) as vendor_count,
-                        COUNT(CASE WHEN scope = 'customized' THEN 1 END) as customized_count,
-                        COUNT(CASE WHEN is_template THEN 1 END) as template_count
+                        COUNT(CASE WHEN scope = 'customized' THEN 1 END) as customized_count
                     FROM knowledge_base
                 """)
 
@@ -575,82 +596,6 @@ class VendorKnowledgeRetriever:
             cursor.close()
 
             return dict(stats)
-
-        finally:
-            conn.close()
-
-    def preview_template_resolution(
-        self,
-        knowledge_id: int,
-        vendor_id: int
-    ) -> Dict:
-        """
-        預覽模板解析結果（用於測試）
-
-        Args:
-            knowledge_id: 知識 ID
-            vendor_id: 業者 ID
-
-        Returns:
-            預覽結果
-        """
-        conn = self._get_db_connection()
-        try:
-            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-            cursor.execute("""
-                SELECT
-                    id,
-                    question_summary,
-                    answer,
-                    is_template,
-                    template_vars
-                FROM knowledge_base
-                WHERE id = %s
-            """, (knowledge_id,))
-
-            row = cursor.fetchone()
-            cursor.close()
-
-            if not row:
-                return {"error": "Knowledge not found"}
-
-            knowledge = dict(row)
-
-            # 自動檢測模板變數（使用動態檢測替代 is_template 欄位）
-            has_template = self._has_template_variables(knowledge['answer'])
-
-            if not has_template:
-                return {
-                    "is_template": False,
-                    "original": knowledge['answer'],
-                    "resolved": knowledge['answer']
-                }
-
-            # 解析模板
-            resolved_answer = self.param_resolver.resolve_template(
-                knowledge['answer'],
-                vendor_id
-            )
-
-            # 驗證模板
-            validation = self.param_resolver.validate_template(
-                knowledge['answer'],
-                vendor_id
-            )
-
-            return {
-                "is_template": True,
-                "original_question": knowledge['question_summary'],
-                "original_answer": knowledge['answer'],
-                "resolved_question": self.param_resolver.resolve_template(
-                    knowledge['question_summary'],
-                    vendor_id
-                ) if knowledge['question_summary'] and self._has_template_variables(knowledge['question_summary']) else knowledge['question_summary'],
-                "resolved_answer": resolved_answer,
-                "template_vars": knowledge['template_vars'],
-                "validation": validation
-            }
 
         finally:
             conn.close()

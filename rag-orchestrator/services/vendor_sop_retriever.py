@@ -154,8 +154,9 @@ class VendorSOPRetriever:
         intent_ids: List[int] = None,
         primary_intent_id: int = None,
         top_k: int = 5,
-        similarity_threshold: float = None
-    ) -> List[Tuple[Dict, float]]:
+        similarity_threshold: float = None,
+        return_debug_info: bool = False
+    ) -> List[Tuple[Dict, float]] | Tuple[List[Tuple[Dict, float]], List[Dict]]:
         """
         混合模式檢索（Group隔離版）：預存 Embedding + 意圖加成 + Group隔離
 
@@ -471,7 +472,35 @@ class VendorSOPRetriever:
             conn.close()
 
         # 返回格式轉換（移除 strategy 和 boost）
-        return [(sop, sim) for sop, sim, _, _ in results_with_similarity]
+        basic_results = [(sop, sim) for sop, sim, _, _ in results_with_similarity]
+
+        # 如果需要調試資訊，返回額外的候選項目詳情
+        if return_debug_info:
+            debug_candidates = []
+            selected_ids = {sop['id'] for sop, _, _, _ in results_with_similarity}
+
+            # 收集所有 Group 內的項目（包括未選中的）
+            for item in items_in_group:
+                boosted_sim = item.get('boosted_similarity', 0)
+                original_sim = item.get('original_similarity', 0)
+                intent_boost = item.get('intent_boost', 1.0)
+
+                debug_candidates.append({
+                    'id': item['id'],
+                    'item_name': item.get('item_name', ''),
+                    'group_name': item.get('group_name', ''),
+                    'base_similarity': original_sim,
+                    'intent_boost': intent_boost,
+                    'boosted_similarity': boosted_sim,
+                    'is_selected': item['id'] in selected_ids
+                })
+
+            # 按加成後相似度排序
+            debug_candidates.sort(key=lambda x: x['boosted_similarity'], reverse=True)
+
+            return basic_results, debug_candidates
+
+        return basic_results
 
     def _cosine_similarity(self, vec1, vec2):
         """計算余弦相似度"""

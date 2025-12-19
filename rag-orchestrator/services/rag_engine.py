@@ -111,6 +111,7 @@ class RAGEngine:
                                 kb.business_types,
                                 kb.scope,
                                 kb.vendor_id,
+                                kb.priority,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
@@ -118,6 +119,12 @@ class RAGEngine:
                                     WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
                                     ELSE 1.0
                                 END as intent_boost,
+                                -- 優先級加成（單獨返回）
+                                CASE
+                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $9
+                                    THEN $8
+                                    ELSE 0
+                                END as priority_boost,
                                 -- 加成後相似度（意圖加成為乘法，優先級加成為固定值）
                                 (1 - (kb.embedding <=> $1::vector)) *
                                 CASE
@@ -155,6 +162,9 @@ class RAGEngine:
                                 kb.category,
                                 kb.target_user,
                                 kb.keywords,
+                                kb.scope,
+                                kb.vendor_id,
+                                kb.priority,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
@@ -162,6 +172,12 @@ class RAGEngine:
                                     WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
                                     ELSE 1.0
                                 END as intent_boost,
+                                -- 優先級加成（單獨返回）
+                                CASE
+                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $8
+                                    THEN $7
+                                    ELSE 0
+                                END as priority_boost,
                                 -- 加成後相似度（意圖加成為乘法，優先級加成為固定值）
                                 (1 - (kb.embedding <=> $1::vector)) *
                                 CASE
@@ -202,6 +218,7 @@ class RAGEngine:
                                 kb.business_types,
                                 kb.scope,
                                 kb.vendor_id,
+                                kb.priority,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
@@ -209,6 +226,12 @@ class RAGEngine:
                                     WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
                                     ELSE 1.0
                                 END as intent_boost,
+                                -- 優先級加成（單獨返回）
+                                CASE
+                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $8
+                                    THEN $7
+                                    ELSE 0
+                                END as priority_boost,
                                 -- 加成後相似度（意圖加成為乘法，優先級加成為固定值）
                                 (1 - (kb.embedding <=> $1::vector)) *
                                 CASE
@@ -247,6 +270,7 @@ class RAGEngine:
                                 kb.keywords,
                                 kb.scope,
                                 kb.vendor_id,
+                                kb.priority,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
@@ -254,6 +278,12 @@ class RAGEngine:
                                     WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
                                     ELSE 1.0
                                 END as intent_boost,
+                                -- 優先級加成（單獨返回）
+                                CASE
+                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $7
+                                    THEN $6
+                                    ELSE 0
+                                END as priority_boost,
                                 -- 加成後相似度（意圖加成為乘法，優先級加成為固定值）
                                 (1 - (kb.embedding <=> $1::vector)) *
                                 CASE
@@ -305,7 +335,14 @@ class RAGEngine:
                                 business_types,
                                 scope,
                                 vendor_id,
+                                priority,
                                 1 - (embedding <=> $1::vector) as base_similarity,
+                                1.0 as intent_boost,
+                                CASE
+                                    WHEN priority > 0 AND (1 - (embedding <=> $1::vector)) >= $7
+                                    THEN $6
+                                    ELSE 0
+                                END as priority_boost,
                                 (1 - (embedding <=> $1::vector)) +
                                 CASE
                                     WHEN priority > 0 AND (1 - (embedding <=> $1::vector)) >= $7
@@ -336,7 +373,14 @@ class RAGEngine:
                                 keywords,
                                 scope,
                                 vendor_id,
+                                priority,
                                 1 - (embedding <=> $1::vector) as base_similarity,
+                                1.0 as intent_boost,
+                                CASE
+                                    WHEN priority > 0 AND (1 - (embedding <=> $1::vector)) >= $6
+                                    THEN $5
+                                    ELSE 0
+                                END as priority_boost,
                                 (1 - (embedding <=> $1::vector)) +
                                 CASE
                                     WHEN priority > 0 AND (1 - (embedding <=> $1::vector)) >= $6
@@ -369,7 +413,14 @@ class RAGEngine:
                                 business_types,
                                 scope,
                                 vendor_id,
+                                priority,
                                 1 - (embedding <=> $1::vector) as base_similarity,
+                                1.0 as intent_boost,
+                                CASE
+                                    WHEN priority > 0 AND (1 - (embedding <=> $1::vector)) >= $6
+                                    THEN $5
+                                    ELSE 0
+                                END as priority_boost,
                                 (1 - (embedding <=> $1::vector)) +
                                 CASE
                                     WHEN priority > 0 AND (1 - (embedding <=> $1::vector)) >= $6
@@ -399,7 +450,14 @@ class RAGEngine:
                                 keywords,
                                 scope,
                                 vendor_id,
+                                priority,
                                 1 - (embedding <=> $1::vector) as base_similarity,
+                                1.0 as intent_boost,
+                                CASE
+                                    WHEN priority > 0 AND (1 - (embedding <=> $1::vector)) >= $5
+                                    THEN $4
+                                    ELSE 0
+                                END as priority_boost,
                                 (1 - (embedding <=> $1::vector)) +
                                 CASE
                                     WHEN priority > 0 AND (1 - (embedding <=> $1::vector)) >= $5

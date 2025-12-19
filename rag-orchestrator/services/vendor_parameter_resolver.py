@@ -192,11 +192,35 @@ class VendorParameterResolver:
             輸入："繳費日為 {{payment_day}} 號，逾期費 {{late_fee}} 元"
             輸出："繳費日為 1 號，逾期費 200 元"
         """
+        result, _ = self.resolve_template_with_tracking(text, vendor_id, raise_on_missing)
+        return result
+
+    def resolve_template_with_tracking(
+        self,
+        text: str,
+        vendor_id: int,
+        raise_on_missing: bool = False
+    ) -> tuple[str, list[str]]:
+        """
+        解析模板並追蹤實際被替換的參數
+
+        Args:
+            text: 包含模板變數的文本
+            vendor_id: 業者 ID
+            raise_on_missing: 遇到缺失變數是否拋出異常
+
+        Returns:
+            (替換後的文本, 實際被使用的參數 key 列表)
+
+        Example:
+            輸入："繳費日為 {{payment_day}} 號"
+            輸出：("繳費日為 1 號", ["payment_day"])
+        """
         # 提取所有變數
         variables = self.extract_template_variables(text)
 
         if not variables:
-            return text
+            return text, []
 
         # 獲取業者參數
         params = self.get_vendor_parameters(vendor_id)
@@ -204,6 +228,7 @@ class VendorParameterResolver:
         # 替換變數
         result = text
         missing_vars = []
+        used_params = []  # 追蹤實際被使用的參數
 
         for var_name in variables:
             if var_name not in params:
@@ -222,11 +247,12 @@ class VendorParameterResolver:
 
             # 替換 {{var_name}} 為實際值
             result = result.replace(f"{{{{{var_name}}}}}", formatted_value)
+            used_params.append(var_name)  # 記錄被使用的參數
 
         if missing_vars and not raise_on_missing:
             print(f"⚠️  Warning: Missing parameters for vendor {vendor_id}: {missing_vars}")
 
-        return result
+        return result, used_params
 
     def resolve_multiple_templates(
         self,

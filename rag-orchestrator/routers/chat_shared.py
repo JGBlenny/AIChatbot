@@ -66,8 +66,9 @@ async def retrieve_sop_hybrid(
     intent_ids: list,
     query: str,
     top_k: int = 5,
-    similarity_threshold: float = None
-) -> list:
+    similarity_threshold: float = None,
+    return_debug_info: bool = False
+) -> list | tuple:
     """
     混合檢索 SOP（Async版本，供 chat 使用）
 
@@ -96,14 +97,22 @@ async def retrieve_sop_hybrid(
     primary_intent_id = intent_ids[0] if intent_ids else None
 
     # 使用 hybrid 方法：intent boosting + 向量相似度（一次性檢索）
-    items_with_sim = await sop_retriever.retrieve_sop_hybrid(
+    result = await sop_retriever.retrieve_sop_hybrid(
         vendor_id=vendor_id,
         query=query,
         intent_ids=intent_ids,
         primary_intent_id=primary_intent_id,
         top_k=top_k,
-        similarity_threshold=similarity_threshold
+        similarity_threshold=similarity_threshold,
+        return_debug_info=return_debug_info
     )
+
+    # 根據是否返回調試資訊，解包結果
+    if return_debug_info:
+        items_with_sim, debug_candidates = result
+    else:
+        items_with_sim = result
+        debug_candidates = None
 
     # 將相似度添加到 item dict 中
     all_sop_items = []
@@ -114,7 +123,10 @@ async def retrieve_sop_hybrid(
     if all_sop_items:
         print(f"✨ Intent Boosting 檢索：共 {len(all_sop_items)} 個 SOP 項目（來自 {len(intent_ids)} 個意圖，主要意圖: {primary_intent_id}）")
 
-    return all_sop_items
+    if return_debug_info:
+        return all_sop_items, debug_candidates
+    else:
+        return all_sop_items
 
 
 def convert_sop_to_search_results(sop_items: list) -> list:

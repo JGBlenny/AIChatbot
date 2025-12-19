@@ -187,7 +187,7 @@ class KnowledgeImportService(UnifiedJobService):
 
             # 8. 推薦意圖（使用 LLM 或分類器）
             await self.update_status(job_id, "processing", progress={"current": 76, "total": 100, "stage": "embedding"})
-            await self._recommend_intents(knowledge_list)
+            await self._recommend_intents(knowledge_list, enable_quality_evaluation=enable_quality_evaluation)
 
             # 8.5. 質量評估（自動篩選低質量知識）
             await self.update_status(job_id, "processing", progress={"current": 77, "total": 100, "stage": "embedding"})
@@ -578,7 +578,7 @@ class KnowledgeImportService(UnifiedJobService):
         answer_cols = ['答案', 'answer', '回答', '回覆', 'response', 'content', '內容', '企業希望的標準A', '標準A', '標準答案']
         audience_cols = ['對象', 'audience', '受眾']
         keywords_cols = ['關鍵字', 'keywords', '標籤', 'tags']
-        intent_cols = ['意圖', 'intent', '分類', 'category', '分類別', '分類別 (可自訂分類)']  # 新增：意圖欄位
+        intent_cols = ['意圖', 'intent', 'intent_names', '分類', 'category', '分類別', '分類別 (可自訂分類)']  # 新增：意圖欄位（支援 intent_names）
         subcategory_cols = ['次分類', 'subcategory', '次類別', '次類別 (可自訂分類)']  # 新增：次分類欄位
         business_type_cols = ['業態類型', 'business_type', 'business_types', '業態', '行業類型']  # 新增：業態類型欄位
 
@@ -1384,18 +1384,21 @@ class KnowledgeImportService(UnifiedJobService):
 
         return unique_list
 
-    async def _recommend_intents(self, knowledge_list: List[Dict]):
+    async def _recommend_intents(self, knowledge_list: List[Dict], enable_quality_evaluation: bool = True):
         """
         為知識推薦合適的意圖
 
         使用 LLM 根據問題和答案內容推薦最合適的意圖
         如果 Excel 已經提供意圖，則直接使用，不調用 LLM
-        推薦結果儲存到 knowledge['recommended_intent']
 
         Args:
             knowledge_list: 知識列表（會直接修改）
+            enable_quality_evaluation: 是否啟用質量評估（False 時跳過 LLM 推薦，僅處理 Excel 提供的意圖）
         """
-        print(f"🎯 為 {len(knowledge_list)} 條知識推薦意圖...")
+        if not enable_quality_evaluation:
+            print(f"🎯 意圖推薦: 已關閉質量評估，僅處理 Excel 提供的意圖（跳過 LLM 推薦）")
+        else:
+            print(f"🎯 為 {len(knowledge_list)} 條知識推薦意圖...")
 
         # 1. 取得所有可用的意圖
         async with self.db_pool.acquire() as conn:
@@ -1467,6 +1470,20 @@ class KnowledgeImportService(UnifiedJobService):
                 continue
 
             # 沒有意圖，需要 LLM 推薦
+            # 🛡️ 如果關閉質量評估，跳過 LLM 推薦
+            if not enable_quality_evaluation:
+                # 設置空的推薦（稍後可在審核時手動設定）
+                knowledge['recommended_intent'] = {
+                    'intent_id': None,
+                    'intent_name': None,
+                    'confidence': 0.0,
+                    'reasoning': '已關閉質量評估，跳過自動推薦'
+                }
+                if idx <= 3:
+                    print(f"   ⏭️  {knowledge['question_summary'][:40]}... → 跳過 LLM 推薦")
+                continue
+
+            # 啟用質量評估時，使用 LLM 推薦意圖
             try:
                 prompt = f"""請根據以下問答內容，從意圖清單中選擇最合適的意圖。
 
@@ -1734,22 +1751,20 @@ class KnowledgeImportService(UnifiedJobService):
                             # 更新現有知識
                             await conn.execute("""
                                 UPDATE knowledge_base SET
-                                    intent_id = $1,
-                                    vendor_id = $2,
-                                    question_summary = $3,
-                                    answer = $4,
-                                    keywords = $5,
-                                    business_types = $6,
-                                    target_user = $7,
-                                    source_file = $8,
-                                    source_date = $9,
-                                    embedding = $10::vector,
-                                    scope = $11,
-                                    priority = $12,
+                                    vendor_id = $1,
+                                    question_summary = $2,
+                                    answer = $3,
+                                    keywords = $4,
+                                    business_types = $5,
+                                    target_user = $6,
+                                    source_file = $7,
+                                    source_date = $8,
+                                    embedding = $9::vector,
+                                    scope = $10,
+                                    priority = $11,
                                     updated_at = CURRENT_TIMESTAMP
-                                WHERE id = $13
+                                WHERE id = $12
                             """,
-                                intent_id,
                                 vendor_id,
                                 knowledge['question_summary'],
                                 knowledge['answer'],
@@ -1763,12 +1778,21 @@ class KnowledgeImportService(UnifiedJobService):
                                 default_priority,
                                 knowledge_id
                             )
+
+                            # 更新意圖映射
+                            if intent_id:
+                                await conn.execute("""
+                                    INSERT INTO knowledge_intent_mapping (knowledge_id, intent_id, intent_type, confidence, assigned_by)
+                                    VALUES ($1, $2, 'primary', 1.0, 'import')
+                                    ON CONFLICT (knowledge_id, intent_id)
+                                    DO UPDATE SET intent_type = 'primary', confidence = 1.0, updated_at = CURRENT_TIMESTAMP
+                                """, knowledge_id, intent_id)
+
                             print(f"   ✏️  更新知識 ID: {knowledge_id}")
                         else:
                             # ID 不存在，新增（忽略提供的 ID，使用自動生成）
-                            await conn.execute("""
+                            new_id = await conn.fetchval("""
                                 INSERT INTO knowledge_base (
-                                    intent_id,
                                     vendor_id,
                                     question_summary,
                                     answer,
@@ -1783,11 +1807,11 @@ class KnowledgeImportService(UnifiedJobService):
                                     created_at,
                                     updated_at
                                 ) VALUES (
-                                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10::vector, $11, $12,
+                                    $1, $2, $3, $4, $5, $6, $7, $8, $9::vector, $10, $11,
                                     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
                                 )
+                                RETURNING id
                             """,
-                                intent_id,
                                 vendor_id,
                                 knowledge['question_summary'],
                                 knowledge['answer'],
@@ -1800,12 +1824,21 @@ class KnowledgeImportService(UnifiedJobService):
                                 'global' if not vendor_id else 'vendor',
                                 default_priority
                             )
-                            print(f"   ⚠️  ID {knowledge_id} 不存在，新增為新知識")
+
+                            # 插入意圖映射
+                            if intent_id:
+                                await conn.execute("""
+                                    INSERT INTO knowledge_intent_mapping (knowledge_id, intent_id, intent_type, confidence, assigned_by)
+                                    VALUES ($1, $2, 'primary', 1.0, 'import')
+                                    ON CONFLICT (knowledge_id, intent_id)
+                                    DO UPDATE SET intent_type = 'primary', confidence = 1.0, updated_at = CURRENT_TIMESTAMP
+                                """, new_id, intent_id)
+
+                            print(f"   ⚠️  ID {knowledge_id} 不存在，新增為新知識 (新 ID: {new_id})")
                     else:
                         # 沒有 ID，新增知識
-                        await conn.execute("""
+                        new_id = await conn.fetchval("""
                             INSERT INTO knowledge_base (
-                                intent_id,
                                 vendor_id,
                                 question_summary,
                                 answer,
@@ -1820,11 +1853,11 @@ class KnowledgeImportService(UnifiedJobService):
                                 created_at,
                                 updated_at
                             ) VALUES (
-                                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10::vector, $11, $12,
+                                $1, $2, $3, $4, $5, $6, $7, $8, $9::vector, $10, $11,
                                 CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
                             )
+                            RETURNING id
                         """,
-                            intent_id,
                             vendor_id,
                             knowledge['question_summary'],
                             knowledge['answer'],
@@ -1837,6 +1870,15 @@ class KnowledgeImportService(UnifiedJobService):
                             'global' if not vendor_id else 'vendor',
                             default_priority
                         )
+
+                        # 插入意圖映射
+                        if intent_id:
+                            await conn.execute("""
+                                INSERT INTO knowledge_intent_mapping (knowledge_id, intent_id, intent_type, confidence, assigned_by)
+                                VALUES ($1, $2, 'primary', 1.0, 'import')
+                                ON CONFLICT (knowledge_id, intent_id)
+                                DO UPDATE SET intent_type = 'primary', confidence = 1.0, updated_at = CURRENT_TIMESTAMP
+                            """, new_id, intent_id)
 
                     imported += 1
 

@@ -471,11 +471,12 @@ class KnowledgeClassifier:
                     i.id,
                     i.name,
                     i.type,
-                    COUNT(kb.id) as knowledge_count,
-                    AVG(kb.intent_confidence) as avg_confidence,
+                    COUNT(DISTINCT kim.knowledge_id) as knowledge_count,
+                    AVG(kim.confidence) as avg_confidence,
                     COUNT(CASE WHEN kb.needs_reclassify THEN 1 END) as needs_reclassify_count
                 FROM intents i
-                LEFT JOIN knowledge_base kb ON i.id = kb.intent_id
+                LEFT JOIN knowledge_intent_mapping kim ON i.id = kim.intent_id AND kim.intent_type = 'primary'
+                LEFT JOIN knowledge_base kb ON kim.knowledge_id = kb.id
                 WHERE i.is_enabled = true
                 GROUP BY i.id, i.name, i.type
                 ORDER BY knowledge_count DESC
