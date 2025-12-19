@@ -58,7 +58,8 @@ services:
     ports:
       - "5001:5000"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   # 知識庫管理後台 - API
@@ -87,9 +88,12 @@ services:
       - ./output:/app/output
       - ./scripts:/app/scripts:ro
     depends_on:
-      - postgres
-      - embedding-api
-      - rag-orchestrator
+      postgres:
+        condition: service_healthy
+      embedding-api:
+        condition: service_started
+      rag-orchestrator:
+        condition: service_started
     restart: unless-stopped
 
   # 知識庫管理後台 - 前端（開發模式）
@@ -162,11 +166,12 @@ services:
       SYNTHESIS_MIN_RESULTS: ${SYNTHESIS_MIN_RESULTS:-2}  # 最少 2 個來源才合成
       SYNTHESIS_MAX_RESULTS: ${SYNTHESIS_MAX_RESULTS:-5}  # 最多合成 5 個來源
       SOP_SIMILARITY_SCORE: ${SOP_SIMILARITY_SCORE:-0.70}  # SOP 相似度分數（調低以觸發合成）
-      # RAG 檢索配置 - 三層降級閾值
+      # RAG 檢索配置 - ✅ 選項1：統一檢索閾值（移除獨立 RAG fallback）
       SOP_SIMILARITY_THRESHOLD: ${SOP_SIMILARITY_THRESHOLD:-0.75}  # SOP 檢索相似度閾值（高精準）
-      KB_SIMILARITY_THRESHOLD: ${KB_SIMILARITY_THRESHOLD:-0.65}  # Knowledge Base 檢索相似度閾值（中精準）
-      FALLBACK_SIMILARITY_THRESHOLD: ${FALLBACK_SIMILARITY_THRESHOLD:-0.55}  # RAG Fallback 相似度閾值（兜底）
-      RAG_SIMILARITY_THRESHOLD: ${RAG_SIMILARITY_THRESHOLD:-0.6}  # RAG 檢索相似度閾值（已廢棄，待移除）
+      KB_SIMILARITY_THRESHOLD: 0.55  # Knowledge Base 統一檢索閾值（含語義匹配，涵蓋原 fallback 範圍）
+      HIGH_QUALITY_THRESHOLD: 0.8  # 高質量知識過濾閾值（用於答案生成）
+      FALLBACK_SIMILARITY_THRESHOLD: 0.55  # ⚠️ 已廢棄：RAG Fallback 已移除，統一使用 KB_SIMILARITY_THRESHOLD
+      RAG_SIMILARITY_THRESHOLD: ${RAG_SIMILARITY_THRESHOLD:-0.6}  # ⚠️ 已廢棄：待移除
       RAG_TOP_K: ${RAG_TOP_K:-5}  # RAG 檢索返回數量
       # 信心度評估配置
       CONFIDENCE_HIGH_THRESHOLD: ${CONFIDENCE_HIGH_THRESHOLD:-0.85}  # 高信心度閾值
@@ -208,9 +213,12 @@ services:
       - ./rag-orchestrator/routers:/app/routers
       - ./rag-orchestrator/services:/app/services
     depends_on:
-      - postgres
-      - embedding-api
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      embedding-api:
+        condition: service_started
     restart: unless-stopped
 
 volumes:

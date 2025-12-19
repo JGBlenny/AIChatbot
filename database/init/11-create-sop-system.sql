@@ -161,7 +161,7 @@ CREATE TABLE IF NOT EXISTS platform_sop_template_intents (
 CREATE INDEX idx_platform_sop_template_intents_template ON platform_sop_template_intents(template_id);
 CREATE INDEX idx_platform_sop_template_intents_intent ON platform_sop_template_intents(intent_id);
 
-COMMENT ON TABLE platform_sop_template_intents IS 'Platform SOP 範本-意圖多對多映射表';
+COMMENT ON TABLE platform_sop_template_intents IS '⚠️ DEPRECATED - Platform SOP 範本-意圖多對多映射表（已廢棄：SOP 現在使用 Group-based embedding 檢索，不再需要意圖關聯）';
 
 -- ========================================
 -- 6. 業者 SOP 分類表
@@ -263,6 +263,8 @@ CREATE TRIGGER update_vendor_sop_items_updated_at
 COMMENT ON TABLE vendor_sop_items IS '業者 SOP 項目表（從平台範本複製後，業者可自行編輯調整）';
 COMMENT ON COLUMN vendor_sop_items.template_id IS '來源範本ID（記錄此 SOP 是從哪個範本複製而來，可為 NULL）';
 COMMENT ON COLUMN vendor_sop_items.group_id IS '群組 ID（邏輯分組，對應 vendor_sop_groups.id）';
+COMMENT ON COLUMN vendor_sop_items.related_intent_id IS '⚠️ DEPRECATED - 關聯意圖（已廢棄：SOP 現在使用 Group-based embedding 檢索，不再需要意圖關聯）';
+COMMENT ON COLUMN vendor_sop_items.priority IS '⚠️ DEPRECATED - 優先級（已廢棄：現代檢索完全基於向量相似度，不使用優先級排序）';
 
 -- ========================================
 -- 9. 業者 SOP 項目-意圖多對多映射表
@@ -284,7 +286,7 @@ CREATE TABLE IF NOT EXISTS vendor_sop_item_intents (
 CREATE INDEX IF NOT EXISTS idx_vendor_sop_item_intents_sop_item ON vendor_sop_item_intents(sop_item_id);
 CREATE INDEX IF NOT EXISTS idx_vendor_sop_item_intents_intent ON vendor_sop_item_intents(intent_id);
 
-COMMENT ON TABLE vendor_sop_item_intents IS '業者 SOP 項目-意圖多對多映射表';
+COMMENT ON TABLE vendor_sop_item_intents IS '⚠️ DEPRECATED - 業者 SOP 項目-意圖多對多映射表（已廢棄：SOP 現在使用 Group-based embedding 檢索，不再需要意圖關聯。現有資料保留但不再使用）';
 
 -- ========================================
 -- 顯示統計資訊
