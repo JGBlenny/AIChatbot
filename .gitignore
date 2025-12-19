@@ -77,3 +77,9 @@ pgadmin_data/
 
 # Data directory
 data/
+
+# 前端測試文件
+knowledge-admin/frontend/public/test-*.html
+
+# 調試腳本
+rag-orchestrator/test_*.py
