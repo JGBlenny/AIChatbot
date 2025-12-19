@@ -32,11 +32,20 @@
 
 ## 🚀 部署步驟
 
+### 環境說明
+
+- **開發環境**: 使用 `docker-compose.yml`
+- **生產環境**: 使用 `docker-compose.prod.yml` ⭐
+
+以下步驟中，請根據環境替換命令：
+- 開發環境: `docker-compose`
+- 生產環境: `docker-compose -f docker-compose.prod.yml`
+
 ### 前置檢查
 
 ```bash
 # 1. 確認當前位置
-cd /Users/lenny/jgb/AIChatbot
+cd /path/to/AIChatbot  # 請替換為實際路徑
 
 # 2. 檢查 Git 狀態
 git status
@@ -46,28 +55,29 @@ git branch
 
 # 4. 拉取最新程式碼（如果是從遠端部署）
 git pull origin main
+
+# 5. 確認環境（開發或生產）
+echo "當前環境: [開發/生產]"  # 請確認
 ```
 
-### 步驟 1: 停止現有服務
+### 步驟 1: 備份資料庫（重要！）⭐ **先備份再停止**
 
 ```bash
-# 停止所有容器
-docker-compose down
+# 確保資料庫正在運行
+# 開發環境:
+docker-compose ps postgres
 
-# 可選：清理舊的容器和網路
-docker-compose down --volumes --remove-orphans
-```
-
-### 步驟 2: 備份資料庫（重要！）
-
-```bash
-# 備份 PostgreSQL 資料庫
-docker-compose up -d postgres
-
-# 等待資料庫啟動
-sleep 5
+# 生產環境:
+docker-compose -f docker-compose.prod.yml ps postgres
 
 # 執行備份
+# 開發環境:
+docker exec aichatbot-postgres pg_dump \
+  -U postgres \
+  -d ai_knowledge_db \
+  > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# 生產環境（相同命令）:
 docker exec aichatbot-postgres pg_dump \
   -U postgres \
   -d ai_knowledge_db \
@@ -76,20 +86,56 @@ docker exec aichatbot-postgres pg_dump \
 echo "✅ 資料庫備份完成"
 ```
 
-### 步驟 3: 更新 Embeddings（重要！）
+### 步驟 2: 執行資料庫遷移（添加 intents.embedding 欄位）⭐ **NEW**
 
-本步驟包含兩個子任務：
+**⚠️ 重要**: 在服務運行時執行，為語義意圖匹配做準備
+
+```bash
+# 確保 PostgreSQL 正在運行
+# 開發環境:
+docker-compose ps postgres
+
+# 生產環境:
+docker-compose -f docker-compose.prod.yml ps postgres
+
+# 執行遷移腳本
+docker exec -i aichatbot-postgres psql -U postgres -d ai_knowledge_db < database/migrations/add_intent_embedding.sql
+
+# 驗證欄位已添加
+docker exec aichatbot-postgres psql -U postgres -d ai_knowledge_db -c "\d intents"
+# 應該看到 embedding | vector(1536) 欄位
+
+echo "✅ 資料庫遷移完成"
+```
+
+### 步驟 3: 更新 Embeddings（重要！）⭐ **在服務運行時執行**
+
+本步驟包含兩個子任務，**都需要在服務運行時執行**：
 
 #### 3.1 更新知識庫 Embeddings（方案 A - Keywords）
 
 **⚠️ 重要**: 此步驟會更新所有現有知識的 embeddings 以包含 keywords
 
 ```bash
-# 方式 1：自動確認模式（推薦用於部署）
-python3 scripts/update_embeddings_with_keywords.py --yes
+# 確保必要服務正在運行（postgres + embedding-api）
+# 開發環境:
+docker-compose ps postgres embedding-api
 
-# 方式 2：手動確認模式（推薦用於測試）
-python3 scripts/update_embeddings_with_keywords.py
+# 生產環境:
+docker-compose -f docker-compose.prod.yml ps postgres embedding-api
+
+# 如果沒有運行，先啟動（僅需要這兩個服務）
+# 開發環境:
+docker-compose up -d postgres embedding-api
+
+# 生產環境:
+docker-compose -f docker-compose.prod.yml up -d postgres embedding-api
+
+# 等待服務就緒
+sleep 10
+
+# 執行更新腳本（自動確認模式，推薦用於部署）
+python3 scripts/update_embeddings_with_keywords.py --yes
 
 # 監控進度日誌
 tail -f /tmp/embedding_update.log
@@ -105,12 +151,8 @@ tail -f /tmp/embedding_update.log
 **⚠️ 新功能**: 此步驟為意圖生成向量表示，支持語義意圖匹配
 
 ```bash
-# 先執行資料庫遷移（添加 intents.embedding 欄位）
-docker-compose up -d postgres
-sleep 5
-
-# 執行遷移腳本
-docker exec -i aichatbot-postgres psql -U postgres -d ai_knowledge_db < database/migrations/add_intent_embedding.sql
+# 確保步驟 2 的資料庫遷移已完成
+# 確保必要服務正在運行（postgres + embedding-api）
 
 # 生成所有意圖的 embeddings
 python3 scripts/generate_intent_embeddings.py --yes
@@ -129,31 +171,64 @@ docker exec aichatbot-postgres psql -U postgres -d ai_knowledge_db -c "SELECT id
 # 應該看到所有意圖的 has_embedding 都是 't' (true)
 ```
 
-### 步驟 4: 重建 Docker 映像
+### 步驟 4: 停止現有服務
 
 ```bash
+# 停止所有容器
+# 開發環境:
+docker-compose down
+
+# 生產環境:
+docker-compose -f docker-compose.prod.yml down
+
+# 可選：清理舊的容器和網路（謹慎使用）
+# docker-compose down --volumes --remove-orphans
+```
+
+### 步驟 5: 重建 Docker 映像
+
+```bash
+# 開發環境:
 # 重建所有服務映像
 docker-compose build --no-cache
 
 # 或只重建特定服務
 docker-compose build knowledge-admin-api rag-orchestrator knowledge-admin-web
+
+# 生產環境:
+docker-compose -f docker-compose.prod.yml build --no-cache
+
+# 或只重建特定服務
+docker-compose -f docker-compose.prod.yml build knowledge-admin-api rag-orchestrator knowledge-admin-web
 ```
 
-### 步驟 5: 啟動服務
+### 步驟 6: 啟動服務
 
 ```bash
-# 啟動所有服務（使用 health checks）
+# 開發環境:
 docker-compose up -d
 
+# 生產環境:
+docker-compose -f docker-compose.prod.yml up -d
+
 # 檢查服務狀態
+# 開發環境:
 docker-compose ps
 
+# 生產環境:
+docker-compose -f docker-compose.prod.yml ps
+
 # 查看啟動日誌
+# 開發環境:
 docker-compose logs -f
+
+# 生產環境:
+docker-compose -f docker-compose.prod.yml logs -f
 ```
 
 **驗證健康檢查**:
 ```bash
+# 開發環境:
 # PostgreSQL
 docker-compose ps postgres | grep "healthy"
 
@@ -162,34 +237,61 @@ docker-compose ps redis | grep "healthy"
 
 # 確認依賴服務都已就緒
 docker-compose ps
+
+# 生產環境:
+docker-compose -f docker-compose.prod.yml ps postgres | grep "healthy"
+docker-compose -f docker-compose.prod.yml ps redis | grep "healthy"
+docker-compose -f docker-compose.prod.yml ps
 ```
 
-### 步驟 6: 驗證部署
+### 步驟 7: 驗證部署
 
-#### 6.1 檢查容器狀態
+#### 7.1 檢查容器狀態
 ```bash
 # 所有容器應該處於 "Up" 狀態
+# 開發環境:
 docker-compose ps
 
+# 生產環境:
+docker-compose -f docker-compose.prod.yml ps
+
 # 檢查容器日誌（無報錯）
+# 開發環境:
 docker-compose logs --tail=50 rag-orchestrator
 docker-compose logs --tail=50 knowledge-admin-api
 docker-compose logs --tail=50 knowledge-admin-web
+
+# 生產環境:
+docker-compose -f docker-compose.prod.yml logs --tail=50 rag-orchestrator
+docker-compose -f docker-compose.prod.yml logs --tail=50 knowledge-admin-api
+docker-compose -f docker-compose.prod.yml logs --tail=50 knowledge-admin-web
 ```
 
-#### 6.2 測試 API 端點
+#### 7.2 測試 API 端點
 ```bash
 # 測試 RAG Orchestrator
+# 開發環境:
 curl http://localhost:8100/health
 
+# 生產環境（請替換為實際域名或 IP）:
+curl http://your-production-domain:8100/health
+
 # 測試 Knowledge Admin API
+# 開發環境:
 curl http://localhost:8086/health
 
+# 生產環境:
+curl http://your-production-domain:8086/health
+
 # 測試前端（應返回 HTML）
+# 開發環境:
 curl http://localhost:8087/
+
+# 生產環境:
+curl http://your-production-domain:8087/
 ```
 
-#### 6.3 功能驗證
+#### 7.3 功能驗證
 
 **測試 Keywords Embedding**:
 1. 訪問 http://localhost:8087/knowledge
@@ -232,10 +334,21 @@ curl http://localhost:8087/
    - ✅ 階段標籤顯示
    - ✅ 百分比和數量雙重顯示
 
-#### 6.4 語義匹配測試
+#### 7.4 語義匹配測試
 ```bash
 # 測試語義意圖匹配
+# 開發環境:
 curl -X POST http://localhost:8100/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "租金幾號要繳？",
+    "vendor_id": 1,
+    "user_role": "customer",
+    "user_id": "test_semantic"
+  }'
+
+# 生產環境:
+curl -X POST http://your-production-domain:8100/api/v1/chat \
   -H "Content-Type: application/json" \
   -d '{
     "question": "租金幾號要繳？",
