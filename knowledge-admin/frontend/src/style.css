@@ -189,6 +189,22 @@ button {
   background: #a6a9ad !important;
 }
 
+.btn-demo {
+  background: #9b59b6 !important;
+  color: white !important;
+  text-decoration: none !important;
+  display: inline-block !important;
+  padding: 6px 12px !important;
+  border-radius: 4px !important;
+  transition: all 0.2s !important;
+}
+
+.btn-demo:hover {
+  background: #8e44ad !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(155, 89, 182, 0.3) !important;
+}
+
 .btn-close {
   background: none;
   border: none;

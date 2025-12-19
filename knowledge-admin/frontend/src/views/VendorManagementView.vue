@@ -24,6 +24,7 @@
             <th width="150">業態類型</th>
             <th width="100">訂閱方案</th>
             <th width="80">狀態</th>
+            <th width="80">展示頁</th>
             <th width="220">操作</th>
           </tr>
         </thead>
@@ -52,6 +53,11 @@
               <span class="status" :class="vendor.is_active ? 'active' : 'inactive'">
                 {{ vendor.is_active ? '✓ 啟用' : '✗ 停用' }}
               </span>
+            </td>
+            <td>
+              <a :href="`/${vendor.code}/chat`" target="_blank" class="btn-demo btn-sm">
+                🔗 展示
+              </a>
             </td>
             <td>
               <button @click="editVendor(vendor)" class="btn-edit btn-sm">編輯</button>

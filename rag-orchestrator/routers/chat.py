@@ -184,10 +184,26 @@ def _clean_answer(answer: str, vendor_id: int, resolver) -> str:
     Returns:
         清理後的答案
     """
+    cleaned, _ = _clean_answer_with_tracking(answer, vendor_id, resolver)
+    return cleaned
+
+
+def _clean_answer_with_tracking(answer: str, vendor_id: int, resolver) -> tuple:
+    """
+    清理答案並替換模板變數（兜底保護），同時追蹤使用的參數
+
+    Args:
+        answer: 原始答案
+        vendor_id: 業者 ID
+        resolver: 參數解析器
+
+    Returns:
+        (清理後的答案, 使用的參數 key 列表)
+    """
     import re
 
-    # 1. 替換明確的模板變數 {{xxx}}
-    cleaned = resolver.resolve_template(answer, vendor_id, raise_on_missing=False)
+    # 1. 替換明確的模板變數 {{xxx}} 並追蹤使用的參數
+    cleaned, used_params = resolver.resolve_template_with_tracking(answer, vendor_id, raise_on_missing=False)
 
     # 2. 清理異常格式（已停用，因為會誤刪真實 LINE ID）
     # 注意：@vendorA 可能是真實的 LINE ID，不應該移除
@@ -198,7 +214,7 @@ def _clean_answer(answer: str, vendor_id: int, resolver) -> str:
         remaining_vars = re.findall(r'\{\{(\w+)\}\}', cleaned)
         print(f"⚠️  警告：答案中仍有未替換的模板變數: {remaining_vars}")
 
-    return cleaned
+    return cleaned, used_params
 
 
 # ==================== 輔助函數：業者驗證與緩存 ====================
@@ -278,11 +294,23 @@ async def _handle_unclear_with_rag_fallback(
     await _record_unclear_question(request, req)
 
     params = resolver.get_vendor_parameters(request.vendor_id)
-    service_hotline = params.get('service_hotline', {}).get('value', '客服')
 
-    # 清理答案並替換模板變數（兜底保護）
-    fallback_answer = f"我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {service_hotline}。請問您方便提供更詳細的內容嗎？"
-    final_answer = _clean_answer(fallback_answer, request.vendor_id, resolver)
+    # 使用模板格式以便追蹤參數使用
+    fallback_answer = "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {{service_hotline}}。請問您方便提供更詳細的內容嗎？"
+
+    # 清理答案並追蹤使用的參數
+    final_answer, used_param_keys = _clean_answer_with_tracking(fallback_answer, request.vendor_id, resolver)
+
+    # 構建調試資訊（如果請求了）
+    debug_info = None
+    if request.include_debug_info:
+        debug_info = _build_debug_info(
+            processing_path='unclear',
+            intent_result=intent_result,
+            llm_strategy='fallback',  # unclear 兜底回應
+            vendor_params=params,
+            used_param_keys=used_param_keys  # ✅ 只顯示實際被注入的參數
+        )
 
     return VendorChatResponse(
         answer=final_answer,
@@ -296,7 +324,8 @@ async def _handle_unclear_with_rag_fallback(
         vendor_id=request.vendor_id,
         mode=request.mode,
         session_id=request.session_id,
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.utcnow().isoformat(),
+        debug_info=debug_info
     )
 
 
@@ -453,6 +482,138 @@ async def _record_unclear_question(request: VendorChatRequest, req: Request):
         print(f"✅ 發現新意圖建議: {analysis['suggested_intent']['name']} (ID: {suggested_intent_id})")
 
 
+# ==================== 輔助函數：調試資訊構建 ====================
+
+def _build_debug_info(
+    processing_path: str,
+    intent_result: dict,
+    llm_strategy: str = "none",
+    sop_candidates: list = None,
+    knowledge_candidates: list = None,
+    synthesis_info: dict = None,
+    vendor_params: dict = None,
+    thresholds: dict = None,
+    used_param_keys: list = None  # 新增：實際被使用的參數 key 列表
+) -> DebugInfo:
+    """構建調試資訊對象"""
+    # 構建意圖詳情
+    intent_details = IntentDetail(
+        primary_intent=intent_result.get('intent_name', ''),
+        primary_confidence=intent_result.get('confidence', 0.0),
+        secondary_intents=intent_result.get('secondary_intents', []),
+        all_intents_with_confidence=intent_result.get('all_intents_with_confidence', [])
+    )
+
+    # 構建 SOP 候選列表
+    sop_candidates_list = None
+    if sop_candidates:
+        sop_candidates_list = [
+            CandidateSOP(**candidate) for candidate in sop_candidates
+        ]
+
+    # 構建知識庫候選列表
+    knowledge_candidates_list = None
+    if knowledge_candidates:
+        knowledge_candidates_list = []
+        for k in knowledge_candidates:
+            knowledge_candidates_list.append(CandidateKnowledge(
+                id=k.get('id'),
+                question_summary=k.get('question_summary', ''),
+                scope=k.get('scope', ''),
+                base_similarity=k.get('base_similarity', k.get('original_similarity', 0.0)),
+                intent_boost=k.get('intent_boost', 1.0),
+                intent_semantic_similarity=k.get('intent_semantic_similarity'),
+                priority=k.get('priority'),
+                priority_boost=k.get('priority_boost', 0.0),
+                boosted_similarity=k.get('boosted_similarity', k.get('similarity', 0.0)),
+                scope_weight=k.get('scope_weight', 0),
+                intent_type=k.get('intent_type'),
+                is_selected=k.get('is_selected', False)
+            ))
+
+    # 構建合成資訊
+    synthesis_info_obj = None
+    if synthesis_info:
+        synthesis_info_obj = SynthesisInfo(**synthesis_info)
+
+    # 構建業者參數列表（只顯示實際被注入的參數）
+    vendor_params_injected = []
+    if vendor_params:
+        # 如果有指定 used_param_keys，只顯示被使用的參數
+        if used_param_keys is not None:
+            for key in used_param_keys:
+                if key in vendor_params:
+                    param = vendor_params[key]
+                    if isinstance(param, dict) and param.get('value'):
+                        vendor_params_injected.append(VendorParamInjected(
+                            param_key=key,
+                            display_name=param.get('display_name', key),
+                            value=str(param.get('value', '')),
+                            unit=param.get('unit')
+                        ))
+        else:
+            # 如果沒有指定，顯示所有有值的參數（向後兼容）
+            for key, param in vendor_params.items():
+                if isinstance(param, dict) and param.get('value'):
+                    vendor_params_injected.append(VendorParamInjected(
+                        param_key=key,
+                        display_name=param.get('display_name', key),
+                        value=str(param.get('value', '')),
+                        unit=param.get('unit')
+                    ))
+
+    # 構建閾值資訊
+    if thresholds is None:
+        thresholds = {
+            'sop_threshold': float(os.getenv('SOP_SIMILARITY_THRESHOLD', '0.75')),
+            'knowledge_retrieval_threshold': float(os.getenv('KB_SIMILARITY_THRESHOLD', '0.55')),
+            'high_quality_threshold': float(os.getenv('HIGH_QUALITY_THRESHOLD', '0.8'))
+        }
+
+    # 構建系統配置狀態
+    system_config = {
+        'llm_strategies': {
+            'perfect_match': {
+                'enabled': True,
+                'threshold': float(os.getenv('PERFECT_MATCH_THRESHOLD', '0.90'))
+            },
+            'synthesis': {
+                'enabled': os.getenv('ENABLE_ANSWER_SYNTHESIS', 'true').lower() == 'true',
+                'threshold': float(os.getenv('SYNTHESIS_THRESHOLD', '0.80'))
+            },
+            'fast_path': {
+                'enabled': True,  # 預設啟用
+                'threshold': float(os.getenv('FAST_PATH_THRESHOLD', '0.75'))
+            },
+            'template': {
+                'enabled': True  # 預設啟用
+            },
+            'llm': {
+                'enabled': True  # 總是啟用
+            }
+        },
+        'processing_paths': {
+            'sop': {'enabled': True, 'threshold': float(os.getenv('SOP_SIMILARITY_THRESHOLD', '0.75'))},
+            'knowledge': {'enabled': True, 'threshold': float(os.getenv('KB_SIMILARITY_THRESHOLD', '0.55'))},
+            'unclear': {'enabled': True},
+            'param_answer': {'enabled': True},
+            'no_knowledge_found': {'enabled': True}
+        }
+    }
+
+    return DebugInfo(
+        processing_path=processing_path,
+        sop_candidates=sop_candidates_list,
+        knowledge_candidates=knowledge_candidates_list,
+        intent_details=intent_details,
+        llm_strategy=llm_strategy,
+        synthesis_info=synthesis_info_obj,
+        vendor_params_injected=vendor_params_injected,
+        thresholds=thresholds,
+        system_config=system_config
+    )
+
+
 # ==================== 輔助函數：SOP 檢索 ====================
 
 async def _retrieve_sop(request: VendorChatRequest, intent_result: dict) -> list:
@@ -492,8 +653,8 @@ async def _build_sop_response(
     # 直接格式化SOP內容，保持原始標題和內容
     raw_answer = _format_sop_answer(sop_items, group_name)
 
-    # 清理答案並替換模板變數（處理 {{service_hotline}} 等參數）
-    final_answer = _clean_answer(raw_answer, request.vendor_id, resolver)
+    # 清理答案並替換模板變數（處理 {{service_hotline}} 等參數），同時追蹤使用的參數
+    final_answer, used_param_keys = _clean_answer_with_tracking(raw_answer, request.vendor_id, resolver)
 
     # 構建來源列表
     sources = []
@@ -504,6 +665,45 @@ async def _build_sop_response(
             answer=sop['content'],
             scope='vendor_sop'
         ) for sop in sop_items]
+
+    # 構建調試資訊（如果請求了）
+    debug_info = None
+    if request.include_debug_info:
+        # 獲取業者參數
+        vendor_params = resolver.get_vendor_parameters(request.vendor_id)
+
+        # 構建 SOP 候選列表
+        sop_candidates_debug = []
+        for sop in sop_items:
+            similarity = sop.get('similarity', 1.0)
+            sop_candidates_debug.append({
+                'id': sop['id'],
+                'item_name': sop['item_name'],
+                'group_name': sop.get('group_name', ''),
+                'base_similarity': similarity,
+                'intent_boost': 1.0,  # SOP 不使用意圖加成
+                'boosted_similarity': similarity,  # 與 base_similarity 相同（boost=1.0）
+                'is_selected': True  # SOP 全部選取
+            })
+
+        # 構建 SOP 合成資訊（多個 SOP 項目組合）
+        synthesis_info_dict = None
+        if len(sop_items) > 1:
+            synthesis_info_dict = {
+                'sources_count': len(sop_items),
+                'sources_ids': [sop['id'] for sop in sop_items],
+                'synthesis_reason': f'組合 {len(sop_items)} 個 SOP 項目（{group_name}）'
+            }
+
+        debug_info = _build_debug_info(
+            processing_path='sop',
+            intent_result=intent_result,
+            llm_strategy='direct',  # SOP 直接返回，不經過 LLM
+            sop_candidates=sop_candidates_debug,
+            synthesis_info=synthesis_info_dict,
+            vendor_params=vendor_params,
+            used_param_keys=used_param_keys  # ✅ 只顯示實際被注入的參數
+        )
 
     response = VendorChatResponse(
         answer=final_answer,
@@ -518,7 +718,8 @@ async def _build_sop_response(
         vendor_id=request.vendor_id,
         mode=request.mode,
         session_id=request.session_id,
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.utcnow().isoformat(),
+        debug_info=debug_info
     )
 
     return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.target_user)
@@ -576,8 +777,47 @@ async def _build_rag_response(
             target_users=r.get('target_user')  # ✅ 添加 target_users
         ) for r in rag_results]
 
-    # 清理答案並替換模板變數（兜底保護）
-    final_answer = _clean_answer(optimization_result['optimized_answer'], request.vendor_id, resolver)
+    # 清理答案並替換模板變數（兜底保護），同時追蹤使用的參數
+    final_answer, used_param_keys = _clean_answer_with_tracking(optimization_result['optimized_answer'], request.vendor_id, resolver)
+
+    # 構建調試資訊（如果請求了）
+    debug_info = None
+    if request.include_debug_info:
+        # 標記哪些知識被選取了
+        selected_ids = {r['id'] for r in rag_results[:optimization_result.get('sources_used', len(rag_results))]}
+        knowledge_candidates_debug = []
+        for r in rag_results:
+            knowledge_candidates_debug.append({
+                'id': r['id'],
+                'question_summary': r.get('question_summary', ''),
+                'scope': r.get('scope', 'global'),
+                'base_similarity': r.get('similarity', 0.0),
+                'intent_boost': 1.0,  # RAG fallback 沒有 intent boost
+                'boosted_similarity': r.get('similarity', 0.0),
+                'scope_weight': 0,
+                'intent_type': r.get('intent_type'),
+                'priority': r.get('priority'),
+                'is_selected': r['id'] in selected_ids
+            })
+
+        # 構建合成資訊
+        synthesis_info_dict = None
+        if optimization_result.get('synthesis_applied'):
+            synthesis_info_dict = {
+                'sources_count': len(rag_results),
+                'sources_ids': [r['id'] for r in rag_results],
+                'synthesis_reason': 'RAG fallback 使用答案合成'
+            }
+
+        debug_info = _build_debug_info(
+            processing_path='rag_fallback',
+            intent_result=intent_result,
+            llm_strategy=optimization_result.get('optimization_method', 'unknown'),
+            knowledge_candidates=knowledge_candidates_debug,
+            synthesis_info=synthesis_info_dict,
+            vendor_params=vendor_params,
+            used_param_keys=used_param_keys  # ✅ 只顯示實際被注入的參數
+        )
 
     response = VendorChatResponse(
         answer=final_answer,
@@ -592,7 +832,8 @@ async def _build_rag_response(
         vendor_id=request.vendor_id,
         mode=request.mode,
         session_id=request.session_id,
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.utcnow().isoformat(),
+        debug_info=debug_info
     )
 
     return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.target_user)
@@ -605,10 +846,20 @@ async def _retrieve_knowledge(
     intent_id: int,
     intent_result: dict
 ):
-    """檢索知識庫（混合模式：intent + 向量相似度）"""
+    """
+    檢索知識庫（混合模式：intent + 向量相似度 + 語義匹配）
+
+    ✅ 選項1實施：統一檢索路徑
+    - 降低閾值到 0.55（原 RAG fallback 的閾值）
+    - 使用語義匹配動態計算 intent_boost
+    - 不再需要獨立的 RAG fallback 路徑
+    """
     retriever = get_vendor_knowledge_retriever()
     all_intent_ids = intent_result.get('intent_ids', [intent_id])
-    kb_similarity_threshold = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.65"))
+
+    # ✅ 選項1：統一閾值為 0.55（涵蓋原 knowledge + rag_fallback 範圍）
+    # 環境變數向後兼容，但默認值改為 0.55
+    kb_similarity_threshold = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.55"))
 
     knowledge_list = await retriever.retrieve_knowledge_hybrid(
         query=request.message,
@@ -616,9 +867,9 @@ async def _retrieve_knowledge(
         vendor_id=request.vendor_id,
         top_k=request.top_k,
         similarity_threshold=kb_similarity_threshold,
-        resolve_templates=False,
         all_intent_ids=all_intent_ids,
-        target_user=request.target_user  # ✅ 使用新參數名
+        target_user=request.target_user,
+        return_debug_info=request.include_debug_info
     )
 
     return knowledge_list
@@ -632,7 +883,14 @@ async def _handle_no_knowledge_found(
     cache_service,
     vendor_info: dict
 ):
-    """處理找不到知識的情況：參數答案 > RAG fallback + 測試場景記錄"""
+    """
+    處理找不到知識的情況：參數答案 > 兜底回應
+
+    ✅ 選項1實施：移除獨立的 RAG fallback 路徑
+    - Knowledge 路徑已降低閾值到 0.55（涵蓋原 RAG fallback 範圍）
+    - 使用語義匹配確保相關知識不會被遺漏
+    - 簡化流程：參數答案 → 兜底回應
+    """
     # Step 1: 優先檢查是否為參數型問題（沒有知識庫時的備選方案）
     from routers.chat_shared import check_param_question
     param_category, param_answer = await check_param_question(
@@ -643,6 +901,20 @@ async def _handle_no_knowledge_found(
 
     if param_answer:
         print(f"   ℹ️  知識庫無結果，使用參數型答案（category={param_category}）")
+
+        # 構建調試資訊（如果請求了）
+        debug_info = None
+        if request.include_debug_info:
+            # 獲取業者參數
+            vendor_params = resolver.get_vendor_parameters(request.vendor_id)
+
+            debug_info = _build_debug_info(
+                processing_path='param_answer',
+                intent_result=intent_result,
+                llm_strategy='param_query',  # 參數查詢
+                vendor_params=vendor_params
+            )
+
         response = VendorChatResponse(
             answer=param_answer['answer'],
             intent_name="參數查詢",
@@ -653,41 +925,37 @@ async def _handle_no_knowledge_found(
             vendor_id=request.vendor_id,
             mode=request.mode,
             timestamp=datetime.utcnow().isoformat() + "Z",
-            video_url=None
+            video_url=None,
+            debug_info=debug_info
         )
         return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.target_user)
 
-    # Step 2: RAG fallback
-    rag_engine = req.app.state.rag_engine
-    fallback_similarity_threshold = float(os.getenv("FALLBACK_SIMILARITY_THRESHOLD", "0.55"))
-    rag_top_k = int(os.getenv("RAG_TOP_K", str(request.top_k)))
-    rag_results = await rag_engine.search(
-        query=request.message,
-        limit=rag_top_k,
-        similarity_threshold=fallback_similarity_threshold,
-        vendor_id=request.vendor_id,
-        target_users=[request.target_user]  # ✅ 添加 target_user 過濾
-    )
+    # ✅ 選項1：移除 Step 2 (RAG fallback)
+    # 原因：Knowledge 路徑已降低閾值到 0.55 並使用語義匹配
+    # 不再需要獨立的降級檢索路徑
 
-    # 如果 RAG 找到結果，返回優化答案
-    if rag_results:
-        print(f"   ✅ RAG fallback 找到 {len(rag_results)} 個相關知識")
-        return await _build_rag_response(
-            request, req, intent_result, rag_results,
-            resolver, vendor_info, cache_service,
-            confidence_level='high'
-        )
-
-    # Step 3: 如果 RAG 也找不到，記錄測試場景並返回兜底回應
-    print(f"   ❌ RAG fallback 也沒有找到相關知識")
+    # Step 2: 記錄測試場景並返回兜底回應
+    print(f"   ❌ 知識庫沒有找到相關知識（閾值: 0.55，已含語義匹配）")
     await _record_no_knowledge_scenario(request, intent_result, req)
 
     params = resolver.get_vendor_parameters(request.vendor_id)
-    service_hotline = params.get('service_hotline', {}).get('value', '客服')
 
-    # 清理答案並替換模板變數（兜底保護）
-    fallback_answer = f"我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {service_hotline}。請問您方便提供更詳細的內容嗎？"
-    final_answer = _clean_answer(fallback_answer, request.vendor_id, resolver)
+    # 使用模板格式以便追蹤參數使用
+    fallback_answer = "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {{service_hotline}}。請問您方便提供更詳細的內容嗎？"
+
+    # 清理答案並追蹤使用的參數
+    final_answer, used_param_keys = _clean_answer_with_tracking(fallback_answer, request.vendor_id, resolver)
+
+    # 構建調試資訊（如果請求了）
+    debug_info = None
+    if request.include_debug_info:
+        debug_info = _build_debug_info(
+            processing_path='no_knowledge_found',
+            intent_result=intent_result,
+            llm_strategy='fallback',  # 兜底回應
+            vendor_params=params,
+            used_param_keys=used_param_keys  # ✅ 只顯示實際被注入的參數
+        )
 
     return VendorChatResponse(
         answer=final_answer,
@@ -702,7 +970,8 @@ async def _handle_no_knowledge_found(
         vendor_id=request.vendor_id,
         mode=request.mode,
         session_id=request.session_id,
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.utcnow().isoformat(),
+        debug_info=debug_info
     )
 
 
@@ -777,14 +1046,32 @@ async def _build_knowledge_response(
     # 獲取業者參數（保留完整資訊包含 display_name, unit 等）
     vendor_params = resolver.get_vendor_parameters(request.vendor_id)
 
-    # 準備搜尋結果格式（使用實際的相似度或預設值）
+    # ✅ 高質量過濾：只保留加成後相似度 >= 0.8 的知識用於答案生成
+    # 注意：knowledge['similarity'] 已經是加成後相似度（見 vendor_knowledge_retriever.py:455）
+    high_quality_threshold = float(os.getenv("HIGH_QUALITY_THRESHOLD", "0.8"))
+    filtered_knowledge_list = [k for k in knowledge_list if k.get('similarity', 0) >= high_quality_threshold]
+
+    if len(filtered_knowledge_list) < len(knowledge_list):
+        print(f"🔍 [高質量過濾] 原始: {len(knowledge_list)} 個候選知識, 過濾後: {len(filtered_knowledge_list)} 個 (閾值: {high_quality_threshold})")
+        for k in knowledge_list:
+            status = "✅" if k.get('similarity', 0) >= high_quality_threshold else "❌"
+            print(f"   {status} ID {k['id']}: similarity={k.get('similarity', 0):.3f}")
+
+    # 如果過濾後沒有高質量知識，返回找不到知識的響應
+    if not filtered_knowledge_list:
+        print(f"⚠️  所有候選知識的相似度都低於高質量閾值 {high_quality_threshold}，嘗試參數答案或兜底回應...")
+        return await _handle_no_knowledge_found(
+            request, req, intent_result, resolver, cache_service, vendor_info
+        )
+
+    # 準備搜尋結果格式（使用過濾後的高質量知識）
     search_results = [{
         'id': k['id'],
         'question_summary': k['question_summary'],
         'content': k['answer'],
         'similarity': k.get('similarity', 0.9),  # 使用實際相似度，沒有則用預設值
         'keywords': k.get('keywords', [])        # 添加 keywords 供信心度評估
-    } for k in knowledge_list]
+    } for k in filtered_knowledge_list]
 
     # 使用 ConfidenceEvaluator 評估信心度（與 /v1/chat/stream 統一）
     evaluation = confidence_evaluator.evaluate(
@@ -834,8 +1121,49 @@ async def _build_knowledge_response(
         video_duration = first_knowledge.get('video_duration')
         video_format = first_knowledge.get('video_format')
 
-    # 清理答案並替換模板變數（兜底保護）
-    final_answer = _clean_answer(optimization_result['optimized_answer'], request.vendor_id, resolver)
+    # 清理答案並替換模板變數（兜底保護），同時追蹤使用的參數
+    final_answer, used_param_keys = _clean_answer_with_tracking(optimization_result['optimized_answer'], request.vendor_id, resolver)
+
+    # 構建調試資訊（如果請求了）
+    debug_info = None
+    if request.include_debug_info:
+        # 標記哪些知識被選取了（使用過濾後的高質量列表）
+        selected_ids = {k['id'] for k in filtered_knowledge_list[:optimization_result.get('sources_used', len(filtered_knowledge_list))]}
+        knowledge_candidates_debug = []
+        # 顯示所有候選知識，但只標記高質量的為被選取
+        for k in knowledge_list:
+            knowledge_candidates_debug.append({
+                'id': k['id'],
+                'question_summary': k.get('question_summary', ''),
+                'scope': k.get('scope', ''),
+                'base_similarity': k.get('original_similarity', k.get('similarity', 0.0)),
+                'intent_boost': k.get('intent_boost', 1.0),
+                'intent_semantic_similarity': k.get('intent_semantic_similarity'),
+                'boosted_similarity': k.get('similarity', 0.0),
+                'scope_weight': k.get('scope_weight', 0),
+                'intent_type': k.get('intent_type'),
+                'priority': k.get('priority'),
+                'is_selected': k['id'] in selected_ids
+            })
+
+        # 構建合成資訊（使用過濾後的高質量列表）
+        synthesis_info_dict = None
+        if optimization_result.get('synthesis_applied'):
+            synthesis_info_dict = {
+                'sources_count': len(filtered_knowledge_list),
+                'sources_ids': [k['id'] for k in filtered_knowledge_list],
+                'synthesis_reason': f'多個高品質結果（>= {high_quality_threshold}），使用答案合成'
+            }
+
+        debug_info = _build_debug_info(
+            processing_path='knowledge',
+            intent_result=intent_result,
+            llm_strategy=optimization_result.get('optimization_method', 'unknown'),
+            knowledge_candidates=knowledge_candidates_debug,
+            synthesis_info=synthesis_info_dict,
+            vendor_params=vendor_params,
+            used_param_keys=used_param_keys  # ✅ 只顯示實際被注入的參數
+        )
 
     response = VendorChatResponse(
         answer=final_answer,
@@ -854,7 +1182,8 @@ async def _build_knowledge_response(
         video_url=video_url,
         video_file_size=video_file_size,
         video_duration=video_duration,
-        video_format=video_format
+        video_format=video_format,
+        debug_info=debug_info
     )
 
     return cache_response_and_return(cache_service, request.vendor_id, request.message, response, request.target_user)
@@ -1031,6 +1360,7 @@ class VendorChatRequest(BaseModel):
     user_id: Optional[str] = Field(None, description="使用者 ID（租客 ID 或客服 ID）")
     top_k: int = Field(5, description="返回知識數量", ge=1, le=10)
     include_sources: bool = Field(True, description="是否包含知識來源")
+    include_debug_info: bool = Field(False, description="是否包含調試資訊（處理流程詳情）")
     disable_answer_synthesis: bool = Field(False, description="禁用答案合成（回測模式專用）")
     skip_sop: bool = Field(False, description="跳過 SOP 檢索，僅檢索知識庫（回測模式專用）")
 
@@ -1085,6 +1415,89 @@ class KnowledgeSource(BaseModel):
     target_users: Optional[List[str]] = Field(None, description="目標用戶列表")
 
 
+# ========================================
+# 調試資訊模型（Debug Info Models）
+# ========================================
+
+class CandidateKnowledge(BaseModel):
+    """候選知識項目（用於調試）"""
+    id: int
+    question_summary: str
+    scope: str
+    base_similarity: float = Field(..., description="基礎向量相似度")
+    intent_boost: float = Field(..., description="意圖加成係數")
+    intent_semantic_similarity: Optional[float] = Field(None, description="意圖語義相似度")
+    priority: Optional[int] = Field(None, description="人工優先級")
+    priority_boost: float = Field(0.0, description="優先級加成值")
+    boosted_similarity: float = Field(..., description="加成後相似度")
+    scope_weight: int = Field(..., description="Scope 權重")
+    intent_type: Optional[str] = Field(None, description="意圖類型：primary/secondary")
+    is_selected: bool = Field(..., description="是否被選取")
+
+
+class CandidateSOP(BaseModel):
+    """候選 SOP 項目（用於調試）"""
+    id: int
+    item_name: str
+    group_name: Optional[str] = None
+    base_similarity: float = Field(..., description="基礎向量相似度")
+    intent_boost: float = Field(..., description="意圖加成係數")
+    boosted_similarity: float = Field(..., description="加成後相似度")
+    is_selected: bool = Field(..., description="是否被選取")
+
+
+class IntentDetail(BaseModel):
+    """意圖分析詳情（用於調試）"""
+    primary_intent: str
+    primary_confidence: float
+    secondary_intents: Optional[List[str]] = None
+    all_intents_with_confidence: Optional[List[Dict]] = None
+
+
+class SynthesisInfo(BaseModel):
+    """答案合成資訊（用於調試）"""
+    sources_count: int
+    sources_ids: List[int]
+    synthesis_reason: str
+
+
+class VendorParamInjected(BaseModel):
+    """已注入的業者參數（用於調試）"""
+    param_key: str
+    display_name: str
+    value: str
+    unit: Optional[str] = None
+
+
+class DebugInfo(BaseModel):
+    """調試資訊（完整處理流程細節）"""
+    processing_path: str = Field(..., description="處理路徑：sop | knowledge | fallback")
+
+    # SOP 檢索結果
+    sop_candidates: Optional[List[CandidateSOP]] = Field(None, description="SOP 候選項目列表")
+
+    # 知識庫檢索結果
+    knowledge_candidates: Optional[List[CandidateKnowledge]] = Field(None, description="知識庫候選項目列表")
+
+    # 意圖分類詳情
+    intent_details: IntentDetail = Field(..., description="意圖分析詳情")
+
+    # LLM 優化策略
+    llm_strategy: str = Field(..., description="LLM 優化策略：perfect_match | synthesis | fast_path | template | full_optimization")
+
+    # 答案合成資訊
+    synthesis_info: Optional[SynthesisInfo] = Field(None, description="答案合成資訊（如果有）")
+
+    # 業者參數注入
+    vendor_params_injected: List[VendorParamInjected] = Field(default_factory=list, description="已注入的業者參數")
+
+    # 相似度閾值資訊
+    thresholds: Dict = Field(default_factory=dict, description="相似度閾值配置")
+
+    # 系統配置狀態
+    system_config: Optional[Dict] = Field(None, description="系統配置狀態（啟用的策略等）")
+
+
 class VendorChatResponse(BaseModel):
     """多業者聊天回應"""
     answer: str = Field(..., description="回答內容")
@@ -1105,6 +1518,8 @@ class VendorChatResponse(BaseModel):
     video_file_size: Optional[int] = Field(None, description="影片檔案大小（bytes）")
     video_duration: Optional[int] = Field(None, description="影片長度（秒）")
     video_format: Optional[str] = Field(None, description="影片格式")
+    # 調試資訊
+    debug_info: Optional[DebugInfo] = Field(None, description="調試資訊（處理流程詳情）")
 
 
 @router.post("/message", response_model=VendorChatResponse)

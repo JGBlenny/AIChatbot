@@ -21,6 +21,16 @@
         </div>
 
         <div class="selector-group">
+          <label>用戶角色：</label>
+          <select v-model="userRole" class="role-select">
+            <option value="tenant">🏠 租客 (tenant)</option>
+            <option value="landlord">🏡 房東 (landlord)</option>
+            <option value="property_manager">👔 物業管理師 (property_manager)</option>
+            <option value="system_admin">⚙️ 系統管理員 (system_admin)</option>
+          </select>
+        </div>
+
+        <div class="selector-group">
           <label>選擇業者：</label>
           <select v-model="selectedVendorId" @change="loadVendorInfo">
             <option value="">請選擇業者...</option>
@@ -28,6 +38,13 @@
               {{ vendor.name }} ({{ vendor.code }})
             </option>
           </select>
+        </div>
+
+        <div class="selector-group">
+          <label>
+            <input type="checkbox" v-model="debugMode" />
+            顯示處理流程詳情
+          </label>
         </div>
       </div>
 
@@ -46,23 +63,13 @@
     <div v-if="selectedVendor" class="vendor-info">
       <h3>業者資訊</h3>
       <div class="info-grid">
-        <div><strong>代碼：</strong>{{ selectedVendor.code }}</div>
-        <div><strong>名稱：</strong>{{ selectedVendor.name }}</div>
-        <div><strong>業務範圍：</strong>
-          <span class="scope-badge" :class="'scope-' + selectedVendor.business_scope_name">
-            {{ getScopeLabel(selectedVendor.business_scope_name) }}
-          </span>
+        <div>
+          <strong>代碼：</strong>
+          <a :href="`/${selectedVendor.code}/chat`" target="_blank" class="vendor-code-link">
+            {{ selectedVendor.code }}
+          </a>
         </div>
-        <div><strong>訂閱方案：</strong>{{ selectedVendor.subscription_plan }}</div>
-        <div><strong>狀態：</strong><span :class="selectedVendor.is_active ? 'status-active' : 'status-inactive'">
-          {{ selectedVendor.is_active ? '啟用' : '停用' }}
-        </span></div>
-      </div>
-      <div class="params-preview" v-if="vendorParamsWithValues && vendorParamsWithValues.length > 0 && chatMode === 'tenant'">
-        <strong>業者參數：</strong>
-        <span class="param-badge" v-for="param in vendorParamsWithValues" :key="param.key">
-          {{ param.displayName }}: {{ formatParamValue(param.value, param.unit) }}
-        </span>
+        <div><strong>名稱：</strong>{{ selectedVendor.name }}</div>
       </div>
     </div>
 
@@ -87,18 +94,190 @@
             </div>
           </div>
 
-          <!-- AI 回應的額外資訊 -->
-          <div v-if="msg.role === 'assistant' && msg.metadata" class="message-metadata">
-            <div class="metadata-item">
-              <strong>意圖：</strong>{{ msg.metadata.intent_name }} ({{ msg.metadata.confidence?.toFixed(2) }})
-            </div>
-            <div v-if="msg.metadata.sources && msg.metadata.sources.length > 0" class="metadata-item">
-              <strong>知識來源 ({{ msg.metadata.source_count }})：</strong>
-              <div v-for="(source, idx) in msg.metadata.sources" :key="idx" class="source-item">
-                <span class="scope-badge" :class="`scope-${source.scope}`">{{ source.scope }}</span>
-                {{ source.question_summary }}
-                <span v-if="source.is_template" class="template-badge">模板</span>
+          <!-- 調試資訊面板 -->
+          <!-- 只有當訊息包含 debug_info 時才顯示 -->
+          <div v-if="msg.role === 'assistant' && msg.debug_info" class="debug-panel">
+            <button @click="toggleDebug(index)" class="debug-toggle">
+              {{ showDebug[index] ? '▼' : '▶' }} 查看處理流程詳情
+            </button>
+
+            <div v-show="showDebug[index]" class="debug-content">
+
+              <!-- 有 debug_info 才顯示詳細資訊 -->
+              <template v-if="msg.debug_info">
+              <!-- 處理路徑 -->
+              <div class="debug-section">
+                <h4>🛤️ 處理路徑</h4>
+                <div v-if="msg.debug_info.system_config" class="config-items">
+                  <span v-for="(config, path) in msg.debug_info.system_config.processing_paths" :key="path"
+                        :class="['config-item', path === msg.debug_info.processing_path ? 'current' : '']">
+                    {{ path === msg.debug_info.processing_path ? '✅' : '○' }} {{ getProcessingPathName(path) }}
+                    <code class="path-code">{{ path }}</code>
+                    <code v-if="config.threshold" class="threshold-code">≥{{ config.threshold }}</code>
+                  </span>
+                </div>
+                <div v-else>
+                  <span class="path-badge" :class="`path-${msg.debug_info.processing_path}`">
+                    {{ getProcessingPathName(msg.debug_info.processing_path) }}
+                  </span>
+                  <code class="path-code">{{ msg.debug_info.processing_path }}</code>
+                </div>
               </div>
+
+              <!-- 意圖分析詳情 -->
+              <div class="debug-section">
+                <h4>🎯 意圖分析</h4>
+                <div>主要意圖: <strong>{{ msg.debug_info.intent_details.primary_intent }}</strong>
+                  ({{ msg.debug_info.intent_details.primary_confidence.toFixed(2) }})
+                </div>
+                <div v-if="msg.debug_info.intent_details.secondary_intents && msg.debug_info.intent_details.secondary_intents.length > 0">
+                  次要意圖: {{ msg.debug_info.intent_details.secondary_intents.join(', ') }}
+                </div>
+              </div>
+
+              <!-- 候選 SOP 列表 -->
+              <div class="debug-section" v-if="msg.debug_info.sop_candidates && msg.debug_info.sop_candidates.length > 0">
+                <h4>📋 候選 SOP ({{ msg.debug_info.sop_candidates.length }})</h4>
+                <div class="table-container">
+                  <table class="candidates-table">
+                    <thead>
+                      <tr>
+                        <th>選取</th>
+                        <th>ID</th>
+                        <th>項目名稱</th>
+                        <th>群組</th>
+                        <th>基礎相似度</th>
+                        <th>意圖加成</th>
+                        <th>加成後</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="s in msg.debug_info.sop_candidates" :key="s.id"
+                          :class="{ 'selected': s.is_selected }">
+                        <td>{{ s.is_selected ? '✅' : '' }}</td>
+                        <td>
+                          <a :href="`/vendors/${selectedVendorId}/configs?category=sop&sop_id=${s.id}`"
+                             target="_blank"
+                             class="id-link"
+                             title="在新分頁打開 SOP 管理">
+                            {{ s.id }}
+                          </a>
+                        </td>
+                        <td class="text-left">
+                          <a :href="`/vendors/${selectedVendorId}/configs?category=sop&sop_id=${s.id}`"
+                             target="_blank"
+                             class="item-link"
+                             title="在新分頁打開 SOP 管理">
+                            {{ s.item_name }}
+                          </a>
+                        </td>
+                        <td class="text-left">{{ s.group_name || '-' }}</td>
+                        <td>{{ s.base_similarity.toFixed(3) }}</td>
+                        <td>{{ s.intent_boost }}x</td>
+                        <td>{{ s.boosted_similarity.toFixed(3) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 候選知識列表 -->
+              <div class="debug-section" v-if="msg.debug_info.knowledge_candidates && msg.debug_info.knowledge_candidates.length > 0">
+                <h4>📚 候選知識 ({{ msg.debug_info.knowledge_candidates.length }})</h4>
+                <div class="table-container">
+                  <table class="candidates-table">
+                    <thead>
+                      <tr>
+                        <th>選取</th>
+                        <th>ID</th>
+                        <th>摘要</th>
+                        <th>Scope</th>
+                        <th>基礎相似度</th>
+                        <th>意圖加成</th>
+                        <th>意圖相似度</th>
+                        <th>優先級加成</th>
+                        <th>加成後</th>
+                        <th>Scope權重</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="k in msg.debug_info.knowledge_candidates" :key="k.id"
+                          :class="{ 'selected': k.is_selected }">
+                        <td>{{ k.is_selected ? '✅' : '' }}</td>
+                        <td>
+                          <a :href="`/knowledge?ids=${k.id}&edit=true`"
+                             target="_blank"
+                             class="id-link"
+                             title="在新分頁打開知識編輯">
+                            {{ k.id }}
+                          </a>
+                        </td>
+                        <td class="text-left">
+                          <a :href="`/knowledge?ids=${k.id}&edit=true`"
+                             target="_blank"
+                             class="item-link"
+                             title="在新分頁打開知識編輯">
+                            {{ k.question_summary }}
+                          </a>
+                        </td>
+                        <td><span class="scope-badge" :class="`scope-${k.scope}`">{{ k.scope }}</span></td>
+                        <td>{{ k.base_similarity.toFixed(3) }}</td>
+                        <td>{{ k.intent_boost }}x</td>
+                        <td>{{ k.intent_semantic_similarity ? k.intent_semantic_similarity.toFixed(3) : 'N/A' }}</td>
+                        <td>{{ k.priority_boost ? '+' + k.priority_boost.toFixed(3) : '0' }}</td>
+                        <td>{{ k.boosted_similarity.toFixed(3) }}</td>
+                        <td>{{ k.scope_weight }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- LLM 優化策略 -->
+              <div class="debug-section">
+                <h4>🤖 LLM 優化策略</h4>
+                <div v-if="msg.debug_info.system_config" class="config-items">
+                  <span v-for="(config, strategy) in msg.debug_info.system_config.llm_strategies" :key="strategy"
+                        :class="['config-item', strategy === msg.debug_info.llm_strategy ? 'current' : '']">
+                    {{ strategy === msg.debug_info.llm_strategy ? '✅' : '○' }} {{ getLLMStrategyName(strategy) }}
+                    <code class="strategy-code">{{ strategy }}</code>
+                    <code v-if="config.threshold" class="threshold-code">≥{{ config.threshold }}</code>
+                  </span>
+                </div>
+                <div v-else>
+                  <span class="strategy-badge">{{ getLLMStrategyName(msg.debug_info.llm_strategy) }}</span>
+                  <code class="strategy-code">{{ msg.debug_info.llm_strategy }}</code>
+                </div>
+              </div>
+
+              <!-- 答案合成資訊 -->
+              <div class="debug-section" v-if="msg.debug_info.synthesis_info">
+                <h4>🔗 答案合成</h4>
+                <div>合成來源: {{ msg.debug_info.synthesis_info.sources_count }} 個</div>
+                <div>來源 ID: {{ msg.debug_info.synthesis_info.sources_ids.join(', ') }}</div>
+                <div>合成原因: {{ msg.debug_info.synthesis_info.synthesis_reason }}</div>
+              </div>
+
+              <!-- 業者參數 -->
+              <div class="debug-section" v-if="msg.debug_info.vendor_params_injected && msg.debug_info.vendor_params_injected.length > 0">
+                <h4>⚙️ 注入的業者參數 ({{ msg.debug_info.vendor_params_injected.length }})</h4>
+                <div v-for="p in msg.debug_info.vendor_params_injected" :key="p.param_key" class="param-item">
+                  <strong>{{ p.display_name }}:</strong> {{ p.value }}{{ p.unit || '' }}
+                  <code class="param-key">{{ p.param_key }}</code>
+                </div>
+              </div>
+
+              <!-- 閾值資訊 -->
+              <div class="debug-section">
+                <h4>📊 相似度閾值</h4>
+                <div class="thresholds">
+                  <span>SOP: {{ msg.debug_info.thresholds.sop_threshold }}</span>
+                  <span>檢索: {{ msg.debug_info.thresholds.knowledge_retrieval_threshold }}</span>
+                  <span>高質量: {{ msg.debug_info.thresholds.high_quality_threshold }}</span>
+                </div>
+              </div>
+              </template>
+              <!-- 結束 debug_info 內容 -->
             </div>
           </div>
         </div>
@@ -114,15 +293,6 @@
 
       <!-- 輸入區域 -->
       <div class="chat-input-container">
-        <div class="quick-questions">
-          <strong>快速測試問題：</strong>
-          <button @click="sendMessage('每月繳費日期是什麼時候？')" class="btn-quick">繳費日期</button>
-          <button @click="sendMessage('繳費方式有哪些？')" class="btn-quick">繳費方式</button>
-          <button @click="sendMessage('逾期繳費會怎樣？')" class="btn-quick">逾期處理</button>
-          <button @click="sendMessage('客服專線是多少？')" class="btn-quick">客服專線</button>
-          <button @click="sendMessage('提前解約怎麼辦？')" class="btn-quick">提前解約</button>
-        </div>
-
         <div class="input-row">
           <input
             v-model="userInput"
@@ -164,8 +334,10 @@ export default {
       messages: [],
       userInput: '',
       loading: false,
-      userRole: 'customer',  // ✅ 新增：從 URL 讀取的用戶角色
-      targetUserConfig: []   // ✅ 新增：從 API 獲取的目標用戶配置
+      userRole: 'tenant',  // 用戶角色（可從 UI 選擇或 URL 讀取）
+      targetUserConfig: [],   // 從 API 獲取的目標用戶配置
+      debugMode: true,  // 是否開啟調試模式（默認開啟）
+      showDebug: {}  // 控制每個訊息的調試面板展開/摺疊 {messageIndex: boolean}
     };
   },
   computed: {
@@ -186,6 +358,7 @@ export default {
     }
   },
   mounted() {
+    console.log('🚀 [ChatTestView] mounted() 被調用');
     this.loadVendors();
     this.loadTargetUserConfig();  // ✅ 新增：載入目標用戶配置
 
@@ -194,7 +367,7 @@ export default {
 
     // 讀取 user_role 參數
     const urlUserRole = urlParams.get('user_role');
-    const validRoles = ['tenant', 'landlord', 'property_manager', 'system_admin', 'staff', 'customer'];
+    const validRoles = ['tenant', 'landlord', 'property_manager', 'system_admin'];
 
     if (urlUserRole && validRoles.includes(urlUserRole)) {
       this.userRole = urlUserRole;
@@ -232,10 +405,17 @@ export default {
     },
     async loadVendors() {
       try {
+        console.log('🔄 [loadVendors] 開始載入業者列表...');
+        console.log('🔄 [loadVendors] RAG_API:', RAG_API);
+        console.log('🔄 [loadVendors] 完整 URL:', `${RAG_API}/v1/vendors`);
         const response = await axios.get(`${RAG_API}/v1/vendors`);
+        console.log('✅ [loadVendors] API 回應成功:', response.data);
         this.vendors = response.data;
+        console.log('✅ [loadVendors] vendors 已更新:', this.vendors);
+        console.log('✅ [loadVendors] vendors 數量:', this.vendors.length);
       } catch (error) {
-        console.error('載入業者失敗', error);
+        console.error('❌ [loadVendors] 載入業者失敗', error);
+        console.error('❌ [loadVendors] error.response:', error.response);
         alert('載入業者失敗：' + (error.response?.data?.detail || error.message));
       }
     },
@@ -325,11 +505,6 @@ export default {
         // 如果沒有從 URL 設定，則根據 chatMode 決定
         let userRole = this.userRole;
 
-        // 如果是預設值 'customer'，且 chatMode 是 B2B，則使用 'staff'
-        if (userRole === 'customer' && this.chatMode === 'customer_service') {
-          userRole = 'staff';
-        }
-
         console.log('📤 發送訊息，user_role:', userRole, 'mode:', this.chatMode);
 
         const response = await axios.post(`${RAG_API}/v1/message`, {
@@ -337,7 +512,8 @@ export default {
           vendor_id: parseInt(this.selectedVendorId),
           mode: this.chatMode,
           user_role: userRole,
-          include_sources: true
+          include_sources: true,
+          include_debug_info: this.debugMode  // 新增：傳遞調試模式
         });
 
         // 添加 AI 回應（使用條件式格式化）
@@ -356,7 +532,8 @@ export default {
             video_file_size: response.data.video_file_size,
             video_duration: response.data.video_duration,
             video_format: response.data.video_format
-          }
+          },
+          debug_info: response.data.debug_info  // 新增：調試資訊
         });
 
       } catch (error) {
@@ -435,22 +612,60 @@ export default {
 
     // ✅ 新增：從配置中獲取角色的中文標籤
     getUserRoleLabel(role) {
-      // 先從 API 配置中查找
-      const config = this.targetUserConfig.find(c => c.user_value === role);
-      if (config && config.display_name) {
-        return config.display_name;
+      // 🛡️ 安全檢查：確保 targetUserConfig 是數組
+      if (Array.isArray(this.targetUserConfig) && this.targetUserConfig.length > 0) {
+        const config = this.targetUserConfig.find(c => c.user_value === role);
+        if (config && config.display_name) {
+          return config.display_name;
+        }
       }
 
-      // 特殊角色
-      if (role === 'staff') {
-        return 'B2B 員工/系統商';
-      }
-      if (role === 'customer') {
-        return '通用客戶';
-      }
+      // Fallback 預設標籤
+      const defaultLabels = {
+        tenant: '租客',
+        landlord: '房東',
+        property_manager: '物業管理師',
+        system_admin: '系統管理員'
+      };
 
-      // 如果都找不到，返回原始值
-      return role;
+      // 如果都找不到，返回預設標籤或原始值
+      return defaultLabels[role] || role;
+    },
+
+    // 切換調試面板顯示/隱藏
+    toggleDebug(index) {
+      // Vue 3: 直接賦值即可，不需要 $set
+      this.showDebug[index] = !this.showDebug[index];
+    },
+
+    // 取得處理路徑的中文名稱
+    getProcessingPathName(path) {
+      const pathNames = {
+        'sop': 'SOP 標準流程',
+        'knowledge': '知識庫流程',
+        'rag_fallback': 'RAG 降級檢索',
+        'param_answer': '參數查詢',
+        'no_knowledge_found': '找不到知識（兜底）',
+        'unclear': '意圖不明確'
+      };
+      return pathNames[path] || path;
+    },
+
+    // 取得 LLM 策略的中文名稱
+    getLLMStrategyName(strategy) {
+      const strategyNames = {
+        'perfect_match': '完美匹配（直接返回）',
+        'fast_path': '快速路徑（簡單格式化）',
+        'template': '模板格式化',
+        'synthesis': '答案合成（多來源）',
+        'llm': 'LLM 完整優化',
+        'direct': '直接返回（SOP）',
+        'param_query': '參數查詢',
+        'fallback': '兜底回應',
+        'none': '無優化',
+        'unknown': '未知策略'
+      };
+      return strategyNames[strategy] || strategy;
     }
   }
 };
@@ -586,14 +801,21 @@ export default {
   margin-bottom: 15px;
 }
 
-.status-active {
-  color: #4ade80;
+.vendor-code-link {
+  color: white;
+  text-decoration: none;
   font-weight: bold;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: inline-block;
 }
 
-.status-inactive {
-  color: #f87171;
-  font-weight: bold;
+.vendor-code-link:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .scope-badge {
@@ -820,36 +1042,6 @@ export default {
   padding: 15px;
 }
 
-.quick-questions {
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.quick-questions strong {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 13px;
-  color: #666;
-}
-
-.btn-quick {
-  padding: 6px 12px;
-  margin-right: 8px;
-  margin-bottom: 6px;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-radius: 16px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-quick:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
-}
-
 .input-row {
   display: flex;
   gap: 10px;
@@ -898,5 +1090,250 @@ export default {
   border: 2px dashed #d1d5db;
   color: #9ca3af;
   font-size: 18px;
+}
+
+/* 調試面板 */
+.debug-panel {
+  margin-top: 15px;
+  border: 2px solid #e0e7ff;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.debug-toggle {
+  width: 100%;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.debug-toggle:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #653a8f 100%);
+}
+
+.debug-content {
+  padding: 20px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 2000px;
+  }
+}
+
+.debug-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: white;
+  border-radius: 6px;
+  border-left: 4px solid #667eea;
+}
+
+.debug-section h4 {
+  margin: 0 0 10px 0;
+  color: #374151;
+  font-size: 15px;
+}
+
+.path-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.path-badge.path-knowledge {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.path-badge.path-sop {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.path-badge.path-fallback {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.strategy-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* 處理路徑和策略的英文代碼 */
+.path-code,
+.strategy-code {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: #f1f5f9;
+  color: #64748b;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: normal;
+}
+
+/* 系統配置狀態樣式 */
+.config-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.config-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  font-size: 12px;
+  color: #4b5563;
+  transition: all 0.2s;
+}
+
+.config-item.current {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e40af;
+  font-weight: 600;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.threshold-code {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.candidates-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.candidates-table thead {
+  background: #f3f4f6;
+}
+
+.candidates-table th {
+  padding: 10px 8px;
+  text-align: center;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #d1d5db;
+  white-space: nowrap;
+}
+
+.candidates-table td {
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.candidates-table td.text-left {
+  text-align: left;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.candidates-table tr.selected {
+  background: #f0fdf4;
+  font-weight: 600;
+}
+
+.candidates-table tr:hover {
+  background: #f9fafb;
+}
+
+/* 候選項連結樣式 */
+.candidates-table .id-link,
+.candidates-table .item-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.candidates-table .id-link:hover,
+.candidates-table .item-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.candidates-table .id-link {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
+.param-item {
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.param-key {
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+}
+
+.thresholds {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.thresholds span {
+  padding: 6px 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.role-select {
+  min-width: 220px;
 }
 </style>

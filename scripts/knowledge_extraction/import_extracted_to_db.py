@@ -181,8 +181,12 @@ class ExtractedKnowledgeImporter:
                         self.stats['skipped_duplicate'] += 1
                         continue
 
-                # 生成向量嵌入
+                # 生成向量嵌入（✅ 方案 A：包含 keywords）
+                keywords_str = ", ".join(keywords) if keywords else ""
                 embedding_text = f"{title} {question_summary} {answer[:200]}"
+                if keywords_str:
+                    embedding_text = f"{embedding_text}. 關鍵字: {keywords_str}"
+
                 embedding = self.generate_embedding(embedding_text)
 
                 if not embedding:

@@ -314,11 +314,15 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
         if not cur.fetchone():
             raise HTTPException(status_code=404, detail="知識不存在")
 
-        # 2. 生成新向量（使用 question_summary 以提高檢索準確度）
+        # 2. 生成新向量（使用 question_summary + keywords 以提高檢索準確度）
         try:
+            # ✅ 方案 A：將 keywords 融入 embedding
+            keywords_str = ", ".join(data.keywords) if data.keywords else ""
+            text_for_embedding = f"{data.question_summary}. 關鍵字: {keywords_str}" if keywords_str else data.question_summary
+
             embedding_response = requests.post(
                 EMBEDDING_API_URL,
-                json={"text": data.question_summary},
+                json={"text": text_for_embedding},
                 timeout=30
             )
 
@@ -448,11 +452,15 @@ async def create_knowledge(data: KnowledgeUpdate):
     cur = conn.cursor()
 
     try:
-        # 1. 生成向量（使用 question_summary 以提高檢索準確度）
+        # 1. 生成向量（使用 question_summary + keywords 以提高檢索準確度）
         try:
+            # ✅ 方案 A：將 keywords 融入 embedding
+            keywords_str = ", ".join(data.keywords) if data.keywords else ""
+            text_for_embedding = f"{data.question_summary}. 關鍵字: {keywords_str}" if keywords_str else data.question_summary
+
             embedding_response = requests.post(
                 EMBEDDING_API_URL,
-                json={"text": data.question_summary},
+                json={"text": text_for_embedding},
                 timeout=30
             )
 
@@ -584,7 +592,7 @@ async def regenerate_all_embeddings():
     try:
         # 1. 查询所有没有 embedding 的知识
         cur.execute("""
-            SELECT id, question_summary, answer
+            SELECT id, question_summary, answer, keywords
             FROM knowledge_base
             WHERE embedding IS NULL
             ORDER BY id
@@ -609,9 +617,12 @@ async def regenerate_all_embeddings():
             kb_id = row['id']
             question = row['question_summary']
             answer = row['answer']
+            keywords = row.get('keywords', [])
 
-            # 使用问题摘要生成 embedding
-            text_for_embedding = question if question else answer[:200]
+            # ✅ 方案 A：將 keywords 融入 embedding
+            keywords_str = ", ".join(keywords) if keywords else ""
+            base_text = question if question else answer[:200]
+            text_for_embedding = f"{base_text}. 關鍵字: {keywords_str}" if keywords_str else base_text
 
             try:
                 embedding_response = requests.post(
@@ -1010,13 +1021,14 @@ async def get_stats():
         """)
         by_business_type = [dict(row) for row in cur.fetchall()]
 
-        # 按意圖統計（前 10 個）
+        # 按意圖統計（前 10 個）- 使用 knowledge_intent_mapping
         cur.execute("""
             SELECT
                 COALESCE(i.name, '未分類') as intent_name,
-                COUNT(kb.id) as count
+                COUNT(DISTINCT COALESCE(kim.knowledge_id, kb.id)) as count
             FROM knowledge_base kb
-            LEFT JOIN intents i ON kb.intent_id = i.id
+            LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id AND kim.intent_type = 'primary'
+            LEFT JOIN intents i ON kim.intent_id = i.id
             GROUP BY i.name
             ORDER BY count DESC
             LIMIT 10

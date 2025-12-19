@@ -222,10 +222,15 @@ class ExcelKnowledgeImporter:
                     self.stats['skipped'] += 1
                     continue
 
-                # 生成向量嵌入
+                # 生成向量嵌入（✅ 方案 A：包含 keywords）
+                keywords_str = ", ".join(knowledge['keywords']) if knowledge.get('keywords') else ""
+                text_for_embedding = f"{question_summary} {knowledge['answer'][:200]}"
+                if keywords_str:
+                    text_for_embedding = f"{text_for_embedding}. 關鍵字: {keywords_str}"
+
                 embedding_response = self.client.embeddings.create(
                     model="text-embedding-3-small",
-                    input=f"{question_summary} {knowledge['answer'][:200]}"
+                    input=text_for_embedding
                 )
                 embedding = embedding_response.data[0].embedding
 

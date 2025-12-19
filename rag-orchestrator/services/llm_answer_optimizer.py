@@ -377,6 +377,7 @@ class LLMAnswerOptimizer:
                     "optimized_answer": original_answer,
                     "original_answer": original_answer,
                     "optimization_applied": False,
+                    "optimization_method": "none",
                     "synthesis_applied": False,
                     "tokens_used": 0,
                     "processing_time_ms": processing_time,
@@ -488,6 +489,7 @@ class LLMAnswerOptimizer:
             "optimized_answer": original_answer,
             "original_answer": original_answer,
             "optimization_applied": False,
+            "optimization_method": "none",
             "tokens_used": 0,
             "processing_time_ms": processing_time
         }
@@ -829,19 +831,22 @@ class LLMAnswerOptimizer:
         base_prompt = """你是一個專業的知識整合助理。你的任務是將多個相關但各有側重的答案，合成為一個完整、準確、結構化的回覆。
 
 🚨 **最高優先級規則**（不可違反）：
-⚠️ **絕對禁止改寫溫暖語氣**：如果原始答案的開頭是溫暖、親切的口語表達（如「先謝謝你願意提出來」、「這種『跟當初講的不一樣』的感覺，真的會讓人很不舒服」、emoji 等），你**必須逐字保留**這些表達，作為合成答案的開頭。
-   - ❌ **嚴格禁止**：將「先謝謝你願意提出來，這種『跟當初講的不一樣』的感覺，真的會讓人很不舒服，也會懷疑是不是被騙 🙏」改寫為「我們理解您的困擾」或「當您發現合約內容不一致時」
-   - ✅ **必須這樣做**：完整保留原句「先謝謝你願意提出來，這種『跟當初講的不一樣』的感覺，真的會讓人很不舒服，也會懷疑是不是被騙 🙏」作為開場，然後再補充其他資訊
+⚠️ **絕對禁止改寫或添加內容**：
+   - 如果原始答案包含溫暖、親切的開場白（如情緒共鳴、安撫性語句、emoji），你**必須逐字保留**這些表達
+   - ❌ **嚴格禁止**：改寫、簡化、或用其他方式表達原始的溫暖語氣
+   - ❌ **嚴格禁止**：在原始答案沒有的情況下，自行添加溫暖的開場白或情緒性語句
+   - ✅ **正確做法**：只保留原始答案中實際存在的內容，不添加、不刪除、不改寫
 
 合成要求：
 1. **完整性**：涵蓋所有重要資訊，不遺漏任何關鍵步驟或細節
 2. **準確性**：資訊必須來自提供的答案，不要編造或推測
-3. **結構化**：可使用標題、列表、步驟編號（但溫暖的開場白不需要標題）
-4. **去重**：如果多個答案提到相同資訊，只保留一次，避免重複
-5. **優先級**：優先使用相似度較高的答案內容
-6. **Markdown**：適當使用 Markdown 格式（## 標題、- 列表、**粗體**）"""
+3. **忠實性**：嚴格基於原始答案內容，不添加原文沒有的內容
+4. **結構化**：可使用標題、列表、步驟編號來組織資訊
+5. **去重**：如果多個答案提到相同資訊，只保留一次，避免重複
+6. **優先級**：優先使用相似度較高的答案內容
+7. **Markdown**：適當使用 Markdown 格式（## 標題、- 列表、**粗體**）"""
 
-        rule_number = 7
+        rule_number = 8  # 合成要求現在有 7 項，從 8 開始
 
         # 如果有業者參數，加入參數替換指令
         if vendor_params:

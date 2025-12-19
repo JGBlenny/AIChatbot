@@ -59,12 +59,6 @@
             <span class="message-time">{{ formatTime(message.timestamp) }}</span>
             <span v-if="message.metadata" class="message-metadata">
               <span class="intent-tag">{{ message.metadata.intent }}</span>
-              <span
-                class="confidence-badge"
-                :class="getConfidenceClass(message.metadata.confidence)"
-              >
-                {{ (message.metadata.confidence * 100).toFixed(0) }}%
-              </span>
             </span>
           </div>
         </div>
