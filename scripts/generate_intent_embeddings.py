@@ -19,9 +19,9 @@ from psycopg2.extras import RealDictCursor
 DB_CONFIG = {
     'host': os.getenv('POSTGRES_HOST', 'localhost'),
     'port': int(os.getenv('POSTGRES_PORT', '5432')),
-    'database': os.getenv('POSTGRES_DB', 'ai_knowledge_db'),
-    'user': os.getenv('POSTGRES_USER', 'postgres'),
-    'password': os.getenv('POSTGRES_PASSWORD', 'postgres123')
+    'database': os.getenv('POSTGRES_DB', 'aichatbot_admin'),
+    'user': os.getenv('POSTGRES_USER', 'aichatbot'),
+    'password': os.getenv('POSTGRES_PASSWORD', 'aichatbot_password')
 }
 
 # Embedding API 配置

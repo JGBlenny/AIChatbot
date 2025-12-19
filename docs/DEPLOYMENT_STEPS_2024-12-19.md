@@ -73,14 +73,14 @@ docker-compose -f docker-compose.prod.yml ps postgres
 # 執行備份
 # 開發環境:
 docker exec aichatbot-postgres pg_dump \
-  -U postgres \
-  -d ai_knowledge_db \
+  -U aichatbot \
+  -d aichatbot_admin \
   > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # 生產環境（相同命令）:
 docker exec aichatbot-postgres pg_dump \
-  -U postgres \
-  -d ai_knowledge_db \
+  -U aichatbot \
+  -d aichatbot_admin \
   > backup_$(date +%Y%m%d_%H%M%S).sql
 
 echo "✅ 資料庫備份完成"
@@ -99,10 +99,10 @@ docker-compose ps postgres
 docker-compose -f docker-compose.prod.yml ps postgres
 
 # 執行遷移腳本
-docker exec -i aichatbot-postgres psql -U postgres -d ai_knowledge_db < database/migrations/add_intent_embedding.sql
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin < database/migrations/add_intent_embedding.sql
 
 # 驗證欄位已添加
-docker exec aichatbot-postgres psql -U postgres -d ai_knowledge_db -c "\d intents"
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c "\d intents"
 # 應該看到 embedding | vector(1536) 欄位
 
 echo "✅ 資料庫遷移完成"
@@ -166,7 +166,7 @@ python3 scripts/generate_intent_embeddings.py --yes
 **如何驗證**:
 ```bash
 # 檢查意圖表的 embedding 欄位
-docker exec aichatbot-postgres psql -U postgres -d ai_knowledge_db -c "SELECT id, name, (embedding IS NOT NULL) as has_embedding FROM intents ORDER BY id;"
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c "SELECT id, name, (embedding IS NOT NULL) as has_embedding FROM intents ORDER BY id;"
 
 # 應該看到所有意圖的 has_embedding 都是 't' (true)
 ```
@@ -372,7 +372,7 @@ curl -X POST http://your-production-domain:8100/api/v1/chat \
 docker-compose logs embedding-api
 
 # 確認資料庫連接
-docker-compose exec postgres psql -U postgres -d ai_knowledge_db -c "SELECT COUNT(*) FROM ai_knowledge;"
+docker-compose exec postgres psql -U aichatbot -d aichatbot_admin -c "SELECT COUNT(*) FROM ai_knowledge;"
 
 # 重新執行更新腳本（知識庫）
 python3 scripts/update_embeddings_with_keywords.py --yes
@@ -388,10 +388,10 @@ python3 scripts/generate_intent_embeddings.py --yes
 **解決方法**:
 ```bash
 # 確認是否執行了遷移腳本
-docker exec aichatbot-postgres psql -U postgres -d ai_knowledge_db -c "\d intents"
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c "\d intents"
 
 # 如果沒有 embedding 欄位，執行遷移
-docker exec -i aichatbot-postgres psql -U postgres -d ai_knowledge_db < database/migrations/add_intent_embedding.sql
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin < database/migrations/add_intent_embedding.sql
 
 # 再次執行生成腳本
 python3 scripts/generate_intent_embeddings.py --yes
@@ -419,7 +419,7 @@ docker-compose logs [service_name]
 **解決方法**:
 ```bash
 # PostgreSQL health check
-docker-compose exec postgres pg_isready -U postgres
+docker-compose exec postgres pg_isready -U aichatbot
 
 # Redis health check
 docker-compose exec redis redis-cli ping
@@ -497,7 +497,7 @@ docker-compose up -d postgres
 sleep 5
 
 # 恢復備份（替換為實際備份文件名）
-docker exec -i aichatbot-postgres psql -U postgres -d ai_knowledge_db < backup_YYYYMMDD_HHMMSS.sql
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin < backup_YYYYMMDD_HHMMSS.sql
 ```
 
 ### 4. 重啟服務
