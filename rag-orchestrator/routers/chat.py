@@ -217,6 +217,45 @@ def _clean_answer_with_tracking(answer: str, vendor_id: int, resolver) -> tuple:
     return cleaned, used_params
 
 
+def _remove_duplicate_question(answer: str, question: str) -> str:
+    """
+    移除答案開頭重複的問題
+
+    有時 LLM 會在答案開頭重複用戶的問題，這個函數會檢測並移除重複的部分。
+
+    Args:
+        answer: 原始答案
+        question: 用戶問題
+
+    Returns:
+        清理後的答案
+    """
+    if not answer or not question:
+        return answer
+
+    # 移除前後空白後比較
+    answer_stripped = answer.strip()
+    question_stripped = question.strip()
+
+    # 檢查答案是否以問題開頭（允許一些空白差異）
+    if answer_stripped.startswith(question_stripped):
+        # 移除重複的問題部分
+        remaining = answer_stripped[len(question_stripped):].strip()
+        print(f"✂️  移除答案中重複的問題: {question_stripped[:50]}...")
+        return remaining
+
+    # 檢查是否有換行符分隔（例如：問題\n\n答案）
+    lines = answer_stripped.split('\n')
+    if lines and lines[0].strip() == question_stripped:
+        # 移除第一行（重複的問題）
+        remaining = '\n'.join(lines[1:]).strip()
+        print(f"✂️  移除答案首行重複的問題: {question_stripped[:50]}...")
+        return remaining
+
+    # 沒有檢測到重複，返回原答案
+    return answer
+
+
 # ==================== 輔助函數：業者驗證與緩存 ====================
 
 def _validate_vendor(vendor_id: int, resolver) -> dict:
@@ -780,6 +819,9 @@ async def _build_rag_response(
     # 清理答案並替換模板變數（兜底保護），同時追蹤使用的參數
     final_answer, used_param_keys = _clean_answer_with_tracking(optimization_result['optimized_answer'], request.vendor_id, resolver)
 
+    # 移除答案中重複的問題（LLM 有時會在答案開頭重複問題）
+    final_answer = _remove_duplicate_question(final_answer, request.message)
+
     # 構建調試資訊（如果請求了）
     debug_info = None
     if request.include_debug_info:
@@ -1123,6 +1165,9 @@ async def _build_knowledge_response(
 
     # 清理答案並替換模板變數（兜底保護），同時追蹤使用的參數
     final_answer, used_param_keys = _clean_answer_with_tracking(optimization_result['optimized_answer'], request.vendor_id, resolver)
+
+    # 移除答案中重複的問題（LLM 有時會在答案開頭重複問題）
+    final_answer = _remove_duplicate_question(final_answer, request.message)
 
     # 構建調試資訊（如果請求了）
     debug_info = None
