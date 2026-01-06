@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { useAuthStore } from './stores/auth';
 import KnowledgeView from './views/KnowledgeView.vue';
+import LoginView from './views/LoginView.vue';
 import IntentsView from './views/IntentsView.vue';
 import SuggestedIntentsView from './views/SuggestedIntentsView.vue';
 import KnowledgeReclassifyView from './views/KnowledgeReclassifyView.vue';
@@ -30,17 +32,27 @@ import CacheManagementView from './views/CacheManagementView.vue';
 import BusinessTypesConfigView from './views/BusinessTypesConfigView.vue';
 // Target User Config Management
 import TargetUserConfigView from './views/TargetUserConfigView.vue';
+// Admin Management
+import AdminManagementView from './views/AdminManagementView.vue';
 
 const routes = [
   {
     path: '/',
     name: 'Home',
-    redirect: '/knowledge/universal'
+    redirect: '/knowledge/universal',
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: LoginView,
+    meta: { requiresAuth: false }
   },
   {
     path: '/knowledge',
     name: 'Knowledge',
-    component: KnowledgeView
+    component: KnowledgeView,
+    meta: { requiresAuth: true }
   },
   // 知識庫分類路由（重定向到主頁面但帶過濾參數）
   {
@@ -163,11 +175,19 @@ const routes = [
     path: '/audience-config',
     redirect: '/target-users-config'
   },
+  // Admin Management
+  {
+    path: '/admin-management',
+    name: 'AdminManagement',
+    component: AdminManagementView,
+    meta: { requiresAuth: true }
+  },
   // Vendor Chat Demo - 業者測試頁面（放在最後以避免路由衝突）
   {
     path: '/:vendorCode/chat',
     name: 'VendorChatDemo',
-    component: VendorChatDemo
+    component: VendorChatDemo,
+    meta: { requiresAuth: false }  // 展示頁不需要登入
   }
 ];
 
@@ -175,5 +195,27 @@ const router = createRouter({
   history: createWebHistory(),
   routes
 });
+
+// 路由守衛 - 保護需要認證的路由
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
+
+  // 檢查路由是否需要認證（預設為 true）
+  const requiresAuth = to.meta.requiresAuth !== false
+
+  if (requiresAuth && !authStore.isAuthenticated) {
+    // 需要登入但未登入，重定向到登入頁
+    next({
+      name: 'Login',
+      query: { redirect: to.fullPath }  // 記錄原本要去的頁面
+    })
+  } else if (to.name === 'Login' && authStore.isAuthenticated) {
+    // 已登入用戶訪問登入頁，重定向到首頁
+    next({ name: 'Home' })
+  } else {
+    // 其他情況正常通過
+    next()
+  }
+})
 
 export default router;

@@ -9,3 +9,7 @@ pandas==2.3.3
 openpyxl==3.1.5
 openai==1.54.0
 httpx==0.27.0
+# 認證相關套件
+python-jose[cryptography]==3.3.0
+passlib==1.7.4
+bcrypt==4.0.1

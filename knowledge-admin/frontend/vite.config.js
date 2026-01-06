@@ -29,7 +29,16 @@ export default defineConfig({
       // Knowledge Admin API 路徑
       '/api': {
         target: 'http://knowledge-admin-api:8000',
-        changeOrigin: true
+        changeOrigin: true,
+        // 確保轉發所有 headers（包括 Authorization）
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            // 轉發原始請求的所有 headers
+            if (req.headers.authorization) {
+              proxyReq.setHeader('Authorization', req.headers.authorization);
+            }
+          });
+        }
       },
       '/rag-api': {
         target: 'http://rag-orchestrator:8100/api',

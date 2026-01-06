@@ -2,7 +2,7 @@
 知識庫管理 API
 提供知識的 CRUD 操作，並自動處理向量更新
 """
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -15,6 +15,10 @@ from datetime import datetime
 
 # 導入測試情境路由
 from routes_test_scenarios import router as test_scenarios_router
+# 導入認證路由和認證依賴
+from routes_auth import router as auth_router, get_current_user
+# 導入管理員管理路由
+from routes_admins import router as admins_router
 
 app = FastAPI(
     title="知識庫管理 API",
@@ -24,6 +28,10 @@ app = FastAPI(
 
 # 包含測試情境路由
 app.include_router(test_scenarios_router)
+# 包含認證路由
+app.include_router(auth_router)
+# 包含管理員管理路由
+app.include_router(admins_router)
 
 # CORS 設定（允許前端跨域請求）
 app.add_middleware(
@@ -120,7 +128,8 @@ async def list_knowledge(
     business_types: Optional[str] = Query(None, description="業態類型過濾（逗號分隔）"),
     universal_only: Optional[str] = Query(None, description="只顯示通用知識"),
     limit: int = Query(50, ge=1, le=100, description="每頁筆數"),
-    offset: int = Query(0, ge=0, description="偏移量")
+    offset: int = Query(0, ge=0, description="偏移量"),
+    user: dict = Depends(get_current_user)
 ):
     """
     列出所有知識
@@ -236,7 +245,7 @@ async def list_knowledge(
         conn.close()
 
 @app.get("/api/knowledge/{knowledge_id}")
-async def get_knowledge(knowledge_id: int):
+async def get_knowledge(knowledge_id: int, user: dict = Depends(get_current_user)):
     """取得單一知識詳情（含關聯意圖）"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -294,7 +303,7 @@ async def get_knowledge(knowledge_id: int):
         conn.close()
 
 @app.put("/api/knowledge/{knowledge_id}")
-async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
+async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict = Depends(get_current_user)):
     """
     更新知識（自動重新生成向量）
 
@@ -438,7 +447,7 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate):
         conn.close()
 
 @app.post("/api/knowledge")
-async def create_knowledge(data: KnowledgeUpdate):
+async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_current_user)):
     """
     新增知識
 
@@ -527,7 +536,7 @@ async def create_knowledge(data: KnowledgeUpdate):
         conn.close()
 
 @app.delete("/api/knowledge/{knowledge_id}")
-async def delete_knowledge(knowledge_id: int):
+async def delete_knowledge(knowledge_id: int, user: dict = Depends(get_current_user)):
     """刪除知識"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -584,7 +593,7 @@ async def delete_knowledge(knowledge_id: int):
         conn.close()
 
 @app.post("/api/knowledge/regenerate-embeddings")
-async def regenerate_all_embeddings():
+async def regenerate_all_embeddings(user: dict = Depends(get_current_user)):
     """批量重新生成所有缺失的 embedding"""
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -669,7 +678,7 @@ async def regenerate_all_embeddings():
         conn.close()
 
 @app.get("/api/intents")
-async def list_intents():
+async def list_intents(user: dict = Depends(get_current_user)):
     """取得所有意圖"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -691,7 +700,7 @@ async def list_intents():
         conn.close()
 
 @app.get("/api/target-users")
-async def list_target_users():
+async def list_target_users(user: dict = Depends(get_current_user)):
     """取得所有目標用戶類型（僅啟用）"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -716,7 +725,7 @@ async def list_target_users():
 # ==================== Target User Config Management ====================
 
 @app.get("/api/target-users-config")
-async def list_target_users_config(is_active: Optional[bool] = None):
+async def list_target_users_config(is_active: Optional[bool] = None, user: dict = Depends(get_current_user)):
     """取得目標用戶類型配置（管理介面用）"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -762,7 +771,7 @@ class TargetUserConfigUpdate(BaseModel):
 
 
 @app.post("/api/target-users-config")
-async def create_target_user_config(data: TargetUserConfigCreate):
+async def create_target_user_config(data: TargetUserConfigCreate, user: dict = Depends(get_current_user)):
     """新增目標用戶類型"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -806,7 +815,7 @@ async def create_target_user_config(data: TargetUserConfigCreate):
 
 
 @app.put("/api/target-users-config/{user_value}")
-async def update_target_user_config(user_value: str, data: TargetUserConfigUpdate):
+async def update_target_user_config(user_value: str, data: TargetUserConfigUpdate, user: dict = Depends(get_current_user)):
     """更新目標用戶類型"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -869,7 +878,7 @@ async def update_target_user_config(user_value: str, data: TargetUserConfigUpdat
 
 
 @app.delete("/api/target-users-config/{user_value}")
-async def delete_target_user_config(user_value: str):
+async def delete_target_user_config(user_value: str, user: dict = Depends(get_current_user)):
     """停用目標用戶類型（軟刪除）"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -905,7 +914,7 @@ async def delete_target_user_config(user_value: str):
         conn.close()
 
 @app.post("/api/knowledge/{knowledge_id}/intents")
-async def add_knowledge_intent(knowledge_id: int, mapping: IntentMapping):
+async def add_knowledge_intent(knowledge_id: int, mapping: IntentMapping, user: dict = Depends(get_current_user)):
     """為知識新增意圖關聯"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -953,7 +962,7 @@ async def add_knowledge_intent(knowledge_id: int, mapping: IntentMapping):
         conn.close()
 
 @app.delete("/api/knowledge/{knowledge_id}/intents/{intent_id}")
-async def remove_knowledge_intent(knowledge_id: int, intent_id: int):
+async def remove_knowledge_intent(knowledge_id: int, intent_id: int, user: dict = Depends(get_current_user)):
     """移除知識的意圖關聯"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -988,7 +997,7 @@ async def remove_knowledge_intent(knowledge_id: int, intent_id: int):
         conn.close()
 
 @app.get("/api/stats")
-async def get_stats():
+async def get_stats(user: dict = Depends(get_current_user)):
     """取得統計資訊"""
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -1076,7 +1085,8 @@ async def get_stats():
 async def get_backtest_results(
     status_filter: Optional[str] = Query(None, description="篩選狀態 (all/failed/passed)"),
     limit: int = Query(50, ge=1, le=200, description="每頁筆數"),
-    offset: int = Query(0, ge=0, description="偏移量")
+    offset: int = Query(0, ge=0, description="偏移量"),
+    user: dict = Depends(get_current_user)
 ):
     """
     取得回測結果
@@ -1244,7 +1254,7 @@ async def get_backtest_results(
         raise HTTPException(status_code=500, detail=f"讀取回測結果失敗: {str(e)}")
 
 @app.get("/api/backtest/summary")
-async def get_backtest_summary():
+async def get_backtest_summary(user: dict = Depends(get_current_user)):
     """取得回測摘要統計"""
     project_root = os.getenv("PROJECT_ROOT", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
     summary_path = os.path.join(project_root, "output/backtest/backtest_results_summary.txt")
@@ -1263,7 +1273,8 @@ async def get_backtest_summary():
 @app.get("/api/backtest/runs")
 async def list_backtest_runs(
     limit: int = Query(10, ge=1, le=50, description="每頁筆數"),
-    offset: int = Query(0, ge=0, description="偏移量")
+    offset: int = Query(0, ge=0, description="偏移量"),
+    user: dict = Depends(get_current_user)
 ):
     """
     列出歷史回測執行記錄
@@ -1346,7 +1357,8 @@ async def get_backtest_run_results(
     run_id: int,
     status_filter: Optional[str] = Query(None, description="篩選狀態 (all/failed/passed)"),
     limit: int = Query(50, ge=1, le=200, description="每頁筆數"),
-    offset: int = Query(0, ge=0, description="偏移量")
+    offset: int = Query(0, ge=0, description="偏移量"),
+    user: dict = Depends(get_current_user)
 ):
     """
     取得特定回測執行的詳細結果
@@ -1498,7 +1510,7 @@ class BacktestRunRequest(BaseModel):
     test_strategy: Optional[str] = "full"  # full, incremental, failed_only
 
 @app.post("/api/backtest/run")
-async def run_backtest(request: BacktestRunRequest = None):
+async def run_backtest(request: BacktestRunRequest = None, user: dict = Depends(get_current_user)):
     """
     執行回測腳本
 
@@ -1608,7 +1620,7 @@ async def run_backtest(request: BacktestRunRequest = None):
 
 
 @app.post("/api/backtest/cancel")
-async def cancel_backtest():
+async def cancel_backtest(user: dict = Depends(get_current_user)):
     """
     中斷當前運行的回測
 
@@ -1672,7 +1684,7 @@ async def cancel_backtest():
 
 
 @app.get("/api/backtest/status")
-async def get_backtest_status():
+async def get_backtest_status(user: dict = Depends(get_current_user)):
     """
     檢查回測執行狀態
     """
@@ -1722,7 +1734,8 @@ class CategoryConfig(BaseModel):
 
 @app.get("/api/category-config")
 async def get_category_config(
-    include_inactive: bool = Query(False, description="是否包含已停用的分類")
+    include_inactive: bool = Query(False, description="是否包含已停用的分類"),
+    user: dict = Depends(get_current_user)
 ):
     """
     取得所有 Category 配置
@@ -1759,7 +1772,7 @@ async def get_category_config(
 
 
 @app.post("/api/category-config")
-async def create_category(category: CategoryConfig):
+async def create_category(category: CategoryConfig, user: dict = Depends(get_current_user)):
     """
     新增 Category 配置
 
@@ -1824,7 +1837,7 @@ async def create_category(category: CategoryConfig):
 
 
 @app.put("/api/category-config/{category_id}")
-async def update_category(category_id: int, category: CategoryConfig):
+async def update_category(category_id: int, category: CategoryConfig, user: dict = Depends(get_current_user)):
     """
     更新 Category 配置
 
@@ -1880,7 +1893,7 @@ async def update_category(category_id: int, category: CategoryConfig):
 
 
 @app.delete("/api/category-config/{category_id}")
-async def delete_category(category_id: int):
+async def delete_category(category_id: int, user: dict = Depends(get_current_user)):
     """
     刪除 Category 配置（軟刪除）
 
@@ -1945,7 +1958,7 @@ async def delete_category(category_id: int):
 
 
 @app.post("/api/category-config/sync-usage")
-async def sync_category_usage():
+async def sync_category_usage(user: dict = Depends(get_current_user)):
     """
     同步 Category 使用次數
 

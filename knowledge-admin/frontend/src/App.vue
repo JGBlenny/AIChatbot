@@ -121,6 +121,10 @@
             <span class="nav-icon">⚡</span>
             <span class="nav-text">緩存管理</span>
           </router-link>
+          <router-link to="/admin-management" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text">管理員管理</span>
+          </router-link>
         </div>
       </nav>
 
@@ -137,12 +141,16 @@
       <header class="app-header">
         <h1 class="page-title">{{ currentPageTitle }}</h1>
         <div class="header-actions">
-          <button class="header-btn" title="通知">
-            🔔
-            <span class="notification-badge">3</span>
+          <div class="user-info" v-if="currentUser">
+            <span class="user-name">{{ currentUser.full_name || currentUser.username }}</span>
+            <span class="user-role">管理員</span>
+          </div>
+          <button class="header-btn change-password-btn" @click="showChangePasswordModal = true" title="修改密碼">
+            🔑 修改密碼
           </button>
-          <button class="header-btn" title="設定">⚙️</button>
-          <button class="header-btn" title="使用者">👤</button>
+          <button class="header-btn logout-btn" @click="handleLogout" title="登出">
+            🚪 登出
+          </button>
         </div>
       </header>
 
@@ -155,12 +163,26 @@
     <div v-if="isStandalonePage" class="standalone-container">
       <router-view />
     </div>
+
+    <!-- 修改密碼對話框 -->
+    <ChangePasswordModal
+      v-if="showChangePasswordModal"
+      @close="showChangePasswordModal = false"
+      @success="handleChangePasswordSuccess"
+    />
   </div>
 </template>
 
 <script>
+import { useAuthStore } from './stores/auth'
+import ChangePasswordModal from './components/ChangePasswordModal.vue'
+
 export default {
   name: 'App',
+
+  components: {
+    ChangePasswordModal
+  },
 
   data() {
     return {
@@ -168,6 +190,8 @@ export default {
         knowledge: true,  // 預設展開知識庫管理
         vendor: true      // 預設展開業者管理
       },
+      currentUser: null,
+      showChangePasswordModal: false,
       pageTitles: {
         '/': '產業知識庫',
         '/knowledge': '知識庫管理',
@@ -186,7 +210,8 @@ export default {
         '/backtest': '回測結果',
         '/cache-management': '緩存管理',
         '/target-users-config': '目標用戶配置',
-        '/business-types-config': '業態類型配置'
+        '/business-types-config': '業態類型配置',
+        '/admin-management': '管理員管理'
       }
     };
   },
@@ -198,7 +223,7 @@ export default {
 
     isStandalonePage() {
       // 檢查是否為獨立頁面（不需要側邊欄和 header）
-      return this.$route.name === 'VendorChatDemo';
+      return this.$route.name === 'VendorChatDemo' || this.$route.name === 'Login';
     }
   },
 
@@ -207,6 +232,39 @@ export default {
       this.expandedGroups[groupName] = !this.expandedGroups[groupName];
       // 儲存展開狀態到 localStorage
       localStorage.setItem('expandedGroups', JSON.stringify(this.expandedGroups));
+    },
+
+    async handleLogout() {
+      const authStore = useAuthStore()
+
+      if (confirm('確定要登出嗎？')) {
+        authStore.logout()
+        this.$router.push('/login')
+      }
+    },
+
+    handleChangePasswordSuccess() {
+      const authStore = useAuthStore()
+
+      this.showChangePasswordModal = false
+      // 修改密碼成功後登出，要求用戶使用新密碼重新登入
+      authStore.logout()
+      this.$router.push('/login')
+    },
+
+    async loadCurrentUser() {
+      const authStore = useAuthStore()
+
+      if (authStore.isAuthenticated && authStore.user) {
+        this.currentUser = authStore.user
+      } else if (authStore.isAuthenticated) {
+        try {
+          await authStore.fetchCurrentUser()
+          this.currentUser = authStore.user
+        } catch (error) {
+          console.error('載入用戶資料失敗:', error)
+        }
+      }
     }
   },
 
@@ -219,6 +277,16 @@ export default {
       } catch (e) {
         console.error('Failed to parse expandedGroups from localStorage:', e);
       }
+    }
+
+    // 載入當前用戶資料
+    this.loadCurrentUser()
+  },
+
+  watch: {
+    '$route'() {
+      // 路由變化時更新用戶資料
+      this.loadCurrentUser()
     }
   }
 };
@@ -612,25 +680,89 @@ body {
   align-items: center;
 }
 
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 10px 18px;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #e8eaed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.user-info:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.user-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a202c;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.user-role {
+  font-size: 12px;
+  color: #667eea;
+  font-weight: 600;
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .header-btn {
   position: relative;
-  width: 40px;
-  height: 40px;
+  height: 42px;
+  padding: 0 20px;
   border: none;
-  background: #f5f7fa;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 18px;
-  transition: all 0.3s;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .header-btn:hover {
-  background: #e8eaed;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.header-btn:active {
+  transform: translateY(-1px);
+}
+
+.change-password-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  color: white;
+  border: 2px solid transparent;
+}
+
+.change-password-btn:hover {
+  background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+  box-shadow: 0 6px 24px rgba(249, 115, 22, 0.4);
+}
+
+.logout-btn {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.logout-btn:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 6px 24px rgba(102, 126, 234, 0.4);
 }
 
 .notification-badge {

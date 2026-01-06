@@ -82,6 +82,9 @@ services:
       # 開發模式：動態掛載後端程式碼
       - ./knowledge-admin/backend/app.py:/app/app.py
       - ./knowledge-admin/backend/routes_test_scenarios.py:/app/routes_test_scenarios.py
+      - ./knowledge-admin/backend/routes_auth.py:/app/routes_auth.py
+      - ./knowledge-admin/backend/routes_admins.py:/app/routes_admins.py
+      - ./knowledge-admin/backend/auth_utils.py:/app/auth_utils.py
       # 測試資料與輸出
       - ./test_scenarios_smoke.xlsx:/app/test_scenarios_smoke.xlsx:ro
       - ./test_scenarios_full.xlsx:/app/test_scenarios_full.xlsx:ro
@@ -112,8 +115,12 @@ services:
       - ./knowledge-admin/frontend/index.html:/app/index.html
       - ./knowledge-admin/frontend/vite.config.js:/app/vite.config.js
       - ./knowledge-admin/frontend/package.json:/app/package.json
+      - ./knowledge-admin/frontend/.env.development:/app/.env.development
     environment:
       - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:8000
+      - VITE_RAG_API_BASE_URL=http://localhost:8100
+      - VITE_RAG_API_URL=http://localhost:8100/api/v1
     depends_on:
       - knowledge-admin-api
     restart: unless-stopped
