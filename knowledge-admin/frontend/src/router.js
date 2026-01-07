@@ -52,7 +52,10 @@ const routes = [
     path: '/knowledge',
     name: 'Knowledge',
     component: KnowledgeView,
-    meta: { requiresAuth: true }
+    meta: {
+      requiresAuth: true,
+      permissions: ['knowledge:view']
+    }
   },
   // 知識庫分類路由（重定向到主頁面但帶過濾參數）
   {
@@ -180,7 +183,10 @@ const routes = [
     path: '/admin-management',
     name: 'AdminManagement',
     component: AdminManagementView,
-    meta: { requiresAuth: true }
+    meta: {
+      requiresAuth: true,
+      permissions: ['admin:view']
+    }
   },
   // Vendor Chat Demo - 業者測試頁面（放在最後以避免路由衝突）
   {
@@ -196,26 +202,52 @@ const router = createRouter({
   routes
 });
 
-// 路由守衛 - 保護需要認證的路由
+// 路由守衛 - 保護需要認證的路由並檢查權限
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
   // 檢查路由是否需要認證（預設為 true）
   const requiresAuth = to.meta.requiresAuth !== false
 
+  // 1. 檢查登入狀態
   if (requiresAuth && !authStore.isAuthenticated) {
     // 需要登入但未登入，重定向到登入頁
-    next({
+    return next({
       name: 'Login',
       query: { redirect: to.fullPath }  // 記錄原本要去的頁面
     })
-  } else if (to.name === 'Login' && authStore.isAuthenticated) {
-    // 已登入用戶訪問登入頁，重定向到首頁
-    next({ name: 'Home' })
-  } else {
-    // 其他情況正常通過
-    next()
   }
+
+  // 2. 已登入用戶訪問登入頁，重定向到首頁
+  if (to.name === 'Login' && authStore.isAuthenticated) {
+    return next({ name: 'Home' })
+  }
+
+  // 3. 檢查權限（如果路由有設定權限要求）
+  if (to.meta.permissions && to.meta.permissions.length > 0) {
+    const hasPermission = authStore.hasAnyPermission(to.meta.permissions)
+
+    if (!hasPermission) {
+      // 無權限，顯示警告並停留在當前頁面
+      console.warn(`缺少權限: ${to.meta.permissions.join(', ')}`)
+      alert('您沒有權限訪問此頁面')
+      return next(false)  // 取消導航
+    }
+  }
+
+  // 4. 檢查角色（如果路由有設定角色要求）
+  if (to.meta.roles && to.meta.roles.length > 0) {
+    const hasRole = to.meta.roles.some(role => authStore.hasRole(role))
+
+    if (!hasRole) {
+      console.warn(`缺少角色: ${to.meta.roles.join(', ')}`)
+      alert('您沒有權限訪問此頁面')
+      return next(false)
+    }
+  }
+
+  // 5. 其他情況正常通過
+  next()
 })
 
 export default router;

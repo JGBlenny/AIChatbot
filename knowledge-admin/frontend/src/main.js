@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 import './style.css'
 import axios from 'axios'
+import permissionDirective from './directives/permission'
 
 // === 全局 Axios 攔截器 - 自動附加認證 Token ===
 axios.interceptors.request.use(
@@ -51,6 +52,9 @@ window.fetch = function(url, options = {}) {
 
 const app = createApp(App)
 const pinia = createPinia()
+
+// 註冊權限指令
+app.directive('permission', permissionDirective)
 
 app.use(pinia)
 app.use(router)

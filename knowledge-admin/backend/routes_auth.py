@@ -11,7 +11,13 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime
 import os
 
-from auth_utils import verify_password, create_access_token, decode_access_token
+from auth_utils import (
+    verify_password,
+    create_access_token,
+    decode_access_token,
+    get_user_permissions,
+    get_user_roles
+)
 
 router = APIRouter(prefix="/api/auth", tags=["認證"])
 
@@ -225,3 +231,36 @@ async def auth_health_check():
         服務狀態
     """
     return {"status": "ok", "service": "auth"}
+
+@router.get("/permissions")
+async def get_current_user_permissions(user: dict = Depends(get_current_user)):
+    """
+    獲取當前用戶的所有權限和角色
+
+    需要在 Authorization header 中提供有效的 JWT token
+
+    Returns:
+        {
+            "roles": [
+                {"name": "super_admin", "display_name": "超級管理員"},
+                ...
+            ],
+            "permissions": ["knowledge:view", "knowledge:create", ...]
+        }
+    """
+    try:
+        # 查詢用戶的角色
+        roles = await get_user_roles(user['id'])
+
+        # 查詢用戶的權限
+        permissions = await get_user_permissions(user['id'])
+
+        return {
+            "roles": roles,
+            "permissions": permissions
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"獲取權限失敗: {str(e)}"
+        )
