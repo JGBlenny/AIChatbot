@@ -38,23 +38,17 @@ git pull origin main
 - 如果 `knowledge-admin/frontend/src/` 下的文件有變更 → 需要
 - 如果只有後端或配置變更 → 不需要
 
-**需要重新構建時執行（本地）：**
+**需要重新構建時執行（在服務器上）：**
 ```bash
 cd knowledge-admin/frontend
 npm install
 npm run build
-```
-
-**上傳 dist 到服務器：**
-```bash
-rsync -avz --progress --delete \
-  knowledge-admin/frontend/dist/ \
-  user@server:/path/to/AIChatbot/knowledge-admin/frontend/dist/
+cd ../..
 ```
 
 **檢查項目：**
-- [ ] dist 目錄已上傳
-- [ ] 沒有上傳錯誤
+- [ ] 前端構建成功
+- [ ] dist 目錄已更新
 
 ---
 

@@ -44,39 +44,15 @@ docker-compose -f docker-compose.prod.yml exec postgres psql -U aichatbot -d aic
 - roles
 - role_permissions
 
-### 步驟 3：重新構建前端（本地或 CI/CD）
+### 步驟 3：重新構建前端
 ```bash
 cd knowledge-admin/frontend
 npm install
 npm run build
+cd ../..
 ```
 
-### 步驟 4：上傳更新文件到服務器
-**需要上傳的文件：**
-```bash
-# 前端構建產物
-knowledge-admin/frontend/dist/
-
-# 後端腳本（新增）
-knowledge-admin/backend/create_admin.py
-
-# 配置文件（已更新）
-docker-compose.prod.yml
-```
-
-**使用 rsync 上傳（推薦）：**
-```bash
-rsync -avz --progress \
-  knowledge-admin/frontend/dist/ \
-  user@server:/path/to/AIChatbot/knowledge-admin/frontend/dist/
-
-rsync -avz --progress \
-  knowledge-admin/backend/create_admin.py \
-  docker-compose.prod.yml \
-  user@server:/path/to/AIChatbot/
-```
-
-### 步驟 5：在服務器上重新構建並啟動服務
+### 步驟 4：重新構建並啟動服務
 ```bash
 cd /path/to/AIChatbot
 
