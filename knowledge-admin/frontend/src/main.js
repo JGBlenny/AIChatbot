@@ -5,6 +5,7 @@ import router from './router'
 import './style.css'
 import axios from 'axios'
 import permissionDirective from './directives/permission'
+import { useAuthStore } from './stores/auth'
 
 // === 全局 Axios 攔截器 - 自動附加認證 Token ===
 axios.interceptors.request.use(
@@ -58,4 +59,11 @@ app.directive('permission', permissionDirective)
 
 app.use(pinia)
 app.use(router)
-app.mount('#app')
+
+// 初始化認證狀態（載入權限）
+const authStore = useAuthStore()
+authStore.initialize().catch(err => {
+  console.warn('初始化認證失敗:', err)
+}).finally(() => {
+  app.mount('#app')
+})

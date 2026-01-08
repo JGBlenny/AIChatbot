@@ -34,6 +34,8 @@ import BusinessTypesConfigView from './views/BusinessTypesConfigView.vue';
 import TargetUserConfigView from './views/TargetUserConfigView.vue';
 // Admin Management
 import AdminManagementView from './views/AdminManagementView.vue';
+// Role Management
+import RoleManagementView from './views/RoleManagementView.vue';
 
 const routes = [
   {
@@ -188,6 +190,16 @@ const routes = [
       permissions: ['admin:view']
     }
   },
+  // Role Management
+  {
+    path: '/role-management',
+    name: 'RoleManagement',
+    component: RoleManagementView,
+    meta: {
+      requiresAuth: true,
+      permissions: ['role:view']
+    }
+  },
   // Vendor Chat Demo - 業者測試頁面（放在最後以避免路由衝突）
   {
     path: '/:vendorCode/chat',
@@ -223,7 +235,19 @@ router.beforeEach(async (to, from, next) => {
     return next({ name: 'Home' })
   }
 
-  // 3. 檢查權限（如果路由有設定權限要求）
+  // 3. 確保已載入權限（頁面刷新時需要）
+  if (authStore.isAuthenticated && authStore.permissions.length === 0) {
+    try {
+      await authStore.fetchUserPermissions()
+    } catch (err) {
+      console.error('載入權限失敗:', err)
+      // 如果載入權限失敗，可能是 token 過期，登出並重定向到登入頁
+      authStore.logout()
+      return next({ name: 'Login', query: { redirect: to.fullPath } })
+    }
+  }
+
+  // 4. 檢查權限（如果路由有設定權限要求）
   if (to.meta.permissions && to.meta.permissions.length > 0) {
     const hasPermission = authStore.hasAnyPermission(to.meta.permissions)
 
@@ -235,7 +259,7 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // 4. 檢查角色（如果路由有設定角色要求）
+  // 5. 檢查角色（如果路由有設定角色要求）
   if (to.meta.roles && to.meta.roles.length > 0) {
     const hasRole = to.meta.roles.some(role => authStore.hasRole(role))
 
@@ -246,7 +270,7 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // 5. 其他情況正常通過
+  // 6. 其他情況正常通過
   next()
 })
 

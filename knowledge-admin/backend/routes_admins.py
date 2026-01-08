@@ -49,6 +49,7 @@ class AdminCreate(AdminBase):
     """新增管理員請求"""
     username: str
     password: str
+    role_ids: Optional[List[int]] = None
 
     @validator('username')
     def validate_username(cls, v):
@@ -71,6 +72,7 @@ class AdminUpdate(BaseModel):
     email: Optional[str] = None
     full_name: Optional[str] = None
     is_active: Optional[bool] = None
+    role_ids: Optional[List[int]] = None
 
     @validator('email')
     def validate_email(cls, v):
@@ -253,6 +255,15 @@ async def create_admin(
         cur.execute(query, (data.username, password_hash, data.email, data.full_name))
         admin = cur.fetchone()
 
+        # 分配角色（如果提供）
+        if data.role_ids:
+            for role_id in data.role_ids:
+                cur.execute("""
+                    INSERT INTO admin_roles (admin_id, role_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT (admin_id, role_id) DO NOTHING
+                """, (admin['id'], role_id))
+
         conn.commit()
 
         return admin
@@ -309,21 +320,42 @@ async def update_admin(
             updates.append("is_active = %s")
             params.append(data.is_active)
 
-        if not updates:
-            raise HTTPException(status_code=400, detail="沒有需要更新的欄位")
+        # 更新角色（如果提供）
+        if data.role_ids is not None:
+            # 刪除現有角色
+            cur.execute("DELETE FROM admin_roles WHERE admin_id = %s", (admin_id,))
+            # 插入新角色
+            if data.role_ids:
+                for role_id in data.role_ids:
+                    cur.execute("""
+                        INSERT INTO admin_roles (admin_id, role_id)
+                        VALUES (%s, %s)
+                        ON CONFLICT (admin_id, role_id) DO NOTHING
+                    """, (admin_id, role_id))
 
-        updates.append("updated_at = CURRENT_TIMESTAMP")
-        params.append(admin_id)
+        # 如果有基本資料更新，執行更新
+        if updates:
+            updates.append("updated_at = CURRENT_TIMESTAMP")
+            params.append(admin_id)
 
-        query = f"""
-            UPDATE admins
-            SET {', '.join(updates)}
-            WHERE id = %s
-            RETURNING id, username, email, full_name, is_active,
-                      last_login_at, created_at, updated_at
-        """
-        cur.execute(query, params)
-        admin = cur.fetchone()
+            query = f"""
+                UPDATE admins
+                SET {', '.join(updates)}
+                WHERE id = %s
+                RETURNING id, username, email, full_name, is_active,
+                          last_login_at, created_at, updated_at
+            """
+            cur.execute(query, params)
+            admin = cur.fetchone()
+        else:
+            # 如果只更新角色，重新查詢管理員資料
+            cur.execute("""
+                SELECT id, username, email, full_name, is_active,
+                       last_login_at, created_at, updated_at
+                FROM admins
+                WHERE id = %s
+            """, (admin_id,))
+            admin = cur.fetchone()
 
         conn.commit()
 
@@ -489,6 +521,101 @@ async def change_own_password(
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"修改密碼失敗: {str(e)}")
+    finally:
+        cur.close()
+        conn.close()
+
+
+# ========== 角色分配 API ==========
+
+@router.get("/{admin_id}/roles")
+async def get_admin_roles(
+    admin_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    獲取管理員的角色列表
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        # 檢查管理員是否存在
+        cur.execute("SELECT id FROM admins WHERE id = %s", (admin_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="管理員不存在")
+
+        # 查詢角色列表
+        query = """
+            SELECT r.id, r.name, r.display_name, r.description, r.is_system
+            FROM roles r
+            JOIN admin_roles ar ON r.id = ar.role_id
+            WHERE ar.admin_id = %s
+            ORDER BY r.name
+        """
+        cur.execute(query, (admin_id,))
+        roles = cur.fetchall()
+
+        return {"admin_id": admin_id, "roles": roles}
+
+    finally:
+        cur.close()
+        conn.close()
+
+
+class UpdateAdminRolesRequest(BaseModel):
+    """更新管理員角色請求"""
+    role_ids: List[int]
+
+
+@router.put("/{admin_id}/roles")
+async def update_admin_roles(
+    admin_id: int,
+    data: UpdateAdminRolesRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    更新管理員的角色
+
+    完全替換管理員的角色列表
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        # 檢查管理員是否存在
+        cur.execute("SELECT id FROM admins WHERE id = %s", (admin_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="管理員不存在")
+
+        # 刪除現有角色
+        cur.execute("DELETE FROM admin_roles WHERE admin_id = %s", (admin_id,))
+
+        # 插入新角色
+        if data.role_ids:
+            for role_id in data.role_ids:
+                # 檢查角色是否存在
+                cur.execute("SELECT id FROM roles WHERE id = %s", (role_id,))
+                if not cur.fetchone():
+                    raise HTTPException(status_code=400, detail=f"角色 ID {role_id} 不存在")
+
+                # 插入角色關聯
+                cur.execute("""
+                    INSERT INTO admin_roles (admin_id, role_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT (admin_id, role_id) DO NOTHING
+                """, (admin_id, role_id))
+
+        conn.commit()
+
+        return {"message": "角色更新成功", "role_count": len(data.role_ids)}
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"更新角色失敗: {str(e)}")
     finally:
         cur.close()
         conn.close()

@@ -19,6 +19,8 @@ from routes_test_scenarios import router as test_scenarios_router
 from routes_auth import router as auth_router, get_current_user
 # 導入管理員管理路由
 from routes_admins import router as admins_router
+# 導入角色管理路由
+from routes_roles import router as roles_router
 
 app = FastAPI(
     title="知識庫管理 API",
@@ -32,6 +34,8 @@ app.include_router(test_scenarios_router)
 app.include_router(auth_router)
 # 包含管理員管理路由
 app.include_router(admins_router)
+# 包含角色管理路由
+app.include_router(roles_router)
 
 # CORS 設定（允許前端跨域請求）
 app.add_middleware(

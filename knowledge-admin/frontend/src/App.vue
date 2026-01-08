@@ -122,8 +122,12 @@
             <span class="nav-text">緩存管理</span>
           </router-link>
           <router-link to="/admin-management" class="nav-item">
-            <span class="nav-icon">👤</span>
-            <span class="nav-text">管理員管理</span>
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">用戶管理</span>
+          </router-link>
+          <router-link to="/role-management" class="nav-item" v-permission="'role:view'">
+            <span class="nav-icon">🔐</span>
+            <span class="nav-text">角色管理</span>
           </router-link>
         </div>
       </nav>
@@ -211,7 +215,8 @@ export default {
         '/cache-management': '緩存管理',
         '/target-users-config': '目標用戶配置',
         '/business-types-config': '業態類型配置',
-        '/admin-management': '管理員管理'
+        '/admin-management': '用戶管理',
+        '/role-management': '角色管理'
       }
     };
   },
@@ -268,7 +273,7 @@ export default {
     }
   },
 
-  mounted() {
+  async mounted() {
     // 恢復群組展開狀態
     const expandedGroups = localStorage.getItem('expandedGroups');
     if (expandedGroups !== null) {
@@ -278,6 +283,10 @@ export default {
         console.error('Failed to parse expandedGroups from localStorage:', e);
       }
     }
+
+    // 初始化認證狀態（會載入用戶資料和權限）
+    const authStore = useAuthStore()
+    await authStore.initialize()
 
     // 載入當前用戶資料
     this.loadCurrentUser()

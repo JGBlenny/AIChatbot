@@ -2,7 +2,7 @@
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>{{ isEditMode ? '編輯管理員' : '新增管理員' }}</h3>
+        <h3>{{ isEditMode ? '編輯用戶' : '新增用戶' }}</h3>
         <button @click="$emit('close')" class="btn-close">&times;</button>
       </div>
 
@@ -62,7 +62,7 @@
               v-model="formData.full_name"
               type="text"
               class="form-control"
-              placeholder="管理員姓名"
+              placeholder="用戶姓名"
             />
           </div>
 
@@ -81,12 +81,19 @@
 
           <!-- 狀態（僅編輯模式） -->
           <div v-if="isEditMode" class="form-group">
-            <label>狀態</label>
-            <div class="checkbox-group">
-              <label>
-                <input type="checkbox" v-model="formData.is_active" />
-                啟用
-              </label>
+            <label class="form-label">狀態</label>
+            <div class="checkbox-wrapper">
+              <div class="checkbox-item" @click="formData.is_active = !formData.is_active">
+                <input
+                  type="checkbox"
+                  v-model="formData.is_active"
+                  @click.stop
+                  class="checkbox-input"
+                />
+                <div class="checkbox-content">
+                  <div class="checkbox-text">啟用此帳號</div>
+                </div>
+              </div>
             </div>
             <div v-if="isSelfEdit" class="form-hint warning">
               ⚠️ 注意：你不能停用自己的帳號
@@ -95,19 +102,27 @@
 
           <!-- 重設密碼（僅編輯模式） -->
           <div v-if="isEditMode && !isSelfEdit" class="form-group">
-            <label>密碼</label>
-            <div class="checkbox-group">
-              <label>
-                <input type="checkbox" v-model="resetPassword" @change="handleResetPasswordToggle" />
-                重設密碼
-              </label>
+            <label class="form-label">密碼設定</label>
+            <div class="checkbox-wrapper">
+              <div class="checkbox-item" @click="toggleResetPassword">
+                <input
+                  type="checkbox"
+                  v-model="resetPassword"
+                  @click.stop
+                  @change="handleResetPasswordToggle"
+                  class="checkbox-input"
+                />
+                <div class="checkbox-content">
+                  <div class="checkbox-text">重設密碼</div>
+                </div>
+              </div>
             </div>
 
             <div v-if="resetPassword" class="reset-password-fields">
               <div class="warning-box">
                 <span class="warning-icon">⚠️</span>
                 <div>
-                  <p>此操作將重設該管理員的密碼。請務必將新密碼告知該管理員。</p>
+                  <p>此操作將重設該用戶的密碼。請務必將新密碼告知該用戶。</p>
                 </div>
               </div>
 
@@ -160,6 +175,42 @@
                 </div>
                 <div v-if="errors.confirm_new_password" class="error-message">{{ errors.confirm_new_password }}</div>
               </div>
+            </div>
+          </div>
+
+          <!-- 角色分配 -->
+          <div class="form-group">
+            <label>角色分配</label>
+            <div class="role-selector">
+              <div v-if="rolesLoading" class="loading-text">載入中...</div>
+              <div v-else-if="availableRoles.length === 0" class="empty-text">無可用角色</div>
+              <div v-else class="role-list">
+                <div
+                  v-for="role in availableRoles"
+                  :key="role.id"
+                  class="role-item"
+                  @click="toggleRole(role.id)"
+                >
+                  <input
+                    type="checkbox"
+                    :value="role.id"
+                    v-model="formData.role_ids"
+                    @click.stop
+                    class="role-checkbox"
+                  />
+                  <div class="role-content">
+                    <div class="role-name">{{ role.display_name }}</div>
+                    <div class="role-meta">
+                      <code>{{ role.name }}</code>
+                      <span v-if="role.description" class="role-divider">·</span>
+                      <span v-if="role.description">{{ role.description }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-if="!rolesLoading && availableRoles.length > 0" class="role-hint">
+              已選擇 {{ formData.role_ids?.length || 0 }} 個角色
             </div>
           </div>
 
@@ -217,7 +268,8 @@ export default {
       full_name: '',
       is_active: true,
       new_password: '',
-      confirm_new_password: ''
+      confirm_new_password: '',
+      role_ids: []
     })
 
     const errors = ref({})
@@ -227,8 +279,54 @@ export default {
     const showConfirmPassword = ref(false)
     const resetPassword = ref(false)
 
+    // 角色相關狀態
+    const availableRoles = ref([])
+    const rolesLoading = ref(false)
+
+    // 加載角色列表
+    const loadAvailableRoles = async () => {
+      rolesLoading.value = true
+      try {
+        const token = localStorage.getItem('auth_token')
+        const response = await fetch(`${API_BASE_URL}/api/roles`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        if (!response.ok) {
+          throw new Error('載入角色列表失敗')
+        }
+        const data = await response.json()
+        availableRoles.value = data.items || []
+      } catch (error) {
+        console.error('載入角色列表失敗:', error)
+      } finally {
+        rolesLoading.value = false
+      }
+    }
+
+    // 加載用戶的角色
+    const loadAdminRoles = async (adminId) => {
+      try {
+        const token = localStorage.getItem('auth_token')
+        const response = await fetch(`${API_BASE_URL}/api/admins/${adminId}/roles`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        if (!response.ok) {
+          throw new Error('載入用戶角色失敗')
+        }
+        const data = await response.json()
+        formData.value.role_ids = data.roles.map(r => r.id)
+      } catch (error) {
+        console.error('載入用戶角色失敗:', error)
+        formData.value.role_ids = []
+      }
+    }
+
     // 編輯模式：填充現有資料
-    watch(() => props.admin, (newAdmin) => {
+    watch(() => props.admin, async (newAdmin) => {
       if (newAdmin) {
         formData.value = {
           username: newAdmin.username || '',
@@ -237,12 +335,20 @@ export default {
           full_name: newAdmin.full_name || '',
           is_active: newAdmin.is_active,
           new_password: '',
-          confirm_new_password: ''
+          confirm_new_password: '',
+          role_ids: []
         }
         // 重置重設密碼狀態
         resetPassword.value = false
+        // 載入用戶的角色
+        await loadAdminRoles(newAdmin.id)
+      } else {
+        formData.value.role_ids = []
       }
     }, { immediate: true })
+
+    // 組件掛載時加載角色列表
+    loadAvailableRoles()
 
     // 密碼強度計算函數
     const calculatePasswordStrength = (pwd) => {
@@ -321,6 +427,22 @@ export default {
         formData.value.confirm_new_password = ''
         errors.value.new_password = ''
         errors.value.confirm_new_password = ''
+      }
+    }
+
+    // 切換重設密碼 checkbox
+    const toggleResetPassword = () => {
+      resetPassword.value = !resetPassword.value
+      handleResetPasswordToggle()
+    }
+
+    // 切換角色選擇
+    const toggleRole = (roleId) => {
+      const index = formData.value.role_ids.indexOf(roleId)
+      if (index > -1) {
+        formData.value.role_ids.splice(index, 1)
+      } else {
+        formData.value.role_ids.push(roleId)
       }
     }
 
@@ -403,12 +525,13 @@ export default {
 
         // 編輯模式
         if (isEditMode.value) {
-          // 1. 更新基本資料
+          // 1. 更新基本資料和角色
           const updateUrl = `${API_BASE_URL}/api/admins/${props.admin.id}`
           const updateBody = {
             email: formData.value.email,
             full_name: formData.value.full_name,
-            is_active: formData.value.is_active
+            is_active: formData.value.is_active,
+            role_ids: formData.value.role_ids
           }
 
           const updateResponse = await fetch(updateUrl, {
@@ -422,7 +545,7 @@ export default {
 
           if (!updateResponse.ok) {
             const error = await updateResponse.json()
-            throw new Error(error.detail || '更新管理員失敗')
+            throw new Error(error.detail || '更新用戶失敗')
           }
 
           // 2. 如果勾選重設密碼，調用重設密碼 API
@@ -446,9 +569,9 @@ export default {
               throw new Error(error.detail || '重設密碼失敗')
             }
 
-            alert('管理員資料已更新，密碼已重設成功')
+            alert('用戶資料已更新，密碼已重設成功')
           } else {
-            alert('管理員資料已更新')
+            alert('用戶資料已更新')
           }
         } else {
           // 新增模式
@@ -457,7 +580,8 @@ export default {
             username: formData.value.username,
             password: formData.value.password,
             email: formData.value.email,
-            full_name: formData.value.full_name
+            full_name: formData.value.full_name,
+            role_ids: formData.value.role_ids
           }
 
           const response = await fetch(url, {
@@ -471,10 +595,10 @@ export default {
 
           if (!response.ok) {
             const error = await response.json()
-            throw new Error(error.detail || '新增管理員失敗')
+            throw new Error(error.detail || '新增用戶失敗')
           }
 
-          alert('管理員已新增成功')
+          alert('用戶已新增成功')
         }
 
         emit('success')
@@ -512,10 +636,14 @@ export default {
       passwordStrength,
       newPasswordStrength,
       isFormValid,
+      availableRoles,
+      rolesLoading,
       validateUsername,
       validatePassword,
       validateEmail,
       handleResetPasswordToggle,
+      toggleResetPassword,
+      toggleRole,
       validateNewPassword,
       validateConfirmNewPassword,
       handleSubmit,
@@ -622,14 +750,22 @@ export default {
 
 .form-group label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-weight: 500;
-  color: #495057;
+  color: #2d3748;
+  font-size: 14px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #2d3748;
   font-size: 14px;
 }
 
 .required {
-  color: #dc3545;
+  color: #f56565;
 }
 
 /* 輸入框 */
@@ -749,32 +885,163 @@ export default {
 /* 提示訊息 */
 .form-hint {
   font-size: 12px;
-  color: #6c757d;
-  margin-top: 4px;
+  color: #718096;
+  margin-top: 6px;
+  line-height: 1.5;
 }
 
 .form-hint.warning {
-  color: #856404;
+  color: #c05621;
+  background: #fffaf0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 3px solid #ed8936;
+  margin-top: 8px;
 }
 
-/* 勾選框群組 */
-.checkbox-group {
-  margin: 0;
+/* Checkbox 樣式（參考權限選擇器） */
+.checkbox-wrapper {
+  padding: 0;
 }
 
-.checkbox-group label {
-  display: inline-flex;
+.checkbox-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.1s;
+}
+
+.checkbox-item:hover {
+  background: #f5f5f5;
+}
+
+.checkbox-input {
+  width: 16px;
+  min-width: 16px;
+  max-width: 16px;
+  height: 16px;
+  margin: 1px 12px 0 0;
+  cursor: pointer;
+  flex: 0 0 16px;
+}
+
+.checkbox-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.checkbox-text {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+}
+
+/* 角色選擇器 */
+.role-selector {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fafafa;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.role-selector::-webkit-scrollbar {
+  width: 6px;
+}
+
+.role-selector::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.role-selector::-webkit-scrollbar-thumb {
+  background: #d0d0d0;
+  border-radius: 3px;
+}
+
+.loading-text,
+.empty-text {
+  text-align: center;
+  color: #999;
+  padding: 32px 16px;
+  font-size: 14px;
+}
+
+.role-list {
+  padding: 8px;
+}
+
+.role-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 8px 10px;
+  margin-bottom: 2px;
+  cursor: pointer;
+  border-radius: 3px;
+  background: white;
+  transition: background 0.1s;
+}
+
+.role-item:last-child {
+  margin-bottom: 0;
+}
+
+.role-item:hover {
+  background: #f5f5f5;
+}
+
+.role-checkbox {
+  width: 16px;
+  min-width: 16px;
+  max-width: 16px;
+  height: 16px;
+  margin: 1px 12px 0 0;
+  cursor: pointer;
+  flex: 0 0 16px;
+}
+
+.role-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.role-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.role-meta {
+  font-size: 12px;
+  color: #888;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: normal;
-  cursor: pointer;
-  margin: 0;
-  color: #495057;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-.checkbox-group input[type="checkbox"] {
-  margin: 0;
-  cursor: pointer;
+.role-meta code {
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: #666;
+  background: #f0f0f0;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 11px;
+}
+
+.role-divider {
+  color: #ddd;
+}
+
+.role-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #666;
 }
 
 /* 資訊群組 */

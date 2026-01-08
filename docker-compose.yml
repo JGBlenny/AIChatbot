@@ -84,7 +84,9 @@ services:
       - ./knowledge-admin/backend/routes_test_scenarios.py:/app/routes_test_scenarios.py
       - ./knowledge-admin/backend/routes_auth.py:/app/routes_auth.py
       - ./knowledge-admin/backend/routes_admins.py:/app/routes_admins.py
+      - ./knowledge-admin/backend/routes_roles.py:/app/routes_roles.py
       - ./knowledge-admin/backend/auth_utils.py:/app/auth_utils.py
+      - ./knowledge-admin/backend/create_admin.py:/app/create_admin.py
       # 測試資料與輸出
       - ./test_scenarios_smoke.xlsx:/app/test_scenarios_smoke.xlsx:ro
       - ./test_scenarios_full.xlsx:/app/test_scenarios_full.xlsx:ro

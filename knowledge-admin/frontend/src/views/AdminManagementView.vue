@@ -1,13 +1,13 @@
 <template>
   <div class="admin-management">
-    <h2>管理員管理</h2>
+    <h2>用戶管理</h2>
 
     <!-- 工具列 -->
     <div class="toolbar">
       <div style="flex: 1; display: flex; gap: 10px;">
         <input
           v-model="searchQuery"
-          placeholder="🔍 搜尋管理員（帳號、姓名、Email）..."
+          placeholder="🔍 搜尋用戶（帳號、姓名、Email）..."
           @input="handleSearch"
           style="flex: 1;"
         />
@@ -17,8 +17,8 @@
           <option value="false">停用</option>
         </select>
       </div>
-      <button @click="showCreateModal" class="btn-primary btn-sm">
-        ➕ 新增管理員
+      <button v-permission="'admin:create'" @click="showCreateModal" class="btn-primary btn-sm">
+        ➕ 新增用戶
       </button>
     </div>
 
@@ -27,11 +27,11 @@
       <p>載入中...</p>
     </div>
 
-    <!-- 管理員列表 -->
+    <!-- 用戶列表 -->
     <div v-else-if="admins.length === 0" class="empty-state">
-      <p>沒有找到管理員</p>
+      <p>沒有找到用戶</p>
       <button @click="showCreateModal" class="btn-primary btn-sm" style="margin-top: 20px;">
-        新增第一個管理員
+        新增第一個用戶
       </button>
     </div>
 
@@ -67,11 +67,12 @@
             <td>{{ formatDateTime(admin.created_at) }}</td>
             <td>
               <div class="action-buttons">
-                <button @click="showEditModal(admin)" class="btn-sm btn-secondary" title="編輯">
+                <button v-permission="'admin:edit'" @click="showEditModal(admin)" class="btn-sm btn-secondary" title="編輯" data-test="edit-button">
                   ✏️ 編輯
                 </button>
                 <button
                   v-if="admin.id !== currentUser?.id && admin.is_active"
+                  v-permission="'admin:edit'"
                   @click="confirmDisable(admin)"
                   class="btn-sm btn-danger"
                   title="停用"
@@ -80,6 +81,7 @@
                 </button>
                 <button
                   v-if="!admin.is_active"
+                  v-permission="'admin:edit'"
                   @click="enableAdmin(admin)"
                   class="btn-sm btn-success"
                   title="啟用"
@@ -106,7 +108,7 @@
       </div>
     </div>
 
-    <!-- 新增/編輯管理員對話框 -->
+    <!-- 新增/編輯用戶對話框 -->
     <AdminFormModal
       v-if="showFormModal"
       :admin="selectedAdmin"
@@ -145,7 +147,7 @@ export default {
 
     let searchTimeout = null
 
-    // 載入管理員列表
+    // 載入用戶列表
     const loadAdmins = async () => {
       loading.value = true
       try {
@@ -170,15 +172,15 @@ export default {
         })
 
         if (!response.ok) {
-          throw new Error('載入管理員列表失敗')
+          throw new Error('載入用戶列表失敗')
         }
 
         const data = await response.json()
         admins.value = data.items
         total.value = data.total
       } catch (error) {
-        console.error('載入管理員失敗:', error)
-        alert('載入管理員列表失敗')
+        console.error('載入用戶失敗:', error)
+        alert('載入用戶列表失敗')
       } finally {
         loading.value = false
       }
@@ -212,8 +214,12 @@ export default {
 
     // 顯示編輯對話框
     const showEditModal = (admin) => {
+      console.log('showEditModal 被調用', admin)
+      console.log('showFormModal 之前的值:', showFormModal.value)
       selectedAdmin.value = admin
       showFormModal.value = true
+      console.log('showFormModal 之後的值:', showFormModal.value)
+      console.log('selectedAdmin:', selectedAdmin.value)
     }
 
     // 關閉表單對話框
@@ -230,12 +236,12 @@ export default {
 
     // 確認停用
     const confirmDisable = (admin) => {
-      if (confirm(`確定要停用管理員「${admin.username}」嗎？\n\n停用後該管理員將無法登入系統。\n你可以隨時重新啟用此帳號。`)) {
+      if (confirm(`確定要停用用戶「${admin.username}」嗎？\n\n停用後該用戶將無法登入系統。\n你可以隨時重新啟用此帳號。`)) {
         disableAdmin(admin)
       }
     }
 
-    // 停用管理員
+    // 停用用戶
     const disableAdmin = async (admin) => {
       try {
         const token = localStorage.getItem('auth_token')
@@ -248,18 +254,18 @@ export default {
 
         if (!response.ok) {
           const error = await response.json()
-          throw new Error(error.detail || '停用管理員失敗')
+          throw new Error(error.detail || '停用用戶失敗')
         }
 
-        alert('管理員已停用')
+        alert('用戶已停用')
         loadAdmins()
       } catch (error) {
-        console.error('停用管理員失敗:', error)
+        console.error('停用用戶失敗:', error)
         alert(error.message)
       }
     }
 
-    // 啟用管理員
+    // 啟用用戶
     const enableAdmin = async (admin) => {
       try {
         const token = localStorage.getItem('auth_token')
@@ -274,13 +280,13 @@ export default {
 
         if (!response.ok) {
           const error = await response.json()
-          throw new Error(error.detail || '啟用管理員失敗')
+          throw new Error(error.detail || '啟用用戶失敗')
         }
 
-        alert('管理員已啟用')
+        alert('用戶已啟用')
         loadAdmins()
       } catch (error) {
-        console.error('啟用管理員失敗:', error)
+        console.error('啟用用戶失敗:', error)
         alert(error.message)
       }
     }
