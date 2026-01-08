@@ -6,9 +6,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 複製應用程式
-COPY app.py .
-COPY routes_test_scenarios.py .
+# 複製所有應用程式文件
+COPY *.py .
 
 # 暴露埠號
 EXPOSE 8000
