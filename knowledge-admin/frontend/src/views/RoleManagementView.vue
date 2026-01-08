@@ -163,8 +163,7 @@ import { usePermission } from '../composables/usePermission'
 import RoleFormModal from '../components/RoleFormModal.vue'
 import RoleDetailModal from '../components/RoleDetailModal.vue'
 import axios from 'axios'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+import { API_BASE_URL } from '@/config/api'
 
 const { can } = usePermission()
 

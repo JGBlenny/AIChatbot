@@ -122,8 +122,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import AdminFormModal from '@/components/AdminFormModal.vue'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+import { API_BASE_URL } from '@/config/api'
 
 export default {
   name: 'AdminManagementView',

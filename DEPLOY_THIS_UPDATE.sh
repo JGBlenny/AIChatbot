@@ -25,26 +25,34 @@ docker-compose -f docker-compose.prod.yml exec -T postgres psql -U aichatbot -d 
 echo "2.3 驗證遷移..."
 docker-compose -f docker-compose.prod.yml exec postgres psql -U aichatbot -d aichatbot_admin -c "\dt" | grep -E "admins|permissions|roles"
 
-# 步驟 3：重新構建並啟動
+# 步驟 3：重新構建前端
 echo ""
-echo "步驟 3：重新構建並啟動服務..."
+echo "步驟 3：重新構建前端..."
+cd knowledge-admin/frontend
+npm install
+npm run build
+cd ../..
+
+# 步驟 4：重新構建並啟動
+echo ""
+echo "步驟 4：重新構建並啟動服務..."
 docker-compose -f docker-compose.prod.yml down
 docker-compose -f docker-compose.prod.yml build --no-cache knowledge-admin-api
 docker-compose -f docker-compose.prod.yml up -d
 
-# 步驟 4：等待服務啟動
+# 步驟 5：等待服務啟動
 echo ""
-echo "步驟 4：等待服務啟動..."
+echo "步驟 5：等待服務啟動..."
 sleep 10
 
-# 步驟 5：檢查服務狀態
+# 步驟 6：檢查服務狀態
 echo ""
-echo "步驟 5：檢查服務狀態..."
+echo "步驟 6：檢查服務狀態..."
 docker-compose -f docker-compose.prod.yml ps
 
-# 步驟 6：驗證
+# 步驟 7：驗證
 echo ""
-echo "步驟 6：驗證 API..."
+echo "步驟 7：驗證 API..."
 docker-compose -f docker-compose.prod.yml logs --tail=20 knowledge-admin-api
 
 echo ""
