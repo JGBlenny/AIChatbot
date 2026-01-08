@@ -83,7 +83,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # 生產環境：只掛載必要的數據目錄
+      # 生產環境：只掛載必要的數據目錄和腳本
+      - ./knowledge-admin/backend/create_admin.py:/app/create_admin.py:ro
       - ./test_scenarios_smoke.xlsx:/app/test_scenarios_smoke.xlsx:ro
       - ./test_scenarios_full.xlsx:/app/test_scenarios_full.xlsx:ro
       - ./output:/app/output
