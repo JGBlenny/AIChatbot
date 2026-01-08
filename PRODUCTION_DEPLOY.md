@@ -17,14 +17,40 @@ cd /path/to/AIChatbot
 git pull origin main
 ```
 
-### 步驟 2：重新構建前端（本地或 CI/CD）
+### 步驟 2：執行資料庫遷移（重要！）
+
+**此次更新需要執行以下 SQL 遷移：**
+
+#### 2.1 建立 admins 表（如果不存在）
+```bash
+docker-compose -f docker-compose.prod.yml exec -T postgres psql -U aichatbot -d aichatbot_admin < database/migrations/add_admins_table.sql
+```
+
+#### 2.2 建立權限系統表
+```bash
+docker-compose -f docker-compose.prod.yml exec -T postgres psql -U aichatbot -d aichatbot_admin < database/migrations/add_permission_system.sql
+```
+
+#### 2.3 驗證遷移成功
+```bash
+docker-compose -f docker-compose.prod.yml exec postgres psql -U aichatbot -d aichatbot_admin -c "\dt" | grep -E "admins|permissions|roles"
+```
+
+**預期輸出：**
+- admins
+- admin_roles
+- permissions
+- roles
+- role_permissions
+
+### 步驟 3：重新構建前端（本地或 CI/CD）
 ```bash
 cd knowledge-admin/frontend
 npm install
 npm run build
 ```
 
-### 步驟 3：上傳更新文件到服務器
+### 步驟 4：上傳更新文件到服務器
 **需要上傳的文件：**
 ```bash
 # 前端構建產物
@@ -49,7 +75,7 @@ rsync -avz --progress \
   user@server:/path/to/AIChatbot/
 ```
 
-### 步驟 4：在服務器上重啟服務
+### 步驟 5：在服務器上重新構建並啟動服務
 ```bash
 cd /path/to/AIChatbot
 
@@ -63,7 +89,7 @@ docker-compose -f docker-compose.prod.yml up -d --build
 docker-compose -f docker-compose.prod.yml ps
 ```
 
-### 步驟 5：驗證更新
+### 步驟 6：驗證更新
 ```bash
 # 1. 檢查腳本是否掛載成功
 docker-compose -f docker-compose.prod.yml exec knowledge-admin-api ls -la /app/create_admin.py
@@ -73,7 +99,7 @@ docker-compose -f docker-compose.prod.yml logs --tail=50 knowledge-admin-api
 docker-compose -f docker-compose.prod.yml logs --tail=50 knowledge-admin-web
 ```
 
-### 步驟 6：測試功能
+### 步驟 7：測試功能
 1. **訪問前端**: `http://your-domain` 或 `http://your-server-ip`
 2. **登入系統**: 使用現有管理員帳號
 3. **檢查 UI**: 進入「用戶管理」，查看新的樣式
@@ -81,7 +107,7 @@ docker-compose -f docker-compose.prod.yml logs --tail=50 knowledge-admin-web
 
 ---
 
-## 🆕 首次創建管理員（僅初次部署需要）
+### 步驟 8：創建管理員（如需要）
 
 **如果這是第一次部署，或者還沒有管理員帳號：**
 
