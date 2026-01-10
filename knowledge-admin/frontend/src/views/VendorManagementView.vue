@@ -25,6 +25,7 @@
             <th width="100">訂閱方案</th>
             <th width="80">狀態</th>
             <th width="80">展示頁</th>
+            <th width="80">表單</th>
             <th width="220">操作</th>
           </tr>
         </thead>
@@ -57,6 +58,11 @@
             <td>
               <a :href="`/${vendor.code}/chat`" target="_blank" class="btn-demo btn-sm">
                 🔗 展示
+              </a>
+            </td>
+            <td>
+              <a :href="`/${vendor.code}/form-submissions`" target="_blank" class="btn-info btn-sm">
+                📋 表單
               </a>
             </td>
             <td>
@@ -654,5 +660,23 @@ code {
 .config-breakdown td, .config-breakdown th {
   text-align: left;
   padding: 8px;
+}
+
+/* 表單按鈕樣式 */
+.btn-info {
+  background: #17a2b8;
+  color: white;
+  text-decoration: none;
+  display: inline-block;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-info:hover {
+  background: #138496;
 }
 </style>

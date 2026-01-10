@@ -40,8 +40,9 @@
             <th width="60">ID</th>
             <th width="150">表單名稱</th>
             <th width="150">業者</th>
+            <th width="100">狀態</th>
             <th width="120">用戶ID</th>
-            <th width="200">觸發問題</th>
+            <th width="180">觸發問題</th>
             <th>提交資料</th>
             <th width="180">提交時間</th>
             <th width="100">操作</th>
@@ -58,6 +59,11 @@
                 {{ item.vendor_name }}
               </span>
               <span v-else class="badge badge-global">全域</span>
+            </td>
+            <td>
+              <span class="status-badge" :class="'status-' + (item.status || 'pending')">
+                {{ getStatusLabel(item.status) }}
+              </span>
             </td>
             <td><code style="font-size: 12px;">{{ item.user_id }}</code></td>
             <td>
@@ -273,6 +279,16 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       });
+    },
+
+    getStatusLabel(status) {
+      const labels = {
+        pending: '⏳ 待處理',
+        processing: '🔄 處理中',
+        completed: '✅ 已完成',
+        rejected: '❌ 已拒絕'
+      };
+      return labels[status] || labels.pending;
     },
 
     viewDetails(item) {
@@ -580,5 +596,39 @@ export default {
   border-top: 1px solid #ebeef5;
   display: flex;
   justify-content: flex-end;
+}
+
+/* 狀態標籤樣式 */
+.status-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+}
+
+.status-processing {
+  background: #cfe2ff;
+  color: #084298;
+  border: 1px solid #0d6efd;
+}
+
+.status-completed {
+  background: #d1e7dd;
+  color: #0f5132;
+  border: 1px solid #198754;
+}
+
+.status-rejected {
+  background: #f8d7da;
+  color: #842029;
+  border: 1px solid #dc3545;
 }
 </style>

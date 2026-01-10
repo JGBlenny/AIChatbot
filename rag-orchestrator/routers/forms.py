@@ -417,6 +417,13 @@ async def get_related_knowledge(request: Request, form_id: str):
         raise HTTPException(status_code=500, detail=f"查詢關聯知識失敗: {str(e)}")
 
 
+class FormSubmissionUpdate(BaseModel):
+    """更新表單提交的請求"""
+    status: Optional[str] = Field(None, description="狀態：pending, processing, completed, rejected")
+    notes: Optional[str] = Field(None, description="備註說明")
+    updated_by: Optional[str] = Field(None, description="更新者")
+
+
 @router.get("/form-submissions")
 async def list_form_submissions(
     request: Request,
@@ -471,6 +478,10 @@ async def list_form_submissions(
                     v.name as vendor_name,
                     fs.submitted_data,
                     fs.submitted_at,
+                    fs.status,
+                    fs.notes,
+                    fs.updated_at,
+                    fs.updated_by,
                     fses.trigger_question
                 FROM form_submissions fs
                 LEFT JOIN form_schemas fsc ON fs.form_id = fsc.form_id
@@ -498,6 +509,90 @@ async def list_form_submissions(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"查詢表單提交記錄失敗: {str(e)}")
+
+
+@router.patch("/form-submissions/{submission_id}")
+async def update_form_submission(
+    request: Request,
+    submission_id: int,
+    update_data: FormSubmissionUpdate
+):
+    """
+    更新表單提交的狀態和備註
+
+    - **submission_id**: 提交記錄ID
+    - **status**: 狀態（pending, processing, completed, rejected）
+    - **notes**: 備註說明
+    - **updated_by**: 更新者
+    """
+    try:
+        db_pool = request.app.state.db_pool
+
+        # 驗證狀態值
+        valid_statuses = ['pending', 'processing', 'completed', 'rejected']
+        if update_data.status and update_data.status not in valid_statuses:
+            raise HTTPException(
+                status_code=400,
+                detail=f"無效的狀態值，有效值為：{', '.join(valid_statuses)}"
+            )
+
+        # 建立更新語句
+        updates = []
+        params = []
+        param_count = 0
+
+        if update_data.status is not None:
+            param_count += 1
+            updates.append(f"status = ${param_count}")
+            params.append(update_data.status)
+
+        if update_data.notes is not None:
+            param_count += 1
+            updates.append(f"notes = ${param_count}")
+            params.append(update_data.notes)
+
+        if update_data.updated_by is not None:
+            param_count += 1
+            updates.append(f"updated_by = ${param_count}")
+            params.append(update_data.updated_by)
+
+        if not updates:
+            raise HTTPException(status_code=400, detail="沒有提供要更新的欄位")
+
+        updates.append("updated_at = NOW()")
+
+        param_count += 1
+        params.append(submission_id)
+
+        query = f"""
+            UPDATE form_submissions
+            SET {', '.join(updates)}
+            WHERE id = ${param_count}
+            RETURNING
+                id,
+                form_id,
+                user_id,
+                vendor_id,
+                submitted_data,
+                submitted_at,
+                status,
+                notes,
+                updated_at,
+                updated_by
+        """
+
+        async with db_pool.acquire() as conn:
+            row = await conn.fetchrow(query, *params)
+
+        if not row:
+            raise HTTPException(status_code=404, detail=f"找不到提交記錄: {submission_id}")
+
+        return dict(row)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"更新提交記錄失敗: {str(e)}")
 
 
 # ============================================================

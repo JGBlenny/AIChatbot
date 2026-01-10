@@ -12,12 +12,31 @@
 
     <!-- 工具列 -->
     <div class="toolbar">
-      <select v-model="filterFormId" @change="loadSubmissions" class="filter-select">
-        <option value="">全部表單</option>
-        <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
-          {{ form.form_name }}
-        </option>
-      </select>
+      <div class="toolbar-left">
+        <select v-model="filterFormId" @change="loadSubmissions" class="filter-select">
+          <option value="">全部表單</option>
+          <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
+            {{ form.form_name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="toolbar-right">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="🔍 搜尋名稱、內容..."
+          class="search-input"
+        />
+
+        <select v-model="filterStatus" class="filter-select">
+          <option value="">全部狀態</option>
+          <option value="pending">⏳ 待處理</option>
+          <option value="processing">🔄 處理中</option>
+          <option value="completed">✅ 已完成</option>
+          <option value="rejected">❌ 已拒絕</option>
+        </select>
+      </div>
     </div>
 
     <!-- 載入狀態 -->
@@ -26,8 +45,8 @@
     </div>
 
     <!-- 空狀態 -->
-    <div v-else-if="submissions.length === 0" class="empty-state">
-      <p>尚無表單提交記錄</p>
+    <div v-else-if="filteredSubmissions.length === 0" class="empty-state">
+      <p>{{ submissions.length === 0 ? '尚無表單提交記錄' : '沒有符合條件的記錄' }}</p>
     </div>
 
     <!-- 表單記錄列表 -->
@@ -37,18 +56,24 @@
           <tr>
             <th width="60">ID</th>
             <th width="150">表單名稱</th>
-            <th width="200">觸發問題</th>
+            <th width="100">狀態</th>
+            <th width="180">觸發問題</th>
             <th>提交資料</th>
             <th width="120">用戶ID</th>
             <th width="180">提交時間</th>
-            <th width="100">操作</th>
+            <th width="120">操作</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in submissions" :key="item.id">
+          <tr v-for="item in filteredSubmissions" :key="item.id">
             <td>{{ item.id }}</td>
             <td>
               <span class="badge badge-form">{{ item.form_name || item.form_id }}</span>
+            </td>
+            <td>
+              <span class="status-badge" :class="'status-' + (item.status || 'pending')">
+                {{ getStatusLabel(item.status) }}
+              </span>
             </td>
             <td>
               <div class="trigger-question">
@@ -75,9 +100,14 @@
     </div>
 
     <!-- 統計資訊和分頁控制 -->
-    <div v-if="submissions.length > 0 && pagination.total > 0" class="pagination-info">
+    <div v-if="filteredSubmissions.length > 0" class="pagination-info">
       <div style="color: #606266;">
-        總計 {{ pagination.total }} 筆記錄，顯示第 {{ pagination.offset + 1 }} - {{ Math.min(pagination.offset + pagination.limit, pagination.total) }} 筆
+        <span v-if="searchQuery || filterStatus">
+          符合條件：{{ filteredSubmissions.length }} 筆 / 總計：{{ pagination.total }} 筆
+        </span>
+        <span v-else>
+          總計 {{ pagination.total }} 筆記錄，顯示第 {{ pagination.offset + 1 }} - {{ Math.min(pagination.offset + pagination.limit, pagination.total) }} 筆
+        </span>
       </div>
       <div class="pagination-controls">
         <button
@@ -140,6 +170,33 @@
               </div>
             </div>
           </div>
+
+          <div class="detail-section">
+            <h3>處理狀態</h3>
+            <div class="status-editor">
+              <div class="form-field">
+                <label>狀態</label>
+                <select v-model="editingStatus" class="status-select">
+                  <option value="pending">⏳ 待處理</option>
+                  <option value="processing">🔄 處理中</option>
+                  <option value="completed">✅ 已完成</option>
+                  <option value="rejected">❌ 已拒絕</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>備註說明</label>
+                <textarea
+                  v-model="editingNotes"
+                  class="notes-textarea"
+                  placeholder="請輸入處理備註..."
+                  rows="4"
+                ></textarea>
+              </div>
+              <button @click="updateStatus" class="btn-save" :disabled="saving">
+                {{ saving ? '儲存中...' : '💾 儲存變更' }}
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -162,9 +219,12 @@ export default {
       vendorCode: null,
       vendor: null,
       loading: false,
+      saving: false,
       submissions: [],
       availableForms: [],
       filterFormId: '',
+      filterStatus: '',
+      searchQuery: '',
       pagination: {
         total: 0,
         limit: 20,
@@ -172,7 +232,9 @@ export default {
       },
       showModal: false,
       selectedItem: null,
-      formSchemas: {}
+      formSchemas: {},
+      editingStatus: 'pending',
+      editingNotes: ''
     };
   },
   computed: {
@@ -181,6 +243,47 @@ export default {
     },
     totalPages() {
       return Math.ceil(this.pagination.total / this.pagination.limit);
+    },
+    filteredSubmissions() {
+      let filtered = this.submissions;
+
+      // 狀態篩選
+      if (this.filterStatus) {
+        filtered = filtered.filter(item => item.status === this.filterStatus);
+      }
+
+      // 搜尋篩選（搜尋名稱和提交資料內容）
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(item => {
+          // 搜尋表單名稱
+          if (item.form_name && item.form_name.toLowerCase().includes(query)) {
+            return true;
+          }
+
+          // 搜尋觸發問題
+          if (item.trigger_question && item.trigger_question.toLowerCase().includes(query)) {
+            return true;
+          }
+
+          // 搜尋用戶ID
+          if (item.user_id && item.user_id.toLowerCase().includes(query)) {
+            return true;
+          }
+
+          // 搜尋提交資料的值
+          if (item.submitted_data) {
+            const dataValues = Object.values(item.submitted_data);
+            return dataValues.some(value =>
+              String(value).toLowerCase().includes(query)
+            );
+          }
+
+          return false;
+        });
+      }
+
+      return filtered;
     }
   },
   async mounted() {
@@ -277,14 +380,58 @@ export default {
       });
     },
 
+    getStatusLabel(status) {
+      const labels = {
+        pending: '⏳ 待處理',
+        processing: '🔄 處理中',
+        completed: '✅ 已完成',
+        rejected: '❌ 已拒絕'
+      };
+      return labels[status] || labels.pending;
+    },
+
     viewDetails(item) {
       this.selectedItem = item;
+      this.editingStatus = item.status || 'pending';
+      this.editingNotes = item.notes || '';
       this.showModal = true;
+    },
+
+    async updateStatus() {
+      if (!this.selectedItem) return;
+
+      this.saving = true;
+      try {
+        await axios.patch(`${RAG_API}/v1/form-submissions/${this.selectedItem.id}`, {
+          status: this.editingStatus,
+          notes: this.editingNotes,
+          updated_by: this.vendor?.code || 'vendor'
+        });
+
+        alert('✅ 狀態已更新！');
+
+        // 更新本地資料
+        const index = this.submissions.findIndex(s => s.id === this.selectedItem.id);
+        if (index !== -1) {
+          this.submissions[index].status = this.editingStatus;
+          this.submissions[index].notes = this.editingNotes;
+        }
+
+        this.selectedItem.status = this.editingStatus;
+        this.selectedItem.notes = this.editingNotes;
+      } catch (error) {
+        console.error('更新狀態失敗', error);
+        alert('更新失敗：' + (error.response?.data?.detail || error.message));
+      } finally {
+        this.saving = false;
+      }
     },
 
     closeModal() {
       this.showModal = false;
       this.selectedItem = null;
+      this.editingStatus = 'pending';
+      this.editingNotes = '';
     },
 
     previousPage() {
@@ -356,20 +503,67 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 20px;
+}
+
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .filter-select {
-  padding: 8px 12px;
+  padding: 8px 36px 8px 12px;
   border: 1px solid #dcdfe6;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
   background: white;
   cursor: pointer;
-  min-width: 200px;
+  min-width: 160px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23606266' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 18px;
+  transition: all 0.3s;
 }
 
 .filter-select:hover {
   border-color: #409eff;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23409eff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+}
+
+.search-input {
+  padding: 8px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  min-width: 260px;
+  transition: all 0.3s;
+}
+
+.search-input:hover {
+  border-color: #409eff;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+}
+
+.search-input::placeholder {
+  color: #909399;
 }
 
 .loading, .empty-state {
@@ -651,5 +845,124 @@ export default {
 
 .btn-modal-close:hover {
   background: #e0e0e0;
+}
+
+/* 狀態標籤樣式 */
+.status-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+}
+
+.status-processing {
+  background: #cfe2ff;
+  color: #084298;
+  border: 1px solid #0d6efd;
+}
+
+.status-completed {
+  background: #d1e7dd;
+  color: #0f5132;
+  border: 1px solid #198754;
+}
+
+.status-rejected {
+  background: #f8d7da;
+  color: #842029;
+  border: 1px solid #dc3545;
+}
+
+/* 狀態編輯器 */
+.status-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field label {
+  display: block;
+  font-size: 13px;
+  color: #555;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-select {
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 15px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.status-select:hover {
+  border-color: #667eea;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.notes-textarea {
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.3s;
+}
+
+.notes-textarea:hover {
+  border-color: #667eea;
+}
+
+.notes-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-save {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  align-self: flex-start;
+}
+
+.btn-save:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

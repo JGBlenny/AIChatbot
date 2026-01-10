@@ -236,7 +236,9 @@ export default {
 
     isStandalonePage() {
       // 檢查是否為獨立頁面（不需要側邊欄和 header）
-      return this.$route.name === 'VendorChatDemo' || this.$route.name === 'Login';
+      return this.$route.name === 'VendorChatDemo' ||
+             this.$route.name === 'VendorFormSubmissions' ||
+             this.$route.name === 'Login';
     }
   },
 
