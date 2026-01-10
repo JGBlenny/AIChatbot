@@ -198,6 +198,26 @@ async def create_vendor(vendor: VendorCreate):
         conn.close()
 
 
+@router.get("/by-code/{vendor_code}", response_model=VendorResponse)
+async def get_vendor_by_code(vendor_code: str):
+    """根據業者代碼獲取業者詳情"""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        cursor.execute("SELECT * FROM vendors WHERE code = %s", (vendor_code,))
+        vendor = cursor.fetchone()
+        cursor.close()
+
+        if not vendor:
+            raise HTTPException(status_code=404, detail=f"找不到代碼為 {vendor_code} 的業者")
+
+        return VendorResponse(**dict(vendor))
+
+    finally:
+        conn.close()
+
+
 @router.get("/{vendor_id}", response_model=VendorResponse)
 async def get_vendor(vendor_id: int):
     """獲取業者詳情"""

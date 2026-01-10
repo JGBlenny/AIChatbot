@@ -75,6 +75,16 @@
 
     <!-- 聊天區域 -->
     <div v-if="selectedVendorId" class="chat-container">
+      <!-- 表單填寫狀態提示 -->
+      <div v-if="isFillingForm" class="form-status-banner">
+        <span class="status-icon">📋</span>
+        <div class="status-content">
+          <strong>表單填寫中：{{ currentFormId }}</strong>
+          <span class="status-hint">目前欄位：{{ currentField }}</span>
+        </div>
+        <button @click="cancelForm" class="btn-cancel-form">取消填寫</button>
+      </div>
+
       <!-- 訊息歷史 -->
       <div class="chat-messages" ref="messagesContainer">
         <div v-for="(msg, index) in messages" :key="index" :class="['message', msg.role]">
@@ -337,7 +347,13 @@ export default {
       userRole: 'tenant',  // 用戶角色（可從 UI 選擇或 URL 讀取）
       targetUserConfig: [],   // 從 API 獲取的目標用戶配置
       debugMode: true,  // 是否開啟調試模式（默認開啟）
-      showDebug: {}  // 控制每個訊息的調試面板展開/摺疊 {messageIndex: boolean}
+      showDebug: {},  // 控制每個訊息的調試面板展開/摺疊 {messageIndex: boolean}
+      // 表單填寫支援
+      sessionId: null,  // 會話 ID（用於表單追蹤）
+      userId: null,  // 用戶 ID
+      isFillingForm: false,  // 是否正在填寫表單
+      currentFormId: null,  // 當前表單 ID
+      currentField: null  // 當前填寫的欄位
     };
   },
   computed: {
@@ -359,6 +375,12 @@ export default {
   },
   mounted() {
     console.log('🚀 [ChatTestView] mounted() 被調用');
+
+    // 初始化 session_id 和 user_id（用於表單追蹤）
+    this.sessionId = this.generateUUID();
+    this.userId = `test_user_${Date.now()}`;
+    console.log('📋 初始化會話:', { sessionId: this.sessionId, userId: this.userId });
+
     this.loadVendors();
     this.loadTargetUserConfig();  // ✅ 新增：載入目標用戶配置
 
@@ -513,8 +535,33 @@ export default {
           mode: this.chatMode,
           user_role: userRole,
           include_sources: true,
-          include_debug_info: this.debugMode  // 新增：傳遞調試模式
+          include_debug_info: this.debugMode,  // 新增：傳遞調試模式
+          // 表單支援
+          session_id: this.sessionId,
+          user_id: this.userId
         });
+
+        // 檢查是否觸發表單
+        if (response.data.form_triggered) {
+          this.isFillingForm = true;
+          this.currentFormId = response.data.form_id;
+          this.currentField = response.data.current_field;
+          console.log('📋 表單已觸發:', {
+            formId: this.currentFormId,
+            currentField: this.currentField,
+            progress: response.data.progress
+          });
+        } else if (response.data.form_completed) {
+          this.isFillingForm = false;
+          this.currentFormId = null;
+          this.currentField = null;
+          console.log('✅ 表單填寫完成');
+        } else if (response.data.form_cancelled) {
+          this.isFillingForm = false;
+          this.currentFormId = null;
+          this.currentField = null;
+          console.log('❌ 表單已取消');
+        }
 
         // 添加 AI 回應（使用條件式格式化）
         this.messages.push({
@@ -531,7 +578,14 @@ export default {
             video_url: response.data.video_url,
             video_file_size: response.data.video_file_size,
             video_duration: response.data.video_duration,
-            video_format: response.data.video_format
+            video_format: response.data.video_format,
+            // 表單資訊
+            form_triggered: response.data.form_triggered,
+            form_completed: response.data.form_completed,
+            form_cancelled: response.data.form_cancelled,
+            form_id: response.data.form_id,
+            current_field: response.data.current_field,
+            progress: response.data.progress
           },
           debug_info: response.data.debug_info  // 新增：調試資訊
         });
@@ -666,6 +720,23 @@ export default {
         'unknown': '未知策略'
       };
       return strategyNames[strategy] || strategy;
+    },
+
+    // 生成 UUID（用於 session_id）
+    generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    },
+
+    // 取消表單填寫
+    async cancelForm() {
+      if (!confirm('確定要取消表單填寫嗎？')) return;
+
+      // 發送「取消」訊息給後端
+      await this.sendMessage('取消');
     }
   }
 };
@@ -1335,5 +1406,62 @@ export default {
 
 .role-select {
   min-width: 220px;
+}
+
+/* 表單填寫狀態橫幅 */
+.form-status-banner {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-status-banner .status-icon {
+  font-size: 24px;
+}
+
+.form-status-banner .status-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-status-banner .status-hint {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.form-status-banner .btn-cancel-form {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.form-status-banner .btn-cancel-form:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 </style>

@@ -68,7 +68,18 @@ export async function apiRequest(url, options = {}) {
  * GET 請求
  */
 export async function apiGet(url, options = {}) {
-  const response = await apiRequest(url, {
+  // 處理 query parameters
+  let finalUrl = url
+  if (options.params) {
+    const queryString = new URLSearchParams(
+      Object.entries(options.params).filter(([_, value]) => value != null)
+    ).toString()
+    if (queryString) {
+      finalUrl = `${url}?${queryString}`
+    }
+  }
+
+  const response = await apiRequest(finalUrl, {
     ...options,
     method: 'GET'
   })
@@ -93,6 +104,11 @@ export async function apiPost(url, data = null, options = {}) {
 
   if (!response.ok) {
     const error = await response.json()
+    // 處理 Pydantic 驗證錯誤（陣列格式）
+    if (Array.isArray(error.detail)) {
+      const errors = error.detail.map(e => `${e.loc.join('.')}: ${e.msg}`).join('; ')
+      throw new Error(errors || 'POST 請求失敗')
+    }
     throw new Error(error.detail || 'POST 請求失敗')
   }
 
@@ -111,6 +127,11 @@ export async function apiPut(url, data = null, options = {}) {
 
   if (!response.ok) {
     const error = await response.json()
+    // 處理 Pydantic 驗證錯誤（陣列格式）
+    if (Array.isArray(error.detail)) {
+      const errors = error.detail.map(e => `${e.loc.join('.')}: ${e.msg}`).join('; ')
+      throw new Error(errors || 'PUT 請求失敗')
+    }
     throw new Error(error.detail || 'PUT 請求失敗')
   }
 
@@ -157,3 +178,11 @@ export async function apiDelete(url, options = {}) {
  * // DELETE 請求
  * await apiDelete('/api/knowledge/1')
  */
+
+// 預設匯出：便利的 api 物件
+export default {
+  get: apiGet,
+  post: apiPost,
+  put: apiPut,
+  delete: apiDelete
+}

@@ -124,7 +124,10 @@ export default {
       messageIdCounter: 1,
       currentStreamingMessage: null,  // 正在流式輸出的訊息
       streamingMetadata: {},  // 收集流式過程中的 metadata
-      targetUser: 'tenant'  // 預設為租客，可透過 URL 參數覆蓋（?target_user=landlord）
+      targetUser: 'tenant',  // 預設為租客，可透過 URL 參數覆蓋（?target_user=landlord）
+      // 表單支援
+      sessionId: null,
+      userId: null
     };
   },
 
@@ -138,6 +141,11 @@ export default {
   },
 
   async mounted() {
+    // 初始化 session_id 和 user_id（用於表單追蹤）
+    this.sessionId = this.generateUUID();
+    this.userId = `user_${Date.now()}`;
+    console.log('📋 初始化會話:', { sessionId: this.sessionId, userId: this.userId });
+
     this.vendorCode = this.$route.params.vendorCode;
 
     // 從 URL 查詢參數讀取 target_user（預設為 tenant）
@@ -198,7 +206,10 @@ export default {
           message: userMessage,
           vendor_id: this.vendor.id,
           target_user: this.targetUser,  // 使用統一的 target_user 參數（預設為 tenant）
-          include_sources: false
+          include_sources: false,
+          // 表單支援
+          session_id: this.sessionId,
+          user_id: this.userId
         });
 
         // 添加 AI 回應
@@ -357,6 +368,15 @@ export default {
       if (bytes < 1024) return bytes + ' B';
       if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
       return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    },
+
+    // 生成 UUID（用於 session_id）
+    generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
     }
   }
 };

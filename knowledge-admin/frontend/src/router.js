@@ -36,6 +36,11 @@ import TargetUserConfigView from './views/TargetUserConfigView.vue';
 import AdminManagementView from './views/AdminManagementView.vue';
 // Role Management
 import RoleManagementView from './views/RoleManagementView.vue';
+// Form Management
+import FormManagementView from './views/FormManagementView.vue';
+import FormEditorView from './views/FormEditorView.vue';
+import FormSubmissionsView from './views/FormSubmissionsView.vue';
+import VendorFormSubmissionsView from './views/VendorFormSubmissionsView.vue';
 
 const routes = [
   {
@@ -199,6 +204,38 @@ const routes = [
       requiresAuth: true,
       permissions: ['role:view']
     }
+  },
+  // Form Management
+  {
+    path: '/forms',
+    name: 'Forms',
+    component: FormManagementView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/forms/:formId/edit',
+    name: 'FormEditor',
+    component: FormEditorView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/form-submissions',
+    name: 'FormSubmissions',
+    component: FormSubmissionsView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  // Vendor Form Submissions - 業者表單提交記錄（公開頁面）
+  {
+    path: '/:vendorCode/form-submissions',
+    name: 'VendorFormSubmissions',
+    component: VendorFormSubmissionsView,
+    meta: { requiresAuth: false }  // 展示頁不需要登入
   },
   // Vendor Chat Demo - 業者測試頁面（放在最後以避免路由衝突）
   {

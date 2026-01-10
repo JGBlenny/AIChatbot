@@ -290,6 +290,30 @@
             <p v-if="selectedIntents.length === 0" class="hint-text">💡 未選擇意圖的知識將標記為「未分類」</p>
           </div>
 
+          <!-- 表單關聯 -->
+          <div class="form-group">
+            <label>表單關聯 <span class="field-hint">（選填，關聯後用戶詢問時會觸發表單）</span></label>
+            <select v-model="formData.form_id" class="form-select">
+              <option value="">無表單</option>
+              <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
+                {{ form.form_name }} ({{ form.form_id }})
+              </option>
+            </select>
+            <p v-if="!formData.form_id" class="hint-text">💡 未選擇表單時，系統僅提供文字回答</p>
+            <p v-else class="hint-text">✅ 已關聯表單：{{ getFormName(formData.form_id) }}</p>
+
+            <!-- 表單引導語 (當選擇了表單時顯示) -->
+            <div v-if="formData.form_id" style="margin-top: 10px;">
+              <label>表單引導語 <span class="field-hint">（可選，自訂觸發表單前的提示）</span></label>
+              <textarea
+                v-model="formData.form_intro"
+                rows="2"
+                placeholder="例如：為了協助您完成申請，請提供以下資訊："
+              ></textarea>
+              <p class="hint-text">💡 留空則使用表單預設引導語</p>
+            </div>
+          </div>
+
           <div class="form-group">
             <label>內容 (Markdown) *</label>
             <div class="editor-container">
@@ -393,6 +417,7 @@ export default {
       availableIntents: [],
       availableBusinessTypes: [],
       availableTargetUsers: [],  // 從 API 載入
+      availableForms: [],  // 從 API 載入可用表單
       searchQuery: '',
       showModal: false,
       editingItem: null,
@@ -414,6 +439,9 @@ export default {
         business_types: [],
         target_user: [],  // 新增：目標用戶類型
         priority: 0,  // 新增：優先級（0-10）
+        // 表單關聯
+        form_id: '',
+        form_intro: '',
         // 影片欄位
         video_url: null,
         video_s3_key: null,
@@ -519,6 +547,7 @@ export default {
     await this.loadIntents();
     await this.loadBusinessTypes();
     await this.loadTargetUsers();
+    await this.loadForms();
     this.loadStats();
 
     // 載入知識列表
@@ -629,6 +658,22 @@ export default {
       } catch (error) {
         console.error('載入意圖失敗', error);
       }
+    },
+
+    async loadForms() {
+      try {
+        const response = await axios.get('/rag-api/v1/forms?is_active=true');
+        this.availableForms = response.data || [];
+        console.log('📋 已載入表單列表:', this.availableForms.length, '個');
+      } catch (error) {
+        console.error('載入表單列表失敗', error);
+        this.availableForms = [];
+      }
+    },
+
+    getFormName(formId) {
+      const form = this.availableForms.find(f => f.form_id === formId);
+      return form ? form.form_name : formId;
     },
 
     updateIntentType(intentId) {
@@ -761,7 +806,9 @@ export default {
         keywords: [],
         intent_mappings: [],
         business_types: [],
-        target_user: []
+        target_user: [],
+        form_id: '',
+        form_intro: ''
       };
       this.keywordsString = '';
       this.selectedIntents = [];
@@ -787,6 +834,9 @@ export default {
           business_types: knowledge.business_types || '',
           target_user: knowledge.target_user || [],
           priority: knowledge.priority || 0,  // 載入優先級
+          // 表單關聯
+          form_id: knowledge.form_id || '',
+          form_intro: knowledge.form_intro || '',
           // 影片欄位
           video_url: knowledge.video_url || null,
           video_s3_key: knowledge.video_s3_key || null,
@@ -851,10 +901,18 @@ export default {
           ? this.selectedTargetUsers
           : null;
 
+        // 處理表單關聯（空字串轉為 null）
+        if (!this.formData.form_id || this.formData.form_id === '') {
+          this.formData.form_id = null;
+          this.formData.form_intro = null;
+        }
+
         console.log('📝 準備儲存的資料:', {
           question_summary: this.formData.question_summary,
           business_types: this.formData.business_types,
           target_user: this.formData.target_user,
+          form_id: this.formData.form_id,
+          form_intro: this.formData.form_intro,
           selectedBusinessTypes: this.selectedBusinessTypes,
           selectedTargetUsers: this.selectedTargetUsers
         });
@@ -1604,6 +1662,22 @@ export default {
   color: #909399;
   font-size: 12px;
   font-weight: normal;
+}
+
+.form-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #606266;
+  background-color: #fff;
+  transition: border-color 0.2s;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #409eff;
 }
 
 .tag-selector {

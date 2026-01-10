@@ -18,9 +18,10 @@ from services.llm_answer_optimizer import LLMAnswerOptimizer
 from services.intent_suggestion_engine import IntentSuggestionEngine
 from services.vendor_config_service import VendorConfigService
 from services.cache_service import CacheService
+from services.form_manager import FormManager
 
 # 導入路由
-from routers import chat, chat_stream, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, platform_sop, cache, videos, business_types, document_converter, target_user_config
+from routers import chat, chat_stream, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, platform_sop, cache, videos, business_types, document_converter, target_user_config, forms
 
 # 全局變數
 db_pool: Pool = None
@@ -32,13 +33,14 @@ llm_answer_optimizer: LLMAnswerOptimizer = None
 suggestion_engine: IntentSuggestionEngine = None
 vendor_config_service: VendorConfigService = None
 cache_service: CacheService = None
+form_manager: FormManager = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """應用生命週期管理"""
     # 啟動時初始化
-    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine, vendor_config_service, cache_service
+    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine, vendor_config_service, cache_service, form_manager
 
     print("🚀 初始化 RAG Orchestrator...")
 
@@ -93,6 +95,10 @@ async def lifespan(app: FastAPI):
     # 初始化緩存服務
     cache_service = CacheService()
 
+    # 初始化表單管理器（Phase X: 表單填寫對話功能 + 方案 B: 資料庫配置）
+    form_manager = FormManager(db_pool=db_pool)
+    print("✅ 表單管理器已初始化（表單填寫功能 + 資料庫配置支援）")
+
     # 將服務注入到 app.state
     app.state.db_pool = db_pool
     app.state.intent_classifier = intent_classifier
@@ -103,8 +109,9 @@ async def lifespan(app: FastAPI):
     app.state.vendor_config_service = vendor_config_service
     app.state.suggestion_engine = suggestion_engine
     app.state.cache_service = cache_service
+    app.state.form_manager = form_manager
 
-    print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化 + Phase B 意圖建議）")
+    print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化 + Phase B 意圖建議 + 表單填寫功能）")
     print(f"📝 API 文件: http://localhost:8100/docs")
 
     yield
@@ -134,7 +141,7 @@ app.add_middleware(
 
 # 註冊路由
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
-app.include_router(chat_stream.router, prefix="/api/v1", tags=["chat_stream"])  # Phase 3: Streaming
+app.include_router(chat_stream.router, prefix="/api/v1", tags=["chat_stream"])  # ⚠️ 暫時廢棄 2026-01-09（代碼保留，觀察期至 2026-07-09）
 app.include_router(unclear_questions.router, prefix="/api/v1", tags=["unclear_questions"])
 app.include_router(suggested_intents.router, prefix="/api/v1", tags=["suggested_intents"])
 app.include_router(intents.router, prefix="/api/v1", tags=["intents"])
@@ -149,6 +156,7 @@ app.include_router(cache.router, tags=["cache"])  # Cache Management (事件驅�
 app.include_router(videos.router, tags=["videos"])  # Video Upload & Management (S3 Storage)
 app.include_router(document_converter.router, tags=["document_converter"])  # Document Converter (Word/PDF -> Q&A)
 app.include_router(target_user_config.router, tags=["target_user_config"])  # Target User Configuration (用戶類型配置)
+app.include_router(forms.router, prefix="/api/v1", tags=["forms"])  # Form Management (表單管理)
 
 
 @app.get("/")

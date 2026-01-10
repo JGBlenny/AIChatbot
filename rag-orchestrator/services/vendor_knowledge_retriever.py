@@ -89,6 +89,9 @@ class VendorKnowledgeRetriever:
                     kb.video_file_size,
                     kb.video_duration,
                     kb.video_format,
+                    kb.form_id,
+                    kb.form_intro,
+                    kb.trigger_form_condition,
                     -- 計算優先級權重
                     CASE
                         WHEN kb.scope = 'customized' AND kb.vendor_id = %s THEN 1000
@@ -272,6 +275,9 @@ class VendorKnowledgeRetriever:
                     kb.video_file_size,
                     kb.video_duration,
                     kb.video_format,
+                    kb.form_id,
+                    kb.form_intro,
+                    kb.trigger_form_condition,
                     kim.intent_id,
                     kim.intent_type,
                     -- 計算向量相似度

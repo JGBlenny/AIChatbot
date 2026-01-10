@@ -112,6 +112,9 @@ class RAGEngine:
                                 kb.scope,
                                 kb.vendor_id,
                                 kb.priority,
+                                kb.form_id,
+                                kb.form_intro,
+                                kb.trigger_form_condition,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
@@ -165,6 +168,9 @@ class RAGEngine:
                                 kb.scope,
                                 kb.vendor_id,
                                 kb.priority,
+                                kb.form_id,
+                                kb.form_intro,
+                                kb.trigger_form_condition,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
@@ -219,6 +225,9 @@ class RAGEngine:
                                 kb.scope,
                                 kb.vendor_id,
                                 kb.priority,
+                                kb.form_id,
+                                kb.form_intro,
+                                kb.trigger_form_condition,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
@@ -271,6 +280,9 @@ class RAGEngine:
                                 kb.scope,
                                 kb.vendor_id,
                                 kb.priority,
+                                kb.form_id,
+                                kb.form_intro,
+                                kb.trigger_form_condition,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
                                 CASE
@@ -374,6 +386,9 @@ class RAGEngine:
                                 scope,
                                 vendor_id,
                                 priority,
+                                form_id,
+                                form_intro,
+                                trigger_form_condition,
                                 1 - (embedding <=> $1::vector) as base_similarity,
                                 1.0 as intent_boost,
                                 CASE
@@ -451,6 +466,9 @@ class RAGEngine:
                                 scope,
                                 vendor_id,
                                 priority,
+                                form_id,
+                                form_intro,
+                                trigger_form_condition,
                                 1 - (embedding <=> $1::vector) as base_similarity,
                                 1.0 as intent_boost,
                                 CASE
@@ -544,6 +562,9 @@ class RAGEngine:
                     answer as content,
                     audience,
                     keywords,
+                    form_id,
+                    form_intro,
+                    trigger_form_condition,
                     created_at,
                     updated_at
                 FROM knowledge_base
@@ -559,6 +580,9 @@ class RAGEngine:
                 "content": row['content'],
                 "target_user": row.get('target_user'),
                 "keywords": row.get('keywords', []),
+                "form_id": row.get('form_id'),
+                "form_intro": row.get('form_intro'),
+                "trigger_form_condition": row.get('trigger_form_condition'),
                 "created_at": row['created_at'].isoformat() if row['created_at'] else None,
                 "updated_at": row['updated_at'].isoformat() if row['updated_at'] else None
             }
@@ -586,7 +610,10 @@ class RAGEngine:
                     answer as content,
                     category,
                     audience,
-                    keywords
+                    keywords,
+                    form_id,
+                    form_intro,
+                    trigger_form_condition
                 FROM knowledge_base
                 WHERE keywords && $1::text[]
                 ORDER BY

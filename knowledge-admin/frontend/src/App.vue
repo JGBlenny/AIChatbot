@@ -63,6 +63,14 @@
                 <span class="nav-icon">📋</span>
                 <span class="nav-text">範本設定</span>
               </router-link>
+              <router-link to="/forms" class="nav-item nav-item-sub">
+                <span class="nav-icon">📝</span>
+                <span class="nav-text">表單管理</span>
+              </router-link>
+              <router-link to="/form-submissions" class="nav-item nav-item-sub">
+                <span class="nav-icon">📋</span>
+                <span class="nav-text">表單提交記錄</span>
+              </router-link>
             </div>
           </div>
         </div>

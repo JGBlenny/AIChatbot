@@ -2,6 +2,44 @@
 Streaming Chat API
 提供 Server-Sent Events (SSE) 流式輸出
 Phase 3: 用戶體驗優化 - 即時反饋
+
+========================================
+⚠️ 此端點暫時廢棄（2026-01-09）
+========================================
+
+【廢棄狀態】：暫時停用，代碼保留
+
+【廢棄原因】：
+1. 系統統一使用 POST /api/v1/message 端點處理對話
+2. 減少維護複雜度（雙端點維護成本高）
+3. 前端主要使用 /message 端點
+4. 流式輸出（SSE）功能暫時不是優先需求
+
+【現狀】：
+- 代碼完整保留，但前端不再調用
+- 主要對話流程統一使用 POST /api/v1/message（chat.py）
+- 如需流式輸出功能，可隨時重新啟用
+
+【未來規劃】：
+如果需要重新啟用流式對話功能：
+1. 確認前端需求（即時逐字輸出 vs 完整回應）
+2. 評估是否需要 session_id 支援（表單會話追蹤）
+3. 統一兩個端點的業務邏輯（SOP、參數、緩存等）
+
+【相關文檔】：
+- docs/design/FORM_FILLING_ENDPOINT_CLARIFICATION.md
+- docs/archive/api/CHAT_API_MIGRATION_GUIDE.md（參考廢棄端點處理方式）
+
+【注意】：
+- 如需刪除此端點，請先確認：
+  1. 前端完全未使用
+  2. 無外部系統依賴
+  3. 創建完整的盤查報告（參考 CHAT_ENDPOINT_REMOVAL_AUDIT.md）
+- 建議先保留 3-6 個月觀察期，確認無副作用後再決定是否刪除
+
+【決策日期】：2026-01-09
+【決策人】：開發團隊
+【預計檢討日期】：2026-07-09（6個月後）
 """
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
@@ -406,7 +444,13 @@ async def stream_optimized_answer(
 @router.post("/chat/stream")
 async def chat_stream(request: ChatStreamRequest, req: Request):
     """
-    流式聊天 API (SSE)
+    ⚠️ [暫時廢棄 2026-01-09] 流式聊天 API (SSE)
+
+    【狀態】：端點保留但暫停使用
+    【替代方案】：請使用 POST /api/v1/message
+    【原因】：系統統一使用 /message 端點，減少維護複雜度
+
+    ========================================
 
     返回 Server-Sent Events 流，包含以下事件:
     - start: 開始處理

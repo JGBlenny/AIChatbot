@@ -34,6 +34,7 @@
 - [優先級系統](features/PRIORITY_SYSTEM.md) - 知識優先級機制
 - [B2B API 整合](features/B2B_API_INTEGRATION.md) - B2B 業者 API 整合
 - [意圖建議語義去重](features/INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md) - pgvector 語義相似度檢查
+- [動態表單收集系統](features/FORM_MANAGEMENT_SYSTEM.md) - 對話式表單收集與知識整合
 
 **測試與品質**:
 - [測試場景防重複](features/DUPLICATE_TEST_SCENARIO_PREVENTION.md) - 避免重複測試
@@ -154,6 +155,8 @@
 - **匯入 LINE 對話** → [知識匯入](features/KNOWLEDGE_IMPORT_FEATURE.md)
 - **管理 SOP 項目** → [SOP 完整指南](guides/SOP_GUIDE.md)
 - **快速新增 SOP** → [SOP 快速參考](guides/SOP_QUICK_REFERENCE.md)
+- **創建表單** → [動態表單收集系統](features/FORM_MANAGEMENT_SYSTEM.md)
+- **查看表單提交記錄** → [動態表單收集系統](features/FORM_MANAGEMENT_SYSTEM.md)
 - **優化知識庫** → [回測知識優化](backtest/BACKTEST_KNOWLEDGE_OPTIMIZATION_GUIDE.md)
 
 **性能優化**:

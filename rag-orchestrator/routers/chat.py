@@ -256,6 +256,46 @@ def _remove_duplicate_question(answer: str, question: str) -> str:
     return answer
 
 
+# ==================== 輔助函數：表單轉換 ====================
+
+def _convert_form_result_to_response(
+    form_result: dict,
+    request: VendorChatRequest
+) -> VendorChatResponse:
+    """
+    將表單處理結果轉換為標準 VendorChatResponse
+
+    Args:
+        form_result: FormManager 返回的結果字典
+        request: 原始請求
+
+    Returns:
+        VendorChatResponse 實例
+    """
+    from datetime import datetime
+
+    return VendorChatResponse(
+        answer=form_result.get('answer', ''),
+        intent_name=form_result.get('intent_name', '表單填寫'),
+        intent_type='form_filling',
+        confidence=1.0,  # 表單流程固定高置信度
+        sources=None,
+        source_count=0,
+        vendor_id=request.vendor_id,
+        mode=request.mode or 'b2c',
+        session_id=request.session_id,
+        timestamp=datetime.utcnow().isoformat(),
+        # 表單專屬欄位
+        form_triggered=form_result.get('form_triggered', False),
+        form_completed=form_result.get('form_completed', False),
+        form_cancelled=form_result.get('form_cancelled', False),
+        form_id=form_result.get('form_id'),
+        current_field=form_result.get('current_field'),
+        progress=form_result.get('progress'),
+        allow_resume=form_result.get('allow_resume', False)
+    )
+
+
 # ==================== 輔助函數：業者驗證與緩存 ====================
 
 def _validate_vendor(vendor_id: int, resolver) -> dict:
@@ -1085,6 +1125,39 @@ async def _build_knowledge_response(
     llm_optimizer = req.app.state.llm_answer_optimizer
     confidence_evaluator = req.app.state.confidence_evaluator
 
+    # ⭐ 新架構：檢查最佳知識是否關聯表單
+    if knowledge_list:
+        print(f"🔍 [調試] knowledge_list[0] keys: {knowledge_list[0].keys()}")
+        print(f"🔍 [調試] knowledge_list[0]['form_id']: {knowledge_list[0].get('form_id')}")
+
+    if knowledge_list and knowledge_list[0].get('form_id'):
+        best_knowledge = knowledge_list[0]
+        form_id = best_knowledge['form_id']
+
+        # 確保有 session_id 和 user_id（表單必須）
+        if not request.session_id or not request.user_id:
+            print(f"⚠️  知識 {best_knowledge['id']} 關聯表單 {form_id}，但缺少 session_id 或 user_id，跳過表單觸發")
+        else:
+            print(f"📝 [表單觸發] 知識 {best_knowledge['id']} 關聯表單 {form_id}，啟動表單流程")
+
+            # 使用知識的 form_intro 或 answer 作為引導語
+            intro_message = best_knowledge.get('form_intro') or best_knowledge.get('answer', '')
+
+            # 調用 FormManager 觸發表單
+            form_manager = req.app.state.form_manager
+            form_result = await form_manager.trigger_form_by_knowledge(
+                knowledge_id=best_knowledge['id'],
+                form_id=form_id,
+                intro_message=intro_message,
+                session_id=request.session_id,
+                user_id=request.user_id,
+                vendor_id=request.vendor_id,
+                trigger_question=request.message
+            )
+
+            # 轉換為 VendorChatResponse 並返回
+            return _convert_form_result_to_response(form_result, request)
+
     # 獲取業者參數（保留完整資訊包含 display_name, unit 等）
     vendor_params = resolver.get_vendor_parameters(request.vendor_id)
 
@@ -1563,6 +1636,14 @@ class VendorChatResponse(BaseModel):
     video_file_size: Optional[int] = Field(None, description="影片檔案大小（bytes）")
     video_duration: Optional[int] = Field(None, description="影片長度（秒）")
     video_format: Optional[str] = Field(None, description="影片格式")
+    # 表單填寫資訊（Phase X: 表單填寫對話功能）
+    form_triggered: Optional[bool] = Field(None, description="表單是否被觸發")
+    form_completed: Optional[bool] = Field(None, description="表單是否已完成")
+    form_cancelled: Optional[bool] = Field(None, description="表單是否已取消")
+    form_id: Optional[str] = Field(None, description="表單 ID")
+    current_field: Optional[str] = Field(None, description="當前欄位名稱")
+    progress: Optional[str] = Field(None, description="填寫進度（如：2/4）")
+    allow_resume: Optional[bool] = Field(None, description="是否允許恢復表單填寫")
     # 調試資訊
     debug_info: Optional[DebugInfo] = Field(None, description="調試資訊（處理流程詳情）")
 
@@ -1573,9 +1654,11 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
     多業者通用聊天端點（Phase 1: B2C 模式）- 已重構
 
     流程：
+    0. 檢查表單會話（Phase X: 表單填寫功能）
     1. 驗證業者狀態
     2. 檢查緩存
     3. 意圖分類
+    3.5. 檢查表單觸發（Phase X: 表單填寫功能）
     4. 根據意圖處理：unclear → SOP → 知識庫 → RAG fallback
     5. LLM 優化並返回答案
 
@@ -1584,11 +1667,47 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
     - 各功能模塊獨立為輔助函數
     """
     try:
+        # Step 0: 檢查表單會話（Phase X: 表單填寫功能）
+        if request.session_id:
+            form_manager = req.app.state.form_manager
+            session_state = await form_manager.get_session_state(request.session_id)
+
+            if session_state and session_state['state'] in ['COLLECTING', 'DIGRESSION']:
+                # 用戶正在填寫表單 → 走表單收集流程
+                print(f"📋 檢測到進行中的表單會話（{session_state['form_id']}），使用表單收集流程")
+
+                intent_classifier = req.app.state.intent_classifier
+                intent_result = intent_classifier.classify(request.message)
+
+                form_result = await form_manager.collect_field_data(
+                    user_message=request.message,
+                    session_id=request.session_id,
+                    intent_result=intent_result,
+                    vendor_id=request.vendor_id,
+                    language='zh-TW'  # TODO: 從 request 或用戶設定讀取語言
+                )
+
+                # 如果用戶選擇回答問題或取消表單，繼續處理待處理的問題
+                if form_result.get('form_cancelled'):
+                    pending_question = form_result.get('pending_question')
+                    if pending_question:
+                        print(f"📋 用戶取消表單，繼續處理待處理的問題：{pending_question}")
+                        # 替換 request.message 為待處理的問題
+                        request.message = pending_question
+                        # 繼續往下走正常流程
+                    else:
+                        print(f"📋 用戶取消表單，但沒有待處理的問題")
+                        # 沒有待處理的問題，直接返回取消訊息
+                        return _convert_form_result_to_response(form_result, request)
+                else:
+                    # 將表單結果轉換為 VendorChatResponse 格式
+                    return _convert_form_result_to_response(form_result, request)
+
         # Step 1: 驗證業者
         resolver = get_vendor_param_resolver()
         vendor_info = _validate_vendor(request.vendor_id, resolver)
 
-        # Step 2: 緩存檢查
+        # Step 2: 緩存檢查（表單期間不使用緩存）
         cache_service = req.app.state.cache_service
         cached_response = _check_cache(cache_service, request.vendor_id, request.message, request.target_user)
         if cached_response:
@@ -1597,6 +1716,21 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         # Step 3: 意圖分類
         intent_classifier = req.app.state.intent_classifier
         intent_result = intent_classifier.classify(request.message)
+
+        # Step 3.5: 檢查表單觸發（Phase X: 表單填寫功能）
+        if request.session_id and request.user_id:
+            form_manager = req.app.state.form_manager
+            form_trigger_result = await form_manager.trigger_form_filling(
+                intent_name=intent_result['intent_name'],
+                session_id=request.session_id,
+                user_id=request.user_id,
+                vendor_id=request.vendor_id
+            )
+
+            if form_trigger_result.get('form_triggered'):
+                # 表單已觸發 → 返回第一個欄位提示
+                print(f"📋 表單已觸發：{form_trigger_result.get('form_id')}")
+                return _convert_form_result_to_response(form_trigger_result, request)
 
         # Step 4: 嘗試檢索 SOP（優先級最高，不管意圖是什麼都先嘗試）- 回測模式可跳過
         if not request.skip_sop:
