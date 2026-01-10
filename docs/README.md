@@ -34,7 +34,7 @@
 - [優先級系統](features/PRIORITY_SYSTEM.md) - 知識優先級機制
 - [B2B API 整合](features/B2B_API_INTEGRATION.md) - B2B 業者 API 整合
 - [意圖建議語義去重](features/INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md) - pgvector 語義相似度檢查
-- [動態表單收集系統](features/FORM_MANAGEMENT_SYSTEM.md) - 對話式表單收集與知識整合
+- [動態表單收集系統](features/FORM_MANAGEMENT_SYSTEM.md) - 對話式表單收集與知識整合（v1.1: 新增審核與編輯功能）⭐ UPDATED
 
 **測試與品質**:
 - [測試場景防重複](features/DUPLICATE_TEST_SCENARIO_PREVENTION.md) - 避免重複測試
@@ -113,6 +113,7 @@
 
 ### 🧪 測試文檔
 
+- [表單審核與編輯測試報告](testing/FORM_REVIEW_EDIT_TEST_REPORT.md) - 表單審核與編輯功能完整測試 ⭐ NEW
 - [優先級條件式加分測試](testing/PRIORITY_CONDITIONAL_BOOST_TEST_REPORT.md) - 優先級加分機制測試
 - [業務類型測試報告](testing/BUSINESS_TYPE_TEST_REPORT.md) - 業務類型篩選測試
 - [四種場景測試報告](testing/FOUR_SCENARIOS_TEST_REPORT.md) - 四種測試場景驗證

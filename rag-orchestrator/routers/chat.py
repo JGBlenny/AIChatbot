@@ -1672,6 +1672,52 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             form_manager = req.app.state.form_manager
             session_state = await form_manager.get_session_state(request.session_id)
 
+            # 處理 REVIEWING 狀態（審核確認）
+            if session_state and session_state['state'] == 'REVIEWING':
+                user_choice = request.message.strip()
+
+                # 確認提交
+                if user_choice.lower() in ["確認", "confirm", "ok", "提交", "submit"]:
+                    print(f"📋 用戶確認提交表單")
+                    # 完成表單
+                    form_schema = await form_manager.get_form_schema(
+                        session_state['form_id'],
+                        request.vendor_id
+                    )
+                    form_result = await form_manager._complete_form(
+                        session_state,
+                        form_schema,
+                        session_state['collected_data']
+                    )
+                    return _convert_form_result_to_response(form_result, request)
+
+                # 取消表單
+                elif user_choice.lower() in ["取消", "cancel", "放棄"]:
+                    print(f"📋 用戶取消表單")
+                    form_result = await form_manager.cancel_form(request.session_id)
+                    return _convert_form_result_to_response(form_result, request)
+
+                # 修改欄位
+                else:
+                    print(f"📋 用戶要求修改欄位：{user_choice}")
+                    form_result = await form_manager.handle_edit_request(
+                        session_id=request.session_id,
+                        user_input=request.message,
+                        vendor_id=request.vendor_id
+                    )
+                    return _convert_form_result_to_response(form_result, request)
+
+            # 處理 EDITING 狀態（編輯欄位）
+            if session_state and session_state['state'] == 'EDITING':
+                print(f"📋 用戶輸入編輯後的欄位值")
+                form_result = await form_manager.collect_edited_field(
+                    session_id=request.session_id,
+                    user_message=request.message,
+                    vendor_id=request.vendor_id
+                )
+                return _convert_form_result_to_response(form_result, request)
+
+            # 處理 COLLECTING 和 DIGRESSION 狀態（收集欄位）
             if session_state and session_state['state'] in ['COLLECTING', 'DIGRESSION']:
                 # 用戶正在填寫表單 → 走表單收集流程
                 print(f"📋 檢測到進行中的表單會話（{session_state['form_id']}），使用表單收集流程")

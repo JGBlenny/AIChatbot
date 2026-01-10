@@ -5,7 +5,8 @@
 動態表單收集系統允許 AI 聊天機器人在對話過程中自動觸發表單填寫流程，收集結構化數據，並將表單答案與知識庫回答整合，提供無縫的用戶體驗。
 
 **實作時間**：2025-01-10
-**版本**：1.0
+**版本**：1.1（新增審核與編輯功能）
+**最後更新**：2026-01-10
 **狀態**：✅ 已完成並驗證
 
 ---
@@ -592,7 +593,436 @@ def _get_knowledge_answer_sync(self, knowledge_id: int) -> Optional[str]:
 
 ---
 
-### 5. Chat API 整合
+### 5. 表單審核與編輯 ⭐ NEW
+
+**版本**：v1.1
+**實作日期**：2026-01-10
+**檔案**：`rag-orchestrator/services/form_manager.py`, `rag-orchestrator/routers/chat.py`
+
+#### 5.1 功能概述
+
+在用戶填寫完所有表單欄位後，系統自動進入**審核模式 (REVIEWING)**，讓用戶可以：
+- 📊 查看所有填寫的資料
+- ✏️ 選擇任意欄位進行修改
+- ✅ 確認無誤後提交
+- ❌ 取消整個表單
+
+這個功能大幅提升了用戶體驗，避免誤填或需要重新開始填寫。
+
+#### 5.2 狀態機設計
+
+新增兩個狀態到 FormState enum：
+
+```python
+class FormState:
+    """表單狀態枚舉"""
+    COLLECTING = "COLLECTING"  # 收集中
+    DIGRESSION = "DIGRESSION"  # 離題中
+    REVIEWING = "REVIEWING"    # 審核中（新增）⭐
+    EDITING = "EDITING"        # 編輯中（新增）⭐
+    COMPLETED = "COMPLETED"    # 已完成
+    CANCELLED = "CANCELLED"    # 已取消
+```
+
+**狀態轉換流程**：
+
+```
+COLLECTING → (填寫最後一個欄位) → REVIEWING
+REVIEWING → (選擇編號1-N) → EDITING
+EDITING → (輸入新值) → REVIEWING
+REVIEWING → (輸入「確認」) → COMPLETED
+REVIEWING → (輸入「取消」) → CANCELLED
+```
+
+#### 5.3 核心方法實作
+
+##### 5.3.1 顯示審核摘要 (show_review_summary)
+
+當所有欄位收集完成後，自動調用此方法進入審核模式：
+
+```python
+async def show_review_summary(
+    self,
+    session_id: str,
+    vendor_id: int
+) -> Dict:
+    """顯示表單審核摘要，讓用戶確認或修改"""
+    session_state = await self.get_session_state(session_id)
+    if not session_state:
+        return {"answer": "找不到表單會話", "error": True}
+
+    form_schema = await self.get_form_schema(
+        session_state['form_id'],
+        vendor_id
+    )
+
+    collected_data = session_state.get('collected_data', {})
+
+    # 格式化摘要
+    summary = self._format_review_summary(form_schema, collected_data)
+
+    # 更新狀態為 REVIEWING
+    await self.update_session_state(
+        session_id=session_id,
+        state=FormState.REVIEWING
+    )
+
+    return {
+        "answer": summary,
+        "state": "REVIEWING",
+        "allow_confirm": True,
+        "allow_edit": True,
+        "form_id": session_state['form_id']
+    }
+```
+
+##### 5.3.2 格式化審核摘要 (_format_review_summary)
+
+提供視覺化的資料呈現，包含：
+- Emoji 圖標（📝 姓名、📍 地址、📞 電話等）
+- 編號列表（1. 2. 3.）方便選擇
+- 修改標記（✨ ← 已更新）
+
+```python
+def _format_review_summary(
+    self,
+    form_schema: Dict,
+    collected_data: Dict,
+    changed_field: str = None
+) -> str:
+    """格式化審核摘要"""
+    lines = [
+        "✅ **所有欄位已填寫完成！**",
+        "",
+        "【您的資料】",
+        "━" * 30
+    ]
+
+    # Emoji 映射
+    emoji_map = {
+        "name": "📝", "full_name": "📝", "姓名": "📝",
+        "address": "📍", "地址": "📍",
+        "phone": "📞", "電話": "📞", "聯絡電話": "📞",
+        "email": "📧",
+        "date": "📅", "日期": "📅"
+    }
+
+    for idx, field in enumerate(form_schema['fields'], 1):
+        field_name = field['field_name']
+        field_label = field['field_label']
+        value = collected_data.get(field_name, '')
+
+        # 選擇 emoji
+        emoji = "▪️"
+        for key, icon in emoji_map.items():
+            if key in field_name.lower() or key in field_label:
+                emoji = icon
+                break
+
+        # 如果是剛修改的欄位，加上標記
+        if field_name == changed_field:
+            lines.append(f"{idx}. {emoji} **{field_label}**：{value}  ✨ ← 已更新")
+        else:
+            lines.append(f"{idx}. {emoji} **{field_label}**：{value}")
+
+    lines.extend([
+        "━" * 30,
+        "",
+        "**資料是否正確？**",
+        "• 輸入「**確認**」→ 提交表單",
+        "• 輸入「**編號**」→ 修改欄位（例如：2）",
+        "• 輸入「**取消**」→ 放棄填寫"
+    ])
+
+    return "\n".join(lines)
+```
+
+**實際輸出範例**：
+
+```
+✅ **所有欄位已填寫完成！**
+
+【您的資料】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. 📝 **姓名**：王小明
+2. 📍 **住址**：新北市板橋區文化路一段188號  ✨ ← 已更新
+3. 📞 **聯絡電話**：0912345678
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**資料是否正確？**
+• 輸入「**確認**」→ 提交表單
+• 輸入「**編號**」→ 修改欄位（例如：2）
+• 輸入「**取消**」→ 放棄填寫
+```
+
+##### 5.3.3 處理編輯請求 (handle_edit_request)
+
+當用戶輸入編號時，進入編輯模式：
+
+```python
+async def handle_edit_request(
+    self,
+    session_id: str,
+    user_input: str,
+    vendor_id: int
+) -> Dict:
+    """處理編輯請求（支援編號輸入）"""
+    session_state = await self.get_session_state(session_id)
+    form_schema = await self.get_form_schema(
+        session_state['form_id'],
+        vendor_id
+    )
+
+    # 嘗試解析為數字
+    try:
+        field_number = int(user_input.strip())
+        if 1 <= field_number <= len(form_schema['fields']):
+            field_index = field_number - 1
+            return await self._start_editing_field(
+                session_id,
+                field_index,
+                form_schema
+            )
+        else:
+            return {
+                "answer": f"❌ 編號無效，請輸入 1-{len(form_schema['fields'])} 之間的數字",
+                "error": True
+            }
+    except ValueError:
+        # 無法解析為數字，返回提示
+        return {
+            "answer": "❌ 請輸入有效的欄位編號（數字）",
+            "error": True
+        }
+```
+
+##### 5.3.4 收集編輯後的值 (collect_edited_field)
+
+處理用戶輸入的新值，包含驗證邏輯：
+
+```python
+async def collect_edited_field(
+    self,
+    session_id: str,
+    user_message: str,
+    vendor_id: int
+) -> Dict:
+    """收集編輯後的欄位值"""
+    session_state = await self.get_session_state(session_id)
+    form_schema = await self.get_form_schema(
+        session_state['form_id'],
+        vendor_id
+    )
+
+    current_field = form_schema['fields'][session_state['current_field_index']]
+
+    # 驗證欄位（使用現有的 FormFieldValidator）
+    is_valid, extracted_value, error_message = self.validator.validate_field(
+        field_config=current_field,
+        user_input=user_message
+    )
+
+    if not is_valid:
+        return {
+            "answer": f"❌ {error_message}\n\n請重新輸入「**{current_field['field_label']}**」",
+            "validation_failed": True,
+            "state": "EDITING"
+        }
+
+    # 更新欄位值
+    collected_data = session_state.get('collected_data', {})
+    collected_data[current_field['field_name']] = extracted_value
+
+    await self.update_session_state(
+        session_id=session_id,
+        collected_data=collected_data,
+        state=FormState.REVIEWING  # 回到審核模式
+    )
+
+    # 顯示更新後的摘要，標記修改的欄位
+    summary = self._format_review_summary(
+        form_schema,
+        collected_data,
+        changed_field=current_field['field_name']
+    )
+
+    return {
+        "answer": f"✅ 已更新「**{current_field['field_label']}**」\n\n{summary}",
+        "state": "REVIEWING",
+        "field_updated": True
+    }
+```
+
+#### 5.4 Chat API 整合
+
+在 `chat.py` 中新增三個狀態處理器：
+
+```python
+# 處理 REVIEWING 狀態（審核確認）
+if session_state and session_state['state'] == 'REVIEWING':
+    user_choice = request.message.strip()
+
+    # 確認提交
+    if user_choice.lower() in ["確認", "confirm", "ok", "提交", "submit"]:
+        print(f"📋 用戶確認提交表單")
+        form_schema = await form_manager.get_form_schema(
+            session_state['form_id'],
+            request.vendor_id
+        )
+        form_result = await form_manager._complete_form(
+            session_state,
+            form_schema,
+            session_state['collected_data']
+        )
+        return _convert_form_result_to_response(form_result, request)
+
+    # 取消表單
+    elif user_choice.lower() in ["取消", "cancel", "放棄"]:
+        print(f"📋 用戶取消表單")
+        form_result = await form_manager.cancel_form(request.session_id)
+        return _convert_form_result_to_response(form_result, request)
+
+    # 修改欄位
+    else:
+        print(f"📋 用戶要求修改欄位：{user_choice}")
+        form_result = await form_manager.handle_edit_request(
+            session_id=request.session_id,
+            user_input=request.message,
+            vendor_id=request.vendor_id
+        )
+        return _convert_form_result_to_response(form_result, request)
+
+# 處理 EDITING 狀態（編輯欄位）
+if session_state and session_state['state'] == 'EDITING':
+    print(f"📋 用戶輸入編輯後的欄位值")
+    form_result = await form_manager.collect_edited_field(
+        session_id=request.session_id,
+        user_message=request.message,
+        vendor_id=request.vendor_id
+    )
+    return _convert_form_result_to_response(form_result, request)
+```
+
+#### 5.5 修改欄位收集完成邏輯
+
+在 `form_manager.py` 的 `collect_field_data()` 方法中：
+
+```python
+# 6. 檢查是否完成所有欄位
+if next_field_index >= len(form_schema['fields']):
+    # 更新collected_data
+    await self.update_session_state(
+        session_id=session_id,
+        collected_data=collected_data
+    )
+    # ⭐ 進入審核模式（而非直接完成表單）
+    return await self.show_review_summary(session_id, vendor_id)
+```
+
+#### 5.6 完整對話流程示例
+
+```
+系統: 請問您的姓名？
+用戶: 王小明
+系統: ✅ **姓名** 已記錄！
+      📊 進度：1/3
+      請問您的住址？
+
+用戶: 台北市信義區
+系統: ✅ **住址** 已記錄！
+      📊 進度：2/3
+      請提供您的聯絡電話
+
+用戶: 0912345678
+系統: ✅ **所有欄位已填寫完成！**
+
+      【您的資料】
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      1. 📝 **姓名**：王小明
+      2. 📍 **住址**：台北市信義區
+      3. 📞 **聯絡電話**：0912345678
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      **資料是否正確？**
+      • 輸入「**確認**」→ 提交表單
+      • 輸入「**編號**」→ 修改欄位（例如：2）
+      • 輸入「**取消**」→ 放棄填寫
+
+用戶: 2
+系統: 請重新輸入「**住址**」
+
+      請問您的住址？
+
+用戶: 新北市板橋區文化路一段188號
+系統: ✅ 已更新「**住址**」
+
+      ✅ **所有欄位已填寫完成！**
+
+      【您的資料】
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      1. 📝 **姓名**：王小明
+      2. 📍 **住址**：新北市板橋區文化路一段188號  ✨ ← 已更新
+      3. 📞 **聯絡電話**：0912345678
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      **資料是否正確？**
+      • 輸入「**確認**」→ 提交表單
+      • 輸入「**編號**」→ 修改欄位（例如：2）
+      • 輸入「**取消**」→ 放棄填寫
+
+用戶: 確認
+系統: ✅ **表單填寫完成！**
+
+      感謝您完成表單！我們會儘快處理您的資料。
+```
+
+#### 5.7 錯誤處理
+
+**無效編號輸入**：
+```
+用戶: 0
+系統: ❌ 編號無效，請輸入 1-3 之間的數字
+
+用戶: 5
+系統: ❌ 編號無效，請輸入 1-3 之間的數字
+
+用戶: abc
+系統: ❌ 請輸入有效的欄位編號（數字）
+```
+
+**欄位驗證失敗**：
+```
+用戶: 2          [選擇電話欄位]
+系統: 請重新輸入「**聯絡電話**」
+
+      請提供您的聯絡電話
+
+用戶: 12345      [輸入無效格式]
+系統: ❌ 請輸入正確的台灣電話號碼格式（如：0912345678 或 02-12345678）
+
+      請重新輸入「**聯絡電話**」
+
+用戶: 02-87654321  [輸入正確格式]
+系統: ✅ 已更新「**聯絡電話**」...
+```
+
+#### 5.8 測試驗證
+
+完整測試報告請參考：[表單審核與編輯功能測試報告](#測試報告)
+
+**測試場景涵蓋**：
+- ✅ 審核狀態下取消表單
+- ✅ 多個欄位連續編輯
+- ✅ 無效編號輸入處理
+- ✅ 欄位驗證失敗處理
+- ✅ 完整端到端流程
+- ✅ 前端表單提交記錄查詢
+
+**測試結果**：6/6 場景通過（100% 成功率）
+
+---
+
+### 6. Chat API 整合
 
 **檔案**：`rag-orchestrator/routers/chat.py`
 
@@ -1174,6 +1604,9 @@ CREATE TABLE form_schema_versions (
 ---
 
 **建立日期**: 2025-01-10
-**最後更新**: 2025-01-10
-**版本**: 1.0
+**最後更新**: 2026-01-10
+**版本**: 1.1
 **維護者**: Development Team
+**變更歷史**:
+- v1.0 (2025-01-10): 初始版本 - 基礎表單收集功能
+- v1.1 (2026-01-10): 新增表單審核與編輯功能

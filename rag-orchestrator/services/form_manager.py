@@ -28,10 +28,12 @@ from services.digression_detector_db import DigressionDetectorDB
 
 class FormState:
     """表單狀態枚舉"""
-    COLLECTING = "COLLECTING"
-    DIGRESSION = "DIGRESSION"
-    COMPLETED = "COMPLETED"
-    CANCELLED = "CANCELLED"
+    COLLECTING = "COLLECTING"  # 收集中
+    DIGRESSION = "DIGRESSION"  # 離題中
+    REVIEWING = "REVIEWING"    # 審核中（新增）
+    EDITING = "EDITING"        # 編輯中（新增）
+    COMPLETED = "COMPLETED"    # 已完成
+    CANCELLED = "CANCELLED"    # 已取消
 
 
 class FormManager:
@@ -599,7 +601,13 @@ class FormManager:
 
         # 6. 檢查是否完成所有欄位
         if next_field_index >= len(form_schema['fields']):
-            return await self._complete_form(session_state, form_schema, collected_data)
+            # 更新collected_data
+            await self.update_session_state(
+                session_id=session_id,
+                collected_data=collected_data
+            )
+            # 進入審核模式（而非直接完成表單）
+            return await self.show_review_summary(session_id, vendor_id)
 
         # 7. 更新會話狀態並提示下一個欄位
         await self.update_session_state(
@@ -739,6 +747,207 @@ class FormManager:
             "answer": "已取消表單填寫。如需重新申請，請隨時告訴我！",
             "form_cancelled": True
         }
+
+    # ========================================================================
+    # 表單審核與編輯功能（新增）
+    # ========================================================================
+
+    async def show_review_summary(
+        self,
+        session_id: str,
+        vendor_id: int
+    ) -> Dict:
+        """顯示表單審核摘要，讓用戶確認或修改"""
+        session_state = await self.get_session_state(session_id)
+        if not session_state:
+            return {"answer": "找不到表單會話", "error": True}
+
+        form_schema = await self.get_form_schema(
+            session_state['form_id'],
+            vendor_id
+        )
+
+        collected_data = session_state.get('collected_data', {})
+
+        # 格式化摘要
+        summary = self._format_review_summary(form_schema, collected_data)
+
+        # 更新狀態為 REVIEWING
+        await self.update_session_state(
+            session_id=session_id,
+            state=FormState.REVIEWING
+        )
+
+        return {
+            "answer": summary,
+            "state": "REVIEWING",
+            "allow_confirm": True,
+            "allow_edit": True,
+            "form_id": session_state['form_id']
+        }
+
+    def _format_review_summary(
+        self,
+        form_schema: Dict,
+        collected_data: Dict,
+        changed_field: str = None
+    ) -> str:
+        """格式化審核摘要"""
+        lines = [
+            "✅ **所有欄位已填寫完成！**",
+            "",
+            "【您的資料】",
+            "━" * 30
+        ]
+
+        # Emoji 映射
+        emoji_map = {
+            "name": "📝", "full_name": "📝", "姓名": "📝",
+            "address": "📍", "地址": "📍",
+            "phone": "📞", "電話": "📞", "聯絡電話": "📞",
+            "email": "📧",
+            "date": "📅", "日期": "📅"
+        }
+
+        for idx, field in enumerate(form_schema['fields'], 1):
+            field_name = field['field_name']
+            field_label = field['field_label']
+            value = collected_data.get(field_name, '')
+
+            # 選擇 emoji
+            emoji = "▪️"
+            for key, icon in emoji_map.items():
+                if key in field_name.lower() or key in field_label:
+                    emoji = icon
+                    break
+
+            # 如果是剛修改的欄位，加上標記
+            if field_name == changed_field:
+                lines.append(f"{idx}. {emoji} **{field_label}**：{value}  ✨ ← 已更新")
+            else:
+                lines.append(f"{idx}. {emoji} **{field_label}**：{value}")
+
+        lines.extend([
+            "━" * 30,
+            "",
+            "**資料是否正確？**",
+            "• 輸入「**確認**」→ 提交表單",
+            "• 輸入「**編號**」→ 修改欄位（例如：2）",
+            "• 輸入「**取消**」→ 放棄填寫"
+        ])
+
+        return "\n".join(lines)
+
+    async def handle_edit_request(
+        self,
+        session_id: str,
+        user_input: str,
+        vendor_id: int
+    ) -> Dict:
+        """處理編輯請求（支援編號或欄位名稱）"""
+        session_state = await self.get_session_state(session_id)
+        form_schema = await self.get_form_schema(
+            session_state['form_id'],
+            vendor_id
+        )
+
+        # 嘗試解析為數字
+        try:
+            field_number = int(user_input.strip())
+            if 1 <= field_number <= len(form_schema['fields']):
+                field_index = field_number - 1
+                return await self._start_editing_field(
+                    session_id,
+                    field_index,
+                    form_schema
+                )
+            else:
+                return {
+                    "answer": f"❌ 編號無效，請輸入 1-{len(form_schema['fields'])} 之間的數字",
+                    "error": True
+                }
+        except ValueError:
+            # 無法解析為數字，返回提示
+            return {
+                "answer": "❌ 請輸入有效的欄位編號（數字）",
+                "error": True
+            }
+
+    async def _start_editing_field(
+        self,
+        session_id: str,
+        field_index: int,
+        form_schema: Dict
+    ) -> Dict:
+        """開始編輯特定欄位"""
+        field = form_schema['fields'][field_index]
+
+        # 更新狀態：設置為編輯模式，並記錄正在編輯的欄位
+        await self.update_session_state(
+            session_id=session_id,
+            state=FormState.EDITING,
+            current_field_index=field_index
+        )
+
+        return {
+            "answer": f"請重新輸入「**{field['field_label']}**」\n\n{field.get('prompt', '')}",
+            "state": "EDITING",
+            "editing_field": field['field_name'],
+            "field_label": field['field_label']
+        }
+
+    async def collect_edited_field(
+        self,
+        session_id: str,
+        user_message: str,
+        vendor_id: int
+    ) -> Dict:
+        """收集編輯後的欄位值"""
+        session_state = await self.get_session_state(session_id)
+        form_schema = await self.get_form_schema(
+            session_state['form_id'],
+            vendor_id
+        )
+
+        current_field = form_schema['fields'][session_state['current_field_index']]
+
+        # 驗證欄位
+        is_valid, extracted_value, error_message = self.validator.validate_field(
+            field_config=current_field,
+            user_input=user_message
+        )
+
+        if not is_valid:
+            return {
+                "answer": f"❌ {error_message}\n\n請重新輸入「**{current_field['field_label']}**」",
+                "validation_failed": True,
+                "state": "EDITING"
+            }
+
+        # 更新欄位值
+        collected_data = session_state.get('collected_data', {})
+        collected_data[current_field['field_name']] = extracted_value
+
+        await self.update_session_state(
+            session_id=session_id,
+            collected_data=collected_data,
+            state=FormState.REVIEWING  # 回到審核模式
+        )
+
+        # 顯示更新後的摘要，標記修改的欄位
+        summary = self._format_review_summary(
+            form_schema,
+            collected_data,
+            changed_field=current_field['field_name']
+        )
+
+        return {
+            "answer": f"✅ 已更新「**{current_field['field_label']}**」\n\n{summary}",
+            "state": "REVIEWING",
+            "field_updated": True
+        }
+
+    # ========================================================================
 
     def _cleanup_expired_sessions_sync(self, timeout_minutes: int = 30) -> int:
         """清理過期的表單會話（同步）"""
