@@ -35,8 +35,8 @@
       </button>
     </div>
 
-    <div v-else class="knowledge-list">
-      <table>
+    <div v-else class="admin-list">
+      <table class="admin-list">
         <thead>
           <tr>
             <th width="60">ID</th>
@@ -93,18 +93,31 @@
           </tr>
         </tbody>
       </table>
+    </div>
 
-      <!-- 分頁 -->
-      <div class="pagination">
-        <span>顯示 {{ offset + 1 }}-{{ Math.min(offset + limit, total) }} / 共 {{ total }} 筆</span>
-        <div>
-          <button @click="prevPage" :disabled="offset === 0" class="btn-sm">
-            &lt; 上一頁
-          </button>
-          <button @click="nextPage" :disabled="offset + limit >= total" class="btn-sm">
-            下一頁 &gt;
-          </button>
-        </div>
+    <!-- 統計資訊和分頁控制 -->
+    <div v-if="admins.length > 0 && total > 0" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+      <div style="color: #606266;">
+        總計 {{ total }} 筆用戶，顯示第 {{ offset + 1 }} - {{ Math.min(offset + limit, total) }} 筆
+      </div>
+      <div class="pagination-controls">
+        <button
+          @click="prevPage"
+          :disabled="offset === 0"
+          class="btn-pagination"
+        >
+          ← 上一頁
+        </button>
+        <span style="margin: 0 15px; color: #606266;">
+          第 {{ currentPage }} / {{ totalPages }} 頁
+        </span>
+        <button
+          @click="nextPage"
+          :disabled="offset + limit >= total"
+          class="btn-pagination"
+        >
+          下一頁 →
+        </button>
       </div>
     </div>
 
@@ -319,6 +332,10 @@ export default {
       loadAdmins()
     })
 
+    // Computed properties for pagination
+    const currentPage = computed(() => Math.floor(offset.value / limit.value) + 1)
+    const totalPages = computed(() => Math.ceil(total.value / limit.value))
+
     return {
       admins,
       loading,
@@ -330,6 +347,8 @@ export default {
       showFormModal,
       selectedAdmin,
       currentUser,
+      currentPage,
+      totalPages,
       loadAdmins,
       handleSearch,
       nextPage,
@@ -484,41 +503,31 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.pagination {
+.pagination-controls {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: 24px;
-  padding: 16px 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  border: 2px solid #f0f0f0;
 }
 
-.pagination span {
+.btn-pagination {
+  padding: 8px 16px;
+  background: #409EFF;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
   font-size: 14px;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.pagination button {
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
   transition: all 0.3s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-.pagination button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+.btn-pagination:hover:not(:disabled) {
+  background: #66B1FF;
+  transform: translateY(-1px);
 }
 
-.pagination button:disabled {
-  opacity: 0.4;
+.btn-pagination:disabled {
+  background: #C0C4CC;
   cursor: not-allowed;
-  transform: none;
+  opacity: 0.6;
 }
 
 .loading,
