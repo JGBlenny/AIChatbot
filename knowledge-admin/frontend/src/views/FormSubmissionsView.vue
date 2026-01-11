@@ -365,13 +365,15 @@ export default {
   text-align: left;
   font-weight: 600;
   color: #606266;
+  font-size: 14px;
   border-bottom: 2px solid #e4e7ed;
 }
 
 .submissions-list td {
   padding: 15px;
   border-bottom: 1px solid #ebeef5;
-  color: #606266;
+  font-size: 14px;
+  color: #2d3748;
 }
 
 .submissions-list tr:hover {

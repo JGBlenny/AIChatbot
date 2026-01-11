@@ -1,19 +1,6 @@
 <template>
-  <div class="role-management">
-    <!-- 頁面標題 -->
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">🔐 角色管理</h1>
-        <p class="page-subtitle">管理系統角色與權限配置</p>
-      </div>
-      <button
-        v-permission="'role:create'"
-        class="btn-primary"
-        @click="openCreateModal"
-      >
-        ＋ 新增角色
-      </button>
-    </div>
+  <div>
+    <h2>🔐 角色管理</h2>
 
     <!-- 搜尋與篩選 -->
     <div class="toolbar">
@@ -21,13 +8,19 @@
         v-model="searchQuery"
         type="text"
         placeholder="🔍 搜尋角色名稱或說明..."
-        class="search-input"
       />
-      <select v-model="filterSystem" class="filter-select">
+      <select v-model="filterSystem">
         <option value="all">全部角色</option>
         <option value="true">系統角色</option>
         <option value="false">自訂角色</option>
       </select>
+      <button
+        v-permission="'role:create'"
+        class="btn-primary btn-sm"
+        @click="openCreateModal"
+      >
+        ➕ 新增角色
+      </button>
     </div>
 
     <!-- 載入中 -->
@@ -325,80 +318,37 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.role-management {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-}
-
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #2d3748;
-  margin: 0 0 8px 0;
-}
-
-.page-subtitle {
-  font-size: 14px;
-  color: #718096;
-  margin: 0;
-}
-
-.btn-primary {
-  background: #667eea;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary:hover {
-  background: #5568d3;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
 .toolbar {
   display: flex;
   gap: 12px;
   margin-bottom: 24px;
+  align-items: center;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 2px solid #f0f0f0;
 }
 
-.search-input {
-  flex: 1;
-  padding: 10px 16px;
-  border: 1px solid #cbd5e0;
-  border-radius: 8px;
+.toolbar input,
+.toolbar select {
+  padding: 12px 16px;
+  border: 2px solid #e8eaed;
+  border-radius: 10px;
   font-size: 14px;
+  transition: all 0.3s;
+  background: white;
 }
 
-.search-input:focus {
+.toolbar input:focus,
+.toolbar select:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.filter-select {
-  padding: 10px 16px;
-  border: 1px solid #cbd5e0;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  background: white;
-}
-
-.filter-select:focus {
-  outline: none;
+.toolbar input:hover,
+.toolbar select:hover {
   border-color: #667eea;
 }
 
@@ -443,17 +393,17 @@ onMounted(() => {
 }
 
 .roles-table th {
-  padding: 16px;
+  padding: 15px;
   text-align: left;
   font-weight: 600;
   color: #4a5568;
-  font-size: 13px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .roles-table td {
-  padding: 16px;
+  padding: 15px;
   border-bottom: 1px solid #e2e8f0;
   font-size: 14px;
   color: #2d3748;
@@ -463,14 +413,12 @@ onMounted(() => {
   background: #f7fafc;
 }
 
-.role-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .name-text {
   font-weight: 500;
+}
+
+.badge-special {
+  margin-left: 8px;
 }
 
 .role-code {

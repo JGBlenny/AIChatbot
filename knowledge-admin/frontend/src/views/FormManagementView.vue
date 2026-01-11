@@ -398,17 +398,20 @@ export default {
 }
 
 .knowledge-list th {
-  padding: 12px;
+  padding: 15px;
   text-align: left;
   background: #f5f7fa;
   border-bottom: 2px solid #dcdfe6;
   font-weight: 600;
   color: #606266;
+  font-size: 14px;
 }
 
 .knowledge-list td {
-  padding: 12px;
+  padding: 15px;
   border-bottom: 1px solid #ebeef5;
+  font-size: 14px;
+  color: #2d3748;
 }
 
 .knowledge-list tbody tr:hover {

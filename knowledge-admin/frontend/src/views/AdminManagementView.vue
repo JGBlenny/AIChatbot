@@ -394,7 +394,7 @@ export default {
 
 .admin-list th,
 .admin-list td {
-  padding: 16px 20px;
+  padding: 15px;
   text-align: left;
 }
 
@@ -405,7 +405,6 @@ export default {
   font-size: 14px;
   border: none;
   border-bottom: 2px solid #e0e0e0;
-  padding: 16px 20px;
   text-align: center;
 }
 
@@ -430,8 +429,8 @@ export default {
 }
 
 .admin-list td strong {
-  color: #1a202c;
-  font-weight: 600;
+  color: #2d3748;
+  font-weight: 500;
 }
 
 .badge {
