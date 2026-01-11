@@ -35,7 +35,7 @@
       </button>
     </div>
 
-    <div v-else class="admin-list">
+    <div v-else class="knowledge-list">
       <table>
         <thead>
           <tr>

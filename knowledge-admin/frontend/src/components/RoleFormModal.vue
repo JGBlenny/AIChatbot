@@ -88,6 +88,7 @@
 import { ref, computed, watch } from 'vue'
 import PermissionSelector from './PermissionSelector.vue'
 import axios from 'axios'
+import { API_BASE_URL } from '@/config/api'
 
 const props = defineProps({
   isOpen: {
@@ -157,8 +158,6 @@ async function handleSubmit() {
   isSubmitting.value = true
 
   try {
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-
     if (isEditMode.value) {
       // 編輯模式：PUT /api/roles/{id}
       const updateData = {
