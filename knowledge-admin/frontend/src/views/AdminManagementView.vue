@@ -1,6 +1,6 @@
 <template>
-  <div class="admin-management">
-    <h2>用戶管理</h2>
+  <div>
+    <h2>👥 用戶管理</h2>
 
     <!-- 工具列 -->
     <div class="toolbar">
@@ -347,24 +347,6 @@ export default {
 </script>
 
 <style scoped>
-.admin-management {
-  padding: 0;
-  max-width: 100%;
-}
-
-.admin-management h2 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a202c;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 3px solid #667eea;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 .toolbar {
   display: flex;
   gap: 12px;
