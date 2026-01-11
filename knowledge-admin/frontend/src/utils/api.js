@@ -85,8 +85,19 @@ export async function apiGet(url, options = {}) {
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'GET 請求失敗')
+    let errorMessage = 'GET 請求失敗'
+    try {
+      const text = await response.text()
+      if (text) {
+        const error = JSON.parse(text)
+        errorMessage = error.detail || errorMessage
+      } else {
+        errorMessage = `${errorMessage} (狀態碼: ${response.status})`
+      }
+    } catch (e) {
+      errorMessage = `${errorMessage} (狀態碼: ${response.status})`
+    }
+    throw new Error(errorMessage)
   }
 
   return response.json()
@@ -103,13 +114,25 @@ export async function apiPost(url, data = null, options = {}) {
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    // 處理 Pydantic 驗證錯誤（陣列格式）
-    if (Array.isArray(error.detail)) {
-      const errors = error.detail.map(e => `${e.loc.join('.')}: ${e.msg}`).join('; ')
-      throw new Error(errors || 'POST 請求失敗')
+    let errorMessage = 'POST 請求失敗'
+    try {
+      const text = await response.text()
+      if (text) {
+        const error = JSON.parse(text)
+        // 處理 Pydantic 驗證錯誤（陣列格式）
+        if (Array.isArray(error.detail)) {
+          const errors = error.detail.map(e => `${e.loc.join('.')}: ${e.msg}`).join('; ')
+          errorMessage = errors || errorMessage
+        } else {
+          errorMessage = error.detail || errorMessage
+        }
+      } else {
+        errorMessage = `${errorMessage} (狀態碼: ${response.status})`
+      }
+    } catch (e) {
+      errorMessage = `${errorMessage} (狀態碼: ${response.status})`
     }
-    throw new Error(error.detail || 'POST 請求失敗')
+    throw new Error(errorMessage)
   }
 
   return response.json()
@@ -126,13 +149,25 @@ export async function apiPut(url, data = null, options = {}) {
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    // 處理 Pydantic 驗證錯誤（陣列格式）
-    if (Array.isArray(error.detail)) {
-      const errors = error.detail.map(e => `${e.loc.join('.')}: ${e.msg}`).join('; ')
-      throw new Error(errors || 'PUT 請求失敗')
+    let errorMessage = 'PUT 請求失敗'
+    try {
+      const text = await response.text()
+      if (text) {
+        const error = JSON.parse(text)
+        // 處理 Pydantic 驗證錯誤（陣列格式）
+        if (Array.isArray(error.detail)) {
+          const errors = error.detail.map(e => `${e.loc.join('.')}: ${e.msg}`).join('; ')
+          errorMessage = errors || errorMessage
+        } else {
+          errorMessage = error.detail || errorMessage
+        }
+      } else {
+        errorMessage = `${errorMessage} (狀態碼: ${response.status})`
+      }
+    } catch (e) {
+      errorMessage = `${errorMessage} (狀態碼: ${response.status})`
     }
-    throw new Error(error.detail || 'PUT 請求失敗')
+    throw new Error(errorMessage)
   }
 
   return response.json()
@@ -148,8 +183,19 @@ export async function apiDelete(url, options = {}) {
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'DELETE 請求失敗')
+    let errorMessage = 'DELETE 請求失敗'
+    try {
+      const text = await response.text()
+      if (text) {
+        const error = JSON.parse(text)
+        errorMessage = error.detail || errorMessage
+      } else {
+        errorMessage = `${errorMessage} (狀態碼: ${response.status})`
+      }
+    } catch (e) {
+      errorMessage = `${errorMessage} (狀態碼: ${response.status})`
+    }
+    throw new Error(errorMessage)
   }
 
   return response.json()

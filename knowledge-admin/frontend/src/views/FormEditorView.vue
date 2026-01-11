@@ -256,7 +256,11 @@ export default {
     const editingIndex = ref(null);
 
     const formId = computed(() => route.params.formId);
-    const isNew = computed(() => route.path.includes('/forms/new') || formId.value === 'new');
+    const isNew = computed(() => {
+      const pathIsNew = route.path === '/forms/new' || route.path.startsWith('/forms/new/');
+      const paramIsNew = formId.value === 'new';
+      return pathIsNew || paramIsNew;
+    });
 
     const formData = ref({
       form_id: '',
@@ -270,7 +274,16 @@ export default {
 
     // 載入表單（編輯模式）
     const loadForm = async () => {
-      if (isNew.value) return;
+      console.log('[FormEditor] loadForm called', {
+        path: route.path,
+        formId: formId.value,
+        isNew: isNew.value
+      });
+
+      if (isNew.value) {
+        console.log('[FormEditor] 新建模式，跳過載入');
+        return;
+      }
 
       loading.value = true;
       try {
@@ -475,7 +488,19 @@ export default {
     };
 
     onMounted(() => {
-      loadForm();
+      console.log('[FormEditor] onMounted', {
+        path: route.path,
+        formId: formId.value,
+        isNew: isNew.value,
+        routeName: route.name
+      });
+
+      // 只有在編輯模式才載入表單
+      if (route.name !== 'FormNew' && formId.value && formId.value !== 'new') {
+        loadForm();
+      } else {
+        console.log('[FormEditor] 跳過載入 - 新建模式');
+      }
     });
 
     return {
