@@ -256,7 +256,7 @@ export default {
     const editingIndex = ref(null);
 
     const formId = computed(() => route.params.formId);
-    const isNew = computed(() => formId.value === 'new');
+    const isNew = computed(() => route.path.includes('/forms/new') || formId.value === 'new');
 
     const formData = ref({
       form_id: '',
