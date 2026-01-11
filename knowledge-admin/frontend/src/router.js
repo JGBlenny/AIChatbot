@@ -215,6 +215,14 @@ const routes = [
     }
   },
   {
+    path: '/forms/new',
+    name: 'FormNew',
+    component: FormEditorView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
     path: '/forms/:formId/edit',
     name: 'FormEditor',
     component: FormEditorView,
