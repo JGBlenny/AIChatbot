@@ -264,7 +264,7 @@ class KnowledgeExportService(UnifiedJobService):
         filters = filters or {}
 
         query = """
-            SELECT
+            SELECT DISTINCT ON (kb.id)
                 kb.id,
                 kb.question_summary,
                 kb.answer,
@@ -315,7 +315,8 @@ class KnowledgeExportService(UnifiedJobService):
             # 明確指定 vendor_id=None 時，只匯出通用知識
             query += " AND kb.vendor_id IS NULL"
 
-        query += " ORDER BY kb.id ASC"
+        # DISTINCT ON 要求 ORDER BY 的第一個欄位必須是 DISTINCT ON 的欄位
+        query += " ORDER BY kb.id ASC, kim.id ASC"
 
         async with self.db_pool.acquire() as conn:
             rows = await conn.fetch(query, *params)
