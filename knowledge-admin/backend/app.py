@@ -478,24 +478,37 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
             keywords_str = ", ".join(data.keywords) if data.keywords else ""
             text_for_embedding = f"{data.question_summary}. 關鍵字: {keywords_str}" if keywords_str else data.question_summary
 
+            print(f"🔄 正在呼叫 Embedding API: {EMBEDDING_API_URL}")
+            print(f"📝 文字內容: {text_for_embedding[:100]}...")
+
             embedding_response = requests.post(
                 EMBEDDING_API_URL,
                 json={"text": text_for_embedding},
                 timeout=30
             )
 
+            print(f"📊 Embedding API 回應狀態: {embedding_response.status_code}")
+
             if embedding_response.status_code != 200:
-                raise Exception(f"Embedding API 錯誤: {embedding_response.text}")
+                error_detail = f"Embedding API 錯誤 (狀態碼: {embedding_response.status_code}): {embedding_response.text}"
+                print(f"❌ {error_detail}")
+                raise Exception(error_detail)
 
             embedding = embedding_response.json()['embedding']
+            print(f"✅ 向量生成成功，維度: {len(embedding)}")
 
         except requests.exceptions.RequestException as e:
+            error_msg = f"無法連線到 Embedding API: {str(e)}"
+            print(f"❌ {error_msg}")
             raise HTTPException(
                 status_code=500,
-                detail=f"無法連線到 Embedding API: {str(e)}"
+                detail=error_msg
             )
 
         # 2. 插入資料庫
+        print(f"💾 開始插入資料庫...")
+        print(f"📋 資料: question_summary={data.question_summary}, business_types={data.business_types}, target_user={data.target_user}")
+
         cur.execute("""
             INSERT INTO knowledge_base
             (question_summary, answer, keywords, embedding, business_types, target_user, priority, form_id, form_intro)
@@ -515,6 +528,7 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
 
         new_record = cur.fetchone()
         new_id = new_record['id']
+        print(f"✅ 知識已插入，ID: {new_id}")
 
         # 3. 插入意圖關聯
         if data.intent_mappings:
@@ -541,6 +555,10 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        error_traceback = traceback.format_exc()
+        print(f"❌ 新增知識失敗:")
+        print(error_traceback)
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"新增失敗: {str(e)}")
 
