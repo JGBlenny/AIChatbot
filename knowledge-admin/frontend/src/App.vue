@@ -198,6 +198,7 @@ export default {
 
   data() {
     return {
+      sidebarCollapsed: false,  // 側邊欄收合狀態
       expandedGroups: {
         knowledge: true,  // 預設展開知識庫管理
         vendor: true      // 預設展開業者管理
