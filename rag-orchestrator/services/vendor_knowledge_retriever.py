@@ -397,8 +397,10 @@ class VendorKnowledgeRetriever:
                 base_similarity = knowledge['base_similarity']
                 boosted_similarity = base_similarity * boost
 
-                # ✅ 在 Python 中過濾：只保留加成後 >= similarity_threshold 的結果
-                if boosted_similarity < similarity_threshold:
+                # ✅ 方案 A：只用向量相似度過濾，意圖純粹作為排序因子
+                # 修改日期：2026-01-13
+                # 修改原因：消除「意圖依賴區間」，使意圖變成純排序加分項而非過濾條件
+                if base_similarity < similarity_threshold:
                     filtered_count += 1
                     continue
 
