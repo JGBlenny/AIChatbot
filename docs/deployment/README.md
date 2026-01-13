@@ -88,6 +88,25 @@ deployment/
 
 ---
 
+### 2026-01-13
+**主要更新：**
+- 統一檢索路徑（commit cbf4c4f）- 使意圖成為純排序因子
+- 前端表單編輯器增加 prompt 欄位必填驗證（commit ba503d3）
+- 移除 form_intro 欄位，統一使用表單 default_intro（commit 781a7c0）
+
+**部署文件：**
+- [PRODUCTION_DEPLOY_2026-01-13.md](2026-01-13/PRODUCTION_DEPLOY_2026-01-13.md) - 統一檢索路徑部署指南
+- [steps_2026-01-13.md](2026-01-13/steps_2026-01-13.md) - 部署步驟
+- [hotfix_2026-01-13.md](2026-01-13/hotfix_2026-01-13.md) - 熱修復記錄
+
+**資料庫遷移：**
+- `docs/deployment/2026-01-13/remove_form_intro_2026-01-13.sql` - 刪除 knowledge_base.form_intro 欄位
+
+**相關文檔：**
+- [FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md](../features/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md) - 表單引導語改善完整報告
+
+---
+
 ## 🆕 新增版本
 
 當有新版本需要特殊部署步驟時，請按以下方式組織：
@@ -99,4 +118,4 @@ deployment/
 
 ---
 
-**最後更新**：2026-01-12
+**最後更新**：2026-01-13
