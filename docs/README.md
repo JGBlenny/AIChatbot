@@ -1,7 +1,9 @@
 # 📚 統一檢索路徑實施 - 文檔索引
 
-**最後更新**：2026-01-13 下午
-**實施版本**：選項 A - 統一檢索引擎（commit cbf4c4f）
+**最後更新**：2026-01-13 晚上
+**主要功能**：
+- 統一檢索路徑（commit cbf4c4f）
+- 表單引導改善（commit ba503d3）
 
 ---
 
@@ -17,6 +19,7 @@
 | **理解設計原則** | [RETRIEVAL_PHILOSOPHY_ANALYSIS.md](./analysis/retrieval_philosophy.md) | 「向量為主，意圖為輔」哲學、數學證明 |
 | **執行測試** | [test_retrieval_logic_validation.sh](../scripts/test_retrieval_validation.sh) | 自動化測試腳本（5個測試案例） |
 | **生產部署** | [DEPLOY_STEPS_2026-01-13.md](./deployment/steps_2026-01-13.md) | 生產環境部署步驟 |
+| **表單引導改善** | [FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md](./features/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md) | 表單引導語和驗證改善 🆕 |
 
 ---
 
@@ -192,6 +195,7 @@ Unclear：使用相同邏輯，boost=1.0
 
 | 日期 | 文檔 | 變更 |
 |------|------|------|
+| 2026-01-13 晚上 | FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md | ✅ 新建（表單引導改善） |
 | 2026-01-13 下午 | FINAL_IMPLEMENTATION_2026-01-13.md | ✅ 新建 |
 | 2026-01-13 下午 | IMPLEMENTATION_SUMMARY.md | ✅ 更新（階段二） |
 | 2026-01-13 下午 | DOCUMENTATION_INDEX.md | ✅ 新建 |
