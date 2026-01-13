@@ -387,15 +387,15 @@ export default {
     // ✅ 新增：從 URL 讀取參數
     const urlParams = new URLSearchParams(window.location.search);
 
-    // 讀取 user_role 參數
-    const urlUserRole = urlParams.get('user_role');
+    // 讀取 target_user 參數（向後兼容 user_role）
+    const urlTargetUser = urlParams.get('target_user') || urlParams.get('user_role');
     const validRoles = ['tenant', 'landlord', 'property_manager', 'system_admin'];
 
-    if (urlUserRole && validRoles.includes(urlUserRole)) {
-      this.userRole = urlUserRole;
-      console.log('🔑 從 URL 設定 user_role:', this.userRole);
-    } else if (urlUserRole) {
-      console.warn('⚠️  無效的 user_role 參數:', urlUserRole, '使用預設值: customer');
+    if (urlTargetUser && validRoles.includes(urlTargetUser)) {
+      this.userRole = urlTargetUser;
+      console.log('🔑 從 URL 設定 target_user:', this.userRole);
+    } else if (urlTargetUser) {
+      console.warn('⚠️  無效的 target_user 參數:', urlTargetUser, '使用預設值: tenant');
     }
 
     // 讀取 vendor_id 參數（自動選擇業者）
@@ -527,13 +527,13 @@ export default {
         // 如果沒有從 URL 設定，則根據 chatMode 決定
         let userRole = this.userRole;
 
-        console.log('📤 發送訊息，user_role:', userRole, 'mode:', this.chatMode);
+        console.log('📤 發送訊息，target_user:', userRole, 'mode:', this.chatMode);
 
         const response = await axios.post(`${RAG_API}/v1/message`, {
           message: message,
           vendor_id: parseInt(this.selectedVendorId),
           mode: this.chatMode,
-          user_role: userRole,
+          target_user: userRole,  // ✅ 使用新參數 target_user
           include_sources: true,
           include_debug_info: this.debugMode,  // 新增：傳遞調試模式
           // 表單支援

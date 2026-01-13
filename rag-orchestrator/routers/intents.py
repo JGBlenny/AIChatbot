@@ -60,8 +60,8 @@ async def get_all_intents(
     """
     try:
         async with req.app.state.db_pool.acquire() as conn:
-            # 構建查詢
-            query = "SELECT * FROM intents WHERE 1=1"
+            # 構建查詢，包含 has_embedding 欄位
+            query = "SELECT *, embedding IS NOT NULL as has_embedding FROM intents WHERE 1=1"
             params = []
             param_count = 0
 
@@ -508,4 +508,94 @@ async def reload_intents(req: Request):
         raise HTTPException(
             status_code=500,
             detail=f"重新載入意圖失敗: {str(e)}"
+        )
+
+
+@router.post("/intents/regenerate-embeddings")
+async def regenerate_intent_embeddings(req: Request):
+    """
+    批量生成所有缺失的意圖 embedding
+
+    查找所有 embedding IS NULL 的意圖，為每個意圖調用 Embedding API 生成向量
+    並更新到資料庫
+    """
+    try:
+        from services.embedding_utils import get_embedding_client
+
+        # 獲取 embedding 客戶端
+        embedding_client = get_embedding_client()
+
+        async with req.app.state.db_pool.acquire() as conn:
+            # 1. 查詢所有沒有 embedding 的意圖
+            rows = await conn.fetch("""
+                SELECT id, name, description
+                FROM intents
+                WHERE embedding IS NULL
+                ORDER BY id
+            """)
+
+            total = len(rows)
+
+            if total == 0:
+                return {
+                    "success": True,
+                    "message": "所有意圖已有向量",
+                    "total": 0,
+                    "generated": 0
+                }
+
+            # 2. 逐筆生成 embedding
+            success_count = 0
+            failed_ids = []
+
+            for row in rows:
+                intent_id = row['id']
+                intent_name = row['name']
+                intent_description = row['description']
+
+                # 生成用於 embedding 的文本（結合名稱和描述）
+                text_for_embedding = intent_name
+                if intent_description:
+                    text_for_embedding += f". {intent_description}"
+
+                try:
+                    # 調用 Embedding API
+                    embedding_vector = await embedding_client.get_embedding(text_for_embedding)
+
+                    if embedding_vector:
+                        # 轉換為 PostgreSQL 向量格式
+                        vector_str = '[' + ','.join(map(str, embedding_vector)) + ']'
+
+                        # 更新到資料庫
+                        await conn.execute("""
+                            UPDATE intents
+                            SET embedding = $1::vector
+                            WHERE id = $2
+                        """, vector_str, intent_id)
+
+                        success_count += 1
+                    else:
+                        failed_ids.append(intent_id)
+
+                except Exception as e:
+                    print(f"⚠️  生成 intent {intent_id} embedding 失敗: {str(e)}")
+                    failed_ids.append(intent_id)
+
+            # 3. 重新載入意圖分類器以使用新的 embeddings
+            intent_classifier = req.app.state.intent_classifier
+            intent_classifier.reload_intents()
+
+            return {
+                "success": True,
+                "message": f"批量生成完成，成功 {success_count}/{total}",
+                "total": total,
+                "generated": success_count,
+                "failed": len(failed_ids),
+                "failed_ids": failed_ids if failed_ids else None
+            }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"批量生成 embedding 失敗: {str(e)}"
         )

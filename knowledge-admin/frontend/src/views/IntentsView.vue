@@ -19,6 +19,9 @@
         <option value="true">已啟用</option>
         <option value="false">已停用</option>
       </select>
+      <button @click="regenerateEmbeddings" class="btn-secondary btn-sm" :disabled="regenerating" style="margin-right: 10px;">
+        {{ regenerating ? '生成中...' : '🔄 批量生成向量' }}
+      </button>
       <button @click="showCreateModal" class="btn-primary btn-sm">新增意圖</button>
     </div>
 
@@ -51,6 +54,7 @@
             <th>描述</th>
             <th width="80">閾值</th>
             <th width="80">使用次數</th>
+            <th width="80">向量</th>
             <th width="60">狀態</th>
             <th width="200">操作</th>
           </tr>
@@ -63,6 +67,10 @@
             <td>{{ intent.description }}</td>
             <td>{{ intent.confidence_threshold }}</td>
             <td>{{ intent.usage_count || 0 }}</td>
+            <td style="text-align: center;">
+              <span v-if="intent.has_embedding" class="badge" style="background: #67c23a; color: white;" title="向量已生成">✓</span>
+              <span v-else class="badge" style="background: #e6a23c; color: white;" title="向量未生成">✗</span>
+            </td>
             <td>
               <span class="status" :class="intent.is_enabled ? 'enabled' : 'disabled'">
                 {{ intent.is_enabled ? '✓ 啟用' : '✗ 停用' }}
@@ -172,6 +180,7 @@ export default {
       editingItem: null,
       saving: false,
       loading: false,
+      regenerating: false,
       stats: null,
       formData: {
         name: '',
@@ -193,6 +202,33 @@ export default {
     this.loadStats();
   },
   methods: {
+    async regenerateEmbeddings() {
+      if (!confirm('確定要批量生成所有缺失的向量嗎？這可能需要一些時間。')) {
+        return;
+      }
+
+      this.regenerating = true;
+      try {
+        const response = await axios.post(`${RAG_API}/intents/regenerate-embeddings`);
+
+        if (response.data.success) {
+          const message = response.data.failed > 0
+            ? `批量生成完成！成功 ${response.data.generated}/${response.data.total}，失敗 ${response.data.failed}`
+            : `批量生成完成！成功生成 ${response.data.generated}/${response.data.total} 個向量`;
+
+          alert('✅ ' + message);
+
+          // 重新加載意圖列表
+          await this.loadIntents();
+        }
+      } catch (error) {
+        console.error('批量生成向量失敗', error);
+        alert('❌ 生成失敗：' + (error.response?.data?.detail || error.message));
+      } finally {
+        this.regenerating = false;
+      }
+    },
+
     async loadIntents() {
       this.loading = true;
       try {

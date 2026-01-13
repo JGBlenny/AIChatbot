@@ -1468,10 +1468,10 @@ class VendorChatRequest(BaseModel):
         description="業務模式：b2c(終端用戶), b2b(業者員工)"
     )
 
-    # ⚠️ 舊欄位（向後兼容，已廢棄）
+    # ⚠️ 舊欄位（向後兼容，已廢棄，將於 2026-03 移除）
     user_role: Optional[str] = Field(
         None,
-        description="[已廢棄] 請使用 target_user 替代。舊值：customer 或 staff"
+        description="[已廢棄，將於 2026-03 移除] 請使用 target_user 替代"
     )
 
     session_id: Optional[str] = Field(None, description="會話 ID（用於追蹤）")
@@ -1496,6 +1496,7 @@ class VendorChatRequest(BaseModel):
         mode = values.get('mode', 'b2c')
 
         if old_user_role:
+            print(f"⚠️  [DEPRECATED] 使用了已廢棄的 user_role 參數：'{old_user_role}'，請改用 target_user（將於 2026-03 移除）")
             # 舊值轉換邏輯
             if old_user_role == 'staff':
                 return 'property_manager'  # B2B 默認為物管
