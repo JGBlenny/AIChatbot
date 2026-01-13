@@ -90,7 +90,6 @@ class VendorKnowledgeRetriever:
                     kb.video_duration,
                     kb.video_format,
                     kb.form_id,
-                    kb.form_intro,
                     kb.trigger_form_condition,
                     -- 計算優先級權重
                     CASE
@@ -281,7 +280,6 @@ class VendorKnowledgeRetriever:
                     kb.video_duration,
                     kb.video_format,
                     kb.form_id,
-                    kb.form_intro,
                     kb.trigger_form_condition,
                     kim.intent_id,
                     kim.intent_type,

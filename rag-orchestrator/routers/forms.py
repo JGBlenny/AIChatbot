@@ -402,7 +402,6 @@ async def get_related_knowledge(request: Request, form_id: str):
                 SELECT
                     id,
                     question_summary,
-                    form_intro,
                     vendor_id,
                     scope,
                     is_active

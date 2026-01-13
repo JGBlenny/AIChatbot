@@ -113,7 +113,6 @@ class RAGEngine:
                                 kb.vendor_id,
                                 kb.priority,
                                 kb.form_id,
-                                kb.form_intro,
                                 kb.trigger_form_condition,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
@@ -169,7 +168,6 @@ class RAGEngine:
                                 kb.vendor_id,
                                 kb.priority,
                                 kb.form_id,
-                                kb.form_intro,
                                 kb.trigger_form_condition,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
@@ -226,7 +224,6 @@ class RAGEngine:
                                 kb.vendor_id,
                                 kb.priority,
                                 kb.form_id,
-                                kb.form_intro,
                                 kb.trigger_form_condition,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
@@ -281,7 +278,6 @@ class RAGEngine:
                                 kb.vendor_id,
                                 kb.priority,
                                 kb.form_id,
-                                kb.form_intro,
                                 kb.trigger_form_condition,
                                 1 - (kb.embedding <=> $1::vector) as base_similarity,
                                 -- 意圖加成
@@ -387,7 +383,6 @@ class RAGEngine:
                                 vendor_id,
                                 priority,
                                 form_id,
-                                form_intro,
                                 trigger_form_condition,
                                 1 - (embedding <=> $1::vector) as base_similarity,
                                 1.0 as intent_boost,
@@ -467,7 +462,6 @@ class RAGEngine:
                                 vendor_id,
                                 priority,
                                 form_id,
-                                form_intro,
                                 trigger_form_condition,
                                 1 - (embedding <=> $1::vector) as base_similarity,
                                 1.0 as intent_boost,
@@ -563,7 +557,6 @@ class RAGEngine:
                     audience,
                     keywords,
                     form_id,
-                    form_intro,
                     trigger_form_condition,
                     created_at,
                     updated_at
@@ -581,7 +574,6 @@ class RAGEngine:
                 "target_user": row.get('target_user'),
                 "keywords": row.get('keywords', []),
                 "form_id": row.get('form_id'),
-                "form_intro": row.get('form_intro'),
                 "trigger_form_condition": row.get('trigger_form_condition'),
                 "created_at": row['created_at'].isoformat() if row['created_at'] else None,
                 "updated_at": row['updated_at'].isoformat() if row['updated_at'] else None
@@ -612,7 +604,6 @@ class RAGEngine:
                     audience,
                     keywords,
                     form_id,
-                    form_intro,
                     trigger_form_condition
                 FROM knowledge_base
                 WHERE keywords && $1::text[]
