@@ -583,7 +583,7 @@ response += f"\n\n{first_field['prompt']}"
 
 #### 資料庫 Migration
 
-**檔案**：`docs/deployment/2026-01-13/remove_form_intro_2026-01-13.sql`
+**檔案**：`database/migrations/remove_form_intro_2026-01-13.sql`
 
 ```sql
 -- 刪除 knowledge_base.form_intro 欄位
@@ -628,7 +628,7 @@ docker-compose -f docker-compose.prod.yml exec -T postgres \
   psql -U aichatbot -d aichatbot_admin -c "ALTER TABLE knowledge_base DROP COLUMN IF EXISTS form_intro;"
 
 # 方法 2：從檔案執行
-cat docs/deployment/2026-01-13/remove_form_intro_2026-01-13.sql | \
+cat database/migrations/remove_form_intro_2026-01-13.sql | \
   docker-compose -f docker-compose.prod.yml exec -T postgres \
   psql -U aichatbot -d aichatbot_admin
 ```

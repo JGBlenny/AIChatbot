@@ -95,15 +95,14 @@ deployment/
 - 移除 form_intro 欄位，統一使用表單 default_intro（commit 781a7c0）
 
 **部署文件：**
-- [PRODUCTION_DEPLOY_2026-01-13.md](2026-01-13/PRODUCTION_DEPLOY_2026-01-13.md) - 統一檢索路徑部署指南
-- [steps_2026-01-13.md](2026-01-13/steps_2026-01-13.md) - 部署步驟
-- [hotfix_2026-01-13.md](2026-01-13/hotfix_2026-01-13.md) - 熱修復記錄
+- [DEPLOY_2026-01-13.md](2026-01-13/DEPLOY_2026-01-13.md) - 整合部署指南（包含所有更新）
 
 **資料庫遷移：**
-- `docs/deployment/2026-01-13/remove_form_intro_2026-01-13.sql` - 刪除 knowledge_base.form_intro 欄位
+- `database/migrations/remove_form_intro_2026-01-13.sql` - 刪除 knowledge_base.form_intro 欄位
 
 **相關文檔：**
-- [FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md](../features/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md) - 表單引導語改善完整報告
+- [統一檢索路徑實施報告](../implementation/FINAL_2026-01-13.md)
+- [表單引導語改善報告](../features/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md)
 
 ---
 
