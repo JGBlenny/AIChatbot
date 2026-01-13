@@ -361,8 +361,26 @@ class IntentClassifier:
             # 查找主要意圖配置
             intent_config = next((i for i in self.intents if i['name'] == primary_intent_name), None)
 
+            # 如果精確匹配失敗，嘗試容錯匹配（處理常見的名稱變異）
+            if not intent_config:
+                # 常見的名稱映射（LLM 可能返回的變體 → 資料庫中的正確名稱）
+                name_mappings = {
+                    "租約／到期": "租期／到期",  # LLM 常說租約，但我們用租期
+                    "租約到期": "租期／到期",
+                    "退租解約": "退租／解約流程",
+                    "退租流程": "退租／解約流程",
+                }
+
+                corrected_name = name_mappings.get(primary_intent_name)
+                if corrected_name:
+                    intent_config = next((i for i in self.intents if i['name'] == corrected_name), None)
+                    if intent_config:
+                        print(f"ℹ️ Intent名稱自動修正: '{primary_intent_name}' → '{corrected_name}'")
+                        primary_intent_name = corrected_name  # 更新為正確名稱
+
             if not intent_config:
                 print(f"⚠️ Intent config not found: {primary_intent_name}")
+                print(f"   可用的意圖名稱: {[i['name'] for i in self.intents][:10]}")
                 return {
                     "intent_name": "unclear",
                     "intent_type": "unclear",
