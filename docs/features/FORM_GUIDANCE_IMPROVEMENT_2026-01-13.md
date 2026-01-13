@@ -443,6 +443,284 @@ ba503d3 fix: 前端表單編輯器增加 prompt 欄位必填驗證
 
 ---
 
+## ⚠️ 重要澄清（2026-01-13 晚上）
+
+### 部署後發現的問題
+
+部署到生產環境後，發現問題仍然存在：
+1. ❌ 前端驗證沒有阻止儲存（表單欄位 prompt 可以為空）
+2. ❌ 表單引導語還是顯示 `##適用情境...`
+
+### 深入調查結果
+
+#### 發現 1：知識 1262 沒有關聯表單
+
+```sql
+-- 線上環境查詢結果
+SELECT id, form_id, form_intro, answer FROM knowledge_base WHERE id = 1262;
+
+id   | form_id | form_intro | answer
+-----|---------|------------|---------------------------
+1262 |         |            | ##適用情境\n當租客詢問關於新合約或續約時
+```
+
+**關鍵發現**：
+- `form_id` 是**空的**（NULL）
+- 知識 1262 目前**沒有關聯任何表單**
+- `##適用情境...` 是知識的 **answer 內容**，不是技術標記
+
+#### 發現 2：`form_intro` vs `default_intro` 的設計
+
+**知識表（knowledge_base）**：
+- `form_id`: 關聯的表單 ID（可選）
+- `form_intro`: 知識專屬的表單引導語（可選）
+
+**表單表（form_schemas）**：
+- `default_intro`: 表單的預設引導語
+- `fields`: 表單欄位（包含 prompt）
+
+**當前代碼邏輯**（`chat.py` line 921）：
+```python
+intro_message = best_knowledge.get('form_intro') or best_knowledge.get('answer', '')
+```
+
+**問題**：
+1. 如果知識沒有 `form_intro`，會使用 `answer`（知識內容）
+2. `answer` 不適合當表單引導語
+3. 沒有 fallback 到表單的 `default_intro`
+
+#### 發現 3：`form_intro` 的實際使用情況
+
+```sql
+-- 線上環境統計
+SELECT COUNT(*) as total, COUNT(form_intro) as has_form_intro
+FROM knowledge_base WHERE form_id IS NOT NULL;
+
+total | has_form_intro
+------|---------------
+0     | 0
+```
+
+**結論**：
+- 線上環境**沒有任何知識**設定了 `form_intro`
+- `form_intro` 欄位可能是**冗餘設計**
+
+### 設計澄清
+
+#### `form_intro` 的原始設計意圖
+
+允許**不同知識**對**同一個表單**使用**不同的引導語**。
+
+**範例**：
+- 知識 A：「續約問題」→ 觸發「租客基本資料表」→ `form_intro`: "您好！感謝您想要續約。"
+- 知識 B：「新租問題」→ 觸發「租客基本資料表」→ `form_intro`: "歡迎租屋！"
+
+#### 實際需求
+
+根據討論，**正確的設計應該是**：
+- 表單有統一的引導語（`form_schemas.default_intro`）
+- 不管哪個知識觸發，都用表單的 `default_intro`
+- `form_intro` 應該廢棄不用
+
+#### 正確的邏輯流程
+
+```
+知識觸發表單
+↓
+檢查知識的 form_intro
+├─ 有值 → 使用（允許自定義）
+└─ 沒有值 → 使用表單的 default_intro（統一引導語）
+    ↓
+    絕對不要使用知識的 answer（那是知識內容，不是引導語）
+```
+
+### 最終修復方案（方案 B）
+
+經確認後，採用**方案 B：刪除 form_intro 欄位**
+
+#### 代碼修改
+
+**1. chat.py (line 920-929)**
+```python
+# 修改前
+intro_message = best_knowledge.get('form_intro') or best_knowledge.get('answer', '')
+form_result = await form_manager.trigger_form_by_knowledge(
+    knowledge_id=best_knowledge['id'],
+    form_id=form_id,
+    intro_message=intro_message,  # 移除此參數
+    ...
+)
+
+# 修改後
+form_result = await form_manager.trigger_form_by_knowledge(
+    knowledge_id=best_knowledge['id'],
+    form_id=form_id,
+    # 不再傳遞 intro_message
+    ...
+)
+```
+
+**2. form_manager.py (line 404-425, 459-470)**
+```python
+# 移除 intro_message 參數
+async def trigger_form_by_knowledge(
+    self,
+    knowledge_id: int,
+    form_id: str,
+    # intro_message: str,  ← 移除
+    session_id: str,
+    user_id: str,
+    vendor_id: int,
+    trigger_question: str = None
+) -> Dict:
+
+# 直接使用表單的 default_intro
+intro_message = form_schema.get('default_intro', '')
+response = intro_message.strip()
+response += f"\n\n📝 **{form_schema['form_name']}**"
+response += f"\n\n{first_field['prompt']}"
+```
+
+#### 資料庫 Migration
+
+**檔案**：`migrations/remove_form_intro_2026-01-13.sql`
+
+```sql
+-- 刪除 knowledge_base.form_intro 欄位
+ALTER TABLE knowledge_base DROP COLUMN IF EXISTS form_intro;
+```
+
+#### 部署步驟
+
+**注意**：本次部署包含資料庫變更（刪除欄位），參考 `docs/deployment/DEPLOY_GUIDE.md`
+
+##### 1. 部署前檢查
+
+```bash
+cd /path/to/AIChatbot
+
+# 檢查當前狀態
+git status
+git log --oneline -5
+```
+
+##### 2. 拉取最新代碼
+
+```bash
+git pull origin main
+```
+
+##### 3. 備份資料庫（重要！）
+
+```bash
+docker-compose -f docker-compose.prod.yml exec -T postgres \
+  pg_dump -U aichatbot aichatbot_admin > backup_before_drop_form_intro_$(date +%Y%m%d).sql
+
+# 確認備份成功
+ls -lh backup_*.sql | tail -1
+```
+
+##### 4. 執行資料庫 Migration
+
+```bash
+# 方法 1：直接執行 SQL
+docker-compose -f docker-compose.prod.yml exec -T postgres \
+  psql -U aichatbot -d aichatbot_admin -c "ALTER TABLE knowledge_base DROP COLUMN IF EXISTS form_intro;"
+
+# 方法 2：從檔案執行（需先將 SQL 檔案複製到容器）
+cat migrations/remove_form_intro_2026-01-13.sql | \
+  docker-compose -f docker-compose.prod.yml exec -T postgres \
+  psql -U aichatbot -d aichatbot_admin
+```
+
+##### 5. 驗證 Migration
+
+```bash
+# 確認欄位已刪除
+docker-compose -f docker-compose.prod.yml exec -T postgres \
+  psql -U aichatbot -d aichatbot_admin -c \
+  "SELECT column_name FROM information_schema.columns WHERE table_name='knowledge_base' AND column_name='form_intro';"
+
+# 預期輸出：(0 rows)
+```
+
+##### 6. 部署後端代碼
+
+```bash
+# 停止服務
+docker-compose -f docker-compose.prod.yml stop rag-orchestrator
+
+# 重建鏡像（--no-cache 確保使用最新代碼）
+docker-compose -f docker-compose.prod.yml build --no-cache rag-orchestrator
+
+# 啟動服務
+docker-compose -f docker-compose.prod.yml up -d rag-orchestrator
+
+# 等待啟動
+sleep 10
+```
+
+##### 7. 驗證部署
+
+```bash
+# 檢查服務狀態
+docker-compose -f docker-compose.prod.yml ps rag-orchestrator
+
+# 健康檢查
+curl -s http://localhost:8100/health
+
+# 檢查日誌
+docker-compose -f docker-compose.prod.yml logs --tail 50 rag-orchestrator
+```
+
+##### 8. 功能測試（如果有關聯表單的知識）
+
+```bash
+# 測試表單觸發（需要替換成實際的知識）
+curl -s -X POST "http://localhost:8100/api/v1/message" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "測試表單觸發",
+    "vendor_id": 2,
+    "target_user": "tenant",
+    "session_id": "test-001",
+    "user_id": "test-user"
+  }'
+```
+
+##### 9. 回滾方案（如果出問題）
+
+```bash
+# 1. 回滾代碼
+git log --oneline -5
+git reset --hard <previous-commit>
+
+# 2. 回滾資料庫（恢復欄位）
+docker-compose -f docker-compose.prod.yml exec -T postgres \
+  psql -U aichatbot -d aichatbot_admin -c \
+  "ALTER TABLE knowledge_base ADD COLUMN form_intro TEXT;"
+
+# 3. 重建並重啟服務
+docker-compose -f docker-compose.prod.yml build --no-cache rag-orchestrator
+docker-compose -f docker-compose.prod.yml up -d rag-orchestrator
+```
+
+### 避免的誤解
+
+1. ❌ **誤解**：`##適用情境` 是技術標記
+   ✅ **事實**：這是知識的 answer 內容
+
+2. ❌ **誤解**：知識 1262 有關聯表單但引導語不對
+   ✅ **事實**：知識 1262 根本沒有關聯表單（form_id 是空）
+
+3. ❌ **誤解**：只要加 fallback 就能解決
+   ✅ **事實**：需要先確認知識是否應該關聯表單
+
+4. ❌ **誤解**：`form_intro` 必填
+   ✅ **事實**：`form_intro` 是可選的，應該有 fallback 到 `default_intro`
+
+---
+
 ## 📚 相關文檔
 
 - [表單管理系統設計](../design/FORM_SYSTEM_DESIGN.md)
@@ -451,6 +729,7 @@ ba503d3 fix: 前端表單編輯器增加 prompt 欄位必填驗證
 
 ---
 
-**文件版本**：1.0
+**文件版本**：1.1（新增重要澄清）
 **建立日期**：2026-01-13
+**最後更新**：2026-01-13 晚上
 **維護人員**：開發團隊

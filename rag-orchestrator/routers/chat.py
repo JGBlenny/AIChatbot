@@ -917,15 +917,11 @@ async def _build_knowledge_response(
         else:
             print(f"📝 [表單觸發] 知識 {best_knowledge['id']} 關聯表單 {form_id}，啟動表單流程")
 
-            # 使用知識的 form_intro 或 answer 作為引導語
-            intro_message = best_knowledge.get('form_intro') or best_knowledge.get('answer', '')
-
-            # 調用 FormManager 觸發表單
+            # 調用 FormManager 觸發表單（使用表單的 default_intro）
             form_manager = req.app.state.form_manager
             form_result = await form_manager.trigger_form_by_knowledge(
                 knowledge_id=best_knowledge['id'],
                 form_id=form_id,
-                intro_message=intro_message,
                 session_id=request.session_id,
                 user_id=request.user_id,
                 vendor_id=request.vendor_id,

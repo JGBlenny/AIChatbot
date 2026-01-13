@@ -405,7 +405,6 @@ class FormManager:
         self,
         knowledge_id: int,
         form_id: str,
-        intro_message: str,
         session_id: str,
         user_id: str,
         vendor_id: int,
@@ -417,7 +416,6 @@ class FormManager:
         Args:
             knowledge_id: 知識ID（用於記錄觸發來源）
             form_id: 表單ID
-            intro_message: 引導訊息（來自知識的 form_intro 或 answer）
             session_id: 會話ID
             user_id: 用戶ID
             vendor_id: 業者ID
@@ -458,9 +456,12 @@ class FormManager:
                 "form_triggered": False
             }
 
-        # 3. 組合回應（知識引導語 + 表單提示）
+        # 3. 組合回應（表單引導語 + 表單提示）
         first_field = form_schema['fields'][0]
         total_fields = len(form_schema['fields'])
+
+        # 使用表單的 default_intro 作為引導語
+        intro_message = form_schema.get('default_intro', '')
 
         # 組裝訊息
         response = intro_message.strip()
