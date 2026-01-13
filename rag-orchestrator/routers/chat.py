@@ -336,231 +336,6 @@ def _check_cache(cache_service, vendor_id: int, question: str, target_user: str)
     return None
 
 
-#==================== 輔助函數：Unclear 意圖處理 ====================
-
-async def _handle_unclear_with_rag_fallback(
-    request: VendorChatRequest,
-    req: Request,
-    intent_result: dict,
-    resolver,
-    vendor_info: dict,
-    cache_service
-):
-    """處理 unclear 意圖：RAG fallback + 測試場景記錄 + 意圖建議"""
-    rag_engine = req.app.state.rag_engine
-
-    # RAG 檢索（使用較低閾值）
-    fallback_similarity_threshold = float(os.getenv("FALLBACK_SIMILARITY_THRESHOLD", "0.55"))
-    rag_top_k = int(os.getenv("RAG_TOP_K", "5"))
-    rag_results = await rag_engine.search(
-        query=request.message,
-        limit=rag_top_k,
-        similarity_threshold=fallback_similarity_threshold,
-        vendor_id=request.vendor_id,
-        target_users=[request.target_user]  # ✅ 添加 target_user 過濾
-    )
-
-    # 如果 RAG 找到結果，優化並返回答案
-    if rag_results:
-        return await _build_rag_response(
-            request, req, intent_result, rag_results,
-            resolver, vendor_info, cache_service,
-            confidence_level='medium',
-            intent_name="unclear"
-        )
-
-    # 如果 RAG 也沒找到，記錄問題並返回兜底回應
-    await _record_unclear_question(request, req)
-
-    params = resolver.get_vendor_parameters(request.vendor_id)
-
-    # 使用模板格式以便追蹤參數使用
-    fallback_answer = "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {{service_hotline}}。請問您方便提供更詳細的內容嗎？"
-
-    # 清理答案並追蹤使用的參數
-    final_answer, used_param_keys = _clean_answer_with_tracking(fallback_answer, request.vendor_id, resolver)
-
-    # 構建調試資訊（如果請求了）
-    debug_info = None
-    if request.include_debug_info:
-        debug_info = _build_debug_info(
-            processing_path='unclear',
-            intent_result=intent_result,
-            llm_strategy='fallback',  # unclear 兜底回應
-            vendor_params=params,
-            used_param_keys=used_param_keys  # ✅ 只顯示實際被注入的參數
-        )
-
-    return VendorChatResponse(
-        answer=final_answer,
-        intent_name="unclear",
-        confidence=intent_result['confidence'],
-        all_intents=intent_result.get('all_intents', []),
-        secondary_intents=intent_result.get('secondary_intents', []),
-        intent_ids=intent_result.get('intent_ids', []),
-        sources=None,
-        source_count=0,
-        vendor_id=request.vendor_id,
-        mode=request.mode,
-        session_id=request.session_id,
-        timestamp=datetime.utcnow().isoformat(),
-        debug_info=debug_info
-    )
-
-
-async def _record_unclear_question(request: VendorChatRequest, req: Request):
-    """
-    記錄 unclear 問題到測試場景庫 + 意圖建議
-
-    功能增強（語義去重）：
-    - 相關度過濾：relevance_score >= 0.7
-    - 語義去重：使用 embedding 檢測相似問題（similarity >= 0.80）
-    - 編輯距離：Levenshtein Distance <= 2（數據庫層）
-    """
-    # 1. 使用意圖建議引擎分析問題相關性
-    suggestion_engine = req.app.state.suggestion_engine
-    analysis = suggestion_engine.analyze_unclear_question(
-        question=request.message,
-        vendor_id=request.vendor_id,
-        user_id=request.user_id,
-        conversation_context=None
-    )
-
-    # 獲取相關度評估結果
-    is_relevant = analysis.get('is_relevant', False)
-    relevance_score = analysis.get('relevance_score', 0.0)
-    should_record = analysis.get('should_record', False)
-
-    # 只記錄相關度高的問題 (relevance_score >= 0.7)
-    if not should_record:
-        print(f"⏭️  跳過記錄：問題相關度不足 (score: {relevance_score:.2f}, relevant: {is_relevant})")
-        print(f"   問題: {request.message}")
-        return
-
-    # 2. 生成問題的 embedding（用於語義去重）
-    embedding_client = get_embedding_client()
-    question_embedding = await embedding_client.get_embedding(request.message, verbose=False)
-
-    if not question_embedding:
-        print(f"⚠️  無法生成問題向量，回退到精確匹配模式")
-        # 後續仍會進行精確匹配檢查
-
-    # 3. 記錄到測試場景庫（相關度過濾 + 語義去重）
-    try:
-        test_scenario_conn = psycopg2.connect(**get_db_config())
-        test_scenario_cursor = test_scenario_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-        # 3a. 精確匹配檢查（完全相同的問題）
-        test_scenario_cursor.execute("""
-            SELECT id, status FROM test_scenarios
-            WHERE test_question = %s
-              AND status IN ('pending_review', 'draft', 'approved')
-              AND is_active = true
-        """, (request.message,))
-        exact_match = test_scenario_cursor.fetchone()
-
-        if exact_match:
-            scenario_id, existing_status = exact_match
-            print(f"⏭️  跳過記錄：完全相同問題已存在 (Scenario ID: {scenario_id}, 狀態: {existing_status})")
-            print(f"   問題: {request.message}")
-            test_scenario_cursor.close()
-            test_scenario_conn.close()
-            return
-
-        # 3b. 語義相似度檢查（使用 embedding 向量搜索）
-        if question_embedding:
-            vector_str = '[' + ','.join(map(str, question_embedding)) + ']'
-
-            test_scenario_cursor.execute("""
-                SELECT
-                    id,
-                    test_question,
-                    status,
-                    (1 - (question_embedding <=> %s::vector)) AS similarity
-                FROM test_scenarios
-                WHERE question_embedding IS NOT NULL
-                  AND status IN ('pending_review', 'draft', 'approved')
-                  AND is_active = true
-                  AND test_question != %s
-                  AND (1 - (question_embedding <=> %s::vector)) >= 0.80
-                ORDER BY similarity DESC
-                LIMIT 1
-            """, (vector_str, request.message, vector_str))
-
-            similar_match = test_scenario_cursor.fetchone()
-
-            if similar_match:
-                scenario_id = similar_match['id']
-                similar_question = similar_match['test_question']
-                similarity = similar_match['similarity']
-                existing_status = similar_match['status']
-
-                print(f"⏭️  跳過記錄：相似問題已存在 (Scenario ID: {scenario_id}, 狀態: {existing_status})")
-                print(f"   原問題: {request.message}")
-                print(f"   相似問題: {similar_question}")
-                print(f"   相似度: {similarity:.3f}")
-
-                test_scenario_cursor.close()
-                test_scenario_conn.close()
-                return
-
-        # 4. 插入新的測試場景記錄（含 embedding）
-        if question_embedding:
-            vector_str = '[' + ','.join(map(str, question_embedding)) + ']'
-            test_scenario_cursor.execute("""
-                INSERT INTO test_scenarios (
-                    test_question, status, source,
-                    difficulty, priority, notes, test_purpose, created_by,
-                    question_embedding
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::vector)
-                RETURNING id
-            """, (
-                request.message, 'pending_review', 'user_question',
-                'hard', 80,
-                f"用戶問題意圖不明確（Vendor {request.vendor_id}），相關度: {relevance_score:.2f}",
-                "追蹤意圖識別缺口，改善分類器",
-                request.user_id or 'system',
-                vector_str
-            ))
-        else:
-            # 無 embedding 時仍插入記錄（但無法做語義去重）
-            test_scenario_cursor.execute("""
-                INSERT INTO test_scenarios (
-                    test_question, status, source,
-                    difficulty, priority, notes, test_purpose, created_by
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id
-            """, (
-                request.message, 'pending_review', 'user_question',
-                'hard', 80,
-                f"用戶問題意圖不明確（Vendor {request.vendor_id}），相關度: {relevance_score:.2f}",
-                "追蹤意圖識別缺口，改善分類器",
-                request.user_id or 'system'
-            ))
-
-        scenario_id = test_scenario_cursor.fetchone()[0]
-        test_scenario_conn.commit()
-
-        embedding_status = "✅ 含向量" if question_embedding else "⚠️  無向量"
-        print(f"✅ 記錄unclear問題到測試場景庫 (Scenario ID: {scenario_id}, 相關度: {relevance_score:.2f}, {embedding_status})")
-
-        test_scenario_cursor.close()
-        test_scenario_conn.close()
-    except Exception as e:
-        print(f"⚠️ 記錄測試場景失敗: {e}")
-        import traceback
-        traceback.print_exc()
-
-    # 5. 記錄意圖建議
-    suggested_intent_id = suggestion_engine.record_suggestion(
-        question=request.message,
-        analysis=analysis,
-        user_id=request.user_id
-    )
-    if suggested_intent_id:
-        print(f"✅ 發現新意圖建議: {analysis['suggested_intent']['name']} (ID: {suggested_intent_id})")
-
-
 # ==================== 輔助函數：調試資訊構建 ====================
 
 def _build_debug_info(
@@ -925,7 +700,7 @@ async def _build_rag_response(
 
 async def _retrieve_knowledge(
     request: VendorChatRequest,
-    intent_id: int,
+    intent_id: Optional[int],
     intent_result: dict
 ):
     """
@@ -935,9 +710,11 @@ async def _retrieve_knowledge(
     - 降低閾值到 0.55（原 RAG fallback 的閾值）
     - 使用語義匹配動態計算 intent_boost
     - 不再需要獨立的 RAG fallback 路徑
+    - 支持 intent_id = None（unclear 情況，無意圖加成）
     """
     retriever = get_vendor_knowledge_retriever()
-    all_intent_ids = intent_result.get('intent_ids', [intent_id])
+    # unclear 時 intent_id = None，all_intent_ids = []
+    all_intent_ids = intent_result.get('intent_ids', [] if intent_id is None else [intent_id])
 
     # ✅ 選項1：統一閾值為 0.55（涵蓋原 knowledge + rag_fallback 範圍）
     # 環境變數向後兼容，但默認值改為 0.55
@@ -1791,16 +1568,10 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         else:
             print(f"ℹ️  [回測模式] 跳過 SOP 檢索，僅使用知識庫")
 
-        # Step 5: 處理 unclear 意圖（RAG fallback + 測試場景記錄）
-        if intent_result['intent_name'] == 'unclear':
-            return await _handle_unclear_with_rag_fallback(
-                request, req, intent_result, resolver, vendor_info, cache_service
-            )
+        # Step 5: 獲取意圖 ID（unclear 時為 None，統一檢索路徑）
+        intent_id = None if intent_result['intent_name'] == 'unclear' else _get_intent_id(intent_result['intent_name'])
 
-        # Step 6: 獲取意圖 ID
-        intent_id = _get_intent_id(intent_result['intent_name'])
-
-        # Step 7: 檢索知識庫（混合模式：intent + 向量）
+        # Step 6: 檢索知識庫（統一路徑：支持 intent_id = None）
         knowledge_list = await _retrieve_knowledge(request, intent_id, intent_result)
 
         # Step 8: 如果知識庫沒有結果，嘗試參數答案或 RAG fallback

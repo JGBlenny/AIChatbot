@@ -156,7 +156,7 @@ class VendorKnowledgeRetriever:
     async def retrieve_knowledge_hybrid(
         self,
         query: str,
-        intent_id: int,
+        intent_id: Optional[int],
         vendor_id: int,
         top_k: int = 3,
         similarity_threshold: float = 0.6,
@@ -166,17 +166,17 @@ class VendorKnowledgeRetriever:
         use_semantic_boost: bool = True  # 新增：是否使用語義加成
     ) -> List[Dict]:
         """
-        混合模式檢索：Intent 過濾 + 向量相似度排序
+        混合模式檢索：向量相似度 + 意圖加成排序（統一檢索路徑）
 
-        這是推薦的檢索方法，結合了分類準確性和語義理解能力：
-        1. 先根據 intent_id(s) 過濾出相關類別的知識
-        2. 再使用向量相似度排序，找出最相關的答案
+        這是統一的檢索方法，適用於所有查詢（包括 unclear）：
+        1. 使用向量相似度過濾知識（主要依據）
+        2. 意圖加成用於排序（輔助優化）
         3. 考慮 scope 優先級（customized > vendor > global）
-        4. 支援多 Intent 檢索（主要 Intent 獲得 1.3x boost，次要 Intent 獲得 1.1x boost）
+        4. 支援 intent_id = None（unclear 情況，無意圖加成，boost = 1.0）
 
         Args:
             query: 使用者問題
-            intent_id: 主要意圖 ID
+            intent_id: 主要意圖 ID（None 表示 unclear，無意圖加成）
             vendor_id: 業者 ID
             top_k: 返回前 K 筆知識
             similarity_threshold: 相似度閾值
@@ -229,9 +229,14 @@ class VendorKnowledgeRetriever:
             print("⚠️  向量生成失敗，降級使用純 intent-based 檢索")
             return self.retrieve_knowledge(intent_id, vendor_id, top_k)
 
-        # 2. 準備 Intent IDs（支援多 Intent）
-        if all_intent_ids is None:
-            all_intent_ids = [intent_id]
+        # 2. 準備 Intent IDs（支援多 Intent，支援 None）
+        if intent_id is None:
+            # unclear 情況：沒有意圖
+            all_intent_ids = []
+            intent_id_for_sql = -1  # 使用不存在的 ID，SQL 中所有 CASE WHEN 都不匹配
+        else:
+            all_intent_ids = all_intent_ids if all_intent_ids is not None else [intent_id]
+            intent_id_for_sql = intent_id
 
         # 2. 執行混合檢索
         conn = self._get_db_connection()
@@ -329,20 +334,19 @@ class VendorKnowledgeRetriever:
                 LIMIT %s
             """
 
-            # 構建參數列表（移除了 all_intent_ids 在 WHERE 子句中的使用）
+            # 構建參數列表（支援 intent_id = None 的情況）
             query_params = [
                 vector_str,
-                intent_id,
-                all_intent_ids,
+                intent_id_for_sql,  # 使用 -1 代替 None
+                all_intent_ids if all_intent_ids else [],
                 vector_str,
-                intent_id,
-                all_intent_ids,
+                intent_id_for_sql,
+                all_intent_ids if all_intent_ids else [],
                 vendor_id,
                 vendor_id,
                 vendor_id,
                 vector_str,
                 sql_threshold,  # ✅ 使用較低的 SQL 閾值
-                # ❌ 移除：all_intent_ids（之前用於硬性過濾）
                 vendor_business_types,  # ✅ 業態類型過濾參數
             ]
 
@@ -372,7 +376,13 @@ class VendorKnowledgeRetriever:
 
                 # 使用語義匹配器計算 boost
                 intent_semantic_similarity = None
-                if use_semantic_boost and knowledge_intent_id:
+
+                # unclear 情況（intent_id = None）：無意圖加成
+                if intent_id is None:
+                    boost = 1.0
+                    reason = "無意圖（unclear）"
+                    intent_semantic_similarity = 0.0
+                elif use_semantic_boost and knowledge_intent_id:
                     boost, reason, intent_semantic_similarity = self.intent_matcher.calculate_semantic_boost(
                         intent_id,
                         knowledge_intent_id,
