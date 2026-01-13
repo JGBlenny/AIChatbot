@@ -406,8 +406,24 @@ export default {
         return;
       }
 
-      // 檢查 select 類型有選項
+      // 檢查必填欄位
       for (const field of formData.value.fields) {
+        // 檢查欄位名稱
+        if (!field.field_name || !field.field_name.trim()) {
+          alert(`請填寫所有欄位的「欄位名稱」`);
+          return;
+        }
+        // 檢查欄位標籤
+        if (!field.field_label || !field.field_label.trim()) {
+          alert(`欄位「${field.field_name}」缺少「欄位標籤」`);
+          return;
+        }
+        // 檢查提示訊息
+        if (!field.prompt || !field.prompt.trim()) {
+          alert(`欄位「${field.field_label}」缺少「提示訊息」\n\n提示訊息用於告訴用戶應該填寫什麼內容，例如：「請輸入您的姓名」`);
+          return;
+        }
+        // 檢查 select 類型有選項
         if ((field.field_type === 'select' || field.field_type === 'multiselect') && (!field.options || field.options.length === 0)) {
           alert(`欄位「${field.field_label}」的類型為 ${field.field_type}，必須提供選項`);
           return;
