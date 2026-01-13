@@ -92,7 +92,6 @@ class KnowledgeUpdate(BaseModel):
     target_user: Optional[List[str]] = None  # 目標用戶（可選，NULL=通用）tenant/landlord/property_manager/system_admin
     priority: Optional[int] = 0  # 優先級加成（0=未啟用，1=已啟用）
     form_id: Optional[str] = None  # 表單關聯 ID（可選）
-    form_intro: Optional[str] = None  # 表單引導語（可選）
 
 class KnowledgeResponse(BaseModel):
     """知識回應模型"""
@@ -263,7 +262,7 @@ async def get_knowledge(knowledge_id: int, user: dict = Depends(get_current_user
                    kb.keywords, kb.business_types, kb.target_user, kb.priority, kb.created_at, kb.updated_at,
                    kb.video_url, kb.video_s3_key, kb.video_file_size, kb.video_duration, kb.video_format,
                    kb.vendor_id,
-                   kb.form_id, kb.form_intro,
+                   kb.form_id,
                    v.name as vendor_name
             FROM knowledge_base kb
             LEFT JOIN vendors v ON kb.vendor_id = v.id
@@ -370,7 +369,6 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
                 target_user = %s,
                 priority = %s,
                 form_id = %s,
-                form_intro = %s,
                 updated_at = NOW()
             WHERE id = %s
             RETURNING id, question_summary, updated_at
@@ -383,7 +381,6 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
             data.target_user,
             data.priority,
             data.form_id,
-            data.form_intro,
             knowledge_id
         ))
 
@@ -511,8 +508,8 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
 
         cur.execute("""
             INSERT INTO knowledge_base
-            (question_summary, answer, keywords, embedding, business_types, target_user, priority, form_id, form_intro)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (question_summary, answer, keywords, embedding, business_types, target_user, priority, form_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, created_at
         """, (
             data.question_summary,
@@ -522,8 +519,7 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
             data.business_types,
             data.target_user,
             data.priority,
-            data.form_id,
-            data.form_intro
+            data.form_id
         ))
 
         new_record = cur.fetchone()
