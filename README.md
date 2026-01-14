@@ -224,12 +224,15 @@ AIChatbot/
 ├── database/                # 資料庫
 │   ├── init/               # 初始化腳本
 │   │   └── *.sql          # 資料庫初始化 SQL
-│   ├── migrations/         # 資料庫遷移（28 個，按編號順序）⭐
-│   │   ├── README.md       # Migration 說明文檔
-│   │   ├── 09-37-*.sql    # 遷移文件（編號已優化，無衝突）✅
-│   │   ├── 33-fix-knowledge-approval-embedding-intent.sql
-│   │   ├── 37-create-vendor-sop-tables.sql  # SOP 範本系統 ⭐
-│   │   └── ...            # 其他遷移
+│   ├── migrations/         # 資料庫遷移（11 個 migration 檔案）⭐
+│   │   ├── add_intent_embedding.sql
+│   │   ├── add_admins_table.sql
+│   │   ├── add_permission_system.sql
+│   │   ├── create_form_tables.sql
+│   │   ├── add_form_*.sql
+│   │   ├── add_knowledge_base_missing_columns.sql
+│   │   ├── rename_chat_history_user_role_to_target_user.sql
+│   │   └── remove_form_intro_2026-01-13.sql  # 最新遷移 ⭐
 │   └── seeds/              # 測試種子數據 ✅ NEW
 │       ├── README.md       # 使用說明
 │       ├── sop_templates.sql
@@ -307,13 +310,17 @@ AIChatbot/
 
 ### 🚀 快速開始
 - 📘 **快速開始指南**: [QUICKSTART.md](./QUICKSTART.md)
+- 📘 **快速開始指南**: [docs/guides/QUICKSTART.md](./docs/guides/QUICKSTART.md)
 - 📖 **開發工作流程**: [docs/guides/DEVELOPMENT_WORKFLOW.md](./docs/guides/DEVELOPMENT_WORKFLOW.md)
 
 ### ⭐ 最新功能文檔
-- 👥 **Target User Config** ⭐ NEW:
+- 📋 **表單管理系統** ⭐ NEW:
+  - [表單管理完整文件](./docs/features/FORM_MANAGEMENT.md)
+- 📄 **文件轉換器** ⭐ NEW:
+  - [Document Converter 功能文件](./docs/features/DOCUMENT_CONVERTER.md)
+- 👥 **Target User Config**:
   - [Target User Config 實作報告](./docs/archive/completion_reports/TARGET_USER_CONFIG_IMPLEMENTATION.md)
   - [配置管理更新摘要](./docs/CONFIG_MANAGEMENT_UPDATE_SUMMARY.md)
-  - [舊文件清理報告](./docs/archive/CLEANUP_EXECUTION_REPORT_2025-10-28.md)
 - 📥 **知識匯入系統**:
   - [知識匯入功能文檔](./docs/features/KNOWLEDGE_IMPORT_FEATURE.md)
   - [知識匯入 API 參考](./docs/api/KNOWLEDGE_IMPORT_API.md)
@@ -326,11 +333,12 @@ AIChatbot/
 
 ### 🏛️ 系統架構
 - 📐 **系統架構文件**: [docs/architecture/SYSTEM_ARCHITECTURE.md](./docs/architecture/SYSTEM_ARCHITECTURE.md)
+- 🗄️ **資料庫架構文件**: [docs/database/DATABASE_SCHEMA.md](./docs/database/DATABASE_SCHEMA.md) ⭐ NEW
+- 📦 **Migration 說明**: [database/migrations/README.md](./database/migrations/README.md) ⭐ NEW
 - 🏢 **Phase 1 多業者實作**: [docs/planning/PHASE1_MULTI_VENDOR_IMPLEMENTATION.md](./docs/planning/PHASE1_MULTI_VENDOR_IMPLEMENTATION.md)
 - 📋 **Phase 2 規劃**: [docs/planning/PHASE2_PLANNING.md](./docs/planning/PHASE2_PLANNING.md)
-- 🎯 **Business Scope 重構**: [docs/architecture/BUSINESS_SCOPE_REFACTORING.md](./docs/architecture/BUSINESS_SCOPE_REFACTORING.md) ⭐ NEW
-- 🔐 **認證與業務範圍整合**: [docs/architecture/AUTH_AND_BUSINESS_SCOPE.md](./docs/architecture/AUTH_AND_BUSINESS_SCOPE.md) ⭐ NEW
-- 🔌 **B2B API 整合框架設計**: [docs/B2B_API_INTEGRATION_DESIGN.md](./docs/B2B_API_INTEGRATION_DESIGN.md) ⭐ NEW
+- 🎯 **Business Scope 重構**: [docs/architecture/BUSINESS_SCOPE_REFACTORING.md](./docs/architecture/BUSINESS_SCOPE_REFACTORING.md)
+- 🔐 **認證與業務範圍整合**: [docs/architecture/AUTH_AND_BUSINESS_SCOPE.md](./docs/architecture/AUTH_AND_BUSINESS_SCOPE.md)
 
 ### 🧪 回測與測試
 - 🔧 **回測優化指南**: [docs/guides/BACKTEST_OPTIMIZATION_GUIDE.md](./docs/guides/BACKTEST_OPTIMIZATION_GUIDE.md)
@@ -339,9 +347,10 @@ AIChatbot/
 ### 🔧 技術參考
 - 🎯 **Intent 管理**: [docs/features/INTENT_MANAGEMENT_README.md](./docs/features/INTENT_MANAGEMENT_README.md)
 - 🧬 **知識提取**: [docs/guides/KNOWLEDGE_EXTRACTION_GUIDE.md](./docs/guides/KNOWLEDGE_EXTRACTION_GUIDE.md)
-- 📡 **API 參考**: [docs/api/API_REFERENCE_PHASE1.md](./docs/api/API_REFERENCE_PHASE1.md)
+- 📡 **RAG Orchestrator API**: [docs/api/API_REFERENCE_PHASE1.md](./docs/api/API_REFERENCE_PHASE1.md)
+- 📘 **Knowledge Admin API** ⭐ NEW: [docs/api/API_REFERENCE_KNOWLEDGE_ADMIN.md](./docs/api/API_REFERENCE_KNOWLEDGE_ADMIN.md)
 - 🐘 **pgvector 設定**: [docs/guides/PGVECTOR_SETUP.md](./docs/guides/PGVECTOR_SETUP.md)
-- 💻 **前端開發模式**: [docs/guides/FRONTEND_DEV_MODE.md](./docs/guides/FRONTEND_DEV_MODE.md) ⭐ NEW
+- 💻 **前端開發模式**: [docs/guides/FRONTEND_DEV_MODE.md](./docs/guides/FRONTEND_DEV_MODE.md)
 
 ### 📊 測試與驗證
 - ✅ **Business Scope 測試報告**: [docs/architecture/BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md](./docs/architecture/BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md) ⭐ NEW

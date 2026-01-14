@@ -66,13 +66,14 @@ docker exec -it aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c "SELE
 
 | 服務 | URL | 說明 |
 |------|-----|------|
-| 知識庫管理後台 | http://localhost:8080 | Web 介面管理知識 |
+| 知識庫管理後台（開發） | http://localhost:8087 | Web 介面管理知識（熱重載） |
+| 知識庫管理後台（正式） | http://localhost:8081 | 靜態檔案服務 |
 | 知識管理 API | http://localhost:8000/docs | FastAPI 文件 |
 | Embedding API | http://localhost:5001/docs | 向量生成 API |
 | **RAG Orchestrator** ⭐ | http://localhost:8100/docs | 智能問答 API |
 | pgAdmin | http://localhost:5050 | 資料庫管理工具 |
 | PostgreSQL | localhost:5432 | 資料庫 |
-| Redis | localhost:6379 | 快取 |
+| Redis | localhost:6381 | 快取 |
 
 **預設帳號密碼：**
 - pgAdmin: `admin@aichatbot.com` / `admin`
@@ -97,8 +98,8 @@ OPENAI_API_KEY="your-key" python3 scripts/process_line_chats.py
 ### 2. 開啟知識庫管理後台
 
 ```bash
-# 瀏覽器開啟
-open http://localhost:8080
+# 瀏覽器開啟（開發模式）
+open http://localhost:8087
 ```
 
 ### 3. 管理知識
@@ -209,7 +210,7 @@ npm install
 # 開發模式
 npm run dev
 
-# 開啟：http://localhost:8080
+# 開啟：http://localhost:8087
 ```
 
 ### RAG Orchestrator
