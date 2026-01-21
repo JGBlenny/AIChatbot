@@ -6,6 +6,41 @@
 
 ## 📋 修復清單
 
+### 2026-01-21
+
+#### ✅ Knowledge Admin API 整合修復（Critical P0）
+**檔案**:
+- [2026-01-21-api-integration-fix.md](./2026-01-21-api-integration-fix.md) - 完整修正報告
+- [2026-01-21-api-integration-analysis.md](./2026-01-21-api-integration-analysis.md) - 深度分析
+- [2026-01-21-api-integration-quick-ref.md](./2026-01-21-api-integration-quick-ref.md) - 快速參考
+
+**問題**: Knowledge Admin 後端 API 缺少 `action_type` 和 `api_config` 欄位支援
+
+**影響**:
+- 前端傳送的 API 關聯設定無法保存到資料庫
+- 編輯知識時無法顯示現有的 API 關聯設定
+- API 整合功能完全無法透過 UI 操作
+
+**修復**:
+- 更新 Pydantic 模型：加入 `action_type` 和 `api_config` 欄位
+- 更新 INSERT 語句：插入時保存這兩個欄位
+- 更新 UPDATE 語句：更新時修改這兩個欄位
+- 更新 GET 端點：查詢和列表返回這兩個欄位
+- 加入必要的 import：`from psycopg2.extras import Json`
+- 修改檔案：`knowledge-admin/backend/app.py` (7 處修正)
+- 修改檔案：`knowledge-admin/frontend/src/views/KnowledgeView.vue` (3 處修正)
+
+**結果**:
+- ✅ 可透過前端 UI 新增帶有 API 關聯的知識
+- ✅ 可編輯和修改現有的 API 關聯
+- ✅ 編輯時正確顯示現有的關聯類型
+- ✅ 完整的 CRUD 生命週期支援
+- ✅ 對話流程可正確觸發 API 調用
+
+**相關測試**: [API 整合測試指南](../testing/api-integration-testing-guide.md)
+
+---
+
 ### 2025-10-29
 
 #### ✅ Business Types 欄位名稱錯誤修復（Critical P0）
@@ -73,6 +108,7 @@
 
 | 日期 | 修復數量 | 類型 | 影響範圍 |
 |------|---------|------|---------|
+| 2026-01-21 | 1 | Critical Bug Fix | Knowledge Admin API、CRUD 生命週期、API 整合 |
 | 2025-10-29 | 2 | Critical Bug Fix + Enhancement | 知識檢索、多意圖信心度、UI |
 | 2025-10-21 | 1 | Bug Fix | 去重檢測 |
 
@@ -81,12 +117,15 @@
 ## 🔍 查找修復
 
 ### 按功能模組
+- **Knowledge Admin API**: [API 整合修復](./2026-01-21-api-integration-fix.md)
 - **知識檢索**: [Business Types 欄位名稱修復](./2025-10-29-business-types-field-name-fix.md)
 - **多意圖分類**: [獨立信心度評分](./2025-10-29-business-types-field-name-fix.md)
 - **去重檢測**: [拼音檢測修復](./PINYIN_DETECTION_FIX_REPORT.md)
 
 ### 按影響等級
-- **Critical**: [Business Types 欄位名稱修復](./2025-10-29-business-types-field-name-fix.md)
+- **Critical**:
+  - [Knowledge Admin API 整合修復](./2026-01-21-api-integration-fix.md)
+  - [Business Types 欄位名稱修復](./2025-10-29-business-types-field-name-fix.md)
 - **高**: [拼音檢測修復](./PINYIN_DETECTION_FIX_REPORT.md)
 
 ---
@@ -104,4 +143,4 @@
 
 ---
 
-**最後更新**: 2025-10-29
+**最後更新**: 2026-01-21

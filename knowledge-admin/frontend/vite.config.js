@@ -17,16 +17,15 @@ export default defineConfig({
       usePolling: true // Docker 環境需要 polling 模式
     },
     proxy: {
-      // RAG API 路徑（需要放在 /api 之前，因為更具體）
-      '/api/v1': {
-        target: 'http://rag-orchestrator:8100',
-        changeOrigin: true
+      // RAG Orchestrator API - 使用 /rag-api/ 前綴
+      // 前端: /rag-api/v1/xxx → 後端: rag-orchestrator:8100/api/v1/xxx
+      '/rag-api': {
+        target: 'http://rag-orchestrator:8100/api',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/rag-api/, '')
       },
-      '/v1': {
-        target: 'http://rag-orchestrator:8100',
-        changeOrigin: true
-      },
-      // Knowledge Admin API 路徑
+      // Knowledge Admin API - 使用 /api/ 前綴
+      // 前端: /api/xxx → 後端: knowledge-admin-api:8000/api/xxx
       '/api': {
         target: 'http://knowledge-admin-api:8000',
         changeOrigin: true,
@@ -39,11 +38,6 @@ export default defineConfig({
             }
           });
         }
-      },
-      '/rag-api': {
-        target: 'http://rag-orchestrator:8100/api',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/rag-api/, '')
       }
     }
   }

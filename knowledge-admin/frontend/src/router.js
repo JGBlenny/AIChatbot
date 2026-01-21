@@ -41,6 +41,8 @@ import FormManagementView from './views/FormManagementView.vue';
 import FormEditorView from './views/FormEditorView.vue';
 import FormSubmissionsView from './views/FormSubmissionsView.vue';
 import VendorFormSubmissionsView from './views/VendorFormSubmissionsView.vue';
+// API Endpoints Management
+import ApiEndpointsView from './views/ApiEndpointsView.vue';
 
 const routes = [
   {
@@ -234,6 +236,15 @@ const routes = [
     path: '/form-submissions',
     name: 'FormSubmissions',
     component: FormSubmissionsView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  // API Endpoints Management
+  {
+    path: '/api-endpoints',
+    name: 'ApiEndpoints',
+    component: ApiEndpointsView,
     meta: {
       requiresAuth: true
     }

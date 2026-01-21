@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, Json
 import requests
 import os
 import pandas as pd
@@ -92,6 +92,8 @@ class KnowledgeUpdate(BaseModel):
     target_user: Optional[List[str]] = None  # 目標用戶（可選，NULL=通用）tenant/landlord/property_manager/system_admin
     priority: Optional[int] = 0  # 優先級加成（0=未啟用，1=已啟用）
     form_id: Optional[str] = None  # 表單關聯 ID（可選）
+    action_type: Optional[str] = 'direct_answer'  # 動作類型：'direct_answer', 'form_fill', 'api_call', 'form_then_api'
+    api_config: Optional[dict] = None  # API 配置（JSONB）：{ endpoint, params, combine_with_knowledge }
 
 class KnowledgeResponse(BaseModel):
     """知識回應模型"""
@@ -149,13 +151,16 @@ async def list_knowledge(
     cur = conn.cursor()
 
     try:
-        # 建立查詢（加入意圖資訊 - 使用 knowledge_intent_mapping，並加入業者資訊）
+        # 建立查詢（加入意圖資訊 - 使用 knowledge_intent_mapping，並加入業者資訊、API 配置）
         query = """
             SELECT DISTINCT
                 kb.id, kb.question_summary, kb.answer as content,
                 kb.keywords, kb.business_types, kb.target_user, kb.priority, kb.created_at, kb.updated_at,
                 (kb.embedding IS NOT NULL) as has_embedding,
                 kb.vendor_id,
+                kb.form_id,
+                kb.action_type,
+                kb.api_config,
                 v.name as vendor_name
             FROM knowledge_base kb
             LEFT JOIN vendors v ON kb.vendor_id = v.id
@@ -256,13 +261,15 @@ async def get_knowledge(knowledge_id: int, user: dict = Depends(get_current_user
     cur = conn.cursor()
 
     try:
-        # 取得知識基本資訊（加入業者資訊、表單關聯）
+        # 取得知識基本資訊（加入業者資訊、表單關聯、API 配置）
         cur.execute("""
             SELECT kb.id, kb.question_summary, kb.answer as content,
                    kb.keywords, kb.business_types, kb.target_user, kb.priority, kb.created_at, kb.updated_at,
                    kb.video_url, kb.video_s3_key, kb.video_file_size, kb.video_duration, kb.video_format,
                    kb.vendor_id,
                    kb.form_id,
+                   kb.action_type,
+                   kb.api_config,
                    v.name as vendor_name
             FROM knowledge_base kb
             LEFT JOIN vendors v ON kb.vendor_id = v.id
@@ -369,6 +376,8 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
                 target_user = %s,
                 priority = %s,
                 form_id = %s,
+                action_type = %s,
+                api_config = %s,
                 updated_at = NOW()
             WHERE id = %s
             RETURNING id, question_summary, updated_at
@@ -381,6 +390,8 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
             data.target_user,
             data.priority,
             data.form_id,
+            data.action_type,
+            Json(data.api_config) if data.api_config else None,
             knowledge_id
         ))
 
@@ -508,8 +519,8 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
 
         cur.execute("""
             INSERT INTO knowledge_base
-            (question_summary, answer, keywords, embedding, business_types, target_user, priority, form_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            (question_summary, answer, keywords, embedding, business_types, target_user, priority, form_id, action_type, api_config)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, created_at
         """, (
             data.question_summary,
@@ -519,7 +530,9 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
             data.business_types,
             data.target_user,
             data.priority,
-            data.form_id
+            data.form_id,
+            data.action_type,
+            Json(data.api_config) if data.api_config else None
         ))
 
         new_record = cur.fetchone()

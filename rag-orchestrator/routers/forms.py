@@ -38,6 +38,8 @@ class FormSchemaCreate(BaseModel):
     fields: List[FormField] = Field(..., description="表單欄位")
     vendor_id: Optional[int] = Field(None, description="業者ID（NULL=全局）")
     is_active: bool = Field(True, description="是否啟用")
+    on_complete_action: Optional[str] = Field('show_knowledge', description="表單完成後執行動作")
+    api_config: Optional[Dict[str, Any]] = Field(None, description="API 配置")
 
 
 class FormSchemaUpdate(BaseModel):
@@ -47,6 +49,8 @@ class FormSchemaUpdate(BaseModel):
     default_intro: Optional[str] = Field(None, description="預設引導語")
     fields: Optional[List[FormField]] = Field(None, description="表單欄位")
     is_active: Optional[bool] = Field(None, description="是否啟用")
+    on_complete_action: Optional[str] = Field(None, description="表單完成後執行動作")
+    api_config: Optional[Dict[str, Any]] = Field(None, description="API 配置")
 
 
 class FormSchemaResponse(BaseModel):
@@ -59,6 +63,8 @@ class FormSchemaResponse(BaseModel):
     fields: List[Dict[str, Any]]
     vendor_id: Optional[int]
     is_active: bool
+    on_complete_action: Optional[str] = 'show_knowledge'
+    api_config: Optional[Dict[str, Any]] = None
     created_at: datetime
     updated_at: datetime
 
@@ -109,6 +115,8 @@ async def list_forms(
                 fields,
                 vendor_id,
                 is_active,
+                on_complete_action,
+                api_config,
                 created_at,
                 updated_at
             FROM form_schemas
@@ -121,12 +129,14 @@ async def list_forms(
         async with db_pool.acquire() as conn:
             rows = await conn.fetch(query, *params)
 
-        # Parse fields from JSON string to list if needed
+        # Parse fields and api_config from JSON string if needed
         results = []
         for row in rows:
             row_dict = dict(row)
             if isinstance(row_dict.get('fields'), str):
                 row_dict['fields'] = json.loads(row_dict['fields'])
+            if isinstance(row_dict.get('api_config'), str):
+                row_dict['api_config'] = json.loads(row_dict['api_config'])
             results.append(row_dict)
 
         return results
@@ -156,6 +166,8 @@ async def get_form(request: Request, form_id: str):
                     fields,
                     vendor_id,
                     is_active,
+                    on_complete_action,
+                    api_config,
                     created_at,
                     updated_at
                 FROM form_schemas
@@ -165,10 +177,12 @@ async def get_form(request: Request, form_id: str):
         if not row:
             raise HTTPException(status_code=404, detail=f"找不到表單: {form_id}")
 
-        # Parse fields from JSON string to list if needed
+        # Parse fields and api_config from JSON string if needed
         row_dict = dict(row)
         if isinstance(row_dict.get('fields'), str):
             row_dict['fields'] = json.loads(row_dict['fields'])
+        if isinstance(row_dict.get('api_config'), str):
+            row_dict['api_config'] = json.loads(row_dict['api_config'])
 
         return row_dict
 
@@ -209,6 +223,9 @@ async def create_form(request: Request, form_data: FormSchemaCreate):
             # 轉換欄位為 JSONB 格式
             fields_json = json.dumps([field.dict(exclude_none=True) for field in form_data.fields])
 
+            # 轉換 api_config 為 JSON 字串（如果有提供）
+            api_config_json = json.dumps(form_data.api_config) if form_data.api_config else None
+
             # 插入表單
             row = await conn.fetchrow("""
                 INSERT INTO form_schemas (
@@ -219,10 +236,12 @@ async def create_form(request: Request, form_data: FormSchemaCreate):
                     fields,
                     vendor_id,
                     is_active,
+                    on_complete_action,
+                    api_config,
                     created_at,
                     updated_at
                 )
-                VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, NOW(), NOW())
+                VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9::jsonb, NOW(), NOW())
                 RETURNING
                     id,
                     form_id,
@@ -232,6 +251,8 @@ async def create_form(request: Request, form_data: FormSchemaCreate):
                     fields,
                     vendor_id,
                     is_active,
+                    on_complete_action,
+                    api_config,
                     created_at,
                     updated_at
             """,
@@ -241,13 +262,17 @@ async def create_form(request: Request, form_data: FormSchemaCreate):
                 form_data.default_intro,
                 fields_json,
                 form_data.vendor_id,
-                form_data.is_active
+                form_data.is_active,
+                form_data.on_complete_action,
+                api_config_json
             )
 
-        # Parse fields from JSON string to list if needed
+        # Parse fields and api_config from JSON string if needed
         row_dict = dict(row)
         if isinstance(row_dict.get('fields'), str):
             row_dict['fields'] = json.loads(row_dict['fields'])
+        if isinstance(row_dict.get('api_config'), str):
+            row_dict['api_config'] = json.loads(row_dict['api_config'])
 
         return row_dict
 
@@ -300,6 +325,17 @@ async def update_form(request: Request, form_id: str, form_data: FormSchemaUpdat
             updates.append(f"is_active = ${param_count}")
             params.append(form_data.is_active)
 
+        if form_data.on_complete_action is not None:
+            param_count += 1
+            updates.append(f"on_complete_action = ${param_count}")
+            params.append(form_data.on_complete_action)
+
+        if form_data.api_config is not None:
+            api_config_json = json.dumps(form_data.api_config) if form_data.api_config else None
+            param_count += 1
+            updates.append(f"api_config = ${param_count}::jsonb")
+            params.append(api_config_json)
+
         if not updates:
             raise HTTPException(status_code=400, detail="沒有提供要更新的欄位")
 
@@ -321,6 +357,8 @@ async def update_form(request: Request, form_id: str, form_data: FormSchemaUpdat
                 fields,
                 vendor_id,
                 is_active,
+                on_complete_action,
+                api_config,
                 created_at,
                 updated_at
         """
@@ -331,10 +369,12 @@ async def update_form(request: Request, form_id: str, form_data: FormSchemaUpdat
         if not row:
             raise HTTPException(status_code=404, detail=f"找不到表單: {form_id}")
 
-        # Parse fields from JSON string to list if needed
+        # Parse fields and api_config from JSON string if needed
         row_dict = dict(row)
         if isinstance(row_dict.get('fields'), str):
             row_dict['fields'] = json.loads(row_dict['fields'])
+        if isinstance(row_dict.get('api_config'), str):
+            row_dict['api_config'] = json.loads(row_dict['api_config'])
 
         return row_dict
 

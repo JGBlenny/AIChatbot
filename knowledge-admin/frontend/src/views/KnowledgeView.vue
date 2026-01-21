@@ -290,27 +290,71 @@
             <p v-if="selectedIntents.length === 0" class="hint-text">💡 未選擇意圖的知識將標記為「未分類」</p>
           </div>
 
-          <!-- 表單關聯 -->
+          <!-- 關聯功能選擇 -->
           <div class="form-group">
-            <label>表單關聯 <span class="field-hint">（選填，關聯後用戶詢問時會觸發表單）</span></label>
-            <select v-model="formData.form_id" class="form-select">
-              <option value="">無表單</option>
-              <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
-                {{ form.form_name }} ({{ form.form_id }})
-              </option>
+            <label>關聯功能 <span class="field-hint">（選擇用戶詢問時觸發的功能）</span></label>
+            <select v-model="linkType" @change="onLinkTypeChange" class="form-select" style="margin-top: 10px;">
+              <option value="none">無（僅回答知識庫內容）</option>
+              <option value="form">表單（引導用戶填寫表單）</option>
+              <option value="api">API（調用 API 查詢即時資訊）</option>
             </select>
-            <p v-if="!formData.form_id" class="hint-text">💡 未選擇表單時，系統僅提供文字回答</p>
-            <p v-else class="hint-text">✅ 已關聯表單：{{ getFormName(formData.form_id) }}</p>
 
-            <!-- 表單引導語 (當選擇了表單時顯示) -->
-            <div v-if="formData.form_id" style="margin-top: 10px;">
-              <label>表單引導語 <span class="field-hint">（可選，自訂觸發表單前的提示）</span></label>
-              <textarea
-                v-model="formData.form_intro"
-                rows="2"
-                placeholder="例如：為了協助您完成申請，請提供以下資訊："
-              ></textarea>
-              <p class="hint-text">💡 留空則使用表單預設引導語</p>
+            <!-- 表單選擇（選擇「表單」後才顯示） -->
+            <div v-if="linkType === 'form'" style="margin-top: 15px;">
+              <label>選擇表單 *</label>
+              <select v-model="formData.form_id" class="form-select">
+                <option value="">請選擇表單...</option>
+                <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
+                  {{ form.form_name }} ({{ form.form_id }})
+                </option>
+              </select>
+              <p v-if="!formData.form_id" class="hint-text">💡 請選擇一個表單</p>
+              <p v-else class="hint-text">✅ 已關聯表單：{{ getFormName(formData.form_id) }}</p>
+
+              <!-- 表單引導語 (當選擇了表單時顯示) -->
+              <div v-if="formData.form_id" style="margin-top: 10px;">
+                <label>表單引導語 <span class="field-hint">（可選，自訂觸發表單前的提示）</span></label>
+                <textarea
+                  v-model="formData.form_intro"
+                  rows="2"
+                  placeholder="例如：為了協助您完成申請，請提供以下資訊："
+                ></textarea>
+                <p class="hint-text">💡 留空則使用表單預設引導語</p>
+              </div>
+            </div>
+
+            <!-- API 端點選擇（選擇「API」後才顯示） -->
+            <div v-if="linkType === 'api'" style="margin-top: 15px;">
+              <label>選擇 API 端點 *</label>
+              <select
+                v-model="selectedApiEndpointId"
+                class="form-select"
+                @change="onApiEndpointChange"
+              >
+                <option value="">請選擇 API 端點...</option>
+                <option
+                  v-for="api in availableApiEndpoints"
+                  :key="api.endpoint_id"
+                  :value="api.endpoint_id"
+                >
+                  {{ api.endpoint_icon }} {{ api.endpoint_name }} ({{ api.endpoint_id }})
+                </option>
+              </select>
+
+              <!-- 顯示選中的 API 資訊 -->
+              <div v-if="selectedApi" class="api-info-box" style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
+                <p><strong>{{ selectedApi.endpoint_icon }} {{ selectedApi.endpoint_name }}</strong></p>
+                <p v-if="selectedApi.description" style="font-size: 0.9em; color: #666;">{{ selectedApi.description }}</p>
+                <p style="font-size: 0.85em; color: #999;">
+                  {{ selectedApi.http_method }} {{ selectedApi.api_url }}
+                </p>
+                <p v-if="selectedApi.param_mappings && selectedApi.param_mappings.length > 0" style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                  📋 需要參數：{{ selectedApi.param_mappings.map(p => p.param_name).join(', ') }}
+                </p>
+              </div>
+
+              <p v-if="!selectedApiEndpointId" class="hint-text">💡 請選擇一個 API 端點</p>
+              <p v-else class="hint-text">✅ 已關聯 API：{{ selectedApi?.endpoint_name }}</p>
             </div>
           </div>
 
@@ -418,6 +462,7 @@ export default {
       availableBusinessTypes: [],
       availableTargetUsers: [],  // 從 API 載入
       availableForms: [],  // 從 API 載入可用表單
+      availableApiEndpoints: [],  // 從 API 載入可用 API 端點
       searchQuery: '',
       showModal: false,
       editingItem: null,
@@ -442,6 +487,9 @@ export default {
         // 表單關聯
         form_id: '',
         form_intro: '',
+        // 動作類型和 API 配置
+        action_type: 'direct_answer',
+        api_config: null,
         // 影片欄位
         video_url: null,
         video_s3_key: null,
@@ -449,6 +497,8 @@ export default {
         video_duration: null,
         video_format: null
       },
+      linkType: 'none',  // 關聯類型：'none', 'form', 'api'
+      selectedApiEndpointId: '',  // 臨時變量：選中的 API 端點 ID
       keywordsString: '',
       selectedIntents: [],
       intentTypes: {},
@@ -474,6 +524,12 @@ export default {
         return '<p style="color: #999;">Markdown 預覽區</p>';
       }
       return marked(this.formData.content);
+    },
+    selectedApi() {
+      if (!this.selectedApiEndpointId) {
+        return null;
+      }
+      return this.availableApiEndpoints.find(api => api.endpoint_id === this.selectedApiEndpointId);
     },
     currentPage() {
       return Math.floor(this.pagination.offset / this.pagination.limit) + 1;
@@ -548,6 +604,7 @@ export default {
     await this.loadBusinessTypes();
     await this.loadTargetUsers();
     await this.loadForms();
+    await this.loadApiEndpoints();
     this.loadStats();
 
     // 載入知識列表
@@ -671,9 +728,54 @@ export default {
       }
     },
 
+    async loadApiEndpoints() {
+      try {
+        const response = await axios.get('/rag-api/v1/api-endpoints?scope=knowledge&is_active=true');
+        this.availableApiEndpoints = response.data || [];
+        console.log('🔌 已載入 API 端點列表:', this.availableApiEndpoints.length, '個');
+      } catch (error) {
+        console.error('載入 API 端點列表失敗', error);
+        this.availableApiEndpoints = [];
+      }
+    },
+
     getFormName(formId) {
       const form = this.availableForms.find(f => f.form_id === formId);
       return form ? form.form_name : formId;
+    },
+
+    onLinkTypeChange() {
+      // 切換關聯類型時，清空對應的欄位並設定 action_type
+      if (this.linkType === 'none') {
+        this.formData.form_id = null;
+        this.formData.form_intro = null;
+        this.formData.action_type = 'direct_answer';
+        this.formData.api_config = null;
+        this.selectedApiEndpointId = '';
+      } else if (this.linkType === 'form') {
+        this.formData.action_type = 'form_fill';
+        this.formData.api_config = null;
+        this.selectedApiEndpointId = '';
+      } else if (this.linkType === 'api') {
+        this.formData.form_id = null;
+        this.formData.form_intro = null;
+        this.formData.action_type = 'api_call';
+        // api_config 會在選擇 API 時構建
+      }
+    },
+
+    onApiEndpointChange() {
+      // API 端點改變時構建 api_config
+      if (this.selectedApiEndpointId) {
+        this.formData.api_config = {
+          endpoint: this.selectedApiEndpointId,
+          params: {},
+          combine_with_knowledge: true
+        };
+        console.log('🔌 已構建 api_config:', this.formData.api_config);
+      } else {
+        this.formData.api_config = null;
+      }
     },
 
     updateIntentType(intentId) {
@@ -807,9 +909,13 @@ export default {
         intent_mappings: [],
         business_types: [],
         target_user: [],
-        form_id: '',
-        form_intro: ''
+        form_id: null,
+        form_intro: null,
+        action_type: 'direct_answer',
+        api_config: null
       };
+      this.linkType = 'none';
+      this.selectedApiEndpointId = '';
       this.keywordsString = '';
       this.selectedIntents = [];
       this.intentTypes = {};
@@ -837,6 +943,9 @@ export default {
           // 表單關聯
           form_id: knowledge.form_id || '',
           form_intro: knowledge.form_intro || '',
+          // 動作類型和 API 配置
+          action_type: knowledge.action_type || 'direct_answer',
+          api_config: knowledge.api_config || null,
           // 影片欄位
           video_url: knowledge.video_url || null,
           video_s3_key: knowledge.video_s3_key || null,
@@ -844,6 +953,20 @@ export default {
           video_duration: knowledge.video_duration || null,
           video_format: knowledge.video_format || null
         };
+
+        // 根據 action_type 判斷關聯類型
+        if (knowledge.action_type === 'api_call' || knowledge.action_type === 'form_then_api') {
+          this.linkType = 'api';
+          // 從 api_config 解析出 endpoint
+          if (knowledge.api_config && knowledge.api_config.endpoint) {
+            this.selectedApiEndpointId = knowledge.api_config.endpoint;
+            console.log('🔌 載入 API 端點:', this.selectedApiEndpointId);
+          }
+        } else if (knowledge.action_type === 'form_fill') {
+          this.linkType = 'form';
+        } else {
+          this.linkType = 'none';
+        }
 
         this.keywordsString = (knowledge.keywords || []).join(', ');
 
@@ -901,10 +1024,40 @@ export default {
           ? this.selectedTargetUsers
           : null;
 
-        // 處理表單關聯（空字串轉為 null）
-        if (!this.formData.form_id || this.formData.form_id === '') {
+        // 根據關聯類型處理表單和 API 欄位
+        if (this.linkType === 'form') {
+          // 選擇了表單，必須選擇一個表單
+          if (!this.formData.form_id) {
+            this.showNotification('error', '請選擇表單', '關聯功能選擇「表單」時，必須選擇一個表單');
+            this.saving = false;
+            return;
+          }
+          // 設定 action_type
+          this.formData.action_type = 'form_fill';
+          this.formData.api_config = null;
+        } else if (this.linkType === 'api') {
+          // 選擇了 API，必須選擇一個 API 端點
+          if (!this.selectedApiEndpointId) {
+            this.showNotification('error', '請選擇 API 端點', '關聯功能選擇「API」時，必須選擇一個 API 端點');
+            this.saving = false;
+            return;
+          }
+          // 設定 action_type 和構建 api_config
+          this.formData.action_type = 'api_call';
+          this.formData.api_config = {
+            endpoint: this.selectedApiEndpointId,
+            params: {},
+            combine_with_knowledge: true
+          };
+          // 清空表單關聯
           this.formData.form_id = null;
           this.formData.form_intro = null;
+        } else {
+          // 選擇了「無」，清空所有關聯
+          this.formData.action_type = 'direct_answer';
+          this.formData.form_id = null;
+          this.formData.form_intro = null;
+          this.formData.api_config = null;
         }
 
         console.log('📝 準備儲存的資料:', {
@@ -913,6 +1066,8 @@ export default {
           target_user: this.formData.target_user,
           form_id: this.formData.form_id,
           form_intro: this.formData.form_intro,
+          action_type: this.formData.action_type,
+          api_config: this.formData.api_config,
           selectedBusinessTypes: this.selectedBusinessTypes,
           selectedTargetUsers: this.selectedTargetUsers
         });

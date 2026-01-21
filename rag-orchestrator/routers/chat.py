@@ -902,34 +902,74 @@ async def _build_knowledge_response(
     llm_optimizer = req.app.state.llm_answer_optimizer
     confidence_evaluator = req.app.state.confidence_evaluator
 
-    # ⭐ 新架構：檢查最佳知識是否關聯表單
+    # ⭐ 新架構：檢查最佳知識的 action_type
     if knowledge_list:
-        print(f"🔍 [調試] knowledge_list[0] keys: {knowledge_list[0].keys()}")
-        print(f"🔍 [調試] knowledge_list[0]['form_id']: {knowledge_list[0].get('form_id')}")
-
-    if knowledge_list and knowledge_list[0].get('form_id'):
         best_knowledge = knowledge_list[0]
-        form_id = best_knowledge['form_id']
+        action_type = best_knowledge.get('action_type', 'direct_answer')
+        print(f"🎯 [action_type] 知識 {best_knowledge['id']} 的 action_type: {action_type}")
 
-        # 確保有 session_id 和 user_id（表單必須）
-        if not request.session_id or not request.user_id:
-            print(f"⚠️  知識 {best_knowledge['id']} 關聯表單 {form_id}，但缺少 session_id 或 user_id，跳過表單觸發")
-        else:
-            print(f"📝 [表單觸發] 知識 {best_knowledge['id']} 關聯表單 {form_id}，啟動表單流程")
+        # 處理不同的 action_type
+        if action_type == 'form_fill' or (action_type == 'direct_answer' and best_knowledge.get('form_id')):
+            # 場景 B: 表單 + 知識答案
+            # 或向後兼容：檢查 form_id（舊架構）
+            form_id = best_knowledge.get('form_id')
+            if not form_id:
+                print(f"⚠️  action_type={action_type} 但缺少 form_id，降級為 direct_answer")
+            elif not request.session_id or not request.user_id:
+                print(f"⚠️  知識 {best_knowledge['id']} 需要表單，但缺少 session_id 或 user_id，跳過表單觸發")
+            else:
+                print(f"📝 [表單觸發] 知識 {best_knowledge['id']} 關聯表單 {form_id}，啟動表單流程")
 
-            # 調用 FormManager 觸發表單（使用表單的 default_intro）
-            form_manager = req.app.state.form_manager
-            form_result = await form_manager.trigger_form_by_knowledge(
-                knowledge_id=best_knowledge['id'],
-                form_id=form_id,
-                session_id=request.session_id,
-                user_id=request.user_id,
-                vendor_id=request.vendor_id,
-                trigger_question=request.message
-            )
+                # 調用 FormManager 觸發表單
+                form_manager = req.app.state.form_manager
+                form_result = await form_manager.trigger_form_by_knowledge(
+                    knowledge_id=best_knowledge['id'],
+                    form_id=form_id,
+                    session_id=request.session_id,
+                    user_id=request.user_id,
+                    vendor_id=request.vendor_id,
+                    trigger_question=request.message
+                )
 
-            # 轉換為 VendorChatResponse 並返回
-            return _convert_form_result_to_response(form_result, request)
+                # 轉換為 VendorChatResponse 並返回
+                return _convert_form_result_to_response(form_result, request)
+
+        elif action_type in ['api_call', 'form_then_api']:
+            # 場景 C/D/E/F: 涉及 API 調用
+            api_config = best_knowledge.get('api_config')
+            if not api_config:
+                print(f"⚠️  action_type={action_type} 但缺少 api_config，降級為 direct_answer")
+            else:
+                # 根據 action_type 處理
+                if action_type == 'api_call':
+                    # 場景 C/F: 直接調用 API（已登入用戶）
+                    return await _handle_api_call(
+                        best_knowledge, request, req, resolver, cache_service
+                    )
+                elif action_type == 'form_then_api':
+                    # 場景 D/E: 先填表單，表單完成後調用 API
+                    form_id = best_knowledge.get('form_id')
+                    if not form_id:
+                        print(f"⚠️  action_type=form_then_api 但缺少 form_id，降級為 direct_answer")
+                    elif not request.session_id:
+                        print(f"⚠️  需要表單但缺少 session_id，跳過")
+                    else:
+                        print(f"📝 [表單+API] 知識 {best_knowledge['id']} 需要先填表單再調用 API")
+
+                        # 觸發表單（API 會在表單完成後由 FormManager 調用）
+                        form_manager = req.app.state.form_manager
+                        form_result = await form_manager.trigger_form_by_knowledge(
+                            knowledge_id=best_knowledge['id'],
+                            form_id=form_id,
+                            session_id=request.session_id,
+                            user_id=request.user_id,
+                            vendor_id=request.vendor_id,
+                            trigger_question=request.message
+                        )
+
+                        return _convert_form_result_to_response(form_result, request)
+
+        # 如果沒有特殊處理，繼續執行原有的 direct_answer 邏輯
 
     # 獲取業者參數（保留完整資訊包含 display_name, unit 等）
     vendor_params = resolver.get_vendor_parameters(request.vendor_id)
@@ -1106,6 +1146,112 @@ async def _build_knowledge_response(
 # - POST /chat 端點函數
 #
 # ========================================
+
+
+async def _handle_api_call(
+    best_knowledge: dict,
+    request: VendorChatRequest,
+    req: Request,
+    resolver,
+    cache_service
+) -> VendorChatResponse:
+    """
+    處理 API 調用場景 (action_type = 'api_call')
+
+    適用場景 C 和 F：
+    - C: 已登入用戶直接調用 API + 知識答案
+    - F: 純 API 調用（不含知識答案）
+    """
+    from services.api_call_handler import get_api_call_handler
+
+    api_config = best_knowledge.get('api_config', {})
+    knowledge_answer = best_knowledge.get('answer')
+
+    print(f"🔌 [API調用] endpoint={api_config.get('endpoint')}, combine_with_knowledge={api_config.get('combine_with_knowledge', True)}")
+
+    # 準備 session 數據
+    session_data = {
+        'user_id': request.user_id,
+        'vendor_id': request.vendor_id,
+        'session_id': request.session_id
+    }
+
+    # 檢查是否缺少必要參數
+    params = api_config.get('params', {})
+    missing_params = []
+    for param_name, param_value in params.items():
+        if isinstance(param_value, str) and '{session.' in param_value:
+            # 檢查 session 參數是否存在
+            field = param_value.replace('{session.', '').replace('}', '')
+            if not session_data.get(field):
+                missing_params.append(field)
+
+    if missing_params:
+        error_message = f"⚠️ 缺少必要的參數：{', '.join(missing_params)}\n\n"
+        if knowledge_answer and api_config.get('combine_with_knowledge', True):
+            error_message += knowledge_answer
+
+        return VendorChatResponse(
+            answer=error_message,
+            intent_name='API查詢',
+            intent_type='knowledge',
+            confidence=0.5,
+            sources=[],
+            source_count=0,
+            vendor_id=request.vendor_id,
+            mode=request.mode or 'b2c',
+            session_id=request.session_id,
+            timestamp=datetime.utcnow().isoformat()
+        )
+
+    # 調用 API（傳遞 db_pool 以支持動態配置的 API）
+    db_pool = req.app.state.db_pool
+    api_handler = get_api_call_handler(db_pool)
+    api_result = await api_handler.execute_api_call(
+        api_config=api_config,
+        session_data=session_data,
+        knowledge_answer=knowledge_answer
+    )
+
+    # 獲取格式化的響應
+    formatted_response = api_result.get('formatted_response', '')
+
+    # 保存對話歷史
+    try:
+        if request.session_id:
+            await cache_service.save_conversation(
+                session_id=request.session_id,
+                user_id=request.user_id,
+                user_role=request.user_role,
+                question=request.message,
+                answer=formatted_response,
+                related_kb_ids=[best_knowledge['id']],
+                vendor_id=request.vendor_id
+            )
+    except Exception as e:
+        print(f"⚠️  保存對話歷史失敗: {e}")
+
+    # 返回響應
+    return VendorChatResponse(
+        answer=formatted_response,
+        intent_name=best_knowledge.get('intent_name', 'API查詢'),
+        intent_type='knowledge',
+        confidence=best_knowledge.get('similarity', 0.9),
+        sources=[{
+            'id': best_knowledge['id'],
+            'question_summary': best_knowledge.get('question_summary', ''),
+            'answer': knowledge_answer or '',
+            'similarity': best_knowledge.get('similarity', 0),
+            'scope': best_knowledge.get('scope'),
+            'vendor_id': best_knowledge.get('vendor_id'),
+            'target_users': best_knowledge.get('target_users')
+        }],
+        source_count=1,
+        vendor_id=request.vendor_id,
+        mode=request.mode or 'b2c',
+        session_id=request.session_id,
+        timestamp=datetime.utcnow().isoformat()
+    )
 
 
 @router.get("/conversations")

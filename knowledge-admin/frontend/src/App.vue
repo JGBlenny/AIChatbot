@@ -71,6 +71,10 @@
                 <span class="nav-icon">📋</span>
                 <span class="nav-text">表單提交記錄</span>
               </router-link>
+              <router-link to="/api-endpoints" class="nav-item nav-item-sub">
+                <span class="nav-icon">🔌</span>
+                <span class="nav-text">API 端點管理</span>
+              </router-link>
             </div>
           </div>
         </div>
@@ -225,7 +229,10 @@ export default {
         '/target-users-config': '目標用戶配置',
         '/business-types-config': '業態類型配置',
         '/admin-management': '用戶管理',
-        '/role-management': '角色管理'
+        '/role-management': '角色管理',
+        '/forms': '表單管理',
+        '/form-submissions': '表單提交記錄',
+        '/api-endpoints': 'API 端點管理'
       }
     };
   },

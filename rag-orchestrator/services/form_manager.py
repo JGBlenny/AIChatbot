@@ -24,6 +24,7 @@ from services.db_utils import get_db_cursor
 from services.form_validator import FormValidator
 from services.digression_detector import DigressionDetector
 from services.digression_detector_db import DigressionDetectorDB
+from services.api_call_handler import get_api_call_handler
 
 
 class FormState:
@@ -713,22 +714,120 @@ class FormManager:
             submitted_data=collected_data
         )
 
-        # 3. 取得完成訊息（如果有 knowledge_id，從知識庫讀取答案）
-        completion_message = "✅ **表單填寫完成！**\n\n感謝您完成表單！我們會儘快處理您的資料。"
+        # 3. ⭐ 新架構：檢查是否需要調用 API
+        on_complete_action = form_schema.get('on_complete_action', 'show_knowledge')
+        api_config = form_schema.get('api_config')
 
+        # 從知識庫讀取答案（如果有）
+        knowledge_answer = None
         knowledge_id = session_state.get('knowledge_id')
         if knowledge_id:
-            # 從知識庫讀取答案
-            knowledge_answer = await asyncio.to_thread(self._get_knowledge_answer_sync, knowledge_id)
-            if knowledge_answer:
-                completion_message = f"✅ **表單填寫完成！**\n\n{knowledge_answer}"
+            knowledge_answer = await asyncio.to_thread(
+                self._get_knowledge_answer_sync, knowledge_id
+            )
+
+        # 4. 執行 API 調用（如果需要）
+        api_result = None
+        if on_complete_action in ['call_api', 'both'] and api_config:
+            print(f"📞 [表單完成] 調用 API: {api_config.get('endpoint')}")
+            api_result = await self._execute_form_api(
+                api_config=api_config,
+                form_data=collected_data,
+                session_state=session_state,
+                knowledge_answer=knowledge_answer
+            )
+
+        # 5. 格式化完成訊息
+        completion_message = await self._format_completion_message(
+            on_complete_action=on_complete_action,
+            knowledge_answer=knowledge_answer,
+            api_result=api_result
+        )
 
         return {
             "answer": completion_message,
             "form_completed": True,
             "submission_id": submission_id,
-            "collected_data": collected_data
+            "collected_data": collected_data,
+            "api_result": api_result  # 返回 API 結果供外部使用
         }
+
+    async def _execute_form_api(
+        self,
+        api_config: Dict,
+        form_data: Dict,
+        session_state: Dict,
+        knowledge_answer: Optional[str]
+    ) -> Dict:
+        """執行表單完成後的 API 調用"""
+        try:
+            # 準備 session 數據
+            session_data = {
+                'user_id': session_state.get('user_id'),
+                'vendor_id': session_state.get('vendor_id'),
+                'session_id': session_state.get('session_id')
+            }
+
+            # 調用 API 處理器（傳遞 db_pool 以支持動態配置的 API）
+            api_handler = get_api_call_handler(self.db_pool)
+            result = await api_handler.execute_api_call(
+                api_config=api_config,
+                session_data=session_data,
+                form_data=form_data,
+                knowledge_answer=knowledge_answer
+            )
+
+            return result
+
+        except Exception as e:
+            print(f"❌ 表單 API 調用失敗: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'formatted_response': f"⚠️ 表單已提交，但後續處理時發生錯誤。請稍後再試或聯繫客服。"
+            }
+
+    async def _format_completion_message(
+        self,
+        on_complete_action: str,
+        knowledge_answer: Optional[str],
+        api_result: Optional[Dict]
+    ) -> str:
+        """格式化表單完成訊息"""
+        # 情況 1: 只顯示知識答案
+        if on_complete_action == 'show_knowledge':
+            if knowledge_answer:
+                return f"✅ **表單填寫完成！**\n\n{knowledge_answer}"
+            else:
+                return "✅ **表單填寫完成！**\n\n感謝您完成表單！我們會儘快處理您的資料。"
+
+        # 情況 2: 只調用 API
+        if on_complete_action == 'call_api':
+            if api_result and api_result.get('success'):
+                return api_result.get('formatted_response', '✅ 操作成功！')
+            elif api_result:
+                return api_result.get('formatted_response', '❌ 操作失敗，請稍後再試。')
+            else:
+                return "❌ API 調用失敗，請稍後再試。"
+
+        # 情況 3: 兩者都執行
+        if on_complete_action == 'both':
+            parts = ["✅ **表單填寫完成！**\n"]
+
+            # API 結果
+            if api_result and api_result.get('success'):
+                parts.append(api_result.get('formatted_response', ''))
+            elif api_result:
+                parts.append(api_result.get('formatted_response', '⚠️ 後續處理時發生錯誤。'))
+
+            # 知識答案
+            if knowledge_answer:
+                parts.append(f"\n---\n\n{knowledge_answer}")
+
+            return '\n'.join(parts)
+
+        # 默認情況
+        return "✅ **表單填寫完成！**\n\n感謝您完成表單！"
 
     async def cancel_form(self, session_id: str) -> Dict:
         """取消表單填寫"""
