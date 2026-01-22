@@ -51,16 +51,63 @@ git pull origin main
 
 ---
 
-### 步驟 3：判斷是否需要重新構建
+### 步驟 3：檢查是否有資料庫遷移
 
-#### 3.1 檢查變更的文件類型
+⚠️ **重要：每次推版前必須執行此步驟！**
+
+```bash
+# 預覽待執行的 migration（不會實際執行）
+./database/run_migrations.sh docker-compose.prod.yml --dry-run
+```
+
+**預期結果：**
+- **情況 A**：`✓ 所有 migration 都已執行，無需執行`
+  - 表示無資料庫變更，直接跳到步驟 4
+
+- **情況 B**：`⚠️ 發現 N 個待執行的 migration`
+  - 表示有資料庫變更，必須先執行 migration
+
+#### 3.1 如果有待執行的 migration
+
+```bash
+# 方法 1: 自動執行（推薦，會自動備份）
+./database/run_migrations.sh docker-compose.prod.yml
+
+# 方法 2: 交互式執行（需要手動確認）
+./database/run_migrations.sh docker-compose.prod.yml --interactive
+
+# 執行完成後驗證
+./database/run_migrations.sh docker-compose.prod.yml --dry-run
+# 應該顯示：✓ 所有 migration 都已執行
+```
+
+**Migration 腳本特性：**
+- ✅ 自動備份資料庫到 `database/backups/`
+- ✅ 冪等性：已執行的 migration 自動跳過
+- ✅ 失敗自動停止並顯示回滾命令
+- ✅ 記錄執行歷史到 `schema_migrations` 表
+
+**如果 migration 失敗：**
+```bash
+# 查看錯誤日誌
+ls -lt /tmp/migration_*.log | head -1
+
+# 使用自動生成的備份回滾
+docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < database/backups/backup_before_migration_*.sql
+```
+
+---
+
+### 步驟 4：判斷是否需要重新構建
+
+#### 4.1 檢查變更的文件類型
 
 ```bash
 # 查看本次更新變更了哪些文件
 git diff HEAD@{1} --name-only
 ```
 
-#### 3.2 根據變更決定操作
+#### 4.2 根據變更決定操作
 
 | 變更內容 | 需要做什麼 |
 |---------|----------|
@@ -68,10 +115,11 @@ git diff HEAD@{1} --name-only
 | 前端文件（.vue, .js） | 需要重新 build 前端 + 重啟前端服務 |
 | Dockerfile 或 requirements.txt | 需要完整重新構建 |
 | docker-compose.yml | 需要重新啟動所有服務 |
+| database/migrations/*.sql | 已在步驟 3 處理，無需額外操作 |
 
 ---
 
-### 步驟 4：執行部署
+### 步驟 5：執行部署
 
 #### 方案 A：只改了後端代碼（最快）
 
@@ -108,9 +156,9 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ---
 
-### 步驟 5：驗證部署
+### 步驟 6：驗證部署
 
-#### 5.1 檢查服務狀態
+#### 6.1 檢查服務狀態
 
 ```bash
 docker-compose -f docker-compose.prod.yml ps
@@ -120,7 +168,7 @@ docker-compose -f docker-compose.prod.yml ps
 - 所有服務狀態都是 `Up`
 - 沒有服務在 `Restarting`
 
-#### 5.2 檢查日誌
+#### 6.2 檢查日誌
 
 ```bash
 # 查看主要服務日誌
@@ -133,7 +181,7 @@ docker-compose -f docker-compose.prod.yml logs --tail=50 knowledge-admin-web
 - [ ] 沒有錯誤訊息
 - [ ] 服務正常啟動
 
-#### 5.3 功能測試
+#### 6.3 功能測試
 
 1. 訪問前端：`http://your-domain`
 2. 測試登入功能
@@ -251,5 +299,5 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ---
 
-**最後更新**：2026-01-12
+**最後更新**：2026-01-22
 **維護者**：DevOps Team

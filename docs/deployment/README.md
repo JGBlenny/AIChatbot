@@ -88,6 +88,31 @@ deployment/
 
 ---
 
+### 2026-01-21
+**主要更新：**
+- **Critical P0**：Knowledge Admin API 整合修復（action_type 和 api_config 欄位支援）
+- API Endpoints 動態管理功能
+- 表單系統增強
+- 文檔結構重組優化
+
+**部署文件：**
+- [DEPLOY_2026-01-21.md](archive/2026-01-21/DEPLOY_2026-01-21.md) - 完整部署指南
+
+**資料庫遷移：**
+- `database/migrations/add_action_type_and_api_config.sql` - 新增知識庫動作類型和 API 配置
+- `database/migrations/create_api_endpoints_table.sql` - 創建 API 端點管理表
+- `database/migrations/upgrade_api_endpoints_dynamic.sql` - 升級為動態 API 管理
+- `database/migrations/configure_billing_inquiry_examples.sql` - 配置帳單查詢範例
+- `database/migrations/remove_handler_function_column.sql` - 移除已棄用欄位
+
+**相關文檔：**
+- [API 整合完整修復報告](../fixes/2026-01-21-api-integration-fix.md)
+- [API 整合深度分析](../fixes/2026-01-21-api-integration-analysis.md)
+- [API 整合測試指南](../testing/api-integration-testing-guide.md)
+- [文檔重組報告](../DOCS_REORGANIZATION_REPORT_2026-01-21.md)
+
+---
+
 ### 2026-01-13
 **主要更新：**
 - 統一檢索路徑（commit cbf4c4f）- 使意圖成為純排序因子
@@ -95,7 +120,7 @@ deployment/
 - 移除 form_intro 欄位，統一使用表單 default_intro（commit 781a7c0）
 
 **部署文件：**
-- [DEPLOY_2026-01-13.md](2026-01-13/DEPLOY_2026-01-13.md) - 整合部署指南（包含所有更新）
+- [DEPLOY_2026-01-13.md](archive/2026-01-13/DEPLOY_2026-01-13.md) - 整合部署指南（包含所有更新）
 
 **資料庫遷移：**
 - `database/migrations/remove_form_intro_2026-01-13.sql` - 刪除 knowledge_base.form_intro 欄位
@@ -103,6 +128,45 @@ deployment/
 **相關文檔：**
 - [統一檢索路徑實施報告](../implementation/FINAL_2026-01-13.md)
 - [表單引導語改善報告](../features/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md)
+
+---
+
+### 2026-01-22 ⭐ 最新
+**主要更新：**
+- **Migration 追蹤系統**：建立 `schema_migrations` 表，解決推版漏掉欄位問題
+- **自動執行腳本**：`database/run_migrations.sh` 支援 dry-run、自動備份、交互式確認
+- **安全機制**：冪等性、錯誤停止、執行記錄、回滾指南
+- **文檔完善**：完整的 Migration 使用說明和 FAQ
+
+**部署文件：**
+- [DEPLOY_2026-01-22.md](archive/2026-01-22/DEPLOY_2026-01-22.md) - Migration 系統部署指南
+
+**資料庫遷移：**
+- `database/migrations/000_create_schema_migrations.sql` - 創建 Migration 追蹤表
+- 所有歷史 migration (17 個) - 自動追蹤和執行
+
+**核心工具：**
+- `database/run_migrations.sh` - Migration 自動執行腳本（安全加強版）
+- `database/migrations/README.md` - Migration 完整文檔
+
+**重要特性：**
+- ✅ 自動追蹤已執行的 migration
+- ✅ Dry-run 模式預覽變更
+- ✅ 自動備份資料庫
+- ✅ 失敗自動停止並提供回滾命令
+- ✅ 防止重複執行
+
+**使用方法：**
+```bash
+# 預覽即將執行的 migration
+./database/run_migrations.sh docker-compose.prod.yml --dry-run
+
+# 執行 migration（自動備份）
+./database/run_migrations.sh docker-compose.prod.yml
+
+# 交互式執行（需要確認）
+./database/run_migrations.sh docker-compose.prod.yml --interactive
+```
 
 ---
 
@@ -117,4 +181,4 @@ deployment/
 
 ---
 
-**最後更新**：2026-01-13
+**最後更新**：2026-01-22
