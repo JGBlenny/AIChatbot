@@ -488,6 +488,130 @@ async def _retrieve_sop(request: VendorChatRequest, intent_result: dict) -> list
     return sop_items
 
 
+async def _build_orchestrator_response(
+    request: VendorChatRequest,
+    req: Request,
+    orchestrator_result: dict,
+    resolver,
+    vendor_info: dict,
+    cache_service
+):
+    """
+    使用 SOP Orchestrator 結果構建回應
+
+    支持：
+    1. none 模式：純資訊回應
+    2. manual/immediate 模式：等待用戶確認或後續匹配
+    3. 觸發後續動作：form_fill / api_call / form_then_api
+    """
+    sop_item = orchestrator_result.get('sop_item', {}) or {}
+    trigger_result = orchestrator_result.get('trigger_result', {}) or {}
+    action_result = orchestrator_result.get('action_result', {}) or {}
+
+    # 構建回應訊息
+    response_text = orchestrator_result.get('response', '')
+
+    # 處理參數替換
+    if response_text:
+        final_answer, used_param_keys = _clean_answer_with_tracking(
+            response_text, request.vendor_id, resolver
+        )
+    else:
+        final_answer = "SOP 處理完成。"
+        used_param_keys = []
+
+    # 構建來源資訊
+    sources = []
+    if request.include_sources and sop_item and sop_item.get('id'):
+        sources = [KnowledgeSource(
+            id=sop_item.get('id'),
+            question_summary=sop_item.get('item_name', 'SOP'),
+            answer=sop_item.get('content', ''),
+            scope='vendor_sop'
+        )]
+
+    # 構建調試資訊
+    debug_info = None
+    if request.include_debug_info:
+        vendor_params = resolver.get_vendor_parameters(request.vendor_id)
+
+        debug_info = _build_debug_info(
+            processing_path='sop_orchestrator',
+            intent_result={'intent_name': 'sop', 'confidence': 1.0},
+            llm_strategy='orchestrated',
+            sop_candidates=[{
+                'id': sop_item.get('id'),
+                'item_name': sop_item.get('item_name'),
+                'trigger_mode': sop_item.get('trigger_mode'),
+                'next_action': sop_item.get('next_action'),
+                'is_selected': True
+            }] if sop_item else [],
+            vendor_params=vendor_params,
+            used_param_keys=used_param_keys
+        )
+
+        # 添加 Orchestrator 特定的調試資訊
+        if debug_info:
+            debug_info['orchestrator'] = {
+                'trigger_mode': trigger_result.get('trigger_mode'),
+                'action': trigger_result.get('action'),
+                'context_saved': trigger_result.get('context_saved'),
+                'next_action': action_result.get('action_type') if action_result else None
+            }
+
+    # 獲取意圖資訊（從檢索結果或使用預設）
+    intent_classifier = req.app.state.intent_classifier
+    intent_result = intent_classifier.classify(request.message)
+
+    # 提取表單資訊（如果有）
+    form_triggered = False
+    form_id = None
+    current_field = None
+    progress = None
+
+    if action_result:
+        action_type = action_result.get('action_type')
+
+        # 如果是表單相關的動作類型
+        if action_type in ['form_fill', 'form_then_api']:
+            form_session = action_result.get('form_session')
+            if form_session:
+                form_triggered = True
+                form_id = form_session.get('form_id')
+                current_field = action_result.get('current_field')
+
+                # 計算進度
+                if form_session.get('current_field_index') is not None and form_session.get('total_fields'):
+                    current_index = form_session['current_field_index']
+                    total_fields = form_session['total_fields']
+                    progress = f"{current_index + 1}/{total_fields}"
+
+    response = VendorChatResponse(
+        answer=final_answer,
+        intent_name=intent_result['intent_name'],
+        intent_type=intent_result.get('intent_type'),
+        confidence=intent_result['confidence'],
+        all_intents=intent_result.get('all_intents', []),
+        secondary_intents=intent_result.get('secondary_intents', []),
+        intent_ids=intent_result.get('intent_ids', []),
+        sources=sources if request.include_sources else None,
+        source_count=1 if sop_item else 0,
+        vendor_id=request.vendor_id,
+        mode=request.mode,
+        session_id=request.session_id,
+        timestamp=datetime.utcnow().isoformat(),
+        form_triggered=form_triggered,
+        form_id=form_id,
+        current_field=current_field,
+        progress=progress,
+        debug_info=debug_info
+    )
+
+    return cache_response_and_return(
+        cache_service, request.vendor_id, request.message, response, request.target_user
+    )
+
+
 async def _build_sop_response(
     request: VendorChatRequest,
     req: Request,
@@ -749,6 +873,10 @@ async def _handle_no_knowledge_found(
     - Knowledge 路徑已降低閾值到 0.55（涵蓋原 RAG fallback 範圍）
     - 使用語義匹配確保相關知識不會被遺漏
     - 簡化流程：參數答案 → 兜底回應
+
+    ⭐ 設計原則：內容優先於資料收集
+    - 需要表單的場景應在知識庫中配置 action_type=form_fill
+    - 不在此處進行意圖表單映射（避免繞過知識庫內容）
     """
     # Step 1: 優先檢查是否為參數型問題（沒有知識庫時的備選方案）
     from routers.chat_shared import check_param_question
@@ -902,79 +1030,8 @@ async def _build_knowledge_response(
     llm_optimizer = req.app.state.llm_answer_optimizer
     confidence_evaluator = req.app.state.confidence_evaluator
 
-    # ⭐ 新架構：檢查最佳知識的 action_type
-    if knowledge_list:
-        best_knowledge = knowledge_list[0]
-        action_type = best_knowledge.get('action_type', 'direct_answer')
-        print(f"🎯 [action_type] 知識 {best_knowledge['id']} 的 action_type: {action_type}")
-
-        # 處理不同的 action_type
-        if action_type == 'form_fill' or (action_type == 'direct_answer' and best_knowledge.get('form_id')):
-            # 場景 B: 表單 + 知識答案
-            # 或向後兼容：檢查 form_id（舊架構）
-            form_id = best_knowledge.get('form_id')
-            if not form_id:
-                print(f"⚠️  action_type={action_type} 但缺少 form_id，降級為 direct_answer")
-            elif not request.session_id or not request.user_id:
-                print(f"⚠️  知識 {best_knowledge['id']} 需要表單，但缺少 session_id 或 user_id，跳過表單觸發")
-            else:
-                print(f"📝 [表單觸發] 知識 {best_knowledge['id']} 關聯表單 {form_id}，啟動表單流程")
-
-                # 調用 FormManager 觸發表單
-                form_manager = req.app.state.form_manager
-                form_result = await form_manager.trigger_form_by_knowledge(
-                    knowledge_id=best_knowledge['id'],
-                    form_id=form_id,
-                    session_id=request.session_id,
-                    user_id=request.user_id,
-                    vendor_id=request.vendor_id,
-                    trigger_question=request.message
-                )
-
-                # 轉換為 VendorChatResponse 並返回
-                return _convert_form_result_to_response(form_result, request)
-
-        elif action_type in ['api_call', 'form_then_api']:
-            # 場景 C/D/E/F: 涉及 API 調用
-            api_config = best_knowledge.get('api_config')
-            if not api_config:
-                print(f"⚠️  action_type={action_type} 但缺少 api_config，降級為 direct_answer")
-            else:
-                # 根據 action_type 處理
-                if action_type == 'api_call':
-                    # 場景 C/F: 直接調用 API（已登入用戶）
-                    return await _handle_api_call(
-                        best_knowledge, request, req, resolver, cache_service
-                    )
-                elif action_type == 'form_then_api':
-                    # 場景 D/E: 先填表單，表單完成後調用 API
-                    form_id = best_knowledge.get('form_id')
-                    if not form_id:
-                        print(f"⚠️  action_type=form_then_api 但缺少 form_id，降級為 direct_answer")
-                    elif not request.session_id:
-                        print(f"⚠️  需要表單但缺少 session_id，跳過")
-                    else:
-                        print(f"📝 [表單+API] 知識 {best_knowledge['id']} 需要先填表單再調用 API")
-
-                        # 觸發表單（API 會在表單完成後由 FormManager 調用）
-                        form_manager = req.app.state.form_manager
-                        form_result = await form_manager.trigger_form_by_knowledge(
-                            knowledge_id=best_knowledge['id'],
-                            form_id=form_id,
-                            session_id=request.session_id,
-                            user_id=request.user_id,
-                            vendor_id=request.vendor_id,
-                            trigger_question=request.message
-                        )
-
-                        return _convert_form_result_to_response(form_result, request)
-
-        # 如果沒有特殊處理，繼續執行原有的 direct_answer 邏輯
-
-    # 獲取業者參數（保留完整資訊包含 display_name, unit 等）
-    vendor_params = resolver.get_vendor_parameters(request.vendor_id)
-
-    # ✅ 高質量過濾：只保留加成後相似度 >= 0.8 的知識用於答案生成
+    # ⭐ 步驟 1：高質量過濾（先過濾再處理 action_type）
+    # 只保留加成後相似度 >= 0.8 的知識用於答案生成
     # 注意：knowledge['similarity'] 已經是加成後相似度（見 vendor_knowledge_retriever.py:455）
     high_quality_threshold = float(os.getenv("HIGH_QUALITY_THRESHOLD", "0.8"))
     filtered_knowledge_list = [k for k in knowledge_list if k.get('similarity', 0) >= high_quality_threshold]
@@ -991,6 +1048,81 @@ async def _build_knowledge_response(
         return await _handle_no_knowledge_found(
             request, req, intent_result, resolver, cache_service, vendor_info
         )
+
+    # ⭐ 步驟 2：檢查最佳知識的 action_type（使用高質量過濾後的知識）
+    best_knowledge = filtered_knowledge_list[0]
+    action_type = best_knowledge.get('action_type', 'direct_answer')
+    print(f"🎯 [action_type] 知識 {best_knowledge['id']} 的 action_type: {action_type}, similarity: {best_knowledge.get('similarity', 0):.3f}")
+
+    # 處理不同的 action_type
+    if action_type == 'form_fill' or (action_type == 'direct_answer' and best_knowledge.get('form_id')):
+        # 場景 B: 表單 + 知識答案
+        # 或向後兼容：檢查 form_id（舊架構）
+        form_id = best_knowledge.get('form_id')
+        if not form_id:
+            print(f"⚠️  action_type={action_type} 但缺少 form_id，降級為 direct_answer")
+            action_type = 'direct_answer'  # 明確降級
+        elif not request.session_id or not request.user_id:
+            print(f"⚠️  知識 {best_knowledge['id']} 需要表單，但缺少 session_id 或 user_id，降級為 direct_answer")
+            action_type = 'direct_answer'  # 明確降級
+        else:
+            print(f"📝 [表單觸發] 知識 {best_knowledge['id']} 關聯表單 {form_id}，啟動表單流程")
+
+            # 調用 FormManager 觸發表單
+            form_manager = req.app.state.form_manager
+            form_result = await form_manager.trigger_form_by_knowledge(
+                knowledge_id=best_knowledge['id'],
+                form_id=form_id,
+                session_id=request.session_id,
+                user_id=request.user_id,
+                vendor_id=request.vendor_id,
+                trigger_question=request.message
+            )
+
+            # 轉換為 VendorChatResponse 並返回
+            return _convert_form_result_to_response(form_result, request)
+
+    elif action_type in ['api_call', 'form_then_api']:
+        # 場景 C/D/E/F: 涉及 API 調用
+        api_config = best_knowledge.get('api_config')
+        if not api_config:
+            print(f"⚠️  action_type={action_type} 但缺少 api_config，降級為 direct_answer")
+            action_type = 'direct_answer'  # 明確降級
+        else:
+            # 根據 action_type 處理
+            if action_type == 'api_call':
+                # 場景 C/F: 直接調用 API（已登入用戶）
+                return await _handle_api_call(
+                    best_knowledge, request, req, resolver, cache_service
+                )
+            elif action_type == 'form_then_api':
+                # 場景 D/E: 先填表單，表單完成後調用 API
+                form_id = best_knowledge.get('form_id')
+                if not form_id:
+                    print(f"⚠️  action_type=form_then_api 但缺少 form_id，降級為 direct_answer")
+                    action_type = 'direct_answer'  # 明確降級
+                elif not request.session_id:
+                    print(f"⚠️  需要表單但缺少 session_id，降級為 direct_answer")
+                    action_type = 'direct_answer'  # 明確降級
+                else:
+                    print(f"📝 [表單+API] 知識 {best_knowledge['id']} 需要先填表單再調用 API")
+
+                    # 觸發表單（API 會在表單完成後由 FormManager 調用）
+                    form_manager = req.app.state.form_manager
+                    form_result = await form_manager.trigger_form_by_knowledge(
+                        knowledge_id=best_knowledge['id'],
+                        form_id=form_id,
+                        session_id=request.session_id,
+                        user_id=request.user_id,
+                        vendor_id=request.vendor_id,
+                        trigger_question=request.message
+                    )
+
+                    return _convert_form_result_to_response(form_result, request)
+
+    # ⭐ 步驟 3：direct_answer 流程（降級或原本就是 direct_answer）
+    # 獲取業者參數（保留完整資訊包含 display_name, unit 等）
+    vendor_params = resolver.get_vendor_parameters(request.vendor_id)
 
     # 準備搜尋結果格式（使用過濾後的高質量知識）
     search_results = [{
@@ -1637,10 +1769,11 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 )
                 return _convert_form_result_to_response(form_result, request)
 
-            # 處理 COLLECTING 和 DIGRESSION 狀態（收集欄位）
-            if session_state and session_state['state'] in ['COLLECTING', 'DIGRESSION']:
+            # 處理 COLLECTING、DIGRESSION 和 PAUSED 狀態（收集欄位）
+            if session_state and session_state['state'] in ['COLLECTING', 'DIGRESSION', 'PAUSED']:
                 # 用戶正在填寫表單 → 走表單收集流程
-                print(f"📋 檢測到進行中的表單會話（{session_state['form_id']}），使用表單收集流程")
+                # PAUSED 狀態：表單暫停（例如 SOP form_then_api），用戶訊息可能是要恢復表單
+                print(f"📋 檢測到進行中的表單會話（{session_state['form_id']}, 狀態: {session_state['state']}），使用表單收集流程")
 
                 intent_classifier = req.app.state.intent_classifier
                 intent_result = intent_classifier.classify(request.message)
@@ -1683,30 +1816,46 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         intent_classifier = req.app.state.intent_classifier
         intent_result = intent_classifier.classify(request.message)
 
-        # Step 3.5: 檢查表單觸發（Phase X: 表單填寫功能）
-        if request.session_id and request.user_id:
-            form_manager = req.app.state.form_manager
-            form_trigger_result = await form_manager.trigger_form_filling(
-                intent_name=intent_result['intent_name'],
+        # Step 3.5: 檢查 SOP Context（SOP Next Action 功能）
+        # ⭐ 優先級：SOP > 意圖表單映射
+        # 優先檢查是否有待處理的 SOP Context（manual/immediate 模式需要後續匹配）
+        if not request.skip_sop and request.session_id:
+            sop_orchestrator = req.app.state.sop_orchestrator
+
+            # 先嘗試使用 Orchestrator 處理訊息（會檢查 context）
+            primary_intent_id = intent_result.get('intent_ids', [None])[0] if intent_result.get('intent_ids') else None
+            orchestrator_result = await sop_orchestrator.process_message(
+                user_message=request.message,
                 session_id=request.session_id,
-                user_id=request.user_id,
-                vendor_id=request.vendor_id
+                user_id=request.user_id or "unknown",
+                vendor_id=request.vendor_id,
+                intent_id=primary_intent_id,  # 傳遞主要意圖ID
+                intent_ids=intent_result.get('intent_ids', [])
             )
 
-            if form_trigger_result.get('form_triggered'):
-                # 表單已觸發 → 返回第一個欄位提示
-                print(f"📋 表單已觸發：{form_trigger_result.get('form_id')}")
-                return _convert_form_result_to_response(form_trigger_result, request)
+            print(f"🔍 DEBUG: orchestrator_result type={type(orchestrator_result)}, value={orchestrator_result}")
 
-        # Step 4: 嘗試檢索 SOP（優先級最高，不管意圖是什麼都先嘗試）- 回測模式可跳過
+            # 如果 Orchestrator 找到 SOP 並有回應內容
+            # ⚠️ 重要：如果 response 為 None（例如 manual 模式等待關鍵詞時用戶說了不匹配的話），
+            #          則不使用 orchestrator 結果，讓系統繼續其他處理流程
+            if orchestrator_result and orchestrator_result.get('has_sop'):
+                orchestrator_response = orchestrator_result.get('response')
+
+                # 只有當有實際回應內容時才使用 orchestrator 結果
+                if orchestrator_response is not None:
+                    print(f"✅ SOP Orchestrator 處理：{(orchestrator_result.get('action_result') or {}).get('action_type', 'unknown')}")
+                    # 將 Orchestrator 結果轉換為聊天回應
+                    return await _build_orchestrator_response(
+                        request, req, orchestrator_result, resolver, vendor_info, cache_service
+                    )
+                else:
+                    # response 為 None：等待關鍵詞中，用戶說了不匹配的話
+                    # 繼續正常流程（讓 LLM 或其他系統回答）
+                    print(f"ℹ️  SOP Orchestrator 等待關鍵詞中，用戶輸入未匹配，繼續其他流程")
+
+        # Step 4: 傳統 SOP 檢索（備用，如果 Orchestrator 未處理）- 回測模式可跳過
         if not request.skip_sop:
-            sop_items = await _retrieve_sop(request, intent_result)
-            if sop_items:
-                print(f"✅ 找到 {len(sop_items)} 個 SOP 項目，使用 SOP 流程")
-                return await _build_sop_response(
-                    request, req, intent_result, sop_items, resolver, vendor_info, cache_service
-                )
-            print(f"ℹ️  沒有找到 SOP，繼續其他流程")
+            print(f"ℹ️  SOP Orchestrator 未找到 SOP，繼續其他流程")
         else:
             print(f"ℹ️  [回測模式] 跳過 SOP 檢索，僅使用知識庫")
 

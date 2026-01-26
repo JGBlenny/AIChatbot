@@ -297,6 +297,7 @@
               <option value="none">無（僅回答知識庫內容）</option>
               <option value="form">表單（引導用戶填寫表單）</option>
               <option value="api">API（調用 API 查詢即時資訊）</option>
+              <option value="form_api">表單+API（先填表單再調用 API）</option>
             </select>
 
             <!-- 表單選擇（選擇「表單」後才顯示） -->
@@ -355,6 +356,74 @@
 
               <p v-if="!selectedApiEndpointId" class="hint-text">💡 請選擇一個 API 端點</p>
               <p v-else class="hint-text">✅ 已關聯 API：{{ selectedApi?.endpoint_name }}</p>
+            </div>
+
+            <!-- 表單+API 選項（選擇「表單+API」後才顯示） -->
+            <div v-if="linkType === 'form_api'" style="margin-top: 15px;">
+              <div style="padding: 15px; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 5px; margin-bottom: 15px;">
+                <p style="margin: 0; color: #1e40af; font-weight: 500;">💡 表單+API 模式說明</p>
+                <p style="margin: 5px 0 0 0; color: #64748b; font-size: 0.9em;">
+                  用戶先填寫表單收集資訊，表單完成後系統自動調用 API 處理請求（例如：退租申請、租屋申請）
+                </p>
+              </div>
+
+              <!-- 表單選擇 -->
+              <div style="margin-bottom: 20px;">
+                <label>選擇表單 *</label>
+                <select v-model="formData.form_id" class="form-select">
+                  <option value="">請選擇表單...</option>
+                  <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
+                    {{ form.form_name }} ({{ form.form_id }})
+                  </option>
+                </select>
+                <p v-if="!formData.form_id" class="hint-text">💡 請選擇一個表單</p>
+                <p v-else class="hint-text">✅ 已關聯表單：{{ getFormName(formData.form_id) }}</p>
+
+                <!-- 表單引導語 -->
+                <div v-if="formData.form_id" style="margin-top: 10px;">
+                  <label>表單引導語 <span class="field-hint">（可選）</span></label>
+                  <textarea
+                    v-model="formData.form_intro"
+                    rows="2"
+                    placeholder="例如：為了協助您完成申請，請提供以下資訊："
+                  ></textarea>
+                </div>
+              </div>
+
+              <!-- API 端點選擇 -->
+              <div>
+                <label>選擇 API 端點 *</label>
+                <select
+                  v-model="selectedApiEndpointId"
+                  class="form-select"
+                  @change="onApiEndpointChange"
+                >
+                  <option value="">請選擇 API 端點...</option>
+                  <option
+                    v-for="api in availableApiEndpoints"
+                    :key="api.endpoint_id"
+                    :value="api.endpoint_id"
+                  >
+                    {{ api.endpoint_icon }} {{ api.endpoint_name }} ({{ api.endpoint_id }})
+                  </option>
+                </select>
+
+                <!-- 顯示選中的 API 資訊 -->
+                <div v-if="selectedApi" class="api-info-box" style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
+                  <p><strong>{{ selectedApi.endpoint_icon }} {{ selectedApi.endpoint_name }}</strong></p>
+                  <p v-if="selectedApi.description" style="font-size: 0.9em; color: #666;">{{ selectedApi.description }}</p>
+                  <p style="font-size: 0.85em; color: #999;">
+                    {{ selectedApi.http_method }} {{ selectedApi.api_url }}
+                  </p>
+                </div>
+
+                <p v-if="!selectedApiEndpointId" class="hint-text">💡 請選擇一個 API 端點</p>
+                <p v-else class="hint-text">✅ 已關聯 API：{{ selectedApi?.endpoint_name }}</p>
+              </div>
+
+              <p class="hint-text" style="margin-top: 15px; padding: 10px; background: #fef3c7; border-radius: 5px; color: #92400e;">
+                ⚠️ 用戶填寫完表單後，系統會自動調用 API。請確保 API 端點能夠接收表單資料。
+              </p>
             </div>
           </div>
 
@@ -761,6 +830,10 @@ export default {
         this.formData.form_intro = null;
         this.formData.action_type = 'api_call';
         // api_config 會在選擇 API 時構建
+      } else if (this.linkType === 'form_api') {
+        // 新增：表單+API 模式
+        this.formData.action_type = 'form_then_api';
+        // 保留表單和 API 配置
       }
     },
 
@@ -955,7 +1028,17 @@ export default {
         };
 
         // 根據 action_type 判斷關聯類型
-        if (knowledge.action_type === 'api_call' || knowledge.action_type === 'form_then_api') {
+        if (knowledge.action_type === 'form_then_api') {
+          // 修正：form_then_api 應該設為 form_api，不是 api
+          this.linkType = 'form_api';
+          // 載入表單資訊（formData.form_id 已在 Line 1017 設定）
+          console.log('📋 載入表單:', knowledge.form_id);
+          // 載入 API 資訊
+          if (knowledge.api_config && knowledge.api_config.endpoint) {
+            this.selectedApiEndpointId = knowledge.api_config.endpoint;
+            console.log('🔌 載入 API 端點:', this.selectedApiEndpointId);
+          }
+        } else if (knowledge.action_type === 'api_call') {
           this.linkType = 'api';
           // 從 api_config 解析出 endpoint
           if (knowledge.api_config && knowledge.api_config.endpoint) {
@@ -1052,6 +1135,28 @@ export default {
           // 清空表單關聯
           this.formData.form_id = null;
           this.formData.form_intro = null;
+        } else if (this.linkType === 'form_api') {
+          // 新增：表單+API 模式
+          // 驗證：必須同時選擇表單和 API 端點
+          if (!this.formData.form_id) {
+            this.showNotification('error', '請選擇表單', '關聯功能選擇「表單+API」時，必須選擇表單');
+            this.saving = false;
+            return;
+          }
+          if (!this.selectedApiEndpointId) {
+            this.showNotification('error', '請選擇 API 端點', '關聯功能選擇「表單+API」時，必須選擇 API 端點');
+            this.saving = false;
+            return;
+          }
+          // 設定 action_type 為 form_then_api
+          this.formData.action_type = 'form_then_api';
+          // 構建 api_config
+          this.formData.api_config = {
+            endpoint: this.selectedApiEndpointId,
+            params: {},
+            combine_with_knowledge: true
+          };
+          // 保留 form_id 和 form_intro（不清空）
         } else {
           // 選擇了「無」，清空所有關聯
           this.formData.action_type = 'direct_answer';

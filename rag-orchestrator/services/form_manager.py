@@ -31,8 +31,10 @@ class FormState:
     """表單狀態枚舉"""
     COLLECTING = "COLLECTING"  # 收集中
     DIGRESSION = "DIGRESSION"  # 離題中
-    REVIEWING = "REVIEWING"    # 審核中（新增）
-    EDITING = "EDITING"        # 編輯中（新增）
+    REVIEWING = "REVIEWING"    # 審核中
+    EDITING = "EDITING"        # 編輯中
+    PAUSED = "PAUSED"          # 暫停中（SOP form_then_api 用）
+    CONFIRMING = "CONFIRMING"  # 確認中（SOP immediate 模式用）
     COMPLETED = "COMPLETED"    # 已完成
     CANCELLED = "CANCELLED"    # 已取消
 
@@ -148,6 +150,35 @@ class FormManager:
         """獲取會話狀態（異步）"""
         return await asyncio.to_thread(self._get_session_state_sync, session_id)
 
+    async def get_next_question(self, session_id: str) -> Optional[str]:
+        """獲取當前表單的下一個問題"""
+        try:
+            # 獲取會話狀態
+            session_state = await self.get_session_state(session_id)
+            if not session_state:
+                return None
+
+            # 獲取表單 schema
+            form_schema = await self.get_form_schema(
+                session_state['form_id'],
+                session_state.get('vendor_id')
+            )
+            if not form_schema:
+                return None
+
+            # 獲取當前欄位
+            current_index = session_state.get('current_field_index', 0)
+            fields = form_schema.get('fields', [])
+
+            if current_index >= len(fields):
+                return None
+
+            current_field = fields[current_index]
+            return current_field.get('prompt', '')
+        except Exception as e:
+            print(f"❌ 獲取下一個問題失敗: {e}")
+            return None
+
     def _create_form_session_sync(
         self,
         session_id: str,
@@ -209,7 +240,8 @@ class FormManager:
         session_id: str,
         state: Optional[str] = None,
         current_field_index: Optional[int] = None,
-        collected_data: Optional[Dict] = None
+        collected_data: Optional[Dict] = None,
+        metadata: Optional[Dict] = None
     ) -> Optional[Dict]:
         """更新會話狀態（同步）"""
         try:
@@ -226,6 +258,9 @@ class FormManager:
             if collected_data is not None:
                 update_fields.append("collected_data = %s")
                 params.append(json.dumps(collected_data))
+            if metadata is not None:
+                update_fields.append("metadata = %s")
+                params.append(json.dumps(metadata))
 
             # 根據狀態設置完成/取消時間
             if state == FormState.COMPLETED:
@@ -254,12 +289,13 @@ class FormManager:
         session_id: str,
         state: Optional[str] = None,
         current_field_index: Optional[int] = None,
-        collected_data: Optional[Dict] = None
+        collected_data: Optional[Dict] = None,
+        metadata: Optional[Dict] = None
     ) -> Optional[Dict]:
         """更新會話狀態（異步）"""
         return await asyncio.to_thread(
             self._update_session_state_sync,
-            session_id, state, current_field_index, collected_data
+            session_id, state, current_field_index, collected_data, metadata
         )
 
     def _save_form_submission_sync(
@@ -667,12 +703,26 @@ class FormManager:
                 "answer": f"抱歉，我沒聽懂您的回覆。\n\n{current_field['prompt']}\n\n（或輸入「**取消**」結束填寫）"
             }
 
-    async def resume_form_filling(self, session_id: str) -> Dict:
-        """恢復表單填寫"""
+    async def resume_form_filling(self, session_id: str, vendor_id: Optional[int] = None) -> Dict:
+        """
+        恢復表單填寫
+
+        支持的恢復場景：
+        1. DIGRESSION（離題後恢復）
+        2. PAUSED（暫停後恢復，用於 SOP form_then_api）
+        """
         session_state = await self.get_session_state(session_id)
-        if not session_state or session_state['state'] != FormState.DIGRESSION:
+        if not session_state:
             return {
                 "answer": "找不到待恢復的表單會話。"
+            }
+
+        current_state = session_state['state']
+
+        # 檢查是否為可恢復的狀態
+        if current_state not in [FormState.DIGRESSION, FormState.PAUSED]:
+            return {
+                "answer": f"該表單會話狀態為 {current_state}，無法恢復。"
             }
 
         # 更新狀態為 COLLECTING
@@ -681,14 +731,24 @@ class FormManager:
             state=FormState.COLLECTING
         )
 
-        form_schema = await self.get_form_schema(session_state['form_id'])
+        form_schema = await self.get_form_schema(
+            session_state['form_id'],
+            vendor_id or session_state.get('vendor_id')
+        )
         current_field = form_schema['fields'][session_state['current_field_index']]
         total_fields = len(form_schema['fields'])
         completed = session_state['current_field_index']
 
+        # 根據之前的狀態提供不同的提示
+        if current_state == FormState.PAUSED:
+            resume_message = "表單已恢復！繼續填寫吧。"
+        else:  # DIGRESSION
+            resume_message = "好的，繼續填寫！"
+
         return {
-            "answer": f"好的，繼續填寫！\n\n📊 進度：{completed}/{total_fields}\n\n{current_field['prompt']}",
-            "form_resumed": True
+            "answer": f"{resume_message}\n\n📊 進度：{completed}/{total_fields}\n\n{current_field['prompt']}",
+            "form_resumed": True,
+            "resumed_from": current_state
         }
 
     async def _complete_form(
@@ -828,6 +888,54 @@ class FormManager:
 
         # 默認情況
         return "✅ **表單填寫完成！**\n\n感謝您完成表單！"
+
+    async def pause_form(
+        self,
+        session_id: str,
+        reason: str = "SOP form_then_api",
+        metadata: Optional[Dict] = None
+    ) -> Dict:
+        """
+        暫停表單填寫（用於 SOP form_then_api 場景）
+
+        當 SOP 需要先執行 API，然後再根據結果繼續填表時使用
+
+        Args:
+            session_id: 會話 ID
+            reason: 暫停原因
+            metadata: 附加元數據（如 API 配置、SOP context 等）
+
+        Returns:
+            操作結果
+        """
+        session_state = await self.get_session_state(session_id)
+        if not session_state:
+            return {
+                "answer": "找不到表單會話。",
+                "error": True
+            }
+
+        # 保存暫停前的狀態和元數據
+        pause_metadata = {
+            "previous_state": session_state.get('state'),
+            "paused_at": datetime.now().isoformat(),
+            "reason": reason,
+            **(metadata or {})
+        }
+
+        # 更新狀態為 PAUSED
+        await self.update_session_state(
+            session_id=session_id,
+            state=FormState.PAUSED,
+            metadata=pause_metadata
+        )
+
+        return {
+            "answer": f"表單填寫已暫停。{reason}",
+            "form_paused": True,
+            "state": FormState.PAUSED,
+            "can_resume": True
+        }
 
     async def cancel_form(self, session_id: str) -> Dict:
         """取消表單填寫"""

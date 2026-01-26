@@ -1,7 +1,7 @@
 # 🎯 Features - 功能文檔索引
 
-**最後更新**: 2026-01-14
-**文件總數**: 20 個功能文件
+**最後更新**: 2026-01-26
+**文件總數**: 24 個功能文件
 
 本目錄包含 AIChatbot 系統所有功能的詳細文檔，包括設計說明、實作指南、使用教學。
 
@@ -20,7 +20,7 @@
 | [INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md](./INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md) | Intent 建議語意去重 | ✅ |
 | [SOP_Group_Embedding_Optimization.md](./SOP_Group_Embedding_Optimization.md) | SOP 分組 Embedding 優化 | ✅ |
 
-### 📚 知識庫管理 (4 個)
+### 📚 知識庫管理 (9 個)
 
 | 文件 | 說明 | 狀態 |
 |------|------|------|
@@ -29,6 +29,10 @@
 | [LINE_CHAT_IMPORT_FINAL_SUMMARY.md](./LINE_CHAT_IMPORT_FINAL_SUMMARY.md) | LINE 對話匯入（完整優化） | ✅ |
 | [DOCUMENT_CONVERTER.md](./DOCUMENT_CONVERTER.md) | 文件轉換功能（Word/PDF → Q&A） | ✅ |
 | [PRIORITY_SYSTEM.md](./PRIORITY_SYSTEM.md) | 知識優先級系統 | ✅ |
+| [VENDOR_SOP_FLOW_CONFIGURATION.md](./VENDOR_SOP_FLOW_CONFIGURATION.md) | Vendor SOP 流程配置 ⭐ | ✅ |
+| [VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md](./VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md) | Vendor SOP 檢索邏輯改進 ⭐ | ✅ |
+| [DUAL_EMBEDDING_RETRIEVAL.md](./DUAL_EMBEDDING_RETRIEVAL.md) | 雙 Embedding 檢索 ⭐ | ✅ |
+| [PRIMARY_EMBEDDING_FIX.md](./PRIMARY_EMBEDDING_FIX.md) | Primary Embedding 稀釋修復 ⭐⭐⭐ 最新 | ✅ |
 
 ### 📋 表單系統 (2 個)
 
@@ -71,13 +75,51 @@
 
 ### 對知識維護者
 
-1. **[LINE_CHAT_IMPORT_FINAL_SUMMARY.md](./LINE_CHAT_IMPORT_FINAL_SUMMARY.md)** - 從 LINE 對話匯入知識
-2. **[KNOWLEDGE_IMPORT_FEATURE.md](./KNOWLEDGE_IMPORT_FEATURE.md)** - Excel/JSON 批次匯入
-3. **[PRIORITY_SYSTEM.md](./PRIORITY_SYSTEM.md)** - 設定知識優先級
+1. **[VENDOR_SOP_FLOW_CONFIGURATION.md](./VENDOR_SOP_FLOW_CONFIGURATION.md)** ⭐ - Vendor SOP 流程配置系統
+2. **[LINE_CHAT_IMPORT_FINAL_SUMMARY.md](./LINE_CHAT_IMPORT_FINAL_SUMMARY.md)** - 從 LINE 對話匯入知識
+3. **[KNOWLEDGE_IMPORT_FEATURE.md](./KNOWLEDGE_IMPORT_FEATURE.md)** - Excel/JSON 批次匯入
+4. **[PRIORITY_SYSTEM.md](./PRIORITY_SYSTEM.md)** - 設定知識優先級
 
 ---
 
 ## 📚 詳細功能說明
+
+### Vendor SOP 系統 ⭐⭐⭐ 最新
+
+**主文件**: [VENDOR_SOP_FLOW_CONFIGURATION.md](./VENDOR_SOP_FLOW_CONFIGURATION.md)
+**技術改進 1**: [VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md](./VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md)
+**技術改進 2**: [DUAL_EMBEDDING_RETRIEVAL.md](./DUAL_EMBEDDING_RETRIEVAL.md)
+**技術改進 3**: [PRIMARY_EMBEDDING_FIX.md](./PRIMARY_EMBEDDING_FIX.md) ⭐⭐⭐ 最新
+
+完整的 Vendor SOP 配置和檢索系統：
+- 🔄 4 種觸發模式（資訊型、排查型、緊急型、自動執行型）
+- 🎯 4 種後續動作（無、觸發表單、調用 API、先填表單再調用 API）
+- 🔍 智能檢索（雙 Embedding + 向量相似度 + Intent 加成）
+- ✏️ Platform/Vendor 雙介面管理
+- ✅ 完整驗證邏輯
+
+**最新重大更新 (2026-01-26 下午)**: ⭐⭐⭐⭐⭐
+- ✅ **Primary Embedding 修復**: 解決向量稀釋問題
+- ✅ **涵蓋率再次提升**: 73.3% → **92.6%** (+19.3%)
+- ✅ **累計提升幅度**: 56.7% → 92.6% (**+35.9%**)
+- ✅ **關鍵問題修復**: 「垃圾要怎麼丟」正確匹配
+- ✅ **零誤配風險**: False Positive = 0%
+
+**重大更新 (2026-01-26 上午)**:
+- ✅ **雙 Embedding 檢索**: GREATEST(primary, fallback)
+- ✅ **涵蓋率提升**: 56.7% → 73.3% (+16.7%)
+- ✅ **新增成功檢索**: 5 個常見問題
+
+**重大更新 (2026-01-24)**:
+- ✅ Intent 從「必需」改為「輔助」
+- ✅ 添加向量相似度檢索
+- ✅ 統一 Knowledge Base 和 Vendor SOP 架構
+- ✅ 修復 56 個 SOP 無法檢索的問題
+- ✅ 業者介面改為完全可編輯
+
+**使用情境**: 維修 SOP、客服流程、常見問題處理
+
+---
 
 ### 表單管理系統 ⭐ 推薦
 

@@ -1,9 +1,10 @@
-# 📚 統一檢索路徑實施 - 文檔索引
+# 📚 AIChatbot 系統文檔索引
 
-**最後更新**：2026-01-13 晚上
+**最後更新**：2026-01-24
 **主要功能**：
 - 統一檢索路徑（commit cbf4c4f）
 - 表單引導改善（commit ba503d3）
+- 對話流程邏輯修正（2026-01-24）🆕
 
 ---
 
@@ -13,13 +14,15 @@
 
 | 你的需求 | 推薦文檔 | 說明 |
 |---------|---------|------|
+| **理解對話流程** | [CHAT_FLOW_ANALYSIS_2026-01-24.md](./analysis/CHAT_FLOW_ANALYSIS_2026-01-24.md) ⭐ 🆕 | 完整對話流程分析、10個步驟詳解 |
+| **查看最新修正** | [CHAT_LOGIC_FIXES_2026-01-24.md](./fixes/CHAT_LOGIC_FIXES_2026-01-24.md) 🆕 | 2026-01-24 三個問題修正報告 |
 | **快速了解實施內容** | [IMPLEMENTATION_SUMMARY.md](./implementation/SUMMARY.md) | 實施總結，包含代碼修改、驗證結果 |
-| **完整實施報告** | [FINAL_IMPLEMENTATION_2026-01-13.md](./implementation/FINAL_2026-01-13.md) ⭐ | 完整故事線：問題→演進→實施→驗證 |
+| **完整實施報告** | [FINAL_IMPLEMENTATION_2026-01-13.md](./implementation/FINAL_2026-01-13.md) | 完整故事線：問題→演進→實施→驗證 |
 | **理解檢索邏輯** | [RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md](./analysis/retrieval_logic_complete.md) | 完整檢索邏輯分析、4種方案對比 |
 | **理解設計原則** | [RETRIEVAL_PHILOSOPHY_ANALYSIS.md](./analysis/retrieval_philosophy.md) | 「向量為主，意圖為輔」哲學、數學證明 |
 | **執行測試** | [test_retrieval_logic_validation.sh](../scripts/test_retrieval_validation.sh) | 自動化測試腳本（5個測試案例） |
 | **生產部署** | [DEPLOY_STEPS_2026-01-13.md](./deployment/steps_2026-01-13.md) | 生產環境部署步驟 |
-| **表單引導改善** | [FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md](./features/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md) | 表單引導語和驗證改善 🆕 |
+| **表單引導改善** | [FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md](./features/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md) | 表單引導語和驗證改善 |
 
 ---
 
@@ -195,6 +198,8 @@ Unclear：使用相同邏輯，boost=1.0
 
 | 日期 | 文檔 | 變更 |
 |------|------|------|
+| 2026-01-24 | CHAT_FLOW_ANALYSIS_2026-01-24.md | ✅ 新建（對話流程完整分析）🆕 |
+| 2026-01-24 | CHAT_LOGIC_FIXES_2026-01-24.md | ✅ 新建（三個問題修正報告）🆕 |
 | 2026-01-13 晚上 | FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md | ✅ 新建（表單引導改善） |
 | 2026-01-13 下午 | FINAL_IMPLEMENTATION_2026-01-13.md | ✅ 新建 |
 | 2026-01-13 下午 | IMPLEMENTATION_SUMMARY.md | ✅ 更新（階段二） |
@@ -239,5 +244,27 @@ git diff 6cda641 cbf4c4f --stat
 
 ---
 
+## 📅 最新進度（2026-01-24）
+
+### 今日完成
+
+✅ **對話流程邏輯修正**：
+- 修正問題 1：調整 action_type 檢查順序（先高質量過濾，再檢查 action_type）
+- 修正問題 2：加入 PAUSED 狀態處理（支持 SOP form_then_api 場景）
+- 修正問題 3：明確 action_type 降級邏輯（所有降級場景明確設置）
+
+✅ **文檔完善**：
+- 創建完整對話流程分析文檔（10 個步驟詳解）
+- 創建三個問題修正報告
+- 更新主文檔索引
+
+### 待辦事項
+
+- [ ] 提交 Git commit（2026-01-24 修正）
+- [ ] 部署到生產環境
+- [ ] 驗證修正效果
+
+---
+
 **文檔維護人員**：Claude
-**最後更新**：2026-01-13 下午
+**最後更新**：2026-01-24

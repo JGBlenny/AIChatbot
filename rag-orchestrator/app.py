@@ -19,6 +19,7 @@ from services.intent_suggestion_engine import IntentSuggestionEngine
 from services.vendor_config_service import VendorConfigService
 from services.cache_service import CacheService
 from services.form_manager import FormManager
+from services.sop_orchestrator import SOPOrchestrator
 
 # 導入路由
 from routers import chat, chat_stream, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, platform_sop, cache, videos, business_types, document_converter, target_user_config, forms, api_endpoints
@@ -34,13 +35,14 @@ suggestion_engine: IntentSuggestionEngine = None
 vendor_config_service: VendorConfigService = None
 cache_service: CacheService = None
 form_manager: FormManager = None
+sop_orchestrator: SOPOrchestrator = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """應用生命週期管理"""
     # 啟動時初始化
-    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine, vendor_config_service, cache_service, form_manager
+    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine, vendor_config_service, cache_service, form_manager, sop_orchestrator
 
     print("🚀 初始化 RAG Orchestrator...")
 
@@ -99,6 +101,10 @@ async def lifespan(app: FastAPI):
     form_manager = FormManager(db_pool=db_pool)
     print("✅ 表單管理器已初始化（表單填寫功能 + 資料庫配置支援）")
 
+    # 初始化 SOP 編排器（SOP Next Action 功能）
+    sop_orchestrator = SOPOrchestrator(form_manager=form_manager)
+    print("✅ SOP 編排器已初始化（SOP Next Action 功能 - 4 種觸發模式 + 3 種後續動作）")
+
     # 將服務注入到 app.state
     app.state.db_pool = db_pool
     app.state.intent_classifier = intent_classifier
@@ -110,8 +116,9 @@ async def lifespan(app: FastAPI):
     app.state.suggestion_engine = suggestion_engine
     app.state.cache_service = cache_service
     app.state.form_manager = form_manager
+    app.state.sop_orchestrator = sop_orchestrator
 
-    print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化 + Phase B 意圖建議 + 表單填寫功能）")
+    print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化 + Phase B 意圖建議 + 表單填寫功能 + SOP Next Action）")
     print(f"📝 API 文件: http://localhost:8100/docs")
 
     yield
