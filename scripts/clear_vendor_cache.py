@@ -1,39 +1,28 @@
-"""
-清除業者參數快取
-"""
-import redis
-import os
+#!/usr/bin/env python3
+"""清除指定業者的緩存"""
 
-# 連接到 Redis
-redis_host = os.getenv('REDIS_HOST', 'localhost')
-redis_port = int(os.getenv('REDIS_PORT', 6381))
+import sys
+sys.path.insert(0, '/app/rag-orchestrator')
 
-try:
-    r = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
+from services.cache_service import CacheService
 
-    # 測試連接
-    r.ping()
-    print(f"✅ 成功連接到 Redis: {redis_host}:{redis_port}")
+def clear_cache(vendor_id: int):
+    """清除指定業者的緩存"""
+    cache = CacheService()
 
-    # 找出所有業者參數相關的快取鍵
-    vendor_keys = r.keys('vendor_params:*')
+    print(f"🗑️ 清除業者 {vendor_id} 的緩存...")
+    count = cache.invalidate_by_vendor_id(vendor_id)
+    print(f"✅ 已清除 {count} 條緩存")
 
-    if vendor_keys:
-        print(f"\n找到 {len(vendor_keys)} 個業者參數快取鍵:")
-        for key in vendor_keys:
-            print(f"  - {key}")
-
-        # 刪除所有快取
-        deleted = r.delete(*vendor_keys)
-        print(f"\n✅ 已刪除 {deleted} 個快取鍵")
+    # 顯示統計
+    stats = cache.get_stats()
+    print(f"\n📊 當前緩存統計:")
+    if stats.get('enabled'):
+        for cache_type, count in stats.get('cache_counts', {}).items():
+            print(f"  • {cache_type}: {count}")
     else:
-        print("\n沒有找到業者參數快取鍵")
+        print(f"  緩存未啟用: {stats.get('reason', 'Unknown')}")
 
-    # 也清除所有快取（可選）
-    # r.flushall()
-    # print("\n✅ 已清除所有 Redis 快取")
-
-except redis.ConnectionError as e:
-    print(f"❌ 無法連接到 Redis: {e}")
-except Exception as e:
-    print(f"❌ 錯誤: {e}")
+if __name__ == "__main__":
+    vendor_id = int(sys.argv[1]) if len(sys.argv) > 1 else 2
+    clear_cache(vendor_id)

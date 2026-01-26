@@ -131,7 +131,7 @@ deployment/
 
 ---
 
-### 2026-01-22 ⭐ 最新
+### 2026-01-22
 **主要更新：**
 - **Migration 追蹤系統**：建立 `schema_migrations` 表，解決推版漏掉欄位問題
 - **自動執行腳本**：`database/run_migrations.sh` 支援 dry-run、自動備份、交互式確認
@@ -170,6 +170,104 @@ deployment/
 
 ---
 
+### 2026-01-26 ⭐ 最新
+
+#### 更新 1: Primary Embedding 修復
+**主要更新：**
+- **Primary Embedding 修復** ⭐⭐⭐：解決向量稀釋問題
+- **涵蓋率大幅提升**：66.7% → 92.6% (+25.9%)
+- **關鍵問題修復**：「垃圾要怎麼丟」等問題正確匹配
+- **零誤配風險**：False Positive 保持 0%
+- **Embeddings 重新生成**：56 個 SOP 全部更新
+
+**部署文件：**
+- [DEPLOYMENT_2026-01-26_PRIMARY_EMBEDDING_FIX.md](DEPLOYMENT_2026-01-26_PRIMARY_EMBEDDING_FIX.md) - 完整部署記錄
+
+**技術文檔：**
+- [PRIMARY_EMBEDDING_FIX.md](../features/PRIMARY_EMBEDDING_FIX.md) - 技術詳細說明
+- [DUAL_EMBEDDING_RETRIEVAL.md](../features/DUAL_EMBEDDING_RETRIEVAL.md) - 雙 Embedding 檢索
+- [threshold_evaluation_report.md](../../threshold_evaluation_report.md) - 閾值評估報告
+
+**代碼變更：**
+- `rag-orchestrator/services/sop_embedding_generator.py` - Primary Embedding 修復
+
+**部署步驟：**
+1. 修改 `sop_embedding_generator.py`（Line 51-56）
+2. 重啟 `rag-orchestrator` 服務
+3. 重新生成 56 個 SOP embeddings（100% 成功）
+4. 驗證測試通過（涵蓋率 92.6%）
+
+**部署效果：**
+- ✅ 涵蓋率：66.7% → **92.6%** (+25.9%)
+- ✅ 誤配率：保持 **0%**
+- ✅ 關鍵問題：「垃圾要怎麼丟」正確匹配「垃圾收取規範」
+- ✅ 響應時間：無影響（~200ms）
+- ✅ 服務可用性：100%
+
+**停機時間：** ~30 秒（服務重啟）
+
+**風險評估：** 🟢 低風險（事前大量測試，100% 成功率）
+
+---
+
+#### 更新 2: SOP 流程配置嚴格限制 ⭐⭐⭐
+**主要更新：**
+- **嚴格組合驗證** ⭐⭐⭐：實施 7 種有效組合規則
+- **動態選項限制**：根據觸發模式自動過濾選項
+- **自動調整機制**：切換模式時自動調整為有效組合
+- **前後端雙重驗證**：確保配置可靠性
+- **必填欄位驗證**：防止遺漏關鍵配置
+- **動態關鍵詞組合**：觸發關鍵詞不再硬編碼
+- **API 端點修正**：統一使用 /v1/ 前綴
+
+**功能文檔：**
+- [SOP_FLOW_STRICT_VALIDATION_2026-01-26.md](../features/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md) - 完整實施文檔
+
+**代碼變更：**
+- `knowledge-admin/frontend/src/components/VendorSOPManager.vue` - 前端驗證邏輯
+  - Lines 354-378: 動態下拉選單
+  - Lines 510-516: VALID_COMBINATIONS 定義
+  - Lines 888-893: 保存前驗證
+  - Lines 1124-1142: API 端點修正
+  - Lines 1157-1180: 自動調整邏輯
+- `rag-orchestrator/routers/vendors.py` - 後端驗證邏輯
+  - Lines 589-603: Pydantic 模型更新
+  - Lines 733-761: 組合與必填欄位驗證
+  - Lines 801-824: SQL 更新
+- `rag-orchestrator/services/sop_trigger_handler.py` - 動態關鍵詞組合
+  - Lines 222-241: 動態組合邏輯
+
+**測試結果：**
+- ✅ 後端測試：**8/8 全部通過 (100%)**
+  - 3 個有效組合測試 (200 OK)
+  - 2 個無效組合測試 (400 Bad Request)
+  - 3 個必填欄位測試 (400 Bad Request)
+- ✅ 前端測試指南：10 個檢查點
+
+**部署步驟：**
+1. 修改前端 `VendorSOPManager.vue`（動態驗證邏輯）
+2. 修改後端 `vendors.py`（組合與必填驗證）
+3. 修改 `sop_trigger_handler.py`（動態關鍵詞）
+4. 重啟 `knowledge-admin` 和 `rag-orchestrator` 服務
+5. 重新生成 66 個 SOP embeddings（100% 成功）
+6. 執行測試驗證（8/8 通過）
+
+**部署效果：**
+- ✅ 用戶體驗：動態選項限制，減少選擇困惑
+- ✅ 配置可靠性：嚴格驗證防止無意義組合
+- ✅ 數據一致性：前後端雙重驗證
+- ✅ 維護成本：清晰的規則，易於理解和維護
+- ✅ API 修正：表單和 API 端點正確載入
+- ✅ Embeddings 更新：移除硬編碼關鍵詞
+
+**符合率：** 89.4% (59/66 SOP 符合嚴格限制規則)
+
+**停機時間：** ~30 秒（服務重啟）
+
+**風險評估：** 🟢 低風險（100% 測試通過，前後端雙重驗證）
+
+---
+
 ## 🆕 新增版本
 
 當有新版本需要特殊部署步驟時，請按以下方式組織：
@@ -181,4 +279,4 @@ deployment/
 
 ---
 
-**最後更新**：2026-01-22
+**最後更新**：2026-01-26

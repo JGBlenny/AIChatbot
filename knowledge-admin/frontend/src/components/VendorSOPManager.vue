@@ -296,7 +296,7 @@
     <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
       <div class="modal-content modal-large" @click.stop>
         <h2>編輯 SOP</h2>
-        <p class="hint">編輯您的 SOP 內容</p>
+        <p class="hint">編輯您的 SOP 內容與提示詞</p>
 
         <form @submit.prevent="saveSOP">
           <div class="form-group">
@@ -307,6 +307,145 @@
           <div class="form-group">
             <label>內容 *</label>
             <textarea v-model="editingForm.content" required class="form-control" rows="6"></textarea>
+          </div>
+
+          <!-- 流程配置（完全可編輯） -->
+          <div class="form-section flow-config-section">
+            <h4 style="margin-bottom: 15px; color: #4b5563;">🔄 流程配置（進階）</h4>
+
+            <div class="form-group">
+              <label>觸發模式 *</label>
+              <select v-model="editingForm.trigger_mode" @change="onTriggerModeChange" class="form-control">
+                <option value="none">資訊型（僅回答 SOP 內容，無後續動作）</option>
+                <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
+                <option value="immediate">行動型（主動詢問用戶是否執行）</option>
+                <!-- <option value="auto">自動執行型（立即執行後續動作）</option> ⚠️ 暫不實作 -->
+              </select>
+              <small class="hint">
+                💡 <strong>資訊型</strong>：只顯示 SOP 內容<br>
+                💡 <strong>排查型</strong>：用戶說出關鍵詞後才觸發<br>
+                💡 <strong>行動型</strong>：主動詢問是否執行
+              </small>
+            </div>
+
+            <!-- manual 模式：觸發關鍵詞 -->
+            <div v-if="editingForm.trigger_mode === 'manual'" class="form-group">
+              <label>觸發關鍵詞 *</label>
+              <KeywordsInput
+                v-model="editingForm.trigger_keywords"
+                placeholder="輸入關鍵詞後按 Enter 或逗號"
+                hint="💡 用戶說出這些關鍵詞後，才會觸發後續動作。例如：「還是不行」、「需要維修」"
+                :max-keywords="10"
+              />
+            </div>
+
+            <!-- immediate 模式：確認提示詞 -->
+            <div v-if="editingForm.trigger_mode === 'immediate'" class="form-group">
+              <label>確認提示詞 *</label>
+              <textarea
+                v-model="editingForm.immediate_prompt"
+                class="form-control"
+                rows="2"
+                placeholder="例如：需要立即為您申請報修嗎？"
+              ></textarea>
+              <small class="hint">💡 系統會主動詢問此問題，用戶回覆肯定詞後觸發</small>
+            </div>
+
+            <div class="form-group">
+              <label>後續動作 *</label>
+              <select v-model="editingForm.next_action" @change="onNextActionChange" class="form-control">
+                <!-- 🔒 根據 trigger_mode 動態顯示選項 -->
+                <option value="none" v-if="VALID_COMBINATIONS[editingForm.trigger_mode].includes('none')">
+                  無（僅顯示 SOP 內容）
+                </option>
+                <option value="form_fill" v-if="VALID_COMBINATIONS[editingForm.trigger_mode].includes('form_fill')">
+                  觸發表單（引導用戶填寫表單）
+                </option>
+                <option value="api_call" v-if="VALID_COMBINATIONS[editingForm.trigger_mode].includes('api_call')">
+                  調用 API（查詢或處理資料）
+                </option>
+                <option value="form_then_api" v-if="VALID_COMBINATIONS[editingForm.trigger_mode].includes('form_then_api')">
+                  先填表單再調用 API（完整流程）
+                </option>
+              </select>
+              <small class="hint">
+                💡 <strong>無</strong>：只顯示 SOP 內容<br>
+                💡 <strong>觸發表單</strong>：引導填寫表單<br>
+                💡 <strong>調用 API</strong>：直接調用 API<br>
+                💡 <strong>先填表單再調用 API</strong>：完整流程<br>
+                <span style="color: #10b981;">🔒 可用選項已根據觸發模式自動調整</span>
+              </small>
+            </div>
+
+            <!-- 後續提示詞 -->
+            <div v-if="editingForm.next_action !== 'none'" class="form-group">
+              <label>後續提示詞（可選）</label>
+              <textarea
+                v-model="editingForm.followup_prompt"
+                class="form-control"
+                rows="2"
+                placeholder="例如：好的，我來協助您填寫表單"
+              ></textarea>
+              <small class="hint">💡 觸發後續動作時顯示的提示語</small>
+            </div>
+
+            <!-- 表單選擇 -->
+            <div v-if="['form_fill', 'form_then_api'].includes(editingForm.next_action)" class="form-group">
+              <label>選擇表單 *</label>
+              <select v-model="editingForm.next_form_id" class="form-control">
+                <option :value="null">請選擇表單...</option>
+                <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
+                  {{ form.form_name }} ({{ form.form_id }})
+                </option>
+              </select>
+              <p v-if="editingForm.next_form_id" class="hint" style="color: #10b981;">
+                ✅ 已關聯表單：{{ getFormName(editingForm.next_form_id) }}
+              </p>
+              <p v-else class="hint" style="color: #ef4444;">
+                ⚠️ 請選擇表單
+              </p>
+            </div>
+
+            <!-- API 配置 -->
+            <div v-if="['api_call', 'form_then_api'].includes(editingForm.next_action)" class="form-group">
+              <label>API 配置 *</label>
+
+              <div v-if="!useCustomApiConfig">
+                <select v-model="selectedApiEndpointId" @change="onApiEndpointChange" class="form-control">
+                  <option value="">請選擇 API 端點...</option>
+                  <option v-for="api in availableApiEndpoints" :key="api.endpoint_id" :value="api.endpoint_id">
+                    {{ api.endpoint_icon || '🔌' }} {{ api.endpoint_name }} ({{ api.endpoint_id }})
+                  </option>
+                </select>
+
+                <p v-if="selectedApiEndpointId" class="hint" style="color: #10b981;">
+                  ✅ 已選擇 API：{{ getApiEndpointName(selectedApiEndpointId) }}
+                </p>
+                <p v-else-if="editingForm.next_api_config" class="hint" style="color: #10b981;">
+                  ✅ 已配置自訂 API
+                </p>
+                <p v-else class="hint" style="color: #ef4444;">
+                  ⚠️ 請選擇 API 端點
+                </p>
+              </div>
+
+              <div style="margin-top: 10px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" v-model="useCustomApiConfig" @change="onCustomApiConfigToggle" />
+                  <span>手動編輯 API 配置 JSON（進階）</span>
+                </label>
+
+                <textarea
+                  v-if="useCustomApiConfig"
+                  v-model="apiConfigJson"
+                  @blur="updateApiConfigFromJson"
+                  class="form-control"
+                  rows="6"
+                  placeholder='{"method": "POST", "endpoint": "...", "params": {}}'
+                  style="margin-top: 10px; font-family: monospace; font-size: 0.9em;"
+                ></textarea>
+              </div>
+            </div>
           </div>
 
           <div class="modal-actions">
@@ -322,12 +461,17 @@
 <script>
 import axios from 'axios';
 import { API_ENDPOINTS, API_BASE_URL } from '@/config/api';
+import KeywordsInput from './KeywordsInput.vue';
 
 // Vendor SOP API 端點在 RAG Orchestrator 中，必須使用 /rag-api 前綴
 const RAG_API = '/rag-api';
 
 export default {
   name: 'VendorSOPManager',
+
+  components: {
+    KeywordsInput
+  },
 
   props: {
     vendorId: {
@@ -355,7 +499,30 @@ export default {
       editingForm: {
         id: null,
         item_name: '',
-        content: ''
+        content: '',
+        // 流程配置欄位（現在可編輯）
+        trigger_mode: 'none',
+        next_action: 'none',
+        trigger_keywords: [],
+        immediate_prompt: '',
+        next_form_id: null,
+        next_api_config: null,
+        followup_prompt: ''
+      },
+
+      // 表單和 API 相關
+      availableForms: [],
+      availableApiEndpoints: [],
+      selectedApiEndpointId: '',
+      useCustomApiConfig: false,
+      apiConfigJson: '',
+
+      // 🔒 嚴格限制：有效的 trigger_mode 和 next_action 組合
+      VALID_COMBINATIONS: {
+        'none': ['none'],  // none 只能搭配 none
+        'manual': ['form_fill', 'api_call', 'form_then_api'],  // manual 必須有後續動作
+        'immediate': ['form_fill', 'api_call', 'form_then_api']  // immediate 必須有後續動作
+        // 'auto': 暫不支持
       }
     };
   },
@@ -382,6 +549,8 @@ export default {
     this.loadVendorInfo();
     this.loadTemplates();
     await this.loadMySOP();
+    this.loadAvailableForms();
+    this.loadAvailableApiEndpoints();
 
     // 檢查是否有 sop_id 參數，如果有則自動打開編輯
     const sopId = this.$route.query.sop_id;
@@ -490,6 +659,19 @@ export default {
       try {
         const response = await axios.get(`${RAG_API}/v1/vendors/${this.vendorId}/sop/items`);
         this.mySOP = response.data;
+
+        // 🔍 檢查 SOP 1678 的數據
+        const sop1678 = this.mySOP.find(item => item.id === 1678);
+        if (sop1678) {
+          console.log('🔍 API 返回的 SOP 1678:', {
+            id: sop1678.id,
+            item_name: sop1678.item_name,
+            trigger_mode: sop1678.trigger_mode,
+            trigger_keywords_count: sop1678.trigger_keywords?.length || 0,
+            trigger_keywords: sop1678.trigger_keywords
+          });
+        }
+
         await this.groupMYSOPByCategory();  // 添加 await 等待分組完成
       } catch (error) {
         console.error('載入我的 SOP 失敗:', error);
@@ -627,8 +809,37 @@ export default {
       this.editingForm = {
         id: sop.id,
         item_name: sop.item_name,
-        content: sop.content
+        content: sop.content,
+        // 載入流程配置（唯讀顯示）
+        trigger_mode: sop.trigger_mode || 'none',
+        next_action: sop.next_action || 'none',
+        trigger_keywords: sop.trigger_keywords || [],
+        immediate_prompt: sop.immediate_prompt || '',
+        next_form_id: sop.next_form_id || null,
+        next_api_config: sop.next_api_config || null,
+        // 載入可編輯欄位
+        followup_prompt: sop.followup_prompt || ''
       };
+
+      console.log('📋 載入 SOP 編輯:', {
+        id: sop.id,
+        trigger_mode: this.editingForm.trigger_mode,
+        next_action: this.editingForm.next_action,
+        has_keywords: this.editingForm.trigger_keywords.length > 0,
+        keywords_count: this.editingForm.trigger_keywords.length,
+        trigger_keywords: this.editingForm.trigger_keywords,
+        has_form: !!this.editingForm.next_form_id,
+        has_api: !!this.editingForm.next_api_config
+      });
+
+      // 🔍 詳細打印每個關鍵詞
+      if (this.editingForm.trigger_keywords.length > 0) {
+        console.log('🔑 觸發關鍵詞詳細:');
+        this.editingForm.trigger_keywords.forEach((kw, index) => {
+          console.log(`  ${index + 1}. "${kw}"`);
+        });
+      }
+
       this.showEditModal = true;
     },
 
@@ -637,17 +848,107 @@ export default {
       this.editingForm = {
         id: null,
         item_name: '',
-        content: ''
+        content: '',
+        // 重置流程配置欄位
+        trigger_mode: 'none',
+        next_action: 'none',
+        trigger_keywords: [],
+        immediate_prompt: '',
+        next_form_id: null,
+        next_api_config: null,
+        followup_prompt: ''
       };
+    },
+
+    // 流程配置顯示輔助方法
+    getTriggerModeLabel(mode) {
+      const labels = {
+        'none': '資訊型（僅回答）',
+        'manual': '排查型（等待關鍵詞）',
+        'immediate': '緊急型（主動詢問）',
+        'auto': '自動執行型'
+      };
+      return labels[mode] || mode;
+    },
+
+    getNextActionLabel(action) {
+      const labels = {
+        'none': '無',
+        'form_fill': '觸發表單',
+        'api_call': '調用 API',
+        'form_then_api': '先填表單再調用 API'
+      };
+      return labels[action] || action;
     },
 
     async saveSOP() {
       try {
+        // ===== 驗證流程配置 =====
+
+        // 🔒 驗證 trigger_mode 和 next_action 組合
+        const validActions = this.VALID_COMBINATIONS[this.editingForm.trigger_mode] || [];
+        if (!validActions.includes(this.editingForm.next_action)) {
+          alert(`❌ 無效的組合：${this.editingForm.trigger_mode} + ${this.editingForm.next_action}\n有效的後續動作：${validActions.join(', ')}`);
+          return;
+        }
+
+        // 驗證 manual 模式
+        if (this.editingForm.trigger_mode === 'manual') {
+          if (!this.editingForm.trigger_keywords || this.editingForm.trigger_keywords.length === 0) {
+            alert('❌ 觸發模式選擇「排查型」時，必須設定至少一個觸發關鍵詞');
+            return;
+          }
+        }
+
+        // 驗證 immediate 模式
+        if (this.editingForm.trigger_mode === 'immediate') {
+          if (!this.editingForm.immediate_prompt || this.editingForm.immediate_prompt.trim() === '') {
+            alert('❌ 觸發模式選擇「緊急型」時，必須設定確認提示詞');
+            return;
+          }
+        }
+
+        // 驗證表單關聯
+        if (['form_fill', 'form_then_api'].includes(this.editingForm.next_action)) {
+          if (!this.editingForm.next_form_id) {
+            alert('❌ 後續動作選擇「觸發表單」或「先填表單再調用 API」時，必須選擇表單');
+            return;
+          }
+        }
+
+        // 驗證 API 配置
+        if (['api_call', 'form_then_api'].includes(this.editingForm.next_action)) {
+          if (!this.editingForm.next_api_config) {
+            alert('❌ 後續動作選擇「調用 API」或「先填表單再調用 API」時，必須配置 API');
+            return;
+          }
+
+          // 如果使用自訂 JSON，驗證 JSON 格式
+          if (this.useCustomApiConfig) {
+            try {
+              const config = JSON.parse(this.apiConfigJson);
+              this.editingForm.next_api_config = config;
+            } catch (e) {
+              alert('❌ API 配置 JSON 格式錯誤：\n' + e.message);
+              return;
+            }
+          }
+        }
+
+        // 發送所有欄位（包含流程配置）
         await axios.put(
           `${RAG_API}/v1/vendors/${this.vendorId}/sop/items/${this.editingForm.id}`,
           {
             item_name: this.editingForm.item_name,
-            content: this.editingForm.content
+            content: this.editingForm.content,
+            // 流程配置欄位
+            trigger_mode: this.editingForm.trigger_mode,
+            next_action: this.editingForm.next_action,
+            trigger_keywords: this.editingForm.trigger_keywords,
+            immediate_prompt: this.editingForm.immediate_prompt,
+            followup_prompt: this.editingForm.followup_prompt,
+            next_form_id: this.editingForm.next_form_id,
+            next_api_config: this.editingForm.next_api_config
           }
         );
         alert('✅ SOP 已更新！');
@@ -838,6 +1139,138 @@ export default {
       const sizes = ['Bytes', 'KB', 'MB', 'GB'];
       const i = Math.floor(Math.log(bytes) / Math.log(k));
       return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    },
+
+    // === 流程配置相關方法 ===
+
+    /**
+     * 載入可用表單列表
+     */
+    async loadAvailableForms() {
+      try {
+        const response = await axios.get(`${RAG_API}/v1/forms`);
+        this.availableForms = response.data;
+        console.log(`✅ 載入 ${this.availableForms.length} 個表單`);
+      } catch (error) {
+        console.error('載入表單列表失敗:', error);
+        this.availableForms = [];
+      }
+    },
+
+    /**
+     * 載入可用 API 端點列表
+     */
+    async loadAvailableApiEndpoints() {
+      try {
+        const response = await axios.get(`${RAG_API}/v1/api-endpoints`);
+        this.availableApiEndpoints = response.data;
+        console.log(`✅ 載入 ${this.availableApiEndpoints.length} 個 API 端點`);
+      } catch (error) {
+        console.error('載入 API 端點列表失敗:', error);
+        this.availableApiEndpoints = [];
+      }
+    },
+
+    /**
+     * 觸發模式變更處理（🔒 嚴格限制）
+     */
+    onTriggerModeChange() {
+      const validActions = this.VALID_COMBINATIONS[this.editingForm.trigger_mode] || [];
+
+      // 🔒 如果當前 next_action 不在有效列表中，重置為第一個有效值
+      if (!validActions.includes(this.editingForm.next_action)) {
+        const oldAction = this.editingForm.next_action;
+        this.editingForm.next_action = validActions[0] || 'none';
+        console.log(`🔒 組合驗證：${this.editingForm.trigger_mode} 不支持 ${oldAction}，已自動調整為 ${this.editingForm.next_action}`);
+      }
+
+      // 清除不相關的欄位
+      if (this.editingForm.trigger_mode !== 'manual') {
+        this.editingForm.trigger_keywords = [];
+      }
+      if (this.editingForm.trigger_mode !== 'immediate') {
+        this.editingForm.immediate_prompt = '';
+      }
+
+      // 自動調整後，需要清理不相關的後續動作字段
+      this.onNextActionChange();
+    },
+
+    /**
+     * 後續動作變更處理
+     */
+    onNextActionChange() {
+      // 清除不相關的欄位
+      if (!['form_fill', 'form_then_api'].includes(this.editingForm.next_action)) {
+        this.editingForm.next_form_id = null;
+      }
+      if (!['api_call', 'form_then_api'].includes(this.editingForm.next_action)) {
+        this.editingForm.next_api_config = null;
+        this.selectedApiEndpointId = '';
+        this.apiConfigJson = '';
+      }
+    },
+
+    /**
+     * API 端點選擇變更處理
+     */
+    onApiEndpointChange() {
+      if (this.selectedApiEndpointId) {
+        const endpoint = this.availableApiEndpoints.find(
+          e => e.endpoint_id === this.selectedApiEndpointId
+        );
+        if (endpoint) {
+          this.editingForm.next_api_config = {
+            endpoint_id: endpoint.endpoint_id,
+            method: endpoint.method,
+            params: {}
+          };
+          this.apiConfigJson = JSON.stringify(this.editingForm.next_api_config, null, 2);
+        }
+      }
+    },
+
+    /**
+     * 切換自訂 API 配置模式
+     */
+    onCustomApiConfigToggle() {
+      if (this.useCustomApiConfig) {
+        this.apiConfigJson = this.editingForm.next_api_config
+          ? JSON.stringify(this.editingForm.next_api_config, null, 2)
+          : '{\n  "endpoint_id": "",\n  "method": "GET",\n  "params": {}\n}';
+      } else {
+        this.selectedApiEndpointId = '';
+        this.editingForm.next_api_config = null;
+      }
+    },
+
+    /**
+     * 從 JSON 更新 API 配置
+     */
+    updateApiConfigFromJson() {
+      try {
+        this.editingForm.next_api_config = JSON.parse(this.apiConfigJson);
+      } catch (error) {
+        alert('❌ JSON 格式錯誤，請檢查語法');
+      }
+    },
+
+    /**
+     * 根據 form_id 取得表單名稱
+     */
+    getFormName(formId) {
+      if (!formId) return '（未設定）';
+      const form = this.availableForms.find(f => f.form_id === formId);
+      return form ? form.form_name : formId;
+    },
+
+    /**
+     * 根據 endpoint_id 取得 API 端點名稱
+     */
+    getApiEndpointName(endpointId) {
+      if (!endpointId) return '（未設定）';
+      const endpoint = this.availableApiEndpoints.find(e => e.endpoint_id === endpointId);
+      return endpoint ? endpoint.name : endpointId;
     }
   }
 };
@@ -1749,5 +2182,67 @@ export default {
 
 .section-header h3 {
   margin: 0;
+}
+
+/* 唯讀流程配置區塊樣式 */
+.readonly-section {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.readonly-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.readonly-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.readonly-info-item-full {
+  grid-column: 1 / -1;
+}
+
+.readonly-info-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.readonly-info-value {
+  font-size: 0.9375rem;
+  color: #1f2937;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}
+
+.readonly-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.readonly-keyword-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .readonly-info-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

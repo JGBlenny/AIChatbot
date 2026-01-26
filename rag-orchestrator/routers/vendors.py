@@ -12,6 +12,7 @@ import psycopg2.extras
 import asyncio
 import httpx
 from services.sop_utils import parse_sop_excel, identify_cashflow_sensitive_items
+from services.cache_service import CacheService
 
 
 router = APIRouter(prefix="/api/v1/vendors", tags=["vendors"])
@@ -575,6 +576,15 @@ class SOPItemCreate(BaseModel):
     intent_ids: Optional[List[int]] = Field(None, description="關聯意圖ID列表")
     priority: int = Field(50, description="優先級（0-100）", ge=0, le=100)
 
+    # 🔄 流程配置欄位
+    trigger_mode: str = Field("none", description="觸發模式: none, manual, immediate, auto")
+    next_action: str = Field("none", description="後續動作: none, form_fill, api_call, form_then_api")
+    trigger_keywords: Optional[List[str]] = Field(None, description="觸發關鍵詞（manual 模式使用）")
+    immediate_prompt: Optional[str] = Field(None, description="確認提示詞（immediate 模式使用）")
+    followup_prompt: Optional[str] = Field(None, description="後續提示詞")
+    next_form_id: Optional[str] = Field(None, description="後續表單ID（form_fill, form_then_api 使用）")
+    next_api_config: Optional[dict] = Field(None, description="後續API配置（api_call, form_then_api 使用）")
+
 
 class SOPItemUpdate(BaseModel):
     """更新 SOP 項目"""
@@ -582,6 +592,15 @@ class SOPItemUpdate(BaseModel):
     content: str = Field(..., description="項目內容")
     # intent_ids: DEPRECATED - 已廢棄，SOP 現在使用 Group-based embedding 檢索，不再需要意圖關聯
     # priority: DEPRECATED - 已廢棄，現代檢索完全基於向量相似度，不使用優先級排序
+
+    # 🔧 流程配置字段
+    trigger_mode: str = Field(default='none', description="觸發模式：none, manual, immediate")
+    next_action: str = Field(default='none', description="後續動作：none, form_fill, api_call, form_then_api")
+    trigger_keywords: Optional[List[str]] = Field(default=None, description="觸發關鍵詞（manual 模式使用）")
+    immediate_prompt: Optional[str] = Field(default=None, description="確認提示詞（immediate 模式使用）")
+    next_form_id: Optional[str] = Field(default=None, description="關聯的表單 ID")
+    next_api_config: Optional[dict] = Field(default=None, description="API 配置")
+    followup_prompt: Optional[str] = Field(default=None, description="後續提示詞")
 
 
 @router.get("/{vendor_id}/sop/categories")
@@ -639,7 +658,7 @@ async def get_sop_items(vendor_id: int, category_id: Optional[int] = None):
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="業者不存在")
 
-        # 獲取 SOP 項目（包含群組資訊、範本來源、多意圖支援）
+        # 獲取 SOP 項目（包含群組資訊、範本來源、多意圖支援、流程配置）
         query = """
             SELECT
                 vsi.id,
@@ -656,6 +675,14 @@ async def get_sop_items(vendor_id: int, category_id: Optional[int] = None):
                 vsi.is_active,
                 vsi.created_at,
                 vsi.updated_at,
+                -- 🔄 流程配置欄位
+                vsi.trigger_mode,
+                vsi.next_action,
+                vsi.trigger_keywords,
+                vsi.immediate_prompt,
+                vsi.next_form_id,
+                vsi.next_api_config,
+                vsi.followup_prompt,
                 COALESCE(
                     (SELECT ARRAY_AGG(vsii.intent_id ORDER BY vsii.intent_id)
                      FROM vendor_sop_item_intents vsii
@@ -703,6 +730,36 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
     Returns:
         Dict: 更新後的 SOP 項目
     """
+    # 🔒 嚴格限制：驗證 trigger_mode 和 next_action 組合
+    VALID_COMBINATIONS = {
+        'none': ['none'],
+        'manual': ['form_fill', 'api_call', 'form_then_api'],
+        'immediate': ['form_fill', 'api_call', 'form_then_api']
+    }
+
+    if item_update.next_action not in VALID_COMBINATIONS.get(item_update.trigger_mode, []):
+        raise HTTPException(
+            status_code=400,
+            detail=f"❌ 無效的組合：{item_update.trigger_mode} + {item_update.next_action}。有效的後續動作：{', '.join(VALID_COMBINATIONS.get(item_update.trigger_mode, []))}"
+        )
+
+    # 🔒 驗證必填字段
+    if item_update.trigger_mode == 'manual':
+        if not item_update.trigger_keywords or len(item_update.trigger_keywords) == 0:
+            raise HTTPException(status_code=400, detail="❌ manual 模式必須設定至少一個觸發關鍵詞")
+
+    if item_update.trigger_mode == 'immediate':
+        if not item_update.immediate_prompt or item_update.immediate_prompt.strip() == '':
+            raise HTTPException(status_code=400, detail="❌ immediate 模式必須設定確認提示詞")
+
+    if item_update.next_action in ['form_fill', 'form_then_api']:
+        if not item_update.next_form_id:
+            raise HTTPException(status_code=400, detail="❌ 此後續動作必須選擇表單")
+
+    if item_update.next_action in ['api_call', 'form_then_api']:
+        if not item_update.next_api_config:
+            raise HTTPException(status_code=400, detail="❌ 此後續動作必須配置 API")
+
     conn = get_db_connection()
     try:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -740,6 +797,28 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
         params.append(item_update.content)
 
         # ⚠️ DEPRECATED: priority 欄位已廢棄，不再更新
+
+        # 🔧 更新流程配置字段
+        update_fields.append("trigger_mode = %s")
+        params.append(item_update.trigger_mode)
+
+        update_fields.append("next_action = %s")
+        params.append(item_update.next_action)
+
+        update_fields.append("trigger_keywords = %s")
+        params.append(item_update.trigger_keywords if item_update.trigger_keywords else None)
+
+        update_fields.append("immediate_prompt = %s")
+        params.append(item_update.immediate_prompt)
+
+        update_fields.append("next_form_id = %s")
+        params.append(item_update.next_form_id)
+
+        update_fields.append("next_api_config = %s")
+        params.append(psycopg2.extras.Json(item_update.next_api_config) if item_update.next_api_config else None)
+
+        update_fields.append("followup_prompt = %s")
+        params.append(item_update.followup_prompt)
 
         update_fields.append("updated_at = CURRENT_TIMESTAMP")
         params.extend([item_id, vendor_id])
@@ -786,6 +865,15 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
                 )
             )
             print(f"🚀 [SOP Update] 已觸發背景 embedding 重新生成 (ID: {item_id})")
+
+        # 🗑️ 清除該業者的所有緩存（確保更新後的內容立即生效）
+        try:
+            cache_service = CacheService()
+            cleared_count = cache_service.invalidate_by_vendor_id(vendor_id)
+            print(f"🗑️ [SOP Update] 已清除業者 {vendor_id} 的緩存 ({cleared_count} 條)")
+        except Exception as e:
+            # 緩存清除失敗不影響主流程
+            print(f"⚠️ [SOP Update] 緩存清除失敗: {e}")
 
         return dict(final_item)
 
@@ -893,13 +981,15 @@ async def create_sop_item(vendor_id: int, item: SOPItemCreate, request: Request)
             if not cursor.fetchone():
                 raise HTTPException(status_code=400, detail=f"範本 ID {item.template_id} 不存在或已停用")
 
-        # 插入新 SOP 項目
+        # 插入新 SOP 項目（包含流程配置欄位）
         cursor.execute("""
             INSERT INTO vendor_sop_items (
                 category_id, vendor_id, item_number, item_name, content,
-                template_id, priority
+                template_id, priority,
+                trigger_mode, next_action, trigger_keywords, immediate_prompt,
+                followup_prompt, next_form_id, next_api_config
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             item.category_id,
@@ -908,7 +998,14 @@ async def create_sop_item(vendor_id: int, item: SOPItemCreate, request: Request)
             item.item_name,
             item.content,
             item.template_id,
-            item.priority
+            item.priority,
+            item.trigger_mode,
+            item.next_action,
+            item.trigger_keywords,
+            item.immediate_prompt,
+            item.followup_prompt,
+            item.next_form_id,
+            psycopg2.extras.Json(item.next_api_config) if item.next_api_config else None
         ))
 
         new_item = cursor.fetchone()
