@@ -4,8 +4,9 @@
 """
 import psycopg2
 import psycopg2.extras
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 from .db_utils import get_db_config
+from .embedding_utils import get_embedding_client
 
 
 class VendorSOPRetriever:
@@ -14,6 +15,7 @@ class VendorSOPRetriever:
     def __init__(self):
         """初始化 SOP 檢索器"""
         self._cache: Dict[int, Dict] = {}  # vendor_id -> vendor_info
+        self.embedding_client = get_embedding_client()  # 向量服務客戶端
 
     def _get_db_connection(self):
         """建立資料庫連接"""
@@ -66,15 +68,20 @@ class VendorSOPRetriever:
     def retrieve_sop_by_intent(
         self,
         vendor_id: int,
-        intent_id: int,
+        intent_id: Optional[int] = None,
         top_k: int = 5
     ) -> List[Dict]:
         """
         根據意圖檢索 SOP 項目（支援 3 層結構）
 
+        ✅ Intent 作為輔助排序（不是必需條件）
+        - 有 Intent 關聯的 SOP 會排在前面（intent_boost = 1000）
+        - 沒有 Intent 關聯的 SOP 也能被檢索到（intent_boost = 0）
+        - 統一與 Knowledge Base 檢索邏輯
+
         Args:
             vendor_id: 業者 ID
-            intent_id: 意圖 ID
+            intent_id: 意圖 ID（可選，用於加成排序）
             top_k: 返回前 K 筆
 
         Returns:
@@ -93,7 +100,8 @@ class VendorSOPRetriever:
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-            # 使用新的多意圖關聯表查詢
+            # ✅ 使用 LEFT JOIN 允許沒有 Intent 關聯的 SOP 被檢索
+            # Intent 僅用於加成排序，不作為硬性過濾條件
             cursor.execute("""
                 SELECT
                     si.id,
@@ -104,19 +112,34 @@ class VendorSOPRetriever:
                     si.item_number,
                     si.item_name,
                     si.content,
-                    si.priority
+                    si.priority,
+                    si.trigger_mode,
+                    si.next_action,
+                    si.next_form_id,
+                    si.next_api_config,
+                    si.trigger_keywords,
+                    si.immediate_prompt,
+                    si.followup_prompt,
+                    vsii.intent_id,
+                    -- Intent 匹配加成（用於排序）
+                    CASE
+                        WHEN vsii.intent_id = %s THEN 1000
+                        ELSE 0
+                    END as intent_boost
                 FROM vendor_sop_items si
                 INNER JOIN vendor_sop_categories sc ON si.category_id = sc.id
                 LEFT JOIN vendor_sop_groups sg ON si.group_id = sg.id
-                INNER JOIN vendor_sop_item_intents vsii ON si.id = vsii.sop_item_id
+                LEFT JOIN vendor_sop_item_intents vsii ON si.id = vsii.sop_item_id
                 WHERE
                     si.vendor_id = %s
-                    AND vsii.intent_id = %s
                     AND si.is_active = TRUE
                     AND sc.is_active = TRUE
-                ORDER BY si.priority DESC, si.item_number ASC
+                ORDER BY
+                    intent_boost DESC,      -- 1st: Intent 匹配加成
+                    si.priority DESC,       -- 2nd: 人工優先級
+                    si.item_number ASC      -- 3rd: 項目編號
                 LIMIT %s
-            """, (vendor_id, intent_id, top_k))
+            """, (intent_id if intent_id else -1, vendor_id, top_k))
 
             rows = cursor.fetchall()
             cursor.close()
@@ -126,7 +149,7 @@ class VendorSOPRetriever:
             if rows:
                 print(f"   項目 IDs: {[row['id'] for row in rows]}")
 
-            # 3. 處理結果（包含群組資訊）
+            # 3. 處理結果（包含群組資訊 + next_action 欄位）
             results = []
             for row in rows:
                 item = dict(row)
@@ -139,7 +162,192 @@ class VendorSOPRetriever:
                     'item_number': item['item_number'],
                     'item_name': item['item_name'],
                     'content': item['content'],
-                    'priority': item['priority']
+                    'priority': item['priority'],
+                    'trigger_mode': item.get('trigger_mode'),
+                    'next_action': item.get('next_action'),
+                    'next_form_id': item.get('next_form_id'),
+                    'next_api_config': item.get('next_api_config'),
+                    'trigger_keywords': item.get('trigger_keywords'),
+                    'immediate_prompt': item.get('immediate_prompt'),
+                    'followup_prompt': item.get('followup_prompt')
+                })
+
+            return results
+
+        finally:
+            conn.close()
+
+    async def _get_embedding(self, text: str) -> Optional[List[float]]:
+        """
+        獲取文本的向量表示
+
+        Args:
+            text: 要轉換的文本
+
+        Returns:
+            向量列表，失敗時返回 None
+        """
+        try:
+            return await self.embedding_client.get_embedding(text, verbose=False)
+        except Exception as e:
+            print(f"⚠️  獲取向量失敗: {e}")
+            return None
+
+    async def retrieve_sop_by_query(
+        self,
+        vendor_id: int,
+        query: str,
+        intent_id: Optional[int] = None,
+        top_k: int = 5,
+        similarity_threshold: float = 0.55
+    ) -> List[Dict]:
+        """
+        根據用戶問題檢索 SOP（向量相似度 + Intent 加成）
+
+        ✅ 混合檢索策略：
+        - 向量相似度為主要依據（similarity >= threshold）
+        - Intent 匹配用於加成排序（boost = 1.3x）
+        - 統一與 Knowledge Base 檢索邏輯
+
+        ✨ 雙 Embedding 檢索（2026-01-26 新增）：
+        - 使用 GREATEST(primary_embedding, fallback_embedding)
+        - Primary: group_name + item_name（適合分類匹配）
+        - Fallback: content（適合語義匹配）
+        - 取兩者相似度的最大值，提升檢索準確性
+
+        Args:
+            vendor_id: 業者 ID
+            query: 用戶問題文本
+            intent_id: 意圖 ID（可選，用於加成排序）
+            top_k: 返回前 K 筆
+            similarity_threshold: 相似度閾值（默認 0.55）
+
+        Returns:
+            SOP 項目列表（按相似度 * intent_boost 排序）
+        """
+        # 1. 獲取問題的向量
+        query_embedding = await self._get_embedding(query)
+        if not query_embedding:
+            print("⚠️  向量生成失敗，降級使用 intent-based 檢索")
+            return self.retrieve_sop_by_intent(vendor_id, intent_id, top_k)
+
+        # 2. 獲取業者資訊
+        vendor_info = self.get_vendor_info(vendor_id)
+        if not vendor_info:
+            return []
+
+        # 3. 執行向量檢索 + Intent 加成
+        conn = self._get_db_connection()
+        try:
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+            vector_str = str(query_embedding)
+
+            # SQL 查詢：計算相似度並應用 Intent 加成
+            # ✅ 使用 GREATEST(primary, fallback) 提升檢索準確性
+            cursor.execute("""
+                SELECT
+                    si.id,
+                    si.category_id,
+                    sc.category_name,
+                    si.group_id,
+                    sg.group_name,
+                    si.item_number,
+                    si.item_name,
+                    si.content,
+                    si.priority,
+                    si.trigger_mode,
+                    si.next_action,
+                    si.next_form_id,
+                    si.next_api_config,
+                    si.trigger_keywords,
+                    si.immediate_prompt,
+                    si.followup_prompt,
+                    vsii.intent_id,
+                    -- 計算向量相似度（取 primary 和 fallback 的最大值）
+                    GREATEST(
+                        COALESCE(1 - (si.primary_embedding <=> %s::vector), 0),
+                        COALESCE(1 - (si.fallback_embedding <=> %s::vector), 0)
+                    ) as base_similarity,
+                    -- Intent 匹配加成
+                    CASE
+                        WHEN vsii.intent_id = %s THEN 1.3
+                        ELSE 1.0
+                    END as intent_boost,
+                    -- 加成後的相似度
+                    GREATEST(
+                        COALESCE(1 - (si.primary_embedding <=> %s::vector), 0),
+                        COALESCE(1 - (si.fallback_embedding <=> %s::vector), 0)
+                    ) *
+                    CASE
+                        WHEN vsii.intent_id = %s THEN 1.3
+                        ELSE 1.0
+                    END as boosted_similarity
+                FROM vendor_sop_items si
+                INNER JOIN vendor_sop_categories sc ON si.category_id = sc.id
+                LEFT JOIN vendor_sop_groups sg ON si.group_id = sg.id
+                LEFT JOIN vendor_sop_item_intents vsii ON si.id = vsii.sop_item_id
+                WHERE
+                    si.vendor_id = %s
+                    AND si.is_active = TRUE
+                    AND sc.is_active = TRUE
+                    AND (si.primary_embedding IS NOT NULL OR si.fallback_embedding IS NOT NULL)
+                    -- 基礎相似度閾值（不含加成）
+                    AND GREATEST(
+                        COALESCE(1 - (si.primary_embedding <=> %s::vector), 0),
+                        COALESCE(1 - (si.fallback_embedding <=> %s::vector), 0)
+                    ) >= %s
+                ORDER BY
+                    boosted_similarity DESC,  -- 1st: 加成後的相似度
+                    si.priority DESC,         -- 2nd: 人工優先級
+                    si.item_number ASC        -- 3rd: 項目編號
+                LIMIT %s
+            """, (
+                vector_str,
+                vector_str,
+                intent_id if intent_id else -1,
+                vector_str,
+                vector_str,
+                intent_id if intent_id else -1,
+                vendor_id,
+                vector_str,
+                vector_str,
+                similarity_threshold,
+                top_k
+            ))
+
+            rows = cursor.fetchall()
+            cursor.close()
+
+            # DEBUG: 記錄實際檢索結果
+            print(f"🔍 [VendorSOPRetriever.retrieve_sop_by_query] 返回 {len(rows)} 行 (threshold={similarity_threshold}, top_k={top_k})")
+            if rows:
+                for row in rows:
+                    print(f"   ID {row['id']}: {row['item_name'][:30]} (similarity={row['base_similarity']:.3f}, boost={row['intent_boost']}, final={row['boosted_similarity']:.3f})")
+
+            # 4. 處理結果
+            results = []
+            for row in rows:
+                item = dict(row)
+                results.append({
+                    'id': item['id'],
+                    'category_id': item['category_id'],
+                    'category_name': item['category_name'],
+                    'group_id': item['group_id'],
+                    'group_name': item['group_name'],
+                    'item_number': item['item_number'],
+                    'item_name': item['item_name'],
+                    'content': item['content'],
+                    'priority': item['priority'],
+                    'trigger_mode': item.get('trigger_mode'),
+                    'next_action': item.get('next_action'),
+                    'next_form_id': item.get('next_form_id'),
+                    'next_api_config': item.get('next_api_config'),
+                    'trigger_keywords': item.get('trigger_keywords'),
+                    'immediate_prompt': item.get('immediate_prompt'),
+                    'followup_prompt': item.get('followup_prompt'),
+                    'similarity': item['base_similarity'],
+                    'boosted_similarity': item['boosted_similarity']
                 })
 
             return results
@@ -156,7 +364,7 @@ class VendorSOPRetriever:
         top_k: int = 5,
         similarity_threshold: float = None,
         return_debug_info: bool = False
-    ) -> List[Tuple[Dict, float]] | Tuple[List[Tuple[Dict, float]], List[Dict]]:
+    ) -> Union[List[Tuple[Dict, float]], Tuple[List[Tuple[Dict, float]], List[Dict]]]:
         """
         混合模式檢索（Group隔離版）：預存 Embedding + 意圖加成 + Group隔離
 
@@ -549,7 +757,14 @@ class VendorSOPRetriever:
                     si.item_number,
                     si.item_name,
                     si.content,
-                    si.priority
+                    si.priority,
+                    si.trigger_mode,
+                    si.next_action,
+                    si.next_form_id,
+                    si.next_api_config,
+                    si.trigger_keywords,
+                    si.immediate_prompt,
+                    si.followup_prompt
                 FROM vendor_sop_items si
                 INNER JOIN vendor_sop_categories sc ON si.category_id = sc.id
                 LEFT JOIN vendor_sop_groups sg ON si.group_id = sg.id
@@ -576,7 +791,14 @@ class VendorSOPRetriever:
                     'item_number': item['item_number'],
                     'item_name': item['item_name'],
                     'content': item['content'],
-                    'priority': item['priority']
+                    'priority': item['priority'],
+                    'trigger_mode': item.get('trigger_mode'),
+                    'next_action': item.get('next_action'),
+                    'next_form_id': item.get('next_form_id'),
+                    'next_api_config': item.get('next_api_config'),
+                    'trigger_keywords': item.get('trigger_keywords'),
+                    'immediate_prompt': item.get('immediate_prompt'),
+                    'followup_prompt': item.get('followup_prompt')
                 })
 
             return results
@@ -684,7 +906,7 @@ class VendorSOPRetriever:
                         AND sg.is_active = TRUE
                         AND sc.is_active = TRUE
                     GROUP BY sg.id, sg.category_id, sc.category_name, sg.group_name,
-                             sg.description, sg.display_order
+                             sg.description, sg.display_order, sc.display_order
                     ORDER BY sc.display_order, sg.display_order, sg.id
                 """, (vendor_id,))
 
@@ -721,7 +943,14 @@ class VendorSOPRetriever:
                     si.item_number,
                     si.item_name,
                     si.content,
-                    si.priority
+                    si.priority,
+                    si.trigger_mode,
+                    si.next_action,
+                    si.next_form_id,
+                    si.next_api_config,
+                    si.trigger_keywords,
+                    si.immediate_prompt,
+                    si.followup_prompt
                 FROM vendor_sop_items si
                 INNER JOIN vendor_sop_categories sc ON si.category_id = sc.id
                 INNER JOIN vendor_sop_groups sg ON si.group_id = sg.id
@@ -749,7 +978,14 @@ class VendorSOPRetriever:
                     'item_number': item['item_number'],
                     'item_name': item['item_name'],
                     'content': item['content'],
-                    'priority': item['priority']
+                    'priority': item['priority'],
+                    'trigger_mode': item.get('trigger_mode'),
+                    'next_action': item.get('next_action'),
+                    'next_form_id': item.get('next_form_id'),
+                    'next_api_config': item.get('next_api_config'),
+                    'trigger_keywords': item.get('trigger_keywords'),
+                    'immediate_prompt': item.get('immediate_prompt'),
+                    'followup_prompt': item.get('followup_prompt')
                 })
 
             return results
