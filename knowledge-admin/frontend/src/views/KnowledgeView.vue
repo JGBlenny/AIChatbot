@@ -300,6 +300,41 @@
               <option value="form_api">表單+API（先填表單再調用 API）</option>
             </select>
 
+            <!-- 🆕 觸發模式（當關聯功能不是「無」時顯示） -->
+            <div v-if="linkType !== 'none'" class="form-group" style="margin-top: 20px;">
+              <label>觸發模式 *</label>
+              <select v-model="formData.trigger_mode" class="form-control">
+                <option value="none">資訊型（僅回答知識庫內容，無後續動作）</option>
+                <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
+                <option value="immediate">行動型（主動詢問用戶是否執行）</option>
+                <!-- <option value="auto">自動執行型（立即執行後續動作）</option> ⚠️ 暫不實作 -->
+              </select>
+              <small class="form-hint">
+                💡 <strong>資訊型</strong>：只回答知識庫內容，不執行後續動作<br>
+                💡 <strong>排查型</strong>：用戶說出關鍵詞後才觸發（例如：「還是不行」→ 執行報修）<br>
+                💡 <strong>行動型</strong>：主動詢問是否執行（例如：「需要立即報修嗎？」）
+              </small>
+            </div>
+
+            <!-- immediate 模式的確認提示詞 -->
+            <div v-if="linkType !== 'none' && formData.trigger_mode === 'immediate'" class="form-group">
+              <label>確認提示詞（選填）</label>
+              <textarea
+                v-model="formData.immediate_prompt"
+                class="form-control"
+                rows="3"
+                placeholder="留空則使用系統預設提示詞"
+              ></textarea>
+              <small class="form-hint">
+                💡 <strong>預設提示詞：</strong><br>
+                💡 **需要安排處理嗎？**<br>
+                • 回覆「要」或「需要」→ 立即執行後續動作<br>
+                • 回覆「不用」→ 繼續為您解答其他問題<br>
+                <br>
+                如需自訂（例如：改為「需要安排維修嗎？」），請在上方輸入。
+              </small>
+            </div>
+
             <!-- 表單選擇（選擇「表單」後才顯示） -->
             <div v-if="linkType === 'form'" style="margin-top: 15px;">
               <label>選擇表單 *</label>
@@ -556,6 +591,9 @@ export default {
         // 表單關聯
         form_id: '',
         form_intro: '',
+        // 🆕 表單觸發模式
+        trigger_mode: 'none',  // 默認為資訊型（與 SOP 一致）
+        immediate_prompt: '',  // immediate 模式的確認提示詞
         // 動作類型和 API 配置
         action_type: 'direct_answer',
         api_config: null,
@@ -984,6 +1022,8 @@ export default {
         target_user: [],
         form_id: null,
         form_intro: null,
+        trigger_mode: 'none',  // 🆕 默認為資訊型（與 SOP 一致）
+        immediate_prompt: '',  // 🆕
         action_type: 'direct_answer',
         api_config: null
       };
@@ -1016,6 +1056,9 @@ export default {
           // 表單關聯
           form_id: knowledge.form_id || '',
           form_intro: knowledge.form_intro || '',
+          // 🆕 表單觸發模式
+          trigger_mode: knowledge.trigger_mode || 'none',
+          immediate_prompt: knowledge.immediate_prompt || '',
           // 動作類型和 API 配置
           action_type: knowledge.action_type || 'direct_answer',
           api_config: knowledge.api_config || null,
@@ -1107,6 +1150,15 @@ export default {
           ? this.selectedTargetUsers
           : null;
 
+        // 🆕 驗證觸發模式（當有關聯功能時）
+        if (this.linkType !== 'none') {
+          if (!this.formData.trigger_mode) {
+            this.showNotification('error', '請選擇觸發模式', '選擇關聯功能後，必須設定觸發模式');
+            this.saving = false;
+            return;
+          }
+        }
+
         // 根據關聯類型處理表單和 API 欄位
         if (this.linkType === 'form') {
           // 選擇了表單，必須選擇一個表單
@@ -1135,6 +1187,9 @@ export default {
           // 清空表單關聯
           this.formData.form_id = null;
           this.formData.form_intro = null;
+          // 🆕 清空表單觸發模式（API 模式不需要）
+          this.formData.trigger_mode = 'none';
+          this.formData.immediate_prompt = null;
         } else if (this.linkType === 'form_api') {
           // 新增：表單+API 模式
           // 驗證：必須同時選擇表單和 API 端點
@@ -1163,6 +1218,9 @@ export default {
           this.formData.form_id = null;
           this.formData.form_intro = null;
           this.formData.api_config = null;
+          // 🆕 清空表單觸發模式
+          this.formData.trigger_mode = 'none';
+          this.formData.immediate_prompt = null;
         }
 
         console.log('📝 準備儲存的資料:', {
@@ -1171,6 +1229,8 @@ export default {
           target_user: this.formData.target_user,
           form_id: this.formData.form_id,
           form_intro: this.formData.form_intro,
+          trigger_mode: this.formData.trigger_mode,  // 🆕
+          immediate_prompt: this.formData.immediate_prompt,  // 🆕
           action_type: this.formData.action_type,
           api_config: this.formData.api_config,
           selectedBusinessTypes: this.selectedBusinessTypes,

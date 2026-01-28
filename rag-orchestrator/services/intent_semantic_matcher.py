@@ -118,14 +118,14 @@ class IntentSemanticMatcher:
         Returns:
             (boost 值, 計算原因, 語義相似度)
         """
-        # 1. 精確匹配：直接返回預設 boost
+        # 1. 精確匹配：直接返回預設 boost（階段 1：降低加成）
         if query_intent_id == knowledge_intent_id:
             if intent_type == 'primary':
-                return 1.3, "精確匹配（主要意圖）", 1.0
+                return 1.1, "精確匹配（主要意圖）", 1.0  # 從 1.3 降到 1.1
             elif intent_type == 'secondary':
-                return 1.15, "精確匹配（次要意圖）", 1.0
+                return 1.05, "精確匹配（次要意圖）", 1.0  # 從 1.15 降到 1.05
             else:
-                return 1.3, "精確匹配", 1.0
+                return 1.1, "精確匹配", 1.0  # 從 1.3 降到 1.1
 
         # 2. 載入兩個意圖的信息
         query_intent = self._load_intent_info(query_intent_id)
@@ -144,25 +144,25 @@ class IntentSemanticMatcher:
             knowledge_intent['embedding']
         )
 
-        # 5. 根據相似度映射到 boost 值
+        # 5. 根據相似度映射到 boost 值（階段 1：降低加成）
         # 相似度閾值參考：
-        # >= 0.85: 高度相關 -> 1.3x（視為精確匹配）
-        # >= 0.70: 強相關 -> 1.2x
-        # >= 0.55: 中度相關 -> 1.1x
-        # >= 0.40: 弱相關 -> 1.05x
+        # >= 0.85: 高度相關 -> 1.1x（階段 1：從 1.3 降到 1.1）
+        # >= 0.70: 強相關 -> 1.08x（階段 1：從 1.2 降到 1.08）
+        # >= 0.55: 中度相關 -> 1.05x（階段 1：從 1.1 降到 1.05）
+        # >= 0.40: 弱相關 -> 1.02x（階段 1：從 1.05 降到 1.02）
         # < 0.40: 不相關 -> 1.0x
 
         if similarity >= 0.85:
-            boost = 1.3
+            boost = 1.1  # 從 1.3 降到 1.1
             reason = f"高度語義相關（相似度: {similarity:.3f}）"
         elif similarity >= 0.70:
-            boost = 1.2
+            boost = 1.08  # 從 1.2 降到 1.08
             reason = f"強語義相關（相似度: {similarity:.3f}）"
         elif similarity >= 0.55:
-            boost = 1.1
+            boost = 1.05  # 從 1.1 降到 1.05
             reason = f"中度語義相關（相似度: {similarity:.3f}）"
         elif similarity >= 0.40:
-            boost = 1.05
+            boost = 1.02  # 從 1.05 降到 1.02
             reason = f"弱語義相關（相似度: {similarity:.3f}）"
         else:
             boost = 1.0

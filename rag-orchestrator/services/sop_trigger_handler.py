@@ -260,7 +260,12 @@ class SOPTriggerHandler:
         print(f"   ✅ immediate 模式：返回 SOP + 立即詢問")
 
         trigger_keywords = sop_item.get('trigger_keywords', ['是', '要', '好', '可以', '需要'])
-        immediate_prompt = sop_item.get('immediate_prompt', '是否要執行此操作？')
+
+        # 使用自訂提示詞（如果有），否則使用系統預設
+        immediate_prompt = sop_item.get('immediate_prompt') or '''💡 **需要安排處理嗎？**
+
+• 回覆「要」或「需要」→ 立即填寫表單
+• 回覆「不用」→ 繼續為您解答其他問題'''
 
         print(f"   💬 立即詢問: {immediate_prompt}")
         print(f"   🔑 觸發關鍵詞: {trigger_keywords}")

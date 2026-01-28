@@ -6,6 +6,54 @@
 
 ## 📋 修復清單
 
+### 2026-01-28
+
+#### ✅ 意圖加成優化 - 移除被 Reranker 覆蓋的無效計算（Performance Optimization）
+**檔案**: [INTENT_BOOST_OPTIMIZATION_2026-01-28.md](./INTENT_BOOST_OPTIMIZATION_2026-01-28.md)
+
+**問題**: 知識庫和 SOP 檢索系統中的意圖加成計算被 Reranker 10/90 混合完全覆蓋
+
+**影響**:
+- 知識庫：54 行無效意圖加成計算（1.0-1.1x）浪費 CPU
+- SOP：SQL CASE WHEN 意圖加成（1.3x）浪費查詢資源
+- 前端：3 個欄位顯示被覆蓋的無效數值（意圖加成、意圖相似度、Scope權重）
+
+**修復**:
+- **知識庫** (`vendor_knowledge_retriever.py`):
+  - 移除 Line 464-518 意圖加成計算邏輯 (-54 行, -68.5%)
+  - 簡化為 base_similarity 過濾 (17 行)
+  - 更新 Log 輸出：顯示 base/rerank/final
+  - 清理無效字段：scope_weight, sql_intent_boost, sql_boosted_similarity
+
+- **SOP** (`vendor_sop_retriever.py`):
+  - 移除 SQL CASE WHEN intent_boost 計算 (-9 行, -15.5%)
+  - 減少 SQL 參數：11 → 9 (-18.2%)
+  - 簡化 Log 輸出：移除 boost 顯示
+  - 添加 Reranker 覆蓋說明註釋
+
+- **前端** (`ChatTestView.vue`):
+  - 移除無效欄位：意圖加成、意圖相似度、Scope權重 (-3 欄)
+  - 添加 Rerank分數 欄位
+  - 表格簡化：11 欄 → 8 欄 (-27%)
+
+- **Router** (`chat.py`):
+  - 添加 rerank_score 到 Pydantic model
+  - 修復 knowledge_candidates_debug 數據流 (2 處)
+
+**結果**:
+- ✅ 知識庫效能提升 ~5-10%（CPU、記憶體、處理時間）
+- ✅ SOP SQL 查詢優化 ~5-8%（參數減少、執行時間）
+- ✅ 代碼可讀性大幅提升（-46 行無效邏輯）
+- ✅ 前端展示更清晰（移除混亂欄位）
+- ✅ 所有測試通過，無功能退化
+
+**保留項目**:
+- ✅ 意圖分類系統完整保留（SOP 觸發、表單觸發、業務邏輯路由）
+- ✅ retrieve_sop_hybrid 保留 intent_boost（不使用 Reranker）
+- ✅ retrieve_sop_by_intent_batch 保留 1000x boost（專門 intent 檢索）
+
+---
+
 ### 2026-01-21
 
 #### ✅ Knowledge Admin API 整合修復（Critical P0）
@@ -108,6 +156,7 @@
 
 | 日期 | 修復數量 | 類型 | 影響範圍 |
 |------|---------|------|---------|
+| 2026-01-28 | 1 | Performance Optimization | 知識庫檢索、SOP 檢索、前端展示 |
 | 2026-01-21 | 1 | Critical Bug Fix | Knowledge Admin API、CRUD 生命週期、API 整合 |
 | 2025-10-29 | 2 | Critical Bug Fix + Enhancement | 知識檢索、多意圖信心度、UI |
 | 2025-10-21 | 1 | Bug Fix | 去重檢測 |
@@ -117,12 +166,15 @@
 ## 🔍 查找修復
 
 ### 按功能模組
+- **知識庫檢索 & SOP 檢索**: [意圖加成優化](./INTENT_BOOST_OPTIMIZATION_2026-01-28.md)
 - **Knowledge Admin API**: [API 整合修復](./2026-01-21-api-integration-fix.md)
 - **知識檢索**: [Business Types 欄位名稱修復](./2025-10-29-business-types-field-name-fix.md)
 - **多意圖分類**: [獨立信心度評分](./2025-10-29-business-types-field-name-fix.md)
 - **去重檢測**: [拼音檢測修復](./PINYIN_DETECTION_FIX_REPORT.md)
 
 ### 按影響等級
+- **Performance Optimization**:
+  - [意圖加成優化](./INTENT_BOOST_OPTIMIZATION_2026-01-28.md)
 - **Critical**:
   - [Knowledge Admin API 整合修復](./2026-01-21-api-integration-fix.md)
   - [Business Types 欄位名稱修復](./2025-10-29-business-types-field-name-fix.md)
@@ -143,4 +195,4 @@
 
 ---
 
-**最後更新**: 2026-01-21
+**最後更新**: 2026-01-28

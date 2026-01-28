@@ -279,7 +279,7 @@ def _convert_form_result_to_response(
         intent_name=form_result.get('intent_name', '表單填寫'),
         intent_type='form_filling',
         confidence=1.0,  # 表單流程固定高置信度
-        sources=None,
+        sources=[] if request.include_sources else None,
         source_count=0,
         vendor_id=request.vendor_id,
         mode=request.mode or 'b2c',
@@ -347,9 +347,13 @@ def _build_debug_info(
     synthesis_info: dict = None,
     vendor_params: dict = None,
     thresholds: dict = None,
-    used_param_keys: list = None  # 新增：實際被使用的參數 key 列表
+    used_param_keys: list = None,  # 實際被使用的參數 key 列表
+    system_config: dict = None,  # 額外的系統配置資訊
+    comparison_metadata: dict = None  # 🆕 2026-01-28: SOP 與知識庫比較資訊
 ) -> DebugInfo:
     """構建調試資訊對象"""
+    print(f"🔍 [_build_debug_info] sop_candidates received: {type(sop_candidates)}, length: {len(sop_candidates) if sop_candidates else 0}")
+
     # 構建意圖詳情
     intent_details = IntentDetail(
         primary_intent=intent_result.get('intent_name', ''),
@@ -361,9 +365,26 @@ def _build_debug_info(
     # 構建 SOP 候選列表
     sop_candidates_list = None
     if sop_candidates:
-        sop_candidates_list = [
-            CandidateSOP(**candidate) for candidate in sop_candidates
-        ]
+        sop_candidates_list = []
+        for candidate in sop_candidates:
+            # 兼容兩種格式：資料庫格式(id, item_name) 和 Context 格式(sop_id, sop_name)
+            sop_id = candidate.get('id') or candidate.get('sop_id')
+            sop_name = candidate.get('item_name') or candidate.get('sop_name')
+
+            # 跳過無效的候選（id 或 item_name 為 None）
+            if sop_id is None or sop_name is None:
+                continue
+
+            sop_candidates_list.append(CandidateSOP(
+                id=sop_id,
+                item_name=sop_name,
+                group_name=candidate.get('group_name'),
+                base_similarity=candidate.get('base_similarity', candidate.get('original_similarity', 0.0)),
+                intent_boost=candidate.get('intent_boost', 1.0),
+                boosted_similarity=candidate.get('boosted_similarity', candidate.get('similarity', 0.0)),
+                rerank_score=candidate.get('rerank_score'),
+                is_selected=candidate.get('is_selected', False)
+            ))
 
     # 構建知識庫候選列表
     knowledge_candidates_list = None
@@ -375,6 +396,7 @@ def _build_debug_info(
                 question_summary=k.get('question_summary', ''),
                 scope=k.get('scope', ''),
                 base_similarity=k.get('base_similarity', k.get('original_similarity', 0.0)),
+                rerank_score=k.get('rerank_score'),
                 intent_boost=k.get('intent_boost', 1.0),
                 intent_semantic_similarity=k.get('intent_semantic_similarity'),
                 priority=k.get('priority'),
@@ -425,7 +447,7 @@ def _build_debug_info(
         }
 
     # 構建系統配置狀態
-    system_config = {
+    system_config_default = {
         'llm_strategies': {
             'perfect_match': {
                 'enabled': True,
@@ -455,6 +477,10 @@ def _build_debug_info(
         }
     }
 
+    # 合併外部傳入的 system_config
+    if system_config:
+        system_config_default.update(system_config)
+
     return DebugInfo(
         processing_path=processing_path,
         sop_candidates=sop_candidates_list,
@@ -464,7 +490,8 @@ def _build_debug_info(
         synthesis_info=synthesis_info_obj,
         vendor_params_injected=vendor_params_injected,
         thresholds=thresholds,
-        system_config=system_config
+        system_config=system_config_default,
+        comparison_metadata=comparison_metadata  # 🆕 2026-01-28: 比較資訊
     )
 
 
@@ -488,13 +515,341 @@ async def _retrieve_sop(request: VendorChatRequest, intent_result: dict) -> list
     return sop_items
 
 
+# ==================== 智能檢索：SOP 與知識庫同時檢索 + 分數比較 ====================
+
+async def _smart_retrieval_with_comparison(
+    request: VendorChatRequest,
+    intent_result: dict,
+    sop_orchestrator,
+    resolver
+) -> dict:
+    """
+    智能檢索：SOP 與知識庫同時檢索 + 分數比較
+
+    核心規則：
+    1. SOP 和知識庫永遠不混合
+    2. 答案合成只用於知識庫
+    3. SOP 有後續動作時優先處理
+    4. 使用 Reranker 後的分數進行公平比較
+
+    Args:
+        request: 聊天請求
+        intent_result: 意圖分類結果
+        sop_orchestrator: SOP 編排器
+        resolver: 參數解析器
+
+    Returns:
+        {
+            'type': 'sop' | 'knowledge' | 'none',
+            'sop_result': SOP 結果 (或 None),
+            'knowledge_list': 知識列表 (或 None),
+            'reason': 決策原因,
+            'comparison': {
+                'sop_score': float,
+                'knowledge_score': float,
+                'gap': float,
+                'sop_candidates': int,
+                'knowledge_candidates': int,
+                'decision_case': str
+            }
+        }
+    """
+    import asyncio
+
+    # ==================== Step 1: 同時檢索 ====================
+    print(f"\n{'='*80}")
+    print(f"🔍 [智能檢索] 同時檢索 SOP 和知識庫")
+    print(f"{'='*80}")
+
+    # 獲取意圖 ID
+    intent_id = None
+    if intent_result['intent_name'] != 'unclear':
+        try:
+            intent_id = _get_intent_id(intent_result['intent_name'])
+        except:
+            intent_id = None
+
+    primary_intent_id = intent_result.get('intent_ids', [None])[0] if intent_result.get('intent_ids') else None
+
+    # 並行執行 SOP 和知識庫檢索
+    sop_task = sop_orchestrator.process_message(
+        user_message=request.message,
+        session_id=request.session_id,
+        user_id=request.user_id or "unknown",
+        vendor_id=request.vendor_id,
+        intent_id=primary_intent_id,
+        intent_ids=intent_result.get('intent_ids', [])
+    )
+
+    knowledge_task = _retrieve_knowledge(
+        request=request,
+        intent_id=intent_id,
+        intent_result=intent_result
+    )
+
+    # 等待兩個都完成
+    sop_result, knowledge_list = await asyncio.gather(
+        sop_task,
+        knowledge_task
+    )
+
+    # ==================== Step 2: 提取最高分 ====================
+    sop_score = 0.0
+    sop_has_action = False
+    sop_has_response = False
+
+    if sop_result and sop_result.get('has_sop'):
+        sop_item = sop_result.get('sop_item', {})
+        sop_score = sop_item.get('similarity', 0.0)
+        sop_has_response = sop_result.get('response') is not None
+
+        # 檢查是否有後續動作
+        next_action = sop_item.get('next_action')
+        sop_has_action = next_action in ['form_fill', 'api_call', 'form_then_api']
+
+    knowledge_score = 0.0
+    knowledge_count = 0
+    high_quality_count = 0  # 用於判斷是否合成
+
+    if knowledge_list:
+        knowledge_score = knowledge_list[0].get('similarity', 0.0)
+        knowledge_count = len(knowledge_list)
+        # 統計高品質結果（相似度 > 0.8）
+        high_quality_count = len([k for k in knowledge_list if k.get('similarity', 0) > 0.8])
+
+    # ==================== Step 3: 決策邏輯 ====================
+    SCORE_GAP_THRESHOLD = 0.15  # 差距閾值
+    SOP_MIN_THRESHOLD = 0.55
+    KNOWLEDGE_MIN_THRESHOLD = 0.6
+
+    print(f"\n📊 [分數比較]")
+    print(f"   SOP:      {sop_score:.3f} (有後續動作: {sop_has_action}, 有回應: {sop_has_response})")
+    print(f"   知識庫:   {knowledge_score:.3f} (數量: {knowledge_count}, 高品質: {high_quality_count})")
+    print(f"   差距:     {abs(sop_score - knowledge_score):.3f}")
+
+    # 特殊情況：SOP 等待關鍵詞（response 為 None）
+    if sop_result and sop_result.get('has_sop') and not sop_has_response:
+        print(f"⏸️  [特殊情況] SOP 等待關鍵詞中，繼續其他流程")
+        # 這種情況下，即使 SOP 分數高，也應該讓知識庫回答
+        gap = abs(knowledge_score - sop_score)
+        sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
+
+        if knowledge_score >= KNOWLEDGE_MIN_THRESHOLD:
+            return {
+                'type': 'knowledge',
+                'sop_result': sop_result,  # ✅ 保留 SOP 結果用於比較顯示
+                'knowledge_list': knowledge_list,
+                'reason': f'SOP 等待關鍵詞，使用知識庫 ({knowledge_score:.3f})',
+                'comparison': {
+                    'sop_score': sop_score,
+                    'knowledge_score': knowledge_score,
+                    'gap': gap,
+                    'sop_candidates': sop_candidates,
+                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
+                    'decision_case': 'sop_waiting_for_keyword_use_knowledge'
+                }
+            }
+        else:
+            return {
+                'type': 'none',
+                'sop_result': sop_result,  # ✅ 保留 SOP 結果用於比較顯示
+                'knowledge_list': knowledge_list,  # ✅ 保留知識庫結果用於比較顯示
+                'reason': 'SOP 等待關鍵詞且知識庫未達標',
+                'comparison': {
+                    'sop_score': sop_score,
+                    'knowledge_score': knowledge_score,
+                    'gap': gap,
+                    'sop_candidates': sop_candidates,
+                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
+                    'decision_case': 'sop_waiting_both_below_threshold'
+                }
+            }
+
+    # Case 1: SOP 顯著更高
+    if (sop_score >= SOP_MIN_THRESHOLD and
+        sop_score > knowledge_score + SCORE_GAP_THRESHOLD):
+        print(f"✅ [決策] SOP 顯著更相關 ({sop_score:.3f} > {knowledge_score:.3f} + 0.15)")
+
+        gap = sop_score - knowledge_score
+        sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
+
+        return {
+            'type': 'sop',
+            'sop_result': sop_result,
+            'knowledge_list': knowledge_list,  # ✅ 保留知識庫結果用於比較顯示
+            'reason': f'SOP 分數顯著更高 ({sop_score:.3f} vs {knowledge_score:.3f})',
+            'comparison': {
+                'sop_score': sop_score,
+                'knowledge_score': knowledge_score,
+                'gap': gap,
+                'sop_candidates': sop_candidates,
+                'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
+                'decision_case': 'sop_significantly_higher'
+            }
+        }
+
+    # Case 2: 知識庫顯著更高
+    if (knowledge_score >= KNOWLEDGE_MIN_THRESHOLD and
+        knowledge_score > sop_score + SCORE_GAP_THRESHOLD):
+        print(f"✅ [決策] 知識庫顯著更相關 ({knowledge_score:.3f} > {sop_score:.3f} + 0.15)")
+        print(f"   將進行答案合成判斷（高品質數量: {high_quality_count}）")
+
+        gap = knowledge_score - sop_score
+        sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
+
+        return {
+            'type': 'knowledge',
+            'sop_result': sop_result,  # ✅ 保留 SOP 結果用於比較顯示
+            'knowledge_list': knowledge_list,
+            'reason': f'知識庫分數顯著更高 ({knowledge_score:.3f} vs {sop_score:.3f})',
+            'comparison': {
+                'sop_score': sop_score,
+                'knowledge_score': knowledge_score,
+                'gap': gap,
+                'sop_candidates': sop_candidates,
+                'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
+                'decision_case': 'knowledge_significantly_higher'
+            }
+        }
+
+    # Case 3: 分數接近（差距 < 0.15）
+    if (sop_score >= SOP_MIN_THRESHOLD and
+        knowledge_score >= KNOWLEDGE_MIN_THRESHOLD):
+        gap = abs(sop_score - knowledge_score)
+        print(f"⚖️  [決策] 分數接近 (差距: {gap:.3f} < 0.15)")
+
+        # 3.1: SOP 有後續動作 → 優先 SOP
+        if sop_has_action:
+            sop_item = sop_result.get('sop_item', {})
+            print(f"✅ [優先級] SOP 有後續動作，優先處理 ({sop_item.get('next_action')})")
+
+            sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
+
+            return {
+                'type': 'sop',
+                'sop_result': sop_result,
+                'knowledge_list': knowledge_list,  # ✅ 保留知識庫結果
+                'reason': f'SOP 有後續動作 ({sop_item.get("next_action")})',
+                'comparison': {
+                    'sop_score': sop_score,
+                    'knowledge_score': knowledge_score,
+                    'gap': gap,
+                    'sop_candidates': sop_candidates,
+                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
+                    'decision_case': 'close_scores_sop_has_action'
+                }
+            }
+
+        # 3.2: SOP 無動作 → 選分數更高的
+        sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
+
+        if sop_score > knowledge_score:
+            print(f"✅ [比較] SOP 分數略高 ({sop_score:.3f} > {knowledge_score:.3f})")
+            return {
+                'type': 'sop',
+                'sop_result': sop_result,
+                'knowledge_list': knowledge_list,  # ✅ 保留知識庫結果
+                'reason': f'分數接近但 SOP 略高 ({sop_score:.3f} vs {knowledge_score:.3f})',
+                'comparison': {
+                    'sop_score': sop_score,
+                    'knowledge_score': knowledge_score,
+                    'gap': gap,
+                    'sop_candidates': sop_candidates,
+                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
+                    'decision_case': 'close_scores_sop_slightly_higher'
+                }
+            }
+        else:
+            print(f"✅ [比較] 知識庫分數略高 ({knowledge_score:.3f} > {sop_score:.3f})")
+            return {
+                'type': 'knowledge',
+                'sop_result': sop_result,  # ✅ 保留 SOP 結果
+                'knowledge_list': knowledge_list,
+                'reason': f'分數接近但知識庫略高 ({knowledge_score:.3f} vs {sop_score:.3f})',
+                'comparison': {
+                    'sop_score': sop_score,
+                    'knowledge_score': knowledge_score,
+                    'gap': gap,
+                    'sop_candidates': sop_candidates,
+                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
+                    'decision_case': 'close_scores_knowledge_slightly_higher'
+                }
+            }
+
+    # Case 4: 只有 SOP 達標
+    if sop_score >= SOP_MIN_THRESHOLD:
+        print(f"✅ [決策] 只有 SOP 達標 ({sop_score:.3f} >= 0.55)")
+
+        gap = abs(sop_score - knowledge_score)
+        sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
+
+        return {
+            'type': 'sop',
+            'sop_result': sop_result,
+            'knowledge_list': knowledge_list,  # ✅ 保留知識庫結果
+            'reason': f'只有 SOP 達標 ({sop_score:.3f})',
+            'comparison': {
+                'sop_score': sop_score,
+                'knowledge_score': knowledge_score,
+                'gap': gap,
+                'sop_candidates': sop_candidates,
+                'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
+                'decision_case': 'only_sop_qualified'
+            }
+        }
+
+    # Case 5: 只有知識庫達標
+    if knowledge_score >= KNOWLEDGE_MIN_THRESHOLD:
+        print(f"✅ [決策] 只有知識庫達標 ({knowledge_score:.3f} >= 0.6)")
+
+        gap = abs(knowledge_score - sop_score)
+        sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
+
+        return {
+            'type': 'knowledge',
+            'sop_result': sop_result,  # ✅ 保留 SOP 結果
+            'knowledge_list': knowledge_list,
+            'reason': f'只有知識庫達標 ({knowledge_score:.3f})',
+            'comparison': {
+                'sop_score': sop_score,
+                'knowledge_score': knowledge_score,
+                'gap': gap,
+                'sop_candidates': sop_candidates,
+                'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
+                'decision_case': 'only_knowledge_qualified'
+            }
+        }
+
+    # Case 6: 都不達標
+    print(f"⚠️  [決策] SOP ({sop_score:.3f}) 和知識庫 ({knowledge_score:.3f}) 都未達標")
+
+    gap = abs(sop_score - knowledge_score)
+    sop_candidates = len(sop_result.get('retrieved_sops', [])) if sop_result else 0
+
+    return {
+        'type': 'none',
+        'sop_result': sop_result,  # ✅ 保留兩邊結果供前端顯示
+        'knowledge_list': knowledge_list,
+        'reason': '都未達到最低閾值',
+        'comparison': {
+            'sop_score': sop_score,
+            'knowledge_score': knowledge_score,
+            'gap': gap,
+            'sop_candidates': sop_candidates,
+            'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
+            'decision_case': 'both_below_threshold'
+        }
+    }
+
+
 async def _build_orchestrator_response(
     request: VendorChatRequest,
     req: Request,
     orchestrator_result: dict,
     resolver,
     vendor_info: dict,
-    cache_service
+    cache_service,
+    decision: dict = None  # 🆕 智能檢索決策資訊（包含比較元數據）
 ):
     """
     使用 SOP Orchestrator 結果構建回應
@@ -535,29 +890,78 @@ async def _build_orchestrator_response(
     if request.include_debug_info:
         vendor_params = resolver.get_vendor_parameters(request.vendor_id)
 
+        # 構建 Orchestrator 特定的調試資訊
+        orchestrator_info = {
+            'trigger_mode': trigger_result.get('trigger_mode'),
+            'action': trigger_result.get('action'),
+            'context_saved': trigger_result.get('context_saved'),
+            'next_action': action_result.get('action_type') if action_result else None
+        }
+
+        # 🆕 獲取所有候選結果（包含 Reranker 分數）
+        all_sop_candidates = orchestrator_result.get('all_sop_candidates', [])
+        selected_id = sop_item.get('id')
+
+        sop_candidates_debug = []
+        for idx, candidate in enumerate(all_sop_candidates):
+            debug_item = {
+                'id': candidate.get('id'),
+                'item_name': candidate.get('item_name'),
+                'group_name': candidate.get('group_name', ''),
+                'base_similarity': candidate.get('original_similarity', candidate.get('similarity', 0)),  # 原始向量相似度
+                'intent_boost': 1.0,  # SOP 不使用意圖加成
+                'boosted_similarity': candidate.get('similarity', 0),  # Reranker 加成後的最終分數
+                'is_selected': candidate.get('id') == selected_id
+            }
+            # 🆕 只在有 Reranker 分數時才添加（避免 None 導致前端混淆）
+            if 'rerank_score' in candidate and candidate['rerank_score'] is not None:
+                debug_item['rerank_score'] = candidate['rerank_score']
+            sop_candidates_debug.append(debug_item)
+
+        # 🆕 如果有 decision，從中提取 comparison_metadata
+        comparison_metadata = None
+        knowledge_candidates_debug = None
+        if decision:
+            comparison_metadata = decision.get('comparison')
+            # 如果有知識庫候選，也一併提供（即使選擇了 SOP）
+            if decision.get('knowledge_list'):
+                knowledge_candidates_debug = []
+                for k in decision['knowledge_list']:
+                    knowledge_candidates_debug.append({
+                        'id': k.get('id'),
+                        'question_summary': k.get('question_summary', ''),
+                        'scope': k.get('scope', 'global'),
+                        'base_similarity': k.get('base_similarity', 0.0),
+                        'rerank_score': k.get('rerank_score'),
+                        'intent_boost': k.get('intent_boost', 1.0),
+                        'intent_semantic_similarity': k.get('intent_semantic_similarity'),
+                        'priority': k.get('priority', 0),
+                        'priority_boost': k.get('priority_boost', 0.0),
+                        'boosted_similarity': k.get('similarity', 0.0),
+                        'scope_weight': k.get('scope_weight', 100),
+                        'intent_type': k.get('intent_type'),
+                        'is_selected': False  # SOP 被選中，知識庫未被選中
+                    })
+
         debug_info = _build_debug_info(
             processing_path='sop_orchestrator',
             intent_result={'intent_name': 'sop', 'confidence': 1.0},
             llm_strategy='orchestrated',
-            sop_candidates=[{
+            sop_candidates=sop_candidates_debug if sop_candidates_debug else [{
                 'id': sop_item.get('id'),
                 'item_name': sop_item.get('item_name'),
-                'trigger_mode': sop_item.get('trigger_mode'),
-                'next_action': sop_item.get('next_action'),
+                'group_name': sop_item.get('group_name', ''),
+                'base_similarity': sop_item.get('similarity', 1.0),
+                'intent_boost': 1.0,
+                'boosted_similarity': sop_item.get('similarity', 1.0),
                 'is_selected': True
             }] if sop_item else [],
+            knowledge_candidates=knowledge_candidates_debug,  # 🆕 添加知識庫候選
             vendor_params=vendor_params,
-            used_param_keys=used_param_keys
+            used_param_keys=used_param_keys,
+            system_config={'orchestrator': orchestrator_info},
+            comparison_metadata=comparison_metadata  # 🆕 添加比較元數據
         )
-
-        # 添加 Orchestrator 特定的調試資訊
-        if debug_info:
-            debug_info['orchestrator'] = {
-                'trigger_mode': trigger_result.get('trigger_mode'),
-                'action': trigger_result.get('action'),
-                'context_saved': trigger_result.get('context_saved'),
-                'next_action': action_result.get('action_type') if action_result else None
-            }
 
     # 獲取意圖資訊（從檢索結果或使用預設）
     intent_classifier = req.app.state.intent_classifier
@@ -586,6 +990,14 @@ async def _build_orchestrator_response(
                     total_fields = form_session['total_fields']
                     progress = f"{current_index + 1}/{total_fields}"
 
+    # 構建快速回復按鈕（immediate 模式）
+    quick_replies = None
+    if orchestrator_result.get('next_step') == 'waiting_for_confirmation':
+        quick_replies = [
+            QuickReply(text="✅ 要，立即處理", value="要", style="primary"),
+            QuickReply(text="❌ 不用，謝謝", value="不用", style="secondary")
+        ]
+
     response = VendorChatResponse(
         answer=final_answer,
         intent_name=intent_result['intent_name'],
@@ -604,6 +1016,7 @@ async def _build_orchestrator_response(
         form_id=form_id,
         current_field=current_field,
         progress=progress,
+        quick_replies=quick_replies,
         debug_info=debug_info
     )
 
@@ -773,6 +1186,7 @@ async def _build_rag_response(
                 'question_summary': r.get('question_summary', ''),
                 'scope': r.get('scope', 'global'),
                 'base_similarity': r.get('similarity', 0.0),
+                'rerank_score': r.get('rerank_score'),  # ← 新增：Rerank 分數
                 'intent_boost': 1.0,  # RAG fallback 沒有 intent boost
                 'boosted_similarity': r.get('similarity', 0.0),
                 'scope_weight': 0,
@@ -952,7 +1366,7 @@ async def _handle_no_knowledge_found(
         all_intents=intent_result.get('all_intents', []),
         secondary_intents=intent_result.get('secondary_intents', []),
         intent_ids=intent_result.get('intent_ids', []),
-        sources=None,
+        sources=[] if request.include_sources else None,
         source_count=0,
         vendor_id=request.vendor_id,
         mode=request.mode,
@@ -1024,15 +1438,17 @@ async def _build_knowledge_response(
     knowledge_list: list,
     resolver,
     vendor_info: dict,
-    cache_service
+    cache_service,
+    decision: dict = None  # 🆕 智能檢索決策資訊（包含 SOP 結果和比較元數據）
 ):
     """使用知識庫結果構建優化回應"""
     llm_optimizer = req.app.state.llm_answer_optimizer
     confidence_evaluator = req.app.state.confidence_evaluator
 
     # ⭐ 步驟 1：高質量過濾（先過濾再處理 action_type）
-    # 只保留加成後相似度 >= 0.8 的知識用於答案生成
-    # 注意：knowledge['similarity'] 已經是加成後相似度（見 vendor_knowledge_retriever.py:455）
+    # 修改：使用 similarity（10/90 rerank 後的最終分數）進行過濾
+    # 原因：base_similarity 是 rerank 前的原始 embedding 分數，無法反映 reranker 的深度語義理解
+    # 在 10/90 混合比例下，最終分數有 90% 來自 reranker，應該信任 reranker 的判斷
     high_quality_threshold = float(os.getenv("HIGH_QUALITY_THRESHOLD", "0.8"))
     filtered_knowledge_list = [k for k in knowledge_list if k.get('similarity', 0) >= high_quality_threshold]
 
@@ -1040,7 +1456,7 @@ async def _build_knowledge_response(
         print(f"🔍 [高質量過濾] 原始: {len(knowledge_list)} 個候選知識, 過濾後: {len(filtered_knowledge_list)} 個 (閾值: {high_quality_threshold})")
         for k in knowledge_list:
             status = "✅" if k.get('similarity', 0) >= high_quality_threshold else "❌"
-            print(f"   {status} ID {k['id']}: similarity={k.get('similarity', 0):.3f}")
+            print(f"   {status} ID {k['id']}: similarity={k.get('similarity', 0):.3f} (base: {k.get('base_similarity', 0):.3f}, rerank: {k.get('rerank_score', 0):.3f})")
 
     # 如果過濾後沒有高質量知識，返回找不到知識的響應
     if not filtered_knowledge_list:
@@ -1059,6 +1475,8 @@ async def _build_knowledge_response(
         # 場景 B: 表單 + 知識答案
         # 或向後兼容：檢查 form_id（舊架構）
         form_id = best_knowledge.get('form_id')
+        trigger_mode = best_knowledge.get('trigger_mode', 'auto')  # 默認為 auto（保持向後兼容）
+
         if not form_id:
             print(f"⚠️  action_type={action_type} 但缺少 form_id，降級為 direct_answer")
             action_type = 'direct_answer'  # 明確降級
@@ -1066,21 +1484,42 @@ async def _build_knowledge_response(
             print(f"⚠️  知識 {best_knowledge['id']} 需要表單，但缺少 session_id 或 user_id，降級為 direct_answer")
             action_type = 'direct_answer'  # 明確降級
         else:
-            print(f"📝 [表單觸發] 知識 {best_knowledge['id']} 關聯表單 {form_id}，啟動表單流程")
+            print(f"📝 [表單觸發] 知識 {best_knowledge['id']} 關聯表單 {form_id}，trigger_mode={trigger_mode}")
 
-            # 調用 FormManager 觸發表單
-            form_manager = req.app.state.form_manager
-            form_result = await form_manager.trigger_form_by_knowledge(
-                knowledge_id=best_knowledge['id'],
-                form_id=form_id,
+            # 🆕 使用 SOP Orchestrator 處理表單觸發（統一邏輯）
+            # 將知識庫項目轉換為 SOP 格式
+            sop_item_format = {
+                'id': best_knowledge['id'],
+                'question_summary': best_knowledge['question_summary'],
+                'answer': best_knowledge['answer'],
+                'trigger_mode': trigger_mode,
+                'immediate_prompt': best_knowledge.get('immediate_prompt'),
+                'next_form_id': form_id,
+                'scope': 'knowledge_base',  # 標記來源
+                'source_type': 'knowledge',
+                'similarity': best_knowledge.get('similarity'),  # 保留原始相似度
+                'base_similarity': best_knowledge.get('base_similarity')  # 保留基礎相似度
+            }
+
+            # 使用 SOP Orchestrator 處理
+            sop_orchestrator = req.app.state.sop_orchestrator
+            orchestrator_result = await sop_orchestrator.handle_sop_action(
+                sop_item=sop_item_format,
+                user_message=request.message,
                 session_id=request.session_id,
                 user_id=request.user_id,
                 vendor_id=request.vendor_id,
-                trigger_question=request.message
+                target_user=request.target_user
             )
 
-            # 轉換為 VendorChatResponse 並返回
-            return _convert_form_result_to_response(form_result, request)
+            # 構建回應（使用統一的 orchestrator 結果處理）
+            return await _build_orchestrator_response(
+                orchestrator_result=orchestrator_result,
+                sop_item=sop_item_format,
+                intent_result=intent_result,
+                request=request,
+                req=req
+            )
 
     elif action_type in ['api_call', 'form_then_api']:
         # 場景 C/D/E/F: 涉及 API 調用
@@ -1200,6 +1639,7 @@ async def _build_knowledge_response(
                 'question_summary': k.get('question_summary', ''),
                 'scope': k.get('scope', ''),
                 'base_similarity': k.get('original_similarity', k.get('similarity', 0.0)),
+                'rerank_score': k.get('rerank_score'),  # ← 新增：Rerank 分數
                 'intent_boost': k.get('intent_boost', 1.0),
                 'intent_semantic_similarity': k.get('intent_semantic_similarity'),
                 'boosted_similarity': k.get('similarity', 0.0),
@@ -1208,6 +1648,31 @@ async def _build_knowledge_response(
                 'priority': k.get('priority'),
                 'is_selected': k['id'] in selected_ids
             })
+
+        # 🆕 構建 SOP 候選資訊（如果有 decision）
+        sop_candidates_debug = None
+        if decision and decision.get('sop_result'):
+            sop_result = decision['sop_result']
+            # ✅ 修復：使用正確的鍵名 'all_sop_candidates'
+            sop_candidates_list = sop_result.get('all_sop_candidates', [])
+            print(f"🔍 [Debug] sop_result keys: {list(sop_result.keys()) if sop_result else 'None'}")
+            print(f"🔍 [Debug] all_sop_candidates length: {len(sop_candidates_list)}")
+            if sop_candidates_list:
+                print(f"🔍 [Debug] Building sop_candidates_debug with {len(sop_candidates_list)} items")
+                sop_candidates_debug = []
+                for sop_item in sop_candidates_list:
+                    sop_candidates_debug.append({
+                        'id': sop_item.get('id'),
+                        'item_name': sop_item.get('title', sop_item.get('item_name', '')),  # ✅ 使用 item_name 鍵
+                        'title': sop_item.get('title', sop_item.get('item_name', '')),  # 保留 title 供前端使用
+                        'content': sop_item.get('content', '')[:200],  # 限制內容長度
+                        'similarity': sop_item.get('similarity', 0.0),
+                        'boosted_similarity': sop_item.get('similarity', 0.0),  # ✅ 添加 boosted_similarity
+                        'intent_ids': sop_item.get('intent_ids', [])
+                    })
+                print(f"🔍 [Debug] sop_candidates_debug final length: {len(sop_candidates_debug)}")
+            else:
+                print(f"⚠️  [Debug] sop_candidates_list is empty or None")
 
         # 構建合成資訊（使用過濾後的高質量列表）
         synthesis_info_dict = None
@@ -1218,14 +1683,19 @@ async def _build_knowledge_response(
                 'synthesis_reason': f'多個高品質結果（>= {high_quality_threshold}），使用答案合成'
             }
 
+        # 🆕 提取比較元數據
+        comparison_metadata = decision.get('comparison') if decision else None
+
         debug_info = _build_debug_info(
             processing_path='knowledge',
             intent_result=intent_result,
             llm_strategy=optimization_result.get('optimization_method', 'unknown'),
             knowledge_candidates=knowledge_candidates_debug,
+            sop_candidates=sop_candidates_debug,  # 🆕 加入 SOP 候選
             synthesis_info=synthesis_info_dict,
             vendor_params=vendor_params,
-            used_param_keys=used_param_keys  # ✅ 只顯示實際被注入的參數
+            used_param_keys=used_param_keys,  # ✅ 只顯示實際被注入的參數
+            comparison_metadata=comparison_metadata  # 🆕 加入比較元數據
         )
 
     response = VendorChatResponse(
@@ -1595,6 +2065,7 @@ class CandidateKnowledge(BaseModel):
     question_summary: str
     scope: str
     base_similarity: float = Field(..., description="基礎向量相似度")
+    rerank_score: Optional[float] = Field(None, description="Reranker 分數 (10/90 混合)")
     intent_boost: float = Field(..., description="意圖加成係數")
     intent_semantic_similarity: Optional[float] = Field(None, description="意圖語義相似度")
     priority: Optional[int] = Field(None, description="人工優先級")
@@ -1613,6 +2084,7 @@ class CandidateSOP(BaseModel):
     base_similarity: float = Field(..., description="基礎向量相似度")
     intent_boost: float = Field(..., description="意圖加成係數")
     boosted_similarity: float = Field(..., description="加成後相似度")
+    rerank_score: Optional[float] = Field(None, description="Reranker 分數（0-1）")
     is_selected: bool = Field(..., description="是否被選取")
 
 
@@ -1667,6 +2139,16 @@ class DebugInfo(BaseModel):
     # 系統配置狀態
     system_config: Optional[Dict] = Field(None, description="系統配置狀態（啟用的策略等）")
 
+    # 智能檢索比較資訊（2026-01-28 新增）
+    comparison_metadata: Optional[Dict] = Field(None, description="SOP 與知識庫比較資訊（分數、候選數、決策依據等）")
+
+
+class QuickReply(BaseModel):
+    """快速回复按钮"""
+    text: str = Field(..., description="按钮显示文字")
+    value: str = Field(..., description="点击后发送的值")
+    style: Optional[str] = Field(None, description="按钮样式：primary, secondary, success, danger")
+
 
 class VendorChatResponse(BaseModel):
     """多業者聊天回應"""
@@ -1696,6 +2178,8 @@ class VendorChatResponse(BaseModel):
     current_field: Optional[str] = Field(None, description="當前欄位名稱")
     progress: Optional[str] = Field(None, description="填寫進度（如：2/4）")
     allow_resume: Optional[bool] = Field(None, description="是否允許恢復表單填寫")
+    # 快速回复按钮（SOP Next Action 功能）
+    quick_replies: Optional[List[QuickReply]] = Field(None, description="快速回复按钮列表")
     # 調試資訊
     debug_info: Optional[DebugInfo] = Field(None, description="調試資訊（處理流程詳情）")
 
@@ -1816,66 +2300,73 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         intent_classifier = req.app.state.intent_classifier
         intent_result = intent_classifier.classify(request.message)
 
-        # Step 3.5: 檢查 SOP Context（SOP Next Action 功能）
-        # ⭐ 優先級：SOP > 意圖表單映射
-        # 優先檢查是否有待處理的 SOP Context（manual/immediate 模式需要後續匹配）
-        if not request.skip_sop and request.session_id:
+        # Step 4: 智能檢索（SOP 與知識庫同時檢索 + 分數比較）
+        # 🆕 2026-01-28: 替換原有的先 SOP 後知識庫的邏輯
+        # 新邏輯：
+        #   1. 同時檢索 SOP 和知識庫（並行執行）
+        #   2. 比較 Reranker 分數，選擇最相關的
+        #   3. SOP 和知識庫永遠不混合
+        #   4. 答案合成只用於知識庫
+        if not request.skip_sop:
             sop_orchestrator = req.app.state.sop_orchestrator
 
-            # 先嘗試使用 Orchestrator 處理訊息（會檢查 context）
-            primary_intent_id = intent_result.get('intent_ids', [None])[0] if intent_result.get('intent_ids') else None
-            orchestrator_result = await sop_orchestrator.process_message(
-                user_message=request.message,
-                session_id=request.session_id,
-                user_id=request.user_id or "unknown",
-                vendor_id=request.vendor_id,
-                intent_id=primary_intent_id,  # 傳遞主要意圖ID
-                intent_ids=intent_result.get('intent_ids', [])
+            # 使用智能檢索
+            decision = await _smart_retrieval_with_comparison(
+                request=request,
+                intent_result=intent_result,
+                sop_orchestrator=sop_orchestrator,
+                resolver=resolver
             )
 
-            print(f"🔍 DEBUG: orchestrator_result type={type(orchestrator_result)}, value={orchestrator_result}")
+            print(f"🎯 [最終決策] {decision['type']} - {decision['reason']}")
 
-            # 如果 Orchestrator 找到 SOP 並有回應內容
-            # ⚠️ 重要：如果 response 為 None（例如 manual 模式等待關鍵詞時用戶說了不匹配的話），
-            #          則不使用 orchestrator 結果，讓系統繼續其他處理流程
-            if orchestrator_result and orchestrator_result.get('has_sop'):
-                orchestrator_response = orchestrator_result.get('response')
+            # 根據決策類型返回回應
+            if decision['type'] == 'sop':
+                # 返回 SOP 回應（不涉及知識庫）
+                return await _build_orchestrator_response(
+                    request, req, decision['sop_result'],
+                    resolver, vendor_info, cache_service,
+                    decision=decision  # 🆕 傳遞決策資訊（包含 comparison_metadata）
+                )
 
-                # 只有當有實際回應內容時才使用 orchestrator 結果
-                if orchestrator_response is not None:
-                    print(f"✅ SOP Orchestrator 處理：{(orchestrator_result.get('action_result') or {}).get('action_type', 'unknown')}")
-                    # 將 Orchestrator 結果轉換為聊天回應
-                    return await _build_orchestrator_response(
-                        request, req, orchestrator_result, resolver, vendor_info, cache_service
-                    )
-                else:
-                    # response 為 None：等待關鍵詞中，用戶說了不匹配的話
-                    # 繼續正常流程（讓 LLM 或其他系統回答）
-                    print(f"ℹ️  SOP Orchestrator 等待關鍵詞中，用戶輸入未匹配，繼續其他流程")
+            elif decision['type'] == 'knowledge':
+                # 返回知識庫回應（會進行答案合成判斷）
+                # ✅ 答案合成只在這裡發生，不會混入 SOP
+                return await _build_knowledge_response(
+                    request, req, intent_result, decision['knowledge_list'],
+                    resolver, vendor_info, cache_service,
+                    decision=decision  # 🆕 傳遞完整決策資訊（包含 SOP 結果和比較元數據）
+                )
 
-        # Step 4: 傳統 SOP 檢索（備用，如果 Orchestrator 未處理）- 回測模式可跳過
-        if not request.skip_sop:
-            print(f"ℹ️  SOP Orchestrator 未找到 SOP，繼續其他流程")
+            elif decision['type'] == 'none':
+                # 無結果，進入 RAG fallback
+                return await _handle_no_knowledge_found(
+                    request, req, intent_result, resolver,
+                    cache_service, vendor_info
+                )
+
         else:
+            # 回測模式：只使用知識庫
             print(f"ℹ️  [回測模式] 跳過 SOP 檢索，僅使用知識庫")
 
-        # Step 5: 獲取意圖 ID（unclear 時為 None，統一檢索路徑）
-        intent_id = None if intent_result['intent_name'] == 'unclear' else _get_intent_id(intent_result['intent_name'])
+            # 獲取意圖 ID
+            intent_id = None if intent_result['intent_name'] == 'unclear' else _get_intent_id(intent_result['intent_name'])
 
-        # Step 6: 檢索知識庫（統一路徑：支持 intent_id = None）
-        knowledge_list = await _retrieve_knowledge(request, intent_id, intent_result)
+            # 檢索知識庫
+            knowledge_list = await _retrieve_knowledge(request, intent_id, intent_result)
 
-        # Step 8: 如果知識庫沒有結果，嘗試參數答案或 RAG fallback
-        if not knowledge_list:
-            print(f"⚠️  意圖 '{intent_result['intent_name']}' (ID: {intent_id}) 沒有關聯知識，嘗試參數答案或 RAG fallback...")
-            return await _handle_no_knowledge_found(
-                request, req, intent_result, resolver, cache_service, vendor_info
+            # 如果知識庫沒有結果
+            if not knowledge_list:
+                return await _handle_no_knowledge_found(
+                    request, req, intent_result, resolver,
+                    cache_service, vendor_info
+                )
+
+            # 返回知識庫回應
+            return await _build_knowledge_response(
+                request, req, intent_result, knowledge_list,
+                resolver, vendor_info, cache_service
             )
-
-        # Step 9: 使用知識庫結果構建優化回應
-        return await _build_knowledge_response(
-            request, req, intent_result, knowledge_list, resolver, vendor_info, cache_service
-        )
 
     except HTTPException:
         raise

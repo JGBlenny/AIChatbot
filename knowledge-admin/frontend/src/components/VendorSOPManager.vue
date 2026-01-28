@@ -339,16 +339,23 @@
               />
             </div>
 
-            <!-- immediate 模式：確認提示詞 -->
+            <!-- immediate 模式：確認提示詞（可選） -->
             <div v-if="editingForm.trigger_mode === 'immediate'" class="form-group">
-              <label>確認提示詞 *</label>
+              <label>確認提示詞（選填）</label>
               <textarea
                 v-model="editingForm.immediate_prompt"
                 class="form-control"
-                rows="2"
-                placeholder="例如：需要立即為您申請報修嗎？"
+                rows="3"
+                placeholder="留空則使用系統預設提示詞"
               ></textarea>
-              <small class="hint">💡 系統會主動詢問此問題，用戶回覆肯定詞後觸發</small>
+              <small class="hint">
+                💡 <strong>預設提示詞：</strong><br>
+                💡 **需要安排處理嗎？**<br>
+                • 回覆「要」或「需要」→ 立即填寫表單<br>
+                • 回覆「不用」→ 繼續為您解答其他問題<br>
+                <br>
+                如需自訂（例如：改為「需要安排維修嗎？」），請在上方輸入。
+              </small>
             </div>
 
             <div class="form-group">
@@ -900,13 +907,7 @@ export default {
           }
         }
 
-        // 驗證 immediate 模式
-        if (this.editingForm.trigger_mode === 'immediate') {
-          if (!this.editingForm.immediate_prompt || this.editingForm.immediate_prompt.trim() === '') {
-            alert('❌ 觸發模式選擇「緊急型」時，必須設定確認提示詞');
-            return;
-          }
-        }
+        // immediate 模式不需要驗證 immediate_prompt（系統自動生成）
 
         // 驗證表單關聯
         if (['form_fill', 'form_then_api'].includes(this.editingForm.next_action)) {

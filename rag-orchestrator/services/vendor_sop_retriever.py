@@ -8,6 +8,22 @@ from typing import Dict, List, Optional, Tuple, Union
 from .db_utils import get_db_config
 from .embedding_utils import get_embedding_client
 
+# 🆕 導入 Reranker（2026-01-28）
+import os
+RERANKER_ENABLED = os.getenv('ENABLE_RERANKER', 'false').lower() == 'true'
+
+if RERANKER_ENABLED:
+    try:
+        from sentence_transformers import CrossEncoder
+        RERANKER_AVAILABLE = True
+        print("ℹ️  Reranker 功能已啟用")
+    except ImportError:
+        RERANKER_AVAILABLE = False
+        print("⚠️  sentence-transformers 未安裝，Reranker 功能禁用")
+else:
+    RERANKER_AVAILABLE = False
+    print("ℹ️  Reranker 功能未啟用（設置 ENABLE_RERANKER=true 以啟用）")
+
 
 class VendorSOPRetriever:
     """業者 SOP 檢索器"""
@@ -16,6 +32,20 @@ class VendorSOPRetriever:
         """初始化 SOP 檢索器"""
         self._cache: Dict[int, Dict] = {}  # vendor_id -> vendor_info
         self.embedding_client = get_embedding_client()  # 向量服務客戶端
+
+        # 🆕 初始化 Reranker（使用更小的模型）
+        self.reranker = None
+        if RERANKER_AVAILABLE:
+            try:
+                # 使用 bge-reranker-base（278M，更快）
+                self.reranker = CrossEncoder(
+                    'BAAI/bge-reranker-base',
+                    max_length=512
+                )
+                print("✅ Reranker initialized (bge-reranker-base)")
+            except Exception as e:
+                print(f"⚠️  Reranker 初始化失敗: {e}")
+                self.reranker = None
 
     def _get_db_connection(self):
         """建立資料庫連接"""
@@ -105,6 +135,7 @@ class VendorSOPRetriever:
             cursor.execute("""
                 SELECT
                     si.id,
+                    si.vendor_id,
                     si.category_id,
                     sc.category_name,
                     si.group_id,
@@ -145,9 +176,18 @@ class VendorSOPRetriever:
             cursor.close()
 
             # DEBUG: 記錄實際檢索結果
-            print(f"🔍 [VendorSOPRetriever] fetchall() 返回 {len(rows)} 行 (top_k={top_k})")
+            print(f"🔍 [VendorSOPRetriever.retrieve_sop_by_intent] vendor_id={vendor_id}, 返回 {len(rows)} 行 (top_k={top_k})")
             if rows:
-                print(f"   項目 IDs: {[row['id'] for row in rows]}")
+                for row in rows:
+                    print(f"   ID {row['id']} (Vendor {row.get('vendor_id', 'N/A')}): {row['item_name'][:30]}")
+
+                    # 🔒 安全檢查：確保不會返回其他 vendor 的 SOP
+                    if row.get('vendor_id') != vendor_id:
+                        error_msg = f"⚠️  VENDOR ID MISMATCH in retrieve_sop_by_intent! 請求 vendor_id={vendor_id}, 但返回了 vendor_id={row.get('vendor_id')} 的 SOP (ID {row['id']})"
+                        print(f"\n{'='*80}")
+                        print(error_msg)
+                        print(f"{'='*80}\n")
+                        raise ValueError(error_msg)
 
             # 3. 處理結果（包含群組資訊 + next_action 欄位）
             results = []
@@ -243,11 +283,15 @@ class VendorSOPRetriever:
 
             vector_str = str(query_embedding)
 
-            # SQL 查詢：計算相似度並應用 Intent 加成
+            # SQL 查詢：計算相似度（僅 retrieve_sop_by_query 使用）
             # ✅ 使用 GREATEST(primary, fallback) 提升檢索準確性
+            # 🔧 優化日期：2026-01-28
+            # 🔧 優化原因：意圖加成被 Reranker 10/90 混合覆蓋（Line 456），移除無效計算
+            # 📝 註：retrieve_sop_hybrid 不使用 Reranker，仍保留 intent_boost 邏輯
             cursor.execute("""
                 SELECT
                     si.id,
+                    si.vendor_id,
                     si.category_id,
                     sc.category_name,
                     si.group_id,
@@ -269,20 +313,11 @@ class VendorSOPRetriever:
                         COALESCE(1 - (si.primary_embedding <=> %s::vector), 0),
                         COALESCE(1 - (si.fallback_embedding <=> %s::vector), 0)
                     ) as base_similarity,
-                    -- Intent 匹配加成
-                    CASE
-                        WHEN vsii.intent_id = %s THEN 1.3
-                        ELSE 1.0
-                    END as intent_boost,
-                    -- 加成後的相似度
+                    -- boosted_similarity 直接使用 base_similarity（Reranker 會進行重排序）
                     GREATEST(
                         COALESCE(1 - (si.primary_embedding <=> %s::vector), 0),
                         COALESCE(1 - (si.fallback_embedding <=> %s::vector), 0)
-                    ) *
-                    CASE
-                        WHEN vsii.intent_id = %s THEN 1.3
-                        ELSE 1.0
-                    END as boosted_similarity
+                    ) as boosted_similarity
                 FROM vendor_sop_items si
                 INNER JOIN vendor_sop_categories sc ON si.category_id = sc.id
                 LEFT JOIN vendor_sop_groups sg ON si.group_id = sg.id
@@ -292,23 +327,21 @@ class VendorSOPRetriever:
                     AND si.is_active = TRUE
                     AND sc.is_active = TRUE
                     AND (si.primary_embedding IS NOT NULL OR si.fallback_embedding IS NOT NULL)
-                    -- 基礎相似度閾值（不含加成）
+                    -- 基礎相似度閾值
                     AND GREATEST(
                         COALESCE(1 - (si.primary_embedding <=> %s::vector), 0),
                         COALESCE(1 - (si.fallback_embedding <=> %s::vector), 0)
                     ) >= %s
                 ORDER BY
-                    boosted_similarity DESC,  -- 1st: 加成後的相似度
+                    boosted_similarity DESC,  -- 1st: 基礎相似度（Reranker 會重排序）
                     si.priority DESC,         -- 2nd: 人工優先級
                     si.item_number ASC        -- 3rd: 項目編號
                 LIMIT %s
             """, (
                 vector_str,
                 vector_str,
-                intent_id if intent_id else -1,
                 vector_str,
                 vector_str,
-                intent_id if intent_id else -1,
                 vendor_id,
                 vector_str,
                 vector_str,
@@ -320,10 +353,19 @@ class VendorSOPRetriever:
             cursor.close()
 
             # DEBUG: 記錄實際檢索結果
-            print(f"🔍 [VendorSOPRetriever.retrieve_sop_by_query] 返回 {len(rows)} 行 (threshold={similarity_threshold}, top_k={top_k})")
+            print(f"🔍 [VendorSOPRetriever.retrieve_sop_by_query] vendor_id={vendor_id}, 返回 {len(rows)} 行 (threshold={similarity_threshold}, top_k={top_k})")
             if rows:
                 for row in rows:
-                    print(f"   ID {row['id']}: {row['item_name'][:30]} (similarity={row['base_similarity']:.3f}, boost={row['intent_boost']}, final={row['boosted_similarity']:.3f})")
+                    print(f"   ID {row['id']} (Vendor {row.get('vendor_id', 'N/A')}): {row['item_name'][:30]} (base_similarity={row['base_similarity']:.3f}, intent={row.get('intent_id', 'None')})")
+
+                    # 🔒 安全檢查：確保不會返回其他 vendor 的 SOP
+                    if row.get('vendor_id') != vendor_id:
+                        error_msg = f"⚠️  VENDOR ID MISMATCH! 請求 vendor_id={vendor_id}, 但返回了 vendor_id={row.get('vendor_id')} 的 SOP (ID {row['id']})"
+                        print(f"\n{'='*80}")
+                        print(error_msg)
+                        print(f"{'='*80}\n")
+                        # 立即拋出異常，而不是返回錯誤的數據
+                        raise ValueError(error_msg)
 
             # 4. 處理結果
             results = []
@@ -350,10 +392,80 @@ class VendorSOPRetriever:
                     'boosted_similarity': item['boosted_similarity']
                 })
 
+            # 🆕 應用 Reranker（如果可用且有結果）
+            if self.reranker and len(results) > 0:
+                results = self._apply_reranker(query, results)
+
             return results
 
         finally:
             conn.close()
+
+    def _apply_reranker(self, query: str, candidates: List[Dict]) -> List[Dict]:
+        """
+        使用 Reranker 重排序候選結果（2026-01-28 新增）
+
+        策略：混合原始相似度和 rerank 分數
+        - 30% 原始向量相似度（快速召回）
+        - 70% rerank 分數（精確排序）
+
+        Args:
+            query: 用戶問題
+            candidates: 候選結果列表
+
+        Returns:
+            重排序後的結果列表
+        """
+        if not candidates:
+            return candidates
+
+        try:
+            # 準備輸入對：[問題, 答案]
+            pairs = [
+                [query, f"{c.get('item_name', '')} {c.get('content', '')}"]
+                for c in candidates
+            ]
+
+            # 批次預測相關性分數（-1 到 1）
+            raw_scores = self.reranker.predict(pairs, batch_size=32)
+
+            # 歸一化到 0-1 範圍
+            normalized_scores = [(score + 1) / 2 for score in raw_scores]
+
+            # 更新分數
+            for candidate, rerank_score in zip(candidates, normalized_scores):
+                # 保存原始分數
+                candidate['original_similarity'] = candidate.get('similarity', 0)
+                candidate['rerank_score'] = rerank_score
+
+                # 混合策略：10% 原始 + 90% rerank
+                candidate['similarity'] = (
+                    candidate['original_similarity'] * 0.1 +
+                    rerank_score * 0.9
+                )
+
+                # 同步更新 boosted_similarity（這會覆蓋 SQL 的 intent_boost 計算）
+                # 🔧 優化日期：2026-01-28
+                # 🔧 這就是為何移除 SQL intent_boost 的原因：此處會完全覆蓋
+                candidate['boosted_similarity'] = candidate['similarity']
+
+            # 重新排序
+            candidates.sort(key=lambda x: x['similarity'], reverse=True)
+
+            # Debug 日誌
+            print(f"🔄 [Reranker] 重排序 {len(candidates)} 個候選結果 (混合比例: 10/90)")
+            for i, c in enumerate(candidates[:3], 1):  # 只顯示前 3 個
+                print(f"   排名 {i}: ID {c['id']} - {c['item_name'][:30]}")
+                print(f"      原始: {c['original_similarity']:.4f}, "
+                      f"Rerank: {c['rerank_score']:.4f}, "
+                      f"最終: {c['similarity']:.4f} (10/90 混合)")
+
+            return candidates
+
+        except Exception as e:
+            print(f"⚠️  Reranker 執行失敗: {e}")
+            # 失敗時返回原始結果
+            return candidates
 
     async def retrieve_sop_hybrid(
         self,
@@ -583,6 +695,16 @@ class VendorSOPRetriever:
 
             items_in_group = cursor.fetchall()
 
+            # 🔒 安全檢查：確保不會返回其他 vendor 的 SOP
+            if items_in_group:
+                for item in items_in_group:
+                    if item.get('vendor_id') != vendor_id:
+                        error_msg = f"⚠️  VENDOR ID MISMATCH in retrieve_sop_hybrid! 請求 vendor_id={vendor_id}, 但返回了 vendor_id={item.get('vendor_id')} 的 SOP (ID {item['id']})"
+                        print(f"\n{'='*80}")
+                        print(error_msg)
+                        print(f"{'='*80}\n")
+                        raise ValueError(error_msg)
+
             print(f"   ✅ Group內共獲取 {len(items_in_group)} 條項目（該Group全部項目）")
 
             # ==================== 階段3: 偏向判斷 ====================
@@ -690,8 +812,12 @@ class VendorSOPRetriever:
             # 收集所有 Group 內的項目（包括未選中的）
             for item in items_in_group:
                 boosted_sim = item.get('boosted_similarity', 0)
-                original_sim = item.get('original_similarity', 0)
                 intent_boost = item.get('intent_boost', 1.0)
+
+                # 計算原始相似度（未經 Intent 加成）
+                primary_sim = item.get('primary_similarity')
+                fallback_sim = item.get('fallback_similarity')
+                original_sim = max(primary_sim or 0, fallback_sim or 0)
 
                 debug_candidates.append({
                     'id': item['id'],
@@ -750,6 +876,7 @@ class VendorSOPRetriever:
             cursor.execute("""
                 SELECT
                     si.id,
+                    si.vendor_id,
                     si.category_id,
                     sc.category_name,
                     si.group_id,
@@ -778,6 +905,16 @@ class VendorSOPRetriever:
 
             rows = cursor.fetchall()
             cursor.close()
+
+            # 🔒 安全檢查：確保不會返回其他 vendor 的 SOP
+            if rows:
+                for row in rows:
+                    if row.get('vendor_id') != vendor_id:
+                        error_msg = f"⚠️  VENDOR ID MISMATCH in retrieve_sop_by_category! 請求 vendor_id={vendor_id}, 但返回了 vendor_id={row.get('vendor_id')} 的 SOP (ID {row['id']})"
+                        print(f"\n{'='*80}")
+                        print(error_msg)
+                        print(f"{'='*80}\n")
+                        raise ValueError(error_msg)
 
             results = []
             for row in rows:
@@ -936,6 +1073,7 @@ class VendorSOPRetriever:
             cursor.execute("""
                 SELECT
                     si.id,
+                    si.vendor_id,
                     si.category_id,
                     sc.category_name,
                     si.group_id,
@@ -965,6 +1103,16 @@ class VendorSOPRetriever:
 
             rows = cursor.fetchall()
             cursor.close()
+
+            # 🔒 安全檢查：確保不會返回其他 vendor 的 SOP
+            if rows:
+                for row in rows:
+                    if row.get('vendor_id') != vendor_id:
+                        error_msg = f"⚠️  VENDOR ID MISMATCH in retrieve_sop_by_group! 請求 vendor_id={vendor_id}, 但返回了 vendor_id={row.get('vendor_id')} 的 SOP (ID {row['id']})"
+                        print(f"\n{'='*80}")
+                        print(error_msg)
+                        print(f"{'='*80}\n")
+                        raise ValueError(error_msg)
 
             results = []
             for row in rows:

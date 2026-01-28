@@ -184,7 +184,7 @@ services:
       # RAG 檢索配置 - ✅ 選項1：統一檢索閾值（移除獨立 RAG fallback）
       SOP_SIMILARITY_THRESHOLD: ${SOP_SIMILARITY_THRESHOLD:-0.75}  # SOP 檢索相似度閾值（高精準）
       KB_SIMILARITY_THRESHOLD: 0.55  # Knowledge Base 統一檢索閾值（含語義匹配，涵蓋原 fallback 範圍）
-      HIGH_QUALITY_THRESHOLD: 0.8  # 高質量知識過濾閾值（用於答案生成）
+      HIGH_QUALITY_THRESHOLD: ${HIGH_QUALITY_THRESHOLD:-0.8}  # 高質量知識過濾閾值（用於答案生成）
       FALLBACK_SIMILARITY_THRESHOLD: 0.55  # ⚠️ 已廢棄：RAG Fallback 已移除，統一使用 KB_SIMILARITY_THRESHOLD
       RAG_SIMILARITY_THRESHOLD: ${RAG_SIMILARITY_THRESHOLD:-0.6}  # ⚠️ 已廢棄：待移除
       RAG_TOP_K: ${RAG_TOP_K:-5}  # RAG 檢索返回數量
@@ -221,6 +221,10 @@ services:
       # 質量評估配置
       QUALITY_EVALUATION_ENABLED: ${QUALITY_EVALUATION_ENABLED:-true}
       QUALITY_EVALUATION_THRESHOLD: ${QUALITY_EVALUATION_THRESHOLD:-6}
+      # Reranker 配置（2026-01-28）
+      # ⚠️  暫時禁用以避免依賴問題，可在修復後啟用
+      ENABLE_RERANKER: ${ENABLE_RERANKER:-true}
+      ENABLE_KNOWLEDGE_RERANKER: ${ENABLE_KNOWLEDGE_RERANKER:-true}
     ports:
       - "8100:8100"
     volumes:

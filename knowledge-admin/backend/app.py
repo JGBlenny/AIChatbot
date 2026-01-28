@@ -94,6 +94,9 @@ class KnowledgeUpdate(BaseModel):
     form_id: Optional[str] = None  # 表單關聯 ID（可選）
     action_type: Optional[str] = 'direct_answer'  # 動作類型：'direct_answer', 'form_fill', 'api_call', 'form_then_api'
     api_config: Optional[dict] = None  # API 配置（JSONB）：{ endpoint, params, combine_with_knowledge }
+    # 🆕 表單觸發模式（統一 SOP 邏輯）
+    trigger_mode: Optional[str] = 'none'  # 表單觸發模式：'none', 'manual', 'immediate'（auto 暫不實作）
+    immediate_prompt: Optional[str] = None  # immediate 模式的確認提示詞
 
 class KnowledgeResponse(BaseModel):
     """知識回應模型"""
@@ -270,6 +273,8 @@ async def get_knowledge(knowledge_id: int, user: dict = Depends(get_current_user
                    kb.form_id,
                    kb.action_type,
                    kb.api_config,
+                   kb.trigger_mode,
+                   kb.immediate_prompt,
                    v.name as vendor_name
             FROM knowledge_base kb
             LEFT JOIN vendors v ON kb.vendor_id = v.id
@@ -378,6 +383,8 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
                 form_id = %s,
                 action_type = %s,
                 api_config = %s,
+                trigger_mode = %s,
+                immediate_prompt = %s,
                 updated_at = NOW()
             WHERE id = %s
             RETURNING id, question_summary, updated_at
@@ -392,6 +399,8 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
             data.form_id,
             data.action_type,
             Json(data.api_config) if data.api_config else None,
+            data.trigger_mode,
+            data.immediate_prompt,
             knowledge_id
         ))
 
@@ -519,8 +528,8 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
 
         cur.execute("""
             INSERT INTO knowledge_base
-            (question_summary, answer, keywords, embedding, business_types, target_user, priority, form_id, action_type, api_config)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (question_summary, answer, keywords, embedding, business_types, target_user, priority, form_id, action_type, api_config, trigger_mode, immediate_prompt)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, created_at
         """, (
             data.question_summary,
@@ -532,7 +541,9 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
             data.priority,
             data.form_id,
             data.action_type,
-            Json(data.api_config) if data.api_config else None
+            Json(data.api_config) if data.api_config else None,
+            data.trigger_mode,
+            data.immediate_prompt
         ))
 
         new_record = cur.fetchone()

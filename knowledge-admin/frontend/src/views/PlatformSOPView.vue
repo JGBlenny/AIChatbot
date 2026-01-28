@@ -298,16 +298,23 @@
               />
             </div>
 
-            <!-- immediate 模式：確認提示詞 -->
+            <!-- immediate 模式：確認提示詞（可選） -->
             <div v-if="templateForm.trigger_mode === 'immediate'" class="form-group">
-              <label>確認提示詞 *</label>
+              <label>確認提示詞（選填）</label>
               <textarea
                 v-model="templateForm.immediate_prompt"
                 class="form-control"
-                rows="2"
-                placeholder="例如：需要立即為您申請報修嗎？（輸入「確認」開始）"
+                rows="3"
+                placeholder="留空則使用系統預設提示詞"
               ></textarea>
-              <small class="form-hint">💡 系統會在顯示 SOP 內容後，主動詢問此問題。用戶回覆「確認」、「好」、「是的」等肯定詞後，觸發後續動作</small>
+              <small class="form-hint">
+                💡 <strong>預設提示詞：</strong><br>
+                💡 **需要安排處理嗎？**<br>
+                • 回覆「要」或「需要」→ 立即填寫表單<br>
+                • 回覆「不用」→ 繼續為您解答其他問題<br>
+                <br>
+                如需自訂（例如：改為「需要安排維修嗎？」），請在上方輸入。
+              </small>
             </div>
 
             <div class="form-group">
@@ -906,13 +913,7 @@ export default {
           }
         }
 
-        // 驗證 immediate 模式
-        if (this.templateForm.trigger_mode === 'immediate') {
-          if (!this.templateForm.immediate_prompt || this.templateForm.immediate_prompt.trim() === '') {
-            alert('❌ 觸發模式選擇「緊急型（主動詢問）」時，必須設定確認提示詞');
-            return;
-          }
-        }
+        // immediate 模式不需要驗證 immediate_prompt（系統自動生成）
 
         // 驗證表單關聯
         if (['form_fill', 'form_then_api'].includes(this.templateForm.next_action)) {

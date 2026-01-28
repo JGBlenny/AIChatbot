@@ -157,8 +157,9 @@
                         <th>項目名稱</th>
                         <th>群組</th>
                         <th>基礎相似度</th>
+                        <th>Rerank分數</th>
                         <th>意圖加成</th>
-                        <th>加成後</th>
+                        <th>最終相似度 (10/90)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -183,6 +184,12 @@
                         </td>
                         <td class="text-left">{{ s.group_name || '-' }}</td>
                         <td>{{ s.base_similarity.toFixed(3) }}</td>
+                        <td>
+                          <span v-if="s.rerank_score !== undefined && s.rerank_score !== null" class="rerank-score">
+                            {{ s.rerank_score.toFixed(4) }}
+                          </span>
+                          <span v-else class="no-rerank">-</span>
+                        </td>
                         <td>{{ s.intent_boost }}x</td>
                         <td>{{ s.boosted_similarity.toFixed(3) }}</td>
                       </tr>
@@ -203,11 +210,9 @@
                         <th>摘要</th>
                         <th>Scope</th>
                         <th>基礎相似度</th>
-                        <th>意圖加成</th>
-                        <th>意圖相似度</th>
+                        <th>Rerank分數</th>
                         <th>優先級加成</th>
-                        <th>加成後</th>
-                        <th>Scope權重</th>
+                        <th>最終相似度 (10/90)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -232,11 +237,14 @@
                         </td>
                         <td><span class="scope-badge" :class="`scope-${k.scope}`">{{ k.scope }}</span></td>
                         <td>{{ k.base_similarity.toFixed(3) }}</td>
-                        <td>{{ k.intent_boost }}x</td>
-                        <td>{{ k.intent_semantic_similarity ? k.intent_semantic_similarity.toFixed(3) : 'N/A' }}</td>
+                        <td>
+                          <span v-if="k.rerank_score !== undefined && k.rerank_score !== null" class="rerank-score">
+                            {{ k.rerank_score.toFixed(4) }}
+                          </span>
+                          <span v-else class="no-rerank">-</span>
+                        </td>
                         <td>{{ k.priority_boost ? '+' + k.priority_boost.toFixed(3) : '0' }}</td>
                         <td>{{ k.boosted_similarity.toFixed(3) }}</td>
-                        <td>{{ k.scope_weight }}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -696,6 +704,7 @@ export default {
     getProcessingPathName(path) {
       const pathNames = {
         'sop': 'SOP 標準流程',
+        'sop_orchestrator': 'SOP 標準流程',  // 🆕 新增：SOP Orchestrator 映射
         'knowledge': '知識庫流程',
         'rag_fallback': 'RAG 降級檢索',
         'param_answer': '參數查詢',
@@ -714,6 +723,7 @@ export default {
         'synthesis': '答案合成（多來源）',
         'llm': 'LLM 完整優化',
         'direct': '直接返回（SOP）',
+        'orchestrated': 'SOP 編排執行',  // 🆕 新增：SOP Orchestrator 策略
         'param_query': '參數查詢',
         'fallback': '兜底回應',
         'none': '無優化',
@@ -1370,6 +1380,23 @@ export default {
 .candidates-table .id-link {
   font-family: 'Courier New', monospace;
   font-weight: 600;
+}
+
+/* Rerank 分數樣式 */
+.candidates-table .rerank-score {
+  display: inline-block;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 4px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+
+.candidates-table .no-rerank {
+  color: #9ca3af;
+  font-style: italic;
 }
 
 .param-item {

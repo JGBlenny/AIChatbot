@@ -17,6 +17,7 @@ from __future__ import annotations
 from typing import Optional, Dict, List, Tuple
 from datetime import datetime
 import json
+import os
 
 from services.vendor_sop_retriever import VendorSOPRetriever
 from services.sop_trigger_handler import SOPTriggerHandler, TriggerMode
@@ -94,6 +95,7 @@ class SOPOrchestrator:
         print(f"{'='*80}")
         print(f"用戶訊息: {user_message}")
         print(f"Session ID: {session_id}")
+        print(f"Vendor ID: {vendor_id}")
         print(f"Intent ID: {intent_id}")
 
         # ========================================
@@ -135,12 +137,14 @@ class SOPOrchestrator:
         print(f"\n🔍 無待處理 Context，檢索新 SOP")
 
         # ✅ 使用向量相似度檢索 SOP（Intent 作為輔助排序）
+        # 修改：提高 top_k 以便 Reranker 有足夠的候選結果進行重排序
+        sop_similarity_threshold = float(os.getenv("SOP_SIMILARITY_THRESHOLD", "0.55"))  # 降低閾值，讓更多候選進入 Reranker
         sop_items = await self.sop_retriever.retrieve_sop_by_query(
             vendor_id=vendor_id,
             query=user_message,
             intent_id=intent_id,  # 可選，用於加成排序
-            top_k=1,  # 只取最相關的
-            similarity_threshold=0.55  # 與 Knowledge Base 一致
+            top_k=5,  # 取前 5 個候選，讓 Reranker 進行語義重排序
+            similarity_threshold=sop_similarity_threshold
         )
 
         if not sop_items:
@@ -148,6 +152,7 @@ class SOPOrchestrator:
             return {
                 'has_sop': False,
                 'sop_item': None,
+                'all_sop_candidates': [],  # 🆕 添加所有候選結果
                 'trigger_result': None,
                 'action_result': None,
                 'response': None,
@@ -156,10 +161,11 @@ class SOPOrchestrator:
 
         sop_item = sop_items[0]
         print(f"   ✅ 找到 SOP: {sop_item.get('item_name')}")
+        print(f"   📋 共 {len(sop_items)} 個候選結果")
 
-        # 處理新 SOP
+        # 處理新 SOP，並傳遞所有候選結果
         return await self._handle_new_sop(
-            sop_item, user_message, session_id, user_id, vendor_id
+            sop_item, user_message, session_id, user_id, vendor_id, all_candidates=sop_items
         )
 
     async def _handle_existing_context(
@@ -185,17 +191,39 @@ class SOPOrchestrator:
         # immediate 模式使用確認詞，manual 模式使用觸發關鍵詞
         if trigger_mode == 'immediate' and not trigger_keywords:
             # immediate 模式的確認詞列表
-            trigger_keywords = ['確認', '好', '是的', '可以', 'ok', 'yes', '要', '開始']
+            trigger_keywords = ['確認', '好', '是的', '可以', 'ok', 'yes', '要', '需要', '開始']
 
         print(f"\n🔑 檢查關鍵詞匹配")
         print(f"   觸發關鍵詞: {trigger_keywords}")
+        print(f"   用戶訊息: {user_message}")
 
-        # 檢查關鍵詞匹配
-        is_match, matched_keyword, match_type = self.keyword_matcher.match_any(
-            user_message,
-            trigger_keywords,
-            match_types=["contains", "synonyms"]
-        )
+        # 🔧 immediate 模式：檢查是否為問句（問句不視為確認）
+        is_question = False
+        if trigger_mode == 'immediate':
+            question_indicators = ['？', '?', '嗎', '呢', '什麼', '如何', '怎麼', '怎樣', '為何', '為什麼', '哪裡', '哪里', '誰', '何時']
+            is_question = any(indicator in user_message for indicator in question_indicators)
+            is_long_message = len(user_message) > 10  # 超過10個字符視為完整問題
+
+            if is_question or is_long_message:
+                print(f"   ⚠️  檢測到問句或長訊息，不視為確認")
+                print(f"      is_question: {is_question}, is_long_message: {is_long_message}")
+                is_match = False
+                matched_keyword = None
+                match_type = None
+            else:
+                # 檢查關鍵詞匹配
+                is_match, matched_keyword, match_type = self.keyword_matcher.match_any(
+                    user_message,
+                    trigger_keywords,
+                    match_types=["contains", "synonyms"]
+                )
+        else:
+            # manual 模式：正常檢查關鍵詞
+            is_match, matched_keyword, match_type = self.keyword_matcher.match_any(
+                user_message,
+                trigger_keywords,
+                match_types=["contains", "synonyms"]
+            )
 
         if is_match:
             print(f"   ✅ 匹配成功: {matched_keyword} ({match_type})")
@@ -224,6 +252,7 @@ class SOPOrchestrator:
             return {
                 'has_sop': True,
                 'sop_item': sop_context,
+                'all_sop_candidates': [sop_context],  # 🆕 添加候選結果（existing context 只有一個）
                 'trigger_result': {
                     'matched': True,
                     'keyword': matched_keyword,
@@ -245,6 +274,7 @@ class SOPOrchestrator:
                 return {
                     'has_sop': True,
                     'sop_item': sop_context,
+                    'all_sop_candidates': [sop_context],  # 🆕 添加候選結果（existing context 只有一個）
                     'trigger_result': {
                         'matched': False,
                         'reason': '未匹配觸發關鍵詞'
@@ -260,6 +290,7 @@ class SOPOrchestrator:
                 return {
                     'has_sop': True,
                     'sop_item': sop_context,
+                    'all_sop_candidates': [sop_context],  # 🆕 添加候選結果（existing context 只有一個）
                     'trigger_result': {
                         'matched': False,
                         'reason': '未匹配確認詞'
@@ -274,6 +305,7 @@ class SOPOrchestrator:
                 return {
                     'has_sop': True,
                     'sop_item': sop_context,
+                    'all_sop_candidates': [sop_context],  # 🆕 添加候選結果（existing context 只有一個）
                     'trigger_result': {
                         'matched': False
                     },
@@ -288,7 +320,8 @@ class SOPOrchestrator:
         user_message: str,
         session_id: str,
         user_id: str,
-        vendor_id: int
+        vendor_id: int,
+        all_candidates: List[Dict] = None  # 🆕 添加所有候選結果參數
     ) -> Dict:
         """
         處理新檢索到的 SOP
@@ -311,6 +344,15 @@ class SOPOrchestrator:
                 'trigger_mode': 'none',
                 'next_action': 'none'
             }
+        else:
+            # 🔧 保留原始 sop_item 的相似度資訊（從 retrieve_sop_by_query 返回）
+            # _fetch_sop_with_next_action 重新查詢時不包含這些欄位，需要手動保留
+            sop_item_full['similarity'] = sop_item.get('similarity')
+            sop_item_full['boosted_similarity'] = sop_item.get('boosted_similarity')
+            sop_item_full['original_similarity'] = sop_item.get('original_similarity')
+            sop_item_full['rerank_score'] = sop_item.get('rerank_score')
+            sop_item_full['group_name'] = sop_item.get('group_name')
+            sop_item_full['category_name'] = sop_item.get('category_name')
 
         # 處理觸發模式
         trigger_result = self.trigger_handler.handle(
@@ -332,6 +374,7 @@ class SOPOrchestrator:
             return {
                 'has_sop': True,
                 'sop_item': sop_item_full,
+                'all_sop_candidates': all_candidates or [sop_item_full],  # 🆕 添加所有候選結果
                 'trigger_result': trigger_result,
                 'action_result': None,
                 'response': trigger_result.get('response'),
@@ -343,6 +386,7 @@ class SOPOrchestrator:
             return {
                 'has_sop': True,
                 'sop_item': sop_item_full,
+                'all_sop_candidates': all_candidates or [sop_item_full],  # 🆕 添加所有候選結果
                 'trigger_result': trigger_result,
                 'action_result': None,
                 'response': trigger_result.get('response'),
@@ -354,6 +398,7 @@ class SOPOrchestrator:
             return {
                 'has_sop': True,
                 'sop_item': sop_item_full,
+                'all_sop_candidates': all_candidates or [sop_item_full],  # 🆕 添加所有候選結果
                 'trigger_result': trigger_result,
                 'action_result': None,
                 'response': trigger_result.get('response'),
@@ -388,6 +433,7 @@ class SOPOrchestrator:
             return {
                 'has_sop': True,
                 'sop_item': sop_item_full,
+                'all_sop_candidates': all_candidates or [sop_item_full],  # 🆕 添加所有候選結果
                 'trigger_result': trigger_result,
                 'action_result': action_result,
                 'response': combined_response,
@@ -399,6 +445,7 @@ class SOPOrchestrator:
             return {
                 'has_sop': True,
                 'sop_item': sop_item_full,
+                'all_sop_candidates': all_candidates or [sop_item_full],  # 🆕 添加所有候選結果
                 'trigger_result': trigger_result,
                 'action_result': None,
                 'response': trigger_result.get('response'),

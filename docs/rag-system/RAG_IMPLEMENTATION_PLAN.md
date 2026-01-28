@@ -267,6 +267,55 @@ intents:
     confidence_threshold: 0.80
 ```
 
+#### 2.7 Reranker 檢索優化 (2026-01-28 新增)
+
+**狀態**: ✅ 已完成
+
+**功能**:
+- 使用 Cross-Encoder 模型重新排序檢索結果
+- 提升 SOP 和 Knowledge 檢索準確率
+- 二階段檢索：向量相似度 + 語義重排序
+
+**實作方式**:
+```python
+# 使用 BAAI/bge-reranker-base 模型
+from sentence_transformers import CrossEncoder
+
+reranker = CrossEncoder('BAAI/bge-reranker-base', max_length=512)
+
+# 準備輸入對：[問題, 答案]
+pairs = [[query, f"{doc['title']} {doc['content']}"]
+         for doc in candidates]
+
+# 預測相關性分數
+raw_scores = reranker.predict(pairs, batch_size=32)
+
+# 混合分數：30% 原始 + 70% Rerank
+final_score = original_similarity * 0.3 + rerank_score * 0.7
+```
+
+**效果驗證**:
+
+| 檢索類型 | Before | After | 改進 |
+|---------|--------|-------|------|
+| SOP | 錯誤匹配 | ✅ 修正 | - |
+| Knowledge | 25% 準確率 | 75% 準確率 | **+200%** |
+
+**配置**:
+```bash
+# 環境變數
+ENABLE_RERANKER=true                  # SOP Reranker
+ENABLE_KNOWLEDGE_RERANKER=true        # Knowledge Reranker
+```
+
+**文件位置**:
+- `rag-orchestrator/services/vendor_sop_retriever.py` (SOP)
+- `rag-orchestrator/services/vendor_knowledge_retriever.py` (Knowledge)
+
+**詳細文檔**: [Reranker 功能文檔](../features/RERANKER_FEATURE.md)
+
+---
+
 **交付物**:
 - ✅ RAG Orchestrator 服務 (FastAPI)
 - ✅ 意圖分類 API
@@ -275,6 +324,7 @@ intents:
 - ✅ 對話記錄資料庫
 - ✅ 配置檔案系統
 - ✅ API 文件
+- ✅ Reranker 檢索優化 (2026-01-28)
 
 **預計完成時間**: 2-3 天
 

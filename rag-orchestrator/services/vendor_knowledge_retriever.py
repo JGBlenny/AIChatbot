@@ -26,6 +26,25 @@ class VendorKnowledgeRetriever:
         from .intent_semantic_matcher import get_intent_semantic_matcher
         self.intent_matcher = get_intent_semantic_matcher()
 
+        # 🆕 Reranker 初始化（2026-01-28）
+        RERANKER_ENABLED = os.getenv('ENABLE_KNOWLEDGE_RERANKER', 'false').lower() == 'true'
+        self.reranker = None
+        self.reranker_enabled = False
+
+        if RERANKER_ENABLED:
+            try:
+                from sentence_transformers import CrossEncoder
+                self.reranker = CrossEncoder(
+                    'BAAI/bge-reranker-base',
+                    max_length=512
+                )
+                self.reranker_enabled = True
+                print("✅ Knowledge Reranker initialized (bge-reranker-base)")
+            except Exception as e:
+                print(f"⚠️  Knowledge Reranker 初始化失敗: {e}")
+                self.reranker = None
+                self.reranker_enabled = False
+
     def _get_db_connection(self):
         """建立資料庫連接（使用共用配置）"""
         db_config = get_db_config()
@@ -140,6 +159,78 @@ class VendorKnowledgeRetriever:
 
         finally:
             conn.close()
+
+    def _apply_reranker(self, query: str, candidates: List[Dict]) -> List[Dict]:
+        """
+        使用 Reranker 重排序候選結果（2026-01-28 新增）
+
+        策略：混合原始相似度和 rerank 分數
+        - 30% 原始向量相似度（快速召回）
+        - 70% rerank 分數（精確排序）
+
+        Args:
+            query: 用戶問題
+            candidates: 候選結果列表（Knowledge）
+
+        Returns:
+            重排序後的結果列表
+        """
+        if not candidates or not self.reranker_enabled:
+            return candidates
+
+        try:
+            # 準備輸入對：[問題, 知識摘要 + 答案]
+            pairs = [
+                [query, f"{c.get('question_summary', '')} {c.get('answer', '')}"]
+                for c in candidates
+            ]
+
+            # 批次預測相關性分數（-1 到 1）
+            raw_scores = self.reranker.predict(pairs, batch_size=32)
+
+            # 歸一化到 0-1 範圍
+            normalized_scores = [(score + 1) / 2 for score in raw_scores]
+
+            # 更新分數
+            for candidate, rerank_score in zip(candidates, normalized_scores):
+                # 保存原始分數（可能來自 base_similarity 或 original_similarity）
+                if 'base_similarity' in candidate:
+                    candidate['original_similarity'] = candidate['base_similarity']
+                elif 'original_similarity' not in candidate:
+                    candidate['original_similarity'] = candidate.get('similarity', 0)
+
+                candidate['rerank_score'] = rerank_score
+
+                # 混合策略：10% 原始 + 90% rerank
+                original_sim = candidate['original_similarity']
+                candidate['similarity'] = (
+                    original_sim * 0.1 +
+                    rerank_score * 0.9
+                )
+
+                # 同步更新 boosted_similarity
+                candidate['boosted_similarity'] = candidate['similarity']
+
+            # 重新排序
+            candidates.sort(key=lambda x: x['similarity'], reverse=True)
+
+            # Debug 日誌
+            print(f"🔄 [Knowledge Reranker] 重排序 {len(candidates)} 個候選結果 (混合比例: 10/90)")
+            for i, c in enumerate(candidates[:3], 1):  # 只顯示前 3 個
+                question_summary = c.get('question_summary', '')[:30]
+                print(f"   排名 {i}: ID {c['id']} - {question_summary}")
+                print(f"      原始: {c['original_similarity']:.4f}, "
+                      f"Rerank: {c['rerank_score']:.4f}, "
+                      f"最終: {c['similarity']:.4f} (10/90 混合)")
+
+            return candidates
+
+        except Exception as e:
+            print(f"⚠️  Knowledge Reranker 執行失敗: {e}")
+            import traceback
+            traceback.print_exc()
+            # 失敗時返回原始結果
+            return candidates
 
     async def _get_embedding(self, text: str) -> Optional[List[float]]:
         """
@@ -285,6 +376,8 @@ class VendorKnowledgeRetriever:
                     kb.trigger_form_condition,
                     kb.action_type,
                     kb.api_config,
+                    kb.trigger_mode,
+                    kb.immediate_prompt,
                     kim.intent_id,
                     kim.intent_type,
                     -- 計算向量相似度
@@ -368,69 +461,36 @@ class VendorKnowledgeRetriever:
             print(f"   SQL threshold: {sql_threshold:.3f}, Target threshold: {similarity_threshold:.3f}")
             print(f"   Found {len(rows)} SQL candidates (will rerank and filter):")
 
-            # ✅ 方案2：使用語義匹配器重新計算 intent_boost
+            # ✅ 簡化邏輯：僅使用 base_similarity 過濾
+            # 修改日期：2026-01-28
+            # 修改原因：意圖加成被 Reranker 10/90 混合覆蓋，移除無效計算
+            # 保留功能：Reranker 10/90 混合會在後續步驟計算最終相似度
             candidates = []
             filtered_count = 0
             for row in rows:
                 knowledge = dict(row)
-                knowledge_intent_id = knowledge.get('intent_id')
-                knowledge_intent_type = knowledge.get('intent_type')
-
-                # 使用語義匹配器計算 boost
-                intent_semantic_similarity = None
-
-                # unclear 情況（intent_id = None）：無意圖加成
-                if intent_id is None:
-                    boost = 1.0
-                    reason = "無意圖（unclear）"
-                    intent_semantic_similarity = 0.0
-                elif use_semantic_boost and knowledge_intent_id:
-                    boost, reason, intent_semantic_similarity = self.intent_matcher.calculate_semantic_boost(
-                        intent_id,
-                        knowledge_intent_id,
-                        knowledge_intent_type
-                    )
-                else:
-                    # 沒有意圖標註或不使用語義加成
-                    if knowledge_intent_id == intent_id:
-                        boost = 1.3
-                        reason = "精確匹配"
-                        intent_semantic_similarity = 1.0
-                    elif knowledge_intent_id in all_intent_ids:
-                        boost = 1.1
-                        reason = "次要意圖匹配"
-                        intent_semantic_similarity = 0.8
-                    else:
-                        boost = 1.0
-                        reason = "無意圖匹配"
-                        intent_semantic_similarity = 0.0
-
-                # 重新計算加成後相似度
                 base_similarity = knowledge['base_similarity']
-                boosted_similarity = base_similarity * boost
 
-                # ✅ 方案 A：只用向量相似度過濾，意圖純粹作為排序因子
-                # 修改日期：2026-01-13
-                # 修改原因：消除「意圖依賴區間」，使意圖變成純排序加分項而非過濾條件
+                # 僅用 base_similarity 過濾
                 if base_similarity < similarity_threshold:
                     filtered_count += 1
                     continue
 
-                # 更新 boost 和加成後相似度
-                knowledge['intent_boost'] = boost
-                knowledge['boosted_similarity'] = boosted_similarity
-                knowledge['boost_reason'] = reason
-                knowledge['intent_semantic_similarity'] = intent_semantic_similarity
-
                 candidates.append(knowledge)
 
-            print(f"   After semantic boost and filtering: {len(candidates)} candidates (filtered out: {filtered_count})")
+            print(f"   After base_similarity filtering: {len(candidates)} candidates (filtered out: {filtered_count})")
 
-            # ✅ 重新排序：scope_weight > boosted_similarity > priority
+            # 🆕 使用 Reranker 重排序（2026-01-28）
+            if self.reranker_enabled and len(candidates) > 1:
+                candidates = self._apply_reranker(query, candidates)
+
+            # ✅ 重新排序：scope_weight > similarity > priority
+            # 注意：如果啟用 Reranker，candidates 已經按 similarity 排序（10/90 混合）
+            # 這裡再次排序是為了確保 scope_weight 優先級最高
             candidates.sort(
                 key=lambda x: (
                     -x['scope_weight'],           # 降序：scope 優先級高的在前
-                    -x['boosted_similarity'],     # 降序：相似度高的在前
+                    -x.get('similarity', x.get('base_similarity', 0)),  # 降序：使用 Reranker 後的 similarity
                     -x.get('priority', 0)         # 降序：人工優先級高的在前
                 )
             )
@@ -455,35 +515,42 @@ class VendorKnowledgeRetriever:
 
             # 輸出結果
             for idx, knowledge in enumerate(results, 1):
-                # 標記 Intent 匹配狀態
-                if knowledge['intent_id'] == intent_id:
+                # 標記 Intent 匹配狀態（僅用於日誌顯示）
+                if knowledge.get('intent_id') == intent_id:
                     intent_marker = "★"  # 主要 Intent
-                elif knowledge['intent_id'] in all_intent_ids:
+                elif knowledge.get('intent_id') in all_intent_ids:
                     intent_marker = "☆"  # 次要 Intent
                 else:
                     intent_marker = "○"  # 其他
 
-                print(f"   {idx}. {intent_marker} ID {knowledge['id']}: {knowledge['question_summary'][:40]}... "
-                      f"(原始: {knowledge['base_similarity']:.3f}, "
-                      f"boost: {knowledge['intent_boost']:.2f}x [{knowledge['boost_reason']}], "
-                      f"加成後: {knowledge['boosted_similarity']:.3f}, "
-                      f"intent: {knowledge['intent_id']})")
+                # 顯示分數信息
+                base_sim = knowledge.get('base_similarity', 0)
+                final_sim = knowledge.get('similarity', base_sim)
+                rerank = knowledge.get('rerank_score')
 
-                # 保留原始相似度和加成後相似度
-                # similarity: 加成後相似度（用於排序）
-                # original_similarity: 原始相似度（用於完美匹配判斷）
-                knowledge['similarity'] = knowledge['boosted_similarity']
+                if rerank is not None:
+                    print(f"   {idx}. {intent_marker} ID {knowledge['id']}: {knowledge['question_summary'][:40]}... "
+                          f"(base: {base_sim:.3f}, rerank: {rerank:.3f}, final: {final_sim:.3f}, "
+                          f"intent: {knowledge.get('intent_id')})")
+                else:
+                    print(f"   {idx}. {intent_marker} ID {knowledge['id']}: {knowledge['question_summary'][:40]}... "
+                          f"(base: {base_sim:.3f}, final: {final_sim:.3f}, "
+                          f"intent: {knowledge.get('intent_id')})")
+
+                # 保留原始相似度
+                # similarity: Reranker 10/90 混合後的最終相似度（用於排序）
+                # original_similarity: 原始 embedding 相似度（用於完美匹配判斷）
+                if 'similarity' not in knowledge:
+                    knowledge['similarity'] = knowledge['base_similarity']
                 knowledge['original_similarity'] = knowledge['base_similarity']
 
                 # 如果不是調試模式，移除內部欄位
                 if not return_debug_info:
                     knowledge.pop('scope_weight', None)
-                    knowledge.pop('base_similarity', None)
-                    knowledge.pop('boosted_similarity', None)
-                    knowledge.pop('intent_boost', None)
+                    # knowledge.pop('base_similarity', None)  # 保留：供高質量過濾使用
+                    # knowledge.pop('rerank_score', None)     # 保留：供前端 Debug Info 顯示
                     knowledge.pop('sql_intent_boost', None)
                     knowledge.pop('sql_boosted_similarity', None)
-                    knowledge.pop('boost_reason', None)
 
             return results
 

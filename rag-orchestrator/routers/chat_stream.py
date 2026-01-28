@@ -198,25 +198,11 @@ async def chat_stream_generator(
             "has_results": len(search_results) > 0
         })
 
-        # 5. 信心度評估（SOP 檢索時強制使用高信心度）
-        from routers.chat_shared import has_sop_results
-
-        has_sop = has_sop_results(search_results)
-
-        if has_sop:
-            # SOP 精準匹配，強制使用高信心度（與 chat.py 統一）
-            evaluation = {
-                'confidence_score': 0.95,
-                'confidence_level': 'high',
-                'decision': 'direct_answer'
-            }
-            print(f"📋 [SOP] 強制使用高信心度（similarity=1.0）")
-        else:
-            # 正常信心度評估
-            evaluation = confidence_evaluator.evaluate(
-                search_results=search_results,
-                question_keywords=intent_result['keywords']
-            )
+        # 5. 信心度評估（統一使用評估器，包含 SOP）
+        evaluation = confidence_evaluator.evaluate(
+            search_results=search_results,
+            question_keywords=intent_result['keywords']
+        )
 
         yield await generate_sse_event("confidence", {
             "score": evaluation['confidence_score'],
