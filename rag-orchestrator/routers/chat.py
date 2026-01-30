@@ -1486,41 +1486,36 @@ async def _build_knowledge_response(
         else:
             print(f"📝 [表單觸發] 知識 {best_knowledge['id']} 關聯表單 {form_id}，trigger_mode={trigger_mode}")
 
-            # 🆕 使用 SOP Orchestrator 處理表單觸發（統一邏輯）
-            # 將知識庫項目轉換為 SOP 格式
-            sop_item_format = {
-                'id': best_knowledge['id'],
-                'question_summary': best_knowledge['question_summary'],
-                'answer': best_knowledge['answer'],
-                'trigger_mode': trigger_mode,
-                'immediate_prompt': best_knowledge.get('immediate_prompt'),
-                'next_form_id': form_id,
-                'scope': 'knowledge_base',  # 標記來源
-                'source_type': 'knowledge',
-                'similarity': best_knowledge.get('similarity'),  # 保留原始相似度
-                'base_similarity': best_knowledge.get('base_similarity')  # 保留基礎相似度
-            }
+            # ========================================
+            # 根據 trigger_mode 處理表單觸發
+            # ========================================
 
-            # 使用 SOP Orchestrator 處理
-            sop_orchestrator = req.app.state.sop_orchestrator
+            if trigger_mode == 'none':
+                # 資訊型：僅回答知識內容，不觸發表單
+                # 降級為 direct_answer（讓後面的邏輯處理）
+                print(f"   ℹ️  trigger_mode=none，降級為 direct_answer")
+                action_type = 'direct_answer'
 
-            # 從 intent_result 獲取 intent_id
-            primary_intent_id = intent_result.get('intent_ids', [None])[0] if intent_result.get('intent_ids') else None
+            elif trigger_mode in ['manual', 'immediate']:
+                # 排查型/行動型：需要使用 SOP Orchestrator 處理關鍵詞匹配
+                # TODO: 完整實作 Knowledge Base 的 trigger_mode 處理
+                print(f"   ⚠️  trigger_mode={trigger_mode} 暫不支援，降級為 direct_answer")
+                print(f"   💡 建議：將此知識轉為 SOP，或改用 trigger_mode=none")
+                action_type = 'direct_answer'
 
-            orchestrator_result = await sop_orchestrator.process_message(
-                user_message=request.message,
-                session_id=request.session_id,
-                user_id=request.user_id or "unknown",
-                vendor_id=request.vendor_id,
-                intent_id=primary_intent_id,
-                intent_ids=intent_result.get('intent_ids', [])
-            )
+            else:  # trigger_mode == 'auto' 或其他值
+                # 自動觸發：直接觸發表單
+                form_manager = req.app.state.form_manager
+                form_result = await form_manager.trigger_form_by_knowledge(
+                    knowledge_id=best_knowledge['id'],
+                    form_id=form_id,
+                    session_id=request.session_id,
+                    user_id=request.user_id,
+                    vendor_id=request.vendor_id,
+                    trigger_question=request.message
+                )
 
-            # 構建回應（使用統一的 orchestrator 結果處理）
-            return await _build_orchestrator_response(
-                request, req, orchestrator_result,
-                resolver, vendor_info, cache_service
-            )
+                return _convert_form_result_to_response(form_result, request)
 
     elif action_type in ['api_call', 'form_then_api']:
         # 場景 C/D/E/F: 涉及 API 調用
