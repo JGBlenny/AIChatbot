@@ -1518,11 +1518,8 @@ async def _build_knowledge_response(
 
             # 構建回應（使用統一的 orchestrator 結果處理）
             return await _build_orchestrator_response(
-                orchestrator_result=orchestrator_result,
-                sop_item=sop_item_format,
-                intent_result=intent_result,
-                request=request,
-                req=req
+                request, req, orchestrator_result,
+                resolver, vendor_info, cache_service
             )
 
     elif action_type in ['api_call', 'form_then_api']:
