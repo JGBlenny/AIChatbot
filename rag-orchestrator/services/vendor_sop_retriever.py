@@ -33,6 +33,10 @@ class VendorSOPRetriever:
         self._cache: Dict[int, Dict] = {}  # vendor_id -> vendor_info
         self.embedding_client = get_embedding_client()  # 向量服務客戶端
 
+        # 從環境變數讀取閾值配置
+        self.sop_similarity_threshold = float(os.getenv("SOP_SIMILARITY_THRESHOLD", "0.75"))
+        print(f"ℹ️  SOP 相似度閾值: {self.sop_similarity_threshold}")
+
         # 🆕 初始化 Reranker（使用更小的模型）
         self.reranker = None
         if RERANKER_AVAILABLE:
@@ -587,15 +591,19 @@ class VendorSOPRetriever:
             can_enter_group = False
             decision_path = ""
 
-            # 步驟1: 高置信度 - Group > 0.75 直接進入
-            if group_similarity > 0.75:
+            # 動態計算閾值
+            high_threshold = self.sop_similarity_threshold + 0.20  # 例如 0.55 + 0.20 = 0.75
+            medium_threshold = self.sop_similarity_threshold + 0.10  # 例如 0.55 + 0.10 = 0.65
+
+            # 步驟1: 高置信度 - Group > high_threshold 直接進入
+            if group_similarity > high_threshold:
                 can_enter_group = True
-                decision_path = "步驟1: Group相似度 > 0.75，直接進入"
+                decision_path = f"步驟1: Group相似度 > {high_threshold:.2f}，直接進入"
                 print(f"   ✅ {decision_path}")
 
-            # 步驟2: 中等置信度 - 0.65 < Group ≤ 0.75，計算混合分數
-            elif group_similarity > 0.65:
-                print(f"   🔍 步驟2: 0.65 < Group相似度 ≤ 0.75，計算混合分數...")
+            # 步驟2: 中等置信度 - medium_threshold < Group ≤ high_threshold，計算混合分數
+            elif group_similarity > medium_threshold:
+                print(f"   🔍 步驟2: {medium_threshold:.2f} < Group相似度 ≤ {high_threshold:.2f}，計算混合分數...")
 
                 # 獲取該Group內最高的Item相似度
                 cursor.execute("""
@@ -622,17 +630,17 @@ class VendorSOPRetriever:
                 print(f"      - Item最高相似度: {max_item_similarity:.3f}")
                 print(f"      - 混合分數: 0.3×{group_similarity:.3f} + 0.7×{max_item_similarity:.3f} = {hybrid_score:.3f}")
 
-                if hybrid_score > 0.75:
+                if hybrid_score > high_threshold:
                     can_enter_group = True
-                    decision_path = f"步驟2: 混合分數 {hybrid_score:.3f} > 0.75，通過驗證"
+                    decision_path = f"步驟2: 混合分數 {hybrid_score:.3f} > {high_threshold:.2f}，通過驗證"
                     print(f"   ✅ {decision_path}")
                 else:
-                    decision_path = f"步驟2: 混合分數 {hybrid_score:.3f} ≤ 0.75，拒絕進入"
+                    decision_path = f"步驟2: 混合分數 {hybrid_score:.3f} ≤ {high_threshold:.2f}，拒絕進入"
                     print(f"   ❌ {decision_path}")
 
-            # 步驟3: 低置信度 - Group ≤ 0.65 直接拒絕
+            # 步驟3: 低置信度 - Group ≤ medium_threshold 直接拒絕
             else:
-                decision_path = "步驟3: Group相似度 ≤ 0.65，直接拒絕"
+                decision_path = f"步驟3: Group相似度 ≤ {medium_threshold:.2f}，直接拒絕"
                 print(f"   ❌ {decision_path}")
 
             # 如果無法進入Group，返回空結果
@@ -768,10 +776,10 @@ class VendorSOPRetriever:
                                 has_bias = True
                                 bias_reason = f"最高相似度 {top1_sim:.3f} 顯著高於第2名 {top2_sim:.3f}（差距 {gap:.3f}）"
 
-                            # 策略2b：第2名 < 0.75
-                            elif top2_sim < 0.75:
+                            # 策略2b：第2名 < high_threshold
+                            elif top2_sim < high_threshold:
                                 has_bias = True
-                                bias_reason = f"最高相似度 {top1_sim:.3f} >= {bias_threshold}，第2名 {top2_sim:.3f} < 0.75"
+                                bias_reason = f"最高相似度 {top1_sim:.3f} >= {bias_threshold}，第2名 {top2_sim:.3f} < {high_threshold:.2f}"
                         else:
                             # 只有1個item
                             has_bias = True

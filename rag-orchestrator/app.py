@@ -256,9 +256,11 @@ async def get_stats():
 
 if __name__ == "__main__":
     import uvicorn
+    # 只在開發環境啟用 reload，生產環境應禁用以避免 DNS 解析問題
+    reload_enabled = os.getenv("UVICORN_RELOAD", "false").lower() == "true"
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
         port=8100,
-        reload=True
+        reload=reload_enabled
     )

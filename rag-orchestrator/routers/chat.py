@@ -1503,13 +1503,17 @@ async def _build_knowledge_response(
 
             # 使用 SOP Orchestrator 處理
             sop_orchestrator = req.app.state.sop_orchestrator
-            orchestrator_result = await sop_orchestrator.handle_sop_action(
-                sop_item=sop_item_format,
+
+            # 從 intent_result 獲取 intent_id
+            primary_intent_id = intent_result.get('intent_ids', [None])[0] if intent_result.get('intent_ids') else None
+
+            orchestrator_result = await sop_orchestrator.process_message(
                 user_message=request.message,
                 session_id=request.session_id,
-                user_id=request.user_id,
+                user_id=request.user_id or "unknown",
                 vendor_id=request.vendor_id,
-                target_user=request.target_user
+                intent_id=primary_intent_id,
+                intent_ids=intent_result.get('intent_ids', [])
             )
 
             # 構建回應（使用統一的 orchestrator 結果處理）
