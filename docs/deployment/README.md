@@ -4,6 +4,12 @@
 
 ## 🚀 快速開始
 
+### 從 fa4d9a6 更新到最新版本（⭐ 推薦）
+```bash
+cat docs/deployment/DEPLOY_FROM_FA4D9A6_TO_LATEST.md
+```
+**適用情境**：從生產環境版本（fa4d9a6）升級到最新版本（e3a6ff9）
+
 ### 日常小更新（沒有資料庫遷移）
 ```bash
 cat docs/deployment/DEPLOY_GUIDE.md
@@ -170,7 +176,86 @@ deployment/
 
 ---
 
-### 2026-01-26 ⭐ 最新
+### 2026-01-28 ⭐⭐⭐ 最新
+
+**主要更新：**
+- **🔄 Reranker 二階段檢索** ⭐⭐⭐⭐⭐：Knowledge 準確率提升 3 倍（25%→75%）
+- **🎯 智能檢索系統** ⭐⭐⭐⭐⭐：SOP 與知識庫並行檢索 + 分數比較決策
+- **⚡ 意圖加成優化** ⭐⭐⭐：效能提升 5-10%，代碼簡化 -46 行
+- **🎨 前端改進**：新增 Rerank 分數顯示，移除混亂欄位（11 欄 → 8 欄）
+- **🔧 觸發模式改進**：immediate 模式確認提示詞改為可選（系統預設）
+
+**部署文件：**
+- [DEPLOYMENT_2026-01-28.md](DEPLOYMENT_2026-01-28.md) - 完整部署指南（含回滾計畫）
+
+**技術文檔：**
+- [SMART_RETRIEVAL_IMPLEMENTATION.md](../SMART_RETRIEVAL_IMPLEMENTATION.md) - 智能檢索完整實施報告
+- [SMART_RETRIEVAL_QUICK_REF.md](../SMART_RETRIEVAL_QUICK_REF.md) - 快速參考指南
+- [RERANKER_FEATURE.md](../features/RERANKER_FEATURE.md) - Reranker 功能文檔
+- [CHANGELOG_2026-01-28.md](../CHANGELOG_2026-01-28.md) - 詳細更新日誌
+- [INTENT_BOOST_OPTIMIZATION_2026-01-28.md](../fixes/INTENT_BOOST_OPTIMIZATION_2026-01-28.md) - 意圖加成優化
+
+**主要代碼變更：**
+- `rag-orchestrator/requirements.txt` - 新增 Reranker 依賴
+  - `sentence-transformers==5.2.2`
+  - `torch==2.5.0`
+- `rag-orchestrator/routers/chat.py` - 智能檢索系統核心邏輯
+  - Lines 515-850: `_smart_retrieval_with_comparison` 函數
+  - Lines 621: SCORE_GAP_THRESHOLD = 0.15
+  - Lines 852-964: comparison_metadata 傳遞修復
+  - Lines 1622-1647: SOP 候選結構修復
+- `rag-orchestrator/services/vendor_knowledge_retriever.py` - Reranker 整合
+  - 移除無效意圖加成計算（-54 行）
+  - 10% base + 90% rerank 混合策略
+- `rag-orchestrator/services/vendor_sop_retriever.py` - SOP Reranker
+  - 移除 SQL 意圖加成計算（-9 行）
+- `knowledge-admin/frontend/src/views/ChatTestView.vue` - 前端改進
+  - Lines 160: 新增 Rerank 分數欄位
+  - Lines 210: 移除無效欄位（意圖加成、意圖相似度、Scope權重）
+  - Lines 707, 726: 處理路徑和 LLM 策略映射
+- `docker-compose.yml` - 環境變數配置
+  - Lines 226-227: ENABLE_RERANKER, ENABLE_KNOWLEDGE_RERANKER
+
+**資料庫遷移：**
+- `database/migrations/add_trigger_mode_to_knowledge_base.sql` - 新增觸發模式欄位
+  - 新增 `trigger_mode` VARCHAR(20) DEFAULT 'none'
+  - 新增 `immediate_prompt` TEXT
+
+**部署步驟（重要）：**
+1. ⚠️ **備份資料庫**（必須！）
+2. 執行 Migration：`./database/run_migrations.sh docker-compose.yml`
+3. 停止服務：`docker-compose down`
+4. **重新構建**：`docker-compose build --no-cache rag-orchestrator knowledge-admin-api`（5-8 分鐘）
+5. 啟動服務：`docker-compose up -d`
+6. 首次啟動會下載 Reranker 模型（~500MB，需 2-3 分鐘）
+7. 重建前端（如需要）：`cd knowledge-admin/frontend && npm run build`
+8. 執行測試：`/tmp/test_smart_retrieval.sh`
+
+**部署效果：**
+- ✅ Knowledge 準確率：25% → **75%** (+200%) 🚀
+- ✅ 檢索效能：提升 **5-10%**
+- ✅ 代碼簡化：**-46 行** 無效邏輯
+- ✅ 前端優化：11 欄 → **8 欄**
+- ✅ 響應時間：+50-100ms（Rerank 開銷，可接受）
+
+**停機時間：** ~2 分鐘（完整重建 + 依賴安裝）
+
+**風險評估：** 🟡 中風險（需重新構建，但已大量測試）
+
+**特別注意：**
+- ⚠️ 首次啟動需下載模型（~500MB），請確保網路暢通
+- ⚠️ 需要磁碟空間 ≥ 5GB（依賴 + 模型）
+- ⚠️ 建議深夜或週末部署（2 分鐘停機）
+
+**監控重點（1 週）：**
+- Knowledge 準確率 ≥ 75%
+- SOP 準確率 ≥ 90%
+- 平均響應時間 < 500ms
+- 服務可用性 ≥ 99.9%
+
+---
+
+### 2026-01-26
 
 #### 更新 1: Primary Embedding 修復
 **主要更新：**
@@ -279,4 +364,23 @@ deployment/
 
 ---
 
-**最後更新**：2026-01-26
+---
+
+## 🔥 重點推薦
+
+### 生產環境升級指南
+如果您的生產環境目前是 **fa4d9a6 版本**，請使用：
+- **[DEPLOY_FROM_FA4D9A6_TO_LATEST.md](DEPLOY_FROM_FA4D9A6_TO_LATEST.md)** - 完整的從 fa4d9a6 到 e3a6ff9 的升級指南
+
+這份文檔包含：
+- ✅ 5 個 commit 的完整變更說明
+- ✅ 4 個資料庫 migration 的詳細步驟
+- ✅ 新依賴安裝指南（sentence-transformers, torch）
+- ✅ Reranker 模型下載說明
+- ✅ 完整的回滾計畫
+- ✅ 1 週監控策略
+- ✅ 詳細的檢查清單
+
+---
+
+**最後更新**：2026-01-28

@@ -83,3 +83,4 @@ knowledge-admin/frontend/public/test-*.html
 
 # 調試腳本
 rag-orchestrator/test_*.py
+.env.bak
