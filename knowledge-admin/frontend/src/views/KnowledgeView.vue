@@ -316,6 +316,19 @@
               </small>
             </div>
 
+            <!-- manual 模式的觸發關鍵詞 -->
+            <div v-if="linkType !== 'none' && formData.trigger_mode === 'manual'" class="form-group">
+              <label>觸發關鍵詞 *</label>
+              <KeywordsInput
+                v-model="formData.trigger_keywords"
+                placeholder="輸入關鍵詞後按 Enter（例如：還是不行、試過了）"
+              />
+              <small class="form-hint">
+                💡 用戶說出這些關鍵詞後，才會觸發後續動作（表單/API）<br>
+                💡 常見關鍵詞：「還是不行」、「試過了」、「沒用」、「無效」等
+              </small>
+            </div>
+
             <!-- immediate 模式的確認提示詞 -->
             <div v-if="linkType !== 'none' && formData.trigger_mode === 'immediate'" class="form-group">
               <label>確認提示詞（選填）</label>
@@ -547,6 +560,7 @@
 import axios from 'axios';
 import { marked } from 'marked';
 import InfoPanel from '@/components/InfoPanel.vue';
+import KeywordsInput from '@/components/KeywordsInput.vue';
 import helpTexts from '@/config/help-texts.js';
 
 const API_BASE = '/api';
@@ -554,7 +568,8 @@ const API_BASE = '/api';
 export default {
   name: 'KnowledgeView',
   components: {
-    InfoPanel
+    InfoPanel,
+    KeywordsInput
   },
   data() {
     return {
@@ -593,6 +608,7 @@ export default {
         form_intro: '',
         // 🆕 表單觸發模式
         trigger_mode: 'none',  // 默認為資訊型（與 SOP 一致）
+        trigger_keywords: [],  // manual 模式的觸發關鍵詞
         immediate_prompt: '',  // immediate 模式的確認提示詞
         // 動作類型和 API 配置
         action_type: 'direct_answer',
@@ -1023,6 +1039,7 @@ export default {
         form_id: null,
         form_intro: null,
         trigger_mode: 'none',  // 🆕 默認為資訊型（與 SOP 一致）
+        trigger_keywords: [],  // 🆕 manual 模式的觸發關鍵詞
         immediate_prompt: '',  // 🆕
         action_type: 'direct_answer',
         api_config: null
@@ -1058,6 +1075,7 @@ export default {
           form_intro: knowledge.form_intro || '',
           // 🆕 表單觸發模式
           trigger_mode: knowledge.trigger_mode || 'none',
+          trigger_keywords: knowledge.trigger_keywords ? [...knowledge.trigger_keywords] : [],
           immediate_prompt: knowledge.immediate_prompt || '',
           // 動作類型和 API 配置
           action_type: knowledge.action_type || 'direct_answer',
@@ -1156,6 +1174,15 @@ export default {
             this.showNotification('error', '請選擇觸發模式', '選擇關聯功能後，必須設定觸發模式');
             this.saving = false;
             return;
+          }
+
+          // 驗證 manual 模式必須設定觸發關鍵詞
+          if (this.formData.trigger_mode === 'manual') {
+            if (!this.formData.trigger_keywords || this.formData.trigger_keywords.length === 0) {
+              this.showNotification('error', '請設定觸發關鍵詞', '觸發模式選擇「排查型」時，必須設定至少一個觸發關鍵詞');
+              this.saving = false;
+              return;
+            }
           }
         }
 
