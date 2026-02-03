@@ -627,6 +627,47 @@ async def _smart_retrieval_with_comparison(
     print(f"   知識庫:   {knowledge_score:.3f} (數量: {knowledge_count}, 高品質: {high_quality_count})")
     print(f"   差距:     {abs(sop_score - knowledge_score):.3f}")
 
+    # 🆕 特殊情況 0A：SOP 被用戶取消（cancelled）
+    if sop_result and sop_result.get('has_sop'):
+        trigger_result = sop_result.get('trigger_result', {})
+        if trigger_result.get('cancelled'):
+            print(f"🚫 [特殊情況] 用戶取消 SOP 動作，返回禮貌回應")
+            return {
+                'type': 'sop',
+                'sop_result': sop_result,
+                'knowledge_list': knowledge_list,
+                'reason': '用戶取消 SOP 動作',
+                'comparison': {
+                    'sop_score': sop_score,
+                    'knowledge_score': knowledge_score,
+                    'gap': abs(sop_score - knowledge_score),
+                    'sop_candidates': len(sop_result.get('all_sop_candidates', [])) if sop_result else 0,
+                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
+                    'decision_case': 'sop_cancelled_by_user'
+                }
+            }
+
+    # 🆕 特殊情況 0B：SOP 已觸發並執行後續動作（action_result 存在）
+    # 這種情況下，無論 similarity 分數如何，都應該優先返回 SOP 的結果（包括錯誤訊息）
+    if sop_result and sop_result.get('has_sop') and sop_result.get('action_result'):
+        trigger_result = sop_result.get('trigger_result', {})
+        if trigger_result.get('matched'):
+            print(f"⚡ [特殊情況] SOP 已觸發並執行後續動作，優先返回 SOP 結果")
+            return {
+                'type': 'sop',
+                'sop_result': sop_result,
+                'knowledge_list': knowledge_list,
+                'reason': 'SOP 關鍵詞匹配並已執行後續動作',
+                'comparison': {
+                    'sop_score': sop_score,
+                    'knowledge_score': knowledge_score,
+                    'gap': abs(sop_score - knowledge_score),
+                    'sop_candidates': len(sop_result.get('all_sop_candidates', [])) if sop_result else 0,
+                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
+                    'decision_case': 'sop_triggered_action_executed'
+                }
+            }
+
     # 特殊情況：SOP 等待關鍵詞（response 為 None）
     if sop_result and sop_result.get('has_sop') and not sop_has_response:
         print(f"⏸️  [特殊情況] SOP 等待關鍵詞中，繼續其他流程")
@@ -1497,11 +1538,56 @@ async def _build_knowledge_response(
                 action_type = 'direct_answer'
 
             elif trigger_mode in ['manual', 'immediate']:
-                # 排查型/行動型：需要使用 SOP Orchestrator 處理關鍵詞匹配
-                # TODO: 完整實作 Knowledge Base 的 trigger_mode 處理
-                print(f"   ⚠️  trigger_mode={trigger_mode} 暫不支援，降級為 direct_answer")
-                print(f"   💡 建議：將此知識轉為 SOP，或改用 trigger_mode=none")
-                action_type = 'direct_answer'
+                # 排查型/行動型：使用 SOP Orchestrator 處理關鍵詞匹配
+                print(f"   ✅ 使用 SOP Orchestrator 處理 trigger_mode={trigger_mode}")
+
+                # 將知識庫項目轉換為 SOP 格式
+                knowledge_as_sop = {
+                    'id': best_knowledge['id'],
+                    'item_name': best_knowledge.get('question_summary', ''),
+                    'content': best_knowledge.get('answer', ''),
+                    'trigger_mode': trigger_mode,
+                    'next_action': 'form_fill',
+                    'next_form_id': form_id,
+                    'next_api_config': None,
+                    'trigger_keywords': best_knowledge.get('trigger_keywords', []),
+                    'immediate_prompt': best_knowledge.get('immediate_prompt', ''),
+                    'followup_prompt': None
+                }
+
+                # 使用 SOP Orchestrator 處理
+                sop_orchestrator = req.app.state.sop_orchestrator
+                result = await sop_orchestrator.handle_knowledge_trigger(
+                    knowledge_item=knowledge_as_sop,
+                    user_message=request.message,
+                    session_id=request.session_id,
+                    user_id=request.user_id,
+                    vendor_id=request.vendor_id
+                )
+
+                # 根據結果返回
+                if result.get('action') == 'triggered':
+                    # 觸發表單
+                    form_manager = req.app.state.form_manager
+                    form_result = await form_manager.trigger_form_by_knowledge(
+                        knowledge_id=best_knowledge['id'],
+                        form_id=form_id,
+                        session_id=request.session_id,
+                        user_id=request.user_id,
+                        vendor_id=request.vendor_id,
+                        trigger_question=request.message
+                    )
+                    return _convert_form_result_to_response(form_result, request)
+                else:
+                    # 返回等待狀態的回應
+                    return VendorChatResponse(
+                        answer=result.get('response', best_knowledge.get('answer', '')),
+                        vendor_id=request.vendor_id,
+                        mode=request.mode,
+                        session_id=request.session_id,
+                        timestamp=datetime.utcnow().isoformat(),
+                        source_count=0
+                    )
 
             else:  # trigger_mode == 'auto' 或其他值
                 # 自動觸發：直接觸發表單

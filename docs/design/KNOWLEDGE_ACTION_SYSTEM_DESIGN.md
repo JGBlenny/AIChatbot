@@ -1,8 +1,8 @@
 # 知識庫動作系統設計文檔
 
-**版本**: 1.0
-**日期**: 2026-01-16
-**狀態**: 設計階段
+**版本**: 1.1
+**日期**: 2026-02-03（更新）
+**狀態**: 已實現
 **作者**: 系統架構團隊
 
 ---
@@ -96,7 +96,10 @@
     ↓
 根據 action_type 執行對應動作
     ├─ direct_answer    → 直接返回知識答案
-    ├─ form_fill        → 觸發表單 → 返回知識答案
+    ├─ form_fill        → 檢查 trigger_mode
+    │   ├─ NULL/auto   → 直接觸發表單 → 返回知識答案
+    │   ├─ manual      → 顯示內容 + 等待關鍵詞 → 觸發表單
+    │   └─ immediate   → 顯示內容 + 立即詢問 → 等待關鍵詞 → 觸發表單
     ├─ api_call         → 調用 API → 結合知識答案
     └─ form_then_api    → 觸發表單 → 調用 API → 結合知識答案
 ```
@@ -1137,12 +1140,15 @@ A：使用 `verify_identity_first: true` 配置，系統會自動先調用驗證
 
 | 版本 | 日期 | 作者 | 變更內容 |
 |-----|------|------|---------|
+| 1.1 | 2026-02-03 | 系統架構團隊 | 實現 trigger_mode 支援（manual, immediate, auto），統一知識庫與 SOP 觸發機制 |
 | 1.0 | 2026-01-16 | 系統架構團隊 | 初始版本 |
 
 ---
 
 ## 相關文檔
 
+- [知識庫表單觸發模式實現](../features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md) - **NEW**
+- [SOP 系統完整指南](../guides/SOP_GUIDE.md)
 - [表單管理系統](./FORM_MANAGEMENT_SYSTEM.md)
 - [API 參考文檔](../api/API_REFERENCE_PHASE1.md)
 - [資料庫 Schema](../architecture/DATABASE_SCHEMA.md)

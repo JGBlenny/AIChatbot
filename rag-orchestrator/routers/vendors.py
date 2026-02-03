@@ -748,9 +748,7 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
         if not item_update.trigger_keywords or len(item_update.trigger_keywords) == 0:
             raise HTTPException(status_code=400, detail="❌ manual 模式必須設定至少一個觸發關鍵詞")
 
-    if item_update.trigger_mode == 'immediate':
-        if not item_update.immediate_prompt or item_update.immediate_prompt.strip() == '':
-            raise HTTPException(status_code=400, detail="❌ immediate 模式必須設定確認提示詞")
+    # immediate 模式的 immediate_prompt 可以為空（系統有預設值）
 
     if item_update.next_action in ['form_fill', 'form_then_api']:
         if not item_update.next_form_id:

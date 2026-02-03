@@ -61,6 +61,78 @@
           </div>
         </div>
 
+        <!-- 完成後動作 -->
+        <div class="section">
+          <h3>完成後動作</h3>
+          <p class="hint">使用者填完表單後，系統要執行什麼動作？</p>
+
+          <div class="form-group">
+            <label>動作類型 *</label>
+            <select v-model="formData.on_complete_action">
+              <option value="show_knowledge">僅顯示完成訊息</option>
+              <option value="call_api">調用 API（表單數據會傳給 API）</option>
+              <option value="both">顯示完成訊息 + 調用 API</option>
+            </select>
+            <small class="form-hint">
+              • <strong>僅顯示完成訊息</strong>：適合一般資料收集<br>
+              • <strong>調用 API</strong>：將表單數據傳送到外部系統<br>
+              • <strong>兩者都做</strong>：同時顯示完成訊息並調用 API
+            </small>
+          </div>
+
+          <!-- API 配置（當選擇 call_api 或 both 時顯示） -->
+          <div v-if="formData.on_complete_action === 'call_api' || formData.on_complete_action === 'both'" class="api-config">
+            <h4 style="margin-top: 1rem; margin-bottom: 0.5rem;">API 配置</h4>
+
+            <div class="form-group">
+              <label>HTTP 方法 *</label>
+              <select v-model="formData.api_config.method">
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="PATCH">PATCH</option>
+                <option value="GET">GET</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>API Endpoint * <small>(完整的 URL)</small></label>
+              <input
+                v-model="formData.api_config.endpoint"
+                type="url"
+                placeholder="https://api.example.com/submit"
+                required
+              />
+              <small class="form-hint">
+                例如：https://your-domain.com/api/forms/submit
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label>Headers（選填）<small>(JSON 格式)</small></label>
+              <textarea
+                v-model="formData.api_config.headers"
+                rows="3"
+                placeholder='{"Authorization": "Bearer YOUR_TOKEN"}'
+              ></textarea>
+              <small class="form-hint">
+                如需認證，可在此設定 Authorization header
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label>額外參數（選填）<small>(JSON 格式)</small></label>
+              <textarea
+                v-model="formData.api_config.params"
+                rows="3"
+                placeholder='{"source": "chatbot", "version": "1.0"}'
+              ></textarea>
+              <small class="form-hint">
+                這些參數會與表單數據一起傳送給 API
+              </small>
+            </div>
+          </div>
+        </div>
+
         <!-- 欄位模板 -->
         <div class="section">
           <h3>新增欄位</h3>
@@ -269,6 +341,13 @@ export default {
       default_intro: '',
       vendor_id: null,
       is_active: true,
+      on_complete_action: 'show_knowledge',  // 完成後動作
+      api_config: {  // API 配置
+        method: 'POST',
+        endpoint: '',
+        headers: '{}',  // 使用字符串以便在 textarea 中顯示
+        params: '{}'    // 使用字符串以便在 textarea 中顯示
+      },
       fields: []
     });
 
@@ -289,6 +368,28 @@ export default {
       try {
         const data = await api.get(`/rag-api/v1/forms/${formId.value}`);
 
+        // 處理 API 配置：將 JSON 對象轉換為字符串以便在 textarea 中顯示
+        let processedApiConfig = {
+          method: 'POST',
+          endpoint: '',
+          headers: '{}',
+          params: '{}'
+        };
+
+        if (data.api_config) {
+          processedApiConfig = {
+            method: data.api_config.method || 'POST',
+            endpoint: data.api_config.endpoint || '',
+            // 將對象轉換為格式化的 JSON 字符串
+            headers: typeof data.api_config.headers === 'object'
+              ? JSON.stringify(data.api_config.headers, null, 2)
+              : (data.api_config.headers || '{}'),
+            params: typeof data.api_config.params === 'object'
+              ? JSON.stringify(data.api_config.params, null, 2)
+              : (data.api_config.params || '{}')
+          };
+        }
+
         formData.value = {
           form_id: data.form_id,
           form_name: data.form_name,
@@ -296,6 +397,8 @@ export default {
           default_intro: data.default_intro || '',
           vendor_id: data.vendor_id,
           is_active: data.is_active,
+          on_complete_action: data.on_complete_action || 'show_knowledge',
+          api_config: processedApiConfig,
           fields: data.fields.map((f, index) => ({
             ...f,
             key: `loaded_${index}_${Date.now()}`,  // 添加穩定的內部 ID
@@ -430,11 +533,50 @@ export default {
         }
       }
 
+      // 處理 API 配置（解析 JSON 字段）
+      let processedApiConfig = null;
+      if (formData.value.on_complete_action === 'call_api' || formData.value.on_complete_action === 'both') {
+        try {
+          // 解析 headers（如果有的話）
+          let parsedHeaders = {};
+          if (formData.value.api_config?.headers && typeof formData.value.api_config.headers === 'string' && formData.value.api_config.headers.trim()) {
+            parsedHeaders = JSON.parse(formData.value.api_config.headers);
+          } else if (typeof formData.value.api_config?.headers === 'object') {
+            parsedHeaders = formData.value.api_config.headers;
+          }
+
+          // 解析 params（如果有的話）
+          let parsedParams = {};
+          if (formData.value.api_config?.params && typeof formData.value.api_config.params === 'string' && formData.value.api_config.params.trim()) {
+            parsedParams = JSON.parse(formData.value.api_config.params);
+          } else if (typeof formData.value.api_config?.params === 'object') {
+            parsedParams = formData.value.api_config.params;
+          }
+
+          processedApiConfig = {
+            method: formData.value.api_config?.method || 'POST',
+            endpoint: formData.value.api_config?.endpoint || '',
+            headers: parsedHeaders,
+            params: parsedParams
+          };
+
+          // 驗證 endpoint 不能為空
+          if (!processedApiConfig.endpoint || !processedApiConfig.endpoint.trim()) {
+            alert('當選擇「呼叫 API」或「兩者都要」時，API Endpoint 不能為空');
+            return;
+          }
+        } catch (error) {
+          alert('API 配置的 JSON 格式不正確，請檢查 Headers 和 Params\n\n錯誤訊息: ' + error.message);
+          return;
+        }
+      }
+
       saving.value = true;
       try {
         // 準備資料（移除內部屬性）
         const data = {
           ...formData.value,
+          api_config: processedApiConfig,  // 使用處理過的 API 配置
           fields: formData.value.fields.map(f => {
             const { _optionsText, key, ...field } = f;  // 移除 key 和 _optionsText
             // 移除空值（但保留必填欄位，即使是空字串）

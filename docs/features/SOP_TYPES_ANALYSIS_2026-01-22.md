@@ -5,6 +5,41 @@
 
 ---
 
+## 🚨 2026-02-03 重要更新
+
+### ✅ 後端變更 (2026-02-03 上午)
+
+**trigger_mode='none' (資訊型) 已移除**
+
+經分析發現 `trigger_mode='none'` 與 `next_action='none'` 功能重複，已於 2026-02-03 移除：
+
+- ~~類型 3：資訊型 SOP（trigger_mode='none'）~~ → 已移除
+- 現在只保留 2 種觸發模式：**manual (排查型)** 和 **immediate (行動型)**
+- 當 `next_action='none'` (無後續動作) 時，`trigger_mode` 設為 `NULL`
+- 詳細變更請參閱 [Changelog](../changelog/2026-01-30-knowledge-followup-actions.md#-2026-02-03-重要變更移除-trigger_modenone)
+
+### 🎨 前端 UI 優化 (2026-02-03 下午)
+
+**全面優化觸發模式編輯體驗**
+
+為提升用戶體驗，針對前端編輯介面進行了全面優化：
+
+- ✅ **移除前端 'none' 選項** - 下拉選單只保留排查型和行動型
+- ✅ **優化欄位顯示順序** - 後續動作 → 選擇表單 → 觸發模式 → 關鍵詞/提示詞
+- ✅ **新增詳細使用提示** - 在編輯介面提供具體範例說明
+- ✅ **自動設定預設值** - 選擇表單時自動設定為「排查型」
+- ✅ **修正顯示時機** - 觸發模式相關欄位僅在選擇表單後顯示
+
+**詳細變更請參閱**: [SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md](./SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)
+
+**影響範圍**:
+- `KnowledgeView.vue` - 知識庫管理
+- `PlatformSOPEditView.vue` - 平台 SOP 編輯頁
+- `PlatformSOPView.vue` - 平台 SOP 列表頁
+- `VendorSOPManager.vue` - 業者 SOP 管理
+
+---
+
 ## 📊 實際 SOP 場景分析
 
 ### 類型 1：排查型 SOP（需要用戶先自行排查）
@@ -177,23 +212,24 @@
 ### 新增欄位設計
 
 ```sql
+-- ⚠️ 2026-02-03 更新：預設值改為 'manual'，約束移除 'none'
 ALTER TABLE vendor_sop_items
-ADD COLUMN trigger_mode VARCHAR(20) DEFAULT 'none';
+ADD COLUMN trigger_mode VARCHAR(20) DEFAULT 'manual';
 
--- 約束
+-- 約束 (2026-02-03 更新)
 ALTER TABLE vendor_sop_items
 ADD CONSTRAINT check_trigger_mode
-CHECK (trigger_mode IN ('none', 'manual', 'immediate', 'auto'));
+CHECK (trigger_mode IS NULL OR trigger_mode IN ('manual', 'immediate', 'auto'));
 ```
 
 ### trigger_mode 類型說明
 
 | trigger_mode | 說明 | 適用場景 | 行為 |
 |--------------|------|----------|------|
-| **none** | 無後續動作 | 資訊型 SOP | 只返回 SOP 內容，結束 |
+| ~~**none**~~ | ~~無後續動作~~ | ~~資訊型 SOP~~ | ~~已移除（使用 next_action='none' + trigger_mode=NULL）~~ |
 | **manual** | 手動觸發 | 排查型 SOP | 返回 SOP → 等用戶說關鍵詞 → 觸發 |
 | **immediate** | 立即詢問 | 行動型 SOP | 返回 SOP → 立即問「是否要執行？」→ 觸發 |
-| **auto** | 自動觸發 | 緊急型 SOP | 返回 SOP → 同時自動觸發 API/表單 |
+| **auto** | 自動觸發 | 緊急型 SOP | 返回 SOP → 同時自動觸發 API/表單 (未實作) |
 
 ---
 
@@ -243,7 +279,11 @@ CHECK (trigger_mode IN ('none', 'manual', 'immediate', 'auto'));
 
 ---
 
-### 場景 C：資訊型（trigger_mode = 'none'）
+### ~~場景 C：資訊型（trigger_mode = 'none'）~~ [已移除]
+
+**⚠️ 此模式已於 2026-02-03 移除**
+
+資訊型 SOP 現在使用 `next_action='none'` + `trigger_mode=NULL` 的組合：
 
 ```
 用戶：「垃圾收取時間」
@@ -255,6 +295,10 @@ CHECK (trigger_mode IN ('none', 'manual', 'immediate', 'auto'));
   ↓
 （結束，無後續動作）
 ```
+
+**配置方式**：
+- `next_action` = 'none' (無後續動作)
+- `trigger_mode` = NULL (不需要觸發模式)
 
 ---
 
@@ -288,27 +332,32 @@ ADD COLUMN IF NOT EXISTS next_form_id VARCHAR(100),
 ADD COLUMN IF NOT EXISTS next_api_config JSONB,
 ADD COLUMN IF NOT EXISTS followup_prompt TEXT,
 
--- 觸發模式（新增）
-ADD COLUMN IF NOT EXISTS trigger_mode VARCHAR(20) DEFAULT 'none',
+-- 觸發模式（新增） - 2026-02-03 更新
+ADD COLUMN IF NOT EXISTS trigger_mode VARCHAR(20) DEFAULT 'manual',  -- 改為 'manual'
 ADD COLUMN IF NOT EXISTS trigger_keywords TEXT[],           -- 僅 manual 模式需要
 ADD COLUMN IF NOT EXISTS immediate_prompt TEXT,             -- 僅 immediate 模式需要
 
--- 約束
+-- 約束 (2026-02-03 更新)
 ADD CONSTRAINT check_next_action
 CHECK (next_action IN ('none', 'form_fill', 'api_call', 'form_then_api')),
 
 ADD CONSTRAINT check_trigger_mode
-CHECK (trigger_mode IN ('none', 'manual', 'immediate', 'auto'));
+CHECK (trigger_mode IS NULL OR trigger_mode IN ('manual', 'immediate', 'auto'));
 ```
 
-### 欄位使用場景
+### 欄位使用場景 (2026-02-03 更新)
 
-| trigger_mode | trigger_keywords | immediate_prompt | followup_prompt |
+| trigger_mode | trigger_keywords | immediate_prompt | ~~followup_prompt~~ |
 |--------------|------------------|------------------|-----------------|
-| **none** | ❌ 不需要 | ❌ 不需要 | ❌ 不需要 |
-| **manual** | ✅ 必須 | ❌ 不需要 | ✅ 必須 |
-| **immediate** | ❌ 不需要 | ✅ 必須 | ✅ 必須 |
-| **auto** | ❌ 不需要 | ❌ 不需要 | ✅ 可選 |
+| ~~**none**~~ | ~~❌ 不需要~~ | ~~❌ 不需要~~ | ~~已移除~~ |
+| **manual** | ✅ 必須 | ❌ 不需要 | ~~已移除~~ |
+| **immediate** | ❌ 不需要 | ✅ 選填 | ~~已移除~~ |
+| **auto** | ❌ 不需要 | ❌ 不需要 | ~~已移除~~ |
+| **NULL** | ❌ 不需要 | ❌ 不需要 | - |
+
+**註**：
+- `trigger_mode='none'` 已移除，改用 `trigger_mode=NULL` + `next_action='none'`
+- `followup_prompt` 已移除（使用表單的 `default_intro`）
 
 ### 範例配置
 
@@ -354,17 +403,20 @@ INSERT INTO vendor_sop_items (
 );
 ```
 
-#### 範例 3：資訊型（none）
+#### ~~範例 3：資訊型（none）~~ [已移除]
 ```sql
+-- ⚠️ 2026-02-03 更新：trigger_mode='none' 已移除
+-- 資訊型 SOP 現在使用 trigger_mode=NULL
+
 INSERT INTO vendor_sop_items (
     item_name,
     content,
-    trigger_mode,
+    trigger_mode,  -- 設為 NULL (不是 'none')
     next_action
 ) VALUES (
     '垃圾收取規範',
     '【垃圾收取時間】\n🗑️ 一般垃圾：週一、三、五...',
-    'none',  -- 無後續動作
+    NULL,  -- 改用 NULL (原為 'none')
     'none'
 );
 ```
@@ -559,16 +611,18 @@ async def _build_sop_response(..., sop_items):
 
 ---
 
-## 📊 對比總結
+## 📊 對比總結 (2026-02-03 更新)
 
-| 項目 | none | manual | immediate | auto |
+| 項目 | ~~none~~ | manual | immediate | auto |
 |------|------|--------|-----------|------|
-| **用途** | 純資訊 | 排查後報修 | 直接行動 | 緊急處理 |
-| **範例** | 垃圾規範 | 冷氣不冷 | 繳租登記 | 天花板漏水 |
-| **觸發時機** | 無 | 用戶說關鍵詞 | SOP 返回時 | SOP 返回時 |
-| **關鍵詞** | ❌ | ✅ 自定義 | ✅ 通用（是/要） | ❌ |
-| **詢問提示** | ❌ | ❌ | ✅ 自定義 | ❌ |
-| **用戶確認** | ❌ | ✅ | ✅ | ❌ 自動執行 |
+| **用途** | ~~純資訊~~ (已移除) | 排查後報修 | 直接行動 | 緊急處理 |
+| **範例** | ~~垃圾規範~~ | 冷氣不冷 | 繳租登記 | 天花板漏水 |
+| **觸發時機** | ~~無~~ | 用戶說關鍵詞 | SOP 返回時 | SOP 返回時 |
+| **關鍵詞** | ~~❌~~ | ✅ 自定義 | ❌ | ❌ |
+| **詢問提示** | ~~❌~~ | ❌ | ✅ 選填 | ❌ |
+| **用戶確認** | ~~❌~~ | ✅ | ✅ | ❌ 自動執行 |
+
+**註**：純資訊 SOP 現在使用 `next_action='none'` + `trigger_mode=NULL`
 
 ---
 

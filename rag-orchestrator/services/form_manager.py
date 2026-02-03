@@ -798,10 +798,13 @@ class FormManager:
             )
 
         # 5. 格式化完成訊息
+        # ⚠️ 如果表單由知識庫觸發，用戶已看過知識內容，不再重複顯示
+        triggered_by_knowledge = session_state.get('knowledge_id') is not None
         completion_message = await self._format_completion_message(
             on_complete_action=on_complete_action,
             knowledge_answer=knowledge_answer,
-            api_result=api_result
+            api_result=api_result,
+            triggered_by_knowledge=triggered_by_knowledge
         )
 
         return {
@@ -851,12 +854,20 @@ class FormManager:
         self,
         on_complete_action: str,
         knowledge_answer: Optional[str],
-        api_result: Optional[Dict]
+        api_result: Optional[Dict],
+        triggered_by_knowledge: bool = False
     ) -> str:
-        """格式化表單完成訊息"""
+        """格式化表單完成訊息
+
+        Args:
+            triggered_by_knowledge: 表單是否由知識庫觸發（用戶已看過知識內容）
+        """
         # 情況 1: 只顯示知識答案
         if on_complete_action == 'show_knowledge':
-            if knowledge_answer:
+            # ⚠️ 如果表單由知識庫觸發，用戶已看過知識內容，不再重複顯示
+            if triggered_by_knowledge:
+                return "✅ **表單填寫完成！**\n\n感謝您完成表單！我們會儘快與您聯繫。"
+            elif knowledge_answer:
                 return f"✅ **表單填寫完成！**\n\n{knowledge_answer}"
             else:
                 return "✅ **表單填寫完成！**\n\n感謝您完成表單！我們會儘快處理您的資料。"
@@ -880,8 +891,8 @@ class FormManager:
             elif api_result:
                 parts.append(api_result.get('formatted_response', '⚠️ 後續處理時發生錯誤。'))
 
-            # 知識答案
-            if knowledge_answer:
+            # 知識答案（如果表單由知識庫觸發，用戶已看過，跳過）
+            if knowledge_answer and not triggered_by_knowledge:
                 parts.append(f"\n---\n\n{knowledge_answer}")
 
             return '\n'.join(parts)

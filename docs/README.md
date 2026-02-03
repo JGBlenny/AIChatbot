@@ -1,10 +1,31 @@
 # 📚 AIChatbot 系統文檔索引
 
-**最後更新**：2026-01-24
+**最後更新**：2026-02-03
 **主要功能**：
+- SOP 觸發模式 UI 優化（2026-02-03）🆕
 - 統一檢索路徑（commit cbf4c4f）
 - 表單引導改善（commit ba503d3）
-- 對話流程邏輯修正（2026-01-24）🆕
+- 對話流程邏輯修正（2026-01-24）
+
+---
+
+## ⭐ 最新更新（2026-02-03）
+
+### SOP 觸發模式 UI 優化
+
+**📑 完整索引**: [SOP 觸發模式更新索引](./SOP_TRIGGER_MODE_UPDATE_INDEX.md)
+
+**更新內容**:
+- ✅ 移除 trigger_mode='none' 選項
+- ✅ 優化欄位顯示順序
+- ✅ 新增詳細使用提示
+- ✅ 修正欄位顯示邏輯
+- ✅ 自動設定預設值
+
+**快速連結**:
+- [詳細變更記錄](./features/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)
+- [測試執行指南](./testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md)
+- [變更日誌](./changelog/CHANGELOG_2026-02-03.md)
 
 ---
 
@@ -14,8 +35,11 @@
 
 | 你的需求 | 推薦文檔 | 說明 |
 |---------|---------|------|
-| **理解對話流程** | [CHAT_FLOW_ANALYSIS_2026-01-24.md](./analysis/CHAT_FLOW_ANALYSIS_2026-01-24.md) ⭐ 🆕 | 完整對話流程分析、10個步驟詳解 |
-| **查看最新修正** | [CHAT_LOGIC_FIXES_2026-01-24.md](./fixes/CHAT_LOGIC_FIXES_2026-01-24.md) 🆕 | 2026-01-24 三個問題修正報告 |
+| **SOP 觸發模式更新** | [SOP 觸發模式更新索引](./SOP_TRIGGER_MODE_UPDATE_INDEX.md) ⭐ 🆕 | 2026-02-03 UI 優化完整索引 |
+| **SOP 系統使用** | [SOP 系統完整指南](./guides/SOP_GUIDE.md) | SOP 系統完整使用說明 |
+| **SOP 測試執行** | [SOP 測試執行指南](./testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md) 🆕 | 9個核心測試場景 |
+| **理解對話流程** | [CHAT_FLOW_ANALYSIS_2026-01-24.md](./analysis/CHAT_FLOW_ANALYSIS_2026-01-24.md) ⭐ | 完整對話流程分析、10個步驟詳解 |
+| **查看最新修正** | [CHAT_LOGIC_FIXES_2026-01-24.md](./fixes/CHAT_LOGIC_FIXES_2026-01-24.md) | 2026-01-24 三個問題修正報告 |
 | **快速了解實施內容** | [IMPLEMENTATION_SUMMARY.md](./implementation/SUMMARY.md) | 實施總結，包含代碼修改、驗證結果 |
 | **完整實施報告** | [FINAL_IMPLEMENTATION_2026-01-13.md](./implementation/FINAL_2026-01-13.md) | 完整故事線：問題→演進→實施→驗證 |
 | **理解檢索邏輯** | [RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md](./analysis/retrieval_logic_complete.md) | 完整檢索邏輯分析、4種方案對比 |

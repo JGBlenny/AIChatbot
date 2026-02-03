@@ -73,8 +73,8 @@
     </div>
 
     <!-- 新增/編輯分類 Modal -->
-    <div v-if="showCategoryModal" class="modal-overlay" @click="showCategoryModal = false">
-      <div class="modal-content" @click.stop>
+    <div v-if="showCategoryModal" class="modal-overlay" @mousedown.self="showCategoryModal = false">
+      <div class="modal-content" @mousedown.stop>
         <h2>{{ editingCategory ? '編輯分類' : '新增分類' }}</h2>
         <form @submit.prevent="saveCategory">
           <div class="form-group">
@@ -101,8 +101,8 @@
     </div>
 
     <!-- Excel 匯入 Modal -->
-    <div v-if="showImportModal" class="modal-overlay" @click="showImportModal = false">
-      <div class="modal-content" @click.stop>
+    <div v-if="showImportModal" class="modal-overlay" @mousedown.self="showImportModal = false">
+      <div class="modal-content" @mousedown.stop>
         <h2>📥 匯入 Excel 替換 SOP 資料</h2>
 
         <div class="import-warning" style="background: #fff3cd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
@@ -173,8 +173,8 @@
     </div>
 
     <!-- 新增/編輯範本 Modal -->
-    <div v-if="showTemplateModal" class="modal-overlay" @click="showTemplateModal = false">
-      <div class="modal-content modal-large" @click.stop>
+    <div v-if="showTemplateModal" class="modal-overlay" @mousedown.self="showTemplateModal = false">
+      <div class="modal-content modal-large" @mousedown.stop>
         <h2>{{ editingTemplate ? '編輯範本' : '新增範本' }}</h2>
         <form @submit.prevent="saveTemplate">
           <!-- 基本資訊 -->
@@ -269,86 +269,27 @@
           </div>
 
           <!-- 流程配置 -->
-          <div class="form-section flow-config-section">
+          <div class="form-section flow-config-section" style="display: flex; flex-direction: column;">
             <h3>🔄 流程配置（進階）</h3>
 
-            <div class="form-group">
-              <label>觸發模式 *</label>
-              <select v-model="templateForm.trigger_mode" @change="onTriggerModeChange" class="form-control">
-                <option value="none">資訊型（僅回答 SOP 內容，無後續動作）</option>
-                <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
-                <option value="immediate">行動型（主動詢問用戶是否執行）</option>
-                <!-- <option value="auto">自動執行型（立即執行後續動作）</option> ⚠️ 暫不實作 -->
-              </select>
-              <small class="form-hint">
-                💡 <strong>資訊型</strong>：只顯示 SOP 內容<br>
-                💡 <strong>排查型</strong>：用戶說出關鍵詞後才觸發（例如：「還是不行」→ 執行報修）<br>
-                💡 <strong>行動型</strong>：主動詢問是否執行（例如：「需要立即報修嗎？」）
-              </small>
-            </div>
-
-            <!-- manual 模式：觸發關鍵詞 -->
-            <div v-if="templateForm.trigger_mode === 'manual'" class="form-group">
-              <label>觸發關鍵詞 *</label>
-              <KeywordsInput
-                v-model="templateForm.trigger_keywords"
-                placeholder="輸入關鍵詞後按 Enter 或逗號"
-                hint="💡 用戶說出這些關鍵詞後，才會觸發後續動作。例如：「還是不行」、「需要維修」、「我要預約」"
-                :max-keywords="10"
-              />
-            </div>
-
-            <!-- immediate 模式：確認提示詞（可選） -->
-            <div v-if="templateForm.trigger_mode === 'immediate'" class="form-group">
-              <label>確認提示詞（選填）</label>
-              <textarea
-                v-model="templateForm.immediate_prompt"
-                class="form-control"
-                rows="3"
-                placeholder="留空則使用系統預設提示詞"
-              ></textarea>
-              <small class="form-hint">
-                💡 <strong>預設提示詞：</strong><br>
-                💡 **需要安排處理嗎？**<br>
-                • 回覆「要」或「需要」→ 立即填寫表單<br>
-                • 回覆「不用」→ 繼續為您解答其他問題<br>
-                <br>
-                如需自訂（例如：改為「需要安排維修嗎？」），請在上方輸入。
-              </small>
-            </div>
-
-            <div class="form-group">
+            <div class="form-group" style="order: 1;">
               <label>後續動作 *</label>
               <select v-model="templateForm.next_action" @change="onNextActionChange" class="form-control">
                 <option value="none">無（僅顯示 SOP 內容）</option>
                 <option value="form_fill">觸發表單（引導用戶填寫表單）</option>
                 <option value="api_call">調用 API（查詢或處理資料）</option>
-                <option value="form_then_api">先填表單再調用 API（完整流程）</option>
               </select>
               <small class="form-hint">
                 💡 <strong>無</strong>：只顯示 SOP 內容，不執行其他動作<br>
-                💡 <strong>觸發表單</strong>：引導用戶填寫表單（例如：報修申請）<br>
-                💡 <strong>調用 API</strong>：直接調用 API（例如：查詢帳單）<br>
-                💡 <strong>先填表單再調用 API</strong>：表單完成後自動提交（例如：租屋申請）
+                💡 <strong>觸發表單</strong>：引導用戶填寫表單（例如：報修申請），表單內可設定是否完成後調用 API<br>
+                💡 <strong>調用 API</strong>：直接調用 API（例如：查詢帳單）
               </small>
             </div>
 
-            <!-- 後續提示詞 -->
-            <div v-if="templateForm.next_action !== 'none'" class="form-group">
-              <label>後續提示詞（可選）</label>
-              <textarea
-                v-model="templateForm.followup_prompt"
-                class="form-control"
-                rows="2"
-                placeholder="例如：好的，我來協助您填寫表單"
-              ></textarea>
-              <small class="form-hint">💡 觸發後續動作時顯示的提示語（留空則使用預設提示）</small>
-            </div>
-
             <!-- 表單選擇 -->
-            <div v-if="['form_fill', 'form_then_api'].includes(templateForm.next_action)" class="form-group">
+            <div v-if="templateForm.next_action === 'form_fill'" class="form-group" style="order: 2;">
               <label>選擇表單 *</label>
-              <select v-model="templateForm.next_form_id" class="form-control">
+              <select v-model="templateForm.next_form_id" @change="onFormSelect" class="form-control">
                 <option :value="null">請選擇表單...</option>
                 <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
                   {{ form.form_name }} ({{ form.form_id }})
@@ -362,8 +303,52 @@
               </p>
             </div>
 
+            <!-- 觸發模式（選擇表單後才顯示） -->
+            <div v-if="templateForm.next_action === 'form_fill' && templateForm.next_form_id" class="form-group" style="order: 3;">
+              <label>觸發模式 *</label>
+              <select v-model="templateForm.trigger_mode" @change="onTriggerModeChange" class="form-control">
+                <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
+                <option value="immediate">行動型（主動詢問用戶是否執行）</option>
+              </select>
+              <small class="form-hint">
+                💡 <strong>排查型</strong>：先在上方「SOP 內容」填寫排查步驟，用戶排查後說出關鍵詞才觸發表單<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;範例：內容寫「請檢查溫度設定、濾網...若仍不冷請報修」→ 用戶說「還是不冷」→ 觸發報修表單<br>
+                💡 <strong>行動型</strong>：顯示 SOP 內容後，立即主動詢問是否執行<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;範例：內容寫「租金繳納方式...」→ 自動詢問「是否要登記繳納記錄？」→ 用戶說「要」→ 觸發表單
+              </small>
+            </div>
+
+            <!-- manual 模式：觸發關鍵詞 -->
+            <div v-if="templateForm.next_action === 'form_fill' && templateForm.next_form_id && templateForm.trigger_mode === 'manual'" class="form-group" style="order: 4;">
+              <label>觸發關鍵詞 *</label>
+              <KeywordsInput
+                v-model="templateForm.trigger_keywords"
+                placeholder="輸入關鍵詞後按 Enter 或逗號"
+                hint="💡 用戶說出這些關鍵詞後，才會觸發後續動作。例如：「還是不行」、「需要維修」、「我要預約」"
+                :max-keywords="10"
+              />
+            </div>
+
+            <!-- immediate 模式：確認提示詞（可選） -->
+            <div v-if="templateForm.next_action === 'form_fill' && templateForm.next_form_id && templateForm.trigger_mode === 'immediate'" class="form-group" style="order: 5;">
+              <label>確認提示詞（選填）</label>
+              <textarea
+                v-model="templateForm.immediate_prompt"
+                class="form-control"
+                rows="3"
+                placeholder="例如：📋 是否要登記本月租金繳納記錄？"
+              ></textarea>
+              <small class="form-hint">
+                💡 <strong>作用</strong>：顯示 SOP 內容後，自動附加此詢問提示<br>
+                💡 <strong>留空則使用預設</strong>：「需要安排處理嗎？回覆『要』或『需要』即可開始填寫表單」<br>
+                💡 <strong>自訂範例</strong>：「📋 是否要登記本月租金繳納記錄？（回覆『是』或『要』即可開始登記）」<br>
+                <br>
+                如需自訂更具體的詢問（例如：「需要安排維修嗎？」），請在上方輸入。
+              </small>
+            </div>
+
             <!-- API 配置 -->
-            <div v-if="['api_call', 'form_then_api'].includes(templateForm.next_action)" class="form-group">
+            <div v-if="templateForm.next_action === 'api_call'" class="form-group" style="order: 7;">
               <label>API 配置 *</label>
 
               <!-- 選擇器模式 -->
@@ -430,8 +415,8 @@
     </div>
 
     <!-- 範本使用情況 Modal -->
-    <div v-if="showUsageModal" class="modal-overlay" @click="showUsageModal = false">
-      <div class="modal-content" @click.stop>
+    <div v-if="showUsageModal" class="modal-overlay" @mousedown.self="showUsageModal = false">
+      <div class="modal-content" @mousedown.stop>
         <h2>範本使用情況: {{ currentTemplateUsage.template_name }}</h2>
 
         <div v-if="currentTemplateUsage.usage.length > 0" class="usage-list">
@@ -516,11 +501,10 @@ export default {
         template_notes: '',
         customization_hint: '',
         // 流程配置欄位
-        trigger_mode: 'none',
+        trigger_mode: 'manual',  // 默認為排查型
         next_action: 'none',
         trigger_keywords: [],
         immediate_prompt: '',
-        followup_prompt: '',
         next_form_id: null,
         next_api_config: null
       },
@@ -770,11 +754,10 @@ export default {
         template_notes: template.template_notes || '',
         customization_hint: template.customization_hint || '',
         // 流程配置欄位
-        trigger_mode: template.trigger_mode || 'none',
+        trigger_mode: template.trigger_mode || 'manual',
         next_action: template.next_action || 'none',
         trigger_keywords: template.trigger_keywords || [],
         immediate_prompt: template.immediate_prompt || '',
-        followup_prompt: template.followup_prompt || '',
         next_form_id: template.next_form_id || null,
         next_api_config: template.next_api_config || null
       };
@@ -816,6 +799,19 @@ export default {
     },
 
     // 流程配置相關方法
+    onFormSelect() {
+      // 當選擇表單時，確保 trigger_mode 有值
+      if (this.templateForm.next_form_id) {
+        // 如果沒有值或值為 'none'，設為 'manual'
+        if (!this.templateForm.trigger_mode || this.templateForm.trigger_mode === 'none' || this.templateForm.trigger_mode === '') {
+          this.templateForm.trigger_mode = 'manual';
+        }
+        console.log('📋 表單選擇後 trigger_mode:', this.templateForm.trigger_mode);
+        // 強制觸發 Vue 的響應式更新
+        this.$forceUpdate();
+      }
+    },
+
     onTriggerModeChange() {
       // 切換 trigger_mode 時清空相關欄位
       if (this.templateForm.trigger_mode !== 'manual') {
@@ -828,17 +824,14 @@ export default {
 
     onNextActionChange() {
       // 切換 next_action 時清空相關欄位
-      if (!['form_fill', 'form_then_api'].includes(this.templateForm.next_action)) {
+      if (this.templateForm.next_action !== 'form_fill') {
         this.templateForm.next_form_id = null;
       }
-      if (!['api_call', 'form_then_api'].includes(this.templateForm.next_action)) {
+      if (this.templateForm.next_action !== 'api_call') {
         this.templateForm.next_api_config = null;
         this.selectedApiEndpointId = '';
         this.useCustomApiConfig = false;
         this.apiConfigJson = '';
-      }
-      if (this.templateForm.next_action === 'none') {
-        this.templateForm.followup_prompt = '';
       }
     },
 
@@ -916,17 +909,17 @@ export default {
         // immediate 模式不需要驗證 immediate_prompt（系統自動生成）
 
         // 驗證表單關聯
-        if (['form_fill', 'form_then_api'].includes(this.templateForm.next_action)) {
+        if (this.templateForm.next_action === 'form_fill') {
           if (!this.templateForm.next_form_id) {
-            alert('❌ 後續動作選擇「觸發表單」或「先填表單再調用 API」時，必須選擇表單');
+            alert('❌ 後續動作選擇「觸發表單」時，必須選擇表單');
             return;
           }
         }
 
         // 驗證 API 配置
-        if (['api_call', 'form_then_api'].includes(this.templateForm.next_action)) {
+        if (this.templateForm.next_action === 'api_call') {
           if (!this.templateForm.next_api_config) {
-            alert('❌ 後續動作選擇「調用 API」或「先填表單再調用 API」時，必須配置 API');
+            alert('❌ 後續動作選擇「調用 API」時，必須配置 API');
             return;
           }
 
@@ -993,11 +986,10 @@ export default {
         template_notes: '',
         customization_hint: '',
         // 流程配置欄位
-        trigger_mode: 'none',
+        trigger_mode: 'manual',  // 默認為排查型
         next_action: 'none',
         trigger_keywords: [],
         immediate_prompt: '',
-        followup_prompt: '',
         next_form_id: null,
         next_api_config: null
       };

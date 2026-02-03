@@ -169,8 +169,8 @@
     </div>
 
     <!-- 編輯/新增 Modal -->
-    <div v-if="showModal" class="modal-overlay">
-      <div class="modal-content">
+    <div v-if="showModal" class="modal-overlay" @mousedown.self="closeModal">
+      <div class="modal-content" @mousedown.stop>
         <h2>{{ editingItem ? '✏️ 編輯知識' : '➕ 新增知識' }}</h2>
 
         <!-- Phase 3: 在 Modal 中顯示回測優化上下文 -->
@@ -290,87 +290,76 @@
             <p v-if="selectedIntents.length === 0" class="hint-text">💡 未選擇意圖的知識將標記為「未分類」</p>
           </div>
 
-          <!-- 關聯功能選擇 -->
+          <!-- 1️⃣ 後續動作 -->
           <div class="form-group">
-            <label>關聯功能 <span class="field-hint">（選擇用戶詢問時觸發的功能）</span></label>
-            <select v-model="linkType" @change="onLinkTypeChange" class="form-select" style="margin-top: 10px;">
-              <option value="none">無（僅回答知識庫內容）</option>
-              <option value="form">表單（引導用戶填寫表單）</option>
-              <option value="api">API（調用 API 查詢即時資訊）</option>
-              <option value="form_api">表單+API（先填表單再調用 API）</option>
+            <label>後續動作 *</label>
+            <select v-model="linkType" @change="onLinkTypeChange" class="form-control">
+              <option value="none">無（僅顯示知識庫內容）</option>
+              <option value="form">觸發表單（引導用戶填寫表單）</option>
+              <option value="api">調用 API（查詢或處理資料）</option>
             </select>
+            <small class="form-hint">
+              💡 <strong>無</strong>：只顯示知識庫內容，不執行其他動作<br>
+              💡 <strong>觸發表單</strong>：引導用戶填寫表單（例如：報修申請），表單內可設定是否完成後調用 API<br>
+              💡 <strong>調用 API</strong>：直接調用 API（例如：查詢帳單）
+            </small>
+          </div>
 
-            <!-- 🆕 觸發模式（當關聯功能不是「無」時顯示） -->
-            <div v-if="linkType !== 'none'" class="form-group" style="margin-top: 20px;">
-              <label>觸發模式 *</label>
-              <select v-model="formData.trigger_mode" class="form-control">
-                <option value="none">資訊型（僅回答知識庫內容，無後續動作）</option>
-                <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
-                <option value="immediate">行動型（主動詢問用戶是否執行）</option>
-                <!-- <option value="auto">自動執行型（立即執行後續動作）</option> ⚠️ 暫不實作 -->
-              </select>
-              <small class="form-hint">
-                💡 <strong>資訊型</strong>：只回答知識庫內容，不執行後續動作<br>
-                💡 <strong>排查型</strong>：用戶說出關鍵詞後才觸發（例如：「還是不行」→ 執行報修）<br>
-                💡 <strong>行動型</strong>：主動詢問是否執行（例如：「需要立即報修嗎？」）
-              </small>
-            </div>
+          <!-- 2️⃣ 表單選擇（選擇「表單」後才顯示） -->
+          <div v-if="linkType === 'form'" class="form-group">
+            <label>選擇表單 *</label>
+            <select v-model="formData.form_id" @change="onFormSelect" class="form-select">
+              <option value="">請選擇表單...</option>
+              <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
+                {{ form.form_name }} ({{ form.form_id }})
+              </option>
+            </select>
+            <p v-if="!formData.form_id" class="hint-text">💡 請選擇一個表單</p>
+            <p v-else class="hint-text">✅ 已關聯表單：{{ getFormName(formData.form_id) }}</p>
+          </div>
 
-            <!-- manual 模式的觸發關鍵詞 -->
-            <div v-if="linkType !== 'none' && formData.trigger_mode === 'manual'" class="form-group">
-              <label>觸發關鍵詞 *</label>
-              <KeywordsInput
-                v-model="formData.trigger_keywords"
-                placeholder="輸入關鍵詞後按 Enter（例如：還是不行、試過了）"
-              />
-              <small class="form-hint">
-                💡 用戶說出這些關鍵詞後，才會觸發後續動作（表單/API）<br>
-                💡 常見關鍵詞：「還是不行」、「試過了」、「沒用」、「無效」等
-              </small>
-            </div>
+          <!-- 3️⃣ 觸發模式（選擇表單後才顯示） -->
+          <div v-if="linkType === 'form' && formData.form_id" class="form-group">
+            <label>觸發模式 *</label>
+            <select v-model="formData.trigger_mode" @change="onTriggerModeChange" class="form-control">
+              <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
+              <option value="immediate">行動型（主動詢問用戶是否執行）</option>
+            </select>
+            <small class="form-hint">
+              💡 <strong>排查型</strong>：先在上方「知識庫內容」填寫排查步驟，用戶排查後說出關鍵詞才觸發表單<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;範例：內容寫「請檢查溫度設定、濾網...若仍不冷請報修」→ 用戶說「還是不冷」→ 觸發報修表單<br>
+              💡 <strong>行動型</strong>：顯示知識庫內容後，立即主動詢問是否執行<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;範例：內容寫「租金繳納方式...」→ 自動詢問「是否要登記繳納記錄？」→ 用戶說「要」→ 觸發表單
+            </small>
+          </div>
 
-            <!-- immediate 模式的確認提示詞 -->
-            <div v-if="linkType !== 'none' && formData.trigger_mode === 'immediate'" class="form-group">
-              <label>確認提示詞（選填）</label>
-              <textarea
-                v-model="formData.immediate_prompt"
-                class="form-control"
-                rows="3"
-                placeholder="留空則使用系統預設提示詞"
-              ></textarea>
-              <small class="form-hint">
-                💡 <strong>預設提示詞：</strong><br>
-                💡 **需要安排處理嗎？**<br>
-                • 回覆「要」或「需要」→ 立即執行後續動作<br>
-                • 回覆「不用」→ 繼續為您解答其他問題<br>
-                <br>
-                如需自訂（例如：改為「需要安排維修嗎？」），請在上方輸入。
-              </small>
-            </div>
+          <!-- 4️⃣ manual 模式：觸發關鍵詞 -->
+          <div v-if="linkType === 'form' && formData.form_id && formData.trigger_mode === 'manual'" class="form-group">
+            <label>觸發關鍵詞 *</label>
+            <KeywordsInput
+              v-model="formData.trigger_keywords"
+              :placeholder="'輸入關鍵詞後按 Enter，例如：還是不行、試過了、無法解決'"
+            />
+            <small class="form-hint">
+              💡 用戶說出任一關鍵詞後，系統會觸發表單填寫
+            </small>
+          </div>
 
-            <!-- 表單選擇（選擇「表單」後才顯示） -->
-            <div v-if="linkType === 'form'" style="margin-top: 15px;">
-              <label>選擇表單 *</label>
-              <select v-model="formData.form_id" class="form-select">
-                <option value="">請選擇表單...</option>
-                <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
-                  {{ form.form_name }} ({{ form.form_id }})
-                </option>
-              </select>
-              <p v-if="!formData.form_id" class="hint-text">💡 請選擇一個表單</p>
-              <p v-else class="hint-text">✅ 已關聯表單：{{ getFormName(formData.form_id) }}</p>
-
-              <!-- 表單引導語 (當選擇了表單時顯示) -->
-              <div v-if="formData.form_id" style="margin-top: 10px;">
-                <label>表單引導語 <span class="field-hint">（可選，自訂觸發表單前的提示）</span></label>
-                <textarea
-                  v-model="formData.form_intro"
-                  rows="2"
-                  placeholder="例如：為了協助您完成申請，請提供以下資訊："
-                ></textarea>
-                <p class="hint-text">💡 留空則使用表單預設引導語</p>
-              </div>
-            </div>
+          <!-- 5️⃣ immediate 模式：確認提示詞 -->
+          <div v-if="linkType === 'form' && formData.form_id && formData.trigger_mode === 'immediate'" class="form-group">
+            <label>確認提示詞（選填）</label>
+            <textarea
+              v-model="formData.immediate_prompt"
+              class="form-control"
+              rows="2"
+              placeholder="例如：📋 是否要登記本月租金繳納記錄？"
+            ></textarea>
+            <small class="form-hint">
+              💡 <strong>作用</strong>：顯示知識庫內容後，自動附加此詢問提示<br>
+              💡 <strong>留空則使用預設</strong>：「需要安排處理嗎？回覆『要』或『需要』即可開始填寫表單」<br>
+              💡 <strong>自訂範例</strong>：「📋 是否要登記本月租金繳納記錄？（回覆『是』或『要』即可開始登記）」
+            </small>
+          </div>
 
             <!-- API 端點選擇（選擇「API」後才顯示） -->
             <div v-if="linkType === 'api'" style="margin-top: 15px;">
@@ -405,75 +394,6 @@
               <p v-if="!selectedApiEndpointId" class="hint-text">💡 請選擇一個 API 端點</p>
               <p v-else class="hint-text">✅ 已關聯 API：{{ selectedApi?.endpoint_name }}</p>
             </div>
-
-            <!-- 表單+API 選項（選擇「表單+API」後才顯示） -->
-            <div v-if="linkType === 'form_api'" style="margin-top: 15px;">
-              <div style="padding: 15px; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 5px; margin-bottom: 15px;">
-                <p style="margin: 0; color: #1e40af; font-weight: 500;">💡 表單+API 模式說明</p>
-                <p style="margin: 5px 0 0 0; color: #64748b; font-size: 0.9em;">
-                  用戶先填寫表單收集資訊，表單完成後系統自動調用 API 處理請求（例如：退租申請、租屋申請）
-                </p>
-              </div>
-
-              <!-- 表單選擇 -->
-              <div style="margin-bottom: 20px;">
-                <label>選擇表單 *</label>
-                <select v-model="formData.form_id" class="form-select">
-                  <option value="">請選擇表單...</option>
-                  <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
-                    {{ form.form_name }} ({{ form.form_id }})
-                  </option>
-                </select>
-                <p v-if="!formData.form_id" class="hint-text">💡 請選擇一個表單</p>
-                <p v-else class="hint-text">✅ 已關聯表單：{{ getFormName(formData.form_id) }}</p>
-
-                <!-- 表單引導語 -->
-                <div v-if="formData.form_id" style="margin-top: 10px;">
-                  <label>表單引導語 <span class="field-hint">（可選）</span></label>
-                  <textarea
-                    v-model="formData.form_intro"
-                    rows="2"
-                    placeholder="例如：為了協助您完成申請，請提供以下資訊："
-                  ></textarea>
-                </div>
-              </div>
-
-              <!-- API 端點選擇 -->
-              <div>
-                <label>選擇 API 端點 *</label>
-                <select
-                  v-model="selectedApiEndpointId"
-                  class="form-select"
-                  @change="onApiEndpointChange"
-                >
-                  <option value="">請選擇 API 端點...</option>
-                  <option
-                    v-for="api in availableApiEndpoints"
-                    :key="api.endpoint_id"
-                    :value="api.endpoint_id"
-                  >
-                    {{ api.endpoint_icon }} {{ api.endpoint_name }} ({{ api.endpoint_id }})
-                  </option>
-                </select>
-
-                <!-- 顯示選中的 API 資訊 -->
-                <div v-if="selectedApi" class="api-info-box" style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
-                  <p><strong>{{ selectedApi.endpoint_icon }} {{ selectedApi.endpoint_name }}</strong></p>
-                  <p v-if="selectedApi.description" style="font-size: 0.9em; color: #666;">{{ selectedApi.description }}</p>
-                  <p style="font-size: 0.85em; color: #999;">
-                    {{ selectedApi.http_method }} {{ selectedApi.api_url }}
-                  </p>
-                </div>
-
-                <p v-if="!selectedApiEndpointId" class="hint-text">💡 請選擇一個 API 端點</p>
-                <p v-else class="hint-text">✅ 已關聯 API：{{ selectedApi?.endpoint_name }}</p>
-              </div>
-
-              <p class="hint-text" style="margin-top: 15px; padding: 10px; background: #fef3c7; border-radius: 5px; color: #92400e;">
-                ⚠️ 用戶填寫完表單後，系統會自動調用 API。請確保 API 端點能夠接收表單資料。
-              </p>
-            </div>
-          </div>
 
           <div class="form-group">
             <label>內容 (Markdown) *</label>
@@ -605,9 +525,8 @@ export default {
         priority: 0,  // 新增：優先級（0-10）
         // 表單關聯
         form_id: '',
-        form_intro: '',
         // 🆕 表單觸發模式
-        trigger_mode: 'none',  // 默認為資訊型（與 SOP 一致）
+        trigger_mode: 'manual',  // 默認為排查型
         trigger_keywords: [],  // manual 模式的觸發關鍵詞
         immediate_prompt: '',  // immediate 模式的確認提示詞
         // 動作類型和 API 配置
@@ -871,7 +790,6 @@ export default {
       // 切換關聯類型時，清空對應的欄位並設定 action_type
       if (this.linkType === 'none') {
         this.formData.form_id = null;
-        this.formData.form_intro = null;
         this.formData.action_type = 'direct_answer';
         this.formData.api_config = null;
         this.selectedApiEndpointId = '';
@@ -879,9 +797,12 @@ export default {
         this.formData.action_type = 'form_fill';
         this.formData.api_config = null;
         this.selectedApiEndpointId = '';
+        // 確保 trigger_mode 有預設值
+        if (!this.formData.trigger_mode || this.formData.trigger_mode === 'none') {
+          this.formData.trigger_mode = 'manual';
+        }
       } else if (this.linkType === 'api') {
         this.formData.form_id = null;
-        this.formData.form_intro = null;
         this.formData.action_type = 'api_call';
         // api_config 會在選擇 API 時構建
       } else if (this.linkType === 'form_api') {
@@ -889,6 +810,28 @@ export default {
         this.formData.action_type = 'form_then_api';
         // 保留表單和 API 配置
       }
+    },
+
+    onFormSelect() {
+      // 當選擇表單時，確保 trigger_mode 有值
+      if (this.formData.form_id) {
+        // 如果沒有值或值為 'none'，設為 'manual'
+        if (!this.formData.trigger_mode || this.formData.trigger_mode === 'none' || this.formData.trigger_mode === '') {
+          this.formData.trigger_mode = 'manual';
+        }
+        console.log('📋 表單選擇後 trigger_mode:', this.formData.trigger_mode);
+      }
+    },
+
+    onTriggerModeChange() {
+      // 切換 trigger_mode 時清空相關欄位
+      if (this.formData.trigger_mode !== 'manual') {
+        this.formData.trigger_keywords = [];
+      }
+      if (this.formData.trigger_mode !== 'immediate') {
+        this.formData.immediate_prompt = '';
+      }
+      console.log('🔄 觸發模式切換:', this.formData.trigger_mode);
     },
 
     onApiEndpointChange() {
@@ -1037,8 +980,7 @@ export default {
         business_types: [],
         target_user: [],
         form_id: null,
-        form_intro: null,
-        trigger_mode: 'none',  // 🆕 默認為資訊型（與 SOP 一致）
+        trigger_mode: 'manual',  // 🆕 默認為排查型
         trigger_keywords: [],  // 🆕 manual 模式的觸發關鍵詞
         immediate_prompt: '',  // 🆕
         action_type: 'direct_answer',
@@ -1072,9 +1014,8 @@ export default {
           priority: knowledge.priority || 0,  // 載入優先級
           // 表單關聯
           form_id: knowledge.form_id || '',
-          form_intro: knowledge.form_intro || '',
-          // 🆕 表單觸發模式
-          trigger_mode: knowledge.trigger_mode || 'none',
+          // 表單觸發模式
+          trigger_mode: knowledge.trigger_mode || 'manual',  // 預設為排查型
           trigger_keywords: knowledge.trigger_keywords ? [...knowledge.trigger_keywords] : [],
           immediate_prompt: knowledge.immediate_prompt || '',
           // 動作類型和 API 配置
@@ -1213,8 +1154,7 @@ export default {
           };
           // 清空表單關聯
           this.formData.form_id = null;
-          this.formData.form_intro = null;
-          // 🆕 清空表單觸發模式（API 模式不需要）
+            // 🆕 清空表單觸發模式（API 模式不需要）
           this.formData.trigger_mode = 'none';
           this.formData.immediate_prompt = null;
         } else if (this.linkType === 'form_api') {
@@ -1238,13 +1178,12 @@ export default {
             params: {},
             combine_with_knowledge: true
           };
-          // 保留 form_id 和 form_intro（不清空）
+          // 保留 form_id（不清空）
         } else {
           // 選擇了「無」，清空所有關聯
           this.formData.action_type = 'direct_answer';
           this.formData.form_id = null;
-          this.formData.form_intro = null;
-          this.formData.api_config = null;
+            this.formData.api_config = null;
           // 🆕 清空表單觸發模式
           this.formData.trigger_mode = 'none';
           this.formData.immediate_prompt = null;
@@ -1255,9 +1194,9 @@ export default {
           business_types: this.formData.business_types,
           target_user: this.formData.target_user,
           form_id: this.formData.form_id,
-          form_intro: this.formData.form_intro,
-          trigger_mode: this.formData.trigger_mode,  // 🆕
-          immediate_prompt: this.formData.immediate_prompt,  // 🆕
+          trigger_mode: this.formData.trigger_mode,
+          trigger_keywords: this.formData.trigger_keywords,
+          immediate_prompt: this.formData.immediate_prompt,
           action_type: this.formData.action_type,
           api_config: this.formData.api_config,
           selectedBusinessTypes: this.selectedBusinessTypes,

@@ -197,6 +197,37 @@ class SOPOrchestrator:
         print(f"   觸發關鍵詞: {trigger_keywords}")
         print(f"   用戶訊息: {user_message}")
 
+        # 🔧 檢查是否為純粹的否定詞（適用於 immediate 模式）
+        negative_keywords = ['不用', '不要', '不需要', '算了', '不必', '免了', '不了', '不']
+        user_message_clean = user_message.strip().replace('\n', '').replace(' ', '')
+
+        # 完全匹配或只包含否定詞+標點
+        is_pure_negative = user_message_clean in negative_keywords or \
+                          any(user_message_clean == kw + punct for kw in negative_keywords for punct in ['', '。', '！', '!', ',', '，'])
+
+        if is_pure_negative and trigger_mode == 'immediate':
+            print(f"   ℹ️  檢測到否定詞，取消動作")
+            # 刪除 context
+            self.trigger_handler.delete_context(session_id)
+
+            # 使用 followup_prompt 或預設禮貌回覆
+            followup_prompt = sop_context.get('followup_prompt')
+            polite_response = followup_prompt or '好的，如有需要隨時告訴我！'
+
+            return {
+                'has_sop': True,
+                'sop_item': sop_context,
+                'all_sop_candidates': [sop_context],
+                'trigger_result': {
+                    'matched': False,
+                    'cancelled': True,
+                    'reason': '用戶拒絕執行'
+                },
+                'action_result': None,
+                'response': polite_response,
+                'next_step': 'cancelled'
+            }
+
         # 🔧 immediate 模式：檢查是否為問句（問句不視為確認）
         is_question = False
         if trigger_mode == 'immediate':
@@ -532,6 +563,77 @@ class SOPOrchestrator:
         except Exception as e:
             print(f"   ❌ 獲取 SOP 完整資訊失敗: {e}")
             return None
+
+    async def handle_knowledge_trigger(
+        self,
+        knowledge_item: Dict,
+        user_message: str,
+        session_id: str,
+        user_id: str,
+        vendor_id: int
+    ) -> Dict:
+        """
+        處理知識庫項目的觸發（支援 manual 和 immediate 模式）
+
+        Args:
+            knowledge_item: 知識庫項目（已轉換為 SOP 格式）
+            user_message: 用戶訊息
+            session_id: 會話 ID
+            user_id: 用戶 ID
+            vendor_id: 業者 ID
+
+        Returns:
+            處理結果 {'action': 'triggered'/'wait_for_confirmation', 'response': str}
+        """
+        print(f"🎯 [Knowledge Trigger] 處理知識庫觸發 ID={knowledge_item.get('id')}, mode={knowledge_item.get('trigger_mode')}")
+
+        # 檢查是否有待處理的 context
+        existing_context = self.trigger_handler.get_context(session_id)
+
+        if existing_context:
+            # 有待處理的 context，檢查關鍵詞匹配
+            print(f"   📖 檢測到待處理 context: knowledge_id={existing_context.get('sop_id')}")
+
+            trigger_keywords = existing_context.get('trigger_keywords', [])
+            matched, matched_keyword = self.keyword_matcher.match(user_message, trigger_keywords)
+
+            if matched:
+                print(f"   ✅ 關鍵詞匹配成功: {matched_keyword}")
+                # 刪除 context
+                self.trigger_handler.delete_context(session_id)
+                return {
+                    'action': 'triggered',
+                    'response': '',
+                    'matched_keyword': matched_keyword
+                }
+            else:
+                print(f"   ❌ 關鍵詞未匹配，保持等待")
+                return {
+                    'action': 'wait_for_keywords',
+                    'response': '請告訴我您是否需要協助？'
+                }
+        else:
+            # 沒有 context，首次觸發
+            result = self.trigger_handler.handle(
+                sop_item=knowledge_item,
+                user_message=user_message,
+                session_id=session_id,
+                user_id=user_id,
+                vendor_id=vendor_id
+            )
+
+            if result.get('action') == 'execute_immediately':
+                # auto 模式：直接觸發
+                return {
+                    'action': 'triggered',
+                    'response': result.get('response', '')
+                }
+            else:
+                # manual/immediate 模式：返回等待回應
+                return {
+                    'action': 'wait_for_confirmation',
+                    'response': result.get('response', '')
+                }
 
 
 # 使用範例

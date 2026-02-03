@@ -112,6 +112,9 @@ class VendorKnowledgeRetriever:
                     kb.trigger_form_condition,
                     kb.action_type,
                     kb.api_config,
+                    kb.trigger_mode,
+                    kb.trigger_keywords,
+                    kb.immediate_prompt,
                     -- 計算優先級權重
                     CASE
                         WHEN kb.scope = 'customized' AND kb.vendor_id = %s THEN 1000
@@ -377,6 +380,7 @@ class VendorKnowledgeRetriever:
                     kb.action_type,
                     kb.api_config,
                     kb.trigger_mode,
+                    kb.trigger_keywords,
                     kb.immediate_prompt,
                     kim.intent_id,
                     kim.intent_type,

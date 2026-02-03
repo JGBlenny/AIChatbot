@@ -72,6 +72,9 @@ class SOPTriggerHandler:
         """
         self.redis_client = redis_client or self._get_redis_client()
 
+        # 內存存儲（當 Redis 未啟用時使用）
+        self._memory_store = {}
+
         # 配置參數
         self.context_ttl = {
             TriggerMode.MANUAL: int(os.getenv("SOP_MANUAL_TTL", "600")),      # 10 分鐘
@@ -79,7 +82,13 @@ class SOPTriggerHandler:
         }
 
     def _get_redis_client(self):
-        """建立 Redis 連接（如果 redis 模組可用）"""
+        """建立 Redis 連接（如果 redis 模組可用且 CACHE_ENABLED=true）"""
+        # 檢查是否啟用緩存
+        cache_enabled = os.getenv("CACHE_ENABLED", "true").lower() == "true"
+        if not cache_enabled:
+            print("ℹ️  CACHE_ENABLED=false，SOP context 將使用內存存儲")
+            return None
+
         if redis is None:
             print("⚠️  Redis 模組未安裝，使用內存存儲（僅限測試）")
             return None
@@ -152,7 +161,7 @@ class SOPTriggerHandler:
 
         elif trigger_mode == TriggerMode.AUTO:
             return self._handle_auto_mode(
-                sop_item, session_id, user_id, vendor_id
+                sop_item, user_message, session_id, user_id, vendor_id
             )
 
         else:
@@ -202,10 +211,12 @@ class SOPTriggerHandler:
         - 儲存 context（等待關鍵詞）
         - 不主動詢問
         - 租戶說關鍵詞後才觸發
+        - 預設觸發詞：['是', '要', '好', '可以', '需要']（可自訂覆蓋）
         """
         print(f"   ✅ manual 模式：返回排查步驟 + 等待關鍵詞")
 
-        trigger_keywords = sop_item.get('trigger_keywords', [])
+        # 使用自訂觸發詞（如果有），否則使用預設詞
+        trigger_keywords = sop_item.get('trigger_keywords') or ['是', '要']
         print(f"   🔑 觸發關鍵詞: {trigger_keywords}")
 
         # 儲存 context
@@ -259,7 +270,7 @@ class SOPTriggerHandler:
         """
         print(f"   ✅ immediate 模式：返回 SOP + 立即詢問")
 
-        trigger_keywords = sop_item.get('trigger_keywords', ['是', '要', '好', '可以', '需要'])
+        trigger_keywords = sop_item.get('trigger_keywords', ['是', '要'])
 
         # 使用自訂提示詞（如果有），否則使用系統預設
         immediate_prompt = sop_item.get('immediate_prompt') or '''💡 **需要安排處理嗎？**
@@ -301,6 +312,7 @@ class SOPTriggerHandler:
     def _handle_auto_mode(
         self,
         sop_item: Dict,
+        user_message: str,
         session_id: str,
         user_id: str,
         vendor_id: int
@@ -409,6 +421,15 @@ class SOPTriggerHandler:
                 'ttl': ttl
             }
 
+            # 如果 Redis 被禁用，使用內存存儲
+            if self.redis_client is None:
+                self._memory_store[context_key] = {
+                    'data': context_data,
+                    'expires_at': datetime.now().timestamp() + ttl
+                }
+                print(f"   💾 SOP Context 已儲存到內存: {context_key} (TTL: {ttl}s)")
+                return True
+
             # 儲存到 Redis
             self.redis_client.setex(
                 context_key,
@@ -416,7 +437,7 @@ class SOPTriggerHandler:
                 json.dumps(context_data, ensure_ascii=False)
             )
 
-            print(f"   💾 SOP Context 已儲存: {context_key} (TTL: {ttl}s)")
+            print(f"   💾 SOP Context 已儲存到 Redis: {context_key} (TTL: {ttl}s)")
             return True
 
         except Exception as e:
@@ -435,15 +456,36 @@ class SOPTriggerHandler:
         """
         try:
             context_key = self._get_context_key(session_id)
+
+            # 如果 Redis 被禁用，使用內存存儲
+            if self.redis_client is None:
+                stored = self._memory_store.get(context_key)
+                if stored:
+                    # 檢查是否過期
+                    if datetime.now().timestamp() > stored['expires_at']:
+                        # 已過期，刪除
+                        del self._memory_store[context_key]
+                        print(f"   ⚠️  SOP Context 已過期: {context_key}")
+                        return None
+
+                    context = stored['data']
+                    print(f"   📖 讀取內存 SOP Context: {context_key}")
+                    print(f"      狀態: {context.get('state')}")
+                    return context
+                else:
+                    print(f"   ⚠️  無內存 SOP Context: {context_key}")
+                    return None
+
+            # 從 Redis 讀取
             context_json = self.redis_client.get(context_key)
 
             if context_json:
                 context = json.loads(context_json)
-                print(f"   📖 讀取 SOP Context: {context_key}")
+                print(f"   📖 讀取 Redis SOP Context: {context_key}")
                 print(f"      狀態: {context.get('state')}")
                 return context
             else:
-                print(f"   ⚠️  無 SOP Context: {context_key}")
+                print(f"   ⚠️  無 Redis SOP Context: {context_key}")
                 return None
 
         except Exception as e:
@@ -462,8 +504,17 @@ class SOPTriggerHandler:
         """
         try:
             context_key = self._get_context_key(session_id)
+
+            # 如果 Redis 被禁用，從內存刪除
+            if self.redis_client is None:
+                if context_key in self._memory_store:
+                    del self._memory_store[context_key]
+                    print(f"   🗑️  內存 SOP Context 已刪除: {context_key}")
+                return True
+
+            # 從 Redis 刪除
             self.redis_client.delete(context_key)
-            print(f"   🗑️  SOP Context 已刪除: {context_key}")
+            print(f"   🗑️  Redis SOP Context 已刪除: {context_key}")
             return True
         except Exception as e:
             print(f"   ❌ 刪除 SOP Context 失敗: {e}")
@@ -485,6 +536,10 @@ class SOPTriggerHandler:
             是否成功
         """
         try:
+            # 如果 Redis 被禁用，跳過更新
+            if self.redis_client is None:
+                return True
+
             context = self.get_context(session_id)
             if not context:
                 return False
