@@ -68,6 +68,11 @@ ON CONFLICT (form_id) DO UPDATE SET
 -- 2. 知識庫項目
 -- =====================================================
 
+-- 先刪除舊的業者 2 知識庫（如果存在）
+DELETE FROM knowledge_base
+WHERE vendor_id = 2 AND question_summary = '查詢電費帳單寄送區間（單月/雙月）';
+
+-- 插入新的知識庫項目
 INSERT INTO knowledge_base (
     question_summary,
     answer,
@@ -98,21 +103,7 @@ INSERT INTO knowledge_base (
     TRUE,
     'customized',
     ARRAY['property_management', 'full_service']::text[]
-)
-ON CONFLICT (vendor_id, question_summary) DO UPDATE SET
-    answer = EXCLUDED.answer,
-    trigger_mode = EXCLUDED.trigger_mode,
-    form_id = EXCLUDED.form_id,
-    immediate_prompt = EXCLUDED.immediate_prompt,
-    trigger_keywords = EXCLUDED.trigger_keywords,
-    target_user = EXCLUDED.target_user,
-    action_type = EXCLUDED.action_type,
-    keywords = EXCLUDED.keywords,
-    priority = EXCLUDED.priority,
-    is_active = EXCLUDED.is_active,
-    scope = EXCLUDED.scope,
-    business_types = EXCLUDED.business_types,
-    updated_at = NOW();
+);
 
 COMMIT;
 
