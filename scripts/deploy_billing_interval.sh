@@ -1,7 +1,7 @@
 #!/bin/bash
 # 電費寄送區間查詢系統 - 快速部署腳本
 # 日期: 2026-02-04
-# 版本: v1.3
+# 版本: v1.4
 # 使用: ./deploy_billing_interval.sh [local|prod]
 
 set -e  # 遇到錯誤立即退出
@@ -107,29 +107,23 @@ run_migrations() {
     log_success "所有 Migrations 執行完成"
 }
 
-# 匯入 CSV 資料
-import_csv_data() {
+# 匯入地址資料
+import_lookup_data() {
     log_info "匯入 247 筆地址資料..."
 
-    # 將 CSV 複製到容器中
-    docker cp database/exports/lookup_tables_vendor1.csv aichatbot-postgres:/tmp/
-
-    # 使用 COPY 命令匯入
-    docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -c "
-        COPY lookup_tables (vendor_id, category, category_name, lookup_key, lookup_value, metadata, is_active)
-        FROM '/tmp/lookup_tables_vendor1.csv'
-        WITH (FORMAT CSV, HEADER true);
-    " > /dev/null
+    # 使用 SQL 檔案匯入
+    docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
+        database/seeds/insert_lookup_tables_vendor1.sql
 
     if [ $? -eq 0 ]; then
-        log_success "CSV 資料匯入完成"
+        log_success "地址資料匯入完成"
         # 驗證數量
         COUNT=$(docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -t -c "
             SELECT COUNT(*) FROM lookup_tables WHERE vendor_id = 1 AND category = 'billing_interval';
         " | xargs)
         log_info "業者 1 地址資料: $COUNT 筆"
     else
-        log_error "CSV 資料匯入失敗"
+        log_error "地址資料匯入失敗"
         exit 1
     fi
 }
@@ -149,8 +143,8 @@ import_business_data() {
         exit 1
     fi
 
-    # 匯入 CSV 資料
-    import_csv_data
+    # 匯入地址資料
+    import_lookup_data
 
     # 匯入業者 2 的配置
     docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
@@ -267,7 +261,7 @@ main() {
     echo ""
     echo "=========================================="
     echo "  電費寄送區間查詢系統 - 部署腳本"
-    echo "  版本: v1.3"
+    echo "  版本: v1.4"
     echo "  日期: 2026-02-04"
     echo "  環境: $ENV (使用 $COMPOSE_FILE)"
     echo "=========================================="
