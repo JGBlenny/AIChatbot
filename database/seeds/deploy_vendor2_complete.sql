@@ -31,7 +31,7 @@ INSERT INTO form_schemas (
     NULL,
     '[
         {
-            "prompt": "請提供完整的物件地址（例如：台北市大安區信義路四段1號3樓）",
+            "prompt": "請提供完整的物件地址（例如：新北市板橋區忠孝路48巷4弄8號一樓）",
             "required": true,
             "field_name": "address",
             "field_type": "text",

@@ -2312,3 +2312,88 @@ async def import_sop_from_excel(
     finally:
         if conn and not conn.closed:
             conn.close()
+
+
+# ========== Embedding 管理功能 ==========
+
+@router.post("/{vendor_id}/sop/regenerate-embeddings", status_code=200)
+async def regenerate_sop_embeddings(vendor_id: int, request: Request):
+    """
+    批量重新生成業者 SOP 的 embeddings
+
+    功能：
+    - 查找該業者所有缺少 embedding 的 SOP 項目
+    - 在背景批量生成 embeddings（primary + fallback）
+    - 不阻塞 API 回應
+
+    Args:
+        vendor_id: 業者ID
+        request: Request 對象（用於訪問 db_pool）
+
+    Returns:
+        Dict: 批量生成任務資訊
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 檢查業者是否存在
+        cursor.execute("SELECT id, name FROM vendors WHERE id = %s", (vendor_id,))
+        vendor = cursor.fetchone()
+        if not vendor:
+            raise HTTPException(status_code=404, detail="業者不存在")
+
+        # 查詢所有缺少 embedding 的 SOP 項目
+        cursor.execute("""
+            SELECT id, item_name
+            FROM vendor_sop_items
+            WHERE vendor_id = %s
+              AND is_active = TRUE
+              AND (primary_embedding IS NULL OR fallback_embedding IS NULL)
+            ORDER BY id
+        """, (vendor_id,))
+
+        missing_items = cursor.fetchall()
+        missing_ids = [item['id'] for item in missing_items]
+
+        cursor.close()
+
+        if not missing_ids:
+            return {
+                "message": f"業者「{vendor['name']}」的所有 SOP 項目都已有 embedding",
+                "vendor_id": vendor_id,
+                "vendor_name": vendor['name'],
+                "total_items": 0,
+                "missing_items": []
+            }
+
+        # 🚀 背景批量生成 embeddings（不阻塞回應）
+        if hasattr(request.app.state, 'db_pool'):
+            from services.sop_embedding_generator import generate_batch_sop_embeddings_async
+            asyncio.create_task(
+                generate_batch_sop_embeddings_async(
+                    db_pool=request.app.state.db_pool,
+                    sop_item_ids=missing_ids,
+                    batch_size=5
+                )
+            )
+            print(f"🚀 [SOP Regenerate] 已觸發批量 embedding 生成：業者 {vendor_id}，共 {len(missing_ids)} 個項目")
+
+        return {
+            "message": f"已觸發批量 embedding 生成：{len(missing_ids)} 個項目",
+            "vendor_id": vendor_id,
+            "vendor_name": vendor['name'],
+            "total_items": len(missing_ids),
+            "missing_items": [
+                {"id": item['id'], "item_name": item['item_name']}
+                for item in missing_items
+            ]
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"批量生成失敗: {str(e)}")
+    finally:
+        if conn and not conn.closed:
+            conn.close()
