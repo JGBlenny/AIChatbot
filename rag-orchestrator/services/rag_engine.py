@@ -102,110 +102,116 @@ class RAGEngine:
                     if vendor_business_types:
                         # 有業態過濾
                         results = await conn.fetch("""
-                            SELECT DISTINCT ON (kb.id)
-                                kb.id,
-                                kb.question_summary,
-                                kb.answer as content,
-                                kb.target_user,
-                                kb.keywords,
-                                kb.business_types,
-                                kb.scope,
-                                kb.vendor_id,
-                                kb.priority,
-                                kb.form_id,
-                                kb.trigger_form_condition,
-                                1 - (kb.embedding <=> $1::vector) as base_similarity,
-                                -- 意圖加成
-                                CASE
-                                    WHEN kim.intent_id = $4 THEN 1.3  -- 主要意圖 1.3x boost
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
-                                    ELSE 1.0
-                                END as intent_boost,
-                                -- 優先級加成（單獨返回）
-                                CASE
-                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $9
-                                    THEN $8
-                                    ELSE 0
-                                END as priority_boost,
-                                -- 加成後相似度（意圖加成為乘法，優先級加成為固定值）
-                                (1 - (kb.embedding <=> $1::vector)) *
-                                CASE
-                                    WHEN kim.intent_id = $4 THEN 1.3
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
-                                    ELSE 1.0
-                                END +
-                                CASE
-                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $9
-                                    THEN $8
-                                    ELSE 0
-                                END as boosted_similarity
-                            FROM knowledge_base kb
-                            LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
-                            WHERE kb.embedding IS NOT NULL
-                                AND (1 - (kb.embedding <=> $1::vector)) >= $2
-                                AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
-                                AND (kb.target_user IS NULL OR kb.target_user && $6::text[])
-                                AND (kb.business_types IS NULL OR kb.business_types && $7::text[])
-                                AND (
-                                    $10::int IS NULL OR
-                                    (kb.vendor_id = $10 AND kb.scope IN ('customized', 'vendor')) OR
-                                    (kb.vendor_id IS NULL AND kb.scope = 'global')
-                                )
-                            ORDER BY kb.id, boosted_similarity DESC
+                            SELECT * FROM (
+                                SELECT DISTINCT ON (kb.id)
+                                    kb.id,
+                                    kb.question_summary,
+                                    kb.answer as content,
+                                    kb.target_user,
+                                    kb.keywords,
+                                    kb.business_types,
+                                    kb.scope,
+                                    kb.vendor_id,
+                                    kb.priority,
+                                    kb.form_id,
+                                    kb.trigger_form_condition,
+                                    1 - (kb.embedding <=> $1::vector) as base_similarity,
+                                    -- 意圖加成
+                                    CASE
+                                        WHEN kim.intent_id = $4 THEN 1.3  -- 主要意圖 1.3x boost
+                                        WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
+                                        ELSE 1.0
+                                    END as intent_boost,
+                                    -- 優先級加成（單獨返回）
+                                    CASE
+                                        WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $9
+                                        THEN $8
+                                        ELSE 0
+                                    END as priority_boost,
+                                    -- 加成後相似度（意圖加成為乘法，優先級加成為固定值）
+                                    (1 - (kb.embedding <=> $1::vector)) *
+                                    CASE
+                                        WHEN kim.intent_id = $4 THEN 1.3
+                                        WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
+                                        ELSE 1.0
+                                    END +
+                                    CASE
+                                        WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $9
+                                        THEN $8
+                                        ELSE 0
+                                    END as boosted_similarity
+                                FROM knowledge_base kb
+                                LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
+                                WHERE kb.embedding IS NOT NULL
+                                    AND (1 - (kb.embedding <=> $1::vector)) >= $2
+                                    AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
+                                    AND (kb.target_user IS NULL OR kb.target_user && $6::text[])
+                                    AND (kb.business_types IS NULL OR kb.business_types && $7::text[])
+                                    AND (
+                                        $10::int IS NULL OR
+                                        (kb.vendor_id = $10 AND kb.scope IN ('customized', 'vendor')) OR
+                                        (kb.vendor_id IS NULL AND kb.scope = 'global')
+                                    )
+                                ORDER BY kb.id, boosted_similarity DESC
+                            ) AS deduped
+                            ORDER BY boosted_similarity DESC
                             LIMIT $3
                         """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, target_users, vendor_business_types, self.priority_boost, self.priority_quality_threshold, vendor_id)
                     else:
                         # 無業態過濾
                         results = await conn.fetch("""
-                            SELECT DISTINCT ON (kb.id)
-                                kb.id,
-                                kb.question_summary,
-                                kb.answer as content,
-                                kb.category,
-                                kb.target_user,
-                                kb.keywords,
-                                kb.scope,
-                                kb.vendor_id,
-                                kb.priority,
-                                kb.form_id,
-                                kb.trigger_form_condition,
-                                1 - (kb.embedding <=> $1::vector) as base_similarity,
-                                -- 意圖加成
-                                CASE
-                                    WHEN kim.intent_id = $4 THEN 1.3  -- 主要意圖 1.3x boost
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
-                                    ELSE 1.0
-                                END as intent_boost,
-                                -- 優先級加成（單獨返回）
-                                CASE
-                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $8
-                                    THEN $7
-                                    ELSE 0
-                                END as priority_boost,
-                                -- 加成後相似度（意圖加成為乘法，優先級加成為固定值）
-                                (1 - (kb.embedding <=> $1::vector)) *
-                                CASE
-                                    WHEN kim.intent_id = $4 THEN 1.3
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
-                                    ELSE 1.0
-                                END +
-                                CASE
-                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $8
-                                    THEN $7
-                                    ELSE 0
-                                END as boosted_similarity
-                            FROM knowledge_base kb
-                            LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
-                            WHERE kb.embedding IS NOT NULL
-                                AND (1 - (kb.embedding <=> $1::vector)) >= $2
-                                AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
-                                AND (kb.target_user IS NULL OR kb.target_user && $6::text[])
-                                AND (
-                                    $9::int IS NULL OR
-                                    (kb.vendor_id = $9 AND kb.scope IN ('customized', 'vendor')) OR
-                                    (kb.vendor_id IS NULL AND kb.scope = 'global')
-                                )
-                            ORDER BY kb.id, boosted_similarity DESC
+                            SELECT * FROM (
+                                SELECT DISTINCT ON (kb.id)
+                                    kb.id,
+                                    kb.question_summary,
+                                    kb.answer as content,
+                                    kb.category,
+                                    kb.target_user,
+                                    kb.keywords,
+                                    kb.scope,
+                                    kb.vendor_id,
+                                    kb.priority,
+                                    kb.form_id,
+                                    kb.trigger_form_condition,
+                                    1 - (kb.embedding <=> $1::vector) as base_similarity,
+                                    -- 意圖加成
+                                    CASE
+                                        WHEN kim.intent_id = $4 THEN 1.3  -- 主要意圖 1.3x boost
+                                        WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
+                                        ELSE 1.0
+                                    END as intent_boost,
+                                    -- 優先級加成（單獨返回）
+                                    CASE
+                                        WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $8
+                                        THEN $7
+                                        ELSE 0
+                                    END as priority_boost,
+                                    -- 加成後相似度（意圖加成為乘法，優先級加成為固定值）
+                                    (1 - (kb.embedding <=> $1::vector)) *
+                                    CASE
+                                        WHEN kim.intent_id = $4 THEN 1.3
+                                        WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
+                                        ELSE 1.0
+                                    END +
+                                    CASE
+                                        WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $8
+                                        THEN $7
+                                        ELSE 0
+                                    END as boosted_similarity
+                                FROM knowledge_base kb
+                                LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
+                                WHERE kb.embedding IS NOT NULL
+                                    AND (1 - (kb.embedding <=> $1::vector)) >= $2
+                                    AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
+                                    AND (kb.target_user IS NULL OR kb.target_user && $6::text[])
+                                    AND (
+                                        $9::int IS NULL OR
+                                        (kb.vendor_id = $9 AND kb.scope IN ('customized', 'vendor')) OR
+                                        (kb.vendor_id IS NULL AND kb.scope = 'global')
+                                    )
+                                ORDER BY kb.id, boosted_similarity DESC
+                            ) AS deduped
+                            ORDER BY boosted_similarity DESC
                             LIMIT $3
                         """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, target_users, self.priority_boost, self.priority_quality_threshold, vendor_id)
                 else:
@@ -213,108 +219,114 @@ class RAGEngine:
                     if vendor_business_types:
                         # 有業態過濾
                         results = await conn.fetch("""
-                            SELECT DISTINCT ON (kb.id)
-                                kb.id,
-                                kb.question_summary,
-                                kb.answer as content,
-                                kb.target_user,
-                                kb.keywords,
-                                kb.business_types,
-                                kb.scope,
-                                kb.vendor_id,
-                                kb.priority,
-                                kb.form_id,
-                                kb.trigger_form_condition,
-                                1 - (kb.embedding <=> $1::vector) as base_similarity,
-                                -- 意圖加成
-                                CASE
-                                    WHEN kim.intent_id = $4 THEN 1.3  -- 主要意圖 1.3x boost
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
-                                    ELSE 1.0
-                                END as intent_boost,
-                                -- 優先級加成（單獨返回）
-                                CASE
-                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $8
-                                    THEN $7
-                                    ELSE 0
-                                END as priority_boost,
-                                -- 加成後相似度（意圖加成為乘法，優先級加成為固定值）
-                                (1 - (kb.embedding <=> $1::vector)) *
-                                CASE
-                                    WHEN kim.intent_id = $4 THEN 1.3
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
-                                    ELSE 1.0
-                                END +
-                                CASE
-                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $8
-                                    THEN $7
-                                    ELSE 0
-                                END as boosted_similarity
-                            FROM knowledge_base kb
-                            LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
-                            WHERE kb.embedding IS NOT NULL
-                                AND (1 - (kb.embedding <=> $1::vector)) >= $2
-                                AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
-                                AND (kb.business_types IS NULL OR kb.business_types && $6::text[])
-                                AND (
-                                    $9::int IS NULL OR
-                                    (kb.vendor_id = $9 AND kb.scope IN ('customized', 'vendor')) OR
-                                    (kb.vendor_id IS NULL AND kb.scope = 'global')
-                                )
-                            ORDER BY kb.id, boosted_similarity DESC
+                            SELECT * FROM (
+                                SELECT DISTINCT ON (kb.id)
+                                    kb.id,
+                                    kb.question_summary,
+                                    kb.answer as content,
+                                    kb.target_user,
+                                    kb.keywords,
+                                    kb.business_types,
+                                    kb.scope,
+                                    kb.vendor_id,
+                                    kb.priority,
+                                    kb.form_id,
+                                    kb.trigger_form_condition,
+                                    1 - (kb.embedding <=> $1::vector) as base_similarity,
+                                    -- 意圖加成
+                                    CASE
+                                        WHEN kim.intent_id = $4 THEN 1.3  -- 主要意圖 1.3x boost
+                                        WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
+                                        ELSE 1.0
+                                    END as intent_boost,
+                                    -- 優先級加成（單獨返回）
+                                    CASE
+                                        WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $8
+                                        THEN $7
+                                        ELSE 0
+                                    END as priority_boost,
+                                    -- 加成後相似度（意圖加成為乘法，優先級加成為固定值）
+                                    (1 - (kb.embedding <=> $1::vector)) *
+                                    CASE
+                                        WHEN kim.intent_id = $4 THEN 1.3
+                                        WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
+                                        ELSE 1.0
+                                    END +
+                                    CASE
+                                        WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $8
+                                        THEN $7
+                                        ELSE 0
+                                    END as boosted_similarity
+                                FROM knowledge_base kb
+                                LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
+                                WHERE kb.embedding IS NOT NULL
+                                    AND (1 - (kb.embedding <=> $1::vector)) >= $2
+                                    AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
+                                    AND (kb.business_types IS NULL OR kb.business_types && $6::text[])
+                                    AND (
+                                        $9::int IS NULL OR
+                                        (kb.vendor_id = $9 AND kb.scope IN ('customized', 'vendor')) OR
+                                        (kb.vendor_id IS NULL AND kb.scope = 'global')
+                                    )
+                                ORDER BY kb.id, boosted_similarity DESC
+                            ) AS deduped
+                            ORDER BY boosted_similarity DESC
                             LIMIT $3
                         """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, vendor_business_types, self.priority_boost, self.priority_quality_threshold, vendor_id)
                     else:
                         # 無業態過濾
                         results = await conn.fetch("""
-                            SELECT DISTINCT ON (kb.id)
-                                kb.id,
-                                kb.question_summary,
-                                kb.answer as content,
-                                kb.category,
-                                kb.target_user,
-                                kb.keywords,
-                                kb.scope,
-                                kb.vendor_id,
-                                kb.priority,
-                                kb.form_id,
-                                kb.trigger_form_condition,
-                                1 - (kb.embedding <=> $1::vector) as base_similarity,
-                                -- 意圖加成
-                                CASE
-                                    WHEN kim.intent_id = $4 THEN 1.3  -- 主要意圖 1.3x boost
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
-                                    ELSE 1.0
-                                END as intent_boost,
-                                -- 優先級加成（單獨返回）
-                                CASE
-                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $7
-                                    THEN $6
-                                    ELSE 0
-                                END as priority_boost,
-                                -- 加成後相似度（意圖加成為乘法，優先級加成為固定值）
-                                (1 - (kb.embedding <=> $1::vector)) *
-                                CASE
-                                    WHEN kim.intent_id = $4 THEN 1.3
-                                    WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
-                                    ELSE 1.0
-                                END +
-                                CASE
-                                    WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $7
-                                    THEN $6
-                                    ELSE 0
-                                END as boosted_similarity
-                            FROM knowledge_base kb
-                            LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
-                            WHERE kb.embedding IS NOT NULL
-                                AND (1 - (kb.embedding <=> $1::vector)) >= $2
-                                AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
-                                AND (
-                                    $8::int IS NULL OR
-                                    (kb.vendor_id = $8 AND kb.scope IN ('customized', 'vendor')) OR
-                                    (kb.vendor_id IS NULL AND kb.scope = 'global')
-                                )
-                            ORDER BY kb.id, boosted_similarity DESC
+                            SELECT * FROM (
+                                SELECT DISTINCT ON (kb.id)
+                                    kb.id,
+                                    kb.question_summary,
+                                    kb.answer as content,
+                                    kb.category,
+                                    kb.target_user,
+                                    kb.keywords,
+                                    kb.scope,
+                                    kb.vendor_id,
+                                    kb.priority,
+                                    kb.form_id,
+                                    kb.trigger_form_condition,
+                                    1 - (kb.embedding <=> $1::vector) as base_similarity,
+                                    -- 意圖加成
+                                    CASE
+                                        WHEN kim.intent_id = $4 THEN 1.3  -- 主要意圖 1.3x boost
+                                        WHEN kim.intent_id = ANY($5::int[]) THEN 1.1  -- 次要意圖 1.1x boost
+                                        ELSE 1.0
+                                    END as intent_boost,
+                                    -- 優先級加成（單獨返回）
+                                    CASE
+                                        WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $7
+                                        THEN $6
+                                        ELSE 0
+                                    END as priority_boost,
+                                    -- 加成後相似度（意圖加成為乘法，優先級加成為固定值）
+                                    (1 - (kb.embedding <=> $1::vector)) *
+                                    CASE
+                                        WHEN kim.intent_id = $4 THEN 1.3
+                                        WHEN kim.intent_id = ANY($5::int[]) THEN 1.1
+                                        ELSE 1.0
+                                    END +
+                                    CASE
+                                        WHEN kb.priority > 0 AND (1 - (kb.embedding <=> $1::vector)) >= $7
+                                        THEN $6
+                                        ELSE 0
+                                    END as boosted_similarity
+                                FROM knowledge_base kb
+                                LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
+                                WHERE kb.embedding IS NOT NULL
+                                    AND (1 - (kb.embedding <=> $1::vector)) >= $2
+                                    AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
+                                    AND (
+                                        $8::int IS NULL OR
+                                        (kb.vendor_id = $8 AND kb.scope IN ('customized', 'vendor')) OR
+                                        (kb.vendor_id IS NULL AND kb.scope = 'global')
+                                    )
+                                ORDER BY kb.id, boosted_similarity DESC
+                            ) AS deduped
+                            ORDER BY boosted_similarity DESC
                             LIMIT $3
                         """, vector_str, similarity_threshold, limit * 2, primary_intent_id, intent_ids, self.priority_boost, self.priority_quality_threshold, vendor_id)
 

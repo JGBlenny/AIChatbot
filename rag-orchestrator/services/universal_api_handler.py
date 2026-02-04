@@ -86,14 +86,13 @@ class UniversalAPICallHandler:
             # 4. 執行動態 API 調用
             result = await self._execute_dynamic_api(config, context)
 
-            # 5. 格式化響應
-            if result['success']:
-                formatted = self._format_response(
-                    config,
-                    result.get('data', {}),
-                    knowledge_answer
-                )
-                result['formatted_response'] = formatted
+            # 5. 格式化響應（成功和失敗都需要格式化）
+            formatted = self._format_response(
+                config,
+                result.get('data', {}) if result.get('success') else result,
+                knowledge_answer
+            )
+            result['formatted_response'] = formatted
 
             return result
 
@@ -219,6 +218,14 @@ class UniversalAPICallHandler:
                 result_data = response.json()
             except:
                 result_data = {'text': response.text}
+
+            # ⚠️ 檢查 API 響應內容中的 success 字段
+            # 有些 API（如 Lookup）會在 JSON 中返回自己的 success 狀態
+            if isinstance(result_data, dict) and 'success' in result_data:
+                # 如果 API 本身返回失敗，直接傳遞該狀態
+                if not result_data.get('success'):
+                    logger.warning(f"⚠️ API 返回業務失敗: {config.get('endpoint_id')}")
+                    return result_data  # 直接返回原始結果（包含 error, suggestions 等）
 
             logger.info(f"✅ API 調用成功: {config.get('endpoint_id')}")
 
@@ -363,6 +370,32 @@ class UniversalAPICallHandler:
         2. raw: 直接返回 JSON
         3. custom: 自定義格式化（暫不支持）
         """
+        # 檢查 API 是否成功
+        if not api_result.get('success', True):
+            # API 失敗時的處理
+            error_type = api_result.get('error', 'unknown')
+            error_msg = api_result.get('message', '查詢失敗')
+            suggestions = api_result.get('suggestions', [])
+
+            # 處理模糊匹配（地址不完整）
+            if error_type == 'ambiguous_match' and suggestions:
+                suggestion_text = "\n\n**找到以下可能的地址，請選擇或提供完整地址：**\n"
+                for i, sug in enumerate(suggestions, 1):
+                    # 顯示地址和對應的寄送區間
+                    value_info = f"（{sug.get('value', '未知')}）" if sug.get('value') else ""
+                    suggestion_text += f"{i}. {sug['key']} {value_info}\n"
+                return f"⚠️ {error_msg}{suggestion_text}\n💡 請提供完整的地址（包含樓層）以獲得準確結果。"
+
+            # 處理一般的找不到匹配
+            elif suggestions:
+                suggestion_text = "\n\n**建議的地址：**\n"
+                for i, sug in enumerate(suggestions[:3], 1):
+                    score_info = f"(相似度: {sug['score']*100:.0f}%)" if sug.get('score') else ""
+                    suggestion_text += f"{i}. {sug['key']} {score_info}\n"
+                return f"❌ {error_msg}{suggestion_text}\n請重新輸入正確的地址。"
+            else:
+                return f"❌ {error_msg}\n\n請確認地址是否正確，或聯繫客服協助查詢。"
+
         format_type = config.get('response_format_type', 'template')
 
         if format_type == 'raw':

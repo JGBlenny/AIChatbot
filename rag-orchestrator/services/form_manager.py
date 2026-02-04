@@ -644,8 +644,16 @@ class FormManager:
                 session_id=session_id,
                 collected_data=collected_data
             )
-            # 進入審核模式（而非直接完成表單）
-            return await self.show_review_summary(session_id, vendor_id)
+
+            # 檢查是否跳過審核步驟（適用於單欄位快速查詢表單）
+            skip_review = form_schema.get('skip_review', False)
+
+            if skip_review:
+                # 直接完成表單並執行後續動作
+                return await self._complete_form(session_state, form_schema, collected_data)
+            else:
+                # 進入審核模式（而非直接完成表單）
+                return await self.show_review_summary(session_id, vendor_id)
 
         # 7. 更新會話狀態並提示下一個欄位
         await self.update_session_state(
@@ -758,23 +766,7 @@ class FormManager:
         collected_data: Dict
     ) -> Dict:
         """完成表單填寫"""
-        # 1. 更新會話狀態為已完成
-        await self.update_session_state(
-            session_id=session_state['session_id'],
-            state=FormState.COMPLETED,
-            collected_data=collected_data
-        )
-
-        # 2. 保存表單提交記錄
-        submission_id = await self.save_form_submission(
-            session_id=session_state['id'],
-            form_id=session_state['form_id'],
-            user_id=session_state['user_id'],
-            vendor_id=session_state['vendor_id'],
-            submitted_data=collected_data
-        )
-
-        # 3. ⭐ 新架構：檢查是否需要調用 API
+        # 1. ⭐ 新架構：檢查是否需要調用 API（提前執行，檢查結果）
         on_complete_action = form_schema.get('on_complete_action', 'show_knowledge')
         api_config = form_schema.get('api_config')
 
@@ -786,7 +778,7 @@ class FormManager:
                 self._get_knowledge_answer_sync, knowledge_id
             )
 
-        # 4. 執行 API 調用（如果需要）
+        # 2. 執行 API 調用（如果需要）
         api_result = None
         if on_complete_action in ['call_api', 'both'] and api_config:
             print(f"📞 [表單完成] 調用 API: {api_config.get('endpoint')}")
@@ -796,6 +788,52 @@ class FormManager:
                 session_state=session_state,
                 knowledge_answer=knowledge_answer
             )
+
+            # ⚠️ 檢查 API 是否返回需要用戶重新輸入的錯誤
+            if api_result and not api_result.get('success'):
+                error_type = api_result.get('error')
+
+                # 特定錯誤類型：需要用戶重新輸入（不完成表單）
+                if error_type in ['ambiguous_match', 'no_match', 'invalid_input']:
+                    print(f"⚠️ API 返回 {error_type}，保持表單狀態為 COLLECTING")
+
+                    # 獲取當前欄位（最後一個欄位）
+                    current_field_index = session_state['current_field_index']
+                    current_field = form_schema['fields'][current_field_index]
+
+                    # 回退到當前欄位，讓用戶重新輸入
+                    await self.update_session_state(
+                        session_id=session_state['session_id'],
+                        state=FormState.COLLECTING
+                        # 保持 current_field_index 不變
+                    )
+
+                    # 返回錯誤訊息 + 重新提示
+                    error_message = api_result.get('formatted_response', '輸入無效，請重新輸入。')
+
+                    return {
+                        "answer": f"{error_message}\n\n---\n\n{current_field['prompt']}\n\n（或輸入「**取消**」結束填寫）",
+                        "form_completed": False,
+                        "needs_retry": True,
+                        "retry_field": current_field['field_name']
+                    }
+
+        # 3. API 成功或無需 API，正常完成表單
+        # 更新會話狀態為已完成
+        await self.update_session_state(
+            session_id=session_state['session_id'],
+            state=FormState.COMPLETED,
+            collected_data=collected_data
+        )
+
+        # 4. 保存表單提交記錄
+        submission_id = await self.save_form_submission(
+            session_id=session_state['id'],
+            form_id=session_state['form_id'],
+            user_id=session_state['user_id'],
+            vendor_id=session_state['vendor_id'],
+            submitted_data=collected_data
+        )
 
         # 5. 格式化完成訊息
         # ⚠️ 如果表單由知識庫觸發，用戶已看過知識內容，不再重複顯示
