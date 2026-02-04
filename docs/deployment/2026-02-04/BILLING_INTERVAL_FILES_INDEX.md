@@ -210,10 +210,10 @@ docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -c "
 "
 
 # 6. 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 
 # 7. 驗證
-docker-compose logs --tail=20 rag-orchestrator
+docker-compose -f docker-compose.prod.yml logs --tail=20 rag-orchestrator
 ```
 
 ---
@@ -226,7 +226,7 @@ docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
   database/exports/billing_interval_complete_data.sql
 
 # 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ---

@@ -4,7 +4,7 @@
 **部署類型**: 重大功能新增（Major Feature Release）
 **影響範圍**: Lookup Table 系統、表單管理、知識庫觸發機制、資料庫結構
 **停機時間**: ~2 分鐘（服務重啟）
-**部署範圍**: commit `822e194` → `c9b2a00`
+**部署範圍**: commit `822e194` → `9b07ced`
 
 ---
 
@@ -14,7 +14,7 @@
 
 本次部署包含兩個重大功能更新：
 
-#### 1. **Lookup Table 系統** ⭐⭐⭐⭐⭐ (commit: c9b2a00)
+#### 1. **Lookup Table 系統** ⭐⭐⭐⭐⭐ (commit: 9b07ced, ae787ed)
 
 **核心功能**：
 - 新增通用 Lookup Table 查詢系統
@@ -70,7 +70,7 @@ docker --version   # 應該 >= 20.10
 docker-compose --version  # 應該 >= 1.29
 
 # 確認當前服務狀態
-docker-compose ps
+docker-compose -f docker-compose.prod.yml ps
 
 # 確認磁碟空間
 df -h /
@@ -100,7 +100,8 @@ git branch
 git log --oneline 822e194..HEAD
 
 # 預期看到：
-# c9b2a00 feat: 實現 Lookup Table 系統與完整文檔整理
+# 9b07ced feat: 電費寄送區間查詢系統完整實現與部署資源
+# ae787ed feat: 實現 Lookup Table 系統與完整文檔整理
 # 3ae0f85 feat: 實現知識庫表單觸發模式，統一知識庫與 SOP 觸發機制
 ```
 
@@ -228,7 +229,7 @@ docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -c "
 如果是生產環境且需要確保一致性：
 
 ```bash
-docker-compose down
+docker-compose -f docker-compose.prod.yml down
 ```
 
 ### 步驟 2：重新構建並啟動
@@ -237,24 +238,24 @@ docker-compose down
 
 ```bash
 # 重啟主要服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 #### 選項 B：完整重新構建（生產環境，推薦）
 
 ```bash
 # 重新構建
-docker-compose build rag-orchestrator
+docker-compose -f docker-compose.prod.yml build rag-orchestrator
 
 # 啟動所有服務
-docker-compose up -d
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### 步驟 3：查看啟動日誌
 
 ```bash
 # 監控啟動過程
-docker-compose logs -f rag-orchestrator
+docker-compose -f docker-compose.prod.yml logs -f rag-orchestrator
 
 # 關鍵日誌檢查點：
 # ✅ [Lookup API] 路由註冊成功
@@ -269,7 +270,7 @@ docker-compose logs -f rag-orchestrator
 ### 1. 服務狀態檢查
 
 ```bash
-docker-compose ps
+docker-compose -f docker-compose.prod.yml ps
 ```
 
 **預期結果**：所有服務都是 `Up` 狀態。
@@ -403,13 +404,13 @@ curl -X POST http://localhost:8100/api/v1/message \
 
 ```bash
 # 查看是否有錯誤
-docker-compose logs rag-orchestrator | grep -E "(Error|錯誤|Exception)" | tail -20
+docker-compose -f docker-compose.prod.yml logs rag-orchestrator | grep -E "(Error|錯誤|Exception)" | tail -20
 
 # 查看 Lookup API 調用日誌
-docker-compose logs rag-orchestrator | grep -E "(Lookup|lookup)" | tail -20
+docker-compose -f docker-compose.prod.yml logs rag-orchestrator | grep -E "(Lookup|lookup)" | tail -20
 
 # 查看表單處理日誌
-docker-compose logs rag-orchestrator | grep -E "(表單|Form)" | tail -20
+docker-compose -f docker-compose.prod.yml logs rag-orchestrator | grep -E "(表單|Form)" | tail -20
 ```
 
 ---
@@ -433,7 +434,7 @@ docker-compose logs rag-orchestrator | grep -E "(表單|Form)" | tail -20
 
 | 指標 | 目標值 | 檢查方法 |
 |------|--------|---------|
-| 服務可用性 | 100% | `docker-compose ps` |
+| 服務可用性 | 100% | `docker-compose -f docker-compose.prod.yml ps` |
 | Lookup API 響應時間 | <200ms | API 測試 |
 | 表單流程成功率 | 100% | 功能測試 |
 | 資料完整性 | 247 筆 | 資料庫查詢 |
@@ -487,10 +488,10 @@ ls -lh data/billing_intervals.xlsx
 **解決方案**：
 ```bash
 # 檢查路由是否註冊
-docker-compose logs rag-orchestrator | grep -E "(Lookup|route)"
+docker-compose -f docker-compose.prod.yml logs rag-orchestrator | grep -E "(Lookup|route)"
 
 # 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 
 # 檢查 API 端點配置
 docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -c "
@@ -567,10 +568,10 @@ git log --oneline -1
 ls -lt database/backups/backup_before_2026-02-04*.sql
 
 # 停止服務
-docker-compose down
+docker-compose -f docker-compose.prod.yml down
 
 # 恢復備份
-docker-compose up -d postgres
+docker-compose -f docker-compose.prod.yml up -d postgres
 sleep 5
 docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
   database/backups/backup_before_2026-02-04_<timestamp>.sql
@@ -580,14 +581,14 @@ docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
 
 ```bash
 # 重新構建
-docker-compose build rag-orchestrator
+docker-compose -f docker-compose.prod.yml build rag-orchestrator
 
 # 啟動服務
-docker-compose up -d
+docker-compose -f docker-compose.prod.yml up -d
 
 # 驗證
-docker-compose ps
-docker-compose logs --tail=50 rag-orchestrator
+docker-compose -f docker-compose.prod.yml ps
+docker-compose -f docker-compose.prod.yml logs --tail=50 rag-orchestrator
 ```
 
 **步驟 4：驗證回滾成功**
@@ -599,7 +600,7 @@ curl -X POST http://localhost:8100/api/v1/message \
   -d '{"message": "租金怎麼繳", "vendor_id": 1, "user_role": "customer", "user_id": "test"}'
 
 # 確認服務正常
-docker-compose ps
+docker-compose -f docker-compose.prod.yml ps
 ```
 
 ### 回滾時間
@@ -640,7 +641,7 @@ docker-compose ps
 
 ### 部署前
 
-- [ ] 代碼已拉取到最新（c9b2a00）
+- [ ] 代碼已拉取到最新（9b07ced）
 - [ ] 資料庫已備份
 - [ ] 確認磁碟空間充足
 - [ ] 確認 Excel 資料文件存在
@@ -739,4 +740,4 @@ docker-compose ps
 
 **最後更新**: 2026-02-04
 **文檔版本**: 1.0
-**部署版本**: 822e194 → c9b2a00
+**部署版本**: 822e194 → 9b07ced

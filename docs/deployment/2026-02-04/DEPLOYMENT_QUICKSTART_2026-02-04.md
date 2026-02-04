@@ -52,7 +52,7 @@ docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -c "
 ### 步驟 2: 重啟服務
 
 ```bash
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 sleep 10
 ```
 
@@ -118,7 +118,7 @@ EOF
 docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < backup_YYYYMMDD_HHMMSS.sql
 
 # 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ---
@@ -153,7 +153,7 @@ docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -c "
 "
 
 # 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ### 問題 2: 業者 2 無資料

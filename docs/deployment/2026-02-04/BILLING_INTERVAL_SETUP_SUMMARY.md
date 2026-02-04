@@ -212,7 +212,7 @@ docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -c "
 "
 
 # 4. 重啟服務 (已執行)
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ---
@@ -296,7 +296,7 @@ docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -c "
 "
 
 # 3. 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 
 # 4. 等待 10 秒後重新測試
 sleep 10

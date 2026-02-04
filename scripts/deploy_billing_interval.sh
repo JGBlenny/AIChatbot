@@ -1,7 +1,8 @@
 #!/bin/bash
 # 電費寄送區間查詢系統 - 快速部署腳本
 # 日期: 2026-02-04
-# 版本: v1.0
+# 版本: v1.1
+# 使用: ./deploy_billing_interval.sh [local|prod]
 
 set -e  # 遇到錯誤立即退出
 
@@ -28,6 +29,14 @@ log_warning() {
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
+
+# 環境設定（預設為生產環境）
+ENV=${1:-prod}
+if [ "$ENV" = "local" ]; then
+    COMPOSE_FILE="docker-compose.yml"
+else
+    COMPOSE_FILE="docker-compose.prod.yml"
+fi
 
 # 檢查函數
 check_prerequisites() {
@@ -154,13 +163,13 @@ copy_embedding() {
 restart_services() {
     log_info "重啟 rag-orchestrator 服務..."
 
-    docker-compose restart rag-orchestrator
+    docker-compose -f "$COMPOSE_FILE" restart rag-orchestrator
 
     log_info "等待服務啟動（10 秒）..."
     sleep 10
 
     # 檢查服務狀態
-    if docker-compose ps rag-orchestrator | grep "Up" &> /dev/null; then
+    if docker-compose -f "$COMPOSE_FILE" ps rag-orchestrator | grep "Up" &> /dev/null; then
         log_success "服務重啟成功"
     else
         log_error "服務重啟失敗"
@@ -253,8 +262,9 @@ main() {
     echo ""
     echo "=========================================="
     echo "  電費寄送區間查詢系統 - 部署腳本"
-    echo "  版本: v1.0"
+    echo "  版本: v1.1"
     echo "  日期: 2026-02-04"
+    echo "  環境: $ENV (使用 $COMPOSE_FILE)"
     echo "=========================================="
     echo ""
 

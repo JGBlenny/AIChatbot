@@ -261,17 +261,17 @@ EOF
 
 ```bash
 # 重新構建（如果有代碼變更）
-docker-compose build rag-orchestrator
+docker-compose -f docker-compose.prod.yml build rag-orchestrator
 
 # 重啟服務
-docker-compose up -d rag-orchestrator
+docker-compose -f docker-compose.prod.yml up -d rag-orchestrator
 
 # 等待服務啟動
 sleep 15
 
 # 檢查服務狀態
-docker-compose ps rag-orchestrator
-docker-compose logs --tail=50 rag-orchestrator | grep -i "application startup complete"
+docker-compose -f docker-compose.prod.yml ps rag-orchestrator
+docker-compose -f docker-compose.prod.yml logs --tail=50 rag-orchestrator | grep -i "application startup complete"
 ```
 
 **預期日誌**:
@@ -288,7 +288,7 @@ cd management-frontend
 npm run build
 
 # 重啟 Nginx（如適用）
-docker-compose restart nginx
+docker-compose -f docker-compose.prod.yml restart nginx
 ```
 
 ---
@@ -455,7 +455,7 @@ docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
   backup_before_822e194_YYYYMMDD_HHMMSS.sql
 
 # 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ### 情境 2: 資料匯入失敗
@@ -482,7 +482,7 @@ COMMIT;
 EOF
 
 # 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ### 情境 3: 服務異常
@@ -492,10 +492,10 @@ docker-compose restart rag-orchestrator
 git checkout 822e194
 
 # 重新構建
-docker-compose build rag-orchestrator
+docker-compose -f docker-compose.prod.yml build rag-orchestrator
 
 # 重啟服務
-docker-compose up -d rag-orchestrator
+docker-compose -f docker-compose.prod.yml up -d rag-orchestrator
 ```
 
 ---
@@ -506,17 +506,17 @@ docker-compose up -d rag-orchestrator
 
 ```bash
 # 監控錯誤日誌
-docker-compose logs -f rag-orchestrator | grep -i error
+docker-compose -f docker-compose.prod.yml logs -f rag-orchestrator | grep -i error
 
 # 檢查最近 1 小時的錯誤
-docker-compose logs --since 1h rag-orchestrator | grep -i error | wc -l
+docker-compose -f docker-compose.prod.yml logs --since 1h rag-orchestrator | grep -i error | wc -l
 ```
 
 ### 2. 效能監控
 
 ```bash
 # 檢查 API 響應時間
-docker-compose logs --tail=100 rag-orchestrator | grep "lookup_billing_interval"
+docker-compose -f docker-compose.prod.yml logs --tail=100 rag-orchestrator | grep "lookup_billing_interval"
 ```
 
 ### 3. 使用統計

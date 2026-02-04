@@ -182,7 +182,7 @@ WHERE id = 1297 AND embedding IS NULL;
 EOF
 
 # 4. 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ---
@@ -224,7 +224,7 @@ docker-compose restart rag-orchestrator
 docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < backup_YYYYMMDD_HHMMSS.sql
 
 # 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ---

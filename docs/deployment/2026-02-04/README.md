@@ -63,8 +63,8 @@ docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
   database/seeds/import_vendor2_only.sql
 
 # 5. 重啟服務
-docker-compose build rag-orchestrator
-docker-compose up -d rag-orchestrator
+docker-compose -f docker-compose.prod.yml build rag-orchestrator
+docker-compose -f docker-compose.prod.yml up -d rag-orchestrator
 ```
 
 ### 🖥️ 本地測試部署（一鍵）
@@ -93,7 +93,7 @@ docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -c "
 "
 
 # 3. 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ---

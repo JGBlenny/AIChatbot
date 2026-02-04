@@ -137,7 +137,7 @@ GROUP BY lookup_value;
 
 **檢查日誌：**
 ```bash
-docker-compose logs rag-orchestrator | grep "API 返回.*保持表單狀態"
+docker-compose -f docker-compose.prod.yml logs rag-orchestrator | grep "API 返回.*保持表單狀態"
 ```
 
 **確認 API 返回：**

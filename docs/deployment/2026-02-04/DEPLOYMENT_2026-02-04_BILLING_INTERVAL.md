@@ -196,17 +196,17 @@ git pull origin main
 
 ```bash
 # 重新構建 rag-orchestrator（包含新的代碼修改）
-docker-compose build rag-orchestrator
+docker-compose -f docker-compose.prod.yml build rag-orchestrator
 
 # 重啟服務
-docker-compose up -d rag-orchestrator
+docker-compose -f docker-compose.prod.yml up -d rag-orchestrator
 
 # 等待服務啟動（約 10 秒）
 sleep 10
 
 # 檢查服務狀態
 docker-compose ps rag-orchestrator
-docker-compose logs --tail=50 rag-orchestrator
+docker-compose -f docker-compose.prod.yml logs --tail=50 rag-orchestrator
 ```
 
 **預期日誌**:
@@ -496,7 +496,7 @@ docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
   backup_YYYYMMDD_HHMMSS.sql
 
 # 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ### 選項 2: 刪除新增配置
@@ -526,7 +526,7 @@ COMMIT;
 EOF
 
 # 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ---

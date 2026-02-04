@@ -37,7 +37,7 @@
 
 ```bash
 # 重啟服務
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ### 📚 詳細文檔

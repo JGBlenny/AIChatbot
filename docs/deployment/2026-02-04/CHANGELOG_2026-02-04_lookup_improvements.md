@@ -212,7 +212,7 @@ if api_result and not api_result.get('success'):
 
 ### 重啟服務
 ```bash
-docker-compose restart rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
 ### 資料庫清理（一次性執行）
