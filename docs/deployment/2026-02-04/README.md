@@ -12,8 +12,9 @@
 
 | 文件 | 說明 | 用途 |
 |------|------|------|
-| **DEPLOYMENT_QUICKSTART_2026-02-04.md** | 快速部署指南 | ⭐ **優先閱讀** - 包含一鍵部署命令 |
-| **DEPLOYMENT_2026-02-04_BILLING_INTERVAL.md** | 完整部署指南 | 詳細的 4 階段部署流程、驗證標準、回滾計畫 |
+| **DEPLOYMENT_FROM_822e194.md** | 生產環境部署指南 | ⭐ **生產環境必讀** - 從 commit 822e194 的完整部署流程 |
+| **DEPLOYMENT_QUICKSTART_2026-02-04.md** | 快速部署指南 | ⚡ **本地測試** - 包含一鍵部署命令 |
+| **DEPLOYMENT_2026-02-04_BILLING_INTERVAL.md** | 完整部署指南 | 📚 詳細的 4 階段部署流程、驗證標準、回滾計畫 |
 
 ### 📚 技術文檔
 
@@ -30,14 +31,50 @@
 
 ## ⚡ 快速開始
 
-### 一鍵部署（推薦）
+### 🏭 生產環境部署（從 822e194）
+
+**完整部署指南**: [DEPLOYMENT_FROM_822e194.md](./DEPLOYMENT_FROM_822e194.md)
+
+```bash
+# 1. 備份資料庫
+docker exec aichatbot-postgres pg_dump -U aichatbot aichatbot_admin > \
+  backup_$(date +%Y%m%d_%H%M%S).sql
+
+# 2. 拉取代碼
+git checkout main
+git pull origin main
+
+# 3. 執行 Migrations（按順序）
+for migration in \
+  add_followup_prompt_to_knowledge_base \
+  create_lookup_tables \
+  add_lookup_api_endpoint \
+  create_billing_address_form \
+  create_billing_knowledge
+do
+  docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
+    database/migrations/${migration}.sql
+done
+
+# 4. 匯入業務資料
+docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
+  database/exports/billing_interval_complete_data.sql
+docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
+  database/seeds/import_vendor2_only.sql
+
+# 5. 重啟服務
+docker-compose build rag-orchestrator
+docker-compose up -d rag-orchestrator
+```
+
+### 🖥️ 本地測試部署（一鍵）
 
 ```bash
 cd /Users/lenny/jgb/AIChatbot
 ./scripts/deploy_billing_interval.sh
 ```
 
-### 手動部署（三步驟）
+### 📋 手動部署（三步驟）
 
 ```bash
 # 1. 備份與配置
