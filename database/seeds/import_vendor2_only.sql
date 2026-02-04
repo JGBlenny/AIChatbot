@@ -2,13 +2,17 @@
 -- 業者 2 (信義包租代管) - 完整資料匯入
 -- =====================================================
 --
+-- ⚠️  重要：此腳本依賴業者 1 的資料
+-- ⚠️  僅用於「已有業者 1」的系統（如本地開發環境）
+-- ⚠️  EC2 生產環境請使用: deploy_vendor2_complete.sql + insert_lookup_tables_vendor2.sql
+--
 -- 此腳本包含業者 2 所需的所有配置：
 -- 1. 表單配置 (billing_address_form_v2)
--- 2. 知識庫項目 (ID: 1297)
+-- 2. 知識庫項目
 -- 3. Lookup Tables 資料（從業者 1 複製）
 -- 4. Embedding（從業者 1 複製）
 --
--- 前提條件: 業者 1 的資料已存在
+-- 前提條件: 業者 1 的資料已存在（ID 1296, lookup_tables vendor_id=1）
 -- 執行時間: ~5 秒
 -- =====================================================
 
@@ -74,7 +78,6 @@ ON CONFLICT (form_id) DO UPDATE SET
 -- =====================================================
 
 INSERT INTO knowledge_base (
-    id,
     question_summary,
     answer,
     trigger_mode,
@@ -90,7 +93,6 @@ INSERT INTO knowledge_base (
     scope,
     business_types
 ) VALUES (
-    1297,
     '查詢電費帳單寄送區間（單月/雙月）',
     E'📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。\n\n查詢方式：\n1. 提供完整的物件地址\n2. 系統會自動查詢該地址的電費寄送區間\n3. 立即告知您帳單寄送時間\n\n',
     'auto',
@@ -106,8 +108,7 @@ INSERT INTO knowledge_base (
     'customized',  -- scope: customized (業者專屬知識)
     ARRAY['property_management', 'full_service']::text[]  -- business_types: 與業者 1 相同
 )
-ON CONFLICT (id) DO UPDATE SET
-    question_summary = EXCLUDED.question_summary,
+ON CONFLICT (vendor_id, question_summary) DO UPDATE SET
     answer = EXCLUDED.answer,
     trigger_mode = EXCLUDED.trigger_mode,
     form_id = EXCLUDED.form_id,
@@ -115,7 +116,6 @@ ON CONFLICT (id) DO UPDATE SET
     trigger_keywords = EXCLUDED.trigger_keywords,
     target_user = EXCLUDED.target_user,
     action_type = EXCLUDED.action_type,
-    vendor_id = EXCLUDED.vendor_id,
     keywords = EXCLUDED.keywords,
     priority = EXCLUDED.priority,
     is_active = EXCLUDED.is_active,
