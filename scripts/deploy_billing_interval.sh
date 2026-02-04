@@ -1,7 +1,7 @@
 #!/bin/bash
 # 電費寄送區間查詢系統 - 快速部署腳本
 # 日期: 2026-02-04
-# 版本: v1.1
+# 版本: v1.2
 # 使用: ./deploy_billing_interval.sh [local|prod]
 
 set -e  # 遇到錯誤立即退出
@@ -79,82 +79,56 @@ backup_database() {
     fi
 }
 
-# 部署配置
-deploy_configuration() {
-    log_info "部署資料庫配置..."
+# 執行 Migrations
+run_migrations() {
+    log_info "執行資料庫 Migrations..."
 
-    # 匯入完整配置
+    MIGRATIONS=(
+        "add_followup_prompt_to_knowledge_base"
+        "create_lookup_tables"
+        "add_lookup_api_endpoint"
+        "create_billing_address_form"
+        "create_billing_knowledge"
+    )
+
+    for migration in "${MIGRATIONS[@]}"; do
+        log_info "執行 Migration: $migration"
+        docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
+            database/migrations/${migration}.sql 2>&1 | grep -v "ERROR.*already exists" | grep -v "ERROR.*duplicate"
+
+        if [ ${PIPESTATUS[0]} -eq 0 ]; then
+            log_success "Migration $migration 完成"
+        else
+            log_warning "Migration $migration 可能已執行過，繼續..."
+        fi
+    done
+
+    log_success "所有 Migrations 執行完成"
+}
+
+# 匯入業務資料
+import_business_data() {
+    log_info "匯入業務資料..."
+
+    # 匯入業者 1 的配置和資料
     docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
-        database/exports/billing_interval_complete_data.sql
+        database/seeds/billing_interval_system_data.sql
 
     if [ $? -eq 0 ]; then
-        log_success "配置部署完成"
+        log_success "業者 1 資料匯入完成"
     else
-        log_error "配置部署失敗"
-        exit 1
-    fi
-}
-
-# 複製資料
-copy_vendor_data() {
-    log_info "複製業者 1 資料給業者 2..."
-
-    # 檢查業者 1 資料
-    VENDOR1_COUNT=$(docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -t -c "
-        SELECT COUNT(*) FROM lookup_tables
-        WHERE vendor_id = 1 AND category = 'billing_interval';
-    " | xargs)
-
-    log_info "業者 1 資料筆數: $VENDOR1_COUNT"
-
-    if [ "$VENDOR1_COUNT" -eq 0 ]; then
-        log_error "業者 1 沒有資料，請先匯入資料"
+        log_error "業者 1 資料匯入失敗"
         exit 1
     fi
 
-    # 複製資料
-    docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -c "
-        INSERT INTO lookup_tables (
-            vendor_id, category, category_name, lookup_key,
-            lookup_value, metadata, is_active, created_at
-        )
-        SELECT
-            2 as vendor_id,
-            category, category_name, lookup_key,
-            lookup_value, metadata, is_active, NOW()
-        FROM lookup_tables
-        WHERE category = 'billing_interval'
-            AND vendor_id = 1
-            AND is_active = TRUE
-        ON CONFLICT DO NOTHING;
-    " > /dev/null
+    # 匯入業者 2 的配置
+    docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
+        database/seeds/import_vendor2_only.sql
 
     if [ $? -eq 0 ]; then
-        log_success "資料複製完成"
+        log_success "業者 2 資料匯入完成"
     else
-        log_error "資料複製失敗"
-        exit 1
-    fi
-}
-
-# 複製 Embedding
-copy_embedding() {
-    log_info "複製 Embedding..."
-
-    docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -c "
-        UPDATE knowledge_base
-        SET embedding = (
-            SELECT embedding
-            FROM knowledge_base
-            WHERE id = 1296
-        )
-        WHERE id = 1297 AND embedding IS NULL;
-    " > /dev/null
-
-    if [ $? -eq 0 ]; then
-        log_success "Embedding 複製完成"
-    else
-        log_error "Embedding 複製失敗"
+        log_error "業者 2 資料匯入失敗"
         exit 1
     fi
 }
@@ -262,7 +236,7 @@ main() {
     echo ""
     echo "=========================================="
     echo "  電費寄送區間查詢系統 - 部署腳本"
-    echo "  版本: v1.1"
+    echo "  版本: v1.2"
     echo "  日期: 2026-02-04"
     echo "  環境: $ENV (使用 $COMPOSE_FILE)"
     echo "=========================================="
@@ -279,9 +253,8 @@ main() {
     # 執行部署步驟
     check_prerequisites
     backup_database
-    deploy_configuration
-    copy_vendor_data
-    copy_embedding
+    run_migrations
+    import_business_data
     restart_services
     verify_deployment
     test_functionality
