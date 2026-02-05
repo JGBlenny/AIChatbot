@@ -169,8 +169,8 @@
     </div>
 
     <!-- 編輯/新增 Modal -->
-    <div v-if="showModal" class="modal-overlay" @mousedown.self="closeModal">
-      <div class="modal-content" @mousedown.stop>
+    <div v-if="showModal" class="modal-overlay">
+      <div class="modal-content">
         <h2>{{ editingItem ? '✏️ 編輯知識' : '➕ 新增知識' }}</h2>
 
         <!-- Phase 3: 在 Modal 中顯示回測優化上下文 -->
@@ -322,10 +322,13 @@
           <div v-if="linkType === 'form' && formData.form_id" class="form-group">
             <label>觸發模式 *</label>
             <select v-model="formData.trigger_mode" @change="onTriggerModeChange" class="form-control">
+              <option value="auto">自動（系統根據用戶意圖智能判斷）</option>
               <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
               <option value="immediate">行動型（主動詢問用戶是否執行）</option>
             </select>
             <small class="form-hint">
+              💡 <strong>自動</strong>：系統智能判斷用戶是否需要填表（詢問時不觸發，執行時觸發）<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;範例：「退租流程？」→ 只顯示答案；「我要退租」→ 觸發退租表單<br>
               💡 <strong>排查型</strong>：先在上方「知識庫內容」填寫排查步驟，用戶排查後說出關鍵詞才觸發表單<br>
               &nbsp;&nbsp;&nbsp;&nbsp;範例：內容寫「請檢查溫度設定、濾網...若仍不冷請報修」→ 用戶說「還是不冷」→ 觸發報修表單<br>
               💡 <strong>行動型</strong>：顯示知識庫內容後，立即主動詢問是否執行<br>
@@ -526,7 +529,7 @@ export default {
         // 表單關聯
         form_id: '',
         // 🆕 表單觸發模式
-        trigger_mode: 'manual',  // 默認為排查型
+        trigger_mode: 'auto',  // 默認為自動
         trigger_keywords: [],  // manual 模式的觸發關鍵詞
         immediate_prompt: '',  // immediate 模式的確認提示詞
         // 動作類型和 API 配置
@@ -799,7 +802,7 @@ export default {
         this.selectedApiEndpointId = '';
         // 確保 trigger_mode 有預設值
         if (!this.formData.trigger_mode || this.formData.trigger_mode === 'none') {
-          this.formData.trigger_mode = 'manual';
+          this.formData.trigger_mode = 'auto';
         }
       } else if (this.linkType === 'api') {
         this.formData.form_id = null;
@@ -815,9 +818,9 @@ export default {
     onFormSelect() {
       // 當選擇表單時，確保 trigger_mode 有值
       if (this.formData.form_id) {
-        // 如果沒有值或值為 'none'，設為 'manual'
+        // 如果沒有值或值為 'none'，設為 'auto'
         if (!this.formData.trigger_mode || this.formData.trigger_mode === 'none' || this.formData.trigger_mode === '') {
-          this.formData.trigger_mode = 'manual';
+          this.formData.trigger_mode = 'auto';
         }
         console.log('📋 表單選擇後 trigger_mode:', this.formData.trigger_mode);
       }
@@ -980,7 +983,7 @@ export default {
         business_types: [],
         target_user: [],
         form_id: null,
-        trigger_mode: 'manual',  // 🆕 默認為排查型
+        trigger_mode: 'auto',  // 🆕 默認為自動
         trigger_keywords: [],  // 🆕 manual 模式的觸發關鍵詞
         immediate_prompt: '',  // 🆕
         action_type: 'direct_answer',
@@ -1015,7 +1018,7 @@ export default {
           // 表單關聯
           form_id: knowledge.form_id || '',
           // 表單觸發模式
-          trigger_mode: knowledge.trigger_mode || 'manual',  // 預設為排查型
+          trigger_mode: knowledge.trigger_mode || 'auto',  // 預設為自動
           trigger_keywords: knowledge.trigger_keywords ? [...knowledge.trigger_keywords] : [],
           immediate_prompt: knowledge.immediate_prompt || '',
           // 動作類型和 API 配置

@@ -133,6 +133,9 @@
       <div class="section-header">
         <h3>我的 SOP</h3>
         <div class="header-actions">
+          <button @click="openAddModal" class="btn btn-primary">
+            ➕ 新增 SOP
+          </button>
           <button @click="showImportModal = true" class="btn btn-primary">
             📤 匯入 Excel
           </button>
@@ -237,8 +240,8 @@
     </div>
 
     <!-- 匯入 Excel Modal -->
-    <div v-if="showImportModal" class="modal-overlay" @click="showImportModal = false">
-      <div class="modal-content" @click.stop>
+    <div v-if="showImportModal" class="modal-overlay">
+      <div class="modal-content">
         <h2>📤 匯入 Excel 檔案</h2>
         <p class="hint">從 Excel 檔案批量匯入 SOP 項目</p>
 
@@ -293,8 +296,8 @@
     </div>
 
     <!-- 編輯 SOP Modal -->
-    <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
-      <div class="modal-content modal-large" @click.stop>
+    <div v-if="showEditModal" class="modal-overlay">
+      <div class="modal-content modal-large">
         <h2>編輯 SOP</h2>
         <p class="hint">編輯您的 SOP 內容與提示詞</p>
 
@@ -348,10 +351,13 @@
             <div v-if="editingForm.next_action === 'form_fill' && editingForm.next_form_id" class="form-group" style="order: 3;">
               <label>觸發模式 *</label>
               <select v-model="editingForm.trigger_mode" @change="onTriggerModeChange" class="form-control">
+                <option value="auto">自動（系統根據用戶意圖智能判斷）</option>
                 <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
                 <option value="immediate">行動型（主動詢問用戶是否執行）</option>
               </select>
               <small class="hint">
+                🤖 <strong>自動</strong>：系統智能判斷用戶是否需要填寫表單<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;範例：「我要報修」→ 觸發表單；「報修流程是什麼」→ 不觸發<br>
                 💡 <strong>排查型</strong>：先在上方「SOP 內容」填寫排查步驟，用戶排查後說出關鍵詞才觸發表單<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;範例：內容寫「請檢查溫度設定、濾網...若仍不冷請報修」→ 用戶說「還是不冷」→ 觸發報修表單<br>
                 💡 <strong>行動型</strong>：顯示 SOP 內容後，立即主動詢問是否執行<br>
@@ -437,6 +443,103 @@
         </form>
       </div>
     </div>
+
+    <!-- 新增 SOP Modal -->
+    <div v-if="showAddModal" class="modal-overlay">
+      <div class="modal-content modal-large">
+        <h2>新增 SOP</h2>
+        <p class="hint">為業者新增一個 SOP 項目</p>
+
+        <form @submit.prevent="addSOP">
+          <!-- 分類選擇 -->
+          <div class="form-group">
+            <label>選擇分類 *</label>
+            <select v-model="addForm.category_id" required class="form-control">
+              <option value="">請選擇分類...</option>
+              <option v-for="category in availableCategories" :key="category.id" :value="category.id">
+                {{ category.category_name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- 項目名稱 -->
+          <div class="form-group">
+            <label>項目名稱 *</label>
+            <input v-model="addForm.item_name" type="text" required class="form-control" placeholder="例如：退租流程說明" />
+          </div>
+
+          <!-- 內容 -->
+          <div class="form-group">
+            <label>內容 *</label>
+            <textarea v-model="addForm.content" required class="form-control" rows="6" placeholder="請輸入 SOP 詳細內容..."></textarea>
+          </div>
+
+          <!-- 優先級 -->
+          <div class="form-group">
+            <label>優先級</label>
+            <input v-model.number="addForm.priority" type="number" min="0" max="10" class="form-control" />
+            <small class="form-hint">0-10 之間，數字越大優先級越高</small>
+          </div>
+
+          <!-- 觸發模式 -->
+          <div class="form-group">
+            <label>觸發模式 *</label>
+            <select v-model="addForm.trigger_mode" required class="form-control">
+              <option value="none">無（僅顯示內容）</option>
+              <option value="auto">自動（系統根據用戶意圖智能判斷）</option>
+              <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
+              <option value="immediate">行動型（主動詢問用戶是否執行）</option>
+            </select>
+          </div>
+
+          <!-- manual 模式的觸發關鍵詞 -->
+          <div v-if="addForm.trigger_mode === 'manual'" class="form-group">
+            <label>觸發關鍵詞 *</label>
+            <KeywordsInput
+              v-model="addForm.trigger_keywords"
+              :placeholder="'輸入關鍵詞後按 Enter'"
+            />
+            <small class="form-hint">用戶說出任一關鍵詞後，系統會觸發後續動作</small>
+          </div>
+
+          <!-- immediate 模式的確認提示詞 -->
+          <div v-if="addForm.trigger_mode === 'immediate'" class="form-group">
+            <label>確認提示詞（選填）</label>
+            <input v-model="addForm.immediate_prompt" type="text" class="form-control" placeholder="例如：需要我幫您處理嗎？" />
+            <small class="form-hint">留空將使用預設提示詞</small>
+          </div>
+
+          <!-- 後續動作 -->
+          <div class="form-group">
+            <label>後續動作</label>
+            <select v-model="addForm.next_action" class="form-control">
+              <option value="none">無後續動作</option>
+              <option value="form_fill">表單填寫</option>
+              <option value="api_call">呼叫 API</option>
+            </select>
+          </div>
+
+          <!-- 表單選擇 -->
+          <div v-if="addForm.next_action === 'form_fill'" class="form-group">
+            <label>選擇表單 *</label>
+            <select v-model="addForm.next_form_id" required class="form-control">
+              <option value="">請選擇表單...</option>
+              <option v-for="form in availableForms" :key="form.id" :value="form.id">
+                {{ form.name }} (ID: {{ form.id }})
+              </option>
+            </select>
+          </div>
+
+          <!-- 按鈕組 -->
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" :disabled="addingForm">
+              {{ addingForm ? '新增中...' : '➕ 新增 SOP' }}
+            </button>
+            <button type="button" @click="closeAddModal" class="btn btn-secondary">取消</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -475,15 +578,30 @@ export default {
       loadingMySOP: false,
       showCopyAllModal: false,
       showEditModal: false,
+      showAddModal: false,  // 新增 SOP Modal
       showImportModal: false,  // Excel 匯入 Modal
       uploading: false,  // 上傳中狀態
       selectedFile: null,  // 已選擇的檔案
+      addingForm: false,  // 新增中狀態
+      availableCategories: [],  // 可用的分類列表
+      addForm: {  // 新增表單
+        category_id: '',
+        item_name: '',
+        content: '',
+        priority: 5,
+        trigger_mode: 'auto',
+        next_action: 'none',
+        trigger_keywords: [],
+        immediate_prompt: '',
+        next_form_id: null,
+        next_api_config: null
+      },
       editingForm: {
         id: null,
         item_name: '',
         content: '',
         // 流程配置欄位（現在可編輯）
-        trigger_mode: 'manual',  // 默認為排查型
+        trigger_mode: 'auto',  // 默認為自動
         next_action: 'none',
         trigger_keywords: [],
         immediate_prompt: '',
@@ -821,7 +939,7 @@ export default {
         item_name: '',
         content: '',
         // 重置流程配置欄位
-        trigger_mode: 'manual',  // 默認為排查型
+        trigger_mode: 'auto',  // 默認為自動
         next_action: 'none',
         trigger_keywords: [],
         immediate_prompt: '',
@@ -923,6 +1041,77 @@ export default {
       } catch (error) {
         console.error('刪除 SOP 失敗:', error);
         alert('刪除失敗: ' + (error.response?.data?.detail || error.message));
+      }
+    },
+
+    async openAddModal() {
+      // 載入分類列表
+      try {
+        const response = await axios.get(`${RAG_API}/v1/vendors/${this.vendorId}/sop/categories`);
+        this.availableCategories = response.data;
+      } catch (error) {
+        console.error('載入分類失敗:', error);
+        alert('載入分類失敗，請重試');
+        return;
+      }
+
+      // 載入表單列表
+      await this.loadAvailableForms();
+
+      this.showAddModal = true;
+    },
+
+    closeAddModal() {
+      this.showAddModal = false;
+      // 重置表單
+      this.addForm = {
+        category_id: '',
+        item_name: '',
+        content: '',
+        priority: 5,
+        trigger_mode: 'auto',
+        next_action: 'none',
+        trigger_keywords: [],
+        immediate_prompt: '',
+        next_form_id: null,
+        next_api_config: null
+      };
+    },
+
+    async addSOP() {
+      try {
+        this.addingForm = true;
+
+        // 準備提交資料（項目編號固定為1，實際排序靠優先級）
+        const requestData = {
+          category_id: this.addForm.category_id,
+          item_number: 1,  // 固定值，實際排序依據優先級
+          item_name: this.addForm.item_name,
+          content: this.addForm.content,
+          priority: this.addForm.priority || 5,
+          trigger_mode: this.addForm.trigger_mode,
+          next_action: this.addForm.next_action,
+          trigger_keywords: this.addForm.trigger_mode === 'manual' ? this.addForm.trigger_keywords : null,
+          immediate_prompt: this.addForm.trigger_mode === 'immediate' ? this.addForm.immediate_prompt : null,
+          next_form_id: this.addForm.next_action === 'form_fill' ? this.addForm.next_form_id : null,
+          next_api_config: this.addForm.next_action === 'api_call' ? this.addForm.next_api_config : null
+        };
+
+        // 呼叫新增 API
+        const response = await axios.post(
+          `${RAG_API}/v1/vendors/${this.vendorId}/sop/items`,
+          requestData
+        );
+
+        alert(`✅ SOP 已新增成功！\n\nID: ${response.data.id}\n名稱: ${response.data.item_name}\n\n系統正在背景生成 embedding...`);
+
+        this.closeAddModal();
+        await this.loadMySOP();  // 重新載入列表
+      } catch (error) {
+        console.error('新增 SOP 失敗:', error);
+        alert('新增失敗: ' + (error.response?.data?.detail || error.message));
+      } finally {
+        this.addingForm = false;
       }
     },
 
