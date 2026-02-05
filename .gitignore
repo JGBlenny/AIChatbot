@@ -84,3 +84,18 @@ knowledge-admin/frontend/public/test-*.html
 # 調試腳本
 rag-orchestrator/test_*.py
 .env.bak
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+*.temp
+.backup/
+
+# Test artifacts
+test_*.txt
+test_*.json
+*_test_output.*
+

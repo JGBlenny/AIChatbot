@@ -649,6 +649,8 @@ class FormManager:
             skip_review = form_schema.get('skip_review', False)
 
             if skip_review:
+                # 重新獲取最新的 session_state（包含最新的 metadata）
+                session_state = await self.get_session_state(session_id)
                 # 直接完成表單並執行後續動作
                 return await self._complete_form(session_state, form_schema, collected_data)
             else:
@@ -795,28 +797,96 @@ class FormManager:
 
                 # 特定錯誤類型：需要用戶重新輸入（不完成表單）
                 if error_type in ['ambiguous_match', 'no_match', 'invalid_input']:
-                    print(f"⚠️ API 返回 {error_type}，保持表單狀態為 COLLECTING")
+                    # ========== 新增：重試次數限制邏輯 ==========
+                    # 從 metadata 獲取重試次數
+                    metadata = session_state.get('metadata', {})
+                    retry_count = metadata.get('retry_count', 0)
+                    MAX_RETRIES = 2  # 最多重試 2 次
+
+                    # 增加重試次數
+                    retry_count += 1
+
+                    print(f"🔄 [表單重試] API 錯誤類型: {error_type}, 重試次數: {retry_count}/{MAX_RETRIES}")
+
+                    # 檢查是否超過重試次數
+                    if retry_count >= MAX_RETRIES:
+                        # 超過重試次數，自動取消表單
+                        await self.update_session_state(
+                            session_id=session_state['session_id'],
+                            state=FormState.CANCELLED
+                        )
+
+                        # 根據錯誤類型提供不同的結束訊息
+                        cancel_messages = {
+                            'no_match': (
+                                "❌ **查詢失敗**\n\n"
+                                "已嘗試 2 次，仍無法找到匹配的資料。\n\n"
+                                "可能原因：\n"
+                                "• 輸入的地址不在服務範圍內\n"
+                                "• 地址格式不正確\n"
+                                "• 該地址尚未登錄在系統中\n\n"
+                                "請確認地址資訊後重新查詢，或聯繫客服協助。"
+                            ),
+                            'ambiguous_match': (
+                                "❌ **查詢中斷**\n\n"
+                                "連續 2 次無法精確定位您的地址。\n"
+                                "請提供更完整的地址資訊（包含樓層、號碼等細節）後重新查詢。"
+                            ),
+                            'invalid_input': (
+                                "❌ **輸入無效**\n\n"
+                                "連續 2 次輸入格式錯誤。\n"
+                                "請參考正確格式範例後重新開始。"
+                            )
+                        }
+
+                        cancel_message = cancel_messages.get(
+                            error_type,
+                            "❌ **查詢已取消**\n\n已達到最大重試次數。請確認資料後重新開始。"
+                        )
+
+                        return {
+                            "answer": cancel_message,
+                            "form_completed": False,
+                            "form_cancelled": True,
+                            "auto_cancelled": True,
+                            "reason": "exceeded_retry_limit",
+                            "retry_count": retry_count,
+                            "error_type": error_type
+                        }
+
+                    # 尚未超過重試次數，更新 metadata 並繼續
+                    metadata['retry_count'] = retry_count
+                    await self.update_session_state(
+                        session_id=session_state['session_id'],
+                        state=FormState.COLLECTING,
+                        metadata=metadata
+                    )
 
                     # 獲取當前欄位（最後一個欄位）
                     current_field_index = session_state['current_field_index']
                     current_field = form_schema['fields'][current_field_index]
 
-                    # 回退到當前欄位，讓用戶重新輸入
-                    await self.update_session_state(
-                        session_id=session_state['session_id'],
-                        state=FormState.COLLECTING
-                        # 保持 current_field_index 不變
-                    )
-
-                    # 返回錯誤訊息 + 重新提示
+                    # 根據重試次數調整提示訊息
                     error_message = api_result.get('formatted_response', '輸入無效，請重新輸入。')
 
+                    # 加入重試次數提示
+                    if retry_count == 1:
+                        retry_hint = "\n\n💡 **提示**：請確認輸入的地址完整且正確（第 1 次重試）"
+                    else:  # retry_count == 2
+                        retry_hint = "\n\n⚠️ **最後一次機會**：請仔細檢查地址格式（最後一次重試）"
+
+                    # 組合錯誤訊息
+                    combined_message = f"{error_message}{retry_hint}\n\n---\n\n{current_field['prompt']}\n\n（或輸入「**取消**」結束填寫）"
+
                     return {
-                        "answer": f"{error_message}\n\n---\n\n{current_field['prompt']}\n\n（或輸入「**取消**」結束填寫）",
+                        "answer": combined_message,
                         "form_completed": False,
                         "needs_retry": True,
-                        "retry_field": current_field['field_name']
+                        "retry_field": current_field['field_name'],
+                        "retry_count": retry_count,
+                        "max_retries": MAX_RETRIES
                     }
+                    # ========== 重試次數限制邏輯結束 ==========
 
         # 3. API 成功或無需 API，正常完成表單
         # 更新會話狀態為已完成
