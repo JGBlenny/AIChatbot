@@ -1,0 +1,50 @@
+{
+  "active_models": [
+    "bge_reranker"
+  ],
+  "models": {
+    "bge_reranker": {
+      "type": "reranker",
+      "class": "BGERerankerModel",
+      "path": "BAAI/bge-reranker-base",
+      "weight": 0.5,
+      "description": "BGE 中文語義重排序模型",
+      "enabled": true
+    },
+    "bge_reranker_large": {
+      "type": "reranker",
+      "class": "BGERerankerModel",
+      "path": "BAAI/bge-reranker-large",
+      "weight": 0.6,
+      "description": "BGE 大型重排序模型（更準確但較慢）",
+      "enabled": false
+    },
+    "m3e_base": {
+      "type": "vector",
+      "class": "M3EModel",
+      "path": "moka-ai/m3e-base",
+      "weight": 0.3,
+      "description": "M3E 中文向量模型",
+      "enabled": false
+    },
+    "custom_finetuned": {
+      "type": "custom",
+      "class": "CustomModel",
+      "path": "models/finetuned_model",
+      "weight": 0.7,
+      "description": "您微調後的自定義模型",
+      "enabled": false
+    },
+    "my_custom_model": {
+      "type": "custom",
+      "class": "CustomModel",
+      "config": {
+        "key": "value"
+      },
+      "weight": 0.2
+    }
+  },
+  "ensemble_strategy": "weighted_average",
+  "fallback_model": "bge_reranker",
+  "version": "1.0.0"
+}

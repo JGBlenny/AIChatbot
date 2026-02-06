@@ -185,13 +185,35 @@ services:
       # Reranker 配置（2026-01-28）
       ENABLE_RERANKER: ${ENABLE_RERANKER:-true}
       ENABLE_KNOWLEDGE_RERANKER: ${ENABLE_KNOWLEDGE_RERANKER:-true}
+      # 語義重排序配置（2026-02-06）
+      USE_SEMANTIC_RERANK: ${USE_SEMANTIC_RERANK:-true}
+      SEMANTIC_MODEL_API_URL: http://semantic-model:8000
     ports:
       - "8100:8100"
     depends_on:
       - postgres
       - embedding-api
       - redis
+      - semantic-model
     restart: unless-stopped
+
+  # 語義重排序模型服務（2026-02-06）
+  semantic-model:
+    build: ./semantic_model
+    container_name: aichatbot-semantic-model
+    ports:
+      - "8002:8000"
+    environment:
+      MODEL_NAME: BAAI/bge-reranker-base
+      MAX_LENGTH: 512
+      BATCH_SIZE: 32
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 volumes:
   postgres_data:

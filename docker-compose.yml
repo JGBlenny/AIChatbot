@@ -184,7 +184,7 @@ services:
       # RAG 檢索配置 - ✅ 選項1：統一檢索閾值（移除獨立 RAG fallback）
       SOP_SIMILARITY_THRESHOLD: ${SOP_SIMILARITY_THRESHOLD:-0.75}  # SOP 檢索相似度閾值（高精準）
       KB_SIMILARITY_THRESHOLD: 0.55  # Knowledge Base 統一檢索閾值（含語義匹配，涵蓋原 fallback 範圍）
-      HIGH_QUALITY_THRESHOLD: ${HIGH_QUALITY_THRESHOLD:-0.8}  # 高質量知識過濾閾值（用於答案生成）
+      HIGH_QUALITY_THRESHOLD: ${HIGH_QUALITY_THRESHOLD:-0.8}  # 高質量知識過濾閾值（僅用於非表單答案）
       FALLBACK_SIMILARITY_THRESHOLD: 0.55  # ⚠️ 已廢棄：RAG Fallback 已移除，統一使用 KB_SIMILARITY_THRESHOLD
       RAG_SIMILARITY_THRESHOLD: ${RAG_SIMILARITY_THRESHOLD:-0.6}  # ⚠️ 已廢棄：待移除
       RAG_TOP_K: ${RAG_TOP_K:-5}  # RAG 檢索返回數量
@@ -197,6 +197,9 @@ services:
       TEMPLATE_MAX_SCORE: ${TEMPLATE_MAX_SCORE:-0.75}  # 模板最高信心度
       LLM_PARAM_INJECTION_TEMP: ${LLM_PARAM_INJECTION_TEMP:-0.1}  # 參數注入溫度
       LLM_SYNTHESIS_TEMP: ${LLM_SYNTHESIS_TEMP:-0.1}  # 答案合成溫度（降低以提高參數替換準確性）
+      # 語義重排序配置
+      USE_SEMANTIC_RERANK: ${USE_SEMANTIC_RERANK:-true}  # 啟用語義重排序
+      SEMANTIC_MODEL_API_URL: http://aichatbot-semantic-model:8000  # 語義模型服務 URL
       # 意圖建議配置
       INTENT_SUGGESTION_TEMP: ${INTENT_SUGGESTION_TEMP:-0.2}  # 意圖建議溫度
       INTENT_SUGGESTION_MAX_TOKENS: ${INTENT_SUGGESTION_MAX_TOKENS:-800}  # 意圖建議最大 tokens

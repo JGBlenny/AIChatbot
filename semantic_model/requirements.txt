@@ -1,0 +1,12 @@
+# 語義模型依賴套件
+sentence-transformers>=2.5.0
+torch>=2.1.0
+transformers>=4.20.0
+numpy>=1.19.0
+scikit-learn>=0.24.0
+psycopg2-binary==2.9.9
+
+# API 服務依賴
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.4.2

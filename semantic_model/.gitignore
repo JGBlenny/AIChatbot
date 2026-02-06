@@ -1,0 +1,7 @@
+# 模型檔案（太大，不適合放在 Git）
+models/*/model.safetensors
+models/*/pytorch_model.bin
+models/*/tokenizer.json
+
+# 這些檔案會在 Docker 建置時自動下載
+# 不需要存在版本控制中

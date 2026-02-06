@@ -1,0 +1,7 @@
+{
+  "base_model": "BAAI/bge-reranker-base",
+  "model_type": "CrossEncoder",
+  "max_length": 512,
+  "test_accuracy": 70.0,
+  "saved_at": "2026-02-06T11:36:36.573120"
+}

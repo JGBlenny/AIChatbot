@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  semantic-model:
+    build: .
+    container_name: aichatbot-semantic-model
+    ports:
+      - "8002:8000"  # 改用 8002 避免衝突
+    volumes:
+      # 資料卷 - 可動態更新
+      - ./data:/app/data
+      - ./config:/app/config
+      # 模型快取 - 避免重複下載
+      - semantic_model_cache:/app/models
+    environment:
+      - MODEL_NAME=BAAI/bge-reranker-base
+      - API_PORT=8000
+      - LOG_LEVEL=INFO
+      # 連接到主要資料庫
+      - DATABASE_URL=postgresql://aichatbot:aichatbot_password@aichatbot-postgres:5432/aichatbot
+    networks:
+      - aichatbot_default
+    restart: unless-stopped
+
+volumes:
+  semantic_model_cache:
+    name: semantic_model_cache
+
+networks:
+  aichatbot_default:
+    external: true

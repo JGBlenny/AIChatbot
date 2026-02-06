@@ -1486,27 +1486,38 @@ async def _build_knowledge_response(
     llm_optimizer = req.app.state.llm_answer_optimizer
     confidence_evaluator = req.app.state.confidence_evaluator
 
-    # ⭐ 步驟 1：高質量過濾（先過濾再處理 action_type）
-    # 修改：使用 similarity（10/90 rerank 後的最終分數）進行過濾
-    # 原因：base_similarity 是 rerank 前的原始 embedding 分數，無法反映 reranker 的深度語義理解
-    # 在 10/90 混合比例下，最終分數有 90% 來自 reranker，應該信任 reranker 的判斷
-    high_quality_threshold = float(os.getenv("HIGH_QUALITY_THRESHOLD", "0.8"))
-    filtered_knowledge_list = [k for k in knowledge_list if k.get('similarity', 0) >= high_quality_threshold]
+    # ⭐ 步驟 1：優先檢查表單類型（表單直接使用，不需閾值）
+    if knowledge_list:
+        best_knowledge = knowledge_list[0]  # 已按相似度排序
+        action_type = best_knowledge.get('action_type', 'direct_answer')
+        form_id = best_knowledge.get('form_id')
 
-    if len(filtered_knowledge_list) < len(knowledge_list):
-        print(f"🔍 [高質量過濾] 原始: {len(knowledge_list)} 個候選知識, 過濾後: {len(filtered_knowledge_list)} 個 (閾值: {high_quality_threshold})")
-        for k in knowledge_list:
-            status = "✅" if k.get('similarity', 0) >= high_quality_threshold else "❌"
-            print(f"   {status} ID {k['id']}: similarity={k.get('similarity', 0):.3f} (base: {k.get('base_similarity', 0):.3f}, rerank: {k.get('rerank_score', 0):.3f})")
+        # 如果最高順位是表單類型，直接使用
+        if action_type == 'form_fill' or form_id:
+            print(f"📝 [表單優先] 最高順位知識 ID {best_knowledge['id']} 是表單類型，直接使用")
+            print(f"   action_type={action_type}, form_id={form_id}, similarity={best_knowledge.get('similarity', 0):.3f}")
+            filtered_knowledge_list = [best_knowledge]  # 直接使用，無需閾值檢查
+        else:
+            # ⭐ 步驟 2：非表單知識才需要質量檢查
+            high_quality_threshold = float(os.getenv("HIGH_QUALITY_THRESHOLD", "0.8"))
+            filtered_knowledge_list = [k for k in knowledge_list if k.get('similarity', 0) >= high_quality_threshold]
 
-    # 如果過濾後沒有高質量知識，返回找不到知識的響應
+            if len(filtered_knowledge_list) < len(knowledge_list):
+                print(f"🔍 [高質量過濾] 原始: {len(knowledge_list)} 個候選知識, 過濾後: {len(filtered_knowledge_list)} 個 (閾值: {high_quality_threshold})")
+                for k in knowledge_list[:3]:  # 只顯示前3個
+                    status = "✅" if k.get('similarity', 0) >= high_quality_threshold else "❌"
+                    print(f"   {status} ID {k['id']}: similarity={k.get('similarity', 0):.3f}")
+    else:
+        filtered_knowledge_list = []
+
+    # 如果過濾後沒有知識，返回找不到知識的響應
     if not filtered_knowledge_list:
-        print(f"⚠️  所有候選知識的相似度都低於高質量閾值 {high_quality_threshold}，嘗試參數答案或兜底回應...")
+        print(f"⚠️  沒有符合條件的知識，嘗試參數答案或兜底回應...")
         return await _handle_no_knowledge_found(
             request, req, intent_result, resolver, cache_service, vendor_info
         )
 
-    # ⭐ 步驟 2：檢查最佳知識的 action_type（使用高質量過濾後的知識）
+    # ⭐ 步驟 3：處理過濾後的知識（可能是表單或一般知識）
     best_knowledge = filtered_knowledge_list[0]
     action_type = best_knowledge.get('action_type', 'direct_answer')
     print(f"🎯 [action_type] 知識 {best_knowledge['id']} 的 action_type: {action_type}, similarity: {best_knowledge.get('similarity', 0):.3f}")

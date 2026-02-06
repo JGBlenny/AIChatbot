@@ -7,6 +7,7 @@ from typing import List, Dict, Optional
 import asyncpg
 from asyncpg.pool import Pool
 from .embedding_utils import get_embedding_client
+from .semantic_reranker import get_semantic_reranker
 
 
 class RAGEngine:
@@ -26,6 +27,10 @@ class RAGEngine:
         self.priority_boost = float(os.getenv("PRIORITY_BOOST", "0.15"))
         # 讀取優先級品質門檻（只對高品質答案加分，預設 0.70）
         self.priority_quality_threshold = float(os.getenv("PRIORITY_QUALITY_THRESHOLD", "0.70"))
+        # 初始化語義重排序器
+        self.semantic_reranker = get_semantic_reranker()
+        # 是否啟用語義重排序（預設關閉，可根據需求開啟）
+        self.use_semantic_rerank = os.getenv("USE_SEMANTIC_RERANK", "false").lower() == "true"
 
     async def search(
         self,
@@ -524,8 +529,34 @@ class RAGEngine:
                 "business_types": row.get('business_types'),
                 "scope": row.get('scope', 'global'),
                 "vendor_id": row.get('vendor_id'),
-                "similarity": similarity
+                "similarity": similarity,
+                "answer": row['content'],  # 為語義重排序準備
+                "form_id": row.get('form_id'),
+                "trigger_form_condition": row.get('trigger_form_condition'),
+                "priority": row.get('priority', 0)
             })
+
+        # 4. 語義重排序（可選）
+        if self.use_semantic_rerank and search_results and self.semantic_reranker.is_available:
+            print(f"   🧠 啟用語義重排序...")
+            original_order = [r['id'] for r in search_results[:5]]
+
+            # 使用語義模型重新排序
+            reranked_results = self.semantic_reranker.rerank(
+                query=query,
+                candidates=search_results,
+                top_k=min(limit, len(search_results))
+            )
+
+            # 如果重排序成功，使用新結果
+            if reranked_results:
+                new_order = [r['id'] for r in reranked_results[:5]]
+                if original_order != new_order:
+                    print(f"      原始順序: {original_order}")
+                    print(f"      重排順序: {new_order}")
+                search_results = reranked_results
+            else:
+                print(f"      ⚠️ 語義重排序失敗，使用原始順序")
 
         return search_results
 
