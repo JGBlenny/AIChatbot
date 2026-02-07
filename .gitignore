@@ -77,6 +77,10 @@ pgadmin_data/
 
 # Data directory
 data/
+# Allow gitkeep files in semantic model data
+!semantic_model/data/
+semantic_model/data/*
+!semantic_model/data/.gitkeep
 
 # 前端測試文件
 knowledge-admin/frontend/public/test-*.html

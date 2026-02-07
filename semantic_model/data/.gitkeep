@@ -1,0 +1,3 @@
+# This directory contains environment-specific knowledge base data
+# Files here should not be committed to git
+# Use extract_knowledge.py to generate or scp from local environment
