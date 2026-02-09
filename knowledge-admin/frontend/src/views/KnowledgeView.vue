@@ -188,6 +188,23 @@
             <input v-model="formData.question_summary" required placeholder="例如：租金逾期如何處理？" />
           </div>
 
+          <!-- 業者選擇 -->
+          <div class="form-group">
+            <label>業者範圍 <span class="field-hint">（選擇業者 = 專屬知識，不選擇 = 全域知識）</span></label>
+            <select v-model="formData.vendor_id">
+              <option :value="null">🌐 全域知識（所有業者可見）</option>
+              <option v-for="vendor in availableVendors" :key="vendor.id" :value="vendor.id">
+                🏢 {{ vendor.name }}（專屬知識）
+              </option>
+            </select>
+            <p v-if="formData.vendor_id === null" class="hint-text">
+              💡 全域知識：所有業者都能看到此知識
+            </p>
+            <p v-else class="hint-text">
+              🔒 業者專屬：只有 {{ availableVendors.find(v => v.id === formData.vendor_id)?.name }} 能看到此知識
+            </p>
+          </div>
+
           <!-- 業態類型選擇 -->
           <div class="form-group">
             <label>業態類型 <span class="field-hint">（點擊標籤選擇，未選擇=通用）</span></label>
@@ -505,6 +522,7 @@ export default {
       availableTargetUsers: [],  // 從 API 載入
       availableForms: [],  // 從 API 載入可用表單
       availableApiEndpoints: [],  // 從 API 載入可用 API 端點
+      availableVendors: [],  // 從 API 載入可用業者
       searchQuery: '',
       showModal: false,
       editingItem: null,
@@ -526,6 +544,7 @@ export default {
         business_types: [],
         target_user: [],  // 新增：目標用戶類型
         priority: 0,  // 新增：優先級（0-10）
+        vendor_id: null,  // 新增：業者 ID (null = 全域知識)
         // 表單關聯
         form_id: '',
         // 🆕 表單觸發模式
@@ -646,6 +665,7 @@ export default {
 
     // 載入基礎資料
     await this.loadIntents();
+    await this.loadVendors();
     await this.loadBusinessTypes();
     await this.loadTargetUsers();
     await this.loadForms();
@@ -759,6 +779,15 @@ export default {
         this.availableIntents = response.data.intents;
       } catch (error) {
         console.error('載入意圖失敗', error);
+      }
+    },
+
+    async loadVendors() {
+      try {
+        const response = await axios.get(`${API_BASE}/vendors`);
+        this.availableVendors = response.data.vendors;
+      } catch (error) {
+        console.error('載入業者失敗', error);
       }
     },
 
@@ -982,6 +1011,7 @@ export default {
         intent_mappings: [],
         business_types: [],
         target_user: [],
+        vendor_id: null,  // 重置業者 ID
         form_id: null,
         trigger_mode: 'auto',  // 🆕 默認為自動
         trigger_keywords: [],  // 🆕 manual 模式的觸發關鍵詞
@@ -1015,6 +1045,7 @@ export default {
           business_types: knowledge.business_types || '',
           target_user: knowledge.target_user || [],
           priority: knowledge.priority || 0,  // 載入優先級
+          vendor_id: knowledge.vendor_id || null,  // 載入業者 ID
           // 表單關聯
           form_id: knowledge.form_id || '',
           // 表單觸發模式

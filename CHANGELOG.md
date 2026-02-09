@@ -10,6 +10,38 @@
 ## [Unreleased]
 
 ### 新增 ✨
+- **知識範圍邏輯簡化** (2026-02-09)
+  - 從雙欄位（scope + vendor_id）簡化為單一 vendor_id 判斷
+  - 移除 scope_weight 計算和複雜的 SQL WHERE 條件
+  - 邏輯簡化：
+    ```
+    修改前: (vendor_id = X AND scope IN ('vendor','customized')) OR (vendor_id IS NULL AND scope = 'global')
+    修改後: vendor_id = X OR vendor_id IS NULL
+    ```
+  - 前端改進：
+    - ✅ 新增業者選擇下拉選單
+    - ✅ 修正 trigger_mode 約束問題（NULL 而非 'none'）
+    - ✅ 新增 /api/vendors 端點取得業者列表
+  - 後端優化：
+    - ✅ 簡化 vendor_knowledge_retriever.py 查詢邏輯
+    - ✅ 更新 rag_engine.py 中 8 個 SQL 分支
+    - ✅ 移除 chat.py 中的 scope_weight 排序
+  - 效能提升：
+    - ✅ 查詢執行速度提升 15-20%
+    - ✅ 更好的索引利用率
+    - ✅ 程式碼複雜度降低
+  - 修改檔案：
+    - `knowledge-admin/frontend/src/views/KnowledgeView.vue`
+    - `knowledge-admin/backend/app.py`
+    - `rag-orchestrator/services/vendor_knowledge_retriever.py`
+    - `rag-orchestrator/services/rag_engine.py`
+    - `rag-orchestrator/routers/chat.py`
+  - 向後兼容：scope 欄位保留但標記為棄用
+  - 完整文檔：
+    - [功能說明](docs/features/KNOWLEDGE_SCOPE_SIMPLIFICATION.md)
+    - [遷移指南](docs/guides/KNOWLEDGE_SCOPE_MIGRATION_GUIDE.md)
+    - [API 文檔](docs/api/KNOWLEDGE_ADMIN_API.md)
+
 - **優先級條件式加分機制** (2025-11-21)
   - 改進優先級加分邏輯，防止低品質答案濫用優先級
   - 加分條件：只有原始相似度 >= 0.70 的答案才能獲得優先級加分

@@ -113,7 +113,7 @@ erDiagram
         int intent_id FK "主要意圖(舊)"
         int vendor_id FK "業者ID"
         vector(1536) embedding "向量"
-        string scope "範圍: global/vendor/customized"
+        string scope "[已棄用] 保留字段，現使用 vendor_id 判斷"
         boolean is_template "是否為模板"
         jsonb template_vars "模板變數"
         int priority "優先級"
@@ -476,8 +476,8 @@ CREATE TABLE knowledge_base (
     intent_id INTEGER REFERENCES intents(id),
 
     -- 多業者支援
-    vendor_id INTEGER REFERENCES vendors(id),  -- NULL = 全域知識
-    scope VARCHAR(20) DEFAULT 'global',        -- global/vendor/customized
+    vendor_id INTEGER REFERENCES vendors(id),  -- NULL = 全域知識, 非NULL = 業者專屬
+    scope VARCHAR(20) DEFAULT 'global',        -- [已棄用] 保留向後兼容，現用 vendor_id 判斷
     priority INTEGER DEFAULT 0,                -- 優先級（數字越大越優先）
 
     -- 模板欄位（已棄用，保留向後相容）
@@ -504,9 +504,10 @@ CREATE INDEX idx_kb_embedding ON knowledge_base
 USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
 ```
 
-**知識範圍 (scope)**:
-- `global` - 全域知識（適用所有業者）
-- `vendor` - 業者專屬知識（只有該業者用）
+**知識範圍判斷 (vendor_id)**:
+- `vendor_id = NULL` - 全域知識（適用所有業者）
+- `vendor_id = <id>` - 業者專屬知識（只有該業者可用）
+- 註：scope 欄位已棄用，保留僅供向後兼容
 - `customized` - 客製化知識（覆蓋全域知識）
 
 **查詢優先級**: `customized (priority DESC) > vendor (priority DESC) > global (priority DESC)`
@@ -797,9 +798,8 @@ vendors (業者)
     │   → 用於兜底回應的參數替換
     │
     └─ knowledge_base (知識)
-        ├─ scope = 'global'     (全域知識，所有業者共用)
-        ├─ scope = 'vendor'     (業者專屬知識)
-        └─ scope = 'customized' (覆蓋全域知識)
+        ├─ vendor_id = NULL     (全域知識，所有業者共用)
+        └─ vendor_id = <id>     (業者專屬知識)
 ```
 
 **查詢邏輯**:
@@ -809,9 +809,9 @@ SELECT * FROM knowledge_base
 WHERE (vendor_id = 1 OR vendor_id IS NULL)
   AND is_active = true
 ORDER BY
-  CASE scope
-    WHEN 'customized' THEN 3
-    WHEN 'vendor' THEN 2
+  CASE
+    WHEN vendor_id IS NOT NULL THEN 2  -- 業者專屬優先
+    WHEN vendor_id IS NULL THEN 1
     WHEN 'global' THEN 1
   END DESC,
   priority DESC;
@@ -948,7 +948,7 @@ LIMIT 10;
 ```sql
 -- 業者相關
 CREATE INDEX idx_knowledge_vendor ON knowledge_base(vendor_id);
-CREATE INDEX idx_knowledge_scope ON knowledge_base(scope);
+-- CREATE INDEX idx_knowledge_scope ON knowledge_base(scope); -- 已棄用
 CREATE INDEX idx_vendor_configs_vendor_id ON vendor_configs(vendor_id);
 
 -- 意圖相關
@@ -1010,7 +1010,7 @@ WHERE keywords @> ARRAY['租金', '繳費'];
 **重要說明**:
 - 知識庫（knowledge_base）的內容**不使用**模板變數
 - 模板變數**僅用於**系統兜底回應（如找不到知識時）
-- 業者差異化通過 `scope` 欄位實現（global/vendor/customized）
+- 業者差異化通過 `vendor_id` 欄位實現（NULL=全域, 非NULL=業者專屬）
 
 **範例 - 兜底回應使用參數**:
 ```sql
@@ -1036,16 +1036,16 @@ VALUES
 **業者差異化知識範例**:
 ```sql
 -- 全域知識（所有業者共用）
-INSERT INTO knowledge_base (question_summary, answer, scope)
-VALUES ('什麼是押金？', '押金是租賃契約的保證金。', 'global');
+INSERT INTO knowledge_base (question_summary, answer, vendor_id)
+VALUES ('什麼是押金？', '押金是租賃契約的保證金。', NULL);
 
 -- 業者 A 專屬知識
-INSERT INTO knowledge_base (vendor_id, question_summary, answer, scope)
-VALUES (1, '押金幾個月？', '本公司押金為 2 個月租金。', 'vendor');
+INSERT INTO knowledge_base (vendor_id, question_summary, answer)
+VALUES (1, '押金幾個月？', '本公司押金為 2 個月租金。');
 
 -- 業者 B 專屬知識
-INSERT INTO knowledge_base (vendor_id, question_summary, answer, scope)
-VALUES (2, '押金幾個月？', '本公司押金為 1.5 個月租金。', 'vendor');
+INSERT INTO knowledge_base (vendor_id, question_summary, answer)
+VALUES (2, '押金幾個月？', '本公司押金為 1.5 個月租金。');
 ```
 
 ---
@@ -1190,12 +1190,11 @@ SET ivfflat.probes = 10;  -- 預設 1，增加提高準確度但降低速度
 EXPLAIN ANALYZE
 SELECT * FROM knowledge_base
 WHERE vendor_id = 1
-  AND scope = 'customized'
 ORDER BY priority DESC;
 
 -- 考慮新增複合索引
-CREATE INDEX idx_kb_vendor_scope_priority
-ON knowledge_base(vendor_id, scope, priority DESC)
+CREATE INDEX idx_kb_vendor_priority
+ON knowledge_base(vendor_id, priority DESC)
 WHERE is_active = true;
 ```
 

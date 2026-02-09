@@ -114,24 +114,15 @@ class VendorKnowledgeRetriever:
                     kb.api_config,
                     kb.trigger_mode,
                     kb.trigger_keywords,
-                    kb.immediate_prompt,
-                    -- 計算優先級權重
-                    CASE
-                        WHEN kb.scope = 'customized' AND kb.vendor_id = %s THEN 1000
-                        WHEN kb.scope = 'vendor' AND kb.vendor_id = %s THEN 500
-                        WHEN kb.scope = 'global' AND kb.vendor_id IS NULL THEN 100
-                        ELSE 0
-                    END as scope_weight
+                    kb.immediate_prompt
                 FROM knowledge_base kb
                 INNER JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                 WHERE
                     kim.intent_id = %s
                     AND (
-                        -- 業者客製化知識
-                        (kb.vendor_id = %s AND kb.scope IN ('customized', 'vendor'))
-                        OR
-                        -- 全域知識
-                        (kb.vendor_id IS NULL AND kb.scope = 'global')
+                        -- 知識範圍過濾（簡化版）
+                        kb.vendor_id = %s OR
+                        kb.vendor_id IS NULL
                     )
                     -- ✅ 業態類型過濾（新增）
                     AND (
@@ -139,11 +130,10 @@ class VendorKnowledgeRetriever:
                         OR kb.business_types && %s::text[]  -- 陣列重疊：知識的業態類型與業者的業態類型有交集
                     )
                 ORDER BY
-                    scope_weight DESC,  -- 先按範圍權重排序
-                    kb.priority DESC,   -- 再按優先級排序
+                    kb.priority DESC,   -- 按優先級排序
                     kb.created_at DESC  -- 最後按建立時間排序
                 LIMIT %s
-            """, (vendor_id, vendor_id, intent_id, vendor_id, vendor_business_types, top_k))
+            """, (intent_id, vendor_id, vendor_business_types, top_k))
 
             rows = cursor.fetchall()
             cursor.close()
@@ -397,22 +387,17 @@ class VendorKnowledgeRetriever:
                         WHEN kim.intent_id = %s THEN 1.3
                         WHEN kim.intent_id = ANY(%s::int[]) THEN 1.1
                         ELSE 1.0
-                    END as sql_boosted_similarity,
-                    -- 計算 Scope 權重
-                    CASE
-                        WHEN kb.scope = 'customized' AND kb.vendor_id = %s THEN 1000
-                        WHEN kb.scope = 'vendor' AND kb.vendor_id = %s THEN 500
-                        WHEN kb.scope = 'global' AND kb.vendor_id IS NULL THEN 100
-                        ELSE 0
-                    END as scope_weight
+                    END as sql_boosted_similarity
                 FROM knowledge_base kb
                 LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                 WHERE
-                    -- Scope 過濾
+                    -- 知識範圍過濾（簡化版：基於 vendor_id 判斷）
                     (
-                        (kb.vendor_id = %s AND kb.scope IN ('customized', 'vendor'))
+                        -- vendor 專屬知識：vendor_id 必須匹配
+                        kb.vendor_id = %s
                         OR
-                        (kb.vendor_id IS NULL AND kb.scope = 'global')
+                        -- global 全域知識：vendor_id 為 NULL
+                        kb.vendor_id IS NULL
                     )
                     -- 向量存在
                     AND kb.embedding IS NOT NULL
@@ -426,9 +411,8 @@ class VendorKnowledgeRetriever:
                     -- ✅ 目標用戶過濾：確保知識適用於當前用戶角色（tenant/landlord/property_manager等）
                     AND {target_user_filter_sql}
                 ORDER BY
-                    scope_weight DESC,           -- 1st: Scope 優先級
-                    sql_boosted_similarity DESC, -- 2nd: SQL 計算的加成相似度（臨時）
-                    kb.priority DESC             -- 3rd: 人工優先級
+                    sql_boosted_similarity DESC, -- 1st: SQL 計算的加成相似度
+                    kb.priority DESC             -- 2nd: 人工優先級
                 LIMIT %s
             """
 
@@ -440,9 +424,7 @@ class VendorKnowledgeRetriever:
                 vector_str,
                 intent_id_for_sql,
                 all_intent_ids if all_intent_ids else [],
-                vendor_id,
-                vendor_id,
-                vendor_id,
+                vendor_id,  # 用於知識範圍過濾
                 vector_str,
                 sql_threshold,  # ✅ 使用較低的 SQL 閾值
                 vendor_business_types,  # ✅ 業態類型過濾參數
@@ -487,12 +469,10 @@ class VendorKnowledgeRetriever:
             if self.reranker_enabled and len(candidates) > 1:
                 candidates = self._apply_reranker(query, candidates)
 
-            # ✅ 重新排序：scope_weight > similarity > priority
+            # ✅ 重新排序：similarity > priority
             # 注意：如果啟用 Reranker，candidates 已經按 similarity 排序（10/90 混合）
-            # 這裡再次排序是為了確保 scope_weight 優先級最高
             candidates.sort(
                 key=lambda x: (
-                    -x['scope_weight'],           # 降序：scope 優先級高的在前
                     -x.get('similarity', x.get('base_similarity', 0)),  # 降序：使用 Reranker 後的 similarity
                     -x.get('priority', 0)         # 降序：人工優先級高的在前
                 )
@@ -598,13 +578,7 @@ class VendorKnowledgeRetriever:
                     priority,
                     is_template,
                     template_vars,
-                    vendor_id,
-                    CASE
-                        WHEN scope = 'customized' AND vendor_id = %s THEN 1000
-                        WHEN scope = 'vendor' AND vendor_id = %s THEN 500
-                        WHEN scope = 'global' AND vendor_id IS NULL THEN 100
-                        ELSE 0
-                    END as scope_weight
+                    vendor_id
                 FROM knowledge_base
                 WHERE
                     (
@@ -612,18 +586,14 @@ class VendorKnowledgeRetriever:
                         OR answer ILIKE %s
                     )
                     AND (
-                        (vendor_id = %s AND scope IN ('customized', 'vendor'))
-                        OR
-                        (vendor_id IS NULL AND scope = 'global')
+                        vendor_id = %s OR
+                        vendor_id IS NULL
                     )
                 ORDER BY
-                    scope_weight DESC,
                     priority DESC,
                     created_at DESC
                 LIMIT %s
             """, (
-                vendor_id,
-                vendor_id,
                 f"%{question}%",
                 f"%{question}%",
                 vendor_id,
@@ -637,7 +607,6 @@ class VendorKnowledgeRetriever:
             results = []
             for row in rows:
                 knowledge = dict(row)
-                knowledge.pop('scope_weight', None)
                 results.append(knowledge)
 
             return results

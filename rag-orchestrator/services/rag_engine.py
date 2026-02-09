@@ -154,8 +154,8 @@ class RAGEngine:
                                     AND (kb.business_types IS NULL OR kb.business_types && $7::text[])
                                     AND (
                                         $10::int IS NULL OR
-                                        (kb.vendor_id = $10 AND kb.scope IN ('customized', 'vendor')) OR
-                                        (kb.vendor_id IS NULL AND kb.scope = 'global')
+                                        kb.vendor_id = $10 OR
+                                        kb.vendor_id IS NULL
                                     )
                                 ORDER BY kb.id, boosted_similarity DESC
                             ) AS deduped
@@ -211,8 +211,8 @@ class RAGEngine:
                                     AND (kb.target_user IS NULL OR kb.target_user && $6::text[])
                                     AND (
                                         $9::int IS NULL OR
-                                        (kb.vendor_id = $9 AND kb.scope IN ('customized', 'vendor')) OR
-                                        (kb.vendor_id IS NULL AND kb.scope = 'global')
+                                        kb.vendor_id = $9 OR
+                                        kb.vendor_id IS NULL
                                     )
                                 ORDER BY kb.id, boosted_similarity DESC
                             ) AS deduped
@@ -270,8 +270,8 @@ class RAGEngine:
                                     AND (kb.business_types IS NULL OR kb.business_types && $6::text[])
                                     AND (
                                         $9::int IS NULL OR
-                                        (kb.vendor_id = $9 AND kb.scope IN ('customized', 'vendor')) OR
-                                        (kb.vendor_id IS NULL AND kb.scope = 'global')
+                                        kb.vendor_id = $9 OR
+                                        kb.vendor_id IS NULL
                                     )
                                 ORDER BY kb.id, boosted_similarity DESC
                             ) AS deduped
@@ -326,8 +326,8 @@ class RAGEngine:
                                     AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
                                     AND (
                                         $8::int IS NULL OR
-                                        (kb.vendor_id = $8 AND kb.scope IN ('customized', 'vendor')) OR
-                                        (kb.vendor_id IS NULL AND kb.scope = 'global')
+                                        kb.vendor_id = $8 OR
+                                        kb.vendor_id IS NULL
                                     )
                                 ORDER BY kb.id, boosted_similarity DESC
                             ) AS deduped
@@ -381,8 +381,8 @@ class RAGEngine:
                                 AND (business_types IS NULL OR business_types && $5::text[])
                                 AND (
                                     $8::int IS NULL OR
-                                    (vendor_id = $8 AND scope IN ('customized', 'vendor')) OR
-                                    (vendor_id IS NULL AND scope = 'global')
+                                    vendor_id = $8 OR
+                                    vendor_id IS NULL
                                 )
                             ORDER BY boosted_similarity DESC
                             LIMIT $3
@@ -420,8 +420,8 @@ class RAGEngine:
                                 AND (target_user IS NULL OR target_user && $4::text[])
                                 AND (
                                     $7::int IS NULL OR
-                                    (vendor_id = $7 AND scope IN ('customized', 'vendor')) OR
-                                    (vendor_id IS NULL AND scope = 'global')
+                                    vendor_id = $7 OR
+                                    vendor_id IS NULL
                                 )
                             ORDER BY boosted_similarity DESC
                             LIMIT $3
@@ -460,8 +460,8 @@ class RAGEngine:
                                 AND (business_types IS NULL OR business_types && $4::text[])
                                 AND (
                                     $7::int IS NULL OR
-                                    (vendor_id = $7 AND scope IN ('customized', 'vendor')) OR
-                                    (vendor_id IS NULL AND scope = 'global')
+                                    vendor_id = $7 OR
+                                    vendor_id IS NULL
                                 )
                             ORDER BY boosted_similarity DESC
                             LIMIT $3
@@ -498,8 +498,8 @@ class RAGEngine:
                                 AND (1 - (embedding <=> $1::vector)) >= $2
                                 AND (
                                     $6::int IS NULL OR
-                                    (vendor_id = $6 AND scope IN ('customized', 'vendor')) OR
-                                    (vendor_id IS NULL AND scope = 'global')
+                                    vendor_id = $6 OR
+                                    vendor_id IS NULL
                                 )
                             ORDER BY boosted_similarity DESC
                             LIMIT $3

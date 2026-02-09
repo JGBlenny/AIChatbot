@@ -28,7 +28,7 @@
 - **📋 SOP 流程自動化**：智能 SOP 觸發與執行（manual/immediate/auto）
 - **📝 表單管理系統**：動態表單創建、填寫、提交與 API 整合
 - **🎨 LLM 參數注入**：智能調整業者差異化參數
-- **🔐 三層知識範圍**：global < vendor < customized
+- **🔐 簡化知識範圍**：vendor_id 決定（NULL=全域, 非NULL=業者專屬）
 - **⚡ Redis 三層緩存**：問題/向量/結果緩存，節省 70-90% API 成本
 - **📡 外部 API 整合**（Phase 2）：整合業者既有系統
 

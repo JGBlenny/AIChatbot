@@ -402,7 +402,6 @@ def _build_debug_info(
                 priority=k.get('priority'),
                 priority_boost=k.get('priority_boost', 0.0),
                 boosted_similarity=k.get('boosted_similarity', k.get('similarity', 0.0)),
-                scope_weight=k.get('scope_weight', 0),
                 intent_type=k.get('intent_type'),
                 is_selected=k.get('is_selected', False)
             ))
@@ -979,7 +978,6 @@ async def _build_orchestrator_response(
                         'priority': k.get('priority', 0),
                         'priority_boost': k.get('priority_boost', 0.0),
                         'boosted_similarity': k.get('similarity', 0.0),
-                        'scope_weight': k.get('scope_weight', 100),
                         'intent_type': k.get('intent_type'),
                         'is_selected': False  # SOP 被選中，知識庫未被選中
                     })
@@ -1230,7 +1228,6 @@ async def _build_rag_response(
                 'rerank_score': r.get('rerank_score'),  # ← 新增：Rerank 分數
                 'intent_boost': 1.0,  # RAG fallback 沒有 intent boost
                 'boosted_similarity': r.get('similarity', 0.0),
-                'scope_weight': 0,
                 'intent_type': r.get('intent_type'),
                 'priority': r.get('priority'),
                 'is_selected': r['id'] in selected_ids
@@ -1736,7 +1733,6 @@ async def _build_knowledge_response(
                 'intent_boost': k.get('intent_boost', 1.0),
                 'intent_semantic_similarity': k.get('intent_semantic_similarity'),
                 'boosted_similarity': k.get('similarity', 0.0),
-                'scope_weight': k.get('scope_weight', 0),
                 'intent_type': k.get('intent_type'),
                 'priority': k.get('priority'),
                 'is_selected': k['id'] in selected_ids
@@ -2164,7 +2160,6 @@ class CandidateKnowledge(BaseModel):
     priority: Optional[int] = Field(None, description="人工優先級")
     priority_boost: float = Field(0.0, description="優先級加成值")
     boosted_similarity: float = Field(..., description="加成後相似度")
-    scope_weight: int = Field(..., description="Scope 權重")
     intent_type: Optional[str] = Field(None, description="意圖類型：primary/secondary")
     is_selected: bool = Field(..., description="是否被選取")
 

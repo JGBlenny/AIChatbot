@@ -114,7 +114,7 @@ Content-Type: application/json
       "id": 123,
       "question_summary": "每月繳費日期",
       "answer": "您的租金繳費日為每月 5 號...",
-      "scope": "global"
+      "vendor_id": null
     }
   ],
   "source_count": 1,
@@ -146,7 +146,7 @@ Content-Type: application/json
 | `sources[].id` | integer | 知識 ID |
 | `sources[].question_summary` | string | 問題摘要 |
 | `sources[].answer` | string | 答案（原始知識庫內容） |
-| `sources[].scope` | string | 知識範圍（global, vendor, customized） |
+| `sources[].vendor_id` | integer/null | 業者ID（NULL=全域, 非NULL=業者專屬） |
 | `source_count` | integer | 知識來源數量 |
 | `vendor_id` | integer | 業者 ID |
 | `mode` | string | 模式 |
@@ -269,7 +269,7 @@ event: content
 data: {"delta": " 1 號"}
 
 event: sources
-data: {"sources": [{"id": 123, "question_summary": "每月繳費日期", "scope": "vendor"}], "source_count": 1}
+data: {"sources": [{"id": 123, "question_summary": "每月繳費日期", "vendor_id": 1}], "source_count": 1}
 
 event: done
 data: {"status": "completed", "timestamp": "2025-10-22T12:00:00"}

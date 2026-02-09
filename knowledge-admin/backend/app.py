@@ -750,6 +750,27 @@ async def list_intents(user: dict = Depends(get_current_user)):
         cur.close()
         conn.close()
 
+@app.get("/api/vendors")
+async def list_vendors(user: dict = Depends(get_current_user)):
+    """取得所有業者"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+            SELECT id, name
+            FROM vendors
+            ORDER BY id
+        """)
+
+        vendors = [dict(row) for row in cur.fetchall()]
+
+        return {"vendors": vendors}
+
+    finally:
+        cur.close()
+        conn.close()
+
 @app.get("/api/target-users")
 async def list_target_users(user: dict = Depends(get_current_user)):
     """取得所有目標用戶類型（僅啟用）"""
