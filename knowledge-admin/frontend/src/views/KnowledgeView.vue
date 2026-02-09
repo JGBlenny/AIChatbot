@@ -1157,8 +1157,8 @@ export default {
           };
           // 清空表單關聯
           this.formData.form_id = null;
-            // 🆕 清空表單觸發模式（API 模式不需要）
-          this.formData.trigger_mode = 'none';
+            // 🆕 清空表單觸發模式（API 模式不需要）- 設為 null
+          this.formData.trigger_mode = null;
           this.formData.immediate_prompt = null;
         } else if (this.linkType === 'form_api') {
           // 新增：表單+API 模式
@@ -1187,8 +1187,8 @@ export default {
           this.formData.action_type = 'direct_answer';
           this.formData.form_id = null;
             this.formData.api_config = null;
-          // 🆕 清空表單觸發模式
-          this.formData.trigger_mode = 'none';
+          // 🆕 清空表單觸發模式 - 設為 null 或 'manual' (預設值)
+          this.formData.trigger_mode = null;
           this.formData.immediate_prompt = null;
         }
 

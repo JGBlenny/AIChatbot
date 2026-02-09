@@ -1346,7 +1346,7 @@ export default {
       // 清除不相關的欄位
       if (this.editingForm.next_action !== 'form_fill') {
         this.editingForm.next_form_id = null;
-        this.editingForm.trigger_mode = 'none';
+        this.editingForm.trigger_mode = null;
         this.editingForm.trigger_keywords = [];
         this.editingForm.immediate_prompt = '';
       }

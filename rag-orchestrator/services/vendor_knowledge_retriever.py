@@ -350,10 +350,9 @@ class VendorKnowledgeRetriever:
             # - 加成後過濾 >= similarity_threshold
             # - 重新排序後取 top_k
 
-            # 計算 SQL 查詢的最低閾值（考慮最大 boost 1.3x）
-            # 如果 similarity_threshold = 0.65，且最大 boost = 1.3
-            # 那麼 sql_threshold = 0.65 / 1.3 = 0.5
-            sql_threshold = similarity_threshold / 1.3 if use_semantic_boost else similarity_threshold
+            # 直接使用 similarity_threshold 作為 SQL 查詢閾值
+            # 取消原本除以 1.3 的設計，避免納入太多不相關的結果
+            sql_threshold = similarity_threshold
 
             # 獲取更多候選以供語義匹配重排序
             candidate_limit = top_k * 3
