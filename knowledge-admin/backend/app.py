@@ -91,6 +91,7 @@ class KnowledgeUpdate(BaseModel):
     business_types: Optional[List[str]] = None  # 業態類型（可選，NULL=通用）
     target_user: Optional[List[str]] = None  # 目標用戶（可選，NULL=通用）tenant/landlord/property_manager/system_admin
     priority: Optional[int] = 0  # 優先級加成（0=未啟用，1=已啟用）
+    vendor_id: Optional[int] = None  # 業者 ID（可選，NULL=全域知識）
     form_id: Optional[str] = None  # 表單關聯 ID（可選）
     action_type: Optional[str] = 'direct_answer'  # 動作類型：'direct_answer', 'form_fill', 'api_call', 'form_then_api'
     api_config: Optional[dict] = None  # API 配置（JSONB）：{ endpoint, params, combine_with_knowledge }
@@ -380,6 +381,7 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
                 business_types = %s,
                 target_user = %s,
                 priority = %s,
+                vendor_id = %s,
                 form_id = %s,
                 action_type = %s,
                 api_config = %s,
@@ -396,6 +398,7 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
             data.business_types,
             data.target_user,
             data.priority,
+            data.vendor_id,  # 直接使用 vendor_id，支援 None 值
             data.form_id,
             data.action_type,
             Json(data.api_config) if data.api_config else None,
@@ -528,8 +531,8 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
 
         cur.execute("""
             INSERT INTO knowledge_base
-            (question_summary, answer, keywords, embedding, business_types, target_user, priority, form_id, action_type, api_config, trigger_mode, immediate_prompt)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (question_summary, answer, keywords, embedding, business_types, target_user, priority, vendor_id, form_id, action_type, api_config, trigger_mode, immediate_prompt)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, created_at
         """, (
             data.question_summary,
@@ -539,6 +542,7 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
             data.business_types,
             data.target_user,
             data.priority,
+            data.vendor_id,  # 直接使用 vendor_id，支援 None 值
             data.form_id,
             data.action_type,
             Json(data.api_config) if data.api_config else None,

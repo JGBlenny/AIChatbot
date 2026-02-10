@@ -1237,16 +1237,24 @@ export default {
           selectedTargetUsers: this.selectedTargetUsers
         });
 
+        // 準備要發送的資料，處理 vendor_id 的 null 值
+        const dataToSend = {
+          ...this.formData,
+          // 保持 vendor_id 原值，包括 null
+          vendor_id: this.formData.vendor_id
+        };
+
+
         if (this.editingItem) {
           // 更新
           await axios.put(
             `${API_BASE}/knowledge/${this.editingItem.id}`,
-            this.formData
+            dataToSend
           );
           this.showNotification('success', '知識已更新', '向量已重新生成，可以重新執行回測驗證效果');
         } else {
           // 新增
-          await axios.post(`${API_BASE}/knowledge`, this.formData);
+          await axios.post(`${API_BASE}/knowledge`, dataToSend);
           this.showNotification('success', '知識已新增', '新知識已加入知識庫，向量已生成');
         }
 
