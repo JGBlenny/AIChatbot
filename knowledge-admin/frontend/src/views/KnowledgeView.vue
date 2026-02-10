@@ -830,8 +830,8 @@ export default {
         this.formData.api_config = null;
         this.selectedApiEndpointId = '';
         // 確保 trigger_mode 有預設值
-        if (!this.formData.trigger_mode || this.formData.trigger_mode === 'none') {
-          this.formData.trigger_mode = 'auto';
+        if (!this.formData.trigger_mode) {
+          this.formData.trigger_mode = 'manual';
         }
       } else if (this.linkType === 'api') {
         this.formData.form_id = null;
@@ -847,9 +847,9 @@ export default {
     onFormSelect() {
       // 當選擇表單時，確保 trigger_mode 有值
       if (this.formData.form_id) {
-        // 如果沒有值或值為 'none'，設為 'auto'
-        if (!this.formData.trigger_mode || this.formData.trigger_mode === 'none' || this.formData.trigger_mode === '') {
-          this.formData.trigger_mode = 'auto';
+        // 如果沒有值，設為 'manual'
+        if (!this.formData.trigger_mode || this.formData.trigger_mode === '') {
+          this.formData.trigger_mode = 'manual';
         }
         console.log('📋 表單選擇後 trigger_mode:', this.formData.trigger_mode);
       }

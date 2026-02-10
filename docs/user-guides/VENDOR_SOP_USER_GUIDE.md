@@ -42,12 +42,16 @@ Vendor SOP 系統採用**兩層架構**：
 
 ### 🔄 流程配置功能
 
-**新增功能** (2026-01-24):
-- ✅ 4 種觸發模式（none, manual, immediate, auto）
+**更新** (2026-02-10):
+- ✅ 2 種觸發模式（manual, immediate）
 - ✅ 4 種後續動作（none, form_fill, api_call, form_then_api）
 - ✅ 關鍵詞觸發（manual 模式）
 - ✅ 主動詢問確認（immediate 模式）
 - ✅ 表單整合（form_fill, form_then_api）
+
+**移除的觸發模式**：
+- ~~`none`（資訊型）~~：如需資訊型 SOP，請將 next_action 設為 'none'
+- ~~`auto`（自動執行）~~：已移除自動判斷功能
 - ✅ API 整合（api_call, form_then_api）
 - ✅ 後續提示詞自訂
 
@@ -674,32 +678,24 @@ http://localhost:8087/vendor-sop
 ```
 是否需要後續動作？
   ↓ 否
-  選擇: none (資訊型)
+  後續動作選擇: none (無動作)
 
   ↓ 是
-  用戶是否需要閱讀說明後再決定？
+  用戶能否明確表達需求？
     ↓ 是
-    用戶能否明確表達需求？
-      ↓ 是
-      選擇: manual (排查型)
-
-      ↓ 否
-      選擇: immediate (緊急型)
+    選擇: manual (排查型)
 
     ↓ 否
-    選擇: auto (自動執行型)
+    選擇: immediate (行動型)
 ```
 
 #### 模式對比
-
-> **⚠️ 注意**：auto（自動執行型）現階段不會實作。
 
 | 模式 | 適用場景 | 優點 | 缺點 | 狀態 |
 |------|---------|------|------|------|
 | **none** | FAQ、說明 | 簡單快速 | 無互動 | ✅ 可用 |
 | **manual** | 排查、可選服務 | 用戶主動控制 | 需要用戶明確表達 | ✅ 可用 |
-| **immediate** | 緊急事件 | 主動引導 | 可能打斷對話 | ✅ 可用 |
-| **auto** | 確定性查詢 | 自動化高 | 不適合複雜場景 | ⚠️ **暫不實作** |
+| **immediate** | 緊急事件、主動服務 | 主動引導 | 可能打斷對話 | ✅ 可用 |
 
 ---
 
@@ -990,8 +986,8 @@ form_then_api:
 - none + none: 純資訊
 - manual + form_fill: 排查後報修
 - immediate + form_fill: 緊急報修
-- auto + api_call: 自動查詢
-- auto + form_then_api: 完整流程
+- manual/immediate + api_call: 觸發後查詢
+- manual/immediate + form_then_api: 完整流程
 
 **原則**: 根據用戶體驗需求選擇。
 
@@ -1247,7 +1243,7 @@ try {
     3. 逾期將酌收滯納金
 
 流程配置:
-  觸發模式: none (資訊型)
+  觸發模式: 不需設定（後續動作為 none 時）
   後續動作: none (無)
 
 執行流程:
@@ -1345,7 +1341,7 @@ try {
     - 繳款期限
 
 流程配置:
-  觸發模式: auto (自動執行)
+  觸發模式: immediate (行動型)
   後續動作: api_call (調用 API)
   API 配置:
     method: GET
@@ -1381,7 +1377,7 @@ try {
     5. 期望租期
 
 流程配置:
-  觸發模式: auto (自動執行)
+  觸發模式: immediate (行動型)
   後續動作: form_then_api (先填表單再調用 API)
   表單: rental_application (租屋申請表)
   API 配置:

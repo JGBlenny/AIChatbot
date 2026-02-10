@@ -802,8 +802,8 @@ export default {
     onFormSelect() {
       // 當選擇表單時，確保 trigger_mode 有值
       if (this.templateForm.next_form_id) {
-        // 如果沒有值或值為 'none'，設為 'manual'
-        if (!this.templateForm.trigger_mode || this.templateForm.trigger_mode === 'none' || this.templateForm.trigger_mode === '') {
+        // 如果沒有值，設為 'manual'
+        if (!this.templateForm.trigger_mode || this.templateForm.trigger_mode === '') {
           this.templateForm.trigger_mode = 'manual';
         }
         console.log('📋 表單選擇後 trigger_mode:', this.templateForm.trigger_mode);

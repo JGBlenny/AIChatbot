@@ -1539,13 +1539,7 @@ async def _build_knowledge_response(
             # 根據 trigger_mode 處理表單觸發
             # ========================================
 
-            if trigger_mode == 'none':
-                # 資訊型：僅回答知識內容，不觸發表單
-                # 降級為 direct_answer（讓後面的邏輯處理）
-                print(f"   ℹ️  trigger_mode=none，降級為 direct_answer")
-                action_type = 'direct_answer'
-
-            elif trigger_mode in ['manual', 'immediate']:
+            if trigger_mode in ['manual', 'immediate']:
                 # 排查型/行動型：使用 SOP Orchestrator 處理關鍵詞匹配
                 print(f"   ✅ 使用 SOP Orchestrator 處理 trigger_mode={trigger_mode}")
 

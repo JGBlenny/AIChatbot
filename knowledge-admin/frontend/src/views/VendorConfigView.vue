@@ -91,7 +91,7 @@
 
       <!-- SOP 管理介面（新架構：範本+覆寫）-->
       <div v-else class="config-section">
-        <VendorSOPManager :vendorId="vendorId" />
+        <VendorSOPManager :vendorId="Number(vendorId)" />
       </div>
 
       <!-- 儲存按鈕 -->

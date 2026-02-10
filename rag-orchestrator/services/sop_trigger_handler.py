@@ -30,10 +30,8 @@ except ImportError:
 
 class TriggerMode(str, Enum):
     """SOP 觸發模式"""
-    NONE = "none"          # 資訊型：純資訊，無後續動作
     MANUAL = "manual"      # 排查型：等待關鍵詞觸發
     IMMEDIATE = "immediate"  # 行動型：立即詢問
-    AUTO = "auto"          # 緊急型：自動執行
 
 
 class NextAction(str, Enum):
@@ -137,7 +135,7 @@ class SOPTriggerHandler:
                 'context_saved': bool      # 是否儲存 context
             }
         """
-        trigger_mode = sop_item.get('trigger_mode', TriggerMode.NONE)
+        trigger_mode = sop_item.get('trigger_mode')
         next_action = sop_item.get('next_action', NextAction.NONE)
 
         print(f"\n🔄 [SOP Trigger Handler] 處理模式: {trigger_mode}")
@@ -145,11 +143,12 @@ class SOPTriggerHandler:
         print(f"   SOP 名稱: {sop_item.get('item_name')}")
         print(f"   後續動作: {next_action}")
 
-        # 根據 trigger_mode 分發處理
-        if trigger_mode == TriggerMode.NONE:
+        # 如果沒有 trigger_mode 或 next_action 是 none，當作純資訊處理
+        if not trigger_mode or next_action == NextAction.NONE:
             return self._handle_none_mode(sop_item)
 
-        elif trigger_mode == TriggerMode.MANUAL:
+        # 根據 trigger_mode 分發處理
+        if trigger_mode == TriggerMode.MANUAL:
             return self._handle_manual_mode(
                 sop_item, user_message, session_id, user_id, vendor_id
             )
@@ -159,23 +158,18 @@ class SOPTriggerHandler:
                 sop_item, user_message, session_id, user_id, vendor_id
             )
 
-        elif trigger_mode == TriggerMode.AUTO:
-            return self._handle_auto_mode(
-                sop_item, user_message, session_id, user_id, vendor_id
-            )
-
         else:
-            # 未知模式，當作 none 處理
-            print(f"   ⚠️  未知的觸發模式: {trigger_mode}，當作 none 處理")
+            # 未知模式，當作純資訊處理
+            print(f"   ⚠️  未知的觸發模式: {trigger_mode}，當作純資訊處理")
             return self._handle_none_mode(sop_item)
 
     # ========================================
-    # 四種模式的處理邏輯
+    # 觸發模式的處理邏輯
     # ========================================
 
     def _handle_none_mode(self, sop_item: Dict) -> Dict:
         """
-        處理 none 模式（資訊型）
+        處理純資訊模式（無後續動作）
 
         特點：
         - 僅返回 SOP 內容
@@ -183,12 +177,12 @@ class SOPTriggerHandler:
         - 不觸發任何後續動作
         - 對話立即結束
         """
-        print(f"   ✅ none 模式：僅返回資訊，無後續動作")
+        print(f"   ✅ 純資訊模式：僅返回內容，無後續動作")
 
         return {
             'response': sop_item.get('content', ''),
             'action': 'completed',
-            'trigger_mode': TriggerMode.NONE,
+            'trigger_mode': None,  # 無觸發模式
             'next_action': NextAction.NONE,
             'form_id': None,
             'api_config': None,
@@ -307,68 +301,6 @@ class SOPTriggerHandler:
             'context_saved': True,
             'trigger_keywords': trigger_keywords,
             'immediate_prompt': immediate_prompt
-        }
-
-    def _handle_auto_mode(
-        self,
-        sop_item: Dict,
-        user_message: str,
-        session_id: str,
-        user_id: str,
-        vendor_id: int
-    ) -> Dict:
-        """
-        處理 auto 模式（自動執行型）
-
-        特點：
-        - 返回 SOP 指引
-        - 自動執行後續動作（form_fill / api_call / form_then_api）
-        - 不需要用戶確認
-        """
-        next_action = sop_item.get('next_action', 'none')
-        print(f"   ✅ auto 模式：返回 SOP + 自動執行 {next_action}")
-
-        api_config = sop_item.get('next_api_config')
-        form_id = sop_item.get('next_form_id')
-
-        if api_config:
-            print(f"   🔥 將觸發 API: {api_config.get('endpoint') if api_config else 'None'}")
-        if form_id:
-            print(f"   📋 將觸發表單: {form_id}")
-
-        # auto 模式不需要儲存 context（立即執行）
-        # 但可以短暫儲存用於追蹤
-        self._save_context(
-            session_id=session_id,
-            sop_item=sop_item,
-            state=SOPContextState.TRIGGERED,
-            user_id=user_id,
-            vendor_id=vendor_id,
-            ttl=300,  # 5 分鐘（僅用於追蹤）
-            original_question=user_message  # ← 保存原始問題
-        )
-
-        # 轉換 next_action 字符串為 NextAction enum
-        next_action_enum = None
-        if next_action == 'form_fill':
-            next_action_enum = NextAction.FORM_FILL
-        elif next_action == 'api_call':
-            next_action_enum = NextAction.API_CALL
-        elif next_action == 'form_then_api':
-            next_action_enum = NextAction.FORM_THEN_API
-        elif next_action == 'none':
-            next_action_enum = NextAction.NONE
-        else:
-            next_action_enum = NextAction.NONE
-
-        return {
-            'response': sop_item.get('content', ''),
-            'action': 'execute_immediately',
-            'trigger_mode': TriggerMode.AUTO,
-            'next_action': next_action_enum,
-            'form_id': form_id,
-            'api_config': api_config,
-            'context_saved': True
         }
 
     # ========================================

@@ -227,7 +227,7 @@ docker exec -it aichatbot-postgres psql -U aichatbot aichatbot_admin -c "\d know
 
 **預期輸出**：
 ```
-trigger_mode          | character varying(20) | DEFAULT 'none'
+trigger_mode          | character varying(20) | DEFAULT NULL
 next_action           | character varying(50)
 next_form_id          | character varying(100)
 next_api_endpoint_id  | integer

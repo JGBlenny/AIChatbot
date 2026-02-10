@@ -350,14 +350,12 @@
             <!-- 觸發模式（選擇表單後才顯示） -->
             <div v-if="editingForm.next_action === 'form_fill' && editingForm.next_form_id" class="form-group" style="order: 3;">
               <label>觸發模式 *</label>
-              <select v-model="editingForm.trigger_mode" @change="onTriggerModeChange" class="form-control">
-                <option value="auto">自動（系統根據用戶意圖智能判斷）</option>
+              <select v-model="editingForm.trigger_mode" @change="onTriggerModeChange" class="form-control" required>
+                <option :value="null">請選擇觸發模式...</option>
                 <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
                 <option value="immediate">行動型（主動詢問用戶是否執行）</option>
               </select>
               <small class="hint">
-                🤖 <strong>自動</strong>：系統智能判斷用戶是否需要填寫表單<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;範例：「我要報修」→ 觸發表單；「報修流程是什麼」→ 不觸發<br>
                 💡 <strong>排查型</strong>：先在上方「SOP 內容」填寫排查步驟，用戶排查後說出關鍵詞才觸發表單<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;範例：內容寫「請檢查溫度設定、濾網...若仍不冷請報修」→ 用戶說「還是不冷」→ 觸發報修表單<br>
                 💡 <strong>行動型</strong>：顯示 SOP 內容後，立即主動詢問是否執行<br>
@@ -481,53 +479,98 @@
             <small class="form-hint">0-10 之間，數字越大優先級越高</small>
           </div>
 
-          <!-- 觸發模式 -->
-          <div class="form-group">
-            <label>觸發模式 *</label>
-            <select v-model="addForm.trigger_mode" required class="form-control">
-              <option value="none">無（僅顯示內容）</option>
-              <option value="auto">自動（系統根據用戶意圖智能判斷）</option>
-              <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
-              <option value="immediate">行動型（主動詢問用戶是否執行）</option>
-            </select>
-          </div>
+          <!-- 流程配置（進階） -->
+          <div class="form-section flow-config-section" style="display: flex; flex-direction: column;">
+            <h4 style="margin-bottom: 15px; color: #4b5563;">🔄 流程配置（進階）</h4>
 
-          <!-- manual 模式的觸發關鍵詞 -->
-          <div v-if="addForm.trigger_mode === 'manual'" class="form-group">
-            <label>觸發關鍵詞 *</label>
-            <KeywordsInput
-              v-model="addForm.trigger_keywords"
-              :placeholder="'輸入關鍵詞後按 Enter'"
-            />
-            <small class="form-hint">用戶說出任一關鍵詞後，系統會觸發後續動作</small>
-          </div>
+            <!-- 後續動作 -->
+            <div class="form-group" style="order: 1;">
+              <label>後續動作 *</label>
+              <select v-model="addForm.next_action" @change="onAddFormNextActionChange" class="form-control">
+                <option value="none">無（僅顯示 SOP 內容）</option>
+                <option value="form_fill">觸發表單（引導用戶填寫表單）</option>
+                <option value="api_call">調用 API（查詢或處理資料）</option>
+              </select>
+              <small class="hint">
+                💡 <strong>無</strong>：只顯示 SOP 內容，不執行其他動作<br>
+                💡 <strong>觸發表單</strong>：引導用戶填寫表單（例如：報修申請），表單內可設定是否完成後調用 API<br>
+                💡 <strong>調用 API</strong>：直接調用 API（例如：查詢帳單）
+              </small>
+            </div>
 
-          <!-- immediate 模式的確認提示詞 -->
-          <div v-if="addForm.trigger_mode === 'immediate'" class="form-group">
-            <label>確認提示詞（選填）</label>
-            <input v-model="addForm.immediate_prompt" type="text" class="form-control" placeholder="例如：需要我幫您處理嗎？" />
-            <small class="form-hint">留空將使用預設提示詞</small>
-          </div>
+            <!-- 表單選擇 -->
+            <div v-if="addForm.next_action === 'form_fill'" class="form-group" style="order: 2;">
+              <label>選擇表單 *</label>
+              <select v-model="addForm.next_form_id" @change="onAddFormSelect" required class="form-control">
+                <option value="">請選擇表單...</option>
+                <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
+                  {{ form.form_name }} (ID: {{ form.form_id }})
+                </option>
+              </select>
+              <p v-if="addForm.next_form_id" class="hint" style="color: #10b981;">
+                ✅ 已關聯表單：{{ getFormName(addForm.next_form_id) }}
+              </p>
+              <p v-else class="hint" style="color: #ef4444;">
+                ⚠️ 請選擇表單，否則後續動作將無法執行
+              </p>
+            </div>
 
-          <!-- 後續動作 -->
-          <div class="form-group">
-            <label>後續動作</label>
-            <select v-model="addForm.next_action" class="form-control">
-              <option value="none">無後續動作</option>
-              <option value="form_fill">表單填寫</option>
-              <option value="api_call">呼叫 API</option>
-            </select>
-          </div>
+            <!-- 觸發模式（選擇表單後才顯示） -->
+            <div v-if="addForm.next_action === 'form_fill' && addForm.next_form_id" class="form-group" style="order: 3;">
+              <label>觸發模式 *</label>
+              <select v-model="addForm.trigger_mode" @change="onAddFormTriggerModeChange" class="form-control" required>
+                <option :value="null">請選擇觸發模式...</option>
+                <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
+                <option value="immediate">行動型（主動詢問用戶是否執行）</option>
+              </select>
+              <small class="hint">
+                💡 <strong>排查型</strong>：先在上方「SOP 內容」填寫排查步驟，用戶排查後說出關鍵詞才觸發表單<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;範例：內容寫「請檢查溫度設定、濾網...若仍不冷請報修」→ 用戶說「還是不冷」→ 觸發報修表單<br>
+                💡 <strong>行動型</strong>：顯示 SOP 內容後，立即主動詢問是否執行<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;範例：內容寫「租金繳納方式...」→ 自動詢問「是否要登記繳納記錄？」→ 用戶說「要」→ 觸發表單
+              </small>
+            </div>
 
-          <!-- 表單選擇 -->
-          <div v-if="addForm.next_action === 'form_fill'" class="form-group">
-            <label>選擇表單 *</label>
-            <select v-model="addForm.next_form_id" required class="form-control">
-              <option value="">請選擇表單...</option>
-              <option v-for="form in availableForms" :key="form.id" :value="form.id">
-                {{ form.name }} (ID: {{ form.id }})
-              </option>
-            </select>
+            <!-- manual 模式：觸發關鍵詞 -->
+            <div v-if="addForm.next_action === 'form_fill' && addForm.next_form_id && addForm.trigger_mode === 'manual'" class="form-group" style="order: 4;">
+              <label>觸發關鍵詞 *</label>
+              <KeywordsInput
+                v-model="addForm.trigger_keywords"
+                placeholder="輸入關鍵詞後按 Enter 或逗號"
+                hint="💡 用戶說出這些關鍵詞後，才會觸發後續動作。例如：「還是不行」、「需要維修」"
+                :max-keywords="10"
+              />
+            </div>
+
+            <!-- immediate 模式：確認提示詞（可選） -->
+            <div v-if="addForm.next_action === 'form_fill' && addForm.next_form_id && addForm.trigger_mode === 'immediate'" class="form-group" style="order: 5;">
+              <label>確認提示詞（選填）</label>
+              <textarea
+                v-model="addForm.immediate_prompt"
+                class="form-control"
+                rows="3"
+                placeholder="例如：📋 是否要登記本月租金繳納記錄？"
+              ></textarea>
+              <small class="hint">
+                💡 <strong>作用</strong>：顯示 SOP 內容後，自動附加此詢問提示<br>
+                💡 <strong>留空則使用預設</strong>：「需要安排處理嗎？回覆『要』或『需要』即可開始填寫表單」<br>
+                💡 <strong>自訂範例</strong>：「📋 是否要登記本月租金繳納記錄？（回覆『是』或『要』即可開始登記）」<br>
+                <br>
+                如需自訂更具體的詢問（例如：「需要安排維修嗎？」），請在上方輸入。
+              </small>
+            </div>
+
+            <!-- API 配置（如果選擇 API 調用） -->
+            <div v-if="addForm.next_action === 'api_call'" class="form-group" style="order: 6;">
+              <label>API 配置 *</label>
+              <textarea
+                v-model="addForm.next_api_config"
+                class="form-control"
+                rows="4"
+                placeholder='{"endpoint_id": "api_id", "params": {...}}'
+              ></textarea>
+              <small class="form-hint">請輸入 API 配置的 JSON 格式</small>
+            </div>
           </div>
 
           <!-- 按鈕組 -->
@@ -589,10 +632,11 @@ export default {
         item_name: '',
         content: '',
         priority: 5,
-        trigger_mode: 'auto',
+        trigger_mode: null,  // 預設為 null，讓使用者選擇
         next_action: 'none',
         trigger_keywords: [],
         immediate_prompt: '',
+        followup_prompt: '',
         next_form_id: null,
         next_api_config: null
       },
@@ -601,10 +645,11 @@ export default {
         item_name: '',
         content: '',
         // 流程配置欄位（現在可編輯）
-        trigger_mode: 'auto',  // 默認為自動
+        trigger_mode: null,  // 預設為 null
         next_action: 'none',
         trigger_keywords: [],
         immediate_prompt: '',
+        followup_prompt: '',
         next_form_id: null,
         next_api_config: null
       },
@@ -906,6 +951,7 @@ export default {
         next_action: sop.next_action || 'none',
         trigger_keywords: sop.trigger_keywords || [],
         immediate_prompt: sop.immediate_prompt || '',
+        followup_prompt: sop.followup_prompt || '',
         next_form_id: sop.next_form_id || null,
         next_api_config: sop.next_api_config || null
       };
@@ -939,10 +985,11 @@ export default {
         item_name: '',
         content: '',
         // 重置流程配置欄位
-        trigger_mode: 'auto',  // 默認為自動
+        trigger_mode: null,  // 預設為 null
         next_action: 'none',
         trigger_keywords: [],
         immediate_prompt: '',
+        followup_prompt: '',
         next_form_id: null,
         next_api_config: null,
       };
@@ -951,10 +998,8 @@ export default {
     // 流程配置顯示輔助方法
     getTriggerModeLabel(mode) {
       const labels = {
-        'none': '資訊型（僅回答）',
         'manual': '排查型（等待關鍵詞）',
-        'immediate': '緊急型（主動詢問）',
-        'auto': '自動執行型'
+        'immediate': '行動型（主動詢問）'
       };
       return labels[mode] || mode;
     },
@@ -1018,6 +1063,7 @@ export default {
             next_action: this.editingForm.next_action,
             trigger_keywords: this.editingForm.trigger_keywords,
             immediate_prompt: this.editingForm.immediate_prompt,
+            followup_prompt: this.editingForm.followup_prompt,
             next_form_id: this.editingForm.next_form_id,
             next_api_config: this.editingForm.next_api_config
           }
@@ -1069,10 +1115,11 @@ export default {
         item_name: '',
         content: '',
         priority: 5,
-        trigger_mode: 'auto',
+        trigger_mode: null,  // 預設為 null
         next_action: 'none',
         trigger_keywords: [],
         immediate_prompt: '',
+        followup_prompt: '',
         next_form_id: null,
         next_api_config: null
       };
@@ -1083,18 +1130,34 @@ export default {
         this.addingForm = true;
 
         // 準備提交資料（項目編號固定為1，實際排序靠優先級）
+        // 處理 API 配置（如果有）
+        let apiConfig = null;
+        if (this.addForm.next_action === 'api_call' && this.addForm.next_api_config) {
+          try {
+            // 如果是字串，嘗試解析為 JSON
+            apiConfig = typeof this.addForm.next_api_config === 'string'
+              ? JSON.parse(this.addForm.next_api_config)
+              : this.addForm.next_api_config;
+          } catch (e) {
+            alert('❌ API 配置 JSON 格式錯誤：\n' + e.message);
+            this.addingForm = false;
+            return;
+          }
+        }
+
         const requestData = {
           category_id: this.addForm.category_id,
           item_number: 1,  // 固定值，實際排序依據優先級
           item_name: this.addForm.item_name,
           content: this.addForm.content,
           priority: this.addForm.priority || 5,
-          trigger_mode: this.addForm.trigger_mode,
+          trigger_mode: this.addForm.trigger_mode || null,
           next_action: this.addForm.next_action,
           trigger_keywords: this.addForm.trigger_mode === 'manual' ? this.addForm.trigger_keywords : null,
           immediate_prompt: this.addForm.trigger_mode === 'immediate' ? this.addForm.immediate_prompt : null,
+          followup_prompt: this.addForm.followup_prompt || null,
           next_form_id: this.addForm.next_action === 'form_fill' ? this.addForm.next_form_id : null,
-          next_api_config: this.addForm.next_action === 'api_call' ? this.addForm.next_api_config : null
+          next_api_config: apiConfig
         };
 
         // 呼叫新增 API
@@ -1319,8 +1382,8 @@ export default {
     onFormSelect() {
       // 當選擇表單時，確保 trigger_mode 有值
       if (this.editingForm.next_form_id) {
-        // 如果沒有值或值為 'none'，設為 'manual'
-        if (!this.editingForm.trigger_mode || this.editingForm.trigger_mode === 'none' || this.editingForm.trigger_mode === '') {
+        // 如果沒有值，設為 'manual'
+        if (!this.editingForm.trigger_mode || this.editingForm.trigger_mode === '') {
           this.editingForm.trigger_mode = 'manual';
         }
         console.log('📋 表單選擇後 trigger_mode:', this.editingForm.trigger_mode);
@@ -1354,6 +1417,45 @@ export default {
         this.editingForm.next_api_config = null;
         this.selectedApiEndpointId = '';
         this.apiConfigJson = '';
+      }
+    },
+
+    /**
+     * 新增表單 - 後續動作變更處理
+     */
+    onAddFormNextActionChange() {
+      // 清除不相關的欄位
+      if (this.addForm.next_action !== 'form_fill') {
+        this.addForm.next_form_id = null;
+        this.addForm.trigger_mode = null;  // 重置為 null
+        this.addForm.trigger_keywords = [];
+        this.addForm.immediate_prompt = '';
+      }
+      if (this.addForm.next_action !== 'api_call') {
+        this.addForm.next_api_config = null;
+      }
+    },
+
+    /**
+     * 新增表單 - 表單選擇變更處理
+     */
+    onAddFormSelect() {
+      // 當選擇表單時，不自動設定 trigger_mode，讓使用者自己選擇
+      if (this.addForm.next_form_id) {
+        console.log('📋 新增表單 - 已選擇表單:', this.addForm.next_form_id);
+      }
+    },
+
+    /**
+     * 新增表單 - 觸發模式變更處理
+     */
+    onAddFormTriggerModeChange() {
+      // 清除不相關的欄位
+      if (this.addForm.trigger_mode !== 'manual') {
+        this.addForm.trigger_keywords = [];
+      }
+      if (this.addForm.trigger_mode !== 'immediate') {
+        this.addForm.immediate_prompt = '';
       }
     },
 

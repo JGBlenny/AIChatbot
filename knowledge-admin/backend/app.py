@@ -96,7 +96,7 @@ class KnowledgeUpdate(BaseModel):
     action_type: Optional[str] = 'direct_answer'  # 動作類型：'direct_answer', 'form_fill', 'api_call', 'form_then_api'
     api_config: Optional[dict] = None  # API 配置（JSONB）：{ endpoint, params, combine_with_knowledge }
     # 🆕 表單觸發模式（統一 SOP 邏輯）
-    trigger_mode: Optional[str] = 'none'  # 表單觸發模式：'none', 'manual', 'immediate'（auto 暫不實作）
+    trigger_mode: Optional[str] = None  # 表單觸發模式：'manual', 'immediate'（null 表示不需要觸發）
     immediate_prompt: Optional[str] = None  # immediate 模式的確認提示詞
 
 class KnowledgeResponse(BaseModel):

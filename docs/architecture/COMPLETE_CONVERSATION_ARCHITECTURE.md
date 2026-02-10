@@ -166,7 +166,7 @@ stateDiagram-v2
     state 檢查觸發模式 {
         [*] --> Manual: trigger_mode='manual'
         [*] --> Immediate: trigger_mode='immediate'
-        [*] --> Auto: trigger_mode='auto'
+        [*] --> NullMode: trigger_mode=null
 
         Manual --> 顯示SOP內容_Manual
         顯示SOP內容_Manual --> 等待關鍵詞
@@ -182,13 +182,12 @@ stateDiagram-v2
         等待用戶確認 --> 取消: ["否", "不用"]
         取消 --> 結束對話
 
-        Auto --> 顯示SOP內容_Auto
-        顯示SOP內容_Auto --> 自動觸發
+        NullMode --> 顯示SOP內容_Null
+        顯示SOP內容_Null --> 結束對話: next_action='none'
     }
 
     匹配成功 --> 執行後續動作
     確認 --> 執行後續動作
-    自動觸發 --> 執行後續動作
 
     state 執行後續動作 {
         [*] --> form_fill: next_action='form_fill'

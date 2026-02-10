@@ -218,7 +218,7 @@ deployment/
 
 **資料庫遷移：**
 - `database/migrations/add_trigger_mode_to_knowledge_base.sql` - 新增觸發模式欄位
-  - 新增 `trigger_mode` VARCHAR(20) DEFAULT 'none'
+  - 新增 `trigger_mode` VARCHAR(20) DEFAULT NULL
   - 新增 `immediate_prompt` TEXT
 
 **部署步驟（重要）：**

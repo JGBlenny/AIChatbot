@@ -577,7 +577,7 @@ class SOPItemCreate(BaseModel):
     priority: int = Field(50, description="優先級（0-100）", ge=0, le=100)
 
     # 🔄 流程配置欄位
-    trigger_mode: str = Field("none", description="觸發模式: none, manual, immediate, auto")
+    trigger_mode: Optional[str] = Field(None, description="觸發模式: manual, immediate (當 next_action 不是 none 時必填)")
     next_action: str = Field("none", description="後續動作: none, form_fill, api_call, form_then_api")
     trigger_keywords: Optional[List[str]] = Field(None, description="觸發關鍵詞（manual 模式使用）")
     immediate_prompt: Optional[str] = Field(None, description="確認提示詞（immediate 模式使用）")
@@ -594,7 +594,7 @@ class SOPItemUpdate(BaseModel):
     # priority: DEPRECATED - 已廢棄，現代檢索完全基於向量相似度，不使用優先級排序
 
     # 🔧 流程配置字段
-    trigger_mode: str = Field(default='none', description="觸發模式：none, manual, immediate")
+    trigger_mode: Optional[str] = Field(default=None, description="觸發模式：manual, immediate (當 next_action 不是 none 時必填)")
     next_action: str = Field(default='none', description="後續動作：none, form_fill, api_call, form_then_api")
     trigger_keywords: Optional[List[str]] = Field(default=None, description="觸發關鍵詞（manual 模式使用）")
     immediate_prompt: Optional[str] = Field(default=None, description="確認提示詞（immediate 模式使用）")
@@ -731,17 +731,22 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
         Dict: 更新後的 SOP 項目
     """
     # 🔒 嚴格限制：驗證 trigger_mode 和 next_action 組合
-    VALID_COMBINATIONS = {
-        'none': ['none'],
-        'manual': ['form_fill', 'api_call', 'form_then_api'],
-        'immediate': ['form_fill', 'api_call', 'form_then_api']
-    }
-
-    if item_update.next_action not in VALID_COMBINATIONS.get(item_update.trigger_mode, []):
-        raise HTTPException(
-            status_code=400,
-            detail=f"❌ 無效的組合：{item_update.trigger_mode} + {item_update.next_action}。有效的後續動作：{', '.join(VALID_COMBINATIONS.get(item_update.trigger_mode, []))}"
-        )
+    # 當 next_action 是 'none' 時，trigger_mode 可以是 null
+    if item_update.next_action == 'none':
+        # next_action 為 'none' 時，trigger_mode 應該是 null
+        if item_update.trigger_mode is not None:
+            raise HTTPException(
+                status_code=400,
+                detail="❌ 當後續動作為 'none' 時，不需要設定觸發模式"
+            )
+    else:
+        # next_action 不是 'none' 時，需要有效的 trigger_mode
+        VALID_TRIGGER_MODES = ['manual', 'immediate']
+        if item_update.trigger_mode not in VALID_TRIGGER_MODES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"❌ 當後續動作不是 'none' 時，必須選擇有效的觸發模式：{', '.join(VALID_TRIGGER_MODES)}"
+            )
 
     # 🔒 驗證必填字段
     if item_update.trigger_mode == 'manual':
@@ -949,6 +954,37 @@ async def create_sop_item(vendor_id: int, item: SOPItemCreate, request: Request)
     Returns:
         Dict: 新建立的 SOP 項目
     """
+    # 🔒 嚴格限制：驗證 trigger_mode 和 next_action 組合
+    # 當 next_action 是 'none' 時，trigger_mode 可以是 null
+    if item.next_action == 'none':
+        # next_action 為 'none' 時，trigger_mode 應該是 null
+        if item.trigger_mode is not None:
+            raise HTTPException(
+                status_code=400,
+                detail="❌ 當後續動作為 'none' 時，不需要設定觸發模式"
+            )
+    else:
+        # next_action 不是 'none' 時，需要有效的 trigger_mode
+        VALID_TRIGGER_MODES = ['manual', 'immediate']
+        if item.trigger_mode not in VALID_TRIGGER_MODES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"❌ 當後續動作不是 'none' 時，必須選擇有效的觸發模式：{', '.join(VALID_TRIGGER_MODES)}"
+            )
+
+    # 🔒 驗證必填字段
+    if item.trigger_mode == 'manual':
+        if not item.trigger_keywords or len(item.trigger_keywords) == 0:
+            raise HTTPException(status_code=400, detail="❌ manual 模式必須設定至少一個觸發關鍵詞")
+
+    if item.next_action in ['form_fill', 'form_then_api']:
+        if not item.next_form_id:
+            raise HTTPException(status_code=400, detail="❌ 此後續動作必須選擇表單")
+
+    if item.next_action in ['api_call', 'form_then_api']:
+        if not item.next_api_config:
+            raise HTTPException(status_code=400, detail="❌ 此後續動作必須配置 API")
+
     conn = get_db_connection()
     try:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)

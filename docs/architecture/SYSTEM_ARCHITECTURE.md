@@ -387,8 +387,9 @@ class SOPOrchestrator:
                 return await self._handle_manual_mode(best_match, session_id)
             elif trigger_mode == 'immediate':
                 return await self._handle_immediate_mode(best_match, session_id)
-            elif trigger_mode == 'auto':
-                return await self._handle_auto_mode(best_match, session_id)
+            else:
+                # trigger_mode 為 null 或未定義時，不觸發任何動作
+                return None
 ```
 
 ---
