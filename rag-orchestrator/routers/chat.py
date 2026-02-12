@@ -55,8 +55,8 @@ def get_vendor_knowledge_retriever():
     """獲取業者知識檢索器"""
     global _vendor_knowledge_retriever
     if _vendor_knowledge_retriever is None:
-        from services.vendor_knowledge_retriever import VendorKnowledgeRetriever
-        _vendor_knowledge_retriever = VendorKnowledgeRetriever()
+        from services.vendor_knowledge_retriever_v2 import VendorKnowledgeRetrieverV2
+        _vendor_knowledge_retriever = VendorKnowledgeRetrieverV2()
     return _vendor_knowledge_retriever
 
 
@@ -73,8 +73,8 @@ def get_vendor_sop_retriever():
     """獲取業者 SOP 檢索器"""
     global _vendor_sop_retriever
     if _vendor_sop_retriever is None:
-        from services.vendor_sop_retriever import VendorSOPRetriever
-        _vendor_sop_retriever = VendorSOPRetriever()
+        from services.vendor_sop_retriever_v2 import VendorSOPRetrieverV2
+        _vendor_sop_retriever = VendorSOPRetrieverV2()
     return _vendor_sop_retriever
 
 

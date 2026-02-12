@@ -572,6 +572,7 @@ class SOPItemCreate(BaseModel):
     item_number: int = Field(..., description="項次編號", ge=1)
     item_name: str = Field(..., description="項目名稱", min_length=1, max_length=200)
     content: str = Field(..., description="項目內容")
+    keywords: Optional[List[str]] = Field(None, description="檢索關鍵字（提升搜尋準確度）")
     template_id: Optional[int] = Field(None, description="來源範本ID（記錄從哪個範本複製而來）")
     intent_ids: Optional[List[int]] = Field(None, description="關聯意圖ID列表")
     priority: int = Field(50, description="優先級（0-100）", ge=0, le=100)
@@ -590,6 +591,7 @@ class SOPItemUpdate(BaseModel):
     """更新 SOP 項目"""
     item_name: str = Field(..., description="項目名稱")
     content: str = Field(..., description="項目內容")
+    keywords: Optional[List[str]] = Field(None, description="檢索關鍵字（提升搜尋準確度）")
     # intent_ids: DEPRECATED - 已廢棄，SOP 現在使用 Group-based embedding 檢索，不再需要意圖關聯
     # priority: DEPRECATED - 已廢棄，現代檢索完全基於向量相似度，不使用優先級排序
 
@@ -669,6 +671,7 @@ async def get_sop_items(vendor_id: int, category_id: Optional[int] = None):
                 vsi.item_number,
                 vsi.item_name,
                 vsi.content,
+                vsi.keywords,
                 vsi.template_id,
                 vsi.priority,
                 pt.item_name as template_item_name,
@@ -798,6 +801,11 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
 
         update_fields.append("content = %s")
         params.append(item_update.content)
+
+        # 更新檢索關鍵字
+        if item_update.keywords is not None:
+            update_fields.append("keywords = %s")
+            params.append(item_update.keywords)
 
         # ⚠️ DEPRECATED: priority 欄位已廢棄，不再更新
 
@@ -1019,11 +1027,11 @@ async def create_sop_item(vendor_id: int, item: SOPItemCreate, request: Request)
         cursor.execute("""
             INSERT INTO vendor_sop_items (
                 category_id, vendor_id, item_number, item_name, content,
-                template_id, priority,
+                keywords, template_id, priority,
                 trigger_mode, next_action, trigger_keywords, immediate_prompt,
                 followup_prompt, next_form_id, next_api_config
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             item.category_id,
@@ -1031,6 +1039,7 @@ async def create_sop_item(vendor_id: int, item: SOPItemCreate, request: Request)
             item.item_number,
             item.item_name,
             item.content,
+            item.keywords if item.keywords else [],
             item.template_id,
             item.priority,
             item.trigger_mode,

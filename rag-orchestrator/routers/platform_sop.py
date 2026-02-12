@@ -54,6 +54,7 @@ class PlatformSOPTemplateCreate(BaseModel):
     item_number: int = Field(..., description="項次編號", ge=1)
     item_name: str = Field(..., description="項目名稱", min_length=1, max_length=200)
     content: str = Field(..., description="範本內容")
+    keywords: Optional[List[str]] = Field(None, description="檢索關鍵字（提升搜尋準確度）")
     intent_ids: Optional[List[int]] = Field(None, description="關聯意圖ID列表（支援多意圖）")
     priority: int = Field(50, description="優先級（0-100）", ge=0, le=100)
     template_notes: Optional[str] = Field(None, description="範本說明（解釋此 SOP 的目的）")
@@ -68,6 +69,7 @@ class PlatformSOPTemplateUpdate(BaseModel):
     item_number: Optional[int] = Field(None, description="項次編號", ge=1)
     item_name: Optional[str] = Field(None, description="項目名稱", min_length=1, max_length=200)
     content: Optional[str] = Field(None, description="範本內容")
+    keywords: Optional[List[str]] = Field(None, description="檢索關鍵字（提升搜尋準確度）")
     intent_ids: Optional[List[int]] = Field(None, description="關聯意圖ID列表（支援多意圖）")
     priority: Optional[int] = Field(None, description="優先級", ge=0, le=100)
     template_notes: Optional[str] = Field(None, description="範本說明")
@@ -711,13 +713,13 @@ async def create_platform_sop_template(
             row = await conn.fetchrow("""
                 INSERT INTO platform_sop_templates (
                     category_id, group_id, business_type, item_number, item_name, content,
-                    priority, template_notes, customization_hint
+                    keywords, priority, template_notes, customization_hint
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 RETURNING id
             """,
                 template.category_id, template.group_id, template.business_type, template.item_number,
-                template.item_name, template.content,
+                template.item_name, template.content, template.keywords,
                 template.priority, template.template_notes, template.customization_hint
             )
 
@@ -832,7 +834,7 @@ async def update_platform_sop_template(
             param_count = 1
 
             for field in ["category_id", "group_id", "business_type", "item_number", "item_name", "content",
-                          "priority", "template_notes", "customization_hint"]:
+                          "keywords", "priority", "template_notes", "customization_hint"]:
                 value = getattr(template, field, None)
                 if value is not None:
                     update_fields.append(f"{field} = ${param_count}")

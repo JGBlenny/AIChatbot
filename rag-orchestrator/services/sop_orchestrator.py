@@ -19,7 +19,7 @@ from datetime import datetime
 import json
 import os
 
-from services.vendor_sop_retriever import VendorSOPRetriever
+from services.vendor_sop_retriever_v2 import VendorSOPRetrieverV2
 from services.sop_trigger_handler import SOPTriggerHandler, TriggerMode
 from services.keyword_matcher import KeywordMatcher
 from services.sop_next_action_handler import SOPNextActionHandler
@@ -48,7 +48,7 @@ class SOPOrchestrator:
             api_handler: API 處理器
             redis_client: Redis 客戶端
         """
-        self.sop_retriever = VendorSOPRetriever()
+        self.sop_retriever = VendorSOPRetrieverV2()
         self.trigger_handler = SOPTriggerHandler(redis_client)
         self.keyword_matcher = KeywordMatcher()
         self.next_action_handler = SOPNextActionHandler(form_manager, api_handler)

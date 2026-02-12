@@ -33,6 +33,7 @@ lxml==5.1.0
 
 # Chinese text processing
 pypinyin==0.51.0
+jieba==0.42.1
 
 # AWS S3 (影片儲存)
 boto3==1.34.0

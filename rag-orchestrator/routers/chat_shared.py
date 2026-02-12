@@ -16,8 +16,8 @@ import os
 
 def get_vendor_sop_retriever():
     """獲取業者 SOP 檢索器（懶加載）"""
-    from services.vendor_sop_retriever import VendorSOPRetriever
-    return VendorSOPRetriever()
+    from services.vendor_sop_retriever_v2 import VendorSOPRetrieverV2
+    return VendorSOPRetrieverV2()
 
 
 async def retrieve_sop_async(

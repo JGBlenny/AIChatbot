@@ -183,6 +183,15 @@
                   <p>{{ sop.content }}</p>
                 </div>
 
+                <!-- 顯示關鍵字 -->
+                <div v-if="sop.keywords && sop.keywords.length > 0" class="sop-keywords" style="margin-top: 10px;">
+                  <span style="font-size: 12px; color: #6b7280;">🔍 關鍵字：</span>
+                  <span v-for="(keyword, index) in sop.keywords" :key="index"
+                        style="display: inline-block; margin: 2px 4px; padding: 2px 8px; background: #f3f4f6; border-radius: 4px; font-size: 12px;">
+                    {{ keyword }}
+                  </span>
+                </div>
+
                 <div class="sop-actions">
                   <button @click="editSOP(sop)" class="btn btn-sm btn-secondary">
                     ✏️ 編輯
@@ -310,6 +319,17 @@
           <div class="form-group">
             <label>內容 *</label>
             <textarea v-model="editingForm.content" required class="form-control" rows="6"></textarea>
+          </div>
+
+          <!-- 檢索關鍵字 -->
+          <div class="form-group">
+            <label>檢索關鍵字</label>
+            <KeywordsInput
+              v-model="editingForm.keywords"
+              placeholder="輸入關鍵字後按 Enter，例如：冷氣、空調、AC"
+              hint="💡 設定檢索關鍵字可提升搜尋準確度，支援同義詞和口語化表達"
+              :max-keywords="20"
+            />
           </div>
 
           <!-- 流程配置（完全可編輯） -->
@@ -472,6 +492,17 @@
             <textarea v-model="addForm.content" required class="form-control" rows="6" placeholder="請輸入 SOP 詳細內容..."></textarea>
           </div>
 
+          <!-- 檢索關鍵字 -->
+          <div class="form-group">
+            <label>檢索關鍵字</label>
+            <KeywordsInput
+              v-model="addForm.keywords"
+              placeholder="輸入關鍵字後按 Enter，例如：冷氣、空調、AC"
+              hint="💡 設定檢索關鍵字可提升搜尋準確度，支援同義詞和口語化表達"
+              :max-keywords="20"
+            />
+          </div>
+
           <!-- 優先級 -->
           <div class="form-group">
             <label>優先級</label>
@@ -631,6 +662,7 @@ export default {
         category_id: '',
         item_name: '',
         content: '',
+        keywords: [],  // 檢索關鍵字
         priority: 5,
         trigger_mode: null,  // 預設為 null，讓使用者選擇
         next_action: 'none',
@@ -644,6 +676,7 @@ export default {
         id: null,
         item_name: '',
         content: '',
+        keywords: [],  // 檢索關鍵字
         // 流程配置欄位（現在可編輯）
         trigger_mode: null,  // 預設為 null
         next_action: 'none',
@@ -946,6 +979,7 @@ export default {
         id: sop.id,
         item_name: sop.item_name,
         content: sop.content,
+        keywords: sop.keywords || [],  // 載入檢索關鍵字
         // 載入流程配置（唯讀顯示）
         trigger_mode: sop.trigger_mode || 'manual',
         next_action: sop.next_action || 'none',
@@ -1058,6 +1092,7 @@ export default {
           {
             item_name: this.editingForm.item_name,
             content: this.editingForm.content,
+            keywords: this.editingForm.keywords,  // 檢索關鍵字
             // 流程配置欄位
             trigger_mode: this.editingForm.trigger_mode,
             next_action: this.editingForm.next_action,
@@ -1150,6 +1185,7 @@ export default {
           item_number: 1,  // 固定值，實際排序依據優先級
           item_name: this.addForm.item_name,
           content: this.addForm.content,
+          keywords: this.addForm.keywords || [],  // 檢索關鍵字
           priority: this.addForm.priority || 5,
           trigger_mode: this.addForm.trigger_mode || null,
           next_action: this.addForm.next_action,

@@ -10,6 +10,37 @@
 ## [Unreleased]
 
 ### 新增 ✨
+- **檢索器架構重構與 Keywords 處理更新** (2026-02-12)
+  - 重構 SOP 和知識庫檢索器，建立統一基類 `BaseRetriever`
+  - Keywords 處理策略調整：關鍵字不再包含在 embeddings 中，改用獨立機制
+  - 新增檔案：
+    - `services/base_retriever.py` - 統一檢索基類
+    - `services/vendor_sop_retriever_v2.py` - SOP 檢索器（繼承基類）
+    - `services/vendor_knowledge_retriever_v2.py` - 知識庫檢索器（繼承基類）
+    - `services/sop_keywords_handler.py` - Keywords 獨立處理機制
+    - `scripts/regenerate_all_embeddings.py` - Embeddings 重新生成腳本
+  - 移除舊檔案：
+    - `services/vendor_sop_retriever.py`
+    - `services/vendor_knowledge_retriever.py`
+    - `routers/chat_stream.py`（未使用的串流版本）
+  - Keywords 策略變更：
+    - 舊策略：keywords 包含在 embeddings 中（干擾語義檢索）
+    - 新策略：keywords 獨立儲存和處理（語義檢索更純粹）
+  - 程式碼簡化：淨減少約 300 行程式碼
+  - 測試結果：
+    - 功能測試 70% 通過
+    - 並發測試 100% 成功（10 並發）
+    - 平均響應時間 1.79 秒
+  - 修改檔案：
+    - `routers/chat.py`, `routers/chat_shared.py`
+    - `routers/platform_sop.py`, `routers/vendors.py`
+    - `services/sop_orchestrator.py`
+    - `services/sop_embedding_generator.py`
+    - `app.py`
+  - 詳細文檔：
+    - [實作細節](docs/features/SOP_KEYWORDS_IMPLEMENTATION_2026-02-11.md)
+    - [Keywords 對比](docs/features/SOP_KEYWORDS_COMPARISON.md)
+
 - **知識範圍邏輯簡化** (2026-02-09)
   - 從雙欄位（scope + vendor_id）簡化為單一 vendor_id 判斷
   - 移除 scope_weight 計算和複雜的 SQL WHERE 條件

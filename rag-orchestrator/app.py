@@ -22,7 +22,7 @@ from services.form_manager import FormManager
 from services.sop_orchestrator import SOPOrchestrator
 
 # 導入路由
-from routers import chat, chat_stream, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, platform_sop, cache, videos, business_types, document_converter, target_user_config, forms, api_endpoints, lookup
+from routers import chat, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, platform_sop, cache, videos, business_types, document_converter, target_user_config, forms, api_endpoints, lookup
 
 # 全局變數
 db_pool: Pool = None
@@ -148,7 +148,6 @@ app.add_middleware(
 
 # 註冊路由
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
-app.include_router(chat_stream.router, prefix="/api/v1", tags=["chat_stream"])  # ⚠️ 暫時廢棄 2026-01-09（代碼保留，觀察期至 2026-07-09）
 app.include_router(unclear_questions.router, prefix="/api/v1", tags=["unclear_questions"])
 app.include_router(suggested_intents.router, prefix="/api/v1", tags=["suggested_intents"])
 app.include_router(intents.router, prefix="/api/v1", tags=["intents"])
