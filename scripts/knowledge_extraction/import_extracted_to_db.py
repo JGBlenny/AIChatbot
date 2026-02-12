@@ -181,11 +181,10 @@ class ExtractedKnowledgeImporter:
                         self.stats['skipped_duplicate'] += 1
                         continue
 
-                # 生成向量嵌入（✅ 方案 A：包含 keywords）
-                keywords_str = ", ".join(keywords) if keywords else ""
-                embedding_text = f"{title} {question_summary} {answer[:200]}"
-                if keywords_str:
-                    embedding_text = f"{embedding_text}. 關鍵字: {keywords_str}"
+                # 生成向量嵌入（V2 架構：只用 question_summary，keywords 獨立處理）
+                # 根據實測：加入 answer 會降低 9.2% 的檢索匹配度（30 題測試，86.7% 受負面影響）
+                # 原因：answer 包含的格式化內容、操作步驟會稀釋語意
+                embedding_text = question_summary
 
                 embedding = self.generate_embedding(embedding_text)
 
