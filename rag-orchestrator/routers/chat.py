@@ -279,6 +279,7 @@ def _convert_form_result_to_response(
         intent_name=form_result.get('intent_name', '表單填寫'),
         intent_type='form_filling',
         confidence=1.0,  # 表單流程固定高置信度
+        action_type='form_fill',
         sources=[] if request.include_sources else None,
         source_count=0,
         vendor_id=request.vendor_id,
@@ -1042,6 +1043,7 @@ async def _build_orchestrator_response(
         intent_name=intent_result['intent_name'],
         intent_type=intent_result.get('intent_type'),
         confidence=intent_result['confidence'],
+        action_type='direct_answer',
         all_intents=intent_result.get('all_intents', []),
         secondary_intents=intent_result.get('secondary_intents', []),
         intent_ids=intent_result.get('intent_ids', []),
@@ -1140,6 +1142,7 @@ async def _build_sop_response(
         intent_name=intent_result['intent_name'],
         intent_type=intent_result.get('intent_type'),
         confidence=intent_result['confidence'],
+        action_type='direct_answer',
         all_intents=intent_result.get('all_intents', []),
         secondary_intents=intent_result.get('secondary_intents', []),
         intent_ids=intent_result.get('intent_ids', []),
@@ -1257,6 +1260,7 @@ async def _build_rag_response(
         intent_name=intent_name or intent_result['intent_name'],
         intent_type=intent_result.get('intent_type'),
         confidence=intent_result['confidence'],
+        action_type='direct_answer',
         all_intents=intent_result.get('all_intents', []),
         secondary_intents=intent_result.get('secondary_intents', []),
         intent_ids=intent_result.get('intent_ids', []),
@@ -1359,6 +1363,7 @@ async def _handle_no_knowledge_found(
             intent_name="參數查詢",
             intent_type="config_param",
             confidence=1.0,
+            action_type='direct_answer',
             sources=[],
             source_count=0,
             vendor_id=request.vendor_id,
@@ -1404,6 +1409,7 @@ async def _handle_no_knowledge_found(
         all_intents=intent_result.get('all_intents', []),
         secondary_intents=intent_result.get('secondary_intents', []),
         intent_ids=intent_result.get('intent_ids', []),
+        action_type='direct_answer',
         sources=[] if request.include_sources else None,
         source_count=0,
         vendor_id=request.vendor_id,
@@ -1584,6 +1590,7 @@ async def _build_knowledge_response(
                     # 返回等待狀態的回應
                     return VendorChatResponse(
                         answer=result.get('response', best_knowledge.get('answer', '')),
+                        action_type='form_fill',
                         vendor_id=request.vendor_id,
                         mode=request.mode,
                         session_id=request.session_id,
@@ -1789,6 +1796,7 @@ async def _build_knowledge_response(
         all_intents=intent_result.get('all_intents', []),
         secondary_intents=intent_result.get('secondary_intents', []),
         intent_ids=intent_result.get('intent_ids', []),
+        action_type=action_type,
         sources=sources if request.include_sources else None,
         source_count=len(knowledge_list),
         vendor_id=request.vendor_id,
@@ -1881,6 +1889,7 @@ async def _handle_api_call(
             intent_name='API查詢',
             intent_type='knowledge',
             confidence=0.5,
+            action_type='api_call',
             sources=[],
             source_count=0,
             vendor_id=request.vendor_id,
@@ -1922,6 +1931,7 @@ async def _handle_api_call(
         intent_name=best_knowledge.get('intent_name', 'API查詢'),
         intent_type='knowledge',
         confidence=best_knowledge.get('similarity', 0.9),
+        action_type='api_call',
         sources=[{
             'id': best_knowledge['id'],
             'question_summary': best_knowledge.get('question_summary', ''),
@@ -2241,6 +2251,7 @@ class VendorChatResponse(BaseModel):
     all_intents: Optional[List[str]] = Field(None, description="所有相關意圖名稱（主要 + 次要）")
     secondary_intents: Optional[List[str]] = Field(None, description="次要相關意圖")
     intent_ids: Optional[List[int]] = Field(None, description="所有意圖 IDs")
+    action_type: Optional[str] = Field(None, description="對話流程類型（direct_answer/form_fill/api_call/form_then_api）")
     sources: Optional[List[KnowledgeSource]] = Field(None, description="知識來源列表")
     source_count: int = Field(0, description="知識來源數量")
     vendor_id: int

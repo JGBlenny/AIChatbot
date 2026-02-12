@@ -1,0 +1,5562 @@
+{
+  "timestamp": "2026-02-12T12:27:50.052734",
+  "total_tests": 100,
+  "analysis": {
+    "total": 100,
+    "success": 100,
+    "error": 0,
+    "action_types": {
+      "null": 100
+    },
+    "intents": {
+      "null": 100
+    },
+    "categories": {
+      "租金": {
+        "total": 10,
+        "success": 10
+      },
+      "維修": {
+        "total": 10,
+        "success": 10
+      },
+      "合約": {
+        "total": 10,
+        "success": 10
+      },
+      "設施": {
+        "total": 4,
+        "success": 4
+      },
+      "政策": {
+        "total": 4,
+        "success": 4
+      },
+      "費用": {
+        "total": 2,
+        "success": 2
+      },
+      "聯絡": {
+        "total": 7,
+        "success": 7
+      },
+      "客服": {
+        "total": 3,
+        "success": 3
+      },
+      "模糊": {
+        "total": 5,
+        "success": 5
+      },
+      "複合": {
+        "total": 5,
+        "success": 5
+      },
+      "同義詞": {
+        "total": 2,
+        "success": 2
+      },
+      "簡化": {
+        "total": 4,
+        "success": 4
+      },
+      "方言": {
+        "total": 2,
+        "success": 2
+      },
+      "簡稱": {
+        "total": 1,
+        "success": 1
+      },
+      "英文": {
+        "total": 1,
+        "success": 1
+      },
+      "帳務": {
+        "total": 10,
+        "success": 10
+      },
+      "系統": {
+        "total": 10,
+        "success": 10
+      },
+      "不相關": {
+        "total": 1,
+        "success": 1
+      },
+      "閒聊": {
+        "total": 2,
+        "success": 2
+      },
+      "禮貌": {
+        "total": 1,
+        "success": 1
+      },
+      "測試": {
+        "total": 1,
+        "success": 1
+      },
+      "無效": {
+        "total": 3,
+        "success": 3
+      },
+      "邊界": {
+        "total": 2,
+        "success": 2
+      }
+    },
+    "knowledge_used": 0,
+    "sop_used": 0
+  },
+  "results": [
+    {
+      "id": 1,
+      "question": "租金怎麼繳？",
+      "category": "租金-繳費方式",
+      "expected_type": "knowledge",
+      "description": "基本租金繳費查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:20.562233",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 2,
+      "question": "每個月幾號要繳房租",
+      "category": "租金-繳費日期",
+      "expected_type": "knowledge",
+      "description": "繳費日期查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:15.404911",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 3,
+      "question": "我忘記繳租金了會怎樣",
+      "category": "租金-逾期處理",
+      "expected_type": "knowledge/sop",
+      "description": "逾期後果查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "逾期費用",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "逾期費用"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          11
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:23.869034",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 4,
+      "question": "可以用信用卡付房租嗎",
+      "category": "租金-繳費方式",
+      "expected_type": "knowledge",
+      "description": "特定繳費方式查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:12.839082",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 5,
+      "question": "租金是多少錢",
+      "category": "租金-金額查詢",
+      "expected_type": "api_call",
+      "description": "個人租金查詢（需API）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:09.793251",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 6,
+      "question": "房租太貴了可以少一點嗎",
+      "category": "租金-議價",
+      "expected_type": "sop/direct",
+      "description": "租金協商（多語意）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金金額調整",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金金額調整"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          23
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:19.553217",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 7,
+      "question": "這個月還沒繳是不是",
+      "category": "租金-繳費狀態",
+      "expected_type": "api_call",
+      "description": "繳費狀態查詢（需API）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "帳務查詢",
+        "intent_type": "data_query",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳務查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          1
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:22.623920",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 8,
+      "question": "我可以分期繳租金嗎",
+      "category": "租金-繳費方式",
+      "expected_type": "knowledge/sop",
+      "description": "特殊繳費需求",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:18.185038",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 9,
+      "question": "租金包含水電費嗎",
+      "category": "租金-包含項目",
+      "expected_type": "knowledge",
+      "description": "租金範圍查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:16.506975",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 10,
+      "question": "之前繳的租金收據在哪裡",
+      "category": "租金-收據查詢",
+      "expected_type": "knowledge/api",
+      "description": "收據查詢（多可能）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "收據問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "收據問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          27
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:14.355224",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 11,
+      "question": "冷氣壞了怎麼辦",
+      "category": "維修-報修",
+      "expected_type": "sop",
+      "description": "基本報修需求",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "冷氣",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "冷氣"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          37
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:44.501608",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 12,
+      "question": "馬桶堵住了",
+      "category": "維修-緊急報修",
+      "expected_type": "sop",
+      "description": "緊急維修（簡短表達）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "維修報修",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "維修報修"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          3
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:39.897104",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 13,
+      "question": "報修要錢嗎",
+      "category": "維修-費用",
+      "expected_type": "knowledge",
+      "description": "維修費用查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我們承諾在收到報修通知後24小時內回應處理。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 1.0
+      },
+      "raw_response": {
+        "answer": "我們承諾在收到報修通知後24小時內回應處理。",
+        "intent_name": "參數查詢",
+        "intent_type": "config_param",
+        "confidence": 1.0,
+        "all_intents": null,
+        "secondary_intents": null,
+        "intent_ids": null,
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:40.072368Z",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 14,
+      "question": "我報修已經三天了還沒來修",
+      "category": "維修-進度追蹤",
+      "expected_type": "sop/api",
+      "description": "維修進度查詢（含抱怨）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "報修申請\n\n",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "報修申請\n\n",
+        "intent_name": "維修進度查詢",
+        "intent_type": "data_query",
+        "confidence": 0.9,
+        "all_intents": [
+          "維修進度查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          7
+        ],
+        "sources": [
+          {
+            "id": 1271,
+            "question_summary": "報修申請",
+            "answer": "",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 9,
+            "question_summary": "如何報修",
+            "answer": "您可以透過以下方式報修：\n1. 撥打客服專線：02-1234-5678\n2. LINE 官方帳號：@example\n3. 前往公司辦公室：台北市信義區範例路 123 號\n\n緊急報修我們會在 24 小時內處理。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 2,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:45.656777",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 15,
+      "question": "可以自己找師傅來修嗎",
+      "category": "維修-自行維修",
+      "expected_type": "knowledge",
+      "description": "維修政策查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "維修報修",
+        "intent_type": "knowledge",
+        "confidence": 0.8,
+        "all_intents": [
+          "維修報修"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          3
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:41.702034",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 16,
+      "question": "電燈一直閃",
+      "category": "維修-故障描述",
+      "expected_type": "sop",
+      "description": "故障問題描述（需引導）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "維修報修",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "維修報修"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          3
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:45.653351",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 17,
+      "question": "晚上可以報修嗎",
+      "category": "維修-時間限制",
+      "expected_type": "knowledge",
+      "description": "報修時間查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我們承諾在收到報修通知後24小時內回應處理。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 1.0
+      },
+      "raw_response": {
+        "answer": "我們承諾在收到報修通知後24小時內回應處理。",
+        "intent_name": "參數查詢",
+        "intent_type": "config_param",
+        "confidence": 1.0,
+        "all_intents": null,
+        "secondary_intents": null,
+        "intent_ids": null,
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:41.831134Z",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 18,
+      "question": "上次報修的進度",
+      "category": "維修-進度查詢",
+      "expected_type": "api",
+      "description": "歷史報修查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我們承諾在收到報修通知後24小時內回應處理。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 1.0
+      },
+      "raw_response": {
+        "answer": "我們承諾在收到報修通知後24小時內回應處理。",
+        "intent_name": "參數查詢",
+        "intent_type": "config_param",
+        "confidence": 1.0,
+        "all_intents": null,
+        "secondary_intents": null,
+        "intent_ids": null,
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:42.531917Z",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 19,
+      "question": "冷氣不冷",
+      "category": "維修-故障",
+      "expected_type": "sop",
+      "description": "故障描述（需SOP引導）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "租客可以使用平台上的故障診斷工具進行自查，若無法解決，系統將派遣維修人員處理。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "租客可以使用平台上的故障診斷工具進行自查，若無法解決，系統將派遣維修人員處理。",
+        "intent_name": "冷氣",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "冷氣"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          37
+        ],
+        "sources": [
+          {
+            "id": 85,
+            "question_summary": "空調故障：",
+            "answer": "租客可以使用平台上的故障診斷工具進行自查，若無法解決，系統將派遣維修人員處理。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:42.529159",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 20,
+      "question": "報修電話是多少",
+      "category": "維修-聯絡方式",
+      "expected_type": "knowledge",
+      "description": "聯絡資訊查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "報修申請\n\n",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "報修申請\n\n",
+        "intent_name": "客服聯絡方式",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "客服聯絡方式"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          14
+        ],
+        "sources": [
+          {
+            "id": 1271,
+            "question_summary": "報修申請",
+            "answer": "",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 9,
+            "question_summary": "如何報修",
+            "answer": "您可以透過以下方式報修：\n1. 撥打客服專線：02-1234-5678\n2. LINE 官方帳號：@example\n3. 前往公司辦公室：台北市信義區範例路 123 號\n\n緊急報修我們會在 24 小時內處理。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 2,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:41.833758",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 21,
+      "question": "我想續約",
+      "category": "合約-續約",
+      "expected_type": "sop/form",
+      "description": "續約需求",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "租客可通過平台續約，選擇租約延長的期間，並支付續租款項。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "租客可通過平台續約，選擇租約延長的期間，並支付續租款項。",
+        "intent_name": "續約流程",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "續約流程"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          13
+        ],
+        "sources": [
+          {
+            "id": 72,
+            "question_summary": "如何續約：",
+            "answer": "租客可通過平台續約，選擇租約延長的期間，並支付續租款項。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:58.513702",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 22,
+      "question": "提前退租要怎麼辦",
+      "category": "合約-退租",
+      "expected_type": "sop/knowledge",
+      "description": "提前解約查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "退租",
+        "intent_type": "knowledge",
+        "confidence": 0.8,
+        "all_intents": [
+          "退租"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          21
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:59.869818",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 23,
+      "question": "合約什麼時候到期",
+      "category": "合約-到期日",
+      "expected_type": "api",
+      "description": "合約資訊查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "租期／到期",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租期／到期"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          19
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:02.997919",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 24,
+      "question": "押金什麼時候退",
+      "category": "合約-押金退還",
+      "expected_type": "knowledge",
+      "description": "押金政策查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "押金如何退還？\n\n押金的退還通常在租約結束後進行。房東會檢查租屋物件的狀況，確保無損壞或超出正常磨損，並扣除應支付的費用後將剩餘款項退還給租客。退還方式可能包括支票、轉帳或現金，取決於房東的支付方式。建議在搬離前與房東溝通押金退還事宜，並確認退還金額和時間安排。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "押金如何退還？\n\n押金的退還通常在租約結束後進行。房東會檢查租屋物件的狀況，確保無損壞或超出正常磨損，並扣除應支付的費用後將剩餘款項退還給租客。退還方式可能包括支票、轉帳或現金，取決於房東的支付方式。建議在搬離前與房東溝通押金退還事宜，並確認退還金額和時間安排。",
+        "intent_name": "押金/退款",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "押金/退款"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          24
+        ],
+        "sources": [
+          {
+            "id": 65,
+            "question_summary": "押金如何退還？",
+            "answer": "押金的退還通常在租約結束後進行。房東會檢查租屋物件的狀況，確保無損壞或超出正常磨損，並扣除應支付的費用後將剩餘款項退還給租客。退還方式可能包括支票、轉帳或現金，取決於房東的支付方式。建議在搬離前與房東溝通押金退還事宜，並確認退還金額和時間安排。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 6,
+            "question_summary": "押金是多少",
+            "answer": "押金為月租金的 2 倍。退租時，如無損壞及欠費，押金將全額退還。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 138,
+            "question_summary": "點退押金在做什麼？",
+            "answer": "1. 讓房東在編輯「點退確認單」的同時，一起結算「找補費用」。 2. 故房東送出點退結果，並待租客同意後，JGB 平台便會立即在合約細節中產生「點退清單」，且由系統按照點退確認單中的金額自動產生帳單，分派到付款方（房東或租客）的繳費帳單中。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 125,
+            "question_summary": "如何執行點退押金？",
+            "answer": "房東若要點退押金，先到「合約管理」 下 「執行中，30天內到期」的合約，或是 「歷史合約」 找到欲點退押金的物件，打開右下方的小齒輪，選取「點退押金」\n\n延伸1：在合約截止日的前後30天內，才能執行點退押金。\n\n延伸2：在合約照片的左下角可以找到標記點退狀態的小標籤，分為「未退押金」、「點退中」、「已點退」、「未退押金」。\n\n延伸3：點退時，房東可以紀錄傢俱品項的狀況，上傳對應的照片和狀態備註，並可結算各類費用。\n\n延伸4：房東完成紀錄後，將會寄送結果給租客確認。\n\n延伸5：租客確認無誤後，會產生點退紀錄文件，並自動產生; 付款人的帳單，房東可。 一但租客確認後，該筆帳單會躺在應付款人的待繳費帳單內。\n\n備註：點退時，一般為房東退押金給租客，一但租客確認後，帳單會在房東的待繳費 帳單內；若租客應賠償的金額大於應退還的押金，一但租客確認後，帳單則會在租客的待繳費帳單內。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 140,
+            "question_summary": "什麼時候會開啟點退押金功能？",
+            "answer": "點退押金功能將在「合約終止日前推30日&amp;後推30天的總計60天內」限時開啟。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 5,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:24:59.872992",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 25,
+      "question": "可以換房間嗎",
+      "category": "合約-換房",
+      "expected_type": "sop/knowledge",
+      "description": "換房需求",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "租約變更／轉租",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租約變更／轉租"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          18
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:06.360533",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 26,
+      "question": "合約可以改成我朋友的名字嗎",
+      "category": "合約-轉租",
+      "expected_type": "knowledge/sop",
+      "description": "轉租查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "合約",
+        "intent_type": "knowledge",
+        "confidence": 0.8,
+        "all_intents": [
+          "合約"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          17
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:01.949938",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 27,
+      "question": "最短要租多久",
+      "category": "合約-租期",
+      "expected_type": "knowledge",
+      "description": "租期政策查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "最短租期是多久\n\n我們的最短租期為 12 個月。如果您需要提前解約，請於 30 天前提出申請。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "最短租期是多久\n\n我們的最短租期為 12 個月。如果您需要提前解約，請於 30 天前提出申請。",
+        "intent_name": "租期／到期",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租期／到期"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          19
+        ],
+        "sources": [
+          {
+            "id": 5,
+            "question_summary": "最短租期是多久",
+            "answer": "我們的最短租期為 12 個月。如果您需要提前解約，請於 30 天前提出申請。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 93,
+            "question_summary": "租客多付或少付怎麼處理？",
+            "answer": "如果租客多付或少付租金，應當立即與房東聯繫，誠實地向其報告情況。\n對於多付的部分，房東應當返還多出的款項；對於少付的部分，則應當補足支付。建\n議在這種情況下，立即修正支付金額，以避免造成後續的糾紛或法律問題。\n最好能與房東保持良好的溝通，並尋求雙方都能接受的解決方案。\n而在JGB系統中可在帳單內調整「已收金額」或建立補差額帳單。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 2,
+            "question_summary": "每月繳費日期",
+            "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 53,
+            "question_summary": "租金是多少呢？是否租金是每月固定嗎？",
+            "answer": "租金金額一般在租賃合約中有明確規定，您可以參考您的租賃合約以確認每月租金金額。通常情況下，租金是固定的，即每個月支付相同金額，除非合約另有規定。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 94,
+            "question_summary": "逾期租金會通知嗎？",
+            "answer": "通常情況下，如果租客逾期未支付租金，房東會向租客發出通知，提醒其支付逾期租金。通知方式可能包括書面通知、電話通知或電子郵件通知。在通知中，可能會提及逾期支付的具體金額、支付期限、可能的違約後果等相關信息。建議在租賃合約中明確規定逾期支付租金的處理方式，以避免爭議。\n而JGB係通中會依設定發送 Line / Email 提醒。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 5,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:01.952196",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 28,
+      "question": "我的合約書在哪裡",
+      "category": "合約-文件查詢",
+      "expected_type": "knowledge/api",
+      "description": "合約文件查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "合約",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "合約"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          17
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:08.476978",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 29,
+      "question": "提前退租押金會退嗎",
+      "category": "合約-退租押金",
+      "expected_type": "knowledge",
+      "description": "複合查詢（退租+押金）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "退租",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "退租"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          21
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:04.357763",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 30,
+      "question": "我想看我的租約內容",
+      "category": "合約-查看",
+      "expected_type": "api/knowledge",
+      "description": "合約內容查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "租約查詢",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租約查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          4
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:10.330881",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 31,
+      "question": "有洗衣機嗎",
+      "category": "設施-查詢",
+      "expected_type": "knowledge",
+      "description": "設施查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "設備",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "設備"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          35
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:24.679981",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 32,
+      "question": "停車位在哪裡",
+      "category": "設施-停車",
+      "expected_type": "knowledge",
+      "description": "停車資訊查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.8,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:26.323864",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 33,
+      "question": "垃圾怎麼丟",
+      "category": "設施-垃圾",
+      "expected_type": "knowledge",
+      "description": "垃圾處理查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "垃圾回收",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "垃圾回收"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          44
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:32.243466",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 34,
+      "question": "wifi密碼是什麼",
+      "category": "設施-網路",
+      "expected_type": "knowledge/api",
+      "description": "網路資訊查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "若遇到網路連線問題，請先檢查路由器電源燈號是否正常，並嘗試重新啟動路由器。若問題持續，請聯繫管理員。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "若遇到網路連線問題，請先檢查路由器電源燈號是否正常，並嘗試重新啟動路由器。若問題持續，請聯繫管理員。",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [
+          {
+            "id": 185,
+            "question_summary": "網路連線問題",
+            "answer": "若遇到網路連線問題，請先檢查路由器電源燈號是否正常，並嘗試重新啟動路由器。若問題持續，請聯繫管理員。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:27.536397",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 35,
+      "question": "可以養寵物嗎",
+      "category": "政策-寵物",
+      "expected_type": "knowledge",
+      "description": "寵物政策查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.8,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:29.947877",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 36,
+      "question": "電費怎麼算",
+      "category": "費用-電費",
+      "expected_type": "knowledge",
+      "description": "電費計算查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。\n\n查詢方式：\n1. 提供完整的物件地址\n2. 系統會自動查詢該地址的電費寄送區間\n3. 立即告知您帳單寄送時間\n\n支援模糊匹配，即使地址不完全相同也能找到相近結果。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。\n\n查詢方式：\n1. 提供完整的物件地址\n2. 系統會自動查詢該地址的電費寄送區間\n3. 立即告知您帳單寄送時間\n\n支援模糊匹配，即使地址不完全相同也能找到相近結果。",
+        "intent_name": "電費查詢",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "電費查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          30
+        ],
+        "sources": [
+          {
+            "id": 1279,
+            "question_summary": "電費寄送區間查詢",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。\n\n查詢方式：\n1. 提供完整的物件地址\n2. 系統會自動查詢該地址的電費寄送區間\n3. 立即告知您帳單寄送時間\n\n支援模糊匹配，即使地址不完全相同也能找到相近結果。",
+            "scope": "global",
+            "vendor_id": 1,
+            "target_users": [
+              "customer",
+              "manager"
+            ]
+          },
+          {
+            "id": 1289,
+            "question_summary": "電費什麼時候繳",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 1289,
+            "question_summary": "電費什麼時候繳",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 54,
+            "question_summary": "房租包含水電嗎？還是要另外算？",
+            "answer": "一般來說，房租是否包含水電費取決於租賃合約中的條款。有些房東會將水電費包含在租金中，稱為包租總額；而有些則要求租客另外支付水電費用。在租屋前應詳細閱讀租賃合約，確認水電費用的支付方式。若合約未明確規定，建議與房東溝通確認，以避免爭議。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 17,
+            "question_summary": "關於房客儲值電費的問題",
+            "answer": "房客透過儲值，金流自動對帳後金箍棒系統會儲值電費。對於非自動對帳的情況，會計需手動點選已查收，如有錯誤會再扣回。如果租客是透過JGB儲值，需要確認儲值時間和帳單時間。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 5,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:27.539838",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 37,
+      "question": "管理費包含什麼",
+      "category": "費用-管理費",
+      "expected_type": "knowledge",
+      "description": "費用項目查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:33.220633",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 38,
+      "question": "可以開伙嗎",
+      "category": "政策-開伙",
+      "expected_type": "knowledge",
+      "description": "開伙政策查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "室友",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "室友"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          43
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:34.237348",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 39,
+      "question": "晚上幾點後不能吵",
+      "category": "政策-安靜時間",
+      "expected_type": "knowledge",
+      "description": "社區規範查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "社區規範",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "社區規範"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          12
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:28.885695",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 40,
+      "question": "可以帶朋友來住嗎",
+      "category": "政策-訪客",
+      "expected_type": "knowledge",
+      "description": "訪客政策查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "室友",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "室友"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          43
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:31.230265",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 41,
+      "question": "客服電話是多少",
+      "category": "聯絡-電話",
+      "expected_type": "knowledge",
+      "description": "客服資訊查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我們的客服專線是 02-2345-6789，服務時間為週一至週日 09:00-21:00。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 1.0
+      },
+      "raw_response": {
+        "answer": "我們的客服專線是 02-2345-6789，服務時間為週一至週日 09:00-21:00。",
+        "intent_name": "參數查詢",
+        "intent_type": "config_param",
+        "confidence": 1.0,
+        "all_intents": null,
+        "secondary_intents": null,
+        "intent_ids": null,
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:51.169646Z",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 42,
+      "question": "我要投訴",
+      "category": "客服-投訴",
+      "expected_type": "sop/form",
+      "description": "投訴需求",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "激動客訴問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "激動客訴問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          46
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:46.606432",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 43,
+      "question": "管理員在哪裡",
+      "category": "聯絡-管理員",
+      "expected_type": "knowledge",
+      "description": "管理員資訊查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "客服聯絡方式",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "客服聯絡方式"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          14
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:47.649545",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 44,
+      "question": "line客服",
+      "category": "聯絡-LINE",
+      "expected_type": "knowledge",
+      "description": "LINE客服查詢（簡短）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我們的 LINE 官方帳號是 @vendorA，歡迎加入以獲得即時服務。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 1.0
+      },
+      "raw_response": {
+        "answer": "我們的 LINE 官方帳號是 @vendorA，歡迎加入以獲得即時服務。",
+        "intent_name": "參數查詢",
+        "intent_type": "config_param",
+        "confidence": 1.0,
+        "all_intents": null,
+        "secondary_intents": null,
+        "intent_ids": null,
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:51.170510Z",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 45,
+      "question": "我有建議想反應",
+      "category": "客服-建議",
+      "expected_type": "sop/form",
+      "description": "建議反饋",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:48.776687",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 46,
+      "question": "你們上班時間",
+      "category": "聯絡-營業時間",
+      "expected_type": "knowledge",
+      "description": "營業時間查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我們的服務時間為週一至週日 09:00-21:00。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 1.0
+      },
+      "raw_response": {
+        "answer": "我們的服務時間為週一至週日 09:00-21:00。",
+        "intent_name": "參數查詢",
+        "intent_type": "config_param",
+        "confidence": 1.0,
+        "all_intents": null,
+        "secondary_intents": null,
+        "intent_ids": null,
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:51.169132Z",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 47,
+      "question": "可以email問問題嗎",
+      "category": "聯絡-Email",
+      "expected_type": "knowledge",
+      "description": "Email聯絡查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "客服聯絡方式",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "客服聯絡方式"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          14
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:50.033699",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 48,
+      "question": "緊急聯絡人電話",
+      "category": "聯絡-緊急",
+      "expected_type": "knowledge",
+      "description": "緊急聯絡查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我們的客服專線是 02-2345-6789，服務時間為週一至週日 09:00-21:00。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 1.0
+      },
+      "raw_response": {
+        "answer": "我們的客服專線是 02-2345-6789，服務時間為週一至週日 09:00-21:00。",
+        "intent_name": "參數查詢",
+        "intent_type": "config_param",
+        "confidence": 1.0,
+        "all_intents": null,
+        "secondary_intents": null,
+        "intent_ids": null,
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:51.170051Z",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 49,
+      "question": "我想當面談",
+      "category": "聯絡-預約",
+      "expected_type": "sop/knowledge",
+      "description": "預約諮詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "客服聯絡方式",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "客服聯絡方式"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          14
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:51.165951",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 50,
+      "question": "客服都不接電話",
+      "category": "客服-抱怨",
+      "expected_type": "sop",
+      "description": "服務抱怨",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我們的客服專線是 02-2345-6789，服務時間為週一至週日 09:00-21:00。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 1.0
+      },
+      "raw_response": {
+        "answer": "我們的客服專線是 02-2345-6789，服務時間為週一至週日 09:00-21:00。",
+        "intent_name": "參數查詢",
+        "intent_type": "config_param",
+        "confidence": 1.0,
+        "all_intents": null,
+        "secondary_intents": null,
+        "intent_ids": null,
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:25:51.168178Z",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 51,
+      "question": "多少錢",
+      "category": "模糊-費用",
+      "expected_type": "unclear/form",
+      "description": "極度模糊（需澄清）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "帳務查詢",
+        "intent_type": "data_query",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳務查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          1
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:15.156348",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 52,
+      "question": "這個可以嗎",
+      "category": "模糊-許可",
+      "expected_type": "unclear",
+      "description": "缺乏上下文",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "unclear",
+        "intent_type": "unclear",
+        "confidence": 0.8,
+        "all_intents": [],
+        "secondary_intents": [],
+        "intent_ids": [],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:05.174151",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 53,
+      "question": "租金跟押金加起來多少",
+      "category": "複合-計算",
+      "expected_type": "api/knowledge",
+      "description": "複合計算問題",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "帳務查詢",
+        "intent_type": "data_query",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳務查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          1
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:06.156245",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 54,
+      "question": "我想退租但還沒到期",
+      "category": "複合-退租",
+      "expected_type": "sop/knowledge",
+      "description": "複合問題（退租+提前）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "退租",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "退租"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          21
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:12.270865",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 55,
+      "question": "冷氣壞了可以自己修嗎還是要報修",
+      "category": "複合-維修",
+      "expected_type": "sop/knowledge",
+      "description": "複合選擇問題",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "報修申請\n\n",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "報修申請\n\n",
+        "intent_name": "維修報修",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "維修報修"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          3
+        ],
+        "sources": [
+          {
+            "id": 1271,
+            "question_summary": "報修申請",
+            "answer": "",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 9,
+            "question_summary": "如何報修",
+            "answer": "您可以透過以下方式報修：\n1. 撥打客服專線：02-1234-5678\n2. LINE 官方帳號：@example\n3. 前往公司辦公室：台北市信義區範例路 123 號\n\n緊急報修我們會在 24 小時內處理。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 1274,
+            "question_summary": "冰箱插電後沒反應，我要怎麼修理?",
+            "answer": "您好，請幫我先按照以下步驟先簡單了解一下故障原因：\n\n1️⃣ 確認插座與電源是否有電\n\n👉 拔下冰箱插頭，插入手機充電器或其他電器測試\n\n其他電器可用 → 插座正常\n\n其他電器也沒電 → 檢查電箱是否跳電\n\n2️⃣ 檢查插頭與電線是否鬆脫或損壞\n\n👉 重新插緊插頭，觀察是否有：\n\n鬆動\n\n破皮\n\n燒焦痕跡\n⚠️ 若有異常 → 停止使用，避免危險\n\n3️⃣ 確認冰箱未誤關電源 / 旋鈕過低\n\n👉 檢查冰箱內部溫控旋鈕或電源鍵\n\n確保不是「OFF」\n\n旋鈕轉到 中段以上（3–5）\n\n有些冰箱需等 3–5 分鐘延遲啟動",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 1274,
+            "question_summary": "冰箱插電後沒反應，我要怎麼修理?",
+            "answer": "您好，請幫我先按照以下步驟先簡單了解一下故障原因：\n\n1️⃣ 確認插座與電源是否有電\n\n👉 拔下冰箱插頭，插入手機充電器或其他電器測試\n\n其他電器可用 → 插座正常\n\n其他電器也沒電 → 檢查電箱是否跳電\n\n2️⃣ 檢查插頭與電線是否鬆脫或損壞\n\n👉 重新插緊插頭，觀察是否有：\n\n鬆動\n\n破皮\n\n燒焦痕跡\n⚠️ 若有異常 → 停止使用，避免危險\n\n3️⃣ 確認冰箱未誤關電源 / 旋鈕過低\n\n👉 檢查冰箱內部溫控旋鈕或電源鍵\n\n確保不是「OFF」\n\n旋鈕轉到 中段以上（3–5）\n\n有些冰箱需等 3–5 分鐘延遲啟動",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 1274,
+            "question_summary": "冰箱插電後沒反應，我要怎麼修理?",
+            "answer": "您好，請幫我先按照以下步驟先簡單了解一下故障原因：\n\n1️⃣ 確認插座與電源是否有電\n\n👉 拔下冰箱插頭，插入手機充電器或其他電器測試\n\n其他電器可用 → 插座正常\n\n其他電器也沒電 → 檢查電箱是否跳電\n\n2️⃣ 檢查插頭與電線是否鬆脫或損壞\n\n👉 重新插緊插頭，觀察是否有：\n\n鬆動\n\n破皮\n\n燒焦痕跡\n⚠️ 若有異常 → 停止使用，避免危險\n\n3️⃣ 確認冰箱未誤關電源 / 旋鈕過低\n\n👉 檢查冰箱內部溫控旋鈕或電源鍵\n\n確保不是「OFF」\n\n旋鈕轉到 中段以上（3–5）\n\n有些冰箱需等 3–5 分鐘延遲啟動",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 5,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:06.179980",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 56,
+      "question": "現在",
+      "category": "模糊-時間",
+      "expected_type": "unclear",
+      "description": "過於簡短",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 1.0
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "unclear",
+        "intent_type": "unclear",
+        "confidence": 1.0,
+        "all_intents": [],
+        "secondary_intents": [],
+        "intent_ids": [],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:07.213494",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 57,
+      "question": "怎麼辦",
+      "category": "模糊-求助",
+      "expected_type": "unclear",
+      "description": "完全缺乏資訊",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.8,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:08.078239",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 58,
+      "question": "我想問一下關於租金和維修還有續約的問題",
+      "category": "複合-多主題",
+      "expected_type": "unclear/form",
+      "description": "過於廣泛",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.8,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:13.354714",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 59,
+      "question": "能不能",
+      "category": "模糊-詢問",
+      "expected_type": "unclear",
+      "description": "不完整問句",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "unclear",
+        "intent_type": "unclear",
+        "confidence": 0.8,
+        "all_intents": [],
+        "secondary_intents": [],
+        "intent_ids": [],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:14.173822",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 60,
+      "question": "租金是每個月幾號繳還有可以用什麼方式付",
+      "category": "複合-租金",
+      "expected_type": "knowledge",
+      "description": "複合問題（日期+方式）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:10.530621",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 61,
+      "question": "房租怎麼交",
+      "category": "同義詞-租金",
+      "expected_type": "knowledge",
+      "description": "租金（交=繳）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:31.473433",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 62,
+      "question": "冷氣不會涼",
+      "category": "同義詞-維修",
+      "expected_type": "sop",
+      "description": "冷氣（不會涼=不冷）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "租客可以使用平台上的故障診斷工具進行自查，若無法解決，系統將派遣維修人員處理。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "租客可以使用平台上的故障診斷工具進行自查，若無法解決，系統將派遣維修人員處理。",
+        "intent_name": "冷氣",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "冷氣"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          37
+        ],
+        "sources": [
+          {
+            "id": 85,
+            "question_summary": "空調故障：",
+            "answer": "租客可以使用平台上的故障診斷工具進行自查，若無法解決，系統將派遣維修人員處理。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:27.383015",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 63,
+      "question": "我要報修",
+      "category": "簡化-報修",
+      "expected_type": "sop/form",
+      "description": "直接需求表達",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "如何報修\n\n您可以透過以下方式報修：\n1. 撥打客服專線：02-1234-5678\n2. LINE 官方帳號：@example\n3. 前往公司辦公室：台北市信義區範例路 123 號\n\n緊急報修我們會在 24 小時內處理。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "如何報修\n\n您可以透過以下方式報修：\n1. 撥打客服專線：02-1234-5678\n2. LINE 官方帳號：@example\n3. 前往公司辦公室：台北市信義區範例路 123 號\n\n緊急報修我們會在 24 小時內處理。",
+        "intent_name": "維修報修",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "維修報修"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          3
+        ],
+        "sources": [
+          {
+            "id": 9,
+            "question_summary": "如何報修",
+            "answer": "您可以透過以下方式報修：\n1. 撥打客服專線：02-1234-5678\n2. LINE 官方帳號：@example\n3. 前往公司辦公室：台北市信義區範例路 123 號\n\n緊急報修我們會在 24 小時內處理。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 1271,
+            "question_summary": "報修申請",
+            "answer": "",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 2,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:27.479426",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 64,
+      "question": "電費帳單",
+      "category": "簡化-電費",
+      "expected_type": "knowledge/api",
+      "description": "名詞查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "電費什麼時候繳\n\n📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "電費什麼時候繳\n\n📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。",
+        "intent_name": "電費查詢",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "電費查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          30
+        ],
+        "sources": [
+          {
+            "id": 1289,
+            "question_summary": "電費什麼時候繳",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 1289,
+            "question_summary": "電費什麼時候繳",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 98,
+            "question_summary": "維修費用如何轉成帳單？",
+            "answer": "報修內按「建立帳單」。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 17,
+            "question_summary": "關於房客儲值電費的問題",
+            "answer": "房客透過儲值，金流自動對帳後金箍棒系統會儲值電費。對於非自動對帳的情況，會計需手動點選已查收，如有錯誤會再扣回。如果租客是透過JGB儲值，需要確認儲值時間和帳單時間。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 147,
+            "question_summary": "租客如何確認向房東繳費的即時繳費帳單狀況？",
+            "answer": "租客可在「我的帳單」下的分類『繳費帳單』有以下各種狀態的帳單： 繳費帳單：待繳費、待查收、已繳費 1.租客「通知房東已匯款」時，帳單會從 「待繳費」跑到「待查收」 2.租客完成「線上繳費」時，帳單會從 「待繳費」跑到「已繳費」 3.當房東在「待對帳款」執行「標註已收」租客帳款時，帳單會從「待查收」跑到「已繳費」",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 5,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:31.475866",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 65,
+      "question": "水電",
+      "category": "簡化-費用",
+      "expected_type": "knowledge",
+      "description": "極簡查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "水電",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "水電"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          29
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:29.554366",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 66,
+      "question": "欠租",
+      "category": "簡化-逾期",
+      "expected_type": "knowledge/sop",
+      "description": "單詞查詢（可能有多義）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "系統會自動發送提醒通知並收取滯納金。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "系統會自動發送提醒通知並收取滯納金。",
+        "intent_name": "逾期費用",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "逾期費用"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          11
+        ],
+        "sources": [
+          {
+            "id": 76,
+            "question_summary": "如果租客遲付租金",
+            "answer": "系統會自動發送提醒通知並收取滯納金。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:35.593770",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 67,
+      "question": "aircon唔夠凍",
+      "category": "方言-維修",
+      "expected_type": "unclear/sop",
+      "description": "粵語+英文混合",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "冷氣",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "冷氣"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          37
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:30.451764",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 68,
+      "question": "AC壞了",
+      "category": "簡稱-維修",
+      "expected_type": "sop",
+      "description": "英文簡稱（AC=冷氣）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "租客可以使用平台上的故障診斷工具進行自查，若無法解決，系統將派遣維修人員處理。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "租客可以使用平台上的故障診斷工具進行自查，若無法解決，系統將派遣維修人員處理。",
+        "intent_name": "維修報修",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "維修報修"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          3
+        ],
+        "sources": [
+          {
+            "id": 85,
+            "question_summary": "空調故障：",
+            "answer": "租客可以使用平台上的故障診斷工具進行自查，若無法解決，系統將派遣維修人員處理。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:32.944016",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 69,
+      "question": "deposit",
+      "category": "英文-押金",
+      "expected_type": "knowledge",
+      "description": "全英文查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "押金/退款",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "押金/退款"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          24
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:34.773878",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 70,
+      "question": "租金幾多錢",
+      "category": "方言-租金",
+      "expected_type": "api/knowledge",
+      "description": "粵語表達",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:32.173955",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 71,
+      "question": "我的帳單",
+      "category": "帳務-帳單",
+      "expected_type": "api",
+      "description": "帳單查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "帳務查詢",
+        "intent_type": "data_query",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳務查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          1
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:00.128592",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 72,
+      "question": "這個月要繳多少",
+      "category": "帳務-應繳金額",
+      "expected_type": "api",
+      "description": "應繳金額查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "帳務查詢",
+        "intent_type": "data_query",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳務查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          1
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:49.901445",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 73,
+      "question": "我有沒有欠費",
+      "category": "帳務-欠費",
+      "expected_type": "api",
+      "description": "欠費狀態查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "帳務查詢",
+        "intent_type": "data_query",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳務查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          1
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:51.691940",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 74,
+      "question": "繳費記錄",
+      "category": "帳務-記錄",
+      "expected_type": "api",
+      "description": "歷史記錄查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "帳務查詢",
+        "intent_type": "data_query",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳務查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          1
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:53.871537",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 75,
+      "question": "上個月的電費",
+      "category": "帳務-電費",
+      "expected_type": "api",
+      "description": "特定月份查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。\n\n查詢方式：\n1. 提供完整的物件地址\n2. 系統會自動查詢該地址的電費寄送區間\n3. 立即告知您帳單寄送時間\n\n支援模糊匹配，即使地址不完全相同也能找到相近結果。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。\n\n查詢方式：\n1. 提供完整的物件地址\n2. 系統會自動查詢該地址的電費寄送區間\n3. 立即告知您帳單寄送時間\n\n支援模糊匹配，即使地址不完全相同也能找到相近結果。",
+        "intent_name": "電費查詢",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "電費查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          30
+        ],
+        "sources": [
+          {
+            "id": 1279,
+            "question_summary": "電費寄送區間查詢",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。\n\n查詢方式：\n1. 提供完整的物件地址\n2. 系統會自動查詢該地址的電費寄送區間\n3. 立即告知您帳單寄送時間\n\n支援模糊匹配，即使地址不完全相同也能找到相近結果。",
+            "scope": "global",
+            "vendor_id": 1,
+            "target_users": [
+              "customer",
+              "manager"
+            ]
+          },
+          {
+            "id": 1289,
+            "question_summary": "電費什麼時候繳",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 1289,
+            "question_summary": "電費什麼時候繳",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 17,
+            "question_summary": "關於房客儲值電費的問題",
+            "answer": "房客透過儲值，金流自動對帳後金箍棒系統會儲值電費。對於非自動對帳的情況，會計需手動點選已查收，如有錯誤會再扣回。如果租客是透過JGB儲值，需要確認儲值時間和帳單時間。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 2,
+            "question_summary": "每月繳費日期",
+            "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 5,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:51.694898",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 76,
+      "question": "我繳了沒有",
+      "category": "帳務-繳費確認",
+      "expected_type": "api",
+      "description": "繳費確認",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "帳務查詢",
+        "intent_type": "data_query",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳務查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          1
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:56.345158",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 77,
+      "question": "為什麼這個月特別貴",
+      "category": "帳務-費用異常",
+      "expected_type": "api/sop",
+      "description": "費用疑問（需查詢+解釋）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "帳務查詢",
+        "intent_type": "data_query",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳務查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          1
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:52.955861",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 78,
+      "question": "可以分期付款嗎",
+      "category": "帳務-分期",
+      "expected_type": "knowledge/sop",
+      "description": "付款方式詢問",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:57.438538",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 79,
+      "question": "發票",
+      "category": "帳務-發票",
+      "expected_type": "knowledge/api",
+      "description": "發票查詢（簡短）",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "收據問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "收據問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          27
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:54.692856",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 80,
+      "question": "我想看去年的繳費紀錄",
+      "category": "帳務-歷史",
+      "expected_type": "api",
+      "description": "長期歷史查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "帳務查詢",
+        "intent_type": "data_query",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳務查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          1
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:26:59.135500",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 81,
+      "question": "怎麼登入",
+      "category": "系統-登入",
+      "expected_type": "knowledge",
+      "description": "系統操作查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "帳號",
+        "intent_type": "hybrid",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳號"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          48
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:14.751886",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 82,
+      "question": "忘記密碼",
+      "category": "系統-密碼",
+      "expected_type": "sop/knowledge",
+      "description": "密碼問題",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "怎麼辦？\n\n如果忘記了租屋管理系統的密碼，可以通過系統提供的「忘記密碼」功能來重設密碼。一般來說，在登入頁面會有「忘記密碼」或「重設密碼」的連結，點擊進入後可能需要輸入註冊郵箱或手機號碼等資訊來證明身份，然後按照系統發送的指引完成密碼重設。如系統未提供相應功能，建議直接聯繫租屋管理單位或客服，他們可以協助重設密碼。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "怎麼辦？\n\n如果忘記了租屋管理系統的密碼，可以通過系統提供的「忘記密碼」功能來重設密碼。一般來說，在登入頁面會有「忘記密碼」或「重設密碼」的連結，點擊進入後可能需要輸入註冊郵箱或手機號碼等資訊來證明身份，然後按照系統發送的指引完成密碼重設。如系統未提供相應功能，建議直接聯繫租屋管理單位或客服，他們可以協助重設密碼。",
+        "intent_name": "帳號",
+        "intent_type": "hybrid",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳號"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          48
+        ],
+        "sources": [
+          {
+            "id": 85,
+            "question_summary": "忘記密碼怎麼辦？",
+            "answer": "如果忘記了租屋管理系統的密碼，可以通過系統提供的「忘記密碼」功能來重設密碼。一般來說，在登入頁面會有「忘記密碼」或「重設密碼」的連結，點擊進入後可能需要輸入註冊郵箱或手機號碼等資訊來證明身份，然後按照系統發送的指引完成密碼重設。如系統未提供相應功能，建議直接聯繫租屋管理單位或客服，他們可以協助重設密碼。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 84,
+            "question_summary": "收不到重設密碼信？",
+            "answer": "如果收不到重設密碼郵件，請先檢查垃圾郵件或垃圾郵件文件夾，確保郵件不是被誤判為垃圾郵件。同時，請確認您提供的郵箱地址拼寫正確且有效。如果仍未收到，建議嘗試重新發送重設密碼郵件或聯繫租屋管理系統的客服部門尋求協助。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 2,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:14.867151",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 83,
+      "question": "app在哪裡下載",
+      "category": "系統-下載",
+      "expected_type": "knowledge",
+      "description": "App資訊查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:20.335944",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 84,
+      "question": "如何修改個人資料",
+      "category": "系統-資料修改",
+      "expected_type": "knowledge/sop",
+      "description": "資料修改流程",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "帳號",
+        "intent_type": "hybrid",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳號"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          48
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:16.012920",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 85,
+      "question": "線上繳費教學",
+      "category": "系統-繳費教學",
+      "expected_type": "knowledge",
+      "description": "操作教學",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "您好，關於線上繳費的教學，我可以協助您進行操作步驟：\n\n1. 登入您的線上帳戶，找到「繳費」或相關選項。\n2. 選擇您要繳費的項目，通常是租金或管理費。\n3. 選擇繳費方式，可以是銀行轉帳或超商繳費。\n4. 輸入正確的金額，確認資料無誤。\n5. 選擇付款日期，在每個月的1號進行繳費即可。\n6. 如果您需要延遲繳費，請注意有5天的繳費寬限期，避免逾期產生200元的逾期手續費。\n\n若您在操作過程中遇到",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "您好，關於線上繳費的教學，我可以協助您進行操作步驟：\n\n1. 登入您的線上帳戶，找到「繳費」或相關選項。\n2. 選擇您要繳費的項目，通常是租金或管理費。\n3. 選擇繳費方式，可以是銀行轉帳或超商繳費。\n4. 輸入正確的金額，確認資料無誤。\n5. 選擇付款日期，在每個月的1號進行繳費即可。\n6. 如果您需要延遲繳費，請注意有5天的繳費寬限期，避免逾期產生200元的逾期手續費。\n\n若您在操作過程中遇到任何困難或疑問，我們可以協助您解決，請隨時聯絡我們的客服專線02-2345-6789或加入我們的LINE官方帳號@vendorA。感謝您的配合。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "sources": [
+          {
+            "id": 1289,
+            "question_summary": "電費什麼時候繳",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 3,
+            "question_summary": "繳費方式有哪些",
+            "answer": "我們提供以下繳費方式：ATM 轉帳、信用卡自動扣款、超商繳費。如有任何繳費問題，請撥打客服專線 02-1234-5678。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 105,
+            "question_summary": "租客繳費方式（線下付款）",
+            "answer": "1.進入JGB頁面或是由email進入\n\n2.點選「匯款資訊」之後前往付款\n\n3.根據燈箱資訊進行付款\n\n4.付款完成之後點選「通知已匯款」\n\n5.輸入帳號後五碼\n\n6.帳單會到「待查收」\n\n7.房東確認完畢會到「已繳費」",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 4,
+            "question_summary": "逾期繳費會怎樣",
+            "answer": "如果您未在繳費日 5 號前完成繳費，我們會提供 3 天的寬限期。超過寬限期後，將加收逾期手續費 300 元。為避免額外費用，請盡早繳納。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 108,
+            "question_summary": "租客繳費方式（藍新ATM）",
+            "answer": "從Dashboard進入繳費\n\n\n\n&nbsp;\n\nor 從email進入系統付款\n\n\n\n&nbsp;\n\n租客身份繳費帳單（線上金流付款）\n\n\n&nbsp;\n\n選擇線上金流的支付方式\n\n\n\n&nbsp;\n\n進行付款。\n\n\n\n繳完房租之後帳單便會出現在「已繳費」。\n\n\n\nYour Payment is Paid. &gt; &quot;Paid&quot;",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 5,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:27.058265",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 86,
+      "question": "手機收不到驗證碼",
+      "category": "系統-驗證碼",
+      "expected_type": "sop/knowledge",
+      "description": "驗證問題",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "客服聯絡方式",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "客服聯絡方式"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          14
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:18.079467",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 87,
+      "question": "如何綁定信用卡",
+      "category": "系統-綁定",
+      "expected_type": "knowledge/sop",
+      "description": "綁定流程",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "帳務",
+        "intent_type": "knowledge",
+        "confidence": 0.8,
+        "all_intents": [
+          "帳務"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          26
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:21.332938",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 88,
+      "question": "系統一直當掉",
+      "category": "系統-故障",
+      "expected_type": "sop",
+      "description": "技術問題",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:22.638156",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 89,
+      "question": "怎麼看我的租約",
+      "category": "系統-查看租約",
+      "expected_type": "knowledge",
+      "description": "功能使用詢問",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "租約查詢",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租約查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          4
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:23.942076",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 90,
+      "question": "可以用電腦嗎還是只能手機",
+      "category": "系統-平台",
+      "expected_type": "knowledge",
+      "description": "平台支援查詢",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:19.170600",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 91,
+      "question": "今天天氣如何",
+      "category": "不相關-天氣",
+      "expected_type": "direct_answer",
+      "description": "完全不相關",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.8,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:50.032561",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 92,
+      "question": "你是誰",
+      "category": "閒聊-身份",
+      "expected_type": "direct_answer",
+      "description": "閒聊問題",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:40.184273",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 93,
+      "question": "你好",
+      "category": "閒聊-打招呼",
+      "expected_type": "direct_answer",
+      "description": "打招呼",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:41.047161",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 94,
+      "question": "謝謝",
+      "category": "禮貌-感謝",
+      "expected_type": "direct_answer",
+      "description": "禮貌用語",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.8,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:44.863397",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 95,
+      "question": "測試",
+      "category": "測試-指令",
+      "expected_type": "direct_answer/unclear",
+      "description": "測試指令",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "unclear",
+        "intent_type": "unclear",
+        "confidence": 0.8,
+        "all_intents": [],
+        "secondary_intents": [],
+        "intent_ids": [],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:43.023308",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 96,
+      "question": "........................",
+      "category": "無效-符號",
+      "expected_type": "unclear",
+      "description": "無意義輸入",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 1.0
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "unclear",
+        "intent_type": "unclear",
+        "confidence": 1.0,
+        "all_intents": [],
+        "secondary_intents": [],
+        "intent_ids": [],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:44.122635",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 97,
+      "question": "123456",
+      "category": "無效-數字",
+      "expected_type": "unclear",
+      "description": "純數字輸入",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.8
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "unclear",
+        "intent_type": "unclear",
+        "confidence": 0.8,
+        "all_intents": [],
+        "secondary_intents": [],
+        "intent_ids": [],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:41.846910",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 98,
+      "question": "asdfghjkl",
+      "category": "無效-亂碼",
+      "expected_type": "unclear",
+      "description": "亂打字",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.5
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "unclear",
+        "intent_type": "unclear",
+        "confidence": 0.5,
+        "all_intents": [],
+        "secondary_intents": [],
+        "intent_ids": [],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:47.444856",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 99,
+      "question": "我想問一個超級超級長的問題就是關於租房子的事情我不知道該怎麼辦才好因為有很多狀況發生包括租金還有維修還有合約等等很多問題不知道該從何問起",
+      "category": "邊界-過長",
+      "expected_type": "unclear/form",
+      "description": "極長問題",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 0.9
+      },
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:48.835552",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 100,
+      "question": "a",
+      "category": "邊界-過短",
+      "expected_type": "unclear",
+      "description": "極短問題",
+      "status": "success",
+      "response": {
+        "intent": null,
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "knowledge_count": 0,
+        "sop_count": 0,
+        "action_type": null,
+        "form_id": null,
+        "confidence": 1.0
+      },
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "unclear",
+        "intent_type": "unclear",
+        "confidence": 1.0,
+        "all_intents": [],
+        "secondary_intents": [],
+        "intent_ids": [],
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T04:27:45.706262",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    }
+  ]
+}

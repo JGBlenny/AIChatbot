@@ -1,0 +1,396 @@
+{
+  "timestamp": "2026-02-12T14:58:41.102400",
+  "total": 6,
+  "success": 6,
+  "error": 0,
+  "action_type_distribution": {
+    "direct_answer": 6
+  },
+  "results": [
+    {
+      "id": 1,
+      "name": "direct_answer - 基本查詢",
+      "status": "success",
+      "action_type": "direct_answer",
+      "action_type_match": true,
+      "source_count": 0,
+      "source_count_match": false,
+      "intent_name": "參數查詢",
+      "intent_type": "config_param",
+      "confidence": 1.0,
+      "has_sources": false,
+      "answer_length": 45,
+      "raw_response": {
+        "answer": "我們的客服專線是 02-2345-6789，服務時間為週一至週日 09:00-21:00。",
+        "intent_name": "參數查詢",
+        "intent_type": "config_param",
+        "confidence": 1.0,
+        "all_intents": null,
+        "secondary_intents": null,
+        "intent_ids": null,
+        "action_type": "direct_answer",
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:58:30.419748Z",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 2,
+      "name": "direct_answer - 電費查詢",
+      "status": "success",
+      "action_type": "direct_answer",
+      "action_type_match": true,
+      "source_count": 3,
+      "source_count_match": true,
+      "intent_name": "電費查詢",
+      "intent_type": "knowledge",
+      "confidence": 0.9,
+      "has_sources": true,
+      "answer_length": 126,
+      "raw_response": {
+        "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。\n\n查詢方式：\n1. 提供完整的物件地址\n2. 系統會自動查詢該地址的電費寄送區間\n3. 立即告知您帳單寄送時間\n\n支援模糊匹配，即使地址不完全相同也能找到相近結果。",
+        "intent_name": "電費查詢",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "電費查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          30
+        ],
+        "action_type": "direct_answer",
+        "sources": [
+          {
+            "id": 1279,
+            "question_summary": "電費寄送區間查詢",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。\n\n查詢方式：\n1. 提供完整的物件地址\n2. 系統會自動查詢該地址的電費寄送區間\n3. 立即告知您帳單寄送時間\n\n支援模糊匹配，即使地址不完全相同也能找到相近結果。",
+            "scope": "global",
+            "vendor_id": 1,
+            "target_users": [
+              "customer",
+              "manager"
+            ]
+          },
+          {
+            "id": 1289,
+            "question_summary": "電費什麼時候繳",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 1289,
+            "question_summary": "電費什麼時候繳",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 3,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:58:32.170877",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 3,
+      "name": "direct_answer - 無相關知識",
+      "status": "success",
+      "action_type": "direct_answer",
+      "action_type_match": true,
+      "source_count": 0,
+      "source_count_match": true,
+      "intent_name": "常見問題",
+      "intent_type": "knowledge",
+      "confidence": 0.8,
+      "has_sources": false,
+      "answer_length": 73,
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.8,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "action_type": "direct_answer",
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:58:35.732941",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 4,
+      "name": "direct_answer - 不相關問題",
+      "status": "success",
+      "action_type": "direct_answer",
+      "action_type_match": true,
+      "source_count": 0,
+      "source_count_match": true,
+      "intent_name": "帳務查詢",
+      "intent_type": "data_query",
+      "confidence": 0.8,
+      "has_sources": false,
+      "answer_length": 73,
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "帳務查詢",
+        "intent_type": "data_query",
+        "confidence": 0.8,
+        "all_intents": [
+          "帳務查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          1
+        ],
+        "action_type": "direct_answer",
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:58:37.754875",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 5,
+      "name": "可能的 form_fill",
+      "status": "success",
+      "action_type": "direct_answer",
+      "action_type_match": true,
+      "source_count": 3,
+      "source_count_match": true,
+      "intent_name": "維修報修",
+      "intent_type": "knowledge",
+      "confidence": 0.9,
+      "has_sources": true,
+      "answer_length": 6,
+      "raw_response": {
+        "answer": "報修申請\n\n",
+        "intent_name": "維修報修",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "維修報修"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          3
+        ],
+        "action_type": "direct_answer",
+        "sources": [
+          {
+            "id": 1271,
+            "question_summary": "報修申請",
+            "answer": "",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 9,
+            "question_summary": "如何報修",
+            "answer": "您可以透過以下方式報修：\n1. 撥打客服專線：02-1234-5678\n2. LINE 官方帳號：@example\n3. 前往公司辦公室：台北市信義區範例路 123 號\n\n緊急報修我們會在 24 小時內處理。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 98,
+            "question_summary": "維修費用如何轉成帳單？",
+            "answer": "報修內按「建立帳單」。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 3,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:58:38.933760",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 6,
+      "name": "可能的 api_call",
+      "status": "success",
+      "action_type": "direct_answer",
+      "action_type_match": true,
+      "source_count": 5,
+      "source_count_match": true,
+      "intent_name": "帳務查詢",
+      "intent_type": "data_query",
+      "confidence": 0.9,
+      "has_sources": true,
+      "answer_length": 126,
+      "raw_response": {
+        "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。\n\n查詢方式：\n1. 提供完整的物件地址\n2. 系統會自動查詢該地址的電費寄送區間\n3. 立即告知您帳單寄送時間\n\n支援模糊匹配，即使地址不完全相同也能找到相近結果。",
+        "intent_name": "帳務查詢",
+        "intent_type": "data_query",
+        "confidence": 0.9,
+        "all_intents": [
+          "帳務查詢"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          1
+        ],
+        "action_type": "direct_answer",
+        "sources": [
+          {
+            "id": 1279,
+            "question_summary": "電費寄送區間查詢",
+            "answer": "📬 **電費寄送區間查詢服務**\n\n我可以協助您查詢物件的電費寄送區間（單月或雙月）。\n\n查詢方式：\n1. 提供完整的物件地址\n2. 系統會自動查詢該地址的電費寄送區間\n3. 立即告知您帳單寄送時間\n\n支援模糊匹配，即使地址不完全相同也能找到相近結果。",
+            "scope": "global",
+            "vendor_id": 1,
+            "target_users": [
+              "customer",
+              "manager"
+            ]
+          },
+          {
+            "id": 1269,
+            "question_summary": "帳單查詢（已登入用戶）",
+            "answer": "📌 **溫馨提醒**\n\n如果您未收到帳單郵件，請檢查：\n1. 垃圾郵件夾\n2. 郵箱地址是否正確\n3. 郵件過濾規則\n\n如仍有問題，請聯繫客服協助。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 1270,
+            "question_summary": "帳單查詢（訪客）",
+            "answer": "📌 **溫馨提醒**\n\n如果您未收到帳單郵件，請檢查：\n1. 垃圾郵件夾\n2. 郵箱地址是否正確\n3. 郵件過濾規則\n\n如仍有問題，請聯繫客服協助。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 95,
+            "question_summary": "租客在哪裡看帳單？",
+            "answer": "登入 JGB → 帳單列表即可。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          },
+          {
+            "id": 119,
+            "question_summary": "我該如何追蹤現金/轉帳匯款完成的帳單後續？",
+            "answer": "當您通知房東帳單已匯款後，此筆帳單會存放在「待查收」的分類下，待房東確認收到款項後，JGB 會寄送通知與 Mail 告知您，此時帳單會從「待查收」該為「已繳費」，您可展開帳單細節查看此筆帳單的生命歷程。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 5,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:58:41.094895",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    }
+  ]
+}

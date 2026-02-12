@@ -1,0 +1,616 @@
+{
+  "timestamp": "2026-02-12T14:59:59.058631",
+  "total": 13,
+  "success": 11,
+  "expected_fail": 1,
+  "error": 1,
+  "exception": 0,
+  "results": [
+    {
+      "id": 1,
+      "name": "空字串",
+      "status": "expected_fail",
+      "should_fail": true,
+      "http_status": 422
+    },
+    {
+      "id": 2,
+      "name": "純空白",
+      "status": "success",
+      "should_fail": false,
+      "action_type": "direct_answer",
+      "has_action_type": true,
+      "answer_length": 73,
+      "has_answer": true,
+      "error_in_answer": false,
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "action_type": "direct_answer",
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:59:40.541486",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 3,
+      "name": "極長文字",
+      "status": "error",
+      "http_status": 500,
+      "error": "{\"detail\":\"處理聊天請求失敗: Expecting value: line 1 column 1 (char 0)\"}"
+    },
+    {
+      "id": 4,
+      "name": "特殊符號",
+      "status": "success",
+      "should_fail": false,
+      "action_type": "direct_answer",
+      "has_action_type": true,
+      "answer_length": 59,
+      "has_answer": true,
+      "error_in_answer": false,
+      "raw_response": {
+        "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "action_type": "direct_answer",
+        "sources": [
+          {
+            "id": 2,
+            "question_summary": "每月繳費日期",
+            "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 53,
+            "question_summary": "租金是多少呢？是否租金是每月固定嗎？",
+            "answer": "租金金額一般在租賃合約中有明確規定，您可以參考您的租賃合約以確認每月租金金額。通常情況下，租金是固定的，即每個月支付相同金額，除非合約另有規定。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 2,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:59:42.329509",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 5,
+      "name": "SQL 注入嘗試",
+      "status": "success",
+      "should_fail": false,
+      "action_type": "direct_answer",
+      "has_action_type": true,
+      "answer_length": 59,
+      "has_answer": true,
+      "error_in_answer": false,
+      "raw_response": {
+        "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "action_type": "direct_answer",
+        "sources": [
+          {
+            "id": 2,
+            "question_summary": "每月繳費日期",
+            "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:59:43.818780",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 6,
+      "name": "XSS 嘗試",
+      "status": "success",
+      "should_fail": false,
+      "action_type": "direct_answer",
+      "has_action_type": true,
+      "answer_length": 59,
+      "has_answer": true,
+      "error_in_answer": false,
+      "raw_response": {
+        "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "action_type": "direct_answer",
+        "sources": [
+          {
+            "id": 2,
+            "question_summary": "每月繳費日期",
+            "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:59:45.004821",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 7,
+      "name": "Emoji 輸入",
+      "status": "success",
+      "should_fail": false,
+      "action_type": "direct_answer",
+      "has_action_type": true,
+      "answer_length": 59,
+      "has_answer": true,
+      "error_in_answer": false,
+      "raw_response": {
+        "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "action_type": "direct_answer",
+        "sources": [
+          {
+            "id": 2,
+            "question_summary": "每月繳費日期",
+            "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 53,
+            "question_summary": "租金是多少呢？是否租金是每月固定嗎？",
+            "answer": "租金金額一般在租賃合約中有明確規定，您可以參考您的租賃合約以確認每月租金金額。通常情況下，租金是固定的，即每個月支付相同金額，除非合約另有規定。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 2,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:59:46.483331",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 8,
+      "name": "多語言混合",
+      "status": "success",
+      "should_fail": false,
+      "action_type": "direct_answer",
+      "has_action_type": true,
+      "answer_length": 59,
+      "has_answer": true,
+      "error_in_answer": false,
+      "raw_response": {
+        "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "action_type": "direct_answer",
+        "sources": [
+          {
+            "id": 2,
+            "question_summary": "每月繳費日期",
+            "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 53,
+            "question_summary": "租金是多少呢？是否租金是每月固定嗎？",
+            "answer": "租金金額一般在租賃合約中有明確規定，您可以參考您的租賃合約以確認每月租金金額。通常情況下，租金是固定的，即每個月支付相同金額，除非合約另有規定。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 2,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:59:47.637653",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 9,
+      "name": "特殊 Unicode",
+      "status": "success",
+      "should_fail": false,
+      "action_type": "direct_answer",
+      "has_action_type": true,
+      "answer_length": 59,
+      "has_answer": true,
+      "error_in_answer": false,
+      "raw_response": {
+        "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "action_type": "direct_answer",
+        "sources": [
+          {
+            "id": 2,
+            "question_summary": "每月繳費日期",
+            "answer": "您的租金繳費日為每月 5 號，請務必在期限前完成繳費。如果超過繳費日 3 天仍未繳納，將加收 300 元的逾期手續費。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": null
+          },
+          {
+            "id": 53,
+            "question_summary": "租金是多少呢？是否租金是每月固定嗎？",
+            "answer": "租金金額一般在租賃合約中有明確規定，您可以參考您的租賃合約以確認每月租金金額。通常情況下，租金是固定的，即每個月支付相同金額，除非合約另有規定。",
+            "scope": "global",
+            "vendor_id": null,
+            "target_users": [
+              "tenant"
+            ]
+          }
+        ],
+        "source_count": 2,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:59:49.104940",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 10,
+      "name": "多行輸入",
+      "status": "success",
+      "should_fail": false,
+      "action_type": "direct_answer",
+      "has_action_type": true,
+      "answer_length": 39,
+      "has_answer": true,
+      "error_in_answer": false,
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "action_type": "direct_answer",
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:59:51.576606",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 11,
+      "name": "Tab 字元",
+      "status": "success",
+      "should_fail": false,
+      "action_type": "direct_answer",
+      "has_action_type": true,
+      "answer_length": 39,
+      "has_answer": true,
+      "error_in_answer": false,
+      "raw_response": {
+        "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+        "intent_name": "租金繳費",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "租金繳費"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          10
+        ],
+        "action_type": "direct_answer",
+        "sources": [
+          {
+            "id": 73,
+            "question_summary": "租金支付方式",
+            "answer": "登入JGB系統查看當月租金及繳款帳號。\n可通過銀行轉帳、信用卡支付或現金支付。",
+            "scope": "vendor_sop",
+            "vendor_id": null,
+            "target_users": null
+          }
+        ],
+        "source_count": 1,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:59:53.991675",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": false,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 12,
+      "name": "純數字",
+      "status": "success",
+      "should_fail": false,
+      "action_type": "direct_answer",
+      "has_action_type": true,
+      "answer_length": 73,
+      "has_answer": true,
+      "error_in_answer": false,
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "unclear",
+        "intent_type": "unclear",
+        "confidence": 0.8,
+        "all_intents": [],
+        "secondary_intents": [],
+        "intent_ids": [],
+        "action_type": "direct_answer",
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:59:56.284610",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    },
+    {
+      "id": 13,
+      "name": "超大數字",
+      "status": "success",
+      "should_fail": false,
+      "action_type": "direct_answer",
+      "has_action_type": true,
+      "answer_length": 73,
+      "has_answer": true,
+      "error_in_answer": false,
+      "raw_response": {
+        "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+        "intent_name": "常見問題",
+        "intent_type": "knowledge",
+        "confidence": 0.9,
+        "all_intents": [
+          "常見問題"
+        ],
+        "secondary_intents": [],
+        "intent_ids": [
+          15
+        ],
+        "action_type": "direct_answer",
+        "sources": [],
+        "source_count": 0,
+        "vendor_id": 1,
+        "mode": "b2c",
+        "session_id": null,
+        "timestamp": "2026-02-12T06:59:59.047756",
+        "video_url": null,
+        "video_file_size": null,
+        "video_duration": null,
+        "video_format": null,
+        "form_triggered": null,
+        "form_completed": null,
+        "form_cancelled": null,
+        "form_id": null,
+        "current_field": null,
+        "progress": null,
+        "allow_resume": null,
+        "quick_replies": null,
+        "debug_info": null
+      }
+    }
+  ]
+}

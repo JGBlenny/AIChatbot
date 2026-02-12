@@ -1,6 +1,6 @@
 """
 共用聊天邏輯模組
-供 chat.py 和 chat_stream.py 共用，避免程式碼重複
+供 chat.py 使用，避免程式碼重複
 
 包含：
 - SOP 檢索邏輯
@@ -26,7 +26,7 @@ async def retrieve_sop_async(
     top_k: int = 5
 ) -> list:
     """
-    檢索 SOP（異步版本，供 chat_stream 使用）
+    檢索 SOP（異步版本，供 chat.py 使用）
 
     Args:
         vendor_id: 業者 ID
