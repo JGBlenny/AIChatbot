@@ -1663,7 +1663,7 @@ async def _build_knowledge_response(
         'keywords': k.get('keywords', [])        # 添加 keywords 供信心度評估
     } for k in filtered_knowledge_list]
 
-    # 使用 ConfidenceEvaluator 評估信心度（與 /v1/chat/stream 統一）
+    # 使用 ConfidenceEvaluator 評估信心度
     evaluation = confidence_evaluator.evaluate(
         search_results=search_results,
         question_keywords=intent_result.get('keywords', [])
@@ -1825,9 +1825,9 @@ async def _build_knowledge_response(
 #    - 支持業者參數配置
 #    - 支持多 Intent 檢索
 #
-# 2. /api/v1/chat/stream - 流式聊天端點
-#    - 提供即時反饋
-#    - 更好的用戶體驗
+# 2. /api/v1/chat/stream - 流式聊天端點 (已移除)
+#    - 已於 2026-02 移除
+#    - 統一使用 /api/v1/message 端點
 #
 # 詳見：
 # - docs/api/CHAT_ENDPOINT_REMOVAL_AUDIT.md (盤查報告)
