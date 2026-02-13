@@ -21,12 +21,12 @@ from pathlib import Path
 from typing import List, Dict, Optional
 from datetime import datetime
 from docx import Document
-import openai
 import asyncpg
 from asyncpg.pool import Pool
 
 # 引入統一 Job 服務
 from services.unified_job_service import UnifiedJobService
+from services.llm_provider import get_llm_provider, LLMProvider
 
 
 class DocumentConverterService(UnifiedJobService):
@@ -39,11 +39,11 @@ class DocumentConverterService(UnifiedJobService):
         'gpt-3.5-turbo': 16385
     }
 
-    def __init__(self, db_pool: Optional[Pool] = None):
+    def __init__(self, db_pool: Optional[Pool] = None, llm_provider: Optional[LLMProvider] = None):
         # 初始化父類（統一 Job 服務）
         super().__init__(db_pool)
 
-        self.openai_api_key = os.getenv('OPENAI_API_KEY')
+        self.llm_provider = llm_provider or get_llm_provider()
         # 規格書轉換專用模型（需要更強的理解能力和大 context）
         self.model = os.getenv('DOCUMENT_CONVERTER_MODEL', os.getenv('KNOWLEDGE_GEN_MODEL', 'gpt-4o'))
         self.temp_dir = Path('/tmp/document_converter')
@@ -443,8 +443,6 @@ class DocumentConverterService(UnifiedJobService):
 請只返回 JSON 格式的輸出，不要包含其他說明文字。"""
 
         try:
-            client = openai.OpenAI(api_key=self.openai_api_key)
-
             # 計算安全的 max_tokens
             # 估算輸入 tokens（中文約 1 字 = 2 tokens，包含 system + prompt + content）
             estimated_input_tokens = len(content) * 2 + 1000  # +1000 for system and prompt
@@ -461,7 +459,7 @@ class DocumentConverterService(UnifiedJobService):
 
             print(f"   📊 Token 估算: 輸入 ~{estimated_input_tokens}, 輸出上限 {safe_max_tokens}")
 
-            response = client.chat.completions.create(
+            llm_result = self.llm_provider.chat_completion(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "你是一個專業的知識庫管理專家，擅長從技術規格書中提取實用的Q&A。請仔細分析文件內容，提取對使用者有實際幫助的問答對。"},
@@ -471,7 +469,7 @@ class DocumentConverterService(UnifiedJobService):
                 max_tokens=safe_max_tokens  # 設置動態計算的安全上限
             )
 
-            result_text = response.choices[0].message.content.strip()
+            result_text = llm_result['content'].strip()
 
             # 嘗試解析 JSON
             # 移除可能的 markdown code block 標記
@@ -664,8 +662,7 @@ class DocumentConverterService(UnifiedJobService):
 
 只輸出 JSON，不要加其他說明。"""
 
-            client = openai.OpenAI(api_key=self.openai_api_key)
-            response = client.chat.completions.create(
+            llm_result = self.llm_provider.chat_completion(
                 model=self.model,
                 temperature=0.3,
                 max_tokens=500,  # 意圖推薦只需要小量輸出
@@ -673,7 +670,7 @@ class DocumentConverterService(UnifiedJobService):
                 messages=[{"role": "user", "content": prompt}]
             )
 
-            result = json.loads(response.choices[0].message.content)
+            result = json.loads(llm_result['content'])
 
             return {
                 'intent_id': result.get('intent_id'),
