@@ -17,7 +17,15 @@ import time
 from typing import Optional
 
 # 添加服務路徑
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'rag-orchestrator'))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(script_dir)
+rag_orchestrator_path = os.path.join(project_root, 'rag-orchestrator')
+
+# 如果在 Docker 容器內，直接使用 /app
+if os.path.exists('/.dockerenv'):
+    sys.path.insert(0, '/app')
+else:
+    sys.path.append(rag_orchestrator_path)
 
 
 def get_db_config():
