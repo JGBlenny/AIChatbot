@@ -296,10 +296,14 @@ router.beforeEach(async (to, from, next) => {
     try {
       await authStore.fetchUserPermissions()
     } catch (err) {
-      console.error('載入權限失敗:', err)
-      // 如果載入權限失敗，可能是 token 過期，登出並重定向到登入頁
+      console.error('載入權限失敗，可能是 token 過期:', err)
+      // Token 過期或無效，清除狀態並重定向到登入頁
+      // 不要顯示權限錯誤訊息，直接跳轉登入
       authStore.logout()
-      return next({ name: 'Login', query: { redirect: to.fullPath } })
+      return next({
+        name: 'Login',
+        query: { redirect: to.fullPath }
+      })
     }
   }
 
@@ -308,10 +312,11 @@ router.beforeEach(async (to, from, next) => {
     const hasPermission = authStore.hasAnyPermission(to.meta.permissions)
 
     if (!hasPermission) {
-      // 無權限，顯示警告並停留在當前頁面
+      // 真正的權限不足（用戶已登入但沒有所需權限）
       console.warn(`缺少權限: ${to.meta.permissions.join(', ')}`)
       alert('您沒有權限訪問此頁面')
-      return next(false)  // 取消導航
+      // 重定向到首頁而非停留
+      return next({ name: 'Home' })
     }
   }
 
@@ -320,9 +325,11 @@ router.beforeEach(async (to, from, next) => {
     const hasRole = to.meta.roles.some(role => authStore.hasRole(role))
 
     if (!hasRole) {
+      // 真正的角色不足（用戶已登入但沒有所需角色）
       console.warn(`缺少角色: ${to.meta.roles.join(', ')}`)
       alert('您沒有權限訪問此頁面')
-      return next(false)
+      // 重定向到首頁而非停留
+      return next({ name: 'Home' })
     }
   }
 
