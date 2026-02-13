@@ -1,6 +1,6 @@
 """
 意圖分類服務
-使用 OpenAI Function Calling 自動識別使用者問題的意圖類型
+使用 LLM Function Calling 自動識別使用者問題的意圖類型
 """
 import os
 import yaml
@@ -8,23 +8,29 @@ import psycopg2
 import psycopg2.extras
 from typing import Dict, List, Optional
 from pathlib import Path
-from openai import OpenAI
 from datetime import datetime
 from .db_utils import get_db_config
+from .llm_provider import get_llm_provider, LLMProvider
 
 
 class IntentClassifier:
     """意圖分類器"""
 
-    def __init__(self, config_path: Optional[str] = None, use_database: bool = True):
+    def __init__(
+        self,
+        config_path: Optional[str] = None,
+        use_database: bool = True,
+        llm_provider: Optional[LLMProvider] = None
+    ):
         """
         初始化意圖分類器
 
         Args:
             config_path: intents.yaml 配置文件路徑（fallback 使用）
             use_database: 是否從資料庫載入意圖（預設 True）
+            llm_provider: LLM Provider 實例（可選，默認使用全域 Provider）
         """
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.llm_provider = llm_provider or get_llm_provider()
         self.use_database = use_database
         self.last_reload = None
 
@@ -312,18 +318,21 @@ class IntentClassifier:
 請仔細分析問題的語義，為每個意圖提供精確的信心度評分。
 """
 
-        # 呼叫 OpenAI API
-        response = self.client.chat.completions.create(
+        # 呼叫 LLM API
+        llm_result = self.llm_provider.chat_completion(
             model=self.classifier_config['model'],
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": question}
             ],
-            functions=functions,
-            function_call={"name": "classify_intent"},
             temperature=self.classifier_config['temperature'],
-            max_tokens=self.classifier_config['max_tokens']
+            max_tokens=self.classifier_config['max_tokens'],
+            functions=functions,
+            function_call={"name": "classify_intent"}
         )
+
+        # 從 raw_response 取得原始回應(用於 function calling)
+        response = llm_result['raw_response']
 
         # 解析結果
         function_call = response.choices[0].message.function_call

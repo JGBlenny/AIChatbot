@@ -1,6 +1,6 @@
 """
 LLM 答案優化服務
-使用 GPT 模型優化 RAG 檢索結果，生成更自然、更精準的答案
+使用 LLM 模型優化 RAG 檢索結果，生成更自然、更精準的答案
 Phase 1 擴展：支援業者參數動態注入
 Phase 3 擴展：條件式優化（快速路徑 + 模板格式化）
 Phase 4 擴展：業態語氣配置從資料庫動態載入
@@ -8,12 +8,12 @@ Phase 4 擴展：業態語氣配置從資料庫動態載入
 import os
 import re
 from typing import List, Dict, Optional
-from openai import OpenAI
 import time
 import psycopg2
 import psycopg2.extras
 from .answer_formatter import AnswerFormatter
 from .db_utils import get_db_config
+from .llm_provider import get_llm_provider, LLMProvider
 
 # 業態語氣配置快取（避免頻繁查詢資料庫）
 _TONE_CONFIG_CACHE: Optional[Dict[str, Dict]] = None
@@ -24,16 +24,16 @@ _TONE_CACHE_TTL = 300  # 5 分鐘快取
 class LLMAnswerOptimizer:
     """LLM 答案優化器"""
 
-    def __init__(self, config: Dict = None):
+    def __init__(self, config: Dict = None, llm_provider: Optional[LLMProvider] = None):
         """
         初始化 LLM 答案優化器
 
         Args:
             config: 配置字典
+            llm_provider: LLM Provider 實例（可選，默認使用全域 Provider）
         """
-        # 延遲初始化：只有在需要時才檢查 API key
-        api_key = os.getenv("OPENAI_API_KEY")
-        self.client = OpenAI(api_key=api_key) if api_key else None
+        # 使用 LLM Provider 抽象層
+        self.llm_provider = llm_provider or get_llm_provider()
 
         # 從環境變數讀取模型配置（用於降低測試成本）
         # 預設使用 gpt-3.5-turbo（速度快 2-3倍，成本低 70%）
@@ -696,12 +696,9 @@ class LLMAnswerOptimizer:
 {content}"""
 
         try:
-            if not self.client:
-                raise Exception("OpenAI client not initialized (missing API key)")
-
             # 方案 C: 語氣調整專用，temperature 0.3 足夠（不做參數替換）
             tone_adjustment_temp = float(os.getenv("LLM_TONE_ADJUSTMENT_TEMP", "0.3"))
-            response = self.client.chat.completions.create(
+            result = self.llm_provider.chat_completion(
                 model=self.config["model"],
                 temperature=tone_adjustment_temp,  # 預設 0.3
                 max_tokens=self.config["max_tokens"],
@@ -711,7 +708,7 @@ class LLMAnswerOptimizer:
                 ]
             )
 
-            adjusted_content = response.choices[0].message.content.strip()
+            adjusted_content = result['content'].strip()
 
             # 檢查內容是否有變化
             if adjusted_content != content:
@@ -790,13 +787,9 @@ class LLMAnswerOptimizer:
         system_prompt = self._create_synthesis_system_prompt(intent_info, vendor_name, vendor_info, vendor_params)
         user_prompt = self._create_synthesis_user_prompt(question, formatted_answers, intent_info)
 
-        # 檢查 API key
-        if not self.client:
-            raise Exception("OpenAI client not initialized (missing API key)")
-
-        # 呼叫 OpenAI API 進行合成
+        # 呼叫 LLM API 進行合成
         synthesis_temp = float(os.getenv("LLM_SYNTHESIS_TEMP", "0.5"))
-        response = self.client.chat.completions.create(
+        result = self.llm_provider.chat_completion(
             model=self.config["model"],
             temperature=synthesis_temp,  # 從環境變數讀取，稍低溫度以確保準確性和結構
             max_tokens=self.config["max_tokens"],
@@ -806,8 +799,8 @@ class LLMAnswerOptimizer:
             ]
         )
 
-        synthesized_answer = response.choices[0].message.content
-        tokens_used = response.usage.total_tokens
+        synthesized_answer = result['content']
+        tokens_used = result['usage'].get('total_tokens', 0)
 
         print(f"✨ 答案合成完成：使用了 {len(answers_to_synthesize)} 個來源，tokens: {tokens_used}")
 
@@ -1000,12 +993,8 @@ class LLMAnswerOptimizer:
         system_prompt = self._create_system_prompt(intent_info, vendor_name, vendor_info, vendor_params)
         user_prompt = self._create_user_prompt(question, context, intent_info)
 
-        # 檢查 API key
-        if not self.client:
-            raise Exception("OpenAI client not initialized (missing API key)")
-
-        # 3. 呼叫 OpenAI API
-        response = self.client.chat.completions.create(
+        # 3. 呼叫 LLM API
+        result = self.llm_provider.chat_completion(
             model=self.config["model"],
             temperature=self.config["temperature"],
             max_tokens=self.config["max_tokens"],
@@ -1015,8 +1004,8 @@ class LLMAnswerOptimizer:
             ]
         )
 
-        optimized_answer = response.choices[0].message.content
-        tokens_used = response.usage.total_tokens
+        optimized_answer = result['content']
+        tokens_used = result['usage'].get('total_tokens', 0)
 
         return optimized_answer, tokens_used
 

@@ -11,7 +11,7 @@ import psycopg2
 import psycopg2.extras
 from typing import Dict, List, Optional, Any
 from datetime import datetime
-from openai import OpenAI
+from .llm_provider import get_llm_provider, LLMProvider
 from .db_utils import get_db_config
 from .embedding_utils import get_embedding_client
 
@@ -19,9 +19,9 @@ from .embedding_utils import get_embedding_client
 class IntentSuggestionEngine:
     """意圖建議引擎"""
 
-    def __init__(self):
+    def __init__(self, llm_provider: Optional[LLMProvider] = None):
         """初始化引擎"""
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.llm_provider = llm_provider or get_llm_provider()
 
         # Embedding 客戶端
         self.embedding_client = get_embedding_client()
@@ -29,8 +29,8 @@ class IntentSuggestionEngine:
         # 業務範圍 cache (vendor_id -> business_scope)
         self._business_scope_cache = {}
 
-        # OpenAI 配置
-        self.model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+        # LLM 配置
+        self.model = os.getenv("INTENT_CLASSIFIER_MODEL", "gpt-3.5-turbo")
         self.temperature = float(os.getenv("INTENT_SUGGESTION_TEMP", "0.2"))
         self.max_tokens = int(os.getenv("INTENT_SUGGESTION_MAX_TOKENS", "800"))
 
@@ -239,21 +239,22 @@ class IntentSuggestionEngine:
         if conversation_context:
             user_message += f"\n\n對話上下文：{conversation_context}"
 
-        # 呼叫 OpenAI API
+        # 呼叫 LLM API
         try:
-            response = self.client.chat.completions.create(
+            llm_result = self.llm_provider.chat_completion(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message}
                 ],
-                functions=functions,
-                function_call={"name": "analyze_business_relevance"},
                 temperature=self.temperature,
-                max_tokens=self.max_tokens
+                max_tokens=self.max_tokens,
+                functions=functions,
+                function_call={"name": "analyze_business_relevance"}
             )
 
-            # 解析結果
+            # 解析結果（需要使用 raw_response 獲取 function_call）
+            response = llm_result['raw_response']
             function_call = response.choices[0].message.function_call
             if function_call and function_call.name == "analyze_business_relevance":
                 result = json.loads(function_call.arguments)
