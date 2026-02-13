@@ -6,7 +6,7 @@ import os
 import httpx
 from abc import ABC, abstractmethod
 from typing import Optional, List, Dict, Any, Union
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 
 
 class LLMProvider(ABC):
@@ -80,6 +80,7 @@ class OpenAIProvider(LLMProvider):
             raise ValueError("OPENAI_API_KEY 未設定")
 
         self.client = OpenAI(api_key=self.api_key)
+        self.async_client = AsyncOpenAI(api_key=self.api_key)
         self.provider_name = "OpenAI"
 
     def chat_completion(
@@ -132,6 +133,55 @@ class OpenAIProvider(LLMProvider):
             return response.data[0].embedding
         except Exception as e:
             print(f"❌ OpenAI Embedding 生成失敗: {e}")
+            return None
+
+    async def async_chat_completion(
+        self,
+        model: str,
+        messages: List[Dict[str, str]],
+        temperature: float = 0.7,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """執行異步 OpenAI 聊天完成請求"""
+        try:
+            response = await self.async_client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                **kwargs
+            )
+
+            # 統一回傳格式
+            return {
+                'content': response.choices[0].message.content,
+                'usage': {
+                    'prompt_tokens': response.usage.prompt_tokens if response.usage else 0,
+                    'completion_tokens': response.usage.completion_tokens if response.usage else 0,
+                    'total_tokens': response.usage.total_tokens if response.usage else 0
+                },
+                'raw_response': response  # 保留原始回應供 function calling 使用
+            }
+        except Exception as e:
+            print(f"❌ OpenAI Async Chat Completion 失敗: {e}")
+            raise
+
+    async def async_embedding(
+        self,
+        text: str,
+        model: Optional[str] = None
+    ) -> Optional[List[float]]:
+        """生成異步 OpenAI embedding"""
+        try:
+            model = model or os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
+            response = await self.async_client.embeddings.create(
+                model=model,
+                input=text
+            )
+            return response.data[0].embedding
+        except Exception as e:
+            print(f"❌ OpenAI Async Embedding 生成失敗: {e}")
             return None
 
 

@@ -14,26 +14,27 @@ from pathlib import Path
 import pandas as pd
 import asyncpg
 from asyncpg.pool import Pool
-from openai import AsyncOpenAI
 import time
 
 # 引入統一 Job 服務
 from services.unified_job_service import UnifiedJobService
+from services.llm_provider import get_llm_provider, LLMProvider
 
 
 class KnowledgeImportService(UnifiedJobService):
     """知識匯入服務（已整合到統一 Job 系統）"""
 
-    def __init__(self, db_pool: Pool):
+    def __init__(self, db_pool: Pool, llm_provider: Optional[LLMProvider] = None):
         """
         初始化知識匯入服務
 
         Args:
             db_pool: 資料庫連接池
+            llm_provider: LLM Provider（可選，默認使用全域 Provider）
         """
         # 初始化父類（統一 Job 服務）
         super().__init__(db_pool)
-        self.openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.llm_provider = llm_provider or get_llm_provider()
         self.embedding_model = "text-embedding-3-small"
         # 知識匯入使用 DOCUMENT_CONVERTER_MODEL（需要大 context 處理長文本）
         # 優先順序：DOCUMENT_CONVERTER_MODEL > KNOWLEDGE_GEN_MODEL > gpt-4o
@@ -865,7 +866,7 @@ class KnowledgeImportService(UnifiedJobService):
         max_retries = 3
         for retry in range(max_retries):
             try:
-                response = await self.openai_client.chat.completions.create(
+                llm_result = await self.llm_provider.async_chat_completion(
                     model=self.llm_model,
                     temperature=0,  # 改為 0，確保一致性
                     max_tokens=max_tokens,  # 動態設定
@@ -876,7 +877,7 @@ class KnowledgeImportService(UnifiedJobService):
                     ]
                 )
 
-                result = json.loads(response.choices[0].message.content)
+                result = json.loads(llm_result['content'])
                 knowledge_list = result.get('knowledge_list', [])
                 break  # 成功則跳出
 
@@ -1040,7 +1041,7 @@ class KnowledgeImportService(UnifiedJobService):
             max_retries = 3
             for retry in range(max_retries):
                 try:
-                    response = await self.openai_client.chat.completions.create(
+                    llm_result = await self.llm_provider.async_chat_completion(
                         model=self.llm_model,
                         temperature=0,  # 確保一致性
                         max_tokens=4000,  # 提高到 4000
@@ -1051,7 +1052,7 @@ class KnowledgeImportService(UnifiedJobService):
                         ]
                     )
 
-                    result = json.loads(response.choices[0].message.content)
+                    result = json.loads(llm_result['content'])
                     knowledge_list = result.get('knowledge_list', [])
 
                     print(f"      提取 {len(knowledge_list)} 個知識")
@@ -1188,14 +1189,14 @@ class KnowledgeImportService(UnifiedJobService):
 
 只輸出問題摘要，不要加其他說明。"""
 
-                response = await self.openai_client.chat.completions.create(
+                llm_result = await self.llm_provider.async_chat_completion(
                     model=self.llm_model,
                     temperature=0.3,
                     max_tokens=50,
                     messages=[{"role": "user", "content": prompt}]
                 )
 
-                question_summary = response.choices[0].message.content.strip()
+                question_summary = llm_result['content'].strip()
                 knowledge['question_summary'] = question_summary
 
                 # 避免 rate limit
@@ -1223,12 +1224,12 @@ class KnowledgeImportService(UnifiedJobService):
                 # 原因：answer 包含的格式化內容、操作步驟會稀釋語意
                 text = knowledge['question_summary']
 
-                response = await self.openai_client.embeddings.create(
-                    model=self.embedding_model,
-                    input=text
+                embedding = await self.llm_provider.async_embedding(
+                    text=text,
+                    model=self.embedding_model
                 )
 
-                knowledge['embedding'] = response.data[0].embedding
+                knowledge['embedding'] = embedding
 
                 if idx % 10 == 0:
                     print(f"   進度: {idx}/{len(knowledge_list)}")
@@ -1506,7 +1507,7 @@ class KnowledgeImportService(UnifiedJobService):
 
 只輸出 JSON，不要加其他說明。"""
 
-                response = await self.openai_client.chat.completions.create(
+                llm_result = await self.llm_provider.async_chat_completion(
                     model=self.llm_model,
                     temperature=0.3,
                     max_tokens=500,  # 意圖推薦只需小量輸出
@@ -1514,7 +1515,7 @@ class KnowledgeImportService(UnifiedJobService):
                     messages=[{"role": "user", "content": prompt}]
                 )
 
-                result = json.loads(response.choices[0].message.content)
+                result = json.loads(llm_result['content'])
 
                 # 儲存推薦結果
                 knowledge['recommended_intent'] = {
@@ -1610,7 +1611,7 @@ class KnowledgeImportService(UnifiedJobService):
 
 只輸出 JSON，不要加其他說明。"""
 
-                response = await self.openai_client.chat.completions.create(
+                llm_result = await self.llm_provider.async_chat_completion(
                     model=self.llm_model,
                     temperature=0.3,
                     max_tokens=500,  # 質量評估只需小量輸出
@@ -1618,7 +1619,7 @@ class KnowledgeImportService(UnifiedJobService):
                     messages=[{"role": "user", "content": prompt}]
                 )
 
-                result = json.loads(response.choices[0].message.content)
+                result = json.loads(llm_result['content'])
 
                 # 儲存評估結果
                 knowledge['quality_evaluation'] = {
