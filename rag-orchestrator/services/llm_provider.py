@@ -353,51 +353,83 @@ class OllamaProvider(LLMProvider):
 
 
 # ============================================================
-# Factory 函數（推薦使用方式）
+# Factory 函數（支援混合 Provider 配置）
 # ============================================================
 
-_default_provider = None
+# Provider 實例緩存（支援多個 Provider 共存）
+_provider_cache: Dict[str, LLMProvider] = {}
 
 
 def get_llm_provider(
     provider_type: Optional[str] = None,
+    service_name: Optional[str] = None,
     reset: bool = False
 ) -> LLMProvider:
     """
-    獲取 LLM Provider（單例模式）
+    獲取 LLM Provider（支援混合配置）
 
     Args:
         provider_type: Provider 類型 ('openai', 'openrouter', 'ollama')
-                      若為 None，則從環境變數 LLM_PROVIDER 讀取
-        reset: 是否重置單例（用於測試）
+                      若為 None，則從環境變數讀取
+        service_name: 服務名稱（用於查找服務專屬的 Provider 配置）
+                     例如: 'intent_classifier', 'answer_optimizer', 'embedding'
+        reset: 是否重置緩存（用於測試）
 
     Returns:
         LLMProvider 實例
 
-    環境變數:
-        LLM_PROVIDER: 'openai' | 'openrouter' | 'ollama'（默認: openai）
-        OPENAI_API_KEY: OpenAI API Key
-        OPENROUTER_API_KEY: OpenRouter API Key
-        OLLAMA_API_URL: Ollama API URL（默認: http://localhost:11434）
+    環境變數（按優先級）:
+        1. {SERVICE_NAME}_PROVIDER: 服務專屬 Provider（最高優先級）
+        2. LLM_PROVIDER: 全域預設 Provider
+        3. 默認: 'openai'
+
+    範例:
+        # 使用全域 Provider
+        provider = get_llm_provider()
+
+        # 為特定服務使用專屬 Provider
+        provider = get_llm_provider(service_name='intent_classifier')
+        # 會查找 INTENT_CLASSIFIER_PROVIDER 環境變數
+
+        # 直接指定 Provider 類型
+        provider = get_llm_provider(provider_type='openrouter')
     """
-    global _default_provider
+    global _provider_cache
 
     if reset:
-        _default_provider = None
+        _provider_cache = {}
 
-    if _default_provider is None:
-        provider_type = provider_type or os.getenv("LLM_PROVIDER", "openai").lower()
+    # 決定使用哪個 Provider
+    if provider_type is None:
+        if service_name:
+            # 優先使用服務專屬的 Provider 配置
+            env_key = f"{service_name.upper()}_PROVIDER"
+            provider_type = os.getenv(env_key)
 
+        # 若服務專屬配置不存在，使用全域配置
+        if not provider_type:
+            provider_type = os.getenv("LLM_PROVIDER", "openai")
+
+    provider_type = provider_type.lower()
+
+    # 從緩存獲取或創建新的 Provider 實例
+    if provider_type not in _provider_cache:
         if provider_type == "openrouter":
-            _default_provider = OpenRouterProvider()
+            _provider_cache[provider_type] = OpenRouterProvider()
         elif provider_type == "ollama":
-            _default_provider = OllamaProvider()
+            _provider_cache[provider_type] = OllamaProvider()
         else:  # 默認使用 openai
-            _default_provider = OpenAIProvider()
+            _provider_cache[provider_type] = OpenAIProvider()
 
-        print(f"🔧 [LLM Provider] 使用 Provider: {_default_provider.provider_name}")
+        print(f"🔧 [LLM Provider] 初始化 {provider_type.upper()} Provider")
 
-    return _default_provider
+    provider = _provider_cache[provider_type]
+
+    # 只在首次調用或服務切換時打印日誌
+    if service_name:
+        print(f"🔧 [LLM Provider] {service_name} 使用: {provider.provider_name}")
+
+    return provider
 
 
 # ============================================================
