@@ -101,7 +101,7 @@ services:
     container_name: aichatbot-knowledge-admin-web
     command: ["nginx", "-g", "daemon off;"]
     ports:
-      - "80:80"  # 只映射 80 端口，不再有 8087
+      - "${WEB_PORT:-80}:80"  # 本地用 8087，線上用 80（透過 .env 設定）
     volumes:
       - ./knowledge-admin/frontend/dist:/usr/share/nginx/html:ro
       - ./knowledge-admin/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro

@@ -11,8 +11,8 @@
 ```
 guides/
 ├── getting-started/    # 快速開始 (3 個文件)
-├── development/        # 開發相關 (8 個文件)
-├── deployment/         # 部署相關 (5 個文件)
+├── development/        # 開發相關 (7 個文件)
+├── deployment/         # 部署相關 (4 個文件)
 ├── api/               # API 相關 (3 個文件)
 ├── features/          # 功能使用 (7 個文件)
 ├── migration/         # 遷移指南 (2 個文件)
@@ -39,7 +39,6 @@ guides/
 
 | 文檔 | 說明 |
 |------|------|
-| [DEVELOPMENT_WORKFLOW.md](./development/DEVELOPMENT_WORKFLOW.md) | 開發工作流程 |
 | [FRONTEND_DEV_MODE.md](./development/FRONTEND_DEV_MODE.md) | 前端開發模式設置 |
 | [FRONTEND_USAGE_GUIDE.md](./development/FRONTEND_USAGE_GUIDE.md) | 前端使用指南 |
 | [FRONTEND_VERIFY.md](./development/FRONTEND_VERIFY.md) | 前端驗證步驟 |
@@ -58,7 +57,6 @@ guides/
 |------|------|
 | [AUTH_DEPLOYMENT_GUIDE.md](./deployment/AUTH_DEPLOYMENT_GUIDE.md) | 認證系統部署指南 |
 | [AWS_S3_VIDEO_SETUP.md](./deployment/AWS_S3_VIDEO_SETUP.md) | AWS S3 視頻設置 |
-| [DOCKER_COMPOSE_GUIDE.md](./deployment/DOCKER_COMPOSE_GUIDE.md) | Docker Compose 使用指南 |
 | [ENVIRONMENT_VARIABLES.md](./deployment/ENVIRONMENT_VARIABLES.md) | 環境變量配置完整說明 |
 | [PGVECTOR_SETUP.md](./deployment/PGVECTOR_SETUP.md) | pgVector 向量資料庫設置 |
 
@@ -127,9 +125,9 @@ guides/
 3. 如需從 Excel 匯入，參考 [SOP_EXCEL_IMPORT_GUIDE.md](./features/SOP_EXCEL_IMPORT_GUIDE.md)
 
 ### 任務 3: 我要部署到生產環境
-1. 閱讀 [DOCKER_COMPOSE_GUIDE.md](./deployment/DOCKER_COMPOSE_GUIDE.md)
-2. 配置 [ENVIRONMENT_VARIABLES.md](./deployment/ENVIRONMENT_VARIABLES.md)
-3. 設置 [PGVECTOR_SETUP.md](./deployment/PGVECTOR_SETUP.md)
+1. 配置 [ENVIRONMENT_VARIABLES.md](./deployment/ENVIRONMENT_VARIABLES.md)
+2. 設置 [PGVECTOR_SETUP.md](./deployment/PGVECTOR_SETUP.md)
+3. 參考 README.md 中的 Docker 操作指令
 
 ### 任務 4: 我要開發 API
 1. 了解 [api-path-conventions.md](./api/api-path-conventions.md)

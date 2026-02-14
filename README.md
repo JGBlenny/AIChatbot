@@ -123,14 +123,14 @@ OPENAI_API_KEY=sk-proj-your-actual-api-key-here
 ### 2. 啟動所有服務
 
 ```bash
-# 啟動所有服務
-docker-compose up -d
+# 啟動所有服務（本地開發環境）
+docker-compose -f docker-compose.prod.yml up -d --build
 
 # 查看服務狀態
-docker-compose ps
+docker-compose -f docker-compose.prod.yml ps
 
 # 查看日誌
-docker-compose logs -f
+docker-compose -f docker-compose.prod.yml logs -f
 ```
 
 ### 3. 存取服務
@@ -273,10 +273,7 @@ AIChatbot/
 │   │   └── *.py           # 其他去重測試
 │   └── run_*_tests.sh     # 測試執行腳本
 │
-├── docker-compose.yml      # Docker Compose 配置
-├── docker-compose.dev.yml  # 開發環境配置
-├── docker-compose.prod.yml # 生產環境配置
-├── Makefile               # 快速指令
+├── docker-compose.prod.yml # Docker Compose 配置（本地開發與生產環境統一）
 ├── .env.example           # 環境變數範例
 ├── QUICKSTART.md         # 快速開始指南
 ├── CHANGELOG.md          # 變更日誌
@@ -312,7 +309,6 @@ AIChatbot/
 ### 🚀 快速開始
 - 📘 **快速開始指南**: [QUICKSTART.md](./QUICKSTART.md)
 - 📘 **快速開始指南**: [docs/guides/QUICKSTART.md](./docs/guides/QUICKSTART.md)
-- 📖 **開發工作流程**: [docs/guides/DEVELOPMENT_WORKFLOW.md](./docs/guides/DEVELOPMENT_WORKFLOW.md)
 
 ### ⭐ 最新功能文檔
 - 📋 **表單管理系統** ⭐ NEW:
@@ -365,45 +361,25 @@ AIChatbot/
 
 ### Docker 操作
 ```bash
-# 啟動所有服務
-docker-compose up -d
-
-# 開發模式（動態掛載程式碼）
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# 啟動所有服務（本地開發與生產環境統一配置）
+docker-compose -f docker-compose.prod.yml up -d --build
 
 # 停止所有服務
-docker-compose stop
+docker-compose -f docker-compose.prod.yml stop
 
 # 停止並移除容器
-docker-compose down
+docker-compose -f docker-compose.prod.yml down
 
 # 重新建置並啟動
-docker-compose up -d --build
+docker-compose -f docker-compose.prod.yml up -d --build
 
 # 查看特定服務日誌
-docker-compose logs -f rag-orchestrator
+docker-compose -f docker-compose.prod.yml logs -f rag-orchestrator
 
 # 重啟特定服務
-docker restart aichatbot-rag-orchestrator
+docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 ```
 
-### Makefile 快捷指令
-```bash
-# 開發環境啟動
-make dev-up
-
-# 生產環境啟動
-make prod-up
-
-# 停止所有服務
-make down
-
-# 查看日誌
-make logs
-
-# 前端重新編譯
-make rebuild-frontend
-```
 
 ### 資料庫操作
 ```bash

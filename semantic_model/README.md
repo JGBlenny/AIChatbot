@@ -59,7 +59,7 @@ docker-compose up -d
 
 ## 整合到主系統
 
-在主系統的 `docker-compose.yml` 中已配置：
+在主系統的 `docker-compose.prod.yml` 中已配置：
 ```yaml
 semantic-model:
   build: ./semantic_model
