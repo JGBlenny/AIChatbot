@@ -103,3 +103,8 @@ test_*.txt
 test_*.json
 *_test_output.*
 
+# Database backups
+backups/
+*.sql
+*.sql.gz
+

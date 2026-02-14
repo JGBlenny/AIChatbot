@@ -1,3 +1,128 @@
+# 系統更新紀錄 - 2026-02-14
+
+## 📋 更新摘要
+
+本次更新完成了文檔結構整理與備份還原功能實作。
+
+---
+
+## 📁 文檔結構整理
+
+### 完成項目
+
+1. **文檔結構分析報告**
+   - 檔案：`docs/DOCS_STRUCTURE_AUDIT_2026-02-14.md`
+   - 統計：364 個 Markdown 文件，63 個子目錄
+   - 發現：archive 佔比 35.4%，187 個過時文件
+
+2. **P0 緊急清理**
+   - ✅ 刪除 3 個 2024 年舊文件
+   - ✅ 更新 .gitignore（新增 backups/ 目錄）
+
+3. **README.md vs INDEX.md 定位明確**
+   - ✅ 實施方案 A：保留兩個文件，各司其職
+   - README.md：技術更新紀錄（檢索邏輯、SOP 系統演進）
+   - INDEX.md：任務導向指南（API 配置、部署、前端開發）
+   - 兩個文檔開頭添加明確定位說明和互相引用
+
+4. **guides 目錄重組完成**
+   - ✅ 31 個指南文件重新分類到 7 個子目錄
+   - ✅ 創建 guides/README.md 索引文件
+   - 分類結構：
+     - getting-started/ (3 個文件) - 快速開始
+     - development/ (8 個文件) - 開發相關
+     - deployment/ (5 個文件) - 部署相關
+     - api/ (3 個文件) - API 相關
+     - features/ (7 個文件) - 功能使用
+     - migration/ (2 個文件) - 遷移指南
+     - reference/ (3 個文件) - 快速參考
+
+5. **歸檔過時文件完成**
+   - ✅ 60 個超過 60 天未修改的文件歸檔至 2025-Q4
+   - ✅ 創建季度歸檔目錄結構
+   - 歸檔分類：
+     - analysis/ (2 個文件)
+     - api/ (2 個文件)
+     - architecture/ (1 個文件)
+     - backtest/ (14 個文件) - 最多
+     - deployment/ (5 個文件)
+     - features/ (13 個文件)
+     - fixes/ (7 個文件)
+     - issues/ (1 個文件)
+     - performance/ (3 個文件) - 整個目錄
+     - planning/ (6 個文件)
+     - testing/ (6 個文件)
+
+6. **整合 SOP 文檔完成**
+   - ✅ 16 個 SOP 文件整合到 features/sop 目錄
+   - ✅ 創建分類子目錄結構
+   - ✅ 創建 SOP 文檔總索引
+   - 分類結構：
+     - design/ (4 個文件) - 設計文檔
+     - implementation/ (6 個文件) - 實作文檔
+     - testing/ (3 個文件) - 測試文檔
+     - optimization/ (2 個文件) - 優化文檔
+     - SOP_TRIGGER_MODE_UPDATE_INDEX.md (總索引)
+
+### 整理完成狀態
+
+✅ **所有 P0/P1 文檔整理任務已完成！**
+
+完成項目清單：
+1. ✅ P0 - 刪除 2024 年舊文件 (3 個文件)
+2. ✅ P0 - 更新 .gitignore (backups/ 目錄)
+3. ✅ P0 - README/INDEX 明確定位 (方案 A)
+4. ✅ P1 - guides 目錄重組 (31 個文件分類到 7 個子目錄)
+5. ✅ P1 - 歸檔過時文件 (60 個文件歸檔至 2025-Q4)
+6. ✅ P1 - 整合 SOP 文檔 (16 個文件整合到 features/sop)
+
+---
+
+## 💾 備份還原功能
+
+### 完成項目
+
+1. **備份腳本**
+   - `scripts/backup_production_db.sh` - EC2 上執行備份
+   - `scripts/download_backup_from_production.sh` - 下載備份到本地
+   - `scripts/restore_backup_to_local.sh` - 還原備份到本地
+
+2. **備份文檔**
+   - `docs/BACKUP_RESTORE_GUIDE.md` - 完整使用指南
+
+3. **實際測試**
+   - ✅ EC2 備份成功（35MB）
+   - ✅ SCP 下載成功
+   - ✅ 本地還原成功（44 個表，1267 筆知識庫）
+
+### 備份配置
+
+```bash
+# 正確的資料庫配置
+DB_USER=aichatbot
+DB_NAME=aichatbot_admin
+DB_PASSWORD=aichatbot_password
+
+# 備份路徑
+EC2: /tmp/backup.sql
+本地: ~/jgb/AIChatbot/backups/
+```
+
+---
+
+## 🔗 相關文件
+
+- 文檔結構分析：`docs/DOCS_STRUCTURE_AUDIT_2026-02-14.md`
+- 備份還原指南：`docs/BACKUP_RESTORE_GUIDE.md`（待建立）
+- Git ignore：`.gitignore`（已更新）
+
+---
+
+**更新完成時間**: 2026-02-14 16:15
+**版本**: v2.1.1
+
+---
+
 # 系統更新紀錄 - 2026-02-12
 
 ## 📋 更新摘要
