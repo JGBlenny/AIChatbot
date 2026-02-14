@@ -198,41 +198,138 @@ export default {
       // 添加用戶訊息
       this.addMessage('user', userMessage);
 
-      // 調用 Message API（改用非串流版本以提升穩定性）
+      // 🆕 使用串流模式 API
       this.isLoading = true;
 
       try {
-        const response = await axios.post(`${RAG_API}/message`, {
+        const payload = {
           message: userMessage,
           vendor_id: this.vendor.id,
           target_user: this.targetUser,  // 使用統一的 target_user 參數（預設為 tenant）
           include_sources: false,
           // 表單支援
           session_id: this.sessionId,
-          user_id: this.userId
+          user_id: this.userId,
+          stream: true  // 🆕 啟用串流模式
+        };
+
+        console.log('📡 [Stream] 發送串流請求:', payload);
+
+        // 使用 fetch API 處理 SSE
+        const response = await fetch(`${RAG_API}/message`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream'
+          },
+          body: JSON.stringify(payload)
         });
 
-        // 添加 AI 回應
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // 創建 AI 訊息佔位符
         const messageId = this.messageIdCounter++;
+        const aiMessageIndex = this.messages.length;
         this.messages.push({
           id: messageId,
           role: 'assistant',
-          content: response.data.answer,
+          content: '',  // 初始為空，將逐字填充
           timestamp: new Date().toISOString(),
           metadata: {
-            intent: response.data.intent_name || 'unknown',
-            confidence: response.data.confidence || 0,
-            sources_count: response.data.source_count || 0,
-            // 影片資訊
-            video_url: response.data.video_url,
-            video_file_size: response.data.video_file_size,
-            video_duration: response.data.video_duration,
-            video_format: response.data.video_format
+            intent: 'unknown',
+            confidence: 0,
+            sources_count: 0
           }
         });
 
+        // 讀取串流
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let fullAnswer = '';
+        let metadata = {
+          intent: 'unknown',
+          confidence: 0,
+          sources_count: 0
+        };
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';  // 保留最後一行（可能不完整）
+
+          for (const line of lines) {
+            if (!line.trim() || line.startsWith(':')) continue;
+
+            if (line.startsWith('event: ')) {
+              // 事件類型行
+              const eventType = line.substring(7).trim();
+              console.log('📡 [Stream] 事件:', eventType);
+            } else if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.substring(6));
+
+                // 處理不同類型的事件
+                if (data.chunk !== undefined) {
+                  // 答案塊：逐字添加
+                  fullAnswer += data.chunk;
+                  this.messages[aiMessageIndex].content = fullAnswer;
+
+                  // 滾動到底部
+                  this.$nextTick(() => {
+                    this.scrollToBottom();
+                  });
+                } else if (data.intent_type) {
+                  // 意圖資訊
+                  metadata.intent = data.intent_name || 'unknown';
+                  metadata.confidence = data.confidence || 0;
+                } else if (data.cache_hit !== undefined) {
+                  // 元數據（包含影片、表單等）
+                  if (data.video_url) metadata.video_url = data.video_url;
+                  if (data.video_file_size) metadata.video_file_size = data.video_file_size;
+                  if (data.video_duration) metadata.video_duration = data.video_duration;
+                  if (data.video_format) metadata.video_format = data.video_format;
+                  if (data.source_count !== undefined) metadata.sources_count = data.source_count;
+
+                  // 🆕 表單元數據處理
+                  if (data.form_triggered) {
+                    metadata.form_triggered = true;
+                    metadata.form_id = data.form_id;
+                    metadata.current_field = data.current_field;
+                    metadata.progress = data.progress;
+                    console.log('📋 [Stream] 表單已觸發:', {
+                      formId: data.form_id,
+                      currentField: data.current_field,
+                      progress: data.progress
+                    });
+                  } else if (data.form_completed) {
+                    metadata.form_completed = true;
+                    console.log('✅ [Stream] 表單填寫完成');
+                  } else if (data.form_cancelled) {
+                    metadata.form_cancelled = true;
+                    console.log('❌ [Stream] 表單已取消');
+                  }
+                } else if (data.success !== undefined) {
+                  // 完成事件
+                  console.log('✅ [Stream] 串流完成');
+                }
+              } catch (e) {
+                console.warn('⚠️  [Stream] 解析 SSE 數據失敗:', line, e);
+              }
+            }
+          }
+        }
+
+        // 更新最終元數據
+        this.messages[aiMessageIndex].metadata = metadata;
+
       } catch (err) {
-        console.error('發送訊息失敗', err);
+        console.error('❌ [Stream] 發送訊息失敗', err);
 
         // 添加錯誤訊息
         this.addMessage('assistant', '抱歉，系統發生錯誤，請稍後再試。', {

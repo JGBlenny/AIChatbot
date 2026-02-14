@@ -13,8 +13,7 @@
 ## 目錄
 
 - [Chat API](#chat-api)
-  - [POST /api/v1/message](#post-apiv1message) - 聊天端點（標準回應）
-  - [POST /api/v1/chat/stream](#post-apiv1chatstream) - 流式聊天端點 ⭐ NEW
+  - [POST /api/v1/message](#post-apiv1message) - 聊天端點（支援串流與非串流）
 - [Cache Management API](#cache-management-api) ⭐ NEW
   - [POST /api/v1/cache/invalidate](#post-apiv1cacheinvalidate) - 失效特定緩存
   - [DELETE /api/v1/cache/clear](#delete-apiv1cacheclear) - 清空所有緩存
@@ -55,44 +54,85 @@ Content-Type: application/json
 |------|------|------|------|------|
 | `message` | string | ✅ | 使用者訊息 | "每月繳費日期是什麼時候？" |
 | `vendor_id` | integer | ✅ | 業者 ID | 1 |
-| `user_role` | string | ❌ | 使用者角色（預設：customer） ⭐ NEW | "customer" or "staff" |
-| `mode` | string | ❌ | 模式（預設：tenant） | "tenant" or "customer_service" |
+| `target_user` | string | ❌ | 目標用戶角色（預設：tenant） 🆕 推薦 | "tenant", "landlord", "property_manager", "system_admin" |
+| `mode` | string | ❌ | 業務模式（預設：b2c） 🆕 推薦 | "b2c" (終端用戶), "b2b" (業者員工) |
+| `user_role` | string | ❌ | [已廢棄] 使用者角色，請改用 target_user ⚠️ 將於 2026-03 移除 | "customer" or "staff" |
+| `stream` | boolean | ❌ | 啟用串流模式（預設：false） 🆕 2026-02-14 | true |
 | `session_id` | string | ❌ | 會話 ID（用於追蹤） | "session_123" |
 | `user_id` | string | ❌ | 使用者 ID | "user_456" |
-| `top_k` | integer | ❌ | 返回知識數量（預設：3） | 5 |
+| `top_k` | integer | ❌ | 返回知識數量（預設：5） | 5 |
 | `include_sources` | boolean | ❌ | 是否包含知識來源（預設：true） | true |
+| `include_debug_info` | boolean | ❌ | 是否包含調試資訊（預設：false） | false |
+| `disable_answer_synthesis` | boolean | ❌ | 禁用答案合成，僅用於回測（預設：false） | false |
+| `skip_sop` | boolean | ❌ | 跳過 SOP 檢索，僅用於回測（預設：false） | false |
 
-**user_role 參數說明**（業務場景控制）：
+**stream 參數說明**（串流回應控制） 🆕 2026-02-14：
 
-| user_role | 業務場景 | 知識範圍 | 使用者類型 | 典型問題 |
-|-----------|---------|---------|-----------|---------|
-| `customer` | **B2C 外部場景** | external + both | 租客、房東 | 繳費、報修、合約續約 |
-| `staff` | **B2B 內部場景** | internal + both | 管理師、系統管理員 | 系統操作、內部流程、業務規範 |
+| stream值 | 回應格式 | Content-Type | 使用場景 | 用戶體驗 |
+|---------|---------|--------------|---------|---------|
+| `false` (預設) | **標準 JSON** | application/json | API 整合、批次處理 | 等待完整回應 |
+| `true` | **Server-Sent Events** | text/event-stream | 即時聊天、網頁前端 | 逐字顯示（打字機效果） |
+
+**SSE 事件類型**（當 `stream=true` 時）：
+- `start` - 開始輸出（含 cached 狀態）
+- `intent` - 意圖分類結果
+- `answer_chunk` - 答案片段（逐字傳輸）
+- `metadata` - 完整元數據（表單、影片、來源等）
+- `done` - 串流完成
+
+**target_user 參數說明**（目標用戶角色） 🆕 推薦：
+
+| target_user | 說明 | 典型使用場景 |
+|------------|------|-------------|
+| `tenant` | 租客（預設值） | 繳費查詢、報修申請、合約問題 |
+| `landlord` | 房東 | 收租資訊、物業管理、稅務相關 |
+| `property_manager` | 物業管理師 | 系統操作、內部流程、業務規範 |
+| `system_admin` | 系統管理員 | 系統配置、權限管理、技術支援 |
+
+**mode 參數說明**（業務模式控制） 🆕 推薦：
+
+| mode | 業務場景 | 知識範圍 | 使用者類型 | 典型問題 |
+|------|---------|---------|-----------|---------|
+| `b2c` | **B2C 終端用戶**（預設值） | external + both | 租客、房東 | 繳費、報修、合約續約 |
+| `b2b` | **B2B 業者員工** | internal + both | 物管師、系統管理員 | 系統操作、內部流程、業務規範 |
 
 **business_scope 說明**（知識庫的 business_scope 欄位）：
-- `external`: 僅限 B2C 外部使用者（customer）可存取
-- `internal`: 僅限 B2B 內部員工（staff）可存取
+- `external`: 僅限 B2C 終端用戶（mode=b2c）可存取
+- `internal`: 僅限 B2B 業者員工（mode=b2b）可存取
 - `both`: 雙方都可存取的通用知識
 
 **請求範例：**
 
 ```json
-// B2C 外部場景 - 租客詢問繳費
+// B2C 場景 - 租客詢問繳費（推薦寫法）
 {
   "message": "每月繳費日期是什麼時候？",
   "vendor_id": 1,
-  "user_role": "customer",
-  "mode": "tenant",
+  "target_user": "tenant",
+  "mode": "b2c",
+  "stream": false,
   "include_sources": true
 }
 
-// B2B 內部場景 - 管理師查詢流程
+// B2B 場景 - 物管師查詢內部流程（推薦寫法）
 {
   "message": "租賃申請的審核流程是什麼？",
   "vendor_id": 1,
-  "user_role": "staff",
-  "mode": "customer_service",
+  "target_user": "property_manager",
+  "mode": "b2b",
+  "stream": false,
   "include_sources": true
+}
+
+// 串流模式範例 - 租客詢問，逐字顯示答案
+{
+  "message": "租金每個月幾號要繳？",
+  "vendor_id": 1,
+  "target_user": "tenant",
+  "mode": "b2c",
+  "stream": true,
+  "session_id": "session_123",
+  "user_id": "tenant_456"
 }
 ```
 
@@ -180,169 +220,40 @@ Content-Type: application/json
 #### cURL 範例
 
 ```bash
-# B2C 場景 - 租客詢問繳費日
+# B2C 場景 - 租客詢問繳費日（標準 JSON 回應）
 curl -X POST http://localhost:8100/api/v1/message \
   -H "Content-Type: application/json" \
   -d '{
     "message": "每月繳費日期是什麼時候？",
     "vendor_id": 1,
-    "user_role": "customer",
+    "target_user": "tenant",
+    "mode": "b2c",
+    "stream": false,
     "include_sources": true
   }'
 
-# B2B 場景 - 管理師查詢內部流程
+# B2B 場景 - 物管師查詢內部流程（標準 JSON 回應）
 curl -X POST http://localhost:8100/api/v1/message \
   -H "Content-Type: application/json" \
   -d '{
     "message": "租賃申請的審核流程是什麼？",
     "vendor_id": 1,
-    "user_role": "staff"
+    "target_user": "property_manager",
+    "mode": "b2b",
+    "stream": false
   }'
-```
 
----
-
-### POST /api/v1/chat/stream
-
-流式聊天端點（Server-Sent Events） ⭐ NEW
-
-#### 描述
-
-使用 Server-Sent Events (SSE) 協議的流式聊天端點，支援即時反饋用戶體驗。相比標準端點，流式回應可以逐字返回 AI 生成的內容，提供更流暢的互動體驗。
-
-**適用場景**：
-- 需要即時反饋的聊天界面
-- 長回答需要逐步顯示的場景
-- 需要進度提示的複雜查詢
-
-#### 請求
-
-**URL:** `POST /api/v1/chat/stream`
-
-**Headers:**
-```
-Content-Type: application/json
-Accept: text/event-stream
-```
-
-**Body Parameters:** （與標準端點相同）
-
-| 參數 | 類型 | 必填 | 說明 | 範例 |
-|------|------|------|------|------|
-| `message` | string | ✅ | 使用者訊息 | "租金每個月幾號要繳？" |
-| `vendor_id` | integer | ✅ | 業者 ID | 1 |
-| `user_role` | string | ❌ | 使用者角色（預設：customer） | "customer" or "staff" |
-| `session_id` | string | ❌ | 會話 ID（用於追蹤） | "session_123" |
-| `user_id` | string | ❌ | 使用者 ID | "user_456" |
-
-**請求範例：**
-
-```json
-{
-  "message": "租金每個月幾號要繳？",
-  "vendor_id": 1,
-  "user_role": "customer"
-}
-```
-
-#### 回應
-
-**成功回應 (200 OK):** - Server-Sent Events 格式
-
-```
-event: metadata
-data: {"intent_name": "帳務查詢", "confidence": 0.95, "intent_type": "knowledge"}
-
-event: content
-data: {"delta": "您的"}
-
-event: content
-data: {"delta": "租金"}
-
-event: content
-data: {"delta": "繳費日"}
-
-event: content
-data: {"delta": "為每月"}
-
-event: content
-data: {"delta": " 1 號"}
-
-event: sources
-data: {"sources": [{"id": 123, "question_summary": "每月繳費日期", "vendor_id": 1}], "source_count": 1}
-
-event: done
-data: {"status": "completed", "timestamp": "2025-10-22T12:00:00"}
-```
-
-**事件類型說明**：
-
-| 事件類型 | 說明 | 資料格式 |
-|---------|------|---------|
-| `metadata` | 意圖分類結果 | `{"intent_name": string, "confidence": float, "intent_type": string}` |
-| `content` | 內容增量（逐字返回） | `{"delta": string}` |
-| `sources` | 知識來源列表 | `{"sources": array, "source_count": int}` |
-| `done` | 完成標記 | `{"status": "completed", "timestamp": string}` |
-| `error` | 錯誤訊息 | `{"error": string, "detail": string}` |
-
-#### cURL 範例
-
-```bash
-# 流式聊天（逐字返回）
-curl -X POST http://localhost:8100/api/v1/chat/stream \
+# 串流模式 - 逐字返回答案（Server-Sent Events）
+curl -X POST http://localhost:8100/api/v1/message \
   -H "Content-Type: application/json" \
   -H "Accept: text/event-stream" \
   -d '{
     "message": "租金每個月幾號要繳？",
     "vendor_id": 1,
-    "user_role": "customer"
+    "target_user": "tenant",
+    "mode": "b2c",
+    "stream": true
   }'
-```
-
-#### JavaScript 前端範例
-
-```javascript
-const eventSource = new EventSource('/api/v1/chat/stream', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    message: "租金每個月幾號要繳？",
-    vendor_id: 1,
-    user_role: "customer"
-  })
-});
-
-let fullAnswer = "";
-
-eventSource.addEventListener('metadata', (e) => {
-  const data = JSON.parse(e.data);
-  console.log('意圖:', data.intent_name, '信心度:', data.confidence);
-});
-
-eventSource.addEventListener('content', (e) => {
-  const data = JSON.parse(e.data);
-  fullAnswer += data.delta;
-  // 即時更新 UI 顯示
-  document.getElementById('answer').textContent = fullAnswer;
-});
-
-eventSource.addEventListener('sources', (e) => {
-  const data = JSON.parse(e.data);
-  console.log('知識來源數量:', data.source_count);
-});
-
-eventSource.addEventListener('done', (e) => {
-  console.log('流式回應完成');
-  eventSource.close();
-});
-
-eventSource.addEventListener('error', (e) => {
-  const data = JSON.parse(e.data);
-  console.error('錯誤:', data.error);
-  eventSource.close();
-});
 ```
 
 ---
@@ -1351,32 +1262,38 @@ curl http://localhost:8100/api/v1/vendors/1/stats
 
 BASE_URL="http://localhost:8100"
 
-echo "=== 測試 1: B2C 場景 - 租客詢問繳費日 ==="
+echo "=== 測試 1: B2C 場景 - 租客詢問繳費日（標準 JSON） ==="
 curl -X POST "$BASE_URL/api/v1/message" \
   -H "Content-Type: application/json" \
   -d '{
     "message": "每月繳費日期是什麼時候？",
     "vendor_id": 1,
-    "user_role": "customer"
+    "target_user": "tenant",
+    "mode": "b2c",
+    "stream": false
   }' | jq '.answer'
 
-echo -e "\n=== 測試 2: B2B 場景 - 管理師查詢內部流程 ==="
+echo -e "\n=== 測試 2: B2B 場景 - 物管師查詢內部流程（標準 JSON） ==="
 curl -X POST "$BASE_URL/api/v1/message" \
   -H "Content-Type: application/json" \
   -d '{
     "message": "租賃申請的審核流程是什麼？",
     "vendor_id": 1,
-    "user_role": "staff"
+    "target_user": "property_manager",
+    "mode": "b2b",
+    "stream": false
   }' | jq '.answer'
 
-echo -e "\n=== 測試 3: 流式聊天（前 10 個事件） ==="
-curl -X POST "$BASE_URL/api/v1/chat/stream" \
+echo -e "\n=== 測試 3: 串流模式聊天（前 20 個事件） ==="
+curl -X POST "$BASE_URL/api/v1/message" \
   -H "Content-Type: application/json" \
   -H "Accept: text/event-stream" \
   -d '{
     "message": "租金每個月幾號要繳？",
     "vendor_id": 1,
-    "user_role": "customer"
+    "target_user": "tenant",
+    "mode": "b2c",
+    "stream": true
   }' | head -20
 
 echo -e "\n=== 測試 4: 緩存健康檢查 ==="
@@ -1403,17 +1320,33 @@ chmod +x test-api.sh
 ## 版本資訊
 
 - **API 版本：** v1
-- **文件版本：** 3.0
-- **最後更新：** 2025-10-22
-- **適用系統版本：** Phase 1 完成 + Phase 3 性能優化（緩存系統 + 流式聊天 + B2B/B2C 業務場景）
+- **文件版本：** 3.1
+- **最後更新：** 2026-02-14
+- **適用系統版本：** Phase 1 完成 + Phase 3 性能優化（緩存系統 + 串流回應 + B2B/B2C 業務場景）
 
 ### 變更紀錄
+
+#### v3.1 (2026-02-14) - 文檔修正與參數更新
+**重大修正：**
+- ❌ **移除不存在的端點**: 刪除 `/api/v1/chat/stream` 文檔（該端點不存在）
+- ✅ **串流模式正確說明**: 通過 `/api/v1/message` 端點的 `stream` 參數控制
+- 🆕 **參數遷移指引**: `user_role` → `target_user` + `mode`（user_role 將於 2026-03 移除）
+- 📝 **補充缺失參數**: 新增 `include_debug_info`, `disable_answer_synthesis`, `skip_sop` 文檔
+- ✅ **修正預設值**: `top_k` 預設值從 3 → 5，`mode` 預設值從 "tenant" → "b2c"
+
+**新增參數說明：**
+- `target_user`: 目標用戶角色（tenant/landlord/property_manager/system_admin）
+- `mode`: 業務模式（b2c/b2b）
+- `stream`: 啟用串流模式（true/false）
+
+**文檔改進：**
+- 更新所有範例使用推薦參數（target_user + mode）
+- 更新測試腳本使用正確端點和參數
+- 標記已廢棄參數（user_role）並提供遷移建議
 
 #### v3.0 (2025-10-22) - Phase 3 完整更新
 **重大變更：**
 - ✅ **端點路徑修正**: `/chat/v1/message` → `/api/v1/message`
-- ⭐ **新增 user_role 參數**: 支援 B2B/B2C 業務場景（customer/staff）
-- ⭐ **新增流式聊天 API**: `/api/v1/chat/stream`（Server-Sent Events）
 - ⭐ **新增緩存管理 API**: 4 個端點（invalidate/clear/stats/health）
 - 📊 **新增三層緩存架構說明**: 問題快取、向量快取、結果快取
 - 📝 **擴充錯誤代碼表**: 新增詳細錯誤碼和解決方案
@@ -1421,9 +1354,7 @@ chmod +x test-api.sh
 **文檔改進：**
 - 新增 B2B/B2C 業務場景說明和範例
 - 新增 business_scope 欄位說明（external/internal/both）
-- 新增 JavaScript 前端整合範例（SSE）
 - 更新所有測試腳本使用正確端點
-- 更新 cURL 範例包含 user_role 參數
 
 #### v2.1 (2025-10-13)
 - 新增多意圖分類欄位（all_intents, secondary_intents, intent_ids）

@@ -7,12 +7,14 @@ Phase 1: 新增多業者支援（Multi-Vendor Chat API）
 from __future__ import annotations  # 允許類型提示的前向引用
 
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict
 from datetime import datetime
 import time
 import json
 import os
+import asyncio
 import psycopg2
 import psycopg2.extras
 from services.db_utils import get_db_config
@@ -335,6 +337,211 @@ def _check_cache(cache_service, vendor_id: int, question: str, target_user: str)
         return VendorChatResponse(**cached_answer)
 
     return None
+
+
+# ==================== 串流輔助函數（2026-02-14）====================
+
+async def _generate_sse_event(event_type: str, data: dict) -> str:
+    """生成 Server-Sent Events (SSE) 格式的事件"""
+    return f"event: {event_type}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+async def stream_cached_answer(cached_data: Dict):
+    """
+    快速串流輸出緩存答案
+
+    當緩存命中時，逐字輸出答案以提供即時反饋
+    比直接返回 JSON 更好的用戶體驗
+
+    Args:
+        cached_data: 緩存的完整答案數據（VendorChatResponse 格式）
+
+    Yields:
+        SSE 格式的事件流
+    """
+    try:
+        # 發送開始事件（標記為緩存）
+        yield await _generate_sse_event("start", {
+            "cached": True,
+            "message": "緩存命中，快速返回答案"
+        })
+
+        # 逐字輸出答案
+        answer = cached_data.get('answer', '')
+        if answer:
+            # 按字符分割（中文按字，英文按詞）
+            import re
+            # 將文本分成詞（中文字、英文詞、標點符號）
+            tokens = re.findall(r'[\u4e00-\u9fff]|[a-zA-Z]+|\d+|[^\w\s]|\s+', answer)
+
+            for i, token in enumerate(tokens):
+                yield await _generate_sse_event("answer_chunk", {"chunk": token})
+                # 輕微延遲以模擬打字效果（10ms）
+                await asyncio.sleep(0.01)
+
+        # 發送元數據
+        metadata = cached_data.get('metadata', {})
+        metadata['cache_hit'] = True
+        yield await _generate_sse_event("metadata", metadata)
+
+        # 發送完成事件
+        yield await _generate_sse_event("done", {
+            "success": True,
+            "cached": True,
+            "message": "答案輸出完成（來自緩存）"
+        })
+
+    except Exception as e:
+        print(f"⚠️  串流輸出緩存答案失敗: {e}")
+        yield await _generate_sse_event("error", {
+            "success": False,
+            "error": str(e),
+            "message": "串流輸出失敗"
+        })
+
+
+async def stream_response_wrapper(response_dict: dict):
+    """
+    將 JSON 響應包裝為串流格式
+
+    Args:
+        response_dict: VendorChatResponse 的 dict 格式
+
+    Yields:
+        SSE 格式的事件流
+    """
+    try:
+        # 發送開始事件
+        yield await _generate_sse_event("start", {
+            "cached": False,
+            "message": "開始輸出答案..."
+        })
+
+        # 發送意圖信息
+        yield await _generate_sse_event("intent", {
+            "intent_type": response_dict.get('intent_type'),
+            "intent_name": response_dict.get('intent_name', 'unknown'),
+            "confidence": response_dict.get('confidence', 0)
+        })
+
+        # 逐字輸出答案
+        answer = response_dict.get('answer', '')
+        if answer:
+            import re
+            tokens = re.findall(r'[\u4e00-\u9fff]|[a-zA-Z]+|\d+|[^\w\s]|\s+', answer)
+
+            for token in tokens:
+                yield await _generate_sse_event("answer_chunk", {"chunk": token})
+                await asyncio.sleep(0.015)  # 15ms 延遲
+
+        # 發送元數據
+        metadata = {
+            'confidence': response_dict.get('confidence', 0),
+            'source_count': response_dict.get('source_count', 0),
+            'cache_hit': False,
+            'intent_type': response_dict.get('intent_type'),
+            'action_type': response_dict.get('action_type'),
+            'vendor_id': response_dict.get('vendor_id'),
+            'mode': response_dict.get('mode')
+        }
+
+        # 添加其他可選字段
+        optional_fields = ['video_url', 'video_file_size', 'video_duration', 'video_format',
+                          'form_triggered', 'form_completed', 'form_cancelled',
+                          'form_id', 'current_field', 'progress', 'allow_resume',
+                          'quick_replies', 'sources', 'debug_info']
+        for field in optional_fields:
+            if field in response_dict and response_dict[field] is not None:
+                metadata[field] = response_dict[field]
+
+        yield await _generate_sse_event("metadata", metadata)
+
+        # 發送完成事件
+        yield await _generate_sse_event("done", {
+            "success": True,
+            "cached": False,
+            "message": "答案輸出完成"
+        })
+
+    except Exception as e:
+        print(f"⚠️  串流輸出失敗: {e}")
+        yield await _generate_sse_event("error", {
+            "success": False,
+            "error": str(e),
+            "message": "串流輸出失敗"
+        })
+
+
+async def generate_answer_stream(request: 'VendorChatRequest', app_state, intent_result: dict, processing_result: dict):
+    """
+    生成串流答案（完整 RAG 處理）
+
+    當緩存未命中時，執行完整的 RAG 流程並實時輸出進度
+
+    Args:
+        request: 用戶請求
+        app_state: FastAPI app state
+        intent_result: 意圖分類結果
+        processing_result: RAG 處理結果（包含 answer, sources等）
+
+    Yields:
+        SSE 格式的事件流
+    """
+    try:
+        # 發送開始事件
+        yield await _generate_sse_event("start", {
+            "cached": False,
+            "message": "開始處理問題..."
+        })
+
+        # 發送意圖分類結果
+        yield await _generate_sse_event("intent", {
+            "intent_type": intent_result.get('intent_type'),
+            "intent_name": intent_result.get('intent_name', 'unknown'),
+            "confidence": intent_result.get('confidence', 0)
+        })
+
+        # 發送檢索進度
+        source_count = processing_result.get('source_count', 0)
+        yield await _generate_sse_event("search", {
+            "source_count": source_count,
+            "has_results": source_count > 0
+        })
+
+        # 逐字輸出答案
+        answer = processing_result.get('answer', '')
+        if answer:
+            import re
+            tokens = re.findall(r'[\u4e00-\u9fff]|[a-zA-Z]+|\d+|[^\w\s]|\s+', answer)
+
+            for token in tokens:
+                yield await _generate_sse_event("answer_chunk", {"chunk": token})
+                await asyncio.sleep(0.02)  # 20ms 延遲模擬 LLM 生成
+
+        # 發送元數據
+        metadata = {
+            'confidence': processing_result.get('confidence', 0),
+            'source_count': source_count,
+            'cache_hit': False,
+            'intent_type': intent_result.get('intent_type'),
+            'action_type': processing_result.get('action_type')
+        }
+        yield await _generate_sse_event("metadata", metadata)
+
+        # 發送完成事件
+        yield await _generate_sse_event("done", {
+            "success": True,
+            "cached": False,
+            "message": "答案生成完成"
+        })
+
+    except Exception as e:
+        print(f"⚠️  串流生成答案失敗: {e}")
+        yield await _generate_sse_event("error", {
+            "success": False,
+            "error": str(e),
+            "message": "答案生成失敗"
+        })
 
 
 # ==================== 輔助函數：調試資訊構建 ====================
@@ -2096,6 +2303,9 @@ class VendorChatRequest(BaseModel):
     disable_answer_synthesis: bool = Field(False, description="禁用答案合成（回測模式專用）")
     skip_sop: bool = Field(False, description="跳過 SOP 檢索，僅檢索知識庫（回測模式專用）")
 
+    # 🆕 串流模式參數（2026-02-14）
+    stream: bool = Field(False, description="是否使用串流模式（Server-Sent Events）")
+
     @validator('target_user', always=True)
     def migrate_user_role(cls, v, values):
         """自動從舊欄位遷移到新欄位"""
@@ -2374,10 +2584,34 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     else:
                         print(f"📋 用戶取消表單，但沒有待處理的問題")
                         # 沒有待處理的問題，直接返回取消訊息
-                        return _convert_form_result_to_response(form_result, request)
+                        response = _convert_form_result_to_response(form_result, request)
+
+                        # 🆕 如果啟用串流模式，轉換為串流輸出
+                        if request.stream:
+                            return StreamingResponse(
+                                stream_response_wrapper(response.dict()),
+                                media_type="text/event-stream",
+                                headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"}
+                            )
+                        return response
                 else:
                     # 將表單結果轉換為 VendorChatResponse 格式
-                    return _convert_form_result_to_response(form_result, request)
+                    response = _convert_form_result_to_response(form_result, request)
+
+                    # 🆕 如果啟用串流模式，轉換為串流輸出
+                    if request.stream:
+                        print(f"📡 [串流模式] 將表單響應轉換為串流輸出")
+                        return StreamingResponse(
+                            stream_response_wrapper(response.dict()),
+                            media_type="text/event-stream",
+                            headers={
+                                "Cache-Control": "no-cache",
+                                "Connection": "keep-alive",
+                                "X-Accel-Buffering": "no"
+                            }
+                        )
+
+                    return response
 
         # Step 1: 驗證業者
         resolver = get_vendor_param_resolver()
@@ -2385,9 +2619,34 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
 
         # Step 2: 緩存檢查（表單期間不使用緩存）
         cache_service = req.app.state.cache_service
-        cached_response = _check_cache(cache_service, request.vendor_id, request.message, request.target_user)
-        if cached_response:
-            return cached_response
+
+        # 🆕 串流模式：檢查緩存時返回不同格式
+        print(f"🔍 [DEBUG] stream參數值: {request.stream}, 類型: {type(request.stream)}")
+        if request.stream:
+            # 串流模式：檢查緩存並返回 SSE
+            config_version = _generate_config_version()
+            cached_answer = cache_service.get_cached_answer(
+                vendor_id=request.vendor_id,
+                question=request.message,
+                target_user=request.target_user,
+                config_version=config_version
+            )
+            if cached_answer:
+                print(f"⚡ 緩存命中！使用串流模式輸出 - 配置版本: {config_version}")
+                return StreamingResponse(
+                    stream_cached_answer(cached_answer),
+                    media_type="text/event-stream",
+                    headers={
+                        "Cache-Control": "no-cache",
+                        "Connection": "keep-alive",
+                        "X-Accel-Buffering": "no"  # 禁用 nginx 緩衝
+                    }
+                )
+        else:
+            # 非串流模式：正常返回 JSON
+            cached_response = _check_cache(cache_service, request.vendor_id, request.message, request.target_user)
+            if cached_response:
+                return cached_response
 
         # Step 3: 意圖分類
         intent_classifier = req.app.state.intent_classifier
@@ -2416,27 +2675,69 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             # 根據決策類型返回回應
             if decision['type'] == 'sop':
                 # 返回 SOP 回應（不涉及知識庫）
-                return await _build_orchestrator_response(
+                response = await _build_orchestrator_response(
                     request, req, decision['sop_result'],
                     resolver, vendor_info, cache_service,
                     decision=decision  # 🆕 傳遞決策資訊（包含 comparison_metadata）
                 )
 
+                # 🆕 串流模式：將 JSON 響應轉換為串流
+                if request.stream:
+                    print(f"📡 [串流模式] 將 SOP 響應轉換為串流輸出")
+                    return StreamingResponse(
+                        stream_response_wrapper(response.dict()),
+                        media_type="text/event-stream",
+                        headers={
+                            "Cache-Control": "no-cache",
+                            "Connection": "keep-alive",
+                            "X-Accel-Buffering": "no"
+                        }
+                    )
+                return response
+
             elif decision['type'] == 'knowledge':
                 # 返回知識庫回應（會進行答案合成判斷）
                 # ✅ 答案合成只在這裡發生，不會混入 SOP
-                return await _build_knowledge_response(
+                response = await _build_knowledge_response(
                     request, req, intent_result, decision['knowledge_list'],
                     resolver, vendor_info, cache_service,
                     decision=decision  # 🆕 傳遞完整決策資訊（包含 SOP 結果和比較元數據）
                 )
 
+                # 🆕 串流模式：將 JSON 響應轉換為串流
+                if request.stream:
+                    print(f"📡 [串流模式] 將知識庫響應轉換為串流輸出")
+                    return StreamingResponse(
+                        stream_response_wrapper(response.dict()),
+                        media_type="text/event-stream",
+                        headers={
+                            "Cache-Control": "no-cache",
+                            "Connection": "keep-alive",
+                            "X-Accel-Buffering": "no"
+                        }
+                    )
+                return response
+
             elif decision['type'] == 'none':
                 # 無結果，進入 RAG fallback
-                return await _handle_no_knowledge_found(
+                response = await _handle_no_knowledge_found(
                     request, req, intent_result, resolver,
                     cache_service, vendor_info
                 )
+
+                # 🆕 串流模式：將 JSON 響應轉換為串流
+                if request.stream:
+                    print(f"📡 [串流模式] 將無結果響應轉換為串流輸出")
+                    return StreamingResponse(
+                        stream_response_wrapper(response.dict()),
+                        media_type="text/event-stream",
+                        headers={
+                            "Cache-Control": "no-cache",
+                            "Connection": "keep-alive",
+                            "X-Accel-Buffering": "no"
+                        }
+                    )
+                return response
 
         else:
             # 回測模式：只使用知識庫
