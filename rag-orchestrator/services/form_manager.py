@@ -498,7 +498,7 @@ class FormManager:
         total_fields = len(form_schema['fields'])
 
         # 使用表單的 default_intro 作為引導語
-        intro_message = form_schema.get('default_intro', '')
+        intro_message = form_schema.get('default_intro') or ''
 
         # 組裝訊息
         response = intro_message.strip()

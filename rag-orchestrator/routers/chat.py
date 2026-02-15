@@ -2534,6 +2534,12 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 elif user_choice.lower() in ["取消", "cancel", "放棄"]:
                     print(f"📋 用戶取消表單")
                     form_result = await form_manager.cancel_form(request.session_id)
+
+                    # 清除 SOP trigger context，避免再次詢問時直接觸發表單
+                    sop_orchestrator = req.app.state.sop_orchestrator
+                    sop_orchestrator.trigger_handler.delete_context(request.session_id)
+                    print(f"🧹 已清除 trigger context")
+
                     return _convert_form_result_to_response(form_result, request)
 
                 # 修改欄位
@@ -2575,6 +2581,11 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
 
                 # 如果用戶選擇回答問題或取消表單，繼續處理待處理的問題
                 if form_result.get('form_cancelled'):
+                    # 清除 SOP trigger context，避免再次詢問時直接觸發表單
+                    sop_orchestrator = req.app.state.sop_orchestrator
+                    sop_orchestrator.trigger_handler.delete_context(request.session_id)
+                    print(f"🧹 已清除 trigger context")
+
                     pending_question = form_result.get('pending_question')
                     if pending_question:
                         print(f"📋 用戶取消表單，繼續處理待處理的問題：{pending_question}")
