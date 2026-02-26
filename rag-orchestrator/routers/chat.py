@@ -1819,43 +1819,41 @@ async def _build_knowledge_response(
 
                 return _convert_form_result_to_response(form_result, request)
 
-    elif action_type in ['api_call', 'form_then_api']:
-        # 場景 C/D/E/F: 涉及 API 調用
+    elif action_type == 'api_call':
+        # 場景 C/F: 直接調用 API（已登入用戶）
         api_config = best_knowledge.get('api_config')
         if not api_config:
-            print(f"⚠️  action_type={action_type} 但缺少 api_config，降級為 direct_answer")
-            action_type = 'direct_answer'  # 明確降級
+            print(f"⚠️  action_type=api_call 但缺少 api_config，降級為 direct_answer")
+            action_type = 'direct_answer'
         else:
-            # 根據 action_type 處理
-            if action_type == 'api_call':
-                # 場景 C/F: 直接調用 API（已登入用戶）
-                return await _handle_api_call(
-                    best_knowledge, request, req, resolver, cache_service
-                )
-            elif action_type == 'form_then_api':
-                # 場景 D/E: 先填表單，表單完成後調用 API
-                form_id = best_knowledge.get('form_id')
-                if not form_id:
-                    print(f"⚠️  action_type=form_then_api 但缺少 form_id，降級為 direct_answer")
-                    action_type = 'direct_answer'  # 明確降級
-                elif not request.session_id:
-                    print(f"⚠️  需要表單但缺少 session_id，降級為 direct_answer")
-                    action_type = 'direct_answer'  # 明確降級
-                else:
-                    print(f"📝 [表單+API] 知識 {best_knowledge['id']} 需要先填表單再調用 API")
+            return await _handle_api_call(
+                best_knowledge, request, req, resolver, cache_service
+            )
 
-                    # 觸發表單（API 會在表單完成後由 FormManager 調用）
-                    form_manager = req.app.state.form_manager
-                    form_result = await form_manager.trigger_form_by_knowledge(
-                        knowledge_id=best_knowledge['id'],
-                        form_id=form_id,
-                        session_id=request.session_id,
-                        user_id=request.user_id,
-                        vendor_id=request.vendor_id,
-                        trigger_question=request.message
-                    )
+    elif action_type == 'form_then_api':
+        # 場景 D/E: 先填表單，表單完成後調用 API
+        form_id = best_knowledge.get('form_id')
+        if not form_id:
+            print(f"⚠️  action_type=form_then_api 但缺少 form_id，降級為 direct_answer")
+            action_type = 'direct_answer'
+        elif not request.session_id:
+            print(f"⚠️  需要表單但缺少 session_id，降級為 direct_answer")
+            action_type = 'direct_answer'
+        else:
+            print(f"📝 [表單+API] 知識 {best_knowledge['id']} 需要先填表單再調用 API")
 
-                    return _convert_form_result_to_response(form_result, request)
+            # 觸發表單（API 會在表單完成後由 FormManager 調用）
+            form_manager = req.app.state.form_manager
+            form_result = await form_manager.trigger_form_by_knowledge(
+                knowledge_id=best_knowledge['id'],
+                form_id=form_id,
+                session_id=request.session_id,
+                user_id=request.user_id,
+                vendor_id=request.vendor_id,
+                trigger_question=request.message
+            )
+
+            return _convert_form_result_to_response(form_result, request)
 
     # ⭐ 步驟 3：direct_answer 流程（降級或原本就是 direct_answer）
     # 獲取業者參數（保留完整資訊包含 display_name, unit 等）
@@ -2108,9 +2106,14 @@ async def _handle_api_call(
     # 調用 API（傳遞 db_pool 以支持動態配置的 API）
     db_pool = req.app.state.db_pool
     api_handler = get_api_call_handler(db_pool)
+
+    # 合併 static_params（與 form_manager.py 保持一致）
+    form_data = api_config.get('static_params', {})
+
     api_result = await api_handler.execute_api_call(
         api_config=api_config,
         session_data=session_data,
+        form_data=form_data,
         knowledge_answer=knowledge_answer
     )
 
@@ -2506,6 +2509,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
     - 各功能模塊獨立為輔助函數
     """
     try:
+        # DEBUG: 檢查 session_id 是否被正確接收
+        print(f"🔍 [DEBUG] vendor_chat_message received - session_id: {request.session_id}, user_id: {request.user_id}")
+
         # Step 0: 檢查表單會話（Phase X: 表單填寫功能）
         if request.session_id:
             form_manager = req.app.state.form_manager
@@ -2528,7 +2534,21 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                         form_schema,
                         session_state['collected_data']
                     )
-                    return _convert_form_result_to_response(form_result, request)
+                    response = _convert_form_result_to_response(form_result, request)
+
+                    # 🆕 如果啟用串流模式，轉換為串流輸出
+                    if request.stream:
+                        print(f"📡 [串流模式] 將表單完成響應轉換為串流輸出")
+                        return StreamingResponse(
+                            stream_response_wrapper(response.dict()),
+                            media_type="text/event-stream",
+                            headers={
+                                "Cache-Control": "no-cache",
+                                "Connection": "keep-alive",
+                                "X-Accel-Buffering": "no"
+                            }
+                        )
+                    return response
 
                 # 取消表單
                 elif user_choice.lower() in ["取消", "cancel", "放棄"]:
@@ -2540,7 +2560,21 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     sop_orchestrator.trigger_handler.delete_context(request.session_id)
                     print(f"🧹 已清除 trigger context")
 
-                    return _convert_form_result_to_response(form_result, request)
+                    response = _convert_form_result_to_response(form_result, request)
+
+                    # 🆕 如果啟用串流模式，轉換為串流輸出
+                    if request.stream:
+                        print(f"📡 [串流模式] 將表單取消響應轉換為串流輸出")
+                        return StreamingResponse(
+                            stream_response_wrapper(response.dict()),
+                            media_type="text/event-stream",
+                            headers={
+                                "Cache-Control": "no-cache",
+                                "Connection": "keep-alive",
+                                "X-Accel-Buffering": "no"
+                            }
+                        )
+                    return response
 
                 # 修改欄位
                 else:
@@ -2550,7 +2584,21 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                         user_input=request.message,
                         vendor_id=request.vendor_id
                     )
-                    return _convert_form_result_to_response(form_result, request)
+                    response = _convert_form_result_to_response(form_result, request)
+
+                    # 🆕 如果啟用串流模式，轉換為串流輸出
+                    if request.stream:
+                        print(f"📡 [串流模式] 將欄位修改響應轉換為串流輸出")
+                        return StreamingResponse(
+                            stream_response_wrapper(response.dict()),
+                            media_type="text/event-stream",
+                            headers={
+                                "Cache-Control": "no-cache",
+                                "Connection": "keep-alive",
+                                "X-Accel-Buffering": "no"
+                            }
+                        )
+                    return response
 
             # 處理 EDITING 狀態（編輯欄位）
             if session_state and session_state['state'] == 'EDITING':
