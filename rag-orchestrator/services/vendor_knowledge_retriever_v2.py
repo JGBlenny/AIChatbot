@@ -70,7 +70,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     kb.answer,
                     kb.scope,
                     kb.priority,
-                    kb.vendor_id,
+                    kb.vendor_ids,
                     kb.business_types,
                     kb.target_user,
                     kb.keywords,
@@ -90,8 +90,9 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                 FROM knowledge_base kb
                 LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                 WHERE
-                    (kb.vendor_id = %s OR kb.vendor_id IS NULL)
+                    (array_length(kb.vendor_ids, 1) IS NULL OR kb.vendor_ids && %s::int[])
                     AND kb.embedding IS NOT NULL
+                    AND kb.is_active = TRUE
                     AND (1 - (kb.embedding <=> %s::vector)) >= %s
                     AND {business_type_filter_sql}
                     AND {target_user_filter_sql}
@@ -111,7 +112,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                 vector_str,
                 intent_id if intent_id else -1,
                 all_intent_ids if all_intent_ids else [],
-                vendor_id,
+                [vendor_id],  # 用於 kb.vendor_ids && %s::int[]
                 vector_str,
                 similarity_threshold,
                 vendor_business_types,
@@ -170,7 +171,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     kb.answer,
                     kb.scope,
                     kb.priority,
-                    kb.vendor_id,
+                    kb.vendor_ids,
                     kb.business_types,
                     kb.target_user,
                     kb.keywords,
@@ -182,14 +183,15 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                 FROM knowledge_base kb
                 LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                 WHERE
-                    (kb.vendor_id = %s OR kb.vendor_id IS NULL)
+                    (array_length(kb.vendor_ids, 1) IS NULL OR kb.vendor_ids && %s::int[])
+                    AND kb.is_active = TRUE
                     AND kb.keywords IS NOT NULL
                     AND array_length(kb.keywords, 1) > 0
                 ORDER BY
                     kb.priority DESC,
                     kb.id DESC
                 LIMIT %s
-            """, (vendor_id, limit * 3))
+            """, ([vendor_id], limit * 3))
 
             all_rows = cursor.fetchall()
             cursor.close()
@@ -243,7 +245,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             'answer': row.get('answer'),
             'scope': row.get('scope'),
             'priority': row.get('priority'),
-            'vendor_id': row.get('vendor_id'),
+            'vendor_ids': row.get('vendor_ids'),
             'business_types': row.get('business_types'),
             'target_user': row.get('target_user'),
             'keywords': row.get('keywords', []),

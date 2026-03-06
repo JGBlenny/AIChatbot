@@ -269,7 +269,7 @@ class KnowledgeExportService(UnifiedJobService):
                 kb.question_summary,
                 kb.answer,
                 kb.scope,
-                kb.vendor_id,
+                kb.vendor_ids,
                 kb.business_types,
                 kb.target_user,
                 kb.keywords,
@@ -306,14 +306,14 @@ class KnowledgeExportService(UnifiedJobService):
             params.append(filters['is_active'])
             param_idx += 1
 
-        # vendor_id 篩選
+        # vendor_ids 篩選
         if filters.get('vendor_id') is not None:
-            query += f" AND kb.vendor_id = ${param_idx}"
+            query += f" AND (array_length(kb.vendor_ids, 1) IS NULL OR kb.vendor_ids && ARRAY[${param_idx}]::int[])"
             params.append(filters['vendor_id'])
             param_idx += 1
         elif filters.get('vendor_id') is None and 'vendor_id' in filters:
             # 明確指定 vendor_id=None 時，只匯出通用知識
-            query += " AND kb.vendor_id IS NULL"
+            query += " AND array_length(kb.vendor_ids, 1) IS NULL"
 
         # DISTINCT ON 要求 ORDER BY 的第一個欄位必須是 DISTINCT ON 的欄位
         query += " ORDER BY kb.id ASC, kim.id ASC"

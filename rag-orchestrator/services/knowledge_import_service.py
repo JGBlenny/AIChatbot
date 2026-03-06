@@ -1270,12 +1270,12 @@ class KnowledgeImportService(UnifiedJobService):
                     if vendor_id is not None:
                         exists = await conn.fetchval("""
                             SELECT COUNT(*) FROM knowledge_base
-                            WHERE question_summary = $1 AND answer = $2 AND vendor_id = $3
+                            WHERE question_summary = $1 AND answer = $2 AND vendor_ids && ARRAY[$3]::int[]
                         """, knowledge.get('question_summary'), knowledge['answer'], vendor_id)
                     else:
                         exists = await conn.fetchval("""
                             SELECT COUNT(*) FROM knowledge_base
-                            WHERE question_summary = $1 AND answer = $2 AND vendor_id IS NULL
+                            WHERE question_summary = $1 AND answer = $2 AND array_length(vendor_ids, 1) IS NULL
                         """, knowledge.get('question_summary'), knowledge['answer'])
                 else:
                     # 審核模式：檢查正式知識庫、審核佇列和測試情境（避免重複送審）
@@ -1283,7 +1283,7 @@ class KnowledgeImportService(UnifiedJobService):
                         exists = await conn.fetchval("""
                             SELECT COUNT(*) FROM (
                                 SELECT 1 FROM knowledge_base
-                                WHERE question_summary = $1 AND answer = $2 AND vendor_id = $3
+                                WHERE question_summary = $1 AND answer = $2 AND vendor_ids && ARRAY[$3]::int[]
                                 UNION ALL
                                 SELECT 1 FROM ai_generated_knowledge_candidates
                                 WHERE question = $1 AND generated_answer = $2 AND vendor_id = $3
@@ -1297,7 +1297,7 @@ class KnowledgeImportService(UnifiedJobService):
                         exists = await conn.fetchval("""
                             SELECT COUNT(*) FROM (
                                 SELECT 1 FROM knowledge_base
-                                WHERE question_summary = $1 AND answer = $2 AND vendor_id IS NULL
+                                WHERE question_summary = $1 AND answer = $2 AND array_length(vendor_ids, 1) IS NULL
                                 UNION ALL
                                 SELECT 1 FROM ai_generated_knowledge_candidates
                                 WHERE question = $1 AND generated_answer = $2 AND vendor_id IS NULL
@@ -1670,7 +1670,7 @@ class KnowledgeImportService(UnifiedJobService):
         async with self.db_pool.acquire() as conn:
             deleted_count = await conn.fetchval("""
                 DELETE FROM knowledge_base
-                WHERE vendor_id = $1
+                WHERE vendor_ids && ARRAY[$1]::int[]
                 RETURNING COUNT(*)
             """, vendor_id)
 
@@ -1754,7 +1754,7 @@ class KnowledgeImportService(UnifiedJobService):
                             # 更新現有知識
                             await conn.execute("""
                                 UPDATE knowledge_base SET
-                                    vendor_id = $1,
+                                    vendor_ids = $1,
                                     question_summary = $2,
                                     answer = $3,
                                     keywords = $4,
@@ -1768,7 +1768,7 @@ class KnowledgeImportService(UnifiedJobService):
                                     updated_at = CURRENT_TIMESTAMP
                                 WHERE id = $12
                             """,
-                                vendor_id,
+                                [vendor_id] if vendor_id is not None else [],
                                 knowledge['question_summary'],
                                 knowledge['answer'],
                                 knowledge['keywords'],
@@ -1796,7 +1796,7 @@ class KnowledgeImportService(UnifiedJobService):
                             # ID 不存在，新增（忽略提供的 ID，使用自動生成）
                             new_id = await conn.fetchval("""
                                 INSERT INTO knowledge_base (
-                                    vendor_id,
+                                    vendor_ids,
                                     question_summary,
                                     answer,
                                     keywords,
@@ -1815,7 +1815,7 @@ class KnowledgeImportService(UnifiedJobService):
                                 )
                                 RETURNING id
                             """,
-                                vendor_id,
+                                [vendor_id] if vendor_id is not None else [],
                                 knowledge['question_summary'],
                                 knowledge['answer'],
                                 knowledge['keywords'],
@@ -1842,7 +1842,7 @@ class KnowledgeImportService(UnifiedJobService):
                         # 沒有 ID，新增知識
                         new_id = await conn.fetchval("""
                             INSERT INTO knowledge_base (
-                                vendor_id,
+                                vendor_ids,
                                 question_summary,
                                 answer,
                                 keywords,
@@ -1861,7 +1861,7 @@ class KnowledgeImportService(UnifiedJobService):
                             )
                             RETURNING id
                         """,
-                            vendor_id,
+                            [vendor_id] if vendor_id is not None else [],
                             knowledge['question_summary'],
                             knowledge['answer'],
                             knowledge['keywords'],

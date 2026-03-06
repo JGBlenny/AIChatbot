@@ -116,7 +116,7 @@ class RAGEngine:
                                     kb.keywords,
                                     kb.business_types,
                                     kb.scope,
-                                    kb.vendor_id,
+                                    kb.vendor_ids,
                                     kb.priority,
                                     kb.form_id,
                                     kb.trigger_form_condition,
@@ -154,8 +154,8 @@ class RAGEngine:
                                     AND (kb.business_types IS NULL OR kb.business_types && $7::text[])
                                     AND (
                                         $10::int IS NULL OR
-                                        kb.vendor_id = $10 OR
-                                        kb.vendor_id IS NULL
+                                        array_length(kb.vendor_ids, 1) IS NULL OR
+                                        kb.vendor_ids && ARRAY[$10]::int[]
                                     )
                                 ORDER BY kb.id, boosted_similarity DESC
                             ) AS deduped
@@ -174,7 +174,7 @@ class RAGEngine:
                                     kb.target_user,
                                     kb.keywords,
                                     kb.scope,
-                                    kb.vendor_id,
+                                    kb.vendor_ids,
                                     kb.priority,
                                     kb.form_id,
                                     kb.trigger_form_condition,
@@ -211,8 +211,8 @@ class RAGEngine:
                                     AND (kb.target_user IS NULL OR kb.target_user && $6::text[])
                                     AND (
                                         $9::int IS NULL OR
-                                        kb.vendor_id = $9 OR
-                                        kb.vendor_id IS NULL
+                                        array_length(kb.vendor_ids, 1) IS NULL OR
+                                        kb.vendor_ids && ARRAY[$9]::int[]
                                     )
                                 ORDER BY kb.id, boosted_similarity DESC
                             ) AS deduped
@@ -233,7 +233,7 @@ class RAGEngine:
                                     kb.keywords,
                                     kb.business_types,
                                     kb.scope,
-                                    kb.vendor_id,
+                                    kb.vendor_ids,
                                     kb.priority,
                                     kb.form_id,
                                     kb.trigger_form_condition,
@@ -270,8 +270,8 @@ class RAGEngine:
                                     AND (kb.business_types IS NULL OR kb.business_types && $6::text[])
                                     AND (
                                         $9::int IS NULL OR
-                                        kb.vendor_id = $9 OR
-                                        kb.vendor_id IS NULL
+                                        array_length(kb.vendor_ids, 1) IS NULL OR
+                                        kb.vendor_ids && ARRAY[$9]::int[]
                                     )
                                 ORDER BY kb.id, boosted_similarity DESC
                             ) AS deduped
@@ -290,7 +290,7 @@ class RAGEngine:
                                     kb.target_user,
                                     kb.keywords,
                                     kb.scope,
-                                    kb.vendor_id,
+                                    kb.vendor_ids,
                                     kb.priority,
                                     kb.form_id,
                                     kb.trigger_form_condition,
@@ -326,8 +326,8 @@ class RAGEngine:
                                     AND (kim.intent_id = ANY($5::int[]) OR kim.intent_id IS NULL)
                                     AND (
                                         $8::int IS NULL OR
-                                        kb.vendor_id = $8 OR
-                                        kb.vendor_id IS NULL
+                                        array_length(kb.vendor_ids, 1) IS NULL OR
+                                        kb.vendor_ids && ARRAY[$8]::int[]
                                     )
                                 ORDER BY kb.id, boosted_similarity DESC
                             ) AS deduped
@@ -528,7 +528,7 @@ class RAGEngine:
                 "keywords": row.get('keywords', []),
                 "business_types": row.get('business_types'),
                 "scope": row.get('scope', 'global'),
-                "vendor_id": row.get('vendor_id'),
+                "vendor_ids": row.get('vendor_ids'),
                 "similarity": similarity,
                 "answer": row['content'],  # 為語義重排序準備
                 "form_id": row.get('form_id'),

@@ -1413,7 +1413,7 @@ async def _build_rag_response(
             question_summary=r['question_summary'],
             answer=r['content'],
             scope=r.get('scope', 'global'),  # ✅ 使用實際 scope
-            vendor_id=r.get('vendor_id'),    # ✅ 添加 vendor_id
+            vendor_ids=r.get('vendor_ids'),  # ✅ 添加 vendor_ids
             target_users=r.get('target_user')  # ✅ 添加 target_users
         ) for r in rag_results]
 
@@ -1900,7 +1900,7 @@ async def _build_knowledge_response(
             question_summary=k['question_summary'],
             answer=k['answer'],
             scope=k['scope'],
-            vendor_id=k.get('vendor_id'),
+            vendor_ids=k.get('vendor_ids'),
             target_users=k.get('target_user')
         ) for k in knowledge_list]
 
@@ -2357,7 +2357,7 @@ class KnowledgeSource(BaseModel):
     question_summary: str
     answer: str
     scope: str = Field(..., description="知識範圍：global(全域), vendor(業者專屬), customized(客製化)")
-    vendor_id: Optional[int] = Field(None, description="業者 ID（如為業者專屬知識）")
+    vendor_ids: Optional[List[int]] = Field(None, description="業者 ID 列表（如為業者專屬知識）")
     target_users: Optional[List[str]] = Field(None, description="目標用戶列表")
 
 
