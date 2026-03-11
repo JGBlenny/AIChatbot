@@ -16,6 +16,7 @@ import re
 from typing import Dict, Any, Optional, Tuple
 import logging
 from asyncpg.pool import Pool
+from difflib import get_close_matches, SequenceMatcher
 
 # 導入具體的 API 服務（根據需要擴展）
 from .billing_api import BillingAPIService
@@ -468,7 +469,7 @@ class APICallHandler:
             )
 
             # 組合查詢鍵
-            lookup_key = f"{key}_{key2}" if key2 and not query_all else key
+            lookup_key = f"{key}-{key2}" if key2 and not query_all else key
 
             logger.info(f"🔍 內部 Lookup 查詢: category={category}, key={lookup_key}, vendor_id={vendor_id}, query_all={query_all}, key2={key2}")
 
@@ -542,9 +543,86 @@ class APICallHandler:
                         },
                         'formatted_response': f"✅ 查詢成功\n\n{result_value}"
                     }
+
+            # ===== 步驟 2: 模糊匹配 =====
+            logger.info(f"🔍 精確匹配失敗，嘗試模糊匹配 | threshold=0.75")
+
+            async with self.db_pool.acquire() as conn:
+                # 獲取所有該類別的 keys
+                rows = await conn.fetch("""
+                    SELECT lookup_key, lookup_value, metadata
+                    FROM lookup_tables
+                    WHERE vendor_id = $1
+                      AND category = $2
+                      AND is_active = true
+                """, vendor_id, category)
+
+                if not rows:
+                    logger.warning(f"⚠️ Lookup 查詢無結果 - 類別無數據")
+                    return {
+                        'success': False,
+                        'error': 'no_match',
+                        'formatted_response': '❌ 查詢失敗\n\n請確認地址是否正確，或聯繫客服協助查詢。'
+                    }
+
+                # 使用 difflib 進行模糊匹配
+                all_keys = [row['lookup_key'] for row in rows]
+                logger.info(f"📊 待匹配數據: {len(all_keys)} 筆")
+
+                matches = get_close_matches(
+                    lookup_key,
+                    all_keys,
+                    n=5,  # 返回最多 5 個匹配
+                    cutoff=0.75  # 相似度閾值 75%
+                )
+
+                if matches:
+                    # 計算所有匹配的相似度分數
+                    match_scores = [
+                        {
+                            "key": match,
+                            "score": SequenceMatcher(None, lookup_key, match).ratio()
+                        }
+                        for match in matches
+                    ]
+
+                    # 按相似度降序排序
+                    match_scores.sort(key=lambda x: x['score'], reverse=True)
+
+                    best_score = match_scores[0]['score']
+                    best_match = match_scores[0]['key']
+
+                    # 找到最佳匹配
+                    matched_row = next(r for r in rows if r['lookup_key'] == best_match)
+
+                    logger.info(
+                        f"✅ 模糊匹配成功 | matched_key={best_match[:50]}, "
+                        f"score={best_score:.2f}"
+                    )
+
+                    result_value = matched_row['lookup_value']
+                    metadata = matched_row['metadata'] if matched_row['metadata'] else {}
+
+                    # 生成模糊匹配提示訊息（簡化版，不影響主要內容）
+                    fuzzy_note = (
+                        f"\n\n💡 已根據相似度 {round(best_score * 100)}% 為您找到最接近的結果"
+                    )
+
+                    return {
+                        'success': True,
+                        'data': {
+                            'value': result_value,
+                            'metadata': metadata,
+                            'category': category,
+                            'key': lookup_key,
+                            'matched_key': best_match,
+                            'match_score': round(best_score, 2)
+                        },
+                        'formatted_response': f"✅ 查詢成功\n\n{result_value}{fuzzy_note}"
+                    }
                 else:
-                    # 未找到
-                    logger.warning(f"⚠️ Lookup 查詢無結果")
+                    # 模糊匹配也失敗
+                    logger.warning(f"⚠️ Lookup 查詢無結果 - 模糊匹配失敗")
                     return {
                         'success': False,
                         'error': 'no_match',

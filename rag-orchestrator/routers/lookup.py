@@ -69,7 +69,7 @@ async def lookup(
     query_all = key2 and key2.strip() in ['全部', '所有', '全部設施', '所有設施', '全部資料', '所有資料', '全', '所', '*']
 
     # 組合最終查詢 key（支援複數 key）
-    lookup_key = f"{key}_{key2}" if key2 and not query_all else key
+    lookup_key = f"{key}-{key2}" if key2 and not query_all else key
 
     logger.info(
         f"🔍 Lookup 查詢 | category={category}, key={lookup_key[:50]}{'...' if len(lookup_key) > 50 else ''}, "
