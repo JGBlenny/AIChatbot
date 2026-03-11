@@ -156,6 +156,16 @@
           </div>
 
           <div class="form-group">
+            <label>關聯的知識庫 ID <small>(選填，多個 ID 用逗號分隔，例如：1396,1397)</small></label>
+            <input
+              v-model="relatedKbIdsInput"
+              placeholder="例如：1396,1397,1398"
+              pattern="[0-9,\s]*"
+              title="請輸入數字和逗號，例如：1396,1397"
+            />
+          </div>
+
+          <div class="form-group">
             <label style="font-weight: bold; margin-bottom: 10px; display: block;">可用範圍</label>
             <div style="display: flex; gap: 20px;">
               <label style="display: flex; align-items: center; gap: 5px;">
@@ -206,6 +216,7 @@ export default {
       editingItem: null,
       saving: false,
       loading: false,
+      relatedKbIdsInput: '',  // 用於輸入框的字串
       stats: {
         total: 0,
         active: 0,
@@ -221,7 +232,8 @@ export default {
         available_in_form: true,
         is_active: true,
         display_order: 0,
-        vendor_id: null
+        vendor_id: null,
+        related_kb_ids: []
       }
     };
   },
@@ -275,8 +287,10 @@ export default {
         available_in_form: true,
         is_active: true,
         display_order: 0,
-        vendor_id: null
+        vendor_id: null,
+        related_kb_ids: []
       };
+      this.relatedKbIdsInput = '';
       this.showModal = true;
     },
 
@@ -291,8 +305,11 @@ export default {
         available_in_form: item.available_in_form,
         is_active: item.is_active,
         display_order: item.display_order,
-        vendor_id: item.vendor_id
+        vendor_id: item.vendor_id,
+        related_kb_ids: item.related_kb_ids || []
       };
+      // 將陣列轉成逗號分隔的字串
+      this.relatedKbIdsInput = (item.related_kb_ids || []).join(',');
       this.showModal = true;
     },
 
@@ -300,13 +317,26 @@ export default {
       this.saving = true;
 
       try {
+        // 將逗號分隔的字串轉成整數陣列
+        const relatedKbIds = this.relatedKbIdsInput
+          .split(',')
+          .map(id => id.trim())
+          .filter(id => id !== '')
+          .map(id => parseInt(id, 10))
+          .filter(id => !isNaN(id));
+
+        const payload = {
+          ...this.formData,
+          related_kb_ids: relatedKbIds.length > 0 ? relatedKbIds : null
+        };
+
         if (this.editingItem) {
           // 更新現有 endpoint
-          await axios.put(`${RAG_API}/api-endpoints/${this.editingItem.endpoint_id}`, this.formData);
+          await axios.put(`${RAG_API}/api-endpoints/${this.editingItem.endpoint_id}`, payload);
           alert('✅ API Endpoint 已更新！');
         } else {
           // 新增 endpoint
-          await axios.post(`${RAG_API}/api-endpoints`, this.formData);
+          await axios.post(`${RAG_API}/api-endpoints`, payload);
           alert('✅ API Endpoint 已新增！');
         }
 

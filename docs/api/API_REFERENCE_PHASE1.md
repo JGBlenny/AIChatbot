@@ -154,7 +154,7 @@ Content-Type: application/json
       "id": 123,
       "question_summary": "每月繳費日期",
       "answer": "您的租金繳費日為每月 5 號...",
-      "vendor_id": null
+      "vendor_ids": null
     }
   ],
   "source_count": 1,
@@ -186,7 +186,7 @@ Content-Type: application/json
 | `sources[].id` | integer | 知識 ID |
 | `sources[].question_summary` | string | 問題摘要 |
 | `sources[].answer` | string | 答案（原始知識庫內容） |
-| `sources[].vendor_id` | integer/null | 業者ID（NULL=全域, 非NULL=業者專屬） |
+| `sources[].vendor_ids` | array[integer]/null | 業者 ID 列表（NULL=全域知識，非空陣列=業者專屬或多業者共享） |
 | `source_count` | integer | 知識來源數量 |
 | `vendor_id` | integer | 業者 ID |
 | `mode` | string | 模式 |

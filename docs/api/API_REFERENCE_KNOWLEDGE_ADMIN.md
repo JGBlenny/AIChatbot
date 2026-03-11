@@ -52,7 +52,7 @@ Knowledge Admin API 使用 **JWT Token** 認證。
 |------|------|------|------|
 | `search` | string | ❌ | 搜尋關鍵字（問題或答案） |
 | `business_scope` | string | ❌ | 業務範圍過濾 (external/internal/both) |
-| `vendor_id` | integer | ❌ | 業者 ID 過濾 |
+| `vendor_ids` | string | ❌ | 業者 ID 過濾（多個 ID 用逗號分隔，例如：1,2,3） |
 | `page` | integer | ❌ | 頁碼（預設: 1） |
 | `page_size` | integer | ❌ | 每頁筆數（預設: 20） |
 | `sort_by` | string | ❌ | 排序欄位 (created_at/priority) |
@@ -91,7 +91,7 @@ curl "http://localhost:8000/api/knowledge?page=2&page_size=10"
       "target_user": ["租客"],
       "priority": 5,
       "business_scope": "external",
-      "vendor_id": null,
+      "vendor_ids": null,
       "created_at": "2026-01-10T10:00:00",
       "updated_at": "2026-01-10T10:00:00"
     }
@@ -128,7 +128,7 @@ curl http://localhost:8000/api/knowledge/123
   "target_user": ["租客"],
   "priority": 5,
   "business_scope": "external",
-  "vendor_id": null,
+  "vendor_ids": null,
   "form_id": null,
   "video_url": null,
   "category": "帳務",
@@ -163,7 +163,7 @@ curl http://localhost:8000/api/knowledge/123
 | `target_user` | array[string] | ❌ | 目標用戶 |
 | `priority` | integer | ❌ | 優先級 (0-10，預設 0) |
 | `business_scope` | string | ❌ | 業務範圍 (預設 both) |
-| `vendor_id` | integer | ❌ | 業者 ID |
+| `vendor_ids` | array[integer] | ❌ | 業者 ID 列表（支援多業者關聯，例如：[1, 2, 3]） |
 | `form_id` | string | ❌ | 關聯表單 ID |
 | `video_url` | string | ❌ | 影片連結 |
 | `category` | string | ❌ | 分類 |
@@ -472,7 +472,7 @@ curl "http://localhost:8000/api/test/scenarios?difficulty=hard"
 | `expected_answer` | string | ❌ | 預期答案 |
 | `expected_intents` | array[string] | ❌ | 預期意圖列表 |
 | `difficulty` | string | ❌ | 難度 (easy/medium/hard) |
-| `vendor_id` | integer | ❌ | 業者 ID |
+| `vendor_ids` | array[integer] | ❌ | 業者 ID 列表 |
 | `business_type` | string | ❌ | 業態類型 |
 | `target_user` | string | ❌ | 目標用戶 |
 
@@ -633,7 +633,7 @@ curl -X POST http://localhost:8000/api/test/unclear-questions/100/convert \
 | `quality_mode` | string | ✅ | 品質模式 (basic/detailed/hybrid) |
 | `difficulty` | string | ❌ | 難度過濾 (easy/medium/hard) |
 | `sample_size` | integer | ❌ | 抽樣數量 (預設全部) |
-| `vendor_id` | integer | ❌ | 業者 ID 過濾 |
+| `vendor_ids` | array[integer] | ❌ | 業者 ID 列表過濾 |
 
 **範例**:
 

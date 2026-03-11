@@ -7,6 +7,7 @@
 **最後更新**：2026-03-11
 **主要功能**：
 - Lookup 批量匯入/匯出系統（2026-03-11）🆕
+- 知識庫多業者支援與 API 端點關聯功能（2026-03-11）🆕
 - SOP 觸發模式 UI 優化（2026-02-03）
 - 統一檢索路徑（commit cbf4c4f）
 - 表單引導改善（commit ba503d3）
@@ -15,6 +16,27 @@
 ---
 
 ## ⭐ 最新更新（2026-03-11）
+
+### 知識庫多業者支援與 API 端點關聯
+
+**📑 變更日誌**: [Vendor IDs 變更日誌](./changelog/2026-03-11-vendor-ids-migration.md)
+
+**更新內容**:
+- ✅ 知識庫 `vendor_id` 升級為 `vendor_ids` 陣列，支援單一知識庫關聯多個業者
+- ✅ API 端點新增 `related_kb_ids` 欄位，支援關聯多個知識庫 ID
+- ✅ SQL 查詢使用 `ANY(kb.vendor_ids)` 語法匹配陣列
+- ✅ 前端支援 `related_kb_ids` 輸入（逗號分隔格式）
+- ✅ 自動解析和驗證輸入的知識庫 ID 列表
+- ✅ API 參考文檔已全面更新，反映 `vendor_id` → `vendor_ids` 變更
+
+**影響範圍**:
+- Knowledge Base API (`knowledge-admin/backend/app.py`)
+- API Endpoints Management (`rag-orchestrator/routers/api_endpoints.py`)
+- API 端點管理介面 (`knowledge-admin/frontend/src/views/ApiEndpointsView.vue`)
+- API 參考文檔 (`docs/api/API_REFERENCE_KNOWLEDGE_ADMIN.md`)
+- API 參考文檔 (`docs/api/API_REFERENCE_PHASE1.md`)
+
+---
 
 ### Lookup 批量匯入/匯出系統
 

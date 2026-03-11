@@ -91,7 +91,7 @@ class KnowledgeUpdate(BaseModel):
     business_types: Optional[List[str]] = None  # 業態類型（可選，NULL=通用）
     target_user: Optional[List[str]] = None  # 目標用戶（可選，NULL=通用）tenant/landlord/property_manager/system_admin
     priority: Optional[int] = 0  # 優先級加成（0=未啟用，1=已啟用）
-    vendor_id: Optional[int] = None  # 業者 ID（可選，NULL=全域知識）
+    vendor_ids: Optional[List[int]] = None  # 業者 ID 列表（可選，NULL=全域知識）
     form_id: Optional[str] = None  # 表單關聯 ID（可選）
     action_type: Optional[str] = 'direct_answer'  # 動作類型：'direct_answer', 'form_fill', 'api_call', 'form_then_api'
     api_config: Optional[dict] = None  # API 配置（JSONB）：{ endpoint, params, combine_with_knowledge }
@@ -161,13 +161,13 @@ async def list_knowledge(
                 kb.id, kb.question_summary, kb.answer as content,
                 kb.keywords, kb.business_types, kb.target_user, kb.priority, kb.created_at, kb.updated_at,
                 (kb.embedding IS NOT NULL) as has_embedding,
-                kb.vendor_id,
+                kb.vendor_ids,
                 kb.form_id,
                 kb.action_type,
                 kb.api_config,
                 v.name as vendor_name
             FROM knowledge_base kb
-            LEFT JOIN vendors v ON kb.vendor_id = v.id
+            LEFT JOIN vendors v ON v.id = ANY(kb.vendor_ids)
             WHERE 1=1
         """
         params = []
@@ -270,7 +270,7 @@ async def get_knowledge(knowledge_id: int, user: dict = Depends(get_current_user
             SELECT kb.id, kb.question_summary, kb.answer as content,
                    kb.keywords, kb.business_types, kb.target_user, kb.priority, kb.created_at, kb.updated_at,
                    kb.video_url, kb.video_s3_key, kb.video_file_size, kb.video_duration, kb.video_format,
-                   kb.vendor_id,
+                   kb.vendor_ids,
                    kb.form_id,
                    kb.action_type,
                    kb.api_config,
@@ -278,7 +278,7 @@ async def get_knowledge(knowledge_id: int, user: dict = Depends(get_current_user
                    kb.immediate_prompt,
                    v.name as vendor_name
             FROM knowledge_base kb
-            LEFT JOIN vendors v ON kb.vendor_id = v.id
+            LEFT JOIN vendors v ON v.id = ANY(kb.vendor_ids)
             WHERE kb.id = %s
         """, (knowledge_id,))
 
@@ -381,7 +381,7 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
                 business_types = %s,
                 target_user = %s,
                 priority = %s,
-                vendor_id = %s,
+                vendor_ids = %s,
                 form_id = %s,
                 action_type = %s,
                 api_config = %s,
@@ -398,7 +398,7 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
             data.business_types,
             data.target_user,
             data.priority,
-            data.vendor_id,  # 直接使用 vendor_id，支援 None 值
+            data.vendor_ids,  # 使用 vendor_ids 陣列，支援 None 值
             data.form_id,
             data.action_type,
             Json(data.api_config) if data.api_config else None,
@@ -531,7 +531,7 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
 
         cur.execute("""
             INSERT INTO knowledge_base
-            (question_summary, answer, keywords, embedding, business_types, target_user, priority, vendor_id, form_id, action_type, api_config, trigger_mode, immediate_prompt)
+            (question_summary, answer, keywords, embedding, business_types, target_user, priority, vendor_ids, form_id, action_type, api_config, trigger_mode, immediate_prompt)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, created_at
         """, (
@@ -542,7 +542,7 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
             data.business_types,
             data.target_user,
             data.priority,
-            data.vendor_id,  # 直接使用 vendor_id，支援 None 值
+            data.vendor_ids,  # 使用 vendor_ids 陣列，支援 None 值
             data.form_id,
             data.action_type,
             Json(data.api_config) if data.api_config else None,

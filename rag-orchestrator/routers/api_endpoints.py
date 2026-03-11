@@ -23,6 +23,7 @@ class ApiEndpointCreate(BaseModel):
     is_active: bool = Field(True, description="是否啟用")
     display_order: int = Field(0, description="顯示順序")
     vendor_id: Optional[int] = Field(None, description="業者 ID，NULL 表示全局")
+    related_kb_ids: Optional[List[int]] = Field(None, description="關聯的知識庫 ID 列表")
 
     # 新增：動態配置欄位
     implementation_type: str = Field('dynamic', description="實作類型：dynamic（動態）或 custom（自定義代碼）")
@@ -48,6 +49,7 @@ class ApiEndpointUpdate(BaseModel):
     is_active: Optional[bool] = Field(None, description="是否啟用")
     display_order: Optional[int] = Field(None, description="顯示順序")
     vendor_id: Optional[int] = Field(None, description="業者 ID")
+    related_kb_ids: Optional[List[int]] = Field(None, description="關聯的知識庫 ID 列表")
 
     # 新增：動態配置欄位
     implementation_type: Optional[str] = Field(None, description="實作類型：dynamic（動態）或 custom（自定義代碼）")
@@ -75,6 +77,7 @@ class ApiEndpointResponse(BaseModel):
     is_active: bool
     display_order: int
     vendor_id: Optional[int] = None
+    related_kb_ids: Optional[List[int]] = None
     created_at: datetime
     updated_at: datetime
 
@@ -137,6 +140,7 @@ async def list_api_endpoints(
             id, endpoint_id, endpoint_name, endpoint_icon, description,
             available_in_knowledge, available_in_form,
             default_params, is_active, display_order, vendor_id,
+            related_kb_ids,
             created_at, updated_at,
             implementation_type, api_url, http_method, request_headers,
             request_body_template, request_timeout, param_mappings,
@@ -176,6 +180,7 @@ async def get_api_endpoint(request: Request, endpoint_id: str):
             id, endpoint_id, endpoint_name, endpoint_icon, description,
             available_in_knowledge, available_in_form,
             default_params, is_active, display_order, vendor_id,
+            related_kb_ids,
             created_at, updated_at,
             implementation_type, api_url, http_method, request_headers,
             request_body_template, request_timeout, param_mappings,
@@ -225,15 +230,17 @@ async def create_api_endpoint(request: Request, data: ApiEndpointCreate):
                 endpoint_id, endpoint_name, endpoint_icon, description,
                 available_in_knowledge, available_in_form,
                 default_params, is_active, display_order, vendor_id,
+                related_kb_ids,
                 implementation_type, api_url, http_method, request_headers,
                 request_body_template, request_timeout, param_mappings,
                 response_format_type, response_template, custom_handler_name,
                 retry_times, cache_ttl
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
             RETURNING
                 id, endpoint_id, endpoint_name, endpoint_icon, description,
                 available_in_knowledge, available_in_form,
                 default_params, is_active, display_order, vendor_id,
+                related_kb_ids,
                 created_at, updated_at,
                 implementation_type, api_url, http_method, request_headers,
                 request_body_template, request_timeout, param_mappings,
@@ -253,6 +260,7 @@ async def create_api_endpoint(request: Request, data: ApiEndpointCreate):
             data.is_active,
             data.display_order,
             data.vendor_id,
+            data.related_kb_ids,
             data.implementation_type,
             data.api_url,
             data.http_method,
@@ -334,6 +342,11 @@ async def update_api_endpoint(request: Request, endpoint_id: str, data: ApiEndpo
         updates.append(f"vendor_id = ${param_count}")
         params.append(data.vendor_id)
 
+    if data.related_kb_ids is not None:
+        param_count += 1
+        updates.append(f"related_kb_ids = ${param_count}")
+        params.append(data.related_kb_ids)
+
     # 新增：動態配置欄位
     if data.implementation_type is not None:
         param_count += 1
@@ -409,6 +422,7 @@ async def update_api_endpoint(request: Request, endpoint_id: str, data: ApiEndpo
             id, endpoint_id, endpoint_name, endpoint_icon, description,
             available_in_knowledge, available_in_form,
             default_params, is_active, display_order, vendor_id,
+            related_kb_ids,
             created_at, updated_at,
             implementation_type, api_url, http_method, request_headers,
             request_body_template, request_timeout, param_mappings,
