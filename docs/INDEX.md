@@ -101,7 +101,18 @@
 
 ---
 
-### 主題 6：程式碼
+### 主題 6：Lookup 數據管理
+
+**我想...**
+- ✅ 了解 Lookup 系統功能 → [Lookup 匯入/匯出指南](./guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md) ⭐ 🆕
+- ✅ 學習如何匯入業者資料 → [Lookup 指南 - 前端介面操作](./guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md#前端介面操作)
+- ✅ 了解 Excel 格式要求 → [Lookup 指南 - Excel 匯入格式](./guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md#excel-匯入格式)
+- ✅ 使用 API 查詢資料 → [Lookup 指南 - API 端點使用](./guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md#api-端點使用)
+- ✅ 查看完整 API 清單 → [API 端點清單 - Lookup 系統](./API_ENDPOINTS_COMPLETE_INVENTORY.md#lookup-table-system-prefix-api)
+
+---
+
+### 主題 7：程式碼
 
 **我想...**
 - ✅ 了解核心修改 → [更新摘要 - 核心改動](./archive/2026-01-18-update-summary.md#🎯-核心改動3-分鐘速覽)

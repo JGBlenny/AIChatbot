@@ -4,16 +4,42 @@
 >
 > **如需**: 快速查找 API 配置、部署步驟、前端開發指南等任務導向文檔，請查看 [INDEX.md](./INDEX.md)
 
-**最後更新**：2026-02-03
+**最後更新**：2026-03-11
 **主要功能**：
-- SOP 觸發模式 UI 優化（2026-02-03）🆕
+- Lookup 批量匯入/匯出系統（2026-03-11）🆕
+- SOP 觸發模式 UI 優化（2026-02-03）
 - 統一檢索路徑（commit cbf4c4f）
 - 表單引導改善（commit ba503d3）
 - 對話流程邏輯修正（2026-01-24）
 
 ---
 
-## ⭐ 最新更新（2026-02-03）
+## ⭐ 最新更新（2026-03-11）
+
+### Lookup 批量匯入/匯出系統
+
+**📑 完整指南**: [Lookup 匯入/匯出指南](./guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md)
+
+**更新內容**:
+- ✅ Excel 批量匯入功能（業務格式 → Lookup 格式自動轉換）
+- ✅ Excel 匯出功能（標準格式）
+- ✅ 前端視覺化管理介面（VendorLookupManager）
+- ✅ 完整 CRUD 操作（建立、讀取、更新、刪除）
+- ✅ 複合鍵查詢支援（地址+停車位編號/設施名稱）
+- ✅ 查詢全部功能（`key2=全部`）
+- ✅ 批量刪除功能
+- ✅ 統計資訊查看
+- ✅ 路由前綴修復（`/api/v1` → `/api`，匹配資料庫配置）
+
+**快速連結**:
+- [使用指南](./guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md)
+- [API 端點清單](./API_ENDPOINTS_COMPLETE_INVENTORY.md#lookup-table-system-prefix-api)
+- [前端介面操作](./guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md#前端介面操作)
+- [Excel 匯入格式](./guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md#excel-匯入格式)
+
+---
+
+## ⭐ 更新記錄（2026-02-03）
 
 ### SOP 觸發模式 UI 優化
 

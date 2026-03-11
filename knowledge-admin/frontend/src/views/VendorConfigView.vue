@@ -43,8 +43,8 @@
         </button>
       </div>
 
-      <!-- 配置表單 (非 SOP) -->
-      <div v-if="selectedCategory !== 'sop'" class="config-section">
+      <!-- 配置表單 (非 SOP 非 Lookup) -->
+      <div v-if="selectedCategory !== 'sop' && selectedCategory !== 'lookup'" class="config-section">
         <div class="section-header">
           <h3>{{ getCategoryInfo(selectedCategory).label }}</h3>
           <div class="header-actions">
@@ -90,12 +90,17 @@
       </div>
 
       <!-- SOP 管理介面（新架構：範本+覆寫）-->
-      <div v-else class="config-section">
+      <div v-else-if="selectedCategory === 'sop'" class="config-section">
         <VendorSOPManager :vendorId="Number(vendorId)" />
       </div>
 
-      <!-- 儲存按鈕 -->
-      <div class="action-bar">
+      <!-- Lookup 數據管理 -->
+      <div v-else-if="selectedCategory === 'lookup'" class="config-section">
+        <VendorLookupManager :vendorId="Number(vendorId)" />
+      </div>
+
+      <!-- 儲存按鈕（僅在 payment/contract/service/contact 標籤顯示）-->
+      <div v-if="selectedCategory !== 'sop' && selectedCategory !== 'lookup'" class="action-bar">
         <button @click="saveConfigs" :disabled="saving" class="btn-primary btn-large">
           {{ saving ? '⏳ 儲存中...' : '💾 儲存所有配置' }}
         </button>
@@ -156,6 +161,7 @@
 <script>
 import axios from 'axios';
 import VendorSOPManager from '../components/VendorSOPManager.vue';
+import VendorLookupManager from '../components/VendorLookupManager.vue';
 import { API_BASE_URL } from '@/config/api';
 
 const RAG_API = `${API_BASE_URL}/rag-api/v1`;
@@ -164,7 +170,8 @@ export default {
   name: 'VendorConfigView',
 
   components: {
-    VendorSOPManager
+    VendorSOPManager,
+    VendorLookupManager
   },
 
   data() {
@@ -181,7 +188,8 @@ export default {
         { value: 'contract', label: '合約設定', icon: '📝' },
         { value: 'service', label: '服務設定', icon: '🛎️' },
         { value: 'contact', label: '聯絡資訊', icon: '📞' },
-        { value: 'sop', label: 'SOP 管理', icon: '📋' }
+        { value: 'sop', label: 'SOP 管理', icon: '📋' },
+        { value: 'lookup', label: 'Lookup 數據', icon: '💾' }
       ]
     };
   },

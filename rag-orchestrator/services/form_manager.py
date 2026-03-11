@@ -939,12 +939,15 @@ class FormManager:
                 'session_id': session_state.get('session_id')
             }
 
+            # 合併 static_params 到 form_data（支援 lookup_generic 的 category 等靜態參數）
+            merged_form_data = {**form_data, **api_config.get('static_params', {})}
+
             # 調用 API 處理器（傳遞 db_pool 以支持動態配置的 API）
             api_handler = get_api_call_handler(self.db_pool)
             result = await api_handler.execute_api_call(
                 api_config=api_config,
                 session_data=session_data,
-                form_data=form_data,
+                form_data=merged_form_data,
                 knowledge_answer=knowledge_answer
             )
 
