@@ -248,11 +248,24 @@
             <p>大小：{{ (selectedFile.size / 1024).toFixed(2) }} KB</p>
           </div>
 
+          <div class="form-group" style="margin-top: 20px;">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="autoLinkKnowledge" />
+              <span>自動關聯知識庫（推薦）</span>
+            </label>
+            <small class="hint">
+              勾選後，系統會自動將對應的知識庫（如電費查詢、租金查詢等）關聯到此業者
+            </small>
+          </div>
+
           <div v-if="importProgress.show" class="import-progress">
             <p>{{ importProgress.message }}</p>
             <div v-if="importProgress.success !== null" class="import-result">
               <p v-if="importProgress.success" class="success-msg">
                 ✅ 成功匯入 {{ importProgress.successCount }} 筆，失敗 {{ importProgress.failCount }} 筆
+                <span v-if="importProgress.linkedKnowledgeCount > 0">
+                  <br/>🔗 已關聯 {{ importProgress.linkedKnowledgeCount }} 個知識庫
+                </span>
               </p>
               <p v-else class="error-msg">
                 ❌ 匯入失敗：{{ importProgress.error }}
@@ -317,12 +330,14 @@ export default {
       showImportExcelModal: false,
       selectedFile: null,
       importing: false,
+      autoLinkKnowledge: true,  // 預設勾選自動關聯知識庫
       importProgress: {
         show: false,
         message: '',
         success: null,
         successCount: 0,
         failCount: 0,
+        linkedKnowledgeCount: 0,
         error: ''
       }
     };
@@ -620,6 +635,7 @@ export default {
         success: null,
         successCount: 0,
         failCount: 0,
+        linkedKnowledgeCount: 0,
         error: ''
       };
 
@@ -628,7 +644,7 @@ export default {
         formData.append('file', this.selectedFile);
 
         const response = await axios.post(
-          `${RAG_API}/lookup/import?vendor_id=${this.vendorId}`,
+          `${RAG_API}/lookup/import?vendor_id=${this.vendorId}&auto_link_knowledge=${this.autoLinkKnowledge}`,
           formData,
           {
             headers: {
@@ -643,6 +659,7 @@ export default {
           success: true,
           successCount: response.data.success_count || 0,
           failCount: response.data.fail_count || 0,
+          linkedKnowledgeCount: response.data.linked_knowledge_count || 0,
           error: ''
         };
 
@@ -674,13 +691,22 @@ export default {
         return;
       }
 
+      // 詢問是否要解除知識庫關聯
+      const unlinkKnowledge = confirm(
+        `🔗 是否同時解除該業者的知識庫關聯？\n\n` +
+        `選擇「確定」：解除關聯（其他業者仍可使用這些知識庫）\n` +
+        `選擇「取消」：僅刪除 Lookup 資料，保留知識庫關聯`
+      );
+
       // 計算總記錄數
       const totalRecords = this.stats?.categories?.reduce((sum, cat) => sum + cat.record_count, 0) || 0;
 
       // 二次確認
-      const doubleConfirmed = confirm(
-        `🚨 最後確認：真的要刪除所有 ${totalRecords} 筆 Lookup 記錄嗎？`
-      );
+      const confirmMessage = unlinkKnowledge
+        ? `🚨 最後確認：真的要刪除所有 ${totalRecords} 筆 Lookup 記錄並解除知識庫關聯嗎？`
+        : `🚨 最後確認：真的要刪除所有 ${totalRecords} 筆 Lookup 記錄嗎？`;
+
+      const doubleConfirmed = confirm(confirmMessage);
 
       if (!doubleConfirmed) {
         return;
@@ -688,11 +714,15 @@ export default {
 
       try {
         const response = await axios.delete(
-          `${RAG_API}/lookup/batch?vendor_id=${this.vendorId}`
+          `${RAG_API}/lookup/batch?vendor_id=${this.vendorId}&auto_unlink_knowledge=${unlinkKnowledge}`
         );
 
         if (response.data.success) {
-          alert(`✅ ${response.data.message}`);
+          let message = `✅ ${response.data.message}`;
+          if (unlinkKnowledge && response.data.unlinked_knowledge_count > 0) {
+            message += `\n🔓 已解除 ${response.data.unlinked_knowledge_count} 個知識庫的關聯`;
+          }
+          alert(message);
           await this.loadLookupData(); // 重新載入資料
         }
       } catch (error) {

@@ -105,9 +105,16 @@
               <span v-else class="badge badge-universal">通用</span>
             </td>
             <td>
-              <span v-if="item.vendor_name" class="badge badge-vendor" :title="`業者 ID: ${item.vendor_id}`">
-                {{ item.vendor_name }}
-              </span>
+              <div v-if="item.vendor_ids && item.vendor_ids.length > 0" class="vendor-badges-wrapper">
+                <span
+                  v-for="vendorId in item.vendor_ids"
+                  :key="vendorId"
+                  class="badge badge-vendor"
+                  :title="getVendorName(vendorId)"
+                >
+                  {{ getVendorName(vendorId).substring(0, 4) }}
+                </span>
+              </div>
               <span v-else class="badge badge-global">全域</span>
             </td>
             <td style="text-align: center;">
@@ -190,18 +197,23 @@
 
           <!-- 業者選擇 -->
           <div class="form-group">
-            <label>業者範圍 <span class="field-hint">（選擇業者 = 專屬知識，不選擇 = 全域知識）</span></label>
-            <select v-model="formData.vendor_id">
-              <option :value="null">🌐 全域知識（所有業者可見）</option>
-              <option v-for="vendor in availableVendors" :key="vendor.id" :value="vendor.id">
-                🏢 {{ vendor.name }}（專屬知識）
-              </option>
-            </select>
-            <p v-if="formData.vendor_id === null" class="hint-text">
+            <label>業者範圍 <span class="field-hint">（可多選業者，未選擇 = 全域知識）</span></label>
+            <div class="tag-selector">
+              <span
+                v-for="vendor in availableVendors"
+                :key="vendor.id"
+                @click="toggleVendor(vendor.id)"
+                class="tag-item"
+                :class="{ selected: formData.vendor_ids && formData.vendor_ids.includes(vendor.id) }"
+              >
+                🏢 {{ vendor.name }}
+              </span>
+            </div>
+            <p v-if="!formData.vendor_ids || formData.vendor_ids.length === 0" class="hint-text">
               💡 全域知識：所有業者都能看到此知識
             </p>
             <p v-else class="hint-text">
-              🔒 業者專屬：只有 {{ availableVendors.find(v => v.id === formData.vendor_id)?.name }} 能看到此知識
+              🔒 業者專屬：僅 {{ formData.vendor_ids.map(id => availableVendors.find(v => v.id === id)?.name).filter(Boolean).join('、') }} 可見
             </p>
           </div>
 
@@ -544,7 +556,7 @@ export default {
         business_types: [],
         target_user: [],  // 新增：目標用戶類型
         priority: 0,  // 新增：優先級（0-10）
-        vendor_id: null,  // 新增：業者 ID (null = 全域知識)
+        vendor_ids: [],  // 新增：業者 IDs 陣列 (空陣列 = 全域知識)
         // 表單關聯
         form_id: '',
         // 🆕 表單觸發模式
@@ -689,6 +701,23 @@ export default {
     }
   },
   methods: {
+    getVendorName(vendorId) {
+      const vendor = this.availableVendors.find(v => v.id === vendorId);
+      return vendor ? vendor.name : `業者 ${vendorId}`;
+    },
+
+    toggleVendor(vendorId) {
+      if (!this.formData.vendor_ids) {
+        this.formData.vendor_ids = [];
+      }
+      const index = this.formData.vendor_ids.indexOf(vendorId);
+      if (index > -1) {
+        this.formData.vendor_ids.splice(index, 1);
+      } else {
+        this.formData.vendor_ids.push(vendorId);
+      }
+    },
+
     async regenerateEmbeddings() {
       if (!confirm('確定要批量生成所有缺失的向量嗎？')) {
         return;
@@ -1011,7 +1040,7 @@ export default {
         intent_mappings: [],
         business_types: [],
         target_user: [],
-        vendor_id: null,  // 重置業者 ID
+        vendor_ids: [],  // 重置業者 IDs
         form_id: null,
         trigger_mode: 'auto',  // 🆕 默認為自動
         trigger_keywords: [],  // 🆕 manual 模式的觸發關鍵詞
@@ -1045,7 +1074,7 @@ export default {
           business_types: knowledge.business_types || '',
           target_user: knowledge.target_user || [],
           priority: knowledge.priority || 0,  // 載入優先級
-          vendor_id: knowledge.vendor_id || null,  // 載入業者 ID
+          vendor_ids: knowledge.vendor_ids || [],  // 載入業者 IDs
           // 表單關聯
           form_id: knowledge.form_id || '',
           // 表單觸發模式
@@ -1240,8 +1269,8 @@ export default {
         // 準備要發送的資料，處理 vendor_id 的 null 值
         const dataToSend = {
           ...this.formData,
-          // 保持 vendor_id 原值，包括 null
-          vendor_id: this.formData.vendor_id
+          // 保持 vendor_ids 原值
+          vendor_ids: this.formData.vendor_ids && this.formData.vendor_ids.length > 0 ? this.formData.vendor_ids : []
         };
 
 
@@ -1762,26 +1791,70 @@ export default {
 .business-types-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 6px;
+  align-items: center;
+}
+
+.business-types-badges .badge {
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.business-types-badges .badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .badge-universal {
   background: #909399 !important;
   color: white !important;
   font-style: italic;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+}
+
+/* 業者徽章容器樣式 */
+.vendor-badges-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  max-width: 300px;
 }
 
 /* 業者徽章樣式 */
 .badge-vendor {
-  background: #8b5cf6 !important;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
   color: white !important;
   font-weight: 500;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+  transition: all 0.2s ease;
+}
+
+.badge-vendor:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
 }
 
 .badge-global {
   background: #6b7280 !important;
   color: white !important;
   font-style: italic;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
 }
 
 /* 業態類型顏色樣式 */

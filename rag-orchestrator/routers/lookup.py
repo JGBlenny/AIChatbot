@@ -912,21 +912,27 @@ async def update_lookup(
 
 
 @router.delete("/lookup/batch")
-async def delete_all_lookup_by_vendor(request: Request, vendor_id: int = Query(..., description="業者 ID")) -> Dict[str, Any]:
+async def delete_all_lookup_by_vendor(
+    request: Request,
+    vendor_id: int = Query(..., description="業者 ID"),
+    auto_unlink_knowledge: bool = Query(False, description="是否自動解除知識庫關聯")
+) -> Dict[str, Any]:
     """
     批量刪除指定 Vendor 的所有 Lookup 記錄
 
     Args:
         vendor_id: 業者 ID
+        auto_unlink_knowledge: 是否自動解除該業者的知識庫關聯
 
     Returns:
         {
             "success": True,
             "deleted_count": 100,
-            "message": "已刪除 100 筆記錄"
+            "message": "已刪除 100 筆記錄",
+            "unlinked_knowledge_count": 5  # 解除關聯的知識庫數量
         }
     """
-    logger.info(f"🗑️  批量刪除 Lookup | vendor_id={vendor_id}")
+    logger.info(f"🗑️  批量刪除 Lookup | vendor_id={vendor_id}, auto_unlink={auto_unlink_knowledge}")
 
     db_pool = request.app.state.db_pool
 
@@ -937,26 +943,42 @@ async def delete_all_lookup_by_vendor(request: Request, vendor_id: int = Query(.
                 SELECT COUNT(*) FROM lookup_tables WHERE vendor_id = $1
             """, vendor_id)
 
-            if count == 0:
-                return {
-                    "success": True,
-                    "deleted_count": 0,
-                    "message": "沒有需要刪除的記錄"
-                }
+            deleted_count = 0
+            if count > 0:
+                # 執行批量刪除
+                result = await conn.execute("""
+                    DELETE FROM lookup_tables WHERE vendor_id = $1
+                """, vendor_id)
 
-            # 執行批量刪除
-            result = await conn.execute("""
-                DELETE FROM lookup_tables WHERE vendor_id = $1
-            """, vendor_id)
+                deleted_count = int(result.split()[-1])
+                logger.info(f"✅ 批量刪除成功 | vendor_id={vendor_id}, 刪除筆數={deleted_count}")
+            else:
+                logger.info(f"ℹ️  沒有需要刪除的 Lookup 記錄 | vendor_id={vendor_id}")
 
-            deleted_count = int(result.split()[-1])
+            # 自動解除知識庫關聯（不論是否有刪除記錄，只要使用者選擇解除關聯就執行）
+            unlinked_knowledge_count = 0
+            if auto_unlink_knowledge:
+                try:
+                    unlinked_knowledge_count = await _auto_unlink_knowledge_base(conn, vendor_id)
+                    logger.info(f"🔓 自動解除知識庫關聯完成 | 解除數量: {unlinked_knowledge_count}")
+                except Exception as e:
+                    logger.error(f"❌ 自動解除知識庫關聯失敗: {e}", exc_info=True)
 
-            logger.info(f"✅ 批量刪除成功 | vendor_id={vendor_id}, 刪除筆數={deleted_count}")
+            # 組合訊息
+            if deleted_count > 0 and unlinked_knowledge_count > 0:
+                message = f"已刪除 {deleted_count} 筆記錄，解除 {unlinked_knowledge_count} 個知識庫關聯"
+            elif deleted_count > 0:
+                message = f"已刪除 {deleted_count} 筆記錄"
+            elif unlinked_knowledge_count > 0:
+                message = f"解除 {unlinked_knowledge_count} 個知識庫關聯"
+            else:
+                message = "沒有需要刪除的記錄"
 
             return {
                 "success": True,
                 "deleted_count": deleted_count,
-                "message": f"已刪除 {deleted_count} 筆記錄"
+                "message": message,
+                "unlinked_knowledge_count": unlinked_knowledge_count
             }
 
     except Exception as e:
@@ -1017,7 +1039,8 @@ async def delete_lookup(request: Request, lookup_id: int) -> Dict[str, Any]:
 async def import_lookup_excel(
     request: Request,
     file: UploadFile = File(...),
-    vendor_id: int = Query(..., description="業者 ID")
+    vendor_id: int = Query(..., description="業者 ID"),
+    auto_link_knowledge: bool = Query(True, description="是否自動關聯知識庫")
 ) -> Dict[str, Any]:
     """
     批量匯入業務格式 Excel（多分頁）
@@ -1025,6 +1048,7 @@ async def import_lookup_excel(
     Args:
         file: 上傳的業務格式 Excel 檔案（多分頁）
         vendor_id: 業者 ID
+        auto_link_knowledge: 是否自動將相關知識庫關聯到此業者
 
     Returns:
         {
@@ -1032,10 +1056,11 @@ async def import_lookup_excel(
             "total": 100,
             "success_count": 95,
             "fail_count": 5,
-            "errors": ["電費資訊-台北市...: key已存在", ...]
+            "errors": ["電費資訊-台北市...: key已存在", ...],
+            "linked_knowledge_count": 5  # 關聯的知識庫數量
         }
     """
-    logger.info(f"📥 批量匯入業務格式 Excel | vendor_id={vendor_id}, filename={file.filename}")
+    logger.info(f"📥 批量匯入業務格式 Excel | vendor_id={vendor_id}, filename={file.filename}, auto_link={auto_link_knowledge}")
 
     db_pool = request.app.state.db_pool
 
@@ -1059,6 +1084,7 @@ async def import_lookup_excel(
         success_count = 0
         fail_count = 0
         errors = []
+        linked_knowledge_count = 0
 
         async with db_pool.acquire() as conn:
             for idx, record in enumerate(lookup_records):
@@ -1099,14 +1125,24 @@ async def import_lookup_excel(
                     fail_count += 1
                     logger.error(f"❌ 匯入記錄失敗: {error_msg}")
 
-        logger.info(f"✅ 批量匯入完成 | 成功: {success_count}, 失敗: {fail_count}")
+            logger.info(f"✅ 批量匯入完成 | 成功: {success_count}, 失敗: {fail_count}")
+
+            # 自動關聯知識庫 (移到 conn 作用域內)
+            if auto_link_knowledge and success_count > 0:
+                try:
+                    linked_knowledge_count = await _auto_link_knowledge_base(conn, vendor_id, lookup_records)
+                    logger.info(f"🔗 自動關聯知識庫完成 | 關聯數量: {linked_knowledge_count}")
+                except Exception as e:
+                    logger.error(f"❌ 自動關聯知識庫失敗: {e}", exc_info=True)
+                    errors.append(f"自動關聯知識庫失敗: {str(e)}")
 
         return {
             "success": True,
             "total": total,
             "success_count": success_count,
             "fail_count": fail_count,
-            "errors": errors[:50]  # 最多返回50個錯誤訊息
+            "errors": errors[:50],  # 最多返回50個錯誤訊息
+            "linked_knowledge_count": linked_knowledge_count
         }
 
     except HTTPException:
@@ -1885,3 +1921,110 @@ async def download_template() -> FileResponse:
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         filename="Lookup匯入範本.xlsx"
     )
+
+
+# ========== 知識庫自動關聯輔助函數 ==========
+
+async def _auto_link_knowledge_base(conn, vendor_id: int, lookup_records: List[Dict[str, Any]]) -> int:
+    """
+    根據 Lookup 資料自動關聯知識庫
+
+    Args:
+        conn: 資料庫連接
+        vendor_id: 業者 ID
+        lookup_records: Lookup 記錄列表
+
+    Returns:
+        int: 關聯的知識庫數量
+    """
+    # Lookup 類別與知識庫表單的對應關係
+    CATEGORY_TO_FORM_MAPPING = {
+        'utility_electricity': ['billing_address_form_v2'],
+        'utility_water': ['water_billing_form_v2'],
+        'utility_gas': ['gas_billing_form_v2'],
+        'rent_info': ['rent_info_form_v2'],
+        'deposit_info': ['deposit_info_form_v2'],
+        'management_fee': ['management_fee_form_v2'],
+        'parking_fee': ['parking_fee_form_v2'],
+        'community_facilities': ['community_facilities_form_v2'],
+        'parcel_service': ['parcel_service_form_v2'],
+    }
+
+    # 收集已匯入的類別
+    imported_categories = set(record.get('category') for record in lookup_records)
+
+    # 找出需要關聯的表單
+    form_ids_to_link = []
+    for category in imported_categories:
+        if category in CATEGORY_TO_FORM_MAPPING:
+            form_ids_to_link.extend(CATEGORY_TO_FORM_MAPPING[category])
+
+    if not form_ids_to_link:
+        logger.info(f"📝 沒有需要關聯的知識庫")
+        return 0
+
+    # 查詢使用這些表單的知識庫
+    knowledge_ids = await conn.fetch("""
+        SELECT id, question_summary, vendor_ids, form_id
+        FROM knowledge_base
+        WHERE form_id = ANY($1)
+          AND action_type IN ('form_fill', 'form_then_api', 'api_call')
+    """, form_ids_to_link)
+
+    linked_count = 0
+    for kb in knowledge_ids:
+        kb_id = kb['id']
+        current_vendor_ids = kb['vendor_ids'] or []
+
+        # 如果該 vendor_id 還沒關聯，則加入
+        if vendor_id not in current_vendor_ids:
+            new_vendor_ids = current_vendor_ids + [vendor_id]
+
+            await conn.execute("""
+                UPDATE knowledge_base
+                SET vendor_ids = $1, updated_at = NOW()
+                WHERE id = $2
+            """, new_vendor_ids, kb_id)
+
+            logger.info(f"🔗 關聯知識庫 ID={kb_id} ({kb['question_summary']}) 到 vendor_id={vendor_id}")
+            linked_count += 1
+
+    return linked_count
+
+
+async def _auto_unlink_knowledge_base(conn, vendor_id: int) -> int:
+    """
+    移除業者的所有知識庫關聯
+
+    Args:
+        conn: 資料庫連接
+        vendor_id: 業者 ID
+
+    Returns:
+        int: 解除關聯的知識庫數量
+    """
+    # 查詢所有包含該 vendor_id 的知識庫
+    knowledge_list = await conn.fetch("""
+        SELECT id, question_summary, vendor_ids
+        FROM knowledge_base
+        WHERE $1 = ANY(vendor_ids)
+    """, vendor_id)
+
+    unlinked_count = 0
+    for kb in knowledge_list:
+        kb_id = kb['id']
+        current_vendor_ids = kb['vendor_ids'] or []
+
+        # 移除該 vendor_id
+        new_vendor_ids = [vid for vid in current_vendor_ids if vid != vendor_id]
+
+        await conn.execute("""
+            UPDATE knowledge_base
+            SET vendor_ids = $1, updated_at = NOW()
+            WHERE id = $2
+        """, new_vendor_ids, kb_id)
+
+        logger.info(f"🔓 解除知識庫 ID={kb_id} ({kb['question_summary']}) 與 vendor_id={vendor_id} 的關聯")
+        unlinked_count += 1
+
+    return unlinked_count
