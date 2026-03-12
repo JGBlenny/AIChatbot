@@ -23,7 +23,31 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api", tags=["lookup"])
+router = APIRouter(prefix="/api/v1", tags=["lookup"])
+
+
+def _parse_lookup_value(category: str, lookup_value: str):
+    """
+    解析 lookup_value，對於整合類別（如 utility_electricity, utility_water, utility_gas）會解析 JSON
+
+    Args:
+        category: 類別 ID
+        lookup_value: 查詢值（可能是字串或 JSON 字串）
+
+    Returns:
+        解析後的值（字串或字典）
+    """
+    # 整合類別清單（這些類別的 lookup_value 儲存為 JSON）
+    json_categories = ['utility_electricity', 'utility_water', 'utility_gas']
+
+    if category in json_categories:
+        try:
+            return json.loads(lookup_value)
+        except (json.JSONDecodeError, TypeError):
+            logger.warning(f"⚠️  無法解析 {category} 的 JSON value: {lookup_value[:50]}")
+            return lookup_value
+    else:
+        return lookup_value
 
 
 @router.get("/lookup")
@@ -115,9 +139,12 @@ async def lookup(
                     else:
                         metadata_dict = {}
 
+                    # 解析 lookup_value
+                    parsed_value = _parse_lookup_value(category, row['lookup_value'])
+
                     items.append({
                         "key": row['lookup_key'],
-                        "value": row['lookup_value'],
+                        "value": parsed_value,
                         "metadata": metadata_dict
                     })
 
@@ -143,7 +170,7 @@ async def lookup(
             """, vendor_id, category, lookup_key)
 
             if row:
-                logger.info(f"✅ 精確匹配成功 | value={row['lookup_value']}")
+                logger.info(f"✅ 精確匹配成功 | value={row['lookup_value'][:100] if len(row['lookup_value']) > 100 else row['lookup_value']}")
 
                 # 從 metadata 讀取說明文字（完全配置化）
                 metadata_raw = row['metadata']
@@ -157,12 +184,15 @@ async def lookup(
 
                 note = metadata_dict.get('note', '')
 
+                # 解析 lookup_value（對於整合類別會解析 JSON）
+                parsed_value = _parse_lookup_value(category, row['lookup_value'])
+
                 return {
                     "success": True,
                     "match_type": "exact",
                     "category": category,
                     "key": key,
-                    "value": row['lookup_value'],
+                    "value": parsed_value,
                     "note": note,
                     "fuzzy_warning": "",  # 精確匹配無警告
                     "metadata": metadata_dict
@@ -256,7 +286,7 @@ async def lookup(
 
                     logger.info(
                         f"✅ 模糊匹配成功 | matched_key={best_match[:50]}, "
-                        f"value={matched_row['lookup_value']}, score={best_score:.2f}"
+                        f"value={matched_row['lookup_value'][:100] if len(matched_row['lookup_value']) > 100 else matched_row['lookup_value']}, score={best_score:.2f}"
                     )
 
                     # 從 metadata 讀取說明文字（與精確匹配相同）
@@ -270,6 +300,9 @@ async def lookup(
                         metadata_dict = {}
 
                     note = metadata_dict.get('note', '')
+
+                    # 解析 lookup_value（對於整合類別會解析 JSON）
+                    parsed_value = _parse_lookup_value(category, matched_row['lookup_value'])
 
                     # 生成模糊匹配警告訊息
                     fuzzy_warning = (
@@ -286,7 +319,7 @@ async def lookup(
                         "category": category,
                         "key": key,
                         "matched_key": best_match,
-                        "value": matched_row['lookup_value'],
+                        "value": parsed_value,
                         "note": note,
                         "fuzzy_warning": fuzzy_warning,
                         "metadata": metadata_dict
@@ -566,9 +599,12 @@ async def lookup_all(
                 else:
                     metadata_dict = {}
 
+                # 解析 lookup_value
+                parsed_value = _parse_lookup_value(category, row['lookup_value'])
+
                 items.append({
                     "key": row['lookup_key'],
-                    "value": row['lookup_value'],
+                    "value": parsed_value,
                     "metadata": metadata_dict
                 })
 
@@ -1129,113 +1165,267 @@ def _convert_business_to_lookup_format(excel_file: io.BytesIO, vendor_id: int) -
 
         # 根據分頁名稱判斷類別
         if '電費資訊' in sheet_name or sheet_name == '01_電費資訊⭐':
-            # 電費資訊 - 特殊處理，一行資料會產生多筆 lookup 記錄
+            # 電費資訊 - 整合處理，一行資料產生 ONE 筆整合記錄
             for _, row in df.iterrows():
                 address = str(row.get('物件地址（必填）', '')).strip()
                 if not address or pd.isna(address) or address == '' or address == 'nan':
                     continue
 
-                electric_number = str(row.get('電號', '')).strip() if pd.notna(row.get('電號')) else None
+                # 提取所有欄位（寄送區間為必填，其他為選填）
+                interval = str(row.get('寄送區間', '')).strip() if pd.notna(row.get('寄送區間')) else ''
 
-                # 1. 寄送區間
-                if pd.notna(row.get('寄送區間')) and str(row.get('寄送區間')).strip():
-                    interval = str(row.get('寄送區間')).strip()
-                    metadata = {"note": f"您的電費帳單將於每【{interval}】寄送。"}
-                    if electric_number and electric_number != 'nan':
-                        metadata["electric_number"] = electric_number
+                # 寄送區間是必填欄位，如果沒有就跳過這筆資料
+                if not interval or interval == 'nan':
+                    logger.warning(f"⚠️  跳過地址（缺少必填欄位 寄送區間）: {address}")
+                    continue
 
-                    lookup_records.append({
-                        'vendor_id': vendor_id,
-                        'category': 'billing_interval',
-                        'category_name': '電費寄送區間',
-                        'lookup_key': address,
-                        'lookup_value': interval,
-                        'metadata': json.dumps(metadata, ensure_ascii=False),
-                        'is_active': True
-                    })
+                electric_number = str(row.get('電號', '')).strip() if pd.notna(row.get('電號')) else ''
+                if electric_number == 'nan':
+                    electric_number = ''
 
-                # 2. 計費方式
-                if pd.notna(row.get('計費方式')) and str(row.get('計費方式')).strip():
-                    method = str(row.get('計費方式')).strip()
-                    metadata = {}
+                method = str(row.get('計費方式', '')).strip() if pd.notna(row.get('計費方式')) else ''
+                if method == 'nan':
+                    method = ''
 
-                    if pd.notna(row.get('固定費率(元/度)')):
-                        try:
-                            rate = float(row.get('固定費率(元/度)'))
-                            metadata["fixed_rate"] = rate
-                            metadata["note"] = f"採用固定費率：{rate} 元/度"
-                        except:
-                            pass
+                rate = str(row.get('固定費率(元/度)', '')).strip() if pd.notna(row.get('固定費率(元/度)')) else ''
+                if rate == 'nan':
+                    rate = ''
 
-                    if pd.notna(row.get('台電優惠')) and str(row.get('台電優惠')).strip():
-                        metadata["taipower_discount"] = str(row.get('台電優惠')).strip()
+                taipower_discount = str(row.get('台電優惠', '')).strip() if pd.notna(row.get('台電優惠')) else ''
+                if taipower_discount == 'nan':
+                    taipower_discount = ''
 
-                    if pd.notna(row.get('分攤方式')) and str(row.get('分攤方式')).strip():
-                        metadata["sharing_method"] = str(row.get('分攤方式')).strip()
+                sharing_method = str(row.get('分攤方式', '')).strip() if pd.notna(row.get('分攤方式')) else ''
+                if sharing_method == 'nan':
+                    sharing_method = ''
 
-                    if electric_number and electric_number != 'nan':
-                        metadata["electric_number"] = electric_number
+                reading_day = str(row.get('抄表日', '')).strip() if pd.notna(row.get('抄表日')) else ''
+                if reading_day == 'nan':
+                    reading_day = ''
 
-                    lookup_records.append({
-                        'vendor_id': vendor_id,
-                        'category': 'billing_method',
-                        'category_name': '電費計費方式',
-                        'lookup_key': address,
-                        'lookup_value': method,
-                        'metadata': json.dumps(metadata, ensure_ascii=False),
-                        'is_active': True
-                    })
+                payment_day = str(row.get('繳費日', '')).strip() if pd.notna(row.get('繳費日')) else ''
+                if payment_day == 'nan':
+                    payment_day = ''
 
-                # 3. 抄表日
-                if pd.notna(row.get('抄表日')) and str(row.get('抄表日')).strip():
-                    reading_day = str(row.get('抄表日')).strip()
-                    metadata = {"note": f"抄表日：{reading_day}"}
-                    if electric_number and electric_number != 'nan':
-                        metadata["electric_number"] = electric_number
+                note = str(row.get('備註', '')).strip() if pd.notna(row.get('備註')) else ''
+                if note == 'nan':
+                    note = ''
 
-                    lookup_records.append({
-                        'vendor_id': vendor_id,
-                        'category': 'meter_reading_day',
-                        'category_name': '電表抄表日',
-                        'lookup_key': address,
-                        'lookup_value': reading_day,
-                        'metadata': json.dumps(metadata, ensure_ascii=False),
-                        'is_active': True
-                    })
+                # 建立整合的 JSON 資料結構
+                electricity_data = {
+                    "寄送區間": interval,  # MANDATORY
+                    "電號": electric_number,
+                    "計費方式": method,
+                    "固定費率(元/度)": rate,
+                    "台電優惠": taipower_discount,
+                    "分攤方式": sharing_method,
+                    "抄表日": reading_day,
+                    "繳費日": payment_day,
+                    "備註": note
+                }
 
-                # 4. 繳費日
-                if pd.notna(row.get('繳費日')) and str(row.get('繳費日')).strip():
-                    payment_day = str(row.get('繳費日')).strip()
-                    metadata = {"note": f"繳費日：{payment_day}"}
-                    if electric_number and electric_number != 'nan':
-                        metadata["electric_number"] = electric_number
+                # 建立友善的說明文字
+                note_parts = [f"您的電費資訊：帳單每【{interval}】寄送"]
+                if method:
+                    note_parts.append(f"，計費方式為【{method}】")
+                    if rate:
+                        note_parts.append(f"（{rate} 元/度）")
+                if reading_day:
+                    note_parts.append(f"，抄表日為【{reading_day}】")
+                if payment_day:
+                    note_parts.append(f"，繳費日為【{payment_day}】")
+                note_parts.append("。")
 
-                    lookup_records.append({
-                        'vendor_id': vendor_id,
-                        'category': 'payment_day',
-                        'category_name': '電費繳費日',
-                        'lookup_key': address,
-                        'lookup_value': payment_day,
-                        'metadata': json.dumps(metadata, ensure_ascii=False),
-                        'is_active': True
-                    })
+                friendly_note = ''.join(note_parts)
 
-                # 5. 備註
-                if pd.notna(row.get('備註')) and str(row.get('備註')).strip():
-                    note = str(row.get('備註')).strip()
-                    metadata = {}
-                    if electric_number and electric_number != 'nan':
-                        metadata["electric_number"] = electric_number
+                # metadata 包含友善說明和電號
+                metadata = {
+                    "note": friendly_note,
+                    "electric_number": electric_number
+                }
 
-                    lookup_records.append({
-                        'vendor_id': vendor_id,
-                        'category': 'electricity_note',
-                        'category_name': '電費備註',
-                        'lookup_key': address,
-                        'lookup_value': note,
-                        'metadata': json.dumps(metadata, ensure_ascii=False),
-                        'is_active': True
-                    })
+                # 產生 ONE 筆整合記錄
+                lookup_records.append({
+                    'vendor_id': vendor_id,
+                    'category': 'utility_electricity',
+                    'category_name': '電費資訊',
+                    'lookup_key': address,
+                    'lookup_value': json.dumps(electricity_data, ensure_ascii=False),
+                    'metadata': json.dumps(metadata, ensure_ascii=False),
+                    'is_active': True
+                })
+
+        elif '水費資訊' in sheet_name or sheet_name == '02_水費資訊⭐':
+            # 水費資訊 - 整合處理，一行資料產生 ONE 筆整合記錄
+            for _, row in df.iterrows():
+                address = str(row.get('物件地址（必填）', '')).strip()
+                if not address or pd.isna(address) or address == '' or address == 'nan':
+                    continue
+
+                # 提取所有欄位（寄送區間建議為必填，但不強制）
+                water_meter = str(row.get('水表編號', '')).strip() if pd.notna(row.get('水表編號')) else ''
+                if water_meter == 'nan':
+                    water_meter = ''
+
+                interval = str(row.get('寄送區間', '')).strip() if pd.notna(row.get('寄送區間')) else ''
+                if interval == 'nan':
+                    interval = ''
+
+                method = str(row.get('計費方式', '')).strip() if pd.notna(row.get('計費方式')) else ''
+                if method == 'nan':
+                    method = ''
+
+                rate = str(row.get('固定費率(元/度)', '')).strip() if pd.notna(row.get('固定費率(元/度)')) else ''
+                if rate == 'nan':
+                    rate = ''
+
+                reading_day = str(row.get('抄表日', '')).strip() if pd.notna(row.get('抄表日')) else ''
+                if reading_day == 'nan':
+                    reading_day = ''
+
+                payment_day = str(row.get('繳費日', '')).strip() if pd.notna(row.get('繳費日')) else ''
+                if payment_day == 'nan':
+                    payment_day = ''
+
+                sharing_method = str(row.get('分攤方式', '')).strip() if pd.notna(row.get('分攤方式')) else ''
+                if sharing_method == 'nan':
+                    sharing_method = ''
+
+                note = str(row.get('備註', '')).strip() if pd.notna(row.get('備註')) else ''
+                if note == 'nan':
+                    note = ''
+
+                # 建立整合的 JSON 資料結構
+                water_data = {
+                    "水表編號": water_meter,
+                    "寄送區間": interval,
+                    "計費方式": method,
+                    "固定費率(元/度)": rate,
+                    "抄表日": reading_day,
+                    "繳費日": payment_day,
+                    "分攤方式": sharing_method,
+                    "備註": note
+                }
+
+                # 建立友善的說明文字
+                note_parts = []
+                if interval:
+                    note_parts.append(f"您的水費資訊：帳單每【{interval}】寄送")
+                elif method:
+                    note_parts.append(f"您的水費資訊：計費方式為【{method}】")
+                else:
+                    note_parts.append("您的水費資訊")
+
+                if method and interval:
+                    note_parts.append(f"，計費方式為【{method}】")
+                    if rate:
+                        note_parts.append(f"（{rate} 元/度）")
+                if reading_day:
+                    note_parts.append(f"，抄表日為【{reading_day}】")
+                if payment_day:
+                    note_parts.append(f"，繳費日為【{payment_day}】")
+                note_parts.append("。")
+
+                friendly_note = ''.join(note_parts)
+
+                # metadata 包含友善說明和水表編號
+                metadata = {
+                    "note": friendly_note,
+                    "water_meter_number": water_meter
+                }
+
+                # 產生 ONE 筆整合記錄
+                lookup_records.append({
+                    'vendor_id': vendor_id,
+                    'category': 'utility_water',
+                    'category_name': '水費資訊',
+                    'lookup_key': address,
+                    'lookup_value': json.dumps(water_data, ensure_ascii=False),
+                    'metadata': json.dumps(metadata, ensure_ascii=False),
+                    'is_active': True
+                })
+
+        elif '瓦斯費資訊' in sheet_name or sheet_name == '03_瓦斯費資訊⭐':
+            # 瓦斯費資訊 - 整合處理，一行資料產生 ONE 筆整合記錄
+            for _, row in df.iterrows():
+                address = str(row.get('物件地址（必填）', '')).strip()
+                if not address or pd.isna(address) or address == '' or address == 'nan':
+                    continue
+
+                # 提取所有欄位（瓦斯公司為必填）
+                gas_company = str(row.get('瓦斯公司', '')).strip() if pd.notna(row.get('瓦斯公司')) else ''
+
+                # 瓦斯公司是必填欄位
+                if not gas_company or gas_company == 'nan':
+                    logger.warning(f"⚠️  跳過地址（缺少必填欄位 瓦斯公司）: {address}")
+                    continue
+
+                method = str(row.get('計費方式', '')).strip() if pd.notna(row.get('計費方式')) else ''
+                if method == 'nan':
+                    method = ''
+
+                rate = str(row.get('固定費率(元/度)', '')).strip() if pd.notna(row.get('固定費率(元/度)')) else ''
+                if rate == 'nan':
+                    rate = ''
+
+                reading_method = str(row.get('抄表方式', '')).strip() if pd.notna(row.get('抄表方式')) else ''
+                if reading_method == 'nan':
+                    reading_method = ''
+
+                payment_day = str(row.get('繳費日', '')).strip() if pd.notna(row.get('繳費日')) else ''
+                if payment_day == 'nan':
+                    payment_day = ''
+
+                gas_phone = str(row.get('瓦斯公司電話', '')).strip() if pd.notna(row.get('瓦斯公司電話')) else ''
+                if gas_phone == 'nan':
+                    gas_phone = ''
+
+                note = str(row.get('備註', '')).strip() if pd.notna(row.get('備註')) else ''
+                if note == 'nan':
+                    note = ''
+
+                # 建立整合的 JSON 資料結構
+                gas_data = {
+                    "瓦斯公司": gas_company,  # MANDATORY
+                    "計費方式": method,
+                    "固定費率(元/度)": rate,
+                    "抄表方式": reading_method,
+                    "繳費日": payment_day,
+                    "瓦斯公司電話": gas_phone,
+                    "備註": note
+                }
+
+                # 建立友善的說明文字
+                note_parts = [f"您的瓦斯費資訊：瓦斯公司為【{gas_company}】"]
+                if gas_phone:
+                    note_parts.append(f"（電話：{gas_phone}）")
+                if method:
+                    note_parts.append(f"，計費方式為【{method}】")
+                    if rate:
+                        note_parts.append(f"（{rate} 元/度）")
+                if payment_day:
+                    note_parts.append(f"，繳費日為【{payment_day}】")
+                note_parts.append("。")
+
+                friendly_note = ''.join(note_parts)
+
+                # metadata 包含友善說明和瓦斯公司資訊
+                metadata = {
+                    "note": friendly_note,
+                    "gas_company": gas_company,
+                    "gas_company_phone": gas_phone
+                }
+
+                # 產生 ONE 筆整合記錄
+                lookup_records.append({
+                    'vendor_id': vendor_id,
+                    'category': 'utility_gas',
+                    'category_name': '瓦斯費資訊',
+                    'lookup_key': address,
+                    'lookup_value': json.dumps(gas_data, ensure_ascii=False),
+                    'metadata': json.dumps(metadata, ensure_ascii=False),
+                    'is_active': True
+                })
 
         else:
             # 其他類別 - 通用處理
@@ -1363,35 +1553,37 @@ def _convert_lookup_to_business_format(df: pd.DataFrame) -> Dict[str, pd.DataFra
     # 定義業務類別與對應的分頁名稱、欄位
     # 這裡只實作幾個主要類別作為示範，可以後續擴充
 
-    # 1. 電費資訊
-    elec_cats = ['billing_interval', 'billing_method', 'meter_reading_day', 'payment_day']
-    df_elec = df[df['category'].isin(elec_cats)].copy()
+    # 1. 電費資訊（整合版）
+    df_elec = df[df['category'] == 'utility_electricity'].copy()
     if not df_elec.empty:
         records = []
-        for address in df_elec['lookup_key'].unique():
-            addr_data = df_elec[df_elec['lookup_key'] == address]
-            record = {'物件地址（必填）': address, '電號': '', '寄送區間': '', '計費方式': '',
-                     '固定費率(元/度)': '', '抄表日': '', '繳費日': '', '台電優惠': '', '分攤方式': '', '備註': ''}
+        for _, row in df_elec.iterrows():
+            # lookup_value 是 JSON 字串，需要解析
+            try:
+                if isinstance(row['lookup_value'], str):
+                    electricity_data = json.loads(row['lookup_value'])
+                else:
+                    electricity_data = row['lookup_value']
+            except (json.JSONDecodeError, TypeError):
+                logger.warning(f"⚠️  無法解析電費資訊 JSON: {row['lookup_key']}")
+                continue
 
-            for _, row in addr_data.iterrows():
-                meta = row['metadata_parsed']
-                if not record['電號'] and meta.get('electric_number'):
-                    record['電號'] = meta['electric_number']
+            # 從 metadata 取得電號（若 JSON 中沒有）
+            meta = row['metadata_parsed']
+            electric_number = electricity_data.get('電號', '') or meta.get('electric_number', '')
 
-                if row['category'] == 'billing_interval':
-                    record['寄送區間'] = row['lookup_value']
-                elif row['category'] == 'billing_method':
-                    record['計費方式'] = row['lookup_value']
-                    if meta.get('fixed_rate'):
-                        record['固定費率(元/度)'] = meta['fixed_rate']
-                    if meta.get('taipower_discount'):
-                        record['台電優惠'] = meta['taipower_discount']
-                    if meta.get('sharing_method'):
-                        record['分攤方式'] = meta['sharing_method']
-                elif row['category'] == 'meter_reading_day':
-                    record['抄表日'] = row['lookup_value']
-                elif row['category'] == 'payment_day':
-                    record['繳費日'] = row['lookup_value']
+            record = {
+                '物件地址（必填）': row['lookup_key'],
+                '電號': electric_number,
+                '寄送區間': electricity_data.get('寄送區間', ''),
+                '計費方式': electricity_data.get('計費方式', ''),
+                '固定費率(元/度)': electricity_data.get('固定費率(元/度)', ''),
+                '抄表日': electricity_data.get('抄表日', ''),
+                '繳費日': electricity_data.get('繳費日', ''),
+                '台電優惠': electricity_data.get('台電優惠', ''),
+                '分攤方式': electricity_data.get('分攤方式', ''),
+                '備註': electricity_data.get('備註', '')
+            }
 
             records.append(record)
 
@@ -1400,7 +1592,83 @@ def _convert_lookup_to_business_format(df: pd.DataFrame) -> Dict[str, pd.DataFra
                 ['物件地址（必填）', '電號', '寄送區間', '計費方式', '固定費率(元/度)', '抄表日', '繳費日', '台電優惠', '分攤方式', '備註']
             ]
 
-    # 2. 其他類別 - 通用處理（簡化版）
+    # 2. 水費資訊（整合版）
+    df_water = df[df['category'] == 'utility_water'].copy()
+    if not df_water.empty:
+        records = []
+        for _, row in df_water.iterrows():
+            # lookup_value 是 JSON 字串，需要解析
+            try:
+                if isinstance(row['lookup_value'], str):
+                    water_data = json.loads(row['lookup_value'])
+                else:
+                    water_data = row['lookup_value']
+            except (json.JSONDecodeError, TypeError):
+                logger.warning(f"⚠️  無法解析水費資訊 JSON: {row['lookup_key']}")
+                continue
+
+            # 從 metadata 取得水表編號（若 JSON 中沒有）
+            meta = row['metadata_parsed']
+            water_meter = water_data.get('水表編號', '') or meta.get('water_meter_number', '')
+
+            record = {
+                '物件地址（必填）': row['lookup_key'],
+                '水表編號': water_meter,
+                '寄送區間': water_data.get('寄送區間', ''),
+                '計費方式': water_data.get('計費方式', ''),
+                '固定費率(元/度)': water_data.get('固定費率(元/度)', ''),
+                '抄表日': water_data.get('抄表日', ''),
+                '繳費日': water_data.get('繳費日', ''),
+                '分攤方式': water_data.get('分攤方式', ''),
+                '備註': water_data.get('備註', '')
+            }
+
+            records.append(record)
+
+        if records:
+            sheets['02_水費資訊⭐'] = pd.DataFrame(records)[
+                ['物件地址（必填）', '水表編號', '寄送區間', '計費方式', '固定費率(元/度)', '抄表日', '繳費日', '分攤方式', '備註']
+            ]
+
+    # 3. 瓦斯費資訊（整合版）
+    df_gas = df[df['category'] == 'utility_gas'].copy()
+    if not df_gas.empty:
+        records = []
+        for _, row in df_gas.iterrows():
+            # lookup_value 是 JSON 字串，需要解析
+            try:
+                if isinstance(row['lookup_value'], str):
+                    gas_data = json.loads(row['lookup_value'])
+                else:
+                    gas_data = row['lookup_value']
+            except (json.JSONDecodeError, TypeError):
+                logger.warning(f"⚠️  無法解析瓦斯費資訊 JSON: {row['lookup_key']}")
+                continue
+
+            # 從 metadata 取得瓦斯公司資訊（若 JSON 中沒有）
+            meta = row['metadata_parsed']
+            gas_company = gas_data.get('瓦斯公司', '') or meta.get('gas_company', '')
+            gas_phone = gas_data.get('瓦斯公司電話', '') or meta.get('gas_company_phone', '')
+
+            record = {
+                '物件地址（必填）': row['lookup_key'],
+                '瓦斯公司': gas_company,
+                '計費方式': gas_data.get('計費方式', ''),
+                '固定費率(元/度)': gas_data.get('固定費率(元/度)', ''),
+                '抄表方式': gas_data.get('抄表方式', ''),
+                '繳費日': gas_data.get('繳費日', ''),
+                '瓦斯公司電話': gas_phone,
+                '備註': gas_data.get('備註', '')
+            }
+
+            records.append(record)
+
+        if records:
+            sheets['03_瓦斯費資訊⭐'] = pd.DataFrame(records)[
+                ['物件地址（必填）', '瓦斯公司', '計費方式', '固定費率(元/度)', '抄表方式', '繳費日', '瓦斯公司電話', '備註']
+            ]
+
+    # 4. 其他類別 - 通用處理（簡化版）
     category_mapping = {
         'water_billing': ('02_水費資訊⭐', ['物件地址（必填）', '水表編號', '寄送區間', '計費方式', '固定費率(元/度)', '抄表日', '繳費日', '分攤方式', '備註']),
         'gas_billing': ('03_瓦斯費資訊⭐', ['物件地址（必填）', '瓦斯公司', '計費方式', '固定費率(元/度)', '抄表方式', '繳費日', '瓦斯公司電話', '備註']),

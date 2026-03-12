@@ -88,7 +88,7 @@
               <code class="lookup-key">{{ item.lookup_key }}</code>
             </td>
             <td>
-              <span class="lookup-value">{{ item.lookup_value }}</span>
+              <span class="lookup-value">{{ formatLookupValue(item) }}</span>
             </td>
             <td>
               <small>{{ getMetadataDescription(item.metadata) }}</small>
@@ -538,6 +538,43 @@ export default {
         }
       }
       return metadata.description || metadata.note || '-';
+    },
+
+    formatLookupValue(item) {
+      const jsonCategories = ['utility_electricity', 'utility_water', 'utility_gas'];
+
+      // 如果是 JSON 類別，嘗試解析並格式化顯示
+      if (jsonCategories.includes(item.category)) {
+        try {
+          let data;
+          if (typeof item.lookup_value === 'string') {
+            data = JSON.parse(item.lookup_value);
+          } else {
+            data = item.lookup_value;
+          }
+
+          // 只顯示非空值的關鍵欄位
+          const keyFields = [];
+          for (const [key, value] of Object.entries(data)) {
+            if (value && value !== '' && value !== 'null') {
+              keyFields.push(`${key}: ${value}`);
+            }
+          }
+
+          // 限制顯示前 3 個欄位，避免過長
+          if (keyFields.length > 3) {
+            return keyFields.slice(0, 3).join(' | ') + ` ...等${keyFields.length}項`;
+          }
+          return keyFields.join(' | ') || '-';
+
+        } catch (e) {
+          // 如果解析失敗，顯示原始值的前 50 字元
+          return String(item.lookup_value).substring(0, 50) + '...';
+        }
+      }
+
+      // 非 JSON 類別，直接顯示原始值
+      return item.lookup_value;
     },
 
     // ===== 匯入/匯出功能 =====

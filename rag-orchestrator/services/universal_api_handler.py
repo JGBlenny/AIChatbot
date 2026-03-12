@@ -421,11 +421,28 @@ class UniversalAPICallHandler:
 
         模板示例:
         "用戶名: {name}\nEmail: {email}\n地址: {address.city}"
+
+        特殊處理:
+        - {formatted_value}: 如果 value 是 dict/JSON，格式化顯示為清單
         """
         def replacer(match):
-            key_path = match.group(1)  # 例如: address.city
-            keys = key_path.split('.')
+            key_path = match.group(1)  # 例如: address.city 或 formatted_value
 
+            # 特殊處理 formatted_value
+            if key_path == 'formatted_value':
+                value = data.get('value')
+                if isinstance(value, dict):
+                    # 格式化為清單顯示
+                    lines = []
+                    for k, v in value.items():
+                        if v and str(v).strip():  # 只顯示非空值
+                            lines.append(f"- **{k}**：{v}")
+                    return '\n'.join(lines) if lines else str(value)
+                else:
+                    return str(value) if value is not None else ''
+
+            # 一般的 key path 處理
+            keys = key_path.split('.')
             value = data
             for key in keys:
                 if isinstance(value, dict):
