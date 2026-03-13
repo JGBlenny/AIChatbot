@@ -197,8 +197,38 @@
 
           <!-- 業者選擇 -->
           <div class="form-group">
-            <label>業者範圍 <span class="field-hint">（可多選業者，未選擇 = 全域知識）</span></label>
-            <div class="tag-selector">
+            <label>業者範圍 <span class="field-hint">（點擊編輯業者範圍）</span></label>
+
+            <!-- 顯示當前狀態 -->
+            <div v-if="!formData.vendor_ids || formData.vendor_ids.length === 0" class="vendor-display">
+              <span class="badge badge-global" @click="showVendorSelector = true" style="cursor: pointer;">
+                🌐 全域知識（所有業者可見）
+              </span>
+            </div>
+            <div v-else class="vendor-display">
+              <span
+                v-for="vendorId in formData.vendor_ids"
+                :key="vendorId"
+                class="badge badge-vendor"
+                style="margin-right: 6px; cursor: pointer;"
+                @click="showVendorSelector = true"
+              >
+                🏢 {{ getVendorName(vendorId) }}
+              </span>
+            </div>
+
+            <!-- 編輯按鈕 -->
+            <button
+              type="button"
+              class="btn-secondary"
+              @click="showVendorSelector = !showVendorSelector"
+              style="margin-top: 8px;"
+            >
+              {{ showVendorSelector ? '✓ 完成編輯' : '✏️ 編輯業者範圍' }}
+            </button>
+
+            <!-- 業者選擇器（編輯模式） -->
+            <div v-if="showVendorSelector" class="tag-selector" style="margin-top: 12px;">
               <span
                 v-for="vendor in availableVendors"
                 :key="vendor.id"
@@ -208,7 +238,15 @@
               >
                 🏢 {{ vendor.name }}
               </span>
+              <span
+                @click="formData.vendor_ids = []"
+                class="tag-item"
+                :class="{ selected: !formData.vendor_ids || formData.vendor_ids.length === 0 }"
+              >
+                🌐 全域（清除所有選擇）
+              </span>
             </div>
+
             <p v-if="!formData.vendor_ids || formData.vendor_ids.length === 0" class="hint-text">
               💡 全域知識：所有業者都能看到此知識
             </p>
@@ -537,6 +575,7 @@ export default {
       availableVendors: [],  // 從 API 載入可用業者
       searchQuery: '',
       showModal: false,
+      showVendorSelector: false,  // 控制業者選擇器顯示
       editingItem: null,
       saving: false,
       regenerating: false,
@@ -1055,6 +1094,7 @@ export default {
       this.intentTypes = {};
       this.selectedBusinessTypes = [];
       this.selectedTargetUsers = [];
+      this.showVendorSelector = false;  // 重置業者選擇器顯示狀態
       this.showModal = true;
     },
 
@@ -1138,6 +1178,7 @@ export default {
           selectedBusinessTypes: this.selectedBusinessTypes
         });
 
+        this.showVendorSelector = false;  // 重置業者選擇器顯示狀態
         this.showModal = true;
       } catch (error) {
         console.error('載入知識詳情失敗', error);
