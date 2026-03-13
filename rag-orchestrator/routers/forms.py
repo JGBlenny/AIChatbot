@@ -478,14 +478,32 @@ async def list_form_submissions(
     - **vendor_id**: 過濾特定業者
     - **limit**: 每頁筆數 (預設 50)
     - **offset**: 偏移量 (預設 0)
+
+    注意：此 API 會自動排除 Lookup 查詢類表單（api_config.endpoint IN ('lookup', 'lookup_generic')），
+    只顯示實際的提交表單（如報修申請、租客資料等）
     """
     try:
         db_pool = request.app.state.db_pool
+
+        async with db_pool.acquire() as conn:
+            # 動態查詢所有 Lookup 查詢類表單（endpoint = 'lookup' 或 'lookup_generic'）
+            lookup_forms = await conn.fetch("""
+                SELECT form_id
+                FROM form_schemas
+                WHERE api_config->>'endpoint' IN ('lookup', 'lookup_generic')
+            """)
+            lookup_form_ids = [row['form_id'] for row in lookup_forms]
 
         # 構建查詢條件
         conditions = []
         params = []
         param_count = 0
+
+        # 排除 Lookup 查詢類表單
+        if lookup_form_ids:
+            param_count += 1
+            conditions.append(f"fs.form_id != ALL(${param_count}::text[])")
+            params.append(lookup_form_ids)
 
         if form_id:
             param_count += 1
