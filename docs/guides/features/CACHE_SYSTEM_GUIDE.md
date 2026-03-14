@@ -656,12 +656,60 @@ cache.get_cached_answer(
 )
 ```
 
-### 5. 禁用緩存的時機
+### 5. Debug 模式不使用緩存 🆕 2026-03-14
+
+**行為說明**：
+當請求中設置 `include_debug_info=true` 時，系統會**自動跳過緩存**，確保返回最新的調試信息。
+
+**設計原因**：
+```
+✅ 數據準確性    - 調試時需要真實、即時的處理流程數據
+✅ 避免緩存污染  - debug 響應體積大（4-7倍），不適合緩存
+✅ 符合測試需求  - 測試場景對延遲不敏感，更關注數據正確性
+✅ 節省存儲成本  - 不緩存大體積 debug 響應
+```
+
+**使用示例**：
+```python
+# 普通請求（使用緩存）
+response = requests.post("http://localhost:8100/api/v1/message", json={
+    "message": "租金何時繳？",
+    "vendor_id": 1,
+    "include_debug_info": False  # 默認值
+})
+# ✅ 緩存命中：50-200ms
+
+# Debug 請求（跳過緩存）
+response = requests.post("http://localhost:8100/api/v1/message", json={
+    "message": "租金何時繳？",
+    "vendor_id": 1,
+    "include_debug_info": True   # 啟用調試模式
+})
+# ⚠️ 跳過緩存：500-2000ms（執行完整檢索）
+# 📊 返回 debug_info：processing_path, sop_candidates, comparison_metadata 等
+```
+
+**日誌輸出**：
+```
+🔍 [DEBUG MODE] 檢測到 debug_info，跳過緩存 - vendor_id: 1
+```
+
+**前端提示**（可選）：
+```vue
+<label>
+  <input type="checkbox" v-model="debugMode" />
+  顯示處理流程詳情
+  <span class="hint">⚡ 開啟後將跳過緩存</span>
+</label>
+```
+
+### 6. 禁用緩存的時機
 
 **以下情況建議暫時禁用**:
 - ✅ 開發測試階段（避免緩存干擾）
 - ✅ 大規模知識庫遷移（避免大量失效操作）
 - ✅ 調試問題（確保每次都是最新數據）
+- ⚠️ **注意**：使用 `include_debug_info=true` 會自動跳過緩存，無需手動禁用
 
 ```bash
 # 測試環境
@@ -873,6 +921,9 @@ def analyze_cache_performance():
 
 ---
 
-**最後更新**: 2025-10-22
+**最後更新**: 2026-03-14
 **維護者**: Claude Code
-**文件版本**: 1.0
+**文件版本**: 1.1
+**變更記錄**:
+- 2026-03-14: 新增 Debug 模式緩存策略說明（`include_debug_info=true` 自動跳過緩存）
+- 2025-10-22: 初始版本

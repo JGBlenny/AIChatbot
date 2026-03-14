@@ -93,7 +93,14 @@ def cache_response_and_return(cache_service, vendor_id: int, question: str, resp
 
     Returns:
         原始 response
+
+    ✅ 2026-03-14: Debug 請求不緩存，避免緩存污染
     """
+    # ✅ Debug 響應不緩存（保證調試信息始終最新）
+    if hasattr(response, 'debug_info') and response.debug_info is not None:
+        print(f"🔍 [DEBUG MODE] 檢測到 debug_info，跳過緩存 - vendor_id: {vendor_id}")
+        return response
+
     try:
         # 生成配置版本
         config_version = _generate_config_version()
@@ -2703,9 +2710,11 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 )
         else:
             # 非串流模式：正常返回 JSON
-            cached_response = _check_cache(cache_service, request.vendor_id, request.message, request.target_user)
-            if cached_response:
-                return cached_response
+            # ✅ Debug 模式不使用緩存，保證調試信息最新
+            if not request.include_debug_info:
+                cached_response = _check_cache(cache_service, request.vendor_id, request.message, request.target_user)
+                if cached_response:
+                    return cached_response
 
         # Step 3: 意圖分類
         intent_classifier = req.app.state.intent_classifier

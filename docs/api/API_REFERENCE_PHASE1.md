@@ -61,8 +61,8 @@ Content-Type: application/json
 | `session_id` | string | ❌ | 會話 ID（用於追蹤） | "session_123" |
 | `user_id` | string | ❌ | 使用者 ID | "user_456" |
 | `top_k` | integer | ❌ | 返回知識數量（預設：5） | 5 |
-| `include_sources` | boolean | ❌ | 是否包含知識來源（預設：true） | true |
-| `include_debug_info` | boolean | ❌ | 是否包含調試資訊（預設：false） | false |
+| `include_sources` | boolean | ❌ | 是否包含知識來源（預設：false） | true |
+| `include_debug_info` | boolean | ❌ | 是否包含調試資訊（預設：false）⚠️ 啟用時將跳過緩存 | false |
 | `disable_answer_synthesis` | boolean | ❌ | 禁用答案合成，僅用於回測（預設：false） | false |
 | `skip_sop` | boolean | ❌ | 跳過 SOP 檢索，僅用於回測（預設：false） | false |
 
@@ -79,6 +79,28 @@ Content-Type: application/json
 - `answer_chunk` - 答案片段（逐字傳輸）
 - `metadata` - 完整元數據（表單、影片、來源等）
 - `done` - 串流完成
+
+**include_debug_info 參數說明**（調試模式） 🆕 2026-03-14：
+
+| include_debug_info值 | 緩存行為 | 回應時間 | 使用場景 | debug_info內容 |
+|---------------------|---------|---------|---------|--------------|
+| `false` (預設) | **使用緩存** | 100-500ms | 生產環境、正常使用 | null |
+| `true` | **跳過緩存** ⚠️ | 500-2000ms | 開發測試、問題診斷 | 詳細處理流程 |
+
+**為什麼啟用 debug 模式會跳過緩存？**
+- ✅ **保證數據準確性**：調試時需要最新、真實的處理流程數據
+- ✅ **避免緩存污染**：debug 響應體積大（含候選列表、元數據），不適合緩存
+- ✅ **符合測試需求**：測試場景對延遲不敏感，更關注數據正確性
+- ✅ **節省存儲成本**：debug 響應是普通響應的 4-7 倍大小
+
+**debug_info 包含的信息**（當 `include_debug_info=true` 時）：
+- `processing_path`: 處理路徑（sop_orchestrator / knowledge / rag_fallback）
+- `llm_strategy`: LLM 策略（orchestrated / direct / synthesis）
+- `sop_candidates`: SOP 候選列表（含相似度分數）
+- `knowledge_candidates`: 知識庫候選列表
+- `comparison_metadata`: SOP vs 知識庫比較元數據
+- `vendor_params`: 使用的業者參數
+- `used_param_keys`: 實際注入的參數鍵列表
 
 **target_user 參數說明**（目標用戶角色） 🆕 推薦：
 
