@@ -85,6 +85,7 @@
 | GET | `/api/v1/forms/{form_id}/related-knowledge` | Get related knowledge |
 | GET | `/api/v1/form-submissions` | List submissions |
 | PATCH | `/api/v1/form-submissions/{submission_id}` | Update submission |
+| GET | `/api/v1/lookup-forms/{form_id}/stats` | ⭐ Get Lookup form statistics (2026-03-13) |
 
 ### API Endpoints Management (Prefix: `/api/v1`)
 | Method | Path | Description |
@@ -94,6 +95,7 @@
 | POST | `/api/v1/api-endpoints` | Create endpoint |
 | PUT | `/api/v1/api-endpoints/{endpoint_id}` | Update endpoint |
 | DELETE | `/api/v1/api-endpoints/{endpoint_id}` | Delete endpoint |
+| GET | `/api/v1/api-endpoints/{endpoint_id}/related-forms` | ⭐ Get related Lookup forms (2026-03-13) |
 
 ### Lookup API (No Prefix)
 | Method | Path | Description |
@@ -508,7 +510,7 @@ CREATE TABLE api_endpoints (
   endpoint_name VARCHAR(200) NOT NULL,
   endpoint_icon VARCHAR(10) DEFAULT '🔌',
   description TEXT,
-  
+
   -- Dynamic Configuration Fields
   implementation_type VARCHAR(20) DEFAULT 'dynamic',  -- 'dynamic' or 'custom'
   api_url TEXT,                                        -- API URL with variable support
@@ -522,24 +524,47 @@ CREATE TABLE api_endpoints (
   custom_handler_name VARCHAR(100),                   -- Custom handler function name
   retry_times INTEGER DEFAULT 0,                      -- Retry attempts
   cache_ttl INTEGER DEFAULT 0,                        -- Cache TTL in seconds
-  
+
+  -- ⭐ Knowledge Base Relationship (2026-03-13 新增)
+  related_kb_ids INTEGER[] DEFAULT '{}',              -- 關聯的知識庫 ID 陣列 (Trigger 自動維護)
+
   -- Availability
   available_in_knowledge BOOLEAN DEFAULT TRUE,
   available_in_form BOOLEAN DEFAULT TRUE,
-  
+
   -- Parameters Definition
   default_params JSONB DEFAULT '[]',
-  
+
   -- Status
   is_active BOOLEAN DEFAULT TRUE,
   display_order INTEGER DEFAULT 0,
   vendor_id INTEGER REFERENCES vendors(id) ON DELETE SET NULL,
-  
+
   -- Timestamps
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ⭐ GIN 索引優化陣列查詢 (2026-03-13 新增)
+CREATE INDEX idx_api_endpoints_related_kb_ids
+ON api_endpoints USING GIN(related_kb_ids);
 ```
+
+**⭐ related_kb_ids 欄位說明 (2026-03-13 新增)**:
+- **用途**: 儲存使用此 API 端點的所有知識庫 ID
+- **維護方式**: 由資料庫 Trigger `sync_api_endpoint_kb_ids()` 自動維護
+- **更新時機**: 當 knowledge_base 的 form_id 變更時自動同步
+- **查詢優化**: 使用 GIN 索引支援陣列查詢
+- **唯讀**: 不應手動修改,會被 Trigger 覆蓋
+
+**關聯邏輯**:
+```
+knowledge_base.form_id → form_schemas.form_id
+form_schemas.api_config.endpoint → api_endpoints.endpoint_id
+api_endpoints.related_kb_ids ← Trigger 自動更新
+```
+
+**參考文檔**: [知識庫、表單與 API 端點自動關聯機制](./docs/features/lookup/KB_FORM_API_AUTO_SYNC.md)
 
 ### Seed Data
 
@@ -862,6 +887,138 @@ SYNTHESIS_MAX_RESULTS=3
 # Server
 UVICORN_RELOAD=false  # disable in production
 ```
+
+---
+
+## ⭐ New API Endpoints (2026-03-13)
+
+### 1. Get Lookup Form Statistics
+
+**Endpoint**: `GET /api/v1/lookup-forms/{form_id}/stats`
+
+**Purpose**: 取得 Lookup 表單的統計資訊,包含關聯的知識庫和使用的 API 端點。
+
+**Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `form_id` | string | Yes | Lookup 表單 ID (e.g., `parcel_service_form_v2`) |
+
+**Request Example**:
+```bash
+curl "http://localhost:8100/api/v1/lookup-forms/parcel_service_form_v2/stats"
+```
+
+**Response Example**:
+```json
+{
+  "form_id": "parcel_service_form_v2",
+  "form_name": "包裹代收服務查詢",
+  "category": "parcel_service",
+  "endpoint": "lookup",
+  "linked_kb_ids": [1397],
+  "linked_kb_count": 1,
+  "api_endpoint": {
+    "endpoint_id": "lookup",
+    "endpoint_name": "通用查詢 API",
+    "related_kb_ids": [1394, 1396, 1397],
+    "total_kb_using": 3
+  }
+}
+```
+
+**Response Fields**:
+- `form_id`: 表單 ID
+- `form_name`: 表單名稱
+- `category`: Lookup 類別
+- `endpoint`: 使用的 API 端點 ID
+- `linked_kb_ids`: 使用此表單的知識庫 ID 陣列
+- `linked_kb_count`: 關聯知識庫數量
+- `api_endpoint`: API 端點詳細資訊
+  - `endpoint_id`: 端點 ID
+  - `endpoint_name`: 端點名稱
+  - `related_kb_ids`: 使用此端點的所有知識庫 ID (含其他表單)
+  - `total_kb_using`: 總使用數量
+
+**Use Case**: 在 `/lookup-forms` 頁面顯示統計資訊,查看表單的使用情況。
+
+---
+
+### 2. Get API Endpoint Related Forms
+
+**Endpoint**: `GET /api/v1/api-endpoints/{endpoint_id}/related-forms`
+
+**Purpose**: 取得某個 API 端點關聯的所有 Lookup 表單及知識庫。
+
+**Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `endpoint_id` | string | Yes | API 端點 ID (e.g., `lookup`, `lookup_generic`) |
+
+**Request Example**:
+```bash
+curl "http://localhost:8100/api/v1/api-endpoints/lookup/related-forms"
+```
+
+**Response Example**:
+```json
+{
+  "endpoint_id": "lookup",
+  "endpoint_name": "通用查詢 API",
+  "related_forms_count": 3,
+  "related_forms": [
+    {
+      "form_id": "parking_fee_form_v2",
+      "form_name": "停車費資訊查詢",
+      "category": "parking_fee",
+      "kb_id": 1394,
+      "kb_question": "停車費金額和繳費方式查詢"
+    },
+    {
+      "form_id": "community_facilities_form_v2",
+      "form_name": "公共設施查詢",
+      "category": "community_facilities",
+      "kb_id": 1396,
+      "kb_question": "社區公共設施有哪些"
+    },
+    {
+      "form_id": "parcel_service_form_v2",
+      "form_name": "包裹代收服務查詢",
+      "category": "parcel_service",
+      "kb_id": 1397,
+      "kb_question": "包裹代收服務說明"
+    }
+  ]
+}
+```
+
+**Response Fields**:
+- `endpoint_id`: API 端點 ID
+- `endpoint_name`: 端點名稱
+- `related_forms_count`: 關聯的表單數量
+- `related_forms`: 關聯的表單列表
+  - `form_id`: 表單 ID
+  - `form_name`: 表單名稱
+  - `category`: Lookup 類別
+  - `kb_id`: 使用此表單的知識庫 ID
+  - `kb_question`: 知識庫問題摘要
+
+**Use Case**: 在 `/api-endpoints` 頁面查看端點的使用情況,了解哪些表單和知識庫依賴此端點。
+
+---
+
+### Implementation Files
+
+| Component | File Path | Lines |
+|-----------|-----------|-------|
+| Lookup Form Stats API | `/rag-orchestrator/routers/forms.py` | 148-238 |
+| API Endpoint Related Forms | `/rag-orchestrator/routers/api_endpoints.py` | 211-269 |
+| Frontend Component | `/knowledge-admin/frontend/src/views/LookupFormManagement.vue` | Full file |
+| Database Trigger | `/database/migrations/add_api_endpoint_kb_sync_trigger.sql` | Full file |
+
+### Related Documentation
+
+- [知識庫、表單與 API 端點自動關聯機制](../features/lookup/KB_FORM_API_AUTO_SYNC.md)
+- [資料庫架構文檔](../architecture/DATABASE_SCHEMA.md)
 
 ---
 

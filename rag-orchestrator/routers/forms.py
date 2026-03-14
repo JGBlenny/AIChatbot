@@ -145,6 +145,99 @@ async def list_forms(
         raise HTTPException(status_code=500, detail=f"查詢表單失敗: {str(e)}")
 
 
+# ============================================================
+# Lookup Forms Statistics (必須在 /forms/{form_id} 之前)
+# ============================================================
+
+@router.get("/lookup-forms/{form_id}/stats")
+async def get_lookup_form_stats(request: Request, form_id: str):
+    """
+    取得 Lookup 表單的統計資訊
+
+    返回:
+    - form_id: 表單 ID
+    - form_name: 表單名稱
+    - category: Lookup 類別
+    - endpoint: API 端點 ID
+    - linked_kb_ids: 關聯的知識庫 ID 列表
+    - linked_kb_count: 關聯知識庫數量
+    - api_endpoint: API 端點詳細資訊
+      - endpoint_id: 端點 ID
+      - endpoint_name: 端點名稱
+      - total_kb_using: 使用此端點的總 KB 數量
+    """
+    try:
+        db_pool = request.app.state.db_pool
+
+        async with db_pool.acquire() as conn:
+            # 1. 取得表單基本資訊
+            form_query = """
+                SELECT
+                    fs.form_id,
+                    fs.form_name,
+                    fs.api_config->>'endpoint' as endpoint,
+                    fs.api_config->'static_params'->>'category' as category
+                FROM form_schemas fs
+                WHERE fs.form_id = $1
+                    AND fs.api_config->>'endpoint' IN ('lookup', 'lookup_generic')
+            """
+            form_row = await conn.fetchrow(form_query, form_id)
+
+            if not form_row:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"找不到 Lookup 表單: {form_id}"
+                )
+
+            # 2. 取得關聯的知識庫 IDs
+            kb_query = """
+                SELECT ARRAY_AGG(id ORDER BY id) as kb_ids
+                FROM knowledge_base
+                WHERE form_id = $1
+            """
+            kb_row = await conn.fetchrow(kb_query, form_id)
+            linked_kb_ids = kb_row['kb_ids'] if kb_row and kb_row['kb_ids'] else []
+
+            # 3. 取得 API 端點資訊
+            endpoint_id = form_row['endpoint']
+            endpoint_query = """
+                SELECT
+                    ae.endpoint_id,
+                    ae.endpoint_name,
+                    ae.related_kb_ids,
+                    array_length(ae.related_kb_ids, 1) as total_kb_using
+                FROM api_endpoints ae
+                WHERE ae.endpoint_id = $1
+            """
+            endpoint_row = await conn.fetchrow(endpoint_query, endpoint_id)
+
+            # 組合回應
+            result = {
+                "form_id": form_row['form_id'],
+                "form_name": form_row['form_name'],
+                "category": form_row['category'],
+                "endpoint": form_row['endpoint'],
+                "linked_kb_ids": linked_kb_ids,
+                "linked_kb_count": len(linked_kb_ids),
+                "api_endpoint": {
+                    "endpoint_id": endpoint_row['endpoint_id'] if endpoint_row else None,
+                    "endpoint_name": endpoint_row['endpoint_name'] if endpoint_row else None,
+                    "related_kb_ids": endpoint_row['related_kb_ids'] if endpoint_row else [],
+                    "total_kb_using": endpoint_row['total_kb_using'] if endpoint_row else 0
+                }
+            }
+
+            return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"取得 Lookup 表單統計失敗: {str(e)}"
+        )
+
+
 @router.get("/forms/{form_id}", response_model=FormSchemaResponse)
 async def get_form(request: Request, form_id: str):
     """

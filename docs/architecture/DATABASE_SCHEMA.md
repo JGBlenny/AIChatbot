@@ -787,6 +787,133 @@ CREATE TABLE vendor_sop_items (
 
 ---
 
+### 11. form_schemas（表單定義）
+
+```sql
+CREATE TABLE form_schemas (
+    id SERIAL PRIMARY KEY,
+    form_id VARCHAR(100) UNIQUE NOT NULL,
+    form_name VARCHAR(200) NOT NULL,
+    form_description TEXT,
+
+    -- 表單欄位定義
+    fields JSONB NOT NULL DEFAULT '[]',
+
+    -- API 配置
+    api_config JSONB DEFAULT '{}',  -- 包含 endpoint, static_params 等
+
+    -- 提交行為
+    submit_behavior VARCHAR(50) DEFAULT 'api_call',
+
+    vendor_id INTEGER REFERENCES vendors(id),
+    is_active BOOLEAN DEFAULT TRUE,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**用途**: 定義系統中的表單結構,特別是 Lookup 表單。
+
+**api_config 範例**:
+```json
+{
+  "endpoint": "lookup",
+  "static_params": {
+    "category": "parking_fee"
+  }
+}
+```
+
+**關鍵欄位**:
+- `form_id`: 表單唯一識別碼（如 `parcel_service_form_v2`）
+- `api_config.endpoint`: 關聯的 API 端點 ID
+- `api_config.static_params`: 靜態參數配置
+
+**與知識庫的關聯**:
+- `knowledge_base.form_id` → `form_schemas.form_id`
+- 知識庫透過 `form_id` 指定要使用的表單
+
+---
+
+### 12. api_endpoints（API 端點配置）
+
+```sql
+CREATE TABLE api_endpoints (
+    id SERIAL PRIMARY KEY,
+    endpoint_id VARCHAR(100) UNIQUE NOT NULL,
+    endpoint_name VARCHAR(200) NOT NULL,
+
+    -- 動態配置
+    implementation_type VARCHAR(20) DEFAULT 'dynamic',
+    api_url TEXT,
+    http_method VARCHAR(10) DEFAULT 'GET',
+    param_mappings JSONB DEFAULT '[]',
+    response_format_type VARCHAR(50) DEFAULT 'template',
+    response_template TEXT,
+
+    -- ⭐ 關聯的知識庫 ID 陣列 (由 Trigger 自動維護)
+    related_kb_ids INTEGER[] DEFAULT '{}',
+
+    -- 可用範圍
+    available_in_knowledge BOOLEAN DEFAULT TRUE,
+    available_in_form BOOLEAN DEFAULT TRUE,
+
+    is_active BOOLEAN DEFAULT TRUE,
+    vendor_id INTEGER REFERENCES vendors(id),
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- GIN 索引優化陣列查詢
+CREATE INDEX idx_api_endpoints_related_kb_ids
+ON api_endpoints USING GIN(related_kb_ids);
+```
+
+**用途**: 定義系統中的 API 端點配置,支援動態調用和統一處理。
+
+**關鍵欄位說明**:
+
+| 欄位 | 說明 | 維護方式 |
+|------|------|----------|
+| `endpoint_id` | 端點唯一識別碼（如 `lookup`, `lookup_generic`） | 手動設定 |
+| `endpoint_name` | 端點顯示名稱（如 "通用查詢 API"） | 手動設定 |
+| `api_url` | API URL 模板 | 手動設定 |
+| `param_mappings` | 參數映射配置 | 手動設定 |
+| **`related_kb_ids`** | **關聯的知識庫 ID 陣列** | **Trigger 自動維護** |
+
+**related_kb_ids 自動同步**:
+- ✅ 由 `sync_api_endpoint_kb_ids()` Trigger 自動維護
+- ✅ 監聽 knowledge_base 的變更
+- ✅ 透過 form_schemas.api_config.endpoint 關聯
+- ❌ 不可手動修改（會被 Trigger 覆蓋）
+
+**查詢範例**:
+```sql
+-- 查詢 lookup 端點關聯的所有知識庫
+SELECT kb.*
+FROM knowledge_base kb
+WHERE kb.id = ANY(
+    SELECT related_kb_ids
+    FROM api_endpoints
+    WHERE endpoint_id = 'lookup'
+);
+
+-- 結果: 返回 KB #1394, #1396, #1397
+```
+
+**三角關係**:
+```
+knowledge_base.form_id → form_schemas.form_id
+form_schemas.api_config.endpoint → api_endpoints.endpoint_id
+api_endpoints.related_kb_ids ← Trigger 自動更新
+```
+
+**詳細文檔**: [知識庫、表單與 API 端點自動關聯機制](../features/lookup/KB_FORM_API_AUTO_SYNC.md)
+
+---
+
 ## 關係說明
 
 ### 1. 業者 ↔ 知識庫（三層架構）
@@ -1070,7 +1197,39 @@ CREATE TRIGGER trigger_update_scenario_stats
     AFTER INSERT ON backtest_results
     FOR EACH ROW
     EXECUTE FUNCTION update_scenario_statistics();
+
+-- ⭐ 自動同步 API 端點的關聯知識庫 (2026-03-13 新增)
+CREATE TRIGGER trigger_sync_api_endpoint_kb_ids
+    AFTER INSERT OR UPDATE OR DELETE ON knowledge_base
+    FOR EACH ROW
+    EXECUTE FUNCTION sync_api_endpoint_kb_ids();
 ```
+
+**Trigger 說明**:
+
+#### sync_api_endpoint_kb_ids() - API 端點知識庫自動同步
+
+**功能**: 當知識庫的 `form_id` 變更時,自動更新 API 端點的 `related_kb_ids` 欄位。
+
+**工作流程**:
+1. 監聽 knowledge_base 的 INSERT/UPDATE/DELETE
+2. 查詢表單的 `api_config.endpoint` 找出受影響的 API 端點
+3. 重新計算每個 API 端點關聯的所有知識庫 ID
+4. 更新 `api_endpoints.related_kb_ids` 陣列
+
+**範例**:
+```sql
+-- 插入新知識庫
+INSERT INTO knowledge_base (question_summary, answer, form_id)
+VALUES ('包裹代收服務說明', '...', 'parcel_service_form_v2');
+-- 假設新 ID = 1397
+
+-- Trigger 自動執行:
+-- 1. 查詢 form_schemas.api_config->>'endpoint' = 'lookup'
+-- 2. 更新 api_endpoints.related_kb_ids,加入 1397
+```
+
+**詳細文檔**: [知識庫、表單與 API 端點自動關聯機制](../features/lookup/KB_FORM_API_AUTO_SYNC.md)
 
 ---
 

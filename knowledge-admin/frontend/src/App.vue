@@ -63,9 +63,23 @@
                 <span class="nav-icon">📋</span>
                 <span class="nav-text">範本設定</span>
               </router-link>
+            </div>
+          </div>
+
+          <!-- 系統整合 -->
+          <div class="nav-group">
+            <div class="nav-group-header" @click="toggleGroup('integration')">
+              <span class="group-icon">{{ expandedGroups.integration ? '▼' : '▶' }}</span>
+              <span class="group-title">系統整合</span>
+            </div>
+            <div class="nav-group-items" v-if="expandedGroups.integration">
               <router-link to="/forms" class="nav-item nav-item-sub">
                 <span class="nav-icon">📝</span>
                 <span class="nav-text">表單管理</span>
+              </router-link>
+              <router-link to="/lookup-forms" class="nav-item nav-item-sub">
+                <span class="nav-icon">🔍</span>
+                <span class="nav-text">Lookup 表單</span>
               </router-link>
               <router-link to="/form-submissions" class="nav-item nav-item-sub">
                 <span class="nav-icon">📋</span>
@@ -204,8 +218,9 @@ export default {
     return {
       sidebarCollapsed: false,  // 側邊欄收合狀態
       expandedGroups: {
-        knowledge: true,  // 預設展開知識庫管理
-        vendor: true      // 預設展開業者管理
+        knowledge: true,    // 預設展開知識庫管理
+        vendor: true,       // 預設展開業者管理
+        integration: true   // 預設展開系統整合
       },
       currentUser: null,
       showChangePasswordModal: false,
@@ -231,6 +246,7 @@ export default {
         '/admin-management': '用戶管理',
         '/role-management': '角色管理',
         '/forms': '表單管理',
+        '/lookup-forms': 'Lookup 表單管理',
         '/form-submissions': '表單提交記錄',
         '/api-endpoints': 'API 端點管理'
       }

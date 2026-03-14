@@ -208,6 +208,67 @@ async def get_api_endpoint(request: Request, endpoint_id: str):
 
         return ApiEndpointResponse(**row_dict)
 
+
+@router.get("/api-endpoints/{endpoint_id}/related-forms")
+async def get_api_endpoint_related_forms(request: Request, endpoint_id: str):
+    """
+    獲取 API endpoint 關聯的所有 Lookup 表單
+
+    返回使用此 endpoint 的所有表單列表,包含:
+    - form_id: 表單 ID
+    - form_name: 表單名稱
+    - category: Lookup 類別
+    - kb_id: 關聯的知識庫 ID
+    - kb_question: 知識庫問題摘要
+    """
+    db_pool = request.app.state.db_pool
+
+    async with db_pool.acquire() as conn:
+        # 檢查 endpoint 是否存在
+        endpoint_check = await conn.fetchrow(
+            "SELECT endpoint_id, endpoint_name FROM api_endpoints WHERE endpoint_id = $1",
+            endpoint_id
+        )
+
+        if not endpoint_check:
+            raise HTTPException(status_code=404, detail=f"API endpoint '{endpoint_id}' 不存在")
+
+        # 查詢使用此端點的所有表單及其關聯知識庫
+        query = """
+            SELECT
+                fs.form_id,
+                fs.form_name,
+                fs.api_config->'static_params'->>'category' as category,
+                kb.id as kb_id,
+                kb.question_summary as kb_question
+            FROM form_schemas fs
+            LEFT JOIN knowledge_base kb ON kb.form_id = fs.form_id
+            WHERE fs.api_config->>'endpoint' = $1
+            ORDER BY fs.form_id, kb.id
+        """
+
+        rows = await conn.fetch(query, endpoint_id)
+
+        # 組合結果
+        result = {
+            "endpoint_id": endpoint_check['endpoint_id'],
+            "endpoint_name": endpoint_check['endpoint_name'],
+            "related_forms_count": len(set(row['form_id'] for row in rows)),
+            "related_forms": [
+                {
+                    "form_id": row['form_id'],
+                    "form_name": row['form_name'],
+                    "category": row['category'],
+                    "kb_id": row['kb_id'],
+                    "kb_question": row['kb_question']
+                }
+                for row in rows
+            ]
+        }
+
+        return result
+
+
 @router.post("/api-endpoints", response_model=ApiEndpointResponse)
 async def create_api_endpoint(request: Request, data: ApiEndpointCreate):
     """創建新的 API endpoint"""
