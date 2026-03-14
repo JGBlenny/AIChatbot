@@ -156,13 +156,19 @@
           </div>
 
           <div class="form-group">
-            <label>關聯的知識庫 ID <small>(選填，多個 ID 用逗號分隔，例如：1396,1397)</small></label>
-            <input
-              v-model="relatedKbIdsInput"
-              placeholder="例如：1396,1397,1398"
-              pattern="[0-9,\s]*"
-              title="請輸入數字和逗號，例如：1396,1397"
-            />
+            <label>🔒 關聯的知識庫 ID <small>(由系統自動維護)</small></label>
+            <div style="padding: 10px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; color: #666;">
+              <span v-if="formData.related_kb_ids && formData.related_kb_ids.length > 0">
+                {{ formData.related_kb_ids.join(', ') }}
+                <small style="margin-left: 10px;">(共 {{ formData.related_kb_ids.length }} 筆)</small>
+              </span>
+              <span v-else style="font-style: italic;">
+                尚無關聯知識庫
+              </span>
+              <div style="margin-top: 5px; font-size: 12px; color: #999;">
+                ℹ️ 當知識庫設定 form_id 或 api_config 引用此 endpoint 時，系統會自動更新此欄位
+              </div>
+            </div>
           </div>
 
           <div class="form-group">
@@ -216,7 +222,6 @@ export default {
       editingItem: null,
       saving: false,
       loading: false,
-      relatedKbIdsInput: '',  // 用於輸入框的字串
       stats: {
         total: 0,
         active: 0,
@@ -290,7 +295,6 @@ export default {
         vendor_id: null,
         related_kb_ids: []
       };
-      this.relatedKbIdsInput = '';
       this.showModal = true;
     },
 
@@ -308,8 +312,6 @@ export default {
         vendor_id: item.vendor_id,
         related_kb_ids: item.related_kb_ids || []
       };
-      // 將陣列轉成逗號分隔的字串
-      this.relatedKbIdsInput = (item.related_kb_ids || []).join(',');
       this.showModal = true;
     },
 
@@ -317,18 +319,11 @@ export default {
       this.saving = true;
 
       try {
-        // 將逗號分隔的字串轉成整數陣列
-        const relatedKbIds = this.relatedKbIdsInput
-          .split(',')
-          .map(id => id.trim())
-          .filter(id => id !== '')
-          .map(id => parseInt(id, 10))
-          .filter(id => !isNaN(id));
-
+        // related_kb_ids 由系統自動維護，從 payload 中移除以避免覆蓋
         const payload = {
-          ...this.formData,
-          related_kb_ids: relatedKbIds.length > 0 ? relatedKbIds : null
+          ...this.formData
         };
+        delete payload.related_kb_ids;  // 確保不發送此欄位給後端
 
         if (this.editingItem) {
           // 更新現有 endpoint
