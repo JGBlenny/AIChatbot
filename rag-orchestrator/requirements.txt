@@ -15,6 +15,14 @@ redis==5.0.1
 openai==1.54.0
 httpx==0.27.0
 
+# HTTP & Async
+aiohttp==3.9.1
+requests==2.31.0
+
+# Progress & Retry
+tqdm==4.66.1
+tenacity==8.2.3
+
 # YAML
 pyyaml==6.0.1
 

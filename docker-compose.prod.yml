@@ -89,6 +89,8 @@ services:
       - ./test_scenarios_full.xlsx:/app/test_scenarios_full.xlsx:ro
       - ./output:/app/output
       - ./scripts:/app/scripts:ro
+      # Mount docker socket for running backtest in rag-orchestrator container
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - postgres
       - embedding-api

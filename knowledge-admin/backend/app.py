@@ -1464,6 +1464,7 @@ async def get_backtest_run_results(
             run_info['completed_at'] = run_info['completed_at'].isoformat()
 
         # 建立查詢（移除已刪除字段：expected_category, category_match, keyword_coverage）
+        # 從 evaluation JSONB 提取 V2 欄位：confidence_score, confidence_level, semantic_overlap, max_similarity, result_count, keyword_match_rate, failure_reason
         query = """
             SELECT
                 id,
@@ -1486,7 +1487,13 @@ async def get_backtest_run_results(
                 source_count,
                 knowledge_sources,
                 optimization_tips,
-                tested_at
+                tested_at,
+                evaluation->>'confidence_score' as confidence_score,
+                evaluation->>'confidence_level' as confidence_level,
+                evaluation->>'max_similarity' as max_similarity,
+                evaluation->>'result_count' as result_count,
+                evaluation->>'keyword_match_rate' as keyword_match_rate,
+                evaluation->>'failure_reason' as failure_reason
             FROM backtest_results
             WHERE run_id = %s
         """
@@ -1522,6 +1529,22 @@ async def get_backtest_run_results(
                 result['tested_at'] = result['tested_at'].isoformat()
             # 添加 expected_category 用於向後兼容（新結果此字段已刪除，設為空字符串）
             result['expected_category'] = ''
+
+            # 轉換 V2 欄位為數字類型（PostgreSQL ->> 返回字串）
+            for field in ['confidence_score', 'max_similarity', 'keyword_match_rate']:
+                if result.get(field) is not None and result[field] != '':
+                    try:
+                        result[field] = float(result[field])
+                    except (ValueError, TypeError):
+                        result[field] = None
+
+            # result_count 轉為整數
+            if result.get('result_count') is not None and result['result_count'] != '':
+                try:
+                    result['result_count'] = int(result['result_count'])
+                except (ValueError, TypeError):
+                    result['result_count'] = None
+
             results.append(result)
 
         # 計算統計（基於過濾後的結果）
@@ -1581,118 +1604,41 @@ async def get_backtest_run_results(
 
 
 class BacktestRunRequest(BaseModel):
-    """回測執行請求模型"""
+    """回測執行請求模型（已廢棄 - 僅供參考）"""
     quality_mode: Optional[str] = "detailed"  # detailed, hybrid
-    test_strategy: Optional[str] = "full"  # full, incremental, failed_only
 
-@app.post("/api/backtest/run")
-async def run_backtest(request: BacktestRunRequest = None, user: dict = Depends(get_current_user)):
-    """
-    執行回測腳本
+class SmartBatchRequest(BaseModel):
+    """智能分批回測請求模型"""
+    batch_size: int = 200  # 每批題數
+    batch_number: int = 1  # 第幾批 (1-based)
+    quality_mode: Optional[str] = "hybrid"  # detailed, hybrid, basic
+    vendor_id: Optional[int] = 1  # 測試業者 ID
+    # 可選篩選條件
+    status: Optional[str] = None  # pending_review, approved, rejected
+    source: Optional[str] = None  # imported, manual, user_question
+    difficulty: Optional[str] = None  # easy, medium, hard
 
-    這會在後台執行回測腳本並返回任務ID
+class CountRequest(BaseModel):
+    """題數統計請求模型"""
+    status: Optional[str] = None
+    source: Optional[str] = None
+    difficulty: Optional[str] = None
 
-    參數:
-    - quality_mode: 品質評估模式 (detailed/hybrid)
-    - test_strategy: 測試策略 (full/incremental/failed_only)
-    """
-    import subprocess
-    import threading
+class ContinuousBatchRequest(BaseModel):
+    """連續分批回測請求模型"""
+    batch_size: int = 50  # 每批題數
+    quality_mode: Optional[str] = "hybrid"  # detailed, hybrid, basic
+    vendor_id: Optional[int] = 1  # 測試業者 ID
+    # 可選篩選條件
+    status: Optional[str] = None
+    source: Optional[str] = None
+    difficulty: Optional[str] = None
 
-    # 如果沒有提供 request body，使用預設值
-    if request is None:
-        request = BacktestRunRequest()
-
-    # 使用資料庫模式，不再需要 Excel 文件
-    project_root = os.getenv("PROJECT_ROOT", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-
-    # 檢查是否已有回測在運行
-    backtest_lock_file = "/tmp/backtest_running.lock"
-    if os.path.exists(backtest_lock_file):
-        raise HTTPException(
-            status_code=409,
-            detail="回測已在執行中，請等待完成後再試"
-        )
-
-    def run_backtest_script():
-        """在背景執行回測腳本"""
-        # 預先定義日誌路徑
-        log_path = os.path.join(project_root, "output/backtest/backtest_log.txt")
-        os.makedirs(os.path.dirname(log_path), exist_ok=True)
-
-        try:
-            # 創建鎖文件
-            with open(backtest_lock_file, 'w') as f:
-                f.write(str(datetime.now()))
-
-            # 執行回測腳本 - 使用並發版本
-            script_path = os.path.join(project_root, "scripts/backtest/run_backtest_with_db_progress.py")
-            env = os.environ.copy()
-
-            # 設定優化環境變數（用於降低回測成本）
-            env["OPENAI_MODEL"] = "gpt-4o-mini"  # 使用更便宜的模型
-            env["RAG_RETRIEVAL_LIMIT"] = "3"  # 減少檢索條數
-            env["BACKTEST_SELECTION_STRATEGY"] = request.test_strategy  # 測試策略 (full/incremental/failed_only)
-            env["BACKTEST_QUALITY_MODE"] = request.quality_mode  # 品質評估模式 (detailed/hybrid)
-            env["BACKTEST_USE_DATABASE"] = "true"  # 使用資料庫模式
-            env["PROJECT_ROOT"] = project_root  # 傳遞專案根目錄
-            env["BACKTEST_NON_INTERACTIVE"] = "true"  # 非交互模式，不等待用戶輸入
-            env["BACKTEST_CONCURRENCY"] = "5"  # 並發數
-
-            result = subprocess.run(
-                ["python3", script_path],
-                env=env,
-                capture_output=True,
-                text=True,
-                cwd=project_root,
-                timeout=7200  # 2 小時超時（足夠1065條測試）
-            )
-
-            # 記錄結果
-            with open(log_path, 'w', encoding='utf-8') as f:
-                f.write(f"=== 回測執行時間: {datetime.now()} ===\n\n")
-                f.write(f"返回碼: {result.returncode}\n\n")
-                f.write("=== STDOUT ===\n")
-                f.write(result.stdout)
-                f.write("\n\n=== STDERR ===\n")
-                f.write(result.stderr)
-
-        except subprocess.TimeoutExpired:
-            with open(log_path, 'a', encoding='utf-8') as f:
-                f.write("\n\n❌ 錯誤: 回測執行超時 (2 小時)")
-        except Exception as e:
-            with open(log_path, 'a', encoding='utf-8') as f:
-                f.write(f"\n\n❌ 錯誤: {str(e)}")
-        finally:
-            # 移除鎖文件
-            if os.path.exists(backtest_lock_file):
-                os.remove(backtest_lock_file)
-
-    # 在背景線程執行
-    thread = threading.Thread(target=run_backtest_script)
-    thread.daemon = True
-    thread.start()
-
-    # 根據品質模式和測試策略估計時間
-    time_estimates = {
-        'detailed': '約需 5-10 分鐘（使用 LLM 評估）',
-        'hybrid': '約需 4-7 分鐘（混合評估）'
-    }
-    estimated_time = time_estimates.get(request.quality_mode, '約需 3-5 分鐘')
-
-    # 如果是 incremental 策略，時間會更短
-    if request.test_strategy == 'incremental':
-        estimated_time = '約需 2-5 分鐘（僅測試新增和失敗的案例）'
-    elif request.test_strategy == 'failed_only':
-        estimated_time = '約需 1-3 分鐘（僅測試失敗的案例）'
-
-    return {
-        "success": True,
-        "message": f"回測已開始執行（{request.quality_mode} 模式），請稍後刷新頁面查看結果",
-        "quality_mode": request.quality_mode,
-        "test_strategy": request.test_strategy,
-        "estimated_time": estimated_time
-    }
+# ========================================================================
+# 舊版執行端點 POST /api/backtest/run 已移除
+# 原因：功能已被 /api/backtest/run/smart-batch 和 /api/backtest/run/continuous-batch 取代
+# 移除日期：2026-03-14
+# ========================================================================
 
 
 @app.post("/api/backtest/cancel")
@@ -1794,6 +1740,546 @@ async def get_backtest_status(user: dict = Depends(get_current_user)):
         "has_results": has_results,
         "last_run_time": last_run_time,
         "log": log_content
+    }
+
+
+@app.post("/api/test-scenarios/count")
+async def count_test_scenarios(request: CountRequest = None):
+    """
+    統計符合條件的測試題數
+
+    NOTE: 此 API 不需要認證，因為只是統計數量用於顯示 UI 資訊
+
+    參數:
+    - status: 篩選狀態 (pending_review, approved, rejected)
+    - source: 篩選來源 (imported, manual, user_question)
+    - difficulty: 篩選難度 (easy, medium, hard)
+    """
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # 建立查詢
+        query = "SELECT COUNT(*) as total FROM test_scenarios WHERE 1=1"
+        params = []
+
+        # 添加篩選條件
+        if request and request.status:
+            query += " AND status = %s"
+            params.append(request.status)
+
+        if request and request.source:
+            query += " AND source = %s"
+            params.append(request.source)
+
+        if request and request.difficulty:
+            query += " AND difficulty = %s"
+            params.append(request.difficulty)
+
+        cur.execute(query, params)
+        result = cur.fetchone()
+        # 處理不同的 cursor 類型（dict 或 tuple）
+        # SQL 使用 COUNT(*) as total，所以欄位名稱是 'total'
+        if result:
+            total = result['total'] if isinstance(result, dict) else result[0]
+        else:
+            total = 0
+
+        cur.close()
+        conn.close()
+
+        return {
+            "success": True,
+            "total": total,
+            "filters": {
+                "status": request.status if request else None,
+                "source": request.source if request else None,
+                "difficulty": request.difficulty if request else None
+            }
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"統計失敗: {str(e)}")
+
+
+@app.post("/api/backtest/run/smart-batch")
+async def run_smart_batch(request: SmartBatchRequest, user: dict = Depends(get_current_user)):
+    """
+    智能分批回測
+
+    範例:
+    - batch_size=200, batch_number=1 → 測試第 1-200 題
+    - batch_size=100, batch_number=3 → 測試第 201-300 題
+
+    參數:
+    - batch_size: 每批題數 (50/100/200/500)
+    - batch_number: 第幾批 (1-based)
+    - quality_mode: 品質評估模式 (detailed/hybrid/basic)
+    - status: 可選，篩選狀態
+    - source: 可選，篩選來源
+    - difficulty: 可選，篩選難度
+    """
+    import subprocess
+    import threading
+
+    # 檢查是否已有回測在運行
+    backtest_lock_file = "/tmp/backtest_running.lock"
+    if os.path.exists(backtest_lock_file):
+        raise HTTPException(
+            status_code=409,
+            detail="回測已在執行中，請等待完成後再試"
+        )
+
+    # 驗證參數
+    if request.batch_size not in [50, 100, 200, 500]:
+        raise HTTPException(status_code=400, detail="batch_size 必須為 50, 100, 200 或 500")
+
+    if request.batch_number < 1:
+        raise HTTPException(status_code=400, detail="batch_number 必須 >= 1")
+
+    # 計算 offset 和 limit
+    offset = (request.batch_number - 1) * request.batch_size
+    limit = request.batch_size
+
+    # 查詢符合條件的總題數
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        count_query = "SELECT COUNT(*) as total FROM test_scenarios WHERE 1=1"
+        count_params = []
+
+        if request.status:
+            count_query += " AND status = %s"
+            count_params.append(request.status)
+
+        if request.source:
+            count_query += " AND source = %s"
+            count_params.append(request.source)
+
+        if request.difficulty:
+            count_query += " AND difficulty = %s"
+            count_params.append(request.difficulty)
+
+        cur.execute(count_query, count_params)
+        result = cur.fetchone()
+        # 處理不同的 cursor 類型（dict 或 tuple）
+        total_scenarios = result['total'] if isinstance(result, dict) else result[0]
+
+        cur.close()
+        conn.close()
+
+        # 檢查是否超出範圍
+        if offset >= total_scenarios:
+            raise HTTPException(
+                status_code=400,
+                detail=f"批次超出範圍：符合條件的題目共 {total_scenarios} 題，第 {request.batch_number} 批（offset={offset}）超出範圍"
+            )
+
+        # 計算實際會測試的題數（可能不足一批）
+        actual_count = min(limit, total_scenarios - offset)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"查詢題數失敗: {str(e)}")
+
+    project_root = os.getenv("PROJECT_ROOT", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
+    def run_backtest_script():
+        """在背景執行分批回測腳本"""
+        log_path = os.path.join(project_root, "output/backtest/backtest_log.txt")
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+
+        try:
+            # 創建鎖文件
+            with open(backtest_lock_file, 'w') as f:
+                f.write(str(datetime.now()))
+
+            # 執行回測腳本（使用 docker exec 在 rag-orchestrator 容器中執行）
+            # 構建環境變數設定
+            env_vars = [
+                f"OPENAI_MODEL=gpt-4o-mini",
+                f"RAG_RETRIEVAL_LIMIT=3",
+                f"BACKTEST_QUALITY_MODE={request.quality_mode}",
+                f"BACKTEST_USE_DATABASE=true",
+                f"BACKTEST_NON_INTERACTIVE=true",
+                f"BACKTEST_CONCURRENCY=5",
+                f"BACKTEST_DELAY=2.0",
+                f"VENDOR_ID={request.vendor_id}",
+                f"RAG_API_URL=http://localhost:8100",
+                f"DB_HOST=aichatbot-postgres",
+                f"DB_PORT=5432",
+                f"DB_NAME=aichatbot_admin",
+                f"DB_USER=aichatbot",
+                f"DB_PASSWORD={os.getenv('DB_PASSWORD', 'aichatbot_password')}",
+                f"BACKTEST_BATCH_OFFSET={offset}",
+                f"BACKTEST_BATCH_LIMIT={limit}"
+            ]
+
+            # 篩選條件（如果有）
+            if request.status:
+                env_vars.append(f"BACKTEST_FILTER_STATUS={request.status}")
+            if request.source:
+                env_vars.append(f"BACKTEST_FILTER_SOURCE={request.source}")
+            if request.difficulty:
+                env_vars.append(f"BACKTEST_FILTER_DIFFICULTY={request.difficulty}")
+
+            # 構建 docker exec 命令
+            env_str = " && ".join([f"export {var}" for var in env_vars])
+            docker_cmd = [
+                "docker", "exec", "aichatbot-rag-orchestrator",
+                "bash", "-c",
+                f"{env_str} && cd /app && python3 run_backtest_db.py"
+            ]
+
+            # 根據批量大小動態計算超時時間（給予 3 倍緩衝）
+            base_timeout_per_question = 5  # 每題預估 5 秒
+            calculated_timeout = actual_count * base_timeout_per_question * 3
+            # 最小 10 分鐘，最大 2 小時
+            timeout_seconds = max(600, min(7200, calculated_timeout))
+
+            result = subprocess.run(
+                docker_cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout_seconds
+            )
+
+            # 記錄結果
+            with open(log_path, 'w', encoding='utf-8') as f:
+                f.write(f"=== 分批回測執行時間: {datetime.now()} ===\n")
+                f.write(f"批次: {request.batch_number}, 批量: {request.batch_size}\n")
+                f.write(f"範圍: 第 {offset + 1}-{offset + actual_count} 題\n")
+                f.write(f"篩選條件: status={request.status}, source={request.source}, difficulty={request.difficulty}\n")
+                f.write(f"Timeout 設定: {timeout_seconds} 秒 ({timeout_seconds/60:.1f} 分鐘)\n\n")
+                f.write(f"返回碼: {result.returncode}\n\n")
+                f.write("=== STDOUT ===\n")
+                f.write(result.stdout)
+                f.write("\n\n=== STDERR ===\n")
+                f.write(result.stderr)
+
+        except subprocess.TimeoutExpired:
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write(f"\n\n❌ 錯誤: 分批回測執行超時 ({timeout_seconds} 秒 = {timeout_seconds/60:.1f} 分鐘)\n")
+                f.write(f"   建議：如果測試題目較多或網路較慢，可能需要調整 timeout 設定")
+        except Exception as e:
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write(f"\n\n❌ 錯誤: {str(e)}")
+        finally:
+            # 移除鎖文件
+            if os.path.exists(backtest_lock_file):
+                os.remove(backtest_lock_file)
+
+    # 在背景線程執行
+    thread = threading.Thread(target=run_backtest_script)
+    thread.daemon = True
+    thread.start()
+
+    # 估計執行時間（基於批量大小）
+    time_per_question = 0.04 if request.quality_mode == 'basic' else 0.06 if request.quality_mode == 'hybrid' else 0.08
+    estimated_minutes = (actual_count * time_per_question) / 60
+
+    if estimated_minutes < 1:
+        estimated_time = f"約需 {int(estimated_minutes * 60)} 秒"
+    else:
+        estimated_time = f"約需 {int(estimated_minutes)}-{int(estimated_minutes * 1.5)} 分鐘"
+
+    return {
+        "success": True,
+        "message": f"分批回測已開始執行（{request.quality_mode} 模式）",
+        "batch_info": {
+            "batch_number": request.batch_number,
+            "batch_size": request.batch_size,
+            "actual_count": actual_count,
+            "range": f"第 {offset + 1}-{offset + actual_count} 題",
+            "total_available": total_scenarios
+        },
+        "filters": {
+            "status": request.status,
+            "source": request.source,
+            "difficulty": request.difficulty
+        },
+        "quality_mode": request.quality_mode,
+        "estimated_time": estimated_time
+    }
+
+
+@app.post("/api/backtest/run/continuous-batch")
+async def run_continuous_batch(request: ContinuousBatchRequest, user: dict = Depends(get_current_user)):
+    """
+    連續分批回測 - 自動執行多個批次直到測完所有題目
+
+    範例：batch_size=50 → 自動執行 60 批（假設總共 3000 題）
+
+    執行流程：
+    1. 立即返回（不會 timeout）
+    2. 背景執行所有批次
+    3. 前端輪詢進度
+    4. 完成後顯示完整報告
+    """
+    import subprocess
+    import threading
+
+    # 檢查是否已有回測在運行
+    backtest_lock_file = "/tmp/backtest_running.lock"
+    if os.path.exists(backtest_lock_file):
+        raise HTTPException(
+            status_code=409,
+            detail="回測已在執行中，請等待完成後再試"
+        )
+
+    # 驗證參數
+    if request.batch_size not in [50, 100, 200, 500]:
+        raise HTTPException(status_code=400, detail="batch_size 必須為 50, 100, 200 或 500")
+
+    # 查詢符合條件的總題數
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        count_query = "SELECT COUNT(*) as total FROM test_scenarios WHERE 1=1"
+        count_params = []
+
+        if request.status:
+            count_query += " AND status = %s"
+            count_params.append(request.status)
+
+        if request.source:
+            count_query += " AND source = %s"
+            count_params.append(request.source)
+
+        if request.difficulty:
+            count_query += " AND difficulty = %s"
+            count_params.append(request.difficulty)
+
+        cur.execute(count_query, count_params)
+        result = cur.fetchone()
+        total_scenarios = result['total'] if isinstance(result, dict) else result[0]
+
+        if total_scenarios == 0:
+            cur.close()
+            conn.close()
+            raise HTTPException(status_code=400, detail="沒有符合條件的測試題目")
+
+        # 計算總批次數
+        total_batches = math.ceil(total_scenarios / request.batch_size)
+
+        # 創建 backtest_run 記錄
+        cur.execute("""
+            INSERT INTO backtest_runs (
+                quality_mode, test_type, total_scenarios, executed_scenarios,
+                status, total_batches, completed_batches,
+                rag_api_url, vendor_id, started_at, created_at
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+            ) RETURNING id
+        """, (
+            request.quality_mode, 'continuous_batch', total_scenarios, 0,
+            'running', total_batches, 0,
+            'http://localhost:8100', request.vendor_id
+        ))
+
+        result = cur.fetchone()
+        run_id = result['id'] if isinstance(result, dict) else result[0]
+        conn.commit()
+        cur.close()
+        conn.close()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"初始化失敗: {str(e)}")
+
+    project_root = os.getenv("PROJECT_ROOT", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
+    def execute_continuous_batches():
+        """背景執行連續批次"""
+        log_path = os.path.join(project_root, "output/backtest/backtest_log.txt")
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+
+        try:
+            # 創建鎖文件
+            with open(backtest_lock_file, 'w') as f:
+                f.write(str(datetime.now()))
+
+            # 記錄開始
+            with open(log_path, 'w', encoding='utf-8') as f:
+                f.write(f"=== 連續分批回測開始: {datetime.now()} ===\n")
+                f.write(f"總題數: {total_scenarios}\n")
+                f.write(f"批量大小: {request.batch_size}\n")
+                f.write(f"總批次數: {total_batches}\n")
+                f.write(f"品質模式: {request.quality_mode}\n")
+                f.write(f"Run ID: {run_id}\n\n")
+
+            # 執行每個批次
+            for batch_num in range(1, total_batches + 1):
+                try:
+                    offset = (batch_num - 1) * request.batch_size
+                    limit = min(request.batch_size, total_scenarios - offset)
+
+                    with open(log_path, 'a', encoding='utf-8') as f:
+                        f.write(f"\n--- Batch {batch_num}/{total_batches} 開始 ({datetime.now()}) ---\n")
+                        f.write(f"範圍: 第 {offset + 1}-{offset + limit} 題\n")
+
+                    # 執行回測腳本
+                    script_path = os.path.join(project_root, "scripts/backtest/run_backtest_with_db_progress.py")
+                    env = os.environ.copy()
+
+                    # 基本設定
+                    env["OPENAI_MODEL"] = "gpt-4o-mini"
+                    env["RAG_RETRIEVAL_LIMIT"] = "3"
+                    env["BACKTEST_QUALITY_MODE"] = request.quality_mode
+                    env["BACKTEST_USE_DATABASE"] = "true"
+                    env["PROJECT_ROOT"] = project_root
+                    env["BACKTEST_NON_INTERACTIVE"] = "true"
+                    env["BACKTEST_CONCURRENCY"] = "5"
+                    env["VENDOR_ID"] = str(request.vendor_id)
+                    env["RAG_API_URL"] = os.getenv("RAG_API_URL", "http://rag-orchestrator:8100")
+
+                    # 資料庫連接參數
+                    env["DB_HOST"] = os.getenv("DB_HOST", "postgres")
+                    env["DB_PORT"] = os.getenv("DB_PORT", "5432")
+                    env["DB_NAME"] = os.getenv("DB_NAME", "aichatbot_admin")
+                    env["DB_USER"] = os.getenv("DB_USER", "aichatbot")
+                    env["DB_PASSWORD"] = os.getenv("DB_PASSWORD", "")
+
+                    # 分批參數
+                    env["BACKTEST_BATCH_OFFSET"] = str(offset)
+                    env["BACKTEST_BATCH_LIMIT"] = str(limit)
+                    env["BACKTEST_PARENT_RUN_ID"] = str(run_id)  # 傳遞 parent run_id
+
+                    # 篩選條件
+                    if request.status:
+                        env["BACKTEST_FILTER_STATUS"] = request.status
+                    if request.source:
+                        env["BACKTEST_FILTER_SOURCE"] = request.source
+                    if request.difficulty:
+                        env["BACKTEST_FILTER_DIFFICULTY"] = request.difficulty
+
+                    # 動態計算 timeout
+                    base_timeout_per_question = 5
+                    calculated_timeout = limit * base_timeout_per_question * 3
+                    timeout_seconds = max(600, min(7200, calculated_timeout))
+
+                    result = subprocess.run(
+                        ["python3", script_path],
+                        env=env,
+                        capture_output=True,
+                        text=True,
+                        cwd=project_root,
+                        timeout=timeout_seconds
+                    )
+
+                    with open(log_path, 'a', encoding='utf-8') as f:
+                        if result.returncode == 0:
+                            f.write(f"✅ Batch {batch_num} 完成\n")
+                        else:
+                            f.write(f"❌ Batch {batch_num} 失敗 (返回碼: {result.returncode})\n")
+                            f.write(f"STDERR: {result.stderr[:500]}\n")
+
+                    # 更新完成批次數
+                    conn = get_db_connection()
+                    cur = conn.cursor()
+                    cur.execute("""
+                        UPDATE backtest_runs
+                        SET completed_batches = %s
+                        WHERE id = %s
+                    """, (batch_num, run_id))
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+
+                    # 檢查是否被取消
+                    conn = get_db_connection()
+                    cur = conn.cursor()
+                    cur.execute("SELECT status FROM backtest_runs WHERE id = %s", (run_id,))
+                    result = cur.fetchone()
+                    status = result['status'] if isinstance(result, dict) else result[0]
+                    cur.close()
+                    conn.close()
+
+                    if status == 'cancelled':
+                        with open(log_path, 'a', encoding='utf-8') as f:
+                            f.write(f"\n⚠️ 用戶取消執行 (已完成 {batch_num}/{total_batches} 批)\n")
+                        break
+
+                except subprocess.TimeoutExpired:
+                    with open(log_path, 'a', encoding='utf-8') as f:
+                        f.write(f"❌ Batch {batch_num} 超時 ({timeout_seconds} 秒)\n")
+                    # 繼續下一批次
+                except Exception as e:
+                    with open(log_path, 'a', encoding='utf-8') as f:
+                        f.write(f"❌ Batch {batch_num} 錯誤: {str(e)}\n")
+                    # 繼續下一批次
+
+            # 更新最終狀態
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE backtest_runs
+                SET status = 'completed',
+                    completed_at = NOW()
+                WHERE id = %s
+            """, (run_id,))
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write(f"\n=== 連續分批回測完成: {datetime.now()} ===\n")
+                f.write(f"Run ID: {run_id}\n")
+
+        except Exception as e:
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write(f"\n❌ 嚴重錯誤: {str(e)}\n")
+
+            # 更新狀態為失敗
+            try:
+                conn = get_db_connection()
+                cur = conn.cursor()
+                cur.execute("""
+                    UPDATE backtest_runs
+                    SET status = 'failed',
+                        completed_at = NOW()
+                    WHERE id = %s
+                """, (run_id,))
+                conn.commit()
+                cur.close()
+                conn.close()
+            except:
+                pass
+
+        finally:
+            # 移除鎖文件
+            if os.path.exists(backtest_lock_file):
+                os.remove(backtest_lock_file)
+
+    # 在背景線程執行
+    thread = threading.Thread(target=execute_continuous_batches)
+    thread.daemon = True
+    thread.start()
+
+    # 估計總執行時間
+    time_per_batch = request.batch_size * 0.06 / 60  # 分鐘
+    total_minutes = total_batches * time_per_batch
+
+    if total_minutes < 60:
+        estimated_time = f"約需 {int(total_minutes)}-{int(total_minutes * 1.5)} 分鐘"
+    else:
+        estimated_hours = total_minutes / 60
+        estimated_time = f"約需 {estimated_hours:.1f}-{estimated_hours * 1.5:.1f} 小時"
+
+    return {
+        "success": True,
+        "message": f"連續分批回測已啟動（背景執行中）",
+        "run_id": run_id,
+        "total_scenarios": total_scenarios,
+        "batch_size": request.batch_size,
+        "total_batches": total_batches,
+        "quality_mode": request.quality_mode,
+        "estimated_time": estimated_time,
+        "note": "系統會自動執行所有批次，您可以關閉此頁面，稍後再回來查看結果"
     }
 
 

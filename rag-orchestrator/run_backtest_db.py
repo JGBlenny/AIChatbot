@@ -17,7 +17,7 @@ import json
 import psycopg2
 from psycopg2.extras import execute_values
 
-sys.path.insert(0, '/app/scripts/backtest')
+sys.path.insert(0, '/app')
 from backtest_framework_async import AsyncBacktestFramework
 
 
@@ -144,7 +144,8 @@ async def main():
     scenarios = []
     for row in rows:
         scenarios.append({
-            'scenario_id': row[0],
+            'id': row[0],  # 使用 'id' 而非 'scenario_id'，讓回測框架能生成獨立 session
+            'scenario_id': row[0],  # 保留 scenario_id 用於相容性
             'test_question': row[1],
             'difficulty': row[2] or 'medium'
         })
