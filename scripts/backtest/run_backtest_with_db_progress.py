@@ -74,7 +74,7 @@ async def main():
     concurrency = int(os.getenv('BACKTEST_CONCURRENCY', '5'))
     quality_mode = os.getenv('BACKTEST_QUALITY_MODE', 'detailed')
     base_url = os.getenv('RAG_API_URL', 'http://localhost:8100')
-    vendor_id = int(os.getenv('VENDOR_ID', '1'))
+    vendor_id = int(os.getenv('VENDOR_ID', '2'))
 
     # 資料庫連接參數
     db_params = {

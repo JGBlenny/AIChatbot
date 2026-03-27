@@ -1,0 +1,27 @@
+{
+  "feature_name": "backtest-knowledge-refinement",
+  "created_at": "2026-03-26T15:25:00Z",
+  "updated_at": "2026-03-27T09:00:00Z",
+  "phase": "tasks-generated",
+  "language": "zh-TW",
+  "project_description": "我需要用建立符合 包租/代管 業 中會遇到的各種問題各種問法 的完善測試情境\n所以我先要把測試題庫清掉再從新建立\n之後 我需要你先了解系統中 知識 與 sop 的完整邏輯 而去完善目前的回測流程\n我預期的流程是   第 1 步：執行回測 =>   第 2 步：分析失敗案例 =>   第 3 步：智能分類 (OpenAI) =>\n  第 4 步：按類別分離 + 第 5 步：分別聚類 =>   第 6 步：生成知識   第 7 步：人工審核   第 8 步：同一批題目回測檢驗\n這是上次的流程 只是執行太久而你變得太混亂\n  📌 唯一執行入口\n\n  cd /Users/lenny/jgb/AIChatbot/rag-orchestrator\n  docker exec -e VENDOR_ID=2 aichatbot-rag-orchestrator \\\n    bash -c \"cd /app && python3 services/knowledge_completion_loop/run_first_loop.py\"\n\n  ---\n  🔄 完整流程與文件對應\n\n  第 1 步：執行回測\n\n  使用文件：\n  services/knowledge_completion_loop/run_first_loop.py\n    ↓ 調用\n  scripts/backtest/backtest_framework_async.py\n    ↓ 使用\n  services/knowledge_completion_loop/backtest_client.py\n\n  資料庫表：\n  - test_scenarios (讀取測試情境)\n  - backtest_results (寫入測試結果)\n\n  ---\n  第 2 步：分析失敗案例\n\n  使用文件：\n  services/knowledge_completion_loop/coordinator.py\n    ↓ 函數：analyze_failures()\n\n  資料來源：\n  - 從回測結果篩選失敗的測試案例\n  - 收集問題、期望答案、實際答案\n\n  ---\n  第 3 步：智能分類 (OpenAI)\n\n  使用文件：\n  services/knowledge_completion_loop/gap_classifier.py\n    ↓ 函數：classify_gaps_batch()\n    ↓ 調用 OpenAI API\n\n  分類結果：\n  - sop_knowledge - SOP 流程知識\n  - form_fill - 表單填寫\n  - system_config - 系統配置知識\n  - api_query - API 查詢（不生成靜態知識）\n\n  資料庫表：\n  - loop_execution_logs (記錄分類事件)\n\n  ---\n  第 4 步：按類別分離 + 第 5 步：分別聚類\n\n  使用文件：\n  services/knowledge_completion_loop/gap_classifier.py\n    ↓ 函數：get_clusters_for_generation()  ⭐ 核心修改處\n    ↓ 函數：_cluster_by_category()         ⭐ 新增函數\n\n  處理邏輯：\n  # 第 4 步：按類別分離\n  sop_questions = []      # sop_knowledge + form_fill\n  knowledge_questions = [] # system_config\n\n  # 第 5 步：分別聚類\n  sop_clusters = _cluster_by_category(sop_questions, \"SOP\")\n  knowledge_clusters = _cluster_by_category(knowledge_questions, \"Knowledge\")\n\n  使用資源：\n  - services/knowledge_completion_loop/cluster_rules.json (聚類規則)\n\n  資料庫表：\n  - loop_execution_logs (記錄聚類事件)\n\n  ---\n  第 6 步：生成知識\n\n  使用文件：\n\n  6.1 SOP 生成\n\n  services/knowledge_completion_loop/coordinator.py\n    ↓ 函數：_generate_sops()\n    ↓ 調用\n  services/knowledge_completion_loop/sop_generator.py\n    ↓ 函數：generate_sop_batch()\n    ↓ 調用 OpenAI API\n\n  資料庫表：\n  - vendor_sop_categories (讀取分類)\n  - vendor_sop_groups (讀取群組)\n  - vendor_sop_items (寫入 SOP 審核表)\n\n  6.2 一般知識生成\n\n  services/knowledge_completion_loop/coordinator.py\n    ↓ 函數：_generate_general_knowledge()\n    ↓ 調用\n  services/knowledge_completion_loop/knowledge_generator.py\n    ↓ 函數：generate_knowledge_batch()\n    ↓ 調用 OpenAI API\n\n  資料庫表：\n  - knowledge_base (寫入一般知識審核表)\n\n  ---\n  第 7 步：人工審核\n\n  使用文件：\n  （人工操作，無程式文件）\n\n  資料庫操作：\n  - 查詢 vendor_sop_items 或 knowledge_base\n  - 篩選 review_status = 'pending'\n  - 審核後更新為 approved 或 rejected\n\n  ---\n  第 8 步：檢查通過率並決定是否迭代\n\n  使用文件：\n  services/knowledge_completion_loop/coordinator.py\n    ↓ 函數：run_iteration()\n    ↓ 檢查 pass_rate < target_pass_rate (85%)\n    ↓ 如果未達標且未超過最大迭代次數 (10)，重複步驟 1-7\n\n  資料庫表：\n  - knowledge_completion_loops (更新迴圈狀態)\n  - loop_execution_logs (記錄迭代事件)\n\n  ---\n  📁 核心文件清單\n\n  入口文件\n\n  services/knowledge_completion_loop/run_first_loop.py\n\n  核心協調器\n\n  services/knowledge_completion_loop/coordinator.py\n\n  回測框架\n\n  scripts/backtest/backtest_framework_async.py\n  services/knowledge_completion_loop/backtest_client.py\n\n  智能分類與聚類 ⭐ 修改處\n\n  services/knowledge_completion_loop/gap_classifier.py\n    - get_clusters_for_generation() [第 513-657 行]\n    - _cluster_by_category() [新增]\n\n  知識生成器\n\n  services/knowledge_completion_loop/sop_generator.py\n  services/knowledge_completion_loop/knowledge_generator.py\n\n  配置文件\n\n  services/knowledge_completion_loop/cluster_rules.json     run_first_loop.py 單獨回測 BACKTEST_ONLY 模式\n\n  ---\n  🗄️ 資料庫表清單\n\n  迴圈管理\n\n  - knowledge_completion_loops - 迴圈記錄\n  - loop_execution_logs - 執行日誌\n  - loop_generated_knowledge - 生成的知識（待審核）\n\n  回測相關\n\n  - test_scenarios - 測試情境\n  - backtest_results - 測試結果\n\n  知識庫\n\n  - vendor_sop_items - SOP 項目\n  - vendor_sop_categories - SOP 分類\n  - vendor_sop_groups - SOP 群組\n  - knowledge_base - 一般知識庫\n\n然後在第一批回測完 我需要可以進入第二批 後續的回測 以達到完善知識缺口\n必須確實盤查程式邏輯 禁止推測 上次專案 你又太多推測 造成專案偏離",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "implementation": {
+    "started": true,
+    "completed": false,
+    "tasks_completed": ["0.1", "0.2", "0.3", "0.4", "1.1"]
+  }
+}

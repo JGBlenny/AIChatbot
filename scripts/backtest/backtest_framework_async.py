@@ -141,7 +141,7 @@ class AsyncBacktestFramework:
             "vendor_id": self.vendor_id,
             "mode": "tenant",
             "include_sources": True,
-            "skip_sop": True,
+            "skip_sop": False,  # 改為 False，讓回測能檢索 SOP
             "include_debug_info": True,  # 回測需要 similarity 數據
             "session_id": unique_session_id,  # 每個案例使用唯一 session_id
             "user_id": unique_user_id  # 每個案例使用唯一 user_id
@@ -937,7 +937,7 @@ async def main():
 
     # 配置
     base_url = os.getenv("RAG_API_URL", "http://localhost:8100")
-    vendor_id = int(os.getenv("VENDOR_ID", "1"))
+    vendor_id = int(os.getenv("VENDOR_ID", "2"))
     quality_mode = os.getenv("BACKTEST_QUALITY_MODE", "detailed")
 
     # 創建回測框架

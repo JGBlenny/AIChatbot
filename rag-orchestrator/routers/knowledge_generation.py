@@ -858,3 +858,544 @@ async def review_candidate(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"審核候選失敗: {str(e)}")
+
+
+# ============================================================
+# 迴圈生成知識審核 API（SOP 審核）
+# ============================================================
+
+class ReviewLoopKnowledgeRequest(BaseModel):
+    """審核迴圈生成知識的請求模型"""
+    action: str = Field(..., description="審核動作: approve, reject")
+    review_notes: Optional[str] = Field(None, description="審核備註")
+    reviewed_by: str = Field(..., description="審核者")
+    vendor_id: Optional[int] = Field(None, description="業者 ID（僅 SOP 需要）")
+    category_id: Optional[int] = Field(None, description="SOP 類別 ID（僅 SOP 需要）")
+    group_id: Optional[int] = Field(None, description="SOP 群組 ID（僅 SOP 需要，選填）")
+
+
+@router.get("/vendors")
+async def get_vendors(req: Request):
+    """
+    取得業者列表
+    """
+    try:
+        db_pool = req.app.state.db_pool
+
+        async with db_pool.acquire() as conn:
+            vendors = await conn.fetch("""
+                SELECT id, name, short_name
+                FROM vendors
+                WHERE is_active = true
+                ORDER BY id
+            """)
+
+            return {
+                "vendors": [
+                    {
+                        "id": v['id'],
+                        "name": v['name'],
+                        "short_name": v['short_name']
+                    }
+                    for v in vendors
+                ]
+            }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"取得業者列表失敗: {str(e)}")
+
+
+@router.get("/sop-categories")
+async def get_sop_categories(req: Request, vendor_id: int = 1):
+    """
+    取得 SOP 類別列表
+    """
+    try:
+        db_pool = req.app.state.db_pool
+
+        async with db_pool.acquire() as conn:
+            categories = await conn.fetch("""
+                SELECT id, category_name, description, display_order
+                FROM vendor_sop_categories
+                WHERE vendor_id = $1 AND is_active = true
+                ORDER BY display_order, id
+            """, vendor_id)
+
+            return {
+                "categories": [
+                    {
+                        "id": cat['id'],
+                        "name": cat['category_name'],
+                        "description": cat['description'],
+                        "display_order": cat['display_order']
+                    }
+                    for cat in categories
+                ]
+            }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"取得類別列表失敗: {str(e)}")
+
+
+@router.get("/sop-groups")
+async def get_sop_groups(req: Request, vendor_id: int, category_id: int):
+    """
+    取得 SOP 群組列表
+    """
+    try:
+        db_pool = req.app.state.db_pool
+
+        async with db_pool.acquire() as conn:
+            groups = await conn.fetch("""
+                SELECT id, group_name, description, display_order
+                FROM vendor_sop_groups
+                WHERE vendor_id = $1 AND category_id = $2 AND is_active = true
+                ORDER BY display_order, id
+            """, vendor_id, category_id)
+
+            return {
+                "groups": [
+                    {
+                        "id": g['id'],
+                        "name": g['group_name'],
+                        "description": g['description']
+                    }
+                    for g in groups
+                ]
+            }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"取得群組列表失敗: {str(e)}")
+
+
+@router.get("/loop-knowledge/stats")
+async def get_loop_knowledge_stats(req: Request):
+    """
+    取得迴圈生成知識統計資訊（包含 SOP）
+    """
+    try:
+        db_pool = req.app.state.db_pool
+
+        async with db_pool.acquire() as conn:
+            # 統計各種狀態的知識數量
+            stats = await conn.fetchrow("""
+                SELECT
+                    COUNT(*) FILTER (WHERE status = 'pending') as pending_count,
+                    COUNT(*) FILTER (WHERE status = 'approved') as approved_count,
+                    COUNT(*) FILTER (WHERE status = 'rejected') as rejected_count,
+                    COUNT(*) FILTER (WHERE knowledge_type = 'sop' AND status = 'pending') as sop_pending_count,
+                    COUNT(*) FILTER (WHERE knowledge_type = 'sop' AND status = 'approved') as sop_approved_count
+                FROM loop_generated_knowledge
+            """)
+
+            return {
+                "pending_count": stats['pending_count'] or 0,
+                "approved_count": stats['approved_count'] or 0,
+                "rejected_count": stats['rejected_count'] or 0,
+                "sop_pending_count": stats['sop_pending_count'] or 0,
+                "sop_approved_count": stats['sop_approved_count'] or 0,
+                "total_count": (stats['pending_count'] or 0) + (stats['approved_count'] or 0) + (stats['rejected_count'] or 0)
+            }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"取得統計資料失敗: {str(e)}")
+
+
+@router.get("/loop-knowledge/pending")
+async def get_pending_loop_knowledge(
+    req: Request,
+    limit: int = 20,
+    knowledge_type: Optional[str] = None
+):
+    """
+    取得待審核的迴圈生成知識列表
+
+    Args:
+        limit: 返回數量限制
+        knowledge_type: 知識類型篩選（sop, general）
+    """
+    try:
+        db_pool = req.app.state.db_pool
+
+        async with db_pool.acquire() as conn:
+            # 構建查詢
+            query = """
+                SELECT
+                    lk.id,
+                    lk.loop_id,
+                    lk.iteration,
+                    lk.question,
+                    lk.answer,
+                    lk.knowledge_type,
+                    lk.sop_config,
+                    lk.action_type,
+                    lk.keywords,
+                    lk.status,
+                    lk.created_at,
+                    kcl.target_pass_rate,
+                    kcl.started_at as loop_started_at
+                FROM loop_generated_knowledge lk
+                LEFT JOIN knowledge_completion_loops kcl ON lk.loop_id = kcl.id
+                WHERE lk.status = 'pending'
+            """
+
+            params = []
+
+            if knowledge_type:
+                query += " AND lk.knowledge_type = $1"
+                params.append(knowledge_type)
+
+            query += " ORDER BY lk.created_at DESC"
+
+            if limit:
+                query += f" LIMIT ${len(params) + 1}"
+                params.append(limit)
+
+            records = await conn.fetch(query, *params)
+
+            items = []
+            for record in records:
+                item = {
+                    "id": record['id'],
+                    "loop_id": record['loop_id'],
+                    "iteration": record['iteration'],
+                    "question": record['question'],
+                    "answer": record['answer'],
+                    "knowledge_type": record['knowledge_type'],
+                    "action_type": record['action_type'],
+                    "keywords": record['keywords'],
+                    "status": record['status'],
+                    "created_at": record['created_at'].isoformat() if record['created_at'] else None,
+                    "loop_info": {
+                        "target_pass_rate": float(record['target_pass_rate']) if record['target_pass_rate'] else None,
+                        "started_at": record['loop_started_at'].isoformat() if record['loop_started_at'] else None
+                    }
+                }
+
+                # 如果是 SOP，添加 SOP 配置
+                if record['sop_config']:
+                    item['sop_config'] = record['sop_config']
+
+                items.append(item)
+
+            return {
+                "items": items,
+                "total": len(items)
+            }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"取得待審核知識失敗: {str(e)}")
+
+
+@router.get("/loop-knowledge/{knowledge_id}")
+async def get_loop_knowledge_detail(knowledge_id: int, req: Request):
+    """
+    取得迴圈生成知識詳情
+    """
+    try:
+        db_pool = req.app.state.db_pool
+
+        async with db_pool.acquire() as conn:
+            record = await conn.fetchrow("""
+                SELECT
+                    lk.*,
+                    kcl.target_pass_rate,
+                    kcl.started_at as loop_started_at,
+                    kcl.status as loop_status
+                FROM loop_generated_knowledge lk
+                LEFT JOIN knowledge_completion_loops kcl ON lk.loop_id = kcl.id
+                WHERE lk.id = $1
+            """, knowledge_id)
+
+            if not record:
+                raise HTTPException(status_code=404, detail="知識不存在")
+
+            detail = {
+                "id": record['id'],
+                "loop_id": record['loop_id'],
+                "iteration": record['iteration'],
+                "gap_analysis_id": record['gap_analysis_id'],
+                "question": record['question'],
+                "answer": record['answer'],
+                "knowledge_type": record['knowledge_type'],
+                "sop_config": record['sop_config'],
+                "action_type": record['action_type'],
+                "form_id": record['form_id'],
+                "api_config": record['api_config'],
+                "intent_id": record['intent_id'],
+                "keywords": record['keywords'],
+                "business_types": record['business_types'],
+                "target_user": record['target_user'],
+                "scope": record['scope'],
+                "priority": record['priority'],
+                "status": record['status'],
+                "synced_to_kb": record['synced_to_kb'],
+                "kb_id": record['kb_id'],
+                "reviewed_by": record['reviewed_by'],
+                "reviewed_at": record['reviewed_at'].isoformat() if record['reviewed_at'] else None,
+                "created_at": record['created_at'].isoformat() if record['created_at'] else None,
+                "loop_info": {
+                    "target_pass_rate": float(record['target_pass_rate']) if record['target_pass_rate'] else None,
+                    "started_at": record['loop_started_at'].isoformat() if record['loop_started_at'] else None,
+                    "status": record['loop_status']
+                }
+            }
+
+            return detail
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"取得知識詳情失敗: {str(e)}")
+
+
+@router.post("/loop-knowledge/{knowledge_id}/review")
+async def review_loop_knowledge(
+    knowledge_id: int,
+    request: ReviewLoopKnowledgeRequest,
+    req: Request
+):
+    """
+    審核迴圈生成的知識（包含 SOP）
+
+    Args:
+        knowledge_id: 知識 ID
+        request: 審核請求（action, review_notes, reviewed_by）
+    """
+    try:
+        db_pool = req.app.state.db_pool
+
+        async with db_pool.acquire() as conn:
+            # 查詢知識詳情
+            knowledge = await conn.fetchrow("""
+                SELECT * FROM loop_generated_knowledge WHERE id = $1
+            """, knowledge_id)
+
+            if not knowledge:
+                raise HTTPException(status_code=404, detail="知識不存在")
+
+            if knowledge['status'] != 'pending':
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"此知識已審核過，狀態為: {knowledge['status']}"
+                )
+
+            # 確定使用的 vendor_id（如果前端有選擇就使用，否則為 None）
+            vendor_id = request.vendor_id  # 可能是 None，表示不指定 vendor
+
+            if request.action == "approve":
+                # 🔧 檢查並生成缺失的 embedding
+                current_embedding = knowledge['embedding']
+                if current_embedding is None:
+                    print(f"⚠️  知識 #{knowledge_id} 缺少 embedding，正在生成...")
+
+                    # 生成文本：使用問題 + 答案
+                    text_for_embedding = f"{knowledge['question']}\n{knowledge['answer']}"
+
+                    try:
+                        # 使用共用的 embedding 生成函數
+                        generated_embedding = await generate_embedding_with_pgvector(
+                            text_for_embedding,
+                            verbose=True
+                        )
+
+                        if generated_embedding:
+                            # 更新 loop_generated_knowledge 記錄的 embedding
+                            await conn.execute("""
+                                UPDATE loop_generated_knowledge
+                                SET embedding = $1::vector
+                                WHERE id = $2
+                            """, generated_embedding, knowledge_id)
+
+                            # 更新當前使用的 embedding
+                            current_embedding = generated_embedding
+                            print(f"✅ 已生成並儲存 embedding 到知識 #{knowledge_id}")
+                        else:
+                            print(f"❌ 無法生成 embedding，審核將繼續但向量為空")
+                    except Exception as e:
+                        print(f"❌ 生成 embedding 時發生錯誤: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        print(f"⚠️  審核將繼續但向量為空")
+                else:
+                    print(f"✓ 知識 #{knowledge_id} 已有 embedding，無需生成")
+
+                # 通過審核
+                async with conn.transaction():
+                    # 更新狀態為 approved
+                    await conn.execute("""
+                        UPDATE loop_generated_knowledge
+                        SET status = 'approved',
+                            reviewed_by = $1,
+                            reviewed_at = NOW()
+                        WHERE id = $2
+                    """, request.reviewed_by, knowledge_id)
+
+                    # 如果是 SOP，需要同步到 vendor_sop_items
+                    if knowledge['knowledge_type'] == 'sop' and knowledge['sop_config']:
+                        # 解析 sop_config（可能是 dict 或 JSON 字串）
+                        sop_config = knowledge['sop_config']
+                        if isinstance(sop_config, str):
+                            import json
+                            sop_config = json.loads(sop_config)
+                        elif not isinstance(sop_config, dict):
+                            sop_config = dict(sop_config) if sop_config else {}
+
+                        # 映射 trigger_mode 到資料庫允許的值
+                        trigger_mode_raw = sop_config.get('trigger_mode', 'keyword')
+                        trigger_mode_map = {
+                            'keyword': 'auto',  # keyword 觸發映射為 auto
+                            'none': 'none',
+                            'manual': 'manual',
+                            'immediate': 'immediate',
+                            'auto': 'auto'
+                        }
+                        trigger_mode = trigger_mode_map.get(trigger_mode_raw, 'auto')
+
+                        # SOP 必須指定 vendor_id
+                        sop_vendor_id = request.vendor_id or vendor_id
+                        if not sop_vendor_id:
+                            raise HTTPException(
+                                status_code=400,
+                                detail="SOP 必須指定 vendor_id"
+                            )
+
+                        # 插入 SOP 到 vendor_sop_items（包含 embedding）
+                        sop_id = await conn.fetchval("""
+                            INSERT INTO vendor_sop_items (
+                                vendor_id,
+                                category_id,
+                                group_id,
+                                item_name,
+                                content,
+                                trigger_mode,
+                                trigger_keywords,
+                                keywords,
+                                next_action,
+                                next_form_id,
+                                immediate_prompt,
+                                primary_embedding,
+                                is_active,
+                                created_at
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true, NOW())
+                            RETURNING id
+                        """,
+                            sop_vendor_id,
+                            request.category_id,  # 使用審核人員選擇的類別
+                            request.group_id,  # 使用審核人員選擇的群組（可為 NULL）
+                            sop_config.get('item_name'),
+                            knowledge['answer'],
+                            trigger_mode,
+                            knowledge.get('keywords', []),  # ✅ 修復：使用 knowledge 中的關鍵字，而非 sop_config
+                            knowledge.get('keywords', []),  # ✅ 同時更新 keywords 欄位
+                            sop_config.get('next_action', 'none'),
+                            sop_config.get('next_form_id'),
+                            sop_config.get('immediate_prompt'),
+                            current_embedding  # 🔧 使用檢查後的 embedding（可能是新生成的）
+                        )
+
+                        # 更新 synced_to_kb 標記（這裡 kb_id 用來存 sop_id）
+                        await conn.execute("""
+                            UPDATE loop_generated_knowledge
+                            SET synced_to_kb = true,
+                                kb_id = $1,
+                                synced_at = NOW()
+                            WHERE id = $2
+                        """, sop_id, knowledge_id)
+
+                        print(f"✅ 知識 #{knowledge_id} 已通過審核並同步為 SOP #{sop_id}")
+
+                    # 如果是一般知識，同步到 knowledge_base
+                    elif knowledge['knowledge_type'] != 'sop':
+                        # vendor_ids: 如果有選擇 vendor 則使用陣列，否則為 null
+                        vendor_ids_value = [vendor_id] if vendor_id is not None else None
+
+                        kb_id = await conn.fetchval("""
+                            INSERT INTO knowledge_base (
+                                question_summary,
+                                answer,
+                                action_type,
+                                form_id,
+                                keywords,
+                                embedding,
+                                vendor_ids,
+                                is_active,
+                                created_at,
+                                source,
+                                source_loop_knowledge_id,
+                                source_loop_id
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW(), 'loop', $8, $9)
+                            RETURNING id
+                        """,
+                            knowledge['question'],
+                            knowledge['answer'],
+                            knowledge['action_type'],
+                            knowledge['form_id'],
+                            knowledge['keywords'],
+                            current_embedding,  # 🔧 使用檢查後的 embedding（可能是新生成的）
+                            vendor_ids_value,  # 可能是 [vendor_id] 或 None
+                            knowledge_id,
+                            knowledge['loop_id']
+                        )
+
+                        await conn.execute("""
+                            UPDATE loop_generated_knowledge
+                            SET synced_to_kb = true,
+                                kb_id = $1,
+                                synced_at = NOW()
+                            WHERE id = $2
+                        """, kb_id, knowledge_id)
+
+                        print(f"✅ 知識 #{knowledge_id} 已通過審核並同步到知識庫 #{kb_id}")
+
+                return {
+                    "message": "已通過審核並同步",
+                    "knowledge_id": knowledge_id,
+                    "action": "approved",
+                    "synced": True
+                }
+
+            elif request.action == "reject":
+                # 拒絕審核
+                await conn.execute("""
+                    UPDATE loop_generated_knowledge
+                    SET status = 'rejected',
+                        reviewed_by = $1,
+                        reviewed_at = NOW(),
+                        rollback_reason = $2
+                    WHERE id = $3
+                """, request.reviewed_by, request.review_notes, knowledge_id)
+
+                print(f"❌ 知識 #{knowledge_id} 已拒絕")
+                print(f"   拒絕原因: {request.review_notes}")
+
+                return {
+                    "message": "已拒絕",
+                    "knowledge_id": knowledge_id,
+                    "action": "rejected"
+                }
+
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"無效的審核動作: {request.action}（必須是 approve, reject）"
+                )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"審核失敗: {str(e)}")

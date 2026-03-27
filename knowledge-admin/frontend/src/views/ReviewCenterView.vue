@@ -45,6 +45,7 @@ import IntentReviewTab from '../components/review/IntentReviewTab.vue';
 import ScenarioReviewTab from '../components/review/ScenarioReviewTab.vue';
 import KnowledgeReviewTab from '../components/review/KnowledgeReviewTab.vue';
 import UnclearQuestionReviewTab from '../components/review/UnclearQuestionReviewTab.vue';
+import LoopKnowledgeReviewTab from '../components/review/LoopKnowledgeReviewTab.vue';
 import InfoPanel from '@/components/InfoPanel.vue';
 import helpTexts from '@/config/help-texts.js';
 
@@ -56,6 +57,7 @@ export default {
     ScenarioReviewTab,
     KnowledgeReviewTab,
     UnclearQuestionReviewTab,
+    LoopKnowledgeReviewTab,
     InfoPanel
   },
 
@@ -101,6 +103,13 @@ export default {
         icon: '📚',
         count: 0,
         component: 'KnowledgeReviewTab'
+      },
+      {
+        key: 'loop-knowledge',
+        label: '迴圈知識審核',
+        icon: '🔄',
+        count: 0,
+        component: 'LoopKnowledgeReviewTab'
       }
     ]);
 

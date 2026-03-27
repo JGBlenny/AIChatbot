@@ -47,6 +47,21 @@ export const API_ENDPOINTS = {
   knowledgeCandidateEdit: (id) => `${API_BASE_URL}/rag-api/v1/knowledge-candidates/${id}/edit`,
   knowledgeCandidateReview: (id) => `${API_BASE_URL}/rag-api/v1/knowledge-candidates/${id}/review`,
 
+  // Loop Knowledge 相關（迴圈生成知識審核，包含 SOP）
+  loopKnowledgePending: `${API_BASE_URL}/rag-api/v1/loop-knowledge/pending`,
+  loopKnowledgeStats: `${API_BASE_URL}/rag-api/v1/loop-knowledge/stats`,
+  loopKnowledgeById: (id) => `${API_BASE_URL}/rag-api/v1/loop-knowledge/${id}`,
+  loopKnowledgeReview: (id) => `${API_BASE_URL}/rag-api/v1/loop-knowledge/${id}/review`,
+
+  // SOP Categories 相關
+  sopCategories: `${API_BASE_URL}/rag-api/v1/sop-categories`,
+
+  // Vendors 相關
+  vendors: `${API_BASE_URL}/rag-api/v1/vendors`,
+
+  // SOP Groups 相關
+  sopGroups: `${API_BASE_URL}/rag-api/v1/sop-groups`,
+
   // Unclear Questions 相關
   unclearQuestions: `${API_BASE_URL}/rag-api/v1/unclear-questions`,
   unclearQuestionById: (id) => `${API_BASE_URL}/rag-api/v1/unclear-questions/${id}`,

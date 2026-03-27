@@ -733,16 +733,12 @@ async def update_sop_item(vendor_id: int, item_id: int, item_update: SOPItemUpda
     Returns:
         Dict: 更新後的 SOP 項目
     """
-    # 🔒 嚴格限制：驗證 trigger_mode 和 next_action 組合
-    # 當 next_action 是 'none' 時，trigger_mode 可以是 null
-    if item_update.next_action == 'none':
-        # next_action 為 'none' 時，trigger_mode 應該是 null
-        if item_update.trigger_mode is not None:
-            raise HTTPException(
-                status_code=400,
-                detail="❌ 當後續動作為 'none' 時，不需要設定觸發模式"
-            )
-    else:
+    # 🔒 驗證 trigger_mode 和 next_action
+    # trigger_mode 控制「何時觸發 SOP」，next_action 控制「觸發後做什麼」
+    # 兩者應該是獨立的概念，允許任意組合
+    # 例如：trigger_mode='auto' + next_action='none' → 關鍵字自動觸發，提供知識後結束
+
+    if item_update.next_action != 'none':
         # next_action 不是 'none' 時，需要有效的 trigger_mode
         VALID_TRIGGER_MODES = ['manual', 'immediate']
         if item_update.trigger_mode not in VALID_TRIGGER_MODES:
@@ -962,16 +958,12 @@ async def create_sop_item(vendor_id: int, item: SOPItemCreate, request: Request)
     Returns:
         Dict: 新建立的 SOP 項目
     """
-    # 🔒 嚴格限制：驗證 trigger_mode 和 next_action 組合
-    # 當 next_action 是 'none' 時，trigger_mode 可以是 null
-    if item.next_action == 'none':
-        # next_action 為 'none' 時，trigger_mode 應該是 null
-        if item.trigger_mode is not None:
-            raise HTTPException(
-                status_code=400,
-                detail="❌ 當後續動作為 'none' 時，不需要設定觸發模式"
-            )
-    else:
+    # 🔒 驗證 trigger_mode 和 next_action
+    # trigger_mode 控制「何時觸發 SOP」，next_action 控制「觸發後做什麼」
+    # 兩者應該是獨立的概念，允許任意組合
+    # 例如：trigger_mode='auto' + next_action='none' → 關鍵字自動觸發，提供知識後結束
+
+    if item.next_action != 'none':
         # next_action 不是 'none' 時，需要有效的 trigger_mode
         VALID_TRIGGER_MODES = ['manual', 'immediate']
         if item.trigger_mode not in VALID_TRIGGER_MODES:
