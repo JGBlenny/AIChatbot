@@ -9,22 +9,23 @@
 - 迭代驗證與同步
 """
 
-from .models import (
-    LoopStatus,
-    LoopConfig,
-    FailureReason,
-    GapPriority,
-    ActionType,
-    KnowledgeGap,
-)
-
-from .coordinator import LoopCoordinator
-from .clients import (
-    BacktestFrameworkClient,
-    GapAnalyzer,
-    ActionTypeClassifier,
-    KnowledgeGeneratorClient,
-)
+# Lazy imports to avoid import errors - import these directly where needed
+# from .models import (
+#     LoopStatus,
+#     LoopConfig,
+#     FailureReason,
+#     GapPriority,
+#     ActionType,
+#     KnowledgeGap,
+# )
+#
+# from .coordinator import LoopCoordinator
+# from .clients import (
+#     BacktestFrameworkClient,
+#     GapAnalyzer,
+#     ActionTypeClassifier,
+#     KnowledgeGeneratorClient,
+# )
 
 __all__ = [
     # Models

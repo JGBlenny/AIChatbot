@@ -6,11 +6,13 @@
 
 import asyncio
 import json
+import os
 from typing import Dict, List, Optional
 import psycopg2.pool
 import psycopg2.extras
 from openai import OpenAI, AsyncOpenAI
 from openai import OpenAIError, RateLimitError, APIConnectionError
+import httpx
 
 
 class KnowledgeGeneratorClient:
@@ -108,6 +110,7 @@ class KnowledgeGeneratorClient:
         self.db_pool = db_pool
         self.model = model
         self.cost_tracker = cost_tracker
+        self.embedding_api_url = os.getenv('EMBEDDING_API_URL', 'http://aichatbot-embedding-api:5000/api/v1/embeddings')
 
         # 初始化 OpenAI 客戶端
         if openai_api_key:
@@ -180,6 +183,15 @@ class KnowledgeGeneratorClient:
                 gaps=gaps,
                 action_type_judgments=action_type_judgments
             )
+
+            # 🔍 記錄重複檢測統計
+            await self._log_duplicate_detection_stats(
+                loop_id=loop_id,
+                iteration=iteration,
+                knowledge_type='knowledge',
+                generated_items=saved_knowledge
+            )
+
             return saved_knowledge
 
         return generated_knowledge
@@ -202,7 +214,7 @@ class KnowledgeGeneratorClient:
         """
         # 處理 action_type_judgment：可能是 ActionTypeJudgment 物件或空字典
         # 統一轉換為可安全存取的格式
-        from models import ActionTypeJudgment
+        from .models import ActionTypeJudgment
         if isinstance(action_type_judgment, ActionTypeJudgment):
             action_type = action_type_judgment.action_type.value
         elif isinstance(action_type_judgment, dict):
@@ -298,7 +310,7 @@ class KnowledgeGeneratorClient:
             str: 完整的 Prompt
         """
         # 處理 action_type_judgment：可能是 ActionTypeJudgment 物件或字典
-        from models import ActionTypeJudgment
+        from .models import ActionTypeJudgment
         if isinstance(action_type_judgment, ActionTypeJudgment):
             suggested_action_type = action_type_judgment.action_type.value
         elif isinstance(action_type_judgment, dict):
@@ -365,6 +377,218 @@ class KnowledgeGeneratorClient:
         finally:
             self.db_pool.putconn(conn)
 
+    async def _generate_embedding(self, text: str) -> Optional[List[float]]:
+        """使用 Embedding API 生成向量
+
+        Args:
+            text: 要生成向量的文本
+
+        Returns:
+            向量列表或 None
+        """
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    self.embedding_api_url,
+                    json={"text": text}
+                )
+
+                if response.status_code == 200:
+                    data = response.json()
+                    return data.get('embedding')
+                else:
+                    print(f"   ⚠️  Embedding API 錯誤: {response.status_code}")
+                    return None
+        except Exception as e:
+            print(f"   ⚠️  生成 embedding 失敗: {e}")
+            return None
+
+    async def _detect_duplicate_knowledge(
+        self,
+        vendor_id: int,
+        question_summary: str
+    ) -> Optional[Dict]:
+        """使用 pgvector 向量相似度檢測重複的一般知識
+
+        Args:
+            vendor_id: 業者 ID
+            question_summary: 問題摘要
+
+        Returns:
+            重複檢測結果，格式：
+            {
+                "detected": bool,
+                "items": [
+                    {
+                        "id": int,
+                        "source_table": str,  # "knowledge_base" or "loop_generated_knowledge"
+                        "question_summary": str,
+                        "similarity_score": float
+                    }
+                ]
+            }
+        """
+        # 生成問題摘要的 embedding
+        query_embedding = await self._generate_embedding(question_summary)
+
+        if not query_embedding:
+            print("   ⚠️  無法生成 embedding，跳過重複檢測")
+            return {"detected": False, "items": []}
+
+        conn = self.db_pool.getconn()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+            similar_items = []
+
+            # 檢測 1: 搜尋 knowledge_base 表（正式知識）
+            # 使用 pgvector 的 cosine similarity (<=> 運算子)
+            # 閾值：similarity > 0.90 視為相似（距離 < 0.10）
+            cur.execute("""
+                SELECT
+                    id,
+                    question_summary,
+                    1 - (embedding <=> %s::vector) AS similarity_score
+                FROM knowledge_base
+                WHERE vendor_ids @> ARRAY[%s]
+                  AND embedding IS NOT NULL
+                  AND 1 - (embedding <=> %s::vector) > 0.90
+                ORDER BY embedding <=> %s::vector ASC
+                LIMIT 3
+            """, (query_embedding, vendor_id, query_embedding, query_embedding))
+
+            for row in cur.fetchall():
+                similar_items.append({
+                    "id": row['id'],
+                    "source_table": "knowledge_base",
+                    "question_summary": row['question_summary'],
+                    "similarity_score": float(row['similarity_score'])
+                })
+
+            # 檢測 2: 搜尋 loop_generated_knowledge 表（待審核知識）
+            cur.execute("""
+                SELECT
+                    id,
+                    question,
+                    1 - (embedding <=> %s::vector) AS similarity_score
+                FROM loop_generated_knowledge
+                WHERE knowledge_type IS NULL
+                  AND status IN ('pending', 'approved')
+                  AND embedding IS NOT NULL
+                  AND 1 - (embedding <=> %s::vector) > 0.90
+                ORDER BY embedding <=> %s::vector ASC
+                LIMIT 3
+            """, (query_embedding, query_embedding, query_embedding))
+
+            for row in cur.fetchall():
+                similar_items.append({
+                    "id": row['id'],
+                    "source_table": "loop_generated_knowledge",
+                    "question_summary": row['question'],
+                    "similarity_score": float(row['similarity_score'])
+                })
+
+            # 按相似度排序，取前 3 個
+            similar_items.sort(key=lambda x: x['similarity_score'], reverse=True)
+            similar_items = similar_items[:3]
+
+            if similar_items:
+                print(f"   🔍 檢測到 {len(similar_items)} 個相似知識:")
+                for item in similar_items:
+                    print(f"      - [{item['source_table']}] {item['question_summary'][:50]}... (相似度: {item['similarity_score']:.1%})")
+
+            return {
+                "detected": len(similar_items) > 0,
+                "items": similar_items
+            }
+
+        except Exception as e:
+            print(f"   ⚠️  重複檢測失敗: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"detected": False, "items": []}
+        finally:
+            cur.close()
+            self.db_pool.putconn(conn)
+
+    async def _log_duplicate_detection_stats(
+        self,
+        loop_id: int,
+        iteration: int,
+        knowledge_type: str,
+        generated_items: List[Dict]
+    ) -> None:
+        """記錄重複檢測統計到 loop_execution_logs
+
+        Args:
+            loop_id: 迴圈 ID
+            iteration: 迭代次數
+            knowledge_type: 知識類型 ('sop' or 'knowledge')
+            generated_items: 生成的知識項目列表
+        """
+        if not self.db_pool:
+            return
+
+        # 收集統計資訊
+        total_generated = len(generated_items)
+        detected_duplicates = sum(
+            1 for item in generated_items
+            if item.get('similar_knowledge') and item.get('similar_knowledge', {}).get('detected', False)
+        )
+
+        # 收集相似度分布
+        similarity_scores = []
+        for item in generated_items:
+            similar_knowledge = item.get('similar_knowledge')
+            if similar_knowledge and similar_knowledge.get('detected'):
+                for similar_item in similar_knowledge.get('items', []):
+                    similarity_scores.append(similar_item.get('similarity_score', 0))
+
+        # 計算相似度統計
+        stats = {
+            'total_generated': total_generated,
+            'detected_duplicates': detected_duplicates,
+            'duplicate_rate': f"{detected_duplicates / total_generated * 100:.1f}%" if total_generated > 0 else "0%",
+            'similarity_scores': {
+                'count': len(similarity_scores),
+                'avg': sum(similarity_scores) / len(similarity_scores) if similarity_scores else 0,
+                'max': max(similarity_scores) if similarity_scores else 0,
+                'min': min(similarity_scores) if similarity_scores else 0
+            }
+        }
+
+        print(f"\n🔍 重複檢測統計 ({knowledge_type}):")
+        print(f"   總生成數：{stats['total_generated']}")
+        print(f"   檢測到重複：{stats['detected_duplicates']} ({stats['duplicate_rate']})")
+        if similarity_scores:
+            print(f"   相似度範圍：{stats['similarity_scores']['min']:.1%} - {stats['similarity_scores']['max']:.1%}")
+            print(f"   平均相似度：{stats['similarity_scores']['avg']:.1%}")
+
+        # 記錄到資料庫
+        conn = self.db_pool.getconn()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO loop_execution_logs (
+                    loop_id,
+                    event_type,
+                    event_data,
+                    created_at
+                ) VALUES (%s, %s, %s, NOW())
+            """, (
+                loop_id,
+                f'duplicate_detection_{knowledge_type}',
+                json.dumps(stats, ensure_ascii=False)
+            ))
+            conn.commit()
+            print(f"   ✅ 統計已記錄到 loop_execution_logs")
+        except Exception as e:
+            conn.rollback()
+            print(f"   ⚠️  統計記錄失敗: {e}")
+        finally:
+            cur.close()
+            self.db_pool.putconn(conn)
+
     async def _save_to_database(
         self,
         loop_id: int,
@@ -416,15 +640,28 @@ class KnowledgeGeneratorClient:
                         print(f"⚠️  跳過重複知識（已在知識庫）: {question}")
                         continue
 
+                    # 🔍 執行向量相似度重複檢測（使用 pgvector）
+                    # 需要先找到 vendor_id（從 gaps 中獲取）
+                    gap = next((g for g in gaps if g.get('gap_id') == gap_id), {})
+                    vendor_id = gap.get('vendor_id', 1)  # 預設為 1
+
+                    similar_knowledge = None
+                    duplicate_check = await self._detect_duplicate_knowledge(
+                        vendor_id=vendor_id,
+                        question_summary=question
+                    )
+                    if duplicate_check and duplicate_check['detected']:
+                        similar_knowledge = duplicate_check  # 儲存完整的檢測結果
+
                     # 插入到 loop_generated_knowledge 表
                     cur.execute("""
                         INSERT INTO loop_generated_knowledge (
                             loop_id, iteration,
                             question, answer, keywords,
-                            action_type, status,
+                            action_type, similar_knowledge, status,
                             created_at
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
                         RETURNING id, question, answer, action_type, status
                     """, (
                         loop_id,
@@ -433,11 +670,15 @@ class KnowledgeGeneratorClient:
                         knowledge["answer"],
                         knowledge.get("keywords", []),
                         knowledge.get("action_type", "direct_answer"),
+                        json.dumps(similar_knowledge) if similar_knowledge else None,  # 重複檢測結果
                         "pending"  # 等待審核
                     ))
 
                     result = cur.fetchone()
-                    saved.append(dict(result))
+                    saved_item = dict(result)
+                    # 附加 similar_knowledge 到返回值，以便後續統計
+                    saved_item['similar_knowledge'] = similar_knowledge
+                    saved.append(saved_item)
 
                 conn.commit()
                 return saved
@@ -461,7 +702,7 @@ class KnowledgeGeneratorClient:
         iteration: int
     ) -> List[Dict]:
         """Stub：模擬知識生成"""
-        from models import ActionTypeJudgment
+        from .models import ActionTypeJudgment
         generated = []
 
         for gap in gaps:

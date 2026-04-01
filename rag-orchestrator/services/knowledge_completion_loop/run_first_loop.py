@@ -23,7 +23,11 @@ import psycopg2.pool
 sys.path.insert(0, os.path.dirname(__file__))
 
 from coordinator import LoopCoordinator
-from models import LoopConfig
+
+try:
+    from models import LoopConfig
+except ImportError:
+    from services.knowledge_completion_loop.models import LoopConfig
 
 
 async def main():
@@ -55,7 +59,7 @@ async def main():
     backtest_url = os.getenv('RAG_API_URL', 'http://localhost:8100')
 
     # 業者 ID
-    vendor_id = int(os.getenv('VENDOR_ID', '2'))
+    vendor_id = int(os.getenv('VENDOR_ID', '1'))
 
     # 檢查是否只執行回測
     backtest_only = os.getenv('BACKTEST_ONLY', 'false').lower() in ('true', '1', 'yes')

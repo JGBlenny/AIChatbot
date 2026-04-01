@@ -22,7 +22,7 @@ from services.form_manager import FormManager
 from services.sop_orchestrator import SOPOrchestrator
 
 # 導入路由
-from routers import chat, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, platform_sop, cache, videos, business_types, document_converter, target_user_config, forms, api_endpoints, lookup
+from routers import chat, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, platform_sop, cache, videos, business_types, document_converter, target_user_config, forms, api_endpoints, lookup, loops, loop_knowledge
 
 # 全局變數
 db_pool: Pool = None
@@ -165,6 +165,8 @@ app.include_router(target_user_config.router, tags=["target_user_config"])  # Ta
 app.include_router(forms.router, prefix="/api/v1", tags=["forms"])  # Form Management (表單管理)
 app.include_router(api_endpoints.router, prefix="/api/v1", tags=["api_endpoints"])  # API Endpoints Management (API 端點管理)
 app.include_router(lookup.router, tags=["lookup"])  # Lookup Table System (通用查詢系統)
+app.include_router(loops.router, prefix="/api/v1/loops", tags=["loops"])  # Knowledge Completion Loop Management (知識完善迴圈管理)
+app.include_router(loop_knowledge.router, prefix="/api/v1/loops", tags=["loop_knowledge"])  # Loop Knowledge Review API (知識審核 API)
 
 
 @app.get("/")

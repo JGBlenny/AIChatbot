@@ -193,3 +193,29 @@ class BudgetExceededError(KnowledgeCompletionError):
             category=ErrorCategory.BUSINESS_LOGIC_ERROR,
             details={"budget_limit": budget_limit, "total_cost": total_cost}
         )
+
+
+class LoopNotFoundError(KnowledgeCompletionError):
+    """迴圈不存在錯誤"""
+
+    def __init__(self, loop_id: int):
+        super().__init__(
+            message=f"Loop {loop_id} 不存在",
+            category=ErrorCategory.VALIDATION_ERROR,
+            details={"loop_id": loop_id}
+        )
+
+
+class EmbeddingGenerationError(KnowledgeCompletionError):
+    """Embedding 生成失敗錯誤"""
+
+    def __init__(self, text: str, error_detail: str = None):
+        details = {"text_length": len(text)}
+        if error_detail:
+            details["error"] = error_detail
+
+        super().__init__(
+            message=f"Embedding 生成失敗：{error_detail or '未知錯誤'}",
+            category=ErrorCategory.EXTERNAL_SERVICE_ERROR,
+            details=details
+        )

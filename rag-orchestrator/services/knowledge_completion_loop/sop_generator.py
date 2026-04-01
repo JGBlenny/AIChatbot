@@ -286,6 +286,15 @@ class SOPGenerator:
                     print(f"   ✅ 已生成: {result.get('item_name', 'Unknown')}")
 
         print(f"\n✅ SOP 生成完成：共 {len(generated_sops)} 筆")
+
+        # 🔍 收集重複檢測統計
+        await self._log_duplicate_detection_stats(
+            loop_id=loop_id,
+            iteration=iteration,
+            knowledge_type='sop',
+            generated_items=generated_sops
+        )
+
         return generated_sops
 
     async def _enrich_trigger_keywords(
@@ -613,6 +622,195 @@ class SOPGenerator:
         finally:
             self.db_pool.putconn(conn)
 
+    async def _detect_duplicate_sops(
+        self,
+        vendor_id: int,
+        sop_title: str,
+        sop_content: str
+    ) -> Optional[Dict]:
+        """使用 pgvector 向量相似度檢測重複的 SOP
+
+        Args:
+            vendor_id: 業者 ID
+            sop_title: SOP 標題
+            sop_content: SOP 內容
+
+        Returns:
+            重複檢測結果，格式：
+            {
+                "detected": bool,
+                "items": [
+                    {
+                        "id": int,
+                        "source_table": str,  # "vendor_sop_items" or "loop_generated_knowledge"
+                        "item_name": str,
+                        "similarity_score": float
+                    }
+                ]
+            }
+        """
+        # 生成 SOP 標題的 embedding
+        combined_text = f"{sop_title}\n\n{sop_content[:200]}"  # 限制內容長度避免過長
+        query_embedding = await self._generate_embedding(combined_text)
+
+        if not query_embedding:
+            print("   ⚠️  無法生成 embedding，跳過重複檢測")
+            return {"detected": False, "items": []}
+
+        conn = self.db_pool.getconn()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+            similar_items = []
+
+            # 檢測 1: 搜尋 vendor_sop_items 表（正式 SOP）
+            # 使用 pgvector 的 cosine similarity (<=> 運算子)
+            # 閾值：similarity > 0.85 視為相似（距離 < 0.15）
+            cur.execute("""
+                SELECT
+                    id,
+                    item_name,
+                    1 - (primary_embedding <=> %s::vector) AS similarity_score
+                FROM vendor_sop_items
+                WHERE vendor_id = %s
+                  AND primary_embedding IS NOT NULL
+                  AND 1 - (primary_embedding <=> %s::vector) > 0.85
+                ORDER BY primary_embedding <=> %s::vector ASC
+                LIMIT 3
+            """, (query_embedding, vendor_id, query_embedding, query_embedding))
+
+            for row in cur.fetchall():
+                similar_items.append({
+                    "id": row['id'],
+                    "source_table": "vendor_sop_items",
+                    "item_name": row['item_name'],
+                    "similarity_score": float(row['similarity_score'])
+                })
+
+            # 檢測 2: 搜尋 loop_generated_knowledge 表（待審核 SOP）
+            cur.execute("""
+                SELECT
+                    id,
+                    question AS item_name,
+                    1 - (embedding <=> %s::vector) AS similarity_score
+                FROM loop_generated_knowledge
+                WHERE knowledge_type = 'sop'
+                  AND status IN ('pending', 'approved')
+                  AND embedding IS NOT NULL
+                  AND 1 - (embedding <=> %s::vector) > 0.85
+                ORDER BY embedding <=> %s::vector ASC
+                LIMIT 3
+            """, (query_embedding, query_embedding, query_embedding))
+
+            for row in cur.fetchall():
+                similar_items.append({
+                    "id": row['id'],
+                    "source_table": "loop_generated_knowledge",
+                    "item_name": row['item_name'],
+                    "similarity_score": float(row['similarity_score'])
+                })
+
+            # 按相似度排序，取前 3 個
+            similar_items.sort(key=lambda x: x['similarity_score'], reverse=True)
+            similar_items = similar_items[:3]
+
+            if similar_items:
+                print(f"   🔍 檢測到 {len(similar_items)} 個相似 SOP:")
+                for item in similar_items:
+                    print(f"      - [{item['source_table']}] {item['item_name']} (相似度: {item['similarity_score']:.1%})")
+
+            return {
+                "detected": len(similar_items) > 0,
+                "items": similar_items
+            }
+
+        except Exception as e:
+            print(f"   ⚠️  重複檢測失敗: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"detected": False, "items": []}
+        finally:
+            cur.close()
+            self.db_pool.putconn(conn)
+
+    async def _log_duplicate_detection_stats(
+        self,
+        loop_id: int,
+        iteration: int,
+        knowledge_type: str,
+        generated_items: List[Dict]
+    ) -> None:
+        """記錄重複檢測統計到 loop_execution_logs
+
+        Args:
+            loop_id: 迴圈 ID
+            iteration: 迭代次數
+            knowledge_type: 知識類型 ('sop' or 'knowledge')
+            generated_items: 生成的知識項目列表
+        """
+        if not self.db_pool:
+            return
+
+        # 收集統計資訊
+        total_generated = len(generated_items)
+        detected_duplicates = sum(
+            1 for item in generated_items
+            if item.get('similar_knowledge', {}).get('detected', False)
+        )
+
+        # 收集相似度分布
+        similarity_scores = []
+        for item in generated_items:
+            similar_knowledge = item.get('similar_knowledge')
+            if similar_knowledge and similar_knowledge.get('detected'):
+                for similar_item in similar_knowledge.get('items', []):
+                    similarity_scores.append(similar_item.get('similarity_score', 0))
+
+        # 計算相似度統計
+        stats = {
+            'total_generated': total_generated,
+            'detected_duplicates': detected_duplicates,
+            'duplicate_rate': f"{detected_duplicates / total_generated * 100:.1f}%" if total_generated > 0 else "0%",
+            'similarity_scores': {
+                'count': len(similarity_scores),
+                'avg': sum(similarity_scores) / len(similarity_scores) if similarity_scores else 0,
+                'max': max(similarity_scores) if similarity_scores else 0,
+                'min': min(similarity_scores) if similarity_scores else 0
+            }
+        }
+
+        print(f"\n🔍 重複檢測統計 ({knowledge_type}):")
+        print(f"   總生成數：{stats['total_generated']}")
+        print(f"   檢測到重複：{stats['detected_duplicates']} ({stats['duplicate_rate']})")
+        if similarity_scores:
+            print(f"   相似度範圍：{stats['similarity_scores']['min']:.1%} - {stats['similarity_scores']['max']:.1%}")
+            print(f"   平均相似度：{stats['similarity_scores']['avg']:.1%}")
+
+        # 記錄到資料庫
+        conn = self.db_pool.getconn()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO loop_execution_logs (
+                    loop_id,
+                    event_type,
+                    event_data,
+                    created_at
+                ) VALUES (%s, %s, %s, NOW())
+            """, (
+                loop_id,
+                f'duplicate_detection_{knowledge_type}',
+                json.dumps(stats, ensure_ascii=False)
+            ))
+            conn.commit()
+            print(f"   ✅ 統計已記錄到 loop_execution_logs")
+        except Exception as e:
+            conn.rollback()
+            print(f"   ⚠️  統計記錄失敗: {e}")
+        finally:
+            cur.close()
+            self.db_pool.putconn(conn)
+
     async def _find_similar_sop(
         self,
         vendor_id: int,
@@ -862,14 +1060,11 @@ class SOPGenerator:
 
             # 追蹤成本
             if self.cost_tracker and hasattr(response, 'usage'):
-                await self.cost_tracker.track_cost(
-                    loop_id=loop_id,
-                    iteration=iteration,
-                    service='openai',
-                    operation='sop_generation',
+                await self.cost_tracker.track_api_call(
                     model=self.model,
-                    input_tokens=response.usage.prompt_tokens,
-                    output_tokens=response.usage.completion_tokens
+                    prompt_tokens=response.usage.prompt_tokens,
+                    completion_tokens=response.usage.completion_tokens,
+                    operation='sop_generation'
                 )
 
             # 解析結果
@@ -932,7 +1127,7 @@ class SOPGenerator:
                 sop_data['group_id'] = None
 
             # 持久化到資料庫
-            sop_id = await self._persist_sop(
+            persist_result = await self._persist_sop(
                 vendor_id=vendor_id,
                 loop_id=loop_id,
                 gap_id=gap.get('gap_id'),
@@ -941,9 +1136,10 @@ class SOPGenerator:
                 primary_embedding=primary_embedding
             )
 
-            if sop_id:
-                sop_data['id'] = sop_id
+            if persist_result:
+                sop_data['id'] = persist_result['id']
                 sop_data['vendor_id'] = vendor_id
+                sop_data['similar_knowledge'] = persist_result.get('similar_knowledge')
                 sop_data['question'] = question
                 return sop_data
 
@@ -1029,6 +1225,17 @@ class SOPGenerator:
                 print(f"⚠️  跳過重複 SOP（已在 SOP 表）: {sop_name}")
                 return None
 
+            # 🔍 執行向量相似度重複檢測（使用 pgvector）
+            similar_knowledge = None
+            if primary_embedding:
+                duplicate_check = await self._detect_duplicate_sops(
+                    vendor_id=vendor_id,
+                    sop_title=sop_data['item_name'],
+                    sop_content=sop_data['content']
+                )
+                if duplicate_check and duplicate_check['detected']:
+                    similar_knowledge = duplicate_check  # 儲存完整的檢測結果
+
             # 插入到 loop_generated_knowledge（待審核）
             cur.execute("""
                 INSERT INTO loop_generated_knowledge (
@@ -1041,11 +1248,12 @@ class SOPGenerator:
                     sop_config,
                     keywords,
                     embedding,
+                    similar_knowledge,
                     status,
                     synced_to_kb,
                     created_at
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW()
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW()
                 )
                 RETURNING id
             """, (
@@ -1058,6 +1266,7 @@ class SOPGenerator:
                 json.dumps(sop_config),      # SOP 配置
                 sop_data.get('keywords', []),
                 primary_embedding,
+                json.dumps(similar_knowledge) if similar_knowledge else None,  # 重複檢測結果
                 'pending',                   # 待審核
                 False                        # 未同步
             ))
@@ -1098,7 +1307,11 @@ class SOPGenerator:
                 conn.rollback()  # 回滾日誌插入，但不影響已提交的 SOP
                 print(f"   ⚠️  跳過日誌記錄: {log_error}")
 
-            return sop_id
+            # 返回 SOP ID 和重複檢測結果
+            return {
+                'id': sop_id,
+                'similar_knowledge': similar_knowledge
+            }
 
         except Exception as e:
             conn.rollback()

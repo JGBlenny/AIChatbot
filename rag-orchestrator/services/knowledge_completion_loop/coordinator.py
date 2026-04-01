@@ -8,6 +8,7 @@ LoopCoordinator 負責協調完整的迴圈流程，包含：
 """
 
 import asyncio
+import random
 from typing import Dict, Optional, List
 from datetime import datetime
 import psycopg2.pool
@@ -21,6 +22,7 @@ try:
         KnowledgeCompletionError,
         ErrorCategory,
         BacktestError,
+        LoopNotFoundError,
     )
     from .clients import ActionTypeClassifier
     from .gap_analyzer import GapAnalyzer
@@ -30,23 +32,12 @@ try:
     from .cost_tracker import OpenAICostTracker, BudgetExceededError
     from .gap_classifier import GapClassifier
     from .sop_generator import SOPGenerator
-except ImportError:
-    from models import (
-        LoopStatus,
-        LoopConfig,
-        InvalidStateError,
-        KnowledgeCompletionError,
-        ErrorCategory,
-        BacktestError,
-    )
-    from clients import ActionTypeClassifier
-    from gap_analyzer import GapAnalyzer
-    from backtest_client import BacktestFrameworkClient
-    from action_type_classifier import ActionTypeClassifier as ActionTypeClassifierReal
-    from knowledge_generator import KnowledgeGeneratorClient
-    from cost_tracker import OpenAICostTracker, BudgetExceededError
-    from gap_classifier import GapClassifier
-    from sop_generator import SOPGenerator
+except ImportError as import_error:
+    # 如果相對 import 失敗，嘗試絕對 import（通常不應該發生）
+    import sys
+    print(f"⚠️ 相對 import 失敗，錯誤: {import_error}", file=sys.stderr)
+    print(f"⚠️ Python 路徑: {sys.path}", file=sys.stderr)
+    raise  # 直接拋出錯誤，不要使用錯誤的 import 路徑
 
 
 class LoopCoordinator:
@@ -192,6 +183,379 @@ class LoopCoordinator:
             },
             "created_at": datetime.now().isoformat()
         }
+
+    async def load_loop(self, loop_id: int) -> Dict:
+        """
+        [需求 10.6.1] 載入已存在的迴圈
+
+        從資料庫載入迴圈記錄並初始化協調器狀態，支援跨 session 續接。
+
+        Args:
+            loop_id: 迴圈 ID
+
+        Returns:
+            {
+                "loop_id": int,
+                "status": str,
+                "current_iteration": int,
+                "loaded_at": str
+            }
+
+        Raises:
+            LoopNotFoundError: 迴圈不存在
+            KnowledgeCompletionError: 資料庫操作失敗
+        """
+        # 從資料庫載入迴圈資訊
+        loop_record = await self._fetch_loop_record(loop_id)
+        if not loop_record:
+            raise LoopNotFoundError(loop_id)
+
+        # 初始化協調器狀態
+        self.loop_id = loop_id
+        self.vendor_id = loop_record["vendor_id"]
+        self.loop_name = loop_record["loop_name"]
+        self.current_status = LoopStatus(loop_record["status"])
+
+        # 初始化配置
+        config_dict = loop_record.get("config", {})
+        self.config = LoopConfig(**config_dict)
+
+        # 初始化成本追蹤器
+        budget_limit = loop_record.get("budget_limit_usd")
+        self.cost_tracker = OpenAICostTracker(
+            loop_id=loop_id,
+            db_pool=self.db_pool,
+            budget_limit_usd=budget_limit
+        )
+
+        # 更新生成器的 cost_tracker
+        self.knowledge_generator.cost_tracker = self.cost_tracker
+        self.sop_generator.cost_tracker = self.cost_tracker
+
+        # 記錄載入事件
+        await self._log_event(
+            event_type="loop_loaded",
+            event_data={
+                "loaded_from_status": self.current_status.value,
+                "current_iteration": loop_record.get("current_iteration", 0),
+                "vendor_id": self.vendor_id
+            }
+        )
+
+        return {
+            "loop_id": self.loop_id,
+            "status": self.current_status.value,
+            "current_iteration": loop_record.get("current_iteration", 0),
+            "loaded_at": datetime.now().isoformat()
+        }
+
+    async def _fetch_loop_record(self, loop_id: int) -> Optional[Dict]:
+        """
+        從資料庫讀取迴圈記錄
+
+        Args:
+            loop_id: 迴圈 ID
+
+        Returns:
+            迴圈記錄字典，若不存在則返回 None
+        """
+        conn = self.db_pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                query = """
+                    SELECT
+                        id, vendor_id, loop_name, status, config,
+                        current_iteration, budget_limit_usd, created_at
+                    FROM knowledge_completion_loops
+                    WHERE id = %s
+                """
+                cursor.execute(query, (loop_id,))
+                result = cursor.fetchone()
+                return dict(result) if result else None
+        finally:
+            self.db_pool.putconn(conn)
+
+    async def validate_loop(
+        self,
+        validation_scope: str = "failed_plus_sample",
+        sample_pass_rate: float = 0.2
+    ) -> Dict:
+        """
+        [需求 9] 驗證效果回測（可選功能）
+
+        執行驗證回測以檢驗已審核知識的效果，支援三種驗證範圍。
+
+        Args:
+            validation_scope: 驗證範圍（failed_only/all/failed_plus_sample）
+            sample_pass_rate: 抽樣比例（僅在 failed_plus_sample 時使用）
+
+        Returns:
+            {
+                "validation_result": Dict,  # 回測結果
+                "validation_passed": bool,  # 驗證是否通過
+                "improvement": float,  # 改善幅度
+                "regression_detected": bool,  # 是否檢測到 regression
+                "regression_count": int,  # regression 案例數量
+                "next_action": str  # 下一步建議（continue/adjust_knowledge）
+            }
+
+        Raises:
+            InvalidStateError: 當前狀態不為 REVIEWING
+        """
+        # 驗證狀態
+        if self.current_status != LoopStatus.REVIEWING:
+            raise InvalidStateError(
+                current_state=self.current_status.value,
+                target_state="validate"
+            )
+
+        # 取得固定測試集
+        scenario_ids = await self._get_scenario_ids()
+
+        # 根據驗證範圍選取測試案例
+        if validation_scope == "failed_only":
+            # 只測試失敗案例
+            test_scenario_ids = await self._get_failed_scenario_ids(
+                iteration=await self._get_current_iteration()
+            )
+        elif validation_scope == "all":
+            # 測試所有案例
+            test_scenario_ids = scenario_ids
+        else:  # failed_plus_sample
+            # 失敗案例 + 抽樣通過案例
+            current_iteration = await self._get_current_iteration()
+            failed_ids = await self._get_failed_scenario_ids(
+                iteration=current_iteration
+            )
+            passed_ids = [sid for sid in scenario_ids if sid not in failed_ids]
+
+            # 隨機抽樣通過案例
+            sample_size = int(len(passed_ids) * sample_pass_rate)
+            sampled_passed_ids = random.sample(passed_ids, min(sample_size, len(passed_ids)))
+
+            test_scenario_ids = failed_ids + sampled_passed_ids
+
+        # 執行驗證回測
+        await self._update_loop_status(LoopStatus.VALIDATING)
+
+        validation_result = await self.backtest_client.execute_backtest(
+            vendor_id=self.vendor_id,
+            scenario_ids=test_scenario_ids,
+            run_name=f"Validation_{self.loop_id}_Iter{await self._get_current_iteration()}"
+        )
+
+        # 檢測 regression（如果測試了通過案例）
+        regression_detected = False
+        regression_count = 0
+        if validation_scope in ["all", "failed_plus_sample"]:
+            regression_count = await self._detect_regression(
+                validation_result,
+                scenario_ids
+            )
+            regression_detected = regression_count > 0
+
+        # 獲取上次通過率
+        current_iteration = await self._get_current_iteration()
+        last_pass_rate = await self._get_last_pass_rate(current_iteration)
+
+        # 判斷驗證是否通過
+        improvement = validation_result["pass_rate"] - last_pass_rate
+        validation_passed = (
+            (improvement >= 0.05 or validation_result["pass_rate"] >= 0.7)
+            and not regression_detected
+        )
+
+        # 更新知識狀態（如果驗證未通過）
+        if not validation_passed:
+            await self._mark_knowledge_need_improvement()
+
+        # 記錄驗證事件
+        await self._log_event(
+            event_type="validation_completed",
+            event_data={
+                "validation_scope": validation_scope,
+                "test_count": len(test_scenario_ids),
+                "pass_rate": validation_result["pass_rate"],
+                "last_pass_rate": last_pass_rate,
+                "improvement": improvement,
+                "regression_detected": regression_detected,
+                "regression_count": regression_count,
+                "validation_passed": validation_passed
+            }
+        )
+
+        # 更新狀態回 RUNNING
+        await self._update_loop_status(LoopStatus.RUNNING)
+
+        return {
+            "validation_result": validation_result,
+            "validation_passed": validation_passed,
+            "improvement": improvement,
+            "regression_detected": regression_detected,
+            "regression_count": regression_count,
+            "next_action": "continue" if validation_passed else "adjust_knowledge"
+        }
+
+    async def _get_scenario_ids(self) -> List[int]:
+        """
+        獲取迴圈的固定測試集 ID 列表
+
+        Returns:
+            測試情境 ID 列表
+        """
+        conn = self.db_pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                query = """
+                    SELECT scenario_ids
+                    FROM knowledge_completion_loops
+                    WHERE id = %s
+                """
+                cursor.execute(query, (self.loop_id,))
+                result = cursor.fetchone()
+                return result["scenario_ids"] if result and result["scenario_ids"] else []
+        finally:
+            self.db_pool.putconn(conn)
+
+    async def _get_last_pass_rate(self, current_iteration: int) -> float:
+        """
+        獲取上一次迭代的通過率
+
+        Args:
+            current_iteration: 當前迭代次數
+
+        Returns:
+            上次通過率，若無則返回 0.0
+        """
+        if current_iteration <= 1:
+            return 0.0
+
+        conn = self.db_pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                query = """
+                    SELECT event_data->>'pass_rate' as pass_rate
+                    FROM loop_execution_logs
+                    WHERE loop_id = %s
+                      AND event_type = 'iteration_completed'
+                      AND (event_data->>'iteration')::int = %s
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                """
+                cursor.execute(query, (self.loop_id, current_iteration - 1))
+                result = cursor.fetchone()
+                return float(result["pass_rate"]) if result and result["pass_rate"] else 0.0
+        finally:
+            self.db_pool.putconn(conn)
+
+    async def _detect_regression(
+        self,
+        validation_result: Dict,
+        original_scenario_ids: List[int]
+    ) -> int:
+        """
+        檢測 regression（原本通過現在失敗的案例）
+
+        Args:
+            validation_result: 驗證回測結果
+            original_scenario_ids: 原始測試集 ID
+
+        Returns:
+            regression 案例數量
+        """
+        # 查詢原本通過的案例
+        conn = self.db_pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # 獲取當前迭代
+                current_iteration = await self._get_current_iteration()
+
+                # 查詢上一次迭代通過的案例
+                query = """
+                    SELECT DISTINCT scenario_id
+                    FROM backtest_results
+                    WHERE loop_id = %s
+                      AND iteration = %s
+                      AND passed = true
+                      AND scenario_id = ANY(%s)
+                """
+                cursor.execute(query, (self.loop_id, current_iteration - 1, original_scenario_ids))
+                previously_passed = cursor.fetchall()
+                previously_passed_ids = [row["scenario_id"] for row in previously_passed]
+
+                # 檢查驗證結果中有哪些原本通過的案例現在失敗了
+                regression_count = 0
+                validation_results = validation_result.get("results", [])
+
+                for result in validation_results:
+                    scenario_id = result.get("scenario_id")
+                    passed = result.get("passed", False)
+
+                    if scenario_id in previously_passed_ids and not passed:
+                        regression_count += 1
+
+                # 記錄 regression 事件
+                if regression_count > 0:
+                    await self._log_event(
+                        event_type="regression_detected",
+                        event_data={
+                            "regression_count": regression_count,
+                            "validation_scope": "validate_loop"
+                        }
+                    )
+
+                return regression_count
+        finally:
+            self.db_pool.putconn(conn)
+
+    async def _mark_knowledge_need_improvement(self):
+        """
+        標記本次迭代生成的知識為需要改善
+
+        更新 knowledge_base 和 vendor_sop_items 的 review_status='need_improvement'
+        """
+        current_iteration = await self._get_current_iteration()
+
+        conn = self.db_pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                # 更新一般知識
+                update_knowledge = """
+                    UPDATE knowledge_base
+                    SET review_status = 'need_improvement',
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE source_loop_id = %s
+                      AND source_loop_iteration = %s
+                      AND review_status = 'approved'
+                """
+                cursor.execute(update_knowledge, (self.loop_id, current_iteration))
+                knowledge_count = cursor.rowcount
+
+                # 更新 SOP 知識
+                update_sop = """
+                    UPDATE vendor_sop_items
+                    SET review_status = 'need_improvement',
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE source_loop_id = %s
+                      AND source_loop_iteration = %s
+                      AND review_status = 'approved'
+                """
+                cursor.execute(update_sop, (self.loop_id, current_iteration))
+                sop_count = cursor.rowcount
+
+                conn.commit()
+
+                # 記錄標記事件
+                await self._log_event(
+                    event_type="knowledge_marked_need_improvement",
+                    event_data={
+                        "knowledge_count": knowledge_count,
+                        "sop_count": sop_count,
+                        "iteration": current_iteration
+                    }
+                )
+        finally:
+            self.db_pool.putconn(conn)
 
     # ============================================
     # 私有方法：資料庫操作
@@ -430,6 +794,79 @@ class LoopCoordinator:
                 message=f"查詢當前迭代次數失敗: {str(e)}",
                 category=ErrorCategory.DATABASE_ERROR,
                 details={"loop_id": self.loop_id}
+            )
+        finally:
+            self.db_pool.putconn(conn)
+
+    async def _update_iteration_count(self, iteration: int) -> None:
+        """
+        更新迭代次數（不更新通過率）
+
+        在迭代開始時立即調用，確保即使後續步驟失敗，
+        current_iteration 也能與 backtest_runs 的記錄保持一致
+
+        Args:
+            iteration: 新的迭代次數
+        """
+        if self.loop_id is None:
+            return
+
+        conn = self.db_pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE knowledge_completion_loops
+                    SET
+                        current_iteration = %s,
+                        updated_at = NOW()
+                    WHERE id = %s
+                    """,
+                    (iteration, self.loop_id)
+                )
+                conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise KnowledgeCompletionError(
+                message=f"更新迭代次數失敗: {str(e)}",
+                category=ErrorCategory.DATABASE_ERROR,
+                details={"loop_id": self.loop_id, "iteration": iteration}
+            )
+        finally:
+            self.db_pool.putconn(conn)
+
+    async def _update_pass_rate(self, pass_rate: float) -> None:
+        """
+        更新當前迭代的通過率（不更新迭代次數）
+
+        在回測完成後調用，記錄本次迭代的通過率
+
+        Args:
+            pass_rate: 通過率 (0.0-1.0)
+        """
+        if self.loop_id is None:
+            return
+
+        conn = self.db_pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE knowledge_completion_loops
+                    SET
+                        current_pass_rate = %s,
+                        updated_at = NOW()
+                    WHERE id = %s
+                    """,
+                    (pass_rate, self.loop_id)
+                )
+                conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise KnowledgeCompletionError(
+                message=f"更新通過率失敗: {str(e)}",
+                category=ErrorCategory.DATABASE_ERROR,
+                details={"loop_id": self.loop_id, "pass_rate": pass_rate}
             )
         finally:
             self.db_pool.putconn(conn)
@@ -809,6 +1246,13 @@ class LoopCoordinator:
             next_iteration = current_iteration + 1
 
             # ============================================
+            # 重要：立即更新迭代次數
+            # ============================================
+            # 在執行任何可能失敗的操作前，先更新 current_iteration
+            # 這樣即使後續步驟失敗，current_iteration 也與 backtest_runs 記錄一致
+            await self._update_iteration_count(next_iteration)
+
+            # ============================================
             # 階段 1：執行回測
             # ============================================
             await self._log_event(
@@ -843,8 +1287,8 @@ class LoopCoordinator:
                     "no_failures_detected",
                     {"iteration": next_iteration, "pass_rate": backtest_result["pass_rate"]}
                 )
-                # 更新迭代次數並返回 RUNNING
-                await self._increment_iteration(backtest_result["pass_rate"])
+                # 更新通過率並返回 RUNNING（iteration 已經在前面更新）
+                await self._update_pass_rate(backtest_result["pass_rate"])
                 await self._update_loop_status(LoopStatus.RUNNING)
                 return {
                     "iteration": next_iteration,
@@ -922,8 +1366,8 @@ class LoopCoordinator:
                         "reason": "所有失敗案例都是 API 查詢類型，不需要生成靜態知識"
                     }
                 )
-                # 更新迭代次數並返回 RUNNING
-                await self._increment_iteration(backtest_result["pass_rate"])
+                # 更新通過率並返回 RUNNING（iteration 已經在前面更新）
+                await self._update_pass_rate(backtest_result["pass_rate"])
                 await self._update_loop_status(LoopStatus.RUNNING)
                 return {
                     "iteration": next_iteration,
@@ -1014,7 +1458,8 @@ class LoopCoordinator:
             # 階段 4：進入人工審核狀態
             # ============================================
             await self._update_loop_status(LoopStatus.REVIEWING)
-            await self._increment_iteration(backtest_result["pass_rate"])
+            # 更新通過率（iteration 已經在前面更新）
+            await self._update_pass_rate(backtest_result["pass_rate"])
 
             await self._log_event(
                 "waiting_for_review",
