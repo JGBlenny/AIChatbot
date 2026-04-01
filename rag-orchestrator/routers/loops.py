@@ -592,7 +592,7 @@ async def get_iteration_backtest_results(
 
             run_id = run_record["id"]
 
-            # 查詢回測結果
+            # 查詢回測結果（包含 evaluation JSON 欄位以提取 confidence_score）
             results = await conn.fetch("""
                 SELECT
                     br.id,
@@ -606,7 +606,9 @@ async def get_iteration_backtest_results(
                     br.completeness,
                     br.accuracy,
                     br.source_count,
-                    br.tested_at
+                    br.tested_at,
+                    br.evaluation,
+                    br.actual_intent
                 FROM backtest_results br
                 WHERE br.run_id = $1
                 ORDER BY br.id
@@ -620,15 +622,37 @@ async def get_iteration_backtest_results(
 
             result_list = []
             for r in results:
+                # 從 evaluation JSON 提取 confidence_score, confidence_level
+                evaluation = r["evaluation"] if isinstance(r["evaluation"], dict) else {}
+
+                # 優先使用 evaluation 的 confidence_score，否則 fallback 到 0（因為沒有 RAG 結果）
+                # 注意：r["confidence"] 是意圖分類信心度，不應該用於 RAG 信心度
+                confidence_score = evaluation.get("confidence_score", 0.0)
+
+                # 根據 source_count 判斷信心度等級（如果 evaluation 沒有提供）
+                if not evaluation.get("confidence_level"):
+                    if r["source_count"] == 0:
+                        confidence_level = "low"
+                    elif confidence_score >= 0.85:
+                        confidence_level = "high"
+                    elif confidence_score >= 0.70:
+                        confidence_level = "medium"
+                    else:
+                        confidence_level = "low"
+                else:
+                    confidence_level = evaluation.get("confidence_level")
+
                 result_list.append({
                     "id": r["id"],
                     "scenario_id": r["scenario_id"],
                     "test_question": r["test_question"] or "",
                     "system_answer": r["system_answer"] or "",
                     "expected_category": None,  # backtest_results 沒有這個欄位
-                    "actual_intent": None,  # 需要從 response_metadata 解析（暫時不實現）
+                    "actual_intent": r["actual_intent"],
                     "passed": r["passed"],
-                    "confidence": float(r["confidence"]) if r["confidence"] else 0.0,
+                    "confidence": float(r["confidence"]) if r["confidence"] else 0.0,  # 意圖分類信心度
+                    "confidence_score": confidence_score,  # RAG 檢索信心度（從 evaluation 提取）
+                    "confidence_level": confidence_level,  # RAG 檢索信心度等級
                     "overall_score": float(r["overall_score"]) if r["overall_score"] else 0.0,
                     "relevance": float(r["relevance"]) if r["relevance"] else None,
                     "completeness": float(r["completeness"]) if r["completeness"] else None,

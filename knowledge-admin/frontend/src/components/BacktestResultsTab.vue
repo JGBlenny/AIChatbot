@@ -585,8 +585,8 @@ export default {
           actual_intent: result.actual_intent,
           expected_intent: result.expected_category,
           actual_response: result.system_answer,
-          confidence_score: result.confidence,
-          confidence_level: this.getConfidenceLevelFromScore(result.confidence),
+          confidence_score: result.confidence_score,  // 使用 RAG 檢索信心度，而非意圖分類信心度
+          confidence_level: result.confidence_level,  // 使用 API 計算的信心度等級
           source_count: result.source_count,
           passed: result.passed,
           timestamp: result.tested_at,
