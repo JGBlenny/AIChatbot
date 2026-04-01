@@ -1227,11 +1227,13 @@ class LoopCoordinator:
             BacktestError: 回測執行失敗
             KnowledgeCompletionError: 其他執行錯誤
         """
-        # 驗證狀態：只有 RUNNING 狀態可以開始迭代
-        if self.current_status != LoopStatus.RUNNING:
+        # 驗證狀態：只有 RUNNING 或 REVIEWING 狀態可以開始迭代
+        # 允許從 REVIEWING 狀態執行，因為審核完成後需要執行驗證回測
+        if self.current_status not in [LoopStatus.RUNNING, LoopStatus.REVIEWING]:
             raise InvalidStateError(
                 current_state=self.current_status.value,
-                target_state="execute_iteration"
+                target_state="execute_iteration",
+                message="只能在 RUNNING 或 REVIEWING 狀態執行迭代"
             )
 
         if self.loop_id is None or self.config is None:

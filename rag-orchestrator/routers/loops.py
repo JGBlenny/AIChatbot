@@ -315,11 +315,12 @@ async def execute_iteration(
 
         load_result = await asyncio.to_thread(load_loop_sync)
 
-        # 2. 檢查狀態是否為 RUNNING
-        if load_result["status"] not in ["running", "pending"]:
+        # 2. 檢查狀態是否為 RUNNING、PENDING 或 REVIEWING
+        # 允許從 REVIEWING 狀態執行，因為審核完成後需要執行驗證回測
+        if load_result["status"] not in ["running", "pending", "reviewing"]:
             raise HTTPException(
                 status_code=409,
-                detail=f"迴圈狀態必須為 RUNNING 或 PENDING，當前為 {load_result['status']}"
+                detail=f"迴圈狀態必須為 RUNNING、PENDING 或 REVIEWING，當前為 {load_result['status']}"
             )
 
         # 3. 執行迭代
