@@ -412,14 +412,21 @@ export default {
           this.selectedRunId = null;
           this.results = [];
           this.statistics = null;
-          this.selectedIteration = null;
+
+          // 不要重置 selectedIteration，保留從 URL 讀取的值
+          // this.selectedIteration = null;
 
           // 載入新迴圈的數據
           await this.loadLoopData();
           await this.loadBacktestRuns();
 
-          // 自動選擇第一個 run
-          if (this.backtestRuns.length > 0) {
+          // 如果有從 URL 載入的 iteration，自動選中對應的 run
+          if (this.selectedIteration !== null && this.filteredBacktestRuns.length === 1) {
+            this.selectedRunId = this.filteredBacktestRuns[0].id;
+            this.loadResults();
+          }
+          // 否則自動選擇第一個 run
+          else if (this.selectedIteration === null && this.backtestRuns.length > 0) {
             this.selectedRunId = this.backtestRuns[0].id;
             this.loadResults();
           }
@@ -429,6 +436,12 @@ export default {
   },
 
   mounted() {
+    // 從 URL 參數讀取 iteration
+    const iterationParam = this.$route.query.iteration;
+    if (iterationParam) {
+      this.selectedIteration = parseInt(iterationParam, 10);
+    }
+
     // watch 會自動處理 loopId 的初始值和變化
     // 不需要在這裡重複載入
   },
@@ -472,6 +485,15 @@ export default {
       this.selectedRunId = null;
       this.results = [];
       this.statistics = null;
+
+      // 更新 URL 參數，保留選中的 iteration
+      const query = { ...this.$route.query };
+      if (iteration !== null) {
+        query.iteration = iteration;
+      } else {
+        delete query.iteration;
+      }
+      this.$router.replace({ query });
 
       // 如果過濾後只有一個 run，自動選中
       if (this.filteredBacktestRuns.length === 1) {

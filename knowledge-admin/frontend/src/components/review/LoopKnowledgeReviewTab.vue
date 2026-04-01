@@ -574,7 +574,8 @@ export default {
     async loadVendors() {
       try {
         const response = await axios.get(API_ENDPOINTS.ragVendors);
-        this.vendors = response.data.vendors || [];
+        // API 直接返回陣列，不是 { vendors: [...] } 格式
+        this.vendors = Array.isArray(response.data) ? response.data : (response.data.vendors || []);
       } catch (error) {
         console.error('載入業者列表失敗:', error);
       }
