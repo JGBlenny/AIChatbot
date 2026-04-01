@@ -624,13 +624,20 @@ async def get_iteration_backtest_results(
             for r in results:
                 # 從 evaluation JSON 提取 confidence_score, confidence_level
                 # asyncpg 將 jsonb 解析為字串，需要手動 parse
-                import json
+                # 注意：某些情況下數據可能被雙重 JSON 編碼，需要處理
                 evaluation = {}
 
                 if r["evaluation"] and isinstance(r["evaluation"], str):
                     try:
-                        evaluation = json.loads(r["evaluation"])
-                    except:
+                        parsed = json.loads(r["evaluation"])
+
+                        # 如果第一次解碼後還是字串，說明被雙重編碼了，需要再解碼一次
+                        if isinstance(parsed, str):
+                            parsed = json.loads(parsed)
+
+                        evaluation = parsed
+                    except Exception as e:
+                        print(f"⚠️ 解析 evaluation JSON 失敗 (ID={r['id']}): {e}")
                         evaluation = {}
                 elif r["evaluation"] and isinstance(r["evaluation"], dict):
                     evaluation = r["evaluation"]
@@ -640,7 +647,10 @@ async def get_iteration_backtest_results(
                 confidence_score = float(evaluation.get("confidence_score", 0.0)) if isinstance(evaluation, dict) else 0.0
 
                 # 根據 source_count 判斷信心度等級（如果 evaluation 沒有提供）
-                if not evaluation.get("confidence_level"):
+                if isinstance(evaluation, dict) and evaluation.get("confidence_level"):
+                    confidence_level = evaluation.get("confidence_level")
+                else:
+                    # Fallback：根據 source_count 和 confidence_score 判斷
                     if r["source_count"] == 0:
                         confidence_level = "low"
                     elif confidence_score >= 0.85:
@@ -649,8 +659,6 @@ async def get_iteration_backtest_results(
                         confidence_level = "medium"
                     else:
                         confidence_level = "low"
-                else:
-                    confidence_level = evaluation.get("confidence_level")
 
                 result_list.append({
                     "id": r["id"],
