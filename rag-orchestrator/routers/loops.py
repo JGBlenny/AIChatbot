@@ -623,11 +623,21 @@ async def get_iteration_backtest_results(
             result_list = []
             for r in results:
                 # 從 evaluation JSON 提取 confidence_score, confidence_level
-                evaluation = r["evaluation"] if isinstance(r["evaluation"], dict) else {}
+                # asyncpg 將 jsonb 解析為字串，需要手動 parse
+                import json
+                evaluation = {}
+
+                if r["evaluation"] and isinstance(r["evaluation"], str):
+                    try:
+                        evaluation = json.loads(r["evaluation"])
+                    except:
+                        evaluation = {}
+                elif r["evaluation"] and isinstance(r["evaluation"], dict):
+                    evaluation = r["evaluation"]
 
                 # 優先使用 evaluation 的 confidence_score，否則 fallback 到 0（因為沒有 RAG 結果）
                 # 注意：r["confidence"] 是意圖分類信心度，不應該用於 RAG 信心度
-                confidence_score = evaluation.get("confidence_score", 0.0)
+                confidence_score = float(evaluation.get("confidence_score", 0.0)) if isinstance(evaluation, dict) else 0.0
 
                 # 根據 source_count 判斷信心度等級（如果 evaluation 沒有提供）
                 if not evaluation.get("confidence_level"):
