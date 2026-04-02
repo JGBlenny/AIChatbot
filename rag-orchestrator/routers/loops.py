@@ -592,7 +592,7 @@ async def get_iteration_backtest_results(
 
             run_id = run_record["id"]
 
-            # 查詢回測結果（包含 evaluation JSON 欄位以提取 confidence_score）
+            # 查詢回測結果（包含 evaluation 和 response_metadata）
             results = await conn.fetch("""
                 SELECT
                     br.id,
@@ -608,7 +608,8 @@ async def get_iteration_backtest_results(
                     br.source_count,
                     br.tested_at,
                     br.evaluation,
-                    br.actual_intent
+                    br.actual_intent,
+                    br.response_metadata
                 FROM backtest_results br
                 WHERE br.run_id = $1
                 ORDER BY br.id
@@ -660,6 +661,20 @@ async def get_iteration_backtest_results(
                     else:
                         confidence_level = "low"
 
+                # 解析 response_metadata（處理流程詳情）
+                response_metadata = {}
+                if r["response_metadata"]:
+                    if isinstance(r["response_metadata"], str):
+                        try:
+                            parsed = json.loads(r["response_metadata"])
+                            if isinstance(parsed, str):
+                                parsed = json.loads(parsed)
+                            response_metadata = parsed
+                        except:
+                            response_metadata = {}
+                    elif isinstance(r["response_metadata"], dict):
+                        response_metadata = r["response_metadata"]
+
                 result_list.append({
                     "id": r["id"],
                     "scenario_id": r["scenario_id"],
@@ -676,7 +691,8 @@ async def get_iteration_backtest_results(
                     "completeness": float(r["completeness"]) if r["completeness"] else None,
                     "accuracy": float(r["accuracy"]) if r["accuracy"] else None,
                     "source_count": r["source_count"] or 0,
-                    "tested_at": r["tested_at"].isoformat() if r["tested_at"] else None
+                    "tested_at": r["tested_at"].isoformat() if r["tested_at"] else None,
+                    "debug_info": response_metadata if response_metadata else None  # 處理流程詳情
                 })
 
             return {

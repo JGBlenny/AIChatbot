@@ -324,6 +324,89 @@
               <span class="detail-value">{{ selectedResult.source_ids }}</span>
             </div>
           </div>
+
+          <!-- 處理流程詳情 -->
+          <div v-if="selectedResult.debug_info && Object.keys(selectedResult.debug_info).length > 0" class="detail-section debug-section">
+            <h4>🔍 處理流程詳情</h4>
+
+            <!-- 處理路徑 -->
+            <div v-if="selectedResult.debug_info.processing_path" class="debug-subsection">
+              <h5>🛤️ 處理路徑</h5>
+              <div class="detail-value">
+                <span class="path-badge">{{ selectedResult.debug_info.processing_path }}</span>
+              </div>
+            </div>
+
+            <!-- 意圖分析 -->
+            <div v-if="selectedResult.debug_info.intent_details" class="debug-subsection">
+              <h5>🎯 意圖分析</h5>
+              <div class="detail-row">
+                <span class="detail-label">主要意圖：</span>
+                <span class="detail-value">
+                  <strong>{{ selectedResult.debug_info.intent_details.primary_intent }}</strong>
+                  ({{ selectedResult.debug_info.intent_details.primary_confidence?.toFixed(2) }})
+                </span>
+              </div>
+            </div>
+
+            <!-- 候選 SOP -->
+            <div v-if="selectedResult.debug_info.sop_candidates && selectedResult.debug_info.sop_candidates.length > 0" class="debug-subsection">
+              <h5>📋 候選 SOP ({{ selectedResult.debug_info.sop_candidates.length }})</h5>
+              <div class="candidates-table-wrapper">
+                <table class="candidates-table">
+                  <thead>
+                    <tr>
+                      <th>選取</th>
+                      <th>ID</th>
+                      <th>項目名稱</th>
+                      <th>基礎相似度</th>
+                      <th>Rerank分數</th>
+                      <th>最終相似度</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="sop in selectedResult.debug_info.sop_candidates" :key="sop.id" :class="{ 'selected': sop.is_selected }">
+                      <td>{{ sop.is_selected ? '✅' : '' }}</td>
+                      <td>{{ sop.id }}</td>
+                      <td class="text-left">{{ sop.item_name }}</td>
+                      <td>{{ sop.base_similarity?.toFixed(3) }}</td>
+                      <td>{{ sop.rerank_score ? sop.rerank_score.toFixed(4) : '-' }}</td>
+                      <td>{{ sop.boosted_similarity?.toFixed(3) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 候選知識 -->
+            <div v-if="selectedResult.debug_info.knowledge_candidates && selectedResult.debug_info.knowledge_candidates.length > 0" class="debug-subsection">
+              <h5>📚 候選知識 ({{ selectedResult.debug_info.knowledge_candidates.length }})</h5>
+              <div class="candidates-table-wrapper">
+                <table class="candidates-table">
+                  <thead>
+                    <tr>
+                      <th>選取</th>
+                      <th>ID</th>
+                      <th>摘要</th>
+                      <th>基礎相似度</th>
+                      <th>Rerank分數</th>
+                      <th>最終相似度</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="kb in selectedResult.debug_info.knowledge_candidates" :key="kb.id" :class="{ 'selected': kb.is_selected }">
+                      <td>{{ kb.is_selected ? '✅' : '' }}</td>
+                      <td>{{ kb.id }}</td>
+                      <td class="text-left">{{ kb.question_summary }}</td>
+                      <td>{{ kb.base_similarity?.toFixed(3) }}</td>
+                      <td>{{ kb.rerank_score ? kb.rerank_score.toFixed(4) : '-' }}</td>
+                      <td>{{ kb.boosted_similarity?.toFixed(3) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button @click="optimizeKnowledge(selectedResult)" class="btn-primary">🔧 優化知識</button>
@@ -1522,5 +1605,79 @@ export default {
 
 .btn-secondary:hover {
   background: #545b62;
+}
+
+/* 處理流程詳情樣式 */
+.debug-section {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.debug-section h4 {
+  margin-top: 0;
+  color: #495057;
+}
+
+.debug-subsection {
+  margin-top: 15px;
+  padding: 10px;
+  background: white;
+  border-radius: 4px;
+}
+
+.debug-subsection h5 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.path-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #007bff;
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.candidates-table-wrapper {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.candidates-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.candidates-table th {
+  background: #e9ecef;
+  padding: 8px;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid #dee2e6;
+}
+
+.candidates-table td {
+  padding: 6px 8px;
+  text-align: center;
+  border: 1px solid #dee2e6;
+}
+
+.candidates-table td.text-left {
+  text-align: left;
+}
+
+.candidates-table tr.selected {
+  background: #d4edda;
+}
+
+.candidates-table tr:hover {
+  background: #f1f3f5;
 }
 </style>

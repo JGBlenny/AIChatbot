@@ -755,6 +755,9 @@ class AsyncBacktestFramework:
 
         knowledge_links = '\n'.join(knowledge_urls) if knowledge_urls else '無'
 
+        # 提取 debug_info（處理流程詳情）
+        debug_info = system_response.get('debug_info', {}) if system_response else {}
+
         # 構建結果
         result = {
             'test_id': index,
@@ -782,7 +785,9 @@ class AsyncBacktestFramework:
             'confidence_level': evaluation.get('confidence_level'),
             'max_similarity': evaluation.get('max_similarity'),
             'keyword_match_rate': evaluation.get('keyword_match_rate'),
-            'failure_reason': evaluation.get('failure_reason', '')
+            'failure_reason': evaluation.get('failure_reason', ''),
+            # 處理流程詳情（用於前端顯示 debug 資訊）
+            'response_metadata': debug_info if debug_info else {}
         }
 
         return result
