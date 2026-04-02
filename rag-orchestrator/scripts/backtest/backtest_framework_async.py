@@ -139,7 +139,8 @@ class AsyncBacktestFramework:
         payload = {
             "message": question,
             "vendor_id": self.vendor_id,
-            "mode": "tenant",
+            "target_user": "tenant",  # ✅ 修復：使用 target_user 而非 mode
+            "mode": "b2c",  # ✅ 修復：mode 應該是 b2c 或 b2b
             "include_sources": True,
             "skip_sop": False,  # 改為 False，讓回測能檢索 SOP
             "include_debug_info": True,  # 回測需要 similarity 數據

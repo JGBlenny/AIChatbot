@@ -31,6 +31,10 @@
           <span class="label">目標通過率：</span>
           <span class="value">{{ (loopInfo.target_pass_rate * 100).toFixed(0) }}%</span>
         </div>
+        <div class="loop-detail-item">
+          <span class="label">業者 ID：</span>
+          <span class="value">Vendor {{ loopInfo.vendor_id }}</span>
+        </div>
       </div>
     </div>
 
@@ -593,7 +597,8 @@ export default {
           loop_name: response.data.loop_name,
           current_iteration: response.data.current_iteration,
           total_scenarios: response.data.total_scenarios,
-          target_pass_rate: response.data.target_pass_rate
+          target_pass_rate: response.data.target_pass_rate,
+          vendor_id: response.data.vendor_id
         };
       } catch (error) {
         console.error('載入迴圈資訊失敗', error);
@@ -702,7 +707,9 @@ export default {
           intent_match: null, // API 目前沒有這個欄位
           quality_overall: result.overall_score,
           // 其他欄位
-          source_ids: null // API 目前沒有這個欄位
+          source_ids: null, // API 目前沒有這個欄位
+          // 處理流程詳情
+          debug_info: result.debug_info || null
         }));
 
       } catch (error) {

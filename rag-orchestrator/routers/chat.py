@@ -579,7 +579,7 @@ def _build_debug_info(
 
     # 構建 SOP 候選列表
     sop_candidates_list = None
-    if sop_candidates:
+    if sop_candidates is not None:  # ✅ 修復：檢查 is not None 而非 truthiness
         sop_candidates_list = []
         for candidate in sop_candidates:
             # 兼容兩種格式：資料庫格式(id, item_name) 和 Context 格式(sop_id, sop_name)
@@ -1534,7 +1534,8 @@ async def _handle_no_knowledge_found(
     intent_result: dict,
     resolver,
     cache_service,
-    vendor_info: dict
+    vendor_info: dict,
+    decision: dict = None  # 🆕 添加 decision 參數以獲取 SOP 候選資訊
 ):
     """
     處理找不到知識的情況：參數答案 > 兜底回應
@@ -1607,12 +1608,23 @@ async def _handle_no_knowledge_found(
     # 構建調試資訊（如果請求了）
     debug_info = None
     if request.include_debug_info:
+        # 🆕 從 decision 中提取 SOP 候選資訊
+        sop_candidates_list = []
+        comparison_metadata = None
+        if decision:
+            sop_result = decision.get('sop_result')
+            if sop_result and sop_result.get('all_sop_candidates'):
+                sop_candidates_list = sop_result['all_sop_candidates']
+            comparison_metadata = decision.get('comparison')
+
         debug_info = _build_debug_info(
             processing_path='no_knowledge_found',
             intent_result=intent_result,
             llm_strategy='fallback',  # 兜底回應
+            sop_candidates=sop_candidates_list,  # 🆕 傳遞 SOP 候選資訊
             vendor_params=params,
-            used_param_keys=used_param_keys  # ✅ 只顯示實際被注入的參數
+            used_param_keys=used_param_keys,  # ✅ 只顯示實際被注入的參數
+            comparison_metadata=comparison_metadata  # 🆕 傳遞比較元數據
         )
 
     return VendorChatResponse(
@@ -1731,7 +1743,8 @@ async def _build_knowledge_response(
     if not filtered_knowledge_list:
         print(f"⚠️  沒有符合條件的知識，嘗試參數答案或兜底回應...")
         return await _handle_no_knowledge_found(
-            request, req, intent_result, resolver, cache_service, vendor_info
+            request, req, intent_result, resolver, cache_service, vendor_info,
+            decision=decision  # 🆕 傳遞 decision 以包含 SOP 候選資訊
         )
 
     # ⭐ 步驟 3：處理過濾後的知識（可能是表單或一般知識）
@@ -1952,7 +1965,7 @@ async def _build_knowledge_response(
             })
 
         # 🆕 構建 SOP 候選資訊（如果有 decision）
-        sop_candidates_debug = None
+        sop_candidates_debug = []  # ✅ 初始化為空數組而非 None
         if decision and decision.get('sop_result'):
             sop_result = decision['sop_result']
             # ✅ 修復：使用正確的鍵名 'all_sop_candidates'
@@ -1961,20 +1974,24 @@ async def _build_knowledge_response(
             print(f"🔍 [Debug] all_sop_candidates length: {len(sop_candidates_list)}")
             if sop_candidates_list:
                 print(f"🔍 [Debug] Building sop_candidates_debug with {len(sop_candidates_list)} items")
-                sop_candidates_debug = []
                 for sop_item in sop_candidates_list:
                     sop_candidates_debug.append({
                         'id': sop_item.get('id'),
                         'item_name': sop_item.get('title', sop_item.get('item_name', '')),  # ✅ 使用 item_name 鍵
+                        'group_name': sop_item.get('group_name', ''),  # ✅ 添加 group_name
                         'title': sop_item.get('title', sop_item.get('item_name', '')),  # 保留 title 供前端使用
                         'content': sop_item.get('content', '')[:200],  # 限制內容長度
+                        'base_similarity': sop_item.get('similarity', 0.0),  # ✅ 添加 base_similarity
                         'similarity': sop_item.get('similarity', 0.0),
-                        'boosted_similarity': sop_item.get('similarity', 0.0),  # ✅ 添加 boosted_similarity
-                        'intent_ids': sop_item.get('intent_ids', [])
+                        'boosted_similarity': sop_item.get('boosted_similarity', sop_item.get('similarity', 0.0)),  # ✅ 優先使用 boosted_similarity
+                        'rerank_score': sop_item.get('rerank_score'),  # ✅ 添加 rerank_score
+                        'intent_boost': sop_item.get('intent_boost', 1.0),  # ✅ 添加 intent_boost
+                        'intent_ids': sop_item.get('intent_ids', []),
+                        'is_selected': sop_item.get('is_selected', False)  # ✅ 添加 is_selected
                     })
                 print(f"🔍 [Debug] sop_candidates_debug final length: {len(sop_candidates_debug)}")
             else:
-                print(f"⚠️  [Debug] sop_candidates_list is empty or None")
+                print(f"⚠️  [Debug] sop_candidates_list is empty (will return empty array)")
 
         # 構建合成資訊（使用過濾後的高質量列表）
         synthesis_info_dict = None
@@ -2790,7 +2807,8 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 # 無結果，進入 RAG fallback
                 response = await _handle_no_knowledge_found(
                     request, req, intent_result, resolver,
-                    cache_service, vendor_info
+                    cache_service, vendor_info,
+                    decision=decision  # 🆕 傳遞 decision 以包含 SOP 候選資訊
                 )
 
                 # 🆕 串流模式：將 JSON 響應轉換為串流
