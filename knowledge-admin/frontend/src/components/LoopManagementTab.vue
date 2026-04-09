@@ -575,8 +575,6 @@ export default {
   },
   mounted() {
     this.loadLoops();
-    // 停用自動輪詢，避免不必要的重新整理
-    // this.startPolling();
   },
   beforeUnmount() {
     this.stopPolling();
@@ -607,10 +605,13 @@ export default {
       await this.loadLoops();
     },
     startPolling() {
-      // 只有在有 RUNNING 狀態的迴圈時才輪詢
-      this.pollingTimer = setInterval(() => {
+      if (this.pollingTimer) return; // 避免重複啟動
+      this.pollingTimer = setInterval(async () => {
         if (this.hasRunningLoops) {
-          this.loadLoops();
+          await this.loadLoops();
+        } else {
+          // 沒有執行中的迴圈，自動停止輪詢
+          this.stopPolling();
         }
       }, this.pollingInterval);
     },
@@ -807,7 +808,7 @@ export default {
         const response = await axios.post('/rag-api/v1/loops/start', payload);
 
         // 成功提示
-        alert(`✅ 迴圈啟動成功！\n\n迴圈 ID: ${response.data.loop_id}\n迴圈名稱: ${response.data.loop_name}\n測試集大小: ${response.data.selected_scenarios.length} 題\n\n系統將開始執行第一次迭代。`);
+        alert(`✅ 迴圈啟動成功！\n\n迴圈 ID: ${response.data.loop_id}\n迴圈名稱: ${response.data.loop_name}\n測試集大小: ${response.data.scenario_ids.length} 題\n\n系統將開始執行第一次迭代。`);
 
         // 關閉 Modal 並刷新列表
         this.closeModal();
@@ -987,10 +988,11 @@ export default {
           { async_mode: true }
         );
 
-        alert(`✅ 迭代執行已啟動！\n\n執行任務 ID: ${response.data.execution_task_id || 'N/A'}\n迴圈狀態: ${response.data.status}\n\n系統將在背景執行，請稍後查看進度。`);
+        alert(`✅ 迭代執行已啟動！\n\n執行任務 ID: ${response.data.execution_task_id || 'N/A'}\n迴圈狀態: ${response.data.status}\n\n系統將在背景執行，狀態會自動更新。`);
 
-        // 立即刷新列表以顯示最新狀態
+        // 啟動臨時輪詢，追蹤背景執行進度
         await this.loadLoops();
+        this.startPolling();
 
       } catch (err) {
         console.error('執行迭代失敗：', err);

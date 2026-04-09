@@ -170,7 +170,9 @@ class KnowledgeGeneratorClient:
         generated_knowledge = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
+                import traceback
                 print(f"⚠️  知識生成失敗 (gap_id={gaps[i]['gap_id']}): {result}")
+                traceback.print_exception(type(result), result, result.__traceback__)
                 continue
             generated_knowledge.append(result)
 

@@ -158,10 +158,7 @@ class LoopCoordinator:
         # 更新 knowledge_generator 的 cost_tracker
         self.knowledge_generator.cost_tracker = self.cost_tracker
 
-        # 狀態轉換：PENDING → RUNNING
-        await self._update_loop_status(LoopStatus.RUNNING)
-
-        # 記錄事件
+        # 記錄事件（保持 PENDING 狀態，等使用者手動執行迭代才變 RUNNING）
         await self._log_event(
             event_type="loop_started",
             event_data={
@@ -175,7 +172,7 @@ class LoopCoordinator:
             "loop_id": self.loop_id,
             "loop_name": self.loop_name,
             "vendor_id": self.vendor_id,
-            "status": LoopStatus.RUNNING.value,
+            "status": LoopStatus.PENDING.value,
             "initial_statistics": {
                 "total_scenarios": total_scenarios,
                 "estimated_iterations": estimated_iterations,
@@ -1227,14 +1224,17 @@ class LoopCoordinator:
             BacktestError: 回測執行失敗
             KnowledgeCompletionError: 其他執行錯誤
         """
-        # 驗證狀態：只有 RUNNING 或 REVIEWING 狀態可以開始迭代
-        # 允許從 REVIEWING 狀態執行，因為審核完成後需要執行驗證回測
-        if self.current_status not in [LoopStatus.RUNNING, LoopStatus.REVIEWING]:
+        # 驗證狀態：PENDING、RUNNING 或 REVIEWING 狀態可以開始迭代
+        if self.current_status not in [LoopStatus.PENDING, LoopStatus.RUNNING, LoopStatus.REVIEWING]:
             raise InvalidStateError(
                 current_state=self.current_status.value,
                 target_state="execute_iteration",
-                message="只能在 RUNNING 或 REVIEWING 狀態執行迭代"
+                message="只能在 PENDING、RUNNING 或 REVIEWING 狀態執行迭代"
             )
+
+        # PENDING → RUNNING 狀態轉換
+        if self.current_status == LoopStatus.PENDING:
+            await self._update_loop_status(LoopStatus.RUNNING)
 
         if self.loop_id is None or self.config is None:
             raise InvalidStateError(

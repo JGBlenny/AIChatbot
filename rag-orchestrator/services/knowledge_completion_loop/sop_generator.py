@@ -755,14 +755,14 @@ class SOPGenerator:
         total_generated = len(generated_items)
         detected_duplicates = sum(
             1 for item in generated_items
-            if item.get('similar_knowledge', {}).get('detected', False)
+            if (item.get('similar_knowledge') or {}).get('detected', False)
         )
 
         # 收集相似度分布
         similarity_scores = []
         for item in generated_items:
             similar_knowledge = item.get('similar_knowledge')
-            if similar_knowledge and similar_knowledge.get('detected'):
+            if similar_knowledge and isinstance(similar_knowledge, dict) and similar_knowledge.get('detected'):
                 for similar_item in similar_knowledge.get('items', []):
                     similarity_scores.append(similar_item.get('similarity_score', 0))
 
@@ -1149,7 +1149,9 @@ class SOPGenerator:
             print(f"   ❌ JSON 解析失敗: {e}")
             return None
         except Exception as e:
+            import traceback
             print(f"   ❌ 生成失敗: {e}")
+            traceback.print_exc()
             return None
 
     async def _persist_sop(

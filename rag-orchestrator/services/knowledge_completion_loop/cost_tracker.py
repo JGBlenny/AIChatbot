@@ -141,14 +141,15 @@ class OpenAICostTracker:
             await self._save_to_database(usage)
 
         # 檢查預算限制（在持久化之後）
-        if self.budget_limit_usd and self.total_cost_usd > self.budget_limit_usd:
+        budget_limit = float(self.budget_limit_usd) if self.budget_limit_usd else None
+        if budget_limit and self.total_cost_usd > budget_limit:
             raise BudgetExceededError(
-                f"迴圈 {self.loop_id} 已超過預算限制：${self.total_cost_usd:.4f} > ${self.budget_limit_usd:.2f}"
+                f"迴圈 {self.loop_id} 已超過預算限制：${self.total_cost_usd:.4f} > ${budget_limit:.2f}"
             )
 
         # 預算警告（達到 80%）
-        if self.budget_limit_usd and not self.budget_warning_sent:
-            usage_percentage = self.total_cost_usd / self.budget_limit_usd
+        if budget_limit and not self.budget_warning_sent:
+            usage_percentage = self.total_cost_usd / budget_limit
             if usage_percentage >= 0.8:
                 self._send_budget_warning(usage_percentage)
                 self.budget_warning_sent = True
