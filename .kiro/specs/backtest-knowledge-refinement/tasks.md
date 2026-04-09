@@ -2730,6 +2730,66 @@ loop_id：____________________
 
 ---
 
+## 任務 13：驗收後優化與品質改善（2026-04-09 實作）
+
+**目標**：根據第一輪回測驗收結果，修正系統邏輯問題與生成品質問題。
+
+**已完成的修改紀錄**（2026-04-09）：
+- 移除 `max_iterations` 限制（`models.py`、`coordinator.py`、`routers/loops.py`、前端）
+- 新增回測覆蓋率統計 API 與前端卡片（`routers/loops.py`、`LoopManagementTab.vue`）
+- 自動排除歷史已測題目、移除 `parent_loop_id`（`scenario_selector.py`、`routers/loops.py`、`coordinator.py`）
+- 迭代歷史數據改從 `backtest_results` 即時計算（`routers/loops.py`）
+- 迴圈列表點擊切換當前迴圈（`LoopManagementTab.vue`）
+- 清理 36 筆不相關測試題目、批量大小提高到 500
+- 資料清理（清空回測資料、刪除 136 筆不合格 SOP、38 筆不合格知識）
+
+---
+
+### 13.1 盤查現有表單與 API 規格 ⏳
+- [ ] 盤查 `vendor_sop_items` 中 `next_action = form_fill` 使用的表單 ID 與對應表單結構
+- [ ] 盤查 `next_action = api_call` 使用的 API 端點與回傳格式
+- [ ] 整理表單清單（form_id → 用途、欄位）提供給 SOP prompt 參考
+- [ ] 整理 API 清單（端點 → 用途、參數）提供給 Knowledge prompt 參考
+- [ ] 修改 SOP/Knowledge prompt，讓生成時能正確指定 `next_form_id` 和 `next_action`
+- [ ] 驗證 form_fill 類型的 SOP 生成是否正確引導填表
+- [ ] 驗證 api_call 類型的知識回答是否正確描述查詢行為
+
+### 13.2 分類器 (gap_classifier) 優化 ✅
+- [x] 新增 SOP vs Knowledge 判斷口訣：問「怎麼做」→ SOP，問「是什麼/為什麼」→ Knowledge
+- [x] 新增不該歸類為 SOP 的範例：「為什麼要收管理費」「管理費包含哪些」「租金分配方式是什麼」
+- **修改檔案**：`gap_classifier.py`
+
+### 13.3 SOP 生成 Prompt 重寫 ✅
+- [x] 角色改為「營運主管建立業務流程知識庫」
+- [x] 禁止編造電話/Email/網址/不確定的數字
+- [x] 禁止「本SOP旨在」「標準作業流程」「在包租代管的過程中」等開場白和術語
+- [x] item_name 限 15 字，禁止冗詞（流程說明、查詢流程、政策說明）
+- [x] 加好壞範例對比
+- **修改檔案**：`sop_generator.py`
+
+### 13.4 Knowledge 生成 Prompt 重寫 ✅
+- [x] 角色改為「資深客服回答客人」
+- [x] 禁止「包租代管公司通常...」泛泛而談
+- [x] 禁止編造任何聯絡資訊和具體數字
+- [x] 新增 `topic` 欄位：精簡主題標題（2-6字），取代原始問題作為 `question_summary`
+- [x] 新增 `keywords` 規則：包含問法變體，原始問題自動加入 keywords
+- [x] 不確定時設 `needs_verification = true`
+- **修改檔案**：`knowledge_generator.py`
+
+### 13.5 SOP/Knowledge 去重機制強化 ✅
+- [x] 向量相似度檢測閾值從 0.85 降到 0.70（搜尋範圍更廣）
+- [x] 向量相似度 ≥ 0.75 時直接跳過不生成（之前只記錄不阻止）
+- [x] SOP 和 Knowledge 生成器都加了去重攔截
+- **修改檔案**：`sop_generator.py`、`knowledge_generator.py`
+
+### 13.6 驗證 ⏳
+- [ ] 跑新一輪回測驗證 prompt 改善效果
+- [ ] 驗證 topic 精簡標題是否正確生成
+- [ ] 驗證向量去重是否有效攔截重複 SOP
+- [ ] 觀察分類器是否正確區分 SOP vs Knowledge
+
+---
+
 ## 實作順序建議
 
 **階段 0（清理 - 必須優先）**：

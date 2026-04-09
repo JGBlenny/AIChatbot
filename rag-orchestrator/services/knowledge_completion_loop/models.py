@@ -32,10 +32,12 @@ class LoopStatus(str, Enum):
 
 class LoopConfig(BaseModel):
     """迴圈配置"""
-    batch_size: int = Field(50, ge=1, le=100, description="每批回測題數")
-    max_iterations: int = Field(20, ge=1, le=50, description="最大迭代次數")
+    batch_size: int = Field(50, ge=1, le=500, description="每批回測題數")
     target_pass_rate: float = Field(0.8, ge=0.0, le=1.0, description="目標通過率")
     action_type_mode: str = Field("ai_assisted", description="回應類型判斷模式")
+    scenario_ids: List[int] = Field(default_factory=list, description="固定測試集 ID")
+    selection_strategy: str = Field("stratified_random", description="選取策略")
+    difficulty_distribution: Dict = Field(default_factory=dict, description="難度分布")
     filters: Dict = Field(default_factory=dict, description="篩選條件")
     backtest_config: Dict = Field(default_factory=dict, description="回測參數配置")
 

@@ -89,14 +89,12 @@ async def main():
     config = LoopConfig(
         batch_size=50,  # 第一輪：50 題
         target_pass_rate=0.85,  # 目標通過率：85%
-        max_iterations=10,  # 最多 10 次迭代
         action_type_mode="ai_assisted",  # AI 輔助判斷回應類型
     )
 
     print("\n⚙️  迴圈配置:")
     print(f"   批次大小: {config.batch_size} 題")
     print(f"   目標通過率: {config.target_pass_rate * 100}%")
-    print(f"   最大迭代次數: {config.max_iterations}")
     print(f"   回應類型判斷: {config.action_type_mode}")
     print()
 

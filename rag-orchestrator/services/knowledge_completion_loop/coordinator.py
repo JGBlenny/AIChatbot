@@ -664,9 +664,12 @@ class LoopCoordinator:
                         total_scenarios,
                         current_iteration,
                         budget_limit_usd,
+                        scenario_ids,
+                        selection_strategy,
+                        difficulty_distribution,
                         created_at,
                         updated_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
                     RETURNING id
                     """,
                     (
@@ -677,7 +680,10 @@ class LoopCoordinator:
                         config.target_pass_rate,
                         total_scenarios,
                         0,
-                        config.dict().get("budget_limit_usd", 100.0)
+                        config.dict().get("budget_limit_usd", 100.0),
+                        config.scenario_ids if config.scenario_ids else None,
+                        config.selection_strategy,
+                        psycopg2.extras.Json(config.difficulty_distribution) if config.difficulty_distribution else None
                     )
                 )
                 result = cur.fetchone()
@@ -1995,9 +2001,8 @@ class LoopCoordinator:
 
         終止條件：
         1. 達到目標通過率（>= target_pass_rate）
-        2. 達到最大迭代次數（>= max_iterations）
-        3. 連續 2 輪通過率提升 < 2%（無改善）
-        4. 執行時間超過 24 小時
+        2. 連續 2 輪通過率提升 < 2%（無改善）
+        3. 執行時間超過 24 小時
         """
         if self.loop_id is None or self.config is None:
             return False, ""
@@ -2034,13 +2039,7 @@ class LoopCoordinator:
                     return True, f"達到目標通過率 {latest_pass_rate:.1%} (目標: {self.config.target_pass_rate:.1%})"
 
                 # ============================================
-                # 條件 2：達到最大迭代次數
-                # ============================================
-                if current_iteration >= self.config.max_iterations:
-                    return True, f"超過最大迭代次數 {current_iteration}/{self.config.max_iterations}"
-
-                # ============================================
-                # 條件 3：連續 2 輪通過率提升 < 2%
+                # 條件 2：連續 2 輪通過率提升 < 2%
                 # ============================================
                 if current_iteration >= 2:
                     # 查詢最近 2 輪的通過率

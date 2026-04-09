@@ -28,67 +28,60 @@ class KnowledgeGeneratorClient:
     """
 
     # OpenAI 知識生成 Prompt 模板
-    KNOWLEDGE_GENERATION_PROMPT = """你是一個專業的知識庫內容撰寫專家，專門為智能客服系統撰寫準確、清晰的知識問答。
+    KNOWLEDGE_GENERATION_PROMPT = """你是包租代管公司的資深客服，正在回答客人的問題。
 
-**任務**：根據以下資訊，為這個問題生成一個完整、準確的答案。
-
----
-
-**問題**：{question}
+**客人問**：{question}
 
 **失敗原因**：{failure_reason}
-- no_match: 知識庫中沒有相關知識
-- low_confidence: 知識庫有部分匹配但信心度不足
-- semantic_mismatch: 語義不符合
-
 **優先級**：{priority}
-- p0: 高優先級（高頻問題且無匹配知識）
-- p1: 中優先級（信心度不足但有部分匹配）
-- p2: 低優先級（邊緣案例或系統錯誤）
-
-**建議回應類型**：{suggested_action_type}
-- direct_answer: 純知識問答
-- form_fill: 需要填寫表單
-- api_call: 需要調用 API 查詢即時資料
-- form_then_api: 先填表單再調用 API
-
+**回應類型**：{suggested_action_type}
 **意圖**：{intent_name}
-
 **業者類型**：{vendor_type}
-- 包租/代管公司
-- 提供租賃管理、維修服務、帳務管理等
-
----
 
 **現有相似知識（參考用）**：
 {existing_knowledge}
 
 ---
 
-**撰寫要求**：
-1. **準確性**：答案必須準確，不能胡亂編造
-2. **完整性**：涵蓋問題的所有要點
-3. **清晰性**：使用簡潔易懂的語言
-4. **繁體中文**：使用台灣常用的繁體中文表達
-5. **專業性**：符合包租代管行業的專業用語
-6. **操作性**：如涉及流程，清楚說明步驟
+**回答規則**：
 
-**特殊說明**：
-- 如果是 form_fill 類型，答案中應引導用戶填寫表單
-- 如果是 api_call 類型，答案中應說明會查詢即時資料
-- 如果資訊不足或不確定，說明「建議聯繫客服確認」
+1. **你是客服在跟客人對話**，語氣自然親切
+2. **第一句直接回答**，不要鋪陳或開場白
+3. **只寫你確定的事實**，不確定的就說「請聯繫您的專屬管家確認」
+4. 如果是 api_call 類型，告知客人「我幫您查一下」
+5. 繁體中文，100-300 字
+
+**絕對禁止**：
+- ❌ 編造電話號碼、Email、網址（如 0800-XXX-XXX、service@example.com）
+- ❌ 編造具體數字（天數、金額、百分比），不確定就不要寫
+- ❌ 使用「在包租代管的過程中」「至關重要」「以下是關於...的說明」等廢話
+- ❌ 回答「包租代管公司通常...」這種泛泛而談，要具體回答客人的問題
+- ❌ 使用「SOP」「標準作業流程」等術語
+
+**好的回答**：「押金會在退租點交完成後 30 天內退還到您的帳戶，如有扣款會提前告知明細。」
+**不好的回答**：「在包租代管公司中，押金的退還是一個重要環節。通常包租代管公司會根據合約規定處理押金退還事宜。」
 
 ---
 
 請以 JSON 格式回應：
 {{
-  "answer": "完整的答案內容（繁體中文，100-300 字）",
-  "keywords": ["關鍵字1", "關鍵字2", "關鍵字3"],
-  "confidence_explanation": "為什麼認為這個答案是準確的（50字內）",
+  "topic": "精簡主題標題（2-6字，例如：繳費紀錄、退租流程、押金退還、租金補助）",
+  "answer": "客服回答內容",
+  "keywords": ["搜尋關鍵字1", "關鍵字2", "關鍵字3", "問法變體1", "問法變體2"],
+  "confidence_explanation": "答案依據（50字內）",
   "needs_verification": false
 }}
 
-只輸出 JSON，不要其他說明。
+**topic 規則**：提取問題的核心主題，不是問句。
+- 「租客如何看自己的繳費紀錄？」→ "繳費紀錄"
+- 「請問客服電話是多少？」→ "客服聯繫方式"
+- 「逾期租金會通知嗎？」→ "逾期租金通知"
+- 「我想找房」→ "找房服務"
+
+**keywords 規則**：包含問題的各種問法變體，讓搜尋能命中。
+- topic "繳費紀錄" → keywords: ["繳費紀錄", "繳費記錄", "付款紀錄", "哪裡看帳單", "查帳"]
+
+不確定答案正確性時，設 needs_verification = true。只輸出 JSON。
 """
 
     def __init__(
@@ -265,11 +258,22 @@ class KnowledgeGeneratorClient:
                     completion_tokens=response.usage.completion_tokens
                 )
 
+            # 使用 AI 生成的 topic 作為精簡標題，原始問題加入 keywords
+            topic = result.get("topic", "").strip()
+            if not topic:
+                topic = gap["question"]  # fallback
+
+            keywords = result.get("keywords", [])
+            # 確保原始問題也在 keywords 中（擴充搜尋覆蓋）
+            if gap["question"] not in keywords:
+                keywords.append(gap["question"])
+
             return {
                 "gap_id": gap["gap_id"],
-                "question": gap["question"],
+                "question": topic,
+                "original_question": gap["question"],
                 "answer": result.get("answer", ""),
-                "keywords": result.get("keywords", []),
+                "keywords": keywords,
                 "confidence_explanation": result.get("confidence_explanation", ""),
                 "needs_verification": result.get("needs_verification", False),
                 "action_type": action_type
@@ -653,7 +657,17 @@ class KnowledgeGeneratorClient:
                         question_summary=question
                     )
                     if duplicate_check and duplicate_check['detected']:
-                        similar_knowledge = duplicate_check  # 儲存完整的檢測結果
+                        # 檢查最高相似度，超過 0.75 直接跳過不生成
+                        max_sim = max(
+                            item.get('similarity_score', 0)
+                            for item in duplicate_check.get('items', [])
+                        ) if duplicate_check.get('items') else 0
+                        if max_sim >= 0.75:
+                            most_similar = duplicate_check['items'][0]
+                            print(f"   ⛔ 跳過重複知識（向量相似度 {max_sim:.1%}）: {question}")
+                            print(f"      相似項: {most_similar.get('item_name', '')}")
+                            continue
+                        similar_knowledge = duplicate_check
 
                     # 插入到 loop_generated_knowledge 表
                     cur.execute("""

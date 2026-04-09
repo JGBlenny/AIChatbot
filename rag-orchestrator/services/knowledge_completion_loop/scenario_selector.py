@@ -330,38 +330,20 @@ class ScenarioSelector:
             "total_available": total_available
         }
 
-    async def get_used_scenario_ids(
-        self,
-        parent_loop_id: Optional[int] = None
-    ) -> List[int]:
+    async def get_used_scenario_ids(self) -> List[int]:
         """
-        取得已使用的測試情境 ID
+        取得所有歷史回測中已測過的測試情境 ID
 
-        查詢同一父迴圈的所有子迴圈已使用的測試情境 ID，
-        用於避免批次間重複選取。
-
-        Args:
-            parent_loop_id: 父迴圈 ID（如果提供，則查詢同一父迴圈的所有子迴圈）
+        從 backtest_results 查詢所有曾經測過的 scenario_id，
+        用於新建迴圈時自動排除，避免重複選取。
 
         Returns:
             List[int]: 已使用的測試情境 ID 列表（不重複）
         """
-        if parent_loop_id:
-            # 查詢同一父迴圈的所有子迴圈（包含父迴圈自己）
-            query = """
-                SELECT DISTINCT unnest(scenario_ids) as scenario_id
-                FROM knowledge_completion_loops
-                WHERE (id = $1 OR parent_loop_id = $1)
-                  AND scenario_ids IS NOT NULL
-            """
-            rows = await self.db_pool.fetch(query, parent_loop_id)
-        else:
-            # 查詢所有迴圈的 scenario_ids
-            query = """
-                SELECT DISTINCT unnest(scenario_ids) as scenario_id
-                FROM knowledge_completion_loops
-                WHERE scenario_ids IS NOT NULL
-            """
-            rows = await self.db_pool.fetch(query)
-
+        query = """
+            SELECT DISTINCT scenario_id
+            FROM backtest_results
+            WHERE scenario_id IS NOT NULL
+        """
+        rows = await self.db_pool.fetch(query)
         return [row["scenario_id"] for row in rows]

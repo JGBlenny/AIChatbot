@@ -81,16 +81,13 @@ class LoopStartRequest(BaseModel):
     """
     啟動迴圈請求
 
-    用於創建新的知識完善迴圈。支援批次關聯功能，可透過 parent_loop_id
-    參數避免與父迴圈重複選取相同的測試情境。
+    用於創建新的知識完善迴圈。系統會自動排除歷史回測已測過的題目。
     """
     loop_name: str = Field(..., description="迴圈名稱", max_length=200)
     vendor_id: int = Field(..., description="業者 ID", gt=0)
     batch_size: int = Field(50, description="批次大小", ge=1, le=3000)
-    max_iterations: int = Field(10, description="最大迭代次數", ge=1, le=50)
     target_pass_rate: float = Field(0.85, description="目標通過率", ge=0.0, le=1.0)
     scenario_filters: Optional[Dict] = Field(None, description="測試情境篩選條件")
-    parent_loop_id: Optional[int] = Field(None, description="父迴圈 ID（批次關聯）")
     budget_limit_usd: Optional[float] = Field(None, description="成本預算上限（USD）", ge=0)
 
     class Config:
@@ -99,7 +96,6 @@ class LoopStartRequest(BaseModel):
                 "loop_name": "包租業知識完善-第1批",
                 "vendor_id": 2,
                 "batch_size": 50,
-                "max_iterations": 10,
                 "target_pass_rate": 0.85,
                 "budget_limit_usd": 50.0
             }
@@ -146,7 +142,6 @@ class LoopStatusResponse(BaseModel):
     vendor_id: int
     status: str
     current_iteration: int
-    max_iterations: int
     current_pass_rate: Optional[float]
     target_pass_rate: float
     scenario_ids: List[int]
@@ -203,12 +198,8 @@ async def start_loop(request: LoopStartRequest, req: Request):
         db_pool_async = req.app.state.db_pool if hasattr(req.app.state, 'db_pool') else req.app.extra.get('db_pool')
         scenario_selector = ScenarioSelector(db_pool_async)
 
-        # 2. 取得已使用的 scenario_ids（如果有 parent_loop_id）
-        exclude_scenario_ids = None
-        if request.parent_loop_id:
-            exclude_scenario_ids = await scenario_selector.get_used_scenario_ids(
-                parent_loop_id=request.parent_loop_id
-            )
+        # 2. 自動排除所有歷史回測已測過的題目
+        exclude_scenario_ids = await scenario_selector.get_used_scenario_ids()
 
         # 3. 選取固定測試集（分層隨機抽樣）
         selection_result = await scenario_selector.select_scenarios(
@@ -234,12 +225,10 @@ async def start_loop(request: LoopStartRequest, req: Request):
         loop_config = LoopConfig(
             vendor_id=request.vendor_id,
             batch_size=request.batch_size,
-            max_iterations=request.max_iterations,
             target_pass_rate=request.target_pass_rate,
             scenario_ids=selection_result["scenario_ids"],
             selection_strategy=selection_result["selection_strategy"],
             difficulty_distribution=selection_result["difficulty_distribution"],
-            parent_loop_id=request.parent_loop_id,
             budget_limit_usd=request.budget_limit_usd,
             filters=request.scenario_filters or {}  # 確保不傳遞 None
         )
@@ -385,6 +374,77 @@ async def execute_iteration(
         raise HTTPException(status_code=500, detail=f"執行迭代失敗：{str(e)}")
 
 
+@router.get("/coverage-stats")
+async def get_coverage_stats(req: Request):
+    """
+    取得回測覆蓋率統計
+
+    返回題庫總題數、已測過的題數、覆蓋率百分比。
+    """
+    try:
+        db_pool_async = req.app.state.db_pool if hasattr(req.app.state, 'db_pool') else req.app.extra.get('db_pool')
+
+        async with db_pool_async.acquire() as conn:
+            # 題庫中所有 active 題目數
+            total_scenarios = await conn.fetchval("""
+                SELECT COUNT(*) FROM test_scenarios WHERE is_active = true
+            """)
+
+            # 從 backtest_results 查實際測過的不重複題目數
+            covered_scenarios = await conn.fetchval("""
+                SELECT COUNT(DISTINCT scenario_id)
+                FROM backtest_results
+                WHERE scenario_id IS NOT NULL
+            """)
+
+            # 各迴圈（含 backtest_run）的覆蓋明細
+            loop_details = await conn.fetch("""
+                SELECT
+                    kcl.id AS loop_id,
+                    kcl.loop_name,
+                    kcl.status,
+                    COALESCE(sub.tested_count, 0) AS scenario_count,
+                    kcl.current_pass_rate
+                FROM knowledge_completion_loops kcl
+                LEFT JOIN (
+                    SELECT
+                        CAST(substring(br.notes FROM 'Loop (\d+)') AS INTEGER) AS loop_id,
+                        COUNT(DISTINCT bres.scenario_id) AS tested_count
+                    FROM backtest_runs br
+                    JOIN backtest_results bres ON bres.run_id = br.id
+                    WHERE br.notes LIKE 'Knowledge Completion Loop %'
+                      AND bres.scenario_id IS NOT NULL
+                    GROUP BY substring(br.notes FROM 'Loop (\d+)')
+                ) sub ON sub.loop_id = kcl.id
+                ORDER BY kcl.id
+            """)
+
+            coverage_rate = (covered_scenarios / total_scenarios * 100) if total_scenarios > 0 else 0
+
+            return {
+                "total_scenarios": total_scenarios,
+                "covered_scenarios": covered_scenarios,
+                "uncovered_scenarios": total_scenarios - covered_scenarios,
+                "coverage_rate": round(coverage_rate, 1),
+                "loop_details": [
+                    {
+                        "loop_id": row["loop_id"],
+                        "loop_name": row["loop_name"],
+                        "status": row["status"],
+                        "scenario_count": row["scenario_count"],
+                        "current_pass_rate": float(row["current_pass_rate"]) if row["current_pass_rate"] else None
+                    }
+                    for row in loop_details
+                ]
+            }
+
+    except Exception as e:
+        print(f"❌ 取得覆蓋率統計失敗：{str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"取得覆蓋率統計失敗：{str(e)}")
+
+
 @router.get("/", response_model=List[LoopStatusResponse])
 async def list_loops(
     req: Request,
@@ -425,7 +485,7 @@ async def list_loops(
             query = f"""
                 SELECT
                     id, loop_name, vendor_id, status,
-                    current_iteration, max_iterations,
+                    current_iteration,
                     current_pass_rate, target_pass_rate,
                     scenario_ids,
                     created_at, updated_at, completed_at
@@ -466,17 +526,28 @@ async def list_loops(
                     progress = phase_map.get(event_type, progress)
                     progress["message"] = event_type
 
+                # 從 backtest_runs 取實際測試題數（scenario_ids 可能為 NULL）
+                actual_scenario_ids = loop_record["scenario_ids"] or []
+                if not actual_scenario_ids:
+                    loop_id_str = str(loop_record["id"])
+                    tested_count = await conn.fetchval("""
+                        SELECT COALESCE(MAX(total_scenarios), 0)
+                        FROM backtest_runs
+                        WHERE notes LIKE 'Knowledge Completion Loop ' || $1 || ' - %'
+                    """, loop_id_str)
+                else:
+                    tested_count = len(actual_scenario_ids)
+
                 results.append(LoopStatusResponse(
                     loop_id=loop_record["id"],
                     loop_name=loop_record["loop_name"],
                     vendor_id=loop_record["vendor_id"],
                     status=loop_record["status"],
                     current_iteration=loop_record["current_iteration"] or 0,
-                    max_iterations=loop_record["max_iterations"] or 10,
                     current_pass_rate=float(loop_record["current_pass_rate"]) if loop_record["current_pass_rate"] else None,
                     target_pass_rate=float(loop_record["target_pass_rate"]) if loop_record["target_pass_rate"] else 0.85,
-                    scenario_ids=loop_record["scenario_ids"] or [],
-                    total_scenarios=len(loop_record["scenario_ids"]) if loop_record["scenario_ids"] else 0,
+                    scenario_ids=actual_scenario_ids,
+                    total_scenarios=tested_count,
                     progress=progress,
                     created_at=loop_record["created_at"].isoformat() if loop_record["created_at"] else "",
                     updated_at=loop_record["updated_at"].isoformat() if loop_record["updated_at"] else "",
@@ -505,21 +576,32 @@ async def get_loop_iterations(
     try:
         pool = req.app.state.db_pool
         async with pool.acquire() as conn:
-            # 查詢迭代的回測記錄
+            # 查詢迭代的回測記錄，從 backtest_results 即時計算通過/失敗數
             records = await conn.fetch("""
                 SELECT
                     br.id as run_id,
                     CAST(SUBSTRING(br.notes FROM 'Iteration (\\d+)') AS INTEGER) as iteration,
                     br.total_scenarios,
                     br.executed_scenarios,
-                    br.passed_count,
-                    br.failed_count,
-                    br.pass_rate,
-                    br.avg_score,
+                    COALESCE(stats.passed_count, br.passed_count, 0) as passed_count,
+                    COALESCE(stats.failed_count, br.failed_count, 0) as failed_count,
+                    COALESCE(stats.calc_pass_rate, br.pass_rate, 0) as pass_rate,
+                    COALESCE(stats.avg_score, br.avg_score, 0) as avg_score,
                     br.started_at,
                     br.completed_at,
                     br.status
                 FROM backtest_runs br
+                LEFT JOIN LATERAL (
+                    SELECT
+                        COUNT(*) FILTER (WHERE passed = true) as passed_count,
+                        COUNT(*) FILTER (WHERE passed = false) as failed_count,
+                        CASE WHEN COUNT(*) > 0
+                            THEN COUNT(*) FILTER (WHERE passed = true)::float / COUNT(*)
+                            ELSE 0 END as calc_pass_rate,
+                        AVG(overall_score) as avg_score
+                    FROM backtest_results
+                    WHERE run_id = br.id
+                ) stats ON true
                 WHERE br.notes LIKE $1
                   AND br.status = 'completed'
                 ORDER BY br.started_at ASC
@@ -733,7 +815,7 @@ async def get_loop_status(loop_id: int, req: Request):
             loop_record = await conn.fetchrow("""
                 SELECT
                     id, loop_name, vendor_id, status,
-                    current_iteration, max_iterations,
+                    current_iteration,
                     current_pass_rate, target_pass_rate,
                     scenario_ids,
                     created_at, updated_at, completed_at
@@ -776,7 +858,6 @@ async def get_loop_status(loop_id: int, req: Request):
                 vendor_id=loop_record["vendor_id"],
                 status=loop_record["status"],
                 current_iteration=loop_record["current_iteration"] or 0,
-                max_iterations=loop_record["max_iterations"] or 10,
                 current_pass_rate=float(loop_record["current_pass_rate"]) if loop_record["current_pass_rate"] else None,
                 target_pass_rate=float(loop_record["target_pass_rate"]) if loop_record["target_pass_rate"] else 0.85,
                 scenario_ids=loop_record["scenario_ids"] or [],
@@ -878,7 +959,7 @@ async def complete_batch(loop_id: int, req: Request):
             loop_record = await conn.fetchrow("""
                 SELECT
                     loop_name, vendor_id, status,
-                    current_iteration, max_iterations,
+                    current_iteration,
                     current_pass_rate, target_pass_rate,
                     scenario_ids, created_at, completed_at
                 FROM knowledge_completion_loops

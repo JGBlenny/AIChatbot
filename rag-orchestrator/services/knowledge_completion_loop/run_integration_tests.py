@@ -53,7 +53,6 @@ async def test_load_loop():
         "status": "reviewing",
         "config": {
             "batch_size": 50,
-            "max_iterations": 10,
             "target_pass_rate": 0.85,
             "action_type_mode": "ai_assisted",
             "filters": {},
@@ -154,7 +153,6 @@ async def test_validate_loop_workflow():
     coordinator.current_status = LoopStatus.REVIEWING
     coordinator.config = LoopConfig(
         batch_size=50,
-        max_iterations=10,
         target_pass_rate=0.85
     )
 
@@ -218,7 +216,6 @@ async def test_validate_loop_with_regression():
     coordinator.current_status = LoopStatus.REVIEWING
     coordinator.config = LoopConfig(
         batch_size=50,
-        max_iterations=10,
         target_pass_rate=0.85
     )
 

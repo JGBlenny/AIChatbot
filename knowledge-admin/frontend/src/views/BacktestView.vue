@@ -15,7 +15,7 @@
         <option :value="null">請選擇迴圈...</option>
         <option v-for="loop in availableLoops" :key="loop.loop_id" :value="loop.loop_id">
           #{{ loop.loop_id }} - {{ loop.loop_name }}
-          ({{ getStatusLabel(loop.status) }}, 迭代: {{ loop.current_iteration }}/{{ loop.max_iterations }})
+          ({{ getStatusLabel(loop.status) }}, 迭代: {{ loop.current_iteration }})
         </option>
       </select>
       <button @click="refreshLoops" class="btn-refresh-loops" :disabled="loadingLoops">

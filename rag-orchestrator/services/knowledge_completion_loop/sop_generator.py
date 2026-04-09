@@ -27,107 +27,79 @@ class SOPGenerator:
     """
 
     # SOP 生成 Prompt 模板
-    SOP_GENERATION_PROMPT = """你是一個專業的 SOP（標準作業流程）撰寫專家，專門為包租代管公司撰寫清晰、結構化的操作流程。
+    SOP_GENERATION_PROMPT = """你是包租代管公司的營運主管，負責建立業務流程知識庫。
 
-**任務**：根據以下資訊，生成一個完整的 SOP 項目。
+**你的任務**：針對客人常問的問題，建立對應的「業務流程」或「政策規範」。
+**內容定位**：結構化的流程步驟或政策說明，但語氣要親切易懂，不是寫公文。
 
 ---
 
-**代表性問題**：{question}
+**客人的問題**：{question}
 
 {related_questions}
 
 **問題類型**：{gap_type}
-- sop_knowledge: 標準操作流程（需要步驟說明）
-- form_fill: 需要引導用戶填寫表單
-
 **失敗原因**：{failure_reason}
-
 **優先級**：{priority}
 
 ---
 
-**輸出要求**：
-
-請以 JSON 格式輸出，包含以下欄位：
+**輸出 JSON 格式**：
 
 ```json
 {{
-  "item_name": "SOP 項目名稱（簡短、描述性，30字以內）",
-  "content": "完整的 SOP 內容（清晰的步驟說明或引導文字，200-500字）",
-  "trigger_mode": "觸發模式（none, manual, immediate, auto）",
+  "item_name": "簡短標題（15字以內，例如：退租流程、續約申請方式）",
+  "content": "客服回答內容（200-500字）",
+  "trigger_mode": "auto",
   "trigger_keywords": ["關鍵字1", "關鍵字2", "關鍵字3"],
-  "next_action": "下一步動作（none, form_fill, api_call, form_then_api）",
-  "next_form_id": "表單ID（如果 next_action 是 form_fill，可選）",
-  "immediate_prompt": "立即提示文字（給用戶的簡短回應，50字以內）",
-  "keywords": ["搜尋關鍵字1", "關鍵字2", "關鍵字3"]
+  "next_action": "none 或 form_fill 或 api_call",
+  "next_form_id": null,
+  "immediate_prompt": "簡短回應（50字以內）",
+  "keywords": ["搜尋關鍵字1", "關鍵字2"]
 }}
 ```
 
-**SOP 內容撰寫指南**：
-
-1. **精準匹配原則**（非常重要！）：
-   - **SOP 名稱必須與內容精準匹配**，避免過於籠統
-   - **每個 SOP 只處理一個具體流程或政策**，不要合併不相關的主題
-   - 如果提供了「相關問題」，這些問題應該是高度相關且屬於同一個具體流程
-   - ❌ 錯誤範例：「租約續約及退租流程」（合併了續約和退租兩個不同流程）
-   - ✅ 正確範例：「租約續約流程」（只處理續約）或「退租解約流程」（只處理退租）
-   - ✅ 正確範例：「雙人入住政策」（只處理雙人入住）或「訪客過夜規範」（只處理訪客）
-
-2. **sop_knowledge 類型**：
-   - 提供清晰的步驟說明（使用編號或項目符號）
-   - 包含必要的注意事項和時間點
-   - 語氣專業但友善
-   - 範例：
-     ```
-     如何續約：
-
-     1. 續約時機：請在合約到期前 30 天提出續約申請
-     2. 聯繫客服：可透過以下方式聯繫：
-        - 線上客服系統
-        - 客服電話：0800-XXX-XXX
-        - 電子郵件：service@example.com
-     3. 提供資料：準備以下文件...
-     4. 審核流程：通常需要 3-5 個工作天...
-     5. 簽約與繳費：...
-     ```
-
-2. **form_fill 類型**：
-   - 說明為什麼需要填寫表單
-   - 引導用戶準備必要資料
-   - 說明填寫後的流程
-   - 設定 next_action = "form_fill"
-   - 提供適當的 next_form_id（如有）
-   - 範例：
-     ```
-     我們需要了解您的需求以提供最適合的服務。請填寫以下表單，我們會盡快與您聯繫。
-
-     需要準備的資料：
-     - 期望租期
-     - 預算範圍
-     - 其他特殊需求
-
-     填寫完成後，我們會在 1 個工作天內與您聯繫。
-     ```
-
-3. **trigger_mode 判斷**：
-   - 如果問題很明確且需要自動觸發 → trigger_mode = "auto"
-   - 如果需要手動選擇 → trigger_mode = "manual"
-   - 如果需要立即執行 → trigger_mode = "immediate"
-   - 一般情況 → trigger_mode = "none"
-
-4. **next_action 判斷**：
-   - 如果需要用戶提供資訊 → next_action = "form_fill"
-   - 如果需要查詢即時資料 → next_action = "api_call"
-   - 其他情況 → next_action = "none"
-
 ---
 
-**重要提醒**：
-- 所有文字使用繁體中文
-- SOP 內容要實用、清晰、易懂
-- 避免使用過於技術性的術語
-- 語氣要專業但友善
+**content 撰寫規則（非常重要）**：
+
+1. **你是客服在跟客人說話**，語氣自然親切，像 LINE 對話
+2. **第一句直接回答問題**，不要任何鋪陳
+3. **只寫你確定知道的事實**，不確定的寫「請聯繫您的專屬管家確認」
+4. **每個回答只處理一個主題**，不要合併不相關的流程
+
+**絕對禁止（違反任何一條就是不合格）**：
+- ❌ 編造電話號碼（如 0800-XXX-XXX）、Email（如 service@example.com）、網址
+- ❌ 使用「SOP」「標準作業流程」「本流程旨在」等術語
+- ❌ 使用「在包租代管的過程中」「至關重要」「以下是關於...的說明」等廢話
+- ❌ 編造不確定的政策細節（如具體天數、百分比、金額），不確定就不要寫
+- ❌ item_name 包含「SOP」「流程說明」「政策說明」「查詢流程」等冗詞
+
+**好的回答範例**：
+```
+續約請在合約到期前 30 天提出，流程如下：
+
+1. 跟您的專屬管家說想續約
+2. 準備身分證件及原合約
+3. 審核通過後簽新約、繳費就完成了
+
+有任何問題都可以直接問我哦！
+```
+
+**不好的回答範例**：
+```
+在包租代管的過程中，續約是一個重要的環節。以下是關於續約的具體步驟說明：
+1. 續約時機：請在合約到期前 30 天提出續約申請
+2. 聯繫客服：可透過以下方式聯繫：
+   - 客服電話：0800-XXX-XXX
+   - 電子郵件：service@example.com
+```
+
+**item_name 範例**：
+- ✅ 退租流程、續約申請、押金退還、租金繳費方式、訪客過夜規範
+- ❌ 退租流程SOP、退租解約流程說明、管理費固定金額查詢流程、自助查閱電表讀數流程
+
+所有文字使用繁體中文。只輸出 JSON。
 """
 
     def __init__(
@@ -665,7 +637,7 @@ class SOPGenerator:
 
             # 檢測 1: 搜尋 vendor_sop_items 表（正式 SOP）
             # 使用 pgvector 的 cosine similarity (<=> 運算子)
-            # 閾值：similarity > 0.85 視為相似（距離 < 0.15）
+            # 閾值：similarity > 0.70 視為相似（距離 < 0.30）
             cur.execute("""
                 SELECT
                     id,
@@ -674,7 +646,7 @@ class SOPGenerator:
                 FROM vendor_sop_items
                 WHERE vendor_id = %s
                   AND primary_embedding IS NOT NULL
-                  AND 1 - (primary_embedding <=> %s::vector) > 0.85
+                  AND 1 - (primary_embedding <=> %s::vector) > 0.70
                 ORDER BY primary_embedding <=> %s::vector ASC
                 LIMIT 3
             """, (query_embedding, vendor_id, query_embedding, query_embedding))
@@ -697,7 +669,7 @@ class SOPGenerator:
                 WHERE knowledge_type = 'sop'
                   AND status IN ('pending', 'approved')
                   AND embedding IS NOT NULL
-                  AND 1 - (embedding <=> %s::vector) > 0.85
+                  AND 1 - (embedding <=> %s::vector) > 0.70
                 ORDER BY embedding <=> %s::vector ASC
                 LIMIT 3
             """, (query_embedding, query_embedding, query_embedding))
@@ -1236,7 +1208,17 @@ class SOPGenerator:
                     sop_content=sop_data['content']
                 )
                 if duplicate_check and duplicate_check['detected']:
-                    similar_knowledge = duplicate_check  # 儲存完整的檢測結果
+                    # 檢查最高相似度，超過 0.75 直接跳過不生成
+                    max_similarity = max(
+                        item.get('similarity_score', 0)
+                        for item in duplicate_check.get('items', [])
+                    ) if duplicate_check.get('items') else 0
+                    if max_similarity >= 0.75:
+                        most_similar = duplicate_check['items'][0]
+                        print(f"   ⛔ 跳過重複 SOP（向量相似度 {max_similarity:.1%}）: {sop_data['item_name']}")
+                        print(f"      相似項: [{most_similar['source_table']}] {most_similar['item_name']}")
+                        return None
+                    similar_knowledge = duplicate_check  # 相似度不高，記錄但繼續生成
 
             # 插入到 loop_generated_knowledge（待審核）
             cur.execute("""

@@ -2,6 +2,25 @@
   <div class="loop-management-tab">
     <h3>🔄 知識完善迴圈管理</h3>
 
+    <!-- 覆蓋率統計 -->
+    <div v-if="coverageStats && !selectedLoopId" class="coverage-stats-card">
+      <div class="coverage-header">
+        <span class="coverage-title">回測覆蓋率</span>
+        <span class="coverage-percentage" :class="getCoverageClass(coverageStats.coverage_rate)">
+          {{ coverageStats.coverage_rate }}%
+        </span>
+      </div>
+      <div class="coverage-progress-bar">
+        <div class="coverage-progress-fill" :style="{ width: coverageStats.coverage_rate + '%' }" :class="getCoverageClass(coverageStats.coverage_rate)"></div>
+      </div>
+      <div class="coverage-details">
+        <span>已覆蓋 {{ coverageStats.covered_scenarios }} / {{ coverageStats.total_scenarios }} 題</span>
+        <span v-if="coverageStats.uncovered_scenarios > 0" class="uncovered-hint">
+          （剩餘 {{ coverageStats.uncovered_scenarios }} 題未測）
+        </span>
+      </div>
+    </div>
+
     <!-- 工具列 -->
     <div class="toolbar">
       <button @click="refreshLoops" class="btn btn-refresh" :disabled="loading">
@@ -50,14 +69,14 @@
         <tbody>
           <tr v-for="loop in displayLoops" :key="loop.loop_id" :class="{ 'row-running': isRunningStatus(loop.status) }">
             <td>{{ loop.loop_id }}</td>
-            <td class="loop-name">{{ loop.loop_name }}</td>
+            <td class="loop-name clickable" @click="$emit('loop-selected', loop.loop_id)">{{ loop.loop_name }}</td>
             <td>{{ getVendorName(loop.vendor_id) }}</td>
             <td>
               <span class="status-badge" :class="`status-${loop.status.toLowerCase()}`">
                 {{ getStatusLabel(loop.status) }}
               </span>
             </td>
-            <td>{{ loop.current_iteration }} / {{ loop.max_iterations }}</td>
+            <td>{{ loop.current_iteration }}</td>
             <td>
               <span class="pass-rate" :class="getPassRateClass(loop.current_pass_rate)">
                 {{ formatPassRate(loop.current_pass_rate) }}
@@ -165,7 +184,7 @@
                 </div>
                 <div class="info-item">
                   <label>當前迭代：</label>
-                  <span>{{ selectedLoop.current_iteration }} / {{ selectedLoop.max_iterations }}</span>
+                  <span>{{ selectedLoop.current_iteration }}</span>
                 </div>
                 <div class="info-item">
                   <label>目標通過率：</label>
@@ -312,20 +331,12 @@
               <select id="batch-size" v-model.number="formData.batch_size" required>
                 <option :value="20">20 題（快速測試）</option>
                 <option :value="50">50 題（標準）</option>
-                <option :value="100">100 題（完整）</option>
-                <option :value="200">200 題（大規模）</option>
+                <option :value="100">100 題</option>
+                <option :value="200">200 題</option>
+                <option :value="300">300 題</option>
+                <option :value="500">500 題</option>
               </select>
               <span class="help-text">選取的測試情境數量</span>
-            </div>
-
-            <!-- 最大迭代次數 -->
-            <div class="form-group">
-              <label for="max-iterations">最大迭代次數 <span class="required">*</span></label>
-              <select id="max-iterations" v-model.number="formData.max_iterations" required>
-                <option :value="5">5 次（快速）</option>
-                <option :value="10">10 次（標準）</option>
-                <option :value="20">20 次（深度）</option>
-              </select>
             </div>
 
             <!-- 目標通過率 -->
@@ -356,18 +367,6 @@
                   <span class="difficulty-value">30% ({{ Math.round(formData.batch_size * 0.3) }} 題)</span>
                 </div>
               </div>
-            </div>
-
-            <!-- 父迴圈選擇（可選） -->
-            <div class="form-group">
-              <label for="parent-loop">父迴圈 ID（可選）</label>
-              <select id="parent-loop" v-model.number="formData.parent_loop_id">
-                <option :value="null">無（第一批）</option>
-                <option v-for="loop in completedLoops" :key="loop.loop_id" :value="loop.loop_id">
-                  #{{ loop.loop_id }} - {{ loop.loop_name }} ({{ loop.total_scenarios }} 題已使用)
-                </option>
-              </select>
-              <span class="help-text">選擇父迴圈可避免重複選取測試情境</span>
             </div>
 
             <!-- 預算上限（可選） -->
@@ -404,29 +403,21 @@
           <button class="close-btn" @click="closeNextBatchModal">✕</button>
         </div>
         <div class="modal-body">
-          <!-- 父迴圈資訊 -->
+          <!-- 上一迴圈資訊 -->
           <div class="parent-loop-info">
-            <h4>📦 父迴圈資訊</h4>
+            <h4>📦 上一迴圈</h4>
             <div class="info-grid">
               <div class="info-item">
-                <label>父迴圈 ID：</label>
-                <span>#{{ nextBatchParentLoop?.loop_id }}</span>
-              </div>
-              <div class="info-item">
-                <label>父迴圈名稱：</label>
-                <span>{{ nextBatchParentLoop?.loop_name }}</span>
+                <label>迴圈：</label>
+                <span>#{{ nextBatchParentLoop?.loop_id }} - {{ nextBatchParentLoop?.loop_name }}</span>
               </div>
               <div class="info-item">
                 <label>狀態：</label>
                 <span class="status-badge status-completed">已完成</span>
               </div>
-              <div class="info-item">
-                <label>已使用測試集：</label>
-                <span class="highlight">{{ nextBatchParentLoop?.total_scenarios }} 題</span>
-              </div>
             </div>
             <div class="info-note">
-              📊 系統將自動排除父迴圈的 {{ nextBatchParentLoop?.total_scenarios }} 題，從剩餘題庫中選取新的測試集
+              📊 系統將自動排除所有歷史回測已測過的題目，從剩餘題庫中選取新的測試集
             </div>
           </div>
 
@@ -451,20 +442,13 @@
               <select id="next-batch-size" v-model.number="nextBatchFormData.batch_size" required>
                 <option :value="20">20 題（快速測試）</option>
                 <option :value="50">50 題（標準）</option>
-                <option :value="100">100 題（完整）</option>
-                <option :value="200">200 題（大規模）</option>
+                <option :value="100">100 題</option>
+                <option :value="200">200 題</option>
+                <option :value="300">300 題</option>
+                <option :value="500">500 題</option>
               </select>
             </div>
 
-            <!-- 最大迭代次數 -->
-            <div class="form-group">
-              <label for="next-max-iterations">最大迭代次數 <span class="required">*</span></label>
-              <select id="next-max-iterations" v-model.number="nextBatchFormData.max_iterations" required>
-                <option :value="5">5 次（快速）</option>
-                <option :value="10">10 次（標準）</option>
-                <option :value="20">20 次（深度）</option>
-              </select>
-            </div>
 
             <!-- 目標通過率 -->
             <div class="form-group">
@@ -526,6 +510,7 @@ export default {
       loops: [],
       loading: false,
       error: null,
+      coverageStats: null,
       pollingTimer: null,
       pollingInterval: 30000, // 30 seconds (減少頻率)
       showModal: false,
@@ -534,9 +519,7 @@ export default {
         loop_name: '',
         vendor_id: '',
         batch_size: 50,
-        max_iterations: 10,
         target_pass_rate: 0.85,
-        parent_loop_id: null,
         budget_limit_usd: null,
         scenario_filters: {}
       },
@@ -553,7 +536,6 @@ export default {
       nextBatchFormData: {
         loop_name: '',
         batch_size: 50,
-        max_iterations: 10,
         target_pass_rate: 0.85
       }
     };
@@ -575,6 +557,7 @@ export default {
   },
   mounted() {
     this.loadLoops();
+    this.loadCoverageStats();
   },
   beforeUnmount() {
     this.stopPolling();
@@ -603,6 +586,20 @@ export default {
     },
     async refreshLoops() {
       await this.loadLoops();
+      await this.loadCoverageStats();
+    },
+    async loadCoverageStats() {
+      try {
+        const response = await axios.get('/rag-api/v1/loops/coverage-stats');
+        this.coverageStats = response.data;
+      } catch (err) {
+        console.error('載入覆蓋率統計失敗：', err);
+      }
+    },
+    getCoverageClass(rate) {
+      if (rate >= 80) return 'coverage-high';
+      if (rate >= 50) return 'coverage-medium';
+      return 'coverage-low';
     },
     startPolling() {
       if (this.pollingTimer) return; // 避免重複啟動
@@ -724,9 +721,7 @@ export default {
         loop_name: '',
         vendor_id: '',
         batch_size: 50,
-        max_iterations: 10,
         target_pass_rate: 0.85,
-        parent_loop_id: null,
         budget_limit_usd: null,
         scenario_filters: {}
       };
@@ -758,12 +753,6 @@ export default {
         isValid = false;
       }
 
-      // 最大迭代次數驗證
-      if (this.formData.max_iterations < 1 || this.formData.max_iterations > 50) {
-        this.validationErrors.max_iterations = '最大迭代次數必須在 1-50 之間';
-        isValid = false;
-      }
-
       // 目標通過率驗證
       if (this.formData.target_pass_rate < 0 || this.formData.target_pass_rate > 1) {
         this.validationErrors.target_pass_rate = '目標通過率必須在 0-1 之間';
@@ -791,15 +780,11 @@ export default {
           loop_name: this.formData.loop_name.trim(),
           vendor_id: parseInt(this.formData.vendor_id),
           batch_size: parseInt(this.formData.batch_size),
-          max_iterations: parseInt(this.formData.max_iterations),
           target_pass_rate: parseFloat(this.formData.target_pass_rate),
           scenario_filters: this.formData.scenario_filters || {}
         };
 
         // 添加可選欄位
-        if (this.formData.parent_loop_id) {
-          payload.parent_loop_id = parseInt(this.formData.parent_loop_id);
-        }
         if (this.formData.budget_limit_usd) {
           payload.budget_limit_usd = parseFloat(this.formData.budget_limit_usd);
         }
@@ -1089,7 +1074,6 @@ export default {
       this.nextBatchFormData = {
         loop_name: `第${batchNumber}批-${vendorName}知識完善`,
         batch_size: 50,
-        max_iterations: 10,
         target_pass_rate: 0.85
       };
 
@@ -1101,7 +1085,6 @@ export default {
       this.nextBatchFormData = {
         loop_name: '',
         batch_size: 50,
-        max_iterations: 10,
         target_pass_rate: 0.85
       };
     },
@@ -1126,9 +1109,7 @@ export default {
           loop_name: this.nextBatchFormData.loop_name.trim(),
           vendor_id: this.nextBatchParentLoop.vendor_id,
           batch_size: parseInt(this.nextBatchFormData.batch_size),
-          max_iterations: parseInt(this.nextBatchFormData.max_iterations),
           target_pass_rate: parseFloat(this.nextBatchFormData.target_pass_rate),
-          parent_loop_id: this.nextBatchParentLoop.loop_id,  // 關鍵：父迴圈 ID
           scenario_filters: {}
         };
 
@@ -1136,7 +1117,7 @@ export default {
         const response = await axios.post('/rag-api/v1/loops/start-next-batch', payload);
 
         // 成功提示
-        alert(`✅ 下一批次啟動成功！\n\n迴圈 ID: ${response.data.loop_id}\n迴圈名稱: ${response.data.loop_name}\n測試集大小: ${response.data.scenario_ids.length} 題\n\n系統已自動排除父迴圈的 ${this.nextBatchParentLoop.total_scenarios} 題。`);
+        alert(`✅ 下一批次啟動成功！\n\n迴圈 ID: ${response.data.loop_id}\n迴圈名稱: ${response.data.loop_name}\n測試集大小: ${response.data.scenario_ids.length} 題\n\n系統已自動排除歷史已測題目。`);
 
         // 關閉 Modal 並刷新列表
         this.closeNextBatchModal();
@@ -1157,6 +1138,65 @@ export default {
 <style scoped>
 .loop-management-tab {
   padding: 20px;
+}
+
+/* 覆蓋率統計卡片 */
+.coverage-stats-card {
+  background: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.coverage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.coverage-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #4a5568;
+}
+
+.coverage-percentage {
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.coverage-percentage.coverage-high { color: #38a169; }
+.coverage-percentage.coverage-medium { color: #d69e2e; }
+.coverage-percentage.coverage-low { color: #e53e3e; }
+
+.coverage-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.coverage-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.coverage-progress-fill.coverage-high { background: #38a169; }
+.coverage-progress-fill.coverage-medium { background: #d69e2e; }
+.coverage-progress-fill.coverage-low { background: #e53e3e; }
+
+.coverage-details {
+  font-size: 13px;
+  color: #718096;
+}
+
+.uncovered-hint {
+  color: #e53e3e;
 }
 
 .toolbar {
@@ -1255,6 +1295,15 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.loop-name.clickable {
+  cursor: pointer;
+  color: #2b6cb0;
+}
+
+.loop-name.clickable:hover {
+  text-decoration: underline;
 }
 
 .timestamp {
