@@ -132,9 +132,11 @@ class AsyncBacktestFramework:
         """
         url = f"{self.base_url}/api/v1/message"
 
-        # 為每個測試案例生成唯一的 session_id，避免表單狀態互相干擾
-        unique_session_id = f"backtest_session_{scenario_id}" if scenario_id else "backtest_session"
-        unique_user_id = f"backtest_user_{scenario_id}" if scenario_id else "backtest_user"
+        # 為每個測試案例生成唯一的 session_id，加入 timestamp + 隨機數避免跨次回測的表單狀態殘留
+        import time, random
+        uid = f"{int(time.time())}_{random.randint(1000,9999)}"
+        unique_session_id = f"backtest_session_{scenario_id}_{uid}" if scenario_id else f"backtest_session_{uid}"
+        unique_user_id = f"backtest_user_{scenario_id}_{uid}" if scenario_id else f"backtest_user_{uid}"
 
         payload = {
             "message": question,

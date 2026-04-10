@@ -20,6 +20,40 @@
       </div>
     </div>
 
+    <!-- 待補齊摘要 -->
+    <div v-if="actionItems.length > 0" class="action-items-section">
+      <div class="action-items-header">
+        <strong>📋 待補齊項目</strong>
+        <span class="action-items-count">{{ actionItems.length }} 筆需要後續處理</span>
+      </div>
+      <table class="action-items-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>SOP 名稱</th>
+            <th>類型</th>
+            <th>表單</th>
+            <th>狀態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in actionItems" :key="item.id">
+            <td>#{{ item.id }}</td>
+            <td>{{ item.question }}</td>
+            <td>
+              <span v-if="item._nextAction === 'form_fill'" class="badge form-badge">表單</span>
+              <span v-else-if="item._nextAction === 'api_call'" class="badge api-badge">API</span>
+            </td>
+            <td>
+              <span v-if="item._formId" class="form-id-linked">{{ item._formId }}</span>
+              <span v-else class="form-id-missing">未關聯</span>
+            </td>
+            <td>{{ item.status === 'pending' ? '待審核' : item.status }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- 篩選器 -->
     <div class="filter-section">
       <label>
@@ -83,6 +117,8 @@
             <span class="item-id">#{{ item.id }}</span>
             <span v-if="item.knowledge_type === 'sop'" class="badge sop-badge">SOP</span>
             <span v-else class="badge knowledge-badge">知識</span>
+            <span v-if="item.sop_config && item.sop_config.next_action === 'form_fill'" class="badge form-badge">表單</span>
+            <span v-if="item.sop_config && item.sop_config.next_action === 'api_call'" class="badge api-badge">API</span>
             <span class="loop-info">迴圈 {{ item.loop_id }} - 第 {{ item.iteration }} 次</span>
             <span class="item-date">{{ formatDate(item.created_at) }}</span>
           </div>
@@ -112,9 +148,12 @@
                 </span>
               </span>
             </div>
-            <div class="config-row" v-if="item.sop_config.next_action">
+            <div class="config-row" v-if="item.sop_config.next_action && item.sop_config.next_action !== 'none'">
               <strong>後續動作：</strong>
-              <span>{{ item.sop_config.next_action }}</span>
+              <span v-if="item.sop_config.next_action === 'form_fill'" class="badge form-badge">表單填寫</span>
+              <span v-else-if="item.sop_config.next_action === 'api_call'" class="badge api-badge">API 查詢</span>
+              <span v-else>{{ item.sop_config.next_action }}</span>
+              <span v-if="item.sop_config.next_form_id" class="form-id-hint">→ {{ item.sop_config.next_form_id }}</span>
             </div>
           </div>
 
@@ -359,6 +398,7 @@ export default {
     return {
       stats: null,
       items: [],
+      approvedActionItems: [],
       loading: true,
       filterType: '', // '', 'sop', 'general'
       vendors: [], // 業者列表
@@ -397,6 +437,10 @@ export default {
     this.loadVendors();
   },
   computed: {
+    // 已通過但需要後續補齊表單/API 的項目
+    actionItems() {
+      return this.approvedActionItems;
+    },
     // 是否全選
     allSelected() {
       return this.items.length > 0 && this.selectedIds.length === this.items.length;
@@ -658,6 +702,8 @@ export default {
             const config = typeof item.sop_config === 'string'
               ? JSON.parse(item.sop_config)
               : item.sop_config;
+            // 確保 template 讀到的是 parsed 物件
+            item.sop_config = config;
 
             // 預填 vendor_id
             if (config.vendor_id) {
@@ -681,6 +727,25 @@ export default {
             }
           }
         }
+        // 載入已通過但需補齊表單/API 的項目
+        try {
+          const approvedRes = await axios.get(API_ENDPOINTS.loopKnowledgePending, {
+            params: { status: 'approved', knowledge_type: 'sop', limit: 200 }
+          });
+          this.approvedActionItems = (approvedRes.data.items || [])
+            .map(item => {
+              const config = typeof item.sop_config === 'string'
+                ? JSON.parse(item.sop_config) : item.sop_config;
+              return { ...item, sop_config: config, _nextAction: config?.next_action, _formId: config?.next_form_id };
+            })
+            .filter(item => {
+              const action = item._nextAction;
+              return (action === 'form_fill' || action === 'api_call') && !item._formId;
+            });
+        } catch (e) {
+          console.error('載入待補齊項目失敗:', e);
+        }
+
       } catch (error) {
         console.error('載入列表失敗:', error);
         alert('載入失敗：' + (error.response?.data?.detail || error.message));
@@ -993,6 +1058,71 @@ export default {
 .knowledge-badge {
   background: #bbdefb;
   color: #1565c0;
+}
+
+.form-badge {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.api-badge {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.form-id-hint {
+  font-size: 12px;
+  color: #999;
+  margin-left: 4px;
+}
+
+.action-items-section {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.action-items-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.action-items-count {
+  font-size: 13px;
+  color: #f57f17;
+}
+
+.action-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.action-items-table th {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 2px solid #ffe082;
+  font-size: 13px;
+  color: #666;
+}
+
+.action-items-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #fff3c4;
+}
+
+.form-id-linked {
+  color: #2e7d32;
+  font-family: monospace;
+}
+
+.form-id-missing {
+  color: #e65100;
+  font-weight: 500;
 }
 
 .loop-info {

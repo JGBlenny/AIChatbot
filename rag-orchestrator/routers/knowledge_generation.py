@@ -1013,14 +1013,16 @@ async def get_loop_knowledge_stats(req: Request):
 async def get_pending_loop_knowledge(
     req: Request,
     limit: int = 20,
-    knowledge_type: Optional[str] = None
+    knowledge_type: Optional[str] = None,
+    status: str = "pending"
 ):
     """
-    取得待審核的迴圈生成知識列表
+    取得迴圈生成知識列表
 
     Args:
         limit: 返回數量限制
         knowledge_type: 知識類型篩選（sop, general）
+        status: 狀態篩選（pending, approved, rejected, synced）
     """
     try:
         db_pool = req.app.state.db_pool
@@ -1044,13 +1046,13 @@ async def get_pending_loop_knowledge(
                     kcl.started_at as loop_started_at
                 FROM loop_generated_knowledge lk
                 LEFT JOIN knowledge_completion_loops kcl ON lk.loop_id = kcl.id
-                WHERE lk.status = 'pending'
+                WHERE lk.status = $1
             """
 
-            params = []
+            params = [status]
 
             if knowledge_type:
-                query += " AND lk.knowledge_type = $1"
+                query += f" AND lk.knowledge_type = ${len(params) + 1}"
                 params.append(knowledge_type)
 
             query += " ORDER BY lk.created_at DESC"
