@@ -7,12 +7,19 @@
 import asyncio
 import json
 import os
+import re
 from typing import Dict, List, Optional
 import psycopg2.pool
 import psycopg2.extras
 from openai import OpenAI, AsyncOpenAI
 from openai import OpenAIError, RateLimitError, APIConnectionError
 import httpx
+
+# 編造內容檢測正則
+_FABRICATED_PHONE_RE = re.compile(r'0[0-9]{1,3}[-\s]?[0-9]{3,4}[-\s]?[0-9]{3,4}')
+_FABRICATED_EMAIL_RE = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
+_FABRICATED_URL_RE = re.compile(r'https?://[^\s]+')
+_BANNED_TERMS = ['專屬管家', '客服專線', '客服電話']
 
 
 class KnowledgeGeneratorClient:
@@ -41,18 +48,21 @@ class KnowledgeGeneratorClient:
 **現有相似知識（參考用）**：
 {existing_knowledge}
 
+{available_api_forms_section}
+
 ---
 
 **回答規則**：
 
 1. **你是客服在跟客人對話**，語氣自然親切
 2. **第一句直接回答**，不要鋪陳或開場白
-3. **只寫你確定的事實**，不確定的就說「請聯繫您的專屬管家確認」
-4. 如果是 api_call 類型，告知客人「我幫您查一下」
+3. **只寫你確定的事實**，不確定的就說「請聯繫您的管理師確認」
+4. 如果是 api_call 類型，回答中要告知客人「請提供您的物件地址，我幫您查詢」（引導進入表單收集資訊）
 5. 繁體中文，100-300 字
 
 **絕對禁止**：
-- ❌ 編造電話號碼、Email、網址（如 0800-XXX-XXX、service@example.com）
+- ❌ 編造電話號碼（如 0800-123-456、02-XXXX-XXXX）、Email、網址 — 任何數字格式的電話都不行
+- ❌ 使用「專屬管家」「客服專線」「客服人員」等稱呼，統一用「管理師」
 - ❌ 編造具體數字（天數、金額、百分比），不確定就不要寫
 - ❌ 使用「在包租代管的過程中」「至關重要」「以下是關於...的說明」等廢話
 - ❌ 回答「包租代管公司通常...」這種泛泛而談，要具體回答客人的問題
@@ -84,6 +94,79 @@ class KnowledgeGeneratorClient:
 不確定答案正確性時，設 needs_verification = true。只輸出 JSON。
 """
 
+    async def _verify_content_quality(self, question: str, content: str) -> Dict:
+        """用第二次 AI call 驗證生成內容的品質
+
+        檢查三項：編造資訊、空泛、是否對所有租客適用
+
+        Args:
+            question: 原始問題
+            content: 生成的內容
+
+        Returns:
+            {"passed": bool, "reasons": List[str]}
+        """
+        if not self.async_client:
+            return {"passed": True, "reasons": []}
+
+        prompt = (
+            "你是品質審查員，檢查以下 AI 生成的知識內容是否合格。\n\n"
+            f"**原始問題**：{question}\n\n"
+            f"**生成內容**：\n{content}\n\n"
+            "**檢查項目**（全部通過才合格）：\n\n"
+            "1. **是否編造資訊？**\n"
+            "   - 是否包含看起來像真實但可能是編造的電話號碼、Email、網址？\n"
+            "   - 是否編造了具體的天數、金額、百分比等數字？（如「30天內退還」「扣除10%」）\n"
+            "   - 注意：「請聯繫管理師確認」不算編造\n\n"
+            "2. **是否空泛？**\n"
+            "   - 內容是否只是在重複問題或說廢話？\n"
+            "   - 去掉「請聯繫管理師」等話，剩下的內容是否有實質資訊？\n"
+            "   - 實質內容是否少於 30 字？\n\n"
+            "3. **是否完全無法通用？**\n"
+            "   - 注意：業務流程、政策規範、操作說明本質上是通用的，即使細節因業者而異也算通用\n"
+            "   - 只有回答明確針對「某一個特定租客」或「某一個特定物件」的個人資料才算不通用\n"
+            "   - 例如「您的租金是 15,000 元」不通用，但「租金繳費方式有匯款和信用卡」是通用的\n"
+            "   - 寧可判定為通用，不要過度攔截\n\n"
+            '**輸出 JSON**：\n'
+            '{\n'
+            '  "fabricated": false,\n'
+            '  "vague": false,\n'
+            '  "not_universal": false,\n'
+            '  "passed": true,\n'
+            '  "reasons": []\n'
+            '}\n\n'
+            "如果任何一項為 true，passed 必須為 false，並在 reasons 中說明原因。\n"
+            "只輸出 JSON。"
+        )
+
+        try:
+            response = await self.async_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                max_tokens=300,
+                response_format={"type": "json_object"}
+            )
+
+            if self.cost_tracker:
+                await self.cost_tracker.track_api_call(
+                    model="gpt-4o-mini",
+                    prompt_tokens=response.usage.prompt_tokens,
+                    completion_tokens=response.usage.completion_tokens,
+                    operation='quality_verification'
+                )
+
+            result = json.loads(response.choices[0].message.content)
+            return {
+                "passed": result.get("passed", True),
+                "reasons": result.get("reasons", [])
+            }
+        except Exception as e:
+            print(f"   ⚠️  品質驗證失敗，預設通過: {e}")
+            return {"passed": True, "reasons": []}
+
     def __init__(
         self,
         openai_api_key: Optional[str] = None,
@@ -104,6 +187,7 @@ class KnowledgeGeneratorClient:
         self.model = model
         self.cost_tracker = cost_tracker
         self.embedding_api_url = os.getenv('EMBEDDING_API_URL', 'http://aichatbot-embedding-api:5000/api/v1/embeddings')
+        self._api_forms_cache = None  # API 查詢表單快取
 
         # 初始化 OpenAI 客戶端
         if openai_api_key:
@@ -112,6 +196,62 @@ class KnowledgeGeneratorClient:
         else:
             self.client = None
             self.async_client = None
+
+    def _load_api_forms(self) -> List[Dict]:
+        """從資料庫載入 API 查詢表單清單（快取）"""
+        if self._api_forms_cache is not None:
+            return self._api_forms_cache
+
+        if not self.db_pool:
+            return []
+
+        conn = self.db_pool.getconn()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT form_id, form_name, description, fields::text
+                FROM form_schemas
+                WHERE is_active = true AND on_complete_action = 'call_api'
+                ORDER BY id
+            """)
+            rows = cur.fetchall()
+            forms = []
+            for row in rows:
+                field_names = []
+                try:
+                    import json as _json
+                    fields = _json.loads(row[3]) if row[3] else []
+                    field_names = [f.get('field_label', f.get('field_name', '')) for f in fields]
+                except (ValueError, TypeError):
+                    pass
+                forms.append({
+                    'form_id': row[0],
+                    'form_name': row[1],
+                    'description': row[2] or '',
+                    'field_names': field_names,
+                })
+            self._api_forms_cache = forms
+            return forms
+        finally:
+            self.db_pool.putconn(conn)
+
+    def _build_available_api_forms_section(self) -> str:
+        """組裝 API 查詢表單清單文字，供 Knowledge prompt 注入"""
+        forms = self._load_api_forms()
+        if not forms:
+            return ""
+
+        lines = [
+            "**系統可用的 API 查詢表單（參考用）**：",
+            "如果客人的問題屬於以下查詢類型，回答時引導客人提供所需資訊。",
+            ""
+        ]
+        for f in forms:
+            fields_str = "、".join(f['field_names'][:4]) if f['field_names'] else ''
+            desc = f"（{f['description']}）" if f['description'] else ''
+            lines.append(f"- `{f['form_id']}` → {f['form_name']}{desc}（需提供：{fields_str}）")
+        lines.append("")
+        return "\n".join(lines)
 
     async def generate_knowledge(
         self,
@@ -159,13 +299,15 @@ class KnowledgeGeneratorClient:
             batch_results = await asyncio.gather(*batch, return_exceptions=True)
             results.extend(batch_results)
 
-        # 過濾錯誤結果
+        # 過濾錯誤結果和被攔截的結果（None）
         generated_knowledge = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 import traceback
                 print(f"⚠️  知識生成失敗 (gap_id={gaps[i]['gap_id']}): {result}")
                 traceback.print_exception(type(result), result, result.__traceback__)
+                continue
+            if result is None:
                 continue
             generated_knowledge.append(result)
 
@@ -258,6 +400,41 @@ class KnowledgeGeneratorClient:
                     completion_tokens=response.usage.completion_tokens
                 )
 
+            # 後處理品質檢查：攔截編造內容
+            answer_text = result.get("answer", "")
+            fabricated = []
+            if _FABRICATED_PHONE_RE.search(answer_text):
+                fabricated.append('電話號碼')
+            if _FABRICATED_EMAIL_RE.search(answer_text):
+                fabricated.append('Email')
+            if _FABRICATED_URL_RE.search(answer_text):
+                fabricated.append('網址')
+            if fabricated:
+                print(f"   ⛔ 攔截知識（內容包含編造的 {', '.join(fabricated)}）: {gap['question']}")
+                return None
+            # 替換禁用稱呼
+            for term in _BANNED_TERMS:
+                if term in answer_text:
+                    result['answer'] = result['answer'].replace(term, '管理師')
+                    print(f"   🔄 已將「{term}」替換為「管理師」")
+
+            # 品質檢查：標記空泛回答（不攔截，讓人工審核決定）
+            content_stripped = re.sub(r'(請|可以|建議|隨時).*?(聯繫|聯絡|詢問|洽詢).*?管理師.*', '', result['answer'])
+            content_stripped = re.sub(r'(如果|若).*?(問題|疑問|需要).*', '', content_stripped)
+            meaningful_chars = len(content_stripped.strip())
+            if meaningful_chars < 30:
+                print(f"   ⚠️  知識內容偏短（{meaningful_chars} 字），標記待人工審核: {gap['question']}")
+
+            # 🔍 AI 品質驗證（第二次 AI call）
+            quality_result = await self._verify_content_quality(
+                question=gap["question"],
+                content=result.get("answer", "")
+            )
+            if not quality_result["passed"]:
+                reasons = ", ".join(quality_result["reasons"])
+                print(f"   ⛔ 品質驗證未通過: {gap['question'][:30]}... — {reasons}")
+                return None
+
             # 使用 AI 生成的 topic 作為精簡標題，原始問題加入 keywords
             topic = result.get("topic", "").strip()
             if not topic:
@@ -333,7 +510,8 @@ class KnowledgeGeneratorClient:
         else:
             knowledge_text = "（無相似知識）"
 
-        # 填充模板
+        # 填充模板（注入可用 API 查詢表單清單）
+        available_api_forms_section = self._build_available_api_forms_section()
         prompt = self.KNOWLEDGE_GENERATION_PROMPT.format(
             question=gap["question"],
             failure_reason=gap.get("failure_reason", "no_match"),
@@ -341,7 +519,8 @@ class KnowledgeGeneratorClient:
             suggested_action_type=suggested_action_type,
             intent_name=gap.get("intent_name", "未知"),
             vendor_type="包租代管公司",
-            existing_knowledge=knowledge_text
+            existing_knowledge=knowledge_text,
+            available_api_forms_section=available_api_forms_section
         )
 
         return prompt

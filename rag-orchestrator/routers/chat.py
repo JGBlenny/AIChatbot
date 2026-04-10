@@ -1207,9 +1207,9 @@ async def _build_orchestrator_response(
                 'id': sop_item.get('id'),
                 'item_name': sop_item.get('item_name'),
                 'group_name': sop_item.get('group_name', ''),
-                'base_similarity': sop_item.get('similarity', 1.0),
+                'base_similarity': sop_item.get('similarity', 0.0),
                 'intent_boost': 1.0,
-                'boosted_similarity': sop_item.get('similarity', 1.0),
+                'boosted_similarity': sop_item.get('similarity', 0.0),
                 'is_selected': True
             }] if sop_item else [],
             knowledge_candidates=knowledge_candidates_debug,  # 🆕 添加知識庫候選
@@ -1323,7 +1323,7 @@ async def _build_sop_response(
         # 構建 SOP 候選列表
         sop_candidates_debug = []
         for sop in sop_items:
-            similarity = sop.get('similarity', 1.0)
+            similarity = sop.get('similarity', 0.0)
             sop_candidates_debug.append({
                 'id': sop['id'],
                 'item_name': sop['item_name'],

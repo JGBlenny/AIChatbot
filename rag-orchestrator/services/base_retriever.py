@@ -28,16 +28,20 @@ class BaseRetriever(ABC):
         # Embedding 客戶端
         self.embedding_client = get_embedding_client()
 
-        # Reranker (如果啟用)
+        # Reranker：統一使用 SemanticReranker（外部 semantic-model 服務）
         self.reranker = None
+        self.semantic_reranker = None
         if os.getenv("ENABLE_RERANKER", "false").lower() == "true":
             try:
-                from FlagEmbedding import FlagReranker
-                model_path = os.getenv("RERANKER_MODEL_PATH", "/app/models/bge-reranker-v2-m3")
-                self.reranker = FlagReranker(model_path, use_fp16=True)
-                print("✅ Reranker 已啟用")
+                from .semantic_reranker import get_semantic_reranker
+                sr = get_semantic_reranker()
+                if sr.is_available:
+                    self.semantic_reranker = sr
+                    print("✅ Reranker 已啟用（SemanticReranker）")
+                else:
+                    print("⚠️ SemanticReranker 服務不可用，Reranker 未啟用")
             except Exception as e:
-                print(f"⚠️ Reranker 載入失敗: {e}")
+                print(f"⚠️ SemanticReranker 載入失敗: {e}，Reranker 未啟用")
 
         # 檢索配置
         self.default_top_k = 5
@@ -185,9 +189,9 @@ class BaseRetriever(ABC):
             results = await self._apply_keyword_boost(results, query)
             print(f"   關鍵字加成: 已應用")
 
-        # Step 5: Reranker
-        if self.reranker and len(results) > 0:
-            results = self._apply_reranker(query, results)
+        # Step 5: SemanticReranker
+        if self.semantic_reranker and len(results) > 0:
+            results = self._apply_semantic_reranker(query, results, top_k)
             print(f"   Reranker: 已重排序")
 
         print(f"   最終結果: {len(results)} 個")
@@ -229,6 +233,40 @@ class BaseRetriever(ABC):
         # 重新排序
         results.sort(key=lambda x: x.get('similarity', 0), reverse=True)
         return results
+
+    def _apply_semantic_reranker(self, query: str, candidates: List[Dict], top_k: int = 5) -> List[Dict]:
+        """使用 SemanticReranker（外部服務）重排序"""
+        if not self.semantic_reranker or not candidates:
+            return candidates
+
+        try:
+            # SemanticReranker 需要 candidates 有 content 欄位
+            # SOP 用 content，KB 用 answer + question_summary
+            prepared = []
+            for c in candidates:
+                item = dict(c)
+                if 'answer' not in item and 'content' in item:
+                    item['answer'] = item['content']
+                if 'question_summary' not in item:
+                    item['question_summary'] = item.get('item_name', '')
+                prepared.append(item)
+
+            reranked = self.semantic_reranker.rerank(query, prepared, top_k=top_k)
+
+            # 把 semantic_score 寫回 similarity（10% 原始 + 90% rerank）
+            for item in reranked:
+                original_score = item.get('similarity', 0)
+                semantic_score = item.get('semantic_score', 0)
+                item['original_similarity'] = original_score
+                item['rerank_score'] = semantic_score
+                item['similarity'] = original_score * 0.1 + semantic_score * 0.9
+
+            reranked.sort(key=lambda x: x['similarity'], reverse=True)
+            return reranked
+
+        except Exception as e:
+            print(f"⚠️ SemanticReranker 執行失敗: {e}")
+            return candidates
 
     def _apply_reranker(self, query: str, candidates: List[Dict]) -> List[Dict]:
         """

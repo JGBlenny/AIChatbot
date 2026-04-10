@@ -2746,11 +2746,11 @@ loop_id：____________________
 ---
 
 ### 13.1 盤查現有表單與 API 規格 ⏳
-- [ ] 盤查 `vendor_sop_items` 中 `next_action = form_fill` 使用的表單 ID 與對應表單結構
-- [ ] 盤查 `next_action = api_call` 使用的 API 端點與回傳格式
-- [ ] 整理表單清單（form_id → 用途、欄位）提供給 SOP prompt 參考
-- [ ] 整理 API 清單（端點 → 用途、參數）提供給 Knowledge prompt 參考
-- [ ] 修改 SOP/Knowledge prompt，讓生成時能正確指定 `next_form_id` 和 `next_action`
+- [x] 盤查 `vendor_sop_items` 中 `next_action = form_fill` 使用的表單 ID 與對應表單結構
+- [x] 盤查 `next_action = api_call` 使用的 API 端點與回傳格式
+- [x] 整理表單清單（form_id → 用途、欄位）提供給 SOP prompt 參考
+- [x] 整理 API 清單（端點 → 用途、參數）提供給 Knowledge prompt 參考
+- [x] 修改 SOP/Knowledge prompt，讓生成時能正確指定 `next_form_id` 和 `next_action`
 - [ ] 驗證 form_fill 類型的 SOP 生成是否正確引導填表
 - [ ] 驗證 api_call 類型的知識回答是否正確描述查詢行為
 
@@ -2782,11 +2782,29 @@ loop_id：____________________
 - [x] SOP 和 Knowledge 生成器都加了去重攔截
 - **修改檔案**：`sop_generator.py`、`knowledge_generator.py`
 
-### 13.6 驗證 ⏳
-- [ ] 跑新一輪回測驗證 prompt 改善效果
-- [ ] 驗證 topic 精簡標題是否正確生成
-- [ ] 驗證向量去重是否有效攔截重複 SOP
-- [ ] 觀察分類器是否正確區分 SOP vs Knowledge
+### 13.6 分類器改良：翻轉預設立場 + 信心分數 ✅
+- [x] 在 `coordinator.py` 分類前，用輕量 AI call 問「這個問題能用固定文字回答所有租客嗎？」，不能的跳過，不確定的標記「待人工判斷」
+- [x] 修改分類 prompt，要求 AI 回傳 `confidence` 欄位（0-1），< 0.8 不生成
+- [x] 簡化硬編碼關鍵字黑名單（精簡至最明確的關鍵字，其他交由 AI 決策樹 + confidence 處理）
+- **修改檔案**：`coordinator.py`、`gap_classifier.py`
+
+### 13.7 SOP 白名單機制 ✅
+- [x] 在 `sop_generator.py` 加 SOP 主題白名單（續約、退租、簽約、轉租、入住、搬出、寵物、訪客、過夜、噪音、繳費方式、押金退還、報修、投訴等）
+- [x] 不在白名單內的主題不生成 SOP，降級為 system_config（由 coordinator 收回合併到 knowledge_gaps）
+- **修改檔案**：`sop_generator.py`、`coordinator.py`
+
+### 13.8 生成品質驗證 ✅
+- [x] 生成後用第二次 AI call 驗證內容（是否編造資訊、是否空泛、是否對所有租客適用）
+- [x] 三項都通過才寫入資料庫
+- **修改檔案**：`sop_generator.py`、`knowledge_generator.py`
+
+### 13.9 回測驗證 ⏳
+- [ ] 清回測資料，跑完整迴圈驗證改善效果
+- [ ] 驗證 SOP 白名單是否正確攔截非業務流程主題
+- [ ] 驗證信心分數是否有效過濾不確定的分類
+- [ ] 驗證品質驗證是否攔截編造內容
+- [ ] 驗證 form_fill 類型的 SOP 生成是否正確引導填表
+- [ ] 驗證 api_call 類型的知識回答是否正確描述查詢行為
 
 ---
 

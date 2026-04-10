@@ -1335,6 +1335,10 @@ class LoopCoordinator:
             # ============================================
             print(f"\n🤖 開始智能分類 {len(gaps)} 個知識缺口...")
 
+            # 預過濾：排除無法用固定文字回答的問題（因人/物件而異）
+            gaps = await self.gap_classifier.pre_filter_dynamic_questions(gaps)
+            print(f"   預過濾後剩餘：{len(gaps)} 題")
+
             # 執行分類
             classification_result = await self.gap_classifier.classify_gaps(gaps)
 
@@ -1349,6 +1353,7 @@ class LoopCoordinator:
                     "api_query_count": summary.get("api_query_count", 0),
                     "form_fill_count": summary.get("form_fill_count", 0),
                     "system_config_count": summary.get("system_config_count", 0),
+                    "jgb_system_count": summary.get("jgb_system_count", 0),
                     "should_generate_count": summary.get("should_generate_count", 0),
                 }
             )
@@ -1358,6 +1363,7 @@ class LoopCoordinator:
             print(f"   - API 查詢: {summary.get('api_query_count', 0)} 題（不生成靜態知識）")
             print(f"   - 表單填寫: {summary.get('form_fill_count', 0)} 題")
             print(f"   - 系統配置: {summary.get('system_config_count', 0)} 題")
+            print(f"   - JGB 平台操作: {summary.get('jgb_system_count', 0)} 題（不生成靜態知識）")
             print(f"   → 需要生成知識: {summary.get('should_generate_count', 0)}/{len(gaps)} 題")
 
             # 使用聚類功能合併相似問題，減少碎片化 SOP
@@ -1415,9 +1421,29 @@ class LoopCoordinator:
                 )
                 print(f"✅ 已生成 {len(generated_sops)} 筆 SOP")
 
+                # 收回 SOP 白名單降級的 gaps，合併到 knowledge_gaps
+                downgraded = getattr(self.sop_generator, '_downgraded_gaps', [])
+                if downgraded:
+                    knowledge_gaps.extend(downgraded)
+                    print(f"   📋 SOP 白名單降級 {len(downgraded)} 題回到一般知識生成")
+
             # 處理一般知識類型（需要 action_type 判斷）
             if knowledge_gaps:
-                print(f"\n📚 開始生成一般知識...")
+                # SOP/Knowledge 去重：排除與已生成 SOP 主題重複的知識缺口
+                if generated_sops:
+                    sop_names = {s.get('item_name', '').lower() for s in generated_sops if s}
+                    sop_questions = {s.get('question', '').lower() for s in generated_sops if s}
+                    dedup_set = sop_names | sop_questions
+                    before_count = len(knowledge_gaps)
+                    knowledge_gaps = [
+                        gap for gap in knowledge_gaps
+                        if gap.get('question', '').lower() not in dedup_set
+                    ]
+                    dedup_count = before_count - len(knowledge_gaps)
+                    if dedup_count > 0:
+                        print(f"   🔄 SOP/Knowledge 去重：排除 {dedup_count} 筆與 SOP 重複的知識缺口")
+
+                print(f"\n📚 開始生成一般知識（{len(knowledge_gaps)} 題）...")
 
                 # 判斷回應類型（只針對一般知識缺口）
                 action_type_judgments = {}

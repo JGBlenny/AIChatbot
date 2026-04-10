@@ -96,35 +96,22 @@ async def retrieve_sop_hybrid(
     # 提取主要意圖（第一個意圖通常是最高置信度）
     primary_intent_id = intent_ids[0] if intent_ids else None
 
-    # 使用 hybrid 方法：intent boosting + 向量相似度（一次性檢索）
-    result = await sop_retriever.retrieve_sop_hybrid(
-        vendor_id=vendor_id,
+    # 使用 BaseRetriever.retrieve() — 已包含向量檢索 + 關鍵字備選 + intent boost
+    all_sop_items = await sop_retriever.retrieve(
         query=query,
-        intent_ids=intent_ids,
-        primary_intent_id=primary_intent_id,
+        vendor_id=vendor_id,
         top_k=top_k,
         similarity_threshold=similarity_threshold,
-        return_debug_info=return_debug_info
+        intent_id=primary_intent_id
     )
-
-    # 根據是否返回調試資訊，解包結果
-    if return_debug_info:
-        items_with_sim, debug_candidates = result
-    else:
-        items_with_sim = result
-        debug_candidates = None
-
-    # 將相似度添加到 item dict 中
-    all_sop_items = []
-    for item, similarity in items_with_sim:
-        item_with_sim = {**item, 'similarity': similarity}
-        all_sop_items.append(item_with_sim)
+    # retrieve() 回傳 List[Dict]，每個 dict 已包含 similarity 欄位
 
     if all_sop_items:
-        print(f"✨ Intent Boosting 檢索：共 {len(all_sop_items)} 個 SOP 項目（來自 {len(intent_ids)} 個意圖，主要意圖: {primary_intent_id}）")
+        print(f"✨ SOP 檢索：共 {len(all_sop_items)} 個項目（主要意圖: {primary_intent_id}）")
 
     if return_debug_info:
-        return all_sop_items, debug_candidates
+        # debug 用：回傳所有候選項作為 debug_candidates
+        return all_sop_items, all_sop_items
     else:
         return all_sop_items
 
@@ -148,8 +135,8 @@ def convert_sop_to_search_results(sop_items: list) -> list:
         'id': sop['id'],
         'title': sop.get('item_name', sop.get('title', '')),
         'content': sop['content'],
-        'similarity': sop.get('similarity', 1.0),  # 加成後相似度（用於排序）
-        'original_similarity': sop.get('original_similarity', sop.get('similarity', 1.0)),  # 原始相似度（用於完美匹配判斷）
+        'similarity': sop.get('similarity', 0.0),  # 向量相似度（用於排序）
+        'original_similarity': sop.get('original_similarity', sop.get('similarity', 0.0)),  # 原始相似度（用於完美匹配判斷）
         'scope': 'vendor_sop'
     } for sop in sop_items]
 
