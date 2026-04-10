@@ -269,7 +269,8 @@ def _remove_duplicate_question(answer: str, question: str) -> str:
 
 def _convert_form_result_to_response(
     form_result: dict,
-    request: VendorChatRequest
+    request: VendorChatRequest,
+    debug_info: dict = None
 ) -> VendorChatResponse:
     """
     將表單處理結果轉換為標準 VendorChatResponse
@@ -302,7 +303,8 @@ def _convert_form_result_to_response(
         form_id=form_result.get('form_id'),
         current_field=form_result.get('current_field'),
         progress=form_result.get('progress'),
-        allow_resume=form_result.get('allow_resume', False)
+        allow_resume=form_result.get('allow_resume', False),
+        debug_info=debug_info if request.include_debug_info else None
     )
 
 
@@ -1535,7 +1537,8 @@ async def _handle_no_knowledge_found(
     resolver,
     cache_service,
     vendor_info: dict,
-    decision: dict = None  # 🆕 添加 decision 參數以獲取 SOP 候選資訊
+    decision: dict = None,  # 🆕 添加 decision 參數以獲取 SOP 候選資訊
+    knowledge_list: list = None  # 🆕 未達標的知識候選（供 debug 顯示）
 ):
     """
     處理找不到知識的情況：參數答案 > 兜底回應
@@ -1617,11 +1620,31 @@ async def _handle_no_knowledge_found(
                 sop_candidates_list = sop_result['all_sop_candidates']
             comparison_metadata = decision.get('comparison')
 
+        # 🆕 構建未達標的知識候選列表
+        knowledge_candidates_debug = []
+        if knowledge_list:
+            for k in knowledge_list:
+                knowledge_candidates_debug.append({
+                    'id': k['id'],
+                    'question_summary': k.get('question_summary', ''),
+                    'scope': k.get('scope', ''),
+                    'base_similarity': k.get('original_similarity', k.get('similarity', 0.0)),
+                    'rerank_score': k.get('rerank_score'),
+                    'intent_boost': k.get('intent_boost', 1.0),
+                    'intent_semantic_similarity': k.get('intent_semantic_similarity'),
+                    'boosted_similarity': k.get('similarity', 0.0),
+                    'intent_type': k.get('intent_type'),
+                    'priority': k.get('priority'),
+                    'priority_boost': k.get('priority_boost', 0.0),
+                    'is_selected': False  # 全部未達標
+                })
+
         debug_info = _build_debug_info(
             processing_path='no_knowledge_found',
             intent_result=intent_result,
             llm_strategy='fallback',  # 兜底回應
             sop_candidates=sop_candidates_list,  # 🆕 傳遞 SOP 候選資訊
+            knowledge_candidates=knowledge_candidates_debug,  # 🆕 未達標的知識候選
             vendor_params=params,
             used_param_keys=used_param_keys,  # ✅ 只顯示實際被注入的參數
             comparison_metadata=comparison_metadata  # 🆕 傳遞比較元數據
@@ -1648,6 +1671,9 @@ async def _handle_no_knowledge_found(
 
 async def _record_no_knowledge_scenario(request: VendorChatRequest, intent_result: dict, req: Request):
     """記錄找不到知識的場景到測試庫 + 意圖建議"""
+    # 回測請求不寫入題庫，避免重複膨脹 test_scenarios
+    if request.session_id and request.session_id.startswith('backtest_session_'):
+        return
     # 1. 記錄到測試場景庫
     try:
         test_scenario_conn = psycopg2.connect(**get_db_config())
@@ -1721,11 +1747,60 @@ async def _build_knowledge_response(
         action_type = best_knowledge.get('action_type', 'direct_answer')
         form_id = best_knowledge.get('form_id')
 
-        # 如果最高順位是表單類型，直接使用
-        if action_type == 'form_fill' or form_id:
-            print(f"📝 [表單優先] 最高順位知識 ID {best_knowledge['id']} 是表單類型，直接使用")
-            print(f"   action_type={action_type}, form_id={form_id}, similarity={best_knowledge.get('similarity', 0):.3f}")
-            filtered_knowledge_list = [best_knowledge]  # 直接使用，無需閾值檢查
+        # 如果最高順位是表單類型，檢查是否達到表單觸發門檻
+        form_trigger_threshold = float(os.getenv("FORM_TRIGGER_THRESHOLD", "0.75"))
+        if (action_type == 'form_fill' or form_id) and best_knowledge.get('similarity', 0) >= form_trigger_threshold:
+            print(f"📝 [表單優先] 最高順位知識 ID {best_knowledge['id']} 是表單類型，相似度 {best_knowledge.get('similarity', 0):.3f} >= {form_trigger_threshold}，觸發表單")
+            filtered_knowledge_list = [best_knowledge]
+
+            # 構建表單觸發路徑的 debug_info
+            form_debug_info = None
+            if request.include_debug_info:
+                knowledge_candidates_debug = [{
+                    'id': k['id'],
+                    'question_summary': k.get('question_summary', ''),
+                    'scope': k.get('scope', ''),
+                    'base_similarity': k.get('original_similarity', k.get('similarity', 0.0)),
+                    'rerank_score': k.get('rerank_score'),
+                    'intent_boost': k.get('intent_boost', 1.0),
+                    'intent_semantic_similarity': k.get('intent_semantic_similarity'),
+                    'boosted_similarity': k.get('similarity', 0.0),
+                    'intent_type': k.get('intent_type'),
+                    'priority': k.get('priority'),
+                    'priority_boost': k.get('priority_boost', 0.0),
+                    'is_selected': k['id'] == best_knowledge['id']
+                } for k in knowledge_list]
+
+                sop_candidates_debug = []
+                if decision and decision.get('sop_result'):
+                    sop_result = decision['sop_result']
+                    for sop_item in sop_result.get('all_sop_candidates', []):
+                        sop_candidates_debug.append({
+                            'id': sop_item.get('id'),
+                            'item_name': sop_item.get('title', sop_item.get('item_name', '')),
+                            'group_name': sop_item.get('group_name', ''),
+                            'base_similarity': sop_item.get('similarity', 0.0),
+                            'rerank_score': sop_item.get('rerank_score'),
+                            'intent_boost': sop_item.get('intent_boost', 1.0),
+                            'boosted_similarity': sop_item.get('boosted_similarity', sop_item.get('similarity', 0.0)),
+                            'is_selected': sop_item.get('is_selected', False)
+                        })
+
+                comparison_metadata = decision.get('comparison') if decision else None
+                form_debug_info = _build_debug_info(
+                    processing_path='knowledge_form',
+                    intent_result=intent_result,
+                    llm_strategy='none',
+                    knowledge_candidates=knowledge_candidates_debug,
+                    sop_candidates=sop_candidates_debug,
+                    comparison_metadata=comparison_metadata
+                )
+        elif action_type == 'form_fill' or form_id:
+            # 表單類型但相似度不足，從候選中排除此筆，用其他非表單知識
+            print(f"⚠️  [表單未觸發] 知識 ID {best_knowledge['id']} 相似度 {best_knowledge.get('similarity', 0):.3f} < {form_trigger_threshold}，排除此筆表單知識")
+            non_form_knowledge = [k for k in knowledge_list if k.get('action_type') != 'form_fill' and not k.get('form_id')]
+            high_quality_threshold = float(os.getenv("HIGH_QUALITY_THRESHOLD", "0.8"))
+            filtered_knowledge_list = [k for k in non_form_knowledge if k.get('similarity', 0) >= high_quality_threshold]
         else:
             # ⭐ 步驟 2：非表單知識才需要質量檢查
             high_quality_threshold = float(os.getenv("HIGH_QUALITY_THRESHOLD", "0.8"))
@@ -1744,7 +1819,8 @@ async def _build_knowledge_response(
         print(f"⚠️  沒有符合條件的知識，嘗試參數答案或兜底回應...")
         return await _handle_no_knowledge_found(
             request, req, intent_result, resolver, cache_service, vendor_info,
-            decision=decision  # 🆕 傳遞 decision 以包含 SOP 候選資訊
+            decision=decision,  # 🆕 傳遞 decision 以包含 SOP 候選資訊
+            knowledge_list=knowledge_list  # 🆕 傳遞未達標的知識候選
         )
 
     # ⭐ 步驟 3：處理過濾後的知識（可能是表單或一般知識）
@@ -1812,7 +1888,7 @@ async def _build_knowledge_response(
                         vendor_id=request.vendor_id,
                         trigger_question=request.message
                     )
-                    return _convert_form_result_to_response(form_result, request)
+                    return _convert_form_result_to_response(form_result, request, debug_info=form_debug_info)
                 else:
                     # 返回等待狀態的回應
                     return VendorChatResponse(
@@ -1822,7 +1898,8 @@ async def _build_knowledge_response(
                         mode=request.mode,
                         session_id=request.session_id,
                         timestamp=datetime.utcnow().isoformat(),
-                        source_count=0
+                        source_count=0,
+                        debug_info=form_debug_info if request.include_debug_info else None
                     )
 
             else:  # trigger_mode == 'auto' 或其他值
@@ -1837,7 +1914,7 @@ async def _build_knowledge_response(
                     trigger_question=request.message
                 )
 
-                return _convert_form_result_to_response(form_result, request)
+                return _convert_form_result_to_response(form_result, request, debug_info=form_debug_info)
 
     elif action_type == 'api_call':
         # 場景 C/F: 直接調用 API（已登入用戶）
@@ -1873,7 +1950,7 @@ async def _build_knowledge_response(
                 trigger_question=request.message
             )
 
-            return _convert_form_result_to_response(form_result, request)
+            return _convert_form_result_to_response(form_result, request, debug_info=form_debug_info)
 
     # ⭐ 步驟 3：direct_answer 流程（降級或原本就是 direct_answer）
     # 獲取業者參數（保留完整資訊包含 display_name, unit 等）
