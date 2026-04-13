@@ -191,6 +191,10 @@ services:
       # 語義重排序配置（2026-02-06）
       USE_SEMANTIC_RERANK: ${USE_SEMANTIC_RERANK:-true}
       SEMANTIC_MODEL_API_URL: http://semantic-model:8000
+      # 表單觸發配置
+      FORM_TRIGGER_THRESHOLD: ${FORM_TRIGGER_THRESHOLD:-0.75}
+      # 回測系統配置
+      BACKTEST_BASE_URL: ${BACKTEST_BASE_URL:-http://rag-orchestrator:8100}
     ports:
       - "8100:8100"
     depends_on:
