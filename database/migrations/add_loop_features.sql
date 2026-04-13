@@ -63,35 +63,23 @@ COMMENT ON COLUMN loop_generated_knowledge.knowledge_type IS '知識類型：sop
 COMMENT ON COLUMN loop_generated_knowledge.sop_config IS 'SOP 配置（僅 knowledge_type = sop 時使用）：{category_id, group_id, step_number, ...}';
 
 -- ============================================
--- 3. 建立 knowledge_gap_analysis 表（如果不存在）
+-- 3. 補充 knowledge_gap_analysis 表欄位（002 建表後新增的欄位）
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS knowledge_gap_analysis (
-    id SERIAL PRIMARY KEY,
-    loop_id INTEGER NOT NULL REFERENCES knowledge_completion_loops(id) ON DELETE CASCADE,
-    iteration INTEGER NOT NULL,
-    scenario_id INTEGER REFERENCES test_scenarios(id),
-    test_question TEXT NOT NULL,
-    gap_type VARCHAR(20),  -- sop_knowledge, form_fill, system_config, api_query
-    failure_reason VARCHAR(50),  -- NO_MATCH, LOW_CONFIDENCE, WRONG_INTENT, etc.
-    priority VARCHAR(10),  -- p0, p1, p2
-    cluster_id INTEGER,  -- 聚類 ID
-    should_generate_knowledge BOOLEAN DEFAULT true,
-    classification_metadata JSONB,  -- OpenAI 分類的完整結果
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+ALTER TABLE knowledge_gap_analysis
+ADD COLUMN IF NOT EXISTS test_question TEXT,
+ADD COLUMN IF NOT EXISTS gap_type VARCHAR(20),
+ADD COLUMN IF NOT EXISTS cluster_id INTEGER,
+ADD COLUMN IF NOT EXISTS should_generate_knowledge BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS classification_metadata JSONB;
 
 -- 建立索引
-CREATE INDEX IF NOT EXISTS idx_gap_analysis_loop_iteration ON knowledge_gap_analysis(loop_id, iteration);
 CREATE INDEX IF NOT EXISTS idx_gap_analysis_scenario ON knowledge_gap_analysis(scenario_id);
 CREATE INDEX IF NOT EXISTS idx_gap_analysis_cluster ON knowledge_gap_analysis(cluster_id);
 CREATE INDEX IF NOT EXISTS idx_gap_analysis_gap_type ON knowledge_gap_analysis(gap_type);
 
 -- 建立註釋
-COMMENT ON TABLE knowledge_gap_analysis IS '知識缺口分析表（記錄失敗測試案例的分類與聚類結果）';
 COMMENT ON COLUMN knowledge_gap_analysis.gap_type IS '缺口類型：sop_knowledge（SOP 流程）、form_fill（表單填寫）、system_config（系統配置）、api_query（API 查詢）';
-COMMENT ON COLUMN knowledge_gap_analysis.failure_reason IS '失敗原因：NO_MATCH（無匹配知識）、LOW_CONFIDENCE（信心度低）、WRONG_INTENT（意圖錯誤）等';
-COMMENT ON COLUMN knowledge_gap_analysis.priority IS '優先級：p0（高）、p1（中）、p2（低）';
 COMMENT ON COLUMN knowledge_gap_analysis.cluster_id IS '聚類 ID（同一聚類的缺口會一起生成知識）';
 COMMENT ON COLUMN knowledge_gap_analysis.should_generate_knowledge IS '是否應生成知識（false 表示 API 查詢類型，不生成靜態知識）';
 COMMENT ON COLUMN knowledge_gap_analysis.classification_metadata IS 'OpenAI 分類的完整結果（JSON 格式）';
