@@ -230,7 +230,7 @@ for MIGRATION_FILE in "${PENDING_MIGRATIONS[@]}"; do
     TMP_LOG="/tmp/migration_${MIGRATION_NAME}_$(date +%s).log"
 
     # 執行 migration
-    if cat "$MIGRATION_FILE" | docker-compose -f "$COMPOSE_FILE" exec -T "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" > "$TMP_LOG" 2>&1; then
+    if cat "$MIGRATION_FILE" | docker-compose -f "$COMPOSE_FILE" exec -T "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" --set ON_ERROR_STOP=on > "$TMP_LOG" 2>&1; then
         # 計算執行時間（秒 -> 毫秒）
         END_TIME=$(date +%s)
         EXECUTION_TIME=$(( (END_TIME - START_TIME) * 1000 ))
