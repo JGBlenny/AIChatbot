@@ -381,6 +381,7 @@ class GapClassifier:
 
     _FORCE_JGB_SYSTEM_KEYWORDS = [
         '系統', '登入', '密碼', 'APP', 'app',
+        '發票',
     ]
 
     # 組合關鍵字：問題中同時包含這些詞就攔（解決「系統有哪些通知」這類中間隔了其他字的情況）
