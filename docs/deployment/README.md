@@ -353,6 +353,80 @@ deployment/
 
 ---
 
+### 2026-03-27 ⭐⭐⭐ 最新
+
+**主要更新：**
+- **🔄 知識完善迴圈系統** ⭐⭐⭐⭐⭐：完整的迭代式知識優化流程
+- **📊 迴圈管理 API** ⭐⭐⭐⭐⭐：啟動、執行、暫停、恢復、取消、完成批次
+- **✅ 知識審核 API** ⭐⭐⭐⭐⭐：單一審核、批量審核、重複檢測
+- **⚡ 非同步執行架構** ⭐⭐⭐⭐：長時間迭代任務背景執行，避免 HTTP 超時
+- **🎯 固定測試集保證** ⭐⭐⭐⭐：確保迭代間測試一致性
+- **💰 成本追蹤與控制** ⭐⭐⭐：OpenAI API 成本監控與預算限制
+
+**部署文件：**
+- [DEPLOY_KNOWLEDGE_COMPLETION_LOOP.md](2026-03-27/DEPLOY_KNOWLEDGE_COMPLETION_LOOP.md) - 完整部署指南
+
+**API 文檔：**
+- [loops_api.md](../api/loops_api.md) - 迴圈管理 API（10 個端點）
+- [loop_knowledge_api.md](../api/loop_knowledge_api.md) - 知識審核 API（3 個端點）
+
+**前端需求文檔：**
+- [batch_review_requirements.md](../frontend/batch_review_requirements.md) - 批量審核功能需求
+- [loop_management_requirements.md](../frontend/loop_management_requirements.md) - 迴圈管理界面需求
+
+**資料庫遷移：**
+- `database/migrations/add_loop_features.sql` - 補充迴圈系統欄位
+  - 新增 `scenario_ids` (INTEGER[]): 固定測試集
+  - 新增 `selection_strategy` (VARCHAR): 選取策略
+  - 新增 `difficulty_distribution` (JSONB): 難度分布
+  - 新增 `parent_loop_id` (INTEGER): 批次關聯
+  - 新增 `max_iterations` (INTEGER): 最大迭代次數
+  - 補充 `loop_generated_knowledge` 重複檢測欄位
+  - 建立 `knowledge_gap_analysis` 表
+- `database/migrations/rollback_add_loop_features.sql` - 回滾腳本
+
+**部署步驟（重要）：**
+1. ⚠️ **備份資料庫**（必須！）
+2. 執行 Migration：`./database/run_migrations.sh docker-compose.yml` 或手動執行
+3. 重啟服務：`docker-compose restart rag-orchestrator`
+4. 驗證部署：測試 API 端點（`/api/v1/loops`, `/api/v1/loop-knowledge/pending`）
+5. 功能測試：啟動迴圈、執行迭代、批量審核
+
+**核心功能：**
+- ✅ **13 個 API 端點**：完整的迴圈生命週期管理
+- ✅ **固定測試集**：scenario_ids 確保迭代間測試一致性
+- ✅ **分層隨機抽樣**：按難度分布選取測試情境
+- ✅ **批次間避免重複**：parent_loop_id 關聯排除已用情境
+- ✅ **非同步執行**：AsyncExecutionManager 管理長時間任務
+- ✅ **重複檢測**：pgvector 向量相似度搜尋（≥0.95 為 duplicate）
+- ✅ **批量審核**：一次審核 1-100 個知識項目（部分成功模式）
+- ✅ **成本控制**：budget_limit_usd 預算限制與追蹤
+
+**部署效果：**
+- ✅ API 回應時間：< 1 秒（非同步啟動）
+- ✅ 批量審核 10 項：< 5 秒
+- ✅ 迭代執行時間：50 題 10-15 分鐘
+- ✅ 資料一致性：固定測試集保證可比較性
+- ✅ 批次擴展性：自動排除已用測試情境
+
+**停機時間：** < 2 分鐘（服務重啟）
+
+**風險評估：** 🟡 中風險（新增資料庫欄位、新增 API 路由，已充分測試）
+
+**特別注意：**
+- ⚠️ 需要 PostgreSQL with pgvector（向量相似度搜尋）
+- ⚠️ 需要 OpenAI API Key（知識分類與生成）
+- ⚠️ 需要 Embedding API 已啟動（`http://localhost:5001`）
+- ⚠️ 前端介面需後續開發（已提供 API 文檔與需求規格）
+
+**監控重點（1 週）：**
+- API 回應時間 < 1 秒
+- 迭代執行時間（50 題）10-15 分鐘
+- OpenAI API 成本 < 預算限制
+- 服務可用性 ≥ 99.9%
+
+---
+
 ## 🆕 新增版本
 
 當有新版本需要特殊部署步驟時，請按以下方式組織：
@@ -383,4 +457,4 @@ deployment/
 
 ---
 
-**最後更新**：2026-01-28
+**最後更新**：2026-03-27

@@ -7,12 +7,19 @@ SOP 生成服務
 import asyncio
 import json
 import os
+import re
 from typing import Dict, List, Optional
 import psycopg2.pool
 import psycopg2.extras
 from openai import AsyncOpenAI
 from openai import OpenAIError, RateLimitError, APIConnectionError
 import httpx
+
+# 編造內容檢測正則：電話號碼、Email、網址
+_FABRICATED_PHONE_RE = re.compile(r'0[0-9]{1,3}[-\s]?[0-9]{3,4}[-\s]?[0-9]{3,4}')
+_FABRICATED_EMAIL_RE = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
+_FABRICATED_URL_RE = re.compile(r'https?://[^\s]+')
+_BANNED_TERMS = ['專屬管家', '客服專線', '客服電話']
 
 
 class SOPGenerator:
@@ -24,110 +31,126 @@ class SOPGenerator:
     3. 自動判斷 trigger_mode 和 next_action
     4. 持久化到 vendor_sop_items 表
     5. 支援表單填寫類型的 SOP（form_fill）
+    6. SOP 主題白名單機制
     """
 
-    # SOP 生成 Prompt 模板
-    SOP_GENERATION_PROMPT = """你是一個專業的 SOP（標準作業流程）撰寫專家，專門為包租代管公司撰寫清晰、結構化的操作流程。
+    # SOP 主題白名單：只有「業務流程」或「政策規範」才適合生成 SOP
+    # 注意：不要放 api_query（電費、水費等費用查詢）或 jgb_system（系統操作）的關鍵字
+    SOP_TOPIC_WHITELIST = [
+        # 合約相關流程
+        '續約', '續租', '退租', '解約', '簽約', '合約', '轉租', '租約',
+        # 入住/搬出流程
+        '入住', '搬出', '搬遷', '點交', '交屋', '搬家',
+        # 生活規範（政策類）
+        '寵物', '養寵物', '訪客', '過夜', '留宿', '噪音', '安寧',
+        '雙人', '入住人數', '帶朋友', '同住',
+        # 繳費「流程」（注意：不是費用金額查詢）
+        '繳費方式', '付款方式', '繳租金',
+        '遲繳', '逾期', '違約金', '晚繳',
+        # 押金流程
+        '押金退還', '退押金', '押金收取',
+        # 報修/投訴流程
+        '報修', '維修', '修繕', '投訴', '客訴',
+        # 停車位申請
+        '停車位', '車位申請', '機車位',
+        # 公共設施使用規範
+        '公共設施', '健身房', '洗衣', '交誼廳',
+        # 鑰匙門禁管理
+        '鑰匙', '門禁', '門卡', '門鎖',
+        # 裝潢申請
+        '裝潢', '裝修', '改建',
+        # 申請類（表單填寫）
+        '找房', '租屋申請',
+        # 發票流程
+        '發票開立', '發票作廢',
+        # 垃圾清運規範
+        '垃圾', '資源回收',
+    ]
 
-**任務**：根據以下資訊，生成一個完整的 SOP 項目。
+    # SOP 生成 Prompt 模板
+    SOP_GENERATION_PROMPT = """你是包租代管公司的營運主管，負責建立業務流程知識庫。
+
+**你的任務**：針對客人常問的問題，建立對應的「業務流程」或「政策規範」。
+**內容定位**：結構化的流程步驟或政策說明，但語氣要親切易懂，不是寫公文。
 
 ---
 
-**代表性問題**：{question}
+**客人的問題**：{question}
 
 {related_questions}
 
 **問題類型**：{gap_type}
-- sop_knowledge: 標準操作流程（需要步驟說明）
-- form_fill: 需要引導用戶填寫表單
-
 **失敗原因**：{failure_reason}
-
 **優先級**：{priority}
 
 ---
 
-**輸出要求**：
-
-請以 JSON 格式輸出，包含以下欄位：
-
-```json
-{{
-  "item_name": "SOP 項目名稱（簡短、描述性，30字以內）",
-  "content": "完整的 SOP 內容（清晰的步驟說明或引導文字，200-500字）",
-  "trigger_mode": "觸發模式（none, manual, immediate, auto）",
-  "trigger_keywords": ["關鍵字1", "關鍵字2", "關鍵字3"],
-  "next_action": "下一步動作（none, form_fill, api_call, form_then_api）",
-  "next_form_id": "表單ID（如果 next_action 是 form_fill，可選）",
-  "immediate_prompt": "立即提示文字（給用戶的簡短回應，50字以內）",
-  "keywords": ["搜尋關鍵字1", "關鍵字2", "關鍵字3"]
-}}
-```
-
-**SOP 內容撰寫指南**：
-
-1. **精準匹配原則**（非常重要！）：
-   - **SOP 名稱必須與內容精準匹配**，避免過於籠統
-   - **每個 SOP 只處理一個具體流程或政策**，不要合併不相關的主題
-   - 如果提供了「相關問題」，這些問題應該是高度相關且屬於同一個具體流程
-   - ❌ 錯誤範例：「租約續約及退租流程」（合併了續約和退租兩個不同流程）
-   - ✅ 正確範例：「租約續約流程」（只處理續約）或「退租解約流程」（只處理退租）
-   - ✅ 正確範例：「雙人入住政策」（只處理雙人入住）或「訪客過夜規範」（只處理訪客）
-
-2. **sop_knowledge 類型**：
-   - 提供清晰的步驟說明（使用編號或項目符號）
-   - 包含必要的注意事項和時間點
-   - 語氣專業但友善
-   - 範例：
-     ```
-     如何續約：
-
-     1. 續約時機：請在合約到期前 30 天提出續約申請
-     2. 聯繫客服：可透過以下方式聯繫：
-        - 線上客服系統
-        - 客服電話：0800-XXX-XXX
-        - 電子郵件：service@example.com
-     3. 提供資料：準備以下文件...
-     4. 審核流程：通常需要 3-5 個工作天...
-     5. 簽約與繳費：...
-     ```
-
-2. **form_fill 類型**：
-   - 說明為什麼需要填寫表單
-   - 引導用戶準備必要資料
-   - 說明填寫後的流程
-   - 設定 next_action = "form_fill"
-   - 提供適當的 next_form_id（如有）
-   - 範例：
-     ```
-     我們需要了解您的需求以提供最適合的服務。請填寫以下表單，我們會盡快與您聯繫。
-
-     需要準備的資料：
-     - 期望租期
-     - 預算範圍
-     - 其他特殊需求
-
-     填寫完成後，我們會在 1 個工作天內與您聯繫。
-     ```
-
-3. **trigger_mode 判斷**：
-   - 如果問題很明確且需要自動觸發 → trigger_mode = "auto"
-   - 如果需要手動選擇 → trigger_mode = "manual"
-   - 如果需要立即執行 → trigger_mode = "immediate"
-   - 一般情況 → trigger_mode = "none"
-
-4. **next_action 判斷**：
-   - 如果需要用戶提供資訊 → next_action = "form_fill"
-   - 如果需要查詢即時資料 → next_action = "api_call"
-   - 其他情況 → next_action = "none"
+{available_forms_section}
 
 ---
 
-**重要提醒**：
-- 所有文字使用繁體中文
-- SOP 內容要實用、清晰、易懂
-- 避免使用過於技術性的術語
-- 語氣要專業但友善
+**輸出 JSON 格式**：
+
+```json
+{{
+  "item_name": "簡短標題（15字以內，例如：退租流程、續約申請方式）",
+  "content": "客服回答內容（200-500字）",
+  "trigger_mode": "auto",
+  "trigger_keywords": ["關鍵字1", "關鍵字2", "關鍵字3"],
+  "next_action": "none 或 form_fill 或 api_call",
+  "next_form_id": "對應的 form_id（從上方表單清單選擇，沒有合適的填 null）",
+  "immediate_prompt": "簡短回應（50字以內）",
+  "keywords": ["搜尋關鍵字1", "關鍵字2"]
+}}
+```
+
+---
+
+**next_action 判斷規則**：
+- **form_fill**：客人需要填表才能完成的事（如報修申請、租屋申請、投訴），`next_form_id` 必須從上方表單清單中選擇
+- **api_call**：需要查詢即時資料的（如查租金、查電費、查停車費），`next_form_id` 必須從上方表單清單中選擇
+- **none**：純知識說明，不需要表單或 API（如退租流程說明、續約規定）
+
+**content 撰寫規則（非常重要）**：
+
+1. **你是客服在跟客人說話**，語氣自然親切，像 LINE 對話
+2. **第一句直接回答問題**，不要任何鋪陳
+3. **只寫你確定知道的事實**，不確定的寫「請聯繫您的管理師確認」
+4. **一個 SOP 只處理一個具體面向**，例如「退租通知期限」「退租點交」「押金退還」是三個獨立 SOP，不要合成一個「退租流程」
+
+**絕對禁止（違反任何一條就是不合格）**：
+- ❌ 編造電話號碼（如 0800-123-456、02-XXXX-XXXX）、Email、網址 — 任何數字格式的電話都不行
+- ❌ 使用「專屬管家」「客服專線」「客服人員」等稱呼，統一用「管理師」
+- ❌ 使用「SOP」「標準作業流程」「本流程旨在」等術語
+- ❌ 使用「在包租代管的過程中」「至關重要」「以下是關於...的說明」等廢話
+- ❌ 編造不確定的政策細節（如具體天數、百分比、金額），不確定就不要寫
+- ❌ item_name 包含「SOP」「流程說明」「政策說明」「查詢流程」等冗詞
+
+**好的回答範例**：
+```
+續約請在合約到期前 30 天提出，流程如下：
+
+1. 跟您的專屬管家說想續約
+2. 準備身分證件及原合約
+3. 審核通過後簽新約、繳費就完成了
+
+有任何問題都可以直接問我哦！
+```
+
+**不好的回答範例**：
+```
+在包租代管的過程中，續約是一個重要的環節。以下是關於續約的具體步驟說明：
+1. 續約時機：請在合約到期前 30 天提出續約申請
+2. 聯繫客服：可透過以下方式聯繫：
+   - 客服電話：0800-XXX-XXX
+   - 電子郵件：service@example.com
+```
+
+**item_name 範例**：
+- ✅ 退租流程、續約申請、押金退還、租金繳費方式、訪客過夜規範
+- ❌ 退租流程SOP、退租解約流程說明、管理費固定金額查詢流程、自助查閱電表讀數流程
+
+所有文字使用繁體中文。只輸出 JSON。
 """
 
     def __init__(
@@ -153,6 +176,247 @@ class SOPGenerator:
         self.model = model
         self.max_retries = max_retries
         self.embedding_api_url = os.getenv('EMBEDDING_API_URL', 'http://aichatbot-embedding-api:5000/api/v1/embeddings')
+        self._form_schemas_cache = None  # 表單清單快取
+
+    # 大主題拆解 Prompt
+    TOPIC_DECOMPOSE_PROMPT = """你是包租代管公司的營運主管。判斷以下問題是否涉及多個不同面向，需要拆成多筆獨立的 SOP。
+
+**問題**：{question}
+
+**判斷規則**：
+- 如果問題只涉及一個具體面向（如「續約申請」「養寵物規定」），不需拆分
+- 如果問題涉及多個面向（如「退租流程」包含通知、點交、押金、結算），需要拆分
+- 每個面向必須是可以獨立回答的具體問題
+
+**輸出 JSON**：
+{{
+  "needs_split": true 或 false,
+  "aspects": ["面向1的具體問題", "面向2的具體問題"]
+}}
+
+如果 needs_split = false，aspects 留空陣列。
+只輸出 JSON。
+"""
+
+    async def _verify_content_quality(self, question: str, content: str, content_type: str = "SOP") -> Dict:
+        """用第二次 AI call 驗證生成內容的品質
+
+        檢查三項：
+        1. 是否編造資訊（電話、Email、具體數字）
+        2. 是否空泛（只有廢話沒有實質內容）
+        3. 是否對所有租客適用（不是因人而異的答案）
+
+        Args:
+            question: 原始問題
+            content: 生成的內容
+            content_type: 內容類型（SOP / Knowledge）
+
+        Returns:
+            {"passed": bool, "reasons": List[str]}
+        """
+        if not self.client:
+            return {"passed": True, "reasons": []}
+
+        prompt = f"""你是品質審查員，檢查以下 AI 生成的{content_type}內容是否合格。
+
+**原始問題**：{question}
+
+**生成內容**：
+{content}
+
+**檢查項目**（全部通過才合格）：
+
+1. **是否編造資訊？**
+   - 是否包含看起來像真實但可能是編造的電話號碼、Email、網址？
+   - 是否編造了具體的天數、金額、百分比等數字？（如「30天內退還」「扣除10%」）
+   - 注意：「請聯繫管理師確認」不算編造
+
+2. **是否空泛？**
+   - 內容是否只是在重複問題或說廢話？
+   - 去掉「請聯繫管理師」等話，剩下的內容是否有實質資訊？
+   - 實質內容是否少於 50 字？
+
+3. **是否完全無法通用？**
+   - 注意：業務流程、政策規範、操作說明本質上是通用的，即使細節因業者而異也算通用
+   - 只有回答明確針對「某一個特定租客」或「某一個特定物件」的個人資料才算不通用
+   - 例如「您的租金是 15,000 元」不通用，但「租金繳費方式有匯款和信用卡」是通用的
+   - 寧可判定為通用，不要過度攔截
+
+**輸出 JSON**：
+{{
+  "fabricated": false,
+  "vague": false,
+  "not_universal": false,
+  "passed": true,
+  "reasons": []
+}}
+
+如果任何一項為 true，passed 必須為 false，並在 reasons 中說明原因。
+只輸出 JSON。"""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                max_tokens=300,
+                response_format={"type": "json_object"}
+            )
+
+            if self.cost_tracker and hasattr(response, 'usage'):
+                await self.cost_tracker.track_api_call(
+                    model="gpt-4o-mini",
+                    prompt_tokens=response.usage.prompt_tokens,
+                    completion_tokens=response.usage.completion_tokens,
+                    operation='quality_verification'
+                )
+
+            result = json.loads(response.choices[0].message.content)
+            return {
+                "passed": result.get("passed", True),
+                "reasons": result.get("reasons", [])
+            }
+        except Exception as e:
+            print(f"   ⚠️  品質驗證失敗，預設通過: {e}")
+            return {"passed": True, "reasons": []}
+
+    async def _is_sop_topic(self, question: str) -> bool:
+        """用 AI 判斷問題是否適合生成 SOP（業務流程/政策規範）
+
+        Args:
+            question: 問題文字
+
+        Returns:
+            True 如果問題適合生成 SOP
+        """
+        if not self.client:
+            return True  # 沒有 AI client 時預設通過
+
+        prompt = f"""判斷以下問題是否適合建立「業務流程 SOP」或「政策規範」。
+
+**問題**：{question}
+
+**適合生成 SOP 的問題**（回答 yes）：
+- 涉及租客/房東需要執行的「完整步驟流程」（退租怎麼做、報修流程、續約申請）
+- 政策規範說明（寵物飼養規定、訪客過夜規範、雙人入住政策）
+
+**特別注意**：如果問題只是問一個「數值」或「時間點」（例如：提前幾天通知、幾天內退還、通知時間是多久），這不是流程，這是知識點，回答 no
+
+**不適合生成 SOP 的問題**（回答 no）：
+- 查詢特定數值（電費多少、租金多少、押金金額）→ 這是 API 查詢
+- 系統畫面操作（怎麼上傳匯款證明、哪裡看帳單、怎麼登入、查詢繳費紀錄）→ 這是系統操作指南
+- 費用計算方式（電費怎麼算、水費計費標準）→ 這因物件而異
+- 費用支付管道（電費支付方式、水費怎麼繳）→ 這因物件/業者而異
+- 系統功能說明（有哪些通知、自動對帳功能）→ 這是系統說明
+- 任何「查詢」「查看」「在哪看」類問題 → 通常是系統操作
+
+只輸出 JSON：{{"is_sop": true/false, "reason": "一句話理由"}}"""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+                max_tokens=100,
+                response_format={"type": "json_object"}
+            )
+            result = json.loads(response.choices[0].message.content)
+            return result.get("is_sop", True)
+        except Exception as e:
+            print(f"   ⚠️ SOP 主題判斷失敗，預設通過: {e}")
+            return True
+
+    def _load_form_schemas(self) -> List[Dict]:
+        """從資料庫載入可用表單清單（快取）"""
+        if self._form_schemas_cache is not None:
+            return self._form_schemas_cache
+
+        conn = self.db_pool.getconn()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT form_id, form_name, description, on_complete_action,
+                       fields::text, api_config::text
+                FROM form_schemas
+                WHERE is_active = true
+                ORDER BY id
+            """)
+            rows = cur.fetchall()
+            forms = []
+            for row in rows:
+                field_names = []
+                try:
+                    fields = json.loads(row[4]) if row[4] else []
+                    field_names = [f.get('field_label', f.get('field_name', '')) for f in fields]
+                except (json.JSONDecodeError, TypeError):
+                    pass
+                forms.append({
+                    'form_id': row[0],
+                    'form_name': row[1],
+                    'description': row[2] or '',
+                    'action_type': row[3],  # show_knowledge or call_api
+                    'field_names': field_names,
+                })
+            self._form_schemas_cache = forms
+            return forms
+        finally:
+            self.db_pool.putconn(conn)
+
+    def _build_available_forms_section(self) -> str:
+        """組裝可用表單清單文字，供 prompt 注入"""
+        forms = self._load_form_schemas()
+        if not forms:
+            return "（系統目前沒有可用表單）"
+
+        lines = ["**可用表單清單（選擇 next_form_id 時必須從此清單中選）**：", ""]
+
+        # 分類：資料收集表單 vs API 查詢表單
+        collect_forms = [f for f in forms if f['action_type'] == 'show_knowledge']
+        api_forms = [f for f in forms if f['action_type'] == 'call_api']
+
+        if collect_forms:
+            lines.append("📋 **資料收集表單**（next_action = form_fill）：")
+            for f in collect_forms:
+                fields_str = "、".join(f['field_names'][:4]) if f['field_names'] else ''
+                lines.append(f"- `{f['form_id']}` → {f['form_name']}（欄位：{fields_str}）")
+            lines.append("")
+
+        if api_forms:
+            lines.append("🔍 **API 查詢表單**（next_action = api_call）：")
+            for f in api_forms:
+                fields_str = "、".join(f['field_names'][:4]) if f['field_names'] else ''
+                desc = f"（{f['description']}）" if f['description'] else ''
+                lines.append(f"- `{f['form_id']}` → {f['form_name']}{desc}（欄位：{fields_str}）")
+            lines.append("")
+
+        return "\n".join(lines)
+
+    async def _decompose_topic(self, question: str) -> List[str]:
+        """判斷問題是否需要拆分成多個面向，回傳面向清單"""
+        try:
+            prompt = self.TOPIC_DECOMPOSE_PROMPT.format(question=question)
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=300,
+                response_format={"type": "json_object"}
+            )
+            result = json.loads(response.choices[0].message.content)
+            if result.get("needs_split") and result.get("aspects"):
+                aspects = result["aspects"]
+                if len(aspects) > 1:
+                    print(f"   🔀 大主題拆解：「{question}」→ {len(aspects)} 個面向")
+                    for i, a in enumerate(aspects, 1):
+                        print(f"      {i}. {a}")
+                    return aspects
+        except Exception as e:
+            print(f"   ⚠️ 主題拆解失敗，照常生成: {e}")
+        return []
 
     async def _get_or_create_default_category(self, vendor_id: int) -> int:
         """獲取或創建默認的 AI 生成知識分類
@@ -257,12 +521,63 @@ class SOPGenerator:
         print(f"   知識缺口數：{len(gaps)}")
         print(f"   批次大小：{batch_size}")
 
+        # SOP 主題過濾：用 AI 判斷是否適合生成 SOP，不適合的降級為 system_config
+        # form_fill 類型直接通過（表單引導本身就需要 SOP 來觸發）
+        sop_gaps = []
+        self._downgraded_gaps = []  # 暫存降級的 gaps，讓 coordinator 可以取回
+        for gap in gaps:
+            question = gap.get('question', '')
+            gap_type = gap.get('gap_type', '')
+            if gap_type == 'form_fill':
+                sop_gaps.append(gap)
+                print(f"   📋 form_fill 直接進 SOP: {question[:50]}")
+                continue
+            is_sop = await self._is_sop_topic(question)
+            if is_sop:
+                sop_gaps.append(gap)
+            else:
+                gap_copy = gap.copy()
+                gap_copy['gap_type'] = 'system_config'
+                gap_copy['downgraded_from'] = 'sop_knowledge'
+                self._downgraded_gaps.append(gap_copy)
+                print(f"   📋 非 SOP 主題，降級 → system_config: {question[:50]}")
+
+        if self._downgraded_gaps:
+            print(f"🔒 SOP 白名單過濾：{len(self._downgraded_gaps)} 題降級為一般知識")
+
+        gaps = sop_gaps
         generated_sops = []
 
+        if not gaps:
+            print(f"   ℹ️  白名單過濾後無 SOP 題目需生成")
+            return generated_sops
+
+        # 主題拆解：大主題拆成多個面向
+        # 拆解後的子問題也必須通過 SOP AI 判斷
+        expanded_gaps = []
+        for gap in gaps:
+            aspects = await self._decompose_topic(gap.get('question', ''))
+            if aspects:
+                for aspect in aspects:
+                    # 拆解後的子問題也做 SOP 判斷
+                    is_sop = await self._is_sop_topic(aspect)
+                    if not is_sop:
+                        print(f"   📋 拆解子面向非 SOP，跳過: {aspect[:50]}")
+                        continue
+                    sub_gap = dict(gap)
+                    sub_gap['question'] = aspect
+                    sub_gap['original_question'] = gap.get('question', '')
+                    expanded_gaps.append(sub_gap)
+            else:
+                expanded_gaps.append(gap)
+
+        if len(expanded_gaps) != len(gaps):
+            print(f"   📊 主題拆解後：{len(gaps)} 題 → {len(expanded_gaps)} 題")
+
         # 批次處理
-        for i in range(0, len(gaps), batch_size):
-            batch = gaps[i:i + batch_size]
-            print(f"\n   處理批次 {i // batch_size + 1}/{(len(gaps) + batch_size - 1) // batch_size}")
+        for i in range(0, len(expanded_gaps), batch_size):
+            batch = expanded_gaps[i:i + batch_size]
+            print(f"\n   處理批次 {i // batch_size + 1}/{(len(expanded_gaps) + batch_size - 1) // batch_size}")
 
             # 並發生成
             tasks = [
@@ -286,6 +601,15 @@ class SOPGenerator:
                     print(f"   ✅ 已生成: {result.get('item_name', 'Unknown')}")
 
         print(f"\n✅ SOP 生成完成：共 {len(generated_sops)} 筆")
+
+        # 🔍 收集重複檢測統計
+        await self._log_duplicate_detection_stats(
+            loop_id=loop_id,
+            iteration=iteration,
+            knowledge_type='sop',
+            generated_items=generated_sops
+        )
+
         return generated_sops
 
     async def _enrich_trigger_keywords(
@@ -613,6 +937,195 @@ class SOPGenerator:
         finally:
             self.db_pool.putconn(conn)
 
+    async def _detect_duplicate_sops(
+        self,
+        vendor_id: int,
+        sop_title: str,
+        sop_content: str
+    ) -> Optional[Dict]:
+        """使用 pgvector 向量相似度檢測重複的 SOP
+
+        Args:
+            vendor_id: 業者 ID
+            sop_title: SOP 標題
+            sop_content: SOP 內容
+
+        Returns:
+            重複檢測結果，格式：
+            {
+                "detected": bool,
+                "items": [
+                    {
+                        "id": int,
+                        "source_table": str,  # "vendor_sop_items" or "loop_generated_knowledge"
+                        "item_name": str,
+                        "similarity_score": float
+                    }
+                ]
+            }
+        """
+        # 生成 SOP 標題的 embedding
+        combined_text = f"{sop_title}\n\n{sop_content[:200]}"  # 限制內容長度避免過長
+        query_embedding = await self._generate_embedding(combined_text)
+
+        if not query_embedding:
+            print("   ⚠️  無法生成 embedding，跳過重複檢測")
+            return {"detected": False, "items": []}
+
+        conn = self.db_pool.getconn()
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+            similar_items = []
+
+            # 檢測 1: 搜尋 vendor_sop_items 表（正式 SOP）
+            # 使用 pgvector 的 cosine similarity (<=> 運算子)
+            # 閾值：similarity > 0.70 視為相似（距離 < 0.30）
+            cur.execute("""
+                SELECT
+                    id,
+                    item_name,
+                    1 - (primary_embedding <=> %s::vector) AS similarity_score
+                FROM vendor_sop_items
+                WHERE vendor_id = %s
+                  AND primary_embedding IS NOT NULL
+                  AND 1 - (primary_embedding <=> %s::vector) > 0.70
+                ORDER BY primary_embedding <=> %s::vector ASC
+                LIMIT 3
+            """, (query_embedding, vendor_id, query_embedding, query_embedding))
+
+            for row in cur.fetchall():
+                similar_items.append({
+                    "id": row['id'],
+                    "source_table": "vendor_sop_items",
+                    "item_name": row['item_name'],
+                    "similarity_score": float(row['similarity_score'])
+                })
+
+            # 檢測 2: 搜尋 loop_generated_knowledge 表（待審核 SOP）
+            cur.execute("""
+                SELECT
+                    id,
+                    question AS item_name,
+                    1 - (embedding <=> %s::vector) AS similarity_score
+                FROM loop_generated_knowledge
+                WHERE knowledge_type = 'sop'
+                  AND status IN ('pending', 'approved')
+                  AND embedding IS NOT NULL
+                  AND 1 - (embedding <=> %s::vector) > 0.70
+                ORDER BY embedding <=> %s::vector ASC
+                LIMIT 3
+            """, (query_embedding, query_embedding, query_embedding))
+
+            for row in cur.fetchall():
+                similar_items.append({
+                    "id": row['id'],
+                    "source_table": "loop_generated_knowledge",
+                    "item_name": row['item_name'],
+                    "similarity_score": float(row['similarity_score'])
+                })
+
+            # 按相似度排序，取前 3 個
+            similar_items.sort(key=lambda x: x['similarity_score'], reverse=True)
+            similar_items = similar_items[:3]
+
+            if similar_items:
+                print(f"   🔍 檢測到 {len(similar_items)} 個相似 SOP:")
+                for item in similar_items:
+                    print(f"      - [{item['source_table']}] {item['item_name']} (相似度: {item['similarity_score']:.1%})")
+
+            return {
+                "detected": len(similar_items) > 0,
+                "items": similar_items
+            }
+
+        except Exception as e:
+            print(f"   ⚠️  重複檢測失敗: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"detected": False, "items": []}
+        finally:
+            cur.close()
+            self.db_pool.putconn(conn)
+
+    async def _log_duplicate_detection_stats(
+        self,
+        loop_id: int,
+        iteration: int,
+        knowledge_type: str,
+        generated_items: List[Dict]
+    ) -> None:
+        """記錄重複檢測統計到 loop_execution_logs
+
+        Args:
+            loop_id: 迴圈 ID
+            iteration: 迭代次數
+            knowledge_type: 知識類型 ('sop' or 'knowledge')
+            generated_items: 生成的知識項目列表
+        """
+        if not self.db_pool:
+            return
+
+        # 收集統計資訊
+        total_generated = len(generated_items)
+        detected_duplicates = sum(
+            1 for item in generated_items
+            if (item.get('similar_knowledge') or {}).get('detected', False)
+        )
+
+        # 收集相似度分布
+        similarity_scores = []
+        for item in generated_items:
+            similar_knowledge = item.get('similar_knowledge')
+            if similar_knowledge and isinstance(similar_knowledge, dict) and similar_knowledge.get('detected'):
+                for similar_item in similar_knowledge.get('items', []):
+                    similarity_scores.append(similar_item.get('similarity_score', 0))
+
+        # 計算相似度統計
+        stats = {
+            'total_generated': total_generated,
+            'detected_duplicates': detected_duplicates,
+            'duplicate_rate': f"{detected_duplicates / total_generated * 100:.1f}%" if total_generated > 0 else "0%",
+            'similarity_scores': {
+                'count': len(similarity_scores),
+                'avg': sum(similarity_scores) / len(similarity_scores) if similarity_scores else 0,
+                'max': max(similarity_scores) if similarity_scores else 0,
+                'min': min(similarity_scores) if similarity_scores else 0
+            }
+        }
+
+        print(f"\n🔍 重複檢測統計 ({knowledge_type}):")
+        print(f"   總生成數：{stats['total_generated']}")
+        print(f"   檢測到重複：{stats['detected_duplicates']} ({stats['duplicate_rate']})")
+        if similarity_scores:
+            print(f"   相似度範圍：{stats['similarity_scores']['min']:.1%} - {stats['similarity_scores']['max']:.1%}")
+            print(f"   平均相似度：{stats['similarity_scores']['avg']:.1%}")
+
+        # 記錄到資料庫
+        conn = self.db_pool.getconn()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO loop_execution_logs (
+                    loop_id,
+                    event_type,
+                    event_data,
+                    created_at
+                ) VALUES (%s, %s, %s, NOW())
+            """, (
+                loop_id,
+                f'duplicate_detection_{knowledge_type}',
+                json.dumps(stats, ensure_ascii=False)
+            ))
+            conn.commit()
+            print(f"   ✅ 統計已記錄到 loop_execution_logs")
+        except Exception as e:
+            conn.rollback()
+            print(f"   ⚠️  統計記錄失敗: {e}")
+        finally:
+            cur.close()
+            self.db_pool.putconn(conn)
+
     async def _find_similar_sop(
         self,
         vendor_id: int,
@@ -832,13 +1345,15 @@ class SOPGenerator:
             # 無聚類：單一問題
             related_questions_text = ""
 
-        # 構建 Prompt
+        # 構建 Prompt（注入可用表單清單）
+        available_forms_section = self._build_available_forms_section()
         prompt = self.SOP_GENERATION_PROMPT.format(
             question=question,
             related_questions=related_questions_text,
             gap_type=gap_type,
             failure_reason=failure_reason,
-            priority=priority
+            priority=priority,
+            available_forms_section=available_forms_section
         )
 
         # 調用 OpenAI API
@@ -862,14 +1377,11 @@ class SOPGenerator:
 
             # 追蹤成本
             if self.cost_tracker and hasattr(response, 'usage'):
-                await self.cost_tracker.track_cost(
-                    loop_id=loop_id,
-                    iteration=iteration,
-                    service='openai',
-                    operation='sop_generation',
+                await self.cost_tracker.track_api_call(
                     model=self.model,
-                    input_tokens=response.usage.prompt_tokens,
-                    output_tokens=response.usage.completion_tokens
+                    prompt_tokens=response.usage.prompt_tokens,
+                    completion_tokens=response.usage.completion_tokens,
+                    operation='sop_generation'
                 )
 
             # 解析結果
@@ -883,6 +1395,43 @@ class SOPGenerator:
                     print(f"   ⚠️  缺少必要欄位: {field}")
                     return None
 
+            # 後處理品質檢查：攔截編造內容
+            sop_content = sop_data.get('content', '')
+            fabricated = []
+            if _FABRICATED_PHONE_RE.search(sop_content):
+                fabricated.append('電話號碼')
+            if _FABRICATED_EMAIL_RE.search(sop_content):
+                fabricated.append('Email')
+            if _FABRICATED_URL_RE.search(sop_content):
+                fabricated.append('網址')
+            if fabricated:
+                print(f"   ⛔ 攔截 SOP（內容包含編造的 {', '.join(fabricated)}）: {sop_data.get('item_name', '?')}")
+                return None
+            # 替換禁用稱呼
+            for term in _BANNED_TERMS:
+                if term in sop_content:
+                    sop_data['content'] = sop_data['content'].replace(term, '管理師')
+                    print(f"   🔄 已將「{term}」替換為「管理師」")
+
+            # 品質檢查：標記空泛回答（不攔截，讓人工審核決定）
+            content_without_contact = re.sub(r'(請|可以|建議|隨時).*?(聯繫|聯絡|詢問|洽詢).*?管理師.*', '', sop_data['content'])
+            content_without_contact = re.sub(r'(如果|若).*?(問題|疑問|需要).*', '', content_without_contact)
+            meaningful_chars = len(content_without_contact.strip())
+            if meaningful_chars < 50:
+                sop_data['_quality_warning'] = f'內容可能空泛（實質內容僅 {meaningful_chars} 字），建議人工補充'
+                print(f"   ⚠️  SOP 內容偏短（{meaningful_chars} 字），標記待人工審核: {sop_data.get('item_name', '?')}")
+
+            # 🔍 AI 品質驗證（第二次 AI call）
+            quality_result = await self._verify_content_quality(
+                question=question,
+                content=sop_data['content'],
+                content_type="SOP"
+            )
+            if not quality_result["passed"]:
+                reasons = ", ".join(quality_result["reasons"])
+                print(f"   ⛔ 品質驗證未通過: {sop_data.get('item_name', '?')} — {reasons}")
+                return None
+
             # 設定預設值
             # 知識完善迴圈生成的 SOP 預設應為 'auto'，以便自動觸發
             sop_data.setdefault('trigger_mode', 'auto')
@@ -892,9 +1441,14 @@ class SOPGenerator:
             sop_data.setdefault('immediate_prompt', '')
             sop_data.setdefault('keywords', [])
 
-            # 強制設定 next_form_id 為 None（避免外鍵約束錯誤）
-            # TODO: 後續可以根據實際需求mapping表單ID
+            # 🔒 [TODO-13.1] 回測驗證通過後啟用 form_id 映射
+            # 目前強制設定 next_form_id 為 None，避免外鍵約束錯誤
+            # 啟用方式：移除下面這行，改用下方的驗證邏輯
             sop_data['next_form_id'] = None
+            # --- 啟用後的驗證邏輯 ---
+            # valid_form_ids = {f['form_id'] for f in self._load_form_schemas()}
+            # if sop_data.get('next_form_id') not in valid_form_ids:
+            #     sop_data['next_form_id'] = None
 
             # 🔑 使用 OpenAI 智能生成檢索關鍵字
             sop_data['trigger_keywords'] = await self._enrich_trigger_keywords(
@@ -932,7 +1486,7 @@ class SOPGenerator:
                 sop_data['group_id'] = None
 
             # 持久化到資料庫
-            sop_id = await self._persist_sop(
+            persist_result = await self._persist_sop(
                 vendor_id=vendor_id,
                 loop_id=loop_id,
                 gap_id=gap.get('gap_id'),
@@ -941,9 +1495,10 @@ class SOPGenerator:
                 primary_embedding=primary_embedding
             )
 
-            if sop_id:
-                sop_data['id'] = sop_id
+            if persist_result:
+                sop_data['id'] = persist_result['id']
                 sop_data['vendor_id'] = vendor_id
+                sop_data['similar_knowledge'] = persist_result.get('similar_knowledge')
                 sop_data['question'] = question
                 return sop_data
 
@@ -953,7 +1508,9 @@ class SOPGenerator:
             print(f"   ❌ JSON 解析失敗: {e}")
             return None
         except Exception as e:
+            import traceback
             print(f"   ❌ 生成失敗: {e}")
+            traceback.print_exc()
             return None
 
     async def _persist_sop(
@@ -1029,6 +1586,27 @@ class SOPGenerator:
                 print(f"⚠️  跳過重複 SOP（已在 SOP 表）: {sop_name}")
                 return None
 
+            # 🔍 執行向量相似度重複檢測（使用 pgvector）
+            similar_knowledge = None
+            if primary_embedding:
+                duplicate_check = await self._detect_duplicate_sops(
+                    vendor_id=vendor_id,
+                    sop_title=sop_data['item_name'],
+                    sop_content=sop_data['content']
+                )
+                if duplicate_check and duplicate_check['detected']:
+                    # 檢查最高相似度，超過 0.75 直接跳過不生成
+                    max_similarity = max(
+                        item.get('similarity_score', 0)
+                        for item in duplicate_check.get('items', [])
+                    ) if duplicate_check.get('items') else 0
+                    if max_similarity >= 0.75:
+                        most_similar = duplicate_check['items'][0]
+                        print(f"   ⛔ 跳過重複 SOP（向量相似度 {max_similarity:.1%}）: {sop_data['item_name']}")
+                        print(f"      相似項: [{most_similar['source_table']}] {most_similar['item_name']}")
+                        return None
+                    similar_knowledge = duplicate_check  # 相似度不高，記錄但繼續生成
+
             # 插入到 loop_generated_knowledge（待審核）
             cur.execute("""
                 INSERT INTO loop_generated_knowledge (
@@ -1041,11 +1619,12 @@ class SOPGenerator:
                     sop_config,
                     keywords,
                     embedding,
+                    similar_knowledge,
                     status,
                     synced_to_kb,
                     created_at
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW()
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW()
                 )
                 RETURNING id
             """, (
@@ -1058,6 +1637,7 @@ class SOPGenerator:
                 json.dumps(sop_config),      # SOP 配置
                 sop_data.get('keywords', []),
                 primary_embedding,
+                json.dumps(similar_knowledge) if similar_knowledge else None,  # 重複檢測結果
                 'pending',                   # 待審核
                 False                        # 未同步
             ))
@@ -1098,7 +1678,11 @@ class SOPGenerator:
                 conn.rollback()  # 回滾日誌插入，但不影響已提交的 SOP
                 print(f"   ⚠️  跳過日誌記錄: {log_error}")
 
-            return sop_id
+            # 返回 SOP ID 和重複檢測結果
+            return {
+                'id': sop_id,
+                'similar_knowledge': similar_knowledge
+            }
 
         except Exception as e:
             conn.rollback()

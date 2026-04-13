@@ -32,10 +32,12 @@ class LoopStatus(str, Enum):
 
 class LoopConfig(BaseModel):
     """迴圈配置"""
-    batch_size: int = Field(50, ge=1, le=100, description="每批回測題數")
-    max_iterations: int = Field(20, ge=1, le=50, description="最大迭代次數")
+    batch_size: int = Field(50, ge=1, le=500, description="每批回測題數")
     target_pass_rate: float = Field(0.8, ge=0.0, le=1.0, description="目標通過率")
     action_type_mode: str = Field("ai_assisted", description="回應類型判斷模式")
+    scenario_ids: List[int] = Field(default_factory=list, description="固定測試集 ID")
+    selection_strategy: str = Field("stratified_random", description="選取策略")
+    difficulty_distribution: Dict = Field(default_factory=dict, description="難度分布")
     filters: Dict = Field(default_factory=dict, description="篩選條件")
     backtest_config: Dict = Field(default_factory=dict, description="回測參數配置")
 
@@ -192,4 +194,30 @@ class BudgetExceededError(KnowledgeCompletionError):
             message=f"OpenAI API 成本已超過預算限制：${total_cost:.2f} > ${budget_limit:.2f}",
             category=ErrorCategory.BUSINESS_LOGIC_ERROR,
             details={"budget_limit": budget_limit, "total_cost": total_cost}
+        )
+
+
+class LoopNotFoundError(KnowledgeCompletionError):
+    """迴圈不存在錯誤"""
+
+    def __init__(self, loop_id: int):
+        super().__init__(
+            message=f"Loop {loop_id} 不存在",
+            category=ErrorCategory.VALIDATION_ERROR,
+            details={"loop_id": loop_id}
+        )
+
+
+class EmbeddingGenerationError(KnowledgeCompletionError):
+    """Embedding 生成失敗錯誤"""
+
+    def __init__(self, text: str, error_detail: str = None):
+        details = {"text_length": len(text)}
+        if error_detail:
+            details["error"] = error_detail
+
+        super().__init__(
+            message=f"Embedding 生成失敗：{error_detail or '未知錯誤'}",
+            category=ErrorCategory.EXTERNAL_SERVICE_ERROR,
+            details=details
         )

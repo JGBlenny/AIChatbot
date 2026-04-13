@@ -232,7 +232,8 @@ class VendorSOPRetrieverV2(BaseRetriever):
                     normalized_score = min(1.0, match_score / max(1, len(matched_keywords)))
 
                     result = self._format_result(item)
-                    result['similarity'] = normalized_score
+                    # 關鍵字匹配的相似度上限 0.70（不應與向量完美匹配等價）
+                    result['similarity'] = min(0.70, normalized_score)
                     result['keyword_matches'] = matched_keywords
                     result['search_method'] = 'keyword'
 
@@ -290,7 +291,7 @@ class VendorSOPRetrieverV2(BaseRetriever):
             vendor_id=vendor_id,
             top_k=top_k,
             similarity_threshold=similarity_threshold or self.sop_similarity_threshold,
-            enable_keyword_fallback=True,
+            enable_keyword_fallback=False,
             enable_keyword_boost=include_keywords_boost,
             intent_id=intent_id
         )

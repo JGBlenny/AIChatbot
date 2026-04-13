@@ -56,8 +56,9 @@ export const API_ENDPOINTS = {
   // SOP Categories 相關
   sopCategories: `${API_BASE_URL}/rag-api/v1/sop-categories`,
 
-  // Vendors 相關
-  vendors: `${API_BASE_URL}/rag-api/v1/vendors`,
+  // Vendors 相關（RAG API）
+  ragVendors: `${API_BASE_URL}/rag-api/v1/vendors`,
+  ragVendorById: (id) => `${API_BASE_URL}/rag-api/v1/vendors/${id}`,
 
   // SOP Groups 相關
   sopGroups: `${API_BASE_URL}/rag-api/v1/sop-groups`,
@@ -70,6 +71,21 @@ export const API_ENDPOINTS = {
   platformSOPCategories: `${API_BASE_URL}/rag-api/v1/platform/sop/categories`,
   platformSOPGroups: `${API_BASE_URL}/rag-api/v1/platform/sop/groups`,
   platformSOPTemplates: `${API_BASE_URL}/rag-api/v1/platform/sop/templates`,
+
+  // Loop 相關
+  loopStart: `${API_BASE_URL}/rag-api/v1/loops/start`,
+  loopList: `${API_BASE_URL}/rag-api/v1/loops/`,
+  loopById: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}`,
+  loopStatus: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/status`,
+  loopIterations: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/iterations`,
+  loopIterationResults: (loopId, iteration) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/iterations/${iteration}/backtest-results`,
+  loopExecuteIteration: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/execute-iteration`,
+  loopValidate: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/validate`,
+  loopCompleteBatch: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/complete-batch`,
+  loopStartNextBatch: `${API_BASE_URL}/rag-api/v1/loops/start-next-batch`,
+  loopPause: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/pause`,
+  loopResume: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/resume`,
+  loopCancel: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/cancel`,
 
   // ==================== Knowledge Admin API ====================
 

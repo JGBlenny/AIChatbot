@@ -132,7 +132,9 @@ class BacktestFrameworkClient:
             test_set_name=f"Loop {loop_id} - Iteration {iteration}"
         )
 
-        # Step 3: 執行回測
+        # Step 3: 執行回測（使用正確的 vendor_id）
+        # 🆕 修復：為每次回測設置正確的 vendor_id
+        self.framework.vendor_id = vendor_id
         results = await self.framework.run_backtest_concurrent(
             test_scenarios=scenarios,
             show_progress=False  # 不顯示 tqdm 進度條（避免日誌污染）

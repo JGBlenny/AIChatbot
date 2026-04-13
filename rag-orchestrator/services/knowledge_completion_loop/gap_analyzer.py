@@ -7,7 +7,11 @@
 import psycopg2.pool
 import psycopg2.extras
 from typing import List, Dict, Optional
-from models import FailureReason, GapPriority, KnowledgeGap
+
+try:
+    from .models import FailureReason, GapPriority, KnowledgeGap
+except ImportError:
+    from services.knowledge_completion_loop.models import FailureReason, GapPriority, KnowledgeGap
 
 
 class GapAnalyzer:

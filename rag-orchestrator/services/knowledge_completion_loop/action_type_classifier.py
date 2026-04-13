@@ -8,7 +8,11 @@ import json
 from typing import Dict, List, Optional
 import psycopg2.pool
 import psycopg2.extras
-from models import ActionType, ActionTypeJudgment
+
+try:
+    from .models import ActionType, ActionTypeJudgment
+except ImportError:
+    from services.knowledge_completion_loop.models import ActionType, ActionTypeJudgment
 
 
 class ActionTypeClassifier:
