@@ -14,6 +14,16 @@
     <!-- 篩選區域 -->
     <div class="filter-section">
       <div class="filter-group">
+        <label>搜尋：</label>
+        <input
+          v-model="filters.search"
+          type="text"
+          placeholder="搜尋測試問題..."
+          @input="onSearchInput"
+          class="search-input"
+        />
+      </div>
+      <div class="filter-group">
         <label>測試結果：</label>
         <select v-model="filters.testResult" @change="loadScenarios">
           <option value="">全部</option>
@@ -371,9 +381,11 @@ export default {
       knowledgeStatus: null,   // 知識候選狀態
 
       filters: {
+        search: '',      // 搜尋測試問題文字
         testResult: '',  // 測試結果篩選：'' = 全部, 'passed' = 通過, 'failed' = 未通過, 'not_tested' = 未測驗
         status: 'approved'  // 固定只顯示已批准的測試情境
       },
+      searchTimer: null,
 
       limit: 50,
       offset: 0,
@@ -432,6 +444,7 @@ export default {
         };
 
         if (this.filters.testResult) params.last_result = this.filters.testResult;
+        if (this.filters.search) params.search = this.filters.search;
 
         const response = await axios.get('/api/test/scenarios', { params });
         this.scenarios = response.data.scenarios;
@@ -442,6 +455,14 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+
+    onSearchInput() {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = setTimeout(() => {
+        this.offset = 0;
+        this.loadScenarios();
+      }, 300);
     },
 
     editScenario(scenario) {
