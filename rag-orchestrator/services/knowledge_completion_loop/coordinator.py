@@ -1271,12 +1271,16 @@ class LoopCoordinator:
             # 狀態轉換：RUNNING → BACKTESTING
             await self._update_loop_status(LoopStatus.BACKTESTING)
 
+            # 取得迴圈的固定測試集（避免每次重複測同一批題目）
+            scenario_ids = await self._get_scenario_ids()
+
             backtest_result = await self.backtest_client.execute_batch_backtest(
                 loop_id=self.loop_id,
                 iteration=next_iteration,
                 vendor_id=self.vendor_id,
                 batch_size=self.config.batch_size,
-                filters=self.config.filters
+                filters=self.config.filters,
+                scenario_ids=scenario_ids if scenario_ids else None
             )
 
             await self._log_event(

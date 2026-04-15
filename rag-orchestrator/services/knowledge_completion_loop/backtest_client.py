@@ -76,7 +76,8 @@ class BacktestFrameworkClient:
         iteration: int,
         vendor_id: int,
         batch_size: int,
-        filters: Dict = None
+        filters: Dict = None,
+        scenario_ids: List[int] = None
     ) -> Dict:
         """執行批次回測
 
@@ -86,6 +87,7 @@ class BacktestFrameworkClient:
             vendor_id: 業者 ID
             batch_size: 批次大小
             filters: 篩選條件（source, difficulty, intent_ids）
+            scenario_ids: 指定測試場景 ID 列表（優先於 batch_size + filters）
 
         Returns:
             Dict: 回測結果
@@ -105,12 +107,15 @@ class BacktestFrameworkClient:
 
         start_time = datetime.datetime.now()
 
-        # Step 1: 載入測試場景
-        scenarios = await self._load_scenarios(
-            vendor_id=vendor_id,
-            batch_size=batch_size,
-            filters=filters
-        )
+        # Step 1: 載入測試場景（優先使用指定的 scenario_ids）
+        if scenario_ids:
+            scenarios = await self._load_scenarios_by_ids(scenario_ids)
+        else:
+            scenarios = await self._load_scenarios(
+                vendor_id=vendor_id,
+                batch_size=batch_size,
+                filters=filters
+            )
 
         if not scenarios:
             return {
