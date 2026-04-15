@@ -492,11 +492,9 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
     cur = conn.cursor()
 
     try:
-        # 1. 生成向量（使用 question_summary + keywords 以提高檢索準確度）
+        # 1. 生成向量（只用 question_summary，keywords 透過獨立的關鍵字搜尋機制處理）
         try:
-            # ✅ 方案 A：將 keywords 融入 embedding
-            keywords_str = ", ".join(data.keywords) if data.keywords else ""
-            text_for_embedding = f"{data.question_summary}. 關鍵字: {keywords_str}" if keywords_str else data.question_summary
+            text_for_embedding = data.question_summary
 
             print(f"🔄 正在呼叫 Embedding API: {EMBEDDING_API_URL}")
             print(f"📝 文字內容: {text_for_embedding[:100]}...")

@@ -5,6 +5,7 @@ AI 知識生成 API 路由
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
+import asyncio
 import json
 import os
 import re
@@ -1203,8 +1204,8 @@ async def review_loop_knowledge(
                 if current_embedding is None:
                     print(f"⚠️  知識 #{knowledge_id} 缺少 embedding，正在生成...")
 
-                    # 生成文本：使用問題 + 答案
-                    text_for_embedding = f"{knowledge['question']}\n{knowledge['answer']}"
+                    # 生成文本：只用問題（keywords 透過獨立的關鍵字搜尋機制處理）
+                    text_for_embedding = knowledge['question']
 
                     try:
                         # 使用共用的 embedding 生成函數
@@ -1274,7 +1275,7 @@ async def review_loop_knowledge(
                                 detail="SOP 必須指定 vendor_id"
                             )
 
-                        # 插入 SOP 到 vendor_sop_items（包含 embedding）
+                        # 插入 SOP 到 vendor_sop_items（不帶 embedding，由 sop_embedding_generator 統一生成）
                         sop_id = await conn.fetchval("""
                             INSERT INTO vendor_sop_items (
                                 vendor_id,
@@ -1288,25 +1289,28 @@ async def review_loop_knowledge(
                                 next_action,
                                 next_form_id,
                                 immediate_prompt,
-                                primary_embedding,
                                 is_active,
                                 created_at
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true, NOW())
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, NOW())
                             RETURNING id
                         """,
                             sop_vendor_id,
-                            request.category_id,  # 使用審核人員選擇的類別
-                            request.group_id,  # 使用審核人員選擇的群組（可為 NULL）
+                            request.category_id,
+                            request.group_id,
                             sop_config.get('item_name'),
                             knowledge['answer'],
                             trigger_mode,
-                            knowledge.get('keywords', []),  # ✅ 修復：使用 knowledge 中的關鍵字，而非 sop_config
-                            knowledge.get('keywords', []),  # ✅ 同時更新 keywords 欄位
+                            knowledge.get('keywords', []),
+                            knowledge.get('keywords', []),
                             sop_config.get('next_action', 'none'),
                             sop_config.get('next_form_id'),
-                            sop_config.get('immediate_prompt'),
-                            current_embedding  # 🔧 使用檢查後的 embedding（可能是新生成的）
+                            sop_config.get('immediate_prompt')
                         )
+
+                        # 統一使用 sop_embedding_generator 生成 embedding
+                        from services.sop_embedding_generator import generate_sop_embeddings_async
+                        db_pool_async = req.app.state.db_pool if hasattr(req.app.state, 'db_pool') else req.app.extra.get('db_pool')
+                        asyncio.create_task(generate_sop_embeddings_async(db_pool_async, sop_id))
 
                         # 更新 synced_to_kb 標記（這裡 kb_id 用來存 sop_id）
                         await conn.execute("""

@@ -291,7 +291,7 @@ class VendorSOPRetrieverV2(BaseRetriever):
             vendor_id=vendor_id,
             top_k=top_k,
             similarity_threshold=similarity_threshold or self.sop_similarity_threshold,
-            enable_keyword_fallback=False,
+            enable_keyword_fallback=True,
             enable_keyword_boost=include_keywords_boost,
             intent_id=intent_id
         )

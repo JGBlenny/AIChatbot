@@ -999,22 +999,7 @@ async def _sync_knowledge_to_production(
             group_id = sop_config.get('group_id')
             item_name = sop_config.get('item_name') or question
 
-            # 生成 SOP embedding（使用 content）
-            embedding_client = get_loop_embedding_client()
-            embedding = await embedding_client.generate_embedding(answer)
-
-            if not embedding:
-                return {
-                    "synced": False,
-                    "synced_to": "vendor_sop_items",
-                    "synced_id": None,
-                    "error": "Embedding 生成失敗"
-                }
-
-            # 轉換為 pgvector 格式
-            embedding_str = embedding_client.to_pgvector_format(embedding)
-
-            # 插入 vendor_sop_items (primary_embedding 使用剛生成的 embedding)
+            # 插入 vendor_sop_items（不帶 embedding，後續由 sop_embedding_generator 統一生成）
             sop_id = await conn.fetchval("""
                 INSERT INTO vendor_sop_items (
                     vendor_id,
@@ -1023,11 +1008,10 @@ async def _sync_knowledge_to_production(
                     item_name,
                     content,
                     keywords,
-                    primary_embedding,
                     created_at,
                     updated_at
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7::vector, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 RETURNING id
             """,
                 vendor_id,
@@ -1035,9 +1019,13 @@ async def _sync_knowledge_to_production(
                 group_id,
                 item_name,
                 answer,  # content
-                None,  # keywords (可選)
-                embedding_str  # primary_embedding
+                None  # keywords (可選)
             )
+
+            # 統一使用 sop_embedding_generator 生成 embedding
+            from services.sop_embedding_generator import generate_sop_embeddings_async
+            db_pool = conn._pool if hasattr(conn, '_pool') else req.app.state.db_pool
+            asyncio.create_task(generate_sop_embeddings_async(db_pool, sop_id))
 
             return {
                 "synced": True,
