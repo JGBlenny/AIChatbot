@@ -52,7 +52,7 @@
 
 ```bash
 # 從專案根目錄執行
-./run_50_verification.sh
+./scripts/testing/run_50_verification.sh
 ```
 
 **特點**：
@@ -63,7 +63,7 @@
 #### 方法 2：500 題標準驗證
 
 ```bash
-./run_500_verification.sh
+./scripts/testing/run_500_verification.sh
 ```
 
 **特點**：
@@ -74,7 +74,7 @@
 #### 方法 3：3000 題完整驗證
 
 ```bash
-./run_3000_verification.sh
+./scripts/testing/run_3000_verification.sh
 ```
 
 **特點**：

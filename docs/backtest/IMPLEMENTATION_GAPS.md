@@ -139,12 +139,12 @@ async def execute_iteration(self) -> Dict:
 
 ```bash
 # 1. 第一次測試
-./run_50_verification.sh        # 建立 Loop #84，迭代 1
+./scripts/testing/run_50_verification.sh        # 建立 Loop #84，迭代 1
 
 # 2. 前端審核知識
 
 # 3. 第二次測試（建立新 loop）
-./run_50_verification.sh        # 建立 Loop #85，迭代 1
+./scripts/testing/run_50_verification.sh        # 建立 Loop #85，迭代 1
 
 # 4. 手動比較改善幅度
 # Loop #84 通過率 vs Loop #85 通過率
@@ -179,7 +179,7 @@ async def execute_iteration(self) -> Dict:
 
 ```bash
 # 1. 執行第一次迭代
-./run_50_verification.sh
+./scripts/testing/run_50_verification.sh
 # → 建立 Loop #84
 
 # 2. 前端審核完成
