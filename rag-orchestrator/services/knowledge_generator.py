@@ -18,9 +18,8 @@ class KnowledgeGenerator:
         if not self.openai_api_key:
             raise ValueError("OPENAI_API_KEY 環境變數未設定")
 
-        # 知識生成專用模型（預設 gpt-3.5-turbo，成本較低）
-        # 系統其他部分使用 gpt-4o-mini
-        self.model = os.getenv("KNOWLEDGE_GEN_MODEL", "gpt-3.5-turbo")
+        # 知識生成專用模型
+        self.model = os.getenv("KNOWLEDGE_GEN_MODEL", "gpt-4o-mini")
         self.api_url = "https://api.openai.com/v1/chat/completions"
 
         print(f"✅ KnowledgeGenerator 初始化完成")

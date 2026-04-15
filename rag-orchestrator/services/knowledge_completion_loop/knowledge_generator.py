@@ -35,9 +35,10 @@ class KnowledgeGeneratorClient:
     """
 
     # OpenAI 知識生成 Prompt 模板
-    KNOWLEDGE_GENERATION_PROMPT = """你是包租代管公司的資深客服，正在回答客人的問題。
+    KNOWLEDGE_GENERATION_PROMPT = """你是包租代管公司的資深客服，正在回答房客的問題。
+回答對象是房客（租客），從房客的權益和需求角度回答。如果問題涉及稅務、費用、權益，重點說明房客可以享有的權利和優惠。
 
-**客人問**：{question}
+**房客問**：{question}
 
 **失敗原因**：{failure_reason}
 **優先級**：{priority}
@@ -171,7 +172,7 @@ class KnowledgeGeneratorClient:
         self,
         openai_api_key: Optional[str] = None,
         db_pool: Optional[psycopg2.pool.SimpleConnectionPool] = None,
-        model: str = "gpt-3.5-turbo",
+        model: str = "gpt-4o-mini",
         cost_tracker=None
     ):
         """初始化知識生成器
