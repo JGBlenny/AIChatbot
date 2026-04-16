@@ -1,11 +1,18 @@
 # Reranker 功能文檔
 
+> ⚠️ **歷史文件**（2026-01-28 原始實施）。2026-04 後經過效能調校與欄位架構重構，
+> **當前行為請參考**：
+> - [docs/architecture/retriever-pipeline.md](../architecture/retriever-pipeline.md)（Reranker 效能調校章節）
+> - [.kiro/issues/reranker-returning-zero.md](../../.kiro/issues/reranker-returning-zero.md)
+>
+> 本文件保留作為歷史脈絡。
+
 ## 📋 概述
 
 Reranker（重排序）是一種二階段檢索優化技術，用於提升 SOP 和 Knowledge 檢索的準確性。通過使用 Cross-Encoder 模型重新評估候選結果，Reranker 能夠捕捉問題與答案之間的深層語義關聯，超越單純的向量相似度匹配。
 
 **實施日期**: 2026-01-28
-**狀態**: ✅ 已實施並驗證
+**狀態**: ✅ 已實施並驗證（邏輯已於 2026-04 refactor 擴充）
 
 ---
 

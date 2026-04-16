@@ -40,6 +40,21 @@
 | [實作範例](./design/KNOWLEDGE_ACTION_IMPLEMENTATION_EXAMPLE.md) | 程式碼範例 |
 | [實作總結](./design/KNOWLEDGE_ACTION_IMPLEMENTATION_SUMMARY.md) | 實作重點總結 |
 
+### 🏗️ 架構文件（2026-04 後最新版）
+
+| 文檔 | 用途 |
+|------|------|
+| [Retriever Pipeline 架構](./architecture/retriever-pipeline.md) ⭐ | 分數欄位定義、pipeline stage、reranker 效能調校、閾值對應表 |
+| [系統架構](./architecture/SYSTEM_ARCHITECTURE.md) | 全系統架構 |
+| [資料庫 schema](./architecture/DATABASE_SCHEMA.md) | DB 結構 |
+
+### 🐛 Issue 追蹤
+
+| 文檔 | 用途 |
+|------|------|
+| [.kiro/issues/](../.kiro/issues/) | 非 feature 性質的 bug / 調查記錄 |
+| [reranker-returning-zero](../.kiro/issues/reranker-returning-zero.md) | Reranker CPU 超時 hotfix 紀錄 |
+
 ---
 
 ### 📊 報告文檔

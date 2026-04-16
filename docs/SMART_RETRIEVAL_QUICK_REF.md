@@ -1,5 +1,9 @@
 # 智能檢索系統快速參考
 
+> ⚠️ **歷史文件**（2026-01-28）。當前架構細節請參考
+> [docs/architecture/retriever-pipeline.md](./architecture/retriever-pipeline.md)。
+> 本文件保留作為歷史脈絡。
+
 ## 🎯 核心原則
 
 1. **SOP 和知識庫永遠不混合**

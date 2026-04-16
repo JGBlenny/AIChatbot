@@ -114,9 +114,52 @@ else:
 SQL vector search:      LIMIT 50    （SOP） / LIMIT 100 （知識庫）
 Keyword fallback:       LIMIT 10
 _apply_keyword_boost:   O(N) jieba
-_apply_semantic_reranker: 對全部候選做 HTTP 呼叫
+Reranker 過濾:          下限 + 上限截斷（見下方）
+_apply_semantic_reranker: 過濾後送 HTTP 到 semantic-model
 最終回傳:                top_k=5
 ```
+
+### Reranker 效能調校（2026-04-17 新增）
+
+> 問題來源：`.kiro/issues/reranker-returning-zero.md`
+> 根因：bge-reranker-base CPU 推論對大批次較慢（56 筆 ~27s），client timeout 15s 必超時。
+
+送進 reranker 前套用**兩層過濾**（見 `base_retriever.py` Step 5）：
+
+**第一層：下限過濾** `RERANKER_MIN_VECTOR_SIMILARITY`（預設 0.3）
+- `vector_similarity < threshold` 的候選直接丟棄
+- rerank 對低向量分項目幾乎不可能打高分，送進去只是浪費推論時間
+- ⚠️ `keyword_fallback` 項目**不受下限影響**（它們 `vector_similarity=0` 是設計預設值，代表走 keyword 路徑）
+
+**第二層：上限截斷** `RERANKER_INPUT_LIMIT`（預設 20）
+- 若剩餘候選仍超過上限，優先保留 `keyword_fallback` 項，再以 `vector_similarity` 補足 vector 項
+- 避免因為 `vector_similarity=0` 預設值把 keyword 項誤砍
+
+**第三層：全 0 防護**（`_apply_semantic_reranker`）
+- 若 reranker 回傳所有 `semantic_score == 0`，視為服務異常
+- 不寫入 `rerank_score`，讓 `_finalize_scores` 退回 vector / keyword 分支
+- 避免 reranker 失效時 final similarity 全部退化成 `0.1 × vector_similarity`
+
+### HTTP Timeout `RERANKER_HTTP_TIMEOUT`（預設 60 秒）
+
+原本 15 秒 timeout 無法支撐 CPU 推論，提高到 60 秒。正常請求約 3–10 秒內完成。
+
+### Reranker 環境變數總覽
+
+| 變數 | 預設 | 說明 |
+|------|------|------|
+| `RERANKER_MIN_VECTOR_SIMILARITY` | 0.3 | vector 下限，低於此值的 vector 項不送 rerank |
+| `RERANKER_INPUT_LIMIT` | 20 | 送進 reranker 的候選數上限（優先保留 keyword_fallback）|
+| `RERANKER_HTTP_TIMEOUT` | 60 | HTTP client timeout（秒）|
+
+### 實測效果（vendor_id=2，查詢「合約簽署」）
+
+| 路徑 | vector_search 回傳 | 下限過濾後 | rerank 處理時間 |
+|------|------------------|-----------|---------------|
+| SOP | 15 | 7 | ~2s |
+| KB | 56 | 10 | ~3-4s |
+
+（調校前 KB 56 筆要 ~27s，100% 超時失敗；調校後降到 10 筆，約 3-4s 穩定完成）
 
 ### 快取
 
