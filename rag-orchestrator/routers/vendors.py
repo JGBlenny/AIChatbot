@@ -1590,7 +1590,7 @@ async def copy_category_templates_to_vendor(vendor_id: int, request: CopyCategor
 
 
 @router.post("/{vendor_id}/sop/copy-category/{platform_category_id}", status_code=201)
-async def copy_category_to_vendor(vendor_id: int, platform_category_id: int, overwrite: bool = False):
+async def copy_category_to_vendor(vendor_id: int, platform_category_id: int, request: Request, overwrite: bool = False):
     """
     複製單個平台分類的所有範本到業者 SOP
 
@@ -1782,54 +1782,24 @@ async def copy_category_to_vendor(vendor_id: int, platform_category_id: int, ove
 
             new_item_ids.append(new_item_id)
 
-        # 為所有新建立的 SOP 項目生成 embeddings
-        embeddings_generated = 0
-        embeddings_failed = 0
-
-        for item_id in new_item_ids:
-            try:
-                # 取得項目資訊
-                cursor.execute("""
-                    SELECT vsi.id, vsi.content, vsi.item_name,
-                           vsg.group_name
-                    FROM vendor_sop_items vsi
-                    LEFT JOIN vendor_sop_groups vsg ON vsi.group_id = vsg.id
-                    WHERE vsi.id = %s
-                """, (item_id,))
-                item = cursor.fetchone()
-
-                if item:
-                    content = item['content']
-                    item_name = item['item_name']
-                    group_name = item['group_name'] or ''
-
-                    # 生成 primary embedding（使用 group_name + item_name）
-                    primary_text = f"{group_name} {item_name}".strip()
-                    primary_embedding = await generate_embedding(primary_text)
-
-                    # 生成 fallback embedding（使用 content）
-                    fallback_embedding = await generate_embedding(content)
-
-                    # 轉換為 pgvector 格式
-                    primary_vector = str(primary_embedding)
-                    fallback_vector = str(fallback_embedding)
-
-                    # 更新資料庫（同時更新 primary 和 fallback）
-                    cursor.execute("""
-                        UPDATE vendor_sop_items
-                        SET
-                            primary_embedding = %s,
-                            fallback_embedding = %s
-                        WHERE id = %s
-                    """, (primary_embedding, fallback_embedding, item_id))
-                    embeddings_generated += 1
-
-            except Exception as e:
-                print(f"為 item {item_id} 生成 embedding 失敗: {e}")
-                embeddings_failed += 1
-
         conn.commit()
         cursor.close()
+
+        # 統一使用 sop_embedding_generator 在背景產生 embeddings
+        # （與 vendors.py 其他 SOP CRUD 端點一致）
+        embeddings_generated = 0
+        embeddings_failed = 0
+        if new_item_ids and hasattr(request.app.state, 'db_pool'):
+            from services.sop_embedding_generator import generate_batch_sop_embeddings_async
+            asyncio.create_task(
+                generate_batch_sop_embeddings_async(
+                    db_pool=request.app.state.db_pool,
+                    sop_item_ids=new_item_ids,
+                    batch_size=5
+                )
+            )
+            embeddings_generated = len(new_item_ids)
+            print(f"🚀 [Copy Category] 已觸發背景 embedding 生成：{len(new_item_ids)} 個項目")
 
         return {
             "message": f"成功複製分類「{platform_category['category_name']}」，共 {len(new_item_ids)} 個項目",

@@ -161,13 +161,15 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         # 獲取額外參數
         target_user = kwargs.get('target_user', 'tenant')
 
+        # 安全上限
+        max_rows = 1000
+
         conn = self._get_db_connection()
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-            # 查詢有關鍵字的知識
-            # 🔧 SQL 端先用 keywords && query_tokens 過濾，避免 LIMIT 把命中的排除
-            cursor.execute("""
+            # 通用 SELECT 與 WHERE
+            base_sql = """
                 SELECT
                     kb.id,
                     kb.question_summary,
@@ -190,17 +192,26 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     AND kb.is_active = TRUE
                     AND kb.keywords IS NOT NULL
                     AND array_length(kb.keywords, 1) > 0
-                    AND (
-                        %s::text[] = '{}'::text[]
-                        OR kb.keywords && %s::text[]
-                    )
-                ORDER BY
-                    kb.priority DESC,
-                    kb.id DESC
-                LIMIT %s
-            """, ([vendor_id], query_tokens_for_sql, query_tokens_for_sql, limit * 3))
+            """
 
-            all_rows = cursor.fetchall()
+            all_rows = []
+
+            # 快速路徑：SQL 用 keywords && query_tokens 過濾（精確配對）
+            if query_tokens_for_sql:
+                cursor.execute(
+                    base_sql + " AND kb.keywords && %s::text[] ORDER BY kb.priority DESC, kb.id DESC LIMIT %s",
+                    ([vendor_id], query_tokens_for_sql, max_rows)
+                )
+                all_rows = cursor.fetchall()
+
+            # Fallback：精確配對 0 結果時撈全部，讓 Python jieba 處理多字詞 keyword
+            if not all_rows:
+                cursor.execute(
+                    base_sql + " ORDER BY kb.priority DESC, kb.id DESC LIMIT %s",
+                    ([vendor_id], max_rows)
+                )
+                all_rows = cursor.fetchall()
+
             cursor.close()
 
             # 篩選包含匹配關鍵字的知識
