@@ -148,11 +148,20 @@ class SOPOrchestrator:
         )
 
         if not sop_items:
-            print(f"   ❌ 無匹配的 SOP")
+            print(f"   ❌ 無匹配的 SOP（達標）")
+            # 🆕 Debug：撈未達標但分數最高的前 5 名 SOP，給 chat-test 顯示
+            debug_candidates = await self.sop_retriever.retrieve_sop_by_query(
+                vendor_id=vendor_id,
+                query=user_message,
+                intent_id=intent_id,
+                top_k=5,
+                similarity_threshold=0.0  # 不過濾，全部撈回來看分數
+            )
+            print(f"   📊 Debug: 取得 {len(debug_candidates)} 個未達標候選供 chat-test 顯示")
             return {
                 'has_sop': False,
                 'sop_item': None,
-                'all_sop_candidates': [],  # 🆕 添加所有候選結果
+                'all_sop_candidates': debug_candidates,  # 含未達標分數
                 'trigger_result': None,
                 'action_result': None,
                 'response': None,

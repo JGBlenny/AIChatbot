@@ -155,6 +155,8 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
 
         # 分詞處理查詢
         query_tokens = set(jieba.cut(query.lower()))
+        # 過濾空白與單字（單字 noise 太多）
+        query_tokens_for_sql = [t for t in query_tokens if t.strip() and len(t) > 1]
 
         # 獲取額外參數
         target_user = kwargs.get('target_user', 'tenant')
@@ -164,6 +166,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
             # 查詢有關鍵字的知識
+            # 🔧 SQL 端先用 keywords && query_tokens 過濾，避免 LIMIT 把命中的排除
             cursor.execute("""
                 SELECT
                     kb.id,
@@ -187,11 +190,15 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     AND kb.is_active = TRUE
                     AND kb.keywords IS NOT NULL
                     AND array_length(kb.keywords, 1) > 0
+                    AND (
+                        %s::text[] = '{}'::text[]
+                        OR kb.keywords && %s::text[]
+                    )
                 ORDER BY
                     kb.priority DESC,
                     kb.id DESC
                 LIMIT %s
-            """, ([vendor_id], limit * 3))
+            """, ([vendor_id], query_tokens_for_sql, query_tokens_for_sql, limit * 3))
 
             all_rows = cursor.fetchall()
             cursor.close()

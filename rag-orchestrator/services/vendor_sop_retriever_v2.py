@@ -160,12 +160,15 @@ class VendorSOPRetrieverV2(BaseRetriever):
 
         # 分詞處理查詢
         query_tokens = set(jieba.cut(query.lower()))
+        # 過濾空白與單字（單字 noise 太多）
+        query_tokens_for_sql = [t for t in query_tokens if t.strip() and len(t) > 1]
 
         conn = self._get_db_connection()
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
             # 查詢有關鍵字的 SOP
+            # 🔧 SQL 端先用 keywords && query_tokens 過濾，避免 LIMIT 把命中的排除
             cursor.execute("""
                 SELECT
                     si.id,
@@ -197,11 +200,15 @@ class VendorSOPRetrieverV2(BaseRetriever):
                     AND sc.is_active = TRUE
                     AND si.keywords IS NOT NULL
                     AND array_length(si.keywords, 1) > 0
+                    AND (
+                        %s::text[] = '{}'::text[]
+                        OR si.keywords && %s::text[]
+                    )
                 ORDER BY
                     si.priority DESC,
                     si.item_number ASC
                 LIMIT %s
-            """, (vendor_id, limit * 3))
+            """, (vendor_id, query_tokens_for_sql, query_tokens_for_sql, limit * 3))
 
             all_rows = cursor.fetchall()
             cursor.close()
