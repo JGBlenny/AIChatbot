@@ -29,9 +29,12 @@ knowledge_base
 ### 向量 Embedding
 
 - **維度**：1536（OpenAI text-embedding-ada-002）
+- **輸入文字**：只用標題（`question_summary`），不混入 keywords（避免語義稀釋）
 - **用途**：語義相似度檢索（pgvector 的 `<=>` 運算子）
 - **索引**：IVFFlat 向量索引（加速相似度搜尋）
-- **閾值**：預設相似度 > 0.6 才視為匹配
+- **閾值**：預設相似度 > 0.65 才視為匹配
+- **生成一致性**：所有寫入 `knowledge_base.embedding` 的路徑都須使用 `get_embedding_client()`，輸入文字統一為 `question_summary`（避免與搜尋時的 query embedding 來源不一致）
+- **keywords 機制**：透過 `BaseRetriever._keyword_search` 獨立進行關鍵字匹配（向量備選），不混入 embedding
 
 ### 業者隔離機制
 

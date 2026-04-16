@@ -94,9 +94,9 @@ docker exec -e VENDOR_ID=2 -e BACKTEST_ONLY=true aichatbot-rag-orchestrator \
 - `services/backtest_service.py`（回測服務）
 
 **回測流程**：
-1. 從 `test_scenarios` 讀取已批准的測試場景
+1. 從 `knowledge_completion_loops.scenario_ids` 讀取迴圈的固定測試集（同一迴圈每次迭代用同一組，不同迴圈間不重複）
 2. 調用 RAG API (`http://localhost:8100`) 進行問答
-3. 記錄結果到 `backtest_results` 表
+3. 記錄結果到 `backtest_results` 表（test_type 支援: smoke/full/custom/batch/continuous_batch）
 4. 計算通過率
 
 ### backtest_results 資料表
@@ -183,13 +183,43 @@ scenario_ids = [s.id for s in selected_scenarios]
 ```sql
 knowledge_completion_loops
 ├── id (loop_id)
+├── loop_name
 ├── vendor_id
-├── status                  -- 'pending'/'running'/'completed'/'failed'
+├── status                  -- pending/running/backtesting/analyzing/generating/
+│                              reviewing/validating/syncing/paused/completed/
+│                              failed/cancelled/terminated
+├── config                  -- jsonb 迴圈配置
+├── scenario_ids            -- integer[] 固定測試集（建立時選定，所有迭代共用，
+│                              不同迴圈間不重複）
+├── selection_strategy      -- stratified_random/sequential/full_random
+├── difficulty_distribution -- jsonb 難度分布（如 {easy:20,medium:50,hard:30}）
+├── total_scenarios
 ├── target_pass_rate        -- 目標通過率（預設 0.85）
+├── current_pass_rate
+├── initial_pass_rate
 ├── max_iterations          -- 最大迭代次數（預設 10）
-├── current_iteration       -- 當前迭代次數
-├── current_pass_rate       -- 當前通過率
-└── created_at
+├── current_iteration
+├── iterations_history      -- jsonb[]
+├── parent_loop_id          -- 關聯批次去重
+├── budget_limit_usd
+├── total_openai_cost_usd
+└── created_at / updated_at / started_at / completed_at
+```
+
+### backtest_runs 資料表
+
+```sql
+backtest_runs
+├── id (run_id)
+├── vendor_id
+├── test_type               -- smoke/full/custom/batch/continuous_batch
+├── quality_mode            -- basic/hybrid/detailed
+├── status                  -- pending/running/completed/failed/cancelled
+├── total_scenarios
+├── executed_scenarios
+├── pass_rate
+├── started_at / completed_at
+└── notes
 ```
 
 ## 6. 品質標準
@@ -299,10 +329,13 @@ loop_execution_logs
 # 主要回測腳本（已存在於專案中，禁止重複創建）
 # ============================================================================
 
-# 1. 完整知識完善迴圈（回測 + 知識生成）
+# 1. 完整知識完善迴圈（回測 + 知識生成）— 透過前端「執行迭代」按鈕觸發
+# 後端 API: POST /api/v1/loops/{loop_id}/execute-iteration
+# 流程：回測（用迴圈固定 scenario_ids）→ 分析缺口 → AI 分類 → 聚類 → 生成知識 → 人工審核
+
+# 2. 純命令列回測（不生成知識）
 services/knowledge_completion_loop/run_first_loop.py
-# 用途：執行完整的知識完善迴圈
-# 流程：回測 → 分析缺口 → AI 分類 → 聚類 → 生成知識 → 人工審核
+# 用途：執行完整的知識完善迴圈（命令列版本）
 # 環境變數：
 #   - VENDOR_ID=2（必需）
 #   - OPENAI_API_KEY（知識生成時必需）
@@ -312,24 +345,11 @@ docker exec -e VENDOR_ID=2 -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
   aichatbot-rag-orchestrator \
   bash -c "cd /app && python3 services/knowledge_completion_loop/run_first_loop.py"
 
-# 2. 純回測模式（不生成知識）
-rag-orchestrator/run_backtest_db.py
-# 用途：僅執行回測，記錄結果到資料庫
-# 流程：讀取測試場景 → 調用 RAG API → 記錄結果 → 計算通過率
-# 環境變數：
-#   - VENDOR_ID=2（必需）
-#   - BACKTEST_BATCH_LIMIT=50（限制測試數量）
-#   - BACKTEST_FILTER_STATUS=approved（篩選已批准的測試）
-# 執行方式：
-docker exec -e VENDOR_ID=2 -e BACKTEST_BATCH_LIMIT=50 \
-  aichatbot-rag-orchestrator \
-  bash -c "cd /app && python3 run_backtest_db.py"
-
 # 3. 回測框架（底層框架，被上述腳本調用）
 scripts/backtest/backtest_framework_async.py
 # 用途：並發回測框架 V2（提供 5-10x 性能提升）
 # 特性：並發執行、異步 HTTP、智能重試、實時進度、批量 LLM 評估
-# 注意：這是底層框架，不直接執行，由 run_backtest_db.py 和 run_first_loop.py 調用
+# 注意：這是底層框架，不直接執行，由 BacktestFrameworkClient 和 run_first_loop.py 調用
 
 # ============================================================================
 # 臨時分析腳本（可重用，使用固定檔名）

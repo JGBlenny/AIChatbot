@@ -1,7 +1,7 @@
 # 📦 資料庫 Migration 文件
 
-**最後更新**: 2026-01-22
-**Migration 總數**: 17 個
+**最後更新**: 2026-04-16
+**Migration 總數**: 63 個（含 test/fix/sync 類）
 **追蹤機制**: `schema_migrations` 表 + 自動執行腳本
 
 ---
@@ -245,6 +245,61 @@ ALTER TABLE api_endpoints DROP COLUMN IF EXISTS handler_function;
 ```
 
 **原因**: `handler_function` 是舊版欄位，新版使用 `custom_handler_name` (配合 `implementation_type`)
+
+---
+
+### 17. fix_backtest_runs_test_type_constraint.sql
+**建立日期**: 2026-04-15
+**功能**: 補齊 `backtest_runs.test_type` CHECK constraint，新增 `batch` 和 `continuous_batch`
+**影響表**: `backtest_runs`
+
+```sql
+ALTER TABLE backtest_runs DROP CONSTRAINT backtest_runs_test_type_check;
+ALTER TABLE backtest_runs ADD CONSTRAINT backtest_runs_test_type_check
+  CHECK (test_type IN ('smoke', 'full', 'custom', 'batch', 'continuous_batch'));
+```
+
+**原因**: 線上 constraint 只允許 smoke/full/custom，知識完善迴圈寫入 `batch` 時 CheckViolation，導致回測失敗。
+
+---
+
+### 18. fix_knowledge_base_loop_fk_on_delete_set_null.sql
+**建立日期**: 2026-04-15
+**功能**: `knowledge_base` 的 loop 相關 FK 改為 `ON DELETE SET NULL`，並放寬 `check_loop_source`
+**影響表**: `knowledge_base`
+
+```sql
+-- FK 改為 ON DELETE SET NULL
+ALTER TABLE knowledge_base ADD CONSTRAINT knowledge_base_source_loop_id_fkey
+  FOREIGN KEY (source_loop_id) REFERENCES knowledge_completion_loops(id) ON DELETE SET NULL;
+
+-- CHECK 放寬，允許 source='loop' 時引用為 NULL
+ALTER TABLE knowledge_base ADD CONSTRAINT check_loop_source
+  CHECK (
+    ((source)::text <> 'loop'::text AND source_loop_id IS NULL AND source_loop_knowledge_id IS NULL)
+    OR ((source)::text = 'loop'::text)
+  );
+```
+
+**原因**: 清除迴圈資料時知識應保留，FK 不應阻擋刪除。
+
+---
+
+### 19. sync_prod_api_forms_knowledge.sql（線上專用）
+**建立日期**: 2026-04-15
+**功能**: 同步線上 `api_endpoints` / `form_schemas` / `knowledge_base` / `knowledge_intent_mapping` 資料（以本地為準）
+**影響表**: `api_endpoints`, `form_schemas`, `knowledge_base`, `knowledge_intent_mapping`, `form_sessions`
+
+**內容**: 刪除死資料 → 更新既有記錄 → 新增缺失記錄（含 lookup endpoints、v2 查詢表單、對應知識與 intent 關聯）。
+
+---
+
+### 20. sync_prod_sop_data.sql（線上專用）
+**建立日期**: 2026-04-15
+**功能**: 補齊線上 vendor_id=2 缺少的 SOP categories / groups / items
+**影響表**: `vendor_sop_categories`, `vendor_sop_groups`, `vendor_sop_items`
+
+**內容**: 只補缺的 3 個 category、1 個 group 和 9 筆 SOP items。Embedding 由 `POST /api/v1/vendors/{id}/sop/regenerate-embeddings` 另外觸發生成。
 
 ---
 

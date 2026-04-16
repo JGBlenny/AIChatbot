@@ -121,8 +121,11 @@ Utils (工具層)
 
 ### 向量處理
 - **Embedding API**: 統一透過 `embedding_utils.get_embedding_client()` 取得客戶端
+- **Embedding 輸入規則**: 只用標題生成 embedding（知識庫用 `question_summary`，SOP 用 `item_name`），keywords 不混入 embedding，透過獨立的關鍵字搜尋機制處理
+- **SOP Embedding**: 統一由 `sop_embedding_generator.py` 生成（primary=item_name, fallback=content），所有寫入 vendor_sop_items 的路徑都觸發此生成器
 - **向量搜尋**: 使用 PostgreSQL pgvector 的 `<=>` 運算子進行相似度搜尋
-- **相似度閾值**: 預設 0.6，可依業務需求調整
+- **檢索策略**: 向量搜尋 + 關鍵字備選（SOP 和知識庫都啟用 keyword_fallback）+ Reranker 語義重排序
+- **相似度閾值**: 知識庫 0.65，SOP 0.75（環境變數可調）
 - **優先級加成**: 支援對高品質答案 (>0.7) 進行固定加成 (+0.15)
 
 ### 快取策略
@@ -133,8 +136,9 @@ Utils (工具層)
 ### AI 呼叫慣例
 - **OpenAI Client**: 使用 `openai.OpenAI(api_key=...)` 初始化
 - **模型選擇**:
-  - GPT-4o: 複雜任務（答案合成、知識生成、分類）
-  - GPT-4o-mini: 簡單任務（分類、標題生成）
+  - GPT-4o: 複雜任務（答案合成、文件轉換）
+  - GPT-4o-mini: 知識生成、SOP 生成、分類、標題生成
+  - GPT-3.5-turbo: 意圖分類（INTENT_CLASSIFIER_MODEL）
 - **Temperature**:
   - 0.0-0.3: 確定性任務（分類、提取）
   - 0.7-0.9: 創造性任務（生成、重寫）
@@ -148,7 +152,7 @@ Utils (工具層)
 - **測試檔案**: 命名為 `test_*.py`
 - **單元測試**: 測試個別服務邏輯
 - **整合測試**: 測試端到端流程（回測、知識完善迴圈）
-- **批次測試**: 使用 `run_backtest_db.py` 進行批量回測
+- **批次測試**: 透過前端「執行迭代」按鈕（`POST /api/v1/loops/{id}/execute-iteration`）或 `run_first_loop.py` 執行
 
 ### 文檔與註釋
 - **Docstrings**: 所有公開函數使用 Google 風格的 docstrings

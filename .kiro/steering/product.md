@@ -27,13 +27,14 @@
 ### 3. 知識完善迴圈 (Knowledge Completion Loop)
 **自動化知識缺口發現與補救流程**:
 
-1. **回測執行** (`run_backtest_db.py`): 對核准的測試場景執行批量測試
+1. **回測執行**: 使用迴圈建立時選定的固定測試集（scenario_ids），確保不同迭代間可比較，不同迴圈間不重複
 2. **失敗分析** (`gap_analyzer.py`): 識別測試失敗原因（知識缺失、檢索不準、答案品質差）
 3. **AI 分類** (`action_type_classifier.py`): 使用 OpenAI 分類失敗案例為 SOP、表單填寫、系統配置
 4. **分類聚類** (`gap_classifier.py`): 按 action_type 分別聚類，生成群組標題
-5. **知識生成** (`knowledge_generator.py`):
-   - SOP 知識: 生成到 SOP 分類、群組、項目
-   - 通用知識: 生成到 knowledge_base
+5. **知識生成** (`knowledge_generator.py`, 模型: gpt-4o-mini):
+   - 從房客（租客）的權益和需求角度生成回答
+   - SOP 知識: 生成到審核表，審核通過後同步到 vendor_sop_items（embedding 由 sop_embedding_generator 統一生成）
+   - 通用知識: 生成到審核表，審核通過後同步到 knowledge_base
 6. **人工審核**: 所有生成知識標記為 `pending_review`，需人工批准
 7. **迭代驗證**: 批准後重新回測，持續改善直到達成目標
 
@@ -42,7 +43,7 @@
 ### 4. SOP 智能編排 (SOP Orchestrator)
 - **多輪對話流程**: 支援複雜 SOP 流程的多輪對話管理
 - **表單填寫**: 動態表單生成、驗證、參數解析
-- **關鍵字匹配**: 支援關鍵字觸發 SOP 流程
+- **檢索策略**: 向量搜尋（item_name embedding）+ 關鍵字備選（keywords 陣列比對）+ Reranker 重排序
 - **語義觸發**: 基於語義相似度的 SOP 流程觸發
 
 ### 5. 測試與驗證

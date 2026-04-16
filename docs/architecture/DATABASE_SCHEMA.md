@@ -111,9 +111,9 @@ erDiagram
         text answer "答案"
         string category "分類"
         int intent_id FK "主要意圖(舊)"
-        int vendor_id FK "業者ID"
-        vector(1536) embedding "向量"
-        string scope "[已棄用] 保留字段，現使用 vendor_id 判斷"
+        int_array vendor_ids "業者 ID 陣列（多業者共享）"
+        vector(1536) embedding "向量（只用 question_summary 生成）"
+        string scope "[已棄用] 保留字段，現使用 vendor_ids 判斷"
         boolean is_template "是否為模板"
         jsonb template_vars "模板變數"
         int priority "優先級"
@@ -475,9 +475,9 @@ CREATE TABLE knowledge_base (
     -- 意圖關聯（舊欄位，保留相容性）
     intent_id INTEGER REFERENCES intents(id),
 
-    -- 多業者支援
-    vendor_id INTEGER REFERENCES vendors(id),  -- NULL = 全域知識, 非NULL = 業者專屬
-    scope VARCHAR(20) DEFAULT 'global',        -- [已棄用] 保留向後兼容，現用 vendor_id 判斷
+    -- 多業者支援（vendor_ids 陣列，支援多業者共享知識）
+    vendor_ids INTEGER[] DEFAULT '{}',         -- 空陣列 = 全域知識, 非空 = 業者專屬列表
+    scope VARCHAR(20) DEFAULT 'global',        -- [已棄用] 保留向後兼容，現用 vendor_ids 判斷
     priority INTEGER DEFAULT 0,                -- 優先級（數字越大越優先）
 
     -- 模板欄位（已棄用，保留向後相容）
@@ -504,13 +504,14 @@ CREATE INDEX idx_kb_embedding ON knowledge_base
 USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
 ```
 
-**知識範圍判斷 (vendor_id)**:
-- `vendor_id = NULL` - 全域知識（適用所有業者）
-- `vendor_id = <id>` - 業者專屬知識（只有該業者可用）
+**知識範圍判斷 (vendor_ids)**:
+- `vendor_ids = '{}' (空陣列)` - 全域知識（適用所有業者）
+- `vendor_ids = '{2}'` - 單一業者專屬
+- `vendor_ids = '{1,2,3}'` - 多業者共享
+- 查詢時用 `vendor_ids && ARRAY[<vendor_id>]` 過濾
 - 註：scope 欄位已棄用，保留僅供向後兼容
-- `customized` - 客製化知識（覆蓋全域知識）
 
-**查詢優先級**: `customized (priority DESC) > vendor (priority DESC) > global (priority DESC)`
+**查詢優先級**: vendor 專屬（priority DESC）> 全域（priority DESC）
 
 **已棄用功能**:
 - `is_template` 和 `template_vars` 欄位已不再使用
