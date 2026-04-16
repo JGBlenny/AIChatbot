@@ -89,18 +89,23 @@ class SemanticReranker:
             }
 
             # 調用語義模型 API
+            # hotfix (.kiro/issues/reranker-returning-zero.md)：
+            # timeout 從 15s → 60s。bge-reranker-base CPU 推論大批次（>30 筆）需時 25-30s，
+            # 舊的 15s timeout 導致 KB 路徑 100% 失敗。
+            # 配合 base_retriever 的 RERANKER_INPUT_LIMIT 限制（預設 20）雙重保險。
+            rerank_timeout = int(os.getenv("RERANKER_HTTP_TIMEOUT", "60"))
             if use_httpx:
                 with httpx.Client() as client:
                     response = client.post(
                         f"{self.semantic_api_url}/rerank",
                         json=request_data,
-                        timeout=15
+                        timeout=rerank_timeout
                     )
             else:
                 response = requests.post(
                     f"{self.semantic_api_url}/rerank",
                     json=request_data,
-                    timeout=15
+                    timeout=rerank_timeout
                 )
 
             if response.status_code == 200:

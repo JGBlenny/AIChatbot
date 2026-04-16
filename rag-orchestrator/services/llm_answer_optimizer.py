@@ -199,14 +199,14 @@ class LLMAnswerOptimizer:
                     topics.add(r['title'])
             has_diverse_topics = len(topics) >= 3  # 至少 3 個不同主題
 
-            # 檢查是否有完美匹配（使用原始相似度，不含意圖加成）
-            # 意圖加成只用於排序，不應影響完美匹配判斷
-            max_similarity = max(
-                r.get('original_similarity', r['similarity'])
-                for r in high_quality_results
+            # 檢查是否有完美匹配（task 5.3：改用純向量分數 vector_similarity）
+            # 說明：similarity 為 final 組合分數（含 rerank/boost），不適合作為「語義完美匹配」判定依據。
+            # PERFECT_MATCH_THRESHOLD 對應純向量 cosine 分數（詳見 docs/architecture/retriever-pipeline.md）。
+            max_vector_similarity = max(
+                r.get('vector_similarity', 0) for r in high_quality_results
             )
             perfect_match_threshold = self.config.get("perfect_match_threshold", 0.95)
-            has_perfect_match = max_similarity >= perfect_match_threshold
+            has_perfect_match = max_vector_similarity >= perfect_match_threshold
 
             # 強制合成的條件（優先級從高到低）：
             # 1. 流程問題（需要完整步驟）
@@ -215,18 +215,18 @@ class LLMAnswerOptimizer:
             if is_process_question:
                 force_synthesis = True
                 print(f"🔄 檢測到 {len(high_quality_results)} 個高品質結果（流程問題），強制使用答案合成")
-                print(f"   相似度範圍: {min(r['similarity'] for r in high_quality_results):.3f}-{max_similarity:.3f}")
+                print(f"   final similarity 範圍: {min(r['similarity'] for r in high_quality_results):.3f}-{max(r['similarity'] for r in high_quality_results):.3f}（perfect_match 比對 vector={max_vector_similarity:.3f}）")
             elif is_broad_query and has_diverse_topics:
-                # 廣泛查詢優先於完美匹配（即使 SOP similarity=1.0 也要合成）
+                # 廣泛查詢優先於完美匹配（即使 vector_similarity 高也要合成）
                 force_synthesis = True
                 print(f"🔄 檢測到 {len(high_quality_results)} 個高品質結果（廣泛查詢 + {len(topics)} 個不同主題），強制使用答案合成")
                 print(f"   主題: {', '.join(list(topics)[:5])}")
-                print(f"   相似度: {max_similarity:.3f} (忽略完美匹配，因為是廣泛查詢)")
+                print(f"   vector_similarity: {max_vector_similarity:.3f} (忽略完美匹配，因為是廣泛查詢)")
             elif not has_perfect_match:
                 force_synthesis = True
-                print(f"🔄 檢測到 {len(high_quality_results)} 個高品質結果（無完美匹配: max={max_similarity:.3f} < {perfect_match_threshold}），強制使用答案合成")
+                print(f"🔄 檢測到 {len(high_quality_results)} 個高品質結果（無完美匹配: vector={max_vector_similarity:.3f} < {perfect_match_threshold}），強制使用答案合成")
             else:
-                print(f"ℹ️  檢測到完美匹配（{max_similarity:.3f} >= {perfect_match_threshold}），直接返回原始答案")
+                print(f"ℹ️  檢測到完美匹配（vector={max_vector_similarity:.3f} >= {perfect_match_threshold}），直接返回原始答案")
                 force_synthesis = False
 
                 # 完美匹配：直接返回原始答案，不進行任何 LLM 優化
@@ -442,13 +442,17 @@ class LLMAnswerOptimizer:
         has_complex_pattern = any(kw in question for kw in complex_keywords)
 
         # 4. 沒有單一高分答案（表示可能需要組合多個答案）
+        # task 5.4：此處明確使用 final similarity（retriever 輸出的組合分數），
+        # 對應環境變數 SYNTHESIS_THRESHOLD（詳見 docs/architecture/retriever-pipeline.md）。
+        # 與 perfect_match 判定（用 vector_similarity）不同：合成觸發衡量的是綜合品質，
+        # 應包含 rerank/boost 後的最終排序分數。
         threshold = self.config.get("synthesis_threshold", 0.7)
-        max_similarity = max(r['similarity'] for r in search_results[:min_results])
-        no_perfect_match = max_similarity < threshold
+        max_final_similarity = max(r['similarity'] for r in search_results[:min_results])
+        no_perfect_match = max_final_similarity < threshold
 
         # 記錄判斷結果（用於調試）
         if has_complex_pattern and no_perfect_match:
-            print(f"🔄 答案合成觸發：問題類型={has_complex_pattern}, 最高相似度={max_similarity:.3f} < {threshold}")
+            print(f"🔄 答案合成觸發：問題類型={has_complex_pattern}, 最高 final similarity={max_final_similarity:.3f} < {threshold}")
 
         return has_complex_pattern and no_perfect_match
 

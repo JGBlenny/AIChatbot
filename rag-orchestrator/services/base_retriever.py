@@ -123,6 +123,7 @@ class BaseRetriever(ABC):
         similarity_threshold: float = None,
         enable_keyword_fallback: bool = None,
         enable_keyword_boost: bool = None,
+        return_unfiltered: bool = False,
         **kwargs
     ) -> List[Dict]:
         """
@@ -136,6 +137,12 @@ class BaseRetriever(ABC):
             similarity_threshold: 相似度閾值
             enable_keyword_fallback: 是否啟用關鍵字備選
             enable_keyword_boost: 是否啟用關鍵字加成
+            return_unfiltered: debug 旁路（followup-debug-visibility 選項 A）。
+                True 時跳過 application 端 threshold 過濾，回傳所有候選
+                （含 final similarity < threshold 的低分項目）。
+                仍會套用 top_k 與 final similarity 排序。
+                僅供 chat.py 在 include_debug_info=True 時使用，
+                產線流量維持 False（預設）。
             **kwargs: 傳遞給子類的額外參數
 
         Returns:
@@ -184,29 +191,112 @@ class BaseRetriever(ABC):
             if added > 0:
                 print(f"   關鍵字備選: 新增 {added} 個結果")
 
-        # Step 4: 關鍵字加成
+        # Step 4: 關鍵字加成（只寫 keyword_boost / keyword_matches）
         if enable_keyword_boost and results:
             results = await self._apply_keyword_boost(results, query)
             print(f"   關鍵字加成: 已應用")
 
-        # Step 5: SemanticReranker
+        # Step 5: SemanticReranker（只寫 rerank_score）
+        # hotfix (.kiro/issues/reranker-returning-zero.md)：
+        # 限制送進 reranker 的候選，避免 bge-reranker-base CPU 推論超時。
+        # 兩層過濾：
+        #   a) vector_similarity < RERANKER_MIN_VECTOR_SIMILARITY 的 vector 項直接丟棄
+        #      （rerank 後幾乎不可能進 top_k，送進去浪費推論時間）
+        #      ⚠️ keyword_fallback 項不受下限影響（它們 vector_similarity=0 是設計預設值，
+        #      不代表「低相關」而是「走 keyword 路徑」）
+        #   b) 若剩餘候選仍超過 RERANKER_INPUT_LIMIT，優先保留 keyword_fallback，
+        #      再以 vector_similarity 補足 vector 項
         if self.semantic_reranker and len(results) > 0:
-            results = self._apply_semantic_reranker(query, results, top_k)
-            print(f"   Reranker: 已重排序")
+            rerank_input_limit = int(os.getenv("RERANKER_INPUT_LIMIT", "20"))
+            rerank_min_vec = float(os.getenv("RERANKER_MIN_VECTOR_SIMILARITY", "0.3"))
+
+            keyword_items = [
+                r for r in results
+                if r.get('search_method') == 'keyword_fallback'
+            ]
+            vector_items = [
+                r for r in results
+                if r.get('search_method') != 'keyword_fallback'
+            ]
+
+            # 下限過濾（只作用於 vector 項；keyword_fallback 項一律保留）
+            filtered_vector = [
+                r for r in vector_items
+                if r.get('vector_similarity', 0) >= rerank_min_vec
+            ]
+            dropped_by_floor = len(vector_items) - len(filtered_vector)
+            vector_items = filtered_vector
+
+            before = len(results)
+            # 上限截斷
+            if len(keyword_items) + len(vector_items) > rerank_input_limit:
+                if len(keyword_items) >= rerank_input_limit:
+                    results = keyword_items[:rerank_input_limit]
+                else:
+                    vector_items.sort(
+                        key=lambda x: x.get('vector_similarity', 0),
+                        reverse=True,
+                    )
+                    vector_slots = rerank_input_limit - len(keyword_items)
+                    results = vector_items[:vector_slots] + keyword_items
+            else:
+                results = vector_items + keyword_items
+
+            if before != len(results):
+                print(
+                    f"   Reranker 過濾: {before} → {len(results)} 筆"
+                    f"（下限 vector>={rerank_min_vec} 砍 {dropped_by_floor} 筆；"
+                    f"剩 {len(keyword_items)} 筆 keyword_fallback"
+                    f" + {len(results) - len(keyword_items)} 筆 vector）"
+                )
+
+            if results:
+                results = self._apply_semantic_reranker(query, results, top_k)
+                print(f"   Reranker: 已重排序")
+            else:
+                print(f"   Reranker: 過濾後無候選，跳過 rerank")
+
+        # Step 6: 統一計算 final similarity 與 score_source（task 4.3）
+        results = self._finalize_scores(results)
+
+        # Step 7: application 端 threshold 過濾（比對 final similarity）
+        # followup-debug-visibility 選項 A：return_unfiltered=True 時跳過過濾，
+        # 讓 chat.py debug 模式拿到完整候選（含低分），供 chat-test 顯示。
+        if not return_unfiltered:
+            before_filter = len(results)
+            results = [r for r in results if r.get('similarity', 0) >= similarity_threshold]
+            if before_filter != len(results):
+                print(f"   閾值過濾: {before_filter} → {len(results)} 筆 (>= {similarity_threshold})")
+        else:
+            print(f"   [debug] 跳過 threshold 過濾（return_unfiltered=True），保留 {len(results)} 筆完整候選")
+
+        # Step 8: 依 final similarity 排序，回傳 top_k
+        results.sort(key=lambda x: x.get('similarity', 0), reverse=True)
+        results = results[:top_k]
 
         print(f"   最終結果: {len(results)} 個")
         return results
 
     async def _apply_keyword_boost(self, results: List[Dict], query: str) -> List[Dict]:
         """
-        應用關鍵字加成
+        應用關鍵字加成（task 4.1）
+
+        只寫入 keyword_boost（倍率）與 keyword_matches，不修改 vector_similarity /
+        keyword_score / similarity。最終 similarity 由 _finalize_scores 依公式重算。
+
+        欄位語意：
+        - keyword_boost：1.0 + raw_boost（例如 1.0、1.1、1.2、1.3）
+          這個倍率由 _finalize_scores 在 keyword/vector 分支套用到 similarity。
+        - keyword_matches：命中的關鍵字 list
+
+        排序由 _finalize_scores 完成後在 retrieve() 末端執行，本方法不排序。
 
         Args:
             results: 檢索結果
             query: 原始查詢
 
         Returns:
-            加成後的結果
+            加成後的結果（順序保持原樣）
         """
         query_tokens = set(jieba.cut(query.lower()))
 
@@ -222,26 +312,37 @@ class BaseRetriever(ABC):
                 if query_tokens & keyword_tokens:  # 有交集
                     matched_keywords.append(keyword)
 
-            # 應用加成
+            # 應用加成（只寫入 keyword_boost 倍率與 keyword_matches）
             if matched_keywords:
-                boost = min(0.3, len(matched_keywords) * 0.1)  # 最多 30% 加成
-                original_score = result.get('similarity', 0)
-                result['similarity'] = min(1.0, original_score * (1 + boost))
+                raw_boost = min(0.3, len(matched_keywords) * 0.1)  # 最多 30% 加成
+                result['keyword_boost'] = 1.0 + raw_boost  # 倍率：1.0–1.3
                 result['keyword_matches'] = matched_keywords
-                result['keyword_boost'] = boost
 
-        # 重新排序
-        results.sort(key=lambda x: x.get('similarity', 0), reverse=True)
         return results
 
     def _apply_semantic_reranker(self, query: str, candidates: List[Dict], top_k: int = 5) -> List[Dict]:
-        """使用 SemanticReranker（外部服務）重排序"""
+        """
+        使用 SemanticReranker（外部服務）重排序（task 4.2）
+
+        本方法只寫入 `rerank_score`，不修改 vector_similarity / keyword_score /
+        keyword_boost / similarity / original_similarity。最終 similarity 由
+        _finalize_scores 依公式重算（rerank 分支：0.1 × vector + 0.9 × rerank）。
+
+        ⚠️ 必須保留 SOP→KB 欄位映射（reranker HTTP 服務需要 answer 與 question_summary）：
+            if 'answer' not in item and 'content' in item:
+                item['answer'] = item['content']
+            if 'question_summary' not in item:
+                item['question_summary'] = item.get('item_name', '')
+
+        重構時不可誤刪此映射，否則 SOP 重排序會收到空字串。
+
+        排序由 retrieve() 末端在 _finalize_scores 後執行，本方法不排序。
+        """
         if not self.semantic_reranker or not candidates:
             return candidates
 
         try:
-            # SemanticReranker 需要 candidates 有 content 欄位
-            # SOP 用 content，KB 用 answer + question_summary
+            # ⚠️ SOP→KB 欄位映射（reranker 服務需要 answer 與 question_summary）
             prepared = []
             for c in candidates:
                 item = dict(c)
@@ -253,15 +354,23 @@ class BaseRetriever(ABC):
 
             reranked = self.semantic_reranker.rerank(query, prepared, top_k=top_k)
 
-            # 把 semantic_score 寫回 similarity（10% 原始 + 90% rerank）
-            for item in reranked:
-                original_score = item.get('similarity', 0)
-                semantic_score = item.get('semantic_score', 0)
-                item['original_similarity'] = original_score
-                item['rerank_score'] = semantic_score
-                item['similarity'] = original_score * 0.1 + semantic_score * 0.9
+            # Issue: reranker-returning-zero 暫行解法
+            # 若 reranker 回傳全部 semantic_score 都是 0，視為 reranker 服務異常，
+            # 回傳原始 candidates（不寫 rerank_score，讓 _finalize_scores 走 vector/keyword 分支）。
+            # 避免 reranker 失效時所有候選的 final similarity 都只剩 10% vector 導致全部被 threshold 過濾。
+            if reranked and all(
+                (item.get('semantic_score') or 0) == 0 for item in reranked
+            ):
+                print(
+                    f"⚠️ Reranker 回傳全 0 分（{len(reranked)} 筆），視為服務異常，"
+                    f"fallback 到原始候選（rerank_score 保持 None）"
+                )
+                return candidates
 
-            reranked.sort(key=lambda x: x['similarity'], reverse=True)
+            # task 4.2：只寫入 rerank_score，不覆寫其他分數欄位
+            for item in reranked:
+                item['rerank_score'] = item.get('semantic_score', 0)
+
             return reranked
 
         except Exception as e:
@@ -316,3 +425,60 @@ class BaseRetriever(ABC):
     def _tokenize_chinese(self, text: str) -> set:
         """中文分詞"""
         return set(jieba.cut(text.lower()))
+
+    def _finalize_scores(self, results: List[Dict]) -> List[Dict]:
+        """
+        統一計算最終 similarity 與 score_source（pipeline Stage 5）。
+
+        對應規格：
+        - requirements.md Requirement 4
+        - design.md 決策 4
+
+        三分支公式（按優先順序判斷）：
+            1. rerank_score is not None:
+                 similarity = 0.1 × vector_similarity + 0.9 × rerank_score
+                 score_source = "rerank"
+            2. keyword_score is not None:
+                 similarity = min(1.0, max(vector_similarity, keyword_score) × keyword_boost)
+                 score_source = "keyword"
+            3. else:
+                 similarity = min(1.0, vector_similarity × keyword_boost)
+                 score_source = "vector"
+
+        本方法只寫入 `similarity` 與 `score_source` 兩個欄位，
+        不修改 vector_similarity / keyword_score / keyword_boost / rerank_score。
+
+        Args:
+            results: 各 pipeline 階段累積分數欄位的結果列表（dict / RetrievalResult）
+
+        Returns:
+            同一份 results（in-place 更新 similarity 與 score_source 後回傳）
+        """
+        rerank_count = 0
+        keyword_count = 0
+        vector_count = 0
+
+        for r in results:
+            vector = r.get('vector_similarity', 0.0) or 0.0
+            keyword = r.get('keyword_score')
+            boost = r.get('keyword_boost', 1.0) or 1.0
+            rerank = r.get('rerank_score')
+
+            if rerank is not None:
+                r['similarity'] = 0.1 * vector + 0.9 * rerank
+                r['score_source'] = 'rerank'
+                rerank_count += 1
+            elif keyword is not None:
+                r['similarity'] = min(1.0, max(vector, keyword) * boost)
+                r['score_source'] = 'keyword'
+                keyword_count += 1
+            else:
+                r['similarity'] = min(1.0, vector * boost)
+                r['score_source'] = 'vector'
+                vector_count += 1
+
+        print(
+            f"   [Finalize] 計算 {len(results)} 筆，分數來源: "
+            f"rerank={rerank_count}, keyword={keyword_count}, vector={vector_count}"
+        )
+        return results

@@ -169,20 +169,27 @@ class AsyncBacktestFramework:
                 if data and "debug_info" in data and data["debug_info"]:
                     debug_info = data["debug_info"]
                     if debug_info and "knowledge_candidates" in debug_info and debug_info["knowledge_candidates"] and "sources" in data:
-                        # 建立 ID 到 similarity 的映射
-                        id_to_sim = {}
+                        # task 5.5：主排序使用 final similarity（含 rerank/boost），
+                        # 額外記錄 vector_similarity 供純向量分數分析。
+                        id_to_scores = {}
                         for candidate in debug_info["knowledge_candidates"]:
                             kb_id = candidate.get("id")
-                            # 優先使用 boosted_similarity (語義重排後), 其次 base_similarity
-                            similarity = candidate.get("boosted_similarity") or candidate.get("base_similarity", 0.0)
-                            if kb_id:
-                                id_to_sim[kb_id] = similarity
-                        
-                        # 注入 similarity 到 sources
+                            if not kb_id:
+                                continue
+                            id_to_scores[kb_id] = {
+                                # 主排序：final similarity（retriever 輸出組合分數）
+                                "similarity": candidate.get('similarity', 0.0),
+                                # 輔助分析：純向量 cosine 分數
+                                "vector_similarity": candidate.get('vector_similarity', 0.0),
+                            }
+
+                        # 注入 similarity + vector_similarity 到 sources
                         for source in data.get("sources", []):
                             source_id = source.get("id")
-                            if source_id in id_to_sim:
-                                source["similarity"] = id_to_sim[source_id]
+                            if source_id in id_to_scores:
+                                scores = id_to_scores[source_id]
+                                source["similarity"] = scores["similarity"]
+                                source["vector_similarity"] = scores["vector_similarity"]
                 
                 return data
             except requests.exceptions.Timeout:

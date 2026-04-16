@@ -124,8 +124,27 @@ Utils (工具層)
 - **Embedding 輸入規則**: 只用標題生成 embedding（知識庫用 `question_summary`，SOP 用 `item_name`），keywords 不混入 embedding，透過獨立的關鍵字搜尋機制處理
 - **SOP Embedding**: 統一由 `sop_embedding_generator.py` 生成（primary=item_name, fallback=content），所有寫入 vendor_sop_items 的路徑都觸發此生成器
 - **向量搜尋**: 使用 PostgreSQL pgvector 的 `<=>` 運算子進行相似度搜尋
-- **檢索策略**: 向量搜尋 + 關鍵字備選（SOP 和知識庫都啟用 keyword_fallback）+ Reranker 語義重排序
-- **相似度閾值**: 知識庫 0.65，SOP 0.75（環境變數可調）
+
+### Retriever Pipeline 分數欄位（重要）
+
+> 詳見 [docs/architecture/retriever-pipeline.md](../../docs/architecture/retriever-pipeline.md)
+
+- **分離式分數欄位**（2026-04 重構）：每個 pipeline stage 寫入獨立欄位，不互相覆寫
+  - `vector_similarity`：純向量 cosine 分數（Stage 1 `_vector_search`）
+  - `keyword_score`：關鍵字 normalized 分數（Stage 2 `_keyword_search`，不再 cap 0.70）
+  - `keyword_boost`：關鍵字命中加成倍率（Stage 3 `_apply_keyword_boost`）
+  - `rerank_score`：bge-reranker-base 輸出（Stage 4 `_apply_semantic_reranker`）
+  - `similarity`：final 組合分數，由 Stage 5 `_finalize_scores` 依階層公式計算
+  - `score_source`：`"rerank"` / `"keyword"` / `"vector"`，debug 用
+- **檢索策略**: Stage 1 vector → Stage 2 keyword_fallback → Stage 3 keyword_boost → Stage 4 reranker → Stage 5 finalize → application threshold 過濾 → top_k
+- **Final similarity 公式**（階層式）：
+  - 有 rerank → `0.1 × vector + 0.9 × rerank`
+  - 有 keyword（無 rerank）→ `min(1.0, max(vector, keyword) × boost)`
+  - 純 vector → `min(1.0, vector × boost)`
+- **SQL 不再過濾 threshold**：`_vector_search` 用 LIMIT（SOP 50、KB 100）控制回傳量，application 端用 `similarity >= threshold` 過濾
+- **閾值對應欄位**：
+  - `PERFECT_MATCH_THRESHOLD` 比對 `vector_similarity`（純向量）
+  - `SOP_SIMILARITY_THRESHOLD` / `KB_SIMILARITY_THRESHOLD` / `HIGH_QUALITY_THRESHOLD` / `SYNTHESIS_THRESHOLD` 比對 `similarity`（final）
 - **優先級加成**: 支援對高品質答案 (>0.7) 進行固定加成 (+0.15)
 
 ### 快取策略

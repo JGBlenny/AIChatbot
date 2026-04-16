@@ -198,10 +198,9 @@ def has_sop_results(search_results: list) -> bool:
     Returns:
         True if 包含 SOP，否則 False
     """
-    return any(
-        result.get('scope') == 'vendor_sop' and result.get('similarity') == 1.0
-        for result in search_results
-    )
+    # 改用 scope 判定（task 5.2）：SOP 格式化後一律帶 scope='vendor_sop'，
+    # 不再依賴 similarity == 1.0 的硬編碼語意（重構後 SOP similarity 為真實分數）。
+    return any(result.get('scope') == 'vendor_sop' for result in search_results)
 
 
 # ==================== 參數型問題檢測共用邏輯 ====================

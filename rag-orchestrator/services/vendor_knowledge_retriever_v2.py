@@ -8,6 +8,7 @@ import psycopg2.extras
 from typing import Dict, List, Optional
 from .base_retriever import BaseRetriever
 from .vendor_parameter_resolver import VendorParameterResolver as VendorParamResolver
+from .retrieval_types import make_default_result
 
 
 class VendorKnowledgeRetrieverV2(BaseRetriever):
@@ -31,12 +32,20 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         **kwargs
     ) -> List[Dict]:
         """
-        知識庫向量檢索實作
+        知識庫向量檢索（task 3.1）
+
+        變更（與 SOP retriever 對稱）：
+        - SQL 不在 WHERE 端用 `>= threshold` 過濾（保留低分候選供 debug 顯示）
+          → similarity_threshold 參數保留簽章但不在 SQL 端使用
+        - SELECT alias 改為 `as vector_similarity`（純向量分數，不含 intent_boost）
+        - LIMIT 預設 100（KB 資料量大於 SOP，可由 kwargs['vector_limit'] 覆寫）
+        - intent_boost 仍用於 ORDER BY 排序，但不寫入 vector_similarity
         """
         # 獲取額外參數
         intent_id = kwargs.get('intent_id')
         all_intent_ids = kwargs.get('all_intent_ids', [])
         target_user = kwargs.get('target_user', 'tenant')
+        vector_limit = kwargs.get('vector_limit', 100)
 
         # 根據用戶角色決定業態類型
         is_b2b_mode = (target_user in ['property_manager', 'system_admin'])
@@ -62,7 +71,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             vector_str = str(query_embedding)
 
-            # 建構 SQL 查詢
+            # 建構 SQL 查詢（不在 SQL 端 threshold 過濾）
             sql_query = f"""
                 SELECT
                     kb.id,
@@ -79,9 +88,9 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     kb.action_type,
                     kb.api_config,
                     kim.intent_id,
-                    -- 計算向量相似度
-                    1 - (kb.embedding <=> %s::vector) as similarity,
-                    -- Intent 加成
+                    -- 計算純向量相似度（不含 intent_boost）
+                    1 - (kb.embedding <=> %s::vector) as vector_similarity,
+                    -- Intent 加成（僅供 ORDER BY 排序使用）
                     CASE
                         WHEN kim.intent_id = %s THEN 1.3
                         WHEN kim.intent_id = ANY(%s::int[]) THEN 1.1
@@ -93,7 +102,6 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     (array_length(kb.vendor_ids, 1) IS NULL OR kb.vendor_ids && %s::int[])
                     AND kb.embedding IS NOT NULL
                     AND kb.is_active = TRUE
-                    AND (1 - (kb.embedding <=> %s::vector)) >= %s
                     AND {business_type_filter_sql}
                     AND {target_user_filter_sql}
                 ORDER BY
@@ -107,14 +115,12 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                 LIMIT %s
             """
 
-            # 構建參數列表
+            # 構建參數列表（已移除 similarity_threshold）
             query_params = [
                 vector_str,
                 intent_id if intent_id else -1,
                 all_intent_ids if all_intent_ids else [],
                 [vendor_id],  # 用於 kb.vendor_ids && %s::int[]
-                vector_str,
-                similarity_threshold,
                 vendor_business_types,
             ]
 
@@ -125,7 +131,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                 vector_str,
                 intent_id if intent_id else -1,
                 all_intent_ids if all_intent_ids else [],
-                top_k
+                vector_limit
             ])
 
             cursor.execute(sql_query, tuple(query_params))
@@ -240,14 +246,19 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     normalized_score = min(1.0, match_score / max(1, len(matched_keywords)))
 
                     result = self._format_result(item)
-                    result['similarity'] = normalized_score
+                    # task 3.2：keyword 路徑寫入獨立欄位
+                    # vector_similarity 預設 0.0（代表「向量沒命中、純靠 keyword 找到」）
+                    result['keyword_score'] = normalized_score
+                    result['vector_similarity'] = 0.0
+                    result['original_similarity'] = 0.0  # alias 同步
+                    result['similarity'] = 0.0  # 待 _finalize_scores 重算
                     result['keyword_matches'] = matched_keywords
                     result['search_method'] = 'keyword'
 
                     keyword_matched_knowledge.append(result)
 
-            # 按匹配度排序，取前 limit 個
-            keyword_matched_knowledge.sort(key=lambda x: x['similarity'], reverse=True)
+            # 按 keyword_score 排序，取前 limit 個（final similarity 由 _finalize_scores 算）
+            keyword_matched_knowledge.sort(key=lambda x: x.get('keyword_score') or 0, reverse=True)
             return keyword_matched_knowledge[:limit]
 
         finally:
@@ -255,8 +266,19 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
 
     def _format_result(self, row: Dict) -> Dict:
         """
-        格式化知識庫檢索結果
+        格式化知識庫檢索結果（task 3.3）
+
+        欄位來源（與 SOP retriever 對稱）：
+        - vector_similarity：vector path 從 row['vector_similarity']（SQL alias）讀；
+          keyword path（row 無此欄位）預設 0.0
+        - keyword_score / rerank_score：預設 None
+        - keyword_boost：預設 1.0
+        - similarity：暫時 = vector_similarity，由 _finalize_scores 依公式重算
+        - original_similarity：向後相容 alias = vector_similarity
         """
+        defaults = make_default_result()
+        vector_similarity = row.get('vector_similarity', defaults['vector_similarity'])
+
         return {
             'id': row['id'],
             'question_summary': row.get('question_summary'),
@@ -272,8 +294,17 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             'action_type': row.get('action_type'),
             'api_config': row.get('api_config'),
             'intent_id': row.get('intent_id'),
-            'similarity': row.get('similarity', 0),
-            'search_method': row.get('search_method', 'vector')
+            # ─── 分數欄位（task 3.3） ───
+            'vector_similarity': vector_similarity,
+            'keyword_score': defaults['keyword_score'],
+            'keyword_boost': defaults['keyword_boost'],
+            'rerank_score': defaults['rerank_score'],
+            'similarity': vector_similarity,  # 暫時值，由 _finalize_scores 重算
+            'score_source': defaults['score_source'],
+            'keyword_matches': list(defaults['keyword_matches']),
+            'original_similarity': vector_similarity,  # 向後相容 alias
+            # ─── 既有 metadata ───
+            'search_method': row.get('search_method', 'vector'),
         }
 
     # 便利方法：保持向後相容
@@ -287,11 +318,17 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         all_intent_ids: Optional[List[int]] = None,
         target_user: str = 'tenant',
         return_debug_info: bool = False,
-        use_semantic_boost: bool = True
+        use_semantic_boost: bool = True,
+        return_unfiltered: bool = False
     ) -> List[Dict]:
         """
         向後相容的介面
         調用統一的 retrieve 方法
+
+        Args:
+            return_unfiltered: debug 旁路（followup-debug-visibility 選項 A）。
+                透傳到 retrieve()，True 時跳過 threshold 過濾，
+                供 chat-test 顯示完整候選。
         """
         results = await self.retrieve(
             query=query,
@@ -300,6 +337,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             similarity_threshold=similarity_threshold,
             enable_keyword_fallback=True,  # 啟用關鍵字備選
             enable_keyword_boost=True,      # 啟用關鍵字加成
+            return_unfiltered=return_unfiltered,
             intent_id=intent_id,
             all_intent_ids=all_intent_ids,
             target_user=target_user

@@ -596,10 +596,15 @@ def _build_debug_info(
                 id=sop_id,
                 item_name=sop_name,
                 group_name=candidate.get('group_name'),
-                base_similarity=candidate.get('base_similarity', candidate.get('original_similarity', 0.0)),
+                # task 5.1：base_similarity 語意改為純向量分數 vector_similarity
+                base_similarity=candidate.get(
+                    'base_similarity',
+                    candidate.get('vector_similarity', candidate.get('original_similarity', 0.0)),
+                ),
                 intent_boost=candidate.get('intent_boost', 1.0),
                 boosted_similarity=candidate.get('boosted_similarity', candidate.get('similarity', 0.0)),
                 rerank_score=candidate.get('rerank_score'),
+                score_source=candidate.get('score_source', 'vector'),
                 is_selected=candidate.get('is_selected', False)
             ))
 
@@ -612,7 +617,11 @@ def _build_debug_info(
                 id=k.get('id'),
                 question_summary=k.get('question_summary', ''),
                 scope=k.get('scope', ''),
-                base_similarity=k.get('base_similarity', k.get('original_similarity', 0.0)),
+                # task 5.1：base_similarity 語意改為純向量分數 vector_similarity
+                base_similarity=k.get(
+                    'base_similarity',
+                    k.get('vector_similarity', k.get('original_similarity', 0.0)),
+                ),
                 rerank_score=k.get('rerank_score'),
                 intent_boost=k.get('intent_boost', 1.0),
                 intent_semantic_similarity=k.get('intent_semantic_similarity'),
@@ -620,6 +629,7 @@ def _build_debug_info(
                 priority_boost=k.get('priority_boost', 0.0),
                 boosted_similarity=k.get('boosted_similarity', k.get('similarity', 0.0)),
                 intent_type=k.get('intent_type'),
+                score_source=k.get('score_source', 'vector'),
                 is_selected=k.get('is_selected', False)
             ))
 
@@ -804,10 +814,14 @@ async def _smart_retrieval_with_comparison(
     )
 
     # 等待兩個都完成
-    sop_result, knowledge_list = await asyncio.gather(
+    # _retrieve_knowledge 回傳 (filtered, unfiltered)：
+    # - filtered: 通過 threshold 的知識，供決策邏輯與 LLM 使用
+    # - unfiltered: include_debug_info=True 時才有，供 chat-test debug 顯示
+    sop_result, knowledge_retrieval = await asyncio.gather(
         sop_task,
         knowledge_task
     )
+    knowledge_list, knowledge_list_unfiltered = knowledge_retrieval
 
     # ==================== Step 2: 提取最高分 ====================
     sop_score = 0.0
@@ -851,7 +865,7 @@ async def _smart_retrieval_with_comparison(
             return {
                 'type': 'sop',
                 'sop_result': sop_result,
-                'knowledge_list': knowledge_list,
+                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
                 'reason': '用戶取消 SOP 動作',
                 'comparison': {
                     'sop_score': sop_score,
@@ -872,7 +886,7 @@ async def _smart_retrieval_with_comparison(
             return {
                 'type': 'sop',
                 'sop_result': sop_result,
-                'knowledge_list': knowledge_list,
+                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
                 'reason': 'SOP 關鍵詞匹配並已執行後續動作',
                 'comparison': {
                     'sop_score': sop_score,
@@ -895,7 +909,7 @@ async def _smart_retrieval_with_comparison(
             return {
                 'type': 'knowledge',
                 'sop_result': sop_result,  # ✅ 保留 SOP 結果用於比較顯示
-                'knowledge_list': knowledge_list,
+                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
                 'reason': f'SOP 等待關鍵詞，使用知識庫 ({knowledge_score:.3f})',
                 'comparison': {
                     'sop_score': sop_score,
@@ -910,7 +924,7 @@ async def _smart_retrieval_with_comparison(
             return {
                 'type': 'none',
                 'sop_result': sop_result,  # ✅ 保留 SOP 結果用於比較顯示
-                'knowledge_list': knowledge_list,  # ✅ 保留知識庫結果用於比較顯示
+                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,  # ✅ 保留知識庫結果用於比較顯示
                 'reason': 'SOP 等待關鍵詞且知識庫未達標',
                 'comparison': {
                     'sop_score': sop_score,
@@ -933,7 +947,7 @@ async def _smart_retrieval_with_comparison(
         return {
             'type': 'sop',
             'sop_result': sop_result,
-            'knowledge_list': knowledge_list,  # ✅ 保留知識庫結果用於比較顯示
+            'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,  # ✅ 保留知識庫結果用於比較顯示
             'reason': f'SOP 分數顯著更高 ({sop_score:.3f} vs {knowledge_score:.3f})',
             'comparison': {
                 'sop_score': sop_score,
@@ -957,7 +971,7 @@ async def _smart_retrieval_with_comparison(
         return {
             'type': 'knowledge',
             'sop_result': sop_result,  # ✅ 保留 SOP 結果用於比較顯示
-            'knowledge_list': knowledge_list,
+            'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
             'reason': f'知識庫分數顯著更高 ({knowledge_score:.3f} vs {sop_score:.3f})',
             'comparison': {
                 'sop_score': sop_score,
@@ -985,7 +999,7 @@ async def _smart_retrieval_with_comparison(
             return {
                 'type': 'sop',
                 'sop_result': sop_result,
-                'knowledge_list': knowledge_list,  # ✅ 保留知識庫結果
+                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,  # ✅ 保留知識庫結果
                 'reason': f'SOP 有後續動作 ({sop_item.get("next_action")})',
                 'comparison': {
                     'sop_score': sop_score,
@@ -1005,7 +1019,7 @@ async def _smart_retrieval_with_comparison(
             return {
                 'type': 'sop',
                 'sop_result': sop_result,
-                'knowledge_list': knowledge_list,  # ✅ 保留知識庫結果
+                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,  # ✅ 保留知識庫結果
                 'reason': f'分數接近但 SOP 略高 ({sop_score:.3f} vs {knowledge_score:.3f})',
                 'comparison': {
                     'sop_score': sop_score,
@@ -1021,7 +1035,7 @@ async def _smart_retrieval_with_comparison(
             return {
                 'type': 'knowledge',
                 'sop_result': sop_result,  # ✅ 保留 SOP 結果
-                'knowledge_list': knowledge_list,
+                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
                 'reason': f'分數接近但知識庫略高 ({knowledge_score:.3f} vs {sop_score:.3f})',
                 'comparison': {
                     'sop_score': sop_score,
@@ -1043,7 +1057,7 @@ async def _smart_retrieval_with_comparison(
         return {
             'type': 'sop',
             'sop_result': sop_result,
-            'knowledge_list': knowledge_list,  # ✅ 保留知識庫結果
+            'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,  # ✅ 保留知識庫結果
             'reason': f'只有 SOP 達標 ({sop_score:.3f})',
             'comparison': {
                 'sop_score': sop_score,
@@ -1065,7 +1079,7 @@ async def _smart_retrieval_with_comparison(
         return {
             'type': 'knowledge',
             'sop_result': sop_result,  # ✅ 保留 SOP 結果
-            'knowledge_list': knowledge_list,
+            'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
             'reason': f'只有知識庫達標 ({knowledge_score:.3f})',
             'comparison': {
                 'sop_score': sop_score,
@@ -1086,7 +1100,7 @@ async def _smart_retrieval_with_comparison(
     return {
         'type': 'none',
         'sop_result': sop_result,  # ✅ 保留兩邊結果供前端顯示
-        'knowledge_list': knowledge_list,
+        'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
         'reason': '都未達到最低閾值',
         'comparison': {
             'sop_score': sop_score,
@@ -1165,9 +1179,11 @@ async def _build_orchestrator_response(
                 'id': candidate.get('id'),
                 'item_name': candidate.get('item_name'),
                 'group_name': candidate.get('group_name', ''),
-                'base_similarity': candidate.get('original_similarity', candidate.get('similarity', 0)),  # 原始向量相似度
+                # task 5.1：base_similarity = 純向量分數（vector_similarity）
+                'base_similarity': candidate.get('vector_similarity', candidate.get('original_similarity', 0)),
                 'intent_boost': 1.0,  # SOP 不使用意圖加成
                 'boosted_similarity': candidate.get('similarity', 0),  # Reranker 加成後的最終分數
+                'score_source': candidate.get('score_source', 'vector'),
                 'is_selected': candidate.get('id') == selected_id
             }
             # 🆕 只在有 Reranker 分數時才添加（避免 None 導致前端混淆）
@@ -1181,14 +1197,23 @@ async def _build_orchestrator_response(
         if decision:
             comparison_metadata = decision.get('comparison')
             # 如果有知識庫候選，也一併提供（即使選擇了 SOP）
-            if decision.get('knowledge_list'):
+            # followup-debug-visibility 選項 A：優先用 unfiltered（含低分候選），
+            # 否則 fallback 到已過濾的 knowledge_list（維持相容）。
+            source_list = (
+                decision.get('knowledge_list_unfiltered')
+                or decision.get('knowledge_list')
+                or []
+            )
+            passing_ids = {k['id'] for k in (decision.get('knowledge_list') or [])}
+            if source_list:
                 knowledge_candidates_debug = []
-                for k in decision['knowledge_list']:
+                for k in source_list:
                     knowledge_candidates_debug.append({
                         'id': k.get('id'),
                         'question_summary': k.get('question_summary', ''),
                         'scope': k.get('scope', 'global'),
-                        'base_similarity': k.get('base_similarity', 0.0),
+                        # task 5.1：base_similarity = 純向量分數（vector_similarity）
+                        'base_similarity': k.get('vector_similarity', k.get('base_similarity', 0.0)),
                         'rerank_score': k.get('rerank_score'),
                         'intent_boost': k.get('intent_boost', 1.0),
                         'intent_semantic_similarity': k.get('intent_semantic_similarity'),
@@ -1196,7 +1221,10 @@ async def _build_orchestrator_response(
                         'priority_boost': k.get('priority_boost', 0.0),
                         'boosted_similarity': k.get('similarity', 0.0),
                         'intent_type': k.get('intent_type'),
-                        'is_selected': False  # SOP 被選中，知識庫未被選中
+                        'score_source': k.get('score_source', 'vector'),
+                        # followup-debug-visibility：is_selected 表示該候選是否通過 threshold（達標）
+                        # 未達標候選也會出現在 debug_info 供 chat-test 觀察
+                        'is_selected': k.get('id') in passing_ids
                     })
 
         debug_info = _build_debug_info(
@@ -1207,9 +1235,11 @@ async def _build_orchestrator_response(
                 'id': sop_item.get('id'),
                 'item_name': sop_item.get('item_name'),
                 'group_name': sop_item.get('group_name', ''),
-                'base_similarity': sop_item.get('similarity', 0.0),
+                # task 5.1：base_similarity = 純向量分數（vector_similarity）
+                'base_similarity': sop_item.get('vector_similarity', sop_item.get('similarity', 0.0)),
                 'intent_boost': 1.0,
                 'boosted_similarity': sop_item.get('similarity', 0.0),
+                'score_source': sop_item.get('score_source', 'vector'),
                 'is_selected': True
             }] if sop_item else [],
             knowledge_candidates=knowledge_candidates_debug,  # 🆕 添加知識庫候選
@@ -1324,13 +1354,16 @@ async def _build_sop_response(
         sop_candidates_debug = []
         for sop in sop_items:
             similarity = sop.get('similarity', 0.0)
+            # task 5.1：base_similarity = 純向量分數（vector_similarity）
+            vector_similarity = sop.get('vector_similarity', similarity)
             sop_candidates_debug.append({
                 'id': sop['id'],
                 'item_name': sop['item_name'],
                 'group_name': sop.get('group_name', ''),
-                'base_similarity': similarity,
+                'base_similarity': vector_similarity,
                 'intent_boost': 1.0,  # SOP 不使用意圖加成
-                'boosted_similarity': similarity,  # 與 base_similarity 相同（boost=1.0）
+                'boosted_similarity': similarity,  # final similarity（含 rerank/boost）
+                'score_source': sop.get('score_source', 'vector'),
                 'is_selected': True  # SOP 全部選取
             })
 
@@ -1443,12 +1476,14 @@ async def _build_rag_response(
                 'id': r['id'],
                 'question_summary': r.get('question_summary', ''),
                 'scope': r.get('scope', 'global'),
-                'base_similarity': r.get('similarity', 0.0),
+                # task 5.1：base_similarity = 純向量分數（vector_similarity）
+                'base_similarity': r.get('vector_similarity', r.get('original_similarity', r.get('similarity', 0.0))),
                 'rerank_score': r.get('rerank_score'),  # ← 新增：Rerank 分數
                 'intent_boost': 1.0,  # RAG fallback 沒有 intent boost
                 'boosted_similarity': r.get('similarity', 0.0),
                 'intent_type': r.get('intent_type'),
                 'priority': r.get('priority'),
+                'score_source': r.get('score_source', 'vector'),
                 'is_selected': r['id'] in selected_ids
             })
 
@@ -1507,6 +1542,14 @@ async def _retrieve_knowledge(
     - 使用語義匹配動態計算 intent_boost
     - 不再需要獨立的 RAG fallback 路徑
     - 支持 intent_id = None（unclear 情況，無意圖加成）
+
+    Returns:
+        Tuple[List[Dict], Optional[List[Dict]]]:
+            (filtered_list, unfiltered_list)
+            - filtered_list: 通過 KB_SIMILARITY_THRESHOLD 的知識候選（供 LLM 使用）
+            - unfiltered_list: 過濾前完整候選（含低分），僅在 include_debug_info=True
+              時非 None；否則為 None。供 chat-test debug 顯示使用
+              （followup-debug-visibility 選項 A）。
     """
     retriever = get_vendor_knowledge_retriever()
     # unclear 時 intent_id = None，all_intent_ids = []
@@ -1516,6 +1559,7 @@ async def _retrieve_knowledge(
     # 環境變數向後兼容，但默認值改為 0.55
     kb_similarity_threshold = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.55"))
 
+    # 產線路徑：過濾後的候選
     knowledge_list = await retriever.retrieve_knowledge_hybrid(
         query=request.message,
         intent_id=intent_id,
@@ -1527,7 +1571,22 @@ async def _retrieve_knowledge(
         return_debug_info=request.include_debug_info
     )
 
-    return knowledge_list
+    # Debug 旁路：若需要 debug_info，再跑一次未過濾的檢索（followup-debug-visibility 選項 A）
+    knowledge_list_unfiltered = None
+    if request.include_debug_info:
+        knowledge_list_unfiltered = await retriever.retrieve_knowledge_hybrid(
+            query=request.message,
+            intent_id=intent_id,
+            vendor_id=request.vendor_id,
+            top_k=request.top_k,
+            similarity_threshold=kb_similarity_threshold,
+            all_intent_ids=all_intent_ids,
+            target_user=request.target_user,
+            return_debug_info=True,
+            return_unfiltered=True,
+        )
+
+    return knowledge_list, knowledge_list_unfiltered
 
 
 async def _handle_no_knowledge_found(
@@ -1621,23 +1680,35 @@ async def _handle_no_knowledge_found(
             comparison_metadata = decision.get('comparison')
 
         # 🆕 構建未達標的知識候選列表
+        # followup-debug-visibility 選項 A：優先使用 decision 的 unfiltered list（含低分候選）
+        source_list = (
+            (decision.get('knowledge_list_unfiltered') if decision else None)
+            or knowledge_list
+            or []
+        )
+        passing_ids = {
+            k['id'] for k in
+            ((decision.get('knowledge_list') if decision else None) or [])
+        }
         knowledge_candidates_debug = []
-        if knowledge_list:
-            for k in knowledge_list:
-                knowledge_candidates_debug.append({
-                    'id': k['id'],
-                    'question_summary': k.get('question_summary', ''),
-                    'scope': k.get('scope', ''),
-                    'base_similarity': k.get('original_similarity', k.get('similarity', 0.0)),
-                    'rerank_score': k.get('rerank_score'),
-                    'intent_boost': k.get('intent_boost', 1.0),
-                    'intent_semantic_similarity': k.get('intent_semantic_similarity'),
-                    'boosted_similarity': k.get('similarity', 0.0),
-                    'intent_type': k.get('intent_type'),
-                    'priority': k.get('priority'),
-                    'priority_boost': k.get('priority_boost', 0.0),
-                    'is_selected': False  # 全部未達標
-                })
+        for k in source_list:
+            knowledge_candidates_debug.append({
+                'id': k['id'],
+                'question_summary': k.get('question_summary', ''),
+                'scope': k.get('scope', ''),
+                # task 5.1：base_similarity = 純向量分數（vector_similarity）
+                'base_similarity': k.get('vector_similarity', k.get('original_similarity', k.get('similarity', 0.0))),
+                'rerank_score': k.get('rerank_score'),
+                'intent_boost': k.get('intent_boost', 1.0),
+                'intent_semantic_similarity': k.get('intent_semantic_similarity'),
+                'boosted_similarity': k.get('similarity', 0.0),
+                'intent_type': k.get('intent_type'),
+                'priority': k.get('priority'),
+                'priority_boost': k.get('priority_boost', 0.0),
+                'score_source': k.get('score_source', 'vector'),
+                # followup-debug-visibility：標記是否通過 threshold（達標）
+                'is_selected': k['id'] in passing_ids,
+            })
 
         debug_info = _build_debug_info(
             processing_path='no_knowledge_found',
@@ -1756,11 +1827,18 @@ async def _build_knowledge_response(
             # 構建表單觸發路徑的 debug_info
             form_debug_info = None
             if request.include_debug_info:
+                # followup-debug-visibility 選項 A：優先顯示 unfiltered 候選
+                _form_source = (
+                    (decision.get('knowledge_list_unfiltered') if decision else None)
+                    or knowledge_list
+                    or []
+                )
                 knowledge_candidates_debug = [{
                     'id': k['id'],
                     'question_summary': k.get('question_summary', ''),
                     'scope': k.get('scope', ''),
-                    'base_similarity': k.get('original_similarity', k.get('similarity', 0.0)),
+                    # task 5.1：base_similarity = 純向量分數（vector_similarity）
+                    'base_similarity': k.get('vector_similarity', k.get('original_similarity', k.get('similarity', 0.0))),
                     'rerank_score': k.get('rerank_score'),
                     'intent_boost': k.get('intent_boost', 1.0),
                     'intent_semantic_similarity': k.get('intent_semantic_similarity'),
@@ -1768,8 +1846,9 @@ async def _build_knowledge_response(
                     'intent_type': k.get('intent_type'),
                     'priority': k.get('priority'),
                     'priority_boost': k.get('priority_boost', 0.0),
+                    'score_source': k.get('score_source', 'vector'),
                     'is_selected': k['id'] == best_knowledge['id']
-                } for k in knowledge_list]
+                } for k in _form_source]
 
                 sop_candidates_debug = []
                 if decision and decision.get('sop_result'):
@@ -1779,10 +1858,12 @@ async def _build_knowledge_response(
                             'id': sop_item.get('id'),
                             'item_name': sop_item.get('title', sop_item.get('item_name', '')),
                             'group_name': sop_item.get('group_name', ''),
-                            'base_similarity': sop_item.get('similarity', 0.0),
+                            # task 5.1：base_similarity = 純向量分數（vector_similarity）
+                            'base_similarity': sop_item.get('vector_similarity', sop_item.get('similarity', 0.0)),
                             'rerank_score': sop_item.get('rerank_score'),
                             'intent_boost': sop_item.get('intent_boost', 1.0),
                             'boosted_similarity': sop_item.get('boosted_similarity', sop_item.get('similarity', 0.0)),
+                            'score_source': sop_item.get('score_source', 'vector'),
                             'is_selected': sop_item.get('is_selected', False)
                         })
 
@@ -2025,19 +2106,27 @@ async def _build_knowledge_response(
         # 標記哪些知識被選取了（使用過濾後的高質量列表）
         selected_ids = {k['id'] for k in filtered_knowledge_list[:optimization_result.get('sources_used', len(filtered_knowledge_list))]}
         knowledge_candidates_debug = []
+        # followup-debug-visibility 選項 A：顯示所有候選（含低分 unfiltered）
+        _kb_source = (
+            (decision.get('knowledge_list_unfiltered') if decision else None)
+            or knowledge_list
+            or []
+        )
         # 顯示所有候選知識，但只標記高質量的為被選取
-        for k in knowledge_list:
+        for k in _kb_source:
             knowledge_candidates_debug.append({
                 'id': k['id'],
                 'question_summary': k.get('question_summary', ''),
                 'scope': k.get('scope', ''),
-                'base_similarity': k.get('original_similarity', k.get('similarity', 0.0)),
+                # task 5.1：base_similarity = 純向量分數（vector_similarity）
+                'base_similarity': k.get('vector_similarity', k.get('original_similarity', k.get('similarity', 0.0))),
                 'rerank_score': k.get('rerank_score'),  # ← 新增：Rerank 分數
                 'intent_boost': k.get('intent_boost', 1.0),
                 'intent_semantic_similarity': k.get('intent_semantic_similarity'),
                 'boosted_similarity': k.get('similarity', 0.0),
                 'intent_type': k.get('intent_type'),
                 'priority': k.get('priority'),
+                'score_source': k.get('score_source', 'vector'),
                 'is_selected': k['id'] in selected_ids
             })
 
@@ -2058,12 +2147,14 @@ async def _build_knowledge_response(
                         'group_name': sop_item.get('group_name', ''),  # ✅ 添加 group_name
                         'title': sop_item.get('title', sop_item.get('item_name', '')),  # 保留 title 供前端使用
                         'content': sop_item.get('content', '')[:200],  # 限制內容長度
-                        'base_similarity': sop_item.get('similarity', 0.0),  # ✅ 添加 base_similarity
+                        # task 5.1：base_similarity = 純向量分數（vector_similarity）
+                        'base_similarity': sop_item.get('vector_similarity', sop_item.get('similarity', 0.0)),
                         'similarity': sop_item.get('similarity', 0.0),
                         'boosted_similarity': sop_item.get('boosted_similarity', sop_item.get('similarity', 0.0)),  # ✅ 優先使用 boosted_similarity
                         'rerank_score': sop_item.get('rerank_score'),  # ✅ 添加 rerank_score
                         'intent_boost': sop_item.get('intent_boost', 1.0),  # ✅ 添加 intent_boost
                         'intent_ids': sop_item.get('intent_ids', []),
+                        'score_source': sop_item.get('score_source', 'vector'),
                         'is_selected': sop_item.get('is_selected', False)  # ✅ 添加 is_selected
                     })
                 print(f"🔍 [Debug] sop_candidates_debug final length: {len(sop_candidates_debug)}")
@@ -2471,14 +2562,16 @@ class CandidateKnowledge(BaseModel):
     id: int
     question_summary: str
     scope: str
-    base_similarity: float = Field(..., description="基礎向量相似度")
+    base_similarity: float = Field(..., description="純向量相似度 vector_similarity（不含 boost/rerank）")
     rerank_score: Optional[float] = Field(None, description="Reranker 分數 (10/90 混合)")
     intent_boost: float = Field(..., description="意圖加成係數")
     intent_semantic_similarity: Optional[float] = Field(None, description="意圖語義相似度")
     priority: Optional[int] = Field(None, description="人工優先級")
     priority_boost: float = Field(0.0, description="優先級加成值")
-    boosted_similarity: float = Field(..., description="加成後相似度")
+    boosted_similarity: float = Field(..., description="加成後相似度（final similarity）")
     intent_type: Optional[str] = Field(None, description="意圖類型：primary/secondary")
+    # task 5.1：新增 score_source 顯示 final similarity 的計算來源
+    score_source: Optional[str] = Field('vector', description="similarity 計算來源：rerank|keyword|vector")
     is_selected: bool = Field(..., description="是否被選取")
 
 
@@ -2487,10 +2580,12 @@ class CandidateSOP(BaseModel):
     id: int
     item_name: str
     group_name: Optional[str] = None
-    base_similarity: float = Field(..., description="基礎向量相似度")
+    base_similarity: float = Field(..., description="純向量相似度 vector_similarity（不含 boost/rerank）")
     intent_boost: float = Field(..., description="意圖加成係數")
-    boosted_similarity: float = Field(..., description="加成後相似度")
+    boosted_similarity: float = Field(..., description="加成後相似度（final similarity）")
     rerank_score: Optional[float] = Field(None, description="Reranker 分數（0-1）")
+    # task 5.1：新增 score_source 顯示 final similarity 的計算來源
+    score_source: Optional[str] = Field('vector', description="similarity 計算來源：rerank|keyword|vector")
     is_selected: bool = Field(..., description="是否被選取")
 
 
@@ -2909,8 +3004,10 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             # 獲取意圖 ID
             intent_id = None if intent_result['intent_name'] == 'unclear' else _get_intent_id(intent_result['intent_name'])
 
-            # 檢索知識庫
-            knowledge_list = await _retrieve_knowledge(request, intent_id, intent_result)
+            # 檢索知識庫（回傳 (filtered, unfiltered)；回測模式暫不使用 unfiltered）
+            knowledge_list, _knowledge_list_unfiltered = await _retrieve_knowledge(
+                request, intent_id, intent_result
+            )
 
             # 如果知識庫沒有結果
             if not knowledge_list:

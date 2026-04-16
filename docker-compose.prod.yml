@@ -139,16 +139,18 @@ services:
       CACHE_TTL_VECTOR: ${CACHE_TTL_VECTOR:-7200}
       CACHE_TTL_RAG_RESULT: ${CACHE_TTL_RAG_RESULT:-1800}
       # LLM 答案合成配置
+      # 分數欄位語意（詳見 docs/architecture/retriever-pipeline.md）：
+      #   vector_similarity = 純向量 cosine；similarity = final 組合分數（含 rerank/boost）
       ENABLE_ANSWER_SYNTHESIS: ${ENABLE_ANSWER_SYNTHESIS:-true}
-      SYNTHESIS_THRESHOLD: ${SYNTHESIS_THRESHOLD:-0.99}
-      PERFECT_MATCH_THRESHOLD: ${PERFECT_MATCH_THRESHOLD:-0.90}  # 完美匹配閾值（用於配置版本區分）
+      SYNTHESIS_THRESHOLD: ${SYNTHESIS_THRESHOLD:-0.99}  # 比對 final similarity（_should_synthesize 合成觸發判定）
+      PERFECT_MATCH_THRESHOLD: ${PERFECT_MATCH_THRESHOLD:-0.90}  # 比對 vector_similarity（純向量分數）— 重構後閾值語意改變，需校準
       SYNTHESIS_MIN_RESULTS: ${SYNTHESIS_MIN_RESULTS:-2}
       SYNTHESIS_MAX_RESULTS: ${SYNTHESIS_MAX_RESULTS:-5}
       SOP_SIMILARITY_SCORE: ${SOP_SIMILARITY_SCORE:-0.70}
       # RAG 檢索配置 - ✅ 選項1：統一檢索閾值（移除獨立 RAG fallback）
-      SOP_SIMILARITY_THRESHOLD: ${SOP_SIMILARITY_THRESHOLD:-0.75}
-      KB_SIMILARITY_THRESHOLD: 0.65  # Knowledge Base 統一檢索閾值（含語義匹配，涵蓋原 fallback 範圍）
-      HIGH_QUALITY_THRESHOLD: ${HIGH_QUALITY_THRESHOLD:-0.8}  # 高質量知識過濾閾值（用於答案生成）
+      SOP_SIMILARITY_THRESHOLD: ${SOP_SIMILARITY_THRESHOLD:-0.75}  # 比對 final similarity（application 端過濾 SOP 候選）
+      KB_SIMILARITY_THRESHOLD: 0.65  # 比對 final similarity（application 端過濾知識庫候選，涵蓋原 fallback 範圍）
+      HIGH_QUALITY_THRESHOLD: ${HIGH_QUALITY_THRESHOLD:-0.8}  # 比對 final similarity（高品質判定，用於答案合成觸發）
       FALLBACK_SIMILARITY_THRESHOLD: 0.55  # ⚠️ 已廢棄：RAG Fallback 已移除，統一使用 KB_SIMILARITY_THRESHOLD
       RAG_SIMILARITY_THRESHOLD: ${RAG_SIMILARITY_THRESHOLD:-0.6}  # ⚠️ 已廢棄：待移除
       RAG_TOP_K: ${RAG_TOP_K:-5}
@@ -161,6 +163,11 @@ services:
       # 質量評估配置
       QUALITY_EVALUATION_ENABLED: ${QUALITY_EVALUATION_ENABLED:-true}
       QUALITY_EVALUATION_THRESHOLD: ${QUALITY_EVALUATION_THRESHOLD:-6}
+      # Semantic Reranker 效能調校（見 .kiro/issues/reranker-returning-zero.md）
+      # bge-reranker-base CPU 推論大批次慢，以下參數避免 client timeout
+      RERANKER_INPUT_LIMIT: ${RERANKER_INPUT_LIMIT:-20}                        # 送進 reranker 的候選數上限
+      RERANKER_MIN_VECTOR_SIMILARITY: ${RERANKER_MIN_VECTOR_SIMILARITY:-0.3}   # vector 下限（過濾不可能進 top_k 的低分）
+      RERANKER_HTTP_TIMEOUT: ${RERANKER_HTTP_TIMEOUT:-60}                      # HTTP client timeout（秒）
       # 條件式優化配置
       FAST_PATH_THRESHOLD: ${FAST_PATH_THRESHOLD:-0.75}
       TEMPLATE_MIN_SCORE: ${TEMPLATE_MIN_SCORE:-0.55}
