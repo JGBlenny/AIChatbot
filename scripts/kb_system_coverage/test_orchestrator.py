@@ -2,7 +2,7 @@
 test_orchestrator.py — Orchestrator 多階段 pipeline 編排腳本測試
 
 測試涵蓋：
-- CLI 參數解析（--vendor-id, --skip-phases, --batch-size）
+- CLI 參數解析（--skip-phases, --batch-size）
 - 各階段的 skip 邏輯
 - Phase 順序與資料傳遞
 - P4/P5 平行執行
@@ -144,34 +144,28 @@ def sample_coverage_report():
 class TestParseArgs:
     """CLI 參數解析測試"""
 
-    def test_required_vendor_id(self):
-        """--vendor-id 為必填參數"""
+    def test_no_required_args(self):
+        """無必填參數，可以不帶任何參數執行"""
         from scripts.kb_system_coverage.orchestrator import parse_args
-        with pytest.raises(SystemExit):
-            parse_args([])
-
-    def test_vendor_id_parsed(self):
-        """--vendor-id 正確解析"""
-        from scripts.kb_system_coverage.orchestrator import parse_args
-        args = parse_args(["--vendor-id", "1"])
-        assert args.vendor_id == 1
+        args = parse_args([])
+        assert args.batch_size == 5
 
     def test_skip_phases_parsed(self):
         """--skip-phases 正確解析為逗號分隔"""
         from scripts.kb_system_coverage.orchestrator import parse_args
-        args = parse_args(["--vendor-id", "1", "--skip-phases", "mapping,questions"])
+        args = parse_args(["--skip-phases", "mapping,questions"])
         assert args.skip_phases == "mapping,questions"
 
     def test_batch_size_default(self):
         """--batch-size 預設為 5"""
         from scripts.kb_system_coverage.orchestrator import parse_args
-        args = parse_args(["--vendor-id", "1"])
+        args = parse_args([])
         assert args.batch_size == 5
 
     def test_batch_size_custom(self):
         """--batch-size 可自訂"""
         from scripts.kb_system_coverage.orchestrator import parse_args
-        args = parse_args(["--vendor-id", "1", "--batch-size", "10"])
+        args = parse_args(["--batch-size", "10"])
         assert args.batch_size == 10
 
 
@@ -216,7 +210,7 @@ class TestPhaseSkip:
 
             from scripts.kb_system_coverage.orchestrator import run_pipeline
             result = await run_pipeline(
-                vendor_id=1,
+    
                 skip_phases=["mapping", "questions", "coverage", "generate_kb",
                              "build_api_kb", "pause", "backtest"],
             )
@@ -227,7 +221,7 @@ class TestPhaseSkip:
         """跳過所有階段仍應正常返回 completed"""
         from scripts.kb_system_coverage.orchestrator import run_pipeline
         result = await run_pipeline(
-            vendor_id=1,
+
             skip_phases=["mapping", "questions", "coverage", "generate_kb",
                          "build_api_kb", "pause", "backtest"],
         )
@@ -250,7 +244,7 @@ class TestPhase1:
         ) as mock_mapper:
             from scripts.kb_system_coverage.orchestrator import run_pipeline
             result = await run_pipeline(
-                vendor_id=1,
+    
                 skip_phases=["questions", "coverage", "generate_kb",
                              "build_api_kb", "pause", "backtest"],
             )
@@ -282,7 +276,7 @@ class TestPhase2:
         ):
             from scripts.kb_system_coverage.orchestrator import run_pipeline
             result = await run_pipeline(
-                vendor_id=1,
+    
                 skip_phases=["coverage", "generate_kb",
                              "build_api_kb", "pause", "backtest"],
             )
@@ -331,7 +325,7 @@ class TestPhase3:
         ):
             from scripts.kb_system_coverage.orchestrator import run_pipeline
             result = await run_pipeline(
-                vendor_id=1,
+    
                 skip_phases=["generate_kb", "build_api_kb", "pause", "backtest"],
             )
             mock_analyzer_instance.analyze.assert_called_once()
@@ -392,7 +386,7 @@ class TestPhase4And5:
         ):
             from scripts.kb_system_coverage.orchestrator import run_pipeline
             result = await run_pipeline(
-                vendor_id=1,
+    
                 skip_phases=["pause", "backtest"],
             )
             mock_generator.generate_batch.assert_called_once()
@@ -450,7 +444,7 @@ class TestPhase4And5:
         ):
             from scripts.kb_system_coverage.orchestrator import run_pipeline
             result = await run_pipeline(
-                vendor_id=1,
+    
                 skip_phases=["pause", "backtest"],
             )
             mock_api_builder.build.assert_called_once()
@@ -509,7 +503,7 @@ class TestPhase6:
             return_value=mock_api_builder,
         ):
             from scripts.kb_system_coverage.orchestrator import run_pipeline
-            result = await run_pipeline(vendor_id=1, skip_phases=[])
+            result = await run_pipeline(skip_phases=[])
             assert result["status"] == "waiting_for_review"
 
     @pytest.mark.asyncio
@@ -517,7 +511,7 @@ class TestPhase6:
         """跳過 P6 時應繼續到 P7（backtest 也跳過時直接完成）"""
         from scripts.kb_system_coverage.orchestrator import run_pipeline
         result = await run_pipeline(
-            vendor_id=1,
+
             skip_phases=["mapping", "questions", "coverage", "generate_kb",
                          "build_api_kb", "pause", "backtest"],
         )
@@ -536,7 +530,7 @@ class TestPhase7:
         """跳過 backtest 時不執行回測"""
         from scripts.kb_system_coverage.orchestrator import run_pipeline
         result = await run_pipeline(
-            vendor_id=1,
+
             skip_phases=["mapping", "questions", "coverage", "generate_kb",
                          "build_api_kb", "pause", "backtest"],
         )
@@ -565,7 +559,7 @@ class TestPipelineDataFlow:
         ):
             from scripts.kb_system_coverage.orchestrator import run_pipeline
             await run_pipeline(
-                vendor_id=1,
+    
                 skip_phases=["coverage", "generate_kb",
                              "build_api_kb", "pause", "backtest"],
             )
@@ -619,7 +613,7 @@ class TestPipelineDataFlow:
         ):
             from scripts.kb_system_coverage.orchestrator import run_pipeline
             await run_pipeline(
-                vendor_id=1,
+    
                 skip_phases=["pause", "backtest"],
             )
             # P4: generate_batch 接收 gaps + module_inventory
@@ -688,7 +682,7 @@ class TestBatchSize:
         ):
             from scripts.kb_system_coverage.orchestrator import run_pipeline
             await run_pipeline(
-                vendor_id=1,
+    
                 batch_size=10,
                 skip_phases=["pause", "backtest"],
             )

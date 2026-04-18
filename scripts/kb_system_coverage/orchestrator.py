@@ -15,18 +15,17 @@ P6 暫停後需另行以 --skip-phases 跳過前段，才會進入 P7。
 
 Usage:
     # 完整 pipeline（P1-P6 後暫停等待審核）
-    python scripts/kb_system_coverage/orchestrator.py --vendor-id 1
+    python scripts/kb_system_coverage/orchestrator.py
 
     # 審核完成後，只跑回測（P7）
-    python scripts/kb_system_coverage/orchestrator.py --vendor-id 1 \\
+    python scripts/kb_system_coverage/orchestrator.py \\
         --skip-phases mapping,questions,coverage,generate_kb,build_api_kb,pause
 
     # 跳過特定階段
-    python scripts/kb_system_coverage/orchestrator.py --vendor-id 1 \\
-        --skip-phases mapping,questions
+    python scripts/kb_system_coverage/orchestrator.py --skip-phases mapping,questions
 
     # 自訂批次大小
-    python scripts/kb_system_coverage/orchestrator.py --vendor-id 1 --batch-size 10
+    python scripts/kb_system_coverage/orchestrator.py --batch-size 10
 """
 
 from __future__ import annotations
@@ -90,30 +89,34 @@ API_KB_PATH = _SCRIPT_DIR / "api_kb_entries.json"
 # 輔助函式：取得 KB / SOP 資料（供 CoverageAnalyzer 使用）
 # ---------------------------------------------------------------------------
 
-async def _fetch_kb_items(vendor_id: int) -> List[dict]:
-    """從 knowledge_base 取得現有 KB 條目（含 embedding）。
+async def _create_db_pool():
+    """建立 DB 連線池（共用）。"""
+    from dotenv import load_dotenv
+    load_dotenv()
+    import asyncpg
+    return await asyncpg.create_pool(
+        host=os.getenv("DB_HOST", "localhost"),
+        port=int(os.getenv("DB_PORT", "5432")),
+        database=os.getenv("DB_NAME", "aichatbot_admin"),
+        user=os.getenv("DB_USER", "aichatbot"),
+        password=os.getenv("DB_PASSWORD", "aichatbot_password"),
+        min_size=1,
+        max_size=3,
+    )
 
-    注意：此函式需要 DB 連線，在純測試環境中會被 mock。
+
+async def _fetch_kb_items() -> List[dict]:
+    """從 knowledge_base 取得所有啟用中的 KB 條目（含 embedding）。
+
+    JGB 系統知識為 scope='global' 全域通用知識，不區分業者。
     """
     try:
-        from dotenv import load_dotenv
-        load_dotenv()
-        import asyncpg
-        pool = await asyncpg.create_pool(
-            host=os.getenv("DB_HOST", "localhost"),
-            port=int(os.getenv("DB_PORT", "5432")),
-            database=os.getenv("DB_NAME", "aichatbot_admin"),
-            user=os.getenv("DB_USER", "aichatbot"),
-            password=os.getenv("DB_PASSWORD", "aichatbot_password"),
-            min_size=1,
-            max_size=3,
-        )
+        pool = await _create_db_pool()
         try:
             rows = await pool.fetch(
                 """SELECT id, question_summary, answer, embedding
                    FROM knowledge_base
-                   WHERE vendor_id = $1 AND is_active = true""",
-                vendor_id,
+                   WHERE is_active = true""",
             )
             return [dict(r) for r in rows]
         finally:
@@ -123,27 +126,15 @@ async def _fetch_kb_items(vendor_id: int) -> List[dict]:
         return []
 
 
-async def _fetch_sop_items(vendor_id: int) -> List[dict]:
-    """從 vendor_sop_items 取得現有 SOP 條目（含 embedding）。"""
+async def _fetch_sop_items() -> List[dict]:
+    """從 vendor_sop_items 取得所有啟用中的 SOP 條目（含 embedding）。"""
     try:
-        from dotenv import load_dotenv
-        load_dotenv()
-        import asyncpg
-        pool = await asyncpg.create_pool(
-            host=os.getenv("DB_HOST", "localhost"),
-            port=int(os.getenv("DB_PORT", "5432")),
-            database=os.getenv("DB_NAME", "aichatbot_admin"),
-            user=os.getenv("DB_USER", "aichatbot"),
-            password=os.getenv("DB_PASSWORD", "aichatbot_password"),
-            min_size=1,
-            max_size=3,
-        )
+        pool = await _create_db_pool()
         try:
             rows = await pool.fetch(
                 """SELECT id, title, content, embedding
                    FROM vendor_sop_items
-                   WHERE vendor_id = $1 AND is_active = true""",
-                vendor_id,
+                   WHERE is_active = true""",
             )
             return [dict(r) for r in rows]
         finally:
@@ -158,15 +149,15 @@ async def _fetch_sop_items(vendor_id: int) -> List[dict]:
 # ---------------------------------------------------------------------------
 
 async def run_pipeline(
-    vendor_id: int,
     skip_phases: Optional[List[str]] = None,
     batch_size: int = 5,
 ) -> Dict:
     """執行 JGB 系統知識覆蓋率 pipeline。
 
+    JGB 系統知識為全域通用知識（scope='global'），不區分業者。
+
     Parameters
     ----------
-    vendor_id : 業者 ID
     skip_phases : 要跳過的階段名稱列表
     batch_size : KB 生成批次大小
 
@@ -184,7 +175,6 @@ async def run_pipeline(
 
     print("=" * 60)
     print("JGB 系統知識覆蓋率 Pipeline")
-    print(f"  vendor_id: {vendor_id}")
     print(f"  skip_phases: {skip or '(none)'}")
     print(f"  batch_size: {batch_size}")
     print(f"  時間: {datetime.now().isoformat()}")
@@ -243,8 +233,8 @@ async def run_pipeline(
             print("  [WARN] 無問題清單，跳過覆蓋分析")
         else:
             # 取得現有 KB 與 SOP
-            kb_items = await _fetch_kb_items(vendor_id)
-            sop_items = await _fetch_sop_items(vendor_id)
+            kb_items = await _fetch_kb_items()
+            sop_items = await _fetch_sop_items()
             print(f"  KB: {len(kb_items)} 筆, SOP: {len(sop_items)} 筆")
 
             analyzer = CoverageAnalyzer()
@@ -349,7 +339,6 @@ async def run_pipeline(
         print(f"  請至審核介面確認後，執行以下命令進行回測：")
         print()
         print(f"  python scripts/kb_system_coverage/orchestrator.py \\")
-        print(f"    --vendor-id {vendor_id} \\")
         print(f"    --skip-phases mapping,questions,coverage,generate_kb,build_api_kb,pause")
         print("=" * 60)
         results["status"] = "waiting_for_review"
@@ -394,7 +383,6 @@ async def run_pipeline(
                 base_url = os.getenv("RAG_API_URL", "http://localhost:8100")
                 bt = AsyncBacktestFramework(
                     base_url=base_url,
-                    vendor_id=vendor_id,
                     use_database=False,
                 )
                 bt_results = await bt.run_backtest_concurrent(
@@ -448,10 +436,6 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         description="JGB 系統知識覆蓋率 Pipeline Orchestrator",
     )
     parser.add_argument(
-        "--vendor-id", type=int, required=True,
-        help="業者 ID",
-    )
-    parser.add_argument(
         "--skip-phases", type=str, default="",
         help="要跳過的階段（逗號分隔），可用值：" + ", ".join(ALL_PHASES),
     )
@@ -468,7 +452,6 @@ if __name__ == "__main__":
     skip_phases = [x.strip() for x in args.skip_phases.split(",") if x.strip()]
 
     asyncio.run(run_pipeline(
-        vendor_id=args.vendor_id,
         skip_phases=skip_phases or None,
         batch_size=args.batch_size,
     ))
