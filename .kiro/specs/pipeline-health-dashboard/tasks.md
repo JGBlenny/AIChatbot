@@ -56,7 +56,7 @@
 
 ## 2. Foundation: 後端 API 端點與註冊
 
-- [ ] 2.1 system_health router
+- [x] 2.1 system_health router
   - 建立 `routers/system_health.py`，定義兩個端點：
     - `GET /api/v1/system/pipeline-health` → 呼叫 `PipelineHealthService.check_all_components()`
     - `POST /api/v1/system/pipeline-e2e-test` → 呼叫 `PipelineHealthService.run_e2e_test()`

@@ -87,6 +87,10 @@ export const API_ENDPOINTS = {
   loopResume: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/resume`,
   loopCancel: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/cancel`,
 
+  // System Health 相關
+  pipelineHealth: `${API_BASE_URL}/rag-api/v1/system/pipeline-health`,
+  pipelineE2ETest: `${API_BASE_URL}/rag-api/v1/system/pipeline-e2e-test`,
+
   // ==================== Knowledge Admin API ====================
 
   // Vendors 相關
