@@ -52,7 +52,7 @@ class AsyncBacktestFramework:
         self.use_database = use_database
 
         # V2 並發配置
-        self.concurrency = concurrency or int(os.getenv('BACKTEST_CONCURRENCY', '5'))
+        self.concurrency = concurrency or int(os.getenv('BACKTEST_CONCURRENCY', '1'))
         self.default_timeout = default_timeout or int(os.getenv('BACKTEST_TIMEOUT', '60'))
         self.default_retry_times = default_retry_times or int(os.getenv('BACKTEST_RETRY_TIMES', '2'))
 
@@ -168,23 +168,31 @@ class AsyncBacktestFramework:
                 # 從 debug_info 提取 similarity 並注入到 sources
                 if data and "debug_info" in data and data["debug_info"]:
                     debug_info = data["debug_info"]
-                    if debug_info and "knowledge_candidates" in debug_info and debug_info["knowledge_candidates"] and "sources" in data:
-                        # task 5.5：主排序使用 final similarity（含 rerank/boost），
-                        # 額外記錄 vector_similarity 供純向量分數分析。
-                        id_to_scores = {}
-                        for candidate in debug_info["knowledge_candidates"]:
-                            kb_id = candidate.get("id")
-                            if not kb_id:
-                                continue
-                            id_to_scores[kb_id] = {
-                                # 主排序：final similarity（retriever 輸出組合分數）
-                                "similarity": candidate.get('similarity', 0.0),
-                                # 輔助分析：純向量 cosine 分數
-                                "vector_similarity": candidate.get('vector_similarity', 0.0),
-                            }
+                    id_to_scores = {}
 
-                        # 注入 similarity + vector_similarity 到 sources
-                        for source in data.get("sources", []):
+                    # 從 knowledge_candidates 提取分數
+                    for candidate in (debug_info.get("knowledge_candidates") or []):
+                        kb_id = candidate.get("id")
+                        if not kb_id:
+                            continue
+                        id_to_scores[kb_id] = {
+                            "similarity": candidate.get('boosted_similarity', candidate.get('similarity', 0.0)),
+                            "vector_similarity": candidate.get('base_similarity', candidate.get('vector_similarity', 0.0)),
+                        }
+
+                    # 從 sop_candidates 提取分數
+                    for candidate in (debug_info.get("sop_candidates") or []):
+                        sop_id = candidate.get("id")
+                        if not sop_id:
+                            continue
+                        id_to_scores[sop_id] = {
+                            "similarity": candidate.get('boosted_similarity', candidate.get('similarity', 0.0)),
+                            "vector_similarity": candidate.get('base_similarity', candidate.get('vector_similarity', 0.0)),
+                        }
+
+                    # 注入 similarity + vector_similarity 到 sources
+                    if id_to_scores and data.get("sources"):
+                        for source in data["sources"]:
                             source_id = source.get("id")
                             if source_id in id_to_scores:
                                 scores = id_to_scores[source_id]
@@ -777,8 +785,8 @@ class AsyncBacktestFramework:
             'all_intents': system_response.get('all_intents', []) if system_response else [],
             'system_answer': system_response.get('answer', '')[:200] if system_response else '',
             'confidence': system_response.get('confidence', 0) if system_response else 0,
-            'score': evaluation.get('score', 0),
-            'overall_score': evaluation.get('score', 0),
+            'score': evaluation.get('confidence_score', evaluation.get('score', 0)),
+            'overall_score': evaluation.get('confidence_score', evaluation.get('score', 0)),
             'passed': evaluation['passed'],
             'evaluation': json.dumps(evaluation, ensure_ascii=False),  # V2: 保存完整評估結果
             'optimization_tips': '\n'.join(evaluation.get('optimization_tips', [])) if isinstance(evaluation.get('optimization_tips'), list) else evaluation.get('optimization_tips', ''),

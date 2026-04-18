@@ -261,9 +261,11 @@ if __name__ == "__main__":
     import uvicorn
     # 只在開發環境啟用 reload，生產環境應禁用以避免 DNS 解析問題
     reload_enabled = os.getenv("UVICORN_RELOAD", "false").lower() == "true"
+    workers = int(os.getenv("UVICORN_WORKERS", "4"))
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
         port=8100,
-        reload=reload_enabled
+        reload=reload_enabled,
+        workers=1 if reload_enabled else workers
     )

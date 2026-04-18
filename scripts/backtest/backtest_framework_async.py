@@ -52,7 +52,7 @@ class AsyncBacktestFramework:
         self.use_database = use_database
 
         # V2 並發配置
-        self.concurrency = concurrency or int(os.getenv('BACKTEST_CONCURRENCY', '5'))
+        self.concurrency = concurrency or int(os.getenv('BACKTEST_CONCURRENCY', '1'))
         self.default_timeout = default_timeout or int(os.getenv('BACKTEST_TIMEOUT', '60'))
         self.default_retry_times = default_retry_times or int(os.getenv('BACKTEST_RETRY_TIMES', '2'))
 
