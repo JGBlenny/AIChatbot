@@ -92,7 +92,7 @@
 
 - [ ] 5. KB 內容生成與審核驗證（Core）
 
-- [ ] 5.1 (P) SystemKBGenerator — 靜態系統操作 KB 批量生成
+- [x] 5.1 (P) SystemKBGenerator — 靜態系統操作 KB 批量生成
   - 讀取 coverage_report.json 中 recommendation=add_kb 且 query_type=static 的缺口
   - 讀取 jgb_module_inventory.json 作為 LLM 生成上下文，確保內容與實際 JGB 功能一致
   - 使用 gpt-4o-mini 生成 KB：question_summary（≤20 字）、answer（100-500 字，含入口路徑）、keywords、category（模組名稱）、target_user、business_types
