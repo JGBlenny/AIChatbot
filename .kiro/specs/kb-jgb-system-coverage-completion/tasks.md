@@ -147,7 +147,7 @@
   - _Depends: 1.2, 3.4, 5.2_
   - _Boundary: chat.py, api_call_handler, JGBSystemAPI, knowledge_base_
 
-- [ ] 7.2 回測驗證 — 系統知識覆蓋率改善
+- [x] 7.2 回測驗證 — 系統知識覆蓋率改善
   - 建立系統操作問題測試場景（test_scenarios），keywords 包含模組名稱供分組統計
   - 測試場景需同時包含靜態操作問題（如「怎麼在 APP 繳費」）與動態查詢問題（如「帳單為什麼沒產生發票」，搭配 mock API）
   - 執行完整回測（AsyncBacktestFramework），比較補齊前後 pass_rate 變化

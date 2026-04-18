@@ -360,9 +360,69 @@ async def run_pipeline(
     # ==================================================================
     if "backtest" not in skip:
         print("\n🧪 Phase 7: Backtest Validation — 回測驗證")
-        # TODO: 待 task 7.2 實作回測場景後整合
-        print("  [TODO] 回測驗證尚未實作（待 task 7.2）")
-        results["backtest"] = {"status": "not_implemented"}
+
+        from scripts.kb_system_coverage.backtest_scenarios import (
+            generate_scenarios,
+            load_checklist,
+            save_scenarios,
+        )
+        from scripts.kb_system_coverage.backtest_analyzer import (
+            analyze_results,
+            export_summary,
+        )
+
+        # 7-1: 從問題清單產出回測場景
+        if QUESTIONS_PATH.exists():
+            qs = load_checklist(QUESTIONS_PATH)
+            scenarios = generate_scenarios(qs)
+            scenario_path = _SCRIPT_DIR / "backtest_test_scenarios.json"
+            save_scenarios(scenarios, scenario_path)
+            print(f"  回測場景：{len(scenarios)} 個（已寫入 {scenario_path.name}）")
+        else:
+            print("  [WARN] 無問題清單，無法產出回測場景")
+            scenarios = []
+
+        if scenarios:
+            # 7-2: 執行回測（需要線上環境）
+            try:
+                sys.path.insert(
+                    0,
+                    str(_PROJECT_ROOT / "rag-orchestrator" / "scripts" / "backtest"),
+                )
+                from backtest_framework_async import AsyncBacktestFramework
+
+                base_url = os.getenv("RAG_API_URL", "http://localhost:8100")
+                bt = AsyncBacktestFramework(
+                    base_url=base_url,
+                    vendor_id=vendor_id,
+                    use_database=False,
+                )
+                bt_results = await bt.run_backtest_concurrent(
+                    test_scenarios=scenarios,
+                    show_progress=True,
+                )
+
+                # 7-3: 分析結果
+                summary = analyze_results(bt_results)
+                summary_path = _SCRIPT_DIR / "backtest_summary.json"
+                export_summary(summary, summary_path)
+
+                results["backtest"] = {
+                    "status": "completed",
+                    "total": summary.total,
+                    "passed": summary.passed,
+                    "overall_pass_rate": round(summary.overall_pass_rate, 4),
+                    "priority_modules": summary.priority_modules,
+                }
+                print(f"  回測完成：pass_rate={summary.overall_pass_rate:.2%}")
+                if summary.priority_modules:
+                    print(f"  需優先補強模組：{summary.priority_modules}")
+            except Exception as e:
+                print(f"  [ERROR] 回測執行失敗：{e}")
+                print("  💡 提示：需要線上環境（RAG API + DB）才能執行回測")
+                results["backtest"] = {"status": "error", "error": str(e)}
+        else:
+            results["backtest"] = {"status": "no_scenarios"}
     else:
         print("\n⏭️  Phase 7: 跳過（backtest）")
 
