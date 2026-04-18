@@ -376,6 +376,8 @@ export default {
     },
 
     handleEnter(event) {
+      // 輸入法組字中（注音、拼音等）不觸發送出
+      if (event.isComposing || event.keyCode === 229) return;
       if (!event.shiftKey) {
         // Enter 不按 Shift = 發送
         this.sendMessage();
