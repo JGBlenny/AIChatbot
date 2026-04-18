@@ -80,11 +80,13 @@ async def generate_sop_embeddings_async(
             primary_vector_str = embedding_client.to_pgvector_format(primary_embedding)
             fallback_vector_str = embedding_client.to_pgvector_format(fallback_embedding)
 
-            # 5. 更新資料庫
+            # 5. 更新資料庫（含 embedding_status）
             await conn.execute("""
                 UPDATE vendor_sop_items
                 SET primary_embedding = $1::vector,
-                    fallback_embedding = $2::vector
+                    fallback_embedding = $2::vector,
+                    embedding_status = 'completed',
+                    embedding_updated_at = NOW()
                 WHERE id = $3
             """,
                 primary_vector_str,
