@@ -1,0 +1,2142 @@
+[
+  {
+    "module_id": "estate",
+    "module_name": "物件管理",
+    "description": "房源物件的建立、編輯、刊登、管理。包含一般物件與社會住宅物件的批次新增、iStaging 3D 看屋、物件地圖等功能。",
+    "features": [
+      {
+        "feature_id": "estate_001",
+        "feature_name": "新增物件",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "estate_002",
+        "feature_name": "編輯物件資料",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "estate_003",
+        "feature_name": "刊登/取消刊登物件",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "estate_004",
+        "feature_name": "刪除物件",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "estate_005",
+        "feature_name": "複製物件",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "estate_006",
+        "feature_name": "物件列表與搜尋",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "major_landlord"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "estate_007",
+        "feature_name": "物件地圖檢視",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "estate_008",
+        "feature_name": "物件儀表板",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "estate_009",
+        "feature_name": "一般物件批次新增",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "estate_010",
+        "feature_name": "社會住宅物件批次新增",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "estate_011",
+        "feature_name": "iStaging 3D 看屋設定",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "estate_012",
+        "feature_name": "自訂費用項目",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "estate_013",
+        "feature_name": "物件月結報表",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "estate_014",
+        "feature_name": "物件 metadata 更新",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "estate_015",
+        "feature_name": "物件收藏管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "contract",
+    "module_name": "合約管理",
+    "description": "出租合約的完整生命週期管理：新建、編輯、簽署邀請、點交入住、點退退租、續約、提前解約等。含 PDF 預覽與電子簽章整合。",
+    "features": [
+      {
+        "feature_id": "contract_001",
+        "feature_name": "新建合約",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_002",
+        "feature_name": "編輯合約",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_003",
+        "feature_name": "合約列表與搜尋",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_004",
+        "feature_name": "查看合約詳情",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_005",
+        "feature_name": "發送簽約邀請",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_006",
+        "feature_name": "合約簽署確認",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_007",
+        "feature_name": "合約點交（入住）",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_008",
+        "feature_name": "合約點退（退租）",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_009",
+        "feature_name": "合約續約",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_010",
+        "feature_name": "提前解約",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_011",
+        "feature_name": "合約 PDF 檢視/下載",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_012",
+        "feature_name": "合約摘要 PDF",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_013",
+        "feature_name": "點交/點退 PDF",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "contract_014",
+        "feature_name": "合約物件封存資料查看",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "contract_015",
+        "feature_name": "合約批次刪除",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "contract_016",
+        "feature_name": "取消入住/退租",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "contract_017",
+        "feature_name": "合約 metadata 更新",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "contract_018",
+        "feature_name": "合約儲值金歷程查詢",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "billing",
+    "module_name": "帳務管理",
+    "description": "租金帳單的建立、編輯、收款確認、催繳，以及帳務統計報表。包含週期帳單自動產生、社宅清冊、帳單批次匯入匯出等。",
+    "features": [
+      {
+        "feature_id": "billing_001",
+        "feature_name": "帳單列表與搜尋",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "billing_002",
+        "feature_name": "編輯帳單",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "billing_003",
+        "feature_name": "帳單收據 PDF",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "billing_004",
+        "feature_name": "帳務統計報表",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "billing_005",
+        "feature_name": "帳務表單匯出",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "billing_006",
+        "feature_name": "帳單品項管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "billing_007",
+        "feature_name": "週期帳單自動產生",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "billing_008",
+        "feature_name": "帳單批次匯入匯出",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "billing_009",
+        "feature_name": "社宅清冊產生",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "billing_010",
+        "feature_name": "帳單付款連結",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "billing_011",
+        "feature_name": "查看帳單明細",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "billing_012",
+        "feature_name": "費用項目群組設定",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "repair",
+    "module_name": "修繕系統",
+    "description": "報修提交、修繕項目管理、進度追蹤。租客可提交報修並追蹤進度，房東/管理公司可管理與處理修繕案件。",
+    "features": [
+      {
+        "feature_id": "repair_001",
+        "feature_name": "修繕列表（依狀態/角色篩選）",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "repair_002",
+        "feature_name": "提交報修申請",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "repair_003",
+        "feature_name": "查看修繕詳情",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "repair_004",
+        "feature_name": "更新修繕進度",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "repair_005",
+        "feature_name": "選擇報修合約/物件",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "repair_006",
+        "feature_name": "修繕項目類別選擇",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "repair_007",
+        "feature_name": "修繕分享連結",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "payment",
+    "module_name": "支付金流",
+    "description": "線上繳費、金流對帳、退款處理。支援永豐金流、國泰 ATM、中信轉帳Pay、愛金卡（iCashPay）、信用卡自動扣款等多種金流管道。",
+    "features": [
+      {
+        "feature_id": "payment_001",
+        "feature_name": "線上繳費（多金流管道）",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "payment_002",
+        "feature_name": "信用卡自動扣款授權",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "payment_003",
+        "feature_name": "付款紀錄查詢",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "payment_004",
+        "feature_name": "收款設置（現金/線上）",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "payment_005",
+        "feature_name": "開通金流商（智付通/中信）",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "payment_006",
+        "feature_name": "訂閱方案付款",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "both"
+      },
+      {
+        "feature_id": "payment_007",
+        "feature_name": "永豐金流管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "payment_008",
+        "feature_name": "國泰 ATM 即時入金",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "payment_009",
+        "feature_name": "愛金卡（iCashPay）會員綁定與付款",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "payment_010",
+        "feature_name": "虛擬帳號繳費",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "payment_011",
+        "feature_name": "金流異常資料檢查",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "payment_012",
+        "feature_name": "帳單金流管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "payment_013",
+        "feature_name": "未對到帳紀錄查詢",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      }
+    ]
+  },
+  {
+    "module_id": "iot",
+    "module_name": "IoT 設備管理",
+    "description": "智慧門鎖、電表、攝影機等 IoT 設備的綁定、管理與操作。包含門鎖開關、電表讀數/儲值、設備密碼管理、QR Code 開鎖等功能。",
+    "features": [
+      {
+        "feature_id": "iot_001",
+        "feature_name": "門鎖設備列表",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_002",
+        "feature_name": "遠端開關門鎖",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_003",
+        "feature_name": "門鎖密碼管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_004",
+        "feature_name": "分享門鎖密碼",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_005",
+        "feature_name": "門鎖開門記錄",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_006",
+        "feature_name": "QR Code 開鎖",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_007",
+        "feature_name": "電表設備管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_008",
+        "feature_name": "電表讀數與統計圖表",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_009",
+        "feature_name": "電表儲值操作",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_010",
+        "feature_name": "電表斷電/恢復供電",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_011",
+        "feature_name": "電表用量查詢",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_012",
+        "feature_name": "電表費率變更記錄",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_013",
+        "feature_name": "攝影機設備管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_014",
+        "feature_name": "IoT 廠商帳號管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "iot_015",
+        "feature_name": "IoT 設備診斷工具",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "iot_016",
+        "feature_name": "手動電表儲值（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "iot_017",
+        "feature_name": "建立 Miezo 電表（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "iot_018",
+        "feature_name": "儲值電表查詢（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "iot_019",
+        "feature_name": "低電度警報查詢（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "iot_020",
+        "feature_name": "iStaging 設備查詢（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      }
+    ]
+  },
+  {
+    "module_id": "community",
+    "module_name": "社區管理",
+    "description": "社區/大樓的建立、編輯、物件綁定管理。包含社區總表、社區物件列表、社區廣告頁、強制綁定流程等。",
+    "features": [
+      {
+        "feature_id": "community_001",
+        "feature_name": "社區列表總表",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "community_002",
+        "feature_name": "新增/編輯社區資料",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "community_003",
+        "feature_name": "社區物件列表管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "community_004",
+        "feature_name": "社區強制綁定流程",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "community_005",
+        "feature_name": "社區廣告頁（對外展示）",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "community_006",
+        "feature_name": "社區挑選（關聯物件）",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "big_landlord",
+    "module_name": "大房東管理",
+    "description": "大房東（屋主）的資料管理、物件權限設定、聯絡簿管理、報表排程發送。包含大房東清冊匯出、報表上傳等功能。",
+    "features": [
+      {
+        "feature_id": "big_landlord_001",
+        "feature_name": "大房東列表與資料管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "big_landlord_002",
+        "feature_name": "大房東物件權限設定",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "big_landlord_003",
+        "feature_name": "大房東聯絡簿（匯入/匯出 Excel）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "big_landlord_004",
+        "feature_name": "大房東報表排程發送",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "big_landlord_005",
+        "feature_name": "大房東報表上傳",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "big_landlord_006",
+        "feature_name": "邀請未註冊大房東",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "big_landlord_007",
+        "feature_name": "大房東清冊匯出（含綁定物件）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "big_landlord_008",
+        "feature_name": "大房東月報表檢視",
+        "roles": [
+          "major_landlord"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "big_landlord_009",
+        "feature_name": "大房東物件總覽",
+        "roles": [
+          "major_landlord"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "entrusted_contract",
+    "module_name": "委託合約",
+    "description": "房東與管理公司間的委託書管理。包含委託合約新建、編輯、簽署、確認、PDF 生成、提前解約等完整流程。",
+    "features": [
+      {
+        "feature_id": "entrusted_contract_001",
+        "feature_name": "委託合約列表",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "entrusted_contract_002",
+        "feature_name": "新建委託合約",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "entrusted_contract_003",
+        "feature_name": "編輯委託合約",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "entrusted_contract_004",
+        "feature_name": "委託合約簽署邀請",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "entrusted_contract_005",
+        "feature_name": "委託合約簽署確認",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "entrusted_contract_006",
+        "feature_name": "查看委託合約詳情",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "entrusted_contract_007",
+        "feature_name": "委託合約 PDF 檢視",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "entrusted_contract_008",
+        "feature_name": "委託合約取消",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "entrusted_contract_009",
+        "feature_name": "委託合約提前解約",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "entrusted_contract_010",
+        "feature_name": "委託合約物件關聯查詢",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "entrusted_contract_011",
+        "feature_name": "雲想電子簽章確認",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "balance_invoice",
+    "module_name": "差額發票",
+    "description": "差額發票群組的建立、管理、開立與查詢。包含群組物件管理、發票開立/歸檔、報表下載、資料匯出等。",
+    "features": [
+      {
+        "feature_id": "balance_invoice_001",
+        "feature_name": "差額發票群組列表",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "balance_invoice_002",
+        "feature_name": "新增差額發票群組",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "balance_invoice_003",
+        "feature_name": "編輯差額發票群組",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "balance_invoice_004",
+        "feature_name": "差額發票群組物件管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "balance_invoice_005",
+        "feature_name": "差額發票開立",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "balance_invoice_006",
+        "feature_name": "差額發票歸檔",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "balance_invoice_007",
+        "feature_name": "差額發票報表下載",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "balance_invoice_008",
+        "feature_name": "差額發票資料匯出",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "balance_invoice_009",
+        "feature_name": "差額發票盤查（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      }
+    ]
+  },
+  {
+    "module_id": "esign",
+    "module_name": "電子簽章",
+    "description": "合約線上簽署（整合雲想 ThinkCloud 電子簽章服務）。支援出租合約與委託合約的電子簽署、簽署狀態追蹤等。",
+    "features": [
+      {
+        "feature_id": "esign_001",
+        "feature_name": "合約電子簽署",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "esign_002",
+        "feature_name": "簽署狀態追蹤",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "esign_003",
+        "feature_name": "委託合約電子簽署",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "esign_004",
+        "feature_name": "電子簽章報表",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      }
+    ]
+  },
+  {
+    "module_id": "user_account",
+    "module_name": "使用者帳號",
+    "description": "帳號註冊、登入、密碼管理、角色管理、團隊成員管理、會員中心。包含 Email/手機/SSO 登入、身份切換、帳號資訊管理等。",
+    "features": [
+      {
+        "feature_id": "user_account_001",
+        "feature_name": "Email 註冊/登入",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_002",
+        "feature_name": "手機號碼驗證登入",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_003",
+        "feature_name": "SSO 單一登入",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_004",
+        "feature_name": "忘記密碼",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_005",
+        "feature_name": "帳號資訊管理",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_006",
+        "feature_name": "團隊資訊管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_007",
+        "feature_name": "團隊成員管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_008",
+        "feature_name": "身份/角色切換",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager",
+          "major_landlord"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_009",
+        "feature_name": "安全設定",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_010",
+        "feature_name": "進階設定",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_011",
+        "feature_name": "簽約身份管理（租客）",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_012",
+        "feature_name": "租客簽約資訊",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_013",
+        "feature_name": "Dashboard 總覽",
+        "roles": [
+          "landlord",
+          "property_manager",
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_014",
+        "feature_name": "登出",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager",
+          "major_landlord"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_015",
+        "feature_name": "Email 變更驗證",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_016",
+        "feature_name": "自訂標籤管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_017",
+        "feature_name": "團隊公司管理（新增/刪除）",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "user_account_018",
+        "feature_name": "團隊幣別設定",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "notification",
+    "module_name": "通知系統",
+    "description": "通知中心、推播設定、Email/簡訊/LINE 通知、訊息中心。包含 Navbar 通知、通知偏好設定、大聲公群發訊息等。",
+    "features": [
+      {
+        "feature_id": "notification_001",
+        "feature_name": "通知中心列表",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "notification_002",
+        "feature_name": "通知偏好設定",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "notification_003",
+        "feature_name": "Navbar 未讀通知",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "notification_004",
+        "feature_name": "LINE 推播通知",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "notification_005",
+        "feature_name": "大聲公群發訊息",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "notification_006",
+        "feature_name": "Email 通知",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "notification_007",
+        "feature_name": "租客邀請訂閱通知",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "subscription",
+    "module_name": "訂閱方案",
+    "description": "JGB 平台訂閱方案選擇、付款、退訂、方案變更。包含方案比較、優惠碼使用、訂閱紀錄管理等。",
+    "features": [
+      {
+        "feature_id": "subscription_001",
+        "feature_name": "訂閱方案選擇",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "subscription_002",
+        "feature_name": "訂閱方案付款",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "subscription_003",
+        "feature_name": "退訂方案",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "subscription_004",
+        "feature_name": "查看目前方案",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "subscription_005",
+        "feature_name": "優惠碼使用",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "subscription_006",
+        "feature_name": "訂閱紀錄管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "subscription_007",
+        "feature_name": "方案移轉（客服工具）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      }
+    ]
+  },
+  {
+    "module_id": "lessee",
+    "module_name": "租客管理",
+    "description": "租客資料的新增、編輯、封存、匯入。包含租客列表、租客搜尋、租客合約/帳單/修繕關聯查詢、批次匯入等。",
+    "features": [
+      {
+        "feature_id": "lessee_001",
+        "feature_name": "租客列表",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "lessee_002",
+        "feature_name": "新增租客",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "lessee_003",
+        "feature_name": "編輯租客資料",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "lessee_004",
+        "feature_name": "封存租客",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "lessee_005",
+        "feature_name": "租客狀態檢查",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "lessee_006",
+        "feature_name": "租客合約列表查詢",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "lessee_007",
+        "feature_name": "租客帳單列表查詢",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "lessee_008",
+        "feature_name": "租客修繕列表查詢",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "lessee_009",
+        "feature_name": "租客批次匯入",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "lessee_010",
+        "feature_name": "租客搜尋",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "lessee_011",
+        "feature_name": "邀請租客訂閱通知",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "invoice",
+    "module_name": "發票管理",
+    "description": "電子發票開立、發票異常處理、發票補開、團隊發票設置。包含發票回調處理、發票異常盤查/通知、帳單發票補開等。",
+    "features": [
+      {
+        "feature_id": "invoice_001",
+        "feature_name": "帳單發票自動開立",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "invoice_002",
+        "feature_name": "發票異常盤查",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "invoice_003",
+        "feature_name": "發票異常通知",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "invoice_004",
+        "feature_name": "帳單發票補開/重開",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "invoice_005",
+        "feature_name": "團隊發票設置管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "invoice_006",
+        "feature_name": "帳單手動開立發票",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      }
+    ]
+  },
+  {
+    "module_id": "recharge_account",
+    "module_name": "固定虛擬帳號管理",
+    "description": "固定虛擬帳號的建立、管理、匯出。包含帳號綁定物件/合約、帳號歷程查詢、外部匯入等功能。",
+    "features": [
+      {
+        "feature_id": "recharge_account_001",
+        "feature_name": "虛擬帳號列表",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "recharge_account_002",
+        "feature_name": "新增虛擬帳號",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "recharge_account_003",
+        "feature_name": "編輯虛擬帳號",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "recharge_account_004",
+        "feature_name": "刪除虛擬帳號",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "recharge_account_005",
+        "feature_name": "虛擬帳號歷程查詢",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "recharge_account_006",
+        "feature_name": "虛擬帳號資料匯出",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "recharge_account_007",
+        "feature_name": "虛擬帳號查詢（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      }
+    ]
+  },
+  {
+    "module_id": "listing",
+    "module_name": "物件刊登與搜尋",
+    "description": "對外的物件刊登頁面、搜尋功能、地圖搜尋。租屋搜尋者可瀏覽已刊登物件、地圖模式搜尋、查看物件詳情等。",
+    "features": [
+      {
+        "feature_id": "listing_001",
+        "feature_name": "物件搜尋列表",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "listing_002",
+        "feature_name": "地圖模式搜尋物件",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "listing_003",
+        "feature_name": "物件詳情頁面",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "listing_004",
+        "feature_name": "房東招租店鋪頁面",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "approval",
+    "module_name": "簽核管理",
+    "description": "團隊內部簽核流程管理。包含簽核專案建立、簽核流程處理、簽核狀態查詢等。",
+    "features": [
+      {
+        "feature_id": "approval_001",
+        "feature_name": "簽核專案列表",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "approval_002",
+        "feature_name": "簽核流程處理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "approval_003",
+        "feature_name": "簽核狀態查詢",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "approval_004",
+        "feature_name": "新增簽核",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "nthurc",
+    "module_name": "住都中心專案管理",
+    "description": "新北住都中心社會住宅專用功能。包含活動列表管理、租客清單、車位活動管理、稅別調整等。",
+    "features": [
+      {
+        "feature_id": "nthurc_001",
+        "feature_name": "住都活動列表管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "nthurc_002",
+        "feature_name": "住都租客清單管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "nthurc_003",
+        "feature_name": "車位活動列表管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "nthurc_004",
+        "feature_name": "車位租客清單管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "nthurc_005",
+        "feature_name": "住都合約稅別調整（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "nthurc_006",
+        "feature_name": "取消合約延長（住都）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "deposit_interest",
+    "module_name": "押金設算息",
+    "description": "押金利息計算功能。依合約押金金額與期間自動計算應退利息，支援批次查詢與計算。",
+    "features": [
+      {
+        "feature_id": "deposit_interest_001",
+        "feature_name": "押金設算息計算",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "deposit_interest_002",
+        "feature_name": "押金設算息查詢",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "deposit_interest_003",
+        "feature_name": "押金設算息設定（後台）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      }
+    ]
+  },
+  {
+    "module_id": "admin_tools",
+    "module_name": "後台管理工具",
+    "description": "JGB 後台管理專用工具：權限管理、客服專區、紀錄管理、系統工具。僅限 JGB 內部管理人員使用。",
+    "features": [
+      {
+        "feature_id": "admin_tools_001",
+        "feature_name": "權限群組管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_002",
+        "feature_name": "管理者帳號管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_003",
+        "feature_name": "會員資料管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_004",
+        "feature_name": "客戶使用資料查詢",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_005",
+        "feature_name": "功能配置管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_006",
+        "feature_name": "點退合約管理（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_007",
+        "feature_name": "永豐金流解密查詢（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_008",
+        "feature_name": "用戶資訊修改（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_009",
+        "feature_name": "修改合約狀態（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_010",
+        "feature_name": "住都租客新增（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_011",
+        "feature_name": "Email/簡訊記錄查詢",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_012",
+        "feature_name": "管理者異動記錄",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_013",
+        "feature_name": "排程執行紀錄/報表",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_014",
+        "feature_name": "全站異動紀錄",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_015",
+        "feature_name": "系統寄信工具",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_016",
+        "feature_name": "排程管理",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_017",
+        "feature_name": "統計報表",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_018",
+        "feature_name": "Botbonnie 設定管理（客服）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_019",
+        "feature_name": "合約租金修改（客戶）",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "admin"
+      },
+      {
+        "feature_id": "admin_tools_020",
+        "feature_name": "代管帳號管理",
+        "roles": [
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "line_integration",
+    "module_name": "LINE 整合",
+    "description": "LINE 官方帳號整合功能。包含 LINE Bot Webhook、LINE LIFF 介面、LINE 通知推播、Botbonnie 聊天機器人整合等。",
+    "features": [
+      {
+        "feature_id": "line_integration_001",
+        "feature_name": "LINE 帳號綁定",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "line_integration_002",
+        "feature_name": "LINE Bot 通知接收",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "line_integration_003",
+        "feature_name": "LINE LIFF 介面操作",
+        "roles": [
+          "tenant",
+          "landlord",
+          "property_manager"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "line_integration_004",
+        "feature_name": "Botbonnie 聊天機器人",
+        "roles": [
+          "tenant"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  },
+  {
+    "module_id": "external_api",
+    "module_name": "外部 API 整合",
+    "description": "對外系統 API 接口。包含物件資料 API、虛擬帳號匯入 API、住都財會串接、雲想圖章外部呼叫等。",
+    "features": [
+      {
+        "feature_id": "external_api_001",
+        "feature_name": "物件資料 API（對外）",
+        "roles": [
+          "agent"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "external_api_002",
+        "feature_name": "虛擬帳號匯入 API",
+        "roles": [
+          "agent"
+        ],
+        "entry_point": "app"
+      },
+      {
+        "feature_id": "external_api_003",
+        "feature_name": "住都財會串接 API",
+        "roles": [
+          "property_manager"
+        ],
+        "entry_point": "app"
+      }
+    ]
+  }
+]

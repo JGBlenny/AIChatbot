@@ -19,7 +19,7 @@
 
 - [ ] 2. JGB 模組盤點與問題清單（Core）
 
-- [ ] 2.1 ModuleMapper — 從 JGB 程式碼爬梳模組清單
+- [x] 2.1 ModuleMapper — 從 JGB 程式碼爬梳模組清單
   - 掃描 JGB routes、controllers、views（路徑：/Users/lenny/jgb/project/jgb/jgb2）
   - 識別並整理 16+ 功能模組（物件管理、合約管理、帳務管理、修繕系統、支付金流、IoT 設備、社區管理、大房東管理、委託合約、差額發票、電子簽章、使用者帳號、通知系統等）
   - 每個模組列出子功能，標註適用角色（tenant/landlord/property_manager/major_landlord/agent）與入口（app/admin/both）
