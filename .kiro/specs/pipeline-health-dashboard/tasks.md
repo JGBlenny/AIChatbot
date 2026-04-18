@@ -71,7 +71,7 @@
 
 ## 3. Core: 前端健康儀表板頁面
 
-- [ ] 3.1 PipelineHealthView.vue — 頁面結構與元件狀態顯示
+- [x] 3.1 PipelineHealthView.vue — 頁面結構與元件狀態顯示
   - 建立 Vue Options API 頁面 `views/PipelineHealthView.vue`
   - `mounted()` 自動呼叫 `GET /rag-api/v1/system/pipeline-health`
   - 頂部：整體狀態摘要卡片（大圖示 ✅/❌/⚠️ + 「X/Y 元件正常」+ overall_status 文字）
