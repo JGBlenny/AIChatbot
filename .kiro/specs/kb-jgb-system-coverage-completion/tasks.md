@@ -103,7 +103,7 @@
   - _Depends: 4.1, 2.1_
   - _Boundary: SystemKBGenerator_
 
-- [ ] 5.2 (P) ApiKBBuilder — 動態查詢 KB 條目建立
+- [x] 5.2 (P) ApiKBBuilder — 動態查詢 KB 條目建立
   - 讀取 coverage_report.json 中 query_type=dynamic 的缺口
   - 參照 JGB API 規格（docs/api/jgb_external_api_spec.md）取得端點對應與回應欄位
   - 為每個動態查詢問題建立 knowledge_base 條目：action_type='api_call'、api_config（endpoint + params mapping + response_template + fallback_message + combine_with_knowledge=true）
