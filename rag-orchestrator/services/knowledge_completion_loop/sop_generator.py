@@ -93,10 +93,10 @@ class SOPGenerator:
 
 ```json
 {{
-  "item_name": "簡短標題（15字以內，例如：退租流程、續約申請方式）",
+  "item_name": "用租客會問的方式寫標題（15字以內，例如：怎麼繳租金、可以提前退租嗎、押金什麼時候退）",
   "content": "客服回答內容（200-500字）",
   "trigger_mode": "auto",
-  "trigger_keywords": ["關鍵字1", "關鍵字2", "關鍵字3"],
+  "trigger_keywords": ["租客可能用的搜尋詞1", "同義詞2", "口語說法3"],
   "next_action": "none 或 form_fill 或 api_call",
   "next_form_id": "對應的 form_id（從上方表單清單選擇，沒有合適的填 null）",
   "immediate_prompt": "簡短回應（50字以內）",
@@ -146,9 +146,11 @@ class SOPGenerator:
    - 電子郵件：service@example.com
 ```
 
-**item_name 範例**：
-- ✅ 退租流程、續約申請、押金退還、租金繳費方式、訪客過夜規範
-- ❌ 退租流程SOP、退租解約流程說明、管理費固定金額查詢流程、自助查閱電表讀數流程
+**item_name 規則（非常重要）**：
+- item_name 必須用「租客會怎麼問」的口吻寫，因為系統用 item_name 生成搜尋向量
+- ✅ 怎麼繳租金、可以提前退租嗎、押金什麼時候退、冷氣不冷怎麼辦、可以養寵物嗎
+- ❌ 退租流程、租金繳納方式、押金退還說明、冷氣故障排查、寵物飼養規定
+- ❌ 退租流程SOP、退租解約流程說明、管理費固定金額查詢流程
 
 所有文字使用繁體中文。只輸出 JSON。
 """
@@ -603,6 +605,78 @@ class SOPGenerator:
         print(f"\n✅ SOP 生成完成：共 {len(generated_sops)} 筆")
 
         # 🔍 收集重複檢測統計
+        await self._log_duplicate_detection_stats(
+            loop_id=loop_id,
+            iteration=iteration,
+            knowledge_type='sop',
+            generated_items=generated_sops
+        )
+
+        return generated_sops
+
+    async def generate_from_checklist(
+        self,
+        loop_id: int,
+        vendor_id: int,
+        gaps: List[Dict],
+        iteration: int = 1,
+        batch_size: int = 5
+    ) -> List[Dict]:
+        """從流程清單批量生成 SOP（跳過白名單過濾與主題拆解）
+
+        與 generate_sop_items() 的差異：
+        1. 不執行 SOP 主題白名單過濾（清單子題已確認為 SOP）
+        2. 不執行主題拆解（清單子題已是適當粒度）
+        3. gaps 中的 category_id 直接使用（不呼叫 LLM 選分類）
+
+        Args:
+            loop_id: 迴圈 ID
+            vendor_id: 業者 ID
+            gaps: 由 checklist_to_gaps() 轉換的清單，每筆含 category_id
+            iteration: 迭代次數
+            batch_size: 批次大小
+
+        Returns:
+            生成的 SOP 項目列表
+        """
+        if not self.client:
+            print("❌ OpenAI API Key 未設定，無法生成 SOP")
+            return []
+
+        print(f"\n📝 從流程清單生成 SOP...")
+        print(f"   待生成數：{len(gaps)}")
+        print(f"   批次大小：{batch_size}")
+
+        generated_sops = []
+
+        # 直接批次處理，不做白名���過濾和主題拆解
+        for i in range(0, len(gaps), batch_size):
+            batch = gaps[i:i + batch_size]
+            batch_num = i // batch_size + 1
+            total_batches = (len(gaps) + batch_size - 1) // batch_size
+            print(f"\n   處理批次 {batch_num}/{total_batches}")
+
+            tasks = [
+                self._generate_single_sop(
+                    loop_id=loop_id,
+                    vendor_id=vendor_id,
+                    gap=gap,
+                    iteration=iteration
+                )
+                for gap in batch
+            ]
+
+            batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for gap, result in zip(batch, batch_results):
+                if isinstance(result, Exception):
+                    print(f"   ❌ 生成失敗: {gap.get('test_question', 'Unknown')} - {result}")
+                elif result:
+                    generated_sops.append(result)
+                    print(f"   ✅ 已生成: {result.get('item_name', 'Unknown')}")
+
+        print(f"\n✅ 流程清單 SOP 生成完成：共 {len(generated_sops)} 筆")
+
         await self._log_duplicate_detection_stats(
             loop_id=loop_id,
             iteration=iteration,
@@ -1432,6 +1506,10 @@ class SOPGenerator:
                 print(f"   ⛔ 品質驗證未通過: {sop_data.get('item_name', '?')} — {reasons}")
                 return None
 
+            # 從 gap 傳入 duplicate_threshold（供 _persist_sop 使用）
+            if gap.get('duplicate_threshold'):
+                sop_data['duplicate_threshold'] = gap['duplicate_threshold']
+
             # 設定預設值
             # 知識完善迴圈生成的 SOP 預設應為 'auto'，以便自動觸發
             sop_data.setdefault('trigger_mode', 'auto')
@@ -1462,16 +1540,21 @@ class SOPGenerator:
             combined_text = f"{sop_data['item_name']}\n\n{sop_data['content']}"
             primary_embedding = await self._generate_embedding(combined_text)
 
-            # 🏷️  使用 LLM 自動選擇 SOP 類別
-            category_id = await self._select_category_with_llm(
-                vendor_id=vendor_id,
-                question=question,
-                sop_name=sop_data['item_name'],
-                sop_content=sop_data['content']
-            )
+            # 🏷️  SOP 類別選擇
+            # 若 gap 已指定 category_id（如從 process_checklist 生成），直接使用
+            if gap.get('category_id'):
+                category_id = gap['category_id']
+                print(f"   🏷️  使用指定類別 (id={category_id})")
+            else:
+                category_id = await self._select_category_with_llm(
+                    vendor_id=vendor_id,
+                    question=question,
+                    sop_name=sop_data['item_name'],
+                    sop_content=sop_data['content']
+                )
             sop_data['category_id'] = category_id  # 保存到 sop_data 中
 
-            # 📁 使用 LLM 自動選擇 SOP 群組（在類別選擇後）
+            # 📁 SOP 群組選擇
             if category_id:
                 group_id = await self._select_group_with_llm(
                     vendor_id=vendor_id,
@@ -1595,12 +1678,14 @@ class SOPGenerator:
                     sop_content=sop_data['content']
                 )
                 if duplicate_check and duplicate_check['detected']:
-                    # 檢查最高相似度，超過 0.75 直接跳過不生成
+                    # 檢查最高相似度，超過閾值直接跳過不生成
+                    # 預設 0.75；從 gap 中可指定 duplicate_threshold 覆蓋
+                    dup_threshold = sop_data.get('duplicate_threshold', 0.75)
                     max_similarity = max(
                         item.get('similarity_score', 0)
                         for item in duplicate_check.get('items', [])
                     ) if duplicate_check.get('items') else 0
-                    if max_similarity >= 0.75:
+                    if max_similarity >= dup_threshold:
                         most_similar = duplicate_check['items'][0]
                         print(f"   ⛔ 跳過重複 SOP（向量相似度 {max_similarity:.1%}）: {sop_data['item_name']}")
                         print(f"      相似項: [{most_similar['source_table']}] {most_similar['item_name']}")

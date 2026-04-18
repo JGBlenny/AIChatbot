@@ -1,0 +1,2608 @@
+[
+  {
+    "category_name": "租賃契約",
+    "description": "租約條款、契約變更、轉租、續約等合約相關問題",
+    "subtopics": [
+      {
+        "topic_id": "租賃_001",
+        "question": "主承租人想換成室友的名字",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_002",
+        "question": "人先搬走但租約不中止",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_003",
+        "question": "住戶違規被檢舉時的處理方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_004",
+        "question": "修繕責任到底誰負責",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_005",
+        "question": "個資與證件影本保存與用途",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_006",
+        "question": "公共空間與陽台使用規則",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_007",
+        "question": "剛收到租約想了解重點",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_008",
+        "question": "包裹與信件代收與遺失責任",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_009",
+        "question": "只想更新聯絡電話與 Email",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_010",
+        "question": "合約副本與電子檔索取",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_011",
+        "question": "合約已簽後補充或修改條款",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_012",
+        "question": "合約禁止飼養寵物能否例外",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_013",
+        "question": "同社區想換到別間房",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_014",
+        "question": "想加同住人但不改主約人",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_015",
+        "question": "想將一年期合約改成短租或月租",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_016",
+        "question": "想把原本一年期租約縮短",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_017",
+        "question": "想把房間轉租給朋友",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_018",
+        "question": "想把每月繳租日往後調整",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_019",
+        "question": "想把租約轉給朋友接手",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_020",
+        "question": "想提前確認是否可續約與條件",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_021",
+        "question": "想改由家人代為匯款但不換承租人",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_022",
+        "question": "房內失竊與火災時責任歸屬",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_023",
+        "question": "房東與管理者是否可自行進房",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_024",
+        "question": "房東若賣屋時租客權益",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_025",
+        "question": "承租人想從個人改成公司名義",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_026",
+        "question": "押金是否可以抵最後一期房租",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_027",
+        "question": "提前解約想找人頂約減少違約金",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_028",
+        "question": "提前解約時違約金怎麼算",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_029",
+        "question": "擔心轉租或提前解約會留下壞紀錄",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_030",
+        "question": "水電費計算方式與說明不一致",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_031",
+        "question": "監視器安裝與房內隱私問題",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_032",
+        "question": "租屋地址做工作室或公司登記",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_033",
+        "question": "租約期間租金是否會調漲",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_034",
+        "question": "管理費包含哪些項目",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_035",
+        "question": "緊急狀況時是否可用備份鑰匙進屋",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_036",
+        "question": "退租清潔與油漆費用怎麼算",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_037",
+        "question": "頂約或變更承租人對押金的影響",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      }
+    ]
+  },
+  {
+    "category_name": "租金與費用",
+    "description": "租金繳納、金額調整、電費、水費、管理費、收據等費用問題",
+    "subtopics": [
+      {
+        "topic_id": "租金_038",
+        "question": "一層多台電表時如何辨認自己的電表",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_039",
+        "question": "一次預繳多期租金與折扣",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_040",
+        "question": "不同房間電費差異與公平性說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_041",
+        "question": "主動回報電表度數以控制電費",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_042",
+        "question": "人在國外時的租金繳納方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_043",
+        "question": "以外幣收入換匯繳租的問題",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_044",
+        "question": "個人電費與公共用電的區分說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_045",
+        "question": "入住與退租當日電表度數交接",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_046",
+        "question": "公司補助房租時租金開立與拆分",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_047",
+        "question": "加租車位後租金總額變化",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_048",
+        "question": "加裝設備後租金調整說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_049",
+        "question": "只租半個月時租金計算與收據期間",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_050",
+        "question": "同戶人數增加對租金與規則的影響",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_051",
+        "question": "同棟換小房以降低租金",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_052",
+        "question": "因收入減少申請調降租金",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_053",
+        "question": "因發薪日錯開導致遲繳租金之協調",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_054",
+        "question": "多人同住電費分攤與拆帳建議",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_055",
+        "question": "學生實習期間租金或付款方式調整",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_056",
+        "question": "室友搬走後租金負擔與是否可調整",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_057",
+        "question": "已儲值但電量未增加之處理方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_058",
+        "question": "已匯款但尚未收到收據",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_059",
+        "question": "已匯款但系統顯示未繳清的情況",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_060",
+        "question": "從個人收據改為公司抬頭收據",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_061",
+        "question": "忘記繳租或已逾期的補救方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_062",
+        "question": "懷疑抄到別間房的電表",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_063",
+        "question": "懷疑抄表錯誤時的查核流程",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_064",
+        "question": "懷疑電表跑太快或有異常",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_065",
+        "question": "房客比價後質疑租金偏高",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_066",
+        "question": "抄表是否需要進房與隱私疑慮",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_067",
+        "question": "抄表照片與度數判讀",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_068",
+        "question": "抄表週期與時間",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_069",
+        "question": "收據抬頭姓名填錯",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_070",
+        "question": "收據金額與實際租金不符",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_071",
+        "question": "改為包電方案導致租金調整",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_072",
+        "question": "新房客質疑是否算到前一位房客電費",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_073",
+        "question": "是否可即時查詢目前用電度數",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_074",
+        "question": "是否接受現金繳租與不收現金說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_075",
+        "question": "本期電費明顯變高之原因說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_076",
+        "question": "查詢本期目前大約用電度數與金額",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_077",
+        "question": "歷史電費紀錄查詢與匯出",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_078",
+        "question": "特殊情況申請暫緩繳租",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_079",
+        "question": "現金繳租後未當場拿到收據",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_080",
+        "question": "申請政府租金補貼對租金與合約的影響",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_081",
+        "question": "申請每月租金分兩次繳納",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_082",
+        "question": "申請租屋補貼需要租金收據或繳款證明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_083",
+        "question": "申請租金歷史明細與帳務紀錄",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_084",
+        "question": "短期經濟壓力下申請暫時降租",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_085",
+        "question": "租金多繳或少繳的處理方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_086",
+        "question": "租金帳單金額疑慮與更正",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_087",
+        "question": "租金收據與繳款證明開立",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_088",
+        "question": "租金收據需加註統編與公司抬頭",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_089",
+        "question": "租金繳款期限與是否有寬限期",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_090",
+        "question": "租金與清潔垃圾代收等服務打包",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_091",
+        "question": "租金與管理費需在收據上分開標示",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_092",
+        "question": "租金與賠償或違規費用是否可相互抵扣",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_093",
+        "question": "第一次入住不會用預付電與儲值方式說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_094",
+        "question": "第一次繳租詢問繳款方式與帳號",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_095",
+        "question": "線上刷卡繳租後的收據與報帳",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_096",
+        "question": "繳稅時需要年度租金繳納證明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_097",
+        "question": "續約調漲租金協商",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_098",
+        "question": "自記度數與帳單度數有差異",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_099",
+        "question": "補開過去幾個月租金收據",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_100",
+        "question": "親友代繳租金時的備註與對帳",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_101",
+        "question": "設備狀況頻繁導致房客希望租金補償",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_102",
+        "question": "設定或取消銀行自動扣款繳租",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_103",
+        "question": "詢問是否可用信用卡或行動支付繳租",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_104",
+        "question": "調整每月租金繳款日",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_105",
+        "question": "跨行與晚間轉帳入帳時間問題",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_106",
+        "question": "退租時預付電餘額的退費方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_107",
+        "question": "遲繳或補繳租金時收據開立方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_108",
+        "question": "釐清租金包含項目並調整方案",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_109",
+        "question": "長期外出期間預付電儲值與使用建議",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_110",
+        "question": "長期房客續約租金是否可優惠",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_111",
+        "question": "電表燈號與聲音異常的詢問",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_112",
+        "question": "電費帳單未收到或遺失之補發",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_113",
+        "question": "電費帳單欄位說明與解讀",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_114",
+        "question": "電費繳費方式調整與注意事項",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_115",
+        "question": "電費計算公式與單價說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_116",
+        "question": "電費逾期未繳與可能後果",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_117",
+        "question": "預付電儲值金額與可使用天數估算",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_118",
+        "question": "預付電單價與計價方式說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_119",
+        "question": "預付電用完導致跳電的緊急處理",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_120",
+        "question": "預付電表辨識與數據判讀問題",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_121",
+        "question": "預付電通知訊息頻率調整",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租金_122",
+        "question": "首次繳租收據怎麼開與取得方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      }
+    ]
+  },
+  {
+    "category_name": "押金",
+    "description": "押金繳納、退還、扣款、爭議等保證金問題",
+    "subtopics": [
+      {
+        "topic_id": "押金_123",
+        "question": "家具損壞時押金扣款與處理方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_124",
+        "question": "押金以現金領取的可行性與注意事項",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_125",
+        "question": "押金內含房屋、清潔與車位押金的退還方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_126",
+        "question": "押金扣款原則與不會亂扣的說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_127",
+        "question": "押金扣清潔與修繕費用時的說明與協調",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_128",
+        "question": "押金是否可抵扣最後一期租金與協調方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_129",
+        "question": "押金是否計息與用途說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_130",
+        "question": "押金退款帳戶指定與是否可退到他人帳戶",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_131",
+        "question": "押金退還延遲時的查詢與處理方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_132",
+        "question": "押金退還時的證明文件與報稅使用",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_133",
+        "question": "提前解約時押金退還與違約金說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_134",
+        "question": "確認當初押金金額與退租時的計算基準",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_135",
+        "question": "繳租帳戶關閉時押金退款處理方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_136",
+        "question": "設備老舊與人為損壞判斷及扣款溝通",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_137",
+        "question": "退租後押金何時退還與流程說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_138",
+        "question": "退租清潔標準與是否扣押金說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_139",
+        "question": "退租當天是否可立即退還押金",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "押金_140",
+        "question": "頂讓或轉租時押金處理方式與風險說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      }
+    ]
+  },
+  {
+    "category_name": "入住與退租",
+    "description": "入住點交、退租流程、租期到期、續約等租期問題",
+    "subtopics": [
+      {
+        "topic_id": "入住_141",
+        "question": "不續租需要提前多久通知",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "入住_142",
+        "question": "原本說不續租後又想繼續住",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "入住_143",
+        "question": "想確認租約到期日",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "入住_144",
+        "question": "提前詢問續租是否調漲租金",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "入住_145",
+        "question": "擔心租約到期會不會被趕走",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "入住_146",
+        "question": "擔心退租點交很嚴格需要準備什麼",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "入住_147",
+        "question": "租期到期仍在找房想多住幾天",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "入住_148",
+        "question": "租約到期只想再續半年",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "入住_149",
+        "question": "租約到期只想延長一兩個月",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "入住_150",
+        "question": "租約到期是否自動續約",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "入住_151",
+        "question": "租約將到期但本人在國外無法點交",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "入住_152",
+        "question": "租約未到期想先退部分押金",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "入住_153",
+        "question": "退租當天水電與押金何時結清",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p1"
+      }
+    ]
+  },
+  {
+    "category_name": "提前解約與違約",
+    "description": "提前退租、違約金、解約流程、點交等解約問題",
+    "subtopics": [
+      {
+        "topic_id": "提前_154",
+        "question": "一般到期退租流程與預告",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_155",
+        "question": "多人同住主約人退租的處理方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_156",
+        "question": "提前解約與到期退租的差別",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_157",
+        "question": "擔心房東不讓退租或刁難解約",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_158",
+        "question": "租期未到提前解約與違約金",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_159",
+        "question": "退租前清潔需要做到什麼程度",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_160",
+        "question": "退租完成是否會有合約終止文件",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_161",
+        "question": "退租後仍收到水電或管理費帳單",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_162",
+        "question": "退租後押金多久會退還",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_163",
+        "question": "退租後若有物品遺留如何處理",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_164",
+        "question": "退租或提前解約是否影響未來租屋",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_165",
+        "question": "退租流程步驟說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_166",
+        "question": "退租當天本人無法到場點交",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_167",
+        "question": "退租結算是否會有一堆隱藏費用",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "提前_168",
+        "question": "退租點交是否會很刁難",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      }
+    ]
+  },
+  {
+    "category_name": "修繕與維護",
+    "description": "水電、冷氣、電器、家具、裝潢等設備維修問題",
+    "subtopics": [
+      {
+        "topic_id": "修繕_169",
+        "question": "不冷",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_170",
+        "question": "使用高功率電器時頻繁跳電",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_171",
+        "question": "信箱鎖壞了打不開",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_172",
+        "question": "儲值電表餘額不足導致斷電",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_173",
+        "question": "全室燈光忽明忽暗或電壓不穩",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_174",
+        "question": "公共洗衣機投幣後沒啟動或吃錢",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_175",
+        "question": "公共洗衣機脫水時聲音很大晃動",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_176",
+        "question": "公共烘衣機烘不乾衣服",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_177",
+        "question": "冰箱冷度不足",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_178",
+        "question": "冰箱漏水",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_179",
+        "question": "冰箱過冷",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_180",
+        "question": "只有冷水沒有熱水（疑似熱水器問題）",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_181",
+        "question": "單盞燈具不亮或異常",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_182",
+        "question": "地板鼓起",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_183",
+        "question": "壁癌／霉斑",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_184",
+        "question": "大樓公共用電異常但房內有電",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_185",
+        "question": "大樓公告預計停水的應對方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_186",
+        "question": "天花板或牆角疑似管線滲水",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_187",
+        "question": "家具表面刮傷（書桌）",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_188",
+        "question": "床墊汙漬（入住初期）",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_189",
+        "question": "床板斷裂",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_190",
+        "question": "床架鬆動",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_191",
+        "question": "感應燈失效",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_192",
+        "question": "房內完全沒自來水",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_193",
+        "question": "房內突然全屋沒電",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_194",
+        "question": "房內紗窗破洞或鬆脫",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_195",
+        "question": "房間部分區域沒電",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_196",
+        "question": "抽屜卡住",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_197",
+        "question": "插座冒火花或有焦味",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_198",
+        "question": "插座無電",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_199",
+        "question": "插座鬆動",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_200",
+        "question": "換氣扇異音",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_201",
+        "question": "搬運碰撞家具（衣櫃）",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_202",
+        "question": "有味道",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_203",
+        "question": "桌腳不穩",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_204",
+        "question": "椅腳損壞",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_205",
+        "question": "水管敲擊聲或水錘噪音",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_206",
+        "question": "水龍頭關不緊持續滴水",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_207",
+        "question": "沙發坐墊塌陷",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_208",
+        "question": "油漆剝落",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_209",
+        "question": "洗手台下方排水管接頭滲水",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_210",
+        "question": "洗衣機不運轉／不脫水",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_211",
+        "question": "洗衣機使用時跳電",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_212",
+        "question": "洗衣機無法啟動",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_213",
+        "question": "洗衣機進水或排水異常",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_214",
+        "question": "流理台排水堵塞與異味",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_215",
+        "question": "浴室排水孔堵塞導致積水",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_216",
+        "question": "浴室排風扇完全不轉",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_217",
+        "question": "浴室排風扇聲音很大",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_218",
+        "question": "浴室水壓過小或忽大忽小",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_219",
+        "question": "漏水",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_220",
+        "question": "無線網路設備異常",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_221",
+        "question": "煙霧偵測器一直叫但沒有煙",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_222",
+        "question": "煙霧偵測器誤報",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_223",
+        "question": "照明燈不亮",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_224",
+        "question": "照明閃爍",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_225",
+        "question": "瓦斯熱水器忽冷忽熱",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_226",
+        "question": "用電超載常跳總開關",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_227",
+        "question": "窗簾桿脫落",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_228",
+        "question": "自行裝掛架詢問",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_229",
+        "question": "衣櫃滑門卡住",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_230",
+        "question": "衣櫃門鬆動",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_231",
+        "question": "裝潢味道重",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_232",
+        "question": "遙控器故障／沒電",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_233",
+        "question": "開不了",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_234",
+        "question": "電熱水器不加熱",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_235",
+        "question": "電磁爐不加熱",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_236",
+        "question": "電線老舊需汰換與施工影響",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_237",
+        "question": "電視無法開機",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_238",
+        "question": "電費金額異常偏高",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_239",
+        "question": "馬桶排水緩慢或快要堵塞",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "修繕_240",
+        "question": "馬桶水箱持續進水或有嘶嘶聲",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      }
+    ]
+  },
+  {
+    "category_name": "居住使用規範",
+    "description": "噪音、鄰居、室友、網路、寵物、裝潢規定等居住規範",
+    "subtopics": [
+      {
+        "topic_id": "居住_241",
+        "question": "Wi-Fi 已連線但無法上網",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_242",
+        "question": "停電後網路及第四台尚未恢復",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_243",
+        "question": "初入住找不到 Wi-Fi 資訊",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_244",
+        "question": "單一設備無法上網",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_245",
+        "question": "想改用網路電視取代第四台",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_246",
+        "question": "房內完全找不到 Wi-Fi",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_247",
+        "question": "房內持續聽到低頻嗡嗡聲但來源不明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_248",
+        "question": "房客擔心投訴噪音身分曝光的疑慮",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_249",
+        "question": "晚上網路特別慢／忽快忽慢",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_250",
+        "question": "樓上或鄰戶小孩奔跑與尖叫聲問題",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_251",
+        "question": "樓上腳步聲與拖椅聲影響休息",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_252",
+        "question": "水塔與機械設備運轉產生低頻噪音",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_253",
+        "question": "第四台只有聲音沒有畫面",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_254",
+        "question": "第四台完全無訊號（黑畫面顯示無訊號）",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_255",
+        "question": "第四台遙控器不靈敏",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_256",
+        "question": "臨馬路房間的外部環境噪音問題",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_257",
+        "question": "自行加裝房內 Wi-Fi 延伸設備",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_258",
+        "question": "裝潢施工噪音與施工時間說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_259",
+        "question": "鄰居揪朋友聚會聊天造成吵鬧",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_260",
+        "question": "鄰居飼養寵物造成長時間狗叫噪音",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "居住_261",
+        "question": "隔壁半夜唱歌與開音響噪音",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      }
+    ]
+  },
+  {
+    "category_name": "社區管理與設施",
+    "description": "鑰匙門禁、垃圾回收、公設使用、停車位等社區管理",
+    "subtopics": [
+      {
+        "topic_id": "社區_262",
+        "question": " 鑰匙能轉但門打不開",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_263",
+        "question": "半夜被鎖在門外",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_264",
+        "question": "垃圾分類規則說明（一般垃圾、回收、廚餘）",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_265",
+        "question": "垃圾分類錯誤被貼單或提醒後的處理",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_266",
+        "question": "垃圾集中區異味與環境髒亂反映",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_267",
+        "question": "大掃除或整理時短期垃圾量增加",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_268",
+        "question": "大量紙箱與包裝材的回收與丟棄",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_269",
+        "question": "大門磁扣刷不過",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_270",
+        "question": "廢棄家電與小電器的丟棄方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_271",
+        "question": "廢棄物代收與特殊清運費用說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_272",
+        "question": "想多配一支鑰匙給家人",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_273",
+        "question": "懷疑有人留鑰匙想換鎖",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_274",
+        "question": "房內簡單烹飪產生廚餘的處理方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_275",
+        "question": "房間鑰匙有但大門磁扣沒領到",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_276",
+        "question": "搬家更換家具時大型廢棄物處理方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_277",
+        "question": "新入住房客詢問垃圾丟棄地點與時間",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_278",
+        "question": "晚班或夜間作息房客垃圾處理協調方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_279",
+        "question": "磁扣遺失",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_280",
+        "question": "退租時鑰匙與磁扣歸還",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_281",
+        "question": "過年連假垃圾清運時間與安排",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_282",
+        "question": "鄰居反映垃圾異味後房客服務協助改善",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_283",
+        "question": "釐清何種情況會被視為亂丟垃圾",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_284",
+        "question": "鑰匙插不太進去",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_285",
+        "question": "鑰匙插得進去但轉很卡",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_286",
+        "question": "長期出差或不在期間垃圾與物品的處理建議",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_287",
+        "question": "門關得上但關不緊",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_288",
+        "question": "電子鎖沒電在門外",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      }
+    ]
+  },
+  {
+    "category_name": "安全與保險",
+    "description": "居家安全、火災保險、天災處理、用電安全等",
+    "subtopics": [
+      {
+        "topic_id": "安全_289",
+        "question": "熱水器安裝位置與一氧化碳安全",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "安全_290",
+        "question": "煙霧偵測器與滅火器配置",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "安全_291",
+        "question": "住宅火災保險說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "安全_292",
+        "question": "地震或颱風後的損壞處理",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "安全_293",
+        "question": "用電安全與高功率電器規範",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      }
+    ]
+  },
+  {
+    "category_name": "稅務相關",
+    "description": "房屋稅、租金扣除額、租金補貼、稅賦優惠等",
+    "subtopics": [
+      {
+        "topic_id": "稅務_294",
+        "question": "房屋稅與地價稅負擔歸屬",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "稅務_295",
+        "question": "租金支出報稅扣除額說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "稅務_296",
+        "question": "申請政府租金補貼的資格與流程",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "稅務_297",
+        "question": "包租代管稅賦優惠說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      }
+    ]
+  },
+  {
+    "category_name": "爭議處理與客訴",
+    "description": "租賃糾紛、客訴處理、調處管道、法律資源等",
+    "subtopics": [
+      {
+        "topic_id": "爭議_298",
+        "question": "冷氣維修延宕讓房客覺得被晾著",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "爭議_299",
+        "question": "同一個馬桶問題重複維修仍未改善",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "爭議_300",
+        "question": "帳單金額認定爭議讓房客覺得被多收",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "爭議_301",
+        "question": "房客懷疑有人未經同意進房造成不安",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "爭議_302",
+        "question": "房客覺得前一次電話中客服態度很差",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "爭議_303",
+        "question": "房客覺得問題被轉來轉去沒人負責",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "爭議_304",
+        "question": "房客認為合約內容與當初口頭承諾不符",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "爭議_305",
+        "question": "突發停電處理與資訊說明不如預期",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "爭議_306",
+        "question": "退租押金扣款明細引發房客強烈不滿",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": true,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "爭議_307",
+        "question": "長期噪音投訴多次未改善引發不滿",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      }
+    ]
+  },
+  {
+    "category_name": "制度與法規",
+    "description": "包租代管制度、租賃專法、定型化契約、政府補貼等",
+    "subtopics": [
+      {
+        "topic_id": "制度_308",
+        "question": "包租業與代管業的定義與差異",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "制度_309",
+        "question": "租賃專法重點說明",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "制度_310",
+        "question": "定型化契約應記載與不得記載事項",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "制度_311",
+        "question": "社會住宅包租代管計畫簡介",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "制度_312",
+        "question": "契約審閱期規定",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "制度_313",
+        "question": "公證費補助申請",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      }
+    ]
+  },
+  {
+    "category_name": "戶籍與居住證明",
+    "description": "戶籍遷入、居住證明、就學設籍等",
+    "subtopics": [
+      {
+        "topic_id": "戶籍_314",
+        "question": "租屋處辦理戶籍遷入的權利",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "戶籍_315",
+        "question": "居住事實證明文件取得",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "戶籍_316",
+        "question": "就學設籍需求的處理方式",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      }
+    ]
+  }
+]
