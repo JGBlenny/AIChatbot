@@ -47,7 +47,7 @@
   - _Requirements: 7.2, 7.3, 7.4, 7.7_
   - _Boundary: JGB API Spec_
 
-- [ ] 3.2 JGBSystemAPI 服務實作（mock 模式）
+- [x] 3.2 JGBSystemAPI 服務實作（mock 模式）
   - 建立 `rag-orchestrator/services/jgb_system_api.py`
   - 依據 3.1 的 API 規格實作 7 個查詢方法：get_bills、get_invoices、get_contracts、get_contract_checkin_eligibility、get_payments、get_repairs、get_tenant_summary
   - mock 假資料依據 3.1 規格中的 mock response 範例，確保欄位與格式一致
