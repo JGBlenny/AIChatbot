@@ -79,7 +79,7 @@
 
 - [ ] 4. 覆蓋缺口分析（Core）
 
-- [ ] 4.1 CoverageAnalyzer — 覆蓋率比對與缺口報告
+- [x] 4.1 CoverageAnalyzer — 覆蓋率比對與缺口報告
   - 讀取 system_questions_checklist.json，對每個問題用 embedding similarity 比對現有 knowledge_base 和 vendor_sop_items
   - 標記覆蓋狀態：已由 KB 覆蓋 / 已由 SOP 覆蓋 / 未覆蓋 / 部分覆蓋
   - 識別品質不佳的現有項目（內容 < 50 字、僅「請洽管理師」）標記為「需改善」
