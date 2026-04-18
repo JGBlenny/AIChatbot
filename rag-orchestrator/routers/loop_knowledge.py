@@ -450,7 +450,8 @@ async def review_knowledge(
         async with db_pool.acquire() as conn:
             # 1. 查詢知識項目
             knowledge_query = """
-                SELECT id, loop_id, iteration, question, answer, knowledge_type, sop_config, status
+                SELECT id, loop_id, iteration, question, answer, knowledge_type, sop_config, status,
+                       category, scope, is_template, template_vars
                 FROM loop_generated_knowledge
                 WHERE id = $1
             """
@@ -552,11 +553,14 @@ async def review_knowledge(
                         'question': updated_question,
                         'answer': updated_answer,
                         'knowledge_type': knowledge['knowledge_type'],
-                        'sop_config': updated_sop_config
+                        'sop_config': updated_sop_config,
+                        'category': knowledge.get('category'),
+                        'scope': knowledge.get('scope', 'global') or 'global',
+                        'is_template': knowledge.get('is_template', False) or False,
+                        'template_vars': knowledge.get('template_vars'),
                     }
 
-                    # 調用同步函數（如果已實作）
-                    # 注意：此函數將在 task 6.6 實作
+                    # 調用同步函數
                     sync_result = await _sync_knowledge_to_production(
                         conn,
                         knowledge_data,
@@ -690,7 +694,8 @@ async def batch_review_knowledge(
                     # 1. 查詢知識項目
                     knowledge_query = """
                         SELECT id, loop_id, iteration, question, answer,
-                               knowledge_type, sop_config, status
+                               knowledge_type, sop_config, status,
+                               category, scope, is_template, template_vars
                         FROM loop_generated_knowledge
                         WHERE id = $1
                     """
@@ -785,7 +790,11 @@ async def batch_review_knowledge(
                                 'question': updated_question,
                                 'answer': updated_answer,
                                 'knowledge_type': knowledge['knowledge_type'],
-                                'sop_config': updated_sop_config
+                                'sop_config': updated_sop_config,
+                                'category': knowledge.get('category'),
+                                'scope': knowledge.get('scope', 'global') or 'global',
+                                'is_template': knowledge.get('is_template', False) or False,
+                                'template_vars': knowledge.get('template_vars'),
                             }
                             sync_result = await _sync_knowledge_to_production(
                                 conn,
@@ -948,10 +957,17 @@ async def _sync_knowledge_to_production(
         # 提取知識資料
         knowledge_id = knowledge_item.get('id')
         loop_id = knowledge_item.get('loop_id')
+        iteration = knowledge_item.get('iteration')
         knowledge_type = knowledge_item.get('knowledge_type')
         question = knowledge_item.get('question')
         answer = knowledge_item.get('answer')
         sop_config = knowledge_item.get('sop_config')
+
+        # 提取擴充欄位（向後相容：舊資料可能沒有這些欄位）
+        category = knowledge_item.get('category')  # 可為 None
+        scope = knowledge_item.get('scope', 'global') or 'global'
+        is_template = knowledge_item.get('is_template', False) or False
+        template_vars = knowledge_item.get('template_vars')  # 可為 None
 
         # 如果 sop_config 是字串，解析為 dict
         if sop_config and isinstance(sop_config, str):
@@ -1051,6 +1067,18 @@ async def _sync_knowledge_to_production(
             # 轉換為 pgvector 格式
             embedding_str = embedding_client.to_pgvector_format(embedding)
 
+            # 組裝 generation_metadata
+            generation_metadata = json.dumps({
+                "loop_id": loop_id,
+                "iteration": iteration,
+                "source": "kb-coverage-completion"
+            }, ensure_ascii=False)
+
+            # 處理 template_vars（確保為 JSON 字串或 None）
+            template_vars_json = None
+            if template_vars is not None:
+                template_vars_json = json.dumps(template_vars, ensure_ascii=False) if isinstance(template_vars, (dict, list)) else template_vars
+
             # 插入 knowledge_base
             kb_id = await conn.fetchval("""
                 INSERT INTO knowledge_base (
@@ -1059,13 +1087,22 @@ async def _sync_knowledge_to_production(
                     answer,
                     keywords,
                     embedding,
-                    source,
+                    category,
+                    scope,
+                    is_template,
+                    template_vars,
+                    source_type,
+                    generation_metadata,
                     source_loop_id,
                     source_loop_knowledge_id,
                     created_at,
                     updated_at
                 )
-                VALUES ($1, $2, $3, $4, $5::vector, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                VALUES ($1, $2, $3, $4, $5::vector,
+                        $6, $7, $8, $9::jsonb,
+                        'ai_generated', $10::jsonb,
+                        $11, $12,
+                        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 RETURNING id
             """,
                 [vendor_id],  # vendor_ids array
@@ -1073,7 +1110,11 @@ async def _sync_knowledge_to_production(
                 answer,
                 None,  # keywords (可選)
                 embedding_str,
-                'loop',
+                category,
+                scope,
+                is_template,
+                template_vars_json,
+                generation_metadata,
                 loop_id,
                 knowledge_id
             )
