@@ -137,7 +137,7 @@
 
 - [ ] 7. 驗證（Validation）
 
-- [ ] 7.1 端到端整合測試 — KB 檢索到 API 回答完整流程
+- [x] 7.1 端到端整合測試 — KB 檢索到 API 回答完整流程
   - 測試完整流程：chat 請求（帶 role_id）→ RAG 檢索到 action_type='api_call' 的 KB → 呼叫 JGBSystemAPI mock → response_template 組合回答 → 回傳用戶
   - 驗證 session_data 中 role_id 從前端到 JGBSystemAPI 的完整傳遞鏈
   - 驗證 KB 條目的 api_config 正確觸發對應端點，combine_with_knowledge 正確合併靜態知識與 API 資料
