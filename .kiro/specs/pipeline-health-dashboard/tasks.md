@@ -84,7 +84,7 @@
   - _Requirements: 3.2, 3.3, 3.4, 3.5, 5.3_
   - _Boundary: PipelineHealthView_
 
-- [ ] 3.2 PipelineHealthView.vue — 操作按鈕與端到端測試
+- [x] 3.2 PipelineHealthView.vue — 操作按鈕與端到端測試
   - 「重新檢查」按鈕：重新呼叫健康檢查 API 並更新結果
   - 「端到端測試」按鈕：呼叫 `POST /rag-api/v1/system/pipeline-e2e-test`
   - 端到端測試結果區域：各階段名稱、通過/失敗狀態、耗時列表

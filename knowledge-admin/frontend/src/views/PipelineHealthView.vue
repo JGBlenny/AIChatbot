@@ -29,9 +29,24 @@
           <div class="overall-title">{{ healthData.healthy_count }}/{{ healthData.total_count }} 元件正常</div>
           <div class="overall-message">{{ overallStatusText }}</div>
         </div>
-        <button @click="fetchPipelineHealth" class="btn-refresh" title="重新檢查">
-          🔄
-        </button>
+        <div class="action-buttons">
+          <button
+            @click="fetchPipelineHealth"
+            class="btn-action btn-refresh"
+            :disabled="loading"
+            title="重新檢查"
+          >
+            🔄 重新檢查
+          </button>
+          <button
+            @click="runE2ETest"
+            class="btn-action btn-e2e"
+            :disabled="e2eLoading"
+            title="端到端測試"
+          >
+            🧪 端到端測試
+          </button>
+        </div>
       </div>
 
       <!-- 元件狀態 Grid -->
@@ -65,6 +80,47 @@
           </div>
         </div>
       </div>
+
+      <!-- 端到端測試結果區域 -->
+      <div v-if="e2eLoading" class="e2e-loading">
+        <div class="loading-icon">⏳</div>
+        <div class="loading-text">正在執行端到端測試...</div>
+      </div>
+
+      <div v-if="e2eError" class="e2e-error">
+        <div class="error-icon">❌</div>
+        <div class="error-info">
+          <div class="error-title">端到端測試失敗</div>
+          <div class="error-message">{{ e2eError }}</div>
+        </div>
+      </div>
+
+      <div v-if="e2eResult" class="e2e-results">
+        <h3>🧪 端到端測試結果</h3>
+        <div class="e2e-summary" :class="e2eResult.success ? 'status-healthy' : 'status-unhealthy'">
+          <span>{{ e2eResult.success ? '✅ 全部通過' : '❌ 有階段失敗' }}</span>
+          <span v-if="e2eResult.total_latency_ms" class="e2e-total-latency">
+            總耗時：{{ formatLatency(e2eResult.total_latency_ms) }}
+          </span>
+        </div>
+        <div class="e2e-stages">
+          <div
+            v-for="stage in e2eResult.stages"
+            :key="stage.name"
+            class="e2e-stage-card"
+            :class="stage.passed ? 'status-healthy' : 'status-unhealthy'"
+          >
+            <div class="e2e-stage-header">
+              <span class="e2e-stage-icon">{{ stage.passed ? '✅' : '❌' }}</span>
+              <span class="e2e-stage-name">{{ stage.name }}</span>
+              <span class="e2e-stage-latency">{{ formatLatency(stage.latency_ms) }}</span>
+            </div>
+            <div v-if="!stage.passed && stage.error" class="e2e-stage-error">
+              {{ stage.error }}
+            </div>
+          </div>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -79,6 +135,9 @@ export default {
       healthData: null,
       loading: false,
       error: null,
+      e2eResult: null,
+      e2eLoading: false,
+      e2eError: null,
     };
   },
   computed: {
@@ -124,6 +183,26 @@ export default {
         this.error = `無法連接到 RAG Orchestrator 服務：${err.message}`;
       } finally {
         this.loading = false;
+      }
+    },
+    async runE2ETest() {
+      this.e2eLoading = true;
+      this.e2eError = null;
+      this.e2eResult = null;
+      try {
+        const response = await fetch(API_ENDPOINTS.pipelineE2ETest, {
+          method: 'POST',
+        });
+        if (response.ok) {
+          this.e2eResult = await response.json();
+        } else {
+          this.e2eError = `伺服器回應錯誤：${response.status} ${response.statusText}`;
+        }
+      } catch (err) {
+        console.error('端到端測試錯誤:', err);
+        this.e2eError = `無法執行端到端測試：${err.message}`;
+      } finally {
+        this.e2eLoading = false;
       }
     },
     statusEmoji(status) {
@@ -359,5 +438,136 @@ h2 {
   border-radius: 4px;
   font-size: 0.85rem;
   color: #856404;
+}
+
+/* 操作按鈕組 */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-action {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.btn-action:hover:not(:disabled) {
+  background: #f8f9fa;
+}
+
+.btn-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-e2e {
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.btn-e2e:hover:not(:disabled) {
+  background: #e7f1ff;
+}
+
+/* 端到端測試載入 */
+.e2e-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  color: #666;
+  margin-top: 20px;
+}
+
+/* 端到端測試錯誤 */
+.e2e-error {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-radius: 8px;
+  border: 2px solid #dc3545;
+  background: #f8d7da;
+  color: #721c24;
+  margin-top: 20px;
+}
+
+.e2e-error .error-icon {
+  font-size: 1.5rem;
+  margin-right: 12px;
+}
+
+/* 端到端測試結果 */
+.e2e-results {
+  margin-top: 20px;
+}
+
+.e2e-results h3 {
+  margin-bottom: 12px;
+  color: #2c3e50;
+}
+
+.e2e-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 2px solid;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+.e2e-total-latency {
+  font-weight: normal;
+  font-size: 0.9rem;
+}
+
+.e2e-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.e2e-stage-card {
+  padding: 12px 16px;
+  border-radius: 6px;
+  border: 1px solid;
+}
+
+.e2e-stage-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.e2e-stage-icon {
+  font-size: 1.1rem;
+}
+
+.e2e-stage-name {
+  flex: 1;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.e2e-stage-latency {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.e2e-stage-error {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-left: 3px solid #dc3545;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #721c24;
 }
 </style>
