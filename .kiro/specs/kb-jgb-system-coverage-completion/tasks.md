@@ -37,7 +37,7 @@
 
 - [ ] 3. JGB API 服務建立（Core）
 
-- [ ] 3.1 JGB API 需求規格定義（基於 JGB 實際 model）
+- [x] 3.1 JGB API 需求規格定義（基於 JGB 實際 model）
   - 分析 JGB 程式碼中的實際 model 結構：Bill（prepare→ready→payed→complete→expired）、Invoice（not_issued→issued→invalid→allowance）、Contract（ready→inviting→signed→move_in→move_out→history）、Payment（多金流商）、Repair（apply→assign→process→complete→finish→archive）、ExistedLessee
   - 依據各 model 的實際欄位定義 7 個 API 端點規格：路徑、HTTP method、必要參數（role_id + user_id）、選填參數、回應欄位（對應 model 實際欄位）、狀態碼對照表
   - 每個端點包含 mock response 範例資料（正常情境 + 查無資料 + 無權限 等異常情境），假資料欄位與 JGB model 一致
