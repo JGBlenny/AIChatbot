@@ -125,11 +125,11 @@ def cache_response_and_return(cache_service, vendor_id: int, question: str, resp
 
 def _format_sop_answer(sop_items: list, group_name: str = None) -> str:
     """
-    直接格式化SOP內容，不經過LLM重組
+    格式化 SOP 內容，保留 Markdown 結構
 
     保持原始的：
     - item_name（標題）
-    - content（內容）
+    - content（內容，保留 Markdown 格式）
     - 順序
 
     Args:
@@ -139,6 +139,8 @@ def _format_sop_answer(sop_items: list, group_name: str = None) -> str:
     Returns:
         格式化後的答案字串
     """
+    from services.answer_formatter import AnswerFormatter
+
     if not sop_items:
         return "未找到相關的SOP資料。"
 
@@ -147,30 +149,29 @@ def _format_sop_answer(sop_items: list, group_name: str = None) -> str:
 
     # 如果有group_name，添加標題
     if group_name:
-        parts.append(f"【{group_name}】\n")
+        parts.append(f"**{group_name}**\n")
 
     for idx, sop in enumerate(sop_items, 1):
         item_name = sop.get('item_name', '')
         content = sop.get('content', '').strip()
 
-        # 轉義 Markdown 特殊字符（防止誤渲染）
-        # 特別處理波浪號：1~15 不應該被渲染成刪除線
+        # 轉義波浪號：1~15 不應該被渲染成刪除線
         content = content.replace('~', '\\~')
         item_name = item_name.replace('~', '\\~')
 
-        # 格式化每條SOP（保持原始標題和內容）
+        # 用 AnswerFormatter 清理內容，保留 Markdown 結構
+        content = AnswerFormatter._clean_content(content)
+
+        # 格式化每條SOP
         if len(sop_items) == 1:
             # 只有一條，不需要編號
-            parts.append(f"{item_name}\n{content}")
+            parts.append(content)
         else:
-            # 多條，添加編號方便閱讀
-            parts.append(f"{idx}. {item_name}\n{content}")
+            # 多條，用 Markdown 標題編號
+            parts.append(f"**{idx}. {item_name}**\n\n{content}")
 
     # 組合答案
     answer = "\n\n".join(parts)
-
-    # 添加友好的結尾
-    answer += "\n\n如有任何疑問，歡迎隨時諮詢！"
 
     return answer
 

@@ -229,9 +229,10 @@ class LLMAnswerOptimizer:
                 print(f"ℹ️  檢測到完美匹配（vector={max_vector_similarity:.3f} >= {perfect_match_threshold}），直接返回原始答案")
                 force_synthesis = False
 
-                # 完美匹配：直接返回原始答案，不進行任何 LLM 優化
+                # 完美匹配：返回格式化後的原始答案，不經過 LLM
                 processing_time = int((time.time() - start_time) * 1000)
                 original_answer = search_results[0].get('content', search_results[0].get('answer', ''))
+                original_answer = self.formatter._clean_content(original_answer)
 
                 return {
                     "optimized_answer": original_answer,
