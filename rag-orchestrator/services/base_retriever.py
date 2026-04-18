@@ -28,6 +28,19 @@ class BaseRetriever(ABC):
         # Embedding 客戶端
         self.embedding_client = get_embedding_client()
 
+        # Query Rewriter
+        self.query_rewriter = None
+        if os.getenv("ENABLE_QUERY_REWRITE", "false").lower() == "true":
+            try:
+                from .query_rewriter import get_query_rewriter
+                self.query_rewriter = get_query_rewriter()
+                if self.query_rewriter.enabled:
+                    print("✅ Query Rewriter 已啟用")
+                else:
+                    self.query_rewriter = None
+            except Exception as e:
+                print(f"⚠️ Query Rewriter 載入失敗: {e}")
+
         # Reranker：統一使用 SemanticReranker（外部 semantic-model 服務）
         self.reranker = None
         self.semantic_reranker = None
@@ -158,7 +171,16 @@ class BaseRetriever(ABC):
         print(f"   業者: {vendor_id}, Top-K: {top_k}, 閾值: {similarity_threshold}")
         print(f"   關鍵字備選: {enable_keyword_fallback}, 關鍵字加成: {enable_keyword_boost}")
 
-        # Step 1: 生成查詢向量
+        # Step 0: Query Rewriting（改寫查詢以提升向量匹配率）
+        # 策略：用原始查詢 + 改寫查詢分別做向量檢索，取聯集後統一 rerank/finalize
+        original_query = query
+        rewritten_queries = []
+        if self.query_rewriter:
+            rewritten_queries = self.query_rewriter.rewrite(query)
+            if rewritten_queries:
+                print(f"   🔄 Query Rewrite: {rewritten_queries}")
+
+        # Step 1: 生成查詢向量（原始查詢）
         query_embedding = await self._get_embedding(query)
         if not query_embedding:
             print("⚠️ 向量生成失敗，降級為純關鍵字檢索")
@@ -166,11 +188,32 @@ class BaseRetriever(ABC):
                 return await self._keyword_search(query, vendor_id, top_k, **kwargs)
             return []
 
-        # Step 2: 向量檢索
+        # Step 2: 向量檢索（原始查詢）
         results = await self._vector_search(
             query_embedding, vendor_id, top_k, similarity_threshold, **kwargs
         )
         print(f"   向量檢索: 找到 {len(results)} 個結果")
+
+        # Step 2.1: 改寫查詢的向量檢索（取聯集，去重）
+        if rewritten_queries:
+            existing_ids = {r.get('id') for r in results}
+            rewrite_added = 0
+            for rq in rewritten_queries:
+                rq_embedding = await self._get_embedding(rq)
+                if not rq_embedding:
+                    continue
+                rq_results = await self._vector_search(
+                    rq_embedding, vendor_id, top_k, similarity_threshold, **kwargs
+                )
+                for rr in rq_results:
+                    if rr.get('id') not in existing_ids:
+                        rr['search_method'] = 'query_rewrite'
+                        rr['rewrite_source'] = rq
+                        results.append(rr)
+                        existing_ids.add(rr.get('id'))
+                        rewrite_added += 1
+            if rewrite_added > 0:
+                print(f"   🔄 改寫查詢新增: {rewrite_added} 個候選")
 
         # Step 3: 關鍵字備選（如果結果不足）
         if enable_keyword_fallback and len(results) < top_k:

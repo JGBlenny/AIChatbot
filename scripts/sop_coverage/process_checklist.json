@@ -298,6 +298,22 @@
         "keywords": [],
         "cashflow_relevant": true,
         "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_321",
+        "question": "簽約一定要房東本人到場嗎",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "租賃_325",
+        "question": "房東換人了租約要重簽嗎",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
       }
     ]
   },
@@ -1134,6 +1150,14 @@
         "keywords": [],
         "cashflow_relevant": true,
         "priority": "p0"
+      },
+      {
+        "topic_id": "押金_326",
+        "question": "寵物押金怎麼算怎麼退",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
       }
     ]
   },
@@ -1244,6 +1268,22 @@
         "keywords": [],
         "cashflow_relevant": true,
         "priority": "p1"
+      },
+      {
+        "topic_id": "入住_317",
+        "question": "看房時怎麼確認房況跟描述一樣",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "入住_319",
+        "question": "入住時發現設備壞了怎麼辦",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
       }
     ]
   },
@@ -1370,6 +1410,22 @@
         "keywords": [],
         "cashflow_relevant": false,
         "priority": "p1"
+      },
+      {
+        "topic_id": "提前_318",
+        "question": "房東可以提前終止合約嗎",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "提前_320",
+        "question": "租客提前解約的法定流程有哪些",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
       }
     ]
   },
@@ -2348,6 +2404,22 @@
         "keywords": [],
         "cashflow_relevant": false,
         "priority": "p1"
+      },
+      {
+        "topic_id": "社區_323",
+        "question": "社區公共設施怎麼申請使用",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
+      },
+      {
+        "topic_id": "社區_328",
+        "question": "管理平台密碼忘記怎麼辦",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
       }
     ]
   },
@@ -2518,6 +2590,14 @@
         "keywords": [],
         "cashflow_relevant": false,
         "priority": "p1"
+      },
+      {
+        "topic_id": "爭議_327",
+        "question": "租客失蹤了租約怎麼處理",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p1"
       }
     ]
   },
@@ -2572,6 +2652,22 @@
         "keywords": [],
         "cashflow_relevant": false,
         "priority": "p1"
+      },
+      {
+        "topic_id": "制度_322",
+        "question": "包租跟代管的租金調整方式有什麼不同",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
+      },
+      {
+        "topic_id": "制度_324",
+        "question": "電子合約有法律效力嗎",
+        "business_type": "both",
+        "keywords": [],
+        "cashflow_relevant": false,
+        "priority": "p0"
       }
     ]
   },

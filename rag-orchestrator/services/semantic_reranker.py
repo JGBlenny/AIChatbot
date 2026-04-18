@@ -76,12 +76,16 @@ class SemanticReranker:
 
         try:
             # 準備請求數據
+            # 傳送原始欄位，讓 API server 決定如何組合
+            # （避免客戶端預先串接導致 question_summary 資訊遺失）
             request_data = {
                 "query": query,
                 "candidates": [
                     {
                         "id": c.get("id"),
-                        "content": c.get("answer", "") + " " + c.get("question_summary", "")
+                        "answer": c.get("answer", ""),
+                        "content": c.get("content", ""),
+                        "question_summary": c.get("question_summary", ""),
                     }
                     for c in candidates
                 ],
