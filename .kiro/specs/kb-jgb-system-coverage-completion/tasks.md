@@ -125,7 +125,7 @@
 
 - [ ] 6. Pipeline 編排（Integration）
 
-- [ ] 6.1 Orchestrator — 多階段 pipeline 編排腳本
+- [x] 6.1 Orchestrator — 多階段 pipeline 編排腳本
   - 建立 `scripts/kb_system_coverage/orchestrator.py`，編排 7 階段 pipeline：P1 Module Mapping → P2 Question Generation → P3 Coverage Analysis → P4 Static KB Generation → P5 API KB Building → P6 Review Pause → P7 Backtest Validation
   - 支援 CLI 參數：--vendor-id、--skip-phases、--batch-size
   - P6 暫停等待人工審核完成後才進入 P7
