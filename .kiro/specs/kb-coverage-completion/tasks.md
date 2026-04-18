@@ -17,7 +17,7 @@
   - _Requirements: 2.1, 2.3, 2.5_
   - _Boundary: generate_checklist.py_
 
-- [ ] 2.2 LLM 輔助子題展開
+- [x] 2.2 LLM 輔助子題展開
   - 一般知識（11 大類）由 LLM 輔助展開子題，每大類 5-15 個子題，使用 boundary_classifier 確認屬於 KB
   - 產業知識（8 大類）子題展開，涉及業者特定數據的子題標註 suggest_api（用途描述）
   - 每個子題標註 target_user 與 business_types
