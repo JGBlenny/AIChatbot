@@ -521,7 +521,7 @@ class PipelineHealthService:
                         """
                         SELECT id, question_summary, answer
                         FROM knowledge_base
-                        WHERE vendor_id = %s
+                        WHERE %s = ANY(vendor_ids)
                         ORDER BY embedding <=> %s::vector
                         LIMIT 5
                         """,
@@ -570,14 +570,14 @@ class PipelineHealthService:
                     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
                     if valid_tokens:
                         like_clauses = " OR ".join(
-                            ["question ILIKE %s" for _ in valid_tokens]
+                            ["question_summary ILIKE %s" for _ in valid_tokens]
                         )
                         params: list = [vendor_id] + [f"%{t}%" for t in valid_tokens]
                         cursor.execute(
                             f"""
                             SELECT id, question_summary, answer
                             FROM knowledge_base
-                            WHERE vendor_id = %s AND ({like_clauses})
+                            WHERE %s = ANY(vendor_ids) AND ({like_clauses})
                             LIMIT 5
                             """,
                             tuple(params),
@@ -713,7 +713,7 @@ class PipelineHealthService:
                 # 簡單的 LIKE 查詢驗證 keyword search 可運作
                 if valid_tokens:
                     like_clauses = " OR ".join(
-                        ["question ILIKE %s" for _ in valid_tokens]
+                        ["question_summary ILIKE %s" for _ in valid_tokens]
                     )
                     params = [f"%{t}%" for t in valid_tokens]
                     cursor.execute(
