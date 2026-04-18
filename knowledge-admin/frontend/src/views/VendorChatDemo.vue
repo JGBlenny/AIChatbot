@@ -81,6 +81,8 @@
       <textarea
         v-model="inputMessage"
         @keydown.enter.prevent="handleEnter"
+        @compositionstart="isComposing = true"
+        @compositionend="handleCompositionEnd"
         placeholder="輸入訊息..."
         class="chat-input"
         rows="1"
@@ -120,6 +122,8 @@ export default {
       messages: [],
       inputMessage: '',
       isLoading: false,
+      isComposing: false,
+      pendingSend: false,
       error: null,
       messageIdCounter: 1,
       currentStreamingMessage: null,  // 正在流式輸出的訊息
@@ -376,13 +380,20 @@ export default {
     },
 
     handleEnter(event) {
-      // 輸入法組字中（注音、拼音等）不觸發送出
-      if (event.isComposing || event.keyCode === 229) return;
-      if (!event.shiftKey) {
-        // Enter 不按 Shift = 發送
-        this.sendMessage();
-      } else {
-        // Shift + Enter = 換行（預設行為）
+      if (event.shiftKey) return; // Shift + Enter = 換行
+      if (this.isComposing) {
+        // 輸入法組字中，標記待送出，等 compositionend 後自動送
+        this.pendingSend = true;
+        return;
+      }
+      this.sendMessage();
+    },
+    handleCompositionEnd() {
+      this.isComposing = false;
+      // 如果組字期間按過 Enter，現在文字已確認，立即送出
+      if (this.pendingSend) {
+        this.pendingSend = false;
+        this.$nextTick(() => this.sendMessage());
       }
     },
 
