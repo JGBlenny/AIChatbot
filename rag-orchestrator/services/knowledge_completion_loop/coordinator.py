@@ -1370,6 +1370,23 @@ class LoopCoordinator:
             print(f"   - JGB 平台操作: {summary.get('jgb_system_count', 0)} 題（不生成靜態知識）")
             print(f"   → 需要生成知識: {summary.get('should_generate_count', 0)}/{len(gaps)} 題")
 
+            # ============================================
+            # 僅回測模式：跳過知識生成
+            # ============================================
+            if self.config.backtest_only:
+                print(f"\n⏭️  僅回測模式（backtest_only=True），跳過知識生成")
+                await self._update_pass_rate(backtest_result["pass_rate"])
+                await self._update_loop_status(LoopStatus.RUNNING)
+                return {
+                    "iteration": next_iteration,
+                    "status": LoopStatus.RUNNING.value,
+                    "backtest_result": backtest_result,
+                    "gap_analysis": gap_stats,
+                    "classification_result": summary,
+                    "generated_knowledge": {"total_generated": 0, "skipped": True, "reason": "backtest_only"},
+                    "next_action": "check_completion"
+                }
+
             # 使用聚類功能合併相似問題，減少碎片化 SOP
             filtered_gaps = self.gap_classifier.get_clusters_for_generation(gaps, classification_result)
 

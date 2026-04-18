@@ -40,6 +40,7 @@ class LoopConfig(BaseModel):
     difficulty_distribution: Dict = Field(default_factory=dict, description="難度分布")
     filters: Dict = Field(default_factory=dict, description="篩選條件")
     backtest_config: Dict = Field(default_factory=dict, description="回測參數配置")
+    backtest_only: bool = Field(False, description="僅回測不生成知識")
 
     @validator('action_type_mode')
     def validate_mode(cls, v):

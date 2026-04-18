@@ -369,6 +369,15 @@
               </div>
             </div>
 
+            <!-- 僅回測模式 -->
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="formData.backtest_only" />
+                僅回測（不生成知識）
+              </label>
+              <span class="form-hint">勾選後只執行回測和缺口分析，不會自動生成 SOP 或知識</span>
+            </div>
+
             <!-- 預算上限（可選） -->
             <div class="form-group">
               <label for="budget-limit">預算上限（USD，可選）</label>
@@ -521,6 +530,7 @@ export default {
         batch_size: 50,
         target_pass_rate: 0.85,
         budget_limit_usd: null,
+        backtest_only: false,
         scenario_filters: {}
       },
       validationErrors: {},
@@ -723,6 +733,7 @@ export default {
         batch_size: 50,
         target_pass_rate: 0.85,
         budget_limit_usd: null,
+        backtest_only: false,
         scenario_filters: {}
       };
       this.validationErrors = {};
@@ -781,6 +792,7 @@ export default {
           vendor_id: parseInt(this.formData.vendor_id),
           batch_size: parseInt(this.formData.batch_size),
           target_pass_rate: parseFloat(this.formData.target_pass_rate),
+          backtest_only: this.formData.backtest_only,
           scenario_filters: this.formData.scenario_filters || {}
         };
 
@@ -1670,6 +1682,23 @@ export default {
   font-weight: 600;
   color: #333;
   font-size: 14px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: #888;
 }
 
 .required {

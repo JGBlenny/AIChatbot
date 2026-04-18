@@ -89,6 +89,7 @@ class LoopStartRequest(BaseModel):
     target_pass_rate: float = Field(0.85, description="目標通過率", ge=0.0, le=1.0)
     scenario_filters: Optional[Dict] = Field(None, description="測試情境篩選條件")
     budget_limit_usd: Optional[float] = Field(None, description="成本預算上限（USD）", ge=0)
+    backtest_only: bool = Field(False, description="僅回測不生成知識")
 
     class Config:
         json_schema_extra = {
@@ -230,7 +231,8 @@ async def start_loop(request: LoopStartRequest, req: Request):
             selection_strategy=selection_result["selection_strategy"],
             difficulty_distribution=selection_result["difficulty_distribution"],
             budget_limit_usd=request.budget_limit_usd,
-            filters=request.scenario_filters or {}  # 確保不傳遞 None
+            filters=request.scenario_filters or {},  # 確保不傳遞 None
+            backtest_only=request.backtest_only
         )
 
         # 6. 啟動迴圈（使用 to_thread 包裝同步 DB 操作的 async 方法）
