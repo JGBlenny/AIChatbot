@@ -35,7 +35,7 @@
   - _Requirements: 1.1, 1.2, 5.1, 5.2_
   - _Boundary: PipelineHealthService_
 
-- [ ] 1.2 PipelineHealthService — 聚合與整體狀態計算
+- [x] 1.2 PipelineHealthService — 聚合與整體狀態計算
   - 實作 `check_all_components()` 方法：用 `asyncio.gather` 並行執行所有 checker
   - 每個 checker 用 `asyncio.wait_for(timeout=5)` 包裹，逾時標記 unhealthy 並附錯誤訊息「檢查逾時（5 秒）」
   - 方法回傳 PipelineHealthResponse 結構：overall_status, healthy_count, total_count, components, checked_at

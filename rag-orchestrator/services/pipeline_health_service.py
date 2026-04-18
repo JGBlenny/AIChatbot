@@ -6,6 +6,7 @@ import os
 import time
 import asyncio
 import logging
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 
 import httpx
@@ -66,12 +67,17 @@ class PipelineHealthService:
     # 聚合方法
     # ------------------------------------------------------------------
 
-    async def check_all_components(self) -> List[Dict[str, Any]]:
+    async def check_all_components(self) -> Dict[str, Any]:
         """
-        並行檢查所有元件，每個 checker 5 秒 timeout。
+        並行檢查所有元件，每個 checker 5 秒 timeout，整體 15 秒內完成。
 
         Returns:
-            ComponentCheckResult 列表
+            PipelineHealthResponse dict，包含：
+            - overall_status: "healthy" / "degraded" / "unhealthy"
+            - healthy_count: 正常元件數
+            - total_count: 總元件數
+            - components: ComponentCheckResult 列表
+            - checked_at: ISO 8601 時間戳
         """
         checkers = [
             self._check_db,
@@ -83,10 +89,6 @@ class PipelineHealthService:
             self._check_keyword_search,
         ]
 
-        tasks = [asyncio.wait_for(checker(), timeout=5.0) for checker in checkers]
-        raw_results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        results: List[Dict[str, Any]] = []
         checker_names = [
             "PostgreSQL", "Redis", "Embedding API",
             "Reranker", "LLM API", "Vector Search", "Keyword Search",
@@ -96,24 +98,63 @@ class PipelineHealthService:
             False, True, False, False,
         ]
 
+        tasks = [asyncio.wait_for(checker(), timeout=5.0) for checker in checkers]
+        raw_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        components: List[Dict[str, Any]] = []
+
         for i, raw in enumerate(raw_results):
             if isinstance(raw, Exception):
-                # Timeout 或其他未捕獲例外
                 name = checker_names[i]
                 is_core = checker_is_core[i]
-                results.append({
+                if isinstance(raw, asyncio.TimeoutError):
+                    error_msg = "檢查逾時（5 秒）"
+                else:
+                    error_msg = str(raw)
+                components.append({
                     "name": name,
                     "status": "unhealthy",
                     "latency_ms": 5000.0,
                     "version": None,
-                    "error": f"Checker timeout or error: {raw}",
+                    "error": error_msg,
                     "is_core": is_core,
                     "degradation_impact": None if is_core else DEGRADATION_IMPACTS.get(name),
                 })
             else:
-                results.append(raw)
+                components.append(raw)
 
-        return results
+        # 計算整體狀態
+        healthy_count = sum(
+            1 for c in components if c["status"] == "healthy"
+        )
+        total_count = len(components)
+
+        core_all_healthy = all(
+            c["status"] == "healthy"
+            for c in components
+            if c["is_core"]
+        )
+        any_core_unhealthy = any(
+            c["status"] != "healthy"
+            for c in components
+            if c["is_core"]
+        )
+
+        if healthy_count == total_count:
+            overall_status = "healthy"
+        elif any_core_unhealthy:
+            overall_status = "unhealthy"
+        else:
+            # 核心全部正常，非核心有異常
+            overall_status = "degraded"
+
+        return {
+            "overall_status": overall_status,
+            "healthy_count": healthy_count,
+            "total_count": total_count,
+            "components": components,
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+        }
 
     # ------------------------------------------------------------------
     # 核心元件 Checkers
