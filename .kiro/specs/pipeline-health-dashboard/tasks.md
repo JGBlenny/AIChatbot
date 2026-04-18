@@ -95,7 +95,7 @@
 
 ## 4. Integration: 路由與導航整合
 
-- [ ] 4.1 前端路由與導航
+- [x] 4.1 前端路由與導航
   - `router.js` 新增 `/pipeline-health` 路由，meta 設定 `requiresAuth: true`
   - `App.vue` 系統設定層導航加入「系統健康」項目，位於快取管理之後
   - 導航項目僅對具有系統設定權限的管理者顯示

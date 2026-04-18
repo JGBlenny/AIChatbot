@@ -147,6 +147,10 @@
             <span class="nav-icon">⚡</span>
             <span class="nav-text">緩存管理</span>
           </router-link>
+          <router-link to="/pipeline-health" class="nav-item">
+            <span class="nav-icon">🩺</span>
+            <span class="nav-text">系統健康</span>
+          </router-link>
           <router-link to="/admin-management" class="nav-item">
             <span class="nav-icon">👥</span>
             <span class="nav-text">用戶管理</span>
@@ -248,7 +252,8 @@ export default {
         '/forms': '表單管理',
         '/lookup-forms': 'Lookup 表單管理',
         '/form-submissions': '表單提交記錄',
-        '/api-endpoints': 'API 端點管理'
+        '/api-endpoints': 'API 端點管理',
+        '/pipeline-health': '系統健康儀表板'
       }
     };
   },

@@ -44,6 +44,8 @@ import VendorFormSubmissionsView from './views/VendorFormSubmissionsView.vue';
 import LookupFormManagement from './views/LookupFormManagement.vue';
 // API Endpoints Management
 import ApiEndpointsView from './views/ApiEndpointsView.vue';
+// Pipeline Health Dashboard
+import PipelineHealthView from './views/PipelineHealthView.vue';
 
 const routes = [
   {
@@ -254,6 +256,15 @@ const routes = [
     path: '/api-endpoints',
     name: 'ApiEndpoints',
     component: ApiEndpointsView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  // Pipeline Health Dashboard
+  {
+    path: '/pipeline-health',
+    name: 'PipelineHealth',
+    component: PipelineHealthView,
     meta: {
       requiresAuth: true
     }
