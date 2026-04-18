@@ -27,7 +27,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
   - _Boundary: ModuleMapper_
 
-- [ ] 2.2 QuestionGenerator — 各角色操作問題清單生成
+- [x] 2.2 QuestionGenerator — 各角色操作問題清單生成
   - 讀取 jgb_module_inventory.json，依模組×角色組合用 LLM（gpt-4o-mini）生成操作問題
   - 每個模組至少生成三類問題：基本操作、常見疑問、異常處理
   - 每個問題標註 topic_id（{模組縮寫}_{流水號}）、角色、入口、優先級（p0/p1/p2）、query_type（static/dynamic）
