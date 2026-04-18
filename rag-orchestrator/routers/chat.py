@@ -2262,6 +2262,7 @@ async def _handle_api_call(
     # 準備 session 數據
     session_data = {
         'user_id': request.user_id,
+        'role_id': request.role_id,
         'vendor_id': request.vendor_id,
         'session_id': request.session_id
     }
@@ -2483,6 +2484,9 @@ class VendorChatRequest(BaseModel):
         'b2c',
         description="業務模式：b2c(終端用戶), b2b(業者員工)"
     )
+
+    # 🆕 JGB 系統身份編號（API 資料權限過濾用，與 target_user 知識過濾用途分離）
+    role_id: Optional[str] = Field(None, description="JGB 系統角色編號（資料權限過濾用）")
 
     # ⚠️ 舊欄位（向後兼容，已廢棄，將於 2026-03 移除）
     user_role: Optional[str] = Field(

@@ -9,7 +9,7 @@
   - 完成後 `from scripts.kb_system_coverage import Module, SystemQuestion, CoverageReport` 可正常匯入
   - _Requirements: 1.1, 1.2, 2.4, 3.4_
 
-- [ ] 1.2 chat.py 新增 role_id 支援
+- [x] 1.2 chat.py 新增 role_id 支援
   - VendorChatRequest model 新增 `role_id: Optional[str] = None` 欄位
   - `_handle_api_call` 方法中 session_data 新增 `role_id: request.role_id`
   - 現有 target_user 欄位維持不變（KB 過濾用途與 role_id 資料權限用途分離）
