@@ -920,6 +920,31 @@ class AsyncBacktestFramework:
                 results = [r for r in results if r is not None]
 
 
+        # 重試 timeout / 無回答的題目
+        failed_no_answer = [
+            (i, r) for i, r in enumerate(results)
+            if r and (not r.get('system_answer') or r.get('error') == 'timeout')
+        ]
+        if failed_no_answer:
+            print(f"\n🔄 重試 {len(failed_no_answer)} 筆 timeout/無回答的題目...")
+            for orig_idx, failed_result in failed_no_answer:
+                scenario_id = failed_result.get('scenario_id')
+                question = failed_result.get('test_question', '')
+                # 找到原始 scenario
+                matching = [s for s in test_scenarios if s.get('id') == scenario_id]
+                if not matching:
+                    continue
+                scenario = matching[0]
+                retry_result = await self._test_single_scenario_async(
+                    scenario, failed_result.get('test_id', orig_idx),
+                    session=None, timeout=timeout, retry_times=1, delay=3.0
+                )
+                if retry_result and retry_result.get('system_answer'):
+                    print(f"   ✅ 重試成功: {question[:30]}")
+                    results[orig_idx] = retry_result
+                else:
+                    print(f"   ❌ 重試仍失敗: {question[:30]}")
+
         # 計算性能指標
         total_duration = time.time() - start_time
         if self.enable_metrics:
