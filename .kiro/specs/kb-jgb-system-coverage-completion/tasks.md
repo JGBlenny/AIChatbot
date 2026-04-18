@@ -113,7 +113,7 @@
   - _Depends: 4.1, 3.1, 3.2_
   - _Boundary: ApiKBBuilder_
 
-- [ ] 5.3 審核 pipeline 相容性驗證
+- [x] 5.3 審核 pipeline 相容性驗證
   - 驗證 ai_generated_knowledge_candidates 表可正確接收系統知識的 metadata（source module、topic_id、generation time 寫入 generation_metadata JSONB）
   - 驗證 approve_ai_knowledge_candidate() SQL function 對 scope='global' + category=模組名稱 的 KB 條目可正常同步到 knowledge_base
   - 驗證同步時自動填入 source_type='ai_generated' 與 generation_metadata
