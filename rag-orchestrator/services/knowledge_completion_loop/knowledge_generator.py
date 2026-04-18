@@ -8,7 +8,7 @@ import asyncio
 import json
 import os
 import re
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 import psycopg2.pool
 import psycopg2.extras
 from openai import OpenAI, AsyncOpenAI
@@ -20,6 +20,9 @@ _FABRICATED_PHONE_RE = re.compile(r'0[0-9]{1,3}[-\s]?[0-9]{3,4}[-\s]?[0-9]{3,4}'
 _FABRICATED_EMAIL_RE = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 _FABRICATED_URL_RE = re.compile(r'https?://[^\s]+')
 _BANNED_TERMS = ['專屬管家', '客服專線', '客服電話']
+
+# 模板變數佔位符偵測（scope=vendor 時使用）
+_TEMPLATE_VAR_RE = re.compile(r'\{\{(\w+)\}\}')
 
 
 class KnowledgeGeneratorClient:
@@ -446,6 +449,14 @@ class KnowledgeGeneratorClient:
             if gap["question"] not in keywords:
                 keywords.append(gap["question"])
 
+            # 從 gap metadata 讀取 category 與 scope（向後相容：預設 None / "global"）
+            category = self._resolve_category(gap)
+            scope = gap.get("scope", "global")
+
+            # scope=vendor 時，標記為模板並提取佔位符變數
+            is_template = (scope == "vendor")
+            template_vars = self._extract_template_vars(answer_text) if is_template else None
+
             return {
                 "gap_id": gap["gap_id"],
                 "question": topic,
@@ -454,7 +465,11 @@ class KnowledgeGeneratorClient:
                 "keywords": keywords,
                 "confidence_explanation": result.get("confidence_explanation", ""),
                 "needs_verification": result.get("needs_verification", False),
-                "action_type": action_type
+                "action_type": action_type,
+                "category": category,
+                "scope": scope,
+                "is_template": is_template,
+                "template_vars": template_vars,
             }
 
         except RateLimitError as e:
@@ -474,6 +489,69 @@ class KnowledgeGeneratorClient:
             print(f"❌ JSON 解析失敗: {e}")
             print(f"   原始回應: {content}")
             raise
+
+    @staticmethod
+    def _resolve_category(gap: Dict) -> Optional[str]:
+        """從 gap metadata 取得 category（向後相容）
+
+        優先使用 gap["category"]，其次由 dimension 推導：
+        - "general" → "general"
+        - "industry" → "industry"
+        - 其他 / 缺失 → None
+        """
+        if gap.get("category"):
+            return gap["category"]
+        dimension = gap.get("dimension")
+        if dimension in ("general", "industry"):
+            return dimension
+        return None
+
+    @staticmethod
+    def _extract_template_vars(text: str) -> Optional[List[Dict[str, Any]]]:
+        """掃描文字中的 {{variable}} 佔位符，組裝 template_vars
+
+        Returns:
+            佔位符列表，如 [{"name": "company_phone", "required": True}]；
+            找不到任何佔位符時回傳 None。
+        """
+        matches = _TEMPLATE_VAR_RE.findall(text)
+        if not matches:
+            return None
+        # 去重但保留首次出現順序
+        seen: set = set()
+        template_vars: List[Dict[str, Any]] = []
+        for m in matches:
+            if m not in seen:
+                seen.add(m)
+                template_vars.append({"name": m, "required": True})
+        return template_vars
+
+    @staticmethod
+    def _build_category_context(category: Optional[str], scope: str) -> str:
+        """根據 category 與 scope 產生提示前綴，引導 LLM 生成正確風格的回答
+
+        Returns:
+            提示前綴字串；無需特殊引導時回傳空字串。
+        """
+        if scope == "vendor":
+            return (
+                "【知識類型：業者專屬知識】\n"
+                "這是業者專屬的知識，回答中需要業者才能提供的具體資訊（如電話、地址、收費標準）"
+                "請使用 {{變數名稱}} 作為佔位符，例如 {{company_phone}}、{{service_email}}。\n"
+            )
+        if category == "industry":
+            return (
+                "【知識類型：產業知識】\n"
+                "這是包租代管產業的專業知識，請從產業實務角度回答，"
+                "說明業界慣例與規則，避免過於泛泛的租屋常識。\n"
+            )
+        if category == "general":
+            return (
+                "【知識類型：一般租屋知識】\n"
+                "這是一般性租屋知識，請根據台灣租賃相關法規與常識回答，"
+                "確保內容穩定正確、適用於所有租客。\n"
+            )
+        return ""
 
     def _build_prompt(
         self,
@@ -523,6 +601,13 @@ class KnowledgeGeneratorClient:
             existing_knowledge=knowledge_text,
             available_api_forms_section=available_api_forms_section
         )
+
+        # 注入 category context，讓 LLM 區分一般知識 vs 產業知識
+        category = self._resolve_category(gap)
+        scope = gap.get("scope", "global")
+        category_context = self._build_category_context(category, scope)
+        if category_context:
+            prompt = category_context + "\n" + prompt
 
         return prompt
 
@@ -849,15 +934,22 @@ class KnowledgeGeneratorClient:
                             continue
                         similar_knowledge = duplicate_check
 
+                    # 組裝 category / scope / is_template / template_vars
+                    kb_category = knowledge.get("category")
+                    kb_scope = knowledge.get("scope", "global")
+                    kb_is_template = knowledge.get("is_template", False)
+                    kb_template_vars = knowledge.get("template_vars")
+
                     # 插入到 loop_generated_knowledge 表
                     cur.execute("""
                         INSERT INTO loop_generated_knowledge (
                             loop_id, iteration,
                             question, answer, keywords,
                             action_type, similar_knowledge, status,
+                            scope, category, is_template, template_vars,
                             created_at
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
                         RETURNING id, question, answer, action_type, status
                     """, (
                         loop_id,
@@ -867,7 +959,11 @@ class KnowledgeGeneratorClient:
                         knowledge.get("keywords", []),
                         knowledge.get("action_type", "direct_answer"),
                         json.dumps(similar_knowledge) if similar_knowledge else None,  # 重複檢測結果
-                        "pending"  # 等待審核
+                        "pending",  # 等待審核
+                        kb_scope,
+                        kb_category,
+                        kb_is_template,
+                        json.dumps(kb_template_vars, ensure_ascii=False) if kb_template_vars else None,
                     ))
 
                     result = cur.fetchone()
@@ -913,14 +1009,25 @@ class KnowledgeGeneratorClient:
             else:
                 action_type = "direct_answer"
 
+            # 從 gap metadata 讀取 category 與 scope（向後相容）
+            category = self._resolve_category(gap)
+            scope = gap.get("scope", "global")
+            is_template = (scope == "vendor")
+            answer_text = f"這是針對「{gap['question']}」生成的答案內容（Stub 模式）"
+            template_vars = self._extract_template_vars(answer_text) if is_template else None
+
             knowledge = {
                 "gap_id": gap_id,
                 "question": gap["question"],
-                "answer": f"這是針對「{gap['question']}」生成的答案內容（Stub 模式）",
+                "answer": answer_text,
                 "keywords": ["關鍵字1", "關鍵字2"],
                 "action_type": action_type,
                 "confidence_explanation": "Stub 模式生成",
-                "needs_verification": True
+                "needs_verification": True,
+                "category": category,
+                "scope": scope,
+                "is_template": is_template,
+                "template_vars": template_vars,
             }
             generated.append(knowledge)
 
