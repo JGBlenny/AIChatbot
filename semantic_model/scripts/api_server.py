@@ -170,10 +170,14 @@ async def rerank(request: RerankRequest):
         raise HTTPException(status_code=503, detail="Model not loaded")
 
     # 準備模型輸入
+    # rag-orchestrator 傳 answer + question_summary，也相容舊的 content 欄位
     pairs = []
     for candidate in request.candidates:
-        content = candidate.get("content", "")
-        pairs.append([request.query, content])
+        content = candidate.get("answer") or candidate.get("content", "")
+        question = candidate.get("question_summary", "")
+        # 用 question + answer 組合給模型評分，更完整的語意
+        text = f"{question} {content}".strip() if question else content
+        pairs.append([request.query, text])
 
     # 計算分數
     if pairs:
