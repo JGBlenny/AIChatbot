@@ -67,7 +67,7 @@
   - _Depends: 3.2_
   - _Boundary: api_call_handler_
 
-- [ ] 3.4 JGB API Mock 模式測試
+- [x] 3.4 JGB API Mock 模式測試
   - 單元測試 JGBSystemAPI 每個方法的 mock 回傳格式正確性（7 端點 × 正常/異常情境）
   - 測試 role_id/user_id 為空時回傳降級回答，不嘗試發送 HTTP 請求
   - 測試 api_call_handler 路由：傳入 jgb_bills 等端點名稱可正確呼叫 JGBSystemAPI 對應方法
