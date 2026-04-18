@@ -44,7 +44,7 @@
   - _Depends: 1.1_
   - _Requirements: 1.3, 1.4, 1.5, 5.3_
 
-- [ ] 1.3 PipelineHealthService — 端到端測試
+- [x] 1.3 PipelineHealthService — 端到端測試
   - 實作 `run_e2e_test()` 方法：使用固定測試查詢（如「漏水怎麼處理」，vendor_id=2）
   - 依序執行 4 個 stage：embedding 生成 → vector search → keyword search → reranker
   - 每個 stage 回傳 E2EStageResult（stage, status, latency_ms, error, detail）
