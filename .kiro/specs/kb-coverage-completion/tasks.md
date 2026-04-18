@@ -9,7 +9,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
 - [ ] 2. 三面向知識清單盤點
-- [ ] 2.1 清單生成框架與資料結構
+- [x] 2.1 清單生成框架與資料結構
   - 建立 ChecklistItem 資料結構（id, dimension, category, sub_topic, question, target_user, business_types, suggest_api）
   - 實作 JSON 輸出框架：三份檔案，含 `"status": "draft"` 欄位
   - 業者專屬知識產出通用欄位範本（is_template=true 的結構定義）
