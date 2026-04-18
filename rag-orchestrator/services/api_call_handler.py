@@ -21,6 +21,7 @@ from difflib import get_close_matches, SequenceMatcher
 # 導入具體的 API 服務（根據需要擴展）
 from .billing_api import BillingAPIService
 from .universal_api_handler import UniversalAPICallHandler
+from .jgb_system_api import JGBSystemAPI
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class APICallHandler:
         """
         self.db_pool = db_pool
         self.billing_api = BillingAPIService()
+        self.jgb_api = JGBSystemAPI()
 
         # 初始化通用 API 處理器（用於動態配置的 API）
         self.universal_handler = UniversalAPICallHandler(db_pool) if db_pool else None
@@ -50,6 +52,14 @@ class APICallHandler:
             'resend_invoice': self.billing_api.resend_invoice,
             'maintenance_request': self.billing_api.submit_maintenance_request,
             'lookup': self._handle_lookup_api,  # 內部 lookup API 處理器
+            # JGB 系統 API 端點
+            'jgb_bills': self.jgb_api.get_bills,
+            'jgb_invoices': self.jgb_api.get_invoices,
+            'jgb_contracts': self.jgb_api.get_contracts,
+            'jgb_contract_checkin': self.jgb_api.get_contract_checkin_eligibility,
+            'jgb_payments': self.jgb_api.get_payments,
+            'jgb_repairs': self.jgb_api.get_repairs,
+            'jgb_tenant_summary': self.jgb_api.get_tenant_summary,
         }
 
     async def execute_api_call(

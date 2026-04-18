@@ -59,7 +59,7 @@
   - _Depends: 3.1_
   - _Boundary: JGBSystemAPI_
 
-- [ ] 3.3 api_call_handler registry 擴充
+- [x] 3.3 api_call_handler registry 擴充
   - 在 api_call_handler.py 的 `__init__` 中匯入 JGBSystemAPI 並註冊 7 個端點到 api_registry
   - 註冊 key：jgb_bills、jgb_invoices、jgb_contracts、jgb_contract_checkin、jgb_payments、jgb_repairs、jgb_tenant_summary
   - 完成後 api_call_handler.execute_api_call 可路由到 JGBSystemAPI 的對應方法
