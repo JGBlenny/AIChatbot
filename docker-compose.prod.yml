@@ -22,6 +22,7 @@ services:
     image: pgvector/pgvector:pg16
     container_name: aichatbot-postgres
     environment:
+      TZ: Asia/Taipei
       POSTGRES_USER: aichatbot
       POSTGRES_PASSWORD: aichatbot_password
       POSTGRES_DB: aichatbot_admin
@@ -57,6 +58,7 @@ services:
     build: ./embedding-service
     container_name: aichatbot-embedding-api
     environment:
+      TZ: Asia/Taipei
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -71,6 +73,7 @@ services:
     build: ./knowledge-admin/backend
     container_name: aichatbot-knowledge-admin-api
     environment:
+      TZ: Asia/Taipei
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: aichatbot_admin
@@ -117,6 +120,7 @@ services:
     build: ./rag-orchestrator
     container_name: aichatbot-rag-orchestrator
     environment:
+      TZ: Asia/Taipei
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_MODEL: gpt-3.5-turbo
       # 意圖分類器配置
@@ -221,6 +225,7 @@ services:
     ports:
       - "8002:8000"
     environment:
+      TZ: Asia/Taipei
       MODEL_NAME: BAAI/bge-reranker-base
       MAX_LENGTH: 512
       BATCH_SIZE: 32

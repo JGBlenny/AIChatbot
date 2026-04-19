@@ -2,6 +2,7 @@
 答案格式化服務
 提供快速路徑和模板格式化，避免不必要的 LLM 調用
 """
+import re
 from typing import List, Dict
 
 
@@ -179,6 +180,33 @@ class AnswerFormatter:
         保留原始 Markdown 格式，只添加來源標註
         """
         return f"{content}\n\n---\n📚 **資料來源**：{result.get('title', '知識庫')}"
+
+    @staticmethod
+    def normalize_format(text: str) -> str:
+        """
+        統一所有回應的格式（適用於所有路徑：SOP、KB、合成答案）
+
+        規則：
+        1. 編號列表（1. 2. 3.）前確保有換行
+        2. 段落間統一一個空行
+        3. 移除尾部多餘空行
+        """
+        if not text:
+            return text
+
+        # 1. 在行內編號前插入換行（「。1. 」「；2. 」等）
+        #    冒號/逗號後的第一個編號：前面加空行（引言與列表之間）
+        #    句號等後的後續編號：只換行不加空行（列表項之間）
+        text = re.sub(r'([，,：:])\s*(1)\.\s', r'\1\n\n\2. ', text)
+        text = re.sub(r'([。！？\?!；;，,])\s*(\d+)\.\s', r'\1\n\2. ', text)
+
+        # 2. 統一多個連續空行為一個空行
+        text = re.sub(r'\n{3,}', '\n\n', text)
+
+        # 3. 移除頭尾空白
+        text = text.strip()
+
+        return text
 
     @staticmethod
     def is_content_complete(result: Dict) -> bool:

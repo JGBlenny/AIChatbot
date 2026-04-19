@@ -219,7 +219,11 @@ def _clean_answer_with_tracking(answer: str, vendor_id: int, resolver) -> tuple:
     # 注意：@vendorA 可能是真實的 LINE ID，不應該移除
     # cleaned = re.sub(r'@vendor[A-Za-z0-9_]*', '', cleaned)  # ← 已停用
 
-    # 3. 如果仍有未替換的模板變數，記錄警告
+    # 3. 統一格式化（所有路徑共用）
+    from services.answer_formatter import AnswerFormatter
+    cleaned = AnswerFormatter.normalize_format(cleaned)
+
+    # 4. 如果仍有未替換的模板變數，記錄警告
     if '{{' in cleaned:
         remaining_vars = re.findall(r'\{\{(\w+)\}\}', cleaned)
         print(f"⚠️  警告：答案中仍有未替換的模板變數: {remaining_vars}")

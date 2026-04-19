@@ -776,6 +776,9 @@ async def get_iteration_backtest_results(
                     "accuracy": float(r["accuracy"]) if r["accuracy"] else None,
                     "source_count": r["source_count"] or 0,
                     "tested_at": r["tested_at"].isoformat() if r["tested_at"] else None,
+                    "failure_reason": evaluation.get("failure_reason") if isinstance(evaluation, dict) else None,
+                    "is_relevant": evaluation.get("is_relevant") if isinstance(evaluation, dict) else None,
+                    "relevance_reason": evaluation.get("relevance_reason") if isinstance(evaluation, dict) else None,
                     "debug_info": response_metadata if response_metadata else None  # 處理流程詳情
                 })
 

@@ -704,14 +704,25 @@ class AsyncBacktestFramework:
         result_count = confidence_eval['result_count']
         keyword_match_rate = confidence_eval['keyword_match_rate']
 
-        # === 第 3 層：綜合判定（僅基於 confidence_score）===
-        # 對齊生產環境：移除 semantic_overlap 攔截，因為生產環境沒有此機制
+        # === 第 2.5 層：LLM 語義正確性判斷（答非所問攔截）===
+        # 用 LLM 判斷回答是否真的回答了問題，攔截高分但答非所問的情況
+        relevance_result = self._evaluate_answer_relevance(question, answer)
+        is_relevant = relevance_result.get('is_relevant', True)
+        relevance_reason = relevance_result.get('reason', '')
+
+        # === 第 3 層：綜合判定 ===
         optimization_tips = []
         passed = False
         failure_reason = None
 
-        # 簡化後的判定邏輯（僅基於 confidence_score）
-        if confidence_score >= 0.85:
+        # 3a. LLM 判定答非所問 → 直接失敗
+        if not is_relevant:
+            passed = False
+            failure_reason = f'答非所問：{relevance_reason}'
+            optimization_tips.append(f'⚠️ LLM 判定答非所問（confidence={confidence_score:.3f} 但內容不匹配）')
+            optimization_tips.append(f'原因：{relevance_reason}')
+        # 3b. 信心度判定
+        elif confidence_score >= 0.85:
             passed = True
             optimization_tips.append(f'高信心度 ({confidence_score:.3f})')
         elif confidence_score >= 0.70:
@@ -734,9 +745,45 @@ class AsyncBacktestFramework:
             'max_similarity': max_similarity,
             'result_count': result_count,
             'keyword_match_rate': keyword_match_rate,
+            'is_relevant': is_relevant,
+            'relevance_reason': relevance_reason,
             'failure_reason': failure_reason if not passed else None,
             'optimization_tips': optimization_tips
         }
+
+    def _evaluate_answer_relevance(self, question: str, answer: str) -> Dict:
+        """
+        LLM 語義正確性判斷：回答是否真的回答了問題
+
+        用輕量 LLM 呼叫判斷答案與問題的相關性，
+        攔截「高檢索分數但答非所問」的情況。
+        """
+        if os.getenv('BACKTEST_RELEVANCE_CHECK', 'true').lower() != 'true':
+            return {'is_relevant': True, 'reason': ''}
+
+        try:
+            response = self.openai_client.chat.completions.create(
+                model=os.getenv('BACKTEST_RELEVANCE_MODEL', 'gpt-4o-mini'),
+                temperature=0,
+                max_tokens=100,
+                messages=[
+                    {"role": "system", "content": "判斷回答是否有回答到問題。只回覆 JSON：{\"relevant\": true/false, \"reason\": \"原因\"}"},
+                    {"role": "user", "content": f"問題：{question}\n回答：{answer[:300]}"}
+                ]
+            )
+
+            text = response.choices[0].message.content.strip()
+            if text.startswith('```'):
+                text = text.split('\n', 1)[1].rsplit('```', 1)[0].strip()
+            result = json.loads(text)
+
+            return {
+                'is_relevant': result.get('relevant', True),
+                'reason': result.get('reason', '')
+            }
+        except Exception as e:
+            print(f"⚠️ LLM 語義判斷失敗，跳過: {e}")
+            return {'is_relevant': True, 'reason': f'判斷失敗: {e}'}
 
     def _build_result_dict(
         self,

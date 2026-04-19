@@ -115,38 +115,6 @@
       </div>
     </div>
 
-    <!-- 品質評估統計卡片 -->
-    <div v-if="statistics && statistics.quality" class="quality-stats-section">
-      <h3 class="section-title">🎯 LLM 品質評估統計 ({{ statistics.quality.count }} 個測試)</h3>
-      <div class="stats-cards quality-cards">
-        <div class="stat-card quality">
-          <div class="stat-label">相關性</div>
-          <div class="stat-value">{{ statistics.quality.avg_relevance.toFixed(2) }}</div>
-          <div class="stat-rating">{{ getQualityRating(statistics.quality.avg_relevance) }}</div>
-        </div>
-        <div class="stat-card quality">
-          <div class="stat-label">完整性</div>
-          <div class="stat-value">{{ statistics.quality.avg_completeness.toFixed(2) }}</div>
-          <div class="stat-rating">{{ getQualityRating(statistics.quality.avg_completeness) }}</div>
-        </div>
-        <div class="stat-card quality">
-          <div class="stat-label">準確性</div>
-          <div class="stat-value">{{ statistics.quality.avg_accuracy.toFixed(2) }}</div>
-          <div class="stat-rating">{{ getQualityRating(statistics.quality.avg_accuracy) }}</div>
-        </div>
-        <div class="stat-card quality">
-          <div class="stat-label">意圖匹配</div>
-          <div class="stat-value">{{ statistics.quality.avg_intent_match.toFixed(2) }}</div>
-          <div class="stat-rating">{{ getQualityRating(statistics.quality.avg_intent_match) }}</div>
-        </div>
-        <div class="stat-card quality">
-          <div class="stat-label">綜合評分</div>
-          <div class="stat-value">{{ statistics.quality.avg_quality_overall.toFixed(2) }}</div>
-          <div class="stat-rating">{{ getQualityRating(statistics.quality.avg_quality_overall) }}</div>
-        </div>
-      </div>
-    </div>
-
     <!-- 工具列 -->
     <div class="toolbar">
       <div class="filter-group">
@@ -199,7 +167,6 @@
             <th style="width: 100px;">信心分數</th>
             <th style="width: 100px;">信心等級</th>
             <th style="width: 80px;">來源數</th>
-            <th style="width: 120px;">品質評分</th>
             <th style="width: 100px;">操作</th>
           </tr>
         </thead>
@@ -216,12 +183,6 @@
             <td>{{ formatConfidenceScore(result.confidence_score) }}</td>
             <td>{{ formatConfidenceLevel(result.confidence_level) }}</td>
             <td>{{ result.source_count || 0 }}</td>
-            <td>
-              <span v-if="result.quality_overall" class="quality-score" :class="getQualityClass(result.quality_overall)">
-                {{ formatFloat(result.quality_overall) }}
-              </span>
-              <span v-else>-</span>
-            </td>
             <td>
               <button @click="showDetail(result)" class="btn-detail">詳情</button>
               <button @click="optimizeKnowledge(result)" class="btn-optimize" title="優化知識">🔧</button>
@@ -293,27 +254,25 @@
             </div>
           </div>
 
-          <div v-if="selectedResult.quality_overall" class="detail-section">
-            <h4>品質評估</h4>
+          <div v-if="selectedResult.is_relevant !== null && selectedResult.is_relevant !== undefined" class="detail-section">
+            <h4>語義判定</h4>
             <div class="detail-row">
-              <span class="detail-label">相關性：</span>
-              <span class="detail-value">{{ formatFloat(selectedResult.relevance) }} / 10.0</span>
+              <span class="detail-label">回答相關性：</span>
+              <span class="detail-value" :style="{ color: selectedResult.is_relevant ? '#27ae60' : '#e74c3c' }">
+                {{ selectedResult.is_relevant ? '✅ 相關' : '❌ 答非所問' }}
+              </span>
             </div>
-            <div class="detail-row">
-              <span class="detail-label">完整性：</span>
-              <span class="detail-value">{{ formatFloat(selectedResult.completeness) }} / 10.0</span>
+            <div v-if="selectedResult.relevance_reason" class="detail-row">
+              <span class="detail-label">判定原因：</span>
+              <span class="detail-value">{{ selectedResult.relevance_reason }}</span>
             </div>
+          </div>
+
+          <div v-if="selectedResult.failure_reason" class="detail-section">
+            <h4>失敗原因</h4>
             <div class="detail-row">
-              <span class="detail-label">準確性：</span>
-              <span class="detail-value">{{ formatFloat(selectedResult.accuracy) }} / 10.0</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">意圖匹配：</span>
-              <span class="detail-value">{{ formatFloat(selectedResult.intent_match) }} / 10.0</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">綜合評分：</span>
-              <span class="detail-value">{{ formatFloat(selectedResult.quality_overall) }} / 10.0</span>
+              <span class="detail-label">原因：</span>
+              <span class="detail-value" style="color: #e74c3c;">{{ selectedResult.failure_reason }}</span>
             </div>
           </div>
 
@@ -708,6 +667,9 @@ export default {
           quality_overall: result.overall_score,
           // 其他欄位
           source_ids: null, // API 目前沒有這個欄位
+          failure_reason: result.failure_reason || null,
+          is_relevant: result.is_relevant,
+          relevance_reason: result.relevance_reason || null,
           // 處理流程詳情
           debug_info: result.debug_info || null
         }));
