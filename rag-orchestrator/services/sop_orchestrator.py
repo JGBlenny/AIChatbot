@@ -195,12 +195,16 @@ class SOPOrchestrator:
         """
         state = sop_context.get('state')
         trigger_mode = sop_context.get('trigger_mode')
-        trigger_keywords = sop_context.get('trigger_keywords', [])
+        trigger_keywords = sop_context.get('trigger_keywords') or []
 
-        # immediate 模式使用確認詞，manual 模式使用觸發關鍵詞
-        if trigger_mode == 'immediate' and not trigger_keywords:
-            # immediate 模式的確認詞列表
-            trigger_keywords = ['確認', '好', '是的', '可以', 'ok', 'yes', '要', '需要', '開始']
+        # 模式兜底：若 context 中沒有觸發關鍵詞，使用預設值
+        if not trigger_keywords:
+            if trigger_mode == 'immediate':
+                # immediate 模式的確認詞列表
+                trigger_keywords = ['確認', '好', '是的', '可以', 'ok', 'yes', '要', '需要', '開始']
+            elif trigger_mode == 'manual':
+                # manual 模式的預設觸發詞（與 _handle_manual_mode 一致）
+                trigger_keywords = ['確認', '需要']
 
         print(f"\n🔑 檢查關鍵詞匹配")
         print(f"   觸發關鍵詞: {trigger_keywords}")

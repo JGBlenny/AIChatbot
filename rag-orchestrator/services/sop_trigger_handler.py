@@ -80,23 +80,24 @@ class SOPTriggerHandler:
         }
 
     def _get_redis_client(self):
-        """建立 Redis 連接（如果 redis 模組可用且 CACHE_ENABLED=true）"""
-        # 檢查是否啟用緩存
-        cache_enabled = os.getenv("CACHE_ENABLED", "true").lower() == "true"
-        if not cache_enabled:
-            print("ℹ️  CACHE_ENABLED=false，SOP context 將使用內存存儲")
-            return None
-
+        """建立 Redis 連接（SOP context 獨立使用 Redis，不受 CACHE_ENABLED 影響）"""
         if redis is None:
-            print("⚠️  Redis 模組未安裝，使用內存存儲（僅限測試）")
+            print("⚠️  Redis 模組未安裝，SOP context 將使用內存存儲（僅限測試）")
             return None
 
-        return redis.Redis(
-            host=os.getenv("REDIS_HOST", "localhost"),
-            port=int(os.getenv("REDIS_PORT", "6379")),
-            db=int(os.getenv("REDIS_DB", "0")),
-            decode_responses=True
-        )
+        try:
+            client = redis.Redis(
+                host=os.getenv("REDIS_HOST", "localhost"),
+                port=int(os.getenv("REDIS_PORT", "6379")),
+                db=int(os.getenv("REDIS_DB", "0")),
+                decode_responses=True
+            )
+            client.ping()
+            print("✅ SOP context 使用 Redis 存儲（獨立於 CACHE_ENABLED）")
+            return client
+        except Exception as e:
+            print(f"⚠️  Redis 連接失敗，SOP context 將使用內存存儲: {e}")
+            return None
 
     def _get_context_key(self, session_id: str) -> str:
         """生成 Redis context key"""
@@ -210,7 +211,7 @@ class SOPTriggerHandler:
         print(f"   ✅ manual 模式：返回排查步驟 + 等待關鍵詞")
 
         # 使用自訂觸發詞（如果有），否則使用預設詞
-        trigger_keywords = sop_item.get('trigger_keywords') or ['是', '要']
+        trigger_keywords = sop_item.get('trigger_keywords') or ['確認', '需要']
         print(f"   🔑 觸發關鍵詞: {trigger_keywords}")
 
         # 儲存 context
@@ -342,7 +343,7 @@ class SOPTriggerHandler:
                 'next_action': sop_item.get('next_action'),
                 'next_form_id': sop_item.get('next_form_id'),
                 'next_api_config': sop_item.get('next_api_config'),
-                'trigger_keywords': sop_item.get('trigger_keywords', []),
+                'trigger_keywords': sop_item.get('trigger_keywords') or [],
                 'immediate_prompt': sop_item.get('immediate_prompt'),
                 'followup_prompt': sop_item.get('followup_prompt'),
                 'state': state,
