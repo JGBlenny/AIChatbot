@@ -81,7 +81,7 @@ class KnowledgeGeneratorClient:
 {{
   "topic": "精簡主題標題（2-6字，例如：繳費紀錄、退租流程、押金退還、租金補助）",
   "answer": "客服回答內容",
-  "keywords": ["搜尋關鍵字1", "關鍵字2", "關鍵字3", "問法變體1", "問法變體2"],
+  "keywords": ["核心關鍵字1", "關鍵字2", "關鍵字3"],
   "confidence_explanation": "答案依據（50字內）",
   "needs_verification": false
 }}
@@ -92,8 +92,9 @@ class KnowledgeGeneratorClient:
 - 「逾期租金會通知嗎？」→ "逾期租金通知"
 - 「我想找房」→ "找房服務"
 
-**keywords 規則**：包含問題的各種問法變體，讓搜尋能命中。
-- topic "繳費紀錄" → keywords: ["繳費紀錄", "繳費記錄", "付款紀錄", "哪裡看帳單", "查帳"]
+**keywords 規則**：填入與主題相關的精準搜尋關鍵字（名詞、術語），用於 keyword boost 加分。不需要問法變體。
+- topic "繳費紀錄" → keywords: ["繳費紀錄", "租金", "帳單"]
+- topic "押金退還" → keywords: ["押金", "保證金", "退還"]
 
 不確定答案正確性時，設 needs_verification = true。只輸出 JSON。
 """
@@ -470,6 +471,8 @@ class KnowledgeGeneratorClient:
                 "scope": scope,
                 "is_template": is_template,
                 "template_vars": template_vars,
+                "target_user": gap.get("target_user", []),
+                "business_types": gap.get("business_types", []),
             }
 
         except RateLimitError as e:
@@ -939,6 +942,11 @@ class KnowledgeGeneratorClient:
                     kb_scope = knowledge.get("scope", "global")
                     kb_is_template = knowledge.get("is_template", False)
                     kb_template_vars = knowledge.get("template_vars")
+                    kb_business_types = knowledge.get("business_types", [])
+                    kb_target_user = knowledge.get("target_user", "tenant")
+                    # target_user 在 loop_generated_knowledge 是 VARCHAR，取第一個值
+                    if isinstance(kb_target_user, list):
+                        kb_target_user = kb_target_user[0] if kb_target_user else "tenant"
 
                     # 插入到 loop_generated_knowledge 表
                     cur.execute("""
@@ -947,9 +955,10 @@ class KnowledgeGeneratorClient:
                             question, answer, keywords,
                             action_type, similar_knowledge, status,
                             scope, category, is_template, template_vars,
+                            business_types, target_user,
                             created_at
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
                         RETURNING id, question, answer, action_type, status
                     """, (
                         loop_id,
@@ -964,6 +973,8 @@ class KnowledgeGeneratorClient:
                         kb_category,
                         kb_is_template,
                         json.dumps(kb_template_vars, ensure_ascii=False) if kb_template_vars else None,
+                        kb_business_types or None,
+                        kb_target_user,
                     ))
 
                     result = cur.fetchone()

@@ -451,7 +451,8 @@ async def review_knowledge(
             # 1. 查詢知識項目
             knowledge_query = """
                 SELECT id, loop_id, iteration, question, answer, knowledge_type, sop_config, status,
-                       category, scope, is_template, template_vars
+                       category, scope, is_template, template_vars,
+                       keywords, business_types, target_user
                 FROM loop_generated_knowledge
                 WHERE id = $1
             """
@@ -558,6 +559,9 @@ async def review_knowledge(
                         'scope': knowledge.get('scope', 'global') or 'global',
                         'is_template': knowledge.get('is_template', False) or False,
                         'template_vars': knowledge.get('template_vars'),
+                        'keywords': knowledge.get('keywords'),
+                        'business_types': knowledge.get('business_types'),
+                        'target_user': knowledge.get('target_user'),
                     }
 
                     # 調用同步函數
@@ -695,7 +699,8 @@ async def batch_review_knowledge(
                     knowledge_query = """
                         SELECT id, loop_id, iteration, question, answer,
                                knowledge_type, sop_config, status,
-                               category, scope, is_template, template_vars
+                               category, scope, is_template, template_vars,
+                               keywords, business_types, target_user
                         FROM loop_generated_knowledge
                         WHERE id = $1
                     """
@@ -795,6 +800,9 @@ async def batch_review_knowledge(
                                 'scope': knowledge.get('scope', 'global') or 'global',
                                 'is_template': knowledge.get('is_template', False) or False,
                                 'template_vars': knowledge.get('template_vars'),
+                                'keywords': knowledge.get('keywords'),
+                                'business_types': knowledge.get('business_types'),
+                                'target_user': knowledge.get('target_user'),
                             }
                             sync_result = await _sync_knowledge_to_production(
                                 conn,
@@ -968,6 +976,16 @@ async def _sync_knowledge_to_production(
         scope = knowledge_item.get('scope', 'global') or 'global'
         is_template = knowledge_item.get('is_template', False) or False
         template_vars = knowledge_item.get('template_vars')  # 可為 None
+        kb_keywords = knowledge_item.get('keywords')  # TEXT[]
+        kb_business_types = knowledge_item.get('business_types')  # TEXT[]
+        # target_user: loop_generated_knowledge 是 VARCHAR，knowledge_base 是 TEXT[]
+        raw_target_user = knowledge_item.get('target_user')
+        if isinstance(raw_target_user, str):
+            kb_target_user = [raw_target_user] if raw_target_user else None
+        elif isinstance(raw_target_user, list):
+            kb_target_user = raw_target_user if raw_target_user else None
+        else:
+            kb_target_user = None
 
         # 如果 sop_config 是字串，解析為 dict
         if sop_config and isinstance(sop_config, str):
@@ -1091,7 +1109,10 @@ async def _sync_knowledge_to_production(
                     scope,
                     is_template,
                     template_vars,
+                    business_types,
+                    target_user,
                     source_type,
+                    source,
                     generation_metadata,
                     source_loop_id,
                     source_loop_knowledge_id,
@@ -1100,20 +1121,23 @@ async def _sync_knowledge_to_production(
                 )
                 VALUES ($1, $2, $3, $4, $5::vector,
                         $6, $7, $8, $9::jsonb,
-                        'ai_generated', $10::jsonb,
-                        $11, $12,
+                        $10, $11,
+                        'ai_generated', 'loop', $12::jsonb,
+                        $13, $14,
                         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 RETURNING id
             """,
                 [vendor_id],  # vendor_ids array
                 question,  # question_summary
                 answer,
-                None,  # keywords (可選)
+                kb_keywords,
                 embedding_str,
                 category,
                 scope,
                 is_template,
                 template_vars_json,
+                kb_business_types,
+                kb_target_user,
                 generation_metadata,
                 loop_id,
                 knowledge_id
