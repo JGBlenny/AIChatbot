@@ -1,0 +1,682 @@
+{
+  "task": "12.1 API 狀態解讀知識清單",
+  "created_at": "2026-04-19",
+  "status": "待人工 review",
+  "purpose": "定義 AI 客服需要查詢哪些資料、JGB 需提供什麼 API、回傳的每個狀態值 AI 該怎麼解讀回應用戶",
+
+  "current_state": {
+    "jgb_existing_api": {
+      "description": "JGB 目前只開放 1 組外部 API：物件查詢（estates），詳見 jgb2/docs/api/client-guide.md",
+      "base_url": "https://www.jgbsmart.com",
+      "auth": "X-API-Key header",
+      "path_prefix": "/api/external/v1/",
+      "endpoints": ["GET /estates", "GET /estates/{id}"],
+      "response_format": "{ success, mapping, data, pagination }",
+      "error_format": "{ success: false, error: { code, message } }",
+      "pagination": "page + per_page（max 200）",
+      "rate_limit": "60 次/分鐘"
+    },
+    "our_api_endpoints_table": {
+      "total": 10,
+      "type": "全部是 lookup_tables 本地查詢（繳費方式/服務時間/廠商電話等靜態資料）",
+      "capability": "無法查詢租客個人的帳單/合約/繳費等動態資料"
+    },
+    "mock_code": {
+      "file": "rag-orchestrator/services/jgb_system_api.py",
+      "endpoints": ["jgb_bills", "jgb_invoices", "jgb_contracts", "jgb_contract_checkin", "jgb_payments", "jgb_repairs", "jgb_tenant_summary"],
+      "status": "純 mock，JGB 後端不存在這些 API，欄位與回應格式均為假設，與 client-guide 的標準格式有落差"
+    }
+  },
+
+  "api_convention": {
+    "description": "以下所有 API 規格均遵循 JGB client-guide.md 的慣例",
+    "base_url": "https://www.jgbsmart.com",
+    "auth": "X-API-Key header（同現有 estates API）",
+    "path_prefix": "/api/external/v1/",
+    "response_format": {
+      "success_example": {
+        "success": true,
+        "mapping": {"status": {"2": "應到帳", "16": "已到帳"}},
+        "data": [],
+        "pagination": {"current_page": 1, "per_page": 50, "total": 0, "total_pages": 0, "has_more": false}
+      },
+      "error_example": {
+        "success": false,
+        "error": {"code": 401, "message": "API Key 無效或未提供"}
+      }
+    },
+    "pagination": "page + per_page（預設 50，最大 200）",
+    "rate_limit": "60 次/分鐘，建議間隔 0.5 秒",
+    "common_error_codes": {
+      "401": "API Key 無效或未提供",
+      "403": "無權存取此資料",
+      "404": "資源不存在",
+      "429": "請求過於頻繁，請稍後再試"
+    }
+  },
+
+  "api_specs": [
+    {
+      "id": "API-1",
+      "name": "帳單查詢",
+      "priority": "must-have",
+      "path": "GET /api/external/v1/bills",
+      "covers_scenarios": ["A1 租客看不到帳單", "A3 帳單未到帳原因", "A4 發票未開立原因", "A8 續約後帳單未產生"],
+      "frequency_justification": "帳務是最大類別（303/679 筆客戶回饋），帳單狀態查詢是 AI 客服最核心的能力",
+      "request": {
+        "method": "GET",
+        "headers": {"X-API-Key": "{API_KEY}"},
+        "params": [
+          {"name": "role_id", "type": "integer", "required": true, "description": "管理者角色 ID"},
+          {"name": "user_id", "type": "integer", "required": false, "description": "租客用戶 ID（篩選特定租客）"},
+          {"name": "contract_id", "type": "integer", "required": false, "description": "合約 ID（篩選特定合約的帳單）"},
+          {"name": "status", "type": "integer", "required": false, "description": "帳單狀態碼篩選"},
+          {"name": "month", "type": "string", "required": false, "description": "篩選月份（YYYY-MM）"},
+          {"name": "page", "type": "integer", "required": false, "description": "頁碼（預設 1）"},
+          {"name": "per_page", "type": "integer", "required": false, "description": "每頁筆數（預設 50，最大 200）"},
+          {"name": "sort_by", "type": "string", "required": false, "description": "排序欄位（date_expire, created_at, total）"},
+          {"name": "sort_direction", "type": "string", "required": false, "description": "排序方向（asc, desc）"}
+        ]
+      },
+      "response": {
+        "success_example": {
+          "success": true,
+          "mapping": {
+            "status": {
+              "comment": "請提供完整的帳單狀態碼對照表",
+              "2": "應到帳",
+              "16": "已到帳",
+              "64": "逾期",
+              "?": "草稿/待對帳/已封存 等（需 JGB 補充）"
+            },
+            "invoice_status": {
+              "0": "未開立",
+              "1": "已開立",
+              "2": "已作廢"
+            }
+          },
+          "data": [
+            {
+              "id": 12345,
+              "contract_id": 678,
+              "estate_id": 456,
+              "estate_name": "信義區套房A",
+              "status": 2,
+              "title": "2026年4月租金",
+              "currency": "TWD",
+              "total": 25000.00,
+              "date_expire": "2026-04-05",
+              "invoice_status": 0,
+              "invoice_number": null,
+              "pay_at": null,
+              "complete_at": null,
+              "created_at": "2026-03-25 10:30:00",
+              "updated_at": "2026-04-01 00:00:00"
+            }
+          ],
+          "pagination": {
+            "current_page": 1,
+            "per_page": 50,
+            "total": 1,
+            "total_pages": 1,
+            "has_more": false
+          }
+        }
+      },
+      "questions_for_jgb": [
+        "帳單狀態碼完整清單？目前 mock 假設 2=應到帳、16=已到帳、64=逾期，實際是否有草稿、待對帳、已封存等？是 bitmask 還是 enum？",
+        "帳單是否有 virtual_account（虛擬帳號）欄位可回傳？AI 可直接告訴租客帳號",
+        "用 role_id 查詢時，回傳該管理者旗下所有租客的帳單嗎？加 user_id 篩選特定租客？"
+      ]
+    },
+    {
+      "id": "API-2",
+      "name": "合約查詢",
+      "priority": "must-have",
+      "path": "GET /api/external/v1/contracts",
+      "covers_scenarios": ["A2 租客無法查看合約", "A4 發票未開立（需查 is_auto_generate_invoice）", "A5 合約狀態查詢", "A8 續約帳單未產生"],
+      "frequency_justification": "合約是第二大類別（165/679 筆），合約狀態判斷影響多個下游操作",
+      "request": {
+        "method": "GET",
+        "headers": {"X-API-Key": "{API_KEY}"},
+        "params": [
+          {"name": "role_id", "type": "integer", "required": true, "description": "管理者角色 ID"},
+          {"name": "user_id", "type": "integer", "required": false, "description": "租客用戶 ID"},
+          {"name": "status", "type": "integer", "required": false, "description": "合約狀態碼篩選"},
+          {"name": "page", "type": "integer", "required": false, "description": "頁碼"},
+          {"name": "per_page", "type": "integer", "required": false, "description": "每頁筆數"}
+        ]
+      },
+      "response": {
+        "success_example": {
+          "success": true,
+          "mapping": {
+            "status": {
+              "comment": "請提供完整的合約狀態碼對照表",
+              "?": "待發送",
+              "?": "待簽約/待簽回",
+              "8": "執行中",
+              "1024": "已結束/歸檔"
+            }
+          },
+          "data": [
+            {
+              "id": 678,
+              "estate_id": 456,
+              "estate_name": "信義區套房A",
+              "status": 8,
+              "rent": 25000.00,
+              "currency": "TWD",
+              "date_start": "2026-01-01",
+              "date_end": "2026-12-31",
+              "is_auto_generate_invoice": 0,
+              "allow_early_termination": true,
+              "early_termination_days": 30,
+              "created_at": "2025-12-10 09:00:00",
+              "updated_at": "2026-01-01 00:00:00"
+            }
+          ],
+          "pagination": {
+            "current_page": 1,
+            "per_page": 50,
+            "total": 1,
+            "total_pages": 1,
+            "has_more": false
+          }
+        }
+      },
+      "questions_for_jgb": [
+        "合約狀態碼完整清單？待發送、待簽約、待簽回各是什麼碼？",
+        "合約單一查詢（GET /contracts/{id}）是否需要額外開？還是列表 API 加 contract_id 篩選即可？"
+      ]
+    },
+    {
+      "id": "API-3",
+      "name": "繳費紀錄查詢",
+      "priority": "must-have",
+      "path": "GET /api/external/v1/payments",
+      "covers_scenarios": ["A3 帳單未到帳原因（需交叉比對帳單與繳費紀錄）"],
+      "frequency_justification": "帳單未到帳是最常見問題，需要繳費紀錄才能判斷是未繳、處理中、還是金流延遲",
+      "request": {
+        "method": "GET",
+        "headers": {"X-API-Key": "{API_KEY}"},
+        "params": [
+          {"name": "role_id", "type": "integer", "required": true, "description": "管理者角色 ID"},
+          {"name": "user_id", "type": "integer", "required": false, "description": "租客用戶 ID"},
+          {"name": "bill_id", "type": "integer", "required": false, "description": "關聯帳單 ID"},
+          {"name": "month", "type": "string", "required": false, "description": "篩選月份（YYYY-MM）"},
+          {"name": "page", "type": "integer", "required": false, "description": "頁碼"},
+          {"name": "per_page", "type": "integer", "required": false, "description": "每頁筆數"}
+        ]
+      },
+      "response": {
+        "success_example": {
+          "success": true,
+          "mapping": {
+            "status": {
+              "0": "待處理",
+              "2": "已完成"
+            },
+            "payment_method": {
+              "credit_card": "信用卡",
+              "atm": "ATM 轉帳",
+              "barcode": "超商條碼"
+            }
+          },
+          "data": [
+            {
+              "id": 9876,
+              "bill_id": 12345,
+              "status": 2,
+              "manufacturer": "newebpay",
+              "payment_method": "credit_card",
+              "currency": "TWD",
+              "amount": 25000.00,
+              "paid_at": "2026-04-01 15:30:00",
+              "created_at": "2026-04-01 14:00:00"
+            }
+          ],
+          "pagination": {
+            "current_page": 1,
+            "per_page": 50,
+            "total": 1,
+            "total_pages": 1,
+            "has_more": false
+          }
+        }
+      },
+      "questions_for_jgb": [
+        "繳費狀態碼完整清單？除了 0=待處理、2=已完成，是否有退款、失敗等狀態？",
+        "是否有 payment_method 的完整清單？（信用卡/ATM/超商/國泰超商 等）"
+      ]
+    },
+    {
+      "id": "API-4",
+      "name": "租客摘要查詢",
+      "priority": "must-have",
+      "path": "GET /api/external/v1/tenants/{user_id}/summary",
+      "covers_scenarios": ["A7 租客收不到通知（需確認 Email/手機/註冊狀態）"],
+      "frequency_justification": "通知問題 31 筆，至少需要查 Email/手機/註冊狀態才能排查",
+      "request": {
+        "method": "GET",
+        "headers": {"X-API-Key": "{API_KEY}"},
+        "url_params": [
+          {"name": "user_id", "type": "integer", "required": true, "description": "租客用戶 ID（路徑參數）"}
+        ],
+        "query_params": [
+          {"name": "role_id", "type": "integer", "required": true, "description": "管理者角色 ID"}
+        ]
+      },
+      "response": {
+        "success_example": {
+          "success": true,
+          "data": {
+            "tenant_info": {
+              "name": "王小明",
+              "email": "tenant@example.com",
+              "phone": "0912345678",
+              "is_registered": true,
+              "is_email_verified": true
+            },
+            "contract_summary": {
+              "active_count": 1,
+              "history_count": 2
+            },
+            "bill_summary": {
+              "unpaid_count": 1,
+              "total_count": 24,
+              "on_time_ratio": 87
+            }
+          }
+        }
+      },
+      "questions_for_jgb": [
+        "租客摘要是否適合做成單一 API，還是拆成 tenant info + bill summary + contract summary 分別查？",
+        "免註冊租客的 is_registered=false 時，是否有 is_email_verified 欄位？"
+      ]
+    },
+    {
+      "id": "API-5",
+      "name": "發票查詢",
+      "priority": "must-have",
+      "path": "GET /api/external/v1/invoices",
+      "covers_scenarios": ["A4 發票未開立原因"],
+      "frequency_justification": "發票問題 34 筆，需交叉查帳單+發票才能判斷原因",
+      "request": {
+        "method": "GET",
+        "headers": {"X-API-Key": "{API_KEY}"},
+        "params": [
+          {"name": "role_id", "type": "integer", "required": true, "description": "管理者角色 ID"},
+          {"name": "user_id", "type": "integer", "required": false, "description": "租客用戶 ID"},
+          {"name": "bill_id", "type": "integer", "required": false, "description": "關聯帳單 ID"},
+          {"name": "page", "type": "integer", "required": false, "description": "頁碼"},
+          {"name": "per_page", "type": "integer", "required": false, "description": "每頁筆數"}
+        ]
+      },
+      "response": {
+        "success_example": {
+          "success": true,
+          "mapping": {
+            "status": {
+              "1": "已開立",
+              "2": "已作廢"
+            },
+            "category": {
+              "B2C": "一般消費者發票",
+              "B2B": "營業人發票"
+            }
+          },
+          "data": [
+            {
+              "id": 5001,
+              "bill_id": 12345,
+              "number": "AZ00000123",
+              "status": 1,
+              "category": "B2C",
+              "amount": 25000,
+              "created_at": "2026-04-01 10:00:00",
+              "invalid_at": null
+            }
+          ],
+          "pagination": {
+            "current_page": 1,
+            "per_page": 50,
+            "total": 1,
+            "total_pages": 1,
+            "has_more": false
+          }
+        }
+      },
+      "questions_for_jgb": [
+        "發票狀態碼：0 是什麼狀態？（未開立 or 不存在於 data 中？）",
+        "是否能透過帳單 API 的 invoice_status 欄位涵蓋基本需求，獨立發票 API 只在需要發票明細時使用？"
+      ]
+    },
+    {
+      "id": "API-6",
+      "name": "修繕查詢",
+      "priority": "should-have",
+      "path": "GET /api/external/v1/repairs",
+      "covers_scenarios": ["修繕進度查詢"],
+      "frequency_justification": "修繕類客戶回饋數量較少，但租客端查進度是常見需求",
+      "request": {
+        "method": "GET",
+        "headers": {"X-API-Key": "{API_KEY}"},
+        "params": [
+          {"name": "role_id", "type": "integer", "required": true, "description": "管理者角色 ID"},
+          {"name": "user_id", "type": "integer", "required": false, "description": "租客用戶 ID"},
+          {"name": "status", "type": "integer", "required": false, "description": "修繕狀態碼篩選"},
+          {"name": "page", "type": "integer", "required": false, "description": "頁碼"},
+          {"name": "per_page", "type": "integer", "required": false, "description": "每頁筆數"}
+        ]
+      },
+      "response": {
+        "success_example": {
+          "success": true,
+          "mapping": {
+            "status": {
+              "comment": "請提供完整修繕狀態碼",
+              "1": "已申請",
+              "2": "處理中",
+              "16": "已完成"
+            }
+          },
+          "data": [
+            {
+              "id": 3001,
+              "estate_name": "信義區套房A",
+              "status": 16,
+              "category_name": "水電類",
+              "item_name": "水管漏水",
+              "is_emergency": false,
+              "assigned_vendor": "信義水電行",
+              "scheduled_date": "2026-04-12",
+              "completed_at": "2026-04-12 14:00:00",
+              "cost": 3500.00,
+              "created_at": "2026-04-05 09:00:00"
+            }
+          ],
+          "pagination": {
+            "current_page": 1,
+            "per_page": 50,
+            "total": 1,
+            "total_pages": 1,
+            "has_more": false
+          }
+        }
+      },
+      "questions_for_jgb": [
+        "修繕狀態碼完整清單？是否有「已派工」「待驗收」等中間狀態？"
+      ]
+    },
+    {
+      "id": "API-7",
+      "name": "點交資格查詢",
+      "priority": "should-have",
+      "path": "GET /api/external/v1/contracts/{contract_id}/checkin-eligibility",
+      "covers_scenarios": ["A5 為什麼合約不能點交"],
+      "frequency_justification": "點交問題頻率中等，但判斷邏輯複雜（合約+帳單+押金），有 API 能大幅減少客服工作量",
+      "request": {
+        "method": "GET",
+        "headers": {"X-API-Key": "{API_KEY}"},
+        "url_params": [
+          {"name": "contract_id", "type": "integer", "required": true, "description": "合約 ID（路徑參數）"}
+        ],
+        "query_params": [
+          {"name": "role_id", "type": "integer", "required": true, "description": "管理者角色 ID"}
+        ]
+      },
+      "response": {
+        "success_example": {
+          "success": true,
+          "data": {
+            "contract_id": 678,
+            "eligible": true,
+            "contract_status": "執行中",
+            "first_bill_paid": true,
+            "deposit_required": 50000.00,
+            "deposit_paid": 50000.00,
+            "blockers": []
+          }
+        },
+        "blocked_example": {
+          "success": true,
+          "data": {
+            "contract_id": 679,
+            "eligible": false,
+            "contract_status": "執行中",
+            "first_bill_paid": false,
+            "deposit_required": 50000.00,
+            "deposit_paid": 25000.00,
+            "blockers": ["首期帳單未繳", "押金未足額"]
+          }
+        }
+      },
+      "questions_for_jgb": [
+        "blockers 的值是固定的中文字串，還是 code？如果是 code 需要 mapping"
+      ]
+    },
+    {
+      "id": "API-8",
+      "name": "電表/IOT 查詢",
+      "priority": "nice-to-have",
+      "path": "GET /api/external/v1/meters",
+      "covers_scenarios": ["A6 電表度數異常排查"],
+      "frequency_justification": "43 筆電表相關回饋，但靜態知識可先頂著",
+      "request": {
+        "method": "GET",
+        "headers": {"X-API-Key": "{API_KEY}"},
+        "params": [
+          {"name": "role_id", "type": "integer", "required": true, "description": "管理者角色 ID"},
+          {"name": "estate_id", "type": "integer", "required": false, "description": "物件 ID"}
+        ]
+      },
+      "response": {
+        "success_example": {
+          "success": true,
+          "mapping": {
+            "meter_type": {"manual": "手動抄表", "cloud": "雲端電表"}
+          },
+          "data": [
+            {
+              "id": 101,
+              "estate_id": 456,
+              "estate_name": "信義區套房A",
+              "meter_type": "cloud",
+              "is_online": true,
+              "current_reading": 1250,
+              "previous_reading": 1100,
+              "reading_date": "2026-04-01",
+              "rate_per_unit": 5.5,
+              "is_summer_rate": true
+            }
+          ],
+          "pagination": {
+            "current_page": 1,
+            "per_page": 50,
+            "total": 1,
+            "total_pages": 1,
+            "has_more": false
+          }
+        }
+      },
+      "fallback": "若 API 無法短期開立，AI 使用靜態知識引導排查（已建 Task 11 id 34/35/36）"
+    },
+    {
+      "id": "API-9",
+      "name": "通知發送紀錄查詢",
+      "priority": "nice-to-have",
+      "path": "GET /api/external/v1/notifications",
+      "covers_scenarios": ["A7 租客收不到通知"],
+      "frequency_justification": "31 筆通知相關回饋，但用租客摘要 + 靜態知識可覆蓋 70% 場景",
+      "request": {
+        "method": "GET",
+        "headers": {"X-API-Key": "{API_KEY}"},
+        "params": [
+          {"name": "role_id", "type": "integer", "required": true, "description": "管理者角色 ID"},
+          {"name": "user_id", "type": "integer", "required": false, "description": "租客用戶 ID"},
+          {"name": "type", "type": "string", "required": false, "description": "通知類型（email/sms）"}
+        ]
+      },
+      "response": {
+        "success_example": {
+          "success": true,
+          "mapping": {
+            "status": {"sent": "已發送", "delivered": "已送達", "failed": "失敗", "bounced": "退信"},
+            "type": {"email": "電子郵件", "sms": "簡訊"}
+          },
+          "data": [
+            {
+              "id": 8001,
+              "type": "email",
+              "recipient": "tenant@example.com",
+              "subject": "2026年4月帳單通知",
+              "status": "delivered",
+              "sent_at": "2026-04-01 12:00:00",
+              "error_reason": null
+            }
+          ],
+          "pagination": {
+            "current_page": 1,
+            "per_page": 50,
+            "total": 1,
+            "total_pages": 1,
+            "has_more": false
+          }
+        }
+      },
+      "fallback": "若 API 無法短期開立，AI 用租客摘要確認 Email + 靜態知識引導排查（已建 Task 11 id 31）"
+    }
+  ],
+
+  "interpretation_knowledge": {
+    "description": "每個 API 回傳的狀態值，AI 該怎麼解讀並回應用戶。JGB 確認狀態碼後再進入 Task 12.2 生成知識。",
+    "items": [
+      {
+        "id": "IK-01",
+        "api": "API-1 帳單查詢",
+        "topic": "帳單狀態解讀",
+        "rules": [
+          {"condition": "狀態=應到帳", "ai_response": "帳單已發送，繳費期限為 {date_expire}，請透過虛擬帳號或線上金流繳費。"},
+          {"condition": "狀態=已到帳", "ai_response": "此帳單已收到繳費（{pay_at}），無需再繳。"},
+          {"condition": "狀態=逾期", "ai_response": "此帳單已逾期未繳（期限 {date_expire}），建議盡快繳費。"},
+          {"condition": "狀態=待對帳", "ai_response": "租客已通知繳費，管理者確認收到款項後手動到帳。待對帳不會發催繳通知。"},
+          {"condition": "狀態=已封存", "ai_response": "此帳單已被封存，租客端不會顯示。"},
+          {"condition": "查無帳單", "ai_response": "查無帳單紀錄，可能帳單尚未發送或合約尚未建立帳單。"}
+        ]
+      },
+      {
+        "id": "IK-02",
+        "api": "API-1 帳單查詢",
+        "topic": "租客帳單可見性",
+        "rules": [
+          {"condition": "帳單存在但租客說看不到", "ai_response": "請確認登入帳號的 Email 是否正確（大小寫需完全一致）。"},
+          {"condition": "租客為免註冊", "ai_response": "免註冊租客無法登入系統查看，帳單透過 Email 發送 PDF，密碼為公司統一編號。"}
+        ]
+      },
+      {
+        "id": "IK-03",
+        "api": "API-2 合約查詢",
+        "topic": "合約狀態解讀",
+        "rules": [
+          {"condition": "狀態=待發送", "ai_response": "合約已建立但尚未發送，請至【合約總表】>【待發送合約】發送。"},
+          {"condition": "狀態=待簽回", "ai_response": "合約已發送，等待租客簽署中。邀請預設 2 天期限，過期需重新發送。"},
+          {"condition": "狀態=執行中", "ai_response": "合約有效執行中，期間 {date_start} ~ {date_end}。執行中合約無法直接修改參數。"},
+          {"condition": "狀態=已結束", "ai_response": "此合約已結束，歷史合約可至合約總表切換篩選條件查看，保存 5 年。"},
+          {"condition": "查無合約", "ai_response": "查無合約。可能 Email 大小寫不同視為不同帳號，或合約尚未建立。"}
+        ]
+      },
+      {
+        "id": "IK-04",
+        "api": "API-1 + API-3",
+        "topic": "帳單未到帳原因判斷",
+        "rules": [
+          {"condition": "帳單=應到帳，無繳費紀錄", "ai_response": "帳單尚未收到付款。"},
+          {"condition": "帳單=應到帳，有繳費但 status=0", "ai_response": "租客已發起付款但尚未完成。超商繳費需等銀行出款日（5/15/25）撥款。"},
+          {"condition": "帳單=待對帳", "ai_response": "租客已通知繳費，管理者需確認收款後手動到帳。"},
+          {"condition": "帳單逾期 + 無繳費紀錄", "ai_response": "帳單已逾期，建議聯繫租客。如租客線下匯款但未通知已繳費，帳單會停在應到帳。"}
+        ]
+      },
+      {
+        "id": "IK-05",
+        "api": "API-1 + API-5",
+        "topic": "發票未開立原因判斷",
+        "rules": [
+          {"condition": "帳單=應到帳", "ai_response": "發票在帳單到帳後才會自動開立，目前帳單尚未收到款項。"},
+          {"condition": "帳單已到帳 + is_auto_generate_invoice=0", "ai_response": "合約未開啟自動開立發票，請至【收款設置】>【發票設定】開啟。"},
+          {"condition": "帳單已到帳 + 發票開啟 + 無發票", "ai_response": "發票功能已開啟但未開立，可能字軌用盡或異常，建議聯繫 JGB 客服。"},
+          {"condition": "發票=已作廢", "ai_response": "發票已作廢（{invalid_at}），如需重開請聯繫 JGB 客服。"}
+        ]
+      },
+      {
+        "id": "IK-06",
+        "api": "API-7 點交資格",
+        "topic": "點交資格解讀",
+        "rules": [
+          {"condition": "eligible=true", "ai_response": "合約符合點交條件。"},
+          {"condition": "blocker=合約未簽", "ai_response": "合約尚未完成簽署，需先完成簽約。"},
+          {"condition": "blocker=首期帳單未繳", "ai_response": "首期帳單未繳費，需租客繳完才能點交。"},
+          {"condition": "blocker=押金不足", "ai_response": "押金未繳足（已繳 {deposit_paid} / 應繳 {deposit_required}），需補繳。"}
+        ]
+      },
+      {
+        "id": "IK-07",
+        "api": "API-4 租客摘要",
+        "topic": "通知收不到排查",
+        "rules": [
+          {"condition": "Email 異常", "ai_response": "租客 Email 可能有誤，注意大小寫不同視為不同帳號。"},
+          {"condition": "is_registered=false", "ai_response": "免註冊租客需先至【人員管理】發送 mail 驗證，驗證後才能收通知。"},
+          {"condition": "Email 正確 + 已驗證", "ai_response": "Email 正確，信件可能進入垃圾郵件匣，請租客檢查。"}
+        ]
+      },
+      {
+        "id": "IK-08",
+        "api": "API-2 + API-1",
+        "topic": "續約帳單判斷",
+        "rules": [
+          {"condition": "新合約 ≠ 執行中", "ai_response": "新合約尚未完成簽署（{status_label}），簽署完成後才會產生帳單。"},
+          {"condition": "新合約執行中 + 無新帳單", "ai_response": "合約已生效但帳單產生日期未到，系統依繳費期限設定自動產生。"}
+        ]
+      },
+      {
+        "id": "IK-09",
+        "api": "API-6 修繕",
+        "topic": "修繕狀態解讀",
+        "rules": [
+          {"condition": "狀態=已申請", "ai_response": "修繕單已申請，等待管理者派工。"},
+          {"condition": "狀態=已申請 + 緊急", "ai_response": "此為緊急修繕，建議優先處理。"},
+          {"condition": "狀態=處理中", "ai_response": "已派工給 {assigned_vendor}，預約 {scheduled_date}。"},
+          {"condition": "狀態=已完成", "ai_response": "修繕已完成（{completed_at}），費用 NT$ {cost}。"}
+        ]
+      },
+      {
+        "id": "IK-10",
+        "api": "API-1",
+        "topic": "金流撥款時程",
+        "rules": [
+          {"condition": "永豐虛擬帳號", "ai_response": "繳款日 +2 天撥款。"},
+          {"condition": "超商繳費", "ai_response": "銀行出款日：每月 5/15/25（遇假日順延），從繳費到入帳 3-10 天。"},
+          {"condition": "虛擬帳號過期", "ai_response": "收回帳單重新發送即可刷新虛擬帳號。"}
+        ]
+      }
+    ]
+  },
+
+  "cross_reference_static_kb": {
+    "description": "Task 11 已生成的靜態知識與 API 解讀知識互補，不重複",
+    "pairs": [
+      {"static_kb": "id 13（對帳流程與帳單狀態）", "api_ik": "IK-04", "relationship": "靜態=流程說明，API=用實際資料判斷原因"},
+      {"static_kb": "id 23（虛擬帳號無法繳納排查）", "api_ik": "IK-10", "relationship": "靜態=排查步驟，API=確認帳單期限"},
+      {"static_kb": "id 34/35（電表度數/電費計算）", "api_ik": "API-8", "relationship": "靜態=基本操作說明，API=查實際度數"},
+      {"static_kb": "id 31（簡訊收不到）", "api_ik": "IK-07", "relationship": "靜態=排查步驟，API=確認 Email 正確性"}
+    ]
+  },
+
+  "next_steps": {
+    "step_1": "人工 review 此清單：場景是否完整、API 規格是否合理、優先順序是否正確",
+    "step_2": "將 api_specs 區段提供給 JGB 團隊，請 JGB 確認：可行性、回傳欄位、狀態碼完整清單、開發排程",
+    "step_3": "JGB 確認後，更新 jgb_system_api.py 的 mock data 對齊實際規格（response 格式改為 { success, mapping, data, pagination }）",
+    "step_4": "依確認後的狀態碼進入 Task 12.2 生成 API 解讀知識寫入 knowledge_base",
+    "suggested_api_priority": "帳單 → 合約 → 繳費紀錄 → 租客摘要 → 發票 → 修繕 → 點交 → 電表 → 通知"
+  }
+}

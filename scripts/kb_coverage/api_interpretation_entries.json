@@ -1,0 +1,262 @@
+{
+  "description": "Task 12.2 API 解讀知識 — 表單 + 知識條目（全部 form_fill → call_api）",
+
+  "form_schemas": [
+    {
+      "form_id": "jgb_bill_query",
+      "form_name": "帳單狀態查詢",
+      "description": "查詢特定帳單的狀態與繳費資訊",
+      "fields": [
+        {
+          "field_name": "bill_keyword",
+          "field_label": "帳單編號或標題",
+          "field_type": "text",
+          "prompt": "請提供帳單編號或帳單標題（例如：12345 或 2026年4月租金）",
+          "required": true,
+          "validation_type": "free_text"
+        }
+      ],
+      "default_intro": "好的，我來幫您查詢帳單狀態。",
+      "on_complete_action": "call_api",
+      "api_config": {
+        "endpoint": "jgb_bills",
+        "params": {
+          "role_id": "{session.role_id}",
+          "user_id": "{session.user_id}"
+        }
+      },
+      "skip_review": true
+    },
+    {
+      "form_id": "jgb_invoice_query",
+      "form_name": "發票狀態查詢",
+      "description": "查詢特定帳單對應的發票開立狀態",
+      "fields": [
+        {
+          "field_name": "bill_keyword",
+          "field_label": "帳單編號或標題",
+          "field_type": "text",
+          "prompt": "請提供帳單編號或帳單標題，我來查詢對應的發票狀態。",
+          "required": true,
+          "validation_type": "free_text"
+        }
+      ],
+      "default_intro": "好的，我來幫您查詢發票狀態。",
+      "on_complete_action": "call_api",
+      "api_config": {
+        "endpoint": "jgb_invoices",
+        "params": {
+          "role_id": "{session.role_id}",
+          "user_id": "{session.user_id}"
+        }
+      },
+      "skip_review": true
+    },
+    {
+      "form_id": "jgb_contract_query",
+      "form_name": "合約狀態查詢",
+      "description": "查詢特定合約的狀態",
+      "fields": [
+        {
+          "field_name": "contract_keyword",
+          "field_label": "合約編號或物件名稱",
+          "field_type": "text",
+          "prompt": "請提供合約編號或物件名稱（例如：678 或 信義區套房A）",
+          "required": true,
+          "validation_type": "free_text"
+        }
+      ],
+      "default_intro": "好的，我來幫您查詢合約狀態。",
+      "on_complete_action": "call_api",
+      "api_config": {
+        "endpoint": "jgb_contracts",
+        "params": {
+          "role_id": "{session.role_id}",
+          "user_id": "{session.user_id}"
+        }
+      },
+      "skip_review": true
+    },
+    {
+      "form_id": "jgb_checkin_query",
+      "form_name": "點交資格查詢",
+      "description": "查詢合約是否符合點交條件",
+      "fields": [
+        {
+          "field_name": "contract_keyword",
+          "field_label": "合約編號或物件名稱",
+          "field_type": "text",
+          "prompt": "請提供合約編號或物件名稱，我來確認是否符合點交條件。",
+          "required": true,
+          "validation_type": "free_text"
+        }
+      ],
+      "default_intro": "好的，我來幫您確認點交資格。",
+      "on_complete_action": "call_api",
+      "api_config": {
+        "endpoint": "jgb_contract_checkin",
+        "params": {
+          "role_id": "{session.role_id}",
+          "user_id": "{session.user_id}",
+          "contract_id": "{form.contract_keyword}"
+        }
+      },
+      "skip_review": true
+    },
+    {
+      "form_id": "jgb_repair_query",
+      "form_name": "修繕進度查詢",
+      "description": "查詢修繕申請的處理進度",
+      "fields": [
+        {
+          "field_name": "repair_keyword",
+          "field_label": "修繕單號或物件名稱",
+          "field_type": "text",
+          "prompt": "請提供修繕單號或物件名稱（例如：3001 或 信義區套房A）",
+          "required": true,
+          "validation_type": "free_text"
+        }
+      ],
+      "default_intro": "好的，我來幫您查詢修繕進度。",
+      "on_complete_action": "call_api",
+      "api_config": {
+        "endpoint": "jgb_repairs",
+        "params": {
+          "role_id": "{session.role_id}",
+          "user_id": "{session.user_id}"
+        }
+      },
+      "skip_review": true
+    },
+    {
+      "form_id": "jgb_payment_query",
+      "form_name": "繳費紀錄查詢",
+      "description": "查詢繳費是否成功、付款狀態",
+      "fields": [
+        {
+          "field_name": "bill_keyword",
+          "field_label": "帳單編號或標題",
+          "field_type": "text",
+          "prompt": "請提供帳單編號或帳單標題，我來查詢繳費紀錄。",
+          "required": true,
+          "validation_type": "free_text"
+        }
+      ],
+      "default_intro": "好的，我來幫您查詢繳費紀錄。",
+      "on_complete_action": "call_api",
+      "api_config": {
+        "endpoint": "jgb_payments",
+        "params": {
+          "role_id": "{session.role_id}",
+          "user_id": "{session.user_id}"
+        }
+      },
+      "skip_review": true
+    },
+    {
+      "form_id": "jgb_tenant_query",
+      "form_name": "租客資訊查詢",
+      "description": "查詢租客聯繫資訊與租賃摘要",
+      "fields": [
+        {
+          "field_name": "tenant_keyword",
+          "field_label": "租客姓名或 Email",
+          "field_type": "text",
+          "prompt": "請提供租客姓名或 Email，我來查詢租客資訊。",
+          "required": true,
+          "validation_type": "free_text"
+        }
+      ],
+      "default_intro": "好的，我來幫您查詢租客資訊。",
+      "on_complete_action": "call_api",
+      "api_config": {
+        "endpoint": "jgb_tenant_summary",
+        "params": {
+          "role_id": "{session.role_id}",
+          "user_id": "{session.user_id}"
+        }
+      },
+      "skip_review": true
+    }
+  ],
+
+  "knowledge_entries": [
+    {
+      "question_summary": "帳單沒到帳 帳單狀態",
+      "answer": "",
+      "action_type": "form_fill",
+      "form_id": "jgb_bill_query",
+      "trigger_mode": "auto",
+      "trigger_form_condition": "always",
+      "scope": "global",
+      "business_types": ["system_provider"],
+      "source_type": "manual"
+    },
+    {
+      "question_summary": "發票沒開 發票狀態",
+      "answer": "",
+      "action_type": "form_fill",
+      "form_id": "jgb_invoice_query",
+      "trigger_mode": "auto",
+      "trigger_form_condition": "always",
+      "scope": "global",
+      "business_types": ["system_provider"],
+      "source_type": "manual"
+    },
+    {
+      "question_summary": "合約狀態 合約查詢",
+      "answer": "",
+      "action_type": "form_fill",
+      "form_id": "jgb_contract_query",
+      "trigger_mode": "auto",
+      "trigger_form_condition": "always",
+      "scope": "global",
+      "business_types": ["system_provider"],
+      "source_type": "manual"
+    },
+    {
+      "question_summary": "合約點交 無法點交",
+      "answer": "",
+      "action_type": "form_fill",
+      "form_id": "jgb_checkin_query",
+      "trigger_mode": "auto",
+      "trigger_form_condition": "always",
+      "scope": "global",
+      "business_types": ["system_provider"],
+      "source_type": "manual"
+    },
+    {
+      "question_summary": "修繕進度 修繕查詢",
+      "answer": "",
+      "action_type": "form_fill",
+      "form_id": "jgb_repair_query",
+      "trigger_mode": "auto",
+      "trigger_form_condition": "always",
+      "scope": "global",
+      "business_types": ["system_provider"],
+      "source_type": "manual"
+    },
+    {
+      "question_summary": "繳費成功 繳費紀錄",
+      "answer": "",
+      "action_type": "form_fill",
+      "form_id": "jgb_payment_query",
+      "trigger_mode": "auto",
+      "trigger_form_condition": "always",
+      "scope": "global",
+      "business_types": ["system_provider"],
+      "source_type": "manual"
+    },
+    {
+      "question_summary": "租客收不到通知 租客資訊",
+      "answer": "",
+      "action_type": "form_fill",
+      "form_id": "jgb_tenant_query",
+      "trigger_mode": "auto",
+      "trigger_form_condition": "always",
+      "scope": "global",
+      "business_types": ["system_provider"],
+      "source_type": "manual"
+    }
+  ]
+}

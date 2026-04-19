@@ -362,6 +362,11 @@ class APICallHandler:
         if 'formatted_response' in api_result:
             return api_result['formatted_response']
 
+        # JGB API 格式：有 mapping + data → 用專屬格式化
+        if 'mapping' in api_result and 'data' in api_result:
+            from services.jgb_response_formatter import format_jgb_response
+            return format_jgb_response(api_result)
+
         lines = ['✅ **查詢成功**\n']
 
         # 欄位中文映射（可自訂）

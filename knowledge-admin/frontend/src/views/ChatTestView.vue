@@ -48,6 +48,18 @@
         </div>
       </div>
 
+      <!-- B2B 模式：JGB 身份參數 -->
+      <div v-if="chatMode === 'customer_service'" class="selector-row jgb-identity-row">
+        <div class="selector-group">
+          <label>JGB Role ID：</label>
+          <input v-model="jgbRoleId" type="text" placeholder="例如：200" class="jgb-input" />
+        </div>
+        <div class="selector-group">
+          <label>JGB User ID：</label>
+          <input v-model="jgbUserId" type="text" placeholder="例如：100" class="jgb-input" />
+        </div>
+      </div>
+
       <!-- 模式說明 -->
       <div class="mode-description">
         <span v-if="chatMode === 'tenant'" class="mode-badge b2c">
@@ -359,6 +371,8 @@ export default {
       // 表單填寫支援
       sessionId: null,  // 會話 ID（用於表單追蹤）
       userId: null,  // 用戶 ID
+      jgbRoleId: '',  // JGB 系統角色 ID（B2B 模式用）
+      jgbUserId: '',  // JGB 系統用戶 ID（B2B 模式用）
       isFillingForm: false,  // 是否正在填寫表單
       currentFormId: null,  // 當前表單 ID
       currentField: null  // 當前填寫的欄位
@@ -537,17 +551,22 @@ export default {
 
         console.log('📤 發送訊息，target_user:', userRole, 'mode:', this.chatMode);
 
-        const response = await axios.post(`${RAG_API}/v1/message`, {
+        const payload = {
           message: message,
           vendor_id: parseInt(this.selectedVendorId),
           mode: this.chatMode,
-          target_user: userRole,  // ✅ 使用新參數 target_user
+          target_user: userRole,
           include_sources: true,
-          include_debug_info: this.debugMode,  // 新增：傳遞調試模式
-          // 表單支援
+          include_debug_info: this.debugMode,
           session_id: this.sessionId,
           user_id: this.userId
-        });
+        };
+        // B2B 模式帶入 JGB 身份參數
+        if (this.chatMode === 'customer_service') {
+          if (this.jgbRoleId) payload.role_id = this.jgbRoleId;
+          if (this.jgbUserId) payload.user_id = this.jgbUserId;
+        }
+        const response = await axios.post(`${RAG_API}/v1/message`, payload);
 
         // 檢查是否觸發表單
         if (response.data.form_triggered) {
@@ -860,6 +879,22 @@ export default {
 
 .mode-badge.b2b {
   color: #92400e;
+}
+
+.jgb-identity-row {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fef3c7;
+  border-radius: 6px;
+  border: 1px solid #f59e0b;
+}
+
+.jgb-input {
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  width: 120px;
+  font-size: 14px;
 }
 
 /* 業者資訊 */
