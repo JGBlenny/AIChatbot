@@ -1328,6 +1328,15 @@ async def review_loop_knowledge(
                         # vendor_ids: 如果有選擇 vendor 則使用陣列，否則為 null
                         vendor_ids_value = [vendor_id] if vendor_id is not None else None
 
+                        # target_user: loop 是 VARCHAR，kb 是 TEXT[]
+                        raw_target_user = knowledge.get('target_user')
+                        if isinstance(raw_target_user, str):
+                            kb_target_user = [raw_target_user] if raw_target_user else None
+                        elif isinstance(raw_target_user, list):
+                            kb_target_user = raw_target_user if raw_target_user else None
+                        else:
+                            kb_target_user = None
+
                         kb_id = await conn.fetchval("""
                             INSERT INTO knowledge_base (
                                 question_summary,
@@ -1337,12 +1346,19 @@ async def review_loop_knowledge(
                                 keywords,
                                 embedding,
                                 vendor_ids,
+                                business_types,
+                                target_user,
+                                category,
+                                scope,
+                                is_template,
+                                template_vars,
+                                source_type,
                                 is_active,
                                 created_at,
                                 source,
                                 source_loop_knowledge_id,
                                 source_loop_id
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW(), 'loop', $8, $9)
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, 'ai_generated', true, NOW(), 'loop', $14, $15)
                             RETURNING id
                         """,
                             knowledge['question'],
@@ -1350,8 +1366,14 @@ async def review_loop_knowledge(
                             knowledge['action_type'],
                             knowledge['form_id'],
                             knowledge['keywords'],
-                            current_embedding,  # 🔧 使用檢查後的 embedding（可能是新生成的）
-                            vendor_ids_value,  # 可能是 [vendor_id] 或 None
+                            current_embedding,
+                            vendor_ids_value,
+                            knowledge.get('business_types'),
+                            kb_target_user,
+                            knowledge.get('category'),
+                            knowledge.get('scope', 'global') or 'global',
+                            knowledge.get('is_template', False) or False,
+                            json.dumps(knowledge['template_vars'], ensure_ascii=False) if knowledge.get('template_vars') else None,
                             knowledge_id,
                             knowledge['loop_id']
                         )
