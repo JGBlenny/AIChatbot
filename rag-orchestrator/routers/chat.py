@@ -1995,7 +1995,8 @@ async def _build_knowledge_response(
                         session_id=request.session_id,
                         user_id=request.user_id,
                         vendor_id=request.vendor_id,
-                        trigger_question=request.message
+                        trigger_question=request.message,
+                        role_id=request.role_id
                     )
                     return _convert_form_result_to_response(form_result, request, debug_info=form_debug_info)
                 else:
@@ -2020,7 +2021,8 @@ async def _build_knowledge_response(
                     session_id=request.session_id,
                     user_id=request.user_id,
                     vendor_id=request.vendor_id,
-                    trigger_question=request.message
+                    trigger_question=request.message,
+                    role_id=request.role_id
                 )
 
                 return _convert_form_result_to_response(form_result, request, debug_info=form_debug_info)
@@ -2056,7 +2058,8 @@ async def _build_knowledge_response(
                 session_id=request.session_id,
                 user_id=request.user_id,
                 vendor_id=request.vendor_id,
-                trigger_question=request.message
+                trigger_question=request.message,
+                role_id=request.role_id
             )
 
             return _convert_form_result_to_response(form_result, request, debug_info=form_debug_info)
@@ -2573,6 +2576,7 @@ class VendorChatRequest(BaseModel):
             return v
         else:
             return 'b2c'  # 默認 B2C
+
 
 
 class KnowledgeSource(BaseModel):

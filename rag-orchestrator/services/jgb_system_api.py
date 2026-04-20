@@ -135,21 +135,24 @@ class JGBSystemAPI:
     async def get_contracts(
         self,
         role_id: str,
-        user_id: str,
+        user_id: str = None,
+        contract_ids: str = None,
         status: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
-        """查詢合約列表"""
-        if not self._validate_identity(role_id, user_id):
+        """查詢合約狀態總覽"""
+        if not role_id:
             return self._degraded_response()
 
         if self.use_mock:
             return self._mock_get_contracts(role_id, user_id, status)
 
-        params: dict[str, Any] = {"role_id": role_id, "user_id": user_id}
-        if status:
-            params["status"] = status
-        return await self._request("/api/external/v1/contracts", params)
+        params: dict[str, Any] = {"role_id": role_id}
+        if contract_ids:
+            params["contract_ids"] = contract_ids
+        return await self._request(
+            "/api/external/v1/contracts/status-overview", params
+        )
 
     async def get_contract_checkin_eligibility(
         self,

@@ -145,6 +145,10 @@ services:
       # LLM 答案合成配置
       # 分數欄位語意（詳見 docs/architecture/retriever-pipeline.md）：
       #   vector_similarity = 純向量 cosine；similarity = final 組合分數（含 rerank/boost）
+      # JGB 系統 API
+      JGB_API_BASE_URL: ${JGB_API_BASE_URL:-https://stage.jgbsmart.com}
+      JGB_API_KEY: ${JGB_API_KEY:-}
+      USE_MOCK_JGB_API: ${USE_MOCK_JGB_API:-true}
       ENABLE_ANSWER_SYNTHESIS: ${ENABLE_ANSWER_SYNTHESIS:-true}
       SYNTHESIS_THRESHOLD: ${SYNTHESIS_THRESHOLD:-0.99}  # 比對 final similarity（_should_synthesize 合成觸發判定）
       PERFECT_MATCH_THRESHOLD: ${PERFECT_MATCH_THRESHOLD:-0.90}  # 比對 vector_similarity（純向量分數）— 重構後閾值語意改變，需校準

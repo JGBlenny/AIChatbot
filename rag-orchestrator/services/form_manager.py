@@ -445,7 +445,8 @@ class FormManager:
         session_id: str,
         user_id: str,
         vendor_id: int,
-        trigger_question: str = None
+        trigger_question: str = None,
+        role_id: str = None
     ) -> Dict:
         """
         通過知識觸發表單（新架構）
@@ -457,6 +458,7 @@ class FormManager:
             user_id: 用戶ID
             vendor_id: 業者ID
             trigger_question: 觸發表單的用戶問題
+            role_id: JGB 角色 ID（B2B 模式用）
 
         Returns:
             表單回應字典
@@ -486,6 +488,16 @@ class FormManager:
                 trigger_question=trigger_question,
                 knowledge_id=knowledge_id
             )
+
+        # 存 role_id 到 metadata（form_sessions 表沒有 role_id 欄位）
+        if role_id and session_state:
+            metadata = session_state.get('metadata') or {}
+            metadata['role_id'] = role_id
+            await self.update_session_state(
+                session_id=session_id,
+                metadata=metadata
+            )
+            session_state['metadata'] = metadata
 
         if not session_state:
             return {
@@ -933,11 +945,12 @@ class FormManager:
         """執行表單完成後的 API 調用"""
         try:
             # 準備 session 數據
+            metadata = session_state.get('metadata') or {}
             session_data = {
                 'user_id': session_state.get('user_id'),
                 'vendor_id': session_state.get('vendor_id'),
                 'session_id': session_state.get('session_id'),
-                'role_id': session_state.get('role_id'),
+                'role_id': metadata.get('role_id'),
             }
 
             # 合併 static_params 到 form_data（支援 lookup_generic 的 category 等靜態參數）

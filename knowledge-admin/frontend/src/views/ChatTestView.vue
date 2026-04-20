@@ -15,8 +15,8 @@
         <div class="selector-group">
           <label>測試模式：</label>
           <select v-model="chatMode" @change="onModeChange" class="mode-select">
-            <option value="tenant">🏠 B2C - 租客對業者 (tenant)</option>
-            <option value="customer_service">🏢 B2B - 業者對我們 (customer_service)</option>
+            <option value="b2c">🏠 B2C - 租客對業者 (b2c)</option>
+            <option value="b2b">🏢 B2B - 業者對我們 (b2b)</option>
           </select>
         </div>
 
@@ -49,7 +49,7 @@
       </div>
 
       <!-- B2B 模式：JGB 身份參數 -->
-      <div v-if="chatMode === 'customer_service'" class="selector-row jgb-identity-row">
+      <div v-if="chatMode === 'b2b'" class="selector-row jgb-identity-row">
         <div class="selector-group">
           <label>JGB Role ID：</label>
           <input v-model="jgbRoleId" type="text" placeholder="例如：200" class="jgb-input" />
@@ -62,7 +62,7 @@
 
       <!-- 模式說明 -->
       <div class="mode-description">
-        <span v-if="chatMode === 'tenant'" class="mode-badge b2c">
+        <span v-if="chatMode === 'b2c'" class="mode-badge b2c">
           <strong>B2C 模式：</strong>模擬租客直接使用業者提供的 AI 客服（業者的終端客戶使用）
         </span>
         <span v-else class="mode-badge b2b">
@@ -356,7 +356,7 @@ export default {
   name: 'ChatTestView',
   data() {
     return {
-      chatMode: 'tenant', // 'tenant' or 'customer_service'
+      chatMode: 'b2c', // 'b2c' or 'b2b'
       vendors: [],
       selectedVendorId: '',
       selectedVendor: null,
@@ -503,7 +503,7 @@ export default {
         this.messages = [];
 
         // 根據模式添加不同的歡迎訊息
-        if (this.chatMode === 'tenant') {
+        if (this.chatMode === 'b2c') {
           // B2C: 租客視角
           this.messages.push({
             role: 'assistant',
@@ -562,7 +562,7 @@ export default {
           user_id: this.userId
         };
         // B2B 模式帶入 JGB 身份參數
-        if (this.chatMode === 'customer_service') {
+        if (this.chatMode === 'b2b') {
           if (this.jgbRoleId) payload.role_id = this.jgbRoleId;
           if (this.jgbUserId) payload.user_id = this.jgbUserId;
         }
@@ -647,7 +647,7 @@ export default {
     clearMessages() {
       this.messages = [];
       if (this.selectedVendor) {
-        if (this.chatMode === 'tenant') {
+        if (this.chatMode === 'b2c') {
           this.messages.push({
             role: 'assistant',
             content: `您好！我是 ${this.selectedVendor.name} 的 AI 客服助理，有什麼可以幫助您的嗎？`,
