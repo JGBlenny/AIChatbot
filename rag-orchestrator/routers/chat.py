@@ -2504,16 +2504,16 @@ async def submit_feedback(
 class VendorChatRequest(BaseModel):
     """多業者聊天請求"""
     message: str = Field(..., description="使用者訊息", min_length=1, max_length=2000)
-    vendor_id: int = Field(..., description="業者 ID", ge=1)
+    mode: Optional[str] = Field(
+        'b2c',
+        description="業務模式：b2c(終端用戶), b2b(業者員工)"
+    )
+    vendor_id: Optional[int] = Field(None, description="業者 ID（B2C 必填，B2B 可不帶）", ge=1)
 
     # ✅ 新欄位（推薦使用）
     target_user: Optional[str] = Field(
         None,
         description="目標用戶角色：tenant(租客), landlord(房東), property_manager(物管), system_admin(系統管理)"
-    )
-    mode: Optional[str] = Field(
-        'b2c',
-        description="業務模式：b2c(終端用戶), b2b(業者員工)"
     )
 
     # 🆕 JGB 系統身份編號（API 資料權限過濾用，與 target_user 知識過濾用途分離）
@@ -2577,6 +2577,14 @@ class VendorChatRequest(BaseModel):
         else:
             return 'b2c'  # 默認 B2C
 
+    @validator('vendor_id', always=True)
+    def validate_vendor_id(cls, v, values):
+        """B2C 必填 vendor_id，B2B 可不帶"""
+        raw_mode = values.get('mode', 'b2c')
+        is_b2b = raw_mode in ('b2b', 'customer_service')
+        if not is_b2b and not v:
+            raise ValueError('B2C 模式下 vendor_id 為必填')
+        return v
 
 
 class KnowledgeSource(BaseModel):
@@ -2699,7 +2707,7 @@ class VendorChatResponse(BaseModel):
     action_type: Optional[str] = Field(None, description="對話流程類型（direct_answer/form_fill/api_call/form_then_api）")
     sources: Optional[List[KnowledgeSource]] = Field(None, description="知識來源列表")
     source_count: int = Field(0, description="知識來源數量")
-    vendor_id: int
+    vendor_id: Optional[int] = None
     mode: str
     session_id: Optional[str] = None
     timestamp: str
@@ -2904,9 +2912,13 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
 
                     return response
 
-        # Step 1: 驗證業者
+        # Step 1: 驗證業者（B2B 可不帶 vendor_id）
         resolver = get_vendor_param_resolver()
-        vendor_info = _validate_vendor(request.vendor_id, resolver)
+        is_b2b = request.mode in ('b2b', 'customer_service')
+        if is_b2b and not request.vendor_id:
+            vendor_info = {'id': 0, 'name': 'JGB System', 'business_types': ['system_provider']}
+        else:
+            vendor_info = _validate_vendor(request.vendor_id, resolver)
 
         # Step 2: 緩存檢查（表單期間不使用緩存）
         cache_service = req.app.state.cache_service
