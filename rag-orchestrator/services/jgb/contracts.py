@@ -438,11 +438,6 @@ def _format_operation_response(contract: dict, check: dict, operation: str) -> s
     reasons = "\n".join(f"• {b}" for b in check["blockers"])
     response = header + f"\n目前無法{check['operation']}，原因如下：\n{reasons}"
 
-    # 加上建議
-    suggestion = _get_suggestion(contract, operation)
-    if suggestion:
-        response += f"\n\n💡 {suggestion}"
-
     return response
 
 
@@ -480,33 +475,6 @@ def _format_status_response(contract: dict) -> str:
     return "\n".join(lines)
 
 
-def _get_suggestion(contract: dict, failed_operation: str) -> str:
-    """根據失敗的操作給出替代建議"""
-    bit_status = contract.get("bit_status", 0)
-
-    if failed_operation == "move_out":
-        # 不能點退 → 建議提前解約
-        if contract.get("allow_early_termination"):
-            early = check_can_early_termination(contract)
-            if early["can_do"]:
-                return "如需提前結束合約，可以使用「提前解約」功能。"
-
-    if failed_operation == "move_in":
-        # 不能點交 → 看缺什麼
-        if not has_bit(bit_status, ContractBit.SIGNED):
-            return "請先完成合約簽署流程，雙方簽名完成後即可發送點交。"
-
-    if failed_operation == "renew":
-        # 不能續約
-        if has_bit(bit_status, ContractBit.EARLY_TERMINATION_DONE):
-            return "此合約已提前解約，如需繼續租賃請建立新合約。"
-
-    if failed_operation == "early_termination":
-        if not contract.get("allow_early_termination"):
-            days = contract.get("early_termination_days", 0)
-            return "如需協商提前解約，建議與租客溝通後聯繫管理師處理。"
-
-    return ""
 
 
 # ── 工具函式 ────────────────────────────────────────────────
