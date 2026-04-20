@@ -936,11 +936,18 @@ class FormManager:
             session_data = {
                 'user_id': session_state.get('user_id'),
                 'vendor_id': session_state.get('vendor_id'),
-                'session_id': session_state.get('session_id')
+                'session_id': session_state.get('session_id'),
+                'role_id': session_state.get('role_id'),
             }
 
             # 合併 static_params 到 form_data（支援 lookup_generic 的 category 等靜態參數）
             merged_form_data = {**form_data, **api_config.get('static_params', {})}
+
+            # 帶入原始問題（觸發表單時的用戶問題）供 formatter 判斷意圖
+            user_input = None
+            trigger_question = session_state.get('trigger_question')
+            if trigger_question:
+                user_input = {"original_question": trigger_question}
 
             # 調用 API 處理器（傳遞 db_pool 以支持動態配置的 API）
             api_handler = get_api_call_handler(self.db_pool)
@@ -948,6 +955,7 @@ class FormManager:
                 api_config=api_config,
                 session_data=session_data,
                 form_data=merged_form_data,
+                user_input=user_input,
                 knowledge_answer=knowledge_answer
             )
 

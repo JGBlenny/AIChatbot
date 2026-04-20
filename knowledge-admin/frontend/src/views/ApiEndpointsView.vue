@@ -185,7 +185,79 @@
             </div>
           </div>
 
-          <div class="form-group">
+          <!-- 外部 API 設定 -->
+          <div class="api-config-section">
+            <h3 style="margin: 20px 0 10px; padding-top: 15px; border-top: 1px solid #e5e7eb;">🌐 外部 API 設定</h3>
+
+            <div class="form-group">
+              <label>實作類型</label>
+              <select v-model="formData.implementation_type">
+                <option value="custom">Custom（程式碼內建）</option>
+                <option value="dynamic">Dynamic（外部 API 呼叫）</option>
+              </select>
+              <small class="hint">Custom = api_registry 中的內建處理器；Dynamic = 透過 URL 呼叫外部 API</small>
+            </div>
+
+            <template v-if="formData.implementation_type === 'dynamic'">
+              <div class="form-row">
+                <div class="form-group" style="flex: 0 0 120px;">
+                  <label>HTTP 方法</label>
+                  <select v-model="formData.http_method">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                  </select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                  <label>API URL *</label>
+                  <input v-model="formData.api_url" placeholder="https://www.jgbsmart.com/api/external/v1/bills" />
+                  <small class="hint">支援變數：{session.role_id}、{form.field_name}、{user_input.xxx}</small>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Request Headers <small>(JSON)</small></label>
+                <textarea v-model="formData.request_headers_text" rows="3" placeholder='{"X-API-Key": "your-api-key", "Content-Type": "application/json"}'></textarea>
+              </div>
+
+              <div class="form-group">
+                <label>參數映射 <small>(JSON，將 session/form 資料映射到 API 參數)</small></label>
+                <textarea v-model="formData.param_mappings_text" rows="4" :placeholder="paramMappingsPlaceholder"></textarea>
+                <small class="hint">格式：[{"param_name": "role_id", "source": "session.role_id"}, {"param_name": "keyword", "source": "form.bill_keyword"}]</small>
+              </div>
+
+              <div class="form-group">
+                <label>回應模板 <small>(用 {data.field} 引用回傳欄位)</small></label>
+                <textarea v-model="formData.response_template" rows="3" placeholder="帳單 {data.title}，狀態：{data.status}，金額：NT$ {data.total}"></textarea>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>逾時 (秒)</label>
+                  <input type="number" v-model.number="formData.request_timeout" min="1" max="120" />
+                </div>
+                <div class="form-group">
+                  <label>重試次數</label>
+                  <input type="number" v-model.number="formData.retry_times" min="0" max="5" />
+                </div>
+                <div class="form-group">
+                  <label>快取 (秒, 0=不快取)</label>
+                  <input type="number" v-model.number="formData.cache_ttl" min="0" />
+                </div>
+              </div>
+            </template>
+
+            <template v-if="formData.implementation_type === 'custom'">
+              <div class="form-group">
+                <label>Custom Handler 名稱 <small>(對應 api_registry 中的 key)</small></label>
+                <input v-model="formData.custom_handler_name" placeholder="例如：jgb_bills" />
+                <small class="hint">此名稱必須與程式碼中 api_registry 的 key 一致</small>
+              </div>
+            </template>
+          </div>
+
+          <div class="form-group" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
             <label>
               <input type="checkbox" v-model="formData.is_active" />
               啟用此 API Endpoint
@@ -238,8 +310,19 @@ export default {
         is_active: true,
         display_order: 0,
         vendor_id: null,
-        related_kb_ids: []
-      }
+        related_kb_ids: [],
+        implementation_type: 'custom',
+        api_url: '',
+        http_method: 'GET',
+        request_headers_text: '',
+        param_mappings_text: '',
+        response_template: '',
+        request_timeout: 30,
+        retry_times: 0,
+        cache_ttl: 0,
+        custom_handler_name: ''
+      },
+      paramMappingsPlaceholder: '[{"param_name": "role_id", "source": "session.role_id"}, {"param_name": "user_id", "source": "session.user_id"}]'
     };
   },
   mounted() {
@@ -293,7 +376,17 @@ export default {
         is_active: true,
         display_order: 0,
         vendor_id: null,
-        related_kb_ids: []
+        related_kb_ids: [],
+        implementation_type: 'custom',
+        api_url: '',
+        http_method: 'GET',
+        request_headers_text: '',
+        param_mappings_text: '',
+        response_template: '',
+        request_timeout: 30,
+        retry_times: 0,
+        cache_ttl: 0,
+        custom_handler_name: ''
       };
       this.showModal = true;
     },
@@ -310,7 +403,17 @@ export default {
         is_active: item.is_active,
         display_order: item.display_order,
         vendor_id: item.vendor_id,
-        related_kb_ids: item.related_kb_ids || []
+        related_kb_ids: item.related_kb_ids || [],
+        implementation_type: item.implementation_type || 'custom',
+        api_url: item.api_url || '',
+        http_method: item.http_method || 'GET',
+        request_headers_text: item.request_headers ? JSON.stringify(item.request_headers, null, 2) : '',
+        param_mappings_text: item.param_mappings ? JSON.stringify(item.param_mappings, null, 2) : '',
+        response_template: item.response_template || '',
+        request_timeout: item.request_timeout || 30,
+        retry_times: item.retry_times || 0,
+        cache_ttl: item.cache_ttl || 0,
+        custom_handler_name: item.custom_handler_name || ''
       };
       this.showModal = true;
     },
@@ -319,11 +422,27 @@ export default {
       this.saving = true;
 
       try {
-        // related_kb_ids 由系統自動維護，從 payload 中移除以避免覆蓋
         const payload = {
           ...this.formData
         };
-        delete payload.related_kb_ids;  // 確保不發送此欄位給後端
+        delete payload.related_kb_ids;
+
+        // JSON 文字欄位轉回物件
+        if (payload.request_headers_text) {
+          try { payload.request_headers = JSON.parse(payload.request_headers_text); }
+          catch (e) { alert('Request Headers JSON 格式錯誤'); this.saving = false; return; }
+        } else {
+          payload.request_headers = null;
+        }
+        delete payload.request_headers_text;
+
+        if (payload.param_mappings_text) {
+          try { payload.param_mappings = JSON.parse(payload.param_mappings_text); }
+          catch (e) { alert('參數映射 JSON 格式錯誤'); this.saving = false; return; }
+        } else {
+          payload.param_mappings = null;
+        }
+        delete payload.param_mappings_text;
 
         if (this.editingItem) {
           // 更新現有 endpoint

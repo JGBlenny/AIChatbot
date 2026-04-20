@@ -788,10 +788,6 @@ async def _smart_retrieval_with_comparison(
     import asyncio
 
     # ==================== Step 1: 同時檢索 ====================
-    print(f"\n{'='*80}")
-    print(f"🔍 [智能檢索] 同時檢索 SOP 和知識庫")
-    print(f"{'='*80}")
-
     # 獲取意圖 ID
     intent_id = None
     if intent_result['intent_name'] != 'unclear':
@@ -802,7 +798,32 @@ async def _smart_retrieval_with_comparison(
 
     primary_intent_id = intent_result.get('intent_ids', [None])[0] if intent_result.get('intent_ids') else None
 
-    # 並行執行 SOP 和知識庫檢索
+    # B2B 模式：只走 JGB 知識庫，不走 SOP
+    is_b2b = request.mode in ('b2b', 'customer_service')
+    if is_b2b:
+        print(f"\n{'='*80}")
+        print(f"🏢 [B2B 模式] 只檢索 JGB 知識庫（system_provider）")
+        print(f"{'='*80}")
+
+        knowledge_list, knowledge_list_unfiltered = await _retrieve_knowledge(
+            request=request,
+            intent_id=intent_id,
+            intent_result=intent_result
+        )
+
+        return {
+            'type': 'knowledge' if knowledge_list else 'none',
+            'reason': 'B2B 模式，走 JGB 知識',
+            'knowledge_list': knowledge_list,
+            'knowledge_list_unfiltered': knowledge_list_unfiltered,
+            'sop_result': None,
+        }
+
+    print(f"\n{'='*80}")
+    print(f"🔍 [智能檢索] 同時檢索 SOP 和知識庫")
+    print(f"{'='*80}")
+
+    # B2C：並行執行 SOP 和知識庫檢索
     sop_task = sop_orchestrator.process_message(
         user_message=request.message,
         session_id=request.session_id,
@@ -1573,6 +1594,7 @@ async def _retrieve_knowledge(
         similarity_threshold=kb_similarity_threshold,
         all_intent_ids=all_intent_ids,
         target_user=request.target_user,
+        mode=request.mode,
         return_debug_info=request.include_debug_info
     )
 
@@ -1587,6 +1609,7 @@ async def _retrieve_knowledge(
             similarity_threshold=kb_similarity_threshold,
             all_intent_ids=all_intent_ids,
             target_user=request.target_user,
+            mode=request.mode,
             return_debug_info=True,
             return_unfiltered=True,
         )

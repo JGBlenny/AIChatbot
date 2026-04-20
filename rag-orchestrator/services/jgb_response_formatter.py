@@ -87,11 +87,22 @@ SECTION_LABELS = {
 }
 
 
-def format_jgb_response(api_result: dict) -> str:
-    """格式化 JGB API 回應（進入點）"""
+def format_jgb_response(api_result: dict, endpoint: str = "", user_question: str = "", form_data: dict = None) -> str:
+    """
+    格式化 JGB API 回應（進入點）
+
+    endpoint: API endpoint 名稱（如 jgb_contracts），用於決定走哪個判斷引擎
+    user_question: 用戶原始問題，用於判斷要檢查什麼操作
+    form_data: 表單收集的資料（含用戶輸入的關鍵字）
+    """
     mapping = api_result.get("mapping", {})
     data = api_result.get("data", [])
 
+    # 合約相關 endpoint → 走合約判斷引擎
+    if endpoint in ("jgb_contracts", "jgb_contract_checkin"):
+        return _format_contracts(data, user_question, form_data=form_data)
+
+    # 其他 endpoint → 通用格式化
     if isinstance(data, dict):
         return _format_single(data, mapping)
 
@@ -105,6 +116,17 @@ def format_jgb_response(api_result: dict) -> str:
         if i < len(data):
             lines.append("---")
     return "\n".join(lines)
+
+
+def _format_contracts(data: Any, user_question: str, form_data: dict = None) -> str:
+    """合約資料走判斷引擎"""
+    from services.jgb.contracts import format_contract_response
+
+    keyword = ""
+    if form_data:
+        keyword = form_data.get("contract_keyword", "") or form_data.get("keyword", "")
+
+    return format_contract_response(data, user_question=user_question, keyword=keyword)
 
 
 def _format_single(item: dict, mapping: dict) -> str:

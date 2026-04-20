@@ -45,10 +45,11 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         intent_id = kwargs.get('intent_id')
         all_intent_ids = kwargs.get('all_intent_ids', [])
         target_user = kwargs.get('target_user', 'tenant')
+        mode = kwargs.get('mode', 'b2c')
         vector_limit = kwargs.get('vector_limit', 100)
 
-        # 根據用戶角色決定業態類型
-        is_b2b_mode = (target_user in ['property_manager', 'system_admin'])
+        # 根據用戶角色或模式決定業態類型
+        is_b2b_mode = (target_user in ['property_manager', 'system_admin']) or (mode == 'b2b')
 
         if is_b2b_mode:
             vendor_business_types = ['system_provider']
@@ -317,6 +318,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         similarity_threshold: float = 0.6,
         all_intent_ids: Optional[List[int]] = None,
         target_user: str = 'tenant',
+        mode: str = 'b2c',
         return_debug_info: bool = False,
         use_semantic_boost: bool = True,
         return_unfiltered: bool = False
@@ -340,7 +342,8 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             return_unfiltered=return_unfiltered,
             intent_id=intent_id,
             all_intent_ids=all_intent_ids,
-            target_user=target_user
+            target_user=target_user,
+            mode=mode
         )
 
         # 如果不需要 debug info，移除內部欄位
