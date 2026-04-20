@@ -1947,8 +1947,8 @@ async def _build_knowledge_response(
         if not form_id:
             print(f"⚠️  action_type={action_type} 但缺少 form_id，降級為 direct_answer")
             action_type = 'direct_answer'  # 明確降級
-        elif not request.session_id or not request.user_id:
-            print(f"⚠️  知識 {best_knowledge['id']} 需要表單，但缺少 session_id 或 user_id，降級為 direct_answer")
+        elif request.session_id is None:
+            print(f"⚠️  知識 {best_knowledge['id']} 需要表單，但缺少 session_id，降級為 direct_answer")
             action_type = 'direct_answer'  # 明確降級
         else:
             print(f"📝 [表單觸發] 知識 {best_knowledge['id']} 關聯表單 {form_id}，trigger_mode={trigger_mode}")
