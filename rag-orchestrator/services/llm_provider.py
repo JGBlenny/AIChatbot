@@ -167,6 +167,36 @@ class OpenAIProvider(LLMProvider):
             print(f"❌ OpenAI Async Chat Completion 失敗: {e}")
             raise
 
+    async def stream_chat_completion(
+        self,
+        model: str,
+        messages: List[Dict[str, str]],
+        temperature: float = 0.7,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ):
+        """
+        串流 OpenAI 聊天完成請求，逐 token 產出
+
+        Yields:
+            str: 每次產出一個 token/chunk 的文字
+        """
+        try:
+            stream = await self.async_client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=True,
+                **kwargs
+            )
+            async for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+        except Exception as e:
+            print(f"❌ OpenAI Stream Chat Completion 失敗: {e}")
+            raise
+
     async def async_embedding(
         self,
         text: str,

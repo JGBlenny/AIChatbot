@@ -811,6 +811,62 @@ class LLMAnswerOptimizer:
 
         return synthesized_answer, tokens_used
 
+    async def synthesize_answer_stream(
+        self,
+        question: str,
+        search_results: List[Dict],
+        intent_info: Dict,
+        vendor_params: Optional[Dict] = None,
+        vendor_name: Optional[str] = None,
+        vendor_info: Optional[Dict] = None
+    ):
+        """
+        串流版答案合成 — 逐 token 產出合成結果
+
+        Yields:
+            str: 每次產出一個 token/chunk
+        """
+        max_results = self.config.get("synthesis_max_results", 3)
+        answers_to_synthesize = []
+
+        for i, result in enumerate(search_results[:max_results], 1):
+            content = result['content']
+            if vendor_params and vendor_name:
+                content = self.inject_vendor_params(content, vendor_params, vendor_name, vendor_info)
+            answers_to_synthesize.append({
+                "index": i,
+                "title": self._get_result_title(result),
+                "content": content,
+                "similarity": result['similarity']
+            })
+
+        formatted_answers = "\n\n".join([
+            f"【答案 {ans['index']}】\n"
+            f"標題：{ans['title']}\n"
+            f"相似度：{ans['similarity']:.2f}\n"
+            f"內容：\n{ans['content']}"
+            for ans in answers_to_synthesize
+        ])
+
+        system_prompt = self._create_synthesis_system_prompt(intent_info, vendor_name, vendor_info, vendor_params)
+        user_prompt = self._create_synthesis_user_prompt(question, formatted_answers, intent_info)
+
+        synthesis_temp = float(os.getenv("LLM_SYNTHESIS_TEMP", "0.5"))
+        print(f"📡 串流答案合成開始：{len(answers_to_synthesize)} 個來源")
+
+        async for chunk in self.llm_provider.stream_chat_completion(
+            model=self.config["model"],
+            temperature=synthesis_temp,
+            max_tokens=self.config["max_tokens"],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
+        ):
+            yield chunk
+
+        print(f"✨ 串流答案合成完成")
+
     def _create_synthesis_system_prompt(
         self,
         intent_info: Dict,
@@ -826,23 +882,26 @@ class LLMAnswerOptimizer:
         if vendor_params:
             print(f"   🔍 調試 - vendor_params 數量: {len(vendor_params)}, 前3個 key: {list(vendor_params.keys())[:3]}")
 
-        base_prompt = """你是一個專業的知識整合助理。你的任務是將多個相關但各有側重的答案，合成為一個完整、準確、結構化的回覆。
+        base_prompt = """你是一個專業的知識整合助理。你的任務是將多個相關的答案合併為一個完整的回覆。
 
-🚨 **最高優先級規則**（不可違反）：
-⚠️ **絕對禁止改寫或添加內容**：
-   - 如果原始答案包含溫暖、親切的開場白（如情緒共鳴、安撫性語句、emoji），你**必須逐字保留**這些表達
-   - ❌ **嚴格禁止**：改寫、簡化、或用其他方式表達原始的溫暖語氣
-   - ❌ **嚴格禁止**：在原始答案沒有的情況下，自行添加溫暖的開場白或情緒性語句
-   - ✅ **正確做法**：只保留原始答案中實際存在的內容，不添加、不刪除、不改寫
+最重要的規則：
+- 嚴格保留原始答案的文字和語氣，不要改寫、美化或添加內容
+- 不要加 ## 標題、不要加粗體 **、不要加 emoji
+- 不要加「如有任何疑問」「請隨時聯繫我們」等客套話
+- 不要加開場白或結尾語
+- 直接輸出內容，像是從知識庫直接貼上的
+
+格式規則：
+- 用 1. 2. 3. 編號列出步驟（如果原文有步驟）
+- 用 - 列出要點（如果原文有要點）
+- 保持原文的換行和段落結構
+- 多筆答案之間用空行分隔
 
 合成要求：
-1. **完整性**：涵蓋所有重要資訊，不遺漏任何關鍵步驟或細節
-2. **準確性**：資訊必須來自提供的答案，不要編造或推測
-3. **忠實性**：嚴格基於原始答案內容，不添加原文沒有的內容
-4. **結構化**：可使用標題、列表、步驟編號來組織資訊
-5. **去重**：如果多個答案提到相同資訊，只保留一次，避免重複
-6. **優先級**：優先使用相似度較高的答案內容
-7. **Markdown**：適當使用 Markdown 格式（## 標題、- 列表、**粗體**）"""
+1. 資訊必須來自提供的答案，不要編造
+2. 相同資訊只保留一次，避免重複
+3. 優先使用相似度較高的答案內容
+4. 只輸出合成後的答案，不要加任何元資訊"""
 
         rule_number = 8  # 合成要求現在有 7 項，從 8 開始
 

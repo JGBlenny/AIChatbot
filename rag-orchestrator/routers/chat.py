@@ -486,6 +486,178 @@ async def stream_response_wrapper(response_dict: dict):
         })
 
 
+async def stream_synthesis_response(
+    request: 'VendorChatRequest',
+    req: Request,
+    intent_result: dict,
+    knowledge_list: list,
+    resolver,
+    vendor_info: dict,
+    cache_service,
+    decision: dict = None
+):
+    """
+    串流合成回應 — 檢索完成後直接串流 LLM 合成輸出
+
+    前半段（檢索、信心度評估等）已完成，這裡負責：
+    1. 發送 start/intent 事件
+    2. 判斷是否需要合成
+    3. 如需合成：直接串流 LLM 輸出
+    4. 如不需合成：用原有 stream_response_wrapper 模擬串流
+    5. 發送 metadata/done 事件
+    """
+    try:
+        llm_optimizer = req.app.state.llm_answer_optimizer
+        confidence_evaluator = req.app.state.confidence_evaluator
+
+        # 發送開始事件
+        yield await _generate_sse_event("start", {
+            "cached": False,
+            "message": "開始處理答案..."
+        })
+
+        # 過濾高品質知識
+        high_quality_threshold = float(os.getenv("HIGH_QUALITY_THRESHOLD", "0.8"))
+        filtered_knowledge_list = [k for k in knowledge_list if k.get('similarity', 0) >= high_quality_threshold]
+
+        if not filtered_knowledge_list:
+            yield await _generate_sse_event("answer_chunk", {"chunk": "我目前沒有找到符合您問題的資訊。"})
+            yield await _generate_sse_event("done", {"success": True, "cached": False})
+            return
+
+        best_knowledge = filtered_knowledge_list[0]
+        action_type = best_knowledge.get('action_type', 'direct_answer')
+
+        # 非 direct_answer 不走串流合成（表單、API 等需要完整回應）
+        if action_type != 'direct_answer':
+            yield await _generate_sse_event("answer_chunk", {"chunk": best_knowledge.get('answer', '')})
+            yield await _generate_sse_event("done", {"success": True, "cached": False})
+            return
+
+        # 準備搜尋結果
+        vendor_params = resolver.get_vendor_parameters(request.vendor_id)
+        search_results = [{
+            'id': k['id'],
+            'question_summary': k['question_summary'],
+            'content': k['answer'],
+            'similarity': k.get('similarity', 0.9),
+            'keywords': k.get('keywords', [])
+        } for k in filtered_knowledge_list]
+
+        # 信心度評估
+        evaluation = confidence_evaluator.evaluate(
+            search_results=search_results,
+            question_keywords=intent_result.get('keywords', [])
+        )
+
+        # 判斷是否需要合成
+        synthesis_threshold = llm_optimizer.config.get("synthesis_threshold", 0.80)
+        high_quality_results = [r for r in search_results if r.get('similarity', 0) > synthesis_threshold]
+        needs_synthesis = (
+            len(high_quality_results) >= 2
+            and llm_optimizer.config.get("enable_synthesis", True)
+        )
+
+        if needs_synthesis:
+            # 檢測是否強制合成
+            process_keywords = ["流程", "步驟", "如何", "怎麼", "程序", "過程"]
+            broad_keywords = ["條款", "規定", "說明", "內容", "包括", "有哪些", "什麼", "包含"]
+            is_process = any(kw in request.message for kw in process_keywords)
+            is_broad = any(kw in request.message for kw in broad_keywords)
+
+            max_vec = max(r.get('vector_similarity', 0) for r in high_quality_results) if high_quality_results else 0
+            perfect_threshold = llm_optimizer.config.get("perfect_match_threshold", 0.95)
+            has_perfect = max_vec >= perfect_threshold
+
+            if not is_process and not is_broad and has_perfect:
+                needs_synthesis = False
+
+        if needs_synthesis:
+            # 串流合成！直接從 LLM 串流 token
+            print(f"📡 [串流合成] 開始串流 LLM 合成輸出")
+            full_answer = ""
+            async for chunk in llm_optimizer.synthesize_answer_stream(
+                question=request.message,
+                search_results=search_results,
+                intent_info=intent_result,
+                vendor_params=vendor_params,
+                vendor_name=vendor_info['name'],
+                vendor_info=vendor_info
+            ):
+                full_answer += chunk
+                yield await _generate_sse_event("answer_chunk", {"chunk": chunk})
+
+            # 參數替換（對完整答案做一次）
+            final_answer, _ = _clean_answer_with_tracking(full_answer, request.vendor_id, resolver)
+
+            # 如果替換後不同，發送替換後的完整答案
+            if final_answer != full_answer:
+                yield await _generate_sse_event("answer_replace", {"full_answer": final_answer})
+
+            # 快取完整回應
+            cache_response = VendorChatResponse(
+                answer=final_answer,
+                intent_name=intent_result['intent_name'],
+                intent_type=intent_result.get('intent_type'),
+                confidence=intent_result['confidence'],
+                action_type='direct_answer',
+                source_count=len(knowledge_list),
+                vendor_id=request.vendor_id,
+                mode=request.mode,
+                session_id=request.session_id,
+                timestamp=datetime.utcnow().isoformat()
+            )
+            cache_response_and_return(cache_service, request.vendor_id, request.message, cache_response, request.target_user)
+        else:
+            # 非合成：用快速路徑/模板/完美匹配
+            optimization_result = llm_optimizer.optimize_answer(
+                question=request.message,
+                search_results=search_results,
+                confidence_level=evaluation['confidence_level'],
+                confidence_score=evaluation['confidence_score'],
+                intent_info=intent_result,
+                vendor_params=vendor_params,
+                vendor_name=vendor_info['name'],
+                vendor_info=vendor_info
+            )
+            final_answer, _ = _clean_answer_with_tracking(
+                optimization_result['optimized_answer'], request.vendor_id, resolver
+            )
+            final_answer = _remove_duplicate_question(final_answer, request.message)
+
+            # 逐字輸出
+            import re
+            tokens = re.findall(r'[\u4e00-\u9fff]|[a-zA-Z]+|\d+|[^\w\s]|\s+', final_answer)
+            for token in tokens:
+                yield await _generate_sse_event("answer_chunk", {"chunk": token})
+                await asyncio.sleep(0.015)
+
+        # 發送 metadata
+        yield await _generate_sse_event("metadata", {
+            'confidence': evaluation['confidence_score'],
+            'source_count': len(knowledge_list),
+            'cache_hit': False,
+            'action_type': 'direct_answer',
+            'vendor_id': request.vendor_id,
+            'mode': request.mode
+        })
+
+        yield await _generate_sse_event("done", {
+            "success": True,
+            "cached": False,
+            "message": "答案輸出完成"
+        })
+
+    except Exception as e:
+        print(f"⚠️ 串流合成失敗: {e}")
+        import traceback
+        traceback.print_exc()
+        yield await _generate_sse_event("error", {
+            "success": False,
+            "error": str(e)
+        })
+
+
 async def generate_answer_stream(request: 'VendorChatRequest', app_state, intent_result: dict, processing_result: dict):
     """
     生成串流答案（完整 RAG 處理）
@@ -3057,22 +3229,16 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 return response
 
             elif decision['type'] == 'knowledge':
-                # 返回知識庫回應（會進行答案合成判斷）
-                # ✅ 答案合成只在這裡發生，不會混入 SOP
-                _t0 = _time.time()
-                response = await _build_knowledge_response(
-                    request, req, intent_result, decision['knowledge_list'],
-                    resolver, vendor_info, cache_service,
-                    decision=decision  # 🆕 傳遞完整決策資訊（包含 SOP 結果和比較元數據）
-                )
-                print(f"⏱️ [Step 5] KB 回應構建: {int((_time.time()-_t0)*1000)}ms")
-                print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
-
-                # 🆕 串流模式：將 JSON 響應轉換為串流
+                # 串流模式：直接串流 LLM 合成輸出（不等完整回應）
                 if request.stream:
-                    print(f"📡 [串流模式] 將知識庫響應轉換為串流輸出")
+                    print(f"📡 [串流模式] 使用串流合成回應")
+                    print(f"⏱️ [總計] 檢索完成，開始串流: {int((_time.time()-_total_start)*1000)}ms")
                     return StreamingResponse(
-                        stream_response_wrapper(response.dict()),
+                        stream_synthesis_response(
+                            request, req, intent_result, decision['knowledge_list'],
+                            resolver, vendor_info, cache_service,
+                            decision=decision
+                        ),
                         media_type="text/event-stream",
                         headers={
                             "Cache-Control": "no-cache",
@@ -3080,6 +3246,16 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                             "X-Accel-Buffering": "no"
                         }
                     )
+
+                # 非串流模式：等待完整回應
+                _t0 = _time.time()
+                response = await _build_knowledge_response(
+                    request, req, intent_result, decision['knowledge_list'],
+                    resolver, vendor_info, cache_service,
+                    decision=decision
+                )
+                print(f"⏱️ [Step 5] KB 回應構建: {int((_time.time()-_t0)*1000)}ms")
+                print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
                 return response
 
             elif decision['type'] == 'none':
