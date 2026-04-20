@@ -46,7 +46,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         all_intent_ids = kwargs.get('all_intent_ids', [])
         target_user = kwargs.get('target_user', 'tenant')
         mode = kwargs.get('mode', 'b2c')
-        vector_limit = kwargs.get('vector_limit', 100)
+        vector_limit = kwargs.get('vector_limit', 20)
 
         # 根據用戶角色或模式決定業態類型
         is_b2b_mode = (target_user in ['property_manager', 'system_admin']) or (mode == 'b2b')
@@ -321,7 +321,9 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         mode: str = 'b2c',
         return_debug_info: bool = False,
         use_semantic_boost: bool = True,
-        return_unfiltered: bool = False
+        return_unfiltered: bool = False,
+        precomputed_embedding=None,
+        precomputed_rewrites=None
     ) -> List[Dict]:
         """
         向後相容的介面
@@ -331,6 +333,8 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             return_unfiltered: debug 旁路（followup-debug-visibility 選項 A）。
                 透傳到 retrieve()，True 時跳過 threshold 過濾，
                 供 chat-test 顯示完整候選。
+            precomputed_embedding: 預計算的查詢向量（避免重複呼叫 API）
+            precomputed_rewrites: 預計算的改寫查詢（避免重複呼叫 LLM）
         """
         results = await self.retrieve(
             query=query,
@@ -343,7 +347,9 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             intent_id=intent_id,
             all_intent_ids=all_intent_ids,
             target_user=target_user,
-            mode=mode
+            mode=mode,
+            precomputed_embedding=precomputed_embedding,
+            precomputed_rewrites=precomputed_rewrites
         )
 
         # 如果不需要 debug info，移除內部欄位

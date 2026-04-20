@@ -62,7 +62,9 @@ class SOPOrchestrator:
         user_id: str,
         vendor_id: int,
         intent_id: Optional[int] = None,
-        intent_ids: Optional[List[int]] = None
+        intent_ids: Optional[List[int]] = None,
+        precomputed_embedding=None,
+        precomputed_rewrites=None
     ) -> Dict:
         """
         處理用戶訊息（主入口）
@@ -144,18 +146,22 @@ class SOPOrchestrator:
             query=user_message,
             intent_id=intent_id,  # 可選，用於加成排序
             top_k=5,  # 取前 5 個候選，讓 Reranker 進行語義重排序
-            similarity_threshold=sop_similarity_threshold
+            similarity_threshold=sop_similarity_threshold,
+            precomputed_embedding=precomputed_embedding,
+            precomputed_rewrites=precomputed_rewrites
         )
 
         if not sop_items:
             print(f"   ❌ 無匹配的 SOP（達標）")
-            # 🆕 Debug：撈未達標但分數最高的前 5 名 SOP，給 chat-test 顯示
+            # Debug：撈未達標候選（僅重用已有的預計算資源，不再重跑完整 retrieve）
             debug_candidates = await self.sop_retriever.retrieve_sop_by_query(
                 vendor_id=vendor_id,
                 query=user_message,
                 intent_id=intent_id,
                 top_k=5,
-                similarity_threshold=0.0  # 不過濾，全部撈回來看分數
+                similarity_threshold=0.0,  # 不過濾，全部撈回來看分數
+                precomputed_embedding=precomputed_embedding,
+                precomputed_rewrites=precomputed_rewrites
             )
             print(f"   📊 Debug: 取得 {len(debug_candidates)} 個未達標候選供 chat-test 顯示")
             return {

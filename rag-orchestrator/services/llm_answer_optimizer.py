@@ -57,7 +57,7 @@ class LLMAnswerOptimizer:
             # Phase 2 擴展：答案合成功能
             "enable_synthesis": True,  # 是否啟用答案合成（已啟用，整合多個 SOP 項目）
             "synthesis_min_results": 2,  # 最少需要幾個結果才考慮合成
-            "synthesis_max_results": 5,  # 最多合成幾個答案（調整為 5，支援更多 SOP 項目）
+            "synthesis_max_results": 3,  # 最多合成幾個答案（從 5 降到 3，減少 LLM 延遲）
             "synthesis_threshold": synthesis_threshold,  # 從環境變數讀取（預設 0.80）
             "perfect_match_threshold": perfect_match_threshold,  # 從環境變數讀取（預設 0.80）
             # Phase 3 擴展：條件式優化

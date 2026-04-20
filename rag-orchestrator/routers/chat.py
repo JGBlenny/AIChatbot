@@ -823,20 +823,43 @@ async def _smart_retrieval_with_comparison(
     print(f"🔍 [智能檢索] 同時檢索 SOP 和知識庫")
     print(f"{'='*80}")
 
-    # B2C：並行執行 SOP 和知識庫檢索
+    # ✅ 預計算共用資源（避免 SOP+KB 重複呼叫 LLM/Embedding API）
+    import time as _time
+
+    _t0 = _time.time()
+    # 預計算 Query Rewrite（一次 LLM 呼叫，SOP+KB 共用）
+    precomputed_rewrites = []
+    if os.getenv("ENABLE_QUERY_REWRITE", "false").lower() == "true":
+        try:
+            from services.query_rewriter import get_query_rewriter
+            _qr = get_query_rewriter()
+            if _qr and _qr.enabled:
+                precomputed_rewrites = _qr.rewrite(request.message)
+        except Exception:
+            pass
+    # 預計算 Embedding（一次 API 呼叫，SOP+KB 共用）
+    _ec = get_embedding_client()
+    precomputed_embedding = await _ec.get_embedding(request.message, verbose=False)
+    print(f"⏱️ [預計算] Query Rewrite + Embedding: {int((_time.time()-_t0)*1000)}ms")
+
+    # B2C：並行執行 SOP 和知識庫檢索（共用預計算結果）
     sop_task = sop_orchestrator.process_message(
         user_message=request.message,
         session_id=request.session_id,
         user_id=request.user_id or "unknown",
         vendor_id=request.vendor_id,
         intent_id=primary_intent_id,
-        intent_ids=intent_result.get('intent_ids', [])
+        intent_ids=intent_result.get('intent_ids', []),
+        precomputed_embedding=precomputed_embedding,
+        precomputed_rewrites=precomputed_rewrites
     )
 
     knowledge_task = _retrieve_knowledge(
         request=request,
         intent_id=intent_id,
-        intent_result=intent_result
+        intent_result=intent_result,
+        precomputed_embedding=precomputed_embedding,
+        precomputed_rewrites=precomputed_rewrites
     )
 
     # 等待兩個都完成
@@ -1275,9 +1298,18 @@ async def _build_orchestrator_response(
             comparison_metadata=comparison_metadata  # 🆕 添加比較元數據
         )
 
-    # 獲取意圖資訊（從檢索結果或使用預設）
-    intent_classifier = req.app.state.intent_classifier
-    intent_result = intent_classifier.classify(request.message)
+    # 獲取意圖資訊（已註解 — SOP 路徑不需要重複分類，省 ~1.5s）
+    # intent_classifier = req.app.state.intent_classifier
+    # intent_result = intent_classifier.classify(request.message)
+    intent_result = {
+        'intent_name': 'unknown',
+        'intent_type': None,
+        'confidence': 0.0,
+        'all_intents': [],
+        'secondary_intents': [],
+        'intent_ids': [],
+        'keywords': [],
+    }
 
     # 提取表單資訊（如果有）
     form_triggered = False
@@ -1558,7 +1590,9 @@ async def _build_rag_response(
 async def _retrieve_knowledge(
     request: VendorChatRequest,
     intent_id: Optional[int],
-    intent_result: dict
+    intent_result: dict,
+    precomputed_embedding=None,
+    precomputed_rewrites=None
 ):
     """
     檢索知識庫（混合模式：intent + 向量相似度 + 語義匹配）
@@ -1585,7 +1619,7 @@ async def _retrieve_knowledge(
     # 環境變數向後兼容，但默認值改為 0.55
     kb_similarity_threshold = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.55"))
 
-    # 產線路徑：過濾後的候選
+    # 產線路徑：過濾後的候選（傳入預計算結果避免重複呼叫）
     knowledge_list = await retriever.retrieve_knowledge_hybrid(
         query=request.message,
         intent_id=intent_id,
@@ -1595,7 +1629,9 @@ async def _retrieve_knowledge(
         all_intent_ids=all_intent_ids,
         target_user=request.target_user,
         mode=request.mode,
-        return_debug_info=request.include_debug_info
+        return_debug_info=request.include_debug_info,
+        precomputed_embedding=precomputed_embedding,
+        precomputed_rewrites=precomputed_rewrites
     )
 
     # Debug 旁路：若需要 debug_info，再跑一次未過濾的檢索（followup-debug-visibility 選項 A）
@@ -1612,6 +1648,8 @@ async def _retrieve_knowledge(
             mode=request.mode,
             return_debug_info=True,
             return_unfiltered=True,
+            precomputed_embedding=precomputed_embedding,
+            precomputed_rewrites=precomputed_rewrites
         )
 
     return knowledge_list, knowledge_list_unfiltered
@@ -2749,6 +2787,8 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
     - 各功能模塊獨立為輔助函數
     """
     try:
+        import time as _time
+        _total_start = _time.time()
         # DEBUG: 檢查 session_id 是否被正確接收
         print(f"🔍 [DEBUG] vendor_chat_message received - session_id: {request.session_id}, user_id: {request.user_id}")
 
@@ -2953,9 +2993,20 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 if cached_response:
                     return cached_response
 
-        # Step 3: 意圖分類
-        intent_classifier = req.app.state.intent_classifier
-        intent_result = intent_classifier.classify(request.message)
+        # Step 3: 意圖分類（已註解 — intent 在檢索計分中零權重，省 ~1.5s）
+        # _t0 = _time.time()
+        # intent_classifier = req.app.state.intent_classifier
+        # intent_result = intent_classifier.classify(request.message)
+        # print(f"⏱️ [Step 3] 意圖分類: {int((_time.time()-_t0)*1000)}ms")
+        intent_result = {
+            'intent_name': 'unknown',
+            'intent_type': None,
+            'confidence': 0.0,
+            'all_intents': [],
+            'secondary_intents': [],
+            'intent_ids': [],
+            'keywords': [],
+        }
 
         # Step 4: 智能檢索（SOP 與知識庫同時檢索 + 分數比較）
         # 🆕 2026-01-28: 替換原有的先 SOP 後知識庫的邏輯
@@ -2968,23 +3019,28 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             sop_orchestrator = req.app.state.sop_orchestrator
 
             # 使用智能檢索
+            _t0 = _time.time()
             decision = await _smart_retrieval_with_comparison(
                 request=request,
                 intent_result=intent_result,
                 sop_orchestrator=sop_orchestrator,
                 resolver=resolver
             )
+            print(f"⏱️ [Step 4] 智能檢索: {int((_time.time()-_t0)*1000)}ms")
 
             print(f"🎯 [最終決策] {decision['type']} - {decision['reason']}")
 
             # 根據決策類型返回回應
             if decision['type'] == 'sop':
                 # 返回 SOP 回應（不涉及知識庫）
+                _t0 = _time.time()
                 response = await _build_orchestrator_response(
                     request, req, decision['sop_result'],
                     resolver, vendor_info, cache_service,
                     decision=decision  # 🆕 傳遞決策資訊（包含 comparison_metadata）
                 )
+                print(f"⏱️ [Step 5] SOP 回應構建: {int((_time.time()-_t0)*1000)}ms")
+                print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
 
                 # 🆕 串流模式：將 JSON 響應轉換為串流
                 if request.stream:
@@ -3003,11 +3059,14 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             elif decision['type'] == 'knowledge':
                 # 返回知識庫回應（會進行答案合成判斷）
                 # ✅ 答案合成只在這裡發生，不會混入 SOP
+                _t0 = _time.time()
                 response = await _build_knowledge_response(
                     request, req, intent_result, decision['knowledge_list'],
                     resolver, vendor_info, cache_service,
                     decision=decision  # 🆕 傳遞完整決策資訊（包含 SOP 結果和比較元數據）
                 )
+                print(f"⏱️ [Step 5] KB 回應構建: {int((_time.time()-_t0)*1000)}ms")
+                print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
 
                 # 🆕 串流模式：將 JSON 響應轉換為串流
                 if request.stream:
@@ -3025,11 +3084,14 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
 
             elif decision['type'] == 'none':
                 # 無結果，進入 RAG fallback
+                _t0 = _time.time()
                 response = await _handle_no_knowledge_found(
                     request, req, intent_result, resolver,
                     cache_service, vendor_info,
                     decision=decision  # 🆕 傳遞 decision 以包含 SOP 候選資訊
                 )
+                print(f"⏱️ [Step 5] Fallback 回應: {int((_time.time()-_t0)*1000)}ms")
+                print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
 
                 # 🆕 串流模式：將 JSON 響應轉換為串流
                 if request.stream:

@@ -328,7 +328,9 @@ class VendorSOPRetrieverV2(BaseRetriever):
         top_k: int = 5,
         similarity_threshold: float = None,
         include_keywords_boost: bool = True,
-        return_unfiltered: bool = False
+        return_unfiltered: bool = False,
+        precomputed_embedding=None,
+        precomputed_rewrites=None
     ) -> List[Dict]:
         """
         向後相容的介面
@@ -338,6 +340,8 @@ class VendorSOPRetrieverV2(BaseRetriever):
             return_unfiltered: debug 旁路（followup-debug-visibility 選項 A）。
                 透傳到 retrieve()，True 時跳過 threshold 過濾，
                 供 chat-test 顯示完整候選。
+            precomputed_embedding: 預計算的查詢向量（避免重複呼叫 API）
+            precomputed_rewrites: 預計算的改寫查詢（避免重複呼叫 LLM）
         """
         return await self.retrieve(
             query=query,
@@ -347,5 +351,7 @@ class VendorSOPRetrieverV2(BaseRetriever):
             enable_keyword_fallback=True,
             enable_keyword_boost=include_keywords_boost,
             return_unfiltered=return_unfiltered,
-            intent_id=intent_id
+            intent_id=intent_id,
+            precomputed_embedding=precomputed_embedding,
+            precomputed_rewrites=precomputed_rewrites
         )

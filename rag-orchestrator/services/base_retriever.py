@@ -167,21 +167,41 @@ class BaseRetriever(ABC):
         enable_keyword_fallback = enable_keyword_fallback if enable_keyword_fallback is not None else self.keyword_fallback_enabled
         enable_keyword_boost = enable_keyword_boost if enable_keyword_boost is not None else self.keyword_boost_enabled
 
+        import time as _time
+        _retrieve_start = _time.time()
+
         print(f"\n🔍 [統一檢索] 查詢: {query}")
         print(f"   業者: {vendor_id}, Top-K: {top_k}, 閾值: {similarity_threshold}")
         print(f"   關鍵字備選: {enable_keyword_fallback}, 關鍵字加成: {enable_keyword_boost}")
 
         # Step 0: Query Rewriting（改寫查詢以提升向量匹配率）
         # 策略：用原始查詢 + 改寫查詢分別做向量檢索，取聯集後統一 rerank/finalize
+        # 支援預計算結果（避免 SOP+KB 重複呼叫 LLM）
         original_query = query
-        rewritten_queries = []
-        if self.query_rewriter:
+        precomputed_rewrites = kwargs.pop('precomputed_rewrites', None)
+        precomputed_embedding = kwargs.pop('precomputed_embedding', None)
+
+        if precomputed_rewrites is not None:
+            rewritten_queries = precomputed_rewrites
+            print(f"   ♻️ 使用預計算 Query Rewrite ({len(rewritten_queries)} 個)")
+        elif self.query_rewriter:
+            _t0 = _time.time()
             rewritten_queries = self.query_rewriter.rewrite(query)
+            print(f"   ⏱️ Query Rewrite: {int((_time.time()-_t0)*1000)}ms")
             if rewritten_queries:
                 print(f"   🔄 Query Rewrite: {rewritten_queries}")
+        else:
+            rewritten_queries = []
 
         # Step 1: 生成查詢向量（原始查詢）
-        query_embedding = await self._get_embedding(query)
+        # 支援預計算 embedding（避免 SOP+KB 重複呼叫 Embedding API）
+        if precomputed_embedding is not None:
+            query_embedding = precomputed_embedding
+            print(f"   ♻️ 使用預計算 Embedding")
+        else:
+            _t0 = _time.time()
+            query_embedding = await self._get_embedding(query)
+            print(f"   ⏱️ Embedding(原始): {int((_time.time()-_t0)*1000)}ms")
         if not query_embedding:
             print("⚠️ 向量生成失敗，降級為純關鍵字檢索")
             if enable_keyword_fallback:
@@ -189,13 +209,15 @@ class BaseRetriever(ABC):
             return []
 
         # Step 2: 向量檢索（原始查詢）
+        _t0 = _time.time()
         results = await self._vector_search(
             query_embedding, vendor_id, top_k, similarity_threshold, **kwargs
         )
-        print(f"   向量檢索: 找到 {len(results)} 個結果")
+        print(f"   ⏱️ 向量檢索(原始): {int((_time.time()-_t0)*1000)}ms, 找到 {len(results)} 個結果")
 
         # Step 2.1: 改寫查詢的向量檢索（取聯集，去重）
         if rewritten_queries:
+            _t0 = _time.time()
             existing_ids = {r.get('id') for r in results}
             rewrite_added = 0
             for rq in rewritten_queries:
@@ -212,11 +234,11 @@ class BaseRetriever(ABC):
                         results.append(rr)
                         existing_ids.add(rr.get('id'))
                         rewrite_added += 1
-            if rewrite_added > 0:
-                print(f"   🔄 改寫查詢新增: {rewrite_added} 個候選")
+            print(f"   ⏱️ 改寫查詢檢索: {int((_time.time()-_t0)*1000)}ms, 新增 {rewrite_added} 個候選")
 
         # Step 3: 關鍵字備選（如果結果不足）
         if enable_keyword_fallback and len(results) < top_k:
+            _t0 = _time.time()
             print(f"   啟動關鍵字備選（需要補充 {top_k - len(results)} 個）")
             keyword_results = await self._keyword_search(
                 query, vendor_id, top_k - len(results), **kwargs
@@ -231,13 +253,13 @@ class BaseRetriever(ABC):
                     results.append(kr)
                     added += 1
 
-            if added > 0:
-                print(f"   關鍵字備選: 新增 {added} 個結果")
+            print(f"   ⏱️ 關鍵字備選: {int((_time.time()-_t0)*1000)}ms, 新增 {added} 個結果")
 
         # Step 4: 關鍵字加成（只寫 keyword_boost / keyword_matches）
         if enable_keyword_boost and results:
+            _t0 = _time.time()
             results = await self._apply_keyword_boost(results, query)
-            print(f"   關鍵字加成: 已應用")
+            print(f"   ⏱️ 關鍵字加成: {int((_time.time()-_t0)*1000)}ms")
 
         # Step 5: SemanticReranker（只寫 rerank_score）
         # hotfix (.kiro/issues/reranker-returning-zero.md)：
@@ -294,8 +316,12 @@ class BaseRetriever(ABC):
                 )
 
             if results:
-                results = self._apply_semantic_reranker(query, results, top_k)
-                print(f"   Reranker: 已重排序")
+                import asyncio
+                _t0 = _time.time()
+                results = await asyncio.to_thread(
+                    self._apply_semantic_reranker, query, results, top_k
+                )
+                print(f"   ⏱️ Reranker: {int((_time.time()-_t0)*1000)}ms ({len(results)} 筆)")
             else:
                 print(f"   Reranker: 過濾後無候選，跳過 rerank")
 
@@ -318,6 +344,7 @@ class BaseRetriever(ABC):
         results = results[:top_k]
 
         print(f"   最終結果: {len(results)} 個")
+        print(f"   ⏱️ [統一檢索] 總耗時: {int((_time.time()-_retrieve_start)*1000)}ms")
         return results
 
     async def _apply_keyword_boost(self, results: List[Dict], query: str) -> List[Dict]:

@@ -57,9 +57,6 @@
 
           <div class="message-footer">
             <span class="message-time">{{ formatTime(message.timestamp) }}</span>
-            <span v-if="message.metadata" class="message-metadata">
-              <span class="intent-tag">{{ message.metadata.intent }}</span>
-            </span>
           </div>
         </div>
       </div>
@@ -641,17 +638,6 @@ export default {
   display: flex;
   gap: 0.5rem;
   align-items: center;
-}
-
-.intent-tag {
-  background: rgba(0,0,0,0.05);
-  padding: 0.15rem 0.5rem;
-  border-radius: 8px;
-  font-size: 0.7rem;
-}
-
-.user-message .intent-tag {
-  background: rgba(255,255,255,0.2);
 }
 
 .confidence-badge {
