@@ -27,6 +27,8 @@ import ReviewCenterView from './views/ReviewCenterView.vue';
 import CacheManagementView from './views/CacheManagementView.vue';
 // Business Types Config Management
 import BusinessTypesConfigView from './views/BusinessTypesConfigView.vue';
+// Category Config Management
+import CategoryConfigView from './views/CategoryConfigView.vue';
 // Target User Config Management
 import TargetUserConfigView from './views/TargetUserConfigView.vue';
 // Admin Management
@@ -160,6 +162,12 @@ const routes = [
     path: '/business-types-config',
     name: 'BusinessTypesConfig',
     component: BusinessTypesConfigView
+  },
+  // Category Config Management
+  {
+    path: '/category-config',
+    name: 'CategoryConfig',
+    component: CategoryConfigView
   },
   // Target User Config Management
   {

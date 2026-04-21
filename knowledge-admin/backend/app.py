@@ -76,18 +76,12 @@ class KnowledgeBase(BaseModel):
     keywords: List[str] = []
     source_file: Optional[str] = None
 
-class IntentMapping(BaseModel):
-    """意圖關聯模型"""
-    intent_id: int
-    intent_type: str = 'secondary'  # 'primary' 或 'secondary'
-    confidence: float = 1.0
-
 class KnowledgeUpdate(BaseModel):
     """知識更新模型"""
     question_summary: str
     content: str
     keywords: List[str] = []
-    intent_mappings: Optional[List[IntentMapping]] = []  # 多意圖支援
+    categories: Optional[List[str]] = None  # 類別（複數，可選）
     business_types: Optional[List[str]] = None  # 業態類型（可選，NULL=通用）
     target_user: Optional[List[str]] = None  # 目標用戶（可選，NULL=通用）tenant/landlord/property_manager/system_admin
     priority: Optional[int] = 0  # 優先級加成（0=未啟用，1=已啟用）
@@ -136,6 +130,7 @@ async def health_check():
 @app.get("/api/knowledge", response_model=dict)
 async def list_knowledge(
     search: Optional[str] = Query(None, description="搜尋關鍵字"),
+    category: Optional[str] = Query(None, description="類別過濾"),
     business_types: Optional[str] = Query(None, description="業態類型過濾（逗號分隔）"),
     universal_only: Optional[str] = Query(None, description="只顯示通用知識"),
     limit: int = Query(50, ge=1, le=100, description="每頁筆數"),
@@ -155,7 +150,7 @@ async def list_knowledge(
     cur = conn.cursor()
 
     try:
-        # 建立查詢（加入意圖資訊 - 使用 knowledge_intent_mapping，並加入業者資訊、API 配置）
+        # 建立查詢（加入業者資訊、API 配置）
         query = """
             SELECT DISTINCT
                 kb.id, kb.question_summary, kb.answer as content,
@@ -165,6 +160,7 @@ async def list_knowledge(
                 kb.form_id,
                 kb.action_type,
                 kb.api_config,
+                kb.categories,
                 v.name as vendor_name
             FROM knowledge_base kb
             LEFT JOIN vendors v ON v.id = ANY(kb.vendor_ids)
@@ -176,6 +172,11 @@ async def list_knowledge(
             query += " AND (kb.question_summary ILIKE %s OR kb.answer ILIKE %s)"
             search_pattern = f"%{search}%"
             params.extend([search_pattern, search_pattern])
+
+        # 類別過濾（精確匹配）
+        if category:
+            query += " AND %s = ANY(kb.categories)"
+            params.append(category)
 
         # 業態類型過濾
         if business_types:
@@ -204,27 +205,6 @@ async def list_knowledge(
             if item.get('updated_at'):
                 item['updated_at'] = item['updated_at'].isoformat()
 
-            # 獲取關聯的意圖
-            cur.execute("""
-                SELECT
-                    kim.intent_id,
-                    i.name as intent_name,
-                    kim.intent_type,
-                    kim.confidence
-                FROM knowledge_intent_mapping kim
-                JOIN intents i ON kim.intent_id = i.id
-                WHERE kim.knowledge_id = %s
-                ORDER BY
-                    CASE kim.intent_type
-                        WHEN 'primary' THEN 1
-                        WHEN 'secondary' THEN 2
-                    END,
-                    kim.confidence DESC
-            """, (item['id'],))
-
-            intents = [dict(intent_row) for intent_row in cur.fetchall()]
-            item['intent_mappings'] = intents
-
             items.append(item)
 
         # 取得總數
@@ -233,6 +213,10 @@ async def list_knowledge(
         if search:
             count_query += " AND (question_summary ILIKE %s OR answer ILIKE %s)"
             count_params.extend([f"%{search}%", f"%{search}%"])
+
+        if category:
+            count_query += " AND %s = ANY(categories)"
+            count_params.append(category)
 
         # 業態類型過濾（總數查詢也要包含）
         if business_types:
@@ -276,6 +260,7 @@ async def get_knowledge(knowledge_id: int, user: dict = Depends(get_current_user
                    kb.api_config,
                    kb.trigger_mode,
                    kb.immediate_prompt,
+                   kb.categories,
                    v.name as vendor_name
             FROM knowledge_base kb
             LEFT JOIN vendors v ON v.id = ANY(kb.vendor_ids)
@@ -293,27 +278,6 @@ async def get_knowledge(knowledge_id: int, user: dict = Depends(get_current_user
             result['created_at'] = result['created_at'].isoformat()
         if result.get('updated_at'):
             result['updated_at'] = result['updated_at'].isoformat()
-
-        # 取得關聯的意圖
-        cur.execute("""
-            SELECT
-                kim.intent_id,
-                i.name as intent_name,
-                kim.intent_type,
-                kim.confidence
-            FROM knowledge_intent_mapping kim
-            JOIN intents i ON kim.intent_id = i.id
-            WHERE kim.knowledge_id = %s
-            ORDER BY
-                CASE kim.intent_type
-                    WHEN 'primary' THEN 1
-                    WHEN 'secondary' THEN 2
-                END,
-                kim.confidence DESC
-        """, (knowledge_id,))
-
-        intents = [dict(row) for row in cur.fetchall()]
-        result['intent_mappings'] = intents
 
         return result
 
@@ -387,6 +351,7 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
                 api_config = %s,
                 trigger_mode = %s,
                 immediate_prompt = %s,
+                categories = %s,
                 updated_at = NOW()
             WHERE id = %s
             RETURNING id, question_summary, updated_at
@@ -398,37 +363,17 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
             data.business_types,
             data.target_user,
             data.priority,
-            data.vendor_ids,  # 使用 vendor_ids 陣列，支援 None 值
+            data.vendor_ids,
             data.form_id,
             data.action_type,
             Json(data.api_config) if data.api_config else None,
             data.trigger_mode,
             data.immediate_prompt,
+            data.categories,
             knowledge_id
         ))
 
         updated = cur.fetchone()
-
-        # 4. 更新意圖關聯
-        # 如果有提供 intent_mappings，先刪除舊的，再插入新的
-        if data.intent_mappings is not None:
-            # 刪除舊的關聯
-            cur.execute("""
-                DELETE FROM knowledge_intent_mapping
-                WHERE knowledge_id = %s
-            """, (knowledge_id,))
-
-            # 插入新的關聯
-            for mapping in data.intent_mappings:
-                cur.execute("""
-                    INSERT INTO knowledge_intent_mapping
-                    (knowledge_id, intent_id, intent_type, confidence, assigned_by)
-                    VALUES (%s, %s, %s, %s, 'manual')
-                    ON CONFLICT (knowledge_id, intent_id) DO UPDATE
-                    SET intent_type = EXCLUDED.intent_type,
-                        confidence = EXCLUDED.confidence,
-                        updated_at = NOW()
-                """, (knowledge_id, mapping.intent_id, mapping.intent_type, mapping.confidence))
 
         conn.commit()
 
@@ -437,8 +382,7 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
             rag_api_url = os.getenv("RAG_API_URL", "http://rag-orchestrator:8100")
             invalidation_payload = {
                 "type": "knowledge_update",
-                "knowledge_id": knowledge_id,
-                "intent_ids": [m.intent_id for m in data.intent_mappings or []]
+                "knowledge_id": knowledge_id
             }
 
             invalidation_response = requests.post(
@@ -529,8 +473,8 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
 
         cur.execute("""
             INSERT INTO knowledge_base
-            (question_summary, answer, keywords, embedding, business_types, target_user, priority, vendor_ids, form_id, action_type, api_config, trigger_mode, immediate_prompt)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (question_summary, answer, keywords, embedding, business_types, target_user, priority, vendor_ids, form_id, action_type, api_config, trigger_mode, immediate_prompt, categories)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, created_at
         """, (
             data.question_summary,
@@ -540,30 +484,18 @@ async def create_knowledge(data: KnowledgeUpdate, user: dict = Depends(get_curre
             data.business_types,
             data.target_user,
             data.priority,
-            data.vendor_ids,  # 使用 vendor_ids 陣列，支援 None 值
+            data.vendor_ids,
             data.form_id,
             data.action_type,
             Json(data.api_config) if data.api_config else None,
             data.trigger_mode,
-            data.immediate_prompt
+            data.immediate_prompt,
+            data.categories
         ))
 
         new_record = cur.fetchone()
         new_id = new_record['id']
         print(f"✅ 知識已插入，ID: {new_id}")
-
-        # 3. 插入意圖關聯
-        if data.intent_mappings:
-            for mapping in data.intent_mappings:
-                cur.execute("""
-                    INSERT INTO knowledge_intent_mapping
-                    (knowledge_id, intent_id, intent_type, confidence, assigned_by)
-                    VALUES (%s, %s, %s, %s, 'manual')
-                    ON CONFLICT (knowledge_id, intent_id) DO UPDATE
-                    SET intent_type = EXCLUDED.intent_type,
-                        confidence = EXCLUDED.confidence,
-                        updated_at = NOW()
-                """, (new_id, mapping.intent_id, mapping.intent_type, mapping.confidence))
 
         conn.commit()
 
@@ -987,87 +919,6 @@ async def delete_target_user_config(user_value: str, user: dict = Depends(get_cu
         cur.close()
         conn.close()
 
-@app.post("/api/knowledge/{knowledge_id}/intents")
-async def add_knowledge_intent(knowledge_id: int, mapping: IntentMapping, user: dict = Depends(get_current_user)):
-    """為知識新增意圖關聯"""
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    try:
-        # 檢查知識是否存在
-        cur.execute("SELECT id FROM knowledge_base WHERE id = %s", (knowledge_id,))
-        if not cur.fetchone():
-            raise HTTPException(status_code=404, detail="知識不存在")
-
-        # 檢查意圖是否存在
-        cur.execute("SELECT id FROM intents WHERE id = %s", (mapping.intent_id,))
-        if not cur.fetchone():
-            raise HTTPException(status_code=404, detail="意圖不存在")
-
-        # 新增或更新關聯
-        cur.execute("""
-            INSERT INTO knowledge_intent_mapping
-            (knowledge_id, intent_id, intent_type, confidence, assigned_by)
-            VALUES (%s, %s, %s, %s, 'manual')
-            ON CONFLICT (knowledge_id, intent_id) DO UPDATE
-            SET intent_type = EXCLUDED.intent_type,
-                confidence = EXCLUDED.confidence,
-                updated_at = NOW()
-            RETURNING id
-        """, (knowledge_id, mapping.intent_id, mapping.intent_type, mapping.confidence))
-
-        mapping_id = cur.fetchone()['id']
-        conn.commit()
-
-        return {
-            "success": True,
-            "message": "意圖關聯已新增",
-            "mapping_id": mapping_id
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=f"新增失敗: {str(e)}")
-
-    finally:
-        cur.close()
-        conn.close()
-
-@app.delete("/api/knowledge/{knowledge_id}/intents/{intent_id}")
-async def remove_knowledge_intent(knowledge_id: int, intent_id: int, user: dict = Depends(get_current_user)):
-    """移除知識的意圖關聯"""
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    try:
-        cur.execute("""
-            DELETE FROM knowledge_intent_mapping
-            WHERE knowledge_id = %s AND intent_id = %s
-            RETURNING id
-        """, (knowledge_id, intent_id))
-
-        deleted = cur.fetchone()
-
-        if not deleted:
-            raise HTTPException(status_code=404, detail="意圖關聯不存在")
-
-        conn.commit()
-
-        return {
-            "success": True,
-            "message": "意圖關聯已移除"
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=f"移除失敗: {str(e)}")
-
-    finally:
-        cur.close()
         conn.close()
 
 @app.get("/api/stats")
@@ -1104,19 +955,18 @@ async def get_stats(user: dict = Depends(get_current_user)):
         """)
         by_business_type = [dict(row) for row in cur.fetchall()]
 
-        # 按意圖統計（前 10 個）- 使用 knowledge_intent_mapping
+        # 按類別統計（前 10 個）
         cur.execute("""
             SELECT
-                COALESCE(i.name, '未分類') as intent_name,
-                COUNT(DISTINCT COALESCE(kim.knowledge_id, kb.id)) as count
-            FROM knowledge_base kb
-            LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id AND kim.intent_type = 'primary'
-            LEFT JOIN intents i ON kim.intent_id = i.id
-            GROUP BY i.name
+                COALESCE(cat, '未分類') as category_name,
+                COUNT(*) as count
+            FROM knowledge_base kb,
+                 LATERAL unnest(COALESCE(kb.categories, ARRAY['未分類'])) AS cat
+            GROUP BY cat
             ORDER BY count DESC
             LIMIT 10
         """)
-        by_intent = [dict(row) for row in cur.fetchall()]
+        by_category = [dict(row) for row in cur.fetchall()]
 
         # Embedding 覆蓋率統計
         cur.execute("""
@@ -1146,7 +996,7 @@ async def get_stats(user: dict = Depends(get_current_user)):
             "total_knowledge": total,
             "by_source_type": by_source_type,
             "by_business_type": by_business_type,
-            "by_intent": by_intent,
+            "by_category": by_category,
             "embedding_stats": embedding_stats,
             "recent_updates": recent_updates
         }

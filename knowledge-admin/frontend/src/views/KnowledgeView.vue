@@ -26,6 +26,12 @@
           ✕
         </button>
       </div>
+      <select v-model="filterCategory" @change="loadKnowledge" class="filter-select" style="margin-right: 10px;">
+        <option value="">全部類別</option>
+        <option v-for="cat in availableCategories" :key="cat.category_value" :value="cat.category_value">
+          {{ cat.display_name }}
+        </option>
+      </select>
       <button @click="regenerateEmbeddings" class="btn-secondary btn-sm" :disabled="regenerating" style="margin-right: 10px;">
         {{ regenerating ? '生成中...' : '🔄 批量生成向量' }}
       </button>
@@ -64,7 +70,7 @@
           <tr>
             <th width="60">ID</th>
             <th>問題摘要</th>
-            <th width="120">意圖</th>
+            <th width="120">類別</th>
             <th width="120">業態類型</th>
             <th width="120">業者</th>
             <th width="80">優先級</th>
@@ -78,15 +84,13 @@
             <td>{{ item.id }}</td>
             <td>{{ item.question_summary || '(無標題)' }}</td>
             <td>
-              <div v-if="item.intent_mappings && item.intent_mappings.length > 0" class="intent-badges">
+              <div v-if="item.categories && item.categories.length > 0" class="category-badges">
                 <span
-                  v-for="mapping in item.intent_mappings"
-                  :key="mapping.intent_id"
-                  :class="['badge', 'badge-intent', mapping.intent_type === 'primary' ? 'badge-primary' : 'badge-secondary']"
-                  :title="`${mapping.intent_type === 'primary' ? '主要' : '次要'}意圖`"
+                  v-for="cat in item.categories"
+                  :key="cat"
+                  class="badge badge-category"
                 >
-                  {{ mapping.intent_name }}
-                  <sup v-if="mapping.intent_type === 'primary'">★</sup>
+                  {{ cat }}
                 </span>
               </div>
               <span v-else class="badge badge-unclassified">未分類</span>
@@ -327,34 +331,22 @@
             </p>
           </div>
 
-          <!-- 多意圖選擇 -->
+          <!-- 類別選擇（複數） -->
           <div class="form-group">
-            <label>意圖關聯 <span class="field-hint">（點擊標籤選擇）</span></label>
-            <div class="tag-selector intent-tags">
-              <div v-for="intent in availableIntents" :key="intent.id" class="intent-tag-wrapper">
-                <button
-                  type="button"
-                  class="tag-btn"
-                  :class="{
-                    'selected': selectedIntents.includes(intent.id),
-                    'primary-intent': intentTypes[intent.id] === 'primary'
-                  }"
-                  @click="toggleIntent(intent.id)"
-                >
-                  {{ intent.name }}
-                </button>
-                <select
-                  v-if="selectedIntents.includes(intent.id)"
-                  v-model="intentTypes[intent.id]"
-                  class="intent-type-select"
-                  @click.stop
-                >
-                  <option value="primary">主要</option>
-                  <option value="secondary">次要</option>
-                </select>
-              </div>
+            <label>類別 <span class="field-hint">（點擊標籤選擇，可複選）</span></label>
+            <div class="tag-selector category-tags">
+              <button
+                v-for="cat in availableCategories"
+                :key="cat.category_value"
+                type="button"
+                class="tag-btn"
+                :class="{ 'selected': selectedCategories.includes(cat.category_value) }"
+                @click="toggleCategory(cat.category_value)"
+              >
+                {{ cat.display_name }}
+              </button>
             </div>
-            <p v-if="selectedIntents.length === 0" class="hint-text">💡 未選擇意圖的知識將標記為「未分類」</p>
+            <p v-if="selectedCategories.length === 0" class="hint-text">未選擇類別的知識將標記為「未分類」</p>
           </div>
 
           <!-- 1️⃣ 後續動作 -->
@@ -567,7 +559,7 @@ export default {
       pageTitle: '📚 知識庫管理',
       pageDescription: '',
       knowledgeList: [],
-      availableIntents: [],
+      availableCategories: [],
       availableBusinessTypes: [],
       availableTargetUsers: [],  // 從 API 載入
       availableForms: [],  // 從 API 載入可用表單
@@ -582,6 +574,7 @@ export default {
       loading: false,
       stats: null,
       filterMode: null, // 'b2c', 'b2b', 'universal', null
+      filterCategory: '', // 類別過濾
       pagination: {
         limit: 50,
         offset: 0,
@@ -591,7 +584,7 @@ export default {
         question_summary: '',
         content: '',
         keywords: [],
-        intent_mappings: [],
+        categories: [],
         business_types: [],
         target_user: [],  // 新增：目標用戶類型
         priority: 0,  // 新增：優先級（0-10）
@@ -615,11 +608,11 @@ export default {
       linkType: 'none',  // 關聯類型：'none', 'form', 'api'
       selectedApiEndpointId: '',  // 臨時變量：選中的 API 端點 ID
       keywordsString: '',
-      selectedIntents: [],
-      intentTypes: {},
+      selectedCategories: [],
       selectedBusinessTypes: [],
       selectedTargetUsers: [],
       searchTimeout: null,
+      categorySearchTimeout: null,
       isIdSearch: false,
       targetIds: [],
       // Phase 2: 回測優化支援
@@ -627,7 +620,7 @@ export default {
       autoCreateMode: false,
       autoEditMode: false,
       pendingQuestion: null,
-      pendingIntent: null,
+      pendingCategory: null,
       // 影片上傳狀態
       uploading: false,
       uploadProgress: 0
@@ -679,7 +672,6 @@ export default {
     const editParam = query.edit;
     const contextParam = query.context;
     const questionParam = query.question;
-    const intentParam = query.intent;
     const filterParam = query.filter;
 
     // 處理過濾模式
@@ -694,7 +686,7 @@ export default {
     if (actionParam === 'create') {
       this.autoCreateMode = true;
       this.pendingQuestion = questionParam || null;
-      this.pendingIntent = intentParam || null;
+      this.pendingCategory = null;
     }
 
     // Phase 2: 處理 edit=true 參數（自動打開編輯 Modal）
@@ -715,7 +707,7 @@ export default {
     }
 
     // 載入基礎資料
-    await this.loadIntents();
+    await this.loadCategories();
     await this.loadVendors();
     await this.loadBusinessTypes();
     await this.loadTargetUsers();
@@ -841,12 +833,12 @@ export default {
       return btype && btype.color ? btype.color : 'gray';
     },
 
-    async loadIntents() {
+    async loadCategories() {
       try {
-        const response = await axios.get(`${API_BASE}/intents`);
-        this.availableIntents = response.data.intents;
+        const response = await axios.get(`${API_BASE}/category-config`);
+        this.availableCategories = (response.data.categories || []).filter(c => c.is_active);
       } catch (error) {
-        console.error('載入意圖失敗', error);
+        console.error('載入類別失敗', error);
       }
     },
 
@@ -948,14 +940,12 @@ export default {
       }
     },
 
-    updateIntentType(intentId) {
-      // 當意圖被選中時，如果沒有設定類型，預設為 primary
-      if (this.selectedIntents.includes(intentId) && !this.intentTypes[intentId]) {
-        this.intentTypes[intentId] = this.selectedIntents.length === 1 ? 'primary' : 'secondary';
-      }
-      // 如果取消選中，移除類型設定
-      if (!this.selectedIntents.includes(intentId)) {
-        delete this.intentTypes[intentId];
+    toggleCategory(catValue) {
+      const index = this.selectedCategories.indexOf(catValue);
+      if (index > -1) {
+        this.selectedCategories.splice(index, 1);
+      } else {
+        this.selectedCategories.push(catValue);
       }
     },
 
@@ -977,16 +967,6 @@ export default {
       }
     },
 
-    toggleIntent(intentId) {
-      const index = this.selectedIntents.indexOf(intentId);
-      if (index > -1) {
-        this.selectedIntents.splice(index, 1);
-        delete this.intentTypes[intentId];
-      } else {
-        this.selectedIntents.push(intentId);
-        this.updateIntentType(intentId);
-      }
-    },
     async loadKnowledge() {
       this.loading = true;
       try {
@@ -1013,6 +993,9 @@ export default {
             offset: this.pagination.offset
           };
           if (this.searchQuery && !this.isIdSearch) params.search = this.searchQuery;
+
+          // 類別過濾
+          if (this.filterCategory) params.category = this.filterCategory;
 
           // 根據過濾模式添加業態過濾
           if (this.filterMode === 'b2c') {
@@ -1069,6 +1052,13 @@ export default {
         this.loadKnowledge();
       }, 500);
     },
+    searchCategory() {
+      clearTimeout(this.categorySearchTimeout);
+      this.categorySearchTimeout = setTimeout(() => {
+        this.pagination.offset = 0;
+        this.loadKnowledge();
+      }, 500);
+    },
 
     showCreateModal() {
       this.editingItem = null;
@@ -1076,7 +1066,7 @@ export default {
         question_summary: '',
         content: '',
         keywords: [],
-        intent_mappings: [],
+        categories: [],
         business_types: [],
         target_user: [],
         vendor_ids: [],  // 重置業者 IDs
@@ -1090,18 +1080,17 @@ export default {
       this.linkType = 'none';
       this.selectedApiEndpointId = '';
       this.keywordsString = '';
-      this.selectedIntents = [];
-      this.intentTypes = {};
+      this.selectedCategories = [];
       this.selectedBusinessTypes = [];
       this.selectedTargetUsers = [];
-      this.showVendorSelector = false;  // 重置業者選擇器顯示狀態
+      this.showVendorSelector = false;
       this.showModal = true;
     },
 
     async editKnowledge(item) {
       this.editingItem = item;
 
-      // Load full knowledge data including intent mappings
+      // Load full knowledge data
       try {
         const response = await axios.get(`${API_BASE}/knowledge/${item.id}`);
         const knowledge = response.data;
@@ -1110,7 +1099,7 @@ export default {
           question_summary: knowledge.question_summary || '',
           content: knowledge.content || '',
           keywords: knowledge.keywords || [],
-          intent_mappings: knowledge.intent_mappings || [],
+          categories: knowledge.categories || [],
           business_types: knowledge.business_types || '',
           target_user: knowledge.target_user || [],
           priority: knowledge.priority || 0,  // 載入優先級
@@ -1158,12 +1147,8 @@ export default {
 
         this.keywordsString = (knowledge.keywords || []).join(', ');
 
-        // 設定已選擇的意圖和類型
-        this.selectedIntents = (knowledge.intent_mappings || []).map(m => m.intent_id);
-        this.intentTypes = {};
-        (knowledge.intent_mappings || []).forEach(m => {
-          this.intentTypes[m.intent_id] = m.intent_type;
-        });
+        // 設定已選擇的類別
+        this.selectedCategories = knowledge.categories || [];
 
         // 設定已選擇的業態類型
         this.selectedBusinessTypes = knowledge.business_types || [];
@@ -1196,12 +1181,10 @@ export default {
           .map(k => k.trim())
           .filter(k => k);
 
-        // 處理意圖關聯
-        this.formData.intent_mappings = this.selectedIntents.map(intentId => ({
-          intent_id: intentId,
-          intent_type: this.intentTypes[intentId] || 'secondary',
-          confidence: 1.0
-        }));
+        // 處理類別
+        this.formData.categories = this.selectedCategories.length > 0
+          ? this.selectedCategories
+          : null;
 
         // 處理業態類型（空陣列或 null 表示通用）
         this.formData.business_types = this.selectedBusinessTypes.length > 0
@@ -1386,26 +1369,14 @@ export default {
         question_summary: this.pendingQuestion || '',
         content: '',
         keywords: [],
-        intent_mappings: [],
+        categories: [],
         business_types: [],
         target_user: []
       };
       this.keywordsString = '';
-      this.selectedIntents = [];
-      this.intentTypes = {};
+      this.selectedCategories = [];
       this.selectedBusinessTypes = [];
       this.selectedTargetUsers = [];
-
-      // 根據 intent 參數自動選擇意圖
-      if (this.pendingIntent) {
-        const matchedIntent = this.availableIntents.find(
-          intent => intent.name === this.pendingIntent
-        );
-        if (matchedIntent) {
-          this.selectedIntents = [matchedIntent.id];
-          this.intentTypes[matchedIntent.id] = 'primary';
-        }
-      }
 
       this.showModal = true;
     },
@@ -1775,6 +1746,24 @@ export default {
 .badge-unclassified {
   background: #909399 !important;
   color: white !important;
+}
+.badge-category {
+  background: #e8f4fd !important;
+  color: #1a73e8 !important;
+  margin-right: 4px;
+  margin-bottom: 2px;
+}
+.category-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.filter-select {
+  padding: 6px 10px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 13px;
+  min-width: 140px;
 }
 
 .badge sup {
