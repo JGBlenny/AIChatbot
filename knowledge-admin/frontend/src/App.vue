@@ -33,10 +33,6 @@
                 <span class="nav-icon">💼</span>
                 <span class="nav-text">JGB知識庫</span>
               </router-link>
-              <router-link to="/intents" class="nav-item nav-item-sub">
-                <span class="nav-icon">🎯</span>
-                <span class="nav-text">意圖設定</span>
-              </router-link>
               <router-link to="/target-users-config" class="nav-item nav-item-sub">
                 <span class="nav-icon">👥</span>
                 <span class="nav-text">目標設定</span>
@@ -125,10 +121,6 @@
           <router-link to="/review-center" class="nav-item">
             <span class="nav-icon">🔍</span>
             <span class="nav-text">審核管理</span>
-          </router-link>
-          <router-link to="/knowledge-reclassify" class="nav-item">
-            <span class="nav-icon">⚙️</span>
-            <span class="nav-text">意圖分配</span>
           </router-link>
           <router-link to="/test-scenarios" class="nav-item">
             <span class="nav-icon">🧪</span>
@@ -234,10 +226,8 @@ export default {
         '/knowledge/industry': '產業知識庫 (B2C)',
         '/knowledge/jgb': 'JGB知識庫 (B2B)',
         '/knowledge/universal': '通用知識庫',
-        '/intents': '意圖管理',
         '/review-center': '審核中心',
         '/business-scope': '業務範圍管理',
-        '/knowledge-reclassify': '知識意圖分類',
         '/knowledge-import': '知識匯入',
         '/vendors': '業者管理',
         '/platform-sop': 'SOP 範本管理',

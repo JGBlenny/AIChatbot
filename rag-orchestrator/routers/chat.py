@@ -901,16 +901,14 @@ def _build_debug_info(
 # ==================== 輔助函數：SOP 檢索 ====================
 
 async def _retrieve_sop(request: VendorChatRequest, intent_result: dict) -> list:
-    """檢索 SOP（SOP 優先於知識庫）- 使用 Hybrid 模式（Intent + 相似度）"""
+    """檢索 SOP — 純向量相似度檢索"""
     from routers.chat_shared import retrieve_sop_hybrid
 
-    # 使用共用模組的 hybrid 版本（intent + 向量相似度過濾）
-    all_intent_ids = intent_result.get('intent_ids', [])
     sop_similarity_threshold = float(os.getenv("SOP_SIMILARITY_THRESHOLD", "0.75"))
     sop_items = await retrieve_sop_hybrid(
         vendor_id=request.vendor_id,
-        intent_ids=all_intent_ids,
-        query=request.message,  # ← 傳入問題文本用於相似度計算
+        intent_ids=[],
+        query=request.message,
         top_k=request.top_k,
         similarity_threshold=sop_similarity_threshold
     )
@@ -960,15 +958,8 @@ async def _smart_retrieval_with_comparison(
     import asyncio
 
     # ==================== Step 1: 同時檢索 ====================
-    # 獲取意圖 ID
     intent_id = None
-    if intent_result['intent_name'] != 'unclear':
-        try:
-            intent_id = _get_intent_id(intent_result['intent_name'])
-        except:
-            intent_id = None
-
-    primary_intent_id = intent_result.get('intent_ids', [None])[0] if intent_result.get('intent_ids') else None
+    primary_intent_id = None
 
     # B2B 模式：只走 JGB 知識庫，不走 SOP
     is_b2b = request.mode in ('b2b', 'customer_service')
@@ -1020,8 +1011,6 @@ async def _smart_retrieval_with_comparison(
         session_id=request.session_id,
         user_id=request.user_id or "unknown",
         vendor_id=request.vendor_id,
-        intent_id=primary_intent_id,
-        intent_ids=intent_result.get('intent_ids', []),
         precomputed_embedding=precomputed_embedding,
         precomputed_rewrites=precomputed_rewrites
     )
@@ -1761,31 +1750,22 @@ async def _build_rag_response(
 
 async def _retrieve_knowledge(
     request: VendorChatRequest,
-    intent_id: Optional[int],
-    intent_result: dict,
+    intent_id: Optional[int] = None,
+    intent_result: dict = None,
     precomputed_embedding=None,
     precomputed_rewrites=None
 ):
     """
-    檢索知識庫（混合模式：intent + 向量相似度 + 語義匹配）
-
-    ✅ 選項1實施：統一檢索路徑
-    - 降低閾值到 0.55（原 RAG fallback 的閾值）
-    - 使用語義匹配動態計算 intent_boost
-    - 不再需要獨立的 RAG fallback 路徑
-    - 支持 intent_id = None（unclear 情況，無意圖加成）
+    檢索知識庫（向量相似度 + 語義匹配）
 
     Returns:
         Tuple[List[Dict], Optional[List[Dict]]]:
             (filtered_list, unfiltered_list)
             - filtered_list: 通過 KB_SIMILARITY_THRESHOLD 的知識候選（供 LLM 使用）
             - unfiltered_list: 過濾前完整候選（含低分），僅在 include_debug_info=True
-              時非 None；否則為 None。供 chat-test debug 顯示使用
-              （followup-debug-visibility 選項 A）。
+              時非 None；否則為 None。供 chat-test debug 顯示使用。
     """
     retriever = get_vendor_knowledge_retriever()
-    # unclear 時 intent_id = None，all_intent_ids = []
-    all_intent_ids = intent_result.get('intent_ids', [] if intent_id is None else [intent_id])
 
     # ✅ 選項1：統一閾值為 0.55（涵蓋原 knowledge + rag_fallback 範圍）
     # 環境變數向後兼容，但默認值改為 0.55
@@ -1794,11 +1774,9 @@ async def _retrieve_knowledge(
     # 產線路徑：過濾後的候選（傳入預計算結果避免重複呼叫）
     knowledge_list = await retriever.retrieve_knowledge_hybrid(
         query=request.message,
-        intent_id=intent_id,
         vendor_id=request.vendor_id,
         top_k=request.top_k,
         similarity_threshold=kb_similarity_threshold,
-        all_intent_ids=all_intent_ids,
         target_user=request.target_user,
         mode=request.mode,
         return_debug_info=request.include_debug_info,
@@ -1806,16 +1784,14 @@ async def _retrieve_knowledge(
         precomputed_rewrites=precomputed_rewrites
     )
 
-    # Debug 旁路：若需要 debug_info，再跑一次未過濾的檢索（followup-debug-visibility 選項 A）
+    # Debug 旁路：若需要 debug_info，再跑一次未過濾的檢索
     knowledge_list_unfiltered = None
     if request.include_debug_info:
         knowledge_list_unfiltered = await retriever.retrieve_knowledge_hybrid(
             query=request.message,
-            intent_id=intent_id,
             vendor_id=request.vendor_id,
             top_k=request.top_k,
             similarity_threshold=kb_similarity_threshold,
-            all_intent_ids=all_intent_ids,
             target_user=request.target_user,
             mode=request.mode,
             return_debug_info=True,
@@ -3319,26 +3295,6 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         )
 
 
-def _get_intent_id(intent_name: str) -> int:
-    """獲取意圖 ID"""
-    conn = psycopg2.connect(**get_db_config())
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT id FROM intents WHERE name = %s AND is_enabled = true",
-        (intent_name,)
-    )
-    result = cursor.fetchone()
-    intent_id = result[0] if result else None
-    cursor.close()
-    conn.close()
-
-    if not intent_id:
-        raise HTTPException(
-            status_code=500,
-            detail=f"資料庫中找不到意圖: {intent_name}"
-        )
-
-    return intent_id
 
 
 @router.get("/vendors/{vendor_id}/test")

@@ -2,9 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from './stores/auth';
 import KnowledgeView from './views/KnowledgeView.vue';
 import LoginView from './views/LoginView.vue';
-import IntentsView from './views/IntentsView.vue';
-import SuggestedIntentsView from './views/SuggestedIntentsView.vue';
-import KnowledgeReclassifyView from './views/KnowledgeReclassifyView.vue';
 // Phase 1: Multi-Vendor Support
 import VendorManagementView from './views/VendorManagementView.vue';
 import VendorConfigView from './views/VendorConfigView.vue';
@@ -84,21 +81,6 @@ const routes = [
     path: '/knowledge/universal',
     name: 'UniversalKnowledge',
     redirect: to => ({ path: '/knowledge', query: { filter: 'universal' }})
-  },
-  {
-    path: '/intents',
-    name: 'Intents',
-    component: IntentsView
-  },
-  {
-    path: '/suggested-intents',
-    name: 'SuggestedIntents',
-    component: SuggestedIntentsView
-  },
-  {
-    path: '/knowledge-reclassify',
-    name: 'KnowledgeReclassify',
-    component: KnowledgeReclassifyView
   },
   {
     path: '/knowledge-import',

@@ -22,7 +22,7 @@ from services.form_manager import FormManager
 from services.sop_orchestrator import SOPOrchestrator
 
 # 導入路由
-from routers import chat, unclear_questions, suggested_intents, intents, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, platform_sop, cache, videos, business_types, document_converter, target_user_config, forms, api_endpoints, lookup, loops, loop_knowledge, system_health
+from routers import chat, unclear_questions, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, platform_sop, cache, videos, business_types, document_converter, target_user_config, forms, api_endpoints, lookup, loops, loop_knowledge, system_health
 
 # 全局變數
 db_pool: Pool = None
@@ -149,8 +149,6 @@ app.add_middleware(
 # 註冊路由
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 app.include_router(unclear_questions.router, prefix="/api/v1", tags=["unclear_questions"])
-app.include_router(suggested_intents.router, prefix="/api/v1", tags=["suggested_intents"])
-app.include_router(intents.router, prefix="/api/v1", tags=["intents"])
 app.include_router(business_types.router, prefix="/api/v1", tags=["business_types"])  # Business Types (Read-only from config)
 app.include_router(knowledge.router, tags=["knowledge"])
 app.include_router(vendors.router, tags=["vendors"])  # Phase 1: Multi-Vendor Support

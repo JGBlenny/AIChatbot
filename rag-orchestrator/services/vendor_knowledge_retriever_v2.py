@@ -32,18 +32,13 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         **kwargs
     ) -> List[Dict]:
         """
-        知識庫向量檢索（task 3.1）
+        知識庫向量檢索
 
-        變更（與 SOP retriever 對稱）：
         - SQL 不在 WHERE 端用 `>= threshold` 過濾（保留低分候選供 debug 顯示）
-          → similarity_threshold 參數保留簽章但不在 SQL 端使用
-        - SELECT alias 改為 `as vector_similarity`（純向量分數，不含 intent_boost）
-        - LIMIT 預設 100（KB 資料量大於 SOP，可由 kwargs['vector_limit'] 覆寫）
-        - intent_boost 仍用於 ORDER BY 排序，但不寫入 vector_similarity
+        - SELECT alias 為 `as vector_similarity`（純向量分數）
+        - LIMIT 預設 20（可由 kwargs['vector_limit'] 覆寫）
         """
         # 獲取額外參數
-        intent_id = kwargs.get('intent_id')
-        all_intent_ids = kwargs.get('all_intent_ids', [])
         target_user = kwargs.get('target_user', 'tenant')
         mode = kwargs.get('mode', 'b2c')
         vector_limit = kwargs.get('vector_limit', 20)
@@ -88,17 +83,8 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     kb.form_id,
                     kb.action_type,
                     kb.api_config,
-                    kim.intent_id,
-                    -- 計算純向量相似度（不含 intent_boost）
-                    1 - (kb.embedding <=> %s::vector) as vector_similarity,
-                    -- Intent 加成（僅供 ORDER BY 排序使用）
-                    CASE
-                        WHEN kim.intent_id = %s THEN 1.3
-                        WHEN kim.intent_id = ANY(%s::int[]) THEN 1.1
-                        ELSE 1.0
-                    END as intent_boost
+                    1 - (kb.embedding <=> %s::vector) as vector_similarity
                 FROM knowledge_base kb
-                LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                 WHERE
                     (array_length(kb.vendor_ids, 1) IS NULL OR kb.vendor_ids && %s::int[])
                     AND kb.embedding IS NOT NULL
@@ -106,21 +92,14 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     AND {business_type_filter_sql}
                     AND {target_user_filter_sql}
                 ORDER BY
-                    (1 - (kb.embedding <=> %s::vector)) *
-                    CASE
-                        WHEN kim.intent_id = %s THEN 1.3
-                        WHEN kim.intent_id = ANY(%s::int[]) THEN 1.1
-                        ELSE 1.0
-                    END DESC,
+                    (1 - (kb.embedding <=> %s::vector)) DESC,
                     kb.priority DESC
                 LIMIT %s
             """
 
-            # 構建參數列表（已移除 similarity_threshold）
+            # 構建參數列表
             query_params = [
                 vector_str,
-                intent_id if intent_id else -1,
-                all_intent_ids if all_intent_ids else [],
                 [vendor_id],  # 用於 kb.vendor_ids && %s::int[]
                 vendor_business_types,
             ]
@@ -130,8 +109,6 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
 
             query_params.extend([
                 vector_str,
-                intent_id if intent_id else -1,
-                all_intent_ids if all_intent_ids else [],
                 vector_limit
             ])
 
@@ -312,40 +289,29 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
     async def retrieve_knowledge_hybrid(
         self,
         query: str,
-        intent_id: Optional[int],
         vendor_id: int,
         top_k: int = 3,
         similarity_threshold: float = 0.6,
-        all_intent_ids: Optional[List[int]] = None,
         target_user: str = 'tenant',
         mode: str = 'b2c',
         return_debug_info: bool = False,
-        use_semantic_boost: bool = True,
         return_unfiltered: bool = False,
         precomputed_embedding=None,
-        precomputed_rewrites=None
+        precomputed_rewrites=None,
+        **kwargs
     ) -> List[Dict]:
         """
         向後相容的介面
         調用統一的 retrieve 方法
-
-        Args:
-            return_unfiltered: debug 旁路（followup-debug-visibility 選項 A）。
-                透傳到 retrieve()，True 時跳過 threshold 過濾，
-                供 chat-test 顯示完整候選。
-            precomputed_embedding: 預計算的查詢向量（避免重複呼叫 API）
-            precomputed_rewrites: 預計算的改寫查詢（避免重複呼叫 LLM）
         """
         results = await self.retrieve(
             query=query,
             vendor_id=vendor_id,
             top_k=top_k,
             similarity_threshold=similarity_threshold,
-            enable_keyword_fallback=True,  # 啟用關鍵字備選
-            enable_keyword_boost=True,      # 啟用關鍵字加成
+            enable_keyword_fallback=True,
+            enable_keyword_boost=True,
             return_unfiltered=return_unfiltered,
-            intent_id=intent_id,
-            all_intent_ids=all_intent_ids,
             target_user=target_user,
             mode=mode,
             precomputed_embedding=precomputed_embedding,

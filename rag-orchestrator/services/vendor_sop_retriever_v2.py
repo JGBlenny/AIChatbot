@@ -62,18 +62,13 @@ class VendorSOPRetrieverV2(BaseRetriever):
         **kwargs
     ) -> List[Dict]:
         """
-        SOP 向量檢索（task 2.1 + 2.2）
+        SOP 向量檢索
 
-        變更：
-        - SQL 不在 WHERE 端用 `>= threshold` 過濾（保留低分候選供後續 stage / debug 顯示）
-          → similarity_threshold 參數保留簽章但不在 SQL 端使用，
-            僅供 application 層在 retrieve() 末端依 final similarity 過濾
-        - SELECT alias 改為 `as vector_similarity`（純向量分數）
-        - LIMIT 預設 50（可透過 kwargs['vector_limit'] 覆寫），由 design.md 階段性 LIMIT 設計
-        - intent_boost 仍用於 ORDER BY 排序，但**不**寫入 vector_similarity（保持純向量語意）
+        - SQL 不在 WHERE 端用 `>= threshold` 過濾（保留低分候選供 debug 顯示）
+        - SELECT alias 為 `as vector_similarity`（純向量分數）
+        - LIMIT 預設 50（可透過 kwargs['vector_limit'] 覆寫）
         """
         # 獲取額外參數
-        intent_id = kwargs.get('intent_id')
         vector_limit = kwargs.get('vector_limit', 50)
 
         conn = self._get_db_connection()
@@ -102,21 +97,13 @@ class VendorSOPRetrieverV2(BaseRetriever):
                     si.trigger_keywords,
                     si.immediate_prompt,
                     si.followup_prompt,
-                    vsii.intent_id,
-                    -- 計算純向量相似度（不含 intent_boost，符合 vector_similarity 語意）
                     GREATEST(
                         COALESCE(1 - (si.primary_embedding <=> %s::vector), 0),
                         COALESCE(1 - (si.fallback_embedding <=> %s::vector), 0)
-                    ) as vector_similarity,
-                    -- Intent 加成（僅供 ORDER BY 排序使用，不寫入 vector_similarity）
-                    CASE
-                        WHEN vsii.intent_id = %s THEN 1.3
-                        ELSE 1.0
-                    END as intent_boost
+                    ) as vector_similarity
                 FROM vendor_sop_items si
                 INNER JOIN vendor_sop_categories sc ON si.category_id = sc.id
                 LEFT JOIN vendor_sop_groups sg ON si.group_id = sg.id
-                LEFT JOIN vendor_sop_item_intents vsii ON si.id = vsii.sop_item_id
                 WHERE
                     si.vendor_id = %s
                     AND si.is_active = TRUE
@@ -126,15 +113,13 @@ class VendorSOPRetrieverV2(BaseRetriever):
                     GREATEST(
                         COALESCE(1 - (si.primary_embedding <=> %s::vector), 0),
                         COALESCE(1 - (si.fallback_embedding <=> %s::vector), 0)
-                    ) * CASE WHEN vsii.intent_id = %s THEN 1.3 ELSE 1.0 END DESC,
+                    ) DESC,
                     si.priority DESC
                 LIMIT %s
             """, (
                 vector_str, vector_str,
-                intent_id if intent_id else -1,
                 vendor_id,
                 vector_str, vector_str,
-                intent_id if intent_id else -1,
                 vector_limit
             ))
 
