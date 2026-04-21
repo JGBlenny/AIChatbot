@@ -97,30 +97,7 @@ BEGIN
         updated_at = NOW()
     WHERE id = p_candidate_id;
 
-    -- 7. 插入 knowledge_intent_mapping（支援多意圖）
-    IF v_candidate.intent_ids IS NOT NULL AND array_length(v_candidate.intent_ids, 1) > 0 THEN
-        FOR i IN 1..array_length(v_candidate.intent_ids, 1) LOOP
-            INSERT INTO knowledge_intent_mapping (
-                knowledge_id,
-                intent_id,
-                intent_type,
-                confidence,
-                assigned_by,
-                created_at,
-                updated_at
-            ) VALUES (
-                v_new_knowledge_id,
-                v_candidate.intent_ids[i],
-                CASE WHEN i = 1 THEN 'primary' ELSE 'secondary' END,  -- 第一個為主要意圖
-                0.95,  -- 人工審核批准的意圖，給予高信心度
-                'reviewer',
-                NOW(),
-                NOW()
-            );
-        END LOOP;
-    END IF;
-
-    -- 8. 更新 test_scenario 的關聯
+    -- 7. 更新 test_scenario 的關聯
     -- 修正：使用 related_knowledge_ids 而非 linked_knowledge_ids
     -- 移除：has_knowledge 欄位不存在
     UPDATE test_scenarios

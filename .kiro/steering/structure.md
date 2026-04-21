@@ -29,9 +29,7 @@ AIChatbot/
 │   │   ├── forms.py                    # 表單管理
 │   │   ├── api_endpoints.py            # 外部 API 管理
 │   │   ├── lookup.py                   # Lookup 表管理
-│   │   ├── intents.py                  # 意圖管理
 │   │   ├── unclear_questions.py        # 未釐清問題
-│   │   ├── suggested_intents.py        # 意圖建議
 │   │   ├── knowledge_import.py         # 知識匯入
 │   │   ├── knowledge_export.py         # 知識匯出
 │   │   ├── videos.py                   # 視頻管理
@@ -47,7 +45,6 @@ AIChatbot/
 │   │   ├── llm_answer_optimizer.py     # LLM 答案優化器
 │   │   ├── sop_orchestrator.py         # SOP 編排器
 │   │   ├── form_manager.py             # 表單管理器
-│   │   ├── intent_suggestion_engine.py # 意圖建議引擎
 │   │   ├── vendor_config_service.py    # 業者配置服務
 │   │   ├── cache_service.py            # 快取服務
 │   │   │
@@ -124,7 +121,9 @@ AIChatbot/
 │   └── ...
 │
 ├── knowledge-admin/                    # 管理後台
-│   └── ...
+│   └── frontend/src/views/
+│       ├── CategoryConfigView.vue      # 類別配置管理
+│       └── ...
 │
 ├── semantic_model/                     # 語義模型服務
 │   └── ...

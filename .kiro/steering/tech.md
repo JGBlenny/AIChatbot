@@ -157,7 +157,7 @@ Utils (工具層)
 - **模型選擇**:
   - GPT-4o: 複雜任務（答案合成、文件轉換）
   - GPT-4o-mini: 知識生成、SOP 生成、分類、標題生成
-  - GPT-3.5-turbo: 意圖分類（INTENT_CLASSIFIER_MODEL）
+  - GPT-3.5-turbo: 表單流程意圖分類、查詢改寫（QUERY_REWRITE_MODEL）
 - **Temperature**:
   - 0.0-0.3: 確定性任務（分類、提取）
   - 0.7-0.9: 創造性任務（生成、重寫）

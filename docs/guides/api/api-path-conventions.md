@@ -38,12 +38,6 @@ POST   /rag-api/v1/chat                    // AI 對話
 POST   /rag-api/v1/chat/stream             // AI 對話（串流）
 ```
 
-### Intent 相關
-```javascript
-GET    /rag-api/v1/intents                 // 意圖列表
-GET    /rag-api/v1/intents/:id             // 單一意圖
-```
-
 ### Business Types 相關
 ```javascript
 GET    /rag-api/v1/business-types-config   // 業態類型配置
@@ -158,11 +152,6 @@ DELETE /api/knowledge/:id                  // 刪除知識
 POST   /api/knowledge/regenerate-embeddings // 重新生成向量
 POST   /api/knowledge/:id/intents          // 關聯意圖
 DELETE /api/knowledge/:id/intents/:intent_id // 移除意圖關聯
-```
-
-### Intents 相關
-```javascript
-GET    /api/intents                        // 意圖列表
 ```
 
 ### Vendors 相關
@@ -326,15 +315,15 @@ async function loadData() {
 
 ```javascript
 // ❌ 錯誤：混淆 RAG API 和 Admin API
-const ragIntents = await axios.get('/api/intents');  // 這是 Admin API
-const adminIntents = await axios.get('/rag-api/v1/intents');  // 這是 RAG API
+const ragForms = await axios.get('/api/forms');  // 這是 Admin API
+const ragApiForms = await axios.get('/rag-api/v1/forms');  // 這是 RAG API
 
 // ✅ 正確：明確區分
-const ragIntents = await axios.get('/rag-api/v1/intents');    // RAG API
-const adminIntents = await axios.get('/api/intents');         // Admin API
+const ragApiForms = await axios.get('/rag-api/v1/forms');    // RAG API
+const adminForms = await axios.get('/api/forms');            // Admin API（如有）
 ```
 
-**注意：** 雖然兩個 API 都有 `/intents` 端點，但用途不同。
+**注意：** 兩個 API 可能有相同名稱的端點，但用途不同。
 
 ---
 

@@ -29,19 +29,6 @@
 | GET | `/api/v1/test` | Test endpoint |
 | POST | `/api/v1/reload` | Reload configuration |
 
-### Intents Management (Prefix: `/api/v1`)
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/v1/intents` | List all intents |
-| GET | `/api/v1/intents/stats` | Intent statistics |
-| GET | `/api/v1/intents/{intent_id}` | Get intent details |
-| POST | `/api/v1/intents` | Create intent |
-| PUT | `/api/v1/intents/{intent_id}` | Update intent |
-| DELETE | `/api/v1/intents/{intent_id}` | Delete intent |
-| PATCH | `/api/v1/intents/{intent_id}/toggle` | Toggle intent status |
-| POST | `/api/v1/intents/reload` | Reload all intents |
-| POST | `/api/v1/intents/regenerate-embeddings` | Regenerate intent embeddings |
-
 ### Knowledge Base Endpoints
 | Method | Path | Description |
 |--------|------|-------------|

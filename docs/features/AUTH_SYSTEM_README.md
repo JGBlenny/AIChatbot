@@ -150,7 +150,6 @@ database/migrations/
 
 所有管理後台 API 均受保護，包括：
 - `/api/knowledge/*` - 知識庫管理
-- `/api/intents/*` - 意圖管理
 - `/api/backtest/*` - 回測功能
 - `/api/test-scenarios/*` - 測試情境
 - `/api/vendors/*` - 業者管理

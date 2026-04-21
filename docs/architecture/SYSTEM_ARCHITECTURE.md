@@ -122,7 +122,6 @@
 │  ├────────────────────────────────────────────────────────┤    │
 │  │  核心資料表:                                            │    │
 │  │  ✓ knowledge_base (知識庫 + 向量)                       │    │
-│  │  ✓ intents (意圖)                                      │    │
 │  │  ✓ vendors (業者)                                      │    │
 │  │  ✓ vendor_configs (業者配置)                           │    │
 │  │                                                        │    │
@@ -130,7 +129,6 @@
 │  │  ✓ vendor_sop_categories (SOP 分類)                    │    │
 │  │  ✓ vendor_sop_items (SOP 項目)                         │    │
 │  │  ✓ vendor_sop_groups (SOP 群組)                        │    │
-│  │  ✓ vendor_sop_intent_intents (SOP 意圖關聯)            │    │
 │  │                                                        │    │
 │  │  表單系統表: 🆕                                         │    │
 │  │  ✓ form_schemas (表單定義)                             │    │
@@ -140,7 +138,6 @@
 │  │  其他系統表:                                            │    │
 │  │  ✓ chat_history (對話歷史)                             │    │
 │  │  ✓ unclear_questions (未知問題)                         │    │
-│  │  ✓ suggested_intents (意圖建議)                         │    │
 │  │  ✓ test_scenarios (測試情境)                           │    │
 │  │                                                        │    │
 │  │  Phase 2:                                              │    │
@@ -257,7 +254,6 @@ rag-orchestrator/
 │   ├── chat.py                      # Chat API 路由
 │   ├── vendors.py                   # 業者管理 API
 │   ├── knowledge.py                 # 知識庫 API
-│   ├── intents.py                   # 意圖管理 API
 │   ├── forms.py                     # 表單管理 API 🆕
 │   └── cache.py                     # 緩存管理 API 🆕
 ├── services/
@@ -456,7 +452,6 @@ class SOPOrchestrator:
 - 知識庫管理
 - SOP 管理 🆕
 - 表單編輯器 🆕
-- 意圖管理
 - 審核中心 🆕
 - Chat 測試介面
 
@@ -466,7 +461,6 @@ class SOPOrchestrator:
 frontend/src/
 ├── views/
 │   ├── KnowledgeView.vue            # 知識庫管理
-│   ├── IntentsView.vue              # 意圖管理
 │   ├── VendorManagementView.vue     # 業者管理
 │   ├── VendorConfigView.vue         # 業者配置
 │   ├── ChatTestView.vue             # Chat 測試
@@ -481,7 +475,6 @@ frontend/src/
 │   └── review/                      # 審核組件 🆕
 │       ├── ScenarioReviewTab.vue
 │       ├── UnclearQuestionReviewTab.vue
-│       ├── IntentReviewTab.vue
 │       └── KnowledgeReviewTab.vue
 └── router/
     └── index.js                      # Vue Router 配置
@@ -548,13 +541,13 @@ frontend/src/
 其他系統表:
 
 ┌───────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│ chat_history  │    │ unclear_questions│    │ suggested_intents│
-│               │    │                  │    │                  │
-│ - id          │    │ - id             │    │ - id             │
-│ - session_id  │    │ - question       │    │ - question_id    │
-│ - vendor_id   │    │ - frequency      │    │ - suggested_name │
-│ - question    │    │ - status         │    │ - confidence     │
-│ - answer      │    └──────────────────┘    └──────────────────┘
+│ chat_history  │    │ unclear_questions│
+│               │    │                  │
+│ - id          │    │ - id             │
+│ - session_id  │    │ - question       │
+│ - vendor_id   │    │ - frequency      │
+│ - question    │    │ - status         │
+│ - answer      │    └──────────────────┘
 └───────────────┘
 
 Phase 2 新增表格:
@@ -588,7 +581,6 @@ Phase 2 新增表格:
 | `form_field_values` 🆕 | 表單欄位值 | submission_id, field_name, field_value |
 | `chat_history` | 對話歷史 | session_id, vendor_id, question, answer |
 | `unclear_questions` | 未知問題 | question, frequency, status, last_asked |
-| `suggested_intents` | 意圖建議 | question_id, suggested_name, confidence |
 | `test_scenarios` | 測試情境 | question, expected_answer, difficulty, status |
 
 #### Phase 2（待實作）
@@ -671,7 +663,6 @@ CREATE INDEX idx_form_submissions_session ON form_submissions(session_id);
 ├─────────────────────────────────────────────────┤
 │  /api/v1/vendors/*        - 業者管理             │
 │  /api/v1/knowledge/*      - 知識庫管理           │
-│  /api/v1/intents/*        - 意圖管理             │
 │  /api/v1/forms/*          - 表單管理 🆕          │
 │  /api/v1/sop/*            - SOP 管理 🆕          │
 │  /api/v1/cache/*          - 緩存管理 🆕          │

@@ -45,14 +45,6 @@
 
 ---
 
-### `/scripts/knowledge_extraction/`
-知識提取和測試場景生成：
-
-- **`extract_knowledge_and_tests.py`** - 從文檔提取知識和測試場景
-- **`import_excel_to_kb.py`** - Excel 知識庫導入
-- **`reclassify_knowledge_intents.py`** - 重新分類知識意圖
-- **`monitor_and_autorun.sh`** - 監控和自動執行腳本
-
 ### `/scripts/backtest/`
 回測框架和測試執行：
 
@@ -180,7 +172,10 @@ cd rag-orchestrator/tests && python test_answer_synthesis.py
 
 ### 分析工具（已完成）
 - `analysis/analyze_sop_vectorization.py` - 向量化策略分析（策略已確定）
-- `analysis/compare_intent_boost_weights.py` - Intent Boost 權重測試（權重已確定為 1.3x/1.1x）
+
+### 知識提取（已移除）
+- `knowledge_extraction/` - 知識提取和測試場景生成目錄（功能已整合至其他流程）
+- `reclassify_knowledge_intents.py` - 重新分類知識意圖（意圖關聯機制已移除）
 
 ### 遷移腳本（已執行）
 - `migrations/migrate_sop_to_templates.py` - SOP 架構遷移（28 templates 已建立）

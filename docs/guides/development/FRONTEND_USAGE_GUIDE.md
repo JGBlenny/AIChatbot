@@ -13,35 +13,7 @@
 
 ---
 
-### 2. 意圖管理頁面 (`/intents`)
-**URL**: http://localhost:8080/intents
-
-**功能**:
-- 查看所有意圖列表
-- 按類型過濾（knowledge/data_query/action/hybrid）
-- 按狀態過濾（已啟用/已停用）
-- 新增意圖
-- 編輯意圖（名稱、類型、描述、關鍵字、閾值、優先級、API配置）
-- 啟用/停用意圖
-- 刪除意圖（軟刪除）
-- 手動重載意圖配置
-- 查看統計資訊（總數、啟用數、停用數）
-- 查看使用次數
-
-**欄位說明**:
-- **名稱**: 意圖名稱（如「退租流程」）
-- **類型**:
-  - `knowledge`: 知識查詢
-  - `data_query`: 資料查詢（需要API）
-  - `action`: 操作請求（需要API）
-  - `hybrid`: 混合型
-- **信心度閾值**: 0-1，分類需達到此分數才匹配
-- **優先級**: 數字越大優先級越高
-- **API配置**: 如果需要API，設定端點和動作
-
----
-
-### 3. 建議意圖審核頁面 (`/suggested-intents`)
+### 2. 建議意圖審核頁面 (`/suggested-intents`)
 **URL**: http://localhost:8080/suggested-intents
 
 **功能**:
@@ -68,7 +40,7 @@
 
 ---
 
-### 4. 業務範圍配置頁面 (`/business-scope`)
+### 3. 業務範圍配置頁面 (`/business-scope`)
 **URL**: http://localhost:8080/business-scope
 
 **功能**:
@@ -97,13 +69,7 @@
 
 ## 🧪 測試流程
 
-### 測試 1: 查看現有意圖
-1. 開啟 http://localhost:8080/intents
-2. 查看列表中的 11 個意圖（10個原始 + 1個從建議採納的）
-3. 點擊「✏️」編輯任一意圖
-4. 點擊「停用」測試啟用/停用功能
-
-### 測試 2: 觸發新意圖建議
+### 測試 1: 觸發新意圖建議
 在 Chat API 提問一個業務相關但不在現有意圖中的問題：
 
 ```bash
@@ -117,19 +83,14 @@ curl -X POST http://localhost:8100/api/v1/chat \
 
 如果問題觸發 unclear 且 OpenAI 判斷相關，會記錄建議。
 
-### 測試 3: 審核建議意圖
+### 測試 2: 審核建議意圖
 1. 開啟 http://localhost:8080/suggested-intents
 2. 查看待審核的建議
 3. 點擊「✓ 採納」
 4. 輸入審核備註（如「常見問題，值得新增」）
 5. 確認後自動建立新意圖
 
-### 測試 4: 驗證新意圖
-1. 開啟 http://localhost:8080/intents
-2. 確認新意圖已出現在列表中
-3. 再次提問相同問題，應該可以成功匹配
-
-### 測試 5: 業務範圍配置
+### 測試 3: 業務範圍配置
 1. 開啟 http://localhost:8080/business-scope
 2. 查看當前使用的業務範圍（external）
 3. 點擊「✏️ 編輯配置」
@@ -142,14 +103,8 @@ curl -X POST http://localhost:8100/api/v1/chat \
 
 ### 導航選單
 - 位於頁面頂部
-- 4 個選項卡：知識庫、意圖管理、建議審核、業務範圍
+- 3 個選項卡：知識庫、建議審核、業務範圍
 - 當前頁面高亮顯示
-
-### 意圖管理頁面
-- 統計卡片：顯示總意圖數、已啟用、已停用
-- 過濾器：按類型、狀態過濾
-- 表格列：ID、名稱、類型、描述、閾值、優先級、使用次數、狀態、操作
-- 操作按鈕：編輯、啟用/停用、刪除
 
 ### 建議意圖審核頁面
 - 統計卡片：待審核、已採納、已拒絕、已合併
@@ -166,15 +121,6 @@ curl -X POST http://localhost:8100/api/v1/chat \
 ---
 
 ## 🔗 API 端點對應
-
-### 意圖管理頁面
-- GET http://localhost:8100/api/v1/intents
-- POST http://localhost:8100/api/v1/intents
-- PUT http://localhost:8100/api/v1/intents/{id}
-- PATCH http://localhost:8100/api/v1/intents/{id}/toggle
-- DELETE http://localhost:8100/api/v1/intents/{id}
-- GET http://localhost:8100/api/v1/intents/stats
-- POST http://localhost:8100/api/v1/intents/reload
 
 ### 建議意圖審核頁面
 - GET http://localhost:8100/api/v1/suggested-intents
@@ -202,9 +148,8 @@ curl -X POST http://localhost:8100/api/v1/chat \
 ## 🚀 快速開始
 
 1. **開啟主頁面**: http://localhost:8080/
-2. **點擊「意圖管理」**: 查看現有的 11 個意圖
-3. **點擊「建議審核」**: 查看 OpenAI 建議的新意圖
-4. **點擊「業務範圍」**: 查看和配置業務範圍
+2. **點擊「建議審核」**: 查看 OpenAI 建議的新意圖
+3. **點擊「業務範圍」**: 查看和配置業務範圍
 
 ---
 

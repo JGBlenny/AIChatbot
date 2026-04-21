@@ -35,9 +35,8 @@ class LLMAnswerOptimizer:
         # 使用 LLM Provider 抽象層
         self.llm_provider = llm_provider or get_llm_provider()
 
-        # 從環境變數讀取模型配置（用於降低測試成本）
-        # 預設使用 gpt-3.5-turbo（速度快 2-3倍，成本低 70%）
-        default_model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+        # 從環境變數讀取模型配置
+        default_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
         # 從環境變數讀取配置
         synthesis_threshold = float(os.getenv("SYNTHESIS_THRESHOLD", "0.80"))

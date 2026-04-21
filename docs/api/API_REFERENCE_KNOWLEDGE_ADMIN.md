@@ -10,7 +10,6 @@
 
 - [認證說明](#認證說明)
 - [知識管理 API](#知識管理-api)
-- [意圖管理 API](#意圖管理-api)
 - [測試情境 API](#測試情境-api)
 - [回測 API](#回測-api)
 - [認證 API](#認證-api)
@@ -371,41 +370,6 @@ curl -X DELETE http://localhost:8000/api/knowledge/123/intents/5 \
   "message": "意圖關聯已移除",
   "knowledge_id": 123,
   "intent_id": 5
-}
-```
-
----
-
-## 意圖管理 API
-
-### GET /api/intents
-
-取得所有意圖
-
-**範例**:
-
-```bash
-curl http://localhost:8000/api/intents
-```
-
-**回應 (200 OK)**:
-
-```json
-{
-  "total": 25,
-  "items": [
-    {
-      "id": 5,
-      "name": "帳務查詢",
-      "type": "knowledge",
-      "description": "租金、費用、繳費相關查詢",
-      "keywords": ["租金", "繳費", "費用"],
-      "confidence_threshold": 0.80,
-      "is_enabled": true,
-      "priority": 5,
-      "created_at": "2025-10-01T00:00:00"
-    }
-  ]
 }
 ```
 

@@ -98,12 +98,14 @@ GET  /api/v1/health            # 健康檢查
 GET  /api/v1/stats             # 統計資訊
 ```
 
-#### 2.2 意圖分類系統
+#### 2.2 意圖分類系統（現僅用於表單流程）
+
+> **注意（2026-04 更新）**：意圖分類器已不再用於主對話路由，僅保留於表單填寫流程中判斷用戶意圖。主對話流程改用向量檢索 + Reranker 重排序。
 
 **功能**:
-- 自動識別問題類型 (知識查詢/資料查詢/操作執行/混合)
+- 表單流程中自動識別問題類型
 - 提取關鍵字和子類別
-- 決定處理路徑
+- 決定表單處理路徑
 
 **實作方式**:
 - 使用 OpenAI Function Calling
@@ -829,7 +831,7 @@ AIChatbot/
 │   │
 │   ├── services/                  # 核心服務
 │   │   ├── __init__.py
-│   │   ├── intent_classifier.py  # 意圖分類 (Phase 2)
+│   │   ├── intent_classifier.py  # 意圖分類 (僅表單流程)
 │   │   ├── rag_engine.py         # RAG 檢索 (Phase 2)
 │   │   ├── confidence_evaluator.py # 信心度評估 (Phase 2)
 │   │   ├── llm_enhancer.py       # LLM 優化 (Phase 3)

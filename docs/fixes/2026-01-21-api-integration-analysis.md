@@ -237,7 +237,7 @@ class KnowledgeUpdate(BaseModel):
     question_summary: str
     content: str
     keywords: List[str] = []
-    intent_mappings: Optional[List[IntentMapping]] = []
+    intent_mappings: Optional[List[IntentMapping]] = []  # （注意：IntentMapping 已於 2026-04 移除）
     business_types: Optional[List[str]] = None
     target_user: Optional[List[str]] = None
     priority: Optional[int] = 0
@@ -396,7 +396,7 @@ class KnowledgeUpdate(BaseModel):
     question_summary: str
     content: str
     keywords: List[str] = []
-    intent_mappings: Optional[List[IntentMapping]] = []
+    intent_mappings: Optional[List[IntentMapping]] = []  # （注意：IntentMapping 已於 2026-04 移除）
     business_types: Optional[List[str]] = None
     target_user: Optional[List[str]] = None
     priority: Optional[int] = 0

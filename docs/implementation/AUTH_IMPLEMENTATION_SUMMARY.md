@@ -392,11 +392,6 @@ curl -X POST http://localhost:8000/api/auth/login \
 - ✅ `PUT /api/knowledge/{id}` - 更新知識
 - ✅ `DELETE /api/knowledge/{id}` - 刪除知識
 - ✅ `POST /api/knowledge/regenerate-embeddings` - 批量生成向量
-- ✅ `POST /api/knowledge/{id}/intents` - 新增意圖關聯
-- ✅ `DELETE /api/knowledge/{id}/intents/{intent_id}` - 移除意圖關聯
-
-#### 意圖管理
-- ✅ `GET /api/intents` - 列出意圖
 
 #### 目標用戶管理
 - ✅ `GET /api/target-users` - 列出目標用戶

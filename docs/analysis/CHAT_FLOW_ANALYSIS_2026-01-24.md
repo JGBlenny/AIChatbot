@@ -63,7 +63,7 @@ VendorChatResponse
     └─ 無 SOP ↓
 
 ┌─────────────────────────────────────────────────────────────┐
-│ Step 6: 知識庫檢索（混合模式：向量 + 意圖）                    │
+│ Step 6: 知識庫檢索（向量 + Reranker）                          │
 │ 閾值：0.55                                                   │
 └─────────────────────────────────────────────────────────────┘
     ├─ 無知識 → Step 8（無知識處理）
@@ -451,25 +451,21 @@ knowledge_list = await _retrieve_knowledge(request, intent_id, intent_result)
 ```python
 async def _retrieve_knowledge(request, intent_id, intent_result):
     """
-    檢索知識庫（混合模式：intent + 向量相似度 + 語義匹配）
+    檢索知識庫（向量相似度 + Reranker 重排序）
 
     ✅ 統一檢索路徑：
     - 降低閾值到 0.55（涵蓋原 RAG fallback 範圍）
-    - 使用語義匹配動態計算 intent_boost
-    - 支持 intent_id = None（unclear 情況）
+    - Reranker 重排序提升準確率
     """
     retriever = get_vendor_knowledge_retriever()
-    all_intent_ids = intent_result.get('intent_ids', [])
 
     kb_similarity_threshold = 0.55
 
     knowledge_list = await retriever.retrieve_knowledge_hybrid(
         query=request.message,
-        intent_id=intent_id,
         vendor_id=request.vendor_id,
         top_k=request.top_k,
         similarity_threshold=kb_similarity_threshold,
-        all_intent_ids=all_intent_ids,
         target_user=request.target_user,
         return_debug_info=request.include_debug_info
     )
@@ -483,13 +479,11 @@ async def _retrieve_knowledge(request, intent_id, intent_result):
 retrieve_knowledge_hybrid()
     ↓
   1. 獲取問題向量 embedding
-  2. SQL 查詢（向量相似度 >= 0.55 / 1.3）
-  3. SQL 計算 intent_boost（精確匹配 1.3x）
-  4. Python 重新計算 intent_boost（語義相似度）
-  5. 計算最終相似度 = base_similarity × intent_boost
-  6. 過濾 >= 0.55
-  7. Scope 優先級排序
-  8. 返回 top_k 結果
+  2. SQL 查詢（向量相似度 >= 0.55）
+  3. Reranker 重排序（如啟用）
+  4. 過濾 >= 0.55
+  5. Scope 優先級排序
+  6. 返回 top_k 結果
 ```
 
 ### Scope 優先級
@@ -499,29 +493,6 @@ retrieve_knowledge_hybrid()
 | **customized** | 1000 | 業者客製化知識（最高優先） |
 | **vendor** | 500 | 業者專屬知識 |
 | **global** | 100 | 全域通用知識 |
-
-### Intent Boost 計算
-
-```python
-# 精確匹配主要意圖
-if knowledge.intent_id == main_intent_id:
-    boost = 1.3
-
-# 精確匹配次要意圖
-elif knowledge.intent_id in secondary_intent_ids:
-    boost = 1.1
-
-# 語義相似度計算
-else:
-    semantic_similarity = calculate_semantic_similarity(
-        knowledge.intent_name,
-        user_intent_name
-    )
-    if semantic_similarity >= 0.7:
-        boost = 1.0 + (semantic_similarity - 0.7) × 0.3 / 0.3
-    else:
-        boost = 1.0
-```
 
 ---
 
@@ -864,14 +835,14 @@ SOP 模式：
   → 使用參數答案或兜底回應 ✅
 ```
 
-### 原則 5：向量為主，意圖為輔
+### 原則 5：向量為主，Reranker 為輔
 
-**向量相似度 > 意圖匹配**
+**向量相似度 + Reranker 重排序**
 
 ```
 檢索基礎：向量相似度（語義理解）
-優化排序：意圖加成（1.0 ~ 1.3x）
-降級處理：unclear 時 boost = 1.0
+優化排序：Reranker 語義重排序
+降級處理：Reranker 不可用時使用原始相似度
 ```
 
 ---

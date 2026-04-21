@@ -31,18 +31,12 @@ erDiagram
 
     %% ============ 意圖相關 ============
     intents ||--o{ knowledge_base : "categorizes (legacy FK)"
-    intents ||--o{ knowledge_intent_mapping : "has"
     intents ||--o{ test_scenarios : "expected for"
     intents ||--o{ vendor_sop_items : "related to"
 
     %% ============ 知識庫相關 ============
-    knowledge_base ||--o{ knowledge_intent_mapping : "has intents"
     knowledge_base ||--o{ chat_history : "used in"
     knowledge_base ||--o{ test_scenarios : "linked from"
-
-    %% ============ 多意圖支援 ============
-    knowledge_intent_mapping }o--|| knowledge_base : "belongs to"
-    knowledge_intent_mapping }o--|| intents : "refers to"
 
     %% ============ 測試與回測 ============
     test_scenarios ||--o{ ai_generated_knowledge_candidates : "generates"
@@ -120,16 +114,6 @@ erDiagram
         string source_type "來源類型"
         int source_test_scenario_id FK
         boolean is_active
-        timestamp created_at
-    }
-
-    knowledge_intent_mapping {
-        int id PK
-        int knowledge_id FK
-        int intent_id FK
-        string intent_type "primary/secondary"
-        float confidence "信心度"
-        string assigned_by "分配方式"
         timestamp created_at
     }
 
@@ -308,8 +292,7 @@ erDiagram
 
 ### 2. 意圖分類模組 (Intent Classification)
 - **intents** - 意圖定義表（帳務查詢、退租流程等）
-- **knowledge_intent_mapping** - 知識-意圖多對多關聯
-- 支援一筆知識關聯多個意圖（1 主要 + 2 次要）
+- 用於表單流程的意圖分類
 
 ### 3. 知識庫模組 (Knowledge Base)
 - **knowledge_base** - 核心知識庫
@@ -520,41 +503,7 @@ USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
 
 ---
 
-### 5. knowledge_intent_mapping（知識-意圖多對多關聯）
-
-```sql
-CREATE TABLE knowledge_intent_mapping (
-    id SERIAL PRIMARY KEY,
-    knowledge_id INT NOT NULL REFERENCES knowledge_base(id),
-    intent_id INT NOT NULL REFERENCES intents(id),
-
-    intent_type VARCHAR(20) NOT NULL DEFAULT 'secondary',  -- primary/secondary
-    confidence FLOAT DEFAULT 1.0,                          -- 信心度
-    assigned_by VARCHAR(50) DEFAULT 'migration',           -- manual/auto/migration
-
-    created_at TIMESTAMP DEFAULT NOW(),
-
-    UNIQUE(knowledge_id, intent_id)
-);
-```
-
-**用途**: 支援一筆知識關聯多個意圖（最多 3 個：1 主要 + 2 次要）
-
-**範例**:
-```sql
--- 知識：「退租押金如何退還？」
--- 主要意圖：退租流程 (primary)
--- 次要意圖：帳務查詢 (secondary)
-
-INSERT INTO knowledge_intent_mapping (knowledge_id, intent_id, intent_type)
-VALUES
-    (123, 10, 'primary'),     -- 退租流程
-    (123, 15, 'secondary');   -- 帳務查詢
-```
-
----
-
-### 6. conversation_logs（RAG 對話記錄）
+### 5. conversation_logs（RAG 對話記錄）
 
 ```sql
 CREATE TABLE conversation_logs (
@@ -596,7 +545,7 @@ CREATE TABLE conversation_logs (
 
 ---
 
-### 7. unclear_questions（未釐清問題）
+### 6. unclear_questions（未釐清問題）
 
 ```sql
 CREATE TABLE unclear_questions (
@@ -639,7 +588,7 @@ CREATE TABLE unclear_questions (
 
 ---
 
-### 8. test_scenarios（測試情境）
+### 7. test_scenarios（測試情境）
 
 ```sql
 CREATE TABLE test_scenarios (
@@ -695,7 +644,7 @@ CREATE TABLE test_scenarios (
 
 ---
 
-### 9. ai_generated_knowledge_candidates（AI 知識候選）
+### 8. ai_generated_knowledge_candidates（AI 知識候選）
 
 ```sql
 CREATE TABLE ai_generated_knowledge_candidates (
@@ -709,7 +658,7 @@ CREATE TABLE ai_generated_knowledge_candidates (
 
     -- 生成詳情
     generation_prompt TEXT,
-    ai_model VARCHAR(50),              -- gpt-4, gpt-3.5-turbo
+    ai_model VARCHAR(50),              -- gpt-4, gpt-4o-mini
     generation_reasoning TEXT,         -- AI 推理過程
     suggested_sources TEXT[],          -- 建議參考來源
     warnings TEXT[],                   -- 風險警告
@@ -740,7 +689,7 @@ CREATE TABLE ai_generated_knowledge_candidates (
 
 ---
 
-### 10. vendor_sop_items（業者 SOP 項目）
+### 9. vendor_sop_items（業者 SOP 項目）
 
 ```sql
 CREATE TABLE vendor_sop_items (
@@ -788,7 +737,7 @@ CREATE TABLE vendor_sop_items (
 
 ---
 
-### 11. form_schemas（表單定義）
+### 10. form_schemas（表單定義）
 
 ```sql
 CREATE TABLE form_schemas (
@@ -837,7 +786,7 @@ CREATE TABLE form_schemas (
 
 ---
 
-### 12. api_endpoints（API 端點配置）
+### 11. api_endpoints（API 端點配置）
 
 ```sql
 CREATE TABLE api_endpoints (
@@ -947,38 +896,14 @@ ORDER BY
 
 ---
 
-### 2. 知識 ↔ 意圖（多對多）
+### 2. 知識 ↔ 意圖（legacy FK）
 
 ```
 knowledge_base (知識)
-    ↓
-knowledge_intent_mapping (關聯表)
-    ├─ intent_type = 'primary'   (主要意圖，1 個)
-    └─ intent_type = 'secondary' (次要意圖，最多 2 個)
-    ↓
-intents (意圖)
+    └─ intent_id (FK) → intents (舊欄位，保留向後兼容)
 ```
 
-**範例**:
-```sql
--- 知識：「租金逾期怎麼辦？」
--- 主要意圖：帳務查詢
--- 次要意圖：合約規定、違約處理
-
-SELECT
-    kb.question_summary,
-    i.name AS intent_name,
-    kim.intent_type
-FROM knowledge_base kb
-JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
-JOIN intents i ON kim.intent_id = i.id
-WHERE kb.id = 123
-ORDER BY
-  CASE kim.intent_type
-    WHEN 'primary' THEN 1
-    ELSE 2
-  END;
-```
+**說明**：知識庫改用類別（category）分類，intent_id 為舊欄位僅保留向後兼容。意圖分類功能目前僅用於表單流程。
 
 ---
 
@@ -1079,10 +1004,6 @@ CREATE INDEX idx_knowledge_vendor ON knowledge_base(vendor_id);
 -- CREATE INDEX idx_knowledge_scope ON knowledge_base(scope); -- 已棄用
 CREATE INDEX idx_vendor_configs_vendor_id ON vendor_configs(vendor_id);
 
--- 意圖相關
-CREATE INDEX idx_knowledge_intent_mapping_knowledge ON knowledge_intent_mapping(knowledge_id);
-CREATE INDEX idx_knowledge_intent_mapping_intent ON knowledge_intent_mapping(intent_id);
-
 -- 測試相關
 CREATE INDEX idx_test_scenarios_status ON test_scenarios(status);
 CREATE INDEX idx_test_scenarios_source ON test_scenarios(source);
@@ -1124,10 +1045,6 @@ WHERE keywords @> ARRAY['租金', '繳費'];
 - **位置**: `chat.py` 的 `_record_unclear_question`
 - **閾值**: 0.80
 - **檢查範圍**: test_scenarios（僅測試場景庫）
-
-#### 系統 3：意圖分類去重
-- **位置**: `intent_suggestion_engine.py`
-- **策略**: 精確文字匹配（目前無語義檢查）
 
 ---
 

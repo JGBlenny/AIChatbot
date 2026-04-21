@@ -71,7 +71,7 @@ CREATE TABLE roles (
 -- 插入預設角色
 INSERT INTO roles (name, display_name, description, is_system) VALUES
 ('super_admin', '超級管理員', '擁有所有權限', true),
-('knowledge_manager', '知識庫管理員', '管理知識庫和意圖', true),
+('knowledge_manager', '知識庫管理員', '管理知識庫', true),
 ('tester', '測試人員', '執行測試和回測', true),
 ('vendor_manager', '業者管理員', '管理業者設定', true),
 ('config_manager', '配置管理員', '管理系統配置', true),
@@ -147,17 +147,7 @@ CREATE INDEX idx_admin_roles_role ON admin_roles(role_id);
 | `knowledge:review` | 審核知識 | 審核待審核知識 | PendingReviewView, ReviewCenterView |
 | `knowledge:ai_review` | AI 審核 | 使用 AI 審核知識 | AIKnowledgeReviewView |
 
-#### 2️⃣ 意圖管理 (Intent Management)
-
-| 權限代碼 | 顯示名稱 | 說明 | 對應視圖 |
-|---------|---------|------|----------|
-| `intent:view` | 查看意圖 | 查看意圖列表 | IntentsView |
-| `intent:create` | 新增意圖 | 新增意圖 | IntentsView |
-| `intent:edit` | 編輯意圖 | 修改意圖 | IntentsView |
-| `intent:delete` | 刪除意圖 | 刪除意圖 | IntentsView |
-| `intent:suggest` | 意圖建議 | 查看和管理建議意圖 | SuggestedIntentsView |
-
-#### 3️⃣ 測試與回測 (Testing & Backtest)
+#### 2️⃣ 測試與回測 (Testing & Backtest)
 
 | 權限代碼 | 顯示名稱 | 說明 | 對應視圖 |
 |---------|---------|------|----------|
@@ -226,7 +216,6 @@ CREATE INDEX idx_admin_roles_role ON admin_roles(role_id);
 
 ```
 ✅ knowledge:*          # 所有知識庫權限
-✅ intent:*             # 所有意圖權限
 ✅ document:convert     # 文檔轉換
 ```
 
@@ -234,7 +223,6 @@ CREATE INDEX idx_admin_roles_role ON admin_roles(role_id);
 
 ```
 ✅ knowledge:view       # 查看知識（唯讀）
-✅ intent:view          # 查看意圖（唯讀）
 ✅ test:*               # 所有測試權限
 ```
 
@@ -243,7 +231,6 @@ CREATE INDEX idx_admin_roles_role ON admin_roles(role_id);
 ```
 ✅ vendor:*             # 所有業者權限
 ✅ knowledge:view       # 查看知識
-✅ intent:view          # 查看意圖
 ```
 
 ### 5. Config Manager (配置管理員)
@@ -258,7 +245,6 @@ CREATE INDEX idx_admin_roles_role ON admin_roles(role_id);
 
 ```
 ✅ knowledge:view       # 查看知識
-✅ intent:view          # 查看意圖
 ✅ test:backtest        # 查看回測（唯讀）
 ✅ vendor:view          # 查看業者
 ✅ sop:view             # 查看 SOP
@@ -573,23 +559,6 @@ export const menuItems = [
         title: '待審核知識',
         path: '/pending-review',
         permissions: ['knowledge:review']
-      }
-    ]
-  },
-  {
-    title: '意圖管理',
-    icon: 'target',
-    permissions: ['intent:view'],
-    children: [
-      {
-        title: '意圖列表',
-        path: '/intents',
-        permissions: ['intent:view']
-      },
-      {
-        title: '建議意圖',
-        path: '/suggested-intents',
-        permissions: ['intent:suggest']
       }
     ]
   },

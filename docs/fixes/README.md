@@ -8,7 +8,7 @@
 
 ### 2026-01-28
 
-#### ✅ 意圖加成優化 - 移除被 Reranker 覆蓋的無效計算（Performance Optimization）
+#### ✅ 意圖加成優化 - 移除被 Reranker 覆蓋的無效計算（Performance Optimization）（已移除：意圖加成機制已於 2026-04 全面移除）
 **檔案**: [INTENT_BOOST_OPTIMIZATION_2026-01-28.md](./INTENT_BOOST_OPTIMIZATION_2026-01-28.md)
 
 **問題**: 知識庫和 SOP 檢索系統中的意圖加成計算被 Reranker 10/90 混合完全覆蓋
@@ -166,7 +166,7 @@
 ## 🔍 查找修復
 
 ### 按功能模組
-- **知識庫檢索 & SOP 檢索**: [意圖加成優化](./INTENT_BOOST_OPTIMIZATION_2026-01-28.md)
+- **知識庫檢索 & SOP 檢索**: [意圖加成優化](./INTENT_BOOST_OPTIMIZATION_2026-01-28.md)（已移除）
 - **Knowledge Admin API**: [API 整合修復](./2026-01-21-api-integration-fix.md)
 - **知識檢索**: [Business Types 欄位名稱修復](./2025-10-29-business-types-field-name-fix.md)
 - **多意圖分類**: [獨立信心度評分](./2025-10-29-business-types-field-name-fix.md)
@@ -174,7 +174,7 @@
 
 ### 按影響等級
 - **Performance Optimization**:
-  - [意圖加成優化](./INTENT_BOOST_OPTIMIZATION_2026-01-28.md)
+  - [意圖加成優化](./INTENT_BOOST_OPTIMIZATION_2026-01-28.md)（已移除）
 - **Critical**:
   - [Knowledge Admin API 整合修復](./2026-01-21-api-integration-fix.md)
   - [Business Types 欄位名稱修復](./2025-10-29-business-types-field-name-fix.md)

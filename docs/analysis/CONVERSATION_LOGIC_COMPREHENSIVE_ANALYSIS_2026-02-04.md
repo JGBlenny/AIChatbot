@@ -15,7 +15,7 @@
 
 1. **文檔完整性**: ✅ 文檔與程式碼基本同步，最新更新到 2026-02-03
 2. **對話架構**: 採用分層協調系統（SOP + 知識庫 + 表單）
-3. **主要流程**: 10 層處理流程 (意圖分類 → SOP 檢索 → 知識檢索 → 表單觸發 → API 調用)
+3. **主要流程**: 10 層處理流程 (SOP 檢索 → 知識檢索 → 表單觸發 → API 調用；意圖分類僅用於表單流程)
 4. **最新功能**: 知識庫與 SOP 統一表單觸發模式（2026-02-03）
 
 ---
@@ -108,7 +108,7 @@
 | 檔案 | 大小 | 職責 |
 |------|------|------|
 | `/rag-orchestrator/services/rag_engine.py` | 33KB | 向量檢索引擎 |
-| `/rag-orchestrator/services/intent_classifier.py` | 24KB | 意圖分類服務 |
+| `/rag-orchestrator/services/intent_classifier.py` | 24KB | 意圖分類服務（僅用於表單流程） |
 | `/rag-orchestrator/services/vendor_knowledge_retriever.py` | 30KB | 知識庫檢索 |
 | `/rag-orchestrator/services/llm_answer_optimizer.py` | 59KB | LLM 答案優化 |
 
@@ -265,7 +265,7 @@ Auto (自動型)
 │  Layer 3: 檢索層 (Retrieval Services)       │
 │  - rag_engine.py (向量檢索)                 │
 │  - vendor_sop_retriever.py (SOP 檢索)       │
-│  - intent_classifier.py (意圖分類)          │
+│  - intent_classifier.py (表單流程意圖分類)   │
 ├─────────────────────────────────────────────┤
 │  Layer 4: 處理層 (Handler Services)         │
 │  - sop_trigger_handler.py                   │
@@ -360,7 +360,7 @@ Step 5: 執行完成後動作
   - API 整合
 
 #### 3. 基礎層 (Foundation Layer)
-- Intent Classifier (意圖分類)
+- Intent Classifier (表單流程意圖分類，不再用於主對話路由)
 - RAG Engine (向量檢索)
 - LLM Optimizer (答案優化)
 - Cache Service (三層緩存)
@@ -570,7 +570,7 @@ class VendorChatResponse(BaseModel):
 | SOP 觸發 | `/rag-orchestrator/services/sop_trigger_handler.py` | 觸發模式處理 |
 | 表單管理 | `/rag-orchestrator/services/form_manager.py` | 表單全生命周期 |
 | 知識檢索 | `/rag-orchestrator/services/vendor_knowledge_retriever.py` | 知識庫檢索 |
-| 意圖分類 | `/rag-orchestrator/services/intent_classifier.py` | 意圖識別 |
+| 意圖分類 | `/rag-orchestrator/services/intent_classifier.py` | 表單流程意圖識別 |
 
 ### 對話流程設計文檔
 | 需求 | 檔案位置 |

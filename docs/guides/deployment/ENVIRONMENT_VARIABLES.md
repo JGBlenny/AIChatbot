@@ -170,14 +170,15 @@ OPENAI_MODEL=gpt-3.5-turbo
 
 | 變數名 | 說明 | 預設值 | 必需 |
 |--------|------|--------|------|
-| `INTENT_CLASSIFIER_MODEL` | 意圖分類使用的模型 | `gpt-3.5-turbo` | ❌ |
+| `INTENT_CLASSIFIER_MODEL` | 表單流程意圖分類使用的模型 | `gpt-3.5-turbo` | ❌ |
 | `INTENT_CLASSIFIER_TEMPERATURE` | 意圖分類溫度（0-2） | `0.1` | ❌ |
 | `INTENT_CLASSIFIER_MAX_TOKENS` | 意圖分類最大 tokens | `500` | ❌ |
 
 **使用位置**：
-- `rag-orchestrator` - 多意圖分類（1 主意圖 + 2 次要意圖）
+- `rag-orchestrator` - 表單流程的意圖分類（僅用於 form flow intent classification）
 
 **說明**：
+- 此模型僅用於表單填寫流程中的意圖分類，不用於一般知識檢索
 - **Temperature 0.1**: 低溫度確保分類結果穩定
 - **Max Tokens 500**: 意圖分類回應較短，500 tokens 足夠
 
@@ -194,14 +195,14 @@ INTENT_CLASSIFIER_MAX_TOKENS=500
 
 | 變數名 | 說明 | 預設值 | 必需 |
 |--------|------|--------|------|
-| `KNOWLEDGE_GEN_MODEL` | AI 知識生成使用的模型 | `gpt-3.5-turbo` | ❌ |
+| `KNOWLEDGE_GEN_MODEL` | AI 知識生成使用的模型 | `gpt-4o-mini` | ❌ |
 
 **使用位置**：
 - `rag-orchestrator` - AI 知識生成功能
 
 **可選值**：
-- `gpt-3.5-turbo` （預設，成本低）
-- `gpt-4o-mini` （更高品質）
+- `gpt-4o-mini` （預設，平衡品質和成本）
+- `gpt-4o` （高品質）
 - `gpt-4` （最高品質，成本高）
 
 **範例**：
@@ -547,7 +548,7 @@ INTENT_CLASSIFIER_TEMPERATURE=0.1
 INTENT_CLASSIFIER_MAX_TOKENS=500
 
 # 知識生成
-KNOWLEDGE_GEN_MODEL=gpt-3.5-turbo
+KNOWLEDGE_GEN_MODEL=gpt-4o-mini
 
 # 規格書轉換
 DOCUMENT_CONVERTER_MODEL=gpt-4o

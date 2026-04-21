@@ -167,20 +167,8 @@ if kb_score >= 0.6:
 return unclear_response
 ```
 
-### 意圖加成策略
+### 優先級加成（知識庫專屬）
 
-**加成係數**：
-```python
-intent_boost = {
-    'primary_intent': 1.3,      # 主要意圖 30% 加成
-    'secondary_intent': 1.1,    # 次要意圖 10% 加成
-    'other': 1.0                # 其他意圖無加成
-}
-
-boosted_similarity = base_similarity * intent_boost
-```
-
-**優先級加成**（知識庫專屬）：
 ```python
 if priority > 0 AND similarity >= 0.70:
     boosted_similarity += 0.15  # 固定加成
@@ -539,7 +527,7 @@ if api_error in ['ambiguous_match', 'no_match', 'invalid_input']:
 - **緩存機制**：減少重複計算
 - **並行檢索**：SOP 和知識庫同時執行
 - **快速路徑**：高信心度跳過 LLM
-- **模型選擇**：分類用 3.5-turbo，優化用 3.5-turbo
+- **模型選擇**：分類用 gpt-4o-mini，答案優化用 gpt-4o-mini
 
 ### 3. 用戶體驗優化
 - **離題處理**：智能識別問題，允許中斷填表

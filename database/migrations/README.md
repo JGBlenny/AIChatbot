@@ -288,9 +288,11 @@ ALTER TABLE knowledge_base ADD CONSTRAINT check_loop_source
 ### 19. sync_prod_api_forms_knowledge.sql（線上專用）
 **建立日期**: 2026-04-15
 **功能**: 同步線上 `api_endpoints` / `form_schemas` / `knowledge_base` / `knowledge_intent_mapping` 資料（以本地為準）
-**影響表**: `api_endpoints`, `form_schemas`, `knowledge_base`, `knowledge_intent_mapping`, `form_sessions`
+**影響表**: `api_endpoints`, `form_schemas`, `knowledge_base`, `form_sessions`
 
-**內容**: 刪除死資料 → 更新既有記錄 → 新增缺失記錄（含 lookup endpoints、v2 查詢表單、對應知識與 intent 關聯）。
+**內容**: 刪除死資料 → 更新既有記錄 → 新增缺失記錄（含 lookup endpoints、v2 查詢表單、對應知識）。
+
+> ⚠️ **已棄用**: 此 migration 中原有的 `knowledge_intent_mapping` 同步操作已不再適用（該表已移除意圖關聯機制）。
 
 ---
 
