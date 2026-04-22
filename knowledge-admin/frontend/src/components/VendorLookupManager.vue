@@ -43,21 +43,6 @@
       </div>
     </div>
 
-    <!-- 統計卡片 -->
-    <div v-if="stats" class="stats-cards">
-      <div class="stat-card">
-        <div class="stat-label">總記錄數</div>
-        <div class="stat-value">{{ stats.total_records || 0 }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">啟用記錄</div>
-        <div class="stat-value">{{ stats.active_records || 0 }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">類別數</div>
-        <div class="stat-value">{{ stats.categories_count || 0 }}</div>
-      </div>
-    </div>
 
     <!-- 載入狀態 -->
     <div v-if="loading" class="loading">

@@ -58,7 +58,6 @@
             <th width="5%">ID</th>
             <th width="35%">測試問題</th>
             <th width="8%">難度</th>
-            <th width="8%">優先級</th>
             <th width="8%">狀態</th>
             <th width="18%">最近測試</th>
             <th width="18%">操作</th>
@@ -72,11 +71,6 @@
               <td>
                 <span :class="['badge', 'badge-' + scenario.difficulty]">
                   {{ scenario.difficulty }}
-                </span>
-              </td>
-              <td>
-                <span :class="['badge', priorityBadgeClass(scenario.priority)]">
-                  {{ priorityLabels[scenario.priority] }}
                 </span>
               </td>
               <td>
@@ -319,15 +313,6 @@
               </select>
             </div>
 
-            <div class="form-group">
-              <label>優先級 *</label>
-              <select v-model.number="formData.priority" required>
-                <option :value="30">低優先級（30）</option>
-                <option :value="50">中等優先級（50）</option>
-                <option :value="80">高優先級（80）</option>
-              </select>
-              <small class="hint">優先級影響測試執行順序</small>
-            </div>
           </div>
 
           <div class="form-group">

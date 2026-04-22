@@ -908,14 +908,16 @@ class FormManager:
             collected_data=collected_data
         )
 
-        # 4. 保存表單提交記錄
-        submission_id = await self.save_form_submission(
-            session_id=session_state['id'],
-            form_id=session_state['form_id'],
-            user_id=session_state['user_id'],
-            vendor_id=session_state['vendor_id'],
-            submitted_data=collected_data
-        )
+        # 4. 保存表單提交記錄（查詢型表單不存，只有申請型才存）
+        submission_id = None
+        if on_complete_action != 'call_api':
+            submission_id = await self.save_form_submission(
+                session_id=session_state['id'],
+                form_id=session_state['form_id'],
+                user_id=session_state['user_id'],
+                vendor_id=session_state['vendor_id'],
+                submitted_data=collected_data
+            )
 
         # 5. 格式化完成訊息
         # ⚠️ 如果表單由知識庫觸發，用戶已看過知識內容，不再重複顯示

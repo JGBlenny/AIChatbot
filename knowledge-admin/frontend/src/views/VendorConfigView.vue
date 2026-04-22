@@ -179,15 +179,11 @@ export default {
       vendorId: null,
       vendor: null,
       configs: {},
-      selectedCategory: 'payment',
+      selectedCategory: 'sop',
       loading: false,
       saving: false,
       showPreviewModal: false,
       categories: [
-        { value: 'payment', label: '帳務設定', icon: '💰' },
-        { value: 'contract', label: '合約設定', icon: '📝' },
-        { value: 'service', label: '服務設定', icon: '🛎️' },
-        { value: 'contact', label: '聯絡資訊', icon: '📞' },
         { value: 'sop', label: 'SOP 管理', icon: '📋' },
         { value: 'lookup', label: 'Lookup 數據', icon: '💾' }
       ]

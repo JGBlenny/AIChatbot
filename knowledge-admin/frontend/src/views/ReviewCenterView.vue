@@ -41,9 +41,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import IntentReviewTab from '../components/review/IntentReviewTab.vue';
 import ScenarioReviewTab from '../components/review/ScenarioReviewTab.vue';
-import KnowledgeReviewTab from '../components/review/KnowledgeReviewTab.vue';
 import UnclearQuestionReviewTab from '../components/review/UnclearQuestionReviewTab.vue';
 import LoopKnowledgeReviewTab from '../components/review/LoopKnowledgeReviewTab.vue';
 import InfoPanel from '@/components/InfoPanel.vue';
@@ -53,9 +51,7 @@ export default {
   name: 'ReviewCenterView',
 
   components: {
-    IntentReviewTab,
     ScenarioReviewTab,
-    KnowledgeReviewTab,
     UnclearQuestionReviewTab,
     LoopKnowledgeReviewTab,
     InfoPanel
@@ -68,21 +64,14 @@ export default {
 
     // 檢查 URL 參數
     onMounted(() => {
-      // 如果有 candidate_id 參數，自動切換到知識庫審核 tab
+      // 如果有 candidate_id 參數，自動切換到迴圈知識審核 tab
       if (route.query.candidate_id) {
         candidateId.value = parseInt(route.query.candidate_id);
-        currentTab.value = 'knowledge';
+        currentTab.value = 'loop-knowledge';
       }
     });
 
     const tabs = ref([
-      {
-        key: 'intents',
-        label: '意圖審核',
-        icon: '💡',
-        count: 0,
-        component: 'IntentReviewTab'
-      },
       {
         key: 'scenarios',
         label: '測試情境審核',
@@ -98,13 +87,6 @@ export default {
         component: 'UnclearQuestionReviewTab'
       },
       {
-        key: 'knowledge',
-        label: '知識庫審核',
-        icon: '📚',
-        count: 0,
-        component: 'KnowledgeReviewTab'
-      },
-      {
         key: 'loop-knowledge',
         label: '迴圈知識審核',
         icon: '🔄',
@@ -115,7 +97,7 @@ export default {
 
     const currentTabComponent = computed(() => {
       const tab = tabs.value.find(t => t.key === currentTab.value);
-      return tab ? tab.component : 'IntentReviewTab';
+      return tab ? tab.component : 'ScenarioReviewTab';
     });
 
     const switchTab = (tabKey) => {
