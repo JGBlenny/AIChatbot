@@ -60,6 +60,9 @@ class APICallHandler:
             'jgb_payments': self.jgb_api.get_payments,
             'jgb_repairs': self.jgb_api.get_repairs,
             'jgb_tenant_summary': self.jgb_api.get_tenant_summary,
+            'jgb_estates': self.jgb_api.get_estates,
+            'jgb_repair_categories': self.jgb_api.get_repair_categories,
+            'jgb_create_repair': self.jgb_api.create_repair,
         }
 
     async def execute_api_call(

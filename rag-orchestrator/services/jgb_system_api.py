@@ -84,6 +84,25 @@ class JGBSystemAPI:
             logger.error(f"JGB API 錯誤: {url} - {e}")
             return self._fallback_response(f"API 錯誤: {str(e)}")
 
+    async def _post_request(
+        self, path: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Send POST request to JGB API with JSON body."""
+        url = f"{self.api_base_url}{path}"
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    url, json=data, headers=self._headers()
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.TimeoutException as e:
+            logger.error(f"JGB API POST 逾時: {url} - {e}")
+            return self._fallback_response(f"API 逾時: {str(e)}")
+        except httpx.HTTPError as e:
+            logger.error(f"JGB API POST 錯誤: {url} - {e}")
+            return self._fallback_response(f"API 錯誤: {str(e)}")
+
     # ------------------------------------------------------------------
     # Public methods
     # ------------------------------------------------------------------
@@ -231,6 +250,74 @@ class JGBSystemAPI:
         return await self._request(
             f"/api/external/v1/tenants/{user_id}/summary", params
         )
+
+    async def get_estates(
+        self,
+        role_id: str,
+        keyword: str = "",
+        per_page: int = 10,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """搜尋物件"""
+        if not role_id:
+            return self._degraded_response()
+
+        if self.use_mock:
+            return self._mock_get_estates(role_id, keyword)
+
+        params: dict[str, Any] = {
+            "role_id": role_id,
+            "keyword": keyword,
+            "per_page": per_page,
+        }
+        return await self._request("/api/external/v1/estates", params)
+
+    async def get_repair_categories(
+        self,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """取得修繕分類樹（不需要 role_id）"""
+        if self.use_mock:
+            return self._mock_get_repair_categories()
+
+        return await self._request(
+            "/api/external/v1/repairs/categories", {}
+        )
+
+    async def create_repair(
+        self,
+        role_id: str,
+        estate_id: int,
+        category_id: int,
+        item_id: int,
+        broken_reason: str,
+        broken_note: str = "",
+        emergency_status: int = 1,
+        contract_id: Optional[int] = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """建立修繕單"""
+        if not role_id:
+            return self._degraded_response()
+
+        if self.use_mock:
+            return self._mock_create_repair(
+                role_id, estate_id, category_id, item_id,
+                broken_reason, broken_note, emergency_status
+            )
+
+        data: dict[str, Any] = {
+            "role_id": role_id,
+            "estate_id": estate_id,
+            "category_id": category_id,
+            "item_id": item_id,
+            "broken_reason": broken_reason,
+            "broken_note": broken_note,
+            "emergency_status": emergency_status,
+        }
+        if contract_id is not None:
+            data["contract_id"] = contract_id
+        return await self._post_request("/api/external/v1/repairs", data)
 
     # ------------------------------------------------------------------
     # Mock implementations
@@ -605,5 +692,147 @@ class JGBSystemAPI:
                     "total_count": 5,
                     "in_progress_count": 1,
                 },
+            },
+        }
+
+    def _mock_get_estates(
+        self,
+        role_id: str,
+        keyword: str = "",
+    ) -> dict[str, Any]:
+        logger.info(f"[MOCK] get_estates: role_id={role_id}, keyword={keyword}")
+        all_estates = [
+            {
+                "id": 54126,
+                "title": "信義區精緻套房",
+                "full_address": "台北市信義區信義路五段7號3樓",
+                "estate_room_number": "3F-1",
+            },
+            {
+                "id": 54200,
+                "title": "中山區溫馨雅房",
+                "full_address": "台北市中山區中山北路二段10號5樓",
+                "estate_room_number": "5F-2",
+            },
+            {
+                "id": 54305,
+                "title": "大安區景觀兩房",
+                "full_address": "台北市大安區敦化南路一段100號12樓",
+                "estate_room_number": "12F-A",
+            },
+        ]
+        # 簡易關鍵字過濾
+        if keyword:
+            filtered = [
+                e for e in all_estates
+                if keyword in e["title"] or keyword in e["full_address"]
+            ]
+        else:
+            filtered = all_estates
+
+        return {
+            "success": True,
+            "data": filtered,
+            "pagination": {
+                "current_page": 1,
+                "per_page": 10,
+                "total": len(filtered),
+                "total_pages": 1,
+                "has_more": False,
+            },
+        }
+
+    def _mock_get_repair_categories(self) -> dict[str, Any]:
+        logger.info("[MOCK] get_repair_categories")
+        return {
+            "success": True,
+            "data": [
+                {
+                    "id": 1,
+                    "name": "家電維修",
+                    "items": [
+                        {
+                            "id": 101,
+                            "name": "冷氣機",
+                            "broken_reasons": ["不冷", "漏水", "異音", "無法開機"],
+                        },
+                        {
+                            "id": 102,
+                            "name": "洗衣機",
+                            "broken_reasons": ["不轉", "漏水", "異音"],
+                        },
+                        {
+                            "id": 103,
+                            "name": "冰箱",
+                            "broken_reasons": ["不冷", "異音", "結霜"],
+                        },
+                    ],
+                },
+                {
+                    "id": 2,
+                    "name": "衛浴維修",
+                    "items": [
+                        {
+                            "id": 201,
+                            "name": "馬桶",
+                            "broken_reasons": ["堵塞", "漏水", "沖水異常"],
+                        },
+                        {
+                            "id": 202,
+                            "name": "水龍頭",
+                            "broken_reasons": ["漏水", "無法關閉", "水量不足"],
+                        },
+                    ],
+                },
+                {
+                    "id": 3,
+                    "name": "結構修繕",
+                    "items": [
+                        {
+                            "id": 301,
+                            "name": "牆壁",
+                            "broken_reasons": ["裂縫", "滲水", "壁癌"],
+                        },
+                        {
+                            "id": 302,
+                            "name": "地板",
+                            "broken_reasons": ["隆起", "破損", "漏水"],
+                        },
+                        {
+                            "id": 303,
+                            "name": "門窗",
+                            "broken_reasons": ["無法關閉", "玻璃破損", "鎖具故障"],
+                        },
+                    ],
+                },
+            ],
+        }
+
+    def _mock_create_repair(
+        self,
+        role_id: str,
+        estate_id: int,
+        category_id: int,
+        item_id: int,
+        broken_reason: str,
+        broken_note: str = "",
+        emergency_status: int = 1,
+    ) -> dict[str, Any]:
+        logger.info(
+            f"[MOCK] create_repair: role_id={role_id}, estate_id={estate_id}, "
+            f"category_id={category_id}, item_id={item_id}"
+        )
+        return {
+            "success": True,
+            "data": {
+                "id": 12346,
+                "estate_id": estate_id,
+                "category_id": category_id,
+                "item_id": item_id,
+                "broken_reason": broken_reason,
+                "broken_note": broken_note,
+                "emergency_status": emergency_status,
+                "status": 1,
+                "created_at": "2026-04-22 19:00:00",
             },
         }

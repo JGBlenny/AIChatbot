@@ -98,6 +98,10 @@ def format_jgb_response(api_result: dict, endpoint: str = "", user_question: str
     mapping = api_result.get("mapping", {})
     data = api_result.get("data", [])
 
+    # 修繕建單 endpoint → 專屬格式化
+    if endpoint == "jgb_create_repair":
+        return _format_create_repair(api_result)
+
     # 合約相關 endpoint → 走合約判斷引擎
     if endpoint in ("jgb_contracts", "jgb_contract_checkin"):
         return _format_contracts(data, user_question, form_data=form_data)
@@ -115,6 +119,36 @@ def format_jgb_response(api_result: dict, endpoint: str = "", user_question: str
         lines.append(_format_single(item, mapping))
         if i < len(data):
             lines.append("---")
+    return "\n".join(lines)
+
+
+def _format_create_repair(api_result: dict) -> str:
+    """格式化修繕建單回應"""
+    if not api_result.get("success", False):
+        error = api_result.get("error", {})
+        if isinstance(error, dict):
+            msg = error.get("message", "建單失敗，請稍後再試。")
+        else:
+            msg = str(error) if error else "建單失敗，請稍後再試。"
+        return f"❌ **修繕單建立失敗**\n\n{msg}"
+
+    data = api_result.get("data", {})
+    repair_id = data.get("id", "—")
+    broken_reason = data.get("broken_reason", "")
+    broken_note = data.get("broken_note", "")
+    emergency = "緊急" if data.get("emergency_status") == 1 else "非緊急"
+
+    lines = [
+        f"✅ **修繕單 #{repair_id} 已建立**",
+        "",
+        f"　損壞原因：{broken_reason}",
+    ]
+    if broken_note:
+        lines.append(f"　補充說明：{broken_note}")
+    lines.append(f"　急迫性：{emergency}")
+    lines.append("")
+    lines.append("我們會儘快安排維修，如有進度會通知您。")
+
     return "\n".join(lines)
 
 

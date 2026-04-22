@@ -25,6 +25,9 @@ from services.form_validator import FormValidator
 from services.digression_detector import DigressionDetector
 from services.digression_detector_db import DigressionDetectorDB
 from services.api_call_handler import get_api_call_handler
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class FormState:
@@ -632,7 +635,78 @@ class FormManager:
                 digression_type=digression_type
             )
 
-        # 4. 驗證資料格式
+        # 4. 動態欄位分派（api_search / api_select）
+        field_type = current_field.get('field_type', 'text')
+
+        # 為動態欄位處理器提供 form_schema_fields 參考
+        session_state['form_schema_fields'] = form_schema.get('fields', [])
+
+        if field_type in ('api_search', 'api_select'):
+            if field_type == 'api_search':
+                result = await self._handle_api_search_field(current_field, user_message, session_state)
+            else:
+                result = await self._handle_api_select_field(current_field, user_message, session_state)
+
+            if not result['resolved']:
+                return {
+                    "answer": result['prompt'],
+                    "form_completed": False,
+                }
+
+            # 已解析，存入 collected_data 並清除 dynamic_field_state
+            collected_data = session_state['collected_data']
+            collected_data[current_field['field_name']] = result['value']
+            metadata = session_state.get('metadata', {})
+            metadata.pop('dynamic_field_state', None)
+
+            next_field_index = current_field_index + 1
+
+            # 檢查是否完成所有欄位
+            if next_field_index >= len(form_schema['fields']):
+                await self.update_session_state(
+                    session_id=session_id,
+                    collected_data=collected_data,
+                    metadata=metadata,
+                )
+                skip_review = form_schema.get('skip_review', False)
+                if skip_review:
+                    session_state = await self.get_session_state(session_id)
+                    return await self._complete_form(session_state, form_schema, collected_data)
+                else:
+                    return await self.show_review_summary(session_id, vendor_id)
+
+            # 更新並提示下一欄位
+            await self.update_session_state(
+                session_id=session_id,
+                current_field_index=next_field_index,
+                collected_data=collected_data,
+                metadata=metadata,
+            )
+
+            next_field = form_schema['fields'][next_field_index]
+            total_fields = len(form_schema['fields'])
+
+            # 如果下一欄位也是 api_select 且無 depends_on，需要先取選項
+            next_field_type = next_field.get('field_type', 'text')
+            if next_field_type == 'api_select':
+                # 重新取得 session_state（metadata 已更新）
+                session_state = await self.get_session_state(session_id)
+                session_state['form_schema_fields'] = form_schema.get('fields', [])
+                select_result = await self._handle_api_select_field(next_field, "", session_state)
+                if not select_result['resolved']:
+                    return {
+                        "answer": f"✅ **{current_field['field_label']}** 已記錄！\n\n📊 進度：{next_field_index}/{total_fields}\n\n{select_result['prompt']}",
+                        "current_field": next_field['field_name'],
+                        "progress": f"{next_field_index}/{total_fields}",
+                    }
+
+            return {
+                "answer": f"✅ **{current_field['field_label']}** 已記錄！\n\n📊 進度：{next_field_index}/{total_fields}\n\n{next_field['prompt']}",
+                "current_field": next_field['field_name'],
+                "progress": f"{next_field_index}/{total_fields}",
+            }
+
+        # 5. 標準欄位：驗證資料格式
         is_valid, extracted_value, error_message = self.validator.validate_field(
             field_config=current_field,
             user_input=user_message
@@ -644,7 +718,7 @@ class FormManager:
                 "validation_failed": True
             }
 
-        # 5. 儲存資料
+        # 6. 儲存資料
         collected_data = session_state['collected_data']
         collected_data[current_field['field_name']] = extracted_value
         next_field_index = current_field_index + 1
@@ -684,6 +758,356 @@ class FormManager:
             "current_field": next_field['field_name'],
             "progress": f"{next_field_index}/{total_fields}"
         }
+
+    # ========================================
+    # 動態欄位處理（api_search / api_select）
+    # ========================================
+
+    def _match_user_selection(
+        self,
+        user_input: str,
+        options: List[Dict],
+        display_field: str = "name"
+    ) -> Optional[Dict]:
+        """
+        匹配用戶選擇：
+        1. 純數字 → 按編號匹配（1-based）
+        2. 文字 → 精確匹配 display_field
+        3. 都不匹配 → 回傳 None
+        """
+        stripped = user_input.strip()
+
+        # 按編號匹配
+        if stripped.isdigit():
+            idx = int(stripped)
+            if 1 <= idx <= len(options):
+                return options[idx - 1]
+            return None
+
+        # 文字精確匹配
+        for opt in options:
+            if isinstance(opt, dict):
+                if opt.get(display_field, "") == stripped or opt.get("label", "") == stripped:
+                    return opt
+            elif isinstance(opt, str) and opt == stripped:
+                return {"label": opt, "value": opt}
+
+        return None
+
+    async def _handle_api_search_field(
+        self,
+        field: Dict,
+        user_input: str,
+        session_state: Dict,
+    ) -> Dict:
+        """
+        處理 api_search 欄位的兩階段流程：
+        1. searching: 用戶輸入關鍵字 → 呼叫 API → 回傳選項列表
+        2. selecting: 用戶輸入編號 → 解析選擇 → 存入 collected_data
+        """
+        metadata = session_state.get('metadata', {})
+        dynamic_state = metadata.get('dynamic_field_state', {})
+        phase = dynamic_state.get('phase', 'searching')
+        api_config = field.get('api_config', {})
+
+        if phase == 'selecting':
+            # 第二階段：用戶選擇
+            pending_options = dynamic_state.get('pending_options', [])
+            display_field = api_config.get('display_field', 'name')
+
+            selected = self._match_user_selection(user_input, pending_options, display_field)
+            if selected is None:
+                # 無效選擇，重新顯示
+                lines = self._format_options_list(pending_options, api_config)
+                return {
+                    "resolved": False,
+                    "prompt": f"請輸入有效的選項編號：\n\n{lines}",
+                }
+
+            # 選擇成功
+            value_field = api_config.get('value_field', 'id')
+            return {
+                "resolved": True,
+                "value": selected.get(value_field, selected.get('value')),
+            }
+
+        # 第一階段：搜尋
+        endpoint = api_config.get('endpoint')
+        search_param = api_config.get('search_param', 'keyword')
+
+        # 組裝 API 參數
+        params = {}
+        extra_params = api_config.get('extra_params', {})
+        for k, v in extra_params.items():
+            if isinstance(v, str) and v.startswith('{session.'):
+                field_name = v[len('{session.'):-1]
+                params[k] = metadata.get(field_name, '')
+            else:
+                params[k] = v
+        params[search_param] = user_input
+
+        # 呼叫 API
+        api_handler = get_api_call_handler(self.db_pool)
+        api_result = await api_handler.api_registry[endpoint](**params)
+
+        if not api_result.get('success', False):
+            return {
+                "resolved": False,
+                "prompt": f"搜尋失敗，請稍後再試或重新輸入關鍵字。\n\n{field['prompt']}",
+            }
+
+        results = api_result.get('data', [])
+
+        if not results:
+            return {
+                "resolved": False,
+                "prompt": f"找不到符合「{user_input}」的結果，請重新輸入關鍵字。\n\n{field['prompt']}",
+            }
+
+        # 超過 10 筆截斷
+        if len(results) > 10:
+            results = results[:10]
+            truncated_hint = f"\n\n💡 結果超過 10 筆，僅顯示前 10 筆。請輸入更精確的關鍵字縮小範圍。"
+        else:
+            truncated_hint = ""
+
+        # 格式化選項列表
+        lines = self._format_options_list(results, api_config)
+
+        # 更新 dynamic_field_state 為 selecting
+        metadata['dynamic_field_state'] = {
+            'field_name': field['field_name'],
+            'phase': 'selecting',
+            'pending_options': results,
+        }
+        await self.update_session_state(
+            session_id=session_state['session_id'],
+            metadata=metadata,
+        )
+
+        return {
+            "resolved": False,
+            "prompt": f"搜尋到以下結果，請輸入編號選擇：\n\n{lines}{truncated_hint}",
+        }
+
+    async def _handle_api_select_field(
+        self,
+        field: Dict,
+        user_input: str,
+        session_state: Dict,
+    ) -> Dict:
+        """
+        處理 api_select 欄位：
+        - 無 depends_on：呼叫 API 取選項
+        - 有 depends_on：從 metadata api_cache 中按 options_path 提取子選項
+        """
+        metadata = session_state.get('metadata', {})
+        dynamic_state = metadata.get('dynamic_field_state', {})
+        phase = dynamic_state.get('phase', 'fetching')
+        collected_data = session_state.get('collected_data', {})
+
+        if phase == 'selecting':
+            # 用戶正在選擇
+            pending_options = dynamic_state.get('pending_options', [])
+            display_field = field.get('display_field') or field.get('api_config', {}).get('display_field', 'name')
+
+            selected = self._match_user_selection(user_input, pending_options, display_field)
+            if selected is None:
+                lines = self._format_options_list(pending_options, field.get('api_config', {}), display_field=display_field)
+                return {
+                    "resolved": False,
+                    "prompt": f"請輸入有效的選項編號：\n\n{lines}",
+                }
+
+            value_field = field.get('value_field') or field.get('api_config', {}).get('value_field', 'id')
+            return {
+                "resolved": True,
+                "value": selected.get(value_field, selected.get('value')),
+            }
+
+        # 第一次進入：取得選項
+        depends_on = field.get('depends_on')
+        options = []
+
+        if depends_on:
+            # 級聯：從 api_cache 取子選項
+            api_cache = metadata.get('api_cache', {})
+            options_path = field.get('options_path', 'items')
+
+            # 找到父欄位的值
+            parent_value = collected_data.get(depends_on)
+
+            # 找到父欄位定義以判斷 cache 來源
+            cache_key = self._find_cache_key_for_field(depends_on, session_state.get('form_schema_fields', []), metadata)
+
+            if cache_key and cache_key in api_cache:
+                cached_data = api_cache[cache_key]['data']
+                # 遞迴尋找：先找 depends_on 的父，再找當前
+                parent_item = self._find_item_in_cache(cached_data, depends_on, parent_value, collected_data, session_state)
+                if parent_item:
+                    raw_options = parent_item.get(options_path, [])
+                    # 處理字串陣列（如 broken_reasons）
+                    options = self._normalize_options(raw_options)
+        else:
+            # 無依賴：呼叫 API
+            api_config = field.get('api_config', {})
+            endpoint = api_config.get('endpoint')
+
+            api_handler = get_api_call_handler(self.db_pool)
+            api_result = await api_handler.api_registry[endpoint](**{})
+
+            if not api_result.get('success', False):
+                return {
+                    "resolved": False,
+                    "prompt": f"取得選項失敗，請稍後再試。",
+                }
+
+            data_path = api_config.get('data_path', 'data')
+            raw_data = api_result
+            for key in data_path.split('.'):
+                raw_data = raw_data.get(key, []) if isinstance(raw_data, dict) else raw_data
+
+            options = raw_data if isinstance(raw_data, list) else []
+
+            # 存入 api_cache
+            cache_key = endpoint
+            api_cache = metadata.get('api_cache', {})
+            api_cache[cache_key] = {
+                'data': options,
+                'fetched_at': datetime.now().isoformat(),
+            }
+            metadata['api_cache'] = api_cache
+
+        if not options:
+            return {
+                "resolved": False,
+                "prompt": f"沒有可選的選項，請聯繫客服協助。",
+            }
+
+        # 格式化並顯示選項
+        display_field = field.get('display_field') or field.get('api_config', {}).get('display_field', 'name')
+        lines = self._format_options_list(options, field.get('api_config', {}), display_field=display_field)
+
+        metadata['dynamic_field_state'] = {
+            'field_name': field['field_name'],
+            'phase': 'selecting',
+            'pending_options': options,
+        }
+        await self.update_session_state(
+            session_id=session_state['session_id'],
+            metadata=metadata,
+        )
+
+        return {
+            "resolved": False,
+            "prompt": f"{field['prompt']}\n\n{lines}",
+        }
+
+    def _format_options_list(
+        self,
+        options: List,
+        api_config: Dict = None,
+        display_field: str = "name",
+    ) -> str:
+        """格式化選項為編號列表"""
+        display_template = (api_config or {}).get('display_template')
+        lines = []
+        for i, opt in enumerate(options, 1):
+            if isinstance(opt, dict):
+                if display_template:
+                    try:
+                        label = display_template.format(**opt)
+                    except (KeyError, IndexError):
+                        label = opt.get(display_field, opt.get('label', str(opt)))
+                else:
+                    label = opt.get(display_field, opt.get('label', str(opt)))
+            else:
+                label = str(opt)
+            lines.append(f"{i}. {label}")
+        return "\n".join(lines)
+
+    def _normalize_options(self, raw_options: list) -> list:
+        """將字串陣列轉為統一的 dict 格式"""
+        if not raw_options:
+            return []
+        if isinstance(raw_options[0], str):
+            return [{"label": s, "value": s} for s in raw_options]
+        return raw_options
+
+    def _find_cache_key_for_field(
+        self, field_name: str, form_fields: list, metadata: dict
+    ) -> Optional[str]:
+        """找到存有此欄位資料的 cache key"""
+        api_cache = metadata.get('api_cache', {})
+        # 最常見的情況：只有一個 cache key
+        if len(api_cache) == 1:
+            return list(api_cache.keys())[0]
+        # 多個 cache key 時，遍歷 form_fields 找到有 api_config.endpoint 的
+        for f in form_fields:
+            if f.get('field_name') == field_name and f.get('api_config', {}).get('endpoint'):
+                ep = f['api_config']['endpoint']
+                if ep in api_cache:
+                    return ep
+        # fallback
+        if api_cache:
+            return list(api_cache.keys())[0]
+        return None
+
+    def _find_item_in_cache(
+        self,
+        cached_data: list,
+        depends_on: str,
+        parent_value: any,
+        collected_data: dict,
+        session_state: dict,
+    ) -> Optional[Dict]:
+        """在快取的樹狀結構中，根據已收集的值逐層定位到正確的節點"""
+        # 取得表單 fields 定義以追蹤依賴鏈
+        form_fields = session_state.get('form_schema_fields', [])
+
+        # 建立依賴鏈：從當前 depends_on 往上追溯
+        chain = []
+        current_dep = depends_on
+        dep_map = {f['field_name']: f for f in form_fields}
+        while current_dep and current_dep in dep_map:
+            chain.append(current_dep)
+            current_dep = dep_map[current_dep].get('depends_on')
+
+        chain.reverse()  # 從根到葉
+
+        # 從根開始逐層定位
+        current_level = cached_data
+        for dep_field in chain:
+            dep_value = collected_data.get(dep_field)
+            if dep_value is None:
+                return None
+            # 在當前層找到匹配的項目
+            found = None
+            for item in current_level:
+                if isinstance(item, dict) and item.get('id') == dep_value:
+                    found = item
+                    break
+            if found is None:
+                return None
+            # 深入下一層
+            dep_field_def = dep_map.get(dep_field, {})
+            next_path = None
+            # 找下一個依賴此欄位的 field 的 options_path
+            for f in form_fields:
+                if f.get('depends_on') == dep_field:
+                    next_path = f.get('options_path')
+                    break
+            if next_path and dep_field != depends_on:
+                current_level = found.get(next_path, [])
+            else:
+                # 最後一層，直接回傳
+                return found
+
+        # 如果 chain 為空，直接在 cached_data 中找
+        for item in cached_data:
+            if isinstance(item, dict) and item.get('id') == parent_value:
+                return item
+        return None
 
     async def _handle_digression(
         self,

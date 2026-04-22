@@ -23,6 +23,7 @@
             <th width="120">聯絡電話</th>
             <th width="150">業態類型</th>
             <th width="100">訂閱方案</th>
+            <th width="100">Role ID</th>
             <th width="80">狀態</th>
             <th width="80">展示頁</th>
             <th width="80">表單</th>
@@ -50,6 +51,7 @@
                 {{ getPlanLabel(vendor.subscription_plan) }}
               </span>
             </td>
+            <td><code>{{ (vendor.settings || {}).jgb_role_id || '-' }}</code></td>
             <td>
               <span class="status" :class="vendor.is_active ? 'active' : 'inactive'">
                 {{ vendor.is_active ? '✓ 啟用' : '✗ 停用' }}
@@ -170,6 +172,18 @@
                 </div>
               </div>
             </div>
+
+            <!-- 系統整合設定 -->
+            <div class="form-section">
+              <h4 class="section-title">系統整合設定</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>JGB Role ID</label>
+                  <input v-model="formData.settings.jgb_role_id" placeholder="JGB 系統角色編號" />
+                  <small class="hint">用於 JGB API 資料權限過濾</small>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="modal-footer">
@@ -264,6 +278,7 @@ export default {
         address: '',
         subscription_plan: 'basic',
         business_types: [],
+        settings: { jgb_role_id: '' },
         is_active: true
       }
     };
@@ -322,6 +337,7 @@ export default {
         address: '',
         subscription_plan: 'basic',
         business_types: defaultBusinessType,
+        settings: { jgb_role_id: '' },
         is_active: true
       };
       this.showModal = true;
@@ -342,6 +358,7 @@ export default {
         address: vendor.address || '',
         subscription_plan: vendor.subscription_plan,
         business_types: vendor.business_types || defaultBusinessType,
+        settings: { jgb_role_id: (vendor.settings || {}).jgb_role_id || '' },
         is_active: vendor.is_active
       };
       this.showModal = true;
@@ -365,6 +382,7 @@ export default {
             address: this.formData.address,
             subscription_plan: this.formData.subscription_plan,
             business_types: this.formData.business_types,
+            settings: this.formData.settings,
             is_active: this.formData.is_active,
             updated_by: 'admin'
           });

@@ -2940,6 +2940,21 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         # DEBUG: 檢查 session_id 是否被正確接收
         print(f"🔍 [DEBUG] vendor_chat_message received - session_id: {request.session_id}, user_id: {request.user_id}")
 
+        # Step 0a: 自動補全 role_id（從業者 settings.jgb_role_id）
+        if not request.role_id and request.vendor_id:
+            try:
+                db_pool = req.app.state.db_pool
+                async with db_pool.acquire() as conn:
+                    row = await conn.fetchrow(
+                        "SELECT settings->>'jgb_role_id' AS jgb_role_id FROM vendors WHERE id = $1",
+                        request.vendor_id
+                    )
+                    if row and row['jgb_role_id']:
+                        request.role_id = row['jgb_role_id']
+                        print(f"🔑 [role_id] 從業者設定自動補全: {request.role_id}")
+            except Exception as e:
+                print(f"⚠️ [role_id] 自動補全失敗: {e}")
+
         # Step 0: 檢查表單會話（Phase X: 表單填寫功能）
         if request.session_id:
             form_manager = req.app.state.form_manager

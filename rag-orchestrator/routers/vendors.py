@@ -44,6 +44,7 @@ class VendorCreate(BaseModel):
         default_factory=lambda: ["property_management"],
         description="業態類型陣列（可多選）：system_provider(系統商)、full_service(包租型)、property_management(代管型)"
     )
+    settings: Optional[Dict] = Field(default_factory=dict, description="額外設定（如 jgb_role_id）")
     created_by: str = Field("admin", description="建立者")
 
 
@@ -59,6 +60,7 @@ class VendorUpdate(BaseModel):
         None,
         description="業態類型陣列（可多選）：system_provider(系統商)、full_service(包租型)、property_management(代管型)"
     )
+    settings: Optional[Dict] = Field(None, description="額外設定（如 jgb_role_id）")
     is_active: Optional[bool] = Field(None, description="是否啟用")
     updated_by: str = Field("admin", description="更新者")
 
@@ -75,6 +77,7 @@ class VendorResponse(BaseModel):
     subscription_plan: str
     business_types: List[str]
     subscription_status: str
+    settings: Optional[Dict] = None
     is_active: bool
     created_at: datetime
     updated_at: Optional[datetime]
@@ -119,7 +122,7 @@ async def list_vendors(
             SELECT
                 id, code, name, short_name, contact_phone, contact_email,
                 address, subscription_plan, business_types, subscription_status,
-                is_active, created_at, updated_at
+                settings, is_active, created_at, updated_at
             FROM vendors
             WHERE 1=1
         """
@@ -161,13 +164,14 @@ async def create_vendor(vendor: VendorCreate):
             )
 
         # 插入業者
+        import json as _json
         cursor.execute("""
             INSERT INTO vendors (
                 code, name, short_name, contact_phone, contact_email,
                 address, subscription_plan, business_types, subscription_status,
-                subscription_start_date, created_by
+                subscription_start_date, settings, created_by
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
         """, (
             vendor.code,
@@ -180,6 +184,7 @@ async def create_vendor(vendor: VendorCreate):
             vendor.business_types,
             'active',
             date.today(),
+            _json.dumps(vendor.settings or {}),
             vendor.created_by
         ))
 
@@ -282,6 +287,11 @@ async def update_vendor(vendor_id: int, vendor: VendorUpdate):
         if vendor.business_types is not None:
             update_fields.append("business_types = %s")
             params.append(vendor.business_types)
+
+        if vendor.settings is not None:
+            import json as _json
+            update_fields.append("settings = %s")
+            params.append(_json.dumps(vendor.settings))
 
         if vendor.is_active is not None:
             update_fields.append("is_active = %s")
