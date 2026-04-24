@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 from datetime import datetime, date
 import os
+import json as _json
 import psycopg2
 import psycopg2.extras
 import asyncio
@@ -164,7 +165,6 @@ async def create_vendor(vendor: VendorCreate):
             )
 
         # 插入業者
-        import json as _json
         cursor.execute("""
             INSERT INTO vendors (
                 code, name, short_name, contact_phone, contact_email,
@@ -289,8 +289,7 @@ async def update_vendor(vendor_id: int, vendor: VendorUpdate):
             params.append(vendor.business_types)
 
         if vendor.settings is not None:
-            import json as _json
-            update_fields.append("settings = %s")
+            update_fields.append("settings = COALESCE(settings, '{}'::jsonb) || %s::jsonb")
             params.append(_json.dumps(vendor.settings))
 
         if vendor.is_active is not None:

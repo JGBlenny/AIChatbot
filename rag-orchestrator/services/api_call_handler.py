@@ -370,8 +370,9 @@ class APICallHandler:
         if 'formatted_response' in api_result:
             return api_result['formatted_response']
 
-        # JGB API 格式：有 mapping + data → 用專屬格式化
-        if 'mapping' in api_result and 'data' in api_result:
+        # JGB API 格式：有 mapping + data，或 JGB endpoint → 用專屬格式化
+        is_jgb = ('mapping' in api_result and 'data' in api_result) or endpoint.startswith('jgb_')
+        if is_jgb:
             from services.jgb_response_formatter import format_jgb_response
             user_question = ""
             if user_input and isinstance(user_input, dict):

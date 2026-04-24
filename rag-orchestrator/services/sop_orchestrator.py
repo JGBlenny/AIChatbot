@@ -64,7 +64,8 @@ class SOPOrchestrator:
         intent_id: Optional[int] = None,
         intent_ids: Optional[List[int]] = None,
         precomputed_embedding=None,
-        precomputed_rewrites=None
+        precomputed_rewrites=None,
+        role_id: Optional[str] = None
     ) -> Dict:
         """
         處理用戶訊息（主入口）
@@ -130,7 +131,7 @@ class SOPOrchestrator:
             else:
                 # 檢查關鍵詞匹配
                 return await self._handle_existing_context(
-                    user_message, session_id, user_id, vendor_id, sop_context
+                    user_message, session_id, user_id, vendor_id, sop_context, role_id=role_id
                 )
 
         # ========================================
@@ -189,7 +190,8 @@ class SOPOrchestrator:
         session_id: str,
         user_id: str,
         vendor_id: int,
-        sop_context: Dict
+        sop_context: Dict,
+        role_id: Optional[str] = None
     ) -> Dict:
         """
         處理已存在的 SOP context（關鍵詞匹配）
@@ -293,7 +295,8 @@ class SOPOrchestrator:
                 form_id=sop_context.get('next_form_id'),
                 api_config=sop_context.get('next_api_config'),
                 sop_context=sop_context,
-                user_message=user_message
+                user_message=user_message,
+                role_id=role_id
             )
 
             # 刪除 context（已觸發）
@@ -472,7 +475,8 @@ class SOPOrchestrator:
                 form_id=trigger_result.get('form_id'),
                 api_config=trigger_result.get('api_config'),
                 sop_context={'sop_id': sop_item_full['id'], 'sop_name': sop_item_full['item_name']},
-                user_message=user_message
+                user_message=user_message,
+                role_id=role_id
             )
 
             # 組合回應：SOP 內容 + API 結果

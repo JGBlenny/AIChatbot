@@ -358,7 +358,7 @@ export default {
         address: vendor.address || '',
         subscription_plan: vendor.subscription_plan,
         business_types: vendor.business_types || defaultBusinessType,
-        settings: { jgb_role_id: (vendor.settings || {}).jgb_role_id || '' },
+        settings: { ...(vendor.settings || {}), jgb_role_id: (vendor.settings || {}).jgb_role_id || '' },
         is_active: vendor.is_active
       };
       this.showModal = true;

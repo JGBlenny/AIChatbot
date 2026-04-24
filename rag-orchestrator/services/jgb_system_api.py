@@ -65,43 +65,40 @@ class JGBSystemAPI:
     def _headers(self) -> dict[str, str]:
         return {"X-API-Key": self.api_key}
 
-    async def _request(
-        self, path: str, params: dict[str, Any]
+    async def _send(
+        self, method: str, path: str, *,
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Send GET request to JGB API with error/timeout handling."""
+        """Send HTTP request to JGB API with error/timeout handling."""
         url = f"{self.api_base_url}{path}"
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(
-                    url, params=params, headers=self._headers()
+                response = await client.request(
+                    method, url,
+                    params=params, json=data,
+                    headers=self._headers(),
                 )
                 response.raise_for_status()
                 return response.json()
         except httpx.TimeoutException as e:
-            logger.error(f"JGB API 逾時: {url} - {e}")
+            logger.error(f"JGB API {method} 逾時: {url} - {e}")
             return self._fallback_response(f"API 逾時: {str(e)}")
         except httpx.HTTPError as e:
-            logger.error(f"JGB API 錯誤: {url} - {e}")
+            logger.error(f"JGB API {method} 錯誤: {url} - {e}")
             return self._fallback_response(f"API 錯誤: {str(e)}")
+
+    async def _request(
+        self, path: str, params: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Send GET request to JGB API."""
+        return await self._send("GET", path, params=params)
 
     async def _post_request(
         self, path: str, data: dict[str, Any]
     ) -> dict[str, Any]:
         """Send POST request to JGB API with JSON body."""
-        url = f"{self.api_base_url}{path}"
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    url, json=data, headers=self._headers()
-                )
-                response.raise_for_status()
-                return response.json()
-        except httpx.TimeoutException as e:
-            logger.error(f"JGB API POST 逾時: {url} - {e}")
-            return self._fallback_response(f"API 逾時: {str(e)}")
-        except httpx.HTTPError as e:
-            logger.error(f"JGB API POST 錯誤: {url} - {e}")
-            return self._fallback_response(f"API 錯誤: {str(e)}")
+        return await self._send("POST", path, data=data)
 
     # ------------------------------------------------------------------
     # Public methods

@@ -642,6 +642,7 @@ class FormManager:
         session_state['form_schema_fields'] = form_schema.get('fields', [])
 
         if field_type in ('api_search', 'api_select'):
+            logger.info(f"[dynamic_field] field_type={field_type}, field_name={current_field.get('field_name')}, user_input={user_message[:50]}")
             if field_type == 'api_search':
                 result = await self._handle_api_search_field(current_field, user_message, session_state)
             else:
@@ -847,10 +848,20 @@ class FormManager:
         params[search_param] = user_input
 
         # 呼叫 API
-        api_handler = get_api_call_handler(self.db_pool)
-        api_result = await api_handler.api_registry[endpoint](**params)
+        logger.info(f"[api_search] endpoint={endpoint}, params={params}")
+        try:
+            api_handler = get_api_call_handler(self.db_pool)
+            api_result = await api_handler.api_registry[endpoint](**params)
+            logger.info(f"[api_search] result success={api_result.get('success')}, data_len={len(api_result.get('data', []))}")
+        except Exception as e:
+            logger.error(f"[api_search] 呼叫 {endpoint} 例外: {e}", exc_info=True)
+            return {
+                "resolved": False,
+                "prompt": f"搜尋失敗，請稍後再試或重新輸入關鍵字。\n\n{field['prompt']}",
+            }
 
         if not api_result.get('success', False):
+            logger.warning(f"[api_search] API 回傳失敗: {api_result}")
             return {
                 "resolved": False,
                 "prompt": f"搜尋失敗，請稍後再試或重新輸入關鍵字。\n\n{field['prompt']}",
@@ -1080,6 +1091,7 @@ class FormManager:
         for dep_field in chain:
             dep_value = collected_data.get(dep_field)
             if dep_value is None:
+                logger.warning(f"[cascade] collected_data 缺少欄位 '{dep_field}'，無法定位級聯選項")
                 return None
             # 在當前層找到匹配的項目
             found = None
@@ -1088,6 +1100,7 @@ class FormManager:
                     found = item
                     break
             if found is None:
+                logger.warning(f"[cascade] 在快取中找不到 {dep_field}={dep_value} 的項目（共 {len(current_level)} 筆）")
                 return None
             # 深入下一層
             dep_field_def = dep_map.get(dep_field, {})

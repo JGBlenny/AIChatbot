@@ -1012,7 +1012,8 @@ async def _smart_retrieval_with_comparison(
         user_id=request.user_id or "unknown",
         vendor_id=request.vendor_id,
         precomputed_embedding=precomputed_embedding,
-        precomputed_rewrites=precomputed_rewrites
+        precomputed_rewrites=precomputed_rewrites,
+        role_id=request.role_id
     )
 
     knowledge_task = _retrieve_knowledge(
@@ -3220,8 +3221,35 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 return response
 
             elif decision['type'] == 'knowledge':
-                # 串流模式：直接串流 LLM 合成輸出（不等完整回應）
+                # 串流模式：先檢查是否有表單/API 動作需要完整處理
                 if request.stream:
+                    # 檢查最佳知識是否需要表單觸發（表單不適合串流合成）
+                    _best_k = decision['knowledge_list'][0] if decision['knowledge_list'] else {}
+                    _k_action = _best_k.get('action_type', 'direct_answer')
+                    _k_form_id = _best_k.get('form_id')
+
+                    if _k_action in ('form_fill', 'api_call', 'form_then_api') or _k_form_id:
+                        # 表單/API 類型：走完整回應路徑（非串流），再包裝成串流輸出
+                        print(f"📡 [串流模式] 知識 action_type={_k_action}，走完整回應再轉串流")
+                        _t0 = _time.time()
+                        response = await _build_knowledge_response(
+                            request, req, intent_result, decision['knowledge_list'],
+                            resolver, vendor_info, cache_service,
+                            decision=decision
+                        )
+                        print(f"⏱️ [Step 5] KB 回應構建（表單）: {int((_time.time()-_t0)*1000)}ms")
+                        # 將完整回應轉為串流格式
+                        print(f"📡 [串流模式] 將表單響應轉換為串流輸出")
+                        return StreamingResponse(
+                            stream_response_wrapper(response.dict() if hasattr(response, 'dict') else response),
+                            media_type="text/event-stream",
+                            headers={
+                                "Cache-Control": "no-cache",
+                                "Connection": "keep-alive",
+                                "X-Accel-Buffering": "no"
+                            }
+                        )
+
                     print(f"📡 [串流模式] 使用串流合成回應")
                     print(f"⏱️ [總計] 檢索完成，開始串流: {int((_time.time()-_total_start)*1000)}ms")
                     return StreamingResponse(

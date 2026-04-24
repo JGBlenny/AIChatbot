@@ -49,7 +49,8 @@ class SOPNextActionHandler:
         form_id: Optional[str] = None,
         api_config: Optional[Dict] = None,
         sop_context: Optional[Dict] = None,
-        user_message: str = None
+        user_message: str = None,
+        role_id: Optional[str] = None
     ) -> Dict:
         """
         處理後續動作
@@ -80,7 +81,7 @@ class SOPNextActionHandler:
 
         if next_action == "form_fill":
             return await self._handle_form_fill(
-                session_id, user_id, vendor_id, form_id, sop_context, user_message
+                session_id, user_id, vendor_id, form_id, sop_context, user_message, role_id=role_id
             )
 
         elif next_action == "api_call":
@@ -123,7 +124,8 @@ class SOPNextActionHandler:
         vendor_id: int,
         form_id: str,
         sop_context: Optional[Dict],
-        user_message: str
+        user_message: str,
+        role_id: Optional[str] = None
     ) -> Dict:
         """
         處理 form_fill 動作：僅觸發表單收集
@@ -162,6 +164,17 @@ class SOPNextActionHandler:
                 'next_step': 'error',
                 'response': '錯誤：無法創建表單會話'
             }
+
+        # 存 role_id 到 metadata（動態欄位 API 呼叫需要）
+        if role_id:
+            session_state = await self.form_manager.get_session_state(session_id)
+            if session_state:
+                metadata = session_state.get('metadata') or {}
+                metadata['role_id'] = role_id
+                await self.form_manager.update_session_state(
+                    session_id=session_id,
+                    metadata=metadata
+                )
 
         # 預填欄位（從 SOP next_api_config.params）
         if sop_context and sop_context.get('next_api_config'):
