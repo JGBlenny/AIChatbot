@@ -73,6 +73,20 @@
       </div>
     </div>
 
+    <!-- 快速回覆按鈕 -->
+    <div v-if="quickReplies.length > 0 && !showImageUpload" class="quick-replies-area">
+      <button
+        v-for="(qr, idx) in quickReplies"
+        :key="idx"
+        class="btn-quick-reply"
+        :class="qr.style || 'default'"
+        @click="sendQuickReply(qr.value)"
+        :disabled="isLoading"
+      >
+        {{ qr.text }}
+      </button>
+    </div>
+
     <!-- 圖片上傳區域（僅當 current_field_type === 'image' 時顯示） -->
     <div v-if="showImageUpload" class="image-upload-area">
       <div class="image-upload-hint">📷 請上傳照片（最多 3 張，支援 JPG/PNG/WebP）</div>
@@ -172,7 +186,9 @@ export default {
       currentFieldType: null,  // 當前表單欄位類型
       pendingImages: [],       // { file, preview }
       pendingImageUrls: [],    // 已上傳的 S3 URLs
-      isUploading: false
+      isUploading: false,
+      // 快速回覆
+      quickReplies: []         // [{text, value, style}]
     };
   },
 
@@ -268,9 +284,10 @@ export default {
           payload.image_urls = [...this.pendingImageUrls];
         }
 
-        // 清除圖片狀態
+        // 清除圖片和快速回覆狀態
         this.pendingImages = [];
         this.pendingImageUrls = [];
+        this.quickReplies = [];
 
         console.log('📡 [Stream] 發送串流請求:', payload);
 
@@ -383,12 +400,21 @@ export default {
                   // 更新 current_field_type（非表單觸發時也可能收到欄位切換）
                   if (data.current_field_type !== undefined) {
                     this.currentFieldType = data.current_field_type || null;
-                    console.log('📷 [Stream] 欄位類型更新:', this.currentFieldType, 'showImageUpload:', this.currentFieldType === 'image');
                   }
-                } else if (data.current_field_type !== undefined && data.current_field !== undefined && !data.chunk && !data.success && !data.cached) {
-                  // form_field 事件：獨立的欄位類型通知
-                  this.currentFieldType = data.current_field_type || null;
-                  console.log('📷 [Stream] form_field 事件:', data.current_field_type);
+                  // 更新快速回覆按鈕
+                  if (data.quick_replies) {
+                    this.quickReplies = data.quick_replies;
+                  } else if (data.form_completed || data.form_cancelled) {
+                    this.quickReplies = [];
+                  }
+                } else if ((data.current_field_type !== undefined || data.quick_replies) && !data.chunk && !data.success && !data.cached && data.cache_hit === undefined) {
+                  // form_field 事件：欄位類型通知 + 快速回覆按鈕
+                  if (data.current_field_type !== undefined) {
+                    this.currentFieldType = data.current_field_type || null;
+                  }
+                  if (data.quick_replies) {
+                    this.quickReplies = data.quick_replies;
+                  }
                 } else if (data.success !== undefined) {
                   // 完成事件
                   console.log('✅ [Stream] 串流完成');
@@ -594,6 +620,12 @@ export default {
       URL.revokeObjectURL(this.pendingImages[index].preview);
       this.pendingImages.splice(index, 1);
       this.pendingImageUrls.splice(index, 1);
+    },
+
+    sendQuickReply(value) {
+      this.inputMessage = String(value);
+      this.quickReplies = [];
+      this.sendMessage();
     },
 
     skipImageField() {
@@ -943,6 +975,57 @@ export default {
   .vendor-info h2 {
     font-size: 1.2rem;
   }
+}
+
+/* 快速回覆按鈕 */
+.quick-replies-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #fafafa;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btn-quick-reply {
+  padding: 0.4rem 0.8rem;
+  border-radius: 16px;
+  border: 1px solid #1976d2;
+  background: white;
+  color: #1976d2;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-quick-reply:hover {
+  background: #1976d2;
+  color: white;
+}
+
+.btn-quick-reply.primary {
+  background: #1976d2;
+  color: white;
+  border-color: #1976d2;
+}
+
+.btn-quick-reply.primary:hover {
+  background: #1565c0;
+}
+
+.btn-quick-reply.secondary {
+  border-color: #9e9e9e;
+  color: #616161;
+}
+
+.btn-quick-reply.secondary:hover {
+  background: #9e9e9e;
+  color: white;
+}
+
+.btn-quick-reply:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* 圖片上傳區域 */

@@ -291,6 +291,7 @@ class JGBSystemAPI:
         broken_note: str = "",
         emergency_status: int = 1,
         contract_id: Optional[int] = None,
+        broken_photos: Optional[list] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """建立修繕單"""
@@ -314,6 +315,8 @@ class JGBSystemAPI:
         }
         if contract_id is not None:
             data["contract_id"] = contract_id
+        if broken_photos:
+            data["broken_photos"] = broken_photos
         return await self._post_request("/api/external/v1/repairs", data)
 
     # ------------------------------------------------------------------

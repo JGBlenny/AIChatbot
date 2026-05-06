@@ -310,6 +310,7 @@ def _convert_form_result_to_response(
         current_field_type=form_result.get('current_field_type'),
         progress=form_result.get('progress'),
         allow_resume=form_result.get('allow_resume', False),
+        quick_replies=form_result.get('quick_replies'),
         debug_info=debug_info if request.include_debug_info else None
     )
 
@@ -355,6 +356,39 @@ def _check_cache(cache_service, vendor_id: int, question: str, target_user: str)
 
 
 # ==================== 串流輔助函數（2026-02-14）====================
+
+def _extract_quick_replies_from_answer(answer: str, field_type: str) -> list:
+    """從回應文字中提取選項列表，生成 quick_replies 按鈕"""
+    import re
+    replies = []
+
+    # 匹配 SOP 確認按鈕格式：• 「確認」\n• 「需要」
+    confirm_pattern = re.findall(r'[•·]\s*「(.+?)」', answer)
+    if confirm_pattern and not field_type:
+        for text in confirm_pattern:
+            replies.append({"text": text, "value": text, "style": "primary"})
+        return replies if replies else None
+
+    # 匹配編號選項格式：1. xxx\n2. xxx（api_select / select / api_search）
+    numbered_pattern = re.findall(r'^\d+\.\s*(.+)$', answer, re.MULTILINE)
+    if numbered_pattern and field_type in ('api_select', 'api_search', 'select', None):
+        for i, text in enumerate(numbered_pattern, 1):
+            clean_text = text.strip()
+            if clean_text.startswith('{'):
+                continue  # 跳過 dict 格式
+            # 截斷過長的文字顯示
+            display_text = clean_text if len(clean_text) <= 20 else clean_text[:18] + '…'
+            replies.append({"text": display_text, "value": str(i), "style": "default"})
+        if replies:
+            return replies
+
+    # 匹配「跳過」提示
+    if '跳過' in answer and field_type in ('image', 'text', 'textarea'):
+        replies.append({"text": "跳過", "value": "跳過", "style": "secondary"})
+        return replies
+
+    return None
+
 
 async def _generate_sse_event(event_type: str, data: dict) -> str:
     """生成 Server-Sent Events (SSE) 格式的事件"""
@@ -471,13 +505,26 @@ async def stream_response_wrapper(response_dict: dict):
 
         yield await _generate_sse_event("metadata", metadata)
 
-        # 單獨發送 form_field 事件（確保前端正確收到欄位類型）
+        # 單獨發送 form_field 事件（欄位類型 + quick_replies）
+        form_field_data = {}
         if metadata.get('current_field_type'):
-            yield await _generate_sse_event("form_field", {
+            form_field_data = {
                 "current_field": metadata.get('current_field'),
                 "current_field_type": metadata.get('current_field_type'),
                 "progress": metadata.get('progress'),
-            })
+            }
+
+        # 帶上 quick_replies
+        if metadata.get('quick_replies'):
+            form_field_data['quick_replies'] = metadata['quick_replies']
+        else:
+            # 從回應文字解析選項列表
+            qr = _extract_quick_replies_from_answer(response_dict.get('answer', ''), metadata.get('current_field_type'))
+            if qr:
+                form_field_data['quick_replies'] = qr
+
+        if form_field_data:
+            yield await _generate_sse_event("form_field", form_field_data)
 
         # 發送完成事件
         yield await _generate_sse_event("done", {

@@ -209,10 +209,11 @@ class S3ImageService:
         compressed, width, height, fmt = self.compress_image(file_content)
         file_size = len(compressed)
 
-        # S3 路徑: images/{vendor_id}/{year}/{month}/{uuid}.{ext}
-        now = datetime.now()
+        # S3 路徑：使用 JGB 路徑規則 {前2字}/{第3-4字}/{檔名}
+        # JGB 的 get_upload_file() 會用這個規則拼 URL
         ext = "jpg" if fmt == "jpeg" else fmt
-        s3_key = f"images/{vendor_id}/{now.year}/{now.month:02d}/{uuid.uuid4().hex}.{ext}"
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        s3_key = f"{filename[:2]}/{filename[2:4]}/{filename}"
 
         # 上傳 S3
         try:
@@ -222,14 +223,18 @@ class S3ImageService:
                 Key=s3_key,
                 Body=compressed,
                 ContentType=upload_mime,
-                ACL="private",
+                ACL="public-read",
             )
         except ClientError as e:
             logger.error(f"S3 圖片上傳失敗: {e}")
             raise Exception("圖片上傳失敗，請重試")
 
-        # 產生 presigned URL
-        s3_url = self.generate_presigned_url(s3_key)
+        # 產生公開 URL（優先 CloudFront，否則 presigned）
+        cloudfront_domain = os.getenv("CLOUDFRONT_DOMAIN", "")
+        if cloudfront_domain:
+            s3_url = f"https://{cloudfront_domain}/{s3_key}"
+        else:
+            s3_url = self.generate_presigned_url(s3_key)
 
         # 寫入 DB
         image_id = None

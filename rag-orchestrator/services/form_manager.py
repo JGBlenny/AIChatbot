@@ -673,6 +673,8 @@ class FormManager:
                 return {
                     "answer": result['prompt'],
                     "form_completed": False,
+                    "current_field": current_field.get('field_name'),
+                    "current_field_type": field_type,
                 }
 
             # 已完成，存入 collected_data
@@ -979,6 +981,8 @@ class FormManager:
                 return {
                     "answer": prompt_text,
                     "form_completed": False,
+                    "current_field": current_field.get('field_name'),
+                    "current_field_type": field_type,
                 }
 
             # 已解析，存入 collected_data 並清除 dynamic_field_state
@@ -1345,6 +1349,32 @@ class FormManager:
                 return {"matched_option": opt}
 
         return None
+
+    @staticmethod
+    def _build_quick_replies(field: Dict, include_skip: bool = False) -> Optional[list]:
+        """根據欄位配置生成 quick_replies 按鈕列表"""
+        replies = []
+        field_type = field.get('field_type', 'text')
+
+        if field_type == 'select' and field.get('options'):
+            for opt in field['options']:
+                if isinstance(opt, dict):
+                    replies.append({"text": opt.get('label', ''), "value": str(opt.get('value', '')), "style": "default"})
+                else:
+                    replies.append({"text": str(opt), "value": str(opt), "style": "default"})
+
+        elif field_type == 'api_select':
+            # api_select 選項是動態的，在顯示選項時才生成
+            pass
+
+        # SOP 確認按鈕
+        if not replies:
+            return None
+
+        if include_skip and not field.get('required', True):
+            replies.append({"text": "跳過", "value": "跳過", "style": "secondary"})
+
+        return replies
 
     def _get_broken_note_suggestion(self, recognition_suggestions: Dict) -> Optional[Dict]:
         """
