@@ -73,6 +73,45 @@
       </div>
     </div>
 
+    <!-- 圖片上傳區域（僅當 current_field_type === 'image' 時顯示） -->
+    <div v-if="showImageUpload" class="image-upload-area">
+      <div class="image-upload-hint">📷 請上傳照片（最多 3 張，支援 JPG/PNG/WebP）</div>
+      <div class="image-previews" v-if="pendingImages.length > 0">
+        <div v-for="(img, idx) in pendingImages" :key="idx" class="image-preview-item">
+          <img :src="img.preview" alt="預覽" />
+          <button class="btn-remove-image" @click="removeImage(idx)">✕</button>
+        </div>
+      </div>
+      <div class="image-upload-actions">
+        <label class="btn-upload" :class="{ disabled: pendingImages.length >= 3 || isUploading }">
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            @change="handleImageSelect"
+            :disabled="pendingImages.length >= 3 || isUploading"
+            ref="fileInput"
+          />
+          {{ isUploading ? '上傳中...' : '選擇照片' }}
+        </label>
+        <button
+          v-if="pendingImages.length > 0"
+          class="btn-skip-image"
+          @click="sendMessage"
+          :disabled="isLoading || isUploading"
+        >
+          📤 送出照片
+        </button>
+        <button
+          class="btn-skip-image"
+          @click="skipImageField"
+          :disabled="isLoading || isUploading"
+        >
+          跳過
+        </button>
+      </div>
+    </div>
+
     <!-- 輸入區域 -->
     <div class="chat-input-area">
       <textarea
@@ -80,14 +119,14 @@
         @keydown.enter.prevent="handleEnter"
         @compositionstart="isComposing = true"
         @compositionend="handleCompositionEnd"
-        placeholder="輸入訊息..."
+        :placeholder="showImageUpload ? '或輸入文字訊息...' : '輸入訊息...'"
         class="chat-input"
         rows="1"
         ref="inputField"
       ></textarea>
       <button
         @click="sendMessage"
-        :disabled="!inputMessage.trim() || isLoading"
+        :disabled="(!inputMessage.trim() && pendingImageUrls.length === 0) || isLoading"
         class="btn-send"
       >
         📤
@@ -128,7 +167,12 @@ export default {
       targetUser: 'tenant',  // 預設為租客，可透過 URL 參數覆蓋（?target_user=landlord）
       // 表單支援
       sessionId: null,
-      userId: null
+      userId: null,
+      // 圖片上傳
+      currentFieldType: null,  // 當前表單欄位類型
+      pendingImages: [],       // { file, preview }
+      pendingImageUrls: [],    // 已上傳的 S3 URLs
+      isUploading: false
     };
   },
 
@@ -138,6 +182,10 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       });
+    },
+    showImageUpload() {
+      console.log('🔍 showImageUpload computed, currentFieldType:', this.currentFieldType);
+      return this.currentFieldType === 'image';
     }
   },
 
@@ -191,9 +239,11 @@ export default {
     },
 
     async sendMessage() {
-      if (!this.inputMessage.trim() || this.isLoading || !this.vendor) return;
+      const hasText = this.inputMessage.trim();
+      const hasImages = this.pendingImageUrls.length > 0;
+      if ((!hasText && !hasImages) || this.isLoading || !this.vendor) return;
 
-      const userMessage = this.inputMessage.trim();
+      const userMessage = this.inputMessage.trim() || (hasImages ? '（已上傳照片）' : '');
       this.inputMessage = '';
 
       // 添加用戶訊息
@@ -206,13 +256,21 @@ export default {
         const payload = {
           message: userMessage,
           vendor_id: this.vendor.id,
-          target_user: this.targetUser,  // 使用統一的 target_user 參數（預設為 tenant）
+          target_user: this.targetUser,
           include_sources: false,
-          // 表單支援
           session_id: this.sessionId,
           user_id: this.userId,
-          stream: true  // 🆕 啟用串流模式
+          stream: true
         };
+
+        // 帶上已上傳的圖片 URLs
+        if (this.pendingImageUrls.length > 0) {
+          payload.image_urls = [...this.pendingImageUrls];
+        }
+
+        // 清除圖片狀態
+        this.pendingImages = [];
+        this.pendingImageUrls = [];
 
         console.log('📡 [Stream] 發送串流請求:', payload);
 
@@ -274,6 +332,7 @@ export default {
             } else if (line.startsWith('data: ')) {
               try {
                 const data = JSON.parse(line.substring(6));
+                console.log('📨 [SSE] data:', JSON.stringify(data).substring(0, 200));
 
                 // 處理不同類型的事件
                 if (data.chunk !== undefined) {
@@ -302,19 +361,34 @@ export default {
                     metadata.form_triggered = true;
                     metadata.form_id = data.form_id;
                     metadata.current_field = data.current_field;
+                    metadata.current_field_type = data.current_field_type;
                     metadata.progress = data.progress;
+                    // 更新 current_field_type 以控制圖片上傳 UI
+                    this.currentFieldType = data.current_field_type || null;
                     console.log('📋 [Stream] 表單已觸發:', {
                       formId: data.form_id,
                       currentField: data.current_field,
+                      currentFieldType: data.current_field_type,
                       progress: data.progress
                     });
                   } else if (data.form_completed) {
                     metadata.form_completed = true;
+                    this.currentFieldType = null;
                     console.log('✅ [Stream] 表單填寫完成');
                   } else if (data.form_cancelled) {
                     metadata.form_cancelled = true;
+                    this.currentFieldType = null;
                     console.log('❌ [Stream] 表單已取消');
                   }
+                  // 更新 current_field_type（非表單觸發時也可能收到欄位切換）
+                  if (data.current_field_type !== undefined) {
+                    this.currentFieldType = data.current_field_type || null;
+                    console.log('📷 [Stream] 欄位類型更新:', this.currentFieldType, 'showImageUpload:', this.currentFieldType === 'image');
+                  }
+                } else if (data.current_field_type !== undefined && data.current_field !== undefined && !data.chunk && !data.success && !data.cached) {
+                  // form_field 事件：獨立的欄位類型通知
+                  this.currentFieldType = data.current_field_type || null;
+                  console.log('📷 [Stream] form_field 事件:', data.current_field_type);
                 } else if (data.success !== undefined) {
                   // 完成事件
                   console.log('✅ [Stream] 串流完成');
@@ -475,6 +549,59 @@ export default {
       if (bytes < 1024) return bytes + ' B';
       if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
       return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    },
+
+    // 圖片上傳相關方法
+    async handleImageSelect(event) {
+      const files = Array.from(event.target.files);
+      if (!files.length) return;
+
+      const remaining = 3 - this.pendingImages.length;
+      const toProcess = files.slice(0, remaining);
+
+      this.isUploading = true;
+      try {
+        for (const file of toProcess) {
+          // 本地預覽
+          const preview = URL.createObjectURL(file);
+          this.pendingImages.push({ file, preview });
+
+          // 上傳到 S3
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('vendor_id', this.vendor.id);
+          formData.append('session_id', this.sessionId);
+
+          const response = await axios.post(`${RAG_API}/images/upload`, formData);
+          if (response.data && response.data.image_url) {
+            this.pendingImageUrls.push(response.data.image_url);
+            console.log('📷 圖片上傳成功:', response.data.image_url);
+          }
+        }
+      } catch (err) {
+        console.error('❌ 圖片上傳失敗:', err);
+        this.error = '圖片上傳失敗，請重試';
+      } finally {
+        this.isUploading = false;
+        // 重置 file input
+        if (this.$refs.fileInput) {
+          this.$refs.fileInput.value = '';
+        }
+      }
+    },
+
+    removeImage(index) {
+      URL.revokeObjectURL(this.pendingImages[index].preview);
+      this.pendingImages.splice(index, 1);
+      this.pendingImageUrls.splice(index, 1);
+    },
+
+    skipImageField() {
+      // 跳過圖片欄位，送「跳過」文字
+      this.inputMessage = '跳過';
+      this.pendingImages = [];
+      this.pendingImageUrls = [];
+      this.sendMessage();
     },
 
     // 生成 UUID（用於 session_id）
@@ -816,5 +943,103 @@ export default {
   .vendor-info h2 {
     font-size: 1.2rem;
   }
+}
+
+/* 圖片上傳區域 */
+.image-upload-area {
+  background: #e8f5e9;
+  border: 1px dashed #4caf50;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.image-upload-hint {
+  font-size: 0.85rem;
+  color: #2e7d32;
+  margin-bottom: 0.5rem;
+}
+
+.image-previews {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.image-preview-item {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #c8e6c9;
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.btn-remove-image {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-upload-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-upload {
+  background: #4caf50;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.btn-upload input[type="file"] {
+  display: none;
+}
+
+.btn-upload.disabled {
+  background: #a5d6a7;
+  cursor: not-allowed;
+}
+
+.btn-skip-image {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #666;
+}
+
+.btn-skip-image:hover {
+  background: #e0e0e0;
+}
+
+.btn-skip-image:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

@@ -25,6 +25,7 @@ from services.form_validator import FormValidator
 from services.digression_detector import DigressionDetector
 from services.digression_detector_db import DigressionDetectorDB
 from services.api_call_handler import get_api_call_handler
+from services.image_recognition_service import ImageRecognitionService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -154,14 +155,17 @@ class FormManager:
         return await asyncio.to_thread(self._get_session_state_sync, session_id)
 
     async def get_next_question(self, session_id: str) -> Optional[str]:
-        """獲取當前表單的下一個問題"""
+        """獲取當前表單的下一個問題（僅回傳 prompt 文字）"""
+        info = await self.get_next_field_info(session_id)
+        return info.get('prompt') if info else None
+
+    async def get_next_field_info(self, session_id: str) -> Optional[Dict]:
+        """獲取當前表單的下一個欄位資訊（含 field_name、field_type、prompt）"""
         try:
-            # 獲取會話狀態
             session_state = await self.get_session_state(session_id)
             if not session_state:
                 return None
 
-            # 獲取表單 schema
             form_schema = await self.get_form_schema(
                 session_state['form_id'],
                 session_state.get('vendor_id')
@@ -169,7 +173,6 @@ class FormManager:
             if not form_schema:
                 return None
 
-            # 獲取當前欄位
             current_index = session_state.get('current_field_index', 0)
             fields = form_schema.get('fields', [])
 
@@ -177,9 +180,13 @@ class FormManager:
                 return None
 
             current_field = fields[current_index]
-            return current_field.get('prompt', '')
+            return {
+                'prompt': current_field.get('prompt', ''),
+                'field_name': current_field.get('field_name', ''),
+                'field_type': current_field.get('field_type', 'text'),
+            }
         except Exception as e:
-            print(f"❌ 獲取下一個問題失敗: {e}")
+            print(f"❌ 獲取下一個欄位資訊失敗: {e}")
             return None
 
     def _create_form_session_sync(
@@ -438,6 +445,7 @@ class FormManager:
             "form_triggered": True,
             "form_id": form_schema['form_id'],
             "current_field": first_field['field_name'],
+            "current_field_type": first_field.get('field_type', 'text'),
             "progress": f"1/{total_fields}"
         }
 
@@ -526,6 +534,7 @@ class FormManager:
             "form_triggered": True,
             "form_id": form_id,
             "current_field": first_field['field_name'],
+            "current_field_type": first_field.get('field_type', 'text'),
             "progress": f"1/{total_fields}",
             "triggered_by_knowledge": knowledge_id
         }
@@ -536,7 +545,8 @@ class FormManager:
         session_id: str,
         intent_result: Optional[Dict] = None,
         vendor_id: int = 1,
-        language: str = 'zh-TW'
+        language: str = 'zh-TW',
+        image_urls: Optional[List[str]] = None,
     ) -> Dict:
         """
         收集欄位資料（核心流程）
@@ -547,6 +557,7 @@ class FormManager:
             intent_result: 意圖分類結果（用於離題偵測）
             vendor_id: 業者 ID（用於載入專屬配置）
             language: 語言代碼（用於載入對應語言的關鍵字）
+            image_urls: 圖片 S3 URL 列表（表單 image 欄位使用）
 
         Returns:
             回應字典
@@ -607,39 +618,326 @@ class FormManager:
         current_field_index = session_state['current_field_index']
         current_field = form_schema['fields'][current_field_index]
 
-        # 3. 偵測離題
-        # 如果使用資料庫版本，傳入 vendor_id 和 language
-        if isinstance(self.digression_detector, DigressionDetectorDB):
-            is_digression, digression_type, confidence = await self.digression_detector.detect(
-                user_message=user_message,
-                current_field=current_field,
-                form_schema=form_schema,
-                intent_result=intent_result,
-                vendor_id=vendor_id,
-                language=language
-            )
-        else:
-            # 硬編碼版本，不需要 vendor_id 和 language
-            is_digression, digression_type, confidence = await self.digression_detector.detect(
-                user_message=user_message,
-                current_field=current_field,
-                form_schema=form_schema,
-                intent_result=intent_result
-            )
-
-        if is_digression:
-            return await self._handle_digression(
-                user_message=user_message,
-                session_state=session_state,
-                form_schema=form_schema,
-                digression_type=digression_type
-            )
-
-        # 4. 動態欄位分派（api_search / api_select）
+        # 3. 偵測離題（動態欄位類型跳過離題偵測，因為輸入可能是地址、關鍵字等非意圖文字）
         field_type = current_field.get('field_type', 'text')
+        skip_digression = field_type in ('api_search', 'api_select', 'image', 'select')
+
+        if not skip_digression:
+            has_images = bool(image_urls)
+            # 如果���用資料庫版本，傳入 vendor_id 和 language
+            if isinstance(self.digression_detector, DigressionDetectorDB):
+                is_digression, digression_type, confidence = await self.digression_detector.detect(
+                    user_message=user_message,
+                    current_field=current_field,
+                    form_schema=form_schema,
+                    intent_result=intent_result,
+                    vendor_id=vendor_id,
+                    language=language,
+                    has_images=has_images,
+                )
+            else:
+                # 硬編碼版本，不需要 vendor_id 和 language
+                is_digression, digression_type, confidence = await self.digression_detector.detect(
+                    user_message=user_message,
+                    current_field=current_field,
+                    form_schema=form_schema,
+                    intent_result=intent_result,
+                    has_images=has_images,
+                )
+
+            if is_digression:
+                return await self._handle_digression(
+                    user_message=user_message,
+                    session_state=session_state,
+                    form_schema=form_schema,
+                    digression_type=digression_type
+                )
+
+        # 4. 動態欄位分派（api_search / api_select / image）
+        # field_type 已在 Step 3 取得
 
         # 為動態欄位處理器提供 form_schema_fields 參考
         session_state['form_schema_fields'] = form_schema.get('fields', [])
+
+        # 4a. image 欄位分派
+        if field_type == 'image':
+            logger.info(f"[image_field] field_name={current_field.get('field_name')}, has_images={bool(image_urls)}")
+            result = await self._handle_image_field(
+                current_field=current_field,
+                user_message=user_message,
+                session_state=session_state,
+                image_urls=image_urls,
+            )
+
+            if not result['field_completed']:
+                return {
+                    "answer": result['prompt'],
+                    "form_completed": False,
+                }
+
+            # 已完成，存入 collected_data
+            collected_data = session_state['collected_data']
+            collected_data[current_field['field_name']] = result['collected_value']
+
+            # 儲存辨識建議至 metadata（如有）
+            if result.get('recognition_result'):
+                metadata = session_state.get('metadata', {})
+                metadata['recognition_suggestions'] = result['recognition_result']
+                session_state['metadata'] = metadata
+
+            next_field_index = current_field_index + 1
+
+            # 檢查是否完成所有欄位
+            if next_field_index >= len(form_schema['fields']):
+                await self.update_session_state(
+                    session_id=session_id,
+                    collected_data=collected_data,
+                    metadata=session_state.get('metadata', {}),
+                )
+                skip_review = form_schema.get('skip_review', False)
+                if skip_review:
+                    session_state = await self.get_session_state(session_id)
+                    return await self._complete_form(session_state, form_schema, collected_data)
+                else:
+                    return await self.show_review_summary(session_id, vendor_id)
+
+            # 更新並提示下一欄位
+            await self.update_session_state(
+                session_id=session_id,
+                current_field_index=next_field_index,
+                collected_data=collected_data,
+                metadata=session_state.get('metadata', {}),
+            )
+
+            next_field = form_schema['fields'][next_field_index]
+            total_fields = len(form_schema['fields'])
+
+            # 如果有辨識結果，附加提示
+            recognition_hint = ""
+            if result.get('recognition_result') and result['recognition_result'].get('is_damage'):
+                desc = result['recognition_result'].get('description', '')
+                if desc:
+                    recognition_hint = f"\n\n📷 圖片辨識：{desc}"
+
+            # 如果下一欄位也是 api_select，先取選項
+            next_field_type = next_field.get('field_type', 'text')
+            if next_field_type == 'api_select':
+                session_state = await self.get_session_state(session_id)
+                session_state['form_schema_fields'] = form_schema.get('fields', [])
+                select_result = await self._handle_api_select_field(next_field, "", session_state)
+                if not select_result['resolved']:
+                    prompt_text = select_result['prompt']
+
+                    # 辨識建議匹配：比對 suggested_category 與 api_select 選項 → 自動填入
+                    next_field_name = next_field.get('field_name', '')
+                    rec_suggestions = session_state.get('metadata', {}).get('recognition_suggestions')
+                    if rec_suggestions and next_field_name == 'category_id' and rec_suggestions.get('is_damage'):
+                        dynamic_state = session_state.get('metadata', {}).get('dynamic_field_state', {})
+                        pending_options = dynamic_state.get('pending_options', [])
+                        if pending_options:
+                            match = self._match_category_suggestion(
+                                recognition_suggestions=rec_suggestions,
+                                options=pending_options,
+                            )
+                            if match:
+                                opt = match['matched_option']
+                                display_field = next_field.get('display_field') or next_field.get('api_config', {}).get('display_field', 'name')
+                                opt_name = opt.get(display_field, opt.get('name', ''))
+                                value_field = next_field.get('value_field') or next_field.get('api_config', {}).get('value_field', 'id')
+                                auto_value = opt.get(value_field)
+
+                                # 自動填入 category_id
+                                collected_data = session_state['collected_data']
+                                collected_data[next_field_name] = auto_value
+                                metadata = session_state.get('metadata', {})
+                                metadata.pop('dynamic_field_state', None)
+                                metadata.pop('pending_suggestion', None)
+
+                                # 移動到下下個欄位
+                                auto_next_index = next_field_index + 1
+                                await self.update_session_state(
+                                    session_id=session_id,
+                                    current_field_index=auto_next_index,
+                                    collected_data=collected_data,
+                                    metadata=metadata,
+                                )
+
+                                if auto_next_index >= len(form_schema['fields']):
+                                    skip_review = form_schema.get('skip_review', False)
+                                    if skip_review:
+                                        session_state = await self.get_session_state(session_id)
+                                        return await self._complete_form(session_state, form_schema, collected_data)
+                                    else:
+                                        return await self.show_review_summary(session_id, vendor_id)
+
+                                # --- 鏈式自動填入 item_id + broken_reason ---
+                                auto_filled_labels = [f"分類：**{opt_name}**"]
+                                auto_next_field = form_schema['fields'][auto_next_index]
+
+                                if auto_next_field.get('field_name') == 'item_id' and auto_next_field.get('field_type') == 'api_select':
+                                    session_state_fresh = await self.get_session_state(session_id)
+                                    session_state_fresh['form_schema_fields'] = form_schema.get('fields', [])
+                                    item_select_result = await self._handle_api_select_field(auto_next_field, "", session_state_fresh)
+
+                                    if not item_select_result['resolved']:
+                                        item_dynamic = session_state_fresh.get('metadata', {}).get('dynamic_field_state', {})
+                                        item_options = item_dynamic.get('pending_options', [])
+                                        item_display = auto_next_field.get('display_field') or auto_next_field.get('api_config', {}).get('display_field', 'name')
+                                        item_match = self._match_item_suggestion(
+                                            recognition_suggestions=rec_suggestions,
+                                            options=item_options,
+                                            display_field=item_display,
+                                        )
+
+                                        if item_match:
+                                            item_opt = item_match['matched_option']
+                                            item_value_field = auto_next_field.get('value_field') or auto_next_field.get('api_config', {}).get('value_field', 'id')
+                                            item_auto_value = item_opt.get(item_value_field, item_opt.get('value'))
+                                            item_opt_name = item_opt.get(item_display, item_opt.get('name', ''))
+
+                                            collected_data['item_id'] = item_auto_value
+                                            auto_filled_labels.append(f"項目：**{item_opt_name}**")
+                                            meta_fresh = session_state_fresh.get('metadata', {})
+                                            meta_fresh.pop('dynamic_field_state', None)
+
+                                            auto_next_index += 1
+
+                                            # 嘗試鏈式填入 broken_reason
+                                            if auto_next_index < len(form_schema['fields']):
+                                                reason_field = form_schema['fields'][auto_next_index]
+                                                if reason_field.get('field_name') == 'broken_reason' and reason_field.get('field_type') == 'api_select':
+                                                    await self.update_session_state(
+                                                        session_id=session_id,
+                                                        current_field_index=auto_next_index,
+                                                        collected_data=collected_data,
+                                                        metadata=meta_fresh,
+                                                    )
+                                                    session_state_fresh2 = await self.get_session_state(session_id)
+                                                    session_state_fresh2['form_schema_fields'] = form_schema.get('fields', [])
+                                                    reason_select_result = await self._handle_api_select_field(reason_field, "", session_state_fresh2)
+
+                                                    if not reason_select_result['resolved']:
+                                                        reason_dynamic = session_state_fresh2.get('metadata', {}).get('dynamic_field_state', {})
+                                                        reason_options = reason_dynamic.get('pending_options', [])
+                                                        reason_display = reason_field.get('display_field') or reason_field.get('api_config', {}).get('display_field', 'label')
+                                                        reason_match = self._match_reason_suggestion(
+                                                            recognition_suggestions=rec_suggestions,
+                                                            options=reason_options,
+                                                            display_field=reason_display,
+                                                        )
+
+                                                        if reason_match:
+                                                            reason_opt = reason_match['matched_option']
+                                                            reason_value_field = reason_field.get('value_field') or reason_field.get('api_config', {}).get('value_field', 'value')
+                                                            reason_auto_value = reason_opt.get(reason_value_field, reason_opt.get('value', reason_opt.get('label')))
+                                                            reason_opt_name = reason_opt.get(reason_display, reason_opt.get('label', ''))
+
+                                                            collected_data['broken_reason'] = reason_auto_value
+                                                            auto_filled_labels.append(f"原因：**{reason_opt_name}**")
+                                                            meta_fresh2 = session_state_fresh2.get('metadata', {})
+                                                            meta_fresh2.pop('dynamic_field_state', None)
+                                                            auto_next_index += 1
+
+                                                            await self.update_session_state(
+                                                                session_id=session_id,
+                                                                current_field_index=auto_next_index,
+                                                                collected_data=collected_data,
+                                                                metadata=meta_fresh2,
+                                                            )
+
+                                                            if auto_next_index >= len(form_schema['fields']):
+                                                                skip_review = form_schema.get('skip_review', False)
+                                                                if skip_review:
+                                                                    session_state = await self.get_session_state(session_id)
+                                                                    return await self._complete_form(session_state, form_schema, collected_data)
+                                                                else:
+                                                                    return await self.show_review_summary(session_id, vendor_id)
+
+                                                            final_field = form_schema['fields'][auto_next_index]
+                                                            labels_str = "\n- ".join(auto_filled_labels)
+                                                            return {
+                                                                "answer": f"✅ **{current_field['field_label']}** 已記錄！{recognition_hint}\n\n📷 已根據照片自動選擇：\n- {labels_str}\n\n📊 進度：{auto_next_index}/{total_fields}\n\n{final_field['prompt']}",
+                                                                "current_field": final_field['field_name'],
+                                                                "current_field_type": final_field.get('field_type', 'text'),
+                                                                "progress": f"{auto_next_index}/{total_fields}",
+                                                            }
+
+                                                        # reason match failed - show reason options
+                                                        labels_str = "\n- ".join(auto_filled_labels)
+                                                        return {
+                                                            "answer": f"✅ **{current_field['field_label']}** 已記錄！{recognition_hint}\n\n📷 已根據照片自動選擇：\n- {labels_str}\n\n📊 進度：{auto_next_index}/{total_fields}\n\n{reason_select_result['prompt']}",
+                                                            "current_field": reason_field['field_name'],
+                                                            "current_field_type": reason_field.get('field_type', 'text'),
+                                                            "progress": f"{auto_next_index}/{total_fields}",
+                                                        }
+
+                                            # item matched but no reason chain or not broken_reason field
+                                            await self.update_session_state(
+                                                session_id=session_id,
+                                                current_field_index=auto_next_index,
+                                                collected_data=collected_data,
+                                                metadata=meta_fresh,
+                                            )
+
+                                            if auto_next_index >= len(form_schema['fields']):
+                                                skip_review = form_schema.get('skip_review', False)
+                                                if skip_review:
+                                                    session_state = await self.get_session_state(session_id)
+                                                    return await self._complete_form(session_state, form_schema, collected_data)
+                                                else:
+                                                    return await self.show_review_summary(session_id, vendor_id)
+
+                                            next_after_item = form_schema['fields'][auto_next_index]
+                                            labels_str = "\n- ".join(auto_filled_labels)
+                                            return {
+                                                "answer": f"✅ **{current_field['field_label']}** 已記錄！{recognition_hint}\n\n📷 已根據照片自動選擇：\n- {labels_str}\n\n📊 進度：{auto_next_index}/{total_fields}\n\n{next_after_item['prompt']}",
+                                                "current_field": next_after_item['field_name'],
+                                                "current_field_type": next_after_item.get('field_type', 'text'),
+                                                "progress": f"{auto_next_index}/{total_fields}",
+                                            }
+
+                                        # item match failed - show item options with category already filled
+                                        return {
+                                            "answer": f"✅ **{current_field['field_label']}** 已記錄！{recognition_hint}\n\n📷 已根據照片自動選擇分類：**{opt_name}**\n\n📊 進度：{auto_next_index}/{total_fields}\n\n{item_select_result['prompt']}",
+                                            "current_field": auto_next_field['field_name'],
+                                            "current_field_type": auto_next_field.get('field_type', 'text'),
+                                            "progress": f"{auto_next_index}/{total_fields}",
+                                        }
+
+                                # Next field is not item_id api_select, return normally
+                                return {
+                                    "answer": f"✅ **{current_field['field_label']}** 已記錄！{recognition_hint}\n\n📷 已根據照片自動選擇分類：**{opt_name}**\n\n📊 進度：{auto_next_index}/{total_fields}\n\n{auto_next_field['prompt']}",
+                                    "current_field": auto_next_field['field_name'],
+                                    "current_field_type": auto_next_field.get('field_type', 'text'),
+                                    "progress": f"{auto_next_index}/{total_fields}",
+                                }
+
+                    return {
+                        "answer": f"✅ **{current_field['field_label']}** 已記錄！{recognition_hint}\n\n📊 進度：{next_field_index}/{total_fields}\n\n{prompt_text}",
+                        "current_field": next_field['field_name'],
+                        "current_field_type": next_field.get('field_type', 'text'),
+                        "progress": f"{next_field_index}/{total_fields}",
+                    }
+
+            return {
+                "answer": f"✅ **{current_field['field_label']}** 已記錄！{recognition_hint}\n\n📊 進度：{next_field_index}/{total_fields}\n\n{next_field['prompt']}",
+                "current_field": next_field['field_name'],
+                "current_field_type": next_field.get('field_type', 'text'),
+                "progress": f"{next_field_index}/{total_fields}",
+            }
+
+        # 4b. 檢查辨識建議（category_id / broken_note / emergency_status 的自動填入）
+        metadata = session_state.get('metadata', {})
+        recognition_suggestions = metadata.get('recognition_suggestions')
+        if recognition_suggestions and field_type in ('api_select', 'text', 'select'):
+            suggestion_result = await self._check_recognition_suggestion(
+                current_field=current_field,
+                user_message=user_message,
+                session_state=session_state,
+                recognition_suggestions=recognition_suggestions,
+            )
+            if suggestion_result is not None:
+                return suggestion_result
 
         if field_type in ('api_search', 'api_select'):
             logger.info(f"[dynamic_field] field_type={field_type}, field_name={current_field.get('field_name')}, user_input={user_message[:50]}")
@@ -649,8 +947,37 @@ class FormManager:
                 result = await self._handle_api_select_field(current_field, user_message, session_state)
 
             if not result['resolved']:
+                # 檢查是否有辨識建議可附加到 api_select 選項列表
+                prompt_text = result['prompt']
+                metadata = session_state.get('metadata', {})
+                recognition_suggestions = metadata.get('recognition_suggestions')
+                if recognition_suggestions and field_name == 'category_id':
+                    dynamic_state = metadata.get('dynamic_field_state', {})
+                    pending_options = dynamic_state.get('pending_options', [])
+                    if pending_options:
+                        match = self._match_category_suggestion(
+                            recognition_suggestions=recognition_suggestions,
+                            options=pending_options,
+                        )
+                        if match:
+                            opt = match['matched_option']
+                            display_field = current_field.get('display_field') or current_field.get('api_config', {}).get('display_field', 'name')
+                            opt_name = opt.get(display_field, opt.get('name', ''))
+                            prompt_text = f"📷 根據照片判斷，這可能是「{opt_name}」，輸入「是」確認，或輸入編號選擇其他分類：\n\n{prompt_text}"
+                            # 記錄待確認建議
+                            metadata['pending_suggestion'] = {
+                                'field_name': 'category_id',
+                                'type': 'category',
+                                'value': opt.get(current_field.get('value_field') or current_field.get('api_config', {}).get('value_field', 'id')),
+                            }
+                            session_state['metadata'] = metadata
+                            await self.update_session_state(
+                                session_id=session_state['session_id'],
+                                metadata=metadata,
+                            )
+
                 return {
-                    "answer": result['prompt'],
+                    "answer": prompt_text,
                     "form_completed": False,
                 }
 
@@ -698,12 +1025,14 @@ class FormManager:
                     return {
                         "answer": f"✅ **{current_field['field_label']}** 已記錄！\n\n📊 進度：{next_field_index}/{total_fields}\n\n{select_result['prompt']}",
                         "current_field": next_field['field_name'],
+                        "current_field_type": next_field.get('field_type', 'text'),
                         "progress": f"{next_field_index}/{total_fields}",
                     }
 
             return {
                 "answer": f"✅ **{current_field['field_label']}** 已記錄！\n\n📊 進度：{next_field_index}/{total_fields}\n\n{next_field['prompt']}",
                 "current_field": next_field['field_name'],
+                "current_field_type": next_field.get('field_type', 'text'),
                 "progress": f"{next_field_index}/{total_fields}",
             }
 
@@ -718,6 +1047,30 @@ class FormManager:
                 "answer": f"{error_message}\n\n{current_field['prompt']}",
                 "validation_failed": True
             }
+
+        # 5b. select 欄位：將 label 或編號轉換為 value
+        if field_type == 'select' and current_field.get('options'):
+            options = current_field['options']
+            resolved_value = None
+            stripped = extracted_value.strip()
+
+            # 嘗試用編號選擇
+            try:
+                idx = int(stripped) - 1
+                if 0 <= idx < len(options):
+                    resolved_value = options[idx].get('value', options[idx].get('label'))
+            except (ValueError, TypeError):
+                pass
+
+            # 嘗試用 label 匹配
+            if resolved_value is None:
+                for opt in options:
+                    if stripped == opt.get('label', '') or stripped == str(opt.get('value', '')):
+                        resolved_value = opt.get('value', opt.get('label'))
+                        break
+
+            if resolved_value is not None:
+                extracted_value = resolved_value
 
         # 6. 儲存資料
         collected_data = session_state['collected_data']
@@ -757,7 +1110,412 @@ class FormManager:
         return {
             "answer": f"✅ **{current_field['field_label']}** 已記錄！\n\n📊 進度：{next_field_index}/{total_fields}\n\n{next_field['prompt']}",
             "current_field": next_field['field_name'],
+            "current_field_type": next_field.get('field_type', 'text'),
             "progress": f"{next_field_index}/{total_fields}"
+        }
+
+    # ========================================
+    # image 欄位處理
+    # ========================================
+
+    _SKIP_KEYWORDS = {"跳過", "略過", "skip", "不用"}
+    _CONFIRM_KEYWORDS = {"是", "對", "確認", "正確", "ok", "yes", "好", "對的", "沒錯"}
+
+    async def _handle_image_field(
+        self,
+        current_field: Dict,
+        user_message: str,
+        session_state: Dict,
+        image_urls: Optional[List[str]] = None,
+    ) -> Dict:
+        """
+        處理 image 類型欄位。
+
+        Returns:
+            {field_completed, collected_value, prompt, recognition_result}
+        """
+        # 1. 有 image_urls → 儲存圖片，嘗試辨識
+        if image_urls:
+            recognition_result = None
+            if current_field.get('enable_recognition'):
+                try:
+                    # 從表單 schema 取得 category_id 的 API 選項名稱及完整分類樹，注入 Vision prompt
+                    category_names = await self._fetch_category_names(session_state)
+                    categories_tree = await self._fetch_categories_tree(session_state)
+                    logger.info(f"[image_field] category_names for prompt: {category_names}, tree_count={len(categories_tree) if categories_tree else 0}")
+
+                    service = ImageRecognitionService()
+                    recognition_result = await service.analyze_images(
+                        image_urls=image_urls,
+                        context=user_message if user_message else None,
+                        category_names=category_names,
+                        categories_tree=categories_tree,
+                        db_pool=self.db_pool,
+                    )
+                    logger.info(f"[image_field] recognition result: is_damage={recognition_result.get('is_damage')}, suggested_category={recognition_result.get('suggested_category')}, suggested_item={recognition_result.get('suggested_item')}, suggested_reason={recognition_result.get('suggested_reason')}, confidence={recognition_result.get('confidence')}")
+                    # 存入 metadata
+                    metadata = session_state.get('metadata', {})
+                    metadata['recognition_suggestions'] = recognition_result
+                    session_state['metadata'] = metadata
+                except Exception as e:
+                    logger.warning(f"[image_field] 圖片辨識失敗，仍儲存圖片: {e}")
+
+            return {
+                "field_completed": True,
+                "collected_value": image_urls,
+                "recognition_result": recognition_result,
+                "prompt": "",
+            }
+
+        # 2. 無 image_urls，檢查跳過
+        stripped = user_message.strip().lower() if user_message else ""
+        if stripped in self._SKIP_KEYWORDS:
+            if not current_field.get('required', False):
+                return {
+                    "field_completed": True,
+                    "collected_value": None,
+                    "recognition_result": None,
+                    "prompt": "",
+                }
+            else:
+                return {
+                    "field_completed": False,
+                    "collected_value": None,
+                    "recognition_result": None,
+                    "prompt": "此欄位為必填，請上傳損壞照片。",
+                }
+
+        # 3. 無 image_urls 且非跳過 → 提示上傳
+        skip_hint = "，或輸入「跳過」" if not current_field.get('required', False) else ""
+        return {
+            "field_completed": False,
+            "collected_value": None,
+            "recognition_result": None,
+            "prompt": f"請上傳損壞照片{skip_hint}。",
+        }
+
+    async def _fetch_category_names(self, session_state: Dict) -> Optional[List[str]]:
+        """
+        從 JGB 修繕分類 API 取得分類名稱列表，供 Vision prompt 注入。
+        讓 GPT-4o 從真實選項中選擇，而非自由生成。
+        """
+        try:
+            form_fields = session_state.get('form_schema_fields', [])
+            for field in form_fields:
+                if field.get('field_name') == 'category_id':
+                    api_config = field.get('api_config', {})
+                    endpoint = api_config.get('endpoint')
+                    if endpoint:
+                        api_handler = get_api_call_handler(self.db_pool)
+                        if endpoint in api_handler.api_registry:
+                            api_result = await api_handler.api_registry[endpoint](**{})
+                            if api_result and api_result.get('success'):
+                                data_path = api_config.get('data_path', 'data')
+                                items = api_result.get(data_path, [])
+                                display_field = api_config.get('display_field', 'name')
+                                names = [item.get(display_field, '') for item in items if item.get(display_field)]
+                                if names:
+                                    logger.info(f"[image_field] 注入 {len(names)} 個分類名稱至 Vision prompt: {names}")
+                                    return names
+        except Exception as e:
+            logger.warning(f"[image_field] 取得分類名稱失敗，Vision 將自由生成: {e}")
+        return None
+
+    async def _fetch_categories_tree(self, session_state: Dict) -> Optional[list]:
+        """
+        從 JGB 修��分類 API 取得完整分類樹（含 items + broken_reasons），
+        供 Vision prompt 注入，讓 GPT-4o 精準選擇 item 和 reason。
+        """
+        try:
+            form_fields = session_state.get('form_schema_fields', [])
+            for field in form_fields:
+                if field.get('field_name') == 'category_id':
+                    api_config = field.get('api_config', {})
+                    endpoint = api_config.get('endpoint')
+                    if endpoint:
+                        api_handler = get_api_call_handler(self.db_pool)
+                        if endpoint in api_handler.api_registry:
+                            api_result = await api_handler.api_registry[endpoint](**{})
+                            if api_result and api_result.get('success'):
+                                data_path = api_config.get('data_path', 'data')
+                                categories = api_result.get(data_path, [])
+                                if categories and isinstance(categories, list):
+                                    # 確認至少有一個 category 含有 items
+                                    has_items = any(cat.get('items') for cat in categories if isinstance(cat, dict))
+                                    if has_items:
+                                        logger.info(f"[image_field] 注入分類樹 ({len(categories)} 分類) 至 Vision prompt")
+                                        return categories
+        except Exception as e:
+            logger.warning(f"[image_field] 取得分類樹失敗: {e}")
+        return None
+
+    # ========================================
+    # 辨識建議匹配（供 5.2 使用）
+    # ========================================
+
+    def _match_category_suggestion(
+        self,
+        recognition_suggestions: Dict,
+        options: List[Dict],
+        display_field: str = "name",
+    ) -> Optional[Dict]:
+        """
+        將辨識建議的 suggested_category 與 api_select 選項比對。
+
+        Returns:
+            {matched_option, confirmation_message} 或 None
+        """
+        confidence = recognition_suggestions.get("confidence", 0)
+        if confidence < 0.7:
+            return None
+
+        suggested = recognition_suggestions.get("suggested_category", "")
+        if not suggested:
+            return None
+
+        for opt in options:
+            opt_name = opt.get(display_field, opt.get("label", ""))
+            if opt_name == suggested:
+                return {
+                    "matched_option": opt,
+                    "confirmation_message": f"根據照片判斷，這可能是「{opt_name}」，是否正確？（輸入「是」確認，或「不是」重新選擇）",
+                }
+        return None
+
+    def _match_item_suggestion(
+        self,
+        recognition_suggestions: Dict,
+        options: List[Dict],
+        display_field: str = "name",
+    ) -> Optional[Dict]:
+        """
+        將辨識建議的 suggested_item 與 item 選項比對。
+        支援精確比對和包含比對。
+        """
+        confidence = recognition_suggestions.get("confidence", 0)
+        if confidence < 0.7:
+            return None
+
+        suggested = recognition_suggestions.get("suggested_item", "")
+        if not suggested:
+            return None
+
+        # 精確比對
+        for opt in options:
+            opt_name = opt.get(display_field, opt.get("label", ""))
+            if opt_name == suggested:
+                return {"matched_option": opt}
+
+        # 包含比對（模糊）
+        for opt in options:
+            opt_name = opt.get(display_field, opt.get("label", ""))
+            if suggested in opt_name or opt_name in suggested:
+                return {"matched_option": opt}
+
+        return None
+
+    def _match_reason_suggestion(
+        self,
+        recognition_suggestions: Dict,
+        options: List[Dict],
+        display_field: str = "label",
+    ) -> Optional[Dict]:
+        """
+        將辨識建議的 suggested_reason 與 broken_reason 選項比對。
+        broken_reason 選項經 _normalize_options 後為 [{"label": "漏水", "value": "漏水"}, ...]
+        """
+        confidence = recognition_suggestions.get("confidence", 0)
+        if confidence < 0.7:
+            return None
+
+        suggested = recognition_suggestions.get("suggested_reason", "")
+        if not suggested:
+            return None
+
+        # 精確比對
+        for opt in options:
+            opt_name = opt.get(display_field, opt.get("name", opt.get("value", "")))
+            if opt_name == suggested:
+                return {"matched_option": opt}
+
+        # 包含比對
+        for opt in options:
+            opt_name = opt.get(display_field, opt.get("name", opt.get("value", "")))
+            if suggested in opt_name or opt_name in suggested:
+                return {"matched_option": opt}
+
+        return None
+
+    def _get_broken_note_suggestion(self, recognition_suggestions: Dict) -> Optional[Dict]:
+        """
+        取得 broken_note 預填建議。
+
+        Returns:
+            {prefill_value, confirmation_message} 或 None
+        """
+        description = recognition_suggestions.get("description", "")
+        if not description:
+            return None
+
+        return {
+            "prefill_value": description,
+            "confirmation_message": f"AI 描述：{description}\n\n是否使用此描述？可直接輸入修改內容。",
+        }
+
+    def _get_emergency_suggestion(self, recognition_suggestions: Dict) -> Optional[Dict]:
+        """
+        取得 emergency_status 建議。severity=critical → 建議緊急。
+
+        Returns:
+            {suggested_value, confirmation_message} 或 None
+        """
+        severity = recognition_suggestions.get("severity", "")
+        if severity == "critical":
+            return {
+                "suggested_value": 1,  # 緊急
+                "confirmation_message": "根據照片判斷損壞情況嚴重，建議選擇「緊急」。是否同意？",
+            }
+        return None
+
+    async def _check_recognition_suggestion(
+        self,
+        current_field: Dict,
+        user_message: str,
+        session_state: Dict,
+        recognition_suggestions: Dict,
+    ) -> Optional[Dict]:
+        """
+        檢查當前欄位是否有辨識建議可套用。
+
+        若有建議且用戶尚未回應 → 展示確認訊息
+        若用戶已回應確認 → 自動填入
+        若用戶拒絕 → 清除建議，回到正常流程
+
+        Returns:
+            回應字典，或 None（表示無建議、繼續正常流程）
+        """
+        metadata = session_state.get('metadata', {})
+        field_name = current_field.get('field_name', '')
+        pending_suggestion = metadata.get('pending_suggestion')
+
+        # 如果有待確認的建議（用戶正在回應確認/拒絕）
+        if pending_suggestion and pending_suggestion.get('field_name') == field_name:
+            stripped = user_message.strip().lower()
+            if stripped in self._CONFIRM_KEYWORDS:
+                # 確認 → 自動填入
+                return await self._accept_suggestion(
+                    current_field=current_field,
+                    session_state=session_state,
+                    pending_suggestion=pending_suggestion,
+                )
+            else:
+                # 拒絕 → 清除建議，回到正常流程
+                metadata.pop('pending_suggestion', None)
+                session_state['metadata'] = metadata
+                return None  # 讓正常流程處理
+
+        # 沒有待確認的建議 → 嘗試生成建議
+        if field_name == 'category_id':
+            # category 欄位：需要 api_select 選項來比對
+            # 這裡不攔截，讓 api_select 先取選項，之後在選項展示時附加建議
+            return None
+
+        if field_name in ('item_id', 'broken_reason'):
+            # item_id 和 broken_reason 的建議在鏈式自動填入中處理
+            # 這裡不攔截，讓 api_select 正常取選項
+            return None
+
+        if field_name == 'broken_note':
+            # 用戶輸入了實際內容 → 直接使用
+            stripped_msg = user_message.strip()
+            if stripped_msg and stripped_msg not in ('', '跳過', '略過', 'skip'):
+                return None  # 讓正常流程直接接受用戶輸入
+
+            # 用戶輸入「跳過」→ 自動用 AI 描述填入（不再詢問確認）
+            suggestion = self._get_broken_note_suggestion(recognition_suggestions)
+            if suggestion:
+                # 直接填入 AI 描述��不需要確認
+                return await self._accept_suggestion(
+                    current_field=current_field,
+                    session_state=session_state,
+                    pending_suggestion={
+                        'field_name': field_name,
+                        'type': 'broken_note',
+                        'value': suggestion['prefill_value'],
+                    },
+                )
+
+        if field_name == 'emergency_status':
+            suggestion = self._get_emergency_suggestion(recognition_suggestions)
+            if suggestion:
+                metadata['pending_suggestion'] = {
+                    'field_name': field_name,
+                    'type': 'emergency_status',
+                    'value': suggestion['suggested_value'],
+                }
+                session_state['metadata'] = metadata
+                await self.update_session_state(
+                    session_id=session_state['session_id'],
+                    metadata=metadata,
+                )
+                return {
+                    "answer": suggestion['confirmation_message'],
+                    "form_completed": False,
+                }
+
+        return None
+
+    async def _accept_suggestion(
+        self,
+        current_field: Dict,
+        session_state: Dict,
+        pending_suggestion: Dict,
+    ) -> Dict:
+        """接受辨識建議，自動填入欄位值並推進"""
+        metadata = session_state.get('metadata', {})
+        collected_data = session_state.get('collected_data', {})
+        field_name = current_field.get('field_name', '')
+        value = pending_suggestion.get('value')
+
+        # 填入值
+        collected_data[field_name] = value
+
+        # 清除待確認建議
+        metadata.pop('pending_suggestion', None)
+
+        # 取得 form_schema 以推進欄位
+        form_schema = await self.get_form_schema(session_state['form_id'])
+        current_field_index = session_state['current_field_index']
+        next_field_index = current_field_index + 1
+
+        if next_field_index >= len(form_schema['fields']):
+            await self.update_session_state(
+                session_id=session_state['session_id'],
+                collected_data=collected_data,
+                metadata=metadata,
+            )
+            skip_review = form_schema.get('skip_review', False)
+            if skip_review:
+                session_state = await self.get_session_state(session_state['session_id'])
+                return await self._complete_form(session_state, form_schema, collected_data)
+            else:
+                return await self.show_review_summary(session_state['session_id'])
+
+        await self.update_session_state(
+            session_id=session_state['session_id'],
+            current_field_index=next_field_index,
+            collected_data=collected_data,
+            metadata=metadata,
+        )
+
+        next_field = form_schema['fields'][next_field_index]
+        total_fields = len(form_schema['fields'])
+
+        return {
+            "answer": f"✅ **{current_field['field_label']}** 已自動填入！\n\n📊 進度：{next_field_index}/{total_fields}\n\n{next_field['prompt']}",
+            "current_field": next_field['field_name'],
+            "current_field_type": next_field.get('field_type', 'text'),
+            "progress": f"{next_field_index}/{total_fields}",
         }
 
     # ========================================
@@ -873,6 +1631,17 @@ class FormManager:
             return {
                 "resolved": False,
                 "prompt": f"找不到符合「{user_input}」的結果，請重新輸入關鍵字。\n\n{field['prompt']}",
+            }
+
+        # 只有 1 筆結果時自動選取
+        if len(results) == 1:
+            value_field = api_config.get('value_field', 'id')
+            display_field = api_config.get('display_field', 'name')
+            selected = results[0]
+            logger.info(f"[api_search] 僅 1 筆結果，自動選取: {selected.get(display_field, selected.get('name', ''))}")
+            return {
+                "resolved": True,
+                "value": selected.get(value_field, selected.get('value')),
             }
 
         # 超過 10 筆截斷
@@ -1233,11 +2002,13 @@ class FormManager:
         api_result = None
         if on_complete_action in ['call_api', 'both'] and api_config:
             print(f"📞 [表單完成] 調用 API: {api_config.get('endpoint')}")
+            # 寫入型 API（如 create_repair）不傳 knowledge_answer，避免錯誤時顯示無關內容
+            pass_knowledge = knowledge_answer if on_complete_action == 'both' else None
             api_result = await self._execute_form_api(
                 api_config=api_config,
                 form_data=collected_data,
                 session_state=session_state,
-                knowledge_answer=knowledge_answer
+                knowledge_answer=pass_knowledge
             )
 
             # ⚠️ 檢查 API 是否返回需要用戶重新輸入的錯誤

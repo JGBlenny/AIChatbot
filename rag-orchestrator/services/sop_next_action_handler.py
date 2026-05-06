@@ -187,8 +187,9 @@ class SOPNextActionHandler:
                 print(f"   🔧 預填欄位: {list(prefill_params.keys())}")
                 await self._prefill_form_fields(form_session, prefill_params)
 
-        # 獲取第一個問題
-        first_question = await self.form_manager.get_next_question(session_id)
+        # 獲取第一個欄位資訊
+        field_info = await self.form_manager.get_next_field_info(session_id)
+        first_question = field_info.get('prompt', '') if field_info else ''
 
         followup_prompt = sop_context.get('followup_prompt', '') if sop_context else ''
         if not followup_prompt:
@@ -200,7 +201,8 @@ class SOPNextActionHandler:
             'api_result': None,
             'next_step': 'collect_field',
             'response': f"{followup_prompt}\n\n{first_question}" if first_question else followup_prompt,
-            'current_field': first_question
+            'current_field': field_info.get('field_name') if field_info else None,
+            'current_field_type': field_info.get('field_type') if field_info else None,
         }
 
     async def _handle_api_call(

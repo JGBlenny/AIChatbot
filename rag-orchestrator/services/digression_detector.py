@@ -43,7 +43,8 @@ class DigressionDetector:
         user_message: str,
         current_field: Dict,
         form_schema: Dict,
-        intent_result: Optional[Dict] = None
+        intent_result: Optional[Dict] = None,
+        has_images: bool = False
     ) -> Tuple[bool, Optional[str], float]:
         """
         偵測用戶是否離題
@@ -53,6 +54,7 @@ class DigressionDetector:
             current_field: 當前欄位配置
             form_schema: 表單定義
             intent_result: 意圖分類結果（可選）
+            has_images: 是否包含圖片（圖片輸入不應被視為離題）
 
         Returns:
             (is_digression, digression_type, confidence)
@@ -60,10 +62,14 @@ class DigressionDetector:
             - digression_type: 離題類型
             - confidence: 置信度（0-1）
         """
-        # 策略 1：明確關鍵字檢測（優先級最高）
+        # 策略 1：明確關鍵字檢測（優先級最高，即使有圖片仍檢查）
         result = self._check_explicit_keywords(user_message)
         if result[0]:
             return result
+
+        # 圖片輸入：跳過語義/意圖檢查，圖片不應被視為離題
+        if has_images:
+            return (False, None, 0.0)
 
         # 策略 2：問題關鍵字檢測
         result = self._check_question_keywords(user_message)

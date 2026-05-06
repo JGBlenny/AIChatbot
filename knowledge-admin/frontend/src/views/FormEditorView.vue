@@ -225,6 +225,9 @@
                         <option value="number">number - 數字</option>
                         <option value="email">email - Email</option>
                         <option value="date">date - 日期</option>
+                        <option value="image">image - 圖片上傳</option>
+                        <option value="api_search">api_search - API 搜尋</option>
+                        <option value="api_select">api_select - API 選單</option>
                       </select>
                     </div>
                     <div class="form-group">
@@ -263,14 +266,99 @@
 
                   <!-- 選項設定（select/multiselect） -->
                   <div v-if="field.field_type === 'select' || field.field_type === 'multiselect'" class="form-group">
-                    <label>選項 * <small>(每行一個選項)</small></label>
+                    <label>選項 * <small>(每行一個選項，格式：label:value 或只寫 label)</small></label>
                     <textarea
                       v-model="field._optionsText"
                       rows="4"
-                      placeholder="選項1&#10;選項2&#10;選項3"
+                      placeholder="緊急:1&#10;非緊急:2"
                       @input="updateOptionsArray(field)"
                     ></textarea>
                     <small class="hint">當前選項：{{ field.options?.length || 0 }} 個</small>
+                  </div>
+
+                  <!-- image 欄位設定 -->
+                  <div v-if="field.field_type === 'image'" class="dynamic-field-config">
+                    <h5>圖片上傳設定</h5>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>最大張數</label>
+                        <input v-model.number="field.max_count" type="number" min="1" max="10" placeholder="3" />
+                      </div>
+                      <div class="form-group">
+                        <label>
+                          <input type="checkbox" v-model="field.enable_recognition" />
+                          啟用 AI 圖片辨識
+                        </label>
+                      </div>
+                    </div>
+                    <div v-if="field.enable_recognition" class="form-group">
+                      <label>辨識結果映射 <small>(JSON：辨識欄位 → 表單欄位)</small></label>
+                      <textarea
+                        v-model="field._recognitionMappingText"
+                        rows="4"
+                        placeholder='{"suggested_category": "category_id", "suggested_item": "item_id", "suggested_reason": "broken_reason", "description": "broken_note", "suggested_emergency": "emergency_status"}'
+                        @input="updateRecognitionMapping(field)"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <!-- api_search 欄位設定 -->
+                  <div v-if="field.field_type === 'api_search'" class="dynamic-field-config">
+                    <h5>API 搜尋設定</h5>
+                    <div class="form-group">
+                      <label>API Endpoint *</label>
+                      <input v-model="field.api_config.endpoint" placeholder="例如：jgb_estates" />
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>搜尋參數名</label>
+                        <input v-model="field.api_config.search_param" placeholder="keyword" />
+                      </div>
+                      <div class="form-group">
+                        <label>值欄位</label>
+                        <input v-model="field.api_config.value_field" placeholder="id" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label>顯示模板 <small>(用 {欄位名} 引用)</small></label>
+                      <input v-model="field.api_config.display_template" placeholder="{title}（{address}）" />
+                    </div>
+                    <div class="form-group">
+                      <label>額外參數 <small>(JSON)</small></label>
+                      <textarea
+                        v-model="field._extraParamsText"
+                        rows="2"
+                        placeholder='{"role_id": "{session.role_id}"}'
+                        @input="updateExtraParams(field)"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <!-- api_select 欄位設定 -->
+                  <div v-if="field.field_type === 'api_select'" class="dynamic-field-config">
+                    <h5>API 選單設定</h5>
+                    <div class="form-group">
+                      <label>API Endpoint *</label>
+                      <input v-model="field.api_config.endpoint" placeholder="例如：jgb_repair_categories" />
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>顯示欄位</label>
+                        <input v-model="field.api_config.display_field" placeholder="name" />
+                      </div>
+                      <div class="form-group">
+                        <label>值欄位</label>
+                        <input v-model="field.api_config.value_field" placeholder="id" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label>依賴欄位 <small>(此欄位的選項取決於哪個欄位的值)</small></label>
+                      <input v-model="field.api_config.depends_on" placeholder="例如：category_id" />
+                    </div>
+                    <div class="form-group">
+                      <label>資料路徑 <small>(從 API 回傳的 JSON 中取選項的路徑)</small></label>
+                      <input v-model="field.api_config.data_path" placeholder="例如：items" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -399,11 +487,30 @@ export default {
           is_active: data.is_active,
           on_complete_action: data.on_complete_action || 'show_knowledge',
           api_config: processedApiConfig,
-          fields: data.fields.map((f, index) => ({
-            ...f,
-            key: `loaded_${index}_${Date.now()}`,  // 添加穩定的內部 ID
-            _optionsText: f.options ? f.options.join('\n') : ''
-          }))
+          fields: data.fields.map((f, index) => {
+            // 處理選項文字（支援 label:value 格式）
+            let optionsText = '';
+            if (f.options) {
+              optionsText = f.options.map(opt => {
+                if (typeof opt === 'object' && opt.label !== undefined) {
+                  return `${opt.label}:${opt.value}`;
+                }
+                return String(opt);
+              }).join('\n');
+            }
+
+            return {
+              ...f,
+              key: `loaded_${index}_${Date.now()}`,
+              _optionsText: optionsText,
+              // image 欄位的內部文字
+              _recognitionMappingText: f.recognition_mapping ? JSON.stringify(f.recognition_mapping, null, 2) : '',
+              // api_search 的額外參數
+              _extraParamsText: f.api_config?.extra_params ? JSON.stringify(f.api_config.extra_params, null, 2) : '',
+              // 確保 api_config 存在
+              api_config: f.api_config || {}
+            };
+          })
         };
       } catch (error) {
         console.error('載入表單失敗:', error);
@@ -418,7 +525,7 @@ export default {
     const addField = (type) => {
       const timestamp = Date.now();
       const field = {
-        key: `temp_${timestamp}`,  // 穩定的內部 ID，用於 Vue key
+        key: `temp_${timestamp}`,
         field_name: `field_${timestamp}`,
         field_label: '',
         field_type: type,
@@ -430,15 +537,43 @@ export default {
 
       if (type === 'select' || type === 'multiselect') {
         field.options = [];
-        field._optionsText = '選項1\n選項2\n選項3';
-        field.options = ['選項1', '選項2', '選項3'];
+        field._optionsText = '選項1:1\n選項2:2';
+        field.options = [{ label: '選項1', value: 1 }, { label: '選項2', value: 2 }];
+      }
+
+      if (type === 'image') {
+        field.max_count = 3;
+        field.enable_recognition = false;
+        field.recognition_mapping = {};
+        field._recognitionMappingText = '';
+      }
+
+      if (type === 'api_search') {
+        field.api_config = {
+          endpoint: '',
+          search_param: 'keyword',
+          value_field: 'id',
+          display_template: '{name}',
+          extra_params: {}
+        };
+        field._extraParamsText = '';
+      }
+
+      if (type === 'api_select') {
+        field.api_config = {
+          endpoint: '',
+          display_field: 'name',
+          value_field: 'id',
+          depends_on: '',
+          data_path: ''
+        };
       }
 
       formData.value.fields.push(field);
       editingIndex.value = formData.value.fields.length - 1;
     };
 
-    // 更新選項陣列
+    // 更新選項陣列（支援 label:value 格式）
     const updateOptionsArray = (field) => {
       if (!field._optionsText) {
         field.options = [];
@@ -447,7 +582,34 @@ export default {
       field.options = field._optionsText
         .split('\n')
         .map(line => line.trim())
-        .filter(line => line.length > 0);
+        .filter(line => line.length > 0)
+        .map(line => {
+          if (line.includes(':')) {
+            const [label, value] = line.split(':').map(s => s.trim());
+            const numVal = Number(value);
+            return { label, value: isNaN(numVal) ? value : numVal };
+          }
+          return line;  // 向後兼容：純文字選項
+        });
+    };
+
+    // 更新辨識映射 JSON
+    const updateRecognitionMapping = (field) => {
+      try {
+        field.recognition_mapping = JSON.parse(field._recognitionMappingText || '{}');
+      } catch (e) {
+        // 輸入中，暫不處理
+      }
+    };
+
+    // 更新額外參數 JSON
+    const updateExtraParams = (field) => {
+      try {
+        if (!field.api_config) field.api_config = {};
+        field.api_config.extra_params = JSON.parse(field._extraParamsText || '{}');
+      } catch (e) {
+        // 輸入中，暫不處理
+      }
     };
 
     // 展開/收合欄位
@@ -669,6 +831,8 @@ export default {
       editingIndex,
       addField,
       updateOptionsArray,
+      updateRecognitionMapping,
+      updateExtraParams,
       toggleEdit,
       moveField,
       duplicateField,
@@ -891,5 +1055,19 @@ export default {
 
 .required {
   color: #dc3545;
+}
+
+.dynamic-field-config {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #f0f7ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 6px;
+}
+
+.dynamic-field-config h5 {
+  margin: 0 0 0.5rem 0;
+  color: #1565c0;
+  font-size: 0.85rem;
 }
 </style>

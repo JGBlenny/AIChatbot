@@ -159,7 +159,8 @@ class DigressionDetectorDB:
         form_schema: Dict,
         intent_result: Optional[Dict] = None,
         vendor_id: int = 1,
-        language: str = 'zh-TW'
+        language: str = 'zh-TW',
+        has_images: bool = False
     ) -> Tuple[bool, Optional[str], float]:
         """
         偵測用戶是否離題
@@ -171,6 +172,7 @@ class DigressionDetectorDB:
             intent_result: 意圖分類結果（可選）
             vendor_id: 業者 ID（用於載入專屬配置）
             language: 語言代碼（用於載入對應語言的關鍵字）
+            has_images: 是否包含圖片（圖片輸入不應被視為離題）
 
         Returns:
             (is_digression, digression_type, confidence)
@@ -181,10 +183,14 @@ class DigressionDetectorDB:
         # 載入配置
         config = await self._load_config(vendor_id, language)
 
-        # 策略 1：明確關鍵字檢測（優先級最高）
+        # 策略 1：明確關鍵字檢測（優先級最高，即使有圖片仍檢查）
         result = self._check_explicit_keywords(user_message, config['exit'])
         if result[0]:
             return result
+
+        # 圖片輸入：跳過語義/意圖檢查，圖片不應被視為離題
+        if has_images:
+            return (False, None, 0.0)
 
         # 策略 2：問題關鍵字檢測
         result = self._check_question_keywords(user_message, config['question'])

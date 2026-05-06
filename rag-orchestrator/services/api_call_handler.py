@@ -316,7 +316,9 @@ class APICallHandler:
         form_data: Optional[Dict[str, Any]] = None
     ) -> str:
         """格式化 API 響應"""
-        combine_with_knowledge = api_config.get('combine_with_knowledge', True)
+        # 建立/寫入型 API 不合併知識庫答案
+        is_write_endpoint = endpoint in ('jgb_create_repair',)
+        combine_with_knowledge = api_config.get('combine_with_knowledge', not is_write_endpoint)
         response_template = api_config.get('response_template')
 
         # 格式化 API 結果
@@ -428,8 +430,15 @@ class APICallHandler:
         if 'next_send_date' in api_result:
             lines.append(f'📅 預計發送日期：{api_result["next_send_date"]}')
 
-        if 'error' in api_result and api_result['error'] not in api_result.get('error_type', ''):
-            lines.append(f'\n錯誤代碼：{api_result["error"]}')
+        if 'error' in api_result:
+            error_val = api_result['error']
+            error_type = api_result.get('error_type', '')
+            # error 可能是 dict（JGB 格式）或 string
+            if isinstance(error_val, dict):
+                error_msg = error_val.get('message', str(error_val))
+                lines.append(f'\n錯誤：{error_msg}')
+            elif isinstance(error_val, str) and error_val not in (error_type if isinstance(error_type, str) else ''):
+                lines.append(f'\n錯誤代碼：{error_val}')
 
         return '\n'.join(lines)
 

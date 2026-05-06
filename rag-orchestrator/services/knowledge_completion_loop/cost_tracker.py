@@ -68,6 +68,16 @@ class OpenAICostTracker:
         "gpt-4": {
             "prompt": 30.00,     # $30.00 / 1M prompt tokens
             "completion": 60.00  # $60.00 / 1M completion tokens
+        },
+        # Vision image token 計價（GPT-4o vision）
+        # low detail: 固定 85 tokens/圖
+        # high detail: 85 + N×170 tokens/圖（依圖片 tile 數）
+        "gpt-4o-vision": {
+            "prompt": 2.50,      # 與 gpt-4o 文字相同
+            "completion": 10.00,
+            "image_tokens_low": 85,       # low detail 固定 token 數
+            "image_tokens_high_base": 85, # high detail 基礎 token
+            "image_tokens_high_tile": 170 # high detail 每 tile token
         }
     }
 

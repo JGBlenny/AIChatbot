@@ -307,6 +307,7 @@ def _convert_form_result_to_response(
         form_cancelled=form_result.get('form_cancelled', False),
         form_id=form_result.get('form_id'),
         current_field=form_result.get('current_field'),
+        current_field_type=form_result.get('current_field_type'),
         progress=form_result.get('progress'),
         allow_resume=form_result.get('allow_resume', False),
         debug_info=debug_info if request.include_debug_info else None
@@ -462,13 +463,21 @@ async def stream_response_wrapper(response_dict: dict):
         # 添加其他可選字段
         optional_fields = ['video_url', 'video_file_size', 'video_duration', 'video_format',
                           'form_triggered', 'form_completed', 'form_cancelled',
-                          'form_id', 'current_field', 'progress', 'allow_resume',
+                          'form_id', 'current_field', 'current_field_type', 'progress', 'allow_resume',
                           'quick_replies', 'sources', 'debug_info']
         for field in optional_fields:
             if field in response_dict and response_dict[field] is not None:
                 metadata[field] = response_dict[field]
 
         yield await _generate_sse_event("metadata", metadata)
+
+        # 單獨發送 form_field 事件（確保前端正確收到欄位類型）
+        if metadata.get('current_field_type'):
+            yield await _generate_sse_event("form_field", {
+                "current_field": metadata.get('current_field'),
+                "current_field_type": metadata.get('current_field_type'),
+                "progress": metadata.get('progress'),
+            })
 
         # 發送完成事件
         yield await _generate_sse_event("done", {
@@ -1477,6 +1486,7 @@ async def _build_orchestrator_response(
     form_triggered = False
     form_id = None
     current_field = None
+    current_field_type = None
     progress = None
 
     if action_result:
@@ -1489,6 +1499,7 @@ async def _build_orchestrator_response(
                 form_triggered = True
                 form_id = form_session.get('form_id')
                 current_field = action_result.get('current_field')
+                current_field_type = action_result.get('current_field_type')
 
                 # 計算進度
                 if form_session.get('current_field_index') is not None and form_session.get('total_fields'):
@@ -1522,6 +1533,7 @@ async def _build_orchestrator_response(
         form_triggered=form_triggered,
         form_id=form_id,
         current_field=current_field,
+        current_field_type=current_field_type,
         progress=progress,
         quick_replies=quick_replies,
         debug_info=debug_info
@@ -2723,6 +2735,9 @@ class VendorChatRequest(BaseModel):
     # 🆕 串流模式參數（2026-02-14）
     stream: bool = Field(False, description="是否使用串流模式（Server-Sent Events）")
 
+    # 🆕 圖片辨識參數（2026-04-28）
+    image_urls: Optional[List[str]] = Field(None, description="圖片 S3 URL 列表，最多 3 張")
+
     @validator('target_user', always=True)
     def migrate_user_role(cls, v, values):
         """自動從舊欄位遷移到新欄位"""
@@ -2771,6 +2786,18 @@ class VendorChatRequest(BaseModel):
         is_b2b = raw_mode in ('b2b', 'customer_service')
         if not is_b2b and not v:
             raise ValueError('B2C 模式下 vendor_id 為必填')
+        return v
+
+    @validator('image_urls')
+    def validate_image_urls(cls, v):
+        """驗證圖片 URL 列表"""
+        if v is None:
+            return v
+        if len(v) > 3:
+            raise ValueError('單次訊息最多附帶 3 張圖片')
+        for url in v:
+            if not url.startswith(('http://', 'https://')):
+                raise ValueError(f'圖片 URL 格式不正確：{url}')
         return v
 
 
@@ -2909,10 +2936,14 @@ class VendorChatResponse(BaseModel):
     form_cancelled: Optional[bool] = Field(None, description="表單是否已取消")
     form_id: Optional[str] = Field(None, description="表單 ID")
     current_field: Optional[str] = Field(None, description="當前欄位名稱")
+    current_field_type: Optional[str] = Field(None, description="當前欄位類型（text/image/api_select 等）")
     progress: Optional[str] = Field(None, description="填寫進度（如：2/4）")
     allow_resume: Optional[bool] = Field(None, description="是否允許恢復表單填寫")
     # 快速回复按钮（SOP Next Action 功能）
     quick_replies: Optional[List[QuickReply]] = Field(None, description="快速回复按钮列表")
+    # 🆕 圖片辨識結果（2026-04-28）
+    image_recognition: Optional[Dict] = Field(None, description="圖像辨識結構化結果（RecognitionResult）")
+    uploaded_images: Optional[List[str]] = Field(None, description="已上傳圖片 URL 列表")
     # 調試資訊
     debug_info: Optional[DebugInfo] = Field(None, description="調試資訊（處理流程詳情）")
 
@@ -3068,7 +3099,8 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     session_id=request.session_id,
                     intent_result=intent_result,
                     vendor_id=request.vendor_id,
-                    language='zh-TW'  # TODO: 從 request 或用戶設定讀取語言
+                    language='zh-TW',  # TODO: 從 request 或用戶設定讀取語言
+                    image_urls=request.image_urls,
                 )
 
                 # 如果用戶選擇回答問題或取消表單，繼續處理待處理的問題
@@ -3115,6 +3147,107 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                         )
 
                     return response
+
+        # Step 0.5: 圖片辨識分支（2026-04-28）
+        from services.image_recognition_service import ImageRecognitionService, is_image_recognition_enabled
+        if request.image_urls and is_image_recognition_enabled():
+            try:
+                recognition_service = ImageRecognitionService()
+                db_pool = req.app.state.db_pool
+
+                recognition = await recognition_service.analyze_images(
+                    image_urls=request.image_urls,
+                    context=request.message if request.message else None,
+                    db_pool=db_pool,
+                )
+
+                if recognition.get("is_damage") and recognition.get("confidence", 0) >= 0.6:
+                    # 損壞圖片：觸發修繕 SOP
+                    damage_desc = recognition.get("description", "")
+                    trigger_msg = f"{request.message}" if request.message else ""
+                    if damage_desc:
+                        trigger_msg = f"{trigger_msg} （圖片辨識：{damage_desc}）".strip()
+
+                    # 注入辨識資訊到 SOP 觸發
+                    sop_orchestrator = req.app.state.sop_orchestrator
+                    form_manager = req.app.state.form_manager
+
+                    # 嘗試觸發修繕 SOP
+                    sop_result = await sop_orchestrator.process_message(
+                        user_message=trigger_msg or "我要報修",
+                        session_id=request.session_id,
+                        user_id=request.user_id or "anonymous",
+                        vendor_id=request.vendor_id,
+                        role_id=request.role_id,
+                    )
+
+                    if sop_result:
+                        from datetime import datetime
+                        sop_answer = sop_result.get("answer", "")
+                        # SOP manual 模式可能先回排查步驟，附加辨識摘要
+                        if not sop_answer:
+                            damage_desc = recognition.get("description", "")
+                            sop_answer = f"根據照片分析，{damage_desc}\n\n需要為您建立修繕報修嗎？請輸入「確認」開始報修。"
+
+                        response = VendorChatResponse(
+                            answer=sop_answer,
+                            intent_name=sop_result.get("intent_name", "repair"),
+                            intent_type="sop",
+                            confidence=recognition.get("confidence", 0.0),
+                            action_type=sop_result.get("action_type", "form_fill"),
+                            sources=[],
+                            source_count=0,
+                            vendor_id=request.vendor_id,
+                            mode=request.mode or "b2c",
+                            session_id=request.session_id,
+                            timestamp=datetime.utcnow().isoformat(),
+                            form_triggered=sop_result.get("form_triggered", False),
+                            form_id=sop_result.get("form_id"),
+                            current_field=sop_result.get("current_field"),
+                            current_field_type=sop_result.get("current_field_type"),
+                            progress=sop_result.get("progress"),
+                            image_recognition=recognition,
+                            uploaded_images=request.image_urls,
+                        )
+                        if request.stream:
+                            return StreamingResponse(
+                                stream_response_wrapper(response.dict()),
+                                media_type="text/event-stream",
+                                headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"}
+                            )
+                        return response
+
+                else:
+                    # 非損壞圖片或信心度不足
+                    from datetime import datetime
+                    msg = "目前僅支援修繕報修的圖片辨識，請描述您的問題。"
+                    if recognition.get("confidence", 0) > 0 and recognition.get("confidence", 0) < 0.6:
+                        msg = "無法確定損壞類型，建議手動選擇或提供更清晰的照片。"
+
+                    response = VendorChatResponse(
+                        answer=msg,
+                        intent_name=None,
+                        confidence=recognition.get("confidence", 0.0),
+                        sources=[],
+                        source_count=0,
+                        vendor_id=request.vendor_id,
+                        mode=request.mode or "b2c",
+                        session_id=request.session_id,
+                        timestamp=datetime.utcnow().isoformat(),
+                        image_recognition=recognition,
+                        uploaded_images=request.image_urls,
+                    )
+                    if request.stream:
+                        return StreamingResponse(
+                            stream_response_wrapper(response.dict()),
+                            media_type="text/event-stream",
+                            headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"}
+                        )
+                    return response
+
+            except Exception as e:
+                # Vision API 失敗/逾時：降級為純文字流程，不阻塞
+                print(f"⚠️ [圖片辨識] 降級為文字流程: {e}")
 
         # Step 1: 驗證業者（B2B 可不帶 vendor_id）
         resolver = get_vendor_param_resolver()
