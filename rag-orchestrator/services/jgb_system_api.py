@@ -153,6 +153,7 @@ class JGBSystemAPI:
         role_id: str,
         user_id: str = None,
         contract_ids: str = None,
+        keyword: str = None,
         status: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
@@ -166,6 +167,8 @@ class JGBSystemAPI:
         params: dict[str, Any] = {"role_id": role_id}
         if contract_ids:
             params["contract_ids"] = contract_ids
+        if keyword:
+            params["keyword"] = keyword
         return await self._request(
             "/api/external/v1/contracts/status-overview", params
         )

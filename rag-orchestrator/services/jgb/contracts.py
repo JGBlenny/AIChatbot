@@ -429,7 +429,10 @@ def _format_operation_response(contract: dict, check: dict, operation: str) -> s
     date_start = _format_date_int(contract.get("date_start", ""))
     date_end = _format_date_int(contract.get("date_end", ""))
 
-    header = f"您好，合約「{title}」目前為{stage}（合約期間 {date_start} ~ {date_end}）。\n"
+    if date_start == "未設定" and date_end == "未設定":
+        header = f"您好，合約「{title}」目前為{stage}。\n"
+    else:
+        header = f"您好，合約「{title}」目前為{stage}（合約期間 {date_start} ~ {date_end}）。\n"
 
     if check["can_do"]:
         return header + f"\n可以進行{check['operation']}，請在系統中操作。"
@@ -498,6 +501,8 @@ def _format_date(dt: datetime) -> str:
 
 
 def _format_date_int(date_val) -> str:
+    if not date_val:
+        return "未設定"
     dt = _parse_date_int(date_val)
     if dt:
         return _format_date(dt)

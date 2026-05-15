@@ -233,8 +233,11 @@ class APICallHandler:
             )
             if resolved_value is not None:
                 params[api_param] = resolved_value
+            elif isinstance(param_value, str) and '{' in param_value:
+                # 模板語法解析為 None → 跳過（條件過濾器不滿足）
+                pass
             else:
-                # 如果無法解析，直接使用原值（支持靜態值）
+                # 靜態值直接使用
                 params[api_param] = param_value
 
         # 方式 2: 從 params_from_form 映射取得
@@ -284,11 +287,24 @@ class APICallHandler:
             field = session_match.group(1)
             return session_data.get(field) if session_data else None
 
-        # {form.xxx}
-        form_match = re.match(r'\{form\.(\w+)\}', param_value)
+        # {form.xxx} 或 {form.xxx|filter}
+        form_match = re.match(r'\{form\.(\w+?)(?:\|(\w+))?\}', param_value)
         if form_match:
             field = form_match.group(1)
-            return form_data.get(field) if form_data else None
+            filter_type = form_match.group(2)
+            value = form_data.get(field) if form_data else None
+            if value is None:
+                return None
+            # 條件過濾器
+            if filter_type == 'if_numeric':
+                # 只有當值是數字時才回傳
+                stripped = str(value).strip()
+                return stripped if stripped.isdigit() else None
+            elif filter_type == 'if_text':
+                # 只有當值不是純數字時才回傳
+                stripped = str(value).strip()
+                return stripped if not stripped.isdigit() else None
+            return value
 
         # {user_input.xxx}
         input_match = re.match(r'\{user_input\.(\w+)\}', param_value)
