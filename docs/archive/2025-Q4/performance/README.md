@@ -158,8 +158,8 @@ python3 tests/performance/test_chat_performance.py
 ## 🔗 相關文檔
 
 - [完整效能分析報告](./CHAT_PERFORMANCE_ANALYSIS.md)
-- [測試腳本說明](/tests/performance/)
-- [優化計劃](/docs/planning/)
+- 測試腳本說明
+- 優化計劃
 
 ---
 

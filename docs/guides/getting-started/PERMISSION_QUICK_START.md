@@ -697,7 +697,7 @@ VALUES (
 
 - 查看 [完整設計文檔](../../design/PERMISSION_SYSTEM_DESIGN.md)
 - 查看 [UI 設計文檔](../../design/PERMISSION_UI_DESIGN.md)
-- 檢查 [測試案例](./PERMISSION_TEST_CASES.md) (待創建)
+- 檢查 測試案例 (待創建)
 
 ---
 

@@ -510,4 +510,4 @@ GROUP BY status;
 - [Migration 13: Auto-scenario creation trigger](../../migrations_history/13-add-auto-scenario-creation-trigger.sql)
 - [Migration 14: Rejected scenario retry logic](../../migrations_history/14-add-rejected-scenario-retry-logic.sql)
 - [Migration 15: Update candidates view](../../migrations_history/15-update-candidates-view-for-rejected-scenarios.sql)
-- [UnclearQuestionReviewTab Component](../knowledge-admin/frontend/src/components/review/UnclearQuestionReviewTab.vue)
+- UnclearQuestionReviewTab Component

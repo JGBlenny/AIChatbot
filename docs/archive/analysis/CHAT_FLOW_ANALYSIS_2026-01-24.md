@@ -892,8 +892,8 @@ SOP 模式：
 ### 相關文檔
 
 - **修正報告**：[CHAT_LOGIC_FIXES_2026-01-24.md](../fixes/CHAT_LOGIC_FIXES_2026-01-24.md)
-- **SOP 文檔**：[SOP_NEXT_ACTION.md](../features/SOP_NEXT_ACTION.md)
-- **表單文檔**：[FORM_STATE_MACHINE.md](../features/FORM_STATE_MACHINE.md)
+- **SOP 文檔**：SOP_NEXT_ACTION.md
+- **表單文檔**：FORM_STATE_MACHINE.md
 
 ---
 

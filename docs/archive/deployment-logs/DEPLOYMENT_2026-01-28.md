@@ -581,19 +581,19 @@ docker-compose ps
 - **[SMART_RETRIEVAL_IMPLEMENTATION.md](../implementation/SMART_RETRIEVAL_IMPLEMENTATION.md)** - 智能檢索完整實施報告
 - **[SMART_RETRIEVAL_QUICK_REF.md](../../SMART_RETRIEVAL_QUICK_REF.md)** - 快速參考指南
 - **[RERANKER_FEATURE.md](../../features/RERANKER_FEATURE.md)** - Reranker 功能文檔
-- **[CHANGELOG_2026-01-28.md](../CHANGELOG_2026-01-28.md)** - 詳細更新日誌
+- **CHANGELOG_2026-01-28.md** - 詳細更新日誌
 
 ### 測試文檔
 
-- **[/tmp/test_smart_retrieval.sh](/tmp/test_smart_retrieval.sh)** - 自動化測試腳本
+- **/tmp/test_smart_retrieval.sh** - 自動化測試腳本
 
 ### 修復文檔
 
-- **[INTENT_BOOST_OPTIMIZATION_2026-01-28.md](../fixes/INTENT_BOOST_OPTIMIZATION_2026-01-28.md)** - 意圖加成優化
+- **INTENT_BOOST_OPTIMIZATION_2026-01-28.md** - 意圖加成優化
 
 ### API 文檔
 
-- **[RAG Orchestrator API](../api/RAG_API.md)** - API 端點文檔
+- **RAG Orchestrator API** - API 端點文檔
 
 ---
 

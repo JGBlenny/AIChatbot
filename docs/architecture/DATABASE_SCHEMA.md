@@ -895,7 +895,7 @@ form_schemas.api_config.endpoint → api_endpoints.endpoint_id
 api_endpoints.related_kb_ids ← Trigger 自動更新
 ```
 
-**詳細文檔**: [知識庫、表單與 API 端點自動關聯機制](../features/lookup/KB_FORM_API_AUTO_SYNC.md)
+**詳細文檔**: 知識庫、表單與 API 端點自動關聯機制
 
 ---
 
@@ -1182,7 +1182,7 @@ VALUES ('包裹代收服務說明', '...', 'parcel_service_form_v2');
 -- 2. 更新 api_endpoints.related_kb_ids,加入 1397
 ```
 
-**詳細文檔**: [知識庫、表單與 API 端點自動關聯機制](../features/lookup/KB_FORM_API_AUTO_SYNC.md)
+**詳細文檔**: 知識庫、表單與 API 端點自動關聯機制
 
 ---
 
@@ -1348,9 +1348,9 @@ psql -h postgres -U aichatbot -d aichatbot_admin < backup_20251022.sql
 
 ## 相關文檔
 
-- [知識庫去重系統對比](/tmp/deduplication_comparison.md)
-- [會話總結 2025-10-22](/tmp/session_summary_2025-10-22.md)
-- [文檔更新清單](/tmp/docs_update_checklist.md)
+- 知識庫去重系統對比
+- 會話總結 2025-10-22
+- 文檔更新清單
 - [API 端點文檔](../README.md)
 
 ---

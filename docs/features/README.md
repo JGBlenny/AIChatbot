@@ -15,7 +15,7 @@
 |------|------|------|
 | [INTENT_MANAGEMENT_README.md](../archive/2025-Q4/features/INTENT_MANAGEMENT_README.md) | Intent 意圖管理系統 | ✅ |
 | [MULTI_INTENT_CLASSIFICATION.md](../archive/2025-Q4/features/MULTI_INTENT_CLASSIFICATION.md) | 多意圖分類功能 | ✅ |
-| [MULTI_INTENT_SCORING.md](./MULTI_INTENT_SCORING.md) | 多意圖評分機制 | ✅ |
+| MULTI_INTENT_SCORING.md | 多意圖評分機制 | ✅ |
 | [AI_KNOWLEDGE_GENERATION_FEATURE.md](../archive/2025-Q4/features/AI_KNOWLEDGE_GENERATION_FEATURE.md) | AI 自動知識生成 | ✅ |
 | [INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md](../archive/2025-Q4/features/INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md) | Intent 建議語意去重 | ✅ |
 | [SOP_Group_Embedding_Optimization.md](../archive/2025-Q4/features/SOP_Group_Embedding_Optimization.md) | SOP 分組 Embedding 優化 | ✅ |
@@ -30,7 +30,7 @@
 | [DOCUMENT_CONVERTER.md](./DOCUMENT_CONVERTER.md) | 文件轉換功能（Word/PDF → Q&A） | ✅ |
 | [PRIORITY_SYSTEM.md](../archive/2025-Q4/features/PRIORITY_SYSTEM.md) | 知識優先級系統 | ✅ |
 | [VENDOR_SOP_FLOW_CONFIGURATION.md](sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md) | Vendor SOP 流程配置 ⭐ | ✅ |
-| [VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md](./VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md) | Vendor SOP 檢索邏輯改進 ⭐ | ✅ |
+| VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md | Vendor SOP 檢索邏輯改進 ⭐ | ✅ |
 | [DUAL_EMBEDDING_RETRIEVAL.md](./DUAL_EMBEDDING_RETRIEVAL.md) | 雙 Embedding 檢索 ⭐ | ✅ |
 | [PRIMARY_EMBEDDING_FIX.md](../archive/features-historical/PRIMARY_EMBEDDING_FIX.md) | Primary Embedding 稀釋修復 ⭐⭐⭐ 最新 | ✅ |
 
@@ -87,7 +87,7 @@
 ### Vendor SOP 系統 ⭐⭐⭐ 最新
 
 **主文件**: [VENDOR_SOP_FLOW_CONFIGURATION.md](sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md)
-**技術改進 1**: [VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md](./VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md)
+**技術改進 1**: VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md
 **技術改進 2**: [DUAL_EMBEDDING_RETRIEVAL.md](./DUAL_EMBEDDING_RETRIEVAL.md)
 **技術改進 3**: [PRIMARY_EMBEDDING_FIX.md](../archive/features-historical/PRIMARY_EMBEDDING_FIX.md) ⭐⭐⭐ 最新
 
@@ -169,7 +169,7 @@ AI 自動將 Word/PDF 文件轉為 Q&A 知識庫：
 ### 多意圖分類系統
 
 **主文件**: [MULTI_INTENT_CLASSIFICATION.md](../archive/2025-Q4/features/MULTI_INTENT_CLASSIFICATION.md)
-**評分機制**: [MULTI_INTENT_SCORING.md](./MULTI_INTENT_SCORING.md)
+**評分機制**: MULTI_INTENT_SCORING.md
 
 支援單一問題匹配多個意圖：
 - 🎯 主要意圖 + 次要意圖

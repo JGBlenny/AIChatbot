@@ -473,8 +473,8 @@ python3 app.py
 
 ## 相關鏈接
 
-- [Phase 1.1 更新日誌](./BACKTEST_PHASE1_CHANGELOG.md)
-- [Phase 1.2 更新日誌](./BACKTEST_PHASE1.2_CHANGELOG.md)
+- Phase 1.1 更新日誌
+- Phase 1.2 更新日誌
 - [Phase 2 更新日誌](./BACKTEST_PHASE2_CHANGELOG.md)
 - [回測策略指南](BACKTEST_STRATEGIES.md)
 - [環境變數參考](BACKTEST_ENV_VARS.md)

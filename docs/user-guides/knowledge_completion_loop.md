@@ -127,7 +127,7 @@
 
 #### 1.2 點擊「啟動新迴圈」按鈕
 
-![啟動新迴圈按鈕](screenshots/start_loop_button.png)
+!啟動新迴圈按鈕
 
 #### 1.3 填寫迴圈配置表單
 
@@ -173,7 +173,7 @@
 
 #### 2.2 點擊「執行迭代」按鈕
 
-![執行迭代按鈕](screenshots/execute_iteration_button.png)
+!執行迭代按鈕
 
 #### 2.3 選擇執行模式
 

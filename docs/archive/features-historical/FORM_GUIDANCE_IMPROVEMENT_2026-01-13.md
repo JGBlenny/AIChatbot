@@ -723,9 +723,9 @@ docker-compose -f docker-compose.prod.yml up -d rag-orchestrator
 
 ## 📚 相關文檔
 
-- [表單管理系統設計](../design/FORM_SYSTEM_DESIGN.md)
-- [表單驗證器實作](../implementation/FORM_VALIDATOR.md)
-- [知識管理系統](../guides/KNOWLEDGE_MANAGEMENT.md)
+- 表單管理系統設計
+- 表單驗證器實作
+- 知識管理系統
 
 ---
 

@@ -19,7 +19,7 @@
 
 ### 知識庫多業者支援與 API 端點關聯
 
-**📑 變更日誌**: [Vendor IDs 變更日誌](./changelog/2026-03-11-vendor-ids-migration.md)
+**📑 變更日誌**: Vendor IDs 變更日誌
 
 **更新內容**:
 - ✅ 知識庫 `vendor_id` 升級為 `vendor_ids` 陣列，支援單一知識庫關聯多個業者
@@ -93,11 +93,11 @@
 | **理解對話流程** | [完整對話架構](./architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md) ⭐ | 對話流程、意圖分類、SOP/KB 決策、表單狀態機 |
 | **查看最新修正** | [CHAT_LOGIC_FIXES_2026-01-24.md](./archive/fixes/CHAT_LOGIC_FIXES_2026-01-24.md) | 2026-01-24 三個問題修正報告 |
 | **快速了解實施內容** | [IMPLEMENTATION_SUMMARY.md](./archive/implementation/SUMMARY.md) | 實施總結，包含代碼修改、驗證結果 |
-| **完整實施報告** | [FINAL_IMPLEMENTATION_2026-01-13.md](./archive/implementation/FINAL_2026-01-13.md) | 完整故事線：問題→演進→實施→驗證 |
-| **理解檢索邏輯** | [RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md](./archive/analysis/retrieval_logic_complete.md) | 完整檢索邏輯分析、4種方案對比 |
-| **理解設計原則** | [RETRIEVAL_PHILOSOPHY_ANALYSIS.md](./archive/analysis/retrieval_philosophy.md) | 「向量為主，意圖為輔」哲學、數學證明 |
-| **執行測試** | [test_retrieval_logic_validation.sh](../scripts/test_retrieval_validation.sh) | 自動化測試腳本（5個測試案例） |
-| **生產部署** | [DEPLOY_STEPS_2026-01-13.md](./deployment/steps_2026-01-13.md) | 生產環境部署步驟 |
+| **完整實施報告** | FINAL_IMPLEMENTATION_2026-01-13.md | 完整故事線：問題→演進→實施→驗證 |
+| **理解檢索邏輯** | RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md | 完整檢索邏輯分析、4種方案對比 |
+| **理解設計原則** | RETRIEVAL_PHILOSOPHY_ANALYSIS.md | 「向量為主，意圖為輔」哲學、數學證明 |
+| **執行測試** | test_retrieval_logic_validation.sh | 自動化測試腳本（5個測試案例） |
+| **生產部署** | DEPLOY_STEPS_2026-01-13.md | 生產環境部署步驟 |
 | **表單引導改善** | [FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md](./archive/features-historical/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md) | 表單引導語和驗證改善 |
 
 ---
@@ -106,7 +106,7 @@
 
 ### ⭐ 核心文檔（必讀）
 
-#### 1. [FINAL_IMPLEMENTATION_2026-01-13.md](./archive/implementation/FINAL_2026-01-13.md)
+#### 1. FINAL_IMPLEMENTATION_2026-01-13.md
 **最重要的文檔**，包含：
 - 完整問題回顧
 - 解決方案演進（方案 A → 選項 A）
@@ -131,7 +131,7 @@
 
 ### 📖 分析文檔
 
-#### 3. [RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md](./archive/analysis/retrieval_logic_complete.md)
+#### 3. RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md
 **檢索邏輯完整分析**：
 - 10 個檢索階段詳解
 - 4 種優化方案對比
@@ -140,7 +140,7 @@
 
 **適合**：需要深入理解檢索機制的開發者
 
-#### 4. [RETRIEVAL_PHILOSOPHY_ANALYSIS.md](./archive/analysis/retrieval_philosophy.md)
+#### 4. RETRIEVAL_PHILOSOPHY_ANALYSIS.md
 **設計哲學分析**：
 - 「向量為主，意圖為輔」原則
 - 問題根源分析
@@ -153,7 +153,7 @@
 
 ### 🧪 測試與驗證
 
-#### 5. [test_retrieval_logic_validation.sh](../scripts/test_retrieval_validation.sh)
+#### 5. test_retrieval_logic_validation.sh
 **自動化測試腳本**：
 - 5 個測試案例
 - 知識 1262 驗證
@@ -165,7 +165,7 @@
 bash test_retrieval_logic_validation.sh
 ```
 
-#### 6. [VERIFICATION_REPORT_2026-01-13.md](./verification/report_2026-01-13.md)
+#### 6. VERIFICATION_REPORT_2026-01-13.md
 **階段一驗證報告**（方案 A）：
 - 5 個測試案例詳細日誌
 - 修改前後對比
@@ -177,7 +177,7 @@ bash test_retrieval_logic_validation.sh
 
 ### 🚀 部署文檔
 
-#### 7. [DEPLOY_STEPS_2026-01-13.md](./deployment/steps_2026-01-13.md)
+#### 7. DEPLOY_STEPS_2026-01-13.md
 **生產部署步驟**：
 - 前置檢查
 - 部署命令
@@ -198,8 +198,8 @@ bash test_retrieval_logic_validation.sh
 | **VERIFICATION_COMPLETE.md** | 早期驗證，不完整 | FINAL_IMPLEMENTATION_2026-01-13.md |
 | **PROPOSED_FIX_high_similarity_bypass.py** | 提案代碼，已實施 | commit cbf4c4f |
 
-📁 **歸檔位置**：[docs/archive/2026-01-13/](./docs/archive/2026-01-13/)
-📄 **歸檔說明**：[archive README](./docs/archive/2026-01-13/README.md)
+📁 **歸檔位置**：docs/archive/2026-01-13/
+📄 **歸檔說明**：archive README
 📋 **清理報告**：[CLEANUP_REPORT_2026-01-13.md](archive/maintenance-historical/cleanup_2026-01-13.md)
 
 ---

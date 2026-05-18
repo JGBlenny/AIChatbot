@@ -459,7 +459,7 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 ## 📚 更多資訊
 
-詳細的開發工作流程請參考：[docs/DEVELOPMENT_WORKFLOW.md](docs/DEVELOPMENT_WORKFLOW.md)
+詳細的開發工作流程請參考：docs/DEVELOPMENT_WORKFLOW.md
 
 ---
 

@@ -523,5 +523,5 @@ ALTER TABLE knowledge_base ALTER COLUMN trigger_mode SET DEFAULT 'manual';
 ## 📚 相關文檔
 
 - [Platform SOP View 實作](../features/FORM_MANAGEMENT_SYSTEM.md)
-- [知識庫管理系統](../features/KNOWLEDGE_MANAGEMENT.md)
+- 知識庫管理系統
 - [SOP 類型分析](../features/sop/design/SOP_TYPES_ANALYSIS_2026-01-22.md)

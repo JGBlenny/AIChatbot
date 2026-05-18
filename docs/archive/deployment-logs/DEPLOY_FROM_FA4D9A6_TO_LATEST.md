@@ -749,7 +749,7 @@ EOF
 - **[SMART_RETRIEVAL_IMPLEMENTATION.md](../implementation/SMART_RETRIEVAL_IMPLEMENTATION.md)** - 智能檢索實施報告
 - **[SMART_RETRIEVAL_QUICK_REF.md](../../SMART_RETRIEVAL_QUICK_REF.md)** - 快速參考指南
 - **[RERANKER_FEATURE.md](../../features/RERANKER_FEATURE.md)** - Reranker 功能文檔
-- **[CHANGELOG_2026-01-28.md](../CHANGELOG_2026-01-28.md)** - 完整更新日誌
+- **CHANGELOG_2026-01-28.md** - 完整更新日誌
 - **[PRIMARY_EMBEDDING_FIX.md](../features-historical/PRIMARY_EMBEDDING_FIX.md)** - Embedding 修復文檔
 - **[SOP_FLOW_STRICT_VALIDATION_2026-01-26.md](../../features/sop/implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md)** - SOP 配置驗證
 
@@ -763,9 +763,9 @@ EOF
 
 ### 測試與驗證
 
-- **[/tmp/test_smart_retrieval.sh](/tmp/test_smart_retrieval.sh)** - 自動化測試腳本
-- **[test_fix_verification.py](scripts/testing/archive/2026-01-26/test_fix_verification.py)** - Embedding 修復驗證
-- **[test_threshold_evaluation.py](scripts/testing/archive/2026-01-26/test_threshold_evaluation.py)** - 閾值評估
+- **/tmp/test_smart_retrieval.sh** - 自動化測試腳本
+- **test_fix_verification.py** - Embedding 修復驗證
+- **test_threshold_evaluation.py** - 閾值評估
 
 ---
 

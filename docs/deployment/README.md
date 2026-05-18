@@ -99,7 +99,7 @@ deployment/
 - [API 整合完整修復報告](../archive/fixes/2026-01-21-api-integration-fix.md)
 - [API 整合深度分析](../archive/fixes/2026-01-21-api-integration-analysis.md)
 - [API 整合測試指南](../testing/api-integration-testing-guide.md)
-- [文檔重組報告](../DOCS_REORGANIZATION_REPORT_2026-01-21.md)
+- 文檔重組報告
 
 ---
 
@@ -116,7 +116,7 @@ deployment/
 - `database/migrations/remove_form_intro_2026-01-13.sql` - 刪除 knowledge_base.form_intro 欄位
 
 **相關文檔：**
-- [統一檢索路徑實施報告](../archive/implementation/FINAL_2026-01-13.md)
+- 統一檢索路徑實施報告
 - [表單引導語改善報告](../archive/features-historical/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md)
 
 ---
@@ -176,8 +176,8 @@ deployment/
 - [SMART_RETRIEVAL_IMPLEMENTATION.md](../archive/implementation/SMART_RETRIEVAL_IMPLEMENTATION.md) - 智能檢索完整實施報告
 - [SMART_RETRIEVAL_QUICK_REF.md](../SMART_RETRIEVAL_QUICK_REF.md) - 快速參考指南
 - [RERANKER_FEATURE.md](../features/RERANKER_FEATURE.md) - Reranker 功能文檔
-- [CHANGELOG_2026-01-28.md](../CHANGELOG_2026-01-28.md) - 詳細更新日誌
-- [INTENT_BOOST_OPTIMIZATION_2026-01-28.md](../archive/fixes/INTENT_BOOST_OPTIMIZATION_2026-01-28.md) - 意圖加成優化
+- CHANGELOG_2026-01-28.md - 詳細更新日誌
+- INTENT_BOOST_OPTIMIZATION_2026-01-28.md - 意圖加成優化
 
 **主要代碼變更：**
 - `rag-orchestrator/requirements.txt` - 新增 Reranker 依賴

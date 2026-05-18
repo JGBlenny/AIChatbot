@@ -71,7 +71,7 @@ Lookup 系統提供業者專屬資料的批量管理功能，支援：
 
 路徑: `業者配置 > 選擇業者 > Lookup 數據` 標籤
 
-![Lookup 標籤位置](../../images/lookup-tab.png)
+!Lookup 標籤位置
 
 ### 2. 查看統計資訊
 

@@ -762,8 +762,8 @@ const hasPermission = computed(() => {
 ## 📚 相關文檔
 
 - [權限系統設計](./PERMISSION_SYSTEM_DESIGN.md)
-- [組件開發規範](./COMPONENT_DEVELOPMENT_GUIDE.md) (待創建)
-- [API 文檔](./API_DOCUMENTATION.md) (待創建)
+- 組件開發規範 (待創建)
+- API 文檔 (待創建)
 
 ---
 

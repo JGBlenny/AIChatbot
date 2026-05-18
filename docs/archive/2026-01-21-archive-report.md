@@ -208,7 +208,7 @@ $ ls /tmp/*.md /tmp/*.sh /tmp/*.json 2>/dev/null | grep -E "(API|TEST|HANDLER|KN
 ### 索引
 
 - [修復清單索引](./fixes/README.md)
-- [測試文檔索引](./testing/README.md)（如有）
+- 測試文檔索引（如有）
 
 ---
 

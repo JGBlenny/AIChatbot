@@ -556,13 +556,13 @@ cat > docs/backtest/README.md << 'EOF'
 
 ## 📖 使用指南
 
-- [優化指南](./OPTIMIZATION_GUIDE.md) - 回測成本與效能優化
-- [答案合成指南](./ANSWER_SYNTHESIS_GUIDE.md) - LLM 答案合成系統
+- 優化指南 - 回測成本與效能優化
+- 答案合成指南 - LLM 答案合成系統
 
 ## 📁 歷史記錄
 
-- [完成報告](./archive/completion_reports/) - 功能實施完成記錄
-- [評估報告](./archive/evaluation_reports/) - 測試與評估結果
+- 完成報告 - 功能實施完成記錄
+- 評估報告 - 測試與評估結果
 EOF
 ```
 
@@ -1126,13 +1126,13 @@ cat > docs/backtest/README.md << 'EOF'
 
 ## 📖 使用指南
 
-- [優化指南](./OPTIMIZATION_GUIDE.md) - 回測成本與效能優化
-- [答案合成指南](./ANSWER_SYNTHESIS_GUIDE.md) - LLM 答案合成系統
+- 優化指南 - 回測成本與效能優化
+- 答案合成指南 - LLM 答案合成系統
 
 ## 📁 歷史記錄
 
-- [完成報告](./archive/completion_reports/) - 功能實施完成記錄
-- [評估報告](./archive/evaluation_reports/) - 測試與評估結果
+- 完成報告 - 功能實施完成記錄
+- 評估報告 - 測試與評估結果
 EOF
 
 # 更新 docs/README.md

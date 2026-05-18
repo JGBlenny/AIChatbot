@@ -4,7 +4,7 @@
 > 2026-04-17 後 reranker 經過 CPU 效能調校（timeout 60s、vector 下限 0.3、
 > 候選上限 20、全 0 防護），**當前運作細節請參考**：
 > - [docs/architecture/retriever-pipeline.md](../../architecture/retriever-pipeline.md)（Reranker 效能調校章節）
-> - [.kiro/issues/reranker-returning-zero.md](../.kiro/issues/reranker-returning-zero.md)
+> - .kiro/issues/reranker-returning-zero.md
 >
 > 本文件保留作為歷史脈絡紀錄。
 

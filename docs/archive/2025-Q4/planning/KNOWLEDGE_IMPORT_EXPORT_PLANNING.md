@@ -1198,10 +1198,10 @@ CREATE TABLE knowledge_restore_jobs (
 
 - [統一 Job 系統設計文件](./UNIFIED_JOB_SYSTEM_DESIGN.md) - ✅ 已完成
 - [統一 Job 系統測試報告](./UNIFIED_JOB_TESTING_REPORT.md) - ✅ 已完成
-- [知識匯入功能文檔](../features/KNOWLEDGE_IMPORT.md)
-- [API 文檔](../api/KNOWLEDGE_API.md)
-- [資料庫 Schema](../database/SCHEMA.md)
-- [部署指南](../deployment/DEPLOYMENT_GUIDE.md)
+- 知識匯入功能文檔
+- API 文檔
+- 資料庫 Schema
+- 部署指南
 
 ---
 

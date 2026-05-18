@@ -515,8 +515,8 @@ async def get_backtest_results(
 ## 📚 相關文檔
 
 - [評分品質分析報告](../../evaluation_reports/SCORING_QUALITY_ANALYSIS.md)
-- [回測框架原始碼](../scripts/knowledge_extraction/backtest_framework.py)
-- [前端回測介面](../knowledge-admin/frontend/src/views/BacktestView.vue)
+- 回測框架原始碼
+- 前端回測介面
 
 ---
 

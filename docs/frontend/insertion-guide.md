@@ -603,6 +603,6 @@ async showEditModal(item) {
 
 ---
 
-**需要幫助？** 查看 [FRONTEND_TODO.md](./FRONTEND_TODO.md) 或 [FRONTEND_REQUIREMENTS.md](./FRONTEND_REQUIREMENTS.md)
+**需要幫助？** 查看 FRONTEND_TODO.md 或 FRONTEND_REQUIREMENTS.md
 
 **最後更新**: 2026-01-18

@@ -381,7 +381,7 @@ curl -X POST http://localhost:8100/api/v1/chat \
 
 - [SOP 系統架構文檔](../../../guides/features/SOP_GUIDE.md)
 - [SOP 觸發模式設計](../design/SOP_NEXT_ACTION_DESIGN_2026-01-22.md)
-- [知識庫關鍵字實作參考](/database/init/02-create-knowledge-base.sql)
+- 知識庫關鍵字實作參考
 
 ## 9. 後續優化建議
 

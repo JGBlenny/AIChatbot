@@ -334,11 +334,11 @@ saveKnowledge()/saveForm() 提交到後端
 
 ## 🔗 相關文檔
 
-- [前端待辦清單](./FRONTEND_TODO.md) - 任務清單
-- [前端修改需求](./FRONTEND_REQUIREMENTS.md) - 詳細規格
-- [前端插入指南](./FRONTEND_INSERTION_GUIDE.md) - 精確插入位置
+- 前端待辦清單 - 任務清單
+- 前端修改需求 - 詳細規格
+- 前端插入指南 - 精確插入位置
 - [API 配置指南](../design/API_CONFIGURATION_GUIDE.md) - API 配置說明
-- [完整變更日誌](./CHANGELOG_2026-01-18.md) - 後端變更
+- 完整變更日誌 - 後端變更
 
 ---
 

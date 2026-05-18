@@ -386,5 +386,5 @@ chmod +x check_env.sh
 ## 相關文件
 
 - [回測策略指南](./BACKTEST_STRATEGIES.md) - 詳細策略說明
-- [資料庫配置](./database_setup.md) - 資料庫設定
-- [CI/CD 整合](./cicd_integration.md) - 持續整合配置
+- 資料庫配置 - 資料庫設定
+- CI/CD 整合 - 持續整合配置

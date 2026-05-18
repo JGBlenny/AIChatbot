@@ -278,8 +278,8 @@ docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < \
 
 ## 相關檔案
 
-- [業者 2 匯入腳本](../database/seeds/import_vendor2_only.sql)
-- [完整匯出腳本](../database/exports/billing_interval_complete_data.sql)
+- 業者 2 匯入腳本
+- 完整匯出腳本
 - [檔案索引](./BILLING_INTERVAL_FILES_INDEX.md)
 - [配置總結](./BILLING_INTERVAL_SETUP_SUMMARY.md)
 

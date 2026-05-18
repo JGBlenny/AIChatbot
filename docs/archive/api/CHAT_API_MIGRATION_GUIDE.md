@@ -335,7 +335,7 @@ const {
 如果在遷移過程中遇到問題，請：
 
 1. 查閱 [API 文檔](http://localhost:8100/docs)
-2. 查看 [示例代碼](../examples/)
+2. 查看 示例代碼
 3. 提交 Issue 到 [GitHub](https://github.com/your-org/your-repo/issues)
 
 ---

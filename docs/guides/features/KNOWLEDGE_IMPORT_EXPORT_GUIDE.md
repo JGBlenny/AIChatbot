@@ -600,7 +600,7 @@ curl http://your-domain/api/v1/knowledge-import/jobs/{job_id}
 
 - [統一 Job 系統設計](../../archive/2025-Q4/planning/UNIFIED_JOB_SYSTEM_DESIGN.md)
 - [知識匯入/匯出介面規劃](../../archive/2025-Q4/planning/KNOWLEDGE_EXPORT_IMPORT_INTERFACE_PLANNING.md)
-- [API 文件](./API_DOCUMENTATION.md)
+- API 文件
 
 ---
 

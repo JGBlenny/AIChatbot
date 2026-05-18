@@ -358,11 +358,11 @@ return {
 
 ### 功能文件
 - [SOP 流程配置功能](./VENDOR_SOP_FLOW_CONFIGURATION.md) - 主功能文檔
-- [SOP 組合分析](../../tmp/sop_combination_analysis.md) - 理論分析（已刪除）
+- SOP 組合分析 - 理論分析（已刪除）
 
 ### 測試文件
-- [後端驗證測試腳本](../../tmp/test_sop_validation.py) - 自動化測試（已刪除）
-- [前端測試指南](../../tmp/frontend_test_guide.md) - 手動測試指南（已刪除）
+- 後端驗證測試腳本 - 自動化測試（已刪除）
+- 前端測試指南 - 手動測試指南（已刪除）
 
 ### 代碼文件
 - **前端**: `knowledge-admin/frontend/src/components/VendorSOPManager.vue`

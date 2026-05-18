@@ -7,7 +7,7 @@
 - Primary embedding: `group_name + item_name`
 - Fallback embedding: `content`
 - 驗證結果: 28/28 items (100% 成功)
-- 詳細報告: [SOP 複製與 Embedding 修復報告](SOP_COPY_EMBEDDING_FIX_2025-11-02.md)
+- 詳細報告: SOP 複製與 Embedding 修復報告
 
 ---
 

@@ -551,7 +551,7 @@ form_schemas.api_config.endpoint → api_endpoints.endpoint_id
 api_endpoints.related_kb_ids ← Trigger 自動更新
 ```
 
-**參考文檔**: [知識庫、表單與 API 端點自動關聯機制](./docs/features/lookup/KB_FORM_API_AUTO_SYNC.md)
+**參考文檔**: 知識庫、表單與 API 端點自動關聯機制
 
 ### Seed Data
 
@@ -1004,7 +1004,7 @@ curl "http://localhost:8100/api/v1/api-endpoints/lookup/related-forms"
 
 ### Related Documentation
 
-- [知識庫、表單與 API 端點自動關聯機制](../features/lookup/KB_FORM_API_AUTO_SYNC.md)
+- 知識庫、表單與 API 端點自動關聯機制
 - [資料庫架構文檔](architecture/DATABASE_SCHEMA.md)
 
 ---

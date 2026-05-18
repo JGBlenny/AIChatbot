@@ -242,7 +242,7 @@ BUSINESS_SCOPE_AUDIENCE_MAPPING = {
 
 - [Business Scope 重構總結](BUSINESS_SCOPE_REFACTORING_SUMMARY.md)
 - [Business Scope 詳細說明](../architecture/BUSINESS_SCOPE_REFACTORING.md)
-- [業務範圍工具](./rag-orchestrator/services/business_scope_utils.py)
+- 業務範圍工具
 - [認證與業務範圍整合](../2025-Q4/architecture/AUTH_AND_BUSINESS_SCOPE.md)
 
 ---

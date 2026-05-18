@@ -457,9 +457,9 @@ assert result['cashflow_model'] == 'hybrid', \
 3. **長期**: 建立性能測試和端到端測試
 
 ### 相關文檔
-- [進階測試執行報告](./ADVANCED_TESTS_EXECUTION_REPORT.md)
-- [業務邏輯測試指南](../tests/integration/README_BUSINESS_LOGIC_TESTS.md)
-- [進階測試指南](../tests/integration/README_ADVANCED_TESTS.md)
+- 進階測試執行報告
+- 業務邏輯測試指南
+- 進階測試指南
 - [自動化測試完成報告](./AUTOMATED_TESTING_SETUP_COMPLETE.md)
 
 ---

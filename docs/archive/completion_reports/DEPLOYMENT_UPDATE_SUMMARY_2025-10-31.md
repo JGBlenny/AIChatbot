@@ -253,17 +253,17 @@ docker-compose logs --tail=50 knowledge-admin-web | grep -i error
 ## 📚 相關文檔索引
 
 ### 部署文檔
-- 主部署指南: [docs/guides/DEPLOYMENT.md](./guides/DEPLOYMENT.md)
+- 主部署指南: docs/guides/DEPLOYMENT.md
 - 前端開發模式: [docs/guides/FRONTEND_DEV_MODE.md](../../guides/development/FRONTEND_DEV_MODE.md)
-- Docker Compose 指南: [docs/guides/DOCKER_COMPOSE_GUIDE.md](./guides/DOCKER_COMPOSE_GUIDE.md)
+- Docker Compose 指南: docs/guides/DOCKER_COMPOSE_GUIDE.md
 
 ### 新增文檔
 - 部署盤查報告: [docs/DEPLOYMENT_AUDIT_2025-10-31.md](./DEPLOYMENT_AUDIT_2025-10-31.md)
 - 本更新摘要: [docs/DEPLOYMENT_UPDATE_SUMMARY_2025-10-31.md](./DEPLOYMENT_UPDATE_SUMMARY_2025-10-31.md)
 
 ### 配置文件
-- vite.config.js: [knowledge-admin/frontend/vite.config.js](../knowledge-admin/frontend/vite.config.js)
-- docker-compose.yml: [docker-compose.yml](../docker-compose.yml)
+- vite.config.js: knowledge-admin/frontend/vite.config.js
+- docker-compose.yml: docker-compose.yml
 
 ---
 

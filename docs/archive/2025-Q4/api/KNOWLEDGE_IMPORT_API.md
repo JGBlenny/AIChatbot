@@ -563,7 +563,7 @@ if candidates['total'] > 0:
 
 - [知識匯入功能文檔](../features/KNOWLEDGE_IMPORT_FEATURE.md)
 - [測試情境管理](../features/TEST_SCENARIO_STATUS_MANAGEMENT.md)
-- [審核中心使用指南](../guides/REVIEW_CENTER_GUIDE.md)
+- 審核中心使用指南
 
 ---
 

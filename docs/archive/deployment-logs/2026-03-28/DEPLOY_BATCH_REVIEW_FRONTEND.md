@@ -495,10 +495,10 @@ curl -I http://localhost:8087/review-center
 
 ## 📖 相關文檔
 
-- [任務 11.3 實作摘要](/.kiro/specs/backtest-knowledge-refinement/task_11.3_implementation_summary.md)
+- 任務 11.3 實作摘要
 - [批量審核功能需求](../../../frontend/batch_review_requirements.md)
 - [Loop Knowledge API 文檔](../../../api/loop_knowledge_api.md)
-- [批量審核測試指南](/knowledge-admin/frontend/BATCH_REVIEW_TEST.md)
+- 批量審核測試指南
 
 ---
 

@@ -488,7 +488,7 @@ WHERE id = 1;
 ## 📚 延伸閱讀
 
 - [SOP 快速參考](../reference/SOP_QUICK_REFERENCE.md) - 常用操作速查表
-- [Database Schema + ERD](./DATABASE_SCHEMA_ERD.md) - 完整資料庫架構
+- Database Schema + ERD - 完整資料庫架構
 - [API Reference](../../api/API_REFERENCE_PHASE1.md) - SOP 相關 API
 
 ---

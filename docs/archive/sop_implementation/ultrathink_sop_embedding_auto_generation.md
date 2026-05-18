@@ -40,7 +40,7 @@
 
 ### 詳細報告
 
-完整實施報告請參閱: [SOP 複製與 Embedding 修復報告](SOP_COPY_EMBEDDING_FIX_2025-11-02.md)
+完整實施報告請參閱: SOP 複製與 Embedding 修復報告
 
 **相關 Commits**:
 - `088880b` - SOP embedding 修復
@@ -2117,7 +2117,7 @@ docker-compose exec rag-orchestrator \
 
 - [SOP Vectorization Strategy Analysis](SOP_VECTORIZATION_STRATEGY_ANALYSIS.md) - 向量化策略詳細分析
 - [SOP Vectorization Implementation Guide](SOP_VECTORIZATION_IMPLEMENTATION_GUIDE.md) - 快速實作指南
-- [SOP Complete Guide](/Users/lenny/jgb/AIChatbot/docs/SOP_COMPLETE_GUIDE.md) - SOP 系統完整指南
+- SOP Complete Guide - SOP 系統完整指南
 - [SOP Retrieval Logic Analysis](analysis_sop_retrieval_logic.md) - 檢索邏輯分析
 
 ---

@@ -466,7 +466,7 @@ python3 scripts/knowledge_extraction/backtest_framework.py
 
 ## 📚 相關文檔
 
-- [TEST_SCENARIOS_QUICK_START.md](./TEST_SCENARIOS_QUICK_START.md) - 測試題庫快速開始
+- TEST_SCENARIOS_QUICK_START.md - 測試題庫快速開始
 - [TEST_SCENARIOS_DATABASE_COMPLETE.md](../completion_reports/TEST_SCENARIOS_DATABASE_COMPLETE.md) - 完整實施報告
 - [BACKTEST_OPTIMIZATION_GUIDE.md](../2025-Q4/backtest/BACKTEST_OPTIMIZATION_GUIDE.md) - 回測優化指南
 

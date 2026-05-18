@@ -258,7 +258,7 @@ for vendor_id in test_vendors:
 
 - [SOP 整合實作總結](./SOP_INTEGRATION_IMPLEMENTATION.md) - 完整設計文檔
 - [SOP 架構測試報告](./SOP_ARCHITECTURE_TEST_REPORT.md) - 初步測試結果
-- [B2B API 整合設計](./B2B_API_INTEGRATION_DESIGN.md) - Phase 2 規劃
+- B2B API 整合設計 - Phase 2 規劃
 
 ---
 

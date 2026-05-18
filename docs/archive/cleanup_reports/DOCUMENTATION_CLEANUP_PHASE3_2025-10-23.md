@@ -272,7 +272,7 @@ docs/planning/SYSTEM_PENDING_FEATURES.md  ✅
 **檢查結果**:
 ```bash
 # 檢查斷裂連結
-$ grep -r "\[.*\](\.\/[a-z].*\.md)" docs/ --exclude-dir=archive
+$ grep -r "\.*\" docs/ --exclude-dir=archive
 
 無斷裂連結 ✅
 ```

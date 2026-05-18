@@ -217,8 +217,8 @@ npm run dev
 ## 📚 相關文檔
 
 - [API 配置指南](../../design/API_CONFIGURATION_GUIDE.md)
-- [API Call Handler 實作](./design/API_CALL_HANDLER_IMPLEMENTATION.md)
-- [前端實作總結](./FRONTEND_IMPLEMENTATION_SUMMARY.md)
+- API Call Handler 實作
+- 前端實作總結
 - [知識動作系統設計](../../design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
 
 ---

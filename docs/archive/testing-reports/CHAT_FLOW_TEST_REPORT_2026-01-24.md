@@ -554,7 +554,7 @@ elif not request.session_id or not request.user_id:
 
 - **對話流程分析**：[CHAT_FLOW_ANALYSIS_2026-01-24.md](../analysis/CHAT_FLOW_ANALYSIS_2026-01-24.md)
 - **修正報告**：[CHAT_LOGIC_FIXES_2026-01-24.md](../fixes/CHAT_LOGIC_FIXES_2026-01-24.md)
-- **測試腳本**：[test_chat_flow_complete.sh](../../tests/manual/test_chat_flow_complete.sh)
+- **測試腳本**：test_chat_flow_complete.sh
 
 ---
 

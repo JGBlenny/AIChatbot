@@ -278,7 +278,7 @@ docker-compose restart rag-orchestrator
 
 ## 參考資料
 
-- [RAG 引擎實現](../../rag-orchestrator/services/rag_engine.py#L117)
-- [知識管理 API](../../knowledge-admin/backend/app.py#L73)
-- [知識匯入服務](../../rag-orchestrator/services/knowledge_import_service.py#L1157)
-- [環境變數配置](../../.env.example#L75)
+- RAG 引擎實現
+- 知識管理 API
+- 知識匯入服務
+- 環境變數配置

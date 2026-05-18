@@ -4,7 +4,7 @@
 > 之後架構經過 `retriever-similarity-refactor`（2026-04）重構，分數欄位已分離、
 > reranker 加上 CPU 效能調校。**當前架構請參考**：
 > - [docs/architecture/retriever-pipeline.md](../../architecture/retriever-pipeline.md)
-> - [.kiro/specs/retriever-similarity-refactor/](../.kiro/specs/retriever-similarity-refactor/)
+> - .kiro/specs/retriever-similarity-refactor/
 >
 > 本文件保留作為歷史脈絡紀錄。
 

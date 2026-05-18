@@ -21,7 +21,7 @@
 | 文檔 | 路徑 | 說明 |
 |------|------|------|
 | **多 Intent 分類系統** | [docs/MULTI_INTENT_CLASSIFICATION.md](../2025-Q4/features/MULTI_INTENT_CLASSIFICATION.md) | 完整的技術實作文檔，包含架構、實測效果、使用範例、調優指南 |
-| **文檔導覽索引** | [docs/README.md](./README.md) | 所有文檔的分類導覽和快速查找 |
+| **文檔導覽索引** | docs/README.md | 所有文檔的分類導覽和快速查找 |
 | **變更日誌** | [CHANGELOG.md](../backtest-historical/CHANGELOG.md) | 從 0.1.0 到 1.3.0 的完整版本歷史 |
 | **快速參考指南** | [QUICK_REFERENCE.md](../../backtest/QUICK_REFERENCE.md) | 常用命令、API、資料庫查詢的快速手冊 |
 
@@ -29,8 +29,8 @@
 
 | 目錄/文檔 | 路徑 | 說明 |
 |----------|------|------|
-| **歸檔目錄** | [docs/archive/](./archive/) | 存放已完成的實作記錄和臨時文檔 |
-| **歸檔說明** | [docs/archive/README.md](./archive/README.md) | 歸檔文檔的清單和查找指引 |
+| **歸檔目錄** | docs/archive/ | 存放已完成的實作記錄和臨時文檔 |
+| **歸檔說明** | docs/archive/README.md | 歸檔文檔的清單和查找指引 |
 
 已歸檔的文檔：
 - `INTENT_MANAGEMENT_COMPLETE.md` → `docs/archive/`
@@ -194,7 +194,7 @@ docs/
 1. 閱讀 [README.md](../README.md) 了解專案概況
 2. 按照 [QUICKSTART.md](../../guides/getting-started/QUICKSTART.md) 快速啟動
 3. 查看 [QUICK_REFERENCE.md](../../backtest/QUICK_REFERENCE.md) 學習常用命令
-4. 參考 [docs/README.md](./README.md) 查找具體主題文檔
+4. 參考 docs/README.md 查找具體主題文檔
 
 ### 開發人員路徑
 
@@ -205,7 +205,7 @@ docs/
 
 ### 運維人員路徑
 
-1. 按照 [README_DEPLOYMENT.md](../README_DEPLOYMENT.md) 部署系統
+1. 按照 README_DEPLOYMENT.md 部署系統
 2. 使用 [QUICK_REFERENCE.md](../../backtest/QUICK_REFERENCE.md) 查找運維命令
 3. 參考故障排除章節解決問題
 

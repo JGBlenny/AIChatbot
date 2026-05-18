@@ -335,14 +335,14 @@ docs/
 ## 🔖 參考資料
 
 ### 本次建立的文檔
-1. [Database Schema + ERD](./DATABASE_SCHEMA_ERD.md)
+1. Database Schema + ERD
 2. [文檔審計報告](./DOCUMENTATION_AUDIT_2025-10-22.md)
 3. [更新完成報告](./DOCUMENTATION_UPDATE_COMPLETION_2025-10-22.md)（本文檔）
 
 ### 相關文檔
 - [主 README](../README.md)
-- [會話總結 2025-10-22](/tmp/session_summary_2025-10-22.md)
-- [去重系統對比](/tmp/deduplication_comparison.md)
+- 會話總結 2025-10-22
+- 去重系統對比
 
 ---
 

@@ -287,10 +287,10 @@ BACKTEST_SELECTION_STRATEGY=incremental python3 backtest_framework.py
 
 ## 相關鏈接
 
-- [Phase 1.1 更新日誌](./BACKTEST_PHASE1_CHANGELOG.md)
-- [Phase 1.2 更新日誌](./BACKTEST_PHASE1.2_CHANGELOG.md)
-- [回測框架使用指南](./backtest_usage.md)
-- [資料庫 Schema](./database_schema.md)
+- Phase 1.1 更新日誌
+- Phase 1.2 更新日誌
+- 回測框架使用指南
+- 資料庫 Schema
 
 ## 回饋與支援
 

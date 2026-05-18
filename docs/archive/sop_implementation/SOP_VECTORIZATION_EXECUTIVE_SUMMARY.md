@@ -8,7 +8,7 @@
 - ✅ Fallback embedding: `content`
 - ✅ 檢索成功率: 0% → 100%
 - ✅ 28/28 items 成功生成 embeddings
-- 📋 詳細報告: [SOP 複製與 Embedding 修復報告](SOP_COPY_EMBEDDING_FIX_2025-11-02.md)
+- 📋 詳細報告: SOP 複製與 Embedding 修復報告
 
 ---
 

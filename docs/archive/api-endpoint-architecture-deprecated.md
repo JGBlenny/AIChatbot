@@ -205,7 +205,7 @@ CREATE TABLE api_endpoints (
        return await self._execute_dynamic_api(endpoint_config)
    else:
        # 使用代碼實作調用
-       return await self.api_registry[endpoint_id](**params)
+       return await self.api_registryendpoint_id
    ```
 
 **優點**:

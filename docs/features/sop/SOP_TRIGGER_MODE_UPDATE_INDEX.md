@@ -213,7 +213,7 @@ docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin \
 ### 其他相關文檔
 
 - [主變更日誌](../../archive/backtest-historical/CHANGELOG.md)
-- [開發工作流程](./guides/DEVELOPMENT_WORKFLOW.md)
+- 開發工作流程
 
 ---
 
@@ -355,6 +355,6 @@ docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin \
 
 **快速連結**:
 - [返回文檔首頁](./README.md)
-- [查看所有功能文檔](./features/)
+- 查看所有功能文檔
 - [查看所有測試文檔](./testing/)
-- [查看所有指南](./guides/)
+- 查看所有指南

@@ -288,7 +288,7 @@ RAG 引擎根據 business_scope 過濾知識
 - [Business Scope 重構總結](BUSINESS_SCOPE_REFACTORING_SUMMARY.md)
 - [Business Scope 詳細說明](../architecture/BUSINESS_SCOPE_REFACTORING.md)
 - [Business Scope 測試報告](BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md)
-- [業務範圍工具](./rag-orchestrator/services/business_scope_utils.py)
+- 業務範圍工具
 
 ---
 

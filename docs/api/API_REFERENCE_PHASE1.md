@@ -1395,4 +1395,4 @@ chmod +x test-api.sh
 - [知識匯入 API 參考](../archive/2025-Q4/api/KNOWLEDGE_IMPORT_API.md) - 批量匯入知識 API
 - [系統架構文檔](../architecture/SYSTEM_ARCHITECTURE.md)
 - [多意圖分類文檔](../archive/2025-Q4/features/MULTI_INTENT_CLASSIFICATION.md)
-- [開發工作流程](../guides/DEVELOPMENT_WORKFLOW.md)
+- 開發工作流程

@@ -530,7 +530,7 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin \
 - [Phase 3 去重增強報告](./PHASE3_DEDUPLICATION_ENHANCEMENTS_2025-10-22.md)（本文檔）
 
 ### 技術文檔
-- [Database Schema + ERD](./DATABASE_SCHEMA_ERD.md)
+- Database Schema + ERD
 - [環境變數參考](../../guides/deployment/ENVIRONMENT_VARIABLES.md)
 - [Intent Management README](../2025-Q4/features/INTENT_MANAGEMENT_README.md)
 

@@ -376,9 +376,9 @@ ALTER TABLE api_endpoints ADD COLUMN response_format_template TEXT;
 
 ## 📚 相關文檔
 
-- [API Endpoints 管理系統實作](./API_ENDPOINTS_MANAGEMENT_IMPLEMENTATION.md)
+- API Endpoints 管理系統實作
 - [知識動作系統設計](../../design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
-- [API Call Handler 實作](./design/API_CALL_HANDLER_IMPLEMENTATION.md)
+- API Call Handler 實作
 
 ---
 

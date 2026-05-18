@@ -288,6 +288,6 @@ BACKTEST_SELECTION_STRATEGY=incremental BACKTEST_LIMIT=30 python3 scripts/...
 
 ## 相關文件
 
-- [回測框架使用指南](./backtest_usage.md)
-- [資料庫 Schema 說明](./database_schema.md)
-- [API 端點文檔](./api_endpoints.md)
+- 回測框架使用指南
+- 資料庫 Schema 說明
+- API 端點文檔

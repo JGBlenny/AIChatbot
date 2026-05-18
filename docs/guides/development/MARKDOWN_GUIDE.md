@@ -255,9 +255,9 @@ curl -X DELETE "http://localhost:8000/api/knowledge/files/產品功能"
 
 ## 📚 分類目錄
 
-- [產品功能](./產品功能.md)
-- [技術支援](./技術支援.md)
-- [使用教學](./使用教學.md)
+- 產品功能
+- 技術支援
+- 使用教學
 
 ---
 
@@ -464,7 +464,7 @@ curl -X POST "http://localhost:8000/api/knowledge/generate/產品功能"
 3. 🤖 建立 RAG 查詢 API
 4. 🌐 整合到前台 AIChatbot
 
-查看：[NEXT_STEPS.md](../NEXT_STEPS.md)
+查看：NEXT_STEPS.md
 
 ---
 
@@ -472,4 +472,4 @@ curl -X POST "http://localhost:8000/api/knowledge/generate/產品功能"
 
 如有問題，請檢查：
 - API 文件：http://localhost:8000/docs
-- 專案文件：[PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md)
+- 專案文件：PROJECT_OVERVIEW.md

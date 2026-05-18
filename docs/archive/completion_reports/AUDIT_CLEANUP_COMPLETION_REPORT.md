@@ -247,7 +247,7 @@
 ## 🔗 相關文檔
 
 - [系統盤查報告 (2025-10-13)](SYSTEM_AUDIT_REPORT_2025-10-13.md) - 審計報告
-- [文檔中心](README.md) - 文檔導覽
+- 文檔中心 - 文檔導覽
 - [CHANGELOG](../backtest-historical/CHANGELOG.md) - 完整變更歷史
 - [環境變數參考](../../guides/deployment/ENVIRONMENT_VARIABLES.md) - 環境變數說明
 - [主 README](../README.md) - 專案總覽

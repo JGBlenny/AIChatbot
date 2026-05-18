@@ -11,8 +11,8 @@
 **歸檔原因**：初步評估文檔，已被更完整的分析取代
 
 **取代文檔**：
-- [RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md](../../RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md) - 完整檢索邏輯分析
-- [FINAL_IMPLEMENTATION_2026-01-13.md](../../FINAL_IMPLEMENTATION_2026-01-13.md) - 最終實施報告
+- RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md - 完整檢索邏輯分析
+- FINAL_IMPLEMENTATION_2026-01-13.md - 最終實施報告
 
 **內容價值**：
 - ⚠️ 分析不完整（缺少完整流程）
@@ -25,8 +25,8 @@
 **歸檔原因**：早期驗證文檔，已被更完整的驗證報告取代
 
 **取代文檔**：
-- [VERIFICATION_REPORT_2026-01-13.md](../../VERIFICATION_REPORT_2026-01-13.md) - 階段一完整驗證
-- [FINAL_IMPLEMENTATION_2026-01-13.md](../../FINAL_IMPLEMENTATION_2026-01-13.md) - 包含完整驗證過程
+- VERIFICATION_REPORT_2026-01-13.md - 階段一完整驗證
+- FINAL_IMPLEMENTATION_2026-01-13.md - 包含完整驗證過程
 
 **內容價值**：
 - ⚠️ 驗證不完整（僅測試部分情況）
@@ -41,7 +41,7 @@
 
 **取代內容**：
 - commit `cbf4c4f` - 實際實施的代碼
-- [vendor_knowledge_retriever.py](../../rag-orchestrator/services/vendor_knowledge_retriever.py) - 實際修改的文件
+- vendor_knowledge_retriever.py - 實際修改的文件
 
 **內容價值**：
 - ⚠️ 僅為提案，未實際使用

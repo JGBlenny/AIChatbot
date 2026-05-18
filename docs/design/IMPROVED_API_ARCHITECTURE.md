@@ -231,7 +231,7 @@ class UniversalAPICallHandler:
             # 調用自定義格式化函數
             handler_name = config.get('custom_formatter')
             if handler_name in self.custom_formatters:
-                return self.custom_formatters[handler_name](api_result)
+                return self.custom_formattershandler_name
 
         return str(api_result)
 

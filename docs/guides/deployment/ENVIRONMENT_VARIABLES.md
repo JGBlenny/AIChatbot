@@ -678,10 +678,10 @@ A: 檢查：
 
 ## 📚 相關文件
 
-- [Docker Compose 指南](./DOCKER_COMPOSE_GUIDE.md)
+- Docker Compose 指南
 - [回測環境變數參考](../../archive/2025-Q4/backtest/BACKTEST_ENV_VARS.md)
 - [快速開始指南](../getting-started/QUICKSTART.md)
-- [開發工作流程](./DEVELOPMENT_WORKFLOW.md)
+- 開發工作流程
 
 ---
 

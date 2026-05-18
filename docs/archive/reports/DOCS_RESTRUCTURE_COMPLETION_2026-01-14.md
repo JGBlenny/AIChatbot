@@ -446,8 +446,8 @@ docs/features/README.md
 
 - [docs 結構盤查報告](./DOCS_STRUCTURE_AUDIT_2026-01-14.md)
 - [文件更新報告](./DOCUMENTATION_UPDATE_2026-01-14.md)
-- [archive 索引](../archive/README.md)
-- [features 索引](../features/README.md)
+- archive 索引
+- features 索引
 
 ---
 

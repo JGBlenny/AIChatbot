@@ -328,7 +328,7 @@ JGB可協助提供標準的點交檢核表。
 ## 📚 相關文件
 
 - [SOP 整合實作總結](./SOP_INTEGRATION_IMPLEMENTATION.md) - 完整實作文檔
-- [B2B API 整合框架設計](./B2B_API_INTEGRATION_DESIGN.md) - Phase 2 多輪對話
+- B2B API 整合框架設計 - Phase 2 多輪對話
 - [Business Scope 重構](../architecture/BUSINESS_SCOPE_REFACTORING.md) - B2B/B2C 場景隔離
 
 ---

@@ -218,7 +218,7 @@ docker-compose exec rag-orchestrator python3 /tmp/test_answer_30_queries_fast.py
 
 - [SOP Keywords 實作說明](features/sop/optimization/SOP_KEYWORDS_IMPLEMENTATION_2026-02-11.md)
 - [SOP Keywords 對比分析](features/sop/optimization/SOP_KEYWORDS_COMPARISON.md)
-- [測試腳本](../tests/test_sop_keywords_api.py)
+- 測試腳本
 
 ---
 

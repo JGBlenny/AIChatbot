@@ -256,7 +256,7 @@ WHERE id = 2;
 
 ## 📚 相關文件
 
-- [B2B API 整合框架設計](./B2B_API_INTEGRATION_DESIGN.md) - Phase 2 多輪對話與狀態管理
+- B2B API 整合框架設計 - Phase 2 多輪對話與狀態管理
 - [Business Scope 重構](../architecture/BUSINESS_SCOPE_REFACTORING.md) - B2B/B2C 場景隔離
 - [多業者實作](../planning/PHASE1_MULTI_VENDOR_IMPLEMENTATION.md) - Phase 1 架構設計
 

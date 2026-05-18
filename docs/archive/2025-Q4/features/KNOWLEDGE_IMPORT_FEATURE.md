@@ -676,7 +676,7 @@ docker logs aichatbot-rag-orchestrator 2>&1 | grep -A 50 "job_id"
 - [API 參考文件](../api/KNOWLEDGE_IMPORT_API.md)
 - [測試情境管理](./TEST_SCENARIO_STATUS_MANAGEMENT.md)
 - [AI 知識生成](./AI_KNOWLEDGE_GENERATION_FEATURE.md)
-- [審核中心使用指南](../guides/REVIEW_CENTER_GUIDE.md)
+- 審核中心使用指南
 
 ---
 

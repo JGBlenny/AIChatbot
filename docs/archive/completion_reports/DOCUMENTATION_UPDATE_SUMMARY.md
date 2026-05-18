@@ -205,7 +205,7 @@ AIChatbot/
 ### 相關功能文檔
 4. [測試情境狀態管理](../2025-Q4/features/TEST_SCENARIO_STATUS_MANAGEMENT.md)
 5. [AI 知識生成](../2025-Q4/features/AI_KNOWLEDGE_GENERATION_FEATURE.md)
-6. [審核中心（待建立）](./guides/REVIEW_CENTER_GUIDE.md)
+6. 審核中心（待建立）
 
 ---
 

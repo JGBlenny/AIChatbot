@@ -417,9 +417,9 @@ async saveForm() {
 
 ## 📚 參考資料
 
-- [詳細前端規格](./FRONTEND_REQUIREMENTS.md) - 完整的 UI 設計和實作細節
+- 詳細前端規格 - 完整的 UI 設計和實作細節
 - [API 配置指南](../design/API_CONFIGURATION_GUIDE.md) - 了解 API 配置的格式
-- [後端變更日誌](./CHANGELOG_2026-01-18.md) - 了解後端的變更
+- 後端變更日誌 - 了解後端的變更
 
 ---
 
@@ -446,14 +446,14 @@ npm run dev
 ## ❓ 遇到問題？
 
 1. **不確定要改哪裡？**
-   - 查看 [詳細前端規格](./FRONTEND_REQUIREMENTS.md)
+   - 查看 詳細前端規格
 
 2. **不知道 API 配置格式？**
    - 查看 [API 配置指南](../design/API_CONFIGURATION_GUIDE.md) 的範例
 
 3. **後端 API 不接受新欄位？**
    - 確認後端已經執行資料庫遷移
-   - 查看 [後端變更日誌](./CHANGELOG_2026-01-18.md)
+   - 查看 後端變更日誌
 
 ---
 

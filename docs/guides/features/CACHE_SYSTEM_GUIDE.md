@@ -917,7 +917,7 @@ def analyze_cache_performance():
 - [API 參考](../../api/API_REFERENCE_PHASE1.md) - 緩存管理 API 詳細文檔
 - [環境變數參考](../deployment/ENVIRONMENT_VARIABLES.md) - 緩存配置變數
 - [系統架構](../../architecture/SYSTEM_ARCHITECTURE.md) - RAG 系統整體架構
-- [故障排除指南](../guides/TROUBLESHOOTING.md) - 通用故障排除
+- 故障排除指南 - 通用故障排除
 
 ---
 

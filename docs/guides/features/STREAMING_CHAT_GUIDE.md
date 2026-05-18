@@ -1361,7 +1361,7 @@ conversation.sendMessage('租金何時繳？', 1, 'customer');
 - [API 參考](../../api/API_REFERENCE_PHASE1.md) - 流式聊天 API 詳細文檔
 - [系統架構](../../architecture/SYSTEM_ARCHITECTURE.md) - RAG 系統整體架構
 - [緩存系統指南](./CACHE_SYSTEM_GUIDE.md) - 緩存機制說明
-- [故障排除指南](../guides/TROUBLESHOOTING.md) - 通用故障排除
+- 故障排除指南 - 通用故障排除
 
 ---
 

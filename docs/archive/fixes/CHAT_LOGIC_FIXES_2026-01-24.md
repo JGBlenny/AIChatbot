@@ -339,8 +339,8 @@ docker-compose restart rag-orchestrator
 ## 📚 相關文檔
 
 - **對話流程完整分析**：[CHAT_FLOW_ANALYSIS_2026-01-24.md](../analysis/CHAT_FLOW_ANALYSIS_2026-01-24.md)
-- **表單狀態機文檔**：[FORM_STATE_MACHINE.md](../features/FORM_STATE_MACHINE.md)
-- **SOP Next Action 文檔**：[SOP_NEXT_ACTION.md](../features/SOP_NEXT_ACTION.md)
+- **表單狀態機文檔**：FORM_STATE_MACHINE.md
+- **SOP Next Action 文檔**：SOP_NEXT_ACTION.md
 
 ---
 

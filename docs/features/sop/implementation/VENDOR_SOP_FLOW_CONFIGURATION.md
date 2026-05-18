@@ -20,7 +20,7 @@
 - ✅ Intent 真正成為「輔助」而非「必需」
 - ✅ 提升檢索準確性（向量相似度 + Intent 加成）
 
-詳細文檔: [`VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md`](./VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md)
+詳細文檔: `VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md`
 
 ---
 

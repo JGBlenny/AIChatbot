@@ -15,7 +15,7 @@
 
 ### 完整報告
 
-最新的實施報告請參閱: [SOP 複製與 Embedding 修復報告](../../SOP_COPY_EMBEDDING_FIX_2025-11-02.md)
+最新的實施報告請參閱: SOP 複製與 Embedding 修復報告
 
 ---
 
@@ -67,12 +67,12 @@
 
 ### 使用文檔（保留在主目錄）
 
-- [SOP 完整指南](../../SOP_COMPLETE_GUIDE.md) - 系統架構和使用說明
+- SOP 完整指南 - 系統架構和使用說明
 - [SOP 快速參考](../../guides/reference/SOP_QUICK_REFERENCE.md) - 5分鐘快速上手
 
 ### 實施報告（保留在主目錄）
 
-- [SOP 複製與 Embedding 修復報告](../../SOP_COPY_EMBEDDING_FIX_2025-11-02.md) - 2025-11-02 最新實施報告
+- SOP 複製與 Embedding 修復報告 - 2025-11-02 最新實施報告
 
 ---
 

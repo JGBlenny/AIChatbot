@@ -263,8 +263,8 @@ jobs:
 
 ## 📚 相關文檔
 
-1. [測試使用指南](../tests/integration/README_BUSINESS_LOGIC_TESTS.md)
-2. [快速開始](../tests/integration/QUICK_START.md)
+1. 測試使用指南
+2. 快速開始
 3. [測試狀況報告](./TESTING_AND_VALIDATION_STATUS.md)
 4. [實作狀況報告](./AI_CHATBOT_LOGIC_IMPLEMENTATION_STATUS.md)
 5. [四種情境手動測試報告](../2025-Q4/testing/FOUR_SCENARIOS_TEST_REPORT.md)

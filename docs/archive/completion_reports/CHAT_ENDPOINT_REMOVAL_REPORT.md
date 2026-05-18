@@ -261,7 +261,7 @@ curl -X POST http://localhost:8100/api/v1/chat/stream \
 - [移除前盤查報告](./CHAT_ENDPOINT_REMOVAL_AUDIT.md)
 - [API 遷移指南](../api/CHAT_API_MIGRATION_GUIDE.md) (參考文檔)
 - [主 README](../../README.md)
-- [RAG Orchestrator README](../../rag-orchestrator/README.md)
+- RAG Orchestrator README
 - [快速入門指南](../../guides/getting-started/QUICKSTART.md)
 
 ---

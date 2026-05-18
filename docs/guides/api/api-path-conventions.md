@@ -417,10 +417,10 @@ server {
 ## 📚 相關資源
 
 ### 文檔
-- [API 架構分析](/tmp/API_ARCHITECTURE_ANALYSIS.md)
-- [API 路徑回滾報告](./API_PATH_ROLLBACK_REPORT.md)
-- [Nginx 配置](../knowledge-admin/frontend/nginx.conf)
-- [Vite 配置](../knowledge-admin/frontend/vite.config.js)
+- API 架構分析
+- API 路徑回滾報告
+- Nginx 配置
+- Vite 配置
 
 ### 配置文件
 - `src/config/api.js` - API 端點定義
@@ -448,4 +448,4 @@ server {
 **維護者**: Development Team
 **狀態**: ✅ 生效中
 
-如有疑問，請參考 [API 架構分析文檔](/tmp/API_ARCHITECTURE_ANALYSIS.md)。
+如有疑問，請參考 API 架構分析文檔。
