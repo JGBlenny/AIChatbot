@@ -215,7 +215,7 @@ export default {
 
     // 從 URL 查詢參數讀取 target_user（預設為 tenant）
     const queryTargetUser = this.$route.query.target_user;
-    if (queryTargetUser === 'landlord' || queryTargetUser === 'tenant') {
+    if (['tenant', 'landlord', 'property_manager', 'system_admin'].includes(queryTargetUser)) {
       this.targetUser = queryTargetUser;
     }
 
