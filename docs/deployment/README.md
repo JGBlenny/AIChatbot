@@ -4,22 +4,9 @@
 
 ## 🚀 快速開始
 
-### 從 fa4d9a6 更新到最新版本（⭐ 推薦）
-```bash
-cat docs/deployment/DEPLOY_FROM_FA4D9A6_TO_LATEST.md
-```
-**適用情境**：從生產環境版本（fa4d9a6）升級到最新版本（e3a6ff9）
-
 ### 日常小更新（沒有資料庫遷移）
 ```bash
 cat docs/deployment/DEPLOY_GUIDE.md
-```
-
-### 首次部署 2026-01-10 版本（有遷移）
-```bash
-cat docs/deployment/2026-01-10/QUICK_DEPLOY_2026-01-10.md
-# 或
-bash docs/deployment/2026-01-10/deploy_2026-01-10.sh
 ```
 
 ### 搭配檢查清單使用
@@ -33,12 +20,10 @@ cat docs/deployment/DEPLOY_CHECKLIST.md
 deployment/
 ├── README.md                    ← 本文件（部署索引）
 ├── DEPLOY_GUIDE.md              ← 通用部署指南
-├── DEPLOY_CHECKLIST.md          ← 通用檢查清單
-└── 2026-01-10/                  ← 2026-01-10 版本部署
-    ├── DEPLOY_README_2026-01-10.md
-    ├── QUICK_DEPLOY_2026-01-10.md
-    ├── PRODUCTION_DEPLOY_2026-01-10.md
-    └── deploy_2026-01-10.sh
+└── DEPLOY_CHECKLIST.md          ← 通用檢查清單
+
+# 歷史部署記錄已遷移至：
+../archive/deployment-logs/      ← 各版本部署文件（2026-01-10 ~ 2026-03-28）
 ```
 
 ## 🎯 使用說明
@@ -78,11 +63,10 @@ deployment/
 - 知識庫缺失欄位補充（form_id, video_url, trigger_form_condition 等）
 - 修復前端 sidebarCollapsed 錯誤
 
-**部署文件：**
-- [DEPLOY_README_2026-01-10.md](2026-01-10/DEPLOY_README_2026-01-10.md) - 部署索引
-- [QUICK_DEPLOY_2026-01-10.md](2026-01-10/QUICK_DEPLOY_2026-01-10.md) - 快速部署
-- [PRODUCTION_DEPLOY_2026-01-10.md](2026-01-10/PRODUCTION_DEPLOY_2026-01-10.md) - 完整部署
-- [deploy_2026-01-10.sh](2026-01-10/deploy_2026-01-10.sh) - 自動化腳本
+**部署文件**（已遷移至 archive）：
+- [DEPLOY_README_2026-01-10.md](../archive/deployment-logs/2026-01-10/DEPLOY_README_2026-01-10.md) - 部署索引
+- [QUICK_DEPLOY_2026-01-10.md](../archive/deployment-logs/2026-01-10/QUICK_DEPLOY_2026-01-10.md) - 快速部署
+- [PRODUCTION_DEPLOY_2026-01-10.md](../archive/deployment-logs/2026-01-10/PRODUCTION_DEPLOY_2026-01-10.md) - 完整部署
 
 **資料庫遷移：**
 - `database/migrations/add_knowledge_base_missing_columns.sql`
