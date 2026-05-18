@@ -150,6 +150,7 @@ services:
       JGB_API_KEY: ${JGB_API_KEY:-}
       USE_MOCK_JGB_API: ${USE_MOCK_JGB_API:-true}
       ENABLE_ANSWER_SYNTHESIS: ${ENABLE_ANSWER_SYNTHESIS:-true}
+      ENABLE_LLM_OPTIMIZATION: ${ENABLE_LLM_OPTIMIZATION:-true}
       SYNTHESIS_THRESHOLD: ${SYNTHESIS_THRESHOLD:-0.99}  # 比對 final similarity（_should_synthesize 合成觸發判定）
       PERFECT_MATCH_THRESHOLD: ${PERFECT_MATCH_THRESHOLD:-0.90}  # 比對 vector_similarity（純向量分數）— 重構後閾值語意改變，需校準
       SYNTHESIS_MIN_RESULTS: ${SYNTHESIS_MIN_RESULTS:-2}

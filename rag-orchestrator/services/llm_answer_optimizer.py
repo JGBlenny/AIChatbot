@@ -50,7 +50,7 @@ class LLMAnswerOptimizer:
             "model": default_model,
             "temperature": float(os.getenv("LLM_ANSWER_TEMPERATURE", "0.7")),
             "max_tokens": int(os.getenv("LLM_ANSWER_MAX_TOKENS", "800")),
-            "enable_optimization": True,
+            "enable_optimization": os.getenv("ENABLE_LLM_OPTIMIZATION", "true").lower() == "true",
             "optimize_for_confidence": ["high", "medium"],  # 只優化高/中信心度
             "fallback_on_error": True,  # 錯誤時使用原始答案
             # Phase 2 擴展：答案合成功能
