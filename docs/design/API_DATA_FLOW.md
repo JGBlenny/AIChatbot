@@ -432,7 +432,7 @@ Email: Lucio_Hettinger@annie.ca
 
 - [動態 API 測試報告](../archive/design-reports/DYNAMIC_API_TESTING_REPORT.md)
 - [改進的 API 架構設計](./IMPROVED_API_ARCHITECTURE.md)
-- [API Endpoint 架構說明](../API_ENDPOINT_ARCHITECTURE.md)
+- ~~API Endpoint 架構說明~~（已刪除，請參考 [改進的 API 架構設計](./IMPROVED_API_ARCHITECTURE.md)）
 
 ---
 

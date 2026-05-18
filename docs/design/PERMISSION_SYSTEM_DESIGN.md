@@ -848,9 +848,9 @@ async def create_knowledge(data: KnowledgeCreate, user: dict = Depends(get_curre
 
 ## 📚 相關文檔
 
-- [認證系統總覽](./AUTH_SYSTEM_README.md)
-- [部署指南](./AUTH_DEPLOYMENT_GUIDE.md)
-- [前端開發規範](./FRONTEND_DEVELOPMENT_GUIDE.md) (待創建)
+- [認證系統總覽](../features/AUTH_SYSTEM_README.md)
+- [部署指南](../guides/deployment/AUTH_DEPLOYMENT_GUIDE.md)
+- 前端開發規範（待創建）
 
 ---
 

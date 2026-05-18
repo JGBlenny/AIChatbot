@@ -5,7 +5,7 @@
 **實施人員**: Claude Code
 **狀態**: ✅ 已完成並投產
 
-> **⚠️ 重要更新**: 此方案後續發現 Primary Embedding 存在稀釋問題，已透過 [Primary Embedding 修復](./PRIMARY_EMBEDDING_FIX.md) 進一步優化，最終涵蓋率達到 **92.6%**。本文檔記錄初始雙重檢索機制的實施過程。
+> **⚠️ 重要更新**: 此方案後續發現 Primary Embedding 存在稀釋問題，已透過 [Primary Embedding 修復](../archive/features-historical/PRIMARY_EMBEDDING_FIX.md) 進一步優化，最終涵蓋率達到 **92.6%**。本文檔記錄初始雙重檢索機制的實施過程。
 
 ---
 
@@ -30,7 +30,7 @@ SOP 檢索涵蓋率僅 56.7%，多個應該匹配的問題無法檢索到相關 
 - ✅ 無誤配風險（False Positive: 0%）
 
 ### 後續優化（第二階段）
-詳見 [Primary Embedding 修復](./PRIMARY_EMBEDDING_FIX.md)：
+詳見 [Primary Embedding 修復](../archive/features-historical/PRIMARY_EMBEDDING_FIX.md)：
 - ✅ 涵蓋率: **73.3% → 92.6%** (+19.3%)
 - ✅ 解決「垃圾要怎麼丟」等關鍵問題誤配
 - ✅ 累計提升: **+35.9%**

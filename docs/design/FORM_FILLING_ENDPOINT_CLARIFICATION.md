@@ -94,11 +94,11 @@ class VendorChatResponse(BaseModel):
 
 ---
 
-#### 2. **流式端點**：`POST /api/v1/chat/stream` ⚠️ **暫時廢棄**
+#### 2. **流式端點**：`POST /api/v1/chat/stream` ❌ **已移除**
 
-**檔案**：`rag-orchestrator/routers/chat_stream.py`
+**檔案**：`rag-orchestrator/routers/chat_stream.py`（已刪除）
 
-**廢棄狀態**：暫時停用（2026-01-09），代碼保留
+**移除狀態**：已完全移除（原暫時停用於 2026-01-09）
 
 **廢棄原因**：
 - 系統統一使用 `/message` 端點處理對話
