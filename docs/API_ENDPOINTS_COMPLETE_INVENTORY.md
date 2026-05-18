@@ -1005,7 +1005,7 @@ curl "http://localhost:8100/api/v1/api-endpoints/lookup/related-forms"
 ### Related Documentation
 
 - [知識庫、表單與 API 端點自動關聯機制](../features/lookup/KB_FORM_API_AUTO_SYNC.md)
-- [資料庫架構文檔](../architecture/DATABASE_SCHEMA.md)
+- [資料庫架構文檔](architecture/DATABASE_SCHEMA.md)
 
 ---
 

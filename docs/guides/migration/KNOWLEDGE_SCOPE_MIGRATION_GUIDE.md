@@ -287,7 +287,7 @@ trigger_mode: null  // 不是 'none'
 遷移支援：
 - 技術問題：建立 GitHub 議題
 - 緊急問題：聯絡 DevOps 團隊
-- 問題：參考[知識範圍簡化](../features/KNOWLEDGE_SCOPE_SIMPLIFICATION.md)
+- 問題：參考[知識範圍簡化](../../features/KNOWLEDGE_SCOPE_SIMPLIFICATION.md)
 
 ---
 

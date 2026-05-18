@@ -385,10 +385,10 @@ WHERE trigger_mode = 'none' AND next_action = 'none';
 
 ## 📝 相關文件
 
-- [SOP_TYPES_ANALYSIS_2026-01-22.md](./SOP_TYPES_ANALYSIS_2026-01-22.md) - trigger_mode 類型分析
-- [SOP_NEXT_ACTION_DESIGN_2026-01-22.md](./SOP_NEXT_ACTION_DESIGN_2026-01-22.md) - 後續動作設計
-- [SOP_UI_DESIGN_2026-01-22.md](./SOP_UI_DESIGN_2026-01-22.md) - UI 設計規範
-- [SOP_GUIDE.md](../guides/SOP_GUIDE.md) - SOP 系統完整指南
+- [SOP_TYPES_ANALYSIS_2026-01-22.md](../design/SOP_TYPES_ANALYSIS_2026-01-22.md) - trigger_mode 類型分析
+- [SOP_NEXT_ACTION_DESIGN_2026-01-22.md](../design/SOP_NEXT_ACTION_DESIGN_2026-01-22.md) - 後續動作設計
+- [SOP_UI_DESIGN_2026-01-22.md](../design/SOP_UI_DESIGN_2026-01-22.md) - UI 設計規範
+- [SOP_GUIDE.md](../../../guides/features/SOP_GUIDE.md) - SOP 系統完整指南
 
 ---
 

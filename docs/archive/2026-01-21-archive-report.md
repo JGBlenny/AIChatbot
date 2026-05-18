@@ -203,7 +203,7 @@ $ ls /tmp/*.md /tmp/*.sh /tmp/*.json 2>/dev/null | grep -E "(API|TEST|HANDLER|KN
 - [完整修正報告](./fixes/2026-01-21-api-integration-fix.md)
 - [深度分析](./fixes/2026-01-21-api-integration-analysis.md)
 - [快速參考](./fixes/2026-01-21-api-integration-quick-ref.md)
-- [測試指南](./testing/api-integration-testing-guide.md)
+- [測試指南](../testing/api-integration-testing-guide.md)
 
 ### 索引
 
@@ -285,7 +285,7 @@ rm /tmp/API_INTEGRATION_TEST_GUIDE.md
 1. **快速查找**: 查看 [快速參考](./fixes/2026-01-21-api-integration-quick-ref.md)
 2. **詳細了解**: 閱讀 [完整報告](./fixes/2026-01-21-api-integration-fix.md)
 3. **技術細節**: 參考 [深度分析](./fixes/2026-01-21-api-integration-analysis.md)
-4. **測試驗證**: 使用 [測試指南](./testing/api-integration-testing-guide.md)
+4. **測試驗證**: 使用 [測試指南](../testing/api-integration-testing-guide.md)
 
 ### 未來維護
 

@@ -204,15 +204,15 @@ docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin \
 
 ### SOP 系統文檔
 
-- [SOP 系統完整指南](./guides/SOP_GUIDE.md)
-- [SOP 快速參考](./guides/SOP_QUICK_REFERENCE.md)
-- [SOP 類型分析](./features/SOP_TYPES_ANALYSIS_2026-01-22.md)
-- [SOP 後續動作設計](./features/SOP_NEXT_ACTION_DESIGN_2026-01-22.md)
-- [SOP UI 設計](./features/SOP_UI_DESIGN_2026-01-22.md)
+- [SOP 系統完整指南](../../guides/features/SOP_GUIDE.md)
+- [SOP 快速參考](../../guides/reference/SOP_QUICK_REFERENCE.md)
+- [SOP 類型分析](design/SOP_TYPES_ANALYSIS_2026-01-22.md)
+- [SOP 後續動作設計](design/SOP_NEXT_ACTION_DESIGN_2026-01-22.md)
+- [SOP UI 設計](design/SOP_UI_DESIGN_2026-01-22.md)
 
 ### 其他相關文檔
 
-- [主變更日誌](../CHANGELOG.md)
+- [主變更日誌](../../archive/backtest-historical/CHANGELOG.md)
 - [開發工作流程](./guides/DEVELOPMENT_WORKFLOW.md)
 
 ---

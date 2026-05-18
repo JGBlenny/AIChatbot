@@ -924,8 +924,8 @@ const ERROR_MESSAGES = {
 ## 📎 相關文檔
 
 - [認證功能實作總結](./AUTH_IMPLEMENTATION_SUMMARY.md)
-- [認證部署指南](./AUTH_DEPLOYMENT_GUIDE.md)
-- [API 保護指南](../knowledge-admin/backend/API_PROTECTION_GUIDE.md)
+- [認證部署指南](../../guides/deployment/AUTH_DEPLOYMENT_GUIDE.md)
+- [API 保護指南](../auth_testing/API_PROTECTION_GUIDE.md)
 
 ---
 

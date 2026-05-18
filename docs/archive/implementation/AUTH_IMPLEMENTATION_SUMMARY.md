@@ -336,7 +336,7 @@ export default {
 
 ### 1. 部署到開發環境
 
-詳見：[AUTH_DEPLOYMENT_GUIDE.md](./AUTH_DEPLOYMENT_GUIDE.md)
+詳見：[AUTH_DEPLOYMENT_GUIDE.md](../../guides/deployment/AUTH_DEPLOYMENT_GUIDE.md)
 
 ```bash
 # 1. 執行資料庫遷移
@@ -354,7 +354,7 @@ docker-compose restart knowledge-admin-api knowledge-admin-web
 
 ### 2. 測試登入功能
 
-詳見：[AUTH_QUICK_TEST.md](./AUTH_QUICK_TEST.md)
+詳見：[AUTH_QUICK_TEST.md](../auth_testing/AUTH_QUICK_TEST.md)
 
 ```bash
 # 測試後端 API
@@ -507,7 +507,7 @@ window.fetch = function(url, options = {}) {
 - ⏳ 登出後清除 token 並跳轉登入頁
 - ⏳ 登出後訪問管理頁面自動跳轉登入頁
 
-**測試指南**: 詳見 [AUTH_FINAL_TEST_GUIDE.md](./AUTH_FINAL_TEST_GUIDE.md)
+**測試指南**: 詳見 [AUTH_FINAL_TEST_GUIDE.md](../auth_testing/AUTH_FINAL_TEST_GUIDE.md)
 
 ---
 
@@ -546,11 +546,11 @@ window.fetch = function(url, options = {}) {
 
 ## 📎 相關文檔
 
-- [完整測試流程指南](./AUTH_FINAL_TEST_GUIDE.md) ⭐ **推薦先看這個**
-- [詳細測試報告](./AUTH_TEST_RESULTS.md)
-- [完整部署指南](./AUTH_DEPLOYMENT_GUIDE.md)
-- [快速測試指南](./AUTH_QUICK_TEST.md)
-- [API 保護指南](../knowledge-admin/backend/API_PROTECTION_GUIDE.md)
+- [完整測試流程指南](../auth_testing/AUTH_FINAL_TEST_GUIDE.md) ⭐ **推薦先看這個**
+- [詳細測試報告](../auth_testing/AUTH_TEST_RESULTS.md)
+- [完整部署指南](../../guides/deployment/AUTH_DEPLOYMENT_GUIDE.md)
+- [快速測試指南](../auth_testing/AUTH_QUICK_TEST.md)
+- [API 保護指南](../auth_testing/API_PROTECTION_GUIDE.md)
 
 ---
 

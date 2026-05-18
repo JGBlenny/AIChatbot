@@ -99,7 +99,7 @@
 
 **相關文檔：**
 - [KNOWLEDGE_SUGGESTION_DESIGN.md](./KNOWLEDGE_SUGGESTION_DESIGN.md) - 原始設計文檔
-- [KNOWLEDGE_SUGGESTIONS_TEST_REPORT.md](../../archive/KNOWLEDGE_SUGGESTIONS_TEST_REPORT.md) - 測試報告
+- [KNOWLEDGE_SUGGESTIONS_TEST_REPORT.md](KNOWLEDGE_SUGGESTIONS_TEST_REPORT.md) - 測試報告
 
 **資料庫遷移：**
 - 創建：`database/migrations/10-create-suggested-knowledge.sql`

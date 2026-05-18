@@ -314,7 +314,7 @@ ENABLE_KNOWLEDGE_RERANKER=true        # Knowledge Reranker
 - `rag-orchestrator/services/vendor_sop_retriever.py` (SOP)
 - `rag-orchestrator/services/vendor_knowledge_retriever.py` (Knowledge)
 
-**詳細文檔**: [Reranker 功能文檔](../features/RERANKER_FEATURE.md)
+**詳細文檔**: [Reranker 功能文檔](../../features/RERANKER_FEATURE.md)
 
 ---
 
@@ -886,9 +886,9 @@ AIChatbot/
 
 ## 📚 相關文件
 
-- [系統架構文件](../architecture/SYSTEM_ARCHITECTURE.md)
-- [快速開始指南](../../QUICKSTART.md)
-- [API 使用文件](../API_USAGE.md)
+- [系統架構文件](../../architecture/SYSTEM_ARCHITECTURE.md)
+- [快速開始指南](../../guides/getting-started/QUICKSTART.md)
+- [API 使用文件](../2025-Q4/api/API_USAGE.md)
 
 ---
 
@@ -979,6 +979,6 @@ curl http://localhost:8100/api/v1/health
 ## 🔗 相關連結
 
 - [GitHub Repository](https://github.com/JGBlenny/AIChatbot)
-- [系統架構圖](../architecture/SYSTEM_ARCHITECTURE.md)
+- [系統架構圖](../../architecture/SYSTEM_ARCHITECTURE.md)
 - [OpenAI Function Calling 文件](https://platform.openai.com/docs/guides/function-calling)
 - [pgvector 文件](https://github.com/pgvector/pgvector)

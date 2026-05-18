@@ -23,7 +23,7 @@
 **清理後**:
 - SOP 活躍文檔: 2 個
   - [SOP_COMPLETE_GUIDE.md](SOP_COMPLETE_GUIDE.md) - 400+ 行完整指南
-  - [SOP_QUICK_REFERENCE.md](SOP_QUICK_REFERENCE.md) - 快速參考卡
+  - [SOP_QUICK_REFERENCE.md](../../guides/reference/SOP_QUICK_REFERENCE.md) - 快速參考卡
 - 歸檔文檔: 9 個 (5 舊指南 + 4 報告)
 - **減少 80%** 的活躍文檔數量
 - 文檔結構清晰、無重複內容
@@ -237,14 +237,14 @@ SOP_CRUD_USAGE_GUIDE.md (9.9K)
 ```markdown
 **SOP 系統指南** ⭐ 已整合:
 - [SOP 完整指南](SOP_COMPLETE_GUIDE.md) - 系統架構、資料庫、使用方式（完整版）
-- [SOP 快速參考](SOP_QUICK_REFERENCE.md) - 5分鐘快速上手（操作卡）
+- [SOP 快速參考](../../guides/reference/SOP_QUICK_REFERENCE.md) - 5分鐘快速上手（操作卡）
 ```
 
 #### 更新「常見任務」區塊
 ```markdown
 **知識管理**:
 - **管理 SOP 項目** → [SOP 完整指南](SOP_COMPLETE_GUIDE.md) ⭐ 已整合
-- **快速新增 SOP** → [SOP 快速參考](SOP_QUICK_REFERENCE.md)
+- **快速新增 SOP** → [SOP 快速參考](../../guides/reference/SOP_QUICK_REFERENCE.md)
 ```
 
 #### 新增「最近更新」記錄
@@ -253,7 +253,7 @@ SOP_CRUD_USAGE_GUIDE.md (9.9K)
 - ✅ **Phase 1 清理**: 歸檔 3 個過時文檔，刪除廢棄測試代碼
 - ✅ **Phase 2 SOP 整合**: 10 個 SOP 文檔整合為 2 個
   - [SOP 完整指南](SOP_COMPLETE_GUIDE.md) - 400+ 行完整系統文檔
-  - [SOP 快速參考](SOP_QUICK_REFERENCE.md) - 5分鐘快速上手
+  - [SOP 快速參考](../../guides/reference/SOP_QUICK_REFERENCE.md) - 5分鐘快速上手
   - 歸檔 5 個舊使用指南 + 4 個完成報告
 - ✅ 更新 [文檔中心](README.md) - 新增 SOP 系統指南區塊
 ```
@@ -615,5 +615,5 @@ Phase 2 SOP 文檔整合已成功完成！
 **日期**: 2025-10-23
 **版本**: v1.0
 **相關文檔**:
-- [文檔審計報告 2025-10-22](./DOCUMENTATION_AUDIT_2025-10-22.md)
+- [文檔審計報告 2025-10-22](../completion_reports/DOCUMENTATION_AUDIT_2025-10-22.md)
 - [Phase 1 清理報告 2025-10-23](./DOCUMENTATION_CLEANUP_PHASE1_2025-10-23.md)

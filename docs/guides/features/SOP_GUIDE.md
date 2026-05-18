@@ -487,9 +487,9 @@ WHERE id = 1;
 
 ## 📚 延伸閱讀
 
-- [SOP 快速參考](./SOP_QUICK_REFERENCE.md) - 常用操作速查表
+- [SOP 快速參考](../reference/SOP_QUICK_REFERENCE.md) - 常用操作速查表
 - [Database Schema + ERD](./DATABASE_SCHEMA_ERD.md) - 完整資料庫架構
-- [API Reference](./api/API_REFERENCE_PHASE1.md) - SOP 相關 API
+- [API Reference](../../api/API_REFERENCE_PHASE1.md) - SOP 相關 API
 
 ---
 
@@ -497,8 +497,8 @@ WHERE id = 1;
 
 | 日期 | 版本 | 說明 |
 |------|------|------|
-| 2026-02-03 | v2.3 | 實現知識庫表單觸發模式，支援 manual/immediate/auto，統一知識庫與 SOP 觸發機制 ([詳細文檔](../features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md)) |
-| 2026-02-03 | v2.2 | 前端 UI 優化:移除 trigger_mode='none',優化欄位順序,新增詳細提示 ([詳細文檔](../features/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)) |
+| 2026-02-03 | v2.3 | 實現知識庫表單觸發模式，支援 manual/immediate/auto，統一知識庫與 SOP 觸發機制 ([詳細文檔](../../features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md)) |
+| 2026-02-03 | v2.2 | 前端 UI 優化:移除 trigger_mode='none',優化欄位順序,新增詳細提示 ([詳細文檔](../../features/sop/implementation/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)) |
 | 2026-02-03 | v2.1 | 移除 trigger_mode='none' 選項,簡化為排查型/行動型兩種模式 |
 | 2025-10-23 | v2.0 | 整合 6 個 SOP 指南為單一完整文檔 |
 | 2025-10-18 | v1.5 | 新增完整 CRUD 功能 |

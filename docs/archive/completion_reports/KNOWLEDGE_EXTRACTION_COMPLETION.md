@@ -330,7 +330,7 @@ cat output/backtest/backtest_results_summary.txt
 | **OpenAI 速率限制** | 減少 batch_size 或增加延遲 |
 | **資料庫連接錯誤** | `docker-compose restart postgres` |
 
-詳細故障排除請參考: [KNOWLEDGE_EXTRACTION_GUIDE.md](./KNOWLEDGE_EXTRACTION_GUIDE.md)
+詳細故障排除請參考: [KNOWLEDGE_EXTRACTION_GUIDE.md](../../guides/development/KNOWLEDGE_EXTRACTION_GUIDE.md)
 
 ---
 
@@ -362,10 +362,10 @@ cat output/backtest/backtest_results_summary.txt
 
 ## 📚 相關文檔
 
-- [完整使用指南](./KNOWLEDGE_EXTRACTION_GUIDE.md) - 詳細操作步驟
-- [Phase 1 實作文件](./PHASE1_MULTI_VENDOR_IMPLEMENTATION.md) - 多業者支援架構
-- [Phase 2 規劃文件](./PHASE2_PLANNING.md) - 未來發展計畫
-- [API 參考文檔](./API_REFERENCE_PHASE1.md) - API 端點說明
+- [完整使用指南](../../guides/development/KNOWLEDGE_EXTRACTION_GUIDE.md) - 詳細操作步驟
+- [Phase 1 實作文件](../planning/PHASE1_MULTI_VENDOR_IMPLEMENTATION.md) - 多業者支援架構
+- [Phase 2 規劃文件](../2025-Q4/planning/PHASE2_PLANNING.md) - 未來發展計畫
+- [API 參考文檔](../../api/API_REFERENCE_PHASE1.md) - API 端點說明
 
 ---
 

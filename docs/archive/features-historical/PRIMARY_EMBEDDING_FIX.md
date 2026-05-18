@@ -336,8 +336,8 @@ ORDER BY max_similarity DESC
 
 ## 相關文件
 
-- [雙重 Embedding 檢索機制](./DUAL_EMBEDDING_RETRIEVAL.md)
-- [閾值評估報告](../threshold_evaluation_report.md)
+- [雙重 Embedding 檢索機制](../../features/DUAL_EMBEDDING_RETRIEVAL.md)
+- [閾值評估報告](../testing-reports/2026-01-26/2026-01-26/threshold_evaluation_report.md)
 - [測試腳本](../../test_fix_verification.py)
 - [重新生成腳本](../../regenerate_sop_embeddings.py)
 

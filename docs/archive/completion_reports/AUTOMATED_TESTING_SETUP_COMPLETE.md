@@ -267,7 +267,7 @@ jobs:
 2. [快速開始](../tests/integration/QUICK_START.md)
 3. [測試狀況報告](./TESTING_AND_VALIDATION_STATUS.md)
 4. [實作狀況報告](./AI_CHATBOT_LOGIC_IMPLEMENTATION_STATUS.md)
-5. [四種情境手動測試報告](./features/FOUR_SCENARIOS_TEST_REPORT.md)
+5. [四種情境手動測試報告](../2025-Q4/testing/FOUR_SCENARIOS_TEST_REPORT.md)
 
 ---
 

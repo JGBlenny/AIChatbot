@@ -20,10 +20,10 @@
 
 | 文檔 | 路徑 | 說明 |
 |------|------|------|
-| **多 Intent 分類系統** | [docs/MULTI_INTENT_CLASSIFICATION.md](./MULTI_INTENT_CLASSIFICATION.md) | 完整的技術實作文檔，包含架構、實測效果、使用範例、調優指南 |
+| **多 Intent 分類系統** | [docs/MULTI_INTENT_CLASSIFICATION.md](../2025-Q4/features/MULTI_INTENT_CLASSIFICATION.md) | 完整的技術實作文檔，包含架構、實測效果、使用範例、調優指南 |
 | **文檔導覽索引** | [docs/README.md](./README.md) | 所有文檔的分類導覽和快速查找 |
-| **變更日誌** | [CHANGELOG.md](../CHANGELOG.md) | 從 0.1.0 到 1.3.0 的完整版本歷史 |
-| **快速參考指南** | [QUICK_REFERENCE.md](../QUICK_REFERENCE.md) | 常用命令、API、資料庫查詢的快速手冊 |
+| **變更日誌** | [CHANGELOG.md](../backtest-historical/CHANGELOG.md) | 從 0.1.0 到 1.3.0 的完整版本歷史 |
+| **快速參考指南** | [QUICK_REFERENCE.md](../../backtest/QUICK_REFERENCE.md) | 常用命令、API、資料庫查詢的快速手冊 |
 
 ### 2. 歸檔機制
 
@@ -192,21 +192,21 @@ docs/
 ### 新用戶入門路徑
 
 1. 閱讀 [README.md](../README.md) 了解專案概況
-2. 按照 [QUICKSTART.md](../QUICKSTART.md) 快速啟動
-3. 查看 [QUICK_REFERENCE.md](../QUICK_REFERENCE.md) 學習常用命令
+2. 按照 [QUICKSTART.md](../../guides/getting-started/QUICKSTART.md) 快速啟動
+3. 查看 [QUICK_REFERENCE.md](../../backtest/QUICK_REFERENCE.md) 學習常用命令
 4. 參考 [docs/README.md](./README.md) 查找具體主題文檔
 
 ### 開發人員路徑
 
-1. 閱讀 [SYSTEM_ARCHITECTURE.md](./architecture/SYSTEM_ARCHITECTURE.md) 理解架構
-2. 查看 [MULTI_INTENT_CLASSIFICATION.md](./MULTI_INTENT_CLASSIFICATION.md) 了解最新功能
-3. 參考 [API_REFERENCE_PHASE1.md](./API_REFERENCE_PHASE1.md) 進行開發
-4. 查閱 [CHANGELOG.md](../CHANGELOG.md) 了解版本歷史
+1. 閱讀 [SYSTEM_ARCHITECTURE.md](../../architecture/SYSTEM_ARCHITECTURE.md) 理解架構
+2. 查看 [MULTI_INTENT_CLASSIFICATION.md](../2025-Q4/features/MULTI_INTENT_CLASSIFICATION.md) 了解最新功能
+3. 參考 [API_REFERENCE_PHASE1.md](../../api/API_REFERENCE_PHASE1.md) 進行開發
+4. 查閱 [CHANGELOG.md](../backtest-historical/CHANGELOG.md) 了解版本歷史
 
 ### 運維人員路徑
 
 1. 按照 [README_DEPLOYMENT.md](../README_DEPLOYMENT.md) 部署系統
-2. 使用 [QUICK_REFERENCE.md](../QUICK_REFERENCE.md) 查找運維命令
+2. 使用 [QUICK_REFERENCE.md](../../backtest/QUICK_REFERENCE.md) 查找運維命令
 3. 參考故障排除章節解決問題
 
 ---

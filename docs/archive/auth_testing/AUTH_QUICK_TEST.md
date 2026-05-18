@@ -263,8 +263,8 @@ localStorage.getItem('auth_token')
 
 - [完整測試流程指南](./AUTH_FINAL_TEST_GUIDE.md) ⭐ **推薦**
 - [詳細測試報告](./AUTH_TEST_RESULTS.md)
-- [實作總結](./AUTH_IMPLEMENTATION_SUMMARY.md)
-- [部署指南](./AUTH_DEPLOYMENT_GUIDE.md)
+- [實作總結](../implementation/AUTH_IMPLEMENTATION_SUMMARY.md)
+- [部署指南](../../guides/deployment/AUTH_DEPLOYMENT_GUIDE.md)
 
 ---
 

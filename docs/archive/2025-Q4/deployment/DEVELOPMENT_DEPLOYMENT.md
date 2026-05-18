@@ -413,7 +413,7 @@ curl http://localhost:8087
 **預防措施：**
 - 定期檢查 vite.config.js 配置
 - 保持文檔更新
-- 參考：[前端開發模式文檔](FRONTEND_DEV_MODE.md)
+- 參考：[前端開發模式文檔](../../../guides/development/FRONTEND_DEV_MODE.md)
 
 ### Q: 線上環境應該用哪種方式？
 

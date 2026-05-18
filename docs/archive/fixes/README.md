@@ -85,14 +85,14 @@
 - ✅ 完整的 CRUD 生命週期支援
 - ✅ 對話流程可正確觸發 API 調用
 
-**相關測試**: [API 整合測試指南](../testing/api-integration-testing-guide.md)
+**相關測試**: [API 整合測試指南](../../testing/api-integration-testing-guide.md)
 
 ---
 
 ### 2025-10-29
 
 #### ✅ Business Types 欄位名稱錯誤修復（Critical P0）
-**檔案**: [2025-10-29-business-types-field-name-fix.md](./2025-10-29-business-types-field-name-fix.md)
+**檔案**: [2025-10-29-business-types-field-name-fix.md](../2025-Q4/fixes/2025-10-29-business-types-field-name-fix.md)
 
 **問題**: `vendor_parameter_resolver.py` 查詢錯誤的資料庫欄位名稱導致通用知識無法被檢索
 
@@ -134,7 +134,7 @@
 ### 2025-10-21
 
 #### ✅ 拼音去重檢測修復
-**檔案**: [PINYIN_DETECTION_FIX_REPORT.md](./PINYIN_DETECTION_FIX_REPORT.md)
+**檔案**: [PINYIN_DETECTION_FIX_REPORT.md](../2025-Q4/fixes/PINYIN_DETECTION_FIX_REPORT.md)
 
 **問題**: PostgreSQL vector 類型轉換錯誤導致拼音相似度檢測失敗
 
@@ -168,17 +168,17 @@
 ### 按功能模組
 - **知識庫檢索 & SOP 檢索**: [意圖加成優化](./INTENT_BOOST_OPTIMIZATION_2026-01-28.md)（已移除）
 - **Knowledge Admin API**: [API 整合修復](./2026-01-21-api-integration-fix.md)
-- **知識檢索**: [Business Types 欄位名稱修復](./2025-10-29-business-types-field-name-fix.md)
-- **多意圖分類**: [獨立信心度評分](./2025-10-29-business-types-field-name-fix.md)
-- **去重檢測**: [拼音檢測修復](./PINYIN_DETECTION_FIX_REPORT.md)
+- **知識檢索**: [Business Types 欄位名稱修復](../2025-Q4/fixes/2025-10-29-business-types-field-name-fix.md)
+- **多意圖分類**: [獨立信心度評分](../2025-Q4/fixes/2025-10-29-business-types-field-name-fix.md)
+- **去重檢測**: [拼音檢測修復](../2025-Q4/fixes/PINYIN_DETECTION_FIX_REPORT.md)
 
 ### 按影響等級
 - **Performance Optimization**:
   - [意圖加成優化](./INTENT_BOOST_OPTIMIZATION_2026-01-28.md)（已移除）
 - **Critical**:
   - [Knowledge Admin API 整合修復](./2026-01-21-api-integration-fix.md)
-  - [Business Types 欄位名稱修復](./2025-10-29-business-types-field-name-fix.md)
-- **高**: [拼音檢測修復](./PINYIN_DETECTION_FIX_REPORT.md)
+  - [Business Types 欄位名稱修復](../2025-Q4/fixes/2025-10-29-business-types-field-name-fix.md)
+- **高**: [拼音檢測修復](../2025-Q4/fixes/PINYIN_DETECTION_FIX_REPORT.md)
 
 ---
 

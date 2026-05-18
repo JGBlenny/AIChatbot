@@ -172,8 +172,8 @@ cat > /Users/lenny/jgb/AIChatbot/docs/archive/audience_research/README.md <<EOF
 - audience_field_analysis.md - Audience 欄位分析
 
 **參考新文檔**:
-- [Target User Config 實作報告](../completion_reports/TARGET_USER_CONFIG_IMPLEMENTATION.md)
-- [配置管理更新摘要](../../CONFIG_MANAGEMENT_UPDATE_SUMMARY.md)
+- [Target User Config 實作報告](completion_reports/TARGET_USER_CONFIG_IMPLEMENTATION.md)
+- [配置管理更新摘要](completion_reports/CONFIG_MANAGEMENT_UPDATE_SUMMARY.md)
 EOF
 
 echo "✅ 歸檔完成"

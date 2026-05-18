@@ -617,23 +617,23 @@ docker-compose -f docker-compose.prod.yml ps
 
 ### 技術文檔
 
-- **[CHANGELOG_2026-02-04_lookup_improvements.md](../CHANGELOG_2026-02-04_lookup_improvements.md)** - 詳細更新日誌
-- **[LOOKUP_SYSTEM_REFERENCE.md](../LOOKUP_SYSTEM_REFERENCE.md)** - Lookup 系統快速參考
-- **[UPDATES_SUMMARY.md](../UPDATES_SUMMARY.md)** - 更新摘要
+- **[CHANGELOG_2026-02-04_lookup_improvements.md](2026-02-04/CHANGELOG_2026-02-04_lookup_improvements.md)** - 詳細更新日誌
+- **[LOOKUP_SYSTEM_REFERENCE.md](2026-02-04/LOOKUP_SYSTEM_REFERENCE.md)** - Lookup 系統快速參考
+- **[UPDATES_SUMMARY.md](2026-02-04/UPDATES_SUMMARY.md)** - 更新摘要
 
 ### 設計文檔
 
-- **[LOOKUP_TABLE_SYSTEM_DESIGN.md](../design/LOOKUP_TABLE_SYSTEM_DESIGN.md)** - 系統設計
-- **[COMPLETE_CONVERSATION_ARCHITECTURE.md](../architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md)** - 對話架構
+- **[LOOKUP_TABLE_SYSTEM_DESIGN.md](../../design/LOOKUP_TABLE_SYSTEM_DESIGN.md)** - 系統設計
+- **[COMPLETE_CONVERSATION_ARCHITECTURE.md](../../architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md)** - 對話架構
 
 ### 實作文檔
 
 - **[LOOKUP_TABLE_IMPLEMENTATION_SUMMARY.md](../implementation/LOOKUP_TABLE_IMPLEMENTATION_SUMMARY.md)** - 實作摘要
-- **[LOOKUP_TABLE_QUICK_REFERENCE.md](../guides/LOOKUP_TABLE_QUICK_REFERENCE.md)** - 快速參考
+- **[LOOKUP_TABLE_QUICK_REFERENCE.md](../../guides/reference/LOOKUP_TABLE_QUICK_REFERENCE.md)** - 快速參考
 
 ### 測試文檔
 
-- **[LOOKUP_SYSTEM_TEST_GUIDE.md](../testing/LOOKUP_SYSTEM_TEST_GUIDE.md)** - 測試指南
+- **[LOOKUP_SYSTEM_TEST_GUIDE.md](../../testing/LOOKUP_SYSTEM_TEST_GUIDE.md)** - 測試指南
 
 ---
 

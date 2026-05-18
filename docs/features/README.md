@@ -13,41 +13,41 @@
 
 | 文件 | 說明 | 狀態 |
 |------|------|------|
-| [INTENT_MANAGEMENT_README.md](./INTENT_MANAGEMENT_README.md) | Intent 意圖管理系統 | ✅ |
-| [MULTI_INTENT_CLASSIFICATION.md](./MULTI_INTENT_CLASSIFICATION.md) | 多意圖分類功能 | ✅ |
+| [INTENT_MANAGEMENT_README.md](../archive/2025-Q4/features/INTENT_MANAGEMENT_README.md) | Intent 意圖管理系統 | ✅ |
+| [MULTI_INTENT_CLASSIFICATION.md](../archive/2025-Q4/features/MULTI_INTENT_CLASSIFICATION.md) | 多意圖分類功能 | ✅ |
 | [MULTI_INTENT_SCORING.md](./MULTI_INTENT_SCORING.md) | 多意圖評分機制 | ✅ |
-| [AI_KNOWLEDGE_GENERATION_FEATURE.md](./AI_KNOWLEDGE_GENERATION_FEATURE.md) | AI 自動知識生成 | ✅ |
-| [INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md](./INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md) | Intent 建議語意去重 | ✅ |
-| [SOP_Group_Embedding_Optimization.md](./SOP_Group_Embedding_Optimization.md) | SOP 分組 Embedding 優化 | ✅ |
+| [AI_KNOWLEDGE_GENERATION_FEATURE.md](../archive/2025-Q4/features/AI_KNOWLEDGE_GENERATION_FEATURE.md) | AI 自動知識生成 | ✅ |
+| [INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md](../archive/2025-Q4/features/INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md) | Intent 建議語意去重 | ✅ |
+| [SOP_Group_Embedding_Optimization.md](../archive/2025-Q4/features/SOP_Group_Embedding_Optimization.md) | SOP 分組 Embedding 優化 | ✅ |
 
 ### 📚 知識庫管理 (9 個)
 
 | 文件 | 說明 | 狀態 |
 |------|------|------|
-| [KNOWLEDGE_IMPORT_FEATURE.md](./KNOWLEDGE_IMPORT_FEATURE.md) | 知識匯入功能 | ✅ |
-| [MULTI_FILE_IMPORT.md](./MULTI_FILE_IMPORT.md) | 多檔案批次匯入 | ✅ |
-| [LINE_CHAT_IMPORT_FINAL_SUMMARY.md](./LINE_CHAT_IMPORT_FINAL_SUMMARY.md) | LINE 對話匯入（完整優化） | ✅ |
+| [KNOWLEDGE_IMPORT_FEATURE.md](../archive/2025-Q4/features/KNOWLEDGE_IMPORT_FEATURE.md) | 知識匯入功能 | ✅ |
+| [MULTI_FILE_IMPORT.md](../archive/2025-Q4/features/MULTI_FILE_IMPORT.md) | 多檔案批次匯入 | ✅ |
+| [LINE_CHAT_IMPORT_FINAL_SUMMARY.md](../archive/2025-Q4/features/LINE_CHAT_IMPORT_FINAL_SUMMARY.md) | LINE 對話匯入（完整優化） | ✅ |
 | [DOCUMENT_CONVERTER.md](./DOCUMENT_CONVERTER.md) | 文件轉換功能（Word/PDF → Q&A） | ✅ |
-| [PRIORITY_SYSTEM.md](./PRIORITY_SYSTEM.md) | 知識優先級系統 | ✅ |
-| [VENDOR_SOP_FLOW_CONFIGURATION.md](./VENDOR_SOP_FLOW_CONFIGURATION.md) | Vendor SOP 流程配置 ⭐ | ✅ |
+| [PRIORITY_SYSTEM.md](../archive/2025-Q4/features/PRIORITY_SYSTEM.md) | 知識優先級系統 | ✅ |
+| [VENDOR_SOP_FLOW_CONFIGURATION.md](sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md) | Vendor SOP 流程配置 ⭐ | ✅ |
 | [VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md](./VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md) | Vendor SOP 檢索邏輯改進 ⭐ | ✅ |
 | [DUAL_EMBEDDING_RETRIEVAL.md](./DUAL_EMBEDDING_RETRIEVAL.md) | 雙 Embedding 檢索 ⭐ | ✅ |
-| [PRIMARY_EMBEDDING_FIX.md](./PRIMARY_EMBEDDING_FIX.md) | Primary Embedding 稀釋修復 ⭐⭐⭐ 最新 | ✅ |
+| [PRIMARY_EMBEDDING_FIX.md](../archive/features-historical/PRIMARY_EMBEDDING_FIX.md) | Primary Embedding 稀釋修復 ⭐⭐⭐ 最新 | ✅ |
 
 ### 📋 表單系統 (2 個)
 
 | 文件 | 說明 | 狀態 |
 |------|------|------|
 | [FORM_MANAGEMENT_SYSTEM.md](./FORM_MANAGEMENT_SYSTEM.md) | 動態表單收集系統（完整） | ✅ |
-| [FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md](./FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md) | 表單引導改善 | ✅ |
+| [FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md](../archive/features-historical/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md) | 表單引導改善 | ✅ |
 
 ### 🧪 測試管理 (3 個)
 
 | 文件 | 說明 | 狀態 |
 |------|------|------|
-| [TEST_SCENARIO_STATUS_MANAGEMENT.md](./TEST_SCENARIO_STATUS_MANAGEMENT.md) | 測試情境狀態管理 | ✅ |
-| [DUPLICATE_TEST_SCENARIO_PREVENTION.md](./DUPLICATE_TEST_SCENARIO_PREVENTION.md) | 重複測試情境防止 | ✅ |
-| [REJECTED_SCENARIO_RETRY_IMPLEMENTATION.md](./REJECTED_SCENARIO_RETRY_IMPLEMENTATION.md) | 被拒情境重試機制 | ✅ |
+| [TEST_SCENARIO_STATUS_MANAGEMENT.md](../archive/2025-Q4/features/TEST_SCENARIO_STATUS_MANAGEMENT.md) | 測試情境狀態管理 | ✅ |
+| [DUPLICATE_TEST_SCENARIO_PREVENTION.md](../archive/2025-Q4/features/DUPLICATE_TEST_SCENARIO_PREVENTION.md) | 重複測試情境防止 | ✅ |
+| [REJECTED_SCENARIO_RETRY_IMPLEMENTATION.md](../archive/2025-Q4/features/REJECTED_SCENARIO_RETRY_IMPLEMENTATION.md) | 被拒情境重試機制 | ✅ |
 
 ### 🔐 系統管理 (3 個)
 
@@ -55,7 +55,7 @@
 |------|------|------|
 | [AUTH_SYSTEM_README.md](./AUTH_SYSTEM_README.md) | 認證系統說明 | ✅ |
 | [PERMISSION_SYSTEM_README.md](./PERMISSION_SYSTEM_README.md) | 權限系統（RBAC） | ✅ |
-| [B2B_API_INTEGRATION.md](./B2B_API_INTEGRATION.md) | B2B API 整合 | ✅ |
+| [B2B_API_INTEGRATION.md](../archive/2025-Q4/features/B2B_API_INTEGRATION.md) | B2B API 整合 | ✅ |
 
 ---
 
@@ -69,16 +69,16 @@
 
 ### 對開發者
 
-1. **[INTENT_MANAGEMENT_README.md](./INTENT_MANAGEMENT_README.md)** - 理解 Intent 系統架構
-2. **[MULTI_INTENT_CLASSIFICATION.md](./MULTI_INTENT_CLASSIFICATION.md)** - 多意圖分類實作
+1. **[INTENT_MANAGEMENT_README.md](../archive/2025-Q4/features/INTENT_MANAGEMENT_README.md)** - 理解 Intent 系統架構
+2. **[MULTI_INTENT_CLASSIFICATION.md](../archive/2025-Q4/features/MULTI_INTENT_CLASSIFICATION.md)** - 多意圖分類實作
 3. **[AUTH_SYSTEM_README.md](./AUTH_SYSTEM_README.md)** - JWT 認證系統
 
 ### 對知識維護者
 
-1. **[VENDOR_SOP_FLOW_CONFIGURATION.md](./VENDOR_SOP_FLOW_CONFIGURATION.md)** ⭐ - Vendor SOP 流程配置系統
-2. **[LINE_CHAT_IMPORT_FINAL_SUMMARY.md](./LINE_CHAT_IMPORT_FINAL_SUMMARY.md)** - 從 LINE 對話匯入知識
-3. **[KNOWLEDGE_IMPORT_FEATURE.md](./KNOWLEDGE_IMPORT_FEATURE.md)** - Excel/JSON 批次匯入
-4. **[PRIORITY_SYSTEM.md](./PRIORITY_SYSTEM.md)** - 設定知識優先級
+1. **[VENDOR_SOP_FLOW_CONFIGURATION.md](sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md)** ⭐ - Vendor SOP 流程配置系統
+2. **[LINE_CHAT_IMPORT_FINAL_SUMMARY.md](../archive/2025-Q4/features/LINE_CHAT_IMPORT_FINAL_SUMMARY.md)** - 從 LINE 對話匯入知識
+3. **[KNOWLEDGE_IMPORT_FEATURE.md](../archive/2025-Q4/features/KNOWLEDGE_IMPORT_FEATURE.md)** - Excel/JSON 批次匯入
+4. **[PRIORITY_SYSTEM.md](../archive/2025-Q4/features/PRIORITY_SYSTEM.md)** - 設定知識優先級
 
 ---
 
@@ -86,10 +86,10 @@
 
 ### Vendor SOP 系統 ⭐⭐⭐ 最新
 
-**主文件**: [VENDOR_SOP_FLOW_CONFIGURATION.md](./VENDOR_SOP_FLOW_CONFIGURATION.md)
+**主文件**: [VENDOR_SOP_FLOW_CONFIGURATION.md](sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md)
 **技術改進 1**: [VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md](./VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md)
 **技術改進 2**: [DUAL_EMBEDDING_RETRIEVAL.md](./DUAL_EMBEDDING_RETRIEVAL.md)
-**技術改進 3**: [PRIMARY_EMBEDDING_FIX.md](./PRIMARY_EMBEDDING_FIX.md) ⭐⭐⭐ 最新
+**技術改進 3**: [PRIMARY_EMBEDDING_FIX.md](../archive/features-historical/PRIMARY_EMBEDDING_FIX.md) ⭐⭐⭐ 最新
 
 完整的 Vendor SOP 配置和檢索系統：
 - 🔄 4 種觸發模式（資訊型、排查型、緊急型、自動執行型）
@@ -153,7 +153,7 @@ AI 自動將 Word/PDF 文件轉為 Q&A 知識庫：
 
 ### LINE 對話匯入 ⭐ 推薦
 
-**文件**: [LINE_CHAT_IMPORT_FINAL_SUMMARY.md](./LINE_CHAT_IMPORT_FINAL_SUMMARY.md)
+**文件**: [LINE_CHAT_IMPORT_FINAL_SUMMARY.md](../archive/2025-Q4/features/LINE_CHAT_IMPORT_FINAL_SUMMARY.md)
 
 從 LINE 對話記錄提取知識與測試情境：
 - 📱 LINE 對話格式解析
@@ -168,7 +168,7 @@ AI 自動將 Word/PDF 文件轉為 Q&A 知識庫：
 
 ### 多意圖分類系統
 
-**主文件**: [MULTI_INTENT_CLASSIFICATION.md](./MULTI_INTENT_CLASSIFICATION.md)
+**主文件**: [MULTI_INTENT_CLASSIFICATION.md](../archive/2025-Q4/features/MULTI_INTENT_CLASSIFICATION.md)
 **評分機制**: [MULTI_INTENT_SCORING.md](./MULTI_INTENT_SCORING.md)
 
 支援單一問題匹配多個意圖：
@@ -181,7 +181,7 @@ AI 自動將 Word/PDF 文件轉為 Q&A 知識庫：
 
 ### Intent 管理系統
 
-**文件**: [INTENT_MANAGEMENT_README.md](./INTENT_MANAGEMENT_README.md)
+**文件**: [INTENT_MANAGEMENT_README.md](../archive/2025-Q4/features/INTENT_MANAGEMENT_README.md)
 
 完整的 Intent 管理：
 - 📝 CRUD 操作
@@ -220,7 +220,7 @@ JWT Token 認證系統：
 - [主項目 README](../../README.md)
 - [API 參考文件](../api/API_REFERENCE_KNOWLEDGE_ADMIN.md)
 - [系統架構](../architecture/SYSTEM_ARCHITECTURE.md)
-- [快速開始指南](../guides/QUICKSTART.md)
+- [快速開始指南](../guides/getting-started/QUICKSTART.md)
 
 ---
 

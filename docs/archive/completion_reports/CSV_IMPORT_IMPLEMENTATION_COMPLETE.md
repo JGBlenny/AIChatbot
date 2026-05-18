@@ -608,6 +608,6 @@ CSV 匯入功能已成功實作並通過所有測試。系統現在支援：
 ## 📞 聯絡資訊
 
 如有問題或建議，請參考：
-- [知識匯入功能文檔](../features/KNOWLEDGE_IMPORT_FEATURE.md)
-- [知識匯入 API 文檔](../api/KNOWLEDGE_IMPORT_API.md)
+- [知識匯入功能文檔](../2025-Q4/features/KNOWLEDGE_IMPORT_FEATURE.md)
+- [知識匯入 API 文檔](../2025-Q4/api/KNOWLEDGE_IMPORT_API.md)
 - [GitHub Issues](https://github.com/your-repo/AIChatbot/issues)

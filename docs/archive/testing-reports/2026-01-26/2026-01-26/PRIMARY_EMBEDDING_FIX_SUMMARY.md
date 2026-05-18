@@ -83,12 +83,12 @@ primary_text = item_name
 ## 📂 相關文檔
 
 ### 技術文檔
-- [PRIMARY_EMBEDDING_FIX.md](docs/features/PRIMARY_EMBEDDING_FIX.md) - 完整技術說明
-- [DUAL_EMBEDDING_RETRIEVAL.md](docs/features/DUAL_EMBEDDING_RETRIEVAL.md) - 雙 Embedding 檢索
+- [PRIMARY_EMBEDDING_FIX.md](../../../features-historical/PRIMARY_EMBEDDING_FIX.md) - 完整技術說明
+- [DUAL_EMBEDDING_RETRIEVAL.md](../../../../features/DUAL_EMBEDDING_RETRIEVAL.md) - 雙 Embedding 檢索
 - [threshold_evaluation_report.md](threshold_evaluation_report.md) - 閾值評估報告
 
 ### 部署文檔
-- [DEPLOYMENT_2026-01-26_PRIMARY_EMBEDDING_FIX.md](docs/deployment/DEPLOYMENT_2026-01-26_PRIMARY_EMBEDDING_FIX.md) - 部署記錄
+- [DEPLOYMENT_2026-01-26_PRIMARY_EMBEDDING_FIX.md](../../../deployment-logs/DEPLOYMENT_2026-01-26_PRIMARY_EMBEDDING_FIX.md) - 部署記錄
 
 ### 測試腳本
 - `test_fix_verification.py` - 修復驗證測試

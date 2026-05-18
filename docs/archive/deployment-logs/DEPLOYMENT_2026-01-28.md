@@ -578,9 +578,9 @@ docker-compose ps
 
 ### 技術文檔
 
-- **[SMART_RETRIEVAL_IMPLEMENTATION.md](../SMART_RETRIEVAL_IMPLEMENTATION.md)** - 智能檢索完整實施報告
-- **[SMART_RETRIEVAL_QUICK_REF.md](../SMART_RETRIEVAL_QUICK_REF.md)** - 快速參考指南
-- **[RERANKER_FEATURE.md](../features/RERANKER_FEATURE.md)** - Reranker 功能文檔
+- **[SMART_RETRIEVAL_IMPLEMENTATION.md](../implementation/SMART_RETRIEVAL_IMPLEMENTATION.md)** - 智能檢索完整實施報告
+- **[SMART_RETRIEVAL_QUICK_REF.md](../../SMART_RETRIEVAL_QUICK_REF.md)** - 快速參考指南
+- **[RERANKER_FEATURE.md](../../features/RERANKER_FEATURE.md)** - Reranker 功能文檔
 - **[CHANGELOG_2026-01-28.md](../CHANGELOG_2026-01-28.md)** - 詳細更新日誌
 
 ### 測試文檔

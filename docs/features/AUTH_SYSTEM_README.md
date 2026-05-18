@@ -68,7 +68,7 @@ database/migrations/
 
 ### 1. 部署認證系統
 
-請參考：[**AUTH_DEPLOYMENT_GUIDE.md**](./AUTH_DEPLOYMENT_GUIDE.md)
+請參考：[**AUTH_DEPLOYMENT_GUIDE.md**](../guides/deployment/AUTH_DEPLOYMENT_GUIDE.md)
 
 包含：
 - 資料庫遷移步驟
@@ -79,7 +79,7 @@ database/migrations/
 
 ### 2. 管理員操作
 
-請參考：[**ADMIN_MANAGEMENT_PLAN.md**](./ADMIN_MANAGEMENT_PLAN.md)
+請參考：[**ADMIN_MANAGEMENT_PLAN.md**](../archive/implementation/ADMIN_MANAGEMENT_PLAN.md)
 
 包含：
 - 新增管理員
@@ -89,7 +89,7 @@ database/migrations/
 
 ### 3. 實作細節
 
-請參考：[**AUTH_IMPLEMENTATION_SUMMARY.md**](./AUTH_IMPLEMENTATION_SUMMARY.md)
+請參考：[**AUTH_IMPLEMENTATION_SUMMARY.md**](../archive/implementation/AUTH_IMPLEMENTATION_SUMMARY.md)
 
 包含：
 - 完整的技術架構

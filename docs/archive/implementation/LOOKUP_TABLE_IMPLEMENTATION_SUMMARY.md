@@ -386,8 +386,8 @@ curl "http://localhost:8100/api/lookup/stats?vendor_id=1&category=billing_interv
 
 ## 📚 相關文檔
 
-- [系統設計文檔](../design/LOOKUP_TABLE_SYSTEM_DESIGN.md) - 完整技術設計
-- [快速參考](../guides/LOOKUP_TABLE_QUICK_REFERENCE.md) - 開發者指南
+- [系統設計文檔](../../design/LOOKUP_TABLE_SYSTEM_DESIGN.md) - 完整技術設計
+- [快速參考](../../guides/reference/LOOKUP_TABLE_QUICK_REFERENCE.md) - 開發者指南
 - [數據庫 Schema](../../database/migrations/create_lookup_tables.sql) - 表結構
 - [API 配置](../../database/migrations/add_lookup_api_endpoint.sql) - Endpoint 配置
 

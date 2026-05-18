@@ -1596,8 +1596,8 @@ CREATE TABLE form_schema_versions (
 
 ## 📚 相關文件
 
-- [知識管理系統](./KNOWLEDGE_IMPORT_FEATURE.md)
-- [多意圖分類](./MULTI_INTENT_CLASSIFICATION.md)
+- [知識管理系統](../archive/2025-Q4/features/KNOWLEDGE_IMPORT_FEATURE.md)
+- [多意圖分類](../archive/2025-Q4/features/MULTI_INTENT_CLASSIFICATION.md)
 - [API 參考文件](../api/API_REFERENCE_PHASE1.md)
 - [系統架構](../architecture/SYSTEM_ARCHITECTURE.md)
 

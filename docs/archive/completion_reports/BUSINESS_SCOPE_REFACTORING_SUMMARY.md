@@ -12,9 +12,9 @@
 
 ### 核心文件
 
-1. **[重構詳細說明](./architecture/BUSINESS_SCOPE_REFACTORING.md)** - 完整的重構背景、方案和實作細節
-2. **[測試報告](./architecture/BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md)** - 10 項測試全部通過的驗證報告
-3. **[認證整合方案](./architecture/AUTH_AND_BUSINESS_SCOPE.md)** - 未來基於 JWT token 的認證整合規劃
+1. **[重構詳細說明](../architecture/BUSINESS_SCOPE_REFACTORING.md)** - 完整的重構背景、方案和實作細節
+2. **[測試報告](BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md)** - 10 項測試全部通過的驗證報告
+3. **[認證整合方案](../2025-Q4/architecture/AUTH_AND_BUSINESS_SCOPE.md)** - 未來基於 JWT token 的認證整合規劃
 
 ---
 
@@ -125,7 +125,7 @@ POST /api/v1/message
 | Chat API | ✅ 100% |
 | Audience 過濾 | ✅ 100% |
 
-詳細測試報告: [BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md](./architecture/BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md)
+詳細測試報告: [BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md](BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md)
 
 ---
 
@@ -162,7 +162,7 @@ POST /api/v1/message
 ### 長期規劃 ⏳
 - 實作 JWT token 認證
 - 自動從 token 判斷 user_role
-- 參考: [AUTH_AND_BUSINESS_SCOPE.md](./architecture/AUTH_AND_BUSINESS_SCOPE.md)
+- 參考: [AUTH_AND_BUSINESS_SCOPE.md](../2025-Q4/architecture/AUTH_AND_BUSINESS_SCOPE.md)
 
 ---
 
@@ -188,9 +188,9 @@ POST /api/v1/message
 
 ## 📖 相關文件
 
-- 📐 [完整重構說明](./architecture/BUSINESS_SCOPE_REFACTORING.md)
-- 📊 [測試報告](./architecture/BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md)
-- 🔐 [認證整合方案](./architecture/AUTH_AND_BUSINESS_SCOPE.md)
+- 📐 [完整重構說明](../architecture/BUSINESS_SCOPE_REFACTORING.md)
+- 📊 [測試報告](BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md)
+- 🔐 [認證整合方案](../2025-Q4/architecture/AUTH_AND_BUSINESS_SCOPE.md)
 - 📘 [主文檔 README](../README.md)
 
 ---

@@ -2115,10 +2115,10 @@ docker-compose exec rag-orchestrator \
 
 ### D. 相關文檔
 
-- [SOP Vectorization Strategy Analysis](/Users/lenny/jgb/AIChatbot/docs/SOP_VECTORIZATION_STRATEGY_ANALYSIS.md) - 向量化策略詳細分析
-- [SOP Vectorization Implementation Guide](/Users/lenny/jgb/AIChatbot/docs/SOP_VECTORIZATION_IMPLEMENTATION_GUIDE.md) - 快速實作指南
+- [SOP Vectorization Strategy Analysis](SOP_VECTORIZATION_STRATEGY_ANALYSIS.md) - 向量化策略詳細分析
+- [SOP Vectorization Implementation Guide](SOP_VECTORIZATION_IMPLEMENTATION_GUIDE.md) - 快速實作指南
 - [SOP Complete Guide](/Users/lenny/jgb/AIChatbot/docs/SOP_COMPLETE_GUIDE.md) - SOP 系統完整指南
-- [SOP Retrieval Logic Analysis](/Users/lenny/jgb/AIChatbot/docs/analysis_sop_retrieval_logic.md) - 檢索邏輯分析
+- [SOP Retrieval Logic Analysis](analysis_sop_retrieval_logic.md) - 檢索邏輯分析
 
 ---
 

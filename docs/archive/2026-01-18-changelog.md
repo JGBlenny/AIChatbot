@@ -805,10 +805,10 @@ response_template = """
 
 ## 📚 相關文檔
 
-- [API 配置完全指南](./docs/design/API_CONFIGURATION_GUIDE.md) ⚠️ 需更新
-- [系統設計文檔](./docs/design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
-- [實作指南](./docs/design/KNOWLEDGE_ACTION_IMPLEMENTATION_GUIDE.md)
-- [快速參考](./docs/design/KNOWLEDGE_ACTION_QUICK_REFERENCE.md)
+- [API 配置完全指南](../design/API_CONFIGURATION_GUIDE.md) ⚠️ 需更新
+- [系統設計文檔](../design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
+- [實作指南](../design/KNOWLEDGE_ACTION_IMPLEMENTATION_GUIDE.md)
+- [快速參考](../design/KNOWLEDGE_ACTION_QUICK_REFERENCE.md)
 
 ---
 

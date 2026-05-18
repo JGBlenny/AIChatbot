@@ -65,7 +65,7 @@
 
 ### SOP 觸發模式 UI 優化
 
-**📑 完整索引**: [SOP 觸發模式更新索引](./SOP_TRIGGER_MODE_UPDATE_INDEX.md)
+**📑 完整索引**: [SOP 觸發模式更新索引](features/sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md)
 
 **更新內容**:
 - ✅ 移除 trigger_mode='none' 選項
@@ -75,8 +75,8 @@
 - ✅ 自動設定預設值
 
 **快速連結**:
-- [詳細變更記錄](./features/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)
-- [測試執行指南](./testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md)
+- [詳細變更記錄](features/sop/implementation/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)
+- [測試執行指南](features/sop/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md)
 - [變更日誌](./changelog/CHANGELOG_2026-02-03.md)
 
 ---
@@ -87,9 +87,9 @@
 
 | 你的需求 | 推薦文檔 | 說明 |
 |---------|---------|------|
-| **SOP 觸發模式更新** | [SOP 觸發模式更新索引](./SOP_TRIGGER_MODE_UPDATE_INDEX.md) ⭐ 🆕 | 2026-02-03 UI 優化完整索引 |
-| **SOP 系統使用** | [SOP 系統完整指南](./guides/SOP_GUIDE.md) | SOP 系統完整使用說明 |
-| **SOP 測試執行** | [SOP 測試執行指南](./testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md) 🆕 | 9個核心測試場景 |
+| **SOP 觸發模式更新** | [SOP 觸發模式更新索引](features/sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md) ⭐ 🆕 | 2026-02-03 UI 優化完整索引 |
+| **SOP 系統使用** | [SOP 系統完整指南](guides/features/SOP_GUIDE.md) | SOP 系統完整使用說明 |
+| **SOP 測試執行** | [SOP 測試執行指南](features/sop/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md) 🆕 | 9個核心測試場景 |
 | **理解對話流程** | [完整對話架構](./architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md) ⭐ | 對話流程、意圖分類、SOP/KB 決策、表單狀態機 |
 | **查看最新修正** | [CHAT_LOGIC_FIXES_2026-01-24.md](./archive/fixes/CHAT_LOGIC_FIXES_2026-01-24.md) | 2026-01-24 三個問題修正報告 |
 | **快速了解實施內容** | [IMPLEMENTATION_SUMMARY.md](./archive/implementation/SUMMARY.md) | 實施總結，包含代碼修改、驗證結果 |
@@ -200,7 +200,7 @@ bash test_retrieval_logic_validation.sh
 
 📁 **歸檔位置**：[docs/archive/2026-01-13/](./docs/archive/2026-01-13/)
 📄 **歸檔說明**：[archive README](./docs/archive/2026-01-13/README.md)
-📋 **清理報告**：[CLEANUP_REPORT_2026-01-13.md](./maintenance/cleanup_2026-01-13.md)
+📋 **清理報告**：[CLEANUP_REPORT_2026-01-13.md](archive/maintenance-historical/cleanup_2026-01-13.md)
 
 ---
 

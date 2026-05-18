@@ -470,9 +470,9 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin \
 
 ## 📚 相關文件
 
-- [表單管理系統功能文件](../features/FORM_MANAGEMENT_SYSTEM.md)
-- [表單審核與編輯流程說明](../features/FORM_MANAGEMENT_SYSTEM.md#5-表單審核與編輯-⭐-new)
-- [API 參考文件](../api/API_REFERENCE_PHASE1.md)
+- [表單管理系統功能文件](../../features/FORM_MANAGEMENT_SYSTEM.md)
+- [表單審核與編輯流程說明](../../features/FORM_MANAGEMENT_SYSTEM.md#5-表單審核與編輯-⭐-new)
+- [API 參考文件](../../api/API_REFERENCE_PHASE1.md)
 
 ---
 

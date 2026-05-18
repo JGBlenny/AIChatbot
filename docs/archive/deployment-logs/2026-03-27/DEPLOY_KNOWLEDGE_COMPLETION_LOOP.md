@@ -483,10 +483,10 @@ WHERE table_name = 'knowledge_completion_loops' AND column_name = 'scenario_ids'
 
 ## 📚 相關文檔
 
-- [API 文檔 - 迴圈管理](../../api/loops_api.md)
-- [API 文檔 - 知識審核](../../api/loop_knowledge_api.md)
-- [前端需求 - 批量審核](../../frontend/batch_review_requirements.md)
-- [前端需求 - 迴圈管理界面](../../frontend/loop_management_requirements.md)
+- [API 文檔 - 迴圈管理](../../../api/loops_api.md)
+- [API 文檔 - 知識審核](../../../api/loop_knowledge_api.md)
+- [前端需求 - 批量審核](../../../frontend/batch_review_requirements.md)
+- [前端需求 - 迴圈管理界面](../../../frontend/loop_management_requirements.md)
 - [技術設計文檔](.kiro/specs/backtest-knowledge-refinement/design.md)
 - [開發者指南](../../developer_guide/architecture.md)
 

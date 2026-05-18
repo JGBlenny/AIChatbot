@@ -1285,9 +1285,9 @@ curl http://localhost:8000/api/category-config
 ## 相關文件
 
 - [RAG Orchestrator API 參考](./API_REFERENCE_PHASE1.md)
-- [資料庫架構文件](../database/DATABASE_SCHEMA.md)
+- [資料庫架構文件](../architecture/DATABASE_SCHEMA.md)
 - [系統架構文件](../architecture/SYSTEM_ARCHITECTURE.md)
-- [快速開始指南](../guides/QUICKSTART.md)
+- [快速開始指南](../guides/getting-started/QUICKSTART.md)
 
 ---
 

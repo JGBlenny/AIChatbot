@@ -332,7 +332,7 @@ docker exec aichatbot-postgres psql -U aichatbot aichatbot_admin -c "
 ## 📚 相關文檔
 
 - [LOOKUP_SYSTEM_REFERENCE.md](./LOOKUP_SYSTEM_REFERENCE.md) - Lookup 系統快速參考
-- [DEPLOYMENT_2026-02-04.md](./deployment/DEPLOYMENT_2026-02-04.md) - 完整部署指南
+- [DEPLOYMENT_2026-02-04.md](../DEPLOYMENT_2026-02-04.md) - 完整部署指南
 - [CHANGELOG_2026-02-04_lookup_improvements.md](./CHANGELOG_2026-02-04_lookup_improvements.md) - 詳細變更日誌
 
 ---

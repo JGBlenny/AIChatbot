@@ -556,8 +556,8 @@ class KnowledgeClassifier:
 
 ## 📚 相關文檔
 
-- [意圖管理系統總覽](/docs/INTENT_MANAGEMENT_COMPLETE.md)
-- [Phase B 完整報告](/docs/intent_management_phase_b_complete.md)
+- [意圖管理系統總覽](../INTENT_MANAGEMENT_COMPLETE.md)
+- [Phase B 完整報告](intent_management_phase_b_complete.md)
 - [前端使用指南](/docs/frontend_usage_guide.md)
 
 ---

@@ -317,9 +317,9 @@ python3 scripts/knowledge_extraction/backtest_framework.py
 
 ## 📚 相關文檔
 
-- [實施完成報告](./BACKTEST_QUALITY_IMPLEMENTATION_COMPLETE.md)
+- [實施完成報告](../completion_reports/BACKTEST_QUALITY_IMPLEMENTATION_COMPLETE.md)
 - [品質分析報告](./SCORING_QUALITY_ANALYSIS.md)
-- [整合計畫](./BACKTEST_QUALITY_INTEGRATION.md)
+- [整合計畫](../2025-Q4/backtest/BACKTEST_QUALITY_INTEGRATION.md)
 
 ---
 

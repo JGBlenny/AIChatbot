@@ -512,9 +512,9 @@ ORDER BY audience, scope;
 
 ### 12.1 相關文件
 
-- [BUSINESS_SCOPE_REFACTORING.md](/docs/BUSINESS_SCOPE_REFACTORING.md) - 重構詳細說明
-- [AUTH_AND_BUSINESS_SCOPE.md](/docs/AUTH_AND_BUSINESS_SCOPE.md) - 認證整合方案
-- [Migration 27](/database/migrations/27-remove-vendor-business-scope.sql) - 資料庫遷移腳本
+- [BUSINESS_SCOPE_REFACTORING.md](../architecture/BUSINESS_SCOPE_REFACTORING.md) - 重構詳細說明
+- [AUTH_AND_BUSINESS_SCOPE.md](../2025-Q4/architecture/AUTH_AND_BUSINESS_SCOPE.md) - 認證整合方案
+- [Migration 27](../migrations_history/27-remove-vendor-business-scope.sql) - 資料庫遷移腳本
 
 ### 12.2 測試環境
 

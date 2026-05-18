@@ -465,7 +465,7 @@ PRIORITY_QUALITY_THRESHOLD=0.70      # 品質門檻 0.70
 | `BACKTEST_INCREMENTAL_LIMIT` | 增量測試數量 | `100` | ❌ |
 | `BACKTEST_FAILED_LIMIT` | 失敗測試數量 | `50` | ❌ |
 
-**詳細說明**：請參閱 [回測環境變數參考](../BACKTEST_ENV_VARS.md)
+**詳細說明**：請參閱 [回測環境變數參考](../../archive/2025-Q4/backtest/BACKTEST_ENV_VARS.md)
 
 ## 🐳 前端開發變數
 
@@ -679,8 +679,8 @@ A: 檢查：
 ## 📚 相關文件
 
 - [Docker Compose 指南](./DOCKER_COMPOSE_GUIDE.md)
-- [回測環境變數參考](../BACKTEST_ENV_VARS.md)
-- [快速開始指南](../../QUICKSTART.md)
+- [回測環境變數參考](../../archive/2025-Q4/backtest/BACKTEST_ENV_VARS.md)
+- [快速開始指南](../getting-started/QUICKSTART.md)
 - [開發工作流程](./DEVELOPMENT_WORKFLOW.md)
 
 ---

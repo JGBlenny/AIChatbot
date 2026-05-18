@@ -22,7 +22,7 @@
 
 ### 1. 架構設計
 
-創建了完整的設計文檔：[UNIFIED_REVIEW_CENTER_DESIGN.md](./docs/UNIFIED_REVIEW_CENTER_DESIGN.md)
+創建了完整的設計文檔：[UNIFIED_REVIEW_CENTER_DESIGN.md](../design_docs/UNIFIED_REVIEW_CENTER_DESIGN.md)
 
 **設計亮點：**
 - Tab 切換式介面
@@ -324,8 +324,8 @@ Body: {
 
 | 文檔 | 說明 | 位置 |
 |------|------|------|
-| **設計文檔** | 完整的架構設計 | [UNIFIED_REVIEW_CENTER_DESIGN.md](./docs/UNIFIED_REVIEW_CENTER_DESIGN.md) |
-| **集合移除報告** | 集合功能移除說明 | [COLLECTION_REMOVAL_SUMMARY.md](./COLLECTION_REMOVAL_SUMMARY.md) |
+| **設計文檔** | 完整的架構設計 | [UNIFIED_REVIEW_CENTER_DESIGN.md](../design_docs/UNIFIED_REVIEW_CENTER_DESIGN.md) |
+| **集合移除報告** | 集合功能移除說明 | [COLLECTION_REMOVAL_SUMMARY.md](../evaluation_reports/COLLECTION_REMOVAL_SUMMARY.md) |
 | **測試題庫指南** | 測試題庫快速開始 | [TEST_SCENARIOS_QUICK_START_V2.md](./TEST_SCENARIOS_QUICK_START_V2.md) |
 
 ---

@@ -68,7 +68,7 @@
 ### 使用文檔（保留在主目錄）
 
 - [SOP 完整指南](../../SOP_COMPLETE_GUIDE.md) - 系統架構和使用說明
-- [SOP 快速參考](../../SOP_QUICK_REFERENCE.md) - 5分鐘快速上手
+- [SOP 快速參考](../../guides/reference/SOP_QUICK_REFERENCE.md) - 5分鐘快速上手
 
 ### 實施報告（保留在主目錄）
 

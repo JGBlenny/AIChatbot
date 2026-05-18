@@ -686,7 +686,7 @@ VALUES (
 
 完成基礎建設後，可以：
 
-1. **開發角色管理 UI** - 參考 [PERMISSION_UI_DESIGN.md](./PERMISSION_UI_DESIGN.md)
+1. **開發角色管理 UI** - 參考 [PERMISSION_UI_DESIGN.md](../../design/PERMISSION_UI_DESIGN.md)
 2. **為現有頁面添加權限控制** - 更新路由 meta 和組件
 3. **為 API 添加權限驗證** - 使用 `require_permission` 裝飾器
 4. **撰寫單元測試** - 測試權限邏輯
@@ -695,8 +695,8 @@ VALUES (
 
 ## 📞 需要幫助？
 
-- 查看 [完整設計文檔](./PERMISSION_SYSTEM_DESIGN.md)
-- 查看 [UI 設計文檔](./PERMISSION_UI_DESIGN.md)
+- 查看 [完整設計文檔](../../design/PERMISSION_SYSTEM_DESIGN.md)
+- 查看 [UI 設計文檔](../../design/PERMISSION_UI_DESIGN.md)
 - 檢查 [測試案例](./PERMISSION_TEST_CASES.md) (待創建)
 
 ---

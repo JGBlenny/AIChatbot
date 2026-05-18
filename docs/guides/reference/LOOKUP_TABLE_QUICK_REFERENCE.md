@@ -395,10 +395,10 @@ AIChatbot/
 
 ## 🔗 相關文檔
 
-- [📘 Lookup Table System 詳細設計](../design/LOOKUP_TABLE_SYSTEM_DESIGN.md)
-- [📘 Knowledge Action System Design](../design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
-- [📘 API Configuration Guide](../design/API_CONFIGURATION_GUIDE.md)
-- [📘 SOP 系統指南](./SOP_GUIDE.md)
+- [📘 Lookup Table System 詳細設計](../../design/LOOKUP_TABLE_SYSTEM_DESIGN.md)
+- [📘 Knowledge Action System Design](../../design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
+- [📘 API Configuration Guide](../../design/API_CONFIGURATION_GUIDE.md)
+- [📘 SOP 系統指南](../features/SOP_GUIDE.md)
 
 ---
 
@@ -499,5 +499,5 @@ INSERT INTO lookup_tables (vendor_id, category, lookup_key, lookup_value) VALUES
 
 **快速鏈接**:
 - [返回文檔首頁](../README.md)
-- [查看詳細設計](../design/LOOKUP_TABLE_SYSTEM_DESIGN.md)
+- [查看詳細設計](../../design/LOOKUP_TABLE_SYSTEM_DESIGN.md)
 - [報告問題](../../.github/ISSUE_TEMPLATE.md)

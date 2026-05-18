@@ -313,5 +313,5 @@ curl -X POST http://localhost:8100/api/v1/intents/reload
 **維護者**: Claude Code
 **最後更新**: 2025-10-11
 **相關文檔**:
-- [回測優化指南](../BACKTEST_OPTIMIZATION_GUIDE.md)
-- [多 Intent 分類系統](./MULTI_INTENT_CLASSIFICATION.md)
+- [回測優化指南](BACKTEST_OPTIMIZATION_GUIDE.md)
+- [多 Intent 分類系統](../features/MULTI_INTENT_CLASSIFICATION.md)

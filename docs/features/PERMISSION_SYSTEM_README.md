@@ -21,7 +21,7 @@
 
 如果你想**立即實作**權限系統，請閱讀：
 
-👉 **[權限系統快速開始指南](./PERMISSION_QUICK_START.md)**
+👉 **[權限系統快速開始指南](../guides/getting-started/PERMISSION_QUICK_START.md)**
 
 這份文檔提供：
 - ✅ 步驟式實作教學
@@ -38,7 +38,7 @@
 
 如果你想**深入了解**系統架構和設計理念，請閱讀：
 
-👉 **[權限系統設計文檔](./PERMISSION_SYSTEM_DESIGN.md)**
+👉 **[權限系統設計文檔](../design/PERMISSION_SYSTEM_DESIGN.md)**
 
 這份文檔包含：
 - 🎯 核心概念（權限、角色、用戶關聯）
@@ -57,7 +57,7 @@
 
 如果你想了解**前端介面**和用戶體驗設計，請閱讀：
 
-👉 **[權限系統 UI 設計文檔](./PERMISSION_UI_DESIGN.md)**
+👉 **[權限系統 UI 設計文檔](../design/PERMISSION_UI_DESIGN.md)**
 
 這份文檔包含：
 - 📄 完整的頁面布局設計
@@ -343,17 +343,17 @@ async def create_knowledge(data: KnowledgeCreate, user: dict = Depends(get_curre
 ## 🔗 相關文檔
 
 ### 權限系統
-- [快速開始指南](./PERMISSION_QUICK_START.md) ⭐ 推薦
-- [系統設計文檔](./PERMISSION_SYSTEM_DESIGN.md)
-- [UI 設計文檔](./PERMISSION_UI_DESIGN.md)
+- [快速開始指南](../guides/getting-started/PERMISSION_QUICK_START.md) ⭐ 推薦
+- [系統設計文檔](../design/PERMISSION_SYSTEM_DESIGN.md)
+- [UI 設計文檔](../design/PERMISSION_UI_DESIGN.md)
 
 ### 認證系統
 - [認證系統總覽](./AUTH_SYSTEM_README.md)
-- [認證部署指南](./AUTH_DEPLOYMENT_GUIDE.md)
-- [認證實作總結](./AUTH_IMPLEMENTATION_SUMMARY.md)
+- [認證部署指南](../guides/deployment/AUTH_DEPLOYMENT_GUIDE.md)
+- [認證實作總結](../archive/implementation/AUTH_IMPLEMENTATION_SUMMARY.md)
 
 ### 管理功能
-- [管理員管理計劃](./ADMIN_MANAGEMENT_PLAN.md)
+- [管理員管理計劃](../archive/implementation/ADMIN_MANAGEMENT_PLAN.md)
 
 ---
 
@@ -397,7 +397,7 @@ async def create_knowledge(data: KnowledgeCreate, user: dict = Depends(get_curre
 
 ## 🎯 從這裡開始
 
-1. **閱讀** → [快速開始指南](./PERMISSION_QUICK_START.md)
+1. **閱讀** → [快速開始指南](../guides/getting-started/PERMISSION_QUICK_START.md)
 2. **實作** → 跟隨步驟建置系統
 3. **測試** → 使用驗證清單檢查
 4. **部署** → 發布到生產環境

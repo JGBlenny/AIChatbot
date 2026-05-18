@@ -420,9 +420,9 @@ curl -X POST http://localhost:8000/api/backtest/run \
 
 ## 🔗 相關文檔
 
-- [RAG 評分品質深度分析](./SCORING_QUALITY_ANALYSIS.md)
-- [回測品質整合計畫](./BACKTEST_QUALITY_INTEGRATION.md)
-- [系統架構文檔](./architecture/SYSTEM_ARCHITECTURE.md)
+- [RAG 評分品質深度分析](../evaluation_reports/SCORING_QUALITY_ANALYSIS.md)
+- [回測品質整合計畫](../2025-Q4/backtest/BACKTEST_QUALITY_INTEGRATION.md)
+- [系統架構文檔](../../architecture/SYSTEM_ARCHITECTURE.md)
 
 ---
 

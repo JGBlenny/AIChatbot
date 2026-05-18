@@ -563,11 +563,11 @@ docker-compose -f docker-compose.prod.yml restart rag-orchestrator
 
 ## 📝 相關文件
 
-- [檔案索引](../BILLING_INTERVAL_FILES_INDEX.md)
-- [配置總結](../BILLING_INTERVAL_SETUP_SUMMARY.md)
-- [Lookup 系統參考](../LOOKUP_SYSTEM_REFERENCE.md)
-- [業者 2 修正報告](../VENDOR2_BILLING_INTERVAL_FIX.md)
-- [更新日誌](../CHANGELOG_2026-02-04_lookup_improvements.md)
+- [檔案索引](BILLING_INTERVAL_FILES_INDEX.md)
+- [配置總結](BILLING_INTERVAL_SETUP_SUMMARY.md)
+- [Lookup 系統參考](LOOKUP_SYSTEM_REFERENCE.md)
+- [業者 2 修正報告](VENDOR2_BILLING_INTERVAL_FIX.md)
+- [更新日誌](CHANGELOG_2026-02-04_lookup_improvements.md)
 
 ---
 

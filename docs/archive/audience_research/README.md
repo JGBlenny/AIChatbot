@@ -61,7 +61,7 @@ audience 欄位混合概念：
 ## 📚 參考新文檔
 
 - [Target User Config 實作報告](../completion_reports/TARGET_USER_CONFIG_IMPLEMENTATION.md)
-- [配置管理更新摘要](../../CONFIG_MANAGEMENT_UPDATE_SUMMARY.md)
+- [配置管理更新摘要](../completion_reports/CONFIG_MANAGEMENT_UPDATE_SUMMARY.md)
 - [完整清理方案](../COMPLETE_CLEANUP_PLAN.md)
 - [舊文件清理報告](../LEGACY_FILES_CLEANUP_2025-10-28.md)
 

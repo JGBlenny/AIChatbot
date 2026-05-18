@@ -1148,8 +1148,8 @@ A：使用 `verify_identity_first: true` 配置，系統會自動先調用驗證
 ## 相關文檔
 
 - [知識庫表單觸發模式實現](../features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md) - **NEW**
-- [SOP 系統完整指南](../guides/SOP_GUIDE.md)
-- [表單管理系統](./FORM_MANAGEMENT_SYSTEM.md)
+- [SOP 系統完整指南](../guides/features/SOP_GUIDE.md)
+- [表單管理系統](../features/FORM_MANAGEMENT_SYSTEM.md)
 - [API 參考文檔](../api/API_REFERENCE_PHASE1.md)
 - [資料庫 Schema](../architecture/DATABASE_SCHEMA.md)
 - [知識庫管理指南](../guides/KNOWLEDGE_MANAGEMENT.md)

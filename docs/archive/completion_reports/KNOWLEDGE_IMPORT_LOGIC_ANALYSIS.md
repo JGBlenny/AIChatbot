@@ -1252,9 +1252,9 @@ async def import_knowledge_with_transaction(
 
 ### 相關文件
 
-- [Business Scope 重構總結](./docs/BUSINESS_SCOPE_REFACTORING_SUMMARY.md)
-- [Business Scope 詳細說明](./docs/architecture/BUSINESS_SCOPE_REFACTORING.md)
-- [認證與業務範圍整合](./docs/architecture/AUTH_AND_BUSINESS_SCOPE.md)
+- [Business Scope 重構總結](BUSINESS_SCOPE_REFACTORING_SUMMARY.md)
+- [Business Scope 詳細說明](../architecture/BUSINESS_SCOPE_REFACTORING.md)
+- [認證與業務範圍整合](../2025-Q4/architecture/AUTH_AND_BUSINESS_SCOPE.md)
 
 ---
 

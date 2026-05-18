@@ -388,10 +388,10 @@ docker exec -it aichatbot-postgres psql -U aichatbot -d aichatbot_admin
 
 ## 📚 下一步
 
-- [系統架構文件](./docs/architecture/SYSTEM_ARCHITECTURE.md)
-- [RAG 系統實作計畫](./docs/rag-system/RAG_IMPLEMENTATION_PLAN.md)
+- [系統架構文件](../../architecture/SYSTEM_ARCHITECTURE.md)
+- [RAG 系統實作計畫](../../archive/implementation/RAG_IMPLEMENTATION_PLAN.md)
 - [RAG Orchestrator 使用說明](./rag-orchestrator/README.md) ⭐
-- [pgvector 設定說明](./PGVECTOR_SETUP.md)
+- [pgvector 設定說明](../deployment/PGVECTOR_SETUP.md)
 - [知識庫管理說明](./knowledge-admin/README.md)
 
 ---

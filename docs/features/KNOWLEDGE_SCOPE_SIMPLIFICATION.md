@@ -238,9 +238,9 @@ CREATE INDEX idx_knowledge_vendor ON knowledge_base(vendor_id);
 - **第三階段**（長期）：遷移現有資料並刪除 scope 欄位
 
 ## 相關文件
-- [知識匯入匯出指南](../guides/KNOWLEDGE_IMPORT_EXPORT_GUIDE.md)
+- [知識匯入匯出指南](../guides/features/KNOWLEDGE_IMPORT_EXPORT_GUIDE.md)
 - [API 參考](../api/API_REFERENCE_PHASE1.md)
-- [前端使用指南](../guides/FRONTEND_USAGE_GUIDE.md)
+- [前端使用指南](../guides/development/FRONTEND_USAGE_GUIDE.md)
 
 ## 聯絡方式
 關於此變更的問題或議題，請聯絡開發團隊或在專案儲存庫中建立議題。

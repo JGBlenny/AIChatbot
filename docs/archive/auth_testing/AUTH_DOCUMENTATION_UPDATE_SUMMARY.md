@@ -289,8 +289,8 @@ async def list_knowledge(
 如有任何問題，請參考：
 
 - **測試問題**: 查看 [AUTH_FINAL_TEST_GUIDE.md](./AUTH_FINAL_TEST_GUIDE.md) 的故障排除章節
-- **部署問題**: 查看 [AUTH_DEPLOYMENT_GUIDE.md](./AUTH_DEPLOYMENT_GUIDE.md) 的故障排除章節
-- **技術細節**: 查看 [AUTH_IMPLEMENTATION_SUMMARY.md](./AUTH_IMPLEMENTATION_SUMMARY.md)
+- **部署問題**: 查看 [AUTH_DEPLOYMENT_GUIDE.md](../../guides/deployment/AUTH_DEPLOYMENT_GUIDE.md) 的故障排除章節
+- **技術細節**: 查看 [AUTH_IMPLEMENTATION_SUMMARY.md](../implementation/AUTH_IMPLEMENTATION_SUMMARY.md)
 
 ---
 

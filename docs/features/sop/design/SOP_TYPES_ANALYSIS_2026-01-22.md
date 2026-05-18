@@ -16,7 +16,7 @@
 - ~~類型 3：資訊型 SOP（trigger_mode='none'）~~ → 已移除
 - 現在只保留 2 種觸發模式：**manual (排查型)** 和 **immediate (行動型)**
 - 當 `next_action='none'` (無後續動作) 時，`trigger_mode` 設為 `NULL`
-- 詳細變更請參閱 [Changelog](../changelog/2026-01-30-knowledge-followup-actions.md#-2026-02-03-重要變更移除-trigger_modenone)
+- 詳細變更請參閱 [Changelog](../../../changelog/2026-01-30-knowledge-followup-actions.md#-2026-02-03-重要變更移除-trigger_modenone)
 
 ### 🎨 前端 UI 優化 (2026-02-03 下午)
 
@@ -30,7 +30,7 @@
 - ✅ **自動設定預設值** - 選擇表單時自動設定為「排查型」
 - ✅ **修正顯示時機** - 觸發模式相關欄位僅在選擇表單後顯示
 
-**詳細變更請參閱**: [SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md](./SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)
+**詳細變更請參閱**: [SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md](../implementation/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)
 
 **影響範圍**:
 - `KnowledgeView.vue` - 知識庫管理

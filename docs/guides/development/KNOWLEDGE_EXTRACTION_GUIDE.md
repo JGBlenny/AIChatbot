@@ -423,10 +423,10 @@ HARD      : 4/6 (66.7%)
 
 ## 📚 相關文檔
 
-- [Phase 1 實作文件](./PHASE1_MULTI_VENDOR_IMPLEMENTATION.md)
-- [Phase 2 規劃文件](./PHASE2_PLANNING.md)
-- [系統架構文檔](./architecture/SYSTEM_ARCHITECTURE.md)
-- [API 參考文檔](./API_REFERENCE_PHASE1.md)
+- [Phase 1 實作文件](../../archive/planning/PHASE1_MULTI_VENDOR_IMPLEMENTATION.md)
+- [Phase 2 規劃文件](../../archive/2025-Q4/planning/PHASE2_PLANNING.md)
+- [系統架構文檔](../../architecture/SYSTEM_ARCHITECTURE.md)
+- [API 參考文檔](../../api/API_REFERENCE_PHASE1.md)
 
 ---
 

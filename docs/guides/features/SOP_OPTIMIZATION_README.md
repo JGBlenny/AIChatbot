@@ -3,7 +3,7 @@
 ## 📁 核心文件
 
 ### 1. 文档
-- **[SOP_Group_Embedding_Optimization.md](./SOP_Group_Embedding_Optimization.md)** - 完整技术文档
+- **[SOP_Group_Embedding_Optimization.md](../../archive/2025-Q4/features/SOP_Group_Embedding_Optimization.md)** - 完整技术文档
   - 问题分析与解决方案
   - 实施细节与配置说明
   - 测试验证与性能优化
@@ -116,7 +116,7 @@ generalization_ratio = 0.7     # 泛化查询判定比例（70%）
 - **返回全部但期望只返回1条** → 检查偏向检测策略触发情况
 - **应该返回全部但只返回部分** → 检查是否误判为有偏向
 
-详细排查步骤见 [完整文档 - 8.3节](./SOP_Group_Embedding_Optimization.md#83-故障排查)
+详细排查步骤见 [完整文档 - 8.3节](../../archive/2025-Q4/features/SOP_Group_Embedding_Optimization.md#83-故障排查)
 
 ## 🗂️ 文件清理记录
 
@@ -146,4 +146,4 @@ generalization_ratio = 0.7     # 泛化查询判定比例（70%）
 
 ---
 
-**需要更多信息？** 请查阅 [完整技术文档](./SOP_Group_Embedding_Optimization.md)
+**需要更多信息？** 请查阅 [完整技术文档](../../archive/2025-Q4/features/SOP_Group_Embedding_Optimization.md)

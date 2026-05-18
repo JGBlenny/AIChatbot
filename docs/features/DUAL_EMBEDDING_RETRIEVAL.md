@@ -207,8 +207,8 @@ GREATEST: 0.6138 → 通過！
 ## 🔗 相關文件
 
 - [VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md](./VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md) - Intent 改為輔助
-- [sop_coverage_report.md](../../sop_coverage_report.md) - 涵蓋率測試報告
-- [VENDOR_SOP_FLOW_CONFIGURATION.md](./VENDOR_SOP_FLOW_CONFIGURATION.md) - SOP 流程配置
+- [sop_coverage_report.md](sop/testing/sop_coverage_report.md) - 涵蓋率測試報告
+- [VENDOR_SOP_FLOW_CONFIGURATION.md](sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md) - SOP 流程配置
 
 ---
 

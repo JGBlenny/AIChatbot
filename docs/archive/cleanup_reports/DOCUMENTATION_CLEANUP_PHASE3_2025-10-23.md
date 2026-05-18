@@ -608,6 +608,6 @@ Phase 3 命名與結構標準化已成功完成！
 **日期**: 2025-10-23
 **版本**: v1.0
 **相關文檔**:
-- [文檔審計報告 2025-10-22](./DOCUMENTATION_AUDIT_2025-10-22.md)
+- [文檔審計報告 2025-10-22](../completion_reports/DOCUMENTATION_AUDIT_2025-10-22.md)
 - [Phase 1 清理報告 2025-10-23](./DOCUMENTATION_CLEANUP_PHASE1_2025-10-23.md)
 - [Phase 2 清理報告 2025-10-23](./DOCUMENTATION_CLEANUP_PHASE2_2025-10-23.md)

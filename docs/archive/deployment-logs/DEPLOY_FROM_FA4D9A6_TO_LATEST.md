@@ -746,20 +746,20 @@ EOF
 ### 完整技術文檔
 
 - **[DEPLOYMENT_2026-01-28.md](DEPLOYMENT_2026-01-28.md)** - 單個功能詳細部署
-- **[SMART_RETRIEVAL_IMPLEMENTATION.md](../SMART_RETRIEVAL_IMPLEMENTATION.md)** - 智能檢索實施報告
-- **[SMART_RETRIEVAL_QUICK_REF.md](../SMART_RETRIEVAL_QUICK_REF.md)** - 快速參考指南
-- **[RERANKER_FEATURE.md](../features/RERANKER_FEATURE.md)** - Reranker 功能文檔
+- **[SMART_RETRIEVAL_IMPLEMENTATION.md](../implementation/SMART_RETRIEVAL_IMPLEMENTATION.md)** - 智能檢索實施報告
+- **[SMART_RETRIEVAL_QUICK_REF.md](../../SMART_RETRIEVAL_QUICK_REF.md)** - 快速參考指南
+- **[RERANKER_FEATURE.md](../../features/RERANKER_FEATURE.md)** - Reranker 功能文檔
 - **[CHANGELOG_2026-01-28.md](../CHANGELOG_2026-01-28.md)** - 完整更新日誌
-- **[PRIMARY_EMBEDDING_FIX.md](../features/PRIMARY_EMBEDDING_FIX.md)** - Embedding 修復文檔
-- **[SOP_FLOW_STRICT_VALIDATION_2026-01-26.md](../features/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md)** - SOP 配置驗證
+- **[PRIMARY_EMBEDDING_FIX.md](../features-historical/PRIMARY_EMBEDDING_FIX.md)** - Embedding 修復文檔
+- **[SOP_FLOW_STRICT_VALIDATION_2026-01-26.md](../../features/sop/implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md)** - SOP 配置驗證
 
 ### Commit 詳細說明
 
-1. **dc61ff5** - [SOP_FLOW_STRICT_VALIDATION_2026-01-26.md](../features/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md)
-2. **18d9484** - [SOP_NEXT_ACTION_IMPLEMENTATION.md](../development/SOP_NEXT_ACTION_IMPLEMENTATION.md)
-3. **78e21f6** - [PRIMARY_EMBEDDING_FIX.md](../features/PRIMARY_EMBEDDING_FIX.md)
+1. **dc61ff5** - [SOP_FLOW_STRICT_VALIDATION_2026-01-26.md](../../features/sop/implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md)
+2. **18d9484** - [SOP_NEXT_ACTION_IMPLEMENTATION.md](../../features/sop/implementation/SOP_NEXT_ACTION_IMPLEMENTATION.md)
+3. **78e21f6** - [PRIMARY_EMBEDDING_FIX.md](../features-historical/PRIMARY_EMBEDDING_FIX.md)
 4. **0ca9a16** - 文檔完善（無功能變更）
-5. **e3a6ff9** - [RERANKER_FEATURE.md](../features/RERANKER_FEATURE.md) + [SMART_RETRIEVAL_IMPLEMENTATION.md](../SMART_RETRIEVAL_IMPLEMENTATION.md)
+5. **e3a6ff9** - [RERANKER_FEATURE.md](../../features/RERANKER_FEATURE.md) + [SMART_RETRIEVAL_IMPLEMENTATION.md](../implementation/SMART_RETRIEVAL_IMPLEMENTATION.md)
 
 ### 測試與驗證
 

@@ -235,9 +235,9 @@ docker-compose restart rag-orchestrator
 
 ## 📚 相關文檔
 
-- [PRIMARY_EMBEDDING_FIX.md](../features/PRIMARY_EMBEDDING_FIX.md) - 技術詳細說明
-- [DUAL_EMBEDDING_RETRIEVAL.md](../features/DUAL_EMBEDDING_RETRIEVAL.md) - 雙 Embedding 檢索
-- [threshold_evaluation_report.md](../../threshold_evaluation_report.md) - 閾值評估報告
+- [PRIMARY_EMBEDDING_FIX.md](../features-historical/PRIMARY_EMBEDDING_FIX.md) - 技術詳細說明
+- [DUAL_EMBEDDING_RETRIEVAL.md](../../features/DUAL_EMBEDDING_RETRIEVAL.md) - 雙 Embedding 檢索
+- [threshold_evaluation_report.md](../testing-reports/2026-01-26/2026-01-26/threshold_evaluation_report.md) - 閾值評估報告
 
 ---
 

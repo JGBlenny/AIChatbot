@@ -8,15 +8,15 @@
 > - **90% 的簡單 API**: 只需在數據庫中配置，不需要寫代碼 ✅
 >   - 配置 `api_url`, `response_template` 等欄位
 >   - 系統自動使用統一處理函數
->   - 參考: [API 核心函數參考](./design/CORE_API_FUNCTIONS_REFERENCE.md)
+>   - 參考: [API 核心函數參考](../../design/CORE_API_FUNCTIONS_REFERENCE.md)
 >
 > - **10% 的複雜 API**: 仍然使用本文檔描述的流程
 >   - 需要複雜業務邏輯的情況
 >   - 按本文檔步驟實作自定義函數
 >
 > 更多資訊請參考:
-> - [改進的 API 架構設計](./design/IMPROVED_API_ARCHITECTURE.md)
-> - [API 數據流程完整說明](./design/API_DATA_FLOW.md)
+> - [改進的 API 架構設計](../../design/IMPROVED_API_ARCHITECTURE.md)
+> - [API 數據流程完整說明](../../design/API_DATA_FLOW.md)
 > - [動態 API 測試報告](../../archive/design-reports/DYNAMIC_API_TESTING_REPORT.md)
 
 **日期**: 2026-01-18
@@ -377,7 +377,7 @@ ALTER TABLE api_endpoints ADD COLUMN response_format_template TEXT;
 ## 📚 相關文檔
 
 - [API Endpoints 管理系統實作](./API_ENDPOINTS_MANAGEMENT_IMPLEMENTATION.md)
-- [知識動作系統設計](./design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
+- [知識動作系統設計](../../design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
 - [API Call Handler 實作](./design/API_CALL_HANDLER_IMPLEMENTATION.md)
 
 ---

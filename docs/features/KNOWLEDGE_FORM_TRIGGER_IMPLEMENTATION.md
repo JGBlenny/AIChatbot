@@ -1016,10 +1016,10 @@ trigger_mode = 'none'      -- ❌ 不允許
 
 ## 相關文檔
 
-- [SOP 系統完整指南](../guides/SOP_GUIDE.md)
-- [知識庫動作系統設計](./KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
+- [SOP 系統完整指南](../guides/features/SOP_GUIDE.md)
+- [知識庫動作系統設計](../design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
 - [表單管理系統](./FORM_MANAGEMENT_SYSTEM.md)
-- [SOP 觸發模式 UI 更新](./SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)
+- [SOP 觸發模式 UI 更新](sop/implementation/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)
 
 ---
 

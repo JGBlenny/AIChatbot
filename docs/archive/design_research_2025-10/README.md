@@ -100,12 +100,12 @@
 
 ### 實施後的正式文檔
 - [Target User Config 實作報告](../completion_reports/TARGET_USER_CONFIG_IMPLEMENTATION.md)
-- [配置管理更新摘要](../../CONFIG_MANAGEMENT_UPDATE_SUMMARY.md)
+- [配置管理更新摘要](../completion_reports/CONFIG_MANAGEMENT_UPDATE_SUMMARY.md)
 - [Audience 清理執行報告](../CLEANUP_EXECUTION_REPORT_2025-10-28.md)
 
 ### 架構文檔
 - [系統架構文檔](../../architecture/SYSTEM_ARCHITECTURE.md)
-- [認證與業務範圍](../../architecture/AUTH_AND_BUSINESS_SCOPE.md)
+- [認證與業務範圍](../2025-Q4/architecture/AUTH_AND_BUSINESS_SCOPE.md)
 
 ## 💡 設計洞察
 

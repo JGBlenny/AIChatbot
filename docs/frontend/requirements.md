@@ -843,7 +843,7 @@ GET    /api/forms/:id
 
 ## 📚 相關文檔
 
-- [API 配置指南](./design/API_CONFIGURATION_GUIDE.md) - 給用戶的配置說明
+- [API 配置指南](../design/API_CONFIGURATION_GUIDE.md) - 給用戶的配置說明
 - [完整變更日誌](./CHANGELOG_2026-01-18.md) - 後端變更詳情
 - [更新摘要](./UPDATE_SUMMARY_2026-01-18.md) - 快速了解
 

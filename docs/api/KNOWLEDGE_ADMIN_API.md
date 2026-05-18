@@ -305,5 +305,5 @@ async loadVendors() {
 ## 相關文件
 
 - [知識範圍簡化](../features/KNOWLEDGE_SCOPE_SIMPLIFICATION.md)
-- [前端使用指南](../guides/FRONTEND_USAGE_GUIDE.md)
+- [前端使用指南](../guides/development/FRONTEND_USAGE_GUIDE.md)
 - [API 參考第一階段](./API_REFERENCE_PHASE1.md)

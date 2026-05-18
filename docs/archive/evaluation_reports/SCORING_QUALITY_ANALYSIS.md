@@ -341,7 +341,7 @@ def synthesize_answer(question: str, top_answers: List[Dict]) -> str:
 
 - [多意圖 RAG 測試報告](../output/multi_intent_test_*.json)
 - [評分品質測試結果](../output/scoring_quality_test_*.json)
-- [系統架構文檔](./architecture/SYSTEM_ARCHITECTURE.md)
+- [系統架構文檔](../../architecture/SYSTEM_ARCHITECTURE.md)
 
 ---
 

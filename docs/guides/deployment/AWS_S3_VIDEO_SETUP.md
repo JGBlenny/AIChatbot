@@ -447,7 +447,7 @@ aws s3api put-bucket-encryption \
 ## 相關文件
 
 - [API 文件 - 影片管理](/docs/api/VIDEO_API.md)
-- [系統架構](/docs/architecture/SYSTEM_ARCHITECTURE.md)
+- [系統架構](../../architecture/SYSTEM_ARCHITECTURE.md)
 - [部署指南](/docs/guides/DEPLOYMENT.md)
 - [AWS S3 官方文件](https://docs.aws.amazon.com/s3/)
 - [CloudFront 官方文件](https://docs.aws.amazon.com/cloudfront/)

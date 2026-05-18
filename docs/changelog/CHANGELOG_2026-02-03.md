@@ -369,15 +369,15 @@ dist/assets/index-BT4m8h7J.js   784.99 kB │ gzip: 254.56 kB
 ### 技術文檔
 - [KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md](../features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md) - **知識庫表單觸發模式實現** ⭐
 - [KNOWLEDGE_ACTION_SYSTEM_DESIGN.md](../design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md) - 知識庫動作系統設計
-- [SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md](../features/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md) - 前端 UI 優化詳細說明
-- [SOP_TYPES_ANALYSIS_2026-01-22.md](../features/SOP_TYPES_ANALYSIS_2026-01-22.md) - 觸發模式類型分析
-- [SOP_GUIDE.md](../guides/SOP_GUIDE.md) - SOP 系統完整指南
+- [SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md](../features/sop/implementation/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md) - 前端 UI 優化詳細說明
+- [SOP_TYPES_ANALYSIS_2026-01-22.md](../features/sop/design/SOP_TYPES_ANALYSIS_2026-01-22.md) - 觸發模式類型分析
+- [SOP_GUIDE.md](../guides/features/SOP_GUIDE.md) - SOP 系統完整指南
 
 ### 使用手冊
-- [SOP_QUICK_REFERENCE.md](../guides/SOP_QUICK_REFERENCE.md) - SOP 快速參考
+- [SOP_QUICK_REFERENCE.md](../guides/reference/SOP_QUICK_REFERENCE.md) - SOP 快速參考
 
 ### 索引文檔
-- [SOP_TRIGGER_MODE_UPDATE_INDEX.md](../SOP_TRIGGER_MODE_UPDATE_INDEX.md) - 觸發模式更新文檔索引
+- [SOP_TRIGGER_MODE_UPDATE_INDEX.md](../features/sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md) - 觸發模式更新文檔索引
 
 ---
 

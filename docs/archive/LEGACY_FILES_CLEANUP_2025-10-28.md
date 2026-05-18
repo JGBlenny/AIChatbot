@@ -172,15 +172,15 @@ grep -r "import.*audience" /Users/lenny/jgb/AIChatbot/rag-orchestrator --include
 
 ### 新文檔
 - [Target User Config 實作完成報告](./completion_reports/TARGET_USER_CONFIG_IMPLEMENTATION.md)
-- [配置管理更新摘要](../CONFIG_MANAGEMENT_UPDATE_SUMMARY.md)
+- [配置管理更新摘要](completion_reports/CONFIG_MANAGEMENT_UPDATE_SUMMARY.md)
 - [CHANGELOG](../../CHANGELOG.md)
 
 ### 已廢棄文檔
 - [Audience 選擇器改進](./completion_reports/AUDIENCE_SELECTOR_IMPROVEMENT.md) ⚠️ DEPRECATED
 
 ### 架構文檔
-- [Business Scope 重構](../architecture/BUSINESS_SCOPE_REFACTORING.md)
-- [認證與業務範圍整合](../architecture/AUTH_AND_BUSINESS_SCOPE.md)
+- [Business Scope 重構](architecture/BUSINESS_SCOPE_REFACTORING.md)
+- [認證與業務範圍整合](2025-Q4/architecture/AUTH_AND_BUSINESS_SCOPE.md)
 
 ## ✨ 總結
 

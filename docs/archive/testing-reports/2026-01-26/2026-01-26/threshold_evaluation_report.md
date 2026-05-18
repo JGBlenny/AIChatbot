@@ -5,7 +5,7 @@
 **測試時長**: ~15 分鐘
 **測試版本**: Primary Embedding 修復後（涵蓋率 92.6%）
 
-> **⚠️ 重要**: 本報告基於 Primary Embedding 修復後的測試結果。修復前後對比請參考 [PRIMARY_EMBEDDING_FIX.md](docs/features/PRIMARY_EMBEDDING_FIX.md)
+> **⚠️ 重要**: 本報告基於 Primary Embedding 修復後的測試結果。修復前後對比請參考 [PRIMARY_EMBEDDING_FIX.md](../../../features-historical/PRIMARY_EMBEDDING_FIX.md)
 
 ---
 

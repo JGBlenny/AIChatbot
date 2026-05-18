@@ -306,9 +306,9 @@ ORDER BY id
 
 ## 📚 詳細文檔
 
-- [Target User Config 實作完成報告](./archive/completion_reports/TARGET_USER_CONFIG_IMPLEMENTATION.md)
-- [系統架構文檔](./architecture/SYSTEM_ARCHITECTURE.md)
-- [業務範圍認證架構](./architecture/AUTH_AND_BUSINESS_SCOPE.md)
+- [Target User Config 實作完成報告](TARGET_USER_CONFIG_IMPLEMENTATION.md)
+- [系統架構文檔](../../architecture/SYSTEM_ARCHITECTURE.md)
+- [業務範圍認證架構](../2025-Q4/architecture/AUTH_AND_BUSINESS_SCOPE.md)
 
 ## 🚀 下一步計劃
 

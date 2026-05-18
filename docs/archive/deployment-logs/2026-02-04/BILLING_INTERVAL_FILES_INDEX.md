@@ -320,7 +320,7 @@ is_active              | TRUE
 
 ### 內部文檔
 - [Lookup 系統快速參考](./LOOKUP_SYSTEM_REFERENCE.md)
-- [部署指南](./deployment/DEPLOYMENT_2026-02-04.md)
+- [部署指南](../DEPLOYMENT_2026-02-04.md)
 - [配置總結](./BILLING_INTERVAL_SETUP_SUMMARY.md)
 
 ### 資料庫

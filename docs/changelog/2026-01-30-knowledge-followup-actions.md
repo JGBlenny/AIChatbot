@@ -524,4 +524,4 @@ ALTER TABLE knowledge_base ALTER COLUMN trigger_mode SET DEFAULT 'manual';
 
 - [Platform SOP View 實作](../features/FORM_MANAGEMENT_SYSTEM.md)
 - [知識庫管理系統](../features/KNOWLEDGE_MANAGEMENT.md)
-- [SOP 類型分析](../features/SOP_TYPES_ANALYSIS_2026-01-22.md)
+- [SOP 類型分析](../features/sop/design/SOP_TYPES_ANALYSIS_2026-01-22.md)

@@ -182,4 +182,4 @@ run_business_logic_tests.sh → tests/
 
 **相關文檔**:
 - [完整分析報告](./FILE_STRUCTURE_ANALYSIS.md)
-- [分析摘要](./ANALYSIS_SUMMARY.txt)
+- [分析摘要](../ANALYSIS_SUMMARY.txt)

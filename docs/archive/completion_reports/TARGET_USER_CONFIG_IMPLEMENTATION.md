@@ -406,10 +406,10 @@ FROM business_types_config;
 
 ## 📚 相關文檔
 
-- [Business Types Config 測試報告](./BUSINESS_TYPE_TEST_REPORT.md)
+- [Business Types Config 測試報告](../2025-Q4/testing/BUSINESS_TYPE_TEST_REPORT.md)
 - [受眾選擇器改進報告](./AUDIENCE_SELECTOR_IMPROVEMENT.md)
-- [系統架構文檔](../architecture/SYSTEM_ARCHITECTURE.md)
-- [業務範圍認證架構](../architecture/AUTH_AND_BUSINESS_SCOPE.md)
+- [系統架構文檔](../../architecture/SYSTEM_ARCHITECTURE.md)
+- [業務範圍認證架構](../2025-Q4/architecture/AUTH_AND_BUSINESS_SCOPE.md)
 
 ## 🎉 總結
 

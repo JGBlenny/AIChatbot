@@ -13,19 +13,19 @@
 
 如果您是新手或想快速了解系統，請按順序閱讀：
 
-1. **[API 核心函數參考](./design/CORE_API_FUNCTIONS_REFERENCE.md)** ⭐ 最重要
+1. **[API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md)** ⭐ 最重要
    - 統一處理函數說明
    - 核心函數列表和作用
    - 快速參考和示例
    - **閱讀時間**: 10 分鐘
 
-2. **[API 數據流程完整說明](./design/API_DATA_FLOW.md)**
+2. **[API 數據流程完整說明](../design/API_DATA_FLOW.md)**
    - 完整的 12 階段數據流程
    - 從 API 調用到用戶收到回應
    - 詳細的數據轉換過程
    - **閱讀時間**: 15 分鐘
 
-3. **[改進的 API 架構設計](./design/IMPROVED_API_ARCHITECTURE.md)**
+3. **[改進的 API 架構設計](../design/IMPROVED_API_ARCHITECTURE.md)**
    - 新架構的設計理念
    - 動態配置 vs 自定義函數
    - 完整的代碼示例
@@ -58,7 +58,7 @@
 ### 我想了解...
 
 #### 「系統是如何處理 API 回傳的？」
-→ 閱讀: [API 核心函數參考](./design/CORE_API_FUNCTIONS_REFERENCE.md)
+→ 閱讀: [API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md)
 
 **關鍵信息**:
 - 統一處理函數: `UniversalAPICallHandler._format_response()`
@@ -66,7 +66,7 @@
 - 作用: 統一處理所有動態 API 的回傳數據
 
 #### 「從 API 取得資訊後，系統如何組成可用資訊？」
-→ 閱讀: [API 數據流程完整說明](./design/API_DATA_FLOW.md)
+→ 閱讀: [API 數據流程完整說明](../design/API_DATA_FLOW.md)
 
 **關鍵章節**:
 - 階段 9: 格式化響應
@@ -74,7 +74,7 @@
 - 系統「組成可用資訊」的具體方式
 
 #### 「如何新增一個 API？」
-→ 閱讀: [改進的 API 架構設計](./design/IMPROVED_API_ARCHITECTURE.md)
+→ 閱讀: [改進的 API 架構設計](../design/IMPROVED_API_ARCHITECTURE.md)
 
 **兩種方式**:
 - 90% 情況: 只需在數據庫配置（推薦）
@@ -102,7 +102,7 @@
 - **函數名**: `UniversalAPICallHandler._format_response()`
 - **位置**: `services/universal_api_handler.py:352-383`
 - **作用**: 統一處理所有 `implementation_type='dynamic'` API 的回傳
-- **詳細說明**: 參考 [API 核心函數參考](./design/CORE_API_FUNCTIONS_REFERENCE.md)
+- **詳細說明**: 參考 [API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md)
 
 ### Q2: 從 API 取得資訊後，會在系統組成可用資訊嗎？
 **A**: ✅ 完全正確！
@@ -112,7 +112,7 @@
 2. 在系統組成：使用 `response_template` 格式化 + 替換變量 + 合併知識答案
 3. 可用資訊：`formatted_response` 直接顯示給用戶
 
-**詳細說明**: 參考 [API 數據流程完整說明](./design/API_DATA_FLOW.md)
+**詳細說明**: 參考 [API 數據流程完整說明](../design/API_DATA_FLOW.md)
 
 ### Q3: 新增 API 需要寫代碼嗎？
 **A**: 90% 情況不需要！
@@ -120,7 +120,7 @@
 - **簡單 API**: 只需在數據庫配置 `api_url` 和 `response_template`
 - **複雜 API**: 需要寫自定義函數（複雜業務邏輯）
 
-**詳細說明**: 參考 [改進的 API 架構設計](./design/IMPROVED_API_ARCHITECTURE.md)
+**詳細說明**: 參考 [改進的 API 架構設計](../design/IMPROVED_API_ARCHITECTURE.md)
 
 ### Q4: 文檔記錄清楚嗎？
 **A**: ✅ 是的，現在很清楚！
@@ -158,14 +158,14 @@
 ### 按主題分類
 
 **架構設計**:
-- [改進的 API 架構設計](./design/IMPROVED_API_ARCHITECTURE.md) ✅
+- [改進的 API 架構設計](../design/IMPROVED_API_ARCHITECTURE.md) ✅
 - [改良版 API 架構](../design/IMPROVED_API_ARCHITECTURE.md)
 
 **核心函數**:
-- [API 核心函數參考](./design/CORE_API_FUNCTIONS_REFERENCE.md) ✅ (最新)
+- [API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md) ✅ (最新)
 
 **數據流程**:
-- [API 數據流程完整說明](./design/API_DATA_FLOW.md) ✅
+- [API 數據流程完整說明](../design/API_DATA_FLOW.md) ✅
 
 **測試驗證**:
 - [動態 API 測試報告](../archive/design-reports/DYNAMIC_API_TESTING_REPORT.md) ✅
@@ -180,15 +180,15 @@
 ### 新手入門（3 步驟）
 
 1. **快速了解**（10 分鐘）
-   - 閱讀：[API 核心函數參考](./design/CORE_API_FUNCTIONS_REFERENCE.md)
+   - 閱讀：[API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md)
    - 目標：了解統一處理函數是什麼
 
 2. **深入理解**（15 分鐘）
-   - 閱讀：[API 數據流程完整說明](./design/API_DATA_FLOW.md)
+   - 閱讀：[API 數據流程完整說明](../design/API_DATA_FLOW.md)
    - 目標：了解完整數據流程
 
 3. **架構全貌**（20 分鐘）
-   - 閱讀：[改進的 API 架構設計](./design/IMPROVED_API_ARCHITECTURE.md)
+   - 閱讀：[改進的 API 架構設計](../design/IMPROVED_API_ARCHITECTURE.md)
    - 目標：了解設計理念和實作細節
 
 **總時間**: 約 45 分鐘
@@ -254,9 +254,9 @@
 
 ## ✅ 文檔完整性檢查表
 
-- ✅ 統一處理函數說明 → [API 核心函數參考](./design/CORE_API_FUNCTIONS_REFERENCE.md)
-- ✅ 數據流程說明 → [API 數據流程完整說明](./design/API_DATA_FLOW.md)
-- ✅ 架構設計說明 → [改進的 API 架構設計](./design/IMPROVED_API_ARCHITECTURE.md)
+- ✅ 統一處理函數說明 → [API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md)
+- ✅ 數據流程說明 → [API 數據流程完整說明](../design/API_DATA_FLOW.md)
+- ✅ 架構設計說明 → [改進的 API 架構設計](../design/IMPROVED_API_ARCHITECTURE.md)
 - ✅ 測試驗證報告 → [動態 API 測試報告](../archive/design-reports/DYNAMIC_API_TESTING_REPORT.md)
 - ✅ 舊文檔標註 → API Endpoint 架構說明（已刪除，改用 IMPROVED_API_ARCHITECTURE.md）
 - ✅ 文檔索引 → 本文檔

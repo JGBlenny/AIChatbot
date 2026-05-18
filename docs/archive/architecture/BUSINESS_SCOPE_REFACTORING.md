@@ -357,8 +357,8 @@ business_scope = ROLE_TO_SCOPE_MAPPING.get(user_role, "external")
 
 - [Business Scope Utils](/rag-orchestrator/services/business_scope_utils.py)
 - [Migration 25 - Mark is_active as DEPRECATED](/database/migrations/25-mark-business-scope-is-active-deprecated.sql)
-- [Migration 26 - Remove is_active](/database/migrations/26-remove-business-scope-is-active.sql)
-- [Migration 27 - Remove vendors.business_scope_name](/database/migrations/27-remove-vendor-business-scope.sql)
+- [Migration 26 - Remove is_active](../migrations_history/26-remove-business-scope-is-active.sql)
+- [Migration 27 - Remove vendors.business_scope_name](../migrations_history/27-remove-vendor-business-scope.sql)
 
 ## 總結
 

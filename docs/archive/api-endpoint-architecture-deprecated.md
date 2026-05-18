@@ -5,9 +5,9 @@
 > 本文檔描述的是舊架構（改進前），其中每個 API 需要單獨寫函數。
 >
 > **新架構**: 90% 的 API 現在使用動態配置，不需要寫代碼。請參考：
-> - [API 核心函數參考](./design/CORE_API_FUNCTIONS_REFERENCE.md) - 統一處理函數說明
-> - [改進的 API 架構設計](./design/IMPROVED_API_ARCHITECTURE.md) - 新架構設計
-> - [API 數據流程完整說明](./design/API_DATA_FLOW.md) - 完整流程
+> - [API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md) - 統一處理函數說明
+> - [改進的 API 架構設計](../design/IMPROVED_API_ARCHITECTURE.md) - 新架構設計
+> - [API 數據流程完整說明](../design/API_DATA_FLOW.md) - 完整流程
 >
 > 保留此文檔僅供參考舊架構的設計思路。
 

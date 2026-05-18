@@ -616,10 +616,10 @@ if all_intent_ids is None:
 
 ## 📚 相關文檔
 
-- [系統架構文檔](./architecture/SYSTEM_ARCHITECTURE.md)
+- [系統架構文檔](../../../architecture/SYSTEM_ARCHITECTURE.md)
 - [Intent 管理指南](./INTENT_MANAGEMENT_README.md)
-- [回測優化指南](../BACKTEST_OPTIMIZATION_GUIDE.md)
-- [知識分類指南](./KNOWLEDGE_CLASSIFICATION_COMPLETE.md)
+- [回測優化指南](../backtest/BACKTEST_OPTIMIZATION_GUIDE.md)
+- [知識分類指南](../../completion_reports/KNOWLEDGE_CLASSIFICATION_COMPLETE.md)
 
 ---
 

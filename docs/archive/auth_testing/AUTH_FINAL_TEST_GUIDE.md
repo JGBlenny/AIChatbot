@@ -330,7 +330,7 @@ docker-compose logs knowledge-admin-api --tail 30
 **技術支援**: 查看 `docs/AUTH_TEST_RESULTS.md` 獲取詳細測試報告
 
 **相關文檔**:
-- [完整部署指南](./AUTH_DEPLOYMENT_GUIDE.md)
+- [完整部署指南](../../guides/deployment/AUTH_DEPLOYMENT_GUIDE.md)
 - [快速測試指南](./AUTH_QUICK_TEST.md)
-- [實作總結](./AUTH_IMPLEMENTATION_SUMMARY.md)
+- [實作總結](../implementation/AUTH_IMPLEMENTATION_SUMMARY.md)
 - [測試結果報告](./AUTH_TEST_RESULTS.md)

@@ -115,8 +115,8 @@
 **新增章節**：
 ```markdown
 - 📥 **知識匯入系統** ⭐ NEW:
-  - [知識匯入功能文檔](./docs/features/KNOWLEDGE_IMPORT_FEATURE.md)
-  - [知識匯入 API 參考](./docs/api/KNOWLEDGE_IMPORT_API.md)
+  - [知識匯入功能文檔](../2025-Q4/features/KNOWLEDGE_IMPORT_FEATURE.md)
+  - [知識匯入 API 參考](../2025-Q4/api/KNOWLEDGE_IMPORT_API.md)
 ```
 
 ---
@@ -198,13 +198,13 @@ AIChatbot/
 ## 🔗 文檔連結
 
 ### 知識匯入相關文檔
-1. [知識匯入功能文檔](./features/KNOWLEDGE_IMPORT_FEATURE.md) - 完整功能說明
-2. [知識匯入 API 參考](./api/KNOWLEDGE_IMPORT_API.md) - API 詳細文檔
+1. [知識匯入功能文檔](../2025-Q4/features/KNOWLEDGE_IMPORT_FEATURE.md) - 完整功能說明
+2. [知識匯入 API 參考](../2025-Q4/api/KNOWLEDGE_IMPORT_API.md) - API 詳細文檔
 3. [README.md](../README.md) - 主文檔（已更新）
 
 ### 相關功能文檔
-4. [測試情境狀態管理](./features/TEST_SCENARIO_STATUS_MANAGEMENT.md)
-5. [AI 知識生成](./features/AI_KNOWLEDGE_GENERATION_FEATURE.md)
+4. [測試情境狀態管理](../2025-Q4/features/TEST_SCENARIO_STATUS_MANAGEMENT.md)
+5. [AI 知識生成](../2025-Q4/features/AI_KNOWLEDGE_GENERATION_FEATURE.md)
 6. [審核中心（待建立）](./guides/REVIEW_CENTER_GUIDE.md)
 
 ---

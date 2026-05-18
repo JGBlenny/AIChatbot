@@ -6,14 +6,14 @@
 
 ### 文檔清單
 
-1. **[intent_management_phase_b_complete.md](./intent_management_phase_b_complete.md)** ⭐
+1. **[intent_management_phase_b_complete.md](../../completion_reports/intent_management_phase_b_complete.md)** ⭐
    - Phase B 完整實作報告
    - 後端 API 詳細文檔
    - 測試結果和驗證
    - 資料庫使用情況
    - OpenAI Function Calling 設計
 
-2. **[FRONTEND_USAGE_GUIDE.md](../guides/FRONTEND_USAGE_GUIDE.md)** ⭐
+2. **[FRONTEND_USAGE_GUIDE.md](../../../guides/development/FRONTEND_USAGE_GUIDE.md)** ⭐
    - 前端頁面使用指南
    - 4 個管理頁面說明
    - 完整測試流程
@@ -172,7 +172,7 @@ docker exec aichatbot-rag-orchestrator python3 /app/tests/test_intent_suggestion
 ```
 
 ### 手動測試流程
-詳見 [FRONTEND_USAGE_GUIDE.md](../guides/FRONTEND_USAGE_GUIDE.md) 的「測試流程」章節。
+詳見 [FRONTEND_USAGE_GUIDE.md](../../../guides/development/FRONTEND_USAGE_GUIDE.md) 的「測試流程」章節。
 
 ---
 
@@ -187,7 +187,7 @@ http://localhost:8100/docs
 - **業務範圍**: `/api/v1/business-scope`
 - **Chat**: `/api/v1/chat`
 
-詳細 API 說明請參考 [intent_management_phase_b_complete.md](./intent_management_phase_b_complete.md)。
+詳細 API 說明請參考 [intent_management_phase_b_complete.md](../../completion_reports/intent_management_phase_b_complete.md)。
 
 ---
 
@@ -249,8 +249,8 @@ curl http://localhost:8100/api/v1/health
 ## 📞 支援
 
 如有問題，請參考：
-1. [Phase B 完整報告](./intent_management_phase_b_complete.md)
-2. [前端使用指南](../guides/FRONTEND_USAGE_GUIDE.md)
+1. [Phase B 完整報告](../../completion_reports/intent_management_phase_b_complete.md)
+2. [前端使用指南](../../../guides/development/FRONTEND_USAGE_GUIDE.md)
 3. API 文檔: http://localhost:8100/docs
 
 ---

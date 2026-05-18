@@ -480,7 +480,7 @@ docker logs aichatbot-rag-orchestrator --tail 50
 
 **相關文檔**:
 - [Database Schema + ERD](../DATABASE_SCHEMA_ERD.md)
-- [環境變數參考](../guides/ENVIRONMENT_VARIABLES.md)
+- [環境變數參考](../../../guides/deployment/ENVIRONMENT_VARIABLES.md)
 - [Intent Management README](./INTENT_MANAGEMENT_README.md)
 
 ---

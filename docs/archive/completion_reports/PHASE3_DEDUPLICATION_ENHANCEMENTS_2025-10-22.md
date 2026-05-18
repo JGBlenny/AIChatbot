@@ -526,18 +526,18 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin \
 ## 📚 相關文檔
 
 ### 實現報告
-- [意圖建議語義去重實現報告](./features/INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md)
+- [意圖建議語義去重實現報告](../2025-Q4/features/INTENT_SUGGESTION_SEMANTIC_DEDUP_IMPLEMENTATION.md)
 - [Phase 3 去重增強報告](./PHASE3_DEDUPLICATION_ENHANCEMENTS_2025-10-22.md)（本文檔）
 
 ### 技術文檔
 - [Database Schema + ERD](./DATABASE_SCHEMA_ERD.md)
-- [環境變數參考](./guides/ENVIRONMENT_VARIABLES.md)
-- [Intent Management README](./features/INTENT_MANAGEMENT_README.md)
+- [環境變數參考](../../guides/deployment/ENVIRONMENT_VARIABLES.md)
+- [Intent Management README](../2025-Q4/features/INTENT_MANAGEMENT_README.md)
 
 ### API 文檔
-- [API Reference Phase 1-3](./api/API_REFERENCE_PHASE1.md)
-- [Cache System Guide](./features/CACHE_SYSTEM_GUIDE.md)
-- [Streaming Chat Guide](./features/STREAMING_CHAT_GUIDE.md)
+- [API Reference Phase 1-3](../../api/API_REFERENCE_PHASE1.md)
+- [Cache System Guide](../../guides/features/CACHE_SYSTEM_GUIDE.md)
+- [Streaming Chat Guide](../../guides/features/STREAMING_CHAT_GUIDE.md)
 
 ---
 

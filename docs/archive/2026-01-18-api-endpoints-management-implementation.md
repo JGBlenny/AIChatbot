@@ -632,7 +632,7 @@ ALTER TABLE api_endpoints ADD COLUMN usage_count INTEGER DEFAULT 0;
 
 - [如何新增 API Endpoints](./HOW_TO_ADD_API_ENDPOINTS.md) - 操作指南
 - [前端實作總結](./FRONTEND_IMPLEMENTATION_SUMMARY.md) - 前端修改詳情
-- [知識動作系統設計](./design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md) - 系統架構
+- [知識動作系統設計](../design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md) - 系統架構
 - [API Call Handler 實作](./design/API_CALL_HANDLER_IMPLEMENTATION.md) - 後端處理
 
 ---
