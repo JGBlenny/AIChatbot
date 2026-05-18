@@ -54,20 +54,13 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             vendor_business_types = vendor_info.get('business_types', [])
             business_type_filter_sql = "(kb.business_types IS NULL OR kb.business_types && %s::text[])"
 
-        # 目標用戶過濾 - target_user 是陣列欄位，使用 && 運算子檢查重疊
-        target_user_roles = None
-        if target_user in ['tenant', 'landlord', 'property_manager', 'system_admin']:
-            target_user_roles = ['all_users', target_user]
-            target_user_filter_sql = "(kb.target_user IS NULL OR kb.target_user && %s::text[])"
-        else:
-            target_user_filter_sql = "(kb.target_user IS NULL OR 'all_users' = ANY(kb.target_user))"
-
         conn = self._get_db_connection()
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             vector_str = str(query_embedding)
 
             # 建構 SQL 查詢（不在 SQL 端 threshold 過濾）
+            # 暫時移除 target_user 過濾，只用 business_types 過濾
             sql_query = f"""
                 SELECT
                     kb.id,
@@ -90,7 +83,6 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     AND kb.embedding IS NOT NULL
                     AND kb.is_active = TRUE
                     AND {business_type_filter_sql}
-                    AND {target_user_filter_sql}
                 ORDER BY
                     (1 - (kb.embedding <=> %s::vector)) DESC,
                     kb.priority DESC
@@ -102,15 +94,9 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                 vector_str,
                 [vendor_id],  # 用於 kb.vendor_ids && %s::int[]
                 vendor_business_types,
-            ]
-
-            if target_user_roles is not None:
-                query_params.append(target_user_roles)
-
-            query_params.extend([
                 vector_str,
                 vector_limit
-            ])
+            ]
 
             cursor.execute(sql_query, tuple(query_params))
             rows = cursor.fetchall()
@@ -144,6 +130,18 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
 
         # 獲取額外參數
         target_user = kwargs.get('target_user', 'tenant')
+        mode = kwargs.get('mode', 'b2c')
+
+        # 業態過濾（與 _vector_search 一致）
+        is_b2b_mode = (target_user in ['property_manager', 'system_admin']) or (mode == 'b2b')
+
+        if is_b2b_mode:
+            vendor_business_types = ['system_provider']
+            business_type_filter_sql = "AND kb.business_types && %s::text[]"
+        else:
+            vendor_info = self.param_resolver.get_vendor_info(vendor_id)
+            vendor_business_types = vendor_info.get('business_types', [])
+            business_type_filter_sql = "AND (kb.business_types IS NULL OR kb.business_types && %s::text[])"
 
         # 安全上限
         max_rows = 1000
@@ -153,7 +151,8 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
             # 通用 SELECT 與 WHERE
-            base_sql = """
+            # 暫時移除 target_user 過濾，只用 business_types 過濾
+            base_sql = f"""
                 SELECT
                     kb.id,
                     kb.question_summary,
@@ -176,7 +175,12 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     AND kb.is_active = TRUE
                     AND kb.keywords IS NOT NULL
                     AND array_length(kb.keywords, 1) > 0
+                    {business_type_filter_sql}
             """
+
+            # 構建基本參數列表
+            base_params = [[vendor_id]]
+            base_params.append(vendor_business_types)
 
             all_rows = []
 
@@ -184,7 +188,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             if query_tokens_for_sql:
                 cursor.execute(
                     base_sql + " AND kb.keywords && %s::text[] ORDER BY kb.priority DESC, kb.id DESC LIMIT %s",
-                    ([vendor_id], query_tokens_for_sql, max_rows)
+                    tuple(base_params + [query_tokens_for_sql, max_rows])
                 )
                 all_rows = cursor.fetchall()
 
@@ -192,7 +196,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             if not all_rows:
                 cursor.execute(
                     base_sql + " ORDER BY kb.priority DESC, kb.id DESC LIMIT %s",
-                    ([vendor_id], max_rows)
+                    tuple(base_params + [max_rows])
                 )
                 all_rows = cursor.fetchall()
 

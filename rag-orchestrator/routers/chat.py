@@ -3487,7 +3487,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             print(f"ℹ️  [回測模式] 跳過 SOP 檢索，僅使用知識庫")
 
             # 獲取意圖 ID
-            intent_id = None if intent_result['intent_name'] == 'unclear' else _get_intent_id(intent_result['intent_name'])
+            intent_id = None
 
             # 檢索知識庫（回傳 (filtered, unfiltered)；回測模式暫不使用 unfiltered）
             knowledge_list, _knowledge_list_unfiltered = await _retrieve_knowledge(
