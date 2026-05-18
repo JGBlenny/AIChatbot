@@ -70,9 +70,12 @@
 │  - AsyncExecutionManager (非同步執行管理器)                     │
 │  - ScenarioSelector (測試情境選取器)                            │
 │  - BacktestFrameworkClient (回測客戶端)                         │
-│  - GapClassifier (缺口分類器)                                  │
+│  - GapAnalyzer (失敗分析器 — 按 failure_reason 分類)           │
+│  - GapClassifier (缺口分類器 — 按 gap_type 分類)              │
+│  - ActionTypeClassifier (動作類型分類器)                        │
 │  - SOPGenerator (SOP 生成器)                                   │
 │  - KnowledgeGeneratorClient (知識生成器)                       │
+│  - KnowledgeLoopEmbeddingClient (Embedding 生成客戶端)        │
 │  - OpenAICostTracker (成本追蹤器)                              │
 └─────────────────────────────────────────────────────────────┘
                           ↓ 資料存取
@@ -1043,8 +1046,8 @@ services:
 
 - [API 文檔 - 迴圈管理](../api/loops_api.md)
 - [API 文檔 - 知識審核](../api/loop_knowledge_api.md)
-- [使用者指南](../user_guide/knowledge_completion_loop.md)
-- [部署指南](../deployment/2026-03-27/DEPLOY_KNOWLEDGE_COMPLETION_LOOP.md)
+- [使用者指南](../user-guides/knowledge_completion_loop.md)
+- [部署指南](../archive/deployment-logs/2026-03-27/DEPLOY_KNOWLEDGE_COMPLETION_LOOP.md)
 - [技術設計文檔](../../.kiro/specs/backtest-knowledge-refinement/design.md)
 
 ---

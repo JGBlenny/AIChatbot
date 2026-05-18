@@ -1,8 +1,8 @@
 # AIChatbot Database Schema & ERD
 
-**版本**: 2025-10-22
+**版本**: 2026-05-18（驗證更新）
 **資料庫**: PostgreSQL 16 + pgvector
-**總表數**: 16 個核心表 + 多個視圖和函數
+**總表數**: ~39 個表（16 核心 + 配置/權限/表單/平台 SOP 等）
 
 ---
 
@@ -69,11 +69,13 @@ erDiagram
         int id PK
         string code UK "業者代碼"
         string name "業者名稱"
+        string short_name "簡稱"
         string subscription_plan "訂閱方案"
-        string business_type "業種類型"
-        string cashflow_model "金流模式"
+        text_array business_types "業態陣列"
+        jsonb settings "業者設定"
         boolean is_active
         timestamp created_at
+        timestamp updated_at
     }
 
     vendor_configs {
@@ -240,7 +242,7 @@ erDiagram
     chat_history {
         int id PK
         string user_id
-        string user_role "用戶角色"
+        string target_user "使用者角色（原 user_role）"
         text question "問題"
         text answer "答案"
         int[] related_kb_ids "相關知識ID"
@@ -262,20 +264,27 @@ erDiagram
     vendor_sop_items {
         int id PK
         int category_id FK
+        int group_id FK
         int vendor_id FK
+        int template_id FK "平台範本 ID"
         int item_number "項次"
         string item_name "項目名稱"
         text content "基礎內容"
-        boolean requires_cashflow_check "需檢查金流"
-        text cashflow_through_company "金流過我家"
-        text cashflow_direct_to_landlord "金流不過"
-        text cashflow_mixed "混合型"
-        boolean requires_business_type_check "需檢查業種"
-        text business_type_full_service "包租型"
-        text business_type_management "代管型"
+        vector primary_embedding "主向量(1536)"
+        vector fallback_embedding "備援向量(1536)"
+        string trigger_mode "none/manual/immediate/auto"
+        string next_action "none/form_fill/api_call/form_then_api"
+        string next_form_id "觸發表單 ID"
+        jsonb next_api_config "API 配置"
+        text_array trigger_keywords "觸發關鍵詞"
+        text immediate_prompt "確認提示"
+        text followup_prompt "後續提示"
+        text_array keywords "搜尋關鍵字"
         int related_intent_id FK
         int priority "優先級"
         boolean is_active
+        timestamp created_at
+        timestamp updated_at
     }
 ```
 
@@ -318,9 +327,35 @@ erDiagram
 - 審核流程：pending_review → approved/rejected
 
 ### 7. SOP 管理模組 (Vendor SOP)
-- **vendor_sop_categories** - SOP 分類
-- **vendor_sop_items** - SOP 項目
-- 支援金流模式和業種類型動態調整
+- **platform_sop_categories** - 平台 SOP 分類
+- **platform_sop_templates** - 平台 SOP 範本
+- **platform_sop_groups** - 平台 SOP 群組
+- **vendor_sop_categories** - 業者 SOP 分類
+- **vendor_sop_groups** - 業者 SOP 群組
+- **vendor_sop_items** - 業者 SOP 項目（含 embedding、trigger_mode、next_action）
+- **vendor_sop_overrides** - 業者覆寫平台範本
+
+### 8. 配置管理模組 (Configuration)
+- **business_types_config** - 業態配置
+- **target_user_config** - 使用者角色配置
+- **category_config** - 分類配置
+- **system_param_definitions** - 系統參數定義
+
+### 9. 權限管理模組 (Permission System)
+- **admins** - 管理員帳號
+- **roles** - 角色定義
+- **permissions** - 權限定義
+- **role_permissions** - 角色-權限對應
+- **admin_roles** - 管理員-角色對應
+
+### 10. 表單管理模組 (Form Management)
+- **form_sessions** - 表單填寫會話
+- **form_submissions** - 表單提交記錄
+
+### 11. 其他模組
+- **lookup_tables** - 查表（key-value）
+- **image_uploads** - 圖片上傳記錄
+- **knowledge_import_jobs** - 知識匯入任務追蹤
 
 ---
 
@@ -342,8 +377,8 @@ CREATE TABLE vendors (
     subscription_end_date DATE,
 
     -- 業務設定
-    business_type VARCHAR(50) DEFAULT 'property_management',  -- 包租型/代管型
-    cashflow_model VARCHAR(50) DEFAULT 'direct_to_landlord', -- 金流模式
+    business_types TEXT[],                                    -- 業態陣列（取代舊 business_type 單值）
+    settings JSONB DEFAULT '{}',                             -- 業者自訂設定
 
     -- 狀態
     is_active BOOLEAN DEFAULT true,
@@ -409,7 +444,7 @@ CREATE TABLE intents (
     description TEXT,                        -- 詳細描述
     keywords TEXT[],                         -- 關鍵字陣列
 
-    confidence_threshold FLOAT DEFAULT 0.7,  -- 信心度閾值
+    confidence_threshold FLOAT DEFAULT 0.80,  -- 信心度閾值
 
     -- API 配置（如果需要呼叫外部 API）
     api_required BOOLEAN DEFAULT false,

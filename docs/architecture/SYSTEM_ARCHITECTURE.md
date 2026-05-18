@@ -109,6 +109,16 @@
 │  │  ✓ Redis 緩存    │          │  ✓ 測試情境管理  │            │
 │  └──────────────────┘          └──────────────────┘            │
 │                                                                 │
+│  ┌──────────────────┐                                           │
+│  │  Semantic Model   │                                           │
+│  │  (FastAPI)        │                                           │
+│  │  Port: 8002       │                                           │
+│  │                   │                                           │
+│  │  ✓ Reranker 重排序│                                           │
+│  │  Model: bge-      │                                           │
+│  │  reranker-base    │                                           │
+│  └──────────────────┘                                           │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -249,33 +259,81 @@
 
 ```
 rag-orchestrator/
-├── main.py                          # FastAPI 應用入口
+├── app.py                           # FastAPI 應用入口
 ├── routers/
-│   ├── chat.py                      # Chat API 路由
+│   ├── chat.py                      # Chat API 路由（核心）
+│   ├── chat_shared.py               # Chat 共用工具
 │   ├── vendors.py                   # 業者管理 API
-│   ├── knowledge.py                 # 知識庫 API
-│   ├── forms.py                     # 表單管理 API 🆕
-│   └── cache.py                     # 緩存管理 API 🆕
+│   ├── knowledge.py                 # 知識庫 CRUD API
+│   ├── knowledge_generation.py      # 知識生成 API
+│   ├── knowledge_import.py          # 知識匯入 API
+│   ├── knowledge_export.py          # 知識匯出 API
+│   ├── forms.py                     # 表單管理 API
+│   ├── cache.py                     # 緩存管理 API
+│   ├── intents.py                   # 意圖管理 API
+│   ├── loops.py                     # 知識完善迴圈 API
+│   ├── loop_knowledge.py            # 迴圈知識 API
+│   ├── lookup.py                    # 查表 API
+│   ├── images.py                    # 圖片上傳 API
+│   ├── videos.py                    # 影片上傳 API
+│   ├── document_converter.py        # 文件轉換 API
+│   ├── business_types.py            # 業態管理 API
+│   ├── target_user_config.py        # 使用者角色配置 API
+│   ├── platform_sop.py              # 平台 SOP API
+│   ├── suggested_intents.py         # 建議意圖 API
+│   ├── api_endpoints.py             # API 端點配置
+│   ├── system_health.py             # 系統健康檢查 API
+│   └── error_middleware.py          # 錯誤處理中介
 ├── services/
 │   ├── intent_classifier.py         # 意圖分類服務
 │   ├── rag_engine.py                # RAG 檢索服務
-│   ├── reranker_service.py          # Reranker 重排序 🆕
+│   ├── base_retriever.py            # 檢索管線基底
+│   ├── semantic_reranker.py         # Reranker 重排序
 │   ├── llm_answer_optimizer.py      # LLM 優化服務
-│   ├── cache_service.py             # 三層緩存服務 🆕
+│   ├── llm_provider.py              # LLM 呼叫統一介面
+│   ├── answer_formatter.py          # 答案格式化
+│   ├── confidence_evaluator.py      # 信心度評估
+│   ├── cache_service.py             # 三層緩存服務
+│   ├── query_rewriter.py            # 查詢改寫
 │   ├── vendor_parameter_resolver.py # 業者參數解析
-│   ├── vendor_knowledge_retriever.py# 業者知識檢索
-│   ├── vendor_sop_retriever.py      # SOP 檢索服務 🆕
-│   ├── sop_orchestrator.py          # SOP 協調器 🆕
-│   ├── sop_trigger_handler.py       # SOP 觸發處理 🆕
-│   ├── form_manager.py              # 表單管理器 🆕
-│   ├── tenant_identifier.py         # [Phase 2] 租客識別
-│   ├── external_api_client.py       # [Phase 2] 外部 API
-│   └── customer_service_assistant.py# [Phase 2] 客服助理
+│   ├── vendor_config_service.py     # 業者配置服務
+│   ├── vendor_knowledge_retriever_v2.py # 業者知識檢索
+│   ├── vendor_sop_retriever_v2.py   # SOP 檢索服務
+│   ├── sop_orchestrator.py          # SOP 協調器
+│   ├── sop_trigger_handler.py       # SOP 觸發處理
+│   ├── sop_next_action_handler.py   # SOP 後續動作
+│   ├── sop_utils.py                 # SOP 工具函式
+│   ├── form_manager.py              # 表單管理器
+│   ├── form_validator.py            # 表單驗證
+│   ├── digression_detector.py       # 離題偵測
+│   ├── keyword_matcher.py           # 關鍵字匹配
+│   ├── knowledge_generator.py       # 知識生成
+│   ├── knowledge_import_service.py  # 知識匯入
+│   ├── knowledge_export_service.py  # 知識匯出
+│   ├── knowledge_classifier.py      # 知識分類
+│   ├── document_converter_service.py# 文件轉換
+│   ├── image_recognition_service.py # 圖片辨識
+│   ├── s3_image_service.py          # S3 圖片存取
+│   ├── s3_video_service.py          # S3 影片存取
+│   ├── embedding_utils.py           # Embedding 工具
+│   ├── intent_manager.py            # 意圖管理
+│   ├── intent_suggestion_engine.py  # 意圖建議引擎
+│   ├── unclear_question_manager.py  # 不明確問題管理
+│   ├── universal_api_handler.py     # 通用 API 呼叫
+│   ├── jgb_system_api.py            # JGB 系統 API
+│   ├── jgb_response_formatter.py    # JGB 回應格式化
+│   ├── pipeline_health_service.py   # 管線健康檢查
+│   ├── unified_job_service.py       # 統一背景任務
+│   ├── db_utils.py                  # 資料庫工具
+│   └── knowledge_completion_loop/   # 知識完善迴圈子系統
 ├── models/
-│   └── database.py                  # SQLAlchemy 模型
+│   └── unclear_question.py          # 不明確問題模型
+├── config/
+│   ├── business_types.py            # 業態配置
+│   ├── deduplication_config.py      # 去重配置
+│   └── intents.yaml                 # 意圖 YAML（fallback）
 └── utils/
-    ├── vector_utils.py              # 向量處理工具
-    └── redis_client.py              # Redis 客戶端 🆕
+    └── __init__.py
 ```
 
 **核心流程：**

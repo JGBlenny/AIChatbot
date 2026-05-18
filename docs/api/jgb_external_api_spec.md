@@ -359,9 +359,9 @@ API Key 驗證流程：
 
 ---
 
-### 2.3 GET `/api/external/v1/contracts`
+### 2.3 GET `/api/external/v1/contracts/status-overview`
 
-**說明**：查詢指定租客的合約列表
+**說明**：查詢指定租客的合約狀態總覽
 
 #### 參數
 

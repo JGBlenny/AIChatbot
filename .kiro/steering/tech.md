@@ -15,7 +15,7 @@
 
 ### AI/ML
 - **OpenAI**:
-  - GPT-4o: LLM 驅動的答案優化、知識生成、分類聚類
+  - GPT-4o-mini: LLM 驅動的答案優化、知識生成、分類聚類
   - Embedding API: 向量嵌入生成
 - **sentence-transformers**: 本地語義重排序模型
 - **torch**: PyTorch，支援 sentence-transformers
@@ -154,10 +154,10 @@ Utils (工具層)
 
 ### AI 呼叫慣例
 - **OpenAI Client**: 使用 `openai.OpenAI(api_key=...)` 初始化
-- **模型選擇**:
-  - GPT-4o: 複雜任務（答案合成、文件轉換）
-  - GPT-4o-mini: 知識生成、SOP 生成、分類、標題生成
-  - GPT-3.5-turbo: 表單流程意圖分類、查詢改寫（QUERY_REWRITE_MODEL）
+- **模型選擇**（預設值，可用環境變數覆蓋）:
+  - GPT-4o: 文件轉換（DOCUMENT_CONVERTER_MODEL）、知識匯入
+  - GPT-4o-mini: 答案優化（OPENAI_MODEL）、知識生成、SOP 生成、分類
+  - GPT-3.5-turbo: 意圖分類（INTENT_CLASSIFIER_MODEL）、查詢改寫（QUERY_REWRITE_MODEL，fallback: OPENAI_MODEL）
 - **Temperature**:
   - 0.0-0.3: 確定性任務（分類、提取）
   - 0.7-0.9: 創造性任務（生成、重寫）

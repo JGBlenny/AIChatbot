@@ -1,7 +1,7 @@
 # 知識審核 API 文檔
 
 > **版本**: v1
-> **基礎路徑**: `/api/v1/loop-knowledge`
+> **基礎路徑**: `/api/v1/loops/loop-knowledge`
 > **建立時間**: 2026-03-27
 
 ## 概述

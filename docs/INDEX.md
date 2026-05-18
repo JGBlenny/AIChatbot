@@ -1,279 +1,130 @@
-# AIChatbot 文檔索引 - 任務導向指南
+# AIChatbot 文檔索引
 
-> **文檔定位**: 本文檔提供任務導向的快速查找，包含 API 配置、部署步驟、前端開發、測試指南等實用內容
->
-> **如需**: 了解系統技術更新、檢索邏輯演進、SOP 系統改進等深度技術內容，請查看 [README.md](./README.md)
+> 本文檔提供任務導向的快速查找。技術演進與深度內容請查看 [README.md](./README.md)。
 
-**最後更新**: 2026-01-21
+**最後更新**: 2026-05-18
 
 ---
 
-## 📚 文檔導航
-
-### 🚀 快速開始（新手必看）
-
-| 文檔 | 用途 | 閱讀時間 |
-|------|------|---------|
-| [更新摘要](./archive/2026-01-18-update-summary.md) | 3 分鐘了解 2026-01-18 更新 | 3 分鐘 |
-| [前端待辦清單](./frontend/todo.md) ⭐ | 前端開發任務（簡化版） | 10 分鐘 |
-| [API 配置指南](./design/API_CONFIGURATION_GUIDE.md) | 學習如何配置 API | 20 分鐘 |
-| [如何添加 API 端點](./guides/how-to-add-api-endpoints.md) | API 端點添加指南 | 15 分鐘 |
-
----
-
-### 📖 詳細規格（開發者必讀）
-
-| 文檔 | 用途 | 閱讀時間 |
-|------|------|---------|
-| [完整變更日誌](./archive/2026-01-18-changelog.md) | 2026-01-18 所有變更的詳細規格 | 30 分鐘 |
-| [前端修改需求](./frontend/requirements.md) ⭐ | 前端詳細規格（完整版） | 40 分鐘 |
-| [系統設計](./design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md) | 知識庫動作系統架構 | 30 分鐘 |
-| [實作指南](./design/KNOWLEDGE_ACTION_IMPLEMENTATION_GUIDE.md) | 分步驟實作教學 | 40 分鐘 |
-
----
-
-### 🔍 參考資料
+## 架構文件（Source of Truth）
 
 | 文檔 | 用途 |
 |------|------|
-| [快速參考](./design/KNOWLEDGE_ACTION_QUICK_REFERENCE.md) | 常用配置速查表 |
-| [實作範例](./design/KNOWLEDGE_ACTION_IMPLEMENTATION_EXAMPLE.md) | 程式碼範例 |
-| [實作總結](./design/KNOWLEDGE_ACTION_IMPLEMENTATION_SUMMARY.md) | 實作重點總結 |
+| [完整對話架構](./architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md) ⭐ | 對話流程、意圖分類、SOP/KB 決策、表單狀態機、答案優化 |
+| [Retriever Pipeline](./architecture/retriever-pipeline.md) ⭐ | 分數欄位定義、pipeline stage、閾值對應表 |
+| [系統架構](./architecture/SYSTEM_ARCHITECTURE.md) | 全系統架構、微服務、部署 |
+| [資料庫 Schema](./architecture/DATABASE_SCHEMA.md) | DB 結構、表關聯 |
 
-### 🏗️ 架構文件（2026-04 後最新版）
-
-| 文檔 | 用途 |
-|------|------|
-| [Retriever Pipeline 架構](./architecture/retriever-pipeline.md) ⭐ | 分數欄位定義、pipeline stage、reranker 效能調校、閾值對應表 |
-| [系統架構](./architecture/SYSTEM_ARCHITECTURE.md) | 全系統架構 |
-| [資料庫 schema](./architecture/DATABASE_SCHEMA.md) | DB 結構 |
-
-### 🐛 Issue 追蹤
+## API 文件
 
 | 文檔 | 用途 |
 |------|------|
-| [.kiro/issues/](../.kiro/issues/) | 非 feature 性質的 bug / 調查記錄 |
-| [reranker-returning-zero](../.kiro/issues/reranker-returning-zero.md) | Reranker CPU 超時 hotfix 紀錄 |
+| [API 端點完整清單](./API_ENDPOINTS_COMPLETE_INVENTORY.md) | 所有端點一覽 |
+| [API 文檔索引](./api/README.md) | API 規格詳細說明 |
+| [JGB 外部 API 規格](./api/jgb_external_api_spec.md) | JGB 系統對接規格 |
+| [JGB 合約 API 規格](./api/jgb-contracts-api-spec.md) | JGB 合約查詢規格 |
 
----
-
-### 📊 報告文檔
+## 操作指南
 
 | 文檔 | 用途 |
 |------|------|
-| [部署結果](./design/DEPLOYMENT_RESULTS.md) | 部署記錄 |
-| [最終報告](./design/FINAL_IMPLEMENTATION_REPORT.md) | 專案完成報告 |
-| [系統驗證](./design/SYSTEM_VERIFICATION_REPORT.md) | 系統測試驗證 |
+| [快速開始](./guides/getting-started/QUICKSTART.md) | 新手入門 |
+| [部署指南](./deployment/DEPLOY_GUIDE.md) | 部署步驟 |
+| [部署清單](./deployment/DEPLOY_CHECKLIST.md) | 部署前檢查 |
+| [SOP 指南](./guides/features/SOP_GUIDE.md) | SOP 系統使用 |
+| [知識匯入匯出](./guides/features/KNOWLEDGE_IMPORT_EXPORT_GUIDE.md) | 知識庫管理 |
+| [串流聊天指南](./guides/features/STREAMING_CHAT_GUIDE.md) | SSE 串流實作 |
+| [快取系統](./guides/features/CACHE_SYSTEM_GUIDE.md) | Redis 快取管理 |
+| [更多指南...](./guides/README.md) | 完整指南目錄 |
+
+## 使用者指南（非技術人員）
+
+| 文檔 | 用途 |
+|------|------|
+| [修繕表單指南](./user-guides/MAINTENANCE_FORM_USER_GUIDE.md) | 修繕報修操作 |
+| [SOP 使用指南](./user-guides/VENDOR_SOP_USER_GUIDE.md) | SOP 流程操作 |
+| [知識完善迴圈](./user-guides/knowledge_completion_loop.md) | 知識迴圈操作 |
+| [快速開始](./user-guides/quick_start.md) | 快速上手 |
+
+## 設計文件
+
+| 文檔 | 用途 |
+|------|------|
+| [API 配置指南](./design/API_CONFIGURATION_GUIDE.md) | API 配置方式 |
+| [知識動作系統設計](./design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md) | 知識庫動作架構 |
+| [表單對話設計](./design/FORM_FILLING_DIALOG_DESIGN.md) | 表單填寫流程 |
+| [權限系統設計](./design/PERMISSION_SYSTEM_DESIGN.md) | 權限架構 |
+| [Lookup 表系統設計](./design/LOOKUP_TABLE_SYSTEM_DESIGN.md) | Lookup 系統架構 |
+
+## 功能文件
+
+| 文檔 | 用途 |
+|------|------|
+| [功能文件索引](./features/README.md) | 所有功能總覽 |
+| [表單管理系統](./features/FORM_MANAGEMENT_SYSTEM.md) | 表單系統說明 |
+| [Reranker 功能](./features/RERANKER_FEATURE.md) | 語義重排序 |
+| [認證系統](./features/AUTH_SYSTEM_README.md) | 認證機制 |
+| [SOP 功能](./features/sop/README.md) | SOP 系統完整說明 |
+
+## 回測系統
+
+| 文檔 | 用途 |
+|------|------|
+| [回測快速開始](./backtest/GETTING_STARTED.md) | 回測入門 |
+| [知識完善迴圈](./backtest/KNOWLEDGE_COMPLETION_LOOP_GUIDE.md) | 迴圈完整指南 |
+| [回測速查](./backtest/QUICK_REFERENCE.md) | 快速參考 |
+
+## 測試指南
+
+| 文檔 | 用途 |
+|------|------|
+| [批次測試標準](./testing/BATCH_TEST_STANDARDS.md) | 測試規範 |
+| [Lookup 系統測試](./testing/LOOKUP_SYSTEM_TEST_GUIDE.md) | Lookup 測試方式 |
+| [API 整合測試](./testing/api-integration-testing-guide.md) | API 測試指南 |
+
+## Issue 追蹤
+
+| 文檔 | 用途 |
+|------|------|
+| [.kiro/issues/](../.kiro/issues/) | Bug / 調查記錄 |
+
+## 其他
+
+| 文檔 | 用途 |
+|------|------|
+| [前端文件](./frontend/) | 前端需求、TODO |
+| [變更日誌](./changelog/) | 歷史變更記錄 |
+| [維護記錄](./maintenance/) | 系統審計報告 |
+| [歸檔文件](./archive/) | 所有歷史文件 |
 
 ---
 
-## 🗂️ 按主題查找
-
-### 主題 1：API 配置
-
-**我想...**
-- ✅ 學習如何配置 API → [API 配置指南](./design/API_CONFIGURATION_GUIDE.md)
-- ✅ 了解 API 如何返回數據 → [更新摘要 - 效果對比](./UPDATE_SUMMARY_2026-01-18.md#🎨-效果對比)
-- ✅ 自訂欄位映射 → [更新摘要 - 如何自訂](./UPDATE_SUMMARY_2026-01-18.md#🔧-如何自訂格式化)
-- ✅ 查看 API 配置範例 → [API 配置指南 - 完整範例](./design/API_CONFIGURATION_GUIDE.md#完整範例)
-
----
-
-### 主題 2：資料庫
-
-**我想...**
-- ✅ 了解資料庫變更 → [完整變更日誌 - 資料庫變更規格](./archive/2026-01-18-changelog.md#💾-資料庫變更規格)
-- ✅ 執行資料庫遷移 → [更新摘要 - 快速部署](./archive/2026-01-18-update-summary.md#🚀-快速部署5-步驟)
-- ✅ 查看遷移腳本 → [add_action_type_and_api_config.sql](../database/migrations/add_action_type_and_api_config.sql)
-- ✅ 查看範例配置 → [configure_billing_inquiry_examples.sql](../database/migrations/configure_billing_inquiry_examples.sql)
-
----
-
-### 主題 3：部署
-
-**我想...**
-- ✅ 快速部署系統 → [更新摘要 - 快速部署](./archive/2026-01-18-update-summary.md#🚀-快速部署5-步驟)
-- ✅ 詳細部署步驟 → [完整變更日誌 - 部署檢查清單](./archive/2026-01-18-changelog.md#🚀-部署檢查清單)
-
----
-
-### 主題 4：測試
-
-**我想...**
-- ✅ 了解測試場景 → [更新摘要 - 測試場景](./archive/2026-01-18-update-summary.md#📊-測試場景)
-- ✅ 查看測試規格 → [完整變更日誌 - 測試規格](./archive/2026-01-18-changelog.md#🧪-測試規格)
-- ✅ 執行測試 → [實作指南 - 測試指南](./design/KNOWLEDGE_ACTION_IMPLEMENTATION_GUIDE.md#🧪-測試指南)
-
----
-
-### 主題 5：前端開發
-
-**我想...**
-- ✅ 快速開始前端開發 → [前端待辦清單](./frontend/todo.md) ⭐
-- ✅ 了解詳細的 UI 設計 → [前端修改需求](./frontend/requirements.md)
-- ✅ 查看需要修改的頁面 → [前端修改需求 - 修改總覽](./frontend/requirements.md#📋-修改總覽)
-- ✅ 了解 UI/UX 設計規範 → [前端修改需求 - UI/UX 設計規範](./frontend/requirements.md#🎨-uiux-設計規範)
-
----
-
-### 主題 6：Lookup 數據管理
-
-**我想...**
-- ✅ 了解 Lookup 系統功能 → [Lookup 匯入/匯出指南](./guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md) ⭐ 🆕
-- ✅ 學習如何匯入業者資料 → [Lookup 指南 - 前端介面操作](./guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md#前端介面操作)
-- ✅ 了解 Excel 格式要求 → [Lookup 指南 - Excel 匯入格式](./guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md#excel-匯入格式)
-- ✅ 使用 API 查詢資料 → [Lookup 指南 - API 端點使用](./guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md#api-端點使用)
-- ✅ 查看完整 API 清單 → [API 端點清單 - Lookup 系統](./API_ENDPOINTS_COMPLETE_INVENTORY.md#lookup-table-system-prefix-api)
-
----
-
-### 主題 7：程式碼
-
-**我想...**
-- ✅ 了解核心修改 → [更新摘要 - 核心改動](./archive/2026-01-18-update-summary.md#🎯-核心改動3-分鐘速覽)
-- ✅ 查看程式碼範例 → [實作範例](./design/KNOWLEDGE_ACTION_IMPLEMENTATION_EXAMPLE.md)
-- ✅ 查看 API 參考 → [API 文檔索引](./api/README.md)
-
----
-
-## 🎯 常見任務速查
-
-### 任務 1：我要配置一個新的 API
-
-1. 閱讀：[API 配置指南](./design/API_CONFIGURATION_GUIDE.md)
-2. 參考：[範例配置](./design/API_CONFIGURATION_GUIDE.md#完整範例)
-3. 修改：`rag-orchestrator/services/billing_api.py`
-4. 註冊：`rag-orchestrator/services/api_call_handler.py:33-38`
-5. 配置：在資料庫中插入知識或表單配置
-
----
-
-### 任務 2：我要修改 API 回應格式
-
-1. 查看當前格式化邏輯：`rag-orchestrator/services/api_call_handler.py:287-338`
-2. 修改欄位映射：第 292-302 行
-3. 修改特殊格式化：第 313-316 行
-4. 測試：重啟服務並調用 API
-
----
-
-### 任務 3：我要部署到生產環境
-
-1. 閱讀：[更新摘要 - 快速部署](./archive/2026-01-18-update-summary.md#🚀-快速部署5-步驟)
-2. 檢查：[部署檢查清單](./archive/2026-01-18-changelog.md#🚀-部署檢查清單)
-3. 執行：資料庫遷移 → 重啟服務 → 測試
-
----
-
-### 任務 4：我要測試系統
-
-1. 設置：確保 `USE_MOCK_BILLING_API=true`
-2. 測試場景：[測試場景表](./UPDATE_SUMMARY_2026-01-18.md#📊-測試場景)
-3. 執行測試：使用 curl 或 Postman
-4. 驗證結果：檢查格式化效果
-
----
-
-### 任務 5：我要開發前端功能
-
-1. 快速開始：[前端待辦清單](./frontend/todo.md)
-2. 詳細規格：[前端修改需求](./frontend/requirements.md)
-3. 參考範例：查看 [KnowledgeView.vue](../knowledge-admin/frontend/src/views/KnowledgeView.vue) 現有欄位
-4. 測試：完成後使用 [測試檢查清單](./frontend/todo.md#🧪-測試檢查清單)
-
----
-
-### 任務 6：我要了解系統架構
-
-1. 系統設計：[KNOWLEDGE_ACTION_SYSTEM_DESIGN.md](./design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
-2. 流程圖：[完整變更日誌 - 流程圖](./archive/2026-01-18-changelog.md#🔄-api-變更規格)
-3. API 參考：[API 文檔索引](./api/README.md)
-
----
-
-## 📂 文檔結構
+## 文檔結構
 
 ```
 docs/
-├── INDEX.md                                    # 本文件：文檔索引
-├── README.md                                   # 項目主索引
-├── api/
-│   └── README.md                               # API 文檔索引
-├── frontend/
-│   ├── requirements.md                         # 前端修改需求（詳細版）⭐
-│   ├── todo.md                                 # 前端待辦清單（簡化版）⭐
-│   ├── implementation-summary.md               # 前端實作總結
-│   └── insertion-guide.md                      # 前端插入指南
-├── guides/
-│   ├── api-path-conventions.md                 # API 路徑規範
-│   ├── how-to-add-api-endpoints.md             # 如何添加 API 端點
-│   └── how-to-add-complete-api.md              # 如何添加完整 API
-├── archive/
-│   ├── 2026-01-18-changelog.md                 # 完整變更日誌
-│   ├── 2026-01-18-update-summary.md            # 更新摘要（3分鐘速覽）
-│   ├── 2026-01-21-archive-report.md            # 歸檔報告
-│   └── [其他歷史文件]
-├── fixes/                                      # 修復報告
-├── testing/                                    # 測試報告
-└── design/
-    ├── API_CONFIGURATION_GUIDE.md              # API 配置指南 ⭐
-    ├── KNOWLEDGE_ACTION_SYSTEM_DESIGN.md       # 系統設計
-    ├── KNOWLEDGE_ACTION_IMPLEMENTATION_GUIDE.md # 實作指南
-    ├── KNOWLEDGE_ACTION_QUICK_REFERENCE.md     # 快速參考
-    ├── KNOWLEDGE_ACTION_IMPLEMENTATION_EXAMPLE.md # 實作範例
-    ├── KNOWLEDGE_ACTION_IMPLEMENTATION_SUMMARY.md # 實作總結
-    ├── DEPLOYMENT_RESULTS.md                   # 部署結果
-    ├── FINAL_IMPLEMENTATION_REPORT.md          # 最終報告
-    └── SYSTEM_VERIFICATION_REPORT.md           # 系統驗證
-
-database/migrations/
-├── add_action_type_and_api_config.sql          # 資料庫遷移
-└── configure_billing_inquiry_examples.sql      # 範例配置
-
-rag-orchestrator/services/
-├── api_call_handler.py                         # API 調用處理器 ⭐
-├── billing_api.py                              # 帳單 API 服務 ⭐
-├── form_manager.py                             # 表單管理器
-└── vendor_knowledge_retriever.py               # 知識檢索器
+├── INDEX.md                    # 本文件
+├── README.md                   # 技術演進總覽
+├── architecture/               # 系統架構（source of truth）
+├── api/                        # API 規格
+├── guides/                     # 操作指南（含子目錄）
+├── user-guides/                # 非技術人員指南
+├── features/                   # 功能說明
+├── design/                     # 設計文件
+├── backtest/                   # 回測系統
+├── frontend/                   # 前端文件
+├── deployment/                 # 部署指南
+├── testing/                    # 測試指南
+├── changelog/                  # 變更日誌
+├── maintenance/                # 維護記錄
+└── archive/                    # 歷史歸檔
+    ├── analysis/               # 歷史分析報告
+    ├── deployment-logs/        # 部署日誌
+    ├── design-reports/         # 設計實作報告
+    ├── features-historical/    # 歷史功能記錄
+    ├── fixes/                  # Bug 修復記錄
+    ├── implementation/         # 實作報告
+    ├── maintenance-historical/ # 舊維護記錄
+    ├── reports/                # 歷史報告
+    └── testing-reports/        # 測試報告
 ```
-
----
-
-## 🔖 推薦閱讀順序
-
-### 新手入門（1 小時）
-
-1. [更新摘要](./archive/2026-01-18-update-summary.md) - 3 分鐘
-2. [API 配置指南](./design/API_CONFIGURATION_GUIDE.md) - 20 分鐘
-3. [如何添加 API 端點](./guides/how-to-add-api-endpoints.md) - 15 分鐘
-4. [快速部署](./archive/2026-01-18-update-summary.md#🚀-快速部署5-步驟) - 10 分鐘
-5. [測試場景](./archive/2026-01-18-update-summary.md#📊-測試場景) - 10 分鐘
-
-### 進階開發（3 小時）
-
-1. [完整變更日誌](./archive/2026-01-18-changelog.md) - 30 分鐘
-2. [系統設計](./design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md) - 30 分鐘
-3. [實作指南](./design/KNOWLEDGE_ACTION_IMPLEMENTATION_GUIDE.md) - 40 分鐘
-4. [實作範例](./design/KNOWLEDGE_ACTION_IMPLEMENTATION_EXAMPLE.md) - 30 分鐘
-5. [測試規格](./archive/2026-01-18-changelog.md#🧪-測試規格) - 30 分鐘
-
-### 系統維護（持續）
-
-1. [快速參考](./design/KNOWLEDGE_ACTION_QUICK_REFERENCE.md) - 隨時查閱
-2. [文件檢查清單](./FILES_CHECKLIST.md) - 隨時查閱
-3. [API 配置指南](./design/API_CONFIGURATION_GUIDE.md) - 隨時查閱
-
----
-
-## 💡 提示
-
-- 💬 **有問題？** 先查看 [API 配置指南 - 常見問題](./design/API_CONFIGURATION_GUIDE.md#常見問題)
-- 🐛 **發現問題？** 參考 [實作指南 - 常見問題排查](./design/KNOWLEDGE_ACTION_IMPLEMENTATION_GUIDE.md#🐛-常見問題排查)
-- 🚀 **要部署？** 使用 [更新摘要 - 快速部署](./archive/2026-01-18-update-summary.md#🚀-快速部署5-步驟)
-- 📊 **要測試？** 參考 [測試場景表](./archive/2026-01-18-update-summary.md#📊-測試場景)
-- 📁 **查看修復記錄？** 瀏覽 [修復報告索引](./fixes/README.md)
-
----
-
-**維護者**: Claude Code
-**最後更新**: 2026-01-21

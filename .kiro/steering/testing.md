@@ -43,14 +43,14 @@ LoopConfig(
 ```sql
 test_scenarios
 ├── id
-├── question                -- 測試問題
+├── test_question           -- 測試問題
 ├── expected_answer         -- 預期答案（可選）
-├── status                  -- 'approved'/'pending_review'/'rejected'
-├── vendor_id               -- 業者 ID
-├── category                -- 問題分類（可選）
-├── source                  -- 'manual'/'user_question'/'auto_generated'
+├── expected_category       -- 預期分類（可選）
+├── status                  -- 'pending_review'/'approved'/'rejected'/'draft'
+├── source                  -- 'manual'/'user_question'/'auto_generated'/'imported'
 ├── difficulty              -- 'easy'/'medium'/'hard'
 └── created_at
+-- 注意：此表無 vendor_id 欄位，測試場景為跨業者共用
 ```
 
 ### 狀態管理
@@ -106,12 +106,13 @@ backtest_results
 ├── id
 ├── run_id                  -- 回測批次 ID（用於追蹤同批次重測）
 ├── scenario_id             -- 對應的 test_scenarios.id
-├── question
-├── expected_answer
-├── actual_answer           -- RAG 系統實際回答
-├── is_pass                 -- 是否通過（布林值）
-├── execution_time          -- 回答耗時（毫秒）
-└── created_at
+├── test_question           -- 測試問題
+├── system_answer           -- RAG 系統實際回答
+├── passed                  -- 是否通過（布林值）
+├── confidence              -- 信心度
+├── score                   -- 綜合分數
+├── evaluation JSONB        -- 完整評估（含 relevance/completeness/accuracy）
+└── tested_at
 ```
 
 ## 4. 失敗案例分析
@@ -142,7 +143,7 @@ backtest_results
 
 ### 迭代完成條件
 
-**3 種情況會結束迭代**：
+**3 種情況會結束迭代**（`check_completion_conditions`）：
 
 ```python
 # Case 1: 達到目標通過率
@@ -150,16 +151,18 @@ if latest_pass_rate >= target_pass_rate:  # >= 85%
     status = 'completed'
     reason = f"達到目標通過率 {latest_pass_rate:.1%}"
 
-# Case 2: 超過最大迭代次數
-if current_iteration >= max_iterations:  # >= 10
+# Case 2: 連續 2 輪通過率改善 < 2%（停滯）
+if consecutive_no_improvement >= 2:
     status = 'completed'
-    reason = f"超過最大迭代次數 {current_iteration}/{max_iterations}"
+    reason = "連續 2 輪無顯著改善（< 2%）"
 
-# Case 3: 無新的知識缺口（無法再改善）
-if failed_count == 0:
+# Case 3: 執行時間超過 24 小時
+if elapsed_hours > 24:
     status = 'completed'
-    reason = "無失敗案例"
+    reason = "執行時間超過 24 小時"
 ```
+
+> **注意**：`failed_count == 0` 是單次迭代內的早期返回條件（不是迴圈級別的完成條件）。`max_iterations` 由呼叫端控制，不在 `check_completion_conditions` 內。
 
 ### 同批次重測驗證
 

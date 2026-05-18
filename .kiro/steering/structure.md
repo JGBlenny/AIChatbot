@@ -23,20 +23,29 @@ AIChatbot/
 │   ├── requirements.txt                # Python 依賴
 │   │
 │   ├── routers/                        # API 路由層
-│   │   ├── chat.py                     # 聊天對話
-│   │   ├── knowledge.py                # 知識管理
-│   │   ├── platform_sop.py             # SOP 編排
-│   │   ├── forms.py                    # 表單管理
-│   │   ├── api_endpoints.py            # 外部 API 管理
-│   │   ├── lookup.py                   # Lookup 表管理
-│   │   ├── unclear_questions.py        # 未釐清問題
+│   │   ├── chat.py                     # 聊天對話（核心）
+│   │   ├── chat_shared.py              # Chat 共用工具
+│   │   ├── vendors.py                  # 業者管理
+│   │   ├── knowledge.py                # 知識 CRUD
+│   │   ├── knowledge_generation.py     # 知識生成
 │   │   ├── knowledge_import.py         # 知識匯入
 │   │   ├── knowledge_export.py         # 知識匯出
+│   │   ├── platform_sop.py             # SOP 編排
+│   │   ├── forms.py                    # 表單管理
+│   │   ├── intents.py                  # 意圖管理
+│   │   ├── suggested_intents.py        # 意圖建議
+│   │   ├── loops.py                    # 知識完善迴圈
+│   │   ├── loop_knowledge.py           # 迴圈知識審核
+│   │   ├── api_endpoints.py            # 外部 API 管理
+│   │   ├── lookup.py                   # Lookup 表管理
+│   │   ├── images.py                   # 圖片上傳
 │   │   ├── videos.py                   # 視頻管理
+│   │   ├── document_converter.py       # 文檔轉換
 │   │   ├── business_types.py           # 業態類型
 │   │   ├── target_user_config.py       # 目標用戶配置
-│   │   ├── document_converter.py       # 文檔轉換
-│   │   └── cache.py                    # 快取管理
+│   │   ├── cache.py                    # 快取管理
+│   │   ├── system_health.py            # 系統健康檢查
+│   │   └── error_middleware.py         # 錯誤處理中介
 │   │
 │   ├── services/                       # 業務邏輯層
 │   │   ├── rag_engine.py               # RAG 檢索引擎
@@ -74,18 +83,27 @@ AIChatbot/
 │   │   ├── intent_semantic_matcher.py  # 意圖語義匹配器
 │   │   ├── keyword_matcher.py          # 關鍵字匹配器
 │   │   ├── sop_trigger_handler.py      # SOP 觸發處理器
-│   │   ├── sop_keywords_handler.py     # SOP 關鍵字處理器
 │   │   ├── sop_next_action_handler.py  # SOP 下一步處理器
 │   │   ├── sop_embedding_generator.py  # SOP 嵌入生成器
+│   │   ├── sop_utils.py                # SOP 工具函式
 │   │   ├── form_validator.py           # 表單驗證器
 │   │   ├── vendor_parameter_resolver.py # 業者參數解析器
-│   │   ├── api_call_handler.py         # API 呼叫處理器
 │   │   ├── universal_api_handler.py    # 通用 API 處理器
 │   │   ├── billing_api.py              # 計費 API
 │   │   ├── document_converter_service.py # 文檔轉換服務
+│   │   ├── image_recognition_service.py # 圖片辨識服務
+│   │   ├── s3_image_service.py         # S3 圖片服務
 │   │   ├── s3_video_service.py         # S3 視頻服務
 │   │   ├── answer_formatter.py         # 答案格式化器
 │   │   ├── llm_provider.py             # LLM 提供者
+│   │   ├── query_rewriter.py           # 查詢改寫器
+│   │   ├── intent_suggestion_engine.py # 意圖建議引擎
+│   │   ├── embedding_utils.py          # Embedding 工具
+│   │   ├── db_utils.py                 # 資料庫工具
+│   │   ├── pipeline_health_service.py  # 管線健康檢查
+│   │   ├── unified_job_service.py      # 統一背景任務
+│   │   ├── jgb_system_api.py           # JGB 系統 API
+│   │   ├── jgb_response_formatter.py   # JGB 回應格式化
 │   │   └── ...
 │   │
 │   ├── models/                         # 資料模型
@@ -95,13 +113,10 @@ AIChatbot/
 │   ├── config/                         # 配置管理
 │   │   ├── deduplication_config.py     # 去重配置
 │   │   ├── business_types.py           # 業態類型配置
-│   │   └── ...
+│   │   └── intents.yaml                # 意圖 YAML（DB fallback）
 │   │
-│   ├── utils/                          # 工具函數
-│   │   ├── db_utils.py                 # 資料庫工具
-│   │   ├── embedding_utils.py          # 嵌入工具
-│   │   ├── sop_utils.py                # SOP 工具
-│   │   └── ...
+│   ├── utils/                          # 工具函數（目前為空，工具已移至 services/）
+│   │   └── __init__.py
 │   │
 │   ├── tests/                          # 測試檔案
 │   │   ├── test_rag_engine.py
@@ -271,25 +286,53 @@ from config.deduplication_config import DeduplicationConfig
 ### API Keys
 - `OPENAI_API_KEY`
 
+### LLM 模型配置
+- `OPENAI_MODEL`: 答案優化模型 (預設 gpt-4o-mini)
+- `INTENT_CLASSIFIER_MODEL`: 意圖分類模型 (預設 gpt-3.5-turbo)
+- `KNOWLEDGE_GEN_MODEL`: 知識生成模型 (預設 gpt-4o-mini)
+- `DOCUMENT_CONVERTER_MODEL`: 文件轉換模型 (預設 gpt-4o)
+- `QUERY_REWRITE_MODEL`: 查詢改寫模型 (預設 gpt-3.5-turbo)
+- `EMBEDDING_MODEL`: Embedding 模型 (預設 text-embedding-3-small)
+- `LLM_ANSWER_TEMPERATURE`, `LLM_ANSWER_MAX_TOKENS`: 答案生成溫度/token
+- `INTENT_CLASSIFIER_TEMPERATURE`, `INTENT_CLASSIFIER_MAX_TOKENS`
+- `LLM_SYNTHESIS_TEMP`: 合成溫度 (預設 0.5)
+
 ### 服務配置
 - `RAG_RETRIEVAL_LIMIT`: RAG 檢索限制 (預設 5)
 - `PRIORITY_BOOST`: 優先級加成 (預設 0.15)
 - `PRIORITY_QUALITY_THRESHOLD`: 優先級品質門檻 (預設 0.70)
 - `USE_SEMANTIC_RERANK`: 是否啟用語義重排序 (預設 false)
 - `ENABLE_ANSWER_SYNTHESIS`: 是否啟用答案合成 (預設 false)
-- `SYNTHESIS_THRESHOLD`: 答案合成閾值 (預設 0.7)
+- `SYNTHESIS_THRESHOLD`: 答案合成閾值 (預設 0.80)
+- `PERFECT_MATCH_THRESHOLD`: 完美匹配閾值 (預設 0.90)
+- `FAST_PATH_THRESHOLD`: 快速路徑閾值 (預設 0.75)
+- `CONFIDENCE_HIGH_THRESHOLD`: 高信心度 (預設 0.85)
+- `CONFIDENCE_MEDIUM_THRESHOLD`: 中信心度 (預設 0.70)
+- `ENABLE_QUERY_REWRITE`: 是否啟用查詢改寫
+- `ENABLE_RERANKER`: 是否啟用 Reranker
+- `RERANKER_INPUT_LIMIT`: Reranker 輸入限制 (預設 20)
+- `SEMANTIC_API_URL`: 語義模型 API URL
+
+### SOP 配置
+- `SOP_SIMILARITY_THRESHOLD`: SOP 相似度閾值 (預設 0.55)
+- `KB_SIMILARITY_THRESHOLD`: 知識庫相似度閾值 (預設 0.6)
 
 ### 回測配置
 - `VENDOR_ID`: 業者 ID
-- `BACKTEST_BATCH_LIMIT`: 回測批次限制
-- `BACKTEST_FILTER_STATUS`: 回測過濾狀態 (如 approved)
 - `BACKTEST_ONLY`: 僅執行回測模式 (true/false)
+- `BACKTEST_CONCURRENCY`, `BACKTEST_TIMEOUT`, `BACKTEST_QUALITY_MODE` 等
 
 ### Redis
-- `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
+- `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`
+- `CACHE_ENABLED`, `CACHE_TTL_QUESTION`, `CACHE_TTL_VECTOR`, `CACHE_TTL_RAG_RESULT`
 
 ### AWS S3
-- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET_NAME`
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `S3_BUCKET_NAME`, `CLOUDFRONT_DOMAIN`
+
+### 外部 API
+- `BILLING_API_BASE_URL`, `BILLING_API_KEY`, `USE_MOCK_BILLING_API`
+- `JGB_API_BASE_URL`, `JGB_API_KEY`, `USE_MOCK_JGB_API`
+- `ENABLE_IMAGE_RECOGNITION`, `IMAGE_RECOGNITION_MODEL`
 
 ## 文件組織模式
 

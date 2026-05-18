@@ -13,10 +13,13 @@
 
 ```mermaid
 graph LR
-    Q[Query 文字] --> EMB[embedding-api]
+    Q[Query 文字] --> QR[Stage 0: query_rewriter<br/>查詢改寫]
+    QR --> EMB[embedding-api]
     EMB --> Vec[Stage 1: _vector_search<br/>寫入 vector_similarity]
+    QR --> RVec[Stage 1.1: rewrite vector<br/>改寫查詢向量搜尋]
     Q --> KW[Stage 2: _keyword_search fallback<br/>寫入 keyword_score]
     Vec --> Merge[合併去重]
+    RVec --> Merge
     KW --> Merge
     Merge --> Boost[Stage 3: _apply_keyword_boost<br/>寫入 keyword_boost]
     Boost --> Rerank[Stage 4: _apply_semantic_reranker<br/>寫入 rerank_score]
@@ -25,6 +28,8 @@ graph LR
     Filter --> TopK[排序取 top_k]
     TopK --> Out[結果列表]
 ```
+
+> **Note**: Stage 0（查詢改寫）使用 `query_rewriter` 產生語義等價的替代查詢，Stage 1.1 用改寫後的查詢再做一次向量搜尋並與原始結果合併去重，提升召回率。
 
 每個 stage 為純資料增補（不覆寫前階段欄位），最終由 `_finalize_scores` 階段依公式組合 final `similarity`。
 
@@ -112,7 +117,7 @@ else:
 
 ```
 SQL vector search:      LIMIT 50    （SOP） / LIMIT 100 （知識庫）
-Keyword fallback:       LIMIT 10
+Keyword fallback:       LIMIT (top_k - 已有結果數)  # 動態計算，非固定值
 _apply_keyword_boost:   O(N) jieba
 Reranker 過濾:          下限 + 上限截斷（見下方）
 _apply_semantic_reranker: 過濾後送 HTTP 到 semantic-model

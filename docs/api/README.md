@@ -41,15 +41,15 @@
 |---------|------|------|------|------|
 | **API 核心函數參考** | `docs/design/CORE_API_FUNCTIONS_REFERENCE.md` | 2026-01-20 | ✅ 最新 | 快速參考統一處理函數和核心 API |
 | **API 數據流程完整說明** | `docs/design/API_DATA_FLOW.md` | 2026-01-20 | ✅ 最新 | 了解完整的數據流程和轉換 |
-| **動態 API 測試報告** | `docs/design/DYNAMIC_API_TESTING_REPORT.md` | 2026-01-20 | ✅ 最新 | 測試結果和生產就緒評估 |
+| **動態 API 測試報告** | `docs/archive/design-reports/DYNAMIC_API_TESTING_REPORT.md` | 2026-01-20 | ✅ 最新 | 測試結果和生產就緒評估 |
 | **改進的 API 架構設計** | `docs/design/IMPROVED_API_ARCHITECTURE.md` | 2026-01-18 | ✅ 有效 | 架構設計和實作細節 |
 
 ### ⚠️ 部分過時文檔（參考用）
 
 | 文檔名稱 | 路徑 | 日期 | 狀態 | 備註 |
 |---------|------|------|------|------|
-| **API Endpoint 架構說明** | `docs/API_ENDPOINT_ARCHITECTURE.md` | 2026-01-18 | ⚠️ 已過時 | 描述舊架構，僅供參考 |
-| **如何新增 API Endpoint** | `docs/HOW_TO_ADD_COMPLETE_API.md` | 2026-01-18 | ⚠️ 部分過時 | 僅適用於複雜自定義 API |
+| **API Endpoint 架構說明** | （已刪除） | 2026-01-18 | ❌ 已刪除 | 請參考 `design/IMPROVED_API_ARCHITECTURE.md` |
+| **如何新增 API Endpoint** | `guides/api/how-to-add-complete-api.md` | 2026-01-18 | ⚠️ 部分過時 | 已遷移至 guides/ |
 
 ---
 
@@ -81,14 +81,14 @@
 - 10% 情況: 寫自定義函數（複雜邏輯）
 
 #### 「新架構測試通過了嗎？可以上線嗎？」
-→ 閱讀: [動態 API 測試報告](./design/DYNAMIC_API_TESTING_REPORT.md)
+→ 閱讀: [動態 API 測試報告](../archive/design-reports/DYNAMIC_API_TESTING_REPORT.md)
 
 **測試結果**:
 - ✅ 26 個測試項全部通過
 - ✅ 生產就緒度: 可以上線
 
 #### 「舊架構是怎樣的？」
-→ 閱讀: [API Endpoint 架構說明](./API_ENDPOINT_ARCHITECTURE.md) (已過時)
+→ 閱讀: [改良版 API 架構](../design/IMPROVED_API_ARCHITECTURE.md)
 
 **注意**: 僅供了解歷史，新開發請使用新架構
 
@@ -159,7 +159,7 @@
 
 **架構設計**:
 - [改進的 API 架構設計](./design/IMPROVED_API_ARCHITECTURE.md) ✅
-- [API Endpoint 架構說明](./API_ENDPOINT_ARCHITECTURE.md) ⚠️ (舊架構)
+- [改良版 API 架構](../design/IMPROVED_API_ARCHITECTURE.md)
 
 **核心函數**:
 - [API 核心函數參考](./design/CORE_API_FUNCTIONS_REFERENCE.md) ✅ (最新)
@@ -168,10 +168,10 @@
 - [API 數據流程完整說明](./design/API_DATA_FLOW.md) ✅
 
 **測試驗證**:
-- [動態 API 測試報告](./design/DYNAMIC_API_TESTING_REPORT.md) ✅
+- [動態 API 測試報告](../archive/design-reports/DYNAMIC_API_TESTING_REPORT.md) ✅
 
 **操作指南**:
-- [如何新增 API Endpoint](./HOW_TO_ADD_COMPLETE_API.md) ⚠️ (部分過時，僅適用自定義 API)
+- [如何新增 API Endpoint](../guides/api/how-to-add-complete-api.md) ⚠️ (部分過時，僅適用自定義 API)
 
 ---
 
@@ -257,8 +257,8 @@
 - ✅ 統一處理函數說明 → [API 核心函數參考](./design/CORE_API_FUNCTIONS_REFERENCE.md)
 - ✅ 數據流程說明 → [API 數據流程完整說明](./design/API_DATA_FLOW.md)
 - ✅ 架構設計說明 → [改進的 API 架構設計](./design/IMPROVED_API_ARCHITECTURE.md)
-- ✅ 測試驗證報告 → [動態 API 測試報告](./design/DYNAMIC_API_TESTING_REPORT.md)
-- ✅ 舊文檔標註 → [API Endpoint 架構說明](./API_ENDPOINT_ARCHITECTURE.md) (已標註)
+- ✅ 測試驗證報告 → [動態 API 測試報告](../archive/design-reports/DYNAMIC_API_TESTING_REPORT.md)
+- ✅ 舊文檔標註 → API Endpoint 架構說明（已刪除，改用 IMPROVED_API_ARCHITECTURE.md）
 - ✅ 文檔索引 → 本文檔
 
 **完整性評分**: 95% ✅

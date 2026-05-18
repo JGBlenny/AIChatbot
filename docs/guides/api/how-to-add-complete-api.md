@@ -17,7 +17,7 @@
 > 更多資訊請參考:
 > - [改進的 API 架構設計](./design/IMPROVED_API_ARCHITECTURE.md)
 > - [API 數據流程完整說明](./design/API_DATA_FLOW.md)
-> - [動態 API 測試報告](./design/DYNAMIC_API_TESTING_REPORT.md)
+> - [動態 API 測試報告](../../archive/design-reports/DYNAMIC_API_TESTING_REPORT.md)
 
 **日期**: 2026-01-18
 **目的**: 從頭到尾新增一個可工作的 API endpoint（自定義函數方式）

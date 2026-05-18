@@ -90,15 +90,15 @@
 | **SOP 觸發模式更新** | [SOP 觸發模式更新索引](./SOP_TRIGGER_MODE_UPDATE_INDEX.md) ⭐ 🆕 | 2026-02-03 UI 優化完整索引 |
 | **SOP 系統使用** | [SOP 系統完整指南](./guides/SOP_GUIDE.md) | SOP 系統完整使用說明 |
 | **SOP 測試執行** | [SOP 測試執行指南](./testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md) 🆕 | 9個核心測試場景 |
-| **理解對話流程** | [CHAT_FLOW_ANALYSIS_2026-01-24.md](./analysis/CHAT_FLOW_ANALYSIS_2026-01-24.md) ⭐ | 完整對話流程分析、10個步驟詳解 |
-| **查看最新修正** | [CHAT_LOGIC_FIXES_2026-01-24.md](./fixes/CHAT_LOGIC_FIXES_2026-01-24.md) | 2026-01-24 三個問題修正報告 |
-| **快速了解實施內容** | [IMPLEMENTATION_SUMMARY.md](./implementation/SUMMARY.md) | 實施總結，包含代碼修改、驗證結果 |
-| **完整實施報告** | [FINAL_IMPLEMENTATION_2026-01-13.md](./implementation/FINAL_2026-01-13.md) | 完整故事線：問題→演進→實施→驗證 |
-| **理解檢索邏輯** | [RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md](./analysis/retrieval_logic_complete.md) | 完整檢索邏輯分析、4種方案對比 |
-| **理解設計原則** | [RETRIEVAL_PHILOSOPHY_ANALYSIS.md](./analysis/retrieval_philosophy.md) | 「向量為主，意圖為輔」哲學、數學證明 |
+| **理解對話流程** | [完整對話架構](./architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md) ⭐ | 對話流程、意圖分類、SOP/KB 決策、表單狀態機 |
+| **查看最新修正** | [CHAT_LOGIC_FIXES_2026-01-24.md](./archive/fixes/CHAT_LOGIC_FIXES_2026-01-24.md) | 2026-01-24 三個問題修正報告 |
+| **快速了解實施內容** | [IMPLEMENTATION_SUMMARY.md](./archive/implementation/SUMMARY.md) | 實施總結，包含代碼修改、驗證結果 |
+| **完整實施報告** | [FINAL_IMPLEMENTATION_2026-01-13.md](./archive/implementation/FINAL_2026-01-13.md) | 完整故事線：問題→演進→實施→驗證 |
+| **理解檢索邏輯** | [RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md](./archive/analysis/retrieval_logic_complete.md) | 完整檢索邏輯分析、4種方案對比 |
+| **理解設計原則** | [RETRIEVAL_PHILOSOPHY_ANALYSIS.md](./archive/analysis/retrieval_philosophy.md) | 「向量為主，意圖為輔」哲學、數學證明 |
 | **執行測試** | [test_retrieval_logic_validation.sh](../scripts/test_retrieval_validation.sh) | 自動化測試腳本（5個測試案例） |
 | **生產部署** | [DEPLOY_STEPS_2026-01-13.md](./deployment/steps_2026-01-13.md) | 生產環境部署步驟 |
-| **表單引導改善** | [FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md](./features/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md) | 表單引導語和驗證改善 |
+| **表單引導改善** | [FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md](./archive/features-historical/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md) | 表單引導語和驗證改善 |
 
 ---
 
@@ -106,7 +106,7 @@
 
 ### ⭐ 核心文檔（必讀）
 
-#### 1. [FINAL_IMPLEMENTATION_2026-01-13.md](./implementation/FINAL_2026-01-13.md)
+#### 1. [FINAL_IMPLEMENTATION_2026-01-13.md](./archive/implementation/FINAL_2026-01-13.md)
 **最重要的文檔**，包含：
 - 完整問題回顧
 - 解決方案演進（方案 A → 選項 A）
@@ -117,7 +117,7 @@
 
 **適合**：想全面了解整個實施過程的人
 
-#### 2. [IMPLEMENTATION_SUMMARY.md](./implementation/SUMMARY.md)
+#### 2. [IMPLEMENTATION_SUMMARY.md](./archive/implementation/SUMMARY.md)
 **實施總結**，包含：
 - 代碼修改統計（+40, -259）
 - 核心修改要點
@@ -131,7 +131,7 @@
 
 ### 📖 分析文檔
 
-#### 3. [RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md](./analysis/retrieval_logic_complete.md)
+#### 3. [RETRIEVAL_LOGIC_COMPLETE_ANALYSIS.md](./archive/analysis/retrieval_logic_complete.md)
 **檢索邏輯完整分析**：
 - 10 個檢索階段詳解
 - 4 種優化方案對比
@@ -140,7 +140,7 @@
 
 **適合**：需要深入理解檢索機制的開發者
 
-#### 4. [RETRIEVAL_PHILOSOPHY_ANALYSIS.md](./analysis/retrieval_philosophy.md)
+#### 4. [RETRIEVAL_PHILOSOPHY_ANALYSIS.md](./archive/analysis/retrieval_philosophy.md)
 **設計哲學分析**：
 - 「向量為主，意圖為輔」原則
 - 問題根源分析

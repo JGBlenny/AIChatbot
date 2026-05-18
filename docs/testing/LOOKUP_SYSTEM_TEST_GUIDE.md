@@ -429,7 +429,7 @@ curl "http://localhost:8100/api/lookup?category=billing_interval&key=地址&vend
 如有問題，請查看：
 - [系統設計文檔](../design/LOOKUP_TABLE_SYSTEM_DESIGN.md)
 - [快速參考指南](../guides/LOOKUP_TABLE_QUICK_REFERENCE.md)
-- [實現總結](../implementation/LOOKUP_TABLE_IMPLEMENTATION_SUMMARY.md)
+- [實現總結](../archive/implementation/LOOKUP_TABLE_IMPLEMENTATION_SUMMARY.md)
 
 **測試業者**: Vendor 1
 **知識 ID**: 1296

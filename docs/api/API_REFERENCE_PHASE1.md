@@ -280,7 +280,7 @@ curl -X POST http://localhost:8100/api/v1/message \
 
 ---
 
-### GET /chat/v1/vendors/{vendor_id}/test
+### GET /api/v1/vendors/{vendor_id}/test
 
 測試業者配置
 
@@ -290,7 +290,7 @@ curl -X POST http://localhost:8100/api/v1/message \
 
 #### 請求
 
-**URL:** `GET /chat/v1/vendors/{vendor_id}/test`
+**URL:** `GET /api/v1/vendors/{vendor_id}/test`
 
 **Path Parameters:**
 
@@ -341,12 +341,12 @@ curl -X POST http://localhost:8100/api/v1/message \
 #### cURL 範例
 
 ```bash
-curl http://localhost:8100/chat/v1/vendors/1/test
+curl http://localhost:8100/api/v1/vendors/1/test
 ```
 
 ---
 
-### POST /chat/v1/reload
+### POST /api/v1/reload
 
 重新載入多業者服務
 
@@ -356,7 +356,7 @@ curl http://localhost:8100/chat/v1/vendors/1/test
 
 #### 請求
 
-**URL:** `POST /chat/v1/reload`
+**URL:** `POST /api/v1/reload`
 
 #### 回應
 
@@ -373,7 +373,7 @@ curl http://localhost:8100/chat/v1/vendors/1/test
 #### cURL 範例
 
 ```bash
-curl -X POST http://localhost:8100/chat/v1/reload
+curl -X POST http://localhost:8100/api/v1/reload
 ```
 
 ---
@@ -1328,7 +1328,7 @@ echo -e "\n=== 測試 6: 獲取業者列表 ==="
 curl "$BASE_URL/api/v1/vendors" | jq '.[].name'
 
 echo -e "\n=== 測試 7: 測試業者配置 ==="
-curl "$BASE_URL/chat/v1/vendors/1/test" | jq '.test_template'
+curl "$BASE_URL/api/v1/vendors/1/test" | jq '.test_template'
 ```
 
 使用方法：
@@ -1368,7 +1368,7 @@ chmod +x test-api.sh
 
 #### v3.0 (2025-10-22) - Phase 3 完整更新
 **重大變更：**
-- ✅ **端點路徑修正**: `/chat/v1/message` → `/api/v1/message`
+- ✅ **端點路徑修正**: `/api/v1/message` → `/api/v1/message`
 - ⭐ **新增緩存管理 API**: 4 個端點（invalidate/clear/stats/health）
 - 📊 **新增三層緩存架構說明**: 問題快取、向量快取、結果快取
 - 📝 **擴充錯誤代碼表**: 新增詳細錯誤碼和解決方案

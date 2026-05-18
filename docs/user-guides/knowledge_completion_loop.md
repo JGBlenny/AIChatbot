@@ -705,8 +705,8 @@
 如有問題，請聯繫：
 - **技術文檔**: `.kiro/specs/backtest-knowledge-refinement/`
 - **API 文檔**: `docs/api/loops_api.md`, `docs/api/loop_knowledge_api.md`
-- **開發者指南**: `docs/developer_guide/architecture.md`
-- **部署文檔**: `docs/deployment/2026-03-27/DEPLOY_KNOWLEDGE_COMPLETION_LOOP.md`
+- **開發者指南**: `docs/architecture/developer_architecture.md`
+- **部署文檔**: `docs/archive/deployment-logs/2026-03-27/DEPLOY_KNOWLEDGE_COMPLETION_LOOP.md`
 
 ---
 
