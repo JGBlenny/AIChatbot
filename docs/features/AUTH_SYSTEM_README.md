@@ -79,7 +79,7 @@ database/migrations/
 
 ### 2. 管理員操作
 
-請參考：[**ADMIN_MANAGEMENT_PLAN.md**](../archive/implementation/ADMIN_MANAGEMENT_PLAN.md)
+請參考：**ADMIN_MANAGEMENT_PLAN.md**
 
 包含：
 - 新增管理員
@@ -89,7 +89,7 @@ database/migrations/
 
 ### 3. 實作細節
 
-請參考：[**AUTH_IMPLEMENTATION_SUMMARY.md**](../archive/implementation/AUTH_IMPLEMENTATION_SUMMARY.md)
+請參考：**AUTH_IMPLEMENTATION_SUMMARY.md**
 
 包含：
 - 完整的技術架構

@@ -598,8 +598,8 @@ curl http://your-domain/api/v1/knowledge-import/jobs/{job_id}
 
 ## 相關文件
 
-- [統一 Job 系統設計](../../archive/2025-Q4/planning/UNIFIED_JOB_SYSTEM_DESIGN.md)
-- [知識匯入/匯出介面規劃](../../archive/2025-Q4/planning/KNOWLEDGE_EXPORT_IMPORT_INTERFACE_PLANNING.md)
+- 統一 Job 系統設計
+- 知識匯入/匯出介面規劃
 - API 文件
 
 ---

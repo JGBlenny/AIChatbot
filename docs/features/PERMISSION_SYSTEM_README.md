@@ -350,10 +350,10 @@ async def create_knowledge(data: KnowledgeCreate, user: dict = Depends(get_curre
 ### 認證系統
 - [認證系統總覽](./AUTH_SYSTEM_README.md)
 - [認證部署指南](../guides/deployment/AUTH_DEPLOYMENT_GUIDE.md)
-- [認證實作總結](../archive/implementation/AUTH_IMPLEMENTATION_SUMMARY.md)
+- 認證實作總結
 
 ### 管理功能
-- [管理員管理計劃](../archive/implementation/ADMIN_MANAGEMENT_PLAN.md)
+- 管理員管理計劃
 
 ---
 

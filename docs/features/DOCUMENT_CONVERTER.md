@@ -736,7 +736,7 @@ curl -X POST http://localhost:8100/api/v1/document-converter/conv-abc123/export-
 
 - [Knowledge Admin API 參考](../api/API_REFERENCE_KNOWLEDGE_ADMIN.md)
 - [RAG Orchestrator API 參考](../api/API_REFERENCE_PHASE1.md)
-- [知識匯入功能](../archive/2025-Q4/features/KNOWLEDGE_IMPORT_FEATURE.md)
+- 知識匯入功能
 - [資料庫架構文件](../architecture/DATABASE_SCHEMA.md)
 
 ---

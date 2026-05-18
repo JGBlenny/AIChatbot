@@ -64,9 +64,9 @@ deployment/
 - 修復前端 sidebarCollapsed 錯誤
 
 **部署文件**（已遷移至 archive）：
-- [DEPLOY_README_2026-01-10.md](../archive/deployment-logs/2026-01-10/DEPLOY_README_2026-01-10.md) - 部署索引
-- [QUICK_DEPLOY_2026-01-10.md](../archive/deployment-logs/2026-01-10/QUICK_DEPLOY_2026-01-10.md) - 快速部署
-- [PRODUCTION_DEPLOY_2026-01-10.md](../archive/deployment-logs/2026-01-10/PRODUCTION_DEPLOY_2026-01-10.md) - 完整部署
+- DEPLOY_README_2026-01-10.md - 部署索引
+- QUICK_DEPLOY_2026-01-10.md - 快速部署
+- PRODUCTION_DEPLOY_2026-01-10.md - 完整部署
 
 **資料庫遷移：**
 - `database/migrations/add_knowledge_base_missing_columns.sql`
@@ -86,7 +86,7 @@ deployment/
 - 文檔結構重組優化
 
 **部署文件：**
-- [DEPLOY_2026-01-21.md](../archive/deployment-logs/2026-01-21/DEPLOY_2026-01-21.md) - 完整部署指南
+- DEPLOY_2026-01-21.md - 完整部署指南
 
 **資料庫遷移：**
 - `database/migrations/add_action_type_and_api_config.sql` - 新增知識庫動作類型和 API 配置
@@ -96,8 +96,8 @@ deployment/
 - `database/migrations/remove_handler_function_column.sql` - 移除已棄用欄位
 
 **相關文檔：**
-- [API 整合完整修復報告](../archive/fixes/2026-01-21-api-integration-fix.md)
-- [API 整合深度分析](../archive/fixes/2026-01-21-api-integration-analysis.md)
+- API 整合完整修復報告
+- API 整合深度分析
 - [API 整合測試指南](../testing/api-integration-testing-guide.md)
 - 文檔重組報告
 
@@ -110,14 +110,14 @@ deployment/
 - 移除 form_intro 欄位，統一使用表單 default_intro（commit 781a7c0）
 
 **部署文件：**
-- [DEPLOY_2026-01-13.md](../archive/deployment-logs/2026-01-13/DEPLOY_2026-01-13.md) - 整合部署指南（包含所有更新）
+- DEPLOY_2026-01-13.md - 整合部署指南（包含所有更新）
 
 **資料庫遷移：**
 - `database/migrations/remove_form_intro_2026-01-13.sql` - 刪除 knowledge_base.form_intro 欄位
 
 **相關文檔：**
 - 統一檢索路徑實施報告
-- [表單引導語改善報告](../archive/features-historical/FORM_GUIDANCE_IMPROVEMENT_2026-01-13.md)
+- 表單引導語改善報告
 
 ---
 
@@ -129,7 +129,7 @@ deployment/
 - **文檔完善**：完整的 Migration 使用說明和 FAQ
 
 **部署文件：**
-- [DEPLOY_2026-01-22.md](../archive/deployment-logs/2026-01-22/DEPLOY_2026-01-22.md) - Migration 系統部署指南
+- DEPLOY_2026-01-22.md - Migration 系統部署指南
 
 **資料庫遷移：**
 - `database/migrations/000_create_schema_migrations.sql` - 創建 Migration 追蹤表
@@ -170,10 +170,10 @@ deployment/
 - **🔧 觸發模式改進**：immediate 模式確認提示詞改為可選（系統預設）
 
 **部署文件：**
-- [DEPLOYMENT_2026-01-28.md](../archive/deployment-logs/DEPLOYMENT_2026-01-28.md) - 完整部署指南（含回滾計畫）
+- DEPLOYMENT_2026-01-28.md - 完整部署指南（含回滾計畫）
 
 **技術文檔：**
-- [SMART_RETRIEVAL_IMPLEMENTATION.md](../archive/implementation/SMART_RETRIEVAL_IMPLEMENTATION.md) - 智能檢索完整實施報告
+- SMART_RETRIEVAL_IMPLEMENTATION.md - 智能檢索完整實施報告
 - [SMART_RETRIEVAL_QUICK_REF.md](../SMART_RETRIEVAL_QUICK_REF.md) - 快速參考指南
 - [RERANKER_FEATURE.md](../features/RERANKER_FEATURE.md) - Reranker 功能文檔
 - CHANGELOG_2026-01-28.md - 詳細更新日誌
@@ -250,12 +250,12 @@ deployment/
 - **Embeddings 重新生成**：56 個 SOP 全部更新
 
 **部署文件：**
-- [DEPLOYMENT_2026-01-26_PRIMARY_EMBEDDING_FIX.md](../archive/deployment-logs/DEPLOYMENT_2026-01-26_PRIMARY_EMBEDDING_FIX.md) - 完整部署記錄
+- DEPLOYMENT_2026-01-26_PRIMARY_EMBEDDING_FIX.md - 完整部署記錄
 
 **技術文檔：**
-- [PRIMARY_EMBEDDING_FIX.md](../archive/features-historical/PRIMARY_EMBEDDING_FIX.md) - 技術詳細說明
+- PRIMARY_EMBEDDING_FIX.md - 技術詳細說明
 - [DUAL_EMBEDDING_RETRIEVAL.md](../features/DUAL_EMBEDDING_RETRIEVAL.md) - 雙 Embedding 檢索
-- [threshold_evaluation_report.md](../archive/testing-reports/2026-01-26/2026-01-26/threshold_evaluation_report.md) - 閾值評估報告
+- threshold_evaluation_report.md - 閾值評估報告
 
 **代碼變更：**
 - `rag-orchestrator/services/sop_embedding_generator.py` - Primary Embedding 修復
@@ -348,7 +348,7 @@ deployment/
 - **💰 成本追蹤與控制** ⭐⭐⭐：OpenAI API 成本監控與預算限制
 
 **部署文件：**
-- [DEPLOY_KNOWLEDGE_COMPLETION_LOOP.md](../archive/deployment-logs/2026-03-27/DEPLOY_KNOWLEDGE_COMPLETION_LOOP.md) - 完整部署指南
+- DEPLOY_KNOWLEDGE_COMPLETION_LOOP.md - 完整部署指南
 
 **API 文檔：**
 - [loops_api.md](../api/loops_api.md) - 迴圈管理 API（10 個端點）
@@ -428,7 +428,7 @@ deployment/
 
 ### 生產環境升級指南
 如果您的生產環境目前是 **fa4d9a6 版本**，請使用：
-- **[DEPLOY_FROM_FA4D9A6_TO_LATEST.md](../archive/deployment-logs/DEPLOY_FROM_FA4D9A6_TO_LATEST.md)** - 完整的從 fa4d9a6 到 e3a6ff9 的升級指南
+- **DEPLOY_FROM_FA4D9A6_TO_LATEST.md** - 完整的從 fa4d9a6 到 e3a6ff9 的升級指南
 
 這份文檔包含：
 - ✅ 5 個 commit 的完整變更說明

@@ -1047,7 +1047,7 @@ services:
 - [API 文檔 - 迴圈管理](../api/loops_api.md)
 - [API 文檔 - 知識審核](../api/loop_knowledge_api.md)
 - [使用者指南](../user-guides/knowledge_completion_loop.md)
-- [部署指南](../archive/deployment-logs/2026-03-27/DEPLOY_KNOWLEDGE_COMPLETION_LOOP.md)
+- 部署指南
 - [技術設計文檔](../../.kiro/specs/backtest-knowledge-refinement/design.md)
 
 ---

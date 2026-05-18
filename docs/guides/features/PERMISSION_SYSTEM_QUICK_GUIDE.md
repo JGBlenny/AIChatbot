@@ -238,7 +238,7 @@ docker-compose ps
 
 - [完整設計文檔](../../design/PERMISSION_SYSTEM_DESIGN.md)
 - [UI 設計規範](../../design/PERMISSION_UI_DESIGN.md)
-- [測試報告](../../archive/testing-reports/PERMISSION_SYSTEM_TEST_REPORT.md)
+- 測試報告
 - [實作快速開始](../getting-started/PERMISSION_QUICK_START.md)
 
 ---

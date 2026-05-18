@@ -81,7 +81,7 @@
 - 10% 情況: 寫自定義函數（複雜邏輯）
 
 #### 「新架構測試通過了嗎？可以上線嗎？」
-→ 閱讀: [動態 API 測試報告](../archive/design-reports/DYNAMIC_API_TESTING_REPORT.md)
+→ 閱讀: 動態 API 測試報告
 
 **測試結果**:
 - ✅ 26 個測試項全部通過
@@ -168,7 +168,7 @@
 - [API 數據流程完整說明](../design/API_DATA_FLOW.md) ✅
 
 **測試驗證**:
-- [動態 API 測試報告](../archive/design-reports/DYNAMIC_API_TESTING_REPORT.md) ✅
+- 動態 API 測試報告 ✅
 
 **操作指南**:
 - [如何新增 API Endpoint](../guides/api/how-to-add-complete-api.md) ⚠️ (部分過時，僅適用自定義 API)
@@ -257,7 +257,7 @@
 - ✅ 統一處理函數說明 → [API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md)
 - ✅ 數據流程說明 → [API 數據流程完整說明](../design/API_DATA_FLOW.md)
 - ✅ 架構設計說明 → [改進的 API 架構設計](../design/IMPROVED_API_ARCHITECTURE.md)
-- ✅ 測試驗證報告 → [動態 API 測試報告](../archive/design-reports/DYNAMIC_API_TESTING_REPORT.md)
+- ✅ 測試驗證報告 → 動態 API 測試報告
 - ✅ 舊文檔標註 → API Endpoint 架構說明（已刪除，改用 IMPROVED_API_ARCHITECTURE.md）
 - ✅ 文檔索引 → 本文檔
 

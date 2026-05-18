@@ -144,8 +144,8 @@ curl -X POST "http://localhost:8100/api/v1/knowledge-import/upload" \
 
 ## 更多資訊
 
-- 📖 [完整文檔](../../archive/2025-Q4/features/PRIORITY_SYSTEM.md)
-- 📝 [變更日誌](../../archive/backtest-historical/CHANGELOG.md)
+- 📖 完整文檔
+- 📝 變更日誌
 - 🏗️ [系統架構](../../README.md)
 
 ---

@@ -327,10 +327,10 @@ docker-compose up -d --force-recreate rag-orchestrator
 
 ## 📚 相關文檔
 
-- [RAG 實施計劃](../archive/implementation/RAG_IMPLEMENTATION_PLAN.md)
+- RAG 實施計劃
 - [系統架構](../architecture/SYSTEM_ARCHITECTURE.md)
-- [Knowledge 檢索優化指南](../archive/2025-Q4/backtest/BACKTEST_KNOWLEDGE_OPTIMIZATION_GUIDE.md)
-- [Reranker 實施完成報告](../archive/completion_reports/RERANKER_IMPLEMENTATION_COMPLETE.md)
+- Knowledge 檢索優化指南
+- Reranker 實施完成報告
 
 ---
 

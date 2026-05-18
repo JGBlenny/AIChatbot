@@ -361,7 +361,7 @@ INSERT INTO api_endpoints (
 ## 📚 相關文檔
 
 - [API 數據流程完整說明](./API_DATA_FLOW.md) - 詳細的 12 階段流程
-- [動態 API 測試報告](../archive/design-reports/DYNAMIC_API_TESTING_REPORT.md) - 測試驗證
+- 動態 API 測試報告 - 測試驗證
 - [改進的 API 架構設計](./IMPROVED_API_ARCHITECTURE.md) - 架構設計思路
 
 ---

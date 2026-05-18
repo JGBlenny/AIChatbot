@@ -122,7 +122,7 @@ window.fetch = function(url, options = {}) {
 }
 ```
 
-**如果不存在**，請參考 [AUTH_IMPLEMENTATION_SUMMARY.md](../../archive/implementation/AUTH_IMPLEMENTATION_SUMMARY.md#🌐-全局-fetch-攔截器) 添加此代碼。
+**如果不存在**，請參考 AUTH_IMPLEMENTATION_SUMMARY.md 添加此代碼。
 
 ---
 
@@ -453,11 +453,11 @@ Authorization: Bearer <token>
 
 ## 📎 相關文件
 
-- [完整測試流程指南](../../archive/auth_testing/AUTH_FINAL_TEST_GUIDE.md) ⭐ **推薦**
-- [詳細測試報告](../../archive/auth_testing/AUTH_TEST_RESULTS.md)
-- [實作總結](../../archive/implementation/AUTH_IMPLEMENTATION_SUMMARY.md)
-- [快速測試指南](../../archive/auth_testing/AUTH_QUICK_TEST.md)
-- [API 保護指南](../../archive/auth_testing/API_PROTECTION_GUIDE.md)
+- 完整測試流程指南 ⭐ **推薦**
+- 詳細測試報告
+- 實作總結
+- 快速測試指南
+- API 保護指南
 
 ---
 
