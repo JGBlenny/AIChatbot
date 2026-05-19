@@ -63,6 +63,12 @@ class APICallHandler:
             'jgb_estates': self.jgb_api.get_estates,
             'jgb_repair_categories': self.jgb_api.get_repair_categories,
             'jgb_create_repair': self.jgb_api.create_repair,
+            # JGB v1.1 診斷用端點
+            'jgb_bill_detail': self.jgb_api.get_bill_detail,
+            'jgb_payment_logs': self.jgb_api.get_payment_logs,
+            'jgb_invoice_logs': self.jgb_api.get_invoice_logs,
+            'jgb_subscription': self.jgb_api.get_subscription,
+            'jgb_iot_manufacturers': self.jgb_api.get_iot_manufacturers,
         }
 
     async def execute_api_call(

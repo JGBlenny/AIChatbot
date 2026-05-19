@@ -12,6 +12,10 @@
         </div>
       </div>
       <div class="header-actions">
+        <select v-model="targetUser" @change="onRoleChange" class="role-select">
+          <option value="tenant">🏠 租客</option>
+          <option value="property_manager">🏢 業者</option>
+        </select>
         <button @click="clearChat" class="btn-secondary btn-sm">
           🗑️ 清除對話
         </button>
@@ -269,15 +273,20 @@ export default {
       this.isLoading = true;
 
       try {
+        const isB2B = ['property_manager', 'system_admin'].includes(this.targetUser);
         const payload = {
           message: userMessage,
           vendor_id: this.vendor.id,
           target_user: this.targetUser,
+          mode: isB2B ? 'b2b' : 'b2c',
           include_sources: false,
           session_id: this.sessionId,
           user_id: this.userId,
           stream: true
         };
+        if (isB2B && this.vendor.settings?.jgb_role_id) {
+          payload.role_id = this.vendor.settings.jgb_role_id;
+        }
 
         // 帶上已上傳的圖片 URLs
         if (this.pendingImageUrls.length > 0) {
@@ -502,6 +511,15 @@ export default {
         timestamp: new Date().toISOString(),
         metadata
       });
+    },
+
+    onRoleChange() {
+      // 切換角色時重設 session 和對話
+      this.sessionId = this.generateUUID();
+      this.messages = [];
+      this.messageIdCounter = 1;
+      this.quickReplies = [];
+      console.log('🔄 角色切換為:', this.targetUser, '新 session:', this.sessionId);
     },
 
     clearChat() {
@@ -931,6 +949,16 @@ export default {
 .btn-sm {
   font-size: 0.85rem;
   padding: 0.4rem 0.8rem;
+}
+
+.role-select {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
 }
 
 /* 訊息影片播放器 */

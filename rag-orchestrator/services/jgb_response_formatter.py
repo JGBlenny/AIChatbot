@@ -106,6 +106,27 @@ def format_jgb_response(api_result: dict, endpoint: str = "", user_question: str
     if endpoint in ("jgb_contracts", "jgb_contract_checkin"):
         return _format_contracts(data, user_question, form_data=form_data)
 
+    # v1.1 診斷用 endpoint → 各自的診斷引擎
+    if endpoint == "jgb_bill_detail":
+        from services.jgb.bills import diagnose_bill
+        return diagnose_bill(data if isinstance(data, dict) else {}, user_question)
+
+    if endpoint == "jgb_payment_logs":
+        from services.jgb.payments import diagnose_payment_logs
+        return diagnose_payment_logs(data if isinstance(data, list) else [], user_question)
+
+    if endpoint == "jgb_invoice_logs":
+        from services.jgb.invoices import diagnose_invoice_logs
+        return diagnose_invoice_logs(data if isinstance(data, list) else [], user_question)
+
+    if endpoint == "jgb_subscription":
+        from services.jgb.subscription import diagnose_subscription
+        return diagnose_subscription(data if isinstance(data, dict) else {}, user_question)
+
+    if endpoint == "jgb_iot_manufacturers":
+        from services.jgb.iot import diagnose_iot
+        return diagnose_iot(data if isinstance(data, list) else [], user_question)
+
     # 其他 endpoint → 通用格式化
     if isinstance(data, dict):
         return _format_single(data, mapping)

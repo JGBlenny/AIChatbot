@@ -323,6 +323,109 @@ class JGBSystemAPI:
         return await self._post_request("/api/external/v1/repairs", data)
 
     # ------------------------------------------------------------------
+    # v1.1 診斷用端點
+    # ------------------------------------------------------------------
+
+    async def get_bill_detail(
+        self,
+        role_id: str,
+        bill_id: int,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """查詢單一帳單詳情（含 pay_info + details）"""
+        if not role_id:
+            return self._degraded_response()
+
+        if self.use_mock:
+            return self._mock_get_bill_detail(role_id, bill_id)
+
+        params: dict[str, Any] = {"role_id": role_id}
+        return await self._request(
+            f"/api/external/v1/bills/{bill_id}", params
+        )
+
+    async def get_payment_logs(
+        self,
+        role_id: str,
+        payment_id: Optional[int] = None,
+        bill_id: Optional[int] = None,
+        transaction_id: Optional[str] = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """查詢付款交易的金流 API 日誌"""
+        if not role_id:
+            return self._degraded_response()
+
+        if self.use_mock:
+            return self._mock_get_payment_logs(role_id, payment_id, bill_id)
+
+        params: dict[str, Any] = {"role_id": role_id}
+        if payment_id is not None:
+            params["payment_id"] = payment_id
+        if bill_id is not None:
+            params["bill_id"] = bill_id
+        if transaction_id:
+            params["transaction_id"] = transaction_id
+        return await self._request("/api/external/v1/payment-logs", params)
+
+    async def get_invoice_logs(
+        self,
+        role_id: str,
+        invoice_id: Optional[int] = None,
+        bill_id: Optional[int] = None,
+        action: Optional[str] = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """查詢發票開立/作廢的 API 日誌"""
+        if not role_id:
+            return self._degraded_response()
+
+        if self.use_mock:
+            return self._mock_get_invoice_logs(role_id, invoice_id, bill_id)
+
+        params: dict[str, Any] = {"role_id": role_id}
+        if invoice_id is not None:
+            params["invoice_id"] = invoice_id
+        if bill_id is not None:
+            params["bill_id"] = bill_id
+        if action:
+            params["action"] = action
+        return await self._request("/api/external/v1/invoice-logs", params)
+
+    async def get_subscription(
+        self,
+        role_id: str,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """查詢團隊的訂閱方案與物件額度"""
+        if not role_id:
+            return self._degraded_response()
+
+        if self.use_mock:
+            return self._mock_get_subscription(role_id)
+
+        return await self._request(
+            f"/api/external/v1/roles/{role_id}/subscription", {}
+        )
+
+    async def get_iot_manufacturers(
+        self,
+        role_id: str,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """查詢團隊的 IoT 廠商綁定狀態"""
+        if not role_id:
+            return self._degraded_response()
+
+        if self.use_mock:
+            return self._mock_get_iot_manufacturers(role_id)
+
+        params: dict[str, Any] = {"role_id": role_id}
+        return await self._request(
+            "/api/external/v1/iot-manufacturers", params
+        )
+
+    # ------------------------------------------------------------------
     # Mock implementations
     # ------------------------------------------------------------------
 
@@ -837,5 +940,201 @@ class JGBSystemAPI:
                 "emergency_status": emergency_status,
                 "status": 1,
                 "created_at": "2026-04-22 19:00:00",
+            },
+        }
+
+    # ------------------------------------------------------------------
+    # v1.1 Mock implementations
+    # ------------------------------------------------------------------
+
+    def _mock_get_bill_detail(
+        self, role_id: str, bill_id: int
+    ) -> dict[str, Any]:
+        logger.info(f"[MOCK] get_bill_detail: role_id={role_id}, bill_id={bill_id}")
+        return {
+            "success": True,
+            "mapping": {
+                "status": {"1": "待發送", "2": "待繳費", "8": "待對帳", "16": "已繳費", "32": "排定發送", "64": "已失效"},
+                "type": {"1": "一般租金", "2": "點退", "3": "新增帳單", "4": "罰款", "5": "儲值", "6": "押金設算息"},
+                "unit_type": {"": "無單位", "1": "度", "2": "日", "3": "月"},
+            },
+            "data": {
+                "id": bill_id,
+                "contract_id": 678,
+                "estate_id": 456,
+                "type": 1,
+                "category": 3,
+                "bit_status": 2,
+                "title": "2026年4月租金",
+                "sub_title": "2026/04/01 ~ 2026/04/30",
+                "currency": "TWD",
+                "total": 25000.00,
+                "final_total": 25000.00,
+                "date_expire": 20260405,
+                "is_auto_pay": False,
+                "pay_at": None,
+                "complete_at": None,
+                "pay_info": {
+                    "type": "online",
+                    "manufacturer": "newebpay",
+                    "action": "atm",
+                    "expire_ymd": "2026/04/10",
+                    "atm_info": {
+                        "bank_code": "004",
+                        "bank_name": "台灣銀行",
+                        "atm": "9103522178643201",
+                        "expire": "2026-04-10",
+                    },
+                },
+                "details": [
+                    {
+                        "id": 101,
+                        "label": "租金",
+                        "unit_price": 25000.00,
+                        "unit_type": None,
+                        "unit_count": 1.00,
+                        "measurement_before": None,
+                        "measurement_after": None,
+                        "total_price": 25000.00,
+                        "active": 1,
+                    },
+                    {
+                        "id": 102,
+                        "label": "電費",
+                        "unit_price": 5.50,
+                        "unit_type": 1,
+                        "unit_count": 120.00,
+                        "measurement_before": 1000.00,
+                        "measurement_after": 1120.00,
+                        "total_price": 660.00,
+                        "active": 1,
+                    },
+                ],
+                "created_at": "2026-03-25T10:30:00+08:00",
+                "updated_at": "2026-04-01T00:00:00+08:00",
+            },
+        }
+
+    def _mock_get_payment_logs(
+        self, role_id: str, payment_id: Optional[int] = None,
+        bill_id: Optional[int] = None,
+    ) -> dict[str, Any]:
+        logger.info(f"[MOCK] get_payment_logs: role_id={role_id}, payment_id={payment_id}, bill_id={bill_id}")
+        return {
+            "success": True,
+            "mapping": {
+                "action": {
+                    "credit_card": "信用卡", "atm": "ATM 轉帳",
+                    "cvs": "超商代碼", "cvs_barcode": "超商條碼",
+                },
+                "type": {"bill": "帳單付款", "subscription": "訂閱付款", "topup": "儲值"},
+            },
+            "data": [
+                {
+                    "id": 50001,
+                    "role_id": int(role_id) if role_id else 0,
+                    "payment_id": payment_id or 9876,
+                    "transaction_id": "TXN20260401123456",
+                    "manufacturer": "newebpay",
+                    "action": "credit_card",
+                    "type": "bill",
+                    "amount": "25000",
+                    "note": "信用卡授權失敗",
+                    "response": {
+                        "Status": "LIB10002",
+                        "Message": "信用卡授權失敗，請確認卡片資訊",
+                    },
+                    "created_at": "2026-04-01T14:00:00+08:00",
+                },
+            ],
+            "pagination": {
+                "current_page": 1, "per_page": 50,
+                "total": 1, "total_pages": 1, "has_more": False,
+            },
+        }
+
+    def _mock_get_invoice_logs(
+        self, role_id: str, invoice_id: Optional[int] = None,
+        bill_id: Optional[int] = None,
+    ) -> dict[str, Any]:
+        logger.info(f"[MOCK] get_invoice_logs: role_id={role_id}, invoice_id={invoice_id}, bill_id={bill_id}")
+        return {
+            "success": True,
+            "mapping": {
+                "action": {
+                    "issue": "開立", "invalid": "作廢",
+                    "allowance": "折讓", "allowance_invalid": "作廢折讓",
+                },
+            },
+            "data": [
+                {
+                    "id": 60001,
+                    "invoice_id": invoice_id or 5001,
+                    "bill_id": bill_id or 12345,
+                    "manufacturer": "ezpay",
+                    "action": "issue",
+                    "type": "bill",
+                    "http_code": 200,
+                    "response_data": {
+                        "RtnCode": 1,
+                        "RtnMsg": "開立發票成功",
+                        "InvoiceNumber": "AZ00000123",
+                    },
+                    "note": None,
+                    "created_at": "2026-04-01T10:00:00+08:00",
+                },
+            ],
+            "pagination": {
+                "current_page": 1, "per_page": 50,
+                "total": 1, "total_pages": 1, "has_more": False,
+            },
+        }
+
+    def _mock_get_subscription(self, role_id: str) -> dict[str, Any]:
+        logger.info(f"[MOCK] get_subscription: role_id={role_id}")
+        return {
+            "success": True,
+            "mapping": {
+                "plan_type": {"trial": "試用", "basic": "基本", "advance": "進階"},
+            },
+            "data": {
+                "role_id": int(role_id) if role_id else 0,
+                "is_subscribed": 1,
+                "plan_id": 3,
+                "plan_type": "advance",
+                "plan_name": "進階方案",
+                "plan_start_ymd": 20260101,
+                "plan_end_ymd": 20261231,
+                "plan_estate_limit": 50,
+                "plan_price": 2990.00,
+                "plan_currency": "TWD",
+                "plan_cycle": "monthly",
+                "estate_usage": {
+                    "current_count": 35,
+                    "limit": 55,
+                    "remain": 20,
+                },
+            },
+        }
+
+    def _mock_get_iot_manufacturers(self, role_id: str) -> dict[str, Any]:
+        logger.info(f"[MOCK] get_iot_manufacturers: role_id={role_id}")
+        return {
+            "success": True,
+            "mapping": {
+                "manufacturer": {"SkyWatch": "SkyWatch", "Miezo": "Miezo", "DAE": "DAE"},
+            },
+            "data": [
+                {
+                    "id": 1,
+                    "role_id": int(role_id) if role_id else 0,
+                    "manufacturer": "SkyWatch",
+                    "manufacturer_user_id": "user_abc123",
+                    "is_active": 1,
+                },
+            ],
+            "pagination": {
+                "current_page": 1, "per_page": 50,
+                "total": 1, "total_pages": 1, "has_more": False,
             },
         }
