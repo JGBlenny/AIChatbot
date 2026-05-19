@@ -106,6 +106,10 @@ def format_jgb_response(api_result: dict, endpoint: str = "", user_question: str
     if endpoint in ("jgb_contracts", "jgb_contract_checkin"):
         return _format_contracts(data, user_question, form_data=form_data)
 
+    # 租客摘要 → 專屬格式化
+    if endpoint == "jgb_tenant_summary":
+        return _format_tenant_summary(data if isinstance(data, dict) else {})
+
     # v1.1 診斷用 endpoint → 各自的診斷引擎
     if endpoint == "jgb_bill_detail":
         from services.jgb.bills import diagnose_bill
@@ -247,3 +251,85 @@ def _format_value(key: str, value: Any) -> str:
         return "、".join(str(v) for v in value) if value else "無"
 
     return str(value)
+
+
+def _format_tenant_summary(data: dict) -> str:
+    """格式化租客摘要"""
+    if not data:
+        return "查無此租客資料，請確認租客 ID 或姓名是否正確。"
+
+    tenant = data.get("tenant_info", {})
+    contract = data.get("contract_summary", {})
+    bill = data.get("bill_summary", {})
+    repair = data.get("repair_summary", {})
+
+    lines = []
+
+    # 租客資訊
+    name = tenant.get("lessee_name", "未知")
+    email = tenant.get("lessee_email", "")
+    phone = tenant.get("lessee_registered_phone", "")
+    registered = "已註冊" if tenant.get("is_lessee_user_registered") else "未註冊"
+    active = "啟用" if tenant.get("active") else "停用"
+
+    lines.append(f"**租客：{name}**")
+    if email:
+        lines.append(f"　Email：{email}")
+    if phone:
+        lines.append(f"　電話：{phone}")
+    lines.append(f"　帳號狀態：{registered}（{active}）")
+
+    # 合約摘要
+    total = contract.get("registered_contract_count", 0) + contract.get("exempt_register_contract_count", 0)
+    signed = contract.get("registered_contract_signed_count", 0) + contract.get("exempt_register_contract_signed_count", 0)
+    history = contract.get("registered_contract_history_count", 0) + contract.get("exempt_register_contract_history_count", 0)
+    inviting = contract.get("registered_contract_inviting_count", 0)
+
+    lines.append(f"\n**合約：**共 {total} 份")
+    parts = []
+    if signed:
+        parts.append(f"執行中 {signed}")
+    if history:
+        parts.append(f"歷史 {history}")
+    if inviting:
+        parts.append(f"簽約中 {inviting}")
+    if parts:
+        lines.append(f"　{' / '.join(parts)}")
+
+    # 帳單摘要
+    bill_total = bill.get("income_bill_count", 0)
+    ready = bill.get("income_bill_ready_count", 0)
+    overdue = bill.get("income_bill_ready_overdue_count", 0)
+    complete = bill.get("income_bill_complete_count", 0)
+    on_time = bill.get("income_bill_complete_on_time_count", 0)
+    late = bill.get("income_bill_complete_late_count", 0)
+    ratio = bill.get("income_bill_paid_on_time_ratio", 0)
+
+    lines.append(f"\n**帳單：**共 {bill_total} 筆")
+    if ready:
+        overdue_note = f"，其中逾期 {overdue} 筆" if overdue else ""
+        lines.append(f"　待繳 {ready} 筆{overdue_note}")
+    if complete:
+        lines.append(f"　已繳 {complete} 筆（準時 {on_time} / 逾期繳 {late}，準時率 {ratio}%）")
+
+    # 修繕摘要
+    repair_total = repair.get("repair_count", 0)
+    apply_count = repair.get("repair_apply_count", 0)
+    assign_count = repair.get("repair_assign_count", 0)
+    complete_count = repair.get("repair_complete_count", 0)
+    finish_count = repair.get("repair_finish_count", 0)
+
+    lines.append(f"\n**修繕：**共 {repair_total} 筆")
+    r_parts = []
+    if apply_count:
+        r_parts.append(f"申請中 {apply_count}")
+    if assign_count:
+        r_parts.append(f"安排中 {assign_count}")
+    if complete_count:
+        r_parts.append(f"已完成 {complete_count}")
+    if finish_count:
+        r_parts.append(f"已結單 {finish_count}")
+    if r_parts:
+        lines.append(f"　{' / '.join(r_parts)}")
+
+    return "\n".join(lines)
