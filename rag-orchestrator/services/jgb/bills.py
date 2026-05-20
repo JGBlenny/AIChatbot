@@ -67,11 +67,16 @@ def _diagnose_cannot_send(bill: dict) -> str:
             continue
         # 費用名稱：label > item.name > unit_type 推斷
         item = detail.get("item", {}) or {}
-        label = detail.get("label") or item.get("name") or UNIT_TYPE_NAMES.get(detail.get("unit_type"), f"第 {idx} 項費用")
+        raw_label = detail.get("label") or item.get("name")
+        label = raw_label or UNIT_TYPE_NAMES.get(detail.get("unit_type"), f"第 {idx} 項費用")
         unit_type = detail.get("unit_type")
         unit_price = detail.get("unit_price")
         measurement_before = detail.get("measurement_before")
         measurement_after = detail.get("measurement_after")
+
+        # 費用名稱為空（label=null）：系統可能要求填寫
+        if not raw_label:
+            blockers.append(f"{label}（第 {idx} 項）尚未設定費用名稱")
 
         # 度數類（電費、水費等）需要上期/本期度數
         if unit_type == 1:  # 度
@@ -166,17 +171,21 @@ def _diagnose_manual_complete(bill: dict) -> str:
 def _diagnose_atm_expired(bill: dict) -> str:
     """P04：虛擬帳號過期"""
     title = bill.get("title", f"帳單 {bill.get('id', '?')}")
-    pay_info = bill.get("pay_info", {})
+    pay_info = bill.get("pay_info") or {}
 
-    if not pay_info:
-        return f"帳單「{title}」沒有付款資訊，可能尚未產生繳費方式。"
-
-    action = pay_info.get("action", "")
-    atm_info = pay_info.get("atm_info", {})
+    # 判斷繳費方式：優先看 pay_info.action，fallback 看 online_payment_action
+    action = pay_info.get("action") or bill.get("online_payment_action") or ""
+    atm_info = pay_info.get("atm_info") or {}
     expire_ymd = pay_info.get("expire_ymd", "")
 
-    if action != "atm" or not atm_info:
-        return f"帳單「{title}」的繳費方式不是虛擬帳號（ATM），目前為「{action}」。"
+    if action != "atm":
+        display_action = action or "未設定"
+        if not action:
+            return f"帳單「{title}」尚未產生繳費方式，可能租客尚未操作付款。"
+        return f"帳單「{title}」的繳費方式不是虛擬帳號（ATM），目前為「{display_action}」。"
+
+    if not atm_info:
+        return f"帳單「{title}」已設定為 ATM 轉帳，但虛擬帳號尚未產生。租客需先在繳費頁面操作取號。"
 
     lines = [f"帳單「{title}」的虛擬帳號資訊：\n"]
     lines.append(f"• 銀行：{atm_info.get('bank_name', '?')}（代碼 {atm_info.get('bank_code', '?')}）")

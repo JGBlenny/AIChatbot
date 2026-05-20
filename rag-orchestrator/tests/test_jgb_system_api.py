@@ -51,7 +51,7 @@ class TestRoleIdUserIdValidation:
         result = await api.get_bills(role_id="", user_id="100")
         assert result["success"] is False
         assert "error" in result
-        assert "message" in result
+        assert result["error"]["message"]
 
     @pytest.mark.asyncio
     async def test_none_role_id_returns_degraded(self, api):
@@ -65,7 +65,7 @@ class TestRoleIdUserIdValidation:
 
     @pytest.mark.asyncio
     async def test_none_user_id_returns_degraded(self, api):
-        result = await api.get_contracts(role_id="200", user_id=None)
+        result = await api.get_payments(role_id="200", user_id=None)
         assert result["success"] is False
 
     @pytest.mark.asyncio
@@ -88,7 +88,7 @@ class TestRoleIdUserIdValidation:
         for coro in endpoints:
             result = await coro
             assert result["success"] is False, f"Expected degraded response, got: {result}"
-            assert "message" in result
+            assert result.get("error", {}).get("message")
 
 
 class TestGetBillsMock:
@@ -207,7 +207,7 @@ class TestGetPaymentsMock:
         result = await api.get_payments(role_id="200", user_id="100")
         payment = result["data"][0]
         required_fields = [
-            "id", "no", "status", "manufacturer", "payment",
+            "id", "no", "status", "manufacturer", "payment_method",
             "currency", "price", "final_price",
         ]
         for field in required_fields:
@@ -281,7 +281,7 @@ class TestErrorHandling:
             result = await svc.get_bills(role_id="200", user_id="100")
             assert result["success"] is False
             assert "error" in result
-            assert "message" in result
+            assert result["error"]["message"]
 
     @pytest.mark.asyncio
     async def test_timeout_returns_fallback(self):
@@ -302,7 +302,7 @@ class TestErrorHandling:
 
             result = await svc.get_bills(role_id="200", user_id="100")
             assert result["success"] is False
-            assert "message" in result
+            assert result["error"]["message"]
 
 
 class TestMockDataVariety:

@@ -618,9 +618,10 @@ class FormManager:
         current_field_index = session_state['current_field_index']
         current_field = form_schema['fields'][current_field_index]
 
-        # 3. 偵測離題（動態欄位類型跳過離題偵測，因為輸入可能是地址、關鍵字等非意圖文字）
+        # 3. 偵測離題（動態欄位類型或自由文字跳過離題偵測，因為輸入可能是姓名、地址、關鍵字等非意圖文字）
         field_type = current_field.get('field_type', 'text')
-        skip_digression = field_type in ('api_search', 'api_select', 'image', 'select')
+        validation_type = current_field.get('validation_type', '')
+        skip_digression = field_type in ('api_search', 'api_select', 'image', 'select') or validation_type == 'free_text'
 
         if not skip_digression:
             has_images = bool(image_urls)

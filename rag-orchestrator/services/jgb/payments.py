@@ -18,7 +18,13 @@ def diagnose_payment_logs(logs: list, user_question: str = "") -> str:
     user_question: 用戶原始問題
     """
     if not logs:
-        return "查無此帳單的付款紀錄。可能是尚未嘗試付款，或帳單編號不正確。"
+        return (
+            "查無此帳單的金流交易日誌。可能原因：\n"
+            "• 租客尚未操作線上付款（帳單處於待繳費狀態）\n"
+            "• 帳單是透過手動到帳（非線上金流），不會產生金流日誌\n"
+            "• 帳單編號不正確\n\n"
+            "如果帳單已顯示「已繳費」但您仍有疑問，請查詢帳單詳情確認付款時間。"
+        )
 
     question = user_question.lower() if user_question else ""
 

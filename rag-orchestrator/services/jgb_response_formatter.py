@@ -11,9 +11,13 @@ from typing import Any
 FIELD_LABELS = {
     "id": "編號",
     "title": "標題",
+    "estate_title": "物件",
     "estate_name": "物件",
     "total": "金額",
     "amount": "金額",
+    "price": "金額",
+    "final_price": "實付金額",
+    "total_amt": "發票金額",
     "rent": "月租金",
     "date_expire": "繳費期限",
     "date_start": "起始日",
@@ -28,9 +32,11 @@ FIELD_LABELS = {
     "invoice_status": "發票狀態",
     "invoice_number": "發票號碼",
     "number": "發票號碼",
+    "type": "類型",
     "category": "類別",
     "manufacturer": "金流商",
     "payment_method": "付款方式",
+    "note": "備註",
     "name": "姓名",
     "email": "Email",
     "phone": "電話",
@@ -38,41 +44,100 @@ FIELD_LABELS = {
     "is_email_verified": "Email 已驗證",
     "category_name": "類別",
     "item_name": "項目",
-    "is_emergency": "緊急",
-    "assigned_vendor": "維修廠商",
-    "scheduled_date": "預約日期",
-    "cost": "費用",
+    "emergency_status": "急迫性",
+    "manufacturer_name": "維修廠商",
+    "manufacturer_phone": "廠商電話",
+    "broken_reason": "損壞原因",
+    "broken_note": "補充說明",
+    "estate_full_address": "地址",
+    "estate_room_number": "房號",
+    "user_name": "管理者",
+    "to_user_name": "租客",
+    "agent_name": "經辦人",
+    "user_note": "管理者備註",
+    "to_user_note": "租客備註",
+    "user_phone": "管理者電話",
+    "user_email": "管理者信箱",
+    "to_user_phone": "租客電話",
+    "to_user_email": "租客信箱",
+    "ready_at": "發送時間",
+    "apply_at": "申請時間",
+    "assign_at": "派工時間",
+    "complete_at": "完成時間",
+    "finish_at": "結單時間",
+    "lessee_name": "姓名",
+    "lessee_email": "Email",
+    "lessee_registered_phone": "電話",
+    "lessee_primary_contact": "主要聯絡方式",
+    "is_lessee_user_registered": "已註冊",
+    "plan_name": "方案名稱",
+    "plan_type": "方案類型",
     "eligible": "可點交",
     "contract_status": "合約狀態",
-    "first_bill_paid": "首期帳單已繳",
-    "deposit_required": "應繳押金",
-    "deposit_paid": "已繳押金",
-    "blockers": "未通過項目",
+    "first_bill_status": "首期帳單",
+    "deposit_status": "押金狀態",
+    "checkin_blockers": "未通過項目",
+    "required_amount": "應繳金額",
+    "paid_amount": "已繳金額",
+    "is_fulfilled": "已繳足",
+    "is_signed": "已簽署",
+    "is_paid": "已繳費",
+    "label": "狀態",
     "city": "城市",
     "district": "區域",
     "address": "地址",
     "deposit_amount": "押金",
     "allow_early_termination": "可提前終止",
     "early_termination_days": "提前終止天數",
-    "active_count": "進行中",
-    "history_count": "歷史",
-    "unpaid_count": "待繳",
-    "total_count": "總計",
-    "on_time_ratio": "準時率",
-    "in_progress_count": "進行中",
+    "enable_late_fee": "滯納金",
+    "calc_late_fee_buffer_days": "滯納金寬限天數",
+    "late_fee_percent": "滯納金比例(%)",
+    "early_termination_penalty_type": "違約金類型",
+    "early_termination_penalty": "違約金倍數",
+    "early_termination_penalty_amount": "違約金金額",
+    "payment_completed_at": "付款完成時間",
+    "no": "交易編號",
+    "transaction_id": "金流交易號",
 }
 
 # 跳過不顯示的欄位
 SKIP_KEYS = {
     "success", "pagination", "mapping", "updated_at",
     "estate_id", "contract_id", "bill_id", "currency",
-    "is_auto_generate_invoice",
+    "is_auto_generate_invoice", "payment_id",
+    "role_id", "user_id", "to_user_id", "agent_user_id",
+    "role_id_comment", "team_id", "team_id_comment", "team_name_comment",
+    "category_id", "item_id", "creditor_role_id",
+    "orig_currency", "final_currency", "orig_price",
+    "discount_cash", "discount_price", "payment_times",
+    "upload_status", "random_num", "print_flag",
+    "buyer_ubn", "buyer_address", "carrier_type", "carrier_number",
+    "love_code", "bar_code", "item_data",
+    "online_payment_method", "online_payment_action",
+    "date_expire_note", "cycle", "days", "rate", "sub_title",
+    "broken_photos", "archive_at",
+    "lessee_role_id", "lessor_role_id", "lessee_user_id",
+    "lessee_registered_phone_country", "lessee_nationality", "lessee_birthday",
+    "data", "items", "ymd", "payment_completed_ymd",
+    "user_phone", "user_email", "to_user_phone", "to_user_email",
+    "manufacturer_phone",
+    "final_total", "is_auto_pay", "is_paid_on_time",
+    "orig_price", "discount_cash", "discount_price",
+    "no", "transaction_id", "category",
+    "random_num", "upload_status", "print_flag",
+    "buyer_name", "buyer_email", "buyer_ubn", "buyer_address",
+    "carrier_type", "carrier_number", "love_code",
+    "bar_code", "url", "item_data",
+    "tax_rate", "tax_amt", "amt",
+    "added_at", "allowanced_at",
 }
 
 # 金額類欄位
 MONEY_KEYS = {
-    "total", "amount", "rent", "cost",
-    "deposit_amount", "deposit_required", "deposit_paid",
+    "total", "amount", "rent", "price", "final_price",
+    "deposit_amount", "required_amount", "paid_amount",
+    "total_amt", "amt", "tax_amt",
+    "early_termination_penalty_amount", "final_total",
 }
 
 # 日期整數欄位（YYYYMMDD）
@@ -221,12 +286,23 @@ def _translate(key: str, value: Any, mapping: dict) -> Any:
     str_val = str(value)
 
     # 直接 key 對照（如 status, payment_method）
-    if key in mapping and str_val in mapping[key]:
-        return mapping[key][str_val]
+    if key in mapping:
+        m = mapping[key]
+        # mapping 可能是 dict {"1": "..."} 或 list ["...", "..."]（用 index 當 key）
+        if isinstance(m, dict) and str_val in m:
+            return m[str_val]
+        if isinstance(m, list) and isinstance(value, int) and 0 <= value < len(m):
+            return m[value]
 
-    # bit_status 特殊處理
-    if key == "bit_status" and "bit_status" in mapping and str_val in mapping["bit_status"]:
-        return mapping["bit_status"][str_val]
+    # bit_status 特殊處理：欄位名是 bit_status，mapping key 可能是 bit_status 或 status
+    if key == "bit_status":
+        for mk in ("bit_status", "status"):
+            if mk in mapping and str_val in mapping[mk]:
+                return mapping[mk][str_val]
+
+    # emergency_status 對照
+    if key == "emergency_status" and "emergency_status" in mapping and str_val in mapping["emergency_status"]:
+        return mapping["emergency_status"][str_val]
 
     return value
 

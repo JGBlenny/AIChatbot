@@ -30,18 +30,20 @@ class ContractBit:
     HISTORY_DONE = 2048            # 歷史完成
 
 
-# status 常數（當前階段，非 bitmask）
+# status 常數（jgb2 的 status 值與 bit_status 常數相同）
 class ContractStatus:
     READY = 1
     INVITING = 2
-    SIGNED = 3
-    MOVE_IN = 4
-    MOVE_IN_DONE = 5
-    MOVE_OUT = 6
-    MOVE_OUT_DONE = 7
-    EARLY_TERMINATION = 8
-    HISTORY = 9
-    HISTORY_DONE = 10
+    INVITING_NEXT = 4
+    SIGNED = 8
+    MOVE_IN = 16
+    MOVE_IN_DONE = 32
+    MOVE_OUT = 64
+    MOVE_OUT_DONE = 128
+    EARLY_TERMINATION = 256
+    EARLY_TERMINATION_DONE = 512
+    HISTORY = 1024
+    HISTORY_DONE = 2048
 
 
 # bit_status flag → 中文標籤
@@ -261,9 +263,10 @@ def check_can_early_termination(contract: dict) -> dict:
     status = contract.get("status", 0)
     blockers = []
 
-    # 條件 1：status 必須在 SIGNED 或 MOVE_IN_DONE
-    valid_statuses = {ContractStatus.SIGNED, ContractStatus.MOVE_IN_DONE}
-    if isinstance(status, int) and status not in valid_statuses:
+    # 條件 1：必須已簽約或已點交（用 bit_status 判斷，比 status 欄位更可靠）
+    is_signed = has_bit(bit_status, ContractBit.SIGNED)
+    is_moved_in_done = has_bit(bit_status, ContractBit.MOVE_IN_DONE)
+    if not is_signed and not is_moved_in_done:
         stage = get_current_stage(contract)
         blockers.append(f"合約目前狀態為「{stage}」，僅在已簽約或已點交狀態才可申請提前解約")
 
@@ -338,7 +341,7 @@ def check_can_renew(contract: dict) -> dict:
 
 # ── 主要入口：回應格式化 ───────────────────────────────────
 
-def format_contract_response(contracts: list | dict, user_question: str = "", keyword: str = "") -> str:
+def format_contract_response(contracts, user_question: str = "", keyword: str = "") -> str:
     """
     根據合約資料 + 用戶問題，產出客戶理解的自然語言回應。
 
@@ -482,7 +485,7 @@ def _format_status_response(contract: dict) -> str:
 
 # ── 工具函式 ────────────────────────────────────────────────
 
-def _parse_date_int(date_val) -> datetime | None:
+def _parse_date_int(date_val):
     """將 JGB 的日期整數（YYYYMMDD）轉為 datetime"""
     if isinstance(date_val, int):
         s = str(date_val)

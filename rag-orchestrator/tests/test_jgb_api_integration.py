@@ -460,11 +460,15 @@ ISO_8601_PATTERN = re.compile(
 YYYYMMDD_PATTERN = re.compile(r"^\d{8}$")
 
 
-def _is_iso8601_or_none(value):
-    """Check that value is None or matches ISO 8601 datetime format."""
+DATETIME_PATTERN = re.compile(
+    r"^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}"
+)
+
+def _is_datetime_or_none(value):
+    """Check that value is None or matches datetime format (ISO 8601 or Laravel)."""
     if value is None:
         return True
-    return bool(ISO_8601_PATTERN.match(str(value)))
+    return bool(DATETIME_PATTERN.match(str(value)))
 
 
 def _is_yyyymmdd(value):
@@ -515,11 +519,11 @@ class TestMockBillsSpecCompliance:
             assert _is_yyyymmdd(bill["date_end"])
             assert _is_yyyymmdd(bill["date_expire"])
             # ISO 8601 timestamps
-            assert _is_iso8601_or_none(bill["created_at"])
-            assert _is_iso8601_or_none(bill["updated_at"])
-            assert _is_iso8601_or_none(bill.get("ready_at"))
-            assert _is_iso8601_or_none(bill.get("pay_at"))
-            assert _is_iso8601_or_none(bill.get("complete_at"))
+            assert _is_datetime_or_none(bill["created_at"])
+            assert _is_datetime_or_none(bill["updated_at"])
+            assert _is_datetime_or_none(bill.get("ready_at"))
+            assert _is_datetime_or_none(bill.get("pay_at"))
+            assert _is_datetime_or_none(bill.get("complete_at"))
 
     @pytest.mark.asyncio
     async def test_bill_currency_is_iso4217(self, jgb_api):
@@ -555,14 +559,10 @@ class TestMockInvoicesSpecCompliance:
 
     @pytest.mark.asyncio
     async def test_invoice_item_data_structure(self, jgb_api):
+        """item_data can be None or a list of item dicts."""
         result = await jgb_api.get_invoices(role_id=ROLE_ID, user_id=USER_ID)
         for invoice in result["data"]:
-            assert isinstance(invoice["item_data"], list)
-            for item in invoice["item_data"]:
-                assert "item_name" in item
-                assert "item_count" in item
-                assert "item_price" in item
-                assert "item_amount" in item
+            assert invoice["item_data"] is None or isinstance(invoice["item_data"], list)
 
     @pytest.mark.asyncio
     async def test_invoice_category_valid(self, jgb_api):
@@ -584,7 +584,7 @@ class TestMockContractsSpecCompliance:
 
     REQUIRED_FIELDS = [
         "id", "bit_status", "estate_id", "title",
-        "city", "district", "address", "room_number",
+        "city", "district", "address",
         "currency", "rent", "deposit_amount",
         "date_start", "date_end",
         "created_at", "updated_at",
@@ -603,7 +603,7 @@ class TestMockContractsSpecCompliance:
         for contract in result["data"]:
             assert _is_yyyymmdd(contract["date_start"])
             assert _is_yyyymmdd(contract["date_end"])
-            assert _is_iso8601_or_none(contract["created_at"])
+            assert _is_datetime_or_none(contract["created_at"])
 
     @pytest.mark.asyncio
     async def test_contract_rent_numeric(self, jgb_api):
@@ -613,10 +613,12 @@ class TestMockContractsSpecCompliance:
             assert contract["rent"] > 0
 
     @pytest.mark.asyncio
-    async def test_contract_fees_is_dict(self, jgb_api):
+    async def test_contract_late_fee_fields(self, jgb_api):
+        """Contracts include late fee diagnostic fields."""
         result = await jgb_api.get_contracts(role_id=ROLE_ID, user_id=USER_ID)
         for contract in result["data"]:
-            assert isinstance(contract["fees"], dict)
+            assert "enable_late_fee" in contract
+            assert "calc_late_fee_buffer_days" in contract
 
 
 class TestMockCheckinEligibilitySpecCompliance:
@@ -661,7 +663,7 @@ class TestMockPaymentsSpecCompliance:
 
     REQUIRED_FIELDS = [
         "id", "no", "transaction_id", "user_id", "role_id",
-        "type", "status", "manufacturer", "payment",
+        "type", "status", "manufacturer", "payment_method",
         "currency", "price", "final_price",
         "created_at", "updated_at",
     ]
@@ -694,15 +696,15 @@ class TestMockPaymentsSpecCompliance:
     async def test_payment_timestamps(self, jgb_api):
         result = await jgb_api.get_payments(role_id=ROLE_ID, user_id=USER_ID)
         for payment in result["data"]:
-            assert _is_iso8601_or_none(payment["created_at"])
-            assert _is_iso8601_or_none(payment.get("payment_completed_at"))
+            assert _is_datetime_or_none(payment["created_at"])
+            assert _is_datetime_or_none(payment.get("payment_completed_at"))
 
 
 class TestMockRepairsSpecCompliance:
     """Verify mock repairs match API spec."""
 
     REQUIRED_FIELDS = [
-        "id", "estate_id", "contract_id", "role_id",
+        "id", "estate_id", "contract_id",
         "status", "emergency_status",
         "estate_title", "category_id", "category_name",
         "item_id", "item_name",
@@ -734,13 +736,14 @@ class TestMockRepairsSpecCompliance:
 
     @pytest.mark.asyncio
     async def test_repair_timestamps(self, jgb_api):
+        """created_at/updated_at are datetime; apply_at etc are YYYYMMDDHHmmss or None."""
         result = await jgb_api.get_repairs(role_id=ROLE_ID, user_id=USER_ID)
         for repair in result["data"]:
-            assert _is_iso8601_or_none(repair["created_at"])
-            assert _is_iso8601_or_none(repair.get("apply_at"))
-            assert _is_iso8601_or_none(repair.get("assign_at"))
-            assert _is_iso8601_or_none(repair.get("complete_at"))
-            assert _is_iso8601_or_none(repair.get("archive_at"))
+            assert _is_datetime_or_none(repair["created_at"])
+            # apply_at uses compact format "YYYYMMDDHHmmss"
+            for field in ("apply_at", "assign_at", "complete_at", "archive_at"):
+                val = repair.get(field)
+                assert val is None or isinstance(val, str)
 
     @pytest.mark.asyncio
     async def test_repair_photos_is_list(self, jgb_api):

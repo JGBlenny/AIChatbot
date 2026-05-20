@@ -40,27 +40,42 @@ def _diagnose_issue_failure(logs: list) -> str:
     lines = ["發票開立紀錄：\n"]
 
     has_success = False
+    has_failure = False
     for log in issue_logs:
         created = log.get("created_at", "?")
-        response = log.get("response_data", {})
+        response = log.get("response_data") or {}
         note = log.get("note", "")
         http_code = log.get("http_code")
+
+        # 判斷成功：Status=SUCCESS 或 Message 含「成功」或 InvoiceNumber 存在
+        status_val = response.get("Status", "")
+        message_val = response.get("Message", "")
         rtn_code = response.get("RtnCode", "")
         rtn_msg = response.get("RtnMsg", "")
         inv_number = response.get("InvoiceNumber", "")
 
+        is_ok = (
+            str(status_val).upper() == "SUCCESS"
+            or "成功" in str(message_val)
+            or "成功" in str(rtn_msg)
+            or bool(inv_number)
+        )
+
         lines.append(f"• {created[:16]}")
         if inv_number:
             lines.append(f"  發票號碼：{inv_number}")
-            has_success = True
-        if rtn_code:
-            lines.append(f"  回應碼：{rtn_code}")
-        if rtn_msg:
-            lines.append(f"  說明：{rtn_msg}")
+        display_msg = message_val or rtn_msg
+        if display_msg:
+            lines.append(f"  結果：{display_msg}")
         if note:
             lines.append(f"  備註：{note}")
         if http_code and http_code != 200:
             lines.append(f"  HTTP 狀態：{http_code}")
+
+        if is_ok:
+            has_success = True
+        else:
+            has_failure = True
 
     if has_success:
         lines.append("\n✅ 發票已成功開立。如果帳單上仍顯示「未開立」，可能是同步延遲。")
@@ -83,25 +98,43 @@ def _diagnose_invalid_failure(logs: list) -> str:
 
     lines = ["發票作廢紀錄：\n"]
 
+    has_success = False
+    has_failure = False
     for log in invalid_logs:
         created = log.get("created_at", "?")
-        response = log.get("response_data", {})
+        response = log.get("response_data") or {}
         note = log.get("note", "")
+
+        status_val = response.get("Status", "")
+        message_val = response.get("Message", "")
         rtn_code = response.get("RtnCode", "")
         rtn_msg = response.get("RtnMsg", "")
 
+        is_ok = (
+            str(status_val).upper() == "SUCCESS"
+            or "成功" in str(message_val)
+            or "成功" in str(rtn_msg)
+        )
+
+        display_msg = message_val or rtn_msg
         lines.append(f"• {created[:16]}")
-        if rtn_code:
-            lines.append(f"  回應碼：{rtn_code}")
-        if rtn_msg:
-            lines.append(f"  說明：{rtn_msg}")
+        if display_msg:
+            lines.append(f"  結果：{display_msg}")
         if note:
             lines.append(f"  備註：{note}")
 
-    lines.append("\n常見發票無法作廢的原因：")
-    lines.append("• 發票已超過當月或規定的作廢時限")
-    lines.append("• 發票已進行折讓，需先取消折讓")
-    lines.append("• 發票廠商端處理中或系統異常")
+        if is_ok:
+            has_success = True
+        else:
+            has_failure = True
+
+    if has_success:
+        lines.append("\n✅ 發票已成功作廢。如果系統仍顯示原狀態，可能是同步延遲。")
+    else:
+        lines.append("\n⚠️ 發票作廢嘗試未成功。常見原因：")
+        lines.append("• 發票已超過當月或規定的作廢時限")
+        lines.append("• 發票已進行折讓，需先取消折讓")
+        lines.append("• 發票廠商端處理中或系統異常")
 
     return "\n".join(lines)
 
