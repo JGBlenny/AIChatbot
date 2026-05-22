@@ -170,13 +170,13 @@ async def rerank(request: RerankRequest):
         raise HTTPException(status_code=503, detail="Model not loaded")
 
     # 準備模型輸入
-    # rag-orchestrator 傳 answer + question_summary，也相容舊的 content 欄位
+    # 只用 question_summary 評分（與 embedding 一致）
+    # 原因：answer/content 會稀釋標題的意圖訊號，
+    # 實測拿掉後差距提升 99%，正確率不變（見 knowledge.md §5）
     pairs = []
     for candidate in request.candidates:
-        content = candidate.get("answer") or candidate.get("content", "")
         question = candidate.get("question_summary", "")
-        # 用 question + answer 組合給模型評分，更完整的語意
-        text = f"{question} {content}".strip() if question else content
+        text = question if question else (candidate.get("answer") or candidate.get("content", ""))
         pairs.append([request.query, text])
 
     # 計算分數
