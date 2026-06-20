@@ -1756,6 +1756,26 @@ async def _build_rag_response(
         enable_synthesis_override=False if request.disable_answer_synthesis else None
     )
 
+    # prospect 自由問答（R13.2/13.3）：以「系統脈絡 md + 檢索知識」grounded 合成（競品/功能推薦走此）
+    # 失敗或非 prospect → 保留原 optimize_answer 結果（不影響一般 RAG）
+    if request.target_user == 'prospect' and rag_results:
+        try:
+            from services.system_context import get_system_context
+            system_md = await get_system_context(req.app.state.db_pool)
+            grounding = "\n\n".join(
+                r.get('content', '') for r in rag_results[:3] if r.get('content')
+            )
+            if grounding:
+                synth = await asyncio.to_thread(
+                    llm_optimizer.synthesize_presales_answer,
+                    grounding, None, system_md, request.message,
+                )
+                if synth:
+                    optimization_result = {**optimization_result, 'optimized_answer': synth}
+                    print("✨ [presales] 自由問答已 grounded LLM 合成（注入系統 md）")
+        except Exception as e:
+            print(f"❌ presales 自由問答合成失敗（保留原答案）：{e}")
+
     # 構建來源列表
     sources = []
     if request.include_sources:

@@ -861,8 +861,10 @@ class LLMAnswerOptimizer:
             )
 
             synthesis_temp = float(os.getenv("LLM_SYNTHESIS_TEMP", "0.5"))
+            # presales 合成模型可獨立覆寫（預設沿用 optimizer 模型 gpt-4o-mini）
+            synth_model = os.getenv("PRESALES_SYNTH_MODEL", self.config["model"])
             result = self.llm_provider.chat_completion(
-                model=self.config["model"],
+                model=synth_model,
                 temperature=synthesis_temp,
                 max_tokens=self.config["max_tokens"],
                 messages=[
