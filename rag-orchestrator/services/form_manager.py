@@ -14,7 +14,7 @@
 - 使用 db_utils 的 context manager 自動管理連接
 """
 from __future__ import annotations
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 from datetime import datetime, timedelta
 import asyncio
 import json
@@ -54,6 +54,15 @@ class FormManager:
     - 恢復表單填寫
     - 完成或取消表單
     """
+
+    # 表單串接（form-chaining）：一次對話中連續自動串接的深度上限（R6.1）
+    MAX_CHAIN_DEPTH = 3
+
+    # 取消表單的關鍵字（精確比對）。集中於此避免多處硬編漂移。
+    # 註：離題偵測器另有更寬的退出語清單（含「不填了/停止」等，子字串比對），
+    # 負責 text 等「不跳過離題偵測」欄位；此清單供 select/api_select 等選單型
+    # 欄位（跳過離題偵測）與 DIGRESSION 狀態的明確取消使用。
+    CANCEL_KEYWORDS = ["取消", "算了", "cancel"]
 
     def __init__(self, db_pool: Optional[asyncpg.Pool] = None):
         """
@@ -281,10 +290,18 @@ class FormManager:
             params.append(session_id)
 
             with get_db_cursor(dict_cursor=True) as cursor:
+                # 只更新該 session 的「最新」一列。表單串接（form-chaining）會讓同一
+                # session_id 同時存在多列（來源 COMPLETED + 後續 COLLECTING），若用
+                # WHERE session_id 會波及已完成的歷史列；以最新 id 鎖定當前進行中的會話。
                 cursor.execute(f"""
                     UPDATE form_sessions
                     SET {', '.join(update_fields)}
-                    WHERE session_id = %s
+                    WHERE id = (
+                        SELECT id FROM form_sessions
+                        WHERE session_id = %s
+                        ORDER BY id DESC
+                        LIMIT 1
+                    )
                     RETURNING *
                 """, tuple(params))
 
@@ -449,6 +466,153 @@ class FormManager:
             "progress": f"1/{total_fields}"
         }
 
+    def _present_first_field(self, form_schema: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        組裝表單第一欄的呈現契約（純函式，不碰 DB）。
+
+        抽取自 trigger_form_by_knowledge 既有的第一欄組裝邏輯，供串接
+        （_maybe_chain_next_form）與既有知識觸發共用，避免重複。
+
+        Args:
+            form_schema: 表單定義（含 form_name / default_intro / fields）
+
+        Returns:
+            {
+                "prompt": str,                    # 第一欄提示字串（select 含內建 1./2./3. 選項與取消提示）
+                "current_field": str,             # 第一欄 field_name
+                "current_field_type": str,        # 第一欄 field_type（如 'select'）
+                "quick_replies": list[dict] | None,  # select 選項按鈕（text/value/style），非 select 為 None
+            }
+        """
+        first_field = form_schema['fields'][0]
+
+        # 使用表單的 default_intro 作為引導語
+        intro_message = form_schema.get('default_intro') or ''
+
+        # 組裝訊息：引導語 + 表單名稱 + 第一欄提示（含選項）+ 取消提示
+        prompt = intro_message.strip()
+        prompt += f"\n\n📝 **{form_schema['form_name']}**"
+        prompt += f"\n\n{first_field['prompt']}"
+        prompt += "\n\n（或輸入「**取消**」結束填寫）"
+
+        return {
+            "prompt": prompt,
+            "current_field": first_field['field_name'],
+            "current_field_type": first_field.get('field_type', 'text'),
+            "quick_replies": self._build_quick_replies(first_field),
+        }
+
+    @staticmethod
+    def _cancel_response(pending_question: Optional[str] = None) -> Dict:
+        """取消表單的統一回應（訊息 + 旗標），避免多處取消訊息漂移。"""
+        resp = {
+            "answer": "已取消表單填寫。如需重新申請，請隨時告訴我！",
+            "form_cancelled": True,
+        }
+        if pending_question is not None:
+            resp["pending_question"] = pending_question
+        return resp
+
+    async def _maybe_chain_next_form(
+        self,
+        source_form_schema: Dict[str, Any],
+        session_state: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        """
+        在表單完成後，判斷是否需串接後續表單（form-chaining）。
+
+        純加值、全程容錯：任何例外或防護命中都回傳 None，不影響來源表單的完成。
+
+        Args:
+            source_form_schema: 來源表單定義（含 next_form_id）
+            session_state: 來源會話（含 session_id / user_id / vendor_id / metadata）
+
+        Returns:
+            None 表示無串接；否則回傳後續表單第一欄的呈現契約：
+            {
+                "next_form_id": str,
+                "first_field_prompt": str,
+                "current_field": str,
+                "current_field_type": str,
+                "quick_replies": list[dict] | None,
+                "chain_depth": int,
+            }
+        """
+        try:
+            # 1. 讀串接設定；無則不串接（R1.2）
+            next_form_id = source_form_schema.get('next_form_id')
+            if not next_form_id:
+                return None
+
+            session_id = session_state.get('session_id')
+            user_id = session_state.get('user_id')
+            vendor_id = session_state.get('vendor_id')
+
+            # 2. 讀來源會話串接情境
+            source_meta = session_state.get('metadata') or {}
+            chain_depth = source_meta.get('chain_depth', 0)
+            source_form_id = source_form_schema.get('form_id')
+            # 已訪集合必含來源 form_id，用於偵測 A→A / A→B→A 循環。
+            # 即使既有 metadata 帶了不含來源的部分集合，也補上來源以確保偵測正確。
+            chain_visited = list(source_meta.get('chain_visited') or [])
+            if source_form_id and source_form_id not in chain_visited:
+                chain_visited.append(source_form_id)
+
+            # 3. 防護：深度上限（R6.1）
+            if chain_depth + 1 > self.MAX_CHAIN_DEPTH:
+                print(f"⛓️ 串接深度達上限（{self.MAX_CHAIN_DEPTH}），不再自動觸發後續表單：{next_form_id}")
+                return None
+
+            # 3b. 防護：循環偵測（R6.2）
+            if next_form_id in chain_visited:
+                print(f"⛓️ 偵測到串接循環（{next_form_id} 已在已訪集合），中止串接")
+                return None
+
+            # 4. 載入後續表單（_get_form_schema_sync 已過濾 is_active；不存在/未啟用 → None，R1.3）
+            next_schema = await asyncio.to_thread(
+                self._get_form_schema_sync, next_form_id, vendor_id
+            )
+            if not next_schema:
+                print(f"⚠️ 後續表單不存在或未啟用，跳過串接：{next_form_id}")
+                return None
+
+            # 5. 建立後續 COLLECTING 會話（INSERT 新列，沿用同一 session_id，R2.1/R2.4）
+            new_session = await self.create_form_session(
+                session_id=session_id,
+                user_id=user_id,
+                vendor_id=vendor_id,
+                form_id=next_form_id,
+            )
+            if not new_session:
+                print(f"⚠️ 建立後續表單會話失敗，跳過串接：{next_form_id}")
+                return None
+
+            # 6. 寫入後續會話 metadata：串接深度 + 已訪集合 + 沿用角色（R2.5）
+            new_metadata = {
+                "chain_depth": chain_depth + 1,
+                "chain_visited": chain_visited + [next_form_id],
+            }
+            role_id = source_meta.get('role_id')
+            if role_id:
+                new_metadata['role_id'] = role_id
+            await self.update_session_state(session_id=session_id, metadata=new_metadata)
+
+            # 7. 組後續表單第一欄呈現契約
+            presented = self._present_first_field(next_schema)
+            print(f"⛓️ 串接後續表單：{source_form_id} → {next_form_id}（depth={chain_depth + 1}）")
+
+            return {
+                "next_form_id": next_form_id,
+                "first_field_prompt": presented["prompt"],
+                "current_field": presented["current_field"],
+                "current_field_type": presented["current_field_type"],
+                "quick_replies": presented["quick_replies"],
+                "chain_depth": chain_depth + 1,
+            }
+        except Exception as e:
+            print(f"❌ 串接後續表單失敗（不影響來源完成）：{e}")
+            return None
+
     async def trigger_form_by_knowledge(
         self,
         knowledge_id: int,
@@ -516,25 +680,17 @@ class FormManager:
                 "form_triggered": False
             }
 
-        # 3. 組合回應（表單引導語 + 表單提示）
-        first_field = form_schema['fields'][0]
+        # 3. 組合回應（表單引導語 + 表單提示）— 抽取為共用 helper
         total_fields = len(form_schema['fields'])
-
-        # 使用表單的 default_intro 作為引導語
-        intro_message = form_schema.get('default_intro') or ''
-
-        # 組裝訊息
-        response = intro_message.strip()
-        response += f"\n\n📝 **{form_schema['form_name']}**"
-        response += f"\n\n{first_field['prompt']}"
-        response += "\n\n（或輸入「**取消**」結束填寫）"
+        presented = self._present_first_field(form_schema)
 
         return {
-            "answer": response,
+            "answer": presented["prompt"],
             "form_triggered": True,
             "form_id": form_id,
-            "current_field": first_field['field_name'],
-            "current_field_type": first_field.get('field_type', 'text'),
+            "current_field": presented["current_field"],
+            "current_field_type": presented["current_field_type"],
+            "quick_replies": presented["quick_replies"],
             "progress": f"1/{total_fields}",
             "triggered_by_knowledge": knowledge_id
         }
@@ -594,7 +750,7 @@ class FormManager:
                     return {
                         "answer": "找不到您的問題記錄。"
                     }
-            elif user_message.strip() in ["取消", "算了", "cancel"]:
+            elif user_message.strip() in self.CANCEL_KEYWORDS:
                 # 處理離題後取消，取得待處理的問題
                 pending_question = await asyncio.to_thread(self._get_pending_question_sync, session_id)
 
@@ -602,11 +758,7 @@ class FormManager:
                     session_id=session_id,
                     state=FormState.CANCELLED
                 )
-                return {
-                    "answer": "已取消表單填寫。",
-                    "form_cancelled": True,
-                    "pending_question": pending_question  # 返回待處理的問題
-                }
+                return self._cancel_response(pending_question)
 
         # 2. 獲取表單定義
         form_schema = await self.get_form_schema(session_state['form_id'])
@@ -622,6 +774,17 @@ class FormManager:
         field_type = current_field.get('field_type', 'text')
         validation_type = current_field.get('validation_type', '')
         skip_digression = field_type in ('api_search', 'api_select', 'image', 'select') or validation_type == 'free_text'
+
+        # 3a. 取消關鍵字（僅選單型欄位）：select / api_select 會跳過離題偵測，使用者輸入
+        #     「取消」原本會被當成選項值，故在此明確處理，與第一欄提示「輸入取消結束填寫」
+        #     一致。其餘欄位（text 走離題偵測；free_text / api_search 維持既有行為）不受影響。
+        #     取消後轉 CANCELLED、不進入 _complete_form，故不會自動串接後續表單（R5.1/R5.3）。
+        if field_type in ('select', 'api_select') and user_message.strip() in self.CANCEL_KEYWORDS:
+            await self.update_session_state(
+                session_id=session_id,
+                state=FormState.CANCELLED
+            )
+            return self._cancel_response()
 
         if not skip_digression:
             has_images = bool(image_urls)
@@ -1936,10 +2099,7 @@ class FormManager:
                 session_id=session_state['session_id'],
                 state=FormState.CANCELLED
             )
-            return {
-                "answer": "已取消表單填寫。如需重新申請，請隨時告訴我！",
-                "form_cancelled": True
-            }
+            return self._cancel_response()
 
         elif digression_type == "question":
             # 用戶問問題（需要整合到主對話流程）
@@ -2168,6 +2328,30 @@ class FormManager:
             triggered_by_knowledge=triggered_by_knowledge
         )
 
+        # 6. 表單串接（form-chaining）：完成後若設定 next_form_id，自動接續後續表單。
+        #    純加值——_maybe_chain_next_form 全程容錯，回 None 表示不串接（回應與現況一致）。
+        #    來源表單核心完成（COMPLETED 狀態、save_form_submission）已於上方執行，不受串接影響。
+        chain = await self._maybe_chain_next_form(form_schema, session_state)
+        if chain:
+            # 串接 turn 旗標契約（design 元件 4）：對前端為「新表單開始、等待輸入」，
+            # 而非「表單結束」，故 form_completed=False、form_triggered=True，
+            # 並把 form_id/current_field/quick_replies 指向後續表單。
+            merged_answer = f"{completion_message}\n\n---\n\n{chain['first_field_prompt']}"
+            return {
+                "answer": merged_answer,
+                "form_completed": False,
+                "form_triggered": True,
+                "form_id": chain["next_form_id"],
+                "current_field": chain["current_field"],
+                "current_field_type": chain["current_field_type"],
+                "quick_replies": chain["quick_replies"],
+                "next_form_id": chain["next_form_id"],
+                # 保留既有欄位（來源完成事實）
+                "submission_id": submission_id,
+                "collected_data": collected_data,
+                "api_result": api_result,
+            }
+
         return {
             "answer": completion_message,
             "form_completed": True,
@@ -2335,10 +2519,7 @@ class FormManager:
             state=FormState.CANCELLED
         )
 
-        return {
-            "answer": "已取消表單填寫。如需重新申請，請隨時告訴我！",
-            "form_cancelled": True
-        }
+        return self._cancel_response()
 
     # ========================================================================
     # 表單審核與編輯功能（新增）
