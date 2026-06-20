@@ -302,6 +302,32 @@ async def _maybe_synthesize_presales_leaf(form_result: dict, request, req) -> di
     return form_result
 
 
+async def _maybe_synth_prospect_freetext(optimization_result: dict, search_results: list, request, req) -> dict:
+    """
+    prospect 自由問答 grounded 合成（R13.2/13.3）：以「系統脈絡 md + 檢索知識」合成，
+    替換 optimize_answer 結果。失敗 / 非 prospect / 無 grounding → 保留原結果（不影響一般 RAG）。
+    競品、功能推薦等自由問答走此。
+    """
+    try:
+        if request.target_user != 'prospect' or not search_results:
+            return optimization_result
+        from services.system_context import get_system_context
+        optimizer = req.app.state.llm_answer_optimizer
+        system_md = await get_system_context(req.app.state.db_pool)
+        grounding = "\n\n".join(r.get('content', '') for r in search_results[:3] if r.get('content'))
+        if not grounding:
+            return optimization_result
+        synth = await asyncio.to_thread(
+            optimizer.synthesize_presales_answer, grounding, None, system_md, request.message
+        )
+        if synth:
+            print("✨ [presales] 自由問答已 grounded LLM 合成（注入系統 md）")
+            return {**optimization_result, 'optimized_answer': synth}
+    except Exception as e:
+        print(f"❌ presales 自由問答合成失敗（保留原答案）：{e}")
+    return optimization_result
+
+
 def _convert_form_result_to_response(
     form_result: dict,
     request: VendorChatRequest,
@@ -1756,25 +1782,10 @@ async def _build_rag_response(
         enable_synthesis_override=False if request.disable_answer_synthesis else None
     )
 
-    # prospect 自由問答（R13.2/13.3）：以「系統脈絡 md + 檢索知識」grounded 合成（競品/功能推薦走此）
-    # 失敗或非 prospect → 保留原 optimize_answer 結果（不影響一般 RAG）
-    if request.target_user == 'prospect' and rag_results:
-        try:
-            from services.system_context import get_system_context
-            system_md = await get_system_context(req.app.state.db_pool)
-            grounding = "\n\n".join(
-                r.get('content', '') for r in rag_results[:3] if r.get('content')
-            )
-            if grounding:
-                synth = await asyncio.to_thread(
-                    llm_optimizer.synthesize_presales_answer,
-                    grounding, None, system_md, request.message,
-                )
-                if synth:
-                    optimization_result = {**optimization_result, 'optimized_answer': synth}
-                    print("✨ [presales] 自由問答已 grounded LLM 合成（注入系統 md）")
-        except Exception as e:
-            print(f"❌ presales 自由問答合成失敗（保留原答案）：{e}")
+    # prospect 自由問答 grounded 合成（R13.2/13.3）：RAG fallback 路徑
+    optimization_result = await _maybe_synth_prospect_freetext(
+        optimization_result, rag_results, request, req
+    )
 
     # 構建來源列表
     sources = []
@@ -1987,6 +1998,27 @@ async def _handle_no_knowledge_found(
 
     # 使用模板格式以便追蹤參數使用
     fallback_answer = "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {{service_hotline}}。請問您方便提供更詳細的內容嗎？"
+
+    # prospect 無檢索知識：以系統脈絡「功能索引」md-only 合成（功能推薦走此，R13.3）
+    # 有對應功能 → 點名推薦並導出口；無 → 禮貌導專人；不杜撰功能。失敗保留原 fallback。
+    if request.target_user == 'prospect':
+        try:
+            from services.system_context import get_system_context
+            optimizer = req.app.state.llm_answer_optimizer
+            system_md = await get_system_context(req.app.state.db_pool)
+            md_only_grounding = (
+                "（本次未檢索到對應的特定知識。請依系統脈絡的「功能對照索引」判斷是否有對應功能："
+                "有 → 點名推薦該功能並導向 demo / 試用；無 → 禮貌說明可由專人協助了解，不杜撰功能。）"
+            )
+            synth = await asyncio.to_thread(
+                optimizer.synthesize_presales_answer,
+                md_only_grounding, None, system_md, request.message,
+            )
+            if synth:
+                fallback_answer = synth
+                print("✨ [presales] 無知識 → 依功能索引 md-only 合成推薦")
+        except Exception as e:
+            print(f"❌ presales 無知識合成失敗（保留 fallback）：{e}")
 
     # 清理答案並追蹤使用的參數
     final_answer, used_param_keys = _clean_answer_with_tracking(fallback_answer, request.vendor_id, resolver)
@@ -2395,6 +2427,11 @@ async def _build_knowledge_response(
         vendor_name=vendor_info['name'],
         vendor_info=vendor_info,  # 傳入完整業者資訊
         enable_synthesis_override=False if request.disable_answer_synthesis else None
+    )
+
+    # prospect 自由問答 grounded 合成（R13.2/13.3）：主 handler direct_answer 路徑（競品等走此）
+    optimization_result = await _maybe_synth_prospect_freetext(
+        optimization_result, search_results, request, req
     )
 
     # 構建來源列表
