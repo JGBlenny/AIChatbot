@@ -52,6 +52,7 @@ class APICallHandler:
             'resend_invoice': self.billing_api.resend_invoice,
             'maintenance_request': self.billing_api.submit_maintenance_request,
             'lookup': self._handle_lookup_api,  # 內部 lookup API 處理器
+            'branch_answer': self._handle_branch_answer,  # 選項分歧知識回覆（純內部，不打外部 API）
             # JGB 系統 API 端點
             'jgb_bills': self.jgb_api.get_bills,
             'jgb_invoices': self.jgb_api.get_invoices,
@@ -491,6 +492,55 @@ class APICallHandler:
             'error': error_message,
             'formatted_response': formatted_message
         }
+
+    async def _handle_branch_answer(
+        self,
+        choice: Optional[str] = None,
+        mapping: Optional[Dict[str, Any]] = None,
+        fallback: Optional[str] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        選項分歧知識回覆：依使用者選擇的欄位值回覆對應知識條目的答案
+
+        純內部處理，不打任何外部 API。表單 api_config 範例：
+        {
+            "endpoint": "branch_answer",
+            "combine_with_knowledge": false,
+            "params": {
+                "choice": "{form.gateway}",
+                "mapping": {"newebpay": 3551, "sinopac": 3553},
+                "fallback": "這個選項目前沒有對應的說明，請聯繫客服協助。"
+            }
+        }
+
+        Args:
+            choice: 使用者選擇的欄位值（select 欄位的 value）
+            mapping: 欄位值 → knowledge_base.id 的對照
+            fallback: 找不到對照時的回覆文字
+
+        Returns:
+            {'message': 對應知識的 answer 或 fallback}
+        """
+        default_fallback = '抱歉，這個選項目前沒有對應的說明，請聯繫客服協助。'
+        try:
+            mapping = mapping or {}
+            kb_id = mapping.get(str(choice).strip()) if choice is not None else None
+            if kb_id and self.db_pool:
+                async with self.db_pool.acquire() as conn:
+                    row = await conn.fetchrow(
+                        "SELECT answer FROM knowledge_base WHERE id = $1 AND is_active = TRUE",
+                        int(kb_id)
+                    )
+                if row and row['answer']:
+                    return {'message': row['answer']}
+                logger.warning(f"⚠️ branch_answer 對照的知識不存在或停用: choice={choice}, kb_id={kb_id}")
+            else:
+                logger.warning(f"⚠️ branch_answer 無對照: choice={choice}, mapping_keys={list(mapping.keys())}")
+            return {'message': fallback or default_fallback}
+        except Exception as e:
+            logger.error(f"❌ branch_answer 處理失敗: {e}", exc_info=True)
+            return {'message': fallback or default_fallback}
 
     async def _handle_lookup_api(
         self,
