@@ -68,7 +68,8 @@ INSERT INTO target_user_config (user_value, display_name, description, icon, dis
 ('tenant', '租客', '承租人 - 租屋的一方', '👤', 1),
 ('landlord', '房東', '出租人 - 提供租屋的一方', '🏠', 2),
 ('property_manager', '物業管理師', '協助管理租賃事務的專業人員', '👔', 3),
-('system_admin', '系統管理員', '系統後台管理人員', '⚙️', 4)
+('system_admin', '系統管理員', '系統後台管理人員', '⚙️', 4),
+('prospect', '潛在客戶', '尚未成交的潛在業者客戶（售前諮詢，b2b 匿名訪客）', '🔍', 5)
 ON CONFLICT (user_value) DO NOTHING;
 
 -- ========================================

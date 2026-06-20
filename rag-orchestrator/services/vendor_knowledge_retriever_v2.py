@@ -14,6 +14,17 @@ from .retrieval_types import make_default_result
 class VendorKnowledgeRetrieverV2(BaseRetriever):
     """業者知識庫檢索器 - 統一架構版本"""
 
+    # 可信 target_user 角色（對齊 target_user_config + 售前 prospect）。
+    # 非此集合（None / 空字串 / 未知角色）一律正規化為 tenant（最公開、最小權限的安全預設）。
+    KNOWN_TARGET_USERS = {'tenant', 'landlord', 'property_manager', 'system_admin', 'prospect'}
+
+    @classmethod
+    def _effective_target_user(cls, target_user) -> str:
+        """將任意 target_user 輸入正規化為可信角色；非可信（None/空/未知）→ tenant。"""
+        if isinstance(target_user, list):
+            target_user = target_user[0] if target_user else None
+        return target_user if target_user in cls.KNOWN_TARGET_USERS else 'tenant'
+
     def __init__(self):
         """初始化知識庫檢索器"""
         super().__init__()  # 調用基類初始化
@@ -46,13 +57,18 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         # 根據用戶角色或模式決定業態類型
         is_b2b_mode = (target_user in ['property_manager', 'system_admin']) or (mode == 'b2b')
 
+        # b2b 角色隔離：重啟 target_user 過濾（與 b2c rag_engine 一致的寬鬆語義，
+        # target_user IS NULL 一律放行）。僅 b2b 套用；b2c 維持此 retriever 既有行為不變。
+        target_user_param = [self._effective_target_user(target_user)]
         if is_b2b_mode:
             vendor_business_types = ['system_provider']
             business_type_filter_sql = "kb.business_types && %s::text[]"
+            target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
         else:
             vendor_info = self.param_resolver.get_vendor_info(vendor_id)
             vendor_business_types = vendor_info.get('business_types', [])
             business_type_filter_sql = "(kb.business_types IS NULL OR kb.business_types && %s::text[])"
+            target_user_filter_sql = ""
 
         conn = self._get_db_connection()
         try:
@@ -60,7 +76,6 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             vector_str = str(query_embedding)
 
             # 建構 SQL 查詢（不在 SQL 端 threshold 過濾）
-            # 暫時移除 target_user 過濾，只用 business_types 過濾
             sql_query = f"""
                 SELECT
                     kb.id,
@@ -83,17 +98,22 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     AND kb.embedding IS NOT NULL
                     AND kb.is_active = TRUE
                     AND {business_type_filter_sql}
+                    {target_user_filter_sql}
                 ORDER BY
                     (1 - (kb.embedding <=> %s::vector)) DESC,
                     kb.priority DESC
                 LIMIT %s
             """
 
-            # 構建參數列表
+            # 構建參數列表（target_user 過濾參數須緊接 business_types 之後、ORDER BY vector_str 之前）
             query_params = [
                 vector_str,
                 [vendor_id],  # 用於 kb.vendor_ids && %s::int[]
                 vendor_business_types,
+            ]
+            if target_user_filter_sql:
+                query_params.append(target_user_param)
+            query_params += [
                 vector_str,
                 vector_limit
             ]
@@ -135,13 +155,17 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         # 業態過濾（與 _vector_search 一致）
         is_b2b_mode = (target_user in ['property_manager', 'system_admin']) or (mode == 'b2b')
 
+        # b2b 角色隔離：重啟 target_user 過濾（與 _vector_search 一致；NULL 一律放行，僅 b2b 套用）
+        target_user_param = [self._effective_target_user(target_user)]
         if is_b2b_mode:
             vendor_business_types = ['system_provider']
             business_type_filter_sql = "AND kb.business_types && %s::text[]"
+            target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
         else:
             vendor_info = self.param_resolver.get_vendor_info(vendor_id)
             vendor_business_types = vendor_info.get('business_types', [])
             business_type_filter_sql = "AND (kb.business_types IS NULL OR kb.business_types && %s::text[])"
+            target_user_filter_sql = ""
 
         # 安全上限
         max_rows = 1000
@@ -151,7 +175,6 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
             # 通用 SELECT 與 WHERE
-            # 暫時移除 target_user 過濾，只用 business_types 過濾
             base_sql = f"""
                 SELECT
                     kb.id,
@@ -176,11 +199,14 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     AND kb.keywords IS NOT NULL
                     AND array_length(kb.keywords, 1) > 0
                     {business_type_filter_sql}
+                    {target_user_filter_sql}
             """
 
-            # 構建基本參數列表
+            # 構建基本參數列表（target_user 過濾參數緊接 business_types 之後）
             base_params = [[vendor_id]]
             base_params.append(vendor_business_types)
+            if target_user_filter_sql:
+                base_params.append(target_user_param)
 
             all_rows = []
 
