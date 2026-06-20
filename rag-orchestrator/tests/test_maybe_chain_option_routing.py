@@ -110,7 +110,7 @@ async def test_option_leaf_answer_only(manager):
     result = await manager._maybe_chain_next_form(
         src, _session_state(None), collected_data={"identity": "team"}
     )
-    assert result == {"leaf": True, "answer": "團隊方案說明（不含價格）"}
+    assert result["leaf"] is True and result["answer"] == "團隊方案說明（不含價格）"
     manager.create_form_session.assert_not_called()
     manager._resolve_leaf_answer.assert_awaited_once_with(9001)
 
@@ -145,7 +145,7 @@ async def test_leaf_plus_subtree_degrades_to_leaf_when_subtree_missing(manager):
     result = await manager._maybe_chain_next_form(
         src, _session_state(None), collected_data={"identity": "team"}
     )
-    assert result == {"leaf": True, "answer": "團隊方案請走 demo"}
+    assert result["leaf"] is True and result["answer"] == "團隊方案請走 demo"
     manager.create_form_session.assert_not_called()
 
 
@@ -161,7 +161,7 @@ async def test_leaf_plus_subtree_degrades_to_leaf_on_depth_limit(manager):
     result = await manager._maybe_chain_next_form(
         src, _session_state(meta), collected_data={"identity": "team"}
     )
-    assert result == {"leaf": True, "answer": "團隊方案請走 demo"}
+    assert result["leaf"] is True and result["answer"] == "團隊方案請走 demo"
     manager.create_form_session.assert_not_called()
 
 

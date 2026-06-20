@@ -273,6 +273,35 @@ def _remove_duplicate_question(answer: str, question: str) -> str:
 
 # ==================== 輔助函數：表單轉換 ====================
 
+async def _maybe_synthesize_presales_leaf(form_result: dict, request, req) -> dict:
+    """
+    葉答案 LLM 個人化（option-routing R11/R13）：prospect 情境下，將決策樹葉答案的
+    「知識原文」以「系統脈絡 md + 累積情境」grounded 合成為個人化回覆；失敗/非 prospect 保留原文。
+    只合成葉答案「頭部」，後綴（分隔線 + 後續表單第一欄）維持決定性。
+    """
+    try:
+        if request.target_user != 'prospect':
+            return form_result
+        raw = form_result.get('presales_leaf_raw')
+        if not raw:
+            return form_result
+        from services.system_context import get_system_context
+        optimizer = req.app.state.llm_answer_optimizer
+        db_pool = req.app.state.db_pool
+        system_md = await get_system_context(db_pool)
+        ctx = form_result.get('presales_context')
+        synth = await asyncio.to_thread(
+            optimizer.synthesize_presales_answer, raw, ctx, system_md, None
+        )
+        if synth:
+            suffix = form_result.get('presales_suffix') or ""
+            form_result['answer'] = synth + suffix
+            print("✨ [presales] 葉答案已 LLM 個人化合成")
+    except Exception as e:
+        print(f"❌ presales 葉答案合成失敗（保留原文）：{e}")
+    return form_result
+
+
 def _convert_form_result_to_response(
     form_result: dict,
     request: VendorChatRequest,
@@ -3150,6 +3179,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     language='zh-TW',  # TODO: 從 request 或用戶設定讀取語言
                     image_urls=request.image_urls,
                 )
+
+                # 葉答案 LLM 個人化（R11/R13）：prospect 情境下合成決策樹葉答案（失敗保留原文）
+                form_result = await _maybe_synthesize_presales_leaf(form_result, request, req)
 
                 # 如果用戶選擇回答問題或取消表單，繼續處理待處理的問題
                 if form_result.get('form_cancelled'):

@@ -810,6 +810,72 @@ class LLMAnswerOptimizer:
 
         return synthesized_answer, tokens_used
 
+    # ========================================
+    # presales 模式：grounded 葉答案 / 自由問答合成（option-routing R11/R13）
+    # ========================================
+
+    PRESALES_SYNTH_RULES = (
+        "【合成鐵則（必守）】\n"
+        "- 只用「系統脈絡 + 可用知識」內的事實，嚴禁新增、誇大或杜撰（尤其價格、競品、IoT 規格）。\n"
+        "- 不報價：價格/級距一律導 /pricing 或留資，不講數字。\n"
+        "- 競品：不主動點名；被問且本次有 E1 事實才中立比較，未列明說「不確定，建議向對方確認」，不斷言對方沒有。\n"
+        "- 系統脈絡與知識都沒有的事實 → 不自行補，導向 demo/專人。\n"
+        "- 每段收束到一個明確出口（試用/demo/pricing/專人）。\n"
+        "- 口吻：顧問式、親切專業、簡潔不誇大；可依使用者情境個人化。"
+    )
+
+    def synthesize_presales_answer(
+        self,
+        grounding_knowledge: str,
+        accumulated_context: Optional[List[Dict]] = None,
+        system_context_md: str = "",
+        user_question: Optional[str] = None,
+    ) -> Optional[str]:
+        """
+        售前個人化合成：以「系統脈絡 md + 選定/檢索知識 + 累積情境」grounded 合成自然回覆。
+        事實只能來自 system_context_md + grounding_knowledge；失敗/逾時/超 token → 回 None（呼叫端降級原文）。
+        [需求 11.1–11.3, 13.5；決策 8]
+        """
+        try:
+            if not grounding_knowledge:
+                return None
+            # 累積情境 → 條列
+            ctx_lines = []
+            for c in (accumulated_context or []):
+                label = c.get('field_label') or ''
+                val = c.get('selected_label') or c.get('selected_value') or ''
+                if val:
+                    ctx_lines.append(f"- {label}：{val}" if label else f"- {val}")
+            ctx_txt = "\n".join(ctx_lines) if ctx_lines else "（無特定情境）"
+
+            system_prompt = f"{system_context_md}\n\n{self.PRESALES_SYNTH_RULES}".strip()
+            user_prompt = (
+                f"【使用者情境】\n{ctx_txt}\n\n"
+                f"【可用知識（唯一事實來源，不得超出）】\n{grounding_knowledge}\n"
+            )
+            if user_question:
+                user_prompt += f"\n【使用者問題】\n{user_question}\n"
+            user_prompt += (
+                "\n請依系統脈絡的口吻與合規鐵則，整合上述情境與知識，生成個人化、自然的回覆；"
+                "只用提供的事實，缺的導向出口。"
+            )
+
+            synthesis_temp = float(os.getenv("LLM_SYNTHESIS_TEMP", "0.5"))
+            result = self.llm_provider.chat_completion(
+                model=self.config["model"],
+                temperature=synthesis_temp,
+                max_tokens=self.config["max_tokens"],
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+            )
+            answer = (result or {}).get('content')
+            return answer.strip() if answer else None
+        except Exception as e:
+            print(f"❌ presales 合成失敗（呼叫端降級原文）：{e}")
+            return None
+
     async def synthesize_answer_stream(
         self,
         question: str,

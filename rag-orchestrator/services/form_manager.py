@@ -588,6 +588,46 @@ class FormManager:
             print(f"❌ 解析選項層路由失敗（fallback 表單層）：{e}")
             return None
 
+    def _selected_option_context(
+        self,
+        form_schema: Dict[str, Any],
+        collected_data: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        """
+        取本表單「被選中選項」的情境條目，供跨步情境累積（R12 / 元件 8）。
+        回 {form_id, field_label, selected_label, selected_value} 或 None（無 select / 無相符）。純函式。
+        """
+        try:
+            fields = form_schema.get('fields') or []
+            if not fields:
+                return None
+            select_field = fields[-1] if fields[-1].get('field_type') == 'select' else None
+            if select_field is None:
+                for field in reversed(fields):
+                    if field.get('field_type') == 'select':
+                        select_field = field
+                        break
+            if select_field is None:
+                return None
+            field_name = select_field.get('field_name')
+            selected_value = collected_data.get(field_name) if field_name else None
+            if selected_value is None:
+                return None
+            selected_label = None
+            for opt in select_field.get('options') or []:
+                opt_value = opt.get('value', opt.get('label'))
+                if selected_value == opt_value or str(selected_value) == str(opt_value):
+                    selected_label = opt.get('label')
+                    break
+            return {
+                "form_id": form_schema.get('form_id'),
+                "field_label": select_field.get('field_label') or field_name,
+                "selected_label": selected_label or str(selected_value),
+                "selected_value": selected_value,
+            }
+        except Exception:
+            return None
+
     async def _resolve_leaf_answer(self, answer_kb: int) -> Optional[str]:
         """
         以既有 branch_answer 取選項葉答案的知識文字（不經檢索，議題 2 async 邊界）。
@@ -647,8 +687,14 @@ class FormManager:
             # 0. 選項層路由優先；無則 fallback 表單層 next_form_id（決策 5）
             leaf_answer = None
             route = None
+            # 跨步情境累積（R12 / 元件 8）：來源已累積 + 本表單被選中選項
+            _src_meta_for_ctx = session_state.get('metadata') or {}
+            accumulated_context = list(_src_meta_for_ctx.get('chain_context') or [])
             if collected_data is not None:
                 route = self._resolve_selected_route(source_form_schema, collected_data)
+                _ctx_entry = self._selected_option_context(source_form_schema, collected_data)
+                if _ctx_entry:
+                    accumulated_context.append(_ctx_entry)
 
             if route is not None:
                 # 葉答案：以 branch_answer 取知識文字（不經檢索）；失敗整體回 None（議題 2）
@@ -661,7 +707,8 @@ class FormManager:
                 # 純葉答案（無子樹）：分支結束，回葉契約
                 if not next_form_id:
                     print(f"選項葉答案（answer_kb={answer_kb}），分支結束")
-                    return {"leaf": True, "answer": leaf_answer}
+                    return {"leaf": True, "answer": leaf_answer,
+                            "accumulated_context": accumulated_context}
             else:
                 # 1. fallback 表單層 next_form_id；無則不串接（R1.2）
                 next_form_id = source_form_schema.get('next_form_id')
@@ -673,7 +720,8 @@ class FormManager:
             def _degrade_to_leaf():
                 if leaf_answer is not None:
                     print("⚠️ 子樹串接未成，降級回選項葉答案（不丟失答案）")
-                    return {"leaf": True, "answer": leaf_answer}
+                    return {"leaf": True, "answer": leaf_answer,
+                            "accumulated_context": accumulated_context}
                 return None
 
             session_id = session_state.get('session_id')
@@ -719,14 +767,19 @@ class FormManager:
                 print(f"⚠️ 建立後續表單會話失敗，跳過串接：{next_form_id}")
                 return _degrade_to_leaf()
 
-            # 6. 寫入後續會話 metadata：串接深度 + 已訪集合 + 沿用角色（R2.5）
+            # 6. 寫入後續會話 metadata：串接深度 + 已訪集合 + 沿用角色（R2.5）+ 累積情境（R12）
             new_metadata = {
                 "chain_depth": chain_depth + 1,
                 "chain_visited": chain_visited + [next_form_id],
+                "chain_context": accumulated_context,
             }
             role_id = source_meta.get('role_id')
             if role_id:
                 new_metadata['role_id'] = role_id
+            # 沿用來源 target_user（供葉節點判斷是否 prospect 合成）
+            src_target_user = source_meta.get('target_user')
+            if src_target_user:
+                new_metadata['target_user'] = src_target_user
             await self.update_session_state(session_id=session_id, metadata=new_metadata)
 
             # 7. 組後續表單第一欄呈現契約
@@ -742,11 +795,14 @@ class FormManager:
                 "chain_depth": chain_depth + 1,
                 # 選項葉答案（answer_kb + next_form_id 並存時）供 _complete_form 合併呈現；無則 None
                 "leaf_answer": leaf_answer,
+                # 累積情境（R12）供葉答案 LLM 個人化合成
+                "accumulated_context": accumulated_context,
             }
         except Exception as e:
             print(f"❌ 串接後續表單失敗（不影響來源完成）：{e}")
             # 串接過程例外：若選項已解出葉答案，降級回葉契約不丟失答案；否則 None
-            return {"leaf": True, "answer": leaf_answer} if leaf_answer else None
+            return ({"leaf": True, "answer": leaf_answer,
+                     "accumulated_context": accumulated_context} if leaf_answer else None)
 
     async def trigger_form_by_knowledge(
         self,
@@ -2480,6 +2536,10 @@ class FormManager:
                     "submission_id": submission_id,
                     "collected_data": collected_data,
                     "api_result": api_result,
+                    # 葉答案 LLM 個人化（R11）：供 chat.py 在 prospect 情境合成；缺則維持原文
+                    "presales_leaf_raw": chain["answer"],
+                    "presales_context": chain.get("accumulated_context"),
+                    "presales_suffix": None,
                 }
 
             # 6b. 後續子樹：串接 turn 旗標契約（design 元件 4）——對前端為「新表單開始、
@@ -2502,6 +2562,10 @@ class FormManager:
                 "submission_id": submission_id,
                 "collected_data": collected_data,
                 "api_result": api_result,
+                # 葉答案 LLM 個人化（R11）：只合成「頭部葉答案」，後綴（分隔線 + 後續第一欄）維持決定性
+                "presales_leaf_raw": chain.get("leaf_answer"),
+                "presales_context": chain.get("accumulated_context"),
+                "presales_suffix": f"\n\n---\n\n{chain['first_field_prompt']}",
             }
 
         return {

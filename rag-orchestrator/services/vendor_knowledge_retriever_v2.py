@@ -18,6 +18,10 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
     # 非此集合（None / 空字串 / 未知角色）一律正規化為 tenant（最公開、最小權限的安全預設）。
     KNOWN_TARGET_USERS = {'tenant', 'landlord', 'property_manager', 'system_admin', 'prospect'}
 
+    # 保留分類：掛此 category 的列為「系統注入用文件」（如售前系統脈絡 md），
+    # 一律排除於檢索之外，永不被當答案回傳（決策 11）。
+    SYSTEM_DOC_CATEGORY = '系統脈絡'
+
     @classmethod
     def _effective_target_user(cls, target_user) -> str:
         """將任意 target_user 輸入正規化為可信角色；非可信（None/空/未知）→ tenant。"""
@@ -97,6 +101,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     (array_length(kb.vendor_ids, 1) IS NULL OR kb.vendor_ids && %s::int[])
                     AND kb.embedding IS NOT NULL
                     AND kb.is_active = TRUE
+                    AND kb.category IS DISTINCT FROM '{self.SYSTEM_DOC_CATEGORY}'
                     AND {business_type_filter_sql}
                     {target_user_filter_sql}
                 ORDER BY
@@ -196,6 +201,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                 WHERE
                     (array_length(kb.vendor_ids, 1) IS NULL OR kb.vendor_ids && %s::int[])
                     AND kb.is_active = TRUE
+                    AND kb.category IS DISTINCT FROM '{self.SYSTEM_DOC_CATEGORY}'
                     AND kb.keywords IS NOT NULL
                     AND array_length(kb.keywords, 1) > 0
                     {business_type_filter_sql}

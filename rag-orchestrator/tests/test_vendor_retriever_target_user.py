@@ -57,3 +57,10 @@ def test_filter_param_uses_effective_target_user():
     """過濾參數使用正規化後的 effective target_user。"""
     for src in (_vector_src(), _keyword_src()):
         assert "self._effective_target_user(target_user)" in src
+
+
+def test_system_doc_category_excluded_from_retrieval():
+    """系統脈絡 md（category=系統脈絡）於 vector + keyword 兩處檢索皆被排除（決策 11）。"""
+    assert VendorKnowledgeRetrieverV2.SYSTEM_DOC_CATEGORY == '系統脈絡'
+    for src in (_vector_src(), _keyword_src()):
+        assert "kb.category IS DISTINCT FROM '{self.SYSTEM_DOC_CATEGORY}'" in src
