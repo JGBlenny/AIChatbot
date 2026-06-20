@@ -23,7 +23,8 @@ from services.embedding_utils import get_embedding_client
 router = APIRouter()
 
 # 常量定義
-TARGET_USER_ROLES = ['tenant', 'landlord', 'property_manager', 'system_admin']
+# 'prospect'（潛在客戶）：b2b 售前匿名訪客，對應 presales 知識的角色隔離（見 target_user_config）
+TARGET_USER_ROLES = ['tenant', 'landlord', 'property_manager', 'system_admin', 'prospect']
 BUSINESS_MODES = ['b2c', 'b2b']
 
 
