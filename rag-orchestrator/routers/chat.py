@@ -284,6 +284,10 @@ async def _maybe_synthesize_presales_leaf(form_result: dict, request, req) -> di
             return form_result
         raw = form_result.get('presales_leaf_raw')
         if not raw:
+            # 無葉答案的決策樹轉場（如個人房東→戶數）：去掉通用「表單填寫完成」頭部，只呈現下一題
+            suffix = form_result.get('presales_suffix')
+            if suffix and form_result.get('form_triggered'):
+                form_result['answer'] = suffix.split("\n\n---\n\n", 1)[-1].strip()
             return form_result
         from services.system_context import get_system_context
         optimizer = req.app.state.llm_answer_optimizer
