@@ -208,8 +208,8 @@ class ConversationalEngine:
             ctx = [{"field_label": k, "selected_label": str(v)} for k, v in fields.items() if k != "_seed" and v]
         if not grounding:
             grounding = "（依系統脈絡的功能索引與已知情境給適合建議；無確切知識的細節導向 demo/專人，不杜撰、不報價）"
-        # 推薦型結尾帶 demo CTA 連結（明確下一步）；事實型答問不強推 demo
-        with_cta = (converge_kind != "answer")
+        # 推薦型結尾必帶 demo CTA（明確下一步）；事實型答問/追問抑制連結（保持自然、不每則推銷）
+        cta_mode = "force" if converge_kind != "answer" else "suppress"
         return await asyncio.to_thread(
-            self.optimizer.synthesize_presales_answer, grounding, ctx, system_md, user_message, with_cta,
+            self.optimizer.synthesize_presales_answer, grounding, ctx, system_md, user_message, cta_mode,
         )

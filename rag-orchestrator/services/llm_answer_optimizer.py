@@ -884,7 +884,7 @@ class LLMAnswerOptimizer:
         accumulated_context: Optional[List[Dict]] = None,
         system_context_md: str = "",
         user_question: Optional[str] = None,
-        with_cta: bool = False,
+        cta_mode: str = "auto",   # force=結尾必附 demo 連結；suppress=不附連結；auto=不特別處理
     ) -> Optional[str]:
         """
         售前個人化合成：以「系統脈絡 md + 選定/檢索知識 + 累積情境」grounded 合成自然回覆。
@@ -914,10 +914,15 @@ class LLMAnswerOptimizer:
                 "\n請依系統脈絡的口吻與合規鐵則，整合上述情境與知識，生成個人化、自然的回覆；"
                 "只用提供的事實，缺的導向出口。"
             )
-            if with_cta:
+            if cta_mode == "force":
                 user_prompt += (
                     "\n【收束】結尾用一句邀約收束，附上預約連結："
                     "想看實際操作可預約 demo 👉 https://www.jgbsmart.com/demo-form ，或留個聯絡方式我們聯繫您 🙂"
+                )
+            elif cta_mode == "suppress":
+                user_prompt += (
+                    "\n【限制】這是延續對話中的回答，請**直接把問題答清楚就好，不要附上 demo 預約連結、"
+                    "也不要主動推銷預約**（除非使用者自己問怎麼預約）；保持自然。"
                 )
 
             synthesis_temp = float(os.getenv("LLM_SYNTHESIS_TEMP", "0.5"))
