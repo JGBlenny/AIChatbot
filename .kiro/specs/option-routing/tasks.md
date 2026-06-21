@@ -76,11 +76,11 @@
   - 需求：13.1
 - [x] 9.4 跨步情境累積（元件 8）：`_maybe_chain_next_form` 串接時 append `chain_context`（form_id/label/value）至 metadata；取消/完成清除；**不影響決定性路由**。
   - 需求：12.1, 12.2, 12.3, 12.4
-- [ ]* 9.5 單元測試：多步累積正確、取消/完成清除、路由不受情境累積影響。
+- [x]* 9.5 單元測試：多步累積正確、取消/完成清除、路由不受情境累積影響。
   - 需求：12.3, 12.4
 - [x] 9.6 擴充 `LLMAnswerOptimizer.synthesize_presales_answer`（元件 9）：輸入「選定知識 + 系統 md + 累積情境（+ 自由問答的 user_question）」；system prompt = md + 嚴格 grounding/合規指令；例外/逾時/超 token 回 None。
   - 需求：11.1, 11.2, 11.3, 13.5；決策 8
-- [ ]* 9.7 單元測試：grounding 不超出「知識 + md」、合規 prompt 注入、競品只用本次 E1、失敗回 None。
+- [x]* 9.7 單元測試：grounding 不超出「知識 + md」、合規 prompt 注入、競品只用本次 E1、失敗回 None。
   - 需求：11.2, 11.3, 13.5
 - [x] 9.8 葉答案接線（改元件 3/4）：`_resolve_leaf_answer`→`_synthesize_leaf_answer`（傳 `chain_context`）；合成失敗沿用 `_degrade_to_leaf` 降級**知識原文**；CTA / 表單第一欄段維持決定性、不經 LLM。
   - 需求：11.1, 11.4, 11.5
@@ -103,7 +103,7 @@
   - 需求：16.1, 16.2, 16.3
 - [x] 10.4 對話 brain（元件 12）[cf8b8c3 部分完成]：`conversational_step(rules_text, system_md, state, message)` 單次 structured-output LLM call → JSON `{extracted_fields, action:ask|converge, next_question?, converge_topic?}`；接規則載入器傳入 `rules_text`（補上現缺 arity）；JSON 驗證 + 收斂門檻（身分+「規模或痛點」）+ 提問上限 ≤4 + 使用者要求收斂 + 一次一題。
   - 需求：14.1, 14.2, 14.3, 14.4, 14.5, 15.1, 15.2
-- [ ]* 10.5 單元測試：JSON 解析/驗證、收斂門檻達成→converge、未達→ask、使用者要求→converge、提問上限、越界輸出被拒。
+- [x]* 10.5 單元測試：JSON 解析/驗證、收斂門檻達成→converge、未達→ask、使用者要求→converge、提問上限、越界輸出被拒。
   - 需求：14.4, 15.1, 15.2, 17.4
 - [x] 10.6 grounding 範圍 + 收斂合成（元件 13/15）：收斂依 config `grounding_scope` 限定檢索（多面向不互撈）→ 重用 `synthesize_presales_answer`（累積情境=狀態）生成推薦（方案級距不報價 + 模組 + CTA）。
   - 需求：15.3, 15.4, 19.5
