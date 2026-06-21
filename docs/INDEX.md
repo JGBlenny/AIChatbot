@@ -23,6 +23,7 @@
 | [API 文檔索引](./api/README.md) | API 規格詳細說明 |
 | [JGB 外部 API 規格](./api/jgb_external_api_spec.md) | JGB 系統對接規格 |
 | [JGB 合約 API 規格](./api/jgb-contracts-api-spec.md) | JGB 合約查詢規格 |
+| [對話式回答 API 串接](./api/conversational-api.md) | 售前 conversational 對話 API（外部專案串接） |
 
 ## 操作指南
 
@@ -61,6 +62,7 @@
 | 文檔 | 用途 |
 |------|------|
 | [功能文件索引](./features/README.md) | 所有功能總覽 |
+| [對話式回答＋售前顧問](./features/conversational-presales.md) | conversational 模式（多輪問答→收斂）、資料驅動設定、串流、部署 |
 | [表單管理系統](./features/FORM_MANAGEMENT_SYSTEM.md) | 表單系統說明 |
 | [Reranker 功能](./features/RERANKER_FEATURE.md) | 語義重排序 |
 | [認證系統](./features/AUTH_SYSTEM_README.md) | 認證機制 |

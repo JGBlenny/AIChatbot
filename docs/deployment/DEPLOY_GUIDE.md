@@ -116,6 +116,7 @@ git diff HEAD@{1} --name-only
 | Dockerfile 或 requirements.txt | 需要完整重新構建 |
 | docker-compose.yml | 需要重新啟動所有服務 |
 | database/migrations/*.sql | 已在步驟 3 處理，無需額外操作 |
+| **換庫 / 大量知識變更** | ⚠️ **必一併重建 `semantic-model`（reranker）+ `embedding-api`**，否則檢索排序/表單觸發會與新資料不同步（`docker compose -f docker-compose.prod.yml up -d --build --no-deps semantic-model embedding-api`） |
 
 ---
 
