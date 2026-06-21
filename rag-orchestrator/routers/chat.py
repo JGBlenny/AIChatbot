@@ -362,14 +362,55 @@ def _finalize_response(response: 'VendorChatResponse', request):
     return response
 
 
+async def _conversational_sse(engine, decision, request):
+    """把對話引擎的 stream_answer 包成前端相容 SSE（start/intent/answer_chunk/metadata/done）。
+    converge＝真 token 串流（stream_chat_completion）；ask＝整句一次。"""
+    try:
+        yield await _generate_sse_event("start", {"cached": False, "message": "開始輸出答案..."})
+        yield await _generate_sse_event("intent", {
+            "intent_type": "conversational", "intent_name": "售前對話", "confidence": 1.0})
+        async for chunk in engine.stream_answer(decision):
+            if chunk:
+                yield await _generate_sse_event("answer_chunk", {"chunk": chunk})
+        yield await _generate_sse_event("metadata", {
+            "intent_type": "conversational", "action_type": "conversational", "cache_hit": False})
+        yield await _generate_sse_event("done", {"success": True, "cached": False, "message": "答案生成完成"})
+    except Exception as e:
+        print(f"⚠️ 對話串流失敗：{e}")
+        yield await _generate_sse_event("error", {"success": False, "error": str(e)})
+
+
+async def _conversational_respond(request, req, *, start_if_absent, config=None):
+    """
+    跑對話一輪並回傳 Response（stream→真 token SSE / 非 stream→JSON）或 None（降級）。
+    stream 時用 engine.prepare 先決策（可乾淨降級），再 StreamingResponse 串流合成。
+    """
+    engine = req.app.state.conversational_engine
+    if request.stream:
+        decision = await engine.prepare(
+            session_id=request.session_id, user_id=request.user_id or "anonymous",
+            vendor_id=request.vendor_id or 0, user_message=request.message,
+            config=config, start_if_absent=start_if_absent)
+        if decision is None:
+            return None
+        return StreamingResponse(
+            _conversational_sse(engine, decision, request),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"})
+    result = await engine.handle(
+        session_id=request.session_id, user_id=request.user_id or "anonymous",
+        vendor_id=request.vendor_id or 0, user_message=request.message,
+        config=config, start_if_absent=start_if_absent)
+    if not result:
+        return None
+    return _conversational_to_response(result, request)
+
+
 async def _maybe_conversational_freetext(request, req):
     """
-    對話式回答 engine-first dispatch（option-routing R14–R19 / 元件 14）：**任何有 conversational
-    設定的角色**（依 target_user 查設定，資料驅動）一律先進對話引擎——引擎每輪自判「事實問題→
-    用知識 grounding 直答」或「推薦型→先了解再推薦」；知識成為引擎收斂時的事實依據（grounding）。
-
-    無設定角色 / 無 session / 引擎降級（brain 失敗）→ 回 None，呼叫端落回既有流程
-    （知識/SOP/兜底，作為安全網，不阻斷對話）。後續輪由 Step 0 的續對話 hook 接手。
+    對話式回答 engine-first dispatch（option-routing R14–R19 / 元件 14）：有 conversational 設定的
+    角色（依 target_user 查設定）先進對話引擎；知識為收斂時的 grounding。stream 時真 token 串流。
+    無設定角色 / 無 session / 引擎降級 → 回 None，呼叫端落回既有流程（不阻斷對話）。
     """
     try:
         if not request.target_user or not request.session_id:
@@ -378,18 +419,11 @@ async def _maybe_conversational_freetext(request, req):
         cfg = await config_for_target_user(req.app.state.db_pool, request.target_user)
         if not cfg:
             return None
-        engine = req.app.state.conversational_engine
-        result = await engine.handle(
-            session_id=request.session_id,
-            user_id=request.user_id or "anonymous",
-            vendor_id=request.vendor_id or 0,
-            user_message=request.message,
-            config=cfg, start_if_absent=True,
-        )
-        if not result:
-            return None
-        print("💬 [conversational] prospect 自由問答（無知識）→ 進對話引擎")
-        return _conversational_to_response(result, request)
+        resp = await _conversational_respond(request, req, start_if_absent=True, config=cfg)
+        if resp is not None:
+            print("💬 [conversational] prospect 自由問答 → 進對話引擎"
+                  + ("（串流）" if request.stream else ""))
+        return resp
     except Exception as e:
         print(f"❌ prospect 自由問答 dispatch 失敗（落回兜底）：{e}")
         return None
@@ -3305,15 +3339,10 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                         form_cancelled=True,
                     )
                     return _finalize_response(cancel_resp, request)
-                stepped = await engine.handle(
-                    session_id=request.session_id,
-                    user_id=request.user_id or "anonymous",
-                    vendor_id=request.vendor_id or 0,
-                    user_message=request.message,
-                    config=None, start_if_absent=False,
-                )
-                if stepped:
-                    return _finalize_response(_conversational_to_response(stepped, request), request)
+                # 續對話（stream→真 token 串流 / 非 stream→JSON）；降級回 None
+                conv_resp = await _conversational_respond(request, req, start_if_absent=False, config=None)
+                if conv_resp is not None:
+                    return conv_resp
                 # 引擎降級（brain 失敗）：關閉殘留會話、落回一般流程（不阻斷對話）
                 print("⚠️ [conversational] 引擎降級，關閉對話會話、改走一般流程")
                 await engine._close(request.session_id)

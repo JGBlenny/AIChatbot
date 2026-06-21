@@ -89,12 +89,15 @@ class ConversationalEngine:
         return bool(session_state and session_state.get("form_id") == CONVERSATIONAL_FORM_ID)
 
     # ---------- 主流程（元件 12/13/14） ----------
-    async def handle(self, session_id, user_id, vendor_id, user_message,
-                     config: Optional[ConversationalConfig] = None,
-                     start_if_absent=True, seed_topic=None) -> Optional[Dict[str, Any]]:
+    async def prepare(self, session_id, user_id, vendor_id, user_message,
+                      config: Optional[ConversationalConfig] = None,
+                      start_if_absent=True, seed_topic=None) -> Optional[Dict[str, Any]]:
         """
-        跑一輪對話。config 為入口/新建時的面向設定；續對話（state 已存在）時若未傳則由
-        state.config_key 還原。回 {answer, conversational:True, converged:bool} 或 None（呼叫端降級）。
+        跑 brain + gate，回「決策」（converge 僅先取 grounding、尚未合成/未 save）：
+          {'kind':'ask','answer':<問句>}（已 +1 並 save asked_count）
+          {'kind':'converge', grounding, ctx, cta_mode, converge_kind, system_md, session_id, state, user_message}
+          None（降級）
+        供 handle()（非串流合成）與 stream_answer()（串流合成）共用，避免重複 brain 邏輯。
         """
         try:
             state = await self.get_state(session_id)
@@ -111,34 +114,28 @@ class ConversationalEngine:
             system_md = await self._get_system_context(self.db_pool)
             rules_text = await self._load_rules(self.db_pool, config.persona_role)
             if not rules_text:
-                return None  # 該角色無規則 → 不啟用 conversational，降級
+                return None  # 該角色無規則 → 降級
 
             step = self.optimizer.conversational_step(rules_text, system_md, state, user_message)
             if step is None:
-                # brain 失敗 → 降級；若是剛起的新會話，關掉以免殘留 COLLECTING
                 if state.get("asked_count", 0) == 0:
-                    await self._close(session_id)
+                    await self._close(session_id)  # 新會話 brain 失敗 → 關掉殘留 COLLECTING
                 return None
 
-            # 更新已收集欄位
             for k, v in (step.get("extracted_fields") or {}).items():
                 if v:
                     state.setdefault("collected_fields", {})[k] = v
 
             asked = state.get("asked_count", 0)
             collected = state.get("collected_fields", {})
-            # converge_kind：'answer'＝回答明確事實問題（競品/價格/功能，直接用知識 grounding）；
-            # 其餘＝'recommend'（產品適配推薦，需基本資訊）
             converge_kind = (step.get("converge_kind") or "recommend").lower()
 
-            # 收斂最低門檻：**僅推薦型**需要基本資訊（身分 + 規模或痛點）；事實型直接答不卡。
-            # 基本資訊不足就想做推薦型收斂 → 先補問關鍵 1 題（用 brain 一併給的備用 next_question）。
+            # 推薦型基本資訊門檻（事實型不卡）
             if step["action"] == "converge" and converge_kind != "answer" \
                     and not _has_basic_info(collected) and asked < MAX_ASKS and step.get("next_question"):
                 print("🛑 推薦型收斂但基本資訊不足，先補問再收斂（避免空泛推薦）")
                 step = {**step, "action": "ask"}
-
-            # 程式層硬上限（絕對保底，防失控無限問；正常收斂由 AI 判斷）
+            # 程式層硬上限
             if step["action"] == "ask" and asked >= MAX_ASKS:
                 print(f"⛓️ 對話提問達絕對上限（{MAX_ASKS}），強制收斂")
                 step = {**step, "action": "converge"}
@@ -146,35 +143,66 @@ class ConversationalEngine:
             if step["action"] == "ask":
                 state["asked_count"] = asked + 1
                 await self._save(session_id, state)
-                return {"answer": step.get("next_question"), "conversational": True, "converged": False}
+                return {"kind": "ask", "answer": step.get("next_question")}
 
-            # converge → 取知識 grounding + 合成（事實型答問 / 推薦型推薦）
-            reco = await self._converge(
-                state, step.get("converge_topic"), system_md, user_message, config, converge_kind,
-            )
-            if not reco:
-                return None
-            # 收斂後**不關閉會話**，保留已收集情境讓後續追問接得上（給完推薦使用者常會再追問，
-            # 關閉會導致下一輪重問身分/戶數）。只有使用者「取消」才結束（見 chat.py 續對話 hook）。
-            if converge_kind != "answer":
-                state["recommended"] = True  # 標記已給過推薦：後續正面回應改引導 CTA、不重述方案
-            await self._save(session_id, state)
-            return {"answer": reco, "conversational": True, "converged": converge_kind != "answer"}
+            grounding, ctx, cta_mode = await self._converge_grounding(
+                state, step.get("converge_topic"), user_message, config, converge_kind)
+            return {"kind": "converge", "grounding": grounding, "ctx": ctx, "cta_mode": cta_mode,
+                    "converge_kind": converge_kind, "system_md": system_md,
+                    "session_id": session_id, "state": state, "user_message": user_message}
         except Exception as e:
-            print(f"❌ 對話引擎 handle 失敗（降級）：{e}")
+            print(f"❌ 對話引擎 prepare 失敗（降級）：{e}")
             return None
 
-    async def _converge(self, state, converge_topic, system_md, user_message,
-                        config: ConversationalConfig, converge_kind: str = "recommend") -> Optional[str]:
-        """
-        依設定 grounding_scope 檢索知識當 grounding，合成回答。
-        - recommend：以已收集欄位（身分/規模/痛點）為主組檢索 → 個人化推薦。
-        - answer：以使用者問題為主組檢索（競品/價格/功能等）→ grounded 直答。
-        知識一律當「事實底稿」，由 synthesize_presales_answer 合成（不直吐、受合規護欄約束）。
-        """
+    async def _finalize_converge(self, decision) -> None:
+        """converge 合成完成後：推薦型標記 recommended；保存狀態（不關閉會話，續對話接得上）。"""
+        state = decision["state"]
+        if decision["converge_kind"] != "answer":
+            state["recommended"] = True
+        await self._save(decision["session_id"], state)
+
+    async def handle(self, session_id, user_id, vendor_id, user_message,
+                     config: Optional[ConversationalConfig] = None,
+                     start_if_absent=True, seed_topic=None) -> Optional[Dict[str, Any]]:
+        """非串流：回 {answer, conversational, converged} 或 None（降級）。"""
+        decision = await self.prepare(session_id, user_id, vendor_id, user_message,
+                                      config, start_if_absent, seed_topic)
+        if decision is None:
+            return None
+        if decision["kind"] == "ask":
+            return {"answer": decision["answer"], "conversational": True, "converged": False}
+        reco = await asyncio.to_thread(
+            self.optimizer.synthesize_presales_answer,
+            decision["grounding"], decision["ctx"], decision["system_md"],
+            decision["user_message"], decision["cta_mode"])
+        if not reco:
+            return None
+        await self._finalize_converge(decision)
+        return {"answer": reco, "conversational": True, "converged": decision["converge_kind"] != "answer"}
+
+    async def stream_answer(self, decision):
+        """串流：依決策 yield 文字 chunk。ask→整句一次；converge→真 token 串流，結束後 finalize。"""
+        if not decision:
+            return
+        if decision["kind"] == "ask":
+            q = decision.get("answer") or ""
+            if q:
+                yield q
+            return
+        got = False
+        async for chunk in self.optimizer.synthesize_presales_answer_stream(
+                decision["grounding"], decision["ctx"], decision["system_md"],
+                decision["user_message"], decision["cta_mode"]):
+            if chunk:
+                got = True
+                yield chunk
+        if got:
+            await self._finalize_converge(decision)
+
+    async def _converge_grounding(self, state, converge_topic, user_message, config, converge_kind):
+        """取 grounding（選材三態）+ 累積情境 ctx + cta_mode；不合成。回 (grounding, ctx, cta_mode)。"""
         fields = state.get("collected_fields", {})
         scope = config.grounding_scope or {}
-        # 組檢索查詢：事實型以使用者問題為主；推薦型以欄位為主。兩者都帶 user_message 提升命中。
         parts = [str(fields.get(k, "")) for k in ("identity", "scale", "pain", "interested")]
         extra = [converge_topic] if converge_topic else []
         if converge_kind == "answer":
@@ -184,47 +212,33 @@ class ConversationalEngine:
             if user_message:
                 kw = kw + [user_message]
         query = " ".join([k for k in kw if k])
-        # grounding 選材三態（決定性優先；非功能需求 #1）：
-        #   ids      → 明列 kb_ids（最決定性）
-        #   category → 某分類整批撈（決定性，窄主題；可無 embedding）
-        #   vector   → 語意檢索（廣主題，如 presales；預設）
+        # 選材三態（決定性優先；非功能需求 #1）：ids 明列 / category 整批 / vector 語意（預設）
         select = (scope.get("select") or "vector").lower()
         grounding = ""
         try:
             if select == "ids" and scope.get("kb_ids"):
                 grounding = await self._grounding_by_ids(scope["kb_ids"])
             elif select == "category" and scope.get("category"):
-                grounding = await self._grounding_by_category(
-                    scope["category"], scope.get("target_user")
-                )
-            else:  # vector（預設）
+                grounding = await self._grounding_by_category(scope["category"], scope.get("target_user"))
+            else:  # vector
                 emb = await self.retriever.embedding_client.get_embedding(query, verbose=False)
                 if emb:
                     res = await self.retriever._vector_search(
-                        emb,
-                        vendor_id=scope.get("vendor_id") or 0,  # prospect/b2b 系統知識 vendor_ids 為 NULL，值無作用；0 為安全預設
-                        top_k=5,
-                        similarity_threshold=0.0,
-                        target_user=scope.get("target_user"),
-                        mode=scope.get("mode", "b2b"),
-                        vector_limit=20,
-                    )
+                        emb, vendor_id=scope.get("vendor_id") or 0, top_k=5,
+                        similarity_threshold=0.0, target_user=scope.get("target_user"),
+                        mode=scope.get("mode", "b2b"), vector_limit=20)
                     grounding = "\n\n".join(r.get("answer", "") for r in res[:3] if r.get("answer"))
         except Exception as e:
             print(f"⚠️ 對話引擎收斂檢索失敗（select={select}）：{e}")
-        # 累積情境 = 已收集欄位（供推薦個人化）。事實型答問(answer)不帶情境，避免回答前
-        # 先複述舊 profile/方案（直接針對問題回答）。
+        # 事實型答問不帶情境（避免回答前複述舊 profile）；推薦型帶情境做個人化
         if converge_kind == "answer":
             ctx = None
         else:
             ctx = [{"field_label": k, "selected_label": str(v)} for k, v in fields.items() if k != "_seed" and v]
         if not grounding:
             grounding = "（依系統脈絡的功能索引與已知情境給適合建議；無確切知識的細節導向 demo/專人，不杜撰、不報價）"
-        # 推薦型結尾必帶 demo CTA（明確下一步）；事實型答問/追問抑制連結（保持自然、不每則推銷）
         cta_mode = "force" if converge_kind != "answer" else "suppress"
-        return await asyncio.to_thread(
-            self.optimizer.synthesize_presales_answer, grounding, ctx, system_md, user_message, cta_mode,
-        )
+        return grounding, ctx, cta_mode
 
     # ---------- grounding 決定性選材（不靠向量） ----------
     async def _grounding_by_ids(self, kb_ids, limit: int = 8) -> str:

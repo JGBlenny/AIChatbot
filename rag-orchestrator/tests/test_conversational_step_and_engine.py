@@ -89,9 +89,11 @@ def _engine(step_return):
         rules_loader=AsyncMock(return_value="規則"),
     )
     eng.optimizer.conversational_step = MagicMock(return_value=step_return)
+    eng.optimizer.synthesize_presales_answer = MagicMock(return_value="合成內容")
     eng._save = AsyncMock()
     eng._close = AsyncMock()
-    eng._converge = AsyncMock(return_value="合成內容")
+    # 隔離檢索：converge 取 grounding 改 mock（回 grounding/ctx/cta_mode）
+    eng._converge_grounding = AsyncMock(return_value=("grounding", None, "force"))
     return eng
 
 
@@ -108,7 +110,7 @@ async def test_recommend_without_basic_info_flips_to_ask():
     out = await _run(eng, {"collected_fields": {}, "asked_count": 1})
     assert out["converged"] is False
     assert out["answer"] == "請問您的身分是？"
-    eng._converge.assert_not_awaited()
+    eng._converge_grounding.assert_not_awaited()
     eng._close.assert_not_awaited()
     eng._save.assert_awaited()
 
@@ -122,7 +124,7 @@ async def test_recommend_with_basic_info_converges():
                            "asked_count": 2})
     assert out["converged"] is True
     assert out["answer"] == "合成內容"
-    eng._converge.assert_awaited_once()
+    eng._converge_grounding.assert_awaited_once()
     eng._close.assert_not_awaited()
     eng._save.assert_awaited()
 
@@ -135,7 +137,7 @@ async def test_answer_kind_does_not_close_session():
     out = await _run(eng, {"collected_fields": {}, "asked_count": 1})
     assert out["converged"] is False
     assert out["answer"] == "合成內容"
-    eng._converge.assert_awaited_once()
+    eng._converge_grounding.assert_awaited_once()
     eng._close.assert_not_awaited()
     eng._save.assert_awaited()
 
@@ -146,7 +148,7 @@ async def test_ask_cap_forces_converge_at_max():
     eng = _engine({"action": "ask", "next_question": "再問一題", "extracted_fields": {}})
     out = await _run(eng, {"collected_fields": {}, "asked_count": MAX_ASKS})
     assert out["converged"] is True
-    eng._converge.assert_awaited_once()
+    eng._converge_grounding.assert_awaited_once()
     eng._close.assert_not_awaited()  # 收斂不關閉會話（保留上下文）
 
 
