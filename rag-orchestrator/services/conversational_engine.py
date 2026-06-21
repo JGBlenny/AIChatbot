@@ -200,8 +200,12 @@ class ConversationalEngine:
                 grounding = "\n\n".join(r.get("answer", "") for r in res[:3] if r.get("answer"))
         except Exception as e:
             print(f"⚠️ 對話引擎收斂檢索失敗：{e}")
-        # 累積情境 = 已收集欄位
-        ctx = [{"field_label": k, "selected_label": str(v)} for k, v in fields.items() if k != "_seed" and v]
+        # 累積情境 = 已收集欄位（供推薦個人化）。事實型答問(answer)不帶情境，避免回答前
+        # 先複述舊 profile/方案（直接針對問題回答）。
+        if converge_kind == "answer":
+            ctx = None
+        else:
+            ctx = [{"field_label": k, "selected_label": str(v)} for k, v in fields.items() if k != "_seed" and v]
         if not grounding:
             grounding = "（依系統脈絡的功能索引與已知情境給適合建議；無確切知識的細節導向 demo/專人，不杜撰、不報價）"
         return await asyncio.to_thread(
