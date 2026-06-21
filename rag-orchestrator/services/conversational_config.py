@@ -8,8 +8,9 @@ conversational（多輪自適應問答→收斂）；未設定的面向一律 di
   - `answer`        → 該角色的對話規則（persona，見 conversational_rules 載入）
   - `target_user[]` → 角色（persona_role）
   - `generation_metadata.conversational_config`（jsonb）→ 設定本體：
-        { key, answer_mode, persona_role?, grounding_scope{target_user,mode,vendor_id?,category?,keywords?},
-          entry{form_id, option_values[]}, seed? }
+        { key, answer_mode, persona_role?, enabled?,
+          topic_scope{mode:all|category|keywords, ...}（進入方式：all=整角色 freetext / 主題命中）,
+          grounding_scope{select:vector|category|ids, target_user, mode, vendor_id?, category?, kb_ids?}, seed? }
 
 **新增一組面向/角色 = 後台加一筆「對話規則」（含上述 metadata），零改程式。**
 DB 未提供時以 code 內建預設（presales）fallback。
@@ -31,7 +32,6 @@ class ConversationalConfig:
     #   - select: "vector"(語意檢索,廣主題) | "category"(整批撈某分類,決定性) | "ids"(明列 kb_ids,最決定性)
     #   - 既有鍵：target_user / mode(b2b·b2c) / vendor_id / category / keywords / kb_ids
     grounding_scope: Dict[str, Any] = field(default_factory=dict)
-    entry: Dict[str, Any] = field(default_factory=dict)
     seed: Optional[str] = None
     # topic_scope：啟用粒度。{"mode":"all"}=整角色（prospect）；
     #   {"mode":"category","category":"退租結算"} / {"mode":"keywords","keywords":[...]} = 主題級（檢索命中才進）
@@ -70,7 +70,6 @@ def _config_from_row(target_user: Optional[List[str]], metadata: Any) -> Optiona
         answer_mode=md.get("answer_mode", "conversational"),
         persona_role=persona_role,
         grounding_scope=md.get("grounding_scope") or {"target_user": persona_role, "mode": "b2b"},
-        entry=md.get("entry") or {},
         seed=md.get("seed"),
         topic_scope=md.get("topic_scope") or {"mode": "all"},
         enabled=md.get("enabled", True),
@@ -122,22 +121,6 @@ async def config_for_target_user(db_pool, target_user: Optional[str]) -> Optiona
         return None
     await _load(db_pool)
     return _cache["by_role"].get(target_user)
-
-
-async def config_for_entry(db_pool, form_id: str, option_value: Any) -> Optional[ConversationalConfig]:
-    """依選單入口取設定：某選單表單的某選項 value 是否為某 conversational 面向的入口。"""
-    if not form_id:
-        return None
-    await _load(db_pool)
-    for cfg in _cache["by_key"].values():
-        if cfg.answer_mode != "conversational":
-            continue
-        entry = cfg.entry or {}
-        if entry.get("form_id") == form_id:
-            values = entry.get("option_values") or []
-            if option_value in values or str(option_value) in [str(v) for v in values]:
-                return cfg
-    return None
 
 
 def reset_cache() -> None:

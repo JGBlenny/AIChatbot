@@ -362,46 +362,6 @@ def _finalize_response(response: 'VendorChatResponse', request):
     return response
 
 
-async def _maybe_seed_conversational(form_result: dict, session_state: dict, request, req):
-    """
-    對話式回答 seed（option-routing R18 / 元件 14）：選單入口（如 presales_entry）的特定
-    選項（fit / pain）完成後，依設定 seed 對話引擎並回傳第一題；非入口選項或角色不符或
-    引擎降級 → 回 None（呼叫端維持原表單完成回應）。
-    """
-    try:
-        if not form_result.get('form_completed') or form_result.get('form_triggered'):
-            return None
-        from services.conversational_config import config_for_entry
-        db_pool = req.app.state.db_pool
-        src_form_id = session_state.get('form_id')
-        cd = form_result.get('collected_data') or {}
-        seed_cfg, seed_val = None, None
-        for v in cd.values():
-            cfg = await config_for_entry(db_pool, src_form_id, v)
-            if cfg:
-                seed_cfg, seed_val = cfg, v
-                break
-        if not seed_cfg or request.target_user != seed_cfg.persona_role:
-            return None
-        engine = req.app.state.conversational_engine
-        seeded = await engine.handle(
-            session_id=request.session_id,
-            user_id=request.user_id or "anonymous",
-            vendor_id=request.vendor_id or 0,
-            user_message=request.message,
-            config=seed_cfg,
-            start_if_absent=True,
-            seed_topic=seed_val,
-        )
-        if not seeded:
-            return None
-        print(f"💬 [conversational] 由 {src_form_id} 選項 '{seed_val}' seed 對話引擎（{seed_cfg.key}）")
-        return _finalize_response(_conversational_to_response(seeded, request), request)
-    except Exception as e:
-        print(f"❌ conversational seed 失敗（維持原表單回應）：{e}")
-        return None
-
-
 async def _maybe_conversational_freetext(request, req):
     """
     對話式回答 engine-first dispatch（option-routing R14–R19 / 元件 14）：**任何有 conversational
@@ -3407,12 +3367,6 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                             )
                         return response
                 else:
-                    # 對話式回答 seed（R18 / 元件 14）：presales_entry「fit / pain」選項完成
-                    # → 進對話引擎並回第一題（非入口選項 / 角色不符 / 引擎降級 → 維持原表單回應）
-                    seed_resp = await _maybe_seed_conversational(form_result, session_state, request, req)
-                    if seed_resp is not None:
-                        return seed_resp
-
                     # 將表單結果轉換為 VendorChatResponse 格式
                     response = _convert_form_result_to_response(form_result, request)
 
