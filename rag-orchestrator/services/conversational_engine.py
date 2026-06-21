@@ -104,7 +104,7 @@ class ConversationalEngine:
                 state = await self._start(session_id, user_id, vendor_id, config.key, seed_topic)
             # 續對話：以 state 內的 config_key 還原設定（不依賴呼叫端再傳）
             if config is None:
-                config = get_config(state.get("config_key"))
+                config = await get_config(self.db_pool, state.get("config_key"))
             if config is None:
                 return None
 

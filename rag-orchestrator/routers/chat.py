@@ -372,11 +372,12 @@ async def _maybe_seed_conversational(form_result: dict, session_state: dict, req
         if not form_result.get('form_completed') or form_result.get('form_triggered'):
             return None
         from services.conversational_config import config_for_entry
+        db_pool = req.app.state.db_pool
         src_form_id = session_state.get('form_id')
         cd = form_result.get('collected_data') or {}
         seed_cfg, seed_val = None, None
         for v in cd.values():
-            cfg = config_for_entry(src_form_id, v)
+            cfg = await config_for_entry(db_pool, src_form_id, v)
             if cfg:
                 seed_cfg, seed_val = cfg, v
                 break
@@ -401,20 +402,20 @@ async def _maybe_seed_conversational(form_result: dict, session_state: dict, req
         return None
 
 
-async def _maybe_prospect_conversational_freetext(request, req):
+async def _maybe_conversational_freetext(request, req):
     """
-    對話式回答 engine-first dispatch（option-routing R14–R19 / 元件 14）：prospect 一律先進
-    對話引擎——引擎每輪自判「事實問題→用知識 grounding 直答」或「推薦型→先了解再推薦」；
-    知識成為引擎收斂時的事實依據（grounding），不再走獨立的知識直答。
+    對話式回答 engine-first dispatch（option-routing R14–R19 / 元件 14）：**任何有 conversational
+    設定的角色**（依 target_user 查設定，資料驅動）一律先進對話引擎——引擎每輪自判「事實問題→
+    用知識 grounding 直答」或「推薦型→先了解再推薦」；知識成為引擎收斂時的事實依據（grounding）。
 
-    非 prospect / 無 session / 引擎降級（brain 失敗）→ 回 None，呼叫端落回既有流程
+    無設定角色 / 無 session / 引擎降級（brain 失敗）→ 回 None，呼叫端落回既有流程
     （知識/SOP/兜底，作為安全網，不阻斷對話）。後續輪由 Step 0 的續對話 hook 接手。
     """
     try:
-        if request.target_user != 'prospect' or not request.session_id:
+        if not request.target_user or not request.session_id:
             return None
         from services.conversational_config import config_for_target_user
-        cfg = config_for_target_user('prospect')
+        cfg = await config_for_target_user(req.app.state.db_pool, request.target_user)
         if not cfg:
             return None
         engine = req.app.state.conversational_engine
@@ -3539,11 +3540,12 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         else:
             vendor_info = _validate_vendor(request.vendor_id, resolver)
 
-        # Step 1.5: 對話式回答 engine-first（option-routing R14–R19｜元件 14）
-        # prospect 一律先進對話引擎（先了解再回答；知識在引擎收斂時當 grounding，不再獨立直答）。
+        # Step 1.5: 對話式回答 engine-first（option-routing R14–R19｜元件 14｜資料驅動）
+        # 有 conversational 設定的角色（依 target_user 查設定）先進對話引擎（先了解再回答；
+        # 知識在引擎收斂時當 grounding，不再獨立直答）。無設定角色不受影響。
         # 此處已過 Step 0（無進行中會話）；引擎降級（brain 失敗）→ 回 None，落回既有流程（知識/兜底）。
-        if request.target_user == 'prospect':
-            conv_resp = await _maybe_prospect_conversational_freetext(request, req)
+        if request.target_user:
+            conv_resp = await _maybe_conversational_freetext(request, req)
             if conv_resp is not None:
                 return conv_resp
 
