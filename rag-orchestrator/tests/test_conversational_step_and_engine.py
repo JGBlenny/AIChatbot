@@ -115,7 +115,7 @@ async def test_recommend_without_basic_info_flips_to_ask():
 
 @pytest.mark.asyncio
 async def test_recommend_with_basic_info_converges():
-    """推薦型且已具備 identity+scale → 收斂並關閉會話。"""
+    """推薦型且已具備 identity+scale → 收斂；**不關閉會話**（保留上下文供後續追問），改 _save。"""
     eng = _engine({"action": "converge", "converge_kind": "recommend",
                    "next_question": "備用", "extracted_fields": {}})
     out = await _run(eng, {"collected_fields": {"identity": "個人房東", "scale": "20"},
@@ -123,7 +123,8 @@ async def test_recommend_with_basic_info_converges():
     assert out["converged"] is True
     assert out["answer"] == "合成內容"
     eng._converge.assert_awaited_once()
-    eng._close.assert_awaited_once()
+    eng._close.assert_not_awaited()
+    eng._save.assert_awaited()
 
 
 @pytest.mark.asyncio
@@ -146,7 +147,7 @@ async def test_ask_cap_forces_converge_at_max():
     out = await _run(eng, {"collected_fields": {}, "asked_count": MAX_ASKS})
     assert out["converged"] is True
     eng._converge.assert_awaited_once()
-    eng._close.assert_awaited_once()
+    eng._close.assert_not_awaited()  # 收斂不關閉會話（保留上下文）
 
 
 @pytest.mark.asyncio

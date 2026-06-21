@@ -154,13 +154,10 @@ class ConversationalEngine:
             )
             if not reco:
                 return None
-            if converge_kind == "answer":
-                # 事實型答問：答完**不結束**會話，保留已收集情境繼續對話（中途岔題不丟上下文）
-                await self._save(session_id, state)
-                return {"answer": reco, "conversational": True, "converged": False}
-            # 推薦型：給出推薦＝對話終點，關閉會話
-            await self._close(session_id)
-            return {"answer": reco, "conversational": True, "converged": True}
+            # 收斂後**不關閉會話**，保留已收集情境讓後續追問接得上（給完推薦使用者常會再追問，
+            # 關閉會導致下一輪重問身分/戶數）。只有使用者「取消」才結束（見 chat.py 續對話 hook）。
+            await self._save(session_id, state)
+            return {"answer": reco, "conversational": True, "converged": converge_kind != "answer"}
         except Exception as e:
             print(f"❌ 對話引擎 handle 失敗（降級）：{e}")
             return None
