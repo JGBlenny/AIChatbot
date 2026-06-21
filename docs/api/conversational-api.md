@@ -46,7 +46,7 @@ JSON（`VendorChatResponse`，重點欄位）：
 
 ```json
 {
-  "answer": "回覆文字（可能含 • 條列、純網址、\\n 換行）",
+  "answer": "回覆文字（可能含 • 條列、markdown 連結 [標籤](網址)、\\n 換行）",
   "intent_type": "conversational",   // 對話中；導到表單時為 "form_filling"
   "session_id": "...",
   "form_triggered": false,           // 導到 CTA 表單時 true
@@ -59,7 +59,7 @@ JSON（`VendorChatResponse`，重點欄位）：
 }
 ```
 
-> `answer` 顯示請用 **`white-space: pre-wrap`** 或 markdown 渲染（含換行/條列/純網址連結）。
+> `answer` 內含 **markdown**（換行/`•` 條列/`[標籤](網址)` 連結），顯示端請用 **markdown 渲染**（連結才會變可點按；純 `pre-wrap` 會顯示原始 `[]()` 文字）。
 
 ## Response B — 串流（`stream:true`）
 
@@ -97,8 +97,8 @@ data: {"success": true, "message": "答案生成完成"}
 
 - 模糊需求 → 顧問式反問（一次一題：身分/規模/痛點…）
 - 事實題（競品/價格/某功能）→ 直接答
-- 了解夠 → 個人化推薦 ＋ 預約連結 `https://www.jgbsmart.com/demo-form`
-- 合規：不報價（導 `https://www.jgbsmart.com/pricing`）、IoT 被問才提、競品中立
+- 了解夠 → 個人化推薦 ＋ 預約連結 `[立即預約 demo](https://www.jgbsmart.com/demo-form)`
+- 合規：不報價（導 `[查看方案與費用](https://www.jgbsmart.com/pricing)`）、IoT 被問才提、競品中立；連結一律 markdown、禁止裸網址
 
 ## 範例
 

@@ -31,7 +31,7 @@ prospect 訊息（mode=b2b, target_user=prospect, 固定 session_id）
 - **不報價**：價格一律導 `https://www.jgbsmart.com/pricing` 或留資，不講數字。
 - **IoT 不主動**：被問才說「細節由專人說明」、不報價。
 - **競品中立**：被問才比較、只憑事實、未列明說「不確定，建議向對方確認」、不斷言對方沒有。
-- **CTA**：推薦結尾導預約 demo `https://www.jgbsmart.com/demo-form`（連結用純網址，不用 markdown `[]()`）。
+- **CTA**：推薦結尾導預約 demo（連結一律用 **markdown 格式 `[標籤](網址)`、禁止裸網址**）：預約→`[立即預約 demo](https://www.jgbsmart.com/demo-form)`、方案→`[查看方案與費用](https://www.jgbsmart.com/pricing)`。
 - 事實只能來自「系統脈絡 md ＋ 選定知識」，不杜撰。
 
 ## 四、架構與檔案
