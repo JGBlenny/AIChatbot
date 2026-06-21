@@ -156,6 +156,8 @@ class ConversationalEngine:
                 return None
             # 收斂後**不關閉會話**，保留已收集情境讓後續追問接得上（給完推薦使用者常會再追問，
             # 關閉會導致下一輪重問身分/戶數）。只有使用者「取消」才結束（見 chat.py 續對話 hook）。
+            if converge_kind != "answer":
+                state["recommended"] = True  # 標記已給過推薦：後續正面回應改引導 CTA、不重述方案
             await self._save(session_id, state)
             return {"answer": reco, "conversational": True, "converged": converge_kind != "answer"}
         except Exception as e:

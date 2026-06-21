@@ -845,10 +845,12 @@ class LLMAnswerOptimizer:
                 return None
             collected = state.get('collected_fields', {}) or {}
             asked = state.get('asked_count', 0)
+            recommended = bool(state.get('recommended', False))
             system_prompt = f"{system_context_md}\n\n{rules_text}".strip()
             user_prompt = (
                 f"【已知欄位】{json.dumps(collected, ensure_ascii=False)}\n"
                 f"【asked_count】{asked}\n"
+                f"【已給過推薦】{recommended}\n"
                 f"【使用者最新訊息】{user_message}\n\n請依規則輸出 JSON。"
             )
             result = self.llm_provider.chat_completion(
