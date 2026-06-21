@@ -429,6 +429,65 @@ prospect 訊息
 - **葉出口（leaf outlet）**：分支底端去向，三型——知識答案、動作表單、導向連結。
 - **擴充共存**：選項層路由與表單層 `next_form_id` 並存，選項優先、表單層 fallback。
 
+---
+
+## 修訂（藍圖）：對話式回答通用化擴充 —（角色＋主題範圍）/ grounding 三態 / 設定管理畫面
+
+> 狀態（2026-06-21 更新）：**Phase 1/2 已實作；Phase 3 待做**。
+> - **Phase 1（已實作）**：X2 grounding 三態（ids/category/vector）+ X3 設定模型（topic_scope/enabled/grounding.select）。
+> - **Phase 2（已實作）**：X4 設定管理畫面 + upsert/list/delete API（knowledge-admin「對話設定」頁）。
+> - **Phase 3（待做，按需）**：X1 主題級「檢索命中就進」的進入觸發（目前啟用僅 prospect freetext，由
+>   `CONVERSATIONAL_ENABLED_ROLES` 白名單明確控制；有真實主題場景再實作並驗證）。
+> - **調整**：X1「選單 entry」進入方式已捨棄（engine-first 已涵蓋 prospect）；進入方式收斂為
+>   **freetext（整角色）/ topic（主題命中）** 兩種。現況：prospect=（freetext, grounding vector）。
+
+### 背景
+- 角色有限（粗門）；同一角色內非每個問題都該對話（細門需「主題」）。R19 原意即「opt-in 決定**哪些問題/主題**走 conversational」。目前實作把粒度簡化成「整個角色」（prospect）。
+
+### 設計 X1：統一啟用模型（角色 + 主題範圍）
+- 設定 = **(角色 role, 主題範圍 topic_scope)**；`prospect = (prospect, ALL)` 為特例（整角色皆對話）。
+- **進入判斷（粗→細）**：
+  1. 角色在啟用白名單？（`CONVERSATIONAL_ENABLED_ROLES`，明確控制；不因 DB 有設定就自動開）→ 否：直答。
+  2. 該角色設定 `topic_scope=ALL`？→ 是：進對話（prospect 走這條）。
+  3. 否（主題級）：本訊息是否**命中該主題**（用既有檢索/`category` 判定）→ 命中才進，否則維持直答。
+- 「單一角色進入」＝主題範圍設 ALL 的特例；兩者同一套機制、不衝突。
+
+### 設計 X2：grounding 選材三態（決定性優先）
+對應非功能需求 #1（**知識選擇決定性、措辭才交 LLM**）。`grounding_scope.mode`：
+- **`ids`**：明列 `kb_ids`（最決定性）。
+- **`category`**：某分類**整批撈**（決定性；**窄主題首選**，如退租結算；該批知識甚至可無 embedding）。
+- **`vector`**：語意檢索＋過濾（**廣主題**用，如 presales 多主題顧問）。
+
+`_converge` 依 mode 取知識；**選材決定性、合成 LLM、事實只能來自選定那批**。窄主題用 category/ids、廣主題才用 vector。
+
+### 設計 X3：設定資料模型（擴充 ConversationalConfig）
+- 既有：`key/answer_mode/persona_role/grounding_scope/entry/seed`。
+- 擴充：`topic_scope`（ALL | category | keywords | ids）、`enabled`（布林）、`grounding_scope.mode`（ids/category/vector）。
+- 仍存於 `knowledge_base` `category='對話規則'` 列的 `generation_metadata.conversational_config`（一列＝規則 `answer` + 設定 metadata）。
+
+### 設計 X4：設定管理畫面（前端 admin｜knowledge-admin 新頁）
+> 解決現況痛點：`generation_metadata` 目前**無 UI 可編**，加設定只能下 SQL。本頁讓「加一組」變純畫面。
+- **列表頁**：顯示所有對話設定（角色 / 主題範圍 / 啟用 / grounding 模式 / 入口），可新增/編輯/停用。
+- **編輯表單欄位**：
+  - 角色 `target_user`（白名單下拉）、`enabled` 啟用、`answer_mode`
+  - persona 規則文字（＝`knowledge_base.answer`）
+  - 主題範圍 `topic_scope`（ALL / 選 category / 關鍵字 / 選知識 ids）
+  - grounding 模式與範圍（ids＝多選知識 / category＝分類下拉 / vector＝條件）
+  - 入口 `entry`（選單 `form_id` + option values）、`seed`
+- **後端 API**：新增一支 upsert 端點，寫入 `knowledge_base`（`answer` + `generation_metadata.conversational_config`）；存檔後 `reset_cache()`（或提示重啟）。
+- **防呆**：寫入前驗證設定 schema；該分類沿用檢索排除（不被當答案回傳）。
+
+### 範圍與分期
+- **現在**：只補本藍圖文件；prospect 維持 `(prospect, ALL, vector)`，不動程式。
+- **之後**：出現第一個真實主題（例：`tenant 退租結算 = (tenant, topic_scope=category:退租結算, grounding.mode=category)`）時，才實作 X1–X4 對應部分並真實驗證。
+
+### 技術決策（藍圖）
+- **決策 19：啟用＝角色白名單明確控制**（非「有設定就自動開」）——避免誤加設定誤觸；要擴充才加角色。
+- **決策 20：grounding 選材決定性優先**——窄主題 category/ids（不靠向量、可無 embedding），廣主題才 vector；守住非功能需求 #1。
+- **決策 21：設定統一存 `對話規則` 列的 metadata**＋**管理畫面**——資料驅動且可由後台維護，避免 SQL。
+
+---
+
 ### 變更歷史
 | 日期 | 版本 | 變更內容 | 修改者 |
 |------|------|---------|--------|
@@ -436,6 +495,8 @@ prospect 訊息
 | 2026-06-20 | 1.1 | 設計審查補強：決策 7（葉答案覆寫 vs on_complete_action）、async 葉答案邊界容錯、終端 select 穩健 fallback | AI |
 | 2026-06-20 | 2.0 | R11–R13 修訂：新增元件 8（情境累積）/9（擴充 LLMAnswerOptimizer presales 合成）/10（系統脈絡 md 載入），決策 8–11（樹內 LLM 護欄 / md 注入範圍 / 情境累積 / 專屬分類存放），更新非功能效能 | AI |
 | 2026-06-21 | 3.0 | R14–R18 修訂：AI 引導式售前顧問——元件 11（顧問狀態）/12（brain 控制迴圈）/13（收斂推薦）/14（進入與降級），決策 14–17（棄用問問題表單 / 單次 structured LLM call / 狀態存 form_sessions / 收斂 grounding）。決策樹問問題職能交 AI，保留 entry 快速選 + CTA 結構化 | AI |
+| 2026-06-21 | 3.1 | 對話式回答通用化擴充——設計 X1（角色＋主題範圍）/X2（grounding 三態）/X3（設定資料模型）/X4（設定管理畫面），決策 19–21 | AI |
+| 2026-06-21 | 3.2 | 實作：Phase 1（X2 grounding 三態 + X3 模型 topic_scope/enabled/grounding.select）、Phase 2（X4 管理畫面 + API）完成；進入方式捨棄選單 entry、收斂為 freetext/topic；prospect 移除 vendor_id/entry。Phase 3（X1 主題命中觸發）待真實主題 | AI |
 
 ---
 
