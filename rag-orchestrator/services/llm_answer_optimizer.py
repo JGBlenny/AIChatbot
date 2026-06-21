@@ -916,8 +916,11 @@ class LLMAnswerOptimizer:
             )
             if cta_mode == "force":
                 user_prompt += (
-                    "\n【收束】結尾用一句邀約收束，附上預約連結："
-                    "想看實際操作可預約 demo 👉 https://www.jgbsmart.com/demo-form ，或留個聯絡方式我們聯繫您 🙂"
+                    "\n【收束】最後**空一行另起**，並用『分行條列』呈現下一步（不要擠成一長句），"
+                    "嚴格照以下排版（連結獨立成行、前後留空格）：\n"
+                    "想看實際操作或進一步了解嗎？\n"
+                    "• 預約 demo，由專人帶您看 👉 https://www.jgbsmart.com/demo-form\n"
+                    "• 或留個聯絡方式，我們主動與您聯繫 🙂"
                 )
             elif cta_mode == "suppress":
                 user_prompt += (
