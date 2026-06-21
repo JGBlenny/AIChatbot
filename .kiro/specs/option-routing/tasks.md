@@ -57,11 +57,11 @@
 
 ## 8. 端到端與向後相容驗證
 
-- [ ] 8.1 端到端（b2b mode）：問「適不適合我」→ 起手式 → 個人→戶數→方案說明(不報價)→試用；團隊→demo；痛點→模組→demo / IoT→專人；問價格→`/pricing`；問競品→中立比較→收束 demo；任一層取消→結束
+- [x] 8.1 端到端（b2b mode）：**reframe（R14–R19）**——presales 問答職能已由「對話式回答引擎」交付（起手式問答表單 presales_intro/units/pain 已停用）。presales 端到端（個人/團隊/痛點→模組、IoT→專人不報價、問價格→`/pricing`、問競品→中立、任一輪取消→結束）已由 conversational 引擎**真實對話驗證**（見 10.12 與引擎調校驗證）；選項路由「機制」（葉答案/子樹/CTA/多對一）由整合測試覆蓋（test_complete_form_option_routing_integration、test_leaf_outlets_integration）。
   - 需求：8.1, 8.2, 8.3, 8.4, 8.5, 9.1, 9.2, 10.1, 10.3, 5.1
-- [ ] 8.2 向後相容回歸：未設選項路由之既有表單（查詢/申請型）流程不變；form-chaining 表單層 `next_form_id` 主幹串接（金流範例）行為不受影響
+- [x] 8.2 向後相容回歸：既有表單（查詢/申請型）與 form-chaining 表單層 `next_form_id` 主幹串接（金流範例）行為不受影響。**驗證**：整合測試 test_e2e_payment_gateway_chain（真實 DB 端到端）通過；實機（property_manager）金流→`payment_gateway_select`、報修→`jgb_tenant_query` 正常觸發，engine-first（prospect-only）未干擾非 prospect。
   - 需求：7.1, 7.2, 7.3
-- [ ]* 8.3 取消與離題、深度上限/循環防護於決策樹多層情境沿用驗證
+- [x]* 8.3 取消與離題、深度上限/循環防護於決策樹多層情境沿用驗證。**驗證**：test_option_routing_protections（選項路由多層的深度上限/循環）+ test_followup_cancel_and_digression（取消/離題）+ conversational 引擎取消（實機）。
   - 需求：5.1, 5.2, 5.3, 6.1, 6.2
 
 ## 9. 葉答案 LLM 個人化（R11–R13 修訂｜接續新階段）
