@@ -27,9 +27,16 @@ class ConversationalConfig:
     key: str
     answer_mode: str = "conversational"
     persona_role: Optional[str] = None
+    # grounding_scope：收斂時的知識範圍。
+    #   - select: "vector"(語意檢索,廣主題) | "category"(整批撈某分類,決定性) | "ids"(明列 kb_ids,最決定性)
+    #   - 既有鍵：target_user / mode(b2b·b2c) / vendor_id / category / keywords / kb_ids
     grounding_scope: Dict[str, Any] = field(default_factory=dict)
     entry: Dict[str, Any] = field(default_factory=dict)
     seed: Optional[str] = None
+    # topic_scope：啟用粒度。{"mode":"all"}=整角色（prospect）；
+    #   {"mode":"category","category":"退租結算"} / {"mode":"keywords","keywords":[...]} = 主題級（檢索命中才進）
+    topic_scope: Dict[str, Any] = field(default_factory=lambda: {"mode": "all"})
+    enabled: bool = True
 
 
 # code 內建 fallback（DB 無設定 metadata 時用）；售前為第一個設定。
@@ -65,6 +72,8 @@ def _config_from_row(target_user: Optional[List[str]], metadata: Any) -> Optiona
         grounding_scope=md.get("grounding_scope") or {"target_user": persona_role, "mode": "b2b"},
         entry=md.get("entry") or {},
         seed=md.get("seed"),
+        topic_scope=md.get("topic_scope") or {"mode": "all"},
+        enabled=md.get("enabled", True),
     )
 
 
@@ -93,7 +102,7 @@ async def _load(db_pool) -> None:
     _cache["by_key"] = by_key
     _cache["by_role"] = {
         c.persona_role: c for c in by_key.values()
-        if c.answer_mode == "conversational" and c.persona_role
+        if c.answer_mode == "conversational" and c.persona_role and c.enabled
     }
     _cache["loaded"] = True
 

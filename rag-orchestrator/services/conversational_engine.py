@@ -184,22 +184,34 @@ class ConversationalEngine:
             if user_message:
                 kw = kw + [user_message]
         query = " ".join([k for k in kw if k])
+        # grounding 選材三態（決定性優先；非功能需求 #1）：
+        #   ids      → 明列 kb_ids（最決定性）
+        #   category → 某分類整批撈（決定性，窄主題；可無 embedding）
+        #   vector   → 語意檢索（廣主題，如 presales；預設）
+        select = (scope.get("select") or "vector").lower()
         grounding = ""
         try:
-            emb = await self.retriever.embedding_client.get_embedding(query, verbose=False)
-            if emb:
-                res = await self.retriever._vector_search(
-                    emb,
-                    vendor_id=scope.get("vendor_id", 1),
-                    top_k=5,
-                    similarity_threshold=0.0,
-                    target_user=scope.get("target_user"),
-                    mode=scope.get("mode", "b2b"),
-                    vector_limit=20,
+            if select == "ids" and scope.get("kb_ids"):
+                grounding = await self._grounding_by_ids(scope["kb_ids"])
+            elif select == "category" and scope.get("category"):
+                grounding = await self._grounding_by_category(
+                    scope["category"], scope.get("target_user")
                 )
-                grounding = "\n\n".join(r.get("answer", "") for r in res[:3] if r.get("answer"))
+            else:  # vector（預設）
+                emb = await self.retriever.embedding_client.get_embedding(query, verbose=False)
+                if emb:
+                    res = await self.retriever._vector_search(
+                        emb,
+                        vendor_id=scope.get("vendor_id", 1),
+                        top_k=5,
+                        similarity_threshold=0.0,
+                        target_user=scope.get("target_user"),
+                        mode=scope.get("mode", "b2b"),
+                        vector_limit=20,
+                    )
+                    grounding = "\n\n".join(r.get("answer", "") for r in res[:3] if r.get("answer"))
         except Exception as e:
-            print(f"⚠️ 對話引擎收斂檢索失敗：{e}")
+            print(f"⚠️ 對話引擎收斂檢索失敗（select={select}）：{e}")
         # 累積情境 = 已收集欄位（供推薦個人化）。事實型答問(answer)不帶情境，避免回答前
         # 先複述舊 profile/方案（直接針對問題回答）。
         if converge_kind == "answer":
@@ -213,3 +225,43 @@ class ConversationalEngine:
         return await asyncio.to_thread(
             self.optimizer.synthesize_presales_answer, grounding, ctx, system_md, user_message, cta_mode,
         )
+
+    # ---------- grounding 決定性選材（不靠向量） ----------
+    async def _grounding_by_ids(self, kb_ids, limit: int = 8) -> str:
+        """明列知識 id → 取其 answer 串接（決定性；只取 active）。"""
+        try:
+            ids = [int(i) for i in (kb_ids or [])][:limit]
+            if not ids:
+                return ""
+            async with self.db_pool.acquire() as conn:
+                rows = await conn.fetch(
+                    "SELECT answer FROM knowledge_base WHERE id = ANY($1::int[]) "
+                    "AND is_active = TRUE AND answer <> ''",
+                    ids,
+                )
+            return "\n\n".join(r["answer"] for r in rows if r["answer"])
+        except Exception as e:
+            print(f"⚠️ grounding_by_ids 失敗：{e}")
+            return ""
+
+    async def _grounding_by_category(self, category: str, target_user=None, limit: int = 8) -> str:
+        """某分類整批撈 → 串接 answer（決定性；窄主題用；可無 embedding）。"""
+        try:
+            async with self.db_pool.acquire() as conn:
+                if target_user:
+                    rows = await conn.fetch(
+                        "SELECT answer FROM knowledge_base WHERE category = $1 AND is_active = TRUE "
+                        "AND answer <> '' AND (target_user IS NULL OR target_user @> ARRAY[$2]::text[]) "
+                        "ORDER BY priority DESC NULLS LAST, id LIMIT $3",
+                        category, target_user, limit,
+                    )
+                else:
+                    rows = await conn.fetch(
+                        "SELECT answer FROM knowledge_base WHERE category = $1 AND is_active = TRUE "
+                        "AND answer <> '' ORDER BY priority DESC NULLS LAST, id LIMIT $2",
+                        category, limit,
+                    )
+            return "\n\n".join(r["answer"] for r in rows if r["answer"])
+        except Exception as e:
+            print(f"⚠️ grounding_by_category 失敗：{e}")
+            return ""
