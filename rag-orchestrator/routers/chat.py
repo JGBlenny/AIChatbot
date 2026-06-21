@@ -332,6 +332,108 @@ async def _maybe_synth_prospect_freetext(optimization_result: dict, search_resul
     return optimization_result
 
 
+def _conversational_to_response(result: dict, request) -> 'VendorChatResponse':
+    """對話式回答引擎結果 → VendorChatResponse（option-routing R14-R19）。"""
+    from datetime import datetime
+    converged = bool(result.get('converged'))
+    return VendorChatResponse(
+        answer=result.get('answer', ''),
+        intent_name='售前推薦' if converged else '售前諮詢',
+        intent_type='conversational',
+        confidence=1.0,
+        action_type='conversational',
+        sources=[] if request.include_sources else None,
+        source_count=0,
+        vendor_id=request.vendor_id,
+        mode=request.mode or 'b2b',
+        session_id=request.session_id,
+        timestamp=datetime.utcnow().isoformat(),
+    )
+
+
+def _finalize_response(response: 'VendorChatResponse', request):
+    """依 stream 旗標回傳一般或 SSE 串流回應（與既有表單回應一致）。"""
+    if request.stream:
+        return StreamingResponse(
+            stream_response_wrapper(response.dict()),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+        )
+    return response
+
+
+async def _maybe_seed_conversational(form_result: dict, session_state: dict, request, req):
+    """
+    對話式回答 seed（option-routing R18 / 元件 14）：選單入口（如 presales_entry）的特定
+    選項（fit / pain）完成後，依設定 seed 對話引擎並回傳第一題；非入口選項或角色不符或
+    引擎降級 → 回 None（呼叫端維持原表單完成回應）。
+    """
+    try:
+        if not form_result.get('form_completed') or form_result.get('form_triggered'):
+            return None
+        from services.conversational_config import config_for_entry
+        src_form_id = session_state.get('form_id')
+        cd = form_result.get('collected_data') or {}
+        seed_cfg, seed_val = None, None
+        for v in cd.values():
+            cfg = config_for_entry(src_form_id, v)
+            if cfg:
+                seed_cfg, seed_val = cfg, v
+                break
+        if not seed_cfg or request.target_user != seed_cfg.persona_role:
+            return None
+        engine = req.app.state.conversational_engine
+        seeded = await engine.handle(
+            session_id=request.session_id,
+            user_id=request.user_id or "anonymous",
+            vendor_id=request.vendor_id or 0,
+            user_message=request.message,
+            config=seed_cfg,
+            start_if_absent=True,
+            seed_topic=seed_val,
+        )
+        if not seeded:
+            return None
+        print(f"💬 [conversational] 由 {src_form_id} 選項 '{seed_val}' seed 對話引擎（{seed_cfg.key}）")
+        return _finalize_response(_conversational_to_response(seeded, request), request)
+    except Exception as e:
+        print(f"❌ conversational seed 失敗（維持原表單回應）：{e}")
+        return None
+
+
+async def _maybe_prospect_conversational_freetext(request, req):
+    """
+    對話式回答 engine-first dispatch（option-routing R14–R19 / 元件 14）：prospect 一律先進
+    對話引擎——引擎每輪自判「事實問題→用知識 grounding 直答」或「推薦型→先了解再推薦」；
+    知識成為引擎收斂時的事實依據（grounding），不再走獨立的知識直答。
+
+    非 prospect / 無 session / 引擎降級（brain 失敗）→ 回 None，呼叫端落回既有流程
+    （知識/SOP/兜底，作為安全網，不阻斷對話）。後續輪由 Step 0 的續對話 hook 接手。
+    """
+    try:
+        if request.target_user != 'prospect' or not request.session_id:
+            return None
+        from services.conversational_config import config_for_target_user
+        cfg = config_for_target_user('prospect')
+        if not cfg:
+            return None
+        engine = req.app.state.conversational_engine
+        result = await engine.handle(
+            session_id=request.session_id,
+            user_id=request.user_id or "anonymous",
+            vendor_id=request.vendor_id or 0,
+            user_message=request.message,
+            config=cfg, start_if_absent=True,
+        )
+        if not result:
+            return None
+        print("💬 [conversational] prospect 自由問答（無知識）→ 進對話引擎")
+        return _conversational_to_response(result, request)
+    except Exception as e:
+        print(f"❌ prospect 自由問答 dispatch 失敗（落回兜底）：{e}")
+        return None
+
+
 def _convert_form_result_to_response(
     form_result: dict,
     request: VendorChatRequest,
@@ -3223,6 +3325,39 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 )
                 return _convert_form_result_to_response(form_result, request)
 
+            # 對話式回答模式（option-routing R14-R19）：進行中的 conversational 偽會話
+            # → 交對話引擎續跑（不走表單收集；form_id='conversational' 無對應表單 schema）。
+            if session_state and session_state.get('form_id') == 'conversational' \
+                    and session_state['state'] == 'COLLECTING':
+                engine = req.app.state.conversational_engine
+                user_choice = request.message.strip()
+                # 取消：關閉對話會話（R16.2 隨取消清除）
+                if user_choice.lower() in ["取消", "cancel", "放棄", "結束"]:
+                    await engine._close(request.session_id)
+                    from datetime import datetime
+                    cancel_resp = VendorChatResponse(
+                        answer="好的，已結束這次諮詢。隨時需要都可以再問我！",
+                        intent_name='售前諮詢', intent_type='conversational', confidence=1.0,
+                        action_type='conversational', sources=None, source_count=0,
+                        vendor_id=request.vendor_id, mode=request.mode or 'b2b',
+                        session_id=request.session_id, timestamp=datetime.utcnow().isoformat(),
+                        form_cancelled=True,
+                    )
+                    return _finalize_response(cancel_resp, request)
+                stepped = await engine.handle(
+                    session_id=request.session_id,
+                    user_id=request.user_id or "anonymous",
+                    vendor_id=request.vendor_id or 0,
+                    user_message=request.message,
+                    config=None, start_if_absent=False,
+                )
+                if stepped:
+                    return _finalize_response(_conversational_to_response(stepped, request), request)
+                # 引擎降級（brain 失敗）：關閉殘留會話、落回一般流程（不阻斷對話）
+                print("⚠️ [conversational] 引擎降級，關閉對話會話、改走一般流程")
+                await engine._close(request.session_id)
+                session_state = None
+
             # 處理 COLLECTING、DIGRESSION 和 PAUSED 狀態（收集欄位）
             if session_state and session_state['state'] in ['COLLECTING', 'DIGRESSION', 'PAUSED']:
                 # 用戶正在填寫表單 → 走表單收集流程
@@ -3271,6 +3406,12 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                             )
                         return response
                 else:
+                    # 對話式回答 seed（R18 / 元件 14）：presales_entry「fit / pain」選項完成
+                    # → 進對話引擎並回第一題（非入口選項 / 角色不符 / 引擎降級 → 維持原表單回應）
+                    seed_resp = await _maybe_seed_conversational(form_result, session_state, request, req)
+                    if seed_resp is not None:
+                        return seed_resp
+
                     # 將表單結果轉換為 VendorChatResponse 格式
                     response = _convert_form_result_to_response(form_result, request)
 
@@ -3397,6 +3538,14 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             vendor_info = {'id': 0, 'name': 'JGB System', 'business_types': ['system_provider']}
         else:
             vendor_info = _validate_vendor(request.vendor_id, resolver)
+
+        # Step 1.5: 對話式回答 engine-first（option-routing R14–R19｜元件 14）
+        # prospect 一律先進對話引擎（先了解再回答；知識在引擎收斂時當 grounding，不再獨立直答）。
+        # 此處已過 Step 0（無進行中會話）；引擎降級（brain 失敗）→ 回 None，落回既有流程（知識/兜底）。
+        if request.target_user == 'prospect':
+            conv_resp = await _maybe_prospect_conversational_freetext(request, req)
+            if conv_resp is not None:
+                return conv_resp
 
         # Step 2: 緩存檢查（表單期間不使用緩存）
         cache_service = req.app.state.cache_service

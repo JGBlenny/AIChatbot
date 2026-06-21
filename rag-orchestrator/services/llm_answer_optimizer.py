@@ -824,27 +824,10 @@ class LLMAnswerOptimizer:
         "- 口吻：顧問式、親切專業、簡潔不誇大；可依使用者情境個人化。"
     )
 
-    # AI 引導 brain 規則（依 target_user 選人格；目前實作 prospect 售前顧問，
-    # 其他角色（property_manager 業者助理 / tenant 租客助理）之後可加，無規則者不走 advisor）
-    ADVISOR_RULES_BY_ROLE = {
-        'prospect': (
-            "你是金箍棒智慧物管的售前顧問。目標：問對問題、了解到足以推薦，然後給建議。\n"
-            "【提問策略】\n"
-            "- 優先補問「標準欄位」中還不知道的：identity(個人房東/二房東/包租代管/物管)、scale(管理戶數)、"
-            "team(有無團隊/多人協作)、pain(主要痛點)、interested(有興趣的功能)。\n"
-            "- 若某情境需釐清但無標準欄位，可動態生成一題補問（限售前產品適配，不問敏感/無關問題）。\n"
-            "- 一次只問一個重點，語氣口語、友善、像顧問。\n"
-            "【收斂條件（達成任一即 action=converge）】\n"
-            "- ①已知 identity 且（已知 scale 或 pain）②asked_count 已達 4 ③使用者要求建議（如「直接給我建議」「不用問了」「你直接說」）。\n"
-            "【抽取】從使用者訊息抽出可得欄位填入 extracted_fields（只填這次能確定的）。\n"
-            "【合規】提問階段不報價、不主動提競品/IoT。\n"
-            "【輸出 JSON】{\"extracted_fields\": {欄位:值}, \"action\": \"ask\"|\"converge\", "
-            "\"next_question\": \"若 ask，下一題（一句口語）\", "
-            "\"converge_topic\": \"若 converge，推薦主軸關鍵詞，如 個人小規模 / 團隊 / 痛點:收租對帳\"}"
-        ),
-    }
+    # 對話 brain 規則（人格）已外移至 services/conversational_rules.py（R19 reframe：
+    # advisor→conversational，DB category='對話規則' 載入 + code fallback）；brain 不綁角色。
 
-    def advisor_step(
+    def conversational_step(
         self,
         rules_text: str,
         system_context_md: str,
@@ -852,8 +835,8 @@ class LLMAnswerOptimizer:
         user_message: str,
     ) -> Optional[dict]:
         """
-        AI 引導顧問 brain（option-routing R14/R15）：單次 structured-output LLM call。
-        規則（人格）由外部依 target_user 載入後傳入（可擴充：DB 驅動）；brain 不綁角色。
+        對話式回答 brain（option-routing R14/R15/R19）：單次 structured-output LLM call。
+        規則（人格）由外部依角色載入後傳入（資料驅動，見 conversational_rules）；brain 不綁角色。
         同時做①抽取欄位②判斷 ask/converge③生成下一題。JSON 輸出 + 驗證；失敗 → 回 None。
         """
         try:
@@ -888,7 +871,7 @@ class LLMAnswerOptimizer:
                 return None
             return data
         except Exception as e:
-            print(f"❌ advisor_step 失敗（呼叫端降級）：{e}")
+            print(f"❌ conversational_step 失敗（呼叫端降級）：{e}")
             return None
 
     def synthesize_presales_answer(

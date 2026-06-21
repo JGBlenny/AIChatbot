@@ -105,6 +105,20 @@ async def lifespan(app: FastAPI):
     sop_orchestrator = SOPOrchestrator(form_manager=form_manager)
     print("✅ SOP 編排器已初始化（SOP Next Action 功能 - 4 種觸發模式 + 3 種後續動作）")
 
+    # 初始化對話式回答引擎（option-routing R14–R19｜售前為首例）
+    from services.conversational_engine import ConversationalEngine
+    from services.conversational_rules import load_rules as conversational_load_rules
+    from services.system_context import get_system_context as conversational_get_system_context
+    from services.vendor_knowledge_retriever_v2 import VendorKnowledgeRetrieverV2
+    conversational_engine = ConversationalEngine(
+        db_pool=db_pool,
+        optimizer=llm_answer_optimizer,
+        retriever=VendorKnowledgeRetrieverV2(),
+        get_system_context=conversational_get_system_context,
+        rules_loader=conversational_load_rules,
+    )
+    print("✅ 對話式回答引擎已初始化（conversational：多輪自適應問答→收斂，售前為首例）")
+
     # 將服務注入到 app.state
     app.state.db_pool = db_pool
     app.state.intent_classifier = intent_classifier
@@ -117,6 +131,7 @@ async def lifespan(app: FastAPI):
     app.state.cache_service = cache_service
     app.state.form_manager = form_manager
     app.state.sop_orchestrator = sop_orchestrator
+    app.state.conversational_engine = conversational_engine
 
     print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化 + Phase B 意圖建議 + 表單填寫功能 + SOP Next Action）")
     print(f"📝 API 文件: http://localhost:8100/docs")
