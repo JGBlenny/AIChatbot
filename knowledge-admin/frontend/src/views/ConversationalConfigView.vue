@@ -84,11 +84,7 @@
           <option value="ids">ids：明列知識 id（最決定性）</option>
         </select>
         <template v-if="form.g_select==='vector'">
-          <label class="cc-hint">檢索 target_user（知識角色範圍）</label>
-          <select v-model="form.g_target_user">
-            <option value="">（同角色：{{ form.target_user }}）</option>
-            <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
-          </select>
+          <label class="cc-hint">檢索知識角色：自動沿用上方「角色 = {{ form.target_user }}」（不需另設）</label>
           <label class="cc-hint">檢索 mode（b2b 業者/售前、b2c 租客）</label>
           <select v-model="form.g_mode"><option value="b2b">b2b</option><option value="b2c">b2c</option></select>
           <!-- vendor_id 僅 b2c 業者範圍知識才需要；prospect/b2b 系統知識不需 -->
@@ -177,7 +173,7 @@ export default {
       let grounding_scope = {};
       if (f.g_select === 'category') grounding_scope = { select: 'category', category: f.g_category, target_user: f.target_user };
       else if (f.g_select === 'ids') grounding_scope = { select: 'ids', kb_ids: f.g_ids.split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n)) };
-      else { grounding_scope = { select: 'vector', target_user: f.g_target_user || f.target_user, mode: f.g_mode }; if (f.g_vendor_id) grounding_scope.vendor_id = parseInt(f.g_vendor_id); }
+      else { grounding_scope = { select: 'vector', target_user: f.target_user, mode: f.g_mode }; if (f.g_mode === 'b2c' && f.g_vendor_id) grounding_scope.vendor_id = parseInt(f.g_vendor_id); }
       const cfg = { key: f.target_user, answer_mode: f.answer_mode, topic_scope, grounding_scope, enabled: f.enabled };
       if (f.entry_form_id) cfg.entry = { form_id: f.entry_form_id, option_values: f.entry_values.split(',').map(s=>s.trim()).filter(Boolean) };
       if (f.seed) cfg.seed = f.seed;
