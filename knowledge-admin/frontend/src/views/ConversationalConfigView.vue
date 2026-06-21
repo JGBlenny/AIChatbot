@@ -61,18 +61,15 @@
         <textarea v-model="form.rules_text" rows="6" placeholder="例：你是…顧問。每輪先判斷…"></textarea>
 
         <hr/>
-        <label>主題範圍 topic_scope（哪些問題會進這套對話）</label>
-        <select v-model="form.topic_mode">
-          <option value="all">all：整角色都對話（如 prospect 售前）</option>
-          <option value="category">category：只有命中該分類的問題才進</option>
-          <option value="keywords">keywords：命中關鍵字才進</option>
+        <label>進入方式 trigger（這套對話什麼時候啟動）</label>
+        <select v-model="form.trigger">
+          <option value="freetext">自由問答：整角色打字就進（engine-first，如 prospect）</option>
+          <option value="topic">主題命中：命中某分類/關鍵字的問題才進</option>
         </select>
-        <template v-if="form.topic_mode==='category'">
-          <label class="cc-hint">主題分類（下拉選既有分類，或自行輸入新分類）</label>
-          <input v-model="form.topic_category" list="cc-categories" placeholder="選擇或輸入，如：退租結算" />
-        </template>
-        <template v-if="form.topic_mode==='keywords'">
-          <label class="cc-hint">觸發關鍵字（逗號分隔）</label>
+        <template v-if="form.trigger==='topic'">
+          <label class="cc-hint">主題分類（下拉既有或自行輸入；擇一）</label>
+          <input v-model="form.topic_category" list="cc-categories" placeholder="如：退租結算" />
+          <label class="cc-hint">或觸發關鍵字（逗號分隔；擇一）</label>
           <input v-model="form.topic_keywords" placeholder="如：退租,押金,結算" />
         </template>
 
@@ -103,11 +100,6 @@
         </template>
 
         <hr/>
-        <label>入口選單 form_id（選填：哪張選單的選項可進這套對話）</label>
-        <input v-model="form.entry_form_id" placeholder="如：presales_entry（無則留空）" />
-        <label class="cc-hint">入口選項 value（逗號分隔，對應選單選項）</label>
-        <input v-model="form.entry_values" placeholder="如：fit,pain" />
-
         <label>seed 起手主軸（選填）</label>
         <input v-model="form.seed" placeholder="選填" />
 
@@ -148,34 +140,34 @@ export default {
     },
     openNew() {
       this.form = { id: null, label: '', target_user: 'prospect', is_active: true, enabled: true,
-        answer_mode: 'conversational', rules_text: '', topic_mode: 'all', topic_category: '', topic_keywords: '',
-        g_select: 'vector', g_target_user: 'prospect', g_mode: 'b2b', g_vendor_id: '', g_category: '', g_ids: '',
-        entry_form_id: '', entry_values: '', seed: '' };
+        answer_mode: 'conversational', rules_text: '', trigger: 'freetext', topic_category: '', topic_keywords: '',
+        g_select: 'vector', g_mode: 'b2b', g_vendor_id: '', g_category: '', g_ids: '', seed: '' };
       this.editing = true;
     },
     openEdit(c) {
       const cfg = c.config || {}, ts = cfg.topic_scope || {mode:'all'}, gs = cfg.grounding_scope || {};
+      const trigger = (ts.mode === 'category' || ts.mode === 'keywords') ? 'topic' : 'freetext';
       this.form = {
         id: c.id, label: c.label, target_user: c.target_user, is_active: c.is_active,
         enabled: cfg.enabled !== false, answer_mode: cfg.answer_mode || 'conversational', rules_text: c.rules_text,
-        topic_mode: ts.mode || 'all', topic_category: ts.category || '', topic_keywords: (ts.keywords||[]).join(','),
-        g_select: gs.select || 'vector', g_target_user: gs.target_user || '', g_mode: gs.mode || 'b2b',
+        trigger, topic_category: ts.category || '', topic_keywords: (ts.keywords||[]).join(','),
+        g_select: gs.select || 'vector', g_mode: gs.mode || 'b2b',
         g_vendor_id: gs.vendor_id || '', g_category: gs.category || '', g_ids: (gs.kb_ids||[]).join(','),
-        entry_form_id: (cfg.entry||{}).form_id || '', entry_values: ((cfg.entry||{}).option_values||[]).join(','),
         seed: cfg.seed || '' };
       this.editing = true;
     },
     buildConfig() {
       const f = this.form;
-      const topic_scope = f.topic_mode === 'category' ? { mode: 'category', category: f.topic_category }
-        : f.topic_mode === 'keywords' ? { mode: 'keywords', keywords: f.topic_keywords.split(',').map(s=>s.trim()).filter(Boolean) }
-        : { mode: 'all' };
+      let topic_scope = { mode: 'all' };
+      if (f.trigger === 'topic') {
+        topic_scope = f.topic_category ? { mode: 'category', category: f.topic_category }
+          : { mode: 'keywords', keywords: f.topic_keywords.split(',').map(s=>s.trim()).filter(Boolean) };
+      }
       let grounding_scope = {};
       if (f.g_select === 'category') grounding_scope = { select: 'category', category: f.g_category, target_user: f.target_user };
       else if (f.g_select === 'ids') grounding_scope = { select: 'ids', kb_ids: f.g_ids.split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n)) };
       else { grounding_scope = { select: 'vector', target_user: f.target_user, mode: f.g_mode }; if (f.g_mode === 'b2c' && f.g_vendor_id) grounding_scope.vendor_id = parseInt(f.g_vendor_id); }
       const cfg = { key: f.target_user, answer_mode: f.answer_mode, topic_scope, grounding_scope, enabled: f.enabled };
-      if (f.entry_form_id) cfg.entry = { form_id: f.entry_form_id, option_values: f.entry_values.split(',').map(s=>s.trim()).filter(Boolean) };
       if (f.seed) cfg.seed = f.seed;
       return cfg;
     },

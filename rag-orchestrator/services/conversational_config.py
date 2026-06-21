@@ -45,7 +45,7 @@ PRESALES_CONFIG = ConversationalConfig(
     answer_mode="conversational",
     persona_role="prospect",
     grounding_scope={"target_user": "prospect", "mode": "b2b"},
-    entry={"form_id": "presales_entry", "option_values": ["fit", "pain"]},
+    # 進入方式＝freetext（engine-first）：prospect 打字直接進，不靠選單入口（entry 已移除）。
 )
 _CODE_DEFAULTS: Dict[str, ConversationalConfig] = {PRESALES_CONFIG.key: PRESALES_CONFIG}
 
