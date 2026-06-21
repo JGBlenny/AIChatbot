@@ -819,9 +819,10 @@ class LLMAnswerOptimizer:
         "- 只用「系統脈絡 + 可用知識」內的事實，嚴禁新增、誇大或杜撰（尤其價格、競品、IoT 規格）。\n"
         "- 不報價：價格/級距一律導 /pricing 或留資，不講數字。\n"
         "- 競品：不主動點名；被問且本次有 E1 事實才中立比較，未列明說「不確定，建議向對方確認」，不斷言對方沒有。\n"
-        "- 系統脈絡與知識都沒有的事實 → 不自行補，導向 demo/專人。\n"
-        "- 每段收束到一個明確出口（試用/demo/pricing/專人）；**引導預約 demo 時附上連結 "
-        "https://www.jgbsmart.com/demo-form** ，讓使用者有可直接行動的下一步。\n"
+        "- 系統脈絡與知識都沒有的『細節』才導 demo/專人；功能「有沒有/能不能」這類，知識或系統"
+        "脈絡有提到就**直接回答（有就說有、簡述怎麼運作）**，別動不動推 demo。\n"
+        "- **不必每則回覆都推 demo**：一般追問把問題答清楚即可。只有在『推薦結論』或『使用者表示"
+        "要行動/想看實際操作』時，才附上預約連結 https://www.jgbsmart.com/demo-form 。\n"
         "- 口吻：顧問式、親切專業、簡潔不誇大；可依使用者情境個人化。"
     )
 
@@ -883,6 +884,7 @@ class LLMAnswerOptimizer:
         accumulated_context: Optional[List[Dict]] = None,
         system_context_md: str = "",
         user_question: Optional[str] = None,
+        with_cta: bool = False,
     ) -> Optional[str]:
         """
         售前個人化合成：以「系統脈絡 md + 選定/檢索知識 + 累積情境」grounded 合成自然回覆。
@@ -912,6 +914,11 @@ class LLMAnswerOptimizer:
                 "\n請依系統脈絡的口吻與合規鐵則，整合上述情境與知識，生成個人化、自然的回覆；"
                 "只用提供的事實，缺的導向出口。"
             )
+            if with_cta:
+                user_prompt += (
+                    "\n【收束】結尾用一句邀約收束，附上預約連結："
+                    "想看實際操作可預約 demo 👉 https://www.jgbsmart.com/demo-form ，或留個聯絡方式我們聯繫您 🙂"
+                )
 
             synthesis_temp = float(os.getenv("LLM_SYNTHESIS_TEMP", "0.5"))
             # presales 合成模型可獨立覆寫（預設沿用 optimizer 模型 gpt-4o-mini）
