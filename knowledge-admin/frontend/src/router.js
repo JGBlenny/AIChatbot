@@ -31,6 +31,7 @@ import BusinessTypesConfigView from './views/BusinessTypesConfigView.vue';
 import CategoryConfigView from './views/CategoryConfigView.vue';
 // Target User Config Management
 import TargetUserConfigView from './views/TargetUserConfigView.vue';
+import ConversationalConfigView from './views/ConversationalConfigView.vue';
 // Admin Management
 import AdminManagementView from './views/AdminManagementView.vue';
 // Role Management
@@ -174,6 +175,12 @@ const routes = [
     path: '/target-users-config',
     name: 'TargetUsersConfig',
     component: TargetUserConfigView
+  },
+  // Conversational Config Management（對話式回答設定）
+  {
+    path: '/conversational-config',
+    name: 'ConversationalConfig',
+    component: ConversationalConfigView
   },
   // Audience Config - Redirect to Target Users (舊功能已遷移)
   {

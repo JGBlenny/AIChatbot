@@ -23,7 +23,8 @@ from services.embedding_utils import get_embedding_client
 router = APIRouter()
 
 # 常量定義
-TARGET_USER_ROLES = ['tenant', 'landlord', 'property_manager', 'system_admin']
+# 'prospect'（潛在客戶）：b2b 售前匿名訪客，對應 presales 知識的角色隔離（見 target_user_config）
+TARGET_USER_ROLES = ['tenant', 'landlord', 'property_manager', 'system_admin', 'prospect']
 BUSINESS_MODES = ['b2c', 'b2b']
 
 
@@ -271,6 +272,162 @@ def _remove_duplicate_question(answer: str, question: str) -> str:
 
 
 # ==================== 輔助函數：表單轉換 ====================
+
+async def _maybe_synthesize_presales_leaf(form_result: dict, request, req) -> dict:
+    """
+    葉答案 LLM 個人化（option-routing R11/R13）：prospect 情境下，將決策樹葉答案的
+    「知識原文」以「系統脈絡 md + 累積情境」grounded 合成為個人化回覆；失敗/非 prospect 保留原文。
+    只合成葉答案「頭部」，後綴（分隔線 + 後續表單第一欄）維持決定性。
+    """
+    try:
+        if request.target_user != 'prospect':
+            return form_result
+        raw = form_result.get('presales_leaf_raw')
+        if not raw:
+            # 無葉答案的決策樹轉場（如個人房東→戶數）：去掉通用「表單填寫完成」頭部，只呈現下一題
+            suffix = form_result.get('presales_suffix')
+            if suffix and form_result.get('form_triggered'):
+                form_result['answer'] = suffix.split("\n\n---\n\n", 1)[-1].strip()
+            return form_result
+        from services.system_context import get_system_context
+        optimizer = req.app.state.llm_answer_optimizer
+        db_pool = req.app.state.db_pool
+        system_md = await get_system_context(db_pool)
+        ctx = form_result.get('presales_context')
+        synth = await asyncio.to_thread(
+            optimizer.synthesize_presales_answer, raw, ctx, system_md, None
+        )
+        if synth:
+            suffix = form_result.get('presales_suffix') or ""
+            form_result['answer'] = synth + suffix
+            print("✨ [presales] 葉答案已 LLM 個人化合成")
+    except Exception as e:
+        print(f"❌ presales 葉答案合成失敗（保留原文）：{e}")
+    return form_result
+
+
+async def _maybe_synth_prospect_freetext(optimization_result: dict, search_results: list, request, req) -> dict:
+    """
+    prospect 自由問答 grounded 合成（R13.2/13.3）：以「系統脈絡 md + 檢索知識」合成，
+    替換 optimize_answer 結果。失敗 / 非 prospect / 無 grounding → 保留原結果（不影響一般 RAG）。
+    競品、功能推薦等自由問答走此。
+    """
+    try:
+        if request.target_user != 'prospect' or not search_results:
+            return optimization_result
+        from services.system_context import get_system_context
+        optimizer = req.app.state.llm_answer_optimizer
+        system_md = await get_system_context(req.app.state.db_pool)
+        grounding = "\n\n".join(r.get('content', '') for r in search_results[:3] if r.get('content'))
+        if not grounding:
+            return optimization_result
+        synth = await asyncio.to_thread(
+            optimizer.synthesize_presales_answer, grounding, None, system_md, request.message
+        )
+        if synth:
+            print("✨ [presales] 自由問答已 grounded LLM 合成（注入系統 md）")
+            return {**optimization_result, 'optimized_answer': synth}
+    except Exception as e:
+        print(f"❌ presales 自由問答合成失敗（保留原答案）：{e}")
+    return optimization_result
+
+
+def _conversational_to_response(result: dict, request) -> 'VendorChatResponse':
+    """對話式回答引擎結果 → VendorChatResponse（option-routing R14-R19）。"""
+    from datetime import datetime
+    converged = bool(result.get('converged'))
+    return VendorChatResponse(
+        answer=result.get('answer', ''),
+        intent_name='售前推薦' if converged else '售前諮詢',
+        intent_type='conversational',
+        confidence=1.0,
+        action_type='conversational',
+        sources=[] if request.include_sources else None,
+        source_count=0,
+        vendor_id=request.vendor_id,
+        mode=request.mode or 'b2b',
+        session_id=request.session_id,
+        timestamp=datetime.utcnow().isoformat(),
+    )
+
+
+def _finalize_response(response: 'VendorChatResponse', request):
+    """依 stream 旗標回傳一般或 SSE 串流回應（與既有表單回應一致）。"""
+    if request.stream:
+        return StreamingResponse(
+            stream_response_wrapper(response.dict()),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+        )
+    return response
+
+
+async def _conversational_sse(engine, decision, request):
+    """把對話引擎的 stream_answer 包成前端相容 SSE（start/intent/answer_chunk/metadata/done）。
+    converge＝真 token 串流（stream_chat_completion）；ask＝整句一次。"""
+    try:
+        yield await _generate_sse_event("start", {"cached": False, "message": "開始輸出答案..."})
+        yield await _generate_sse_event("intent", {
+            "intent_type": "conversational", "intent_name": "售前對話", "confidence": 1.0})
+        async for chunk in engine.stream_answer(decision):
+            if chunk:
+                yield await _generate_sse_event("answer_chunk", {"chunk": chunk})
+        yield await _generate_sse_event("metadata", {
+            "intent_type": "conversational", "action_type": "conversational", "cache_hit": False})
+        yield await _generate_sse_event("done", {"success": True, "cached": False, "message": "答案生成完成"})
+    except Exception as e:
+        print(f"⚠️ 對話串流失敗：{e}")
+        yield await _generate_sse_event("error", {"success": False, "error": str(e)})
+
+
+async def _conversational_respond(request, req, *, start_if_absent, config=None):
+    """
+    跑對話一輪並回傳 Response（stream→真 token SSE / 非 stream→JSON）或 None（降級）。
+    stream 時用 engine.prepare 先決策（可乾淨降級），再 StreamingResponse 串流合成。
+    """
+    engine = req.app.state.conversational_engine
+    if request.stream:
+        decision = await engine.prepare(
+            session_id=request.session_id, user_id=request.user_id or "anonymous",
+            vendor_id=request.vendor_id or 0, user_message=request.message,
+            config=config, start_if_absent=start_if_absent)
+        if decision is None:
+            return None
+        return StreamingResponse(
+            _conversational_sse(engine, decision, request),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"})
+    result = await engine.handle(
+        session_id=request.session_id, user_id=request.user_id or "anonymous",
+        vendor_id=request.vendor_id or 0, user_message=request.message,
+        config=config, start_if_absent=start_if_absent)
+    if not result:
+        return None
+    return _conversational_to_response(result, request)
+
+
+async def _maybe_conversational_freetext(request, req):
+    """
+    對話式回答 engine-first dispatch（option-routing R14–R19 / 元件 14）：有 conversational 設定的
+    角色（依 target_user 查設定）先進對話引擎；知識為收斂時的 grounding。stream 時真 token 串流。
+    無設定角色 / 無 session / 引擎降級 → 回 None，呼叫端落回既有流程（不阻斷對話）。
+    """
+    try:
+        if not request.target_user or not request.session_id:
+            return None
+        from services.conversational_config import config_for_target_user
+        cfg = await config_for_target_user(req.app.state.db_pool, request.target_user)
+        if not cfg:
+            return None
+        resp = await _conversational_respond(request, req, start_if_absent=True, config=cfg)
+        if resp is not None:
+            print("💬 [conversational] prospect 自由問答 → 進對話引擎"
+                  + ("（串流）" if request.stream else ""))
+        return resp
+    except Exception as e:
+        print(f"❌ prospect 自由問答 dispatch 失敗（落回兜底）：{e}")
+        return None
+
 
 def _convert_form_result_to_response(
     form_result: dict,
@@ -1726,6 +1883,11 @@ async def _build_rag_response(
         enable_synthesis_override=False if request.disable_answer_synthesis else None
     )
 
+    # prospect 自由問答 grounded 合成（R13.2/13.3）：RAG fallback 路徑
+    optimization_result = await _maybe_synth_prospect_freetext(
+        optimization_result, rag_results, request, req
+    )
+
     # 構建來源列表
     sources = []
     if request.include_sources:
@@ -1937,6 +2099,27 @@ async def _handle_no_knowledge_found(
 
     # 使用模板格式以便追蹤參數使用
     fallback_answer = "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {{service_hotline}}。請問您方便提供更詳細的內容嗎？"
+
+    # prospect 無檢索知識：以系統脈絡「功能索引」md-only 合成（功能推薦走此，R13.3）
+    # 有對應功能 → 點名推薦並導出口；無 → 禮貌導專人；不杜撰功能。失敗保留原 fallback。
+    if request.target_user == 'prospect':
+        try:
+            from services.system_context import get_system_context
+            optimizer = req.app.state.llm_answer_optimizer
+            system_md = await get_system_context(req.app.state.db_pool)
+            md_only_grounding = (
+                "（本次未檢索到對應的特定知識。請依系統脈絡的「功能對照索引」判斷是否有對應功能："
+                "有 → 點名推薦該功能並導向 demo / 試用；無 → 禮貌說明可由專人協助了解，不杜撰功能。）"
+            )
+            synth = await asyncio.to_thread(
+                optimizer.synthesize_presales_answer,
+                md_only_grounding, None, system_md, request.message,
+            )
+            if synth:
+                fallback_answer = synth
+                print("✨ [presales] 無知識 → 依功能索引 md-only 合成推薦")
+        except Exception as e:
+            print(f"❌ presales 無知識合成失敗（保留 fallback）：{e}")
 
     # 清理答案並追蹤使用的參數
     final_answer, used_param_keys = _clean_answer_with_tracking(fallback_answer, request.vendor_id, resolver)
@@ -2345,6 +2528,11 @@ async def _build_knowledge_response(
         vendor_name=vendor_info['name'],
         vendor_info=vendor_info,  # 傳入完整業者資訊
         enable_synthesis_override=False if request.disable_answer_synthesis else None
+    )
+
+    # prospect 自由問答 grounded 合成（R13.2/13.3）：主 handler direct_answer 路徑（競品等走此）
+    optimization_result = await _maybe_synth_prospect_freetext(
+        optimization_result, search_results, request, req
     )
 
     # 構建來源列表
@@ -3132,6 +3320,34 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 )
                 return _convert_form_result_to_response(form_result, request)
 
+            # 對話式回答模式（option-routing R14-R19）：進行中的 conversational 偽會話
+            # → 交對話引擎續跑（不走表單收集；form_id='conversational' 無對應表單 schema）。
+            if session_state and session_state.get('form_id') == 'conversational' \
+                    and session_state['state'] == 'COLLECTING':
+                engine = req.app.state.conversational_engine
+                user_choice = request.message.strip()
+                # 取消：關閉對話會話（R16.2 隨取消清除）
+                if user_choice.lower() in ["取消", "cancel", "放棄", "結束"]:
+                    await engine._close(request.session_id)
+                    from datetime import datetime
+                    cancel_resp = VendorChatResponse(
+                        answer="好的，已結束這次諮詢。隨時需要都可以再問我！",
+                        intent_name='售前諮詢', intent_type='conversational', confidence=1.0,
+                        action_type='conversational', sources=None, source_count=0,
+                        vendor_id=request.vendor_id, mode=request.mode or 'b2b',
+                        session_id=request.session_id, timestamp=datetime.utcnow().isoformat(),
+                        form_cancelled=True,
+                    )
+                    return _finalize_response(cancel_resp, request)
+                # 續對話（stream→真 token 串流 / 非 stream→JSON）；降級回 None
+                conv_resp = await _conversational_respond(request, req, start_if_absent=False, config=None)
+                if conv_resp is not None:
+                    return conv_resp
+                # 引擎降級（brain 失敗）：關閉殘留會話、落回一般流程（不阻斷對話）
+                print("⚠️ [conversational] 引擎降級，關閉對話會話、改走一般流程")
+                await engine._close(request.session_id)
+                session_state = None
+
             # 處理 COLLECTING、DIGRESSION 和 PAUSED 狀態（收集欄位）
             if session_state and session_state['state'] in ['COLLECTING', 'DIGRESSION', 'PAUSED']:
                 # 用戶正在填寫表單 → 走表單收集流程
@@ -3149,6 +3365,9 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     language='zh-TW',  # TODO: 從 request 或用戶設定讀取語言
                     image_urls=request.image_urls,
                 )
+
+                # 葉答案 LLM 個人化（R11/R13）：prospect 情境下合成決策樹葉答案（失敗保留原文）
+                form_result = await _maybe_synthesize_presales_leaf(form_result, request, req)
 
                 # 如果用戶選擇回答問題或取消表單，繼續處理待處理的問題
                 if form_result.get('form_cancelled'):
@@ -3303,6 +3522,16 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             vendor_info = {'id': 0, 'name': 'JGB System', 'business_types': ['system_provider']}
         else:
             vendor_info = _validate_vendor(request.vendor_id, resolver)
+
+        # Step 1.5: 對話式回答 engine-first（option-routing R14–R19｜元件 14）
+        # 啟用範圍**目前明確限 prospect**（不因 DB 有其他設定就自動開；設定層雖資料驅動，
+        # 但啟用角色在此明確控制，要擴充再加進此清單）。prospect 先進對話引擎（先了解再答；
+        # 知識在收斂時當 grounding）。引擎降級（brain 失敗）→ 回 None，落回既有流程（知識/兜底）。
+        CONVERSATIONAL_ENABLED_ROLES = {'prospect'}
+        if request.target_user in CONVERSATIONAL_ENABLED_ROLES:
+            conv_resp = await _maybe_conversational_freetext(request, req)
+            if conv_resp is not None:
+                return conv_resp
 
         # Step 2: 緩存檢查（表單期間不使用緩存）
         cache_service = req.app.state.cache_service

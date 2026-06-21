@@ -810,6 +810,188 @@ class LLMAnswerOptimizer:
 
         return synthesized_answer, tokens_used
 
+    # ========================================
+    # presales 模式：grounded 葉答案 / 自由問答合成（option-routing R11/R13）
+    # ========================================
+
+    PRESALES_SYNTH_RULES = (
+        "【合成鐵則（必守）】\n"
+        "- 只用「系統脈絡 + 可用知識」內的事實，嚴禁新增、誇大或杜撰（尤其價格、競品、IoT 規格）。\n"
+        "- 不報價：價格/級距一律導 https://www.jgbsmart.com/pricing 或留資，不講數字。\n"
+        "- 競品：不主動點名；被問且本次有 E1 事實才中立比較，未列明說「不確定，建議向對方確認」，不斷言對方沒有。\n"
+        "- 系統脈絡與知識都沒有的『細節』才導 demo/專人；功能「有沒有/能不能」這類，知識或系統"
+        "脈絡有提到就**直接回答（有就說有、簡述怎麼運作）**，別動不動推 demo。\n"
+        "- **不必每則回覆都推 demo**：一般追問把問題答清楚即可。只有在『推薦結論』或『使用者表示"
+        "要行動/想看實際操作』時，才附上預約連結 https://www.jgbsmart.com/demo-form 。\n"
+        "- 口吻：顧問式、親切專業、簡潔不誇大；可依使用者情境個人化。\n"
+        "- 排版可讀性：短答 1–2 句即可、不硬湊；**一次要講多個點（如競品比較、多項功能）就用"
+        "『• 條列』分行呈現，每點一行，別擠成一大段**。\n"
+        "- 連結一律用**純網址**（直接寫 https://www.jgbsmart.com/pricing），"
+        "**不要**用 markdown 的 [文字](網址) 語法（顯示端不一定支援，會變成原始文字）。"
+    )
+
+    # 對話 brain 規則（人格）已外移至 services/conversational_rules.py（R19 reframe：
+    # advisor→conversational，DB category='對話規則' 載入 + code fallback）；brain 不綁角色。
+
+    def conversational_step(
+        self,
+        rules_text: str,
+        system_context_md: str,
+        state: dict,
+        user_message: str,
+    ) -> Optional[dict]:
+        """
+        對話式回答 brain（option-routing R14/R15/R19）：單次 structured-output LLM call。
+        規則（人格）由外部依角色載入後傳入（資料驅動，見 conversational_rules）；brain 不綁角色。
+        同時做①抽取欄位②判斷 ask/converge③生成下一題。JSON 輸出 + 驗證；失敗 → 回 None。
+        """
+        try:
+            import json
+            if not rules_text:
+                return None
+            collected = state.get('collected_fields', {}) or {}
+            asked = state.get('asked_count', 0)
+            recommended = bool(state.get('recommended', False))
+            system_prompt = f"{system_context_md}\n\n{rules_text}".strip()
+            user_prompt = (
+                f"【已知欄位】{json.dumps(collected, ensure_ascii=False)}\n"
+                f"【asked_count】{asked}\n"
+                f"【已給過推薦】{recommended}\n"
+                f"【使用者最新訊息】{user_message}\n\n請依規則輸出 JSON。"
+            )
+            result = self.llm_provider.chat_completion(
+                model=os.getenv("PRESALES_SYNTH_MODEL", self.config["model"]),
+                temperature=float(os.getenv("ADVISOR_TEMP", "0.4")),
+                max_tokens=400,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                response_format={"type": "json_object"},
+            )
+            data = json.loads((result or {}).get('content') or "{}")
+            # 驗證（防越界輸出）
+            if data.get('action') not in ('ask', 'converge'):
+                return None
+            if not isinstance(data.get('extracted_fields', {}), dict):
+                data['extracted_fields'] = {}
+            if data['action'] == 'ask' and not data.get('next_question'):
+                return None
+            return data
+        except Exception as e:
+            print(f"❌ conversational_step 失敗（呼叫端降級）：{e}")
+            return None
+
+    def _build_presales_synth(self, grounding_knowledge, accumulated_context, system_context_md,
+                              user_question, cta_mode):
+        """組售前合成的 messages/model/temperature（非串流與串流共用）。無 grounding → None。"""
+        if not grounding_knowledge:
+            return None
+        ctx_lines = []
+        for c in (accumulated_context or []):
+            label = c.get('field_label') or ''
+            val = c.get('selected_label') or c.get('selected_value') or ''
+            if val:
+                ctx_lines.append(f"- {label}：{val}" if label else f"- {val}")
+        ctx_txt = "\n".join(ctx_lines) if ctx_lines else "（無特定情境）"
+
+        system_prompt = f"{system_context_md}\n\n{self.PRESALES_SYNTH_RULES}".strip()
+        user_prompt = (
+            f"【使用者情境】\n{ctx_txt}\n\n"
+            f"【可用知識（唯一事實來源，不得超出）】\n{grounding_knowledge}\n"
+        )
+        if user_question:
+            user_prompt += f"\n【使用者問題】\n{user_question}\n"
+        user_prompt += (
+            "\n請依系統脈絡的口吻與合規鐵則，整合上述情境與知識，生成個人化、自然的回覆；"
+            "只用提供的事實，缺的導向出口。"
+        )
+        if cta_mode == "force":
+            user_prompt += (
+                "\n【整篇排版與收束（必照，一次寫好）】讓回覆好讀且收尾整合：\n"
+                "1. 開頭 1–2 句：同理使用者情境 + 點出可解決的問題。\n"
+                "2. 中段：用『• 分行條列』列出最相關的功能/價值（約 3–5 點，每點一行，"
+                "不要擠成一大段文字）。\n"
+                "3. 結尾：**只用『一個』整合的「下一步」區塊**收束（不要分散成多段、不要重複收尾）；"
+                "把行動呼籲集中放這裡，分行條列。範例：\n"
+                "下一步：\n"
+                "• 免費試用一個月，親自體驗\n"
+                "• 預約 demo 或留聯絡方式，由專人帶您看 👉 https://www.jgbsmart.com/demo-form 🙂\n"
+                "（想先看方案與費用可參考 https://www.jgbsmart.com/pricing）\n"
+                "※ 重點規則：①「👉 https://www.jgbsmart.com/demo-form」務必出現、不可省略。"
+                "②「預約 demo」與「留聯絡方式／我們聯繫您」是**同一個動作（聯繫專人）**，"
+                "**合併成同一行**，不要拆成兩點重複。③價格一律導 https://www.jgbsmart.com/pricing 或留資、不講數字。"
+            )
+        elif cta_mode == "suppress":
+            user_prompt += (
+                "\n【限制】這是延續對話中的回答，請**直接把問題答清楚就好，不要附上 demo 預約連結、"
+                "也不要主動推銷預約**（除非使用者自己問怎麼預約）；保持自然。"
+            )
+        temp = float(os.getenv("LLM_SYNTHESIS_TEMP", "0.5"))
+        if cta_mode == "force":
+            model = os.getenv("PRESALES_SYNTH_MODEL", self.config["model"])
+        else:
+            model = os.getenv("PRESALES_ANSWER_MODEL", os.getenv("OPENAI_MODEL", "gpt-4o-mini"))
+        messages = [{"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}]
+        return messages, model, temp
+
+    def synthesize_presales_answer(
+        self,
+        grounding_knowledge: str,
+        accumulated_context: Optional[List[Dict]] = None,
+        system_context_md: str = "",
+        user_question: Optional[str] = None,
+        cta_mode: str = "auto",   # force=結尾必附 demo 連結；suppress=不附連結；auto=不特別處理
+    ) -> Optional[str]:
+        """
+        售前個人化合成（非串流）：以「系統脈絡 md + 選定/檢索知識 + 累積情境」grounded 合成。
+        失敗/逾時/超 token → 回 None（呼叫端降級原文）。[需求 11.1–11.3, 13.5；決策 8]
+        """
+        try:
+            built = self._build_presales_synth(
+                grounding_knowledge, accumulated_context, system_context_md, user_question, cta_mode)
+            if not built:
+                return None
+            messages, synth_model, synthesis_temp = built
+            result = self.llm_provider.chat_completion(
+                model=synth_model, temperature=synthesis_temp,
+                max_tokens=self.config["max_tokens"], messages=messages,
+            )
+            answer = (result or {}).get('content')
+            return answer.strip() if answer else None
+        except Exception as e:
+            print(f"❌ presales 合成失敗（呼叫端降級原文）：{e}")
+            return None
+
+    async def synthesize_presales_answer_stream(
+        self,
+        grounding_knowledge: str,
+        accumulated_context: Optional[List[Dict]] = None,
+        system_context_md: str = "",
+        user_question: Optional[str] = None,
+        cta_mode: str = "auto",
+    ):
+        """
+        售前合成（**真 token 串流**）：重用 _build_presales_synth 組同款 prompt，改用
+        llm_provider.stream_chat_completion 逐 token yield。無 grounding / 失敗 → 不 yield（呼叫端降級）。
+        """
+        built = self._build_presales_synth(
+            grounding_knowledge, accumulated_context, system_context_md, user_question, cta_mode)
+        if not built:
+            return
+        messages, synth_model, synthesis_temp = built
+        try:
+            async for chunk in self.llm_provider.stream_chat_completion(
+                model=synth_model, temperature=synthesis_temp,
+                max_tokens=self.config["max_tokens"], messages=messages,
+            ):
+                if chunk:
+                    yield chunk
+        except Exception as e:
+            print(f"❌ presales 串流合成失敗（呼叫端降級）：{e}")
+            return
+
     async def synthesize_answer_stream(
         self,
         question: str,

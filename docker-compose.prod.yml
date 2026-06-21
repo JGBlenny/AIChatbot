@@ -123,6 +123,8 @@ services:
       TZ: Asia/Taipei
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      # presales 葉答案/自由問答合成模型（可獨立切換；預設 gpt-4o：售前體驗優先）
+      PRESALES_SYNTH_MODEL: ${PRESALES_SYNTH_MODEL:-gpt-4o}
       # 意圖分類器配置
       INTENT_CLASSIFIER_MODEL: ${INTENT_CLASSIFIER_MODEL:-gpt-3.5-turbo}
       INTENT_CLASSIFIER_TEMPERATURE: ${INTENT_CLASSIFIER_TEMPERATURE:-0.1}

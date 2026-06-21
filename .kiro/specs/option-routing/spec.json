@@ -1,0 +1,70 @@
+{
+  "feature_name": "option-routing",
+  "created_at": "2026-06-20T08:15:27Z",
+  "updated_at": "2026-06-20T13:30:00Z",
+  "phase": "requirements-amended-r19",
+  "amendment_note": "R14-R18 新增：AI 引導式售前顧問對話（自適應提問+收斂判準+對話狀態+合規護欄+與CTA/選單分工）。接續 R1-R13（決策樹+LLM個人化已完成驗證）。決策樹降為 CTA 結構化+presales_entry 快速選入口，顧問對話交 AI。待 review requirements→design→tasks。重用：system md #3622、presales 知識、synthesize_presales_answer(gpt-4o)、prospect 檢索路由、CTA 表單。 || R19 reframe：AI 引導顧問→通用「對話式回答模式」（answer_mode direct|conversational、opt-in 資料驅動、persona 依 target_user、grounding 範圍 per 面向、可擴充）。命名 advisor→conversational。售前適配為首例。待重 review。",
+  "language": "zh-TW",
+  "project_description": "per-option 決策樹路由（option-routing）：讓 select 選單表單的「每個選項」各自決定後續走向，實現真正的決策樹，而非目前 form-chaining 的「整張表單接同一張後續表單」的主幹式串接。建立於既有 form-chaining 機制之上（_maybe_chain_next_form / branch_answer / 合併呈現 / 會話切換 / 取消守衛 / Fix #1 最新列更新），僅將「後續路由」從表單層下放到被選中的選項層；每個選項可帶固定答案(葉，沿用 branch_answer)與/或後續子樹(內部節點，沿用串接引擎)。主場景＝售前顧問 bot（presales）決策樹（來源：docs/presales-kb/01-product-and-fit.md 之 KB-B1/B2、02-modules-plan-cta.md 之 C/D/F、03-competitors.md）：分支點①起手式「個人房東 vs 公司/團隊」→ 個人再問戶數→對應方案+試用(trial_form)、團隊→demo/專人(demo_form)，兩選項走完全不同子樹；分支點②痛點分流（收租對帳/合約/人多/抄表換鎖/交報表/報修）→ 各自導到不同模組說明(C1–C6)再到不同 CTA（IoT 走專人不報價、其餘走 demo）；葉子兩型皆已支援：知識答案(branch_answer)、動作表單(trial_form/demo_form，on_complete_action=call_api)；多選項可路由到同一 CTA 表單(多對一)。建議架構＝擴充共存（per-option 優先、表單層 next_form_id 保留為非-select/無條件串接的 fallback；理由：非 select 結尾表單無選項可承載路由），待設計階段最終確認。向後相容：未設定 per-option 路由的既有表單（含現有表單層 next_form_id 主幹式串接、form-chaining 已上線之金流範例）行為完全不變。【已決定】presales 售前訪客掛既有 b2b mode（系統無 presales mode，BUSINESS_MODES=['b2c','b2b']）：售前知識以 b2b/system_provider scope 新增資料，不改 mode/檢索程式，與金流同一條 b2b 檢索路徑；售前知識與業者知識若混淆再以 category/scope 區隔。樹根入口觸發：b2b mode 下金流 3548 實測相似度 0.975 正常觸發、自然語言端到端已驗證可用（先前用 b2c 測為誤測，非系統問題）；presales 入口同理在 b2b mode 下運作，僅需把售前觸發知識建好。不改向量檢索/reranker；CTA 留資欄位對齊既有 demoForm（身分/戶數/團隊人數/有興趣功能/聯絡方式），本 spec 只負責導向對的 CTA 表單；金流案例降為 form-chaining 已驗證之機制示範。技術脈絡：services/form_manager.py 的 _maybe_chain_next_form / _complete_form / collect_field_data（select 選項解析 ~1187，options 帶 label/value）；api_call_handler._handle_branch_answer；form_schemas.fields(JSONB) 內 select option 目前僅 label/value。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": false
+    },
+    "design": {
+      "generated": true,
+      "approved": false
+    },
+    "tasks": {
+      "generated": true,
+      "approved": false
+    }
+  },
+  "implementation": {
+    "started": true,
+    "completed": false,
+    "tasks_completed": [
+      "1.1",
+      "1.2",
+      "2.1",
+      "2.2",
+      "3.1",
+      "3.2",
+      "4.1",
+      "5.1",
+      "5.2",
+      "5.3",
+      "6.1",
+      "6.2",
+      "6.3",
+      "7.1",
+      "7.2",
+      "9.1",
+      "9.2",
+      "9.3",
+      "9.4",
+      "9.6",
+      "9.8",
+      "9.9",
+      "9.10",
+      "10.1",
+      "10.2",
+      "10.3",
+      "10.4",
+      "10.6",
+      "10.7",
+      "10.8",
+      "10.9",
+      "10.10",
+      "10.11",
+      "10.12",
+      "9.5",
+      "9.7",
+      "10.5",
+      "8.1",
+      "8.2",
+      "8.3"
+    ],
+    "completed": true
+  }
+}

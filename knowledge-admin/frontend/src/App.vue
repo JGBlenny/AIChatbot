@@ -41,6 +41,10 @@
                 <span class="nav-icon">👥</span>
                 <span class="nav-text">目標設定</span>
               </router-link>
+              <router-link to="/conversational-config" class="nav-item nav-item-sub">
+                <span class="nav-icon">💬</span>
+                <span class="nav-text">對話設定</span>
+              </router-link>
             </div>
           </div>
 
