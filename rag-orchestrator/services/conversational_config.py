@@ -44,7 +44,7 @@ PRESALES_CONFIG = ConversationalConfig(
     key="presales",
     answer_mode="conversational",
     persona_role="prospect",
-    grounding_scope={"target_user": "prospect", "mode": "b2b", "vendor_id": 1},
+    grounding_scope={"target_user": "prospect", "mode": "b2b"},
     entry={"form_id": "presales_entry", "option_values": ["fit", "pain"]},
 )
 _CODE_DEFAULTS: Dict[str, ConversationalConfig] = {PRESALES_CONFIG.key: PRESALES_CONFIG}

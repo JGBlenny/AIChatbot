@@ -202,7 +202,7 @@ class ConversationalEngine:
                 if emb:
                     res = await self.retriever._vector_search(
                         emb,
-                        vendor_id=scope.get("vendor_id", 1),
+                        vendor_id=scope.get("vendor_id") or 0,  # prospect/b2b 系統知識 vendor_ids 為 NULL，值無作用；0 為安全預設
                         top_k=5,
                         similarity_threshold=0.0,
                         target_user=scope.get("target_user"),

@@ -91,8 +91,11 @@
           </select>
           <label class="cc-hint">檢索 mode（b2b 業者/售前、b2c 租客）</label>
           <select v-model="form.g_mode"><option value="b2b">b2b</option><option value="b2c">b2c</option></select>
-          <label class="cc-hint">vendor_id（選填，預設 1）</label>
-          <input v-model="form.g_vendor_id" placeholder="預設 1" />
+          <!-- vendor_id 僅 b2c 業者範圍知識才需要；prospect/b2b 系統知識不需 -->
+          <template v-if="form.g_mode==='b2c'">
+            <label class="cc-hint">vendor_id（b2c 限定某業者範圍時填，選填）</label>
+            <input v-model="form.g_vendor_id" placeholder="某業者 id（選填）" />
+          </template>
         </template>
         <template v-if="form.g_select==='category'">
           <label class="cc-hint">grounding 分類（整批撈此分類的知識）</label>
