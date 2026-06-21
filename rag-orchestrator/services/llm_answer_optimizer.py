@@ -825,7 +825,9 @@ class LLMAnswerOptimizer:
         "要行動/想看實際操作』時，才附上預約連結 https://www.jgbsmart.com/demo-form 。\n"
         "- 口吻：顧問式、親切專業、簡潔不誇大；可依使用者情境個人化。\n"
         "- 排版可讀性：短答 1–2 句即可、不硬湊；**一次要講多個點（如競品比較、多項功能）就用"
-        "『• 條列』分行呈現，每點一行，別擠成一大段**。"
+        "『• 條列』分行呈現，每點一行，別擠成一大段**。\n"
+        "- 連結一律用**純網址**（直接寫 https://www.jgbsmart.com/pricing），"
+        "**不要**用 markdown 的 [文字](網址) 語法（顯示端不一定支援，會變成原始文字）。"
     )
 
     # 對話 brain 規則（人格）已外移至 services/conversational_rules.py（R19 reframe：
