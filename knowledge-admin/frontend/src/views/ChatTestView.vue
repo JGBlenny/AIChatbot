@@ -22,18 +22,19 @@
 
         <div class="selector-group">
           <label>用戶角色：</label>
-          <select v-model="userRole" class="role-select">
+          <select v-model="userRole" @change="onRoleChange" class="role-select">
             <option value="tenant">🏠 租客 (tenant)</option>
             <option value="landlord">🏡 房東 (landlord)</option>
             <option value="property_manager">👔 物業管理師 (property_manager)</option>
             <option value="system_admin">⚙️ 系統管理員 (system_admin)</option>
+            <option value="prospect">🎯 潛在客戶/售前 (prospect) — 用 b2b 模式</option>
           </select>
         </div>
 
         <div class="selector-group">
           <label>選擇業者：</label>
-          <select v-model="selectedVendorId" @change="loadVendorInfo">
-            <option value="">請選擇業者...</option>
+          <select v-model="selectedVendorId" @change="loadVendorInfo" :disabled="userRole === 'prospect'">
+            <option value="">{{ userRole === 'prospect' ? '售前免選業者' : '請選擇業者...' }}</option>
             <option v-for="vendor in vendors" :key="vendor.id" :value="vendor.id">
               {{ vendor.name }} ({{ vendor.code }})
             </option>
@@ -86,7 +87,7 @@
     </div>
 
     <!-- 聊天區域 -->
-    <div v-if="selectedVendorId" class="chat-container">
+    <div v-if="canChat" class="chat-container">
       <!-- 表單填寫狀態提示 -->
       <div v-if="isFillingForm" class="form-status-banner">
         <span class="status-icon">📋</span>
@@ -328,7 +329,7 @@
             v-model="userInput"
             @keypress.enter="handleSend"
             placeholder="輸入訊息... (按 Enter 發送)"
-            :disabled="loading || !selectedVendorId"
+            :disabled="loading || !canChat"
           />
           <button @click="handleSend" :disabled="!userInput.trim() || loading" class="btn-send">
             {{ loading ? '⏳ 發送中...' : '📤 發送' }}
@@ -340,7 +341,7 @@
 
     <!-- 未選擇業者提示 -->
     <div v-else class="empty-state">
-      <p>👆 請先選擇一個業者開始測試</p>
+      <p>👆 請先選擇一個業者開始測試（售前/潛在客戶 prospect 可免選業者）</p>
     </div>
   </div>
 </template>
@@ -379,6 +380,10 @@ export default {
     };
   },
   computed: {
+    // 可開始對話：有選業者，或售前/潛在客戶（prospect 免選業者）
+    canChat() {
+      return !!this.selectedVendorId || this.userRole === 'prospect';
+    },
     vendorParamsWithValues() {
       if (!this.vendorParams) return [];
 
@@ -411,7 +416,7 @@ export default {
 
     // 讀取 target_user 參數（向後兼容 user_role）
     const urlTargetUser = urlParams.get('target_user') || urlParams.get('user_role');
-    const validRoles = ['tenant', 'landlord', 'property_manager', 'system_admin'];
+    const validRoles = ['tenant', 'landlord', 'property_manager', 'system_admin', 'prospect'];
 
     if (urlTargetUser && validRoles.includes(urlTargetUser)) {
       this.userRole = urlTargetUser;
@@ -553,7 +558,6 @@ export default {
 
         const payload = {
           message: message,
-          vendor_id: parseInt(this.selectedVendorId),
           mode: this.chatMode,
           target_user: userRole,
           include_sources: true,
@@ -561,6 +565,10 @@ export default {
           session_id: this.sessionId,
           user_id: this.userId
         };
+        // vendor_id 僅在有選業者時帶入（prospect/售前 b2b 可不帶業者）
+        if (this.selectedVendorId) {
+          payload.vendor_id = parseInt(this.selectedVendorId);
+        }
         // B2B 模式帶入 JGB 身份參數
         if (this.chatMode === 'b2b') {
           if (this.jgbRoleId) payload.role_id = this.jgbRoleId;
@@ -642,6 +650,16 @@ export default {
       if (this.selectedVendor) {
         this.loadVendorInfo();
       }
+    },
+
+    onRoleChange() {
+      // 選「潛在客戶/售前」：自動切 b2b、清掉業者選擇（售前免選業者）
+      if (this.userRole === 'prospect') {
+        this.chatMode = 'b2b';
+        this.selectedVendorId = '';
+        this.selectedVendor = null;
+      }
+      this.messages = [];
     },
 
     clearMessages() {
