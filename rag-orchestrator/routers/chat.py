@@ -3540,11 +3540,12 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         else:
             vendor_info = _validate_vendor(request.vendor_id, resolver)
 
-        # Step 1.5: 對話式回答 engine-first（option-routing R14–R19｜元件 14｜資料驅動）
-        # 有 conversational 設定的角色（依 target_user 查設定）先進對話引擎（先了解再回答；
-        # 知識在引擎收斂時當 grounding，不再獨立直答）。無設定角色不受影響。
-        # 此處已過 Step 0（無進行中會話）；引擎降級（brain 失敗）→ 回 None，落回既有流程（知識/兜底）。
-        if request.target_user:
+        # Step 1.5: 對話式回答 engine-first（option-routing R14–R19｜元件 14）
+        # 啟用範圍**目前明確限 prospect**（不因 DB 有其他設定就自動開；設定層雖資料驅動，
+        # 但啟用角色在此明確控制，要擴充再加進此清單）。prospect 先進對話引擎（先了解再答；
+        # 知識在收斂時當 grounding）。引擎降級（brain 失敗）→ 回 None，落回既有流程（知識/兜底）。
+        CONVERSATIONAL_ENABLED_ROLES = {'prospect'}
+        if request.target_user in CONVERSATIONAL_ENABLED_ROLES:
             conv_resp = await _maybe_conversational_freetext(request, req)
             if conv_resp is not None:
                 return conv_resp
