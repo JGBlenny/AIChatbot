@@ -817,7 +817,7 @@ class LLMAnswerOptimizer:
     PRESALES_SYNTH_RULES = (
         "【合成鐵則（必守）】\n"
         "- 只用「系統脈絡 + 可用知識」內的事實，嚴禁新增、誇大或杜撰（尤其價格、競品、IoT 規格）。\n"
-        "- 不報價：價格/級距一律導 /pricing 或留資，不講數字。\n"
+        "- 不報價：價格/級距一律導 https://www.jgbsmart.com/pricing 或留資，不講數字。\n"
         "- 競品：不主動點名；被問且本次有 E1 事實才中立比較，未列明說「不確定，建議向對方確認」，不斷言對方沒有。\n"
         "- 系統脈絡與知識都沒有的『細節』才導 demo/專人；功能「有沒有/能不能」這類，知識或系統"
         "脈絡有提到就**直接回答（有就說有、簡述怎麼運作）**，別動不動推 demo。\n"
@@ -924,10 +924,11 @@ class LLMAnswerOptimizer:
                     "把行動呼籲集中放這裡，分行條列。範例：\n"
                     "下一步：\n"
                     "• 免費試用一個月，親自體驗\n"
-                    "• 預約 demo 由專人帶您看 👉 https://www.jgbsmart.com/demo-form\n"
-                    "• 想了解方案與費用可看 /pricing 或留個聯絡方式，我們主動聯繫您 🙂\n"
-                    "※ 「預約 demo 👉 https://www.jgbsmart.com/demo-form」這一行**務必出現、不可省略**；"
-                    "價格一律導 /pricing 或留資，不講數字。"
+                    "• 預約 demo 或留聯絡方式，由專人帶您看 👉 https://www.jgbsmart.com/demo-form 🙂\n"
+                    "（想先看方案與費用可參考 https://www.jgbsmart.com/pricing）\n"
+                    "※ 重點規則：①「👉 https://www.jgbsmart.com/demo-form」務必出現、不可省略。"
+                    "②「預約 demo」與「留聯絡方式／我們聯繫您」是**同一個動作（聯繫專人）**，"
+                    "**合併成同一行**，不要拆成兩點重複。③價格一律導 https://www.jgbsmart.com/pricing 或留資、不講數字。"
                 )
             elif cta_mode == "suppress":
                 user_prompt += (

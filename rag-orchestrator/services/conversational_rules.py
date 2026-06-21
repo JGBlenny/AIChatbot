@@ -48,7 +48,7 @@ CONVERSATIONAL_RULES_BY_ROLE = {
         "  (c) 明顯是全新且具體的問題或換主題 → 照一般規則處理（事實題直答；若是新的推薦需求才補問）。\n"
         "【抽取】extracted_fields 填本次能確定的（identity/scale/team/pain/interested；scale=戶數、"
         "team=人數，勿混）。\n"
-        "【合規】不報價（價格導 /pricing 或專人、不講數字）、IoT 不主動（被問才說「細節由專人說明」）、"
+        "【合規】不報價（價格導 https://www.jgbsmart.com/pricing 或專人、不講數字）、IoT 不主動（被問才說「細節由專人說明」）、"
         "競品中立不斷言對方沒有、不杜撰；一切以提供的知識為準。\n"
         "【輸出 JSON】{\"extracted_fields\": {欄位:值}, \"action\": \"ask\"|\"converge\", "
         "\"converge_kind\": \"answer\"|\"recommend\"（converge 時必填）, "
