@@ -939,8 +939,16 @@ class LLMAnswerOptimizer:
                 )
 
             synthesis_temp = float(os.getenv("LLM_SYNTHESIS_TEMP", "0.5"))
-            # presales 合成模型可獨立覆寫（預設沿用 optimizer 模型 gpt-4o-mini）
-            synth_model = os.getenv("PRESALES_SYNTH_MODEL", self.config["model"])
+            # 模型分流：推薦(force) 是主打體驗 → 用較強模型（PRESALES_SYNTH_MODEL，預設 gpt-4o）；
+            # 追問/葉答案/自由問答(suppress/auto) 是 grounded 簡單回覆 → 用較便宜模型
+            # （PRESALES_ANSWER_MODEL，預設 gpt-4o-mini）以省成本。皆可由 env 覆寫。
+            if cta_mode == "force":
+                synth_model = os.getenv("PRESALES_SYNTH_MODEL", self.config["model"])
+            else:
+                synth_model = os.getenv(
+                    "PRESALES_ANSWER_MODEL",
+                    os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+                )
             result = self.llm_provider.chat_completion(
                 model=synth_model,
                 temperature=synthesis_temp,
