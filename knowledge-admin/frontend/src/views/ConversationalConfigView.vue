@@ -34,55 +34,83 @@
       <div class="cc-modal">
         <h3>{{ form.id ? '編輯設定' : '新增設定' }}</h3>
 
-        <label>標題</label>
+        <datalist id="cc-categories">
+          <option v-for="c in availableCategories" :key="c.category_value" :value="c.category_value">
+            {{ c.category_label || c.category_value }}
+          </option>
+        </datalist>
+
+        <label>標題（顯示用名稱）</label>
         <input v-model="form.label" placeholder="如：對話規則：售前顧問" />
 
-        <label>角色 (target_user)</label>
+        <label>角色 target_user（這套對話給哪個角色用）</label>
         <select v-model="form.target_user">
           <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
         </select>
 
-        <label><input type="checkbox" v-model="form.is_active" /> 此筆資料啟用</label>
-        <label><input type="checkbox" v-model="form.enabled" /> 對話模式啟用 (enabled)</label>
+        <label class="cc-check"><input type="checkbox" v-model="form.is_active" /> 此筆資料啟用（停用＝整筆忽略）</label>
+        <label class="cc-check"><input type="checkbox" v-model="form.enabled" /> 對話模式啟用 enabled（關＝該角色不走對話）</label>
 
-        <label>回答模式 (answer_mode)</label>
+        <label>回答模式 answer_mode</label>
         <select v-model="form.answer_mode">
-          <option value="conversational">conversational（多輪對話）</option>
+          <option value="conversational">conversational（多輪對話→收斂）</option>
           <option value="direct">direct（單次直答）</option>
         </select>
 
-        <label>persona 規則文字</label>
-        <textarea v-model="form.rules_text" rows="6" placeholder="brain 的人格與規則…"></textarea>
+        <label>persona 規則文字（brain 的人格與行為規則，會餵給 LLM）</label>
+        <textarea v-model="form.rules_text" rows="6" placeholder="例：你是…顧問。每輪先判斷…"></textarea>
 
-        <label>主題範圍 (topic_scope)</label>
+        <hr/>
+        <label>主題範圍 topic_scope（哪些問題會進這套對話）</label>
         <select v-model="form.topic_mode">
-          <option value="all">all（整角色都對話，如 prospect）</option>
-          <option value="category">category（只有該分類問題才進）</option>
-          <option value="keywords">keywords（關鍵字命中才進）</option>
+          <option value="all">all：整角色都對話（如 prospect 售前）</option>
+          <option value="category">category：只有命中該分類的問題才進</option>
+          <option value="keywords">keywords：命中關鍵字才進</option>
         </select>
-        <input v-if="form.topic_mode==='category'" v-model="form.topic_category" placeholder="主題分類，如：退租結算" />
-        <input v-if="form.topic_mode==='keywords'" v-model="form.topic_keywords" placeholder="關鍵字，逗號分隔" />
+        <template v-if="form.topic_mode==='category'">
+          <label class="cc-hint">主題分類（下拉選既有分類，或自行輸入新分類）</label>
+          <input v-model="form.topic_category" list="cc-categories" placeholder="選擇或輸入，如：退租結算" />
+        </template>
+        <template v-if="form.topic_mode==='keywords'">
+          <label class="cc-hint">觸發關鍵字（逗號分隔）</label>
+          <input v-model="form.topic_keywords" placeholder="如：退租,押金,結算" />
+        </template>
 
-        <label>grounding 選材 (grounding_scope.select)</label>
+        <hr/>
+        <label>grounding 選材 grounding_scope.select（收斂時參考哪批知識）</label>
         <select v-model="form.g_select">
-          <option value="vector">vector（語意檢索，廣主題）</option>
-          <option value="category">category（整批撈某分類，決定性，窄主題）</option>
-          <option value="ids">ids（明列知識 id，最決定性）</option>
+          <option value="vector">vector：語意檢索（廣主題，如 presales）</option>
+          <option value="category">category：整批撈某分類（決定性，窄主題推薦）</option>
+          <option value="ids">ids：明列知識 id（最決定性）</option>
         </select>
         <template v-if="form.g_select==='vector'">
-          <input v-model="form.g_target_user" placeholder="grounding target_user，如 prospect" />
+          <label class="cc-hint">檢索 target_user（知識角色範圍）</label>
+          <select v-model="form.g_target_user">
+            <option value="">（同角色：{{ form.target_user }}）</option>
+            <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
+          </select>
+          <label class="cc-hint">檢索 mode（b2b 業者/售前、b2c 租客）</label>
           <select v-model="form.g_mode"><option value="b2b">b2b</option><option value="b2c">b2c</option></select>
-          <input v-model="form.g_vendor_id" placeholder="vendor_id（選填，預設 1）" />
+          <label class="cc-hint">vendor_id（選填，預設 1）</label>
+          <input v-model="form.g_vendor_id" placeholder="預設 1" />
         </template>
-        <input v-if="form.g_select==='category'" v-model="form.g_category" placeholder="grounding 分類，如：退租結算" />
-        <input v-if="form.g_select==='ids'" v-model="form.g_ids" placeholder="知識 id，逗號分隔，如 3596,3597" />
+        <template v-if="form.g_select==='category'">
+          <label class="cc-hint">grounding 分類（整批撈此分類的知識）</label>
+          <input v-model="form.g_category" list="cc-categories" placeholder="選擇或輸入，如：退租結算" />
+        </template>
+        <template v-if="form.g_select==='ids'">
+          <label class="cc-hint">知識 id（逗號分隔）</label>
+          <input v-model="form.g_ids" placeholder="如：3596,3597,3598" />
+        </template>
 
-        <label>入口 (entry，選填)：選單 form_id</label>
+        <hr/>
+        <label>入口選單 form_id（選填：哪張選單的選項可進這套對話）</label>
         <input v-model="form.entry_form_id" placeholder="如：presales_entry（無則留空）" />
-        <input v-model="form.entry_values" placeholder="入口選項 value，逗號分隔，如 fit,pain" />
+        <label class="cc-hint">入口選項 value（逗號分隔，對應選單選項）</label>
+        <input v-model="form.entry_values" placeholder="如：fit,pain" />
 
-        <label>seed（選填）</label>
-        <input v-model="form.seed" placeholder="起手主軸（選填）" />
+        <label>seed 起手主軸（選填）</label>
+        <input v-model="form.seed" placeholder="選填" />
 
         <div class="cc-actions">
           <button class="btn" @click="editing=null">取消</button>
@@ -100,10 +128,17 @@ const RAG_API = '/rag-api/v1';
 export default {
   name: 'ConversationalConfigView',
   data() {
-    return { items: [], editing: null, roles: ['prospect','tenant','landlord','property_manager','system_admin'], form: {} };
+    return { items: [], editing: null, roles: ['prospect','tenant','landlord','property_manager','system_admin'],
+      availableCategories: [], form: {} };
   },
-  mounted() { this.load(); },
+  mounted() { this.load(); this.loadCategories(); },
   methods: {
+    async loadCategories() {
+      try {
+        const r = await axios.get('/api/category-config');
+        this.availableCategories = (r.data.categories || []).filter(c => c.is_active !== false);
+      } catch (e) { /* 分類載入失敗不阻斷，欄位仍可自行輸入 */ }
+    },
     topicLabel(ts) {
       if (!ts || ts.mode === 'all' || !ts.mode) return 'all';
       return ts.mode === 'category' ? `category:${ts.category||''}` : `keywords`;
@@ -180,6 +215,9 @@ export default {
 .cc-modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .cc-modal { background: #fff; border-radius: 10px; padding: 20px 24px; width: 560px; max-height: 88vh; overflow-y: auto; }
 .cc-modal label { display: block; margin: 12px 0 4px; font-weight: 600; font-size: 13px; }
+.cc-modal label.cc-hint { font-weight: 400; font-size: 12px; color: #777; margin: 8px 0 3px; }
+.cc-modal label.cc-check { font-weight: 400; }
+.cc-modal hr { border: none; border-top: 1px solid #eee; margin: 16px 0 4px; }
 .cc-modal input, .cc-modal select, .cc-modal textarea { width: 100%; padding: 7px 9px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
 .cc-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
 </style>
