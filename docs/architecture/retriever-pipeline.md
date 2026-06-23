@@ -37,6 +37,8 @@ graph LR
 
 ## 分數欄位定義
 
+<!-- tested-by: testing-traceability:5.3 -->
+
 | 欄位 | 型別 | 來源 | 語意 |
 |------|------|------|------|
 | `vector_similarity` | float | Stage 1 SQL (`GREATEST(primary, fallback)` 的 cosine) | 純向量 cosine 分數（0.0–1.0）。keyword 路徑項目預設 0.0 |
@@ -48,6 +50,8 @@ graph LR
 | `original_similarity` | float | `_format_result` | `vector_similarity` 的向後相容 alias |
 
 ### Final similarity 計算公式（`_finalize_scores`）
+
+<!-- tested-by: testing-traceability:5.3 -->
 
 ```python
 if rerank_score is not None:

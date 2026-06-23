@@ -1,0 +1,26 @@
+# 覆蓋率設定（spec testing-traceability 元件 4・R3.5）
+# 量測範圍＝services/ + routers/（由 --cov 指定）；以下排除非產品執行邏輯。
+[run]
+branch = False
+omit =
+    # 測試自身（含散落在 services/ routers/ 內的 test_*.py，非產品程式碼）
+    tests/*
+    */tests/*
+    */test_*.py
+    test_*.py
+    # 一次性／執行腳本（依專案「一次性腳本不納入產品程式碼」慣例，R3.5/R9.4）
+    */verify_migration_*.py
+    */run_*.py
+    */migrations/*
+    scripts/*
+    */scripts/*
+    # 入口
+    app.py
+
+[report]
+# 排除不可達／樣板行，讓基準反映真實邏輯覆蓋
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    raise NotImplementedError
+    if TYPE_CHECKING:

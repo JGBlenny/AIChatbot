@@ -115,6 +115,7 @@ async def test_recommend_without_basic_info_flips_to_ask():
     eng._save.assert_awaited()
 
 
+@pytest.mark.req("testing-traceability:5.2")
 @pytest.mark.asyncio
 async def test_recommend_with_basic_info_converges():
     """推薦型且已具備 identity+scale → 收斂；**不關閉會話**（保留上下文供後續追問），改 _save。"""
@@ -129,6 +130,7 @@ async def test_recommend_with_basic_info_converges():
     eng._save.assert_awaited()
 
 
+@pytest.mark.req("testing-traceability:5.2")
 @pytest.mark.asyncio
 async def test_answer_kind_does_not_close_session():
     """事實型收斂（answer）→ 答完不關閉會話（保留上下文），converged=False。"""
@@ -142,6 +144,7 @@ async def test_answer_kind_does_not_close_session():
     eng._save.assert_awaited()
 
 
+@pytest.mark.req("testing-traceability:5.2")
 @pytest.mark.asyncio
 async def test_ask_cap_forces_converge_at_max():
     """提問達硬上限 MAX_ASKS → ask 被強制改為收斂。"""

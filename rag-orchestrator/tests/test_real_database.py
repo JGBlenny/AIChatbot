@@ -1,17 +1,36 @@
 """
 實際資料庫測試腳本
 測試 VendorSOPRetriever 和 FormManager 的擴展功能
+
+⚠️ STALE（spec testing-traceability 元件 8 / 任務 1.5）：
+本檔針對 pre-v2 的 `services.vendor_sop_retriever.VendorSOPRetriever` 撰寫，
+該模組已移除、API（retrieve_sop_by_intent / get_all_categories / retrieve_sop_by_*）
+不存在於現行 `VendorSOPRetrieverV2`（僅 retrieve_sop_by_query）。
+此處修正匯入使收集（collection）零錯誤，並以 module-level skip 隔離，
+待依現行 V2 API 重寫後再移除 skip（非破壞性，保留歷史）。
 """
 import sys
 import os
 import asyncio
 
-# 添加路徑
+import pytest
+
+# 添加路徑（conftest.py 已統一處理，保留以相容直接執行）
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from services.vendor_sop_retriever import VendorSOPRetriever
+# 修正 stale import：原 services.vendor_sop_retriever 已移除，改指向 V2 並保留舊名別名，
+# 使本檔在收集階段不致 ImportError。
+from services.vendor_sop_retriever_v2 import VendorSOPRetrieverV2 as VendorSOPRetriever
 from services.form_manager import FormManager, FormState
 import asyncpg
+
+# 隔離：本檔測試 pre-v2 已移除 API，標示 integration 並整檔略過（不假綠燈、不報收集錯）。
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skip(
+        reason="stale: 針對 pre-v2 VendorSOPRetriever（已移除）；待依 V2 API 重寫"
+    ),
+]
 
 
 async def test_vendor_sop_retriever_extensions():

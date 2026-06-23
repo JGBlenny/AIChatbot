@@ -1,0 +1,84 @@
+# CI 測試把關（spec testing-traceability 元件 6・R4・D2）
+# unit 層為硬把關（容器內 3.11、可離線）；覆蓋率 ratchet 守門；追溯掃描產報告 artifact。
+# integration 層起 postgres/redis 嘗試執行（非阻擋，避免在 schema/seed 尚未就緒前假紅/假綠）；
+# e2e 不在 CI 跑（未設 RUN_E2E）→ 標示略過，不假綠燈（R4.5）。
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  unit:
+    name: unit + coverage + traceability（硬把關）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unit 測試（容器內 3.11）＋覆蓋率
+        run: scripts/run-tests.sh unit --cov
+
+      - name: 覆蓋率 ratchet 守門（CI 只讀，低於基準→fail）
+        run: python3 rag-orchestrator/tools/coverage/check_baseline.py
+
+      - name: 追溯掃描（產報告＋缺口警示，預設不硬擋）
+        run: |
+          python3 rag-orchestrator/tools/traceability/scan.py
+          echo "ℹ️ 追溯為漸進式門檻：缺口以警示為主（R8.3/8.4），如需硬擋可在此加判斷。"
+
+      - name: 上傳追溯報告與覆蓋率 artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traceability-and-coverage
+          path: |
+            .kiro/specs/testing-traceability/traceability-matrix.md
+            .kiro/specs/testing-traceability/traceability-matrix.json
+            rag-orchestrator/tests/.coverage.json
+          if-no-files-found: warn
+
+  integration:
+    name: integration（真實相依，非阻擋）
+    runs-on: ubuntu-latest
+    # 不阻擋合併：DB schema/seed 完整供裝為後續工作；在此先驗證相依可起與接線，
+    # 而非在未就緒時假紅或假綠（透明標示，符合 R4.5「略過而非通過」精神）。
+    continue-on-error: true
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: aichatbot_admin
+          POSTGRES_USER: aichatbot
+          POSTGRES_PASSWORD: aichatbot_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aichatbot"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      RUN_INTEGRATION: "1"
+      DB_HOST: localhost
+      REDIS_HOST: localhost
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 安裝相依（執行期＋測試）
+        run: |
+          pip install -q -r rag-orchestrator/requirements.txt
+          pip install -q -r rag-orchestrator/requirements-test.txt
+      - name: Integration 測試（schema/seed 未就緒前為資訊性）
+        working-directory: rag-orchestrator
+        run: |
+          echo "⚠️ 注意：完整 DB schema/seed 供裝為後續工作；本步驟先以服務容器嘗試 integration。"
+          python3 -m pytest -m integration -p no:cacheprovider --tb=short || \
+            echo "integration 尚未全綠（多數需 schema/seed）—非阻擋，待後續供裝。"

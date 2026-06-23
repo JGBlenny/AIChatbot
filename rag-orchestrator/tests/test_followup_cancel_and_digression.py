@@ -86,6 +86,7 @@ async def _chain_to_followup(manager, session_id):
     assert r1.get("form_id") == NEXT, "前置：應已串接到追問選單"
 
 
+@pytest.mark.req("testing-traceability:5.4")
 @pytest.mark.asyncio
 async def test_cancel_on_followup_ends_chain(manager):
     """R5.1/R5.3：追問選單輸入「取消」→ 結束、會話 CANCELLED、不再自動觸發。"""
@@ -108,6 +109,7 @@ async def test_cancel_on_followup_ends_chain(manager):
         await _cleanup(session_id)
 
 
+@pytest.mark.req("testing-traceability:5.4")
 @pytest.mark.asyncio
 async def test_unmatched_input_returns_fallback_no_retrieval(manager):
     """R5.2/R4.2：無對應選項的輸入 → branch_answer fallback，不送檢索、不再串接。"""

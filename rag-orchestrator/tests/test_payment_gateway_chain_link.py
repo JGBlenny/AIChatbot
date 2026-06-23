@@ -50,6 +50,7 @@ async def test_followup_target_exists_and_active(conn):
     assert is_active is True
 
 
+@pytest.mark.req("testing-traceability:5.4")
 @pytest.mark.asyncio
 async def test_no_chain_cycle(conn):
     """後續表單不得反向指回來源（避免循環設定）。"""

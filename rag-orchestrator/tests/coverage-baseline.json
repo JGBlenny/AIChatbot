@@ -1,0 +1,14 @@
+{
+  "_comment": "spec testing-traceability 元件 4 (R3.2-3.4). 首次量測於 unit 層 (scripts/run-tests.sh unit --cov), Python 3.11 容器. 值為實測向下取整 (留 ratchet headroom). 政策: 只升不降, 升基準由人工 commit (CI 只讀守門, 不自動寫回).",
+  "measured_at": "2026-06-22",
+  "layer": "unit",
+  "scope": ["services", "routers"],
+  "policy": "ratchet",
+  "overall": 0.10,
+  "modules": {
+    "services/conversational_engine.py": 0.43,
+    "services/vendor_knowledge_retriever_v2.py": 0.16,
+    "services/form_manager.py": 0.25,
+    "routers/chat.py": 0.17
+  }
+}

@@ -76,6 +76,7 @@ def _no_sleep(monkeypatch):
     monkeypatch.setattr(chat_module.asyncio, "sleep", _noop)
 
 
+@pytest.mark.req("testing-traceability:5.5")
 @pytest.mark.asyncio
 async def test_chained_response_streams_merged_answer_and_flags():
     # 經真實轉換層產生 response dict

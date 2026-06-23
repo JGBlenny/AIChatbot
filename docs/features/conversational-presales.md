@@ -28,6 +28,8 @@ prospect 訊息（mode=b2b, target_user=prospect, 固定 session_id）
 
 ## 三、合規鐵則（內容硬約束）
 
+<!-- tested-by: testing-traceability:5.2 -->
+
 - **不報價**：價格一律導 `https://www.jgbsmart.com/pricing` 或留資，不講數字。
 - **IoT 不主動**：被問才說「細節由專人說明」、不報價。
 - **競品中立**：被問才比較、只憑事實、未列明說「不確定，建議向對方確認」、不斷言對方沒有。
@@ -53,6 +55,8 @@ prospect 訊息（mode=b2b, target_user=prospect, 固定 session_id）
 - brain ＝ `PRESALES_SYNTH_MODEL`
 
 ## 五、資料（DB，category 保留分類）
+
+<!-- tested-by: testing-traceability:5.3 -->
 
 - `category='對話規則'`：每列＝一個角色的 persona 規則（`answer`）＋設定（`generation_metadata.conversational_config`）。
 - `category='系統脈絡'`：售前系統脈絡 md（合規底座，注入所有 prospect 合成）。
