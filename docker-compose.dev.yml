@@ -1,0 +1,38 @@
+# docker-compose.dev.yml — 測試／開發專用（spec testing-traceability・元件 2・D1）
+#
+# 用途：在 Python 3.11 容器（對齊執行期）內跑 pytest，使「測試環境＝執行期」。
+#   - 掛載源碼 `./rag-orchestrator:/app` → 改碼即跑、免 rebuild。
+#   - 測試以 `docker compose -f docker-compose.dev.yml run --rm`（本地與 CI 同一入口），
+#     不用 `docker exec`（避免假設常駐容器）。
+#   - 不影響 prod：不重用 prod 的 container_name 與 host ports。
+#
+# 典型用法（建議透過 scripts/run-tests.sh / make test）：
+#   docker compose -f docker-compose.dev.yml run --rm rag-orchestrator \
+#     sh -c "pip install -q -r requirements-test.txt && python3 -m pytest -m unit"
+#
+# 註：unit 層全 mock、可離線，不需 postgres/redis；integration/e2e 由 CI（service
+#     containers）或本地既有 prod 堆疊提供真實相依，未提供時對應測試標示略過（R4.5）。
+
+# 獨立 project 名稱，避免與 prod（docker-compose.prod.yml）共用 namespace 而誤報 orphan。
+name: aichatbot-test
+
+services:
+  rag-orchestrator:
+    build: ./rag-orchestrator
+    image: aichatbot-rag-orchestrator-test
+    working_dir: /app
+    volumes:
+      - ./rag-orchestrator:/app          # 掛載源碼：改碼即跑、免 rebuild
+    environment:
+      TZ: Asia/Taipei
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: /app
+      # integration/e2e 若有真實相依時使用；unit 層全 mock 不需要
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-aichatbot_admin}
+      DB_USER: ${DB_USER:-aichatbot}
+      DB_PASSWORD: ${DB_PASSWORD:-aichatbot_password}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    command: ["sleep", "infinity"]        # 維持容器；測試以 run --rm 進入

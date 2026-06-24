@@ -63,6 +63,8 @@ JSON（`VendorChatResponse`，重點欄位）：
 
 ## Response B — 串流（`stream:true`）
 
+<!-- tested-by: testing-traceability:5.5 -->
+
 `Content-Type: text/event-stream`，事件序：
 
 ```
@@ -94,6 +96,8 @@ data: {"success": true, "message": "答案生成完成"}
 - **新對話**：換新的 `session_id`。
 
 ## 售前對話行為（prospect）
+
+<!-- tested-by: testing-traceability:5.2 -->
 
 - 模糊需求 → 顧問式反問（一次一題：身分/規模/痛點…）
 - 事實題（競品/價格/某功能）→ 直接答

@@ -109,10 +109,33 @@ class FormManager:
                         WHERE form_id = %s AND is_active = true
                     """, (form_id,))
                 result = cursor.fetchone()
-                return dict(result) if result else None
+                if not result:
+                    return None
+                schema = dict(result)
+                self._normalize_form_fields(schema)
+                return schema
         except Exception as e:
             print(f"❌ 獲取表單定義失敗: {e}")
             return None
+
+    @staticmethod
+    def _normalize_form_fields(schema: Dict) -> None:
+        """正規化欄位：保證每個欄位都有 prompt / field_label。
+
+        部分表單資料缺 `prompt`，而下游多處以硬存取 `field['prompt']` 取用，
+        逐欄位推進時會 KeyError。於 schema 載入邊界補預設值，使所有下游存取安全
+        （單一修正點覆蓋全部使用處；不改變已有 prompt 的表單行為）。
+        """
+        fields = schema.get('fields')
+        if not isinstance(fields, list):
+            return
+        for field in fields:
+            if not isinstance(field, dict):
+                continue
+            if not field.get('field_label'):
+                field['field_label'] = field.get('field_name') or '欄位'
+            if not field.get('prompt'):
+                field['prompt'] = field.get('field_label') or field.get('field_name') or '請繼續填寫'
 
     async def get_form_schema(self, form_id: str, vendor_id: Optional[int] = None) -> Optional[Dict]:
         """獲取表單定義（異步）"""
@@ -1430,6 +1453,17 @@ class FormManager:
 
             if resolved_value is not None:
                 extracted_value = resolved_value
+            else:
+                # 不符任何選項（非編號、非精確 label/value）→ 退回重問，不存入無效值。
+                # 僅影響「完全不符」的輸入；既有編號/精確選擇行為不變。
+                labels = "、".join(
+                    str(o.get('label', o.get('value', ''))) for o in options
+                )
+                return {
+                    "answer": f"請從以下選項擇一（可輸入選項文字或編號）：{labels}\n\n"
+                              f"{current_field.get('prompt', '')}",
+                    "validation_failed": True,
+                }
 
         # 6. 儲存資料
         collected_data = session_state['collected_data']

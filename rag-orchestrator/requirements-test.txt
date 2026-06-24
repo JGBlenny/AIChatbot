@@ -1,0 +1,6 @@
+# 測試相依（僅 dev/CI 安裝；正式 image 不含，避免膨脹）— spec testing-traceability 元件 2 / U6
+# 由 docker-compose.dev.yml / CI 於執行時 `pip install -r requirements-test.txt`，
+# 不寫進 rag-orchestrator/requirements.txt、不進正式 image。
+pytest==8.4.2
+pytest-asyncio==0.24.0
+pytest-cov==5.0.0
