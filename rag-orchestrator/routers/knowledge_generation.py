@@ -10,6 +10,7 @@ import json
 import os
 import re
 from services.embedding_utils import generate_embedding_with_pgvector
+from services.category_utils import to_categories
 
 router = APIRouter()
 
@@ -1349,6 +1350,7 @@ async def review_loop_knowledge(
                                 business_types,
                                 target_user,
                                 category,
+                                categories,
                                 scope,
                                 is_template,
                                 template_vars,
@@ -1358,7 +1360,7 @@ async def review_loop_knowledge(
                                 source,
                                 source_loop_knowledge_id,
                                 source_loop_id
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, 'ai_generated', true, NOW(), 'loop', $14, $15)
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $16, $11, $12, $13::jsonb, 'ai_generated', true, NOW(), 'loop', $14, $15)
                             RETURNING id
                         """,
                             knowledge['question'],
@@ -1370,12 +1372,13 @@ async def review_loop_knowledge(
                             vendor_ids_value,
                             knowledge.get('business_types'),
                             kb_target_user,
-                            knowledge.get('category'),
+                            None,  # 單數 category 退役：主題真實來源為 categories（$16）
                             knowledge.get('scope', 'global') or 'global',
                             knowledge.get('is_template', False) or False,
                             json.dumps(knowledge['template_vars'], ensure_ascii=False) if knowledge.get('template_vars') else None,
                             knowledge_id,
-                            knowledge['loop_id']
+                            knowledge['loop_id'],
+                            to_categories(knowledge.get('category'), knowledge.get('categories')),  # $16：主題分類陣列
                         )
 
                         await conn.execute("""

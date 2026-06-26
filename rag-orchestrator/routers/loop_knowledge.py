@@ -20,6 +20,7 @@ from typing import Optional, List, Dict
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import asyncpg
+from services.category_utils import to_categories
 
 router = APIRouter()
 
@@ -1106,6 +1107,7 @@ async def _sync_knowledge_to_production(
                     keywords,
                     embedding,
                     category,
+                    categories,
                     scope,
                     is_template,
                     template_vars,
@@ -1120,7 +1122,7 @@ async def _sync_knowledge_to_production(
                     updated_at
                 )
                 VALUES ($1, $2, $3, $4, $5::vector,
-                        $6, $7, $8, $9::jsonb,
+                        $6, $15, $7, $8, $9::jsonb,
                         $10, $11,
                         'ai_generated', 'loop', $12::jsonb,
                         $13, $14,
@@ -1132,7 +1134,7 @@ async def _sync_knowledge_to_production(
                 answer,
                 kb_keywords,
                 embedding_str,
-                category,
+                None,  # 單數 category 退役：主題真實來源為 categories（下方 $15）
                 scope,
                 is_template,
                 template_vars_json,
@@ -1140,7 +1142,8 @@ async def _sync_knowledge_to_production(
                 kb_target_user,
                 generation_metadata,
                 loop_id,
-                knowledge_id
+                knowledge_id,
+                to_categories(category),  # $15：主題分類陣列（SoT，排除保留值）
             )
 
             return {

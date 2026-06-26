@@ -259,19 +259,29 @@ class ConversationalEngine:
             return ""
 
     async def _grounding_by_category(self, category: str, target_user=None, limit: int = 8) -> str:
-        """某分類整批撈 → 串接 answer（決定性；窄主題用；可無 embedding）。"""
+        """某主題分類整批撈 → 串接 answer（決定性；窄主題用；可無 embedding）。
+
+        主題分類以多值欄位 categories 為準（category-multi-select 任務 3.1）：
+        語意＝「categories 含此主題值」（$1 = ANY(categories)），涵蓋掛多個主題的列。
+        """
+        # 父層展開：選父層時自動涵蓋其子分類（與 admin 知識篩選一致）
+        cat_match = (
+            "($1 = ANY(categories) OR categories && COALESCE("
+            "(SELECT array_agg(category_value::text) FROM category_config WHERE parent_value = $1), "
+            "'{}'::text[]))"
+        )
         try:
             async with self.db_pool.acquire() as conn:
                 if target_user:
                     rows = await conn.fetch(
-                        "SELECT answer FROM knowledge_base WHERE category = $1 AND is_active = TRUE "
+                        f"SELECT answer FROM knowledge_base WHERE {cat_match} AND is_active = TRUE "
                         "AND answer <> '' AND (target_user IS NULL OR target_user @> ARRAY[$2]::text[]) "
                         "ORDER BY priority DESC NULLS LAST, id LIMIT $3",
                         category, target_user, limit,
                     )
                 else:
                     rows = await conn.fetch(
-                        "SELECT answer FROM knowledge_base WHERE category = $1 AND is_active = TRUE "
+                        f"SELECT answer FROM knowledge_base WHERE {cat_match} AND is_active = TRUE "
                         "AND answer <> '' ORDER BY priority DESC NULLS LAST, id LIMIT $2",
                         category, limit,
                     )

@@ -173,9 +173,16 @@ async def list_knowledge(
             search_pattern = f"%{search}%"
             params.extend([search_pattern, search_pattern])
 
-        # 類別過濾（精確匹配）
+        # 類別過濾：選葉子→精確匹配；選父層→展開為其所有子分類（兩層分類）
         if category:
-            query += " AND %s = ANY(kb.categories)"
+            query += """ AND (
+                %s = ANY(kb.categories)
+                OR kb.categories && COALESCE(
+                    (SELECT array_agg(category_value::text) FROM category_config WHERE parent_value = %s),
+                    '{}'::text[]
+                )
+            )"""
+            params.append(category)
             params.append(category)
 
         # 業態類型過濾
@@ -215,7 +222,14 @@ async def list_knowledge(
             count_params.extend([f"%{search}%", f"%{search}%"])
 
         if category:
-            count_query += " AND %s = ANY(categories)"
+            count_query += """ AND (
+                %s = ANY(categories)
+                OR categories && COALESCE(
+                    (SELECT array_agg(category_value::text) FROM category_config WHERE parent_value = %s),
+                    '{}'::text[]
+                )
+            )"""
+            count_params.append(category)
             count_params.append(category)
 
         # 業態類型過濾（總數查詢也要包含）
@@ -2140,6 +2154,7 @@ class CategoryConfig(BaseModel):
     description: Optional[str] = None
     display_order: int = 0
     is_active: bool = True
+    parent_value: Optional[str] = None  # 兩層分類：父層分類值（NULL=頂層）
 
 
 @app.get("/api/category-config")
@@ -2159,18 +2174,30 @@ async def get_category_config(
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
+    # usage_count 即時統計：以 knowledge_base.categories 實際使用筆數為準
+    # （取代從不更新的 stored 欄位；category-multi-select 下游一致化）
     query = """
         SELECT
-            id, category_value, display_name, description,
-            display_order, is_active, usage_count,
-            created_at, updated_at
-        FROM category_config
+            cc.id, cc.category_value, cc.display_name, cc.description,
+            cc.display_order, cc.is_active, cc.parent_value,
+            -- 使用數：本分類 + 其子分類(若為父層)所涵蓋的「去重知識數」
+            (SELECT count(*) FROM knowledge_base kb
+             WHERE kb.categories && (
+                 ARRAY[cc.category_value::text]
+                 || COALESCE(
+                     (SELECT array_agg(c2.category_value::text)
+                      FROM category_config c2 WHERE c2.parent_value = cc.category_value),
+                     '{}'::text[]
+                 )
+             )) AS usage_count,
+            cc.created_at, cc.updated_at
+        FROM category_config cc
     """
 
     if not include_inactive:
-        query += " WHERE is_active = true"
+        query += " WHERE cc.is_active = true"
 
-    query += " ORDER BY id"
+    query += " ORDER BY cc.id"
 
     cur.execute(query)
     categories = [dict(row) for row in cur.fetchall()]
@@ -2179,6 +2206,23 @@ async def get_category_config(
     conn.close()
 
     return {"categories": categories}
+
+
+def _validate_two_level_parent(cur, category_value, parent_value):
+    """兩層分類防呆：父層須為頂層、且本分類不可已有子分類。違反→HTTPException 400。"""
+    if not parent_value:
+        return
+    if parent_value == category_value:
+        raise HTTPException(status_code=400, detail="父層不可為自己")
+    cur.execute("SELECT parent_value FROM category_config WHERE category_value = %s", (parent_value,))
+    row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=400, detail=f"父層分類 '{parent_value}' 不存在")
+    if row['parent_value']:
+        raise HTTPException(status_code=400, detail="父層必須是頂層分類，不可超過兩層")
+    cur.execute("SELECT 1 FROM category_config WHERE parent_value = %s LIMIT 1", (category_value,))
+    if cur.fetchone():
+        raise HTTPException(status_code=400, detail="此分類已有子分類，不可再設父層（維持兩層）")
 
 
 @app.post("/api/category-config")
@@ -2209,18 +2253,22 @@ async def create_category(category: CategoryConfig, user: dict = Depends(get_cur
                 detail=f"Category '{category.category_value}' 已存在"
             )
 
+        # 兩層分類防呆
+        _validate_two_level_parent(cur, category.category_value, category.parent_value)
+
         # 插入新 category
         cur.execute("""
             INSERT INTO category_config
-            (category_value, display_name, description, display_order, is_active)
-            VALUES (%s, %s, %s, %s, %s)
+            (category_value, display_name, description, display_order, is_active, parent_value)
+            VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             category.category_value,
             category.display_name,
             category.description,
             category.display_order,
-            category.is_active
+            category.is_active,
+            category.parent_value or None
         ))
 
         category_id = cur.fetchone()['id']
@@ -2267,6 +2315,9 @@ async def update_category(category_id: int, category: CategoryConfig, user: dict
         if not cur.fetchone():
             raise HTTPException(status_code=404, detail="Category 不存在")
 
+        # 兩層分類防呆
+        _validate_two_level_parent(cur, category.category_value, category.parent_value)
+
         # 更新 category
         cur.execute("""
             UPDATE category_config
@@ -2274,6 +2325,7 @@ async def update_category(category_id: int, category: CategoryConfig, user: dict
                 description = %s,
                 display_order = %s,
                 is_active = %s,
+                parent_value = %s,
                 updated_at = NOW()
             WHERE id = %s
         """, (
@@ -2281,6 +2333,7 @@ async def update_category(category_id: int, category: CategoryConfig, user: dict
             category.description,
             category.display_order,
             category.is_active,
+            category.parent_value or None,
             category_id
         ))
 
@@ -2329,9 +2382,20 @@ async def delete_category(category_id: int, user: dict = Depends(get_current_use
         if not category:
             raise HTTPException(status_code=404, detail="Category 不存在")
 
-        # 檢查是否有知識使用此 category
+        # 衝突2 防呆：父層底下尚有子分類 → 不可刪除（避免孤兒子層）
         cur.execute(
-            "SELECT COUNT(*) as count FROM knowledge_base WHERE category = %s",
+            "SELECT 1 FROM category_config WHERE parent_value = %s LIMIT 1",
+            (category['category_value'],)
+        )
+        if cur.fetchone():
+            raise HTTPException(
+                status_code=400,
+                detail="此分類底下有子分類，請先移除或改掛子分類後再刪除"
+            )
+
+        # 檢查是否有知識使用此 category（衝突1：主題真實來源為 categories[]，不可用單數 category）
+        cur.execute(
+            "SELECT COUNT(*) as count FROM knowledge_base WHERE %s = ANY(categories)",
             (category['category_value'],)
         )
 
@@ -2355,6 +2419,37 @@ async def delete_category(category_id: int, user: dict = Depends(get_current_use
 
         return {"message": message, "usage_count": usage}
 
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.post("/api/category-config/{category_id}/remove-from-knowledge")
+async def remove_category_from_knowledge(category_id: int, user: dict = Depends(get_current_user)):
+    """連動清理：將某分類值從所有知識的 categories[] 移除（停用/刪除前的可選步驟）。"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute("SELECT category_value FROM category_config WHERE id = %s", (category_id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Category 不存在")
+        val = row['category_value']
+        cur.execute(
+            "UPDATE knowledge_base SET categories = array_remove(categories, %s), updated_at = NOW() "
+            "WHERE %s = ANY(categories)",
+            (val, val)
+        )
+        removed = cur.rowcount
+        conn.commit()
+        return {"removed_count": removed, "message": f"已從 {removed} 筆知識移除分類「{val}」"}
     except HTTPException:
         raise
     except Exception as e:

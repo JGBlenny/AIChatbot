@@ -171,6 +171,7 @@ class RAGEngine:
                                     kb.question_summary,
                                     kb.answer as content,
                                     kb.category,
+                                    kb.categories,
                                     kb.target_user,
                                     kb.keywords,
                                     kb.scope,
@@ -287,6 +288,7 @@ class RAGEngine:
                                     kb.question_summary,
                                     kb.answer as content,
                                     kb.category,
+                                    kb.categories,
                                     kb.target_user,
                                     kb.keywords,
                                     kb.scope,
@@ -678,13 +680,15 @@ class RAGEngine:
 
     async def get_category_stats(self) -> Dict:
         """
-        取得分類統計（已停用，因資料庫無 category 欄位）
+        取得分類統計（已停用，無呼叫者）。
+
+        備註（category-multi-select）：主題分類現以 knowledge_base.categories（TEXT[]）為
+        唯一真實來源、單數 category 收斂為文件角色標記專用。如未來需要分類統計，
+        應以 unnest(categories) 聚合，而非單數 category。
 
         Returns:
             空字典
         """
-        # 注意：knowledge_base 表已不使用 category 欄位
-        # 改用 intent_id 進行分類
         return {}
 
 
