@@ -55,14 +55,3 @@ def test_image_urls_max_three():
         VendorChatRequest(message="hi", vendor_id=1,
                           image_urls=["https://a/1.jpg", "https://a/2.jpg",
                                       "https://a/3.jpg", "https://a/4.jpg"])
-
-
-@pytest.mark.e2e
-@pytest.mark.req("testing-traceability:5.5")
-def test_sse_event_sequence_contract():
-    """e2e（預設略過）：/api/v1/message SSE 串流事件序 start→intent→answer_chunk→metadata→done。
-
-    需整服務（DB/embedding/semantic-model/LLM）；於 RUN_E2E=1 環境以 TestClient 實跑。
-    此處先以契約佔位，確保 e2e 層被追溯與標示略過（非假綠燈）。
-    """
-    pytest.skip("e2e：需整服務，於 RUN_E2E=1 環境實跑（見任務 9.2）")
