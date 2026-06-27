@@ -479,6 +479,26 @@ PRIORITY_QUALITY_THRESHOLD=0.70      # 品質門檻 0.70
 - `development` - 開發模式（熱重載、詳細錯誤）
 - `production` - 生產模式（優化、壓縮）
 
+## 🔐 服務對服務認證
+
+### rag API Key 認證
+
+| 變數名 | 說明 | 預設值 | 必需 |
+|--------|------|--------|------|
+| `RAG_API_AUTH_ENFORCE` | rag-orchestrator 服務對服務 API Key 認證開關。關（預設）→ 不強制（安全上線）；開 → 除豁免路徑外，請求須帶 Header `X-API-Key`，以 SHA-256 比對 `api_keys` 表（`is_active`）驗證 | `false`（關） | ❌ |
+
+**接受的開啟值**：`1` / `true` / `yes` / `on`（不分大小寫），其餘一律視為關。
+
+**使用位置**：
+- `rag-orchestrator` - middleware 攔截驗證（豁免：`/`、`/api/v1/health`、`/docs`、`/redoc`、`/openapi`）
+
+**金鑰來源**：`api_keys` 表（只存 SHA-256 雜湊），由 knowledge-admin 後台 `/api/api-keys` 建立 / 停用；明文僅建立當下回傳一次。
+
+```bash
+# 啟用 rag API Key 認證（正式環境建議開啟）
+RAG_API_AUTH_ENFORCE=true
+```
+
 ## 🛠️ 其他變數
 
 ### 專案配置
@@ -601,6 +621,11 @@ BACKTEST_SELECTION_STRATEGY=incremental
 BACKTEST_QUALITY_MODE=basic
 BACKTEST_USE_DATABASE=true
 BACKTEST_NON_INTERACTIVE=true
+
+# ==========================================
+# 服務對服務認證
+# ==========================================
+RAG_API_AUTH_ENFORCE=false   # 開啟（true）後 rag 須帶 X-API-Key
 
 # ==========================================
 # 前端開發

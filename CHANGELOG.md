@@ -67,8 +67,8 @@
     - `services/sop_embedding_generator.py`
     - `app.py`
   - 詳細文檔：
-    - [實作細節](docs/features/SOP_KEYWORDS_IMPLEMENTATION_2026-02-11.md)
-    - [Keywords 對比](docs/features/SOP_KEYWORDS_COMPARISON.md)
+    - 實作細節
+    - Keywords 對比
 
 - **知識範圍邏輯簡化** (2026-02-09)
   - 從雙欄位（scope + vendor_id）簡化為單一 vendor_id 判斷
@@ -99,7 +99,7 @@
   - 向後兼容：scope 欄位保留但標記為棄用
   - 完整文檔：
     - [功能說明](docs/features/KNOWLEDGE_SCOPE_SIMPLIFICATION.md)
-    - [遷移指南](docs/guides/KNOWLEDGE_SCOPE_MIGRATION_GUIDE.md)
+    - 遷移指南
     - [API 文檔](docs/api/KNOWLEDGE_ADMIN_API.md)
 
 - **優先級條件式加分機制** (2025-11-21)
@@ -126,7 +126,7 @@
     - ✅ 0.60 分答案不再因優先級跳到 0.75
     - ✅ 只有 >= 0.70 的答案才能使用優先級提升
     - ✅ 防止低品質答案排序異常
-  - 完整測試報告：[條件式加分測試報告](docs/testing/PRIORITY_CONDITIONAL_BOOST_TEST_REPORT.md)
+  - 完整測試報告：條件式加分測試報告
 
 - **知識優先級系統重構** (2025-11-17)
   - 從 0-10 分級制（乘法加成）改為 0/1 開關制（固定加成）
@@ -156,7 +156,7 @@
     - `rag-orchestrator/services/knowledge_import_service.py` - 匯入邏輯
     - `.env` & `.env.example` - 環境變數
     - `docker-compose.yml` - 容器配置
-  - 完整文檔：[知識優先級系統](docs/features/PRIORITY_SYSTEM.md)
+  - 完整文檔：知識優先級系統
 
 ### 修復 🐛
 - **Critical: SOP 複製與 Embedding 自動生成修復** (2025-11-02)
@@ -174,7 +174,7 @@
     - 檢索成功率從 0% → 100%
   - 修復檔案：`rag-orchestrator/routers/vendors.py:1555-1763`
   - 新增工具：`generate_vendor_sop_embeddings.py` 補救腳本
-  - 完整報告：[SOP 複製與 Embedding 修復報告](docs/SOP_COPY_EMBEDDING_FIX_2025-11-02.md)
+  - 完整報告：SOP 複製與 Embedding 修復報告
 
 - **業者參數處理優化** (2025-11-02)
   - 修復業者參數在 LLM 答案合成時未正確處理 `display_name` 和 `unit` 資訊
@@ -261,8 +261,8 @@
   - 完整的事件驅動緩存失效流程
 
 ### 文檔
-- 新增 [Target User Config 實作完成報告](docs/archive/completion_reports/TARGET_USER_CONFIG_IMPLEMENTATION.md)
-- 新增 [配置管理更新摘要](docs/CONFIG_MANAGEMENT_UPDATE_SUMMARY.md)
+- 新增 Target User Config 實作完成報告
+- 新增 配置管理更新摘要
 
 ### 規劃中
 - 整合用戶登入/認證系統（啟用 target_user 過濾功能）
@@ -290,9 +290,9 @@
   - 更新最新功能說明
 
 ### 文檔
-- 新增 [系統盤查報告 (2025-10-13)](docs/SYSTEM_AUDIT_REPORT_2025-10-13.md)
+- 新增 系統盤查報告 (2025-10-13)
 - 新增 [文檔中心](docs/README.md) - 完整文檔導覽與分類索引
-- 新增 [DEPRECATED.md](docs/archive/legacy/backend/DEPRECATED.md) - 遺留代碼說明
+- 新增 DEPRECATED.md - 遺留代碼說明
 
 ### 系統健康狀況
 - ✅ 7 個服務正常運行
@@ -336,7 +336,7 @@
   - 統計資訊展示（組成分布、選擇原因）
   - 環境變數配置（BACKTEST_SELECTION_STRATEGY、BACKTEST_INCREMENTAL_LIMIT）
   - 向後相容性（保留所有舊環境變數）
-  - 詳見：[回測 Phase 2 變更日誌](docs/backtest/BACKTEST_PHASE2_CHANGELOG.md)
+  - 詳見：回測 Phase 2 變更日誌
 
 - **回測框架 Phase 3 - 趨勢分析與視覺化** 📈
   - 趨勢分析 API：
@@ -353,7 +353,7 @@
     - 可配置閾值（通過率、分數、信心度）
     - 三個警報級別（critical / warning / info）
     - 智能建議（根據警報類型提供優化建議）
-  - 詳見：[回測 Phase 3 變更日誌](docs/backtest/BACKTEST_PHASE3_CHANGELOG.md)
+  - 詳見：回測 Phase 3 變更日誌
 
 ### 改進
 - **前端開發模式**
@@ -388,19 +388,19 @@
 - **Embedding 快取命中率**: 70-90%（Redis 快取）
 
 ### 文檔
-- 新增 [知識匯入功能文檔](docs/features/KNOWLEDGE_IMPORT_FEATURE.md)
-- 新增 [知識匯入 API 參考](docs/api/KNOWLEDGE_IMPORT_API.md)
-- 新增 [測試情境狀態管理](docs/features/TEST_SCENARIO_STATUS_MANAGEMENT.md)
-- 新增 [拒絕情境智能重試](docs/features/REJECTED_SCENARIO_RETRY_IMPLEMENTATION.md)
-- 新增 [測試情境遷移指南](docs/guides/TEST_SCENARIOS_MIGRATION_GUIDE.md)
-- 新增 [Business Scope 重構文檔](docs/architecture/BUSINESS_SCOPE_REFACTORING.md)
-- 新增 [認證與業務範圍整合](docs/architecture/AUTH_AND_BUSINESS_SCOPE.md)
-- 新增 [Business Scope 測試報告](docs/architecture/BUSINESS_SCOPE_REFACTORING_TEST_REPORT.md)
-- 新增 [前端開發模式指南](docs/guides/FRONTEND_DEV_MODE.md)
-- 新增 [回測策略指南](docs/backtest/backtest_strategies.md)
-- 新增 [環境變數參考](docs/backtest/backtest_env_vars.md)
-- 新增 [回測 Phase 2 變更日誌](docs/BACKTEST_PHASE2_CHANGELOG.md)
-- 新增 [回測 Phase 3 變更日誌](docs/BACKTEST_PHASE3_CHANGELOG.md)
+- 新增 知識匯入功能文檔
+- 新增 知識匯入 API 參考
+- 新增 測試情境狀態管理
+- 新增 拒絕情境智能重試
+- 新增 測試情境遷移指南
+- 新增 Business Scope 重構文檔
+- 新增 認證與業務範圍整合
+- 新增 Business Scope 測試報告
+- 新增 前端開發模式指南
+- 新增 回測策略指南
+- 新增 環境變數參考
+- 新增 回測 Phase 2 變更日誌
+- 新增 回測 Phase 3 變更日誌
 
 ---
 
@@ -449,7 +449,7 @@
 - **「租金如何計算？」案例**: 0.57 (FAIL) → 0.87 (PASS) (+53%)
 
 ### 文檔
-- 新增 [多 Intent 分類系統完整文檔](docs/MULTI_INTENT_CLASSIFICATION.md)
+- 新增 多 Intent 分類系統完整文檔
 - 新增 [文檔導覽索引](docs/README.md)
 - 更新主 README 反映最新功能
 - 更新 API 使用範例
@@ -475,9 +475,9 @@
 - 意圖管理介面改進
 
 ### 文檔
-- 新增 [Intent 管理完成記錄](INTENT_MANAGEMENT_COMPLETE.md)
-- 新增 [知識分類完成文檔](docs/KNOWLEDGE_CLASSIFICATION_COMPLETE.md)
-- 新增 [回測優化指南](BACKTEST_OPTIMIZATION_GUIDE.md)
+- 新增 Intent 管理完成記錄
+- 新增 知識分類完成文檔
+- 新增 回測優化指南
 
 ---
 
@@ -525,9 +525,9 @@
 - 移除模板變數系統相關欄位
 
 ### 文檔
-- 新增 [Phase 1 多業者實作文檔](docs/PHASE1_MULTI_VENDOR_IMPLEMENTATION.md)
-- 新增 [API 參考文檔](docs/API_REFERENCE_PHASE1.md)
-- 新增 [前端使用指南](docs/frontend_usage_guide.md)
+- 新增 Phase 1 多業者實作文檔
+- 新增 API 參考文檔
+- 新增 前端使用指南
 
 ---
 
@@ -586,8 +586,8 @@
 
 ### 文檔
 - 新增 [系統架構文檔](docs/architecture/SYSTEM_ARCHITECTURE.md)
-- 新增 [Intent 管理指南](docs/INTENT_MANAGEMENT_README.md)
-- 新增 [Phase 2 規劃文檔](docs/PHASE2_PLANNING.md)
+- 新增 Intent 管理指南
+- 新增 Phase 2 規劃文檔
 
 ---
 
@@ -640,8 +640,8 @@
   - 分類標籤化
 
 ### 文檔
-- 新增 [知識提取指南](docs/KNOWLEDGE_EXTRACTION_GUIDE.md)
-- 新增 [Markdown 撰寫指南](docs/MARKDOWN_GUIDE.md)
+- 新增 知識提取指南
+- 新增 Markdown 撰寫指南
 
 ---
 

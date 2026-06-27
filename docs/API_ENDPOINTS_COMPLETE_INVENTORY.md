@@ -220,6 +220,26 @@
 | GET | `/api/v1/health` | Health check |
 | GET | `/api/v1/stats` | System statistics |
 
+### Category Configuration (Knowledge Admin)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/category-config` | List category configs (includes `parent_value` for two-level categories; usage_count is live count over `knowledge_base.categories[]`) |
+| POST | `/api/category-config` | Create category (optional `parent_value` for sub-category; two-level only) |
+| PUT | `/api/category-config/{category_id}` | Update category |
+| DELETE | `/api/category-config/{category_id}` | Delete (soft-deactivate if used / has children) |
+| POST | `/api/category-config/{category_id}/remove-from-knowledge` | Remove this category value from all knowledge `categories[]` |
+| POST | `/api/category-config/sync-usage` | Recompute usage counts |
+
+### API Keys (Service-to-Service, Knowledge Admin)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/api-keys` | List API keys (prefix only; never hash/plaintext) |
+| POST | `/api/api-keys` | Create key (plaintext returned once) |
+| PUT | `/api/api-keys/{key_id}` | Enable/disable key |
+| DELETE | `/api/api-keys/{key_id}` | Delete key |
+
+> rag-orchestrator verifies requests via Header `X-API-Key` (SHA-256 lookup against `api_keys`); toggle with env `RAG_API_AUTH_ENFORCE`. Exempt paths: `/`, `/api/v1/health`, `/docs`, `/redoc`, `/openapi`.
+
 ---
 
 ## Lookup API Details

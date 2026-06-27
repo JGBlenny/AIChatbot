@@ -105,7 +105,8 @@ erDiagram
         string title "標題"
         text question_summary "問題摘要"
         text answer "答案"
-        string category "分類"
+        text_array categories "主題分類(多值,唯一真實來源)"
+        string category "[退役] 僅存文件角色: 對話規則/系統脈絡"
         int intent_id FK "主要意圖(舊)"
         int_array vendor_ids "業者 ID 陣列（多業者共享）"
         vector(1536) embedding "向量（只用 question_summary 生成）"
@@ -338,7 +339,7 @@ erDiagram
 ### 8. 配置管理模組 (Configuration)
 - **business_types_config** - 業態配置
 - **target_user_config** - 使用者角色配置
-- **category_config** - 分類配置
+- **category_config** - 分類配置（含 `parent_value` 支援兩層分類）
 - **system_param_definitions** - 系統參數定義
 
 ### 9. 權限管理模組 (Permission System)
@@ -347,6 +348,7 @@ erDiagram
 - **permissions** - 權限定義
 - **role_permissions** - 角色-權限對應
 - **admin_roles** - 管理員-角色對應
+- **api_keys** - 服務對服務 API 金鑰（rag-orchestrator 認證；只存 hash）
 
 ### 10. 表單管理模組 (Form Management)
 - **form_sessions** - 表單填寫會話
@@ -488,7 +490,11 @@ CREATE TABLE knowledge_base (
     title VARCHAR(255) NOT NULL,
     question_summary TEXT,               -- 問題摘要
     answer TEXT NOT NULL,                -- 答案
-    category VARCHAR(100),               -- 分類
+
+    -- 主題分類（多值化）
+    categories TEXT[] DEFAULT '{}',      -- 主題分類（多值，唯一真實來源；檢索/接地以此為準）
+    category VARCHAR(100),               -- [退役] 主題分類已移轉至 categories[]；
+                                         --   此單數欄位僅保留「文件角色」用途（保留值：對話規則 / 系統脈絡）
 
     -- 意圖關聯（舊欄位，保留相容性）
     intent_id INTEGER REFERENCES intents(id),
@@ -520,7 +526,21 @@ CREATE TABLE knowledge_base (
 -- 向量索引（IVFFlat）
 CREATE INDEX idx_kb_embedding ON knowledge_base
 USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+
+-- 多值主題查詢索引（GIN；加速 `= ANY(categories)` / `&&`）
+CREATE INDEX idx_kb_categories_gin ON knowledge_base USING GIN (categories);
+
+-- 保留值防護：categories 不得含文件角色保留值（對話規則 / 系統脈絡）
+ALTER TABLE knowledge_base
+    ADD CONSTRAINT chk_categories_no_reserved
+    CHECK (NOT (categories && ARRAY['對話規則', '系統脈絡']::text[]));
 ```
+
+**主題分類 (categories) — 多值化**:
+- `categories TEXT[]` 為主題分類的**唯一真實來源**，檢索與接地（`_grounding_by_category`）皆以 `= ANY(categories)` 比對，並支援父層展開（選父層時涵蓋其子分類）
+- 單數 `category` 欄位**已退役**為主題用途，僅保留「文件角色」標記（保留值：`對話規則`、`系統脈絡`）
+- `chk_categories_no_reserved` 約束確保保留值不會被寫入 `categories[]`
+- 遷移：`backfill_knowledge_categories_phase1.sql`（加性、補值＋索引＋約束）、`cleanup_singular_category_phase2.sql`（gated 清空非保留單數值）
 
 **知識範圍判斷 (vendor_ids)**:
 - `vendor_ids = '{}' (空陣列)` - 全域知識（適用所有業者）
@@ -899,6 +919,62 @@ api_endpoints.related_kb_ids ← Trigger 自動更新
 
 ---
 
+### 12. category_config（分類配置）
+
+```sql
+CREATE TABLE category_config (
+    id SERIAL PRIMARY KEY,
+    category_value VARCHAR(50) UNIQUE NOT NULL,  -- 分類值（知識 categories[] 所存的葉子值）
+    display_name VARCHAR(100),                    -- 顯示名稱
+    description TEXT,
+    display_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    parent_value VARCHAR(50),                      -- 父層分類值（兩層分類；NULL=頂層，非 NULL=該值之子分類）
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_category_config_parent ON category_config(parent_value);
+```
+
+**兩層分類 (parent_value)**:
+- `parent_value IS NULL` → 頂層分類；`parent_value = '售前'` → 「售前」的子分類
+- 僅支援兩層（後端 `_validate_two_level_parent` 防呆：父層須為頂層、本分類不可已有子分類）
+- 父層列僅作分組用，知識不會直接掛父層值，故其自身 usage_count 為 0；
+  `GET /api/category-config` 回傳的父層「使用數」＝其所有子分類去重加總
+- 遷移：`add_category_config_parent_value.sql`
+
+---
+
+### 13. api_keys（服務對服務 API 金鑰）
+
+```sql
+CREATE TABLE api_keys (
+    id           SERIAL PRIMARY KEY,
+    name         VARCHAR(100) NOT NULL,            -- 系統名稱（呼叫方識別）
+    key_hash     VARCHAR(64)  NOT NULL UNIQUE,     -- SHA-256 hex（只存雜湊，不存明文）
+    key_prefix   VARCHAR(16)  NOT NULL,            -- 前綴（顯示辨識，如 a4942bd2）
+    description  TEXT,                             -- 用途說明（選填）
+    is_active    BOOLEAN      DEFAULT TRUE,
+    created_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMP                         -- 最後使用時間（看誰在用）
+);
+
+CREATE INDEX idx_api_keys_hash_active ON api_keys(key_hash) WHERE is_active;
+```
+
+**用途**: rag-orchestrator 服務對服務（service-to-service）認證的金鑰來源，可於 knowledge-admin 後台動態新增 / 停用 / 查用量。
+
+**關鍵設計**:
+- 只儲存 key 的 **SHA-256 雜湊**（`key_hash`）＋前綴（`key_prefix`），**不存明文**；明文僅於建立當下回傳一次
+- rag middleware 以 `sha256(請求帶的 X-API-Key)` 查此表（`is_active = TRUE`）驗證，命中時更新 `last_used_at`
+- 認證開關為環境變數 `RAG_API_AUTH_ENFORCE`（預設關＝不強制；開＝強制）
+- 豁免路徑：`/`、`/api/v1/health`、`/docs`、`/redoc`、`/openapi`
+- 後台管理端點：`GET/POST/PUT/DELETE /api/api-keys`
+- 遷移：`create_api_keys_table.sql`
+
+---
+
 ## 關係說明
 
 ### 1. 業者 ↔ 知識庫（三層架構）
@@ -938,7 +1014,7 @@ knowledge_base (知識)
     └─ intent_id (FK) → intents (舊欄位，保留向後兼容)
 ```
 
-**說明**：知識庫改用類別（category）分類，intent_id 為舊欄位僅保留向後兼容。意圖分類功能目前僅用於表單流程。
+**說明**：知識庫改用主題分類（`categories[]` 多值）分類，intent_id 為舊欄位僅保留向後兼容。意圖分類功能目前僅用於表單流程。
 
 ---
 

@@ -627,7 +627,7 @@ Phase 2 新增表格:
 
 | 表名 | 說明 | 主要欄位 |
 |------|------|---------|
-| `knowledge_base` | 知識庫 | question, answer, embedding, vendor_id, scope |
+| `knowledge_base` | 知識庫 | question, answer, embedding, vendor_id, categories（多值主題分類，唯一真實來源；單數 category 已退役為文件角色用） |
 | `intents` | 意圖 | name, intent_type, keywords, example_questions |
 | `vendors` | 業者 | code, name, subscription_plan, is_active |
 | `vendor_configs` | 業者配置 | vendor_id, category, param_key, param_value |
@@ -640,6 +640,8 @@ Phase 2 新增表格:
 | `chat_history` | 對話歷史 | session_id, vendor_id, question, answer |
 | `unclear_questions` | 未知問題 | question, frequency, status, last_asked |
 | `test_scenarios` | 測試情境 | question, expected_answer, difficulty, status |
+| `category_config` | 主題分類配置 | category_value, display_name, parent_value（兩層分類） |
+| `api_keys` 🆕 | 服務對服務 API 金鑰 | name, key_hash（只存 SHA-256）, key_prefix, is_active, last_used_at |
 
 #### Phase 2（待實作）
 
@@ -814,11 +816,17 @@ GET /api/v1/cache/stats
 | 機制 | 實作方式 | 狀態 |
 |------|---------|------|
 | **HTTPS** | Nginx SSL/TLS 終止 | ✅ 生產環境 |
-| **API Key** | Header: `X-API-Key` | ⏳ 待實作 |
+| **API Key（服務對服務）** | Header: `X-API-Key`，金鑰存 `api_keys` 表（SHA-256），開關 `RAG_API_AUTH_ENFORCE` | ✅ 已實作 🆕 |
 | **Rate Limiting** | 基於 IP 或 API Key | ⏳ 待實作 |
 | **CORS** | FastAPI CORS Middleware | ✅ 已實作 |
 | **Input Validation** | Pydantic Models | ✅ 已實作 |
 | **Redis Session** | Session 存儲與驗證 | ✅ 已實作 🆕 |
+
+**服務對服務 API Key 認證層** 🆕：
+rag-orchestrator 以 middleware 攔截請求（豁免 `/`、`/api/v1/health`、`/docs`、`/redoc`、`/openapi`），
+驗證 Header `X-API-Key`：以 `sha256(key)` 查 `api_keys`（`is_active`），命中即更新 `last_used_at`。
+金鑰只存雜湊（不存明文），由 knowledge-admin 後台（`/api/api-keys`）建立 / 停用 / 查用量；
+明文僅建立當下回傳一次。是否強制由環境變數 `RAG_API_AUTH_ENFORCE` 控制（預設關＝不強制，便於安全上線）。
 
 ---
 

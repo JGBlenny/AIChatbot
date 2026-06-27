@@ -97,7 +97,7 @@
 | [前端文件](./frontend/) | 前端需求、TODO |
 | [變更日誌](./changelog/) | 歷史變更記錄 |
 | [維護記錄](./maintenance/) | 系統審計報告 |
-| 歸檔文件 | 所有歷史文件 |
+| [歸檔文件](./archive/) | 歷史歸檔（依日期，如 `2026-06/`） |
 
 ---
 
@@ -119,14 +119,5 @@ docs/
 ├── testing/                    # 測試指南
 ├── changelog/                  # 變更日誌
 ├── maintenance/                # 維護記錄
-└── archive/                    # 歷史歸檔
-    ├── analysis/               # 歷史分析報告
-    ├── deployment-logs/        # 部署日誌
-    ├── design-reports/         # 設計實作報告
-    ├── features-historical/    # 歷史功能記錄
-    ├── fixes/                  # Bug 修復記錄
-    ├── implementation/         # 實作報告
-    ├── maintenance-historical/ # 舊維護記錄
-    ├── reports/                # 歷史報告
-    └── testing-reports/        # 測試報告
+└── archive/                    # 歷史歸檔（依日期分批，如 2026-06/）
 ```
