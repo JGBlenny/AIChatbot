@@ -93,6 +93,10 @@
                 <span class="nav-icon">🔌</span>
                 <span class="nav-text">API 端點管理</span>
               </router-link>
+              <router-link to="/api-keys" class="nav-item nav-item-sub">
+                <span class="nav-icon">🔑</span>
+                <span class="nav-text">API 金鑰管理</span>
+              </router-link>
             </div>
           </div>
         </div>

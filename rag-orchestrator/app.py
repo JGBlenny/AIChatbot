@@ -161,6 +161,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── 服務對服務 API Key 認證（金鑰存 DB；RAG_API_AUTH_ENFORCE 關→不強制，安全上線）──
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from services.api_key_auth import is_exempt, auth_enforced, verify_api_key
+
+if auth_enforced():
+    print("🔒 [security] rag API Key 認證【已啟用】，金鑰來源＝api_keys 表")
+else:
+    print("⚠️ [security] RAG_API_AUTH_ENFORCE 未開 → API Key 認證【停用】，rag 對外無保護。正式環境務必開啟。")
+
+
+@app.middleware("http")
+async def api_key_guard(request: Request, call_next):
+    if auth_enforced() and request.method != "OPTIONS" and not is_exempt(request.url.path):
+        pool = getattr(request.app.state, "db_pool", None)
+        if not await verify_api_key(pool, request.headers.get("x-api-key")):
+            return JSONResponse(status_code=401, content={"detail": "Invalid or missing API key"})
+    return await call_next(request)
+
+
 # 註冊路由
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 app.include_router(unclear_questions.router, prefix="/api/v1", tags=["unclear_questions"])

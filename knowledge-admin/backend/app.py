@@ -10,6 +10,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor, Json
 import requests
 import os
+import secrets
+import hashlib
 import pandas as pd
 from datetime import datetime
 
@@ -2460,6 +2462,107 @@ async def remove_category_from_knowledge(category_id: int, user: dict = Depends(
             cur.close()
         if conn:
             conn.close()
+
+
+# ========== API Keys（服務對服務金鑰，後台管理；只存 hash，明文僅建立時回傳一次）==========
+
+class ApiKeyCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class ApiKeyToggle(BaseModel):
+    is_active: bool
+
+
+def _hash_api_key(key: str) -> str:
+    return hashlib.sha256(key.encode("utf-8")).hexdigest()
+
+
+@app.get("/api/api-keys")
+async def list_api_keys(user: dict = Depends(get_current_user)):
+    """列出所有 API 金鑰（不回傳 hash 或明文，只有前綴）。"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute(
+            "SELECT id, name, key_prefix, description, is_active, created_at, last_used_at "
+            "FROM api_keys ORDER BY created_at DESC"
+        )
+        return {"api_keys": [dict(r) for r in cur.fetchall()]}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.post("/api/api-keys")
+async def create_api_key(data: ApiKeyCreate, user: dict = Depends(get_current_user)):
+    """建立金鑰：產生隨機明文 → 存 hash+前綴 → 明文僅此次回傳。"""
+    if not data.name or not data.name.strip():
+        raise HTTPException(status_code=400, detail="名稱不可空白")
+    plain = secrets.token_urlsafe(32)
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute(
+            "INSERT INTO api_keys (name, key_hash, key_prefix, description) VALUES (%s,%s,%s,%s) RETURNING id",
+            (data.name.strip(), _hash_api_key(plain), plain[:8], data.description)
+        )
+        new_id = cur.fetchone()["id"]
+        conn.commit()
+        return {
+            "id": new_id, "name": data.name.strip(), "key_prefix": plain[:8],
+            "api_key": plain,
+            "message": "金鑰已建立，請立即複製保存——此明文只顯示這一次，之後無法再查看。"
+        }
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.put("/api/api-keys/{key_id}")
+async def update_api_key(key_id: int, data: ApiKeyToggle, user: dict = Depends(get_current_user)):
+    """啟用/停用金鑰。"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute("UPDATE api_keys SET is_active = %s WHERE id = %s RETURNING id", (data.is_active, key_id))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="金鑰不存在")
+        conn.commit()
+        return {"message": "已更新"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.delete("/api/api-keys/{key_id}")
+async def delete_api_key(key_id: int, user: dict = Depends(get_current_user)):
+    """刪除金鑰。"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute("DELETE FROM api_keys WHERE id = %s RETURNING id", (key_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="金鑰不存在")
+        conn.commit()
+        return {"message": "已刪除"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
 
 
 @app.post("/api/category-config/sync-usage")

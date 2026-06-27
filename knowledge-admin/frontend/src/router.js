@@ -29,6 +29,7 @@ import CacheManagementView from './views/CacheManagementView.vue';
 import BusinessTypesConfigView from './views/BusinessTypesConfigView.vue';
 // Category Config Management
 import CategoryConfigView from './views/CategoryConfigView.vue';
+import ApiKeyManagementView from './views/ApiKeyManagementView.vue';
 // Target User Config Management
 import TargetUserConfigView from './views/TargetUserConfigView.vue';
 import ConversationalConfigView from './views/ConversationalConfigView.vue';
@@ -253,6 +254,15 @@ const routes = [
     path: '/api-endpoints',
     name: 'ApiEndpoints',
     component: ApiEndpointsView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  // API Key Management（服務對服務金鑰）
+  {
+    path: '/api-keys',
+    name: 'ApiKeys',
+    component: ApiKeyManagementView,
     meta: {
       requiresAuth: true
     }
