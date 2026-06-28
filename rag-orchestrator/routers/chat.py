@@ -3429,13 +3429,16 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             except Exception as e:
                 print(f"⚠️ [role_id] 自動補全失敗: {e}")
 
+        # 跨 handler 共享情境(於 dispatcher 頂端建立一次,無 session_id 亦可用)
+        ctx = ChatRequestContext()
+
         # Step 0: 檢查表單會話（Phase X: 表單填寫功能）
         if request.session_id:
             form_manager = req.app.state.form_manager
             session_state = await form_manager.get_session_state(request.session_id)
 
             # 表單會話 REVIEWING / EDITING → handle_form_session(Stage 2)
-            ctx = ChatRequestContext(session_state=session_state)
+            ctx.session_state = session_state
             resp = await handle_form_session(request, req, ctx)
             if resp is not None:
                 return resp
