@@ -569,6 +569,185 @@ async def handle_image(request, req, ctx: ChatRequestContext):
         return None
 
 
+async def handle_conversational_entry(request, req, ctx: ChatRequestContext):
+    """Step 1.5 對話式回答 engine-first(目前明確限 prospect)。
+    真 token 串流→最終 Response(派發器不二次 finalize,陷阱3);引擎降級或非啟用角色→回 None。"""
+    CONVERSATIONAL_ENABLED_ROLES = {'prospect'}
+    if request.target_user not in CONVERSATIONAL_ENABLED_ROLES:
+        return None
+    return await _maybe_conversational_freetext(request, req)
+
+
+async def handle_cache(request, req, ctx: ChatRequestContext):
+    """Step 2 緩存(表單期間不進此處)。命中:stream→stream_cached_answer SSE(陷阱2,維持自有串流);
+    非 stream→_check_cache JSON。未命中或 debug→回 None。"""
+    cache_service = req.app.state.cache_service
+    print(f"🔍 [DEBUG] stream參數值: {request.stream}, 類型: {type(request.stream)}")
+    if request.stream:
+        config_version = _generate_config_version()
+        cached_answer = cache_service.get_cached_answer(
+            vendor_id=request.vendor_id,
+            question=request.message,
+            target_user=request.target_user,
+            config_version=config_version,
+        )
+        if cached_answer:
+            print(f"⚡ 緩存命中！使用串流模式輸出 - 配置版本: {config_version}")
+            return StreamingResponse(
+                stream_cached_answer(cached_answer),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "X-Accel-Buffering": "no",  # 禁用 nginx 緩衝
+                },
+            )
+        return None
+    # 非串流:Debug 模式不使用緩存,保證調試信息最新
+    if not request.include_debug_info:
+        cached_response = _check_cache(cache_service, request.vendor_id, request.message, request.target_user)
+        if cached_response:
+            return cached_response
+    return None
+
+
+async def handle_retrieval(request, req, ctx: ChatRequestContext):
+    """Step 4 智能檢索(終點,必回)。SOP/知識/兜底同時檢索比分;skip_sop→回測僅知識庫。
+    intent_result 用固定 stub(意圖在計分零權重)。vendor_info 取自 ctx。"""
+    import time as _time
+    _total_start = _time.time()
+    resolver = get_vendor_param_resolver()
+    cache_service = req.app.state.cache_service
+    vendor_info = ctx.vendor_info
+
+    # Step 3: 意圖分類（已註解 — intent 在檢索計分中零權重,省 ~1.5s）
+    intent_result = {
+        'intent_name': 'unknown',
+        'intent_type': None,
+        'confidence': 0.0,
+        'all_intents': [],
+        'secondary_intents': [],
+        'intent_ids': [],
+        'keywords': [],
+    }
+
+    if not request.skip_sop:
+        sop_orchestrator = req.app.state.sop_orchestrator
+
+        _t0 = _time.time()
+        decision = await _smart_retrieval_with_comparison(
+            request=request,
+            intent_result=intent_result,
+            sop_orchestrator=sop_orchestrator,
+            resolver=resolver,
+        )
+        print(f"⏱️ [Step 4] 智能檢索: {int((_time.time()-_t0)*1000)}ms")
+        print(f"🎯 [最終決策] {decision['type']} - {decision['reason']}")
+
+        if decision['type'] == 'sop':
+            _t0 = _time.time()
+            response = await _build_orchestrator_response(
+                request, req, decision['sop_result'],
+                resolver, vendor_info, cache_service,
+                decision=decision,
+            )
+            print(f"⏱️ [Step 5] SOP 回應構建: {int((_time.time()-_t0)*1000)}ms")
+            print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
+
+            if request.stream:
+                print(f"📡 [串流模式] 將 SOP 響應轉換為串流輸出")
+                return _finalize_response(response, request)
+            return response
+
+        elif decision['type'] == 'knowledge':
+            # 串流模式：先檢查是否有表單/API 動作需要完整處理
+            if request.stream:
+                _best_k = decision['knowledge_list'][0] if decision['knowledge_list'] else {}
+                _k_action = _best_k.get('action_type', 'direct_answer')
+                _k_form_id = _best_k.get('form_id')
+
+                if _k_action in ('form_fill', 'api_call', 'form_then_api') or _k_form_id:
+                    # 表單/API 類型：走完整回應路徑（非串流），再包裝成串流輸出
+                    print(f"📡 [串流模式] 知識 action_type={_k_action}，走完整回應再轉串流")
+                    _t0 = _time.time()
+                    response = await _build_knowledge_response(
+                        request, req, intent_result, decision['knowledge_list'],
+                        resolver, vendor_info, cache_service,
+                        decision=decision,
+                    )
+                    print(f"⏱️ [Step 5] KB 回應構建（表單）: {int((_time.time()-_t0)*1000)}ms")
+                    print(f"📡 [串流模式] 將表單響應轉換為串流輸出")
+                    return StreamingResponse(
+                        stream_response_wrapper(response.dict() if hasattr(response, 'dict') else response),
+                        media_type="text/event-stream",
+                        headers={
+                            "Cache-Control": "no-cache",
+                            "Connection": "keep-alive",
+                            "X-Accel-Buffering": "no",
+                        },
+                    )
+
+                print(f"📡 [串流模式] 使用串流合成回應")
+                print(f"⏱️ [總計] 檢索完成，開始串流: {int((_time.time()-_total_start)*1000)}ms")
+                return StreamingResponse(
+                    stream_synthesis_response(
+                        request, req, intent_result, decision['knowledge_list'],
+                        resolver, vendor_info, cache_service,
+                        decision=decision,
+                    ),
+                    media_type="text/event-stream",
+                    headers={
+                        "Cache-Control": "no-cache",
+                        "Connection": "keep-alive",
+                        "X-Accel-Buffering": "no",
+                    },
+                )
+
+            # 非串流模式：等待完整回應
+            _t0 = _time.time()
+            response = await _build_knowledge_response(
+                request, req, intent_result, decision['knowledge_list'],
+                resolver, vendor_info, cache_service,
+                decision=decision,
+            )
+            print(f"⏱️ [Step 5] KB 回應構建: {int((_time.time()-_t0)*1000)}ms")
+            print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
+            return response
+
+        elif decision['type'] == 'none':
+            # 無結果，進入 RAG fallback
+            _t0 = _time.time()
+            response = await _handle_no_knowledge_found(
+                request, req, intent_result, resolver,
+                cache_service, vendor_info,
+                decision=decision,
+            )
+            print(f"⏱️ [Step 5] Fallback 回應: {int((_time.time()-_t0)*1000)}ms")
+            print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
+
+            if request.stream:
+                print(f"📡 [串流模式] 將無結果響應轉換為串流輸出")
+                return _finalize_response(response, request)
+            return response
+
+    else:
+        # 回測模式：只使用知識庫
+        print(f"ℹ️  [回測模式] 跳過 SOP 檢索，僅使用知識庫")
+        intent_id = None
+        knowledge_list, _knowledge_list_unfiltered = await _retrieve_knowledge(
+            request, intent_id, intent_result
+        )
+        if not knowledge_list:
+            return await _handle_no_knowledge_found(
+                request, req, intent_result, resolver,
+                cache_service, vendor_info,
+            )
+        return await _build_knowledge_response(
+            request, req, intent_result, knowledge_list,
+            resolver, vendor_info, cache_service,
+        )
+
+
 async def _conversational_sse(engine, decision, request):
     """把對話引擎的 stream_answer 包成前端相容 SSE（start/intent/answer_chunk/metadata/done）。
     converge＝真 token 串流（stream_chat_completion）；ask＝整句一次。"""
@@ -3409,8 +3588,6 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
     - 各功能模塊獨立為輔助函數
     """
     try:
-        import time as _time
-        _total_start = _time.time()
         # DEBUG: 檢查 session_id 是否被正確接收
         print(f"🔍 [DEBUG] vendor_chat_message received - session_id: {request.session_id}, user_id: {request.user_id}")
 
@@ -3447,7 +3624,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             resp = await handle_conversational_session(request, req, ctx)
             if resp is not None:
                 return resp
-            session_state = ctx.session_state  # 同步降級結果(陷阱4:可能被設 None)
+            # 降級結果(陷阱4)已寫入 ctx.session_state;handle_collecting 內讀 ctx 自行判斷
 
             # 表單收集 COLLECTING/DIGRESSION/PAUSED → handle_collecting(Stage 2)
             resp = await handle_collecting(request, req, ctx)
@@ -3460,226 +3637,19 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         if resp is not None:
             return resp
 
-        # Step 1: 驗證業者（B2B 可不帶 vendor_id）
+        # Step 1: 驗證業者（B2B 可不帶 vendor_id）— 原位執行,結果入 ctx
         resolver = get_vendor_param_resolver()
         is_b2b = request.mode in ('b2b', 'customer_service')
         if is_b2b and not request.vendor_id:
-            vendor_info = {'id': 0, 'name': 'JGB System', 'business_types': ['system_provider']}
+            ctx.vendor_info = {'id': 0, 'name': 'JGB System', 'business_types': ['system_provider']}
         else:
-            vendor_info = _validate_vendor(request.vendor_id, resolver)
+            ctx.vendor_info = _validate_vendor(request.vendor_id, resolver)
 
-        # Step 1.5: 對話式回答 engine-first（option-routing R14–R19｜元件 14）
-        # 啟用範圍**目前明確限 prospect**（不因 DB 有其他設定就自動開；設定層雖資料驅動，
-        # 但啟用角色在此明確控制，要擴充再加進此清單）。prospect 先進對話引擎（先了解再答；
-        # 知識在收斂時當 grounding）。引擎降級（brain 失敗）→ 回 None，落回既有流程（知識/兜底）。
-        CONVERSATIONAL_ENABLED_ROLES = {'prospect'}
-        if request.target_user in CONVERSATIONAL_ENABLED_ROLES:
-            conv_resp = await _maybe_conversational_freetext(request, req)
-            if conv_resp is not None:
-                return conv_resp
-
-        # Step 2: 緩存檢查（表單期間不使用緩存）
-        cache_service = req.app.state.cache_service
-
-        # 🆕 串流模式：檢查緩存時返回不同格式
-        print(f"🔍 [DEBUG] stream參數值: {request.stream}, 類型: {type(request.stream)}")
-        if request.stream:
-            # 串流模式：檢查緩存並返回 SSE
-            config_version = _generate_config_version()
-            cached_answer = cache_service.get_cached_answer(
-                vendor_id=request.vendor_id,
-                question=request.message,
-                target_user=request.target_user,
-                config_version=config_version
-            )
-            if cached_answer:
-                print(f"⚡ 緩存命中！使用串流模式輸出 - 配置版本: {config_version}")
-                return StreamingResponse(
-                    stream_cached_answer(cached_answer),
-                    media_type="text/event-stream",
-                    headers={
-                        "Cache-Control": "no-cache",
-                        "Connection": "keep-alive",
-                        "X-Accel-Buffering": "no"  # 禁用 nginx 緩衝
-                    }
-                )
-        else:
-            # 非串流模式：正常返回 JSON
-            # ✅ Debug 模式不使用緩存，保證調試信息最新
-            if not request.include_debug_info:
-                cached_response = _check_cache(cache_service, request.vendor_id, request.message, request.target_user)
-                if cached_response:
-                    return cached_response
-
-        # Step 3: 意圖分類（已註解 — intent 在檢索計分中零權重，省 ~1.5s）
-        # _t0 = _time.time()
-        # intent_classifier = req.app.state.intent_classifier
-        # intent_result = intent_classifier.classify(request.message)
-        # print(f"⏱️ [Step 3] 意圖分類: {int((_time.time()-_t0)*1000)}ms")
-        intent_result = {
-            'intent_name': 'unknown',
-            'intent_type': None,
-            'confidence': 0.0,
-            'all_intents': [],
-            'secondary_intents': [],
-            'intent_ids': [],
-            'keywords': [],
-        }
-
-        # Step 4: 智能檢索（SOP 與知識庫同時檢索 + 分數比較）
-        # 🆕 2026-01-28: 替換原有的先 SOP 後知識庫的邏輯
-        # 新邏輯：
-        #   1. 同時檢索 SOP 和知識庫（並行執行）
-        #   2. 比較 Reranker 分數，選擇最相關的
-        #   3. SOP 和知識庫永遠不混合
-        #   4. 答案合成只用於知識庫
-        if not request.skip_sop:
-            sop_orchestrator = req.app.state.sop_orchestrator
-
-            # 使用智能檢索
-            _t0 = _time.time()
-            decision = await _smart_retrieval_with_comparison(
-                request=request,
-                intent_result=intent_result,
-                sop_orchestrator=sop_orchestrator,
-                resolver=resolver
-            )
-            print(f"⏱️ [Step 4] 智能檢索: {int((_time.time()-_t0)*1000)}ms")
-
-            print(f"🎯 [最終決策] {decision['type']} - {decision['reason']}")
-
-            # 根據決策類型返回回應
-            if decision['type'] == 'sop':
-                # 返回 SOP 回應（不涉及知識庫）
-                _t0 = _time.time()
-                response = await _build_orchestrator_response(
-                    request, req, decision['sop_result'],
-                    resolver, vendor_info, cache_service,
-                    decision=decision  # 🆕 傳遞決策資訊（包含 comparison_metadata）
-                )
-                print(f"⏱️ [Step 5] SOP 回應構建: {int((_time.time()-_t0)*1000)}ms")
-                print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
-
-                # 🆕 串流模式：將 JSON 響應轉換為串流
-                if request.stream:
-                    print(f"📡 [串流模式] 將 SOP 響應轉換為串流輸出")
-                    return StreamingResponse(
-                        stream_response_wrapper(response.dict()),
-                        media_type="text/event-stream",
-                        headers={
-                            "Cache-Control": "no-cache",
-                            "Connection": "keep-alive",
-                            "X-Accel-Buffering": "no"
-                        }
-                    )
-                return response
-
-            elif decision['type'] == 'knowledge':
-                # 串流模式：先檢查是否有表單/API 動作需要完整處理
-                if request.stream:
-                    # 檢查最佳知識是否需要表單觸發（表單不適合串流合成）
-                    _best_k = decision['knowledge_list'][0] if decision['knowledge_list'] else {}
-                    _k_action = _best_k.get('action_type', 'direct_answer')
-                    _k_form_id = _best_k.get('form_id')
-
-                    if _k_action in ('form_fill', 'api_call', 'form_then_api') or _k_form_id:
-                        # 表單/API 類型：走完整回應路徑（非串流），再包裝成串流輸出
-                        print(f"📡 [串流模式] 知識 action_type={_k_action}，走完整回應再轉串流")
-                        _t0 = _time.time()
-                        response = await _build_knowledge_response(
-                            request, req, intent_result, decision['knowledge_list'],
-                            resolver, vendor_info, cache_service,
-                            decision=decision
-                        )
-                        print(f"⏱️ [Step 5] KB 回應構建（表單）: {int((_time.time()-_t0)*1000)}ms")
-                        # 將完整回應轉為串流格式
-                        print(f"📡 [串流模式] 將表單響應轉換為串流輸出")
-                        return StreamingResponse(
-                            stream_response_wrapper(response.dict() if hasattr(response, 'dict') else response),
-                            media_type="text/event-stream",
-                            headers={
-                                "Cache-Control": "no-cache",
-                                "Connection": "keep-alive",
-                                "X-Accel-Buffering": "no"
-                            }
-                        )
-
-                    print(f"📡 [串流模式] 使用串流合成回應")
-                    print(f"⏱️ [總計] 檢索完成，開始串流: {int((_time.time()-_total_start)*1000)}ms")
-                    return StreamingResponse(
-                        stream_synthesis_response(
-                            request, req, intent_result, decision['knowledge_list'],
-                            resolver, vendor_info, cache_service,
-                            decision=decision
-                        ),
-                        media_type="text/event-stream",
-                        headers={
-                            "Cache-Control": "no-cache",
-                            "Connection": "keep-alive",
-                            "X-Accel-Buffering": "no"
-                        }
-                    )
-
-                # 非串流模式：等待完整回應
-                _t0 = _time.time()
-                response = await _build_knowledge_response(
-                    request, req, intent_result, decision['knowledge_list'],
-                    resolver, vendor_info, cache_service,
-                    decision=decision
-                )
-                print(f"⏱️ [Step 5] KB 回應構建: {int((_time.time()-_t0)*1000)}ms")
-                print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
-                return response
-
-            elif decision['type'] == 'none':
-                # 無結果，進入 RAG fallback
-                _t0 = _time.time()
-                response = await _handle_no_knowledge_found(
-                    request, req, intent_result, resolver,
-                    cache_service, vendor_info,
-                    decision=decision  # 🆕 傳遞 decision 以包含 SOP 候選資訊
-                )
-                print(f"⏱️ [Step 5] Fallback 回應: {int((_time.time()-_t0)*1000)}ms")
-                print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
-
-                # 🆕 串流模式：將 JSON 響應轉換為串流
-                if request.stream:
-                    print(f"📡 [串流模式] 將無結果響應轉換為串流輸出")
-                    return StreamingResponse(
-                        stream_response_wrapper(response.dict()),
-                        media_type="text/event-stream",
-                        headers={
-                            "Cache-Control": "no-cache",
-                            "Connection": "keep-alive",
-                            "X-Accel-Buffering": "no"
-                        }
-                    )
-                return response
-
-        else:
-            # 回測模式：只使用知識庫
-            print(f"ℹ️  [回測模式] 跳過 SOP 檢索，僅使用知識庫")
-
-            # 獲取意圖 ID
-            intent_id = None
-
-            # 檢索知識庫（回傳 (filtered, unfiltered)；回測模式暫不使用 unfiltered）
-            knowledge_list, _knowledge_list_unfiltered = await _retrieve_knowledge(
-                request, intent_id, intent_result
-            )
-
-            # 如果知識庫沒有結果
-            if not knowledge_list:
-                return await _handle_no_knowledge_found(
-                    request, req, intent_result, resolver,
-                    cache_service, vendor_info
-                )
-
-            # 返回知識庫回應
-            return await _build_knowledge_response(
-                request, req, intent_result, knowledge_list,
-                resolver, vendor_info, cache_service
-            )
+        # 對話/緩存/檢索 handler 群：依序嘗試,首個命中即回(handle_retrieval 為終點必回)
+        for handler in (handle_conversational_entry, handle_cache, handle_retrieval):
+            resp = await handler(request, req, ctx)
+            if resp is not None:
+                return resp
 
     except HTTPException:
         raise
