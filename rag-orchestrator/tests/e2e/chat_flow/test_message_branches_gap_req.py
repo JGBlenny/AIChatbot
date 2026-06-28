@@ -170,3 +170,40 @@ def test_image_damage_nonstream_returns_json(client, monkeypatch):
         "message": "牆壁裂開了", "vendor_id": V, "image_urls": ["https://x/a.jpg"], "stream": False})
     assert r.status_code == 200, r.text
     assert r.headers["content-type"].startswith("application/json")
+
+
+# ── 陷阱4 自然 e2e:離題暫存問題 → 取消 → 接回主流程回答 ─────────────────
+#    需 form_sessions.pending_question 欄位(database/fixes/add_form_sessions_pending_question_column.sql);
+#    未套用則欄位不存在 → 自動 skip。
+
+def _has_pending_col(db):
+    with db.cursor() as cur:
+        cur.execute("SELECT 1 FROM information_schema.columns "
+                    "WHERE table_name='form_sessions' AND column_name='pending_question'")
+        return cur.fetchone() is not None
+
+
+@pytest.mark.req("chat-flow-refactor:3.2")
+def test_digression_cancel_answers_pending_question_e2e(client, db):
+    """陷阱4 全鏈:DIGRESSION + 暫存問題,輸入「取消」→ handle_collecting 換 request.message
+    為暫存問題、續跑 → handle_retrieval 回答之。以 pending=vendor SOP 題,斷言回應含 vendor_sop 來源。"""
+    if not _has_pending_col(db):
+        pytest.skip("form_sessions.pending_question 欄位未建 → 套用 migration 後此陷阱4 全鏈才可實跑")
+    sid = "gap-digress-cancel-1"
+    with db.cursor() as cur:
+        cur.execute("DELETE FROM form_sessions WHERE session_id=%s", (sid,))
+        cur.execute(
+            "INSERT INTO form_sessions (session_id, user_id, vendor_id, form_id, state, current_field_index, collected_data, pending_question) "
+            "VALUES (%s,%s,%s,'demo_form','DIGRESSION',0,'{}',%s)",
+            (sid, "u-gap", V, "大樓停水怎麼辦"),  # 暫存問題=vendor 2 SOP 題(確定性來源)
+        )
+    try:
+        r = client.post("/api/v1/message", json={
+            "message": "取消", "vendor_id": V, "target_user": "tenant", "session_id": sid, "stream": False})
+        assert r.status_code == 200, r.text
+        d = r.json()
+        scopes = [s.get("scope") for s in d.get("sources", [])]
+        assert "vendor_sop" in scopes, \
+            f"取消後應接回暫存問題並由檢索回答(含 vendor_sop 來源),實得 sources={scopes}、answer={d.get('answer','')[:60]}"
+    finally:
+        _cleanup(db, sid)
