@@ -3245,20 +3245,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                         session_state['collected_data']
                     )
                     response = _convert_form_result_to_response(form_result, request)
-
-                    # 🆕 如果啟用串流模式，轉換為串流輸出
-                    if request.stream:
-                        print(f"📡 [串流模式] 將表單完成響應轉換為串流輸出")
-                        return StreamingResponse(
-                            stream_response_wrapper(response.dict()),
-                            media_type="text/event-stream",
-                            headers={
-                                "Cache-Control": "no-cache",
-                                "Connection": "keep-alive",
-                                "X-Accel-Buffering": "no"
-                            }
-                        )
-                    return response
+                    return _finalize_response(response, request)
 
                 # 取消表單
                 elif user_choice.lower() in ["取消", "cancel", "放棄"]:
@@ -3271,20 +3258,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                     print(f"🧹 已清除 trigger context")
 
                     response = _convert_form_result_to_response(form_result, request)
-
-                    # 🆕 如果啟用串流模式，轉換為串流輸出
-                    if request.stream:
-                        print(f"📡 [串流模式] 將表單取消響應轉換為串流輸出")
-                        return StreamingResponse(
-                            stream_response_wrapper(response.dict()),
-                            media_type="text/event-stream",
-                            headers={
-                                "Cache-Control": "no-cache",
-                                "Connection": "keep-alive",
-                                "X-Accel-Buffering": "no"
-                            }
-                        )
-                    return response
+                    return _finalize_response(response, request)
 
                 # 修改欄位
                 else:
@@ -3295,20 +3269,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                         vendor_id=request.vendor_id
                     )
                     response = _convert_form_result_to_response(form_result, request)
-
-                    # 🆕 如果啟用串流模式，轉換為串流輸出
-                    if request.stream:
-                        print(f"📡 [串流模式] 將欄位修改響應轉換為串流輸出")
-                        return StreamingResponse(
-                            stream_response_wrapper(response.dict()),
-                            media_type="text/event-stream",
-                            headers={
-                                "Cache-Control": "no-cache",
-                                "Connection": "keep-alive",
-                                "X-Accel-Buffering": "no"
-                            }
-                        )
-                    return response
+                    return _finalize_response(response, request)
 
             # 處理 EDITING 狀態（編輯欄位）
             if session_state and session_state['state'] == 'EDITING':
@@ -3386,33 +3347,11 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                         print(f"📋 用戶取消表單，但沒有待處理的問題")
                         # 沒有待處理的問題，直接返回取消訊息
                         response = _convert_form_result_to_response(form_result, request)
-
-                        # 🆕 如果啟用串流模式，轉換為串流輸出
-                        if request.stream:
-                            return StreamingResponse(
-                                stream_response_wrapper(response.dict()),
-                                media_type="text/event-stream",
-                                headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"}
-                            )
-                        return response
+                        return _finalize_response(response, request)
                 else:
                     # 將表單結果轉換為 VendorChatResponse 格式
                     response = _convert_form_result_to_response(form_result, request)
-
-                    # 🆕 如果啟用串流模式，轉換為串流輸出
-                    if request.stream:
-                        print(f"📡 [串流模式] 將表單響應轉換為串流輸出")
-                        return StreamingResponse(
-                            stream_response_wrapper(response.dict()),
-                            media_type="text/event-stream",
-                            headers={
-                                "Cache-Control": "no-cache",
-                                "Connection": "keep-alive",
-                                "X-Accel-Buffering": "no"
-                            }
-                        )
-
-                    return response
+                    return _finalize_response(response, request)
 
         # Step 0.5: 圖片辨識分支（2026-04-28）
         from services.image_recognition_service import ImageRecognitionService, is_image_recognition_enabled
@@ -3475,13 +3414,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                             image_recognition=recognition,
                             uploaded_images=request.image_urls,
                         )
-                        if request.stream:
-                            return StreamingResponse(
-                                stream_response_wrapper(response.dict()),
-                                media_type="text/event-stream",
-                                headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"}
-                            )
-                        return response
+                        return _finalize_response(response, request)
 
                 else:
                     # 非損壞圖片或信心度不足
@@ -3503,13 +3436,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                         image_recognition=recognition,
                         uploaded_images=request.image_urls,
                     )
-                    if request.stream:
-                        return StreamingResponse(
-                            stream_response_wrapper(response.dict()),
-                            media_type="text/event-stream",
-                            headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"}
-                        )
-                    return response
+                    return _finalize_response(response, request)
 
             except Exception as e:
                 # Vision API 失敗/逾時：降級為純文字流程，不阻塞
