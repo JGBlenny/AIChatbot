@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict
+from dataclasses import dataclass
 from datetime import datetime
 import time
 import json
@@ -360,6 +361,45 @@ def _finalize_response(response: 'VendorChatResponse', request):
             headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
         )
     return response
+
+
+@dataclass
+class ChatRequestContext:
+    """跨 /message handler 共享的請求情境(分階段填入、部分可變)。"""
+    session_state: Optional[dict] = None     # 會話狀態(可被降級設 None)
+    vendor_info: Optional[dict] = None        # 業者驗證結果(原位填入)
+
+
+async def handle_form_session(request, req, ctx: ChatRequestContext):
+    """表單會話 REVIEWING / EDITING 分支。回最終 Response;非此案回 None。
+    陷阱1:EDITING 維持不串流(直接回 _convert_…,不經 _finalize_response)。"""
+    session_state = ctx.session_state
+    if not session_state:
+        return None
+    form_manager = req.app.state.form_manager
+
+    if session_state['state'] == 'REVIEWING':
+        user_choice = request.message.strip()
+        if user_choice.lower() in ["確認", "confirm", "ok", "提交", "submit"]:
+            form_schema = await form_manager.get_form_schema(session_state['form_id'], request.vendor_id)
+            form_result = await form_manager._complete_form(
+                session_state, form_schema, session_state['collected_data'])
+            return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+        elif user_choice.lower() in ["取消", "cancel", "放棄"]:
+            form_result = await form_manager.cancel_form(request.session_id)
+            req.app.state.sop_orchestrator.trigger_handler.delete_context(request.session_id)
+            return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+        else:
+            form_result = await form_manager.handle_edit_request(
+                session_id=request.session_id, user_input=request.message, vendor_id=request.vendor_id)
+            return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+
+    if session_state['state'] == 'EDITING':
+        form_result = await form_manager.collect_edited_field(
+            session_id=request.session_id, user_message=request.message, vendor_id=request.vendor_id)
+        return _convert_form_result_to_response(form_result, request)  # 陷阱1:不串流
+
+    return None
 
 
 async def _conversational_sse(engine, decision, request):
@@ -3227,59 +3267,11 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             form_manager = req.app.state.form_manager
             session_state = await form_manager.get_session_state(request.session_id)
 
-            # 處理 REVIEWING 狀態（審核確認）
-            if session_state and session_state['state'] == 'REVIEWING':
-                user_choice = request.message.strip()
-
-                # 確認提交
-                if user_choice.lower() in ["確認", "confirm", "ok", "提交", "submit"]:
-                    print(f"📋 用戶確認提交表單")
-                    # 完成表單
-                    form_schema = await form_manager.get_form_schema(
-                        session_state['form_id'],
-                        request.vendor_id
-                    )
-                    form_result = await form_manager._complete_form(
-                        session_state,
-                        form_schema,
-                        session_state['collected_data']
-                    )
-                    response = _convert_form_result_to_response(form_result, request)
-                    return _finalize_response(response, request)
-
-                # 取消表單
-                elif user_choice.lower() in ["取消", "cancel", "放棄"]:
-                    print(f"📋 用戶取消表單")
-                    form_result = await form_manager.cancel_form(request.session_id)
-
-                    # 清除 SOP trigger context，避免再次詢問時直接觸發表單
-                    sop_orchestrator = req.app.state.sop_orchestrator
-                    sop_orchestrator.trigger_handler.delete_context(request.session_id)
-                    print(f"🧹 已清除 trigger context")
-
-                    response = _convert_form_result_to_response(form_result, request)
-                    return _finalize_response(response, request)
-
-                # 修改欄位
-                else:
-                    print(f"📋 用戶要求修改欄位：{user_choice}")
-                    form_result = await form_manager.handle_edit_request(
-                        session_id=request.session_id,
-                        user_input=request.message,
-                        vendor_id=request.vendor_id
-                    )
-                    response = _convert_form_result_to_response(form_result, request)
-                    return _finalize_response(response, request)
-
-            # 處理 EDITING 狀態（編輯欄位）
-            if session_state and session_state['state'] == 'EDITING':
-                print(f"📋 用戶輸入編輯後的欄位值")
-                form_result = await form_manager.collect_edited_field(
-                    session_id=request.session_id,
-                    user_message=request.message,
-                    vendor_id=request.vendor_id
-                )
-                return _convert_form_result_to_response(form_result, request)
+            # 表單會話 REVIEWING / EDITING → handle_form_session(Stage 2)
+            ctx = ChatRequestContext(session_state=session_state)
+            resp = await handle_form_session(request, req, ctx)
+            if resp is not None:
+                return resp
 
             # 對話式回答模式（option-routing R14-R19）：進行中的 conversational 偽會話
             # → 交對話引擎續跑（不走表單收集；form_id='conversational' 無對應表單 schema）。
