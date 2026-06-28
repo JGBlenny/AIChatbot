@@ -402,6 +402,40 @@ async def handle_form_session(request, req, ctx: ChatRequestContext):
     return None
 
 
+async def handle_conversational_session(request, req, ctx: ChatRequestContext):
+    """對話偽會話(form_id='conversational' + COLLECTING)續跑。
+    取消→最終 Response;續對話→真 token 串流(已是最終 Response,派發器不二次 finalize,陷阱3);
+    引擎降級→關閉會話、設 ctx.session_state=None 回 None 續跑(陷阱4)。非此案回 None。"""
+    session_state = ctx.session_state
+    if not (session_state and session_state.get('form_id') == 'conversational'
+            and session_state['state'] == 'COLLECTING'):
+        return None
+    engine = req.app.state.conversational_engine
+    user_choice = request.message.strip()
+    # 取消:關閉對話會話(R16.2 隨取消清除)
+    if user_choice.lower() in ["取消", "cancel", "放棄", "結束"]:
+        await engine._close(request.session_id)
+        from datetime import datetime
+        cancel_resp = VendorChatResponse(
+            answer="好的，已結束這次諮詢。隨時需要都可以再問我！",
+            intent_name='售前諮詢', intent_type='conversational', confidence=1.0,
+            action_type='conversational', sources=None, source_count=0,
+            vendor_id=request.vendor_id, mode=request.mode or 'b2b',
+            session_id=request.session_id, timestamp=datetime.utcnow().isoformat(),
+            form_cancelled=True,
+        )
+        return _finalize_response(cancel_resp, request)
+    # 續對話(stream→真 token 串流 / 非 stream→JSON);降級回 None
+    conv_resp = await _conversational_respond(request, req, start_if_absent=False, config=None)
+    if conv_resp is not None:
+        return conv_resp  # 陷阱3:已是最終 Response,不二次 finalize
+    # 引擎降級(brain 失敗):關閉殘留會話、落回一般流程(不阻斷對話)
+    print("⚠️ [conversational] 引擎降級，關閉對話會話、改走一般流程")
+    await engine._close(request.session_id)
+    ctx.session_state = None  # 陷阱4:降級續跑
+    return None
+
+
 async def _conversational_sse(engine, decision, request):
     """把對話引擎的 stream_answer 包成前端相容 SSE（start/intent/answer_chunk/metadata/done）。
     converge＝真 token 串流（stream_chat_completion）；ask＝整句一次。"""
@@ -3273,33 +3307,11 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             if resp is not None:
                 return resp
 
-            # 對話式回答模式（option-routing R14-R19）：進行中的 conversational 偽會話
-            # → 交對話引擎續跑（不走表單收集；form_id='conversational' 無對應表單 schema）。
-            if session_state and session_state.get('form_id') == 'conversational' \
-                    and session_state['state'] == 'COLLECTING':
-                engine = req.app.state.conversational_engine
-                user_choice = request.message.strip()
-                # 取消：關閉對話會話（R16.2 隨取消清除）
-                if user_choice.lower() in ["取消", "cancel", "放棄", "結束"]:
-                    await engine._close(request.session_id)
-                    from datetime import datetime
-                    cancel_resp = VendorChatResponse(
-                        answer="好的，已結束這次諮詢。隨時需要都可以再問我！",
-                        intent_name='售前諮詢', intent_type='conversational', confidence=1.0,
-                        action_type='conversational', sources=None, source_count=0,
-                        vendor_id=request.vendor_id, mode=request.mode or 'b2b',
-                        session_id=request.session_id, timestamp=datetime.utcnow().isoformat(),
-                        form_cancelled=True,
-                    )
-                    return _finalize_response(cancel_resp, request)
-                # 續對話（stream→真 token 串流 / 非 stream→JSON）；降級回 None
-                conv_resp = await _conversational_respond(request, req, start_if_absent=False, config=None)
-                if conv_resp is not None:
-                    return conv_resp
-                # 引擎降級（brain 失敗）：關閉殘留會話、落回一般流程（不阻斷對話）
-                print("⚠️ [conversational] 引擎降級，關閉對話會話、改走一般流程")
-                await engine._close(request.session_id)
-                session_state = None
+            # 對話偽會話續跑（option-routing R14-R19）→ handle_conversational_session(Stage 2)
+            resp = await handle_conversational_session(request, req, ctx)
+            if resp is not None:
+                return resp
+            session_state = ctx.session_state  # 同步降級結果(陷阱4:可能被設 None)
 
             # 處理 COLLECTING、DIGRESSION 和 PAUSED 狀態（收集欄位）
             if session_state and session_state['state'] in ['COLLECTING', 'DIGRESSION', 'PAUSED']:
