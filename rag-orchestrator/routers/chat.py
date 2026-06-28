@@ -477,6 +477,98 @@ async def handle_collecting(request, req, ctx: ChatRequestContext):
     return _finalize_response(_convert_form_result_to_response(form_result, request), request)
 
 
+async def handle_image(request, req, ctx: ChatRequestContext):
+    """Step 0.5 圖片辨識。損壞+SOP→修繕 SOP Response;非損壞→提示 Response;
+    無圖/未啟用、損壞但 SOP 無結果、Vision 例外→回 None 降級走文字流程(陷阱4)。"""
+    from services.image_recognition_service import ImageRecognitionService, is_image_recognition_enabled
+    if not (request.image_urls and is_image_recognition_enabled()):
+        return None
+    try:
+        recognition_service = ImageRecognitionService()
+        db_pool = req.app.state.db_pool
+
+        recognition = await recognition_service.analyze_images(
+            image_urls=request.image_urls,
+            context=request.message if request.message else None,
+            db_pool=db_pool,
+        )
+
+        if recognition.get("is_damage") and recognition.get("confidence", 0) >= 0.6:
+            # 損壞圖片：觸發修繕 SOP
+            damage_desc = recognition.get("description", "")
+            trigger_msg = f"{request.message}" if request.message else ""
+            if damage_desc:
+                trigger_msg = f"{trigger_msg} （圖片辨識：{damage_desc}）".strip()
+
+            sop_orchestrator = req.app.state.sop_orchestrator
+            sop_result = await sop_orchestrator.process_message(
+                user_message=trigger_msg or "我要報修",
+                session_id=request.session_id,
+                user_id=request.user_id or "anonymous",
+                vendor_id=request.vendor_id,
+                role_id=request.role_id,
+            )
+
+            if sop_result:
+                from datetime import datetime
+                sop_answer = sop_result.get("answer", "")
+                # SOP manual 模式可能先回排查步驟，附加辨識摘要
+                if not sop_answer:
+                    damage_desc = recognition.get("description", "")
+                    sop_answer = f"根據照片分析，{damage_desc}\n\n需要為您建立修繕報修嗎？請輸入「確認」開始報修。"
+
+                response = VendorChatResponse(
+                    answer=sop_answer,
+                    intent_name=sop_result.get("intent_name", "repair"),
+                    intent_type="sop",
+                    confidence=recognition.get("confidence", 0.0),
+                    action_type=sop_result.get("action_type", "form_fill"),
+                    sources=[],
+                    source_count=0,
+                    vendor_id=request.vendor_id,
+                    mode=request.mode or "b2c",
+                    session_id=request.session_id,
+                    timestamp=datetime.utcnow().isoformat(),
+                    form_triggered=sop_result.get("form_triggered", False),
+                    form_id=sop_result.get("form_id"),
+                    current_field=sop_result.get("current_field"),
+                    current_field_type=sop_result.get("current_field_type"),
+                    progress=sop_result.get("progress"),
+                    image_recognition=recognition,
+                    uploaded_images=request.image_urls,
+                )
+                return _finalize_response(response, request)
+            # SOP 無結果:落回文字流程
+            return None
+
+        else:
+            # 非損壞圖片或信心度不足
+            from datetime import datetime
+            msg = "目前僅支援修繕報修的圖片辨識，請描述您的問題。"
+            if recognition.get("confidence", 0) > 0 and recognition.get("confidence", 0) < 0.6:
+                msg = "無法確定損壞類型，建議手動選擇或提供更清晰的照片。"
+
+            response = VendorChatResponse(
+                answer=msg,
+                intent_name=None,
+                confidence=recognition.get("confidence", 0.0),
+                sources=[],
+                source_count=0,
+                vendor_id=request.vendor_id,
+                mode=request.mode or "b2c",
+                session_id=request.session_id,
+                timestamp=datetime.utcnow().isoformat(),
+                image_recognition=recognition,
+                uploaded_images=request.image_urls,
+            )
+            return _finalize_response(response, request)
+
+    except Exception as e:
+        # Vision API 失敗/逾時：降級為純文字流程，不阻塞
+        print(f"⚠️ [圖片辨識] 降級為文字流程: {e}")
+        return None
+
+
 async def _conversational_sse(engine, decision, request):
     """把對話引擎的 stream_answer 包成前端相容 SSE（start/intent/answer_chunk/metadata/done）。
     converge＝真 token 串流（stream_chat_completion）；ask＝整句一次。"""
@@ -3360,94 +3452,10 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 return resp
             # 取消+pending:request.message 已被 handler 替換,續走一般流程
 
-        # Step 0.5: 圖片辨識分支（2026-04-28）
-        from services.image_recognition_service import ImageRecognitionService, is_image_recognition_enabled
-        if request.image_urls and is_image_recognition_enabled():
-            try:
-                recognition_service = ImageRecognitionService()
-                db_pool = req.app.state.db_pool
-
-                recognition = await recognition_service.analyze_images(
-                    image_urls=request.image_urls,
-                    context=request.message if request.message else None,
-                    db_pool=db_pool,
-                )
-
-                if recognition.get("is_damage") and recognition.get("confidence", 0) >= 0.6:
-                    # 損壞圖片：觸發修繕 SOP
-                    damage_desc = recognition.get("description", "")
-                    trigger_msg = f"{request.message}" if request.message else ""
-                    if damage_desc:
-                        trigger_msg = f"{trigger_msg} （圖片辨識：{damage_desc}）".strip()
-
-                    # 注入辨識資訊到 SOP 觸發
-                    sop_orchestrator = req.app.state.sop_orchestrator
-                    form_manager = req.app.state.form_manager
-
-                    # 嘗試觸發修繕 SOP
-                    sop_result = await sop_orchestrator.process_message(
-                        user_message=trigger_msg or "我要報修",
-                        session_id=request.session_id,
-                        user_id=request.user_id or "anonymous",
-                        vendor_id=request.vendor_id,
-                        role_id=request.role_id,
-                    )
-
-                    if sop_result:
-                        from datetime import datetime
-                        sop_answer = sop_result.get("answer", "")
-                        # SOP manual 模式可能先回排查步驟，附加辨識摘要
-                        if not sop_answer:
-                            damage_desc = recognition.get("description", "")
-                            sop_answer = f"根據照片分析，{damage_desc}\n\n需要為您建立修繕報修嗎？請輸入「確認」開始報修。"
-
-                        response = VendorChatResponse(
-                            answer=sop_answer,
-                            intent_name=sop_result.get("intent_name", "repair"),
-                            intent_type="sop",
-                            confidence=recognition.get("confidence", 0.0),
-                            action_type=sop_result.get("action_type", "form_fill"),
-                            sources=[],
-                            source_count=0,
-                            vendor_id=request.vendor_id,
-                            mode=request.mode or "b2c",
-                            session_id=request.session_id,
-                            timestamp=datetime.utcnow().isoformat(),
-                            form_triggered=sop_result.get("form_triggered", False),
-                            form_id=sop_result.get("form_id"),
-                            current_field=sop_result.get("current_field"),
-                            current_field_type=sop_result.get("current_field_type"),
-                            progress=sop_result.get("progress"),
-                            image_recognition=recognition,
-                            uploaded_images=request.image_urls,
-                        )
-                        return _finalize_response(response, request)
-
-                else:
-                    # 非損壞圖片或信心度不足
-                    from datetime import datetime
-                    msg = "目前僅支援修繕報修的圖片辨識，請描述您的問題。"
-                    if recognition.get("confidence", 0) > 0 and recognition.get("confidence", 0) < 0.6:
-                        msg = "無法確定損壞類型，建議手動選擇或提供更清晰的照片。"
-
-                    response = VendorChatResponse(
-                        answer=msg,
-                        intent_name=None,
-                        confidence=recognition.get("confidence", 0.0),
-                        sources=[],
-                        source_count=0,
-                        vendor_id=request.vendor_id,
-                        mode=request.mode or "b2c",
-                        session_id=request.session_id,
-                        timestamp=datetime.utcnow().isoformat(),
-                        image_recognition=recognition,
-                        uploaded_images=request.image_urls,
-                    )
-                    return _finalize_response(response, request)
-
-            except Exception as e:
-                # Vision API 失敗/逾時：降級為純文字流程，不阻塞
-                print(f"⚠️ [圖片辨識] 降級為文字流程: {e}")
+        # Step 0.5: 圖片辨識分支（2026-04-28）→ handle_image(Stage 2)
+        resp = await handle_image(request, req, ctx)
+        if resp is not None:
+            return resp
 
         # Step 1: 驗證業者（B2B 可不帶 vendor_id）
         resolver = get_vendor_param_resolver()
