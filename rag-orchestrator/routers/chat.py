@@ -436,6 +436,47 @@ async def handle_conversational_session(request, req, ctx: ChatRequestContext):
     return None
 
 
+async def handle_collecting(request, req, ctx: ChatRequestContext):
+    """表單收集 COLLECTING / DIGRESSION / PAUSED。自行 classify 取真意圖供 collect_field_data。
+    取消+pending_question→改 request.message 回 None 續跑(陷阱4);其餘回最終 Response。非此案回 None。"""
+    session_state = ctx.session_state
+    if not (session_state and session_state['state'] in ['COLLECTING', 'DIGRESSION', 'PAUSED']):
+        return None
+    form_manager = req.app.state.form_manager
+    print(f"📋 檢測到進行中的表單會話（{session_state['form_id']}, 狀態: {session_state['state']}），使用表單收集流程")
+
+    intent_classifier = req.app.state.intent_classifier
+    intent_result = intent_classifier.classify(request.message)  # 真意圖(非 stub)
+
+    form_result = await form_manager.collect_field_data(
+        user_message=request.message,
+        session_id=request.session_id,
+        intent_result=intent_result,
+        vendor_id=request.vendor_id,
+        language='zh-TW',  # TODO: 從 request 或用戶設定讀取語言
+        image_urls=request.image_urls,
+    )
+
+    # 葉答案 LLM 個人化（R11/R13）：prospect 情境下合成決策樹葉答案（失敗保留原文）
+    form_result = await _maybe_synthesize_presales_leaf(form_result, request, req)
+
+    # 如果用戶選擇回答問題或取消表單，繼續處理待處理的問題
+    if form_result.get('form_cancelled'):
+        # 清除 SOP trigger context，避免再次詢問時直接觸發表單
+        req.app.state.sop_orchestrator.trigger_handler.delete_context(request.session_id)
+        print(f"🧹 已清除 trigger context")
+
+        pending_question = form_result.get('pending_question')
+        if pending_question:
+            print(f"📋 用戶取消表單，繼續處理待處理的問題：{pending_question}")
+            request.message = pending_question  # 陷阱4:替換訊息續跑
+            return None
+        print(f"📋 用戶取消表單，但沒有待處理的問題")
+        return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+
+    return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+
+
 async def _conversational_sse(engine, decision, request):
     """把對話引擎的 stream_answer 包成前端相容 SSE（start/intent/answer_chunk/metadata/done）。
     converge＝真 token 串流（stream_chat_completion）；ask＝整句一次。"""
@@ -3313,49 +3354,11 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
                 return resp
             session_state = ctx.session_state  # 同步降級結果(陷阱4:可能被設 None)
 
-            # 處理 COLLECTING、DIGRESSION 和 PAUSED 狀態（收集欄位）
-            if session_state and session_state['state'] in ['COLLECTING', 'DIGRESSION', 'PAUSED']:
-                # 用戶正在填寫表單 → 走表單收集流程
-                # PAUSED 狀態：表單暫停（例如 SOP form_then_api），用戶訊息可能是要恢復表單
-                print(f"📋 檢測到進行中的表單會話（{session_state['form_id']}, 狀態: {session_state['state']}），使用表單收集流程")
-
-                intent_classifier = req.app.state.intent_classifier
-                intent_result = intent_classifier.classify(request.message)
-
-                form_result = await form_manager.collect_field_data(
-                    user_message=request.message,
-                    session_id=request.session_id,
-                    intent_result=intent_result,
-                    vendor_id=request.vendor_id,
-                    language='zh-TW',  # TODO: 從 request 或用戶設定讀取語言
-                    image_urls=request.image_urls,
-                )
-
-                # 葉答案 LLM 個人化（R11/R13）：prospect 情境下合成決策樹葉答案（失敗保留原文）
-                form_result = await _maybe_synthesize_presales_leaf(form_result, request, req)
-
-                # 如果用戶選擇回答問題或取消表單，繼續處理待處理的問題
-                if form_result.get('form_cancelled'):
-                    # 清除 SOP trigger context，避免再次詢問時直接觸發表單
-                    sop_orchestrator = req.app.state.sop_orchestrator
-                    sop_orchestrator.trigger_handler.delete_context(request.session_id)
-                    print(f"🧹 已清除 trigger context")
-
-                    pending_question = form_result.get('pending_question')
-                    if pending_question:
-                        print(f"📋 用戶取消表單，繼續處理待處理的問題：{pending_question}")
-                        # 替換 request.message 為待處理的問題
-                        request.message = pending_question
-                        # 繼續往下走正常流程
-                    else:
-                        print(f"📋 用戶取消表單，但沒有待處理的問題")
-                        # 沒有待處理的問題，直接返回取消訊息
-                        response = _convert_form_result_to_response(form_result, request)
-                        return _finalize_response(response, request)
-                else:
-                    # 將表單結果轉換為 VendorChatResponse 格式
-                    response = _convert_form_result_to_response(form_result, request)
-                    return _finalize_response(response, request)
+            # 表單收集 COLLECTING/DIGRESSION/PAUSED → handle_collecting(Stage 2)
+            resp = await handle_collecting(request, req, ctx)
+            if resp is not None:
+                return resp
+            # 取消+pending:request.message 已被 handler 替換,續走一般流程
 
         # Step 0.5: 圖片辨識分支（2026-04-28）
         from services.image_recognition_service import ImageRecognitionService, is_image_recognition_enabled
