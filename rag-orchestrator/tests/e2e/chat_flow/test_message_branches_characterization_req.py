@@ -78,6 +78,71 @@ def test_reviewing_cancel_stream_returns_sse(client, db):
 
 
 @pytest.mark.req("chat-flow-refactor:1.1")
+def test_collecting_normal_nonstream_returns_json(client, db):
+    sid = "char-collecting-1"
+    _seed_session(db, sid, "COLLECTING", current_field_index=0)
+    try:
+        r = client.post("/api/v1/message", json={
+            "message": "個人房東", "vendor_id": V, "session_id": sid, "stream": False})
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("application/json")
+    finally:
+        _cleanup(db, sid)
+
+
+@pytest.mark.req("chat-flow-refactor:1.1")
+def test_collecting_normal_stream_returns_sse(client, db):
+    sid = "char-collecting-2"
+    _seed_session(db, sid, "COLLECTING", current_field_index=0)
+    try:
+        r = client.post("/api/v1/message", json={
+            "message": "個人房東", "vendor_id": V, "session_id": sid, "stream": True})
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/event-stream")
+    finally:
+        _cleanup(db, sid)
+
+
+def _patch_image(monkeypatch, *, is_damage):
+    """讓圖片辨識服務回固定結果(避開真 Vision API,釘住分支串流行為)。"""
+    import services.image_recognition_service as irs
+
+    async def _fake_analyze(self, *a, **k):
+        return {"is_damage": is_damage, "confidence": 0.9, "description": "測試辨識"}
+
+    monkeypatch.setattr(irs, "is_image_recognition_enabled", lambda: True)
+    monkeypatch.setattr(irs.ImageRecognitionService, "analyze_images", _fake_analyze)
+
+
+@pytest.mark.req("chat-flow-refactor:1.1")
+def test_image_nondamage_nonstream_returns_json(client, monkeypatch):
+    _patch_image(monkeypatch, is_damage=False)
+    r = client.post("/api/v1/message", json={
+        "message": "這是什麼", "vendor_id": V, "image_urls": ["https://x/a.jpg"], "stream": False})
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("application/json")
+
+
+@pytest.mark.req("chat-flow-refactor:1.1")
+def test_image_nondamage_stream_returns_sse(client, monkeypatch):
+    _patch_image(monkeypatch, is_damage=False)
+    r = client.post("/api/v1/message", json={
+        "message": "這是什麼", "vendor_id": V, "image_urls": ["https://x/a.jpg"], "stream": True})
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/event-stream")
+
+
+@pytest.mark.req("chat-flow-refactor:1.1")
+def test_image_damage_stream_returns_sse(client, monkeypatch):
+    """損壞圖片→修繕 SOP 分支;釘住串流行為(內容由 SOP/LLM,非決定性,不斷言文字)。"""
+    _patch_image(monkeypatch, is_damage=True)
+    r = client.post("/api/v1/message", json={
+        "message": "牆壁裂開了", "vendor_id": V, "image_urls": ["https://x/a.jpg"], "stream": True})
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/event-stream")
+
+
+@pytest.mark.req("chat-flow-refactor:1.1")
 def test_editing_ignores_stream_returns_json(client, db):
     """陷阱1:EDITING 分支目前**不吃 stream**,即使 stream=True 也回 JSON。重構須保留此行為。"""
     sid = "char-editing-1"
