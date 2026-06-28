@@ -119,3 +119,56 @@ async def test_dispatch_conv_entry_first_hit_short_circuits(monkeypatch):
     resp = await vendor_chat_message(_b2b_req(), _req())
     assert resp is SENTINEL
     assert calls == ["conv_entry"]
+
+
+# ── 陷阱4:handle_collecting 取消+pending → 換 request.message 並續跑(回 None)──
+#
+# 註:此 fall-through 在「真實 DB」目前走不到——form_sessions 缺 pending_question 欄位,
+# _get_pending_question_sync 例外被吞 → 永遠回 None → 取消時無 pending(見回覆說明)。
+# 故以 unit 確定性驗「重構後 handle_collecting 對 cancel+pending 結果的處置」本身。
+
+def _collecting_req():
+    return VendorChatRequest(message="取消", mode="b2b", session_id="trap4-sid")
+
+
+def _collecting_req_env(monkeypatch, *, form_result):
+    """假 req:form_manager.collect_field_data 回 form_result;隔離 presales leaf 合成。"""
+    async def _collect(**kw):
+        return form_result
+
+    async def _passthrough(fr, request, req):
+        return fr
+
+    monkeypatch.setattr(chat, "_maybe_synthesize_presales_leaf", _passthrough)
+    fm = SimpleNamespace(collect_field_data=_collect)
+    ic = SimpleNamespace(classify=lambda msg: {})
+    sop = SimpleNamespace(trigger_handler=SimpleNamespace(delete_context=lambda sid: None))
+    return _req(form_manager=fm, intent_classifier=ic, sop_orchestrator=sop)
+
+
+@pytest.mark.req("chat-flow-refactor:3.2")
+async def test_collecting_cancel_with_pending_swaps_message_and_continues(monkeypatch):
+    """陷阱4:取消且有 pending_question → 換 request.message 為待處理問題、回 None(交由後續檢索續答)。"""
+    req = _collecting_req_env(monkeypatch, form_result={
+        "form_cancelled": True, "pending_question": "大樓停水怎麼辦"})
+    request = _collecting_req()
+    ctx = ChatRequestContext(session_state={"state": "COLLECTING", "form_id": "demo_form"})
+
+    resp = await handle_collecting(request, req, ctx)
+
+    assert resp is None, "取消+pending 應回 None(續跑),而非直接回應"
+    assert request.message == "大樓停水怎麼辦", "request.message 應被替換為待處理問題(陷阱4)"
+
+
+@pytest.mark.req("chat-flow-refactor:3.2")
+async def test_collecting_cancel_without_pending_returns_response(monkeypatch):
+    """對照:取消但無 pending → 直接回最終 Response(不續跑、不改 message)。"""
+    req = _collecting_req_env(monkeypatch, form_result={
+        "form_cancelled": True, "answer": "已取消表單"})
+    request = _collecting_req()
+    ctx = ChatRequestContext(session_state={"state": "COLLECTING", "form_id": "demo_form"})
+
+    resp = await handle_collecting(request, req, ctx)
+
+    assert resp is not None, "取消但無 pending → 應直接回應(非 None)"
+    assert request.message == "取消", "無 pending 時不應改 request.message"
