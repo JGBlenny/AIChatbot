@@ -1667,10 +1667,7 @@ async def _smart_retrieval_with_comparison(
     # ==================== Step 3: 決策邏輯 ====================
     SCORE_GAP_THRESHOLD = 0.15  # 差距閾值
     SOP_MIN_THRESHOLD = 0.55
-    # 修正(retrieval-fixes #2):決策門檻與檢索門檻一致(同讀 KB_SIMILARITY_THRESHOLD,預設 0.55)。
-    #   原本固定 0.6 > 檢索門檻 0.55,使 [0.55,0.6) 的知識「檢索得到卻永遠選不上」,
-    #   甚至 sop<0.55 + knowledge=0.58 會誤判 none 回兜底。
-    KNOWLEDGE_MIN_THRESHOLD = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.55"))
+    KNOWLEDGE_MIN_THRESHOLD = 0.6
 
     print(f"\n📊 [分數比較]")
     print(f"   SOP:      {sop_score:.3f} (有後續動作: {sop_has_action}, 有回應: {sop_has_response})")
