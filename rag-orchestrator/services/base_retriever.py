@@ -236,12 +236,19 @@ class BaseRetriever(ABC):
                         rewrite_added += 1
             print(f"   ⏱️ 改寫查詢檢索: {int((_time.time()-_t0)*1000)}ms, 新增 {rewrite_added} 個候選")
 
-        # Step 3: 關鍵字備選（如果結果不足）
-        if enable_keyword_fallback and len(results) < top_k:
+        # Step 3: 關鍵字備選（如果「達標」結果不足）
+        # 修正(retrieval-fixes #1):以通過 similarity_threshold 的候選數判斷,而非過濾前原始候選數。
+        #   _vector_search 不在 SQL 端卡門檻、固定回 ~20 筆,用原始數會讓 len(results)<top_k 幾乎永不成立
+        #   → keyword fallback 形同虛設,純關鍵字命中(精確產品名/代碼)永遠補不進來。
+        relevant_count = sum(
+            1 for r in results if r.get('vector_similarity', 0) >= similarity_threshold
+        )
+        if enable_keyword_fallback and relevant_count < top_k:
             _t0 = _time.time()
-            print(f"   啟動關鍵字備選（需要補充 {top_k - len(results)} 個）")
+            need = top_k - relevant_count
+            print(f"   啟動關鍵字備選（達標 {relevant_count} < top_k {top_k}，需補充 {need} 個）")
             keyword_results = await self._keyword_search(
-                query, vendor_id, top_k - len(results), **kwargs
+                query, vendor_id, need, **kwargs
             )
 
             # 合併結果（去重）

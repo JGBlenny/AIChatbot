@@ -71,7 +71,9 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
         else:
             vendor_info = self.param_resolver.get_vendor_info(vendor_id)
-            vendor_business_types = vendor_info.get('business_types', [])
+            # 修正(retrieval-fixes #4):vendor_id 查無時 get_vendor_info 回 None,
+            #   None.get() 會 AttributeError 使整個請求 500;改為 null-safe 降級為空業態。
+            vendor_business_types = (vendor_info or {}).get('business_types', [])
             business_type_filter_sql = "(kb.business_types IS NULL OR kb.business_types && %s::text[])"
             target_user_filter_sql = ""
 
@@ -170,7 +172,9 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
         else:
             vendor_info = self.param_resolver.get_vendor_info(vendor_id)
-            vendor_business_types = vendor_info.get('business_types', [])
+            # 修正(retrieval-fixes #4):vendor_id 查無時 get_vendor_info 回 None,
+            #   None.get() 會 AttributeError 使整個請求 500;改為 null-safe 降級為空業態。
+            vendor_business_types = (vendor_info or {}).get('business_types', [])
             business_type_filter_sql = "AND (kb.business_types IS NULL OR kb.business_types && %s::text[])"
             target_user_filter_sql = ""
 

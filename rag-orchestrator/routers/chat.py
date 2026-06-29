@@ -1120,7 +1120,14 @@ async def stream_synthesis_response(
         filtered_knowledge_list = [k for k in knowledge_list if k.get('similarity', 0) >= high_quality_threshold]
 
         if not filtered_knowledge_list:
-            yield await _generate_sse_event("answer_chunk", {"chunk": "我目前沒有找到符合您問題的資訊。"})
+            # 修正(retrieval-fixes #3):無 ≥0.8 高品質知識時,走與非串流一致的富兜底
+            #   (_handle_no_knowledge_found:參數型答案/prospect 合成/客服專線/缺口記錄),
+            #   而非回裸句。避免同一問題串流答案較差、且缺口統計在串流模式被漏記。
+            fallback_resp = await _handle_no_knowledge_found(
+                request, req, intent_result, resolver, cache_service, vendor_info, decision=decision)
+            fallback_answer = getattr(fallback_resp, 'answer', None) or (
+                fallback_resp.get('answer', '') if isinstance(fallback_resp, dict) else '')
+            yield await _generate_sse_event("answer_chunk", {"chunk": fallback_answer})
             yield await _generate_sse_event("done", {"success": True, "cached": False})
             return
 
@@ -1660,7 +1667,10 @@ async def _smart_retrieval_with_comparison(
     # ==================== Step 3: 決策邏輯 ====================
     SCORE_GAP_THRESHOLD = 0.15  # 差距閾值
     SOP_MIN_THRESHOLD = 0.55
-    KNOWLEDGE_MIN_THRESHOLD = 0.6
+    # 修正(retrieval-fixes #2):決策門檻與檢索門檻一致(同讀 KB_SIMILARITY_THRESHOLD,預設 0.55)。
+    #   原本固定 0.6 > 檢索門檻 0.55,使 [0.55,0.6) 的知識「檢索得到卻永遠選不上」,
+    #   甚至 sop<0.55 + knowledge=0.58 會誤判 none 回兜底。
+    KNOWLEDGE_MIN_THRESHOLD = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.55"))
 
     print(f"\n📊 [分數比較]")
     print(f"   SOP:      {sop_score:.3f} (有後續動作: {sop_has_action}, 有回應: {sop_has_response})")
