@@ -62,8 +62,8 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         # 根據用戶角色或模式決定業態類型
         is_b2b_mode = (target_user in ['property_manager', 'system_admin']) or (mode == 'b2b')
 
-        # b2b 角色隔離：重啟 target_user 過濾（與 b2c rag_engine 一致的寬鬆語義，
-        # target_user IS NULL 一律放行）。僅 b2b 套用；b2c 維持此 retriever 既有行為不變。
+        # 角色隔離：b2b 與 b2c 皆過濾 target_user（target_user IS NULL 一律放行；retrieval-fixes #5）。
+        # b2b 業態嚴格 system_provider；b2c 用業者業態 + 通用 all_users 放行。
         target_user_param = [self._effective_target_user(target_user)]
         if is_b2b_mode:
             vendor_business_types = ['system_provider']

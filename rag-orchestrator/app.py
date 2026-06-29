@@ -11,7 +11,6 @@ from asyncpg.pool import Pool
 
 # 導入服務
 from services.intent_classifier import IntentClassifier
-from services.rag_engine import RAGEngine
 from services.confidence_evaluator import ConfidenceEvaluator
 from services.unclear_question_manager import UnclearQuestionManager
 from services.llm_answer_optimizer import LLMAnswerOptimizer
@@ -27,7 +26,6 @@ from routers import chat, unclear_questions, knowledge, vendors, knowledge_impor
 # 全局變數
 db_pool: Pool = None
 intent_classifier: IntentClassifier = None
-rag_engine: RAGEngine = None
 confidence_evaluator: ConfidenceEvaluator = None
 unclear_question_manager: UnclearQuestionManager = None
 llm_answer_optimizer: LLMAnswerOptimizer = None
@@ -42,7 +40,7 @@ sop_orchestrator: SOPOrchestrator = None
 async def lifespan(app: FastAPI):
     """應用生命週期管理"""
     # 啟動時初始化
-    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine, vendor_config_service, cache_service, form_manager, sop_orchestrator
+    global db_pool, intent_classifier, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine, vendor_config_service, cache_service, form_manager, sop_orchestrator
 
     print("🚀 初始化 RAG Orchestrator...")
 
@@ -61,9 +59,6 @@ async def lifespan(app: FastAPI):
     # 初始化服務
     intent_classifier = IntentClassifier()
     print("✅ 意圖分類器已初始化")
-
-    rag_engine = RAGEngine(db_pool)
-    print("✅ RAG 檢索引擎已初始化")
 
     confidence_evaluator = ConfidenceEvaluator()
     print("✅ 信心度評估器已初始化")
@@ -122,7 +117,6 @@ async def lifespan(app: FastAPI):
     # 將服務注入到 app.state
     app.state.db_pool = db_pool
     app.state.intent_classifier = intent_classifier
-    app.state.rag_engine = rag_engine
     app.state.confidence_evaluator = confidence_evaluator
     app.state.unclear_question_manager = unclear_question_manager
     app.state.llm_answer_optimizer = llm_answer_optimizer
@@ -229,7 +223,6 @@ async def health_check():
             "database": "connected",
             "services": {
                 "intent_classifier": "ready",
-                "rag_engine": "ready",
                 "confidence_evaluator": "ready",
                 "unclear_question_manager": "ready",
                 "llm_answer_optimizer": "ready (Phase 3)",
