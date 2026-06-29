@@ -1912,7 +1912,9 @@ async def _smart_retrieval_with_comparison(
     print(f"⚠️  [決策] SOP ({sop_score:.3f}) 和知識庫 ({knowledge_score:.3f}) 都未達標")
 
     gap = abs(sop_score - knowledge_score)
-    sop_candidates = len(sop_result.get('retrieved_sops', [])) if sop_result else 0
+    # 修正(retrieval-fixes #10):其餘 case 皆用 all_sop_candidates;此處原誤用不存在的 retrieved_sops
+    #   → Case 6 的 comparison.sop_candidates 恆為 0(僅 debug 顯示,不影響決策)。
+    sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
 
     return {
         'type': 'none',
