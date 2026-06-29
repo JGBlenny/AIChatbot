@@ -216,16 +216,19 @@ class ConversationalEngine:
         select = (scope.get("select") or "vector").lower()
         grounding = ""
         try:
+            # 修正(retrieval-fixes #8):grounding_scope 漏填 target_user 時,預設用 persona_role
+            #   (如 prospect),避免 retriever 把 None 正規化成 tenant → prospect 收斂時誤抓租客知識。
+            scope_target_user = scope.get("target_user") or getattr(config, "persona_role", None)
             if select == "ids" and scope.get("kb_ids"):
                 grounding = await self._grounding_by_ids(scope["kb_ids"])
             elif select == "category" and scope.get("category"):
-                grounding = await self._grounding_by_category(scope["category"], scope.get("target_user"))
+                grounding = await self._grounding_by_category(scope["category"], scope_target_user)
             else:  # vector
                 emb = await self.retriever.embedding_client.get_embedding(query, verbose=False)
                 if emb:
                     res = await self.retriever._vector_search(
                         emb, vendor_id=scope.get("vendor_id") or 0, top_k=5,
-                        similarity_threshold=0.0, target_user=scope.get("target_user"),
+                        similarity_threshold=0.0, target_user=scope_target_user,
                         mode=scope.get("mode", "b2b"), vector_limit=20)
                     grounding = "\n\n".join(r.get("answer", "") for r in res[:3] if r.get("answer"))
         except Exception as e:

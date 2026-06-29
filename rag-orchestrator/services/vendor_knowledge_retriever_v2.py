@@ -75,7 +75,10 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             #   None.get() 會 AttributeError 使整個請求 500;改為 null-safe 降級為空業態。
             vendor_business_types = (vendor_info or {}).get('business_types', [])
             business_type_filter_sql = "(kb.business_types IS NULL OR kb.business_types && %s::text[])"
-            target_user_filter_sql = ""
+            # 修正(retrieval-fixes #5):b2c 也過濾 target_user(預設 tenant),避免租客↔房東知識互漏;
+            #   'all_users' 為通用標記須一併放行(否則原本對 b2c 可見的通用知識會被擋掉)。
+            target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
+            target_user_param = [self._effective_target_user(target_user), 'all_users']
 
         conn = self._get_db_connection()
         try:
@@ -176,7 +179,9 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             #   None.get() 會 AttributeError 使整個請求 500;改為 null-safe 降級為空業態。
             vendor_business_types = (vendor_info or {}).get('business_types', [])
             business_type_filter_sql = "AND (kb.business_types IS NULL OR kb.business_types && %s::text[])"
-            target_user_filter_sql = ""
+            # 修正(retrieval-fixes #5):b2c 也過濾 target_user(預設 tenant)+ 通用 all_users 放行(與 vector 一致)。
+            target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
+            target_user_param = [self._effective_target_user(target_user), 'all_users']
 
         # 安全上限
         max_rows = 1000

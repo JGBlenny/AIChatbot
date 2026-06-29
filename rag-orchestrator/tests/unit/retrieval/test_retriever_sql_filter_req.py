@@ -5,7 +5,7 @@
 - 保留分類排除（系統脈絡 / 對話規則）—— 任何模式都必須在
 - is_b2b_mode 判定（target_user∈{property_manager,system_admin} 或 mode==b2b）
 - b2b：嚴格 business_types(&&) + target_user 過濾（NULL 放行）
-- b2c：寬鬆 business_types(IS NULL OR &&) + 無 target_user 過濾
+- b2c：寬鬆 business_types(IS NULL OR &&) + target_user 過濾(預設 tenant + all_users 放行;retrieval-fixes #5)
 
 ⚠️ 範圍：驗「過濾子句有無正確組進 SQL」（改壞離線即紅）；
    「SQL 對真實資料是否回傳正確列」仍由 integration（test_retrieval_invariants_req）驗。
@@ -100,15 +100,35 @@ async def test_mode_b2b_triggers_b2b_path_even_for_tenant():
     assert "kb.business_types IS NULL OR" not in sql, "mode=b2b 也須嚴格 business_types"
 
 
-@pytest.mark.req("unit-coverage-rebuild:5")
-async def test_b2c_no_target_user_filter_and_loose_business_types():
-    """b2c：無 target_user 過濾、寬鬆 business_types（IS NULL OR &&），用業者業態。"""
+@pytest.mark.req("retrieval-fixes:5")
+async def test_b2c_filters_target_user_default_tenant_with_all_users_passthrough():
+    """b2c（retrieval-fixes #5）：過濾 target_user（預設 tenant）+ 通用 all_users 放行；寬鬆 business_types。"""
     store = {}
     r = _make_retriever(store, vendor_business_types=["landlord_individual"])
     await _run(r, target_user="tenant", mode="b2c")
     sql = store["sql"]
-    assert "kb.target_user IS NULL OR kb.target_user &&" not in sql, "b2c 不應有 target_user 過濾"
+    assert "kb.target_user IS NULL OR kb.target_user && %s::text[]" in sql, "b2c 現應有 target_user 過濾"
     assert "kb.business_types IS NULL OR kb.business_types && %s::text[]" in sql, "b2c 應為寬鬆 business_types"
+    # target_user 參數：預設 tenant + all_users 通用放行
+    assert ["tenant", "all_users"] in store["params"], "b2c target_user 參數應為 [tenant, all_users]"
     # 用的是業者業態（非 system_provider）
     assert ["landlord_individual"] in store["params"]
     assert ["system_provider"] not in store["params"]
+
+
+@pytest.mark.req("retrieval-fixes:5")
+async def test_b2c_unknown_target_user_normalized_to_tenant():
+    """b2c：未知/空 target_user 正規化為 tenant（不外洩其他角色知識）。"""
+    store = {}
+    r = _make_retriever(store, vendor_business_types=["landlord_individual"])
+    await _run(r, target_user=None, mode="b2c")
+    assert ["tenant", "all_users"] in store["params"], "未知 target_user 應預設 tenant"
+
+
+@pytest.mark.req("retrieval-fixes:5")
+async def test_b2c_landlord_role_preserved_not_forced_tenant():
+    """b2c：landlord 為已知角色,不應被正規化成 tenant（房東看房東知識）。"""
+    store = {}
+    r = _make_retriever(store, vendor_business_types=["landlord_individual"])
+    await _run(r, target_user="landlord", mode="b2c")
+    assert ["landlord", "all_users"] in store["params"], "landlord 應保留,不被強制 tenant"
