@@ -313,7 +313,7 @@ class ConversationalEngine:
                 # 仍非單筆（資料異動，少見）→ 安全降級回 ask（含可能新候選）
                 if r.get("candidates"):
                     state["pending_candidates"] = r["candidates"]
-                    await self._save(session_id, state)
+                await self._save(session_id, state)   # 存檔：含 0 筆時清空的無效 slot
                 return {"kind": "ask", "answer": r["answer"]}
 
             # 【確定性識別填槽 — pre-LLM】診斷面向等待 required_slot、槽位未填、
@@ -335,7 +335,7 @@ class ConversationalEngine:
                             "session_id": session_id, "state": state, "user_message": user_message}
                 if r.get("candidates"):
                     state["pending_candidates"] = r["candidates"]
-                    await self._save(session_id, state)
+                await self._save(session_id, state)   # 存檔：含 0 筆時 _ground_by_api 已清空的無效 slot
                 return {"kind": "ask", "answer": r["answer"]}
 
             # 領域鍵＝當輪面向（state.face；首輪＝進入面向 _domain_key）：per-領域系統脈絡疊加（R2.1/R2.2）
@@ -495,8 +495,12 @@ class ConversationalEngine:
         elif not isinstance(rows, list):
             rows = [rows]
 
-        # 0 筆：不杜撰，回到追問請使用者確認/更正識別（R3.4）
+        # 0 筆：不杜撰，回到追問請使用者確認/更正識別（R3.4）。
+        #   ★ 清掉無效的識別槽位——否則殘留無效值會卡住下一句重新識別（讀設定 required_slots，零硬編）。
         if not rows:
+            collected = state.get("collected_fields") or {}
+            for slot in (scope.get("required_slots") or []):
+                collected.pop(slot, None)
             return {"kind": "ask",
                     "answer": "查無對應的資料，請再確認一下識別資訊（如編號或名稱）是否正確？"}
 

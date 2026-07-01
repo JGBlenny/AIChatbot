@@ -107,6 +107,39 @@ async def test_pending_candidates_not_intercepted_by_slot_fill():
     assert d["kind"] == "ask" and "哪一筆" in d["answer"]
 
 
+# ── 查無（0 筆）→ 清掉無效識別槽位（下一句可重新識別）──
+@pytest.mark.req("domain-conversational-facets:4.4")
+async def test_zero_rows_clears_identifier_slot():
+    handler = MagicMock()
+    handler.execute_api_call = AsyncMock(return_value={"success": True, "data": {"data": []}})
+    eng = ConversationalEngine(
+        db_pool=MagicMock(), optimizer=MagicMock(), retriever=MagicMock(),
+        get_system_context=AsyncMock(), rules_loader=AsyncMock(), api_handler=handler)
+    state = {"collected_fields": {"contract_ref": "99999999"}, "role_id": "20151",
+             "vendor_id": 7, "session_id": "s", "user_id": "u", "asked_count": 1}
+    r = await eng._ground_by_api(state, _cfg())
+    assert r["kind"] == "ask" and "candidates" not in r
+    assert "contract_ref" not in state["collected_fields"]   # 清掉無效值
+
+
+# ── 查無後 prepare 存檔（確定性填槽路徑）→ 下一輪 slot 空、可重填 ──
+@pytest.mark.req("domain-conversational-facets:4.4")
+async def test_prepare_saves_after_zero_rows_so_slot_reusable():
+    handler = MagicMock()
+    handler.execute_api_call = AsyncMock(return_value={"success": True, "data": {"data": []}})
+    eng = ConversationalEngine(
+        db_pool=MagicMock(), optimizer=MagicMock(), retriever=MagicMock(),
+        get_system_context=AsyncMock(return_value="MD"), rules_loader=AsyncMock(return_value="R"),
+        api_handler=handler)
+    eng._save = AsyncMock()
+    state = {"config_key": "contract_diag", "collected_fields": {}, "asked_count": 1}
+    eng.get_state = AsyncMock(return_value=state)
+    d = await eng.prepare("s", "u", 7, "99999999", config=_cfg())   # 純數字→確定性填→查無
+    assert d["kind"] == "ask"
+    assert "contract_ref" not in state.get("collected_fields", {})  # 已清
+    eng._save.assert_awaited()                                       # 有存檔（清空持久化）
+
+
 # ── 錯誤情況⑤：槽位已填 → 不重填、走 brain ──
 @pytest.mark.req("domain-conversational-facets:4.4")
 async def test_slot_already_filled_goes_to_brain():
