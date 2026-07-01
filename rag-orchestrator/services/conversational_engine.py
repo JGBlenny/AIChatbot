@@ -18,6 +18,7 @@
 
 import asyncio
 import json
+import re
 from typing import Any, Dict, List, Optional
 
 from services.conversational_config import ConversationalConfig, get_config
@@ -74,11 +75,35 @@ def _build_candidate_label(row: Dict[str, Any], mapping: Dict[str, Any]) -> Opti
 
 
 def _looks_like_identifier(msg: Optional[str]) -> bool:
-    """本句是否為「明確識別」（純數字編號）。用於等待 required_slot 時確定性填槽——
-    LLM 對純數字抽取不穩（如「84800」抽不到）。只認純數字（2–15 位），文字名稱仍交 brain。
-    純位置語義，不硬編面向欄位。"""
+    """本句是否為「明確識別」（純數字編號）。只認純數字（2–15 位），文字名稱仍交 brain。"""
     m = (msg or "").strip()
     return m.isdigit() and 2 <= len(m) <= 15
+
+
+# 數字後方的金額/日期單位（跟在數字後即非編號）；前方的金額語意（如月租）亦排除
+_ID_UNIT_AFTER = "元塊％%坪年月日天期時分秒歲位"
+_ID_AMOUNT_CUE = ("月租", "租金", "押金", "金額", "價", "費")
+_ID_TOKEN_RE = re.compile(r"\d{4,15}")
+
+
+def _extract_identifier(msg: Optional[str]) -> Optional[str]:
+    """抽「明確識別編號」：純數字整句（2–15 位）直接回；否則從句中抽 id-like token
+    （≥4 位、非緊接金額/日期單位、前方非月租/押金等金額語意）——供等待/切換識別時確定性填槽，
+    繞過 LLM 不穩的抽取。抓不到回 None（文字名稱等交 brain）。純位置語義，不硬編面向欄位。"""
+    m = (msg or "").strip()
+    if not m:
+        return None
+    if m.isdigit() and 2 <= len(m) <= 15:
+        return m
+    for mt in _ID_TOKEN_RE.finditer(m):
+        after = m[mt.end():].lstrip()[:1]
+        before = m[:mt.start()].rstrip()[-3:]
+        if after and after in _ID_UNIT_AFTER:
+            continue
+        if any(cue in before for cue in _ID_AMOUNT_CUE):
+            continue
+        return mt.group(0)
+    return None
 
 
 def _domain_key(config) -> Optional[str]:
@@ -316,15 +341,16 @@ class ConversationalEngine:
                 await self._save(session_id, state)   # 存檔：含 0 筆時清空的無效 slot
                 return {"kind": "ask", "answer": r["answer"]}
 
-            # 【確定性識別填槽 — pre-LLM】診斷面向等待 required_slot、槽位未填、
-            #   本句是明確識別（純數字編號）→ 直接填槽走單筆收斂，不靠 brain（LLM 對純數字抽取不穩，
-            #   如「84800」3 次都抽不到→一直追問）。同插點A：確定性優先於 LLM。slot/欄位讀設定，零硬編。
+            # 【確定性識別填槽/切換 — pre-LLM】診斷面向：本句抽得到「明確識別編號」（純數字或
+            #   句中 id-like，如「那換 84328 呢?」）、且與現填不同（含未填）→ 直接填/換槽走單筆收斂，
+            #   不靠 brain（LLM 對數字抽取/更新不穩，如「84800」抽不到、切換不更新）。slot 讀設定，零硬編。
             gscope = config.grounding_scope or {}
             required = gscope.get("required_slots") or []
-            if (gscope.get("select") or "").lower() == "api" and required \
-                    and not (state.get("collected_fields") or {}).get(required[0]) \
-                    and _looks_like_identifier(user_message):
-                state.setdefault("collected_fields", {})[required[0]] = user_message.strip()
+            _ident = _extract_identifier(user_message) if required else None
+            if (gscope.get("select") or "").lower() == "api" and required and _ident is not None \
+                    and _ident != (state.get("collected_fields") or {}).get(required[0]):
+                state.setdefault("collected_fields", {})[required[0]] = _ident
+                state.pop("pending_candidates", None)   # 換識別 → 清舊候選
                 await self._save(session_id, state)
                 system_md = await self._get_system_context(
                     self.db_pool, state.get("face") or _domain_key(config))
