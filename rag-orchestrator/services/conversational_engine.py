@@ -73,6 +73,14 @@ def _build_candidate_label(row: Dict[str, Any], mapping: Dict[str, Any]) -> Opti
     return row.get(single) if single else None
 
 
+def _looks_like_identifier(msg: Optional[str]) -> bool:
+    """本句是否為「明確識別」（純數字編號）。用於等待 required_slot 時確定性填槽——
+    LLM 對純數字抽取不穩（如「84800」抽不到）。只認純數字（2–15 位），文字名稱仍交 brain。
+    純位置語義，不硬編面向欄位。"""
+    m = (msg or "").strip()
+    return m.isdigit() and 2 <= len(m) <= 15
+
+
 def _domain_key(config) -> Optional[str]:
     """領域鍵（載入 per-領域系統脈絡用）：
       - 診斷型面向（topic_scope.mode=='category'）→ 用其**母/子分類值** topic_scope.category
@@ -303,6 +311,28 @@ class ConversationalEngine:
                             "cta_mode": "suppress", "converge_kind": "answer", "system_md": system_md,
                             "session_id": session_id, "state": state, "user_message": user_message}
                 # 仍非單筆（資料異動，少見）→ 安全降級回 ask（含可能新候選）
+                if r.get("candidates"):
+                    state["pending_candidates"] = r["candidates"]
+                    await self._save(session_id, state)
+                return {"kind": "ask", "answer": r["answer"]}
+
+            # 【確定性識別填槽 — pre-LLM】診斷面向等待 required_slot、槽位未填、
+            #   本句是明確識別（純數字編號）→ 直接填槽走單筆收斂，不靠 brain（LLM 對純數字抽取不穩，
+            #   如「84800」3 次都抽不到→一直追問）。同插點A：確定性優先於 LLM。slot/欄位讀設定，零硬編。
+            gscope = config.grounding_scope or {}
+            required = gscope.get("required_slots") or []
+            if (gscope.get("select") or "").lower() == "api" and required \
+                    and not (state.get("collected_fields") or {}).get(required[0]) \
+                    and _looks_like_identifier(user_message):
+                state.setdefault("collected_fields", {})[required[0]] = user_message.strip()
+                await self._save(session_id, state)
+                system_md = await self._get_system_context(
+                    self.db_pool, state.get("face") or _domain_key(config))
+                r = await self._ground_by_api(state, config)
+                if r["kind"] == "converge":
+                    return {"kind": "converge", "grounding": r["grounding"], "ctx": None,
+                            "cta_mode": "suppress", "converge_kind": "answer", "system_md": system_md,
+                            "session_id": session_id, "state": state, "user_message": user_message}
                 if r.get("candidates"):
                     state["pending_candidates"] = r["candidates"]
                     await self._save(session_id, state)
