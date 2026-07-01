@@ -105,12 +105,14 @@ async def lifespan(app: FastAPI):
     from services.conversational_rules import load_rules as conversational_load_rules
     from services.system_context import get_system_context as conversational_get_system_context
     from services.vendor_knowledge_retriever_v2 import VendorKnowledgeRetrieverV2
+    from services.api_call_handler import get_api_call_handler
     conversational_engine = ConversationalEngine(
         db_pool=db_pool,
         optimizer=llm_answer_optimizer,
         retriever=VendorKnowledgeRetrieverV2(),
         get_system_context=conversational_get_system_context,
         rules_loader=conversational_load_rules,
+        api_handler=get_api_call_handler(db_pool),  # 診斷型對話 API grounding 用
     )
     print("✅ 對話式回答引擎已初始化（conversational：多輪自適應問答→收斂，售前為首例）")
 

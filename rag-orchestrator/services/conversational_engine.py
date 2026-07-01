@@ -25,22 +25,184 @@ from services.conversational_config import ConversationalConfig, get_config
 CONVERSATIONAL_FORM_ID = "conversational"
 MAX_ASKS = 20  # 提問硬上限（絕對保底；收斂時機交由 AI 自行判斷，此值僅防失控無限問）
 
+# API grounding 結果契約（conversational-diagnosis R3.4–R3.6）：
+#   {"kind":"converge", "grounding": str}                        # 1 筆 → 合成
+#   {"kind":"ask", "answer": str}                                # 0 筆 / 失敗 → 重問或降級
+#   {"kind":"ask", "answer": str, "candidates":[{"id","label"}]} # N 筆 → 列候選
+ApiGroundingResult = Dict[str, Any]
 
-def _has_basic_info(fields: dict) -> bool:
-    """收斂前的最低資訊門檻：至少知道身分 + （規模 或 痛點）才足以給有意義的推薦。"""
+
+def _dig_path(obj: Any, path: Optional[str]) -> Any:
+    """依點分隔路徑取值（list_path 由設定指定，程式不硬編面向欄位）。"""
+    cur = obj
+    for key in (path or "").split("."):
+        if not key:
+            continue
+        if isinstance(cur, dict):
+            cur = cur.get(key)
+        else:
+            return None
+    return cur
+
+
+def _fmt_ymd(value: Any) -> str:
+    """Ymd（如 '20240115' / 20240115）→ 'Y/m/d'（'2024/01/15'）；非 8 位數字原樣回傳。
+    純格式化，欄位由 result_mapping.label_date_fields 指定（不硬編面向欄位）。"""
+    s = str(value).strip()
+    if len(s) == 8 and s.isdigit():
+        return f"{s[0:4]}/{s[4:6]}/{s[6:8]}"
+    return s
+
+
+def _build_candidate_label(row: Dict[str, Any], mapping: Dict[str, Any]) -> Optional[str]:
+    """組候選標籤（區別欄位）：有 label_fields → 依序取值以「｜」串接（label_date_fields 者格式化）；
+    無 → 回退單 label_field（向後相容）。欄位一律讀 result_mapping（零硬編，R4.2/R6.1）。"""
+    label_fields = mapping.get("label_fields")
+    single = mapping.get("label_field")
+    if not label_fields:
+        return row.get(single) if single else None
+    date_fields = set(mapping.get("label_date_fields") or [])
+    parts = []
+    for f in label_fields:
+        v = row.get(f)
+        if v is None or v == "":
+            continue
+        parts.append(_fmt_ymd(v) if f in date_fields else str(v))
+    if parts:
+        return "｜".join(parts)
+    return row.get(single) if single else None
+
+
+def _domain_key(config) -> Optional[str]:
+    """領域鍵（載入 per-領域系統脈絡用）：
+      - 診斷型面向（topic_scope.mode=='category'）→ 用其**母/子分類值** topic_scope.category
+        （每個診斷領域唯一，如 '條件診斷：合約'；同角色多領域不撞鍵）；
+      - 角色級面向（如售前 mode=='all'）→ 用 persona_role（=target_user，如 'prospect'）。
+    全讀設定，程式不硬編任何領域字面。"""
+    ts = getattr(config, "topic_scope", None) or {}
+    if ts.get("mode") == "category" and ts.get("category"):
+        return ts.get("category")
+    return getattr(config, "persona_role", None)
+
+
+async def _domain_faces(db_pool, config) -> List[str]:
+    """本領域可用面向集合（mid-session-switch 方案B）：
+      1. `topic_scope.faces` 明列 → 直接用（設定驅動、優先）。
+      2. 未明列 → 由 category_config 衍生：進入面向（topic_scope.category）之**母分類的所有子分類**
+         （沿用父層展開慣例，免每領域重複列面向）。進入面向本身必在集合內。
+      3. 皆無 / 衍生失敗 → 空清單＝不啟用換面向（向後相容、不阻斷）。"""
+    ts = getattr(config, "topic_scope", None) or {}
+    explicit = ts.get("faces")
+    if isinstance(explicit, list):
+        return list(explicit)
+    cat = ts.get("category")
+    if not cat:
+        return []
+    try:
+        async with db_pool.acquire() as conn:
+            parent = await conn.fetchval(
+                "SELECT parent_value FROM category_config WHERE category_value = $1 AND is_active = TRUE",
+                cat,
+            )
+            base = parent or cat  # cat 本身即母分類（無 parent）→ 取其子分類
+            rows = await conn.fetch(
+                "SELECT category_value FROM category_config WHERE parent_value = $1 AND is_active = TRUE "
+                "ORDER BY display_order NULLS LAST, category_value",
+                base,
+            )
+        faces = [r["category_value"] for r in rows]
+        if cat not in faces:
+            faces.append(cat)  # 進入面向必在集合內
+        return faces
+    except Exception as e:
+        print(f"⚠️ 面向集合衍生失敗（不啟用換面向）：{e}")
+        return []
+
+
+def _has_basic_info(fields: dict, config=None) -> bool:
+    """收斂前的最低資訊門檻（conversational-diagnosis R2.1/R2.5）。
+    有設定 grounding_scope.required_slots → 全部必填槽位到齊才足夠（診斷面向，槽位讀設定）；
+    無 → 維持售前預設：至少知道身分 + （規模 或 痛點）。"""
     fields = fields or {}
+    required = (getattr(config, "grounding_scope", None) or {}).get("required_slots") if config else None
+    if required:
+        return all(fields.get(k) for k in required)
     has_identity = bool(fields.get("identity"))
     has_scale_or_pain = bool(fields.get("scale") or fields.get("pain"))
     return has_identity and has_scale_or_pain
 
 
+_CN_NUM = {"一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5,
+           "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
+
+
+def _parse_ordinal(msg: str, n: int) -> Optional[int]:
+    """把口語序數解析成 1-based 序號（候選 ≤ 個位數，支援 1–10）：
+    純數字 / 中文數字(一二…十) / 第X個·第X筆 / 頭一個 → X；最後一個·最後一筆 → n。
+    無法解析或越界 → None。純位置語義，不硬編面向。"""
+    m = (msg or "").strip()
+    if not m:
+        return None
+    if any(k in m for k in ("最後", "最尾", "最末")):
+        return n if n >= 1 else None
+    core = m
+    for ch in ("第", "個", "筆", "份", "那", "這", "號", "位", "、", " "):
+        core = core.replace(ch, "")
+    core = core.strip()
+    idx = None
+    if core.isdigit():
+        idx = int(core)
+    elif core in _CN_NUM:
+        idx = _CN_NUM[core]
+    elif "頭" in m:
+        idx = 1
+    return idx if (idx is not None and 1 <= idx <= n) else None
+
+
+def _match_candidate(user_message: Optional[str],
+                     candidates: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """確定性比對使用者選擇（pre-LLM，conversational-diagnosis R3.5/R2.2/R2.3）。
+
+    依序：序號/口語序數（1-based，最自然）→ id 完全比對 → label 子字串（雙向、忽略大小寫）。
+    無法判定回 None（交插點 A 再次反問）。候選的 id/label 由 result_mapping 決定，不硬編面向。
+    """
+    msg = (user_message or "").strip()
+    if not msg or not candidates:
+        return None
+    # 1) 序號 / 口語序數（第二個 / 二 / 最後一個…）——優先於 id，符合「請選 1/2/3」直覺
+    ordinal = _parse_ordinal(msg, len(candidates))
+    if ordinal is not None:
+        return candidates[ordinal - 1]
+    # 2) id 完全比對
+    for c in candidates:
+        if str(c.get("id")) == msg:
+            return c
+    # 3) label 子字串（雙向、忽略大小寫）
+    low = msg.lower()
+    for c in candidates:
+        label = str(c.get("label") or "").strip().lower()
+        if label and (low in label or label in low):
+            return c
+    return None
+
+
+def _ask_pick_again(candidates: List[Dict[str, Any]]) -> str:
+    """無法對應選擇時再次列出候選反問（label 取自 result_mapping，不硬編面向）。"""
+    listing = "\n".join(f"{i + 1}. {c.get('label')}" for i, c in enumerate(candidates))
+    return f"不好意思，沒能對應到您的選擇，請問是以下哪一筆？\n{listing}"
+
+
 class ConversationalEngine:
-    def __init__(self, db_pool, optimizer, retriever, get_system_context, rules_loader):
+    def __init__(self, db_pool, optimizer, retriever, get_system_context, rules_loader,
+                 api_handler=None):
         self.db_pool = db_pool
         self.optimizer = optimizer
         self.retriever = retriever
-        self._get_system_context = get_system_context  # async fn(db_pool)->str
+        self._get_system_context = get_system_context  # async fn(db_pool, domain_key=None)->str
         self._load_rules = rules_loader                 # async fn(db_pool, role)->Optional[str]
+        # 診斷型對話的 API grounding 用（conversational-diagnosis R3.1）；
+        # 可選，不傳為 None（向後相容售前）。實際 grounding 於 select:"api" 分支使用。
+        self.api_handler = api_handler
 
     # ---------- 狀態（元件 11，R16） ----------
     async def get_state(self, session_id: str) -> Optional[Dict[str, Any]]:
@@ -56,8 +218,13 @@ class ConversationalEngine:
         cd = row["collected_data"]
         return cd if isinstance(cd, dict) else json.loads(cd)
 
-    async def _start(self, session_id, user_id, vendor_id, config_key, seed_topic=None) -> Dict[str, Any]:
-        state = {"config_key": config_key, "collected_fields": {}, "asked_count": 0}
+    async def _start(self, session_id, user_id, vendor_id, config_key, seed_topic=None,
+                     role_id=None) -> Dict[str, Any]:
+        # 會話識別存入 state：續對話時 _ground_by_api 僅收 (state, config)，需從 state 取
+        # session_data（role_id/vendor_id/session_id/user_id）打 API（診斷面向資料權限過濾）。
+        state = {"config_key": config_key, "collected_fields": {}, "asked_count": 0,
+                 "session_id": session_id, "user_id": user_id,
+                 "vendor_id": vendor_id, "role_id": role_id}
         if seed_topic:
             state["collected_fields"]["_seed"] = seed_topic
         async with self.db_pool.acquire() as conn:
@@ -91,7 +258,7 @@ class ConversationalEngine:
     # ---------- 主流程（元件 12/13/14） ----------
     async def prepare(self, session_id, user_id, vendor_id, user_message,
                       config: Optional[ConversationalConfig] = None,
-                      start_if_absent=True, seed_topic=None) -> Optional[Dict[str, Any]]:
+                      start_if_absent=True, seed_topic=None, role_id=None) -> Optional[Dict[str, Any]]:
         """
         跑 brain + gate，回「決策」（converge 僅先取 grounding、尚未合成/未 save）：
           {'kind':'ask','answer':<問句>}（已 +1 並 save asked_count）
@@ -104,23 +271,72 @@ class ConversationalEngine:
             if state is None:
                 if not start_if_absent or config is None:
                     return None
-                state = await self._start(session_id, user_id, vendor_id, config.key, seed_topic)
+                state = await self._start(session_id, user_id, vendor_id, config.key, seed_topic,
+                                          role_id=role_id)
             # 續對話：以 state 內的 config_key 還原設定（不依賴呼叫端再傳）
             if config is None:
                 config = await get_config(self.db_pool, state.get("config_key"))
             if config is None:
                 return None
 
-            system_md = await self._get_system_context(self.db_pool)
+            # 【插點 A — pre-LLM 候選選擇輪（不依賴 LLM step）】
+            # 上一輪 API 多筆已存 pending_candidates；本輪為「選擇」而非新問題：
+            #   確定性比對 → 命中設 id 槽位、清候選 → 走單筆 api 收斂；未命中 → 再次列出反問。
+            pending = state.get("pending_candidates")
+            if pending:
+                picked = _match_candidate(user_message, pending)
+                if picked is None:
+                    return {"kind": "ask", "answer": _ask_pick_again(pending)}
+                gscope = config.grounding_scope or {}
+                slot = (gscope.get("required_slots") or [None])[0]  # 讀設定，不硬編面向欄位
+                if slot:
+                    state.setdefault("collected_fields", {})[slot] = picked["id"]
+                state.pop("pending_candidates", None)
+                await self._save(session_id, state)
+                # 以單一 id 走 select:api 單筆收斂（確定性，不經 LLM step）
+                # 領域鍵＝當輪面向（state.face；未曾切換＝進入面向）；插點A 不跑 brain（護欄1：待答中不切）
+                system_md = await self._get_system_context(
+                    self.db_pool, state.get("face") or _domain_key(config))
+                r = await self._ground_by_api(state, config)
+                if r["kind"] == "converge":
+                    return {"kind": "converge", "grounding": r["grounding"], "ctx": None,
+                            "cta_mode": "suppress", "converge_kind": "answer", "system_md": system_md,
+                            "session_id": session_id, "state": state, "user_message": user_message}
+                # 仍非單筆（資料異動，少見）→ 安全降級回 ask（含可能新候選）
+                if r.get("candidates"):
+                    state["pending_candidates"] = r["candidates"]
+                    await self._save(session_id, state)
+                return {"kind": "ask", "answer": r["answer"]}
+
+            # 領域鍵＝當輪面向（state.face；首輪＝進入面向 _domain_key）：per-領域系統脈絡疊加（R2.1/R2.2）
+            faces = await _domain_faces(self.db_pool, config)
+            entry_key = _domain_key(config)
+            current_face = state.get("face") or entry_key
+            system_md = await self._get_system_context(self.db_pool, current_face)
             rules_text = await self._load_rules(self.db_pool, config.persona_role)
             if not rules_text:
                 return None  # 該角色無規則 → 降級
 
-            step = self.optimizer.conversational_step(rules_text, system_md, state, user_message)
+            step = self.optimizer.conversational_step(rules_text, system_md, state, user_message, faces=faces)
             if step is None:
                 if state.get("asked_count", 0) == 0:
                     await self._close(session_id)  # 新會話 brain 失敗 → 關掉殘留 COLLECTING
                 return None
+
+            # 【中途切換 scope（換 config）— mid-session-switch 方案B / D2】
+            # brain 判定這句明顯不屬本 config 職責 → 關會話、回 None，由 chat.py 落回一般流程對「當前訊息」重路由。
+            # （護欄1：pending_candidates 在時已於插點A 先行返回，走不到這裡＝待答中不切。）
+            if step.get("scope") == "switch":
+                print("🔀 [conversational] brain 判定離題(scope=switch) → 關會話、重路由當前訊息")
+                await self._close(session_id)
+                return None
+
+            # 【中途切換 face（換面向）— 護欄4】當輪面向在集合內才切；越界/空 → 退回進入面向。
+            face = step.get("face")
+            face_key = face if (face and face in faces) else entry_key
+            state["face"] = face_key
+            if face_key != current_face:
+                system_md = await self._get_system_context(self.db_pool, face_key)
 
             for k, v in (step.get("extracted_fields") or {}).items():
                 if v:
@@ -132,7 +348,7 @@ class ConversationalEngine:
 
             # 推薦型基本資訊門檻（事實型不卡）
             if step["action"] == "converge" and converge_kind != "answer" \
-                    and not _has_basic_info(collected) and asked < MAX_ASKS and step.get("next_question"):
+                    and not _has_basic_info(collected, config) and asked < MAX_ASKS and step.get("next_question"):
                 print("🛑 推薦型收斂但基本資訊不足，先補問再收斂（避免空泛推薦）")
                 step = {**step, "action": "ask"}
             # 程式層硬上限
@@ -145,8 +361,20 @@ class ConversationalEngine:
                 await self._save(session_id, state)
                 return {"kind": "ask", "answer": step.get("next_question")}
 
-            grounding, ctx, cta_mode = await self._converge_grounding(
-                state, step.get("converge_topic"), user_message, config, converge_kind)
+            # 【插點 B】收斂選材：select=='api' → API grounding（可降級回 ask）；否則既有知識 grounding。
+            gscope = config.grounding_scope or {}
+            if (gscope.get("select") or "").lower() == "api":
+                r = await self._ground_by_api(state, config)
+                if r["kind"] == "ask":  # 0/N 筆或 API 失敗 → 降級回追問（非 converge，R3.4/R3.5）
+                    state["asked_count"] = asked + 1  # 維持提問次數上限保護（R2.4）
+                    if r.get("candidates"):
+                        state["pending_candidates"] = r["candidates"]  # 供下一輪確定性選擇（任務 5.2）
+                    await self._save(session_id, state)
+                    return {"kind": "ask", "answer": r["answer"]}
+                grounding, ctx, cta_mode = r["grounding"], None, "suppress"  # 1 筆 → 事實型合成（不複述情境/不推 CTA）
+            else:
+                grounding, ctx, cta_mode = await self._converge_grounding(
+                    state, step.get("converge_topic"), user_message, config, converge_kind)
             return {"kind": "converge", "grounding": grounding, "ctx": ctx, "cta_mode": cta_mode,
                     "converge_kind": converge_kind, "system_md": system_md,
                     "session_id": session_id, "state": state, "user_message": user_message}
@@ -163,10 +391,10 @@ class ConversationalEngine:
 
     async def handle(self, session_id, user_id, vendor_id, user_message,
                      config: Optional[ConversationalConfig] = None,
-                     start_if_absent=True, seed_topic=None) -> Optional[Dict[str, Any]]:
+                     start_if_absent=True, seed_topic=None, role_id=None) -> Optional[Dict[str, Any]]:
         """非串流：回 {answer, conversational, converged} 或 None（降級）。"""
         decision = await self.prepare(session_id, user_id, vendor_id, user_message,
-                                      config, start_if_absent, seed_topic)
+                                      config, start_if_absent, seed_topic, role_id=role_id)
         if decision is None:
             return None
         if decision["kind"] == "ask":
@@ -198,6 +426,89 @@ class ConversationalEngine:
                 yield chunk
         if got:
             await self._finalize_converge(decision)
+
+    # ---------- API grounding（select:"api"，conversational-diagnosis R3.1–R3.6/R6.1/R6.3） ----------
+    async def _ground_by_api(self, state: Dict[str, Any],
+                             config: "ConversationalConfig") -> ApiGroundingResult:
+        """收齊槽位後呼叫設定指定之 API，依回傳筆數分三路（1/0/N）。
+
+        重用既有 `api_handler.execute_api_call`（不另寫 API 邏輯，R3.2）：
+          - api_config 的 endpoint/params 一律讀 `grounding_scope`（R3.3，不硬編端點/參數）；
+          - slot 走 `form_data` 通道（= collected_fields），會話資訊走 session_data（含 role_id，R3.1）；
+          - 資料列以 `result_mapping.list_path` 取出、候選 id/label 以 `id_field`/`label_field` 取，
+            全部由設定驅動（R6.1，程式不出現特定面向欄位字面）。
+        API 例外/失敗 → 安全 ask 降級（R3.6），不拋出。
+        """
+        scope = config.grounding_scope or {}
+        mapping = scope.get("result_mapping") or {}
+        api_config = {"endpoint": scope.get("endpoint"), "params": scope.get("params") or {}}
+        form_data = state.get("collected_fields") or {}
+        session_data = {
+            "role_id": state.get("role_id"),
+            "vendor_id": state.get("vendor_id"),
+            "session_id": state.get("session_id"),
+            "user_id": state.get("user_id"),
+        }
+        try:
+            result = await self.api_handler.execute_api_call(api_config, session_data, form_data)
+        except Exception as e:  # 逾時/連線等例外 → 不阻斷（R3.6）
+            print(f"⚠️ API grounding 呼叫失敗（降級 ask）：{e}")
+            return {"kind": "ask", "answer": "目前查詢系統忙線，請稍後再試或由專人協助您。"}
+
+        result = result or {}
+        if not result.get("success"):
+            return {"kind": "ask", "answer": "目前查詢系統忙線，請稍後再試或由專人協助您。"}
+
+        rows = _dig_path(result.get("data"), mapping.get("list_path"))
+        if rows is None:
+            rows = []
+        elif not isinstance(rows, list):
+            rows = [rows]
+
+        # 0 筆：不杜撰，回到追問請使用者確認/更正識別（R3.4）
+        if not rows:
+            return {"kind": "ask",
+                    "answer": "查無對應的資料，請再確認一下識別資訊（如編號或名稱）是否正確？"}
+
+        # N 筆：候選帶區別欄位（label_fields）+ 過多分流（candidate_cap）
+        #   （domain-conversational-facets 元件3/D4，R4；id/label 欄位皆讀 result_mapping，零硬編）
+        if len(rows) > 1:
+            id_field = mapping.get("id_field")
+            candidates = [{"id": r.get(id_field), "label": _build_candidate_label(r, mapping)}
+                          for r in rows]
+            cap = mapping.get("candidate_cap")
+            if cap and len(candidates) > cap:
+                # 大集合分流（D4）：API 通常只吃關鍵字查詢/精確 id 兩種參數——
+                #   不同名大集合可靠「補更明確識別」縮小關鍵字；同名多份補條件重查無效，只能列候選/給精確 id。
+                if not state.get("_refine_requested"):
+                    state["_refine_requested"] = True  # prepare 隨後 _save（供下一輪判斷是否補不動）
+                    return {"kind": "ask",
+                            "answer": (f"符合的合約較多（找到 {len(candidates)} 筆），"
+                                       "請提供更明確的識別（完整物件名稱、合約編號，或租期），以便縮小範圍。")}
+                # 已補過仍 > cap（同名多份重查無效）→ 截斷列前 cap 筆並提示可給編號直接指定（避免死迴圈）
+                shown = candidates[:cap]
+                listing = "\n".join(f"{i + 1}. {c['label']}" for i, c in enumerate(shown))
+                return {"kind": "ask",
+                        "answer": (f"仍有多筆相符（僅顯示前 {cap} 筆），您可回覆序號選擇，"
+                                   f"或直接提供合約編號指定：\n{listing}"),
+                        "candidates": shown}
+            # N ≤ cap（或未設 cap＝不限）→ 列候選供選序號（同名多份靠區別欄位辨識）
+            state.pop("_refine_requested", None)  # 已可列出＝分流解決，清補條件標記
+            listing = "\n".join(f"{i + 1}. {c['label']}" for i, c in enumerate(candidates))
+            return {"kind": "ask",
+                    "answer": f"找到多筆資料，請問您指的是哪一筆？\n{listing}",
+                    "candidates": candidates}
+
+        # 1 筆：以 API 回傳作為合成底稿（R3.1/R3.4）——
+        #   label（哪一筆）+ formatted_response（formatter 已把碼翻成中文事實/可否操作），組文字；
+        #   兩者皆無則退而序列化該列（label/欄位皆讀設定，程式不硬編面向欄位，R6.1）。
+        #   ★ 由 formatter 產「乾淨中文 facts」餵 LLM 組話——不餵原始碼讓 LLM 自行解碼
+        #     （已證實 LLM 解碼會幻覺/張冠李戴/代碼外洩）。
+        state.pop("_refine_requested", None)  # 收斂＝分流解決，清補條件標記
+        label = rows[0].get(mapping.get("label_field")) if mapping.get("label_field") else None
+        parts = [str(p) for p in (label, result.get("formatted_response")) if p]
+        grounding = "\n".join(parts) if parts else str(rows[0])
+        return {"kind": "converge", "grounding": grounding}
 
     async def _converge_grounding(self, state, converge_topic, user_message, config, converge_kind):
         """取 grounding（選材三態）+ 累積情境 ctx + cta_mode；不合成。回 (grounding, ctx, cta_mode)。"""

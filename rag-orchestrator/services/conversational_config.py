@@ -50,7 +50,7 @@ PRESALES_CONFIG = ConversationalConfig(
 _CODE_DEFAULTS: Dict[str, ConversationalConfig] = {PRESALES_CONFIG.key: PRESALES_CONFIG}
 
 # 進程級快取（每輪都要查設定，不可每次查庫；資料更新後重啟或呼叫 reset_cache）
-_cache: Dict[str, Any] = {"loaded": False, "by_key": {}, "by_role": {}}
+_cache: Dict[str, Any] = {"loaded": False, "by_key": {}, "by_role": {}, "by_category": {}}
 
 
 def _config_from_row(target_user: Optional[List[str]], metadata: Any) -> Optional[ConversationalConfig]:
@@ -103,6 +103,14 @@ async def _load(db_pool) -> None:
         c.persona_role: c for c in by_key.values()
         if c.answer_mode == "conversational" and c.persona_role and c.enabled
     }
+    # by_category：topic_scope.mode=='category' 且啟用者，以其 category 入索引（診斷型面向路由用）
+    _cache["by_category"] = {
+        (c.topic_scope or {}).get("category"): c
+        for c in by_key.values()
+        if c.answer_mode == "conversational" and c.enabled
+        and (c.topic_scope or {}).get("mode") == "category"
+        and (c.topic_scope or {}).get("category")
+    }
     _cache["loaded"] = True
 
 
@@ -123,8 +131,20 @@ async def config_for_target_user(db_pool, target_user: Optional[str]) -> Optiona
     return _cache["by_role"].get(target_user)
 
 
+async def config_for_category(db_pool, category: Optional[str]) -> Optional[ConversationalConfig]:
+    """
+    分類路由（conversational-diagnosis R1.3）：依「檢索到知識的分類」取對應之診斷型對話設定。
+    僅 topic_scope.mode=='category' 且啟用者會被索引；未命中/未啟用/非 category 模式回 None。
+    """
+    if not category:
+        return None
+    await _load(db_pool)
+    return _cache["by_category"].get(category)
+
+
 def reset_cache() -> None:
     """清快取（設定資料更新後可呼叫；或進程重啟自然重載）。"""
     _cache["loaded"] = False
     _cache["by_key"] = {}
     _cache["by_role"] = {}
+    _cache["by_category"] = {}

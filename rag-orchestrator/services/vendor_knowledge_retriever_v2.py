@@ -101,6 +101,8 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     kb.form_id,
                     kb.action_type,
                     kb.api_config,
+                    kb.category,
+                    kb.categories,
                     1 - (kb.embedding <=> %s::vector) as vector_similarity
                 FROM knowledge_base kb
                 WHERE
@@ -206,6 +208,8 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     kb.form_id,
                     kb.action_type,
                     kb.api_config,
+                    kb.category,
+                    kb.categories,
                     kim.intent_id
                 FROM knowledge_base kb
                 LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
@@ -319,6 +323,9 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             'form_id': row.get('form_id'),
             'action_type': row.get('action_type'),
             'api_config': row.get('api_config'),
+            # 分類（conversational-diagnosis 元件 5：分類路由用）；category 單值、categories 多值
+            'category': row.get('category'),
+            'categories': row.get('categories'),
             'intent_id': row.get('intent_id'),
             # ─── 分數欄位（task 3.3） ───
             'vector_similarity': vector_similarity,

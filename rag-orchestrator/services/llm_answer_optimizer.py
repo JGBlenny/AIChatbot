@@ -840,11 +840,16 @@ class LLMAnswerOptimizer:
         system_context_md: str,
         state: dict,
         user_message: str,
+        faces: Optional[List[str]] = None,
     ) -> Optional[dict]:
         """
         對話式回答 brain（option-routing R14/R15/R19）：單次 structured-output LLM call。
         規則（人格）由外部依角色載入後傳入（資料驅動，見 conversational_rules）；brain 不綁角色。
         同時做①抽取欄位②判斷 ask/converge③生成下一題。JSON 輸出 + 驗證；失敗 → 回 None。
+
+        mid-session-switch（方案B）：另帶 scope(stay|switch)/face 兩訊號——
+          - scope 由 persona 規則指示、此處正規化（缺省/越界 → 'stay'，向後相容防越界）；
+          - faces 非空時注入 prompt（本領域可用面向清單，供 brain 從中選 face；引擎再驗證）。
         """
         try:
             import json
@@ -853,7 +858,9 @@ class LLMAnswerOptimizer:
             collected = state.get('collected_fields', {}) or {}
             asked = state.get('asked_count', 0)
             recommended = bool(state.get('recommended', False))
-            system_prompt = f"{system_context_md}\n\n{rules_text}".strip()
+            faces_note = (f"\n\n【本領域可用面向】{('、'.join(faces))}"
+                          "（判斷本輪最貼近哪個，輸出 face；純識別/無指向可留空）" if faces else "")
+            system_prompt = f"{system_context_md}\n\n{rules_text}{faces_note}".strip()
             user_prompt = (
                 f"【已知欄位】{json.dumps(collected, ensure_ascii=False)}\n"
                 f"【asked_count】{asked}\n"
@@ -878,6 +885,8 @@ class LLMAnswerOptimizer:
                 data['extracted_fields'] = {}
             if data['action'] == 'ask' and not data.get('next_question'):
                 return None
+            # scope 正規化（防越界）：非 'switch' 一律視為 'stay'（缺省＝現狀行為，向後相容）
+            data['scope'] = 'switch' if data.get('scope') == 'switch' else 'stay'
             return data
         except Exception as e:
             print(f"❌ conversational_step 失敗（呼叫端降級）：{e}")

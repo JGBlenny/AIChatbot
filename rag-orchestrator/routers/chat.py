@@ -293,7 +293,7 @@ async def _maybe_synthesize_presales_leaf(form_result: dict, request, req) -> di
         from services.system_context import get_system_context
         optimizer = req.app.state.llm_answer_optimizer
         db_pool = req.app.state.db_pool
-        system_md = await get_system_context(db_pool)
+        system_md = await get_system_context(db_pool, request.target_user)  # 領域鍵＝target_user（此路徑必為 prospect）
         ctx = form_result.get('presales_context')
         synth = await asyncio.to_thread(
             optimizer.synthesize_presales_answer, raw, ctx, system_md, None
@@ -318,7 +318,7 @@ async def _maybe_synth_prospect_freetext(optimization_result: dict, search_resul
             return optimization_result
         from services.system_context import get_system_context
         optimizer = req.app.state.llm_answer_optimizer
-        system_md = await get_system_context(req.app.state.db_pool)
+        system_md = await get_system_context(req.app.state.db_pool, request.target_user)  # 領域鍵＝target_user（此路徑必為 prospect）
         grounding = "\n\n".join(r.get('content', '') for r in search_results[:3] if r.get('content'))
         if not grounding:
             return optimization_result
@@ -611,6 +611,37 @@ async def handle_cache(request, req, ctx: ChatRequestContext):
     return None
 
 
+def _knowledge_category(best_knowledge) -> list:
+    """取知識的分類候選（conversational-diagnosis 元件 5）。
+
+    categories 多值優先（會話診斷分類常掛多值），無則退 category 單值；皆無回 []。
+    多值/單值以實際欄位為準（category 雙欄位半遷移），供分類路由逐一查診斷設定。
+    """
+    if not best_knowledge:
+        return []
+    cats = best_knowledge.get('categories')
+    if cats:
+        return [c for c in cats if c]
+    cat = best_knowledge.get('category')
+    return [cat] if cat else []
+
+
+async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, threshold):
+    """分類路由決策（conversational-diagnosis 元件 5 / R1.1,1.2,1.4,7.2）。
+
+    最高順位知識達表單觸發門檻、且其分類命中某診斷型對話面向 → 回該對話設定；
+    未達門檻 / 未命中任何面向 → None（呼叫端落回既有表單/直接知識處理）。
+    """
+    if not best_knowledge or best_knowledge.get('similarity', 0) < threshold:
+        return None
+    from services.conversational_config import config_for_category
+    for cat in _knowledge_category(best_knowledge):
+        cfg = await config_for_category(db_pool, cat)
+        if cfg is not None:
+            return cfg
+    return None
+
+
 async def handle_retrieval(request, req, ctx: ChatRequestContext):
     """Step 4 智能檢索(終點,必回)。SOP/知識/兜底同時檢索比分;skip_sop→回測僅知識庫。
     intent_result 用固定 stub(意圖在計分零權重)。vendor_info 取自 ctx。"""
@@ -660,6 +691,22 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
             return response
 
         elif decision['type'] == 'knowledge':
+            # 分類路由出口（conversational-diagnosis 元件 5 / R1.1,1.2,1.4,4.4,7.2）：
+            # 串流/表單分支之前攔截——最高順位知識達門檻且分類命中診斷面向 → 進對話引擎；
+            # 引擎降級（回 None）或未命中 → 落回既有處理（不阻斷）。
+            _best_knowledge = decision['knowledge_list'][0] if decision.get('knowledge_list') else None
+            _diag_threshold = float(os.getenv("FORM_TRIGGER_THRESHOLD", "0.75"))
+            _diag_cfg = await _diagnosis_config_for_knowledge(
+                req.app.state.db_pool, _best_knowledge, _diag_threshold)
+            if _diag_cfg is not None:
+                _diag_resp = await _conversational_respond(
+                    request, req, start_if_absent=True, config=_diag_cfg)
+                if _diag_resp is not None:
+                    print(f"💬 [conversational-diagnosis] 分類命中 {_diag_cfg.key} → 進診斷對話"
+                          + ("（串流）" if request.stream else ""))
+                    return _diag_resp
+                print("⚠️ [conversational-diagnosis] 引擎降級 → 落回既有知識/表單處理")
+
             # 串流模式：先檢查是否有表單/API 動作需要完整處理
             if request.stream:
                 _best_k = decision['knowledge_list'][0] if decision['knowledge_list'] else {}
@@ -776,7 +823,7 @@ async def _conversational_respond(request, req, *, start_if_absent, config=None)
         decision = await engine.prepare(
             session_id=request.session_id, user_id=request.user_id or "anonymous",
             vendor_id=request.vendor_id or 0, user_message=request.message,
-            config=config, start_if_absent=start_if_absent)
+            config=config, start_if_absent=start_if_absent, role_id=request.role_id)
         if decision is None:
             return None
         return StreamingResponse(
@@ -786,7 +833,7 @@ async def _conversational_respond(request, req, *, start_if_absent, config=None)
     result = await engine.handle(
         session_id=request.session_id, user_id=request.user_id or "anonymous",
         vendor_id=request.vendor_id or 0, user_message=request.message,
-        config=config, start_if_absent=start_if_absent)
+        config=config, start_if_absent=start_if_absent, role_id=request.role_id)
     if not result:
         return None
     return _conversational_to_response(result, request)
@@ -2501,7 +2548,7 @@ async def _handle_no_knowledge_found(
         try:
             from services.system_context import get_system_context
             optimizer = req.app.state.llm_answer_optimizer
-            system_md = await get_system_context(req.app.state.db_pool)
+            system_md = await get_system_context(req.app.state.db_pool, request.target_user)  # 領域鍵＝target_user（此路徑必為 prospect）
             md_only_grounding = (
                 "（本次未檢索到對應的特定知識。請依系統脈絡的「功能對照索引」判斷是否有對應功能："
                 "有 → 點名推薦該功能並導向 demo / 試用；無 → 禮貌說明可由專人協助了解，不杜撰功能。）"

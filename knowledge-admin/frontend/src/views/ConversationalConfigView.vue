@@ -79,6 +79,7 @@
           <option value="vector">vector：語意檢索（廣主題，如 presales）</option>
           <option value="category">category：整批撈某分類（決定性，窄主題推薦）</option>
           <option value="ids">ids：明列知識 id（最決定性）</option>
+          <option value="api">api：呼叫設定 API 回傳當底稿（診斷型，如合約查詢）</option>
         </select>
         <template v-if="form.g_select==='vector'">
           <label class="cc-hint">檢索知識角色：自動沿用上方「角色 = {{ form.target_user }}」（不需另設）</label>
@@ -97,6 +98,19 @@
         <template v-if="form.g_select==='ids'">
           <label class="cc-hint">知識 id（逗號分隔）</label>
           <input v-model="form.g_ids" placeholder="如：3596,3597,3598" />
+        </template>
+        <template v-if="form.g_select==='api'">
+          <label class="cc-hint">API endpoint（如 jgb_contracts / jgb_bills，須為後端 api_registry 已支援者）</label>
+          <input v-model="form.g_endpoint" placeholder="如：jgb_contracts" />
+          <label class="cc-hint">必填槽位 required_slots（逗號分隔；全收齊才收斂，如 contract_ref）</label>
+          <input v-model="form.g_required_slots" placeholder="如：contract_ref" />
+          <label class="cc-hint">參數映射 params（每行 key=模板；模板用 {{ '{session.x}' }} / {{ '{form.槽位|if_numeric}' }} / {{ '{form.槽位|if_text}' }}）</label>
+          <textarea v-model="form.g_params" rows="3" placeholder="role_id={session.role_id}&#10;contract_ids={form.contract_ref|if_numeric}&#10;keyword={form.contract_ref|if_text}"></textarea>
+          <label class="cc-hint">result_mapping（回傳取資料列與識別/顯示欄位；不寫死面向欄位）</label>
+          <input v-model="form.g_list_path" placeholder="list_path：資料列陣列路徑，如 data" />
+          <input v-model="form.g_id_field" placeholder="id_field：識別欄位，如 id" />
+          <input v-model="form.g_label_field" placeholder="label_field：候選顯示欄位，如 title" />
+          <input v-model="form.g_refine_param" placeholder="refine_param：選定候選後帶回的參數，如 contract_ids" />
         </template>
 
         <hr/>
@@ -141,7 +155,9 @@ export default {
     openNew() {
       this.form = { id: null, label: '', target_user: 'prospect', is_active: true, enabled: true,
         answer_mode: 'conversational', rules_text: '', trigger: 'freetext', topic_category: '', topic_keywords: '',
-        g_select: 'vector', g_mode: 'b2b', g_vendor_id: '', g_category: '', g_ids: '', seed: '' };
+        g_select: 'vector', g_mode: 'b2b', g_vendor_id: '', g_category: '', g_ids: '',
+        g_endpoint: '', g_required_slots: '', g_params: '',
+        g_list_path: '', g_id_field: '', g_label_field: '', g_refine_param: '', seed: '' };
       this.editing = true;
     },
     openEdit(c) {
@@ -153,6 +169,11 @@ export default {
         trigger, topic_category: ts.category || '', topic_keywords: (ts.keywords||[]).join(','),
         g_select: gs.select || 'vector', g_mode: gs.mode || 'b2b',
         g_vendor_id: gs.vendor_id || '', g_category: gs.category || '', g_ids: (gs.kb_ids||[]).join(','),
+        // api 型 grounding（診斷面向）：endpoint/required_slots/params/result_mapping
+        g_endpoint: gs.endpoint || '', g_required_slots: (gs.required_slots||[]).join(','),
+        g_params: Object.entries(gs.params || {}).map(([k,v]) => `${k}=${v}`).join('\n'),
+        g_list_path: (gs.result_mapping||{}).list_path || '', g_id_field: (gs.result_mapping||{}).id_field || '',
+        g_label_field: (gs.result_mapping||{}).label_field || '', g_refine_param: (gs.result_mapping||{}).refine_param || '',
         seed: cfg.seed || '' };
       this.editing = true;
     },
@@ -166,6 +187,23 @@ export default {
       let grounding_scope = {};
       if (f.g_select === 'category') grounding_scope = { select: 'category', category: f.g_category, target_user: f.target_user };
       else if (f.g_select === 'ids') grounding_scope = { select: 'ids', kb_ids: f.g_ids.split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n)) };
+      else if (f.g_select === 'api') {
+        // 參數映射：每行 key=模板 → 物件（值含等號者只切首個）
+        const params = {};
+        (f.g_params || '').split('\n').forEach(line => {
+          const i = line.indexOf('=');
+          if (i > 0) { const k = line.slice(0, i).trim(); const v = line.slice(i + 1).trim(); if (k) params[k] = v; }
+        });
+        const result_mapping = {};
+        if (f.g_list_path) result_mapping.list_path = f.g_list_path.trim();
+        if (f.g_id_field) result_mapping.id_field = f.g_id_field.trim();
+        if (f.g_label_field) result_mapping.label_field = f.g_label_field.trim();
+        if (f.g_refine_param) result_mapping.refine_param = f.g_refine_param.trim();
+        grounding_scope = {
+          select: 'api', endpoint: (f.g_endpoint || '').trim(),
+          required_slots: f.g_required_slots.split(',').map(s=>s.trim()).filter(Boolean),
+          params, result_mapping };
+      }
       else { grounding_scope = { select: 'vector', target_user: f.target_user, mode: f.g_mode }; if (f.g_mode === 'b2c' && f.g_vendor_id) grounding_scope.vendor_id = parseInt(f.g_vendor_id); }
       const cfg = { key: f.target_user, answer_mode: f.answer_mode, topic_scope, grounding_scope, enabled: f.enabled };
       if (f.seed) cfg.seed = f.seed;
