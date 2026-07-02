@@ -104,8 +104,10 @@
           <input v-model="form.g_endpoint" placeholder="如：jgb_contracts" />
           <label class="cc-hint">必填槽位 required_slots（逗號分隔；全收齊才收斂，如 contract_ref）</label>
           <input v-model="form.g_required_slots" placeholder="如：contract_ref" />
-          <label class="cc-hint">參數映射 params（每行 key=模板；模板用 {{ '{session.x}' }} / {{ '{form.槽位|if_numeric}' }} / {{ '{form.槽位|if_text}' }}）</label>
-          <textarea v-model="form.g_params" rows="3" placeholder="role_id={session.role_id}&#10;contract_ids={form.contract_ref|if_numeric}&#10;keyword={form.contract_ref|if_text}"></textarea>
+          <label class="cc-hint">共用參數 params（每行 key=模板，如 {{ '{session.x}' }} / {{ '{form.槽位}' }}；每次搜尋都會帶）</label>
+          <textarea v-model="form.g_params" rows="2" placeholder="role_id={session.role_id}"></textarea>
+          <label class="cc-hint">依序搜尋 search_params（選填；每行一組疊在共用參數上依序試，第一組有結果即止；一組多參數用 & 串。後端 id 與關鍵字為 AND 不能同送時用：先當編號、查無再當名稱）</label>
+          <textarea v-model="form.g_search_params" rows="2" placeholder="contract_ids={form.contract_ref}&#10;keyword={form.contract_ref}"></textarea>
           <label class="cc-hint">result_mapping（回傳取資料列與識別/顯示欄位；不寫死面向欄位）</label>
           <input v-model="form.g_list_path" placeholder="list_path：資料列陣列路徑，如 data" />
           <input v-model="form.g_id_field" placeholder="id_field：識別欄位，如 id" />
@@ -156,8 +158,9 @@ export default {
       this.form = { id: null, label: '', target_user: 'prospect', is_active: true, enabled: true,
         answer_mode: 'conversational', rules_text: '', trigger: 'freetext', topic_category: '', topic_keywords: '',
         g_select: 'vector', g_mode: 'b2b', g_vendor_id: '', g_category: '', g_ids: '',
-        g_endpoint: '', g_required_slots: '', g_params: '',
-        g_list_path: '', g_id_field: '', g_label_field: '', g_refine_param: '', seed: '' };
+        g_endpoint: '', g_required_slots: '', g_params: '', g_search_params: '',
+        g_list_path: '', g_id_field: '', g_label_field: '', g_refine_param: '', seed: '',
+        _orig_cfg: null };
       this.editing = true;
     },
     openEdit(c) {
@@ -169,44 +172,74 @@ export default {
         trigger, topic_category: ts.category || '', topic_keywords: (ts.keywords||[]).join(','),
         g_select: gs.select || 'vector', g_mode: gs.mode || 'b2b',
         g_vendor_id: gs.vendor_id || '', g_category: gs.category || '', g_ids: (gs.kb_ids||[]).join(','),
-        // api 型 grounding（診斷面向）：endpoint/required_slots/params/result_mapping
+        // api 型 grounding（診斷面向）：endpoint/required_slots/params/search_params/result_mapping
         g_endpoint: gs.endpoint || '', g_required_slots: (gs.required_slots||[]).join(','),
         g_params: Object.entries(gs.params || {}).map(([k,v]) => `${k}=${v}`).join('\n'),
+        // search_params：list of 參數組（每組一行；組內多參數以 & 串）
+        g_search_params: (gs.search_params || [])
+          .map(o => Object.entries(o || {}).map(([k,v]) => `${k}=${v}`).join('&')).join('\n'),
         g_list_path: (gs.result_mapping||{}).list_path || '', g_id_field: (gs.result_mapping||{}).id_field || '',
         g_label_field: (gs.result_mapping||{}).label_field || '', g_refine_param: (gs.result_mapping||{}).refine_param || '',
-        seed: cfg.seed || '' };
+        seed: cfg.seed || '',
+        // 保留整個原 config：存檔時 merge，表單沒管的鍵不被洗掉——
+        //   cfg 層（key/persona_role…）、topic_scope（faces…）、grounding_scope（search_params/
+        //   result_mapping.label_fields/label_date_fields/candidate_cap…）
+        _orig_cfg: cfg };
       this.editing = true;
     },
     buildConfig() {
       const f = this.form;
-      let topic_scope = { mode: 'all' };
+      const origCfg = f._orig_cfg || {};
+      // topic_scope 以原值為底 merge（保留 faces 等表單沒管的鍵）；category/keywords 互斥、以表單為準
+      const origTs = origCfg.topic_scope || {};
+      let topic_scope = { ...origTs, mode: 'all' };
+      delete topic_scope.category; delete topic_scope.keywords;
       if (f.trigger === 'topic') {
-        topic_scope = f.topic_category ? { mode: 'category', category: f.topic_category }
-          : { mode: 'keywords', keywords: f.topic_keywords.split(',').map(s=>s.trim()).filter(Boolean) };
+        topic_scope = f.topic_category
+          ? { ...origTs, mode: 'category', category: f.topic_category }
+          : { ...origTs, mode: 'keywords', keywords: f.topic_keywords.split(',').map(s=>s.trim()).filter(Boolean) };
+        if (topic_scope.mode === 'category') delete topic_scope.keywords;
+        else delete topic_scope.category;
       }
       let grounding_scope = {};
       if (f.g_select === 'category') grounding_scope = { select: 'category', category: f.g_category, target_user: f.target_user };
       else if (f.g_select === 'ids') grounding_scope = { select: 'ids', kb_ids: f.g_ids.split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n)) };
       else if (f.g_select === 'api') {
         // 參數映射：每行 key=模板 → 物件（值含等號者只切首個）
-        const params = {};
-        (f.g_params || '').split('\n').forEach(line => {
-          const i = line.indexOf('=');
-          if (i > 0) { const k = line.slice(0, i).trim(); const v = line.slice(i + 1).trim(); if (k) params[k] = v; }
-        });
-        const result_mapping = {};
-        if (f.g_list_path) result_mapping.list_path = f.g_list_path.trim();
-        if (f.g_id_field) result_mapping.id_field = f.g_id_field.trim();
-        if (f.g_label_field) result_mapping.label_field = f.g_label_field.trim();
-        if (f.g_refine_param) result_mapping.refine_param = f.g_refine_param.trim();
+        const parsePairs = (text, sep) => {
+          const o = {};
+          (text || '').split(sep).forEach(part => {
+            const i = part.indexOf('=');
+            if (i > 0) { const k = part.slice(0, i).trim(); const v = part.slice(i + 1).trim(); if (k) o[k] = v; }
+          });
+          return o;
+        };
+        const params = parsePairs(f.g_params, '\n');
+        // search_params：每行一組（依序嘗試），組內多參數以 & 串
+        const search_params = (f.g_search_params || '').split('\n')
+          .map(line => parsePairs(line, '&')).filter(o => Object.keys(o).length);
+        // 以原 grounding_scope 為底 merge：表單沒管的鍵（如 result_mapping.label_fields/
+        // label_date_fields/candidate_cap）保留不洗掉；已知欄位以表單值為準（空＝移除）。
+        const origGs = origCfg.grounding_scope || {};
+        const orig = origGs.select === 'api' ? origGs : {};
+        const result_mapping = { ...(orig.result_mapping || {}) };
+        const setOrDel = (key, val) => { if (val) result_mapping[key] = val.trim(); else delete result_mapping[key]; };
+        setOrDel('list_path', f.g_list_path); setOrDel('id_field', f.g_id_field);
+        setOrDel('label_field', f.g_label_field); setOrDel('refine_param', f.g_refine_param);
         grounding_scope = {
+          ...orig,
           select: 'api', endpoint: (f.g_endpoint || '').trim(),
           required_slots: f.g_required_slots.split(',').map(s=>s.trim()).filter(Boolean),
           params, result_mapping };
+        if (search_params.length) grounding_scope.search_params = search_params;
+        else delete grounding_scope.search_params;
       }
       else { grounding_scope = { select: 'vector', target_user: f.target_user, mode: f.g_mode }; if (f.g_mode === 'b2c' && f.g_vendor_id) grounding_scope.vendor_id = parseInt(f.g_vendor_id); }
-      const cfg = { key: f.target_user, answer_mode: f.answer_mode, topic_scope, grounding_scope, enabled: f.enabled };
-      if (f.seed) cfg.seed = f.seed;
+      // cfg 層以原值為底 merge：key 沿用原 key（如 contract_diag；session 的 config_key 靠它續接，
+      // 不可被改名成 target_user）、persona_role 等表單沒管的鍵保留；新增才用 target_user 當 key。
+      const cfg = { ...origCfg, key: origCfg.key || f.target_user, answer_mode: f.answer_mode,
+        topic_scope, grounding_scope, enabled: f.enabled };
+      if (f.seed) cfg.seed = f.seed; else delete cfg.seed;
       return cfg;
     },
     async save() {
