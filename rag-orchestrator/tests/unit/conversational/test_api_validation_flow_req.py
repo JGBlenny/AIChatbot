@@ -32,6 +32,7 @@ def test_extract_identifier_no_semantic_guard():
     assert _extract_identifier("") is None
 
 
+
 # ════════ _ground_by_api：search_params 依序試（後端當裁判）════════
 def _engine_with_handler(side_effect):
     handler = MagicMock()
@@ -71,7 +72,7 @@ def _state(ref):
 async def test_numeric_name_falls_back_to_keyword():
     seen = []
 
-    async def side(api_config, session_data, form_data):
+    async def side(api_config, session_data, form_data, **kwargs):
         seen.append(api_config["params"])
         if "contract_ids" in api_config["params"]:
             return _rows_result([])                              # 當 id → 查無
@@ -87,7 +88,7 @@ async def test_numeric_name_falls_back_to_keyword():
 # ── 真 id 84800：第一組（id）即命中 → 不再試名稱組；grounding 開頭帶「id｜名稱」──
 @pytest.mark.req("domain-conversational-facets:4.4")
 async def test_id_hit_skips_name_attempt():
-    async def side(api_config, session_data, form_data):
+    async def side(api_config, session_data, form_data, **kwargs):
         return _rows_result([{"id": 84800, "title": "台北信義-單人房"}])
 
     eng, handler = _engine_with_handler(side)
@@ -101,7 +102,7 @@ async def test_id_hit_skips_name_attempt():
 # ── 名稱多筆同名：第二組命中多筆 → 列候選（帶 candidates）──
 @pytest.mark.req("domain-conversational-facets:4.4")
 async def test_name_many_rows_lists_candidates():
-    async def side(api_config, session_data, form_data):
+    async def side(api_config, session_data, form_data, **kwargs):
         if "contract_ids" in api_config["params"]:
             return _rows_result([])
         return _rows_result([{"id": 1, "title": "0626"}, {"id": 2, "title": "0626"}])
@@ -114,7 +115,7 @@ async def test_name_many_rows_lists_candidates():
 # ── 兩組都查無 → 0 筆路徑：清無效槽、回追問（不杜撰）──
 @pytest.mark.req("domain-conversational-facets:4.4")
 async def test_all_attempts_zero_clears_slot():
-    async def side(api_config, session_data, form_data):
+    async def side(api_config, session_data, form_data, **kwargs):
         return _rows_result([])
 
     eng, handler = _engine_with_handler(side)
@@ -128,7 +129,7 @@ async def test_all_attempts_zero_clears_slot():
 # ── 向後相容：無 search_params → 單組 params 單次呼叫（既有 config 不受影響）──
 @pytest.mark.req("domain-conversational-facets:4.4")
 async def test_backward_compat_single_params():
-    async def side(api_config, session_data, form_data):
+    async def side(api_config, session_data, form_data, **kwargs):
         return _rows_result([{"id": 1, "title": "X"}])
 
     eng, handler = _engine_with_handler(side)
@@ -169,7 +170,7 @@ def _cfg():
 # ── 切換識別命中 → 提交換合約收斂（不落 brain）──
 @pytest.mark.req("domain-conversational-facets:4.4")
 async def test_switch_hit_commits_new_contract():
-    async def ground(state, config):
+    async def ground(state, config, **kwargs):
         return {"kind": "converge", "grounding": "G"}
 
     eng = _engine_prepare(ground)
@@ -185,7 +186,7 @@ async def test_switch_hit_commits_new_contract():
 # ── 切換識別查無（0 筆）→ 回滾保留原合約、落回 brain（不誤切、不清有效槽）──
 @pytest.mark.req("domain-conversational-facets:4.4")
 async def test_switch_zero_rows_rolls_back_and_falls_to_brain():
-    async def ground(state, config):
+    async def ground(state, config, **kwargs):
         # 模擬真 _ground_by_api：84921 有效→converge；27000 查無→清該槽回 ask（回滾後 brain
         # 對原合約 84921 追問會再打一次 _ground_by_api，此時應命中、不清槽）。
         ref = (state.get("collected_fields") or {}).get("contract_ref")
@@ -207,7 +208,7 @@ async def test_switch_zero_rows_rolls_back_and_falls_to_brain():
 # ── 首次識別查無（原槽本空）→ 回追問請重新識別（無可回滾）──
 @pytest.mark.req("domain-conversational-facets:4.4")
 async def test_first_identify_zero_rows_asks_again():
-    async def ground(state, config):
+    async def ground(state, config, **kwargs):
         (state.get("collected_fields") or {}).pop("contract_ref", None)
         return {"kind": "ask", "answer": "查無對應的資料…"}
 

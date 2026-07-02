@@ -78,7 +78,8 @@ class APICallHandler:
         session_data: Optional[Dict[str, Any]] = None,
         form_data: Optional[Dict[str, Any]] = None,
         user_input: Optional[Dict[str, Any]] = None,
-        knowledge_answer: Optional[str] = None
+        knowledge_answer: Optional[str] = None,
+        face: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         執行 API 調用
@@ -89,6 +90,7 @@ class APICallHandler:
             form_data: 表單收集的數據
             user_input: 用戶輸入的其他參數
             knowledge_answer: 知識庫答案（用於 combine_with_knowledge）
+            face: 當輪對話面向（僅透傳給領域 formatter 選 fact 集，此層不解讀）
 
         Returns:
             {
@@ -174,7 +176,7 @@ class APICallHandler:
             formatted_response = self._format_response(
                 api_config, api_result, knowledge_answer,
                 endpoint=endpoint, user_input=user_input,
-                form_data=form_data
+                form_data=form_data, face=face
             )
 
             return {
@@ -336,7 +338,8 @@ class APICallHandler:
         knowledge_answer: Optional[str],
         endpoint: str = "",
         user_input: Optional[Dict[str, Any]] = None,
-        form_data: Optional[Dict[str, Any]] = None
+        form_data: Optional[Dict[str, Any]] = None,
+        face: Optional[str] = None
     ) -> str:
         """格式化 API 響應"""
         # 建立/寫入型 API 不合併知識庫答案
@@ -352,7 +355,7 @@ class APICallHandler:
             )
         else:
             # 使用默認格式
-            api_response_text = self._format_api_data(api_result, endpoint=endpoint, user_input=user_input, form_data=form_data)
+            api_response_text = self._format_api_data(api_result, endpoint=endpoint, user_input=user_input, form_data=form_data, face=face)
 
         # 是否合併知識答案
         if combine_with_knowledge and knowledge_answer:
@@ -360,7 +363,7 @@ class APICallHandler:
         else:
             return api_response_text
 
-    def _format_api_data(self, api_result, endpoint: str = "", user_input: Optional[Dict[str, Any]] = None, form_data: Optional[Dict[str, Any]] = None) -> str:
+    def _format_api_data(self, api_result, endpoint: str = "", user_input: Optional[Dict[str, Any]] = None, form_data: Optional[Dict[str, Any]] = None, face: Optional[str] = None) -> str:
         """
         格式化 API 數據為易讀文本
 
@@ -384,12 +387,12 @@ class APICallHandler:
                 return self._format_error_data(api_result)
 
             # 正常數據格式化
-            return self._format_success_data(api_result, endpoint=endpoint, user_input=user_input, form_data=form_data)
+            return self._format_success_data(api_result, endpoint=endpoint, user_input=user_input, form_data=form_data, face=face)
 
         # 其他類型直接轉字符串
         return str(api_result)
 
-    def _format_success_data(self, api_result: dict, endpoint: str = "", user_input: Optional[Dict[str, Any]] = None, form_data: Optional[Dict[str, Any]] = None) -> str:
+    def _format_success_data(self, api_result: dict, endpoint: str = "", user_input: Optional[Dict[str, Any]] = None, form_data: Optional[Dict[str, Any]] = None, face: Optional[str] = None) -> str:
         """格式化成功的 API 數據"""
         # 特殊處理：如果結果已經包含 formatted_response，直接使用
         if 'formatted_response' in api_result:
@@ -404,7 +407,7 @@ class APICallHandler:
                 user_question = user_input.get("message", "") or user_input.get("original_question", "")
             return format_jgb_response(
                 api_result, endpoint=endpoint, user_question=user_question,
-                form_data=form_data
+                form_data=form_data, face=face
             )
 
         lines = ['✅ **查詢成功**\n']

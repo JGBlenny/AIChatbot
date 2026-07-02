@@ -337,7 +337,7 @@ class ConversationalEngine:
                 # 領域鍵＝當輪面向（state.face；未曾切換＝進入面向）；插點A 不跑 brain（護欄1：待答中不切）
                 system_md = await self._get_system_context(
                     self.db_pool, state.get("face") or _domain_key(config))
-                r = await self._ground_by_api(state, config)
+                r = await self._ground_by_api(state, config, user_message=user_message)
                 if r["kind"] == "converge":
                     return {"kind": "converge", "grounding": r["grounding"], "ctx": None,
                             "cta_mode": "suppress", "converge_kind": "answer", "system_md": _synth_context(system_md, config),
@@ -361,7 +361,7 @@ class ConversationalEngine:
                 # ★ 先搜後提交（API 驗證式）：以候選識別探查，命中才提交；查無則回滾、不誤切。
                 state.setdefault("collected_fields", {})[slot] = _ident
                 state.pop("pending_candidates", None)   # 換識別 → 清舊候選
-                r = await self._ground_by_api(state, config)   # 0 筆時內部會清該 slot
+                r = await self._ground_by_api(state, config, user_message=user_message)   # 0 筆時內部會清該 slot
                 if r["kind"] == "converge":
                     await self._save(session_id, state)
                     system_md = await self._get_system_context(
@@ -440,7 +440,7 @@ class ConversationalEngine:
             # 【插點 B】收斂選材：select=='api' → API grounding（可降級回 ask）；否則既有知識 grounding。
             gscope = config.grounding_scope or {}
             if (gscope.get("select") or "").lower() == "api":
-                r = await self._ground_by_api(state, config)
+                r = await self._ground_by_api(state, config, user_message=user_message)
                 if r["kind"] == "ask":  # 0/N 筆或 API 失敗 → 降級回追問（非 converge，R3.4/R3.5）
                     state["asked_count"] = asked + 1  # 維持提問次數上限保護（R2.4）
                     if r.get("candidates"):
@@ -506,7 +506,8 @@ class ConversationalEngine:
 
     # ---------- API grounding（select:"api"，conversational-diagnosis R3.1–R3.6/R6.1/R6.3） ----------
     async def _ground_by_api(self, state: Dict[str, Any],
-                             config: "ConversationalConfig") -> ApiGroundingResult:
+                             config: "ConversationalConfig",
+                             user_message: str = "") -> ApiGroundingResult:
         """收齊槽位後呼叫設定指定之 API，依回傳筆數分三路（1/0/N）。
 
         重用既有 `api_handler.execute_api_call`（不另寫 API 邏輯，R3.2）：
@@ -514,6 +515,8 @@ class ConversationalEngine:
           - slot 走 `form_data` 通道（= collected_fields），會話資訊走 session_data（含 role_id，R3.1）；
           - 資料列以 `result_mapping.list_path` 取出、候選 id/label 以 `id_field`/`label_field` 取，
             全部由設定驅動（R6.1，程式不出現特定面向欄位字面）。
+          - `user_message`/`state.face` 透傳給決定性 formatter 選 fact 集（contract-conversational-facets
+            R7.1）：原句走既有 user_input 通道、face 為選配參數，皆不在引擎解讀。
         API 例外/失敗 → 安全 ask 降級（R3.6），不拋出。
         """
         scope = config.grounding_scope or {}
@@ -538,7 +541,11 @@ class ConversationalEngine:
             params = {**base_params, **overlay} if overlay else dict(base_params)
             api_config = {"endpoint": endpoint, "params": params}
             try:
-                result = await self.api_handler.execute_api_call(api_config, session_data, form_data)
+                result = await self.api_handler.execute_api_call(
+                    api_config, session_data, form_data,
+                    user_input={"message": user_message} if user_message else None,
+                    face=state.get("face"),
+                )
             except Exception as e:  # 逾時/連線等例外 → 不阻斷（R3.6）
                 print(f"⚠️ API grounding 呼叫失敗（降級 ask）：{e}")
                 return {"kind": "ask", "answer": "目前查詢系統忙線，請稍後再試或由專人協助您。"}
