@@ -26,18 +26,16 @@ def test_looks_like_identifier():
     assert _looks_like_identifier("2") is False              # 單字太短（避免誤catch）
 
 
-# ── _extract_identifier：句中抽 id-like 編號（防誤抓金額/日期）──
+# ── _extract_identifier：句中抽 id-like 編號（退掉語意 guard，後端當裁判）──
+# 詳見 test_api_validation_flow_req.py：金額/單位不再靠清單擋，抽出交後端探查，
+# 查無則回滾保留原合約（不誤切）——避免累積領域特例。此處僅守結構性判斷。
 @pytest.mark.req("domain-conversational-facets:4.4")
 def test_extract_identifier():
     from services.conversational_engine import _extract_identifier
     assert _extract_identifier("84800") == "84800"              # 純數字
     assert _extract_identifier("那換 84328 呢?") == "84328"      # 文字切換
     assert _extract_identifier("84328 的狀態?") == "84328"
-    assert _extract_identifier("月租 27000 對嗎?") is None       # 金額（月租前綴）不抓
-    assert _extract_identifier("押金 50000") is None
-    assert _extract_identifier("27000元") is None               # 元 單位不抓
-    assert _extract_identifier("2026 年到期") is None            # 年份不抓
-    assert _extract_identifier("可以點退嗎?") is None            # 無數字
+    assert _extract_identifier("可以點退嗎?") is None            # 無 id-like token
     assert _extract_identifier("基隆溫馨一人宅套房") is None      # 文字名稱交 brain
 
 

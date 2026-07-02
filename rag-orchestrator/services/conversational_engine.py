@@ -80,30 +80,23 @@ def _looks_like_identifier(msg: Optional[str]) -> bool:
     return m.isdigit() and 2 <= len(m) <= 15
 
 
-# 數字後方的金額/日期單位（跟在數字後即非編號）；前方的金額語意（如月租）亦排除
-_ID_UNIT_AFTER = "元塊％%坪年月日天期時分秒歲位"
-_ID_AMOUNT_CUE = ("月租", "租金", "押金", "金額", "價", "費")
 _ID_TOKEN_RE = re.compile(r"\d{4,15}")
 
 
 def _extract_identifier(msg: Optional[str]) -> Optional[str]:
-    """抽「明確識別編號」：純數字整句（2–15 位）直接回；否則從句中抽 id-like token
-    （≥4 位、非緊接金額/日期單位、前方非月租/押金等金額語意）——供等待/切換識別時確定性填槽，
-    繞過 LLM 不穩的抽取。抓不到回 None（文字名稱等交 brain）。純位置語義，不硬編面向欄位。"""
+    """抽「候選識別」：純數字整句（2–15 位）直接回；否則從句中抽第一個 id-like token（≥4 位）。
+    抓不到回 None（純文字名稱等交 brain）。
+
+    ★ API 驗證式（後端當裁判）：這裡**只做結構性抽取**、不靠金額/單位語意 guard 預先分類——
+      抽到的識別交 `prepare` 先搜後提交（`_ground_by_api` 探查），查無則回滾保留原識別、
+      落回 brain（不誤切、不清有效槽）。刻意不累積領域特例清單。純位置語義，不硬編面向欄位。"""
     m = (msg or "").strip()
     if not m:
         return None
     if m.isdigit() and 2 <= len(m) <= 15:
         return m
-    for mt in _ID_TOKEN_RE.finditer(m):
-        after = m[mt.end():].lstrip()[:1]
-        before = m[:mt.start()].rstrip()[-3:]
-        if after and after in _ID_UNIT_AFTER:
-            continue
-        if any(cue in before for cue in _ID_AMOUNT_CUE):
-            continue
-        return mt.group(0)
-    return None
+    mt = _ID_TOKEN_RE.search(m)
+    return mt.group(0) if mt else None
 
 
 def _domain_key(config) -> Optional[str]:
@@ -346,23 +339,36 @@ class ConversationalEngine:
             #   不靠 brain（LLM 對數字抽取/更新不穩，如「84800」抽不到、切換不更新）。slot 讀設定，零硬編。
             gscope = config.grounding_scope or {}
             required = gscope.get("required_slots") or []
-            _ident = _extract_identifier(user_message) if required else None
-            if (gscope.get("select") or "").lower() == "api" and required and _ident is not None \
-                    and _ident != (state.get("collected_fields") or {}).get(required[0]):
-                state.setdefault("collected_fields", {})[required[0]] = _ident
+            slot = required[0] if required else None
+            _ident = _extract_identifier(user_message) if slot else None
+            _prev_ident = (state.get("collected_fields") or {}).get(slot) if slot else None
+            if (gscope.get("select") or "").lower() == "api" and slot and _ident is not None \
+                    and _ident != _prev_ident:
+                # ★ 先搜後提交（API 驗證式）：以候選識別探查，命中才提交；查無則回滾、不誤切。
+                state.setdefault("collected_fields", {})[slot] = _ident
                 state.pop("pending_candidates", None)   # 換識別 → 清舊候選
-                await self._save(session_id, state)
-                system_md = await self._get_system_context(
-                    self.db_pool, state.get("face") or _domain_key(config))
-                r = await self._ground_by_api(state, config)
+                r = await self._ground_by_api(state, config)   # 0 筆時內部會清該 slot
                 if r["kind"] == "converge":
+                    await self._save(session_id, state)
+                    system_md = await self._get_system_context(
+                        self.db_pool, state.get("face") or _domain_key(config))
                     return {"kind": "converge", "grounding": r["grounding"], "ctx": None,
                             "cta_mode": "suppress", "converge_kind": "answer", "system_md": system_md,
                             "session_id": session_id, "state": state, "user_message": user_message}
                 if r.get("candidates"):
                     state["pending_candidates"] = r["candidates"]
-                await self._save(session_id, state)   # 存檔：含 0 筆時 _ground_by_api 已清空的無效 slot
-                return {"kind": "ask", "answer": r["answer"]}
+                    await self._save(session_id, state)
+                    return {"kind": "ask", "answer": r["answer"]}
+                # 0 筆 → 不提交此識別（後端當裁判）：
+                if _prev_ident is not None:
+                    # 原本已有有效識別 → 回滾保留，落回 brain 當作對原識別的追問（不誤切、不清有效槽）。
+                    state.setdefault("collected_fields", {})[slot] = _prev_ident
+                    await self._save(session_id, state)
+                    # 不 return，續走下方 brain 流程
+                else:
+                    # 首次識別即查無（無可回滾）→ slot 已被清空，回追問請重新識別。
+                    await self._save(session_id, state)
+                    return {"kind": "ask", "answer": r["answer"]}
 
             # 領域鍵＝當輪面向（state.face；首輪＝進入面向 _domain_key）：per-領域系統脈絡疊加（R2.1/R2.2）
             faces = await _domain_faces(self.db_pool, config)
@@ -497,7 +503,12 @@ class ConversationalEngine:
         """
         scope = config.grounding_scope or {}
         mapping = scope.get("result_mapping") or {}
-        api_config = {"endpoint": scope.get("endpoint"), "params": scope.get("params") or {}}
+        endpoint = scope.get("endpoint")
+        base_params = scope.get("params") or {}
+        # ★ API 驗證式（後端當裁判）：`search_params` 明列多組「搜尋嘗試」，依序試、第一組有結果即止——
+        #   因後端常把 id 與關鍵字當 AND 不能同送（如合約：先當 id 查、查無再當名稱查，數字名稱不漏）。
+        #   未設 → 單組（base_params），向後相容。overlay 疊在 base_params 上；全讀設定，不硬編面向欄位。
+        overlays = scope.get("search_params") or [None]
         form_data = state.get("collected_fields") or {}
         session_data = {
             "role_id": state.get("role_id"),
@@ -505,21 +516,27 @@ class ConversationalEngine:
             "session_id": state.get("session_id"),
             "user_id": state.get("user_id"),
         }
-        try:
-            result = await self.api_handler.execute_api_call(api_config, session_data, form_data)
-        except Exception as e:  # 逾時/連線等例外 → 不阻斷（R3.6）
-            print(f"⚠️ API grounding 呼叫失敗（降級 ask）：{e}")
-            return {"kind": "ask", "answer": "目前查詢系統忙線，請稍後再試或由專人協助您。"}
 
-        result = result or {}
-        if not result.get("success"):
-            return {"kind": "ask", "answer": "目前查詢系統忙線，請稍後再試或由專人協助您。"}
-
-        rows = _dig_path(result.get("data"), mapping.get("list_path"))
-        if rows is None:
-            rows = []
-        elif not isinstance(rows, list):
-            rows = [rows]
+        result: Dict[str, Any] = {}
+        rows: List[Any] = []
+        for overlay in overlays:
+            params = {**base_params, **overlay} if overlay else dict(base_params)
+            api_config = {"endpoint": endpoint, "params": params}
+            try:
+                result = await self.api_handler.execute_api_call(api_config, session_data, form_data)
+            except Exception as e:  # 逾時/連線等例外 → 不阻斷（R3.6）
+                print(f"⚠️ API grounding 呼叫失敗（降級 ask）：{e}")
+                return {"kind": "ask", "answer": "目前查詢系統忙線，請稍後再試或由專人協助您。"}
+            result = result or {}
+            if not result.get("success"):
+                return {"kind": "ask", "answer": "目前查詢系統忙線，請稍後再試或由專人協助您。"}
+            rows = _dig_path(result.get("data"), mapping.get("list_path"))
+            if rows is None:
+                rows = []
+            elif not isinstance(rows, list):
+                rows = [rows]
+            if rows:
+                break   # 有結果 → 用這組（不再試後續嘗試）
 
         # 0 筆：不杜撰，回到追問請使用者確認/更正識別（R3.4）。
         #   ★ 清掉無效的識別槽位——否則殘留無效值會卡住下一句重新識別（讀設定 required_slots，零硬編）。
@@ -565,8 +582,13 @@ class ConversationalEngine:
         #   ★ 由 formatter 產「乾淨中文 facts」餵 LLM 組話——不餵原始碼讓 LLM 自行解碼
         #     （已證實 LLM 解碼會幻覺/張冠李戴/代碼外洩）。
         state.pop("_refine_requested", None)  # 收斂＝分流解決，清補條件標記
+        # 收斂底稿開頭帶「識別值｜名稱」：讓 LLM 能把使用者用的編號/名稱對回這筆事實。
+        #   （使用者常用 id 稱呼，但 formatter facts 只帶名稱；grounding 不含 id → LLM 會誤判成
+        #     「這不是他問的那筆」而推託/要求再提供。）id/label 皆讀 result_mapping，零硬編面向欄位。
+        rid = rows[0].get(mapping.get("id_field")) if mapping.get("id_field") else None
         label = rows[0].get(mapping.get("label_field")) if mapping.get("label_field") else None
-        parts = [str(p) for p in (label, result.get("formatted_response")) if p]
+        head = "｜".join(str(p) for p in (rid, label) if p is not None and p != "")
+        parts = [p for p in (head, result.get("formatted_response")) if p]
         grounding = "\n".join(parts) if parts else str(rows[0])
         return {"kind": "converge", "grounding": grounding}
 

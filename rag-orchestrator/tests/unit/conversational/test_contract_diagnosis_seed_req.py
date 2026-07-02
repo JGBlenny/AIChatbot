@@ -51,11 +51,13 @@ def test_seed_grounding_scope_is_api_with_full_mapping():
     assert gs["select"] == "api"
     assert gs["endpoint"] == "jgb_contracts"
     assert gs["required_slots"] == ["contract_ref"]
-    assert gs["params"] == {
-        "role_id": "{session.role_id}",
-        "contract_ids": "{form.contract_ref|if_numeric}",
-        "keyword": "{form.contract_ref|if_text}",
-    }
+    # API 驗證式（後端當裁判）：共用 params 只放身分過濾；識別走 search_params 依序試
+    #   （先當 id、查無再當名稱）——因後端 id 與關鍵字為 AND 不能同送。數字名稱（如 0626）不漏。
+    assert gs["params"] == {"role_id": "{session.role_id}"}
+    assert gs["search_params"] == [
+        {"contract_ids": "{form.contract_ref}"},
+        {"keyword": "{form.contract_ref}"},
+    ]
     assert gs["result_mapping"] == {
         "list_path": "data", "id_field": "id",
         "label_field": "title", "refine_param": "contract_ids",
