@@ -109,7 +109,9 @@ async def test_multiturn_ambiguous_then_distinguishing_candidates(pool):
         assert all("｜" in lb for lb in labels)
         assert any("/" in lb for lb in labels)
         # 面向集合由 category_config 衍生、三層脈絡注入 brain
-        assert brain.seen["faces"] == ["狀態判斷"]
+        # 面向集合由 category_config 衍生（contract-conversational-facets 上庫後擴為 6 面向，
+        #   本測試意圖＝「集合有衍生且注入 brain」，不鎖面向數）
+        assert "狀態判斷" in (brain.seen["faces"] or [])
         assert brain.seen["base"] and brain.seen["parent"] and brain.seen["child"]
     finally:
         await _cleanup(pool, sid)
