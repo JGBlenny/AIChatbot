@@ -99,6 +99,15 @@ def _extract_identifier(msg: Optional[str]) -> Optional[str]:
     return mt.group(0) if mt else None
 
 
+def _synth_context(system_md: Optional[str], config) -> Optional[str]:
+    """收斂組答用的系統脈絡＝領域脈絡＋本對話 answer_rules（設定資料承載的作答行為，
+    如：底稿在手直接答/禁推託/只有一份時比較請補識別）。未設 → 原樣（向後相容售前）。"""
+    extra = getattr(config, "answer_rules", None)
+    if extra:
+        return f"{system_md}\n\n{extra}" if system_md else extra
+    return system_md
+
+
 def _domain_key(config) -> Optional[str]:
     """領域鍵（載入 per-領域系統脈絡用）：
       - 診斷型面向（topic_scope.mode=='category'）→ 用其**母/子分類值** topic_scope.category
@@ -326,7 +335,7 @@ class ConversationalEngine:
                 r = await self._ground_by_api(state, config)
                 if r["kind"] == "converge":
                     return {"kind": "converge", "grounding": r["grounding"], "ctx": None,
-                            "cta_mode": "suppress", "converge_kind": "answer", "system_md": system_md,
+                            "cta_mode": "suppress", "converge_kind": "answer", "system_md": _synth_context(system_md, config),
                             "session_id": session_id, "state": state, "user_message": user_message}
                 # 仍非單筆（資料異動，少見）→ 安全降級回 ask（含可能新候選）
                 if r.get("candidates"):
@@ -353,7 +362,7 @@ class ConversationalEngine:
                     system_md = await self._get_system_context(
                         self.db_pool, state.get("face") or _domain_key(config))
                     return {"kind": "converge", "grounding": r["grounding"], "ctx": None,
-                            "cta_mode": "suppress", "converge_kind": "answer", "system_md": system_md,
+                            "cta_mode": "suppress", "converge_kind": "answer", "system_md": _synth_context(system_md, config),
                             "session_id": session_id, "state": state, "user_message": user_message}
                 if r.get("candidates"):
                     state["pending_candidates"] = r["candidates"]
@@ -438,7 +447,7 @@ class ConversationalEngine:
                 grounding, ctx, cta_mode = await self._converge_grounding(
                     state, step.get("converge_topic"), user_message, config, converge_kind)
             return {"kind": "converge", "grounding": grounding, "ctx": ctx, "cta_mode": cta_mode,
-                    "converge_kind": converge_kind, "system_md": system_md,
+                    "converge_kind": converge_kind, "system_md": _synth_context(system_md, config),
                     "session_id": session_id, "state": state, "user_message": user_message}
         except Exception as e:
             print(f"❌ 對話引擎 prepare 失敗（降級）：{e}")

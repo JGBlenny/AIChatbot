@@ -37,6 +37,9 @@ class ConversationalConfig:
     #   {"mode":"category","category":"退租結算"} / {"mode":"keywords","keywords":[...]} = 主題級（檢索命中才進）
     topic_scope: Dict[str, Any] = field(default_factory=lambda: {"mode": "all"})
     enabled: bool = True
+    # answer_rules：本對話的「收斂作答規則」（如：底稿在手直接答、禁推託語、只有一份時比較請補識別）。
+    #   屬對話行為、隨設定走（換面向不消失、新領域不用抄面向脈絡）；收斂組答時附加於系統脈絡後。
+    answer_rules: Optional[str] = None
 
 
 # code 內建 fallback（DB 無設定 metadata 時用）；售前為第一個設定。
@@ -73,6 +76,7 @@ def _config_from_row(target_user: Optional[List[str]], metadata: Any) -> Optiona
         seed=md.get("seed"),
         topic_scope=md.get("topic_scope") or {"mode": "all"},
         enabled=md.get("enabled", True),
+        answer_rules=md.get("answer_rules"),
     )
 
 
