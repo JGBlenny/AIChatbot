@@ -33,6 +33,18 @@ def test_ops_line_carries_effectiveness_statement():
     assert "未列出的操作目前不可進行" in out               # 清單外＝不可
 
 
+# ── 點交點退同時可用 → 明寫「可略過點交直接點退」（jgb2 canMoveOut 不要求先點交；
+#     模型的「退租前須先交屋」先驗連效力聲明都壓不住，由程式講死，6/6 實測收斂）──
+@pytest.mark.req("domain-conversational-facets:3.2")
+def test_pair_clarifier_when_both_movein_moveout_available():
+    from datetime import datetime, timedelta
+    bits = ContractBit.READY | ContractBit.INVITING | ContractBit.INVITING_NEXT | ContractBit.SIGNED
+    near_end = int((datetime.now() + timedelta(days=15)).strftime("%Y%m%d"))  # 30 天窗內→點退可用
+    out = _format_status_response(_contract(bits, ContractBit.SIGNED, date_end=near_end))
+    assert "點交" in out and "點退" in out
+    assert "可略過點交直接點退" in out
+
+
 # ── 無可用操作 → 原樣「沒有可進行的操作」（不加聲明）──
 @pytest.mark.req("domain-conversational-facets:3.2")
 def test_no_ops_line_unchanged():

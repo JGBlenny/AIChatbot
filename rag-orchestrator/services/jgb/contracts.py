@@ -493,8 +493,12 @@ def _format_status_response(contract: dict) -> str:
     if available:
         # 效力聲明：各 check_can_* 為系統獨立判定（jgb2 真規則），列出即可直接做——
         # 明講「彼此獨立/未列出者不可」，堵 LLM 用常識自加前置條件（如「要先點交才能點退」）。
-        lines.append(f"\n目前可進行的操作：{'、'.join(available)}"
-                     "（以上操作皆可立即進行、彼此獨立無先後依賴；未列出的操作目前不可進行）")
+        note = "以上操作皆可立即進行、彼此獨立無先後依賴；未列出的操作目前不可進行"
+        if "點交" in available and "點退" in available:
+            # 模型最常腦補的一點（「退租前須先交屋」常識先驗）直接講死——jgb2 canMoveOut
+            # 不要求先點交，此為忠實語意陳述（決定性），非猜測。
+            note += "。點退不以點交為前提，可略過點交直接點退"
+        lines.append(f"\n目前可進行的操作：{'、'.join(available)}（{note}）")
     else:
         lines.append("\n目前沒有可進行的操作。")
 
