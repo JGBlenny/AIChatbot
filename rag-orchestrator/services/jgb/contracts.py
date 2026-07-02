@@ -461,6 +461,23 @@ def _format_status_response(contract: dict) -> str:
     if rent:
         lines.append(f"• 月租金：NT$ {rent:,.0f}")
 
+    # 已完成的歷程（bit_status 逐位元機械解碼）：讓「某流程做了沒/完成沒」有據可答。
+    bit_status_val = contract.get("bit_status", 0)
+    milestones = decode_bit_status(bit_status_val)
+    if milestones:
+        lines.append(f"• 已完成的歷程：{'、'.join(milestones)}")
+
+    # 進行中未完成（送出位元有、完成位元無 → 程式判定）：「缺某位元＝未完成」這種
+    # 缺席推理 LLM 做不可靠（會把「已發送」腦補成「已完成」），由程式明講。
+    pending = [text for sent, done, text in [
+        (ContractBit.MOVE_OUT, ContractBit.MOVE_OUT_DONE, "點退已送出但租客尚未同意（點退未完成）"),
+        (ContractBit.MOVE_IN, ContractBit.MOVE_IN_DONE, "點交已送出但租客尚未同意（點交未完成）"),
+        (ContractBit.EARLY_TERMINATION, ContractBit.EARLY_TERMINATION_DONE,
+         "提前解約申請中、尚未確認（未完成）"),
+    ] if has_bit(bit_status_val, sent) and not has_bit(bit_status_val, done)]
+    if pending:
+        lines.append(f"• 進行中未完成：{'、'.join(pending)}")
+
     # 簡要列出可用操作
     available = []
     for check_fn, label in [
@@ -474,7 +491,10 @@ def _format_status_response(contract: dict) -> str:
             available.append(label)
 
     if available:
-        lines.append(f"\n目前可進行的操作：{'、'.join(available)}")
+        # 效力聲明：各 check_can_* 為系統獨立判定（jgb2 真規則），列出即可直接做——
+        # 明講「彼此獨立/未列出者不可」，堵 LLM 用常識自加前置條件（如「要先點交才能點退」）。
+        lines.append(f"\n目前可進行的操作：{'、'.join(available)}"
+                     "（以上操作皆可立即進行、彼此獨立無先後依賴；未列出的操作目前不可進行）")
     else:
         lines.append("\n目前沒有可進行的操作。")
 

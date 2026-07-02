@@ -911,7 +911,12 @@ class LLMAnswerOptimizer:
                 "\n【限制】這是延續對話中的回答，請**直接把問題答清楚就好，不要附上 demo 預約連結、"
                 "也不要主動推銷預約**（除非使用者自己問怎麼預約）；保持自然。"
             )
-        temp = float(os.getenv("LLM_SYNTHESIS_TEMP", "0.5"))
+        # 事實型答問（suppress，如診斷收斂）走低溫：答案應近確定性、不該因溫度抖動
+        #   （同輸入曾出現可/不可互相矛盾）。推薦/一般合成維持原溫度（口吻多樣性）。
+        if cta_mode == "suppress":
+            temp = float(os.getenv("LLM_ANSWER_SYNTH_TEMP", "0.2"))
+        else:
+            temp = float(os.getenv("LLM_SYNTHESIS_TEMP", "0.5"))
         if cta_mode == "force":
             model = os.getenv("PRESALES_SYNTH_MODEL", self.config["model"])
         else:
