@@ -37,7 +37,7 @@ TARGET_USER = os.getenv("TEST_DIAG_TARGET_USER", "property_manager")
 REF_ONE = os.getenv("TEST_CONTRACT_REF_ONE", "")
 REF_MULTI = os.getenv("TEST_CONTRACT_REF_MULTI", "")
 REF_NONE = os.getenv("TEST_CONTRACT_REF_NONE", "查無此合約xyz")
-DIAG_CATEGORY = "條件診斷:合約"
+DIAG_CATEGORY = "狀態判斷"  # 合約診斷面向（實作定名；同 test_domain_facets_e2e_req.py）
 
 
 def _conn_kwargs():

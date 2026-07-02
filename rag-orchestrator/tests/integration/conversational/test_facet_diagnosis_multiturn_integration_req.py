@@ -15,7 +15,9 @@ import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-os.environ.setdefault("USE_MOCK_JGB_API", "true")
+# 本檔設計即走 mock jgb2（腳本化、決定性）；用硬設而非 setdefault——
+# 在常駐容器（USE_MOCK_JGB_API=false 打真 API）跑時 setdefault 蓋不掉，會變成打真 API 的不決定性測試。
+os.environ["USE_MOCK_JGB_API"] = "true"
 
 pytestmark = pytest.mark.integration
 
@@ -59,8 +61,10 @@ class _Brain:
 
     def conversational_step(self, rules, system_md, state, msg, faces=None):
         self.turn += 1
+        # 三層脈絡標記＝現行種子（seed_domain_contract_system_context.sql）的獨有語句：
+        #   母『系統合約』＝12 里程碑表；子『狀態判斷』＝以系統判定為準（原始 bit_status 已改由 formatter 解碼，不再進脈絡）
         self.seen = {"faces": faces, "base": "金箍棒" in system_md,
-                     "parent": "bit_status" in system_md, "child": "各階段下一步" in system_md}
+                     "parent": "12 里程碑" in system_md, "child": "不要自行推斷操作條件" in system_md}
         if self.turn == 1:
             return {"action": "ask", "converge_kind": "answer", "extracted_fields": {},
                     "next_question": "請問哪一份合約？", "scope": "stay"}
@@ -131,9 +135,9 @@ async def test_single_row_converges_with_hybrid_three_level_context(pool):
         assert d["kind"] == "converge"
         # 混合底稿：API 現值（bit_status=47）
         assert "bit_status=47" in d["grounding"]
-        # 三層面向 system_md：base + 母共用(12階段) + 子面向(狀態判斷下一步)
+        # 三層面向 system_md：base + 母共用(12 里程碑) + 子面向(以系統判定為準)
         smd = d["system_md"]
-        assert "金箍棒" in smd and "bit_status" in smd and "各階段下一步" in smd
+        assert "金箍棒" in smd and "12 里程碑" in smd and "不要自行推斷操作條件" in smd
     finally:
         await _cleanup(pool, sid)
 
