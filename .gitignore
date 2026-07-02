@@ -107,6 +107,8 @@ test_*.json
 backups/
 *.sql
 *.sql.gz
+# …但 migrations/種子是部署必需，不屬備份 → 例外進版控
+!rag-orchestrator/database/migrations/*.sql
 
 
 # 覆蓋率執行產物（基準 coverage-baseline.json 才版控）
