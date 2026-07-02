@@ -44,12 +44,12 @@ def test_presales_suppress_branch_stays_generic():
         assert contract_only not in p           # 對話層鐵則不得混入共用函式
 
 
-# ── force（推薦型）不受影響：仍帶 CTA/demo ──
+# ── force（推薦型）也通用化：CTA/排版塊已外移 config.cta_rules（見 test_presales_rules_extraction）──
 @pytest.mark.req("domain-conversational-facets:3.2")
-def test_force_branch_unaffected():
+def test_force_branch_generic_no_hardcoded_cta():
     opt = LLMAnswerOptimizer(config={}, llm_provider=MagicMock())
     messages, _m, _t = opt._build_presales_synth(
         grounding_knowledge="方案知識", accumulated_context=None, system_context_md="SYS",
         user_question="有什麼方案", cta_mode="force")
     p = "\n".join(m["content"] for m in messages)
-    assert "demo" in p.lower()
+    assert "jgbsmart.com" not in p      # 業務網址不再硬編在共用程式

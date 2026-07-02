@@ -814,22 +814,10 @@ class LLMAnswerOptimizer:
     # presales 模式：grounded 葉答案 / 自由問答合成（option-routing R11/R13）
     # ========================================
 
-    PRESALES_SYNTH_RULES = (
-        "【合成鐵則（必守）】\n"
-        "- 只用「系統脈絡 + 可用知識」內的事實，嚴禁新增、誇大或杜撰（尤其價格、競品、IoT 規格）。\n"
-        "- 不報價：價格/級距一律導 [查看方案與費用](https://www.jgbsmart.com/pricing) 或留資，不講數字。\n"
-        "- 競品：不主動點名；被問且本次有 E1 事實才中立比較，未列明說「不確定，建議向對方確認」，不斷言對方沒有。\n"
-        "- 系統脈絡與知識都沒有的『細節』才導 demo/專人；功能「有沒有/能不能」這類，知識或系統"
-        "脈絡有提到就**直接回答（有就說有、簡述怎麼運作）**，別動不動推 demo。\n"
-        "- **不必每則回覆都推 demo**：一般追問把問題答清楚即可。只有在『推薦結論』或『使用者表示"
-        "要行動/想看實際操作』時，才附上預約連結 [立即預約 demo](https://www.jgbsmart.com/demo-form) 。\n"
-        "- 口吻：顧問式、親切專業、簡潔不誇大；可依使用者情境個人化。\n"
-        "- 排版可讀性：短答 1–2 句即可、不硬湊；**一次要講多個點（如競品比較、多項功能）就用"
-        "『• 條列』分行呈現，每點一行，別擠成一大段**。\n"
-        "- 連結一律用 **markdown 格式 [標籤](網址)**、**禁止貼裸網址**："
-        "預約 → [立即預約 demo](https://www.jgbsmart.com/demo-form)；"
-        "方案 → [查看方案與費用](https://www.jgbsmart.com/pricing)。"
-    )
+    # 售前合成鐵則/CTA 排版塊已外移至 conversational_config（PRESALES_ANSWER_RULES/
+    # PRESALES_CTA_RULES 為 code 保底；DB 設定列 answer_rules/cta_rules 優先、後台可編）。
+    # 附加時機：引擎 _synth_context 收斂時把規則併入 system_md（cta_rules 僅 force）——
+    # 本函式保持通用，不再硬編任何角色/業務內容（各對話吃各自規則，不互相污染）。
 
     # 對話 brain 規則（人格）已外移至 services/conversational_rules.py（R19 reframe：
     # advisor→conversational，DB category='對話規則' 載入 + code fallback）；brain 不綁角色。
@@ -905,7 +893,7 @@ class LLMAnswerOptimizer:
                 ctx_lines.append(f"- {label}：{val}" if label else f"- {val}")
         ctx_txt = "\n".join(ctx_lines) if ctx_lines else "（無特定情境）"
 
-        system_prompt = f"{system_context_md}\n\n{self.PRESALES_SYNTH_RULES}".strip()
+        system_prompt = (system_context_md or "").strip()
         user_prompt = (
             f"【使用者情境】\n{ctx_txt}\n\n"
             f"【可用知識（唯一事實來源，不得超出）】\n{grounding_knowledge}\n"
@@ -916,24 +904,9 @@ class LLMAnswerOptimizer:
             "\n請依系統脈絡的口吻與合規鐵則，整合上述情境與知識，生成個人化、自然的回覆；"
             "只用提供的事實，缺的導向出口。"
         )
-        if cta_mode == "force":
-            user_prompt += (
-                "\n【整篇排版與收束（必照，一次寫好）】讓回覆好讀且收尾整合：\n"
-                "1. 開頭 1–2 句：同理使用者情境 + 點出可解決的問題。\n"
-                "2. 中段：用『• 分行條列』列出最相關的功能/價值（約 3–5 點，每點一行，"
-                "不要擠成一大段文字）。\n"
-                "3. 結尾：**只用『一個』整合的「下一步」區塊**收束（不要分散成多段、不要重複收尾）；"
-                "把行動呼籲集中放這裡，分行條列。範例：\n"
-                "下一步：\n"
-                "• 免費試用一個月，親自體驗\n"
-                "• 預約 demo 或留聯絡方式，由專人帶您看 👉 [立即預約 demo](https://www.jgbsmart.com/demo-form) 🙂\n"
-                "（想先看方案與費用可參考 [查看方案與費用](https://www.jgbsmart.com/pricing)）\n"
-                "※ 重點規則：①連結一律用 **markdown 格式 [標籤](網址)、禁止裸網址**；"
-                "「[立即預約 demo](https://www.jgbsmart.com/demo-form)」務必出現、不可省略。"
-                "②「預約 demo」與「留聯絡方式／我們聯繫您」是**同一個動作（聯繫專人）**，"
-                "**合併成同一行**，不要拆成兩點重複。③價格一律導 [查看方案與費用](https://www.jgbsmart.com/pricing) 或留資、不講數字。"
-            )
-        elif cta_mode == "suppress":
+        # cta_mode=='force' 的 CTA/排版塊已外移設定（config.cta_rules，引擎於 system_md 附加）；
+        # 此處只保留通用的 suppress 語意（延續對話直接答，不推銷）。
+        if cta_mode == "suppress":
             user_prompt += (
                 "\n【限制】這是延續對話中的回答，請**直接把問題答清楚就好，不要附上 demo 預約連結、"
                 "也不要主動推銷預約**（除非使用者自己問怎麼預約）；保持自然。"

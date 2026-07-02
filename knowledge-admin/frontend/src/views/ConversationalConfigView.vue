@@ -63,6 +63,9 @@
         <label>收斂作答規則 answer_rules（選填；收斂組答時附加在系統脈絡後，管「怎麼答」——如：底稿在手直接答、禁推託語、只有一份時要比較請補識別）</label>
         <textarea v-model="form.answer_rules" rows="4" placeholder="例：## 收斂作答鐵則&#10;- 底稿開頭標「編號｜名稱」，那就是對方問的那一份，直接照答，不要說查無/請稍等…"></textarea>
 
+        <label>推薦收斂 CTA 規則 cta_rules（選填；只有「推薦型收斂」才附加——CTA/排版/業務連結，如售前的「下一步」收束塊）</label>
+        <textarea v-model="form.cta_rules" rows="3" placeholder="例：【整篇排版與收束】…結尾用一個「下一步」區塊，附 [立即預約 demo](…) 連結…"></textarea>
+
         <hr/>
         <label>進入方式 trigger（這套對話什麼時候啟動）</label>
         <select v-model="form.trigger">
@@ -159,7 +162,7 @@ export default {
     },
     openNew() {
       this.form = { id: null, label: '', target_user: 'prospect', is_active: true, enabled: true,
-        answer_mode: 'conversational', rules_text: '', answer_rules: '', trigger: 'freetext', topic_category: '', topic_keywords: '',
+        answer_mode: 'conversational', rules_text: '', answer_rules: '', cta_rules: '', trigger: 'freetext', topic_category: '', topic_keywords: '',
         g_select: 'vector', g_mode: 'b2b', g_vendor_id: '', g_category: '', g_ids: '',
         g_endpoint: '', g_required_slots: '', g_params: '', g_search_params: '',
         g_list_path: '', g_id_field: '', g_label_field: '', g_refine_param: '', seed: '',
@@ -172,7 +175,7 @@ export default {
       this.form = {
         id: c.id, label: c.label, target_user: c.target_user, is_active: c.is_active,
         enabled: cfg.enabled !== false, answer_mode: cfg.answer_mode || 'conversational', rules_text: c.rules_text,
-        answer_rules: cfg.answer_rules || '',
+        answer_rules: cfg.answer_rules || '', cta_rules: cfg.cta_rules || '',
         trigger, topic_category: ts.category || '', topic_keywords: (ts.keywords||[]).join(','),
         g_select: gs.select || 'vector', g_mode: gs.mode || 'b2b',
         g_vendor_id: gs.vendor_id || '', g_category: gs.category || '', g_ids: (gs.kb_ids||[]).join(','),
@@ -245,6 +248,7 @@ export default {
         topic_scope, grounding_scope, enabled: f.enabled };
       if (f.seed) cfg.seed = f.seed; else delete cfg.seed;
       if (f.answer_rules && f.answer_rules.trim()) cfg.answer_rules = f.answer_rules; else delete cfg.answer_rules;
+      if (f.cta_rules && f.cta_rules.trim()) cfg.cta_rules = f.cta_rules; else delete cfg.cta_rules;
       return cfg;
     },
     async save() {

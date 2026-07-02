@@ -274,6 +274,20 @@ def _remove_duplicate_question(answer: str, question: str) -> str:
 
 # ==================== 輔助函數：表單轉換 ====================
 
+async def _presales_synth_md(db_pool, target_user, system_md):
+    """售前直呼合成路徑（不經對話引擎）之系統脈絡：附加該角色對話設定的 answer_rules
+    （合成鐵則已從共用 optimizer 外移為設定資料，DB 優先、code 保底）。
+    這些路徑 cta_mode 皆 'auto' → 不附 cta_rules。失敗回原 system_md（不阻斷）。"""
+    try:
+        from services.conversational_config import config_for_target_user
+        from services.conversational_engine import _synth_context
+        cfg = await config_for_target_user(db_pool, target_user)
+        return _synth_context(system_md, cfg) if cfg else system_md
+    except Exception as e:
+        print(f"⚠️ 附加售前合成規則失敗（用原系統脈絡）：{e}")
+        return system_md
+
+
 async def _maybe_synthesize_presales_leaf(form_result: dict, request, req) -> dict:
     """
     葉答案 LLM 個人化（option-routing R11/R13）：prospect 情境下，將決策樹葉答案的
@@ -294,6 +308,7 @@ async def _maybe_synthesize_presales_leaf(form_result: dict, request, req) -> di
         optimizer = req.app.state.llm_answer_optimizer
         db_pool = req.app.state.db_pool
         system_md = await get_system_context(db_pool, request.target_user)  # 領域鍵＝target_user（此路徑必為 prospect）
+        system_md = await _presales_synth_md(db_pool, request.target_user, system_md)
         ctx = form_result.get('presales_context')
         synth = await asyncio.to_thread(
             optimizer.synthesize_presales_answer, raw, ctx, system_md, None
@@ -319,6 +334,7 @@ async def _maybe_synth_prospect_freetext(optimization_result: dict, search_resul
         from services.system_context import get_system_context
         optimizer = req.app.state.llm_answer_optimizer
         system_md = await get_system_context(req.app.state.db_pool, request.target_user)  # 領域鍵＝target_user（此路徑必為 prospect）
+        system_md = await _presales_synth_md(req.app.state.db_pool, request.target_user, system_md)
         grounding = "\n\n".join(r.get('content', '') for r in search_results[:3] if r.get('content'))
         if not grounding:
             return optimization_result
@@ -2549,6 +2565,7 @@ async def _handle_no_knowledge_found(
             from services.system_context import get_system_context
             optimizer = req.app.state.llm_answer_optimizer
             system_md = await get_system_context(req.app.state.db_pool, request.target_user)  # 領域鍵＝target_user（此路徑必為 prospect）
+            system_md = await _presales_synth_md(req.app.state.db_pool, request.target_user, system_md)
             md_only_grounding = (
                 "（本次未檢索到對應的特定知識。請依系統脈絡的「功能對照索引」判斷是否有對應功能："
                 "有 → 點名推薦該功能並導向 demo / 試用；無 → 禮貌說明可由專人協助了解，不杜撰功能。）"

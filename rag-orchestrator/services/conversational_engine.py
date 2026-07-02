@@ -99,13 +99,18 @@ def _extract_identifier(msg: Optional[str]) -> Optional[str]:
     return mt.group(0) if mt else None
 
 
-def _synth_context(system_md: Optional[str], config) -> Optional[str]:
-    """收斂組答用的系統脈絡＝領域脈絡＋本對話 answer_rules（設定資料承載的作答行為，
-    如：底稿在手直接答/禁推託/只有一份時比較請補識別）。未設 → 原樣（向後相容售前）。"""
-    extra = getattr(config, "answer_rules", None)
-    if extra:
-        return f"{system_md}\n\n{extra}" if system_md else extra
-    return system_md
+def _synth_context(system_md: Optional[str], config, cta_mode: Optional[str] = None) -> Optional[str]:
+    """收斂組答用的系統脈絡＝領域脈絡＋本對話 answer_rules（＋推薦型再加 cta_rules）。
+
+    - answer_rules：本對話的作答行為（如底稿在手直接答/禁推託），收斂一律附加；
+    - cta_rules：CTA/排版塊，僅 cta_mode=='force'（推薦型收斂）附加——時機由程式決定（確定性），
+      內容由設定承載（業務連結/收束格式不硬編共用程式）。皆未設 → 原樣（向後相容）。"""
+    parts = [system_md]
+    parts.append(getattr(config, "answer_rules", None))
+    if cta_mode == "force":
+        parts.append(getattr(config, "cta_rules", None))
+    parts = [p for p in parts if p]
+    return "\n\n".join(parts) if parts else system_md
 
 
 def _domain_key(config) -> Optional[str]:
@@ -447,7 +452,8 @@ class ConversationalEngine:
                 grounding, ctx, cta_mode = await self._converge_grounding(
                     state, step.get("converge_topic"), user_message, config, converge_kind)
             return {"kind": "converge", "grounding": grounding, "ctx": ctx, "cta_mode": cta_mode,
-                    "converge_kind": converge_kind, "system_md": _synth_context(system_md, config),
+                    "converge_kind": converge_kind,
+                    "system_md": _synth_context(system_md, config, cta_mode),
                     "session_id": session_id, "state": state, "user_message": user_message}
         except Exception as e:
             print(f"❌ 對話引擎 prepare 失敗（降級）：{e}")
