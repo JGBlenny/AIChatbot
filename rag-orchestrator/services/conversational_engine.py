@@ -80,7 +80,10 @@ def _looks_like_identifier(msg: Optional[str]) -> bool:
     return m.isdigit() and 2 <= len(m) <= 15
 
 
-_ID_TOKEN_RE = re.compile(r"\d{4,15}")
+# id-like token：4–15 位數字；排除「與日期分隔符（/ - .）或其他數字相鄰」者——
+#   日期（2026/12/30、2026-12-30）是結構性特徵，不是識別；抽成識別會誤觸切換探查
+#   （e2e 真跑揪出：申請書槽位回答含租期日期 → keyword=2026 誤中含數字標題的多筆合約）。
+_ID_TOKEN_RE = re.compile(r"(?<![\d/\-])(?<!\d\.)\d{4,15}(?![\d/\-])(?!\.\d)")
 
 
 def _extract_identifier(msg: Optional[str]) -> Optional[str]:

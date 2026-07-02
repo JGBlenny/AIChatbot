@@ -32,6 +32,18 @@ def test_extract_identifier_no_semantic_guard():
     assert _extract_identifier("") is None
 
 
+# ── 日期不是識別（結構性 guard）：申請書槽位/租期回答常含日期，抽成識別會誤觸切換探查
+#    （e2e 真跑揪出：「異動前租期到 2026/12/30」→ keyword=2026 誤中「20260624實價登錄」多筆）──
+@pytest.mark.req("contract-conversational-facets:2.4")
+def test_extract_identifier_ignores_date_tokens():
+    assert _extract_identifier("異動前租期到 2026/12/30，異動後改成 2028/12/30") is None
+    assert _extract_identifier("租期 2027/8/31 改 2029/8/31") is None
+    assert _extract_identifier("2026-12-30 到期") is None
+    # 日期旁另有獨立識別 → 仍抽得到識別本身
+    assert _extract_identifier("83315 租期改到 2028/12/30") == "83315"
+    # 純數字整句照舊（含日期整數形——後端當裁判）
+    assert _extract_identifier("20260731") == "20260731"
+
 
 # ════════ _ground_by_api：search_params 依序試（後端當裁判）════════
 def _engine_with_handler(side_effect):
