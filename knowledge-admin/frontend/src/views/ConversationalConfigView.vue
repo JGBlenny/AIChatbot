@@ -96,6 +96,8 @@
             <label class="cc-hint">vendor_id（b2c 限定某業者範圍時填，選填）</label>
             <input v-model="form.g_vendor_id" placeholder="某業者 id（選填）" />
           </template>
+          <label class="cc-hint">推薦收斂關鍵字 keywords（選填，逗號分隔；推薦型收斂檢索時的補充查詢詞，預設「方案推薦」）</label>
+          <input v-model="form.g_keywords" placeholder="如：方案推薦,功能比較" />
         </template>
         <template v-if="form.g_select==='category'">
           <label class="cc-hint">grounding 分類（整批撈此分類的知識）</label>
@@ -119,6 +121,12 @@
           <input v-model="form.g_id_field" placeholder="id_field：識別欄位，如 id" />
           <input v-model="form.g_label_field" placeholder="label_field：候選顯示欄位，如 title" />
           <input v-model="form.g_refine_param" placeholder="refine_param：選定候選後帶回的參數，如 contract_ids" />
+          <label class="cc-hint">候選區別欄位 label_fields（選填，逗號分隔；同名多筆時候選標籤依序串接這些欄位，如 title,date_start,date_end）</label>
+          <input v-model="form.g_label_fields" placeholder="如：title,date_start,date_end" />
+          <label class="cc-hint">日期格式化欄位 label_date_fields（選填，逗號分隔；上列中屬 Ymd 日期者，顯示為 Y/m/d）</label>
+          <input v-model="form.g_label_date_fields" placeholder="如：date_start,date_end" />
+          <label class="cc-hint">候選數上限 candidate_cap（選填；超過先請補更明確識別，再超過截斷列前 N 筆）</label>
+          <input v-model="form.g_candidate_cap" placeholder="如：8" />
         </template>
 
         <hr/>
@@ -163,9 +171,10 @@ export default {
     openNew() {
       this.form = { id: null, label: '', target_user: 'prospect', is_active: true, enabled: true,
         answer_mode: 'conversational', rules_text: '', answer_rules: '', cta_rules: '', trigger: 'freetext', topic_category: '', topic_keywords: '',
-        g_select: 'vector', g_mode: 'b2b', g_vendor_id: '', g_category: '', g_ids: '',
+        g_select: 'vector', g_mode: 'b2b', g_vendor_id: '', g_category: '', g_ids: '', g_keywords: '',
         g_endpoint: '', g_required_slots: '', g_params: '', g_search_params: '',
-        g_list_path: '', g_id_field: '', g_label_field: '', g_refine_param: '', seed: '',
+        g_list_path: '', g_id_field: '', g_label_field: '', g_refine_param: '',
+        g_label_fields: '', g_label_date_fields: '', g_candidate_cap: '', seed: '',
         _orig_cfg: null };
       this.editing = true;
     },
@@ -179,6 +188,7 @@ export default {
         trigger, topic_category: ts.category || '', topic_keywords: (ts.keywords||[]).join(','),
         g_select: gs.select || 'vector', g_mode: gs.mode || 'b2b',
         g_vendor_id: gs.vendor_id || '', g_category: gs.category || '', g_ids: (gs.kb_ids||[]).join(','),
+        g_keywords: (gs.keywords||[]).join(','),
         // api 型 grounding（診斷面向）：endpoint/required_slots/params/search_params/result_mapping
         g_endpoint: gs.endpoint || '', g_required_slots: (gs.required_slots||[]).join(','),
         g_params: Object.entries(gs.params || {}).map(([k,v]) => `${k}=${v}`).join('\n'),
@@ -187,6 +197,9 @@ export default {
           .map(o => Object.entries(o || {}).map(([k,v]) => `${k}=${v}`).join('&')).join('\n'),
         g_list_path: (gs.result_mapping||{}).list_path || '', g_id_field: (gs.result_mapping||{}).id_field || '',
         g_label_field: (gs.result_mapping||{}).label_field || '', g_refine_param: (gs.result_mapping||{}).refine_param || '',
+        g_label_fields: ((gs.result_mapping||{}).label_fields||[]).join(','),
+        g_label_date_fields: ((gs.result_mapping||{}).label_date_fields||[]).join(','),
+        g_candidate_cap: (gs.result_mapping||{}).candidate_cap != null ? String((gs.result_mapping||{}).candidate_cap) : '',
         seed: cfg.seed || '',
         // 保留整個原 config：存檔時 merge，表單沒管的鍵不被洗掉——
         //   cfg 層（key/persona_role…）、topic_scope（faces…）、grounding_scope（search_params/
@@ -209,8 +222,10 @@ export default {
         else delete topic_scope.category;
       }
       let grounding_scope = {};
-      if (f.g_select === 'category') grounding_scope = { select: 'category', category: f.g_category, target_user: f.target_user };
-      else if (f.g_select === 'ids') grounding_scope = { select: 'ids', kb_ids: f.g_ids.split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n)) };
+      const origGsAll = origCfg.grounding_scope || {};
+      const baseGs = (origGsAll.select === f.g_select) ? origGsAll : {};   // 同型才 merge，換型從乾淨開始
+      if (f.g_select === 'category') grounding_scope = { ...baseGs, select: 'category', category: f.g_category, target_user: f.target_user };
+      else if (f.g_select === 'ids') grounding_scope = { ...baseGs, select: 'ids', kb_ids: f.g_ids.split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n)) };
       else if (f.g_select === 'api') {
         // 參數映射：每行 key=模板 → 物件（值含等號者只切首個）
         const parsePairs = (text, sep) => {
@@ -227,12 +242,17 @@ export default {
           .map(line => parsePairs(line, '&')).filter(o => Object.keys(o).length);
         // 以原 grounding_scope 為底 merge：表單沒管的鍵（如 result_mapping.label_fields/
         // label_date_fields/candidate_cap）保留不洗掉；已知欄位以表單值為準（空＝移除）。
-        const origGs = origCfg.grounding_scope || {};
-        const orig = origGs.select === 'api' ? origGs : {};
+        const orig = baseGs;
         const result_mapping = { ...(orig.result_mapping || {}) };
         const setOrDel = (key, val) => { if (val) result_mapping[key] = val.trim(); else delete result_mapping[key]; };
         setOrDel('list_path', f.g_list_path); setOrDel('id_field', f.g_id_field);
         setOrDel('label_field', f.g_label_field); setOrDel('refine_param', f.g_refine_param);
+        const lf = (f.g_label_fields||'').split(',').map(s=>s.trim()).filter(Boolean);
+        if (lf.length) result_mapping.label_fields = lf; else delete result_mapping.label_fields;
+        const ldf = (f.g_label_date_fields||'').split(',').map(s=>s.trim()).filter(Boolean);
+        if (ldf.length) result_mapping.label_date_fields = ldf; else delete result_mapping.label_date_fields;
+        const cap = parseInt(f.g_candidate_cap);
+        if (!isNaN(cap) && cap > 0) result_mapping.candidate_cap = cap; else delete result_mapping.candidate_cap;
         grounding_scope = {
           ...orig,
           select: 'api', endpoint: (f.g_endpoint || '').trim(),
@@ -241,7 +261,12 @@ export default {
         if (search_params.length) grounding_scope.search_params = search_params;
         else delete grounding_scope.search_params;
       }
-      else { grounding_scope = { select: 'vector', target_user: f.target_user, mode: f.g_mode }; if (f.g_mode === 'b2c' && f.g_vendor_id) grounding_scope.vendor_id = parseInt(f.g_vendor_id); }
+      else {
+        grounding_scope = { ...baseGs, select: 'vector', target_user: f.target_user, mode: f.g_mode };
+        if (f.g_mode === 'b2c' && f.g_vendor_id) grounding_scope.vendor_id = parseInt(f.g_vendor_id); else delete grounding_scope.vendor_id;
+        const kw = (f.g_keywords||'').split(',').map(s=>s.trim()).filter(Boolean);
+        if (kw.length) grounding_scope.keywords = kw; else delete grounding_scope.keywords;
+      }
       // cfg 層以原值為底 merge：key 沿用原 key（如 contract_diag；session 的 config_key 靠它續接，
       // 不可被改名成 target_user）、persona_role 等表單沒管的鍵保留；新增才用 target_user 當 key。
       const cfg = { ...origCfg, key: origCfg.key || f.target_user, answer_mode: f.answer_mode,
