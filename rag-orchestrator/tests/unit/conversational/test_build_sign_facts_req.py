@@ -122,6 +122,16 @@ def test_g2_absent_skips_mismatch_branch():
     assert "登入" not in out                    # 欄位缺 → 略過比對分支
 
 
+# ── G2 值非明文信箱（jgb2 實測回加密密文，如 'IAiPNxhp3ug…='）→ 視同欄位不可用，
+#    略過比對不虛構——拿密文比明文會永遠「不一致」變假錯配（preview 實盤揪出）──
+@pytest.mark.req("contract-conversational-facets:10.3")
+def test_g2_ciphertext_value_skips_comparison():
+    out = build_sign_facts(
+        _contract(_INVITING, to_user_login_email="IAiPNxhp3ug8Uhkf4ySCbGgwtvs="), "")
+    assert "不一致" not in out and "登入" not in out   # 不產生假錯配
+    assert "IAiPNxhp" not in out                       # 密文不外洩
+
+
 # ── 已註冊進 FACE_BUILDERS ──
 @pytest.mark.req("contract-conversational-facets:7.1")
 def test_registered_in_face_builders():

@@ -154,6 +154,18 @@ def test_diagnosis_configs_share_status_grounding_shape():
         assert gs["result_mapping"]["candidate_cap"] == 8       # 沿用狀態判斷形狀
 
 
+@pytest.mark.req("contract-conversational-facets:3.3")
+def test_closeout_declares_secondary_call_for_bills():
+    """退租收尾宣告 secondary_call（G3）：單筆收斂後查帳單、attach 為 bills（{row.id} 插值）。"""
+    sec = _configs()["contract_closeout"].grounding_scope["secondary_call"]
+    assert sec["endpoint"] == "jgb_bills"
+    assert sec["params"]["contract_ids"] == "{row.id}"
+    assert sec["attach_as"] == "bills" and sec["list_path"] == "data"
+    # 其餘 4 面向不宣告（不做無謂二次查詢）
+    for key in ("contract_change", "contract_renew", "contract_sign", "contract_create_guide"):
+        assert "secondary_call" not in (_configs()[key].grounding_scope or {})
+
+
 @pytest.mark.req("contract-conversational-facets:5.1")
 def test_create_guide_grounds_by_knowledge_category():
     gs = _configs()["contract_create_guide"].grounding_scope

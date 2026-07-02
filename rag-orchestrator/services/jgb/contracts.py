@@ -382,10 +382,25 @@ def build_change_exit_facts(contract: dict, user_question: str = "") -> str:
     return "\n".join(lines)
 
 
+def _archive_facts(contract: dict) -> str:
+    """帳單封存 facts：secondary_call 附掛 bills 時個人化（G3）；未附掛 → 通用指引（降級態）。"""
+    bills = contract.get("bills")
+    if isinstance(bills, list):
+        unarchived = [b for b in bills if not b.get("is_archived")]
+        if unarchived:
+            ids = "、".join(str(b.get("id")) for b in unarchived[:8])
+            more = f" 等 {len(unarchived)} 筆" if len(unarchived) > 8 else f"，共 {len(unarchived)} 筆"
+            return (f"帳單封存（依查詢現值）：這份合約還有 {len(unarchived)} 筆帳單未封存"
+                    f"（帳單編號 {ids}{'' if len(unarchived) <= 8 else more}），"
+                    "請至帳單總表以合約編號搜尋批次封存。")
+        return "帳單封存（依查詢現值）：這份合約的帳單皆已封存，無需處理。"
+    return "帳單封存指引：至帳單總表以合約編號搜尋，將剩餘帳單批次封存。"
+
+
 def build_closeout_facts(contract: dict, user_question: str = "") -> str:
     """退租收尾步驟鏈（R3.1–3.5；research.md §二）。
 
-    步驟序：提前解約(256/512)／點退(64/128) → 帳單封存（G3 前通用指引＝常態降級）
+    步驟序：提前解約(256/512)／點退(64/128) → 帳單封存（G3 attach 個人化／未附掛通用指引）
     → 轉歷史（過終止/到期日後每日排程自動轉；逾期未轉導客服）。
     未發起 → 重用 check_can_move_out（點交點退互不相依）＋提前解約發起路徑。
     """
@@ -393,9 +408,12 @@ def build_closeout_facts(contract: dict, user_question: str = "") -> str:
     bit_status = contract.get("bit_status", 0)
     lines = [f"合約「{title}」目前狀態：{get_current_stage(contract)}。"]
 
-    # 已轉歷史 → 收尾全部完成
+    # 已轉歷史 → 收尾完成；但轉歷史與封存互不相依，有未封存帳單仍要提醒
     if contract.get("is_history") or contract.get("is_history_done"):
         lines.append("步驟判定：合約已轉為歷史合約，退租收尾流程已全部完成，無需其他操作。")
+        bills = contract.get("bills")
+        if isinstance(bills, list) and any(not b.get("is_archived") for b in bills):
+            lines.append(_archive_facts(contract))
         return "\n".join(lines)
 
     done_moveout = has_bit(bit_status, ContractBit.MOVE_OUT_DONE)
@@ -403,7 +421,7 @@ def build_closeout_facts(contract: dict, user_question: str = "") -> str:
     if done_moveout or done_early:
         what = "點退" if done_moveout else "提前解約"
         lines.append(f"步驟判定：{what}已完成。下一步：封存這份合約剩餘未結的帳單。")
-        lines.append("帳單封存指引：至帳單總表以合約編號搜尋，將剩餘帳單批次封存。")
+        lines.append(_archive_facts(contract))
         lines.append("轉歷史時點：過終止/到期日後，系統每日排程會自動轉為歷史合約，無需手動操作。")
         end = _parse_date_int(contract.get("date_end"))
         if end and datetime.now() > end:
@@ -499,7 +517,11 @@ def build_sign_facts(contract: dict, user_question: str = "") -> str:
                 lines.append(f"邀請效期至 {expire:%Y/%m/%d %H:%M}，目前仍在有效期間。")
 
     # G2：發送信箱 vs 租客登入信箱錯配（欄位存在才比；登入信箱遮罩輸出）
+    #   值必須是明文信箱（含 @）才可比——jgb2 實測曾回加密密文（users.email 加密儲存、
+    #   select 未解密），拿密文比明文會永遠不一致變假錯配 → 非明文視同欄位不可用（降級略過）。
     login_raw = (contract.get("to_user_login_email") or "").strip()
+    if login_raw and "@" not in login_raw:
+        login_raw = ""
     if login_raw and email:
         if login_raw.lower() != email.lower():
             lines.append(f"信箱比對：邀請發送至 {email}，但租客登入帳號信箱為 "

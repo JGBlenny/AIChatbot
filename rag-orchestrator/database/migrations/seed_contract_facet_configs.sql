@@ -111,6 +111,12 @@ SELECT
                     "label_date_fields": ["date_start", "date_end"],
                     "candidate_cap": 8,
                     "refine_param": "contract_ids"
+                },
+                "secondary_call": {
+                    "endpoint": "jgb_bills",
+                    "params": {"role_id": "{session.role_id}", "contract_ids": "{row.id}"},
+                    "list_path": "data",
+                    "attach_as": "bills"
                 }
             }
         }

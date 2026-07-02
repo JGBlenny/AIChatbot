@@ -86,6 +86,17 @@ def _looks_like_identifier(msg: Optional[str]) -> bool:
 _ID_TOKEN_RE = re.compile(r"(?<![\d/\-])(?<!\d\.)\d{4,15}(?![\d/\-])(?!\.\d)")
 
 
+_ROW_TMPL_RE = re.compile(r"\{row\.([A-Za-z0-9_]+)\}")
+
+
+def _resolve_row_template(value: Any, row: Dict[str, Any]) -> Any:
+    """把參數值中的 {row.<field>} 以主查詢結果列插值（secondary_call 用，通用零硬編）。
+    非字串原樣回；{session.*}/{form.*} 模板不動——留給 api_handler 既有解析。"""
+    if not isinstance(value, str):
+        return value
+    return _ROW_TMPL_RE.sub(lambda m: str(row.get(m.group(1)) or ""), value)
+
+
 def _extract_identifier(msg: Optional[str]) -> Optional[str]:
     """抽「候選識別」：純數字整句（2–15 位）直接回；否則從句中抽第一個 id-like token（≥4 位）。
     抓不到回 None（純文字名稱等交 brain）。
@@ -607,6 +618,31 @@ class ConversationalEngine:
         #   ★ 由 formatter 產「乾淨中文 facts」餵 LLM 組話——不餵原始碼讓 LLM 自行解碼
         #     （已證實 LLM 解碼會幻覺/張冠李戴/代碼外洩）。
         state.pop("_refine_requested", None)  # 收斂＝分流解決，清補條件標記
+
+        # 【secondary_call】單筆收斂後的二次查詢（G3；grounding_scope 宣告才執行，R3.3/R10.2）：
+        #   params 支援 {row.<field>} 以本列插值；結果 rows 掛在主列 attach_as 鍵，
+        #   再以 handler 重格式化（face 貫穿）→ facts 含二次資料。失敗沿用主底稿（降級不阻斷）。
+        secondary = scope.get("secondary_call") or {}
+        if secondary.get("endpoint"):
+            try:
+                sec_params = {k: _resolve_row_template(v, rows[0])
+                              for k, v in (secondary.get("params") or {}).items()}
+                sec_result = await self.api_handler.execute_api_call(
+                    {"endpoint": secondary["endpoint"], "params": sec_params},
+                    session_data, form_data)
+                if (sec_result or {}).get("success"):
+                    sec_rows = _dig_path(sec_result.get("data"), secondary.get("list_path") or "data")
+                    rows[0][secondary.get("attach_as") or "secondary"] = \
+                        sec_rows if isinstance(sec_rows, list) else []
+                    reformatted = self.api_handler.format_api_result(
+                        result.get("data"), endpoint=endpoint,
+                        user_input={"message": user_message} if user_message else None,
+                        form_data=form_data, face=state.get("face"))
+                    if reformatted:
+                        result = {**result, "formatted_response": reformatted}
+            except Exception as e:
+                print(f"⚠️ secondary_call 失敗（沿用主查詢底稿，不阻斷）：{e}")
+
         # 收斂底稿開頭帶「識別值｜名稱」：讓 LLM 能把使用者用的編號/名稱對回這筆事實。
         #   （使用者常用 id 稱呼，但 formatter facts 只帶名稱；grounding 不含 id → LLM 會誤判成
         #     「這不是他問的那筆」而推託/要求再提供。）id/label 皆讀 result_mapping，零硬編面向欄位。

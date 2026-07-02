@@ -363,6 +363,21 @@ class APICallHandler:
         else:
             return api_response_text
 
+    def format_api_result(
+        self,
+        api_result,
+        endpoint: str = "",
+        user_input: Optional[Dict[str, Any]] = None,
+        form_data: Optional[Dict[str, Any]] = None,
+        face: Optional[str] = None
+    ) -> str:
+        """格式化「既有」API 結果（不重打 API）。
+
+        供上層在主查詢結果附掛二次查詢資料（secondary_call attach）後重格式化——
+        formatter 可讀到 attach 鍵產出含二次資料的 facts。"""
+        return self._format_api_data(api_result, endpoint=endpoint, user_input=user_input,
+                                     form_data=form_data, face=face)
+
     def _format_api_data(self, api_result, endpoint: str = "", user_input: Optional[Dict[str, Any]] = None, form_data: Optional[Dict[str, Any]] = None, face: Optional[str] = None) -> str:
         """
         格式化 API 數據為易讀文本

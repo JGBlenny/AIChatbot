@@ -107,19 +107,30 @@ class JGBSystemAPI:
     async def get_bills(
         self,
         role_id: str,
-        user_id: str,
+        user_id: str = None,
         month: Optional[str] = None,
         status: Optional[str] = None,
+        contract_ids: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
-        """查詢帳單列表"""
-        if not self._validate_identity(role_id, user_id):
+        """查詢帳單列表。
+
+        兩種授權形態：
+          - 租客情境（既有）：role_id + user_id（身分保護，缺一降級）；
+          - b2b per-contract（收尾封存 secondary_call）：role_id + contract_ids——
+            與 get_contracts 相同以 role_id 為授權主體，不需 user_id。
+        """
+        if not (self._validate_identity(role_id, user_id) or (role_id and contract_ids)):
             return self._degraded_response()
 
         if self.use_mock:
             return self._mock_get_bills(role_id, user_id, month, status)
 
-        params: dict[str, Any] = {"role_id": role_id, "user_id": user_id}
+        params: dict[str, Any] = {"role_id": role_id}
+        if user_id:
+            params["user_id"] = user_id
+        if contract_ids:
+            params["contract_ids"] = contract_ids
         if month:
             params["month"] = month
         if status:

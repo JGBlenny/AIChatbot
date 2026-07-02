@@ -140,6 +140,10 @@ def test_closeout_colloquial_entry_then_ground(client):
         # （preview 資料會隨到期日推移轉歷史，兩態皆為正確 grounded 回答）
         assert any(k in a2 for k in ("點退", "租客同意", "封存", "收尾", "歷史合約")), \
             f"應依合約實際收尾狀態作答，實得：{a2[:200]}"
+        # G3 secondary_call（7.3）：附掛真實 bills → 個人化封存 facts（該合約實測有未封存帳單；
+        # 若日後資料被封存完，「皆已封存」亦為正確個人化輸出）
+        assert ("未封存" in a2) or ("皆已封存" in a2), \
+            f"G3 上線後封存應個人化（未封存清單/皆已封存），實得：{a2[:200]}"
     finally:
         _cleanup(sid)
 
@@ -171,11 +175,15 @@ def test_sign_trouble_colloquial_entry_degrades_without_g1_g2(client):
         assert (r1.json().get("answer") or "").strip()
         assert _conversational_rows(sid) >= 1, "口語第一句應進簽署排障對話"
 
-        # G1/G2 未上線 → 效期/信箱比對分支略過，仍能答「還差誰簽」（R6.1, R7.4）
         r2 = _post(client, REF_SIGN, sid)
         a2 = (r2.json().get("answer") or "")
         assert r2.status_code == 200 and a2.strip()
         assert ("租客" in a2) and ("簽" in a2)
+        # G1 已上線（7.2）：邀請效期 facts 生效（未過期→效期至；過期→已過期＋退回清資料說明）
+        assert any(k in a2 for k in ("效期", "有效", "過期", "期限")), \
+            f"G1 上線後應帶效期判斷，實得：{a2[:200]}"
+        # G2 防護（7.2）：preview 實測 to_user_login_email 為密文 → 略過比對，不得產生假錯配
+        assert "不一致" not in a2, f"密文登入信箱不得判為錯配：{a2[:200]}"
     finally:
         _cleanup(sid)
 
