@@ -454,6 +454,18 @@ class ConversationalEngine:
             # 【插點 B】收斂選材：select=='api' → API grounding（可降級回 ask）；否則既有知識 grounding。
             gscope = config.grounding_scope or {}
             if (gscope.get("select") or "").lower() == "api":
+                # 【收斂槽位保底】persona 要求「識別收齊才收斂」，但 LLM 機率性越權——未齊就打 API
+                #   只會全量撈取後仍反問（最貴的查詢做追問就能做的事；無 role_id 情境更會炸降級句）。
+                #   程式層強制（讀設定零硬編，R2.1/R7.3）：required_slots 未齊 → 轉追問、不打 API。
+                #   達 MAX_ASKS 例外放行（保留強制收斂防死問迴圈）。
+                _missing = [k for k in (gscope.get("required_slots") or []) if not collected.get(k)]
+                if _missing and asked < MAX_ASKS:
+                    print(f"🛡️ 收斂槽位未齊（{_missing}）→ 程式保底轉追問（不打 API）")
+                    state["asked_count"] = asked + 1
+                    await self._save(session_id, state)
+                    return {"kind": "ask",
+                            "answer": step.get("next_question")
+                            or "請先提供查詢所需的識別資訊（如編號或名稱），以便繼續。"}
                 r = await self._ground_by_api(state, config, user_message=user_message)
                 if r["kind"] == "ask":  # 0/N 筆或 API 失敗 → 降級回追問（非 converge，R3.4/R3.5）
                     state["asked_count"] = asked + 1  # 維持提問次數上限保護（R2.4）
