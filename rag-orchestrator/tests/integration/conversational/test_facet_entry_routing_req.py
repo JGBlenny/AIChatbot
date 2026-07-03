@@ -143,6 +143,60 @@ BILLING_SINGLE_CASES = [
 ]
 
 
+# ── 帳號：應進對話（account-conversational-facets 任務 3.4 / R7.3, R10.2）──
+ACCOUNT_FACES = {"註冊驗證排障", "登入排障", "帳號綁定異動", "團隊成員權限"}
+
+ACCOUNT_DIALOG_CASES = [
+    "租客一直沒辦法註冊 卡住了",
+    "租客說他一直無法註冊 換手機也一樣",
+    "租客收不到驗證簡訊 驗證過不了",
+    "租客說他登不進去系統",
+    "租客忘記密碼 登不進去",              # 3436 補標後進對話
+    "租客用 LINE 登入變成要重新註冊",
+    "手機被綁定過了 要解綁換綁",
+    "租客註冊的名字跟證件不一樣 要怎麼改",
+    "加了團隊成員 他什麼都看不到",
+    "成員只能查看 不能編輯要怎麼調",       # 3545 補標後進對話
+]
+
+# ── 帳號：應單發（教學/制度，未補標）──
+ACCOUNT_SINGLE_CASES = [
+    "帳號要怎麼註冊 流程是什麼",           # 3435 維持單發
+    "房東和租客的身分要怎麼切換",           # 3438 維持單發
+]
+
+# ── 三組誤吸邊界（gap-analysis R7 點名）：斷言到面向，不只 dialog/single ──
+BOUNDARY_CASES = [
+    ("租客簽不了約 一直簽不成", "簽署排障"),        # 「簽」→ 合約域，不被登入排障吸走
+    ("租客說他登不進去系統", "登入排障"),            # 反向：登入不被簽署排障吸走
+    ("租客說看不到帳單 找不到", "帳單異常"),         # 「帳單」→ 帳務域，不被登入排障吸走
+]
+
+
+@pytest.mark.req("account-conversational-facets:7.3")
+@pytest.mark.parametrize("question", ACCOUNT_DIALOG_CASES)
+async def test_account_openers_enter_dialog(retriever, pool, question):
+    kind, detail, best = await _route(retriever, pool, question)
+    assert kind == "dialog" and detail in ACCOUNT_FACES, \
+        f"應進帳號對話卻為 {detail}：{question}｜{_fmt(best)}"
+
+
+@pytest.mark.req("account-conversational-facets:10.2")
+@pytest.mark.parametrize("question", ACCOUNT_SINGLE_CASES)
+async def test_account_teaching_stays_single_shot(retriever, pool, question):
+    kind, detail, best = await _route(retriever, pool, question)
+    assert kind == "single", \
+        f"帳號教學問句被吸進「{detail}」對話：{question}｜{_fmt(best)}"
+
+
+@pytest.mark.req("account-conversational-facets:10.2")
+@pytest.mark.parametrize("question,expected_facet", BOUNDARY_CASES)
+async def test_cross_domain_boundary_no_misattraction(retriever, pool, question, expected_facet):
+    kind, detail, best = await _route(retriever, pool, question)
+    assert kind == "dialog" and detail == expected_facet, \
+        f"邊界句應進「{expected_facet}」卻為 {kind}/{detail}：{question}｜{_fmt(best)}"
+
+
 @pytest.mark.req("billing-conversational-facets:8.3")
 @pytest.mark.parametrize("question", BILLING_DIALOG_CASES)
 async def test_billing_openers_enter_dialog(retriever, pool, question):

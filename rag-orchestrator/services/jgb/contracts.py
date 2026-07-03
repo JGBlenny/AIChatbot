@@ -632,6 +632,11 @@ def format_contract_response(contracts, user_question: str = "", keyword: str = 
 
     # face 命中註冊表 → 面向 fact-builder；未命中/None → 現行路由（零回歸）
     builder = FACE_BUILDERS.get(face) if face else None
+    if builder is None and face:
+        # 帳號領域面向 ground 同一端點（jgb_contracts）→ 分發至 accounts.py
+        # （延遲匯入避免循環：accounts.py 匯入本檔的 _mask_email）
+        from services.jgb.accounts import ACCOUNT_FACE_BUILDERS
+        builder = ACCOUNT_FACE_BUILDERS.get(face)
     if builder:
         return builder(contract, user_question)
 

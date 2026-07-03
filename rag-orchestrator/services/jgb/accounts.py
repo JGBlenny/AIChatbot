@@ -1,0 +1,84 @@
+"""
+JGB 帳號領域檔（account-conversational-facets 元件 4）
+
+登入排障 face 的決定性 fact-builder：由 jgb_contracts 合約現值判定
+「租客未註冊／疑似登錯帳號／帳號正常」三分支（research.md 主題 2）。
+面向字面只允許出現在本檔與資料列；G 欄位存在性驅動（缺則降級不虛構）。
+機制數字以 research.md 為準寫死（快速驗證信 72 小時），LLM 不得自創。
+"""
+
+from typing import Callable
+
+from services.jgb.contracts import _mask_email
+
+AccountFaceBuilder = Callable[[dict, str], str]   # (contract_row, user_question) -> facts 文字
+
+
+def _plain_email(raw) -> str:
+    """明文信箱防護（沿 G2 教訓）：jgb2 曾回加密密文（users.email 密文儲存、
+    select 未解密），非明文（無 @）視同欄位不可用，避免假錯配與密文外洩。"""
+    val = (raw or "").strip()
+    return val if "@" in val else ""
+
+
+def build_login_trouble_facts(contract: dict, user_question: str = "") -> str:
+    """登入排障（R3.3；research.md 主題 2）。
+
+    is_tenant_registered=False → 未註冊引導（邀請/快速驗證信 72 小時）；
+    True＋登入信箱與邀請信箱不一致 → 疑似登錯帳號/多帳號（登入信箱遮罩輸出）；
+    一致 → 帳號正常，轉角色視角與忘記密碼自助路徑。
+    欄位缺失 → 誠實降級（不虛構註冊狀態、不虛構比對結果）。
+    """
+    title = contract.get("title", f"合約 {contract.get('id', '?')}")
+    invite_email = (contract.get("to_user_email") or "").strip()
+    lines = [f"合約「{title}」的租客登入狀況（依系統現值）："]
+
+    registered = contract.get("is_tenant_registered")
+
+    if registered is None:
+        # 欄位缺失（存在性驅動）：不虛構註冊狀態，給一般排查
+        lines.append("目前無法從系統確認這位租客的帳號註冊狀態。")
+        lines.append("一般排查：請租客以「當初註冊時的確切寫法」輸入信箱登入；"
+                     "若忘記密碼可在登入頁自助重設（Email 或手機簡訊驗證擇一）；"
+                     "登入成功但看不到資料時，請確認左上角是否切換到正確的租客身分。")
+        return "\n".join(lines)
+
+    if not registered:
+        lines.append("這位租客尚未註冊 JGB 帳號——登不進去是因為帳號還不存在，不是密碼問題。")
+        if invite_email:
+            lines.append(f"合約邀請發送至 {invite_email}：請租客用邀請連結完成註冊"
+                         "（免註冊快速驗證信的連結效期為 72 小時，逾期需重新發送邀請）。")
+        else:
+            lines.append("合約上未設定租客 Email：請先補上租客聯絡方式並重新發送邀請，"
+                         "租客才能收到註冊連結（快速驗證信連結效期 72 小時）。")
+        return "\n".join(lines)
+
+    lines.append("這位租客已註冊 JGB 帳號。")
+
+    login_email = _plain_email(contract.get("to_user_login_email"))
+    if login_email and invite_email:
+        if login_email.lower() != invite_email.lower():
+            lines.append(f"信箱比對：邀請發送至 {invite_email}，但租客實際登入帳號的信箱為 "
+                         f"{_mask_email(login_email)}，兩者不一致——租客很可能登錯帳號"
+                         "（或有另一個帳號），登入後自然看不到這份合約。"
+                         "請租客改用該登入信箱的帳號登入，或將邀請重新發送至租客實際使用的信箱。")
+            return "\n".join(lines)
+        lines.append("信箱比對：邀請發送信箱與租客登入信箱一致，帳號本身正常。")
+    else:
+        # 登入信箱欄位缺失或密文 → 不比對、不虛構結果
+        lines.append("（系統目前無法比對租客登入信箱，略過帳號錯配檢查。）")
+
+    lines.append("後續排查：登入時請用「當初註冊時的確切寫法」輸入信箱；"
+                 "忘記密碼可在登入頁自助重設（Email 或手機簡訊驗證擇一）；"
+                 "登入成功但看不到合約或帳單時，請租客確認左上角身分選單已切換到租客身分。")
+    return "\n".join(lines)
+
+
+# ── 帳號面向 fact-builder 註冊表 ────────────────────────────────────────────
+#
+# face 命中 → builder 接手；未命中 → contracts.py 現行路由（零回歸）。
+# G-A1/A2 查詢能力上線後，註冊驗證排障/團隊成員權限的 grounded builder 於此擴充。
+
+ACCOUNT_FACE_BUILDERS: dict[str, AccountFaceBuilder] = {
+    "登入排障": build_login_trouble_facts,
+}
