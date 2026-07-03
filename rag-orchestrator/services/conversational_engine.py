@@ -87,6 +87,7 @@ _ID_TOKEN_RE = re.compile(r"(?<![\d/\-])(?<!\d\.)\d{4,15}(?![\d/\-])(?!\.\d)")
 
 
 _ROW_TMPL_RE = re.compile(r"\{row\.([A-Za-z0-9_]+)\}")
+_SESSION_TMPL_RE = re.compile(r"\{session\.([A-Za-z0-9_]+)\}")
 
 
 def _resolve_row_template(value: Any, row: Dict[str, Any]) -> Any:
@@ -560,6 +561,20 @@ class ConversationalEngine:
             "session_id": state.get("session_id"),
             "user_id": state.get("user_id"),
         }
+
+        # 【身分參數保底】設定宣告需要的 {session.<key>} 缺值 → 禁打 API、誠實降級——
+        #   先前行為：缺值參數被靜默丟棄 → 端點缺必要參數報錯 → 誤導性「忙線」句
+        #   （回測/租客無 role_id 情境實測踩到）。零硬編：掃設定模板取需求鍵。
+        needed_session_keys: set = set()
+        for v in list(base_params.values()) + [v for o in overlays if o for v in o.values()]:
+            if isinstance(v, str):
+                needed_session_keys.update(_SESSION_TMPL_RE.findall(v))
+        missing_session = [k for k in needed_session_keys if not session_data.get(k)]
+        if missing_session:
+            print(f"🛡️ API grounding 缺必要身分參數 {missing_session} → 不打 API，誠實降級")
+            return {"kind": "ask",
+                    "answer": "目前的登入身分無法進行此查詢（缺少必要的帳號資訊），"
+                              "請以對應的帳號身分登入後再試，或由專人協助您。"}
 
         result: Dict[str, Any] = {}
         rows: List[Any] = []

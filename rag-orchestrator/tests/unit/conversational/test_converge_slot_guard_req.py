@@ -115,6 +115,69 @@ async def test_no_required_slots_config_unaffected():
     eng._ground_by_api.assert_awaited_once()
 
 
+# ════════ 身分參數保底：設定要求的 {session.*} 缺值 → 禁打 API、誠實降級 ════════
+# （先前行為：參數被靜默丟棄 → 端點 TypeError → 誤導性「忙線」句；零硬編：掃設定模板）
+
+def _engine_ground(api_result=None):
+    handler = MagicMock()
+    handler.execute_api_call = AsyncMock(return_value=api_result or {
+        "success": True, "data": {"data": [{"id": 1, "title": "T"}]},
+        "formatted_response": "FR"})
+    eng = ConversationalEngine(
+        db_pool=MagicMock(), optimizer=MagicMock(), retriever=MagicMock(),
+        get_system_context=AsyncMock(), rules_loader=AsyncMock(), api_handler=handler)
+    return eng, handler
+
+
+def _gstate(role_id=None):
+    s = {"config_key": "contract_diag", "collected_fields": {"contract_ref": "85174"},
+         "vendor_id": 7, "session_id": "s1", "user_id": "u1"}
+    if role_id is not None:
+        s["role_id"] = role_id
+    return s
+
+
+def _gcfg(params=None):
+    return ConversationalConfig(
+        key="contract_diag",
+        grounding_scope={"select": "api", "endpoint": "jgb_contracts",
+                         "required_slots": ["contract_ref"],
+                         "params": params if params is not None
+                         else {"role_id": "{session.role_id}",
+                               "contract_ids": "{form.contract_ref}"},
+                         "result_mapping": {"list_path": "data", "id_field": "id",
+                                            "label_field": "title"}},
+        topic_scope={"mode": "category", "category": "狀態判斷"})
+
+
+@pytest.mark.req("contract-conversational-facets:7.3")
+async def test_missing_session_param_blocks_api_with_honest_degrade():
+    eng, handler = _engine_ground()
+    r = await eng._ground_by_api(_gstate(role_id=None), _gcfg(), user_message="狀態")
+    assert r["kind"] == "ask"
+    assert "身分" in r["answer"]                          # 誠實說明，不是「忙線」
+    assert "忙線" not in r["answer"]
+    handler.execute_api_call.assert_not_awaited()          # 禁打 API
+
+
+@pytest.mark.req("contract-conversational-facets:7.3")
+async def test_session_param_present_grounds_normally():
+    eng, handler = _engine_ground()
+    r = await eng._ground_by_api(_gstate(role_id="20151"), _gcfg(), user_message="狀態")
+    assert r["kind"] == "converge"
+    handler.execute_api_call.assert_awaited_once()
+
+
+@pytest.mark.req("contract-conversational-facets:7.3")
+async def test_config_without_session_templates_unaffected():
+    eng, handler = _engine_ground()
+    r = await eng._ground_by_api(_gstate(role_id=None),
+                                 _gcfg(params={"contract_ids": "{form.contract_ref}"}),
+                                 user_message="狀態")
+    assert r["kind"] == "converge"                         # 設定沒要 session 參數 → 不擋
+    handler.execute_api_call.assert_awaited_once()
+
+
 # ── 達 MAX_ASKS 強制收斂時不擋（保留防死問迴圈的絕對上限行為）──
 @pytest.mark.req("contract-conversational-facets:7.3")
 async def test_guard_yields_at_max_asks():
