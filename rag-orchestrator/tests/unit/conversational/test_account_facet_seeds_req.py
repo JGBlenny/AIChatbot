@@ -158,6 +158,9 @@ def test_grounding_shapes():
         gs = cfgs[key].grounding_scope
         assert gs["select"] == "category" and gs["category"] == facet
         assert "secondary_call" not in gs
+        # 收斂檢索的 target_user 必須明填：漏填會 fallback 到 persona_role
+        # （pm_account_*），與知識列的 property_manager 對不上 → grounding 恆空
+        assert gs["target_user"] == "property_manager", f"{key} 缺 grounding target_user"
 
 
 @pytest.mark.req("account-conversational-facets:6.2")

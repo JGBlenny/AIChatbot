@@ -27,7 +27,7 @@ TARGET_USER = os.getenv("TEST_DIAG_TARGET_USER", "property_manager")
 REF_CHANGE = os.getenv("TEST_REF_CHANGE_SIGNED", "85174")     # status=8 已簽 → 申請書出口
 REF_CLOSEOUT = os.getenv("TEST_REF_CLOSEOUT", "84908")        # status=64 點退中
 REF_RENEW = os.getenv("TEST_REF_RENEW", "84981")              # status=8 未過期
-REF_SIGN = os.getenv("TEST_REF_SIGN_PENDING", "84927")        # status=2 等租客簽
+REF_SIGN = os.getenv("TEST_REF_SIGN_PENDING", "84972")        # 簽署中（84927 已被改為待發送、聯絡空——preview 資料漂移 2026-07-03）
 
 
 def _conn_kwargs():
