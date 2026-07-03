@@ -176,6 +176,15 @@ def format_jgb_response(api_result: dict, endpoint: str = "", user_question: str
     if endpoint == "jgb_tenant_summary":
         return _format_tenant_summary(data if isinstance(data, dict) else {})
 
+    # 帳務面向分流（billing-conversational-facets）：face 命中 BILL_FACE_BUILDERS 才接手，
+    # 否則往下走原路（jgb_bills 通用格式化、其餘各自 diagnose 引擎）——零回歸。
+    if face and endpoint in ("jgb_bills", "jgb_bill_detail",
+                             "jgb_payment_logs", "jgb_invoice_logs"):
+        from services.jgb.bills import face_bill_response
+        faced = face_bill_response(endpoint, data, user_question, face)
+        if faced is not None:
+            return faced
+
     # v1.1 診斷用 endpoint → 各自的診斷引擎
     if endpoint == "jgb_bill_detail":
         from services.jgb.bills import diagnose_bill

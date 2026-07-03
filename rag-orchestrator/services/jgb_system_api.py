@@ -111,20 +111,49 @@ class JGBSystemAPI:
         month: Optional[str] = None,
         status: Optional[str] = None,
         contract_ids: Optional[str] = None,
+        bill_ref: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """查詢帳單列表。
 
-        兩種授權形態：
+        授權形態：
           - 租客情境（既有）：role_id + user_id（身分保護，缺一降級）；
-          - b2b per-contract（收尾封存 secondary_call）：role_id + contract_ids——
+          - b2b per-contract / per-bill：role_id + contract_ids 或 bill_ref——
             與 get_contracts 相同以 role_id 為授權主體，不需 user_id。
+
+        `bill_ref` 識別語意參數（adapter，billing-conversational-facets R2.1）：
+          純數字 → 先 get_bill_detail 直查（單筆包成列）；查無 → 當合約 id 解析；
+          非數字 → get_contracts(keyword) 解析 → 取第一筆合約 → 該合約帳單列候選。
+          解析失敗/例外 → 空列不拋（引擎走 0 筆追問路，不炸降級句）。
         """
-        if not (self._validate_identity(role_id, user_id) or (role_id and contract_ids)):
+        if not (self._validate_identity(role_id, user_id)
+                or (role_id and (contract_ids or bill_ref))):
             return self._degraded_response()
 
         if self.use_mock:
             return self._mock_get_bills(role_id, user_id, month, status)
+
+        # bill_ref 識別解析（後端當裁判：逐層試、命中即止）
+        if bill_ref is not None and contract_ids is None:
+            ref = str(bill_ref).strip()
+            try:
+                if ref.isdigit():
+                    detail = await self.get_bill_detail(role_id, int(ref))
+                    row = (detail or {}).get("data")
+                    if (detail or {}).get("success") and isinstance(row, dict) and row:
+                        return {"success": True,
+                                "mapping": (detail or {}).get("mapping", {}),
+                                "data": [row]}
+                    contracts = await self.get_contracts(role_id, contract_ids=ref)
+                else:
+                    contracts = await self.get_contracts(role_id, keyword=ref)
+                rows = (contracts or {}).get("data") or []
+                if not ((contracts or {}).get("success") and rows):
+                    return {"success": True, "data": []}
+                contract_ids = rows[0].get("id")
+            except Exception as e:
+                logger.warning(f"bill_ref 識別解析失敗（回空列降級）：{e}")
+                return {"success": True, "data": []}
 
         params: dict[str, Any] = {"role_id": role_id}
         if user_id:
