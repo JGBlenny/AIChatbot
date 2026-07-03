@@ -21,6 +21,7 @@ VENDOR_ID = int(os.getenv("TEST_VENDOR_ID", "2"))
 ENTRY_THRESHOLD = float(os.getenv("FORM_TRIGGER_THRESHOLD", "0.75"))
 KB_THRESHOLD = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.65"))
 FACES = {"狀態判斷", "合約異動", "退租收尾", "續約", "建約引導", "簽署排障"}
+BILLING_FACES = {"繳費金流排障", "帳單異常", "發票", "滯納金", "帳單設定引導"}
 
 
 def _conn_kwargs():
@@ -111,6 +112,51 @@ SINGLE_CASES = [
     "點退做完後，帳單會自動出來嗎？",
     "合約備註只能寫 50 行嗎",
 ]
+
+
+# ── 帳務：應進對話（billing-conversational-facets 任務 5.4 / R8.3, R11.2）──
+BILLING_DIALOG_CASES = [
+    "租客說繳了 錢還沒進來",
+    "帳單卡在待對帳 狀態一直沒跳",
+    "已付款但帳單狀態沒有更新",          # form_fill 升級（3497）
+    "租客繳不了費 一直失敗",
+    "帳單金額怪怪的 跟預期不一樣",
+    "這期帳單怎麼還沒出來",
+    "租客說看不到帳單 找不到",
+    "發票怎麼還沒開 沒收到發票",
+    "發票為什麼沒有開出來",              # form_fill 升級（3503）
+    "滯納金怎麼收這麼多",
+    "要開始收租 帳單要怎麼設定",
+    "收款帳戶怎麼綁 金流怎麼申請",
+]
+
+# ── 帳務：應單發（教學/制度＋保留的 form_fill 精確句）──
+BILLING_SINGLE_CASES = [
+    "帳單有哪幾種狀態",
+    "帳單的收費項目有哪些",
+    "怎麼用 Excel 批次匯入帳單",
+    "收據 PDF 在哪裡下載",
+    "固定虛擬帳號會過期嗎",
+    "押金設算息怎麼計算",
+    "帳單為什麼發不出去",                # form_fill 保留（3495，混合制）
+    "點退帳單的金額是怎麼算的",           # 邊界：含「帳單」但屬合約域教學（3519 單發）
+]
+
+
+@pytest.mark.req("billing-conversational-facets:8.3")
+@pytest.mark.parametrize("question", BILLING_DIALOG_CASES)
+async def test_billing_openers_enter_dialog(retriever, pool, question):
+    kind, detail, best = await _route(retriever, pool, question)
+    assert kind == "dialog" and detail in BILLING_FACES, \
+        f"應進帳務對話卻為 {detail}：{question}｜{_fmt(best)}"
+
+
+@pytest.mark.req("billing-conversational-facets:11.2")
+@pytest.mark.parametrize("question", BILLING_SINGLE_CASES)
+async def test_billing_operation_questions_stay_single_shot(retriever, pool, question):
+    kind, detail, best = await _route(retriever, pool, question)
+    assert kind == "single", \
+        f"帳務教學/制度問句被吸進「{detail}」對話：{question}｜{_fmt(best)}"
 
 
 @pytest.mark.req("contract-conversational-facets:8.3")
