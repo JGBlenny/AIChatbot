@@ -23,9 +23,9 @@ WHERE id IN (3329) AND is_active AND NOT (COALESCE(categories, ARRAY[]::text[]) 
 UPDATE knowledge_base SET categories = array_append(COALESCE(categories, ARRAY[]::text[]), '退租收尾'), updated_at = now()
 WHERE id IN (3327, 3380, 3526) AND is_active AND NOT (COALESCE(categories, ARRAY[]::text[]) @> ARRAY['退租收尾']::text[]);
 
--- 續約
+-- 續約（3388 到期提醒原列此處，2026-07-03 路由調校回退為單發——制度 yes/no 題，錨點已覆蓋模糊進場）
 UPDATE knowledge_base SET categories = array_append(COALESCE(categories, ARRAY[]::text[]), '續約'), updated_at = now()
-WHERE id IN (3333, 3388) AND is_active AND NOT (COALESCE(categories, ARRAY[]::text[]) @> ARRAY['續約']::text[]);
+WHERE id IN (3333) AND is_active AND NOT (COALESCE(categories, ARRAY[]::text[]) @> ARRAY['續約']::text[]);
 
 -- 簽署排障
 UPDATE knowledge_base SET categories = array_append(COALESCE(categories, ARRAY[]::text[]), '簽署排障'), updated_at = now()
@@ -46,7 +46,7 @@ BEGIN
     WHERE is_active AND (
         SELECT COUNT(*) FROM unnest(categories) c
         WHERE c IN ('合約異動','退租收尾','續約','建約引導','簽署排障')) > 1;
-    RAISE NOTICE '✅ 面向補標：% 筆知識掛新面向（預期 11）；跨面向重複 % 筆（預期 0）', n, dup;
+    RAISE NOTICE '✅ 面向補標：% 筆知識掛新面向（預期 10）；跨面向重複 % 筆（預期 0）', n, dup;
     IF dup > 0 THEN
         RAISE WARNING '⚠️ 有知識掛多個新面向，違反一筆一主面向互斥，請檢查';
     END IF;
