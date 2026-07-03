@@ -169,19 +169,25 @@ class JGBSystemAPI:
     async def get_invoices(
         self,
         role_id: str,
-        user_id: str,
+        user_id: str = None,
         bill_id: Optional[int] = None,
         status: Optional[int] = None,
         **kwargs,
     ) -> dict[str, Any]:
-        """查詢發票列表"""
-        if not self._validate_identity(role_id, user_id):
+        """查詢發票列表。
+
+        授權形態：租客情境 role_id+user_id（既有）；
+        b2b per-bill（發票面向 secondary_call）：role_id+bill_id，不需 user_id。
+        """
+        if not (self._validate_identity(role_id, user_id) or (role_id and bill_id)):
             return self._degraded_response()
 
         if self.use_mock:
             return self._mock_get_invoices(role_id, user_id, bill_id, status)
 
-        params: dict[str, Any] = {"role_id": role_id, "user_id": user_id}
+        params: dict[str, Any] = {"role_id": role_id}
+        if user_id:
+            params["user_id"] = user_id
         if bill_id is not None:
             params["bill_id"] = bill_id
         if status is not None:

@@ -63,13 +63,14 @@ async def test_ground_by_api_passes_face_and_user_message():
     assert kwargs.get("user_input") == {"message": "我想改租期"}
 
 
-# ── 預設 None：state 無 face／未傳 user_message → 不虛構值（R7.1 零回歸前提）──
+# ── state 無 face → fallback 進入面向（第一句帶識別直收斂不經 brain 時，
+#    builder 仍按進場面向接手；未註冊面向如「狀態判斷」在 formatter 端 fallback 原路）──
 @pytest.mark.req("contract-conversational-facets:7.1")
-async def test_ground_by_api_defaults_to_none_when_unset():
+async def test_ground_by_api_falls_back_to_entry_face_when_unset():
     eng, handler = _engine_with_mock_handler()
     await eng._ground_by_api(_state(), _cfg())
     kwargs = handler.execute_api_call.call_args.kwargs
-    assert kwargs.get("face") is None
+    assert kwargs.get("face") == "條件診斷:合約"   # 進入面向（topic_scope.category）
     assert not kwargs.get("user_input")   # 未傳原句 → 不傳（維持現行 user_question=""）
 
 

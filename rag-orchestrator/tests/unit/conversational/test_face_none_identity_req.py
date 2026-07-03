@@ -68,9 +68,10 @@ def test_format_jgb_response_identity_with_face():
                                    user_question="可以點交嗎", face=face) == baseline
 
 
-# ── 引擎層：state 無 face → contracts.py 收到 None（不虛構值，R11.1）──
+# ── 引擎層：state 無 face → contracts.py 收到「進入面向」（fallback _domain_key；
+#    未註冊面向（如狀態判斷）在 formatter 端 fallback 原路，恆等保證由上方矩陣把守）──
 @pytest.mark.req("contract-conversational-facets:11.1")
-async def test_state_without_face_reaches_contracts_as_none(monkeypatch):
+async def test_state_without_face_reaches_contracts_as_entry_face(monkeypatch):
     from services.api_call_handler import APICallHandler
     from services.conversational_engine import ConversationalEngine
     from services.conversational_config import ConversationalConfig
@@ -107,4 +108,4 @@ async def test_state_without_face_reaches_contracts_as_none(monkeypatch):
 
     r = await eng._ground_by_api(state, cfg, user_message="狀態如何")
     assert r["kind"] == "converge"
-    assert captured["face"] is None
+    assert captured["face"] == "狀態判斷"   # 進入面向；未註冊 → builder 不接手（原路）

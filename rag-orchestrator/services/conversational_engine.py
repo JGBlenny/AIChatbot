@@ -582,10 +582,12 @@ class ConversationalEngine:
             params = {**base_params, **overlay} if overlay else dict(base_params)
             api_config = {"endpoint": endpoint, "params": params}
             try:
+                # face：state 未設（第一句帶識別直收斂、brain 未跑）→ fallback 進入面向
+                # （同系統脈絡載入慣例 _domain_key；未註冊面向由 formatter 端 fallback 原路）
                 result = await self.api_handler.execute_api_call(
                     api_config, session_data, form_data,
                     user_input={"message": user_message} if user_message else None,
-                    face=state.get("face"),
+                    face=state.get("face") or _domain_key(config),
                 )
             except Exception as e:  # 逾時/連線等例外 → 不阻斷（R3.6）
                 print(f"⚠️ API grounding 呼叫失敗（降級 ask）：{e}")
@@ -664,7 +666,7 @@ class ConversationalEngine:
                     reformatted = self.api_handler.format_api_result(
                         result.get("data"), endpoint=endpoint,
                         user_input={"message": user_message} if user_message else None,
-                        form_data=form_data, face=state.get("face"))
+                        form_data=form_data, face=state.get("face") or _domain_key(config))
                     if reformatted:
                         result = {**result, "formatted_response": reformatted}
             except Exception as e:

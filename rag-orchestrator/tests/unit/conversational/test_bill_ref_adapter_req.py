@@ -98,3 +98,17 @@ async def test_without_bill_ref_unchanged():
     api.get_bill_detail.assert_not_awaited()
     api.get_contracts.assert_not_awaited()
     assert api._request.await_args.args[1]["contract_ids"] == "84908"
+
+
+# ── get_invoices b2b per-bill 授權（secondary_call 用；比照 get_bills 形態）──
+@pytest.mark.req("billing-conversational-facets:7.5")
+async def test_get_invoices_allows_role_id_plus_bill_id():
+    api = _api()
+    api._request = AsyncMock(return_value={"success": True, "data": [{"id": 1, "status": 1}]})
+    r = await api.get_invoices(role_id="20151", bill_id=714100)     # 無 user_id
+    assert r["success"] is True
+    assert api._request.await_args.args[1]["bill_id"] == 714100
+
+    api2 = _api()
+    r2 = await api2.get_invoices(role_id="20151")                    # 無 user_id 也無 bill_id → 仍降級
+    assert r2["success"] is False
