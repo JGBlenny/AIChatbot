@@ -219,6 +219,26 @@ def test_late_fee_generic_bill_row_degrades_with_guidance():
 # ════════ 註冊表 ════════
 
 @pytest.mark.req("billing-conversational-facets:7.1")
+def test_bill_status_prefers_corrected_status_field():
+    """jgb2 補正後：status 裝現行狀態、bit_status 回歸歷程位元遮罩 → 讀 status。
+
+    真資料例（preview 2026-07-03）：709739 status=2、bit_status=35（1|2|32 歷程）。
+    誤讀 35 會判「未知」導客服，正確是待繳費 → 查無繳費核對引導分支。
+    """
+    row = _bill(2)
+    row["status"] = 2
+    row["bit_status"] = 35
+    out = build_payment_flow_facts(row, "租客說繳了")
+    assert "查無" in out and "繳費" in out
+    assert "未知" not in out
+
+
+def test_bill_status_falls_back_to_bit_status_for_legacy_rows():
+    """無 status 鍵的舊列（或 mock）→ 沿用 bit_status，行為不變。"""
+    out = build_payment_flow_facts(_bill(2), "租客說繳了")   # _bill 只放 bit_status
+    assert "查無" in out and "未知" not in out
+
+
 def test_all_four_registered():
     assert BILL_FACE_BUILDERS.get("繳費金流排障") is build_payment_flow_facts
     assert BILL_FACE_BUILDERS.get("帳單異常") is build_bill_anomaly_facts

@@ -23,12 +23,12 @@ BillFaceBuilder = Callable[[dict, str], str]   # (bill_row, user_question) -> fa
 
 # ── 面向 fact-builders（決定性規則見 billing spec research.md §一–§四）──────
 #
-# 註：外部 bills API 現況把 status 值裝在 `bit_status` 鍵（已列 G 清單 bug 補正）；
-# builder 以 `_bill_status()` 讀值（bit_status 優先、fallback status），補正後自動相容。
+# 註：jgb2 已補正 bills API 欄位（2026-07-03）：`status` 裝現行狀態、`bit_status` 為歷程位元遮罩；
+# 一律經 `_bill_status()` 讀值（status 優先；無 status 鍵的舊列/mock fallback bit_status）。
 
 def _bill_status(bill: dict) -> int:
-    v = bill.get("bit_status")
-    return v if isinstance(v, int) else (bill.get("status") or 0)
+    v = bill.get("status")
+    return v if isinstance(v, int) else (bill.get("bit_status") or 0)
 
 
 def _bill_head(bill: dict) -> list:
@@ -253,7 +253,7 @@ def diagnose_bill(bill: dict, user_question: str = "") -> str:
     question = user_question.lower() if user_question else ""
     bill_id = bill.get("id", "?")
     title = bill.get("title", f"帳單 {bill_id}")
-    bit_status = bill.get("bit_status", 0)
+    bit_status = _bill_status(bill)
 
     # 判斷用戶問的是什麼問題
     if any(k in question for k in ["發不出", "無法發送", "發送失敗", "送不出"]):
@@ -274,7 +274,7 @@ def diagnose_bill(bill: dict, user_question: str = "") -> str:
 def _diagnose_cannot_send(bill: dict) -> str:
     """B01：帳單為什麼發不出去"""
     title = bill.get("title", f"帳單 {bill.get('id', '?')}")
-    bit_status = bill.get("bit_status", 0)
+    bit_status = _bill_status(bill)
     details = bill.get("details", [])
     blockers = []
 
@@ -325,7 +325,7 @@ def _diagnose_cannot_send(bill: dict) -> str:
 def _diagnose_cannot_cancel(bill: dict) -> str:
     """B02：帳單為什麼取消不了"""
     title = bill.get("title", f"帳單 {bill.get('id', '?')}")
-    bit_status = bill.get("bit_status", 0)
+    bit_status = _bill_status(bill)
     bill_type = bill.get("type", 1)
     blockers = []
 
@@ -375,7 +375,7 @@ def _diagnose_late_fee(bill: dict) -> str:
 def _diagnose_manual_complete(bill: dict) -> str:
     """B04：手動到帳失敗"""
     title = bill.get("title", f"帳單 {bill.get('id', '?')}")
-    bit_status = bill.get("bit_status", 0)
+    bit_status = _bill_status(bill)
     complete_at = bill.get("complete_at")
     blockers = []
 
@@ -436,7 +436,7 @@ def _diagnose_atm_expired(bill: dict) -> str:
 def _format_bill_status(bill: dict) -> str:
     """格式化帳單現況"""
     title = bill.get("title", f"帳單 {bill.get('id', '?')}")
-    bit_status = bill.get("bit_status", 0)
+    bit_status = _bill_status(bill)
     status_label = _get_status_label(bit_status)
     total = bill.get("total", 0)
     date_expire = bill.get("date_expire")

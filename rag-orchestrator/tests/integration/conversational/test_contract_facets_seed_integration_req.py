@@ -14,9 +14,15 @@ import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-os.environ["USE_MOCK_JGB_API"] = "true"
 
 pytestmark = pytest.mark.integration
+
+
+@pytest.fixture(autouse=True)
+def _force_mock_jgb(monkeypatch):
+    # 僅在本檔測試執行期間生效：模組層 os.environ 會在全套收集時污染
+    # 同進程的 e2e（真 jgb2 變 mock），改用 monkeypatch 隔離。
+    monkeypatch.setenv("USE_MOCK_JGB_API", "true")
 
 _MIG = os.path.join(os.path.dirname(__file__), "..", "..", "..", "database", "migrations")
 FACETS = ["合約異動", "退租收尾", "續約", "建約引導", "簽署排障"]

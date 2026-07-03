@@ -17,9 +17,15 @@ from unittest.mock import AsyncMock, MagicMock
 
 # 本檔設計即走 mock jgb2（腳本化、決定性）；用硬設而非 setdefault——
 # 在常駐容器（USE_MOCK_JGB_API=false 打真 API）跑時 setdefault 蓋不掉，會變成打真 API 的不決定性測試。
-os.environ["USE_MOCK_JGB_API"] = "true"
 
 pytestmark = pytest.mark.integration
+
+
+@pytest.fixture(autouse=True)
+def _force_mock_jgb(monkeypatch):
+    # 僅在本檔測試執行期間生效：模組層 os.environ 會在全套收集時污染
+    # 同進程的 e2e（真 jgb2 變 mock），改用 monkeypatch 隔離。
+    monkeypatch.setenv("USE_MOCK_JGB_API", "true")
 
 
 def _conn_kwargs():
