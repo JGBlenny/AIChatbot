@@ -132,23 +132,34 @@ class AsyncBacktestFramework:
         """
         url = f"{self.base_url}/api/v1/message"
 
-        # 為每個測試案例生成唯一的 session_id，加入 timestamp + 隨機數避免跨次回測的表單狀態殘留
-        import time, random
-        uid = f"{int(time.time())}_{random.randint(1000,9999)}"
-        unique_session_id = f"backtest_session_{scenario_id}_{uid}" if scenario_id else f"backtest_session_{uid}"
-        unique_user_id = f"backtest_user_{scenario_id}_{uid}" if scenario_id else f"backtest_user_{uid}"
+        # 為每個測試案例生成唯一的 session_id，避免表單狀態互相干擾
+        # ⚠️ 必須含 run 級唯一段：跨 run 重用同 session_id 會吃到前一輪殘留的
+        #    COLLECTING 表單狀態（run290→291 汙染 19 題「找不到表單定義」實案）
+        if not hasattr(self, "_run_nonce"):
+            import uuid as _uuid
+            self._run_nonce = _uuid.uuid4().hex[:6]
+        unique_session_id = f"backtest_{self._run_nonce}_{scenario_id or 'x'}"
+        unique_user_id = f"backtest_user_{self._run_nonce}_{scenario_id or 'x'}"
 
+        # 請求形狀鏡像生產呼叫端（2026-07-05 架構修正）：
+        #   舊硬編 mode="tenant" 使業者題集在業態/受眾隔離下大面積查無（run290 驗屍）。
+        #   預設 b2b+property_manager（jgb2 後台 useChat.ts:62）；租客題集以 env 覆寫。
         payload = {
             "message": question,
             "vendor_id": self.vendor_id,
-            "target_user": "tenant",  # ✅ 修復：使用 target_user 而非 mode
-            "mode": "b2c",  # ✅ 修復：mode 應該是 b2c 或 b2b
+            "mode": os.getenv("BACKTEST_MODE", "b2b"),
             "include_sources": True,
             "skip_sop": False,  # 改為 False，讓回測能檢索 SOP
             "include_debug_info": True,  # 回測需要 similarity 數據
             "session_id": unique_session_id,  # 每個案例使用唯一 session_id
             "user_id": unique_user_id  # 每個案例使用唯一 user_id
         }
+        _tu = os.getenv("BACKTEST_TARGET_USER", "property_manager")
+        if _tu:
+            payload["target_user"] = _tu
+        _rid = os.getenv("BACKTEST_ROLE_ID", "")
+        if _rid:
+            payload["role_id"] = _rid
 
         # 回測專用配置
         disable_synthesis = os.getenv("BACKTEST_DISABLE_ANSWER_SYNTHESIS", "false").lower() == "true"
@@ -168,31 +179,23 @@ class AsyncBacktestFramework:
                 # 從 debug_info 提取 similarity 並注入到 sources
                 if data and "debug_info" in data and data["debug_info"]:
                     debug_info = data["debug_info"]
-                    id_to_scores = {}
+                    if debug_info and "knowledge_candidates" in debug_info and debug_info["knowledge_candidates"] and "sources" in data:
+                        # task 5.5：主排序使用 final similarity（含 rerank/boost），
+                        # 額外記錄 vector_similarity 供純向量分數分析。
+                        id_to_scores = {}
+                        for candidate in debug_info["knowledge_candidates"]:
+                            kb_id = candidate.get("id")
+                            if not kb_id:
+                                continue
+                            id_to_scores[kb_id] = {
+                                # 主排序：final similarity（retriever 輸出組合分數）
+                                "similarity": candidate.get('similarity', 0.0),
+                                # 輔助分析：純向量 cosine 分數
+                                "vector_similarity": candidate.get('vector_similarity', 0.0),
+                            }
 
-                    # 從 knowledge_candidates 提取分數
-                    for candidate in (debug_info.get("knowledge_candidates") or []):
-                        kb_id = candidate.get("id")
-                        if not kb_id:
-                            continue
-                        id_to_scores[kb_id] = {
-                            "similarity": candidate.get('boosted_similarity', candidate.get('similarity', 0.0)),
-                            "vector_similarity": candidate.get('base_similarity', candidate.get('vector_similarity', 0.0)),
-                        }
-
-                    # 從 sop_candidates 提取分數
-                    for candidate in (debug_info.get("sop_candidates") or []):
-                        sop_id = candidate.get("id")
-                        if not sop_id:
-                            continue
-                        id_to_scores[sop_id] = {
-                            "similarity": candidate.get('boosted_similarity', candidate.get('similarity', 0.0)),
-                            "vector_similarity": candidate.get('base_similarity', candidate.get('vector_similarity', 0.0)),
-                        }
-
-                    # 注入 similarity + vector_similarity 到 sources
-                    if id_to_scores and data.get("sources"):
-                        for source in data["sources"]:
+                        # 注入 similarity + vector_similarity 到 sources
+                        for source in data.get("sources", []):
                             source_id = source.get("id")
                             if source_id in id_to_scores:
                                 scores = id_to_scores[source_id]
@@ -292,8 +295,12 @@ class AsyncBacktestFramework:
                     else:
                         raise
 
-            # 評估答案（V2：使用 confidence_score + 語義攔截）
-            evaluation_result = self.evaluate_answer_v2(scenario, system_response)
+            # 評估答案：預設 v3 多輪感知六級（BACKTEST_EVAL_V3=false 退回 v2）
+            if os.getenv("BACKTEST_EVAL_V3", "true").lower() == "true":
+                evaluation_result = await asyncio.to_thread(
+                    self.evaluate_answer_v3, scenario, system_response)
+            else:
+                evaluation_result = self.evaluate_answer_v2(scenario, system_response)
             result = self._build_result_dict(
                 scenario, system_response, evaluation_result, index
             )
@@ -605,6 +612,75 @@ class AsyncBacktestFramework:
             'keyword_match_rate': round(keyword_match_rate, 3)
         }
 
+    EVAL_V3_RUBRIC = (
+        "你是客服品質評審。系統是「多輪對話式」客服。輸出 JSON："
+        "{\"grade\":\"...\",\"why\":\"12字內\"}\n"
+        "判定規則（依序）：\n"
+        "1. 回答的主要內容是「反問/要求提供資訊」才可能是 ASK_*；"
+        "只要含實質說明內容（流程/條件/定義/步驟），一律不是 ASK_*。\n"
+        "2. ASK_OK：追問合理——問題需要特定對象（某份合約/帳單/物件/成員）或確有歧義需分流。"
+        "ASK_BAD：問題是通則，卻被要求提供識別。\n"
+        "3. GOOD：實質回答且主題對（答到核心即可）。\n"
+        "4. WRONG：實質回答但主題錯位/答非所問。\n"
+        "5. NOFOUND：回答「找不到資訊、請聯絡客服」。\n"
+        "6. BROKEN：系統錯誤訊息（找不到表單定義/請重新開始/亂碼）。"
+    )
+    EVAL_V3_PASS_GRADES = ("GOOD", "ASK_OK")
+
+    def evaluate_answer_v3(self, scenario: Dict, system_response: Dict) -> Dict:
+        """多輪感知評估（2026-07-05 架構修正）。
+
+        背景：v2 的 confidence/keyword 打分對「面向先追問識別」的多輪架構
+        全面失真（正確追問被判 fail、run291 score 全 0）。v3 改為 LLM 六級
+        分級：GOOD/ASK_OK 視為通過；雙票一致採納、不一致第三票仲裁
+        （單票 gpt-4o-mini 噪音實測會把正確直答誤標 ASK_BAD）。
+        env：BACKTEST_EVAL_MODEL（預設 gpt-4o-mini）、BACKTEST_EVAL_VOTES（預設 2）。
+        """
+        question = scenario.get('test_question', '')
+        answer = (system_response or {}).get('answer', '') or ''
+        expected = scenario.get('expected_answer') or ''
+        user_msg = f"問題：{question}\n系統回答：{answer[:500]}"
+        if expected:
+            user_msg += f"\n（參考）期望答案要點：{str(expected)[:200]}"
+
+        client = OpenAI()
+        model = os.getenv("BACKTEST_EVAL_MODEL", "gpt-4o-mini")
+
+        def _vote():
+            r = client.chat.completions.create(
+                model=model, temperature=0,
+                response_format={"type": "json_object"},
+                messages=[{"role": "system", "content": self.EVAL_V3_RUBRIC},
+                          {"role": "user", "content": user_msg}])
+            d = json.loads(r.choices[0].message.content)
+            return d.get("grade", "?"), d.get("why", "")
+
+        try:
+            votes = max(1, int(os.getenv("BACKTEST_EVAL_VOTES", "2")))
+            g1, why = _vote()
+            grade = g1
+            if votes >= 2:
+                g2, why2 = _vote()
+                if g2 != g1:
+                    g3, why3 = _vote()          # 仲裁票
+                    grade, why = (g3, why3) if g3 in (g1, g2) else (g1, why)
+                else:
+                    grade = g1
+            passed = grade in self.EVAL_V3_PASS_GRADES
+            return {
+                'passed': passed,
+                'grade': grade,
+                'grade_reason': why,
+                'score': 1.0 if passed else 0.0,
+                'eval_version': 'v3-multiturn',
+                'failure_reason': '' if passed else f'{grade}: {why}',
+            }
+        except Exception as e:
+            # 評審失敗不假裝通過也不假裝失敗——標記 EVAL_ERR 供人工複核
+            return {'passed': False, 'grade': 'EVAL_ERR', 'grade_reason': str(e)[:60],
+                    'score': 0.0, 'eval_version': 'v3-multiturn',
+                    'failure_reason': f'EVAL_ERR: {str(e)[:60]}'}
+
     def evaluate_answer_v2(self, scenario: Dict, system_response: Dict) -> Dict:
         """
         對齊生產環境的評估邏輯 (V2 - 2026-03-15)
@@ -757,7 +833,18 @@ class AsyncBacktestFramework:
 
         用輕量 LLM 呼叫判斷答案與問題的相關性，
         攔截「高檢索分數但答非所問」的情況。
+
+        Args:
+            question: 用戶問題
+            answer: 系統回答
+
+        Returns:
+            {
+                'is_relevant': bool,
+                'reason': str  # 不相關時的原因
+            }
         """
+        # 環境變數控制開關（預設開啟）
         if os.getenv('BACKTEST_RELEVANCE_CHECK', 'true').lower() != 'true':
             return {'is_relevant': True, 'reason': ''}
 
@@ -772,7 +859,9 @@ class AsyncBacktestFramework:
                 ]
             )
 
+            import json
             text = response.choices[0].message.content.strip()
+            # 處理可能的 markdown 包裹
             if text.startswith('```'):
                 text = text.split('\n', 1)[1].rsplit('```', 1)[0].strip()
             result = json.loads(text)
@@ -820,9 +909,6 @@ class AsyncBacktestFramework:
 
         knowledge_links = '\n'.join(knowledge_urls) if knowledge_urls else '無'
 
-        # 提取 debug_info（處理流程詳情）
-        debug_info = system_response.get('debug_info', {}) if system_response else {}
-
         # 構建結果
         result = {
             'test_id': index,
@@ -832,8 +918,8 @@ class AsyncBacktestFramework:
             'all_intents': system_response.get('all_intents', []) if system_response else [],
             'system_answer': system_response.get('answer', '')[:200] if system_response else '',
             'confidence': system_response.get('confidence', 0) if system_response else 0,
-            'score': evaluation.get('confidence_score', evaluation.get('score', 0)),
-            'overall_score': evaluation.get('confidence_score', evaluation.get('score', 0)),
+            'score': evaluation.get('score', 0),
+            'overall_score': evaluation.get('score', 0),
             'passed': evaluation['passed'],
             'evaluation': json.dumps(evaluation, ensure_ascii=False),  # V2: 保存完整評估結果
             'optimization_tips': '\n'.join(evaluation.get('optimization_tips', [])) if isinstance(evaluation.get('optimization_tips'), list) else evaluation.get('optimization_tips', ''),
@@ -850,9 +936,7 @@ class AsyncBacktestFramework:
             'confidence_level': evaluation.get('confidence_level'),
             'max_similarity': evaluation.get('max_similarity'),
             'keyword_match_rate': evaluation.get('keyword_match_rate'),
-            'failure_reason': evaluation.get('failure_reason', ''),
-            # 處理流程詳情（用於前端顯示 debug 資訊）
-            'response_metadata': debug_info if debug_info else {}
+            'failure_reason': evaluation.get('failure_reason', '')
         }
 
         return result
@@ -977,7 +1061,6 @@ class AsyncBacktestFramework:
             for orig_idx, failed_result in failed_no_answer:
                 scenario_id = failed_result.get('scenario_id')
                 question = failed_result.get('test_question', '')
-                # 找到原始 scenario
                 matching = [s for s in test_scenarios if s.get('id') == scenario_id]
                 if not matching:
                     continue

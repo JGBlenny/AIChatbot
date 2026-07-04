@@ -141,16 +141,25 @@ class AsyncBacktestFramework:
         unique_session_id = f"backtest_{self._run_nonce}_{scenario_id or 'x'}"
         unique_user_id = f"backtest_user_{self._run_nonce}_{scenario_id or 'x'}"
 
+        # 請求形狀鏡像生產呼叫端（2026-07-05 架構修正）：
+        #   舊硬編 mode="tenant" 使業者題集在業態/受眾隔離下大面積查無（run290 驗屍）。
+        #   預設 b2b+property_manager（jgb2 後台 useChat.ts:62）；租客題集以 env 覆寫。
         payload = {
             "message": question,
             "vendor_id": self.vendor_id,
-            "mode": "tenant",
+            "mode": os.getenv("BACKTEST_MODE", "b2b"),
             "include_sources": True,
             "skip_sop": False,  # 改為 False，讓回測能檢索 SOP
             "include_debug_info": True,  # 回測需要 similarity 數據
             "session_id": unique_session_id,  # 每個案例使用唯一 session_id
             "user_id": unique_user_id  # 每個案例使用唯一 user_id
         }
+        _tu = os.getenv("BACKTEST_TARGET_USER", "property_manager")
+        if _tu:
+            payload["target_user"] = _tu
+        _rid = os.getenv("BACKTEST_ROLE_ID", "")
+        if _rid:
+            payload["role_id"] = _rid
 
         # 回測專用配置
         disable_synthesis = os.getenv("BACKTEST_DISABLE_ANSWER_SYNTHESIS", "false").lower() == "true"
@@ -286,8 +295,12 @@ class AsyncBacktestFramework:
                     else:
                         raise
 
-            # 評估答案（V2：使用 confidence_score + 語義攔截）
-            evaluation_result = self.evaluate_answer_v2(scenario, system_response)
+            # 評估答案：預設 v3 多輪感知六級（BACKTEST_EVAL_V3=false 退回 v2）
+            if os.getenv("BACKTEST_EVAL_V3", "true").lower() == "true":
+                evaluation_result = await asyncio.to_thread(
+                    self.evaluate_answer_v3, scenario, system_response)
+            else:
+                evaluation_result = self.evaluate_answer_v2(scenario, system_response)
             result = self._build_result_dict(
                 scenario, system_response, evaluation_result, index
             )
@@ -598,6 +611,75 @@ class AsyncBacktestFramework:
             'result_count': result_count,
             'keyword_match_rate': round(keyword_match_rate, 3)
         }
+
+    EVAL_V3_RUBRIC = (
+        "你是客服品質評審。系統是「多輪對話式」客服。輸出 JSON："
+        "{\"grade\":\"...\",\"why\":\"12字內\"}\n"
+        "判定規則（依序）：\n"
+        "1. 回答的主要內容是「反問/要求提供資訊」才可能是 ASK_*；"
+        "只要含實質說明內容（流程/條件/定義/步驟），一律不是 ASK_*。\n"
+        "2. ASK_OK：追問合理——問題需要特定對象（某份合約/帳單/物件/成員）或確有歧義需分流。"
+        "ASK_BAD：問題是通則，卻被要求提供識別。\n"
+        "3. GOOD：實質回答且主題對（答到核心即可）。\n"
+        "4. WRONG：實質回答但主題錯位/答非所問。\n"
+        "5. NOFOUND：回答「找不到資訊、請聯絡客服」。\n"
+        "6. BROKEN：系統錯誤訊息（找不到表單定義/請重新開始/亂碼）。"
+    )
+    EVAL_V3_PASS_GRADES = ("GOOD", "ASK_OK")
+
+    def evaluate_answer_v3(self, scenario: Dict, system_response: Dict) -> Dict:
+        """多輪感知評估（2026-07-05 架構修正）。
+
+        背景：v2 的 confidence/keyword 打分對「面向先追問識別」的多輪架構
+        全面失真（正確追問被判 fail、run291 score 全 0）。v3 改為 LLM 六級
+        分級：GOOD/ASK_OK 視為通過；雙票一致採納、不一致第三票仲裁
+        （單票 gpt-4o-mini 噪音實測會把正確直答誤標 ASK_BAD）。
+        env：BACKTEST_EVAL_MODEL（預設 gpt-4o-mini）、BACKTEST_EVAL_VOTES（預設 2）。
+        """
+        question = scenario.get('test_question', '')
+        answer = (system_response or {}).get('answer', '') or ''
+        expected = scenario.get('expected_answer') or ''
+        user_msg = f"問題：{question}\n系統回答：{answer[:500]}"
+        if expected:
+            user_msg += f"\n（參考）期望答案要點：{str(expected)[:200]}"
+
+        client = OpenAI()
+        model = os.getenv("BACKTEST_EVAL_MODEL", "gpt-4o-mini")
+
+        def _vote():
+            r = client.chat.completions.create(
+                model=model, temperature=0,
+                response_format={"type": "json_object"},
+                messages=[{"role": "system", "content": self.EVAL_V3_RUBRIC},
+                          {"role": "user", "content": user_msg}])
+            d = json.loads(r.choices[0].message.content)
+            return d.get("grade", "?"), d.get("why", "")
+
+        try:
+            votes = max(1, int(os.getenv("BACKTEST_EVAL_VOTES", "2")))
+            g1, why = _vote()
+            grade = g1
+            if votes >= 2:
+                g2, why2 = _vote()
+                if g2 != g1:
+                    g3, why3 = _vote()          # 仲裁票
+                    grade, why = (g3, why3) if g3 in (g1, g2) else (g1, why)
+                else:
+                    grade = g1
+            passed = grade in self.EVAL_V3_PASS_GRADES
+            return {
+                'passed': passed,
+                'grade': grade,
+                'grade_reason': why,
+                'score': 1.0 if passed else 0.0,
+                'eval_version': 'v3-multiturn',
+                'failure_reason': '' if passed else f'{grade}: {why}',
+            }
+        except Exception as e:
+            # 評審失敗不假裝通過也不假裝失敗——標記 EVAL_ERR 供人工複核
+            return {'passed': False, 'grade': 'EVAL_ERR', 'grade_reason': str(e)[:60],
+                    'score': 0.0, 'eval_version': 'v3-multiturn',
+                    'failure_reason': f'EVAL_ERR: {str(e)[:60]}'}
 
     def evaluate_answer_v2(self, scenario: Dict, system_response: Dict) -> Dict:
         """
