@@ -1515,12 +1515,14 @@ class SmartBatchRequest(BaseModel):
     status: Optional[str] = None  # pending_review, approved, rejected
     source: Optional[str] = None  # imported, manual, user_question
     difficulty: Optional[str] = None  # easy, medium, hard
+    target_user: Optional[str] = None  # 題庫受眾：property_manager(JGB知識)/tenant(租客)/prospect(售前)
 
 class CountRequest(BaseModel):
     """題數統計請求模型"""
     status: Optional[str] = None
     source: Optional[str] = None
     difficulty: Optional[str] = None
+    target_user: Optional[str] = None  # 題庫受眾：property_manager(JGB知識)/tenant/prospect
 
 class ContinuousBatchRequest(BaseModel):
     """連續分批回測請求模型"""
@@ -1674,6 +1676,10 @@ async def count_test_scenarios(request: CountRequest = None):
             query += " AND difficulty = %s"
             params.append(request.difficulty)
 
+        if request and request.target_user:
+            query += " AND request_target_user = %s"
+            params.append(request.target_user)
+
         cur.execute(query, params)
         result = cur.fetchone()
         # 處理不同的 cursor 類型（dict 或 tuple）
@@ -1822,6 +1828,8 @@ async def run_smart_batch(request: SmartBatchRequest, user: dict = Depends(get_c
                 env_vars.append(f"BACKTEST_FILTER_SOURCE={request.source}")
             if request.difficulty:
                 env_vars.append(f"BACKTEST_FILTER_DIFFICULTY={request.difficulty}")
+            if request.target_user:
+                env_vars.append(f"BACKTEST_FILTER_TARGET_USER={request.target_user}")
 
             # 構建 docker exec 命令
             env_str = " && ".join([f"export {var}" for var in env_vars])
@@ -2054,6 +2062,8 @@ async def run_continuous_batch(request: ContinuousBatchRequest, user: dict = Dep
                         env["BACKTEST_FILTER_SOURCE"] = request.source
                     if request.difficulty:
                         env["BACKTEST_FILTER_DIFFICULTY"] = request.difficulty
+                    if request.target_user:
+                        env["BACKTEST_FILTER_TARGET_USER"] = request.target_user
 
                     # 動態計算 timeout
                     base_timeout_per_question = 5

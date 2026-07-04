@@ -103,6 +103,7 @@ async def main():
     filter_status = os.getenv('BACKTEST_FILTER_STATUS')
     filter_source = os.getenv('BACKTEST_FILTER_SOURCE')
     filter_difficulty = os.getenv('BACKTEST_FILTER_DIFFICULTY')
+    filter_target_user = os.getenv('BACKTEST_FILTER_TARGET_USER')   # 題庫受眾：property_manager=JGB知識/tenant/prospect
 
     # 直接從資料庫載入情境（避免依賴 backtest_framework.py）
     conn = psycopg2.connect(**db_params)
@@ -124,6 +125,10 @@ async def main():
     if filter_difficulty:
         query += " AND difficulty = %s"
         params.append(filter_difficulty)
+
+    if filter_target_user:
+        query += " AND request_target_user = %s"
+        params.append(filter_target_user)
 
     # 排序並添加分批參數
     query += " ORDER BY id"
@@ -162,7 +167,7 @@ async def main():
     else:
         print(f'✅ 載入 {total_tests} 個測試情境 (全量)')
 
-    if filter_status or filter_source or filter_difficulty:
+    if filter_status or filter_source or filter_difficulty or filter_target_user:
         filters = []
         if filter_status:
             filters.append(f"status={filter_status}")
