@@ -71,14 +71,14 @@ def test_parent_layer_two_axis_without_branch_details():
 def test_guide_context_carries_ground_truth_anchors():
     _, child = _bodies()
     guide = child["物件操作引導"]
-    assert "通知中心" in guide                                # 批次結果去向
-    assert "10MB" in guide                                    # 檔案上限
-    assert "重傳" in guide or "重複" in guide                  # 停處理中不教重傳
     assert "刪除" in guide and "合約" in guide                 # 刪除三擋（有約不可刪）
     assert "對外" in guide and "完整地址" in guide             # 地址雙層
     assert "/p/" in guide or "招租店舖" in guide               # 店舖
     assert "儲存" in guide                                    # 儲存行為提醒
     assert "不影響既有合約" in guide or "既有合約" in guide     # 快照原則（有約可編輯）
+    # 批次上傳範圍外（使用者裁定 2026-07-04）：脈絡不含批次機制、明文導客服
+    assert "10MB" not in guide and "通知中心" not in guide
+    assert "批次上傳" in guide and "客服" in guide
 
 
 @pytest.mark.req("estate-conversational-facets:4.2")
@@ -154,5 +154,6 @@ def test_red_lines_everywhere():
     assert "已刪除" in diag_rules                              # 查不到紅線明文
     assert "對外顯示" in diag_rules                            # 地址遮罩口徑
     guide_rules = cfgs["estate_guide"].answer_rules or ""
-    assert "重傳" in guide_rules or "重複建立" in guide_rules
-    assert "通知中心" in guide_rules
+    # 批次範圍外：紅線改「識別後導客服」，不得再教批次機制
+    assert "批次上傳範圍外" in guide_rules and "導客服" in guide_rules
+    assert "通知中心" not in guide_rules

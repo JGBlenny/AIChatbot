@@ -27,7 +27,7 @@ _SEEDS = ["split_base_system_context_extract_presales.sql",
           "seed_estate_facet_system_context.sql",
           "seed_estate_facet_configs.sql"]
 
-_TEST_KB_SUMMARY = "IT測試-物件批次上傳教學"   # fixture 自插（teardown 刪）
+_TEST_KB_SUMMARY = "IT測試-對外顯示地址教學"   # fixture 自插（teardown 刪）
 
 
 def _conn_kwargs():
@@ -53,7 +53,7 @@ async def pool():
             await p.execute(f.read())
     await p.execute(
         "INSERT INTO knowledge_base (question_summary, answer, category, categories, target_user, is_active) "
-        "SELECT $1, '批次上傳測試內容：範本必填欄補齊後確認，結果在通知中心。', '一般知識', "
+        "SELECT $1, '對外顯示地址測試內容：只作用在對外廣告頁，後台恆顯完整地址。', '一般知識', "
         "ARRAY['物件操作引導']::text[], ARRAY['property_manager']::text[], TRUE "
         "WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary=$1)", _TEST_KB_SUMMARY)
     cc.reset_cache(); sc.reset_cache(); cr.reset_cache()
@@ -133,7 +133,7 @@ async def test_both_facets_enter_by_category(pool):
 @pytest.mark.req("estate-conversational-facets:1.3")
 async def test_three_layer_context_isolated(pool):
     from services import system_context as sc
-    markers = {"物件操作引導": "通知中心", "物件現況診斷": "已刪除"}
+    markers = {"物件操作引導": "完整地址", "物件現況診斷": "已刪除"}
     for facet, marker in markers.items():
         sc.reset_cache()
         md = await sc.get_system_context(pool, facet)
@@ -225,13 +225,13 @@ async def test_guide_category_convergence_has_grounding(pool):
     from services import conversational_config as cc
     cfg = await cc.config_for_category(pool, "物件操作引導")
     brain = _Brain([{"action": "converge", "converge_kind": "answer", "scope": "stay",
-                     "extracted_fields": {"topic": "批次上傳"}}])
+                     "extracted_fields": {"topic": "對外顯示地址"}}])
     eng = _engine(pool, brain, _handler([]))
     sid = "it-estg-" + os.urandom(3).hex()
     try:
-        d = await eng.prepare(sid, "u1", 7, "物件批次上傳一直失敗", config=cfg, role_id="37305")
+        d = await eng.prepare(sid, "u1", 7, "改了對外顯示地址怎麼沒生效", config=cfg, role_id="37305")
         assert d["kind"] == "converge"
-        assert "通知中心" in (d.get("grounding") or ""), "category 收斂應吃到面向知識（target_user 明填）"
+        assert "對外廣告頁" in (d.get("grounding") or ""), "category 收斂應吃到面向知識（target_user 明填）"
     finally:
         await _cleanup(pool, sid)
 
