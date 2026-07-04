@@ -720,7 +720,11 @@ class ConversationalEngine:
             if select == "ids" and scope.get("kb_ids"):
                 grounding = await self._grounding_by_ids(scope["kb_ids"])
             elif select == "category" and scope.get("category"):
-                grounding = await self._grounding_by_category(scope["category"], scope_target_user)
+                # limit 可由 grounding_scope 宣告（通用擴充；預設 8）——面向知識超過 8 筆時
+                # priority 同分靠 id 排序會把新知識擠出底稿（estate 抽驗逼出）。
+                grounding = await self._grounding_by_category(
+                    scope["category"], scope_target_user,
+                    limit=int(scope.get("limit") or 8))
             else:  # vector
                 emb = await self.retriever.embedding_client.get_embedding(query, verbose=False)
                 if emb:

@@ -232,8 +232,8 @@ async def test_guide_category_convergence_has_grounding(pool):
         d = await eng.prepare(sid, "u1", 7, "改了對外顯示地址怎麼沒生效", config=cfg, role_id="37305")
         assert d["kind"] == "converge"
         g = d.get("grounding") or ""
-        # category 選材有上限（不保證特定筆入選）——斷言面向知識底稿成立（target_user 明填生效）
-        assert len(g) > 50 and ("刊登" in g or "對外" in g or "物件" in g), f"grounding 空或無面向知識：{g[:80]}"
+        # limit=12 後新知識必入底稿（抽驗 M2 根因修正的回歸釘）
+        assert "對外廣告頁" in g or "永遠顯示完整地址" in g, f"新知識未入底稿：{g[:120]}"
     finally:
         await _cleanup(pool, sid)
 

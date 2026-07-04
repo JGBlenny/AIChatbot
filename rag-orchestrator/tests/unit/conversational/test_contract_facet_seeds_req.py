@@ -204,3 +204,12 @@ def test_persona_rules_carry_facet_specific_behaviors():
     assert "現象" in rules["簽署排障"] and "客服" in rules["簽署排障"]
     for text in rules.values():
         assert "API 現值為準" in text                             # R7.2 全含
+
+
+@pytest.mark.req("contract-conversational-facets:2.1")
+def test_closeout_persona_acknowledges_identifier_no_verbatim_repeat():
+    """抽驗逼出（五域 spot check M3）：使用者給了物件/合約識別但沒回答退租型態時，
+    persona 必須先收識別＋確認已收到，不得一字不差重複上一句分流問題。"""
+    sql = _read("seed_contract_facet_configs.sql")
+    block = sql.split("對話規則：退租收尾")[1].split("$RULES$")[1]
+    assert "給了合約/物件識別" in block and "不要一字不差重複" in block

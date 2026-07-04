@@ -129,6 +129,8 @@ def test_grounding_shapes():
     assert guide["select"] == "category" and guide["category"] == "物件操作引導"
     # 收斂檢索 target_user 必須明填（account 坑：漏填 fallback persona_role → grounding 恆空）
     assert guide["target_user"] == "property_manager"
+    # 面向知識 12 筆 > 預設 8——limit 必須明填，否則 id 排序擠掉新知識（抽驗 M2 根因）
+    assert guide["limit"] == 12
 
     diag = cfgs["estate_diag"].grounding_scope
     assert diag["select"] == "api" and diag["endpoint"] == "jgb_estate_status"   # 新鍵（修繕表單鍵不可用）
@@ -157,3 +159,5 @@ def test_red_lines_everywhere():
     # 批次範圍外：紅線改「識別後導客服」，不得再教批次機制
     assert "批次上傳範圍外" in guide_rules and "導客服" in guide_rules
     assert "通知中心" not in guide_rules
+    # 抽驗逼出（M2）：LLM 曾自創「刪除後合約保留機制」——不臆測紅線明文
+    assert "不臆測" in guide_rules
