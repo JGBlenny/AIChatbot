@@ -659,10 +659,18 @@ async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, threshold):
 
 
 def _drop_empty_answer_rows(rows: list) -> list:
-    """錨點防呆（五域抽驗 A3/電費題逼出）：answer 空的知識＝面向進場錨點，
-    只供進場判定用——落回單發答題前必須濾除，否則 question_summary 會被
-    當回答吐給使用者（實例：id 3873「我想改合約 內容要修改」被原文輸出）。"""
-    return [k for k in (rows or []) if (k.get('answer') or '').strip()]
+    """錨點防呆（五域抽驗 A3/電費題逼出）：answer 空且無任何動作的知識＝面向
+    進場錨點，只供進場判定用——落回單發答題前必須濾除，否則 question_summary
+    會被當回答吐給使用者（實例：id 3873「我想改合約 內容要修改」被原文輸出）。
+    ⚠️ answer 空但帶 form_id/動作型 action_type 的列是表單觸發知識（全庫 16 筆），
+    必須保留——首版誤濾導致表單 e2e 兩案紅（先紅後綠教訓）。"""
+    def _keep(k):
+        if (k.get('answer') or '').strip():
+            return True
+        if k.get('form_id'):
+            return True
+        return k.get('action_type') in ('form_fill', 'api_call', 'form_then_api')
+    return [k for k in (rows or []) if _keep(k)]
 
 
 async def handle_retrieval(request, req, ctx: ChatRequestContext):

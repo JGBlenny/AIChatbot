@@ -35,3 +35,18 @@ def test_all_anchors_filtered_leaves_empty_list():
     from routers.chat import _drop_empty_answer_rows
     out = _drop_empty_answer_rows([{"id": 9, "question_summary": "錨", "answer": ""}])
     assert out == []
+
+
+def test_form_trigger_rows_with_empty_answer_kept():
+    """表單觸發知識 answer 可為空（全庫 16 筆）——不得被錨點防呆誤濾
+    （首版誤濾致表單 e2e 兩案紅的回歸釘）。"""
+    from routers.chat import _drop_empty_answer_rows
+    rows = [
+        {"id": 10, "answer": "", "form_id": "jgb_repair_create"},
+        {"id": 11, "answer": None, "action_type": "form_fill"},
+        {"id": 12, "answer": "", "action_type": "api_call"},
+        {"id": 13, "answer": "", "action_type": "form_then_api"},
+        {"id": 14, "answer": "", "action_type": "direct_answer"},   # 純錨點 → 濾
+    ]
+    out = _drop_empty_answer_rows(rows)
+    assert [k["id"] for k in out] == [10, 11, 12, 13]
