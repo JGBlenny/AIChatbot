@@ -777,16 +777,26 @@ async def get_iteration_backtest_results(
                     "source_count": r["source_count"] or 0,
                     "tested_at": r["tested_at"].isoformat() if r["tested_at"] else None,
                     "failure_reason": evaluation.get("failure_reason") if isinstance(evaluation, dict) else None,
+                    "grade": evaluation.get("grade") if isinstance(evaluation, dict) else None,          # v3 多輪感知評級
+                    "grade_reason": evaluation.get("grade_reason") if isinstance(evaluation, dict) else None,
                     "is_relevant": evaluation.get("is_relevant") if isinstance(evaluation, dict) else None,
                     "relevance_reason": evaluation.get("relevance_reason") if isinstance(evaluation, dict) else None,
                     "debug_info": response_metadata if response_metadata else None  # 處理流程詳情
                 })
+
+            # v3 評級分佈（舊 run 無 grade → 空 dict，前端據此隱藏分佈條）
+            grade_rows = await conn.fetch("""
+                SELECT COALESCE(evaluation::jsonb->>'grade','') AS grade, count(*) AS n
+                FROM backtest_results WHERE run_id = $1 GROUP BY 1
+            """, run_id)
+            grade_distribution = {gr["grade"]: gr["n"] for gr in grade_rows if gr["grade"]}
 
             return {
                 "results": result_list,
                 "total": total,
                 "summary": {
                     "run_id": run_id,
+                    "grade_distribution": grade_distribution,
                     "total": run_record["total_scenarios"] or 0,
                     "passed": run_record["passed_count"] or 0,
                     "failed": run_record["failed_count"] or 0,

@@ -1024,6 +1024,7 @@ async def get_stats(user: dict = Depends(get_current_user)):
 @app.get("/api/backtest/results")
 async def get_backtest_results(
     status_filter: Optional[str] = Query(None, description="篩選狀態 (all/failed/passed)"),
+    grade_filter: Optional[str] = Query(None, description="v3 評級篩選（GOOD/ASK_OK/ASK_BAD/WRONG/NOFOUND/BROKEN）"),
     limit: int = Query(50, ge=1, le=200, description="每頁筆數"),
     offset: int = Query(0, ge=0, description="偏移量"),
     user: dict = Depends(get_current_user)
@@ -1292,10 +1293,36 @@ async def list_backtest_runs(
         conn.close()
 
 
+@app.get("/api/backtest/runs/{run_id}/grade-distribution")
+async def get_backtest_grade_distribution(run_id: int, user: dict = Depends(get_current_user)):
+    """v3 多輪感知評級分佈（GOOD/ASK_OK/ASK_BAD/WRONG/NOFOUND/BROKEN）。
+
+    舊 run（v2 評估）無 grade 欄位 → 回空分佈，前端據此隱藏分佈條。"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT COALESCE(evaluation->>'grade','') AS grade, count(*) AS n
+            FROM backtest_results WHERE run_id = %s
+            GROUP BY 1 ORDER BY 2 DESC
+        """, (run_id,))
+        rows = [dict(r) for r in cur.fetchall()]
+        dist = {r['grade']: r['n'] for r in rows if r['grade']}
+        total = sum(dist.values())
+        ok = dist.get('GOOD', 0) + dist.get('ASK_OK', 0)
+        return {"run_id": run_id, "distribution": dist, "graded_total": total,
+                "pass_grades": ["GOOD", "ASK_OK"],
+                "pass_rate_v3": round(ok / total * 100, 1) if total else None}
+    finally:
+        cur.close()
+        conn.close()
+
+
 @app.get("/api/backtest/runs/{run_id}/results")
 async def get_backtest_run_results(
     run_id: int,
     status_filter: Optional[str] = Query(None, description="篩選狀態 (all/failed/passed)"),
+    grade_filter: Optional[str] = Query(None, description="v3 評級篩選（GOOD/ASK_OK/ASK_BAD/WRONG/NOFOUND/BROKEN）"),
     limit: int = Query(50, ge=1, le=200, description="每頁筆數"),
     offset: int = Query(0, ge=0, description="偏移量"),
     user: dict = Depends(get_current_user)
@@ -1357,11 +1384,18 @@ async def get_backtest_run_results(
                 evaluation->>'max_similarity' as max_similarity,
                 evaluation->>'result_count' as result_count,
                 evaluation->>'keyword_match_rate' as keyword_match_rate,
-                evaluation->>'failure_reason' as failure_reason
+                evaluation->>'failure_reason' as failure_reason,
+                evaluation->>'grade' as grade,
+                evaluation->>'grade_reason' as grade_reason,
+                evaluation->>'eval_version' as eval_version
             FROM backtest_results
             WHERE run_id = %s
         """
         params = [run_id]
+
+        if grade_filter:
+            query += " AND evaluation->>'grade' = %s"
+            params.append(grade_filter)
 
         # 過濾狀態
         if status_filter == "failed":

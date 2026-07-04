@@ -115,6 +115,16 @@
       </div>
     </div>
 
+    <!-- v3 多輪感知評級分佈（舊 run 無資料時自動隱藏） -->
+    <div v-if="gradeDistribution && Object.keys(gradeDistribution).length" class="grade-dist">
+      <span class="grade-dist-label">評級分佈（v3 多輪感知）：</span>
+      <span v-for="g in gradeOrder" :key="g">
+        <span v-if="gradeDistribution[g]" class="grade-chip" :class="'grade-' + g.toLowerCase()">
+          {{ gradeLabel(g) }} {{ gradeDistribution[g] }}
+        </span>
+      </span>
+    </div>
+
     <!-- 工具列 -->
     <div class="toolbar">
       <div class="filter-group">
@@ -162,6 +172,7 @@
           <tr>
             <th style="width: 60px;">ID</th>
             <th style="width: 80px;">狀態</th>
+            <th style="width: 95px;">評級</th>
             <th style="width: 300px;">測試問題</th>
             <th style="width: 150px;">意圖</th>
             <th style="width: 100px;">信心分數</th>
@@ -177,6 +188,11 @@
               <span class="status-badge" :class="result.passed ? 'passed' : 'failed'">
                 {{ result.passed ? '✅ 通過' : '❌ 失敗' }}
               </span>
+            </td>
+            <td>
+              <span v-if="result.grade" class="grade-chip" :class="'grade-' + result.grade.toLowerCase()"
+                    :title="result.grade_reason || ''">{{ gradeLabel(result.grade) }}</span>
+              <span v-else class="grade-chip grade-none">—</span>
             </td>
             <td class="question-cell">{{ result.test_question }}</td>
             <td>{{ result.actual_intent || 'N/A' }}</td>
@@ -405,6 +421,8 @@ export default {
       loading: false,
       error: null,
       statusFilter: 'all',
+      gradeDistribution: null,
+      gradeOrder: ['GOOD', 'ASK_OK', 'ASK_BAD', 'WRONG', 'NOFOUND', 'BROKEN', 'EVAL_ERR'],
       pagination: {
         limit: 50,
         offset: 0
@@ -594,6 +612,12 @@ export default {
       }
     },
 
+    gradeLabel(g) {
+      const map = { GOOD: '✔ 直答', ASK_OK: '↩ 合理追問', ASK_BAD: '⚠ 過度追問',
+                    WRONG: '✖ 錯位', NOFOUND: '∅ 查無', BROKEN: '💥 異常', EVAL_ERR: '? 評審失敗' };
+      return map[g] || g;
+    },
+
     onRunSelected() {
       this.pagination.offset = 0;
       this.loadResults();
@@ -646,6 +670,7 @@ export default {
           pass_rate: (response.data.summary.pass_rate * 100).toFixed(1),
           avg_score: response.data.summary.avg_score?.toFixed(2) || 'N/A'
         } : null;
+        this.gradeDistribution = response.data.summary?.grade_distribution || null;
 
         // 將 API 回傳的欄位映射到前端需要的格式
         this.results = this.results.map(result => ({
@@ -656,6 +681,8 @@ export default {
           actual_response: result.system_answer,
           confidence_score: result.confidence_score,  // 使用 RAG 檢索信心度，而非意圖分類信心度
           confidence_level: result.confidence_level,  // 使用 API 計算的信心度等級
+          grade: result.grade,                          // v3 多輪感知評級
+          grade_reason: result.grade_reason,
           source_count: result.source_count,
           passed: result.passed,
           timestamp: result.tested_at,
@@ -854,6 +881,17 @@ export default {
 </script>
 
 <style scoped>
+.grade-dist { margin: 8px 0 4px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.grade-dist-label { font-size: 13px; color: #666; }
+.grade-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
+.grade-good { background: #e6f7e6; color: #1a7f1a; }
+.grade-ask_ok { background: #e8f1fb; color: #1a5fa8; }
+.grade-ask_bad { background: #fff3e0; color: #b26a00; }
+.grade-wrong { background: #fdecea; color: #b3261e; }
+.grade-nofound { background: #f0f0f0; color: #666; }
+.grade-broken { background: #fce4ec; color: #ad1457; }
+.grade-eval_err, .grade-none { background: #f5f5f5; color: #999; }
+
 .backtest-results-tab {
   padding: 20px;
 }
