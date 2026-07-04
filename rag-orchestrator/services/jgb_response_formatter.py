@@ -179,6 +179,15 @@ def format_jgb_response(api_result: dict, endpoint: str = "", user_question: str
         if faced is not None:
             return faced
 
+    # 物件 endpoint（estate 現況診斷面向）：face 命中 → estates builder（sentinel 亦走此路）；
+    # 未命中/None → 原路恆等（零回歸）。⚠️ jgb_estates（修繕表單）不進此分支。
+    if endpoint == "jgb_estate_status":
+        from services.jgb.estates import face_estate_response
+        rows = data if isinstance(data, list) else ([data] if isinstance(data, dict) else [])
+        faced = face_estate_response(rows, user_question, face)
+        if faced is not None:
+            return faced
+
     # 團隊成員 endpoint（account 團隊權限面向）：face 命中 → accounts builder；
     # 主列為 T1 成員（含 permissions/bill_visibility secondary attach），零回歸（無此 face 不進此檔）。
     if endpoint == "jgb_team_members":

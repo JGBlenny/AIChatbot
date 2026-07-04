@@ -75,6 +75,9 @@ class APICallHandler:
             'jgb_meters': self.jgb_api.get_meters,
             'jgb_member_permissions': self.jgb_api.get_member_permissions,
             'jgb_bill_visibility': self.jgb_api.get_bill_visibility,
+            # 物件面向（⚠️ jgb_estates 為修繕報修表單現役鍵，語義不同勿混用）
+            'jgb_estate_status': self.jgb_api.get_estate_status,
+            'jgb_estate_detail': self.jgb_api.get_estate_detail,
         }
 
     async def execute_api_call(

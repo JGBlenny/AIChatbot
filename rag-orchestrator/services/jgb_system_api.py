@@ -617,6 +617,91 @@ class JGBSystemAPI:
                 rows = [m for m in rows if _hit(m)]
         return {"success": True, "data": rows}
 
+    async def get_estate_status(
+        self,
+        role_id: Optional[str] = None,
+        keyword: Optional[str] = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """物件現況診斷識別 adapter（estate-conversational-facets 任務 1.1）。
+
+        ⚠️ 與 get_estates（修繕報修表單現役）語義不同，勿混用：
+        - 拉頁 per_page=200 後 client 端 token 化過濾 title｜display_address
+          （API keyword 只搜 title LIKE，口語多詞配不中——get_meters 同款）
+        - 過濾後空集回 sentinel [{"found": False, "keyword": kw}]——引擎 0-row
+          會硬編「查無資料」短路（conversational_engine.py:610），sentinel 讓
+          builder 接手「非刊登中」口徑（design Issue 1；G-A1 found:false 先例）
+        - 每列附 status_zh 轉譯欄（候選標籤用；轉譯邏輯在 services/jgb/estates.py）
+        - 端點硬過濾 is_open=1（只回刊登中）——「查不到＝非刊登中」為弱信號，
+          口徑紅線見 estates.py builder
+        """
+        from services.jgb.estates import estate_status_zh   # 延遲匯入（分層慣例）
+
+        if self.use_mock:
+            rows = [{
+                "id": 8801, "serial_id": "E-8801", "title": "新莊富貴500-14B05",
+                "status": 2, "use_for": "residential",
+                "display_address": "新北市新莊區富貴路",
+                "full_display_address": "新北市新莊區富貴路",
+                "rent": 15800, "currency": "TWD"}]
+        else:
+            params: dict[str, Any] = {"per_page": 200}
+            if role_id:
+                params["role_id"] = role_id
+            raw = await self._request("/api/external/v1/estates", params)
+            if not (raw or {}).get("success"):
+                return {"success": False, "data": []}
+            data = raw.get("data")
+            rows = data if isinstance(data, list) else []
+
+        kw = str(keyword).strip() if keyword is not None else ""   # int 容錯（候選 refine 先例）
+        if kw:
+            _sep = re.compile(r"[\s　\-/,，]+")
+            tokens = [_sep.sub("", t) for t in re.split(r"[的之在 　,，/\-]+", kw) if t]
+            if kw.isdigit() and any(str(e.get("id")) == kw for e in rows):
+                rows = [e for e in rows if str(e.get("id")) == kw]
+            else:
+                def _hit(e):
+                    joined = _sep.sub("", f"{e.get('title') or ''}｜"
+                                          f"{e.get('display_address') or ''}")
+                    return all(t in joined for t in tokens if t)
+                rows = [e for e in rows if _hit(e)]
+        if not rows:
+            return {"success": True, "data": [{"found": False, "keyword": kw}]}
+        for e in rows:
+            e["status_zh"] = estate_status_zh(e.get("status"))
+        return {"success": True, "data": rows}
+
+    async def get_estate_detail(
+        self,
+        estate_id: Any = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """物件單筆深查（GET /estates/{id}；含 contract_required_fields）。
+
+        sentinel 列無 id → secondary_call 會帶空值進來：優雅降級回 success:False
+        （引擎 attach 失敗即略過，builder 不依賴 detail 存在）。
+        單物件正規化為單元素 list（get_tenant_registration 先例）。
+        """
+        eid = str(estate_id).strip() if estate_id is not None else ""
+        if not eid or eid == "None" or not eid.isdigit():
+            return {"success": False, "data": []}
+
+        if self.use_mock:
+            return {"success": True, "data": [{
+                "id": int(eid), "title": "新莊富貴500-14B05", "status": 2,
+                "contract_required_fields": {"all_filled": True, "fields": []}}]}
+
+        raw = await self._request(f"/api/external/v1/estates/{eid}", {})
+        if not (raw or {}).get("success"):
+            return {"success": False, "data": []}
+        data = raw.get("data")
+        if isinstance(data, dict):
+            data = [data]
+        elif not isinstance(data, list):
+            data = []
+        return {"success": True, "data": data}
+
     async def get_iot_manufacturers(
         self,
         role_id: str,
