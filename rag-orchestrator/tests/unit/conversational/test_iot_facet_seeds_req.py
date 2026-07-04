@@ -149,3 +149,14 @@ def test_no_remote_operation_red_line_everywhere():
     for key, cfg in _configs().items():
         rules = cfg.answer_rules or ""
         assert ("不代" in rules or "只指路" in rules or "代為操作" in rules), f"{key} 缺不代操作紅線"
+
+
+@pytest.mark.req("iot-conversational-facets:5.5")
+def test_meter_billing_advice_red_line():
+    """電費計收紅線（demo 逼出）：儲值電表為租客預付制，收斂追問「怎麼跟租客收」
+    時 LLM 曾自創「照餘額/度數計費向租客收取」的錯誤引導——answer_rules 必須明文封死，
+    並釘度數正確性口徑（台科電回傳存值、系統不重算）與追問輪不重複現值。"""
+    rules = _configs()["iot_meter"].answer_rules or ""
+    assert "預付" in rules and "不需另向租客收電費" in rules, "缺電費計收紅線（預付制）"
+    assert "不重算" in rules or "系統不重算" in rules, "缺度數正確性口徑"
+    assert "不整段重複" in rules, "缺追問輪防重複規則"
