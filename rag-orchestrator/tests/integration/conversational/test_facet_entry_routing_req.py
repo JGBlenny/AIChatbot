@@ -143,6 +143,60 @@ BILLING_SINGLE_CASES = [
 ]
 
 
+# ── IoT：應進對話（iot-conversational-facets 任務 3.4 / R6.3, R9.2）──
+IOT_FACES = {"電表排障", "IoT設定引導"}
+
+IOT_DIALOG_CASES = [
+    "租客說房間沒電 電表沒供電",
+    "租客反映房間突然沒電了",
+    "電表一直離線 度數不動",
+    "電表度數跟現場對不起來",
+    "租客儲值了 電還是沒有來",          # 儲值後未復電（電表排障，非帳務）
+    "電表要怎麼串接進系統",
+    "儲值單價要在哪裡設定",
+    "租客要怎麼幫電表儲值",              # 3459 補標後進設定引導（教學收斂，體驗等同單發＋可追問）
+]
+
+# ── IoT：應單發（教學/門鎖硬體，未掛面向）──
+IOT_SINGLE_CASES = [
+    "門鎖可以用悠遊卡嗎",                # 門鎖硬體單發包
+]
+
+# ── IoT 誤吸邊界（點名）：儲值金流歸帳務、門鎖不吸電表 ──
+IOT_BOUNDARY_CASES = [
+    ("租客儲值的錢到底入帳了沒", "not_iot"),     # 金流入帳 → 帳務域（不得進 IoT 面向）
+    ("門鎖的電池是不是沒電了", "not_meter"),      # 門鎖硬體 → 不得吸進電表排障
+]
+
+
+@pytest.mark.req("iot-conversational-facets:6.3")
+@pytest.mark.parametrize("question", IOT_DIALOG_CASES)
+async def test_iot_openers_enter_dialog(retriever, pool, question):
+    kind, detail, best = await _route(retriever, pool, question)
+    assert kind == "dialog" and detail in IOT_FACES, \
+        f"應進 IoT 對話卻為 {detail}：{question}｜{_fmt(best)}"
+
+
+@pytest.mark.req("iot-conversational-facets:9.2")
+@pytest.mark.parametrize("question", IOT_SINGLE_CASES)
+async def test_iot_teaching_stays_single_shot(retriever, pool, question):
+    kind, detail, best = await _route(retriever, pool, question)
+    assert kind == "single", \
+        f"IoT 教學/門鎖問句被吸進「{detail}」對話：{question}｜{_fmt(best)}"
+
+
+@pytest.mark.req("iot-conversational-facets:6.4")
+@pytest.mark.parametrize("question,rule", IOT_BOUNDARY_CASES)
+async def test_iot_boundary_no_misattraction(retriever, pool, question, rule):
+    kind, detail, best = await _route(retriever, pool, question)
+    if rule == "not_iot":
+        assert not (kind == "dialog" and detail in IOT_FACES), \
+            f"金流句被吸進 IoT「{detail}」：{question}｜{_fmt(best)}"
+    else:  # not_meter
+        assert not (kind == "dialog" and detail == "電表排障"), \
+            f"門鎖句被吸進電表排障：{question}｜{_fmt(best)}"
+
+
 # ── 帳號：應進對話（account-conversational-facets 任務 3.4 / R7.3, R10.2）──
 ACCOUNT_FACES = {"註冊驗證排障", "登入排障", "帳號綁定異動", "團隊成員權限"}
 
