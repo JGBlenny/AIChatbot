@@ -18,6 +18,7 @@ import os
 import asyncio
 import psycopg2
 import psycopg2.extras
+from services.llm_provider import chat_completion   # 相關性把關用（測試以模組屬性 patch）
 from services.db_utils import get_db_config
 from services.embedding_utils import get_embedding_client
 
@@ -673,6 +674,49 @@ def _drop_empty_answer_rows(rows: list) -> list:
     return [k for k in (rows or []) if _keep(k)]
 
 
+async def _top1_relevance_gate(question: str, rows: list, max_checks: int = 2) -> list:
+    """錯位直答把關（51 題全面抽驗逼出）：分數＝0.1×向量＋0.9×rerank，reranker
+    對表面詞彙重疊的無關知識會打 0.9+（實例：「電表度數登記錯誤怎麼改」top1=
+    「租客看即時電表」0.956）——任何分數閾值都切不開。直答前對 top1 做一次輕量
+    LLM 相關性判定：不相關讓次筆晉位（最多查 max_checks 筆），全不相關回空列
+    走誠實 fallback（勝過給錯答案）。
+    豁免：表單/API 觸發列不判（不擋表單）；raw 向量 ≥0.85 近精確命中跳過（省
+    延遲）；LLM 失敗放行（fail-open 不阻斷）。env RELEVANCE_GATE_ENABLED=false 可關。
+    """
+    rows = list(rows or [])
+    if not rows or os.getenv("RELEVANCE_GATE_ENABLED", "true").lower() == "false":
+        return rows
+
+    for i in range(min(max_checks, len(rows))):
+        k = rows[i]
+        if k.get('form_id') or k.get('action_type') in ('form_fill', 'api_call', 'form_then_api'):
+            return rows[i:]                                   # 表單/API 觸發不判
+        if (k.get('vector_similarity') or 0) >= float(os.getenv("RELEVANCE_GATE_SKIP_VEC", "0.85")):
+            return rows[i:]                                   # 近精確命中免判
+        try:
+            resp = await asyncio.to_thread(
+                chat_completion,
+                model=os.getenv("RELEVANCE_GATE_MODEL") or os.getenv("LLM_MODEL", "gpt-3.5-turbo"),
+                messages=[
+                    {"role": "system",
+                     "content": "你判斷一筆客服知識能否用來回答使用者的問題。"
+                                "主題相關、能回答到一部分就算 YES；答非所問、主題不同才是 NO。"
+                                "只輸出 YES 或 NO。"},
+                    {"role": "user",
+                     "content": f"問題：{question}\n知識標題：{k.get('question_summary', '')}\n"
+                                f"知識內容（節錄）：{(k.get('answer') or '')[:180]}"},
+                ],
+                temperature=0, max_tokens=3)
+            verdict = (resp.get("content") or "").strip().upper()
+        except Exception as e:
+            print(f"⚠️ [相關性把關] LLM 失敗放行：{e}")
+            return rows[i:]
+        if verdict.startswith("YES"):
+            return rows[i:]
+        print(f"🛡️ [相關性把關] top{i+1}「{k.get('question_summary','')[:24]}」判不相關（sim={k.get('similarity',0):.3f}）→ 次筆晉位")
+    return []
+
+
 async def handle_retrieval(request, req, ctx: ChatRequestContext):
     """Step 4 智能檢索(終點,必回)。SOP/知識/兜底同時檢索比分;skip_sop→回測僅知識庫。
     intent_result 用固定 stub(意圖在計分零權重)。vendor_info 取自 ctx。"""
@@ -743,6 +787,11 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
             decision['knowledge_list'] = _drop_empty_answer_rows(decision.get('knowledge_list'))
             if _pre_n != len(decision['knowledge_list']):
                 print(f"🛡️ [錨點防呆] 濾除 {_pre_n - len(decision['knowledge_list'])} 筆空答案錨點（不進單發答題）")
+
+            # 相關性把關（51 題抽驗逼出）：reranker 高分錯位直答比查無更糟——
+            # top1 判不相關讓次筆晉位，全不相關空列走誠實 fallback
+            decision['knowledge_list'] = await _top1_relevance_gate(
+                request.message, decision['knowledge_list'])
 
             # 串流模式：先檢查是否有表單/API 動作需要完整處理
             if request.stream:
