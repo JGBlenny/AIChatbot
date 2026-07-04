@@ -82,7 +82,7 @@ def real_estate():
 
 def _post(client, message, sid):
     r = client.post("/api/v1/message", json={
-        "message": message, "vendor_id": VENDOR_ID, "target_user": TARGET_USER,
+        "message": message, "vendor_id": VENDOR_ID, "target_user": TARGET_USER, "mode": "b2b",
         "role_id": ROLE_ID, "session_id": sid, "stream": False})
     assert r.status_code == 200, r.text
     return (r.json().get("answer") or "").strip()

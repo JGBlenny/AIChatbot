@@ -68,7 +68,7 @@ def _require_facet_configs():
 
 def _post(client, message, sid):
     return client.post("/api/v1/message", json={
-        "message": message, "vendor_id": VENDOR_ID, "target_user": TARGET_USER,
+        "message": message, "vendor_id": VENDOR_ID, "target_user": TARGET_USER, "mode": "b2b",
         "role_id": ROLE_ID, "session_id": sid, "stream": False,
     })
 

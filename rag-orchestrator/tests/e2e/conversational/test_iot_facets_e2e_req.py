@@ -61,7 +61,7 @@ def _require_facet_configs():
 
 def _post(client, message, sid):
     return client.post("/api/v1/message", json={
-        "message": message, "vendor_id": VENDOR_ID, "target_user": TARGET_USER,
+        "message": message, "vendor_id": VENDOR_ID, "target_user": TARGET_USER, "mode": "b2b",
         "role_id": ROLE_ID, "session_id": sid, "stream": False,
     })
 
@@ -97,8 +97,11 @@ def _cleanup(sid):
 def test_meter_entry_then_degraded_no_fabrication(client):
     sid = f"e2e-iotm-{uuid.uuid4().hex[:8]}"
     try:
-        # 產品現實：「房間沒電」泛句由修繕 SOP 1166 先攔（既有設計，比分優先）——
-        # 電表面向以「電表」強詞句進場；泛句走 SOP 屬正確行為不在此測。
+        # 改判（2026-07-05）：舊註記「房間沒電被 SOP 1166 攔」為 harness 未帶 mode 的
+        # artifact——生產業者走 mode='b2b' 不經 SOP（chat.py:1633）；本檔已補 mode。原句：
+        # 但該 SOP 是「租客問業者」的指引（請填修繕單）——業者本人問會得到錯位回答。
+        # 根因：vendor_sop_items 無 target_user 欄位，SOP 檢索無角色隔離（系統級，另案）。
+        # 本測試以「電表」強詞句進場（面向路徑）；SOP 角色隔離修復後泛句應改進面向。
         r1 = _post(client, "電表一直離線 度數不動", sid)
         assert r1.status_code == 200, r1.text
         assert (r1.json().get("answer") or "").strip()

@@ -658,6 +658,13 @@ async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, threshold):
     return None
 
 
+def _drop_empty_answer_rows(rows: list) -> list:
+    """錨點防呆（五域抽驗 A3/電費題逼出）：answer 空的知識＝面向進場錨點，
+    只供進場判定用——落回單發答題前必須濾除，否則 question_summary 會被
+    當回答吐給使用者（實例：id 3873「我想改合約 內容要修改」被原文輸出）。"""
+    return [k for k in (rows or []) if (k.get('answer') or '').strip()]
+
+
 async def handle_retrieval(request, req, ctx: ChatRequestContext):
     """Step 4 智能檢索(終點,必回)。SOP/知識/兜底同時檢索比分;skip_sop→回測僅知識庫。
     intent_result 用固定 stub(意圖在計分零權重)。vendor_info 取自 ctx。"""
@@ -722,6 +729,12 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
                           + ("（串流）" if request.stream else ""))
                     return _diag_resp
                 print("⚠️ [conversational-diagnosis] 引擎降級 → 落回既有知識/表單處理")
+
+            # 錨點防呆（P0）：進場判定已用過 top1；未進面向 → 空答案錨點退出答題候選
+            _pre_n = len(decision.get('knowledge_list') or [])
+            decision['knowledge_list'] = _drop_empty_answer_rows(decision.get('knowledge_list'))
+            if _pre_n != len(decision['knowledge_list']):
+                print(f"🛡️ [錨點防呆] 濾除 {_pre_n - len(decision['knowledge_list'])} 筆空答案錨點（不進單發答題）")
 
             # 串流模式：先檢查是否有表單/API 動作需要完整處理
             if request.stream:
