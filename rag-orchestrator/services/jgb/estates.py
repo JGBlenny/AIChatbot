@@ -64,23 +64,26 @@ def build_estate_status_facts(estate: dict, detail: Optional[dict] = None,
         is_published = int(status) == 2
     except (TypeError, ValueError):
         pass
+    # 建約前提句只講合約軸（status），不得說「非刊登中」——status=4/8 物件
+    # 查得到＝對外刊登中（is_open=1），混軸會誤導（unit: status4_no_axis_confusion）
+    zh = estate_status_zh(status)
     crf = (detail or {}).get("contract_required_fields") if detail else None
     if crf is not None:
         if crf.get("all_filled"):
             if is_published:
                 lines.append("建約條件：必填欄位皆已齊備，此物件目前可建立合約。")
             else:
-                lines.append("建約條件：必填欄位已齊備；惟建立合約的前提是物件為「刊登中」狀態，"
-                             "此物件目前非刊登中，需先刊登。")
+                lines.append(f"建約條件：必填欄位已齊備；惟依系統規則，建立新合約需物件狀態為"
+                             f"「刊登中」——此物件目前為「{zh}」。")
         else:
             missing = [f.get("label") or f.get("field") or "?"
                        for f in (crf.get("fields") or []) if not f.get("is_filled")]
             if missing:
                 lines.append("建約條件：尚缺必填欄位——" + "、".join(missing) +
                              "。補齊後即可建立合約" +
-                             ("。" if is_published else "（另需物件為刊登中狀態）。"))
+                             ("。" if is_published else f"（另需物件狀態為「刊登中」，目前為「{zh}」）。"))
     elif not is_published:
-        lines.append("提醒：建立合約的前提是物件為「刊登中」狀態。")
+        lines.append(f"提醒：依系統規則，建立新合約需物件狀態為「刊登中」——此物件目前為「{zh}」。")
 
     rent = estate.get("rent")
     if rent is not None:

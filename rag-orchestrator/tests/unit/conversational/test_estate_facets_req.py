@@ -166,9 +166,18 @@ def test_facts_missing_fields_listed():
 
 
 def test_facts_not_published_states_contract_precondition():
-    """status≠2：建約前提為刊登中（EstateController.php:279-283 口徑）。"""
+    """status≠2：建約前提為合約軸「刊登中」（EstateController.php:279-283 口徑）。"""
     txt = _facts(_estate(status=1))
     assert "刊登中" in txt  # 前提說明必然帶到
+
+
+def test_facts_status4_no_axis_confusion():
+    """兩軸紅線：status=4（洽談中）物件查得到＝對外刊登中——建約前提句
+    不得說「此物件非刊登中」（混軸誤導），只能講合約軸狀態。"""
+    detail = {"contract_required_fields": {"all_filled": True, "fields": []}}
+    txt = _facts(_estate(status=4), detail)
+    assert "洽談中" in txt
+    assert "目前非刊登中" not in txt and "非刊登中" not in txt.replace("查不到", "")
 
 
 def test_facts_detail_absent_degrades_gracefully():

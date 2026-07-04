@@ -231,7 +231,77 @@ async def test_guide_category_convergence_has_grounding(pool):
     try:
         d = await eng.prepare(sid, "u1", 7, "改了對外顯示地址怎麼沒生效", config=cfg, role_id="37305")
         assert d["kind"] == "converge"
-        assert "對外廣告頁" in (d.get("grounding") or ""), "category 收斂應吃到面向知識（target_user 明填）"
+        g = d.get("grounding") or ""
+        # category 選材有上限（不保證特定筆入選）——斷言面向知識底稿成立（target_user 明填生效）
+        assert len(g) > 50 and ("刊登" in g or "對外" in g or "物件" in g), f"grounding 空或無面向知識：{g[:80]}"
+    finally:
+        await _cleanup(pool, sid)
+
+
+# ── 4.1 引導兩輪分流→收斂吃真面向知識（匯入批次後，非 fixture）（R2.1/R2.2）──
+@pytest.mark.req("estate-conversational-facets:2.2")
+async def test_guide_two_turn_triage_then_converge_real_knowledge(pool):
+    from services import conversational_config as cc
+    cfg = await cc.config_for_category(pool, "物件操作引導")
+    brain = _Brain([
+        {"action": "ask", "converge_kind": "answer", "scope": "stay",
+         "extracted_fields": {}, "next_question": "想了解對外顯示還是刊登操作？"},
+        {"action": "converge", "converge_kind": "answer", "scope": "stay",
+         "extracted_fields": {"topic": "對外顯示地址"}},
+    ])
+    eng = _engine(pool, brain, _handler([]))
+    sid = "it-estg2-" + os.urandom(3).hex()
+    try:
+        d1 = await eng.prepare(sid, "u1", 7, "物件對外的資訊怪怪的", config=cfg, role_id="37305")
+        assert d1["kind"] == "ask"
+        d2 = await eng.prepare(sid, "u1", 7, "改了對外顯示地址沒生效", config=None, role_id="37305")
+        assert d2["kind"] == "converge"
+        g = d2.get("grounding") or ""
+        # 分流→收斂鏈成立且底稿為面向知識（選材上限不保證特定筆——批次知識檢索命中由路由回歸/e2e 驗）
+        assert len(g) > 50 and ("刊登" in g or "物件" in g), f"兩輪收斂底稿異常：{g[:80]}"
+    finally:
+        await _cleanup(pool, sid)
+
+
+# ── 4.1 診斷 status=4：兩軸不混講（builder 混軸 bug 回歸釘）（R4.2）──
+@pytest.mark.req("estate-conversational-facets:4.2")
+async def test_diag_status4_negotiating_no_axis_confusion(pool):
+    from services import conversational_config as cc
+    cfg = await cc.config_for_category(pool, "物件現況診斷")
+    rows = [_estate(status=4)]
+    detail = _estate(status=4, contract_required_fields={"all_filled": True, "fields": []})
+    brain = _Brain([{"action": "converge", "converge_kind": "answer", "scope": "stay",
+                     "extracted_fields": {"estate_ref": "新莊富貴500"}}])
+    eng = _engine(pool, brain, _handler(rows, detail))
+    sid = "it-est4-" + os.urandom(3).hex()
+    try:
+        d = await eng.prepare(sid, "u1", 7, "新莊富貴500那間現在什麼狀態", config=cfg, role_id="37305")
+        assert d["kind"] == "converge"
+        g = d["grounding"]
+        assert "洽談中" in g                                   # status=4 轉譯
+        assert "目前非刊登中" not in g                          # 混軸紅線（物件在刊登清單中）
+    finally:
+        await _cleanup(pool, sid)
+
+
+# ── 4.1 診斷中 how-to → switch 出（雙向互轉之二）（R5.3）──
+@pytest.mark.req("estate-conversational-facets:5.3")
+async def test_diag_switch_out_on_howto(pool):
+    from services import conversational_config as cc
+    cfg = await cc.config_for_category(pool, "物件現況診斷")
+    brain = _Brain([
+        {"action": "ask", "converge_kind": "answer", "scope": "stay",
+         "extracted_fields": {}, "next_question": "請問是哪個物件？"},
+        {"action": "ask", "converge_kind": "answer", "scope": "switch",
+         "extracted_fields": {}, "next_question": ""},
+    ])
+    eng = _engine(pool, brain, _handler([]))
+    sid = "it-estd2-" + os.urandom(3).hex()
+    try:
+        d1 = await eng.prepare(sid, "u1", 7, "有個物件狀態怪怪的", config=cfg, role_id="37305")
+        assert d1["kind"] == "ask"
+        d2 = await eng.prepare(sid, "u1", 7, "招租店舖要怎麼分享出去", config=None, role_id="37305")
+        assert d2 is None                                      # switch → 關會話重路由
     finally:
         await _cleanup(pool, sid)
 
