@@ -252,3 +252,95 @@ async def test_cross_domain_switch_to_billing(pool):
         assert n == 0
     finally:
         await _cleanup(pool, sid)
+
+
+# ════════ 任務 4.1 補全流程：四分支其餘兩案＋設定引導兩輪分流＋switch 第二向 ════════
+
+@pytest.mark.req("iot-conversational-facets:2.2")
+async def test_meter_flow_poweroff_switch_branch(pool):
+    """online＋poweron=false＋餘額足 → 供電關閉分支（不臆測原因＋模式切換指路）。"""
+    from services import conversational_config as cc
+    cfg = await cc.config_for_category(pool, "電表排障")
+    rows = [_meter(is_poweron=False, balance=350.0, available_meter=87.5)]
+    brain = _Brain([{"action": "converge", "converge_kind": "answer", "scope": "stay",
+                     "extracted_fields": {"meter_ref": "海大"}}])
+    eng = _engine(pool, brain, _handler(rows))
+    sid = "it-iotpo-" + os.urandom(3).hex()
+    try:
+        d = await eng.prepare(sid, "u1", 7, "海大的電表沒在供電", config=cfg, role_id="37305")
+        assert d["kind"] == "converge"
+        g = d["grounding"]
+        assert "關閉" in g and "原因" in g                        # 無原因紀錄不臆測
+        assert "供電模式" in g or "IoT 裝置" in g                 # 指路
+        assert "排除儲值因素" in g                                # 餘額足註記
+    finally:
+        await _cleanup(pool, sid)
+
+
+@pytest.mark.req("iot-conversational-facets:2.2")
+async def test_meter_flow_normal_turns_hardware(pool):
+    """online＋poweron=true → 供電正常轉硬體/確認問對表。"""
+    from services import conversational_config as cc
+    cfg = await cc.config_for_category(pool, "電表排障")
+    rows = [_meter(is_poweron=True, balance=350.0, available_meter=87.5)]
+    brain = _Brain([{"action": "converge", "converge_kind": "answer", "scope": "stay",
+                     "extracted_fields": {"meter_ref": "海大"}}])
+    eng = _engine(pool, brain, _handler(rows))
+    sid = "it-iotok-" + os.urandom(3).hex()
+    try:
+        d = await eng.prepare(sid, "u1", 7, "海大那間說沒電 但我看電表好像正常", config=cfg, role_id="37305")
+        assert d["kind"] == "converge"
+        g = d["grounding"]
+        assert "正常" in g
+        assert "台科電" in g or "廠商" in g                       # 硬體轉向
+    finally:
+        await _cleanup(pool, sid)
+
+
+@pytest.mark.req("iot-conversational-facets:3.1")
+async def test_setup_guide_two_round_triage(pool):
+    """設定引導兩輪分流：先問設定對象 → 回答後收斂（機制 facts 進底稿）。"""
+    from services import conversational_config as cc
+    cfg = await cc.config_for_category(pool, "IoT設定引導")
+    brain = _Brain([
+        {"action": "ask", "converge_kind": "answer", "scope": "stay",
+         "extracted_fields": {}, "next_question": "請問要設定電表串接、儲值單價，還是門鎖密碼規則？"},
+        {"action": "converge", "converge_kind": "answer", "scope": "stay",
+         "extracted_fields": {"topic": "串接"}},
+    ])
+    eng = _engine(pool, brain, _handler([]))
+    sid = "it-iot2r-" + os.urandom(3).hex()
+    try:
+        d1 = await eng.prepare(sid, "u1", 7, "IoT 要怎麼設定", config=cfg, role_id="37305")
+        assert d1["kind"] == "ask"                                # 第一輪分流
+        d2 = await eng.prepare(sid, "u1", 7, "電表串接", config=None, role_id="37305")
+        assert d2["kind"] == "converge"
+        assert "串接教學測試內容" in d2["grounding"]               # category 收斂
+    finally:
+        await _cleanup(pool, sid)
+
+
+@pytest.mark.req("iot-conversational-facets:6.2")
+async def test_cross_domain_switch_to_account(pool):
+    """switch 第二向：租客登入視角話題 → 關會話重路由（→帳號域）。"""
+    from services import conversational_config as cc
+    cfg = await cc.config_for_category(pool, "電表排障")
+    brain = _Brain([
+        {"action": "ask", "converge_kind": "answer", "scope": "stay",
+         "extracted_fields": {}, "next_question": "請問是哪個物件的電表？"},
+        {"action": "converge", "converge_kind": "answer", "scope": "switch",
+         "extracted_fields": {}},
+    ])
+    eng = _engine(pool, brain, _handler([]))
+    sid = "it-iotxa-" + os.urandom(3).hex()
+    try:
+        d1 = await eng.prepare(sid, "u1", 7, "電表有問題", config=cfg, role_id="37305")
+        assert d1["kind"] == "ask"
+        d2 = await eng.prepare(sid, "u1", 7, "租客說他根本登不進去系統", config=None, role_id="37305")
+        assert d2 is None
+        n = await pool.fetchval(
+            "SELECT count(*) FROM form_sessions WHERE session_id=$1 AND form_id='conversational' "
+            "AND state='COLLECTING'", sid)
+        assert n == 0
+    finally:
+        await _cleanup(pool, sid)
