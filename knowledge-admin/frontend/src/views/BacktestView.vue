@@ -56,15 +56,6 @@
       </div>
       <div
         class="tab-item"
-        :class="{ active: activeTab === 'question-bank' }"
-        @click="activeTab = 'question-bank'"
-        title="手動選題庫執行回測（與迴圈無關）"
-      >
-        <span class="tab-icon">🧪</span>
-        <span class="tab-label">題庫回測</span>
-      </div>
-      <div
-        class="tab-item"
         :class="{ active: activeTab === 'validation' }"
         @click="activeTab = 'validation'"
         title="可選功能"
@@ -92,11 +83,6 @@
         <BacktestResultsTab :loop-id="selectedLoopId" />
       </div>
 
-      <!-- 題庫回測 Tab（獨立於迴圈） -->
-      <div v-if="activeTab === 'question-bank'" class="tab-pane">
-        <QuestionBankBacktestTab />
-      </div>
-
       <!-- 驗證回測 Tab -->
       <div v-if="activeTab === 'validation'" class="tab-pane">
         <ValidationTabPlaceholder />
@@ -111,7 +97,6 @@ import { API_ENDPOINTS } from '@/config/api';
 import LoopManagementTab from '@/components/LoopManagementTab.vue';
 import LoopKnowledgeReviewTab from '@/components/review/LoopKnowledgeReviewTab.vue';
 import BacktestResultsTab from '@/components/BacktestResultsTab.vue';
-import QuestionBankBacktestTab from '@/components/QuestionBankBacktestTab.vue';
 
 export default {
   name: 'BacktestView',
@@ -120,7 +105,6 @@ export default {
     LoopManagementTab,
     LoopKnowledgeReviewTab,
     BacktestResultsTab,
-    QuestionBankBacktestTab,
     ValidationTabPlaceholder: {
       template: `
         <div class="placeholder-tab">
@@ -173,7 +157,7 @@ export default {
 
     // 從 URL query 參數讀取預設 Tab
     const tab = this.$route.query.tab;
-    if (tab && ['loop-management', 'knowledge-review', 'backtest-results', 'question-bank', 'validation'].includes(tab)) {
+    if (tab && ['loop-management', 'knowledge-review', 'backtest-results', 'validation'].includes(tab)) {
       this.activeTab = tab;
     }
 

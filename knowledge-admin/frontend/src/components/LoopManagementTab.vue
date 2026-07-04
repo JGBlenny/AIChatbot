@@ -325,6 +325,18 @@
               </select>
             </div>
 
+            <!-- 題庫受眾 -->
+            <div class="form-group">
+              <label for="target-user">題庫（受眾）</label>
+              <select id="target-user" v-model="formData.target_user">
+                <option value="">全部（混合受眾）</option>
+                <option value="property_manager">業者（JGB 系統知識）</option>
+                <option value="tenant">租客（服務/SOP）</option>
+                <option value="prospect">售前</option>
+              </select>
+              <span class="help-text">決定測試集從哪個題庫抽樣；回測時自動用對應請求形狀（業者/售前→b2b、租客→b2c）</span>
+            </div>
+
             <!-- 批量大小 -->
             <div class="form-group">
               <label for="batch-size">批量大小 <span class="required">*</span></label>
@@ -528,6 +540,7 @@ export default {
         loop_name: '',
         vendor_id: '',
         batch_size: 50,
+        target_user: '',
         target_pass_rate: 0.85,
         budget_limit_usd: null,
         backtest_only: false,
@@ -546,6 +559,7 @@ export default {
       nextBatchFormData: {
         loop_name: '',
         batch_size: 50,
+        target_user: '',
         target_pass_rate: 0.85
       }
     };
@@ -731,6 +745,7 @@ export default {
         loop_name: '',
         vendor_id: '',
         batch_size: 50,
+        target_user: '',
         target_pass_rate: 0.85,
         budget_limit_usd: null,
         backtest_only: false,
@@ -793,7 +808,10 @@ export default {
           batch_size: parseInt(this.formData.batch_size),
           target_pass_rate: parseFloat(this.formData.target_pass_rate),
           backtest_only: this.formData.backtest_only,
-          scenario_filters: this.formData.scenario_filters || {}
+          scenario_filters: {
+            ...(this.formData.scenario_filters || {}),
+            ...(this.formData.target_user ? { target_user: this.formData.target_user } : {})
+          }
         };
 
         // 添加可選欄位
@@ -1086,6 +1104,7 @@ export default {
       this.nextBatchFormData = {
         loop_name: `第${batchNumber}批-${vendorName}知識完善`,
         batch_size: 50,
+        target_user: '',
         target_pass_rate: 0.85
       };
 
@@ -1097,6 +1116,7 @@ export default {
       this.nextBatchFormData = {
         loop_name: '',
         batch_size: 50,
+        target_user: '',
         target_pass_rate: 0.85
       };
     },
@@ -1122,7 +1142,7 @@ export default {
           vendor_id: this.nextBatchParentLoop.vendor_id,
           batch_size: parseInt(this.nextBatchFormData.batch_size),
           target_pass_rate: parseFloat(this.nextBatchFormData.target_pass_rate),
-          scenario_filters: {}
+          scenario_filters: {}   // 空＝後端自動繼承父迴圈題庫（loops.py start-next-batch）
         };
 
         // 發送 API 請求

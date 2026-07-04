@@ -313,7 +313,8 @@ class BacktestFrameworkClient:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 query = """
                     SELECT id, test_question, expected_answer,
-                           difficulty, source, expected_intent_id as intent_id
+                           difficulty, source, expected_intent_id as intent_id,
+                           request_target_user, request_mode
                     FROM test_scenarios
                     WHERE is_active = true
                 """
@@ -330,6 +331,9 @@ class BacktestFrameworkClient:
                     if filters.get('intent_ids'):
                         query += " AND intent_id = ANY(%s)"
                         params.append(filters['intent_ids'])
+                    if filters.get('target_user'):
+                        query += " AND request_target_user = %s"
+                        params.append(filters['target_user'])
 
                 query += " ORDER BY id LIMIT %s"
                 params.append(batch_size)
@@ -351,7 +355,8 @@ class BacktestFrameworkClient:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute("""
                     SELECT id, test_question, expected_answer,
-                           difficulty, source, expected_intent_id as intent_id
+                           difficulty, source, expected_intent_id as intent_id,
+                           request_target_user, request_mode
                     FROM test_scenarios
                     WHERE id = ANY(%s) AND is_active = true
                     ORDER BY id

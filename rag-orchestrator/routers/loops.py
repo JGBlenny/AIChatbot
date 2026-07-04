@@ -1131,7 +1131,7 @@ async def start_next_batch(
 
         async with db_pool_async.acquire() as conn:
             parent_loop = await conn.fetchrow("""
-                SELECT status FROM knowledge_completion_loops WHERE id = $1
+                SELECT status, config FROM knowledge_completion_loops WHERE id = $1
             """, request.parent_loop_id)
 
             if not parent_loop:
@@ -1142,6 +1142,20 @@ async def start_next_batch(
                     status_code=409,
                     detail=f"父迴圈必須為 COMPLETED 狀態，當前為 {parent_loop['status']}"
                 )
+
+            # 題庫繼承：下一批次未指定 scenario_filters 時沿用父迴圈的 filters
+            # （同題庫續跑才有可比性；config 為 jsonb，filters 隨 LoopConfig 持久化）
+            if not request.scenario_filters:
+                try:
+                    parent_config = parent_loop["config"]
+                    if isinstance(parent_config, str):
+                        parent_config = json.loads(parent_config)
+                    inherited = (parent_config or {}).get("filters") or {}
+                    if inherited:
+                        request.scenario_filters = inherited
+                        print(f"🧬 下一批次繼承父迴圈題庫 filters: {inherited}")
+                except Exception as _e:
+                    print(f"⚠️ 父迴圈 filters 繼承失敗（不阻斷）：{_e}")
 
         # 調用 start_loop 端點（內部會自動排除已使用的 scenario_ids）
         return await start_loop(request, req)
