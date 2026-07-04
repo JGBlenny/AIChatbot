@@ -699,9 +699,10 @@ async def _top1_relevance_gate(question: str, rows: list, max_checks: int = 2) -
                 model=os.getenv("RELEVANCE_GATE_MODEL") or os.getenv("LLM_MODEL", "gpt-3.5-turbo"),
                 messages=[
                     {"role": "system",
-                     "content": "你判斷一筆客服知識能否用來回答使用者的問題。"
-                                "主題相關、能回答到一部分就算 YES；答非所問、主題不同才是 NO。"
-                                "只輸出 YES 或 NO。"},
+                     "content": "你判斷一筆客服知識能否用來回應使用者的問題。判定從寬："
+                                "主題相關、能回答到一部分、或說明了該問題的處理管道"
+                                "（例如告知此事屬廠商/客服範疇並導向）都算 YES；"
+                                "只有主題不同、答非所問才是 NO。只輸出 YES 或 NO。"},
                     {"role": "user",
                      "content": f"問題：{question}\n知識標題：{k.get('question_summary', '')}\n"
                                 f"知識內容（節錄）：{(k.get('answer') or '')[:180]}"},
