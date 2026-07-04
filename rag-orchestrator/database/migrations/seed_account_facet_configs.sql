@@ -91,6 +91,12 @@ SELECT
                     "label_date_fields": ["date_start", "date_end"],
                     "candidate_cap": 8,
                     "refine_param": "contract_ids"
+                },
+                "secondary_call": {
+                    "endpoint": "jgb_tenant_registration",
+                    "params": {"role_id": "{session.role_id}", "email": "{row.to_user_email}"},
+                    "list_path": "data",
+                    "attach_as": "registration"
                 }
             }
         }

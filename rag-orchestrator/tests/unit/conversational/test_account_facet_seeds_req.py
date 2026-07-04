@@ -152,6 +152,11 @@ def test_grounding_shapes():
     assert login["required_slots"] == ["contract_ref"]
     assert {"contract_ids": "{form.contract_ref}"} in login["search_params"]
     assert login["result_mapping"]["label_fields"] == ["title", "date_start", "date_end"]
+    # G-A1 附掛：合約收斂後以 to_user_email 查註冊狀態，掛 registration 供 builder 三態排查
+    sec = login["secondary_call"]
+    assert sec["endpoint"] == "jgb_tenant_registration" and sec["attach_as"] == "registration"
+    assert sec["params"]["email"] == "{row.to_user_email}"
+    assert sec["list_path"] == "data"
     for key, facet in (("account_register", "註冊驗證排障"),
                        ("account_binding", "帳號綁定異動"),
                        ("account_team", "團隊成員權限")):

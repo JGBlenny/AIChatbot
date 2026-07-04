@@ -33,6 +33,16 @@ def build_login_trouble_facts(contract: dict, user_question: str = "") -> str:
     invite_email = (contract.get("to_user_email") or "").strip()
     lines = [f"合約「{title}」的租客登入狀況（依系統現值）："]
 
+    # G-A1 附掛（secondary_call：tenants/registration-status，單元素 list）優先——
+    # found 當歸屬閘門、is_registered＋email_verify 驅動三態排查。
+    # 嚴格遮罩：registration 帶 lessee_name/lessee_user_id，一律不進回話。
+    reg_list = contract.get("registration")
+    reg = reg_list[0] if isinstance(reg_list, list) and reg_list else None
+    if reg is not None:
+        faced = _login_facts_from_registration(reg, invite_email, lines)
+        if faced is not None:
+            return faced
+
     registered = contract.get("is_tenant_registered")
 
     if registered is None:
@@ -71,6 +81,40 @@ def build_login_trouble_facts(contract: dict, user_question: str = "") -> str:
     lines.append("後續排查：登入時請用「當初註冊時的確切寫法」輸入信箱；"
                  "忘記密碼可在登入頁自助重設（Email 或手機簡訊驗證擇一）；"
                  "登入成功但看不到合約或帳單時，請租客確認左上角身分選單已切換到租客身分。")
+    return "\n".join(lines)
+
+
+def _login_facts_from_registration(reg: dict, invite_email: str, lines: list) -> str | None:
+    """G-A1（tenants/registration-status）三態排查——嚴格遮罩，只讀不吐。
+
+    輸入欄位僅取 found／is_registered／lessee_email_verify_status 決定分支；
+    lessee_name／lessee_user_id 絕不進 lines（個資最小揭露，account-api-contract 承諾）。
+    None → 交回合約層邏輯（本函式不處理的情況）。"""
+    if not reg.get("found"):
+        # 歸屬閘門：查無此人為此團隊名下租客 → 導客服，不揭露任何帳號細節
+        lines.append("系統查不到這位是您名下合約的租客——可能是聯絡資訊不符或非本團隊租客，"
+                     "請聯繫客服協助確認，不需在此提供更多個資。")
+        return "\n".join(lines)
+
+    if not reg.get("is_registered"):
+        lines.append("這位租客尚未完成 JGB 帳號註冊——登不進去是因為註冊還沒完成，不是密碼問題。")
+        if invite_email:
+            lines.append(f"請租客用您發送的邀請連結（寄至 {invite_email}）完成註冊"
+                         "（免註冊快速驗證信連結效期 72 小時，逾期需重新發送邀請）。")
+        else:
+            lines.append("請確認合約已填租客聯絡方式並重新發送邀請，租客才會收到註冊連結"
+                         "（連結效期 72 小時）。")
+        return "\n".join(lines)
+
+    if not reg.get("lessee_email_verify_status"):
+        lines.append("這位租客已建立帳號，但 Email 尚未完成驗證——請租客收驗證信、"
+                     "點信中連結完成驗證後即可登入（驗證碼效期 5 分鐘、輸錯三次需重新取得）。")
+        return "\n".join(lines)
+
+    lines.append("這位租客的帳號已註冊且信箱已驗證，帳號本身正常——方向轉向登入操作：")
+    lines.append("請租客以「當初註冊時的確切寫法」輸入信箱登入；忘記密碼可在登入頁自助重設"
+                 "（Email 或手機簡訊驗證擇一）；登入成功卻看不到合約/帳單時，"
+                 "請確認左上角身分選單已切換到租客身分。")
     return "\n".join(lines)
 
 

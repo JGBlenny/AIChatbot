@@ -70,6 +70,7 @@ class APICallHandler:
             'jgb_invoice_logs': self.jgb_api.get_invoice_logs,
             'jgb_subscription': self.jgb_api.get_subscription,
             'jgb_iot_manufacturers': self.jgb_api.get_iot_manufacturers,
+            'jgb_tenant_registration': self.jgb_api.get_tenant_registration,
         }
 
     async def execute_api_call(

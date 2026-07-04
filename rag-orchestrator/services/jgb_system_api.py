@@ -438,6 +438,43 @@ class JGBSystemAPI:
             params["action"] = action
         return await self._request("/api/external/v1/invoice-logs", params)
 
+    async def get_tenant_registration(
+        self,
+        role_id: str,
+        email: Optional[str] = None,
+        phone: Optional[str] = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """G-A1：查此團隊名下租客的註冊/綁定狀態（登入排障歸屬閘門）。
+
+        授權：role_id 綁定＋伺服器端只回名下租客（found:false 防枚舉，jgb2 已擋）。
+        email/phone 至少一（缺則降級不打）；回應單一物件正規化為單元素 list，
+        供 secondary_call（list_path='data'）附掛。個資欄位（name/user_id）由消費端不輸出。
+        """
+        email = (email or "").strip()
+        phone = (phone or "").strip()
+        if not role_id or not (email or phone):
+            return self._degraded_response()
+
+        if self.use_mock:
+            return self._mock_get_tenant_registration(role_id, email, phone)
+
+        params: dict[str, Any] = {"role_id": role_id}
+        if email:
+            params["email"] = email
+        if phone:
+            params["phone"] = phone
+        raw = await self._request("/api/external/v1/tenants/registration-status", params)
+        # 單一物件 → 單元素 list（secondary_call 只吃 list）；失敗/無 data 則空 list
+        data = (raw or {}).get("data")
+        return {"success": bool((raw or {}).get("success")),
+                "data": [data] if isinstance(data, dict) else []}
+
+    def _mock_get_tenant_registration(self, role_id, email, phone) -> dict[str, Any]:
+        return {"success": True, "data": [{
+            "found": True, "is_bound": True, "is_registered": True,
+            "lessee_email_verify_status": 1, "lessee_user_id": 0, "lessee_name": ""}]}
+
     async def get_subscription(
         self,
         role_id: str,

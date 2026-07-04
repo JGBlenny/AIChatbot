@@ -93,6 +93,11 @@ def _handler(contract_rows):
         return {"mapping": {}, "data": rows}
 
     handler.api_registry["jgb_contracts"] = fake_contracts
+
+    async def fake_registration_empty(role_id, email=None, phone=None, **kw):
+        return {"success": False, "data": []}   # G-A1 不可用 → 走合約層三分支（本檔驗合約層）
+
+    handler.api_registry["jgb_tenant_registration"] = fake_registration_empty
     return handler
 
 

@@ -96,6 +96,23 @@ def _handler(contract_rows):
         return {"mapping": {}, "data": rows}
 
     handler.api_registry["jgb_contracts"] = fake_contracts
+
+    async def fake_registration_empty(role_id, email=None, phone=None, **kw):
+        return {"success": False, "data": []}   # G-A1 不可用 → secondary 降級、走合約層
+
+    handler.api_registry["jgb_tenant_registration"] = fake_registration_empty
+    return handler
+
+
+def _handler_with_ga1(contract_rows, reg_by_email):
+    """合約 stub＋G-A1（tenants/registration-status）參數感知 stub（secondary_call 用）。"""
+    handler = _handler(contract_rows)
+
+    async def fake_registration(role_id, email=None, phone=None, **kw):
+        r = reg_by_email.get((email or "").strip())
+        return {"success": True, "data": [r] if r else []}
+
+    handler.api_registry["jgb_tenant_registration"] = fake_registration
     return handler
 
 
@@ -209,6 +226,32 @@ async def test_login_candidate_path_then_ground(pool):
         g = d2["grounding"]
         assert "尚未註冊" in g or "未註冊" in g                     # A=未註冊分支
         assert "72 小時" in g
+    finally:
+        await _cleanup(pool, sid)
+
+
+# ── 登入排障 G-A1 附掛：secondary_call 三態排查＋嚴格遮罩（account 6.2* / R9.2）──
+@pytest.mark.req("account-conversational-facets:9.2")
+async def test_login_ga1_secondary_three_state_and_masking(pool):
+    from services import conversational_config as cc
+    cfg = await cc.config_for_category(pool, "登入排障")
+    # 合約層說已註冊，但 G-A1 說沒完成註冊（85366 真實錯配態）→ 以 G-A1 為準
+    c = _contract(id=84927, title="海大質感獨立套房",
+                  to_user_email="tenant@example.com", is_tenant_registered=True)
+    reg = {"tenant@example.com": {"found": True, "is_bound": True, "is_registered": False,
+                                  "lessee_email_verify_status": 0,
+                                  "lessee_user_id": 99999, "lessee_name": "王小明"}}
+    brain = _Brain([{"action": "converge", "converge_kind": "answer", "scope": "stay",
+                     "extracted_fields": {"contract_ref": "84927"}}])
+    eng = _engine(pool, brain, _handler_with_ga1([c], reg))
+    sid = "it-alogin-ga1-" + os.urandom(3).hex()
+    try:
+        d = await eng.prepare(sid, "u1", 7, "海大那間租客登不進去 84927", config=cfg, role_id="20151")
+        assert d["kind"] == "converge"
+        g = d["grounding"]
+        assert "未完成註冊" in g or "尚未" in g                      # G-A1 覆寫合約層
+        assert "邀請連結" in g
+        assert "王小明" not in g and "99999" not in g               # 嚴格遮罩：名字/user_id 不出口
     finally:
         await _cleanup(pool, sid)
 

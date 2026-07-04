@@ -106,3 +106,62 @@ def test_contract_faces_still_route_to_contract_builders():
 def test_registry_shape():
     assert set(ACCOUNT_FACE_BUILDERS.keys()) == {"登入排障"}
     assert all(callable(b) for b in ACCOUNT_FACE_BUILDERS.values())
+
+
+# ════════ G-A1 註冊狀態附掛：三態排查（account 6.2* / R9.2）════════
+#
+# secondary_call 把 tenants/registration-status 結果掛在合約列 registration 鍵（單元素 list）；
+# builder 以 found 當歸屬閘門、is_registered＋email_verify 驅動 found:true 三態排查。
+# 嚴格遮罩：registration 帶 lessee_name/lessee_user_id，回話絕不輸出。
+
+def _reg(**over):
+    r = {"found": True, "lessee_user_id": 12291, "is_bound": True,
+         "is_registered": True, "lessee_email_verify_status": 1, "lessee_name": "私密姓名"}
+    r.update(over)
+    return r
+
+
+def test_ga1_found_false_routes_to_support():
+    """found:false（查無此人為名下租客）→ 導客服，不揭露任何帳號細節。"""
+    out = build_login_trouble_facts(_contract(registration=[_reg(found=False)]), "租客登不進去")
+    assert "客服" in out
+    assert "私密姓名" not in out and "12291" not in out
+
+
+def test_ga1_not_registered_gives_invite_link():
+    out = build_login_trouble_facts(
+        _contract(registration=[_reg(is_registered=False, lessee_email_verify_status=0)]), "登不進去")
+    assert ("尚未" in out or "未完成註冊" in out or "還沒" in out)
+    assert "邀請連結" in out
+    assert "私密姓名" not in out and "12291" not in out
+
+
+def test_ga1_registered_but_email_unverified():
+    out = build_login_trouble_facts(
+        _contract(registration=[_reg(is_registered=True, lessee_email_verify_status=0)]), "登不進去")
+    assert "驗證" in out and ("信箱" in out or "email" in out.lower() or "Email" in out)
+    assert "私密姓名" not in out and "12291" not in out
+
+
+def test_ga1_registered_verified_turns_to_login_ops():
+    out = build_login_trouble_facts(
+        _contract(registration=[_reg(is_registered=True, lessee_email_verify_status=1)]), "登不進去")
+    assert "確切寫法" in out
+    assert "角色" in out or "身分" in out
+    assert "私密姓名" not in out and "12291" not in out
+
+
+def test_ga1_no_pii_ever_across_states():
+    for r in (_reg(found=False), _reg(is_registered=False), _reg(lessee_email_verify_status=0),
+              _reg()):
+        out = build_login_trouble_facts(_contract(registration=[r]), "登不進去")
+        assert "私密姓名" not in out and "12291" not in out
+        assert not re.search(r"驗證碼[^\n]{0,6}\d{4}", out)
+
+
+def test_ga1_absent_falls_back_to_contract_logic():
+    """未掛 registration（G-A1 未上線/降級）→ 沿用合約層三分支，零回歸。"""
+    c = _contract(is_tenant_registered=False, to_user_login_email=None)
+    assert build_login_trouble_facts(c, "登不進去") == \
+        build_login_trouble_facts(_contract(is_tenant_registered=False, to_user_login_email=None), "登不進去")
+    assert "尚未註冊" in build_login_trouble_facts(c, "登不進去")
