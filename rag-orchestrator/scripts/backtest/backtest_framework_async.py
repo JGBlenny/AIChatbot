@@ -116,7 +116,8 @@ class AsyncBacktestFramework:
         question: str,
         timeout: int = None,
         session: aiohttp.ClientSession = None,
-        scenario_id: int = None
+        scenario_id: int = None,
+        shape: Dict = None
     ) -> Dict:
         """
         異步查詢 RAG 系統
@@ -144,17 +145,20 @@ class AsyncBacktestFramework:
         # 請求形狀鏡像生產呼叫端（2026-07-05 架構修正）：
         #   舊硬編 mode="tenant" 使業者題集在業態/受眾隔離下大面積查無（run290 驗屍）。
         #   預設 b2b+property_manager（jgb2 後台 useChat.ts:62）；租客題集以 env 覆寫。
+        # 按題帶形狀（題庫受眾維度 request_target_user/request_mode）；
+        # 未標注落回 env 預設（BACKTEST_MODE/TARGET_USER）——向下相容。
+        _shape = shape or {}   # 併發安全：shape 走參數不走 instance 屬性
         payload = {
             "message": question,
             "vendor_id": self.vendor_id,
-            "mode": os.getenv("BACKTEST_MODE", "b2b"),
+            "mode": _shape.get("mode") or os.getenv("BACKTEST_MODE", "b2b"),
             "include_sources": True,
             "skip_sop": False,  # 改為 False，讓回測能檢索 SOP
             "include_debug_info": True,  # 回測需要 similarity 數據
             "session_id": unique_session_id,  # 每個案例使用唯一 session_id
             "user_id": unique_user_id  # 每個案例使用唯一 user_id
         }
-        _tu = os.getenv("BACKTEST_TARGET_USER", "property_manager")
+        _tu = _shape.get("target_user") or os.getenv("BACKTEST_TARGET_USER", "property_manager")
         if _tu:
             payload["target_user"] = _tu
         _rid = os.getenv("BACKTEST_ROLE_ID", "")
@@ -270,7 +274,9 @@ class AsyncBacktestFramework:
             測試結果字典
         """
         question = scenario.get('test_question', '')
-        scenario_id = scenario.get('id', None)  # 獲取 scenario ID
+        # ⚠️ runner 的 dict 鍵是 scenario_id（歷史差異）——兩鍵都認，否則讀 None
+        #    → 整輪共用同一 session（290/291 汙染的完整根因：不只跨 run，同 run 內也互踩）
+        scenario_id = scenario.get('id') or scenario.get('scenario_id')
         if not question:
             return None
 
@@ -282,7 +288,9 @@ class AsyncBacktestFramework:
             for attempt in range(retry_times + 1):
                 try:
                     system_response = await self._query_rag_async(
-                        question, timeout, session, scenario_id  # 傳入 scenario_id
+                        question, timeout, session, scenario_id,
+                        shape={"target_user": scenario.get('request_target_user'),
+                               "mode": scenario.get('request_mode')},
                     )
                     if system_response is None:
                         # API 返回 None，說明發生了未捕獲的錯誤

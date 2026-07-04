@@ -109,7 +109,7 @@ async def main():
     cur = conn.cursor()
 
     # 建立查詢
-    query = "SELECT id, test_question, difficulty FROM test_scenarios WHERE 1=1"
+    query = "SELECT id, test_question, difficulty, request_target_user, request_mode FROM test_scenarios WHERE 1=1"
     params = []
 
     # 添加篩選條件
@@ -146,7 +146,9 @@ async def main():
         scenarios.append({
             'scenario_id': row[0],
             'test_question': row[1],
-            'difficulty': row[2] or 'medium'
+            'difficulty': row[2] or 'medium',
+            'request_target_user': row[3],
+            'request_mode': row[4],
         })
 
     cur.close()
