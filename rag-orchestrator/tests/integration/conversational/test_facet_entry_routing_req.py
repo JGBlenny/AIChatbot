@@ -197,6 +197,58 @@ async def test_iot_boundary_no_misattraction(retriever, pool, question, rule):
             f"門鎖句被吸進電表排障：{question}｜{_fmt(best)}"
 
 
+# ── 物件：應進對話（estate-conversational-facets 任務 3.3 / R7.1, R7.2）──
+ESTATE_FACES = {"物件操作引導", "物件現況診斷"}
+
+ESTATE_DIALOG_CASES = [
+    "物件要怎麼刊登 上架流程",                  # 錨點本尊（引導）
+    "改了對外顯示地址 怎麼還是顯示完整地址",      # 錨點本尊（引導）
+    "物件為什麼不能建立合約 缺什麼欄位",          # 錨點本尊（診斷）
+    "這個物件現在什麼狀態 租客看得到嗎",          # 錨點本尊（診斷）
+    "物件刪掉的話 以前的合約會不會不見",          # 刪除三擋知識（引導）
+    "為什麼不能新增物件",                        # 3505 改寫掛引導
+    "物件突然全部被下架了",                      # 3506 掛引導
+    "招租店舖要怎麼進去",                        # 店舖知識（引導）
+]
+
+# ── 物件：應單發（未掛面向；批次上傳範圍外由 persona 導客服，不在路由層）──
+ESTATE_SINGLE_CASES = [
+    "進階搜尋怎麼用 有哪些條件",
+    "報表匯出跑很久跑不完",
+]
+
+# ── 物件誤吸邊界（點名）：合約域 title 語彙/IoT 綁定/帳號經理人 ──
+ESTATE_BOUNDARY_CASES = [
+    ("這份合約的物件地址錯了要怎麼改", "not_estate"),   # 合約資料異動 → 不得進物件面向
+    ("物件要綁電表要怎麼設定", "not_estate"),           # IoT 域
+    ("要把成員設成某個物件的經理人", "not_estate"),      # 帳號域團隊權限
+]
+
+
+@pytest.mark.req("estate-conversational-facets:7.1")
+@pytest.mark.parametrize("question", ESTATE_DIALOG_CASES)
+async def test_estate_openers_enter_dialog(retriever, pool, question):
+    kind, detail, best = await _route(retriever, pool, question)
+    assert kind == "dialog" and detail in ESTATE_FACES, \
+        f"應進物件對話卻為 {detail}：{question}｜{_fmt(best)}"
+
+
+@pytest.mark.req("estate-conversational-facets:7.1")
+@pytest.mark.parametrize("question", ESTATE_SINGLE_CASES)
+async def test_estate_teaching_stays_single_shot(retriever, pool, question):
+    kind, detail, best = await _route(retriever, pool, question)
+    assert kind == "single", \
+        f"物件單發問句被吸進「{detail}」對話：{question}｜{_fmt(best)}"
+
+
+@pytest.mark.req("estate-conversational-facets:7.2")
+@pytest.mark.parametrize("question,rule", ESTATE_BOUNDARY_CASES)
+async def test_estate_boundary_no_misattraction(retriever, pool, question, rule):
+    kind, detail, best = await _route(retriever, pool, question)
+    assert not (kind == "dialog" and detail in ESTATE_FACES), \
+        f"邊界句被吸進物件「{detail}」：{question}｜{_fmt(best)}"
+
+
 # ── 帳號：應進對話（account-conversational-facets 任務 3.4 / R7.3, R10.2）──
 ACCOUNT_FACES = {"註冊驗證排障", "登入排障", "帳號綁定異動", "團隊成員權限"}
 
