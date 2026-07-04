@@ -255,7 +255,7 @@ SELECT
                 "select": "category",
                 "category": "帳單設定引導",
                 "target_user": "property_manager",
-                "target_user": "property_manager"
+                "limit": 14
             }
         }
     }'::jsonb

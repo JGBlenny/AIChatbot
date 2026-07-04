@@ -134,6 +134,7 @@ def test_grounding_shapes():
     assert lf["endpoint"] == "jgb_contracts" and lf["required_slots"] == ["contract_ref"]
     sg = cfgs["billing_setup_guide"].grounding_scope
     assert sg["select"] == "category" and sg["category"] == "帳單設定引導"
+    assert sg["limit"] == 14   # 面向知識 12 筆 > 預設 8——id 排序擠新知識（estate M2 同款根因）
 
 
 @pytest.mark.req("billing-conversational-facets:7.5")

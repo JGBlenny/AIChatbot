@@ -212,7 +212,8 @@ SELECT
             "grounding_scope": {
                 "select": "category",
                 "category": "建約引導",
-                "target_user": "property_manager"
+                "target_user": "property_manager",
+                "limit": 10
             }
         }
     }'::jsonb

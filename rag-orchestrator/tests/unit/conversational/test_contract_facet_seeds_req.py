@@ -175,6 +175,7 @@ def test_closeout_declares_secondary_call_for_bills():
 def test_create_guide_grounds_by_knowledge_category():
     gs = _configs()["contract_create_guide"].grounding_scope
     assert gs["select"] == "category" and gs["category"] == "建約引導"
+    assert gs["limit"] == 10   # 面向知識 9 筆 > 預設 8（estate M2 同款根因）
     assert gs["target_user"] == "property_manager"              # 知識過濾用真實角色
 
 
