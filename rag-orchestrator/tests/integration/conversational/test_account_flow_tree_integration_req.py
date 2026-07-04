@@ -179,23 +179,27 @@ async def test_binding_converge_carries_application_form_tokens(pool):
         await _cleanup(pool, sid)
 
 
-# ── 團隊權限：判因分流收斂，最高頻真因進底稿（R5.1/R5.2）──
+# ── 團隊權限：無角色（未指派）→ 決定性解釋「沒開檢視權限」（R5.1）──
 @pytest.mark.req("account-conversational-facets:5.1")
-async def test_team_converge_carries_role_assignment_cause(pool):
+async def test_team_member_no_permission_flags(pool):
     from services import conversational_config as cc
     cfg = await cc.config_for_category(pool, "團隊成員權限")
-    brain = _Brain([
-        {"action": "converge", "converge_kind": "answer", "scope": "stay",
-         "extracted_fields": {"symptom": "成員看不到社區"}},
-    ])
-    eng = _engine(pool, brain, _handler([]))
+    members = [{"member_user_id": 700, "character_name": "新進", "is_owner": False,
+                "match_field": "name", "_name": "李四", "_email": "li@x.com"}]
+    perms = {700: {"character_name": "新進",
+                   "abilities": {"show_bill": False, "show_owner_bill": False,
+                                 "show_estate": False, "show_owner_estate": False}}}
+    handler = _handler_team(members, perms, {})
+    brain = _Brain([{"action": "converge", "converge_kind": "answer", "scope": "stay",
+                     "extracted_fields": {"member_ref": "李四"}}])
+    eng = _engine(pool, brain, handler)
     sid = "it-ateam-" + os.urandom(3).hex()
     try:
-        d = await eng.prepare(sid, "u1", 7, "加了成員 他看不到社區", config=cfg, role_id="20151")
+        d = await eng.prepare(sid, "u1", 7, "李四 加了之後什麼都看不到", config=cfg, role_id="20151")
         assert d["kind"] == "converge"
         g = d["grounding"]
-        assert "變更角色" in g                                     # 最高頻真因（invite 未指派）
-        assert "3544" not in g and "3545" not in g                 # 不外洩內部 id
+        assert "沒有" in g and "變更角色" in g                     # 沒開權限 → 指路變更角色
+        assert "700" not in g                                      # 遮罩 user_id
     finally:
         await _cleanup(pool, sid)
 
@@ -252,6 +256,83 @@ async def test_login_ga1_secondary_three_state_and_masking(pool):
         assert "未完成註冊" in g or "尚未" in g                      # G-A1 覆寫合約層
         assert "邀請連結" in g
         assert "王小明" not in g and "99999" not in g               # 嚴格遮罩：名字/user_id 不出口
+    finally:
+        await _cleanup(pool, sid)
+
+
+# ── 團隊權限完整版：T1 成員→兩 secondary（旗標＋T2 可見性）三跳＋遮罩（account 5.1）──
+def _handler_team(members, perms_by_uid, visible_bill_ids):
+    """T1 成員查詢＋permissions＋bill_visibility 三個參數感知 stub。"""
+    from services.api_call_handler import APICallHandler
+    handler = APICallHandler(db_pool=None)
+    handler.jgb_api.use_mock = False
+
+    async def fake_members(role_id, keyword=None, **kw):
+        kw_s = (keyword or "").strip()
+        rows = [m for m in members if kw_s and (kw_s in (m.get("_name") or "") or kw_s in (m.get("_email") or ""))]
+        # 去掉測試輔助欄位
+        return {"success": True, "data": [{k: v for k, v in m.items() if not k.startswith("_")} for m in rows]}
+
+    async def fake_perms(role_id, user_id=None, **kw):
+        p = perms_by_uid.get(int(user_id)) if user_id else None
+        return {"success": True, "data": [p] if p else []}
+
+    async def fake_visibility(role_id, viewer_user_id=None, bill_id=None, **kw):
+        if not bill_id:
+            return {"success": False, "data": []}   # 無具體資源 → 降級不 attach
+        vis = str(bill_id) in {str(b) for b in visible_bill_ids.get(int(viewer_user_id), [])}
+        return {"success": True, "data": [{"id": bill_id}] if vis else []}
+
+    handler.api_registry["jgb_team_members"] = fake_members
+    handler.api_registry["jgb_member_permissions"] = fake_perms
+    handler.api_registry["jgb_bill_visibility"] = fake_visibility
+    return handler
+
+
+@pytest.mark.req("account-conversational-facets:5.1")
+async def test_team_permission_full_three_hop_owner_scoped_invisible(pool):
+    from services import conversational_config as cc
+    cfg = await cc.config_for_category(pool, "團隊成員權限")
+    members = [{"member_user_id": 292, "character_id": 1151, "character_name": "檢視者",
+                "is_owner": False, "match_field": "email", "_name": "張三", "_email": "zhang@x.com"}]
+    perms = {292: {"character_name": "檢視者",
+                   "abilities": {"show_bill": False, "show_owner_bill": True}}}
+    # 292 對 716478 不可見（未指派）
+    handler = _handler_team(members, perms, visible_bill_ids={292: []})
+    brain = _Brain([{"action": "converge", "converge_kind": "answer", "scope": "stay",
+                     "extracted_fields": {"member_ref": "張三", "resource_ref": "716478"}}])
+    eng = _engine(pool, brain, handler)
+    sid = "it-team-" + os.urandom(3).hex()
+    try:
+        d = await eng.prepare(sid, "u1", 7, "張三看不到 716478 這張帳單", config=cfg, role_id="20151")
+        assert d["kind"] == "converge"
+        g = d["grounding"]
+        assert "檢視者" in g                                       # 角色名（顯示）
+        assert "只看" in g or "經手" in g                          # show_owner 機制
+        assert "看不到" in g and "指派" in g                       # T2 確認＋解法
+        assert "292" not in g                                      # 遮罩 user_id
+    finally:
+        await _cleanup(pool, sid)
+
+
+@pytest.mark.req("account-conversational-facets:5.1")
+async def test_team_permission_candidate_list_multiple_members(pool):
+    from services import conversational_config as cc
+    cfg = await cc.config_for_category(pool, "團隊成員權限")
+    members = [{"member_user_id": 292, "character_name": "檢視者", "is_owner": False,
+                "match_field": "name", "_name": "張三", "_email": "z1@x.com"},
+               {"member_user_id": 445, "character_name": "店長", "is_owner": False,
+                "match_field": "name", "_name": "張三", "_email": "z2@x.com"}]
+    handler = _handler_team(members, {}, {})
+    brain = _Brain([{"action": "converge", "converge_kind": "answer", "scope": "stay",
+                     "extracted_fields": {"member_ref": "張三"}}])
+    eng = _engine(pool, brain, handler)
+    sid = "it-teamcand-" + os.urandom(3).hex()
+    try:
+        d = await eng.prepare(sid, "u1", 7, "張三 權限有問題", config=cfg, role_id="20151")
+        assert d["kind"] == "ask" and d.get("answer")             # 同名兩位 → 列候選
+        state = await eng.get_state(sid)
+        assert len(state.get("pending_candidates") or []) == 2
     finally:
         await _cleanup(pool, sid)
 

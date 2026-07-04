@@ -201,23 +201,32 @@ def test_binding_entry_then_application_form_tokens(client):
         _cleanup(sid)
 
 
-# ══════ 團隊權限：口語進場＋最高頻真因（R5.1）══════
+# ══════ 團隊權限完整版：口語進場→成員識別→旗標驅動 grounded（R5.1）══════
+
+TEAM_MEMBER_KW = os.getenv("TEST_TEAM_MEMBER_KW", "hank")       # preview 真成員（店長，非擁有者）
+TEAM_MEMBER_UID = os.getenv("TEST_TEAM_MEMBER_UID", "42134")    # 該成員 user_id（不得外洩）
 
 @pytest.mark.req("account-conversational-facets:5.1")
-def test_team_entry_then_role_assignment_cause(client):
+def test_team_grounded_member_role_flags(client):
     sid = f"e2e-ateam-{uuid.uuid4().hex[:8]}"
     try:
-        r1 = _post(client, "加了團隊成員 他什麼都看不到", sid)
+        r1 = _post(client, "團隊裡有個成員帳單看不到 想確認他的權限", sid)
         assert r1.status_code == 200, r1.text
-        a1 = (r1.json().get("answer") or "")
-        assert a1.strip()
+        assert (r1.json().get("answer") or "").strip()
         assert _conversational_rows(sid) >= 1, "口語第一句應進團隊成員權限對話"
-        # 首輪或次輪內容擇一驗（LLM 可能直接收斂）：最高頻真因要出現
-        if "變更角色" not in a1 and "指派" not in a1:
-            r2 = _post(client, "他是加入之後就一直看不到社區", sid)
-            a2 = (r2.json().get("answer") or "")
-            assert "變更角色" in a2 or "指派" in a2, \
-                f"應指向角色指派真因，實得：{a2[:200]}"
+
+        # 逐輪補成員識別（persona 會先問是哪位）→ grounded 旗標解釋
+        transcript = []
+        for msg in (TEAM_MEMBER_KW, f"就是 {TEAM_MEMBER_KW} 這位"):
+            r = _post(client, msg, sid)
+            assert r.status_code == 200, r.text
+            transcript.append(r.json().get("answer") or "")
+            if any(k in transcript[-1] for k in ("店長", "全團隊", "只看", "檢視", "角色")):
+                break
+        joined = "\n".join(transcript)
+        assert any(k in joined for k in ("店長", "全團隊", "只看", "檢視權限", "角色")), \
+            f"應給旗標驅動的權限範圍解釋，實得：{joined[-300:]}"
+        assert TEAM_MEMBER_UID not in joined                     # 成員 user_id 絕不外洩
     finally:
         _cleanup(sid)
 

@@ -118,6 +118,78 @@ def _login_facts_from_registration(reg: dict, invite_email: str, lines: list) ->
     return "\n".join(lines)
 
 
+# 資源類型 → (全團隊旗標, 只看經手旗標) 對照（自訂角色亦適用，判定靠旗標非角色名）。
+_VISIBILITY_FLAGS = {
+    "帳單": ("show_bill", "show_owner_bill"),
+    "合約": ("show_contract", "show_owner_contract"),
+    "物件": ("show_estate", "show_owner_estate"),
+}
+
+
+def build_team_permission_facts(member: dict, user_question: str = "") -> str:
+    """團隊成員權限（完整版；research 主題 4）——旗標驅動＋T2 具體可見性確認。
+
+    主查 T1 成員列；secondary attach：permissions（abilities 旗標）、bill_visibility（T2）。
+    擁有者→全看；成員依成對旗標（show_X/show_owner_X）決定性解釋可見範圍，
+    T2 確認該具體資源看不看得到。嚴格遮罩：member_user_id 不進回話。
+    無 permissions attach → 降級沿知識口徑（去成員列表變更角色）。
+    """
+    role_name = member.get("character_name") or "該成員"
+
+    if member.get("is_owner"):
+        return (f"這位是「{role_name}」（團隊擁有者）——擁有者可看團隊全部資料，"
+                "看不到特定資料通常不是權限問題，請確認左上角身分是否切到此團隊、或重新整理。")
+
+    perm_list = member.get("permissions")
+    perm = perm_list[0] if isinstance(perm_list, list) and perm_list else None
+    if perm is None:
+        # 降級：無旗標資料 → 沿團隊權限知識口徑
+        return (f"這位成員的角色是「{role_name}」。若他看不到應有的資料，"
+                "多半是角色權限未開或未指派——請到團隊管理的成員列表對他「變更角色」檢視與調整權限。")
+
+    abilities = perm.get("abilities") or {}
+    role_name = perm.get("character_name") or role_name
+    # 資源類型（問句含關鍵字 → 對應旗標；預設帳單）
+    kind = next((k for k in _VISIBILITY_FLAGS if k in (user_question or "")), "帳單")
+    show_all, show_owner = _VISIBILITY_FLAGS[kind]
+    can_all = bool(abilities.get(show_all))
+    can_owner = bool(abilities.get(show_owner))
+
+    # T2：該具體資源可見性（bill_visibility attach 存在＝有問具體資源；非空＝看得到）
+    has_t2 = isinstance(member.get("bill_visibility"), list)
+    visible = has_t2 and bool(member.get("bill_visibility"))
+
+    lines = [f"這位成員的角色是「{role_name}」。"]
+
+    if not can_all and not can_owner:
+        lines.append(f"這個角色沒有開啟「檢視{kind}」的權限——所以他看不到任何{kind}。"
+                     f"解法：到成員列表為他變更角色、開啟{kind}檢視權限。")
+        return "\n".join(lines)
+
+    if can_all:
+        lines.append(f"這個角色可看全團隊的{kind}。")
+        if has_t2 and visible:
+            lines.append(f"系統確認他其實看得到這筆{kind}——看不到多半不是權限問題，"
+                         "請確認他左上角身分已切到此團隊、或重新整理頁面。")
+        else:
+            lines.append(f"若他反映看不到某筆{kind}，請確認該{kind}狀態正常（非草稿/封存），"
+                         "或聯繫客服協助核查。")
+        return "\n".join(lines)
+
+    # 只看經手（show_owner_X）
+    lines.append(f"這個角色只看得到「自己被指派為經理人」的{kind}（僅 show_owner，非全團隊）。")
+    if not has_t2:
+        # 泛問（未指定具體資源）：只解釋機制＋給自查方向
+        lines.append(f"所以他只看得到被指派為經理人的{kind}；某筆看不到，多半是那筆對應的"
+                     f"合約/物件沒指派他為經理人——請確認指派，或改用可看全團隊{kind}的角色。")
+    elif visible:
+        lines.append(f"系統確認他看得到這筆{kind}；若仍反映看不到，請確認身分切換或重新整理。")
+    else:
+        lines.append(f"系統確認他看不到這筆{kind}——因為這筆對應的合約/物件沒有指派他為經理人。"
+                     f"解法：把該合約/物件指派他為經理人，或改用可看全團隊{kind}的角色。")
+    return "\n".join(lines)
+
+
 # ── 帳號面向 fact-builder 註冊表 ────────────────────────────────────────────
 #
 # face 命中 → builder 接手；未命中 → contracts.py 現行路由（零回歸）。
@@ -125,4 +197,5 @@ def _login_facts_from_registration(reg: dict, invite_email: str, lines: list) ->
 
 ACCOUNT_FACE_BUILDERS: dict[str, AccountFaceBuilder] = {
     "登入排障": build_login_trouble_facts,
+    "團隊成員權限": build_team_permission_facts,
 }

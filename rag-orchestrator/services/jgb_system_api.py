@@ -475,6 +475,78 @@ class JGBSystemAPI:
             "found": True, "is_bound": True, "is_registered": True,
             "lessee_email_verify_status": 1, "lessee_user_id": 0, "lessee_name": ""}]}
 
+    async def get_team_members(
+        self,
+        role_id: str,
+        keyword: Optional[str] = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """T1：以 email/名字查此團隊成員（團隊權限面向識別）。
+
+        授權：role_id 綁定＋只回該 role 成員（防枚舉，jgb2 已擋）。
+        回應 data 為 list（成員候選：member_user_id/character_name/is_owner/match_field，無明文個資）。
+        """
+        keyword = (keyword or "").strip()
+        if not role_id or not keyword:
+            return self._degraded_response()
+        if self.use_mock:
+            return {"success": True, "data": [{
+                "member_user_id": 292, "character_id": 1151, "character_name": "檢視者",
+                "is_owner": False, "match_field": "email"}]}
+        raw = await self._request(
+            f"/api/external/v1/roles/{role_id}/members", {"keyword": keyword})
+        data = (raw or {}).get("data")
+        return {"success": bool((raw or {}).get("success")),
+                "data": data if isinstance(data, list) else []}
+
+    async def get_member_permissions(
+        self,
+        role_id: str,
+        user_id: str,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """步驟 3：查成員角色能力旗標（G-A2；32 旗標含成對 show_owner_*）。
+
+        回應正規化為單元素 list（供 secondary_call list_path='data'）：
+        {character_name, abilities:{show_bill,show_owner_bill,...}}。
+        """
+        if not role_id or not user_id:
+            return self._degraded_response()
+        if self.use_mock:
+            return {"success": True, "data": [{
+                "character_name": "檢視者",
+                "abilities": {"show_bill": False, "show_owner_bill": True,
+                              "show_contract": False, "show_owner_contract": True,
+                              "show_estate": False, "show_owner_estate": True}}]}
+        raw = await self._request(
+            f"/api/external/v1/roles/{role_id}/members/{user_id}/permissions", {})
+        data = (raw or {}).get("data")
+        return {"success": bool((raw or {}).get("success")),
+                "data": [data] if isinstance(data, dict) else []}
+
+    async def get_bill_visibility(
+        self,
+        role_id: str,
+        viewer_user_id: str,
+        bill_id: str,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """T2：某成員視角下這張帳單可不可見（viewer 圈定＋單筆過濾）。
+
+        走列表端點帶 viewer_user_id＋bill_id（非 /bills/{id}，那支不套 viewer 圈定）：
+        回結果非空＝看得到、空＝看不到。data 為 list（供 secondary_call）。
+        """
+        if not (role_id and viewer_user_id and bill_id):
+            return self._degraded_response()
+        if self.use_mock:
+            return {"success": True, "data": []}   # mock 預設看不到（owner-scoped 未指派）
+        raw = await self._request("/api/external/v1/bills",
+                                  {"role_id": role_id, "viewer_user_id": viewer_user_id,
+                                   "bill_id": bill_id})
+        data = (raw or {}).get("data")
+        return {"success": bool((raw or {}).get("success")),
+                "data": data if isinstance(data, list) else []}
+
     async def get_subscription(
         self,
         role_id: str,

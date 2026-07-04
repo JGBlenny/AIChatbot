@@ -104,8 +104,82 @@ def test_contract_faces_still_route_to_contract_builders():
 
 
 def test_registry_shape():
-    assert set(ACCOUNT_FACE_BUILDERS.keys()) == {"登入排障"}
+    assert set(ACCOUNT_FACE_BUILDERS.keys()) == {"登入排障", "團隊成員權限"}
     assert all(callable(b) for b in ACCOUNT_FACE_BUILDERS.values())
+
+
+# ════════ 完整版團隊權限：成員列＋旗標＋T2 可見性三跳（account 6.x / R5）════════
+#
+# 主查 T1（成員列）＋兩 secondary attach：permissions（abilities）、bill_visibility（可見性）。
+# 旗標驅動解釋（成對 show_X/show_owner_X），T2 確認具體資源可見性。嚴格遮罩 user_id。
+
+def _member(**over):
+    m = {"member_user_id": 292, "character_id": 1151, "character_name": "檢視者",
+         "is_owner": False, "match_field": "email"}
+    m.update(over)
+    return m
+
+
+def test_team_owner_sees_all_no_permission_issue():
+    from services.jgb.accounts import build_team_permission_facts
+    out = build_team_permission_facts(
+        _member(is_owner=True, character_name="團隊擁有者"), "為什麼看不到帳單")
+    assert "擁有者" in out and ("全部" in out or "全團隊" in out)
+    assert "292" not in out
+
+
+def test_team_owner_scoped_bill_invisible_explains_and_confirms():
+    from services.jgb.accounts import build_team_permission_facts
+    m = _member(
+        permissions=[{"character_name": "檢視者",
+                      "abilities": {"show_bill": False, "show_owner_bill": True}}],
+        bill_visibility=[])                      # T2 空 = 看不到
+    out = build_team_permission_facts(m, "張三看不到 716478")
+    assert "檢視者" in out                        # 角色名（顯示用，自訂角色同理）
+    assert "只看" in out or "經手" in out or "指派" in out   # show_owner 機制解釋
+    assert "看不到" in out                        # T2 確認具體不可見
+    assert "指派" in out                          # 解法
+    assert "292" not in out                       # 遮罩 user_id
+
+
+def test_team_full_visibility_flag_says_should_see():
+    from services.jgb.accounts import build_team_permission_facts
+    m = _member(
+        permissions=[{"character_name": "店長",
+                      "abilities": {"show_bill": True, "show_owner_bill": True}}],
+        bill_visibility=[{"id": 716478}])        # T2 非空 = 看得到
+    out = build_team_permission_facts(m, "看不到 716478")
+    assert "看得到" in out or "應該看得到" in out or "全團隊" in out
+    assert "身分" in out or "角色切換" in out or "重新整理" in out   # 轉向非權限排查
+
+
+def test_team_no_permission_flag_at_all():
+    from services.jgb.accounts import build_team_permission_facts
+    m = _member(permissions=[{"character_name": "自訂角色",
+                              "abilities": {"show_bill": False, "show_owner_bill": False}}],
+                bill_visibility=[])
+    out = build_team_permission_facts(m, "看不到帳單")
+    assert "沒有" in out and ("帳單" in out or "檢視" in out or "權限" in out)
+    assert "自訂角色" in out
+
+
+def test_team_degrades_without_permissions_attach():
+    from services.jgb.accounts import build_team_permission_facts
+    out = build_team_permission_facts(_member(), "看不到帳單")   # 無 permissions attach
+    assert out.strip() and "檢視者" in out
+    assert "變更角色" in out or "成員列表" in out                  # 降級沿知識口徑
+
+
+def test_team_owner_scoped_generic_without_resource():
+    """泛問（未指定具體帳單，無 T2 attach）→ 只解釋機制＋自查方向，不誤稱「確認看不到」。"""
+    from services.jgb.accounts import build_team_permission_facts
+    m = _member(permissions=[{"character_name": "檢視者",
+                              "abilities": {"show_bill": False, "show_owner_bill": True}}])
+    # 無 bill_visibility 鍵
+    out = build_team_permission_facts(m, "成員看不到帳單")
+    assert "只看" in out or "經手" in out
+    assert "指派" in out                                          # 給自查方向
+    assert "系統確認他看不到" not in out                          # 未查具體資源不得斷言
 
 
 # ════════ G-A1 註冊狀態附掛：三態排查（account 6.2* / R9.2）════════

@@ -158,14 +158,29 @@ def test_grounding_shapes():
     assert sec["params"]["email"] == "{row.to_user_email}"
     assert sec["list_path"] == "data"
     for key, facet in (("account_register", "註冊驗證排障"),
-                       ("account_binding", "帳號綁定異動"),
-                       ("account_team", "團隊成員權限")):
+                       ("account_binding", "帳號綁定異動")):
         gs = cfgs[key].grounding_scope
         assert gs["select"] == "category" and gs["category"] == facet
         assert "secondary_call" not in gs
         # 收斂檢索的 target_user 必須明填：漏填會 fallback 到 persona_role
         # （pm_account_*），與知識列的 property_manager 對不上 → grounding 恆空
         assert gs["target_user"] == "property_manager", f"{key} 缺 grounding target_user"
+
+
+@pytest.mark.req("account-conversational-facets:5.1")
+def test_team_grounded_three_hop():
+    """團隊成員權限（完整版）：T1 主查＋兩 secondary_calls（permissions＋bill_visibility）。"""
+    team = _configs()["account_team"].grounding_scope
+    assert team["select"] == "api" and team["endpoint"] == "jgb_team_members"
+    assert team["required_slots"] == ["member_ref"]
+    assert {"keyword": "{form.member_ref}"} in team["search_params"]
+    assert team["result_mapping"]["id_field"] == "member_user_id"
+    secs = team["secondary_calls"]
+    assert [s["endpoint"] for s in secs] == ["jgb_member_permissions", "jgb_bill_visibility"]
+    perms, vis = secs
+    assert perms["params"]["user_id"] == "{row.member_user_id}" and perms["attach_as"] == "permissions"
+    assert vis["params"]["viewer_user_id"] == "{row.member_user_id}"
+    assert vis["params"]["bill_id"] == "{form.resource_ref}" and vis["attach_as"] == "bill_visibility"
 
 
 @pytest.mark.req("account-conversational-facets:6.2")

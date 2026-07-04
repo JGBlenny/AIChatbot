@@ -371,8 +371,10 @@ class ConversationalEngine:
             slot = required[0] if required else None
             _ident = _extract_identifier(user_message) if slot else None
             _prev_ident = (state.get("collected_fields") or {}).get(slot) if slot else None
-            if (gscope.get("select") or "").lower() == "api" and slot and _ident is not None \
-                    and _ident != _prev_ident:
+            # deterministic_id=false：主槽為名字型（如成員 email/名字），數字非其值 →
+            #   跳過決定性數字抽取，交 brain 抽（避免把資源編號誤填成員槽）。預設 true（向後相容）。
+            if (gscope.get("select") or "").lower() == "api" and gscope.get("deterministic_id", True) \
+                    and slot and _ident is not None and _ident != _prev_ident:
                 # ★ 先搜後提交（API 驗證式）：以候選識別探查，命中才提交；查無則回滾、不誤切。
                 state.setdefault("collected_fields", {})[slot] = _ident
                 state.pop("pending_candidates", None)   # 換識別 → 清舊候選
@@ -651,8 +653,17 @@ class ConversationalEngine:
         # 【secondary_call】單筆收斂後的二次查詢（G3；grounding_scope 宣告才執行，R3.3/R10.2）：
         #   params 支援 {row.<field>} 以本列插值；結果 rows 掛在主列 attach_as 鍵，
         #   再以 handler 重格式化（face 貫穿）→ facts 含二次資料。失敗沿用主底稿（降級不阻斷）。
-        secondary = scope.get("secondary_call") or {}
-        if secondary.get("endpoint"):
+        #   支援單一（secondary_call）或多個（secondary_calls 清單，依賴同一主列、各自 attach）。
+        #   params 以 {row.*}（本列，此處插值）＋{form.*}/{session.*}（下游 _prepare_params 解）混用；
+        #   各結果掛主列 attach_as 鍵。全部 attach 後**重格式化一次**（face 貫穿）。失敗降級不阻斷。
+        secondary_calls = scope.get("secondary_calls")
+        if not secondary_calls:
+            single = scope.get("secondary_call")
+            secondary_calls = [single] if single else []
+        attached_any = False
+        for secondary in secondary_calls:
+            if not (secondary or {}).get("endpoint"):
+                continue
             try:
                 sec_params = {k: _resolve_row_template(v, rows[0])
                               for k, v in (secondary.get("params") or {}).items()}
@@ -663,19 +674,23 @@ class ConversationalEngine:
                     sec_rows = _dig_path(sec_result.get("data"), secondary.get("list_path") or "data")
                     rows[0][secondary.get("attach_as") or "secondary"] = \
                         sec_rows if isinstance(sec_rows, list) else []
-                    reformatted = self.api_handler.format_api_result(
-                        result.get("data"), endpoint=endpoint,
-                        user_input={"message": user_message} if user_message else None,
-                        form_data=form_data, face=state.get("face") or _domain_key(config))
-                    if reformatted:
-                        result = {**result, "formatted_response": reformatted}
+                    attached_any = True
             except Exception as e:
                 print(f"⚠️ secondary_call 失敗（沿用主查詢底稿，不阻斷）：{e}")
+        if attached_any:
+            reformatted = self.api_handler.format_api_result(
+                result.get("data"), endpoint=endpoint,
+                user_input={"message": user_message} if user_message else None,
+                form_data=form_data, face=state.get("face") or _domain_key(config))
+            if reformatted:
+                result = {**result, "formatted_response": reformatted}
 
         # 收斂底稿開頭帶「識別值｜名稱」：讓 LLM 能把使用者用的編號/名稱對回這筆事實。
         #   （使用者常用 id 稱呼，但 formatter facts 只帶名稱；grounding 不含 id → LLM 會誤判成
         #     「這不是他問的那筆」而推託/要求再提供。）id/label 皆讀 result_mapping，零硬編面向欄位。
-        rid = rows[0].get(mapping.get("id_field")) if mapping.get("id_field") else None
+        #   suppress_head_id：id 為內部個資（如成員 user_id）時不進底稿，只留名稱（遮罩防線）。
+        rid = (rows[0].get(mapping.get("id_field"))
+               if mapping.get("id_field") and not mapping.get("suppress_head_id") else None)
         label = rows[0].get(mapping.get("label_field")) if mapping.get("label_field") else None
         head = "｜".join(str(p) for p in (rid, label) if p is not None and p != "")
         parts = [p for p in (head, result.get("formatted_response")) if p]

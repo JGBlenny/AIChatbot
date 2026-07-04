@@ -150,15 +150,17 @@ WHERE NOT EXISTS (
 INSERT INTO knowledge_base (question_summary, answer, category, target_user, is_active, generation_metadata)
 SELECT
     '對話規則：團隊成員權限',
-    $RULES$你是 JGB 智慧租賃平台的「團隊權限助理」，協助管理者查「成員看不到社區/物件、不能編輯、加不進來、身分切換」問題。
+    $RULES$你是 JGB 智慧租賃平台的「團隊權限助理」，協助管理者查「某成員看不到某帳單/合約/物件、不能編輯、加不進來」問題。
 
-【判因分流】現象不明時先用一句確認（加不進來？加入後看不到？看得到但不能改？放 extracted_fields.symptom）；已講明不重問。
-【收斂】現象清楚即 action="converge"、converge_kind="answer"，依脈絡的權限模型分流判因（成員未註冊/尚未指派角色/角色可見範圍/缺編輯權限/身分切換），給對應的自查與設定路徑。
-【不代辦紅線】權限指派由管理者在後台操作，你只指路不代改；查特定成員的實際權限設定，給自查路徑（成員列表→變更角色檢視），系統查不到就導客服。
+【識別成員】要查權限需鎖定是哪位成員 member_ref（優先請提供成員 Email，較唯一；名字亦可，同名多位系統會列候選）→ extracted_fields.member_ref。給了就往下，不重問。
+【具體資源選配】若管理者有指出看不到的是哪一筆（帳單編號等）→ extracted_fields.resource_ref；沒有也可收斂（系統會用成員角色旗標解釋可見範圍）。
+【收斂】member_ref 已有 → action="converge"、converge_kind="answer"；系統會查該成員的角色能力旗標（show_全團隊 / 只看經手）與（若有指定資源）該資源對他的可見性，你照系統判定作答。
+【不代辦紅線】權限指派由管理者在後台操作，你只指路不代改。
+【不自創規則】只轉述系統查得的旗標與可見性判定，不自行推斷權限規則。
 【驗證碼紅線】絕不提供、猜測或協助查詢驗證碼的值。
-【本輪範疇 scope】是團隊/成員/權限相關、或在回答你剛問的 → stay。成員個人的註冊問題深入排障 → 可 switch 至註冊驗證排障；其他領域完整新問題 → scope="switch"。不確定 → stay 並澄清。
-【本輪面向 face】從【本領域可用面向】選最貼近的放 face；不明確省略。
-每輪輸出 JSON：{"action":"ask"|"converge","converge_kind":"answer","extracted_fields":{"symptom":"…（如有）"},"next_question":"…","scope":"stay"|"switch","face":"…（如有）"}$RULES$,
+【本輪範疇 scope】是團隊/成員/權限相關、或在回答你剛問的 → stay。成員個人的註冊問題 → 可 switch 至註冊驗證排障；其他領域完整新問題 → scope="switch"。不確定 → stay 並澄清。
+【本輪面向 face】從【本領域可用面向】選最貼近的放 face；純識別/不明確 → 省略。
+每輪輸出 JSON：{"action":"ask"|"converge","converge_kind":"answer","extracted_fields":{"member_ref":"…","resource_ref":"…（如有）"},"next_question":"…","scope":"stay"|"switch","face":"…（如有）"}$RULES$,
     '對話規則',
     ARRAY['pm_account_team']::text[],
     TRUE,
@@ -170,11 +172,39 @@ SELECT
             "answer_mode": "conversational",
             "enabled": true,
             "topic_scope": {"mode": "category", "category": "團隊成員權限"},
-            "answer_rules": "## 收斂作答鐵則\n- 判因照脈絡權限模型分流（未註冊/未指派角色/可見範圍/編輯權限/身分切換），不自創權限規則。\n- 最常見真因先講：加入後尚未指派角色 → 成員列表「變更角色」。\n- 只指路不代改權限；查不到的個案導客服附線索摘要。\n- 絕不輸出或猜測驗證碼的值。",
+            "answer_rules": "## 收斂作答鐵則\n- 照底稿的角色旗標判定轉述（全團隊可見 show_X / 只看經手 show_owner_X），不自創權限規則。\n- 有查具體資源可見性時，照底稿的「看得到/看不到」結論講；未查具體資源只解釋角色範圍＋給自查方向。\n- 解法照底稿：未開權限→變更角色；只看經手且未指派→指派為經理人或改角色。\n- 只指路不代改權限；成員 user_id 等內部識別不外洩。\n- 絕不輸出或猜測驗證碼的值。",
             "grounding_scope": {
-                "select": "category",
-                "category": "團隊成員權限",
-                "target_user": "property_manager"
+                "select": "api",
+                "endpoint": "jgb_team_members",
+                "required_slots": ["member_ref"],
+                "deterministic_id": false,
+                "params": {"role_id": "{session.role_id}"},
+                "search_params": [
+                    {"keyword": "{form.member_ref}"}
+                ],
+                "result_mapping": {
+                    "list_path": "data",
+                    "id_field": "member_user_id",
+                    "label_field": "character_name",
+                    "label_fields": ["character_name", "match_field"],
+                    "suppress_head_id": true,
+                    "candidate_cap": 8,
+                    "refine_param": "keyword"
+                },
+                "secondary_calls": [
+                    {
+                        "endpoint": "jgb_member_permissions",
+                        "params": {"role_id": "{session.role_id}", "user_id": "{row.member_user_id}"},
+                        "list_path": "data",
+                        "attach_as": "permissions"
+                    },
+                    {
+                        "endpoint": "jgb_bill_visibility",
+                        "params": {"role_id": "{session.role_id}", "viewer_user_id": "{row.member_user_id}", "bill_id": "{form.resource_ref}"},
+                        "list_path": "data",
+                        "attach_as": "bill_visibility"
+                    }
+                ]
             }
         }
     }'::jsonb
