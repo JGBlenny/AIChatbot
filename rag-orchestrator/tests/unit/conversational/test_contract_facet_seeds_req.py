@@ -161,8 +161,13 @@ def test_closeout_declares_secondary_call_for_bills():
     assert sec["endpoint"] == "jgb_bills"
     assert sec["params"]["contract_ids"] == "{row.id}"
     assert sec["attach_as"] == "bills" and sec["list_path"] == "data"
-    # 其餘 4 面向不宣告（不做無謂二次查詢）
-    for key in ("contract_change", "contract_renew", "contract_sign", "contract_create_guide"):
+    # 合約異動宣告 G5 permissions 附掛（權限擋 vs 狀態擋分流，contract 7.4）
+    g5 = _configs()["contract_change"].grounding_scope["secondary_call"]
+    assert g5["endpoint"] == "jgb_member_permissions"
+    assert g5["params"]["user_id"] == "{session.user_id}"
+    assert g5["attach_as"] == "requester_permissions"
+    # 其餘 3 面向不宣告（不做無謂二次查詢）
+    for key in ("contract_renew", "contract_sign", "contract_create_guide"):
         assert "secondary_call" not in (_configs()[key].grounding_scope or {})
 
 

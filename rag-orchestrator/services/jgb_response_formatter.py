@@ -172,6 +172,13 @@ def format_jgb_response(api_result: dict, endpoint: str = "", user_question: str
     if endpoint in ("jgb_contracts", "jgb_contract_checkin"):
         return _format_contracts(data, user_question, form_data=form_data, face=face)
 
+    # 電表 endpoint（iot 電表排障面向）：face 命中 → iot builder；未命中/None → 原路（零回歸）。
+    if endpoint == "jgb_meters":
+        from services.jgb.iot import face_meter_response
+        faced = face_meter_response(data, user_question, face)
+        if faced is not None:
+            return faced
+
     # 團隊成員 endpoint（account 團隊權限面向）：face 命中 → accounts builder；
     # 主列為 T1 成員（含 permissions/bill_visibility secondary attach），零回歸（無此 face 不進此檔）。
     if endpoint == "jgb_team_members":

@@ -563,6 +563,47 @@ class JGBSystemAPI:
             f"/api/external/v1/roles/{role_id}/subscription", {}
         )
 
+    async def get_meters(
+        self,
+        role_id: str,
+        keyword: Optional[str] = None,
+        estate_id: Optional[str] = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """電表列表（IoT 電表排障識別 adapter）。
+
+        端點無 keyword 參數 → 拉全列（per_page=200）後 client 端以 keyword 對
+        estate_name/name 過濾（後端當裁判精神：查無回空列不拋）；estate_id 原生透傳。
+        欄位：is_online/is_poweron/balance/available_meter/current_reading/synced_at 等
+        （消費端注意：離線時皆為最後同步快照；is_poweron 三態失真見 J-I1，builder 端防護）。
+        """
+        if not role_id:
+            return self._degraded_response()
+
+        if self.use_mock:
+            rows = [{
+                "id": 501, "estate_id": 9001, "estate_name": "海大質感獨立套房",
+                "name": "3F 分電表", "manufacturer": "DAE", "meter_type": "cloud",
+                "is_online": True, "is_topup": True, "enable_topup": True,
+                "balance": 350.0, "available_meter": 87.5, "current_reading": 1234.5,
+                "is_poweron": True, "is_low_battery": False,
+                "synced_at": "2026-07-04 10:35:00"}]
+        else:
+            params: dict[str, Any] = {"role_id": role_id, "per_page": 200}
+            if estate_id:
+                params["estate_id"] = estate_id
+            raw = await self._request("/api/external/v1/meters", params)
+            if not (raw or {}).get("success"):
+                return {"success": False, "data": []}
+            data = raw.get("data")
+            rows = data if isinstance(data, list) else []
+
+        kw = (keyword or "").strip()
+        if kw:
+            rows = [m for m in rows
+                    if kw in (m.get("estate_name") or "") or kw in (m.get("name") or "")]
+        return {"success": True, "data": rows}
+
     async def get_iot_manufacturers(
         self,
         role_id: str,

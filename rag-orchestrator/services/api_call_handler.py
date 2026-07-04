@@ -72,6 +72,7 @@ class APICallHandler:
             'jgb_iot_manufacturers': self.jgb_api.get_iot_manufacturers,
             'jgb_tenant_registration': self.jgb_api.get_tenant_registration,
             'jgb_team_members': self.jgb_api.get_team_members,
+            'jgb_meters': self.jgb_api.get_meters,
             'jgb_member_permissions': self.jgb_api.get_member_permissions,
             'jgb_bill_visibility': self.jgb_api.get_bill_visibility,
         }
