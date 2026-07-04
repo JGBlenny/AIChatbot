@@ -133,8 +133,13 @@ class AsyncBacktestFramework:
         url = f"{self.base_url}/api/v1/message"
 
         # 為每個測試案例生成唯一的 session_id，避免表單狀態互相干擾
-        unique_session_id = f"backtest_session_{scenario_id}" if scenario_id else "backtest_session"
-        unique_user_id = f"backtest_user_{scenario_id}" if scenario_id else "backtest_user"
+        # ⚠️ 必須含 run 級唯一段：跨 run 重用同 session_id 會吃到前一輪殘留的
+        #    COLLECTING 表單狀態（run290→291 汙染 19 題「找不到表單定義」實案）
+        if not hasattr(self, "_run_nonce"):
+            import uuid as _uuid
+            self._run_nonce = _uuid.uuid4().hex[:6]
+        unique_session_id = f"backtest_{self._run_nonce}_{scenario_id or 'x'}"
+        unique_user_id = f"backtest_user_{self._run_nonce}_{scenario_id or 'x'}"
 
         payload = {
             "message": question,
