@@ -185,3 +185,47 @@ def test_formatter_dispatches_jgb_meters_by_face():
     none_case = format_jgb_response(api_result, endpoint="jgb_meters",
                                     user_question="沒電", face=None)
     assert none_case != faced                                 # face=None 走原路（恆等/mutation）
+
+
+# ── 真資料逼出的 adapter 升級：多詞口語 keyword token 化過濾（6.1* 發現）──
+
+async def test_meters_keyword_tokenized_multiword_colloquial():
+    """「新莊富貴500的14B05」→ token 化（去虛詞）後全部命中 estate_name+name 聯合字串。"""
+    rows = [_meter(id=2408, estate_name="新北新莊-富貴500-14B05", name="14B05-220V"),
+            _meter(id=2410, estate_name="新北新莊-富貴500-14B06", name="14B06-220V")]
+    api = _api_with_rows(rows)
+    r = await api.get_meters(role_id="37305", keyword="新莊富貴500的14B05")
+    assert [m["id"] for m in r["data"]] == [2408]
+
+
+async def test_meters_keyword_tokenized_partial_no_match():
+    rows = [_meter(estate_name="新北新莊-富貴500-14B05", name="14B05-220V")]
+    api = _api_with_rows(rows)
+    r = await api.get_meters(role_id="37305", keyword="新莊的15C99")   # 一 token 不中 → 全不中
+    assert r["data"] == []
+
+
+async def test_meters_keyword_matches_meter_id_for_refine():
+    """候選選定後 refine 以 id 值當 keyword 重查 → 過濾須認 id（真資料 e2e 逼出）。"""
+    rows = [_meter(id=2408, estate_name="新北新莊-富貴500-14B05", name="14B05-220V"),
+            _meter(id=2407, estate_name="新北新莊-富貴500-14B05", name="14B05-110V")]
+    api = _api_with_rows(rows)
+    r = await api.get_meters(role_id="37305", keyword="2408")
+    assert [m["id"] for m in r["data"]] == [2408]
+
+
+async def test_meters_keyword_int_type_tolerant():
+    """候選 refine 帶 int id → wrapper 型別容錯（真資料 e2e 逼出的崩潰）。"""
+    rows = [_meter(id=2408), _meter(id=2407)]
+    api = _api_with_rows(rows)
+    r = await api.get_meters(role_id="37305", keyword=2408)
+    assert [m["id"] for m in r["data"]] == [2408]
+
+
+async def test_team_members_keyword_int_type_tolerant():
+    """get_team_members 同款潛在崩潰：int keyword 不得拋。"""
+    from services.jgb_system_api import JGBSystemAPI
+    api = JGBSystemAPI()
+    api.use_mock = True
+    r = await api.get_team_members(role_id="20151", keyword=292)
+    assert r["success"] is not None                     # 不拋即可（mock 路徑）

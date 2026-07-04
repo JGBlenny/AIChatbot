@@ -11,6 +11,7 @@ JGB 好租寶外部 API 的 client 封裝，支援 mock/real 模式切換。
 """
 
 import os
+import re
 import logging
 from typing import Any, Optional
 
@@ -486,7 +487,7 @@ class JGBSystemAPI:
         授權：role_id 綁定＋只回該 role 成員（防枚舉，jgb2 已擋）。
         回應 data 為 list（成員候選：member_user_id/character_name/is_owner/match_field，無明文個資）。
         """
-        keyword = (keyword or "").strip()
+        keyword = str(keyword).strip() if keyword is not None else ""   # 候選 refine 帶 int id 容錯
         if not role_id or not keyword:
             return self._degraded_response()
         if self.use_mock:
@@ -598,10 +599,22 @@ class JGBSystemAPI:
             data = raw.get("data")
             rows = data if isinstance(data, list) else []
 
-        kw = (keyword or "").strip()
+        kw = str(keyword).strip() if keyword is not None else ""   # 候選 refine 帶 int id 容錯
         if kw:
-            rows = [m for m in rows
-                    if kw in (m.get("estate_name") or "") or kw in (m.get("name") or "")]
+            # token 化過濾（真資料 e2e 逼出）：口語「新莊富貴500的14B05」對
+            # estate_name「新北新莊-富貴500-14B05」整串 substring 配不中——
+            # 以虛詞拆 token，比對時兩邊都去分隔符（口語常省略 '-'），
+            # 全部 token 命中（AND）estate_name+name 聯合字串才算。
+            _sep = re.compile(r"[\s　\-/,，]+")
+            tokens = [_sep.sub("", t) for t in re.split(r"[的之在 　,，/\-]+", kw) if t]
+            # 純數字 keyword 先當電表 id 直配（候選選定後 refine 以 id 重查）
+            if kw.isdigit() and any(str(m.get("id")) == kw for m in rows):
+                rows = [m for m in rows if str(m.get("id")) == kw]
+            else:
+                def _hit(m):
+                    joined = _sep.sub("", f"{m.get('estate_name') or ''}｜{m.get('name') or ''}")
+                    return all(t in joined for t in tokens if t)
+                rows = [m for m in rows if _hit(m)]
         return {"success": True, "data": rows}
 
     async def get_iot_manufacturers(

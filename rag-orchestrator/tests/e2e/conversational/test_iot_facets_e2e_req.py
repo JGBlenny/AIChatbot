@@ -193,3 +193,36 @@ def test_doorlock_hardware_stays_single_shot(client):
         assert "廠商" in a or "型號" in a                         # 導廠商口徑
     finally:
         _cleanup(sid)
+
+
+# ══════ 6.1*：J-I0 修復後真電表多輪（2026-07-04 解鎖；role 37305 真資料）══════
+
+@pytest.mark.req("iot-conversational-facets:9.3")
+def test_meter_real_data_multiturn_candidates_then_ground(client):
+    """真資料多輪：物件名→一屋雙表（110V/220V）候選→選定→現值分支 facts。
+
+    37305 現況全表 online＋poweron＋儲值餘額>0 → 分支④供電正常轉硬體；
+    數值隨同步變動故斷言結構 token（度數/餘額存在＋不虛構）。"""
+    sid = f"e2e-iotreal-{uuid.uuid4().hex[:8]}"
+    try:
+        r1 = _post(client, "電表一直離線 度數不動", sid)
+        assert r1.status_code == 200, r1.text
+        assert _conversational_rows(sid) >= 1
+
+        r2 = _post(client, "新莊富貴500的14B05", sid)
+        assert r2.status_code == 200, r2.text
+        a2 = (r2.json().get("answer") or "")
+        assert a2.strip()
+        # 一屋雙表 → 候選（110V/220V），或檢索寬鬆時直中單顆——兩態皆為正確行為
+        if "110V" in a2 and "220V" in a2:
+            r3 = _post(client, "1", sid)
+            assert r3.status_code == 200, r3.text
+            a3 = (r3.json().get("answer") or "")
+        else:
+            a3 = a2
+        assert a3.strip()
+        assert "正常" in a3 or "在線" in a3, f"真資料為在線供電態，應照現值作答：{a3[:200]}"
+        for fab in ("已為您", "已幫您"):
+            assert fab not in a3                                  # 不代操作
+    finally:
+        _cleanup(sid)
