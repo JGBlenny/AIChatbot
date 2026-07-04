@@ -59,6 +59,12 @@ SELECT
                     "label_date_fields": ["date_start", "date_end"],
                     "candidate_cap": 8,
                     "refine_param": "contract_ids"
+                },
+                "secondary_call": {
+                    "endpoint": "jgb_member_permissions",
+                    "params": {"role_id": "{session.role_id}", "user_id": "{session.user_id}"},
+                    "list_path": "data",
+                    "attach_as": "requester_permissions"
                 }
             }
         }

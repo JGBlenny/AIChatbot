@@ -87,8 +87,15 @@ def _engine(pool, brain, api_handler):
 
 def _mock_handler(rows):
     handler = MagicMock()
-    handler.execute_api_call = AsyncMock(return_value={
-        "success": True, "data": {"data": rows}, "formatted_response": "FACTS"})
+
+    async def fake_execute(api_config, *a, **kw):
+        # G5 secondary（jgb_member_permissions）回未啟用態——本檔驗面向機制非 G5；
+        # endpoint 感知避免 MagicMock 回傳污染收斂底稿。
+        if (api_config or {}).get("endpoint") == "jgb_member_permissions":
+            return {"success": False, "data": []}
+        return {"success": True, "data": {"data": rows}, "formatted_response": "FACTS"}
+
+    handler.execute_api_call = AsyncMock(side_effect=fake_execute)
     return handler
 
 
@@ -168,8 +175,12 @@ async def test_face_switch_keeps_locked_contract(pool):
         state = await eng.get_state(sid)
         assert state["collected_fields"]["contract_ref"] == "83315"   # 合約鎖定保留
         assert state["face"] == "退租收尾"
-        # face 貫穿：第二輪 API 呼叫收到 face=退租收尾（任務 1.1 鏈路 × 真設定）
-        assert handler.execute_api_call.call_args.kwargs.get("face") == "退租收尾"
+        # face 貫穿：第二輪「主查」呼叫收到 face=退租收尾（任務 1.1 鏈路 × 真設定）。
+        # G5 加入 secondary（jgb_member_permissions，不帶 face）後，最後一次呼叫不再是主查
+        # → 以 endpoint 過濾主查呼叫驗 face。
+        contract_faces = [c.kwargs.get("face") for c in handler.execute_api_call.call_args_list
+                          if (c.args[0] or {}).get("endpoint") == "jgb_contracts"]
+        assert contract_faces[-1] == "退租收尾"
         # 換面向後脈絡換成退租收尾層
         assert "帳單總表" in d2["system_md"]
     finally:

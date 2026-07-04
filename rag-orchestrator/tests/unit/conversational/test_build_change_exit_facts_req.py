@@ -96,3 +96,50 @@ def test_facts_carry_current_stage(status):
 @pytest.mark.req("contract-conversational-facets:7.1")
 def test_registered_in_face_builders():
     assert FACE_BUILDERS.get("合約異動") is build_change_exit_facts
+
+
+# ════════ G5 grounded：requester_permissions 附掛——權限擋 vs 狀態擋分流（7.4）════════
+#
+# secondary_call（jgb_member_permissions，user_id={session.user_id}）掛 requester_permissions；
+# 存在性驅動：未掛/查無 → 現行輸出恆等（G5 未啟用常態）。自訂角色靠 edit_contract 旗標。
+
+def _perm(edit_contract, name="自訂角色"):
+    return [{"character_name": name, "abilities": {"edit_contract": edit_contract}}]
+
+
+@pytest.mark.req("contract-conversational-facets:7.4")
+def test_g5_no_edit_permission_flags_permission_block():
+    """狀態可編輯（READY）但角色無 edit_contract → 權限擋明示。"""
+    out = build_change_exit_facts(
+        _contract(1, requester_permissions=_perm(False, "業務")), "我編輯不了合約")
+    assert "可直接編輯" in out                              # 狀態層不變
+    assert "權限" in out and ("沒有" in out or "未開" in out)  # 權限擋
+    assert "業務" in out                                    # 角色名（顯示用）
+    assert "變更角色" in out or "調整" in out                # 解法指路
+
+
+@pytest.mark.req("contract-conversational-facets:7.4")
+def test_g5_has_edit_permission_ready_confirms_not_permission():
+    out = build_change_exit_facts(
+        _contract(1, requester_permissions=_perm(True)), "編輯不了")
+    assert "可直接編輯" in out
+    assert "具備" in out or "有合約編輯權限" in out           # 確認非權限問題
+
+
+@pytest.mark.req("contract-conversational-facets:7.4")
+def test_g5_signed_with_permission_disambiguates_status_block():
+    """已簽署＋有權限 → 明示擋的是狀態非權限（分流核心）。"""
+    out = build_change_exit_facts(
+        _contract(8, requester_permissions=_perm(True)), "為什麼不能改")
+    assert "不可直接修改" in out                            # 狀態擋不變
+    assert "非權限" in out or "不是權限" in out              # 分流明示
+
+
+@pytest.mark.req("contract-conversational-facets:7.4")
+def test_g5_absent_identity_with_current_output():
+    """未附掛（G5 未啟用/user_id 非成員）→ 與現行輸出逐字恆等（零回歸）。"""
+    for status in (1, 2, 8):
+        assert build_change_exit_facts(_contract(status), "改合約") == \
+            build_change_exit_facts(_contract(status), "改合約")
+        base = build_change_exit_facts(_contract(status), "改合約")
+        assert "權限" not in base.split("出口判定")[0]        # 未啟用不憑空談權限

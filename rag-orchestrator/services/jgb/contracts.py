@@ -379,6 +379,24 @@ def build_change_exit_facts(contract: dict, user_question: str = "") -> str:
     else:
         lines.append("出口判定：無法辨識此合約的狀態，請聯繫客服確認。")
 
+    # G5 權限層（requester_permissions 附掛：jgb_member_permissions，user_id={session.user_id}）——
+    # 權限擋 vs 狀態擋分流。存在性驅動：未附掛/查無（G5 未啟用、發問者非 jgb2 成員）→ 不加行（恆等）。
+    # 判定靠 edit_contract 旗標（自訂角色同理），角色名僅顯示；成員 user_id 不進 facts。
+    perm_list = contract.get("requester_permissions")
+    perm = perm_list[0] if isinstance(perm_list, list) and perm_list else None
+    if perm is not None:
+        role_name = perm.get("character_name") or "你目前的角色"
+        can_edit = bool((perm.get("abilities") or {}).get("edit_contract"))
+        if not can_edit:
+            lines.append(f"權限判定：你目前使用的角色「{role_name}」沒有合約編輯權限——"
+                         "即使合約狀態允許編輯也無法操作。請團隊管理者到成員列表為你調整角色權限，"
+                         "或由具備編輯權限的成員處理。")
+        elif status == ContractStatus.READY:
+            lines.append(f"權限判定：你的角色「{role_name}」具備合約編輯權限，可直接操作。")
+        else:
+            lines.append(f"權限判定：你的角色「{role_name}」具備合約編輯權限——"
+                         "目前擋住的是合約狀態，不是權限問題，照上述出口處理即可。")
+
     return "\n".join(lines)
 
 

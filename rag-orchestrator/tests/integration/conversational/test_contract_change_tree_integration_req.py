@@ -89,6 +89,26 @@ def _real_handler(row):
         return {"mapping": {}, "data": [row] if hit else []}
 
     handler.api_registry["jgb_contracts"] = fake_contracts
+
+    async def fake_member_permissions(role_id, user_id=None, **kw):
+        # 預設 G5 未啟用（發問者非 jgb2 成員）→ 查無、skip attach（既有測試恆等）
+        return {"success": False, "data": []}
+
+    handler.api_registry["jgb_member_permissions"] = fake_member_permissions
+    return handler
+
+
+def _handler_with_g5(row, abilities, character_name="業務"):
+    """G5 啟用態：requester permissions 附掛（session.user_id 對應到 jgb2 成員）。"""
+    handler = _real_handler(row)
+
+    async def fake_member_permissions(role_id, user_id=None, **kw):
+        if not user_id:
+            return {"success": False, "data": []}
+        return {"success": True,
+                "data": [{"character_name": character_name, "abilities": abilities}]}
+
+    handler.api_registry["jgb_member_permissions"] = fake_member_permissions
     return handler
 
 
@@ -203,5 +223,44 @@ async def test_history_deletion_request_shared_exit(pool):
         assert "歷史合約" in d["grounding"]
         assert "資料異動申請書" in d["grounding"]          # 共用出口
         assert "可直接編輯" not in d["grounding"]
+    finally:
+        await _cleanup(pool, sid)
+
+
+# ── G5 grounded：權限擋 vs 狀態擋分流（contract 7.4）──
+@pytest.mark.req("contract-conversational-facets:7.4")
+async def test_g5_permission_block_when_status_editable(pool):
+    """READY（狀態可編）＋角色無 edit_contract → 底稿同時帶狀態出口與權限擋。"""
+    from services import conversational_config as cc
+    cfg = await cc.config_for_category(pool, "合約異動")
+    brain = _Brain([{"action": "converge", "converge_kind": "answer", "scope": "stay",
+                     "extracted_fields": {"contract_ref": "基隆物件"}, "face": "合約異動"}])
+    eng = _engine(pool, brain, _handler_with_g5(_row(1), {"edit_contract": False}, "業務"))
+    sid = "it-g5-" + os.urandom(3).hex()
+    try:
+        d = await eng.prepare(sid, "u1", 7, "我編輯不了基隆那份合約", config=cfg, role_id="20151")
+        assert d["kind"] == "converge"
+        g = d["grounding"]
+        assert "可直接編輯" in g                            # 狀態層
+        assert "沒有合約編輯權限" in g and "業務" in g       # 權限擋＋角色名
+    finally:
+        await _cleanup(pool, sid)
+
+
+@pytest.mark.req("contract-conversational-facets:7.4")
+async def test_g5_status_block_disambiguated_with_permission(pool):
+    """已簽署＋有權限 → 明示擋的是狀態非權限。"""
+    from services import conversational_config as cc
+    cfg = await cc.config_for_category(pool, "合約異動")
+    brain = _Brain([{"action": "converge", "converge_kind": "answer", "scope": "stay",
+                     "extracted_fields": {"contract_ref": "基隆物件"}, "face": "合約異動"}])
+    eng = _engine(pool, brain, _handler_with_g5(_row(8), {"edit_contract": True}, "店長"))
+    sid = "it-g5b-" + os.urandom(3).hex()
+    try:
+        d = await eng.prepare(sid, "u1", 7, "基隆那份合約為什麼改不了", config=cfg, role_id="20151")
+        assert d["kind"] == "converge"
+        g = d["grounding"]
+        assert "資料異動申請書" in g                        # 狀態擋出口不變
+        assert "不是權限" in g or "非權限" in g              # 分流明示
     finally:
         await _cleanup(pool, sid)
