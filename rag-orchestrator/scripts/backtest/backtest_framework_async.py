@@ -306,6 +306,7 @@ class AsyncBacktestFramework:
             # 多輪續走（BACKTEST_MULTITURN，預設開）：第一輪為追問時由使用者模擬器
             # 續答、同 session 最多 BACKTEST_MAX_TURNS 輪——驗「收斂後」的最終品質，
             # 不再停在第一輪追問。transcript = [使用者Q, 系統A, 使用者A2, 系統A2, ...]
+            first_response = system_response          # 觸發類金標驗首輪
             transcript = [question, (system_response or {}).get('answer', '') or '']
             if os.getenv("BACKTEST_MULTITURN", "true").lower() == "true":
                 max_turns = int(os.getenv("BACKTEST_MAX_TURNS", "4"))
@@ -332,6 +333,18 @@ class AsyncBacktestFramework:
                 evaluation_result['transcript'] = [t[:300] for t in transcript]
             else:
                 evaluation_result = self.evaluate_answer_v2(scenario, system_response)
+
+            # 金標決定性斷言（優先於 LLM 評級；LLM 評級保留於 llm_grade）
+            # ⚠️ 首版誤把本段 if 接走了上方 v3/v2 的 else（無金標失敗時評估被 v2
+            #    覆蓋、grade 消失——run299 全 '?' 實案），重排為平行段落。
+            _gold_fails = self._gold_checks(scenario, first_response, transcript)
+            if _gold_fails:
+                evaluation_result['llm_grade'] = evaluation_result.get('grade')
+                evaluation_result['grade'] = 'GOLD_FAIL'
+                evaluation_result['grade_reason'] = '；'.join(_gold_fails)[:200]
+                evaluation_result['passed'] = False
+                evaluation_result['score'] = 0.0
+                evaluation_result['failure_reason'] = f"GOLD_FAIL: {'；'.join(_gold_fails)[:180]}"
             result = self._build_result_dict(
                 scenario, system_response, evaluation_result, index
             )
@@ -664,6 +677,35 @@ class AsyncBacktestFramework:
     )
     EVAL_V3_PASS_GRADES = ("GOOD", "ASK_OK")
 
+
+
+    @staticmethod
+    def _gold_checks(scenario: Dict, first_response: Dict, transcript: list) -> list:
+        """金標決定性斷言（2026-07-05）：任一不符回傳失敗清單（空=全過/未設）。
+
+        觸發類（action_type/form_id/path）驗「首輪」回應——觸發發生在第一輪；
+        facts tokens 驗「整段對話全文」——收斂值可能出現在任何一輪。
+        """
+        fails = []
+        fr = first_response or {}
+        exp_at = scenario.get('expected_action_type')
+        if exp_at and (fr.get('action_type') or '') != exp_at:
+            fails.append(f"action_type 應為 {exp_at}，實際 {fr.get('action_type')!r}")
+        exp_form = scenario.get('expected_form_id')
+        if exp_form and (fr.get('form_id') or '') != exp_form:
+            fails.append(f"form_id 應為 {exp_form}，實際 {fr.get('form_id')!r}")
+        exp_path = scenario.get('expected_path')
+        if exp_path:
+            path = ((fr.get('debug_info') or {}).get('processing_path') or '')
+            if exp_path not in path:
+                fails.append(f"processing_path 應含 {exp_path}，實際 {path!r}")
+        exp_tokens = scenario.get('expected_facts_tokens') or []
+        if exp_tokens:
+            full_text = "\n".join(transcript or [])
+            missing = [t for t in exp_tokens if t and t not in full_text]
+            if missing:
+                fails.append(f"金標關鍵值缺失：{missing}")
+        return fails
 
     # ── 多輪品質驗證（2026-07-05）：使用者模擬器 ──────────────────────
     SIM_FIXTURE_DEFAULT = (

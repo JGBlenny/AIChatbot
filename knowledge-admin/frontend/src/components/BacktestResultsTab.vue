@@ -422,7 +422,7 @@ export default {
       error: null,
       statusFilter: 'all',
       gradeDistribution: null,
-      gradeOrder: ['GOOD', 'ASK_OK', 'ASK_BAD', 'WRONG', 'NOFOUND', 'BROKEN', 'EVAL_ERR'],
+      gradeOrder: ['GOOD', 'ASK_OK', 'GOLD_FAIL', 'ASK_BAD', 'WRONG', 'NOFOUND', 'BROKEN', 'EVAL_ERR'],
       pagination: {
         limit: 50,
         offset: 0
@@ -613,7 +613,7 @@ export default {
     },
 
     gradeLabel(g) {
-      const map = { GOOD: '✔ 直答', ASK_OK: '↩ 合理追問', ASK_BAD: '⚠ 過度追問',
+      const map = { GOOD: '✔ 直答', ASK_OK: '↩ 合理追問', GOLD_FAIL: '✗ 金標不符', ASK_BAD: '⚠ 過度追問',
                     WRONG: '✖ 錯位', NOFOUND: '∅ 查無', BROKEN: '💥 異常', EVAL_ERR: '? 評審失敗' };
       return map[g] || g;
     },
@@ -890,6 +890,7 @@ export default {
 .grade-wrong { background: #fdecea; color: #b3261e; }
 .grade-nofound { background: #f0f0f0; color: #666; }
 .grade-broken { background: #fce4ec; color: #ad1457; }
+.grade-gold_fail { background: #7f1d1d; color: #fff; }
 .grade-eval_err, .grade-none { background: #f5f5f5; color: #999; }
 
 .backtest-results-tab {

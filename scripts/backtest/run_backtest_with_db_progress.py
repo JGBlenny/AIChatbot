@@ -110,7 +110,9 @@ async def main():
     cur = conn.cursor()
 
     # 建立查詢
-    query = "SELECT id, test_question, difficulty, request_target_user, request_mode FROM test_scenarios WHERE 1=1"
+    query = ("SELECT id, test_question, difficulty, request_target_user, request_mode, "
+         "expected_action_type, expected_form_id, expected_path, expected_facts_tokens "
+         "FROM test_scenarios WHERE 1=1")
     params = []
 
     # 添加篩選條件
@@ -154,6 +156,10 @@ async def main():
             'difficulty': row[2] or 'medium',
             'request_target_user': row[3],
             'request_mode': row[4],
+            'expected_action_type': row[5],
+            'expected_form_id': row[6],
+            'expected_path': row[7],
+            'expected_facts_tokens': row[8],
         })
 
     cur.close()
