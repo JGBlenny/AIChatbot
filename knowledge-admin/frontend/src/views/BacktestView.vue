@@ -169,6 +169,20 @@ export default {
   },
 
   watch: {
+    // URL → 頁面（原本只有 mounted 讀一次：返回鍵/手改參數不會切頁——2026-07-05 補）
+    '$route.query.tab'(val) {
+      if (val && ['loop-management', 'knowledge-review', 'backtest-results', 'validation'].includes(val)
+          && val !== this.activeTab) {
+        this.activeTab = val;
+      }
+    },
+    '$route.query.loopId'(val) {
+      const id = val ? parseInt(val) : null;
+      if (id !== this.selectedLoopId) {
+        this.selectedLoopId = id;
+        if (id) this.onLoopChange();
+      }
+    },
     activeTab(newTab) {
       if (this.$route.query.tab !== newTab) {
         this.$router.push({
@@ -176,7 +190,7 @@ export default {
             ...this.$route.query,
             tab: newTab
           }
-        });
+        }).catch(() => {});
       }
     },
 
@@ -188,7 +202,7 @@ export default {
             ...this.$route.query,
             loopId: newLoopId
           }
-        });
+        }).catch(() => {});
       }
     }
   },
