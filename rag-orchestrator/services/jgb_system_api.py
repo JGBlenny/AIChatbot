@@ -216,9 +216,41 @@ class JGBSystemAPI:
             params["contract_ids"] = contract_ids
         if keyword:
             params["keyword"] = keyword
-        return await self._request(
+        result = await self._request(
             "/api/external/v1/contracts/status-overview", params
         )
+
+        # 查無 fallback（多輪回測 run295/296 逼出）：合約 title 格式不一致——
+        # 「重慶北137-503」（無前綴）與「台北大同-重慶北5-304」（帶前綴）並存，
+        # 業者用物件全名查 → server LIKE 恆查無。沿 get_meters 先例：
+        # 以最長 token 重查放寬命中面，client 端全 token 去分隔符 AND 過濾。
+        rows = (result or {}).get("data") or []
+        if not rows and keyword:
+            _sep = re.compile(r"[\s　\-/,，]+")
+            tokens = [_sep.sub("", t) for t in re.split(r"[的之在 　,，/\-]+", str(keyword)) if t]
+            if len(tokens) >= 2:                              # 可拆才放寬（單詞查無不亂擴）
+                widest = max(tokens, key=len)
+                retry_params = dict(params)
+                retry_params["keyword"] = widest
+                retry = await self._request(
+                    "/api/external/v1/contracts/status-overview", retry_params
+                )
+                cand = (retry or {}).get("data") or []
+
+                q_joined = "".join(tokens)
+
+                def _hit(c):
+                    title = str(c.get("title") or "")
+                    joined = _sep.sub("", title)
+                    # 雙向包含：查詢 tokens 全在候選（口語少於存值）
+                    # 或候選 tokens 全在查詢（存值無前綴、查詢帶物件全名——run296 實案）
+                    if all(t in joined for t in tokens if t):
+                        return True
+                    c_tokens = [_sep.sub("", t) for t in re.split(r"[的之在 　,，/\-]+", title) if t]
+                    return bool(c_tokens) and all(t in q_joined for t in c_tokens)
+                filtered = [c for c in cand if _hit(c)]
+                return {**(retry or {}), "success": True, "data": filtered}
+        return result
 
     async def get_contract_checkin_eligibility(
         self,

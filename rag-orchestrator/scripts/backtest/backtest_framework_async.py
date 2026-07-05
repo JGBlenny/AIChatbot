@@ -303,15 +303,43 @@ class AsyncBacktestFramework:
                     else:
                         raise
 
+            # 多輪續走（BACKTEST_MULTITURN，預設開）：第一輪為追問時由使用者模擬器
+            # 續答、同 session 最多 BACKTEST_MAX_TURNS 輪——驗「收斂後」的最終品質，
+            # 不再停在第一輪追問。transcript = [使用者Q, 系統A, 使用者A2, 系統A2, ...]
+            transcript = [question, (system_response or {}).get('answer', '') or '']
+            if os.getenv("BACKTEST_MULTITURN", "true").lower() == "true":
+                max_turns = int(os.getenv("BACKTEST_MAX_TURNS", "4"))
+                shape = {"target_user": scenario.get('request_target_user'),
+                         "mode": scenario.get('request_mode')}
+                for _turn in range(max_turns - 1):
+                    sim = await asyncio.to_thread(
+                        self._user_simulator_reply, question, transcript)
+                    if sim["done"]:
+                        break
+                    follow = await self._query_rag_async(
+                        sim["reply"], timeout, session, scenario_id, shape=shape)
+                    if not follow:
+                        break
+                    transcript.extend([sim["reply"], (follow.get('answer') or '')])
+                    system_response = follow   # 最終輪為評分對象
+
             # 評估答案：預設 v3 多輪感知六級（BACKTEST_EVAL_V3=false 退回 v2）
             if os.getenv("BACKTEST_EVAL_V3", "true").lower() == "true":
                 evaluation_result = await asyncio.to_thread(
-                    self.evaluate_answer_v3, scenario, system_response)
+                    self.evaluate_answer_v3, scenario, system_response,
+                    transcript=transcript)
+                evaluation_result['turns_used'] = (len(transcript) + 1) // 2
+                evaluation_result['transcript'] = [t[:300] for t in transcript]
             else:
                 evaluation_result = self.evaluate_answer_v2(scenario, system_response)
             result = self._build_result_dict(
                 scenario, system_response, evaluation_result, index
             )
+            # 多輪：結果表顯示逐輪紀錄（而非只有最終輪）
+            if len(transcript) > 2:
+                _lines = [f"[第{i//2+1}輪]{'使用者' if i % 2 == 0 else '系統'}：{t[:150]}"
+                          for i, t in enumerate(transcript)]
+                result['system_answer'] = "\n".join(_lines)[:900]
 
             # 延遲 (避免 rate limit)
             if delay > 0:
@@ -636,7 +664,51 @@ class AsyncBacktestFramework:
     )
     EVAL_V3_PASS_GRADES = ("GOOD", "ASK_OK")
 
-    def evaluate_answer_v3(self, scenario: Dict, system_response: Dict) -> Dict:
+
+    # ── 多輪品質驗證（2026-07-05）：使用者模擬器 ──────────────────────
+    SIM_FIXTURE_DEFAULT = (
+        "你是業者（role 37305）。查合約/帳單/退租用「租約中」物件：台北大同-重慶北137-503；"
+        "問刊登/建約用「刊登中（尚無合約）」物件：台北中正-汀州140-101；"
+        "電表例：新北新莊-富貴500-14B05。你手上「沒有」任何帳單編號、合約編號或成員 Email。"
+    )
+
+    def _user_simulator_reply(self, question: str, transcript: list) -> Dict:
+        """LLM 扮演使用者續答（多輪回測）。
+
+        規則：系統追問識別→從情境卡給（物件/電表名）；列編號候選→回「1」；
+        被要沒有的資訊（帳單/合約編號）→ 第一次回「我沒有編號，可以用物件名稱查嗎」、
+        再被要→「就是沒有編號」（測降級）；系統已給實質回答→ done。
+        回傳 {"done": bool, "reply": str}；LLM 失敗視為 done（不阻斷）。
+        """
+        fixture = os.getenv("BACKTEST_SIM_FIXTURE", self.SIM_FIXTURE_DEFAULT)
+        convo = "\n".join(f"{'使用者' if i % 2 == 0 else '系統'}：{t}" for i, t in enumerate(transcript))
+        try:
+            client = OpenAI()
+            r = client.chat.completions.create(
+                model=os.getenv("BACKTEST_SIM_MODEL", "gpt-4o-mini"),
+                temperature=0, response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content":
+                        "你扮演正在諮詢租賃管理系統客服的使用者，延續對話。判斷系統最後一句：\n"
+                        "- 系統列出「1. …2. …」的候選清單 → 你只回覆一個字：「1」（不要反問、不要複述清單）。\n"
+                        "- 是追問/要求提供資訊 → 依「你的情境資料」回覆：要物件/電表/房號就給名稱；"
+                        "要你沒有的資訊（帳單編號/合約編號/Email）第一次回"
+                        "「我沒有編號，可以用物件名稱查嗎」，若之前已說過沒有則回「就是沒有編號」。\n"
+                        "- 已是實質回答/操作指引/查無導客服 → action 用 done。\n"
+                        "只輸出 JSON {\"action\":\"reply\"|\"done\",\"text\":\"...\"}"},
+                    {"role": "user", "content":
+                        f"你的情境資料：{fixture}\n你的原始問題：{question}\n對話紀錄：\n{convo}"},
+                ])
+            d = json.loads(r.choices[0].message.content)
+            if d.get("action") == "reply" and (d.get("text") or "").strip():
+                return {"done": False, "reply": d["text"].strip()}
+            return {"done": True, "reply": ""}
+        except Exception as e:
+            print(f"⚠️ [多輪模擬] 失敗視為結束：{e}")
+            return {"done": True, "reply": ""}
+
+    def evaluate_answer_v3(self, scenario: Dict, system_response: Dict,
+                           transcript: list = None) -> Dict:
         """多輪感知評估（2026-07-05 架構修正）。
 
         背景：v2 的 confidence/keyword 打分對「面向先追問識別」的多輪架構
@@ -648,7 +720,15 @@ class AsyncBacktestFramework:
         question = scenario.get('test_question', '')
         answer = (system_response or {}).get('answer', '') or ''
         expected = scenario.get('expected_answer') or ''
-        user_msg = f"問題：{question}\n系統回答：{answer[:500]}"
+        if transcript and len(transcript) > 2:
+            convo = "\n".join(f"{'使用者' if i % 2 == 0 else '系統'}：{t[:220]}"
+                               for i, t in enumerate(transcript))
+            user_msg = (f"這是多輪對話（使用者由模擬器扮演），請評「整段對話最終有沒有解決問題」：\n"
+                        f"{convo}\n"
+                        f"補充規則：最後一輪仍在要求提供資訊＝卡輪→ASK_BAD；"
+                        f"使用者已說沒有編號、系統改用其他方式查或誠實導客服→不算卡輪。")
+        else:
+            user_msg = f"問題：{question}\n系統回答：{answer[:500]}"
         if expected:
             user_msg += f"\n（參考）期望答案要點：{str(expected)[:200]}"
 
