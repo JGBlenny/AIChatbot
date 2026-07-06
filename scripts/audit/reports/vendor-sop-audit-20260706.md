@@ -50,3 +50,15 @@
 - **8+3 分類錨點**：33 筆（11 分類主錨點＋自然問句變體；handler 放行 key 空＋key2=全部 的整分類查詢）。活體：vendor 1（零 SOP）「管理員會代收包裹嗎」NOFOUND→列 6 筆代收明細 ✓。
 - **修正認知**：先前 b2b 回測的「範疇外 NOFOUND」在 b2c 側多有 SOP/知識覆蓋（vendor 2 SOP #1323 管理費 1.0 完勝）——錨點價值在零/薄 SOP 業者（vendor 1/3）與未來擴充分類。
 - 殘留掛帳：管理費類 generic 知識（#3117 等）排名壓過 lookup 錨點——內容不錯但非 per-vendor 實值；擇期評估以 lookup 值增潤或退役。SYNC_FILES +3 檔；稽核/709 unit 全綠。
+
+
+## 分工定案與反轉（2026-07-06 使用者裁決）
+
+**裁決**：通用資料（公司電話/LINE/營業時間等 vendor 級單值）＝`vendor_configs`；案場級與額外資料（管理費/電費/包裹等）＝`lookup_tables`。推翻先前「統一 lookup」方向。
+
+**執行**：搬家 40 筆自 lookup 撤除、migrate migration 撤檔（prod 未跑過，無痕）；resolver 預設回 configs（flag 保留）；知識 1403 客服專線改 configs 模板直答（`{{service_hotline}}`——比 lookup alias 更正確，各 vendor 出自家值）；案場級 33 錨點不動。三路活體驗證通過。
+
+**取捨與已知債**：
+1. lookup 內原生「通用類」殘留（customer_service 的 LINE/服務中心、service_hours 7 筆、payment_methods 8 筆）依新分工屬 configs 範疇，但為業者上傳原生資料且部分比 configs 豐富——重匯時歸位（移 configs 或刪除），service_hours/payment_methods 錨點暫仍讀之（保留豐富覆蓋）。
+2. configs 升格為通用唯一源後，其 2025-11 種子值的真實性核實（原 P0 疑慮）更形關鍵。
+3. vendor 2 污染/vendor 3 demo 值：不變，待重匯。

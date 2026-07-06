@@ -56,11 +56,11 @@ class VendorParameterResolver:
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-            # 參數雙軌收斂（盤查 20260706）：預設讀 lookup_tables（單源，Excel 統一維護），
-            # VENDOR_PARAMS_FROM_LOOKUP=false 秒切回 vendor_configs（過渡保底）。
-            # 只撈參數四分類——不掃 lookup 的物件級資料（管理費/包裹等歸錨點消費）。
+            # 參數分工定案（使用者裁決 2026-07-06）：通用資料（電話/LINE/營業時間等
+            # vendor 級單值）＝vendor_configs；案場級/清單級（管理費/電費/包裹）＝lookup
+            # 由錨點消費。預設讀 configs；VENDOR_PARAMS_FROM_LOOKUP=true 保留切換能力。
             import os as _os
-            if _os.getenv("VENDOR_PARAMS_FROM_LOOKUP", "true").lower() != "false":
+            if _os.getenv("VENDOR_PARAMS_FROM_LOOKUP", "false").lower() == "true":
                 cursor.execute("""
                     SELECT
                         lookup_key   AS param_key,

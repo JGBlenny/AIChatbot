@@ -1,7 +1,5 @@
-"""unit：參數雙軌收斂——resolver 切讀 lookup_tables（盤查 20260706 步驟②）。
-
-契約：VENDOR_PARAMS_FROM_LOOKUP=true（預設）→ 讀 lookup_tables（param 四分類），
-型別/單位/顯示名自 metadata 還原；=false → 回退 vendor_configs（原行為，可秒切回）。
+"""unit：參數來源分工（使用者裁決 2026-07-06）——通用參數預設讀 vendor_configs；
+VENDOR_PARAMS_FROM_LOOKUP=true 才切 lookup（保留切換能力）。案場級資料歸 lookup 錨點。
 """
 import json
 import pytest
@@ -24,7 +22,7 @@ def _resolver_with(rows, monkeypatch, flag="true"):
     return r, cursor
 
 
-def test_lookup_source_reads_lookup_tables(monkeypatch):
+def test_flag_on_reads_lookup_tables(monkeypatch):
     rows = [{"param_key": "late_fee", "param_value": "300",
              "data_type": "number", "unit": "元", "display_name": "逾期手續費",
              "description": None}]
@@ -37,11 +35,11 @@ def test_lookup_source_reads_lookup_tables(monkeypatch):
     assert params["late_fee"]["unit"] == "元"
 
 
-def test_flag_off_falls_back_to_configs(monkeypatch):
+def test_default_reads_vendor_configs(monkeypatch):
     rows = [{"param_key": "late_fee", "param_value": "200",
              "data_type": "number", "unit": "元", "display_name": "逾期手續費",
              "description": None}]
-    r, cursor = _resolver_with(rows, monkeypatch, flag="false")
+    r, cursor = _resolver_with(rows, monkeypatch, flag="unset-默認")
     params = r.get_vendor_parameters(2, use_cache=False)
     assert "vendor_configs" in cursor.execute.call_args[0][0]
     assert params["late_fee"]["value"] == "200"
