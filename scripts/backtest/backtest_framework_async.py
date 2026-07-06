@@ -11,6 +11,7 @@
 """
 
 import os
+import re
 import sys
 import time
 import math
@@ -307,6 +308,7 @@ class AsyncBacktestFramework:
             # 續答、同 session 最多 BACKTEST_MAX_TURNS 輪——驗「收斂後」的最終品質，
             # 不再停在第一輪追問。transcript = [使用者Q, 系統A, 使用者A2, 系統A2, ...]
             first_response = system_response          # 觸發類金標驗首輪
+            _responses = [system_response]            # 各輪回應（供逐輪知識來源聚合）
             transcript = [question, (system_response or {}).get('answer', '') or '']
             if os.getenv("BACKTEST_MULTITURN", "true").lower() == "true":
                 max_turns = int(os.getenv("BACKTEST_MAX_TURNS", "4"))
@@ -322,6 +324,7 @@ class AsyncBacktestFramework:
                     if not follow:
                         break
                     transcript.extend([sim["reply"], (follow.get('answer') or '')])
+                    _responses.append(follow)
                     system_response = follow   # 最終輪為評分對象
 
             # 評估答案：預設 v3 多輪感知六級（BACKTEST_EVAL_V3=false 退回 v2）
@@ -345,9 +348,29 @@ class AsyncBacktestFramework:
                 evaluation_result['passed'] = False
                 evaluation_result['score'] = 0.0
                 evaluation_result['failure_reason'] = f"GOLD_FAIL: {'；'.join(_gold_fails)[:180]}"
+            # 逐輪知識來源：每輪各記一份（turn_sources），結果層 source_ids/count
+            # 改為全輪「聯集」——否則只剩最終輪，前幾輪參與的知識被丟掉
+            _turn_sources, _union, _seen = [], [], set()
+            for _resp in _responses:
+                _ts = []
+                for _s in ((_resp or {}).get('sources') or []):
+                    _sid = _s.get('id')
+                    _ts.append({'id': _sid, 'q': (_s.get('question_summary') or '')[:60]})
+                    if _sid and _sid not in _seen:
+                        _seen.add(_sid)
+                        _union.append(_s)
+                _turn_sources.append(_ts)
+            evaluation_result['turn_sources'] = _turn_sources
+
             result = self._build_result_dict(
                 scenario, system_response, evaluation_result, index
             )
+            if len(_responses) > 1 and _union:
+                result['source_ids'] = ','.join(str(s.get('id')) for s in _union if s.get('id'))
+                result['source_count'] = len(_union)
+                result['knowledge_sources'] = '; '.join(
+                    f"[{s.get('id', 'N/A')}] {(s.get('question_summary') or 'N/A')[:40]}"
+                    for s in _union[:5])
             # 多輪：結果表顯示逐輪紀錄（而非只有最終輪）
             if len(transcript) > 2:
                 _lines = [f"[第{i//2+1}輪]{'使用者' if i % 2 == 0 else '系統'}：{t[:150]}"
@@ -376,7 +399,7 @@ class AsyncBacktestFramework:
             duration = time.time() - start_time
             return {
                 'test_id': index,
-                'scenario_id': scenario.get('id'),
+                'scenario_id': scenario.get('id') or scenario.get('scenario_id'),
                 'test_question': question,
                 'error': 'timeout',
                 'test_duration': duration,
@@ -389,7 +412,7 @@ class AsyncBacktestFramework:
             duration = time.time() - start_time
             return {
                 'test_id': index,
-                'scenario_id': scenario.get('id'),
+                'scenario_id': scenario.get('id') or scenario.get('scenario_id'),
                 'test_question': question,
                 'error': str(e),
                 'test_duration': duration,
@@ -743,7 +766,16 @@ class AsyncBacktestFramework:
                 ])
             d = json.loads(r.choices[0].message.content)
             if d.get("action") == "reply" and (d.get("text") or "").strip():
-                return {"done": False, "reply": d["text"].strip()}
+                reply = d["text"].strip()
+                # 防呆（盤查 run310 逼出）：系統最後一句沒有候選清單卻回純序號＝
+                # 模擬器幻覺——會把首輪已完整回答的對話帶壞（實案：「完整流程」
+                # 首輪知識全文答對，模擬器亂回「1」拖成 NOFOUND）。視為對話結束。
+                last_sys = transcript[-1] if transcript else ""
+                if (re.fullmatch(r"[0-9]+", reply)
+                        and not re.search(r"(?m)^\s*[0-9]+\.\s", last_sys)
+                        and "序號" not in last_sys and "哪一筆" not in last_sys):
+                    return {"done": True, "reply": ""}
+                return {"done": False, "reply": reply}
             return {"done": True, "reply": ""}
         except Exception as e:
             print(f"⚠️ [多輪模擬] 失敗視為結束：{e}")
@@ -768,7 +800,11 @@ class AsyncBacktestFramework:
             user_msg = (f"這是多輪對話（使用者由模擬器扮演），請評「整段對話最終有沒有解決問題」：\n"
                         f"{convo}\n"
                         f"補充規則：最後一輪仍在要求提供資訊＝卡輪→ASK_BAD；"
-                        f"使用者已說沒有編號、系統改用其他方式查或誠實導客服→不算卡輪。")
+                        f"使用者已說沒有編號、系統改用其他方式查或誠實導客服→不算卡輪。"
+                        f"若系統在任何一輪已對原始問題給出完整實質回答，即使後續輪次"
+                        f"使用者回覆離題或無增益，仍按該回答評級（通常 GOOD）——"
+                        f"只有後續輪次輸出了錯誤/矛盾資訊才降級（評審重點是系統品質，"
+                        f"不是模擬器行為）。")
         else:
             user_msg = f"問題：{question}\n系統回答：{answer[:500]}"
         if expected:
@@ -1043,7 +1079,7 @@ class AsyncBacktestFramework:
         # 構建結果
         result = {
             'test_id': index,
-            'scenario_id': scenario.get('id'),
+            'scenario_id': scenario.get('id') or scenario.get('scenario_id'),
             'test_question': question,
             'actual_intent': system_response.get('intent_name', '') if system_response else '',
             'all_intents': system_response.get('all_intents', []) if system_response else [],

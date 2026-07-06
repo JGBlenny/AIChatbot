@@ -219,6 +219,8 @@ services:
       FORM_TRIGGER_THRESHOLD: ${FORM_TRIGGER_THRESHOLD:-0.75}
       # 回測系統配置
       BACKTEST_BASE_URL: ${BACKTEST_BASE_URL:-http://rag-orchestrator:8100}
+      # 多輪模擬器情境卡綁定的測試角色（37305 有租約中/刊登中物件與電表真資料）
+      BACKTEST_ROLE_ID: ${BACKTEST_ROLE_ID:-37305}
       # 圖片辨識配置（2026-04-28）
       ENABLE_IMAGE_RECOGNITION: ${ENABLE_IMAGE_RECOGNITION:-false}
       IMAGE_RECOGNITION_MODEL: ${IMAGE_RECOGNITION_MODEL:-gpt-4o}

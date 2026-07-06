@@ -693,17 +693,26 @@ async def get_iteration_backtest_results(
                     br.tested_at,
                     br.evaluation,
                     br.actual_intent,
-                    br.response_metadata
+                    br.response_metadata,
+                    br.source_ids,
+                    br.knowledge_sources,
+                    ts.request_target_user,
+                    ts.request_mode
                 FROM backtest_results br
+                LEFT JOIN test_scenarios ts ON ts.id = br.scenario_id
                 WHERE br.run_id = $1
                 ORDER BY br.id
                 LIMIT $2 OFFSET $3
             """, run_id, limit, offset)
 
-            # 獲取總數
-            total = await conn.fetchval("""
-                SELECT COUNT(*) FROM backtest_results WHERE run_id = $1
+            # 獲取總數與通過統計（backtest_runs 的 passed_count 迴圈路徑不回填，須即時算）
+            count_row = await conn.fetchrow("""
+                SELECT COUNT(*) AS total,
+                       COUNT(*) FILTER (WHERE passed) AS passed,
+                       COUNT(*) FILTER (WHERE NOT passed) AS failed
+                FROM backtest_results WHERE run_id = $1
             """, run_id)
+            total = count_row["total"]
 
             result_list = []
             for r in results:
@@ -779,6 +788,17 @@ async def get_iteration_backtest_results(
                     "failure_reason": evaluation.get("failure_reason") if isinstance(evaluation, dict) else None,
                     "grade": evaluation.get("grade") if isinstance(evaluation, dict) else None,          # v3 多輪感知評級
                     "grade_reason": evaluation.get("grade_reason") if isinstance(evaluation, dict) else None,
+                    # v3 多輪欄位：輪次/逐字稿/評估版本/金標明細
+                    "turns_used": evaluation.get("turns_used") if isinstance(evaluation, dict) else None,
+                    "transcript": evaluation.get("transcript") if isinstance(evaluation, dict) else None,
+                    "eval_version": evaluation.get("eval_version") if isinstance(evaluation, dict) else None,
+                    "request_target_user": r["request_target_user"],
+                    "request_mode": r["request_mode"],
+                    "source_ids": r["source_ids"],
+                    "knowledge_sources": r["knowledge_sources"],
+                    "turn_sources": evaluation.get("turn_sources") if isinstance(evaluation, dict) else None,
+                    "llm_grade": evaluation.get("llm_grade") if isinstance(evaluation, dict) else None,
+                    "gold_fails": evaluation.get("gold_fails") if isinstance(evaluation, dict) else None,
                     "is_relevant": evaluation.get("is_relevant") if isinstance(evaluation, dict) else None,
                     "relevance_reason": evaluation.get("relevance_reason") if isinstance(evaluation, dict) else None,
                     "debug_info": response_metadata if response_metadata else None  # 處理流程詳情
@@ -797,10 +817,10 @@ async def get_iteration_backtest_results(
                 "summary": {
                     "run_id": run_id,
                     "grade_distribution": grade_distribution,
-                    "total": run_record["total_scenarios"] or 0,
-                    "passed": run_record["passed_count"] or 0,
-                    "failed": run_record["failed_count"] or 0,
-                    "pass_rate": float(run_record["pass_rate"]) if run_record["pass_rate"] else 0.0,
+                    "total": run_record["total_scenarios"] or count_row["total"] or 0,
+                    "passed": count_row["passed"] or 0,
+                    "failed": count_row["failed"] or 0,
+                    "pass_rate": (count_row["passed"] / count_row["total"]) if count_row["total"] else 0.0,
                     "avg_score": 0.0  # 暫時設為 0，後續可從結果計算
                 }
             }

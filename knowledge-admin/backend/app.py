@@ -1387,7 +1387,13 @@ async def get_backtest_run_results(
                 evaluation->>'failure_reason' as failure_reason,
                 evaluation->>'grade' as grade,
                 evaluation->>'grade_reason' as grade_reason,
-                evaluation->>'eval_version' as eval_version
+                evaluation->>'eval_version' as eval_version,
+                evaluation->>'turns_used' as turns_used,
+                evaluation->'transcript' as transcript,
+                evaluation->>'llm_grade' as llm_grade,
+                evaluation->'gold_fails' as gold_fails,
+                evaluation->'turn_sources' as turn_sources,
+                (SELECT ts.request_target_user FROM test_scenarios ts WHERE ts.id = backtest_results.scenario_id) as request_target_user
             FROM backtest_results
             WHERE run_id = %s
         """
@@ -1442,6 +1448,19 @@ async def get_backtest_run_results(
                     result['result_count'] = int(result['result_count'])
                 except (ValueError, TypeError):
                     result['result_count'] = None
+
+            # v3 多輪欄位：turns_used 轉整數；transcript/gold_fails 是 jsonb 子值（psycopg2 已解成 list）
+            if result.get('turns_used') is not None and result['turns_used'] != '':
+                try:
+                    result['turns_used'] = int(result['turns_used'])
+                except (ValueError, TypeError):
+                    result['turns_used'] = None
+            for _jf in ('transcript', 'gold_fails', 'turn_sources'):
+                if isinstance(result.get(_jf), str):
+                    try:
+                        result[_jf] = json.loads(result[_jf])
+                    except (ValueError, TypeError):
+                        result[_jf] = None
 
             results.append(result)
 

@@ -5,12 +5,24 @@
 """
 
 import asyncio
+import json
 import os
 import sys
 import datetime
 from typing import Dict, List, Optional
 import psycopg2.pool
 import psycopg2.extras
+
+
+def _as_dict(value):
+    """framework 的 evaluation 是 json.dumps 過的字串（直跑 runner 直插 jsonb 用）；
+    這裡再包 psycopg2 Json 會變雙重編碼、->>'grade' 全讀不到——先正規化成 dict。"""
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except (ValueError, TypeError):
+            return {"raw": value}
+    return value or {}
 
 
 # 動態導入回測框架
@@ -444,8 +456,8 @@ class BacktestFrameworkClient:
                         result.get('accuracy'),
                         result.get('intent_match'),
                         result.get('quality_overall'),
-                        psycopg2.extras.Json(result.get('evaluation', {})),
-                        psycopg2.extras.Json(result.get('response_metadata', {}))
+                        psycopg2.extras.Json(_as_dict(result.get('evaluation', {}))),
+                        psycopg2.extras.Json(_as_dict(result.get('response_metadata', {})))
                     ))
 
                 # 批次插入
