@@ -20,7 +20,7 @@ import urllib.request
 _args = [a for a in sys.argv[1:] if not a.startswith("--")]
 BATCH = _args[0] if _args else os.path.join(
     os.path.dirname(__file__), "..", "..",
-    ".kiro", "specs", "contract-conversational-facets", "knowledge-batch.json")
+    "scripts", "knowledge-batches", "contract-knowledge-batch.json")
 EMB_URL = os.getenv("EMBEDDING_API_URL", "http://localhost:5001/api/v1/embeddings")
 DRY = "--dry-run" in sys.argv
 

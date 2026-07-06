@@ -112,16 +112,16 @@ export EMBEDDING_API_URL=http://localhost:5001/api/v1/embeddings
 
 ```bash
 # 先 dry-run 看清單，再真跑
-python3 rag-orchestrator/tools/import_facet_knowledge.py .kiro/specs/contract-conversational-facets/knowledge-batch.json --dry-run
-python3 rag-orchestrator/tools/import_facet_knowledge.py .kiro/specs/contract-conversational-facets/knowledge-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py .kiro/specs/contract-conversational-facets/knowledge-batch-2.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py .kiro/specs/billing-conversational-facets/billing-knowledge-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py .kiro/specs/account-conversational-facets/account-knowledge-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py .kiro/specs/account-conversational-facets/account-anchors-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py .kiro/specs/iot-conversational-facets/iot-knowledge-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py .kiro/specs/iot-conversational-facets/iot-anchors-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py .kiro/specs/estate-conversational-facets/estate-knowledge-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py .kiro/specs/sop-audience-isolation/b2b-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/contract-knowledge-batch.json --dry-run
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/contract-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/contract-knowledge-batch-2.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/billing-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/account-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/account-anchors-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/iot-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/iot-anchors-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/estate-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/b2b-knowledge-batch.json
 ```
 
 （IoT 批次無後置步驟：雙角色單發維持 system_provider 業態——b2b 檢索為嚴格業態過濾、NULL 會隱形；先例 3435/3458 同慣例。）
@@ -132,7 +132,7 @@ python3 rag-orchestrator/tools/import_facet_knowledge.py .kiro/specs/sop-audienc
 
 ```bash
 # 3388 untag／3402、3530 question 重嵌（需 EMBEDDING_API_URL 與 DB 環境變數）
-python3 .kiro/specs/contract-conversational-facets/tune_routing.py
+python3 scripts/knowledge-batches/tune_routing.py
 ```
 
 ## 4. 重建服務（reranker 必重建——2026-06-21 教訓）
