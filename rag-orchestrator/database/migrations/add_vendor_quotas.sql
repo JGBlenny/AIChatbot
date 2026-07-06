@@ -15,3 +15,6 @@ DO $$
 BEGIN
     RAISE NOTICE '✅ vendor_quotas 就緒（opt-in：未設定團隊不受限）';
 END $$;
+
+-- 2026-07-06 改判：警示不進對話改寄信——每月首次跨閾值寄一次的防重標記
+ALTER TABLE vendor_quotas ADD COLUMN IF NOT EXISTS last_warned_month DATE;

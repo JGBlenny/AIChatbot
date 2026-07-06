@@ -130,3 +130,29 @@ def test_append_hint_skipped_for_non_pm(ut):
 def test_append_hint_non_json_safe():
     assert um.append_quota_hint(b"not-json", "property_manager",
                                 um.QuotaState("warn", 1, 5000, 1)) is None   # 改寫失敗回 None 走原回應
+
+
+# ── 2026-07-06 改判：警示不進對話改寄信（每月首次跨閾值一次）──
+async def test_warn_email_claim_once_per_month():
+    """UPDATE 標記當裁判：首次 claim 成功觸發寄信路徑，同月第二次不寄。"""
+    sent = []
+    conn = MagicMock()
+    conn.execute = AsyncMock(side_effect=["UPDATE 1", "UPDATE 0"])
+    conn.fetchrow = AsyncMock(return_value={"name": "測試業者", "contact_email": None})
+    acq = MagicMock(); acq.__aenter__ = AsyncMock(return_value=conn); acq.__aexit__ = AsyncMock(return_value=False)
+    pool = MagicMock(); pool.acquire = MagicMock(return_value=acq)
+    import services.usage_metering as m
+    orig = m._smtp_configured
+    m._smtp_configured = lambda: False          # SMTP 未設 → 走 log 分支（不炸）
+    try:
+        await um._maybe_send_warn_email(pool, 2, um.QuotaState("warn", 4100, 5000, 82))
+        await um._maybe_send_warn_email(pool, 2, um.QuotaState("warn", 4200, 5000, 84))
+        assert conn.fetchrow.await_count == 1   # 第二次 claim 失敗提前返回，不再查 vendor
+    finally:
+        m._smtp_configured = orig
+
+
+async def test_warn_email_failure_never_raises():
+    pool = MagicMock()
+    pool.acquire = MagicMock(side_effect=RuntimeError("db down"))
+    await um._maybe_send_warn_email(pool, 2, um.QuotaState("warn", 1, 5, 20))  # 不得拋

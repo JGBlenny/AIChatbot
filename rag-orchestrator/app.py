@@ -214,8 +214,10 @@ async def usage_metering_middleware(request: Request, call_next):
         if "text/event-stream" not in _ctype:      # 串流由 generator finally 收尾
             _um.finalize("success" if response.status_code < 500 else "error",
                          response.status_code, db_pool=_pool)
-            # quota 警示（R3.1–3.3）：warn 且 pm 非串流 → answer 尾端附額度提示
-            if (_quota is not None and _quota.state == "warn"
+            # quota 警示：2026-07-06 改判——警示不進對話（改寄信），
+            # env QUOTA_WARN_IN_CHAT=true 可重新啟用對話內提示
+            if (os.getenv("QUOTA_WARN_IN_CHAT", "false").lower() == "true"
+                    and _quota is not None and _quota.state == "warn"
                     and "application/json" in _ctype and response.status_code == 200):
                 _ctx_obj = _um._ctx.get()
                 _ut = _ctx_obj.user_type if _ctx_obj else "unknown"

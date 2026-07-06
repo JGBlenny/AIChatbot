@@ -318,6 +318,9 @@ async def quota_check(db_pool, vendor_id: Optional[int], is_internal: bool) -> "
         else:
             qs = _quota_state_from(row, used)
         _quota_cache[vendor_id] = (qs, row, now)
+        if qs.state in ("warn", "blocked"):
+            # 跨越閾值首次通知（月防重標記在 DB，fire-and-forget）
+            asyncio.create_task(_maybe_send_warn_email(db_pool, vendor_id, qs))
         return qs
     except Exception as e:
         logger.warning(f"[quota] 檢查失敗 fail-open：{e}")
@@ -360,3 +363,68 @@ def append_quota_hint(body_bytes: bytes, user_type: str, qs: "QuotaState") -> Op
         return json.dumps(d, ensure_ascii=False).encode()
     except Exception:
         return None
+
+
+# ── 警示寄信（2026-07-06 使用者改判：警示不進對話、改 email）──────────────
+# 每 vendor 每月首次跨越警示閾值寄一次（DB 標記 last_warned_month 防重，
+# UPDATE 當裁判防多 worker 重複寄）。SMTP 未設定 → 記 log 不寄（等 prod 參數）。
+# env：QUOTA_SMTP_HOST/PORT/USER/PASS/FROM、QUOTA_WARN_EMAIL_TO（JGB 營運收件，逗號分隔）
+
+def _smtp_configured() -> bool:
+    return bool(os.getenv("QUOTA_SMTP_HOST"))
+
+
+def _send_warn_email_sync(vendor_id: int, vendor_name: str, contact_email: str,
+                          qs: "QuotaState") -> None:
+    import smtplib
+    from email.mime.text import MIMEText
+    host = os.getenv("QUOTA_SMTP_HOST")
+    port = int(os.getenv("QUOTA_SMTP_PORT", "587"))
+    user = os.getenv("QUOTA_SMTP_USER", "")
+    pwd = os.getenv("QUOTA_SMTP_PASS", "")
+    sender = os.getenv("QUOTA_SMTP_FROM", user or "noreply@jgbsmart.com")
+    to = [e.strip() for e in os.getenv("QUOTA_WARN_EMAIL_TO", "").split(",") if e.strip()]
+    if contact_email:
+        to.append(contact_email)
+    if not to:
+        logger.warning(f"[quota] vendor {vendor_id} 警示無收件人（未設 QUOTA_WARN_EMAIL_TO 且無 contact_email）")
+        return
+    body = (f"{vendor_name or f'Vendor {vendor_id}'} 的 AI 客服本月額度已使用 "
+            f"{qs.pct}%（{qs.used:,}/{qs.quota:,} 則）。\n\n"
+            f"達到 100% 後智慧回覆將暫停並提示加值。如需調整額度，"
+            f"請至後台「使用量統計 → 額度管理」，或聯繫金箍棒客服。")
+    msg = MIMEText(body, "plain", "utf-8")
+    msg["Subject"] = f"【JGB AI 客服】額度警示：{vendor_name or vendor_id} 已使用 {qs.pct}%"
+    msg["From"] = sender
+    msg["To"] = ", ".join(to)
+    with smtplib.SMTP(host, port, timeout=15) as s:
+        s.starttls()
+        if user:
+            s.login(user, pwd)
+        s.sendmail(sender, to, msg.as_string())
+
+
+async def _maybe_send_warn_email(db_pool, vendor_id: int, qs: "QuotaState") -> None:
+    """跨越警示閾值的首次通知：UPDATE 標記當裁判（本月已寄過→0 列→不寄）。"""
+    try:
+        async with db_pool.acquire() as conn:
+            claimed = await conn.execute(
+                "UPDATE vendor_quotas SET last_warned_month = $2 "
+                "WHERE vendor_id = $1 AND is_active "
+                "  AND (last_warned_month IS NULL OR last_warned_month < $2)",
+                vendor_id, _month_start_tpe())
+            if not str(claimed).endswith("1"):
+                return                                    # 本月已通知過
+            row = await conn.fetchrow(
+                "SELECT name, contact_email FROM vendors WHERE id = $1", vendor_id)
+        if not _smtp_configured():
+            logger.warning(f"[quota] vendor {vendor_id} 達警示閾值 {qs.pct}%"
+                           f"（SMTP 未設定，僅記 log——prod 設 QUOTA_SMTP_* 後自動寄信）")
+            return
+        await asyncio.to_thread(
+            _send_warn_email_sync, vendor_id,
+            (row or {}).get("name") if row else None,
+            (row or {}).get("contact_email") if row else None, qs)
+        logger.info(f"[quota] vendor {vendor_id} 警示信已寄出（{qs.pct}%）")
+    except Exception as e:                                 # 通知失敗不影響任何請求
+        logger.warning(f"[quota] 警示通知失敗（不影響服務）：{e}")
