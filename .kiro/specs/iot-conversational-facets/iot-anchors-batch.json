@@ -1,0 +1,15 @@
+{
+  "_meta": {
+    "spec": "iot-conversational-facets 任務 3.4",
+    "produced_at": "2026-07-04",
+    "note": "進場錨點：現行痛點口語（未給電/離線/度數/串接/單價）；pm-only；語彙分工避「入帳/金流」（帳務）與「簽」（合約）"
+  },
+  "updates": [],
+  "knowledge": [],
+  "anchors": [
+    {"facet": "電表排障", "question": "租客說房間沒電 電表沒供電", "keywords": ["沒電", "未給電"]},
+    {"facet": "電表排障", "question": "電表一直離線 度數不動", "keywords": ["離線", "度數"]},
+    {"facet": "IoT設定引導", "question": "電表要怎麼串接進系統", "keywords": ["串接", "設定"]},
+    {"facet": "IoT設定引導", "question": "儲值單價要在哪裡設定", "keywords": ["單價", "儲值設定"]}
+  ]
+}

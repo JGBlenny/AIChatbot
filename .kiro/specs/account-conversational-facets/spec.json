@@ -1,0 +1,27 @@
+{
+  "feature_name": "account-conversational-facets",
+  "created_at": "2026-07-03T08:04:49Z",
+  "updated_at": "2026-07-03T09:15:00Z",
+  "phase": "tasks-generated",
+  "language": "zh-TW",
+  "project_description": "在 contract/billing-conversational-facets 定型的面向化路徑（母子分類＋資料四件套＋FACE_BUILDERS 領域檔＋face 貫穿，擴領域零改引擎）之上，擴充「註冊登入/帳號」領域的對話面向。素材證據：客服 A.回饋 2.0 分類欄「註冊登入」33 筆（大宗為「驗證」項目：驗證碼連續失敗因新舊碼對不上、收不到合約簡訊改走 mail 註冊、網路金鑰無效、註冊頁錯誤多業者同報）；C-4 QA list 註冊登入 2 筆、B.異動單「手機信箱變更」4 筆；既有知識「帳號管理」10 筆（3435-3440 註冊/忘記密碼/Email變更/角色切換/團隊成員/簽約身份、3544-3547 團隊成員權限系列）。候選子面向拆兩類（使用者指示定調；需求階段以頻率定案細分）——【外部類：還進不了系統的人，問題多由業者代問租客】1. 註冊/驗證排障（多輪：租客註冊卡住→分管道簡訊/mail→驗證碼新舊碼機制→分支解法或導客服後台查碼）；2. 登入排障（LINE 快速登入跳註冊、忘記密碼、同名帳號大小寫混淆登錯帳號致看不到電表/資料）；附屬：租客快速入門教學（單發或輕引導）。【內部類：已登入使用者的帳號後台管理，業者自身操作】3. 綁定與帳號資料異動（手機已被綁定→解綁屬 JGB 後台作業、出口為資料異動申請書（沿合約域申請書骨架先例）；換綁信箱手機；姓名與證件不同→帳號基本資訊自行修改，藍字連動說明）；4. 團隊成員與權限（成員加入後看不到社區/無法新增、只能查看不能編輯、一帳號多團隊切換——既有 3439/3544-3547 為 grounding 素材，可能走 select=category 輕引導）；附屬：角色切換教學。兩類的系統脈絡、persona、target_user 配置獨立設計（外部類偏代問模式＋b2c 面、內部類純 b2b）；架構上是「一母分類雙群」或「兩個母分類」由需求/設計階段以三層脈絡疊加的內聚性定案。grounding 現況：jgb2 對外 API 無帳號/會員/團隊權限端點（現有 registry 僅 contracts/bills/repairs/estates/tenant_summary 等），G 清單待 research 盤 jgb2 真碼定案（候選：以 phone/email 查註冊與綁定狀態、驗證碼最新狀態、團隊成員權限；存在性驅動，兩端獨立部署）；jgb_contracts 的 to_user_login_email（G2 已上線）可部分 ground「租客帳號與邀請錯配」。邊界：簽約頁身分證上傳/藍字欄位問題屬合約域簽署排障（共用出口不重複開面向）；系統故障類（B.Bug：註冊頁全面錯誤、金鑰無效）識別後導客服不對話化（沿金流工程事故原則）；解綁/改綁等後台作業 AI 不代辦，收斂到申請書出口。原則沿用：先盤 jgb2 ground truth（驗證碼機制/綁定唯一性/團隊權限模型以程式證據為準）、機械解碼由 formatter 決定性算、LLM 只轉述 facts、知識產製理解情境不搬運、進對話 vs 單發準則（模糊起手掛面向、具體操作單發）、persona_role 用面向專屬鍵（pm_account_*）防規則互蓋、進場路由回歸測試（test_facet_entry_routing_req.py 模式）擴帳號案例納入驗收；target_user 注意租客端問題多由業者代問（同帳務模式），既有 3435-3438 已標 property_manager+tenant 雙角色，b2c 面配置留需求階段定。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": false
+    }
+  },
+  "implementation": {
+    "started": false,
+    "completed": false,
+    "tasks_completed": []
+  }
+}

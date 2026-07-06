@@ -1,0 +1,27 @@
+{
+  "feature_name": "estate-conversational-facets",
+  "created_at": "2026-07-04T18:30:00+08:00",
+  "updated_at": "2026-07-04T20:20:00+08:00",
+  "phase": "tasks-generated",
+  "language": "zh-TW",
+  "project_description": "在 contract/billing/account/iot-conversational-facets 定型的面向化路徑（母子分類＋資料四件套＋領域檔 builder＋face 貫穿＋secondary_calls，擴領域零改引擎）之上，擴充「物件管理」領域的對話面向。定位：物件是 B 端業者的基本盤功能（建物件→編輯→刊登→招租），為四域外客服案量最大的成塊領域。素材證據：客服 C-4 QA list 物件 15 案（批次上傳表格怎麼填/上傳失敗、編輯物件資料未儲存、修改物件圖片、修改洽談中的物件、VR）＋C-2 付費客戶 4 案（VR、報表匯出、物件變更、物件建立）；JGB 幫助中心未抓 13 篇物件/刊登類文章（如何新增物件、一分鐘上手新建物件、房東教學03物件篇、「編輯物件」vs「刊登物件」差異、物件狀態影響什麼功能、非刊登中物件廣告頁連結可見性、招租店舖／房東對外首頁、對外顯示地址、物件批次新增表格、進階搜尋、點交點退押金狀態快找、設定經理人）——本 spec 素材工序需先補抓這批。⚠️ 素材年代大宗為 2021 舊工單，research 第一步必須以 jgb2 現碼過濾已被改版解決者（IoT 先例：預期可轉知識約剩半）。既有底子：知識庫現有 categories 無物件類成塊知識（建約引導 11 筆屬合約域）；jgb2 對外 API 是否有 estates/物件端點未盤——診斷型需求可能低（案型多 how-to），本領域可能以 select=category 輕引導為主、G 趨近零或僅輕 ground，research 盤查後定案。候選子面向（需求階段以案型定案）：1. 物件建立與刊登引導（新增/批次上傳表格/編輯 vs 刊登差異/物件狀態機與各狀態可用功能/對外顯示地址）；2. 招租店舖與對外曝光（房東對外首頁、廣告頁連結可見性、如何進入招租店舖——可能併入面向 1 成單面向）；3. 物件變更排障（編輯不能儲存/洽談中物件的修改限制——若現碼盤查後仍成立才開，否則轉單發知識）。邊界：物件綁電表屬 IoT 域（已解，scope=switch 共用出口）；物件的合約/點交/押金屬合約域；報表匯出屬全域功能非物件專屬（識別後單發知識或導客服）；VR/istaging 範圍外（IoT 先例剔除）；經理人/團隊成員權限屬帳號域團隊權限（已解）。原則沿用：先盤 jgb2 ground truth（物件狀態機/編輯與刊登的欄位鎖定條件/洽談中限制/批次上傳格式驗證以真碼 file:line 為準，客服口徑錯誤處修正）、機械判定用程式非 LLM、G 清單存在性驅動、persona_role 面向專屬鍵（pm_estate_*）防互蓋、進場路由回歸擴物件案例＋與合約（建約/點交）、IoT（綁電表）、帳號（經理人）錨點互不誤吸雙向驗證（「物件」一詞在合約域 title 搜尋鍵高頻出現為已知風險點）、知識產製理解情境不搬運（幫助中心文章為 UI 路徑權威、與現碼衝突時以真碼為準——IoT 效期 3 天 vs 4 天先例）、個資遮罩沿既有協定、業態 business_types 慣例 system_provider。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": false
+    }
+  },
+  "implementation": {
+    "started": false,
+    "completed": false,
+    "tasks_completed": []
+  }
+}

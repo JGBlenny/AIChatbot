@@ -1,0 +1,27 @@
+{
+  "feature_name": "sop-audience-isolation",
+  "created_at": "2026-07-04T23:30:00+08:00",
+  "updated_at": "2026-07-05T01:00:00+08:00",
+  "phase": "withdrawn",
+  "language": "zh-TW",
+  "project_description": "補上 SOP 檢索的受眾隔離：vendor_sop_items 無 target_user 欄位，SOP 檢索完全無角色過濾，租客向 SOP（「您的管理師」口吻）會攔截業者問句給出受眾錯位的回答。實彈證據：五域大抽驗（2026-07-04）20 題中 4 題中招——業者問「租客能用信用卡繳房租嗎」「押金要退多少會自動算嗎」「電費包租金還是另外收怎麼設定」「租客要開統編發票怎麼弄」全部被租客向 SOP（id 1256/1193/1285/1268）接走，以對租客的口吻回答業者；更早 IoT e2e「房間沒電」被修繕 SOP 1166 攔截為第一案（使用者裁定受眾錯位 2026-07-04 立案）。資料現況（實測）：全庫 vendor_sop_items 407 筆、3 個 vendor（vendor 2 佔 328），其中 370 筆（91%）帶租客向口吻特徵（管理師/房東稱謂）——符合 SOP 本質為「租客問業者」的標準回覆。四件事：1. schema——vendor_sop_items 加 target_user text[] 欄（migration，冪等）；2. 資料回填——策略「預設全標 tenant、白名單挑出通用/業者向少數（~37 筆口吻無特徵者逐筆人工審）」，經人工閘門後回填；3. 檢索邏輯——SOP retriever 與 chat.py 的 SOP vs 知識比分之前按請求 target_user 過濾（property_manager 請求不吃 tenant-only SOP、租客請求照舊；NULL 視為通用，過渡期不破壞既有行為）；4. 業者向補位知識——業者問句被過濾後需知識層接住否則從錯位變查無：清單起點即 4 實彈（業者收款方式支援範圍、退租結算業者側口徑、電費收法設定、代開統編發票流程——後兩題需先盤 jgb2 真相：金流支援的支付方式、電費計收模式設定位置、發票統編開立鏈），沿知識工程慣例（理解情境/短關鍵字 question/人工閘門/business_types=system_provider）。回歸三組：4 實彈業者問句不得再回租客 SOP＋租客問句零回歸（抽樣租客向 SOP 命中案）＋「房間沒電」案改判（過濾後電表錨點應接手或誠實 fallback）。邊界：不動 SOP 管理後台 UI（僅資料與檢索）；不重寫 SOP 內容（口吻改寫另案）；五域面向/售前/form_fill 零回歸；platform_sop_templates 體系若同構缺口記入 gap 分析定案。原則沿用：TDD 先紅後綠、機械判定用程式、人工閘門、一次性腳本不 commit、部署併統一 runbook。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": false
+    },
+    "tasks": {
+      "generated": false,
+      "approved": false
+    }
+  },
+  "implementation": {
+    "started": false,
+    "completed": false,
+    "tasks_completed": []
+  }
+}

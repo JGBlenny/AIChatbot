@@ -1,0 +1,29 @@
+{
+  "feature_name": "domain-conversational-facets",
+  "created_at": "2026-07-01T08:00:00Z",
+  "updated_at": "2026-07-01T11:00:00Z",
+  "phase": "tasks-generated",
+  "language": "zh-TW",
+  "project_description": "領域化對話面向（domain-conversational-facets）：把「對話式回答/診斷」的面向從「全域共用一份系統脈絡 + 各自臨時檢索」升級為「以母分類（category_config parent/child）組織的領域」，每個領域（售前、合約、帳單、修繕…）自帶四件套：①系統脈絡（該領域的基底架構知識，固定注入 system_md）②對話規則（persona）③一般知識（領域 FAQ）④（診斷型）API 設定。核心變更：(1) get_system_context 由全域單例改為 per-領域載入（鍵：target_user，比照既有 load_rules 機制；或母分類）——解決「合約診斷硬吃到售前系統脈絡」；(2) 併入 R4.1「混合 grounding」：診斷型收斂時 grounding = 領域基底架構知識（固定注入 or _grounding_by_category 撈）+ API 即時資料，使 LLM 有領域框架可『判斷』而非只複述 API 資料（例：合約 bit_status=7『租客已簽名』→ 依 12 階段架構推斷下一步是房東簽名→點交）；(3) 母分類組織：診斷 config 的 topic_scope.category 已宣告領域，據此路由/載入對應系統脈絡與知識。動機來自真 jgb2 API 驗證發現的三個缺口：合約診斷只 grounding 於 API（無領域知識）、系統脈絡全域共用（售前導向）、候選同名不可辨識。首案＝合約：其基底架構知識已從真實 jgb2 程式（app/Contract.php 狀態常數/生命週期、External/ContractApiController status-overview、違約金/滯納金規則）盤查整理。零改通用：新領域＝加母分類 + 四件套資料，不改引擎程式。R4.1 從「API 或 知識」修訂為「API ＋ 領域知識（混合）」。範圍不含：既有派發器/檢索 pipeline/表單機制；售前既有行為保持不變（僅系統脈絡改為可分領域，售前續用其原有那份）。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "implementation": {
+    "started": true,
+    "completed": false,
+    "tasks_completed": ["0.1", "1.1", "1.2", "1.3", "2.1", "2.2", "2.4", "3.1", "3.2", "3.3", "4.1", "4.2", "4.3", "5.1", "5.2", "5.3"],
+    "tasks_skipped": ["2.3"],
+    "notes": "2.3 不實作（spike 0.1 判走選項 A）。5.3 e2e 已交付並 env-gated，離線全綠；真環境實跑待部署（套三種子＋清快取＋jgb2 API env / RUN_E2E=1）。completed=false 直到 e2e 對真 API 實跑通過。"
+  }
+}

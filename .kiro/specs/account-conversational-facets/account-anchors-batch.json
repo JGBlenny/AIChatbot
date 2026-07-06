@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "spec": "account-conversational-facets 任務 3.4",
+    "produced_at": "2026-07-03",
+    "note": "進場錨點：口語起手句（33 案措辭取材）；pm-only（b2c 防護）；避開「簽」「帳單」他域強詞"
+  },
+  "updates": [],
+  "knowledge": [],
+  "anchors": [
+    {"facet": "註冊驗證排障", "question": "租客一直沒辦法註冊 卡住了", "keywords": ["無法註冊", "註冊失敗"]},
+    {"facet": "註冊驗證排障", "question": "租客收不到驗證簡訊 驗證一直過不了", "keywords": ["收不到驗證", "驗證失敗"]},
+    {"facet": "登入排障", "question": "租客說他登不進去系統", "keywords": ["登不進去", "無法登入"]},
+    {"facet": "登入排障", "question": "租客登入後什麼都看不到 畫面空空的", "keywords": ["登入後看不到", "空白"]},
+    {"facet": "帳號綁定異動", "question": "手機被綁定過了 要解綁換綁", "keywords": ["解綁", "換綁"]},
+    {"facet": "帳號綁定異動", "question": "會員帳號資料要修改 信箱手機要換", "keywords": ["帳號修改", "換信箱"]},
+    {"facet": "團隊成員權限", "question": "加了團隊成員 他什麼都看不到", "keywords": ["成員看不到", "沒權限"]},
+    {"facet": "團隊成員權限", "question": "成員權限怎麼開 只能看不能改", "keywords": ["權限設定", "不能編輯"]}
+  ]
+}
