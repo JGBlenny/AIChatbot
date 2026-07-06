@@ -1,0 +1,80 @@
+# jgb2 租客端 AI 客服串接規格（b2c）
+
+> 版本：v1（2026-07-06）　對象：jgb2 工程團隊
+> 參照現役實作：業者後台 HelpSystem `useChat.ts`（b2b）——租客端為同一 API 的 b2c 形狀。
+> 我方（AI 系統側）**已就緒**，本文件即租客端 widget 需要遵守的請求契約。
+
+## 1. 端點
+
+```
+POST https://chatai.jgbsmart.com/rag-api/v1/message
+Content-Type: application/json
+X-API-Key: <發放之金鑰>          # 認證啟用（RAG_API_AUTH_ENFORCE）後必帶
+```
+
+非串流（與 b2b 現行相同：fetch＋response.json()）。回應時間一般 3–15 秒，建議 timeout 90s＋loading 態。
+
+## 2. 請求格式（租客身分四件套）
+
+```json
+{
+  "message": "使用者輸入的問題（1–2000 字）",
+  "mode": "b2c",
+  "target_user": "tenant",
+  "vendor_id": 2,
+  "user_id": "<租客的 JGB user id>",
+  "role_id": "<該租客所屬業者的 role id>",
+  "session_id": "<對話識別，見 §4>"
+}
+```
+
+| 欄位 | 必要性 | 語義與後果 |
+|---|---|---|
+| `mode: "b2c"` | **必填** | 決定回答資源池：租客走 SOP＋租客知識；帶錯成 b2b 會走業者知識庫（受眾錯位） |
+| `target_user: "tenant"` | **必填** | 知識受眾過濾；漏帶時系統以 b2c 推導為 tenant，但請明帶（統計正確性） |
+| `vendor_id` | **必填** | ①該租客所屬管理公司——決定吃哪家的 SOP/參數/案場資料（跨業者嚴格隔離）②使用量計量與**額度**歸屬（額度用盡時本 vendor 的請求會收到服務暫停回應） |
+| `user_id` | **必填** | ①個人資料查詢（我的帳單/合約/電表）的身分之一 ②per-user 使用統計 |
+| `role_id` | **必填** | 個人資料查詢為**雙證制**（`role_id`＋`user_id` 缺一即降級為「無法查個人資料」，一般問答不受影響）。值＝該租客所屬業者在 JGB 的 role id（與 b2b 端同一值域） |
+| `session_id` | **必填** | 同一場對話沿用同值（多輪對話、對話數統計、額度語義都依賴它） |
+
+## 3. 回應格式（讀法與 b2b 相同）
+
+```json
+{
+  "answer": "回答內容（Markdown）",
+  "action_type": "direct_answer | form_fill | api_call | conversational | quota_blocked",
+  "quick_replies": ["..."],      // 選配：候選選項（多輪識別時常見，建議渲染為可點按鈕）
+  "session_id": "...",
+  "source_count": 3
+}
+```
+
+- **只需渲染 `answer`**（＋選配 `quick_replies`）即可運作；其餘欄位可忽略。
+- **多輪**：系統可能反問（「請問是哪一個物件？」「1. …2. …請回覆序號」）——widget 不需特殊處理，使用者直接回下一句（同 session_id）即可。
+- **`action_type: "quota_blocked"`**：該業者本月 AI 額度用盡，`answer` 為中性服務暫停文案（不含商業字眼）——照常渲染即可，HTTP 仍為 200。
+
+## 4. session_id 規則
+
+- 格式自由，建議 `tenant_{userId}_{隨機}`；**不得**以下列前綴開頭（系統內部流量標記，會被計量排除）：`backtest_`、`loop_`、`smoke_`、`verify_`、`probe_`、`demo_`、`dev_`、`fp_`、`reg_`。
+- 同一場對話（使用者未關閉視窗）沿用同值；新開對話換新值。
+
+## 5. 身分與安全紅線（我方已內建，列出供知悉）
+
+- 個資 API 雙證：缺 `role_id` 或 `user_id` 時個人資料查詢誠實降級，不會撈到別人資料。
+- 跨業者隔離：SOP/參數/案場資料嚴格按 `vendor_id` 隔離（已實測）。
+- 地址個資：物件相關回答只出顯示用地址，完整地址/經緯度不出口。
+- 請求原文不落庫（計量僅記長度）。
+
+## 6. 上線前置（非 jgb2 工程，供排程參考）
+
+各業者資料就緒直接決定其租客的回答品質：①SOP 建置（vendor 1 目前為零）②通用參數真值核實（vendor 3 目前為佔位假值）③lookup 案場資料核實（vendor 2 客服類待重匯）。建議每業者過就緒清單後再對其租客開放入口。
+
+## 7. 驗收案例（串接完成後煙囪）
+
+| 問句 | 預期 |
+|---|---|
+| 「你們客服電話幾號」 | 出**該業者**的專線（configs 值） |
+| 「管理費包含什麼項目」 | 列該業者案場明細（lookup）或該業者 SOP |
+| 「我這期帳單繳了沒」 | 進入識別/查詢流程（雙證齊才查得到） |
+| 換一個 vendor_id 問同樣問題 | 資料完全不同（隔離驗證） |
+| 額度測試（該 vendor 設低額度） | `quota_blocked`＋中性文案 |

@@ -69,7 +69,7 @@ def test_normal_traffic_not_internal():
     (dict(target_user="property_manager"), "property_manager"),
     (dict(target_user=None, mode="b2b", role_id=None), "prospect"),          # b2b 無 role
     (dict(target_user=None, mode="b2b", role_id="37305"), "unknown"),
-    (dict(target_user=None, mode="b2c", role_id=None), "unknown"),
+    (dict(target_user=None, mode="b2c", role_id=None), "tenant"),   # 與 chat 路由推導一致（租客端漏帶防呆）
     (dict(target_user=None, mode="b2b", role_id=None,
           session_id="backtest_x"), "internal"),                             # 內部且無形狀
 ])

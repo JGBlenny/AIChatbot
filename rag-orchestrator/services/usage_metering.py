@@ -115,6 +115,8 @@ def begin(fields: Dict[str, Any]) -> None:
         user_type = tu
     elif fields.get("mode") == "b2b" and not fields.get("role_id") and not is_internal:
         user_type = "prospect"                       # 生產推導慣例：b2b＋無 role_id
+    elif fields.get("mode") == "b2c" and not is_internal:
+        user_type = "tenant"                         # b2c 漏帶 target_user → 與 chat 路由推導一致
     elif is_internal:
         user_type = "internal"                       # 內部且無形狀
     else:
