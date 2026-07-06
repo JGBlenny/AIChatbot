@@ -2,9 +2,18 @@
 
 > 本文檔提供任務導向的快速查找。技術演進與深度內容請查看 [README.md](./README.md)。
 
-**最後更新**: 2026-05-18
+**最後更新**: 2026-07-06
 
 ---
+
+## 現況入口（2026-07-06 新增，優先讀）
+
+| 文檔 | 用途 |
+|------|------|
+| [系統架構總覽](./architecture-overview.md) ⭐ | 現況單一入口：使用者×路由×面向×資料體系×計量額度×品質×已知債 |
+| [統一部署 Runbook](./deployment-runbook.md) ⭐ | 33 migrations→匯入→重建→煙囪→稽核（部署唯一依據） |
+| [jgb2 租客端串接規格](./jgb2-tenant-chat-integration.md) | b2c 身分四件套契約（給 jgb2 工程） |
+| 盤查報告與批次 | `scripts/audit/reports/`（知識/業者SOP盤查證據鏈與可重放批次） |
 
 ## 架構文件（Source of Truth）
 

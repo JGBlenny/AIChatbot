@@ -86,4 +86,5 @@ POST /api/v1/message
 | `scripts/audit/reports/` | 盤查報告與可重放批次（知識盤查/業者SOP盤查/修正批次/lookup 錨點） |
 | `scripts/usage/` | 計量治理 SQL（被遺忘權/內部重標/保留期清理） |
 | `.kiro/specs/`（不進版控） | 各功能 spec 開發史（requirements/design/tasks/research） |
+| `docs/architecture/`＋`docs/INDEX.md` | 深度文檔（完整對話架構/Retriever Pipeline/DB Schema）與任務導向索引 |
 | `CLAUDE.md` | AI 助理工作流（kiro spec 流程與開發鐵則） |
