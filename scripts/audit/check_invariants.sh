@@ -84,6 +84,9 @@ SYNC_FILES=(
   routers/loops.py
   services/usage_metering.py
   services/llm_provider.py
+  services/api_call_handler.py
+  services/vendor_parameter_resolver.py
+  routers/lookup.py
   app.py
 )
 for f in "${SYNC_FILES[@]}"; do

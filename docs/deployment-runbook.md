@@ -19,7 +19,7 @@ grep RAG_API_AUTH_ENFORCE <prod env>   # 應為已開；未開請設定後再部
 
 順帶檢查兩件先前掛帳（與本批無關但同機會處理）：chatflow 重構那批的 prod migration、`form_sessions.pending_question` 欄位 migration 是否已跑。
 
-## 1. Migrations（依序 33 支，皆冪等）
+## 1. Migrations（依序 34 支，皆冪等）
 
 ```bash
 cd rag-orchestrator/database/migrations
@@ -196,6 +196,17 @@ services/usage_metering.py（quota 區段）、admin app.py（/api/usage/quotas 
 ＋`QUOTA_WARN_EMAIL_TO`（營運收件，逗號分隔；vendor 的 contact_email 有值會一併收）；
 未設 SMTP 僅記 log 不寄。每 vendor 每月首次跨閾值寄一次（vendor_quotas.last_warned_month 防重）。
 `QUOTA_WARN_IN_CHAT=true` 可重新啟用對話內附註（預設關）。
+
+## 5.6.2 參數雙軌收斂＋lookup 錨點（盤查 20260706 步驟②③）
+
+- migration `migrate_vendor_configs_to_lookup.sql`（§1 已含）：configs 37 參數＋客服專線 alias 搬入 lookup
+- 版更檔：vendor_parameter_resolver（切讀 lookup，`VENDOR_PARAMS_FROM_LOOKUP=false` 可秒切回）、
+  api_call_handler（key 空＋key2=全部＝整分類列出）、routers/lookup（匯入拒收「範例：」列）
+- **lookup 錨點 33 筆**（11 分類×主錨點＋自然問句變體）：`python3 scripts/audit/reports/lookup-anchors-import.py`
+  （冪等；需 embedding-api 5001）→ semantic model 重抽（§4 已含）
+- ⚠️ 前置：各 vendor 的 lookup 資料須為業者核實版（vendor 2 客服類疑似拷貝污染待重匯，見
+  vendor-sop-audit-20260706.md）；錨點按 vendor 自動出該 vendor 資料，資料錯=答案錯
+- 驗證：b2c 租客問「管理員會代收包裹嗎」→ 列出該業者包裹代收明細（vendor 1 實測 6 筆）
 
 ## 5.7 不變量稽核（部署收尾必跑）
 

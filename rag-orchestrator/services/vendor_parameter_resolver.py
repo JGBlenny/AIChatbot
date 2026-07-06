@@ -56,17 +56,35 @@ class VendorParameterResolver:
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-            cursor.execute("""
-                SELECT
-                    param_key,
-                    param_value,
-                    data_type,
-                    unit,
-                    display_name,
-                    description
-                FROM vendor_configs
-                WHERE vendor_id = %s AND is_active = true
-            """, (vendor_id,))
+            # 參數雙軌收斂（盤查 20260706）：預設讀 lookup_tables（單源，Excel 統一維護），
+            # VENDOR_PARAMS_FROM_LOOKUP=false 秒切回 vendor_configs（過渡保底）。
+            # 只撈參數四分類——不掃 lookup 的物件級資料（管理費/包裹等歸錨點消費）。
+            import os as _os
+            if _os.getenv("VENDOR_PARAMS_FROM_LOOKUP", "true").lower() != "false":
+                cursor.execute("""
+                    SELECT
+                        lookup_key   AS param_key,
+                        lookup_value AS param_value,
+                        metadata->>'data_type'    AS data_type,
+                        metadata->>'unit'         AS unit,
+                        metadata->>'display_name' AS display_name,
+                        NULL         AS description
+                    FROM lookup_tables
+                    WHERE vendor_id = %s AND is_active = true
+                      AND category IN ('payment', 'contract', 'service', 'contact')
+                """, (vendor_id,))
+            else:
+                cursor.execute("""
+                    SELECT
+                        param_key,
+                        param_value,
+                        data_type,
+                        unit,
+                        display_name,
+                        description
+                    FROM vendor_configs
+                    WHERE vendor_id = %s AND is_active = true
+                """, (vendor_id,))
 
             rows = cursor.fetchall()
             cursor.close()

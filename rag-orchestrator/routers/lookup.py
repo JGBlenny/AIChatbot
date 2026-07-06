@@ -1096,6 +1096,15 @@ async def import_lookup_excel(
                     metadata = record.get('metadata', '')
                     is_active = record.get('is_active', True)
 
+                    # 匯入防呆（盤查 20260706）：範本示例列拒收——「範例：」開頭的 key/value
+                    # 是 Excel 範本殘留，混入會被當真資料端給租客（實案：vendor 2 包裹分類）
+                    _k = str(lookup_key or '').strip()
+                    _v = str(lookup_value or '').strip()
+                    if _k.startswith(('範例：', '範例:', '例：', '例:')) or _v.startswith(('範例：', '範例:')):
+                        errors.append(f"{category_name}-{_k[:20]}: 範本示例列拒收（請刪除 Excel 範例行）")
+                        fail_count += 1
+                        continue
+
                     # 檢查是否已存在
                     existing = await conn.fetchrow("""
                         SELECT id FROM lookup_tables

@@ -39,3 +39,14 @@
 - 待確認：lookup 142 筆是真業者上傳還是功能 demo 匯入（地址樣態偏 demo）。
 
 **優化路線（若資料屬實）**：為 8 個未接分類補知識錨點（api_call lookup 端點現成、5 筆先例可抄）＝「管理費/包裹/停車/設施」類 b2c 問句從 NOFOUND 變真答案；同時廢 vendor_configs 併入 lookup（單源），param resolver 改讀 lookup 或反向——擇一收斂。
+
+
+## 執行紀錄（步驟②③，2026-07-06 使用者核准）
+
+- **搬家**：`migrate_vendor_configs_to_lookup.sql`——37 參數（含 vendor 3 demo 殘渣照搬保行為）＋3 筆客服專線 alias 入 lookup（40 筆，冪等）。
+- **切讀**：`vendor_parameter_resolver` 預設讀 lookup（param 四分類過濾，不掃物件級資料）；`VENDOR_PARAMS_FROM_LOOKUP=false` 秒切回。unit 2 案先紅後綠。
+- **錨點修復**：1403 客服專線因 alias 復活（活體 02-8765-4321 直出）；1405-1408 key 對位確認無需改。
+- **匯入防呆**：lookup import 拒收「範例：」開頭列。
+- **8+3 分類錨點**：33 筆（11 分類主錨點＋自然問句變體；handler 放行 key 空＋key2=全部 的整分類查詢）。活體：vendor 1（零 SOP）「管理員會代收包裹嗎」NOFOUND→列 6 筆代收明細 ✓。
+- **修正認知**：先前 b2b 回測的「範疇外 NOFOUND」在 b2c 側多有 SOP/知識覆蓋（vendor 2 SOP #1323 管理費 1.0 完勝）——錨點價值在零/薄 SOP 業者（vendor 1/3）與未來擴充分類。
+- 殘留掛帳：管理費類 generic 知識（#3117 等）排名壓過 lookup 錨點——內容不錯但非 per-vendor 實值；擇期評估以 lookup 值增潤或退役。SYNC_FILES +3 檔；稽核/709 unit 全綠。

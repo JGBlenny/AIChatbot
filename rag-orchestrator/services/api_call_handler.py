@@ -589,7 +589,9 @@ class APICallHandler:
             {success: bool, data: dict, formatted_response: str}
         """
         try:
-            if not category or not key or not vendor_id:
+            # key 可為空——當 key2 為「全部」時代表整分類列出（盤查 20260706：
+            # 管理費/包裹等按地址分鍵的分類，通用問句無從給 key，列全分類作答）
+            if not category or (not key and not key2) or not vendor_id:
                 return self._error_response(
                     f"缺少必要參數: category={category}, key={key}, vendor_id={vendor_id}"
                 )
