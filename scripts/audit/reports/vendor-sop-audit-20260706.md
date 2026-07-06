@@ -62,3 +62,13 @@
 1. lookup 內原生「通用類」殘留（customer_service 的 LINE/服務中心、service_hours 7 筆、payment_methods 8 筆）依新分工屬 configs 範疇，但為業者上傳原生資料且部分比 configs 豐富——重匯時歸位（移 configs 或刪除），service_hours/payment_methods 錨點暫仍讀之（保留豐富覆蓋）。
 2. configs 升格為通用唯一源後，其 2025-11 種子值的真實性核實（原 P0 疑慮）更形關鍵。
 3. vendor 2 污染/vendor 3 demo 值：不變，待重匯。
+
+
+## 通用類 lookup 清除（2026-07-06 使用者裁決續）
+
+**執行**：lookup 通用三分類（customer_service/service_hours/payment_methods）36 筆停用（不硬刪保審計）——**vendor 2 污染列隨之休眠，錯 LINE 不再有任何輸出路徑**；受影響錨點 7 筆（1405 LINE＋服務時間×3＋繳費方式×3）轉 configs 模板直答（1403 模式）；重放腳本同步（只產案場級錨點）。四路活體驗證：LINE/假日服務/超商繳費→configs 模板各 vendor 正確值；包裹→lookup 案場明細不受影響。
+
+**取捨與已知債**：
+1. 豐富度粗化：lookup 原生 service_hours 7 筆分時段（含緊急報修）/payment_methods 8 筆含帳戶資訊 → 停用後這些細節以 configs 一行字作答。要恢復細節＝業者把完整內容寫進 configs 對應欄（text 可多行）或重匯時另議。
+2. configs 種子值真實性核實 = 部署前置（vendor 3 的 @example/123456789 假值現為 LINE/專線題的直接輸出源——業者補真值前，該兩題對 vendor 3 租客輸出假資料）。
+3. 包裹 handler 文案寫死「設施」二字（cosmetic）。

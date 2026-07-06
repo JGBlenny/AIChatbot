@@ -1,4 +1,5 @@
-"""一次性（不 commit）：8+3 分類 lookup 錨點入庫（盤查 20260706 步驟⑤，使用者核准）。"""
+"""部署重放：lookup 案場級錨點（通用類已依 2026-07-06 分工定案改 configs 模板，不在此腳本）。"""
+
 import json, urllib.request, psycopg2
 
 ANCHORS = [
@@ -11,8 +12,6 @@ ANCHORS = [
     ("電費 計費方式 每度電價 電錶", "utility_electricity"),
     ("水費 計費方式 水錶", "utility_water"),
     ("瓦斯費 計費方式 瓦斯錶", "utility_gas"),
-    ("繳費方式 怎麼繳費 轉帳帳戶 超商繳費", "payment_methods"),
-    ("服務時間 營業時間 幾點上班 假日服務", "service_hours"),
 ]
 
 def emb(text):
@@ -60,8 +59,6 @@ VARIANTS = {
     "utility_electricity": ["電費怎麼算 一度多少錢", "電費帳單計費方式"],
     "utility_water": ["水費怎麼算 怎麼收", "水費帳單計費方式"],
     "utility_gas": ["瓦斯費怎麼算 怎麼收", "瓦斯費計費收費方式"],
-    "payment_methods": ["可以用什麼方式繳費 有哪些繳費管道", "可以超商繳費或轉帳嗎"],
-    "service_hours": ["服務中心幾點開 什麼時候有人", "假日有服務嗎 營業時間"],
 }
 
 def emb(text):
