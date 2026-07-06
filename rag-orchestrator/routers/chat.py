@@ -373,7 +373,7 @@ def _finalize_response(response: 'VendorChatResponse', request):
     """依 stream 旗標回傳一般或 SSE 串流回應（與既有表單回應一致）。"""
     if request.stream:
         return StreamingResponse(
-            stream_response_wrapper(response.dict()),
+            _metered_stream(stream_response_wrapper(response.dict()), req.app.state.db_pool),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
         )
@@ -611,7 +611,7 @@ async def handle_cache(request, req, ctx: ChatRequestContext):
         if cached_answer:
             print(f"⚡ 緩存命中！使用串流模式輸出 - 配置版本: {config_version}")
             return StreamingResponse(
-                stream_cached_answer(cached_answer),
+                _metered_stream(stream_cached_answer(cached_answer), req.app.state.db_pool),
                 media_type="text/event-stream",
                 headers={
                     "Cache-Control": "no-cache",
@@ -780,6 +780,11 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
                 if _diag_resp is not None:
                     print(f"💬 [conversational-diagnosis] 分類命中 {_diag_cfg.key} → 進診斷對話"
                           + ("（串流）" if request.stream else ""))
+                    try:
+                        from services.usage_metering import set_path as _um_sp
+                        _um_sp("conversational", answer_source=_diag_cfg.key)
+                    except Exception:
+                        pass
                     return _diag_resp
                 print("⚠️ [conversational-diagnosis] 引擎降級 → 落回既有知識/表單處理")
 
@@ -812,7 +817,7 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
                     print(f"⏱️ [Step 5] KB 回應構建（表單）: {int((_time.time()-_t0)*1000)}ms")
                     print(f"📡 [串流模式] 將表單響應轉換為串流輸出")
                     return StreamingResponse(
-                        stream_response_wrapper(response.dict() if hasattr(response, 'dict') else response),
+                        _metered_stream(stream_response_wrapper(response.dict() if hasattr(response, 'dict') else response), req.app.state.db_pool),
                         media_type="text/event-stream",
                         headers={
                             "Cache-Control": "no-cache",
@@ -824,11 +829,11 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
                 print(f"📡 [串流模式] 使用串流合成回應")
                 print(f"⏱️ [總計] 檢索完成，開始串流: {int((_time.time()-_total_start)*1000)}ms")
                 return StreamingResponse(
-                    stream_synthesis_response(
+                    _metered_stream(stream_synthesis_response(
                         request, req, intent_result, decision['knowledge_list'],
                         resolver, vendor_info, cache_service,
                         decision=decision,
-                    ),
+                    ), req.app.state.db_pool),
                     media_type="text/event-stream",
                     headers={
                         "Cache-Control": "no-cache",
@@ -914,7 +919,7 @@ async def _conversational_respond(request, req, *, start_if_absent, config=None)
         if decision is None:
             return None
         return StreamingResponse(
-            _conversational_sse(engine, decision, request),
+            _metered_stream(_conversational_sse(engine, decision, request), req.app.state.db_pool),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"})
     result = await engine.handle(
@@ -1124,6 +1129,23 @@ async def stream_cached_answer(cached_data: Dict):
             "error": str(e),
             "message": "串流輸出失敗"
         })
+
+
+async def _metered_stream(gen, db_pool):
+    """usage-metering（2.1）：串流回應的計量收尾——SSE 在 middleware return 後才吐流，
+    出場落點蓋不到（middleware 對 event-stream 跳過），由本包裝器 finally 收
+    （finalize 冪等，雙落點安全；客戶端中斷時 starlette 會跑 generator cleanup → 仍落event）。"""
+    from services import usage_metering as _um
+    _status, _http = "error", 500          # 中斷/例外預設 error；正常走完改 success
+    try:
+        async for chunk in gen:
+            yield chunk
+        _status, _http = "success", 200
+    finally:
+        try:
+            _um.finalize(_status, _http, db_pool=db_pool)
+        except Exception:
+            pass
 
 
 async def stream_response_wrapper(response_dict: dict):
@@ -1472,6 +1494,16 @@ async def generate_answer_stream(request: 'VendorChatRequest', app_state, intent
 
 # ==================== 輔助函數：調試資訊構建 ====================
 
+def _meter_path(processing_path: str) -> None:
+    """usage-metering：無條件路徑標記（debug builder 被 include_debug_info 閘住，
+    生產不帶 flag 永不觸發——實測 web_meter_test2 事件 path 空案）。"""
+    try:
+        from services.usage_metering import set_path as _sp
+        _sp(processing_path)
+    except Exception:
+        pass
+
+
 def _build_debug_info(
     processing_path: str,
     intent_result: dict,
@@ -1486,6 +1518,12 @@ def _build_debug_info(
     comparison_metadata: dict = None  # 🆕 2026-01-28: SOP 與知識庫比較資訊
 ) -> DebugInfo:
     """構建調試資訊對象"""
+    # usage-metering：processing_path 的中央賦值點（各答題路徑必經）——順手記入計量 context
+    try:
+        from services.usage_metering import set_path as _um_set_path
+        _um_set_path(processing_path)
+    except Exception:
+        pass
     print(f"🔍 [_build_debug_info] sop_candidates received: {type(sop_candidates)}, length: {len(sop_candidates) if sop_candidates else 0}")
 
     # 構建意圖詳情
@@ -2311,6 +2349,7 @@ async def _build_sop_response(
 
     # 構建調試資訊（如果請求了）
     debug_info = None
+    _meter_path('sop')
     if request.include_debug_info:
         # 獲取業者參數
         vendor_params = resolver.get_vendor_parameters(request.vendor_id)
@@ -2437,6 +2476,7 @@ async def _build_rag_response(
 
     # 構建調試資訊（如果請求了）
     debug_info = None
+    _meter_path('rag_fallback')
     if request.include_debug_info:
         # 標記哪些知識被選取了
         selected_ids = {r['id'] for r in rag_results[:optimization_result.get('sources_used', len(rag_results))]}
@@ -2537,6 +2577,7 @@ async def _retrieve_knowledge(
 
     # Debug 旁路：若需要 debug_info，再跑一次未過濾的檢索
     knowledge_list_unfiltered = None
+    _meter_path('param_answer')
     if request.include_debug_info:
         knowledge_list_unfiltered = await retriever.retrieve_knowledge_hybrid(
             query=request.message,
@@ -2589,6 +2630,7 @@ async def _handle_no_knowledge_found(
 
         # 構建調試資訊（如果請求了）
         debug_info = None
+        _meter_path('param_answer')
         if request.include_debug_info:
             # 獲取業者參數
             vendor_params = resolver.get_vendor_parameters(request.vendor_id)
@@ -2656,6 +2698,7 @@ async def _handle_no_knowledge_found(
 
     # 構建調試資訊（如果請求了）
     debug_info = None
+    _meter_path('no_knowledge_found')
     if request.include_debug_info:
         # 🆕 從 decision 中提取 SOP 候選資訊
         sop_candidates_list = []
@@ -2813,6 +2856,7 @@ async def _build_knowledge_response(
 
             # 構建表單觸發路徑的 debug_info
             form_debug_info = None
+            _meter_path('knowledge_form')
             if request.include_debug_info:
                 # followup-debug-visibility 選項 A：優先顯示 unfiltered 候選
                 _form_source = (

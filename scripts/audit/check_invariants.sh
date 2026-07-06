@@ -82,6 +82,9 @@ SYNC_FILES=(
   services/jgb/bills.py
   routers/chat.py
   routers/loops.py
+  services/usage_metering.py
+  services/llm_provider.py
+  app.py
 )
 for f in "${SYNC_FILES[@]}"; do
   C=$(docker exec aichatbot-rag-orchestrator md5sum "/app/$f" 2>/dev/null | awk '{print $1}')
@@ -110,6 +113,63 @@ if [ -n "$NO_CTX" ]; then
   echo "$NO_CTX"
 else
   echo "✅ PASS"
+fi
+
+echo ""
+echo "═══ 不變量 5：usage-metering 計量健全（spec usage-metering R8.4）═══"
+# 漏標鐵證：內部前綴 session 卻未標 internal → FAIL（統計/計費直接失真）
+LEAK=$($PSQL -c "
+SELECT count(*) FROM usage_events
+WHERE is_internal = FALSE
+  AND (session_id LIKE 'backtest\_%' OR session_id LIKE 'loop\_%' OR session_id LIKE 'smoke\_%')")
+if [ "${LEAK:-0}" != "0" ]; then
+  echo "❌ FAIL：$LEAK 筆內部前綴事件未標 is_internal（INTERNAL_RULES 漏網）"
+  FAIL=1
+else
+  echo "✅ PASS"
+fi
+# 維度缺失雷達：近 24h 非內部事件 vendor_id 缺失 >5% → WARN（呼叫端沒帶 vendor）
+MISS=$($PSQL -c "
+SELECT COALESCE(round(100.0 * count(*) FILTER (WHERE vendor_id IS NULL) / NULLIF(count(*),0)), 0)
+FROM usage_events WHERE is_internal = FALSE AND ts > now() - interval '24 hours'")
+if [ "${MISS:-0}" -gt 5 ] 2>/dev/null; then
+  echo "⚠️  WARN：近 24h 非內部事件 vendor_id 缺失 ${MISS}%（>5%，查呼叫端）"
+fi
+
+echo ""
+echo "═══ 不變量 6：quota-management 額度一致（spec quota-management R5.5）═══"
+# 幽靈攔截：有 blocked 事件的 vendor 卻「從未設定過」額度 → FAIL（不可能的狀態）
+#   （設定後停用屬合法營運動作——24h 窗內殘留攔截事件只 WARN 不 FAIL）
+GHOST=$($PSQL -c "
+SELECT count(DISTINCT e.vendor_id) FROM usage_events e
+WHERE e.status = 'blocked'
+  AND e.ts > now() - interval '24 hours'
+  AND NOT EXISTS (SELECT 1 FROM vendor_quotas q WHERE q.vendor_id = e.vendor_id)")
+if [ "${GHOST:-0}" != "0" ]; then
+  echo "❌ FAIL：$GHOST 個 vendor 近 24h 有攔截事件但額度表無此列（幽靈攔截）"
+  FAIL=1
+else
+  echo "✅ PASS"
+fi
+DEACT=$($PSQL -c "
+SELECT count(DISTINCT e.vendor_id) FROM usage_events e
+WHERE e.status = 'blocked' AND e.ts > now() - interval '24 hours'
+  AND EXISTS (SELECT 1 FROM vendor_quotas q
+              WHERE q.vendor_id = e.vendor_id AND NOT q.is_active)")
+if [ "${DEACT:-0}" != "0" ] 2>/dev/null; then
+  echo "⚠️  WARN：$DEACT 個 vendor 額度已停用但 24h 內曾攔截（確認停用是否符合預期）"
+fi
+# 寬限模式燒錢雷達：用量超過額度 120% 且未攔截 → WARN
+BURN=$($PSQL -c "
+SELECT count(*) FROM vendor_quotas q
+JOIN (SELECT vendor_id, count(*) AS used FROM usage_events
+      WHERE date_tpe >= date_trunc('month', now() AT TIME ZONE 'Asia/Taipei')::date
+        AND is_internal = FALSE AND status <> 'blocked' GROUP BY vendor_id) u
+  ON u.vendor_id = q.vendor_id
+WHERE q.is_active AND q.block_on_exceed = FALSE
+  AND u.used > q.monthly_message_quota * 1.2")
+if [ "${BURN:-0}" != "0" ] 2>/dev/null; then
+  echo "⚠️  WARN：$BURN 個寬限模式團隊用量已超額 120%（持續燒 LLM 成本，考慮改攔截或加值）"
 fi
 
 echo ""

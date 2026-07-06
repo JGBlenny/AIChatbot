@@ -169,6 +169,70 @@ else:
 
 
 @app.middleware("http")
+async def usage_metering_middleware(request: Request, call_next):
+    """usage-metering（spec usage-metering 2.1）：/api/v1/message 進場建計量
+    context、出場落事件（fire-and-forget）。串流回應（SSE）由 generator finally
+    落點（finalize 冪等使雙落點安全）；其餘路徑零觸碰；任何失敗不影響回應。"""
+    from services import usage_metering as _um
+    metered = (request.url.path == "/api/v1/message" and request.method == "POST"
+               and _um.is_enabled())
+    if metered:
+        try:
+            import json as _json
+            _body = await request.body()
+            # ⚠️ BaseHTTPMiddleware 讀 body 會吃掉 receive channel，下游 handler
+            #    等 body 永久卡死（實測）——回灌 _receive 供下游重читать
+            async def _replay():
+                return {"type": "http.request", "body": _body, "more_body": False}
+            request._receive = _replay
+            _fields = _json.loads(_body) if _body else {}
+            _um.begin(_fields if isinstance(_fields, dict) else {})
+        except Exception:
+            _fields = {}
+            _um.begin({})
+    _pool = getattr(request.app.state, "db_pool", None)
+    _quota = None
+    if metered:
+        # quota-management：達限短路（進檢索/LLM 前，零成本，R4.1）；fail-open
+        _ctx_obj = _um._ctx.get()
+        _quota = await _um.quota_check(_pool, (_fields or {}).get("vendor_id"),
+                                       bool(_ctx_obj and _ctx_obj.is_internal))
+        if _quota.state == "blocked":
+            _um.set_path("quota_blocked")
+            _um.finalize("blocked", 200, db_pool=_pool)      # 記事件供舉證（R4.6）
+            _body_dict = _um.quota_blocked_body(
+                _ctx_obj.user_type if _ctx_obj else "unknown", _quota, _fields or {})
+            return JSONResponse(status_code=200, content=_body_dict)
+    try:
+        response = await call_next(request)
+    except Exception:
+        if metered:
+            _um.finalize("error", 500, db_pool=_pool)
+        raise
+    if metered:
+        _ctype = response.headers.get("content-type", "")
+        if "text/event-stream" not in _ctype:      # 串流由 generator finally 收尾
+            _um.finalize("success" if response.status_code < 500 else "error",
+                         response.status_code, db_pool=_pool)
+            # quota 警示（R3.1–3.3）：warn 且 pm 非串流 → answer 尾端附額度提示
+            if (_quota is not None and _quota.state == "warn"
+                    and "application/json" in _ctype and response.status_code == 200):
+                _ctx_obj = _um._ctx.get()
+                _ut = _ctx_obj.user_type if _ctx_obj else "unknown"
+                _raw = b""
+                async for _chunk in response.body_iterator:
+                    _raw += _chunk
+                _new_raw = _um.append_quota_hint(_raw, _ut, _quota)
+                from starlette.responses import Response as _Resp
+                _hdrs = dict(response.headers)
+                _hdrs.pop("content-length", None)      # 重算（research 風險 2）
+                return _Resp(content=_new_raw if _new_raw is not None else _raw,
+                             status_code=response.status_code, headers=_hdrs,
+                             media_type="application/json")
+    return response
+
+
+@app.middleware("http")
 async def api_key_guard(request: Request, call_next):
     if auth_enforced() and request.method != "OPTIONS" and not is_exempt(request.url.path):
         pool = getattr(request.app.state, "db_pool", None)

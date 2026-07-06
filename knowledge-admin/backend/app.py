@@ -1520,6 +1520,313 @@ async def get_backtest_run_results(
         conn.close()
 
 
+# ==================== usage-metering 統計 API（spec usage-metering 任務 3.1）====================
+
+def _usage_stats_query(cur, date_from: str, date_to: str, vendor_ids, user_type,
+                       include_internal: bool, granularity: str):
+    """查詢時聚合（research 裁決：量級不需物化）。
+    sessions 跨日歸屬首事件日（R2.2）：以 session 首事件列的維度計入其首日 bucket。
+    不回傳任何 user_id 明細——僅去重計數（R5.3）。"""
+    bucket = "to_char(date_tpe, 'YYYY-MM')" if granularity == 'month' else "date_tpe::text"
+    conds, params = ["date_tpe BETWEEN %s AND %s"], [date_from, date_to]
+    if not include_internal:
+        conds.append("is_internal = FALSE")
+    if vendor_ids:
+        conds.append("vendor_id = ANY(%s)")
+        params.append(vendor_ids)
+    if user_type:
+        conds.append("user_type = %s")
+        params.append(user_type)
+    where = " AND ".join(conds)
+
+    cur.execute(f"""
+        SELECT {bucket} AS bucket, vendor_id, user_type, channel,
+               count(*) AS messages,
+               count(*) FILTER (WHERE status='error') AS errors,
+               count(DISTINCT user_id) AS distinct_users,
+               COALESCE(sum(prompt_tokens),0) AS prompt_tokens,
+               COALESCE(sum(completion_tokens),0) AS completion_tokens,
+               sum(est_cost_usd) AS est_cost_usd
+        FROM usage_events WHERE {where}
+        GROUP BY 1,2,3,4 ORDER BY 1,2,3,4
+    """, params)
+    groups = {}
+    for r in cur.fetchall():
+        d = dict(r)
+        d['sessions'] = 0
+        d['est_cost_usd'] = float(d['est_cost_usd']) if d['est_cost_usd'] is not None else None
+        groups[(d['bucket'], d['vendor_id'], d['user_type'], d['channel'])] = d
+
+    # sessions：session 首事件列（首日歸屬）
+    cur.execute(f"""
+        WITH firsts AS (
+            SELECT DISTINCT ON (session_id) session_id, date_tpe, vendor_id, user_type, channel
+            FROM usage_events WHERE {where} AND session_id IS NOT NULL
+            ORDER BY session_id, ts
+        )
+        SELECT {bucket} AS bucket, vendor_id, user_type, channel, count(*) AS sessions
+        FROM firsts GROUP BY 1,2,3,4
+    """, params)
+    for r in cur.fetchall():
+        d = dict(r)
+        key = (d['bucket'], d['vendor_id'], d['user_type'], d['channel'])
+        if key in groups:
+            groups[key]['sessions'] = d['sessions']
+        else:
+            groups[key] = {'bucket': d['bucket'], 'vendor_id': d['vendor_id'],
+                           'user_type': d['user_type'], 'channel': d['channel'],
+                           'messages': 0, 'errors': 0, 'distinct_users': 0,
+                           'prompt_tokens': 0, 'completion_tokens': 0,
+                           'est_cost_usd': None, 'sessions': d['sessions']}
+    return sorted(groups.values(), key=lambda g: (g['bucket'], g['vendor_id'] or 0, g['user_type']))
+
+
+def _usage_stats_params(date_from, date_to, vendor_id, granularity):
+    import datetime as _dt
+    try:
+        d1 = _dt.date.fromisoformat(date_from)
+        d2 = _dt.date.fromisoformat(date_to)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail="date_from/date_to 需為 YYYY-MM-DD")
+    if d1 > d2:
+        raise HTTPException(status_code=400, detail="date_from 不得晚於 date_to")
+    retention = int(os.getenv("USAGE_RETENTION_MONTHS", "18"))
+    if (_dt.date.today() - d1).days > retention * 31:
+        raise HTTPException(status_code=400, detail=f"查詢起日超過保留期（{retention} 個月）")
+    if granularity not in ("day", "month"):
+        raise HTTPException(status_code=400, detail="granularity 需為 day|month")
+    vendor_ids = None
+    if vendor_id:
+        try:
+            vendor_ids = [int(v) for v in vendor_id]
+        except ValueError:
+            raise HTTPException(status_code=400, detail="vendor_id 需為整數")
+    return vendor_ids
+
+
+@app.get("/api/usage/stats")
+async def get_usage_stats(
+    date_from: str = Query(..., description="起日 YYYY-MM-DD"),
+    date_to: str = Query(..., description="迄日 YYYY-MM-DD"),
+    vendor_id: Optional[List[str]] = Query(None, description="業者 ID（可多值；缺省=全部）"),
+    user_type: Optional[str] = Query(None, description="使用者類型過濾"),
+    include_internal: bool = Query(False, description="是否含內部流量（回測/迴圈/煙囪）"),
+    granularity: str = Query("day", description="day|month"),
+    user: dict = Depends(get_current_user)
+):
+    """使用量統計（計費依據）：訊息/對話（session 首日歸屬）/去重使用者/token/估算成本/失敗數。"""
+    vendor_ids = _usage_stats_params(date_from, date_to, vendor_id, granularity)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        groups = _usage_stats_query(cur, date_from, date_to, vendor_ids, user_type,
+                                    include_internal, granularity)
+        totals = {
+            'messages': sum(g['messages'] for g in groups),
+            'sessions': sum(g['sessions'] for g in groups),
+            'errors': sum(g['errors'] for g in groups),
+            'prompt_tokens': sum(g['prompt_tokens'] for g in groups),
+            'completion_tokens': sum(g['completion_tokens'] for g in groups),
+            'est_cost_usd': round(sum(g['est_cost_usd'] or 0 for g in groups), 6),
+        }
+        return {"groups": groups, "totals": totals,
+                "params": {"date_from": date_from, "date_to": date_to,
+                           "granularity": granularity, "include_internal": include_internal}}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.get("/api/usage/users")
+async def get_usage_by_user(
+    date_from: str = Query(..., description="起日 YYYY-MM-DD"),
+    date_to: str = Query(..., description="迄日 YYYY-MM-DD"),
+    vendor_id: Optional[List[str]] = Query(None, description="業者 ID（可多值）"),
+    user_type: Optional[str] = Query(None),
+    include_internal: bool = Query(False),
+    limit: int = Query(50, ge=1, le=500),
+    user: dict = Depends(get_current_user)
+):
+    """per-user 使用明細（2026-07-06 使用者改判開放——原設計僅去重計數）。
+    user_id＝JGB 系統 user_id（jgb2 呼叫必帶），非姓名；依訊息數排序取 Top N；
+    無 user_id 事件歸「(未識別)」。"""
+    vendor_ids = _usage_stats_params(date_from, date_to, vendor_id, "day")
+    conds, params = ["date_tpe BETWEEN %s AND %s"], [date_from, date_to]
+    if not include_internal:
+        conds.append("is_internal = FALSE")
+    if vendor_ids:
+        conds.append("vendor_id = ANY(%s)")
+        params.append(vendor_ids)
+    if user_type:
+        conds.append("user_type = %s")
+        params.append(user_type)
+    where = " AND ".join(conds)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(f"""
+            SELECT COALESCE(user_id, '(未識別)') AS user_id,
+                   vendor_id,
+                   max(user_type) AS user_type,
+                   count(*) AS messages,
+                   count(DISTINCT session_id) AS sessions,
+                   COALESCE(sum(prompt_tokens),0) AS prompt_tokens,
+                   COALESCE(sum(completion_tokens),0) AS completion_tokens,
+                   sum(est_cost_usd) AS est_cost_usd,
+                   count(*) FILTER (WHERE status='error') AS errors,
+                   min(ts) AS first_seen, max(ts) AS last_seen
+            FROM usage_events WHERE {where}
+            GROUP BY 1, 2 ORDER BY messages DESC LIMIT %s
+        """, params + [limit])
+        users = []
+        for r in cur.fetchall():
+            d = dict(r)
+            d['est_cost_usd'] = float(d['est_cost_usd']) if d['est_cost_usd'] is not None else None
+            d['first_seen'] = d['first_seen'].isoformat() if d['first_seen'] else None
+            d['last_seen'] = d['last_seen'].isoformat() if d['last_seen'] else None
+            users.append(d)
+        return {"users": users, "limit": limit,
+                "params": {"date_from": date_from, "date_to": date_to,
+                           "include_internal": include_internal}}
+    finally:
+        cur.close()
+        conn.close()
+
+
+# ── quota-management：額度 CRUD（spec quota-management 任務 3）──
+
+class QuotaUpsert(BaseModel):
+    monthly_message_quota: int
+    warn_threshold_pct: int = 80
+    block_on_exceed: bool = True
+    is_active: bool = True
+
+
+@app.get("/api/usage/quotas")
+async def list_quotas(user: dict = Depends(get_current_user)):
+    """各團隊額度＋本月用量（進度條資料一次帶回）。"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT q.vendor_id, q.monthly_message_quota, q.warn_threshold_pct,
+                   q.block_on_exceed, q.is_active, q.updated_at, q.updated_by,
+                   COALESCE(u.used, 0) AS used_this_month
+            FROM vendor_quotas q
+            LEFT JOIN (
+                SELECT vendor_id, count(*) AS used FROM usage_events
+                WHERE date_tpe >= date_trunc('month', now() AT TIME ZONE 'Asia/Taipei')::date
+                  AND is_internal = FALSE AND status <> 'blocked'
+                GROUP BY vendor_id
+            ) u ON u.vendor_id = q.vendor_id
+            ORDER BY q.vendor_id
+        """)
+        rows = []
+        for r in cur.fetchall():
+            d = dict(r)
+            d['updated_at'] = d['updated_at'].isoformat() if d['updated_at'] else None
+            quota = d['monthly_message_quota']
+            used = d['used_this_month']
+            pct = int(used * 100 / quota) if quota else 0
+            d['pct'] = pct
+            if not d['is_active']:
+                d['state'] = 'none'
+            elif used >= quota:
+                d['state'] = 'blocked' if d['block_on_exceed'] else 'warn'
+            elif pct >= d['warn_threshold_pct']:
+                d['state'] = 'warn'
+            else:
+                d['state'] = 'ok'
+            rows.append(d)
+        return {"quotas": rows}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.put("/api/usage/quotas/{vendor_id}")
+async def upsert_quota(vendor_id: int, body: QuotaUpsert,
+                       user: dict = Depends(get_current_user)):
+    if body.monthly_message_quota <= 0:
+        raise HTTPException(status_code=400, detail="額度需為正整數")
+    if not (1 <= body.warn_threshold_pct <= 99):
+        raise HTTPException(status_code=400, detail="警示閾值需為 1–99")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            INSERT INTO vendor_quotas
+                (vendor_id, monthly_message_quota, warn_threshold_pct,
+                 block_on_exceed, is_active, updated_at, updated_by)
+            VALUES (%s, %s, %s, %s, %s, now(), %s)
+            ON CONFLICT (vendor_id) DO UPDATE SET
+                monthly_message_quota = EXCLUDED.monthly_message_quota,
+                warn_threshold_pct = EXCLUDED.warn_threshold_pct,
+                block_on_exceed = EXCLUDED.block_on_exceed,
+                is_active = EXCLUDED.is_active,
+                updated_at = now(), updated_by = EXCLUDED.updated_by
+        """, (vendor_id, body.monthly_message_quota, body.warn_threshold_pct,
+              body.block_on_exceed, body.is_active, user.get("username", "admin")))
+        conn.commit()
+        return {"ok": True}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.delete("/api/usage/quotas/{vendor_id}")
+async def deactivate_quota(vendor_id: int, user: dict = Depends(get_current_user)):
+    """停用（不刪列保歷史）。"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE vendor_quotas SET is_active=FALSE, updated_at=now(), updated_by=%s "
+                    "WHERE vendor_id=%s", (user.get("username", "admin"), vendor_id))
+        conn.commit()
+        return {"ok": True}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.get("/api/usage/export.csv")
+async def export_usage_csv(
+    date_from: str = Query(...),
+    date_to: str = Query(...),
+    vendor_id: Optional[List[str]] = Query(None),
+    user_type: Optional[str] = Query(None),
+    include_internal: bool = Query(False),
+    granularity: str = Query("day"),
+    user: dict = Depends(get_current_user)
+):
+    """CSV 匯出（UTF-8 BOM 供 Excel，R6.3）。"""
+    from fastapi.responses import Response
+    vendor_ids = _usage_stats_params(date_from, date_to, vendor_id, granularity)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        groups = _usage_stats_query(cur, date_from, date_to, vendor_ids, user_type,
+                                    include_internal, granularity)
+        import io, csv
+        buf = io.StringIO()
+        w = csv.writer(buf)
+        w.writerow(["期間", "業者ID", "使用者類型", "通路", "訊息數", "對話數",
+                    "去重使用者", "prompt_tokens", "completion_tokens", "估算成本USD", "失敗數"])
+        for g in groups:
+            w.writerow([g['bucket'], g['vendor_id'], g['user_type'], g['channel'],
+                        g['messages'], g['sessions'], g['distinct_users'],
+                        g['prompt_tokens'], g['completion_tokens'],
+                        g['est_cost_usd'] if g['est_cost_usd'] is not None else '',
+                        g['errors']])
+        csv_bytes = '\ufeff' + buf.getvalue()
+        return Response(content=csv_bytes, media_type="text/csv; charset=utf-8",
+                        headers={"Content-Disposition":
+                                 f"attachment; filename=usage_{date_from}_{date_to}.csv"})
+    finally:
+        cur.close()
+        conn.close()
+
+
 class BacktestRunRequest(BaseModel):
     """回測執行請求模型（已廢棄 - 僅供參考）"""
     quality_mode: Optional[str] = "detailed"  # detailed, hybrid

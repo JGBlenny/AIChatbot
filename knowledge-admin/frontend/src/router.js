@@ -18,6 +18,7 @@ import KnowledgeExportView from './views/KnowledgeExportView.vue';
 import DocumentConverterView from './views/DocumentConverterView.vue';
 // Backtest Results
 import BacktestView from './views/BacktestView.vue';
+import UsageStatsView from './views/UsageStatsView.vue';
 // Test Scenarios Management
 import TestScenariosView from './views/TestScenariosView.vue';
 import PendingReviewView from './views/PendingReviewView.vue';
@@ -131,6 +132,11 @@ const routes = [
     path: '/backtest',
     name: 'Backtest',
     component: BacktestView
+  },
+  {
+    path: '/usage-stats',
+    name: 'UsageStats',
+    component: UsageStatsView
   },
   {
     path: '/test-scenarios',
