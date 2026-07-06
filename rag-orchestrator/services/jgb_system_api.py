@@ -160,12 +160,22 @@ class JGBSystemAPI:
         if user_id:
             params["user_id"] = user_id
         if contract_ids:
-            params["contract_ids"] = contract_ids
+            # ⚠️ /bills 的合約過濾參數是 contract_id（單數）——複數會被上游無視、
+            #    整個 role 帳單全回（帳單診斷 e2e 實測 50 筆電錶儲值蓋台）。
+            params["contract_id"] = contract_ids
         if month:
             params["month"] = month
         if status:
             params["status"] = status
-        return await self._request("/api/external/v1/bills", params)
+        resp = await self._request("/api/external/v1/bills", params)
+        # client 端防衛過濾（上游再無視參數也擋得住；沿 get_contracts 過濾先例）：
+        # 只在列上帶 contract_id 時啟動，舊形狀列不受影響。
+        if contract_ids and (resp or {}).get("success"):
+            rows = resp.get("data") or []
+            if any(r.get("contract_id") is not None for r in rows if isinstance(r, dict)):
+                resp["data"] = [r for r in rows
+                                if str(r.get("contract_id")) == str(contract_ids)]
+        return resp
 
     async def get_invoices(
         self,

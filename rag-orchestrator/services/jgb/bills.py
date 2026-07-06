@@ -213,11 +213,39 @@ def build_late_fee_facts(row: dict, user_question: str = "") -> str:
     return "\n".join(lines)
 
 
+_DIAG_KEYWORDS = ("發不出", "無法發送", "發送失敗", "送不出", "取消", "作廢", "cancel",
+                  "逾期", "延遲金", "滯納金", "late fee", "到帳", "收款", "標記已收",
+                  "手動", "虛擬帳號", "帳號過期", "ATM", "轉帳失敗")
+
+
+def build_bill_diagnosis_facts(row: dict, user_question: str = "") -> str:
+    """條件診斷：帳單（發不出去/取消不了/逾期費/手動到帳）——重用 v1.1 決定性
+    diagnose_bill 引擎；secondary_call 附掛的 bill_detail 併回主列再判定
+    （列表列常缺 details/status 細節，診斷要用 detail 現值）。
+    收斂輪的 user_message 常是「1」（選序號）→ 無症狀關鍵字時輸出全判定 facts
+    （發送/取消/手動到帳），原句症狀由 LLM 從對話脈絡選答（e2e v3 逼出）。"""
+    detail = row.get("bill_detail")
+    if isinstance(detail, list):
+        detail = detail[0] if detail else None
+    if isinstance(detail, dict) and detail:
+        row = {**row, **detail}
+    q = user_question or ""
+    if any(k in q for k in _DIAG_KEYWORDS):
+        return diagnose_bill(row, q)
+    return "\n".join([
+        _format_bill_status(row),
+        f"【發送判定】{_diagnose_cannot_send(row)}",
+        f"【取消判定】{_diagnose_cannot_cancel(row)}",
+        f"【手動到帳判定】{_diagnose_manual_complete(row)}",
+    ])
+
+
 BILL_FACE_BUILDERS: dict[str, BillFaceBuilder] = {
     "繳費金流排障": build_payment_flow_facts,
     "帳單異常": build_bill_anomaly_facts,
     "發票": build_invoice_facts,
     "滯納金": build_late_fee_facts,
+    "條件診斷：帳單": build_bill_diagnosis_facts,
     # "帳單設定引導" 為輕引導（select='category'），無 builder
 }
 

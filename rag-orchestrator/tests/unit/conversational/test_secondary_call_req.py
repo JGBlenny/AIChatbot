@@ -144,7 +144,7 @@ async def test_get_bills_forwards_contract_ids_without_user_id(monkeypatch):
     monkeypatch.setattr(api, "_request", fake_request)
     r = await api.get_bills(role_id="20151", contract_ids="84908")
     assert r["success"] is True                       # 不因缺 user_id 降級
-    assert captured["params"]["contract_ids"] == "84908"
+    assert captured["params"]["contract_id"] == "84908"   # 上游參數為單數（2026-07-05 修正）
     assert captured["params"]["role_id"] == "20151"
 
     # 原有租客情境不變：無 contract_ids 時仍需 user_id（身分保護）

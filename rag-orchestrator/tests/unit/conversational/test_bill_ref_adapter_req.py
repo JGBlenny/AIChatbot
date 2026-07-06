@@ -3,8 +3,10 @@
 背景（research §六-1）：bills 列表無編號直查、無名稱搜尋——「給帳單編號」與「給物件名稱」
 單靠一個端點的 search_params 蓋不住。解法：`get_bills` 擴充 `bill_ref` 識別語意參數
 （adapter 屬 JGB 領域檔職責，引擎零改、後端當裁判慣例不變）：
-  純數字 → get_bill_detail 直查（單筆包成列）；查無 → 當合約識別（contract_ids 直查）；
-  非數字 → get_contracts(keyword) 解析 → 取第一筆合約 → bills?contract_ids 回列候選。
+  純數字 → get_bill_detail 直查（單筆包成列）；查無 → 當合約識別（contract_id 直查）；
+  非數字 → get_contracts(keyword) 解析 → 取第一筆合約 → bills?contract_id 回列候選。
+（2026-07-05 修正：上游參數為 contract_id 單數，誤送複數被無視致整 role 帳單全回；
+ 另加 client 端防衛過濾——列上帶 contract_id 才啟動。）
 降級：解析失敗/例外 → 回空列（success=True, data=[]）不拋——引擎走 0 筆追問路，不炸忙線。
 既有呼叫（無 bill_ref）零回歸。
 """
@@ -49,7 +51,7 @@ async def test_numeric_miss_falls_back_to_contract_id():
     assert [b["id"] for b in r["data"]] == [714100, 2]
     kwargs = api.get_contracts.await_args.kwargs
     assert kwargs.get("contract_ids") == "84908"          # 數字先當合約 id 解析
-    assert api._request.await_args.args[1]["contract_ids"] == 84908
+    assert api._request.await_args.args[1]["contract_id"] == 84908
 
 
 # ── 路徑三：非數字 → 合約 keyword 解析 → 取第一筆 → bills 列候選 ──
@@ -63,7 +65,7 @@ async def test_text_bill_ref_resolves_contract_by_keyword():
     assert r["data"] == [_BILL]
     assert api.get_contracts.await_args.kwargs.get("keyword") == "基隆溫馨一人宅套房"
     assert api.get_bill_detail.await_count == 0            # 非數字不試 bill_detail
-    assert api._request.await_args.args[1]["contract_ids"] == 84981   # 取第一筆
+    assert api._request.await_args.args[1]["contract_id"] == 84981   # 取第一筆
 
 
 # ── 降級：合約解析空/例外 → 空列不拋（引擎 0 筆追問路，不炸忙線）──
@@ -97,7 +99,7 @@ async def test_without_bill_ref_unchanged():
     assert r["data"] == [_BILL]
     api.get_bill_detail.assert_not_awaited()
     api.get_contracts.assert_not_awaited()
-    assert api._request.await_args.args[1]["contract_ids"] == "84908"
+    assert api._request.await_args.args[1]["contract_id"] == "84908"
 
 
 # ── get_invoices b2b per-bill 授權（secondary_call 用；比照 get_bills 形態）──

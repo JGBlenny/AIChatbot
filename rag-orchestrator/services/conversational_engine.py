@@ -624,17 +624,20 @@ class ConversationalEngine:
             if cap and len(candidates) > cap:
                 # 大集合分流（D4）：API 通常只吃關鍵字查詢/精確 id 兩種參數——
                 #   不同名大集合可靠「補更明確識別」縮小關鍵字；同名多份補條件重查無效，只能列候選/給精確 id。
-                if not state.get("_refine_requested"):
+                #   skip_refine（設定驅動，預設關）：同母體多期資料（如同一合約的帳單）
+                #   補識別縮不了 → 跳過補識別輪直接截斷列候選（帳單診斷 e2e 逼出）。
+                noun = mapping.get("entity_noun", "合約")
+                if not mapping.get("skip_refine") and not state.get("_refine_requested"):
                     state["_refine_requested"] = True  # prepare 隨後 _save（供下一輪判斷是否補不動）
                     return {"kind": "ask",
-                            "answer": (f"符合的合約較多（找到 {len(candidates)} 筆），"
-                                       "請提供更明確的識別（完整物件名稱、合約編號，或租期），以便縮小範圍。")}
+                            "answer": (f"符合的{noun}較多（找到 {len(candidates)} 筆），"
+                                       f"請提供更明確的識別（完整物件名稱、{noun}編號，或租期），以便縮小範圍。")}
                 # 已補過仍 > cap（同名多份重查無效）→ 截斷列前 cap 筆並提示可給編號直接指定（避免死迴圈）
                 shown = candidates[:cap]
                 listing = "\n".join(f"{i + 1}. {c['label']}" for i, c in enumerate(shown))
                 return {"kind": "ask",
-                        "answer": (f"仍有多筆相符（僅顯示前 {cap} 筆），您可回覆序號選擇，"
-                                   f"或直接提供合約編號指定：\n{listing}"),
+                        "answer": (f"符合的{noun}有多筆（僅顯示前 {cap} 筆），您可回覆序號選擇，"
+                                   f"或直接提供{noun}編號指定：\n{listing}"),
                         "candidates": shown}
             # N ≤ cap（或未設 cap＝不限）→ 列候選供選序號（同名多份靠區別欄位辨識）
             state.pop("_refine_requested", None)  # 已可列出＝分流解決，清補條件標記
