@@ -12,7 +12,7 @@
         <span class="label-text">當前迴圈：</span>
       </div>
       <select v-model="selectedLoopId" @change="onLoopChange" class="loop-select">
-        <option :value="null">請選擇迴圈...</option>
+        <option :value="null">不選迴圈（瀏覽所有 Run）</option>
         <option v-for="loop in availableLoops" :key="loop.loop_id" :value="loop.loop_id">
           #{{ loop.loop_id }} - {{ loop.loop_name }}
           ({{ getStatusLabel(loop.status) }}, 迭代: {{ loop.current_iteration }})
@@ -195,14 +195,15 @@ export default {
     },
 
     selectedLoopId(newLoopId) {
-      // 更新 URL
+      // 更新 URL；切回「不選迴圈」時要把 loopId 拿掉，否則刷新後又被鎖回迴圈視角
+      const query = { ...this.$route.query };
       if (newLoopId !== null) {
-        this.$router.push({
-          query: {
-            ...this.$route.query,
-            loopId: newLoopId
-          }
-        }).catch(() => {});
+        query.loopId = newLoopId;
+      } else {
+        delete query.loopId;
+      }
+      if (String(this.$route.query.loopId || '') !== String(query.loopId || '')) {
+        this.$router.push({ query }).catch(() => {});
       }
     }
   },
