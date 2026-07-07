@@ -12,7 +12,7 @@
 |------|------|
 | [系統架構總覽](./architecture-overview.md) ⭐ | 現況單一入口：使用者×路由×面向×資料體系×計量額度×品質×已知債 |
 | [統一部署 Runbook](./deployment-runbook.md) ⭐ | 33 migrations→匯入→重建→煙囪→稽核（部署唯一依據） |
-| [jgb2 租客端串接規格](./jgb2-tenant-chat-integration.md) | b2c 身分四件套契約（給 jgb2 工程） |
+| [jgb2 串接規格（正式版）](./jgb2-chat-integration.md) | 三形狀身分契約 b2b/b2c/prospect（給 jgb2 工程，含 b2b 待補齊項） |
 | 盤查報告與批次 | `scripts/audit/reports/`（知識/業者SOP盤查證據鏈與可重放批次） |
 | [Ground-truth Research](./research/README.md) | jgb2 原始碼盤查定案結論（各域真相依據） |
 | 知識批次 | `scripts/knowledge-batches/`（部署重放依賴） |

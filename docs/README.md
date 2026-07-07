@@ -29,7 +29,7 @@
 
 - **系統現況總覽（2026-07-06 起單一入口）**：[architecture-overview.md](./architecture-overview.md) ⭐ —— 三類使用者/路由順位/21+面向登記/資料體系分工/計量額度/品質三層/已知債
 - **統一部署**：[deployment-runbook.md](./deployment-runbook.md) ⭐（部署聖經，取代舊 deployment/ 指南）
-- **jgb2 租客端串接**：[jgb2-tenant-chat-integration.md](./jgb2-tenant-chat-integration.md)
+- **jgb2 串接規格（b2b/b2c/售前）**：[jgb2-chat-integration.md](./jgb2-chat-integration.md)
 - 架構真相來源：[完整對話架構](./architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md)、[Retriever Pipeline](./architecture/retriever-pipeline.md)
 - API 一覽：[API 端點完整清單](./API_ENDPOINTS_COMPLETE_INVENTORY.md)
 - 上手：[快速開始](./guides/getting-started/QUICKSTART.md)

@@ -81,7 +81,7 @@ POST /api/v1/message
 | 文件 | 用途 |
 |---|---|
 | `docs/deployment-runbook.md` | **統一部署聖經**（33 migrations→匯入→重建→煙囪→稽核） |
-| `docs/jgb2-tenant-chat-integration.md` | 租客端串接規格（給 jgb2 工程） |
+| `docs/jgb2-chat-integration.md` | jgb2 串接規格正式版：b2b/b2c/prospect 三形狀契約 |
 | `scripts/audit/check_invariants.sh` | 不變量稽核（維護準則在腳本頭） |
 | `scripts/audit/reports/` | 盤查報告與可重放批次（知識盤查/業者SOP盤查/修正批次/lookup 錨點） |
 | `scripts/usage/` | 計量治理 SQL（被遺忘權/內部重標/保留期清理） |
