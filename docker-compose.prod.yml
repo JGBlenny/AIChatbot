@@ -227,6 +227,22 @@ services:
       IMAGE_RECOGNITION_DETAIL: ${IMAGE_RECOGNITION_DETAIL:-low}
       IMAGE_MAX_DIMENSION: ${IMAGE_MAX_DIMENSION:-1024}
       IMAGE_COMPRESS_QUALITY: ${IMAGE_COMPRESS_QUALITY:-85}
+      # API Key 認證（開啟前 jgb2 前端須已帶 X-API-Key，否則現役 b2b 直接斷線）
+      RAG_API_AUTH_ENFORCE: ${RAG_API_AUTH_ENFORCE:-false}
+      # usage-metering 使用量計量（2026-07-06；預設開，關=零行為差異）
+      USAGE_METERING_ENABLED: ${USAGE_METERING_ENABLED:-true}
+      LLM_PRICING_PATH: ${LLM_PRICING_PATH:-}
+      USAGE_RETENTION_MONTHS: ${USAGE_RETENTION_MONTHS:-18}
+      # quota-management 額度警示寄信（SMTP 未設僅記 log 不寄）
+      QUOTA_SMTP_HOST: ${QUOTA_SMTP_HOST:-}
+      QUOTA_SMTP_PORT: ${QUOTA_SMTP_PORT:-587}
+      QUOTA_SMTP_USER: ${QUOTA_SMTP_USER:-}
+      QUOTA_SMTP_PASS: ${QUOTA_SMTP_PASS:-}
+      QUOTA_SMTP_FROM: ${QUOTA_SMTP_FROM:-}
+      QUOTA_WARN_EMAIL_TO: ${QUOTA_WARN_EMAIL_TO:-}
+      QUOTA_WARN_IN_CHAT: ${QUOTA_WARN_IN_CHAT:-false}
+      # 參數雙源切換（預設 configs；true 才改讀 lookup——2026-07-06 分工定案後保留開關）
+      VENDOR_PARAMS_FROM_LOOKUP: ${VENDOR_PARAMS_FROM_LOOKUP:-false}
     ports:
       - "8100:8100"
     depends_on:

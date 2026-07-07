@@ -1,24 +1,28 @@
 # 統一部署 Runbook
 
-> 涵蓋：五域對話面向（contract/billing/account/iot/estate）＋帳單診斷＋回測新架構＋
-> 使用量計量＋額度管制＋參數分工——**一批上**。依序執行 §0–§10，§11 為部署後掛帳。
+> 涵蓋：對話式診斷＋五域對話面向（contract/billing/account/iot/estate）＋帳單診斷＋回測新架構＋
+> 知識盤查修正＋使用量計量＋額度管制＋參數分工——**一批上**。依序執行 §0–§10，§11 為部署後掛帳。
 
 | § | 步驟 | 性質 |
 |---|---|---|
 | 0 | 前置（備份＋安全開關） | 必做 |
-| 1 | Migrations 33 支＋資料修正＋知識補強重放 | 必做 |
-| 2 | 知識批次匯入（九份） | 必做 |
+| 1 | Migrations 36 支（單一序列，含計量/額度/盤查修正）＋資料修復＋知識補強重放 | 必做 |
+| 2 | 知識批次匯入（12 份） | 必做 |
 | 3 | 進場路由微調 | 必做 |
 | 4 | 重建服務（含 semantic model 重抽） | 必做 |
 | 5 | 煙囪驗證（20 面向） | 必做 |
 | 6 | 回測新架構說明＋正式基準 | 部署後 |
-| 7–9 | 計量／額度／參數分工（版更檔與 env） | 必做（隨版更） |
+| 7–9 | 計量／額度／參數分工（env 與驗證；migration 已併 §1） | 必做（隨版更） |
 | 10 | `make audit` 不變量稽核 | **收尾必跑** |
 | 11 | 部署後掛帳 | 追蹤 |
+| 附錄A | **全庫搬遷路徑**（本機庫整顆搬 prod，取代 §1–§3） | 二選一 |
 
-> 產出：2026-07-04（estate 物件領域併入更新）　對應：contract 6.3＋billing 7.2＋account 5.2＋iot 5.2＋estate 5.2
+> **路徑二選一**：①逐支重放（§1–§3，prod 現庫上疊加）②全庫搬遷（附錄 A，本機庫即真相直接換庫）。
+> 2026-07-07 使用者裁定走**全庫搬遷**——§1–§3 跳過，§0/§4–§10 照做。
+> 更新：2026-07-07（migration 序列補全 36 支＋批次補列 12 份＋分支併版＋附錄 A 全庫搬遷）
 > 原則：全部指令由使用者在 prod 執行（[[feedback_prod_ops_self_run]]）；migration 皆冪等，重跑安全。
-> 前提：分支 `feature/category-two-level` 程式碼已隨版更上到 prod（含 `services/jgb/bills.py` status 讀取優先序修正——**jgb2 prod 補正 bills 欄位前後皆相容**，fallback 保舊行為）。
+> 前提：`feature/category-two-level` 已併入 **main**（bf67fba，2026-07-07）——**版更以 main 為準**
+> （含 `services/jgb/bills.py` status 讀取優先序修正——**jgb2 prod 補正 bills 欄位前後皆相容**，fallback 保舊行為）。
 
 ## 0. 前置
 
@@ -35,15 +39,23 @@ grep RAG_API_AUTH_ENFORCE <prod env>   # 應為已開；未開請設定後再部
 
 順帶檢查兩件先前掛帳（與本批無關但同機會處理）：chatflow 重構那批的 prod migration、`form_sessions.pending_question` 欄位 migration 是否已跑。
 
-## 1. Migrations（依序 33 支，皆冪等）
+## 1. Migrations（依序 36 支，皆冪等；按 commit 時序排列——後出的 seed 覆蓋先出的，順序不可換）
+
+> 2026-07-07 補全：原序列漏列 4 支合約/售前時代 migration（`backfill_contract_knowledge_diagnosis_category`／
+> `seed_conversational_diagnosis_contract_rule`／`backfill_presales_synth_rules`／`seed_contract_entry_anchor_colloquial`），
+> 並將 §7/§8 的計量/額度兩支與盤查修正一支併入單一序列。若 prod 曾跑過其中幾支，冪等重跑安全。
 
 ```bash
 cd rag-orchestrator/database/migrations
 for f in \
   split_base_system_context_extract_presales.sql \
-  add_contract_facet_categories.sql \
-  add_contract_facet_categories_v2.sql \
+  backfill_contract_knowledge_diagnosis_category.sql \
+  seed_conversational_diagnosis_contract_rule.sql \
   seed_domain_contract_system_context.sql \
+  add_contract_facet_categories.sql \
+  backfill_presales_synth_rules.sql \
+  seed_contract_entry_anchor_colloquial.sql \
+  add_contract_facet_categories_v2.sql \
   seed_contract_facet_system_context.sql \
   seed_contract_facet_configs.sql \
   add_closeout_secondary_call.sql \
@@ -69,10 +81,14 @@ for f in \
   backfill_test_scenario_audience.sql \
   add_test_scenario_gold_checks.sql \
   seed_bill_diagnosis_facet.sql \
+  audit_20260706_knowledge_fixes.sql \
+  add_usage_events.sql \
+  add_vendor_quotas.sql \
 ; do echo "== $f"; docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 < "$f" || break; done
 ```
 
 每支結尾有 `RAISE NOTICE ✅` 自檢（計數／互斥），看到非預期數字先停。
+（`create_digression_config.sql` 屬表單 v1.1 舊版更，prod 應已存在——§0 先前掛帳一併確認即可，不在本序列。）
 
 **1.1 資料修復（一次性，冪等）**：歷史迴圈回測的 evaluation 雙重編碼（backtest_client 包兩層 JSON，
 評級/逐字稿讀不到；2026-07-05 已修寫入端）——prod 套用：
@@ -84,7 +100,7 @@ WHERE jsonb_typeof(evaluation)='string' AND left(evaluation #>> '{}',1)='{';
 
 **1.2 金標改判（帳單診斷收編）**：已併入 `audit_20260706_knowledge_fixes.sql`（見 1.3）。
 
-**1.3 盤查 2026-07-06 資料修正＋知識批次**（migration 序列已含 `audit_20260706_knowledge_fixes.sql`——
+**1.3 盤查 2026-07-06 知識補強重放**（資料修正已由序列內 `audit_20260706_knowledge_fixes.sql` 完成——
 錯誤知識 5 筆修正/3367 轉直答/金標改判等）。新知識 INSERT 需 embedding，用 import 工具重放：
 
 ```bash
@@ -101,7 +117,7 @@ WHERE question_summary='取消點交邀請 取消點退邀請 收回邀請' AND 
 
 匯入後 semantic model 重抽（§4 已含）。盤查報告與豁免依據：`scripts/audit/reports/jgb-knowledge-audit-20260706.md`。
 
-## 2. 知識批次匯入（九份，均已人工審核通過）
+## 2. 知識批次匯入（12 份，均已人工審核通過）
 
 工具：`rag-orchestrator/tools/import_facet_knowledge.py`（冪等；updates 重算 embedding、新知識/錨點含 embedding）。連線走環境變數，prod 主機上視實際埠位覆寫（tune_routing.py 同）：
 
@@ -122,7 +138,11 @@ python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batch
 python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/iot-anchors-batch.json
 python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/estate-knowledge-batch.json
 python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/b2b-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/b2b-knowledge-batch-2.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/askbad-rootfix-batch.json
 ```
+
+（末兩份為 2026-07-05 閘門批：51 題抽驗長尾 7 筆＋ASK_BAD 根因批 1 修 3 補——2026-07-07 補列，原 runbook 漏收。）
 
 （IoT 批次無後置步驟：雙角色單發維持 system_provider 業態——b2b 檢索為嚴格業態過濾、NULL 會隱形；先例 3435/3458 同慣例。）
 
@@ -185,11 +205,7 @@ cd semantic_model && DB_HOST=localhost DB_NAME=aichatbot_admin DB_USER=aichatbot
 
 ## 7. usage-metering 使用量計量（2026-07-06）
 
-```bash
-# migration（冪等；已含於 §1 序列尾端則跳過）
-docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
-  < rag-orchestrator/database/migrations/add_usage_events.sql
-```
+migration（`add_usage_events.sql`）已含於 §1 序列尾端，本節只剩 env 與驗證。
 
 - **env（皆有預設可不設）**：`USAGE_METERING_ENABLED`（預設 true；關=零行為差異）、
   `LLM_PRICING_PATH`（外部單價 JSON，缺省用內建表）、`USAGE_RETENTION_MONTHS`（預設 18）
@@ -201,6 +217,7 @@ docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERR
 
 ## 8. quota-management 額度管制（2026-07-06）
 
+migration（`add_vendor_quotas.sql`）已含於 §1 序列尾端。
 疊在 usage-metering 上，opt-in——**未設額度的團隊零行為差異**。版更檔：app.py（middleware 擴充）、
 services/usage_metering.py（quota 區段）、admin app.py（/api/usage/quotas CRUD）、前端 build。
 
@@ -232,12 +249,18 @@ services/usage_metering.py（quota 區段）、admin app.py（/api/usage/quotas 
 make audit   # = scripts/audit/check_invariants.sh，exit 非 0 = 有違規，修完重跑
 ```
 
-四條不變量：動作知識必有面向接管（防「開關漏插」再犯——帳單診斷案根因）／
+六條不變量：動作知識必有面向接管（防「開關漏插」再犯——帳單診斷案根因）／
 backtest evaluation 必為 JSON 物件／服務容器關鍵檔與 repo 一致（防舊引擎）／
-面向必有系統脈絡。維護準則在腳本頭：修一類 bug＝加一條不變量；WARN 清單只准變短。
+面向必有系統脈絡／計量健全（內部流量漏標 FAIL、vendor 缺失 WARN）／
+額度一致（幽靈攔截 FAIL、寬限燒錢 WARN）。
+維護準則在腳本頭：修一類 bug＝加一條不變量；WARN 清單只准變短。
 
 ## 11. 部署後掛帳（不阻塞）
 
+- **jgb2 串接規格 v3 的 AI 側配套**（`docs/jgb2-chat-integration.md` §8.1，2026-07-07 定案）：
+  jgb2 端一律只送 `role_id` 不送 `vendor_id`——AI 側需 ①放寬 b2c 驗證層 `vendor_id` 必填
+  ②新增 `role_id`→`vendor_id` 反查（`vendors.settings->>'jgb_role_id'`）。**jgb2 前端按 v3 改版前必須完成**，
+  否則 b2c 請求會被 422 擋掉；現行 b2b（不帶 target_user）行為不受影響。前提：各業者 `jgb_role_id` 建妥。
 - jgb2 **preview→master 併版**（G1–G4＋帳務欄位）：存在性驅動，併上當天對應分支自動增強，不用配合改版。
 - G-gated 補測：billing 8.2*（VA 效期/取號狀態；滯納金屬客製排除）。contract 7.4（G5）與帳號 grounded 均已收案——**完整啟用共同條件：JGB Web 把登入成員 user_id 傳入 AI session**（viewer 整合議題）。
 - 設定引導「調整語族」錨點：等知識缺口管線收真實 miss 句再補（已決議）。
@@ -246,3 +269,116 @@ backtest evaluation 必為 JSON 物件／服務容器關鍵檔與 repo 一致（
 - estate G 清單已交付 jgb2（estate-api-contract.md）：G-E1（estates 放寬 is_open 過濾——現況診斷弱信號升級正面判定）選配；批次上傳範圍外（使用者裁定 2026-07-04，J-E1 已撤）。
 - 物件域掛帳：3861 vs 3862 建約前提表面矛盾（續約/上傳既存合約可能不走 pick 入口）待 jgb2 盤查釐清；3357 舊批次知識含過時口徑（批次範圍外掛帳不動）。
 - **SOP 角色隔離——已改判撤案（2026-07-05）**：原立案「租客向 SOP 攔截業者問句」經查為測試 harness 未帶 mode 的 artifact——生產隔離本已存在（jgb2 後台帶 mode='b2b'，chat.py:1633 b2b 不走 SOP；租客 b2c 走 SOP 受眾正確）。轉出並已收：錨點單發防呆（P0 程式修正）、e2e harness 全面補 mode='b2b'、b2b 知識補齊 3 件（3408 口徑補強＋退房換約＋電費六模式）。殘餘 G 掛帳：b2c＋property_manager 矛盾組合的呼叫端防呆警示（低優先）。煙囪驗證請以 mode='b2b' 發送業者句。
+
+## 附錄 A：全庫搬遷路徑（2026-07-07 裁定採用；取代 §1–§3）
+
+> 本機開發庫（知識/embedding/面向規則/系統脈絡/題庫/lookup/configs 全在裡面）即真相，
+> 整顆搬上 prod。優點：不用逐支重放、不需 prod 跑 embedding；代價：**prod 現庫上、
+> 本機沒有的資料會被蓋掉**。
+> **2026-07-07 使用者裁定簡化：prod 備份後直接覆蓋**——A-1 盤點/A-5 回灌省略、A-4 藍綠換庫
+> 簡化為 drop-restore（見 A-4 簡化版）；prod-only 資料若事後要撈，從 pre_swap 備份檔取。
+
+### A-1. 盤點 prod-only 資料（prod 上跑，決定保留清單）
+
+```sql
+-- prod 與本機各跑一次，對比計數；prod > 本機的表就是要保留/回灌的候選
+SELECT 'unclear_questions' t, count(*) FROM unclear_questions
+UNION ALL SELECT 'vendor_sop_items', count(*) FROM vendor_sop_items
+UNION ALL SELECT 'vendor_configs', count(*) FROM vendor_configs
+UNION ALL SELECT 'lookup_tables', count(*) FROM lookup_tables
+UNION ALL SELECT 'knowledge_base', count(*) FROM knowledge_base
+UNION ALL SELECT 'conversation_logs', count(*) FROM conversation_logs
+UNION ALL SELECT 'form_sessions', count(*) FROM form_sessions
+UNION ALL SELECT 'usage_events', count(*) FROM (SELECT 1 FROM usage_events LIMIT 1) s;  -- prod 未上計量時此表不存在，報錯即 0
+```
+
+重點三類：①**unclear_questions**（prod 真人 miss 句，知識缺口管線的原料——prod 較多必先導出）
+②**SOP／configs／lookup**（若 prod 後台在本機快照後有人工編修——比對 updated_at 最大值）
+③form_sessions 屬暫態可棄。有差異的表先導出：
+
+```bash
+docker exec aichatbot-postgres pg_dump -U aichatbot -d aichatbot_admin \
+  -t unclear_questions --data-only -Fc -f /tmp/prod_only.dump   # 視盤點結果加 -t
+```
+
+### A-2. 本機出貨前清理（在本機庫執行，дump 前）
+
+```sql
+-- 計量歸零：本機測試事件不得成為 prod 計費痕跡（額度月計數也隨之乾淨）
+TRUNCATE usage_events;
+-- 測試額度清掉（prod 要用時由後台重設）
+DELETE FROM vendor_quotas;
+-- 暫態表
+TRUNCATE form_sessions;
+```
+
+回測歷史（backtest_runs/results、迴圈）**保留**——搬上去即 8087 的基準線延續，內部流量標記完備不影響統計。
+
+### A-3. 本機 dump → 傳輸
+
+```bash
+docker exec aichatbot-postgres pg_dump -U aichatbot -d aichatbot_admin -Fc -f /tmp/aichatbot_full.dump
+docker cp aichatbot-postgres:/tmp/aichatbot_full.dump ./aichatbot_full_$(date +%Y%m%d).dump
+scp aichatbot_full_*.dump <prod主機>:~/
+```
+
+### A-4 簡化版（裁定採用）：備份後直接覆蓋
+
+```bash
+# 1) 備份現行（唯一回滾點，必做）
+docker exec aichatbot-postgres pg_dump -U aichatbot -d aichatbot_admin | gzip > backups/pre_swap_$(date +%Y%m%d_%H%M).sql.gz
+
+# 2) 停打 DB 的服務（restore 期間停機）
+docker stop aichatbot-rag-orchestrator aichatbot-knowledge-admin
+
+# 3) 覆蓋：斷連線 → drop → 重建 → restore
+docker cp aichatbot_full_*.dump aichatbot-postgres:/tmp/full.dump
+docker exec aichatbot-postgres psql -U aichatbot -d postgres -c \
+  "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='aichatbot_admin' AND pid<>pg_backend_pid();"
+docker exec aichatbot-postgres dropdb -U aichatbot aichatbot_admin
+docker exec aichatbot-postgres createdb -U aichatbot aichatbot_admin
+docker exec aichatbot-postgres pg_restore -U aichatbot -d aichatbot_admin --no-owner /tmp/full.dump
+
+# 4) 抽驗 → 起服務（§4 重建含重啟，可直接接 §4）
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "SELECT count(*) FROM knowledge_base; SELECT count(*) FROM knowledge_base WHERE category='對話規則' AND is_active;"
+```
+
+回滾＝`dropdb`＋`createdb`＋灌回 pre_swap 備份檔。
+
+### A-4 原案（藍綠換庫，停機窗＝rename 一瞬；備查不採用）
+
+```bash
+# 備份現行（回滾保險）
+docker exec aichatbot-postgres pg_dump -U aichatbot -d aichatbot_admin | gzip > backups/pre_swap_$(date +%Y%m%d_%H%M).sql.gz
+
+# 還原到新庫（不動現庫，服務照跑）
+docker cp aichatbot_full_*.dump aichatbot-postgres:/tmp/full.dump
+docker exec aichatbot-postgres createdb -U aichatbot aichatbot_admin_new
+docker exec aichatbot-postgres pg_restore -U aichatbot -d aichatbot_admin_new --no-owner /tmp/full.dump
+
+# 抽驗新庫（knowledge_base 計數/對話規則 22 筆/pgvector 可查）
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin_new -c \
+  "SELECT count(*) FROM knowledge_base; SELECT count(*) FROM knowledge_base WHERE category='對話規則' AND is_active;"
+
+# 換庫（先停打 DB 的服務 → 斷連線 → rename → 起服務）
+docker stop aichatbot-rag-orchestrator aichatbot-knowledge-admin
+docker exec aichatbot-postgres psql -U aichatbot -d postgres -c \
+  "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname IN ('aichatbot_admin','aichatbot_admin_new') AND pid<>pg_backend_pid();
+   ALTER DATABASE aichatbot_admin RENAME TO aichatbot_admin_old_20260707;
+   ALTER DATABASE aichatbot_admin_new RENAME TO aichatbot_admin;"
+```
+
+回滾＝反向 rename（old 庫原封不動留著，確認穩定一週後再刪）。
+
+### A-5. prod-only 資料回灌（A-1 有導出才做）
+
+```bash
+docker exec aichatbot-postgres pg_restore -U aichatbot -d aichatbot_admin --data-only /tmp/prod_only.dump
+```
+
+### A-6. 後續照本 runbook 主線
+
+- **§4 重建服務＋semantic model 重抽**——換庫必做（[[project_deploy_semantic_model]]：reranker 與新庫不同步＝排序失真）
+- §0-2 安全開關、§5 煙囪 20 面向、§7/§8 env（計量預設即開；SMTP 要寄警示信才設）、§10 `make audit`
+- **跳過**：§1 migrations／§2 知識批次／§3 tune_routing（全在庫裡）；§9 只剩「業者資料核實」仍有效
