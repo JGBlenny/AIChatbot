@@ -160,3 +160,21 @@ def test_no_grounding_note_no_block():
     opt = _opt({"action": "ask", "next_question": "q", "extracted_fields": {}})
     opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "x")
     assert "已鎖定資料" not in _sent_user_prompt(opt)
+
+
+# ────────────────────── converge 答案記史（不重述已答內容） ──────────────────────
+
+@pytest.mark.req("conversational-diagnosis:2.4")
+async def test_converge_answer_recorded_into_dialog():
+    """收斂合成完成後答案記入 dialog——使用者複述/追問出口時 brain 知道剛答過什麼
+    （2026-07-07 實測：複述選項一，AI 原樣重述整段判定）。"""
+    eng = _engine({"action": "converge", "converge_kind": "answer",
+                   "extracted_fields": {}, "next_question": "備用"})
+    state = {"config_key": "contract_change",
+             "collected_fields": {"contract_ref": "85646"}, "asked_count": 2}
+    eng.get_state = AsyncMock(return_value=state)
+    eng._ground_by_api = AsyncMock(return_value={"kind": "converge", "grounding": "G"})
+    eng.optimizer.synthesize_presales_answer = MagicMock(return_value="兩個出口：複製重簽或申請書")
+    r = await eng.handle("s1", "u1", 7, "查我合約", config=_api_cfg())
+    assert r["answer"] == "兩個出口：複製重簽或申請書"
+    assert state["dialog"][-1] == {"u": "查我合約", "a": "兩個出口：複製重簽或申請書"}

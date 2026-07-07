@@ -511,11 +511,14 @@ class ConversationalEngine:
             print(f"❌ 對話引擎 prepare 失敗（降級）：{e}")
             return None
 
-    async def _finalize_converge(self, decision) -> None:
-        """converge 合成完成後：推薦型標記 recommended；保存狀態（不關閉會話，續對話接得上）。"""
+    async def _finalize_converge(self, decision, answer_text: Optional[str] = None) -> None:
+        """converge 合成完成後：推薦型標記 recommended；答案記入對話史（brain 才知道
+        自己剛答過什麼，使用者複述/追問出口時不重述整段——2026-07-07 實測）；保存狀態。"""
         state = decision["state"]
         if decision["converge_kind"] != "answer":
             state["recommended"] = True
+        if answer_text:
+            _note_turn(state, decision.get("user_message") or "", answer_text)
         await self._save(decision["session_id"], state)
 
     async def handle(self, session_id, user_id, vendor_id, user_message,
@@ -534,7 +537,7 @@ class ConversationalEngine:
             decision["user_message"], decision["cta_mode"])
         if not reco:
             return None
-        await self._finalize_converge(decision)
+        await self._finalize_converge(decision, answer_text=reco)
         return {"answer": reco, "conversational": True, "converged": decision["converge_kind"] != "answer"}
 
     async def stream_answer(self, decision):
@@ -546,15 +549,15 @@ class ConversationalEngine:
             if q:
                 yield q
             return
-        got = False
+        buf: List[str] = []
         async for chunk in self.optimizer.synthesize_presales_answer_stream(
                 decision["grounding"], decision["ctx"], decision["system_md"],
                 decision["user_message"], decision["cta_mode"]):
             if chunk:
-                got = True
+                buf.append(chunk)
                 yield chunk
-        if got:
-            await self._finalize_converge(decision)
+        if buf:
+            await self._finalize_converge(decision, answer_text="".join(buf))
 
     # ---------- API grounding（select:"api"，conversational-diagnosis R3.1–R3.6/R6.1/R6.3） ----------
     async def _ground_by_api(self, state: Dict[str, Any],
