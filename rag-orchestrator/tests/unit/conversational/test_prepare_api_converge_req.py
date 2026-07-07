@@ -63,7 +63,9 @@ async def test_api_converge_uses_api_grounding():
     assert decision["kind"] == "converge"
     assert decision["grounding"] == "API_G"
     assert decision["ctx"] is None
-    assert decision["cta_mode"] == "suppress"
+    # 2026-07-07 語義拆分：面向事實收斂＝factual（售前 demo 壓制措辭不得漏入，
+    # 否則 LLM 泛化成「不放任何連結」吃掉功能性連結——申請書下載實測）
+    assert decision["cta_mode"] == "factual"
     eng._ground_by_api.assert_awaited_once()
     eng._converge_grounding.assert_not_awaited()  # api 路不走既有知識 grounding
 

@@ -369,8 +369,9 @@ class ConversationalEngine:
                     self.db_pool, state.get("face") or _domain_key(config))
                 r = await self._ground_by_api(state, config, user_message=user_message)
                 if r["kind"] == "converge":
+                    await self._save(session_id, state)   # 落地 grounding_note（後續輪 brain 取現況）
                     return {"kind": "converge", "grounding": r["grounding"], "ctx": None,
-                            "cta_mode": "suppress", "converge_kind": "answer", "system_md": _synth_context(system_md, config),
+                            "cta_mode": "factual", "converge_kind": "answer", "system_md": _synth_context(system_md, config),
                             "session_id": session_id, "state": state, "user_message": user_message}
                 # 仍非單筆（資料異動，少見）→ 安全降級回 ask（含可能新候選）
                 if r.get("candidates"):
@@ -400,7 +401,7 @@ class ConversationalEngine:
                     system_md = await self._get_system_context(
                         self.db_pool, state.get("face") or _domain_key(config))
                     return {"kind": "converge", "grounding": r["grounding"], "ctx": None,
-                            "cta_mode": "suppress", "converge_kind": "answer", "system_md": _synth_context(system_md, config),
+                            "cta_mode": "factual", "converge_kind": "answer", "system_md": _synth_context(system_md, config),
                             "session_id": session_id, "state": state, "user_message": user_message}
                 if r.get("candidates"):
                     state["pending_candidates"] = r["candidates"]
@@ -497,7 +498,8 @@ class ConversationalEngine:
                     _note_turn(state, user_message, r["answer"])
                     await self._save(session_id, state)
                     return {"kind": "ask", "answer": r["answer"]}
-                grounding, ctx, cta_mode = r["grounding"], None, "suppress"  # 1 筆 → 事實型合成（不複述情境/不推 CTA）
+                grounding, ctx, cta_mode = r["grounding"], None, "factual"  # 1 筆 → 事實型合成（不複述情境/不推 CTA）
+                await self._save(session_id, state)   # 落地 grounding_note（後續輪 brain 取現況）
             else:
                 grounding, ctx, cta_mode = await self._converge_grounding(
                     state, step.get("converge_topic"), user_message, config, converge_kind)
@@ -719,6 +721,9 @@ class ConversationalEngine:
         head = "｜".join(str(p) for p in (rid, label) if p is not None and p != "")
         parts = [p for p in (head, result.get("formatted_response")) if p]
         grounding = "\n".join(parts) if parts else str(rows[0])
+        # ★ 底稿摘要回饋 state：後續輪 brain 才知道系統已查得的現況（如租期起迄）——
+        #   否則會回頭問使用者系統早就有的值（2026-07-07 申請書槽位實測：問「目前的租期是什麼」）。
+        state["grounding_note"] = grounding[:600]
         return {"kind": "converge", "grounding": grounding}
 
     async def _converge_grounding(self, state, converge_topic, user_message, config, converge_kind):

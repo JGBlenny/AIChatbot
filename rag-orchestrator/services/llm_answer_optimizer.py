@@ -851,6 +851,11 @@ class LLMAnswerOptimizer:
             system_prompt = f"{system_context_md}\n\n{rules_text}{faces_note}".strip()
             # 對話史（引擎 ask 返回點記入 state.dialog）：brain 必須知道自己問過什麼——
             # 否則純中文名稱回覆對不上槽位、且會原句重問（2026-07-07 線上實測缺陷）。
+            # 已鎖定底稿摘要（引擎收斂時記入）：現況值直接取用，不回頭問使用者系統已有的資料。
+            _gnote = state.get('grounding_note') or ""
+            gnote_block = (f"【已鎖定資料（系統查得的現況）】\n{_gnote}\n"
+                           "（現況/異動前等欄位的值可直接取自上述資料，"
+                           "不要再問使用者系統已查得的現況。）\n") if _gnote else ""
             _dialog = state.get('dialog') or []
             hist_block = ""
             if _dialog:
@@ -867,6 +872,7 @@ class LLMAnswerOptimizer:
                 f"【已知欄位】{json.dumps(collected, ensure_ascii=False)}\n"
                 f"【asked_count】{asked}\n"
                 f"【已給過推薦】{recommended}\n"
+                f"{gnote_block}"
                 f"{hist_block}"
                 f"【使用者最新訊息】{user_message}\n\n請依規則輸出 JSON。"
             )
@@ -919,16 +925,22 @@ class LLMAnswerOptimizer:
             "\n請依系統脈絡的口吻與合規鐵則，整合上述情境與知識，生成個人化、自然的回覆；"
             "只用提供的事實，缺的導向出口。"
         )
-        # cta_mode=='force' 的 CTA/排版塊已外移設定（config.cta_rules，引擎於 system_md 附加）；
-        # 此處只保留通用的 suppress 語意（延續對話直接答，不推銷）。
+        # cta_mode=='force' 的 CTA/排版塊已外移設定（config.cta_rules，引擎於 system_md 附加）。
+        # suppress＝售前延續對話（壓 demo 推銷）；factual＝面向事實收斂（售前措辭不得漏入——
+        #   2026-07-07 實測：demo 限制被 LLM 泛化成「不放任何連結」，吃掉申請書下載連結）。
         if cta_mode == "suppress":
             user_prompt += (
                 "\n【限制】這是延續對話中的回答，請**直接把問題答清楚就好，不要附上 demo 預約連結、"
                 "也不要主動推銷預約**（除非使用者自己問怎麼預約）；保持自然。"
             )
-        # 事實型答問（suppress，如診斷收斂）走低溫：答案應近確定性、不該因溫度抖動
+        elif cta_mode == "factual":
+            user_prompt += (
+                "\n【限制】這是延續對話中的事實回答，直接把問題答清楚、不推銷；"
+                "系統脈絡或規則要求附上的功能性連結（檔案下載、操作頁面）**照附**。"
+            )
+        # 事實型答問（suppress/factual，如診斷收斂）走低溫：答案應近確定性、不該因溫度抖動
         #   （同輸入曾出現可/不可互相矛盾）。推薦/一般合成維持原溫度（口吻多樣性）。
-        if cta_mode == "suppress":
+        if cta_mode in ("suppress", "factual"):
             temp = float(os.getenv("LLM_ANSWER_SYNTH_TEMP", "0.2"))
         else:
             temp = float(os.getenv("LLM_SYNTHESIS_TEMP", "0.5"))

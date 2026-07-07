@@ -125,3 +125,38 @@ async def test_dialog_capped_at_six():
     assert len(state["dialog"]) == 6                 # 滾動上限
     assert state["dialog"][-1]["u"] == "第七句"      # 新的進
     assert state["dialog"][0]["u"] == "u1"           # 最舊的出
+
+
+# ────────────────────── grounding_note：底稿回饋 brain ──────────────────────
+
+@pytest.mark.req("conversational-diagnosis:2.4")
+async def test_ground_by_api_converge_stores_grounding_note():
+    """單筆收斂時把底稿摘要存 state——後續輪 brain 才知道系統已查得的現況
+    （2026-07-07 實測：申請書槽位回頭問「目前的租期是什麼」）。"""
+    eng = _engine({"action": "ask", "next_question": "q", "extracted_fields": {}})
+    eng.api_handler.execute_api_call = AsyncMock(return_value={
+        "success": True, "data": {"data": [{"id": 85646, "title": "0707"}]},
+        "formatted_response": "已簽約（待點交）；租期 2026/07/01–2026/07/30"})
+    state = {"collected_fields": {"contract_ref": "85646"}, "role_id": "20151"}
+    r = await eng._ground_by_api(state, _api_cfg())
+    assert r["kind"] == "converge"
+    assert "租期 2026/07/01–2026/07/30" in state["grounding_note"]
+
+
+@pytest.mark.req("conversational-diagnosis:2.4")
+def test_grounding_note_rendered_into_brain_prompt():
+    opt = _opt({"action": "ask", "next_question": "q", "extracted_fields": {}})
+    state = {"collected_fields": {},
+             "grounding_note": "85646｜0707\n租期 2026/07/01–2026/07/30"}
+    opt.conversational_step("RULES", "SYS", state, "填寫資料異動申請書")
+    up = _sent_user_prompt(opt)
+    assert "已鎖定資料" in up
+    assert "租期 2026/07/01–2026/07/30" in up
+    assert "不要再問使用者" in up
+
+
+@pytest.mark.req("conversational-diagnosis:2.4")
+def test_no_grounding_note_no_block():
+    opt = _opt({"action": "ask", "next_question": "q", "extracted_fields": {}})
+    opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "x")
+    assert "已鎖定資料" not in _sent_user_prompt(opt)
