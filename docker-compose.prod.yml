@@ -265,7 +265,8 @@ services:
       BATCH_SIZE: 32
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      # image 無 curl（2026-07-07 部署實測 unhealthy 誤報）→ 改用 python 內建 urllib
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3
