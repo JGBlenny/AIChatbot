@@ -1,0 +1,32 @@
+{
+  "_meta": {
+    "source": "jgb-knowledge-audit-20260706 檢索未命中排查（run310↔311 翻面案 2 題根因）",
+    "gate": "人工閘門待審——審核通過後以 import_facet_knowledge.py knowledge 模式入庫（含 embedding）",
+    "root_causes": {
+      "case_1": "問句用具體狀態名（待發送/待租客簽回/待房東簽名），庫內只有 3373「合約狀態 12 階段總覽」——狀態詞彙不在任何 question_summary，向量對不上（top1 僅 0.584 且無關）",
+      "case_2": "「取消已發出的點交邀請」top1=3512 正確但 final 0.738 卡 0.75 進場門檻下，灰帶抖動兩輪翻面——補一筆詞彙更貼近的錨點拉高命中分"
+    }
+  },
+  "knowledge": [
+    {
+      "question": "簽約前狀態 待發送 待租客簽回 待房東簽名 差別",
+      "answer": "這三個是合約「簽約前」階段的狀態，依簽署進度遞進：（1）待發送：合約剛建立完成，尚未把簽約邀請發送給租客，此時可自由編輯合約內容；（2）待租客簽回：已送出簽約邀請，等待租客線上簽名；（3）待房東簽名：租客已完成簽名，換房東（或管理方）簽名。雙方都簽完後合約進入「已簽署」，開始生效並自動產生帳單。若邀請逾期或想修改內容，可取消邀請退回待發送狀態重新編輯。",
+      "categories": ["合約管理"],
+      "target_user": ["property_manager", "tenant"],
+      "business_types": ["system_provider"],
+      "action_type": "direct_answer",
+      "truth_ref": "jgb2 Contract.php:38-40（CONTRACT_READY=1 待發送/CONTRACT_INVITING=2 待租客簽回/CONTRACT_INVITING_NEXT=4 待房東簽名）"
+    },
+    {
+      "question": "取消點交邀請 取消點退邀請 收回邀請",
+      "answer": "",
+      "categories": ["條件診斷：合約", "狀態判斷"],
+      "target_user": ["property_manager", "tenant"],
+      "business_types": ["system_provider"],
+      "form_id": "jgb_contract_query",
+      "action_type": "form_fill",
+      "note": "錨點知識（answer 空，沿 3511/3512/3513 慣例）——進合約診斷面向按該合約現值判定可否取消；補此錨點使「取消點交邀請」問法向量命中 >0.75 穩定進場",
+      "truth_ref": "既有 3512 條件（取消點交需 status=16、取消點退需 status=6），面向 formatter 已涵蓋"
+    }
+  ]
+}

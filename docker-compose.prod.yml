@@ -88,6 +88,9 @@ services:
     volumes:
       # 生產環境：只掛載必要的數據目錄和腳本
       - ./knowledge-admin/backend/create_admin.py:/app/create_admin.py:ro
+      # app.py 掛載即時生效（admin-api image 建置卡上游 apt 源 404——Dockerfile 修復前的過渡；
+      # 修復方向：docker.io 改 docker-ce-cli 或靜態 docker binary）
+      - ./knowledge-admin/backend/app.py:/app/app.py:ro
       - ./test_scenarios_smoke.xlsx:/app/test_scenarios_smoke.xlsx:ro
       - ./test_scenarios_full.xlsx:/app/test_scenarios_full.xlsx:ro
       - ./output:/app/output
@@ -216,6 +219,8 @@ services:
       FORM_TRIGGER_THRESHOLD: ${FORM_TRIGGER_THRESHOLD:-0.75}
       # 回測系統配置
       BACKTEST_BASE_URL: ${BACKTEST_BASE_URL:-http://rag-orchestrator:8100}
+      # 多輪模擬器情境卡綁定的測試角色（37305 有租約中/刊登中物件與電表真資料）
+      BACKTEST_ROLE_ID: ${BACKTEST_ROLE_ID:-37305}
       # 圖片辨識配置（2026-04-28）
       ENABLE_IMAGE_RECOGNITION: ${ENABLE_IMAGE_RECOGNITION:-false}
       IMAGE_RECOGNITION_MODEL: ${IMAGE_RECOGNITION_MODEL:-gpt-4o}

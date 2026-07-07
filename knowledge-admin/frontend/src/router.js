@@ -18,6 +18,7 @@ import KnowledgeExportView from './views/KnowledgeExportView.vue';
 import DocumentConverterView from './views/DocumentConverterView.vue';
 // Backtest Results
 import BacktestView from './views/BacktestView.vue';
+import UsageStatsView from './views/UsageStatsView.vue';
 // Test Scenarios Management
 import TestScenariosView from './views/TestScenariosView.vue';
 import PendingReviewView from './views/PendingReviewView.vue';
@@ -29,6 +30,7 @@ import CacheManagementView from './views/CacheManagementView.vue';
 import BusinessTypesConfigView from './views/BusinessTypesConfigView.vue';
 // Category Config Management
 import CategoryConfigView from './views/CategoryConfigView.vue';
+import ApiKeyManagementView from './views/ApiKeyManagementView.vue';
 // Target User Config Management
 import TargetUserConfigView from './views/TargetUserConfigView.vue';
 import ConversationalConfigView from './views/ConversationalConfigView.vue';
@@ -130,6 +132,11 @@ const routes = [
     path: '/backtest',
     name: 'Backtest',
     component: BacktestView
+  },
+  {
+    path: '/usage-stats',
+    name: 'UsageStats',
+    component: UsageStatsView
   },
   {
     path: '/test-scenarios',
@@ -253,6 +260,15 @@ const routes = [
     path: '/api-endpoints',
     name: 'ApiEndpoints',
     component: ApiEndpointsView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  // API Key Management（服務對服務金鑰）
+  {
+    path: '/api-keys',
+    name: 'ApiKeys',
+    component: ApiKeyManagementView,
     meta: {
       requiresAuth: true
     }

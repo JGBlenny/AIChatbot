@@ -93,6 +93,10 @@
                 <span class="nav-icon">🔌</span>
                 <span class="nav-text">API 端點管理</span>
               </router-link>
+              <router-link to="/api-keys" class="nav-item nav-item-sub">
+                <span class="nav-icon">🔑</span>
+                <span class="nav-text">API 金鑰管理</span>
+              </router-link>
             </div>
           </div>
         </div>
@@ -137,6 +141,10 @@
           <router-link to="/backtest" class="nav-item">
             <span class="nav-icon">📊</span>
             <span class="nav-text">回測管理</span>
+          </router-link>
+          <router-link to="/usage-stats" class="nav-item">
+            <span class="nav-icon">📈</span>
+            <span class="nav-text">使用量統計</span>
           </router-link>
         </div>
 
@@ -243,6 +251,7 @@ export default {
         '/chat-test': 'Chat 測試',
         '/test-scenarios': '測試題庫',
         '/backtest': '回測結果',
+        '/usage-stats': '使用量統計',
         '/cache-management': '緩存管理',
         '/target-users-config': '目標用戶配置',
         '/business-types-config': '業態類型配置',

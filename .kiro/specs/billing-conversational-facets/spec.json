@@ -1,0 +1,43 @@
+{
+  "feature_name": "billing-conversational-facets",
+  "created_at": "2026-07-03T01:30:00Z",
+  "updated_at": "2026-07-03T03:20:00Z",
+  "phase": "tasks-generated",
+  "language": "zh-TW",
+  "project_description": "在 contract-conversational-facets 定型的面向化路徑（母子分類＋資料四件套＋FACE_BUILDERS 領域檔＋face 貫穿，擴領域零改引擎）之上，擴充「帳單/帳務」領域的對話面向。現況：conversational-diagnosis v1.1 已有 4 個單發診斷引擎（services/jgb/bills.py diagnose_bill、payments.py 繳費紀錄、invoices.py 發票、subscription.py 訂閱）與條件診斷知識（條件診斷：帳單×3、發票×2），但未面向化——無母子分類、無多輪對話、無系統脈絡疊加。素材證據：客服 Excel 帳務類官方回覆 11 則（超商繳費狀態不跳轉、虛擬帳號過期/格式/臨櫃匯款、租客看不到帳單、匯款上限、一元帳單測試流程）；合約基準回測非合約失敗樣本含繳費週期選項、發票補開/差額發票時機、滯納金規則等缺口；既有帳務知識 帳單管理 12＋發票開立 10＋付款金流 5 筆。候選子面向（需求階段以頻率分析定案）：1. 繳費金流排障（多輪：租客說繳了但未入帳→ground 繳費紀錄/帳單狀態→超商未轉出/虛擬帳號過期/匯款上限分支→解法或導客服）；2. 帳單異常診斷（金額不對/沒產生/看不到→ground 帳單明細與合約設定）；3. 發票（何時開/補開/差額/作廢→ground 發票紀錄）；4. 滯納金（產生規則/客製版本/爭議，含既有 3531/3532 知識）；5. 帳單設定引導（輕引導：週期/繳費期限/發送日/收款帳戶，無 grounding 或 select=category）。領域檔於 services/jgb/bills.py 平行擴充 FACE_BUILDERS（face 貫穿機制現成）；jgb2 API 現有 jgb_bills（含 G3 is_archived/archive_ymd 已上線）、jgb_bill_detail、jgb_payment_logs、jgb_invoice_logs、jgb_subscription 端點，缺口待 research 盤查 jgb2 真碼後定 G 清單（存在性驅動，兩端獨立部署）。邊界：點退帳單/帳單封存屬合約域退租收尾（共用出口不重複開面向）；押金結算屬點退清單流程；金流工程事故識別後導客服不對話化。原則沿用：先盤 jgb2 ground truth（金流狀態機/對帳排程/發票開立時點/滯納金結算規則以程式證據為準，客服口徑錯誤處以真碼修正）、機械解碼與可否判斷由 formatter 決定性算、LLM 只轉述 facts、知識產製理解情境不搬運、進對話 vs 單發準則（模糊起手掛面向、具體操作單發）、persona_role 用面向專屬鍵防規則互蓋、進場路由回歸測試（test_facet_entry_routing_req.py 模式）納入驗收。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "implementation": {
+    "started": true,
+    "completed": false,
+    "tasks_completed": [
+      "1.1",
+      "2.1",
+      "3.1",
+      "3.2",
+      "3.3",
+      "3.4",
+      "4.1",
+      "4.2",
+      "4.3",
+      "4.4",
+      "8.1",
+      "5.1",
+      "5.2",
+      "5.3",
+      "5.4"
+    ]
+  }
+}

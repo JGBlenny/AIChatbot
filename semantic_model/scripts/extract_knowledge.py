@@ -49,7 +49,7 @@ def extract_knowledge_base(vendor_id=None):
                     created_at,
                     updated_at
                 FROM knowledge_base
-                WHERE vendor_id = %s AND is_active = true
+                WHERE %s = ANY(vendor_ids) AND is_active = true
                 ORDER BY id
             """, (vendor_id,))
         else:
@@ -64,7 +64,7 @@ def extract_knowledge_base(vendor_id=None):
                     priority,
                     keywords,
                     scope,
-                    vendor_id,
+                    vendor_ids,
                     created_at,
                     updated_at
                 FROM knowledge_base
@@ -97,7 +97,7 @@ def extract_knowledge_base(vendor_id=None):
                     "priority": row[5],
                     "keywords": row[6] if row[6] else [],
                     "scope": row[7],
-                    "vendor_id": row[8],
+                    "vendor_ids": list(row[8] or []),
                     "created_at": row[9].isoformat() if row[9] else None,
                     "updated_at": row[10].isoformat() if row[10] else None
                 })

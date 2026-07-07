@@ -5,12 +5,24 @@
 """
 
 import asyncio
+import json
 import os
 import sys
 import datetime
 from typing import Dict, List, Optional
 import psycopg2.pool
 import psycopg2.extras
+
+
+def _as_dict(value):
+    """framework 的 evaluation 是 json.dumps 過的字串（直跑 runner 直插 jsonb 用）；
+    這裡再包 psycopg2 Json 會變雙重編碼、->>'grade' 全讀不到——先正規化成 dict。"""
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except (ValueError, TypeError):
+            return {"raw": value}
+    return value or {}
 
 
 # 動態導入回測框架
@@ -313,7 +325,8 @@ class BacktestFrameworkClient:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 query = """
                     SELECT id, test_question, expected_answer,
-                           difficulty, source, expected_intent_id as intent_id
+                           difficulty, source, expected_intent_id as intent_id,
+                           request_target_user, request_mode
                     FROM test_scenarios
                     WHERE is_active = true
                 """
@@ -330,6 +343,9 @@ class BacktestFrameworkClient:
                     if filters.get('intent_ids'):
                         query += " AND intent_id = ANY(%s)"
                         params.append(filters['intent_ids'])
+                    if filters.get('target_user'):
+                        query += " AND request_target_user = %s"
+                        params.append(filters['target_user'])
 
                 query += " ORDER BY id LIMIT %s"
                 params.append(batch_size)
@@ -351,7 +367,8 @@ class BacktestFrameworkClient:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute("""
                     SELECT id, test_question, expected_answer,
-                           difficulty, source, expected_intent_id as intent_id
+                           difficulty, source, expected_intent_id as intent_id,
+                           request_target_user, request_mode
                     FROM test_scenarios
                     WHERE id = ANY(%s) AND is_active = true
                     ORDER BY id
@@ -439,8 +456,8 @@ class BacktestFrameworkClient:
                         result.get('accuracy'),
                         result.get('intent_match'),
                         result.get('quality_overall'),
-                        psycopg2.extras.Json(result.get('evaluation', {})),
-                        psycopg2.extras.Json(result.get('response_metadata', {}))
+                        psycopg2.extras.Json(_as_dict(result.get('evaluation', {}))),
+                        psycopg2.extras.Json(_as_dict(result.get('response_metadata', {})))
                     ))
 
                 # 批次插入

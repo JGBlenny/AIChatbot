@@ -16,6 +16,7 @@
 - [管理員管理 API](#管理員管理-api)
 - [角色管理 API](#角色管理-api)
 - [配置管理 API](#配置管理-api)
+- [API 金鑰管理 API](#api-金鑰管理-api)
 - [錯誤代碼](#錯誤代碼)
 
 ---
@@ -130,7 +131,7 @@ curl http://localhost:8000/api/knowledge/123
   "vendor_ids": null,
   "form_id": null,
   "video_url": null,
-  "category": "帳務",
+  "categories": ["帳務"],
   "intents": [
     {
       "id": 5,
@@ -165,7 +166,7 @@ curl http://localhost:8000/api/knowledge/123
 | `vendor_ids` | array[integer] | ❌ | 業者 ID 列表（支援多業者關聯，例如：[1, 2, 3]） |
 | `form_id` | string | ❌ | 關聯表單 ID |
 | `video_url` | string | ❌ | 影片連結 |
-| `category` | string | ❌ | 分類 |
+| `categories` | array[string] | ❌ | 主題分類（多值；唯一真實來源。單數 `category` 已退役，僅承載文件角色保留值） |
 | `intent_ids` | array[integer] | ❌ | 意圖 ID 列表 |
 
 **範例**:
@@ -1211,7 +1212,13 @@ curl -X DELETE "http://localhost:8000/api/target-users-config/仲介" \
 
 ### GET /api/category-config
 
-取得所有 Category 配置
+取得所有 Category 配置（支援兩層分類）
+
+**Query Parameters**:
+
+| 參數 | 類型 | 必填 | 說明 |
+|------|------|------|------|
+| `include_inactive` | boolean | ❌ | 是否包含已停用的分類（預設 false） |
 
 **範例**:
 
@@ -1223,17 +1230,253 @@ curl http://localhost:8000/api/category-config
 
 ```json
 {
-  "total": 10,
-  "items": [
+  "categories": [
     {
       "id": 1,
-      "value": "帳務",
-      "label": "帳務",
-      "is_enabled": true,
+      "category_value": "帳務",
+      "display_name": "帳務",
+      "description": null,
+      "display_order": 0,
+      "is_active": true,
+      "parent_value": null,
       "usage_count": 25,
-      "created_at": "2025-10-01T00:00:00"
+      "created_at": "2025-10-01T00:00:00",
+      "updated_at": "2025-10-01T00:00:00"
+    },
+    {
+      "id": 7,
+      "category_value": "售前競品",
+      "display_name": "售前競品",
+      "description": null,
+      "display_order": 0,
+      "is_active": true,
+      "parent_value": "售前",
+      "usage_count": 8,
+      "created_at": "2026-06-24T00:00:00",
+      "updated_at": "2026-06-24T00:00:00"
     }
   ]
+}
+```
+
+**說明**:
+- `parent_value`：兩層分類的父層分類值（`null` = 頂層；非 `null` = 該父層的子分類）
+- `usage_count`：以 `knowledge_base.categories[]` 實際使用筆數即時統計；父層的使用數＝其所有子分類所涵蓋知識的**去重加總**（父層本身不會被知識直接掛上，故僅作分組）
+
+---
+
+### POST /api/category-config
+
+新增 Category 配置
+
+**權限**: `knowledge:update`
+
+**Body Parameters**:
+
+| 參數 | 類型 | 必填 | 說明 |
+|------|------|------|------|
+| `category_value` | string | ✅ | 分類值（唯一） |
+| `display_name` | string | ✅ | 顯示名稱 |
+| `description` | string | ❌ | 描述 |
+| `display_order` | integer | ❌ | 排序（預設 0） |
+| `is_active` | boolean | ❌ | 是否啟用（預設 true） |
+| `parent_value` | string | ❌ | 父層分類值（設定即成為子分類；僅支援兩層，父層須為頂層） |
+
+**範例**:
+
+```bash
+curl -X POST http://localhost:8000/api/category-config \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "category_value": "售前競品",
+    "display_name": "售前競品",
+    "parent_value": "售前"
+  }'
+```
+
+**回應 (200 OK)**:
+
+```json
+{
+  "id": 7,
+  "message": "Category 已建立"
+}
+```
+
+**錯誤 (400)**：父層不存在、父層非頂層（超過兩層）、`category_value` 已存在、本分類已有子分類等。
+
+---
+
+### PUT /api/category-config/{category_id}
+
+更新 Category 配置
+
+**權限**: `knowledge:update`
+
+**Path Parameters**:
+- `category_id` (integer): Category ID
+
+**Body Parameters**: 同新增（含 `parent_value`，可調整父子關係，受兩層防呆限制）
+
+**回應 (200 OK)**:
+
+```json
+{
+  "message": "Category 已更新"
+}
+```
+
+---
+
+### DELETE /api/category-config/{category_id}
+
+刪除 Category 配置（軟刪除）
+
+**權限**: `knowledge:update`
+
+**Path Parameters**:
+- `category_id` (integer): Category ID
+
+**行為**:
+- 若該分類底下尚有子分類 → 回 400（請先移除或改掛子分類）
+- 若仍有知識使用（`= ANY(categories)`）→ 只停用不刪除
+- 無使用 → 真刪除
+
+**回應 (200 OK)**:
+
+```json
+{
+  "message": "Category 已停用（有 8 筆知識使用中，無法刪除）",
+  "usage_count": 8
+}
+```
+
+---
+
+### POST /api/category-config/{category_id}/remove-from-knowledge
+
+連動清理：將此分類值從所有知識的 `categories[]` 移除（通常在停用 / 刪除前執行）
+
+**權限**: `knowledge:update`
+
+**Path Parameters**:
+- `category_id` (integer): Category ID
+
+**範例**:
+
+```bash
+curl -X POST http://localhost:8000/api/category-config/7/remove-from-knowledge \
+  -H "Authorization: Bearer <token>"
+```
+
+**回應 (200 OK)**:
+
+```json
+{
+  "removed_count": 8,
+  "message": "已從 8 筆知識移除分類「售前競品」"
+}
+```
+
+---
+
+## API 金鑰管理 API
+
+服務對服務（service-to-service）認證金鑰管理。金鑰只儲存 SHA-256 雜湊（不存明文），明文僅於建立時回傳一次。供 rag-orchestrator 以 Header `X-API-Key` 驗證（開關見環境變數 `RAG_API_AUTH_ENFORCE`）。
+
+### GET /api/api-keys
+
+列出所有 API 金鑰（不回傳 hash 或明文，只有前綴）
+
+**權限**: 需登入
+
+**回應 (200 OK)**:
+
+```json
+{
+  "api_keys": [
+    {
+      "id": 1,
+      "name": "rag-client-A",
+      "key_prefix": "a4942bd2",
+      "description": "A 系統呼叫 rag",
+      "is_active": true,
+      "created_at": "2026-06-26T00:00:00",
+      "last_used_at": "2026-06-27T09:00:00"
+    }
+  ]
+}
+```
+
+---
+
+### POST /api/api-keys
+
+建立金鑰：產生隨機明文 → 存 hash + 前綴 → **明文僅此次回傳**
+
+**權限**: 需登入
+
+**Body Parameters**:
+
+| 參數 | 類型 | 必填 | 說明 |
+|------|------|------|------|
+| `name` | string | ✅ | 系統名稱（呼叫方識別） |
+| `description` | string | ❌ | 用途說明 |
+
+**回應 (200 OK)**:
+
+```json
+{
+  "id": 2,
+  "name": "rag-client-B",
+  "key_prefix": "f3c1a9de",
+  "api_key": "f3c1a9de...<完整明文，僅此次顯示>",
+  "message": "金鑰已建立，請立即複製保存——此明文只顯示這一次，之後無法再查看。"
+}
+```
+
+---
+
+### PUT /api/api-keys/{key_id}
+
+啟用 / 停用金鑰
+
+**權限**: 需登入
+
+**Path Parameters**:
+- `key_id` (integer): 金鑰 ID
+
+**Body Parameters**:
+
+| 參數 | 類型 | 必填 | 說明 |
+|------|------|------|------|
+| `is_active` | boolean | ✅ | 啟用 (true) / 停用 (false) |
+
+**回應 (200 OK)**:
+
+```json
+{
+  "message": "已更新"
+}
+```
+
+---
+
+### DELETE /api/api-keys/{key_id}
+
+刪除金鑰
+
+**權限**: 需登入
+
+**Path Parameters**:
+- `key_id` (integer): 金鑰 ID
+
+**回應 (200 OK)**:
+
+```json
+{
+  "message": "已刪除"
 }
 ```
 

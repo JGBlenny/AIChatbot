@@ -1,0 +1,27 @@
+{
+  "feature_name": "conversational-diagnosis",
+  "created_at": "2026-06-30T07:42:07Z",
+  "updated_at": "2026-06-30T08:05:00Z",
+  "phase": "tasks-generated",
+  "language": "zh-TW",
+  "project_description": "對話式合約診斷（以合約為首案的「通用對話診斷」框架，擴充既有 conversational engine）。把『合約』這類查詢/診斷面向從『跳表單』改為『進對話引擎』，提供售前引導式的多輪自適應對話：模糊入口→追問識別→條件不足說明→收齊打真實 API 回狀態/資訊→非查某份合約則轉靜態知識。實作做成通用底座（讀設定不寫死合約），使未來帳單/繳費/修繕等十幾個 jgb_* 面向只加設定、零改程式即可比照啟用。改動：①_has_basic_info 讀 config.required_slots；②_converge_grounding 加 select:api 分支（重用 api_call_handler/_resolve_param_value/JGBSystemAPI）；③chat.py 表單觸發點依分類路由到對話；③附 conversational_config 加 by_category 查詢（wire topic_scope）；④前端 ConversationalConfigView 加 api grounding 欄位。設定：新增 1 筆合約診斷對話規則。完整描述見 requirements.md。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": false
+    }
+  },
+  "implementation": {
+    "started": true,
+    "completed": false,
+    "tasks_completed": ["1.1", "1.2", "1.3", "2.1", "2.2", "3.1", "3.2", "4.1", "4.2", "4.3", "5.1", "5.2", "5.3", "6.1", "6.2", "7.1", "7.2", "8.1", "8.2", "10.1"]
+  }
+}

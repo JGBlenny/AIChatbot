@@ -62,8 +62,8 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         # 根據用戶角色或模式決定業態類型
         is_b2b_mode = (target_user in ['property_manager', 'system_admin']) or (mode == 'b2b')
 
-        # b2b 角色隔離：重啟 target_user 過濾（與 b2c rag_engine 一致的寬鬆語義，
-        # target_user IS NULL 一律放行）。僅 b2b 套用；b2c 維持此 retriever 既有行為不變。
+        # 角色隔離：b2b 與 b2c 皆過濾 target_user（target_user IS NULL 一律放行；retrieval-fixes #5）。
+        # b2b 業態嚴格 system_provider；b2c 用業者業態 + 通用 all_users 放行。
         target_user_param = [self._effective_target_user(target_user)]
         if is_b2b_mode:
             vendor_business_types = ['system_provider']
@@ -71,9 +71,14 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
         else:
             vendor_info = self.param_resolver.get_vendor_info(vendor_id)
-            vendor_business_types = vendor_info.get('business_types', [])
+            # 修正(retrieval-fixes #4):vendor_id 查無時 get_vendor_info 回 None,
+            #   None.get() 會 AttributeError 使整個請求 500;改為 null-safe 降級為空業態。
+            vendor_business_types = (vendor_info or {}).get('business_types', [])
             business_type_filter_sql = "(kb.business_types IS NULL OR kb.business_types && %s::text[])"
-            target_user_filter_sql = ""
+            # 修正(retrieval-fixes #5):b2c 也過濾 target_user(預設 tenant),避免租客↔房東知識互漏;
+            #   'all_users' 為通用標記須一併放行(否則原本對 b2c 可見的通用知識會被擋掉)。
+            target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
+            target_user_param = [self._effective_target_user(target_user), 'all_users']
 
         conn = self._get_db_connection()
         try:
@@ -96,6 +101,8 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     kb.form_id,
                     kb.action_type,
                     kb.api_config,
+                    kb.category,
+                    kb.categories,
                     1 - (kb.embedding <=> %s::vector) as vector_similarity
                 FROM knowledge_base kb
                 WHERE
@@ -170,9 +177,13 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
         else:
             vendor_info = self.param_resolver.get_vendor_info(vendor_id)
-            vendor_business_types = vendor_info.get('business_types', [])
+            # 修正(retrieval-fixes #4):vendor_id 查無時 get_vendor_info 回 None,
+            #   None.get() 會 AttributeError 使整個請求 500;改為 null-safe 降級為空業態。
+            vendor_business_types = (vendor_info or {}).get('business_types', [])
             business_type_filter_sql = "AND (kb.business_types IS NULL OR kb.business_types && %s::text[])"
-            target_user_filter_sql = ""
+            # 修正(retrieval-fixes #5):b2c 也過濾 target_user(預設 tenant)+ 通用 all_users 放行(與 vector 一致)。
+            target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
+            target_user_param = [self._effective_target_user(target_user), 'all_users']
 
         # 安全上限
         max_rows = 1000
@@ -197,6 +208,8 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     kb.form_id,
                     kb.action_type,
                     kb.api_config,
+                    kb.category,
+                    kb.categories,
                     kim.intent_id
                 FROM knowledge_base kb
                 LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
@@ -310,6 +323,9 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             'form_id': row.get('form_id'),
             'action_type': row.get('action_type'),
             'api_config': row.get('api_config'),
+            # 分類（conversational-diagnosis 元件 5：分類路由用）；category 單值、categories 多值
+            'category': row.get('category'),
+            'categories': row.get('categories'),
             'intent_id': row.get('intent_id'),
             # ─── 分數欄位（task 3.3） ───
             'vector_similarity': vector_similarity,

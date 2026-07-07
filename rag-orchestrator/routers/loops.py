@@ -693,17 +693,26 @@ async def get_iteration_backtest_results(
                     br.tested_at,
                     br.evaluation,
                     br.actual_intent,
-                    br.response_metadata
+                    br.response_metadata,
+                    br.source_ids,
+                    br.knowledge_sources,
+                    ts.request_target_user,
+                    ts.request_mode
                 FROM backtest_results br
+                LEFT JOIN test_scenarios ts ON ts.id = br.scenario_id
                 WHERE br.run_id = $1
                 ORDER BY br.id
                 LIMIT $2 OFFSET $3
             """, run_id, limit, offset)
 
-            # 獲取總數
-            total = await conn.fetchval("""
-                SELECT COUNT(*) FROM backtest_results WHERE run_id = $1
+            # 獲取總數與通過統計（backtest_runs 的 passed_count 迴圈路徑不回填，須即時算）
+            count_row = await conn.fetchrow("""
+                SELECT COUNT(*) AS total,
+                       COUNT(*) FILTER (WHERE passed) AS passed,
+                       COUNT(*) FILTER (WHERE NOT passed) AS failed
+                FROM backtest_results WHERE run_id = $1
             """, run_id)
+            total = count_row["total"]
 
             result_list = []
             for r in results:
@@ -777,20 +786,41 @@ async def get_iteration_backtest_results(
                     "source_count": r["source_count"] or 0,
                     "tested_at": r["tested_at"].isoformat() if r["tested_at"] else None,
                     "failure_reason": evaluation.get("failure_reason") if isinstance(evaluation, dict) else None,
+                    "grade": evaluation.get("grade") if isinstance(evaluation, dict) else None,          # v3 多輪感知評級
+                    "grade_reason": evaluation.get("grade_reason") if isinstance(evaluation, dict) else None,
+                    # v3 多輪欄位：輪次/逐字稿/評估版本/金標明細
+                    "turns_used": evaluation.get("turns_used") if isinstance(evaluation, dict) else None,
+                    "transcript": evaluation.get("transcript") if isinstance(evaluation, dict) else None,
+                    "eval_version": evaluation.get("eval_version") if isinstance(evaluation, dict) else None,
+                    "request_target_user": r["request_target_user"],
+                    "request_mode": r["request_mode"],
+                    "source_ids": r["source_ids"],
+                    "knowledge_sources": r["knowledge_sources"],
+                    "turn_sources": evaluation.get("turn_sources") if isinstance(evaluation, dict) else None,
+                    "llm_grade": evaluation.get("llm_grade") if isinstance(evaluation, dict) else None,
+                    "gold_fails": evaluation.get("gold_fails") if isinstance(evaluation, dict) else None,
                     "is_relevant": evaluation.get("is_relevant") if isinstance(evaluation, dict) else None,
                     "relevance_reason": evaluation.get("relevance_reason") if isinstance(evaluation, dict) else None,
                     "debug_info": response_metadata if response_metadata else None  # 處理流程詳情
                 })
+
+            # v3 評級分佈（舊 run 無 grade → 空 dict，前端據此隱藏分佈條）
+            grade_rows = await conn.fetch("""
+                SELECT COALESCE(evaluation::jsonb->>'grade','') AS grade, count(*) AS n
+                FROM backtest_results WHERE run_id = $1 GROUP BY 1
+            """, run_id)
+            grade_distribution = {gr["grade"]: gr["n"] for gr in grade_rows if gr["grade"]}
 
             return {
                 "results": result_list,
                 "total": total,
                 "summary": {
                     "run_id": run_id,
-                    "total": run_record["total_scenarios"] or 0,
-                    "passed": run_record["passed_count"] or 0,
-                    "failed": run_record["failed_count"] or 0,
-                    "pass_rate": float(run_record["pass_rate"]) if run_record["pass_rate"] else 0.0,
+                    "grade_distribution": grade_distribution,
+                    "total": run_record["total_scenarios"] or count_row["total"] or 0,
+                    "passed": count_row["passed"] or 0,
+                    "failed": count_row["failed"] or 0,
+                    "pass_rate": (count_row["passed"] / count_row["total"]) if count_row["total"] else 0.0,
                     "avg_score": 0.0  # 暫時設為 0，後續可從結果計算
                 }
             }
@@ -1121,7 +1151,7 @@ async def start_next_batch(
 
         async with db_pool_async.acquire() as conn:
             parent_loop = await conn.fetchrow("""
-                SELECT status FROM knowledge_completion_loops WHERE id = $1
+                SELECT status, config FROM knowledge_completion_loops WHERE id = $1
             """, request.parent_loop_id)
 
             if not parent_loop:
@@ -1132,6 +1162,20 @@ async def start_next_batch(
                     status_code=409,
                     detail=f"父迴圈必須為 COMPLETED 狀態，當前為 {parent_loop['status']}"
                 )
+
+            # 題庫繼承：下一批次未指定 scenario_filters 時沿用父迴圈的 filters
+            # （同題庫續跑才有可比性；config 為 jsonb，filters 隨 LoopConfig 持久化）
+            if not request.scenario_filters:
+                try:
+                    parent_config = parent_loop["config"]
+                    if isinstance(parent_config, str):
+                        parent_config = json.loads(parent_config)
+                    inherited = (parent_config or {}).get("filters") or {}
+                    if inherited:
+                        request.scenario_filters = inherited
+                        print(f"🧬 下一批次繼承父迴圈題庫 filters: {inherited}")
+                except Exception as _e:
+                    print(f"⚠️ 父迴圈 filters 繼承失敗（不阻斷）：{_e}")
 
         # 調用 start_loop 端點（內部會自動排除已使用的 scenario_ids）
         return await start_loop(request, req)

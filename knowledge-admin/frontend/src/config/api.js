@@ -104,6 +104,11 @@ export const API_ENDPOINTS = {
   // Knowledge Base 相關
   knowledge: '/api/knowledge',
   knowledgeById: (id) => `/api/knowledge/${id}`,
+
+  // Backtest Runs 相關（獨立 run 瀏覽，不限迴圈；手動/容器執行的 run 由此進入）
+  backtestRuns: '/api/backtest/runs',
+  backtestRunResults: (runId) => `/api/backtest/runs/${runId}/results`,
+  backtestRunGradeDistribution: (runId) => `/api/backtest/runs/${runId}/grade-distribution`,
 };
 
 /**

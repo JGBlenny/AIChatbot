@@ -1,0 +1,27 @@
+{
+  "feature_name": "iot-conversational-facets",
+  "created_at": "2026-07-04T03:18:16Z",
+  "updated_at": "2026-07-04T04:35:00Z",
+  "phase": "tasks-generated",
+  "language": "zh-TW",
+  "project_description": "在 contract/billing/account-conversational-facets 定型的面向化路徑（母子分類＋資料四件套＋領域檔 builder＋face 貫穿＋secondary_calls，擴領域零改引擎）之上，擴充「智慧設備（IoT）」領域的對話面向。定位：IoT 是 B 端基本功能（使用者定調 2026-07-04），業者角度屬基本盤，非加值客製。素材證據：客服 IoT 案 20（C-4 QA list 16＋A.回饋 2.0/C-2 共 4）——電表類 9 案為絕對大宗（雲端電表離線/斷線/顯示未連線、度數異常跳度、度數不增加但有住人、電錶數據與 JGB 不同）、儲值/串接/單價設定 3 案、門鎖硬體 6 案（悠遊卡設定/音量/電池接電/磁扣/QRCode 失靈）、VR 拍攝 2 案範圍外。⚠️ 素材年代大宗為 2021–2023 舊工單，research 第一步必須以 jgb2 現碼過濾已被產品改版解決者（預期可轉知識約剩半）。既有底子：services/jgb/iot.py（diagnose_iot 廠商綁定失敗診斷）＋jgb_iot_manufacturers 端點＋「IoT 智慧設備」知識 5 筆；jgb2 preview 的 /meters 與 /recharge-accounts 對外端點已上線（2026-07-04 實測 200），AIChatbot 尚無 client 包裝——G 缺口小、grounding surface 現成。**現行主要痛點（使用者一手定調 2026-07-04，優先於舊工單）：台科電電表、未給電、設備狀況**——「未給電」（租客沒電：預付儲值餘額耗盡斷電？供電開關/繼電器狀態？設備離線？）是排障核心場景，需 ground 儲值餘額＋設備供電/連線現值決定性判因；「設備狀況」為高頻查詢（線上/離線/最後回報/度數現值）；廠商差異（台科電/DAE/skywatch）的離線判定與供電控制機制以 research 盤 jgb2 真碼定案。候選子面向（需求階段以案型定案）：1. 電表排障（診斷樹：**未給電→儲值餘額/供電狀態/離線三路判因**；離線/未連線→網路/重啟/廠商串接分支；度數異常/不增加/與 JGB 不符→ground 電表現值與讀數同步機制判讀；廠商綁定失敗沿 iot.py 既有診斷升級掛面向）；2. IoT 設定引導（輕引導：電表串接啟用、儲值操作與單價設定、門鎖預設密碼規則、IoT 連結起始日——select=category 或 ground recharge-accounts）。門鎖硬體問題不開面向：做單發知識包（悠遊卡/磁扣/電池/音量屬硬體功能面，識別後導廠商或客服，沿 B.Bug 不對話化原則）。邊界：租客看不到電表屬帳號域登入排障（已解，共用出口 scope=switch）；電表儲值的帳單/金流入帳屬帳務域；VR/istaging 範圍外；硬體故障（skywatch 螢幕未連線、QRCode 失靈）識別後導廠商/客服。原則沿用：先盤 jgb2 ground truth（電表狀態機/離線判定條件/度數同步機制/儲值扣款鏈/單價設定以真碼 file:line 為準，客服口徑錯誤處修正）、機械解碼由 formatter 決定性算、LLM 只轉述 facts、金額與度數只引用存值禁重算、G 清單存在性驅動（meters/recharge-accounts client 包裝＋缺欄位盤查後定 G）、persona_role 用面向專屬鍵（pm_iot_*）防規則互蓋、進場路由回歸測試擴 IoT 案例＋與帳務/帳號錨點互不誤吸雙向驗證（「儲值」與帳務、「看不到電表」與帳號域登入排障的語彙邊界為已知風險點）、知識產製理解情境不搬運、個資遮罩沿既有協定。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": false
+    }
+  },
+  "implementation": {
+    "started": false,
+    "completed": false,
+    "tasks_completed": []
+  }
+}

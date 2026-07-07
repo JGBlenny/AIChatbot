@@ -9,6 +9,18 @@ from typing import Optional, List, Dict, Any, Union
 from openai import OpenAI, AsyncOpenAI
 
 
+def _meter_usage(model: str, result: dict) -> None:
+    """usage-metering 統一出口鉤（spec usage-metering 2.1）：累計本請求 token。
+    無計量 context（非 /message 路徑、開關關閉、回測 harness）時 no-op；
+    任何失敗靜默——計量不得影響 LLM 呼叫。"""
+    try:
+        from services.usage_metering import add_llm_usage
+        add_llm_usage(model, (result or {}).get('usage'))
+    except Exception:
+        pass
+
+
+
 class LLMProvider(ABC):
     """
     LLM Provider 抽象基類
@@ -114,6 +126,7 @@ class OpenAIProvider(LLMProvider):
                 'raw_response': response  # 保留原始回應以支援 function calling 等特殊功能
             }
 
+            _meter_usage(model, result)     # usage-metering：統一出口計量（無 context 時 no-op）
             return result
         except Exception as e:
             raise Exception(f"OpenAI API 調用失敗: {str(e)}")
@@ -154,7 +167,7 @@ class OpenAIProvider(LLMProvider):
             )
 
             # 統一回傳格式
-            return {
+            result = {
                 'content': response.choices[0].message.content,
                 'usage': {
                     'prompt_tokens': response.usage.prompt_tokens if response.usage else 0,
@@ -163,6 +176,8 @@ class OpenAIProvider(LLMProvider):
                 },
                 'raw_response': response  # 保留原始回應供 function calling 使用
             }
+            _meter_usage(model, result)     # usage-metering：統一出口計量
+            return result
         except Exception as e:
             print(f"❌ OpenAI Async Chat Completion 失敗: {e}")
             raise
@@ -193,6 +208,7 @@ class OpenAIProvider(LLMProvider):
             async for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
+            _meter_usage(model, {})    # 串流不回 usage：計 1 次呼叫、token 0（設計註記）
         except Exception as e:
             print(f"❌ OpenAI Stream Chat Completion 失敗: {e}")
             raise

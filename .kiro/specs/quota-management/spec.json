@@ -1,0 +1,32 @@
+{
+  "feature_name": "quota-management",
+  "created_at": "2026-07-06T20:00:00+08:00",
+  "updated_at": "2026-07-06T22:00:00+08:00",
+  "phase": "implementation-completed",
+  "language": "zh-TW",
+  "project_description": "團隊（vendor）AI 客服對話額度管制（quota-management）：疊在 usage-metering 事實層上。①額度設定：每 vendor 月額度（單位＝訊息數，如 5,000 則/月；後台可設）＋可自訂警示閾值（百分比，如 80%，可多段或單段設計定案）＋達限行為開關；加值＝調整額度即時生效。②檢查：middleware 於請求進場查本月累計（60 秒快取，走既有複合索引），近零負擔。③警示（快到額度）：達警示閾值後——b2b 業者用戶的正常回答尾端附額度提示（如「本月額度已使用 82%（4,100/5,000）」）；租客（b2c）不顯示任何商業訊息；後台使用量統計頁加每業者額度進度條（警示黃/達限紅）。④達限攔截：超限後該 vendor 請求於 middleware 直接回應不進檢索不打 LLM（零成本）——b2b 文案『本月 AI 客服對話額度已達上限（N 則），請聯繫金箍棒客服加值』；b2c 文案『智慧客服暫停服務中，請聯繫您的管理公司或撥打客服專線』。邊界：內部流量不計入額度；無額度設定的 vendor 不受限（opt-in）；不做金流/收款；計量開關關閉時額度檢查一併停用。原則沿用：TDD、migration 冪等、fire-and-forget 不影響正常請求、部署併 runbook。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "implementation": {
+    "started": true,
+    "completed": true,
+    "tasks_completed": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ]
+  }
+}

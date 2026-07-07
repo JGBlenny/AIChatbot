@@ -1,0 +1,121 @@
+{
+  "_meta": {
+    "spec": "51 題全面抽驗長尾知識批（閘門通過 2026-07-05）",
+    "produced_at": "2026-07-05",
+    "sources": "jgb2 真碼盤查（ContractRequest.php:93-109 證件驗證/BillAutoBatchSend.php:100-146 草稿排定/CreateRechargeAccountRequest.php:32 銀行無白名單/EditsBillFees.php:36+Bill.php:11201 度數重算）＋租客帳務篇官方教學＋presales-kb 事實轉 pm 版",
+    "post_import_fix": "UPDATE knowledge_base SET business_types=NULL WHERE question_summary='帳單在哪裡看 繳費' AND is_active;"
+  },
+  "updates": [],
+  "knowledge": [
+    {
+      "question": "既存合約 是什麼 簽署完成上傳備查",
+      "answer": "是的——既存合約就是已經在線下簽署完成的合約，上傳到系統留存備查並接續管理（後續帳單、點交等功能照常使用）。入口：合約總表右上「建立合約」選「既存合約」。如果點進去沒有物件可選，通常是因為還沒有「刊登中」的物件——建立合約（含既存合約）的前提是物件處於刊登中狀態，請先完成物件刊登。",
+      "categories": [
+        "建約引導"
+      ],
+      "target_user": [
+        "property_manager"
+      ],
+      "keywords": [
+        "既存合約",
+        "上傳",
+        "備查"
+      ],
+      "source": "G2-02 錯位殘留（正解知識輸給續約歷史 rerank）＋建約前提真碼"
+    },
+    {
+      "question": "承租人身分證影本 必填嗎 事後補傳",
+      "answer": "承租人的身分證「字號」是必填（個人簽約），但身分證「影本」不是系統強制必填——沒上傳也能完成簽約流程。上傳位置：業者在合約編輯的「承租人附件」步驟上傳（附「已檢附」勾選欄）；租客在簽署流程上傳的證件也會帶入合約。簽約時漏了可以事後由業者在合約編輯補上；若合約狀態已無法編輯，請聯繫客服協助。",
+      "categories": [
+        "建約引導"
+      ],
+      "target_user": [
+        "property_manager"
+      ],
+      "keywords": [
+        "身分證",
+        "證件",
+        "補傳"
+      ],
+      "source": "jgb2：ContractRequest.php:93（字號 required_if）/:108-109（影本 nullable）、tenantAttachment/Index.vue:86-99、ContractController.php:11912"
+    },
+    {
+      "question": "草稿帳單 會自動發送嗎 封存哪裡看",
+      "answer": "草稿（待發送）帳單不會單純因為繳費日到了就自動寄給租客。要自動發送，需在團隊設定開啟「自動排定發送」並設定提前天數（N 天前）：系統每天早上把符合條件的草稿轉為排定發送、中午過後實際寄出。沒開啟這個設定的話，草稿會一直停留在待發送，需手動發送。注意：度數還沒填齊的帳單不會被自動排定。封存的帳單在「待發送帳單」頁的「封存」分頁可以找到。",
+      "categories": [
+        "帳單設定引導"
+      ],
+      "target_user": [
+        "property_manager"
+      ],
+      "keywords": [
+        "草稿帳單",
+        "自動發送",
+        "封存"
+      ],
+      "source": "jgb2：Bill.php:14813-14825（draft 定義）、BillAutoBatchSend.php:100-146（roles.batch_send_bill_days 兩段式）、Bill.php:14954（封存分頁）"
+    },
+    {
+      "question": "收款帳戶 銀行有限制嗎 台新",
+      "answer": "收款入帳的銀行帳戶沒有指定銀行的限制——公司帳戶是台新或任何銀行都可以設定。藍新、國泰、永豐這些是「金流商」，負責處理租客端的付款（信用卡/ATM/超商等），收到的款項會撥付到你設定的收款帳戶，兩者不需要同一家銀行。若使用中信 ACH 代扣，收款帳戶需先通過驗證。撥付時程與細節依各金流商的合約規範，有疑慮可聯繫客服確認。",
+      "categories": [
+        "帳單設定引導"
+      ],
+      "target_user": [
+        "property_manager"
+      ],
+      "keywords": [
+        "收款帳戶",
+        "銀行",
+        "撥付"
+      ],
+      "source": "jgb2：CreateRechargeAccountRequest.php:32（bank_code 無白名單）、Role.php:2075-2082（ACH 驗證）；撥付屬金流商端"
+    },
+    {
+      "question": "電表度數登記錯誤 修改 重算",
+      "answer": "手動抄表的度數登記錯了，業者可以直接修改、不需要透過租客：到該張帳單點「編輯」，修正度數後系統會重算這張帳單的金額。注意：修改只作用在這一張帳單，不會自動連動其他期別——如果錯誤的度數也影響了下一期的期初度數，請一併檢查修正。",
+      "categories": [
+        "帳單設定引導"
+      ],
+      "target_user": [
+        "property_manager"
+      ],
+      "keywords": [
+        "電表度數",
+        "登記錯誤",
+        "修改"
+      ],
+      "source": "jgb2：BillController.php:2111-2114（PATCH edit）、EditsBillFees.php:36、Bill.php:11201-11240（updateFees 重算）"
+    },
+    {
+      "question": "帳單在哪裡看 繳費",
+      "answer": "登入 JGB 之後，在帳單（應支出）列表就能看到每期帳單與繳費狀態。房東發送帳單時系統會寄通知給您（Email；註冊時有綁 LINE 或手機也會通知），點通知裡的「前往查看」可以直接到帳單頁。線上付款直接點物件下方的「付款」；若是匯款，完成後請點「通知已匯款」並填寫匯款帳號後五碼與收據照片，房東確認後帳單就會完成。",
+      "categories": null,
+      "target_user": [
+        "tenant"
+      ],
+      "keywords": [
+        "帳單",
+        "繳費",
+        "查看"
+      ],
+      "source": "官方「租客系統操作教學—帳務篇」（G3-09 租客側缺口）",
+      "business_types_override": "NULL（租客向慣例——importer 硬寫 system_provider 會使 b2c 檢索隱形，部署後需跑下方 UPDATE）"
+    },
+    {
+      "question": "包租 代管 差別 系統功能",
+      "answer": "包租：業者先向房東承租房屋、再以二房東身分轉租給租客——租客的合約是跟業者簽的，收據/發票由業者開立，系統另提供差額發票群組功能（按底租與實收差額開立）。代管：業者受房東委託管理，租約仍在房東與租客之間，業者負責代收代付與收取管理服務費。系統面的差異主要在合約模板、收據/發票的開立主體，以及包租特有的差額發票設定。團隊的業態在方案/團隊設定中設定。",
+      "categories": null,
+      "target_user": [
+        "property_manager"
+      ],
+      "keywords": [
+        "包租",
+        "代管",
+        "差別"
+      ],
+      "source": "presales-kb 事實轉 pm 版（G5-06：既有 23 筆同主題全標 prospect，pm 檢索不可見）＋差額發票 3537 口徑"
+    }
+  ],
+  "anchors": []
+}

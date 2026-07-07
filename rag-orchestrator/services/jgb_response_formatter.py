@@ -152,13 +152,14 @@ SECTION_LABELS = {
 }
 
 
-def format_jgb_response(api_result: dict, endpoint: str = "", user_question: str = "", form_data: dict = None) -> str:
+def format_jgb_response(api_result: dict, endpoint: str = "", user_question: str = "", form_data: dict = None, face: str | None = None) -> str:
     """
     格式化 JGB API 回應（進入點）
 
     endpoint: API endpoint 名稱（如 jgb_contracts），用於決定走哪個判斷引擎
     user_question: 用戶原始問題，用於判斷要檢查什麼操作
     form_data: 表單收集的資料（含用戶輸入的關鍵字）
+    face: 當輪對話面向（僅透傳給領域模組選 fact 集，此層不解讀）
     """
     mapping = api_result.get("mapping", {})
     data = api_result.get("data", [])
@@ -167,13 +168,48 @@ def format_jgb_response(api_result: dict, endpoint: str = "", user_question: str
     if endpoint == "jgb_create_repair":
         return _format_create_repair(api_result)
 
-    # 合約相關 endpoint → 走合約判斷引擎
+    # 合約相關 endpoint → 走合約判斷引擎（含 face 分流至 contracts/accounts builder）
     if endpoint in ("jgb_contracts", "jgb_contract_checkin"):
-        return _format_contracts(data, user_question, form_data=form_data)
+        return _format_contracts(data, user_question, form_data=form_data, face=face)
+
+    # 電表 endpoint（iot 電表排障面向）：face 命中 → iot builder；未命中/None → 原路（零回歸）。
+    if endpoint == "jgb_meters":
+        from services.jgb.iot import face_meter_response
+        faced = face_meter_response(data, user_question, face)
+        if faced is not None:
+            return faced
+
+    # 物件 endpoint（estate 現況診斷面向）：face 命中 → estates builder（sentinel 亦走此路）；
+    # 未命中/None → 原路恆等（零回歸）。⚠️ jgb_estates（修繕表單）不進此分支。
+    if endpoint == "jgb_estate_status":
+        from services.jgb.estates import face_estate_response
+        rows = data if isinstance(data, list) else ([data] if isinstance(data, dict) else [])
+        faced = face_estate_response(rows, user_question, face)
+        if faced is not None:
+            return faced
+
+    # 團隊成員 endpoint（account 團隊權限面向）：face 命中 → accounts builder；
+    # 主列為 T1 成員（含 permissions/bill_visibility secondary attach），零回歸（無此 face 不進此檔）。
+    if endpoint == "jgb_team_members":
+        from services.jgb.accounts import ACCOUNT_FACE_BUILDERS
+        builder = ACCOUNT_FACE_BUILDERS.get(face) if face else None
+        if builder:
+            rows = data if isinstance(data, list) else ([data] if isinstance(data, dict) else [])
+            if rows:
+                return builder(rows[0], user_question)
 
     # 租客摘要 → 專屬格式化
     if endpoint == "jgb_tenant_summary":
         return _format_tenant_summary(data if isinstance(data, dict) else {})
+
+    # 帳務面向分流（billing-conversational-facets）：face 命中 BILL_FACE_BUILDERS 才接手，
+    # 否則往下走原路（jgb_bills 通用格式化、其餘各自 diagnose 引擎）——零回歸。
+    if face and endpoint in ("jgb_bills", "jgb_bill_detail",
+                             "jgb_payment_logs", "jgb_invoice_logs"):
+        from services.jgb.bills import face_bill_response
+        faced = face_bill_response(endpoint, data, user_question, face)
+        if faced is not None:
+            return faced
 
     # v1.1 診斷用 endpoint → 各自的診斷引擎
     if endpoint == "jgb_bill_detail":
@@ -242,7 +278,7 @@ def _format_create_repair(api_result: dict) -> str:
     return "\n".join(lines)
 
 
-def _format_contracts(data: Any, user_question: str, form_data: dict = None) -> str:
+def _format_contracts(data: Any, user_question: str, form_data: dict = None, face: str | None = None) -> str:
     """合約資料走判斷引擎"""
     from services.jgb.contracts import format_contract_response
 
@@ -250,7 +286,7 @@ def _format_contracts(data: Any, user_question: str, form_data: dict = None) -> 
     if form_data:
         keyword = form_data.get("contract_keyword", "") or form_data.get("keyword", "")
 
-    return format_contract_response(data, user_question=user_question, keyword=keyword)
+    return format_contract_response(data, user_question=user_question, keyword=keyword, face=face)
 
 
 def _format_single(item: dict, mapping: dict) -> str:

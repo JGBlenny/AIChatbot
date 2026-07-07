@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict
+from dataclasses import dataclass
 from datetime import datetime
 import time
 import json
@@ -17,6 +18,7 @@ import os
 import asyncio
 import psycopg2
 import psycopg2.extras
+from services.llm_provider import chat_completion   # 相關性把關用（測試以模組屬性 patch）
 from services.db_utils import get_db_config
 from services.embedding_utils import get_embedding_client
 
@@ -273,6 +275,20 @@ def _remove_duplicate_question(answer: str, question: str) -> str:
 
 # ==================== 輔助函數：表單轉換 ====================
 
+async def _presales_synth_md(db_pool, target_user, system_md):
+    """售前直呼合成路徑（不經對話引擎）之系統脈絡：附加該角色對話設定的 answer_rules
+    （合成鐵則已從共用 optimizer 外移為設定資料，DB 優先、code 保底）。
+    這些路徑 cta_mode 皆 'auto' → 不附 cta_rules。失敗回原 system_md（不阻斷）。"""
+    try:
+        from services.conversational_config import config_for_target_user
+        from services.conversational_engine import _synth_context
+        cfg = await config_for_target_user(db_pool, target_user)
+        return _synth_context(system_md, cfg) if cfg else system_md
+    except Exception as e:
+        print(f"⚠️ 附加售前合成規則失敗（用原系統脈絡）：{e}")
+        return system_md
+
+
 async def _maybe_synthesize_presales_leaf(form_result: dict, request, req) -> dict:
     """
     葉答案 LLM 個人化（option-routing R11/R13）：prospect 情境下，將決策樹葉答案的
@@ -292,7 +308,8 @@ async def _maybe_synthesize_presales_leaf(form_result: dict, request, req) -> di
         from services.system_context import get_system_context
         optimizer = req.app.state.llm_answer_optimizer
         db_pool = req.app.state.db_pool
-        system_md = await get_system_context(db_pool)
+        system_md = await get_system_context(db_pool, request.target_user)  # 領域鍵＝target_user（此路徑必為 prospect）
+        system_md = await _presales_synth_md(db_pool, request.target_user, system_md)
         ctx = form_result.get('presales_context')
         synth = await asyncio.to_thread(
             optimizer.synthesize_presales_answer, raw, ctx, system_md, None
@@ -317,7 +334,8 @@ async def _maybe_synth_prospect_freetext(optimization_result: dict, search_resul
             return optimization_result
         from services.system_context import get_system_context
         optimizer = req.app.state.llm_answer_optimizer
-        system_md = await get_system_context(req.app.state.db_pool)
+        system_md = await get_system_context(req.app.state.db_pool, request.target_user)  # 領域鍵＝target_user（此路徑必為 prospect）
+        system_md = await _presales_synth_md(req.app.state.db_pool, request.target_user, system_md)
         grounding = "\n\n".join(r.get('content', '') for r in search_results[:3] if r.get('content'))
         if not grounding:
             return optimization_result
@@ -355,11 +373,518 @@ def _finalize_response(response: 'VendorChatResponse', request):
     """依 stream 旗標回傳一般或 SSE 串流回應（與既有表單回應一致）。"""
     if request.stream:
         return StreamingResponse(
-            stream_response_wrapper(response.dict()),
+            _metered_stream(stream_response_wrapper(response.dict()), req.app.state.db_pool),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
         )
     return response
+
+
+@dataclass
+class ChatRequestContext:
+    """跨 /message handler 共享的請求情境(分階段填入、部分可變)。"""
+    session_state: Optional[dict] = None     # 會話狀態(可被降級設 None)
+    vendor_info: Optional[dict] = None        # 業者驗證結果(原位填入)
+
+
+async def handle_form_session(request, req, ctx: ChatRequestContext):
+    """表單會話 REVIEWING / EDITING 分支。回最終 Response;非此案回 None。
+    陷阱1:EDITING 維持不串流(直接回 _convert_…,不經 _finalize_response)。"""
+    session_state = ctx.session_state
+    if not session_state:
+        return None
+    form_manager = req.app.state.form_manager
+
+    if session_state['state'] == 'REVIEWING':
+        user_choice = request.message.strip()
+        if user_choice.lower() in ["確認", "confirm", "ok", "提交", "submit"]:
+            form_schema = await form_manager.get_form_schema(session_state['form_id'], request.vendor_id)
+            form_result = await form_manager._complete_form(
+                session_state, form_schema, session_state['collected_data'])
+            return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+        elif user_choice.lower() in ["取消", "cancel", "放棄"]:
+            form_result = await form_manager.cancel_form(request.session_id)
+            req.app.state.sop_orchestrator.trigger_handler.delete_context(request.session_id)
+            return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+        else:
+            form_result = await form_manager.handle_edit_request(
+                session_id=request.session_id, user_input=request.message, vendor_id=request.vendor_id)
+            return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+
+    if session_state['state'] == 'EDITING':
+        form_result = await form_manager.collect_edited_field(
+            session_id=request.session_id, user_message=request.message, vendor_id=request.vendor_id)
+        return _convert_form_result_to_response(form_result, request)  # 陷阱1:不串流
+
+    return None
+
+
+async def handle_conversational_session(request, req, ctx: ChatRequestContext):
+    """對話偽會話(form_id='conversational' + COLLECTING)續跑。
+    取消→最終 Response;續對話→真 token 串流(已是最終 Response,派發器不二次 finalize,陷阱3);
+    引擎降級→關閉會話、設 ctx.session_state=None 回 None 續跑(陷阱4)。非此案回 None。"""
+    session_state = ctx.session_state
+    if not (session_state and session_state.get('form_id') == 'conversational'
+            and session_state['state'] == 'COLLECTING'):
+        return None
+    engine = req.app.state.conversational_engine
+    user_choice = request.message.strip()
+    # 取消:關閉對話會話(R16.2 隨取消清除)
+    if user_choice.lower() in ["取消", "cancel", "放棄", "結束"]:
+        await engine._close(request.session_id)
+        from datetime import datetime
+        cancel_resp = VendorChatResponse(
+            answer="好的，已結束這次諮詢。隨時需要都可以再問我！",
+            intent_name='售前諮詢', intent_type='conversational', confidence=1.0,
+            action_type='conversational', sources=None, source_count=0,
+            vendor_id=request.vendor_id, mode=request.mode or 'b2b',
+            session_id=request.session_id, timestamp=datetime.utcnow().isoformat(),
+            form_cancelled=True,
+        )
+        return _finalize_response(cancel_resp, request)
+    # 續對話(stream→真 token 串流 / 非 stream→JSON);降級回 None
+    conv_resp = await _conversational_respond(request, req, start_if_absent=False, config=None)
+    if conv_resp is not None:
+        return conv_resp  # 陷阱3:已是最終 Response,不二次 finalize
+    # 引擎降級(brain 失敗):關閉殘留會話、落回一般流程(不阻斷對話)
+    print("⚠️ [conversational] 引擎降級，關閉對話會話、改走一般流程")
+    await engine._close(request.session_id)
+    ctx.session_state = None  # 陷阱4:降級續跑
+    return None
+
+
+async def handle_collecting(request, req, ctx: ChatRequestContext):
+    """表單收集 COLLECTING / DIGRESSION / PAUSED。自行 classify 取真意圖供 collect_field_data。
+    取消+pending_question→改 request.message 回 None 續跑(陷阱4);其餘回最終 Response。非此案回 None。"""
+    session_state = ctx.session_state
+    if not (session_state and session_state['state'] in ['COLLECTING', 'DIGRESSION', 'PAUSED']):
+        return None
+    form_manager = req.app.state.form_manager
+    print(f"📋 檢測到進行中的表單會話（{session_state['form_id']}, 狀態: {session_state['state']}），使用表單收集流程")
+
+    intent_classifier = req.app.state.intent_classifier
+    intent_result = intent_classifier.classify(request.message)  # 真意圖(非 stub)
+
+    form_result = await form_manager.collect_field_data(
+        user_message=request.message,
+        session_id=request.session_id,
+        intent_result=intent_result,
+        vendor_id=request.vendor_id,
+        language='zh-TW',  # TODO: 從 request 或用戶設定讀取語言
+        image_urls=request.image_urls,
+    )
+
+    # 葉答案 LLM 個人化（R11/R13）：prospect 情境下合成決策樹葉答案（失敗保留原文）
+    form_result = await _maybe_synthesize_presales_leaf(form_result, request, req)
+
+    # 如果用戶選擇回答問題或取消表單，繼續處理待處理的問題
+    if form_result.get('form_cancelled'):
+        # 清除 SOP trigger context，避免再次詢問時直接觸發表單
+        req.app.state.sop_orchestrator.trigger_handler.delete_context(request.session_id)
+        print(f"🧹 已清除 trigger context")
+
+        pending_question = form_result.get('pending_question')
+        if pending_question:
+            print(f"📋 用戶取消表單，繼續處理待處理的問題：{pending_question}")
+            request.message = pending_question  # 陷阱4:替換訊息續跑
+            return None
+        print(f"📋 用戶取消表單，但沒有待處理的問題")
+        return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+
+    return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+
+
+async def handle_image(request, req, ctx: ChatRequestContext):
+    """Step 0.5 圖片辨識。損壞+SOP→修繕 SOP Response;非損壞→提示 Response;
+    無圖/未啟用、損壞但 SOP 無結果、Vision 例外→回 None 降級走文字流程(陷阱4)。"""
+    from services.image_recognition_service import ImageRecognitionService, is_image_recognition_enabled
+    if not (request.image_urls and is_image_recognition_enabled()):
+        return None
+    try:
+        recognition_service = ImageRecognitionService()
+        db_pool = req.app.state.db_pool
+
+        recognition = await recognition_service.analyze_images(
+            image_urls=request.image_urls,
+            context=request.message if request.message else None,
+            db_pool=db_pool,
+        )
+
+        if recognition.get("is_damage") and recognition.get("confidence", 0) >= 0.6:
+            # 損壞圖片：觸發修繕 SOP
+            damage_desc = recognition.get("description", "")
+            trigger_msg = f"{request.message}" if request.message else ""
+            if damage_desc:
+                trigger_msg = f"{trigger_msg} （圖片辨識：{damage_desc}）".strip()
+
+            sop_orchestrator = req.app.state.sop_orchestrator
+            sop_result = await sop_orchestrator.process_message(
+                user_message=trigger_msg or "我要報修",
+                session_id=request.session_id,
+                user_id=request.user_id or "anonymous",
+                vendor_id=request.vendor_id,
+                role_id=request.role_id,
+            )
+
+            if sop_result:
+                from datetime import datetime
+                sop_answer = sop_result.get("answer", "")
+                # SOP manual 模式可能先回排查步驟，附加辨識摘要
+                if not sop_answer:
+                    damage_desc = recognition.get("description", "")
+                    sop_answer = f"根據照片分析，{damage_desc}\n\n需要為您建立修繕報修嗎？請輸入「確認」開始報修。"
+
+                response = VendorChatResponse(
+                    answer=sop_answer,
+                    intent_name=sop_result.get("intent_name", "repair"),
+                    intent_type="sop",
+                    confidence=recognition.get("confidence", 0.0),
+                    action_type=sop_result.get("action_type", "form_fill"),
+                    sources=[],
+                    source_count=0,
+                    vendor_id=request.vendor_id,
+                    mode=request.mode or "b2c",
+                    session_id=request.session_id,
+                    timestamp=datetime.utcnow().isoformat(),
+                    form_triggered=sop_result.get("form_triggered", False),
+                    form_id=sop_result.get("form_id"),
+                    current_field=sop_result.get("current_field"),
+                    current_field_type=sop_result.get("current_field_type"),
+                    progress=sop_result.get("progress"),
+                    image_recognition=recognition,
+                    uploaded_images=request.image_urls,
+                )
+                return _finalize_response(response, request)
+            # SOP 無結果:落回文字流程
+            return None
+
+        else:
+            # 非損壞圖片或信心度不足
+            from datetime import datetime
+            msg = "目前僅支援修繕報修的圖片辨識，請描述您的問題。"
+            if recognition.get("confidence", 0) > 0 and recognition.get("confidence", 0) < 0.6:
+                msg = "無法確定損壞類型，建議手動選擇或提供更清晰的照片。"
+
+            response = VendorChatResponse(
+                answer=msg,
+                intent_name=None,
+                confidence=recognition.get("confidence", 0.0),
+                sources=[],
+                source_count=0,
+                vendor_id=request.vendor_id,
+                mode=request.mode or "b2c",
+                session_id=request.session_id,
+                timestamp=datetime.utcnow().isoformat(),
+                image_recognition=recognition,
+                uploaded_images=request.image_urls,
+            )
+            return _finalize_response(response, request)
+
+    except Exception as e:
+        # Vision API 失敗/逾時：降級為純文字流程，不阻塞
+        print(f"⚠️ [圖片辨識] 降級為文字流程: {e}")
+        return None
+
+
+async def handle_conversational_entry(request, req, ctx: ChatRequestContext):
+    """Step 1.5 對話式回答 engine-first(目前明確限 prospect)。
+    真 token 串流→最終 Response(派發器不二次 finalize,陷阱3);引擎降級或非啟用角色→回 None。"""
+    CONVERSATIONAL_ENABLED_ROLES = {'prospect'}
+    if request.target_user not in CONVERSATIONAL_ENABLED_ROLES:
+        return None
+    return await _maybe_conversational_freetext(request, req)
+
+
+async def handle_cache(request, req, ctx: ChatRequestContext):
+    """Step 2 緩存(表單期間不進此處)。命中:stream→stream_cached_answer SSE(陷阱2,維持自有串流);
+    非 stream→_check_cache JSON。未命中或 debug→回 None。"""
+    cache_service = req.app.state.cache_service
+    print(f"🔍 [DEBUG] stream參數值: {request.stream}, 類型: {type(request.stream)}")
+    if request.stream:
+        config_version = _generate_config_version()
+        cached_answer = cache_service.get_cached_answer(
+            vendor_id=request.vendor_id,
+            question=request.message,
+            target_user=request.target_user,
+            config_version=config_version,
+        )
+        if cached_answer:
+            print(f"⚡ 緩存命中！使用串流模式輸出 - 配置版本: {config_version}")
+            return StreamingResponse(
+                _metered_stream(stream_cached_answer(cached_answer), req.app.state.db_pool),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "X-Accel-Buffering": "no",  # 禁用 nginx 緩衝
+                },
+            )
+        return None
+    # 非串流:Debug 模式不使用緩存,保證調試信息最新
+    if not request.include_debug_info:
+        cached_response = _check_cache(cache_service, request.vendor_id, request.message, request.target_user)
+        if cached_response:
+            return cached_response
+    return None
+
+
+def _knowledge_category(best_knowledge) -> list:
+    """取知識的分類候選（conversational-diagnosis 元件 5）。
+
+    categories 多值優先（會話診斷分類常掛多值），無則退 category 單值；皆無回 []。
+    多值/單值以實際欄位為準（category 雙欄位半遷移），供分類路由逐一查診斷設定。
+    """
+    if not best_knowledge:
+        return []
+    cats = best_knowledge.get('categories')
+    if cats:
+        return [c for c in cats if c]
+    cat = best_knowledge.get('category')
+    return [cat] if cat else []
+
+
+async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, threshold):
+    """分類路由決策（conversational-diagnosis 元件 5 / R1.1,1.2,1.4,7.2）。
+
+    最高順位知識達表單觸發門檻、且其分類命中某診斷型對話面向 → 回該對話設定；
+    未達門檻 / 未命中任何面向 → None（呼叫端落回既有表單/直接知識處理）。
+    """
+    if not best_knowledge or best_knowledge.get('similarity', 0) < threshold:
+        return None
+    from services.conversational_config import config_for_category
+    for cat in _knowledge_category(best_knowledge):
+        cfg = await config_for_category(db_pool, cat)
+        if cfg is not None:
+            return cfg
+    return None
+
+
+def _drop_empty_answer_rows(rows: list) -> list:
+    """錨點防呆（五域抽驗 A3/電費題逼出）：answer 空且無任何動作的知識＝面向
+    進場錨點，只供進場判定用——落回單發答題前必須濾除，否則 question_summary
+    會被當回答吐給使用者（實例：id 3873「我想改合約 內容要修改」被原文輸出）。
+    ⚠️ answer 空但帶 form_id/動作型 action_type 的列是表單觸發知識（全庫 16 筆），
+    必須保留——首版誤濾導致表單 e2e 兩案紅（先紅後綠教訓）。"""
+    def _keep(k):
+        if (k.get('answer') or '').strip():
+            return True
+        if k.get('form_id'):
+            return True
+        return k.get('action_type') in ('form_fill', 'api_call', 'form_then_api')
+    return [k for k in (rows or []) if _keep(k)]
+
+
+async def _top1_relevance_gate(question: str, rows: list, max_checks: int = 2) -> list:
+    """錯位直答把關（51 題全面抽驗逼出）：分數＝0.1×向量＋0.9×rerank，reranker
+    對表面詞彙重疊的無關知識會打 0.9+（實例：「電表度數登記錯誤怎麼改」top1=
+    「租客看即時電表」0.956）——任何分數閾值都切不開。直答前對 top1 做一次輕量
+    LLM 相關性判定：不相關讓次筆晉位（最多查 max_checks 筆），全不相關回空列
+    走誠實 fallback（勝過給錯答案）。
+    豁免：表單/API 觸發列不判（不擋表單）；raw 向量 ≥0.85 近精確命中跳過（省
+    延遲）；LLM 失敗放行（fail-open 不阻斷）。env RELEVANCE_GATE_ENABLED=false 可關。
+    """
+    rows = list(rows or [])
+    if not rows or os.getenv("RELEVANCE_GATE_ENABLED", "true").lower() == "false":
+        return rows
+
+    for i in range(min(max_checks, len(rows))):
+        k = rows[i]
+        if k.get('form_id') or k.get('action_type') in ('form_fill', 'api_call', 'form_then_api'):
+            return rows[i:]                                   # 表單/API 觸發不判
+        if (k.get('vector_similarity') or 0) >= float(os.getenv("RELEVANCE_GATE_SKIP_VEC", "0.85")):
+            return rows[i:]                                   # 近精確命中免判
+        try:
+            resp = await asyncio.to_thread(
+                chat_completion,
+                model=os.getenv("RELEVANCE_GATE_MODEL") or os.getenv("LLM_MODEL", "gpt-3.5-turbo"),
+                messages=[
+                    {"role": "system",
+                     "content": "你判斷一筆客服知識能否用來回應使用者的問題。判定從寬："
+                                "主題相關、能回答到一部分、或說明了該問題的處理管道"
+                                "（例如告知此事屬廠商/客服範疇並導向）都算 YES；"
+                                "只有主題不同、答非所問才是 NO。只輸出 YES 或 NO。"},
+                    {"role": "user",
+                     "content": f"問題：{question}\n知識標題：{k.get('question_summary', '')}\n"
+                                f"知識內容（節錄）：{(k.get('answer') or '')[:180]}"},
+                ],
+                temperature=0, max_tokens=3)
+            verdict = (resp.get("content") or "").strip().upper()
+        except Exception as e:
+            print(f"⚠️ [相關性把關] LLM 失敗放行：{e}")
+            return rows[i:]
+        if verdict.startswith("YES"):
+            return rows[i:]
+        print(f"🛡️ [相關性把關] top{i+1}「{k.get('question_summary','')[:24]}」判不相關（sim={k.get('similarity',0):.3f}）→ 次筆晉位")
+    return []
+
+
+async def handle_retrieval(request, req, ctx: ChatRequestContext):
+    """Step 4 智能檢索(終點,必回)。SOP/知識/兜底同時檢索比分;skip_sop→回測僅知識庫。
+    intent_result 用固定 stub(意圖在計分零權重)。vendor_info 取自 ctx。"""
+    import time as _time
+    _total_start = _time.time()
+    resolver = get_vendor_param_resolver()
+    cache_service = req.app.state.cache_service
+    vendor_info = ctx.vendor_info
+
+    # Step 3: 意圖分類（已註解 — intent 在檢索計分中零權重,省 ~1.5s）
+    intent_result = {
+        'intent_name': 'unknown',
+        'intent_type': None,
+        'confidence': 0.0,
+        'all_intents': [],
+        'secondary_intents': [],
+        'intent_ids': [],
+        'keywords': [],
+    }
+
+    if not request.skip_sop:
+        sop_orchestrator = req.app.state.sop_orchestrator
+
+        _t0 = _time.time()
+        decision = await _smart_retrieval_with_comparison(
+            request=request,
+            intent_result=intent_result,
+            sop_orchestrator=sop_orchestrator,
+            resolver=resolver,
+        )
+        print(f"⏱️ [Step 4] 智能檢索: {int((_time.time()-_t0)*1000)}ms")
+        print(f"🎯 [最終決策] {decision['type']} - {decision['reason']}")
+
+        if decision['type'] == 'sop':
+            _t0 = _time.time()
+            response = await _build_orchestrator_response(
+                request, req, decision['sop_result'],
+                resolver, vendor_info, cache_service,
+                decision=decision,
+            )
+            print(f"⏱️ [Step 5] SOP 回應構建: {int((_time.time()-_t0)*1000)}ms")
+            print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
+
+            if request.stream:
+                print(f"📡 [串流模式] 將 SOP 響應轉換為串流輸出")
+                return _finalize_response(response, request)
+            return response
+
+        elif decision['type'] == 'knowledge':
+            # 分類路由出口（conversational-diagnosis 元件 5 / R1.1,1.2,1.4,4.4,7.2）：
+            # 串流/表單分支之前攔截——最高順位知識達門檻且分類命中診斷面向 → 進對話引擎；
+            # 引擎降級（回 None）或未命中 → 落回既有處理（不阻斷）。
+            _best_knowledge = decision['knowledge_list'][0] if decision.get('knowledge_list') else None
+            _diag_threshold = float(os.getenv("FORM_TRIGGER_THRESHOLD", "0.75"))
+            _diag_cfg = await _diagnosis_config_for_knowledge(
+                req.app.state.db_pool, _best_knowledge, _diag_threshold)
+            if _diag_cfg is not None:
+                _diag_resp = await _conversational_respond(
+                    request, req, start_if_absent=True, config=_diag_cfg)
+                if _diag_resp is not None:
+                    print(f"💬 [conversational-diagnosis] 分類命中 {_diag_cfg.key} → 進診斷對話"
+                          + ("（串流）" if request.stream else ""))
+                    try:
+                        from services.usage_metering import set_path as _um_sp
+                        _um_sp("conversational", answer_source=_diag_cfg.key)
+                    except Exception:
+                        pass
+                    return _diag_resp
+                print("⚠️ [conversational-diagnosis] 引擎降級 → 落回既有知識/表單處理")
+
+            # 錨點防呆（P0）：進場判定已用過 top1；未進面向 → 空答案錨點退出答題候選
+            _pre_n = len(decision.get('knowledge_list') or [])
+            decision['knowledge_list'] = _drop_empty_answer_rows(decision.get('knowledge_list'))
+            if _pre_n != len(decision['knowledge_list']):
+                print(f"🛡️ [錨點防呆] 濾除 {_pre_n - len(decision['knowledge_list'])} 筆空答案錨點（不進單發答題）")
+
+            # 相關性把關（51 題抽驗逼出）：reranker 高分錯位直答比查無更糟——
+            # top1 判不相關讓次筆晉位，全不相關空列走誠實 fallback
+            decision['knowledge_list'] = await _top1_relevance_gate(
+                request.message, decision['knowledge_list'])
+
+            # 串流模式：先檢查是否有表單/API 動作需要完整處理
+            if request.stream:
+                _best_k = decision['knowledge_list'][0] if decision['knowledge_list'] else {}
+                _k_action = _best_k.get('action_type', 'direct_answer')
+                _k_form_id = _best_k.get('form_id')
+
+                if _k_action in ('form_fill', 'api_call', 'form_then_api') or _k_form_id:
+                    # 表單/API 類型：走完整回應路徑（非串流），再包裝成串流輸出
+                    print(f"📡 [串流模式] 知識 action_type={_k_action}，走完整回應再轉串流")
+                    _t0 = _time.time()
+                    response = await _build_knowledge_response(
+                        request, req, intent_result, decision['knowledge_list'],
+                        resolver, vendor_info, cache_service,
+                        decision=decision,
+                    )
+                    print(f"⏱️ [Step 5] KB 回應構建（表單）: {int((_time.time()-_t0)*1000)}ms")
+                    print(f"📡 [串流模式] 將表單響應轉換為串流輸出")
+                    return StreamingResponse(
+                        _metered_stream(stream_response_wrapper(response.dict() if hasattr(response, 'dict') else response), req.app.state.db_pool),
+                        media_type="text/event-stream",
+                        headers={
+                            "Cache-Control": "no-cache",
+                            "Connection": "keep-alive",
+                            "X-Accel-Buffering": "no",
+                        },
+                    )
+
+                print(f"📡 [串流模式] 使用串流合成回應")
+                print(f"⏱️ [總計] 檢索完成，開始串流: {int((_time.time()-_total_start)*1000)}ms")
+                return StreamingResponse(
+                    _metered_stream(stream_synthesis_response(
+                        request, req, intent_result, decision['knowledge_list'],
+                        resolver, vendor_info, cache_service,
+                        decision=decision,
+                    ), req.app.state.db_pool),
+                    media_type="text/event-stream",
+                    headers={
+                        "Cache-Control": "no-cache",
+                        "Connection": "keep-alive",
+                        "X-Accel-Buffering": "no",
+                    },
+                )
+
+            # 非串流模式：等待完整回應
+            _t0 = _time.time()
+            response = await _build_knowledge_response(
+                request, req, intent_result, decision['knowledge_list'],
+                resolver, vendor_info, cache_service,
+                decision=decision,
+            )
+            print(f"⏱️ [Step 5] KB 回應構建: {int((_time.time()-_t0)*1000)}ms")
+            print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
+            return response
+
+        elif decision['type'] == 'none':
+            # 無結果，進入 RAG fallback
+            _t0 = _time.time()
+            response = await _handle_no_knowledge_found(
+                request, req, intent_result, resolver,
+                cache_service, vendor_info,
+                decision=decision,
+            )
+            print(f"⏱️ [Step 5] Fallback 回應: {int((_time.time()-_t0)*1000)}ms")
+            print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
+
+            if request.stream:
+                print(f"📡 [串流模式] 將無結果響應轉換為串流輸出")
+                return _finalize_response(response, request)
+            return response
+
+    else:
+        # 回測模式：只使用知識庫
+        print(f"ℹ️  [回測模式] 跳過 SOP 檢索，僅使用知識庫")
+        intent_id = None
+        knowledge_list, _knowledge_list_unfiltered = await _retrieve_knowledge(
+            request, intent_id, intent_result
+        )
+        if not knowledge_list:
+            return await _handle_no_knowledge_found(
+                request, req, intent_result, resolver,
+                cache_service, vendor_info,
+            )
+        return await _build_knowledge_response(
+            request, req, intent_result, knowledge_list,
+            resolver, vendor_info, cache_service,
+        )
 
 
 async def _conversational_sse(engine, decision, request):
@@ -390,17 +915,17 @@ async def _conversational_respond(request, req, *, start_if_absent, config=None)
         decision = await engine.prepare(
             session_id=request.session_id, user_id=request.user_id or "anonymous",
             vendor_id=request.vendor_id or 0, user_message=request.message,
-            config=config, start_if_absent=start_if_absent)
+            config=config, start_if_absent=start_if_absent, role_id=request.role_id)
         if decision is None:
             return None
         return StreamingResponse(
-            _conversational_sse(engine, decision, request),
+            _metered_stream(_conversational_sse(engine, decision, request), req.app.state.db_pool),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"})
     result = await engine.handle(
         session_id=request.session_id, user_id=request.user_id or "anonymous",
         vendor_id=request.vendor_id or 0, user_message=request.message,
-        config=config, start_if_absent=start_if_absent)
+        config=config, start_if_absent=start_if_absent, role_id=request.role_id)
     if not result:
         return None
     return _conversational_to_response(result, request)
@@ -606,6 +1131,23 @@ async def stream_cached_answer(cached_data: Dict):
         })
 
 
+async def _metered_stream(gen, db_pool):
+    """usage-metering（2.1）：串流回應的計量收尾——SSE 在 middleware return 後才吐流，
+    出場落點蓋不到（middleware 對 event-stream 跳過），由本包裝器 finally 收
+    （finalize 冪等，雙落點安全；客戶端中斷時 starlette 會跑 generator cleanup → 仍落event）。"""
+    from services import usage_metering as _um
+    _status, _http = "error", 500          # 中斷/例外預設 error；正常走完改 success
+    try:
+        async for chunk in gen:
+            yield chunk
+        _status, _http = "success", 200
+    finally:
+        try:
+            _um.finalize(_status, _http, db_pool=db_pool)
+        except Exception:
+            pass
+
+
 async def stream_response_wrapper(response_dict: dict):
     """
     將 JSON 響應包裝為串流格式
@@ -734,7 +1276,14 @@ async def stream_synthesis_response(
         filtered_knowledge_list = [k for k in knowledge_list if k.get('similarity', 0) >= high_quality_threshold]
 
         if not filtered_knowledge_list:
-            yield await _generate_sse_event("answer_chunk", {"chunk": "我目前沒有找到符合您問題的資訊。"})
+            # 修正(retrieval-fixes #3):無 ≥0.8 高品質知識時,走與非串流一致的富兜底
+            #   (_handle_no_knowledge_found:參數型答案/prospect 合成/客服專線/缺口記錄),
+            #   而非回裸句。避免同一問題串流答案較差、且缺口統計在串流模式被漏記。
+            fallback_resp = await _handle_no_knowledge_found(
+                request, req, intent_result, resolver, cache_service, vendor_info, decision=decision)
+            fallback_answer = getattr(fallback_resp, 'answer', None) or (
+                fallback_resp.get('answer', '') if isinstance(fallback_resp, dict) else '')
+            yield await _generate_sse_event("answer_chunk", {"chunk": fallback_answer})
             yield await _generate_sse_event("done", {"success": True, "cached": False})
             return
 
@@ -945,6 +1494,16 @@ async def generate_answer_stream(request: 'VendorChatRequest', app_state, intent
 
 # ==================== 輔助函數：調試資訊構建 ====================
 
+def _meter_path(processing_path: str) -> None:
+    """usage-metering：無條件路徑標記（debug builder 被 include_debug_info 閘住，
+    生產不帶 flag 永不觸發——實測 web_meter_test2 事件 path 空案）。"""
+    try:
+        from services.usage_metering import set_path as _sp
+        _sp(processing_path)
+    except Exception:
+        pass
+
+
 def _build_debug_info(
     processing_path: str,
     intent_result: dict,
@@ -959,6 +1518,12 @@ def _build_debug_info(
     comparison_metadata: dict = None  # 🆕 2026-01-28: SOP 與知識庫比較資訊
 ) -> DebugInfo:
     """構建調試資訊對象"""
+    # usage-metering：processing_path 的中央賦值點（各答題路徑必經）——順手記入計量 context
+    try:
+        from services.usage_metering import set_path as _um_set_path
+        _um_set_path(processing_path)
+    except Exception:
+        pass
     print(f"🔍 [_build_debug_info] sop_candidates received: {type(sop_candidates)}, length: {len(sop_candidates) if sop_candidates else 0}")
 
     # 構建意圖詳情
@@ -1519,7 +2084,9 @@ async def _smart_retrieval_with_comparison(
     print(f"⚠️  [決策] SOP ({sop_score:.3f}) 和知識庫 ({knowledge_score:.3f}) 都未達標")
 
     gap = abs(sop_score - knowledge_score)
-    sop_candidates = len(sop_result.get('retrieved_sops', [])) if sop_result else 0
+    # 修正(retrieval-fixes #10):其餘 case 皆用 all_sop_candidates;此處原誤用不存在的 retrieved_sops
+    #   → Case 6 的 comparison.sop_candidates 恆為 0(僅 debug 顯示,不影響決策)。
+    sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
 
     return {
         'type': 'none',
@@ -1782,6 +2349,7 @@ async def _build_sop_response(
 
     # 構建調試資訊（如果請求了）
     debug_info = None
+    _meter_path('sop')
     if request.include_debug_info:
         # 獲取業者參數
         vendor_params = resolver.get_vendor_parameters(request.vendor_id)
@@ -1908,6 +2476,7 @@ async def _build_rag_response(
 
     # 構建調試資訊（如果請求了）
     debug_info = None
+    _meter_path('rag_fallback')
     if request.include_debug_info:
         # 標記哪些知識被選取了
         selected_ids = {r['id'] for r in rag_results[:optimization_result.get('sources_used', len(rag_results))]}
@@ -2008,6 +2577,7 @@ async def _retrieve_knowledge(
 
     # Debug 旁路：若需要 debug_info，再跑一次未過濾的檢索
     knowledge_list_unfiltered = None
+    _meter_path('param_answer')
     if request.include_debug_info:
         knowledge_list_unfiltered = await retriever.retrieve_knowledge_hybrid(
             query=request.message,
@@ -2060,6 +2630,7 @@ async def _handle_no_knowledge_found(
 
         # 構建調試資訊（如果請求了）
         debug_info = None
+        _meter_path('param_answer')
         if request.include_debug_info:
             # 獲取業者參數
             vendor_params = resolver.get_vendor_parameters(request.vendor_id)
@@ -2106,7 +2677,8 @@ async def _handle_no_knowledge_found(
         try:
             from services.system_context import get_system_context
             optimizer = req.app.state.llm_answer_optimizer
-            system_md = await get_system_context(req.app.state.db_pool)
+            system_md = await get_system_context(req.app.state.db_pool, request.target_user)  # 領域鍵＝target_user（此路徑必為 prospect）
+            system_md = await _presales_synth_md(req.app.state.db_pool, request.target_user, system_md)
             md_only_grounding = (
                 "（本次未檢索到對應的特定知識。請依系統脈絡的「功能對照索引」判斷是否有對應功能："
                 "有 → 點名推薦該功能並導向 demo / 試用；無 → 禮貌說明可由專人協助了解，不杜撰功能。）"
@@ -2126,6 +2698,7 @@ async def _handle_no_knowledge_found(
 
     # 構建調試資訊（如果請求了）
     debug_info = None
+    _meter_path('no_knowledge_found')
     if request.include_debug_info:
         # 🆕 從 decision 中提取 SOP 候選資訊
         sop_candidates_list = []
@@ -2283,6 +2856,7 @@ async def _build_knowledge_response(
 
             # 構建表單觸發路徑的 debug_info
             form_debug_info = None
+            _meter_path('knowledge_form')
             if request.include_debug_info:
                 # followup-debug-visibility 選項 A：優先顯示 unfiltered 候選
                 _form_source = (
@@ -3202,8 +3776,6 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
     - 各功能模塊獨立為輔助函數
     """
     try:
-        import time as _time
-        _total_start = _time.time()
         # DEBUG: 檢查 session_id 是否被正確接收
         print(f"🔍 [DEBUG] vendor_chat_message received - session_id: {request.session_id}, user_id: {request.user_id}")
 
@@ -3222,519 +3794,50 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             except Exception as e:
                 print(f"⚠️ [role_id] 自動補全失敗: {e}")
 
+        # 跨 handler 共享情境(於 dispatcher 頂端建立一次,無 session_id 亦可用)
+        ctx = ChatRequestContext()
+
         # Step 0: 檢查表單會話（Phase X: 表單填寫功能）
         if request.session_id:
             form_manager = req.app.state.form_manager
             session_state = await form_manager.get_session_state(request.session_id)
 
-            # 處理 REVIEWING 狀態（審核確認）
-            if session_state and session_state['state'] == 'REVIEWING':
-                user_choice = request.message.strip()
+            # 表單會話 REVIEWING / EDITING → handle_form_session(Stage 2)
+            ctx.session_state = session_state
+            resp = await handle_form_session(request, req, ctx)
+            if resp is not None:
+                return resp
 
-                # 確認提交
-                if user_choice.lower() in ["確認", "confirm", "ok", "提交", "submit"]:
-                    print(f"📋 用戶確認提交表單")
-                    # 完成表單
-                    form_schema = await form_manager.get_form_schema(
-                        session_state['form_id'],
-                        request.vendor_id
-                    )
-                    form_result = await form_manager._complete_form(
-                        session_state,
-                        form_schema,
-                        session_state['collected_data']
-                    )
-                    response = _convert_form_result_to_response(form_result, request)
+            # 對話偽會話續跑（option-routing R14-R19）→ handle_conversational_session(Stage 2)
+            resp = await handle_conversational_session(request, req, ctx)
+            if resp is not None:
+                return resp
+            # 降級結果(陷阱4)已寫入 ctx.session_state;handle_collecting 內讀 ctx 自行判斷
 
-                    # 🆕 如果啟用串流模式，轉換為串流輸出
-                    if request.stream:
-                        print(f"📡 [串流模式] 將表單完成響應轉換為串流輸出")
-                        return StreamingResponse(
-                            stream_response_wrapper(response.dict()),
-                            media_type="text/event-stream",
-                            headers={
-                                "Cache-Control": "no-cache",
-                                "Connection": "keep-alive",
-                                "X-Accel-Buffering": "no"
-                            }
-                        )
-                    return response
+            # 表單收集 COLLECTING/DIGRESSION/PAUSED → handle_collecting(Stage 2)
+            resp = await handle_collecting(request, req, ctx)
+            if resp is not None:
+                return resp
+            # 取消+pending:request.message 已被 handler 替換,續走一般流程
 
-                # 取消表單
-                elif user_choice.lower() in ["取消", "cancel", "放棄"]:
-                    print(f"📋 用戶取消表單")
-                    form_result = await form_manager.cancel_form(request.session_id)
+        # Step 0.5: 圖片辨識分支（2026-04-28）→ handle_image(Stage 2)
+        resp = await handle_image(request, req, ctx)
+        if resp is not None:
+            return resp
 
-                    # 清除 SOP trigger context，避免再次詢問時直接觸發表單
-                    sop_orchestrator = req.app.state.sop_orchestrator
-                    sop_orchestrator.trigger_handler.delete_context(request.session_id)
-                    print(f"🧹 已清除 trigger context")
-
-                    response = _convert_form_result_to_response(form_result, request)
-
-                    # 🆕 如果啟用串流模式，轉換為串流輸出
-                    if request.stream:
-                        print(f"📡 [串流模式] 將表單取消響應轉換為串流輸出")
-                        return StreamingResponse(
-                            stream_response_wrapper(response.dict()),
-                            media_type="text/event-stream",
-                            headers={
-                                "Cache-Control": "no-cache",
-                                "Connection": "keep-alive",
-                                "X-Accel-Buffering": "no"
-                            }
-                        )
-                    return response
-
-                # 修改欄位
-                else:
-                    print(f"📋 用戶要求修改欄位：{user_choice}")
-                    form_result = await form_manager.handle_edit_request(
-                        session_id=request.session_id,
-                        user_input=request.message,
-                        vendor_id=request.vendor_id
-                    )
-                    response = _convert_form_result_to_response(form_result, request)
-
-                    # 🆕 如果啟用串流模式，轉換為串流輸出
-                    if request.stream:
-                        print(f"📡 [串流模式] 將欄位修改響應轉換為串流輸出")
-                        return StreamingResponse(
-                            stream_response_wrapper(response.dict()),
-                            media_type="text/event-stream",
-                            headers={
-                                "Cache-Control": "no-cache",
-                                "Connection": "keep-alive",
-                                "X-Accel-Buffering": "no"
-                            }
-                        )
-                    return response
-
-            # 處理 EDITING 狀態（編輯欄位）
-            if session_state and session_state['state'] == 'EDITING':
-                print(f"📋 用戶輸入編輯後的欄位值")
-                form_result = await form_manager.collect_edited_field(
-                    session_id=request.session_id,
-                    user_message=request.message,
-                    vendor_id=request.vendor_id
-                )
-                return _convert_form_result_to_response(form_result, request)
-
-            # 對話式回答模式（option-routing R14-R19）：進行中的 conversational 偽會話
-            # → 交對話引擎續跑（不走表單收集；form_id='conversational' 無對應表單 schema）。
-            if session_state and session_state.get('form_id') == 'conversational' \
-                    and session_state['state'] == 'COLLECTING':
-                engine = req.app.state.conversational_engine
-                user_choice = request.message.strip()
-                # 取消：關閉對話會話（R16.2 隨取消清除）
-                if user_choice.lower() in ["取消", "cancel", "放棄", "結束"]:
-                    await engine._close(request.session_id)
-                    from datetime import datetime
-                    cancel_resp = VendorChatResponse(
-                        answer="好的，已結束這次諮詢。隨時需要都可以再問我！",
-                        intent_name='售前諮詢', intent_type='conversational', confidence=1.0,
-                        action_type='conversational', sources=None, source_count=0,
-                        vendor_id=request.vendor_id, mode=request.mode or 'b2b',
-                        session_id=request.session_id, timestamp=datetime.utcnow().isoformat(),
-                        form_cancelled=True,
-                    )
-                    return _finalize_response(cancel_resp, request)
-                # 續對話（stream→真 token 串流 / 非 stream→JSON）；降級回 None
-                conv_resp = await _conversational_respond(request, req, start_if_absent=False, config=None)
-                if conv_resp is not None:
-                    return conv_resp
-                # 引擎降級（brain 失敗）：關閉殘留會話、落回一般流程（不阻斷對話）
-                print("⚠️ [conversational] 引擎降級，關閉對話會話、改走一般流程")
-                await engine._close(request.session_id)
-                session_state = None
-
-            # 處理 COLLECTING、DIGRESSION 和 PAUSED 狀態（收集欄位）
-            if session_state and session_state['state'] in ['COLLECTING', 'DIGRESSION', 'PAUSED']:
-                # 用戶正在填寫表單 → 走表單收集流程
-                # PAUSED 狀態：表單暫停（例如 SOP form_then_api），用戶訊息可能是要恢復表單
-                print(f"📋 檢測到進行中的表單會話（{session_state['form_id']}, 狀態: {session_state['state']}），使用表單收集流程")
-
-                intent_classifier = req.app.state.intent_classifier
-                intent_result = intent_classifier.classify(request.message)
-
-                form_result = await form_manager.collect_field_data(
-                    user_message=request.message,
-                    session_id=request.session_id,
-                    intent_result=intent_result,
-                    vendor_id=request.vendor_id,
-                    language='zh-TW',  # TODO: 從 request 或用戶設定讀取語言
-                    image_urls=request.image_urls,
-                )
-
-                # 葉答案 LLM 個人化（R11/R13）：prospect 情境下合成決策樹葉答案（失敗保留原文）
-                form_result = await _maybe_synthesize_presales_leaf(form_result, request, req)
-
-                # 如果用戶選擇回答問題或取消表單，繼續處理待處理的問題
-                if form_result.get('form_cancelled'):
-                    # 清除 SOP trigger context，避免再次詢問時直接觸發表單
-                    sop_orchestrator = req.app.state.sop_orchestrator
-                    sop_orchestrator.trigger_handler.delete_context(request.session_id)
-                    print(f"🧹 已清除 trigger context")
-
-                    pending_question = form_result.get('pending_question')
-                    if pending_question:
-                        print(f"📋 用戶取消表單，繼續處理待處理的問題：{pending_question}")
-                        # 替換 request.message 為待處理的問題
-                        request.message = pending_question
-                        # 繼續往下走正常流程
-                    else:
-                        print(f"📋 用戶取消表單，但沒有待處理的問題")
-                        # 沒有待處理的問題，直接返回取消訊息
-                        response = _convert_form_result_to_response(form_result, request)
-
-                        # 🆕 如果啟用串流模式，轉換為串流輸出
-                        if request.stream:
-                            return StreamingResponse(
-                                stream_response_wrapper(response.dict()),
-                                media_type="text/event-stream",
-                                headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"}
-                            )
-                        return response
-                else:
-                    # 將表單結果轉換為 VendorChatResponse 格式
-                    response = _convert_form_result_to_response(form_result, request)
-
-                    # 🆕 如果啟用串流模式，轉換為串流輸出
-                    if request.stream:
-                        print(f"📡 [串流模式] 將表單響應轉換為串流輸出")
-                        return StreamingResponse(
-                            stream_response_wrapper(response.dict()),
-                            media_type="text/event-stream",
-                            headers={
-                                "Cache-Control": "no-cache",
-                                "Connection": "keep-alive",
-                                "X-Accel-Buffering": "no"
-                            }
-                        )
-
-                    return response
-
-        # Step 0.5: 圖片辨識分支（2026-04-28）
-        from services.image_recognition_service import ImageRecognitionService, is_image_recognition_enabled
-        if request.image_urls and is_image_recognition_enabled():
-            try:
-                recognition_service = ImageRecognitionService()
-                db_pool = req.app.state.db_pool
-
-                recognition = await recognition_service.analyze_images(
-                    image_urls=request.image_urls,
-                    context=request.message if request.message else None,
-                    db_pool=db_pool,
-                )
-
-                if recognition.get("is_damage") and recognition.get("confidence", 0) >= 0.6:
-                    # 損壞圖片：觸發修繕 SOP
-                    damage_desc = recognition.get("description", "")
-                    trigger_msg = f"{request.message}" if request.message else ""
-                    if damage_desc:
-                        trigger_msg = f"{trigger_msg} （圖片辨識：{damage_desc}）".strip()
-
-                    # 注入辨識資訊到 SOP 觸發
-                    sop_orchestrator = req.app.state.sop_orchestrator
-                    form_manager = req.app.state.form_manager
-
-                    # 嘗試觸發修繕 SOP
-                    sop_result = await sop_orchestrator.process_message(
-                        user_message=trigger_msg or "我要報修",
-                        session_id=request.session_id,
-                        user_id=request.user_id or "anonymous",
-                        vendor_id=request.vendor_id,
-                        role_id=request.role_id,
-                    )
-
-                    if sop_result:
-                        from datetime import datetime
-                        sop_answer = sop_result.get("answer", "")
-                        # SOP manual 模式可能先回排查步驟，附加辨識摘要
-                        if not sop_answer:
-                            damage_desc = recognition.get("description", "")
-                            sop_answer = f"根據照片分析，{damage_desc}\n\n需要為您建立修繕報修嗎？請輸入「確認」開始報修。"
-
-                        response = VendorChatResponse(
-                            answer=sop_answer,
-                            intent_name=sop_result.get("intent_name", "repair"),
-                            intent_type="sop",
-                            confidence=recognition.get("confidence", 0.0),
-                            action_type=sop_result.get("action_type", "form_fill"),
-                            sources=[],
-                            source_count=0,
-                            vendor_id=request.vendor_id,
-                            mode=request.mode or "b2c",
-                            session_id=request.session_id,
-                            timestamp=datetime.utcnow().isoformat(),
-                            form_triggered=sop_result.get("form_triggered", False),
-                            form_id=sop_result.get("form_id"),
-                            current_field=sop_result.get("current_field"),
-                            current_field_type=sop_result.get("current_field_type"),
-                            progress=sop_result.get("progress"),
-                            image_recognition=recognition,
-                            uploaded_images=request.image_urls,
-                        )
-                        if request.stream:
-                            return StreamingResponse(
-                                stream_response_wrapper(response.dict()),
-                                media_type="text/event-stream",
-                                headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"}
-                            )
-                        return response
-
-                else:
-                    # 非損壞圖片或信心度不足
-                    from datetime import datetime
-                    msg = "目前僅支援修繕報修的圖片辨識，請描述您的問題。"
-                    if recognition.get("confidence", 0) > 0 and recognition.get("confidence", 0) < 0.6:
-                        msg = "無法確定損壞類型，建議手動選擇或提供更清晰的照片。"
-
-                    response = VendorChatResponse(
-                        answer=msg,
-                        intent_name=None,
-                        confidence=recognition.get("confidence", 0.0),
-                        sources=[],
-                        source_count=0,
-                        vendor_id=request.vendor_id,
-                        mode=request.mode or "b2c",
-                        session_id=request.session_id,
-                        timestamp=datetime.utcnow().isoformat(),
-                        image_recognition=recognition,
-                        uploaded_images=request.image_urls,
-                    )
-                    if request.stream:
-                        return StreamingResponse(
-                            stream_response_wrapper(response.dict()),
-                            media_type="text/event-stream",
-                            headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"}
-                        )
-                    return response
-
-            except Exception as e:
-                # Vision API 失敗/逾時：降級為純文字流程，不阻塞
-                print(f"⚠️ [圖片辨識] 降級為文字流程: {e}")
-
-        # Step 1: 驗證業者（B2B 可不帶 vendor_id）
+        # Step 1: 驗證業者（B2B 可不帶 vendor_id）— 原位執行,結果入 ctx
         resolver = get_vendor_param_resolver()
         is_b2b = request.mode in ('b2b', 'customer_service')
         if is_b2b and not request.vendor_id:
-            vendor_info = {'id': 0, 'name': 'JGB System', 'business_types': ['system_provider']}
+            ctx.vendor_info = {'id': 0, 'name': 'JGB System', 'business_types': ['system_provider']}
         else:
-            vendor_info = _validate_vendor(request.vendor_id, resolver)
+            ctx.vendor_info = _validate_vendor(request.vendor_id, resolver)
 
-        # Step 1.5: 對話式回答 engine-first（option-routing R14–R19｜元件 14）
-        # 啟用範圍**目前明確限 prospect**（不因 DB 有其他設定就自動開；設定層雖資料驅動，
-        # 但啟用角色在此明確控制，要擴充再加進此清單）。prospect 先進對話引擎（先了解再答；
-        # 知識在收斂時當 grounding）。引擎降級（brain 失敗）→ 回 None，落回既有流程（知識/兜底）。
-        CONVERSATIONAL_ENABLED_ROLES = {'prospect'}
-        if request.target_user in CONVERSATIONAL_ENABLED_ROLES:
-            conv_resp = await _maybe_conversational_freetext(request, req)
-            if conv_resp is not None:
-                return conv_resp
-
-        # Step 2: 緩存檢查（表單期間不使用緩存）
-        cache_service = req.app.state.cache_service
-
-        # 🆕 串流模式：檢查緩存時返回不同格式
-        print(f"🔍 [DEBUG] stream參數值: {request.stream}, 類型: {type(request.stream)}")
-        if request.stream:
-            # 串流模式：檢查緩存並返回 SSE
-            config_version = _generate_config_version()
-            cached_answer = cache_service.get_cached_answer(
-                vendor_id=request.vendor_id,
-                question=request.message,
-                target_user=request.target_user,
-                config_version=config_version
-            )
-            if cached_answer:
-                print(f"⚡ 緩存命中！使用串流模式輸出 - 配置版本: {config_version}")
-                return StreamingResponse(
-                    stream_cached_answer(cached_answer),
-                    media_type="text/event-stream",
-                    headers={
-                        "Cache-Control": "no-cache",
-                        "Connection": "keep-alive",
-                        "X-Accel-Buffering": "no"  # 禁用 nginx 緩衝
-                    }
-                )
-        else:
-            # 非串流模式：正常返回 JSON
-            # ✅ Debug 模式不使用緩存，保證調試信息最新
-            if not request.include_debug_info:
-                cached_response = _check_cache(cache_service, request.vendor_id, request.message, request.target_user)
-                if cached_response:
-                    return cached_response
-
-        # Step 3: 意圖分類（已註解 — intent 在檢索計分中零權重，省 ~1.5s）
-        # _t0 = _time.time()
-        # intent_classifier = req.app.state.intent_classifier
-        # intent_result = intent_classifier.classify(request.message)
-        # print(f"⏱️ [Step 3] 意圖分類: {int((_time.time()-_t0)*1000)}ms")
-        intent_result = {
-            'intent_name': 'unknown',
-            'intent_type': None,
-            'confidence': 0.0,
-            'all_intents': [],
-            'secondary_intents': [],
-            'intent_ids': [],
-            'keywords': [],
-        }
-
-        # Step 4: 智能檢索（SOP 與知識庫同時檢索 + 分數比較）
-        # 🆕 2026-01-28: 替換原有的先 SOP 後知識庫的邏輯
-        # 新邏輯：
-        #   1. 同時檢索 SOP 和知識庫（並行執行）
-        #   2. 比較 Reranker 分數，選擇最相關的
-        #   3. SOP 和知識庫永遠不混合
-        #   4. 答案合成只用於知識庫
-        if not request.skip_sop:
-            sop_orchestrator = req.app.state.sop_orchestrator
-
-            # 使用智能檢索
-            _t0 = _time.time()
-            decision = await _smart_retrieval_with_comparison(
-                request=request,
-                intent_result=intent_result,
-                sop_orchestrator=sop_orchestrator,
-                resolver=resolver
-            )
-            print(f"⏱️ [Step 4] 智能檢索: {int((_time.time()-_t0)*1000)}ms")
-
-            print(f"🎯 [最終決策] {decision['type']} - {decision['reason']}")
-
-            # 根據決策類型返回回應
-            if decision['type'] == 'sop':
-                # 返回 SOP 回應（不涉及知識庫）
-                _t0 = _time.time()
-                response = await _build_orchestrator_response(
-                    request, req, decision['sop_result'],
-                    resolver, vendor_info, cache_service,
-                    decision=decision  # 🆕 傳遞決策資訊（包含 comparison_metadata）
-                )
-                print(f"⏱️ [Step 5] SOP 回應構建: {int((_time.time()-_t0)*1000)}ms")
-                print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
-
-                # 🆕 串流模式：將 JSON 響應轉換為串流
-                if request.stream:
-                    print(f"📡 [串流模式] 將 SOP 響應轉換為串流輸出")
-                    return StreamingResponse(
-                        stream_response_wrapper(response.dict()),
-                        media_type="text/event-stream",
-                        headers={
-                            "Cache-Control": "no-cache",
-                            "Connection": "keep-alive",
-                            "X-Accel-Buffering": "no"
-                        }
-                    )
-                return response
-
-            elif decision['type'] == 'knowledge':
-                # 串流模式：先檢查是否有表單/API 動作需要完整處理
-                if request.stream:
-                    # 檢查最佳知識是否需要表單觸發（表單不適合串流合成）
-                    _best_k = decision['knowledge_list'][0] if decision['knowledge_list'] else {}
-                    _k_action = _best_k.get('action_type', 'direct_answer')
-                    _k_form_id = _best_k.get('form_id')
-
-                    if _k_action in ('form_fill', 'api_call', 'form_then_api') or _k_form_id:
-                        # 表單/API 類型：走完整回應路徑（非串流），再包裝成串流輸出
-                        print(f"📡 [串流模式] 知識 action_type={_k_action}，走完整回應再轉串流")
-                        _t0 = _time.time()
-                        response = await _build_knowledge_response(
-                            request, req, intent_result, decision['knowledge_list'],
-                            resolver, vendor_info, cache_service,
-                            decision=decision
-                        )
-                        print(f"⏱️ [Step 5] KB 回應構建（表單）: {int((_time.time()-_t0)*1000)}ms")
-                        # 將完整回應轉為串流格式
-                        print(f"📡 [串流模式] 將表單響應轉換為串流輸出")
-                        return StreamingResponse(
-                            stream_response_wrapper(response.dict() if hasattr(response, 'dict') else response),
-                            media_type="text/event-stream",
-                            headers={
-                                "Cache-Control": "no-cache",
-                                "Connection": "keep-alive",
-                                "X-Accel-Buffering": "no"
-                            }
-                        )
-
-                    print(f"📡 [串流模式] 使用串流合成回應")
-                    print(f"⏱️ [總計] 檢索完成，開始串流: {int((_time.time()-_total_start)*1000)}ms")
-                    return StreamingResponse(
-                        stream_synthesis_response(
-                            request, req, intent_result, decision['knowledge_list'],
-                            resolver, vendor_info, cache_service,
-                            decision=decision
-                        ),
-                        media_type="text/event-stream",
-                        headers={
-                            "Cache-Control": "no-cache",
-                            "Connection": "keep-alive",
-                            "X-Accel-Buffering": "no"
-                        }
-                    )
-
-                # 非串流模式：等待完整回應
-                _t0 = _time.time()
-                response = await _build_knowledge_response(
-                    request, req, intent_result, decision['knowledge_list'],
-                    resolver, vendor_info, cache_service,
-                    decision=decision
-                )
-                print(f"⏱️ [Step 5] KB 回應構建: {int((_time.time()-_t0)*1000)}ms")
-                print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
-                return response
-
-            elif decision['type'] == 'none':
-                # 無結果，進入 RAG fallback
-                _t0 = _time.time()
-                response = await _handle_no_knowledge_found(
-                    request, req, intent_result, resolver,
-                    cache_service, vendor_info,
-                    decision=decision  # 🆕 傳遞 decision 以包含 SOP 候選資訊
-                )
-                print(f"⏱️ [Step 5] Fallback 回應: {int((_time.time()-_t0)*1000)}ms")
-                print(f"⏱️ [總計] 端到端: {int((_time.time()-_total_start)*1000)}ms")
-
-                # 🆕 串流模式：將 JSON 響應轉換為串流
-                if request.stream:
-                    print(f"📡 [串流模式] 將無結果響應轉換為串流輸出")
-                    return StreamingResponse(
-                        stream_response_wrapper(response.dict()),
-                        media_type="text/event-stream",
-                        headers={
-                            "Cache-Control": "no-cache",
-                            "Connection": "keep-alive",
-                            "X-Accel-Buffering": "no"
-                        }
-                    )
-                return response
-
-        else:
-            # 回測模式：只使用知識庫
-            print(f"ℹ️  [回測模式] 跳過 SOP 檢索，僅使用知識庫")
-
-            # 獲取意圖 ID
-            intent_id = None
-
-            # 檢索知識庫（回傳 (filtered, unfiltered)；回測模式暫不使用 unfiltered）
-            knowledge_list, _knowledge_list_unfiltered = await _retrieve_knowledge(
-                request, intent_id, intent_result
-            )
-
-            # 如果知識庫沒有結果
-            if not knowledge_list:
-                return await _handle_no_knowledge_found(
-                    request, req, intent_result, resolver,
-                    cache_service, vendor_info
-                )
-
-            # 返回知識庫回應
-            return await _build_knowledge_response(
-                request, req, intent_result, knowledge_list,
-                resolver, vendor_info, cache_service
-            )
+        # 對話/緩存/檢索 handler 群：依序嘗試,首個命中即回(handle_retrieval 為終點必回)
+        for handler in (handle_conversational_entry, handle_cache, handle_retrieval):
+            resp = await handler(request, req, ctx)
+            if resp is not None:
+                return resp
 
     except HTTPException:
         raise

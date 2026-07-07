@@ -11,7 +11,6 @@ from asyncpg.pool import Pool
 
 # 導入服務
 from services.intent_classifier import IntentClassifier
-from services.rag_engine import RAGEngine
 from services.confidence_evaluator import ConfidenceEvaluator
 from services.unclear_question_manager import UnclearQuestionManager
 from services.llm_answer_optimizer import LLMAnswerOptimizer
@@ -27,7 +26,6 @@ from routers import chat, unclear_questions, knowledge, vendors, knowledge_impor
 # 全局變數
 db_pool: Pool = None
 intent_classifier: IntentClassifier = None
-rag_engine: RAGEngine = None
 confidence_evaluator: ConfidenceEvaluator = None
 unclear_question_manager: UnclearQuestionManager = None
 llm_answer_optimizer: LLMAnswerOptimizer = None
@@ -42,7 +40,7 @@ sop_orchestrator: SOPOrchestrator = None
 async def lifespan(app: FastAPI):
     """應用生命週期管理"""
     # 啟動時初始化
-    global db_pool, intent_classifier, rag_engine, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine, vendor_config_service, cache_service, form_manager, sop_orchestrator
+    global db_pool, intent_classifier, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine, vendor_config_service, cache_service, form_manager, sop_orchestrator
 
     print("🚀 初始化 RAG Orchestrator...")
 
@@ -61,9 +59,6 @@ async def lifespan(app: FastAPI):
     # 初始化服務
     intent_classifier = IntentClassifier()
     print("✅ 意圖分類器已初始化")
-
-    rag_engine = RAGEngine(db_pool)
-    print("✅ RAG 檢索引擎已初始化")
 
     confidence_evaluator = ConfidenceEvaluator()
     print("✅ 信心度評估器已初始化")
@@ -110,19 +105,20 @@ async def lifespan(app: FastAPI):
     from services.conversational_rules import load_rules as conversational_load_rules
     from services.system_context import get_system_context as conversational_get_system_context
     from services.vendor_knowledge_retriever_v2 import VendorKnowledgeRetrieverV2
+    from services.api_call_handler import get_api_call_handler
     conversational_engine = ConversationalEngine(
         db_pool=db_pool,
         optimizer=llm_answer_optimizer,
         retriever=VendorKnowledgeRetrieverV2(),
         get_system_context=conversational_get_system_context,
         rules_loader=conversational_load_rules,
+        api_handler=get_api_call_handler(db_pool),  # 診斷型對話 API grounding 用
     )
     print("✅ 對話式回答引擎已初始化（conversational：多輪自適應問答→收斂，售前為首例）")
 
     # 將服務注入到 app.state
     app.state.db_pool = db_pool
     app.state.intent_classifier = intent_classifier
-    app.state.rag_engine = rag_engine
     app.state.confidence_evaluator = confidence_evaluator
     app.state.unclear_question_manager = unclear_question_manager
     app.state.llm_answer_optimizer = llm_answer_optimizer
@@ -160,6 +156,92 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── 服務對服務 API Key 認證（金鑰存 DB；RAG_API_AUTH_ENFORCE 關→不強制，安全上線）──
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from services.api_key_auth import is_exempt, auth_enforced, verify_api_key
+
+if auth_enforced():
+    print("🔒 [security] rag API Key 認證【已啟用】，金鑰來源＝api_keys 表")
+else:
+    print("⚠️ [security] RAG_API_AUTH_ENFORCE 未開 → API Key 認證【停用】，rag 對外無保護。正式環境務必開啟。")
+
+
+@app.middleware("http")
+async def usage_metering_middleware(request: Request, call_next):
+    """usage-metering（spec usage-metering 2.1）：/api/v1/message 進場建計量
+    context、出場落事件（fire-and-forget）。串流回應（SSE）由 generator finally
+    落點（finalize 冪等使雙落點安全）；其餘路徑零觸碰；任何失敗不影響回應。"""
+    from services import usage_metering as _um
+    metered = (request.url.path == "/api/v1/message" and request.method == "POST"
+               and _um.is_enabled())
+    if metered:
+        try:
+            import json as _json
+            _body = await request.body()
+            # ⚠️ BaseHTTPMiddleware 讀 body 會吃掉 receive channel，下游 handler
+            #    等 body 永久卡死（實測）——回灌 _receive 供下游重читать
+            async def _replay():
+                return {"type": "http.request", "body": _body, "more_body": False}
+            request._receive = _replay
+            _fields = _json.loads(_body) if _body else {}
+            _um.begin(_fields if isinstance(_fields, dict) else {})
+        except Exception:
+            _fields = {}
+            _um.begin({})
+    _pool = getattr(request.app.state, "db_pool", None)
+    _quota = None
+    if metered:
+        # quota-management：達限短路（進檢索/LLM 前，零成本，R4.1）；fail-open
+        _ctx_obj = _um._ctx.get()
+        _quota = await _um.quota_check(_pool, (_fields or {}).get("vendor_id"),
+                                       bool(_ctx_obj and _ctx_obj.is_internal))
+        if _quota.state == "blocked":
+            _um.set_path("quota_blocked")
+            _um.finalize("blocked", 200, db_pool=_pool)      # 記事件供舉證（R4.6）
+            _body_dict = _um.quota_blocked_body(
+                _ctx_obj.user_type if _ctx_obj else "unknown", _quota, _fields or {})
+            return JSONResponse(status_code=200, content=_body_dict)
+    try:
+        response = await call_next(request)
+    except Exception:
+        if metered:
+            _um.finalize("error", 500, db_pool=_pool)
+        raise
+    if metered:
+        _ctype = response.headers.get("content-type", "")
+        if "text/event-stream" not in _ctype:      # 串流由 generator finally 收尾
+            _um.finalize("success" if response.status_code < 500 else "error",
+                         response.status_code, db_pool=_pool)
+            # quota 警示：2026-07-06 改判——警示不進對話（改寄信），
+            # env QUOTA_WARN_IN_CHAT=true 可重新啟用對話內提示
+            if (os.getenv("QUOTA_WARN_IN_CHAT", "false").lower() == "true"
+                    and _quota is not None and _quota.state == "warn"
+                    and "application/json" in _ctype and response.status_code == 200):
+                _ctx_obj = _um._ctx.get()
+                _ut = _ctx_obj.user_type if _ctx_obj else "unknown"
+                _raw = b""
+                async for _chunk in response.body_iterator:
+                    _raw += _chunk
+                _new_raw = _um.append_quota_hint(_raw, _ut, _quota)
+                from starlette.responses import Response as _Resp
+                _hdrs = dict(response.headers)
+                _hdrs.pop("content-length", None)      # 重算（research 風險 2）
+                return _Resp(content=_new_raw if _new_raw is not None else _raw,
+                             status_code=response.status_code, headers=_hdrs,
+                             media_type="application/json")
+    return response
+
+
+@app.middleware("http")
+async def api_key_guard(request: Request, call_next):
+    if auth_enforced() and request.method != "OPTIONS" and not is_exempt(request.url.path):
+        pool = getattr(request.app.state, "db_pool", None)
+        if not await verify_api_key(pool, request.headers.get("x-api-key")):
+            return JSONResponse(status_code=401, content={"detail": "Invalid or missing API key"})
+    return await call_next(request)
+
 
 # 註冊路由
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
@@ -209,7 +291,6 @@ async def health_check():
             "database": "connected",
             "services": {
                 "intent_classifier": "ready",
-                "rag_engine": "ready",
                 "confidence_evaluator": "ready",
                 "unclear_question_manager": "ready",
                 "llm_answer_optimizer": "ready (Phase 3)",

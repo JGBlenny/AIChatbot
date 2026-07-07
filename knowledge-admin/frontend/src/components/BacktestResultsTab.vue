@@ -1,10 +1,20 @@
 <template>
   <div class="backtest-results-tab">
-    <!-- 空狀態提示 -->
-    <div v-if="!loopId" class="empty-state">
-      <div class="empty-icon">🎯</div>
-      <h3>請選擇迴圈</h3>
-      <p>請在頂部的「當前迴圈」選擇器中選擇一個迴圈，以查看回測結果。</p>
+    <!-- 未選迴圈：瀏覽所有 Run（含手動/容器執行的獨立 run） -->
+    <div v-if="!loopId" class="loop-info-card">
+      <h3>📜 所有回測 Run</h3>
+      <p class="all-runs-hint">未選擇迴圈時顯示全部 run（含手動執行）；在頂部選擇迴圈可切換為迭代視圖。</p>
+      <div class="filter-group">
+        <label>選擇 Run：</label>
+        <select v-model="selectedRunId" @change="onRunSelected" class="run-selector" :disabled="allRuns.length === 0">
+          <option v-if="allRuns.length === 0" :value="null" disabled>尚無回測記錄</option>
+          <option v-for="run in allRuns" :key="run.id" :value="run.id">
+            Run #{{ run.id }} - {{ formatRunDate(run.started_at) }}
+            ({{ run.executed_scenarios || run.total_scenarios }} 題, 通過率 {{ run.pass_rate }}%{{ run.status !== 'completed' ? ', ' + run.status : '' }})
+          </option>
+        </select>
+        <span v-if="allRuns.length > 0" class="run-count">最近 {{ allRuns.length }} 次</span>
+      </div>
     </div>
 
     <!-- 迴圈資訊卡片 -->
@@ -115,9 +125,19 @@
       </div>
     </div>
 
+    <!-- v3 多輪感知評級分佈（舊 run 無資料時自動隱藏） -->
+    <div v-if="gradeDistribution && Object.keys(gradeDistribution).length" class="grade-dist">
+      <span class="grade-dist-label">評級分佈（v3 多輪感知）：</span>
+      <span v-for="g in gradeOrder" :key="g">
+        <span v-if="gradeDistribution[g]" class="grade-chip" :class="'grade-' + g.toLowerCase()">
+          {{ gradeLabel(g) }} {{ gradeDistribution[g] }}
+        </span>
+      </span>
+    </div>
+
     <!-- 工具列 -->
     <div class="toolbar">
-      <div class="filter-group">
+      <div v-if="loopId" class="filter-group">
         <label>📜 該輪次的回測記錄：</label>
         <select v-model="selectedRunId" @change="onRunSelected" class="run-selector" :disabled="filteredBacktestRuns.length === 0">
           <option v-if="filteredBacktestRuns.length === 0" value="" disabled>
@@ -161,12 +181,11 @@
         <thead>
           <tr>
             <th style="width: 60px;">ID</th>
-            <th style="width: 80px;">狀態</th>
-            <th style="width: 300px;">測試問題</th>
-            <th style="width: 150px;">意圖</th>
-            <th style="width: 100px;">信心分數</th>
-            <th style="width: 100px;">信心等級</th>
-            <th style="width: 80px;">來源數</th>
+            <th style="width: 105px;">評級</th>
+            <th style="width: 280px;">測試問題</th>
+            <th style="width: 55px;">輪次</th>
+            <th>評審理由</th>
+            <th style="width: 55px;">來源</th>
             <th style="width: 100px;">操作</th>
           </tr>
         </thead>
@@ -174,14 +193,17 @@
           <tr v-for="result in results" :key="result.test_id" :class="{ 'failed-row': !result.passed }">
             <td>{{ result.test_id }}</td>
             <td>
-              <span class="status-badge" :class="result.passed ? 'passed' : 'failed'">
-                {{ result.passed ? '✅ 通過' : '❌ 失敗' }}
-              </span>
+              <span v-if="result.grade" class="grade-chip" :class="'grade-' + result.grade.toLowerCase()"
+                    :title="result.grade_reason || ''">{{ gradeLabel(result.grade) }}</span>
+              <span v-else class="status-badge" :class="result.passed ? 'passed' : 'failed'"
+                    title="舊版評估（無 v3 評級）">{{ result.passed ? '✅ 通過' : '❌ 失敗' }}</span>
             </td>
             <td class="question-cell">{{ result.test_question }}</td>
-            <td>{{ result.actual_intent || 'N/A' }}</td>
-            <td>{{ formatConfidenceScore(result.confidence_score) }}</td>
-            <td>{{ formatConfidenceLevel(result.confidence_level) }}</td>
+            <td class="turns-cell">
+              <span v-if="(result.turns_used || 1) > 1" class="turns-badge">🔁 {{ result.turns_used }}</span>
+              <span v-else class="turns-single">1</span>
+            </td>
+            <td class="reason-cell" :title="result.grade_reason || ''">{{ result.grade_reason || '—' }}</td>
             <td>{{ result.source_count || 0 }}</td>
             <td>
               <button @click="showDetail(result)" class="btn-detail">詳情</button>
@@ -224,13 +246,13 @@
               <span class="detail-label">測試問題：</span>
               <span class="detail-value">{{ selectedResult.test_question }}</span>
             </div>
-            <div class="detail-row">
-              <span class="detail-label">預期意圖：</span>
-              <span class="detail-value">{{ selectedResult.expected_intent || 'N/A' }}</span>
+            <div class="detail-row" v-if="selectedResult.request_target_user">
+              <span class="detail-label">受眾（請求形狀）：</span>
+              <span class="detail-value">{{ audienceLabel(selectedResult.request_target_user) }}</span>
             </div>
-            <div class="detail-row">
-              <span class="detail-label">實際意圖：</span>
-              <span class="detail-value">{{ selectedResult.actual_intent || 'N/A' }}</span>
+            <div class="detail-row" v-if="selectedResult.actual_intent && selectedResult.actual_intent !== 'unknown'">
+              <span class="detail-label">路由意圖：</span>
+              <span class="detail-value">{{ selectedResult.actual_intent }}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">測試時間：</span>
@@ -239,33 +261,44 @@
           </div>
 
           <div class="detail-section">
-            <h4>系統回應</h4>
+            <h4>評審判定</h4>
             <div class="detail-row">
-              <span class="detail-label">回應內容：</span>
-              <pre class="detail-value response-text">{{ selectedResult.actual_response || 'N/A' }}</pre>
+              <span class="detail-label">評級：</span>
+              <span class="detail-value">
+                <span v-if="selectedResult.grade" class="grade-chip" :class="'grade-' + selectedResult.grade.toLowerCase()">
+                  {{ gradeLabel(selectedResult.grade) }}
+                </span>
+                <span v-else>舊版評估（無 v3 評級）</span>
+                <span v-if="selectedResult.eval_version" class="eval-version">{{ selectedResult.eval_version }}</span>
+              </span>
+            </div>
+            <div class="detail-row" v-if="selectedResult.grade_reason">
+              <span class="detail-label">評審理由：</span>
+              <span class="detail-value">{{ selectedResult.grade_reason }}</span>
             </div>
             <div class="detail-row">
-              <span class="detail-label">信心分數：</span>
-              <span class="detail-value">{{ formatConfidenceScore(selectedResult.confidence_score) }}</span>
+              <span class="detail-label">對話輪次：</span>
+              <span class="detail-value">{{ selectedResult.turns_used || 1 }} 輪</span>
             </div>
-            <div class="detail-row">
-              <span class="detail-label">信心等級：</span>
-              <span class="detail-value">{{ formatConfidenceLevel(selectedResult.confidence_level) }}</span>
+            <div v-if="selectedResult.gold_fails && selectedResult.gold_fails.length" class="detail-row">
+              <span class="detail-label">金標不符：</span>
+              <span class="detail-value" style="color: #c0392b;">
+                <div v-for="(gf, i) in selectedResult.gold_fails" :key="i">• {{ gf }}</div>
+                <div v-if="selectedResult.llm_grade" class="llm-grade-note">（LLM 原評級：{{ gradeLabel(selectedResult.llm_grade) }}）</div>
+              </span>
             </div>
           </div>
 
-          <div v-if="selectedResult.is_relevant !== null && selectedResult.is_relevant !== undefined" class="detail-section">
-            <h4>語義判定</h4>
-            <div class="detail-row">
-              <span class="detail-label">回答相關性：</span>
-              <span class="detail-value" :style="{ color: selectedResult.is_relevant ? '#27ae60' : '#e74c3c' }">
-                {{ selectedResult.is_relevant ? '✅ 相關' : '❌ 答非所問' }}
-              </span>
+          <div class="detail-section">
+            <h4>對話過程</h4>
+            <div v-if="selectedResult.transcript && selectedResult.transcript.length" class="transcript">
+              <div v-for="(line, idx) in selectedResult.transcript" :key="idx"
+                   class="transcript-line" :class="idx % 2 === 0 ? 'from-user' : 'from-system'">
+                <span class="speaker">{{ idx % 2 === 0 ? '👤 使用者' : '🤖 系統' }}</span>
+                <pre class="bubble">{{ line }}</pre>
+              </div>
             </div>
-            <div v-if="selectedResult.relevance_reason" class="detail-row">
-              <span class="detail-label">判定原因：</span>
-              <span class="detail-value">{{ selectedResult.relevance_reason }}</span>
-            </div>
+            <pre v-else class="detail-value response-text">{{ selectedResult.actual_response || 'N/A' }}</pre>
           </div>
 
           <div v-if="selectedResult.failure_reason" class="detail-section">
@@ -279,10 +312,24 @@
           <div class="detail-section">
             <h4>知識來源</h4>
             <div class="detail-row">
-              <span class="detail-label">來源數量：</span>
-              <span class="detail-value">{{ selectedResult.source_count || 0 }}</span>
+              <span class="detail-label">參與知識（全輪去重）：</span>
+              <span class="detail-value">{{ selectedResult.source_count || 0 }} 筆</span>
             </div>
-            <div v-if="selectedResult.source_ids" class="detail-row">
+            <div v-if="selectedResult.knowledge_sources && selectedResult.knowledge_sources !== '無來源'" class="detail-row">
+              <span class="detail-label">來源明細：</span>
+              <span class="detail-value sources-text">{{ selectedResult.knowledge_sources }}</span>
+            </div>
+            <div v-if="hasTurnSources" class="turn-sources">
+              <div class="detail-label" style="margin-bottom: 4px;">逐輪檢索：</div>
+              <div v-for="(ts, ti) in selectedResult.turn_sources" :key="ti" class="turn-source-row">
+                <span class="turn-source-label">第 {{ ti + 1 }} 輪</span>
+                <span v-if="!ts || !ts.length" class="turn-source-empty">無檢索來源（追問/表單/面向輪）</span>
+                <span v-else class="turn-source-items">
+                  <span v-for="s in ts" :key="s.id" class="source-chip" :title="s.q">#{{ s.id }} {{ s.q }}</span>
+                </span>
+              </div>
+            </div>
+            <div v-else-if="selectedResult.source_ids" class="detail-row">
               <span class="detail-label">來源 ID：</span>
               <span class="detail-value">{{ selectedResult.source_ids }}</span>
             </div>
@@ -405,6 +452,8 @@ export default {
       loading: false,
       error: null,
       statusFilter: 'all',
+      gradeDistribution: null,
+      gradeOrder: ['GOOD', 'ASK_OK', 'GOLD_FAIL', 'ASK_BAD', 'WRONG', 'NOFOUND', 'BROKEN', 'EVAL_ERR'],
       pagination: {
         limit: 50,
         offset: 0
@@ -412,6 +461,7 @@ export default {
       showDetailModal: false,
       selectedResult: null,
       backtestRuns: [],
+      allRuns: [],  // 未選迴圈時的全部 run 清單（含手動執行）
       selectedRunId: null,
       // 迴圈相關資料（新增）
       loopInfo: null,
@@ -436,6 +486,11 @@ export default {
       return this.backtestRuns.filter(run => run.iteration === this.selectedIteration);
     },
 
+    hasTurnSources() {
+      const ts = this.selectedResult?.turn_sources;
+      return Array.isArray(ts) && ts.some(t => t && t.length);
+    },
+
     // 選中迭代的詳細資訊
     selectedIterationInfo() {
       if (this.selectedIteration === null || !this.iterationComparison) {
@@ -450,6 +505,18 @@ export default {
     loopId: {
       immediate: true,  // 立即執行，包含初始值
       async handler(newLoopId, oldLoopId) {
+        if (!newLoopId) {
+          // 未選迴圈 → 切到「所有 Run」瀏覽模式
+          this.loopInfo = null;
+          this.iterationComparison = [];
+          this.backtestRuns = [];
+          this.selectedRunId = null;
+          this.results = [];
+          this.statistics = null;
+          this.gradeDistribution = null;
+          await this.loadAllRuns();
+          return;
+        }
         if (newLoopId && newLoopId !== oldLoopId) {
           // 清空當前數據
           this.loopInfo = null;
@@ -498,6 +565,26 @@ export default {
 
       await this.loadLoopInfo();
       await this.loadIterationComparison();
+    },
+
+    async loadAllRuns() {
+      try {
+        const response = await axios.get(API_ENDPOINTS.backtestRuns, { params: { limit: 50 } });
+        this.allRuns = response.data.runs || [];
+        // 支援 URL ?runId= 直達；否則自動選最新一筆
+        const runIdParam = parseInt(this.$route.query.runId, 10);
+        if (runIdParam && this.allRuns.some(r => r.id === runIdParam)) {
+          this.selectedRunId = runIdParam;
+        } else if (this.allRuns.length > 0) {
+          this.selectedRunId = this.allRuns[0].id;
+        }
+        if (this.selectedRunId) {
+          this.loadResults();
+        }
+      } catch (error) {
+        console.error('載入回測 Run 清單失敗', error);
+        this.error = '載入 Run 清單失敗：' + (error.response?.data?.detail || error.message);
+      }
     },
 
     async loadBacktestRuns() {
@@ -594,8 +681,24 @@ export default {
       }
     },
 
+    audienceLabel(tu) {
+      const map = { property_manager: '🏢 業者（JGB 知識）', tenant: '🏠 租客', prospect: '🔍 潛在客戶' };
+      return map[tu] || tu;
+    },
+
+    gradeLabel(g) {
+      const map = { GOOD: '✔ 直答', ASK_OK: '↩ 合理追問', GOLD_FAIL: '✗ 金標不符', ASK_BAD: '⚠ 過度追問',
+                    WRONG: '✖ 錯位', NOFOUND: '∅ 查無', BROKEN: '💥 異常', EVAL_ERR: '? 評審失敗' };
+      return map[g] || g;
+    },
+
     onRunSelected() {
       this.pagination.offset = 0;
+      // 「所有 Run」模式下把選中 run 同步到 URL，可直達分享
+      if (!this.loopId && this.selectedRunId) {
+        const query = { ...this.$route.query, runId: String(this.selectedRunId) };
+        this.$router.replace({ query }).catch(() => {});
+      }
       this.loadResults();
     },
 
@@ -605,8 +708,8 @@ export default {
 
       try {
         if (!this.loopId) {
-          this.error = '請在頂部選擇一個迴圈';
-          this.loading = false;
+          // 「所有 Run」模式：直接用 run 端點載入
+          await this.loadStandaloneRunResults();
           return;
         }
 
@@ -646,6 +749,7 @@ export default {
           pass_rate: (response.data.summary.pass_rate * 100).toFixed(1),
           avg_score: response.data.summary.avg_score?.toFixed(2) || 'N/A'
         } : null;
+        this.gradeDistribution = response.data.summary?.grade_distribution || null;
 
         // 將 API 回傳的欄位映射到前端需要的格式
         this.results = this.results.map(result => ({
@@ -656,6 +760,14 @@ export default {
           actual_response: result.system_answer,
           confidence_score: result.confidence_score,  // 使用 RAG 檢索信心度，而非意圖分類信心度
           confidence_level: result.confidence_level,  // 使用 API 計算的信心度等級
+          grade: result.grade,                          // v3 多輪感知評級
+          grade_reason: result.grade_reason,
+          turns_used: result.turns_used,
+          transcript: result.transcript,
+          eval_version: result.eval_version,
+          llm_grade: result.llm_grade,
+          gold_fails: result.gold_fails,
+          request_target_user: result.request_target_user,
           source_count: result.source_count,
           passed: result.passed,
           timestamp: result.tested_at,
@@ -666,7 +778,9 @@ export default {
           intent_match: null, // API 目前沒有這個欄位
           quality_overall: result.overall_score,
           // 其他欄位
-          source_ids: null, // API 目前沒有這個欄位
+          source_ids: result.source_ids || null,
+          knowledge_sources: result.knowledge_sources || null,
+          turn_sources: result.turn_sources || null,
           failure_reason: result.failure_reason || null,
           is_relevant: result.is_relevant,
           relevance_reason: result.relevance_reason || null,
@@ -681,6 +795,77 @@ export default {
         } else {
           this.error = '載入失敗：' + (error.response?.data?.detail || error.message);
         }
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async loadStandaloneRunResults() {
+      if (!this.selectedRunId) {
+        this.error = '請選擇一個回測 Run';
+        this.loading = false;
+        return;
+      }
+      try {
+        const params = {
+          limit: this.pagination.limit,
+          offset: this.pagination.offset
+        };
+        if (this.statusFilter !== 'all') {
+          params.status_filter = this.statusFilter;
+        }
+        const [resResp, distResp] = await Promise.all([
+          axios.get(API_ENDPOINTS.backtestRunResults(this.selectedRunId), { params }),
+          axios.get(API_ENDPOINTS.backtestRunGradeDistribution(this.selectedRunId))
+        ]);
+
+        const data = resResp.data;
+        this.total = data.total || 0;
+        const stats = data.statistics || null;
+        this.statistics = stats ? {
+          total_tests: stats.total_tests,
+          passed_tests: stats.passed_tests,
+          failed_tests: stats.failed_tests,
+          pass_rate: stats.pass_rate,  // 後端已是百分比
+          avg_score: stats.avg_score != null ? Number(stats.avg_score).toFixed(2) : 'N/A'
+        } : null;
+        this.gradeDistribution = distResp.data.distribution || null;
+
+        this.results = (data.results || []).map(result => ({
+          test_id: result.id,
+          test_question: result.test_question,
+          actual_intent: result.actual_intent,
+          expected_intent: result.expected_category,
+          actual_response: result.system_answer,
+          confidence_score: result.confidence_score,
+          confidence_level: result.confidence_level,
+          grade: result.grade,
+          grade_reason: result.grade_reason,
+          turns_used: result.turns_used,
+          transcript: result.transcript,
+          eval_version: result.eval_version,
+          llm_grade: result.llm_grade,
+          gold_fails: result.gold_fails,
+          request_target_user: result.request_target_user,
+          knowledge_sources: result.knowledge_sources,
+          turn_sources: result.turn_sources,
+          source_count: result.source_count,
+          passed: result.passed,
+          timestamp: result.tested_at,
+          relevance: result.relevance,
+          completeness: result.completeness,
+          accuracy: result.accuracy,
+          intent_match: result.intent_match,
+          quality_overall: result.quality_overall,
+          source_ids: result.source_ids,
+          failure_reason: result.failure_reason || null,
+          is_relevant: null,
+          relevance_reason: null,
+          debug_info: null
+        }));
+      } catch (error) {
+        console.error('載入回測結果失敗', error);
+        this.error = '載入失敗：' + (error.response?.data?.detail || error.message);
       } finally {
         this.loading = false;
       }
@@ -854,11 +1039,93 @@ export default {
 </script>
 
 <style scoped>
+.grade-dist { margin: 8px 0 4px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.grade-dist-label { font-size: 13px; color: #666; }
+.grade-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
+.grade-good { background: #e6f7e6; color: #1a7f1a; }
+.grade-ask_ok { background: #e8f1fb; color: #1a5fa8; }
+.grade-ask_bad { background: #fff3e0; color: #b26a00; }
+.grade-wrong { background: #fdecea; color: #b3261e; }
+.grade-nofound { background: #f0f0f0; color: #666; }
+.grade-broken { background: #fce4ec; color: #ad1457; }
+.grade-gold_fail { background: #7f1d1d; color: #fff; }
+.grade-eval_err, .grade-none { background: #f5f5f5; color: #999; }
+
 .backtest-results-tab {
   padding: 20px;
 }
 
 /* 迴圈資訊卡片樣式 */
+/* v3 欄位樣式 */
+.reason-cell {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #555;
+  font-size: 13px;
+}
+
+.turns-cell { text-align: center; }
+.turns-badge {
+  background: #e8f4fd;
+  color: #2471a3;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.turns-single { color: #aaa; }
+
+.eval-version {
+  margin-left: 8px;
+  color: #95a5a6;
+  font-size: 12px;
+}
+
+.llm-grade-note { color: #7f8c8d; font-size: 12px; margin-top: 2px; }
+
+.transcript { display: flex; flex-direction: column; gap: 8px; }
+.transcript-line { display: flex; flex-direction: column; }
+.transcript-line .speaker { font-size: 12px; color: #7f8c8d; margin-bottom: 2px; }
+.transcript-line .bubble {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.transcript-line.from-user .bubble { background: #eaf2ff; align-self: flex-start; max-width: 85%; }
+.transcript-line.from-system .bubble { background: #f4f6f7; align-self: stretch; }
+.transcript-line.from-user { align-items: flex-start; }
+
+.sources-text { font-size: 13px; color: #444; }
+.turn-sources { margin-top: 8px; }
+.turn-source-row { display: flex; align-items: baseline; gap: 8px; margin: 4px 0; }
+.turn-source-label { flex: 0 0 52px; font-size: 12px; color: #7f8c8d; font-weight: 600; }
+.turn-source-empty { font-size: 12px; color: #aaa; }
+.turn-source-items { display: flex; flex-wrap: wrap; gap: 4px; }
+.source-chip {
+  background: #eef7ee;
+  color: #1e7b34;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.all-runs-hint {
+  color: #7f8c8d;
+  font-size: 13px;
+  margin: 4px 0 12px;
+}
+
 .loop-info-card {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;

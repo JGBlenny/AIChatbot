@@ -234,3 +234,13 @@ Utils (工具層)
 - **檢索限制**: RAG_RETRIEVAL_LIMIT 預設為 5，降低檢索成本
 - **閾值過濾**: 只返回相似度 > threshold 的結果
 - **語義重排序**: 可選功能，預設關閉，避免額外成本
+
+---
+
+## 2026-07 現況增補（本節為最新，與上文衝突時以本節與 docs/architecture-overview.md 為準）
+
+- **對話面向體系**：21＋售前個 conversational facets（資料驅動：`category='對話規則'` 一筆設定＝一個面向，新增零改程式）；五域（合約/帳務/帳號/物件/IoT）；機械判定用 `services/jgb/*` FACE_BUILDERS，LLM 只照 facts 組話。
+- **資料體系分工（定案）**：`vendor_configs`＝通用單值參數（{{param}} 模板）；`lookup_tables`＝案場級（Excel 匯入＋錨點）；SOP＝b2c 專用（b2b 不走）；jgb API＝個資（role_id+user_id 雙證）。
+- **計量與額度**：usage_events 每請求計量（token/成本/內部流量標記）；vendor_quotas 月額度（達限攔截/警示寄信）。
+- **品質三層**：unit（make test-unit）／系統回測（迴圈＋多輪模擬＋v3 評審＋金標，按受眾分庫）／不變量稽核（make audit，修一類 bug＝加一條）。驗收鐵則：改引擎行為以系統路徑實跑收案。
+- **單一真相源**：`docs/architecture-overview.md`（含已知債總表）；部署走 `docs/deployment-runbook.md`。

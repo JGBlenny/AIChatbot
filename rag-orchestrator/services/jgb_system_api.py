@@ -11,6 +11,7 @@ JGB 好租寶外部 API 的 client 封裝，支援 mock/real 模式切換。
 """
 
 import os
+import re
 import logging
 from typing import Any, Optional
 
@@ -107,41 +108,97 @@ class JGBSystemAPI:
     async def get_bills(
         self,
         role_id: str,
-        user_id: str,
+        user_id: str = None,
         month: Optional[str] = None,
         status: Optional[str] = None,
+        contract_ids: Optional[str] = None,
+        bill_ref: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
-        """查詢帳單列表"""
-        if not self._validate_identity(role_id, user_id):
+        """查詢帳單列表。
+
+        授權形態：
+          - 租客情境（既有）：role_id + user_id（身分保護，缺一降級）；
+          - b2b per-contract / per-bill：role_id + contract_ids 或 bill_ref——
+            與 get_contracts 相同以 role_id 為授權主體，不需 user_id。
+
+        `bill_ref` 識別語意參數（adapter，billing-conversational-facets R2.1）：
+          純數字 → 先 get_bill_detail 直查（單筆包成列）；查無 → 當合約 id 解析；
+          非數字 → get_contracts(keyword) 解析 → 取第一筆合約 → 該合約帳單列候選。
+          解析失敗/例外 → 空列不拋（引擎走 0 筆追問路，不炸降級句）。
+        """
+        if not (self._validate_identity(role_id, user_id)
+                or (role_id and (contract_ids or bill_ref))):
             return self._degraded_response()
 
         if self.use_mock:
             return self._mock_get_bills(role_id, user_id, month, status)
 
-        params: dict[str, Any] = {"role_id": role_id, "user_id": user_id}
+        # bill_ref 識別解析（後端當裁判：逐層試、命中即止）
+        if bill_ref is not None and contract_ids is None:
+            ref = str(bill_ref).strip()
+            try:
+                if ref.isdigit():
+                    detail = await self.get_bill_detail(role_id, int(ref))
+                    row = (detail or {}).get("data")
+                    if (detail or {}).get("success") and isinstance(row, dict) and row:
+                        return {"success": True,
+                                "mapping": (detail or {}).get("mapping", {}),
+                                "data": [row]}
+                    contracts = await self.get_contracts(role_id, contract_ids=ref)
+                else:
+                    contracts = await self.get_contracts(role_id, keyword=ref)
+                rows = (contracts or {}).get("data") or []
+                if not ((contracts or {}).get("success") and rows):
+                    return {"success": True, "data": []}
+                contract_ids = rows[0].get("id")
+            except Exception as e:
+                logger.warning(f"bill_ref 識別解析失敗（回空列降級）：{e}")
+                return {"success": True, "data": []}
+
+        params: dict[str, Any] = {"role_id": role_id}
+        if user_id:
+            params["user_id"] = user_id
+        if contract_ids:
+            # ⚠️ /bills 的合約過濾參數是 contract_id（單數）——複數會被上游無視、
+            #    整個 role 帳單全回（帳單診斷 e2e 實測 50 筆電錶儲值蓋台）。
+            params["contract_id"] = contract_ids
         if month:
             params["month"] = month
         if status:
             params["status"] = status
-        return await self._request("/api/external/v1/bills", params)
+        resp = await self._request("/api/external/v1/bills", params)
+        # client 端防衛過濾（上游再無視參數也擋得住；沿 get_contracts 過濾先例）：
+        # 只在列上帶 contract_id 時啟動，舊形狀列不受影響。
+        if contract_ids and (resp or {}).get("success"):
+            rows = resp.get("data") or []
+            if any(r.get("contract_id") is not None for r in rows if isinstance(r, dict)):
+                resp["data"] = [r for r in rows
+                                if str(r.get("contract_id")) == str(contract_ids)]
+        return resp
 
     async def get_invoices(
         self,
         role_id: str,
-        user_id: str,
+        user_id: str = None,
         bill_id: Optional[int] = None,
         status: Optional[int] = None,
         **kwargs,
     ) -> dict[str, Any]:
-        """查詢發票列表"""
-        if not self._validate_identity(role_id, user_id):
+        """查詢發票列表。
+
+        授權形態：租客情境 role_id+user_id（既有）；
+        b2b per-bill（發票面向 secondary_call）：role_id+bill_id，不需 user_id。
+        """
+        if not (self._validate_identity(role_id, user_id) or (role_id and bill_id)):
             return self._degraded_response()
 
         if self.use_mock:
             return self._mock_get_invoices(role_id, user_id, bill_id, status)
 
-        params: dict[str, Any] = {"role_id": role_id, "user_id": user_id}
+        params: dict[str, Any] = {"role_id": role_id}
+        if user_id:
+            params["user_id"] = user_id
         if bill_id is not None:
             params["bill_id"] = bill_id
         if status is not None:
@@ -169,9 +226,41 @@ class JGBSystemAPI:
             params["contract_ids"] = contract_ids
         if keyword:
             params["keyword"] = keyword
-        return await self._request(
+        result = await self._request(
             "/api/external/v1/contracts/status-overview", params
         )
+
+        # 查無 fallback（多輪回測 run295/296 逼出）：合約 title 格式不一致——
+        # 「重慶北137-503」（無前綴）與「台北大同-重慶北5-304」（帶前綴）並存，
+        # 業者用物件全名查 → server LIKE 恆查無。沿 get_meters 先例：
+        # 以最長 token 重查放寬命中面，client 端全 token 去分隔符 AND 過濾。
+        rows = (result or {}).get("data") or []
+        if not rows and keyword:
+            _sep = re.compile(r"[\s　\-/,，]+")
+            tokens = [_sep.sub("", t) for t in re.split(r"[的之在 　,，/\-]+", str(keyword)) if t]
+            if len(tokens) >= 2:                              # 可拆才放寬（單詞查無不亂擴）
+                widest = max(tokens, key=len)
+                retry_params = dict(params)
+                retry_params["keyword"] = widest
+                retry = await self._request(
+                    "/api/external/v1/contracts/status-overview", retry_params
+                )
+                cand = (retry or {}).get("data") or []
+
+                q_joined = "".join(tokens)
+
+                def _hit(c):
+                    title = str(c.get("title") or "")
+                    joined = _sep.sub("", title)
+                    # 雙向包含：查詢 tokens 全在候選（口語少於存值）
+                    # 或候選 tokens 全在查詢（存值無前綴、查詢帶物件全名——run296 實案）
+                    if all(t in joined for t in tokens if t):
+                        return True
+                    c_tokens = [_sep.sub("", t) for t in re.split(r"[的之在 　,，/\-]+", title) if t]
+                    return bool(c_tokens) and all(t in q_joined for t in c_tokens)
+                filtered = [c for c in cand if _hit(c)]
+                return {**(retry or {}), "success": True, "data": filtered}
+        return result
 
     async def get_contract_checkin_eligibility(
         self,
@@ -392,6 +481,115 @@ class JGBSystemAPI:
             params["action"] = action
         return await self._request("/api/external/v1/invoice-logs", params)
 
+    async def get_tenant_registration(
+        self,
+        role_id: str,
+        email: Optional[str] = None,
+        phone: Optional[str] = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """G-A1：查此團隊名下租客的註冊/綁定狀態（登入排障歸屬閘門）。
+
+        授權：role_id 綁定＋伺服器端只回名下租客（found:false 防枚舉，jgb2 已擋）。
+        email/phone 至少一（缺則降級不打）；回應單一物件正規化為單元素 list，
+        供 secondary_call（list_path='data'）附掛。個資欄位（name/user_id）由消費端不輸出。
+        """
+        email = (email or "").strip()
+        phone = (phone or "").strip()
+        if not role_id or not (email or phone):
+            return self._degraded_response()
+
+        if self.use_mock:
+            return self._mock_get_tenant_registration(role_id, email, phone)
+
+        params: dict[str, Any] = {"role_id": role_id}
+        if email:
+            params["email"] = email
+        if phone:
+            params["phone"] = phone
+        raw = await self._request("/api/external/v1/tenants/registration-status", params)
+        # 單一物件 → 單元素 list（secondary_call 只吃 list）；失敗/無 data 則空 list
+        data = (raw or {}).get("data")
+        return {"success": bool((raw or {}).get("success")),
+                "data": [data] if isinstance(data, dict) else []}
+
+    def _mock_get_tenant_registration(self, role_id, email, phone) -> dict[str, Any]:
+        return {"success": True, "data": [{
+            "found": True, "is_bound": True, "is_registered": True,
+            "lessee_email_verify_status": 1, "lessee_user_id": 0, "lessee_name": ""}]}
+
+    async def get_team_members(
+        self,
+        role_id: str,
+        keyword: Optional[str] = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """T1：以 email/名字查此團隊成員（團隊權限面向識別）。
+
+        授權：role_id 綁定＋只回該 role 成員（防枚舉，jgb2 已擋）。
+        回應 data 為 list（成員候選：member_user_id/character_name/is_owner/match_field，無明文個資）。
+        """
+        keyword = str(keyword).strip() if keyword is not None else ""   # 候選 refine 帶 int id 容錯
+        if not role_id or not keyword:
+            return self._degraded_response()
+        if self.use_mock:
+            return {"success": True, "data": [{
+                "member_user_id": 292, "character_id": 1151, "character_name": "檢視者",
+                "is_owner": False, "match_field": "email"}]}
+        raw = await self._request(
+            f"/api/external/v1/roles/{role_id}/members", {"keyword": keyword})
+        data = (raw or {}).get("data")
+        return {"success": bool((raw or {}).get("success")),
+                "data": data if isinstance(data, list) else []}
+
+    async def get_member_permissions(
+        self,
+        role_id: str,
+        user_id: str,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """步驟 3：查成員角色能力旗標（G-A2；32 旗標含成對 show_owner_*）。
+
+        回應正規化為單元素 list（供 secondary_call list_path='data'）：
+        {character_name, abilities:{show_bill,show_owner_bill,...}}。
+        """
+        if not role_id or not user_id:
+            return self._degraded_response()
+        if self.use_mock:
+            return {"success": True, "data": [{
+                "character_name": "檢視者",
+                "abilities": {"show_bill": False, "show_owner_bill": True,
+                              "show_contract": False, "show_owner_contract": True,
+                              "show_estate": False, "show_owner_estate": True}}]}
+        raw = await self._request(
+            f"/api/external/v1/roles/{role_id}/members/{user_id}/permissions", {})
+        data = (raw or {}).get("data")
+        return {"success": bool((raw or {}).get("success")),
+                "data": [data] if isinstance(data, dict) else []}
+
+    async def get_bill_visibility(
+        self,
+        role_id: str,
+        viewer_user_id: str,
+        bill_id: str,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """T2：某成員視角下這張帳單可不可見（viewer 圈定＋單筆過濾）。
+
+        走列表端點帶 viewer_user_id＋bill_id（非 /bills/{id}，那支不套 viewer 圈定）：
+        回結果非空＝看得到、空＝看不到。data 為 list（供 secondary_call）。
+        """
+        if not (role_id and viewer_user_id and bill_id):
+            return self._degraded_response()
+        if self.use_mock:
+            return {"success": True, "data": []}   # mock 預設看不到（owner-scoped 未指派）
+        raw = await self._request("/api/external/v1/bills",
+                                  {"role_id": role_id, "viewer_user_id": viewer_user_id,
+                                   "bill_id": bill_id})
+        data = (raw or {}).get("data")
+        return {"success": bool((raw or {}).get("success")),
+                "data": data if isinstance(data, list) else []}
+
     async def get_subscription(
         self,
         role_id: str,
@@ -407,6 +605,144 @@ class JGBSystemAPI:
         return await self._request(
             f"/api/external/v1/roles/{role_id}/subscription", {}
         )
+
+    async def get_meters(
+        self,
+        role_id: str,
+        keyword: Optional[str] = None,
+        estate_id: Optional[str] = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """電表列表（IoT 電表排障識別 adapter）。
+
+        端點無 keyword 參數 → 拉全列（per_page=200）後 client 端以 keyword 對
+        estate_name/name 過濾（後端當裁判精神：查無回空列不拋）；estate_id 原生透傳。
+        欄位：is_online/is_poweron/balance/available_meter/current_reading/synced_at 等
+        （消費端注意：離線時皆為最後同步快照；is_poweron 三態失真見 J-I1，builder 端防護）。
+        """
+        if not role_id:
+            return self._degraded_response()
+
+        if self.use_mock:
+            rows = [{
+                "id": 501, "estate_id": 9001, "estate_name": "海大質感獨立套房",
+                "name": "3F 分電表", "manufacturer": "DAE", "meter_type": "cloud",
+                "is_online": True, "is_topup": True, "enable_topup": True,
+                "balance": 350.0, "available_meter": 87.5, "current_reading": 1234.5,
+                "is_poweron": True, "is_low_battery": False,
+                "synced_at": "2026-07-04 10:35:00"}]
+        else:
+            params: dict[str, Any] = {"role_id": role_id, "per_page": 200}
+            if estate_id:
+                params["estate_id"] = estate_id
+            raw = await self._request("/api/external/v1/meters", params)
+            if not (raw or {}).get("success"):
+                return {"success": False, "data": []}
+            data = raw.get("data")
+            rows = data if isinstance(data, list) else []
+
+        kw = str(keyword).strip() if keyword is not None else ""   # 候選 refine 帶 int id 容錯
+        if kw:
+            # token 化過濾（真資料 e2e 逼出）：口語「新莊富貴500的14B05」對
+            # estate_name「新北新莊-富貴500-14B05」整串 substring 配不中——
+            # 以虛詞拆 token，比對時兩邊都去分隔符（口語常省略 '-'），
+            # 全部 token 命中（AND）estate_name+name 聯合字串才算。
+            _sep = re.compile(r"[\s　\-/,，]+")
+            tokens = [_sep.sub("", t) for t in re.split(r"[的之在 　,，/\-]+", kw) if t]
+            # 純數字 keyword 先當電表 id 直配（候選選定後 refine 以 id 重查）
+            if kw.isdigit() and any(str(m.get("id")) == kw for m in rows):
+                rows = [m for m in rows if str(m.get("id")) == kw]
+            else:
+                def _hit(m):
+                    joined = _sep.sub("", f"{m.get('estate_name') or ''}｜{m.get('name') or ''}")
+                    return all(t in joined for t in tokens if t)
+                rows = [m for m in rows if _hit(m)]
+        return {"success": True, "data": rows}
+
+    async def get_estate_status(
+        self,
+        role_id: Optional[str] = None,
+        keyword: Optional[str] = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """物件現況診斷識別 adapter（estate-conversational-facets 任務 1.1）。
+
+        ⚠️ 與 get_estates（修繕報修表單現役）語義不同，勿混用：
+        - 拉頁 per_page=200 後 client 端 token 化過濾 title｜display_address
+          （API keyword 只搜 title LIKE，口語多詞配不中——get_meters 同款）
+        - 過濾後空集回 sentinel [{"found": False, "keyword": kw}]——引擎 0-row
+          會硬編「查無資料」短路（conversational_engine.py:610），sentinel 讓
+          builder 接手「非刊登中」口徑（design Issue 1；G-A1 found:false 先例）
+        - 每列附 status_zh 轉譯欄（候選標籤用；轉譯邏輯在 services/jgb/estates.py）
+        - 端點硬過濾 is_open=1（只回刊登中）——「查不到＝非刊登中」為弱信號，
+          口徑紅線見 estates.py builder
+        """
+        from services.jgb.estates import estate_status_zh   # 延遲匯入（分層慣例）
+
+        if self.use_mock:
+            rows = [{
+                "id": 8801, "serial_id": "E-8801", "title": "新莊富貴500-14B05",
+                "status": 2, "use_for": "residential",
+                "display_address": "新北市新莊區富貴路",
+                "full_display_address": "新北市新莊區富貴路",
+                "rent": 15800, "currency": "TWD"}]
+        else:
+            params: dict[str, Any] = {"per_page": 200}
+            if role_id:
+                params["role_id"] = role_id
+            raw = await self._request("/api/external/v1/estates", params)
+            if not (raw or {}).get("success"):
+                return {"success": False, "data": []}
+            data = raw.get("data")
+            rows = data if isinstance(data, list) else []
+
+        kw = str(keyword).strip() if keyword is not None else ""   # int 容錯（候選 refine 先例）
+        if kw:
+            _sep = re.compile(r"[\s　\-/,，]+")
+            tokens = [_sep.sub("", t) for t in re.split(r"[的之在 　,，/\-]+", kw) if t]
+            if kw.isdigit() and any(str(e.get("id")) == kw for e in rows):
+                rows = [e for e in rows if str(e.get("id")) == kw]
+            else:
+                def _hit(e):
+                    joined = _sep.sub("", f"{e.get('title') or ''}｜"
+                                          f"{e.get('display_address') or ''}")
+                    return all(t in joined for t in tokens if t)
+                rows = [e for e in rows if _hit(e)]
+        if not rows:
+            return {"success": True, "data": [{"found": False, "keyword": kw}]}
+        for e in rows:
+            e["status_zh"] = estate_status_zh(e.get("status"))
+        return {"success": True, "data": rows}
+
+    async def get_estate_detail(
+        self,
+        estate_id: Any = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """物件單筆深查（GET /estates/{id}；含 contract_required_fields）。
+
+        sentinel 列無 id → secondary_call 會帶空值進來：優雅降級回 success:False
+        （引擎 attach 失敗即略過，builder 不依賴 detail 存在）。
+        單物件正規化為單元素 list（get_tenant_registration 先例）。
+        """
+        eid = str(estate_id).strip() if estate_id is not None else ""
+        if not eid or eid == "None" or not eid.isdigit():
+            return {"success": False, "data": []}
+
+        if self.use_mock:
+            return {"success": True, "data": [{
+                "id": int(eid), "title": "新莊富貴500-14B05", "status": 2,
+                "contract_required_fields": {"all_filled": True, "fields": []}}]}
+
+        raw = await self._request(f"/api/external/v1/estates/{eid}", {})
+        if not (raw or {}).get("success"):
+            return {"success": False, "data": []}
+        data = raw.get("data")
+        if isinstance(data, dict):
+            data = [data]
+        elif not isinstance(data, list):
+            data = []
+        return {"success": True, "data": data}
 
     async def get_iot_manufacturers(
         self,

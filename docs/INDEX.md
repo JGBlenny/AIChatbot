@@ -2,9 +2,20 @@
 
 > 本文檔提供任務導向的快速查找。技術演進與深度內容請查看 [README.md](./README.md)。
 
-**最後更新**: 2026-05-18
+**最後更新**: 2026-07-06
 
 ---
+
+## 現況入口（2026-07-06 新增，優先讀）
+
+| 文檔 | 用途 |
+|------|------|
+| [系統架構總覽](./architecture-overview.md) ⭐ | 現況單一入口：使用者×路由×面向×資料體系×計量額度×品質×已知債 |
+| [統一部署 Runbook](./deployment-runbook.md) ⭐ | 33 migrations→匯入→重建→煙囪→稽核（部署唯一依據） |
+| [jgb2 租客端串接規格](./jgb2-tenant-chat-integration.md) | b2c 身分四件套契約（給 jgb2 工程） |
+| 盤查報告與批次 | `scripts/audit/reports/`（知識/業者SOP盤查證據鏈與可重放批次） |
+| [Ground-truth Research](./research/README.md) | jgb2 原始碼盤查定案結論（各域真相依據） |
+| 知識批次 | `scripts/knowledge-batches/`（部署重放依賴） |
 
 ## 架構文件（Source of Truth）
 
@@ -97,7 +108,7 @@
 | [前端文件](./frontend/) | 前端需求、TODO |
 | [變更日誌](./changelog/) | 歷史變更記錄 |
 | [維護記錄](./maintenance/) | 系統審計報告 |
-| 歸檔文件 | 所有歷史文件 |
+| [歸檔文件](./archive/) | 歷史歸檔（依日期，如 `2026-06/`） |
 
 ---
 
@@ -119,14 +130,5 @@ docs/
 ├── testing/                    # 測試指南
 ├── changelog/                  # 變更日誌
 ├── maintenance/                # 維護記錄
-└── archive/                    # 歷史歸檔
-    ├── analysis/               # 歷史分析報告
-    ├── deployment-logs/        # 部署日誌
-    ├── design-reports/         # 設計實作報告
-    ├── features-historical/    # 歷史功能記錄
-    ├── fixes/                  # Bug 修復記錄
-    ├── implementation/         # 實作報告
-    ├── maintenance-historical/ # 舊維護記錄
-    ├── reports/                # 歷史報告
-    └── testing-reports/        # 測試報告
+└── archive/                    # 歷史歸檔（依日期分批，如 2026-06/）
 ```

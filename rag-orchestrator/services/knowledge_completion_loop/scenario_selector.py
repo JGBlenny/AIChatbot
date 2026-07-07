@@ -152,12 +152,15 @@ class ScenarioSelector:
                 continue
 
             # 查詢該難度的可用情境
+            # 受眾題庫篩選（filters.target_user：property_manager=JGB知識/tenant/prospect）
+            _tu = (filters or {}).get("target_user")
             query = """
                 SELECT id FROM test_scenarios
                 WHERE difficulty = $1
                   AND status = 'approved'
                   AND ($2::INTEGER IS NULL OR collection_id = $2)
                   AND ($3::INTEGER[] IS NULL OR NOT (id = ANY($3)))
+                  AND ($5::VARCHAR IS NULL OR request_target_user = $5)
                 ORDER BY RANDOM()
                 LIMIT $4
             """
@@ -167,7 +170,8 @@ class ScenarioSelector:
                 difficulty,
                 collection_id,
                 exclude_scenario_ids if exclude_scenario_ids else None,
-                target_count
+                target_count,
+                _tu
             )
 
             ids = [row["id"] for row in rows]
@@ -180,11 +184,13 @@ class ScenarioSelector:
             WHERE status = 'approved'
               AND ($1::INTEGER IS NULL OR collection_id = $1)
               AND ($2::INTEGER[] IS NULL OR NOT (id = ANY($2)))
+              AND ($3::VARCHAR IS NULL OR request_target_user = $3)
         """
         total_row = await self.db_pool.fetchrow(
             total_query,
             collection_id,
-            exclude_scenario_ids if exclude_scenario_ids else None
+            exclude_scenario_ids if exclude_scenario_ids else None,
+            (filters or {}).get("target_user")
         )
         total_available = total_row["total"]
 
@@ -221,6 +227,7 @@ class ScenarioSelector:
             WHERE status = 'approved'
               AND ($1::INTEGER IS NULL OR collection_id = $1)
               AND ($2::INTEGER[] IS NULL OR NOT (id = ANY($2)))
+              AND ($4::VARCHAR IS NULL OR request_target_user = $4)
             ORDER BY id ASC
             LIMIT $3
         """
@@ -229,7 +236,8 @@ class ScenarioSelector:
             query,
             collection_id,
             exclude_scenario_ids if exclude_scenario_ids else None,
-            batch_size
+            batch_size,
+            (filters or {}).get("target_user")
         )
 
         selected_ids = [row["id"] for row in rows]
@@ -247,11 +255,13 @@ class ScenarioSelector:
             WHERE status = 'approved'
               AND ($1::INTEGER IS NULL OR collection_id = $1)
               AND ($2::INTEGER[] IS NULL OR NOT (id = ANY($2)))
+              AND ($3::VARCHAR IS NULL OR request_target_user = $3)
         """
         total_row = await self.db_pool.fetchrow(
             total_query,
             collection_id,
-            exclude_scenario_ids if exclude_scenario_ids else None
+            exclude_scenario_ids if exclude_scenario_ids else None,
+            (filters or {}).get("target_user")
         )
         total_available = total_row["total"]
 
@@ -289,6 +299,7 @@ class ScenarioSelector:
             WHERE status = 'approved'
               AND ($1::INTEGER IS NULL OR collection_id = $1)
               AND ($2::INTEGER[] IS NULL OR NOT (id = ANY($2)))
+              AND ($4::VARCHAR IS NULL OR request_target_user = $4)
             ORDER BY RANDOM()
             LIMIT $3
         """
@@ -297,7 +308,8 @@ class ScenarioSelector:
             query,
             collection_id,
             exclude_scenario_ids if exclude_scenario_ids else None,
-            batch_size
+            batch_size,
+            (filters or {}).get("target_user")
         )
 
         selected_ids = [row["id"] for row in rows]
@@ -315,11 +327,13 @@ class ScenarioSelector:
             WHERE status = 'approved'
               AND ($1::INTEGER IS NULL OR collection_id = $1)
               AND ($2::INTEGER[] IS NULL OR NOT (id = ANY($2)))
+              AND ($3::VARCHAR IS NULL OR request_target_user = $3)
         """
         total_row = await self.db_pool.fetchrow(
             total_query,
             collection_id,
-            exclude_scenario_ids if exclude_scenario_ids else None
+            exclude_scenario_ids if exclude_scenario_ids else None,
+            (filters or {}).get("target_user")
         )
         total_available = total_row["total"]
 

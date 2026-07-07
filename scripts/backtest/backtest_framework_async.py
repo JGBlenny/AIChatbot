@@ -11,6 +11,7 @@
 """
 
 import os
+import re
 import sys
 import time
 import math
@@ -116,7 +117,8 @@ class AsyncBacktestFramework:
         question: str,
         timeout: int = None,
         session: aiohttp.ClientSession = None,
-        scenario_id: int = None
+        scenario_id: int = None,
+        shape: Dict = None
     ) -> Dict:
         """
         異步查詢 RAG 系統
@@ -133,19 +135,36 @@ class AsyncBacktestFramework:
         url = f"{self.base_url}/api/v1/message"
 
         # 為每個測試案例生成唯一的 session_id，避免表單狀態互相干擾
-        unique_session_id = f"backtest_session_{scenario_id}" if scenario_id else "backtest_session"
-        unique_user_id = f"backtest_user_{scenario_id}" if scenario_id else "backtest_user"
+        # ⚠️ 必須含 run 級唯一段：跨 run 重用同 session_id 會吃到前一輪殘留的
+        #    COLLECTING 表單狀態（run290→291 汙染 19 題「找不到表單定義」實案）
+        if not hasattr(self, "_run_nonce"):
+            import uuid as _uuid
+            self._run_nonce = _uuid.uuid4().hex[:6]
+        unique_session_id = f"backtest_{self._run_nonce}_{scenario_id or 'x'}"
+        unique_user_id = f"backtest_user_{self._run_nonce}_{scenario_id or 'x'}"
 
+        # 請求形狀鏡像生產呼叫端（2026-07-05 架構修正）：
+        #   舊硬編 mode="tenant" 使業者題集在業態/受眾隔離下大面積查無（run290 驗屍）。
+        #   預設 b2b+property_manager（jgb2 後台 useChat.ts:62）；租客題集以 env 覆寫。
+        # 按題帶形狀（題庫受眾維度 request_target_user/request_mode）；
+        # 未標注落回 env 預設（BACKTEST_MODE/TARGET_USER）——向下相容。
+        _shape = shape or {}   # 併發安全：shape 走參數不走 instance 屬性
         payload = {
             "message": question,
             "vendor_id": self.vendor_id,
-            "mode": "tenant",
+            "mode": _shape.get("mode") or os.getenv("BACKTEST_MODE", "b2b"),
             "include_sources": True,
             "skip_sop": False,  # 改為 False，讓回測能檢索 SOP
             "include_debug_info": True,  # 回測需要 similarity 數據
             "session_id": unique_session_id,  # 每個案例使用唯一 session_id
             "user_id": unique_user_id  # 每個案例使用唯一 user_id
         }
+        _tu = _shape.get("target_user") or os.getenv("BACKTEST_TARGET_USER", "property_manager")
+        if _tu:
+            payload["target_user"] = _tu
+        _rid = os.getenv("BACKTEST_ROLE_ID", "")
+        if _rid:
+            payload["role_id"] = _rid
 
         # 回測專用配置
         disable_synthesis = os.getenv("BACKTEST_DISABLE_ANSWER_SYNTHESIS", "false").lower() == "true"
@@ -256,7 +275,9 @@ class AsyncBacktestFramework:
             測試結果字典
         """
         question = scenario.get('test_question', '')
-        scenario_id = scenario.get('id', None)  # 獲取 scenario ID
+        # ⚠️ runner 的 dict 鍵是 scenario_id（歷史差異）——兩鍵都認，否則讀 None
+        #    → 整輪共用同一 session（290/291 汙染的完整根因：不只跨 run，同 run 內也互踩）
+        scenario_id = scenario.get('id') or scenario.get('scenario_id')
         if not question:
             return None
 
@@ -268,7 +289,9 @@ class AsyncBacktestFramework:
             for attempt in range(retry_times + 1):
                 try:
                     system_response = await self._query_rag_async(
-                        question, timeout, session, scenario_id  # 傳入 scenario_id
+                        question, timeout, session, scenario_id,
+                        shape={"target_user": scenario.get('request_target_user'),
+                               "mode": scenario.get('request_mode')},
                     )
                     if system_response is None:
                         # API 返回 None，說明發生了未捕獲的錯誤
@@ -281,11 +304,78 @@ class AsyncBacktestFramework:
                     else:
                         raise
 
-            # 評估答案（V2：使用 confidence_score + 語義攔截）
-            evaluation_result = self.evaluate_answer_v2(scenario, system_response)
+            # 多輪續走（BACKTEST_MULTITURN，預設開）：第一輪為追問時由使用者模擬器
+            # 續答、同 session 最多 BACKTEST_MAX_TURNS 輪——驗「收斂後」的最終品質，
+            # 不再停在第一輪追問。transcript = [使用者Q, 系統A, 使用者A2, 系統A2, ...]
+            first_response = system_response          # 觸發類金標驗首輪
+            _responses = [system_response]            # 各輪回應（供逐輪知識來源聚合）
+            transcript = [question, (system_response or {}).get('answer', '') or '']
+            if os.getenv("BACKTEST_MULTITURN", "true").lower() == "true":
+                max_turns = int(os.getenv("BACKTEST_MAX_TURNS", "4"))
+                shape = {"target_user": scenario.get('request_target_user'),
+                         "mode": scenario.get('request_mode')}
+                for _turn in range(max_turns - 1):
+                    sim = await asyncio.to_thread(
+                        self._user_simulator_reply, question, transcript)
+                    if sim["done"]:
+                        break
+                    follow = await self._query_rag_async(
+                        sim["reply"], timeout, session, scenario_id, shape=shape)
+                    if not follow:
+                        break
+                    transcript.extend([sim["reply"], (follow.get('answer') or '')])
+                    _responses.append(follow)
+                    system_response = follow   # 最終輪為評分對象
+
+            # 評估答案：預設 v3 多輪感知六級（BACKTEST_EVAL_V3=false 退回 v2）
+            if os.getenv("BACKTEST_EVAL_V3", "true").lower() == "true":
+                evaluation_result = await asyncio.to_thread(
+                    self.evaluate_answer_v3, scenario, system_response,
+                    transcript=transcript)
+                evaluation_result['turns_used'] = (len(transcript) + 1) // 2
+                evaluation_result['transcript'] = [t[:300] for t in transcript]
+            else:
+                evaluation_result = self.evaluate_answer_v2(scenario, system_response)
+
+            # 金標決定性斷言（優先於 LLM 評級；LLM 評級保留於 llm_grade）
+            # ⚠️ 首版誤把本段 if 接走了上方 v3/v2 的 else（無金標失敗時評估被 v2
+            #    覆蓋、grade 消失——run299 全 '?' 實案），重排為平行段落。
+            _gold_fails = self._gold_checks(scenario, first_response, transcript)
+            if _gold_fails:
+                evaluation_result['llm_grade'] = evaluation_result.get('grade')
+                evaluation_result['grade'] = 'GOLD_FAIL'
+                evaluation_result['grade_reason'] = '；'.join(_gold_fails)[:200]
+                evaluation_result['passed'] = False
+                evaluation_result['score'] = 0.0
+                evaluation_result['failure_reason'] = f"GOLD_FAIL: {'；'.join(_gold_fails)[:180]}"
+            # 逐輪知識來源：每輪各記一份（turn_sources），結果層 source_ids/count
+            # 改為全輪「聯集」——否則只剩最終輪，前幾輪參與的知識被丟掉
+            _turn_sources, _union, _seen = [], [], set()
+            for _resp in _responses:
+                _ts = []
+                for _s in ((_resp or {}).get('sources') or []):
+                    _sid = _s.get('id')
+                    _ts.append({'id': _sid, 'q': (_s.get('question_summary') or '')[:60]})
+                    if _sid and _sid not in _seen:
+                        _seen.add(_sid)
+                        _union.append(_s)
+                _turn_sources.append(_ts)
+            evaluation_result['turn_sources'] = _turn_sources
+
             result = self._build_result_dict(
                 scenario, system_response, evaluation_result, index
             )
+            if len(_responses) > 1 and _union:
+                result['source_ids'] = ','.join(str(s.get('id')) for s in _union if s.get('id'))
+                result['source_count'] = len(_union)
+                result['knowledge_sources'] = '; '.join(
+                    f"[{s.get('id', 'N/A')}] {(s.get('question_summary') or 'N/A')[:40]}"
+                    for s in _union[:5])
+            # 多輪：結果表顯示逐輪紀錄（而非只有最終輪）
+            if len(transcript) > 2:
+                _lines = [f"[第{i//2+1}輪]{'使用者' if i % 2 == 0 else '系統'}：{t[:150]}"
+                          for i, t in enumerate(transcript)]
+                result['system_answer'] = "\n".join(_lines)[:900]
 
             # 延遲 (避免 rate limit)
             if delay > 0:
@@ -309,7 +399,7 @@ class AsyncBacktestFramework:
             duration = time.time() - start_time
             return {
                 'test_id': index,
-                'scenario_id': scenario.get('id'),
+                'scenario_id': scenario.get('id') or scenario.get('scenario_id'),
                 'test_question': question,
                 'error': 'timeout',
                 'test_duration': duration,
@@ -322,7 +412,7 @@ class AsyncBacktestFramework:
             duration = time.time() - start_time
             return {
                 'test_id': index,
-                'scenario_id': scenario.get('id'),
+                'scenario_id': scenario.get('id') or scenario.get('scenario_id'),
                 'test_question': question,
                 'error': str(e),
                 'test_duration': duration,
@@ -594,6 +684,170 @@ class AsyncBacktestFramework:
             'keyword_match_rate': round(keyword_match_rate, 3)
         }
 
+    EVAL_V3_RUBRIC = (
+        "你是客服品質評審。系統是「多輪對話式」客服。輸出 JSON："
+        "{\"grade\":\"...\",\"why\":\"12字內\"}\n"
+        "判定規則（依序）：\n"
+        "0. 回答主體是「我目前沒有找到符合…的資訊/轉客服」之類查無語句時，一律 NOFOUND——即使句尾附帶請提供更詳細內容也不是 ASK_*。\n"
+        "1. 回答的主要內容是「反問/要求提供資訊」才可能是 ASK_*；"
+        "只要含實質說明內容（流程/條件/定義/步驟），一律不是 ASK_*。\n"
+        "2. ASK_OK：追問合理——問題需要特定對象（某份合約/帳單/物件/成員）或確有歧義需分流。"
+        "ASK_BAD：問題是通則，卻被要求提供識別。\n"
+        "3. GOOD：實質回答且主題對（答到核心即可）。\n"
+        "4. WRONG：實質回答但主題錯位/答非所問。\n"
+        "5. NOFOUND：回答「找不到資訊、請聯絡客服」。\n"
+        "6. BROKEN：系統錯誤訊息（找不到表單定義/請重新開始/亂碼）。"
+    )
+    EVAL_V3_PASS_GRADES = ("GOOD", "ASK_OK")
+
+
+
+    @staticmethod
+    def _gold_checks(scenario: Dict, first_response: Dict, transcript: list) -> list:
+        """金標決定性斷言（2026-07-05）：任一不符回傳失敗清單（空=全過/未設）。
+
+        觸發類（action_type/form_id/path）驗「首輪」回應——觸發發生在第一輪；
+        facts tokens 驗「整段對話全文」——收斂值可能出現在任何一輪。
+        """
+        fails = []
+        fr = first_response or {}
+        exp_at = scenario.get('expected_action_type')
+        if exp_at and (fr.get('action_type') or '') != exp_at:
+            fails.append(f"action_type 應為 {exp_at}，實際 {fr.get('action_type')!r}")
+        exp_form = scenario.get('expected_form_id')
+        if exp_form and (fr.get('form_id') or '') != exp_form:
+            fails.append(f"form_id 應為 {exp_form}，實際 {fr.get('form_id')!r}")
+        exp_path = scenario.get('expected_path')
+        if exp_path:
+            path = ((fr.get('debug_info') or {}).get('processing_path') or '')
+            if exp_path not in path:
+                fails.append(f"processing_path 應含 {exp_path}，實際 {path!r}")
+        exp_tokens = scenario.get('expected_facts_tokens') or []
+        if exp_tokens:
+            full_text = "\n".join(transcript or [])
+            missing = [t for t in exp_tokens if t and t not in full_text]
+            if missing:
+                fails.append(f"金標關鍵值缺失：{missing}")
+        return fails
+
+    # ── 多輪品質驗證（2026-07-05）：使用者模擬器 ──────────────────────
+    SIM_FIXTURE_DEFAULT = (
+        "你是業者（role 37305）。查合約/帳單/退租用「租約中」物件：台北大同-重慶北137-503；"
+        "問刊登/建約用「刊登中（尚無合約）」物件：台北中正-汀州140-101；"
+        "電表例：新北新莊-富貴500-14B05。你手上「沒有」任何帳單編號、合約編號或成員 Email。"
+    )
+
+    def _user_simulator_reply(self, question: str, transcript: list) -> Dict:
+        """LLM 扮演使用者續答（多輪回測）。
+
+        規則：系統追問識別→從情境卡給（物件/電表名）；列編號候選→回「1」；
+        被要沒有的資訊（帳單/合約編號）→ 第一次回「我沒有編號，可以用物件名稱查嗎」、
+        再被要→「就是沒有編號」（測降級）；系統已給實質回答→ done。
+        回傳 {"done": bool, "reply": str}；LLM 失敗視為 done（不阻斷）。
+        """
+        fixture = os.getenv("BACKTEST_SIM_FIXTURE", self.SIM_FIXTURE_DEFAULT)
+        convo = "\n".join(f"{'使用者' if i % 2 == 0 else '系統'}：{t}" for i, t in enumerate(transcript))
+        try:
+            client = OpenAI()
+            r = client.chat.completions.create(
+                model=os.getenv("BACKTEST_SIM_MODEL", "gpt-4o-mini"),
+                temperature=0, response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content":
+                        "你扮演正在諮詢租賃管理系統客服的使用者，延續對話。判斷系統最後一句：\n"
+                        "- 系統列出「1. …2. …」的候選清單 → 你只回覆一個字：「1」（不要反問、不要複述清單）。\n"
+                        "- 是追問/要求提供資訊 → 依「你的情境資料」回覆：要物件/電表/房號就給名稱；"
+                        "要你沒有的資訊（帳單編號/合約編號/Email）第一次回"
+                        "「我沒有編號，可以用物件名稱查嗎」，若之前已說過沒有則回「就是沒有編號」。\n"
+                        "- 已是實質回答/操作指引/查無導客服 → action 用 done。\n"
+                        "只輸出 JSON {\"action\":\"reply\"|\"done\",\"text\":\"...\"}"},
+                    {"role": "user", "content":
+                        f"你的情境資料：{fixture}\n你的原始問題：{question}\n對話紀錄：\n{convo}"},
+                ])
+            d = json.loads(r.choices[0].message.content)
+            if d.get("action") == "reply" and (d.get("text") or "").strip():
+                reply = d["text"].strip()
+                # 防呆（盤查 run310 逼出）：系統最後一句沒有候選清單卻回純序號＝
+                # 模擬器幻覺——會把首輪已完整回答的對話帶壞（實案：「完整流程」
+                # 首輪知識全文答對，模擬器亂回「1」拖成 NOFOUND）。視為對話結束。
+                last_sys = transcript[-1] if transcript else ""
+                if (re.fullmatch(r"[0-9]+", reply)
+                        and not re.search(r"(?m)^\s*[0-9]+\.\s", last_sys)
+                        and "序號" not in last_sys and "哪一筆" not in last_sys):
+                    return {"done": True, "reply": ""}
+                return {"done": False, "reply": reply}
+            return {"done": True, "reply": ""}
+        except Exception as e:
+            print(f"⚠️ [多輪模擬] 失敗視為結束：{e}")
+            return {"done": True, "reply": ""}
+
+    def evaluate_answer_v3(self, scenario: Dict, system_response: Dict,
+                           transcript: list = None) -> Dict:
+        """多輪感知評估（2026-07-05 架構修正）。
+
+        背景：v2 的 confidence/keyword 打分對「面向先追問識別」的多輪架構
+        全面失真（正確追問被判 fail、run291 score 全 0）。v3 改為 LLM 六級
+        分級：GOOD/ASK_OK 視為通過；雙票一致採納、不一致第三票仲裁
+        （單票 gpt-4o-mini 噪音實測會把正確直答誤標 ASK_BAD）。
+        env：BACKTEST_EVAL_MODEL（預設 gpt-4o-mini）、BACKTEST_EVAL_VOTES（預設 2）。
+        """
+        question = scenario.get('test_question', '')
+        answer = (system_response or {}).get('answer', '') or ''
+        expected = scenario.get('expected_answer') or ''
+        if transcript and len(transcript) > 2:
+            convo = "\n".join(f"{'使用者' if i % 2 == 0 else '系統'}：{t[:220]}"
+                               for i, t in enumerate(transcript))
+            user_msg = (f"這是多輪對話（使用者由模擬器扮演），請評「整段對話最終有沒有解決問題」：\n"
+                        f"{convo}\n"
+                        f"補充規則：最後一輪仍在要求提供資訊＝卡輪→ASK_BAD；"
+                        f"使用者已說沒有編號、系統改用其他方式查或誠實導客服→不算卡輪。"
+                        f"若系統在任何一輪已對原始問題給出完整實質回答，即使後續輪次"
+                        f"使用者回覆離題或無增益，仍按該回答評級（通常 GOOD）——"
+                        f"只有後續輪次輸出了錯誤/矛盾資訊才降級（評審重點是系統品質，"
+                        f"不是模擬器行為）。")
+        else:
+            user_msg = f"問題：{question}\n系統回答：{answer[:500]}"
+        if expected:
+            user_msg += f"\n（參考）期望答案要點：{str(expected)[:200]}"
+
+        client = OpenAI()
+        model = os.getenv("BACKTEST_EVAL_MODEL", "gpt-4o-mini")
+
+        def _vote():
+            r = client.chat.completions.create(
+                model=model, temperature=0,
+                response_format={"type": "json_object"},
+                messages=[{"role": "system", "content": self.EVAL_V3_RUBRIC},
+                          {"role": "user", "content": user_msg}])
+            d = json.loads(r.choices[0].message.content)
+            return d.get("grade", "?"), d.get("why", "")
+
+        try:
+            votes = max(1, int(os.getenv("BACKTEST_EVAL_VOTES", "2")))
+            g1, why = _vote()
+            grade = g1
+            if votes >= 2:
+                g2, why2 = _vote()
+                if g2 != g1:
+                    g3, why3 = _vote()          # 仲裁票
+                    grade, why = (g3, why3) if g3 in (g1, g2) else (g1, why)
+                else:
+                    grade = g1
+            passed = grade in self.EVAL_V3_PASS_GRADES
+            return {
+                'passed': passed,
+                'grade': grade,
+                'grade_reason': why,
+                'score': 1.0 if passed else 0.0,
+                'eval_version': 'v3-multiturn',
+                'failure_reason': '' if passed else f'{grade}: {why}',
+            }
+        except Exception as e:
+            # 評審失敗不假裝通過也不假裝失敗——標記 EVAL_ERR 供人工複核
+            return {'passed': False, 'grade': 'EVAL_ERR', 'grade_reason': str(e)[:60],
+                    'score': 0.0, 'eval_version': 'v3-multiturn',
+                    'failure_reason': f'EVAL_ERR: {str(e)[:60]}'}
+
     def evaluate_answer_v2(self, scenario: Dict, system_response: Dict) -> Dict:
         """
         對齊生產環境的評估邏輯 (V2 - 2026-03-15)
@@ -825,7 +1079,7 @@ class AsyncBacktestFramework:
         # 構建結果
         result = {
             'test_id': index,
-            'scenario_id': scenario.get('id'),
+            'scenario_id': scenario.get('id') or scenario.get('scenario_id'),
             'test_question': question,
             'actual_intent': system_response.get('intent_name', '') if system_response else '',
             'all_intents': system_response.get('all_intents', []) if system_response else [],

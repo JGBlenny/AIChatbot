@@ -28,9 +28,15 @@
       </div>
       <select v-model="filterCategory" @change="loadKnowledge" class="filter-select" style="margin-right: 10px;">
         <option value="">全部類別</option>
-        <option v-for="cat in availableCategories" :key="cat.category_value" :value="cat.category_value">
+        <option v-for="cat in categoryGroups.flat" :key="cat.category_value" :value="cat.category_value">
           {{ cat.display_name }}
         </option>
+        <optgroup v-for="g in categoryGroups.groups" :key="g.parent.category_value" :label="g.parent.display_name">
+          <option :value="g.parent.category_value">{{ g.parent.display_name }}（全部）</option>
+          <option v-for="cat in g.children" :key="cat.category_value" :value="cat.category_value">
+            {{ cat.display_name }}
+          </option>
+        </optgroup>
       </select>
       <button @click="regenerateEmbeddings" class="btn-secondary btn-sm" :disabled="regenerating" style="margin-right: 10px;">
         {{ regenerating ? '生成中...' : '🔄 批量生成向量' }}
@@ -85,12 +91,28 @@
             <td>{{ item.question_summary || '(無標題)' }}</td>
             <td>
               <div v-if="item.categories && item.categories.length > 0" class="category-badges">
+                <!-- 頂層分類 -->
                 <span
-                  v-for="cat in item.categories"
-                  :key="cat"
+                  v-for="b in catBadges(item.categories).flat"
+                  :key="b.value"
                   class="badge badge-category"
                 >
-                  {{ cat }}
+                  {{ b.label }}
+                </span>
+                <!-- 父層群組：父層標一次、子類去前綴 -->
+                <span
+                  v-for="g in catBadges(item.categories).groups"
+                  :key="g.parent"
+                  class="badge-group-inline"
+                >
+                  <span class="badge-group-parent">{{ g.parent }}：</span>
+                  <span
+                    v-for="b in g.items"
+                    :key="b.value"
+                    class="badge badge-category"
+                  >
+                    {{ b.label }}
+                  </span>
                 </span>
               </div>
               <span v-else class="badge badge-unclassified">未分類</span>
@@ -335,8 +357,9 @@
           <div class="form-group">
             <label>類別 <span class="field-hint">（點擊標籤選擇，可複選）</span></label>
             <div class="tag-selector category-tags">
+              <!-- 頂層葉子分類 -->
               <button
-                v-for="cat in availableCategories"
+                v-for="cat in categoryGroups.flat"
                 :key="cat.category_value"
                 type="button"
                 class="tag-btn"
@@ -345,6 +368,20 @@
               >
                 {{ cat.display_name }}
               </button>
+              <!-- 父層群組：父層僅標頭、子分類可點選 -->
+              <div v-for="g in categoryGroups.groups" :key="g.parent.category_value" class="cat-group">
+                <span class="cat-group-label">{{ g.parent.display_name }}</span>
+                <button
+                  v-for="cat in g.children"
+                  :key="cat.category_value"
+                  type="button"
+                  class="tag-btn"
+                  :class="{ 'selected': selectedCategories.includes(cat.category_value) }"
+                  @click="toggleCategory(cat.category_value)"
+                >
+                  {{ cat.display_name }}
+                </button>
+              </div>
             </div>
             <p v-if="selectedCategories.length === 0" class="hint-text">未選擇類別的知識將標記為「未分類」</p>
           </div>
@@ -627,6 +664,26 @@ export default {
     };
   },
   computed: {
+    // 兩層分類：把 availableCategories 整理成「頂層葉子 flat + 父層群組 groups」
+    categoryGroups() {
+      const cats = this.availableCategories || [];
+      const parentVals = new Set(cats.filter(c => c.parent_value).map(c => c.parent_value));
+      const parents = cats.filter(c => parentVals.has(c.category_value));
+      const groups = parents.map(p => ({
+        parent: p,
+        children: cats.filter(c => c.parent_value === p.category_value)
+      }));
+      const flat = cats.filter(c => !c.parent_value && !parentVals.has(c.category_value));
+      return { flat, groups };
+    },
+    // value → { parent_value, display_name } 對照（給列表 badge 分組用）
+    catMeta() {
+      const m = {};
+      for (const c of (this.availableCategories || [])) {
+        m[c.category_value] = { parent_value: c.parent_value || null, display_name: c.display_name || c.category_value };
+      }
+      return m;
+    },
     markdownPreview() {
       if (!this.formData.content) {
         return '<p style="color: #999;">Markdown 預覽區</p>';
@@ -840,6 +897,28 @@ export default {
       } catch (error) {
         console.error('載入類別失敗', error);
       }
+    },
+    // 子類名稱去掉父層前綴：售前競品→競品、條件診斷:合約→合約
+    stripParentPrefix(value, parent) {
+      if (!parent || !value.startsWith(parent)) return value;
+      const rest = value.slice(parent.length).replace(/^[\s:：_\-／/]+/, '');
+      return rest || value;
+    },
+    // 列表 badge 分組：頂層平鋪 + 父層群組(父層標一次、子類去前綴)
+    catBadges(categories) {
+      const flat = [];
+      const groupMap = {};
+      for (const v of (categories || [])) {
+        const meta = this.catMeta[v];
+        const parent = meta ? meta.parent_value : null;
+        if (parent) {
+          if (!groupMap[parent]) groupMap[parent] = { parent, items: [] };
+          groupMap[parent].items.push({ value: v, label: this.stripParentPrefix(v, parent) });
+        } else {
+          flat.push({ value: v, label: meta ? meta.display_name : v });
+        }
+      }
+      return { flat, groups: Object.values(groupMap) };
     },
 
     async loadVendors() {
@@ -1756,7 +1835,21 @@ export default {
 .category-badges {
   display: flex;
   flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.badge-group-inline {
+  display: inline-flex;
+  align-items: center;
   gap: 2px;
+  padding: 1px 4px 1px 6px;
+  background: #eef3fb;
+  border-radius: 4px;
+}
+.badge-group-parent {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a90d9;
 }
 .filter-select {
   padding: 6px 10px;
@@ -2120,6 +2213,24 @@ export default {
   border-radius: 6px;
   min-height: 50px;
 }
+
+.cat-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 0;
+  border-top: 1px dashed #d6dbe3;
+}
+
+.cat-group-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a90d9;
+  margin-right: 4px;
+}
+.cat-group-label::after { content: '：'; }
 
 .tag-btn {
   padding: 8px 16px;

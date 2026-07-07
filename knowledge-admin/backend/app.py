@@ -10,6 +10,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor, Json
 import requests
 import os
+import secrets
+import hashlib
 import pandas as pd
 from datetime import datetime
 
@@ -173,9 +175,16 @@ async def list_knowledge(
             search_pattern = f"%{search}%"
             params.extend([search_pattern, search_pattern])
 
-        # 類別過濾（精確匹配）
+        # 類別過濾：選葉子→精確匹配；選父層→展開為其所有子分類（兩層分類）
         if category:
-            query += " AND %s = ANY(kb.categories)"
+            query += """ AND (
+                %s = ANY(kb.categories)
+                OR kb.categories && COALESCE(
+                    (SELECT array_agg(category_value::text) FROM category_config WHERE parent_value = %s),
+                    '{}'::text[]
+                )
+            )"""
+            params.append(category)
             params.append(category)
 
         # 業態類型過濾
@@ -215,7 +224,14 @@ async def list_knowledge(
             count_params.extend([f"%{search}%", f"%{search}%"])
 
         if category:
-            count_query += " AND %s = ANY(categories)"
+            count_query += """ AND (
+                %s = ANY(categories)
+                OR categories && COALESCE(
+                    (SELECT array_agg(category_value::text) FROM category_config WHERE parent_value = %s),
+                    '{}'::text[]
+                )
+            )"""
+            count_params.append(category)
             count_params.append(category)
 
         # 業態類型過濾（總數查詢也要包含）
@@ -1008,6 +1024,7 @@ async def get_stats(user: dict = Depends(get_current_user)):
 @app.get("/api/backtest/results")
 async def get_backtest_results(
     status_filter: Optional[str] = Query(None, description="篩選狀態 (all/failed/passed)"),
+    grade_filter: Optional[str] = Query(None, description="v3 評級篩選（GOOD/ASK_OK/ASK_BAD/WRONG/NOFOUND/BROKEN）"),
     limit: int = Query(50, ge=1, le=200, description="每頁筆數"),
     offset: int = Query(0, ge=0, description="偏移量"),
     user: dict = Depends(get_current_user)
@@ -1276,10 +1293,36 @@ async def list_backtest_runs(
         conn.close()
 
 
+@app.get("/api/backtest/runs/{run_id}/grade-distribution")
+async def get_backtest_grade_distribution(run_id: int, user: dict = Depends(get_current_user)):
+    """v3 多輪感知評級分佈（GOOD/ASK_OK/ASK_BAD/WRONG/NOFOUND/BROKEN）。
+
+    舊 run（v2 評估）無 grade 欄位 → 回空分佈，前端據此隱藏分佈條。"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT COALESCE(evaluation->>'grade','') AS grade, count(*) AS n
+            FROM backtest_results WHERE run_id = %s
+            GROUP BY 1 ORDER BY 2 DESC
+        """, (run_id,))
+        rows = [dict(r) for r in cur.fetchall()]
+        dist = {r['grade']: r['n'] for r in rows if r['grade']}
+        total = sum(dist.values())
+        ok = dist.get('GOOD', 0) + dist.get('ASK_OK', 0)
+        return {"run_id": run_id, "distribution": dist, "graded_total": total,
+                "pass_grades": ["GOOD", "ASK_OK"],
+                "pass_rate_v3": round(ok / total * 100, 1) if total else None}
+    finally:
+        cur.close()
+        conn.close()
+
+
 @app.get("/api/backtest/runs/{run_id}/results")
 async def get_backtest_run_results(
     run_id: int,
     status_filter: Optional[str] = Query(None, description="篩選狀態 (all/failed/passed)"),
+    grade_filter: Optional[str] = Query(None, description="v3 評級篩選（GOOD/ASK_OK/ASK_BAD/WRONG/NOFOUND/BROKEN）"),
     limit: int = Query(50, ge=1, le=200, description="每頁筆數"),
     offset: int = Query(0, ge=0, description="偏移量"),
     user: dict = Depends(get_current_user)
@@ -1341,11 +1384,24 @@ async def get_backtest_run_results(
                 evaluation->>'max_similarity' as max_similarity,
                 evaluation->>'result_count' as result_count,
                 evaluation->>'keyword_match_rate' as keyword_match_rate,
-                evaluation->>'failure_reason' as failure_reason
+                evaluation->>'failure_reason' as failure_reason,
+                evaluation->>'grade' as grade,
+                evaluation->>'grade_reason' as grade_reason,
+                evaluation->>'eval_version' as eval_version,
+                evaluation->>'turns_used' as turns_used,
+                evaluation->'transcript' as transcript,
+                evaluation->>'llm_grade' as llm_grade,
+                evaluation->'gold_fails' as gold_fails,
+                evaluation->'turn_sources' as turn_sources,
+                (SELECT ts.request_target_user FROM test_scenarios ts WHERE ts.id = backtest_results.scenario_id) as request_target_user
             FROM backtest_results
             WHERE run_id = %s
         """
         params = [run_id]
+
+        if grade_filter:
+            query += " AND evaluation->>'grade' = %s"
+            params.append(grade_filter)
 
         # 過濾狀態
         if status_filter == "failed":
@@ -1392,6 +1448,19 @@ async def get_backtest_run_results(
                     result['result_count'] = int(result['result_count'])
                 except (ValueError, TypeError):
                     result['result_count'] = None
+
+            # v3 多輪欄位：turns_used 轉整數；transcript/gold_fails 是 jsonb 子值（psycopg2 已解成 list）
+            if result.get('turns_used') is not None and result['turns_used'] != '':
+                try:
+                    result['turns_used'] = int(result['turns_used'])
+                except (ValueError, TypeError):
+                    result['turns_used'] = None
+            for _jf in ('transcript', 'gold_fails', 'turn_sources'):
+                if isinstance(result.get(_jf), str):
+                    try:
+                        result[_jf] = json.loads(result[_jf])
+                    except (ValueError, TypeError):
+                        result[_jf] = None
 
             results.append(result)
 
@@ -1451,6 +1520,313 @@ async def get_backtest_run_results(
         conn.close()
 
 
+# ==================== usage-metering 統計 API（spec usage-metering 任務 3.1）====================
+
+def _usage_stats_query(cur, date_from: str, date_to: str, vendor_ids, user_type,
+                       include_internal: bool, granularity: str):
+    """查詢時聚合（research 裁決：量級不需物化）。
+    sessions 跨日歸屬首事件日（R2.2）：以 session 首事件列的維度計入其首日 bucket。
+    不回傳任何 user_id 明細——僅去重計數（R5.3）。"""
+    bucket = "to_char(date_tpe, 'YYYY-MM')" if granularity == 'month' else "date_tpe::text"
+    conds, params = ["date_tpe BETWEEN %s AND %s"], [date_from, date_to]
+    if not include_internal:
+        conds.append("is_internal = FALSE")
+    if vendor_ids:
+        conds.append("vendor_id = ANY(%s)")
+        params.append(vendor_ids)
+    if user_type:
+        conds.append("user_type = %s")
+        params.append(user_type)
+    where = " AND ".join(conds)
+
+    cur.execute(f"""
+        SELECT {bucket} AS bucket, vendor_id, user_type, channel,
+               count(*) AS messages,
+               count(*) FILTER (WHERE status='error') AS errors,
+               count(DISTINCT user_id) AS distinct_users,
+               COALESCE(sum(prompt_tokens),0) AS prompt_tokens,
+               COALESCE(sum(completion_tokens),0) AS completion_tokens,
+               sum(est_cost_usd) AS est_cost_usd
+        FROM usage_events WHERE {where}
+        GROUP BY 1,2,3,4 ORDER BY 1,2,3,4
+    """, params)
+    groups = {}
+    for r in cur.fetchall():
+        d = dict(r)
+        d['sessions'] = 0
+        d['est_cost_usd'] = float(d['est_cost_usd']) if d['est_cost_usd'] is not None else None
+        groups[(d['bucket'], d['vendor_id'], d['user_type'], d['channel'])] = d
+
+    # sessions：session 首事件列（首日歸屬）
+    cur.execute(f"""
+        WITH firsts AS (
+            SELECT DISTINCT ON (session_id) session_id, date_tpe, vendor_id, user_type, channel
+            FROM usage_events WHERE {where} AND session_id IS NOT NULL
+            ORDER BY session_id, ts
+        )
+        SELECT {bucket} AS bucket, vendor_id, user_type, channel, count(*) AS sessions
+        FROM firsts GROUP BY 1,2,3,4
+    """, params)
+    for r in cur.fetchall():
+        d = dict(r)
+        key = (d['bucket'], d['vendor_id'], d['user_type'], d['channel'])
+        if key in groups:
+            groups[key]['sessions'] = d['sessions']
+        else:
+            groups[key] = {'bucket': d['bucket'], 'vendor_id': d['vendor_id'],
+                           'user_type': d['user_type'], 'channel': d['channel'],
+                           'messages': 0, 'errors': 0, 'distinct_users': 0,
+                           'prompt_tokens': 0, 'completion_tokens': 0,
+                           'est_cost_usd': None, 'sessions': d['sessions']}
+    return sorted(groups.values(), key=lambda g: (g['bucket'], g['vendor_id'] or 0, g['user_type']))
+
+
+def _usage_stats_params(date_from, date_to, vendor_id, granularity):
+    import datetime as _dt
+    try:
+        d1 = _dt.date.fromisoformat(date_from)
+        d2 = _dt.date.fromisoformat(date_to)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail="date_from/date_to 需為 YYYY-MM-DD")
+    if d1 > d2:
+        raise HTTPException(status_code=400, detail="date_from 不得晚於 date_to")
+    retention = int(os.getenv("USAGE_RETENTION_MONTHS", "18"))
+    if (_dt.date.today() - d1).days > retention * 31:
+        raise HTTPException(status_code=400, detail=f"查詢起日超過保留期（{retention} 個月）")
+    if granularity not in ("day", "month"):
+        raise HTTPException(status_code=400, detail="granularity 需為 day|month")
+    vendor_ids = None
+    if vendor_id:
+        try:
+            vendor_ids = [int(v) for v in vendor_id]
+        except ValueError:
+            raise HTTPException(status_code=400, detail="vendor_id 需為整數")
+    return vendor_ids
+
+
+@app.get("/api/usage/stats")
+async def get_usage_stats(
+    date_from: str = Query(..., description="起日 YYYY-MM-DD"),
+    date_to: str = Query(..., description="迄日 YYYY-MM-DD"),
+    vendor_id: Optional[List[str]] = Query(None, description="業者 ID（可多值；缺省=全部）"),
+    user_type: Optional[str] = Query(None, description="使用者類型過濾"),
+    include_internal: bool = Query(False, description="是否含內部流量（回測/迴圈/煙囪）"),
+    granularity: str = Query("day", description="day|month"),
+    user: dict = Depends(get_current_user)
+):
+    """使用量統計（計費依據）：訊息/對話（session 首日歸屬）/去重使用者/token/估算成本/失敗數。"""
+    vendor_ids = _usage_stats_params(date_from, date_to, vendor_id, granularity)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        groups = _usage_stats_query(cur, date_from, date_to, vendor_ids, user_type,
+                                    include_internal, granularity)
+        totals = {
+            'messages': sum(g['messages'] for g in groups),
+            'sessions': sum(g['sessions'] for g in groups),
+            'errors': sum(g['errors'] for g in groups),
+            'prompt_tokens': sum(g['prompt_tokens'] for g in groups),
+            'completion_tokens': sum(g['completion_tokens'] for g in groups),
+            'est_cost_usd': round(sum(g['est_cost_usd'] or 0 for g in groups), 6),
+        }
+        return {"groups": groups, "totals": totals,
+                "params": {"date_from": date_from, "date_to": date_to,
+                           "granularity": granularity, "include_internal": include_internal}}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.get("/api/usage/users")
+async def get_usage_by_user(
+    date_from: str = Query(..., description="起日 YYYY-MM-DD"),
+    date_to: str = Query(..., description="迄日 YYYY-MM-DD"),
+    vendor_id: Optional[List[str]] = Query(None, description="業者 ID（可多值）"),
+    user_type: Optional[str] = Query(None),
+    include_internal: bool = Query(False),
+    limit: int = Query(50, ge=1, le=500),
+    user: dict = Depends(get_current_user)
+):
+    """per-user 使用明細（2026-07-06 使用者改判開放——原設計僅去重計數）。
+    user_id＝JGB 系統 user_id（jgb2 呼叫必帶），非姓名；依訊息數排序取 Top N；
+    無 user_id 事件歸「(未識別)」。"""
+    vendor_ids = _usage_stats_params(date_from, date_to, vendor_id, "day")
+    conds, params = ["date_tpe BETWEEN %s AND %s"], [date_from, date_to]
+    if not include_internal:
+        conds.append("is_internal = FALSE")
+    if vendor_ids:
+        conds.append("vendor_id = ANY(%s)")
+        params.append(vendor_ids)
+    if user_type:
+        conds.append("user_type = %s")
+        params.append(user_type)
+    where = " AND ".join(conds)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(f"""
+            SELECT COALESCE(user_id, '(未識別)') AS user_id,
+                   vendor_id,
+                   max(user_type) AS user_type,
+                   count(*) AS messages,
+                   count(DISTINCT session_id) AS sessions,
+                   COALESCE(sum(prompt_tokens),0) AS prompt_tokens,
+                   COALESCE(sum(completion_tokens),0) AS completion_tokens,
+                   sum(est_cost_usd) AS est_cost_usd,
+                   count(*) FILTER (WHERE status='error') AS errors,
+                   min(ts) AS first_seen, max(ts) AS last_seen
+            FROM usage_events WHERE {where}
+            GROUP BY 1, 2 ORDER BY messages DESC LIMIT %s
+        """, params + [limit])
+        users = []
+        for r in cur.fetchall():
+            d = dict(r)
+            d['est_cost_usd'] = float(d['est_cost_usd']) if d['est_cost_usd'] is not None else None
+            d['first_seen'] = d['first_seen'].isoformat() if d['first_seen'] else None
+            d['last_seen'] = d['last_seen'].isoformat() if d['last_seen'] else None
+            users.append(d)
+        return {"users": users, "limit": limit,
+                "params": {"date_from": date_from, "date_to": date_to,
+                           "include_internal": include_internal}}
+    finally:
+        cur.close()
+        conn.close()
+
+
+# ── quota-management：額度 CRUD（spec quota-management 任務 3）──
+
+class QuotaUpsert(BaseModel):
+    monthly_message_quota: int
+    warn_threshold_pct: int = 80
+    block_on_exceed: bool = True
+    is_active: bool = True
+
+
+@app.get("/api/usage/quotas")
+async def list_quotas(user: dict = Depends(get_current_user)):
+    """各團隊額度＋本月用量（進度條資料一次帶回）。"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT q.vendor_id, q.monthly_message_quota, q.warn_threshold_pct,
+                   q.block_on_exceed, q.is_active, q.updated_at, q.updated_by,
+                   COALESCE(u.used, 0) AS used_this_month
+            FROM vendor_quotas q
+            LEFT JOIN (
+                SELECT vendor_id, count(*) AS used FROM usage_events
+                WHERE date_tpe >= date_trunc('month', now() AT TIME ZONE 'Asia/Taipei')::date
+                  AND is_internal = FALSE AND status <> 'blocked'
+                GROUP BY vendor_id
+            ) u ON u.vendor_id = q.vendor_id
+            ORDER BY q.vendor_id
+        """)
+        rows = []
+        for r in cur.fetchall():
+            d = dict(r)
+            d['updated_at'] = d['updated_at'].isoformat() if d['updated_at'] else None
+            quota = d['monthly_message_quota']
+            used = d['used_this_month']
+            pct = int(used * 100 / quota) if quota else 0
+            d['pct'] = pct
+            if not d['is_active']:
+                d['state'] = 'none'
+            elif used >= quota:
+                d['state'] = 'blocked' if d['block_on_exceed'] else 'warn'
+            elif pct >= d['warn_threshold_pct']:
+                d['state'] = 'warn'
+            else:
+                d['state'] = 'ok'
+            rows.append(d)
+        return {"quotas": rows}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.put("/api/usage/quotas/{vendor_id}")
+async def upsert_quota(vendor_id: int, body: QuotaUpsert,
+                       user: dict = Depends(get_current_user)):
+    if body.monthly_message_quota <= 0:
+        raise HTTPException(status_code=400, detail="額度需為正整數")
+    if not (1 <= body.warn_threshold_pct <= 99):
+        raise HTTPException(status_code=400, detail="警示閾值需為 1–99")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            INSERT INTO vendor_quotas
+                (vendor_id, monthly_message_quota, warn_threshold_pct,
+                 block_on_exceed, is_active, updated_at, updated_by)
+            VALUES (%s, %s, %s, %s, %s, now(), %s)
+            ON CONFLICT (vendor_id) DO UPDATE SET
+                monthly_message_quota = EXCLUDED.monthly_message_quota,
+                warn_threshold_pct = EXCLUDED.warn_threshold_pct,
+                block_on_exceed = EXCLUDED.block_on_exceed,
+                is_active = EXCLUDED.is_active,
+                updated_at = now(), updated_by = EXCLUDED.updated_by
+        """, (vendor_id, body.monthly_message_quota, body.warn_threshold_pct,
+              body.block_on_exceed, body.is_active, user.get("username", "admin")))
+        conn.commit()
+        return {"ok": True}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.delete("/api/usage/quotas/{vendor_id}")
+async def deactivate_quota(vendor_id: int, user: dict = Depends(get_current_user)):
+    """停用（不刪列保歷史）。"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE vendor_quotas SET is_active=FALSE, updated_at=now(), updated_by=%s "
+                    "WHERE vendor_id=%s", (user.get("username", "admin"), vendor_id))
+        conn.commit()
+        return {"ok": True}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.get("/api/usage/export.csv")
+async def export_usage_csv(
+    date_from: str = Query(...),
+    date_to: str = Query(...),
+    vendor_id: Optional[List[str]] = Query(None),
+    user_type: Optional[str] = Query(None),
+    include_internal: bool = Query(False),
+    granularity: str = Query("day"),
+    user: dict = Depends(get_current_user)
+):
+    """CSV 匯出（UTF-8 BOM 供 Excel，R6.3）。"""
+    from fastapi.responses import Response
+    vendor_ids = _usage_stats_params(date_from, date_to, vendor_id, granularity)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        groups = _usage_stats_query(cur, date_from, date_to, vendor_ids, user_type,
+                                    include_internal, granularity)
+        import io, csv
+        buf = io.StringIO()
+        w = csv.writer(buf)
+        w.writerow(["期間", "業者ID", "使用者類型", "通路", "訊息數", "對話數",
+                    "去重使用者", "prompt_tokens", "completion_tokens", "估算成本USD", "失敗數"])
+        for g in groups:
+            w.writerow([g['bucket'], g['vendor_id'], g['user_type'], g['channel'],
+                        g['messages'], g['sessions'], g['distinct_users'],
+                        g['prompt_tokens'], g['completion_tokens'],
+                        g['est_cost_usd'] if g['est_cost_usd'] is not None else '',
+                        g['errors']])
+        csv_bytes = '\ufeff' + buf.getvalue()
+        return Response(content=csv_bytes, media_type="text/csv; charset=utf-8",
+                        headers={"Content-Disposition":
+                                 f"attachment; filename=usage_{date_from}_{date_to}.csv"})
+    finally:
+        cur.close()
+        conn.close()
+
+
 class BacktestRunRequest(BaseModel):
     """回測執行請求模型（已廢棄 - 僅供參考）"""
     quality_mode: Optional[str] = "detailed"  # detailed, hybrid
@@ -1465,12 +1841,14 @@ class SmartBatchRequest(BaseModel):
     status: Optional[str] = None  # pending_review, approved, rejected
     source: Optional[str] = None  # imported, manual, user_question
     difficulty: Optional[str] = None  # easy, medium, hard
+    target_user: Optional[str] = None  # 題庫受眾：property_manager(JGB知識)/tenant(租客)/prospect(售前)
 
 class CountRequest(BaseModel):
     """題數統計請求模型"""
     status: Optional[str] = None
     source: Optional[str] = None
     difficulty: Optional[str] = None
+    target_user: Optional[str] = None  # 題庫受眾：property_manager(JGB知識)/tenant/prospect
 
 class ContinuousBatchRequest(BaseModel):
     """連續分批回測請求模型"""
@@ -1624,6 +2002,10 @@ async def count_test_scenarios(request: CountRequest = None):
             query += " AND difficulty = %s"
             params.append(request.difficulty)
 
+        if request and request.target_user:
+            query += " AND request_target_user = %s"
+            params.append(request.target_user)
+
         cur.execute(query, params)
         result = cur.fetchone()
         # 處理不同的 cursor 類型（dict 或 tuple）
@@ -1772,6 +2154,8 @@ async def run_smart_batch(request: SmartBatchRequest, user: dict = Depends(get_c
                 env_vars.append(f"BACKTEST_FILTER_SOURCE={request.source}")
             if request.difficulty:
                 env_vars.append(f"BACKTEST_FILTER_DIFFICULTY={request.difficulty}")
+            if request.target_user:
+                env_vars.append(f"BACKTEST_FILTER_TARGET_USER={request.target_user}")
 
             # 構建 docker exec 命令
             env_str = " && ".join([f"export {var}" for var in env_vars])
@@ -2004,6 +2388,8 @@ async def run_continuous_batch(request: ContinuousBatchRequest, user: dict = Dep
                         env["BACKTEST_FILTER_SOURCE"] = request.source
                     if request.difficulty:
                         env["BACKTEST_FILTER_DIFFICULTY"] = request.difficulty
+                    if request.target_user:
+                        env["BACKTEST_FILTER_TARGET_USER"] = request.target_user
 
                     # 動態計算 timeout
                     base_timeout_per_question = 5
@@ -2140,6 +2526,7 @@ class CategoryConfig(BaseModel):
     description: Optional[str] = None
     display_order: int = 0
     is_active: bool = True
+    parent_value: Optional[str] = None  # 兩層分類：父層分類值（NULL=頂層）
 
 
 @app.get("/api/category-config")
@@ -2159,18 +2546,30 @@ async def get_category_config(
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
+    # usage_count 即時統計：以 knowledge_base.categories 實際使用筆數為準
+    # （取代從不更新的 stored 欄位；category-multi-select 下游一致化）
     query = """
         SELECT
-            id, category_value, display_name, description,
-            display_order, is_active, usage_count,
-            created_at, updated_at
-        FROM category_config
+            cc.id, cc.category_value, cc.display_name, cc.description,
+            cc.display_order, cc.is_active, cc.parent_value,
+            -- 使用數：本分類 + 其子分類(若為父層)所涵蓋的「去重知識數」
+            (SELECT count(*) FROM knowledge_base kb
+             WHERE kb.categories && (
+                 ARRAY[cc.category_value::text]
+                 || COALESCE(
+                     (SELECT array_agg(c2.category_value::text)
+                      FROM category_config c2 WHERE c2.parent_value = cc.category_value),
+                     '{}'::text[]
+                 )
+             )) AS usage_count,
+            cc.created_at, cc.updated_at
+        FROM category_config cc
     """
 
     if not include_inactive:
-        query += " WHERE is_active = true"
+        query += " WHERE cc.is_active = true"
 
-    query += " ORDER BY id"
+    query += " ORDER BY cc.id"
 
     cur.execute(query)
     categories = [dict(row) for row in cur.fetchall()]
@@ -2179,6 +2578,23 @@ async def get_category_config(
     conn.close()
 
     return {"categories": categories}
+
+
+def _validate_two_level_parent(cur, category_value, parent_value):
+    """兩層分類防呆：父層須為頂層、且本分類不可已有子分類。違反→HTTPException 400。"""
+    if not parent_value:
+        return
+    if parent_value == category_value:
+        raise HTTPException(status_code=400, detail="父層不可為自己")
+    cur.execute("SELECT parent_value FROM category_config WHERE category_value = %s", (parent_value,))
+    row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=400, detail=f"父層分類 '{parent_value}' 不存在")
+    if row['parent_value']:
+        raise HTTPException(status_code=400, detail="父層必須是頂層分類，不可超過兩層")
+    cur.execute("SELECT 1 FROM category_config WHERE parent_value = %s LIMIT 1", (category_value,))
+    if cur.fetchone():
+        raise HTTPException(status_code=400, detail="此分類已有子分類，不可再設父層（維持兩層）")
 
 
 @app.post("/api/category-config")
@@ -2209,18 +2625,22 @@ async def create_category(category: CategoryConfig, user: dict = Depends(get_cur
                 detail=f"Category '{category.category_value}' 已存在"
             )
 
+        # 兩層分類防呆
+        _validate_two_level_parent(cur, category.category_value, category.parent_value)
+
         # 插入新 category
         cur.execute("""
             INSERT INTO category_config
-            (category_value, display_name, description, display_order, is_active)
-            VALUES (%s, %s, %s, %s, %s)
+            (category_value, display_name, description, display_order, is_active, parent_value)
+            VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             category.category_value,
             category.display_name,
             category.description,
             category.display_order,
-            category.is_active
+            category.is_active,
+            category.parent_value or None
         ))
 
         category_id = cur.fetchone()['id']
@@ -2267,6 +2687,9 @@ async def update_category(category_id: int, category: CategoryConfig, user: dict
         if not cur.fetchone():
             raise HTTPException(status_code=404, detail="Category 不存在")
 
+        # 兩層分類防呆
+        _validate_two_level_parent(cur, category.category_value, category.parent_value)
+
         # 更新 category
         cur.execute("""
             UPDATE category_config
@@ -2274,6 +2697,7 @@ async def update_category(category_id: int, category: CategoryConfig, user: dict
                 description = %s,
                 display_order = %s,
                 is_active = %s,
+                parent_value = %s,
                 updated_at = NOW()
             WHERE id = %s
         """, (
@@ -2281,6 +2705,7 @@ async def update_category(category_id: int, category: CategoryConfig, user: dict
             category.description,
             category.display_order,
             category.is_active,
+            category.parent_value or None,
             category_id
         ))
 
@@ -2329,9 +2754,20 @@ async def delete_category(category_id: int, user: dict = Depends(get_current_use
         if not category:
             raise HTTPException(status_code=404, detail="Category 不存在")
 
-        # 檢查是否有知識使用此 category
+        # 衝突2 防呆：父層底下尚有子分類 → 不可刪除（避免孤兒子層）
         cur.execute(
-            "SELECT COUNT(*) as count FROM knowledge_base WHERE category = %s",
+            "SELECT 1 FROM category_config WHERE parent_value = %s LIMIT 1",
+            (category['category_value'],)
+        )
+        if cur.fetchone():
+            raise HTTPException(
+                status_code=400,
+                detail="此分類底下有子分類，請先移除或改掛子分類後再刪除"
+            )
+
+        # 檢查是否有知識使用此 category（衝突1：主題真實來源為 categories[]，不可用單數 category）
+        cur.execute(
+            "SELECT COUNT(*) as count FROM knowledge_base WHERE %s = ANY(categories)",
             (category['category_value'],)
         )
 
@@ -2365,6 +2801,138 @@ async def delete_category(category_id: int, user: dict = Depends(get_current_use
             cur.close()
         if conn:
             conn.close()
+
+
+@app.post("/api/category-config/{category_id}/remove-from-knowledge")
+async def remove_category_from_knowledge(category_id: int, user: dict = Depends(get_current_user)):
+    """連動清理：將某分類值從所有知識的 categories[] 移除（停用/刪除前的可選步驟）。"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute("SELECT category_value FROM category_config WHERE id = %s", (category_id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Category 不存在")
+        val = row['category_value']
+        cur.execute(
+            "UPDATE knowledge_base SET categories = array_remove(categories, %s), updated_at = NOW() "
+            "WHERE %s = ANY(categories)",
+            (val, val)
+        )
+        removed = cur.rowcount
+        conn.commit()
+        return {"removed_count": removed, "message": f"已從 {removed} 筆知識移除分類「{val}」"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+# ========== API Keys（服務對服務金鑰，後台管理；只存 hash，明文僅建立時回傳一次）==========
+
+class ApiKeyCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class ApiKeyToggle(BaseModel):
+    is_active: bool
+
+
+def _hash_api_key(key: str) -> str:
+    return hashlib.sha256(key.encode("utf-8")).hexdigest()
+
+
+@app.get("/api/api-keys")
+async def list_api_keys(user: dict = Depends(get_current_user)):
+    """列出所有 API 金鑰（不回傳 hash 或明文，只有前綴）。"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute(
+            "SELECT id, name, key_prefix, description, is_active, created_at, last_used_at "
+            "FROM api_keys ORDER BY created_at DESC"
+        )
+        return {"api_keys": [dict(r) for r in cur.fetchall()]}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.post("/api/api-keys")
+async def create_api_key(data: ApiKeyCreate, user: dict = Depends(get_current_user)):
+    """建立金鑰：產生隨機明文 → 存 hash+前綴 → 明文僅此次回傳。"""
+    if not data.name or not data.name.strip():
+        raise HTTPException(status_code=400, detail="名稱不可空白")
+    plain = secrets.token_urlsafe(32)
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute(
+            "INSERT INTO api_keys (name, key_hash, key_prefix, description) VALUES (%s,%s,%s,%s) RETURNING id",
+            (data.name.strip(), _hash_api_key(plain), plain[:8], data.description)
+        )
+        new_id = cur.fetchone()["id"]
+        conn.commit()
+        return {
+            "id": new_id, "name": data.name.strip(), "key_prefix": plain[:8],
+            "api_key": plain,
+            "message": "金鑰已建立，請立即複製保存——此明文只顯示這一次，之後無法再查看。"
+        }
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.put("/api/api-keys/{key_id}")
+async def update_api_key(key_id: int, data: ApiKeyToggle, user: dict = Depends(get_current_user)):
+    """啟用/停用金鑰。"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute("UPDATE api_keys SET is_active = %s WHERE id = %s RETURNING id", (data.is_active, key_id))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="金鑰不存在")
+        conn.commit()
+        return {"message": "已更新"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.delete("/api/api-keys/{key_id}")
+async def delete_api_key(key_id: int, user: dict = Depends(get_current_user)):
+    """刪除金鑰。"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute("DELETE FROM api_keys WHERE id = %s RETURNING id", (key_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="金鑰不存在")
+        conn.commit()
+        return {"message": "已刪除"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
 
 
 @app.post("/api/category-config/sync-usage")

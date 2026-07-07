@@ -21,7 +21,24 @@
   分層依據＝離線實跑結果。**新測試一律用顯式 marker**：`@pytest.mark.unit/integration/e2e`。
 - 真實相依層在無相依時**標示略過（skipped）而非失敗**，避免假綠燈（R4.5）。
 
-## 三、追溯標記（需求↔測試↔文件，D3/D4）
+### 目錄架構（layer-first，跨服務統一）
+
+測試以「**層級 → 領域**」兩層目錄組織,讓測試金字塔在檔案樹上可見;`conftest.py` 留在 `tests/` 根(套用所有子目錄):
+
+```
+<service>/tests/
+  conftest.py                     # 共用 fixtures(套用全部子層)
+  unit/        <領域>/            # category/ retrieval/ conversational/ forms/ security/ api/ _meta/
+  integration/ <領域>/            # 真實 DB/跨模組
+  e2e/         <領域>/            # 整服務 HTTP/SSE
+```
+
+- **層級＝第一層目錄**(unit/integration/e2e)＝測試金字塔;**領域＝第二層**(依功能)。
+- 檔案仍須帶顯式 `@pytest.mark.<層級>`(目錄是給人看,marker 是給 `-m` 選層與 skip gate 用,兩者一致)。
+- pytest `testpaths=tests` 遞迴收集、追溯 `scan.py` 用 `rglob` → 子目錄皆自動納入,無需改設定。
+- 新服務(如 knowledge-admin)沿用相同 `tests/<層級>/<領域>/` 架構 + 自己的 conftest。
+
+## 三、追溯標記（需求↔測試↔文件,D3/D4）
 
 - 測試宣告需求：`@pytest.mark.req("testing-traceability:5.2")`（marker 為主；舊 docstring `spec:id` 過渡）。
 - 文件章節背書：在 docs 關鍵行為章節加 `<!-- tested-by: spec:id -->`。
