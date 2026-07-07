@@ -174,6 +174,18 @@ async def _domain_faces(db_pool, config) -> List[str]:
         return []
 
 
+_DIALOG_CAP = 6
+
+
+def _note_turn(state: dict, user_message: str, ai_text: str) -> None:
+    """ask 返回點記入滾動對話史（供 brain 知道自己問過什麼——2026-07-07 線上實測：
+    無史則純中文名稱識別對不上槽位、且會原句重問；帶數字識別有決定性抽取兜底才未現形）。"""
+    d = state.setdefault("dialog", [])
+    d.append({"u": (user_message or "")[:200], "a": (ai_text or "")[:300]})
+    if len(d) > _DIALOG_CAP:
+        del d[:-_DIALOG_CAP]
+
+
 def _has_basic_info(fields: dict, config=None) -> bool:
     """收斂前的最低資訊門檻（conversational-diagnosis R2.1/R2.5）。
     有設定 grounding_scope.required_slots → 全部必填槽位到齊才足夠（診斷面向，槽位讀設定）；
@@ -341,7 +353,10 @@ class ConversationalEngine:
             if pending:
                 picked = _match_candidate(user_message, pending)
                 if picked is None:
-                    return {"kind": "ask", "answer": _ask_pick_again(pending)}
+                    _ask_text = _ask_pick_again(pending)
+                    _note_turn(state, user_message, _ask_text)
+                    await self._save(session_id, state)
+                    return {"kind": "ask", "answer": _ask_text}
                 gscope = config.grounding_scope or {}
                 slot = (gscope.get("required_slots") or [None])[0]  # 讀設定，不硬編面向欄位
                 if slot:
@@ -360,6 +375,7 @@ class ConversationalEngine:
                 # 仍非單筆（資料異動，少見）→ 安全降級回 ask（含可能新候選）
                 if r.get("candidates"):
                     state["pending_candidates"] = r["candidates"]
+                _note_turn(state, user_message, r["answer"])
                 await self._save(session_id, state)   # 存檔：含 0 筆時清空的無效 slot
                 return {"kind": "ask", "answer": r["answer"]}
 
@@ -388,6 +404,7 @@ class ConversationalEngine:
                             "session_id": session_id, "state": state, "user_message": user_message}
                 if r.get("candidates"):
                     state["pending_candidates"] = r["candidates"]
+                    _note_turn(state, user_message, r["answer"])
                     await self._save(session_id, state)
                     return {"kind": "ask", "answer": r["answer"]}
                 # 0 筆 → 不提交此識別（後端當裁判）：
@@ -398,6 +415,7 @@ class ConversationalEngine:
                     # 不 return，續走下方 brain 流程
                 else:
                     # 首次識別即查無（無可回滾）→ slot 已被清空，回追問請重新識別。
+                    _note_turn(state, user_message, r["answer"])
                     await self._save(session_id, state)
                     return {"kind": "ask", "answer": r["answer"]}
 
@@ -451,6 +469,7 @@ class ConversationalEngine:
 
             if step["action"] == "ask":
                 state["asked_count"] = asked + 1
+                _note_turn(state, user_message, step.get("next_question"))
                 await self._save(session_id, state)
                 return {"kind": "ask", "answer": step.get("next_question")}
 
@@ -465,15 +484,17 @@ class ConversationalEngine:
                 if _missing and asked < MAX_ASKS:
                     print(f"🛡️ 收斂槽位未齊（{_missing}）→ 程式保底轉追問（不打 API）")
                     state["asked_count"] = asked + 1
+                    _ask_text = (step.get("next_question")
+                                 or "請先提供查詢所需的識別資訊（如編號或名稱），以便繼續。")
+                    _note_turn(state, user_message, _ask_text)
                     await self._save(session_id, state)
-                    return {"kind": "ask",
-                            "answer": step.get("next_question")
-                            or "請先提供查詢所需的識別資訊（如編號或名稱），以便繼續。"}
+                    return {"kind": "ask", "answer": _ask_text}
                 r = await self._ground_by_api(state, config, user_message=user_message)
                 if r["kind"] == "ask":  # 0/N 筆或 API 失敗 → 降級回追問（非 converge，R3.4/R3.5）
                     state["asked_count"] = asked + 1  # 維持提問次數上限保護（R2.4）
                     if r.get("candidates"):
                         state["pending_candidates"] = r["candidates"]  # 供下一輪確定性選擇（任務 5.2）
+                    _note_turn(state, user_message, r["answer"])
                     await self._save(session_id, state)
                     return {"kind": "ask", "answer": r["answer"]}
                 grounding, ctx, cta_mode = r["grounding"], None, "suppress"  # 1 筆 → 事實型合成（不複述情境/不推 CTA）

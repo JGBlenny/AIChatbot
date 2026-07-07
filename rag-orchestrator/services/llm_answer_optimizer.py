@@ -849,10 +849,25 @@ class LLMAnswerOptimizer:
             faces_note = (f"\n\n【本領域可用面向】{('、'.join(faces))}"
                           "（判斷本輪最貼近哪個，輸出 face；純識別/無指向可留空）" if faces else "")
             system_prompt = f"{system_context_md}\n\n{rules_text}{faces_note}".strip()
+            # 對話史（引擎 ask 返回點記入 state.dialog）：brain 必須知道自己問過什麼——
+            # 否則純中文名稱回覆對不上槽位、且會原句重問（2026-07-07 線上實測缺陷）。
+            _dialog = state.get('dialog') or []
+            hist_block = ""
+            if _dialog:
+                _lines = []
+                for t in _dialog[-4:]:
+                    _lines.append(f"使用者：{t.get('u', '')}")
+                    _lines.append(f"你（追問）：{t.get('a', '')}")
+                hist_block = (
+                    "【最近對話】\n" + "\n".join(_lines) +
+                    "\n（使用者最新訊息通常是在回答你上一題——把對應的值填入 extracted_fields；"
+                    "已問過的問題不要重複再問。）\n"
+                )
             user_prompt = (
                 f"【已知欄位】{json.dumps(collected, ensure_ascii=False)}\n"
                 f"【asked_count】{asked}\n"
                 f"【已給過推薦】{recommended}\n"
+                f"{hist_block}"
                 f"【使用者最新訊息】{user_message}\n\n請依規則輸出 JSON。"
             )
             result = self.llm_provider.chat_completion(

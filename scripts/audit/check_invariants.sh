@@ -84,6 +84,7 @@ SYNC_FILES=(
   routers/loops.py
   services/usage_metering.py
   services/llm_provider.py
+  services/llm_answer_optimizer.py
   services/api_call_handler.py
   services/vendor_parameter_resolver.py
   routers/lookup.py
