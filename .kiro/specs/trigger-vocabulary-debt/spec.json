@@ -1,0 +1,27 @@
+{
+  "feature_name": "trigger-vocabulary-debt",
+  "created_at": "2026-07-11T14:13:11+08:00",
+  "updated_at": "2026-07-11T15:25:00+08:00",
+  "phase": "tasks-generated",
+  "language": "zh-TW",
+  "project_description": "觸發語彙還債（P0）：修復知識層觸發配置的檢索斷鏈＋清理死欄位＋檢索分數埋點。背景：docs/conversation-first-architecture-assessment.md 定案混合骨架 C 後的第一階段（P0），docs/chat-architecture-overview.md §3 為問題盤點。範圍三件事：(1) 修斷鏈——vendor_knowledge_retriever_v2.py 的 SELECT（約 L89-106）補齊 trigger_mode/trigger_keywords/immediate_prompt 欄位，使 chat.py:2948/2976 的消費邏輯真正拿到 DB 配置值而非永遠回退預設 'auto'（此為線上正在發生的靜默失效：admin 設的知識觸發詞被忽略）；(2) 清死欄位——knowledge_base 的 trigger_form_condition/trigger_conditions/auto_keywords 三欄（add_knowledge_form_auto_option.sql 建立）經全庫 grep 確認零程式碼讀取，且 C 定案後確定不投資 auto 機制，直接以 migration 移除（含 admin 前端若有引用需一併清）；(3) 檢索分數埋點——usage_events 增加檢索分數欄位（如 retrieval_score/sop_score），在計量 middleware 或 chat handler 落點記錄每則訊息的仲裁分數，供後續分析 0.6-0.75 灰帶占比（P2 意圖路由設計的關鍵輸入）。驗收：知識觸發配置（trigger_mode=manual/immediate＋trigger_keywords）e2e 生效；死欄位移除後全測試綠；新流量的 usage_events 帶分數。約束：不動仲裁邏輯與門檻本身（那是 P2 的事）、migration 純加性優先、embedding 完整性不受影響。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "implementation": {
+    "started": true,
+    "completed": true,
+    "tasks_completed": ["1.1", "1.2", "1.3", "2.1", "3.1", "3.2", "3.3", "4.1", "5.1", "5.2"]
+  }
+}

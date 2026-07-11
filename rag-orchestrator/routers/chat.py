@@ -751,6 +751,9 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
         print(f"⏱️ [Step 4] 智能檢索: {int((_time.time()-_t0)*1000)}ms")
         print(f"🎯 [最終決策] {decision['type']} - {decision['reason']}")
 
+        # 檢索仲裁分數埋點：decision 誕生後的單一無條件生產點（不受 include_debug_info 閘住）
+        _meter_comparison(decision.get('comparison'))
+
         if decision['type'] == 'sop':
             _t0 = _time.time()
             response = await _build_orchestrator_response(
@@ -1500,6 +1503,24 @@ def _meter_path(processing_path: str) -> None:
     try:
         from services.usage_metering import set_path as _sp
         _sp(processing_path)
+    except Exception:
+        pass
+
+
+def _meter_comparison(comparison: dict) -> None:
+    """usage-metering：無條件檢索仲裁分數埋點（同 _meter_path 繞開 include_debug_info 閘）。
+    掛在 decision 誕生後的單一生產點（_smart_retrieval_with_comparison 回傳處），
+    生產形狀請求（不帶 debug flag）亦記分數。comparison 為 None（短路路徑／b2b 回測
+    無仲裁）→ 不呼叫，分數欄留 NULL 為正確語義。計量失敗零影響事件本體。"""
+    if not comparison:
+        return
+    try:
+        from services.usage_metering import set_comparison as _sc
+        _sc(
+            knowledge_score=comparison.get('knowledge_score'),
+            sop_score=comparison.get('sop_score'),
+            decision_case=comparison.get('decision_case'),
+        )
     except Exception:
         pass
 

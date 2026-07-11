@@ -15,6 +15,7 @@
 | 7–9 | 計量／額度／參數分工（env 與驗證；migration 已併 §1） | 必做（隨版更） |
 | 10 | `make audit` 不變量稽核 | **收尾必跑** |
 | 11 | 部署後掛帳 | 追蹤 |
+| 12 | trigger-vocabulary-debt（觸發語彙還債 P0） | 隨版更（2026-07-11 增補） |
 | 附錄A | **全庫搬遷路徑**（本機庫整顆搬 prod，取代 §1–§3） | 二選一 |
 
 > **路徑二選一**：①逐支重放（§1–§3，prod 現庫上疊加）②全庫搬遷（附錄 A，本機庫即真相直接換庫）。
@@ -270,7 +271,77 @@ backtest evaluation 必為 JSON 物件／服務容器關鍵檔與 repo 一致（
 - 物件域掛帳：3861 vs 3862 建約前提表面矛盾（續約/上傳既存合約可能不走 pick 入口）待 jgb2 盤查釐清；3357 舊批次知識含過時口徑（批次範圍外掛帳不動）。
 - **SOP 角色隔離——已改判撤案（2026-07-05）**：原立案「租客向 SOP 攔截業者問句」經查為測試 harness 未帶 mode 的 artifact——生產隔離本已存在（jgb2 後台帶 mode='b2b'，chat.py:1633 b2b 不走 SOP；租客 b2c 走 SOP 受眾正確）。轉出並已收：錨點單發防呆（P0 程式修正）、e2e harness 全面補 mode='b2b'、b2b 知識補齊 3 件（3408 口徑補強＋退房換約＋電費六模式）。殘餘 G 掛帳：b2c＋property_manager 矛盾組合的呼叫端防呆警示（低優先）。煙囪驗證請以 mode='b2b' 發送業者句。
 
+## 12. trigger-vocabulary-debt（觸發語彙還債 P0）（2026-07-11）
+
+修斷鏈（檢索層透傳 `trigger_mode`/`trigger_keywords`/`immediate_prompt`——manual 觸發配置終於生效，
+命中先等關鍵詞確認、不再直觸發表單）＋ `usage_events` 檢索仲裁分數埋點
+（`knowledge_score`/`sop_score`/`decision_case`，灰帶分析原料）＋ `knowledge_base` 三個死欄位清理。
+零行為改變原則：仲裁邏輯/門檻（0.55/0.6/0.75）/消費邏輯一行未動；分數是計量加值欄位——
+欄位偵測保護，M1 未跑時事件本體照舊完整寫入。
+
+**部署順序：M1 → 重建 rag-orchestrator → 煙囪 → M2（破壞性，操作者確認煙囪全過後手動執行）**
+
+```bash
+# 12-1 M1（加性、冪等）：usage_events 加三個分數欄
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
+  < rag-orchestrator/database/migrations/add_usage_events_scores.sql
+# 結尾自檢 RAISE NOTICE 應為「✅ … 3 / 3 欄就緒」
+
+# 12-2 重建 rag-orchestrator image
+docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrator
+```
+
+> ⚠️ **常駐 rag 容器是舊 image，本案生效必須重建**（不重建＝透傳與埋點皆不上線，
+> manual 知識靜默降級為直觸發；`make audit` 不變量 3 也會抓到容器/本地不一致）。
+> **semantic-model 免重建**：本案不動 embedding／知識語料（透傳＋計量欄＋刪零資訊死欄位），
+> reranker 的模型與輸入無變化——與 §4 換庫情境不同，不適用重抽規則。
+
+**12-3 煙囪**（M2 之前必過）：
+
+```bash
+# ① 一則真 b2c 請求（走 SOP↔知識檢索仲裁）→ 事件帶分數
+SID="smoke_tvd_$(date +%s)"
+curl -sS -X POST http://localhost:8100/api/v1/message -H "Content-Type: application/json" \
+  -d "{\"message\": \"我要繳房租\", \"vendor_id\": 2, \"mode\": \"b2c\", \"target_user\": \"tenant\", \"session_id\": \"$SID\"}"
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "SELECT knowledge_score, sop_score, decision_case FROM usage_events ORDER BY id DESC LIMIT 1;"
+# 期望：分數欄帶 0–1 數值、decision_case 為既有仲裁識別字串
+# （knowledge_significantly_higher / sop_significantly_higher / only_knowledge_qualified …）
+
+# ② 短路路徑（b2b 請求，早退不經仲裁）→ 分數 NULL、事件其餘欄位照舊完整
+SID="smoke_tvd_b2b_$(date +%s)"
+curl -sS -X POST http://localhost:8100/api/v1/message -H "Content-Type: application/json" \
+  -d "{\"message\": \"我要繳房租\", \"vendor_id\": 2, \"mode\": \"b2b\", \"target_user\": \"property_manager\", \"role_id\": \"37305\", \"session_id\": \"$SID\"}"
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "SELECT knowledge_score, sop_score, decision_case FROM usage_events ORDER BY id DESC LIMIT 1;"
+# 期望：三欄皆 NULL（vendor/token/成本等本體欄位仍齊全）
+```
+
+③（可選，完整驗證 manual 觸發全流程）——自動化 e2e 已於開發環境收案
+（`tests/e2e/chat_flow/test_trigger_manual_flow_e2e_req.py`，task 5.1，fixture 自建自清；
+需宿主直跑 pytest＋另起臨時 rag 容器，不適合照搬 prod 現場）。現場驗證照 e2e 同流程手動走：
+建一筆 `trigger_mode='manual'`＋`trigger_keywords` 的表單測試知識（後台建立即含 embedding）→
+問句命中 → 應**等待確認**（不直觸發表單、回應含關鍵詞引導）→ 回覆關鍵詞 → 表單觸發 →
+另起 session 命中後回非關鍵詞 → 不觸發 → **驗畢刪除該測試知識**。
+
+```bash
+# 12-4 M2（⚠️ 破壞性：DROP COLUMN ×3——由操作者確認煙囪全過後手動執行，不得由自動化流程觸發）
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
+  < rag-orchestrator/database/migrations/drop_knowledge_trigger_dead_columns.sql
+# 自檢 RAISE NOTICE「✅ M2 完成」；刪除對象 trigger_form_condition / trigger_conditions / auto_keywords
+# （全庫 grep 零引用＋資料全為預設值零資訊，雙重盤點見 spec gap-analysis）
+
+# 反悔：rollback 可回復欄位/約束/索引結構——資料不可回復（已接受，原內容零資訊）
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
+  < rag-orchestrator/database/migrations/rollback_drop_knowledge_trigger_dead_columns.sql
+```
+
+收尾照 §10 `make audit`（新增的知識 dict 契約測試在 unit 套件，隨 `make test`/CI 自動把關）。
+
 ## 附錄 A：全庫搬遷路徑（2026-07-07 裁定採用；取代 §1–§3）
+
+> **新環境建置的唯一正式路徑＝本附錄的 dump 還原**。`database/init-legacy/`（原 `database/init/`）
+> 已於 2026-07-11 除役——schema 凍結於早期架構、seed 過時，compose 掛載已移除，勿用於任何建置。
 
 > 本機開發庫（知識/embedding/面向規則/系統脈絡/題庫/lookup/configs 全在裡面）即真相，
 > 整顆搬上 prod。優點：不用逐支重放、不需 prod 跑 embedding；代價：**prod 現庫上、

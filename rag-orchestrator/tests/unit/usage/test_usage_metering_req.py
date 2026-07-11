@@ -152,3 +152,125 @@ def test_date_tpe_taipei_boundary():
     ctx.ts = datetime(2026, 7, 5, 17, 30, tzinfo=timezone.utc)   # UTC 17:30 = 台北 7/6 01:30
     row = um._to_row(ctx)
     assert str(row["date_tpe"]) == "2026-07-06"
+
+
+# ════════════════════════════════════════════════════════════
+# task 3.2：set_comparison hook＋欄位偵測降級（R3.1/3.3/3.5）
+# ════════════════════════════════════════════════════════════
+
+@pytest.fixture(autouse=True)
+def _reset_score_cols_cache():
+    """每案重置分數欄位偵測快取（模組層狀態）。"""
+    orig = um._score_cols_present
+    um._score_cols_present = None
+    yield
+    um._score_cols_present = orig
+
+
+# ── 矩陣①：ctx None 呼叫不爆 ──
+def test_set_comparison_no_context_silent():
+    assert um._ctx.get() is None
+    um.set_comparison(knowledge_score=0.7, sop_score=0.5, decision_case="knowledge_wins")
+
+
+# ── 矩陣②：decision_case 截斷 [:60] ──
+def test_set_comparison_decision_case_truncated():
+    um.begin(_fields())
+    long_case = "c" * 200
+    um.set_comparison(knowledge_score=0.61, sop_score=0.4, decision_case=long_case)
+    ctx = um._ctx.get()
+    assert ctx.knowledge_score == 0.61
+    assert ctx.sop_score == 0.4
+    assert ctx.decision_case == "c" * 60
+
+
+# ── 矩陣③：finalized 後呼叫不改值 ──
+def test_set_comparison_after_finalized_noop():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    ctx._finalized = True
+    um.set_comparison(knowledge_score=0.9, sop_score=0.9, decision_case="late")
+    assert ctx.knowledge_score is None
+    assert ctx.sop_score is None
+    assert ctx.decision_case is None
+
+
+# ── 矩陣④：偵測為 False（欄位未建）→ _to_row 不含三 key、其餘欄位齊全 ──
+def test_to_row_without_score_cols():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_comparison(knowledge_score=0.7, sop_score=0.5, decision_case="knowledge_wins")
+    um._score_cols_present = False
+    row = um._to_row(ctx)
+    for k in ("knowledge_score", "sop_score", "decision_case"):
+        assert k not in row
+    # 其餘既有欄位齊全
+    for k in ("request_id", "ts", "date_tpe", "vendor_id", "user_type",
+              "message_len", "processing_path", "status", "prompt_tokens",
+              "model_breakdown"):
+        assert k in row
+
+
+# ── 矩陣④'：未偵測（None）視同不存在 → _to_row 不含三 key ──
+def test_to_row_undetected_omits_score_cols():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_comparison(knowledge_score=0.7)
+    assert um._score_cols_present is None
+    row = um._to_row(ctx)
+    for k in ("knowledge_score", "sop_score", "decision_case"):
+        assert k not in row
+
+
+# ── 矩陣⑤：偵測為 True → _to_row 含三 key（含分數值透傳） ──
+def test_to_row_with_score_cols():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_comparison(knowledge_score=0.72, sop_score=0.33, decision_case="knowledge_wins")
+    um._score_cols_present = True
+    row = um._to_row(ctx)
+    assert row["knowledge_score"] == 0.72
+    assert row["sop_score"] == 0.33
+    assert row["decision_case"] == "knowledge_wins"
+
+
+# ── 偵測為 True 但未設分數 → 三 key 存在且為 None（NULL 落地） ──
+def test_to_row_score_cols_present_but_none():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um._score_cols_present = True
+    row = um._to_row(ctx)
+    assert row["knowledge_score"] is None
+    assert row["sop_score"] is None
+    assert row["decision_case"] is None
+
+
+# ── 降級偵測：欄位齊全 → 快取 True ──
+async def test_detect_score_cols_present(mock_db_pool):
+    mock_db_pool._conn.fetch = AsyncMock(
+        return_value=[{"column_name": c} for c in um._SCORE_COLS])
+    await um._detect_score_cols(mock_db_pool)
+    assert um._score_cols_present is True
+
+
+# ── 降級偵測：欄位缺 → 快取 False ──
+async def test_detect_score_cols_absent(mock_db_pool):
+    mock_db_pool._conn.fetch = AsyncMock(
+        return_value=[{"column_name": "knowledge_score"}])   # 缺兩欄
+    await um._detect_score_cols(mock_db_pool)
+    assert um._score_cols_present is False
+
+
+# ── 降級偵測：查詢失敗 → 保持 None（下次重試），不外拋 ──
+async def test_detect_score_cols_failure_retryable(mock_db_pool):
+    mock_db_pool._conn.fetch = AsyncMock(side_effect=RuntimeError("db down"))
+    await um._detect_score_cols(mock_db_pool)
+    assert um._score_cols_present is None
+
+
+# ── 降級偵測：已偵測（非 None）則不再查 ──
+async def test_detect_score_cols_cached_skips_query(mock_db_pool):
+    um._score_cols_present = True
+    mock_db_pool._conn.fetch = AsyncMock(side_effect=AssertionError("不應再查"))
+    await um._detect_score_cols(mock_db_pool)
+    assert um._score_cols_present is True

@@ -103,6 +103,9 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     kb.api_config,
                     kb.category,
                     kb.categories,
+                    kb.trigger_mode,
+                    kb.trigger_keywords,
+                    kb.immediate_prompt,
                     1 - (kb.embedding <=> %s::vector) as vector_similarity
                 FROM knowledge_base kb
                 WHERE
@@ -210,6 +213,9 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     kb.api_config,
                     kb.category,
                     kb.categories,
+                    kb.trigger_mode,
+                    kb.trigger_keywords,
+                    kb.immediate_prompt,
                     kim.intent_id
                 FROM knowledge_base kb
                 LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
@@ -327,6 +333,11 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             'category': row.get('category'),
             'categories': row.get('categories'),
             'intent_id': row.get('intent_id'),
+            # ─── 觸發配置（spec trigger-vocabulary-debt 元件 1：修檢索斷鏈，透傳至消費層 chat.py:2948）───
+            # trigger_mode=varchar／immediate_prompt=text → str|None；trigger_keywords=text[] → list|None（比照 keywords）
+            'trigger_mode': row.get('trigger_mode'),
+            'trigger_keywords': row.get('trigger_keywords'),
+            'immediate_prompt': row.get('immediate_prompt'),
             # ─── 分數欄位（task 3.3） ───
             'vector_similarity': vector_similarity,
             'keyword_score': defaults['keyword_score'],
