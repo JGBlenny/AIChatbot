@@ -104,6 +104,9 @@ AIChatbot/
 │   │   ├── unified_job_service.py      # 統一背景任務
 │   │   ├── jgb_system_api.py           # JGB 系統 API
 │   │   ├── jgb_response_formatter.py   # JGB 回應格式化
+│   │   ├── conversational_engine.py    # 對話面向引擎（交易語義：confirm gate/execute/冪等）
+│   │   ├── jgb/                         # JGB 面向邏輯
+│   │   │   └── repair_prefill.py       # 修繕槽位預填（租約→物件雙證、Vision 分類推斷）
 │   │   └── ...
 │   │
 │   ├── models/                         # 資料模型
@@ -362,7 +365,7 @@ from config.deduplication_config import DeduplicationConfig
 
 ## 2026-07 現況增補（本節為最新，與上文衝突時以本節與 docs/architecture-overview.md 為準）
 
-- **對話面向體系**：21＋售前個 conversational facets（資料驅動：`category='對話規則'` 一筆設定＝一個面向，新增零改程式）；五域（合約/帳務/帳號/物件/IoT）；機械判定用 `services/jgb/*` FACE_BUILDERS，LLM 只照 facts 組話。
+- **對話面向體系**：資料驅動（`category='對話規則'` 一筆設定＝一個面向，新增零改程式），分**診斷（唯讀）＋交易（寫入）兩型**。診斷面向 21＋售前個，五域（合約/帳務/帳號/物件/IoT）機械判定用 `services/jgb/*` FACE_BUILDERS、LLM 只照 facts 組話。**交易面向**（2026-07-12 conversational-repair 收案，commit 646743a）：引擎長出交易語義（confirm gate／execute／冪等），修繕為第一個交易面向；判定＝面向配置 `grounding_scope.execute_endpoint` 存在，全配置驅動，下一個交易面向＝加配置與 seeds、引擎零改動（目標）。**b2c 租客報修改走對話面向**：vendor 2/4 修繕子集 SOP 已停用（M2，可逆），SOP 仍為 b2c 其餘場景專用。
 - **資料體系分工（定案）**：`vendor_configs`＝通用單值參數（{{param}} 模板）；`lookup_tables`＝案場級（Excel 匯入＋錨點）；SOP＝b2c 專用（b2b 不走）；jgb API＝個資（role_id+user_id 雙證）。
 - **計量與額度**：usage_events 每請求計量（token/成本/內部流量標記）；vendor_quotas 月額度（達限攔截/警示寄信）。
 - **品質三層**：unit（make test-unit）／系統回測（迴圈＋多輪模擬＋v3 評審＋金標，按受眾分庫）／不變量稽核（make audit，修一類 bug＝加一條）。驗收鐵則：改引擎行為以系統路徑實跑收案。

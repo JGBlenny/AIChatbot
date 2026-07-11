@@ -76,3 +76,129 @@ psql "$DATABASE_URL" -f database/migrations/backfill_contract_knowledge_diagnosi
 
 - **合約加面向（違約金試算…）**：category_config 加 `違約金`(parent=系統合約)；系統脈絡加一列 `categories=['違約金']`；相關知識掛 `違約金`。問違約金→載 base＋系統合約母＋違約金子。
 - **新領域（帳單…）**：category_config 加 `系統帳單`(母)＋子面向；系統脈絡加母/子列；診斷 config topic_scope.category＝該子面向；知識掛該子面向。與合約完全平行，程式不動。
+
+---
+
+## 七、交易面向（conversational-repair 落地）
+
+<!-- tested-by: conversational-repair:4.1 -->
+<!-- tested-by: conversational-repair:4.4 -->
+
+> 建立：2026-07-11（commit 646743a）。§一–六是**診斷面向**（收斂＝查詢唯讀）；本節記錄引擎長出的**交易面向**（收斂＝執行寫入），以修繕（報修建單）為第一個落地。與診斷面向共用同一套面向配置機制，差異全在配置與引擎的 confirm/execute 分支——引擎零硬編面向字樣，下一個交易面向（退租等）＝加配置與 seeds、引擎零改動（目標）。
+
+### 7.1 定義：交易面向 vs 診斷面向
+
+| 維度 | 診斷面向（§一–六） | 交易面向（本節） |
+|---|---|---|
+| 判定 | `grounding_scope` 無 `execute_endpoint` | `grounding_scope` **宣告 `execute_endpoint`** |
+| 收斂動作 | 查現值→formatter facts→LLM 組話（唯讀） | 收齊槽位→確認 gate→**執行寫入**（create_repair） |
+| state | 既有結構（不設交易鍵） | `form_sessions.collected_data` 內 TransactionState（slots/executed/execute_result/user_turns/awaiting_confirm） |
+| brain action | `ask`／`converge` | ＋`confirm`（新） |
+
+- **面向配置列鐵則**：`target_user` 必須＝`persona_role`（修繕＝`tenant_repair`，`load_rules` 按 `persona_role` 查；寫錯全程降級）。
+
+### 7.2 進場三路（共用 repair_enabled gate）
+
+三路都先過同一個 gate helper（`routers/chat.py`），命中才 seed 面向：
+
+| 路 | 觸發 | 行為 |
+|---|---|---|
+| ①分類路由（既有機制） | 意圖錨點知識（`vendor_ids` 空、`question` 主題關鍵字式、掛「修繕報修」分類）命中，觸發門檻 similarity≥0.75 | `by_category` 1:1 → 面向配置。**模糊敘述**（如「房子有點問題」）<0.75 不進面向、先澄清 |
+| ②Step 0.5 改道 | 損傷照片 `is_damage` 且信心足 | **不打 SOP 檢索**、直接 seed 修繕面向並攜帶 RecognitionResult；找不到面向配置→降級回原行為（安全網）；非損傷/信心不足維持現行降級。非租約標的（公共區域）損傷仍進面向、由對話處理，不另設分支 |
+| ③`trigger_facet_key` 直達（chat API 新選填參數） | 命中 conversational config registry（by_key）且 enabled | 跳過意圖辨識直接 seed（帶本次訊息與圖）；**未命中→照常管線不報錯**（防呆） |
+
+**gate（`enabled_gate`）**：面向配置有 `enabled_gate` 鍵（修繕＝`"repair_enabled"`）才檢查——`vendor_configs` 讀值、**缺值預設 true**；`false`→不進面向、回 `degraded_messages.gate_disabled` 文案並注入客服管道參數（預設鍵 `service_hotline`，可由 `contact_config_key` 覆蓋）。gate 僅對「宣告 `enabled_gate` 的面向」生效（配置驅動，引擎/進場不硬編修繕字樣）。
+
+### 7.3 槽位預填 Prefill（`services/jgb/repair_prefill.py`）
+
+面向啟動時執行、配置 `prefill_api` 鍵武裝。
+
+**物件（estate）**：`get_tenant_contracts(role_id, user_id)`（雙證；mock 契約 `{success, data:[{contract_id, estate_id, estate_title, display_address, room}]}`）——
+- 1 筆 → 扁平標量槽 `estate_id`／`contract_id`／`estate_display`（source=`'prefill'`）
+- N 筆 → `pending_candidates`（重用插點 A 三級比對，物件轉選擇項一輪）
+- 0 筆或 API 失敗 → `degraded_messages.no_contract`、**不開面向**
+
+**分類**：Vision `RecognitionResult`（`suggested_category`/`item`/`reason`/`emergency`＋`confidence`）→ `resolve_repair_classification` 以 `get_repair_categories` 分類樹做名稱→ID 解析——
+- `confidence≥inference_confidence`（配置，預設 0.7）→ `category_id`／`item_id`（int）＋`broken_reason`（str）＋display 槽（`category`/`item`）（source=`'inferred'`，**確認型槽位**：陳述＋允許否定、不開口問）；急迫性推斷為 `emergency_status` 槽
+- 信心不足 → 2–3 候選選一輪（`candidate_max` 預設 3，**不退三層下拉**）
+- 名稱樹上對不到 → 該槽留空變詢問型；樹查詢失敗 → 降級候選不拋錯；無圖 → 分類槽留空由 brain 開口問
+
+**槽位統一形狀（SlotValue）**：`{value, source∈prefill|inferred|user|candidate_pick, confirmed}`。**扁平標量鐵則**——`api_call_handler` 的 `{form.x}` 解析不吃 dict／點號，故所有可映射槽位皆為扁平標量。
+
+### 7.4 Brain 交易語義（`llm_answer_optimizer.conversational_step`）
+
+- `action='ask'|'converge'|'confirm'`（新）＋`inline_answer`（岔題即答：有則先答再接 next_question/摘要）；未知 action→None（**拒絕不寬鬆回退**）；`confirm` 免 next_question。
+- 規則範本 `conversational_rules.TRANSACTION_FACET_RULES` 三條：
+  - (a) `required_slots` 全齊（含推斷槽）→`confirm`
+  - (b) 任何槽位被否定→更新後重出 `confirm`
+  - (c) 岔題→`inline_answer` 先答、同回覆接回收集
+- brain 失敗回 None→降級一般流程、**絕不建單**。
+
+### 7.5 確認 gate 與執行（`conversational_engine`）
+
+**確認（收齊≠送出）**：brain 回 `confirm` 且引擎**保底驗 `required_slots` 真的齊**（沒齊→續問，防 brain 誤判空槽 confirm）→ `confirm_template` 組摘要（缺槽容錯渲染）＋`quick_replies` 三顆（機器值 `confirm_submit`/`confirm_edit`/`confirm_cancel`，顯示文字可由 `confirm_qr_labels` 覆蓋）→ `awaiting_confirm` 存 state 等下一輪。
+
+**同意判定在引擎層非 brain（決定性）**——下一輪先於 brain：
+- 按鈕 value 或明確同意詞（好/確認/送出/OK 小集合）→ execute
+- 「修改」→ 回 brain 帶否定語境重出 confirm（槽位保留、局部更新，不重跑流程）
+- 「取消」→ 既有 `_close`、槽位丟棄不留殘單
+- 模糊語 → 交 brain（安全方向：不送出）
+
+**execute**：重用 `execute_api_call`（`endpoint=execute_endpoint`、params 由 `execute_params` 以 `params_from_form` 語彙自槽位映射、支援 `{session.role_id}`）——
+- 成功 → `executed=True`＋`receipt_template` 回執（單號取 `execute_result_path`，修繕＝`data.id`；`execute_api_call` 回傳雙包 `result.data`＝原始 API `{success,data:{id}}`；＋追蹤指引）
+- 失敗/例外 → **`executed` 不設**＋誠實告知＋「再試一次」quick reply（**絕不假裝成功**）
+
+**冪等**：`executed=True` 後任何同意詞→回「已為您建單 #X」不重複執行；收斂**不關會話**（沿用既有慣例）供追問。
+
+**state**：`form_sessions.collected_data` 存 TransactionState（`slots`/`executed`/`execute_result`/`user_turns`/`awaiting_confirm`）；非交易面向不設這些鍵、既有結構零改變。
+
+### 7.6 續跑補圖（image 通道）
+
+`handle_conversational_session` 見 `image_urls`→Vision→`engine.ingest_recognition`——**只填空槽、絕不覆蓋使用者已提供槽位**；非交易面向/無會話/無辨識＝no-op；Vision 失敗/timeout→無推斷降級不阻斷。
+
+### 7.7 埋點（可觀測性）
+
+`user_turns` 每輪+1→`usage_metering.set_facet(facet_key, turn_number)`（fire-and-forget、失敗不影響對話；欄位偵測降級——欄位未建事件本體照寫）。`usage_events` 新欄 `facet_key VARCHAR(60)`／`turn_number SMALLINT`（M3 加性冪等）。
+
+- P50/P90＝per session `MAX(turn_number)` 聚合 `percentile_cont`。
+- 驗收：A 類 e2e ≤3 輪（無岔題腳本）；上線 P50≤4／P90≤6 含岔題，未達標觸發設計覆核。
+- 輪數定義＝使用者訊息數、開場算第 1 輪。
+
+### 7.8 配置鍵全表（`grounding_scope` 內，全配置驅動）
+
+| 鍵 | 用途 |
+|---|---|
+| `execute_endpoint` | 收斂寫入的 API 端點（＝交易面向判定依據） |
+| `execute_params` | slots→params 映射（`params_from_form` 語彙，支援 `{session.role_id}`） |
+| `required_slots` | 必填槽位清單（引擎保底驗齊） |
+| `confirm_template` | 確認摘要範本（嵌槽位、缺槽容錯渲染） |
+| `receipt_template` | 成功回執範本 |
+| `execute_result_path` | 回執取單號路徑（修繕＝`data.id`） |
+| `inference_confidence` | 分類推斷信心門檻（預設 0.7） |
+| `prefill_api` | 預填武裝鍵（宣告則面向啟動時 prefill） |
+| `degraded_messages` | `{no_contract, gate_disabled}` 降級文案 |
+| `candidate_max` | 推斷退化候選上限（預設 3） |
+| `facet_key` | 埋點面向識別 |
+| `enabled_gate` | gate 的 vendor_configs 開關鍵名（修繕＝`repair_enabled`；未宣告→不檢查） |
+| `confirm_qr_labels` | 確認 quick reply 顯示文字覆寫（機器值不變） |
+| `contact_config_key` | gate 關閉時客服管道鍵覆寫（預設 `service_hotline`） |
+
+### 7.9 邊界與降級矩陣
+
+| 情況 | 行為 |
+|---|---|
+| 未綁定/雙證缺 | 誠實降級引導、不進面向、不預填 |
+| 多租約 | 物件變選擇項一輪 |
+| `repair_enabled` 關 | 降級文案＋客服管道 |
+| 任一階段取消 | 不留殘單 |
+| FAQ 快路徑 | 零影響（回歸鎖） |
+| brain 失敗 | 降級一般流程、絕不建單 |
+| execute 失敗 | 誠實告知＋重試、不假裝成功 |
+| E1 真 API | 上線 gate（現 `USE_MOCK_JGB_API` 驗流程；`get_tenant_contracts` 真端點列 J 清單） |
+
+### 7.10 切換與資料
+
+- **M2**：停 vendor 2/4 `next_form_id='jgb_repair_create'` SOP 各 75 條（`is_active=false` 可逆、rollback 備、prod 使用者手動）；vendor 2 其餘 250 條非修繕 SOP 不動。
+- **M1**（表單 vendor_id 2→NULL）免辦——dev＋prod dump 雙查證已是 NULL。表單機本體不動（schema 僅供欄位契約）。
+- **知識 seeds**：錨點 4 筆＋查進度 1 筆（`action_type=api_call→jgb_repairs`，帶身份雙證 params）。
+- **reranker**（`/rerank`）＝stateless cross-encoder，新知識免重建 semantic-model；需清 redis 檢索快取。

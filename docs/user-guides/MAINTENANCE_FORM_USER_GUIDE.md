@@ -6,6 +6,14 @@
 
 ---
 
+> ⚠️ **現況註記（2026-07-12 更新）**
+>
+> 自 2026-07 起，**b2c 租客報修已改走對話式修繕面向**（conversational-repair，commit 646743a）：租客以自然對話＋照片完成報修，引擎推斷租約/物件與分類、收齊後經確認 gate 建單，不再逐欄位填表；vendor 2/4 的舊修繕 SOP 已停用（可逆）。
+>
+> 本指南描述的**逐欄位表單機制仍保留但不再是租客報修的主路徑**；表單 schema（`jgb_repair_create`）仍作為報修欄位契約使用（供對話面向的槽位/預填對齊）。對話式修繕的路線與判準見 [docs/conversation-first-architecture-assessment.md](../conversation-first-architecture-assessment.md) §6.6，面向配置詳節見 [docs/architecture/facet-architecture.md](../architecture/facet-architecture.md)。
+
+---
+
 ## 📚 目錄
 
 1. [系統概述](#系統概述)

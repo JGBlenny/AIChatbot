@@ -19,7 +19,11 @@
     ↓
 業者驗證 + 緩存檢查
     ↓
-意圖分類（LLM Function Calling，主意圖 1.3x + 次意圖 1.1x 加成）
+交易面向直達分支：
+    ├─ trigger_facet_key 參數 → 直接進對話面向（跳過分類/檢索）
+    └─ Step 0.5 損傷圖改道 → 偵測到報修損傷圖，不打 SOP 直接進修繕面向
+    ↓
+意圖分類（LLM Function Calling，主意圖 1.3x + 次意圖 1.1x 加成；意圖錨點命中「修繕報修」≥0.75 → 進修繕面向）
     ↓
 智能檢索（SOP + 知識庫並行）
     ↓
@@ -56,6 +60,18 @@
 | `immediate` | 詢問確認（短訊息判定） | 即時確認操作 |
 | `auto` | 立即執行後續動作（不等待） | 自動觸發表單/API |
 
+## 交易面向速查
+
+面向體系分兩型：**診斷面向（唯讀，照 facts 組話）** 與 **交易面向（寫入，走確認 gate）**。交易面向判定＝面向配置 `grounding_scope.execute_endpoint` 存在，全配置驅動；下一個交易面向＝加配置與 seeds、引擎零改動（目標）。修繕為第一個交易面向。
+
+- **confirm gate 一句話**：收齊欄位 ≠ 送出——brain 收齊後回 `confirm` action，引擎渲染確認卡，用戶按鈕同意才 execute 建單。
+- **三鈕機器值**：`confirm_submit`（送出）／`confirm_edit`（修改）／`confirm_cancel`（取消）；同意判定在引擎層決定性比對機器值，非交給 brain 自由判讀。
+- **冪等**：execute 成功後標 `executed`，防重複建單；失敗誠實告知可重試、不設旗標；取消不留殘單；brain 失敗絕不建單。
+- **進場三路**：①分類路由（意圖錨點「修繕報修」≥0.75）②Step 0.5 損傷圖改道（不打 SOP 直接進面向）③`trigger_facet_key` 參數直達；三路共用 `repair_enabled` gate（vendor_configs，預設開，關→降級文案＋service_hotline）。
+- **配置鍵鐵則**：面向配置 `target_user` 必須＝persona_role（修繕＝`tenant_repair`），寫錯 load_rules 查不到 → 全程降級。
+- **輪數可觀測**：usage_events 埋 `facet_key`／`turn_number`（M3）；P50/P90 以 per-session MAX 聚合，上線目標 P50≤4／P90≤6（含岔題），未達標觸發設計覆核。
+- **詳節**：面向配置結構、grounding_scope、確認 gate 完整流程見 [docs/architecture/facet-architecture.md](../../docs/architecture/facet-architecture.md)。
+
 ## 表單狀態機速查
 
 ```
@@ -80,6 +96,8 @@ PAUSED → COLLECTING / CANCELLED（超時 30 分鐘）
 | 組件 | 檔案 |
 |------|------|
 | 主入口 | `routers/chat.py` |
+| 對話面向引擎／交易語義 | `services/conversational_engine.py` |
+| 修繕槽位預填 | `services/jgb/repair_prefill.py` |
 | SOP 編排 | `services/sop_orchestrator.py` |
 | 知識檢索 | `services/vendor_knowledge_retriever_v2.py` |
 | 表單管理 | `services/form_manager.py` |
