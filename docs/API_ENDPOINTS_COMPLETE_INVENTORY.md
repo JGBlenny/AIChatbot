@@ -1,5 +1,7 @@
 # AIChatbot API Endpoints - Complete Inventory
 
+> ⚠️ **Snapshot：2026-02-17，未持續維護**——此後端點多有增減（計量/額度/對話面向/圖片等），引用前以程式碼為準（routers/ 目錄）。名稱中的 "Complete" 僅指快照當時。
+
 **Document Created:** 2026-02-17  
 **System:** RAG Orchestrator (FastAPI)  
 **Database:** PostgreSQL (asyncpg)  

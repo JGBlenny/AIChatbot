@@ -1,3 +1,5 @@
+> ⚠️ **歷史快照（早期設定紀錄），內容已過時**：文中 `database/init/` 已於 2026-07-11 除役（現為 `init-legacy/`），新環境建置走 dump 還原（docs/deployment-runbook.md 附錄 A）。pgvector 映像與索引資訊僅供考據。
+
 # ✅ pgvector + PostgreSQL 設定完成
 
 ## 📋 已完成的工作
