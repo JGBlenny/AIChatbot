@@ -1,0 +1,76 @@
+%% 全景架構圖：骨架（回合歸屬→引擎/快路徑→工具箱→資料層）× 四維度（通路/角色/業者/業態）
+%% 狀態標記：✅ 生產/已收案　🚧 已規劃有案　⬜ 未立案/待建
+%% 來源：docs/chat-architecture-overview.md（同步維護，以 overview 為權威）
+%% 渲染：mmdc -i architecture-map.mmd -o architecture-map.svg 或貼 mermaid.live
+flowchart TB
+    subgraph CH["通路層"]
+        WEB["Web 內嵌（jgb2）✅"]
+        LINE["LINE Bot 🚧 line-bot-integration-plan"]
+    end
+
+    subgraph ID["入口與身份正規化"]
+        PROXY["jgb2 後端代理 ✅<br/>session 覆寫 role_id/user_id・X-API-Key server 側"]
+        GW["LINE Gateway 🚧<br/>line_channels/bindings/sessions＋LIFF 綁定"]
+        NORM["VendorChatRequest（單一契約）<br/>mode × target_user × vendor_id × role_id/user_id（雙證）"]
+    end
+
+    subgraph OWN["回合歸屬層——維度：角色"]
+        S0["進行中會話攔截 ✅<br/>對話偽會話 ＞ 表單會話"]
+        IMG["損傷圖片 → 修繕 SOP ✅"]
+        BTN["按鈕 trigger_form_id ⬜ G9/LINE P1"]
+        RULE{"角色規則<br/>prospect→引擎 ✅｜業者員工診斷→引擎 ✅<br/>租客→P2 ⬜｜FAQ→快路徑 ✅"}
+    end
+
+    subgraph ENG["對話引擎（擁有 ①進行中對話 ②交易/診斷 回合）"]
+        BRAIN["Brain 每輪決策 ✅<br/>ask/converge・face/scope 中途切換"]
+        CTX["三層系統脈絡＋槽位＋候選辨識 ✅<br/>面向＝DB 配置（加面向零改碼）"]
+        GRD["grounding ✅<br/>API facts→formatter 決定性解碼<br/>／向量/分類/ids 選材"]
+        P1CAP["調用表單能力 ⬜ P1<br/>（對話式報修 POC）"]
+    end
+
+    subgraph FAST["檢索快路徑（擁有 ③冷資訊問答 回合）"]
+        QR["query rewrite＋embedding 預計算 ✅"]
+        RET["SOP ∥ 知識並行檢索 ✅<br/>觸發配置透傳（P0 已修）"]
+        ARB["仲裁 ✅ SOP 0.55／知識 0.6／差距 0.15<br/>Case 3.1＝業者 SOP 覆蓋通用知識"]
+        DISP["action 分派 ✅<br/>direct│api_call│form_fill≥0.75│面向路由≥0.75<br/>（0.75 側門 → P2 改意圖規則）"]
+        CACHE["快取 ✅（動作類排除）"]
+    end
+
+    subgraph TOOLS["工具箱（兩邊共用，維度：業者×業態）"]
+        FORM["表單機 ✅ 8 狀態＋離題＋chaining＋option-routing<br/>（業者變體被 UNIQUE 債擋，需求出現才解）"]
+        API["JGB API ✅ 雙證個資（mock→真 API＝E1 gate）"]
+        LK["lookup 業者資料集 ✅"]
+        CFG["vendor_configs 業者參數 ✅<br/>（模組開關 repair_enabled ⬜修繕通用化）"]
+    end
+
+    subgraph DATA["資料層（歸屬×形狀）"]
+        KB[("knowledge_base<br/>vendor_ids 空＝通用・business_types 過濾業態<br/>對話規則列＝面向/persona 定義")]
+        SOPD[("vendor_sop_items<br/>嚴格業者維度")]
+        FS[("form_schemas<br/>vendor_id NULL＝通用")]
+        LKT[("lookup_tables<br/>UNIQUE(vendor,category,key)")]
+        JGBD[("JGB 平台<br/>合約/帳單/修繕個資")]
+        UE[("usage_events<br/>計量/額度/分數埋點 ✅P0")]
+    end
+
+    WEB --> PROXY --> NORM
+    LINE -.-> GW -.-> NORM
+    NORM --> S0 --> IMG --> RULE
+    BTN -.直達.-> FORM
+    RULE -->|"①②對話/診斷/交易"| BRAIN
+    RULE -->|"③FAQ／未達診斷路由"| QR
+    QR --> RET --> ARB --> DISP
+    DISP -->|form_fill| FORM
+    DISP -->|api_call| API & LK
+    DISP -->|面向路由| BRAIN
+    DISP --> CACHE
+    BRAIN --> CTX --> GRD
+    GRD --> API & KB
+    P1CAP -.P1.-> FORM
+    FORM -->|完成 call_api| API
+    RET --> KB & SOPD
+    FORM --> FS
+    LK --> LKT
+    API --> JGBD
+    CFG -.參數注入.-> FORM & KB
+    NORM -.每則訊息計量.-> UE
+    ARB -.分數埋點.-> UE
