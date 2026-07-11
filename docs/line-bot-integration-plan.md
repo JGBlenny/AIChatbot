@@ -135,6 +135,7 @@ Session 管理：gateway 以 `(channel_id, line_user_id)` 維護 session_id（�
 
 | # | 依賴 | 對象 | 說明 |
 |---|---|---|---|
+| E0 | **LINE 平台行為核實** | LINE 官方文件 | 本文件的平台斷言（UID 以 Provider 為值域、LIFF 取 userId、quick reply 上限 13）**未對現行官方文件驗證**（2026-07-11 證據分級盤點列 D 級）——LINE spec 動工的第一個任務即核實此批，錯一條綁定設計就要改 |
 | E1 | **JGB 真實 API 對接** | JGB | 修繕 API 目前 mock（`USE_MOCK` fallback，jgb_system_api.py:318）；LINE 端到端上線前必須切真 |
 | E2 | 綁定認證支援（方案 A 或 B） | jgb2 | LINE 串接案唯一需 jgb2 新做的東西 |
 | E3 | Provider / Messaging API channel / LIFF app 申請 | LINE Console | 含業者代管條款談定 |
