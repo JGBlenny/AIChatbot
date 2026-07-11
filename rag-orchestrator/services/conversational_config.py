@@ -175,6 +175,14 @@ async def get_config(db_pool, key: Optional[str]) -> Optional[ConversationalConf
     return _cache["by_key"].get(key) if key else None
 
 
+async def config_for_key(db_pool, key: Optional[str]) -> Optional[ConversationalConfig]:
+    """直達參數路由（conversational-repair R1.3）：依 config registry 鍵取設定（by_key 索引）。
+
+    未命中回 None（呼叫端照常走既有管線、不報錯——防呆）。get_config 已封裝相同查找；
+    此別名對齊「registry by_key」語義，供 trigger_facet_key 進場使用。"""
+    return await get_config(db_pool, key)
+
+
 async def config_for_target_user(db_pool, target_user: Optional[str]) -> Optional[ConversationalConfig]:
     """
     answer_mode dispatch（R19.1/19.2）：依角色取「該角色的 conversational 設定」。

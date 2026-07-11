@@ -16,6 +16,7 @@
 | 10 | `make audit` 不變量稽核 | **收尾必跑** |
 | 11 | 部署後掛帳 | 追蹤 |
 | 12 | trigger-vocabulary-debt（觸發語彙還債 P0） | 隨版更（2026-07-11 增補） |
+| 13 | conversational-repair（對話式報修面向） | 隨版更（2026-07-12 增補） |
 | 附錄A | **全庫搬遷路徑**（本機庫整顆搬 prod，取代 §1–§3） | 二選一 |
 
 > **路徑二選一**：①逐支重放（§1–§3，prod 現庫上疊加）②全庫搬遷（附錄 A，本機庫即真相直接換庫）。
@@ -337,6 +338,117 @@ docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERR
 ```
 
 收尾照 §10 `make audit`（新增的知識 dict 契約測試在 unit 套件，隨 `make test`/CI 自動把關）。
+
+## 13. conversational-repair（對話式報修面向）（2026-07-12）
+
+對話式報修：引擎新增 confirm/execute 語義分支＋接線（image 辨識併槽／插點 A 預填／埋點）＋
+面向配置與意圖錨點知識資料＋3 支 migration（M2 停租客修繕 SOP、M3 埋點兩欄）。
+唯一新 chat API 選填參數 `trigger_facet_key`（命中 config registry 即直達面向）。
+零回歸原則：既有 FAQ 快路徑／五域診斷面向／prospect／非修繕表單邏輯一行未動。
+
+**部署順序：M3 → 面向配置＋知識 seeds → 推程式（image rebuild）→ 煙囪 → M2（破壞性，操作者手動）→ 四業者驗收矩陣**
+
+> **M1 免辦**：原規劃 `form_schemas` vendor_id 2→NULL 的 migration，經 dev DB ＋ prod dump
+> （`aichatbot_full_20260707.dump`）雙查證，vendor_id 均已為 NULL＝目標態，**不需執行**（tasks.md 收案註記同）。
+
+```bash
+# 13-1 M3（加性、冪等）：usage_events 加 facet_key/turn_number 兩欄
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
+  < rag-orchestrator/database/migrations/20260711_usage_events_facet_columns.sql
+# 自檢：SELECT column_name FROM information_schema.columns
+#       WHERE table_name='usage_events' AND column_name IN ('facet_key','turn_number'); → 兩列
+# （欄位偵測保護：M3 未套時計量事件本體照舊完整寫入，僅兩欄略過。）
+
+# 13-2 面向配置＋意圖錨點知識 seeds
+#   ① 面向對話規則列＋grounding_scope 全鍵（execute_endpoint/required_slots/confirm_template/
+#      inference_confidence/prefill_api/degraded_messages/candidate_max/enabled_gate/facet_key）
+#      ——已含 e2e 輪修正版本（target_user @> persona_role 撈規則、扁平標量槽映射）。
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
+  < rag-orchestrator/database/migrations/seed_repair_facet_config.sql
+#   ② 意圖錨點知識＋查進度知識（embedding 走 embedding-api，須先在線）。
+docker exec aichatbot-rag-orchestrator python3 tools/seed_repair_facet_knowledge.py
+
+# 13-3 推程式（常駐 rag 容器是 baked image；本案生效必須重建）
+docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrator
+```
+
+> ⚠️ **常駐 rag 容器是舊 image，本案生效必須重建**（不重建＝confirm/execute 分支、預填、埋點皆不上線；
+> `make audit` 不變量 3 也會抓到 `services/conversational_engine.py`／`routers/chat.py`／
+> `services/usage_metering.py`／`services/jgb_system_api.py`／`services/llm_answer_optimizer.py` 容器/本地不一致）。
+
+> **semantic-model／reranker 免重建——查證結論（不抄任務假設）**：
+> semantic-model 是 **stateless cross-encoder**（BAAI/bge-reranker-base）：rag-orchestrator 呼 `/rerank`，
+> 把候選的 `question_summary` 隨請求本體送去，模型逐 `[query, question_summary]` pair 即時 `model.predict` 打分——
+> **不持有語料庫、不持索引、不存預算文件向量**（`/search` 端點才吃啟動載入的 knowledge_base JSON，本系統不走該端點）。
+> 故新增錨點知識**不需重抽/重建 reranker**，也**不需 `/reload`**——與 §4 換庫「reranker 與新庫不同步」情境本質不同。
+>
+> **但要清 redis 檢索快取**：rag-orchestrator 的 `CacheService`（`services/cache_service.py`）以
+> `rag:question:{vendor_id}:{target_user}:{hash}` 快取整包 RAG 答案（question_cache TTL 3600s＝1h）。
+> 不清的話，錨點知識入庫前已被快取的報修觸發問句會續發**舊答案**最長 1 小時。上線後對受影響業者清一次：
+> ```bash
+> # 逐業者失效（建議）——只清該 vendor 的檢索快取，不動其他
+> docker exec aichatbot-rag-orchestrator python3 scripts/clear_vendor_cache.py <vendor_id>
+> # 或整包 question 命名空間 flush（急用）：redis DEL rag:question:*
+> ```
+> 附註：`conversational_config` 另有進程級快取（`_cache`，啟動載入一次）——13-3 重建 image＝全新進程，seed 自動生效，無需額外處置。
+
+**13-4 煙囪**（M2 之前必過）：情境 A（單一租約、圖片高信心）真跑一輪，確認①面向接管報修對話②埋點入庫。
+
+```bash
+SID="smoke_repair_$(date +%s)"
+# 直達面向：trigger_facet_key=repair（或以報修意圖問句命中錨點）
+curl -sS -X POST http://localhost:8100/api/v1/message -H "Content-Type: application/json" \
+  -d "{\"message\": \"我家冷氣壞了要報修\", \"vendor_id\": 1, \"mode\": \"b2c\", \"target_user\": \"tenant\", \"role_id\": \"<真租客 role>\", \"session_id\": \"$SID\", \"trigger_facet_key\": \"repair\"}"
+# 期望：回應為報修面向對話（澄清/確認摘要），非 FAQ 直答。
+# 埋點入庫確認：
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "SELECT facet_key, turn_number, session_id FROM usage_events WHERE session_id='$SID' ORDER BY id DESC LIMIT 3;"
+# 期望：facet_key='repair'、turn_number 有值（隨輪次遞增）。
+```
+
+```bash
+# 13-5 M2（⚠️ 破壞性可逆：停 vendor 24 租客修繕 SOP，改由對話面向接管——
+#       由操作者確認 13-4 煙囪全過後手動執行，不得由自動化流程觸發；rollback 備妥）
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
+  < rag-orchestrator/database/migrations/20260711_disable_repair_sop_vendor24.sql
+
+# 反悔：回復停用的 SOP 觸發
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
+  < rag-orchestrator/database/migrations/20260711_disable_repair_sop_vendor24.rollback.sql
+```
+
+**13-6 四業者驗收矩陣**：宿主直跑 `RUN_E2E=1`（fixture 自建自清，需臨時 rag 容器；不照搬 prod 現場）——
+
+```bash
+RUN_E2E=1 scripts/run-tests.sh e2e tests/e2e/conversational/test_repair_vendor_matrix_e2e_req.py
+```
+
+### 13-7 prod 部署另需盤查（環境相依，非 migration）
+
+- **`vendor_configs.repair_enabled`**：面向進場 gate（`enabled_gate`）讀此鍵，**預設開、不需建**（缺鍵＝視同開）。
+  要對特定業者關閉才需顯式設 false。
+- **客服管道參數 `service_hotline`**：任何報修回應模板引用「客服專線／`{service_hotline}`」時由此鍵替換。
+  **dev 現況：active 業者 1／2／3 已有，業者 4（JGB TW-住宅）缺**——prod 上線前對缺鍵業者補齊，
+  否則引用該鍵的答案會渲染未解析佔位字。查法：
+  ```bash
+  docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+    "SELECT v.id, v.name, EXISTS(SELECT 1 FROM vendor_configs vc WHERE vc.vendor_id=v.id AND vc.param_key='service_hotline' AND vc.is_active) AS has_hotline FROM vendors v WHERE v.is_active ORDER BY v.id;"
+  ```
+- **E1（JGB 真 API）是上線 gate**：現以 `USE_MOCK_JGB_API=true` 驗流程；`get_tenant_contracts` 等真端點
+  對接前，插點 A 租約預填走 mock。真端點需求已列 J 清單（掛帳待 jgb2）。
+
+### 13-8 輪數承諾與覆核觸發
+
+上線後 SLO：**P50 ≤ 4／P90 ≤ 6**（含岔題）。未達標＝面向對話發散，觸發設計覆核。以埋點 SQL 週期量測：
+
+```sql
+SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY mx) AS p50,
+       percentile_cont(0.9) WITHIN GROUP (ORDER BY mx) AS p90
+FROM (SELECT MAX(turn_number) mx FROM usage_events WHERE facet_key='repair' GROUP BY session_id) t;
+```
+
+收尾照 §10 `make audit`（不變量 4 對 `修繕報修` category 會 WARN「查無系統脈絡知識」——
+本面向為交易型／輕引導型：靠意圖錨點＋config＋表單填槽推進，**不需**「系統脈絡：」長文脈絡，屬**預期免脈絡**，非缺漏）。
 
 ## 附錄 A：全庫搬遷路徑（2026-07-07 裁定採用；取代 §1–§3）
 

@@ -848,7 +848,18 @@ class LLMAnswerOptimizer:
             recommended = bool(state.get('recommended', False))
             faces_note = (f"\n\n【本領域可用面向】{('、'.join(faces))}"
                           "（判斷本輪最貼近哪個，輸出 face；純識別/無指向可留空）" if faces else "")
-            system_prompt = f"{system_context_md}\n\n{rules_text}{faces_note}".strip()
+            # 交易語義 schema（R3.1/R4.1）：對交易型面向可用的兩個擴充輸出——
+            #   action='confirm'（槽位收齊→出確認摘要，收齊≠送出；不需 next_question）；
+            #   inline_answer（岔題即答：使用者岔題問費用/時程等，此欄先答、同回覆再接 next_question）。
+            # 非交易面向的規則不會用到這兩者，注入不影響（純 schema 說明，內容由 rules_text 驅動）。
+            schema_note = (
+                "\n\n【交易語義（若本領域規則有指示才用）】"
+                "action 除 ask/converge 外可為 'confirm'（必要槽位全部收齊→輸出確認摘要，"
+                "收齊不等於送出；confirm 時不需 next_question/converge_kind）。"
+                "岔題（費用/時程/規定等問題）可在 inline_answer 放即答內容，"
+                "並於 next_question 接回槽位收集（先答再接）。"
+            )
+            system_prompt = f"{system_context_md}\n\n{rules_text}{faces_note}{schema_note}".strip()
             # 對話史（引擎 ask 返回點記入 state.dialog）：brain 必須知道自己問過什麼——
             # 否則純中文名稱回覆對不上槽位、且會原句重問（2026-07-07 線上實測缺陷）。
             # 已鎖定底稿摘要（引擎收斂時記入）：現況值直接取用，不回頭問使用者系統已有的資料。
@@ -887,13 +898,18 @@ class LLMAnswerOptimizer:
                 response_format={"type": "json_object"},
             )
             data = json.loads((result or {}).get('content') or "{}")
-            # 驗證（防越界輸出）
-            if data.get('action') not in ('ask', 'converge'):
+            # 驗證（防越界輸出）。'confirm'（交易面向）：槽位收齊→出確認摘要，
+            # 收齊≠送出；confirm 不需 next_question/converge_kind（R4.1）。
+            if data.get('action') not in ('ask', 'converge', 'confirm'):
                 return None
             if not isinstance(data.get('extracted_fields', {}), dict):
                 data['extracted_fields'] = {}
             if data['action'] == 'ask' and not data.get('next_question'):
                 return None
+            # inline_answer（岔題即答，R3.1）：有則先答再接 next_question；
+            # 非 str 一律丟棄（絕不半吊子透傳），缺省不帶鍵（向後相容）。
+            if 'inline_answer' in data and not isinstance(data.get('inline_answer'), str):
+                data.pop('inline_answer', None)
             # scope 正規化（防越界）：非 'switch' 一律視為 'stay'（缺省＝現狀行為，向後相容）
             data['scope'] = 'switch' if data.get('scope') == 'switch' else 'stay'
             return data

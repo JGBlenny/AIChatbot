@@ -120,6 +120,7 @@ gap-analysis §四的 8 條研究題：驗證碼機制、LINE 登入、大小寫
 3. **authPhone 換綁未後端擋**：已綁定用戶直接打 API 可換綁，僅 UI 擋（安全）。
 4. `GET /contracts/status-overview` 未掛 `_resource/_action` 權限點。
 5. （觀察）`getReSendEmailRemainSec` 以 `email_verified_at` 起算冷卻疑誤（僅變更綁定信箱流程）。
+6. **租客租約物件清單端點缺口（conversational-repair G1）**：目前 jgb2 無租客視角的租約清單端點。入參需 role_id+user_id，出參 contract_id/estate_id/estate_title/display_address/room，供對話式修繕報修物件自動預填（租約→物件帶入）；此 repo 已以 mock 定案契約形狀，待與 jgb2 談 E1 真 API 時一併對接。
 
 ## 開放問題
 

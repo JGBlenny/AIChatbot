@@ -354,6 +354,10 @@ def _conversational_to_response(result: dict, request) -> 'VendorChatResponse':
     """對話式回答引擎結果 → VendorChatResponse（option-routing R14-R19）。"""
     from datetime import datetime
     converged = bool(result.get('converged'))
+    # Gap C：交易 confirm gate 的三顆按鈕（✅送出/✏️修改/❌取消）由引擎 handle() 回傳
+    #   quick_replies 透傳進回應（VendorChatResponse.quick_replies）——否則到不了前端。
+    #   既有面向（無 quick_replies）維持 None，行為不變。
+    quick_replies = result.get('quick_replies') or None
     return VendorChatResponse(
         answer=result.get('answer', ''),
         intent_name='售前推薦' if converged else '售前諮詢',
@@ -366,6 +370,7 @@ def _conversational_to_response(result: dict, request) -> 'VendorChatResponse':
         mode=request.mode or 'b2b',
         session_id=request.session_id,
         timestamp=datetime.utcnow().isoformat(),
+        quick_replies=quick_replies,
     )
 
 
@@ -442,6 +447,18 @@ async def handle_conversational_session(request, req, ctx: ChatRequestContext):
             form_cancelled=True,
         )
         return _finalize_response(cancel_resp, request)
+    # 對話中補圖（conversational-repair R2.6，任務 2.4）：續跑前先把本輪圖片辨識併入
+    #   現有面向槽位/候選（交易面向才生效，engine 側判定）；Vision 失敗→None 降級無推斷、不中斷。
+    if request.image_urls:
+        try:
+            from services.conversational_config import get_config
+            _cfg = await get_config(req.app.state.db_pool,
+                                    (session_state or {}).get("config_key"))
+            if _cfg is not None:
+                _recog = await _recognize_repair_image(req, request)
+                await engine.ingest_recognition(request.session_id, _recog, _cfg)
+        except Exception as e:
+            print(f"⚠️ [續跑補圖] 併槽失敗（不中斷對話）：{e}")
     # 續對話(stream→真 token 串流 / 非 stream→JSON);降級回 None
     conv_resp = await _conversational_respond(request, req, start_if_absent=False, config=None)
     if conv_resp is not None:
@@ -511,7 +528,22 @@ async def handle_image(request, req, ctx: ChatRequestContext):
         )
 
         if recognition.get("is_damage") and recognition.get("confidence", 0) >= 0.6:
-            # 損壞圖片：觸發修繕 SOP
+            # 損壞圖片改道（conversational-repair 決策 6，任務 3.2）：不打 SOP 檢索，
+            #   直接 seed 修繕交易面向並攜帶辨識結果（suggested_* 併入 prefill）。
+            #   「哪個面向」不硬編——用 conversational_config 分類索引查（修繕面向掛哪個分類由 3.3 定）；
+            #   找不到配置（3.3 資料未 seed）→ 落回下方現行 SOP 降級行為（安全網）。
+            from services.conversational_config import config_for_category
+            _repair_cfg = await config_for_category(db_pool, "修繕報修")
+            if _repair_cfg is not None:
+                print("🖼️ [Step 0.5 改道] 損傷高信心 → seed 修繕面向（不打 SOP）")
+                _resp = await _seed_repair_facet(
+                    request, req, _repair_cfg, recognition=recognition)
+                if _resp is not None:
+                    return _resp
+                # 引擎降級（回 None）→ 落回下方 SOP 安全網
+                print("⚠️ [Step 0.5 改道] 面向引擎降級 → 落回 SOP 安全網")
+
+            # 安全網（無面向配置 / 引擎降級）：維持現行修繕 SOP 觸發。
             damage_desc = recognition.get("description", "")
             trigger_msg = f"{request.message}" if request.message else ""
             if damage_desc:
@@ -659,6 +691,173 @@ async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, threshold):
     return None
 
 
+# ── 修繕交易面向進場（conversational-repair 元件 4/5｜任務 2.4/3.1/3.2）──
+#
+# 三路進場（trigger_facet_key 直達／Step 0.5 損傷圖改道／分類路由）共用：
+#   ①repair_enabled gate（vendor_configs 讀值，預設 true；false→降級文案＋客服管道）
+#   ②Vision 辨識（有圖時，image_recognition_service 既有服務）
+#   ③prefill（repair_prefill.prefill_repair_slots：租約→estate、辨識→分類槽/候選）
+#   ④seed 面向會話（engine.handle/prepare 帶 prefill 起始）
+# gate 僅對「宣告 enabled_gate 的面向」生效（配置驅動，引擎/進場不硬編修繕字樣）。
+
+# 面向配置驅動鍵（回報 3.3 配置用）——grounding_scope 內：
+#   enabled_gate  : gate 的 vendor_configs 開關鍵名（如 "repair_enabled"）；未宣告→不檢查 gate
+#   prefill_api   : 啟動時預填的 API 契約鍵（如 "get_tenant_contracts"）；未宣告→不預填
+_GATE_CONFIG_KEY = "enabled_gate"
+_PREFILL_API_KEY = "prefill_api"
+_DEFAULT_CONTACT_KEY = "service_hotline"   # 客服管道 vendor_configs 既有鍵（category=contact）
+
+
+def _gate_switch_key(config) -> Optional[str]:
+    """面向配置宣告的 gate 開關鍵（grounding_scope.enabled_gate）；未宣告回 None（不檢查）。"""
+    scope = getattr(config, "grounding_scope", None) or {}
+    return scope.get(_GATE_CONFIG_KEY)
+
+
+async def _repair_gate_open(db_pool, vendor_id, config) -> bool:
+    """gate 判定（R1.5）：面向宣告 enabled_gate → 讀 vendor_configs 該開關（**預設 true**，
+    值不存在/讀取失敗一律放行）；未宣告 gate → 恆放行（非受控面向）。"""
+    switch_key = _gate_switch_key(config)
+    if not switch_key:
+        return True
+    if not vendor_id:
+        return True
+    try:
+        from services.vendor_config_service import VendorConfigService
+        svc = VendorConfigService(db_pool)
+        configs = await svc.get_vendor_configs(vendor_id)
+        entry = configs.get(switch_key)
+        if entry is None:
+            return True   # 值不存在 → 預設開啟
+        return bool(entry.get("value", True))
+    except Exception as e:
+        print(f"⚠️ [repair gate] 讀 vendor_configs 失敗，預設放行：{e}")
+        return True
+
+
+async def _repair_degraded_response(db_pool, request, config):
+    """gate 關閉 → 降級文案 ＋ 該業者客服管道（vendor_configs 參數，沿用 {{param}} 注入慣例）。"""
+    scope = getattr(config, "grounding_scope", None) or {}
+    contact_key = scope.get("contact_config_key") or _DEFAULT_CONTACT_KEY
+    template = (scope.get("degraded_messages") or {}).get("gate_disabled") \
+        or "目前暫不支援線上報修，請直接聯繫客服協助：{{%s}}" % contact_key
+    contact = ""
+    try:
+        from services.vendor_config_service import VendorConfigService
+        svc = VendorConfigService(db_pool)
+        configs = await svc.get_vendor_configs(request.vendor_id) if request.vendor_id else {}
+        entry = configs.get(contact_key)
+        if entry is not None:
+            contact = str(entry.get("value") or "")
+    except Exception as e:
+        print(f"⚠️ [repair gate] 客服管道參數讀取失敗：{e}")
+    answer = template.replace("{{%s}}" % contact_key, contact) if contact \
+        else template.split("：")[0] + "。"
+    from datetime import datetime
+    resp = VendorChatResponse(
+        answer=answer, intent_name="修繕報修", intent_type="conversational",
+        confidence=1.0, action_type="conversational", sources=None, source_count=0,
+        vendor_id=request.vendor_id, mode=request.mode or "b2c",
+        session_id=request.session_id, timestamp=datetime.utcnow().isoformat())
+    return _finalize_response(resp, request)
+
+
+async def _recognize_repair_image(req, request):
+    """有圖時打 Vision（image_recognition_service 既有）→ RecognitionResult dict；
+    無圖/未啟用/失敗 → None（降級為無推斷，2.4 不阻斷對話）。"""
+    from services.image_recognition_service import (
+        ImageRecognitionService, is_image_recognition_enabled)
+    if not (request.image_urls and is_image_recognition_enabled()):
+        return None
+    try:
+        service = ImageRecognitionService()
+        return await service.analyze_images(
+            image_urls=request.image_urls,
+            context=request.message if request.message else None,
+            db_pool=req.app.state.db_pool)
+    except Exception as e:
+        print(f"⚠️ [repair image] Vision 辨識失敗，降級為無推斷：{e}")
+        return None
+
+
+async def _run_repair_prefill(req, request, config, recognition):
+    """面向配置宣告 prefill_api 才執行預填（配置驅動，3.3 定鍵）；未宣告 → None（不預填）。
+    回 PrefillResult（{slots, candidates, degraded}）或 None。"""
+    scope = getattr(config, "grounding_scope", None) or {}
+    if not scope.get(_PREFILL_API_KEY):
+        return None
+    try:
+        from services.jgb.repair_prefill import prefill_repair_slots
+        # JGBSystemAPI 實例掛在對話引擎的 api_handler 上（app.py 注入 get_api_call_handler）。
+        engine = getattr(req.app.state, "conversational_engine", None)
+        api_handler = getattr(engine, "api_handler", None)
+        jgb_api = getattr(api_handler, "jgb_api", None)
+        if jgb_api is None:
+            return None
+        return await prefill_repair_slots(
+            role_id=request.role_id, user_id=request.user_id,
+            vendor_id=request.vendor_id, image_recognition=recognition,
+            config=scope, jgb_api=jgb_api)
+    except Exception as e:
+        print(f"⚠️ [repair prefill] 預填失敗，降級為無預填：{e}")
+        return None
+
+
+async def _seed_repair_facet(request, req, config, *, recognition=None):
+    """修繕交易面向進場（三路共用）：gate → prefill（含 Vision 辨識）→ seed 面向會話。
+
+    回最終 Response（進面向或降級），或 None（引擎降級 → 呼叫端落回既有管線）。
+    - gate 關 → 降級文案＋客服管道 Response。
+    - prefill degraded（0 租約/API 失敗）→ 不硬開面向，回降級文案 Response。
+    - 其餘 → 帶 prefill seed 面向、跑本輪一次。
+    """
+    db_pool = req.app.state.db_pool
+    if not await _repair_gate_open(db_pool, request.vendor_id, config):
+        print("🚪 [repair gate] repair_enabled=false → 降級文案＋客服管道")
+        return await _repair_degraded_response(db_pool, request, config)
+
+    if recognition is None:
+        recognition = await _recognize_repair_image(req, request)
+    prefill = await _run_repair_prefill(req, request, config, recognition)
+
+    if prefill and prefill.get("degraded"):
+        # 0 租約 / API 失敗 → 誠實降級，不硬開面向（R2.1/R2.2）。
+        print("🧾 [repair prefill] 降級（無有效租約）→ 不開面向，回降級文案")
+        from datetime import datetime
+        resp = VendorChatResponse(
+            answer=prefill["degraded"], intent_name="修繕報修",
+            intent_type="conversational", confidence=1.0, action_type="conversational",
+            sources=None, source_count=0, vendor_id=request.vendor_id,
+            mode=request.mode or "b2c", session_id=request.session_id,
+            timestamp=datetime.utcnow().isoformat())
+        return _finalize_response(resp, request)
+
+    return await _conversational_respond(
+        request, req, start_if_absent=True, config=config, prefill=prefill)
+
+
+async def handle_trigger_facet(request, req, ctx: ChatRequestContext):
+    """直達參數進場（conversational-repair R1.3/R1.5，任務 3.1）。
+
+    trigger_facet_key 命中 config registry（by_key）且 enabled → 跳過意圖辨識、直接 seed 該面向
+    （帶本次訊息與 image 一併處理，經 gate/prefill）；未命中/未啟用 → 回 None（照常走既有管線，
+    不報錯，防呆）。非交易面向亦可經此直達（gate 僅對宣告 enabled_gate 的面向生效）。"""
+    key = getattr(request, "trigger_facet_key", None)
+    if not key:
+        return None
+    try:
+        from services.conversational_config import config_for_key
+        config = await config_for_key(req.app.state.db_pool, key)
+        if config is None or not getattr(config, "enabled", True):
+            print(f"↩️ [trigger_facet_key] '{key}' 未命中/未啟用 → 照常走既有管線（防呆）")
+            return None
+        print(f"🎯 [trigger_facet_key] '{key}' 命中 → 直達面向")
+        return await _seed_repair_facet(request, req, config)
+    except Exception as e:
+        print(f"⚠️ [trigger_facet_key] 進場失敗，落回既有管線：{e}")
+        return None
+
+
 def _drop_empty_answer_rows(rows: list) -> list:
     """錨點防呆（五域抽驗 A3/電費題逼出）：answer 空且無任何動作的知識＝面向
     進場錨點，只供進場判定用——落回單發答題前必須濾除，否則 question_summary
@@ -778,8 +977,14 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
             _diag_cfg = await _diagnosis_config_for_knowledge(
                 req.app.state.db_pool, _best_knowledge, _diag_threshold)
             if _diag_cfg is not None:
-                _diag_resp = await _conversational_respond(
-                    request, req, start_if_absent=True, config=_diag_cfg)
+                # 交易面向（宣告 enabled_gate/prefill_api，如修繕）經共用進場：gate＋prefill＋圖片
+                #   （conversational-repair 三路共用，R1.5/2.6）；一般診斷面向走既有 respond。
+                if _gate_switch_key(_diag_cfg) or (getattr(_diag_cfg, "grounding_scope", None)
+                                                   or {}).get(_PREFILL_API_KEY):
+                    _diag_resp = await _seed_repair_facet(request, req, _diag_cfg)
+                else:
+                    _diag_resp = await _conversational_respond(
+                        request, req, start_if_absent=True, config=_diag_cfg)
                 if _diag_resp is not None:
                     print(f"💬 [conversational-diagnosis] 分類命中 {_diag_cfg.key} → 進診斷對話"
                           + ("（串流）" if request.stream else ""))
@@ -900,25 +1105,32 @@ async def _conversational_sse(engine, decision, request):
         async for chunk in engine.stream_answer(decision):
             if chunk:
                 yield await _generate_sse_event("answer_chunk", {"chunk": chunk})
-        yield await _generate_sse_event("metadata", {
-            "intent_type": "conversational", "action_type": "conversational", "cache_hit": False})
+        # Gap C：串流路徑也把交易 confirm 的 quick_replies 帶進 metadata 事件（前端相容）。
+        _metadata = {"intent_type": "conversational", "action_type": "conversational",
+                     "cache_hit": False}
+        _qr = decision.get("quick_replies") if isinstance(decision, dict) else None
+        if _qr:
+            _metadata["quick_replies"] = _qr
+        yield await _generate_sse_event("metadata", _metadata)
         yield await _generate_sse_event("done", {"success": True, "cached": False, "message": "答案生成完成"})
     except Exception as e:
         print(f"⚠️ 對話串流失敗：{e}")
         yield await _generate_sse_event("error", {"success": False, "error": str(e)})
 
 
-async def _conversational_respond(request, req, *, start_if_absent, config=None):
+async def _conversational_respond(request, req, *, start_if_absent, config=None, prefill=None):
     """
     跑對話一輪並回傳 Response（stream→真 token SSE / 非 stream→JSON）或 None（降級）。
     stream 時用 engine.prepare 先決策（可乾淨降級），再 StreamingResponse 串流合成。
+    prefill（PrefillResult）：僅新開會話時由引擎種入初始槽位/候選（進場一次性，2.3/2.4）。
     """
     engine = req.app.state.conversational_engine
     if request.stream:
         decision = await engine.prepare(
             session_id=request.session_id, user_id=request.user_id or "anonymous",
             vendor_id=request.vendor_id or 0, user_message=request.message,
-            config=config, start_if_absent=start_if_absent, role_id=request.role_id)
+            config=config, start_if_absent=start_if_absent, role_id=request.role_id,
+            prefill=prefill)
         if decision is None:
             return None
         return StreamingResponse(
@@ -928,7 +1140,8 @@ async def _conversational_respond(request, req, *, start_if_absent, config=None)
     result = await engine.handle(
         session_id=request.session_id, user_id=request.user_id or "anonymous",
         vendor_id=request.vendor_id or 0, user_message=request.message,
-        config=config, start_if_absent=start_if_absent, role_id=request.role_id)
+        config=config, start_if_absent=start_if_absent, role_id=request.role_id,
+        prefill=prefill)
     if not result:
         return None
     return _conversational_to_response(result, request)
@@ -3568,6 +3781,11 @@ class VendorChatRequest(BaseModel):
     # 🆕 圖片辨識參數（2026-04-28）
     image_urls: Optional[List[str]] = Field(None, description="圖片 S3 URL 列表，最多 3 張")
 
+    # 🆕 直達面向參數（conversational-repair R1.3，2026-07-11）：命中 conversational config
+    #   registry（by_key）且 enabled → 跳過意圖辨識直接 seed 該面向；未命中→照常管線（防呆）。
+    trigger_facet_key: Optional[str] = Field(
+        None, description="直達對話面向鍵（如 repair）；未命中 registry 時忽略、照常走既有管線")
+
     @validator('target_user', always=True)
     def migrate_user_role(cls, v, values):
         """自動從舊欄位遷移到新欄位"""
@@ -3840,6 +4058,13 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             if resp is not None:
                 return resp
             # 取消+pending:request.message 已被 handler 替換,續走一般流程
+
+        # Step 0.4: 直達面向參數（conversational-repair R1.3）→ handle_trigger_facet
+        #   命中 config registry 且 enabled → 跳過意圖辨識直接 seed 面向；未命中→回 None 續跑（防呆）。
+        #   置於 session 續跑之後（不劫持進行中會話）、Step 0.5 圖片之前。
+        resp = await handle_trigger_facet(request, req, ctx)
+        if resp is not None:
+            return resp
 
         # Step 0.5: 圖片辨識分支（2026-04-28）→ handle_image(Stage 2)
         resp = await handle_image(request, req, ctx)

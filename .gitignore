@@ -113,3 +113,4 @@ backups/
 
 # 覆蓋率執行產物（基準 coverage-baseline.json 才版控）
 rag-orchestrator/tests/.coverage*.json
+aichatbot_full_*.dump

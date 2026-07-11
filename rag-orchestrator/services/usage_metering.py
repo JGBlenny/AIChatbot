@@ -33,6 +33,13 @@ _ctx: contextvars.ContextVar = contextvars.ContextVar("usage_ctx", default=None)
 _SCORE_COLS = ("knowledge_score", "sop_score", "decision_case")
 _score_cols_present: Optional[bool] = None
 
+# 面向標注兩欄（facet_key/turn_number）的一次性偵測快取（比照 _SCORE_COLS 的 P0 機制）：
+# None＝尚未偵測；True/False＝usage_events 是否已建兩欄。首寫時查 information_schema
+# 決定，欄位未建（migration 未套）時事件本體照寫、兩欄略過（不弄壞既有計量）。
+# 偵測失敗（DB 暫不可達）視同不存在，保持 None → 下次重試。
+_FACET_COLS = ("facet_key", "turn_number")
+_facet_cols_present: Optional[bool] = None
+
 # ── 單價表（USD / 1M tokens，(prompt, completion)）；env LLM_PRICING_PATH 外部 JSON 覆蓋 ──
 DEFAULT_PRICING: Dict[str, tuple] = {
     "gpt-4o-mini": (0.15, 0.60),
@@ -99,6 +106,8 @@ class UsageContext:
     knowledge_score: Optional[float] = None
     sop_score: Optional[float] = None
     decision_case: Optional[str] = None
+    facet_key: Optional[str] = None
+    turn_number: Optional[int] = None
     _t0: float = 0.0
     _finalized: bool = False
 
@@ -192,6 +201,19 @@ def set_comparison(knowledge_score: Optional[float] = None,
         ctx.decision_case = decision_case[:60]
 
 
+def set_facet(facet_key: Optional[str] = None, turn_number: Optional[int] = None) -> None:
+    """對話面向標注落入當前使用事件 context（比照 set_path／set_comparison 房式）。
+    非計量路徑（ctx None）或已定稿（_finalized）靜默略過；
+    facet_key 截斷 [:60]（與 processing_path 同款）。（conversational-repair R7.1）"""
+    ctx = _ctx.get()
+    if ctx is None or ctx._finalized:
+        return
+    if facet_key:
+        ctx.facet_key = facet_key[:60]
+    if turn_number is not None:
+        ctx.turn_number = turn_number
+
+
 def _compute_cost(ctx: UsageContext) -> None:
     """按 model_breakdown 逐模型計價；任一模型缺價 → 整筆成本留空不臆造（R2.4）。"""
     if not ctx.model_breakdown:
@@ -243,6 +265,10 @@ def _to_row(ctx: UsageContext) -> Dict[str, Any]:
         row["knowledge_score"] = ctx.knowledge_score
         row["sop_score"] = ctx.sop_score
         row["decision_case"] = ctx.decision_case
+    # 面向兩欄：同款降級——僅在已偵測欄位存在時才帶入 row（migration 未套時略過）。
+    if _facet_cols_present:
+        row["facet_key"] = ctx.facet_key
+        row["turn_number"] = ctx.turn_number
     return row
 
 
@@ -262,6 +288,24 @@ async def _detect_score_cols(db_pool) -> None:
         _score_cols_present = all(c in names for c in _SCORE_COLS)
     except Exception as e:            # 偵測失敗視同不存在、下次重試（不危及事件本體）
         logger.warning(f"[usage] 分數欄位偵測失敗（本次不帶分數，下次重試）：{e}")
+
+
+async def _detect_facet_cols(db_pool) -> None:
+    """一次性偵測 usage_events 是否已建面向兩欄（比照 _detect_score_cols）。
+    已偵測（非 None）則略過；偵測失敗保持 None，下次重試（不影響事件寫入）。"""
+    global _facet_cols_present
+    if _facet_cols_present is not None:
+        return
+    try:
+        async with db_pool.acquire() as conn:
+            found = await conn.fetch(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'usage_events' AND column_name = ANY($1)",
+                list(_FACET_COLS))
+        names = {r["column_name"] for r in found}
+        _facet_cols_present = all(c in names for c in _FACET_COLS)
+    except Exception as e:            # 偵測失敗視同不存在、下次重試（不危及事件本體）
+        logger.warning(f"[usage] 面向欄位偵測失敗（本次不帶面向，下次重試）：{e}")
 
 
 async def _write_event(db_pool, row: Dict[str, Any]) -> None:
@@ -299,6 +343,7 @@ def finalize(status: str = "success", http_status: int = 200, db_pool=None) -> N
             # 分數欄位偵測先於 _to_row（首寫時完成並快取），使 _to_row 依偵測結果決定
             # 是否帶三 key；偵測與寫入全在 fire-and-forget 邊界內，任一失敗只丟棄事件。
             await _detect_score_cols(db_pool)
+            await _detect_facet_cols(db_pool)
             await _safe_write(db_pool, _to_row(ctx))
 
         asyncio.create_task(_task())

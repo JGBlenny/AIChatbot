@@ -744,6 +744,32 @@ class JGBSystemAPI:
             data = []
         return {"success": True, "data": data}
 
+    async def get_tenant_contracts(
+        self,
+        role_id: str,
+        user_id: str,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """查詢租客名下的有效租約清單（含物件資訊，供修繕報修自動預填）。
+
+        契約形狀（conversational-repair research.md 決策 1 / G1）：
+          data: [{contract_id, estate_id, estate_title, display_address, room}]
+
+        授權：role_id + user_id 雙證，缺一降級（_validate_identity 慣例）。
+        真端點：jgb2 尚未提供租客視角的租約清單端點（G1 缺口）；
+                real 分支留 NotImplementedError 占位，待與 jgb2 確認後對接。
+        """
+        if not self._validate_identity(role_id, user_id):
+            return self._degraded_response()
+
+        if self.use_mock:
+            return self._mock_get_tenant_contracts(role_id, user_id)
+
+        # TODO: 真端點待 jgb2 提供（J 清單 G1）
+        raise NotImplementedError(
+            "get_tenant_contracts 真端點尚未由 jgb2 提供，請使用 mock 模式。"
+        )
+
     async def get_iot_manufacturers(
         self,
         role_id: str,
@@ -1967,6 +1993,50 @@ class JGBSystemAPI:
                 },
             },
         }
+
+    def _mock_get_tenant_contracts(
+        self, role_id: str, user_id: str
+    ) -> dict[str, Any]:
+        """租客視角租約清單（conversational-repair G1 mock；真端點待 jgb2 提供）。
+
+        三種形狀以 role_id/user_id 組合區分：
+          R001/U001 → 1 筆（典型單租約租客）
+          R002/U002 → 2 筆（多租約）
+          R003/U003 → 0 筆（無有效租約）
+          其他      → 1 筆（預設）
+        """
+        logger.info(
+            f"[MOCK] get_tenant_contracts: role_id={role_id}, user_id={user_id}"
+        )
+        # 多租約形狀
+        multi = [
+            {
+                "contract_id": 678,
+                "estate_id": 456,
+                "estate_title": "信義區套房A",
+                "display_address": "信義路五段7號",
+                "room": "3F-1",
+            },
+            {
+                "contract_id": 701,
+                "estate_id": 512,
+                "estate_title": "中山區雅房B",
+                "display_address": "中山北路二段10號",
+                "room": "5F-2",
+            },
+        ]
+        single = [multi[0]]
+        zero: list = []
+
+        if role_id == "R002" and user_id == "U002":
+            data = multi
+        elif role_id == "R003" and user_id == "U003":
+            data = zero
+        else:
+            # R001/U001 或其他預設回 1 筆
+            data = single
+
+        return {"success": True, "data": data}
 
     def _mock_get_iot_manufacturers(self, role_id: str) -> dict[str, Any]:
         """對齊 IotManufacturerApiController@index"""

@@ -64,6 +64,32 @@ CONVERSATIONAL_RULES_BY_ROLE = {
     ),
 }
 
+# ────────────────────── 交易面向規則範本（conversational-repair 元件 1｜R3.1/R4.1/R4.5）──────────────────────
+# 交易型面向（收斂動作＝執行寫入而非回答）共用的 brain 行為範本。
+# 與既有 code fallback 一樣是「可重用規則文字常量」——供之後各交易面向配置
+# 引用/組裝（面向配置的 required_slots／confirm 文案等具體內容由該面向自帶，
+# 此範本只講三條核心行為、不硬編任何面向專屬內容，維持配置驅動精神）。
+#
+# 使用方式（任務 2.2/3.3 接手）：交易面向的 persona rules_text = 面向自身開場人格
+#   ＋本範本（如 f"{面向人格}\n\n{TRANSACTION_FACET_RULES}"），或於面向對話規則列
+#   （DB category='對話規則'）中內嵌本範本文字。brain schema 的 confirm/inline_answer
+#   語義說明已由 conversational_step 統一注入（schema_note），此處講「何時」用。
+TRANSACTION_FACET_RULES = (
+    "【交易面向行為（本面向會實際執行寫入，收齊≠送出，務必照下列三條）】\n"
+    "(a) 收齊→確認：當**必要槽位（required_slots，含系統已推斷/預填的確認型槽位）全部齊備**時，"
+    "action=\"confirm\"——輸出一次性確認摘要供使用者核對後同意；**不要**直接送出、"
+    "confirm 不需 next_question。缺任何必要槽位時才 action=\"ask\"、一次只問一個推不出的槽位。\n"
+    "(b) 否定/修正→更新後重確認：使用者否定或修改任一槽位（含對推斷/預填值說「不是…」）時，"
+    "把更正值填入 extracted_fields，然後**重新** action=\"confirm\"（只更新受影響處，不重跑整個流程）。\n"
+    "(c) 岔題→先答再接：使用者在收集過程中插入問題（費用/時程/規定等），"
+    "把即答內容放 inline_answer，並於同一輪的 next_question 自然接回還缺的槽位收集"
+    "（先答再接，不中斷面向；答案以提供的知識/現況為依據，缺的據實導向出口）。\n"
+    "【抽取】extracted_fields 填本輪能確定的槽位值（含使用者對確認型槽位的否定/修正）。\n"
+    "【輸出 JSON】action=\"ask\"|\"confirm\"（confirm 時 next_question 可省）、"
+    "extracted_fields、選填 next_question（ask 必填）、選填 inline_answer（有岔題才放）。"
+)
+
+
 # 進程級快取（每輪 brain 都要規則，不可每次查庫）
 _cache: dict = {}
 

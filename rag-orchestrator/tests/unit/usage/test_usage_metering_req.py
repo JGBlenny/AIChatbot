@@ -274,3 +274,143 @@ async def test_detect_score_cols_cached_skips_query(mock_db_pool):
     mock_db_pool._conn.fetch = AsyncMock(side_effect=AssertionError("不應再查"))
     await um._detect_score_cols(mock_db_pool)
     assert um._score_cols_present is True
+
+
+# ════════════════════════════════════════════════════════════
+# task 1.2：set_facet hook＋面向欄位偵測降級（conversational-repair R7.1）
+# 契約：完全比照 set_comparison／_detect_score_cols 房式——contextvar 承載、
+# ctx None／finalized 靜默、facet_key 截斷 [:60]；欄位未建時事件本體照寫、
+# facet_key/turn_number 兩欄略過（欄位未建不能弄壞既有計量）。
+# ════════════════════════════════════════════════════════════
+
+@pytest.fixture(autouse=True)
+def _reset_facet_cols_cache():
+    """每案重置面向欄位偵測快取（模組層狀態）。"""
+    orig = um._facet_cols_present
+    um._facet_cols_present = None
+    yield
+    um._facet_cols_present = orig
+
+
+# ── 矩陣①：ctx 存在時 set_facet 寫入 ctx（turn_number 正常傳遞）──
+@pytest.mark.req("conversational-repair:7.1")
+def test_set_facet_writes_to_ctx():
+    um.begin(_fields())
+    um.set_facet(facet_key="contract", turn_number=3)
+    ctx = um._ctx.get()
+    assert ctx.facet_key == "contract"
+    assert ctx.turn_number == 3
+
+
+# ── 矩陣②：ctx None → 靜默不拋 ──
+@pytest.mark.req("conversational-repair:7.1")
+def test_set_facet_no_context_silent():
+    assert um._ctx.get() is None
+    um.set_facet(facet_key="billing", turn_number=1)
+
+
+# ── 矩陣③：finalized 後呼叫不改值 ──
+@pytest.mark.req("conversational-repair:7.1")
+def test_set_facet_after_finalized_noop():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    ctx._finalized = True
+    um.set_facet(facet_key="account", turn_number=9)
+    assert ctx.facet_key is None
+    assert ctx.turn_number is None
+
+
+# ── 矩陣④：facet_key 超長截斷 [:60] ──
+@pytest.mark.req("conversational-repair:7.1")
+def test_set_facet_key_truncated():
+    um.begin(_fields())
+    um.set_facet(facet_key="f" * 200, turn_number=2)
+    ctx = um._ctx.get()
+    assert ctx.facet_key == "f" * 60
+    assert ctx.turn_number == 2
+
+
+# ── 矩陣⑤：偵測為 False（欄位未建）→ _to_row 不含兩 key、其餘欄位齊全、不拋 ──
+@pytest.mark.req("conversational-repair:7.1")
+def test_to_row_without_facet_cols():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_facet(facet_key="iot", turn_number=4)
+    um._facet_cols_present = False
+    row = um._to_row(ctx)
+    for k in ("facet_key", "turn_number"):
+        assert k not in row
+    # 既有欄位不受影響
+    for k in ("request_id", "ts", "vendor_id", "user_type", "message_len",
+              "processing_path", "status", "prompt_tokens", "model_breakdown"):
+        assert k in row
+
+
+# ── 矩陣⑤'：未偵測（None）視同不存在 → _to_row 不含兩 key ──
+@pytest.mark.req("conversational-repair:7.1")
+def test_to_row_undetected_omits_facet_cols():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_facet(facet_key="estate", turn_number=1)
+    assert um._facet_cols_present is None
+    row = um._to_row(ctx)
+    for k in ("facet_key", "turn_number"):
+        assert k not in row
+
+
+# ── 矩陣⑥：偵測為 True → _to_row 含兩 key（值透傳）──
+@pytest.mark.req("conversational-repair:7.1")
+def test_to_row_with_facet_cols():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_facet(facet_key="repair", turn_number=7)
+    um._facet_cols_present = True
+    row = um._to_row(ctx)
+    assert row["facet_key"] == "repair"
+    assert row["turn_number"] == 7
+
+
+# ── 偵測為 True 但未設面向 → 兩 key 存在且為 None（NULL 落地）──
+@pytest.mark.req("conversational-repair:7.1")
+def test_to_row_facet_cols_present_but_none():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um._facet_cols_present = True
+    row = um._to_row(ctx)
+    assert row["facet_key"] is None
+    assert row["turn_number"] is None
+
+
+# ── 降級偵測：欄位齊全 → 快取 True ──
+@pytest.mark.req("conversational-repair:7.1")
+async def test_detect_facet_cols_present(mock_db_pool):
+    mock_db_pool._conn.fetch = AsyncMock(
+        return_value=[{"column_name": c} for c in um._FACET_COLS])
+    await um._detect_facet_cols(mock_db_pool)
+    assert um._facet_cols_present is True
+
+
+# ── 降級偵測：欄位缺 → 快取 False ──
+@pytest.mark.req("conversational-repair:7.1")
+async def test_detect_facet_cols_absent(mock_db_pool):
+    mock_db_pool._conn.fetch = AsyncMock(
+        return_value=[{"column_name": "facet_key"}])   # 缺 turn_number
+    await um._detect_facet_cols(mock_db_pool)
+    assert um._facet_cols_present is False
+
+
+# ── 降級偵測：查詢失敗 → 保持 None（下次重試），不外拋 ──
+@pytest.mark.req("conversational-repair:7.1")
+async def test_detect_facet_cols_failure_retryable(mock_db_pool):
+    mock_db_pool._conn.fetch = AsyncMock(side_effect=RuntimeError("db down"))
+    await um._detect_facet_cols(mock_db_pool)
+    assert um._facet_cols_present is None
+
+
+# ── 降級偵測：已偵測（非 None）則不再查 ──
+@pytest.mark.req("conversational-repair:7.1")
+async def test_detect_facet_cols_cached_skips_query(mock_db_pool):
+    um._facet_cols_present = True
+    mock_db_pool._conn.fetch = AsyncMock(side_effect=AssertionError("不應再查"))
+    await um._detect_facet_cols(mock_db_pool)
+    assert um._facet_cols_present is True

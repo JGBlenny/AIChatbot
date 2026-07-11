@@ -21,10 +21,44 @@ import json
 import re
 from typing import Any, Dict, List, Optional
 
+try:
+    from typing import TypedDict
+except ImportError:  # pragma: no cover（3.7 以下）
+    TypedDict = dict
+
 from services.conversational_config import ConversationalConfig, get_config
 
 CONVERSATIONAL_FORM_ID = "conversational"
 MAX_ASKS = 20  # 提問硬上限（絕對保底；收斂時機交由 AI 自行判斷，此值僅防失控無限問）
+
+
+# ── 交易面向型別（conversational-repair 元件 2｜R4.x）──
+# state 存 form_sessions.collected_data（jsonb）。交易面向在既有 state 上疊這些鍵；
+# 非交易面向不設 execute_endpoint → 完全走原路徑，既有 state 結構零改變（向後相容）。
+class SlotValue(TypedDict, total=False):
+    value: Any
+    source: str      # 'prefill' | 'inferred' | 'user' | 'candidate_pick'
+    confirmed: bool  # 出現於已同意之確認摘要 → True
+
+
+class TransactionState(TypedDict, total=False):
+    slots: Dict[str, "SlotValue"]   # 統一槽位表（{value, source, confirmed}）
+    executed: bool                  # 冪等標記（R4.4）：True 後同意詞不再觸發 execute
+    execute_result: Optional[Dict]  # 回執資料（單號等）
+    user_turns: int                 # 使用者訊息計數（R7）
+    awaiting_confirm: bool          # confirm gate 待決（下一輪引擎先於 brain 判定同意/修改/取消）
+
+
+# 三顆確認 quick reply 的穩定機器值（前後端契約；label 可由配置覆寫，value 不變）
+_QR_SUBMIT = "confirm_submit"
+_QR_EDIT = "confirm_edit"
+_QR_CANCEL = "confirm_cancel"
+_DEFAULT_QR_LABELS = {_QR_SUBMIT: "✅ 確認送出", _QR_EDIT: "✏️ 我要修改", _QR_CANCEL: "❌ 取消"}
+
+# 引擎層決定性同意/取消判定（非 brain）：小集合明確詞，避免誤判。
+_CONSENT_WORDS = ("好", "好的", "確認", "確定", "送出", "沒問題", "可以", "對", "是的", "ok", "yes", "y")
+_CANCEL_WORDS = ("取消", "不報了", "不用了", "算了", "不要了", "先不要", "cancel")
+_RETRY_WORDS = ("再試", "重試", "再一次", "retry")
 
 # API grounding 結果契約（conversational-diagnosis R3.4–R3.6）：
 #   {"kind":"converge", "grounding": str}                        # 1 筆 → 合成
@@ -259,6 +293,102 @@ def _ask_pick_again(candidates: List[Dict[str, Any]]) -> str:
     return f"不好意思，沒能對應到您的選擇，請問是以下哪一筆？\n{listing}"
 
 
+# ── 交易面向輔助（conversational-repair 元件 2/7）──
+def set_facet(facet_key: Optional[str] = None, turn_number: Optional[int] = None) -> None:
+    """輪數埋點透傳（fire-and-forget）：委派 usage_metering.set_facet；
+    非計量路徑（ctx None/finalized）由 usage_metering 靜默處理。
+    測試以 monkeypatch 此模組層符號攔截；lazy import 避免循環依賴。"""
+    from services.usage_metering import set_facet as _sf
+    _sf(facet_key=facet_key, turn_number=turn_number)
+
+
+def _is_transaction_scope(scope: Dict[str, Any]) -> bool:
+    """交易面向＝grounding_scope 宣告 execute_endpoint（配置驅動，引擎不硬編面向）。"""
+    return bool((scope or {}).get("execute_endpoint"))
+
+
+def _slot_values(collected: Dict[str, Any]) -> Dict[str, Any]:
+    """把統一槽位表攤平成 {slot: value}（供模板嵌值/params 映射）。
+    槽位值可能是 {value, source, confirmed} dict（prefill 統一形狀）或裸值（brain 抽取）——
+    兩者皆容忍（2.3 prefill 產 dict，brain extracted_fields 產裸值）。"""
+    out = {}
+    for k, v in (collected or {}).items():
+        if isinstance(v, dict) and "value" in v:
+            out[k] = v.get("value")
+        else:
+            out[k] = v
+    return out
+
+
+def _confirm_quick_replies(scope: Dict[str, Any]) -> List[Dict[str, str]]:
+    """三顆確認 quick reply（穩定機器值；label 可由 confirm_qr_labels 覆寫）。"""
+    labels = {**_DEFAULT_QR_LABELS, **((scope or {}).get("confirm_qr_labels") or {})}
+    styles = {_QR_SUBMIT: "success", _QR_EDIT: "secondary", _QR_CANCEL: "danger"}
+    return [{"text": labels[v], "value": v, "style": styles[v]}
+            for v in (_QR_SUBMIT, _QR_EDIT, _QR_CANCEL)]
+
+
+def _retry_quick_reply(scope: Dict[str, Any]) -> List[Dict[str, str]]:
+    """execute 失敗後的重試 quick reply（value 沿用 confirm_submit：再同意即重試）。"""
+    labels = {**_DEFAULT_QR_LABELS, **((scope or {}).get("confirm_qr_labels") or {})}
+    return [{"text": "🔄 再試一次", "value": _QR_SUBMIT, "style": "primary"},
+            {"text": labels[_QR_CANCEL], "value": _QR_CANCEL, "style": "danger"}]
+
+
+def _build_confirm_summary(scope: Dict[str, Any], collected: Dict[str, Any]) -> str:
+    """以 confirm_template 嵌槽位值組確認摘要（缺鍵容忍：str.format_map 缺鍵留空）。
+    未設模板 → 退為「欄位：值」逐行（不硬編面向文案）。"""
+    template = (scope or {}).get("confirm_template")
+    vals = _slot_values(collected)
+    if template:
+        class _Blank(dict):
+            def __missing__(self, key):  # 缺槽位不炸，留空白
+                return ""
+        return template.format_map(_Blank(vals))
+    required = (scope or {}).get("required_slots") or list(vals.keys())
+    lines = [f"{k}：{vals.get(k, '')}" for k in required]
+    return "確認以下資訊後送出：\n" + "\n".join(lines)
+
+
+def _build_receipt(scope: Dict[str, Any], execute_result: Dict[str, Any]) -> str:
+    """成功回執文案（receipt_template 嵌回執欄位；execute_result_path 取單號）。
+    未設模板 → 通用回執（不硬編面向）。"""
+    template = (scope or {}).get("receipt_template")
+    data = (execute_result or {}).get("data") or {}
+    path = (scope or {}).get("execute_result_path")
+    ticket_no = _dig_path(data, path) if path else None
+    fields = dict(data) if isinstance(data, dict) else {}
+    if ticket_no is not None:
+        fields.setdefault("ticket_no", ticket_no)
+    if template:
+        class _Blank(dict):
+            def __missing__(self, key):
+                return ""
+        return template.format_map(_Blank(fields))
+    if ticket_no is not None:
+        return f"已為您建單 #{ticket_no}。"
+    return (execute_result or {}).get("formatted_response") or "已為您完成建單。"
+
+
+def _apply_prefill(state: Dict[str, Any], prefill: Optional[Dict[str, Any]]) -> None:
+    """把 PrefillResult 的 slots/candidates 種進新會話初始 state（進場一次性，2.3/2.4）。
+
+    slots（{slot: {value, source, confirmed}}）→ collected_fields（引擎既有槽位表；
+    _slot_values 已容忍此 dict 形狀）；candidates（插點 A 形狀）→ pending_candidates。
+    degraded 由呼叫端在進場前處理（0 租約不開面向），此處不消費。"""
+    if not prefill:
+        return
+    slots = prefill.get("slots") or {}
+    if slots:
+        cf = state.setdefault("collected_fields", {})
+        for k, v in slots.items():
+            if v is not None:
+                cf[k] = v
+    candidates = prefill.get("candidates")
+    if candidates:
+        state["pending_candidates"] = candidates
+
+
 class ConversationalEngine:
     def __init__(self, db_pool, optimizer, retriever, get_system_context, rules_loader,
                  api_handler=None):
@@ -319,19 +449,65 @@ class ConversationalEngine:
                 session_id, CONVERSATIONAL_FORM_ID,
             )
 
+    async def ingest_recognition(self, session_id: str,
+                                 recognition: Optional[Dict[str, Any]],
+                                 config: "ConversationalConfig") -> None:
+        """對話中補圖（2.4/R2.6）：把外部 Vision 辨識結果依門檻併入現有會話槽位/候選。
+
+        薄接口——不動 confirm/execute 邏輯，只「接收外部辨識結果併槽」：
+          - 分型沿用 repair_prefill.classify_recognition（門檻邏輯單一真源，不複製）；
+          - 信心足 → 分類三槽併入 collected_fields（不覆蓋使用者已明確提供者：僅補空槽）；
+          - 信心不足 → 候選寫 pending_candidates（下一輪確定性選擇）；
+          - 無會話 / 非交易面向 / 無辨識 → 靜默 no-op（不中斷對話）。
+        Vision 失敗/timeout 由呼叫端傳 None，降級為無推斷（槽位維持詢問型）。"""
+        if not recognition:
+            return
+        scope = getattr(config, "grounding_scope", None) or {}
+        if not _is_transaction_scope(scope):
+            return
+        state = await self.get_state(session_id)
+        if state is None:
+            return
+        from services.jgb.repair_prefill import (
+            classify_recognition, resolve_repair_classification)
+        # 名稱→id 解析（Gap B）：ingest 續跑補圖與 prefill 共用單一實作。
+        #   jgb_api 掛在 api_handler；拿不到（None）→ resolve 回 None →
+        #   classify_recognition 降級為顯示名候選（不硬塞 id 進交易槽），如實處理。
+        _jgb_api = getattr(self.api_handler, "jgb_api", None)
+        resolved = await resolve_repair_classification(recognition, _jgb_api)
+        class_slots, candidates = classify_recognition(recognition, scope,
+                                                       resolved=resolved)
+        cf = state.setdefault("collected_fields", {})
+        changed = False
+        for k, v in (class_slots or {}).items():
+            # 僅補空槽：使用者對話中已明確提供的槽位不被辨識覆蓋。
+            if v is not None and not cf.get(k):
+                cf[k] = v
+                changed = True
+        if candidates and not state.get("pending_candidates"):
+            state["pending_candidates"] = candidates
+            changed = True
+        if changed:
+            await self._save(session_id, state)
+
     def is_active_state(self, session_state: Optional[Dict]) -> bool:
         return bool(session_state and session_state.get("form_id") == CONVERSATIONAL_FORM_ID)
 
     # ---------- 主流程（元件 12/13/14） ----------
     async def prepare(self, session_id, user_id, vendor_id, user_message,
                       config: Optional[ConversationalConfig] = None,
-                      start_if_absent=True, seed_topic=None, role_id=None) -> Optional[Dict[str, Any]]:
+                      start_if_absent=True, seed_topic=None, role_id=None,
+                      prefill: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
         """
         跑 brain + gate，回「決策」（converge 僅先取 grounding、尚未合成/未 save）：
           {'kind':'ask','answer':<問句>}（已 +1 並 save asked_count）
           {'kind':'converge', grounding, ctx, cta_mode, converge_kind, system_md, session_id, state, user_message}
           None（降級）
         供 handle()（非串流合成）與 stream_answer()（串流合成）共用，避免重複 brain 邏輯。
+
+        prefill（PrefillResult：{slots, candidates, degraded}）：僅在**本輪新開會話**時套用——
+          slots → 初始 collected_fields（預填/推斷槽位，2.3）；candidates → pending_candidates
+          （插點 A 多租約/分類候選）。續對話（state 已存在）不覆蓋既有槽位（進場一次性種子）。
         """
         try:
             state = await self.get_state(session_id)
@@ -340,11 +516,34 @@ class ConversationalEngine:
                     return None
                 state = await self._start(session_id, user_id, vendor_id, config.key, seed_topic,
                                           role_id=role_id)
+                # 進場種子（2.3/2.4）：prefill 產出的槽位/候選寫入新會話初始狀態。
+                #   只在新開會話套用，避免續對話覆蓋使用者已提供的資訊。
+                _apply_prefill(state, prefill)
             # 續對話：以 state 內的 config_key 還原設定（不依賴呼叫端再傳）
             if config is None:
                 config = await get_config(self.db_pool, state.get("config_key"))
             if config is None:
                 return None
+
+            # 【交易面向埋點 — 每輪使用者訊息 user_turns+=1 後透傳 set_facet（R7.1，fire-and-forget）】
+            #   非交易面向（無 execute_endpoint）不計 facet；set_facet 失敗絕不影響對話。
+            _tx = _is_transaction_scope(config.grounding_scope or {})
+            if _tx:
+                state["user_turns"] = int(state.get("user_turns", 0)) + 1
+                _facet_key = (config.grounding_scope or {}).get("facet_key")
+                if _facet_key:
+                    try:
+                        set_facet(facet_key=_facet_key, turn_number=state["user_turns"])
+                    except Exception as e:
+                        print(f"⚠️ set_facet 失敗（不影響對話）：{e}")
+
+            # 【交易 confirm gate 待決（或已 executed）— pre-LLM 決定性判定】
+            #   同意→execute／取消→關會話丟槽／修改→落回 brain 重確認／冪等→回單號。
+            #   回 None＝交主流程走 brain（修改語境）。
+            if _tx and (state.get("awaiting_confirm") or state.get("executed")):
+                _cd = await self._handle_confirm_pending(session_id, user_message, state, config)
+                if _cd is not None:
+                    return _cd
 
             # 【插點 A — pre-LLM 候選選擇輪（不依賴 LLM step）】
             # 上一輪 API 多筆已存 pending_candidates；本輪為「選擇」而非新問題：
@@ -457,6 +656,38 @@ class ConversationalEngine:
             asked = state.get("asked_count", 0)
             collected = state.get("collected_fields", {})
             converge_kind = (step.get("converge_kind") or "recommend").lower()
+            _inline = step.get("inline_answer") if isinstance(step.get("inline_answer"), str) else None
+
+            # 【交易 confirm — brain 回 action='confirm'（收齊→出摘要＋quick_replies，收齊≠送出，R4.1）】
+            #   只在交易面向（execute_endpoint 存在）處理；組摘要（confirm_template 嵌槽位）、
+            #   標記 awaiting_confirm 等下一輪；有 inline_answer 先答再接摘要（岔題先答，R3.1）。
+            if step["action"] == "confirm" and _tx:
+                gscope = config.grounding_scope or {}
+                # 【確認 gate 誠實化】brain 機率性會在必要槽位未齊時越權回 confirm——
+                #   若 required_slots 未齊，不出確認摘要（否則會拿空槽位去 execute，寫入失敗）；
+                #   降級為續問缺槽（沿用 brain next_question，無則通用提示）。收齊≠送出的前提是
+                #   「收齊」本身要為真（R4.1）。與插點 B 收斂保底同款、全配置驅動、零面向硬編。
+                _missing_confirm = [k for k in (gscope.get("required_slots") or [])
+                                    if not collected.get(k)]
+                if _missing_confirm and asked < MAX_ASKS:
+                    print(f"🛡️ [confirm gate] 必要槽位未齊（{_missing_confirm}）→ 續問缺槽，不出確認摘要")
+                    state["asked_count"] = asked + 1
+                    _q = step.get("next_question") or "還差一點資訊就能幫您送出，方便再補充一下嗎？"
+                    _ask_text = f"{_inline}\n\n{_q}" if _inline else _q
+                    _note_turn(state, user_message, _q)
+                    await self._save(session_id, state)
+                    return {"kind": "ask", "answer": _ask_text}
+                summary = _build_confirm_summary(gscope, collected)
+                answer = f"{_inline}\n\n{summary}" if _inline else summary
+                state["awaiting_confirm"] = True
+                _note_turn(state, user_message, summary)
+                await self._save(session_id, state)
+                return {"kind": "ask", "answer": answer,
+                        "quick_replies": _confirm_quick_replies(gscope)}
+            # 非交易面向誤回 confirm（越權）→ 保守轉追問（不進交易分支）
+            if step["action"] == "confirm":
+                step = {**step, "action": "ask",
+                        "next_question": step.get("next_question") or "請問還有其他需要協助的嗎？"}
 
             # 推薦型基本資訊門檻（事實型不卡）
             if step["action"] == "converge" and converge_kind != "answer" \
@@ -470,9 +701,12 @@ class ConversationalEngine:
 
             if step["action"] == "ask":
                 state["asked_count"] = asked + 1
-                _note_turn(state, user_message, step.get("next_question"))
+                _q = step.get("next_question")
+                # 岔題先答再接問題（R3.1）：有 inline_answer 則「即答＋問題」同一回覆
+                _ask_text = f"{_inline}\n\n{_q}" if (_inline and _q) else (_inline or _q)
+                _note_turn(state, user_message, _q)
                 await self._save(session_id, state)
-                return {"kind": "ask", "answer": step.get("next_question")}
+                return {"kind": "ask", "answer": _ask_text}
 
             # 【插點 B】收斂選材：select=='api' → API grounding（可降級回 ask）；否則既有知識 grounding。
             gscope = config.grounding_scope or {}
@@ -523,14 +757,19 @@ class ConversationalEngine:
 
     async def handle(self, session_id, user_id, vendor_id, user_message,
                      config: Optional[ConversationalConfig] = None,
-                     start_if_absent=True, seed_topic=None, role_id=None) -> Optional[Dict[str, Any]]:
+                     start_if_absent=True, seed_topic=None, role_id=None,
+                     prefill: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
         """非串流：回 {answer, conversational, converged} 或 None（降級）。"""
         decision = await self.prepare(session_id, user_id, vendor_id, user_message,
-                                      config, start_if_absent, seed_topic, role_id=role_id)
+                                      config, start_if_absent, seed_topic, role_id=role_id,
+                                      prefill=prefill)
         if decision is None:
             return None
         if decision["kind"] == "ask":
-            return {"answer": decision["answer"], "conversational": True, "converged": False}
+            resp = {"answer": decision["answer"], "conversational": True, "converged": False}
+            if decision.get("quick_replies"):
+                resp["quick_replies"] = decision["quick_replies"]   # 交易確認/重試按鈕透傳（3.x 消費）
+            return resp
         reco = await asyncio.to_thread(
             self.optimizer.synthesize_presales_answer,
             decision["grounding"], decision["ctx"], decision["system_md"],
@@ -728,6 +967,91 @@ class ConversationalEngine:
         #   否則會回頭問使用者系統早就有的值（2026-07-07 申請書槽位實測：問「目前的租期是什麼」）。
         state["grounding_note"] = grounding[:600]
         return {"kind": "converge", "grounding": grounding}
+
+    # ---------- 交易 execute（conversational-repair 元件 2｜R4.2/R4.3） ----------
+    async def _execute_transaction(self, state: Dict[str, Any],
+                                   config: "ConversationalConfig") -> Dict[str, Any]:
+        """confirm gate 通過後呼叫 grounding_scope.execute_endpoint 建單（重用 api_handler）。
+
+        slots→params 沿用 `execute_params`（同 params_from_form 映射語彙：
+        {"item_id":"item","role_id":"{session.role_id}"}）；成功回回執，失敗誠實告知。
+        回 {"kind":"receipt","answer","result"} 或 {"kind":"failed","answer"}。
+        全配置驅動——引擎不出現任何面向專屬字面。"""
+        scope = config.grounding_scope or {}
+        endpoint = scope.get("execute_endpoint")
+        api_config = {
+            "endpoint": endpoint,
+            "params_from_form": scope.get("execute_params") or {},
+        }
+        form_data = _slot_values(state.get("collected_fields") or {})
+        session_data = {
+            "role_id": state.get("role_id"), "vendor_id": state.get("vendor_id"),
+            "session_id": state.get("session_id"), "user_id": state.get("user_id"),
+        }
+        try:
+            result = await self.api_handler.execute_api_call(
+                api_config, session_data, form_data,
+                face=state.get("face") or _domain_key(config))
+        except Exception as e:  # 逾時/連線等 → 誠實告知，executed 不設（絕不假裝成功，R4.3）
+            print(f"⚠️ 交易 execute 呼叫失敗（誠實告知可重試）：{e}")
+            return {"kind": "failed",
+                    "answer": "抱歉，建單時系統忙線，尚未成功送出。要再試一次嗎？"}
+        result = result or {}
+        if not result.get("success"):
+            return {"kind": "failed",
+                    "answer": "抱歉，建單未成功送出。您可以再試一次，或改由專人協助。"}
+        return {"kind": "receipt", "answer": _build_receipt(scope, result), "result": result}
+
+    async def _handle_confirm_pending(self, session_id, user_message, state, config):
+        """confirm gate 待決（或已 executed）下一輪：引擎先於 brain 決定性判定。
+          - executed=True → 冪等，回單號、不重複建單（R4.4）。
+          - 取消詞/取消鈕 → _close、丟棄槽位（R3.3）。
+          - 同意詞/送出鈕/重試詞 → execute（成功回執/失敗誠實告知＋重試，R4.2/R4.3）。
+          - 其餘（修改鈕或自由修正語）→ 離開待決、落回 brain 帶修正語境重出 confirm（R4.5）。
+        回 decision dict 或 None（None＝交回主流程走 brain）。"""
+        scope = config.grounding_scope or {}
+        msg = (user_message or "").strip()
+        low = msg.lower()
+
+        # 冪等：已建單 → 任何同意詞都回單號、不重執行（R4.4）
+        if state.get("executed"):
+            receipt = _build_receipt(scope, state.get("execute_result") or {})
+            return {"kind": "ask", "answer": receipt}
+
+        # 取消（詞或按鈕）→ 結束、丟棄槽位、不留殘單（R3.3）
+        if msg == _QR_CANCEL or any(w in msg for w in _CANCEL_WORDS):
+            await self._close(session_id)
+            return {"kind": "ask", "answer": "好的，已為您取消這次報修，未送出任何單子。有需要再跟我說。"}
+
+        # 修改（按鈕或自由修正語）→ 離開待決，落回 brain 重出 confirm（R4.5）
+        if msg == _QR_EDIT:
+            state.pop("awaiting_confirm", None)
+            await self._save(session_id, state)
+            return None  # 交主流程走 brain（帶修正語境）
+
+        # 同意（送出鈕 / 明確同意詞 / 重試詞）→ execute
+        _consent = (msg == _QR_SUBMIT
+                    or any(w == low for w in _CONSENT_WORDS)
+                    or any(w in msg for w in _CONSENT_WORDS)
+                    or any(w in msg for w in _RETRY_WORDS))
+        if _consent:
+            r = await self._execute_transaction(state, config)
+            if r["kind"] == "receipt":
+                state["executed"] = True
+                state["execute_result"] = r["result"]
+                state.pop("awaiting_confirm", None)
+                # 收斂不關會話（既有慣例）：保留供追問；標記已收斂
+                await self._save(session_id, state)
+                return {"kind": "ask", "answer": r["answer"]}
+            # 失敗：executed 不設、維持 awaiting_confirm 供再試（R4.3）
+            await self._save(session_id, state)
+            return {"kind": "ask", "answer": r["answer"],
+                    "quick_replies": _retry_quick_reply(scope)}
+
+        # 其餘（非同意/取消/修改鈕的自由文字）→ 落回 brain 當修正語境重出 confirm
+        state.pop("awaiting_confirm", None)
+        await self._save(session_id, state)
+        return None
 
     async def _converge_grounding(self, state, converge_topic, user_message, config, converge_kind):
         """取 grounding（選材三態）+ 累積情境 ctx + cta_mode；不合成。回 (grounding, ctx, cta_mode)。"""

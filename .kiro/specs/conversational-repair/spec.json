@@ -1,8 +1,8 @@
 {
   "feature_name": "conversational-repair",
   "created_at": "2026-07-11T21:30:00+08:00",
-  "updated_at": "2026-07-11T23:00:00+08:00",
-  "phase": "tasks-generated",
+  "updated_at": "2026-07-12T02:30:00+08:00",
+  "phase": "implementation-completed",
   "language": "zh-TW",
   "project_description": "對話式修繕（target-first 路線的主線正案，docs/conversation-first-architecture-assessment.md §6.6 拍板）：引擎交易能力＋修繕作為第一個交易面向。目標形態＝「推斷＋確認為主、填寫為輔、對話原生」——租客一句話＋照片，系統從租約帶入物件、從照片/描述推斷分類，追問最少必要資訊（急迫性等），一次性確認摘要後建單（create_repair），典型 3 輪（今天富喬表單為 6-8 輪逐欄位）。範圍：(1) 引擎交易語義——確認 gate（收齊≠送出）、image 槽位、執行結果回傳處理（對碼事實：引擎 grounding 已重用 api_call_handler.execute_api_call，通道存在一半；缺的是交易三語義）；(2) 槽位預填——role_id→租約→物件自動帶入（雙證）、照片/描述→分類/項目/原因推斷（Step 0.5 損傷辨識為基礎）、「確認型槽位」機制（推得出的變確認項、推不出的才開口問）；(3) 修繕交易面向配置＋通用意圖錨點知識（vendor_ids 空）＋查進度知識（api_call→jgb_repairs）；(4) 隨行 bug 修——jgb_repair_create 表單 vendor_id 2→NULL（修 vendor 4 觸發後表單載入失敗）＋vendor_configs.repair_enabled 開關；(5) 切換——上線即停用 vendor 2/4 修繕 SOP（is_active=false 可逆），全業者同步新形態（拍板棄灰度）。已拍板決策：綁定優先（身份先於對話，引擎不支援無身份槽位暫存——本案 Web 驗收下身份恆存在）；輪數驗收 A 類 e2e ≤3 輪、上線後 P50≤4/P90≤6 含岔題、輪數埋點進計量；分類推斷失敗退化＝給 2-3 候選讓使用者選一輪（不退回三層下拉）；本案以 Web 通道驗收、對話邏輯通道無關設計，LINE gateway 為既有另案（E0 官方文件核實前置）、兩案於 LINE 上線會合。驗收基準＝目標對話腳本情境 A-F 真實發生（A 明確報修＋照片 3 輪完成、B 混合話語先答費用再收槽、C 模糊敘述先澄清、D 確認階段改資料、E 完成後查進度、F 按鈕直達同面向）；邊界：未綁定/雙證缺→誠實降級引導、多租約→物件變選擇項、repair_enabled 關→降級文案＋客服管道、任何階段可取消不留殘單、FAQ 快路徑零影響。約束：不碰 embedding 完整性；富喬既有非修繕 SOP 不動；四業者驗收矩陣（心巢/愛租屋從無到有、富喬/vendor 4 從舊表單切新形態且 decision_case 埋點佐證）。",
   "approvals": {
@@ -16,12 +16,27 @@
     },
     "tasks": {
       "generated": true,
-      "approved": false
+      "approved": true
     }
   },
   "implementation": {
-    "started": false,
-    "completed": false,
-    "tasks_completed": []
+    "started": true,
+    "completed": true,
+    "tasks_completed": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "2.1",
+      "2.2",
+      "2.3",
+      "2.4",
+      "3.1",
+      "3.2",
+      "3.3",
+      "4.1",
+      "4.2",
+      "5.1",
+      "5.2"
+    ]
   }
 }
