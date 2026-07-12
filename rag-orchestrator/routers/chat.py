@@ -374,7 +374,7 @@ def _conversational_to_response(result: dict, request) -> 'VendorChatResponse':
     )
 
 
-def _finalize_response(response: 'VendorChatResponse', request):
+def _finalize_response(response: 'VendorChatResponse', request, req):
     """依 stream 旗標回傳一般或 SSE 串流回應（與既有表單回應一致）。"""
     if request.stream:
         return StreamingResponse(
@@ -406,15 +406,15 @@ async def handle_form_session(request, req, ctx: ChatRequestContext):
             form_schema = await form_manager.get_form_schema(session_state['form_id'], request.vendor_id)
             form_result = await form_manager._complete_form(
                 session_state, form_schema, session_state['collected_data'])
-            return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+            return _finalize_response(_convert_form_result_to_response(form_result, request), request, req)
         elif user_choice.lower() in ["取消", "cancel", "放棄"]:
             form_result = await form_manager.cancel_form(request.session_id)
             req.app.state.sop_orchestrator.trigger_handler.delete_context(request.session_id)
-            return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+            return _finalize_response(_convert_form_result_to_response(form_result, request), request, req)
         else:
             form_result = await form_manager.handle_edit_request(
                 session_id=request.session_id, user_input=request.message, vendor_id=request.vendor_id)
-            return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+            return _finalize_response(_convert_form_result_to_response(form_result, request), request, req)
 
     if session_state['state'] == 'EDITING':
         form_result = await form_manager.collect_edited_field(
@@ -446,7 +446,7 @@ async def handle_conversational_session(request, req, ctx: ChatRequestContext):
             session_id=request.session_id, timestamp=datetime.utcnow().isoformat(),
             form_cancelled=True,
         )
-        return _finalize_response(cancel_resp, request)
+        return _finalize_response(cancel_resp, request, req)
     # 對話中補圖（conversational-repair R2.6，任務 2.4）：續跑前先把本輪圖片辨識併入
     #   現有面向槽位/候選（交易面向才生效，engine 側判定）；Vision 失敗→None 降級無推斷、不中斷。
     if request.image_urls:
@@ -506,9 +506,9 @@ async def handle_collecting(request, req, ctx: ChatRequestContext):
             request.message = pending_question  # 陷阱4:替換訊息續跑
             return None
         print(f"📋 用戶取消表單，但沒有待處理的問題")
-        return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+        return _finalize_response(_convert_form_result_to_response(form_result, request), request, req)
 
-    return _finalize_response(_convert_form_result_to_response(form_result, request), request)
+    return _finalize_response(_convert_form_result_to_response(form_result, request), request, req)
 
 
 async def handle_image(request, req, ctx: ChatRequestContext):
@@ -586,7 +586,7 @@ async def handle_image(request, req, ctx: ChatRequestContext):
                     image_recognition=recognition,
                     uploaded_images=request.image_urls,
                 )
-                return _finalize_response(response, request)
+                return _finalize_response(response, request, req)
             # SOP 無結果:落回文字流程
             return None
 
@@ -610,7 +610,7 @@ async def handle_image(request, req, ctx: ChatRequestContext):
                 image_recognition=recognition,
                 uploaded_images=request.image_urls,
             )
-            return _finalize_response(response, request)
+            return _finalize_response(response, request, req)
 
     except Exception as e:
         # Vision API 失敗/逾時：降級為純文字流程，不阻塞
@@ -735,7 +735,7 @@ async def _repair_gate_open(db_pool, vendor_id, config) -> bool:
         return True
 
 
-async def _repair_degraded_response(db_pool, request, config):
+async def _repair_degraded_response(db_pool, request, config, req):
     """gate 關閉 → 降級文案 ＋ 該業者客服管道（vendor_configs 參數，沿用 {{param}} 注入慣例）。"""
     scope = getattr(config, "grounding_scope", None) or {}
     contact_key = scope.get("contact_config_key") or _DEFAULT_CONTACT_KEY
@@ -759,7 +759,7 @@ async def _repair_degraded_response(db_pool, request, config):
         confidence=1.0, action_type="conversational", sources=None, source_count=0,
         vendor_id=request.vendor_id, mode=request.mode or "b2c",
         session_id=request.session_id, timestamp=datetime.utcnow().isoformat())
-    return _finalize_response(resp, request)
+    return _finalize_response(resp, request, req)
 
 
 async def _recognize_repair_image(req, request):
@@ -814,7 +814,7 @@ async def _seed_repair_facet(request, req, config, *, recognition=None):
     db_pool = req.app.state.db_pool
     if not await _repair_gate_open(db_pool, request.vendor_id, config):
         print("🚪 [repair gate] repair_enabled=false → 降級文案＋客服管道")
-        return await _repair_degraded_response(db_pool, request, config)
+        return await _repair_degraded_response(db_pool, request, config, req)
 
     if recognition is None:
         recognition = await _recognize_repair_image(req, request)
@@ -830,7 +830,7 @@ async def _seed_repair_facet(request, req, config, *, recognition=None):
             sources=None, source_count=0, vendor_id=request.vendor_id,
             mode=request.mode or "b2c", session_id=request.session_id,
             timestamp=datetime.utcnow().isoformat())
-        return _finalize_response(resp, request)
+        return _finalize_response(resp, request, req)
 
     return await _conversational_respond(
         request, req, start_if_absent=True, config=config, prefill=prefill)
@@ -965,7 +965,7 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
 
             if request.stream:
                 print(f"📡 [串流模式] 將 SOP 響應轉換為串流輸出")
-                return _finalize_response(response, request)
+                return _finalize_response(response, request, req)
             return response
 
         elif decision['type'] == 'knowledge':
@@ -1074,7 +1074,7 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
 
             if request.stream:
                 print(f"📡 [串流模式] 將無結果響應轉換為串流輸出")
-                return _finalize_response(response, request)
+                return _finalize_response(response, request, req)
             return response
 
     else:
