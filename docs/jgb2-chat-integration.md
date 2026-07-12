@@ -134,12 +134,14 @@ X-API-Key: <發放之金鑰>          # 認證啟用（RAG_API_AUTH_ENFORCE）�
 
 ### 8.2 b2b 現役前端待補齊（對照 `useChat.ts` 現況）
 
-現役 b2b 串接可運作，但有兩項與本契約的落差，建議排入前端修版：
+現役 b2b 串接可運作，先前有兩項與本契約的落差，**均已於 jgb2 端修版完成**：
 
-| # | 現況 | 影響 | 補齊 |
-|---|---|---|---|
-| 1 | 未帶 `target_user` | 系統依 mode 預設為 `property_manager`（`migrate_user_role` validator，約 L3550），目前結果正確；明帶可去除歧義並確保統計正確 | body 加 `"target_user": "property_manager"` |
-| 2 | timeout 30s | 多輪診斷／真 API 查詢題偶爾超過 30s，使用者看到假性「回應逾時」 | 調升至 90s |
+| # | 現況 | 影響 | 補齊 | 狀態 |
+|---|---|---|---|---|
+| 1 | 未帶 `target_user` | 系統依 mode 預設為 `property_manager`（`migrate_user_role` validator，約 L3550），目前結果正確；明帶可去除歧義並確保統計正確 | body 加 `"target_user": "property_manager"` | ✅ 已補（`ChatView.vue`） |
+| 2 | timeout 30s | 多輪診斷／真 API 查詢題偶爾超過 30s，使用者看到假性「回應逾時」 | 調升至 90s | ✅ 已調（`useChat.ts`） |
+
+> **b2b 已改走 jgb2 後端代理**（`POST /api2/assistant/chat` → `HelpAssistantController@chat`），不再由瀏覽器直打 chatai。兩項效果：①`X-API-Key` 只存 jgb2 server 端（`.env` 的 `ASSISTANT_CHAT_API_KEY`），authorize 開啟後由後端帶上，前端無須改動；②`role_id`／`user_id` 一律以登入 session 覆寫，前端無法偽造身分查個資。`vendor_id` 仍不帶（依 §8.1 由 AI 側解析）。
 
 > `vendor_id` 已於 §8.1 定案由 AI 側解析，故不再列為前端待補。
 
