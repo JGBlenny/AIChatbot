@@ -68,7 +68,7 @@ class _Brain:
     def __init__(self, steps):
         self.steps, self.turn, self.seen = steps, 0, []
 
-    def conversational_step(self, rules, system_md, state, msg, faces=None):
+    async def conversational_step(self, rules, system_md, state, msg, faces=None, kb_search=None):
         self.seen.append({"faces": faces, "md": system_md, "rules": rules})
         step = self.steps[min(self.turn, len(self.steps) - 1)]
         self.turn += 1

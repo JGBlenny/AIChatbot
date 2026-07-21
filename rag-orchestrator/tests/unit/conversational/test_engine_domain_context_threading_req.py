@@ -17,8 +17,8 @@ pytestmark = pytest.mark.unit
 
 def _engine():
     optimizer = MagicMock()
-    optimizer.conversational_step.return_value = {
-        "action": "converge", "converge_kind": "answer", "extracted_fields": {}}
+    optimizer.conversational_step = AsyncMock(return_value={
+        "action": "converge", "converge_kind": "answer", "extracted_fields": {}})
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),
         get_system_context=AsyncMock(return_value="SYS"),

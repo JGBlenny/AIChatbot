@@ -60,7 +60,7 @@ def _collected():
 
 def _engine(step_return=None, execute_result=None):
     optimizer = MagicMock()
-    optimizer.conversational_step.return_value = step_return
+    optimizer.conversational_step = AsyncMock(return_value=step_return)
     api_handler = MagicMock()
     api_handler.execute_api_call = AsyncMock(
         return_value=execute_result if execute_result is not None

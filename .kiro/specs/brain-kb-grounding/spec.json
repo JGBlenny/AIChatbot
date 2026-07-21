@@ -1,0 +1,35 @@
+{
+  "feature_name": "brain-kb-grounding",
+  "created_at": "2026-07-20T06:54:09Z",
+  "updated_at": "2026-07-21T00:00:00Z",
+  "phase": "implementation-completed",
+  "language": "zh-TW",
+  "project_description": "對話面向 Brain 掛載 search_kb 工具：讓 conversational_step（llm_answer_optimizer.py:825）的 LLM 呼叫支援 function calling，新增 search_kb 工具讓 Brain 在面向對話中途遇到知識性岔題（費用歸屬/時程/規定等）時，能呼叫既有知識庫檢索服務查詢後再回答，使 inline_answer 從「憑 rules_text 與模型印象作答」升級為「知識庫背書的落地答案」。範圍：conversational_step 內加 tool-call 迴圈（最多 1-2 圈）、search_kb function 定義、接上既有檢索服務（pgvector + reranker 零改動，含 business_types/target_user 過濾與 persona 脈絡）。不變量：引擎寫入 gate（required_slots 驗證、確認才 execute、冪等）完全不動；Brain 輸出 JSON schema（action=ask/converge/confirm）不變；查詢失敗或模型不呼叫工具時行為與現行完全一致（安全降級）。驗收：費用/規定類岔題實測，查庫後答案與知識庫內容一致且無事實幻覺；既有面向 e2e 全綠零回歸；FAQ 快路徑不受影響。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "implementation": {
+    "started": true,
+    "completed": true,
+    "tasks_completed": [
+      "1.1",
+      "2.1",
+      "2.2",
+      "3.1",
+      "3.2",
+      "4.1",
+      "4.2"
+    ]
+  }
+}

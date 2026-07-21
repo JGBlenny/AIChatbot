@@ -24,7 +24,7 @@ def _sysctx():
 
 def _engine(step_result):
     optimizer = MagicMock()
-    optimizer.conversational_step.return_value = step_result
+    optimizer.conversational_step = AsyncMock(return_value=step_result)
     optimizer.synthesize_presales_answer = MagicMock(return_value="ans")
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),

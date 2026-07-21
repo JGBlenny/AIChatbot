@@ -7,7 +7,7 @@ Phase 4 擴展：業態語氣配置從資料庫動態載入
 """
 import os
 import re
-from typing import List, Dict, Optional
+from typing import Awaitable, Callable, List, Dict, Optional
 import time
 import psycopg2
 import psycopg2.extras
@@ -19,6 +19,43 @@ from .llm_provider import get_llm_provider, LLMProvider
 _TONE_CONFIG_CACHE: Optional[Dict[str, Dict]] = None
 _TONE_CACHE_TIMESTAMP: Optional[float] = None
 _TONE_CACHE_TTL = 300  # 5 分鐘快取
+
+# ════════════════════════════════════════════════════════════
+# Brain search_kb 工具（spec brain-kb-grounding）：對話面向 Brain 掛載的唯讀知識庫檢索工具。
+# 引擎注入 async kb_search callback（bake vendor/target_user/mode 脈絡）；Brain 判斷事實性
+# 岔題時發 tool_call，引擎執行既有檢索、命中組話用文字或 NO_MATCH_SENTINEL 回灌 → 二次呼叫
+# 取最終 JSON。上限 1，達限去 tools 強制收斂。寫入 gate/schema 不變、純唯讀、失敗安全降級。
+# ════════════════════════════════════════════════════════════
+# async (query) -> str（命中組話用文字 或 NO_MATCH_SENTINEL）
+KbSearch = Callable[[str], Awaitable[str]]
+NO_MATCH_SENTINEL = "NO_MATCH"   # kb_search 查無達標命中的回傳；prompt 契約據此誠實回退
+MAX_TOOL_CALLS = 1               # 單輪 search_kb 呼叫上限（R1.2）
+SEARCH_KB_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "search_kb",
+        "description": (
+            "查詢知識庫回答使用者岔出的事實性問題（費用歸屬/時程/規定等）。"
+            "僅在需要事實性答案時呼叫；純槽位填寫、閒聊、可由既有規則回答者不呼叫。"
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "要查詢的知識性問題（精簡主題式）"}
+            },
+            "required": ["query"],
+        },
+    },
+}
+
+
+def _tool_call_to_dict(tc) -> dict:
+    """SDK tool_call 物件 → OpenAI messages 格式 dict（供 assistant 訊息回填續呼）。"""
+    return {
+        "id": tc.id,
+        "type": "function",
+        "function": {"name": tc.function.name, "arguments": tc.function.arguments or "{}"},
+    }
 
 
 class LLMAnswerOptimizer:
@@ -822,22 +859,30 @@ class LLMAnswerOptimizer:
     # 對話 brain 規則（人格）已外移至 services/conversational_rules.py（R19 reframe：
     # advisor→conversational，DB category='對話規則' 載入 + code fallback）；brain 不綁角色。
 
-    def conversational_step(
+    async def conversational_step(
         self,
         rules_text: str,
         system_context_md: str,
         state: dict,
         user_message: str,
         faces: Optional[List[str]] = None,
+        kb_search: Optional[KbSearch] = None,
     ) -> Optional[dict]:
         """
-        對話式回答 brain（option-routing R14/R15/R19）：單次 structured-output LLM call。
+        對話式回答 brain（option-routing R14/R15/R19）：structured-output LLM call。
         規則（人格）由外部依角色載入後傳入（資料驅動，見 conversational_rules）；brain 不綁角色。
         同時做①抽取欄位②判斷 ask/converge③生成下一題。JSON 輸出 + 驗證；失敗 → 回 None。
 
         mid-session-switch（方案B）：另帶 scope(stay|switch)/face 兩訊號——
           - scope 由 persona 規則指示、此處正規化（缺省/越界 → 'stay'，向後相容防越界）；
           - faces 非空時注入 prompt（本領域可用面向清單，供 brain 從中選 face；引擎再驗證）。
+
+        kb_search（brain-kb-grounding）：引擎注入的 async 唯讀知識庫檢索 callback。
+          - None（缺省）→ 單次 json_object 呼叫，輸出與現行 100% 一致（不掛工具，R1.3）。
+          - 提供 → 首呼帶 tools=[SEARCH_KB_TOOL]、tool_choice='auto'；模型回 tool_call →
+            await kb_search(query)（上限 MAX_TOOL_CALLS）→ 注入 tool result 續呼取最終 JSON；
+            達上限或已無 tool_call → 去 tools 收斂。最終 JSON 驗證與現行同。
+          - 任一步例外 → 回 None（呼叫端既有降級，R4.2）。方法本身為 async（唯一呼叫點加 await）。
         """
         try:
             import json
@@ -859,7 +904,19 @@ class LLMAnswerOptimizer:
                 "岔題（費用/時程/規定等問題）可在 inline_answer 放即答內容，"
                 "並於 next_question 接回槽位收集（先答再接）。"
             )
-            system_prompt = f"{system_context_md}\n\n{rules_text}{faces_note}{schema_note}".strip()
+            # search_kb 工具契約（brain-kb-grounding 元件 3｜R3.1/3.2）：僅在 kb_search 注入時附加，
+            # 使 kb_search=None 路徑的 prompt 與現行逐字一致（R1.3 回歸鎖）。落地規則：查了再答、
+            # 據結果組話不加庫外事實、NO_MATCH 誠實回退不憑印象補答、答完接回槽位。
+            tool_note = (
+                "\n\n【知識查詢工具 search_kb（僅本輪可用）】"
+                "使用者岔出事實性問題（費用歸屬/時程/規定等）時，先呼叫 search_kb 查知識庫再答，"
+                "不要憑印象回答事實。工具回覆即為可用事實：據此於 inline_answer 組話，"
+                "不得加入工具結果與規則以外的事實性斷言（金額/天數/歸屬結論等）。"
+                "工具回覆為 NO_MATCH 時，誠實告知目前無法確認並建議洽客服（或回退規則既有指引），"
+                "不得自行編造事實。答完岔題後於 next_question 接回槽位收集（先答再接）。"
+                "純槽位填寫、閒聊、可由既有規則回答者不呼叫工具。"
+            ) if kb_search is not None else ""
+            system_prompt = f"{system_context_md}\n\n{rules_text}{faces_note}{schema_note}{tool_note}".strip()
             # 對話史（引擎 ask 返回點記入 state.dialog）：brain 必須知道自己問過什麼——
             # 否則純中文名稱回覆對不上槽位、且會原句重問（2026-07-07 線上實測缺陷）。
             # 已鎖定底稿摘要（引擎收斂時記入）：現況值直接取用，不回頭問使用者系統已有的資料。
@@ -887,17 +944,23 @@ class LLMAnswerOptimizer:
                 f"{hist_block}"
                 f"【使用者最新訊息】{user_message}\n\n請依規則輸出 JSON。"
             )
-            result = self.llm_provider.chat_completion(
-                model=os.getenv("PRESALES_SYNTH_MODEL", self.config["model"]),
-                temperature=float(os.getenv("ADVISOR_TEMP", "0.4")),
-                max_tokens=400,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                response_format={"type": "json_object"},
-            )
-            data = json.loads((result or {}).get('content') or "{}")
+            model = os.getenv("PRESALES_SYNTH_MODEL", self.config["model"])
+            temperature = float(os.getenv("ADVISOR_TEMP", "0.4"))
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ]
+            if kb_search is None:
+                # 現行行為：單次 json_object 呼叫（kb_search 未注入＝不掛工具，R1.3 逐位一致）
+                result = self.llm_provider.chat_completion(
+                    model=model, temperature=temperature, max_tokens=400,
+                    messages=messages, response_format={"type": "json_object"},
+                )
+                data = json.loads((result or {}).get('content') or "{}")
+            else:
+                # 工具圈：首呼帶 tools，回 tool_call → await kb_search → 續呼取最終 JSON（R1.1/1.2）
+                content = await self._brain_tool_loop(model, temperature, messages, kb_search)
+                data = json.loads(content or "{}")
             # 驗證（防越界輸出）。'confirm'（交易面向）：槽位收齊→出確認摘要，
             # 收齊≠送出；confirm 不需 next_question/converge_kind（R4.1）。
             if data.get('action') not in ('ask', 'converge', 'confirm'):
@@ -916,6 +979,47 @@ class LLMAnswerOptimizer:
         except Exception as e:
             print(f"❌ conversational_step 失敗（呼叫端降級）：{e}")
             return None
+
+    async def _brain_tool_loop(self, model, temperature, messages, kb_search: KbSearch) -> str:
+        """Brain 工具圈（brain-kb-grounding R1.1/1.2）：首呼帶 tools，回 tool_call →
+        await kb_search → 注入 tool result 續呼；上限 MAX_TOOL_CALLS，達限去 tools 強制收斂。
+        回傳最終 JSON 字串（供呼叫端 json.loads）。工具狀態經 set_search_kb_status 埋點（R5.2）。
+        兩次呼叫的 token 皆經 llm_provider 統一出口自動計入同一計量 context（第二呼不漏計）。"""
+        try:
+            from services.usage_metering import set_search_kb_status
+        except Exception:                          # 計量不可用不得影響 Brain
+            set_search_kb_status = lambda *_a, **_k: None
+        import json
+        msgs = list(messages)
+        tool_calls_made = 0
+        while True:
+            use_tools = tool_calls_made < MAX_TOOL_CALLS
+            kwargs = dict(model=model, temperature=temperature, max_tokens=400,
+                          messages=msgs, response_format={"type": "json_object"})
+            if use_tools:                          # 未達上限才掛工具；達限→去 tools 強制收斂
+                kwargs["tools"] = [SEARCH_KB_TOOL]
+                kwargs["tool_choice"] = "auto"
+            result = self.llm_provider.chat_completion(**kwargs)
+            raw = (result or {}).get("raw_response")
+            msg = raw.choices[0].message if raw and getattr(raw, "choices", None) else None
+            tool_calls = getattr(msg, "tool_calls", None) if msg else None
+            if use_tools and tool_calls:
+                tc = tool_calls[0]                 # 上限 1：只取第一個 tool_call（多要求也只執行一次）
+                try:
+                    args = json.loads(tc.function.arguments or "{}")
+                except Exception:
+                    args = {}
+                query = (args.get("query") or "").strip()
+                kb_result = await kb_search(query) if query else NO_MATCH_SENTINEL
+                set_search_kb_status("miss" if kb_result == NO_MATCH_SENTINEL else "hit")
+                # 回填 assistant tool_call 訊息 + tool 結果訊息，供續呼帶上下文
+                msgs.append({"role": "assistant", "content": msg.content or "",
+                             "tool_calls": [_tool_call_to_dict(tc)]})
+                msgs.append({"role": "tool", "tool_call_id": tc.id, "content": kb_result})
+                tool_calls_made += 1
+                continue
+            # 無 tool_call（或已去 tools 收斂）→ 最終 JSON 內容
+            return (result or {}).get("content") or "{}"
 
     def _build_presales_synth(self, grounding_knowledge, accumulated_context, system_context_md,
                               user_question, cta_mode):

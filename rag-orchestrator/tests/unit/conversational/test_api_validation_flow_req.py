@@ -159,7 +159,7 @@ async def test_backward_compat_single_params():
 # ════════ prepare 切換識別：先搜後提交（rollback / commit）════════
 def _engine_prepare(ground_side):
     optimizer = MagicMock()
-    optimizer.conversational_step = MagicMock(return_value={
+    optimizer.conversational_step = AsyncMock(return_value={
         "action": "converge", "converge_kind": "answer", "extracted_fields": {}, "scope": "stay"})
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),

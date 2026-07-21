@@ -18,7 +18,7 @@ pytestmark = pytest.mark.unit
 
 def _engine(step):
     optimizer = MagicMock()
-    optimizer.conversational_step.return_value = step
+    optimizer.conversational_step = AsyncMock(return_value=step)
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),
         get_system_context=AsyncMock(return_value="SYS"),

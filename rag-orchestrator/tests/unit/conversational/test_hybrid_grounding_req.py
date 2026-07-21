@@ -19,8 +19,8 @@ DOMAIN_MD = "BASE_PRODUCT\n\n合約架構：12 里程碑…（領域）"
 
 def _engine():
     optimizer = MagicMock()
-    optimizer.conversational_step.return_value = {
-        "action": "converge", "converge_kind": "answer", "extracted_fields": {}}
+    optimizer.conversational_step = AsyncMock(return_value={
+        "action": "converge", "converge_kind": "answer", "extracted_fields": {}})
     optimizer.synthesize_presales_answer = MagicMock(return_value="合成後回覆")
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),

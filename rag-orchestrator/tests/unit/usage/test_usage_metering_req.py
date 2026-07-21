@@ -414,3 +414,135 @@ async def test_detect_facet_cols_cached_skips_query(mock_db_pool):
     mock_db_pool._conn.fetch = AsyncMock(side_effect=AssertionError("不應再查"))
     await um._detect_facet_cols(mock_db_pool)
     assert um._facet_cols_present is True
+
+
+# ════════════════════════════════════════════════════════════
+# task 1.1：set_search_kb_status hook＋search_kb_status 欄位偵測降級
+# （brain-kb-grounding R5.2）
+# 契約：完全比照 set_facet／_detect_facet_cols 房式——contextvar 承載、
+# ctx None／finalized 靜默、只接受 'hit'/'miss'（越界忽略）；欄位未建時事件本體
+# 照寫、search_kb_status 略過（欄位未建不能弄壞既有計量）。
+# ════════════════════════════════════════════════════════════
+
+@pytest.fixture(autouse=True)
+def _reset_search_kb_col_cache():
+    """每案重置 search_kb 欄位偵測快取（模組層狀態）。"""
+    orig = um._search_kb_col_present
+    um._search_kb_col_present = None
+    yield
+    um._search_kb_col_present = orig
+
+
+# ── ①：ctx 存在時 set_search_kb_status 寫入 ctx（hit/miss 正常）──
+@pytest.mark.req("brain-kb-grounding:5.2")
+@pytest.mark.parametrize("status", ["hit", "miss"])
+def test_set_search_kb_status_writes_to_ctx(status):
+    um.begin(_fields())
+    um.set_search_kb_status(status)
+    assert um._ctx.get().search_kb_status == status
+
+
+# ── ②：ctx None → 靜默不拋 ──
+@pytest.mark.req("brain-kb-grounding:5.2")
+def test_set_search_kb_status_no_context_silent():
+    assert um._ctx.get() is None
+    um.set_search_kb_status("hit")
+
+
+# ── ③：finalized 後呼叫不改值 ──
+@pytest.mark.req("brain-kb-grounding:5.2")
+def test_set_search_kb_status_after_finalized_noop():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    ctx._finalized = True
+    um.set_search_kb_status("hit")
+    assert ctx.search_kb_status is None
+
+
+# ── ④：越界值忽略（防污染）──
+@pytest.mark.req("brain-kb-grounding:5.2")
+@pytest.mark.parametrize("bad", ["HIT", "found", "", "true", "1"])
+def test_set_search_kb_status_rejects_out_of_domain(bad):
+    um.begin(_fields())
+    um.set_search_kb_status(bad)
+    assert um._ctx.get().search_kb_status is None
+
+
+# ── ⑤：偵測為 False（欄位未建）→ _to_row 不含 key、其餘欄位齊全、不拋 ──
+@pytest.mark.req("brain-kb-grounding:5.2")
+def test_to_row_without_search_kb_col():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_search_kb_status("hit")
+    um._search_kb_col_present = False
+    row = um._to_row(ctx)
+    assert "search_kb_status" not in row
+    for k in ("request_id", "ts", "vendor_id", "user_type", "message_len",
+              "processing_path", "status", "prompt_tokens", "model_breakdown"):
+        assert k in row
+
+
+# ── ⑤'：未偵測（None）視同不存在 → _to_row 不含 key ──
+@pytest.mark.req("brain-kb-grounding:5.2")
+def test_to_row_undetected_omits_search_kb_col():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_search_kb_status("miss")
+    assert um._search_kb_col_present is None
+    row = um._to_row(ctx)
+    assert "search_kb_status" not in row
+
+
+# ── ⑥：偵測為 True → _to_row 含 key（值透傳）──
+@pytest.mark.req("brain-kb-grounding:5.2")
+def test_to_row_with_search_kb_col():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_search_kb_status("hit")
+    um._search_kb_col_present = True
+    row = um._to_row(ctx)
+    assert row["search_kb_status"] == "hit"
+
+
+# ── ⑥'：偵測為 True 但未呼叫工具 → key 存在且為 None（一般輪 NULL 落地）──
+@pytest.mark.req("brain-kb-grounding:5.2")
+def test_to_row_search_kb_col_present_but_none():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um._search_kb_col_present = True
+    row = um._to_row(ctx)
+    assert row["search_kb_status"] is None
+
+
+# ── 降級偵測：欄位存在 → 快取 True ──
+@pytest.mark.req("brain-kb-grounding:5.2")
+async def test_detect_search_kb_col_present(mock_db_pool):
+    mock_db_pool._conn.fetch = AsyncMock(
+        return_value=[{"column_name": c} for c in um._SEARCH_KB_COLS])
+    await um._detect_search_kb_col(mock_db_pool)
+    assert um._search_kb_col_present is True
+
+
+# ── 降級偵測：欄位缺 → 快取 False ──
+@pytest.mark.req("brain-kb-grounding:5.2")
+async def test_detect_search_kb_col_absent(mock_db_pool):
+    mock_db_pool._conn.fetch = AsyncMock(return_value=[])
+    await um._detect_search_kb_col(mock_db_pool)
+    assert um._search_kb_col_present is False
+
+
+# ── 降級偵測：查詢失敗 → 保持 None（下次重試），不外拋 ──
+@pytest.mark.req("brain-kb-grounding:5.2")
+async def test_detect_search_kb_col_failure_retryable(mock_db_pool):
+    mock_db_pool._conn.fetch = AsyncMock(side_effect=RuntimeError("db down"))
+    await um._detect_search_kb_col(mock_db_pool)
+    assert um._search_kb_col_present is None
+
+
+# ── 降級偵測：已偵測（非 None）則不再查 ──
+@pytest.mark.req("brain-kb-grounding:5.2")
+async def test_detect_search_kb_col_cached_skips_query(mock_db_pool):
+    um._search_kb_col_present = True
+    mock_db_pool._conn.fetch = AsyncMock(side_effect=AssertionError("不應再查"))
+    await um._detect_search_kb_col(mock_db_pool)
+    assert um._search_kb_col_present is True

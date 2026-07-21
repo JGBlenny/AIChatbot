@@ -28,9 +28,9 @@ def _opt(llm_json: dict):
 
 # ── action='confirm' 合法解析透傳（收齊→確認摘要）──
 @pytest.mark.req("conversational-repair:4.1")
-def test_confirm_action_passed_through():
+async def test_confirm_action_passed_through():
     opt = _opt({"action": "confirm", "extracted_fields": {"urgency": "急"}})
-    r = opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "蠻急的")
+    r = await opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "蠻急的")
     assert r is not None
     assert r["action"] == "confirm"
     assert r["extracted_fields"] == {"urgency": "急"}
@@ -38,51 +38,51 @@ def test_confirm_action_passed_through():
 
 # ── confirm 無 next_question 仍合法（confirm 不需下一題）──
 @pytest.mark.req("conversational-repair:4.1")
-def test_confirm_without_next_question_is_valid():
+async def test_confirm_without_next_question_is_valid():
     opt = _opt({"action": "confirm", "extracted_fields": {}})
-    r = opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "好")
+    r = await opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "好")
     assert r is not None
     assert r["action"] == "confirm"
 
 
 # ── inline_answer 合法透傳（岔題先答）──
 @pytest.mark.req("conversational-repair:3.1")
-def test_inline_answer_passed_through():
+async def test_inline_answer_passed_through():
     opt = _opt({"action": "ask", "next_question": "發生多久了？",
                 "inline_answer": "牆內管線由業者負責", "extracted_fields": {}})
-    r = opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "要自己出錢嗎")
+    r = await opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "要自己出錢嗎")
     assert r["inline_answer"] == "牆內管線由業者負責"
 
 
 # ── inline_answer 非 str → 丟棄（不半吊子透傳）──
 @pytest.mark.req("conversational-repair:3.1")
-def test_inline_answer_non_str_dropped():
+async def test_inline_answer_non_str_dropped():
     opt = _opt({"action": "ask", "next_question": "q",
                 "inline_answer": {"bad": 1}, "extracted_fields": {}})
-    r = opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "x")
+    r = await opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "x")
     assert r is not None
     assert "inline_answer" not in r
 
 
 # ── inline_answer 缺省 → 輸出不含該鍵（向後相容）──
 @pytest.mark.req("conversational-repair:3.1")
-def test_inline_answer_absent_no_key():
+async def test_inline_answer_absent_no_key():
     opt = _opt({"action": "converge", "converge_kind": "answer", "extracted_fields": {}})
-    r = opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "x")
+    r = await opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "x")
     assert "inline_answer" not in r
 
 
 # ── 未知 action（'submit'）→ None（拒絕未知值，不寬鬆回退）──
 @pytest.mark.req("conversational-repair:4.1")
-def test_unknown_action_rejected():
+async def test_unknown_action_rejected():
     opt = _opt({"action": "submit", "extracted_fields": {}})
-    r = opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "送出")
+    r = await opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "送出")
     assert r is None
 
 
 # ── action='ask' 無 next_question → None（既有行為不回歸）──
 @pytest.mark.req("conversational-repair:4.1")
-def test_ask_without_next_question_still_none():
+async def test_ask_without_next_question_still_none():
     opt = _opt({"action": "ask", "extracted_fields": {}})
-    r = opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "x")
+    r = await opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "x")
     assert r is None

@@ -450,6 +450,74 @@ FROM (SELECT MAX(turn_number) mx FROM usage_events WHERE facet_key='repair' GROU
 收尾照 §10 `make audit`（不變量 4 對 `修繕報修` category 會 WARN「查無系統脈絡知識」——
 本面向為交易型／輕引導型：靠意圖錨點＋config＋表單填槽推進，**不需**「系統脈絡：」長文脈絡，屬**預期免脈絡**，非缺漏）。
 
+## 14. brain-kb-grounding（Brain 掛載 search_kb 工具）（2026-07-20）
+
+對話面向 Brain（`conversational_step`）改 async 並掛載 OpenAI function calling 工具 `search_kb`：
+交易面向（`_tx`，目前＝修繕）對話中遇事實性岔題（費用/時程/規定）時，Brain 呼叫既有知識庫
+檢索（pgvector＋reranker 零改動、脈絡與 FAQ 主路徑同源）查了再答，使 `inline_answer` 從
+憑印象升級為知識庫背書。診斷面向不掛工具（行為與現狀完全一致）。純唯讀、寫入 gate 不動。
+
+**部署順序：M（search_kb_status 欄，加性）→ 推程式（rebuild）→ 煙囪（費用岔題）→ 驗收 SQL**
+
+```bash
+# 14-1 M（加性、冪等）：usage_events 加 search_kb_status 單欄
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
+  < rag-orchestrator/database/migrations/20260720_usage_events_search_kb_status.sql
+# 自檢：SELECT column_name FROM information_schema.columns
+#       WHERE table_name='usage_events' AND column_name='search_kb_status'; → 一列
+# （欄位偵測保護：M 未套時計量事件本體照舊完整寫入，僅此欄略過 → 部署順序皆安全。）
+# 反悔：< rag-orchestrator/database/migrations/20260720_usage_events_search_kb_status_rollback.sql
+
+# 14-2 推程式（常駐 rag 容器是 baked image；本案生效必須重建）
+docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrator
+```
+
+> ⚠️ **常駐 rag 容器不重建＝工具圈不上線**（`conversational_step` 仍為舊 sync 版、Brain 不掛工具；
+> `make audit` 不變量 3 也會抓 `services/llm_answer_optimizer.py`／`services/conversational_engine.py`／
+> `services/usage_metering.py` 容器/本地不一致）。**semantic-model／reranker 免重建**（檢索管線零改動，
+> 同 §13 查證結論）。**redis 檢索快取免特別清**（本案不改知識內容、不改檢索結果，只多一個內部呼叫方）。
+
+**14-3 煙囪**（費用岔題實跑一輪，確認查庫落地＋埋點）：
+
+```bash
+SID="smoke_kbtool_$(date +%s)"
+# 修繕面向對話中岔題問費用（先進面向、再岔題）——此處直接以直達參數進面向後問費用
+curl -sS -X POST http://localhost:8100/api/v1/message -H "Content-Type: application/json" \
+  -d "{\"message\": \"馬桶不通，這修理要收費嗎\", \"vendor_id\": 1, \"mode\": \"b2c\", \"target_user\": \"tenant\", \"role_id\": \"<真租客 role>\", \"session_id\": \"$SID\", \"trigger_facet_key\": \"repair_create\"}"
+# 期望：回應先答費用（與知識庫費用歸屬知識一致、非憑印象），再接回槽位收集。
+# 埋點入庫確認：
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "SELECT search_kb_status, facet_key, session_id FROM usage_events WHERE session_id='$SID' ORDER BY id DESC LIMIT 3;"
+# 期望：該岔題輪 search_kb_status='hit'（庫中有費用知識時）或 'miss'（查無時誠實回退）。
+```
+
+### 14-4 環境變數與快速回退
+
+- **`KB_SIMILARITY_THRESHOLD`**（沿用既有，預設 0.55）：`search_kb` 與 FAQ 主路徑同源閾值，不另設。
+- **`SEARCH_KB_ENABLED`**（可選，預設 true）：設 `false` → 交易面向不注入工具＝**即時回退現行行為**（Brain 憑規則答岔題），
+  免重推程式、免 migration 回復。prod 若發現工具圈延遲或幻覺異常，先關此開關止血再排查。
+
+### 14-5 驗收 SQL（R5.2/R5.3：呼叫率／命中率／P90 延遲增量）
+
+```sql
+-- 岔題輪工具呼叫率＋命中率（切分鍵＝search_kb_status）
+SELECT facet_key,
+       count(*) FILTER (WHERE search_kb_status IS NOT NULL)::float / NULLIF(count(*),0) AS call_rate,
+       count(*) FILTER (WHERE search_kb_status = 'hit')::float
+         / NULLIF(count(*) FILTER (WHERE search_kb_status IS NOT NULL), 0) AS hit_rate
+FROM usage_events WHERE facet_key IS NOT NULL GROUP BY facet_key;
+
+-- 工具輪 vs 一般輪 P90 延遲（增量＝前者−後者，目標 ≤3s；超標觸發設計覆核）
+SELECT percentile_disc(0.9) WITHIN GROUP (ORDER BY duration_ms)
+         FILTER (WHERE search_kb_status IS NOT NULL) AS p90_tool_turn,
+       percentile_disc(0.9) WITHIN GROUP (ORDER BY duration_ms)
+         FILTER (WHERE search_kb_status IS NULL) AS p90_plain_turn
+FROM usage_events WHERE facet_key IS NOT NULL;
+```
+
+收尾照 §10 `make audit`。B 區數據（call_rate/hit_rate/事實一致性）供 A 區（進場路由 agent 化，
+前置於回測現代化，另案）評估引用。
+
 ## 附錄 A：全庫搬遷路徑（2026-07-07 裁定採用；取代 §1–§3）
 
 > **新環境建置的唯一正式路徑＝本附錄的 dump 還原**。`database/init-legacy/`（原 `database/init/`）

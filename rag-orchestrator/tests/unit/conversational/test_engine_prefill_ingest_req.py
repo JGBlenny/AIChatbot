@@ -95,8 +95,8 @@ async def test_prepare_seeds_prefill_on_new_session(monkeypatch):
         return started["state"]
     eng._start = _start
     # brain 回 ask（避免走 API grounding）；驗證進場時 state 已含 prefill 槽位。
-    eng.optimizer.conversational_step.return_value = {
-        "action": "ask", "next_question": "急迫程度？", "extracted_fields": {}, "scope": "stay"}
+    eng.optimizer.conversational_step = AsyncMock(return_value={
+        "action": "ask", "next_question": "急迫程度？", "extracted_fields": {}, "scope": "stay"})
     prefill = {"slots": {"estate": {"value": "信義套房", "source": "prefill"}},
                "candidates": None, "degraded": None}
     await eng.prepare("s1", "u1", 2, "冷氣壞了", config=_tx_cfg(),
@@ -111,8 +111,8 @@ async def test_prepare_ignores_prefill_on_existing_session():
                 "asked_count": 1, "session_id": "s1"}
     eng.get_state = AsyncMock(return_value=existing)
     eng._start = AsyncMock()
-    eng.optimizer.conversational_step.return_value = {
-        "action": "ask", "next_question": "?", "extracted_fields": {}, "scope": "stay"}
+    eng.optimizer.conversational_step = AsyncMock(return_value={
+        "action": "ask", "next_question": "?", "extracted_fields": {}, "scope": "stay"})
     prefill = {"slots": {"estate": {"value": "NEW"}}, "candidates": None, "degraded": None}
     await eng.prepare("s1", "u1", 2, "續問", config=_tx_cfg(),
                       start_if_absent=True, prefill=prefill)

@@ -38,11 +38,11 @@ def _sent_user_prompt(opt) -> str:
 
 
 @pytest.mark.req("conversational-diagnosis:2.4")
-def test_dialog_history_rendered_into_prompt():
+async def test_dialog_history_rendered_into_prompt():
     opt = _opt({"action": "ask", "next_question": "q", "extracted_fields": {}})
     state = {"collected_fields": {},
              "dialog": [{"u": "想把租期延長", "a": "請問合約編號或物件名稱是什麼？"}]}
-    opt.conversational_step("RULES", "SYS", state, "捷仕堂大一廳一房")
+    await opt.conversational_step("RULES", "SYS", state, "捷仕堂大一廳一房")
     up = _sent_user_prompt(opt)
     assert "最近對話" in up
     assert "請問合約編號或物件名稱是什麼？" in up
@@ -52,18 +52,18 @@ def test_dialog_history_rendered_into_prompt():
 
 
 @pytest.mark.req("conversational-diagnosis:2.4")
-def test_no_dialog_no_history_block():
+async def test_no_dialog_no_history_block():
     opt = _opt({"action": "ask", "next_question": "q", "extracted_fields": {}})
-    opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "我想改合約")
+    await opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "我想改合約")
     up = _sent_user_prompt(opt)
     assert "最近對話" not in up
 
 
 @pytest.mark.req("conversational-diagnosis:2.4")
-def test_dialog_renders_only_recent_tail():
+async def test_dialog_renders_only_recent_tail():
     opt = _opt({"action": "ask", "next_question": "q", "extracted_fields": {}})
     dialog = [{"u": f"u{i}", "a": f"a{i}"} for i in range(10)]
-    opt.conversational_step("RULES", "SYS", {"collected_fields": {}, "dialog": dialog}, "x")
+    await opt.conversational_step("RULES", "SYS", {"collected_fields": {}, "dialog": dialog}, "x")
     up = _sent_user_prompt(opt)
     assert "a9" in up and "a6" in up     # 尾段在
     assert "a0" not in up                # 遠古的不在（只渲染尾 4 輪）
@@ -73,7 +73,7 @@ def test_dialog_renders_only_recent_tail():
 
 def _engine(step_result):
     optimizer = MagicMock()
-    optimizer.conversational_step.return_value = step_result
+    optimizer.conversational_step = AsyncMock(return_value=step_result)
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),
         get_system_context=AsyncMock(return_value="SYS"),
@@ -144,11 +144,11 @@ async def test_ground_by_api_converge_stores_grounding_note():
 
 
 @pytest.mark.req("conversational-diagnosis:2.4")
-def test_grounding_note_rendered_into_brain_prompt():
+async def test_grounding_note_rendered_into_brain_prompt():
     opt = _opt({"action": "ask", "next_question": "q", "extracted_fields": {}})
     state = {"collected_fields": {},
              "grounding_note": "85646｜0707\n租期 2026/07/01–2026/07/30"}
-    opt.conversational_step("RULES", "SYS", state, "填寫資料異動申請書")
+    await opt.conversational_step("RULES", "SYS", state, "填寫資料異動申請書")
     up = _sent_user_prompt(opt)
     assert "已鎖定資料" in up
     assert "租期 2026/07/01–2026/07/30" in up
@@ -156,9 +156,9 @@ def test_grounding_note_rendered_into_brain_prompt():
 
 
 @pytest.mark.req("conversational-diagnosis:2.4")
-def test_no_grounding_note_no_block():
+async def test_no_grounding_note_no_block():
     opt = _opt({"action": "ask", "next_question": "q", "extracted_fields": {}})
-    opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "x")
+    await opt.conversational_step("RULES", "SYS", {"collected_fields": {}}, "x")
     assert "已鎖定資料" not in _sent_user_prompt(opt)
 
 

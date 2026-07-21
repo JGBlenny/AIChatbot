@@ -72,7 +72,7 @@ async def test_engine_recommend_converge_carries_cta_rules(monkeypatch):
         rules_loader=AsyncMock(return_value="RULES"), api_handler=MagicMock())
     eng._save = AsyncMock()
     eng._converge_grounding = AsyncMock(return_value=("G", [{"field_label": "身分", "selected_label": "房東"}], "force"))
-    eng.optimizer.conversational_step = MagicMock(return_value={
+    eng.optimizer.conversational_step = AsyncMock(return_value={
         "action": "converge", "converge_kind": "recommend",
         "extracted_fields": {}, "scope": "stay"})
     eng.get_state = AsyncMock(return_value={
@@ -86,7 +86,7 @@ async def test_engine_recommend_converge_carries_cta_rules(monkeypatch):
 
     # 事實型（suppress）→ 只附鐵則
     eng._converge_grounding = AsyncMock(return_value=("G", None, "suppress"))
-    eng.optimizer.conversational_step = MagicMock(return_value={
+    eng.optimizer.conversational_step = AsyncMock(return_value={
         "action": "converge", "converge_kind": "answer", "extracted_fields": {}, "scope": "stay"})
     d2 = await eng.prepare("s", "u", 7, "IoT 怎麼算", config=cfg)
     assert d2["system_md"].endswith("AR") and "CTA" not in d2["system_md"]

@@ -18,6 +18,7 @@
 
 import asyncio
 import json
+import os
 import re
 from typing import Any, Dict, List, Optional
 
@@ -307,6 +308,19 @@ def _is_transaction_scope(scope: Dict[str, Any]) -> bool:
     return bool((scope or {}).get("execute_endpoint"))
 
 
+def _format_kb_hits_for_tool(results: List[Dict[str, Any]], top: int = 2) -> str:
+    """檢索命中序列化為 tool result 文字（brain-kb-grounding 元件 2）：供 Brain 據實組話。
+    只帶 question_summary/answer（事實內容），不帶分數/metadata（Brain 不需要）。"""
+    lines = []
+    for r in (results or [])[:top]:
+        ans = (r.get("answer") or "").strip()
+        if not ans:
+            continue
+        q = (r.get("question_summary") or "").strip()
+        lines.append(f"【{q}】{ans}" if q else ans)
+    return "\n\n".join(lines) if lines else "NO_MATCH"
+
+
 def _slot_values(collected: Dict[str, Any]) -> Dict[str, Any]:
     """把統一槽位表攤平成 {slot: value}（供模板嵌值/params 映射）。
     槽位值可能是 {value, source, confirmed} dict（prefill 統一形狀）或裸值（brain 抽取）——
@@ -400,6 +414,32 @@ class ConversationalEngine:
         # 診斷型對話的 API grounding 用（conversational-diagnosis R3.1）；
         # 可選，不傳為 None（向後相容售前）。實際 grounding 於 select:"api" 分支使用。
         self.api_handler = api_handler
+
+    def _make_kb_search(self, config, state):
+        """建構注入 Brain 的 async 唯讀知識庫檢索 callback（brain-kb-grounding 元件 2）。
+        脈絡（vendor/target_user/mode/閾值）於此固定，與 FAQ 主路徑同源（chat.py:2797
+        用 KB_SIMILARITY_THRESHOLD，非決策樹 0.6）。命中 → 序列化 answer 供 Brain 據實組話；
+        空結果或例外 → NO_MATCH_SENTINEL（R3.2/R4.1 誠實回退＝失敗等同未掛工具）。純唯讀。"""
+        from services.llm_answer_optimizer import NO_MATCH_SENTINEL
+        scope = getattr(config, "grounding_scope", None) or {}
+        vendor_id = state.get("vendor_id")
+        target_user = scope.get("target_user") or getattr(config, "persona_role", None) or "tenant"
+        mode = scope.get("mode") or "b2c"
+        kb_threshold = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.55"))
+
+        async def kb_search(query: str) -> str:
+            try:
+                results = await self.retriever.retrieve_knowledge_hybrid(
+                    query=query, vendor_id=vendor_id, top_k=3,
+                    similarity_threshold=kb_threshold, target_user=target_user, mode=mode,
+                )
+                if not results:
+                    return NO_MATCH_SENTINEL
+                return _format_kb_hits_for_tool(results)
+            except Exception as e:                       # 失敗＝等同未掛工具（Brain 走無命中回退，R4.1）
+                print(f"⚠️ [search_kb] 檢索失敗，降級：{e}")
+                return NO_MATCH_SENTINEL
+        return kb_search
 
     # ---------- 狀態（元件 11，R16） ----------
     async def get_state(self, session_id: str) -> Optional[Dict[str, Any]]:
@@ -628,7 +668,13 @@ class ConversationalEngine:
             if not rules_text:
                 return None  # 該角色無規則 → 降級
 
-            step = self.optimizer.conversational_step(rules_text, system_md, state, user_message, faces=faces)
+            # kb_search 僅注入交易面向（_tx）——診斷面向不掛工具、行為與現狀完全一致（R6.1）。
+            # 模型 tool_choice=auto 自行決定是否岔題查庫；不查＝與現行一致（R1.3）。
+            # SEARCH_KB_ENABLED=false → 不注入（快速回退＝現行行為，免重推程式）。
+            _kb_enabled = os.getenv("SEARCH_KB_ENABLED", "true").lower() != "false"
+            _kb_search = self._make_kb_search(config, state) if (_tx and _kb_enabled) else None
+            step = await self.optimizer.conversational_step(
+                rules_text, system_md, state, user_message, faces=faces, kb_search=_kb_search)
             if step is None:
                 if state.get("asked_count", 0) == 0:
                     await self._close(session_id)  # 新會話 brain 失敗 → 關掉殘留 COLLECTING

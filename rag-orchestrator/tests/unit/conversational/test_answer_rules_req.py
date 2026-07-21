@@ -81,7 +81,7 @@ async def test_candidate_pick_converge_appends_answer_rules():
 @pytest.mark.req("domain-conversational-facets:3.2")
 async def test_brain_converge_appends_answer_rules(monkeypatch):
     eng = _engine()
-    eng.optimizer.conversational_step = MagicMock(return_value={
+    eng.optimizer.conversational_step = AsyncMock(return_value={
         "action": "converge", "converge_kind": "answer",
         "extracted_fields": {"contract_ref": "84800"}, "scope": "stay"})
     eng.get_state = AsyncMock(return_value={"config_key": "contract_diag",

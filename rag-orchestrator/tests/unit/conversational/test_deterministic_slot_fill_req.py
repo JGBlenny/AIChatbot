@@ -41,7 +41,7 @@ def test_extract_identifier():
 
 def _engine(ground_result):
     optimizer = MagicMock()
-    optimizer.conversational_step = MagicMock()  # 用來斷言「沒被呼叫」
+    optimizer.conversational_step = AsyncMock()  # 用來斷言「沒被呼叫」
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),
         get_system_context=AsyncMock(return_value="MD"),
@@ -98,8 +98,8 @@ async def test_number_many_rows_lists_candidates():
 @pytest.mark.req("domain-conversational-facets:4.4")
 async def test_opening_sentence_goes_to_brain():
     eng = _engine({"kind": "converge", "grounding": "G"})
-    eng.optimizer.conversational_step.return_value = {
-        "action": "ask", "next_question": "請提供合約編號或物件名稱", "extracted_fields": {}, "scope": "stay"}
+    eng.optimizer.conversational_step = AsyncMock(return_value={
+        "action": "ask", "next_question": "請提供合約編號或物件名稱", "extracted_fields": {}, "scope": "stay"})
     state = {"config_key": "contract_diag", "collected_fields": {}, "asked_count": 0}
     eng.get_state = AsyncMock(return_value=state)
     d = await eng.prepare("s", "u", 7, "我的合約狀態怪怪的", config=_cfg())
@@ -170,8 +170,8 @@ async def test_switch_contract_via_text_number():
 @pytest.mark.req("domain-conversational-facets:4.4")
 async def test_same_number_followup_goes_to_brain():
     eng = _engine({"kind": "converge", "grounding": "G"})
-    eng.optimizer.conversational_step.return_value = {
-        "action": "converge", "converge_kind": "answer", "extracted_fields": {}, "scope": "stay"}
+    eng.optimizer.conversational_step = AsyncMock(return_value={
+        "action": "converge", "converge_kind": "answer", "extracted_fields": {}, "scope": "stay"})
     state = {"config_key": "contract_diag", "collected_fields": {"contract_ref": "84328"}, "asked_count": 2}
     eng.get_state = AsyncMock(return_value=state)
     await eng.prepare("s", "u", 7, "84328 可以點退嗎?", config=_cfg())  # 同編號 → 非切換

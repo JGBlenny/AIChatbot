@@ -65,7 +65,7 @@ class _Brain:
         self._scope, self._face = scope, face
         self.seen = {}
 
-    def conversational_step(self, rules, system_md, state, msg, faces=None):
+    async def conversational_step(self, rules, system_md, state, msg, faces=None, kb_search=None):
         self.turn += 1
         # 三層脈絡標記＝現行種子（seed_domain_contract_system_context.sql）的獨有語句：
         #   母『系統合約』＝12 里程碑表；子『狀態判斷』＝以系統判定為準（原始 bit_status 已改由 formatter 解碼，不再進脈絡）
