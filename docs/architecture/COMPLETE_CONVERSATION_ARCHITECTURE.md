@@ -6,6 +6,8 @@
 > **相關文件**：
 > - Retriever Pipeline 分數欄位：[retriever-pipeline.md](./retriever-pipeline.md)
 > - 知識資料結構：[DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)
+> - **端到端合併大圖**（§1–§14＋全景圖合成單一流程圖，技術版）：[conversation-flow-complete.mmd](./conversation-flow-complete.mmd)／[.svg](./conversation-flow-complete.svg)
+> - **業務版流程圖**（給非技術受眾，白話無術語）：[conversation-flow-business.mmd](./conversation-flow-business.mmd)／[.svg](./conversation-flow-business.svg)／[.png](./conversation-flow-business.png)
 
 ---
 
@@ -184,8 +186,10 @@ classify_intent(question, available_intents) → {
 
 | 意圖級別 | 數量限制 | 用途 |
 |---------|---------|------|
-| 主要意圖 | 1 個 | RAG 檢索 1.3x 加成 |
-| 次要意圖 | 最多 2 個 | RAG 檢索 1.1x 加成 |
+| 主要意圖 | 1 個 | 回應標註／knowledge_intent_mapping 關聯 |
+| 次要意圖 | 最多 2 個 | 同上 |
+
+> ⚠️ 2026-07-16 對碼修正：原記載「主 1.3x／次 1.1x 檢索加成」**無實裝**。實碼的分數加成是**關鍵字加成**（base_retriever.py:357-403：每命中一詞 +0.1、上限 +0.3，倍率 1.0–1.3）；意圖經 knowledge_intent_mapping JOIN 帶出（vendor_knowledge_retriever_v2.py:219-221），無意圖倍率。
 
 **意圖配置來源**：
 1. **資料庫** (intents 表)：動態配置，支援業者自定義
@@ -332,12 +336,9 @@ return unclear_response
 - **業態過濾**：`business_types IS NULL OR business_types @> ARRAY[$business_type]`
 - **啟用狀態**：`is_active = true`
 
-### 優先級加成（知識庫專屬）
+### 優先級與加成（知識庫專屬）
 
-```python
-if priority > 0 AND similarity >= 0.70:
-    boosted_similarity += 0.15  # 固定加成
-```
+> ⚠️ 2026-07-16 對碼修正：原記載「priority>0 且 similarity≥0.70 → +0.15」**無實裝**。實碼行為：`priority` 用於檢索排序（vendor_knowledge_retriever_v2.py:121 `ORDER BY kb.priority DESC`）；分數加成為關鍵字加成 1.0–1.3x（見 §2 修正註）。
 
 > Retriever Pipeline 各階段分數欄位的詳細說明，請參考 [retriever-pipeline.md](./retriever-pipeline.md)。
 
@@ -601,16 +602,12 @@ stateDiagram-v2
     COLLECTING --> COLLECTING: 收集欄位
     COLLECTING --> DIGRESSION: 用戶離題
     COLLECTING --> REVIEWING: 所有欄位完成
-    COLLECTING --> CONFIRMING: SOP immediate 確認
 
     DIGRESSION --> COLLECTING: 選擇恢復
     DIGRESSION --> PAUSED: 選擇暫停
 
     PAUSED --> COLLECTING: resume_form()
     PAUSED --> CANCELLED: 超時/取消（預設 30 分鐘）
-
-    CONFIRMING --> COLLECTING: 用戶確認
-    CONFIRMING --> CANCELLED: 用戶取消
 
     REVIEWING --> EDITING: 用戶要求修改
     REVIEWING --> COMPLETED: 確認提交
@@ -632,11 +629,6 @@ stateDiagram-v2
         動作: 處理其他問題
     end note
 
-    note right of CONFIRMING
-        狀態: 確認中
-        動作: SOP immediate 模式等待確認
-    end note
-
     note right of REVIEWING
         狀態: 審核確認
         動作: 顯示所有資料
@@ -647,6 +639,8 @@ stateDiagram-v2
         動作: 修改特定欄位
     end note
 ```
+
+> ⚠️ 2026-07-16 對碼修正：`CONFIRMING` 於 FormState 有定義（form_manager.py:41）但全庫**無任何轉換使用**（死狀態）；SOP immediate 的待確認由 SOP context（Redis）管理，不進表單狀態機。上圖已移除 CONFIRMING 轉換，實際使用中狀態為 7 個。
 
 ### 離題偵測
 

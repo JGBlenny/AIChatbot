@@ -1,0 +1,229 @@
+---
+config:
+  layout: elk
+  theme: base
+  themeVariables:
+    fontSize: "14px"
+    primaryColor: "#ffffff"
+    primaryBorderColor: "#94a3b8"
+    lineColor: "#64748b"
+    clusterBkg: "#f8fafc"
+    clusterBorder: "#cbd5e1"
+  elk:
+    nodePlacementStrategy: NETWORK_SIMPLEX
+---
+%% 對話邏輯端到端合併流程圖（單一大圖版）
+%% 來源合併：COMPLETE_CONVERSATION_ARCHITECTURE.md §1–§14 ＋ chat-architecture-overview.md 全景圖
+%% 產生：2026-07-16；現況基準＝conversational-repair 收案（646743a）＋ a4421d5
+%% 維護：與上述兩文件同步改；編譯：npx -y @mermaid-js/mermaid-cli -i conversation-flow-complete.mmd -o conversation-flow-complete.svg
+%% 圖例：(( )) 起訖　{ } 決策　⟦R⟧ 就地回應終點（= 回傳用戶，JSON 或 SSE）　虛線＝資料/埋點
+flowchart TB
+
+    classDef resp fill:#dcfce7,stroke:#16a34a,color:#14532d,font-weight:bold
+    classDef dec fill:#fef9c3,stroke:#ca8a04
+    classDef warn fill:#fee2e2,stroke:#dc2626
+    classDef data fill:#f1f5f9,stroke:#94a3b8
+
+    %% ═══════════ 入口 ═══════════
+    subgraph ENTRY["① 入口與身份正規化"]
+        direction LR
+        U(["用戶訊息"])
+        WEB["Web 內嵌（jgb2 代理）✅"]
+        LINEBOT["LINE Bot 🚧"]
+        NORM["VendorChatRequest 單一契約<br/>mode × target_user × vendor × 雙證"]
+        U --> WEB --> NORM
+        U -.-> LINEBOT -.-> NORM
+    end
+
+    %% ═══════════ 回合歸屬 ═══════════
+    subgraph OWN["② 回合歸屬 Step 0–1.5（由上而下攔截）"]
+        S0A["0a：role_id 自動補全"]
+        S0{"0：進行中會話？"}
+        S04{"0.4：trigger_facet_key？"}
+        S05{"0.5：損傷圖 is_damage？"}
+        V1["1：業者驗證"]
+        S15{"1.5：prospect？<br/>（b2b＋無 role_id）"}
+        S0A --> S0
+        S0 -->|"無會話"| S04 -->|"否"| S05 -->|"否"| V1 --> S15
+    end
+    NORM --> S0A
+
+    %% ═══════════ 快路徑前處理 ═══════════
+    subgraph PREP["③ 前處理"]
+        C2{"2：三層快取<br/>（動作類/串流/debug 排除）"}
+        QR["3：query rewriting＋embedding 預計算"]
+        INT["意圖分類（主 1.3x／次 1.1x 加成）"]
+        C2 -->|"未命中"| QR --> INT
+    end
+    S15 -->|"否"| C2
+    C2 -->|"命中"| R_CACHE["⟦R⟧ 快取回應"]
+
+    %% ═══════════ 檢索與仲裁 ═══════════
+    subgraph RETR["④ 檢索與仲裁 Step 4"]
+        MODE{"4a：mode？"}
+        KBSYS["b2b：只檢索系統知識庫<br/>（無 SOP／表單）"]
+        PAR["4b：SOP ∥ 知識並行檢索"]
+        ARB{"4c：仲裁<br/>SOP≥0.55／知識≥0.6／差距 0.15<br/>─────<br/>0A 取消→禮貌回應｜0B 已執行→絕對優先<br/>0C SOP 等詞→讓知識答｜1/2 顯著高者勝<br/>3 接近：SOP 有動作優先（3.1 業者覆蓋）<br/>4/5 單方達標｜6 都不達標"}
+        ROUTE{"4e：分類路由<br/>top1≥0.75 且命中面向配置？"}
+        ACT{"4f：action_type？"}
+        FB["4g：fallback 鏈<br/>參數答案→LLM 兜底"]
+        MODE -->|"b2b"| KBSYS --> ROUTE
+        MODE -->|"b2c"| PAR --> ARB
+        ARB -->|"知識勝出"| ROUTE
+        ARB -->|"都不達標"| FB
+        ROUTE -->|"否"| ACT
+    end
+    INT --> MODE
+    FB --> R_FB["⟦R⟧ 兜底回應"]
+
+    %% ═══════════ SOP 觸發 ═══════════
+    subgraph SOPF["⑤ SOP 觸發（修繕子集停用＝M2，其餘不動）"]
+        TM{"trigger_mode？"}
+        SMAN["manual：顯示＋等觸發詞"]
+        SIMM["immediate：顯示＋詢問確認"]
+        KW{"觸發詞命中？"}
+        CF{"確認？<br/>否定/問句/過長→不觸發"}
+        NA{"next_action？"}
+        TM -->|"manual"| SMAN --> KW -->|"命中"| NA
+        TM -->|"immediate"| SIMM --> CF -->|"確認"| NA
+    end
+    ARB -->|"SOP 勝出"| TM
+    TM -->|"none：純資訊"| R_SOP["⟦R⟧ SOP 內容"]
+    KW -->|"未命中"| R_SOP
+    CF -->|"取消"| R_SOP
+
+    %% ═══════════ 知識層表單觸發 ═══════════
+    KTRIG{"知識 trigger_mode？<br/>（欄位斷鏈 P0 已修）"}
+    ACT -->|"form_fill（另需≥0.75）"| KTRIG
+    KTRIG -->|"manual"| KW
+    KTRIG -->|"immediate"| CF
+
+    %% ═══════════ 表單機 ═══════════
+    subgraph FORM["⑥ 表單機（7 個使用中狀態；修繕已改走⑧不逐欄）"]
+        FSTART["建立表單會話"]
+        COLL["COLLECTING 逐欄收集＋驗證"]
+        DIG["DIGRESSION 離題<br/>exit→取消／question→答後拉回"]
+        PAUSE["PAUSED（30 分超時）"]
+        REV["REVIEWING 審核摘要"]
+        EDIT["EDITING 修改欄位"]
+        OCA{"on_complete_action？"}
+        CHAIN["chaining／option-routing<br/>決策樹（深度≤3）"]
+        FSTART --> COLL
+        COLL <-->|"離題/恢復"| DIG
+        DIG -->|"暫停"| PAUSE -->|"resume"| COLL
+        COLL -->|"齊"| REV
+        REV <-->|"修改 N"| EDIT
+        REV -->|"確認"| OCA
+        OCA -->|"chaining"| CHAIN --> FSTART
+    end
+    KTRIG -->|"auto/NULL"| FSTART
+    NA -->|"form_fill／form_then_api"| FSTART
+    ACT -->|"form_then_api"| FSTART
+    S0 -->|"②表單會話續跑"| COLL
+    REV -->|"取消"| R_FORM["⟦R⟧ 表單取消/完成"]
+    PAUSE -->|"超時"| R_FORM
+    OCA -->|"show_knowledge"| R_FORM
+
+    %% ═══════════ 答案優化 ═══════════
+    subgraph OPTF["⑦ 答案優化（direct_answer）"]
+        OPT{"優化決策"}
+        PERFECT["完美匹配 ≥0.90 原答直回"]
+        SYN["合成：≥2 筆 >0.80＋複雜問題"]
+        FASTP["快速路徑≥0.75／模板／完整優化"]
+        INJ["業者參數注入"]
+        OPT --> PERFECT & SYN & FASTP
+        PERFECT --> INJ
+        SYN --> INJ
+        FASTP --> INJ
+    end
+    ACT -->|"direct_answer"| OPT
+    INJ --> R_OPT["⟦R⟧ 優化答案（寫入快取）"]
+
+    %% ═══════════ 對話面向引擎 ═══════════
+    subgraph ENG["⑧ 對話面向引擎（面向＝DB 配置，加面向零改碼）"]
+        GATE{"enabled_gate？<br/>（vendor_configs，缺值＝true）"}
+        FACET["面向啟動（對話規則列<br/>target_user＝persona_role 鐵則）"]
+        PRE["prefill：租約雙證＋分類推斷＋Vision<br/>槽位＝扁平標量"]
+        BRAIN["Brain 每輪決策<br/>ask／converge／confirm／inline_answer 岔題即答"]
+        CTX["三層系統脈絡＋槽位＋候選辨識"]
+        GRD{"grounding"}
+        GAPI["API facts→formatter 決定性解碼<br/>1 筆答／0 筆追問／N 筆候選"]
+        GVEC["ids/分類/向量選材"]
+        SWITCH["face 切換／scope switch<br/>離題→關會話重路由"]
+        TXQ{"grounding_scope 有<br/>execute_endpoint？"}
+        GATE -->|"開"| FACET --> PRE --> BRAIN
+        BRAIN --> CTX --> GRD
+        GRD --> GAPI & GVEC
+        BRAIN -.-> SWITCH
+        GAPI --> TXQ
+        GVEC --> TXQ
+    end
+    S04 -->|"命中且 enabled：直達"| GATE
+    S05 -->|"損傷：帶 Vision 結果改道"| GATE
+    S15 -->|"prospect：engine-first"| FACET
+    ROUTE -->|"是"| GATE
+    S0 -->|"①對話偽會話續跑（補圖只填空槽）"| BRAIN
+    GATE -->|"關"| R_DEG["⟦R⟧ 降級文案＋客服管道"]
+    TXQ -->|"無：診斷面向<br/>facts→LLM 組話（收斂不關會話）"| R_DIAG["⟦R⟧ 診斷作答"]
+
+    %% ═══════════ 交易面向 ═══════════
+    subgraph TX["⑨ 交易面向（首例：修繕建單 ≤3 輪）"]
+        SLOTS["required_slots 收齊<br/>（brain confirm＋引擎保底驗齊）"]
+        CONFIRM{"確認 gate<br/>引擎層決定性同意"}
+        EXEC["execute：execute_params→endpoint"]
+        RCPT["回執 receipt_template<br/>executed=true 冪等不重建"]
+        TXFAIL["失敗誠實告知＋重試<br/>（executed 不設）"]
+        SLOTS -->|"齊"| CONFIRM
+        CONFIRM -->|"同意（按鈕值/同意詞）"| EXEC
+        CONFIRM -->|"修改：槽位保留"| SLOTS
+        EXEC -->|"成功"| RCPT
+        EXEC -->|"失敗"| TXFAIL
+    end
+    TXQ -->|"有：交易面向"| SLOTS
+    SLOTS -->|"未齊：續問"| BRAIN
+    CONFIRM -->|"模糊→交 brain 不送出"| BRAIN
+    CONFIRM -->|"取消：不留殘單"| R_TX["⟦R⟧ 取消"]
+    RCPT --> R_RCPT["⟦R⟧ 建單回執"]
+    TXFAIL --> R_RCPT
+
+    %% ═══════════ API 執行 ═══════════
+    subgraph TOOLS["⑩ API 執行與決定性解碼"]
+        APIH["api_call_handler<br/>註冊表路由＋params_from_form"]
+        JGBAPI["JGB 平台 API（雙證）<br/>mock→真 API＝E1 gate"]
+        LKUP["lookup 結構化資料集（無 LLM）"]
+        FMT["formatter 決定性解碼<br/>＋FACE_BUILDERS 五領域"]
+        APIH -->|"jgb_*"| JGBAPI --> FMT
+        APIH -->|"lookup"| LKUP
+    end
+    ACT -->|"api_call"| APIH
+    NA -->|"api_call"| APIH
+    OCA -->|"call_api／both（重試≤2）"| APIH
+    GAPI -.-> JGBAPI
+    EXEC -.-> JGBAPI
+    FMT --> R_API["⟦R⟧ API 結果"]
+    LKUP --> R_API
+
+    %% ═══════════ 資料層 ═══════════
+    subgraph DATA["資料層（虛線＝讀寫/埋點）"]
+        direction LR
+        KB[("knowledge_base<br/>vendor_ids 空＝通用<br/>對話規則列＝面向定義")]
+        SOPD[("vendor_sop_items")]
+        FS[("form_schemas<br/>NULL＝通用")]
+        LKT[("lookup_tables")]
+        VC[("vendor_configs")]
+        UE[("usage_events<br/>計量/額度/facet 埋點")]
+    end
+    PAR -.-> KB & SOPD
+    KBSYS -.-> KB
+    FSTART -.-> FS
+    LKUP -.-> LKT
+    GATE -.-> VC
+    INJ -.-> VC
+    NORM -. "每則計量" .-> UE
+    ARB -. "分數" .-> UE
+    BRAIN -. "set_facet 輪數" .-> UE
+
+    class S0,S04,S05,S15,C2,MODE,ARB,ROUTE,ACT,TM,KW,CF,NA,KTRIG,OCA,OPT,GATE,GRD,TXQ,CONFIRM dec
+    class R_CACHE,R_FB,R_SOP,R_FORM,R_OPT,R_DEG,R_DIAG,R_TX,R_RCPT,R_API resp
+    class TXFAIL,R_DEG warn
+    class KB,SOPD,FS,LKT,VC,UE data
