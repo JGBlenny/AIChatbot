@@ -1791,7 +1791,7 @@ class FormManager:
         severity = recognition_suggestions.get("severity", "")
         if severity == "critical":
             return {
-                "suggested_value": 1,  # 緊急
+                "suggested_value": 2,  # 緊急（DB 真值 2=緊急、1=非緊急）
                 "confirmation_message": "根據照片判斷損壞情況嚴重，建議選擇「緊急」。是否同意？",
             }
         return None

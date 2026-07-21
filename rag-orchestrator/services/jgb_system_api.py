@@ -1308,15 +1308,15 @@ class JGBSystemAPI:
                     "64": "封存",
                 },
                 "emergency_status": {
-                    "1": "緊急",
-                    "2": "非緊急",
+                    "1": "非緊急",
+                    "2": "緊急",
                 },
             },
             "data": [
                 {
                     "id": 3001,
                     "status": 16,
-                    "emergency_status": 2,
+                    "emergency_status": 1,  # 非緊急（漏水已完成修繕）
                     "estate_id": 456,
                     "estate_title": "信義區套房A",
                     "estate_full_address": "台北市信義區信義路五段7號3樓",
@@ -1356,7 +1356,7 @@ class JGBSystemAPI:
                 {
                     "id": 3002,
                     "status": 1,
-                    "emergency_status": 1,
+                    "emergency_status": 2,  # 緊急（冷氣不冷、天氣熱盼盡快）
                     "estate_id": 456,
                     "estate_title": "信義區套房A",
                     "estate_full_address": "台北市信義區信義路五段7號3樓",

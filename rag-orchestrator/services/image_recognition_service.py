@@ -28,7 +28,7 @@ class RecognitionResult(TypedDict, total=False):
     suggested_category: str # 建議的修繕分類名稱
     suggested_item: str     # 建議的損壞項目（如「天花板」「馬桶」）
     suggested_reason: str   # 建議的損壞原因（如「漏水」「堵塞」）
-    suggested_emergency: int  # 1=緊急, 2=非緊急
+    suggested_emergency: int  # 2=緊急, 1=非緊急（對齊 jgb2 DB 真值）
     secondary_damages: List[str]
 
 
@@ -42,7 +42,7 @@ _NOT_DAMAGE_RESULT: RecognitionResult = {
     "suggested_category": "",
     "suggested_item": "",
     "suggested_reason": "",
-    "suggested_emergency": 2,
+    "suggested_emergency": 1,
     "secondary_damages": [],
 }
 
@@ -95,15 +95,16 @@ _BASE_PROMPT = """你是一個租屋損壞辨識專家。請分析以下圖片�
   "suggested_category": "",
   "suggested_item": "",
   "suggested_reason": "",
-  "suggested_emergency": 2,
+  "suggested_emergency": 1,
   "secondary_damages": []
 }}
 
+suggested_emergency：2=緊急、1=非緊急（對齊 jgb2 DB 真值）。
 severity 判斷標準：
-- critical：影響安全或生活（如水管爆裂、電線外露、大面積漏水）→ suggested_emergency=1
-- high：明顯損壞需要儘快修繕（如設備完全失靈）→ suggested_emergency=2
-- medium：一般損壞可安排修繕（如牆面裂痕、小範圍滲水）→ suggested_emergency=2
-- low：輕微損壞或磨損（如油漆剝落、小刮痕）→ suggested_emergency=2"""
+- critical：影響安全或生活（如水管爆裂、電線外露、大面積漏水）→ suggested_emergency=2
+- high：明顯損壞需要儘快修繕（如設備完全失靈）→ suggested_emergency=1
+- medium：一般損壞可安排修繕（如牆面裂痕、小範圍滲水）→ suggested_emergency=1
+- low：輕微損壞或磨損（如油漆剝落、小刮痕）→ suggested_emergency=1"""
 
 
 def build_prompt(category_names: Optional[List[str]] = None, categories_tree: Optional[list] = None) -> str:

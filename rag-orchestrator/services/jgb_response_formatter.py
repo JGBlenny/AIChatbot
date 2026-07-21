@@ -143,6 +143,11 @@ MONEY_KEYS = {
 # 日期整數欄位（YYYYMMDD）
 DATE_INT_KEYS = {"date_expire", "date_start", "date_end"}
 
+# emergency_status 自家真值對照（DB 真值 2=緊急、1=非緊急）。
+# 不信任 API 回應附的 mapping——jgb2 對外 mapping 標反了、修復時程未定；
+# 契約原則「回應 mapping 僅供人讀，不做程式分支依據」。
+_EMERGENCY_STATUS_LABELS = {"1": "非緊急", "2": "緊急"}
+
 # 巢狀 dict 的區段標題
 SECTION_LABELS = {
     "tenant_info": "租客資訊",
@@ -262,7 +267,7 @@ def _format_create_repair(api_result: dict) -> str:
     repair_id = data.get("id", "—")
     broken_reason = data.get("broken_reason", "")
     broken_note = data.get("broken_note", "")
-    emergency = "緊急" if data.get("emergency_status") == 1 else "非緊急"
+    emergency = "緊急" if data.get("emergency_status") == 2 else "非緊急"
 
     lines = [
         f"✅ **修繕單 #{repair_id} 已建立**",
@@ -336,9 +341,11 @@ def _translate(key: str, value: Any, mapping: dict) -> Any:
             if mk in mapping and str_val in mapping[mk]:
                 return mapping[mk][str_val]
 
-    # emergency_status 對照
-    if key == "emergency_status" and "emergency_status" in mapping and str_val in mapping["emergency_status"]:
-        return mapping["emergency_status"][str_val]
+    # emergency_status 對照：一律用自家真值對照，不信任回應附的 mapping。
+    # jgb2 對外 mapping 標反了（1=緊急），DB 真值是 2=緊急/1=非緊急；
+    # 契約原則「回應 mapping 僅供人讀，不做程式分支依據」（見 docs/api/repair-api-contract.md）。
+    if key == "emergency_status":
+        return _EMERGENCY_STATUS_LABELS.get(str_val, value)
 
     return value
 
