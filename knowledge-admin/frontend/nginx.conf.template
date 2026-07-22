@@ -1,3 +1,6 @@
+# 由 nginx 官方 image 的 envsubst 機制展開（/etc/nginx/templates/*.template → conf.d/*.conf）。
+# ${RAG_ADMIN_API_KEY} 於容器啟動時代入（compose environment ← .env，金鑰不進版控、不進瀏覽器）。
+# 其餘 $變數（$host、$http_authorization…）為 nginx 執行期變數，envsubst 只替換「已定義的環境變數」不會誤傷。
 server {
     listen 80;
     server_name localhost;
@@ -31,9 +34,25 @@ server {
         alias /usr/share/nginx/api-docs.html;
     }
 
+    # ── 內部認證子請求：拿前端帶的 Bearer JWT 問後台「這是誰」──
+    # 200 → 已登入；401/403 → auth_request 擋下（前端 401 攔截器導回登入頁＝正確行為）。
+    location = /_admin_auth {
+        internal;
+        set $admin_api_auth http://knowledge-admin-api:8000;
+        proxy_pass $admin_api_auth/api/auth/me;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header Authorization $http_authorization;
+    }
+
     # RAG Orchestrator API 代理 (Phase 1: Multi-Vendor)
     # 前端請求 /rag-api/v1/xxx -> 後端 /api/v1/xxx
+    # 2026-07-22：RAG_API_AUTH_ENFORCE 上線後補的管理後台通道——
+    #   後台 JWT 驗過（auth_request）才轉發，並於伺服器端注入 X-API-Key
+    #   （金鑰只存在 env 與此處，瀏覽器與掃描器拿不到；修「登入即被踢」）。
     location /rag-api/ {
+        auth_request /_admin_auth;
+
         # set 必須在 rewrite...break 之前（break 會中止 rewrite 階段後續指令）
         set $rag_api http://rag-orchestrator:8100;
         rewrite ^/rag-api/(.*)$ /api/$1 break;
@@ -42,6 +61,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-API-Key "${RAG_ADMIN_API_KEY}";
 
         # SSE 串流支援（禁用 buffering，確保即時傳送）
         proxy_buffering off;

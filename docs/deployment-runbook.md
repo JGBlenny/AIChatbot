@@ -552,6 +552,50 @@ RUN_INTEGRATION=1 ... pytest tests/integration/conversational/test_facet_entry_r
 > 裸泛詞（合約/帳單/租客/點退/註冊/物件/儲值）不得單獨作 keyword（jieba 斷詞交集匹配，
 > 一個裸詞=整族問句加成 30%）；掛面向分類的列＝路由器，教學列亂掛=誤進場。
 
+## 16. 後台「登入即被踢」修復：/rag-api 認證通道（2026-07-22）
+
+**根因**：7/7 部署同時上了後台 JWT 認證與 `RAG_API_AUTH_ENFORCE=true`，但後台頁面
+會呼叫 `/rag-api/*`（nginx 轉發 rag）——無金鑰被 rag 拒 401，前端全域 401 攔截器誤判
+為登入過期 → 清 token 踢回登入頁。**每次登入必踢**（rag log 與登入時刻逐秒對齊坐實）。
+dev 未開強制所以測不到。
+
+**修法**：nginx `auth_request` 以後台 JWT（前端本就自動附帶）向 admin-api `/api/auth/me`
+驗身分，驗過才轉發 rag 並於**伺服器端**注入 `X-API-Key`（api_keys 表發行；金鑰只存
+.env 與 nginx 記憶體，不進版控/瀏覽器；未登入與掃描器 403）。
+改動：`nginx.conf` → `nginx.conf.template`（envsubst）＋compose 掛載/環境變數＋
+`main.js` fetch 包裝器補 `/rag-api` 前綴（影片上傳走裸 fetch）。
+
+**部署（jgb2-ai-chatbot 主機）：**
+
+```bash
+cd /home/ec2-user/AIChatbot && git pull
+
+# 16-1 發行金鑰（產生→入庫→寫 .env）
+KEY=$(python3 -c "import secrets;print('rgk_'+secrets.token_urlsafe(32))")
+HASH=$(python3 -c "import hashlib;print(hashlib.sha256('$KEY'.encode()).hexdigest())")
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "INSERT INTO api_keys (name, key_hash, key_prefix, description, is_active)
+   VALUES ('admin-web-proxy', '$HASH', '${KEY:0:8}', '後台 nginx /rag-api 代理注入', TRUE);"
+echo "RAG_ADMIN_API_KEY=$KEY" >> .env
+
+# 16-2 金鑰自檢（直打 rag，強制開啟下應 200）
+curl -s http://localhost:8100/api/v1/business-types-config -H "X-API-Key: $KEY" \
+  -o /dev/null -w '%{http_code}\n'   # 期望 200
+
+# 16-3 重建前端 dist（main.js fetch 修正）＋重開 admin-web（載入模板）
+cd knowledge-admin/frontend && npm ci && npm run build && cd ../..
+docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps knowledge-admin-web
+
+# 16-4 驗收
+docker exec aichatbot-knowledge-admin-web grep -c auth_request /etc/nginx/conf.d/default.conf  # ≥2
+curl -s http://localhost/rag-api/v1/business-types-config -o /dev/null -w '%{http_code}\n'      # 403（未登入擋下）
+# 瀏覽器登入後台 → 不再被踢、知識頁業態/表單正常載入、影片上傳可用
+```
+
+**回退**：compose 還原 nginx.conf 掛載（git 歷史有原檔）重開 admin-web；或暫關
+`RAG_API_AUTH_ENFORCE`（同 7/7 前風險：rag 對 nginx 通道無保護）。
+已於本機同款 compose 端到端驗證（無 token 403／帶 JWT 200＋金鑰注入）。
+
 ## 附錄 A：全庫搬遷路徑（2026-07-07 裁定採用；取代 §1–§3）
 
 > **新環境建置的唯一正式路徑＝本附錄的 dump 還原**。`database/init-legacy/`（原 `database/init/`）

@@ -112,8 +112,12 @@ services:
       - "${WEB_PORT:-80}:80"  # 本地用 8087，線上用 80（透過 .env 設定）
     volumes:
       - ./knowledge-admin/frontend/dist:/usr/share/nginx/html:ro
-      - ./knowledge-admin/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # 模板經 image 內建 envsubst 展開至 conf.d/default.conf（RAG_ADMIN_API_KEY 代入）
+      - ./knowledge-admin/frontend/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
       - ./knowledge-admin/frontend/api-docs.html:/usr/share/nginx/api-docs.html:ro
+    environment:
+      # 後台 → rag 的服務金鑰（api_keys 表發行；RAG_API_AUTH_ENFORCE 開啟時必填，見 runbook §16）
+      RAG_ADMIN_API_KEY: ${RAG_ADMIN_API_KEY:-}
     depends_on:
       - knowledge-admin-api
     restart: unless-stopped

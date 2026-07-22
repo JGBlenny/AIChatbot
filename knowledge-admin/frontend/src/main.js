@@ -38,8 +38,8 @@ axios.interceptors.response.use(
 // === 全局 Fetch 攔截器 - 自動附加認證 Token ===
 const originalFetch = window.fetch
 window.fetch = function(url, options = {}) {
-  // 只攔截 API 請求（不攔截外部資源）
-  if (url.startsWith('/api') || url.startsWith('http://localhost:8000')) {
+  // 只攔截 API 請求（不攔截外部資源）；/rag-api 需 JWT 過 nginx auth_request（2026-07-22）
+  if (url.startsWith('/api') || url.startsWith('/rag-api') || url.startsWith('http://localhost:8000')) {
     const token = localStorage.getItem('auth_token')
     if (token) {
       // 確保 headers 物件存在
