@@ -334,7 +334,7 @@ docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERR
 
 # 反悔：rollback 可回復欄位/約束/索引結構——資料不可回復（已接受，原內容零資訊）
 docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
-  < rag-orchestrator/database/migrations/rollback_drop_knowledge_trigger_dead_columns.sql
+  < rag-orchestrator/database/migrations/rollback/rollback_drop_knowledge_trigger_dead_columns.sql
 ```
 
 收尾照 §10 `make audit`（新增的知識 dict 契約測試在 unit 套件，隨 `make test`/CI 自動把關）。
@@ -414,7 +414,7 @@ docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERR
 
 # 反悔：回復停用的 SOP 觸發
 docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
-  < rag-orchestrator/database/migrations/20260711_disable_repair_sop_vendor24.rollback.sql
+  < rag-orchestrator/database/migrations/rollback/20260711_disable_repair_sop_vendor24.rollback.sql
 ```
 
 **13-6 四業者驗收矩陣**：宿主直跑 `RUN_E2E=1`（fixture 自建自清，需臨時 rag 容器；不照搬 prod 現場）——
@@ -466,7 +466,7 @@ docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERR
 # 自檢：SELECT column_name FROM information_schema.columns
 #       WHERE table_name='usage_events' AND column_name='search_kb_status'; → 一列
 # （欄位偵測保護：M 未套時計量事件本體照舊完整寫入，僅此欄略過 → 部署順序皆安全。）
-# 反悔：< rag-orchestrator/database/migrations/20260720_usage_events_search_kb_status_rollback.sql
+# 反悔：< rag-orchestrator/database/migrations/rollback/20260720_usage_events_search_kb_status_rollback.sql
 
 # 14-2 推程式（常駐 rag 容器是 baked image；本案生效必須重建）
 docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrator
@@ -532,7 +532,7 @@ FROM usage_events WHERE facet_key IS NOT NULL;
 docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
   < rag-orchestrator/database/migrations/20260722_routing_keyword_hygiene.sql
 # 自檢：NOTICE 顯示「路由調校錨點：4 筆」
-# 反悔：< rag-orchestrator/database/migrations/20260722_routing_keyword_hygiene_rollback.sql
+# 反悔：< rag-orchestrator/database/migrations/rollback/20260722_routing_keyword_hygiene_rollback.sql
 
 # 15-2 重嵌 4 筆錨點（migration 不填 embedding；到知識後台把 4 筆各重存一次，
 #      或跑缺嵌補算——錨點 question_summary：
@@ -595,6 +595,48 @@ curl -s http://localhost/rag-api/v1/business-types-config -o /dev/null -w '%{htt
 **回退**：compose 還原 nginx.conf 掛載（git 歷史有原檔）重開 admin-web；或暫關
 `RAG_API_AUTH_ENFORCE`（同 7/7 前風險：rag 對 nginx 通道無保護）。
 已於本機同款 compose 端到端驗證（無 token 403／帶 JWT 200＋金鑰注入）。
+
+## 17. migration 帳本與體系收斂（2026-07-22 裁定）
+
+**兩套體系收斂為一**：唯一正統＝`rag-orchestrator/database/migrations/`＋本 runbook 逐節手動；
+編號系列（`database/migrations-legacy/`，原 database/migrations）與 `run_migrations.sh` 同日除役
+（前例：init-legacy）。保留其遺產 **`schema_migrations` 表**作執行帳本——解決反覆發生的
+「prod 套了沒」不可考問題（pending_question／search_kb_status 皆踩過）。
+
+```bash
+# 17-1 帳本建表＋回填 7/7 全庫搬遷批 36 支（冪等；dev 已套）
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
+  < rag-orchestrator/database/migrations/20260722_schema_migrations_ledger.sql
+# 預期 NOTICE:✅ migration 帳本就緒
+
+# 17-2 範式:今後每支 migration 跑完,補一行帳(name=檔名去 .sql)
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "INSERT INTO schema_migrations (migration_name, created_by) VALUES ('<檔名去.sql>', 'runbook') ON CONFLICT DO NOTHING;"
+
+# 17-3 查帳:某支套了沒
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "SELECT migration_name, executed_at, created_by FROM schema_migrations ORDER BY executed_at DESC LIMIT 10;"
+```
+
+**本批（§12–§15 的 7 支）跑完後的記帳指令**：
+
+```bash
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin <<'SQL'
+INSERT INTO schema_migrations (migration_name, created_by) VALUES
+  ('20260711_usage_events_facet_columns', 'runbook'),
+  ('add_usage_events_scores', 'runbook'),
+  ('20260720_usage_events_search_kb_status', 'runbook'),
+  ('20260722_routing_keyword_hygiene', 'runbook'),
+  ('seed_repair_facet_config', 'runbook'),
+  -- 下兩支破壞性 M2 實跑後才記:
+  ('drop_knowledge_trigger_dead_columns', 'runbook'),
+  ('20260711_disable_repair_sop_vendor24', 'runbook')
+ON CONFLICT (migration_name) DO NOTHING;
+SQL
+```
+
+**衛生規則**：rollback 檔一律放 `migrations/rollback/` 子目錄（2026-07-22 已搬 4 支）；
+新 migration 檔名一律 `YYYYMMDD_` 前綴；帳本只記前向支，rollback 執行時 DELETE 對應帳紀錄。
 
 ## 附錄 A：全庫搬遷路徑（2026-07-07 裁定採用；取代 §1–§3）
 

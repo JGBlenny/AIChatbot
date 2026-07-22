@@ -58,7 +58,7 @@ knowledge-admin/frontend/src/
 
 ### 資料庫
 ```
-database/migrations/
+database/migrations-legacy/
 └── add_admins_table.sql   # 管理員資料表遷移腳本
 ```
 

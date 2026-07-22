@@ -58,46 +58,22 @@ git pull origin main
 
 ⚠️ **重要：每次推版前必須執行此步驟！**
 
-```bash
-# 預覽待執行的 migration（不會實際執行）
-./database/run_migrations.sh docker-compose.prod.yml --dry-run
-```
-
-**預期結果：**
-- **情況 A**：`✓ 所有 migration 都已執行，無需執行`
-  - 表示無資料庫變更，直接跳到步驟 4
-
-- **情況 B**：`⚠️ 發現 N 個待執行的 migration`
-  - 表示有資料庫變更，必須先執行 migration
-
-#### 3.1 如果有待執行的 migration
+> 🔄 **2026-07-22 體系收斂**：`run_migrations.sh` 與編號系列（`database/migrations-legacy/`）已除役。
+> migration 一律在 `rag-orchestrator/database/migrations/`，照 **`docs/deployment-runbook.md`
+> 對應節逐支手動執行**；執行帳本＝`schema_migrations` 表（runbook §17）。
 
 ```bash
-# 方法 1: 自動執行（推薦，會自動備份）
-./database/run_migrations.sh docker-compose.prod.yml
+# 檢查本次版更是否帶 migration（比對拉碼前後）
+git diff HEAD@{1} --name-only -- rag-orchestrator/database/migrations/ | grep -v rollback/
 
-# 方法 2: 交互式執行（需要手動確認）
-./database/run_migrations.sh docker-compose.prod.yml --interactive
-
-# 執行完成後驗證
-./database/run_migrations.sh docker-compose.prod.yml --dry-run
-# 應該顯示：✓ 所有 migration 都已執行
+# 查帳:哪些已套過
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "SELECT migration_name, executed_at FROM schema_migrations ORDER BY executed_at DESC LIMIT 10;"
 ```
 
-**Migration 腳本特性：**
-- ✅ 自動備份資料庫到 `database/backups/`
-- ✅ 冪等性：已執行的 migration 自動跳過
-- ✅ 失敗自動停止並顯示回滾命令
-- ✅ 記錄執行歷史到 `schema_migrations` 表
-
-**如果 migration 失敗：**
-```bash
-# 查看錯誤日誌
-ls -lt /tmp/migration_*.log | head -1
-
-# 使用自動生成的備份回滾
-docker exec -i aichatbot-postgres psql -U aichatbot aichatbot_admin < database/backups/backup_before_migration_*.sql
-```
+- **無新 migration** → 直接跳到步驟 4
+- **有新 migration** → 停止使用本文件，改走 `docs/deployment-runbook.md` 對應節
+  （逐支執行＋每支記帳＋煙囪驗證；破壞性支押後）
 
 ---
 
@@ -118,7 +94,7 @@ git diff HEAD@{1} --name-only
 | 前端文件（.vue, .js） | 需要重新 build 前端 + 重啟前端服務 |
 | Dockerfile 或 requirements.txt | 需要完整重新構建 |
 | docker-compose.yml | 需要重新啟動所有服務 |
-| database/migrations/*.sql | 已在步驟 3 處理，無需額外操作 |
+| rag-orchestrator/database/migrations/*.sql | 已在步驟 3 處理（走 runbook），無需額外操作 |
 | **換庫 / 大量知識變更** | ⚠️ **必一併重建 `semantic-model`（reranker）+ `embedding-api`**，否則檢索排序/表單觸發會與新資料不同步（`docker compose -f docker-compose.prod.yml up -d --build --no-deps semantic-model embedding-api`） |
 
 ---

@@ -21,7 +21,7 @@
 
 #### 步驟 1.1: 創建資料庫遷移腳本
 
-創建檔案：`database/migrations/add_permission_system.sql`
+創建檔案：`database/migrations-legacy/add_permission_system.sql`
 
 ```sql
 -- ==========================================
@@ -232,10 +232,10 @@ SELECT '✅ 權限系統資料庫建置完成！' AS status;
 
 ```bash
 # 開發環境
-docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin < database/migrations/add_permission_system.sql
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin < database/migrations-legacy/add_permission_system.sql
 
 # 生產環境
-docker-compose -f docker-compose.prod.yml exec -T postgres psql -U aichatbot -d aichatbot_admin < database/migrations/add_permission_system.sql
+docker-compose -f docker-compose.prod.yml exec -T postgres psql -U aichatbot -d aichatbot_admin < database/migrations-legacy/add_permission_system.sql
 ```
 
 #### 步驟 1.3: 驗證資料

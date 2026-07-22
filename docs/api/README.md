@@ -241,7 +241,7 @@
 ### 數據庫
 
 - `api_endpoints` 表 - API 端點配置
-- Migration: `database/migrations/upgrade_api_endpoints_dynamic.sql`
+- Migration: `database/migrations-legacy/upgrade_api_endpoints_dynamic.sql`
 
 ### 測試腳本
 

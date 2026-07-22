@@ -511,7 +511,7 @@ GET /api/lookup?category={category}&key={key}&vendor_id={vendor_id}
 
 #### 1.1 創建 lookup_tables 表
 
-**文件**: `database/migrations/create_lookup_tables.sql`
+**文件**: `database/migrations-legacy/create_lookup_tables.sql`
 
 ```sql
 -- 啟用 pg_trgm 擴展（支持模糊查詢）
@@ -550,7 +550,7 @@ COMMENT ON COLUMN lookup_tables.lookup_value IS '查詢值 (如單月/雙月)';
 
 #### 1.2 配置 api_endpoints
 
-**文件**: `database/migrations/add_lookup_api_endpoint.sql`
+**文件**: `database/migrations-legacy/add_lookup_api_endpoint.sql`
 
 ```sql
 INSERT INTO api_endpoints (
@@ -1140,8 +1140,8 @@ echo "========================================"
 
 # 1. 數據庫遷移
 echo "1️⃣ 執行數據庫遷移..."
-docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin < database/migrations/create_lookup_tables.sql
-docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin < database/migrations/add_lookup_api_endpoint.sql
+docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin < database/migrations-legacy/create_lookup_tables.sql
+docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin < database/migrations-legacy/add_lookup_api_endpoint.sql
 
 # 2. 導入數據
 echo "2️⃣ 導入電費數據..."

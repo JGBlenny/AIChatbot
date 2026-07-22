@@ -60,15 +60,15 @@ system_md = base ＋（沿領域鍵在 category_config 的父鏈，母共用在�
 
 ```bash
 # 1) 拆售前出 base（內容保全、冪等、自檢）
-psql "$DATABASE_URL" -f database/migrations/split_base_system_context_extract_presales.sql
+psql "$DATABASE_URL" -f rag-orchestrator/database/migrations/split_base_system_context_extract_presales.sql
 # 2) 建面向分類骨架（系統合約母 / 狀態判斷子）
-psql "$DATABASE_URL" -f database/migrations/add_contract_facet_categories.sql
+psql "$DATABASE_URL" -f rag-orchestrator/database/migrations/add_contract_facet_categories.sql
 # 3) 合約系統脈絡兩列（母共用 + 子面向）
-psql "$DATABASE_URL" -f database/migrations/seed_domain_contract_system_context.sql
+psql "$DATABASE_URL" -f rag-orchestrator/database/migrations/seed_domain_contract_system_context.sql
 # 4) 合約診斷 config（topic_scope.category=狀態判斷）
-psql "$DATABASE_URL" -f database/migrations/seed_conversational_diagnosis_contract_rule.sql
+psql "$DATABASE_URL" -f rag-orchestrator/database/migrations/seed_conversational_diagnosis_contract_rule.sql
 # 5) 合約查詢知識補標 狀態判斷
-psql "$DATABASE_URL" -f database/migrations/backfill_contract_knowledge_diagnosis_category.sql
+psql "$DATABASE_URL" -f rag-orchestrator/database/migrations/backfill_contract_knowledge_diagnosis_category.sql
 # 套用後清快取（重啟服務，或後台 /conversational-config 任一儲存）
 ```
 

@@ -4,7 +4,7 @@
 
 ### 1. 執行 Migration
 ```bash
-docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin < database/migrations/add_knowledge_form_auto_option.sql
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin < database/migrations-legacy/add_knowledge_form_auto_option.sql
 ```
 
 ### 2. 選項說明

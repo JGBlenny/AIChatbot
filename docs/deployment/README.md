@@ -69,12 +69,12 @@ deployment/
 - PRODUCTION_DEPLOY_2026-01-10.md - 完整部署
 
 **資料庫遷移：**
-- `database/migrations/add_knowledge_base_missing_columns.sql`
-- `database/migrations/create_form_tables.sql`
-- `database/migrations/add_form_schema_description_fields.sql`
-- `database/migrations/add_form_sessions_trigger_fields.sql`
+- `database/migrations-legacy/add_knowledge_base_missing_columns.sql`
+- `database/migrations-legacy/create_form_tables.sql`
+- `database/migrations-legacy/add_form_schema_description_fields.sql`
+- `database/migrations-legacy/add_form_sessions_trigger_fields.sql`
 - `rag-orchestrator/database/migrations/create_digression_config.sql`
-- `database/migrations/add_form_submission_status.sql`
+- `database/migrations-legacy/add_form_submission_status.sql`
 
 ---
 
@@ -89,11 +89,11 @@ deployment/
 - DEPLOY_2026-01-21.md - 完整部署指南
 
 **資料庫遷移：**
-- `database/migrations/add_action_type_and_api_config.sql` - 新增知識庫動作類型和 API 配置
-- `database/migrations/create_api_endpoints_table.sql` - 創建 API 端點管理表
-- `database/migrations/upgrade_api_endpoints_dynamic.sql` - 升級為動態 API 管理
-- `database/migrations/configure_billing_inquiry_examples.sql` - 配置帳單查詢範例
-- `database/migrations/remove_handler_function_column.sql` - 移除已棄用欄位
+- `database/migrations-legacy/add_action_type_and_api_config.sql` - 新增知識庫動作類型和 API 配置
+- `database/migrations-legacy/create_api_endpoints_table.sql` - 創建 API 端點管理表
+- `database/migrations-legacy/upgrade_api_endpoints_dynamic.sql` - 升級為動態 API 管理
+- `database/migrations-legacy/configure_billing_inquiry_examples.sql` - 配置帳單查詢範例
+- `database/migrations-legacy/remove_handler_function_column.sql` - 移除已棄用欄位
 
 **相關文檔：**
 - API 整合完整修復報告
@@ -113,7 +113,7 @@ deployment/
 - DEPLOY_2026-01-13.md - 整合部署指南（包含所有更新）
 
 **資料庫遷移：**
-- `database/migrations/remove_form_intro_2026-01-13.sql` - 刪除 knowledge_base.form_intro 欄位
+- `database/migrations-legacy/remove_form_intro_2026-01-13.sql` - 刪除 knowledge_base.form_intro 欄位
 
 **相關文檔：**
 - 統一檢索路徑實施報告
@@ -124,7 +124,7 @@ deployment/
 ### 2026-01-22
 **主要更新：**
 - **Migration 追蹤系統**：建立 `schema_migrations` 表，解決推版漏掉欄位問題
-- **自動執行腳本**：`database/run_migrations.sh` 支援 dry-run、自動備份、交互式確認
+- **自動執行腳本**：`database/run_migrations.sh` ⚠️ 2026-07-22 已除役——migration 改照 `docs/deployment-runbook.md` 對應節逐支手動＋§17 記帳
 - **安全機制**：冪等性、錯誤停止、執行記錄、回滾指南
 - **文檔完善**：完整的 Migration 使用說明和 FAQ
 
@@ -132,12 +132,12 @@ deployment/
 - DEPLOY_2026-01-22.md - Migration 系統部署指南
 
 **資料庫遷移：**
-- `database/migrations/000_create_schema_migrations.sql` - 創建 Migration 追蹤表
+- `database/migrations-legacy/000_create_schema_migrations.sql` - 創建 Migration 追蹤表
 - 所有歷史 migration (17 個) - 自動追蹤和執行
 
 **核心工具：**
 - `database/run_migrations.sh` - Migration 自動執行腳本（安全加強版）
-- `database/migrations/README.md` - Migration 完整文檔
+- `database/migrations-legacy/README.md` - Migration 完整文檔
 
 **重要特性：**
 - ✅ 自動追蹤已執行的 migration
@@ -201,7 +201,7 @@ deployment/
   - Lines 226-227: ENABLE_RERANKER, ENABLE_KNOWLEDGE_RERANKER
 
 **資料庫遷移：**
-- `database/migrations/add_trigger_mode_to_knowledge_base.sql` - 新增觸發模式欄位
+- `database/migrations-legacy/add_trigger_mode_to_knowledge_base.sql` - 新增觸發模式欄位
   - 新增 `trigger_mode` VARCHAR(20) DEFAULT NULL
   - 新增 `immediate_prompt` TEXT
 
@@ -359,7 +359,7 @@ deployment/
 - [loop_management_requirements.md](../frontend/loop_management_requirements.md) - 迴圈管理界面需求
 
 **資料庫遷移：**
-- `database/migrations/add_loop_features.sql` - 補充迴圈系統欄位
+- `database/migrations-legacy/add_loop_features.sql` - 補充迴圈系統欄位
   - 新增 `scenario_ids` (INTEGER[]): 固定測試集
   - 新增 `selection_strategy` (VARCHAR): 選取策略
   - 新增 `difficulty_distribution` (JSONB): 難度分布
@@ -367,7 +367,7 @@ deployment/
   - 新增 `max_iterations` (INTEGER): 最大迭代次數
   - 補充 `loop_generated_knowledge` 重複檢測欄位
   - 建立 `knowledge_gap_analysis` 表
-- `database/migrations/rollback_add_loop_features.sql` - 回滾腳本
+- `database/migrations-legacy/rollback_add_loop_features.sql` - 回滾腳本
 
 **部署步驟（重要）：**
 1. ⚠️ **備份資料庫**（必須！）

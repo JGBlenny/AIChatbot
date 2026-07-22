@@ -23,11 +23,11 @@ Lookup Table System 是一個通用的鍵值對查詢系統，支持：
 ```bash
 # 1. 創建數據庫表
 docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin \
-  < database/migrations/create_lookup_tables.sql
+  < database/migrations-legacy/create_lookup_tables.sql
 
 # 2. 配置 API endpoint
 docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin \
-  < database/migrations/add_lookup_api_endpoint.sql
+  < database/migrations-legacy/add_lookup_api_endpoint.sql
 
 # 3. 導入數據
 python3 scripts/data_import/import_billing_intervals.py

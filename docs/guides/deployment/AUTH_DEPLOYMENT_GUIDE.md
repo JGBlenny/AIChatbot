@@ -20,10 +20,10 @@
 
 ```bash
 # 開發環境
-docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin < database/migrations/add_admins_table.sql
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin < database/migrations-legacy/add_admins_table.sql
 
 # 生產環境
-docker-compose -f docker-compose.prod.yml exec -T postgres psql -U aichatbot -d aichatbot_admin < database/migrations/add_admins_table.sql
+docker-compose -f docker-compose.prod.yml exec -T postgres psql -U aichatbot -d aichatbot_admin < database/migrations-legacy/add_admins_table.sql
 ```
 
 **預期結果**：

@@ -506,7 +506,7 @@ GET /api/lookup?category=parking_fee&key=台北市大安區信義路三段123號
 ## API Endpoints Table Structure
 
 ### Database Location
-- **File:** `/Users/lenny/jgb/AIChatbot/database/migrations/create_api_endpoints_table.sql`
+- **File:** `/Users/lenny/jgb/AIChatbot/database/migrations-legacy/create_api_endpoints_table.sql`
 - **Table:** `api_endpoints`
 - **Database:** PostgreSQL (aichatbot_admin)
 
@@ -577,7 +577,7 @@ api_endpoints.related_kb_ids ← Trigger 自動更新
 
 ### Seed Data
 
-**File:** `/Users/lenny/jgb/AIChatbot/database/migrations/add_lookup_api_endpoint.sql`
+**File:** `/Users/lenny/jgb/AIChatbot/database/migrations-legacy/add_lookup_api_endpoint.sql`
 
 Initial endpoints inserted:
 1. `lookup_billing_interval` - 電費寄送區間查詢 (dynamic)
@@ -854,8 +854,8 @@ curl -X GET \
 | Universal API Handler | `/Users/lenny/jgb/AIChatbot/rag-orchestrator/services/universal_api_handler.py` | Dynamic API execution |
 | Form Manager | `/Users/lenny/jgb/AIChatbot/rag-orchestrator/services/form_manager.py` | Form lifecycle |
 | Main App | `/Users/lenny/jgb/AIChatbot/rag-orchestrator/app.py` | App setup & routing |
-| API Endpoints Migration | `/Users/lenny/jgb/AIChatbot/database/migrations/create_api_endpoints_table.sql` | Table schema |
-| Lookup Tables Migration | `/Users/lenny/jgb/AIChatbot/database/migrations/create_lookup_tables.sql` | Lookup data schema |
+| API Endpoints Migration | `/Users/lenny/jgb/AIChatbot/database/migrations-legacy/create_api_endpoints_table.sql` | Table schema |
+| Lookup Tables Migration | `/Users/lenny/jgb/AIChatbot/database/migrations-legacy/create_lookup_tables.sql` | Lookup data schema |
 | Seed Data V1 | `/Users/lenny/jgb/AIChatbot/database/seeds/insert_lookup_tables_vendor1.sql` | Test data (247 records) |
 | Seed Data V2 | `/Users/lenny/jgb/AIChatbot/database/seeds/insert_lookup_tables_vendor2.sql` | Test data for vendor 2 |
 
@@ -1022,7 +1022,7 @@ curl "http://localhost:8100/api/v1/api-endpoints/lookup/related-forms"
 | Lookup Form Stats API | `/rag-orchestrator/routers/forms.py` | 148-238 |
 | API Endpoint Related Forms | `/rag-orchestrator/routers/api_endpoints.py` | 211-269 |
 | Frontend Component | `/knowledge-admin/frontend/src/views/LookupFormManagement.vue` | Full file |
-| Database Trigger | `/database/migrations/add_api_endpoint_kb_sync_trigger.sql` | Full file |
+| Database Trigger | `/database/migrations-legacy/add_api_endpoint_kb_sync_trigger.sql` | Full file |
 
 ### Related Documentation
 

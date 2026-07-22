@@ -4,7 +4,7 @@
 
 ### 1. 数据库迁移 ✅
 
-**文件:** `database/migrations/40-simplify-test-scenarios-for-llm-eval.sql`
+**文件:** `database/migrations-legacy/40-simplify-test-scenarios-for-llm-eval.sql`
 
 **改动内容:**
 - ✅ 删除字段：`expected_category`, `expected_keywords`, `expected_intent_id`

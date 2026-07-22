@@ -68,17 +68,17 @@ docker-compose logs postgres | grep "測試題庫"
 cd /Users/lenny/jgb/AIChatbot
 
 # 測試遷移（不實際寫入）
-python3 database/migrations/migrate_excel_to_db.py --dry-run
+python3 database/migrations-legacy/migrate_excel_to_db.py --dry-run
 ```
 
 #### 2.2 實際遷移
 
 ```bash
 # 執行遷移
-python3 database/migrations/migrate_excel_to_db.py
+python3 database/migrations-legacy/migrate_excel_to_db.py
 
 # 或強制執行（跳過確認）
-python3 database/migrations/migrate_excel_to_db.py --force
+python3 database/migrations-legacy/migrate_excel_to_db.py --force
 ```
 
 #### 2.3 驗證遷移
@@ -347,10 +347,10 @@ GET    /api/test/backtest/runs            # 回測執行歷史 ✅
 
 ```bash
 # 1. Dry run 測試
-python3 database/migrations/migrate_excel_to_db.py --dry-run
+python3 database/migrations-legacy/migrate_excel_to_db.py --dry-run
 
 # 2. 實際遷移
-python3 database/migrations/migrate_excel_to_db.py --force
+python3 database/migrations-legacy/migrate_excel_to_db.py --force
 
 # 3. 驗證資料
 psql -U aichatbot -d aichatbot_admin -c "
@@ -414,7 +414,7 @@ docker-compose up -d postgres
 docker-compose logs -f postgres | grep "測試題庫"
 
 # 3. 執行遷移
-python3 database/migrations/migrate_excel_to_db.py --force
+python3 database/migrations-legacy/migrate_excel_to_db.py --force
 
 # 4. 啟動後端
 docker-compose restart knowledge-admin-backend rag-orchestrator
@@ -434,7 +434,7 @@ pg_dump -U aichatbot aichatbot_admin > backup_$(date +%Y%m%d).sql
 psql -U aichatbot -d aichatbot_admin -f database/init/09-create-test-scenarios.sql
 
 # 3. 執行遷移
-python3 database/migrations/migrate_excel_to_db.py --force
+python3 database/migrations-legacy/migrate_excel_to_db.py --force
 
 # 4. 重啟服務
 docker-compose restart
@@ -482,7 +482,7 @@ VALUES ('custom_set', '自定義集合', '我的自定義測試集合');
 | 文檔 | 說明 |
 |------|------|
 | `database/init/09-create-test-scenarios.sql` | Schema 定義 |
-| `database/migrations/migrate_excel_to_db.py` | 遷移腳本 |
+| `database/migrations-legacy/migrate_excel_to_db.py` | 遷移腳本 |
 | `docs/BACKTEST_OPTIMIZATION_GUIDE.md` | 回測優化指南 |
 | `test_scenarios_smoke.xlsx` | Smoke 測試題庫（原始） |
 | `test_scenarios_full.xlsx` | Full 測試題庫（原始） |

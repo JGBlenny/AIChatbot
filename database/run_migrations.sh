@@ -1,4 +1,11 @@
 #!/bin/bash
+# ⚠️ 已除役(2026-07-22):本腳本服務的編號系列 migration(database/migrations-legacy/)已封存。
+# 現行 migration 一律走 rag-orchestrator/database/migrations/ + docs/deployment-runbook.md 逐節手動,
+# 執行帳本=schema_migrations 表(runbook §17)。除役原因:字母序全自動無法承載
+# conversational 系列的順序語義(seed 後出覆蓋先出)、rollback 同目錄、破壞性押煙囪後等需求。
+echo "⚠️ 本腳本已除役(2026-07-22)——migration 請照 docs/deployment-runbook.md 執行(帳本見 §17)"
+exit 1
+
 # Migration 自動執行腳本（安全加強版）
 # 用途: 自動執行所有未執行的 migration，解決推版漏掉欄位的問題
 # 使用: ./run_migrations.sh [docker-compose-file] [options]
