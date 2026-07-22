@@ -396,9 +396,9 @@ docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrat
 
 ```bash
 SID="smoke_repair_$(date +%s)"
-# 直達面向：trigger_facet_key=repair（或以報修意圖問句命中錨點）
+# 直達面向：trigger_facet_key=repair_create（或以報修意圖問句命中錨點；正確鍵以 config registry 為準）
 curl -sS -X POST http://localhost:8100/api/v1/message -H "Content-Type: application/json" \
-  -d "{\"message\": \"我家冷氣壞了要報修\", \"vendor_id\": 1, \"mode\": \"b2c\", \"target_user\": \"tenant\", \"role_id\": \"<真租客 role>\", \"session_id\": \"$SID\", \"trigger_facet_key\": \"repair\"}"
+  -d "{\"message\": \"我家冷氣壞了要報修\", \"vendor_id\": 1, \"mode\": \"b2c\", \"target_user\": \"tenant\", \"role_id\": \"<真租客 role>\", \"session_id\": \"$SID\", \"trigger_facet_key\": \"repair_create\"}"
 # 期望：回應為報修面向對話（澄清/確認摘要），非 FAQ 直答。
 # 埋點入庫確認：
 docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
