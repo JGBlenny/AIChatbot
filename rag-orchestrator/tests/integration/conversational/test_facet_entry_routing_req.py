@@ -21,7 +21,7 @@ VENDOR_ID = int(os.getenv("TEST_VENDOR_ID", "2"))
 ENTRY_THRESHOLD = float(os.getenv("FORM_TRIGGER_THRESHOLD", "0.75"))
 KB_THRESHOLD = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.65"))
 FACES = {"狀態判斷", "合約異動", "退租收尾", "續約", "建約引導", "簽署排障"}
-BILLING_FACES = {"繳費金流排障", "帳單異常", "發票", "滯納金", "帳單設定引導"}
+BILLING_FACES = {"繳費金流排障", "帳單異常", "發票", "滯納金", "帳單設定引導", "條件診斷：帳單"}
 
 
 def _conn_kwargs():
@@ -128,6 +128,7 @@ BILLING_DIALOG_CASES = [
     "滯納金怎麼收這麼多",
     "要開始收租 帳單要怎麼設定",
     "收款帳戶怎麼綁 金流怎麼申請",
+    "帳單為什麼發不出去",                # 2026-07-06 帳單診斷面向立案後改判進對話（3495 錨點，原 form_fill 保留裁定過時）
 ]
 
 # ── 帳務：應單發（教學/制度＋保留的 form_fill 精確句）──
@@ -138,7 +139,6 @@ BILLING_SINGLE_CASES = [
     "收據 PDF 在哪裡下載",
     "固定虛擬帳號會過期嗎",
     "押金設算息怎麼計算",
-    "帳單為什麼發不出去",                # form_fill 保留（3495，混合制）
     "點退帳單的金額是怎麼算的",           # 邊界：含「帳單」但屬合約域教學（3519 單發）
 ]
 

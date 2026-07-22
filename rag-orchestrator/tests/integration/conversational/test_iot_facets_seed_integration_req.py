@@ -53,10 +53,12 @@ async def pool():
         with open(os.path.join(_MIG, name), encoding="utf-8") as f:
             await p.execute(f.read())
     # 設定引導收斂資料源（第 3 節知識未產前以測試列頂替；target_user 明填驗證用）
+    # priority=100：grounding 取分類 top-8（priority DESC, id ASC），池子隨知識工程成長，
+    # 播種列驗的是「掛面向知識進 grounding」的管線，不與池子大小賽跑（2026-07-22 路由調校後 4053 進池）。
     await p.execute(
-        "INSERT INTO knowledge_base (question_summary, answer, category, categories, target_user, is_active) "
+        "INSERT INTO knowledge_base (question_summary, answer, category, categories, target_user, is_active, priority) "
         "SELECT $1, '串接教學測試內容：綁定台科電帳號後系統自動同步裝置清單。', '一般知識', "
-        "ARRAY['IoT設定引導']::text[], ARRAY['property_manager']::text[], TRUE "
+        "ARRAY['IoT設定引導']::text[], ARRAY['property_manager']::text[], TRUE, 100 "
         "WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary=$1)", _TEST_KB_SUMMARY)
     cc.reset_cache(); sc.reset_cache(); cr.reset_cache()
     yield p

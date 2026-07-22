@@ -518,6 +518,40 @@ FROM usage_events WHERE facet_key IS NOT NULL;
 收尾照 §10 `make audit`。B 區數據（call_rate/hit_rate/事實一致性）供 A 區（進場路由 agent 化，
 前置於回測現代化，另案）評估引用。
 
+## 15. 路由調校：keywords 衛生＋口語錨點（2026-07-22）
+
+進場路由 13 案誤路由修正（根因＝關鍵字加成飽和塌陷：裸泛詞 keywords 對整族問句
+加成 ×1.1–1.3 並 cap 於 1.0，多列同分後排序亂決）。純資料調校，**零程式改動**：
+21 列 keywords 修剪＋4053 補 IoT設定引導＋口語錨點 4 筆＋2 筆測試期望更新
+（帳單為什麼發不出去 改判進帳單診斷——7/6 面向立案後的歸屬）。
+
+**部署順序：M（資料調校）→ 重嵌 4 錨點 → 清檢索快取 → 路由回歸驗證**
+
+```bash
+# 15-1 M（冪等；id＋question_summary 雙重定位，錯位即 no-op 安全跳過）
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
+  < rag-orchestrator/database/migrations/20260722_routing_keyword_hygiene.sql
+# 自檢：NOTICE 顯示「路由調校錨點：4 筆」
+# 反悔：< rag-orchestrator/database/migrations/20260722_routing_keyword_hygiene_rollback.sql
+
+# 15-2 重嵌 4 筆錨點（migration 不填 embedding；到知識後台把 4 筆各重存一次，
+#      或跑缺嵌補算——錨點 question_summary：
+#      註冊名字跟證件不符 要怎麼改資料／想改合約租期 租金要調整／
+#      合約狀態怪怪的 不太對勁／租客儲值了電還是沒有來 沒復電）
+
+# 15-3 清檢索快取（keywords 變更影響加成計分，舊快取答案作廢）
+python3 scripts/clear_vendor_cache.py   # 或照既有清快取慣例
+
+# 15-4 驗證：路由回歸 83 案全綠
+RUN_INTEGRATION=1 ... pytest tests/integration/conversational/test_facet_entry_routing_req.py
+```
+
+> ⚠️ **既有列免重嵌**（只動 keywords/categories，不參與向量）；**reranker 照 §4 認知**
+> （/rerank 為 request-time 打分，不吃快照；本案無 image 推版則免動）。
+> 教訓入庫：新知識批次補入時 **categories 標注與 keywords 衛生是路由的一部分**——
+> 裸泛詞（合約/帳單/租客/點退/註冊/物件/儲值）不得單獨作 keyword（jieba 斷詞交集匹配，
+> 一個裸詞=整族問句加成 30%）；掛面向分類的列＝路由器，教學列亂掛=誤進場。
+
 ## 附錄 A：全庫搬遷路徑（2026-07-07 裁定採用；取代 §1–§3）
 
 > **新環境建置的唯一正式路徑＝本附錄的 dump 還原**。`database/init-legacy/`（原 `database/init/`）
