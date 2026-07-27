@@ -49,12 +49,20 @@
 ## 0. 前置
 
 ```bash
-# 0-1 備份 prod DB
-docker exec aichatbot-postgres pg_dump -U aichatbot -d aichatbot_admin | gzip > backups/pre_facets_$(date +%Y%m%d_%H%M).sql.gz
+# 0-1 確認起點 commit（核對部署範圍；記下來供追溯）
+git rev-parse --short HEAD
 ```
 
 ```bash
-# 0-2 安全開關（上線必開）：RAG API 認證——未開時任何人可帶任意 role_id 直打我們的 API，
+# 0-2 備份 prod DB（動任何 DB 前必做；災難快照）
+mkdir -p backups
+docker exec aichatbot-postgres pg_dump -U aichatbot -d aichatbot_admin | gzip > backups/pre_deploy_$(date +%Y%m%d_%H%M).sql.gz
+ls -lh backups/pre_deploy_*.sql.gz | tail -1   # 驗證：檔案在、大小非 0（幾十 MB 才正常；0/幾 KB＝dump 失敗）
+# 還原（萬一）：gunzip -c backups/pre_deploy_<時間戳>.sql.gz | docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin
+```
+
+```bash
+# 0-3 安全開關（上線必開）：RAG API 認證——未開時任何人可帶任意 role_id 直打我們的 API，
 #     role 隔離只剩 jgb2 白名單單層。確認 prod env 有：
 grep RAG_API_AUTH_ENFORCE <prod env>   # 應為已開；未開請設定後再部署
 ```
