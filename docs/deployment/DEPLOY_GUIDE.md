@@ -59,8 +59,8 @@ git pull origin main
 ⚠️ **重要：每次推版前必須執行此步驟！**
 
 > 🔄 **2026-07-22 體系收斂**：`run_migrations.sh` 與編號系列（`database/migrations-legacy/`）已除役。
-> migration 一律在 `rag-orchestrator/database/migrations/`，照 **`docs/deployment-runbook.md`
-> 對應節逐支手動執行**；執行帳本＝`schema_migrations` 表（runbook §17）。
+> migration/seed 一律用帳本感知 runner **`rag-orchestrator/database/migrate.sh`**
+> （dry-run→`--apply`，自動記帳），詳見 **`docs/deployment-runbook.md` §17**；執行帳本＝`schema_migrations` 表。
 
 ```bash
 # 檢查本次版更是否帶 migration（比對拉碼前後）
@@ -72,8 +72,8 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 ```
 
 - **無新 migration** → 直接跳到步驟 4
-- **有新 migration** → 停止使用本文件，改走 `docs/deployment-runbook.md` 對應節
-  （逐支執行＋每支記帳＋煙囪驗證；破壞性支押後）
+- **有新 migration** → 停止使用本文件，改走 `docs/deployment-runbook.md`：用帳本感知 runner
+  `rag-orchestrator/database/migrate.sh`（dry-run→`--apply`，自動記帳；破壞性支自動跳過、煙囪後手動）＋§5 煙囪驗證。詳見 runbook §17。
 
 ---
 
@@ -90,7 +90,8 @@ git diff HEAD@{1} --name-only
 
 | 變更內容 | 需要做什麼 |
 |---------|----------|
-| 只有後端 Python 文件 | 重啟後端服務即可 |
+| 後端 Python — `rag-orchestrator` | **原始碼烤進 image → 必 `up -d --build --no-deps rag-orchestrator`**（`restart` 不吃新碼，無 source volume） |
+| 後端 Python — `knowledge-admin-api` | 有掛 `app.py` volume → `restart knowledge-admin-api` 即可 |
 | 前端文件（.vue, .js） | 需要重新 build 前端 + 重啟前端服務 |
 | Dockerfile 或 requirements.txt | 需要完整重新構建 |
 | docker-compose.yml | 需要重新啟動所有服務 |

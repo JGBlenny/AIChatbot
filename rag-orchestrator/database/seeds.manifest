@@ -1,0 +1,2 @@
+once	seed_repair_facet_knowledge	python3 rag-orchestrator/tools/seed_repair_facet_knowledge.py
+always	-	python3 scripts/regenerate_all_embeddings.py

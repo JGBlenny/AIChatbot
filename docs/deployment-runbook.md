@@ -3,12 +3,25 @@
 > 涵蓋：對話式診斷＋五域對話面向（contract/billing/account/iot/estate）＋帳單診斷＋回測新架構＋
 > 知識盤查修正＋使用量計量＋額度管制＋參數分工——**一批上**。依序執行 §0–§10，§11 為部署後掛帳。
 
+---
+## 🚩 現行部署路徑（先讀這個，不必往下翻）
+
+**既有 prod 的增量部署＝只做這條（2026-07-22 §17 收斂後正統）：**
+1. `git push origin main` → prod `git pull`（碼）
+2. **帳本 bootstrap（§17-1，一次）→ `migrate.sh` dry-run 確認 → `--apply`**：自動跑 migration＋seed 並記帳（見 §17-2；本次＝§12–§15 的 8 支）
+3. §4 重建（`up -d --build`，含 reranker）→ §5 煙囪 → §10 `make audit`
+4. 破壞性 M2（`drop_knowledge_trigger_dead_columns`）**煙囪全過後才手動**
+
+**🚫 勿執行（非增量部署路徑）：**
+- **§1–§3**＝facet 大批逐支明細，**07-07 已整批上線**（prod 現有 facet 資料）→ 已移至文末 **附錄 Z**，僅供新環境建置參考。
+- **附錄 A 全庫搬遷**＝**僅新環境建置**（空庫從 dump 還原）；drop-restore 會蓋掉 prod-only 計量歷史，勿用於既有 prod。
+
+---
+
 | § | 步驟 | 性質 |
 |---|---|---|
 | 0 | 前置（備份＋安全開關） | 必做 |
-| 1 | Migrations 36 支（單一序列，含計量/額度/盤查修正）＋資料修復＋知識補強重放 | 必做 |
-| 2 | 知識批次匯入（12 份） | 必做 |
-| 3 | 進場路由微調 | 必做 |
+| 1–3 | facet 大批（migration 36 支＋知識 12 份＋路由微調）→ **已封存於附錄 Z** | 🚫 增量勿執行（歷史/建置專用） |
 | 4 | 重建服務（含 semantic model 重抽） | 必做 |
 | 5 | 煙囪驗證（20 面向） | 必做 |
 | 6 | 回測新架構說明＋正式基準 | 部署後 |
@@ -17,11 +30,18 @@
 | 11 | 部署後掛帳 | 追蹤 |
 | 12 | trigger-vocabulary-debt（觸發語彙還債 P0） | 隨版更（2026-07-11 增補） |
 | 13 | conversational-repair（對話式報修面向） | 隨版更（2026-07-12 增補） |
-| 附錄A | **全庫搬遷路徑**（本機庫整顆搬 prod，取代 §1–§3） | 二選一 |
+| 14 | brain-kb-grounding（Brain 掛 search_kb） | 隨版更（2026-07-21 增補） |
+| 15 | 進場路由基準調校（keywords 衛生） | 隨版更（2026-07-22 增補） |
+| 17 | **migration 帳本與體系收斂（現行正統：runner `migrate.sh`＋`schema_migrations` 記帳）** | **2026-07-22 定** |
+| 附錄A | 全庫搬遷路徑（**僅新環境建置**：空庫從 dump 還原） | 建置專用 |
 
-> **路徑二選一**：①逐支重放（§1–§3，prod 現庫上疊加）②全庫搬遷（附錄 A，本機庫即真相直接換庫）。
-> 2026-07-07 使用者裁定走**全庫搬遷**——§1–§3 跳過，§0/§4–§10 照做。
-> 更新：2026-07-07（migration 序列補全 36 支＋批次補列 12 份＋分支併版＋附錄 A 全庫搬遷）
+> **⚠️ 部署路徑（現行正統，2026-07-22 §17 收斂後）——先讀這段，勿被下方歷史紀錄誤導：**
+> - **既有 prod 增量部署（一般情況、本批適用）**：migration／seed 一律走 **runner `migrate.sh`**（dry-run→`--apply`，自動記帳；見 §17）。`run_migrations.sh`／`migrations-legacy` 已於 07-22 除役，勿用。
+> - **附錄 A 全庫搬遷＝僅限新環境建置**（空庫從 dump 還原）；**不用於既有 prod 增量更新**（drop-restore 會覆蓋 prod-only 資料，如計量歷史）。
+> - §1–§3 為 **facet 大批**的逐支明細（歷史參考；該批已於 07-07 以全庫搬遷上線完成，prod 現有 facet 資料）。
+>
+> ~~2026-07-07 裁定走全庫搬遷、§1–§3 跳過~~ ← **已被 §17 取代**：該裁定專指 07-07 的 facet 大批（已完成），**非往後通則**。往後新 migration 走 §17 逐支＋帳本。
+> 更新：2026-07-22（§17 兩套體系收斂；本段路徑說明改寫）
 > 原則：全部指令由使用者在 prod 執行（[[feedback_prod_ops_self_run]]）；migration 皆冪等，重跑安全。
 > 前提：`feature/category-two-level` 已併入 **main**（bf67fba，2026-07-07）——**版更以 main 為準**
 > （含 `services/jgb/bills.py` status 讀取優先序修正——**jgb2 prod 補正 bills 欄位前後皆相容**，fallback 保舊行為）。
@@ -41,121 +61,9 @@ grep RAG_API_AUTH_ENFORCE <prod env>   # 應為已開；未開請設定後再部
 
 順帶檢查兩件先前掛帳（與本批無關但同機會處理）：chatflow 重構那批的 prod migration、`form_sessions.pending_question` 欄位 migration 是否已跑。
 
-## 1. Migrations（依序 36 支，皆冪等；按 commit 時序排列——後出的 seed 覆蓋先出的，順序不可換）
+## 1–3. facet 大批逐支明細 → 已移至【附錄 Z】
 
-> 2026-07-07 補全：原序列漏列 4 支合約/售前時代 migration（`backfill_contract_knowledge_diagnosis_category`／
-> `seed_conversational_diagnosis_contract_rule`／`backfill_presales_synth_rules`／`seed_contract_entry_anchor_colloquial`），
-> 並將 §7/§8 的計量/額度兩支與盤查修正一支併入單一序列。若 prod 曾跑過其中幾支，冪等重跑安全。
-
-```bash
-cd rag-orchestrator/database/migrations
-for f in \
-  split_base_system_context_extract_presales.sql \
-  backfill_contract_knowledge_diagnosis_category.sql \
-  seed_conversational_diagnosis_contract_rule.sql \
-  seed_domain_contract_system_context.sql \
-  add_contract_facet_categories.sql \
-  backfill_presales_synth_rules.sql \
-  seed_contract_entry_anchor_colloquial.sql \
-  add_contract_facet_categories_v2.sql \
-  seed_contract_facet_system_context.sql \
-  seed_contract_facet_configs.sql \
-  add_closeout_secondary_call.sql \
-  update_closeout_archive_answer_rule.sql \
-  backfill_contract_knowledge_facet_categories.sql \
-  add_billing_facet_categories.sql \
-  seed_billing_facet_system_context.sql \
-  seed_billing_facet_configs.sql \
-  backfill_billing_knowledge_facet_categories.sql \
-  add_account_facet_categories.sql \
-  seed_account_facet_system_context.sql \
-  seed_account_facet_configs.sql \
-  backfill_account_knowledge_facet_categories.sql \
-  add_iot_facet_categories.sql \
-  seed_iot_facet_system_context.sql \
-  seed_iot_facet_configs.sql \
-  backfill_iot_knowledge_facet_categories.sql \
-  add_estate_facet_categories.sql \
-  seed_estate_facet_system_context.sql \
-  seed_estate_facet_configs.sql \
-  backfill_estate_knowledge_facet_categories.sql \
-  add_test_scenario_audience.sql \
-  backfill_test_scenario_audience.sql \
-  add_test_scenario_gold_checks.sql \
-  seed_bill_diagnosis_facet.sql \
-  audit_20260706_knowledge_fixes.sql \
-  add_usage_events.sql \
-  add_vendor_quotas.sql \
-; do echo "== $f"; docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 < "$f" || break; done
-```
-
-每支結尾有 `RAISE NOTICE ✅` 自檢（計數／互斥），看到非預期數字先停。
-（`create_digression_config.sql` 屬表單 v1.1 舊版更，prod 應已存在——§0 先前掛帳一併確認即可，不在本序列。）
-
-**1.1 資料修復（一次性，冪等）**：歷史迴圈回測的 evaluation 雙重編碼（backtest_client 包兩層 JSON，
-評級/逐字稿讀不到；2026-07-05 已修寫入端）——prod 套用：
-
-```sql
-UPDATE backtest_results SET evaluation = (evaluation #>> '{}')::jsonb
-WHERE jsonb_typeof(evaluation)='string' AND left(evaluation #>> '{}',1)='{';
-```
-
-**1.2 金標改判（帳單診斷收編）**：已併入 `audit_20260706_knowledge_fixes.sql`（見 1.3）。
-
-**1.3 盤查 2026-07-06 知識補強重放**（資料修正已由序列內 `audit_20260706_knowledge_fixes.sql` 完成——
-錯誤知識 5 筆修正/3367 轉直答/金標改判等）。新知識 INSERT 需 embedding，用 import 工具重放：
-
-```bash
-# 檢索補強 2 筆（簽約前狀態差別＋取消點交邀請錨點）
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/audit/reports/audit-additions-import.json
-# 缺口 3 主題（收款方式調整/發票時點/通知排查——通知排查列已由 migration 轉入 3367，import 會自動跳過重複）
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/audit/reports/gap-batch-import.json
-# 錨點補欄位（import 工具 anchors 不帶 form_id）
-docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c "
-UPDATE knowledge_base SET categories=ARRAY['條件診斷：合約','狀態判斷'],
-  target_user=ARRAY['property_manager','tenant'], form_id='jgb_contract_query', action_type='form_fill'
-WHERE question_summary='取消點交邀請 取消點退邀請 收回邀請' AND form_id IS NULL;"
-```
-
-匯入後 semantic model 重抽（§4 已含）。盤查報告與豁免依據：`scripts/audit/reports/jgb-knowledge-audit-20260706.md`。
-
-## 2. 知識批次匯入（12 份，均已人工審核通過）
-
-工具：`rag-orchestrator/tools/import_facet_knowledge.py`（冪等；updates 重算 embedding、新知識/錨點含 embedding）。連線走環境變數，prod 主機上視實際埠位覆寫（tune_routing.py 同）：
-
-```bash
-export DB_HOST=localhost DB_PORT=5432 DB_PASSWORD=<prod密碼>
-export EMBEDDING_API_URL=http://localhost:5001/api/v1/embeddings
-```
-
-```bash
-# 先 dry-run 看清單，再真跑
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/contract-knowledge-batch.json --dry-run
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/contract-knowledge-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/contract-knowledge-batch-2.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/billing-knowledge-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/account-knowledge-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/account-anchors-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/iot-knowledge-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/iot-anchors-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/estate-knowledge-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/b2b-knowledge-batch.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/b2b-knowledge-batch-2.json
-python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/askbad-rootfix-batch.json
-```
-
-（末兩份為 2026-07-05 閘門批：51 題抽驗長尾 7 筆＋ASK_BAD 根因批 1 修 3 補——2026-07-07 補列，原 runbook 漏收。）
-
-（IoT 批次無後置步驟：雙角色單發維持 system_provider 業態——b2b 檢索為嚴格業態過濾、NULL 會隱形；先例 3435/3458 同慣例。）
-
-註：3531/3532 滯納金修正在 billing 批次、3435-3439 帳號口徑修正在 account 批次的 updates 內，不用另跑。
-
-## 3. 進場路由微調（合約 4 紅案資料側修正）
-
-```bash
-# 3388 untag／3402、3530 question 重嵌（需 EMBEDDING_API_URL 與 DB 環境變數）
-python3 scripts/knowledge-batches/tune_routing.py
-```
+> 🚫 **既有 prod 增量部署勿執行**。§1–§3 是 facet 大批（合約/帳單/帳號/IoT/物件面向）的逐支 migration／知識匯入／路由微調明細，**07-07 已整批上線**（prod 現有 facet 資料）。完整內容封存於文末 **附錄 Z：歷史批次（勿執行，僅新環境建置參考）**。增量部署請照頂部「🚩 現行部署路徑」。
 
 ## 4. 重建服務（reranker 必重建——2026-06-21 教訓）
 
@@ -598,47 +506,46 @@ curl -s http://localhost/rag-api/v1/business-types-config -o /dev/null -w '%{htt
 
 ## 17. migration 帳本與體系收斂（2026-07-22 裁定）
 
-**兩套體系收斂為一**：唯一正統＝`rag-orchestrator/database/migrations/`＋本 runbook 逐節手動；
-編號系列（`database/migrations-legacy/`，原 database/migrations）與 `run_migrations.sh` 同日除役
-（前例：init-legacy）。保留其遺產 **`schema_migrations` 表**作執行帳本——解決反覆發生的
-「prod 套了沒」不可考問題（pending_question／search_kb_status 皆踩過）。
+**收斂為一版**：唯一正統＝`rag-orchestrator/database/migrations/`（SQL）＋`rag-orchestrator/database/seeds.manifest`（需 embedding 的知識 seed）＋**帳本感知 runner `rag-orchestrator/database/migrate.sh`**；執行帳本＝`schema_migrations` 表。編號系列（`database/migrations-legacy/`）與 `run_migrations.sh` 於 2026-07-22 除役；**「逐支手動貼 psql／手動 INSERT 記帳」的舊做法亦於 2026-07-25 由 runner 取代——migration/seed 一律走 runner**（解決「prod 套了沒」不可考：pending_question／search_kb_status 皆踩過）。
 
+### 17-1 帳本 bootstrap（既有 prod 首次上 runner 前跑一次；全新環境免此步）
+prod 的 facet 大批早於帳本存在，需先回填標記為已套，runner 才不會誤重跑：
 ```bash
-# 17-1 帳本建表＋回填 7/7 全庫搬遷批 36 支（冪等；dev 已套）
 docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
   < rag-orchestrator/database/migrations/20260722_schema_migrations_ledger.sql
 # 預期 NOTICE:✅ migration 帳本就緒
+```
 
-# 17-2 範式:今後每支 migration 跑完,補一行帳(name=檔名去 .sql)
+### 17-2 用 runner 部署 SQL＋seed（現行正統，取代逐支手動貼）
+```bash
+# ① dry-run：看 SQL＋seed 待辦，不寫任何東西
+bash rag-orchestrator/database/migrate.sh
+# ② 確認清單無誤 → 真跑（seed 批需 DB 密碼＋embedding 網址）
+export DB_HOST=localhost DB_PORT=5432 DB_PASSWORD=<prod密碼>
+export EMBEDDING_API_URL=http://localhost:5001/api/v1/embeddings
+bash rag-orchestrator/database/migrate.sh --apply
+```
+runner 行為：讀帳本 → 只跑未套 `.sql`（逐支 `ON_ERROR_STOP`、成功即自動記帳）→ 跑 `seeds.manifest`（`once` 記帳／`always` 每次跑）；**破壞性支（DROP/TRUNCATE）自動跳過**，留待 17-3 手動。出錯即停、失敗不記帳——修好重跑即可（冪等，已成功的自動跳過）。
+
+### 17-3 破壞性支手動收尾（runner 跳過的；煙囪全過後才跑）
+```bash
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 \
+  < rag-orchestrator/database/migrations/drop_knowledge_trigger_dead_columns.sql
 docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
-  "INSERT INTO schema_migrations (migration_name, created_by) VALUES ('<檔名去.sql>', 'runbook') ON CONFLICT DO NOTHING;"
+  "INSERT INTO schema_migrations(migration_name,created_by) VALUES('drop_knowledge_trigger_dead_columns','runbook') ON CONFLICT DO NOTHING;"
+```
 
-# 17-3 查帳:某支套了沒
+### 17-4 查帳（某支套了沒）
+```bash
 docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
   "SELECT migration_name, executed_at, created_by FROM schema_migrations ORDER BY executed_at DESC LIMIT 10;"
 ```
 
-**本批（§12–§15 的 7 支）跑完後的記帳指令**：
+**衛生規則**：新 migration 檔名一律 `YYYYMMDD_` 前綴（runner 靠檔名排序＝時序）；需 embedding 的知識 seed 宣告於 `seeds.manifest`（一行一支：`模式<TAB>帳本名<TAB>指令`，`once`＝跑一次記帳／`always`＝每次跑不記帳）；rollback 檔放 `migrations/rollback/`；帳本只記前向支，rollback 執行時 DELETE 對應帳紀錄。runner 四路徑＋seed 批已於 2026-07-25 以丟棄庫驗證。
 
-```bash
-docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin <<'SQL'
-INSERT INTO schema_migrations (migration_name, created_by) VALUES
-  ('20260711_usage_events_facet_columns', 'runbook'),
-  ('add_usage_events_scores', 'runbook'),
-  ('20260720_usage_events_search_kb_status', 'runbook'),
-  ('20260722_routing_keyword_hygiene', 'runbook'),
-  ('seed_repair_facet_config', 'runbook'),
-  -- 下兩支破壞性 M2 實跑後才記:
-  ('drop_knowledge_trigger_dead_columns', 'runbook'),
-  ('20260711_disable_repair_sop_vendor24', 'runbook')
-ON CONFLICT (migration_name) DO NOTHING;
-SQL
-```
+## 附錄 A：全庫搬遷路徑（**僅新環境建置**：空庫從 dump 還原）
 
-**衛生規則**：rollback 檔一律放 `migrations/rollback/` 子目錄（2026-07-22 已搬 4 支）；
-新 migration 檔名一律 `YYYYMMDD_` 前綴；帳本只記前向支，rollback 執行時 DELETE 對應帳紀錄。
-
-## 附錄 A：全庫搬遷路徑（2026-07-07 裁定採用；取代 §1–§3）
+> **⚠️ 2026-07-22 §17 後正名**：本路徑**不用於既有 prod 增量部署**（drop-restore 會覆蓋 prod-only 計量歷史）。07-07 曾以此路徑把 facet 大批整批上線（已完成）；往後既有 prod 增量一律走頂部「🚩 現行部署路徑」＝逐支 migration＋§17 記帳。
 
 > **新環境建置的唯一正式路徑＝本附錄的 dump 還原**。`database/init-legacy/`（原 `database/init/`）
 > 已於 2026-07-11 除役——schema 凍結於早期架構、seed 過時，compose 掛載已移除，勿用於任何建置。
@@ -753,3 +660,128 @@ docker exec aichatbot-postgres pg_restore -U aichatbot -d aichatbot_admin --data
 - **§4 重建服務＋semantic model 重抽**——換庫必做（[[project_deploy_semantic_model]]：reranker 與新庫不同步＝排序失真）
 - §0-2 安全開關、§5 煙囪 20 面向、§7/§8 env（計量預設即開；SMTP 要寄警示信才設）、§10 `make audit`
 - **跳過**：§1 migrations／§2 知識批次／§3 tune_routing（全在庫裡）；§9 只剩「業者資料核實」仍有效
+
+
+---
+
+## 附錄 Z：歷史批次（勿執行，僅新環境建置逐支重放參考）
+
+> 🚫 **既有 prod 增量部署勿跑本附錄**——以下 §1–§3 為 facet 大批，07-07 已以全庫搬遷整批上線於 prod。僅在**從空庫建置新環境**時，作為逐支重放的明細參考（另見附錄 A 的 dump 還原路徑）。
+
+## 1. Migrations（依序 36 支，皆冪等；按 commit 時序排列——後出的 seed 覆蓋先出的，順序不可換）
+
+> **⚠️ 適用範圍（2026-07-22 補注）**：本節 36 支＝**facet 大批**，**07-07 已以全庫搬遷整批上線於 prod**（prod 現有 21 筆對話規則/面向資料可驗）。**既有 prod 的增量部署不需重跑本節**；只需跑 facet 之後新增的 migration（§12–§15 的 8 支），並依 §17 記帳。本節保留供**新環境建置**逐支重放參考。
+
+> 2026-07-07 補全：原序列漏列 4 支合約/售前時代 migration（`backfill_contract_knowledge_diagnosis_category`／
+> `seed_conversational_diagnosis_contract_rule`／`backfill_presales_synth_rules`／`seed_contract_entry_anchor_colloquial`），
+> 並將 §7/§8 的計量/額度兩支與盤查修正一支併入單一序列。若 prod 曾跑過其中幾支，冪等重跑安全。
+
+```bash
+cd rag-orchestrator/database/migrations
+for f in \
+  split_base_system_context_extract_presales.sql \
+  backfill_contract_knowledge_diagnosis_category.sql \
+  seed_conversational_diagnosis_contract_rule.sql \
+  seed_domain_contract_system_context.sql \
+  add_contract_facet_categories.sql \
+  backfill_presales_synth_rules.sql \
+  seed_contract_entry_anchor_colloquial.sql \
+  add_contract_facet_categories_v2.sql \
+  seed_contract_facet_system_context.sql \
+  seed_contract_facet_configs.sql \
+  add_closeout_secondary_call.sql \
+  update_closeout_archive_answer_rule.sql \
+  backfill_contract_knowledge_facet_categories.sql \
+  add_billing_facet_categories.sql \
+  seed_billing_facet_system_context.sql \
+  seed_billing_facet_configs.sql \
+  backfill_billing_knowledge_facet_categories.sql \
+  add_account_facet_categories.sql \
+  seed_account_facet_system_context.sql \
+  seed_account_facet_configs.sql \
+  backfill_account_knowledge_facet_categories.sql \
+  add_iot_facet_categories.sql \
+  seed_iot_facet_system_context.sql \
+  seed_iot_facet_configs.sql \
+  backfill_iot_knowledge_facet_categories.sql \
+  add_estate_facet_categories.sql \
+  seed_estate_facet_system_context.sql \
+  seed_estate_facet_configs.sql \
+  backfill_estate_knowledge_facet_categories.sql \
+  add_test_scenario_audience.sql \
+  backfill_test_scenario_audience.sql \
+  add_test_scenario_gold_checks.sql \
+  seed_bill_diagnosis_facet.sql \
+  audit_20260706_knowledge_fixes.sql \
+  add_usage_events.sql \
+  add_vendor_quotas.sql \
+; do echo "== $f"; docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERROR_STOP=1 < "$f" || break; done
+```
+
+每支結尾有 `RAISE NOTICE ✅` 自檢（計數／互斥），看到非預期數字先停。
+（`create_digression_config.sql` 屬表單 v1.1 舊版更，prod 應已存在——§0 先前掛帳一併確認即可，不在本序列。）
+
+**1.1 資料修復（一次性，冪等）**：歷史迴圈回測的 evaluation 雙重編碼（backtest_client 包兩層 JSON，
+評級/逐字稿讀不到；2026-07-05 已修寫入端）——prod 套用：
+
+```sql
+UPDATE backtest_results SET evaluation = (evaluation #>> '{}')::jsonb
+WHERE jsonb_typeof(evaluation)='string' AND left(evaluation #>> '{}',1)='{';
+```
+
+**1.2 金標改判（帳單診斷收編）**：已併入 `audit_20260706_knowledge_fixes.sql`（見 1.3）。
+
+**1.3 盤查 2026-07-06 知識補強重放**（資料修正已由序列內 `audit_20260706_knowledge_fixes.sql` 完成——
+錯誤知識 5 筆修正/3367 轉直答/金標改判等）。新知識 INSERT 需 embedding，用 import 工具重放：
+
+```bash
+# 檢索補強 2 筆（簽約前狀態差別＋取消點交邀請錨點）
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/audit/reports/audit-additions-import.json
+# 缺口 3 主題（收款方式調整/發票時點/通知排查——通知排查列已由 migration 轉入 3367，import 會自動跳過重複）
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/audit/reports/gap-batch-import.json
+# 錨點補欄位（import 工具 anchors 不帶 form_id）
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c "
+UPDATE knowledge_base SET categories=ARRAY['條件診斷：合約','狀態判斷'],
+  target_user=ARRAY['property_manager','tenant'], form_id='jgb_contract_query', action_type='form_fill'
+WHERE question_summary='取消點交邀請 取消點退邀請 收回邀請' AND form_id IS NULL;"
+```
+
+匯入後 semantic model 重抽（§4 已含）。盤查報告與豁免依據：`scripts/audit/reports/jgb-knowledge-audit-20260706.md`。
+
+## 2. 知識批次匯入（12 份，均已人工審核通過）
+
+工具：`rag-orchestrator/tools/import_facet_knowledge.py`（冪等；updates 重算 embedding、新知識/錨點含 embedding）。連線走環境變數，prod 主機上視實際埠位覆寫（tune_routing.py 同）：
+
+```bash
+export DB_HOST=localhost DB_PORT=5432 DB_PASSWORD=<prod密碼>
+export EMBEDDING_API_URL=http://localhost:5001/api/v1/embeddings
+```
+
+```bash
+# 先 dry-run 看清單，再真跑
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/contract-knowledge-batch.json --dry-run
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/contract-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/contract-knowledge-batch-2.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/billing-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/account-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/account-anchors-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/iot-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/iot-anchors-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/estate-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/b2b-knowledge-batch.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/b2b-knowledge-batch-2.json
+python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/askbad-rootfix-batch.json
+```
+
+（末兩份為 2026-07-05 閘門批：51 題抽驗長尾 7 筆＋ASK_BAD 根因批 1 修 3 補——2026-07-07 補列，原 runbook 漏收。）
+
+（IoT 批次無後置步驟：雙角色單發維持 system_provider 業態——b2b 檢索為嚴格業態過濾、NULL 會隱形；先例 3435/3458 同慣例。）
+
+註：3531/3532 滯納金修正在 billing 批次、3435-3439 帳號口徑修正在 account 批次的 updates 內，不用另跑。
+
+## 3. 進場路由微調（合約 4 紅案資料側修正）
+
+```bash
+# 3388 untag／3402、3530 question 重嵌（需 EMBEDDING_API_URL 與 DB 環境變數）
+python3 scripts/knowledge-batches/tune_routing.py
+```
