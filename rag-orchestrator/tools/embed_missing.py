@@ -43,9 +43,11 @@ async def main() -> None:
         rows = await conn.fetch(
             "SELECT id, question_summary FROM knowledge_base "
             "WHERE is_active AND embedding IS NULL AND question_summary IS NOT NULL "
-            # 排除「系統脈絡／對話規則」：注入/設定列，靠 facet key／category 取用、
-            # 標註『勿檢索』，系統本就不給 embedding；只補真正走向量檢索的知識/錨點。
-            "AND COALESCE(category,'') NOT IN ('系統脈絡','對話規則') "
+            # 排除「系統脈絡／對話規則」：注入/設定列（勿檢索），系統本就不給 embedding。
+            # 用 question_summary 前綴判定——category 欄不可靠（有的系統脈絡列 category 掛面向名
+            # 如 '條件診斷：帳單' 會漏網；但前綴命名一致）。只補真正走向量檢索的知識/錨點。
+            "AND question_summary NOT LIKE '%系統脈絡%' "
+            "AND question_summary NOT LIKE '%對話規則%' "
             "ORDER BY id")
         print(f"缺 embedding 的列：{len(rows)} 筆")
         for row in rows:
