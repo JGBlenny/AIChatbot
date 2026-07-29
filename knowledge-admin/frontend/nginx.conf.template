@@ -1,6 +1,15 @@
 # 由 nginx 官方 image 的 envsubst 機制展開（/etc/nginx/templates/*.template → conf.d/*.conf）。
 # ${RAG_ADMIN_API_KEY} 於容器啟動時代入（compose environment ← .env，金鑰不進版控、不進瀏覽器）。
 # 其餘 $變數（$host、$http_authorization…）為 nginx 執行期變數，envsubst 只替換「已定義的環境變數」不會誤傷。
+
+# 呼叫端已帶 X-API-Key（伺服器對伺服器整合，如 jgb2）→ 原樣沿用其金鑰；沒帶（後台瀏覽器）→ 注入 admin 金鑰。
+# 修（2026-07-29）：§16 的 auth_request 誤擋「帶 API 金鑰但無後台 JWT」的外部整合（403）；
+#   此 map ＋ /_admin_auth 放行，讓「API 金鑰呼叫者」與「後台 JWT 呼叫者」在同一 /rag-api 共存。
+map $http_x_api_key $rag_api_key {
+    ""       "${RAG_ADMIN_API_KEY}";
+    default  $http_x_api_key;
+}
+
 server {
     listen 80;
     server_name localhost;
@@ -38,6 +47,8 @@ server {
     # 200 → 已登入；401/403 → auth_request 擋下（前端 401 攔截器導回登入頁＝正確行為）。
     location = /_admin_auth {
         internal;
+        # 帶 API 金鑰的呼叫者（外部整合）→ 直接放行、不要求後台 JWT（rag 端會驗那把金鑰）。
+        if ($http_x_api_key) { return 200; }
         set $admin_api_auth http://knowledge-admin-api:8000;
         proxy_pass $admin_api_auth/api/auth/me;
         proxy_pass_request_body off;
@@ -61,7 +72,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-API-Key "${RAG_ADMIN_API_KEY}";
+        proxy_set_header X-API-Key $rag_api_key;
 
         # SSE 串流支援（禁用 buffering，確保即時傳送）
         proxy_buffering off;
