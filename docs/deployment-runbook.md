@@ -67,6 +67,12 @@ ls -lh backups/pre_deploy_*.sql.gz | tail -1   # 驗證：檔案在、大小非 
 grep RAG_API_AUTH_ENFORCE <prod env>   # 應為已開；未開請設定後再部署
 ```
 
+> **⚠️ 驗證用 curl 一律要帶金鑰（因 0-3 認證已開）**：本 runbook 所有「直接打 rag（`localhost:8100`）」的驗證 curl（§5 煙囪／§12-3／§13／§14…），因 `RAG_API_AUTH_ENFORCE=true`，**未帶 `X-API-Key` 會被 401**（非功能故障，是認證擋下）。跑任何驗證前先設一次金鑰變數：
+> ```bash
+> K=$(grep '^RAG_ADMIN_API_KEY=' .env | cut -d= -f2-)   # §16 發行的後台代理金鑰
+> ```
+> 然後每個驗證 curl 補上 `-H "X-API-Key: $K"`。（若改走 UI／jgb2 前端測則免帶——nginx 會自動注入。）
+
 順帶檢查兩件先前掛帳（與本批無關但同機會處理）：chatflow 重構那批的 prod migration、`form_sessions.pending_question` 欄位 migration 是否已跑。
 
 ## 1–3. facet 大批逐支明細 → 已移至【附錄 Z】
