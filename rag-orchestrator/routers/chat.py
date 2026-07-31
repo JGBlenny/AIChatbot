@@ -2902,8 +2902,13 @@ async def _handle_no_knowledge_found(
 
     params = resolver.get_vendor_parameters(request.vendor_id)
 
-    # 使用模板格式以便追蹤參數使用
-    fallback_answer = "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 {{service_hotline}}。請問您方便提供更詳細的內容嗎？"
+    # 使用模板格式以便追蹤參數使用；業者未設 service_hotline 時整句拿掉（缺值會吐原始佔位符給使用者）
+    _has_hotline = bool(((params or {}).get("service_hotline") or {}).get("value"))
+    fallback_answer = (
+        "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。"
+        + ("如需立即協助，請撥打客服專線 {{service_hotline}}。" if _has_hotline else "")
+        + "請問您方便提供更詳細的內容嗎？"
+    )
 
     # prospect 無檢索知識：以系統脈絡「功能索引」md-only 合成（功能推薦走此，R13.3）
     # 有對應功能 → 點名推薦並導出口；無 → 禮貌導專人；不杜撰功能。失敗保留原 fallback。

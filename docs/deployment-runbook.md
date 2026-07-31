@@ -557,6 +557,63 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 
 **衛生規則**：新 migration 檔名一律 `YYYYMMDD_` 前綴（runner 靠檔名排序＝時序）；需 embedding 的知識 seed 宣告於 `seeds.manifest`（一行一支：`模式<TAB>帳本名<TAB>指令`，`once`＝跑一次記帳／`always`＝每次跑不記帳）；rollback 檔放 `migrations/rollback/`；帳本只記前向支，rollback 執行時 DELETE 對應帳紀錄。runner 四路徑＋seed 批已於 2026-07-25 以丟棄庫驗證。
 
+## 18. 客服回報修正批 20260731（assistant-reports R-31~R-37）
+
+依據：`docs/backtest/assistant-report-regression.md`（批次 20260731，本機 10 測全綠）。
+內容：①R-33 知識錯誤修正（已發送應到帳可收回）②T-1 查資料型知識補面向分類＋收據錨點 ③R-32/34/36 新知識三筆 ④B-1 fallback 缺 `service_hotline` 不吐佔位符（程式修正，含在 image 重建）。
+
+### 18-1. 碼與 migration
+
+```bash
+cd /home/ec2-user/AIChatbot
+git pull   # 需含 20260731 客服回報修正批 commit
+
+# dry-run 確認只列 20260731_assistant_report_fixes（create_digression_config 為已記帳 legacy，不應再列）
+bash rag-orchestrator/database/migrate.sh
+# 預期：🔸 待跑：20260731_assistant_report_fixes（僅此一支）
+
+bash rag-orchestrator/database/migrate.sh --apply
+# 預期：UPDATE 1 / UPDATE 1 / UPDATE 3 / UPDATE 1 ＋ INSERT 0 1 × 4，並記帳
+```
+
+### 18-2. 補嵌（4 筆新知識列，容器內跑）
+
+```bash
+docker cp rag-orchestrator/tools/embed_missing.py aichatbot-rag-orchestrator:/app/tools_embed_missing.py
+docker exec aichatbot-rag-orchestrator python3 /app/tools_embed_missing.py
+# 預期：缺 embedding 的列：4 筆（帳單總表 虛擬帳號查交易／帳單批次匯入 批次建立／租客姓名查合約／帳單收據金額 收據多少錢）→ 完成
+```
+
+### 18-3. 重建服務（載入 chat.py fallback 修正）
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrator
+```
+
+### 18-4. 業者 service_hotline 補值（資料側，B-1 第二層）
+
+```bash
+# 查缺值的 active 業者
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "SELECT v.id, v.name FROM vendors v WHERE v.is_active AND NOT EXISTS \
+   (SELECT 1 FROM vendor_configs c WHERE c.vendor_id=v.id AND c.param_key='service_hotline' AND c.is_active);"
+# 缺的向業者取得實際專線後補（範例，號碼換成真值）：
+# INSERT INTO vendor_configs (vendor_id, param_key, param_value, data_type, display_name, category, is_active)
+# VALUES (<vendor_id>, 'service_hotline', '<專線號碼>', 'string', '客服專線', 'contact', true);
+```
+
+### 18-5. 驗證（帶 X-API-Key，見 §0）
+
+```bash
+# ① T-1：應進面向（回追問/查無或實值，不能是通用知識條目）
+curl -s -X POST https://chatai.jgbsmart.com/rag-api/v1/message -H "Content-Type: application/json" -H "X-API-Key: $KEY" \
+  -d '{"message":"合約822032點退帳單金額為多少?","vendor_id":4,"mode":"b2b","role_id":"<真role>","user_id":"<真user>","session_id":"verify-18-1"}'
+# ② B-1：無知識題 fallback 不得含 {{service_hotline}} 字樣
+# ③ R-33：問「已發送的帳單可以取消嗎」不得再答「無法撤回」
+```
+
+**prod 待驗（真 API 才能確認）**：bill_diagnosis 以合約編號搜帳單的實際效果（R-35 期望找到關帳帳單）、bill_detail 是否含收據金額（R-31）。驗完把登錄簿對應案例標「已入回測」。
+
 ## 附錄 A：全庫搬遷路徑（**僅新環境建置**：空庫從 dump 還原）
 
 > **⚠️ 2026-07-22 §17 後正名**：本路徑**不用於既有 prod 增量部署**（drop-restore 會覆蓋 prod-only 計量歷史）。07-07 曾以此路徑把 facet 大批整批上線（已完成）；往後既有 prod 增量一律走頂部「🚩 現行部署路徑」＝逐支 migration＋§17 記帳。

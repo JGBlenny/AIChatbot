@@ -36,7 +36,7 @@ aws s3 cp s3://jgb2-production-upload/assistant-reports/2026/07/ ./reports/ --re
 - **實際行為**：卡住未回覆
 - **正確期望**（回報人）：應於租客帳單內查看收據實際金額
 - **分類**：帳務面向缺口——收據金額查詢未涵蓋（或 ID 型問句卡在路由）
-- **狀態**：待處理
+- **狀態**：已修正（本機驗證 2026-07-31）——新增「帳單收據金額」進場錨點（20260731_assistant_report_fixes.sql §6a）＋ 3406 補掛 條件診斷：帳單；實測進 bill_diagnosis 面向。prod 待驗：真 API 的 bill_detail 是否含收據金額
 
 ### R-32｜金流抽查交易查詢引導
 
@@ -45,7 +45,7 @@ aws s3 cp s3://jgb2-production-upload/assistant-reports/2026/07/ ./reports/ --re
 - **實際行為**：（逐字稿僅含使用者訊息，未見有效回覆）
 - **正確期望**（回報人）：引導至帳單總表 → 下拉篩選單 → 搜尋虛擬帳號
 - **分類**：操作引導知識缺漏（帳單總表以虛擬帳號查交易）
-- **狀態**：待處理
+- **狀態**：已修正（本機驗證 2026-07-31）——新增知識「帳單總表 虛擬帳號查交易」（migration §4）；實測直答命中
 
 ### R-33｜已發送應到帳可否取消（知識錯誤）
 
@@ -54,7 +54,7 @@ aws s3 cp s3://jgb2-production-upload/assistant-reports/2026/07/ ./reports/ --re
 - **實際行為**：AI 回覆「已發送的帳單無法撤回」
 - **正確期望**（回報人）：**已發送的應到帳是可以取消的**——知識內容錯誤需修正
 - **分類**：知識庫內容錯誤（帳單撤回/取消規則）
-- **狀態**：待處理
+- **狀態**：已修正（本機驗證 2026-07-31）——修 3403 知識與 4253 帳單診斷系統脈絡（migration §1/§2，依 jgb2 Bill::canCancel：應到帳/排定發送可收回、待對帳/已到帳不可）；相關問句實測進帳單診斷面向照 API 現值判斷
 
 ### R-34｜帳單批次新增/更新（無知識）
 
@@ -63,7 +63,7 @@ aws s3 cp s3://jgb2-production-upload/assistant-reports/2026/07/ ./reports/ --re
 - **實際行為**：無知識可答，走轉客服 fallback；且回覆中 `{{servicehotline}}` 佔位符未替換直接吐給使用者
 - **正確期望**：補批次帳單功能知識（有無此功能需先向 jgb2 確認事實）
 - **分類**：知識缺漏＋**佔位符渲染 bug**（見 B-1）
-- **狀態**：待處理
+- **狀態**：已修正（本機驗證 2026-07-31）——新增知識「帳單批次匯入 批次建立」（migration §5，jgb2 bills.excel.batch.import 通用路由查證）；實測直答命中。批次「編輯」屬客製路由（batch-edit-ziyu）未寫入知識
 
 ### R-35｜指定合約點退帳單金額（答通用知識非實際資料）
 
@@ -72,7 +72,7 @@ aws s3 cp s3://jgb2-production-upload/assistant-reports/2026/07/ ./reports/ --re
 - **實際行為**：回覆點退帳單金額「算法」的通用知識條目
 - **正確期望**（回報人）：先查該合約的先關帳單，找到帳單 ID 739330，回覆該帳單細節
 - **分類**：**路由缺口**——帶具體 ID 的資料查詢被 RAG 通用知識搶答，未進帳務面向
-- **狀態**：待處理
+- **狀態**：已修正（本機驗證 2026-07-31）——3519/3402 補掛 條件診斷：帳單（migration §3）；實測進 bill_diagnosis、以 822032 追查（mock 0-row 誠實查無）。prod 待驗：真 API 以合約編號搜帳單的實際效果
 
 ### R-36｜租客姓名反查合約 ID
 
@@ -81,7 +81,7 @@ aws s3 cp s3://jgb2-production-upload/assistant-reports/2026/07/ ./reports/ --re
 - **實際行為**：查不到走轉客服 fallback（`{{servicehotline}}` 同樣未替換）
 - **正確期望**（回報人）：以租客姓名反查合約，答 87197
 - **分類**:能力缺口——合約面向不支援「姓名 → 合約」反查（需評估 JGB API 是否支援）
-- **狀態**：待處理
+- **狀態**：已修正（本機驗證 2026-07-31）——新增誠實引導知識「租客姓名查合約」（migration §6b）；實測直答命中。能力面已確認 external API keyword 只搜合約 title（jgb2 ContractApiController:72-74）→ 姓名反查需 jgb2 擴充，列 J 清單
 
 ### R-37｜指定合約續約紀錄（答通用知識非實際資料）
 
@@ -90,17 +90,23 @@ aws s3 cp s3://jgb2-production-upload/assistant-reports/2026/07/ ./reports/ --re
 - **實際行為**：回覆續約歷史「機制說明」的通用知識條目
 - **正確期望**（回報人）：實際查合約 86829 的續約歷程，關聯合約為 81918
 - **分類**：**路由缺口**——同 R-35，帶 ID 的資料查詢被通用知識搶答
-- **狀態**：待處理
+- **狀態**：已修正（本機驗證 2026-07-31）——3527 補掛 續約（migration §3）；實測進 contract_renew 面向
 
 ## 橫向問題（跨案例）
 
 ### B-1｜`{{servicehotline}}` 佔位符未替換
 
-R-34、R-36 的 fallback 回覆都把 `{{servicehotline}}` 原字串吐給使用者。需查 fallback 模板的變數替換路徑（疑似 vendor 未設定客服專線值或渲染層漏替換），修正後兩案例一併驗證。
+R-34、R-36 的 fallback 回覆都把 `{{servicehotline}}` 原字串吐給使用者。
+
+**已修正（本機驗證 2026-07-31）**：根因＝該業者 `vendor_configs` 缺 `service_hotline` 參數時，resolver 保留原佔位符（`vendor_parameter_resolver.py:251-257`）。修法兩層：
+1. **程式**：`chat.py` fallback 構建改為缺值時整句拿掉專線句（實測 vendor 4 無專線 → 乾淨 fallback）。
+2. **資料（prod 待做）**：檢查 active 業者缺 `service_hotline` 者補值——`SELECT v.id, v.name FROM vendors v WHERE v.is_active AND NOT EXISTS (SELECT 1 FROM vendor_configs c WHERE c.vendor_id=v.id AND c.param_key='service_hotline' AND c.is_active);` 缺的向業者取得專線號碼後補 INSERT。
 
 ### T-1｜「帶具體 ID 問實際資料」被通用知識搶答（R-31、R-35、R-37）
 
 三筆同型：使用者給合約/帳單 ID 問具體資料，系統回 RAG 通用知識或卡住，未路由到已具備的帳務/合約面向。回測時此型問句應驗證「路由進面向＋回實際資料」，不接受知識條目作為正解。
+
+**已修正（本機驗證 2026-07-31）**：根因＝面向進場靠「top-1 知識的分類」（`_diagnosis_config_for_knowledge`），而 6/12 批匯入的查資料型知識（3402/3406/3519/3527）只掛後台分類（合約管理/帳單管理），top-1 命中時就直答不進面向。修法＝補掛面向診斷分類（migration §3）＋收據金額專屬錨點（§6a）。回歸確認：無 ID 泛問（「點退帳單金額怎麼計算」「收據 PDF 怎麼下載」）仍直答機制說明，不被拐進面向。**同型防呆**：日後匯入「可用面向查實值」主題的知識時，必須同時掛面向分類，否則會再現此缺口。
 
 ## 回測整合方式
 
