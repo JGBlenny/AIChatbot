@@ -215,7 +215,7 @@ def build_late_fee_facts(row: dict, user_question: str = "") -> str:
 
 _DIAG_KEYWORDS = ("發不出", "無法發送", "發送失敗", "送不出", "取消", "作廢", "cancel",
                   "逾期", "延遲金", "滯納金", "late fee", "到帳", "收款", "標記已收",
-                  "手動", "虛擬帳號", "帳號過期", "ATM", "轉帳失敗")
+                  "手動", "虛擬帳號", "帳號過期", "ATM", "轉帳失敗", "收據")
 
 
 def build_bill_diagnosis_facts(row: dict, user_question: str = "") -> str:
@@ -292,6 +292,8 @@ def diagnose_bill(bill: dict, user_question: str = "") -> str:
         return _diagnose_late_fee(bill)
     elif any(k in question for k in ["到帳", "收款", "標記已收", "手動"]):
         return _diagnose_manual_complete(bill)
+    elif "收據" in question:
+        return _diagnose_receipt(bill)
     elif any(k in question for k in ["虛擬帳號", "帳號過期", "ATM", "轉帳失敗"]):
         return _diagnose_atm_expired(bill)
 
@@ -375,6 +377,25 @@ def _diagnose_cannot_cancel(bill: dict) -> str:
     return (f"帳單「{title}」無法取消，原因：\n"
             f"• 帳單目前狀態為「{status_label}」，{hint}"
             "（可取消的狀態：應到帳/待繳費、排定發送）")
+
+
+def _diagnose_receipt(bill: dict) -> str:
+    """B05：收據查詢（R-31）——收據於繳費完成後產生（同 3406 知識），
+    未繳費要明說「尚無收據」，不得沉默改答帳單金額。"""
+    title = bill.get("title", f"帳單 {bill.get('id', '?')}")
+    bit_status = _bill_status(bill)
+    if bit_status == 16:
+        amount = bill.get("final_total", bill.get("total"))
+        amount_str = f"NT$ {amount:,.0f}" if amount is not None else "（依帳單實收金額）"
+        return (f"帳單「{title}」已繳費，收據金額為 {amount_str}。"
+                "可在帳單詳情頁點選「下載收據」取得 PDF（含帳單編號、繳費日期、金額明細與付款方式）。")
+    if bit_status == 8:
+        return (f"帳單「{title}」租客已付款、款項待金流商確認入帳（待對帳），"
+                "收據會在款項確認到帳後產生，屆時可於帳單詳情下載。")
+    total = bill.get("total")
+    total_str = f"（帳單金額 NT$ {total:,.0f}）" if total is not None else ""
+    return (f"帳單「{title}」目前狀態為「{_get_status_label(bit_status)}」，尚未繳費，"
+            f"因此還沒有收據可查{total_str}。收據會在租客完成繳費、款項到帳後產生。")
 
 
 def _diagnose_late_fee(bill: dict) -> str:

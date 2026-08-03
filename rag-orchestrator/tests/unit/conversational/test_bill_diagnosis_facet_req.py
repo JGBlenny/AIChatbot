@@ -91,6 +91,22 @@ def test_cancel_verdict_paid_not_cancellable():
         assert "無法取消" in out and "不能收回" in out
 
 
+def test_receipt_unpaid_says_no_receipt_yet():
+    """B05 收據判定（客服回報 R-31／情境回測 D-1 逼出）：未繳費（status=2）問收據
+    → 明說「尚未繳費、尚無收據」，不得沉默改答帳單金額。"""
+    out = face_bill_response("jgb_bills", [_bill(status=2, total=28500)],
+                             "這張帳單的收據金額是多少", FACE)
+    assert "尚無收據" in out or "還沒有收據" in out
+
+
+def test_receipt_paid_gives_receipt_amount():
+    """B05：已繳費（status=16）問收據 → 給收據金額（實收 final_total）與下載出口。"""
+    out = face_bill_response("jgb_bills",
+                             [_bill(status=16, total=28500, final_total=28500)],
+                             "收據金額是多少", FACE)
+    assert "收據" in out and "28,500" in out
+
+
 def test_other_faces_unaffected():
     """零回歸：既有四個 face builder 不受收編影響。"""
     for f in ("繳費金流排障", "帳單異常", "發票", "滯納金"):

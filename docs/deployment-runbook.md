@@ -573,16 +573,16 @@ bash rag-orchestrator/database/migrate.sh
 # 預期：🔸 待跑：20260731_assistant_report_fixes ＋ 20260803_batch24_standard_answers（共兩支）
 
 bash rag-orchestrator/database/migrate.sh --apply
-# 預期：20260731 支＝UPDATE 1 / UPDATE 1 / UPDATE 3 / UPDATE 1 ＋ INSERT 0 1 × 6；
-#       20260803 支＝INSERT 0 1 × 15；皆記帳
+# 預期：20260731 支＝UPDATE 1 / UPDATE 1 / UPDATE 3 / UPDATE 1 ＋ INSERT 0 1 × 5；
+#       20260803 支＝INSERT 0 1 × 16 ＋ UPDATE 1 × 2（雙人簽約矛盾調和）；皆記帳
 ```
 
-### 18-2. 補嵌（20 筆新知識/錨點列，容器內跑）
+### 18-2. 補嵌（21 筆新知識/錨點列，容器內跑）
 
 ```bash
 docker cp rag-orchestrator/tools/embed_missing.py aichatbot-rag-orchestrator:/app/tools_embed_missing.py
 docker exec aichatbot-rag-orchestrator python3 /app/tools_embed_missing.py
-# 預期：缺 embedding 的列：20 筆（20260731 批 5 筆＋20260803 標準答案批 15 筆）→ 完成
+# 預期：缺 embedding 的列：21 筆（20260731 批 5 筆＋20260803 批 16 筆）→ 完成
 ```
 
 ### 18-3. 重建服務（載入 chat.py fallback 修正）

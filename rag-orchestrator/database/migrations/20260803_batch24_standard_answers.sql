@@ -127,3 +127,12 @@ SET answer = '兩人共同簽約時：身分證欄位請把證件種類改選「
     updated_at = CURRENT_TIMESTAMP
 WHERE question_summary = '雙人簽約 兩位承租人填寫方式'
   AND answer NOT LIKE '%代表完成%';
+
+-- ── 情境回測 D-3：「合約N的點退帳單金額」措辭變體錨點 ──
+--   3519 已掛面向分類，但此句型相似度落在 0.55-0.75 區間→直答搶答（門檻脆弱性）。
+INSERT INTO knowledge_base (question_summary, answer, categories, target_user, business_types,
+                            keywords, is_active, source)
+SELECT '合約的點退帳單金額 查點退金額', '', ARRAY['條件診斷：帳單']::text[],
+       ARRAY['property_manager','tenant']::text[], ARRAY['system_provider']::text[],
+       ARRAY['合約','點退','金額']::text[], TRUE, 'manual'
+WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '合約的點退帳單金額 查點退金額');
