@@ -61,9 +61,21 @@ SELECT '帳單收據金額 收據多少錢', '', ARRAY['條件診斷：帳單']:
        ARRAY['帳單','收據','金額']::text[], TRUE, 'manual'
 WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '帳單收據金額 收據多少錢');
 
+-- ── 6b-0. 合約資訊查詢錨點（20260803 重跑 #5 逼出的回歸防護）：
+--   「查詢合約資訊 <編號>」語義離 6b 姓名引導知識太近會被搶答，
+--   需本錨點把編號句吸進合約診斷面向；姓名句仍落在 6b。──
+INSERT INTO knowledge_base (question_summary, answer, categories, target_user, business_types,
+                            keywords, is_active, source)
+SELECT '查詢合約資訊 合約編號查詢', '', ARRAY['狀態判斷']::text[],
+       ARRAY['property_manager','tenant']::text[], ARRAY['system_provider']::text[],
+       ARRAY['合約','查詢','資訊']::text[], TRUE, 'manual'
+WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '查詢合約資訊 合約編號查詢');
+
 -- ── 6b. R-36：租客姓名反查合約——外部 API 不支援，誠實引導後台搜尋 ──
 INSERT INTO knowledge_base (question_summary, answer, categories, business_types, target_user, action_type, source, is_active)
-SELECT '租客姓名查合約',
+--   summary 聚焦「姓名反查」語義：泛「查詢合約資訊 <編號>」句不可被本筆搶答（20260803 重跑 #5 逼出，
+--   帶編號的合約查詢必須留給合約面向錨點）。
+SELECT '用租客姓名找合約 姓名反查合約編號',
        '智能助手目前無法直接用租客姓名反查合約編號，查詢合約資訊時請提供合約編號或物件名稱。若手邊只有租客姓名，可先到後台合約列表以租客姓名搜尋，找到對應合約後，再以該合約編號向助手查詢狀態或細節。',
        '{合約管理}', '{system_provider}', '{property_manager}', 'direct_answer', 'manual', true
-WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '租客姓名查合約');
+WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '用租客姓名找合約 姓名反查合約編號');

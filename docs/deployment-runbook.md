@@ -568,20 +568,21 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 cd /home/ec2-user/AIChatbot
 git pull   # 需含 20260731 客服回報修正批 commit
 
-# dry-run 確認只列 20260731_assistant_report_fixes（create_digression_config 為已記帳 legacy，不應再列）
+# dry-run 確認列出兩支（create_digression_config 為已記帳 legacy，不應再列）
 bash rag-orchestrator/database/migrate.sh
-# 預期：🔸 待跑：20260731_assistant_report_fixes（僅此一支）
+# 預期：🔸 待跑：20260731_assistant_report_fixes ＋ 20260803_batch24_standard_answers（共兩支）
 
 bash rag-orchestrator/database/migrate.sh --apply
-# 預期：UPDATE 1 / UPDATE 1 / UPDATE 3 / UPDATE 1 ＋ INSERT 0 1 × 4，並記帳
+# 預期：20260731 支＝UPDATE 1 / UPDATE 1 / UPDATE 3 / UPDATE 1 ＋ INSERT 0 1 × 6；
+#       20260803 支＝INSERT 0 1 × 15；皆記帳
 ```
 
-### 18-2. 補嵌（4 筆新知識列，容器內跑）
+### 18-2. 補嵌（20 筆新知識/錨點列，容器內跑）
 
 ```bash
 docker cp rag-orchestrator/tools/embed_missing.py aichatbot-rag-orchestrator:/app/tools_embed_missing.py
 docker exec aichatbot-rag-orchestrator python3 /app/tools_embed_missing.py
-# 預期：缺 embedding 的列：4 筆（帳單總表 虛擬帳號查交易／帳單批次匯入 批次建立／租客姓名查合約／帳單收據金額 收據多少錢）→ 完成
+# 預期：缺 embedding 的列：20 筆（20260731 批 5 筆＋20260803 標準答案批 15 筆）→ 完成
 ```
 
 ### 18-3. 重建服務（載入 chat.py fallback 修正）
