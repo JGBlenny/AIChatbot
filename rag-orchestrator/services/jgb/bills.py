@@ -351,26 +351,30 @@ def _diagnose_cannot_send(bill: dict) -> str:
 
 
 def _diagnose_cannot_cancel(bill: dict) -> str:
-    """B02：帳單為什麼取消不了"""
+    """B02：帳單為什麼取消不了——鏡射 jgb2 Bill::canCancel：
+    只有應到帳/待繳費(2)與排定發送(32)可取消（收回）；無型態限制。
+    （客服回報批次20260731 R-33 勘誤：舊版「只有待發送能取消」方向相反。）"""
     title = bill.get("title", f"帳單 {bill.get('id', '?')}")
     bit_status = _bill_status(bill)
-    bill_type = bill.get("type", 1)
-    blockers = []
+    status_label = _get_status_label(bit_status)
 
-    # 條件 1：只有草稿狀態可取消
-    if bit_status != 1:
-        status_label = _get_status_label(bit_status)
-        blockers.append(f"帳單目前狀態為「{status_label}」，只有「待發送」狀態的帳單才能取消")
+    if bit_status in (2, 32):
+        return (f"帳單「{title}」目前狀態為「{status_label}」，可以取消（收回）——"
+                "收回後帳單退回「待發送」，可修改內容後重新發送；"
+                "原繳費資訊會失效，重發時會產生新的虛擬帳號／繳費代碼。"
+                "如仍無法操作，請重新整理頁面後再試。")
 
-    # 條件 2：點退帳單不可取消
-    if bill_type == 2:
-        blockers.append("此為點退帳單，系統自動產生的帳單無法直接取消")
-
-    if not blockers:
-        return f"帳單「{title}」目前為待發送狀態，應該可以取消。如仍無法操作，請重新整理頁面後再試。"
-
-    reasons = "\n".join(f"• {b}" for b in blockers)
-    return f"帳單「{title}」無法取消，原因：\n{reasons}"
+    if bit_status == 1:
+        hint = "帳單尚未發送，不需要取消——可直接編輯內容；不再需要時可將其封存"
+    elif bit_status in (8, 16):
+        hint = "租客款項已進入對帳／到帳流程，不能收回"
+    elif bit_status == 64:
+        hint = "帳單已失效，無需取消"
+    else:
+        hint = "此狀態不支援取消"
+    return (f"帳單「{title}」無法取消，原因：\n"
+            f"• 帳單目前狀態為「{status_label}」，{hint}"
+            "（可取消的狀態：應到帳/待繳費、排定發送）")
 
 
 def _diagnose_late_fee(bill: dict) -> str:

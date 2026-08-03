@@ -63,6 +63,34 @@ def test_candidate_pick_turn_emits_full_verdicts():
     assert "發送" in out and "取消" in out and "到帳" in out
 
 
+def test_cancel_verdict_ready_is_cancellable():
+    """B02 勘誤（客服回報批次20260731 R-33 同源）：應到帳(status=2)可收回——
+    jgb2 Bill::canCancel 只認 BILL_READY(2)/BILL_PREPARE_TO_READY(32)，
+    舊解碼「只有待發送能取消」方向相反。"""
+    out = face_bill_response("jgb_bills", [_bill(status=2)], "帳單可以取消嗎", FACE)
+    assert "可以取消" in out
+    assert "只有「待發送」狀態的帳單才能取消" not in out
+
+
+def test_cancel_verdict_scheduled_is_cancellable():
+    """B02：排定發送(status=32)同樣可取消。"""
+    out = face_bill_response("jgb_bills", [_bill(status=32)], "帳單取消不了", FACE)
+    assert "可以取消" in out
+
+
+def test_cancel_verdict_draft_needs_no_cancel():
+    """B02：待發送(status=1)是草稿——沒有「取消」可言，應導向直接編輯/失效。"""
+    out = face_bill_response("jgb_bills", [_bill(status=1)], "帳單可以取消嗎", FACE)
+    assert "不需要取消" in out or "直接編輯" in out
+
+
+def test_cancel_verdict_paid_not_cancellable():
+    """B02：待對帳(8)/已到帳(16)——款項已進流程，不能收回。"""
+    for st in (8, 16):
+        out = face_bill_response("jgb_bills", [_bill(status=st)], "帳單為什麼取消不了", FACE)
+        assert "無法取消" in out and "不能收回" in out
+
+
 def test_other_faces_unaffected():
     """零回歸：既有四個 face builder 不受收編影響。"""
     for f in ("繳費金流排障", "帳單異常", "發票", "滯納金"):
