@@ -614,6 +614,13 @@ curl -s -X POST https://chatai.jgbsmart.com/rag-api/v1/message -H "Content-Type:
 
 **prod 待驗（真 API 才能確認）**：bill_diagnosis 以合約編號搜帳單的實際效果（R-35 期望找到關帳帳單）、bill_detail 是否含收據金額（R-31）。驗完把登錄簿對應案例標「已入回測」。
 
+```bash
+# ④ 合約端點健康（登錄簿 J-2：preview 已因部署落後 500，prod 需確認無此問題）
+curl -s -o /dev/null -w "%{http_code}\n" \
+  "https://www.jgbsmart.com/api/external/v1/contracts/status-overview?role_id=<真role>" -H "X-API-Key: $JGB_KEY"
+# 預期 200；若 500 且錯誤含 early_termination_notice_date → 同 J-2，轉 jgb2 處理
+```
+
 ## 附錄 A：全庫搬遷路徑（**僅新環境建置**：空庫從 dump 還原）
 
 > **⚠️ 2026-07-22 §17 後正名**：本路徑**不用於既有 prod 增量部署**（drop-restore 會覆蓋 prod-only 計量歷史）。07-07 曾以此路徑把 facet 大批整批上線（已完成）；往後既有 prod 增量一律走頂部「🚩 現行部署路徑」＝逐支 migration＋§17 記帳。
