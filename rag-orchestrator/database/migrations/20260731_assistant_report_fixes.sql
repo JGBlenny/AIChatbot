@@ -47,10 +47,10 @@ WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '帳單�
 
 -- ── 5. R-34：批次建立帳單（jgb2 bills.excel.batch.import 通用路由查證）──
 INSERT INTO knowledge_base (question_summary, answer, categories, business_types, target_user, action_type, source, is_active)
-SELECT '帳單批次匯入 批次建立',
+SELECT '帳單批次匯入 整批電費帳單 批次建立',
        '需要一次為多位租客建立帳單（例如整批電費帳單）時，可使用帳單的 Excel 批次匯入：先在帳單頁面下載系統提供的匯入範例檔，填妥各租客的費用資料後上傳，系統會依檔案內容批次建立帳單。匯入建立的帳單為待發送狀態，可逐筆檢查後再發送。已發送帳單如需批次調整，請聯繫客服協助。',
        '{業者操作指引,帳單管理}', '{system_provider}', '{property_manager}', 'direct_answer', 'manual', true
-WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '帳單批次匯入 批次建立');
+WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary IN ('帳單批次匯入 整批電費帳單 批次建立','帳單批次匯入 批次建立'));
 
 -- ── 6a. R-31：帳單收據金額進場錨點（口語錨點範式：一種講法一筆、空答案、掛面向分類）──
 --   「716317 帳單收據金額是多少」這類短句對一般知識相似度不足 0.55，需專屬錨點帶進帳單診斷。

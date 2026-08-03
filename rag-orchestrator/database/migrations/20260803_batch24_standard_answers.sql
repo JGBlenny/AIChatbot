@@ -38,10 +38,10 @@ WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '雙人�
 
 -- R-38e（#19）已議定修改的合約更新
 INSERT INTO knowledge_base (question_summary, answer, categories, business_types, target_user, action_type, source, is_active)
-SELECT '合約修改後更新 複製合約 不重填',
+SELECT '合約修改後更新 改租金要重填嗎 複製合約',
        '已與房客議定修改內容、要更新現有合約時：可用「複製合約」功能，依需要的項目選擇複製再調整，不必整份重填；若合約還在待發送、內容已與房客確認，建議直接創建新合約（房客同意即可，不必再次線上簽名）。舊合約可提交異動單移至歷史合約、過去帳單手動封存，之後以新合約與新帳單為準。',
        '{業者操作指引,合約管理}', '{system_provider}', '{property_manager}', 'direct_answer', 'manual', true
-WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '合約修改後更新 複製合約 不重填');
+WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary IN ('合約修改後更新 改租金要重填嗎 複製合約','合約修改後更新 複製合約 不重填'));
 
 -- R-38f（#21）未發送帳單批次編輯限制
 INSERT INTO knowledge_base (question_summary, answer, categories, business_types, target_user, action_type, source, is_active)
@@ -66,10 +66,10 @@ WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '租客�
 
 -- R-38i（#24）新增帳單入口
 INSERT INTO knowledge_base (question_summary, answer, categories, business_types, target_user, action_type, source, is_active)
-SELECT '新增帳單 操作入口',
+SELECT '新增帳單 開帳單給租客 操作入口',
        '要在系統新增帳單，到「待發送帳單」頁面即可直接新增：選擇物件、設定繳費截止日與收費項目金額後建立，確認無誤再發送給租客。',
        '{業者操作指引,帳單管理}', '{system_provider}', '{property_manager}', 'direct_answer', 'manual', true
-WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '新增帳單 操作入口');
+WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary IN ('新增帳單 開帳單給租客 操作入口','新增帳單 操作入口'));
 
 -- R-38j（#25）逾期虛擬帳號與年繳拆分
 INSERT INTO knowledge_base (question_summary, answer, categories, business_types, target_user, action_type, source, is_active)
@@ -136,3 +136,13 @@ SELECT '合約的點退帳單金額 查點退金額', '', ARRAY['條件診斷：
        ARRAY['property_manager','tenant']::text[], ARRAY['system_provider']::text[],
        ARRAY['合約','點退','金額']::text[], TRUE, 'manual'
 WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '合約的點退帳單金額 查點退金額');
+
+
+-- ── 情境回測第二輪：三筆摘要口語化（A-4/B-5/C-2 第一輪失守——口語句與摘要語義距離過遠，
+--    被面向搶接或 IoT 知識蓋台）。已套環境改名＋清嵌重算；新環境 INSERT 已是最終版。──
+UPDATE knowledge_base SET question_summary='新增帳單 開帳單給租客 操作入口', embedding=NULL, updated_at=CURRENT_TIMESTAMP
+WHERE question_summary='新增帳單 操作入口';
+UPDATE knowledge_base SET question_summary='帳單批次匯入 整批電費帳單 批次建立', embedding=NULL, updated_at=CURRENT_TIMESTAMP
+WHERE question_summary='帳單批次匯入 批次建立';
+UPDATE knowledge_base SET question_summary='合約修改後更新 改租金要重填嗎 複製合約', embedding=NULL, updated_at=CURRENT_TIMESTAMP
+WHERE question_summary='合約修改後更新 複製合約 不重填';
