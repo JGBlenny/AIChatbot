@@ -568,21 +568,24 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 cd /home/ec2-user/AIChatbot
 git pull   # 需含 20260731 客服回報修正批 commit
 
-# dry-run 確認列出兩支（create_digression_config 為已記帳 legacy，不應再列）
+# dry-run 確認列出三支（create_digression_config 為已記帳 legacy，不應再列）
 bash rag-orchestrator/database/migrate.sh
-# 預期：🔸 待跑：20260731_assistant_report_fixes ＋ 20260803_batch24_standard_answers（共兩支）
+# 預期：🔸 待跑：20260731_assistant_report_fixes ＋ 20260803_batch24_standard_answers
+#              ＋ 20260803_variant_robustness（共三支，依檔名序執行）
 
 bash rag-orchestrator/database/migrate.sh --apply
 # 預期：20260731 支＝UPDATE 1 / UPDATE 1 / UPDATE 3 / UPDATE 1 ＋ INSERT 0 1 × 5；
-#       20260803 支＝INSERT 0 1 × 16 ＋ UPDATE 1 × 2（雙人簽約矛盾調和）；皆記帳
+#       20260803_batch24 支＝INSERT 0 1 × 16 ＋ UPDATE 1 × 2（雙人簽約矛盾調和）
+#         ＋末段三筆摘要口語化 UPDATE（對本批新插列可能顯示 UPDATE 0，正常）；
+#       20260803_variant_robustness 支＝UPDATE 1 × 10 ＋ INSERT 0 1 × 1；皆記帳
 ```
 
-### 18-2. 補嵌（21 筆新知識/錨點列，容器內跑）
+### 18-2. 補嵌（約 24 筆新知識/錨點/改名列，容器內跑）
 
 ```bash
 docker cp rag-orchestrator/tools/embed_missing.py aichatbot-rag-orchestrator:/app/tools_embed_missing.py
 docker exec aichatbot-rag-orchestrator python3 /app/tools_embed_missing.py
-# 預期：缺 embedding 的列：21 筆（20260731 批 5 筆＋20260803 批 16 筆）→ 完成
+# 預期：缺 embedding 的列約 24 筆（新增 21＋既有列改名清嵌 3406/3926＋續約錨點）→ 完成
 ```
 
 ### 18-3. 重建服務（載入 chat.py fallback 修正）
