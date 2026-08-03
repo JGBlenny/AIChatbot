@@ -113,3 +113,17 @@ SELECT '查帳單 帳單編號查詢', '', ARRAY['條件診斷：帳單']::text[
        ARRAY['property_manager','tenant']::text[], ARRAY['system_provider']::text[],
        ARRAY['帳單','查詢','編號']::text[], TRUE, 'manual'
 WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE question_summary = '查帳單 帳單編號查詢');
+
+-- ── 情境回測 F1（P1）：3863 與 4645 矛盾調和 ──
+--   3863（建約引導面向用）缺「其他身分證放兩位證號」填法，多輪時把使用者導向「只填一位證號」；
+--   4645（客服標準答案）缺「電子簽署由一位代表完成」限制。雙向補齊，兩筆一致。
+UPDATE knowledge_base
+SET answer = '遇到兩位承租人要共同承租時，資料填寫方式：身分證欄位把證件種類改選「其他身分證」（此選項不檢核格式），即可一次輸入兩位的證號；姓名欄填「姓：第一位全名、名：/第二位全名」（例如 姓：宋維光、名：/宋紹光），兩位簽約人會完整並列顯示。電子簽署部分，系統一份合約由一位承租人代表完成電子簽署即可。若希望兩位都親簽，可改用紙本：線下完成雙方簽立後以「上傳合約」存入系統，或用系統產生合約後列印給兩位簽名再上傳。',
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = (SELECT id FROM knowledge_base WHERE question_summary = '共同承租 兩位承租人 做法' AND answer LIKE '%只支援一位簽署人%' LIMIT 1);
+
+UPDATE knowledge_base
+SET answer = '兩人共同簽約時：身分證欄位請把證件種類改選「其他身分證」（此選項不檢核格式），即可一次輸入兩位的證號；姓名欄建議填「姓：第一位全名、名：/第二位全名」（例如 姓：宋維光、名：/宋紹光），兩位簽約人就會完整顯示、不會跑版。電子簽署由其中一位承租人代表完成即可。',
+    updated_at = CURRENT_TIMESTAMP
+WHERE question_summary = '雙人簽約 兩位承租人填寫方式'
+  AND answer NOT LIKE '%代表完成%';
