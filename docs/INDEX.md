@@ -86,6 +86,8 @@
 | [回測快速開始](./backtest/GETTING_STARTED.md) | 回測入門 |
 | [知識完善迴圈](./backtest/KNOWLEDGE_COMPLETION_LOOP_GUIDE.md) | 迴圈完整指南 |
 | [回測速查](./backtest/QUICK_REFERENCE.md) | 快速參考 |
+| [客服回報案例登錄簿](./backtest/assistant-report-regression.md) | 線上「回報」案例來源、狀態追蹤、J 清單 |
+| [客服回報修正 SOP](./backtest/assistant-report-workflow.md) | 回報案例修正七步流程 |
 
 ## 測試指南
 
