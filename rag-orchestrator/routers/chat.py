@@ -21,6 +21,11 @@ import psycopg2.extras
 from services.llm_provider import chat_completion   # 相關性把關用（測試以模組屬性 patch）
 from services.db_utils import get_db_config
 from services.embedding_utils import get_embedding_client
+# C1 決策中樞（retrieval-decision-layer 任務 1.3）：門檻唯一讀值點＋六 case 仲裁搬移
+from services.decision_layer import (
+    DecisionConfig, decide_arbitration, facet_entry_eligible, form_trigger_eligible,
+    DECISION_RULE_VERSION,
+)
 
 router = APIRouter()
 
@@ -675,13 +680,15 @@ def _knowledge_category(best_knowledge) -> list:
     return [cat] if cat else []
 
 
-async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, threshold):
+async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: DecisionConfig):
     """分類路由決策（conversational-diagnosis 元件 5 / R1.1,1.2,1.4,7.2）。
 
     最高順位知識達表單觸發門檻、且其分類命中某診斷型對話面向 → 回該對話設定；
     未達門檻 / 未命中任何面向 → None（呼叫端落回既有表單/直接知識處理）。
+    門檻 gate 收斂至決策中樞（retrieval-decision-layer 任務 1.3）：判定式原樣、
+    讀值點唯一化；分類→面向設定的 DB 查詢留在本函式。
     """
-    if not best_knowledge or best_knowledge.get('similarity', 0) < threshold:
+    if not facet_entry_eligible(best_knowledge, config):
         return None
     from services.conversational_config import config_for_category
     for cat in _knowledge_category(best_knowledge):
@@ -973,9 +980,8 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
             # 串流/表單分支之前攔截——最高順位知識達門檻且分類命中診斷面向 → 進對話引擎；
             # 引擎降級（回 None）或未命中 → 落回既有處理（不阻斷）。
             _best_knowledge = decision['knowledge_list'][0] if decision.get('knowledge_list') else None
-            _diag_threshold = float(os.getenv("FORM_TRIGGER_THRESHOLD", "0.75"))
             _diag_cfg = await _diagnosis_config_for_knowledge(
-                req.app.state.db_pool, _best_knowledge, _diag_threshold)
+                req.app.state.db_pool, _best_knowledge, DecisionConfig.load())
             if _diag_cfg is not None:
                 # 交易面向（宣告 enabled_gate/prefill_api，如修繕）經共用進場：gate＋prefill＋圖片
                 #   （conversational-repair 三路共用，R1.5/2.6）；一般診斷面向走既有 respond。
@@ -988,6 +994,14 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
                 if _diag_resp is not None:
                     print(f"💬 [conversational-diagnosis] 分類命中 {_diag_cfg.key} → 進診斷對話"
                           + ("（串流）" if request.stream else ""))
+                    # R8.3：面向接管事件落快照（與仲裁快照同輪合併，key 不衝突）
+                    _meter_decision(
+                        snapshot={"facet_entry": {
+                            "facet_key": _diag_cfg.key,
+                            "kb_top1_final": (_best_knowledge or {}).get('similarity'),
+                            "threshold": DecisionConfig.load().form_trigger_threshold,
+                        }},
+                        facet_event="enter")
                     try:
                         from services.usage_metering import set_path as _um_sp
                         _um_sp("conversational", answer_source=_diag_cfg.key)
@@ -1738,6 +1752,16 @@ def _meter_comparison(comparison: dict) -> None:
         pass
 
 
+def _meter_decision(snapshot: dict = None, facet_event: str = None) -> None:
+    """usage-metering：決策快照埋點（retrieval-decision-layer R8.3；同 _meter_comparison
+    房式）。掛在 decide_arbitration 回傳處與面向進場處；計量失敗零影響事件本體。"""
+    try:
+        from services.usage_metering import set_decision as _sd
+        _sd(snapshot=snapshot, facet_event=facet_event)
+    except Exception:
+        pass
+
+
 def _build_debug_info(
     processing_path: str,
     intent_result: dict,
@@ -1857,7 +1881,7 @@ def _build_debug_info(
     if thresholds is None:
         thresholds = {
             'sop_threshold': float(os.getenv('SOP_SIMILARITY_THRESHOLD', '0.75')),
-            'knowledge_retrieval_threshold': float(os.getenv('KB_SIMILARITY_THRESHOLD', '0.55')),
+            'knowledge_retrieval_threshold': DecisionConfig.load().kb_threshold,
             'high_quality_threshold': float(os.getenv('HIGH_QUALITY_THRESHOLD', '0.8'))
         }
 
@@ -1885,7 +1909,7 @@ def _build_debug_info(
         },
         'processing_paths': {
             'sop': {'enabled': True, 'threshold': float(os.getenv('SOP_SIMILARITY_THRESHOLD', '0.75'))},
-            'knowledge': {'enabled': True, 'threshold': float(os.getenv('KB_SIMILARITY_THRESHOLD', '0.55'))},
+            'knowledge': {'enabled': True, 'threshold': DecisionConfig.load().kb_threshold},
             'unclear': {'enabled': True},
             'param_answer': {'enabled': True},
             'no_knowledge_found': {'enabled': True}
@@ -1986,6 +2010,19 @@ async def _smart_retrieval_with_comparison(
             intent_result=intent_result
         )
 
+        # R8.3：b2b 短路也是一個決策點——凍結語料全走此路，E-5 歸因不能漏這裡。
+        # 只加快照不動判定（'knowledge' if knowledge_list else 'none' 原樣）。
+        _dlc = DecisionConfig.load()
+        _meter_decision(snapshot={
+            "rule_version": DECISION_RULE_VERSION,
+            "config_hash": _dlc.config_hash(),
+            "kb_top1_final": (knowledge_list[0].get('similarity', 0.0)
+                              if knowledge_list else None),
+            "kb_threshold": _dlc.kb_threshold,
+            "verdict": 'knowledge' if knowledge_list else 'none',
+            "decision_case": 'b2b_knowledge_only',
+        })
+
         return {
             'type': 'knowledge' if knowledge_list else 'none',
             'reason': 'B2B 模式，走 JGB 知識',
@@ -2050,6 +2087,7 @@ async def _smart_retrieval_with_comparison(
     sop_score = 0.0
     sop_has_action = False
     sop_has_response = False
+    sop_next_action = None
 
     if sop_result and sop_result.get('has_sop'):
         sop_item = sop_result.get('sop_item', {})
@@ -2058,6 +2096,7 @@ async def _smart_retrieval_with_comparison(
 
         # 檢查是否有後續動作
         next_action = sop_item.get('next_action')
+        sop_next_action = next_action
         sop_has_action = next_action in ['form_fill', 'api_call', 'form_then_api']
 
     knowledge_score = 0.0
@@ -2070,270 +2109,40 @@ async def _smart_retrieval_with_comparison(
         # 統計高品質結果（相似度 > 0.8）
         high_quality_count = len([k for k in knowledge_list if k.get('similarity', 0) > 0.8])
 
-    # ==================== Step 3: 決策邏輯 ====================
-    SCORE_GAP_THRESHOLD = 0.15  # 差距閾值
-    SOP_MIN_THRESHOLD = 0.55
-    KNOWLEDGE_MIN_THRESHOLD = 0.6
+    # ==================== Step 3: 決策邏輯（C1 決策中樞，任務 1.3 搬移不重構）====================
+    # 六 case 仲裁原樣搬入 services/decision_layer.decide_arbitration（判定式、比較運算、
+    # reason 字串逐字等價——嚴格等價由 tests/unit/decision/ 參考實作全網格對拍）。
+    # 本函式保留：訊號提取（Step 2）＋回傳外殼組裝（sop_result/knowledge_list/comparison
+    # 結構不動）＋決策快照埋點（R8.3）。
+    _dl_config = DecisionConfig.load()
+    _trigger = (sop_result.get('trigger_result') or {}) if sop_result else {}
+    verdict = decide_arbitration(
+        sop_score=sop_score,
+        knowledge_score=knowledge_score,
+        has_sop=bool(sop_result and sop_result.get('has_sop')),
+        sop_cancelled=bool(_trigger.get('cancelled')),
+        sop_action_executed=(bool(sop_result.get('action_result')) if sop_result else False)
+                            and bool(_trigger.get('matched')),
+        sop_has_response=sop_has_response,
+        sop_has_action=sop_has_action,
+        sop_next_action=sop_next_action,
+        config=_dl_config,
+    )
+    _meter_decision(snapshot=verdict['snapshot'])          # R8.3：每輪仲裁必落快照
 
-    print(f"\n📊 [分數比較]")
-    print(f"   SOP:      {sop_score:.3f} (有後續動作: {sop_has_action}, 有回應: {sop_has_response})")
-    print(f"   知識庫:   {knowledge_score:.3f} (數量: {knowledge_count}, 高品質: {high_quality_count})")
-    print(f"   差距:     {abs(sop_score - knowledge_score):.3f}")
-
-    # 🆕 特殊情況 0A：SOP 被用戶取消（cancelled）
-    if sop_result and sop_result.get('has_sop'):
-        trigger_result = sop_result.get('trigger_result', {})
-        if trigger_result.get('cancelled'):
-            print(f"🚫 [特殊情況] 用戶取消 SOP 動作，返回禮貌回應")
-            return {
-                'type': 'sop',
-                'sop_result': sop_result,
-                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
-                'reason': '用戶取消 SOP 動作',
-                'comparison': {
-                    'sop_score': sop_score,
-                    'knowledge_score': knowledge_score,
-                    'gap': abs(sop_score - knowledge_score),
-                    'sop_candidates': len(sop_result.get('all_sop_candidates', [])) if sop_result else 0,
-                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
-                    'decision_case': 'sop_cancelled_by_user'
-                }
-            }
-
-    # 🆕 特殊情況 0B：SOP 已觸發並執行後續動作（action_result 存在）
-    # 這種情況下，無論 similarity 分數如何，都應該優先返回 SOP 的結果（包括錯誤訊息）
-    if sop_result and sop_result.get('has_sop') and sop_result.get('action_result'):
-        trigger_result = sop_result.get('trigger_result', {})
-        if trigger_result.get('matched'):
-            print(f"⚡ [特殊情況] SOP 已觸發並執行後續動作，優先返回 SOP 結果")
-            return {
-                'type': 'sop',
-                'sop_result': sop_result,
-                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
-                'reason': 'SOP 關鍵詞匹配並已執行後續動作',
-                'comparison': {
-                    'sop_score': sop_score,
-                    'knowledge_score': knowledge_score,
-                    'gap': abs(sop_score - knowledge_score),
-                    'sop_candidates': len(sop_result.get('all_sop_candidates', [])) if sop_result else 0,
-                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
-                    'decision_case': 'sop_triggered_action_executed'
-                }
-            }
-
-    # 特殊情況：SOP 等待關鍵詞（response 為 None）
-    if sop_result and sop_result.get('has_sop') and not sop_has_response:
-        print(f"⏸️  [特殊情況] SOP 等待關鍵詞中，繼續其他流程")
-        # 這種情況下，即使 SOP 分數高，也應該讓知識庫回答
-        gap = abs(knowledge_score - sop_score)
-        sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
-
-        if knowledge_score >= KNOWLEDGE_MIN_THRESHOLD:
-            return {
-                'type': 'knowledge',
-                'sop_result': sop_result,  # ✅ 保留 SOP 結果用於比較顯示
-                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
-                'reason': f'SOP 等待關鍵詞，使用知識庫 ({knowledge_score:.3f})',
-                'comparison': {
-                    'sop_score': sop_score,
-                    'knowledge_score': knowledge_score,
-                    'gap': gap,
-                    'sop_candidates': sop_candidates,
-                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
-                    'decision_case': 'sop_waiting_for_keyword_use_knowledge'
-                }
-            }
-        else:
-            return {
-                'type': 'none',
-                'sop_result': sop_result,  # ✅ 保留 SOP 結果用於比較顯示
-                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,  # ✅ 保留知識庫結果用於比較顯示
-                'reason': 'SOP 等待關鍵詞且知識庫未達標',
-                'comparison': {
-                    'sop_score': sop_score,
-                    'knowledge_score': knowledge_score,
-                    'gap': gap,
-                    'sop_candidates': sop_candidates,
-                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
-                    'decision_case': 'sop_waiting_both_below_threshold'
-                }
-            }
-
-    # Case 1: SOP 顯著更高
-    if (sop_score >= SOP_MIN_THRESHOLD and
-        sop_score > knowledge_score + SCORE_GAP_THRESHOLD):
-        print(f"✅ [決策] SOP 顯著更相關 ({sop_score:.3f} > {knowledge_score:.3f} + 0.15)")
-
-        gap = sop_score - knowledge_score
-        sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
-
-        return {
-            'type': 'sop',
-            'sop_result': sop_result,
-            'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,  # ✅ 保留知識庫結果用於比較顯示
-            'reason': f'SOP 分數顯著更高 ({sop_score:.3f} vs {knowledge_score:.3f})',
-            'comparison': {
-                'sop_score': sop_score,
-                'knowledge_score': knowledge_score,
-                'gap': gap,
-                'sop_candidates': sop_candidates,
-                'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
-                'decision_case': 'sop_significantly_higher'
-            }
-        }
-
-    # Case 2: 知識庫顯著更高
-    if (knowledge_score >= KNOWLEDGE_MIN_THRESHOLD and
-        knowledge_score > sop_score + SCORE_GAP_THRESHOLD):
-        print(f"✅ [決策] 知識庫顯著更相關 ({knowledge_score:.3f} > {sop_score:.3f} + 0.15)")
-        print(f"   將進行答案合成判斷（高品質數量: {high_quality_count}）")
-
-        gap = knowledge_score - sop_score
-        sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
-
-        return {
-            'type': 'knowledge',
-            'sop_result': sop_result,  # ✅ 保留 SOP 結果用於比較顯示
-            'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
-            'reason': f'知識庫分數顯著更高 ({knowledge_score:.3f} vs {sop_score:.3f})',
-            'comparison': {
-                'sop_score': sop_score,
-                'knowledge_score': knowledge_score,
-                'gap': gap,
-                'sop_candidates': sop_candidates,
-                'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
-                'decision_case': 'knowledge_significantly_higher'
-            }
-        }
-
-    # Case 3: 分數接近（差距 < 0.15）
-    if (sop_score >= SOP_MIN_THRESHOLD and
-        knowledge_score >= KNOWLEDGE_MIN_THRESHOLD):
-        gap = abs(sop_score - knowledge_score)
-        print(f"⚖️  [決策] 分數接近 (差距: {gap:.3f} < 0.15)")
-
-        # 3.1: SOP 有後續動作 → 優先 SOP
-        if sop_has_action:
-            sop_item = sop_result.get('sop_item', {})
-            print(f"✅ [優先級] SOP 有後續動作，優先處理 ({sop_item.get('next_action')})")
-
-            sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
-
-            return {
-                'type': 'sop',
-                'sop_result': sop_result,
-                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,  # ✅ 保留知識庫結果
-                'reason': f'SOP 有後續動作 ({sop_item.get("next_action")})',
-                'comparison': {
-                    'sop_score': sop_score,
-                    'knowledge_score': knowledge_score,
-                    'gap': gap,
-                    'sop_candidates': sop_candidates,
-                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
-                    'decision_case': 'close_scores_sop_has_action'
-                }
-            }
-
-        # 3.2: SOP 無動作 → 選分數更高的
-        sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
-
-        if sop_score > knowledge_score:
-            print(f"✅ [比較] SOP 分數略高 ({sop_score:.3f} > {knowledge_score:.3f})")
-            return {
-                'type': 'sop',
-                'sop_result': sop_result,
-                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,  # ✅ 保留知識庫結果
-                'reason': f'分數接近但 SOP 略高 ({sop_score:.3f} vs {knowledge_score:.3f})',
-                'comparison': {
-                    'sop_score': sop_score,
-                    'knowledge_score': knowledge_score,
-                    'gap': gap,
-                    'sop_candidates': sop_candidates,
-                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
-                    'decision_case': 'close_scores_sop_slightly_higher'
-                }
-            }
-        else:
-            print(f"✅ [比較] 知識庫分數略高 ({knowledge_score:.3f} > {sop_score:.3f})")
-            return {
-                'type': 'knowledge',
-                'sop_result': sop_result,  # ✅ 保留 SOP 結果
-                'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
-                'reason': f'分數接近但知識庫略高 ({knowledge_score:.3f} vs {sop_score:.3f})',
-                'comparison': {
-                    'sop_score': sop_score,
-                    'knowledge_score': knowledge_score,
-                    'gap': gap,
-                    'sop_candidates': sop_candidates,
-                    'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
-                    'decision_case': 'close_scores_knowledge_slightly_higher'
-                }
-            }
-
-    # Case 4: 只有 SOP 達標
-    if sop_score >= SOP_MIN_THRESHOLD:
-        print(f"✅ [決策] 只有 SOP 達標 ({sop_score:.3f} >= 0.55)")
-
-        gap = abs(sop_score - knowledge_score)
-        sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
-
-        return {
-            'type': 'sop',
-            'sop_result': sop_result,
-            'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,  # ✅ 保留知識庫結果
-            'reason': f'只有 SOP 達標 ({sop_score:.3f})',
-            'comparison': {
-                'sop_score': sop_score,
-                'knowledge_score': knowledge_score,
-                'gap': gap,
-                'sop_candidates': sop_candidates,
-                'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
-                'decision_case': 'only_sop_qualified'
-            }
-        }
-
-    # Case 5: 只有知識庫達標
-    if knowledge_score >= KNOWLEDGE_MIN_THRESHOLD:
-        print(f"✅ [決策] 只有知識庫達標 ({knowledge_score:.3f} >= 0.6)")
-
-        gap = abs(knowledge_score - sop_score)
-        sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
-
-        return {
-            'type': 'knowledge',
-            'sop_result': sop_result,  # ✅ 保留 SOP 結果
-            'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
-            'reason': f'只有知識庫達標 ({knowledge_score:.3f})',
-            'comparison': {
-                'sop_score': sop_score,
-                'knowledge_score': knowledge_score,
-                'gap': gap,
-                'sop_candidates': sop_candidates,
-                'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
-                'decision_case': 'only_knowledge_qualified'
-            }
-        }
-
-    # Case 6: 都不達標
-    print(f"⚠️  [決策] SOP ({sop_score:.3f}) 和知識庫 ({knowledge_score:.3f}) 都未達標")
-
-    gap = abs(sop_score - knowledge_score)
-    # 修正(retrieval-fixes #10):其餘 case 皆用 all_sop_candidates;此處原誤用不存在的 retrieved_sops
-    #   → Case 6 的 comparison.sop_candidates 恆為 0(僅 debug 顯示,不影響決策)。
     sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
-
     return {
-        'type': 'none',
-        'sop_result': sop_result,  # ✅ 保留兩邊結果供前端顯示
+        'type': verdict['type'],
+        'sop_result': sop_result,       # ✅ 保留兩邊結果供比較顯示（各 case 外殼同構）
         'knowledge_list': knowledge_list, 'knowledge_list_unfiltered': knowledge_list_unfiltered,
-        'reason': '都未達到最低閾值',
+        'reason': verdict['reason'],
         'comparison': {
             'sop_score': sop_score,
             'knowledge_score': knowledge_score,
-            'gap': gap,
+            'gap': verdict['gap'],
             'sop_candidates': sop_candidates,
             'knowledge_candidates': len(knowledge_list) if knowledge_list else 0,
-            'decision_case': 'both_below_threshold'
+            'decision_case': verdict['decision_case'],
         }
     }
 
@@ -2793,8 +2602,8 @@ async def _retrieve_knowledge(
     retriever = get_vendor_knowledge_retriever()
 
     # ✅ 選項1：統一閾值為 0.55（涵蓋原 knowledge + rag_fallback 範圍）
-    # 環境變數向後兼容，但默認值改為 0.55
-    kb_similarity_threshold = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.55"))
+    # 讀值收斂至決策中樞（任務 1.3）：env 鍵/預設不變，唯一讀值點
+    kb_similarity_threshold = DecisionConfig.load().kb_threshold
 
     # 產線路徑：過濾後的候選（傳入預計算結果避免重複呼叫）
     knowledge_list = await retriever.retrieve_knowledge_hybrid(
@@ -3088,8 +2897,9 @@ async def _build_knowledge_response(
         form_id = best_knowledge.get('form_id')
 
         # 如果最高順位是表單類型，檢查是否達到表單觸發門檻
-        form_trigger_threshold = float(os.getenv("FORM_TRIGGER_THRESHOLD", "0.75"))
-        if (action_type == 'form_fill' or form_id) and best_knowledge.get('similarity', 0) >= form_trigger_threshold:
+        # （gate 收斂至決策中樞——判定式原樣，讀值點唯一化；任務 1.3）
+        form_trigger_threshold = DecisionConfig.load().form_trigger_threshold
+        if form_trigger_eligible(best_knowledge, DecisionConfig.load()):
             print(f"📝 [表單優先] 最高順位知識 ID {best_knowledge['id']} 是表單類型，相似度 {best_knowledge.get('similarity', 0):.3f} >= {form_trigger_threshold}，觸發表單")
             filtered_knowledge_list = [best_knowledge]
 

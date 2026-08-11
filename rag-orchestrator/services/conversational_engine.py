@@ -425,7 +425,8 @@ class ConversationalEngine:
         vendor_id = state.get("vendor_id")
         target_user = scope.get("target_user") or getattr(config, "persona_role", None) or "tenant"
         mode = scope.get("mode") or "b2c"
-        kb_threshold = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.55"))
+        from services.decision_layer import DecisionConfig
+        kb_threshold = DecisionConfig.load().kb_threshold   # 唯一讀值點（任務 1.3）
 
         async def kb_search(query: str) -> str:
             try:

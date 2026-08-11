@@ -83,6 +83,7 @@ SYNC_FILES=(
   routers/chat.py
   routers/loops.py
   services/usage_metering.py
+  services/decision_layer.py
   services/llm_provider.py
   services/llm_answer_optimizer.py
   services/api_call_handler.py
@@ -192,6 +193,27 @@ AMOUNT_VIOL=$(grep -rn 'final_total' rag-orchestrator/services/jgb/ 2>/dev/null 
 if [ -n "$AMOUNT_VIOL" ]; then
   echo "❌ FAIL：以下位置直接讀 final_total，未經金額語義層："
   echo "$AMOUNT_VIOL"
+  FAIL=1
+else
+  echo "✅ PASS"
+fi
+
+echo ""
+echo "═══ 不變量 8：決策層門檻唯一讀值點（retrieval-decision-layer R7.4）═══"
+# 源起：KB_SIMILARITY_THRESHOLD ×4＋FORM_TRIGGER_THRESHOLD ×2 散落讀值＋六 case 硬編碼
+# 常數，檢索側任何改動直接翻轉路由（前身 spec 撤案教訓 4）。任務 1.3 收斂後：
+# services/decision_layer.py 是這兩個 env 鍵的唯一 os.getenv 讀值點，六 case 門檻常數
+# （SOP_MIN/KNOWLEDGE_MIN/SCORE_GAP）不得在其他 prod 碼（app.py/routers/services）再定義。
+DL_SCATTER=$(grep -rnE 'os\.getenv\(["'"'"'](KB_SIMILARITY_THRESHOLD|FORM_TRIGGER_THRESHOLD)' \
+  "$REPO/rag-orchestrator/app.py" "$REPO/rag-orchestrator/routers" "$REPO/rag-orchestrator/services" 2>/dev/null \
+  | grep -v 'services/decision_layer.py' || true)
+DL_CONST=$(grep -rnE '^[[:space:]]*(SOP_MIN_THRESHOLD|KNOWLEDGE_MIN_THRESHOLD|SCORE_GAP_THRESHOLD)[[:space:]]*=' \
+  "$REPO/rag-orchestrator/app.py" "$REPO/rag-orchestrator/routers" "$REPO/rag-orchestrator/services" 2>/dev/null \
+  | grep -v 'services/decision_layer.py' || true)
+if [ -n "$DL_SCATTER$DL_CONST" ]; then
+  echo "❌ FAIL：決策層門檻在唯一讀值點之外被讀取/定義："
+  [ -n "$DL_SCATTER" ] && echo "$DL_SCATTER"
+  [ -n "$DL_CONST" ] && echo "$DL_CONST"
   FAIL=1
 else
   echo "✅ PASS"

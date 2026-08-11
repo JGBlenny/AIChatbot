@@ -21,7 +21,7 @@
   - 需求：1.1, 1.2, 1.3, 1.4, 1.7
 - [x] 1.2 (P) 決策快照埋點（TDD）：usage_events 加 `decision_snapshot JSONB`、`facet_event VARCHAR(30)`（ADD COLUMN IF NOT EXISTS，沿 20260720 慣例）＋usage_metering `set_decision()` hook（比照 set_facet 房式：ctx None/finalized 靜默）；unit 矩陣＋欄位未建降級。
   - 需求：8.3
-- [ ] 1.3 DecisionConfig 集中讀值＋行為等價搬移（1.1、1.2 完成後）：`services/decision_layer.py` 建 `DecisionConfig.load()`（唯一讀值點）與 `decide()`（六 case＋面向進場邏輯原樣搬入）；chat.py 4 處＋engine.py:428＋FORM_TRIGGER_THRESHOLD 兩處改經 DecisionConfig；**等價驗證照審查修訂 1 雙層**：①決定性子決策（門檻比對/分類路由/識別碼規則）unit 嚴格等價；②凍結語料搬移前後各 ≥3 輪，逐輪多數決類別不一致率 ≤ 基線重跑變異（run2 vs run3 基準）。散讀值點=0 入 `make audit` 新不變量。
+- [x] 1.3 DecisionConfig 集中讀值＋行為等價搬移（1.1、1.2 完成後）：`services/decision_layer.py` 建 `DecisionConfig.load()`（唯一讀值點）與 `decide()`（六 case＋面向進場邏輯原樣搬入）；chat.py 4 處＋engine.py:428＋FORM_TRIGGER_THRESHOLD 兩處改經 DecisionConfig；**等價驗證照審查修訂 1 雙層**：①決定性子決策（門檻比對/分類路由/識別碼規則）unit 嚴格等價；②凍結語料搬移前後各 ≥3 輪，逐輪多數決類別不一致率 ≤ 基線重跑變異（run2 vs run3 基準）。散讀值點=0 入 `make audit` 新不變量。
   - 需求：7.4, 8.3
 - [ ] 1.4 R8.1 歸因實驗（1.1、1.2 完成後；產物=報告非程式）：三組受控分離 E-5 變異來源——①固定檢索重跑 LLM 環節②rewriter/意圖分類同輸入 ×N 輸出變異③快照灰帶密度分佈；產出歸因報告＋**E-5 目標上限提案報業主核定**（核定後寫入 design.md 不得放寬）。**【V0 關卡】**與 1.3 等價證明併成 P0 關卡報告呈業主（照報告規格五欄），簽核才進 P1。
   - 需求：8.1, 8.2

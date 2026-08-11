@@ -1,13 +1,15 @@
 """unit:分類路由出口決策（conversational-diagnosis 任務 6.1 / R1.1, R1.2, R1.4, R4.4, R7.2）。
 
 `_knowledge_category(best_knowledge)`：取知識分類候選（categories 多值優先，退 category 單值）。
-`_diagnosis_config_for_knowledge(db_pool, best_knowledge, threshold)`：最高順位知識達門檻且分類
+`_diagnosis_config_for_knowledge(db_pool, best_knowledge, config)`：最高順位知識達門檻且分類
+（門檻 gate 收斂至 decision_layer.facet_entry_eligible，任務 1.3；判定行為不變）
 命中診斷面向 → 回該對話設定；未達門檻/未命中 → None（落回既有處理）。
 以假 db_pool 注入「對話規則」列，確定性 unit。
 """
 import pytest
 
 from routers.chat import _knowledge_category, _diagnosis_config_for_knowledge
+from services.decision_layer import DecisionConfig
 from services import conversational_config as cc
 
 pytestmark = pytest.mark.unit
@@ -77,7 +79,7 @@ def test_knowledge_category_none():
 async def test_routes_when_threshold_met_and_category_hits():
     pool = _FakePool([_diag_row()])
     bk = {"id": 1, "similarity": 0.9, "categories": ["條件診斷:合約"]}
-    cfg = await _diagnosis_config_for_knowledge(pool, bk, threshold=0.75)
+    cfg = await _diagnosis_config_for_knowledge(pool, bk, DecisionConfig(form_trigger_threshold=0.75))
     assert cfg is not None and cfg.key == "contract_diag"
 
 
@@ -85,25 +87,25 @@ async def test_routes_when_threshold_met_and_category_hits():
 async def test_no_route_below_threshold():
     pool = _FakePool([_diag_row()])
     bk = {"id": 1, "similarity": 0.5, "categories": ["條件診斷:合約"]}  # < 門檻
-    assert await _diagnosis_config_for_knowledge(pool, bk, threshold=0.75) is None
+    assert await _diagnosis_config_for_knowledge(pool, bk, DecisionConfig(form_trigger_threshold=0.75)) is None
 
 
 @pytest.mark.req("conversational-diagnosis:1.2")
 async def test_no_route_when_category_misses():
     pool = _FakePool([_diag_row()])
     bk = {"id": 1, "similarity": 0.9, "categories": ["一般合約知識"]}  # 非診斷分類
-    assert await _diagnosis_config_for_knowledge(pool, bk, threshold=0.75) is None
+    assert await _diagnosis_config_for_knowledge(pool, bk, DecisionConfig(form_trigger_threshold=0.75)) is None
 
 
 @pytest.mark.req("conversational-diagnosis:1.4")
 async def test_multi_category_second_hits():
     pool = _FakePool([_diag_row()])
     bk = {"id": 1, "similarity": 0.9, "categories": ["一般合約知識", "條件診斷:合約"]}
-    cfg = await _diagnosis_config_for_knowledge(pool, bk, threshold=0.75)
+    cfg = await _diagnosis_config_for_knowledge(pool, bk, DecisionConfig(form_trigger_threshold=0.75))
     assert cfg is not None and cfg.key == "contract_diag"
 
 
 @pytest.mark.req("conversational-diagnosis:7.2")
 async def test_no_route_when_best_knowledge_none():
     pool = _FakePool([_diag_row()])
-    assert await _diagnosis_config_for_knowledge(pool, None, threshold=0.75) is None
+    assert await _diagnosis_config_for_knowledge(pool, None, DecisionConfig(form_trigger_threshold=0.75)) is None
