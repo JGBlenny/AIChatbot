@@ -89,20 +89,31 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 
 ## 欄 5｜fresh 代理獨立驗證紀錄
 
-**狀態：未獨立驗證——代理環境凍結。**
+**狀態：四項全數獨立 CONFIRMED。**
 
-- 2026-08-11 派 fresh verifier（唯讀＋跑測試）覆核四項宣稱：①多數決比較獨立重算
-  （宣稱 1/107、UNSTABLE 0、唯一輪=#11 T15）②unit 953 passed ③不變量 8 散讀值點=0
-  ④決策快照 live 落庫。
-- 代理起步後 1 小時無任何回報（正常應 ≤10 分鐘）；催討訊息無回應（凍結代理無下一個
-  工具回合可收訊）。此為 **08-10 兩例後的第三例同症狀**（起步即卡）。
-- 依業主 08-10 裁示：**不以自驗頂替獨立驗證**——四項宣稱目前僅有主 session 自驗
-  （欄 1–3 之數字與工件皆自驗產出），本欄如實標注「未獨立驗證」，停在本關卡報業主。
-- 可行替代（請業主擇一裁示）：
-  a. 業主親自以欄 2 指令抽驗（多數決重算腳本邏輯已在歸檔包 majority_compare.py，
-     或任抽一案 curl 戳穿）；
-  b. 另派一次驗證（換同步 foreground 分段小任務，主 session 監督）；
-  c. 接受本關卡以「未獨立驗證」狀態簽核，獨立驗證債記入 V1 關卡一併補。
+時間線如實記錄：首派 verifier 1 小時無回報，依 08-10 前例先行判定凍結並以「未獨立驗證」
+呈報（commit f9b5a1d 版本）；業主裁示「要驗完」後改小探分段重派；**原代理其後於 2.8 小時
+完成全部四項**（未凍結、屬極慢——判定過早，於此更正），分段代理亦陸續回報。每項皆有
+獨立代理自寫腳本重算（未用主 session 任何比較腳本）：
+
+1. **多數決比較｜CONFIRMED**（原代理逐字）：「六個目錄各 37 個案例 JSON…各 107 筆
+   turn_results…差異輪數 1/107、位置 #11 T15、UNSTABLE=0，三項全數吻合」；鍵集合
+   union 107／intersection 107 無缺漏。DIFF 明細：`('11',15) before=ANSWER
+   [ANSWER,ANSWER,ASK_ID] → after=ASK_ID [ASK_ID,ASK_ID,ANSWER]`。
+2. **unit 全綠｜CONFIRMED**（原代理＋分段代理雙確認）：「953 passed, 266 deselected,
+   7 warnings」；確認於容器內執行（輸出路徑 /app/…）。
+3. **不變量 8｜CONFIRMED**（原代理＋分段代理雙確認）：兩個 env 鍵讀值僅
+   decision_layer.py:47-48；六 case 常數在 chat.py「不只無賦值定義，連引用都沒有」，
+   全 repo 只在 decision_layer.py 與等價測試的參照實作出現。
+4. **決策快照落庫｜CONFIRMED**（原代理＋分段代理雙確認）：
+   `enter|b2b_knowledge_only|dl-v1|…`；原代理另查證非殘留（該 session 僅 1 筆、
+   寫入時間為查詢前 20 秒）。
+
+代理另附兩則非阻斷 advisory，與主 session 歸因報告互相印證、無新增風險：
+- A-1（P3）：clarify_question 欄 3 輪多數決在此欄位不具鑑別力（同側自身噪音
+  21/20 輪）——與歸因報告「clarify 尺 19=19、不作 gate 只作觀測」的處置一致。
+- A-2（P4）：after 側輪內非全一致 7→11/107，落二項噪音內——與歸因報告
+  「判讀為抽樣噪音」一致；若在意加輪次重測。
 
 ## 簽核請求
 
