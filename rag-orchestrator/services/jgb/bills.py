@@ -31,13 +31,45 @@ def _bill_status(bill: dict) -> int:
     return v if isinstance(v, int) else (bill.get("bit_status") or 0)
 
 
+# ── 金額語義層（20260810 真對話重播 P1-a）────────────────────────────────
+#
+# 與 `_bill_status()` 同一範式：狀態不准各分支自己讀 status/bit_status，
+# 金額同樣不准各分支自己讀 total/final_total。理由是 jgb2 兩個欄位語義不同，
+# 且邊界會破壞資訊：
+#   • total       ＝應收（帳單明細合計）。收據 PDF 的金額即由 feeDetails 合計而來
+#                   （jgb2 `Bill::generateGeneralReceiptPdf`）。
+#   • final_total ＝實收金額。後台一律以 `final_total > 0 ? 值 : '尚未付款'` 呈現
+#                   （jgb2 `Admin/BillController`），且 external API 寫死
+#                   `(float) $bill->final_total`（`External/BillApiController`），
+#                   **把 null 壓成 0.0** → RAG 側分不出「沒填」與「真的是 0」。
+#                   因此一律以 `> 0` 判定有效，其餘視同無實收紀錄（回 None）。
+# 舊碼 `bill.get("final_total", bill.get("total"))` 的錯在：key 存在且為 0 時
+# 不會 fallback，於是把「後台手動標記到帳、未填實收」的已繳費帳單答成 NT$ 0
+# （帳單 716317 實案）。**吐錯誤實值比查無更傷**，故收斂到此層一次講清楚。
+
+def _bill_amount_due(bill: dict):
+    """應收金額（帳單明細合計）。無值回 None，不代 0。"""
+    v = bill.get("total")
+    return v if isinstance(v, (int, float)) else None
+
+
+def _bill_amount_received(bill: dict):
+    """實收金額；未記錄（null 被邊界壓成 0、或 <=0）一律回 None。"""
+    v = bill.get("final_total")
+    return v if isinstance(v, (int, float)) and v > 0 else None
+
+
+def _money(v) -> str:
+    return f"NT$ {v:,.0f}"
+
+
 def _bill_head(bill: dict) -> list:
     """共同開頭 facts：名稱/編號/狀態/金額（系統存值）/期限。"""
     title = bill.get("title", f"帳單 {bill.get('id', '?')}")
     lines = [f"帳單「{title}」（編號 {bill.get('id', '?')}）狀態：{_get_status_label(_bill_status(bill))}。"]
-    total = bill.get("total")
+    total = _bill_amount_due(bill)
     if total is not None:
-        lines.append(f"帳單金額 NT$ {total:,.0f}（系統存值）。")
+        lines.append(f"帳單金額 {_money(total)}（系統存值）。")
     if bill.get("date_expire"):
         lines.append(f"繳費期限：{_format_date_int(bill.get('date_expire'))}。")
     return lines
@@ -385,15 +417,20 @@ def _diagnose_receipt(bill: dict) -> str:
     title = bill.get("title", f"帳單 {bill.get('id', '?')}")
     bit_status = _bill_status(bill)
     if bit_status == 16:
-        amount = bill.get("final_total", bill.get("total"))
-        amount_str = f"NT$ {amount:,.0f}" if amount is not None else "（依帳單實收金額）"
-        return (f"帳單「{title}」已繳費，收據金額為 {amount_str}。"
-                "可在帳單詳情頁點選「下載收據」取得 PDF（含帳單編號、繳費日期、金額明細與付款方式）。")
+        due = _bill_amount_due(bill)
+        received = _bill_amount_received(bill)
+        # 收據金額＝帳單明細合計（鏡射 jgb2 收據 PDF 產生方式），不是實收欄位
+        amount_str = _money(due) if due is not None else "（依帳單明細金額）"
+        msg = f"帳單「{title}」已繳費，收據金額為 {amount_str}。"
+        if received is not None and due is not None and abs(received - due) >= 1:
+            msg += (f"另外系統記錄的實收金額為 {_money(received)}，與帳單金額不同，"
+                    "請以收據明細為準。")
+        return msg + "可在帳單詳情頁點選「下載收據」取得 PDF（含帳單編號、繳費日期、金額明細與付款方式）。"
     if bit_status == 8:
         return (f"帳單「{title}」租客已付款、款項待金流商確認入帳（待對帳），"
                 "收據會在款項確認到帳後產生，屆時可於帳單詳情下載。")
-    total = bill.get("total")
-    total_str = f"（帳單金額 NT$ {total:,.0f}）" if total is not None else ""
+    total = _bill_amount_due(bill)
+    total_str = f"（帳單金額 {_money(total)}）" if total is not None else ""
     return (f"帳單「{title}」目前狀態為「{_get_status_label(bit_status)}」，尚未繳費，"
             f"因此還沒有收據可查{total_str}。收據會在租客完成繳費、款項到帳後產生。")
 
@@ -491,12 +528,12 @@ def _format_bill_status(bill: dict) -> str:
     title = bill.get("title", f"帳單 {bill.get('id', '?')}")
     bit_status = _bill_status(bill)
     status_label = _get_status_label(bit_status)
-    total = bill.get("total", 0)
+    total = _bill_amount_due(bill)
     date_expire = bill.get("date_expire")
 
     lines = [f"帳單「{title}」資訊：\n"]
     lines.append(f"• 狀態：{status_label}")
-    lines.append(f"• 金額：NT$ {total:,.0f}")
+    lines.append(f"• 金額：{_money(total) if total is not None else '（系統未記錄）'}")
     if date_expire:
         lines.append(f"• 繳費期限：{_format_date_int(date_expire)}")
 

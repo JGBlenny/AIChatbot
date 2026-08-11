@@ -177,6 +177,27 @@ if [ "${BURN:-0}" != "0" ] 2>/dev/null; then
 fi
 
 echo ""
+echo "═══ 不變量 7：JGB 金額欄位一律走語義層（20260810 真對話重播 P1-a）═══"
+# 源起：`_diagnose_receipt` 直接寫 `bill.get("final_total", bill.get("total"))`，
+# 而 jgb2 external API 把 null 壓成 (float) 0（BillApiController）→ key 存在不 fallback
+# → 已繳費帳單 716317 被答成「收據金額 NT$ 0」。錯誤實值比查無更傷。
+# 不變量：services/jgb/ 內除 bills.py 的語義層（_bill_amount_due/_bill_amount_received）
+# 外，任何檔案都不得直接讀 final_total——狀態走 _bill_status 的同一範式。
+# 允許清單只有一行：語義層本體的取值。註解行（含說明 jgb2 語義的段落）不算違反。
+AMOUNT_VIOL=$(grep -rn 'final_total' rag-orchestrator/services/jgb/ 2>/dev/null \
+  | awk -F: '{ body = $0; sub(/^[^:]*:[0-9]+:/, "", body);
+               if (body ~ /^[[:space:]]*#/) next;
+               if ($1 ~ /bills\.py$/ && body ~ /^[[:space:]]*v = bill\.get\("final_total"\)$/) next;
+               print }' || true)
+if [ -n "$AMOUNT_VIOL" ]; then
+  echo "❌ FAIL：以下位置直接讀 final_total，未經金額語義層："
+  echo "$AMOUNT_VIOL"
+  FAIL=1
+else
+  echo "✅ PASS"
+fi
+
+echo ""
 if [ $FAIL -eq 0 ]; then
   echo "🎉 稽核通過（$(date +%Y-%m-%d))"
 else

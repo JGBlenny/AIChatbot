@@ -100,11 +100,36 @@ def test_receipt_unpaid_says_no_receipt_yet():
 
 
 def test_receipt_paid_gives_receipt_amount():
-    """B05：已繳費（status=16）問收據 → 給收據金額（實收 final_total）與下載出口。"""
+    """B05：已繳費（status=16）問收據 → 給收據金額與下載出口。"""
     out = face_bill_response("jgb_bills",
                              [_bill(status=16, total=28500, final_total=28500)],
                              "收據金額是多少", FACE)
     assert "收據" in out and "28,500" in out
+
+
+def test_receipt_paid_zero_final_total_uses_bill_total():
+    """B05（20260810 真對話重播 P1-a，帳單 716317 實案）：已繳費但 final_total=0
+    （後台手動標記到帳、未填實收），舊碼 `get("final_total", total)` 因 key 存在而
+    直接吐「NT$ 0」——錯誤實值比查無更傷。
+
+    jgb2 真相：收據 PDF 金額由 feeDetails 合計（即 total）而來（Bill::generateGeneralReceiptPdf）；
+    final_total 是「實收金額」，後台以 `final_total > 0 ? : '尚未付款'` 呈現
+    （Admin/BillController），且 External/BillApiController 把 null 轉成 (float) 0，
+    RAG 側分不出 null 與 0 → 一律以 >0 為有效實收。"""
+    out = face_bill_response("jgb_bills",
+                             [_bill(status=16, total=3999996, final_total=0)],
+                             "收據金額是多少", FACE)
+    assert "NT$ 0" not in out
+    assert "3,999,996" in out
+
+
+def test_receipt_paid_final_total_differs_flags_actual_received():
+    """B05：實收金額（final_total>0）與帳單金額不符時，收據金額仍以帳單明細合計為準，
+    但必須把實收金額一併說明，不可沉默吞掉差額。"""
+    out = face_bill_response("jgb_bills",
+                             [_bill(status=16, total=28500, final_total=28000)],
+                             "收據金額是多少", FACE)
+    assert "28,500" in out and "28,000" in out
 
 
 def test_other_faces_unaffected():
