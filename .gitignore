@@ -114,3 +114,8 @@ backups/
 # 覆蓋率執行產物（基準 coverage-baseline.json 才版控）
 rag-orchestrator/tests/.coverage*.json
 aichatbot_full_*.dump
+
+# 凍結評測語料本體走 S3（docs/backtest/corpus-20260810/README.md 有取回指令與 SHA-256）
+docs/backtest/corpus-20260810/run1-stale-image/
+docs/backtest/corpus-20260810/run2-head/
+docs/backtest/corpus-20260810/run3-head/

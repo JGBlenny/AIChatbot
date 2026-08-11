@@ -59,6 +59,17 @@ aws s3 cp s3://jgb2-production-upload/assistant-reports/<年>/<月>/<檔名> ./
 
 ## ⑤ 本機驗證（先定標準再跑）
 
+**前置閘門（0 步，不可跳）：`make audit` 必須先過，重點是不變量 3「服務容器內關鍵檔案與本地一致」。**
+容器跑舊 image 時，整輪回測結論不具效力——20260810 批實錘：撤案還原後未重建容器，第一輪 107 輪
+重播判出「10 筆宣稱已修的知識 MISS」等一長串劣化，重建 image 重跑後 10 筆全部命中，結論全數作廢。
+不變量 3 未過 → 先 `docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrator`
+（碼包在 image，restart 無效），再開跑。**凡重播結果與登錄簿既有結論衝突，先驗容器一致性，
+再談知識或引擎缺陷。**
+
+同理，**判定「系統不穩定」前要先分離變異來源**：同一 image、同一輸入至少跑兩輪對照，
+再加單輪受控探測（同句 ×N 個新 session）。20260810 批據此才分清「多輪路由非決定性 13%（真）」
+與「單輪檢索抖動（假，12/12 一致）」。
+
 環境注意：**本機 rag-orchestrator 接的是 preview 真 API**（非 mock）——prod 的資料編號在 preview 查無是正常的；要驗「答出實值」需用 preview 實際存在的編號（可先 `curl preview API` 找一筆）。
 
 1. **套用**：psql 跑 migration＋手動記帳（`schema_migrations`）；`docker cp` `tools/embed_missing.py` 進容器補嵌；程式改動要 `docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrator`（碼包在 image，restart 無效）。
