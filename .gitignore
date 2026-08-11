@@ -119,3 +119,7 @@ aichatbot_full_*.dump
 docs/backtest/corpus-20260810/run1-stale-image/
 docs/backtest/corpus-20260810/run2-head/
 docs/backtest/corpus-20260810/run3-head/
+# 逐字稿正本在 s3://jgb2-production-upload/assistant-reports/（真實客戶對話，不進 repo）
+docs/backtest/corpus-20260810/reports/
+# decision_replay 的重播輸出（每輪重跑即重生，只留 S3/本機工作目錄）
+docs/backtest/corpus-20260810/out_*/

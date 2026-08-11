@@ -1,0 +1,579 @@
+{
+  "manifest_version": "1",
+  "corpus": "corpus-20260810",
+  "generated_for": "spec retrieval-decision-layer 任務 1.1（R1.4 雜訊機器可讀）",
+  "source_of_truth": "docs/backtest/assistant-report-regression.md「批次 20260810」節「逐字稿雜訊分類」——本檔為該節的機器可讀轉寫，衝突時以該節為準",
+  "corpus_integrity": {
+    "note": "凍結語料只讀不改（R1.1）；decision_replay 開跑前比對，不符即 abort",
+    "tarball_sha256": "b9c690cf63a2474f5fbab061e8d996e3fc445610678663de70c5841f3bb93495",
+    "tarball_s3": "s3://jgb2-production-upload/aichatbot/eval-corpus/corpus-20260810/corpus-20260810.tar.gz",
+    "verified_at": "2026-08-11",
+    "verified_how": "自 S3 取回 tarball 驗 SHA-256 相符，解開後與本機 run 目錄逐檔比對：run1/run2/run3 全同（僅 README.md 因事後補 S3 指標節而異）",
+    "trees": {
+      "run1-stale-image": {
+        "files": 37,
+        "sha256": "9f5270529c75fca52698d9a8551bae96ad7f94348fc2ae736b1fcbcadb7bfedf"
+      },
+      "run2-head": {
+        "files": 37,
+        "sha256": "14b4157526ff50bd0d41b10c1a6f82dfe93edefa5dc9acea8b8f51daa2f975f5"
+      },
+      "run3-head": {
+        "files": 37,
+        "sha256": "02af1412899864a886b9bd01f77180de37f887ac935479b458b358704afc9963"
+      }
+    }
+  },
+  "tag_definitions": {
+    "testcase": "全案無效——回報本身是內部試打或空案，整案剔除",
+    "carryover": "跨案殘留輪次——同一客服連續測，前一份回報的輪次被收進本份逐字稿",
+    "probe_duplicate": "重複探測腳本——#06～#11 同一組探測句在多個 session 重貼，重複輪不重複計",
+    "paraphrased": "客服轉述句非真實口語——只驗知識覆蓋，不得推論線上口語表現",
+    "env_limited": "環境限制——本機接 preview，prod 編號查無屬正確行為，grounding 不列入判定",
+    "signal": "病灶句——該份回報真正要驗的輪次（正向標記，統計時不得與雜訊一起剔除）"
+  },
+  "usage_rules": {
+    "knowledge_coverage": {
+      "exclude_case_tags": [
+        "testcase"
+      ],
+      "exclude_turn_tags": [
+        "carryover",
+        "probe_duplicate"
+      ],
+      "signal_overrides_noise": true,
+      "why": "同一探測句在 5 個 session 重貼，覆蓋率把它算 6 次會虛胖"
+    },
+    "routing_determinism_e5": {
+      "exclude_case_tags": [
+        "testcase"
+      ],
+      "exclude_turn_tags": [],
+      "why": "重跑變異量的單位是「輪」，重複探測輪是合法量測單位（同輸入本來就該同路由）；E-5 現況值 14/107 即以全輪為母體，換母體會與立案值不可比"
+    },
+    "colloquial_robustness": {
+      "exclude_case_tags": [
+        "testcase",
+        "paraphrased"
+      ],
+      "exclude_turn_tags": [
+        "carryover",
+        "probe_duplicate"
+      ],
+      "why": "客服轉述句不是真實口語，口語韌性另以 30 題變形集量測"
+    },
+    "env_limited": "grounding 正確性不列入判定；路由正確性仍列入（兩者分開判）"
+  },
+  "review_notes": [
+    "#19 T1 未標 carryover：登錄簿寫「#18～#21 的 T1/T2」為概述，逐句核對後 #19 只有一輪且即為該案主訴（合約修改後更新／複製合約），標了會把有效輪誤剔",
+    "#29 兩輪（物件刊登招租廣告後影響／那刊登買賣廣告呢）文風為真實口語，與 #13～#30「客服轉述」的概述不符；本檔仍依登錄簿標 paraphrased，口語韌性統計若要納入需獨立 review 裁決",
+    "#06 未在登錄簿的病灶句清單內；其問題描述「沒辦法告訴我如何對帳」對應 T3，本檔據此標 signal，屬推導非明列，獨立 review 請覆核",
+    "知識覆蓋母體實算 50 輪，低於 design.md 風險欄寫的「校準集 n≈70 有效輪」——差額來自本檔把 #06～#11 的重複探測輪（48 輪）也扣掉。校準/驗收切分與「校準集過小」的緩解（30 題集補充）以 50 為準重新評估，不得沿用 70"
+  ],
+  "cases": {
+    "01": {
+      "file": "20260709_114155_role20151_DaKIY4CoCbHs9jjmQD3dd7TZwmagJi2IMF0JVV07.md",
+      "turn_count": 2,
+      "case_tags": [
+        "testcase",
+        "env_limited"
+      ],
+      "turn_tags": {},
+      "note": "問題描述＝「測試」，role 20151 內部試打",
+      "env_note": "85748"
+    },
+    "02": {
+      "file": "20260709_115957_role78830_j1atHmaiD6qZiojvcQD8mFVS8SuiynlXTfD009MY.md",
+      "turn_count": 2,
+      "case_tags": [],
+      "turn_tags": {
+        "1": [
+          "carryover"
+        ]
+      },
+      "carryover_corroborated_turns": []
+    },
+    "03": {
+      "file": "20260709_120207_role78830_zaxjLCs6LFbuuQPeDAH1t6tVFLcxgB8ygTot3MW1.md",
+      "turn_count": 3,
+      "case_tags": [],
+      "turn_tags": {
+        "1": [
+          "carryover"
+        ],
+        "2": [
+          "carryover"
+        ]
+      },
+      "carryover_corroborated_turns": [
+        1,
+        2
+      ]
+    },
+    "04": {
+      "file": "20260709_120442_role78830_JU6WqwT8dHvXPZq3FhUW456PVHtjXCRmBNUWaCvM.md",
+      "turn_count": 4,
+      "case_tags": [],
+      "turn_tags": {}
+    },
+    "05": {
+      "file": "20260709_132301_role20151_Yxq3wbJM3FM2SCs6bYbY2oOMmDb1WdGNhudiTAu6.md",
+      "turn_count": 1,
+      "case_tags": [
+        "testcase",
+        "env_limited"
+      ],
+      "turn_tags": {},
+      "note": "問題描述＝「測試」，role 20151 內部試打",
+      "env_note": "85748"
+    },
+    "06": {
+      "file": "20260721_171857_role20151_BCvOy4R7HD6KkcgtdcVMq96xxQ8FW6IvDT0LDUyW.md",
+      "turn_count": 3,
+      "case_tags": [],
+      "turn_tags": {
+        "3": [
+          "signal"
+        ]
+      }
+    },
+    "07": {
+      "file": "20260721_172152_role20151_URqHyf3A0CT5iUF7xnGwkRMI0UEgnum9bUzWaDWO.md",
+      "turn_count": 8,
+      "case_tags": [],
+      "turn_tags": {
+        "1": [
+          "probe_duplicate"
+        ],
+        "2": [
+          "probe_duplicate"
+        ],
+        "3": [
+          "probe_duplicate"
+        ],
+        "7": [
+          "signal"
+        ]
+      }
+    },
+    "08": {
+      "file": "20260721_172249_role20151_DyS1K7GiIVbX1l55vS0NvX73Sh9aP8q3dYW0GZ3j.md",
+      "turn_count": 10,
+      "case_tags": [],
+      "turn_tags": {
+        "1": [
+          "probe_duplicate"
+        ],
+        "2": [
+          "probe_duplicate"
+        ],
+        "3": [
+          "probe_duplicate"
+        ],
+        "4": [
+          "probe_duplicate"
+        ],
+        "5": [
+          "probe_duplicate"
+        ],
+        "6": [
+          "probe_duplicate"
+        ],
+        "7": [
+          "probe_duplicate"
+        ],
+        "8": [
+          "probe_duplicate"
+        ],
+        "9": [
+          "signal"
+        ],
+        "10": [
+          "signal"
+        ]
+      }
+    },
+    "09": {
+      "file": "20260721_172426_role20151_nlE29GTz9PCzrHsbarXG3dMr4ZqboXL29NpLKF9j.md",
+      "turn_count": 13,
+      "case_tags": [],
+      "turn_tags": {
+        "1": [
+          "probe_duplicate"
+        ],
+        "2": [
+          "probe_duplicate"
+        ],
+        "3": [
+          "probe_duplicate"
+        ],
+        "4": [
+          "probe_duplicate"
+        ],
+        "5": [
+          "probe_duplicate"
+        ],
+        "6": [
+          "probe_duplicate"
+        ],
+        "7": [
+          "probe_duplicate"
+        ],
+        "8": [
+          "probe_duplicate"
+        ],
+        "9": [
+          "probe_duplicate"
+        ],
+        "10": [
+          "probe_duplicate"
+        ],
+        "13": [
+          "signal"
+        ]
+      }
+    },
+    "10": {
+      "file": "20260721_172458_role20151_kB0leR5nYNEJf643NUPA0ElyMJvOG2ebQMD2NMTD.md",
+      "turn_count": 14,
+      "case_tags": [],
+      "turn_tags": {
+        "1": [
+          "probe_duplicate"
+        ],
+        "2": [
+          "probe_duplicate"
+        ],
+        "3": [
+          "probe_duplicate"
+        ],
+        "4": [
+          "probe_duplicate"
+        ],
+        "5": [
+          "probe_duplicate"
+        ],
+        "6": [
+          "probe_duplicate"
+        ],
+        "7": [
+          "probe_duplicate"
+        ],
+        "8": [
+          "probe_duplicate"
+        ],
+        "9": [
+          "probe_duplicate"
+        ],
+        "10": [
+          "probe_duplicate"
+        ],
+        "11": [
+          "probe_duplicate"
+        ],
+        "12": [
+          "probe_duplicate"
+        ],
+        "13": [
+          "probe_duplicate",
+          "signal"
+        ],
+        "14": [
+          "signal"
+        ]
+      }
+    },
+    "11": {
+      "file": "20260721_172936_role20151_3Ity5QjU9TpYTP2ltAsusRkup7GY9XrykFLnimAl.md",
+      "turn_count": 17,
+      "case_tags": [],
+      "turn_tags": {
+        "1": [
+          "probe_duplicate"
+        ],
+        "2": [
+          "probe_duplicate"
+        ],
+        "3": [
+          "probe_duplicate"
+        ],
+        "4": [
+          "probe_duplicate"
+        ],
+        "5": [
+          "probe_duplicate"
+        ],
+        "6": [
+          "probe_duplicate"
+        ],
+        "7": [
+          "probe_duplicate"
+        ],
+        "8": [
+          "probe_duplicate"
+        ],
+        "9": [
+          "probe_duplicate"
+        ],
+        "10": [
+          "probe_duplicate"
+        ],
+        "11": [
+          "probe_duplicate"
+        ],
+        "12": [
+          "probe_duplicate"
+        ],
+        "13": [
+          "probe_duplicate"
+        ],
+        "14": [
+          "probe_duplicate"
+        ],
+        "15": [
+          "signal"
+        ],
+        "16": [
+          "signal"
+        ],
+        "17": [
+          "signal"
+        ]
+      }
+    },
+    "12": {
+      "file": "20260721_182129_demoform_gH5o4SfkfvyAi6VSHlFZFVShlSDtFkqJ1FNm426D.md",
+      "turn_count": 0,
+      "case_tags": [
+        "testcase"
+      ],
+      "turn_tags": {},
+      "note": "demoform 空案、無逐字稿"
+    },
+    "13": {
+      "file": "20260724_104232_role93920_zWxpreqq8Al9GMMUUwVZXaTR1LOcHb6pjgI8pTJ7.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "14": {
+      "file": "20260724_105139_role93920_aw2uvf3pKGuEDzdMSuzgWVIrg5G1T4fVGXMXWl3g.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "15": {
+      "file": "20260724_105305_role93920_mxvePVv8qpQYIqhPAHNGngDWo2nFQFzQLN7RrW0G.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "16": {
+      "file": "20260724_105449_role93920_iQWnFPEXmo75HRmQR3OhJz7Fg2HeYecaEGEUW6Ls.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "17": {
+      "file": "20260724_105628_role93920_eDrChd1F9pkYyPTSlJVE4YpJoCSZQGN9dETdSvVM.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "18": {
+      "file": "20260724_105805_role93920_QHsAnLJc5uzBoFPSzNUm8LOxXGFcLZp7I8FNfi3b.md",
+      "turn_count": 2,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {
+        "1": [
+          "carryover"
+        ]
+      },
+      "carryover_corroborated_turns": [
+        1
+      ]
+    },
+    "19": {
+      "file": "20260724_105950_role93920_qC01XmNvd9e5J3GBkM4UB05uv5K3ya8kGw9d8AXk.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "20": {
+      "file": "20260724_110104_role93920_hBiFDl71VDjOtHZqQen2WCJwqxWv9gftBSPaHbld.md",
+      "turn_count": 2,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {
+        "1": [
+          "carryover"
+        ]
+      },
+      "carryover_corroborated_turns": [
+        1
+      ]
+    },
+    "21": {
+      "file": "20260724_110153_role93920_pJZ4rd6nWdRkmQNda7EcRyaA1Vkv5gYryBHvFRDf.md",
+      "turn_count": 3,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {
+        "1": [
+          "carryover"
+        ],
+        "2": [
+          "carryover"
+        ]
+      },
+      "carryover_corroborated_turns": [
+        1,
+        2
+      ]
+    },
+    "22": {
+      "file": "20260724_112218_role93920_0sOQ1u4Zb0iMSpEwy3zM3m1jzvyIr7ont5cO59Za.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "23": {
+      "file": "20260724_112333_role93920_CuGtl2dapVzVjuapHk2tfiqiDJIfLD1KaiEiWN25.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "24": {
+      "file": "20260724_112636_role93920_0bTZdvnFBHT9Q6mvvOkIMc5FLrUDSPzn05ADetNh.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "25": {
+      "file": "20260724_113006_role93920_5Fb38qNa6UtC5kjDASH4fG1xcSkJA3tKQpu9ySqj.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "26": {
+      "file": "20260724_113239_role93920_Vkzzgj4AMmvcD9z2bIKi9sofG8A3dlzDbvTpwj3c.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "27": {
+      "file": "20260724_113407_role93920_0puh51tyCj4k3ORMi2qXmys3B66Yc4yUyVbspcP7.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "28": {
+      "file": "20260724_113514_role93920_VKshQ3qUj6h0HYC3RHvJNJzCwwSTu0S6lUJLjiED.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "29": {
+      "file": "20260724_113817_role93920_FoNv3dKkEdSp4tEJb60vbcX7elRef5KFHVYJGv5k.md",
+      "turn_count": 2,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "30": {
+      "file": "20260724_113857_role93920_NXGpL74vGq8snsPwop8SPHKKXs0ulxlYxE39otIm.md",
+      "turn_count": 1,
+      "case_tags": [
+        "paraphrased"
+      ],
+      "turn_tags": {}
+    },
+    "31": {
+      "file": "20260724_164356_role79146_Aoc7tH3Vvkg4QznaTk3DsYCm6zAHR3HXw92xGMTo.md",
+      "turn_count": 1,
+      "case_tags": [],
+      "turn_tags": {}
+    },
+    "32": {
+      "file": "20260724_172440_role57888_wmbiadBKJICccN6xgISQhhjxl1jXWeCNtZEbwHd7.md",
+      "turn_count": 1,
+      "case_tags": [],
+      "turn_tags": {}
+    },
+    "33": {
+      "file": "20260728_153338_role21339_7dUm2LKPxl8pwqieU42CUYKLuWj9iSJCeJssTHxm.md",
+      "turn_count": 1,
+      "case_tags": [],
+      "turn_tags": {}
+    },
+    "34": {
+      "file": "20260729_135750_role78830_Fk3uhv3yhSIYvAb1pjtMDt3RHwcthA2LvlioMGJO.md",
+      "turn_count": 1,
+      "case_tags": [],
+      "turn_tags": {}
+    },
+    "35": {
+      "file": "20260729_165334_role78958_Q2GAm5OumMf4IoTTl0mcPlBIIKPtfrsVNYAQJv7P.md",
+      "turn_count": 1,
+      "case_tags": [
+        "env_limited"
+      ],
+      "turn_tags": {},
+      "env_note": "prod 編號（739330 等）"
+    },
+    "36": {
+      "file": "20260729_165439_role78958_9IadjQmXzUzbiXVK0wdZdO4PAFAY5EfQU9oKcRBg.md",
+      "turn_count": 1,
+      "case_tags": [],
+      "turn_tags": {}
+    },
+    "37": {
+      "file": "20260729_165544_role78958_tMG035Wo9l4E5bwKpqQyx8GKfzsECLsXj1F46b7X.md",
+      "turn_count": 1,
+      "case_tags": [
+        "env_limited"
+      ],
+      "turn_tags": {},
+      "env_note": "prod 編號（86829／81918）"
+    }
+  },
+  "totals": {
+    "cases": 37,
+    "turns": 107,
+    "testcase_turns": 3,
+    "carryover_or_probe_turns": 54,
+    "knowledge_coverage_turns": 50,
+    "routing_determinism_turns": 104
+  }
+}

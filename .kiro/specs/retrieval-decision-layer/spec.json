@@ -1,8 +1,8 @@
 {
   "feature_name": "retrieval-decision-layer",
   "created_at": "2026-08-10T08:16:02Z",
-  "updated_at": "2026-08-10T14:20:00Z",
-  "phase": "tasks-generated",
+  "updated_at": "2026-08-11T00:00:00Z",
+  "phase": "implementation",
   "language": "zh-TW",
   "project_description": "對話與檢索決策層韌性——以 20260810 凍結語料（37 份 S3 客服回報真實多輪對話、107 輪 ×3 輪次重播，docs/backtest/corpus-20260810/）為評測基準，盤查並重造「檢索評分＋面向進出」耦合決策層：E-2 多輪追問不帶上下文、E-3 面向誤搶接與黏著無逃生門、E-4 口語→系統詞彙斷層、E-5 多輪路由非決定性（run2 vs run3 同碼同輸入 14/107 輪路由類別不同，集中於長對話第 5 輪後）、加上一知識多問法變體表（max-pooling 承接、非算術組合）與路由門檻解耦（校準信心／top1−top2 相對差距取代絕對分數單點）。前身 spec conversation-retrieval-resilience 已撤案（封存分支 archive/conversation-retrieval-resilience-failed），重來鐵則：病灶寫死在 requirements 不可降級、評測語料先於設計凍結、每機制先藥效實驗、檢索分數與面向進場門檻是耦合決策層不可拆開設計驗收、每功能獨立代理驗到 CONFIRMED 才走下一個。",
   "approvals": {
@@ -16,12 +16,12 @@
     },
     "tasks": {
       "generated": true,
-      "approved": false
+      "approved": true
     }
   },
   "implementation": {
-    "started": false,
+    "started": true,
     "completed": false,
-    "tasks_completed": []
+    "tasks_completed": ["1.1", "1.2"]
   }
 }

@@ -17,9 +17,9 @@
 
 ## 1. P0｜評測基礎與決策快照（量尺先行）
 
-- [ ] 1.1 (P) 評測 harness 入 repo（TDD）：`scripts/backtest/decision_replay.py`（源自 corpus-20260810/replay_harness.py）＋`classify_routing()` 版本化（unit：五類別判定矩陣＋version 戳）＋`corpus-20260810/noise_manifest.json`（37 案雜訊標記，機器可讀，獨立 review 防 R-f）＋前置容器閘門（audit 不變量 3 未過→abort）＋`cache_mode=on/off` 雙軌參數。
+- [x] 1.1 (P) 評測 harness 入 repo（TDD）：`scripts/backtest/decision_replay.py`（源自 corpus-20260810/replay_harness.py）＋`classify_routing()` 版本化（unit：五類別判定矩陣＋version 戳）＋`corpus-20260810/noise_manifest.json`（37 案雜訊標記，機器可讀，獨立 review 防 R-f）＋前置容器閘門（audit 不變量 3 未過→abort）＋`cache_mode=on/off` 雙軌參數。
   - 需求：1.1, 1.2, 1.3, 1.4, 1.7
-- [ ] 1.2 (P) 決策快照埋點（TDD）：usage_events 加 `decision_snapshot JSONB`、`facet_event VARCHAR(30)`（ADD COLUMN IF NOT EXISTS，沿 20260720 慣例）＋usage_metering `set_decision()` hook（比照 set_facet 房式：ctx None/finalized 靜默）；unit 矩陣＋欄位未建降級。
+- [x] 1.2 (P) 決策快照埋點（TDD）：usage_events 加 `decision_snapshot JSONB`、`facet_event VARCHAR(30)`（ADD COLUMN IF NOT EXISTS，沿 20260720 慣例）＋usage_metering `set_decision()` hook（比照 set_facet 房式：ctx None/finalized 靜默）；unit 矩陣＋欄位未建降級。
   - 需求：8.3
 - [ ] 1.3 DecisionConfig 集中讀值＋行為等價搬移（1.1、1.2 完成後）：`services/decision_layer.py` 建 `DecisionConfig.load()`（唯一讀值點）與 `decide()`（六 case＋面向進場邏輯原樣搬入）；chat.py 4 處＋engine.py:428＋FORM_TRIGGER_THRESHOLD 兩處改經 DecisionConfig；**等價驗證照審查修訂 1 雙層**：①決定性子決策（門檻比對/分類路由/識別碼規則）unit 嚴格等價；②凍結語料搬移前後各 ≥3 輪，逐輪多數決類別不一致率 ≤ 基線重跑變異（run2 vs run3 基準）。散讀值點=0 入 `make audit` 新不變量。
   - 需求：7.4, 8.3
