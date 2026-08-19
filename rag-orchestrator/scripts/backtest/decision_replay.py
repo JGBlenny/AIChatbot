@@ -211,6 +211,122 @@ def assert_ruler_sees_known_defects(samples, require_any=True):
     return True, flat
 
 
+# ════════════════════════════════════════════════════════════════════
+# 期望答案表與 answer_verdict（任務 0.7｜R5.4.1／5.4.2）
+#
+# 「0 胡編 0 錯誤資訊」原本只是驗收口號——全 spec 沒有任何量測機制，而 `grounded`
+# 只證明「有來源」，**有來源仍可能答錯**。此表把它變成可量測：
+#   母體＝表涵蓋的輪；母體內任一輪 unjudged 即 FAIL（禁止「沒判＝沒問題」）；
+#   母體外不罰，但**必須揭露筆數與佔比**（不得讓分母悄悄縮小）。
+# 表本身納入 R2.5 的量測前凍結（雜湊可查）。
+# ════════════════════════════════════════════════════════════════════
+
+# `not_applicable`：本輪的答案真偽在本環境不可判——目前唯一來源是 env_limited
+# （prod 編號在 preview 查無屬**正確行為**，noise_manifest 明訂 grounding 不列入判定）。
+# 沒有這個值就只能判 incorrect，那是假陰性；它與 unjudged 的差別是
+# **unjudged＝還沒判（母體內即 FAIL）、not_applicable＝判過且結論是「此環境不適用」**。
+ANSWER_VERDICTS = ("correct", "incorrect", "unsupported", "not_applicable", "unjudged")
+_EXPECTED_CONFIDENCE = ("explicit", "derivable")
+
+
+class UnjudgedError(RuntimeError):
+    """母體內存在未判定的輪——R5.4.2 明令 FAIL。"""
+
+
+def load_expected_answers(path=None):
+    path = path or os.path.join(CORPUS_DIR, "expected_answers.json")
+    with open(path, encoding="utf-8") as f:
+        t = json.load(f)
+    validate_expected_answers(t)
+    return t
+
+
+def validate_expected_answers(table):
+    """結構驗證：鍵格式、期望答案與判定要點非空、confidence 值域。"""
+    bad = []
+    for k, e in (table.get("entries") or {}).items():
+        parts = k.split("|")
+        if len(parts) != 2 or not parts[1].isdigit():
+            bad.append(f"{k}：鍵格式須為 '<case_id>|<turn>'")
+            continue
+        if not (e.get("expected_answer") or "").strip():
+            bad.append(f"{k}：expected_answer 為空（期望答案須逐字引用，不得留白）")
+        if not (e.get("key_points") or []):
+            bad.append(f"{k}：key_points 為空（無判定要點則此列無法用於判 correct/incorrect）")
+        if e.get("confidence") not in _EXPECTED_CONFIDENCE:
+            bad.append(f"{k}：confidence 須為 {_EXPECTED_CONFIDENCE}，得到 {e.get('confidence')!r}")
+    if bad:
+        raise GateError("期望答案表結構不合格：\n  " + "\n  ".join(bad))
+    return True
+
+
+def in_answer_population(table, case_id, turn):
+    return f"{case_id}|{turn}" in (table.get("entries") or {})
+
+
+def expected_answers_breakdown(table):
+    """explicit / derivable 分開統計——derivable 有主觀成分，報告須分列。"""
+    b = {"explicit": 0, "derivable": 0}
+    for e in (table.get("entries") or {}).values():
+        b[e["confidence"]] = b.get(e["confidence"], 0) + 1
+    b["total"] = b["explicit"] + b["derivable"]
+    return b
+
+
+def expected_answers_hash(table):
+    """R2.5：表入量測前凍結，雜湊隨內容變動。"""
+    body = json.dumps(table.get("entries") or {}, ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
+
+
+def env_limited_turns(table):
+    """表上標 env_limited 的輪（prod 編號在 preview 查無屬正確行為）。"""
+    return {k for k, e in (table.get("entries") or {}).items() if e.get("env_limited")}
+
+
+def assert_answer_population_judged(table, turn_results):
+    """R5.4.2 驗收：母體內全判、母體外揭露。
+
+    `turn_results`：{(case_id, turn): TurnResult}。
+    回傳報告 dict；母體內有 unjudged 即 raise UnjudgedError。
+    """
+    inside, judged, unjudged_keys, outside, na = 0, 0, [], 0, 0
+    for (cid, t), tr in turn_results.items():
+        av = tr.get("answer_verdict", "unjudged")
+        if av not in ANSWER_VERDICTS:
+            raise GateError(f"{cid}|{t}：answer_verdict 越界 {av!r}")
+        if in_answer_population(table, cid, t):
+            inside += 1
+            if av == "unjudged":
+                unjudged_keys.append(f"{cid}|{t}")
+            elif av == "not_applicable":
+                na += 1                    # 判過，但此環境不適用（env_limited）
+            else:
+                judged += 1
+        else:
+            outside += 1
+    total = inside + outside
+    rep = {"in_population": inside, "judged": judged, "not_applicable": na,
+           "outside_population": outside,
+           "outside_ratio": (outside / total) if total else 0.0,
+           "table_hash": expected_answers_hash(table),
+           "breakdown": expected_answers_breakdown(table)}
+    # env_limited 的輪若被判 incorrect＝假陰性（在 preview 查無本來就對）
+    _env = env_limited_turns(table)
+    _false_neg = [f"{c}|{t}" for (c, t), tr in turn_results.items()
+                  if f"{c}|{t}" in _env and tr.get("answer_verdict") == "incorrect"]
+    if _false_neg:
+        raise GateError(
+            "env_limited 輪被判 incorrect（假陰性）——prod 編號在 preview 查無屬正確行為，"
+            f"應判 not_applicable：{'、'.join(sorted(_false_neg))}")
+    rep["env_limited_in_population"] = len(_env)
+    if unjudged_keys:
+        raise UnjudgedError(
+            "母體內尚有未判定的輪（禁止以『沒判＝沒問題』通過，R5.4.2）："
+            + "、".join(sorted(unjudged_keys)))
+    return rep
+
+
 ROUTING_CLASSES = ("ANSWER", "ASK_ID", "FACET_EMPTY", "FORM", "FALLBACK")
 # 呼叫失敗的輪：不屬五類別，另立標記——把錯誤輪塞進任一真類別會污染 E-5 不一致率。
 CLASS_ERROR = "ERROR"
