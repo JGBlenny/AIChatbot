@@ -11,16 +11,16 @@
 
 | 元件 | 問題 | 決策 | 狀態 |
 |---|---|---|---|
-| **C1 RoutingSignals** | 無 `calibrated_confidence` 欄位，R7.1 的「校準信心」只剩由絕對分數算出的 `gray_zone: bool` | **D-01** | 🔴 待業主裁決 |
-| **C1 ↔ C6 詞彙衝突** | C1 的 `verdict` 為六值路由去向，C6 的 `routing_class` 為五值且**從答案文字反推**——同一份設計兩套詞彙 | **D-04** | 🟡 待套用 |
-| **C1 ↔ C3 詞彙衝突** | C3 的 `EscapeVerdict.action` 四值與 C1 verdict 無映射 → `degrade_knowledge/honest`（R4.2/4.3 主要療效）在路由尺上不可見 | **D-07** | 🟡 待套用 |
-| **C1 RoutingSignals 輸入不足** | 缺 `user_text`／`topic_terms`／`EscapeState`，但 C3 的再進場抑制判準需要它們——**用宣告的輸入算不出宣告的行為**；`SessionFeatures` 全 spec 無定義；欄位名 `escape_count`/`escape_events`、`question_type`/`query_type` 不一致 | **D-08** | 🟡 待套用 |
-| **C1 快照欄位** | 缺 `query_text`（或雜湊），C7 的查詢聚類（R10.1）無從計算 | **D-08** | 🟡 待套用 |
+| **C1 R7.1 落實** | 業主 2026-08-19 裁 **D-01(d)**：不建 `calibrated_confidence` 浮點層（EXP-7 判準 P3，n=31 撐不起機率校準）；改「分數欄位降為觀測＋判定改吃決定性特徵」，驗收＝AST 不變量＋假實作必 FAIL＋病灶行為 | **D-01** | 🟡 待實作（任務 0.9）|
+| ~~C1 ↔ C6 詞彙衝突~~ ✅已套用 | C1 的 `verdict` 為六值路由去向，C6 的 `routing_class` 為五值且**從答案文字反推**——同一份設計兩套詞彙 | **D-04** | 🟡 待套用 |
+| ~~C1 ↔ C3 詞彙衝突~~ ✅已套用 | C3 的 `EscapeVerdict.action` 四值與 C1 verdict 無映射 → `degrade_knowledge/honest`（R4.2/4.3 主要療效）在路由尺上不可見 | **D-07** | 🟡 待套用 |
+| ~~C1 RoutingSignals 輸入不足~~ ✅已套用 | 缺 `user_text`／`topic_terms`／`EscapeState`，但 C3 的再進場抑制判準需要它們——**用宣告的輸入算不出宣告的行為**；`SessionFeatures` 全 spec 無定義；欄位名 `escape_count`/`escape_events`、`question_type`/`query_type` 不一致 | **D-08** | 🟡 待套用 |
+| ~~C1 快照欄位~~ ✅已套用 | 缺 `query_text`（或雜湊），C7 的查詢聚類（R10.1）無從計算 | **D-08** | 🟡 待套用 |
 | **C1 灰帶** | 灰帶種子 0.55–0.75 未標分數尺；設計自己量到 final 中位 0.50–0.53 落在下界外 → 對語料主體恆 False | **D-09** | 🟡 待套用 |
 | **C4 K_MAX=5** | 標「EXP-4 定」但 EXP-4 未量過 k=5，且採用的是實驗自陳的**上界值**去訂不可逆 DB 硬約束 | **D-12** | 🟡 待套用 |
 | **C5 閘門 ↔ R5.3** | 「永不觸碰強向量命中」與 R5.3「雙證據一致時融合分數高於單通道」互斥 | **D-10** | 🟡 待套用 |
-| **C6 EvalHarness** | 見 C1↔C6；另 FORM 在全語料 1291 輪成立 0 次，「⇄表單」那一支實質量不到 | **D-04** | 🟡 待套用 |
-| **C8 統一出口** | 原則已為 `append_turn` 定案（審查修訂 3），**未推廣至決策快照** → 快照覆蓋 54.8%、面向續輪 0% | **D-19** | 🟢 補做 |
+| ~~C6 EvalHarness~~ ✅已套用 | 見 C1↔C6；另 FORM 在全語料 1291 輪成立 0 次，「⇄表單」那一支實質量不到 | **D-04** | 🟡 待套用 |
+| ~~C8 統一出口~~ ✅已完成（任務 0.1）| 原則已為 `append_turn` 定案（審查修訂 3），**未推廣至決策快照** → 快照覆蓋 54.8%、面向續輪 0% | **D-19** | 🟢 補做 |
 
 **未列於上表者視為有效。**
 
@@ -88,13 +88,27 @@ graph TD
 **介面定義**：
 ```python
 class RoutingSignals(TypedDict):
-    kb_top1_final: float | None        # 檢索後 final 分數
+    # ── 分數欄位：**觀測用，不得作為路由分支的直接輸入**（R7.1／D-01(d)）──
+    #    EXP-7 實證：score_band 單獨 AUC 0.474（近隨機）；決策點分數已飽和
+    #    （a1 全 63 筆快照 kb_top1_final 落 0.739–0.981、中位 0.953）。
+    kb_top1_final: float | None
     sop_top1_final: float | None
     kb_top1_vector: float | None
-    gray_zone: bool                    # final 落校準灰帶（校準集定界）
-    identifier: IdentifierSignal       # 識別碼偵測結果
-    session: SessionFeatures           # 輪次、當前面向、zero_row_count、escape_count
-    top1_categories: list[str]         # top-1 知識分類（面向進場判定用）
+    gray_zone: bool                    # 觀測欄位（同上，不得為判定輸入）
+    # ── 判定輸入：決定性特徵 ──
+    identifier: IdentifierSignal       # 識別碼×question_type（EXP-7 最穩訊號 AUC 0.826）
+    session: SessionFeatures
+    top1_categories: list[str]
+    # ── D-08 新增：C3 的再進場抑制判準需要，原契約算不出宣告的行為 ──
+    user_text: str                     # 當輪原句
+    topic_terms: list[str]             # 主題詞（決定性抽取）
+    escape: EscapeState                # 逃生門狀態（含 exited_facets）
+
+class SessionFeatures(TypedDict):      # D-08：原全 spec 無定義
+    turn_index: int
+    current_facet: str | None
+    zero_row_count: int
+    escape_events: list[str]           # 欄位名統一（原註解誤寫 escape_count）
 
 class IdentifierSignal(TypedDict):
     has_id: bool
@@ -102,12 +116,16 @@ class IdentifierSignal(TypedDict):
     question_type: Literal["data_query", "knowledge", "ambiguous"]  # 決定性規則判定
 
 class RoutingDecision(TypedDict):
-    verdict: Literal["direct_answer", "enter_facet", "form", "fallback", "stay_facet", "exit_facet"]
-    # ⚠ D-04/D-07：本枚舉與 C6 的 routing_class（五值）、C3 的 EscapeVerdict.action（四值）
-    #    三套詞彙不一致。修訂方向：三者共用單一枚舉，且面向續輪須可細分
-    #    （否則 #07 型黏著在此尺上前後皆為 stay_facet＝判為一致，主病灶量不到）
+    # 單一枚舉（D-04/D-07 已套用 08-19）：C1／C3／C6 共用，不得各自定義。
+    # stay_facet 細分 _ask/_answer——不細分則 #07 型黏著前後皆 stay 而判為一致。
+    routing_verdict: Literal["direct_answer", "enter_facet",
+                             "stay_facet_ask", "stay_facet_answer", "exit_facet",
+                             "degrade_knowledge", "degrade_honest", "form", "fallback"]
     facet_key: str | None
-    snapshot: dict                     # 全部輸入訊號＋門檻值＋規則版本（落 usage_events）
+    snapshot: dict                     # 落 usage_events；**必要欄位**（D-08）：
+    #   routing_verdict／grounded／rule_version／config_hash／decision_case／path
+    #   ＋ query_hash＋topic_terms（依隱私鐵則不存原文，但滿足 C7 查詢聚類 R10.1）
+    #   缺任一即視為不完整快照；未貢獻路徑落最小快照（帶 path 與 incomplete: true）
 
 def decide(signals: RoutingSignals, config: DecisionConfig) -> RoutingDecision: ...
 
@@ -168,7 +186,10 @@ class EscapeState(TypedDict):          # 掛在既有面向 state（沿 _refine_
     exited_facets: dict[str, int]      # 審查修訂 2：facet_key → 退出時輪次（再進場抑制）
 
 class EscapeVerdict(TypedDict):
-    action: Literal["stay", "exit_requery", "degrade_knowledge", "degrade_honest"]
+    # D-07（已套用 08-19）：併入 C1 的單一 routing_verdict 枚舉，C3 不另立詞彙——
+    # 否則 degrade_knowledge/honest（R4.2/4.3 的主要療效）在路由尺上不可見。
+    action: Literal["stay_facet_ask", "stay_facet_answer", "exit_facet",
+                    "degrade_knowledge", "degrade_honest"]
     reason: str
 
 def check_escape(user_text: str, state: EscapeState, config: DecisionConfig) -> EscapeVerdict: ...
@@ -250,13 +271,18 @@ def lexical_search(query: str, vendor_id: int, top_n: int = 10) -> list[LexicalH
 # scripts/backtest/decision_replay.py（重播 harness 入 repo，源自 corpus-20260810/replay_harness.py）
 class TurnResult(TypedDict):
     case_id: str; turn: int
-    routing_class: Literal["ANSWER","ASK_ID","FACET_EMPTY","FORM","FALLBACK"]
-    # ⚠ D-04：本五值為人工歸納，與 C1 verdict 不一致；且從答案文字反推，
-    #    看不見「同類別但知識接地翻轉」（實測漏計 36% 不穩定輪）。改讀決策快照。
+    routing_verdict: str               # 值域同 C1 單一枚舉；**來源＝決策快照，非文字反推**
+    grounded: bool | None              # 有無知識來源支撐（正交維度）
+    answer_verdict: Literal["correct","incorrect","unsupported","unjudged"]
+    source: Literal["snapshot","legacy_text"]   # 混計即為缺陷（R1.3.4）
     classifier_version: str            # R1.3 版本化
     noise_tags: list[str]              # R1.4 機器可讀雜訊標記（testcase/carryover/probe/paraphrased）
 
-def classify_routing(answer: str) -> tuple[str, str]: ...   # (class, version)
+def collect_verdicts(run_tag: str) -> dict[tuple[str,int], TurnResult]: ...
+    # 重播後自 usage_events 依 session_id＋輪序取回快照對齊；**不改請求 payload**
+    # （維持與凍結語料逐欄可比）。FORM 自此由 verdict 直接可見，不再靠 form_triggered
+    # （該欄實測全語料 1291 輪成立 0 次）。
+def classify_routing_legacy(answer: str, *, sources) -> tuple[str, str]: ...  # 僅舊檔
 def run_corpus(cache_mode: Literal["off","on"]) -> list[TurnResult]: ...  # R1.7 雙軌
 # 前置：make audit 不變量 3 未過 → 直接 abort（R1.2）
 ```
