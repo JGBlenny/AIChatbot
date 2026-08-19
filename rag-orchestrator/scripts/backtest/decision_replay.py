@@ -65,6 +65,152 @@ ROUTING_RULES = {
     "ask_id_requires_no_sources": True,
 }
 
+# ════════════════════════════════════════════════════════════════════
+# verdict 量尺（任務 0.6｜R1.3）——**唯一來源＝決策快照**，不從文字反推
+#
+# 舊五類尺（下方 ROUTING_CLASSES／classify_routing）自此降級為 `legacy_text`，
+# 僅供本 spec 立案前產生、無決策快照的舊檔重判，且 SHALL NOT 與 verdict 尺混計（R1.3.4）。
+# 換尺的理由（D-04）：五類看不見「同類別但知識接地翻轉」——同一句「我可以擁有多少個
+# 物件？」一輪答『上限 10 份』（有來源）、一輪答『並沒有上限』（無來源、與知識庫矛盾），
+# 兩者皆記 ANSWER，實測漏計 36% 的不穩定輪。
+# ════════════════════════════════════════════════════════════════════
+
+# 單一枚舉：與 design.md C1 的 RoutingDecision.routing_verdict 逐字相同（R1.3.2 自動核對）
+ROUTING_VERDICTS = (
+    "direct_answer", "enter_facet",
+    "stay_facet_ask", "stay_facet_answer", "exit_facet",
+    "degrade_knowledge", "degrade_honest", "form", "fallback",
+)
+# 已知病灶的換尺自檢錨點（R1.3.3）：這三個初翻點在任何新尺上都必須判為不一致
+KNOWN_DEFECT_TURNS = (("07", 4), ("10", 3), ("21", 3))
+
+
+class RulerMixError(RuntimeError):
+    """verdict 尺與 legacy_text 尺混計——R1.3.4 明令禁止。"""
+
+
+class BlindRulerError(RuntimeError):
+    """換尺鐵則（R1.3.3）未過：新尺在已知病灶上判不出既有不一致。"""
+
+
+def verdict_domain_check(design_src: str) -> bool:
+    """R1.3.2：本模組值域必須與 design.md C1 枚舉逐字一致，否則兩套詞彙又分岔。"""
+    missing = [v for v in ROUTING_VERDICTS if f'"{v}"' not in design_src]
+    if missing:
+        raise GateError(f"verdict 值域與 design C1 不一致，缺：{missing}")
+    return True
+
+
+def grounded_flag(sources):
+    """本輪答案有無知識來源支撐（正交於 verdict）。None＝該 run 未記錄，無從判斷。"""
+    if sources is None:
+        return None
+    return bool(sources)
+
+
+def turn_result_v2(case_id, turn, snapshot, *, sources=None, answer=None,
+                   noise_tags=None, answer_verdict="unjudged"):
+    """verdict 尺的 TurnResult（R1.3／3.1）。
+
+    `snapshot` 為該輪的 `usage_events.decision_snapshot`；**沒有快照就不猜**
+    （回 routing_verdict=None、source='missing'）——猜了就退回文字反推的老路。
+    """
+    v = (snapshot or {}).get("routing_verdict")
+    if v is not None and v not in ROUTING_VERDICTS:
+        raise GateError(f"快照帶了值域外的 routing_verdict：{v!r}")
+    return {"case_id": case_id, "turn": turn,
+            "routing_verdict": v,
+            "grounded": grounded_flag(sources),
+            "answer_verdict": answer_verdict,
+            "source": "snapshot" if v is not None else "missing",
+            "classifier_version": None,
+            "noise_tags": list(noise_tags or []),
+            "facet_key": (snapshot or {}).get("facet_key"),
+            "incomplete": bool((snapshot or {}).get("incomplete"))}
+
+
+def turn_result_legacy(case_id, turn, *, answer, sources=None, noise_tags=None):
+    """舊檔重判（R1.3.4）：標 legacy_text＋版本戳，不得與 verdict 尺混計。"""
+    cls, ver = classify_routing(answer, sources=sources)
+    return {"case_id": case_id, "turn": turn,
+            "routing_verdict": None, "legacy_class": cls,
+            "grounded": grounded_flag(sources),
+            "answer_verdict": "unjudged",
+            "source": "legacy_text", "classifier_version": ver,
+            "noise_tags": list(noise_tags or []), "facet_key": None, "incomplete": False}
+
+
+def composite_key_v2(tr):
+    """R1.3.1 的唯一合法比較單位。單用 routing_verdict 視為缺陷。"""
+    return (tr["routing_verdict"], tr["grounded"], tr["answer_verdict"])
+
+
+def compare_rounds(a, b):
+    """兩輪次的逐輪複合鍵比較，回不一致的鍵清單。混尺即 raise（R1.3.4）。"""
+    for k in set(a) & set(b):
+        srcs = {a[k]["source"], b[k]["source"]}
+        if "legacy_text" in srcs and srcs != {"legacy_text"}:
+            raise RulerMixError(
+                f"{k} 兩側尺別不同（{srcs}）——legacy_text 與 verdict 尺不得混計")
+    return [k for k in sorted(set(a) & set(b))
+            if composite_key_v2(a[k]) != composite_key_v2(b[k])]
+
+
+# 已知病灶的**文獻記載結果對**（來源：e5-attribution-report.md 實驗①的 10 樣本 census）。
+# 換尺能力檢查用這個，不用抽樣——抽樣會把「尺瞎了」和「這兩個樣本剛好沒翻」混為一談。
+DOCUMENTED_DEFECT_PAIRS = {
+    # #07 T4 黏著：正常輪切到金流面向 vs 黏著輪留在帳單面向索編號（9:1）
+    ("07", 4): ({"routing_verdict": "enter_facet"}, {"routing_verdict": "stay_facet_ask"}),
+    # #10 T3 對帳被扣住索編號 vs 正常直答（9:1）
+    ("10", 3): ({"routing_verdict": "stay_facet_ask"}, {"routing_verdict": "direct_answer"}),
+    # #21 T3 一次編輯未發送帳單：直答 vs 被面向索編號（8:2）
+    ("21", 3): ({"routing_verdict": "direct_answer"}, {"routing_verdict": "stay_facet_ask"}),
+}
+
+
+def assert_ruler_can_represent_defects():
+    """**換尺鐵則·能力檢查（R1.3.3 主判準）**——決定性，不依賴抽樣。
+
+    對每個已知病灶，把文獻記載的兩種結果餵進本尺，複合鍵**必須不同**。
+    這是尺的性質（表達力），與某次重播剛好抽到什麼無關。
+
+    存在理由（D-24 教訓）：修訂過程中曾以 `stay_facet` 不細分的尺取代舊尺，
+    結果 #07 型黏著前後皆 stay 而判為一致——**換了一把同樣瞎的尺**。
+    """
+    blind = []
+    for k, (s1, s2) in DOCUMENTED_DEFECT_PAIRS.items():
+        t1 = turn_result_v2(k[0], k[1], s1, sources=[], noise_tags=[])
+        t2 = turn_result_v2(k[0], k[1], s2, sources=[], noise_tags=[])
+        if composite_key_v2(t1) == composite_key_v2(t2):
+            blind.append(k)
+    if blind:
+        raise BlindRulerError(
+            "換尺鐵則未過：本尺無法區分已知病灶的兩種結果 → 對主病灶全盲，退回重設計。"
+            f"表達不出的輪：{blind}")
+    return True
+
+
+def assert_ruler_sees_known_defects(samples, require_any=True):
+    """**換尺鐵則·現場檢查（R1.3.3 輔助）**——以實跑樣本佐證，非主判準。
+
+    `samples`：{(case_id, turn): [TurnResult, ...]}。
+    已知病灶的翻動率介於 1/10～2/10，樣本少時全部不翻屬正常抽樣結果，
+    故判準為「**至少一個**病灶輪呈現不一致」；全部一致才是可疑訊號。
+    回傳 (passed, 未翻動的輪清單) 供報告揭露。
+    """
+    flipped, flat = [], []
+    for k in KNOWN_DEFECT_TURNS:
+        rs = samples.get(k)
+        if not rs or len(rs) < 2:
+            continue
+        (flipped if len({composite_key_v2(t) for t in rs}) > 1 else flat).append(k)
+    if require_any and not flipped and flat:
+        raise BlindRulerError(
+            f"現場檢查：{len(flat)} 個已知病灶輪在 {len(samples.get(flat[0], []))} 個樣本上"
+            f"全部一致，且無任何病灶輪翻動——樣本不足或尺有問題，需加樣本重驗。輪：{flat}")
+    return True, flat
+
+
 ROUTING_CLASSES = ("ANSWER", "ASK_ID", "FACET_EMPTY", "FORM", "FALLBACK")
 # 呼叫失敗的輪：不屬五類別，另立標記——把錯誤輪塞進任一真類別會污染 E-5 不一致率。
 CLASS_ERROR = "ERROR"
@@ -331,6 +477,58 @@ def turn_result(case_id, turn, res, noise_tags):
             "structured_form_evidence": "form_triggered" in res}
 
 
+def collect_verdicts(run_tag, cases_meta, since_iso=None):
+    """重播後自 usage_events 取回決策快照，依 session_id＋輪序對齊（R1.3、C6 重寫）。
+
+    **不改請求 payload**——payload 與凍結語料逐欄一致，可比性不變；對齊只靠
+    session_id 與同 session 內的時間序。取不到快照的輪回 None（由 turn_result_v2
+    標 source='missing'），**不猜**。
+
+    `since_iso`：session_id 由 tag 衍生，**重用同一個 tag 會撈到前一輪的舊列**
+    （實測踩過：前一輪留下未細分的 stay_facet，讓本輪在值域檢查當場 abort）。
+    以本次執行起始時間過濾，不改請求 payload、不動 session_id 格式。
+    """
+    out = {}
+    for case_id, sid, n_turns in cases_meta:
+        r = _run(["docker", "exec", "aichatbot-postgres", "psql", "-U", "aichatbot",
+                  "-d", "aichatbot_admin", "-tA", "-c",
+                  f"SELECT coalesce(decision_snapshot::text,'') FROM usage_events "
+                  f"WHERE session_id = '{sid}'"
+                  + (f" AND ts >= '{since_iso}'" if since_iso else "")
+                  + " ORDER BY ts"])
+        if r.returncode != 0:
+            print(f"⚠️ 取快照失敗（{sid}）：{r.stderr.strip()[:100]}")
+            continue
+        rows = [ln for ln in r.stdout.splitlines() if ln.strip() != ""]
+        for i in range(1, n_turns + 1):
+            snap = None
+            if i <= len(rows):
+                try:
+                    snap = json.loads(rows[i - 1]) if rows[i - 1] else None
+                except json.JSONDecodeError:
+                    snap = None
+            out[(case_id, i)] = snap
+    return out
+
+
+def build_turn_results(results, verdicts, manifest):
+    """把重播結果與快照併成 verdict 尺的 TurnResult（複合鍵可比）。"""
+    trs = {}
+    for out in results:
+        case_id = out["turn_results"][0]["case_id"] if out.get("turn_results") else None
+        if case_id is None:
+            continue
+        tags = ((manifest.get("cases") or {}).get(case_id) or {})
+        for rp in out["replay"]:
+            k = (case_id, rp["turn"])
+            trs[k] = turn_result_v2(
+                case_id, rp["turn"], verdicts.get(k),
+                sources=rp.get("sources"), answer=rp.get("answer"),
+                noise_tags=list(tags.get("case_tags") or [])
+                + list((tags.get("turn_tags") or {}).get(str(rp["turn"]), [])))
+    return trs
+
+
 def replay_case(args):
     idx, rec, run_tag, outdir, manifest = args
     case_id = "%02d" % idx
@@ -371,6 +569,8 @@ def run_corpus(cache_mode, run_tag, outdir, reports_dir, workers=4, only=None,
         print("⚠️  完整性未經外部錨點驗證：%s" % gates["external_anchor"].get("why"))
     # 逐字稿在 S3 下是 <年>/<月>/ 分層，必須遞迴收集後**依檔名排序**——案號＝排序序位，
     # 與 replay_harness.py 逐字相同；換排序法會讓案號與 run2/run3 對不上、全部不可比。
+    _run_started = _run(["docker", "exec", "aichatbot-postgres", "psql", "-U", "aichatbot",
+                         "-d", "aichatbot_admin", "-tA", "-c", "SELECT now()"]).stdout.strip()
     files = []
     for root, _, names in os.walk(reports_dir):
         files.extend(os.path.join(root, n) for n in names if n.endswith(".md"))
@@ -394,9 +594,25 @@ def run_corpus(cache_mode, run_tag, outdir, reports_dir, workers=4, only=None,
         _degraded.append("容器一致性未驗（--skip-audit）")
     if not gates["external_anchor"].get("verified"):
         _degraded.append("完整性未經外部錨點驗證")
+    # verdict 尺（任務 0.6）：自快照取回並落檔，供跨輪以複合鍵比較
+    _cases_meta = [(("%02d" % i), "%s_%02d_%s" % (run_tag, i, r["file"][:15]),
+                    len([t for t in r["turns"] if t["speaker"] == "使用者"]))
+                   for i, r in cases]
+    _verdicts = collect_verdicts(run_tag, _cases_meta, since_iso=_run_started or None)
+    _trs = build_turn_results(results, _verdicts, manifest)
+    with open(os.path.join(outdir, "_turn_results_v2.json"), "w", encoding="utf-8") as f:
+        json.dump({f"{k[0]}|{k[1]}": v for k, v in sorted(_trs.items())},
+                  f, ensure_ascii=False, indent=2)
+    _missing = sum(1 for v in _trs.values() if v["source"] == "missing")
+    _cov = 1 - (_missing / len(_trs)) if _trs else 0
+    print("verdict 尺：%d 輪，快照覆蓋 %.1f%%（missing %d）"
+          % (len(_trs), _cov * 100, _missing))
+
     meta = {"run_tag": run_tag, "cache_mode": cache_mode,
             "evidence_grade": "invalid_for_regression" if _degraded else "valid",
             "degraded_reasons": _degraded,
+            "verdict_ruler": {"turns": len(_trs), "snapshot_coverage": round(_cov, 4),
+                              "missing": _missing},
             "classifier_version": classifier_version(),
             "manifest_version": manifest.get("manifest_version"),
             "gates": gates, "cases": len(results),

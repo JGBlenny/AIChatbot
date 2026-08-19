@@ -475,7 +475,10 @@ async def handle_conversational_session(request, req, ctx: ChatRequestContext):
     # 續對話(stream→真 token 串流 / 非 stream→JSON);降級回 None
     # 貢獻須在 _conversational_respond **之前**——引擎內部對交易面向會呼叫 set_facet，
     # 讓它後寫才不會被本處覆蓋（診斷面向引擎不寫，由此處補上 facet_key）。
-    _meter_decision(snapshot={"routing_verdict": "stay_facet",
+    # 續輪細分 ask/answer（R1.3 值域強制）：不細分則 #07 型黏著前後皆 stay 而判為一致，
+    # 主病灶在量尺上不可見（D-24 教訓）。此處先落 pending，回應產出後由
+    # `_refine_stay_verdict()` 依實際回應是否在索取識別資訊定案。
+    _meter_decision(snapshot={"routing_verdict": "stay_facet_answer",
                               "facet_key": _facet_key,
                               "user_turns": (session_state or {}).get("user_turns"),
                               "decision_case": "facet_continuation"},
@@ -491,6 +494,7 @@ async def handle_conversational_session(request, req, ctx: ChatRequestContext):
         pass
     conv_resp = await _conversational_respond(request, req, start_if_absent=False, config=None)
     if conv_resp is not None:
+        _refine_stay_verdict(conv_resp)
         return conv_resp  # 陷阱3:已是最終 Response,不二次 finalize
     # 引擎降級(brain 失敗):關閉殘留會話、落回一般流程(不阻斷對話)
     _meter_decision(snapshot={"routing_verdict": "exit_facet",
@@ -501,6 +505,28 @@ async def handle_conversational_session(request, req, ctx: ChatRequestContext):
     await engine._close(request.session_id)
     ctx.session_state = None  # 陷阱4:降級續跑
     return None
+
+
+_STAY_ASK_VERB = "請提供"
+_STAY_ASK_TERMS = ("編號", "bill_ref", "名稱", "ID")
+
+
+def _refine_stay_verdict(resp) -> None:
+    """面向續輪的 `stay_facet_ask` / `_answer` 定案（R1.3 值域細分）。
+
+    判準決定性：本輪回應是否在**索取識別資訊**（含索取動詞＋識別詞）。
+    串流回應取不到文字 → 維持 `_answer`（保守：不誤報索取）。
+    理由：黏著（#07 型）的表徵就是「使用者換主題、面向仍在索編號」，
+    不細分則前後皆 stay 而判為一致，量尺對主病灶全盲。
+    """
+    try:
+        text = getattr(resp, "answer", None)
+        if not isinstance(text, str) or not text:
+            return
+        if _STAY_ASK_VERB in text and any(t in text for t in _STAY_ASK_TERMS):
+            _meter_decision(snapshot={"routing_verdict": "stay_facet_ask"})
+    except Exception:
+        pass
 
 
 async def handle_collecting(request, req, ctx: ChatRequestContext):

@@ -116,7 +116,8 @@ async def test_facet_continuation_contributes_stay(monkeypatch):
     assert resp is not None
     snap = um._ctx.get().decision_snapshot
     assert snap is not None, "面向續輪必須落快照——這是 #07 黏著的歸因現場"
-    assert snap["routing_verdict"] == "stay_facet"
+    # R1.3 值域強制細分：續輪先落 _answer，回應含索取語句才由 _refine_stay_verdict 改 _ask
+    assert snap["routing_verdict"] == "stay_facet_answer"
     assert snap["facet_key"] == "bill_diagnosis"
     assert um._ctx.get().facet_event == "stay"
 
@@ -140,3 +141,29 @@ async def test_facet_cancel_contributes_exit(monkeypatch):
     await chat.handle_conversational_session(request, req, ctx)
 
     assert um._ctx.get().facet_event == "exit_user_cancel"
+
+
+# ── R1.3 細分：回應在索取識別資訊 → 定案 stay_facet_ask ──
+@pytest.mark.req("retrieval-decision-layer:1.3")
+def test_refine_stay_verdict_marks_ask():
+    um = _begin()
+    chat._meter_decision(snapshot={"routing_verdict": "stay_facet_answer"})
+    chat._refine_stay_verdict(MagicMock(answer="請提供帳單編號（bill_ref），以便查詢。"))
+    assert um._ctx.get().decision_snapshot["routing_verdict"] == "stay_facet_ask"
+
+
+@pytest.mark.req("retrieval-decision-layer:1.3")
+def test_refine_stay_verdict_keeps_answer_when_not_asking():
+    um = _begin()
+    chat._meter_decision(snapshot={"routing_verdict": "stay_facet_answer"})
+    chat._refine_stay_verdict(MagicMock(answer="對帳的過程主要是確認租客的付款狀態……"))
+    assert um._ctx.get().decision_snapshot["routing_verdict"] == "stay_facet_answer"
+
+
+@pytest.mark.req("retrieval-decision-layer:1.3")
+def test_refine_stay_verdict_safe_on_stream(monkeypatch):
+    """串流回應取不到文字 → 保守維持 _answer，不誤報索取。"""
+    um = _begin()
+    chat._meter_decision(snapshot={"routing_verdict": "stay_facet_answer"})
+    chat._refine_stay_verdict(object())
+    assert um._ctx.get().decision_snapshot["routing_verdict"] == "stay_facet_answer"

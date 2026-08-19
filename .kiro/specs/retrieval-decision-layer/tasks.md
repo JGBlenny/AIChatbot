@@ -105,7 +105,7 @@
     新增 R2.4/R2.5、R5.4 期望答案表）、design 四處（C1 契約補 user_text/topic_terms/escape
     ＋定義 SessionFeatures＋分數欄降為觀測、C1/C3/C6 收斂為**單一 routing_verdict 枚舉**、
     快照必要欄位、C6 改讀快照）。spec.json 核准重走完成（rev-01）。
-- [ ] 0.6 量尺實作（0.1、0.5 完成後）：
+- [x] 0.6 量尺實作（0.1、0.5 完成後）：
   > **前情**：2026-08-19 曾有半成品（已 `git checkout` 捨棄，未 commit）——它實作了
   > `grounded` 複合鍵並移除冗餘的 `ask_id_max_len`，但**只做了 D-04/D-05 的前半**：
   > 沒有從快照讀 `routing_verdict`、沒有面向續輪細分、沒有 `answer_verdict`，
@@ -117,6 +117,17 @@
   `legacy_text` 僅供舊檔且不得混計。
   - **驗收（換尺鐵則，D-24 教訓）**：歸因報告 5 個翻動案在新尺上重判，
     **#07/#10/#21 的初翻點必須被計為不一致**——新尺看不見已知病灶即判定尺不合格，退回重設計
+  - **完成 2026-08-19**：`ROUTING_VERDICTS` 九值單一枚舉（R1.3.2 對 design.md 逐字核對）；
+    `turn_result_v2` 讀快照、**沒有快照就回 None 不猜**；`composite_key_v2` 三元複合鍵；
+    `compare_rounds` 混尺即 raise；harness 重播後 `collect_verdicts` 自 usage_events 對齊
+    （payload 不動）。chat.py 續輪細分 `stay_facet_ask/_answer`（`_refine_stay_verdict`）。
+  - **換尺鐵則實測**：主判準（能力檢查，決定性）**PASS**——三個已知病灶的兩種結果本尺皆可區分；
+    現場檢查 PASS（#10 T3 兩樣本未翻，其歷史翻動率 1/10，屬正常抽樣）。
+    同 25 輪兩輪對照：新尺不一致 12/25，**其中 3 輪是 grounded 翻轉（舊尺完全看不見的那型）**。
+  - **過程中修掉兩個自身缺陷**（誠實記錄）：①閘門原設計把「尺瞎了」與「這兩樣本剛好沒翻」
+    混為一談，實測在 #10 T3 誤 FAIL → 拆成能力檢查（決定性主判準）＋現場檢查（抽樣輔助）。
+    ②`collect_verdicts` 重用 tag 會撈到前一輪舊列（實測踩到，前輪未細分的 stay_facet 讓本輪
+    值域檢查 abort）→ 加執行起始時間過濾。
   - 需求：1.3, 1.4｜決策：D-04～D-08
 - [ ] 0.7 期望答案表（D-06）：凍結語料有客服標準答案者＋30 題集，逐輪列 ID 與期望答案；
   `answer_verdict` 的判定母體＝**該表涵蓋的輪**，表外輪不計 FAIL 但須揭露分母；表入 D-16 凍結範圍。
