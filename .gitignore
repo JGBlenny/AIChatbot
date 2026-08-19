@@ -123,3 +123,5 @@ docs/backtest/corpus-20260810/run3-head/
 docs/backtest/corpus-20260810/reports/
 # decision_replay 的重播輸出（每輪重跑即重生，只留 S3/本機工作目錄）
 docs/backtest/corpus-20260810/out_*/
+# 外部錨點驗證時自 S3 取回的 tarball（正本在 S3，本機只是暫存）
+docs/backtest/corpus-20260810/*.tar.gz
