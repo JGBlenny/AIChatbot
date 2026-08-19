@@ -2,7 +2,7 @@
 
 > 建立時間：2026-08-10
 > 需求：requirements.md（R1–R10，含 R7.1 證據修訂）｜設計：design.md（C1–C8，含審查修訂 1–3）｜落差：gap-analysis.md｜研究：research.md（六實驗＋反證覆核）
-> 標記：`(P)` = 可與同層其他 `(P)` 平行
+> 標記：`(P)` = 可與同層其他 `(P)` 平行｜`[x]`＝完成且驗收有效｜`[~]`＝做過但**驗收已退回**（見下表）
 
 ## ⚠ 驗收狀態（2026-08-19）
 
@@ -23,6 +23,24 @@
 > **S1（0.1–0.4）不動 spec 正文**——是補做既有需求，可立即開工，不等任何裁決。
 > **S2（0.5–0.7）要改 spec 正文**，須業主核准條文修訂後才動。
 > **S3（0.9）卡在業主裁決 D-01**，未裁決不得開工。
+
+### 依賴圖與規模
+
+```
+0.1 快照全覆蓋 ──┬────────────► 0.6 量尺實作 ──┬─► 0.8 新尺重測 ──► 0.10 重驗 V0
+   (1.0 天)      │   0.5 條文套用 ─┘  (0.5 天)   │   (0.5 天)         (0.5 天)
+                 │      (0.5 天)                 │
+0.2 不變量 AST   │   0.7 期望答案表 ─────────────┘
+   (0.5 天) (P)  │      (1.0 天)
+0.3 語料錨點     │
+   (0.5 天) (P)  │   0.9 R7.1 ◄── 卡 D-01 裁決 ──► 併入 0.10 前
+0.4 閘門約束     │      (2.0 天，含藥效 pilot)
+   (0.5 天) (P)  │
+                 └─ S1 合計 2.5 天（0.2/0.3/0.4 平行則約 1.5 天）
+```
+
+**總計約 6 天**（S1 1.5–2.5＋S2 2.0＋關卡 0.5＋S3 2.0＋重驗 0.5，S3 可與 S2 部分重疊）。
+0.7 的 `answer_verdict` 逐輪判讀成本另計（母體輪數 × 每次驗收，見 D-06）。
 
 ### S1｜機制補課（不動 spec，可立即開工）
 
@@ -59,7 +77,14 @@
 - [ ] 0.5 條文修訂套用（D-04～D-08、D-11、D-14、D-16、D-17）：把台帳已定調項寫進
   requirements.md／design.md 正文，`spec.json` 的 requirements/design 核准打回重走。
   含兩條新流程鐵則：**引用實驗數據須帶量測條件**（D-14）、**量測前凍結判準/分母/雜訊標記/尺版本**（D-16）。
-- [ ] 0.6 量尺實作（0.1、0.5 完成後）：`routing_verdict` 獨立欄位（仲裁欄改名 `arbitration_type`）
+- [ ] 0.6 量尺實作（0.1、0.5 完成後）：
+  > **前情**：2026-08-19 曾有半成品（已 `git checkout` 捨棄，未 commit）——它實作了
+  > `grounded` 複合鍵並移除冗餘的 `ask_id_max_len`，但**只做了 D-04/D-05 的前半**：
+  > 沒有從快照讀 `routing_verdict`、沒有面向續輪細分、沒有 `answer_verdict`，
+  > 卻已把版號改成 `rc-v2`。**捨棄理由：它是一把半瞎的尺卻有正式版號背書**
+  > （通不過本任務「#07/#10/#21 初翻點必須被計為不一致」的驗收）。
+  > 本任務實作時可參考該方向，但版號須待通過換尺驗收後才升。
+`routing_verdict` 獨立欄位（仲裁欄改名 `arbitration_type`）
   ＋**面向續輪細分**＋`grounded`＋`answer_verdict`；EvalHarness 改讀快照；文字判定降為
   `legacy_text` 僅供舊檔且不得混計。
   - **驗收（換尺鐵則，D-24 教訓）**：歸因報告 5 個翻動案在新尺上重判，
@@ -100,13 +125,13 @@
 
 ## 1. P0｜評測基礎與決策快照（量尺先行）
 
-- [x] 1.1 (P) 評測 harness 入 repo（TDD）：`scripts/backtest/decision_replay.py`（源自 corpus-20260810/replay_harness.py）＋`classify_routing()` 版本化（unit：五類別判定矩陣＋version 戳）＋`corpus-20260810/noise_manifest.json`（37 案雜訊標記，機器可讀，獨立 review 防 R-f）＋前置容器閘門（audit 不變量 3 未過→abort）＋`cache_mode=on/off` 雙軌參數。
+- [~] **[❌退回]** 1.1 (P) 評測 harness 入 repo（TDD）：`scripts/backtest/decision_replay.py`（源自 corpus-20260810/replay_harness.py）＋`classify_routing()` 版本化（unit：五類別判定矩陣＋version 戳）＋`corpus-20260810/noise_manifest.json`（37 案雜訊標記，機器可讀，獨立 review 防 R-f）＋前置容器閘門（audit 不變量 3 未過→abort）＋`cache_mode=on/off` 雙軌參數。
   - 需求：1.1, 1.2, 1.3, 1.4, 1.7
-- [x] 1.2 (P) 決策快照埋點（TDD）：usage_events 加 `decision_snapshot JSONB`、`facet_event VARCHAR(30)`（ADD COLUMN IF NOT EXISTS，沿 20260720 慣例）＋usage_metering `set_decision()` hook（比照 set_facet 房式：ctx None/finalized 靜默）；unit 矩陣＋欄位未建降級。
+- [~] **[⚠部分]** 1.2 (P) 決策快照埋點（TDD）：usage_events 加 `decision_snapshot JSONB`、`facet_event VARCHAR(30)`（ADD COLUMN IF NOT EXISTS，沿 20260720 慣例）＋usage_metering `set_decision()` hook（比照 set_facet 房式：ctx None/finalized 靜默）；unit 矩陣＋欄位未建降級。
   - 需求：8.3
-- [x] 1.3 DecisionConfig 集中讀值＋行為等價搬移（1.1、1.2 完成後）：`services/decision_layer.py` 建 `DecisionConfig.load()`（唯一讀值點）與 `decide()`（六 case＋面向進場邏輯原樣搬入）；chat.py 4 處＋engine.py:428＋FORM_TRIGGER_THRESHOLD 兩處改經 DecisionConfig；**等價驗證照審查修訂 1 雙層**：①決定性子決策（門檻比對/分類路由/識別碼規則）unit 嚴格等價；②凍結語料搬移前後各 ≥3 輪，逐輪多數決類別不一致率 ≤ 基線重跑變異（run2 vs run3 基準）。散讀值點=0 入 `make audit` 新不變量。
+- [x] **[✅有效]** 1.3 DecisionConfig 集中讀值＋行為等價搬移（1.1、1.2 完成後）：`services/decision_layer.py` 建 `DecisionConfig.load()`（唯一讀值點）與 `decide()`（六 case＋面向進場邏輯原樣搬入）；chat.py 4 處＋engine.py:428＋FORM_TRIGGER_THRESHOLD 兩處改經 DecisionConfig；**等價驗證照審查修訂 1 雙層**：①決定性子決策（門檻比對/分類路由/識別碼規則）unit 嚴格等價；②凍結語料搬移前後各 ≥3 輪，逐輪多數決類別不一致率 ≤ 基線重跑變異（run2 vs run3 基準）。散讀值點=0 入 `make audit` 新不變量。
   - 需求：7.4, 8.3
-- [x] 1.4 R8.1 歸因實驗（1.1、1.2 完成後；產物=報告非程式）：三組受控分離 E-5 變異來源——①固定檢索重跑 LLM 環節②rewriter/意圖分類同輸入 ×N 輸出變異③快照灰帶密度分佈；產出歸因報告＋**E-5 目標上限提案報業主核定**（核定後寫入 design.md 不得放寬）。**【V0 關卡】**與 1.3 等價證明併成 P0 關卡報告呈業主（照報告規格五欄），簽核才進 P1。
+- [~] **[⚠部分]** 1.4 R8.1 歸因實驗（1.1、1.2 完成後；產物=報告非程式）：三組受控分離 E-5 變異來源——①固定檢索重跑 LLM 環節②rewriter/意圖分類同輸入 ×N 輸出變異③快照灰帶密度分佈；產出歸因報告＋**E-5 目標上限提案報業主核定**（核定後寫入 design.md 不得放寬）。**【V0 關卡】**與 1.3 等價證明併成 P0 關卡報告呈業主（照報告規格五欄），簽核才進 P1。
   - 需求：8.1, 8.2
 
 ## 2. P1｜決策層調參與逃生門（主病灶）

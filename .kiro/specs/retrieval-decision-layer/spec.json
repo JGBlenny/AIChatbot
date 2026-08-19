@@ -8,13 +8,15 @@
   "approvals": {
     "requirements": {
       "generated": true,
-      "approved": true,
-      "note": "部分條文修訂中，見 requirements.md 條文狀態表與 decisions/DECISIONS.md"
+      "approved": false,
+      "revision_required": true,
+      "note": "部分條文修訂中（見 requirements.md 條文狀態表）；任務 0.5 套用後重走核准"
     },
     "design": {
       "generated": true,
-      "approved": true,
-      "note": "部分元件修訂中，見 design.md 元件狀態表"
+      "approved": false,
+      "revision_required": true,
+      "note": "部分元件修訂中（見 design.md 元件狀態表）；任務 0.5 套用後重走核准"
     },
     "tasks": {
       "generated": true,
