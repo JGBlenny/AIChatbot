@@ -9,9 +9,12 @@
 仲裁）對任意輸入必須與搬移前的 inline 邏輯**嚴格同輸出**——unit 以逐字複製的參考實作
 全域對拍（tests/unit/decision/）。調參、灰帶、識別碼訊號都是 P1 的事，不在此檔此版。
 
-快照（R8.3）：`decide_arbitration()` 同時產出可歸因快照 dict，由呼叫端經
-`usage_metering.set_decision()` 落 usage_events——E-5 的 14/107 輪路由擺盪，從此每輪
-記下「輸入分數＋門檻＋判定」，不一致可離線歸因。
+快照（R8.3）：`decide_arbitration()` 產出可歸因快照 dict，由呼叫端經
+`usage_metering.set_decision()` 貢獻，最終由 `chat._finalize_decision_snapshot()`
+在 dispatcher **唯一出口**組裝落地（任務 0.1）。仲裁只是其中一個貢獻者——
+面向進場/續輪/退出、b2b 短路、快取命中各自貢獻；未貢獻的路徑落最小快照
+（帶 `path` 與 `incomplete: true`），使覆蓋缺口成為可查事實而非靜默缺席。
+（本檔頭原寫「從此每輪記下」，實測僅 54.8%、面向續輪 0%——D-19 已修正。）
 """
 import hashlib
 import json

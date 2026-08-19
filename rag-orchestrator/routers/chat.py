@@ -439,8 +439,16 @@ async def handle_conversational_session(request, req, ctx: ChatRequestContext):
         return None
     engine = req.app.state.conversational_engine
     user_choice = request.message.strip()
+    # 面向內每一輪都是決策點（任務 0.1｜R8.3、D-19）——舊做法只埋進場輪，
+    # 續輪 0% 覆蓋，正是 #07「一次黏著、五輪全毀」無從歸因的原因。
+    # config_key 存在偽會話的 collected_data 內（form_sessions 慣例），非 state 頂層
+    _facet_key = ((session_state or {}).get("collected_data") or {}).get("config_key")
     # 取消:關閉對話會話(R16.2 隨取消清除)
     if user_choice.lower() in ["取消", "cancel", "放棄", "結束"]:
+        _meter_decision(snapshot={"routing_verdict": "exit_facet",
+                                  "facet_key": _facet_key,
+                                  "decision_case": "facet_user_cancel"},
+                        facet_event="exit_user_cancel")
         await engine._close(request.session_id)
         from datetime import datetime
         cancel_resp = VendorChatResponse(
@@ -465,10 +473,30 @@ async def handle_conversational_session(request, req, ctx: ChatRequestContext):
         except Exception as e:
             print(f"⚠️ [續跑補圖] 併槽失敗（不中斷對話）：{e}")
     # 續對話(stream→真 token 串流 / 非 stream→JSON);降級回 None
+    # 貢獻須在 _conversational_respond **之前**——引擎內部對交易面向會呼叫 set_facet，
+    # 讓它後寫才不會被本處覆蓋（診斷面向引擎不寫，由此處補上 facet_key）。
+    _meter_decision(snapshot={"routing_verdict": "stay_facet",
+                              "facet_key": _facet_key,
+                              "user_turns": (session_state or {}).get("user_turns"),
+                              "decision_case": "facet_continuation"},
+                    facet_event="stay")
+    try:
+        from services.usage_metering import set_facet as _um_sf
+        _um_sf(facet_key=_facet_key)
+        # ⚠ 語義擴大（任務 0.1）：usage_events.facet_key 原由 conversational-repair R7.1
+        #   定為「**交易**面向專用」（engine 內 _is_transaction_scope 才寫），實測 321 筆全 NULL、
+        #   全 repo 無 SQL 消費者。此處起**診斷面向也寫**，使面向輪可被 SQL 切分。
+        #   下游若需區分交易/診斷，改看 decision_snapshot->>'decision_case'。
+    except Exception:
+        pass
     conv_resp = await _conversational_respond(request, req, start_if_absent=False, config=None)
     if conv_resp is not None:
         return conv_resp  # 陷阱3:已是最終 Response,不二次 finalize
     # 引擎降級(brain 失敗):關閉殘留會話、落回一般流程(不阻斷對話)
+    _meter_decision(snapshot={"routing_verdict": "exit_facet",
+                              "facet_key": _facet_key,
+                              "decision_case": "facet_engine_degraded"},
+                    facet_event="exit_degraded")
     print("⚠️ [conversational] 引擎降級，關閉對話會話、改走一般流程")
     await engine._close(request.session_id)
     ctx.session_state = None  # 陷阱4:降級續跑
@@ -996,12 +1024,18 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
                           + ("（串流）" if request.stream else ""))
                     # R8.3：面向接管事件落快照（與仲裁快照同輪合併，key 不衝突）
                     _meter_decision(
-                        snapshot={"facet_entry": {
-                            "facet_key": _diag_cfg.key,
-                            "kb_top1_final": (_best_knowledge or {}).get('similarity'),
-                            "threshold": DecisionConfig.load().form_trigger_threshold,
-                        }},
+                        snapshot={"routing_verdict": "enter_facet",
+                                  "facet_key": _diag_cfg.key,
+                                  "facet_entry": {
+                                      "kb_top1_final": (_best_knowledge or {}).get('similarity'),
+                                      "threshold": DecisionConfig.load().form_trigger_threshold,
+                                  }},
                         facet_event="enter")
+                    try:
+                        from services.usage_metering import set_facet as _um_sf2
+                        _um_sf2(facet_key=_diag_cfg.key)
+                    except Exception:
+                        pass
                     try:
                         from services.usage_metering import set_path as _um_sp
                         _um_sp("conversational", answer_source=_diag_cfg.key)
@@ -1762,6 +1796,43 @@ def _meter_decision(snapshot: dict = None, facet_event: str = None) -> None:
         pass
 
 
+# 快照「完整」的必要欄位（D-19；A2 的 routing_verdict 併入後同步擴充）：
+# 至少要有一個判定去向，否則這輪等於沒被決策層記錄到。
+_DECISION_REQUIRED_KEYS = ("verdict", "routing_verdict")
+
+
+def _finalize_decision_snapshot(path: str) -> None:
+    """決策快照的**唯一組裝出口**（retrieval-decision-layer 任務 0.1｜R8.3、D-19）。
+
+    設計原則沿 C8 審查修訂 3（既有 `append_turn` 統一出口）推廣而來：各階段只「貢獻」
+    片段（呼叫 `_meter_decision`），由本函式在 dispatcher 出口組裝落地。
+
+    **未貢獻的路徑不得靜默缺席**——落一筆帶 `path` 與 `incomplete: true` 的最小快照。
+    理由：舊做法把埋點掛在三個手挑呼叫點，面向內續輪 0% 覆蓋（#07「一次黏著、五輪全毀」
+    的現場零資料），而「沒有這筆列」與「這輪沒被決策層記錄」在 SQL 上分不出來。
+    有最小快照後，覆蓋缺口變成可查事實（任務 0.1 驗收＝非內部事件覆蓋率 ≥99%）。
+
+    冪等：已組裝過（含 path）即返回，避免重複呼叫在 `prior` 造出假的同輪擺盪紀錄。
+    """
+    try:
+        from services.usage_metering import _ctx as _um_ctx
+        c = _um_ctx.get()
+        if c is None or c._finalized:
+            return
+        snap = c.decision_snapshot
+        if snap is not None and "path" in snap:
+            return
+        _dl = DecisionConfig.load()
+        patch = {"path": path,
+                 "rule_version": DECISION_RULE_VERSION,
+                 "config_hash": _dl.config_hash()}
+        if not snap or not any(k in snap for k in _DECISION_REQUIRED_KEYS):
+            patch["incomplete"] = True
+        _meter_decision(snapshot=patch)
+    except Exception:                                # 計量失敗零影響回答
+        pass
+
+
 def _build_debug_info(
     processing_path: str,
     intent_result: dict,
@@ -2020,6 +2091,7 @@ async def _smart_retrieval_with_comparison(
                               if knowledge_list else None),
             "kb_threshold": _dlc.kb_threshold,
             "verdict": 'knowledge' if knowledge_list else 'none',
+            "routing_verdict": 'direct_answer' if knowledge_list else 'fallback',
             "decision_case": 'b2b_knowledge_only',
         })
 
@@ -2128,7 +2200,12 @@ async def _smart_retrieval_with_comparison(
         sop_next_action=sop_next_action,
         config=_dl_config,
     )
-    _meter_decision(snapshot=verdict['snapshot'])          # R8.3：每輪仲裁必落快照
+    # R8.3：每輪仲裁必落快照。仲裁 type（sop/knowledge/none）與 C1 的路由去向詞彙不同，
+    # 於此映射出 routing_verdict，兩者並存（D-04：量測讀 routing_verdict，不讀仲裁 type）。
+    _ARB_TO_VERDICT = {'sop': 'direct_answer', 'knowledge': 'direct_answer', 'none': 'fallback'}
+    _snap = dict(verdict['snapshot'])
+    _snap['routing_verdict'] = _ARB_TO_VERDICT.get(verdict['type'], 'fallback')
+    _meter_decision(snapshot=_snap)
 
     sop_candidates = len(sop_result.get('all_sop_candidates', [])) if sop_result else 0
     return {
@@ -3829,6 +3906,18 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
     - 主函數作為編排器（Orchestrator）
     - 各功能模塊獨立為輔助函數
     """
+    # 決策快照唯一出口（任務 0.1｜R8.3、D-19）：派發交由 _dispatch_message，
+    # 無論走哪條路徑（含例外）都在 finally 組裝落地一筆快照。
+    _path = {"name": "unknown"}
+    try:
+        return await _dispatch_message(request, req, _path)
+    finally:
+        _finalize_decision_snapshot(_path["name"])
+
+
+async def _dispatch_message(request: VendorChatRequest, req: Request, _path: dict):
+    """/message 的實際派發（自 vendor_chat_message 抽出，**行為不變**）。
+    `_path` 由各 handler 命中時填入，供出口標記本輪由誰作答。"""
     try:
         # DEBUG: 檢查 session_id 是否被正確接收
         print(f"🔍 [DEBUG] vendor_chat_message received - session_id: {request.session_id}, user_id: {request.user_id}")
@@ -3860,17 +3949,20 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
             ctx.session_state = session_state
             resp = await handle_form_session(request, req, ctx)
             if resp is not None:
+                _path["name"] = "handle_form_session"
                 return resp
 
             # 對話偽會話續跑（option-routing R14-R19）→ handle_conversational_session(Stage 2)
             resp = await handle_conversational_session(request, req, ctx)
             if resp is not None:
+                _path["name"] = "handle_conversational_session"
                 return resp
             # 降級結果(陷阱4)已寫入 ctx.session_state;handle_collecting 內讀 ctx 自行判斷
 
             # 表單收集 COLLECTING/DIGRESSION/PAUSED → handle_collecting(Stage 2)
             resp = await handle_collecting(request, req, ctx)
             if resp is not None:
+                _path["name"] = "handle_collecting"
                 return resp
             # 取消+pending:request.message 已被 handler 替換,續走一般流程
 
@@ -3879,11 +3971,13 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         #   置於 session 續跑之後（不劫持進行中會話）、Step 0.5 圖片之前。
         resp = await handle_trigger_facet(request, req, ctx)
         if resp is not None:
+            _path["name"] = "handle_trigger_facet"
             return resp
 
         # Step 0.5: 圖片辨識分支（2026-04-28）→ handle_image(Stage 2)
         resp = await handle_image(request, req, ctx)
         if resp is not None:
+            _path["name"] = "handle_image"
             return resp
 
         # Step 1: 驗證業者（B2B 可不帶 vendor_id）— 原位執行,結果入 ctx
@@ -3898,6 +3992,7 @@ async def vendor_chat_message(request: VendorChatRequest, req: Request):
         for handler in (handle_conversational_entry, handle_cache, handle_retrieval):
             resp = await handler(request, req, ctx)
             if resp is not None:
+                _path["name"] = handler.__name__
                 return resp
 
     except HTTPException:
