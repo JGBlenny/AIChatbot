@@ -1,0 +1,649 @@
+{
+  "experiment": "EXP-7 校準訊號藥效 pilot",
+  "frozen_protocol_ref": ".kiro/specs/retrieval-decision-layer/research.md §EXP-7（commit 0d47f25 凍結）",
+  "labeled_at": "2026-08-19",
+  "replay_run": "a1",
+  "replay_run_note": "b1/b2/b3 無 decision_snapshot；a1/a2/a3 有。取 a1（字典序最小）為唯一分析 run，每個樣本一個標籤。",
+  "population_definition": {
+    "base": "noise_manifest usage_rules.knowledge_coverage（剔 testcase 案、剔 carryover/probe_duplicate 輪、signal 覆蓋雜訊）＝50 輪",
+    "plus": "母體B 明列輪次 #07T4-T8/#10T3/#11T15-T17/#18T2/#21T3（其中 #10T3 為 probe_duplicate、不在 50 輪內，補入）",
+    "pop_a_cases": [
+      "13",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37"
+    ],
+    "pop_b_turns": {
+      "07": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "10": [
+        3
+      ],
+      "11": [
+        15,
+        16,
+        17
+      ],
+      "18": [
+        2
+      ],
+      "21": [
+        3
+      ]
+    }
+  },
+  "label_definition": {
+    "correct": "本輪回應命中該案客服標準答案的要點，且路由去向合理（知識題直答／查實值進面向）",
+    "wrong": "正解在庫卻未出（被面向攔截／被錨點搶答／落 fallback），或答非所問",
+    "unjudged": "無標準答案 → 排除",
+    "env_limited_rule": "noise_manifest：env_limited 輪的 grounding 正確性不列入判定，路由正確性仍列入"
+  },
+  "split_rule": "case_greedy_balance: 依 case_id 升冪走訪，每案整案指派給「目前輪數較少」的集合，同數指派 CAL。同一案所有輪次必落同集（防洩漏）。規則於算 AUC 前寫死。",
+  "counts": {
+    "population_turns": 51,
+    "correct": 21,
+    "wrong": 10,
+    "unjudged": 20
+  },
+  "labels": [
+    {
+      "case_id": "02",
+      "turn": 2,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "03",
+      "turn": 3,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "04",
+      "turn": 1,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "04",
+      "turn": 2,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "04",
+      "turn": 3,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "04",
+      "turn": 4,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "06",
+      "turn": 1,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "06",
+      "turn": 2,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "06",
+      "turn": 3,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [
+        "signal"
+      ],
+      "case_tags": []
+    },
+    {
+      "case_id": "07",
+      "turn": 4,
+      "label": "unjudged",
+      "rationale": "『我要如何設定線上金流？』該輪無客服標準答案；回澄清問句屬合法路由，無決定性正解可依",
+      "in_pop_a": false,
+      "in_pop_b": true,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "07",
+      "turn": 5,
+      "label": "wrong",
+      "rationale": "使用者已明答『設定新的收款帳戶』，系統重複同一句澄清＝迴圈未答，收款設置知識在庫未出",
+      "in_pop_a": false,
+      "in_pop_b": true,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "07",
+      "turn": 6,
+      "label": "correct",
+      "rationale": "藍新手續費 2.4%／ATM 1%+15，與原逐字稿實答一致，直答合理",
+      "in_pop_a": false,
+      "in_pop_b": true,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "07",
+      "turn": 7,
+      "label": "wrong",
+      "rationale": "SA=國泰 ATM 需聯絡專人處理不能自行設置（案主訴）；實際反問是否要設定新收款帳戶＝答非所問",
+      "in_pop_a": false,
+      "in_pop_b": true,
+      "noise_tags": [
+        "signal"
+      ],
+      "case_tags": []
+    },
+    {
+      "case_id": "07",
+      "turn": 8,
+      "label": "correct",
+      "rationale": "『要如何驗證？』答一元帳單驗證流程（目標知識 3930），承接前文正確",
+      "in_pop_a": false,
+      "in_pop_b": true,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "08",
+      "turn": 9,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [
+        "signal"
+      ],
+      "case_tags": []
+    },
+    {
+      "case_id": "08",
+      "turn": 10,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [
+        "signal"
+      ],
+      "case_tags": []
+    },
+    {
+      "case_id": "09",
+      "turn": 11,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "09",
+      "turn": 12,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "09",
+      "turn": 13,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [
+        "signal"
+      ],
+      "case_tags": []
+    },
+    {
+      "case_id": "10",
+      "turn": 3,
+      "label": "correct",
+      "rationale": "『我要怎麼對帳』（#06 案主訴＝沒辦法告訴我如何對帳）；直答『帳單狀態流程 對帳機制』命中",
+      "in_pop_a": false,
+      "in_pop_b": true,
+      "noise_tags": [
+        "probe_duplicate"
+      ],
+      "case_tags": []
+    },
+    {
+      "case_id": "10",
+      "turn": 13,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [
+        "probe_duplicate",
+        "signal"
+      ],
+      "case_tags": []
+    },
+    {
+      "case_id": "10",
+      "turn": 14,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [
+        "signal"
+      ],
+      "case_tags": []
+    },
+    {
+      "case_id": "11",
+      "turn": 15,
+      "label": "wrong",
+      "rationale": "承 T14 押金問題『修改成三個月』，正解＝押金上限兩個月（#10 desc）；實際 ASK_ID 索取合約編號",
+      "in_pop_a": false,
+      "in_pop_b": true,
+      "noise_tags": [
+        "signal"
+      ],
+      "case_tags": []
+    },
+    {
+      "case_id": "11",
+      "turn": 16,
+      "label": "wrong",
+      "rationale": "SA=#11 主訴租金合理性預估；實際反問『這份合約的租金是多少』＝面向搶接答非所問",
+      "in_pop_a": false,
+      "in_pop_b": true,
+      "noise_tags": [
+        "signal"
+      ],
+      "case_tags": []
+    },
+    {
+      "case_id": "11",
+      "turn": 17,
+      "label": "wrong",
+      "rationale": "『租金合理性』落 FACET_EMPTY 查無，主訴完全未獲回應",
+      "in_pop_a": false,
+      "in_pop_b": true,
+      "noise_tags": [
+        "signal"
+      ],
+      "case_tags": []
+    },
+    {
+      "case_id": "13",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=品名依租金命名不可改、建約時租金設0另設費用、現有需重簽；直答逐點命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "14",
+      "turn": 1,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "15",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=聯絡方式未驗證故無法寄送，轉註冊或補驗證；直答命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "16",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=系統不檢查簽名內容、把關在管理者回簽；直答命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "17",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=證件種類改選其他身分證可輸兩證號＋姓名填法；直答命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "18",
+      "turn": 2,
+      "label": "wrong",
+      "rationale": "SA=續約帳單每月逐筆產出、隔日看得到（知識題）；實際被合約面向接走→FACET_EMPTY 查無死結",
+      "in_pop_a": true,
+      "in_pop_b": true,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "19",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=複製合約／創建新合約、舊約異動單移歷史；直答命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "20",
+      "turn": 2,
+      "label": "wrong",
+      "rationale": "SA=身分證欄改選『其他身分證』；實際被面向搶接反問合約編號，正解在庫未出",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "21",
+      "turn": 3,
+      "label": "wrong",
+      "rationale": "SA=僅支援批次調整水電費用、加項另開週期帳單；實際反問索取合約編號，正解未出",
+      "in_pop_a": true,
+      "in_pop_b": true,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "22",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=合約中的物件總數量÷物件總數；直答命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "23",
+      "turn": 1,
+      "label": "wrong",
+      "rationale": "SA=到待發送帳單新增一筆並手動補電表度數；實際 ASK_ID 索取合約編號，正解未出",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "24",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=到『待發送帳單』頁面直接新增；直答命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "25",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=逾期虛擬帳號仍可繳款＋年繳無法自動拆分；直答兩點皆命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "26",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=Google 自動翻譯造成，關閉即恢復；直答命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "27",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=封存後退回需異動單／或待發送頁新增；直答命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "28",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=修繕品項選『其他』自行輸入整合多品項；直答命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "29",
+      "turn": 1,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "29",
+      "turn": 2,
+      "label": "unjudged",
+      "rationale": "不屬母體A（非 20260731/20260803 有標準答案批）亦不屬母體B，無 ground truth",
+      "in_pop_a": false,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "30",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=物件總表上方欄位選『本月到期』＋看標籤；直答命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "paraphrased"
+      ]
+    },
+    {
+      "case_id": "31",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=應於租客帳單內查看收據實際金額；實答收據金額 NT$3,999,996＋下載出口，路由進帳務面向查實值",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "32",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=帳單總表→下拉篩選→搜尋虛擬帳號；直答知識完全命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "33",
+      "turn": 1,
+      "label": "wrong",
+      "rationale": "SA=已發送的應到帳可以取消；實答『物件刊登租金調整 帳單金額不變』＝錯配知識搶答、答非所問",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "34",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=批次新增/更新帳單；直答『帳單批次匯入』命中",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "35",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=先查該合約先關帳單；進面向查實值，查無屬 env_limited(prod 編號在 preview 無資料)，路由正確",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "env_limited"
+      ]
+    },
+    {
+      "case_id": "36",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=合約 ID 87197；能力面確認姓名反查不支援，直答誠實引導知識，路由合理（登錄簿判定命中）",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": []
+    },
+    {
+      "case_id": "37",
+      "turn": 1,
+      "label": "correct",
+      "rationale": "SA=查合約 86829 續約紀錄；進續約面向查實值，查無屬 env_limited，路由正確",
+      "in_pop_a": true,
+      "in_pop_b": false,
+      "noise_tags": [],
+      "case_tags": [
+        "env_limited"
+      ]
+    }
+  ]
+}
