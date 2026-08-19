@@ -4,6 +4,26 @@
 > 需求文件：requirements.md（2026-08-10 核准，含 R7.1 證據修訂）
 > 證據底座：gap-analysis.md（現碼查證）＋research.md（六支藥效實驗＋反證覆核）
 
+## ⚠ 元件狀態表（2026-08-19）
+
+下列元件契約經反證盤查發現缺陷，**修訂前不得作為實作或驗收依據**。
+證據與裁決見 `decisions/DECISIONS.md`。
+
+| 元件 | 問題 | 決策 | 狀態 |
+|---|---|---|---|
+| **C1 RoutingSignals** | 無 `calibrated_confidence` 欄位，R7.1 的「校準信心」只剩由絕對分數算出的 `gray_zone: bool` | **D-01** | 🔴 待業主裁決 |
+| **C1 ↔ C6 詞彙衝突** | C1 的 `verdict` 為六值路由去向，C6 的 `routing_class` 為五值且**從答案文字反推**——同一份設計兩套詞彙 | **D-04** | 🟡 待套用 |
+| **C1 ↔ C3 詞彙衝突** | C3 的 `EscapeVerdict.action` 四值與 C1 verdict 無映射 → `degrade_knowledge/honest`（R4.2/4.3 主要療效）在路由尺上不可見 | **D-07** | 🟡 待套用 |
+| **C1 RoutingSignals 輸入不足** | 缺 `user_text`／`topic_terms`／`EscapeState`，但 C3 的再進場抑制判準需要它們——**用宣告的輸入算不出宣告的行為**；`SessionFeatures` 全 spec 無定義；欄位名 `escape_count`/`escape_events`、`question_type`/`query_type` 不一致 | **D-08** | 🟡 待套用 |
+| **C1 快照欄位** | 缺 `query_text`（或雜湊），C7 的查詢聚類（R10.1）無從計算 | **D-08** | 🟡 待套用 |
+| **C1 灰帶** | 灰帶種子 0.55–0.75 未標分數尺；設計自己量到 final 中位 0.50–0.53 落在下界外 → 對語料主體恆 False | **D-09** | 🟡 待套用 |
+| **C4 K_MAX=5** | 標「EXP-4 定」但 EXP-4 未量過 k=5，且採用的是實驗自陳的**上界值**去訂不可逆 DB 硬約束 | **D-12** | 🟡 待套用 |
+| **C5 閘門 ↔ R5.3** | 「永不觸碰強向量命中」與 R5.3「雙證據一致時融合分數高於單通道」互斥 | **D-10** | 🟡 待套用 |
+| **C6 EvalHarness** | 見 C1↔C6；另 FORM 在全語料 1291 輪成立 0 次，「⇄表單」那一支實質量不到 | **D-04** | 🟡 待套用 |
+| **C8 統一出口** | 原則已為 `append_turn` 定案（審查修訂 3），**未推廣至決策快照** → 快照覆蓋 54.8%、面向續輪 0% | **D-19** | 🟢 補做 |
+
+**未列於上表者視為有效。**
+
 ## 概述
 
 ### 設計目標
@@ -83,6 +103,9 @@ class IdentifierSignal(TypedDict):
 
 class RoutingDecision(TypedDict):
     verdict: Literal["direct_answer", "enter_facet", "form", "fallback", "stay_facet", "exit_facet"]
+    # ⚠ D-04/D-07：本枚舉與 C6 的 routing_class（五值）、C3 的 EscapeVerdict.action（四值）
+    #    三套詞彙不一致。修訂方向：三者共用單一枚舉，且面向續輪須可細分
+    #    （否則 #07 型黏著在此尺上前後皆為 stay_facet＝判為一致，主病灶量不到）
     facet_key: str | None
     snapshot: dict                     # 全部輸入訊號＋門檻值＋規則版本（落 usage_events）
 
@@ -228,6 +251,8 @@ def lexical_search(query: str, vendor_id: int, top_n: int = 10) -> list[LexicalH
 class TurnResult(TypedDict):
     case_id: str; turn: int
     routing_class: Literal["ANSWER","ASK_ID","FACET_EMPTY","FORM","FALLBACK"]
+    # ⚠ D-04：本五值為人工歸納，與 C1 verdict 不一致；且從答案文字反推，
+    #    看不見「同類別但知識接地翻轉」（實測漏計 36% 不穩定輪）。改讀決策快照。
     classifier_version: str            # R1.3 版本化
     noise_tags: list[str]              # R1.4 機器可讀雜訊標記（testcase/carryover/probe/paraphrased）
 
