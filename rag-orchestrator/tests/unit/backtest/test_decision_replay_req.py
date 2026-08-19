@@ -359,3 +359,59 @@ def test_manifest_matches_frozen_corpus_on_disk():
         assert matches, f"#{cid} 在凍結語料中找不到對應檔"
         with open(os.path.join(run2, matches[0]), encoding="utf-8") as f:
             assert len(json.load(f)["replay"]) == c["turn_count"]
+
+
+# ════════════════════════════════════════════════════════════
+# 任務 0.4｜D-23：判定字面量須與程式碼實際字串一致
+# 契約：規則表的標記是從引擎/路由程式碼抄來的字面量。有人改引擎一個字，
+# 分類器會**靜默**把整批 FACET_EMPTY 重判成 ANSWER，而 classifier_version 不變
+# （版本戳只涵蓋規則表內容，涵蓋不到「規則表與現實脫節」）。此測試釘死兩者一致。
+# ════════════════════════════════════════════════════════════
+
+_SRC_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))))
+
+
+def _read(rel):
+    with open(os.path.join(_SRC_ROOT, rel), encoding="utf-8") as f:
+        return f.read()
+
+
+@pytest.mark.req("retrieval-decision-layer:1.3")
+def test_facet_empty_marker_matches_engine_source():
+    """`查無對應的資料` 必須真的還在引擎裡——否則分類器把面向查無全判成 ANSWER。"""
+    src = _read("services/conversational_engine.py")
+    for m in dr.ROUTING_RULES["facet_empty_markers"]:
+        assert m in src, (
+            f"規則表標記 {m!r} 已不在 conversational_engine.py——"
+            f"引擎文案改了而規則表沒跟上，整批 FACET_EMPTY 會被靜默重判成 ANSWER")
+
+
+@pytest.mark.req("retrieval-decision-layer:1.3")
+def test_fallback_marker_matches_chat_source():
+    """兜底句必須真的還在 chat.py 的 `_handle_no_knowledge_found` 模板裡。"""
+    src = _read("routers/chat.py")
+    for m in dr.ROUTING_RULES["fallback_markers"]:
+        assert m in src, (
+            f"規則表標記 {m!r} 已不在 chat.py——兜底文案改了而規則表沒跟上，"
+            f"整批 FALLBACK 會被靜默重判成 ANSWER")
+
+
+@pytest.mark.req("retrieval-decision-layer:1.3")
+def test_ask_id_verb_still_appears_in_corpus():
+    """索取動詞須在凍結語料實際出現過，避免規則表寫了系統根本不講的話。"""
+    run2 = os.path.join(dr.CORPUS_DIR, "run2-head")
+    if not os.path.isdir(run2):
+        pytest.skip("凍結語料未取回")
+    hit = False
+    for name in os.listdir(run2):
+        if not name.endswith(".json"):
+            continue
+        with open(os.path.join(run2, name), encoding="utf-8") as f:
+            for r in json.load(f).get("replay", []):
+                if dr.ROUTING_RULES["ask_id_verb"] in (r.get("answer") or ""):
+                    hit = True
+                    break
+        if hit:
+            break
+    assert hit, f"{dr.ROUTING_RULES['ask_id_verb']!r} 在凍結語料中零出現——規則表與現實脫節"

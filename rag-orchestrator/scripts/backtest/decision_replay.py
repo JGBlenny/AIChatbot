@@ -148,8 +148,49 @@ def load_manifest(path=MANIFEST_PATH):
         return json.load(f)
 
 
+def verify_external_anchor(manifest, corpus_dir=CORPUS_DIR, allow_offline=True):
+    """R1.8／D-21：完整性錨點須為**本流程無法改寫的外部事實**。
+
+    舊做法只比對 `noise_manifest.json` 內由本程式算出的樹雜湊——同時改語料與重算雜湊
+    即可通過（自簽自證）；而 corpus README 白紙黑字寫「開跑前必驗 SHA-256，不符即 abort」，
+    程式卻從未讀 `tarball_sha256`、從未觸及 S3。此函式補上該實比對。
+
+    回傳 dict 記錄實際做了什麼（進 `_run_meta.json`，供關卡報告判斷結論效力）：
+      verified=True   已對 S3 物件的 SHA-256 實比對
+      verified=False  外部錨點不可達 → **明示降級**，該輪標「完整性未經外部錨點驗證」
+    不符（非不可達，是真的對不上）一律 raise，不得降級。
+    """
+    ci = (manifest.get("corpus_integrity") or {})
+    want = ci.get("tarball_sha256")
+    s3 = ci.get("tarball_s3")
+    if not want or not s3:
+        return {"verified": False, "why": "manifest 未記 tarball_sha256／tarball_s3"}
+    local = os.path.join(corpus_dir, os.path.basename(s3))
+    if not os.path.exists(local):
+        r = _run(["aws", "s3", "cp", s3, local])
+        if r.returncode != 0:
+            if allow_offline:
+                return {"verified": False, "anchor": s3,
+                        "why": f"S3 錨點不可達（{r.stderr.strip()[:120]}）——"
+                               f"本輪結論標記「完整性未經外部錨點驗證」"}
+            raise GateError(f"S3 錨點不可達且不允許降級：{r.stderr.strip()[:200]}")
+    h = hashlib.sha256()
+    with open(local, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    got = h.hexdigest()
+    if got != want:
+        raise GateError(f"凍結語料 tarball SHA-256 不符（R1.1 只讀不改）：\n"
+                        f"  期望 {want}\n  實得 {got}\n  來源 {s3}")
+    return {"verified": True, "anchor": s3, "sha256": got}
+
+
 def verify_corpus_integrity(manifest, corpus_dir=CORPUS_DIR):
-    """R1.1：凍結語料只讀不改。任一 run 目錄樹雜湊不符即 abort。"""
+    """R1.1：凍結語料只讀不改。任一 run 目錄樹雜湊不符即 abort。
+
+    ⚠ 本函式只是**本機一致性**檢查（自簽自證，擋不住「同時改語料與雜湊」）；
+    真正的錨點是 `verify_external_anchor()`。兩者都跑，缺一不可。
+    """
     expected = (manifest.get("corpus_integrity") or {}).get("trees") or {}
     if not expected:
         raise GateError("noise_manifest.json 缺 corpus_integrity.trees，無從驗凍結語料")
@@ -321,10 +362,13 @@ def run_corpus(cache_mode, run_tag, outdir, reports_dir, workers=4, only=None,
     """R1.7 雙軌重播。前置閘門任一未過即 abort（不降級續跑）。"""
     manifest = load_manifest()
     gates = {
-        "corpus_integrity": verify_corpus_integrity(manifest),
+        "corpus_integrity": verify_corpus_integrity(manifest),      # 本機樹雜湊（自簽）
+        "external_anchor": verify_external_anchor(manifest),        # S3 SHA-256（外部事實）
         "container": check_container_consistency(skip=skip_audit),
         "cache": check_cache_mode(cache_mode),
     }
+    if not gates["external_anchor"].get("verified"):
+        print("⚠️  完整性未經外部錨點驗證：%s" % gates["external_anchor"].get("why"))
     # 逐字稿在 S3 下是 <年>/<月>/ 分層，必須遞迴收集後**依檔名排序**——案號＝排序序位，
     # 與 replay_harness.py 逐字相同；換排序法會讓案號與 run2/run3 對不上、全部不可比。
     files = []
@@ -343,7 +387,16 @@ def run_corpus(cache_mode, run_tag, outdir, reports_dir, workers=4, only=None,
     jobs = [(i, r, run_tag, outdir, manifest) for i, r in cases]
     with ThreadPoolExecutor(max_workers=workers) as ex:
         results = list(ex.map(replay_case, jobs))
+    # D-22：`_run_meta.json` 原本全 repo 無消費者，「本輪結論不具回歸效力」只是寫給人看的
+    # 良心話。此處把效力判定固化成欄位，關卡報告產生器據此拒絕收錄（`evidence_grade`）。
+    _degraded = []
+    if not gates["container"].get("checked"):
+        _degraded.append("容器一致性未驗（--skip-audit）")
+    if not gates["external_anchor"].get("verified"):
+        _degraded.append("完整性未經外部錨點驗證")
     meta = {"run_tag": run_tag, "cache_mode": cache_mode,
+            "evidence_grade": "invalid_for_regression" if _degraded else "valid",
+            "degraded_reasons": _degraded,
             "classifier_version": classifier_version(),
             "manifest_version": manifest.get("manifest_version"),
             "gates": gates, "cases": len(results),
@@ -359,7 +412,9 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="凍結語料決策層重播（R1）")
     ap.add_argument("--cache-mode", choices=("on", "off"), required=True,
                     help="快取軌別；開跑前以容器 CACHE_ENABLED 實測核對")
-    ap.add_argument("--tag", default="rdl", help="run tag（進 session_id 前綴）")
+    # 預設須為 usage_metering.INTERNAL_RULES 認得的內部前綴，否則自己的重播會被算成
+    # 「非內部事件」而污染快照覆蓋率母體（任務 0.1 驗收④）。
+    ap.add_argument("--tag", default="backtest_rdl", help="run tag（進 session_id 前綴；須為內部前綴）")
     ap.add_argument("--outdir", default=None)
     ap.add_argument("--reports", default=os.path.join(CORPUS_DIR, "reports"))
     ap.add_argument("--workers", type=int, default=int(os.environ.get("WORKERS", "4")))
@@ -368,6 +423,12 @@ def main(argv=None):
     ap.add_argument("--skip-audit", action="store_true",
                     help="略過容器一致性閘門（本輪結論不具回歸效力，會寫進 _run_meta）")
     a = ap.parse_args(argv)
+    _INTERNAL_PREFIXES = ("backtest_", "loop_", "kcl_", "smoke_", "verify_", "probe_",
+                          "demo_", "fp_", "fp2_", "reg_", "dev_")
+    if not a.tag.startswith(_INTERNAL_PREFIXES):
+        print("💥 --tag 必須以內部流量前綴開頭（%s），否則重播會污染計量母體；"
+              "現值：%s" % ("/".join(_INTERNAL_PREFIXES[:3]) + "…", a.tag), file=sys.stderr)
+        return 2
     outdir = a.outdir or os.path.join(CORPUS_DIR, "out_%s_cache%s" % (a.tag, a.cache_mode))
     only = {int(x) for x in a.only.split(",")} if a.only else None
     try:

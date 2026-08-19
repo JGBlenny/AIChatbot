@@ -62,21 +62,37 @@
     「交易面向專用」擴大為「所有面向」（原 321 筆全 NULL、無 SQL 消費者；
     下游需區分改看 `decision_case`），已在碼內註記。
   - 需求：8.3｜決策：D-19
-- [ ] 0.2 (P) 不變量體系升級（D-20；tasks 1.3 本就要求「入 audit 不變量」）：不變量 8 改
+- [x] 0.2 (P) 不變量體系升級（D-20；tasks 1.3 本就要求「入 audit 不變量」）：不變量 8 改
   **AST 走訪**（涵蓋 `os.environ[...]`／`os.environ.get`／`from os import getenv`／字串拼接／
   變數間接／任意空白）；掃描範圍擴至 `tools/`、`scripts/`、`knowledge-admin/`；
   常數檢查涵蓋 `_SOP_MIN = 0.6`、型別註記、dict 形式、內聯字面量。
   新增 design C9「不變量體系實作標準」：程式結構用 AST／執行期事實用查詢／外部資產用外部錨點。
   - **驗收**：以 8 種規避寫法逐一測試，**全部必須 FAIL**（現況只擋 1 種）；每條不變量附規避測試
+  - **完成 2026-08-19**：`scripts/audit/checks/decision_threshold_ast.py`（AST 走訪）
+    ——**10 種規避寫法全數攔截**（原 grep 版只擋 1 種）：os.environ[]／environ.get／
+    別名 import／字串拼接／變數間接／多餘空白／`_SOP_MIN=0.6`／型別註記／dict 形式。
+    掃描範圍擴至 tools/、scripts/、knowledge-admin/。檢查器**自帶 --self-test**，
+    audit 先驗「擋得住」再驗 repo（規避測試未過即 FAIL，因為那時它的 PASS 不可信）。
+    正反向實測：插入 `os.environ.get("KB_SIMILARITY_THRESHOLD")` → FAIL 並指出檔:行；還原 → PASS。
   - 需求：7.4｜決策：D-20
-- [ ] 0.3 (P) 語料完整性接外部錨點（D-21；R1.1「只讀不改」＋corpus README 本就要求）：
+- [x] 0.3 (P) 語料完整性接外部錨點（D-21；R1.1「只讀不改」＋corpus README 本就要求）：
   `verify_corpus_integrity` 實作 **S3 物件 SHA-256 實比對**（現況只比對由同一支程式算出的
   本機樹雜湊＝自簽自證）；外部錨點不可達時**明示降級**並標記該輪「完整性未經外部錨點驗證」。
   - **驗收**：竄改任一語料檔後閘門仍 abort；斷網情境下降級標記出現在 `_run_meta.json`
+  - **完成 2026-08-19**：`verify_external_anchor()` 自 S3 取回 tarball 實算 SHA-256 比對
+    （實測 verified=True，b9c690cf…）。不可達 → **明示降級**並在 `_run_meta.json` 標
+    「完整性未經外部錨點驗證」；真的對不上 → raise，不得降級。原自簽自證的樹雜湊保留為
+    本機一致性檢查，兩者都跑。順帶完成 0.1 驗收④：`--tag` 預設改 `backtest_rdl`，
+    非內部前綴直接拒跑（原 `rdl` 會讓重播污染計量母體）。
   - 需求：1.1, 1.2｜決策：D-21
-- [ ] 0.4 (P) 閘門紀錄的下游約束＋字面量釘死（D-22、D-23）：關卡報告產生器須讀
+- [x] 0.4 (P) 閘門紀錄的下游約束＋字面量釘死（D-22、D-23）：關卡報告產生器須讀
   `_run_meta.json` 的 `gates.container.checked`，為 false 即拒絕收錄（現況全 repo 無消費者）；
   補測試釘住 legacy 判定器的規則表標記 ↔ 程式字面量一致（改引擎一個字會靜默重判整批）。
+  - **完成 2026-08-19**：`_run_meta.json` 新增 `evidence_grade`／`degraded_reasons`，
+    並寫 `check_evidence_grade.py` 當**實際消費者**（原本全 repo 無人讀）：關卡報告引用
+    run 目錄前先過此閘。實測——新跑的 s1 判 `valid`；既有 b1/a1/n1 判
+    `invalid_for_regression`（早於 D-21 修復，無外部錨點）——與 V0 退回一致。
+    D-23 字面量釘死：三測釘住規則表標記 ↔ engine/chat 實際字串 ↔ 凍結語料實際出現。
   - 需求：1.2｜決策：D-22, D-23
 
 ### S2｜量尺重建（要改 spec 正文，須業主核准）

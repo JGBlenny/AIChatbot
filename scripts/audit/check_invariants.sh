@@ -201,22 +201,21 @@ fi
 echo ""
 echo "═══ 不變量 8：決策層門檻唯一讀值點（retrieval-decision-layer R7.4）═══"
 # 源起：KB_SIMILARITY_THRESHOLD ×4＋FORM_TRIGGER_THRESHOLD ×2 散落讀值＋六 case 硬編碼
-# 常數，檢索側任何改動直接翻轉路由（前身 spec 撤案教訓 4）。任務 1.3 收斂後：
-# services/decision_layer.py 是這兩個 env 鍵的唯一 os.getenv 讀值點，六 case 門檻常數
-# （SOP_MIN/KNOWLEDGE_MIN/SCORE_GAP）不得在其他 prod 碼（app.py/routers/services）再定義。
-DL_SCATTER=$(grep -rnE 'os\.getenv\(["'"'"'](KB_SIMILARITY_THRESHOLD|FORM_TRIGGER_THRESHOLD)' \
-  "$REPO/rag-orchestrator/app.py" "$REPO/rag-orchestrator/routers" "$REPO/rag-orchestrator/services" 2>/dev/null \
-  | grep -v 'services/decision_layer.py' || true)
-DL_CONST=$(grep -rnE '^[[:space:]]*(SOP_MIN_THRESHOLD|KNOWLEDGE_MIN_THRESHOLD|SCORE_GAP_THRESHOLD)[[:space:]]*=' \
-  "$REPO/rag-orchestrator/app.py" "$REPO/rag-orchestrator/routers" "$REPO/rag-orchestrator/services" 2>/dev/null \
-  | grep -v 'services/decision_layer.py' || true)
-if [ -n "$DL_SCATTER$DL_CONST" ]; then
-  echo "❌ FAIL：決策層門檻在唯一讀值點之外被讀取/定義："
-  [ -n "$DL_SCATTER" ] && echo "$DL_SCATTER"
-  [ -n "$DL_CONST" ] && echo "$DL_CONST"
+# 常數，檢索側任何改動直接翻轉路由（前身 spec 撤案教訓 4）。
+# 2026-08-19 改 AST（D-20）：原 grep 版實測 8 種規避寫法只擋 1 種——os.environ[]／
+# os.environ.get／別名 import／字串拼接／變數間接／**甚至多一個空格**皆繞過；常數檢查
+# 對 _SOP_MIN=0.6／型別註記／dict 形式亦無感。字面比對防不住無意的重構或排版。
+# 檢查器自帶規避測試（--self-test），先驗「擋得住」再驗 repo（D-20 要求）。
+DL_CHECK="$REPO/scripts/audit/checks/decision_threshold_ast.py"
+if ! python3 "$DL_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 8 檢查器的規避測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$DL_CHECK" --self-test
+  FAIL=1
+elif ! DL_OUT=$(python3 "$DL_CHECK" 2>&1); then
+  echo "$DL_OUT"
   FAIL=1
 else
-  echo "✅ PASS"
+  echo "✅ PASS（含 10 種規避寫法自我測試）"
 fi
 
 echo ""
