@@ -147,6 +147,10 @@ services:
       # Redis 緩存配置
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      # R7.2 分數平移量測探針（retrieval-decision-layer D-13）：**預設空＝完全 no-op**。
+      # 僅供平移基線量測時以 SCORE_SHIFT_PROBE=0.10 起容器；量完必須拿掉。
+      # 生效時 base_retriever 會在每次檢索印警語，防止忘了關而汙染正式量測。
+      SCORE_SHIFT_PROBE: ${SCORE_SHIFT_PROBE:-}
       CACHE_ENABLED: ${CACHE_ENABLED:-true}
       CACHE_TTL_QUESTION: ${CACHE_TTL_QUESTION:-3600}
       CACHE_TTL_VECTOR: ${CACHE_TTL_VECTOR:-7200}
