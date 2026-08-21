@@ -1,0 +1,77 @@
+{
+  "label": "v0-remeasure",
+  "note": "任務 0.8 基線重測：legacy 兩臂等價＋新尺單臂 E-5 基線",
+  "frozen_snapshot": {
+    "criteria": {
+      "e5_upper_bound": null,
+      "r72_shift_upper_bound": null,
+      "equivalence_rule": "逐輪多數決複合鍵不一致率 ≤ 同側重跑變異中位數",
+      "answer_population_rule": "母體內任一 unjudged 即 FAIL；母體外揭露佔比"
+    },
+    "population": {
+      "routing_determinism_turns": 104,
+      "knowledge_coverage_turns": 50,
+      "total_turns": 107,
+      "answer_population": 25
+    },
+    "noise_manifest": {
+      "version": "1",
+      "sha": "541ff8325ab4e24b"
+    },
+    "ruler": {
+      "verdict_domain": [
+        "direct_answer",
+        "enter_facet",
+        "stay_facet_ask",
+        "stay_facet_answer",
+        "exit_facet",
+        "degrade_knowledge",
+        "degrade_honest",
+        "form",
+        "fallback"
+      ],
+      "composite_key": [
+        "routing_verdict",
+        "grounded",
+        "answer_verdict"
+      ],
+      "legacy_classifier_version": "rc-v1+ad8c415d",
+      "selection_rule": "verdict 直讀決策快照，無模型擬合、無可調參數",
+      "known_defect_pairs": {
+        "07|4": [
+          {
+            "routing_verdict": "enter_facet"
+          },
+          {
+            "routing_verdict": "stay_facet_ask"
+          }
+        ],
+        "10|3": [
+          {
+            "routing_verdict": "stay_facet_ask"
+          },
+          {
+            "routing_verdict": "direct_answer"
+          }
+        ],
+        "21|3": [
+          {
+            "routing_verdict": "direct_answer"
+          },
+          {
+            "routing_verdict": "stay_facet_ask"
+          }
+        ]
+      }
+    },
+    "expected_answers": {
+      "sha": "dc038577b2171eec",
+      "breakdown": {
+        "explicit": 22,
+        "derivable": 3,
+        "total": 25
+      }
+    }
+  },
+  "sha": "e8c34e84e51836ec"
+}

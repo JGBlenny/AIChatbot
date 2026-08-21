@@ -83,6 +83,8 @@ SYNC_FILES=(
   routers/chat.py
   routers/loops.py
   services/usage_metering.py
+  services/decision_layer.py
+  services/base_retriever.py
   services/llm_provider.py
   services/llm_answer_optimizer.py
   services/api_call_handler.py
@@ -195,6 +197,26 @@ if [ -n "$AMOUNT_VIOL" ]; then
   FAIL=1
 else
   echo "✅ PASS"
+fi
+
+echo ""
+echo "═══ 不變量 8：決策層門檻唯一讀值點（retrieval-decision-layer R7.4）═══"
+# 源起：KB_SIMILARITY_THRESHOLD ×4＋FORM_TRIGGER_THRESHOLD ×2 散落讀值＋六 case 硬編碼
+# 常數，檢索側任何改動直接翻轉路由（前身 spec 撤案教訓 4）。
+# 2026-08-19 改 AST（D-20）：原 grep 版實測 8 種規避寫法只擋 1 種——os.environ[]／
+# os.environ.get／別名 import／字串拼接／變數間接／**甚至多一個空格**皆繞過；常數檢查
+# 對 _SOP_MIN=0.6／型別註記／dict 形式亦無感。字面比對防不住無意的重構或排版。
+# 檢查器自帶規避測試（--self-test），先驗「擋得住」再驗 repo（D-20 要求）。
+DL_CHECK="$REPO/scripts/audit/checks/decision_threshold_ast.py"
+if ! python3 "$DL_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 8 檢查器的規避測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$DL_CHECK" --self-test
+  FAIL=1
+elif ! DL_OUT=$(python3 "$DL_CHECK" 2>&1); then
+  echo "$DL_OUT"
+  FAIL=1
+else
+  echo "✅ PASS（含 10 種規避寫法自我測試）"
 fi
 
 echo ""

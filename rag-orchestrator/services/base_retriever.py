@@ -531,6 +531,24 @@ class BaseRetriever(ABC):
         Returns:
             同一份 results（in-place 更新 similarity 與 score_source 後回傳）
         """
+        # ── R7.2 量測探針（retrieval-decision-layer D-13）──────────────────
+        # 分數平移穩定性驗收**必須端到端實跑**：D-01(d) 規定路由分支不得直讀分數，
+        # 故「把快照分數 +0.10 再跑一次 decide()」結構上恆為 0，是假關卡
+        # （D-24 作廢教訓：平移不變性對任何分數單調函數恆成立）。
+        # 偏移注入本融合出口，讓面向進場 gate 0.75、KB 過濾 0.65、六 case 的 0.15 gap、
+        # 相關性把關全部看得到。預設關閉且 shift=0 為**精確 no-op**（對照臂效力靠這條）。
+        _shift_raw = os.getenv("SCORE_SHIFT_PROBE")
+        _shift = 0.0
+        if _shift_raw is not None:
+            try:
+                _shift = float(_shift_raw)          # 壞值不得靜默當 0（會誤以為平移了）
+            except ValueError:
+                raise ValueError(
+                    f"SCORE_SHIFT_PROBE 值不合法：{_shift_raw!r}（須為浮點數，如 0.10／-0.10）")
+            if _shift != 0.0:
+                print(f"   ⚠️ [量測探針] SCORE_SHIFT_PROBE={_shift:+.3f} 生效——"
+                      f"本輪分數非真實值，結論僅供 R7.2 平移量測，不得作他用")
+
         rerank_count = 0
         keyword_count = 0
         vector_count = 0
@@ -553,6 +571,9 @@ class BaseRetriever(ABC):
                 r['similarity'] = min(1.0, vector * boost)
                 r['score_source'] = 'vector'
                 vector_count += 1
+
+            if _shift:                              # 只動融合出口，不碰原始分數欄位
+                r['similarity'] = min(1.0, max(0.0, r['similarity'] + _shift))
 
         print(
             f"   [Finalize] 計算 {len(results)} 筆，分數來源: "

@@ -23,6 +23,12 @@ services:
     working_dir: /app
     volumes:
       - ./rag-orchestrator:/app          # 掛載源碼：改碼即跑、免 rebuild
+      # 凍結語料與雜訊標記（retrieval-decision-layer R1.1/1.4）：decision_replay 的
+      # unit 測試要對真語料驗標記，唯讀掛入即可（容器內 /app 的上兩層恰為 /）。
+      - ./docs:/docs:ro
+      # spec 正文（retrieval-decision-layer R1.3.2）：測試要核對 verdict 值域
+      # 與 design.md C1 枚舉逐字一致，唯讀掛入。
+      - ./.kiro:/.kiro:ro
     environment:
       TZ: Asia/Taipei
       PYTHONDONTWRITEBYTECODE: "1"

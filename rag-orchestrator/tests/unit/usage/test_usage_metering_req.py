@@ -5,6 +5,7 @@ token；finalize 冪等（雙落點只寫一次）、成本以單價表估算（
 fire-and-forget（寫入失敗僅 log）；開關關閉全鏈 no-op；不存問題原文（個資負斷言）。
 """
 import asyncio
+import json
 import pytest
 from decimal import Decimal
 from unittest.mock import AsyncMock, patch
@@ -546,3 +547,235 @@ async def test_detect_search_kb_col_cached_skips_query(mock_db_pool):
     mock_db_pool._conn.fetch = AsyncMock(side_effect=AssertionError("不應再查"))
     await um._detect_search_kb_col(mock_db_pool)
     assert um._search_kb_col_present is True
+
+
+# ════════════════════════════════════════════════════════════
+# retrieval-decision-layer 任務 1.2：set_decision hook＋決策快照欄位偵測降級
+# （R8.3：每輪落決策快照，使任何路由不一致可事後歸因）
+# 契約：比照 set_facet／_detect_facet_cols 房式——contextvar 承載、ctx None／
+# finalized 靜默、facet_event 截斷 [:30]；欄位未建時事件本體照寫、兩欄略過。
+# 額外契約（本 hook 特有）：同輪多次 set_decision 的快照**不得靜默覆蓋**——
+# 同 key 值衝突時舊快照整份進 prior（E-5 歸因要看得見同輪擺盪）。
+# ════════════════════════════════════════════════════════════
+
+@pytest.fixture(autouse=True)
+def _reset_decision_cols_cache():
+    """每案重置決策快照欄位偵測快取（模組層狀態）。"""
+    orig = um._decision_cols_present
+    um._decision_cols_present = None
+    yield
+    um._decision_cols_present = orig
+
+
+# ── 矩陣①：ctx 存在時 set_decision 寫入 ctx ──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_set_decision_writes_to_ctx():
+    um.begin(_fields())
+    um.set_decision(snapshot={"verdict": "direct_answer", "kb_top1_final": 0.61},
+                    facet_event="none")
+    ctx = um._ctx.get()
+    assert ctx.decision_snapshot == {"verdict": "direct_answer", "kb_top1_final": 0.61}
+    assert ctx.facet_event == "none"
+
+
+# ── 矩陣②：ctx None → 靜默不拋 ──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_set_decision_no_context_silent():
+    assert um._ctx.get() is None
+    um.set_decision(snapshot={"verdict": "fallback"}, facet_event="exit_requery")
+
+
+# ── 矩陣③：finalized 後呼叫不改值 ──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_set_decision_after_finalized_noop():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    ctx._finalized = True
+    um.set_decision(snapshot={"verdict": "enter_facet"}, facet_event="enter")
+    assert ctx.decision_snapshot is None
+    assert ctx.facet_event is None
+
+
+# ── 矩陣④：facet_event 超長截斷 [:30]（欄位 VARCHAR(30)）──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_set_decision_facet_event_truncated():
+    um.begin(_fields())
+    um.set_decision(facet_event="e" * 90)
+    assert um._ctx.get().facet_event == "e" * 30
+
+
+# ── 矩陣④'：只給 facet_event 不給 snapshot（兩參數各自獨立）──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_set_decision_partial_args_independent():
+    um.begin(_fields())
+    um.set_decision(snapshot={"verdict": "enter_facet"})
+    um.set_decision(facet_event="degrade_knowledge")
+    ctx = um._ctx.get()
+    assert ctx.decision_snapshot == {"verdict": "enter_facet"}
+    assert ctx.facet_event == "degrade_knowledge"
+
+
+# ── 矩陣⑤：同輪二次呼叫、key 不衝突 → 淺層合併（不產生 prior）──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_set_decision_merges_disjoint_keys():
+    um.begin(_fields())
+    um.set_decision(snapshot={"verdict": "enter_facet", "gray_zone": True})
+    um.set_decision(snapshot={"rule_version": "v1"})
+    ctx = um._ctx.get()
+    assert ctx.decision_snapshot == {"verdict": "enter_facet", "gray_zone": True,
+                                     "rule_version": "v1"}
+    assert "prior" not in ctx.decision_snapshot
+
+
+# ── 矩陣⑥：同輪二次決策且值衝突 → 舊快照整份進 prior，不得靜默消失 ──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_set_decision_conflicting_write_keeps_prior():
+    um.begin(_fields())
+    um.set_decision(snapshot={"verdict": "enter_facet", "facet_key": "billing"})
+    um.set_decision(snapshot={"verdict": "direct_answer"})   # exit_requery 後重判
+    snap = um._ctx.get().decision_snapshot
+    assert snap["verdict"] == "direct_answer"
+    assert snap["facet_key"] == "billing"                    # 未衝突的 key 保留
+    assert snap["prior"] == [{"verdict": "enter_facet", "facet_key": "billing"}]
+
+
+# ── 矩陣⑥'：prior 有上限，不得無限膨脹（事件列大小可控）──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_set_decision_prior_capped():
+    um.begin(_fields())
+    for i in range(um._DECISION_PRIOR_MAX + 3):
+        um.set_decision(snapshot={"verdict": "v%d" % i})
+    snap = um._ctx.get().decision_snapshot
+    assert len(snap["prior"]) == um._DECISION_PRIOR_MAX
+    assert snap["verdict"] == "v%d" % (um._DECISION_PRIOR_MAX + 2)   # 最後一筆為現值
+    assert snap["prior"][-1]["verdict"] == "v%d" % (um._DECISION_PRIOR_MAX + 1)
+
+
+# ── 矩陣⑦：偵測為 False（欄位未建）→ _to_row 不含兩 key、其餘欄位齊全、不拋 ──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_to_row_without_decision_cols():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_decision(snapshot={"verdict": "fallback"}, facet_event="none")
+    um._decision_cols_present = False
+    row = um._to_row(ctx)
+    for k in ("decision_snapshot", "facet_event"):
+        assert k not in row
+    for k in ("request_id", "ts", "vendor_id", "user_type", "message_len",
+              "processing_path", "status", "prompt_tokens", "model_breakdown"):
+        assert k in row
+
+
+# ── 矩陣⑦'：未偵測（None）視同不存在 → _to_row 不含兩 key ──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_to_row_undetected_omits_decision_cols():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_decision(snapshot={"verdict": "form"})
+    assert um._decision_cols_present is None
+    row = um._to_row(ctx)
+    for k in ("decision_snapshot", "facet_event"):
+        assert k not in row
+
+
+# ── 矩陣⑧：偵測為 True → decision_snapshot 以 JSON 字串落地（jsonb 需 str）──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_to_row_with_decision_cols_serialized():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_decision(snapshot={"verdict": "enter_facet", "facet_key": "合約"},
+                    facet_event="enter")
+    um._decision_cols_present = True
+    row = um._to_row(ctx)
+    assert isinstance(row["decision_snapshot"], str)         # 比照 model_breakdown
+    assert json.loads(row["decision_snapshot"]) == {"verdict": "enter_facet",
+                                                    "facet_key": "合約"}
+    assert "\\u" not in row["decision_snapshot"]             # ensure_ascii=False
+    assert row["facet_event"] == "enter"
+
+
+# ── 矩陣⑧'：偵測為 True 但未設決策 → 兩 key 存在且為 None（NULL 落地，非 "null"）──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_to_row_decision_cols_present_but_none():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um._decision_cols_present = True
+    row = um._to_row(ctx)
+    assert row["decision_snapshot"] is None
+    assert row["facet_event"] is None
+
+
+# ── 矩陣⑨：非 JSON 原生型別（Decimal/datetime 等）以 str 收編，快照不因此整欄丟失 ──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_to_row_non_json_native_values_coerced():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    um.set_decision(snapshot={"verdict": "direct_answer", "score": Decimal("0.61")})
+    um._decision_cols_present = True
+    row = um._to_row(ctx)
+    snap = json.loads(row["decision_snapshot"])
+    assert snap["verdict"] == "direct_answer"
+    assert snap["score"] == "0.61"                           # default=str 收編
+
+
+# ── 矩陣⑨'：真的序列化不了（循環參照）→ 只丟這一欄，事件本體照寫（寧漏勿堵 R1.3）──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+def test_to_row_unserializable_snapshot_degrades():
+    um.begin(_fields())
+    ctx = um._ctx.get()
+    cyclic = {"verdict": "direct_answer"}
+    cyclic["self"] = cyclic
+    um.set_decision(snapshot=cyclic)
+    um._decision_cols_present = True
+    row = um._to_row(ctx)
+    assert row["decision_snapshot"] is None
+    for k in ("request_id", "status", "model_breakdown"):
+        assert k in row
+
+
+# ── 降級偵測：欄位齊全 → 快取 True ──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+async def test_detect_decision_cols_present(mock_db_pool):
+    mock_db_pool._conn.fetch = AsyncMock(
+        return_value=[{"column_name": c} for c in um._DECISION_COLS])
+    await um._detect_decision_cols(mock_db_pool)
+    assert um._decision_cols_present is True
+
+
+# ── 降級偵測：欄位缺 → 快取 False ──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+async def test_detect_decision_cols_absent(mock_db_pool):
+    mock_db_pool._conn.fetch = AsyncMock(
+        return_value=[{"column_name": "facet_event"}])       # 缺 decision_snapshot
+    await um._detect_decision_cols(mock_db_pool)
+    assert um._decision_cols_present is False
+
+
+# ── 降級偵測：查詢失敗 → 保持 None（下次重試），不外拋 ──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+async def test_detect_decision_cols_failure_retryable(mock_db_pool):
+    mock_db_pool._conn.fetch = AsyncMock(side_effect=RuntimeError("db down"))
+    await um._detect_decision_cols(mock_db_pool)
+    assert um._decision_cols_present is None
+
+
+# ── 降級偵測：已偵測（非 None）則不再查 ──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+async def test_detect_decision_cols_cached_skips_query(mock_db_pool):
+    um._decision_cols_present = True
+    mock_db_pool._conn.fetch = AsyncMock(side_effect=AssertionError("不應再查"))
+    await um._detect_decision_cols(mock_db_pool)
+    assert um._decision_cols_present is True
+
+
+# ── finalize 串接：三組既有偵測之外，決策欄偵測亦須在 fire-and-forget 內執行 ──
+@pytest.mark.req("retrieval-decision-layer:8.3")
+async def test_finalize_detects_decision_cols(mock_db_pool):
+    um.begin(_fields())
+    um.set_decision(snapshot={"verdict": "direct_answer"}, facet_event="none")
+    mock_db_pool._conn.fetch = AsyncMock(
+        return_value=[{"column_name": c} for c in um._DECISION_COLS])
+    um.finalize(db_pool=mock_db_pool)
+    await asyncio.sleep(0)
+    await asyncio.sleep(0)
+    assert um._decision_cols_present is True

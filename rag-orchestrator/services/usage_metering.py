@@ -47,6 +47,16 @@ _facet_cols_present: Optional[bool] = None
 _SEARCH_KB_COLS = ("search_kb_status",)
 _search_kb_col_present: Optional[bool] = None
 
+# 決策快照兩欄（decision_snapshot/facet_event）的一次性偵測快取（比照 _FACET_COLS 機制，
+# retrieval-decision-layer R8.3）：None＝未偵測；True/False＝usage_events 是否已建兩欄。
+# migration 未套時事件本體照寫、兩欄略過（不弄壞既有計量）。
+_DECISION_COLS = ("decision_snapshot", "facet_event")
+_decision_cols_present: Optional[bool] = None
+
+# 同輪二次決策時保留的舊快照筆數上限——超過即丟最舊。E-5 歸因看的是「同輪擺盪」，
+# 前幾次翻轉已足；無上限會讓迴圈型對話把單筆事件列撐大。
+_DECISION_PRIOR_MAX = 4
+
 # ── 單價表（USD / 1M tokens，(prompt, completion)）；env LLM_PRICING_PATH 外部 JSON 覆蓋 ──
 DEFAULT_PRICING: Dict[str, tuple] = {
     "gpt-4o-mini": (0.15, 0.60),
@@ -116,6 +126,8 @@ class UsageContext:
     facet_key: Optional[str] = None
     turn_number: Optional[int] = None
     search_kb_status: Optional[str] = None
+    decision_snapshot: Optional[Dict[str, Any]] = None
+    facet_event: Optional[str] = None
     _t0: float = 0.0
     _finalized: bool = False
 
@@ -236,6 +248,34 @@ def set_search_kb_status(status: Optional[str] = None) -> None:
         ctx.search_kb_status = status
 
 
+def set_decision(snapshot: Optional[Dict[str, Any]] = None,
+                 facet_event: Optional[str] = None) -> None:
+    """決策層本輪快照落入當前使用事件 context（比照 set_facet 房式）。
+    非計量路徑（ctx None）或已定稿（_finalized）靜默略過；
+    facet_event 截斷 [:30]（欄位 VARCHAR(30)）。（retrieval-decision-layer R8.3）
+
+    snapshot 淺層合併，**同 key 值衝突時不靜默覆蓋**——舊快照整份推進 `prior`
+    （上限 _DECISION_PRIOR_MAX）。理由：同輪二次決策（如逃生門 exit_requery 後重判）
+    的那次翻轉，正是 E-5 要歸因的東西；只留最後一筆等於把證據刪掉。
+    """
+    ctx = _ctx.get()
+    if ctx is None or ctx._finalized:
+        return
+    if snapshot:
+        cur = ctx.decision_snapshot
+        if cur is None:
+            ctx.decision_snapshot = dict(snapshot)
+        elif any(k in cur and cur[k] != v for k, v in snapshot.items()):
+            prior = cur.pop("prior", [])
+            prior.append(dict(cur))
+            cur.update(snapshot)
+            cur["prior"] = prior[-_DECISION_PRIOR_MAX:]
+        else:
+            cur.update(snapshot)
+    if facet_event:
+        ctx.facet_event = facet_event[:30]
+
+
 def _compute_cost(ctx: UsageContext) -> None:
     """按 model_breakdown 逐模型計價；任一模型缺價 → 整筆成本留空不臆造（R2.4）。"""
     if not ctx.model_breakdown:
@@ -294,6 +334,17 @@ def _to_row(ctx: UsageContext) -> Dict[str, Any]:
     # search_kb 狀態單欄：同款降級（brain-kb-grounding R5.2）。
     if _search_kb_col_present:
         row["search_kb_status"] = ctx.search_kb_status
+    # 決策快照兩欄：同款降級（retrieval-decision-layer R8.3）。jsonb 沿 model_breakdown
+    # 先例以 JSON 字串落地；快照含不可序列化物件時只丟這一欄（寧漏勿堵，R1.3）。
+    if _decision_cols_present:
+        snap = None
+        if ctx.decision_snapshot is not None:
+            try:
+                snap = json.dumps(ctx.decision_snapshot, ensure_ascii=False, default=str)
+            except Exception as e:
+                logger.warning(f"[usage] 決策快照序列化失敗（本欄留空）：{e}")
+        row["decision_snapshot"] = snap
+        row["facet_event"] = ctx.facet_event
     return row
 
 
@@ -351,6 +402,24 @@ async def _detect_search_kb_col(db_pool) -> None:
         logger.warning(f"[usage] search_kb 欄位偵測失敗（本次不帶，下次重試）：{e}")
 
 
+async def _detect_decision_cols(db_pool) -> None:
+    """一次性偵測 usage_events 是否已建決策快照兩欄（比照 _detect_facet_cols）。
+    已偵測（非 None）則略過；偵測失敗保持 None，下次重試（不影響事件寫入）。"""
+    global _decision_cols_present
+    if _decision_cols_present is not None:
+        return
+    try:
+        async with db_pool.acquire() as conn:
+            found = await conn.fetch(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'usage_events' AND column_name = ANY($1)",
+                list(_DECISION_COLS))
+        names = {r["column_name"] for r in found}
+        _decision_cols_present = all(c in names for c in _DECISION_COLS)
+    except Exception as e:            # 偵測失敗視同不存在、下次重試（不危及事件本體）
+        logger.warning(f"[usage] 決策欄位偵測失敗（本次不帶快照，下次重試）：{e}")
+
+
 async def _write_event(db_pool, row: Dict[str, Any]) -> None:
     cols = list(row.keys())
     sql = (f"INSERT INTO usage_events ({', '.join(cols)}) "
@@ -388,6 +457,7 @@ def finalize(status: str = "success", http_status: int = 200, db_pool=None) -> N
             await _detect_score_cols(db_pool)
             await _detect_facet_cols(db_pool)
             await _detect_search_kb_col(db_pool)
+            await _detect_decision_cols(db_pool)
             await _safe_write(db_pool, _to_row(ctx))
 
         asyncio.create_task(_task())
