@@ -37,10 +37,10 @@ sop/
 
 | 文檔 | 說明 | 日期 |
 |------|------|------|
-| [SOP_TYPES_ANALYSIS_2026-01-22.md](./design/SOP_TYPES_ANALYSIS_2026-01-22.md) | SOP 類型分析 | 2026-01-22 |
-| [SOP_UI_DESIGN_2026-01-22.md](./design/SOP_UI_DESIGN_2026-01-22.md) | SOP UI 設計規劃 | 2026-01-22 |
-| [SOP_NEXT_ACTION_DESIGN_2026-01-22.md](./design/SOP_NEXT_ACTION_DESIGN_2026-01-22.md) | SOP Next Action 設計 | 2026-01-22 |
-| [SOP_CONVERSATION_FLOW_2026-01-22.md](./design/SOP_CONVERSATION_FLOW_2026-01-22.md) | SOP 對話流程設計 | 2026-01-22 |
+| [SOP_TYPES_ANALYSIS_2026-01-22.md](../../archive/2026-06/sop/SOP_TYPES_ANALYSIS_2026-01-22.md) | SOP 類型分析 | 2026-01-22 |
+| [SOP_UI_DESIGN_2026-01-22.md](../../archive/2026-06/sop/SOP_UI_DESIGN_2026-01-22.md) | SOP UI 設計規劃 | 2026-01-22 |
+| [SOP_NEXT_ACTION_DESIGN_2026-01-22.md](../../archive/2026-06/sop/SOP_NEXT_ACTION_DESIGN_2026-01-22.md) | SOP Next Action 設計 | 2026-01-22 |
+| [SOP_CONVERSATION_FLOW_2026-01-22.md](../../archive/2026-06/sop/SOP_CONVERSATION_FLOW_2026-01-22.md) | SOP 對話流程設計 | 2026-01-22 |
 
 ---
 
@@ -51,8 +51,8 @@ sop/
 | 文檔 | 說明 | 日期 |
 |------|------|------|
 | [SOP_NEXT_ACTION_IMPLEMENTATION.md](./implementation/SOP_NEXT_ACTION_IMPLEMENTATION.md) | SOP Next Action 實作 | - |
-| [SOP_NEXT_ACTION_IMPLEMENTATION_SUMMARY.md](./implementation/SOP_NEXT_ACTION_IMPLEMENTATION_SUMMARY.md) | SOP Next Action 實作總結 | - |
-| [SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md](./implementation/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md) | SOP 觸發模式 UI 更新 | 2026-02-03 |
+| [SOP_NEXT_ACTION_IMPLEMENTATION_SUMMARY.md](../../archive/2026-06/sop/SOP_NEXT_ACTION_IMPLEMENTATION_SUMMARY.md) | SOP Next Action 實作總結 | - |
+| [SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md](../../archive/2026-06/sop/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md) | SOP 觸發模式 UI 更新 | 2026-02-03 |
 | [SOP_FLOW_STRICT_VALIDATION_2026-01-26.md](./implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md) | SOP Flow 嚴格驗證 | 2026-01-26 |
 | [VENDOR_SOP_FLOW_CONFIGURATION.md](./implementation/VENDOR_SOP_FLOW_CONFIGURATION.md) | 廠商 SOP 流程配置 | - |
 | VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md | 廠商 SOP 檢索改進 | - |
@@ -66,8 +66,8 @@ sop/
 | 文檔 | 說明 | 日期 |
 |------|------|------|
 | [SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md](./testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md) | SOP 觸發模式測試執行指南 | - |
-| [TEST_SOP_VERIFICATION_REPORT.md](./testing/TEST_SOP_VERIFICATION_REPORT.md) | SOP 驗證測試報告 | 2026-01-26 |
-| [sop_coverage_report.md](./testing/sop_coverage_report.md) | SOP 覆蓋率報告 | 2026-01-26 |
+| [TEST_SOP_VERIFICATION_REPORT.md](../../archive/2026-06/sop/TEST_SOP_VERIFICATION_REPORT.md) | SOP 驗證測試報告 | 2026-01-26 |
+| [sop_coverage_report.md](../../archive/2026-06/sop/sop_coverage_report.md) | SOP 覆蓋率報告 | 2026-01-26 |
 
 ---
 
@@ -78,7 +78,7 @@ sop/
 | 文檔 | 說明 | 日期 |
 |------|------|------|
 | [SOP_KEYWORDS_COMPARISON.md](./optimization/SOP_KEYWORDS_COMPARISON.md) | SOP Keywords 方案對比 | - |
-| [SOP_KEYWORDS_IMPLEMENTATION_2026-02-11.md](./optimization/SOP_KEYWORDS_IMPLEMENTATION_2026-02-11.md) | SOP Keywords 實作說明 | 2026-02-11 |
+| [SOP_KEYWORDS_IMPLEMENTATION_2026-02-11.md](../../archive/2026-06/sop/SOP_KEYWORDS_IMPLEMENTATION_2026-02-11.md) | SOP Keywords 實作說明 | 2026-02-11 |
 
 ---
 
@@ -86,22 +86,22 @@ sop/
 
 ### 任務 1: 我要了解 SOP 系統的基本概念
 1. 閱讀 [SOP_GUIDE.md](../../guides/features/SOP_GUIDE.md)
-2. 查看 [SOP_TYPES_ANALYSIS](./design/SOP_TYPES_ANALYSIS_2026-01-22.md)
+2. 查看 [SOP_TYPES_ANALYSIS](../../archive/2026-06/sop/SOP_TYPES_ANALYSIS_2026-01-22.md)
 
 ### 任務 2: 我要配置 SOP 觸發模式
 1. 閱讀 [SOP_TRIGGER_MODE_UPDATE_INDEX.md](./SOP_TRIGGER_MODE_UPDATE_INDEX.md)
-2. 參考 [SOP_TRIGGER_MODE_UI_UPDATE](./implementation/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)
+2. 參考 [SOP_TRIGGER_MODE_UI_UPDATE](../../archive/2026-06/sop/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)
 
 ### 任務 3: 我要測試 SOP 功能
 1. 使用 [SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE](./testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md)
-2. 參考 [TEST_SOP_VERIFICATION_REPORT](./testing/TEST_SOP_VERIFICATION_REPORT.md)
+2. 參考 [TEST_SOP_VERIFICATION_REPORT](../../archive/2026-06/sop/TEST_SOP_VERIFICATION_REPORT.md)
 
 ### 任務 4: 我要優化 SOP 檢索效果
 1. 了解 [SOP_KEYWORDS_COMPARISON](./optimization/SOP_KEYWORDS_COMPARISON.md)
-2. 實作 [SOP_KEYWORDS_IMPLEMENTATION](./optimization/SOP_KEYWORDS_IMPLEMENTATION_2026-02-11.md)
+2. 實作 [SOP_KEYWORDS_IMPLEMENTATION](../../archive/2026-06/sop/SOP_KEYWORDS_IMPLEMENTATION_2026-02-11.md)
 
 ### 任務 5: 我要改進 SOP 對話流程
-1. 查看 [SOP_CONVERSATION_FLOW](./design/SOP_CONVERSATION_FLOW_2026-01-22.md)
+1. 查看 [SOP_CONVERSATION_FLOW](../../archive/2026-06/sop/SOP_CONVERSATION_FLOW_2026-01-22.md)
 2. 參考 [SOP_FLOW_STRICT_VALIDATION](./implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md)
 
 ### 任務 6: 我要配置廠商專屬 SOP
