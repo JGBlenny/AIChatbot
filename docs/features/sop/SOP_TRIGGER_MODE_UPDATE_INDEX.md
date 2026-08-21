@@ -42,7 +42,7 @@ cat docs/features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md
 
 ### 1. 詳細變更記錄 ⭐⭐⭐
 
-**檔案**: `docs/features/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md`
+**檔案**: `docs/archive/2026-06/sop/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md`
 
 **內容**:
 - 完整的變更說明（5 大項）
@@ -55,7 +55,7 @@ cat docs/features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md
 
 **快速訪問**:
 ```bash
-cat docs/features/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md
+cat docs/archive/2026-06/sop/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md
 ```
 
 ---
@@ -81,7 +81,7 @@ cat docs/changelog/CHANGELOG_2026-02-03.md
 
 ### 3. SOP 類型分析（已更新）
 
-**檔案**: `docs/features/SOP_TYPES_ANALYSIS_2026-01-22.md`
+**檔案**: `docs/archive/2026-06/sop/SOP_TYPES_ANALYSIS_2026-01-22.md`
 
 **更新內容**:
 - 添加「前端 UI 優化」章節
@@ -93,7 +93,7 @@ cat docs/changelog/CHANGELOG_2026-02-03.md
 
 ### 4. SOP 系統指南（已更新）
 
-**檔案**: `docs/guides/SOP_GUIDE.md`
+**檔案**: `docs/guides/features/SOP_GUIDE.md`
 
 **更新內容**:
 - 變更歷史添加 v2.2 記錄
@@ -105,9 +105,9 @@ cat docs/changelog/CHANGELOG_2026-02-03.md
 
 ## 🧪 測試相關文檔
 
-### 1. 測試執行指南 ⭐
+### 測試執行指南 ⭐
 
-**檔案**: `docs/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md`
+**檔案**: `docs/features/sop/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md`
 
 **內容**:
 - 9 個核心測試場景
@@ -119,25 +119,7 @@ cat docs/changelog/CHANGELOG_2026-02-03.md
 
 **快速訪問**:
 ```bash
-cat docs/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md
-```
-
----
-
-### 2. 詳細測試計畫（已歸檔）
-
-**檔案**: `docs/testing/archive/SOP_TRIGGER_MODE_COMPREHENSIVE_TEST_PLAN.md`
-
-**內容**:
-- 22 個詳細測試項目
-- 測試矩陣
-- 技術細節
-
-**適合對象**: 開發者、測試工程師
-
-**快速訪問**:
-```bash
-cat docs/testing/archive/SOP_TRIGGER_MODE_COMPREHENSIVE_TEST_PLAN.md
+cat docs/features/sop/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md
 ```
 
 ---
@@ -206,9 +188,9 @@ docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin \
 
 - [SOP 系統完整指南](../../guides/features/SOP_GUIDE.md)
 - [SOP 快速參考](../../guides/reference/SOP_QUICK_REFERENCE.md)
-- [SOP 類型分析](design/SOP_TYPES_ANALYSIS_2026-01-22.md)
-- [SOP 後續動作設計](design/SOP_NEXT_ACTION_DESIGN_2026-01-22.md)
-- [SOP UI 設計](design/SOP_UI_DESIGN_2026-01-22.md)
+- [SOP 類型分析](../../archive/2026-06/sop/SOP_TYPES_ANALYSIS_2026-01-22.md)
+- [SOP 後續動作設計](../../archive/2026-06/sop/SOP_NEXT_ACTION_DESIGN_2026-01-22.md)
+- [SOP UI 設計](../../archive/2026-06/sop/SOP_UI_DESIGN_2026-01-22.md)
 
 ### 其他相關文檔
 
@@ -224,12 +206,12 @@ docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin \
 | 需求 | 推薦文檔 |
 |-----|---------|
 | **知識庫表單觸發實現** | `docs/features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md` ⭐ NEW |
-| **本次更新的詳細內容** | `docs/features/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md` |
-| **如何執行測試** | `docs/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md` |
+| **本次更新的詳細內容** | `docs/archive/2026-06/sop/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md` |
+| **如何執行測試** | `docs/features/sop/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md` |
 | **變更的程式碼** | 查看上方「修改的程式碼檔案」表格 |
 | **測試腳本使用方式** | 查看上方「測試腳本」章節 |
-| **SOP 系統整體架構** | `docs/guides/SOP_GUIDE.md` |
-| **觸發模式的設計理念** | `docs/features/SOP_TYPES_ANALYSIS_2026-01-22.md` |
+| **SOP 系統整體架構** | `docs/guides/features/SOP_GUIDE.md` |
+| **觸發模式的設計理念** | `docs/archive/2026-06/sop/SOP_TYPES_ANALYSIS_2026-01-22.md` |
 
 ---
 
@@ -239,7 +221,7 @@ docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin \
 
 1. 閱讀詳細變更記錄:
    ```bash
-   cat docs/features/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md
+   cat docs/archive/2026-06/sop/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md
    ```
 
 2. 檢查程式碼變更:
@@ -250,7 +232,7 @@ docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin \
 3. 執行測試驗證:
    ```bash
    # 參考測試執行指南
-   cat docs/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md
+   cat docs/features/sop/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md
    ```
 
 ### 對於測試人員
@@ -264,7 +246,7 @@ docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin \
 2. 執行測試:
    ```bash
    # 開啟測試執行指南
-   cat docs/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md
+   cat docs/features/sop/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md
    ```
 
 3. 清理測試資料:

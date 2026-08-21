@@ -33,7 +33,7 @@
   - 執行位置：生產伺服器
   - 自動備份、遷移、驗證
 
-詳細使用指南：[方案 A 部署指南](../docs/DEPLOYMENT_PLAN_A.md)
+詳細使用步驟見下方「🚀 使用說明 → 方案 A：本地構建 + 預構建部署」章節。
 
 #### 開發和維護（`/scripts/deployment/`）
 
@@ -78,8 +78,6 @@ ssh user@server
 cd /path/to/AIChatbot
 bash scripts/deploy_server_prebuilt.sh dist_20251103_120000.tar.gz
 ```
-
-詳細說明請參考：[方案 A 部署指南](../docs/DEPLOYMENT_PLAN_A.md)
 
 ### 生產工具腳本
 
