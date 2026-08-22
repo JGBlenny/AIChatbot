@@ -181,6 +181,22 @@ class BaseRetriever(ABC):
         precomputed_rewrites = kwargs.pop('precomputed_rewrites', None)
         precomputed_embedding = kwargs.pop('precomputed_embedding', None)
 
+        # ── b2b 停用改寫（2026-08-22 A/B 實測，業主定案「先只管 b2b」）──
+        # 10 個機制情境 × 各 3 次，開/關結果 **10/10 完全相同**——含特地挑來測
+        # 「改寫最該幫上忙」的口語模糊題（「物件建好了為什麼發佈不了」）。
+        # 成本卻是明確的：每問一次 LLM（約 600–800ms）、且改寫在 temperature=0
+        # 仍有 40% 題目輸出不穩，是路由抖動已確認的來源之一。
+        # ⚠️ **b2c／SOP 未量測，維持啟用**：REWRITE_PROMPT 的範例（垃圾怎麼分／
+        #    冷氣壞了／可以養狗嗎）整個是為 b2c 租客社區問題寫的，對 SOP 檢索
+        #    可能真的有用。要關 b2c 前必須先比照量過。
+        # b2b 判定與 vendor_knowledge_retriever_v2._vector_search 同式，勿各自定義。
+        _is_b2b = (kwargs.get('target_user') in ('property_manager', 'system_admin')) \
+            or (kwargs.get('mode') == 'b2b')
+        _rw_b2b = os.getenv("ENABLE_QUERY_REWRITE_B2B", "true").lower() == "true"
+        if _is_b2b and not _rw_b2b:
+            precomputed_rewrites = []
+            print("   ⏭️ Query Rewrite: b2b 已停用（ENABLE_QUERY_REWRITE_B2B=false）")
+
         if precomputed_rewrites is not None:
             rewritten_queries = precomputed_rewrites
             print(f"   ♻️ 使用預計算 Query Rewrite ({len(rewritten_queries)} 個)")
