@@ -734,7 +734,59 @@ def _knowledge_category(best_knowledge) -> list:
     return [cat] if cat else []
 
 
-async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: DecisionConfig):
+async def _preentry_routable(db_pool, cfg, user_message: Optional[str]) -> bool:
+    """Pre-entry routability gate（entry-scoped；env `PREENTRY_ROUTABILITY_GATE=true` 才生效）。
+
+    要驗的假說只有一句：**把面向 brain 既有的 scope 判斷提前到進場前，
+    能不能降低錯路由，而且不誤擋正確路由。**
+
+    現況：`KB 很像 + KB 掛 category + score ≥ 0.75 → 直接進 workflow`——
+    沒有先問「使用者這題真的適合這個 workflow 嗎」。而 brain **已經會判**
+    （每輪輸出 `scope: stay|switch`，規則明列「合約操作→switch、成員權限→switch…」），
+    只是判得太晚：先進場、判錯再退出。本函式把同一個判斷挪到進場之前。
+
+    為何幾乎零成本：`conversational_step` 的六個狀態欄位在**進場那一輪全是空的**
+    （collected_fields={}／asked_count=0／recommended=False／grounding_note=""／dialog=[]），
+    實際只餵原始問句。所以這不是搬程式，是把同一次呼叫挪到 commit 之前。
+
+    ⚠️ **entry-scoped，刻意不動全域 validator。**
+    `llm_answer_optimizer.conversational_step` 的 `action` 驗證在 `scope` 正規化之前，
+    `action` 越界即整包丟棄（實測「停用租客帳號」brain 5/5 正確輸出 `scope=switch`，
+    卻因 `action` 也被填 "switch" 而全數丟棄）。修那個 validator 會同時啟用一條
+    blast radius 未量的 **mid-session switch** 能力——**另開 ticket，不得順手修**。
+    本函式取不到被丟棄的原始 JSON，故 `data is None` 時保守 fail-open。
+
+    失敗一律 fail-open（回 True＝照舊進場），確保 gate 故障不阻斷既有行為。
+    """
+    if os.getenv("PREENTRY_ROUTABILITY_GATE", "false").lower() != "true":
+        return True
+    if not user_message:
+        return True
+    try:
+        from services.conversational_rules import load_rules
+        from services.system_context import get_system_context
+        from services.llm_answer_optimizer import LLMAnswerOptimizer
+
+        rules_text = await load_rules(db_pool, getattr(cfg, "persona_role", None))
+        if not rules_text:
+            return True
+        system_md = await get_system_context(db_pool, getattr(cfg, "key", None)) or ""
+        data = await LLMAnswerOptimizer().conversational_step(
+            rules_text, system_md,
+            {"collected_fields": {}, "asked_count": 0, "recommended": False},
+            user_message)
+        if data and data.get("scope") == "switch":
+            print(f"🛡️ [pre-entry routability] 「{user_message[:20]}」"
+                  f"判不適用面向 {getattr(cfg, 'key', '?')} → 不進場")
+            return False
+        return True
+    except Exception as e:
+        print(f"⚠️ [pre-entry routability] 判定失敗，fail-open 照舊進場：{e}")
+        return True
+
+
+async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: DecisionConfig,
+                                          user_message: Optional[str] = None):
     """分類路由決策（conversational-diagnosis 元件 5 / R1.1,1.2,1.4,7.2）。
 
     最高順位知識達表單觸發門檻、且其分類命中某診斷型對話面向 → 回該對話設定；
@@ -748,7 +800,9 @@ async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: Decis
     for cat in _knowledge_category(best_knowledge):
         cfg = await config_for_category(db_pool, cat)
         if cfg is not None:
-            return cfg
+            if await _preentry_routable(db_pool, cfg, user_message):
+                return cfg
+            continue          # 判不適用 → 不 commit 本面向，續試該知識的下一個分類
     return None
 
 
@@ -1084,7 +1138,8 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
             # 引擎降級（回 None）或未命中 → 落回既有處理（不阻斷）。
             _best_knowledge = decision['knowledge_list'][0] if decision.get('knowledge_list') else None
             _diag_cfg = await _diagnosis_config_for_knowledge(
-                req.app.state.db_pool, _best_knowledge, DecisionConfig.load())
+                req.app.state.db_pool, _best_knowledge, DecisionConfig.load(),
+                user_message=request.message)
             if _diag_cfg is not None:
                 # 交易面向（宣告 enabled_gate/prefill_api，如修繕）經共用進場：gate＋prefill＋圖片
                 #   （conversational-repair 三路共用，R1.5/2.6）；一般診斷面向走既有 respond。

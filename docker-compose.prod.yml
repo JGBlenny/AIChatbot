@@ -220,6 +220,8 @@ services:
       QUERY_REWRITE_TEMPERATURE: ${QUERY_REWRITE_TEMPERATURE:-0}
       # b2b 停用改寫（A/B 實測零差異）；b2c/SOP 未測維持啟用
       ENABLE_QUERY_REWRITE_B2B: ${ENABLE_QUERY_REWRITE_B2B:-false}
+      # pre-entry routability gate（entry-scoped 實驗，預設關）
+      PREENTRY_ROUTABILITY_GATE: ${PREENTRY_ROUTABILITY_GATE:-false}
       # Reranker 配置（2026-01-28）
       ENABLE_RERANKER: ${ENABLE_RERANKER:-true}
       ENABLE_KNOWLEDGE_RERANKER: ${ENABLE_KNOWLEDGE_RERANKER:-true}
