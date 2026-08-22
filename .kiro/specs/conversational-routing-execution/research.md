@@ -259,11 +259,108 @@ mock 可驗 C1／C3／C4（控制流），**真 API 只用於確認 schema 與�
 
 ---
 
+## 主題 7：`jgb_bills` API 契約盤查（jgb2 原始碼，2026-08-23）
+
+> 來源 `/Users/lenny/jgb/project/jgb/jgb2`，附 file:line。
+> 目的：作為 **Req.4（Mock 契約）的斷言基準**——mock 期望值不得由推測產生。
+> ⚠️ jgb2 持續演進；本節為「當時盤查」快照，行為不符時**先重盤再改斷言**。
+>
+> **與既有盤查的分工**：[billing-conversational-facets/research.md](../billing-conversational-facets/research.md)
+> 已盤**帳務語義**（`status`／`bit_status` 雙欄位、超商條碼撥付逢 5/15/25、
+> 金額不符卡待對帳、國泰 ATM 無失效時限）。本節盤的是 **API 契約**
+> （端點／參數／回傳形狀），**互補不重複，勿重盤語義**。
+
+### ⭐ 對外與對內是兩套 API，rag 打的是對外
+
+| | **External** `/api/external/v1/bills` | **Internal** `/api/internal/v1/bills` |
+|---|---|---|
+| 控制器 | `External\BillApiController` | `Internal\BillQueryController` |
+| 保護 | `X-API-Key` ＋權限＋限流＋稽核 log | **雙重**：`internal_api_ip`（IP 白名單）**＋** 上述全套（`routes/api.php:179-183`）|
+| 欄位 | **白名單 SELECT ~30 欄** | `Bill::query()` **全欄**，含 10 個 JSON 欄（`data`／`pay_info`／`big_landlords`／`invoice_info`／`late_fee_info`…）|
+| 過濾 | `user_id`／`contract_id`／`bill_id`／`status`／`type`／`month` | ＋`estate_id`／`role_id`／`owner_role_id`／`creditor_role_id`／`category`＋三組日期區間 |
+| 權限圈定 | **強制** `owner_role_id` 或 viewer scope | **無**——`owner_role_id` 只是可選過濾 |
+
+**`api_registry` 目前全部指向 External。** 這代表面向拿得到的是**受限投影**。
+
+> ⚠️ **這是 C4 失敗的第三種可能，本輪原本會漏掉**：
+> | 失敗型態 | 修法 |
+> |---|---|
+> | (a) 鏈路沒跑通 | 修 Face → state → API → grounding 鏈 |
+> | (b) mock 不夠保真 | 修 mock 契約（Req.4）|
+> | **(c) External 欄位投影不足** | **擴 External 欄位或改打 Internal——與修鏈路完全不同的工作** |
+>
+> 「這張帳單為什麼發不出去」需要診斷理由，但 External 只給
+> `status`／`bit_status`／`invoice_status` 等**結果狀態**；
+> `late_fee_info`／`invoice_info`／`data` 這些可能承載原因的 JSON 欄位**只有 Internal 有**。
+
+### 端點與路由
+
+| 契約鍵 | 路由 | 控制器 |
+|---|---|---|
+| `jgb_bills` | `GET /api/external/v1/bills` | `BillApiController@index`（`routes/api.php:83`）|
+| `jgb_bill_detail` | `GET /api/external/v1/bills/{bill_id}` | `BillApiController@show`（`routes/api.php:155`）|
+
+### ⭐ 真 API **沒有 `bill_ref` 參數**
+
+`index` 支援的過濾（`BillApiController.php:49-85`）：
+`role_id`（**必填**，缺則 400）／`user_id`／`contract_id`（單數）／`bill_id`／
+`status`／`type`／`month`（`YYYY-MM`，比對 `date_expire` 整數區間）／
+`sort_by`／`sort_direction`／`page`／`per_page`。
+
+`bill_ref` 是 **rag 端的識別語意 adapter**（`jgb_system_api.get_bills`）：
+純數字 → 先 `get_bill_detail` 直查（單筆包成列）；查無 → 當合約 id；非數字 → 當 keyword 查合約。
+
+> ⚠️ **本輪一度打算「修 mock 讓它依 `bill_ref` 過濾」——那會憑空造出真 API 不存在的行為。**
+> 盤查即時擋下。**Req.4.1 的「依文件契約過濾」應理解為：對齊 adapter 的解析結果
+> （`bill_id` 單筆／`contract_id` 多筆），而非虛構 `bill_ref` 過濾。**
+
+### 回傳結構
+
+`index`（`:110-124`）：
+```jsonc
+{ "success": true,
+  "mapping": {...},
+  "data": [ /* formatBill */ ],
+  "pagination": { "current_page","per_page","total","total_pages","has_more" } }
+```
+分頁常數（`:13-14`）：`DEFAULT_PER_PAGE=50`、`MAX_PER_PAGE=200`。
+排序白名單（`:88`）：`date_expire`／`created_at`／`total`／`updated_at`，預設 `created_at desc`。
+權限（`:41-47`）：有 `user_data` 則依成員主體圈定，否則 `owner_role_id`；一律 `active=1`。
+
+`show`（`:203-268`）在 `formatBill` 之上另加：
+`pay_info`（白名單：`type`／`manufacturer`／`action`／`expire_ymd`／`atm_info`）、
+`cvs_info`（超商代碼，來源 `payments.newebpay_cvs_info`）、
+`details`（`label`／`unit_price`／`unit_type`／`unit_count`／`measurement_before`／`measurement_after`／`total_price`）。
+查詢用 `id`＋`owner_role_id`＋`active=1`，查無回 **404「帳單不存在或無權存取」**。
+`getShowMapping()`（`:326-336`）＝ `getMapping()` **再加 `unit_type`**（無單位／度／日／月）——index 沒有這群。
+
+`mapping`（`:173-198`）：`status` 六值／`invoice_status` 三值／`type` 六值。
+✅ **mock 的 mapping 與此完全一致，無落差。**
+
+### Mock 與真契約的落差（Req.4 待修清單）
+
+| # | 落差 | 嚴重度 |
+|---|---|---|
+| 1 | `_mock_get_bills` **缺 `pagination`** | 中——消費端讀 `has_more` 會拿到 None |
+| 2 | `_mock_get_bill_detail` **缺 `cvs_info`** | 低——超商代碼情境無法測 |
+| 3 | mock 的 `data` 固定三筆、**不依任何參數過濾** | ⚠️ **高** |
+
+**落差 3 的正確修法**：不是「依 `bill_ref` 過濾」（真 API 無此參數），
+而是依真 API **實際存在**的參數過濾（至少 `bill_id`、`contract_id`），
+如此 adapter 的解析才能在 mock 下收斂到單筆，**Req.3 的 C4 才可驗**。
+
+### 尚未盤查（輪到時再補）
+`jgb_contracts`／`jgb_meters`／`jgb_team_members`／`jgb_estate_status`
+——本輪只盤 `jgb_bills`，Req.3 的立即阻塞點只在 `bill_diagnosis`。
+
+---
+
 ## 待決事項
 
 | # | 事項 | 卡在哪 |
 |---|---|---|
-| 1 | C4 最終答案引用真實資料 | mock 忽略 `bill_ref` 恆回 3 筆，無法收斂單筆 |
+| 1 | C4 最終答案引用真實資料 | mock 不依任何參數過濾、恆回 3 筆，無法收斂單筆（見主題 7）|
+| 1b | C4 若失敗屬 (a)鏈路／(b)mock／**(c)External 欄位投影不足** 哪一類 | 需先判型再修——三者修法完全不同 |
 | 2 | knowledge-grounded Face 是否需 face-scoped retrieval | **若** Route-R3 的 end-to-end 證實最終答案仍受 trigger KB 限制，face-scoped evidence retrieval 是**目前最直接的候選解法**——非唯一解。其他可能：Face 本身規則已足以處理／Face 後續另有知識來源／部分案例本來就能正確處理／應直接退出 Face 回 direct path |
 | 3 | D 澄清分岔的 ambiguity 偵測 | brain 對 R3 全數判 `stay`，不具此能力 |
 | 4 | production holdout | S3 客服回報自 2026-07-29 零新增 |
