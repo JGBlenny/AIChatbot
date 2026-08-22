@@ -195,6 +195,105 @@ Query Rewrite → Vector top-20 → 改寫查詢聯集 → 關鍵字備選
   → 錨點濾除 → 適用性把關 → 表單／API／直答 → Generation
 ```
 
+
+---
+
+## 六、面向進場：現況與 pre-entry routability（2026-08-23 實測）
+
+### 現況：有進場條件，但**沒有 routability 判準**
+
+進場只做三步，**沒有任何一步在問「這個使用者的問題適不適合這個 workflow」**：
+
+```python
+if best_knowledge['similarity'] >= FORM_TRIGGER_THRESHOLD:   # ① 分數門檻
+    for cat in best_knowledge['categories']:                 # ② 讀該知識的靜態標籤
+        cfg = config_for_category(cat)                       # ③ 查表
+        if cfg: → 進面向
+```
+
+判的是「**這篇知識夠不夠像，而且它有沒有掛 workflow**」，
+不是「**使用者現在的問題，是否真的適合進這個 workflow**」。
+
+⚠️ 這**補標籤救不了**：標籤本身沒錯（kb「物件操作引導」掛物件操作是對的），
+錯的是推論——「知識像 + 知識掛 X」⇏「這個問題該進 X 的 workflow」。
+
+### 既有的 routability 判斷在**進場之後**
+
+面向引擎的 brain 每輪輸出 `scope: stay|switch`，`switch` → 關會話重路由。
+規則（`estate_guide` 為例）明列範疇：
+
+> 特定物件的現況問題 → `switch` 轉物件現況診斷；合約/點交/押金操作 → `switch`（合約）；
+> 成員/權限 → `switch`（帳號）…**不確定 → stay 並澄清**
+
+**語義確實是 routability**，但校準**偏向放行**——與適用性把關改嚴前的「判定從寬」同一個病。
+
+### ⭐ 前移在技術上幾乎零成本
+
+`conversational_step` 的 user_prompt 六個欄位，**進場那一輪全是空的**：
+`collected_fields={}`、`asked_count=0`、`recommended=False`、`grounding_note=""`、`dialog=[]`。
+實際只餵了原始問句。**「前移」不是搬程式，是把同一次呼叫挪到 commit 之前。**
+
+### Replay 實測（14 案：6 錯路由 + 8 正確路由，各 3–5 次）
+
+| 指標 | 結果 |
+|---|---|
+| 整體正確 | 10/14 |
+| **該擋沒擋（false accept）** | **3/6** |
+| 不該擋卻擋（false reject） | **0–1/8** |
+
+**拆算「判斷錯」vs「判斷正確但被 validator 丟棄」**（6 筆錯路由 × 5 次）：
+
+| | 筆數 |
+|---|---|
+| brain **判斷正確** | 3（其中 **1** 筆被 validator 丟棄）|
+| brain **判斷錯** | 3（`('ask','stay','')` 連續 5/5，**穩定錯判非噪音**）|
+
+穩定錯判的三筆：「物件數量達到上限」→`billing_invoice`、
+「我想增加一個物件」→`contract_create_guide`、「帳單發送按鈕按不了」→`billing_flow`。
+
+### 結論：**不需要新造 selector**
+
+既有 brain 前移即有 **50% 攔截率、幾乎零誤殺**。
+要提升攔截率是改 calibration（「不確定 → **不進場**」），屬 prompt 改動，
+比另造一顆判斷模型便宜一個量級。
+
+架構問題因此重新定義為：
+> 既有 Conversational Brain 已具 routability 判斷能力，但判斷發生在 commit 後。
+> **能否把既有判斷安全地提前到 commit 前？**
+
+### ⛔ 連帶發現的 validator bug（**本輪刻意不修**）
+
+`llm_answer_optimizer.conversational_step` 驗證順序：
+
+```python
+if data.get('action') not in ('ask','converge','confirm'):
+    return None                                    # ← 整包丟棄
+...
+data['scope'] = 'switch' if data.get('scope')=='switch' else 'stay'   # ← 永遠到不了
+```
+
+實測「停用租客帳號」→`estate_guide`：brain **5/5 正確輸出**
+`scope="switch"`、`face="帳號"`，但 `action` 也被填成 `"switch"`（越界）→ **整包丟棄**。
+live 表現為「引擎降級」，**設計中的改道從未執行過**。
+
+> ⚠️ **業主定案（2026-08-23）：不修全域 validator。**
+> 修它等於同時啟用兩件事——① 想要的 pre-entry 保護、
+> ② 一條可能從未真正跑過的 **mid-session switch** 能力，後者 blast radius 未量。
+> **pre-entry gate 應做 entry-scoped 窄修**（entry path 才讓 scope 優先於 action），
+> mid-session validator 維持現狀，另開 ticket。
+
+### 議程（業主定序）
+```
+A. 現況落檔、凍結量測          ← 本 commit
+B. pre-entry routability gate（entry-scoped，不動全域 validator）
+C. 重新量 routing precision / recall
+D. 另開 ticket 查 mid-session switch bug
+```
+B 的兩項必要改動：①entry path 讓 `scope` 優先於 `action` 驗證；
+②calibration 改為「不確定是否屬於 proposed workflow → 不進場」。
+`ADVISOR_TEMP` 0.4 → 0 可一起測，但**三者要能分開歸因**，
+不得混成一個不可拆的實驗。
+
 ---
 
 ## 五、殘餘的不確定性
