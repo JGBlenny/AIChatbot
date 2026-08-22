@@ -55,8 +55,15 @@ class QueryRewriter:
 
     def __init__(self):
         self.enabled = os.getenv("ENABLE_QUERY_REWRITE", "false").lower() == "true"
-        self.model = os.getenv("QUERY_REWRITE_MODEL", os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"))
-        self.temperature = float(os.getenv("QUERY_REWRITE_TEMPERATURE", "0.3"))
+        # ⚠️ 2026-08-22 實測：改寫跑在 gpt-3.5-turbo 會產出簡體字與中國用語
+        #    （租戶／请求／规定——台灣用租客／請求／規定），改寫後向量偏離知識庫用詞；
+        #    且同一句在 temperature=0 仍有 2–3 種輸出，導致候選集不穩、路由不穩
+        #    （實測「停用租客帳號」5 次有 2 次被帶進退租面向）。
+        #    gpt-4o-mini @ temp 0 實測零可疑用語、輸出多數穩定 → fallback 改為跟隨全棧模型。
+        #    **勿把 fallback 改回 gpt-3.5-turbo。**
+        self.model = os.getenv("QUERY_REWRITE_MODEL") or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        # 預設 0：改寫是檢索最前端，其隨機性會被下游候選集與路由放大。
+        self.temperature = float(os.getenv("QUERY_REWRITE_TEMPERATURE", "0"))
         self.max_tokens = int(os.getenv("QUERY_REWRITE_MAX_TOKENS", "100"))
         self._provider = None
 
