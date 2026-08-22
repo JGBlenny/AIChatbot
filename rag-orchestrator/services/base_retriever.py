@@ -537,9 +537,15 @@ class BaseRetriever(ABC):
         # （D-24 作廢教訓：平移不變性對任何分數單調函數恆成立）。
         # 偏移注入本融合出口，讓面向進場 gate 0.75、KB 過濾 0.65、六 case 的 0.15 gap、
         # 相關性把關全部看得到。預設關閉且 shift=0 為**精確 no-op**（對照臂效力靠這條）。
+        # ⚠️ 空字串＝未設定，不是壞值（2026-08-22 實測事故）：
+        #    docker-compose.prod.yml 寫 `SCORE_SHIFT_PROBE: ${SCORE_SHIFT_PROBE:-}`，
+        #    主機未設時展開為空字串。舊寫法只判 `is not None`，於是 float("") 拋錯，
+        #    **每一次知識檢索都 500**。任何一次容器重建（＝下次部署）都會觸發。
+        #    仍保留「壞值不得靜默當 0」的原意：'abc' 這種仍會拋錯。
         _shift_raw = os.getenv("SCORE_SHIFT_PROBE")
         _shift = 0.0
-        if _shift_raw is not None:
+        if _shift_raw is not None and _shift_raw.strip() != "":
+            _shift_raw = _shift_raw.strip()
             try:
                 _shift = float(_shift_raw)          # 壞值不得靜默當 0（會誤以為平移了）
             except ValueError:
