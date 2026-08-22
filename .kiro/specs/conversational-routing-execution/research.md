@@ -40,7 +40,10 @@
 | **15 個 Face 配有 API grounding** | ✅ **配置已查** | ⚠️ 是**配置**，不等於**能力已證實** |
 | API-grounded Face C1 多輪狀態／C2 API 呼叫 | ✅ **已驗** | session 實查 + mock 回傳進入候選 |
 | API-grounded Face C3 grounding 傳遞 | ✅ **已驗** | 既有測試斷言 `bit_status=47 in grounding` 且通過 |
-| **API-grounded Face C4 最終答案引用真實資料** | ⏳ **待驗** | mock 忽略 `bill_ref` 恆回 3 筆，無法收斂單筆 |
+| **API-grounded Face C4 最終答案引用真實資料** | ⏳ **待驗** | mock 不依任何參數過濾、恆回 3 筆，無法收斂單筆（主題 7）|
+| 真 API 有 `bill_ref` 參數 | ❌ **已否定** | External 只有 `bill_id`／`contract_id` 等；`bill_ref` 是 rag 端 adapter |
+| External 與 Internal 是兩套不同投影的 API | ✅ **已驗** | 欄位／過濾／權限圈定皆不同；`api_registry` 全指向 External |
+| External 欄位足以支撐帳單診斷 | ❓ **假說** | `late_fee_info`／`invoice_info`／`data` 僅 Internal 有 |
 | Route-R3 是 routing failure | ❌ **已否定** | brain 判 `stay` 是對的——問題確實屬於該 Face |
 | Route-R3 最終造成 answer failure | ⏳ **待驗** | 需 knowledge-grounded Face 的 end-to-end outcome |
 | knowledge Face 需要 face-scoped retrieval | ❓ **假說** | 最直接的候選解法，非唯一解 |
