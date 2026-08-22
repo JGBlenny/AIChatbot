@@ -118,17 +118,35 @@
 
 ---
 
-## Requirement 6：`categories` 的雙重語義必須顯性化
+## Requirement 6：Capability hint 與 Handling Decision 必須分離
 
-**背景**：`categories` 同時承擔「知識主題標籤」與「workflow 觸發權」。
-一旦掛上即可讓系統進入多輪流程，故它是 **executable configuration** 而非描述性 metadata。
-補標 34 筆 ≠ 資料完整性修復，而是**新增 34 個 workflow entry point**。
+**背景**：一篇 KB 同時承載兩種東西——
+**knowledge evidence**（內容本身）與 **processing capability hint**（這題可能怎麼處理）。
+現況三種 hint 都是「命中即等於決策」：
+
+| Hint | 現況行為 | 數量 |
+|---|---|---|
+| `categories` | 命中面向且 final ≥ 門檻 → **直接 commit 進多輪** | 21 組面向 |
+| `form_id` | 帶 form_id 且 final ≥ 同一顆門檻 → **直接開表單** | 37 筆 form_fill |
+| API capability | 由面向設定的 `grounding_scope` 決定 | 15/21 面向 |
+| 無 | → Direct Knowledge | 336 筆 |
+
+**三者是同一類問題**：metadata 可以**提議**能力，不能**自己等於決策**。
 
 - 6.1 系統文件 SHALL 明確區分
+  **Capability Proposal**（KB 攜帶的能力提示）與 **Handling Decision**（本次實際採用哪一種）。
+- 6.2 `categories`、`form_id` 與 API capability SHALL 一律視為 **proposal**；
+  文件 SHALL NOT 將任一者描述為「命中即決定」。
+- 6.3 系統文件 SHALL 明確區分
   `knowledge_categories`（描述知識主題）與 `routing_faces`（允許提出哪些 workflow proposal）。
-- 6.2 WHEN 新增或修改具 workflow 觸發權的分類，
-  THEN 該變更 SHALL 經與程式碼變更同等的審查與回歸驗證。
-- 6.3 本 spec **不要求**立即變更 DB schema；語義拆分先落於文件與審查流程。
+- 6.4 WHEN 新增或修改任何具 capability 意義的 metadata（含 `categories`／`form_id`），
+  THEN 該變更 SHALL 經與程式碼變更同等的審查與回歸驗證——
+  補 34 筆 `categories` ≠ 資料完整性修復，而是**新增 34 個 workflow entry point**。
+- 6.5 ⚠️ **Handling Decision 現況為 rule-based commit**（門檻＋查表），
+  正本 SHALL 將其記為「目標責任」並標註**尚未驗證是否需要額外 decision capability**。
+  本 spec SHALL NOT 因此新造全域 selector——
+  pre-entry routability gate 實測錯路由攔截率 1/13，ROI 已證不成立。
+- 6.6 本 spec **不要求**立即變更 DB schema；語義拆分先落於文件與審查流程。
 
 ---
 
@@ -151,7 +169,7 @@
 
 | 項目 | 不做的依據 |
 |---|---|
-| always-on query rewrite（b2b）| A/B 10 情境×3 次 **10/14 行為完全相同**；成本 600–800ms／次；已停用 |
+| always-on query rewrite（b2b）| A/B 10 情境×3 次 **10/10 行為完全相同**；成本 600–800ms／次；已停用 |
 | 新的全域 routing selector | 既有 brain 前移即有能力，不需新造判斷模型 |
 | pre-entry routability gate 上線 | 上游凍結後實測錯路由攔截 **1/13**，作用面不成比例；程式保留、flag 預設關 |
 | KB event/object/condition 全面結構化 | selector 實測不需要結構化欄位；現有四欄尚未填滿 |
@@ -176,6 +194,36 @@
 
 ---
 
+## Requirement 10：面向內對話邏輯的品質必須可量測
+
+**背景**：R3 只驗面向的**管線**（狀態→API→grounding→答案「有沒有跑通」），
+**未驗對話本身好不好**。本輪已實測到兩個缺陷，且兩者都不是路由錯：
+
+| # | 實測 | 病灶 |
+|---|---|---|
+| 1 | 「續約 12 個月後在帳單頁找不到帳單」→ 進面向 → 反問「請提供合約編號**以便查詢租客帳號狀態**」 | **進對面向、問錯問題**——使用者問續約帳單，面向去查帳號狀態 |
+| 2 | 「合約**已經簽約了**但我想修改可以嗎？」→ 反問「想修改哪個項目？」 | **繞過使用者已陳述的前提**——完全沒提「已簽約不能改」。對照組「還在簽署中可以改嗎」得到幾乎相同回應：**兩個相反前提、同一個答案** |
+
+- 10.1 系統 SHALL 能量測面向內對話的下列指標，且量測方式可重複執行：
+  **反問對題率**（反問內容是否針對使用者的實際訴求）、
+  **前提衝突處理率**（使用者已陳述的事實是否被納入，而非要求重做已完成的事）、
+  **輪數分佈**（收斂前的平均／最大反問輪數）、
+  **重複詢問率**（是否重問已回答過的欄位）。
+- 10.2 WHEN 使用者訊息已陳述可判定的前提（如「已經簽約了」），
+  THEN 面向的首輪回應 SHALL 反映該前提，
+  SHALL NOT 僅收集槽位而不回應其實際訴求。
+- 10.3 WHEN 面向的反問偏離使用者的原始訴求，
+  THEN 系統 SHALL 可由量測識別出該情形——**不得僅以「有回應」視為通過**。
+- 10.4 `required_slots` 的設計合理性 SHALL 納入評估：
+  是否索取了面向實際不需要的欄位、是否遺漏必要欄位。
+- 10.5 ⚠️ **先量現況、建立基準，再談優化。**
+  本 spec SHALL NOT 在無基準的情況下調整對話規則文字——
+  本輪已五次因小樣本或未驗因果而結論翻盤（見 R9.3）。
+
+---
+
+---
+
 ## 需求優先序
 
 ```
@@ -187,7 +235,12 @@ R3 API-grounded 閉環證實  ←  若失敗，routing 工作全部降級（3.4�
    ↓
 R4 Mock 保真度 ／ R5 已知缺陷（5.2 須獨立上線）
    ↓
-R6 categories 語義拆分  →  解 5.3 的前提
+R6 capability／decision 分離  →  解 5.3 的前提
+   ↓
+R10 對話邏輯品質基準（依賴 R1、R3）
 ```
+
+R10 依賴 R1（測試基礎設施）與 R3（閉環證實）——
+面向管線未證實可跑通之前，量對話品質沒有意義。
 
 R7／R8／R9 為橫向約束，適用於全程。
