@@ -25,6 +25,34 @@
 
 ---
 
+## 命題狀態表（先讀本表）
+
+> 防止本輪最常發生的兩種滑動：
+> **「配置存在」被說成「能力已證實」**、**「候選解法」被說成「必要解法」**。
+
+| 命題 | 狀態 | 依據／缺口 |
+|---|---|---|
+| 原語料（25 筆）已被知識補寫污染 | ✅ **已驗** | 14 筆正解 KB 建立於 07-31／08-03，晚於全部回報 |
+| B2B always-on rewrite 無最終收益 | ✅ **已驗** | A/B 10 情境×3 次，行為 10/10 相同 |
+| `related ≠ answerable` | ✅ **已驗** | kb3968 對 #18 final 0.9931 卻答非所問 |
+| `related ≠ routable` | ✅ **已驗** | 「停用租客帳號」對退租面向 final 0.941 |
+| pre-entry gate ROI 不成立 | ✅ **已驗** | 上游凍結後錯路由攔截 1/13 |
+| **15 個 Face 配有 API grounding** | ✅ **配置已查** | ⚠️ 是**配置**，不等於**能力已證實** |
+| API-grounded Face C1 多輪狀態／C2 API 呼叫 | ✅ **已驗** | session 實查 + mock 回傳進入候選 |
+| API-grounded Face C3 grounding 傳遞 | ✅ **已驗** | 既有測試斷言 `bit_status=47 in grounding` 且通過 |
+| **API-grounded Face C4 最終答案引用真實資料** | ⏳ **待驗** | mock 忽略 `bill_ref` 恆回 3 筆，無法收斂單筆 |
+| Route-R3 是 routing failure | ❌ **已否定** | brain 判 `stay` 是對的——問題確實屬於該 Face |
+| Route-R3 最終造成 answer failure | ⏳ **待驗** | 需 knowledge-grounded Face 的 end-to-end outcome |
+| knowledge Face 需要 face-scoped retrieval | ❓ **假說** | 最直接的候選解法，非唯一解 |
+| Clarification branch 可行 | ❓ **研究項** | brain 對 Route-R3 全數判 `stay`，不具 ambiguity 偵測能力 |
+| 面向降級率 9%，且降級皆為正確拒絕 | ✅ **已驗** | 22 題實測，2 筆降級都是錯路由被正確攔下 |
+| `repair_create` 零觸發點 | ✅ **已驗** | 無任何知識掛 `修繕報修`；`make audit` 不變量 4 長期 WARN |
+| Handling Decision 現況為 rule-based commit | ✅ **已驗** | 讀碼：門檻 + `config_for_category` 查表，無判定步驟 |
+| 測試基礎設施結構性失效 | ✅ **已驗** | `make test-integration` 183 skipped；繞過後 166/5/12 |
+| 離線重建 pipeline 會失真 | ✅ **已驗** | 三次翻盤：錨點濾除／面向分岔／rewrite 擴充候選 |
+
+---
+
 ## 主題 1：本輪工作在完整架構中的**定位**
 
 > ⚠️ **本輪研究的不是「完整對話架構」，而是其中一個接縫。**
@@ -87,7 +115,12 @@ API-grounded Face 待驗）全部掛在這個接縫下**，
 | API | **執行／grounding 能力** |
 | `categories` | 目前 Knowledge → Face 的一種**入口關聯** |
 
-### 四個平面（理解完整系統的正確切法）
+### 四個平面（**責任分析模型**）
+
+> ⚠️ **四個平面是責任分析模型，不代表系統存在四個獨立 service，
+> 也不要求依此重構程式。** 現有實際流程為：表單會話先行 → 特殊 Face 直達 →
+> cache → intent → SOP／Knowledge 並行仲裁；交易面向另有自己的
+> prefill → brain → confirm → execute 流程。
 
 | 平面 | 負責 |
 |---|---|
@@ -154,8 +187,15 @@ API-grounded Face 待驗）全部掛在這個接縫下**，
 | **R3 方向對、證據錯** | **11** | **0** |
 | **R4 明確錯路由** | **2** | **1** |
 
-**錯路由攔截率 1/13。** R3 全數漏放且是結構性的——那些問題 topic 上確實屬於該面向，
-錯的是「觸發它的那篇知識答不了這題」，**是 answerability 的病，gate 治不了**。
+**錯路由攔截率 1/13。** Route-R3 全數漏放，且 brain 判 `stay` 是**對的**——
+那些問題 topic 上確實屬於該面向。
+
+> **Route-R3 不是 routability failure，而是 trigger-evidence mismatch**：
+> 問題確實屬於該 Face，但**觸發 Face 的那篇 KB 本身不足以回答原問題**。
+> ⏳ **是否進一步構成 answerability failure，須以 knowledge-grounded Face 的
+> end-to-end outcome 驗證**——本輪未跑完，不得先行宣判。
+
+無論如何，pre-entry gate 治不了 Route-R3（它判的是 routability，不是 evidence 充分性）。
 → 不上線，程式保留、flag 預設關。
 
 ---
@@ -197,7 +237,15 @@ API-grounded Face 待驗）全部掛在這個接縫下**，
 | 2 | 面向分岔（截走約 30% 流量）| 直答/查無比例整組偏移 |
 | 3 | query rewrite 擴充候選（+10–23 筆）＋關鍵字備選 | 候選集約為線上一半，三題結論相反 |
 
-**結論：不要離線重建 pipeline，驅動真實 API。**
+**結論（精確版）：不得自行重建 production retrieval／routing pipeline 作為比較基準。**
+
+- 量測 SHALL 優先驅動 **production code path**。
+- 若使用**離線 replay**，輸入 SHALL 取自真實管線**凍結後的中間產物**
+  （本輪成功案例：72 筆 cohort 先以 Gate OFF 跑真 API 取得 routing proposal 再凍結）。
+- **Mock 僅替換外部依賴**（如 jgb2 API），SHALL NOT 重寫 routing／retrieval 邏輯。
+
+此原則同時容納：真 Chat API 驅動、frozen proposal replay、API mock、unit／integration test。
+**不是「所有離線測試都不可信」**——是「自行重建管線很容易失真」。
 
 ### 五次「小樣本或未驗因果就下結論」
 25 筆語料／72 筆標註／8 題改寫比較／「改寫造成路由抖動」未驗因果／
@@ -216,6 +264,6 @@ mock 可驗 C1／C3／C4（控制流），**真 API 只用於確認 schema 與�
 | # | 事項 | 卡在哪 |
 |---|---|---|
 | 1 | C4 最終答案引用真實資料 | mock 忽略 `bill_ref` 恆回 3 筆，無法收斂單筆 |
-| 2 | knowledge-grounded Face 是否需 face-scoped retrieval | R3 那 11 筆的唯一出路，未驗 |
+| 2 | knowledge-grounded Face 是否需 face-scoped retrieval | **若** Route-R3 的 end-to-end 證實最終答案仍受 trigger KB 限制，face-scoped evidence retrieval 是**目前最直接的候選解法**——非唯一解。其他可能：Face 本身規則已足以處理／Face 後續另有知識來源／部分案例本來就能正確處理／應直接退出 Face 回 direct path |
 | 3 | D 澄清分岔的 ambiguity 偵測 | brain 對 R3 全數判 `stay`，不具此能力 |
 | 4 | production holdout | S3 客服回報自 2026-07-29 零新增 |
