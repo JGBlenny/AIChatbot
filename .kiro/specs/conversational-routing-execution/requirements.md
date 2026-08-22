@@ -32,12 +32,22 @@ Step 1-3  基礎處理 → cache → 意圖分類
 ```text
 Knowledge Path
   Vector → Rerank → categories 觸發 Face？
-                       ↙          ↘
-                    Face          Direct → Answerability Gate → 直答／誠實 fallback
+                    │  現況：rule-based commit（門檻＋查表）
+                    │  **非獨立 Decision Engine**
+                    ├─ Face
+                    ├─ Clarification 【研究項，未實作】
+                    └─ Direct → Answerability Gate → 直答／誠實 fallback
 ```
 
-不處理：SOP 編排、既有會話續跑、Form Engine、API Engine、交易面向引擎。
-不處理澄清分岔——實測 brain 對 R3 全數判 `stay`，不具 ambiguity 偵測能力，列研究項。
+> ⚠️ 「Proposal／Decision」為**責任模型**，**不代表目前存在獨立的 decision service**，
+> 亦**不要求**新建一個。pre-entry routability gate 實測錯路由攔截率 1/13，
+> 已證明現階段沒有理由新增中央 selector。
+
+**範圍聲明**：本 spec 僅處理 **Knowledge retrieval 勝出後的 Face routing／Direct answer 接縫，
+以及 Face execution 的可驗證性**。
+既有 Form Session 優先序、**SOP vs Knowledge arbitration**、SOP trigger modes、
+Form Engine、API Engine、交易面向引擎——**均不在本次改造範圍**。
+不處理澄清分岔——實測 brain 對 **Route-R3** 全數判 `stay`，不具 ambiguity 偵測能力，列研究項。
 
 ---
 
@@ -86,6 +96,10 @@ Knowledge Path
 
 ## Requirement 3：API-grounded Face 端到端閉環必須被證實
 
+> **Dependency：Requirement 1、Requirement 4。**
+> Req.4（mock 契約）是本需求可驗的前提——mock 不依 `bill_ref` 過濾即無法收斂單筆，
+> C4 便無從驗證。**不得依編號順序先做 Req.3。**
+
 **背景**：15/21 面向為 API-grounded，是面向機制的核心價值主張。
 四檢查點現況：**C1 多輪狀態已證實**（session 實查 `collected_fields.bill_ref=12345`、
 `pending_candidates` 三筆完整）；**C2 API 呼叫已證實**；
@@ -93,14 +107,26 @@ Knowledge Path
 （`test_single_row_converges_with_hybrid_three_level_context` 斷言 `bit_status=47 in grounding`）；
 **C4 最終答案引用真實資料尚未證實**。
 
-- 3.1 系統 SHALL 有一條可重複執行的測試，涵蓋
-  「問題 → 進面向 → 反問必要欄位 → 收齊 → 呼叫 API → grounding → 最終回答」完整鏈路。
+**兩種證據不得混為一談**：
+
+| 證據 | 方法 | 證明什麼 |
+|---|---|---|
+| **A. Deterministic control-flow E2E** | contract-faithful **mock** | 系統控制流**真的閉環** |
+| **B. Real API contract smoke** | 少量打 staging／真 API | **mock 假設與現實 contract 沒漂移** |
+
+3.1–3.3 屬 **A**（走 mock）；**B 由 Req.4.4 負責，不作為主要控制流驗收**。
+
+- 3.1 系統 SHALL 有一條可重複執行的 **deterministic control-flow E2E** 測試，涵蓋
+  「問題 → 進面向 → 反問必要欄位 → 收齊 → 呼叫 API handler → mock response
+  → grounding → 最終回答」完整鏈路。
 - 3.2 WHEN 該鏈路收斂至單筆資料，THEN 最終回答 SHALL 引用該筆的實際狀態值，
   且 SHALL NOT 退回泛用 KB 答案。
 - 3.3 該測試 SHALL 至少涵蓋**兩個不同的 API-grounded 面向**
   （例如 `bill_diagnosis` 與 `contract_diag`），以證明非單一面向特例。
-- 3.4 IF 閉環無法證實，THEN 所有 routing 相關工作 SHALL 降級，
-  優先修復「Face → state → API → grounding → answer」鏈路。
+- 3.4 IF 閉環無法證實，THEN 所有 routing 相關工作 SHALL 降級為 P1 以下，
+  「Face → state → API → grounding → answer」執行鏈修復 SHALL 升為 **P0**。
+- 3.5 ⚠️ 完整系統另有 SOP 直接 API、Form→API 等多種 API 路徑；
+  本需求的「API invocation」SHALL 僅指 **Face grounding** 那一條，不得與其他路徑混稱。
 
 ---
 
@@ -116,8 +142,9 @@ Knowledge Path
   使「通過」可回溯至具體資料值，而非僅「有回答」。
 - 4.3 Mock 的啟用 SHALL 由測試自身控制（現況 `monkeypatch.setenv` 已符合），
   SHALL NOT 依賴常駐容器的環境設定。
-- 4.4 真 API SHALL 僅用於確認「schema 與現實的偏差」，
-  SHALL NOT 作為驗證控制流的起點。
+- 4.4 **Real API contract smoke**：真 API SHALL 僅用於確認
+  「mock 假設與現實 contract 是否漂移」（params → endpoint → response schema），
+  SHALL NOT 作為驗證控制流的起點，亦 SHALL NOT 作為 Req.3 的主要驗收證據。
 
 ---
 
@@ -135,41 +162,60 @@ Knowledge Path
   其 blast radius 未量，**不得與其他改動同批上線**。
 - 5.3 **`repair_create` 零觸發點**：該面向無任何知識掛 `修繕報修`，完全無法進場
   （`make audit` 不變量 4 長期 WARN）。
-  WHEN 補標 kb3365／kb4249，THEN SHALL 先滿足 Requirement 6 的把關前提。
+  WHEN 解 freeze 補上 kb3365／kb4249 的 routing metadata，THEN SHALL：
+  ① 明確記錄其新增的 **Face entry points**；
+  ② 以**現行 production routing 規則**執行回歸；
+  ③ 驗證新增 trigger **不造成已知資訊型問題誤進 `repair_create`**；
+  ④ 通過後始得上線。
+  ⚠️ **不等待任何尚不存在的 Handling Decision**——
+  直接驗證這兩筆 executable metadata change 的 **runtime effect**。
 
 ---
 
-## Requirement 6：Capability hint 與 Handling Decision 必須分離
+## Requirement 6：Routing Hint、Action Declaration 與 Execution Configuration 必須分層
 
-**背景**：一篇 KB 同時承載兩種東西——
-**knowledge evidence**（內容本身）與 **processing capability hint**（這題可能怎麼處理）。
-現況三種 hint 都是「命中即等於決策」：
+**背景**：先前把 `categories`／`form_id`／API capability 統稱「Capability Proposal」——
+**這個抽象不準，已撤回**。三者處於**三個不同層級**，壓成一類會把系統已分好的責任重新混在一起。
 
-| Hint | 現況行為 | 數量 |
+```text
+Knowledge Evidence（內容本身）
+│
+├─ Routing Hint ──────── categories → 可能的 Face
+│                        （Knowledge 與 Face 的入口關聯）
+│
+├─ Action Declaration ── action_type / form_id / trigger_mode
+│                        （direct_answer｜form_fill｜api_call｜form_then_api；
+│                          form_fill 後再由 trigger_mode 分 manual／immediate／auto）
+│
+└─ Face 被選定之後
+     └─ Execution Configuration ── grounding_scope / required_slots
+                                   / execute_endpoint / execute_params
+                                   （不是「要不要選 API」，而是選定後怎麼執行）
+```
+
+| 層級 | 是什麼 | 現況數量 |
 |---|---|---|
-| `categories` | 命中面向且 final ≥ 門檻 → **直接 commit 進多輪** | 21 組面向 |
-| `form_id` | 帶 form_id 且 final ≥ 同一顆門檻 → **直接開表單** | 37 筆 form_fill |
-| API capability | 由面向設定的 `grounding_scope` 決定 | 15/21 面向 |
-| 無 | → Direct Knowledge | 336 筆 |
+| **Routing Hint** | `categories` → 可能的 Face | 21 組面向 |
+| **Action Declaration** | `action_type`／`form_id`／`trigger_mode` | 336 direct_answer／37 form_fill |
+| **Execution Configuration** | `grounding_scope`／`required_slots`／`execute_*` | 15/21 面向為 API-grounded |
 
-**三者是同一類問題**：metadata 可以**提議**能力，不能**自己等於決策**。
-
-- 6.1 系統文件 SHALL 明確區分
-  **Capability Proposal**（KB 攜帶的能力提示）與 **Handling Decision**（本次實際採用哪一種）。
-- 6.2 `categories`、`form_id` 與 API capability SHALL 一律視為 **proposal**；
-  文件 SHALL NOT 將任一者描述為「命中即決定」。
-- 6.3 系統文件 SHALL 明確區分
-  `knowledge_categories`（描述知識主題）與 `routing_faces`（允許提出哪些 workflow proposal）。
-- 6.4 WHEN 新增或修改任何具 capability 意義的 metadata（含 `categories`／`form_id`），
+- 6.1 系統文件 SHALL 以上述三層描述 KB 攜帶的資訊，
+  SHALL NOT 將三者統稱為單一種「capability」。
+- 6.2 **Routing Hint SHALL 被視為提議**：`categories` 命中面向
+  SHALL NOT 於文件中被描述為「命中即決定」。
+- 6.3 **Action Declaration 不等於立即執行**：帶 `form_id` SHALL NOT 被理解為
+  「有 form_id 就直接開表單」——`trigger_mode`（manual／immediate／auto）另有分支。
+- 6.4 **Execution Configuration 僅在 Face／Action 選定之後生效**，
+  SHALL NOT 被描述為 routing 階段的選項。
+- 6.5 系統文件 SHALL 明確區分
+  `knowledge_categories`（描述知識主題）與 `routing_faces`（允許提出哪些 Face）。
+- 6.6 WHEN 新增或修改任何具 routing／action 意義的 metadata，
   THEN 該變更 SHALL 經與程式碼變更同等的審查與回歸驗證——
-  補 34 筆 `categories` ≠ 資料完整性修復，而是**新增 34 個 workflow entry point**。
-- 6.5 ⚠️ **Handling Decision 現況為 rule-based commit**（門檻＋查表），
-  正本 SHALL 將其記為「目標責任」並標註**尚未驗證是否需要額外 decision capability**。
-  本 spec SHALL NOT 因此新造全域 selector——
-  pre-entry routability gate 實測錯路由攔截率 1/13，ROI 已證不成立。
-- 6.6 本 spec **不要求**立即變更 DB schema；語義拆分先落於文件與審查流程。
-
----
+  補 34 筆 `categories` ≠ 資料完整性修復，而是**新增 34 個 Face entry point**。
+- 6.7 ⚠️ 本層級模型為**責任描述**，**不要求**新建任何 decision component。
+  現況為 rule-based commit；pre-entry routability gate 實測錯路由攔截率 1/13，
+  **已證明現階段沒有理由新造中央 selector**。
+- 6.8 本 spec **不要求**立即變更 DB schema；語義分層先落於文件與審查流程。
 
 ## Requirement 7：測試成本控制
 
@@ -195,7 +241,7 @@ Knowledge Path
 | pre-entry routability gate 上線 | 上游凍結後實測錯路由攔截 **1/13**，作用面不成比例；程式保留、flag 預設關 |
 | KB event/object/condition 全面結構化 | selector 實測不需要結構化欄位；現有四欄尚未填滿 |
 | 為架構完整性硬加 hybrid recall | 21 筆中召回可救約 1 筆；且詞面通道已部分存在 |
-| B 澄清分岔 | brain 對 R3 全數判 `stay`，不具 ambiguity 偵測能力，列研究項 |
+| B 澄清分岔 | brain 對 **Route-R3** 全數判 `stay`，不具 ambiguity 偵測能力，列研究項 |
 
 ---
 
@@ -203,21 +249,35 @@ Knowledge Path
 
 **背景**：目前**無 production holdout**（S3 客服回報自 2026-07-29 零新增）。
 現有兩層基準：`test_scenarios` b2b 未污染集 241 筆（`created_by=backtest_user`，來歷未確證）、
-72 筆 routing cohort（有 R1–R5 人工標註，67 筆仍會提出面向 routing）。
+72 筆 routing cohort（有 **Route-R1–R5** 人工標註，67 筆仍會提出面向 routing）。
 
 - 9.1 WHEN 僅通過現有基準，THEN 結論 SHALL 僅聲稱「技術可行／regression-safe」。
 - 9.2 「routing 品質確實提升」SHALL 僅在通過 production holdout 後聲稱。
-- 9.3 任何比較性結論 SHALL 以 ≥30 題為基礎
+- 9.3 任何關於**整體品質提升、precision／recall 改善、元件優劣或泛化效果**的
+  比較性結論 SHALL 以 **≥30 個可判定案例**為基礎
   （本輪三次「擴大樣本即翻盤」：25 筆語料污染／72 筆標註失真／8 題改寫比較）。
-- 9.4 離線驗證 SHALL 完整複刻 production 候選變換
-  （query rewrite 聯集、關鍵字備選、**面向判定用濾錨點之前的 top-1**、錨點濾除），
-  否則測到的不是同一個系統（本輪已三次因此翻盤）。
+  **不受此限**：deterministic contract 驗證、單一 bug 重現、已知 case 的回歸——
+  這些不是統計性結論，不需湊題數。
+- 9.4 離線驗證 SHALL 完整複刻**該版本 production 實際啟用**的候選變換與執行順序。
+  被 feature flag／mode **關閉**的能力 SHALL NOT 在 runner 額外啟用；
+  **降級路徑 SHALL NOT 被誤模擬為並行主路徑**。
+  （本輪已三次因 runner 保真度不足而結論作廢。）
+
+  **目前 b2b snapshot（隨 production 變動，以參數台帳為準）**：
+
+  | 項目 | 現況 |
+  |---|---|
+  | always-on query rewrite | **OFF**（`ENABLE_QUERY_REWRITE_B2B=false`）|
+  | vector retrieval | **primary** |
+  | keyword search | **embedding failure fallback**（非並行 hybrid）|
+  | routing 判定 | 用 **anchor removal 之前**的 top-1 |
+  | anchor removal | 在 routing **之後** |
 
 ---
 
 ## Requirement 10：面向內對話邏輯的品質必須可量測
 
-**背景**：R3 只驗面向的**管線**（狀態→API→grounding→答案「有沒有跑通」），
+**背景**：Req.3 只驗面向的**管線**（狀態→API→grounding→答案「有沒有跑通」），
 **未驗對話本身好不好**。本輪已實測到兩個缺陷，且兩者都不是路由錯：
 
 | # | 實測 | 病灶 |
@@ -247,21 +307,29 @@ Knowledge Path
 
 ## 需求優先序
 
+> ⚠️ **不得依編號順序執行**。Req.4 是 Req.3 可驗的前提。
+
 ```
-R1 測試基礎設施  ←  所有其他驗收的前提
+Req.1  測試基礎設施                       ← 所有驗收的前提
    ↓
-R2 面向進場回歸綠燈
+Req.2  現有面向進場 regression 判定
    ↓
-R3 API-grounded 閉環證實  ←  若失敗，routing 工作全部降級（3.4）
+Req.4  Mock contract／fidelity            ← Req.3 的前提
    ↓
-R4 Mock 保真度 ／ R5 已知缺陷（5.2 須獨立上線）
-   ↓
-R6 capability／decision 分離  →  解 5.3 的前提
-   ↓
-R10 對話邏輯品質基準（依賴 R1、R3）
+Req.3  API-grounded E2E 閉環
+   │
+   ├─ 失敗 → execution chain 升 P0，routing 工作降級（3.4）
+   └─ 通過
+        ↓
+Req.5  已知缺陷逐項修復（5.2 須獨立上線）
+        ↓
+Req.6  Routing hint／Action／Execution 責任分層
+        ↓
+Req.10 Face 對話品質 baseline（依賴 Req.1、Req.3）
 ```
 
-R10 依賴 R1（測試基礎設施）與 R3（閉環證實）——
-面向管線未證實可跑通之前，量對話品質沒有意義。
+Req.7／Req.8／Req.9 為橫向約束，適用於全程。
 
-R7／R8／R9 為橫向約束，適用於全程。
+**命名約定**：`Req.N` 指本文件的需求編號；`Route-R1`–`Route-R5`
+指 routing cohort 的人工標註類別（正確-錨點／正確-一般KB／方向對但證據錯／
+明確錯路由／可議），兩者不得混用。
