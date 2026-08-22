@@ -8,15 +8,36 @@
 
 ## 架構定位（本 spec 的作用域）
 
-```
-① Query Intake → ② Retrieval → ③ Semantic Rerank → ④ Routing Proposal
-                                                          │
-                        ┌─────────────────────────────────┼──────────────────┐
-                        │ A 面向執行（15/21 API-grounded）│ B 澄清（未實作）  │ C 錨點濾除→直答把關→誠實 fallback
+> ⚠️ **本 spec 不是在重建「完整對話架構」，而是改善其中一個接縫。**
+> 母圖為 [COMPLETE_CONVERSATION_ARCHITECTURE.md](../../../docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md) §1；
+> 定位推導見 [research.md 主題 1](./research.md)。
+
+真實系統的主幹（本 spec **未觸及**的部分）：
+
+```text
+Step 0    表單會話檢查（既有會話優先續跑，優先權最高）
+Step 0.4  trigger_facet_key 直達 Face
+Step 0.5  損傷圖改道交易 Face
+Step 1-3  基礎處理 → cache → 意圖分類
+            ↓
+        【並行檢索】SOP ‖ Knowledge
+            ↓
+        【智能決策】仲裁（SOP／KB 分數、門檻、score gap、是否帶 next_action）
+            ↓
+     SOP 勝出 ／ 知識庫勝出 ／ 都不達標 fallback
 ```
 
-**本 spec 處理 ④ 與 A、C 的正確性與可驗證性**，不處理 B（澄清）——
-實測 brain 對 R3 全數判 `stay`，證明它不是現成的 ambiguity detector，B 列為研究項不列需求。
+**本 spec 的作用域＝知識庫勝出之後的那一段**：
+
+```text
+Knowledge Path
+  Vector → Rerank → categories 觸發 Face？
+                       ↙          ↘
+                    Face          Direct → Answerability Gate → 直答／誠實 fallback
+```
+
+不處理：SOP 編排、既有會話續跑、Form Engine、API Engine、交易面向引擎。
+不處理澄清分岔——實測 brain 對 R3 全數判 `stay`，不具 ambiguity 偵測能力，列研究項。
 
 ---
 
