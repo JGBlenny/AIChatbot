@@ -14,6 +14,8 @@
 | [統一部署 Runbook](./deployment-runbook.md) ⭐ | 33 migrations→匯入→重建→煙囪→稽核（部署唯一依據） |
 | [jgb2 串接規格（正式版）](./jgb2-chat-integration.md) | 三形狀身分契約 b2b/b2c/prospect（給 jgb2 工程，含 b2b 待補齊項） |
 | 盤查報告與批次 | `scripts/audit/reports/`（知識/業者SOP盤查證據鏈與可重放批次） |
+| [檢索召回盤查與適用性把關](./retrieval-recall-audit-20260822.md) ⭐ | 2026-08-22：原語料污染實證、四層架構評估、Baseline A 定義與凍結、面向分岔與 routing 發現 |
+| [檢索與對話路由參數台帳](./retrieval-parameters.md) ⭐ | 每個可調參數的現值／控制什麼／動它會怎樣／有沒有實證；含量測紀律（離線重建失敗三次的教訓）|
 | [Ground-truth Research](./research/README.md) | jgb2 原始碼盤查定案結論（各域真相依據） |
 | 知識批次 | `scripts/knowledge-batches/`（部署重放依賴） |
 
