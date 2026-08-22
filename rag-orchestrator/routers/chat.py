@@ -934,47 +934,96 @@ def _drop_empty_answer_rows(rows: list) -> list:
     return [k for k in (rows or []) if _keep(k)]
 
 
-async def _top1_relevance_gate(question: str, rows: list, max_checks: int = 2) -> list:
+_GATE_SYSTEM_PROMPT = (
+    "你判斷一筆客服知識能否用來回答使用者這一次的問題。\n"
+    "\n"
+    "最高原則：**相關不等於足夠。知識必須適用於使用者的情境，而且回答的是他問的那個問題。**\n"
+    "寧可判 NO 讓系統回覆查無，也不要拿一篇沾邊的知識回答另一個問題。\n"
+    "\n"
+    "判 YES 只有兩種情況：\n"
+    "1. 能直接回答使用者的核心問句，而且適用條件與使用者描述的前提一致。\n"
+    "2. 雖然沒有直接解釋原因，但它提供的處理方式確實適用於使用者當前的情境。\n"
+    "\n"
+    "以下一律判 NO：\n"
+    "- 只是主題相同、症狀相似、或提到相同的物件與名詞。\n"
+    "- 回答的是另一個前提下的問題（使用者的前提與知識的適用前提不一致）。\n"
+    "- 會要求使用者去做他在問題中已表明完成的事。\n"
+    "- 無法判斷是否適用。\n"
+    "\n"
+    "先輸出 YES 或 NO，後面可接分號與十字以內的理由。"
+)
+
+
+async def _top1_relevance_gate(question: str, rows: list, max_checks: int = 2,
+                               b2b: bool = False) -> list:
     """錯位直答把關（51 題全面抽驗逼出）：分數＝0.1×向量＋0.9×rerank，reranker
     對表面詞彙重疊的無關知識會打 0.9+（實例：「電表度數登記錯誤怎麼改」top1=
     「租客看即時電表」0.956）——任何分數閾值都切不開。直答前對 top1 做一次輕量
-    LLM 相關性判定：不相關讓次筆晉位（最多查 max_checks 筆），全不相關回空列
-    走誠實 fallback（勝過給錯答案）。
-    豁免：表單/API 觸發列不判（不擋表單）；raw 向量 ≥0.85 近精確命中跳過（省
-    延遲）；LLM 失敗放行（fail-open 不阻斷）。env RELEVANCE_GATE_ENABLED=false 可關。
+    LLM 判定：不適用讓次筆晉位（最多查 max_checks 筆），全不適用回空列走誠實
+    fallback（勝過給錯答案）。
+
+    ⚠️ 判準是「適用性」不是「相關性」（2026-08-22 業主定案，precision-first）。
+    舊版 prompt 明寫「判定從寬」——主題相關／能答一部分／有處理管道都算 YES——
+    實測讓 #18（3968「登入成功 看不到合約帳單電表」對「續約後在帳單頁找不到
+    帳單」）這類「同症狀、不同事件」的知識全數放行。**勿改回從寬。**
+    業主取捨已明示：接受查無比例上升，b2b 錯誤指引的成本高於一次查無。
+
+    豁免：表單/API 觸發列不判（不擋表單）。
+    ⚠️ 「raw 向量 ≥0.85 近精確命中跳過」**預設已關**（同上定案）：高語意相似正是
+    本閘門要擋的錯題型態，拿它當免判理由自相矛盾。要恢復須顯式設環境變數
+    RELEVANCE_GATE_SKIP_VEC（未設＝不跳過）。
+    ⚠️ LLM 失敗：b2c 維持 fail-open（不阻斷）；**b2b 為 fail-closed**（視同不適用
+    →走 fallback），因「寧缺勿錯」。代價：判定 LLM 全面失效時 b2b 會整體落查無，
+    需與生成 LLM 一起監控。
+    env RELEVANCE_GATE_ENABLED=false 可整道關閉。
+
+    ⚠️ 本閘門只守「直答」路徑。面向進場在 handle_retrieval 更前面（分類路由，
+    見 conversational-diagnosis design 元件 5），**不經過這裡**——替知識補
+    categories 等於把它移進一條繞過本閘門的路徑，補標時須一併考量。
     """
     rows = list(rows or [])
     if not rows or os.getenv("RELEVANCE_GATE_ENABLED", "true").lower() == "false":
         return rows
 
+    _skip_raw = os.getenv("RELEVANCE_GATE_SKIP_VEC")      # 未設＝不跳過（預設關）
+    _skip_vec = float(_skip_raw) if _skip_raw else None
+
     for i in range(min(max_checks, len(rows))):
         k = rows[i]
         if k.get('form_id') or k.get('action_type') in ('form_fill', 'api_call', 'form_then_api'):
             return rows[i:]                                   # 表單/API 觸發不判
-        if (k.get('vector_similarity') or 0) >= float(os.getenv("RELEVANCE_GATE_SKIP_VEC", "0.85")):
-            return rows[i:]                                   # 近精確命中免判
+        if _skip_vec is not None and (k.get('vector_similarity') or 0) >= _skip_vec:
+            return rows[i:]                                   # 僅在顯式開啟時免判
         try:
             resp = await asyncio.to_thread(
                 chat_completion,
-                model=os.getenv("RELEVANCE_GATE_MODEL") or os.getenv("LLM_MODEL", "gpt-3.5-turbo"),
+                # ⚠️ 判定模型（2026-08-22 實測定案）：本判定對模型極度敏感——
+                # 同一段 prompt，gpt-3.5-turbo 得 8/25、gpt-4o-mini 得 20/25（差 12 分）。
+                # 舊碼寫死 fallback "gpt-3.5-turbo"，而全棧其餘走 OPENAI_MODEL(gpt-4o-mini)，
+                # 等於把最吃判斷力的一道關卡放在最弱的模型上。改為跟隨全棧模型。
+                # 成本同步下降：舊配置 404 in/0 out @3.5-turbo → 新配置 508 in/25 out
+                # @4o-mini，單次約為原本的一半（4o-mini 單價低於 3.5-turbo）。
+                model=(os.getenv("RELEVANCE_GATE_MODEL") or os.getenv("LLM_MODEL")
+                       or os.getenv("OPENAI_MODEL", "gpt-4o-mini")),
                 messages=[
-                    {"role": "system",
-                     "content": "你判斷一筆客服知識能否用來回應使用者的問題。判定從寬："
-                                "主題相關、能回答到一部分、或說明了該問題的處理管道"
-                                "（例如告知此事屬廠商/客服範疇並導向）都算 YES；"
-                                "只有主題不同、答非所問才是 NO。只輸出 YES 或 NO。"},
+                    {"role": "system", "content": _GATE_SYSTEM_PROMPT},
                     {"role": "user",
                      "content": f"問題：{question}\n知識標題：{k.get('question_summary', '')}\n"
                                 f"知識內容（節錄）：{(k.get('answer') or '')[:180]}"},
                 ],
-                temperature=0, max_tokens=3)
-            verdict = (resp.get("content") or "").strip().upper()
+                temperature=0, max_tokens=32)
+            raw = (resp.get("content") or "").strip()
+            verdict = raw.upper()
         except Exception as e:
-            print(f"⚠️ [相關性把關] LLM 失敗放行：{e}")
+            if b2b:
+                print(f"⚠️ [適用性把關] LLM 失敗，b2b fail-closed 視同不適用：{e}")
+                continue                                      # 不放行，續判次筆
+            print(f"⚠️ [適用性把關] LLM 失敗放行（b2c fail-open）：{e}")
             return rows[i:]
         if verdict.startswith("YES"):
             return rows[i:]
-        print(f"🛡️ [相關性把關] top{i+1}「{k.get('question_summary','')[:24]}」判不相關（sim={k.get('similarity',0):.3f}）→ 次筆晉位")
+        print(f"🛡️ [適用性把關] top{i+1}「{k.get('question_summary','')[:24]}」判不適用"
+              f"（sim={k.get('similarity',0):.3f}｜{raw[:40]}）→ 次筆晉位")
     return []
 
 
@@ -1076,10 +1125,14 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
             if _pre_n != len(decision['knowledge_list']):
                 print(f"🛡️ [錨點防呆] 濾除 {_pre_n - len(decision['knowledge_list'])} 筆空答案錨點（不進單發答題）")
 
-            # 相關性把關（51 題抽驗逼出）：reranker 高分錯位直答比查無更糟——
-            # top1 判不相關讓次筆晉位，全不相關空列走誠實 fallback
+            # 適用性把關（51 題抽驗逼出）：reranker 高分錯位直答比查無更糟——
+            # top1 判不適用讓次筆晉位，全不適用空列走誠實 fallback。
+            # b2b 判定與 vendor_knowledge_retriever_v2._vector_search 同式（勿各自定義）：
+            # LLM 失敗時 b2b fail-closed、b2c fail-open（2026-08-22 業主定案）。
+            _is_b2b = (request.target_user in ('property_manager', 'system_admin')) \
+                or (getattr(request, 'mode', None) == 'b2b')
             decision['knowledge_list'] = await _top1_relevance_gate(
-                request.message, decision['knowledge_list'])
+                request.message, decision['knowledge_list'], b2b=_is_b2b)
 
             # 串流模式：先檢查是否有表單/API 動作需要完整處理
             if request.stream:
