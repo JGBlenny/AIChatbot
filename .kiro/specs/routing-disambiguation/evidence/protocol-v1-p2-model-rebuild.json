@@ -1,0 +1,138 @@
+{
+  "perturbation": {
+    "id": "P2",
+    "name": "semantic_model_rebuild",
+    "rounds": 1
+  },
+  "host_execution": {
+    "command": "docker compose -f docker-compose.prod.yml up -d --force-recreate semantic-model",
+    "container_before": "369e57723b30afbfa1bd1481ea15b34da28b9f92da6676eb49406a42185f1e55",
+    "container_after": "0916e56573940d4d39de77ac2583e9d10094f19cd1528f40bab41b502aa15a24",
+    "image_before": "sha256:fceedf9c18f02a565cb02f6633135a65e1baac2dc245ef974180101feaf2985f",
+    "image_after": "sha256:fceedf9c18f02a565cb02f6633135a65e1baac2dc245ef974180101feaf2985f",
+    "service_http_status": "200"
+  },
+  "validity": {
+    "protocol_validity": "VALID",
+    "perturbation_strength": "LIMITED（image/model artifact 未變）",
+    "claim_supported": "robust to service recreation",
+    "claim_not_supported": "robust to a different semantic model version/model rebuild"
+  },
+  "denominator_this_perturbation": 8,
+  "flip_count": 0,
+  "flipped": [],
+  "observations": [
+    {
+      "question": "點退帳單的金額是怎麼算的",
+      "baseline": [
+        "single",
+        null
+      ],
+      "observed": [
+        "single",
+        null
+      ],
+      "flipped": false,
+      "gate_verdict": "block",
+      "decision_margin": 0.0257
+    },
+    {
+      "question": "點退做完後，帳單會自動出來嗎？",
+      "baseline": [
+        "single",
+        null
+      ],
+      "observed": [
+        "single",
+        null
+      ],
+      "flipped": false,
+      "gate_verdict": "block",
+      "decision_margin": 0.0481
+    },
+    {
+      "question": "收據 PDF 在哪裡下載",
+      "baseline": [
+        "single",
+        null
+      ],
+      "observed": [
+        "single",
+        null
+      ],
+      "flipped": false,
+      "gate_verdict": "block",
+      "decision_margin": 0.1505
+    },
+    {
+      "question": "系統怎麼算點退帳單的金額",
+      "baseline": [
+        "single",
+        null
+      ],
+      "observed": [
+        "single",
+        null
+      ],
+      "flipped": false,
+      "gate_verdict": "block",
+      "decision_margin": 0.0119
+    },
+    {
+      "question": "我的這張點退帳單金額怎麼算出來的",
+      "baseline": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": false,
+      "gate_verdict": "abstain",
+      "decision_margin": 0.0114
+    },
+    {
+      "question": "我這筆點退帳單怎麼會是這個數字",
+      "baseline": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": false,
+      "gate_verdict": "allow",
+      "decision_margin": 0.0384
+    },
+    {
+      "question": "幫我查點退帳單金額",
+      "baseline": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": false,
+      "gate_verdict": "allow",
+      "decision_margin": 0.0243
+    },
+    {
+      "question": "這張帳單的收據金額多少",
+      "baseline": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": false,
+      "gate_verdict": "allow",
+      "decision_margin": 0.2672
+    }
+  ]
+}

@@ -264,7 +264,7 @@ protocol v1 PASS
   門檻 `bilateral_pass = 8/8`（雙邊缺一不可）。
   _Requirements: 1.1, 1.2, 1.3, 6.1_
 
-- [ ] 5.2 **🧠主** 執行擾動 P1 `corpus_add_sibling`×3／P2 `semantic_model_rebuild`×1／
+- [x] 5.2 **🧠主** 執行擾動 P1 `corpus_add_sibling`×3／P2 `semantic_model_rebuild`×1／
   P3 `phrasing_variant`×1，量 `flip_rate ≤ 1/8` 且**不得有任一筆反覆翻面**。
   _Requirements: 3.2, 3.3_
 
@@ -1085,3 +1085,39 @@ docker inspect aichatbot-semantic-model --format 'container={{.Id}}\nimage={{.Im
 `image_before == image_after` → **perturbation strength LIMITED**。
 **支持**「robust to service recreation」；**不支持**「robust to a different semantic model version」。
 ⚠️ 即使 image 相同也**不得**事後宣布 P2 無效而從分母刪掉——那是改凍結規則。
+
+### ✅ 5.2 結算（2026-08-24）——**兩條結論並列，不得只寫 PASS**
+
+```text
+Formal protocol-v1 robustness : PASS
+  P1 corpus_add_sibling   3×8 = 24   flips 0
+  P2 semantic_model_rebuild 1×8 = 8  flips 0
+  P3 phrasing_variant     1×8 =  8   flips 4
+  ────────────────────────────────────────
+  合計 4 / 40 = 10.0%   門檻 ≤12.5%   → PASS
+  「不得有任一筆反覆翻面」→ 成立（四筆各只在 P3 翻面，於 P1×3 與 P2 皆穩定）
+
+P3 adverse finding : 4/8
+  保義改寫下改變 route；6 個變體失敗歸因於 extractor/gate 的 lexical coverage，
+  1 個歸因於既有 retrieval/facet drift（gate 判 allow）
+```
+
+⚠️ **這個 PASS 只能宣稱「符合預先凍結的 aggregate robustness threshold」**，
+SHALL NOT 表述為 phrasing robust／generalized／routing quality improved。
+
+**P2 的兩欄判定（host 端由業主執行 force-recreate）**：
+
+```text
+container_before 369e57723b30…  ≠  container_after 0916e5657394…   → protocol validity  VALID
+image_before     sha256:fceedf9c18f0…  ==  image_after 同值          → perturbation strength LIMITED
+service HTTP 200                                                     → service restored
+
+支持的主張  ：robust to service recreation
+不支持的主張：robust to a different semantic model version/model rebuild
+```
+
+⚠️ image 相同**不構成**把 P2 從分母刪除的理由——那會改凍結規則。
+但也**不得**把它說成測過 model-version drift；同 image ＋ stateless reranker，
+這一輪擾動在效果上可能近乎 no-op。
+
+證據：`evidence/protocol-v1-p1-corpus-sibling.json`／`-p2-model-rebuild.json`／`-p3-phrasing.json`。
