@@ -242,6 +242,33 @@ async def test_membership_and_rollout_scope_are_two_separate_layers(pool):
         "已宣告語義契約但不在本次 rollout scope → SHALL NOT 納管（兩層被摺疊了）"
 
 
+class _UndeclaredFaceInScope:
+    """在 rollout scope 內、但**未宣告**語義契約的 Face。
+
+    ⚠️ 這是兩層契約的**另一半**：只測「宣告了但未啟用」會漏掉「啟用清單裡但沒宣告」——
+    實測突變顯示，少了本條，「把 `gate_applies_to` 改成只看 rollout scope」**不會被抓到**。
+    """
+    key = "bill_diagnosis"           # 在 LEVEL_A_INSTANCE_GATE_SCOPE 內
+    persona_role = None
+    topic_scope = {"mode": "category", "category": "條件診斷：帳單"}
+    grounding_scope = {"required_slots": ["bill_ref"]}      # ⚠️ 刻意沒有宣告
+
+
+@pytest.mark.req("routing-disambiguation:2.5")
+async def test_in_rollout_scope_but_undeclared_is_not_governed(pool):
+    """**目前應為綠**：在啟用清單內但未宣告 → SHALL NOT 納管。
+
+    ⚠️ 缺欄位一律 `False`（fail-closed by scope）：舊 Face 未補宣告時不得被意外納管。
+    ⚠️ 本條同時擋掉「以 face key 推導 membership」——那是 erratum 01 原則②禁止的。
+    """
+    from services.instance_reference_gate import (gate_applies_to, in_gate_rollout_scope,
+                                                  is_instance_requiring_face)
+    face = _UndeclaredFaceInScope()
+    assert in_gate_rollout_scope(face) is True, "本控制的前提（key 在 rollout scope 內）已不成立"
+    assert is_instance_requiring_face(face) is False, "未宣告卻算 membership——判準偷偷用了 key 或 slot"
+    assert gate_applies_to(face) is False
+
+
 @pytest.mark.req("routing-disambiguation:2.5")
 async def test_level_a_face_satisfies_both_layers(pool):
     """**目前應為紅**：`bill_diagnosis` 是唯一兩層皆成立者（erratum 01 逐 Face 裁定）。

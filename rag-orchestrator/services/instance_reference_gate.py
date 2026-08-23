@@ -188,3 +188,46 @@ def suppresses_hint(decision: GateDecision) -> bool:
     ⚠️ 與 `verdict` 分屬兩件事——把兩者併成一個布林，`abstain` 就在型別上消失了。
     """
     return decision.verdict == "block"
+
+
+# ════════════════════════════════════════════════════════════════════
+# membership × rollout scope（design erratum 01｜任務 3.3／4.1｜R2.5, R5.2, R8）
+# ════════════════════════════════════════════════════════════════════
+#
+# erratum 01 把兩個曾被混在一起的命題拆開，**兩層皆成立才實際納管**：
+#
+#   is_instance_requiring_face(face)   ← C：Face 語義上是否要求個體指涉（產品／架構語義）
+#   in_gate_rollout_scope(face)        ← D：本次 release 是否已驗證可對它啟用（成熟度邊界）
+#   gate_applies_to(face)              ← C ∧ D，**沒有第三條隱藏推論**
+#
+# ⚠️ 兩層不得摺疊：摺疊後 Level B 擴張就得回頭改 **membership 定義**，
+#    語義契約會退化成 rollout 清單——那正是 erratum 否決「明列 key 作為 membership」的理由。
+
+#: Face 自身宣告的鍵（`grounding_scope` 內，與 `required_slots`／`enabled_gate` 同處）
+INSTANCE_REFERENCE_KEY: Final[str] = "requires_instance_reference"
+
+#: **D：本次 release 已驗證可納管者**（Level A）。
+#: ⚠️ 它表示「這次驗到哪」，**不表示**「這個 Face 語義上需要 instance」——後者只看 C。
+LEVEL_A_INSTANCE_GATE_SCOPE: Final[frozenset] = frozenset({"bill_diagnosis"})
+
+
+def is_instance_requiring_face(config) -> bool:
+    """**C**：只讀 Face 自己的明示契約 `grounding_scope.requires_instance_reference`。
+
+    ⚠️ **不得 fallback**：`bool(required_slots)`／`bill_ref ∈ required_slots`／
+    `key == "bill_diagnosis"` 一律不得作為推導來源（erratum 01 原則 ①②）。
+    ⚠️ 缺欄位 → `False`（fail-closed by scope）：舊 Face 未補宣告時
+    **不得**被意外納管，Level A 的隔離才是結構性的而非靠運氣。
+    """
+    scope = getattr(config, "grounding_scope", None) or {}
+    return scope.get(INSTANCE_REFERENCE_KEY) is True
+
+
+def in_gate_rollout_scope(config) -> bool:
+    """**D**：本次 release 是否已驗證可對此 Face 啟用 gate。"""
+    return getattr(config, "key", None) in LEVEL_A_INSTANCE_GATE_SCOPE
+
+
+def gate_applies_to(config) -> bool:
+    """**C ∧ D**。此處刻意只有一行——任何額外推論都會讓兩層契約失效。"""
+    return is_instance_requiring_face(config) and in_gate_rollout_scope(config)

@@ -192,3 +192,20 @@ C contract defect                   0 / 32
 
 ⚠️ 剩下 4 條 B 全部指向**任務 4.1**（`is_instance_requiring_face`／
 `in_gate_rollout_scope`／`gate_applies_to`），與 erratum 01 的兩層契約同步落地才能升格。
+
+## 附記三（2026-08-23，任務 3.3／4.1 之後）：**B 歸零**
+
+兩層 membership 契約（C ∧ D）落地，1.4 剩下的 4 條 B 全數升格 A，
+並各自通過突變（M25–M29，全殺）。其中 **M27 當場抓到契約缺口**——
+原本只測「已宣告但不在 rollout scope」，補上「在 rollout scope 內但未宣告」後才殺得掉。
+
+```text
+1.x 契約母體 33（1.4 因補缺口 +1）
+
+A semantic effectiveness proven   33 / 33
+B scaffold                         0 / 33
+C contract defect                  0 / 33
+```
+
+⚠️ 這**不代表**候選已可用：protocol v1 驗收（Task 5）、unseen holdout（Task 6）、
+Level A 範圍宣告與啟用（Task 7）皆未做，且 seam 尚未串接。

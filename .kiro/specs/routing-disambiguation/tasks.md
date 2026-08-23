@@ -208,7 +208,9 @@ protocol v1 PASS
   explanation_request，veto 會誤殺，正是 3.4 那類「修一邊傷另一邊」。
   _Requirements: 1.3_
 
-- [ ] 3.3 **🧠主** 實作 `block` 的**作用域**：抑制該問句對**白名單內所有 instance-requiring Face**
+- [ ] 3.3 **🧠主**（⚠️ **改排入 Task 4**：本條要求的是 **seam-level suppression semantics**，
+  gate 純函式階段做不到，也不該偷做——業主 2026-08-23 裁示）
+  實作 `block` 的**作用域**：抑制該問句對**白名單內所有 instance-requiring Face**
   的 Hint，**不是** `continue` 下一個分類。非白名單 Face 不受影響。
   _Requirements: 1.2, 2.5_
 
@@ -220,7 +222,7 @@ protocol v1 PASS
 
 ## 4. production seam 整合
 
-- [ ] 4.1 **🧠主** 實作**兩層**判定（erratum 01 改判；**取代原白名單版本**）：
+- [x] 4.1 **🧠主** 實作**兩層**判定（erratum 01 改判；**取代原白名單版本**）：
 
   ```text
   is_instance_requiring_face(cfg)  ← C：讀 Face 自身的 requires_instance_reference 宣告
@@ -862,3 +864,49 @@ CONTROL   3/5  block（本就應單發，不受影響）／2/5 abstain（no-sign
 ⚠️ **verdict 與 rollout action 分屬兩欄**：`suppresses_hint()` 只認 `block`。
 `abstain` 的政策效果像 allow，**語義不是 allow**——稽核、holdout 的 abstain 率、
 未來 L5 clarification 都要讀得到它。M24 就是把兩者併回一欄的突變，已被鎖住。
+
+### ✅ 3.3（業主編號）＝ 任務 4.1 的兩層判定（2026-08-23）
+
+⚠️ **編號對照**：業主的「3.3 membership／rollout scope 合取」＝ tasks 原編號 **4.1**；
+tasks 原編號 **3.3（`block` 作用域）** 因屬 seam-level，**改排入 Task 4**。
+兩者不是同一件事，此處記在 4.1 名下並於 3.3 加註。
+
+```text
+is_instance_requiring_face(face)   ← C：只讀 grounding_scope.requires_instance_reference
+in_gate_rollout_scope(face)        ← D：LEVEL_A_INSTANCE_GATE_SCOPE = {bill_diagnosis}
+gate_applies_to(face)              ← C ∧ D，**只有一行，沒有第三條隱藏推論**
+```
+
+**C 不得 fallback**：`bool(required_slots)`／`bill_ref ∈ required_slots`／`key == bill_diagnosis`
+一律不得作為推導來源；**缺欄位 → `False`**（fail-closed by scope）——
+舊 Face 未補宣告時不得被意外納管，Level A 的隔離才是結構性的而非靠運氣。
+
+**Face 宣告落地**：`database/migrations/20260823_bill_diagnosis_requires_instance_reference.sql`
+——**只改 `bill_diagnosis` 一個 Face**（逐 Face 裁定，禁止批次推導）。
+已套 `aichatbot_test` 並回證冪等（第二次 `UPDATE 0`）。
+⚠️ **production 未套**：屬線上操作，由業主自行執行
+`bash rag-orchestrator/database/migrate.sh --apply`（帳本感知）；套用後須清設定快取。
+⚠️ 宣告 ≠ 啟用：實際納管仍需 rollout scope 同時成立，且旗標預設 false、holdout 未過前不得啟用。
+
+**1.4 四條 B → A 升格，並先過突變**：
+
+| ID | 突變 | 被殺的 test ID |
+|---|---|---|
+| M25 | membership 退回 `bool(required_slots)` | membership_is_not_bool_required_slots／in_scope_but_undeclared |
+| M26 | `gate_applies_to` 只看 C（丟掉 rollout scope）| membership_and_rollout_scope_are_two_separate_layers |
+| M27 | `gate_applies_to` 只看 D（丟掉語義 membership）| **in_scope_but_undeclared**（見下）|
+| M28 | membership 以 face key 推導 | in_scope_but_undeclared／two_separate_layers |
+| M29 | 缺欄位預設 `True`（fail-open by scope）| 三條 |
+
+⚠️ **突變當場抓到契約缺口**：原本只測「已宣告但不在 rollout scope」，
+**M27（只看 D、丟掉語義 membership）不會被抓到**。
+補上另一半「在 rollout scope 內但未宣告 → 不得納管」後，M27 才被殺。
+兩層契約要**兩個方向都測**才成立——這正是 1.5 突變紀律要防的形態。
+
+```text
+1.x 契約母體 33（1.4 新增 1 條）
+
+A semantic effectiveness proven   33 / 33
+B scaffold                         0 / 33
+C contract defect                  0 / 33
+```
