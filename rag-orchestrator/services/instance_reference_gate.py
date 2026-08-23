@@ -4,9 +4,9 @@
 責任：使規則集成為**可追溯、可比較**的資產，並讓「未經 matching holdout 驗證者
 不得啟用 gate」成為**結構上不可繞過**的事實。
 
-⚠️ **本檔目前不含 gate 判定邏輯**（`allow`／`block`／`abstain` 屬任務 3.1）。
-   Task 2 的邊界是：**問句側 signal 成為 deterministic、版本化、可稽核，
-   但尚未獲准影響 production routing 的 candidate asset。**
+本檔含 **gate 判定**（任務 3.1／3.2）與 **membership × rollout 合取**（任務 3.3）。
+⚠️ **仍不碰 seam**：`GateDecision` 尚未被 production routing 消費（任務 4.2），
+   故 routing 行為此刻完全不變。
 
 ⚠️ **三重 digest 綁定**，缺一不可：
 
@@ -26,7 +26,7 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Final, Literal, Mapping
+from typing import Final, FrozenSet, Literal, Mapping
 
 HoldoutStatus = Literal["not_run", "passed", "failed"]
 
@@ -121,3 +121,70 @@ def assert_gate_enablable(manifest: RulesetManifest, *, active_protocol_digest: 
 
 #: 供稽核與報表引用；與 protocol v1 的 digest 同源
 ACTIVE_PROTOCOL_DIGEST: Final[str] = "4690a258f502d98d"
+
+
+# ════════════════════════════════════════════════════════════════════
+# gate 判定（任務 3.1／3.2｜R1.1, R1.2, R1.3, R3.1）
+# ════════════════════════════════════════════════════════════════════
+
+Verdict = Literal["allow", "block", "abstain"]
+
+
+@dataclass(frozen=True)
+class GateDecision:
+    """三值判定 ＋ 可稽核的理由（命中哪些正／反向證據）。"""
+
+    verdict: Verdict
+    reason: str
+    positive: FrozenSet[str] = frozenset()
+    counter: FrozenSet[str] = frozenset()
+
+
+def instance_reference_gate(evidence, *, face_requires_instance: bool) -> GateDecision:
+    """判定表（design v1.2）——**不得順手加產品 heuristic**：
+
+    ```text
+    face 不要求 instance          → allow
+    positive ≠ ∅ 且 counter = ∅   → allow
+    positive = ∅ 且 counter ≠ ∅   → block      ← 雙條件，缺一不可
+    positive ≠ ∅ 且 counter ≠ ∅   → abstain
+    positive = ∅ 且 counter = ∅   → abstain
+    ```
+
+    ⚠️ **反向標記不得採 veto**。實測反例就在凍結案例集裡：
+
+    ```text
+    「我的這張點退帳單金額怎麼算出來的」
+      positive = {possessive}   counter = {explanation_request}
+    ```
+
+    寫成 `if counter: block` 會誤殺這一筆——正是前案 3.4
+    「rule 側修好、instance 側受傷」的形態（design 決策 4）。
+
+    ⚠️ **`abstain` 是第三態，不是「還沒決定的 allow」**。
+    rollout 政策（不阻擋）由 `suppresses_hint()` 表示，
+    **與 verdict 分屬兩欄**——政策效果像 allow，不代表語義是 allow：
+    稽核、holdout 的 abstain 率、未來 L5 clarification 都要讀得到它。
+    """
+    positive = frozenset(getattr(evidence, "positive", frozenset()) or frozenset())
+    counter = frozenset(getattr(evidence, "counter", frozenset()) or frozenset())
+
+    if not face_requires_instance:
+        return GateDecision("allow", "face-not-instance-requiring", positive, counter)
+    if positive and not counter:
+        return GateDecision("allow", f"positive={sorted(positive)}", positive, counter)
+    if not positive and counter:
+        return GateDecision("block", f"no-positive+counter={sorted(counter)}", positive, counter)
+    if positive and counter:
+        return GateDecision(
+            "abstain", f"mixed positive={sorted(positive)} counter={sorted(counter)}",
+            positive, counter)
+    return GateDecision("abstain", "no-signal", positive, counter)
+
+
+def suppresses_hint(decision: GateDecision) -> bool:
+    """**rollout action**：只有 `block` 抑制 Hint；`abstain` 維持既有行為。
+
+    ⚠️ 與 `verdict` 分屬兩件事——把兩者併成一個布林，`abstain` 就在型別上消失了。
+    """
+    return decision.verdict == "block"

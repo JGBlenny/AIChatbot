@@ -199,11 +199,11 @@ protocol v1 PASS
 
 ## 3. `InstanceReferenceGate`
 
-- [ ] 3.1 **🧠主** 實作三值判定 `allow`／`block`／`abstain`，並回傳可稽核的 `reason`
+- [x] 3.1 **🧠主** 實作三值判定 `allow`／`block`／`abstain`，並回傳可稽核的 `reason`
   （命中哪些正／反向證據）。
   _Requirements: 1.1, 1.2, 3.1_
 
-- [ ] 3.2 **🧠主** 實作 `block` 的**雙條件**：需同時「無正向證據」且「有反向證據」。
+- [x] 3.2 **🧠主** 實作 `block` 的**雙條件**：需同時「無正向證據」且「有反向證據」。
   ⚠️ 反向標記**不得採 veto**——實測有一筆 instance 案例同時命中 possessive 與
   explanation_request，veto 會誤殺，正是 3.4 那類「修一邊傷另一邊」。
   _Requirements: 1.3_
@@ -212,7 +212,7 @@ protocol v1 PASS
   的 Hint，**不是** `continue` 下一個分類。非白名單 Face 不受影響。
   _Requirements: 1.2, 2.5_
 
-- [ ] 3.4 **⚡F** 補測試鎖住 **`abstain` 不得被摺疊**成 `allow` 或 `block`。
+- [x] 3.4 **⚡F** 補測試鎖住 **`abstain` 不得被摺疊**成 `allow` 或 `block`。
   ⚠️ 訊號不足時假裝有結論，正是本案要消滅的失敗形態。
   _Requirements: 1.3_
 
@@ -822,3 +822,43 @@ M17 拿掉 protocol 綁定／M18 降級為 warning／**M19 恆拒**），**全�
 | **尚未獲准影響 routing** | 2.6：`holdout=not_run` → `assert_gate_enablable` 拒絕；**seam 尚未串接**（任務 4.2）|
 
 **下一步進 Task 3**——那是這個 signal **第一次**取得 routing decision semantics。
+
+### ✅ 3.1／3.2／3.4（2026-08-23）—— gate 判定，仍不碰 seam
+
+`services/instance_reference_gate.py` ＋ `tests/unit/decision/test_instance_reference_gate_req.py`
+（14 筆全綠）。判定表照 design v1.2 逐列實作，**未加任何產品 heuristic**。
+
+**2.0 armed falsifier：gate 模組一存在即自動上膛，第一時間跑，PASS**
+（4 passed／0 skipped，不再是 armed scaffold）：
+
+```text
+我的收據在哪            → allow    suppress=False
+我這筆點退的錢怎麼怪怪的  → allow    suppress=False
+```
+
+1.6「membership 與 facet ownership 可分離」因此取得 **gate-level 第二層證據**
+（第一層為 2.0 的 extractor 層）。⚠️ **仍不決定 Req.4 的 facet ownership。**
+
+**凍結案例集的 gate 實測**（`face_requires_instance=True`）：
+
+```text
+RULE      4/4  block    suppress=True    ← no-positive + counter，雙條件成立
+INSTANCE  3/4  allow    suppress=False
+          1/4  abstain  suppress=False   ← 正反同時命中，**未被 veto 誤殺**
+UNDECIDED 2/2  allow    suppress=False
+CONTROL   3/5  block（本就應單發，不受影響）／2/5 abstain（no-signal）
+```
+
+**突變驗證（5 個，全數被殺）**：
+
+| ID | 突變 | 被殺數 |
+|---|---|---|
+| M20 | 反向標記採 veto（`if counter: block`）| 6 |
+| M21 | abstain → block（第三態塌向 block）| 5 |
+| M22 | **abstain → allow**（最容易被忽略的方向）| 4 |
+| M23 | no-signal → allow（無訊號假裝有結論）| 2 |
+| M24 | rollout action 併回 verdict（abstain 也抑制）| 1 |
+
+⚠️ **verdict 與 rollout action 分屬兩欄**：`suppresses_hint()` 只認 `block`。
+`abstain` 的政策效果像 allow，**語義不是 allow**——稽核、holdout 的 abstain 率、
+未來 L5 clarification 都要讀得到它。M24 就是把兩者併回一欄的突變，已被鎖住。
