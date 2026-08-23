@@ -901,3 +901,76 @@ routing metadata 問題，**不是否定 Face entry 本身**。兩邊都要保�
 
 ⚠️ 兩筆 corpus-exposure failure（`test_grounding_by_parent_expands_to_children`、
 `test_three_layer_context_isolated`）維持獨立 triage，**不併入本結論**。
+
+
+---
+
+## 3.4 修法 **REFUTED**（2026-08-23 獨立 verifier ＋ 業主裁示）
+
+### 判定：instance-oriented anchor 修法不足，**不放行、不追加 anchor**
+
+原三筆 regression 確實轉綠（83 passed / 0 failed），但 matched before/after
+＋ 對抗性變體證明修法本身不成立：
+
+| # | 反證 | 證據 |
+|---|---|---|
+| 1 | 合理 **instance** query 掉回 single | 「我這筆點退帳單怎麼會是這個數字」→ single（3519 **0.905** vs 錨點 **0.902**，差 **0.003**）|
+| 2 | 合理 **rule** query 反被錨點拉進 Face | 「系統怎麼算點退帳單的金額」→ dialog（錨點 **0.967** vs 3519 **0.963**，差 **0.004**）|
+| 3 | 判別完全依賴 **0.003～0.005** 的相似度競爭 | corpus 新增或 semantic-model 重建即可能翻面 |
+| 4 | integration **原本沒有 instance-side coverage** | 「三筆 regression 綠了」曾構成**假綠**——修法只證明了一半 |
+
+> **問題性質已改變**：不是「還少一個好句子」，而是
+> **rule KB 與 instance-routing anchor 在 embedding space 高度重疊**，
+> 兩邊靠極小排名差決定產品語義。再補一個錨點只是增加第三個相互競爭的向量，
+> **不消除判別機制本身的脆弱性**，且等同「對著測試集調向量排名」。
+
+處置：`ae2aedc` 已由 `89ff489` revert；該 migration **從未套用至 production**。
+
+### 3.3 的 defect 判定**不受影響**
+
+```text
+HARNESS_DRIFT 0｜EXPECTATION_DRIFT 0｜REGRESSION 3｜根因＝routing metadata overreach
+```
+
+被推翻的只是 3.4 所選的修法。**Requirement 2 的精確狀態**：
+
+> **production defect 已證實；本 spec 範圍內嘗試的 metadata／anchor 修法已被反證不足，
+> 修復需要超出 Req.8 現有邊界的設計工作。**
+
+### 已補：雙向 regression suite（本輪唯一保留的產出）
+
+`test_facet_entry_routing_req.py` 新增 `BILLING_INSTANCE_CASES`（4 筆），
+**斷言到 facet 而非僅 dialog**——3.4 驗證期間「我的收據在哪」被誤記為 instance 通過，
+實測它進的是「帳單異常」而非「條件診斷：帳單」；只看 `route=='dialog'` 的判定式
+會把**跑錯面向算成成功**。同時把「系統怎麼算點退帳單的金額」補入規則側。
+
+另立 `BILLING_INSTANCE_FACET_UNDECIDED`：實測進其他面向、**產品歸屬尚未定案**者
+（「我的收據在哪」／「我這筆點退的錢怎麼怪怪的」皆進「帳單異常」），
+定案前不列入正向斷言——**不得拿「跑錯面向」當成能力成立的證據**。
+
+### 現行 production 狀態（本 suite 首次同時描述雙邊能力）
+
+```text
+84 passed / 4 failed
+  instance 側 4/4 ✅   ← T-1 能力目前成立
+  rule     側 4/4 ❌   ← 代價：規則問句被誤捕
+```
+
+> **這兩件事共用同一份 metadata，用現行機制拆不開**——
+> 這正是另立設計案要解的問題，也是本 suite 存在的價值：
+> 它讓「修好一邊就宣稱成功」在結構上不再可能。
+
+⚠️ **在設計案定案前，不得為求綠燈調整本組任一斷言。**
+
+### 另立案（範圍外）：routing disambiguation
+
+要回答的**不是**「該用哪個 instance-marker」，而是：
+
+> **當同一語義主題同時包含教學型與 instance-specific 問句時，
+> routing 應在哪一層取得足夠訊號，把兩者可靠分開？**
+
+候選層次（何者可行、何者觸及 Req.8，由新案研究）：
+lexical／structural instance signal｜routing-specific metadata／trigger representation｜
+intent stage｜applicability gate｜clarification｜KB responsibility 拆分。
+
+⚠️ **不得因為 embedding 排名分不開，就在本 spec 內偷塞全域 heuristic**（Req.8 明文排除）。

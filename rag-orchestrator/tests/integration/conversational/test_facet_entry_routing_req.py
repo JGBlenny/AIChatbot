@@ -166,7 +166,47 @@ BILLING_SINGLE_CASES = [
     "固定虛擬帳號會過期嗎",
     "押金設算息怎麼計算",
     "點退帳單的金額是怎麼算的",           # 邊界：含「帳單」但屬合約域教學（3519 單發）
+    "系統怎麼算點退帳單的金額",           # 同上句型變體（3.4 verifier A2 補入）
 ]
+
+
+# ── 帳單診斷：instance-specific 應進對話（spec conversational-routing-execution 任務 3.4）──
+#
+# ⚠️ **本組存在的理由**：20260731 §3（T-1）替三筆內容型 KB 掛面向分類，是為了讓
+#    「查我的實值」問法能進面向。但 integration 原本**只守規則側**
+#    （BILLING_SINGLE_CASES 7 筆），T-1 想保住的能力**沒有任何測試守著**——
+#    於是「三筆 regression 綠了」曾構成假綠：修法只證明了一半。
+#    本組把雙邊能力第一次真正寫進驗收集合。
+#
+# ⚠️ **必須斷言到 facet，不能只驗 dialog**：3.4 驗證期間「我的收據在哪」被誤記為
+#    instance 通過，實測它進的是「帳單異常」（3936）而非「條件診斷：帳單」——
+#    只看 route=='dialog' 的判定式會把跑錯面向算成成功。
+#
+# ⚠️ **已知紅**：本組與上方三筆規則案例目前皆為 known-red——
+#    3.4 所選的 anchor 修法已被獨立 verifier REFUTED（rule 與 instance 兩側
+#    僅靠 0.003～0.005 相似度差分開，corpus 一動即翻面），修復另立
+#    routing-disambiguation 設計案。**在該案定案前不得為求綠燈調整本組斷言。**
+BILLING_INSTANCE_CASES = [
+    "我的這張點退帳單金額怎麼算出來的",
+    "我這筆點退帳單怎麼會是這個數字",
+    "幫我查點退帳單金額",
+    "這張帳單的收據金額多少",
+]
+
+# ── facet 歸屬待定：不得拿來替 T-1 背書 ──
+# 以下問句實測進的是**其他**帳單診斷面向，而非「條件診斷：帳單」。
+# 它們產品上究竟該去哪個面向**尚未定案**，在定案前不列入正向斷言——
+# 否則就是拿「跑錯面向」當成能力成立的證據（3.4 驗證期間已犯過一次）。
+#   「我的收據在哪」          → 帳單異常（3936 租客說看不到帳單 找不到）
+#   「我這筆點退的錢怎麼怪怪的」→ 帳單異常（3934 帳單金額怪怪的 跟預期不一樣）
+# 「怎麼怪怪的」本就是帳單異常的句型，故此二筆的正確歸屬需獨立判定。
+BILLING_INSTANCE_FACET_UNDECIDED = [
+    "我的收據在哪",
+    "我這筆點退的錢怎麼怪怪的",
+]
+
+#: instance 問法應落在的面向——不得只驗 dialog（見上方說明）
+BILLING_INSTANCE_FACET = "條件診斷：帳單"
 
 
 # ── IoT：應進對話（iot-conversational-facets 任務 3.4 / R6.3, R9.2）──
@@ -335,6 +375,16 @@ async def test_billing_openers_enter_dialog(retriever, pool, question):
     kind, detail, best = await _route(retriever, pool, question)
     assert kind == "dialog" and detail in BILLING_FACES, \
         f"應進帳務對話卻為 {detail}：{question}｜{_fmt(best)}"
+
+
+@pytest.mark.req("conversational-routing-execution:2.1")
+@pytest.mark.parametrize("question", BILLING_INSTANCE_CASES)
+async def test_billing_instance_questions_enter_diagnosis_facet(retriever, pool, question):
+    """instance-specific 問法必須進「條件診斷：帳單」——斷言到 facet，非僅 dialog。"""
+    kind, detail, best = await _route(retriever, pool, question)
+    assert kind == "dialog" and detail == BILLING_INSTANCE_FACET, (
+        f"instance 問法應進「{BILLING_INSTANCE_FACET}」卻為 {kind}/{detail}：{question}｜{_fmt(best)}"
+        "\n（此為 T-1 要保住的查實值能力；落回單發＝使用者拿到通則說明而非自己那筆的資料）")
 
 
 @pytest.mark.req("billing-conversational-facets:11.2")
