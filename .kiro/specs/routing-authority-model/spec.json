@@ -1,0 +1,22 @@
+{
+  "feature_name": "routing-authority-model",
+  "created_at": "2026-08-24T12:30:00Z",
+  "updated_at": "2026-08-24T12:30:00Z",
+  "phase": "discovery",
+  "language": "zh-TW",
+  "predecessor": {
+    "spec": "routing-disambiguation",
+    "status": "REFUTED — CLOSED",
+    "closure_commit": "91c589a",
+    "post_mortem": "../routing-disambiguation/post-mortem-01-refuted-candidate.md",
+    "relation": "本案引用 v1 的 closure／post-mortem 作為**已證實前提**，不重跑其研究"
+  },
+  "project_description": "核心問題：當 Knowledge retrieval 提出 Face Routing Hint 時，系統應由什麼 authority 判斷該 Hint 是否真的適用於這個 query？本案比 v1 高一層——不是再問「怎麼分 rule／instance」，而是問「誰有資格讓一個 Routing Hint 生效」。v1 已用 unseen holdout 反證 lexical query-side candidate（routing effect 0/50），並證明 signal coverage 與 routing authority 可分離、單修任一皆不足；其共同上游原因目前有 H1（KB Hint overloading）／H2（缺 first-class query semantics）／H3（Face applicability contract 不完整）三個競爭假說，尚無 winner。discovery 只回答三題：①Routing Hint 現在實際擁有多少 authority；②有哪些既有 first-class signal 可成為 authority source（須獨立於 answer similarity）；③H1／H2／H3 哪些是必要條件、哪些只是伴隨症狀（附 falsifier，允許最後仍無 winner）。明確不做：新 regex、新 anchor、擴 Level-A allowlist、把 categories 搬表就宣稱解耦、重啟 intent classifier 就宣稱 H2 成立、加 applicability prompt 就宣稱 H3 成立——這些都是 implementation candidate，不是 authority discovery。",
+  "approvals": {
+    "discovery": { "generated": false, "approved": false },
+    "requirements": { "generated": false, "approved": false },
+    "design": { "generated": false, "approved": false },
+    "tasks": { "generated": false, "approved": false }
+  },
+  "implementation": { "started": false, "completed": false, "tasks_completed": [] }
+}
