@@ -1,10 +1,31 @@
 {
   "protocol_version": "v2",
-  "frozen_at": "2026-08-23T12:10:00Z",
+  "parent_protocol_digest": "4690a258f502d98d",
+  "replaces_v1": false,
+  "acceptance_role": "required_additive_contract",
+  "final_acceptance": {
+    "protocol_v1_must_pass": true,
+    "protocol_v2_must_pass": true,
+    "statement": "v1 是原凍結 robustness yardstick；v2 是後來由 design review 暴露出的 additive structural contract。v2 不重寫、不取代 v1，但最終 design validation 兩者都必須通過。",
+    "n4_classification": "deterministic contract／future-proof invariant，**非** production incident reproduction；故不受 Req.9.3 ≥30 可判定案例的統計效力約束（該約束針對 holdout）。"
+  },
+  "frozen_at": "2026-08-23T12:40:00Z",
   "spec": "routing-disambiguation",
   "requirement": "1.2, 1.3, 3.5",
-  "provenance": "design v1.1 業主審查 Must ④：`block` 改為抑制同型 Hint、非 continue 下一分類，並要求 multi-category negative control。v1 凍結在該 Must 之前，故新增案例只能另立版本。",
-  "purpose": "把 multi-category 情境的**產品效果**寫成可執行契約；v1 的三筆凍結案例恰為單一相關分類，會出現「案例綠但契約未成立」。",
+  "provenance": {
+    "id": "design_v1_1_must_4",
+    "design_review": "design v1.1 業主審查 Must ④：`block` 改為抑制同型 Hint、非 continue 下一分類，並要求 multi-category negative control。v1 凍結在該 Must 之前，故新增案例只能另立版本。",
+    "created_before_candidate_implementation": true
+  },
+  "supersedes": {
+    "protocol_digest": "791e84c38ae813fd",
+    "status": "superseded_before_use",
+    "reason": "provenance 分裂：v2 本體只定義 N4 案例與量尺，其制度地位（additive／不取代 v1／最終必須通過）只寫在 tasks.md。單獨拿到 protocol artifact 者無法自 v2 判斷它的地位。",
+    "change_scope": "**僅補 metadata**：未改動任何案例、expected route、metric 或 threshold。",
+    "measurements_taken_against_it": "none —— 修改時尚無 candidate implementation，亦未以 v2 量測過任何方案，故不構成事後改尺",
+    "after_first_measurement": "一旦以 v2 量測過任何方案，再要變更 SHALL 另立 v3 並保留 v2 結果"
+  },
+  "purpose": "multi-category structural invariants —— 把 multi-category 情境的**產品效果**寫成可執行契約；v1 的三筆凍結案例恰為單一相關分類，會出現「案例綠但契約未成立」。",
   "relation_to_v1": {
     "v1_protocol_digest": "4690a258f502d98d",
     "v1_status": "原封不動；digest 不變；acceptance evidence 全數保留，不被本版覆寫",
@@ -71,5 +92,5 @@
     "on_failure": "v2 未通過而需改量尺者，SHALL 另立 v3 並保留 v1／v2 結果",
     "holdout": "同 v1：production holdout SHALL NOT 參與方案選定、threshold 設定或本 protocol 的調整"
   },
-  "protocol_digest": "791e84c38ae813fd"
+  "protocol_digest": "26a6199116f738ec"
 }

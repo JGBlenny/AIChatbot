@@ -36,7 +36,11 @@ pytestmark = pytest.mark.integration
 VENDOR_ID = int(os.getenv("TEST_VENDOR_ID", "2"))
 
 #: 本控制凍結於 protocol **v2**（v1 不動、digest 不變）
-PROTOCOL_V2_DIGEST = "791e84c38ae813fd"
+#: ⚠️ `791e84c38ae813fd` 為 **superseded_before_use**：補上 v2 自描述 metadata
+#:    （acceptance_role／replaces_v1／final_acceptance／parent digest）後重算。
+#:    僅補 metadata，未動任何案例、expected route、metric 或 threshold；
+#:    修改時尚無 candidate implementation、亦未以 v2 量測過任何方案。
+PROTOCOL_V2_DIGEST = "26a6199116f738ec"
 
 _REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))))))
@@ -197,6 +201,17 @@ def test_cases_come_from_frozen_protocol_v2():
     assert v1["protocol_digest"] == "4690a258f502d98d" == _digest(v1), \
         "v1 被改動了——凍結量尺一旦可事後修改，Req.3.5 的時間因果即失效"
     assert v2["relation_to_v1"]["v1_protocol_digest"] == v1["protocol_digest"]
+
+    # v2 的**制度地位**須能從 v2 自身判讀，不得只寫在 tasks.md（provenance 分裂）
+    assert v2["replaces_v1"] is False
+    assert v2["acceptance_role"] == "required_additive_contract"
+    assert v2["final_acceptance"]["protocol_v1_must_pass"] is True
+    assert v2["final_acceptance"]["protocol_v2_must_pass"] is True, \
+        "v2 若非最終收案必要條件，N4 就成了旁觀者——design correctness contract 必須最終為綠"
+    assert v2["parent_protocol_digest"] == v1["protocol_digest"]
+    assert v2["provenance"]["id"] == "design_v1_1_must_4"
+    assert v2["provenance"]["created_before_candidate_implementation"] is True
+    assert v2["supersedes"]["status"] == "superseded_before_use"
 
     case = v2["additions"]["case_sets"]["MULTI_CATEGORY"]
     assert case["kb_shape"]["categories"] == MULTI_CATEGORY

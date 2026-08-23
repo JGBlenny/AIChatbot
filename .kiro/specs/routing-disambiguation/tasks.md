@@ -447,7 +447,8 @@ _meta contracts       → 於具 repo-root artifacts 的環境另外執行
 
 ### ✅ 1.3（2026-08-23）
 
-`.kiro/specs/routing-disambiguation/robustness-protocol-v2.json`（digest `791e84c38ae813fd`）
+`.kiro/specs/routing-disambiguation/robustness-protocol-v2.json`（digest `26a6199116f738ec`；
+建立時為 `791e84c38ae813fd`，補 metadata 後 **superseded_before_use**，見下方 1.4 後的補記）
 ＋ `rag-orchestrator/tests/integration/conversational/test_multi_category_gate_scope_req.py`
 ——6 筆，**2 紅 4 綠**（見下方紅綠定性）：
 
@@ -534,3 +535,35 @@ contract_renew／account_login）、`bill_ref`×4、`estate_ref`、`meter_ref`�
 
 **未動既有紅綠**：integration 由 `181 passed + 6 failed` → `185 passed + 8 failed`，
 差額恰為本檔 4 綠 2 紅。
+
+### 📌 v2 自描述 metadata 補全並重新 freeze（2026-08-23，業主裁示）
+
+```text
+791e84c38ae813fd  →  superseded_before_use
+26a6199116f738ec  →  現行 v2
+```
+
+**為什麼改**：不是內容缺失，而是 **provenance 分裂**——v2 本體只定義 N4 案例與量尺，
+它的**制度地位**（additive／不取代 v1／最終收案必要條件）卻只寫在 tasks.md。
+未來只拿到 evidence ＋ protocol artifact 的人，**無法從 v2 自身判讀它是什麼**。
+
+**為什麼現在改不構成事後改尺**：修改時**尚無任何 candidate implementation，
+亦未以 v2 量測過任何方案**（`supersedes.measurements_taken_against_it = "none"`）。
+**僅補 metadata**：未動任何案例、expected route、metric 或 threshold（改檔腳本內逐塊回證
+`additions`／`measurement_note`／`relation_to_v1` 逐字不變）。
+⚠️ **一旦以 v2 量測過任何方案，再要變更 SHALL 另立 v3 並保留 v2 結果。**
+
+補入欄位：`parent_protocol_digest`／`replaces_v1: false`／
+`acceptance_role: required_additive_contract`／
+`final_acceptance{protocol_v1_must_pass, protocol_v2_must_pass}`／
+`provenance{id: design_v1_1_must_4, created_before_candidate_implementation: true}`／
+`supersedes{...}`。這些**已成為可執行斷言**（1.3 測試逐條核對），不再只是散文。
+
+**時間線（到此仍無 candidate implementation／candidate measurement）**：
+
+```text
+v1 freeze → gap／design → 發現 Must ④ → v2 建立 → 1.3／1.4 contract scaffold
+→ v2 acceptance role 補全並重新 freeze
+──────────────────────────────────────────── ↑ 到此為止
+→ 1.5 → design erratum（1.6）→ Task 2 implementation
+```
