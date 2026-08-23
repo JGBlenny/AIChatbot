@@ -82,7 +82,7 @@ protocol v1 PASS
   ⚠️ 特別鎖 `failed` 那一路——原設計的 `result != None` 只防 missing、不防 failed。
   _Requirements: 3.5, 9.2_
 
-- [ ] 1.2 **⚡F** (P) 建立**wrong facet ≠ success**的斷言：instance 問句進入
+- [x] 1.2 **⚡F** (P) 建立**wrong facet ≠ success**的斷言：instance 問句進入
   「條件診斷：帳單」以外的任何 dialog SHALL 判為失敗。
   ⚠️ 前案兩度因只驗 `route == "dialog"` 而把跑錯面向算成成功。
   _Requirements: 1.4_
@@ -348,3 +348,38 @@ import 置於各測試函式內，使四條路徑**各自**變紅——整檔於
 > ⚠️ **1.1 的紅尚不足以證明斷言有效**：六筆紅在**同一個 ImportError**，
 > 一個寫錯的斷言（例如 `pytest.raises` 包錯範圍）此刻同樣顯示為紅。
 > 逐條確認「紅的原因是斷言本身而非缺少實作」**留待任務 1.5**。
+
+### ✅ 1.2（2026-08-23）
+
+`rag-orchestrator/tests/unit/decision/test_protocol_facet_verdict_req.py`
+——12 筆測試，**全紅**（預期）：
+
+```text
+passed=0  failed=12
+ModuleNotFoundError: No module named 'scripts.routing'
+```
+
+被測對象是**量尺**而非 production routing：餵它一筆已知為錯的觀測結果
+（instance 問句進入非「條件診斷：帳單」的 dialog），證明它確實判 `fail`。
+integration 既有的正向斷言只能證明「對的時候會綠」，**不能證明「錯的時候會紅」**。
+
+涵蓋：五個錯面向（含 **3936「帳單異常」——前案真正跑錯、卻被記為通過的那一個**）／
+正確面向須綠（防恆紅）／`facet=None` 不得判 pass（前案判定式的形狀）／
+instance 落回單發＝fail／**彙總層**：RULE 全 single ＋ INSTANCE 全進錯面向
+不得報 `bilateral_pass`／期望值取自凍結檔且 digest 釘死 v1／`UNDECIDED` 判
+`unscored` 而非 pass。
+
+**量尺落點決策**（design 未指定，主 session 裁定）：
+`scripts/routing/protocol_v1.py`，沿 `scripts/backtest/decision_replay.py`
+（量尺為版本化資產、另立 unit 測試）的既有慣例。契約面僅兩支函式
+`score_case()`／`bilateral_pass()` 加 `expected_for()`／`PROTOCOL_DIGEST`，
+刻意壓到最小——先寫的契約若把 API 攤開，實作就會被寫成「剛好符合契約」。
+
+> ⚠️ 同 1.1 的限制：12 筆紅在**同一個 ModuleNotFoundError**，
+> 尚不足以證明各條斷言有效；逐條確認留待任務 1.5。
+> 已先驗證凍結檔在容器內可讀（`/.kiro/...`，digest `4690a258f502d98d`，
+> RULE 4／INSTANCE 4），確保 1.5 檢視時不會混入第二個失敗來源。
+
+**未動既有紅綠**：unit `1021 passed` 前後一致；新增前 19 failed（1.1 六筆
+＋ `_meta` 13 筆——後者為 repo root 未掛進容器的環境 artifact，與本案無關），
+新增後 31 failed，差額恰為本檔 12 筆。
