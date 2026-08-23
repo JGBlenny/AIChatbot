@@ -45,6 +45,59 @@ C 兩層任一不過 → 正式記錄 "C unavailable" → 立即走 D，不回�
 
 ## D：隔離作者流程
 
+### 修訂（2026-08-24，**仍在 C 查證之前**）
+
+業主追加 D1／D2 角色分離與來源證明欄位。
+⚠️ 本次修訂**嚴格加嚴**且**先於任何 production 查證與任何資料產出**，
+故不構成「看到結果再改規則」。
+
+```text
+D1 Author   全新隔離 session／agent；只產 unseen utterances
+            不知 candidate、ruleset、P3 failure、現行 route
+D2 Labeler  產品 owner 或**另一個**隔離 session；看 utterance ＋ 必要產品規格
+            不看 candidate verdict；判 rule／instance／undecidable ＋ intended route/facet
+```
+
+單一隔離 agent 兼任 author＋label **可接受**，但標為**較弱證據等級**——
+⚠️ **且不得因此降低 Task 6 的 PASS 標準**。
+
+**來源證明（utterances freeze 時一併留存）**：
+
+```text
+author_session = isolated
+candidate_context_exposed = false
+generation_prompt_digest = …
+utterance_dataset_digest = …
+generated_at = …
+```
+
+**標註 freeze 時另存**：
+
+```text
+labels_digest = …
+labeler_candidate_blind = true
+```
+
+**因果鏈（不可對調）**：
+
+```text
+author prompt freeze → unseen utterances freeze → blind labels freeze
+──────────────────────────────────────────────
+→ candidate 第一次看資料 → PASS ／ REFUTED
+```
+
+**≥30 的分母定義**：
+
+```text
+Req.9.3 分母 ＝ **≥30 個已盲標、可判定（非 UNDECIDABLE）的 unseen cases**
+≠ 「總共生成 30 句」
+```
+
+故隔離作者 SHALL 產出**多於**最低需求，以容忍 `UNDECIDABLE` 被排除。
+
+⚠️ **SHALL NOT 提前製作 D 語料備用**：在 C 正式判定為 unavailable 之前就先產 D，
+會讓來源選擇的時間因果不乾淨（等於預期 C 失敗而預先備好替代品）。
+
 **隔離是契約，不是宣稱。** 作者**不得**取得：
 
 ```text
