@@ -134,6 +134,26 @@ protocol v1 PASS
   ⚠️ **`billing_anomaly` 另有 Req.4 的產品歸屬未決案例**——
   SHALL NOT 因為 N4 技術上需要它就宣告它屬於 scope
   （「技術上需要它 → 所以產品上它屬於 scope」是本案明令禁止的推論形態）。
+
+  **三條不可違反的裁定原則（業主 2026-08-23）**：
+
+  ```text
+  ① membership SHALL NOT = bool(required_slots)
+  ② membership SHALL NOT 因「有 bill_ref」就自動成立
+     —— 共用 execution slot ≠ 共用 routing responsibility
+  ③ 未決 Face 不得因 N4 技術需要，自動被升格為產品上應納管的 Face
+  ```
+
+  任何方案若**必須先假定**「`billing_anomaly` 與 `bill_diagnosis` 本來就是同一
+  responsibility」才能成立，一律標 **BLOCKED BY PRODUCT DECISION**，
+  不得自行補上假設。
+
+  **選項分析已產出（2026-08-23）**：
+  [design-erratum-01-block-scope.md](./design-erratum-01-block-scope.md)
+  ——五個選項（A 明列 key／B bill-ref family／C Face 層語義宣告／
+  D query-scoped（**正交，非並列**）／E 整筆 KB（**預期 loser，具名以便禁止**）），
+  每個固定產出六項：membership predicate／blast radius／N4 行為／Level A isolation／
+  **Req.4 coupling（硬欄位）**／falsifier。**狀態：RULING PENDING。**
   _Requirements: 1.2, 2.5, 4.2_
 
 ---
