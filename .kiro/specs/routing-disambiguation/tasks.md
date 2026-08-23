@@ -28,10 +28,18 @@ Candidate implementation complete   ≠   Design validated
 
 ```text
 protocol v1 PASS
+＋ protocol v2 structural invariants PASS      ← 2026-08-23 業主裁示新增
 ＋ unseen holdout PASS
 ＋ matching ruleset／protocol／dataset digests
 ＋ Level A regression／blast-radius PASS
 ```
+
+⚠️ **v2 不取代 v1、不改 v1 的尺**；但 **N4 是 design correctness contract，
+最終必須綠**——不得因為「v1 已凍結」就把 v2 當旁觀者。
+⚠️ **N4 的定性**：deterministic contract／future-proof invariant，
+**不是 production incident reproduction**（語料現無天然 multi-face KB），
+故**不受 Req.9.3 的 ≥30 可判定案例限制**——那條約束的是 holdout 的統計效力，
+與結構不變量無關。
 
 ⚠️ **holdout 不是「最後補一個測試任務」，它是本方案是否成立的裁決點。**
 若 holdout 失敗，正確結果是 **candidate REFUTED**，
@@ -94,14 +102,39 @@ protocol v1 PASS
   會出現「案例綠但契約未成立」。
   _Requirements: 1.2, 1.3_
 
-- [ ] 1.4 **⚡F** (P) 建立 **Level A scope isolation** 斷言：旗標開啟時，
+- [x] 1.4 **⚡F** (P) 建立 **Level A scope isolation** 斷言：旗標開啟時，
   **白名單以外的 Face 行為完全不變**（取數個非帳單域面向的代表問句對照）。
   ⚠️ 防「帳單 8/8 但偷偷改了 21 Faces」。
   _Requirements: 2.5, 5.2_
 
-- [ ] 1.5 **🧠主** 確認 1.1–1.4 在**尚未實作**的狀態下全部為紅，並記錄各自的失敗訊息。
+- [ ] 1.5 **🧠主** 逐 **test ID** 檢視 1.1–1.4 的 semantic failure reason，
+  確認每一條的紅是**斷言本身**造成的，而非只是缺少實作；綠的各條逐一說明其定性
+  （preservation／rollout-safety／量尺自我守門），並記錄各自的失敗訊息。
   ⚠️ 這是 negative control 的 negative control——**守門若一開始就是綠的，它守不到任何東西**。
+  ⚠️ **看測試名稱＋失敗原因，不看 failed 總數**；1.3／1.4 刻意不是全紅。
   _Requirements: 6.5_
+
+- [ ] 1.6 **🧠主** **Design Erratum：裁定 `block` 的作用域**
+  （1.5 之後、**任何 candidate implementation 之前**；業主裁示 2026-08-23）。
+
+  ⚠️ **SHALL NOT 直接在 (a) 擴白名單／(b) query-scoped 抑制之間二選一**——
+  那是「如何表示」，不是「要表示什麼」。**先回答責任集合**：
+
+  > **rule 判定成立後，哪些 Routing Hints 屬於同一個「應被抑制的
+  > instance-routing responsibility」？其 membership 依據是什麼？**
+
+  作用域的單位 SHALL 明確：**Face／routing family／整筆 KB 的 hints** 擇一並說明理由。
+  兩條硬約束：
+
+  ```text
+  不得靠「所有 required_slots 非空」  → Must 1 已否決該全域等價（22 Face 中 13 個非空）
+  不得靠「任何 dialog 都封掉」        → 會越過 Level A，變成另一種全域 heuristic
+  ```
+
+  ⚠️ **`billing_anomaly` 另有 Req.4 的產品歸屬未決案例**——
+  SHALL NOT 因為 N4 技術上需要它就宣告它屬於 scope
+  （「技術上需要它 → 所以產品上它屬於 scope」是本案明令禁止的推論形態）。
+  _Requirements: 1.2, 2.5, 4.2_
 
 ---
 
@@ -462,3 +495,42 @@ L6 共居 hygiene 為 future work，語料隨時可能長出天然案例——**
 
 **未動既有紅綠**：integration 由 `177 passed + 4 known-red` → `181 passed + 6 failed`，
 差額恰為本檔 4 綠 2 紅；原 4 筆 known-red 仍為原本那四筆（rule 側），未被本檔影響。
+
+### ✅ 1.4（2026-08-23）
+
+`rag-orchestrator/tests/integration/conversational/test_level_a_scope_isolation_req.py`
+——6 筆，**2 紅 4 綠**：
+
+```text
+passed=4  failed=2
+ModuleNotFoundError: No module named 'services.instance_reference_gate'   ×2
+```
+
+| 區塊 | 斷言 | 現況 | 定性 |
+|---|---|---|---|
+| A | `is_instance_requiring_face()` 判準 ≠ `bool(required_slots)` | 🔴 ×2 | scaffold（實作不存在）|
+| B | 旗標 ON／OFF 下非 Level A Face 的 (route, facet) 完全相同 | 🟢 | preservation |
+| C | **過寬** stub gate（開旗標即封所有 Face）SHALL 被判出漂移 | 🟢 | 證明 B 咬得動 |
+| C | **正確** stub gate（只封 Level A）SHALL **不**被判出漂移 | 🟢 | 證明 B 有鑑別力 |
+| — | 待裁定 Face 僅實測記錄、不入任一側斷言 | 🟢 | 不預選 erratum 解法 |
+
+**判準證據（實查 22 個 Face）**：**13 個 required_slots 非空**——
+`contract_ref`×6（contract_diag／contract_change／contract_sign／contract_closeout／
+contract_renew／account_login）、`bill_ref`×4、`estate_ref`、`meter_ref`、`member_ref`、
+以及 repair_create 的五槽。`bool(required_slots)` 會**一次納管 13 個 Face**，
+這就是 Must 1 否決該等價的具體代價。
+
+**C 的成對設計**：只有「過寬會紅」不夠——只會喊漂移的檢查同樣沒有鑑別力，
+會把正確實作一起擋掉。故另加「正確 stub 不得被判越界」，並**先斷言該 stub 真的改了東西**
+（Level A 代表問句 OFF 落 `bill_diagnosis`、ON 落 `single`），
+否則「什麼都沒變當然沒漂移」會是空跑的假綠。
+
+**判定式的關鍵細節**：一題是否在隔離宣稱範圍內，以 **OFF 側**的落點決定。
+用 ON 側決定的話，「gate 把某題踢出 Level A」會讓那題自動退出宣稱——**漂移永遠測不到**。
+
+**待 erratum 裁定者僅記錄不斷言**：`billing_anomaly`／`billing_invoice`／`billing_flow`／
+`billing_late_fee` 四者既不入正向斷言、也不入隔離宣稱。實測記錄：
+「滯納金怎麼收這麼多」→ `billing_late_fee`。
+
+**未動既有紅綠**：integration 由 `181 passed + 6 failed` → `185 passed + 8 failed`，
+差額恰為本檔 4 綠 2 紅。
