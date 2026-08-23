@@ -50,8 +50,9 @@
 **狀態（2026-08-23）**：
 
 ```text
-1.1–1.6, 1.8–1.12  COMPLETE（1.6 獨立驗證 CONFIRMED；1.10 三層守門結構完成）
-1.7                BLOCKED BY 2.1 + 2.4  ← 驗收 checkpoint 的明確依賴，非「未做完」
+1.1–1.12  COMPLETE — Requirement 1 機制鏈 PASS
+          （1.6 獨立驗證 CONFIRMED；1.10 三層守門結構完成；
+            1.7 以 105/58/24、gate_skipped=0、rc=1 結案）
 ```
 
 **Task 1 最終形成的守門結構**（三層，非單點）：
@@ -176,13 +177,22 @@ A4（移除 job 級 `continue-on-error` 使 `pip install` 暫時性故障會擋�
   `-m "not integration"` →0／`-m unit` →0／宣告 e2e 但未選中（I1 後半）→**10**／all 全設→0。
   _Requirements: 1.4_
 
-- [ ] 1.7 **🧠主** ⛔ **BLOCKED BY 2.1 + 2.4** — 執行驗收：`make test-integration` 的
+- [x] 1.7 **🧠主** ✅ **結案**（2026-08-23 業主裁示）— 執行驗收：`make test-integration` 的
   passed/failed/skipped 三個數字與繞過 runner 直跑一致，並記錄實際數字（作為任務 3 的判定基準）。
 
-  ⚠️ **阻塞理由（不得為求「任務 1 全綠」提前繞過）**：
-  網路已於 1.2 打通，但 **2.1 的 DB fail-closed 守門尚未完成、`aichatbot_test` 尚未供裝**。
-  此刻為取數字而把 integration 真跑起來，會直接連上 production DB——
-  正好違背本任務自己剛建立的安全邊界。
+  **實跑結果**：
+
+  | | 修前 | 現在 |
+  |---|---|---|
+  | 結果 | **183 skipped** | **105 passed / 58 failed / 24 env-skipped** |
+  | `gate_skipped` | （不可分辨）| **0** ← 旗標真的傳到了 |
+  | 退出碼 | **0**（假綠）| **1**（真測試失敗，非結構性的 10）|
+
+  ⚠️ **驗收目的不是「integration 全綠」**，而是證明 `make test-integration`
+  真正執行、且與直跑的結構語義一致。原本「183 skipped ＋ rc=0」的結構性 bug 已消除，
+  **Requirement 1 的機制鏈 PASS**。
+  58 筆失敗全為檢索依賴案例（測試庫無 KB／embedding），屬 **Task 3 的資料前提**，
+  非 Task 1 或 2.4 的缺漏。
   _Requirements: 1.1, 1.2, 1.3, 1.4_
 
 ---
@@ -193,24 +203,24 @@ A4（移除 job 級 `continue-on-error` 使 `pip install` 暫時性故障會擋�
 ⚠️ **本任務的守門一旦落地，`aichatbot_test` 供裝完成前 integration 與 e2e 皆會全數拒絕連線——
 這是預期行為，不是回歸。**
 
-- [ ] 2.1 **🧠主 🔍V** 實作 `assert_non_production_db`：fail closed 雙驗
+- [x] 2.1 **🧠主 🔍V** 實作 `assert_non_production_db`：fail closed 雙驗
   （`DB_ENV != "production"`，缺值視為未證明即拒絕；`db_name ∈ ALLOWED_TEST_DATABASES` 白名單），
   違反時 `raise ProductionDatabaseRefused`，**不得降級為 skip 或 warning**。
   掛於 `tests/conftest.py` 的 session 級 autouse fixture，先於任何 `asyncpg.create_pool`。
   **🔍V 理由**：安全邊界；做錯的後果是測試寫進 production DB。
   _Requirements: 1.2_
 
-- [ ] 2.2 **⚡F** 注入 `DB_ENV`：`docker-compose.dev.yml` 加 `DB_ENV: ${DB_ENV:-test}`；
+- [x] 2.2 **⚡F** 注入 `DB_ENV`：`docker-compose.dev.yml` 加 `DB_ENV: ${DB_ENV:-test}`；
   `.github/workflows/tests.yml` integration job env 加 `DB_ENV: test`。
   （實查：`DB_ENV` 目前在整個 repo 不存在，不注入即全紅。）
   _Requirements: 1.2_
 
-- [ ] 2.3 **⚡F** 統一測試庫名為 `aichatbot_test`：
+- [x] 2.3 **⚡F** 統一測試庫名為 `aichatbot_test`：
   `docker-compose.dev.yml` 的 `DB_NAME` 預設、CI 的 `POSTGRES_DB` 與 job `DB_NAME` 三處。
   **不得改為把 `aichatbot_admin` 加進白名單**——那會在所有環境一併解除對真 production 庫的保護。
   _Requirements: 1.2_
 
-- [ ] 2.4 **🧠主** 供裝 `aichatbot_test`【**IN SCOPE**，2026-08-23 業主定案】。
+- [x] 2.4 **🧠主** 供裝 `aichatbot_test`【**IN SCOPE**，2026-08-23 業主定案】。
   **2.5 決定的是本項的「供裝深度」，不是本項是否納入範圍。**
 
   **必備（無條件納入）**：
@@ -222,7 +232,7 @@ A4（移除 job 級 `continue-on-error` 使 `pip install` 暫時性故障會擋�
   才升格為本 spec 的必要供裝。
   _Requirements: 1.2_
 
-- [ ] 2.5 **🧠主** 先驗證 `trigger_facet_key` 收窄候選是否成立，再決定 e2e 供裝規模：
+- [x] 2.5 **🧠主** 先驗證 `trigger_facet_key` 收窄候選是否成立，再決定 e2e 供裝規模：
   確認 Step 0.4 直達路徑（`handle_trigger_facet` → `_seed_repair_facet`）對**診斷面向**
   是否與分類路由出口的 `_conversational_respond` 等價。
   成立 → 2.4 只做必備七項；不成立 → 2.4 追加條件式兩項（完整 KB ＋ embedding）。
@@ -236,22 +246,145 @@ A4（移除 job 級 `continue-on-error` 使 `pip install` 暫時性故障會擋�
 **目標**：把進場路由回歸從「自行重演決策鏈」改為「呼叫 production 決策函式」，
 使 Requirement 2 的失敗判定有意義。
 
-- [ ] 3.1 **🧠主** 實作 `route_via_production`：內部只做兩件事——
+**狀態（2026-08-23）**：
+
+```text
+3.0–3.2  COMPLETE
+3.3      NEXT — 逐案 evidence packet 後才判型
+
+已證明：harness 已接上 production seam；測試環境已與 production routing 組態對齊
+未證明：哪一筆屬 HARNESS_DRIFT／REGRESSION／EXPECTATION_DRIFT
+```
+
+> ⚠️ **這一輪最重要的成果不是「5 變 3」**，而是證明了：
+> **只要測試環境少一個 production env 或多一個宿主視角 URL，
+> `HARNESS_DRIFT` 的判定本身就可能是假證據。**
+>
+> 兩個保真度 bug（皆在 commit `d290006` 修正）：
+> ① 測試容器不帶 `.env` → 門檻跑 **0.55** 而 production 是 **0.65**
+>    （舊 harness 硬編預設 0.65，反而比未帶 env 的容器更貼近 production）；
+> ② 補 `env_file` 後 `.env` 的**宿主視角服務 URL** 生效 → 向量檢索整組失效
+>    → 「應進對話」案例集體轉紅 59 筆。
+>
+> **在這兩者修正前跑出的紅綠，全部不可作為 Requirement 2 的證據。**
+
+**現況（171 passed / 5 failed / 11 env-skip / gate_skipped=0 / rc=1）**：
+
+| 案例 | 期望 | 舊 harness | production seam |
+|---|---|---|---|
+| 點退帳單的金額是怎麼算的 | 單發 | 紅 | 紅 |
+| 點退做完後，帳單會自動出來嗎？ | 單發 | 紅 | 紅 |
+| **收據 PDF 在哪裡下載** | 單發 | **綠** | **紅** ← 可能是舊 harness 掩蓋 production 真行為 |
+| 點退的前置條件是什麼 | 單發 | 紅 | 綠 |
+| 合約快到期了，系統會自動提醒我嗎？ | 單發 | 紅 | 綠 |
+| 我的合約狀態怪怪的 | 進對話 | 紅 | 綠 |
+
+另 2 筆（`test_grounding_by_parent_expands_to_children`、`test_three_layer_context_isolated`）
+為 **corpus 暴露的既有假設**，獨立 triage，**不併入 Requirement 2 的判定**。
+
+- [x] 3.0 **🧠主 🔍V** **前置供裝：frozen retrieval corpus**（2026-08-23 業主裁示）。
+
+  **為何不回頭擴 2.4**：2.4 驗的是 Face **execution** path（105 passed 即證據）；
+  Task 3 驗的是 **retrieval → entry routing**，本質上依賴檢索語料與 embedding。
+  58 筆紅不是 2.4 做錯，而是 Task 3 有**額外資料前提**。範圍切法：
+
+  ```text
+  2.4  ＝ Face execution 最小供裝
+         database／schema／seed／Face configs／system context／
+         dialogue rules／form_schemas／C4 fixture state
+  3.0  ＝ retrieval routing corpus（本項）
+         KB rows ＋ embeddings ＋ 足以重現現行 routing cohort 的候選空間
+  ```
+
+  ⚠️ **絕不可只 seed「正確答案那幾筆」**：
+
+  ```text
+  只灌 55 個 case 的 expected KB
+    → corpus 幾乎只剩 expected
+    → top1 當然容易命中
+    → routing test 假綠
+  ```
+
+  Task 3 驗的不是「那筆 KB 找不找得到」，而是
+  **在真實候選空間裡，production retrieval 會不會把正確 evidence 排到足以觸發正確 routing 的位置**。
+  故必須保留**競爭候選**。
+
+  **供裝形態＝frozen retrieval corpus**（非模糊的「完整 production KB」）：
+  ① 凍結一份可重現的 KB corpus；② 對應 embeddings 一併凍結；
+  ③ 涵蓋 routing cohort 執行時會參與競爭的候選；
+  ④ 測試一律驅動 production `retrieve_knowledge_hybrid`，
+  **不在測試內重算或重建 routing 語義**。
+
+  縮減依據 SHALL 為 **retrieval candidate space**，不得為「只留 expected rows」。
+  現行 routing-relevant KB 規模若不大，直接凍結當下全部即可。
+
+  **🔍V 理由**：corpus 的組成直接決定 Requirement 2 全部判定的可信度；
+  只留 expected rows 會讓整組結論假綠。
+  _Requirements: 2.1, 9.3, 9.4_
+
+- [x] 3.1 **🧠主** 實作 `route_via_production`：內部只做兩件事——
   呼叫 production `retrieve_knowledge_hybrid` 取 `best_knowledge`，
   再呼叫 `routers.chat._diagnosis_config_for_knowledge(db_pool, best_knowledge, DecisionConfig.load(), user_message=question)`。
   檢索參數一律取自 production 讀值點（`DecisionConfig.load().kb_threshold`、`top_k` 對齊 production 預設），
   harness 不得自行 `os.getenv`。門檻、雙欄位退化、pre-entry gate 皆不在本函式內複刻。
   _Requirements: 2.1, 9.4_
 
-- [ ] 3.2 **⚡F** 改寫 `test_facet_entry_routing_req.py` 的 `_route` 為呼叫 `route_via_production`；
+- [x] 3.2 **⚡F**（併入 3.1）改寫 `test_facet_entry_routing_req.py` 的 `_route` 為呼叫 `route_via_production`；
   **所有既有案例（DIALOG／SINGLE／BOUNDARY，含五域）與斷言文字一字不改**。
   `RouteOutcome.reason` 僅用於失敗訊息，**永不進斷言**。
   _Requirements: 2.1, 9.4_
 
-- [ ] 3.3 **🧠主** 對浮現的每一個失敗案例做三向判定並記錄依據：
-  `REGRESSION`（修程式）／`EXPECTATION_DRIFT`（更新斷言，須書面依據且不得為「測試沒過」本身）／
-  `HARNESS_DRIFT`（須從四項分歧擇一**指名**：進場門檻讀值點／雙欄位退化／`_preentry_routable` 缺席／
-  檢索呼叫參數；無法指名者一律回退為 `REGRESSION`）。
+- [x] 3.3 **🧠主** 逐案 **evidence packet** ＋ 三向判型。
+
+  ### 3.3-a `HARNESS_DRIFT` 定義擴充（2026-08-23 業主裁示）
+
+  原定義只寫「production seam 執行即通過」，**僅涵蓋 false red**。
+  實跑出現「收據 PDF 在哪裡下載」由綠轉紅——舊 harness 可能**掩蓋 production 真行為**。
+  把 false green 硬塞成 `REGRESSION` 並不精確，故擴充定義（**只擴判型名稱，不動產品行為**）：
+
+  ```text
+  HARNESS_DRIFT ＝ 舊 harness 與 production seam 的行為差異，
+                   且差異可歸因於 harness 複刻失真。
+    ・false red  ：舊紅 → production 綠
+    ・false green：舊綠 → production 紅
+  ```
+
+  ### 3.3-b 每案凍結 evidence packet
+
+  **不得只印 top-1 與分數。** 每案兩側各記：
+
+  | 節點 | OLD HARNESS | PRODUCTION SEAM |
+  |---|---|---|
+  | retrieval kwargs | ✓ | ✓ |
+  | top-k candidates（id／similarity／summary／categories／category）| ✓ | ✓ |
+  | selected best_knowledge | ✓ | ✓ |
+  | 門檻判定 | threshold result | `DecisionConfig` resolved values ＋ `facet_entry_eligible` |
+  | 分類推導 | derived category | `_knowledge_category` result |
+  | config 查表 | config result | config result |
+  | 適用性 | —（舊 harness 無）| `_preentry_routable` result |
+  | final route | ✓ | ✓ |
+
+  → **找出第一個發生分歧的節點**，判型即以該節點命名：
+
+  ```text
+  retrieval candidates 就不同   → 查還有哪個 kwarg／preprocessing 不同
+  candidate 同、category 不同   → 雙欄位 fallback divergence
+  category 同、config 同、route 不同 → pre-entry／applicability divergence
+  ```
+
+  ### 3.3-c 判型規則
+
+  | 判定 | 條件 | 依據要求 |
+  |---|---|---|
+  | `REGRESSION` | production 行為確實不合理 | 修程式，斷言不動 |
+  | `EXPECTATION_DRIFT` | 有**後來的產品決策**支持現行行為 | 書面依據（commit／定案紀錄），**不得為「測試沒過」本身** |
+  | `HARNESS_DRIFT` | 差異可歸因於複刻失真 | **必須指名第一個分歧節點**；無法指名者一律回退為 `REGRESSION` |
+
+  ⚠️ **原先以為的兩個分歧候選已被排除，不得用來結案**：
+  門檻（舊 harness 0.65 vs production-faithful seam 0.65）與
+  `top_k`（舊 harness 硬編 5 vs `VendorChatRequest.top_k` Field(5)）**皆非現行分歧**。
+  故三筆轉綠目前狀態為 **candidate HARNESS_DRIFT，divergence 尚未定位**。
+
   **不得以「更新斷言」作為預設處置**，亦不得調整 `FORM_TRIGGER_THRESHOLD`。
   _Requirements: 2.1, 2.2, 2.3_
 
@@ -654,3 +787,117 @@ A4（移除 job 級 `continue-on-error` 使 `pip install` 暫時性故障會擋�
 
 - [x] U0.3 驗收：容器內 `-m unit` → **1012 passed / 0 failed**（修前 2 failed）。
   main unit baseline 已清乾淨，本 spec 後續 checkpoint 不再背既存紅燈。
+
+
+---
+
+## 3.3 evidence packet 結果（2026-08-23）
+
+### 結論一：**零 HARNESS_DRIFT**
+
+六案在**保真環境**下，old harness 與 production seam 逐節點比對——
+retrieval kwargs／top-k candidates／best_knowledge／門檻／分類推導／config 查表／
+pre-entry／final route **全部一致**：
+
+| 案例 | OLD route | PROD route | 期望 | 結果 |
+|---|---|---|---|---|
+| 點退帳單的金額是怎麼算的 | dialog／條件診斷：帳單 | 同左 | single | 兩側皆 FAIL |
+| 點退做完後，帳單會自動出來嗎？ | dialog／條件診斷：帳單 | 同左 | single | 兩側皆 FAIL |
+| 收據 PDF 在哪裡下載 | dialog／條件診斷：帳單 | 同左 | single | 兩側皆 FAIL |
+| 點退的前置條件是什麼 | single | single | single | 兩側皆 PASS |
+| 合約快到期了…自動提醒我嗎？ | single | single | single | 兩側皆 PASS |
+| 我的合約狀態怪怪的 | dialog／狀態判斷 | 同左 | dialog | 兩側皆 PASS |
+
+（`no-facet-config` vs `not-routed` 僅 reason 字串差異，**reason 不進斷言**。）
+
+> ⚠️ **所有紅綠變化都來自測試環境保真度，不來自 harness 複刻。**
+> 三筆「轉綠」在保真環境下**舊 harness 也 PASS** → 轉綠原因是環境修正，非 seam 替換。
+> 「收據 PDF」的 false green 同理——來自錯誤的環境組態，非 harness 複刻失真。
+>
+> 這同時反證了原先擔心的三個 harness 分歧（門檻讀值點、雙欄位退化、
+> `_preentry_routable` 缺席）在現行環境下**皆不產生差異**：
+> `old cats == prod cats`、`preentry=True`（gate 預設關 → fail-open）。
+
+### 結論二：三筆紅的根因是**同一次刻意的 metadata 變更**
+
+三筆的 top-1（3519／3402／3406）皆掛 `條件診斷：帳單` 而進面向。
+實查：掛該分類的 10 筆知識 `updated_at` **全為 2026-08-04 同一批**。
+
+來源鎖定 `rag-orchestrator/database/migrations/20260731_assistant_report_fixes.sql` §3，
+**逐字點名這三筆**：
+
+```sql
+-- ── 3. T-1：查資料型知識補面向分類（top-1 命中也能進面向查實值）──
+UPDATE knowledge_base SET categories = array_append(categories, '條件診斷：帳單')
+WHERE question_summary IN ('點退帳單金額計算 押金結算', '點退帳單 自動產生 費用結算',
+                           '帳單收據 PDF 下載')
+```
+
+檔頭理由：「**T-1 路由缺口：查資料型知識只掛後台分類，top-1 命中時不進面向**」，
+依據 `docs/backtest/assistant-report-regression.md` 批次 20260731（客服回報回歸）。
+
+→ **有後來的產品決策支持現行行為，測試斷言寫於該決策之前**。
+
+### ✅ 判型定案（2026-08-23 業主裁示）：三筆 **`REGRESSION`**，不更新斷言
+
+**關鍵區分：provenance ≠ justification。**
+
+20260731 migration 能證明的是**因果**：
+
+```text
+為什麼三筆今天會進 Face？ → 因為 T-1 刻意替這三筆 KB 掛上「條件診斷：帳單」
+```
+
+但它**不能自動成為正當性證據**：
+
+```text
+為什麼「點退帳單的金額是怎麼算的」應該反問帳單編號？ → migration 沒有證明這件事
+```
+
+`EXPECTATION_DRIFT` 的定義要求「**產品行為已合理改變**」。
+現在只能證明「後來有人刻意改過 metadata」，**不能證明這三個實際問句進 Face 是合理產品行為**。
+
+**真正發生的是：先前修一個 routing 缺口時製造了新的 routing overreach。**
+
+```text
+正確能力需求：「我的這張帳單怎麼算？」→ 需要 instance data → Face 合理
+錯誤連帶效果：「點退帳單的金額是怎麼算的？」→ knowledge/rule question
+              → 卻因同 KB 的 routing metadata 進 Face → 反問 bill_ref
+```
+
+| 案例 | 判型 | 根因 |
+|---|---|---|
+| 點退帳單的金額是怎麼算的 | **REGRESSION** | KB 3519 為支援 instance lookup 掛 Face metadata，連帶攔截**規則型**問句 |
+| 點退做完後，帳單會自動出來嗎？ | **REGRESSION** | 同批 metadata broadening 將**流程／規則**問句錯導入診斷 Face |
+| 收據 PDF 在哪裡下載 | **REGRESSION** | KB 3406 為支援「我的收據在哪」掛 Face metadata，連帶攔截**操作位置**問句 |
+| 其餘三案 | PASS | old／prod 行為一致，現行 expectation 成立 |
+
+```text
+HARNESS_DRIFT     = 0/6
+EXPECTATION_DRIFT = 0/6
+REGRESSION        = 3/6
+PASS              = 3/6
+```
+
+> 這個結果比「5 筆改 seam 後剩 3 筆」有價值得多——現在可以明確說：
+> **原 routing harness 沒有造成這六案的判定失真；留下的三案是 production routing behavior 本身的問題。**
+
+### ⚠️ 修法不得跳成「拿掉分類」
+
+20260731 的需求**本身是真的**：instance-specific 問法確實需要進 Face。
+直接把三筆的 `條件診斷：帳單` 拔掉，只是**把舊 T-1 bug 裝回去**。
+
+修的是「**同一 KB 同時承載 knowledge evidence 與過寬 Routing Hint**」這個
+routing metadata 問題，**不是否定 Face entry 本身**。兩邊都要保住：
+
+```text
+規則／流程／操作問句        → single answer
+我的某一筆／實際狀態／實際金額 → dialog Face
+```
+
+具體採「拆 KB」／「新增更窄的 instance-oriented trigger knowledge」／
+其他 metadata 收窄方式，留待修復任務讀現有 corpus 後決定——
+**3.3 只負責把產品錯誤判真，不順便設計修法。**
+
+⚠️ 兩筆 corpus-exposure failure（`test_grounding_by_parent_expands_to_children`、
+`test_three_layer_context_isolated`）維持獨立 triage，**不併入本結論**。
