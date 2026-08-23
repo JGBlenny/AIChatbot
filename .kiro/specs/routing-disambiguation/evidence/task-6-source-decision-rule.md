@@ -134,6 +134,20 @@ Labeler  → 看 utterance ＋ 產品規則，不看 candidate verdict
 
 若僅能有一個隔離 session 同時撰寫與標註，**仍可接受，但 SHALL 記錄證據強度較低**。
 
+## ✅ C 的判定結果（2026-08-24）：**UNAVAILABLE**
+
+```text
+本機 aichatbot_admin：chat_history 0 列／conversation_logs 0 列
+production          ：業主回報「線上資料跟本地是一樣的」→ 同為 0 列
+usage_events        ：5948 列，但設計上只存 message_len，無問句原文
+```
+
+⚠️ **證據等級**：production 這一項為**業主口頭回報**，非貼回的查詢輸出；
+本檔如實標記，不升格為實查。
+
+**判定**：C 第①層（存在性）即不過 → 依已凍結的 fallback，
+正式記 **C unavailable**，**立即走 D**，不回頭考慮 A／B。
+
 ## 流程
 
 ```text
