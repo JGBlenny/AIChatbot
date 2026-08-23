@@ -43,7 +43,11 @@ jobs:
     runs-on: ubuntu-latest
     # 不阻擋合併：DB schema/seed 完整供裝為後續工作；在此先驗證相依可起與接線，
     # 而非在未就緒時假紅或假綠（透明標示，符合 R4.5「略過而非通過」精神）。
-    continue-on-error: true
+    #
+    # ⚠️ `continue-on-error: true` 已移除（spec conversational-routing-execution 任務 1.6｜R1.4）。
+    #    它在 **job 級**吞噬，會連結構性失效的 exit 1 一起吃掉，使守門在 CI 完全沒有訊號。
+    #    「測試沒過不阻擋」的既有意圖改由下方 step 級的退出碼判斷達成，語義更精確：
+    #      rc=10（空跑守門／DB 守門失敗）→ 硬擋；其餘 → 不擋。
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -65,6 +69,9 @@ jobs:
           --health-interval 10s --health-timeout 5s --health-retries 5
     env:
       RUN_INTEGRATION: "1"
+      # 空跑守門的 requested-layer 唯一權威來源（任務 1.8）——
+      # conftest 不解析 `-m` 推導意圖，由此明示。
+      REQUESTED_TEST_LAYERS: "integration"
       DB_HOST: localhost
       REDIS_HOST: localhost
     steps:
@@ -76,9 +83,25 @@ jobs:
         run: |
           pip install -q -r rag-orchestrator/requirements.txt
           pip install -q -r rag-orchestrator/requirements-test.txt
-      - name: Integration 測試（schema/seed 未就緒前為資訊性）
+      - name: Integration 測試（測試失敗非阻擋；結構性失效硬擋）
         working-directory: rag-orchestrator
         run: |
           echo "⚠️ 注意：完整 DB schema/seed 供裝為後續工作；本步驟先以服務容器嘗試 integration。"
-          python3 -m pytest -m integration -p no:cacheprovider --tb=short || \
-            echo "integration 尚未全綠（多數需 schema/seed）—非阻擋，待後續供裝。"
+          set +e
+          python3 -m pytest -m integration -p no:cacheprovider --tb=short
+          rc=$?
+          set -e
+          # 退出碼語義（tests/conftest.py 定義）：
+          #   10 ＝ 結構性失效（旗標沒傳到／被請求層有 gate-skip）
+          #        ※ 測試 DB fail-closed 守門（任務 2.1）尚未實作，屆時併入同一個碼
+          #        → 這不是「測試沒過」，是「量測工具沒真的跑」，必須硬擋。
+          #    3 ＝ pytest 自身 internal error（pytest 保留碼，與上面可區分）
+          #    1 ＝ 有測試失敗 → 維持既有的刻意決定：不阻擋。
+          if [ "$rc" -eq 10 ]; then
+            echo "::error::結構性失效（R1.4）——integration 層未真正執行，或測試 DB 未通過安全守門。"
+            exit 1
+          fi
+          if [ "$rc" -ne 0 ]; then
+            echo "integration 尚未全綠（多數需 schema/seed）—非阻擋，待後續供裝。(rc=$rc)"
+          fi
+          exit 0

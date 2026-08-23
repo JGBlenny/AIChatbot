@@ -2,7 +2,15 @@
 # run-tests.sh — 本地與 CI 共用的測試入口（spec testing-traceability 元件 2・R1.2/1.4/4.2）
 #
 # 在 Python 3.11 容器（對齊執行期）內跑 pytest：掛載源碼、改碼即跑、免 rebuild。
-# 統一用 `docker compose run --rm`（不用 docker exec，避免假設常駐容器），本地與 CI 同一支。
+# 統一用 `docker compose run --rm`（不用 docker exec，避免假設常駐容器）。
+#
+# ⚠️ 本地與 CI **不是同一支入口**（spec conversational-routing-execution 任務 1.5｜元件 1-C）。
+#    CI 直接跑 `python3 -m pytest`，不經本腳本。分工如下：
+#      ・不變量（旗標語義、skip 型別前綴、空跑守門、測試 DB 守門）
+#        → 掛在 **pytest 層**（tests/conftest.py），本地與 CI 共用同一份，不得各有一套；
+#      ・供裝（容器啟動、network attach、pip install）
+#        → **各自的 runner 負責**（本腳本 ／ GH Actions service containers），
+#          兩者供裝方式本質不同，強行統一只會多一層間接。
 #
 # 用法：
 #   scripts/run-tests.sh [unit|integration|e2e|all] [--cov] [pytest 額外參數...]
@@ -51,8 +59,24 @@ fi
 # 安全展開可能為空的陣列（相容 bash 3.2 + set -u）
 PYTEST_CMD+=(${COV_ARGS[@]+"${COV_ARGS[@]}"} ${PYTEST_EXTRA[@]+"${PYTEST_EXTRA[@]}"})
 
+# 測試旗標注入（spec conversational-routing-execution 任務 1.1／1.8｜R1.1/1.4/1.5）
+#
+# 兩組變數，責任不同：
+#   RUN_INTEGRATION / RUN_E2E  ── 讓該層「可以跑」（conftest 的 skip gate 讀它）
+#   REQUESTED_TEST_LAYERS      ── 宣告本次「要求跑哪一層」（空跑守門讀它）
+# 後者是 requested-layer 的唯一權威來源；conftest **不解析 `-m` 運算式**推導意圖
+# （`-m "not integration"` 會被字面比對誤判成請求了 integration → 無辜硬擋）。
+ENV_ARGS=()
+case "$LAYER" in
+  integration) ENV_ARGS=(-e RUN_INTEGRATION=1 -e REQUESTED_TEST_LAYERS=integration) ;;
+  e2e)         ENV_ARGS=(-e RUN_E2E=1 -e REQUESTED_TEST_LAYERS=e2e) ;;
+  all)         ENV_ARGS=(-e RUN_INTEGRATION=1 -e RUN_E2E=1
+                         -e REQUESTED_TEST_LAYERS=integration,e2e) ;;
+  *)           ;;   # unit 與自訂 marker 運算式：兩者皆不注入（維持離線、不受守門管轄）
+esac
+
 echo "▶ layer=${LAYER}  →  ${PYTEST_CMD[*]}"
 
 # 在容器內先裝測試相依（正式 image 不含），再跑 pytest。
-docker compose -f "$COMPOSE_FILE" run --rm "$SERVICE" sh -c \
+docker compose -f "$COMPOSE_FILE" run --rm ${ENV_ARGS[@]+"${ENV_ARGS[@]}"} "$SERVICE" sh -c \
   "pip install -q -r requirements-test.txt && ${PYTEST_CMD[*]}"

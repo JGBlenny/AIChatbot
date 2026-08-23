@@ -42,3 +42,11 @@ services:
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
     command: ["sleep", "infinity"]        # 維持容器；測試以 run --rm 進入
+
+# 接上共用基礎設施網路（spec conversational-routing-execution 任務 1.2｜R1.2）
+# 已實查：aichatbot_default 上 postgres 服務帶有 alias `postgres`，
+# 故 DB_HOST 預設值無須改動即可解析。
+networks:
+  default:
+    name: aichatbot_default
+    external: true
