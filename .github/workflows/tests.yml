@@ -52,7 +52,9 @@ jobs:
       postgres:
         image: pgvector/pgvector:pg16
         env:
-          POSTGRES_DB: aichatbot_admin
+          # 測試庫名（任務 2.3）：雖為臨時 service container，仍不得沿用 production 庫名——
+          # 守門判的是名字，把 aichatbot_admin 加進白名單等於在所有環境解除保護。
+          POSTGRES_DB: aichatbot_test
           POSTGRES_USER: aichatbot
           POSTGRES_PASSWORD: aichatbot_password
         ports:
@@ -72,6 +74,9 @@ jobs:
       # 空跑守門的 requested-layer 唯一權威來源（任務 1.8）——
       # conftest 不解析 `-m` 推導意圖，由此明示。
       REQUESTED_TEST_LAYERS: "integration"
+      # 測試 DB 安全邊界（任務 2.2／2.3）：兩者缺一即被 fail-closed 守門拒絕。
+      DB_ENV: "test"
+      DB_NAME: "aichatbot_test"
       DB_HOST: localhost
       REDIS_HOST: localhost
     steps:

@@ -33,14 +33,25 @@ services:
       TZ: Asia/Taipei
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONPATH: /app
-      # integration/e2e 若有真實相依時使用；unit 層全 mock 不需要
-      DB_HOST: ${DB_HOST:-postgres}
-      DB_PORT: ${DB_PORT:-5432}
-      DB_NAME: ${DB_NAME:-aichatbot_admin}
-      DB_USER: ${DB_USER:-aichatbot}
-      DB_PASSWORD: ${DB_PASSWORD:-aichatbot_password}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
+      # integration/e2e 的真實相依連線（unit 層全 mock 不需要）。
+      #
+      # ⚠️ **一律用 TEST_ 前綴的覆蓋鍵，不得沿用 DB_HOST／DB_NAME 等裸名**
+      #    （任務 2.4 實測逼出）：docker compose 會自動載入專案根目錄的 `.env`，
+      #    而該檔是**宿主視角**——其中 `DB_HOST=localhost`、`DB_NAME=aichatbot_admin`。
+      #    用裸名做預設（`${DB_NAME:-aichatbot_test}`）會被 `.env` 直接蓋掉：
+      #    容器內 `localhost` 指向容器自己（連不到 postgres），
+      #    而 `aichatbot_admin` 是 **production 庫**——正是 fail-closed 守門要擋的目標。
+      #    改用 `.env` 不會定義的 TEST_* 鍵，即與宿主組態徹底解耦。
+      DB_HOST: ${TEST_DB_HOST:-postgres}
+      DB_PORT: ${TEST_DB_PORT:-5432}
+      # 測試庫（任務 2.3）：守門只放行白名單內的測試庫；供裝見 scripts/provision-test-db.sh
+      DB_NAME: ${TEST_DB_NAME:-aichatbot_test}
+      # 執行環境宣告（任務 2.2）：守門缺值即拒絕——「未設」不是「未知」而是「未證明」
+      DB_ENV: ${TEST_DB_ENV:-test}
+      DB_USER: ${TEST_DB_USER:-aichatbot}
+      DB_PASSWORD: ${TEST_DB_PASSWORD:-aichatbot_password}
+      REDIS_HOST: ${TEST_REDIS_HOST:-redis}
+      REDIS_PORT: ${TEST_REDIS_PORT:-6379}
     command: ["sleep", "infinity"]        # 維持容器；測試以 run --rm 進入
 
 # 接上共用基礎設施網路（spec conversational-routing-execution 任務 1.2｜R1.2）
