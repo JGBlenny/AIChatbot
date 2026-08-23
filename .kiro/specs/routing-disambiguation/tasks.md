@@ -1,7 +1,8 @@
 # 實作任務：routing-disambiguation
 
 > 建立 2026-08-23｜語言 zh-TW
-> 來源：[requirements.md](./requirements.md)（9 需求／35 子需求）、[design.md](./design.md) v1.1、
+> 來源：[requirements.md](./requirements.md)（9 需求／35 子需求）、[design.md](./design.md) **v1.2**
+>（v1.1 ＋ [erratum 01](./design-erratum-01-block-scope.md)：membership 改 Face 層語義契約、與 rollout scope 正交）、
 > [gap-analysis.md](./gap-analysis.md)、[research.md](./research.md)、
 > [robustness-protocol.json](./robustness-protocol.json)（v1，digest `4690a258f502d98d`）
 > ⚠️ `.kiro/settings/rules/tasks-generation.md`、`tasks-parallel-analysis.md`、
@@ -114,7 +115,7 @@ protocol v1 PASS
   ⚠️ **看測試名稱＋失敗原因，不看 failed 總數**；1.3／1.4 刻意不是全紅。
   _Requirements: 6.5_
 
-- [ ] 1.6 **🧠主** **Design Erratum：裁定 `block` 的作用域**
+- [x] 1.6 **🧠主** **Design Erratum：裁定 `block` 的作用域**
   （1.5 之後、**任何 candidate implementation 之前**；業主裁示 2026-08-23）。
 
   ⚠️ **SHALL NOT 直接在 (a) 擴白名單／(b) query-scoped 抑制之間二選一**——
@@ -159,6 +160,12 @@ protocol v1 PASS
 ---
 
 ## 2. `InstanceEvidence` 與決定性抽取器
+
+- [ ] 2.0 **🧠主** ⚠️ **本輪第一件事：跑 erratum 01 的 falsifier**——
+  對「我的收據在哪」「我這筆點退的錢怎麼怪怪的」跑 extractor：
+  判 `allow`／`abstain` → 1.6 裁定維持；判 **`block`** → **1.6 裁定立即失效**，
+  停止 Task 2、重開 erratum，**不准靠修改測試繼續**。
+  _Requirements: 4.2, 1.3_
 
 - [ ] 2.1 **🧠主** 定義 `InstanceEvidence` 值物件：正向證據、反向證據、`spans`。
   ⚠️ `spans` 用 **immutable tuple**——`@dataclass(frozen=True)` 只凍結欄位綁定，
@@ -213,10 +220,22 @@ protocol v1 PASS
 
 ## 4. production seam 整合
 
-- [ ] 4.1 **🧠主** 實作 `is_instance_requiring_face(cfg)`：**Level A 白名單**——
-  face key == `bill_diagnosis` 且 `"bill_ref" ∈ required_slots`。
+- [ ] 4.1 **🧠主** 實作**兩層**判定（erratum 01 改判；**取代原白名單版本**）：
+
+  ```text
+  is_instance_requiring_face(cfg)  ← C：讀 Face 自身的 requires_instance_reference 宣告
+  AND in_gate_rollout_scope(cfg)   ← D：本次 release 的啟用邊界（明列 key）
+      ↓ 兩層同時成立
+  gate_applies_to(cfg)
+  ```
+
   ⚠️ **不得**用 `bool(cfg.grounding_scope.required_slots)`：其語義為「執行需要哪些欄位」，
-  未來 Face 可能 required `date`／`reason`／`amount`，皆非 entity reference。
+  未來 Face 可能 required `date`／`reason`／`amount`，皆非 entity reference
+  （實查：22 Face 中 13 個非空）。
+  ⚠️ **不得把兩層摺疊成一層**——摺疊後 Level B 擴張就得改 membership 定義，
+  語義契約會退化成 rollout 清單。
+  ⚠️ **Face 宣告逐一裁定，禁止批次推導**：現況僅 `bill_diagnosis` 為 `true`；
+  `billing_anomaly` 待逐 Face 裁定；`billing_invoice`／`billing_flow` 不得自動跟進。
   _Requirements: 2.5, 5.2, 8_
 
 - [ ] 4.2 **🧠主** 於 `_diagnosis_config_for_knowledge` 串接：
@@ -628,3 +647,43 @@ bilateral 假綠      → 被拒絕                    ✓ M3（單邊會被抓�
 **可以宣稱**量尺與作用域判定式確實會咬到它們聲稱要咬的錯誤，且不會把正確實作誤判為越界。
 
 **下一步 SHALL 為 1.6 design erratum，不是 Task 2。**
+
+### ✅ 1.6（2026-08-23，業主裁定）
+
+裁定全文：[design-erratum-01-block-scope.md](./design-erratum-01-block-scope.md)
+（**分析原文不回頭改寫**，裁定另立於文末——才看得出裁定依據了什麼）。
+
+```text
+A 明列 key      REJECTED as membership source（第二 truth source）→ 改列為 D 的 rollout list
+B family        REJECTED / INSUFFICIENT_JUSTIFICATION（無獨立 family 語義）
+C Face 語義契約  SELECTED
+D rollout scope SELECTED，與 C 正交
+E 整筆 KB       REJECTED（安全性靠 corpus 偶然形狀）→ 保留為 explicitly rejected alternative
+```
+
+**本次 erratum 的核心不是「白名單放幾個 Face」，而是把兩個曾被混在一起的命題拆開**：
+
+```text
+Face 語義上屬不屬於 instance-routing responsibility   →  C
+這次 release 有沒有資格對它啟用                        →  D
+```
+
+兩側契約因此對稱：`InstanceEvidence`（問句側）× `requires_instance_reference`（Face 側）
+→ `InstanceReferenceGate`。**execution slot 被偷當成 routing semantics 的推論正式消滅。**
+
+**design v1.2**：決策 6 改判、決策 2 精確修訂（保留「不新增 KB-row metadata」，
+只撤回「`required_slots` 足以表示 instance requirement」，新增 Face 層語義契約）。
+
+**Req.4 正式結論**：1.6 **不裁定**兩筆 undecided utterance 的 facet；
+只要 extractor 對它們產生 positive instance evidence 就不進 block path，
+故 **Face membership 與 utterance facet ownership 可分離**。
+⚠️ **falsifier 已排為任務 2.0**：若實測判 `block`，本裁定立即失效並重開。
+
+⚠️ **N4 rule 側在 `billing_anomaly` 完成逐 Face 裁定前仍為紅**——
+裁定尚未做完，不是實作缺失，**不得靠改斷言轉綠**。
+
+**契約同步（1.4 新增 2 條，皆 B／scaffold）**：兩層不得被摺疊、
+Level A Face 須兩層皆成立。宣告載體取 `grounding_scope`
+（與 `required_slots`／`enabled_gate` 同處，沿面向配置鍵契約慣例）——
+**此為主 session 的實作載體選定**，erratum 只裁「Face 自身第一級宣告」。
+1.5 稽核母體因此 **30 → 32**（A 22／B 10／C 0；A 絕對數未變，分母變動已明記）。

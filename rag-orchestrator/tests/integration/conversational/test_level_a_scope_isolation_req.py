@@ -211,6 +211,51 @@ async def test_faces_without_required_slots_are_never_members(pool):
         assert is_instance_requiring_face(cfg) is False, f"{key} 無 required_slots 卻被納管"
 
 
+class _FakeFace:
+    """最小替身：一個**已宣告**語義契約、但**不在本次 rollout scope**內的 Face。
+
+    ⚠️ 必須用替身——今日沒有任何 Face 帶 `requires_instance_reference` 宣告，
+    而「已宣告但未啟用」正是 D 與 C 分離後**唯一**能區分兩層的情境。
+    宣告的載體取 `grounding_scope`（與 `required_slots`／`enabled_gate` 同處，
+    沿面向配置鍵契約慣例）。
+    """
+    key = "future_face_not_in_this_release"
+    persona_role = None
+    topic_scope = {"mode": "category", "category": "（未來面向）"}
+    grounding_scope = {"requires_instance_reference": True, "required_slots": ["bill_ref"]}
+
+
+@pytest.mark.req("routing-disambiguation:2.5")
+async def test_membership_and_rollout_scope_are_two_separate_layers(pool):
+    """**目前應為紅**（erratum 01 的兩層契約尚未實作）。
+
+    ⚠️ 擋的是「把兩層摺疊成一層」——摺疊後 Level B 擴張就得回頭改 **membership 定義**，
+    語義契約會退化成 rollout 清單，正是本 erratum 否決 A 作為 membership source 的理由。
+    """
+    from services.instance_reference_gate import (
+        gate_applies_to, in_gate_rollout_scope, is_instance_requiring_face)
+
+    fake = _FakeFace()
+    assert is_instance_requiring_face(fake) is True, "C 層應讀 Face 自身的宣告"
+    assert in_gate_rollout_scope(fake) is False, "D 層不應把未列入本次 release 的 Face 當成已啟用"
+    assert gate_applies_to(fake) is False, \
+        "已宣告語義契約但不在本次 rollout scope → SHALL NOT 納管（兩層被摺疊了）"
+
+
+@pytest.mark.req("routing-disambiguation:2.5")
+async def test_level_a_face_satisfies_both_layers(pool):
+    """**目前應為紅**：`bill_diagnosis` 是唯一兩層皆成立者（erratum 01 逐 Face 裁定）。
+
+    ⚠️ `billing_anomaly`／`billing_invoice`／`billing_flow` **不在本斷言內**——
+    逐 Face 裁定未完成前納入，就是把已否決的 family 方案從後門裝回來。
+    """
+    from services.conversational_config import config_for_key
+    from services.instance_reference_gate import gate_applies_to
+
+    cfg = await config_for_key(pool, LEVEL_A_FACE)
+    assert cfg is not None and gate_applies_to(cfg) is True
+
+
 # ── B. 作用域隔離（🟢 目前為綠，SHALL 保持綠）────────────────
 @pytest.mark.req("routing-disambiguation:5.2")
 async def test_flag_on_does_not_change_faces_outside_level_a(pool, retriever, monkeypatch):

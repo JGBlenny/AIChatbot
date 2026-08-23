@@ -412,14 +412,24 @@ C. intent taxonomy 增維（L3-b）／D. A ＋ B 混合。
 **選項**：A. `bool(cfg.grounding_scope.required_slots)`／
 B. Level A 白名單（面向 key ＋ 具名 slot）／C. 新增 schema predicate `instance_reference_slots`。
 
-**決定**：**B**。Level A 的契約為：
+**決定（v1.1 原判）**：**B**（Level A 白名單）。
+**決定（v1.2 erratum 01 改判）**：**C ＋ 獨立 rollout scope**——見
+[design-erratum-01-block-scope.md](./design-erratum-01-block-scope.md)。
 
 ```text
-face_requires_instance ≠ bool(required_slots)
+face_requires_instance ≠ bool(required_slots)          ← 兩版皆成立
 
-Level A 白名單（唯一納入管轄者）：
-  face key == "bill_diagnosis"  且  "bill_ref" ∈ required_slots
+v1.2 起，實際納管須**兩層同時成立**：
+  requires_instance_reference == True        ← C：Face 自身第一級語義宣告
+  AND face_key ∈ LEVEL_A_INSTANCE_GATE_SCOPE ← D：本次 release 啟用邊界
 ```
+
+⚠️ **v1.1 的白名單 B 被撤回為 membership source**（它把語義權威放在 decision code，
+與 Face config 形成第二 truth source）；**明列 key 的正確位置是 D 的 rollout list**。
+⚠️ **Face 逐一裁定，禁止批次推導**：不得因四個 Face 都有 `bill_ref` 就一次全標 `true`
+——那是把已否決的「family」方案從後門裝回來。現況僅 `bill_diagnosis` 為 `true`；
+`billing_anomaly` 待逐 Face 裁定（Req.4 已不再阻塞它）；
+`billing_invoice`／`billing_flow` **不得因名稱或 slot 自動跟進**。
 
 **理由**：`required_slots` 的語義是「執行需要哪些欄位」，**不天然等於**
 「必須指涉一個既存個體」。未來 Face 可能 required `date`／`reason`／`category`／`amount`，
@@ -429,8 +439,9 @@ Level A 白名單（唯一納入管轄者）：
 ⚠️ **在跨域 holdout（Level B）通過前，`INSTANCE_REFERENCE_GATE=true`
 SHALL NOT 作用於白名單以外的任何 Face。**
 
-**選項 C（抽象成 `instance_reference_slots` 或既有 schema predicate）留待 Level B**——
-屆時才有跨域證據支持該抽象的正確性。
+~~**選項 C 留待 Level B**~~ —— **v1.2 撤回**：N4（multi-category）與任務 1.4 已反證
+「以 slot 推導 responsibility」不成立，該抽象**不能等到 Level B**，
+否則 Level A 的 membership 就只能靠 allowlist，語義權威落在錯的地方。
 
 **與需求對應**：[需求 2.5]（範圍宣告）[需求 5.2]（不鎖機制、不擴散）[需求 8]
 
@@ -440,8 +451,23 @@ SHALL NOT 作用於白名單以外的任何 Face。**
 
 **問題**：Face 側是否需要新的 routing metadata（L2 的 schema 變更）？
 
-**決定**：**不新增**。Level A 以決策 6 的白名單（`bill_diagnosis` ＋ `bill_ref`）判定，
-複用既有宣告而不新增欄位。
+**決定（v1.1 原判）**：**不新增**，以決策 6 的白名單判定。
+
+**決定（v1.2 erratum 01 修訂）**——**精確描述修了什麼**：
+
+```text
+保留：KB-row Routing Hint metadata 不新增；categories／Hint schema 不改
+撤回：「Face 側不需要新的 routing semantic contract，
+      required_slots 已足以表示 instance requirement」
+新增：Face-level `requires_instance_reference` 第一級語義契約
+```
+
+> 修訂後表述：**不新增 KB-row Routing Hint metadata；不再以 `required_slots`
+> 推導 instance responsibility；新增 Face-level `requires_instance_reference`
+> 第一級語義契約。**
+
+⚠️ 反證來源：N4 ＋ 任務 1.4——**22 個 Face 中 13 個 `required_slots` 非空**，
+以 slot 推導會一次納管 13 個。此修訂發生在 candidate implementation **之前**。
 
 **理由**：缺口是**單邊**的（research.md 主題 2）——Face 側已有第一級契約化宣告，
 問句側缺席。新增欄位會重複既有語義，且擴大 144 筆的變更面。
@@ -653,6 +679,7 @@ query 仍與 source text 高度同源，**等於換個形式的 overfit**。故�
 | 日期 | 版本 | 變更內容 | 修改者 |
 |---|---|---|---|
 | 2026-08-23T10:30:00Z | 1.0 | 初始版本；承接 gap 的 no-winner 結論，提出 InstanceEvidence 訊號契約 | AI |
+| 2026-08-23 | 1.2 | **erratum 01（block scope）裁定**：membership 改採 Face-level `requires_instance_reference`（選項 C），與 **rollout scope（選項 D）正交**，兩層同時成立才納管；撤回 v1.1 的 key allowlist 作為 membership source（改列為 D 的 rollout list）；家族方案判 `INSUFFICIENT_JUSTIFICATION`；整筆 KB suppression 判 REJECTED 並保留為 explicitly rejected alternative；決策 2 精確修訂（不新增 KB-row metadata、撤回以 `required_slots` 推導、新增 Face 層語義契約）；Face **逐一裁定禁止批次推導**，現況僅 `bill_diagnosis` 為 `true` | AI |
 | 2026-08-23 | 1.1 | 業主審查修正 5 Must ＋ 3 Should：①`face_requires_instance` 改 Level A 白名單（決策 6），不等價 `bool(required_slots)`；②架構敘事如實命名——本案分離的是 **routing authorization evidence**，**未**消除 KB 中 Hint／Evidence 共居；③啟用守門改 `HoldoutStatus` 三值 ＋ ruleset／protocol／dataset **三重 digest 綁定**（原 `result != None` 只防 missing、不防 failed）；④`block` 改為抑制同型 Hint，非 `continue` 下一分類，並要求 multi-category negative control；⑤`abstain` 正名為 **rollout policy**，非對 query intent 的判真；另：`spans` 改 immutable tuple、`extract(None)` 行為明訂、holdout 程序五步防同源 | AI |
 
 ---

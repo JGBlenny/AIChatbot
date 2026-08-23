@@ -146,3 +146,22 @@ C（契約本身有問題）                   0 / 30
 且**不會把正確實作誤判為越界**。
 
 **下一步 SHALL 為 1.6 design erratum**，而非 Task 2。
+
+---
+
+## 附記（2026-08-23，erratum 01 裁定後）
+
+erratum 01 改判 membership 為「C 語義契約 × D rollout scope 兩層」，
+任務 1.4 因此**新增 2 條契約**（兩層不得被摺疊、Level A Face 兩層皆成立），
+兩條皆為 **B（scaffold）**——它們守的同樣是 1.6 後才能實作的 candidate 模組。
+
+```text
+母體 30 → 32
+
+A semantic effectiveness proven   22 / 32
+B scaffold（待 candidate 模組）     10 / 32
+C contract defect                  0 / 32
+```
+
+⚠️ **分母變動必須明記**：本輪 A 的絕對數未變（22），
+但若只更新分子而不更新分母，覆蓋率會被讀成上升。

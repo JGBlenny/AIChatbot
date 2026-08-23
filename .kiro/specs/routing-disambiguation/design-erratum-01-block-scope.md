@@ -1,9 +1,10 @@
 # Design Erratum 01：`block` 的作用域——選項分析
 
-> 2026-08-23｜語言 zh-TW｜**狀態：OPTIONS ANALYSIS — RULING PENDING**
+> 2026-08-23｜語言 zh-TW｜**狀態：RULED（業主裁定 2026-08-23）**
 > 觸發：任務 1.3 的 N4 rule 側兩筆紅（`open_conflict_for_task_4_1`）
 > _Requirements: 1.2, 2.5, 4.2_｜前置：任務 1.5 完成（A 22／B 8／C 0，13 突變全殺）
-> ⚠️ **本文件不碰 candidate code**，且**不作裁示**——裁示權在業主。
+> ⚠️ 本文件不碰 candidate code。**裁定見文末「最終裁定」**，其上為裁定前的選項分析原文
+> （**不回頭改寫**——分析當時的推理與裁定分開保存，才看得出裁定依據了什麼）。
 
 ## 命題
 
@@ -176,3 +177,105 @@ contract_renew／account_login）、`bill_ref`×4、`estate_ref`、`meter_ref`�
    不得只存在於程式碼常數。
 5. **Req.4 兩筆未決問句的產品歸屬**——依上方發現，**本 erratum 不需要它先落地**；
    但若 falsifier 成立（extractor 對該二筆判 `block`），則須立即回頭補裁。
+
+---
+
+# 最終裁定（業主，2026-08-23）
+
+| 選項 | 裁定 | 理由 |
+|---|---|---|
+| **A** Face-key hardcoded membership | **REJECTED as membership source** | 形成第二 truth source；**可作 D 的 rollout list**，但不得代表語義 |
+| **B** explicit family | **REJECTED — `INSUFFICIENT_JUSTIFICATION`** | 目前無獨立 family 語義；若只因 `bill_ref` 即違反原則② |
+| **C** Face semantic contract | **SELECTED** | 直接表示真正需要的 routing responsibility，不從 execution slots 推導 |
+| **D** rollout scope | **SELECTED，與 C 正交** | membership 與 Level A activation 分離 |
+| **E** whole-KB suppression | **REJECTED** | 安全性依賴 corpus 偶然形狀，無機制隔離保證；保留於設計中作為 **tempting shortcut / explicitly rejected alternative** |
+
+> B 的重評條件：**系統本身真的建立 first-class routing family taxonomy** 時可重啟。
+
+## 本次 erratum 真正的成果：把兩個曾被混在一起的命題拆開
+
+```text
+Face 語義上屬不屬於 instance-routing responsibility   →  C（產品／架構語義）
+這次 release 有沒有資格對它啟用                        →  D（驗證成熟度／rollout 邊界）
+```
+
+**兩層皆須成立才實際納管**：
+
+```text
+requires_instance_reference == True          ← C：Face 自身的第一級宣告
+AND
+face_key ∈ LEVEL_A_INSTANCE_GATE_SCOPE       ← D：本次 release 的啟用邊界
+        ↓
+gate effective
+```
+
+⚠️ **這不是重複**。未來 Level B 擴張時，**只擴 rollout scope**，
+membership 定義不必跟著改來改去——後者一旦頻繁變動，就不再是語義契約。
+
+⚠️ **A 的正確位置在 D**：明列 key 作為 rollout list 是合理的（它就是「本次驗到哪」），
+但**不得**成為「哪些 Face 算 instance responsibility」的權威來源。
+
+## 兩側契約終於對稱
+
+```text
+Question side          Face side
+InstanceEvidence   ×   requires_instance_reference
+            ↓
+     InstanceReferenceGate
+```
+
+這消除了本案最初的錯誤推論：**execution slot 被偷當成 routing semantics**。
+
+## Face 逐一裁定，**禁止批次推導**
+
+⚠️ **不得因為四個 Face 都有 `bill_ref` 就一次全標 `true`**
+——那是把剛否決的 B **從後門裝回來**。
+
+```text
+Face membership = explicit semantic adjudication
+                ≠ slot-based batch derivation
+```
+
+| Face | 現況裁定 | 依據 |
+|---|---|---|
+| `bill_diagnosis` | **`true`** | 已有完整 Level A 證據 |
+| `billing_anomaly` | **待逐 Face 裁定（Req.4 已不再阻塞）** | 若其產品責任確為「針對某一筆帳單異常做診斷」即可獨立標 `true` |
+| `billing_invoice` | **不得因名稱或 `bill_ref` 自動跟進** | 須各自論證產品責任 |
+| `billing_flow` | **不得因名稱或 `bill_ref` 自動跟進** | 同上 |
+| `billing_late_fee`／`billing_setup_guide` | 未納入 | `contract_ref`／無 slot |
+
+⚠️ **N4 rule 側在 `billing_anomaly` 完成逐 Face 裁定前仍為紅**——
+那是裁定尚未做完，**不是實作缺失，更不得靠改斷言轉綠**。
+
+## Design Decision 2 的修訂（精確描述修了什麼）
+
+**不是**「推翻 Decision 2、新增 KB metadata」——本案**仍不需要新增 KB-row metadata**。
+被推翻的只有其中這個部分：
+
+```text
+撤回：Face 側不需要新的 routing semantic contract，
+      required_slots 已足以表示 instance requirement
+保留：KB categories／Routing Hint schema 不改
+新增：Face config 明確宣告 requires_instance_reference（第一級語義契約）
+```
+
+修訂後的表述：
+
+> **不新增 KB-row Routing Hint metadata；不再以 `required_slots` 推導 instance responsibility。
+> 新增 Face-level `requires_instance_reference` 第一級語義契約。**
+
+反證它的是 **N4 ＋ 任務 1.4**：22 Face 中 13 個 `required_slots` 非空，
+該推導會一次納管 13 個。屬 **design v1.2 等級的實質 erratum**，
+且發生在 candidate implementation **之前**，時間因果乾淨。
+
+## Req.4 的正式結論
+
+> **1.6 不裁定兩筆 undecided utterance 的 facet。**
+> 只要 extractor 對它們產生 positive instance evidence，它們不進 block path；
+> 因此 **Face membership 與 utterance facet ownership 可以分離**。
+> **若 Task 2 實測 falsifier 推翻此前提，立即重開本裁定。**
+
+⚠️ **Task 2 第一輪 SHALL 先跑該 falsifier**：
+對「我的收據在哪」「我這筆點退的錢怎麼怪怪的」跑 extractor，
+若判出 `block`（而非 `allow`／`abstain`），本裁定**立即失效**，
+**不准靠修改測試繼續**。
