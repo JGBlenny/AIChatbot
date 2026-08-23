@@ -76,7 +76,7 @@ protocol v1 PASS
 **目標**：在任何實作之前，先讓「什麼算失敗」成為可執行的斷言。
 ⚠️ 本任務完成時這些測試**應該全部是紅的**——那是它們有效的證明（Req.6.5）。
 
-- [ ] 1.1 **🧠主** 建立**啟用守門**的 negative control：四路皆須拒絕啟用——
+- [x] 1.1 **🧠主** 建立**啟用守門**的 negative control：四路皆須拒絕啟用——
   `status="not_run"`／`status="failed"`／`passed` 但 ruleset digest 不符／
   `passed` 但 protocol digest 不符；僅三者相符才允許。
   ⚠️ 特別鎖 `failed` 那一路——原設計的 `result != None` 只防 missing、不防 failed。
@@ -322,3 +322,29 @@ protocol v1 PASS
 
 **🔍V 集中於四類風險**：守門本身是否有效（1.5、7.2）、與相似度正交的驗證（2.5）、
 等價契約不被破壞（4.3）、現行行為被當成應維持行為（5.4）、**裁決點被侵蝕**（6.5）。
+
+
+---
+
+## 實作進度
+
+### ✅ 1.1（2026-08-23）
+
+`rag-orchestrator/tests/unit/decision/test_instance_gate_enable_invariant_req.py`
+——6 筆測試，**全紅**（預期）：
+
+```text
+passed=0  failed=6
+ImportError: cannot import name 'instance_reference_gate' from 'services'
+```
+
+四條拒絕路徑（`not_run`／`failed`／ruleset digest 不符／protocol digest 不符）
+＋ 一條允許路徑 ＋ 一條「不得降級為 warning」。
+import 置於各測試函式內，使四條路徑**各自**變紅——整檔於收集階段 error
+會只看到一個錯誤，看不出各條是否都有被斷言。
+
+`ACTIVE_PROTOCOL_DIGEST` 釘死 protocol v1 的 `4690a258f502d98d`。
+
+> ⚠️ **1.1 的紅尚不足以證明斷言有效**：六筆紅在**同一個 ImportError**，
+> 一個寫錯的斷言（例如 `pytest.raises` 包錯範圍）此刻同樣顯示為紅。
+> 逐條確認「紅的原因是斷言本身而非缺少實作」**留待任務 1.5**。
