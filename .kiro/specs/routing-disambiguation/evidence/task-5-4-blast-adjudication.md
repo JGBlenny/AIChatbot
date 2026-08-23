@@ -1,7 +1,7 @@
 # 任務 5.4：BLAST 七筆 intended behavior 判定（**先判定、後實測**）
 
 > 2026-08-24｜語言 zh-TW｜_Requirements: 5.2, 7.3_
-> **freeze 狀態：待業主裁定**（本檔為依據盤點，尚未 freeze）
+> **freeze 狀態：已由業主裁定並凍結（2026-08-24）**——機器可讀版：[task-5-4-frozen-expectations.json](./task-5-4-frozen-expectations.json)
 > ⚠️ 本輪**只盤依據**：未跑 candidate、未改任何 assertion。
 
 ## 依據分類（只有 A–C 有資格直接支撐 intended behavior）
@@ -47,7 +47,40 @@ E current route／metadata／observed  ← 同上
 | 6 | 我要查帳單 編號 12345 | **查無 A／B／C**。兩個面向的自述範疇皆未涵蓋「純查詢」：bill_diagnosis 限四類**操作問題**，billing_anomaly 限金額不對／沒出現／看不到。僅有 E（現行 route） | **E** | 無 | ❌ | **不建議**（route 與 facet 皆未定） | **UNADJUDICATED** |
 | 7 | 幫我查點退帳單金額 | protocol v1 **INSTANCE** 案例集，`expected: dialog:條件診斷：帳單`（已凍結）；`test_facet_entry_routing_req.py:192` BILLING_INSTANCE_CASES 成員 | **C** | 強 | ✅ 同一問句 | `dialog:條件診斷：帳單` | **ADJUDICATED** |
 
-## 第 5 筆的張力（提請裁示，我不自行選一份）
+## ✅ 業主裁定（2026-08-24）
+
+```text
+#1 #2 #3 #4 #5 #7  ADJUDICATED → dialog:條件診斷：帳單
+#6                 UNADJUDICATED → 只記 observation，不進 Req.5.2 assertion
+#5                 維持 ADJUDICATED，**不改判 CONFLICTING_EVIDENCE**
+```
+
+**⚠️ #5 的裁定範圍限縮（業主原文，必須逐字保留）**：
+
+> **本裁定限於 instance-specific value lookup；不延伸至「金額組成／為何如此」等
+> explanation／anomaly 問句。後者仍依 Face scope 規則另行分流。**
+
+裁定理由：三類問句是不同的產品命題——
+
+```text
+這張帳單的收據金額多少   → instance value lookup      ← #5 屬此類，無張力
+這張帳單的金額怎麼組成   → explanation / composition  ← 才碰到 scope=switch
+為什麼這張帳單是這個數字 → anomaly / diagnosis        ← 同上
+```
+
+⚠️ **不得**引用 #5 反過來主張「所有問金額的都應進 bill_diagnosis」。
+
+**⚠️ Req.5.2 分母是 6，不是 7**：
+
+```text
+BLAST inventory 7 ＝ ADJUDICATED 6 ＋ UNADJUDICATED 1
+報告 SHALL 寫：BLAST adjudicated regression = X/6｜BLAST observation = 7/7 recorded
+報告 SHALL NOT 寫：BLAST 7/7 PASS   ← #6 沒有產品 expectation，無 PASS 可言
+```
+
+---
+
+## 第 5 筆的張力（裁定前的提請紀錄，保留不改寫）
 
 ```text
 C（凍結 acceptance）：這張帳單的收據金額多少 → 條件診斷：帳單

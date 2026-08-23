@@ -1,0 +1,66 @@
+{
+  "task": "5.4 blast radius intended behavior",
+  "frozen_at": "2026-08-24T09:00:00Z",
+  "ruling_by": "業主（2026-08-24）",
+  "denominator": {
+    "blast_inventory": 7,
+    "adjudicated": 6,
+    "unadjudicated": 1,
+    "req_5_2_assertion_denominator": 6
+  },
+  "reporting_rule": "SHALL 寫成 `BLAST adjudicated regression = X/6` ＋ `BLAST observation = 7/7 recorded`；SHALL NOT 寫成 `BLAST 7/7 PASS`",
+  "cases": [
+    {
+      "n": 1,
+      "question": "帳單為什麼發不出去",
+      "status": "ADJUDICATED",
+      "expected": "dialog:條件診斷：帳單",
+      "basis": "B＋C：面向自述逐字含「發不出去」；BILLING_DIALOG_CASES＋2026-07-06 改判註記"
+    },
+    {
+      "n": 2,
+      "question": "帳單為什麼取消不了",
+      "status": "ADJUDICATED",
+      "expected": "dialog:條件診斷：帳單",
+      "basis": "B：面向自述逐字含「取消不了」"
+    },
+    {
+      "n": 3,
+      "question": "為什麼被收逾期費",
+      "status": "ADJUDICATED",
+      "expected": "dialog:條件診斷：帳單",
+      "basis": "B：面向自述逐字含「被收逾期費」"
+    },
+    {
+      "n": 4,
+      "question": "帳單手動到帳失敗",
+      "status": "ADJUDICATED",
+      "expected": "dialog:條件診斷：帳單",
+      "basis": "B：面向自述逐字含「手動到帳失敗」"
+    },
+    {
+      "n": 5,
+      "question": "這張帳單的收據金額多少",
+      "status": "ADJUDICATED",
+      "expected": "dialog:條件診斷：帳單",
+      "basis": "C：protocol v1 INSTANCE 已凍結期望；bill_diagnosis grounding 可取該筆實值",
+      "scope_limit": "本裁定**限於 instance-specific value lookup**；不延伸至「金額組成／為何如此」等 explanation／anomaly 問句，後者仍依 Face scope 規則另行分流"
+    },
+    {
+      "n": 6,
+      "question": "我要查帳單 編號 12345",
+      "status": "UNADJUDICATED",
+      "expected": null,
+      "basis": "查無 A／B／C。強 instance evidence 只能證明「若某 instance Face 已是適用候選，gate 不應因缺個體指涉而 block」，**不能證明哪個 Face 應承接純查詢**。現行 route／bill_ref／categories 全為 E 類或機制事實",
+      "handling": "只記 observation；排除於 Req.5.2 分母之外"
+    },
+    {
+      "n": 7,
+      "question": "幫我查點退帳單金額",
+      "status": "ADJUDICATED",
+      "expected": "dialog:條件診斷：帳單",
+      "basis": "C：protocol v1 INSTANCE 已凍結期望"
+    }
+  ],
+  "anti_contamination_note": "本裁定非盲標（5.1 baseline 已先被看過），但兩項防污染證據成立：①每筆 expectation 逐條引用獨立 A–C 來源；②#6 的 baseline 同樣是 bill_diagnosis，仍拒絕 adjudicate——實證未採用「current route → intended route」。⚠️ Task 6 holdout **不得**沿用本程序：須先取 unseen utterances → 盲標 → freeze labels → 才跑 candidate。"
+}
