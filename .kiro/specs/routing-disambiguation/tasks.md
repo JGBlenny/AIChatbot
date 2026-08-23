@@ -161,22 +161,22 @@ protocol v1 PASS
 
 ## 2. `InstanceEvidence` 與決定性抽取器
 
-- [ ] 2.0 **🧠主** ⚠️ **本輪第一件事：跑 erratum 01 的 falsifier**——
+- [x] 2.0 **🧠主** ⚠️ **本輪第一件事：跑 erratum 01 的 falsifier**——
   對「我的收據在哪」「我這筆點退的錢怎麼怪怪的」跑 extractor：
   判 `allow`／`abstain` → 1.6 裁定維持；判 **`block`** → **1.6 裁定立即失效**，
   停止 Task 2、重開 erratum，**不准靠修改測試繼續**。
   _Requirements: 4.2, 1.3_
 
-- [ ] 2.1 **🧠主** 定義 `InstanceEvidence` 值物件：正向證據、反向證據、`spans`。
+- [x] 2.1 **🧠主** 定義 `InstanceEvidence` 值物件：正向證據、反向證據、`spans`。
   ⚠️ `spans` 用 **immutable tuple**——`@dataclass(frozen=True)` 只凍結欄位綁定，
   dict 內容仍可 mutate，型別契約會名不副實。
   _Requirements: 2.1, 3.1_
 
-- [ ] 2.2 **⚡F** (P) 實作正向特徵抽取：`identifier`／`possessive`／`lookup_verb`／`problem_report`，
+- [x] 2.2 **⚡F** (P) 實作正向特徵抽取：`identifier`／`possessive`／`lookup_verb`／`problem_report`，
   複用 `conversational_engine.py` 既有 id-like／ordinal 抽取慣例，不新造。
   _Requirements: 2.1_
 
-- [ ] 2.3 **⚡F** (P) 實作反向特徵抽取：`explanation_request`。
+- [x] 2.3 **⚡F** (P) 實作反向特徵抽取：`explanation_request`。
   ⚠️ research 實測顯示它比任一正向特徵更強（8/9 vs 最高 5/11）——
   **只找正向特徵會漏掉「規則問句」這一半**。
   _Requirements: 2.1_
@@ -687,3 +687,43 @@ Level A Face 須兩層皆成立。宣告載體取 `grounding_scope`
 （與 `required_slots`／`enabled_gate` 同處，沿面向配置鍵契約慣例）——
 **此為主 session 的實作載體選定**，erratum 只裁「Face 自身第一級宣告」。
 1.5 稽核母體因此 **30 → 32**（A 22／B 10／C 0；A 絕對數未變，分母變動已明記）。
+
+### ✅ 2.1／2.2／2.3 ＋ 2.0 falsifier（2026-08-23）
+
+`rag-orchestrator/services/instance_evidence.py`（ruleset `ie-v1`）——
+規則集**逐條取自 research.md 主題 1 的實測特徵表**，
+**未針對 falsifier 兩句特調**（特調會讓 2.0 自我實現：為那兩句補到會 positive → PASS → 什麼也沒證明）。
+
+**2.0 結果：PASS（extractor 層）**
+
+```text
+我的收據在哪            pos=['possessive']                       ctr=[]
+我這筆點退的錢怎麼怪怪的  pos=['possessive', 'problem_report']     ctr=[]
+```
+
+⚠️ **PASS 之所以有意義，在於它不是「什麼都 positive」**——同一份規則集在凍結案例集上：
+
+```text
+RULE     4/4  pos=∅ ＋ ctr=explanation_request   → 雙條件成立，會被 block
+INSTANCE 4/4  pos≠∅                              → allow
+CONTROL  5/5  pos=∅（其中 2 筆 ctr 亦空 → abstain，行為不變）
+BLAST    7/7  pos≠∅
+```
+
+若 RULE 側也全 positive，2.0 就是空跑的假綠。**兩側同看才構成證據。**
+
+⚠️ **2.0 PASS 不決定 facet 歸屬**：SHALL NOT 據此宣稱 `billing_anomaly` 或
+`bill_diagnosis` 正確；**Req.4 continues undecided**。
+
+**gate 層的鎖已自動上膛**：`test_undecided_utterances_are_never_blocked` 以
+`importorskip` 寫成——gate 尚未實作時自動略過（`[env]` 2 筆），
+**任務 3.1 落地後自動生效**。寫成註解或待辦會被忘記，寫成自動上膛的斷言不會。
+
+**已記錄、未修的 ruleset 缺口**（**不得為求好看而現在補 pattern**，留給 holdout 判真）：
+`押金設算息怎麼計算`／`怎麼用 Excel 批次匯入帳單` 兩筆 CONTROL 的反向證據為空
+——`怎麼計算` 不含 `怎麼算`。兩筆本就應為 single，gate 判 abstain 不改變行為，故不影響本輪。
+
+**實作邊界**：`identifier` 的 id-like 樣式**逐字複製** `conversational_engine._ID_TOKEN_RE`
+（含「與日期分隔符或數字相鄰者不算識別」這道 e2e 逼出的守門），
+**不 import**——本模組須維持零相依零 IO（R3.1）。⚠️ **兩處不得漂移**，
+同步守門列為任務 2.5 的不變量測試項。
