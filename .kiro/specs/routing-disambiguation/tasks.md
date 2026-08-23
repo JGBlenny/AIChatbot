@@ -107,7 +107,7 @@ protocol v1 PASS
   ⚠️ 防「帳單 8/8 但偷偷改了 21 Faces」。
   _Requirements: 2.5, 5.2_
 
-- [ ] 1.5 **🧠主** 逐 **test ID** 檢視 1.1–1.4 的 semantic failure reason，
+- [x] 1.5 **🧠主** 逐 **test ID** 檢視 1.1–1.4 的 semantic failure reason，
   確認每一條的紅是**斷言本身**造成的，而非只是缺少實作；綠的各條逐一說明其定性
   （preservation／rollout-safety／量尺自我守門），並記錄各自的失敗訊息。
   ⚠️ 這是 negative control 的 negative control——**守門若一開始就是綠的，它守不到任何東西**。
@@ -567,3 +567,44 @@ v1 freeze → gap／design → 發現 Must ④ → v2 建立 → 1.3／1.4 contr
 ──────────────────────────────────────────── ↑ 到此為止
 → 1.5 → design erratum（1.6）→ Task 2 implementation
 ```
+
+### ✅ 1.5（2026-08-23）
+
+完整報告：[evidence/task-1-5-negative-control-audit.md](./evidence/task-1-5-negative-control-audit.md)
+
+```text
+母體 30 個 test ID（1.1 六＋1.2 十二＋1.3 六＋1.4 六）
+
+A  semantic effectiveness proven   22 / 30
+B  scaffold（待 candidate 模組）      8 / 30
+C  契約本身有問題                     0 / 30
+```
+
+⚠️ **母體是 30 不是 26**——先前口頭說 26 是加錯；分母錯會讓覆蓋率看起來比實際好。
+
+**方法：突變測試 13 個，全數被殺、0 survived。** 綠色不會自動等於有效，
+故對每一條綠都問「什麼樣的錯誤會讓它變紅」，答不出來就不是 A。
+成對突變是重點：**M10（恆紅）／M11（恆綠）** 與 **M8（恆稱無漂移）／M9（恆稱有漂移）**
+——只證明「恆綠會被抓」不夠，恆紅的量尺同樣測不出東西，還會擋掉正確實作。
+
+**業主指定的五項量尺結案條件，逐項以突變反證成立**：
+
+```text
+錯 facet            → 因 wrong facet 而 FAIL   ✓ M1／M11
+single on instance  → 因 wrong route 而 FAIL   ✓ M11
+UNDECIDED           → unscored（非 pass）       ✓ M2
+正確 facet          → PASS                     ✓ M10（恆紅會被抓）
+bilateral 假綠      → 被拒絕                    ✓ M3（單邊會被抓）
+```
+
+**方法論邊界（重要）**：本輪實作了**量尺** `rag-orchestrator/scripts/routing/protocol_v1.py`
+——protocol v1 凍結在前、量尺照著實作，屬 measurement infrastructure。
+**candidate（`InstanceEvidence`／gate／seam 整合）完全未動。**
+故 1.1 六條與 1.4 兩條成員資格斷言**必然維持 B**：它們守的正是 1.6 裁定前不得開始的模組。
+**這是順序紀律的必然結果，不是稽核缺口。**
+
+**C ＝ 0**：無非預期紅綠，**無契約需先修**。
+**尚不能宣稱** candidate 的 semantic effectiveness；
+**可以宣稱**量尺與作用域判定式確實會咬到它們聲稱要咬的錯誤，且不會把正確實作誤判為越界。
+
+**下一步 SHALL 為 1.6 design erratum，不是 Task 2。**
