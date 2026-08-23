@@ -29,6 +29,17 @@ services:
       # spec 正文（retrieval-decision-layer R1.3.2）：測試要核對 verdict 值域
       # 與 design.md C1 枚舉逐字一致，唯讀掛入。
       - ./.kiro:/.kiro:ro
+    # ⚠️ **行為設定必須與 production 同源**（任務 3.1 實跑逼出｜R9.4）：
+    #    測試容器原本完全不帶 .env，於是 KB_SIMILARITY_THRESHOLD 未設 →
+    #    DecisionConfig 落回程式預設 **0.55**，而 production 容器實際跑 **0.65**。
+    #    同一組測試在兩個門檻下候選集不同、紅的題目也不同——
+    #    用錯門檻做的對照會得出完全相反的結論（本專案已三次因 runner 保真度不足而結論作廢）。
+    #    故：**行為設定（門檻／旗標／模型）走 env_file 與 production 同源**；
+    #        **連線類設定（DB_*／REDIS_*）由下方 environment 覆蓋**——
+    #        .env 裡的連線值是**宿主視角**（localhost、aichatbot_admin），容器內必須另給。
+    #    docker compose 語義：environment 優先於 env_file，故覆蓋成立。
+    env_file:
+      - .env
     environment:
       TZ: Asia/Taipei
       PYTHONDONTWRITEBYTECODE: "1"
@@ -52,6 +63,22 @@ services:
       DB_PASSWORD: ${TEST_DB_PASSWORD:-aichatbot_password}
       REDIS_HOST: ${TEST_REDIS_HOST:-redis}
       REDIS_PORT: ${TEST_REDIS_PORT:-6379}
+      # ── 服務位置：**一律容器視角，覆蓋 .env 的宿主視角** ──
+      # .env 寫 EMBEDDING_API_URL=http://localhost:5001/...（宿主）；
+      # 容器內 localhost 指向容器自己 → 向量檢索整組失效 → 檢索回空 →
+      # 「應進對話」的案例全數變單發。與 DB_HOST 是同一類 bug，只是換了服務。
+      # （2026-08-23 實跑逼出：加 env_file 後 59 筆進場案例集體轉紅。）
+      EMBEDDING_API_URL: http://embedding-api:5000/api/v1/embeddings
+      SEMANTIC_MODEL_API_URL: http://semantic-model:8000
+      # ── routing 行為參數：**逐字鏡射 docker-compose.prod.yml 的宣告** ──
+      # 不可只靠 env_file 巧合對上：prod 有些參數是在 compose 內以 ${VAR:-default}
+      # 宣告而 .env 並未定義（如 FORM_TRIGGER_THRESHOLD），測試容器若落回程式預設，
+      # 只是「碰巧同值」，任一邊改動即靜默分歧。
+      # 由 tests/unit/_meta/test_env_parity_req.py 鎖住兩份 compose 的一致性。
+      KB_SIMILARITY_THRESHOLD: 0.65
+      FORM_TRIGGER_THRESHOLD: ${FORM_TRIGGER_THRESHOLD:-0.75}
+      ENABLE_QUERY_REWRITE_B2B: ${ENABLE_QUERY_REWRITE_B2B:-false}
+      PREENTRY_ROUTABILITY_GATE: ${PREENTRY_ROUTABILITY_GATE:-false}
     command: ["sleep", "infinity"]        # 維持容器；測試以 run --rm 進入
 
 # 接上共用基礎設施網路（spec conversational-routing-execution 任務 1.2｜R1.2）
