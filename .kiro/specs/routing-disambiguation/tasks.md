@@ -181,7 +181,7 @@ protocol v1 PASS
   **只找正向特徵會漏掉「規則問句」這一半**。
   _Requirements: 2.1_
 
-- [ ] 2.4 **⚡F** 實作 `extract(None)`／`extract("")` → 回空 evidence。
+- [x] 2.4 **⚡F** 實作 `extract(None)`／`extract("")` → 回空 evidence。
   ⚠️ **不得靠 exception → fail-open 間接達成**：靠例外的行為不會被型別或測試鎖住。
   _Requirements: 3.1_
 
@@ -727,3 +727,21 @@ BLAST    7/7  pos≠∅
 （含「與日期分隔符或數字相鄰者不算識別」這道 e2e 逼出的守門），
 **不 import**——本模組須維持零相依零 IO（R3.1）。⚠️ **兩處不得漂移**，
 同步守門列為任務 2.5 的不變量測試項。
+
+### ✅ 2.4（2026-08-23）
+
+`tests/unit/decision/test_instance_evidence_empty_input_req.py`——7 筆全綠。
+
+```text
+None ／ "" ／ "   " ／ "\n\t " ／ 全形空白  → empty evidence（Task 3 對應：abstain）
+```
+
+**同時鎖了反向**：抽取器**不得**有 blanket try/except——餵入結構上不合法的輸入
+SHALL 拋出而非靜默回空。否則這兩件事在型別上不可區分：
+
+```text
+「沒有訊號」             ← 應回空 evidence
+「extractor 壞掉後被吃掉」 ← 應向上拋，由 seam 依 4.4 判 abstain
+```
+
+fail-open 的正確位置在 production seam（任務 4.4），**不在抽取器內部**。
