@@ -1,5 +1,28 @@
 # 實作任務：routing-disambiguation
 
+> ## 🔒 FINAL STATUS：**REFUTED — CLOSED**（2026-08-24）
+>
+> ```text
+> requirements   COMPLETE      Task 5   PASS
+> gap analysis   COMPLETE      Task 6   REFUTED
+> design         COMPLETE      Task 7   SHALL NOT EXECUTE
+> tasks          COMPLETE
+> implementation COMPLETE through Task 6
+> ```
+>
+> **v1 證明了 deterministic query-side evidence 可以在已知案例上安全運作，
+> 但 unseen holdout 顯示：它既無法穩定取得自然語句中的 applicability signal，
+> 也沒有足夠 routing authority 處理實際跨 Face 的 misrouting；
+> 因此它不能作為 production routing intervention。**
+>
+> **A（signal coverage）與 B（routing authority）已由同一 holdout 實測證明可分離，
+> 任一單獨修復皆不足；其共同上游原因目前僅有 H1／H2／H3 假說，尚無 winner。**
+>
+> 解剖見 [post-mortem-01-refuted-candidate.md](./post-mortem-01-refuted-candidate.md)。
+> ⚠️ `refuted` ≠ `failed`：候選假說經正常驗證而被反證，不是工程執行失敗。
+> ⚠️ 後續研究 SHALL 另立新案，**不得**把本案 phase 改回 design——
+> v1 的 falsification record 應完整保留、可引用。
+
 > 建立 2026-08-23｜語言 zh-TW
 > 來源：[requirements.md](./requirements.md)（9 需求／35 子需求）、[design.md](./design.md) **v1.2**
 >（v1.1 ＋ [erratum 01](./design-erratum-01-block-scope.md)：membership 改 Face 層語義契約、與 rollout scope 正交）、
@@ -315,11 +338,15 @@ protocol v1 PASS
 
 ---
 
-## 7. Level A 範圍宣告與啟用
+## 7. Level A 範圍宣告與啟用 —— ⛔ **NOT EXECUTED BY DESIGN**
 
-> ⛔ **本節 SHALL NOT 執行**——任務 6 已裁決 **REFUTED**（2026-08-24）。
-> candidate 不得進入 activation；真實 manifest 為 `holdout.status = "failed"`，
-> `assert_gate_enablable` 於三重 digest 全部相符時**仍拒絕**。
+> **Reason**：Task 6 unseen holdout **REFUTED** the candidate (2026-08-24).
+> Activation would violate the matching-PASS authorization invariant.
+>
+> ⚠️ **本節保留不刪**：它是歷史事實。刪掉或改記「未做」，
+> 未來的人會以為是漏做。真實 manifest 為 `holdout.status = "failed"`，
+> `assert_gate_enablable` 於三重 digest 全部相符時**仍拒絕**——
+> `failed` ／ enable guard ／ Task 7 shutdown 三者構成同一個閉環。
 
 - [ ] 7.1 **🧠主** 依實測宣告 Req.2.5 的**適用範圍**：
   Level A（帳單域驗證）或 Level B（跨 exposure surface，需 ≥30 跨域可判定案例）。
