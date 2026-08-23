@@ -1,0 +1,75 @@
+{
+  "protocol_version": "v2",
+  "frozen_at": "2026-08-23T12:10:00Z",
+  "spec": "routing-disambiguation",
+  "requirement": "1.2, 1.3, 3.5",
+  "provenance": "design v1.1 業主審查 Must ④：`block` 改為抑制同型 Hint、非 continue 下一分類，並要求 multi-category negative control。v1 凍結在該 Must 之前，故新增案例只能另立版本。",
+  "purpose": "把 multi-category 情境的**產品效果**寫成可執行契約；v1 的三筆凍結案例恰為單一相關分類，會出現「案例綠但契約未成立」。",
+  "relation_to_v1": {
+    "v1_protocol_digest": "4690a258f502d98d",
+    "v1_status": "原封不動；digest 不變；acceptance evidence 全數保留，不被本版覆寫",
+    "inheritance": "corpus／model／environment／case_sets（RULE・INSTANCE・UNDECIDED・BLAST・CONTROL）／metrics／perturbations 一律沿用 v1；本檔只**新增**，不重述、不修改",
+    "why_not_amend_v1": "Req.3.5 的時間因果是「先凍結量尺 → 再看方案」。看過方案再改 v1，凍結就失去意義；v2 讓新增案例的 provenance 與時點可稽核。"
+  },
+  "additions": {
+    "negative_controls": [
+      {
+        "id": "N4",
+        "target": "`block` 的作用域（產品效果，非某個迴圈實作）",
+        "rule_side": "rule 問句 ＋ top-1 KB 掛兩個以上可導向 Face 的 categories ＋ 第一個 instance-requiring Face 被 block → SHALL NOT 因 continue 到第二個同型 Routing Hint 而進另一個 Face；final route SHALL 仍為 single",
+        "instance_side": "instance 問句 ＋ **相同** multi-category KB shape → SHALL 仍進 `bill_diagnosis`",
+        "why_bilateral": "只鎖 rule 側，最省事的實作是把整列 categories 全封掉——rule 救回來、instance 一起陪葬，正是前案「修一邊傷另一邊」的形態（design 決策 4）",
+        "order_independence": "categories 順序對調 SHALL 得到相同結果；只修第一順位等於沒修"
+      }
+    ],
+    "case_sets": {
+      "MULTI_CATEGORY": {
+        "kb_shape": {
+          "categories": [
+            "條件診斷：帳單",
+            "帳單異常"
+          ]
+        },
+        "rationale": "design 元件 3 的原始舉例；兩者皆為實際存在的 Face，且 `grounding_scope.required_slots` 皆為 `[\"bill_ref\"]`",
+        "rule_case": "點退帳單的金額是怎麼算的",
+        "instance_case": "我的這張點退帳單金額怎麼算出來的",
+        "expected": {
+          "rule": "single",
+          "instance": "dialog:條件診斷：帳單"
+        },
+        "excluded_deliberately": {
+          "滯納金": "required_slots=['contract_ref']——實體種類不同，混入會把「哪一種 entity reference」的問題偷渡進本控制",
+          "帳單設定引導": "required_slots 為 None——非 instance-requiring"
+        }
+      }
+    }
+  },
+  "measurement_note": {
+    "corpus_finding": "2026-08-23 實查 `aichatbot_test`（corpus digest 918b69ce70fbb8f1660819c3774eb24b）：**categories 解析後掛到兩個以上 Face 的 KB 為 0 筆**。74 筆 categories≥2 之中，58 筆碰到帳務類分類，但配對的另一個分類多為主題分類（帳單管理／付款金流／合約管理／發票開立），皆非 Face。",
+    "not_faces": [
+      "條件診斷：付款",
+      "條件診斷：發票"
+    ],
+    "not_faces_note": "3497／3500／3501／3502 掛 ['條件診斷：付款','繳費金流排障']、3503／3504 掛 ['條件診斷：發票','發票']，看似 multi-face，實則 `config_for_category` 對「條件診斷：付款」「條件診斷：發票」回 None——**只解析到一個 Face**。以肉眼看 categories 會誤判成已有天然案例。",
+    "consequence": "本控制 SHALL 以**合成 KB row** 驅動 production seam（`routers.chat._diagnosis_config_for_knowledge`），而非等待語料出現天然案例：決策邏輯全走 production（真 config registry、真 Face 設定），僅 KB row 為輸入。",
+    "why_not_seed_corpus": "新增 KB 即變更 corpus digest，會破壞 v1 的 corpus 凍結（Req.3.5）。",
+    "standing_risk": "L6 144 筆共居 hygiene 為 future work（tasks 文首表），語料隨時可能長出天然 multi-face KB——**契約先於資料存在**正是本控制的價值。"
+  },
+  "open_conflict_for_task_4_1": {
+    "finding": "Level A 白名單（tasks 4.1：face key == `bill_diagnosis` 且 `bill_ref` ∈ required_slots）只涵蓋**一個** Face；但 N4 rule_side 要求 final 為 single，這需要「帳單異常」（key=`billing_anomaly`，required_slots=['bill_ref']）也被抑制。",
+    "implication": "白名單謂詞與 multi-category 產品效果**目前不相容**：照 4.1 現行字面實作，rule 問句仍會 continue 進 `billing_anomaly`。",
+    "disposition": "本檔**不預選**解法。任務 3.3／4.1 須擇一裁定：(a) 白名單擴為集合（bill_ref 型帳務 Face：bill_diagnosis／billing_anomaly／billing_invoice／billing_flow）；或 (b) 維持單一 Face 並改以 query-scoped 抑制表述。裁定前 N4 rule_side 必然為紅——**那是契約在逼出未決的設計問題，不是測試寫壞**。",
+    "faces_with_bill_ref": {
+      "條件診斷：帳單": "bill_diagnosis",
+      "帳單異常": "billing_anomaly",
+      "發票": "billing_invoice",
+      "繳費金流排障": "billing_flow"
+    }
+  },
+  "amendment_rule": {
+    "v1_immutable": "v1 SHALL NOT 被修改；本版不覆寫 v1 之任何結果",
+    "on_failure": "v2 未通過而需改量尺者，SHALL 另立 v3 並保留 v1／v2 結果",
+    "holdout": "同 v1：production holdout SHALL NOT 參與方案選定、threshold 設定或本 protocol 的調整"
+  },
+  "protocol_digest": "791e84c38ae813fd"
+}

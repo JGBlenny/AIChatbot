@@ -87,7 +87,7 @@ protocol v1 PASS
   ⚠️ 前案兩度因只驗 `route == "dialog"` 而把跑錯面向算成成功。
   _Requirements: 1.4_
 
-- [ ] 1.3 **🧠主** 建立 **multi-category negative control** 並納入 **protocol v2**
+- [x] 1.3 **🧠主** 建立 **multi-category negative control** 並納入 **protocol v2**
   （**不得改 v1**）：一個 rule 問句，其 top-1 KB 掛兩個以上分類且其中兩個皆為
   instance-requiring Face，斷言最終仍為 `single`。
   ⚠️ 沿用 `continue` 下一分類無法保證 Req.1.2；凍結案例集三筆恰為單一相關分類，
@@ -375,11 +375,90 @@ instance 落回單發＝fail／**彙總層**：RULE 全 single ＋ INSTANCE 全�
 `score_case()`／`bilateral_pass()` 加 `expected_for()`／`PROTOCOL_DIGEST`，
 刻意壓到最小——先寫的契約若把 API 攤開，實作就會被寫成「剛好符合契約」。
 
-> ⚠️ 同 1.1 的限制：12 筆紅在**同一個 ModuleNotFoundError**，
-> 尚不足以證明各條斷言有效；逐條確認留待任務 1.5。
+> ⚠️ **證據等級（業主裁示 2026-08-23）**：
+>
+> ```text
+> 1.2 COMPLETE
+>   = contract scaffold exists
+>   = 12/12 pre-implementation red
+>   ≠ semantic effectiveness proven
+> ```
+>
+> 12 筆紅在**同一個 ModuleNotFoundError**，此時「正確的斷言」與「寫反的斷言」
+> **一樣紅**，恆綠／恆紅量尺尚無法區分。把它升格為「有效守門」的是**任務 1.5**：
+> 實作最小必要 module 後，逐條看到它們因**預期的 semantic reason** 紅／綠。
+> 引用本筆證據時 SHALL NOT 用 `12 failed` 支撐超過上述等級的主張。
 > 已先驗證凍結檔在容器內可讀（`/.kiro/...`，digest `4690a258f502d98d`，
 > RULE 4／INSTANCE 4），確保 1.5 檢視時不會混入第二個失敗來源。
 
-**未動既有紅綠**：unit `1021 passed` 前後一致；新增前 19 failed（1.1 六筆
-＋ `_meta` 13 筆——後者為 repo root 未掛進容器的環境 artifact，與本案無關），
-新增後 31 failed，差額恰為本檔 12 筆。
+**未動既有紅綠**：unit `1021 passed` 前後一致；新增前 19 failed，新增後 31 failed，
+差額恰為本檔 12 筆。
+
+⚠️ **`_meta` 13 筆的定性（業主裁示 2026-08-23）**：
+`tests/unit/_meta/test_env_parity_req.py`（6）與 `test_runner_layer_contract_req.py`（7）
+讀取 repo root 的 `docker-compose.prod.yml`／`scripts/run-tests.sh`／`.github/workflows/tests.yml`，
+而測試容器只掛 `/app`(=rag-orchestrator)、`/docs`、`/.kiro`。
+故：**這 13 筆在目前 container mount topology 下不可判定，屬 execution-environment
+mismatch；不得計入 product/unit regression delta。**
+
+比較方式 SHALL 為：
+
+```text
+targeted task tests   → 必須精確判紅綠（看測試名稱＋失敗原因）
+container unit delta  → 排除**已指名的 13 個 test ID**，而非只把數字減 13
+_meta contracts       → 於具 repo-root artifacts 的環境另外執行
+```
+
+⚠️ **不得寫成「日後先扣掉 13 筆」**——固定扣數字會讓第 14 筆同類的**真** regression
+被心理上一併忽略。尤其任務 1.5 SHALL 看測試名稱與失敗原因，**不看 failed 總數**。
+
+### ✅ 1.3（2026-08-23）
+
+`.kiro/specs/routing-disambiguation/robustness-protocol-v2.json`（digest `791e84c38ae813fd`）
+＋ `rag-orchestrator/tests/integration/conversational/test_multi_category_gate_scope_req.py`
+——6 筆，**2 紅 4 綠**（見下方紅綠定性）：
+
+```text
+passed=4  failed=2
+AssertionError: rule 問句在 categories=['條件診斷：帳單','帳單異常'] 下進了「bill_diagnosis」
+AssertionError: rule 問句在 categories=['帳單異常','條件診斷：帳單'] 下進了「billing_anomaly」
+```
+
+**v1 未動**：`robustness-protocol.json` 未出現在本次 diff；測試內逐次重算並回證
+`4690a258f502d98d`。新增案例一律進 v2，provenance＝design v1.1 業主審查 **Must ④**
+（`block` 改抑制同型 Hint、非 `continue` 下一分類）。凍結時間因果「先凍量尺 → 再看方案」
+因此維持完整。
+
+**鎖的是產品效果，不是迴圈實作**，且雙邊：
+
+| 斷言 | 現況 | 定性 |
+|---|---|---|
+| rule ＋ multi-category → `single`（兩種 categories 順序） | 🔴 ×2 | 契約逼出的未決設計問題 |
+| instance ＋ **相同** shape → `bill_diagnosis` | 🟢 | **preservation**：擋「整列 categories 全封掉」的省事修法 |
+| 旗標關閉 → 行為與今日一致 | 🟢 | **rollout-safety**：斷言「關閉時不變」，**非**「今日 route 是對的」 |
+| 兩個分類確實各解析到一個 bill_ref 型 Face | 🟢 | 守門本身沒悄悄失效（退化成單分類情境仍會全綠）|
+| 案例取自凍結 v2 ＋ v1 digest 回證 | 🟢 | 防「事後把量尺改成剛好符合實作」|
+
+⚠️ **本檔刻意不是全紅**，四筆綠各有理由並逐條標於 docstring；
+它們是 preservation／rollout-safety／量尺自我守門，**不是「已經修好」的證據**。
+
+**⚠️ 逼出的未決設計問題（進 v2 `open_conflict_for_task_4_1`，本檔不預選解法）**：
+任務 4.1 的 Level A 白名單（`face key == bill_diagnosis` 且 `bill_ref ∈ required_slots`）
+只涵蓋**一個** Face，但 N4 rule_side 要求 final 為 single，需要「帳單異常」
+（`billing_anomaly`，`required_slots=['bill_ref']`）也被抑制——**兩者目前不相容**。
+任務 3.3／4.1 須擇一裁定：(a) 白名單擴為 bill_ref 型帳務 Face 集合
+（`bill_diagnosis`／`billing_anomaly`／`billing_invoice`／`billing_flow`）；
+或 (b) 維持單一 Face 並改以 query-scoped 抑制表述。**裁定前這兩筆必然為紅。**
+
+**⚠️ 語料實況（實查 `aichatbot_test`，corpus digest `918b69ce70fbb8f1660819c3774eb24b`）**：
+**categories 解析後掛到兩個以上 Face 的 KB 為 0 筆。**
+74 筆 `categories≥2` 中 58 筆碰到帳務分類，但配對者多為主題分類（帳單管理／付款金流／
+合約管理／發票開立），皆非 Face；3497／3500／3501／3502（`['條件診斷：付款','繳費金流排障']`）
+與 3503／3504（`['條件診斷：發票','發票']`）**看似 multi-face，實則
+「條件診斷：付款」「條件診斷：發票」沒有 Face 設定**，`config_for_category` 回 None。
+故本控制以**合成 KB row** 驅動 production seam（決策全走 production，僅 KB row 為輸入）；
+新增語料會變更 corpus digest、破壞 v1 凍結，故不走種資料。
+L6 共居 hygiene 為 future work，語料隨時可能長出天然案例——**契約先於資料存在**即其價值。
+
+**未動既有紅綠**：integration 由 `177 passed + 4 known-red` → `181 passed + 6 failed`，
+差額恰為本檔 4 綠 2 紅；原 4 筆 known-red 仍為原本那四筆（rule 側），未被本檔影響。
