@@ -42,7 +42,14 @@ if [[ "$DST_DB" == "$SRC_DB" ]]; then
 fi
 
 APPLY=0
-[[ "${1:-}" == "--apply" ]] && APPLY=1
+WITH_CORPUS=0
+for a in "$@"; do
+  case "$a" in
+    --apply)        APPLY=1 ;;
+    --with-corpus)  WITH_CORPUS=1 ;;
+    *) echo "未知參數：$a（可用：--apply、--with-corpus）" >&2; exit 1 ;;
+  esac
+done
 say() { echo "$@"; }
 
 dex()      { docker exec "$PG_CONTAINER" "$@"; }
@@ -80,22 +87,36 @@ fi
 #      面向會話一律以 form_id='conversational' 落地——缺它則任何面向執行測試都會
 #      ForeignKeyViolationError（2026-08-23 實跑逼出，原最小清單漏列）。
 #   ❌ 仍**不供裝**：完整 KB（category 不在上述兩類者）、embedding、semantic-model index。
+# ⚠️ knowledge_base 有四條 FK（intents／test_scenarios／knowledge_completion_loops／
+#    loop_generated_knowledge），且那些父表自己又有更深的 FK 鏈（2026-08-23 實跑逼出：
+#    loop_generated_knowledge → knowledge_gap_analysis → …）。
+#    **不複製整條鏈**——那四欄是 provenance（這筆知識從哪個迴圈/題目生出來的），
+#    對 retrieval／routing 完全無用（檢索只讀 question_summary／answer／categories／
+#    target_user／embedding）。載入時一律置 NULL，既保住參照完整性又維持最小供裝。
+KB_NULL_COLS="intent_id,source_test_scenario_id,source_loop_id,source_loop_knowledge_id"
+
 SEED_TABLES=(
-  "vendors|TRUE"
-  "vendor_configs|TRUE"
-  "form_schemas|TRUE"
-  "knowledge_base|category IN ('對話規則','系統脈絡')"
+  "vendors|TRUE|"
+  "vendor_configs|TRUE|"
+  "form_schemas|TRUE|"
+  "knowledge_base|category IN ('對話規則','系統脈絡')|${KB_NULL_COLS}"
 )
 
 seed_table() {
-  local tbl="$1" where="$2" cols n tsv
+  local tbl="$1" where="$2" nullcols="${3:-}" cols sel n tsv
   cols="$(psql_src "SELECT string_agg(quote_ident(column_name), ',' ORDER BY ordinal_position) FROM information_schema.columns WHERE table_name='${tbl}'")"
+  # 取值運算式：nullcols 內的欄位改取 NULL（避免拖入無關的 FK 父表鏈）
+  if [[ -n "${nullcols}" ]]; then
+    sel="$(psql_src "SELECT string_agg(CASE WHEN column_name = ANY(string_to_array('${nullcols}', ',')) THEN 'NULL' ELSE quote_ident(column_name) END, ',' ORDER BY ordinal_position) FROM information_schema.columns WHERE table_name='${tbl}'")"
+  else
+    sel="${cols}"
+  fi
   n="$(psql_src "SELECT count(*) FROM ${tbl} WHERE ${where}")"
   say "   ・${tbl}（WHERE ${where}）→ ${n} 列"
   [[ ${APPLY} == 1 ]] || return 0
   tsv="${TMPDIR:-/tmp}/aichatbot_test_seed_${tbl}.tsv"
   psql_dst "DELETE FROM ${tbl} WHERE ${where}" >/dev/null
-  psql_src "COPY (SELECT ${cols} FROM ${tbl} WHERE ${where}) TO STDOUT" > "${tsv}"
+  psql_src "COPY (SELECT ${sel} FROM ${tbl} WHERE ${where}) TO STDOUT" > "${tsv}"
   docker exec -i "${PG_CONTAINER}" psql -U "${DB_USER}" -d "${DST_DB}" -q -v ON_ERROR_STOP=1 \
       -c "COPY ${tbl} (${cols}) FROM STDIN" < "${tsv}"
   rm -f "${tsv}"
@@ -103,8 +124,49 @@ seed_table() {
 
 say "3. 最小 seed（可重入：先清同範圍再灌）"
 for spec in "${SEED_TABLES[@]}"; do
-  seed_table "${spec%%|*}" "${spec#*|}"
+  IFS='|' read -r _t _w _n <<< "${spec}"
+  seed_table "${_t}" "${_w}" "${_n}"
 done
+
+# ── 3b. Task 3 前置：frozen retrieval corpus（opt-in）───────
+#
+# ⚠️ **與 2.4 的最小供裝分開，刻意不預設開啟**（2026-08-23 業主裁示）：
+#    2.4 驗 Face **execution** path；Task 3 驗 **retrieval → entry routing**，
+#    後者有額外資料前提。58 筆進場路由紅燈不是 2.4 做錯，是 Task 3 的前提未備。
+#
+# ⚠️ **絕不可只 seed「正確答案那幾筆」**：只灌 expected KB 會讓候選空間幾乎只剩正解，
+#    top1 當然命中 → routing test 假綠。Task 3 驗的是「在**真實候選空間**裡，
+#    production retrieval 會不會把正確 evidence 排到足以觸發正確 routing 的位置」，
+#    故必須保留**競爭候選**。
+#
+# 現行候選空間僅 873 列（872 有 embedding），規模小 → **整份凍結，不做任何縮減**，
+# 因此不存在「縮減依據錯誤」的風險。若日後語料變大而需縮，縮減依據 SHALL 為
+# retrieval candidate space，不得為「只留 expected rows」。
+CORPUS_WHERE="is_active AND COALESCE(category,'') NOT IN ('對話規則','系統脈絡')"
+MANIFEST="${MANIFEST:-$(cd "$(dirname "$0")/.." && pwd)/rag-orchestrator/database/test-corpus.manifest}"
+
+if [[ ${WITH_CORPUS} == 1 ]]; then
+  n_corpus="$(psql_src "SELECT count(*) FROM knowledge_base WHERE ${CORPUS_WHERE}")"
+  n_emb="$(psql_src "SELECT count(*) FROM knowledge_base WHERE ${CORPUS_WHERE} AND embedding IS NOT NULL")"
+  say "3b. frozen retrieval corpus（Task 3 前置）→ ${n_corpus} 列（${n_emb} 有 embedding）"
+  if [[ ${APPLY} == 1 ]]; then
+    seed_table "knowledge_base" "${CORPUS_WHERE}" "${KB_NULL_COLS}"
+    digest="$(psql_src "SELECT md5(string_agg(id||'|'||COALESCE(question_summary,'')||'|'||COALESCE(categories::text,'')||'|'||COALESCE(target_user::text,'')||'|'||(embedding IS NOT NULL)::text, chr(10) ORDER BY id)) FROM knowledge_base WHERE ${CORPUS_WHERE}")"
+    {
+      echo "# frozen retrieval corpus manifest（Task 3.0）"
+      echo "# 語料一動即可察覺；比較性結論跨輪可比的前提。"
+      echo "rows=${n_corpus}"
+      echo "rows_with_embedding=${n_emb}"
+      echo "digest=${digest}"
+      echo "source_db=${SRC_DB}"
+      echo "where=${CORPUS_WHERE}"
+    } > "${MANIFEST}"
+    say "   凍結清單：${MANIFEST}"
+    say "   rows=${n_corpus}  digest=${digest}"
+  fi
+else
+  say "3b. frozen retrieval corpus：**未供裝**（加 --with-corpus 才灌；Task 3 才需要）"
+fi
 
 # ── 4. 驗收 ──────────────────────────────────────────────────
 if [[ ${APPLY} == 1 ]]; then
@@ -114,7 +176,11 @@ if [[ ${APPLY} == 1 ]]; then
     t="${spec%%|*}"
     psql_dst "SELECT '   ${t}='||count(*) FROM ${t}"
   done
-  psql_dst "SELECT '   ⚠️ 未供裝的 KB 列（應為 0）='||count(*) FROM knowledge_base WHERE category NOT IN ('對話規則','系統脈絡')"
+  if [[ ${WITH_CORPUS} == 1 ]]; then
+    psql_dst "SELECT '   corpus 列（含 embedding）='||count(*) FROM knowledge_base WHERE embedding IS NOT NULL"
+  else
+    psql_dst "SELECT '   ⚠️ 未供裝的 corpus 列（未加 --with-corpus 時應為 0）='||count(*) FROM knowledge_base WHERE COALESCE(category,'') NOT IN ('對話規則','系統脈絡')"
+  fi
   say "✅ 供裝完成。測試連線用：DB_ENV=test DB_NAME=${DST_DB}"
 else
   say "4. （dry-run 不驗收）加 --apply 才真跑"

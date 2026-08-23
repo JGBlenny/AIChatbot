@@ -1,0 +1,7 @@
+# frozen retrieval corpus manifest（Task 3.0）
+# 語料一動即可察覺；比較性結論跨輪可比的前提。
+rows=873
+rows_with_embedding=872
+digest=918b69ce70fbb8f1660819c3774eb24b
+source_db=aichatbot_admin
+where=is_active AND COALESCE(category,'') NOT IN ('對話規則','系統脈絡')
