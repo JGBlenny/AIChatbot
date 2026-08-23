@@ -1,0 +1,148 @@
+{
+  "protocol_version": "v1",
+  "frozen_at": "2026-08-23T10:05:00Z",
+  "spec": "routing-disambiguation",
+  "requirement": "3.5",
+  "purpose": "凍結穩健性量尺；量尺若能在看到結果後才定，就可先做方案再挑對自己有利的擾動——那是另一種 overfit",
+  "corpus": {
+    "authority": "rag-orchestrator/database/test-corpus.manifest（digest 為權威，非列數）",
+    "digest": "918b69ce70fbb8f1660819c3774eb24b",
+    "rows": 873,
+    "rows_with_embedding": 872,
+    "provision": "bash scripts/provision-test-db.sh --apply --with-corpus"
+  },
+  "model": {
+    "embedding": "embedding-api（1536 維）",
+    "reranker": "semantic-model / BAAI/bge-reranker-base",
+    "note": "重建 semantic-model 即構成 model 版本變更，須記錄並重跑"
+  },
+  "environment": {
+    "entry": "docker compose -f docker-compose.dev.yml run --rm（正規入口，不得自拼 docker run）",
+    "parity_guard": "rag-orchestrator/tests/unit/_meta/test_env_parity_req.py",
+    "db": "aichatbot_test（DB_ENV=test；fail-closed 守門須有效）"
+  },
+  "case_sets": {
+    "RULE": {
+      "cases": [
+        "點退帳單的金額是怎麼算的",
+        "點退做完後，帳單會自動出來嗎？",
+        "收據 PDF 在哪裡下載",
+        "系統怎麼算點退帳單的金額"
+      ],
+      "expected": "single",
+      "note": "四筆現行 known-red"
+    },
+    "INSTANCE": {
+      "cases": [
+        "我的這張點退帳單金額怎麼算出來的",
+        "我這筆點退帳單怎麼會是這個數字",
+        "幫我查點退帳單金額",
+        "這張帳單的收據金額多少"
+      ],
+      "expected": "dialog:條件診斷：帳單",
+      "note": "斷言到 facet，不得僅驗 dialog"
+    },
+    "UNDECIDED": {
+      "cases": [
+        "我的收據在哪",
+        "我這筆點退的錢怎麼怪怪的"
+      ],
+      "expected": null,
+      "note": "Req.4.2 產品歸屬未定案——僅記錄實際 route，不計入通過率"
+    },
+    "BLAST": {
+      "cases": [
+        "帳單為什麼發不出去",
+        "帳單為什麼取消不了",
+        "為什麼被收逾期費",
+        "帳單手動到帳失敗",
+        "這張帳單的收據金額多少",
+        "我要查帳單 編號 12345",
+        "幫我查點退帳單金額"
+      ],
+      "expected": "dialog:條件診斷：帳單",
+      "note": "20260731 同批七筆代表問句；Req.5.2 須先判 intended behavior 才入 assertion"
+    },
+    "CONTROL": {
+      "cases": [
+        "帳單有哪幾種狀態",
+        "帳單的收費項目有哪些",
+        "怎麼用 Excel 批次匯入帳單",
+        "固定虛擬帳號會過期嗎",
+        "押金設算息怎麼計算"
+      ],
+      "expected": "single",
+      "note": "與帳單診斷無關的單發控制組；方案不得改變其結果"
+    }
+  },
+  "metrics": {
+    "primary": {
+      "name": "bilateral_pass",
+      "definition": "RULE 全數 single 且 INSTANCE 全數進正確 facet",
+      "denominator": "len(RULE) + len(INSTANCE) = 8",
+      "pass_threshold": "8/8（雙邊同時，缺一不可——Req.1.3）"
+    },
+    "robustness": {
+      "name": "flip_rate_under_perturbation",
+      "definition": "在下列每種擾動後，RULE∪INSTANCE 中判別結果與基準不同的比例",
+      "denominator": "8 × 擾動輪數",
+      "pass_threshold": "≤ 1/8 且 **不得有任一筆在多輪間反覆翻面**"
+    },
+    "margin_independence": {
+      "name": "decision_margin",
+      "definition": "判別勝出候選與次位候選的 final similarity 差",
+      "record_only": true,
+      "note": "Req.3.1／3.4：判別不得由此差單獨決定；本指標**只記錄不設門檻**，用於證明方案不靠邊際"
+    },
+    "control_stability": {
+      "name": "control_unchanged",
+      "definition": "CONTROL 組結果與基準完全相同",
+      "pass_threshold": "5/5"
+    }
+  },
+  "perturbations": [
+    {
+      "id": "P1",
+      "name": "corpus_add_sibling",
+      "method": "自 exposure surface（144 筆共居 KB）隨機取 5 筆，複製其 question_summary 加入一筆同義變體並補嵌",
+      "rounds": 3,
+      "seed_note": "seed 於執行時記錄於結果檔，凍結後不得更換"
+    },
+    {
+      "id": "P2",
+      "name": "semantic_model_rebuild",
+      "method": "重建 semantic-model 容器後重跑（reranker stateless，但重建即視為 model 版本變更）",
+      "rounds": 1
+    },
+    {
+      "id": "P3",
+      "name": "phrasing_variant",
+      "method": "RULE／INSTANCE 各案生成 2 個保義變體（人／協作代理撰寫，非 LLM 大量生成——Req.7.3）",
+      "rounds": 1
+    }
+  ],
+  "negative_controls": [
+    {
+      "id": "N1",
+      "target": "量尺本身",
+      "assertion": "把 INSTANCE 案例的期望改為 single，量尺 SHALL 判定失敗",
+      "why": "Req.6.5：新增守門須先證明它在該失敗的情境下真的會失敗"
+    },
+    {
+      "id": "N2",
+      "target": "L4 falsifier",
+      "assertion": "L4 實測 SHALL 雙邊同看——只驗 RULE 被攔而不驗 INSTANCE 未被錯攔者，視為未完成"
+    },
+    {
+      "id": "N3",
+      "target": "facet 斷言",
+      "assertion": "INSTANCE 進入非「條件診斷：帳單」的其他 dialog SHALL 判為失敗，不得算通過"
+    }
+  ],
+  "amendment_rule": {
+    "before_implementation": "本 protocol 於任何候選方案實作或調整之前凍結（Req.3.5）",
+    "on_failure": "方案未通過而需改量尺者，SHALL 建立 protocol_version v2 並**保留 v1 結果**；SHALL NOT 事後修改 v1 使既有方案轉為通過",
+    "holdout": "Req.9.2：production holdout SHALL NOT 參與方案選定、threshold 設定或本 protocol 的調整"
+  },
+  "protocol_digest": "4690a258f502d98d"
+}
