@@ -4,8 +4,12 @@
 （實例：「電表度數登記錯誤怎麼改」top1=「租客看即時電表」0.956）——任何分數
 閾值都切不開。修法：直答前對 top1 做一次輕量 LLM 相關性判定，不相關讓次筆
 晉位（最多查 2 筆），全不相關回空列走誠實 fallback。
-豁免：表單/API 觸發列不判（不擋表單）；raw 向量 ≥0.85 視為近精確命中跳過
-（省延遲）；LLM 失敗放行（不阻斷服務）。
+豁免：表單/API 觸發列不判（不擋表單）；LLM 失敗放行（不阻斷服務）。
+
+⚠️ 「raw 向量 ≥0.85 近精確命中跳過」**預設已關**（2026-08-22 業主定案，
+commit 7d6fb03「直答適用性把關改 precision-first」）：高語意相似正是本閘門要擋的
+錯題型態，拿它當免判理由自相矛盾。要恢復須顯式設 `RELEVANCE_GATE_SKIP_VEC`。
+**勿改回預設跳過。**
 """
 import pytest
 from unittest.mock import patch
@@ -54,9 +58,23 @@ async def test_all_irrelevant_returns_empty_for_honest_fallback():
     assert out == []                      # 最多查 2 筆，全 NO → 空列走 fallback
 
 
-async def test_high_vector_similarity_skips_gate():
+async def test_high_vector_similarity_does_not_skip_gate_by_default(monkeypatch):
+    """預設**不**因高 raw 向量而免判（commit 7d6fb03 業主定案，precision-first）。
+
+    高語意相似正是本閘門要擋的錯題型態（reranker 對詞彙重疊的無關知識打 0.9+），
+    拿它當免判理由自相矛盾。故 vec=0.9 仍須送 LLM 判定，判 NO 即不放行。
+    """
+    monkeypatch.delenv("RELEVANCE_GATE_SKIP_VEC", raising=False)
     rows = [_row(1, vec=0.9)]
-    out, n = await _gate(rows, ["NO"])    # 即使 LLM 會說 NO 也不該被呼叫
+    out, n = await _gate(rows, ["NO"])
+    assert out == [] and n == 1           # 有判、判 NO、無次筆 → 空列走誠實 fallback
+
+
+async def test_high_vector_similarity_skips_gate_when_explicitly_enabled(monkeypatch):
+    """顯式設 `RELEVANCE_GATE_SKIP_VEC` 時才恢復舊的免判行為（省延遲）。"""
+    monkeypatch.setenv("RELEVANCE_GATE_SKIP_VEC", "0.85")
+    rows = [_row(1, vec=0.9)]
+    out, n = await _gate(rows, ["NO"])    # 已開豁免 → LLM 不該被呼叫
     assert [k["id"] for k in out] == [1] and n == 0
 
 

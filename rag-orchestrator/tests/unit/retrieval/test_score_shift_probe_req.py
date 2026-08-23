@@ -88,12 +88,33 @@ def test_negative_shift_clamps_at_zero(monkeypatch):
 
 
 # ── 壞值不得靜默生效（避免打錯字變成沒平移卻以為平移了）──
+# ⚠️ `""`／純空白 已於 commit d5c9848 由「壞值」改判為「未設定」，故自本清單移除——
+#    見下方 test_blank_shift_is_unset_not_malformed 的事故說明。
 @pytest.mark.req("retrieval-decision-layer:7.2")
-@pytest.mark.parametrize("bad", ["abc", "", "0.1x"])
+@pytest.mark.parametrize("bad", ["abc", "0.1x", "1.2.3", "0,1"])
 def test_malformed_shift_raises(monkeypatch, bad):
     monkeypatch.setenv("SCORE_SHIFT_PROBE", bad)
     with pytest.raises(ValueError):
         _R()._finalize_scores(_rows())
+
+
+# ── 空字串／純空白＝未設定，不是壞值（線上地雷；commit d5c9848）──
+@pytest.mark.req("retrieval-decision-layer:7.2")
+@pytest.mark.parametrize("blank", ["", "   "])
+def test_blank_shift_is_unset_not_malformed(monkeypatch, blank):
+    """`SCORE_SHIFT_PROBE=""` 必須視同未設定（精確 no-op），**不得拋錯**。
+
+    事故（2026-08-22 實測）：`docker-compose.prod.yml` 寫
+    `SCORE_SHIFT_PROBE: ${SCORE_SHIFT_PROBE:-}`，主機未設時展開為**空字串**。
+    當時的判定只看 `is not None`，於是 `float("")` 拋錯，
+    **每一次知識檢索都 500**——且任何一次容器重建（＝下次部署）都會再觸發。
+    產線碼以 `.strip() != ""` 判定，故**純空白亦視同未設定**。
+    本測試鎖住修正後的語義；**勿改回把空字串當壞值**。
+    """
+    monkeypatch.setenv("SCORE_SHIFT_PROBE", blank)
+    got = _R()._finalize_scores(_rows())
+    baseline = _R()._finalize_scores(_rows())          # 未設 env 的對照
+    assert [r["similarity"] for r in got] == [r["similarity"] for r in baseline]
 
 
 # ── 開啟時留痕（防忘了關）──
