@@ -1,0 +1,299 @@
+{
+  "perturbation": {
+    "id": "P3",
+    "name": "phrasing_variant",
+    "rounds": 1,
+    "authoring": "人撰寫（非 LLM 量產）——R7.3"
+  },
+  "denominator": {
+    "cases": 8,
+    "variants": 16,
+    "rule": "一案只要任一變體翻面即計為該案翻面（嚴格讀法）"
+  },
+  "baseline": {
+    "點退帳單的金額是怎麼算的": [
+      "single",
+      null
+    ],
+    "點退做完後，帳單會自動出來嗎？": [
+      "single",
+      null
+    ],
+    "收據 PDF 在哪裡下載": [
+      "single",
+      null
+    ],
+    "系統怎麼算點退帳單的金額": [
+      "single",
+      null
+    ],
+    "我的這張點退帳單金額怎麼算出來的": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "我這筆點退帳單怎麼會是這個數字": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "幫我查點退帳單金額": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "這張帳單的收據金額多少": [
+      "dialog",
+      "條件診斷：帳單"
+    ]
+  },
+  "flip_count": 4,
+  "flip_rate": "4/8",
+  "threshold": "≤ 1/8",
+  "passed": false,
+  "flipped_cases": [
+    "我這筆點退帳單怎麼會是這個數字",
+    "收據 PDF 在哪裡下載",
+    "系統怎麼算點退帳單的金額",
+    "點退帳單的金額是怎麼算的"
+  ],
+  "observations": [
+    {
+      "base": "點退帳單的金額是怎麼算的",
+      "variant": "點退帳單金額的計算方式是什麼",
+      "baseline": [
+        "single",
+        null
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": true,
+      "gate_verdict": "abstain",
+      "gate_reason": "no-signal"
+    },
+    {
+      "base": "點退帳單的金額是怎麼算的",
+      "variant": "點退的帳單金額怎麼計算出來",
+      "baseline": [
+        "single",
+        null
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": true,
+      "gate_verdict": "abstain",
+      "gate_reason": "no-signal"
+    },
+    {
+      "base": "點退做完後，帳單會自動出來嗎？",
+      "variant": "做完點退之後帳單會自動產生嗎",
+      "baseline": [
+        "single",
+        null
+      ],
+      "observed": [
+        "single",
+        null
+      ],
+      "flipped": false,
+      "gate_verdict": "block",
+      "gate_reason": "no-positive+counter=['explanation_request']"
+    },
+    {
+      "base": "點退做完後，帳單會自動出來嗎？",
+      "variant": "點退完成後系統會自動開帳單嗎",
+      "baseline": [
+        "single",
+        null
+      ],
+      "observed": [
+        "single",
+        null
+      ],
+      "flipped": false,
+      "gate_verdict": "block",
+      "gate_reason": "no-positive+counter=['explanation_request']"
+    },
+    {
+      "base": "收據 PDF 在哪裡下載",
+      "variant": "收據的 PDF 檔要去哪裡下載",
+      "baseline": [
+        "single",
+        null
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": true,
+      "gate_verdict": "abstain",
+      "gate_reason": "no-signal"
+    },
+    {
+      "base": "收據 PDF 在哪裡下載",
+      "variant": "哪裡可以下載收據 PDF",
+      "baseline": [
+        "single",
+        null
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": true,
+      "gate_verdict": "abstain",
+      "gate_reason": "no-signal"
+    },
+    {
+      "base": "系統怎麼算點退帳單的金額",
+      "variant": "系統是如何計算點退帳單金額的",
+      "baseline": [
+        "single",
+        null
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": true,
+      "gate_verdict": "abstain",
+      "gate_reason": "no-signal"
+    },
+    {
+      "base": "系統怎麼算點退帳單的金額",
+      "variant": "點退帳單的金額系統怎麼計算",
+      "baseline": [
+        "single",
+        null
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": true,
+      "gate_verdict": "abstain",
+      "gate_reason": "no-signal"
+    },
+    {
+      "base": "我的這張點退帳單金額怎麼算出來的",
+      "variant": "我這張點退帳單的金額是怎麼算出來的",
+      "baseline": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": false,
+      "gate_verdict": "abstain",
+      "gate_reason": "mixed positive=['possessive'] counter=['explanation_request']"
+    },
+    {
+      "base": "我的這張點退帳單金額怎麼算出來的",
+      "variant": "我的這筆點退帳單金額怎麼來的",
+      "baseline": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": false,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['possessive']"
+    },
+    {
+      "base": "我這筆點退帳單怎麼會是這個數字",
+      "variant": "我這張點退帳單為什麼是這個金額",
+      "baseline": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "observed": [
+        "dialog",
+        "帳單異常"
+      ],
+      "flipped": true,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['possessive', 'problem_report']"
+    },
+    {
+      "base": "我這筆點退帳單怎麼會是這個數字",
+      "variant": "我的這筆點退帳單數字怎麼會這樣",
+      "baseline": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": false,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['possessive', 'problem_report']"
+    },
+    {
+      "base": "幫我查點退帳單金額",
+      "variant": "幫我查一下我的點退帳單金額",
+      "baseline": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": false,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['lookup_verb', 'possessive']"
+    },
+    {
+      "base": "幫我查點退帳單金額",
+      "variant": "請幫我查詢點退帳單的金額",
+      "baseline": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": false,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['lookup_verb']"
+    },
+    {
+      "base": "這張帳單的收據金額多少",
+      "variant": "這筆帳單的收據金額是多少",
+      "baseline": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": false,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['possessive']"
+    },
+    {
+      "base": "這張帳單的收據金額多少",
+      "variant": "我這張帳單收據金額多少錢",
+      "baseline": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "observed": [
+        "dialog",
+        "條件診斷：帳單"
+      ],
+      "flipped": false,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['lookup_verb', 'possessive']"
+    }
+  ]
+}

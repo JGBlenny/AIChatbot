@@ -259,7 +259,7 @@ protocol v1 PASS
 
 ## 5. protocol v1 驗收（**不得改尺**）
 
-- [ ] 5.1 **🧠主** 以凍結案例集驅動 **production seam**（Req.6.1，不得在測試內重演 routing 語義）：
+- [x] 5.1 **🧠主** 以凍結案例集驅動 **production seam**（Req.6.1，不得在測試內重演 routing 語義）：
   `RULE 4 → single`／`INSTANCE 4 → dialog:條件診斷：帳單`／`CONTROL 5` 不變。
   門檻 `bilateral_pass = 8/8`（雙邊缺一不可）。
   _Requirements: 1.1, 1.2, 1.3, 6.1_
@@ -268,7 +268,7 @@ protocol v1 PASS
   P3 `phrasing_variant`×1，量 `flip_rate ≤ 1/8` 且**不得有任一筆反覆翻面**。
   _Requirements: 3.2, 3.3_
 
-- [ ] 5.3 **🧠主** 記錄 `decision_margin`（**只記錄、不設門檻**）——
+- [x] 5.3 **🧠主** 記錄 `decision_margin`（**只記錄、不設門檻**）——
   用於證明判別**不靠邊際**，而非把邊際拉大就算過。
   _Requirements: 3.1, 3.4_
 
@@ -926,8 +926,14 @@ active     = requested AND authorized
 ```
 
 ⚠️ **現階段把 env 設成 `INSTANCE_REFERENCE_GATE=true` 也不會生效**——
-production manifest 仍 `not_run`。凍結案例集**全體 20 筆**（RULE／INSTANCE／CONTROL／
-BLAST／UNDECIDED）在「OFF」與「ON 但未授權」兩種狀態下 routing **逐筆完全相同**。
+production manifest 仍 `not_run`。凍結案例集在「OFF」與「ON 但未授權」兩種狀態下
+routing **逐筆完全相同**。
+
+⚠️ **分母表述更正（業主 2026-08-24）**：該次比對共 **22 筆 utterance observations**
+＝ **20 筆有驗收角色**（RULE 4＋INSTANCE 4＋CONTROL 5＋BLAST 7）
+＋ **2 筆只觀察不計分**（UNDECIDED）。
+先前寫成「全體 20 筆」是把 UNDECIDED 混進了計分集合。
+**UNDECIDED SHALL NOT 進入 bilateral／pass 分母。**
 
 **seam 位置照 design 不重排**：`config_for_category` 之後、`_preentry_routable` 之前。
 之前不行（gate 需要 Face 的語義契約）；之後也不行（LLM 的機率判定會先對 query 下手，
@@ -986,3 +992,96 @@ Req.4 **仍未被 Task 4 裁定**。
 **紅綠現況**：integration `205 passed／4 failed／2 xfailed`——
 4 failed 即原本那 4 筆 known-red REGRESSION，**旗標 OFF 時本就應維持紅**；
 它們要到任務 6 授權、任務 7 啟用後才會轉綠。unit `1107 passed`（13 failed 全為具名 `_meta` 環境錯配）。
+
+### ✅ 5.1／5.3、🟡 5.2（2026-08-24）
+
+**synthetic authorization 的邊界（報告用語不得混用）**：
+
+```text
+Candidate technical acceptance under synthetic authorization
+≠ Candidate authorized for release
+```
+
+只注入 matching-PASS manifest 讓 **production authorization check** 通過，
+其餘 extractor → gate → seam **全走 production code path**；
+未 mock verdict／未 mock suppression／未改 `current_manifest()` 的真實 `not_run`／
+未把 synthetic PASS 寫回正式 manifest。
+
+**5.1 baseline（evidence/protocol-v1-baseline.json）**
+
+```text
+bilateral_pass  8/8   ✅   RULE 4/4 single、INSTANCE 4/4 條件診斷：帳單
+CONTROL         5/5   ✅   不變
+BLAST           7/7        全進條件診斷：帳單（intended behavior 待 5.4 判定）
+UNDECIDED       2          只記錄，**不進 bilateral／pass 分母**
+negative control      ✅   ruleset digest 差一位 → gate_active=False，
+                           且 RULE 四筆 routing 與未授權時完全相同
+                           （證明本 harness 真的過 production authorization seam，
+                             不是 fixture 直接把 gate 打開）
+```
+
+**5.3 decision_margin（只記錄、不設門檻）**：RULE 最小 0.0119、INSTANCE 最小 0.0114。
+邊際依然薄，但判別不由它決定——這正是記錄它的用途（R3.4）。
+
+### 5.2 擾動（IN PROGRESS）
+
+```text
+P1 corpus_add_sibling   3 輪 × 8 = 24    flips 0/24   PASS
+P3 phrasing_variant     1 輪 × 8 =  8    flips 4/8    ADVERSE FINDING CONFIRMED
+P2 semantic_model_rebuild                              BLOCKED — requires host execution
+formal aggregate verdict                               PENDING（分母固定 40）
+```
+
+**P1 選樣的 measurement parity 說明（非錯誤）**：
+production inventory snapshot 曾記錄 **144**；本輪 test corpus 依**同一 frozen predicate**
+（`is_active` ＋ `answer` 非空 ＋ 掛面向分類）實查為 **145**。
+P1 以本輪**完整 eligible population** 為母體、固定 seed 抽樣，
+**不事後排除樣本**——看到樣本再修母體就是另一種改尺。
+其中一筆為 `系統脈絡：帳號領域-登入排障(子面向)`，符合 frozen predicate 故保留。
+
+**P3 adverse finding（獨立保留，不得被 aggregate 沖淡）**：
+
+```text
+4/8 base cases changed route under meaning-preserving paraphrase
+  6 個變體失敗可歸因於 extractor/gate 的 lexical coverage
+  1 個可歸因於既有 retrieval/facet drift（gate 判 allow）
+```
+
+病灶不是 similarity margin，是**字面反向片語**：
+
+```text
+「怎麼算」→ counter 命中        「計算方式是什麼」→ 不命中
+「在哪裡」→ counter 命中        「要去哪裡」      → 不命中
+```
+
+⚠️ **不得補這些 pattern**：P3 已把變體曝光，補了就是拿 acceptance data 訓練 candidate，
+再拿同一批 data 宣稱通過——那批變體從此失去驗證意義。
+
+**風險定位已改變（重要）**：P1 的 0/24 降低了「corpus 一動就翻」這個特定擔憂
+——candidate **不是**重演上一版 anchor 的 0.003 margin 形態；
+主要風險改為 **deterministic lexical contract 對保義改寫的 coverage 不足**。
+Task 6 holdout 正是判「這是可接受的 coverage 缺口，還是整個 deterministic candidate 不成立」。
+
+**最終算式（frozen，不得改）**：分母 40（P1 24＋P2 8＋P3 8），門檻 ≤ 5/40 ＝ 12.5%。
+目前已固定 4 flips：P2 0 flip → 4/40 PASS；1 flip → 5/40 PASS；≥2 → ≥15% FAIL。
+⚠️ 若最終形式 PASS，報告 SHALL **並列**兩條結論，不得只寫 PASS：
+
+```text
+Formal protocol-v1 robustness : PASS（依 frozen aggregate 分母）
+P3 adverse finding            : 4/8（保義改寫下改變 route）
+```
+
+**P2 待執行（host 端，本 session 權限被拒——碰 `docker-compose.prod.yml`）**：
+
+```bash
+docker inspect aichatbot-semantic-model --format 'container={{.Id}}\nimage={{.Image}}'
+docker compose -f docker-compose.prod.yml up -d --force-recreate semantic-model
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8002/        # 預期 200
+docker inspect aichatbot-semantic-model --format 'container={{.Id}}\nimage={{.Image}}'
+```
+
+重建前身分（已存證）：`container=369e57723b30…`／`image=sha256:fceedf9c18f0…`。
+判定分兩欄：`container_before != container_after` → **protocol validity VALID**；
+`image_before == image_after` → **perturbation strength LIMITED**。
+**支持**「robust to service recreation」；**不支持**「robust to a different semantic model version」。
+⚠️ 即使 image 相同也**不得**事後宣布 P2 無效而從分母刪掉——那是改凍結規則。

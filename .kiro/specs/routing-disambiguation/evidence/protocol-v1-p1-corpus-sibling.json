@@ -1,0 +1,495 @@
+{
+  "perturbation": {
+    "id": "P1",
+    "name": "corpus_add_sibling",
+    "rounds": 3
+  },
+  "exposure_surface": {
+    "criteria": "is_active AND answer 非空 AND 掛面向分類",
+    "population_size": 145,
+    "face_categories": [
+      "IoT設定引導",
+      "修繕報修",
+      "合約異動",
+      "團隊成員權限",
+      "帳單異常",
+      "帳單設定引導",
+      "帳號綁定異動",
+      "建約引導",
+      "條件診斷：帳單",
+      "滯納金",
+      "物件操作引導",
+      "物件現況診斷",
+      "狀態判斷",
+      "登入排障",
+      "發票",
+      "簽署排障",
+      "繳費金流排障",
+      "續約",
+      "註冊驗證排障",
+      "退租收尾",
+      "電表排障"
+    ]
+  },
+  "seeds": [
+    20260824001,
+    20260824002,
+    20260824003
+  ],
+  "baseline": {
+    "點退帳單的金額是怎麼算的": [
+      "single",
+      null
+    ],
+    "點退做完後，帳單會自動出來嗎？": [
+      "single",
+      null
+    ],
+    "收據 PDF 在哪裡下載": [
+      "single",
+      null
+    ],
+    "系統怎麼算點退帳單的金額": [
+      "single",
+      null
+    ],
+    "我的這張點退帳單金額怎麼算出來的": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "我這筆點退帳單怎麼會是這個數字": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "幫我查點退帳單金額": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "這張帳單的收據金額多少": [
+      "dialog",
+      "條件診斷：帳單"
+    ]
+  },
+  "total_flips": 0,
+  "denominator_this_perturbation": 24,
+  "rounds": [
+    {
+      "round": 1,
+      "seed": 20260824001,
+      "inserted": [
+        {
+          "new_id": 359,
+          "source_id": 4053,
+          "text": "租客儲值教學 操作步驟 說明（P1-sibling）"
+        },
+        {
+          "new_id": 360,
+          "source_id": 3895,
+          "text": "物件刊登租金調整 帳單金額不變 說明（P1-sibling）"
+        },
+        {
+          "new_id": 361,
+          "source_id": 3852,
+          "text": "提前終止後帳單仍產生 需封存 說明（P1-sibling）"
+        },
+        {
+          "new_id": 362,
+          "source_id": 3954,
+          "text": "系統脈絡：帳號領域-登入排障(子面向) 說明（P1-sibling）"
+        },
+        {
+          "new_id": 363,
+          "source_id": 3868,
+          "text": "邀請過期 連結失效 資料清空 說明（P1-sibling）"
+        }
+      ],
+      "flip_count": 0,
+      "flipped": [],
+      "observations": [
+        {
+          "question": "點退帳單的金額是怎麼算的",
+          "baseline": [
+            "single",
+            null
+          ],
+          "observed": [
+            "single",
+            null
+          ],
+          "flipped": false,
+          "gate_verdict": "block"
+        },
+        {
+          "question": "點退做完後，帳單會自動出來嗎？",
+          "baseline": [
+            "single",
+            null
+          ],
+          "observed": [
+            "single",
+            null
+          ],
+          "flipped": false,
+          "gate_verdict": "block"
+        },
+        {
+          "question": "收據 PDF 在哪裡下載",
+          "baseline": [
+            "single",
+            null
+          ],
+          "observed": [
+            "single",
+            null
+          ],
+          "flipped": false,
+          "gate_verdict": "block"
+        },
+        {
+          "question": "系統怎麼算點退帳單的金額",
+          "baseline": [
+            "single",
+            null
+          ],
+          "observed": [
+            "single",
+            null
+          ],
+          "flipped": false,
+          "gate_verdict": "block"
+        },
+        {
+          "question": "我的這張點退帳單金額怎麼算出來的",
+          "baseline": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "observed": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "flipped": false,
+          "gate_verdict": "abstain"
+        },
+        {
+          "question": "我這筆點退帳單怎麼會是這個數字",
+          "baseline": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "observed": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "flipped": false,
+          "gate_verdict": "allow"
+        },
+        {
+          "question": "幫我查點退帳單金額",
+          "baseline": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "observed": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "flipped": false,
+          "gate_verdict": "allow"
+        },
+        {
+          "question": "這張帳單的收據金額多少",
+          "baseline": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "observed": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "flipped": false,
+          "gate_verdict": "allow"
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "seed": 20260824002,
+      "inserted": [
+        {
+          "new_id": 364,
+          "source_id": 3551,
+          "text": "信用卡ATM收款手續費 房東負擔 說明（P1-sibling）"
+        },
+        {
+          "new_id": 365,
+          "source_id": 3497,
+          "text": "已付款但帳單狀態沒有更新 說明（P1-sibling）"
+        },
+        {
+          "new_id": 366,
+          "source_id": 3550,
+          "text": "永豐金流設置 店舖編號加密因子（P1-sibling）"
+        },
+        {
+          "new_id": 367,
+          "source_id": 4052,
+          "text": "IoT 連結起始日 密碼規則 生效 說明（P1-sibling）"
+        },
+        {
+          "new_id": 368,
+          "source_id": 3402,
+          "text": "點退帳單 自動產生 費用結算 說明（P1-sibling）"
+        }
+      ],
+      "flip_count": 0,
+      "flipped": [],
+      "observations": [
+        {
+          "question": "點退帳單的金額是怎麼算的",
+          "baseline": [
+            "single",
+            null
+          ],
+          "observed": [
+            "single",
+            null
+          ],
+          "flipped": false,
+          "gate_verdict": "block"
+        },
+        {
+          "question": "點退做完後，帳單會自動出來嗎？",
+          "baseline": [
+            "single",
+            null
+          ],
+          "observed": [
+            "single",
+            null
+          ],
+          "flipped": false,
+          "gate_verdict": "block"
+        },
+        {
+          "question": "收據 PDF 在哪裡下載",
+          "baseline": [
+            "single",
+            null
+          ],
+          "observed": [
+            "single",
+            null
+          ],
+          "flipped": false,
+          "gate_verdict": "block"
+        },
+        {
+          "question": "系統怎麼算點退帳單的金額",
+          "baseline": [
+            "single",
+            null
+          ],
+          "observed": [
+            "single",
+            null
+          ],
+          "flipped": false,
+          "gate_verdict": "block"
+        },
+        {
+          "question": "我的這張點退帳單金額怎麼算出來的",
+          "baseline": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "observed": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "flipped": false,
+          "gate_verdict": "abstain"
+        },
+        {
+          "question": "我這筆點退帳單怎麼會是這個數字",
+          "baseline": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "observed": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "flipped": false,
+          "gate_verdict": "allow"
+        },
+        {
+          "question": "幫我查點退帳單金額",
+          "baseline": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "observed": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "flipped": false,
+          "gate_verdict": "allow"
+        },
+        {
+          "question": "這張帳單的收據金額多少",
+          "baseline": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "observed": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "flipped": false,
+          "gate_verdict": "allow"
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "seed": 20260824003,
+      "inserted": [
+        {
+          "new_id": 369,
+          "source_id": 4052,
+          "text": "IoT 連結起始日 密碼規則 生效 說明（P1-sibling）"
+        },
+        {
+          "new_id": 370,
+          "source_id": 4146,
+          "text": "招租店舖 房東對外首頁 入口 分享 說明（P1-sibling）"
+        },
+        {
+          "new_id": 371,
+          "source_id": 4420,
+          "text": "修繕進度 報修單 修得怎樣了 處理到哪 說明（P1-sibling）"
+        },
+        {
+          "new_id": 372,
+          "source_id": 3440,
+          "text": "簽約身份管理 個人法人 說明（P1-sibling）"
+        },
+        {
+          "new_id": 373,
+          "source_id": 3862,
+          "text": "一物件多合約 上限10份 說明（P1-sibling）"
+        }
+      ],
+      "flip_count": 0,
+      "flipped": [],
+      "observations": [
+        {
+          "question": "點退帳單的金額是怎麼算的",
+          "baseline": [
+            "single",
+            null
+          ],
+          "observed": [
+            "single",
+            null
+          ],
+          "flipped": false,
+          "gate_verdict": "block"
+        },
+        {
+          "question": "點退做完後，帳單會自動出來嗎？",
+          "baseline": [
+            "single",
+            null
+          ],
+          "observed": [
+            "single",
+            null
+          ],
+          "flipped": false,
+          "gate_verdict": "block"
+        },
+        {
+          "question": "收據 PDF 在哪裡下載",
+          "baseline": [
+            "single",
+            null
+          ],
+          "observed": [
+            "single",
+            null
+          ],
+          "flipped": false,
+          "gate_verdict": "block"
+        },
+        {
+          "question": "系統怎麼算點退帳單的金額",
+          "baseline": [
+            "single",
+            null
+          ],
+          "observed": [
+            "single",
+            null
+          ],
+          "flipped": false,
+          "gate_verdict": "block"
+        },
+        {
+          "question": "我的這張點退帳單金額怎麼算出來的",
+          "baseline": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "observed": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "flipped": false,
+          "gate_verdict": "abstain"
+        },
+        {
+          "question": "我這筆點退帳單怎麼會是這個數字",
+          "baseline": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "observed": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "flipped": false,
+          "gate_verdict": "allow"
+        },
+        {
+          "question": "幫我查點退帳單金額",
+          "baseline": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "observed": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "flipped": false,
+          "gate_verdict": "allow"
+        },
+        {
+          "question": "這張帳單的收據金額多少",
+          "baseline": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "observed": [
+            "dialog",
+            "條件診斷：帳單"
+          ],
+          "flipped": false,
+          "gate_verdict": "allow"
+        }
+      ]
+    }
+  ],
+  "cleanup": "每輪 finally 刪除本輪插入列；語料回到基準"
+}

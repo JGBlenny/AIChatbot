@@ -1,0 +1,285 @@
+{
+  "label": "baseline",
+  "protocol_version": "v1",
+  "protocol_digest": "4690a258f502d98d",
+  "ruleset_digest": "80b2f570b10c2e20",
+  "ruleset_version": "ie-v1",
+  "authorization": {
+    "mode": "synthetic matching PASS",
+    "production_manifest_status": "not_run",
+    "disclaimer": "Candidate technical acceptance under synthetic authorization != Candidate authorized for release"
+  },
+  "negative_control": {
+    "gate_active_with_corrupt_digest": false,
+    "rule_routes_when_unauthorized": {
+      "點退帳單的金額是怎麼算的": "dialog",
+      "點退做完後，帳單會自動出來嗎？": "dialog",
+      "收據 PDF 在哪裡下載": "dialog",
+      "系統怎麼算點退帳單的金額": "dialog"
+    }
+  },
+  "denominator": {
+    "scored": 20,
+    "observed_only": 2,
+    "bilateral": "RULE 4 + INSTANCE 4 = 8"
+  },
+  "bilateral_pass": true,
+  "scored_verdicts": [
+    {
+      "case_set": "RULE",
+      "question": "點退帳單的金額是怎麼算的",
+      "kind": "single",
+      "facet": null,
+      "top1": "點退帳單金額計算 押金結算",
+      "top1_similarity": 0.9781,
+      "decision_margin": 0.0257,
+      "gate_verdict": "block",
+      "gate_reason": "no-positive+counter=['explanation_request']",
+      "verdict": "pass"
+    },
+    {
+      "case_set": "RULE",
+      "question": "點退做完後，帳單會自動出來嗎？",
+      "kind": "single",
+      "facet": null,
+      "top1": "點退帳單 自動產生 費用結算",
+      "top1_similarity": 0.9672,
+      "decision_margin": 0.0481,
+      "gate_verdict": "block",
+      "gate_reason": "no-positive+counter=['explanation_request']",
+      "verdict": "pass"
+    },
+    {
+      "case_set": "RULE",
+      "question": "收據 PDF 在哪裡下載",
+      "kind": "single",
+      "facet": null,
+      "top1": "帳單收據 繳費證明 PDF 下載",
+      "top1_similarity": 0.925,
+      "decision_margin": 0.1505,
+      "gate_verdict": "block",
+      "gate_reason": "no-positive+counter=['explanation_request']",
+      "verdict": "pass"
+    },
+    {
+      "case_set": "RULE",
+      "question": "系統怎麼算點退帳單的金額",
+      "kind": "single",
+      "facet": null,
+      "top1": "點退帳單金額計算 押金結算",
+      "top1_similarity": 0.9628,
+      "decision_margin": 0.0119,
+      "gate_verdict": "block",
+      "gate_reason": "no-positive+counter=['explanation_request']",
+      "verdict": "pass"
+    },
+    {
+      "case_set": "INSTANCE",
+      "question": "我的這張點退帳單金額怎麼算出來的",
+      "kind": "dialog",
+      "facet": "條件診斷：帳單",
+      "top1": "點退帳單金額計算 押金結算",
+      "top1_similarity": 0.9707,
+      "decision_margin": 0.0114,
+      "gate_verdict": "abstain",
+      "gate_reason": "mixed positive=['possessive'] counter=['explanation_request']",
+      "verdict": "pass"
+    },
+    {
+      "case_set": "INSTANCE",
+      "question": "我這筆點退帳單怎麼會是這個數字",
+      "kind": "dialog",
+      "facet": "條件診斷：帳單",
+      "top1": "點退帳單金額計算 押金結算",
+      "top1_similarity": 0.9047,
+      "decision_margin": 0.0384,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['possessive', 'problem_report']",
+      "verdict": "pass"
+    },
+    {
+      "case_set": "INSTANCE",
+      "question": "幫我查點退帳單金額",
+      "kind": "dialog",
+      "facet": "條件診斷：帳單",
+      "top1": "合約的點退帳單金額 查點退金額",
+      "top1_similarity": 0.9717,
+      "decision_margin": 0.0243,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['lookup_verb']",
+      "verdict": "pass"
+    },
+    {
+      "case_set": "INSTANCE",
+      "question": "這張帳單的收據金額多少",
+      "kind": "dialog",
+      "facet": "條件診斷：帳單",
+      "top1": "帳單收據金額 收據多少錢",
+      "top1_similarity": 0.9833,
+      "decision_margin": 0.2672,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['possessive']",
+      "verdict": "pass"
+    }
+  ],
+  "control_group": [
+    {
+      "case_set": "CONTROL",
+      "question": "帳單有哪幾種狀態",
+      "kind": "single",
+      "facet": null,
+      "top1": "帳單狀態流程 對帳機制",
+      "top1_similarity": 0.9097,
+      "decision_margin": 0.0999,
+      "gate_verdict": "block",
+      "gate_reason": "no-positive+counter=['explanation_request']"
+    },
+    {
+      "case_set": "CONTROL",
+      "question": "帳單的收費項目有哪些",
+      "kind": "single",
+      "facet": null,
+      "top1": "帳單收費項目 六種費用",
+      "top1_similarity": 0.9895,
+      "decision_margin": 0.1455,
+      "gate_verdict": "block",
+      "gate_reason": "no-positive+counter=['explanation_request']"
+    },
+    {
+      "case_set": "CONTROL",
+      "question": "怎麼用 Excel 批次匯入帳單",
+      "kind": "single",
+      "facet": null,
+      "top1": "大量建立帳單 Excel 批次匯入",
+      "top1_similarity": 0.9831,
+      "decision_margin": 0.0122,
+      "gate_verdict": "abstain",
+      "gate_reason": "no-signal"
+    },
+    {
+      "case_set": "CONTROL",
+      "question": "固定虛擬帳號會過期嗎",
+      "kind": "single",
+      "facet": null,
+      "top1": "固定虛擬帳號不會過期 與一般帳號差別",
+      "top1_similarity": 0.9864,
+      "decision_margin": 0.0328,
+      "gate_verdict": "block",
+      "gate_reason": "no-positive+counter=['explanation_request']"
+    },
+    {
+      "case_set": "CONTROL",
+      "question": "押金設算息怎麼計算",
+      "kind": "single",
+      "facet": null,
+      "top1": "押金設算息 利率計算與帳單",
+      "top1_similarity": 0.9844,
+      "decision_margin": 0.0262,
+      "gate_verdict": "abstain",
+      "gate_reason": "no-signal"
+    }
+  ],
+  "blast_group": [
+    {
+      "case_set": "BLAST",
+      "question": "帳單為什麼發不出去",
+      "kind": "dialog",
+      "facet": "條件診斷：帳單",
+      "top1": "帳單為什麼發不出去",
+      "top1_similarity": 0.9994,
+      "decision_margin": 0.0306,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['problem_report']"
+    },
+    {
+      "case_set": "BLAST",
+      "question": "帳單為什麼取消不了",
+      "kind": "dialog",
+      "facet": "條件診斷：帳單",
+      "top1": "帳單為什麼取消不了",
+      "top1_similarity": 0.9993,
+      "decision_margin": 0.1278,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['problem_report']"
+    },
+    {
+      "case_set": "BLAST",
+      "question": "為什麼被收逾期費",
+      "kind": "dialog",
+      "facet": "條件診斷：帳單",
+      "top1": "為什麼被收逾期費（延遲金）",
+      "top1_similarity": 0.9906,
+      "decision_margin": 0.3322,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['problem_report']"
+    },
+    {
+      "case_set": "BLAST",
+      "question": "帳單手動到帳失敗",
+      "kind": "dialog",
+      "facet": "條件診斷：帳單",
+      "top1": "帳單手動到帳或標記已收款失敗",
+      "top1_similarity": 0.9829,
+      "decision_margin": 0.039,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['problem_report']"
+    },
+    {
+      "case_set": "BLAST",
+      "question": "這張帳單的收據金額多少",
+      "kind": "dialog",
+      "facet": "條件診斷：帳單",
+      "top1": "帳單收據金額 收據多少錢",
+      "top1_similarity": 0.9833,
+      "decision_margin": 0.2672,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['possessive']"
+    },
+    {
+      "case_set": "BLAST",
+      "question": "我要查帳單 編號 12345",
+      "kind": "dialog",
+      "facet": "條件診斷：帳單",
+      "top1": "查帳單 帳單編號查詢",
+      "top1_similarity": 0.9752,
+      "decision_margin": null,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['identifier']"
+    },
+    {
+      "case_set": "BLAST",
+      "question": "幫我查點退帳單金額",
+      "kind": "dialog",
+      "facet": "條件診斷：帳單",
+      "top1": "合約的點退帳單金額 查點退金額",
+      "top1_similarity": 0.9717,
+      "decision_margin": 0.0243,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['lookup_verb']"
+    }
+  ],
+  "observed_only": [
+    {
+      "case_set": "UNDECIDED",
+      "question": "我的收據在哪",
+      "kind": "dialog",
+      "facet": "帳單異常",
+      "top1": "租客說看不到帳單 找不到",
+      "top1_similarity": 0.8553,
+      "decision_margin": null,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['possessive']"
+    },
+    {
+      "case_set": "UNDECIDED",
+      "question": "我這筆點退的錢怎麼怪怪的",
+      "kind": "dialog",
+      "facet": "帳單異常",
+      "top1": "帳單金額怪怪的 跟預期不一樣",
+      "top1_similarity": 0.8756,
+      "decision_margin": 0.2111,
+      "gate_verdict": "allow",
+      "gate_reason": "positive=['possessive', 'problem_report']"
+    }
+  ]
+}
