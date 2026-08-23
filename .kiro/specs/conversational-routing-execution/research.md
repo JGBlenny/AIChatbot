@@ -53,6 +53,18 @@
 | Handling Decision 現況為 rule-based commit | ✅ **已驗** | 讀碼：門檻 + `config_for_category` 查表，無判定步驟 |
 | 測試基礎設施結構性失效 | ✅ **已驗** | `make test-integration` 183 skipped；繞過後 166/5/12 |
 | 離線重建 pipeline 會失真 | ✅ **已驗** | 三次翻盤：錨點濾除／面向分岔／rewrite 擴充候選 |
+| `run-tests.sh` 未傳 `RUN_INTEGRATION`／`RUN_E2E` | ✅ **已驗（讀碼）** | 全檔無該二字串；`docker compose run` 不帶 `-e` |
+| 測試容器與 DB 分屬兩個 docker network | ✅ **已驗（實查）** | `aichatbot-test_default` vs `aichatbot_default`，dev compose 無 external network |
+| 「本地與 CI 同一支入口」已不成立 | ✅ **已驗（讀碼）** | CI 直接跑 pytest＋`RUN_INTEGRATION=1`／`DB_HOST=localhost`，未經 `run-tests.sh` |
+| **Req.2 存在第三種失敗型態：harness drift** | ✅ **已驗（讀碼）** | `test_facet_entry_routing_req.py::_route` 自行重演進場鏈，未呼叫 `_diagnosis_config_for_knowledge` |
+| mock 短路位置在 `bill_ref` adapter **之前** | ✅ **已驗（讀碼）** | `jgb_system_api.py` `get_bills`：`if self.use_mock: return self._mock_get_bills(...)` 早於 adapter 解析 |
+| **`skip_refine` 與 Req.4 mock 缺陷同根** | ⏳ **待驗（讀碼推得）** | `skip_refine` 語義＝跳過「補識別」輪，非跳過重查；重查為插點 A 既有正確設計 |
+| 既有 C3 測試把 `api_handler` 整個替換 | ✅ **已驗（讀碼）** | 該測試以 `MagicMock` 注入手寫單列，未經 `APICallHandler`／`jgb_system_api` |
+| `修繕報修` 目前 0 個知識進場點 | ✅ **已驗（實查 DB）** | `categories @> '修繕報修'` 且非「對話規則」＝ 0 筆 |
+| **kb3365／kb4249 與 `repair_create` 語義／角色皆不符** | ✅ **已驗（實查 DB）** | 面向 `target_user=tenant`／`mode=b2c`；3365＝進度查詢（`property_manager,tenant`）、4249＝業者受理（`property_manager`）|
+| `config_for_category` 不做 `target_user`／`mode` 過濾 | ✅ **已驗（讀碼）** | 純 `by_category` 查表，無角色比對 |
+| 3365／1558 的 WARN 在**不變量 1**（非不變量 4）| ✅ **已驗（讀碼）** | 不變量 1＝動作知識必有面向接管（掛帳清單）；不變量 4＝面向 category 必有系統脈絡知識 |
+| **Req.5.2 預設組態下的使用者可見 delta 極小** | ⏳ **待驗（讀碼推得）** | `step is None` 與 `scope=switch` 於 chat.py 續輪皆走「關會話＋重路由」；真正 delta 在 pre-entry gate 由 fail-open 轉為實擋 |
 
 ---
 
@@ -358,12 +370,170 @@ mock 可驗 C1／C3／C4（控制流），**真 API 只用於確認 schema 與�
 
 ---
 
+---
+
+## 主題 8：程式碼盤查（2026-08-23，設計階段輕量發現）
+
+> 目的：把 requirements.md 的每條需求對到**具體整合點**，並揭露需求撰寫時尚未掌握的三個結構事實。
+> 方法：讀碼 ＋ 對 dev 容器實查 DB／docker network，**未執行任何寫入**。
+
+### 8.1 Req.1｜測試基礎設施：三個獨立缺口，不是一個
+
+| # | 缺口 | 證據 |
+|---|---|---|
+| 1 | **旗標未傳遞** | `scripts/run-tests.sh` 全檔無 `RUN_INTEGRATION`／`RUN_E2E`；`docker compose run --rm` 未帶 `-e` |
+| 2 | **網路不通** | `docker-compose.dev.yml` 宣告 `name: aichatbot-test` 且無 `networks:` 區段 → 網路 `aichatbot-test_default`；DB 在 prod 專案的 `aichatbot_default`。`DB_HOST` 預設 `postgres` 在測試網路內無此名 |
+| 3 | **失效不可見** | 183 筆全部被 gate-skip 時 pytest 仍回 exit 0，摘要與「真的跑完且全過」在退出碼上無法分辨 |
+
+補充：`.github/workflows/tests.yml` 的 integration job **不經 `run-tests.sh`**，直接
+`python3 -m pytest -m integration`＋`RUN_INTEGRATION=1`＋`DB_HOST=localhost`。
+`run-tests.sh` 檔頭宣稱「本地與 CI 同一支」——**該宣稱目前不成立**，修 Req.1 時應一併收斂。
+
+亦查得 `pytest.ini` 的 `addopts` 僅有 `--strict-markers`，**無 `-ra`** → skip 原因不進摘要，
+這正是 1.3「兩種略過在輸出上無法分辨」的機制成因。
+
+### 8.2 Req.2｜第三種失敗型態：harness drift
+
+`tests/integration/conversational/test_facet_entry_routing_req.py` 的 `_route()`
+**自行重演**進場決策鏈：直接呼叫 `retrieve_knowledge_hybrid` → 自行比門檻 → 自行取
+`categories` → 自行呼叫 `config_for_category`。
+
+production 的同一段是 `routers/chat.py::_diagnosis_config_for_knowledge`，其組成為
+`decision_layer.facet_entry_eligible`（門檻 gate，讀 `DecisionConfig.load()`）
+→ `_knowledge_category`（`categories` 優先、退 `category`）
+→ `config_for_category`
+→ `_preentry_routable`（gate，預設關）。
+
+差異至少三處：門檻讀值點不同（測試自行 `os.getenv`，非 `DecisionConfig`）、
+`_knowledge_category` 的雙欄位退化規則被複刻而非呼叫、`_preentry_routable` 完全缺席。
+
+> ⚠️ 這與 **R9.4（離線驗證須複刻該版本 production 實際啟用的變換與順序）** 直接衝突。
+> 故 Req.2.2 的二分法（產品行為改變／真實回歸）**不足**，須擴為三分：
+> `REGRESSION`／`EXPECTATION_DRIFT`／`HARNESS_DRIFT`。
+
+### 8.3 Req.3／4｜C4 未證的機制根因：mock 掛錯層
+
+`services/jgb_system_api.py::get_bills` 的執行順序為：
+
+```text
+身分/授權檢查
+  ↓
+if self.use_mock: return self._mock_get_bills(role_id, user_id, month, status)   ← 短路在此
+  ↓  （以下在 mock 模式下永不執行）
+bill_ref adapter 解析（純數字→get_bill_detail 單筆／查無→當合約 id／非數字→keyword 查合約）
+  ↓
+params 組裝（contract_ids → 單數 contract_id）
+  ↓
+_request('/api/external/v1/bills')
+  ↓
+client 端防衛過濾（上游無視參數時仍按 contract_id 濾）
+```
+
+`_mock_get_bills` 的簽章**不含** `contract_ids`／`bill_ref`，回傳固定三列、無 `pagination`。
+因此 mock 模式下被替換掉的不只是「外部依賴」，而是**連同 rag 端的識別解析與防衛過濾一起被略過**
+——這正是主題 6「Mock 僅替換外部依賴，SHALL NOT 重寫 routing／retrieval 邏輯」所禁止的形態。
+
+`bill_diagnosis` 的 `grounding_scope` 實查為：
+`required_slots=['bill_ref']`、`search_params=[{bill_ref: '{form.bill_ref}'}]`、
+`result_mapping.candidate_cap=8`、`skip_refine=true`、
+`secondary_call → jgb_bill_detail(bill_id={row.id})`。
+
+C4 在 mock 下的實際軌跡（讀碼推得）：
+三列 → 列候選 → 使用者選序號 → 插點 A 填 `bill_ref` → **重查 `get_bills` 仍回三列**
+→ 再列候選 → 迴圈，永不進單筆收斂。
+
+### 8.4 Req.5.1｜`skip_refine` 是同一缺陷的第二個症狀
+
+`services/conversational_engine.py` 的 `skip_refine` 只出現在**候選數 > `candidate_cap`**
+的分流分支，作用是「跳過『請提供更明確識別』那一輪、直接截斷列候選」。
+選定候選後於**插點 A** 呼叫 `_ground_by_api` 重查，是為取得單筆＋`secondary_call` 詳情的**既有正確設計**。
+
+> 推得結論（待以重現測試確認）：Req.5.1 觀測到的「宣告 `skip_refine` 卻仍重查 API」
+> **並非行為與宣告不符**，而是 8.3 的 mock 缺陷使重查無法收斂、外觀像是旗標失效。
+> 正確語義＝**跳過補識別輪**，非跳過重查。
+
+### 8.5 Req.3｜既有 C3 證據的範圍需要收窄
+
+`test_single_row_converges_with_hybrid_three_level_context` 以
+`handler.execute_api_call = AsyncMock(return_value=...)` **整個替換 `APICallHandler`**，
+回傳手寫單列與手寫 `formatted_response`。
+
+它證明的是：引擎能把 handler 回傳的 `formatted_response` 組進 `grounding`，且三層 `system_md` 正確注入。
+它**不涵蓋** `_ground_by_api → APICallHandler → api_registry → jgb_system_api → 外部 HTTP` 這一段。
+C4 之所以至今未證，正因這段從未被端到端跑過——與「mock 不過濾」是同一個結構問題的兩面。
+
+### 8.6 Req.5.2｜blast radius 的實際形狀（比需求預估的小，但不為零）
+
+`llm_answer_optimizer.conversational_step` 的驗證順序：
+`action` 白名單檢查（越界即 `return None`）→ …→ `scope` 正規化。故 `action` 越界時 `scope` 陪葬。
+
+三個呼叫點與各自的實際 delta：
+
+| 呼叫點 | 現況（step 被丟棄） | 修復後 | delta |
+|---|---|---|---|
+| `conversational_engine`（進場輪 `asked_count=0`）| 關會話 → 回 None → chat.py 落回一般流程 | `scope=switch` → 關會話 → 回 None | **無使用者可見差異** |
+| `conversational_engine`（續輪）| 回 None → chat.py 記 `facet_engine_degraded`、關會話、重路由 | 同上，但語義為 switch | **歸因改變**（`decision_snapshot` 值域），使用者可見行為相同 |
+| `chat._preentry_routable` | `data is None` → **fail-open 照舊進場** | 取得 `scope=switch` → **實際擋下進場** | ⚠️ **真正的行為 delta**，但受 `PREENTRY_ROUTABILITY_GATE`（預設 `false`）保護 |
+
+> 既有測試 `test_scope_switch_closes_session` 已證 `scope=switch` → 引擎回 None → 會話關閉。
+> 故 Req.5.2 的「獨立上線」紀律仍應維持——但理由從「blast radius 未知」
+> 修正為「**歸因值域改變 ＋ pre-entry gate 語義由 fail-open 轉為實擋**」，兩者都應單獨可回退。
+
+### 8.7 Req.5.3｜補 metadata 之前必須先判型（新增阻塞點）
+
+實查 DB：
+
+| id | `question_summary` | `action_type` | `form_id` | `target_user` | `categories` |
+|---|---|---|---|---|---|
+| 3365 | 修繕進度 修繕查詢 | `form_fill` | `jgb_repair_query` | `{property_manager, tenant}` | NULL |
+| 4249 | 收到租客修繕申請 怎麼受理處理 | `direct_answer` | — | `{property_manager}` | NULL |
+| 1558 | 維修進度查詢 | `api_call` | — | NULL | NULL |
+
+`repair_create` 面向配置（`seed_repair_facet_config.sql`）：
+`topic_scope.category='修繕報修'`、`persona_role='tenant_repair'`、
+`grounding_scope.target_user='tenant'`、`mode='b2c'`、`execute_endpoint='jgb_create_repair'`。
+
+且 `services/conversational_config.py::config_for_category` 為**純 by_category 查表，
+不比對 `target_user`／`mode`**。
+
+> ⚠️ 兩重不符，直接補 `categories=['修繕報修']` 會同時踩到：
+> 1. **意圖不符**：3365／1558 是「查進度」，4249 是「業者受理」——皆非「租客建報修單」；
+> 2. **角色不符**：4249 只掛 `property_manager`，掛上去等於替 b2b 業者開一條通往
+>    b2c 租客面向的進場路徑，而查表層不會擋。
+>
+> 故 Req.5.3 的「補上 kb3365／kb4249 的 routing metadata」**不可照字面執行**，
+> 須先判型（見 design.md 元件 6 的三選項）。
+
+補正：requirements.md 記為「`make audit` 不變量 4 長期 WARN」；實際 3365／1558 的掛帳 WARN
+在**不變量 1**（動作知識必有面向接管）。不變量 4 是「每個面向 category 必有系統脈絡知識」，
+兩者皆與修繕相關但語義不同，驗收時要對到正確那條。
+
+### 8.8 Req.10｜可直接複用的既有量測基礎
+
+- `usage_events` 已有 `facet_key`／`turn_number`／`facet_event`／`decision_snapshot`
+  → **輪數分佈**與**重複詢問率**可由既有埋點以 SQL 聚合，無須新埋點。
+- **反問對題率**與**前提衝突處理率**需要對「反問文字 vs 使用者原句」下判定，既有埋點不足。
+- `scripts/backtest/freeze_measurement.py`（判準／分母／雜訊標記／尺版本四項量測前凍結）
+  與 `decision_replay.py`（容器一致性、語料完整性、快取軌別、規則版本四道閘門）
+  是既有且經過教訓沉澱的模式——Req.10 的 baseline 應建在其上，不另起爐灶。
+
+### 8.9 風險登記（輕量發現第 5 階段）
+
+| 風險類別 | 檢查項目 | 結果 |
+|---|---|---|
+| 資料完整性 | 是否涉及資料遷移？ | **是**（Req.5.3 的 `categories` 變更即 routing 變更，見 R6.6）|
+| 效能 | 是否有大量資料處理？ | 否（mock transport 無 IO；量測為離線批次）|
+| 安全性 | 是否處理敏感資料？ | **是**（mock fixture 不得含真實個資；`USE_MOCK_JGB_API` 預設 `true`，未設定即走假資料）|
+| 相容性 | 是否影響現有 API？ | **是**（`conversational_step` 回傳契約、`get_bills` mock 分支位置）|
+
+
 ## 待決事項
 
 | # | 事項 | 卡在哪 |
 |---|---|---|
-| 1 | C4 最終答案引用真實資料 | mock 不依任何參數過濾、恆回 3 筆，無法收斂單筆（見主題 7）|
+| 1 | C4 最終答案引用真實資料 | 根因已定位為 **mock 掛錯層**（主題 8.3）——`use_mock` 短路在 `bill_ref` adapter 之前；解法見 design.md 元件 3 |
 | 1b | C4 若失敗屬 (a)鏈路／(b)mock／**(c)External 欄位投影不足** 哪一類 | 需先判型再修——三者修法完全不同 |
 | 2 | knowledge-grounded Face 是否需 face-scoped retrieval | **若** Route-R3 的 end-to-end 證實最終答案仍受 trigger KB 限制，face-scoped evidence retrieval 是**目前最直接的候選解法**——非唯一解。其他可能：Face 本身規則已足以處理／Face 後續另有知識來源／部分案例本來就能正確處理／應直接退出 Face 回 direct path |
 | 3 | D 澄清分岔的 ambiguity 偵測 | brain 對 R3 全數判 `stay`，不具此能力 |
 | 4 | production holdout | S3 客服回報自 2026-07-29 零新增 |
+| 5 | `repair_create` 該掛哪一筆進場知識 | kb3365／4249 意圖與角色皆不符（主題 8.7）；三選項與推薦見 design.md 元件 6 |

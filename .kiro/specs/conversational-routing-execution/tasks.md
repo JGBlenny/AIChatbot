@@ -1,0 +1,656 @@
+# 實作任務：conversational-routing-execution
+
+> 建立 2026-08-23｜語言 zh-TW
+> 來源：[requirements.md](./requirements.md)（Req.1–10）、[design.md](./design.md) v1.6、[research.md](./research.md)
+> ⚠️ `.kiro/settings/rules/tasks-generation.md`、`tasks-parallel-analysis.md`、
+> `templates/specs/tasks.md` **均不存在**，本文件採標準 kiro 任務格式（兩層、數字需求 ID）。
+
+---
+
+## 註記圖例
+
+| 註記 | 意義 | 判準 |
+|---|---|---|
+| **⚡F** | **可交 Fable 執行** | 全機械、brief 可一次寫完、**無設計判斷**；產物對錯可由既有斷言或契約當場判定 |
+| **🧠主** | **須主 session 親自做** | 診斷、判型、裁決、跨元件整合；或本 spec 明訂「不得預設處置」者 |
+| **🔍V** | **完成後須獨立代理驗證** | 觸發獨立審查條件：安全邊界／資料寫入／外部副作用／驗收結論所依賴 |
+| **(P)** | 可與同層其他 (P) 任務並行 | 無共享檔案、無順序依賴 |
+
+> ⚠️ **⚡F 的鐵則**：交付 Fable 的 brief 必須自帶完整契約與驗收條件。
+> 凡需要「先讀碼判斷再決定怎麼寫」的任務一律不掛 ⚡F——
+> 那是判型工作，錯誤會被下游當成事實。
+>
+> ⚠️ **🔍V 的鐵則**：驗證代理收到的是**明確的宣稱**與相關 diff／路徑，不是「幫我看看」。
+> 自驗不作收案證據（本 spec 已三次證實）。
+
+---
+
+## 執行順序（依 design.md 的依賴 DAG）
+
+```text
+任務 1 ─┬─ 任務 2 ──────────────┐
+        │                        ├─ 任務 5（C4a）─┬─ 任務 6（C4b／上線 gate）
+        ├─ 任務 3 (P) ───────────┤                ├─ 任務 7（skip_refine）
+        └─ 任務 4 (P) ──────────┘                 ├─ 任務 8（step 契約）
+                                                   └─ 任務 9（repair_create）
+                                                          ↓
+                                              任務 10（文件分層）→ 任務 11（品質基準）
+任務 12（contract smoke）＝橫向，任務 4 後任意時點
+```
+
+⚠️ **不得依編號順序執行**：任務 4（mock 契約）是任務 5（C4a）可驗的前提［需求優先序段］。
+
+---
+
+## 1. 測試執行入口供裝與失效可見性
+
+**目標**：使 `make test-integration` / `make test-e2e` 在結構上有能力真正執行，
+且「因環境略過」「因標記未啟用略過」「真的跑完且全過」三者在輸出與退出碼上可分辨。
+
+**狀態（2026-08-23）**：
+
+```text
+1.1–1.6, 1.8–1.12  COMPLETE（1.6 獨立驗證 CONFIRMED；1.10 三層守門結構完成）
+1.7                BLOCKED BY 2.1 + 2.4  ← 驗收 checkpoint 的明確依賴，非「未做完」
+```
+
+**Task 1 最終形成的守門結構**（三層，非單點）：
+
+```text
+L1  runner intent      REQUESTED_TEST_LAYERS（宣告「要跑什麼」）
+L2  pytest actual      selected items（實際「會跑什麼」）      ← L1 與 L2 互相校驗
+L3  runner contract    unit 測試鎖 LAYER→selection→宣告→旗標 四者成套
+```
+
+不是「runner 告訴守門自己要跑什麼，守門相信它」。
+
+**獨立驗證（1.6 🔍V）結論：CONFIRMED**。四條宣稱皆以真實測試套件實跑驗過——
+rc=10 穿透 CI 吞噬（183 skipped 場景，`STEP_EXIT=1`）；rc=1 仍不擋（18 failed／160 env-skip，`STEP_EXIT=0`）；
+`continue-on-error` 已移除且無其他吞噬路徑（YAML parse 而非 grep 目視）；
+skip 分類器實跑確認未失效（160 筆 DB 不可達全歸 `[env]`，0 筆誤歸 `[gate]`）。
+另驗出一條未被列入宣稱但關鍵的優先序：結構性失效與測試失敗並存時 **10 勝過 1**。
+
+**未處置的 advisory**（見文末「已知 advisory」）：A2（守門可自我停用）待業主裁示；
+A4（移除 job 級 `continue-on-error` 使 `pip install` 暫時性故障會擋合併）待業主知情裁示。
+
+> ⚠️ **實作期已發現並修正一個假綠燈**：design.md 原訂分類器為
+> `reason.startswith("[gate]")`，但 pytest 實際在 reason 前加 `"Skipped: "`
+> （實測 `longrepr[2] == 'Skipped: [gate] …'`），該判斷**恆為 False** →
+> gate-skip 恆為 0 → **空跑守門變成永遠通過的不變量**。
+> 已於 `conftest.py` 剝除該前綴後比對，並以三情境實跑確認 `gate_skipped=1` 真的出現。
+> **教訓**：新增不變量時，必須先證明它在「該失敗的情境」下真的會失敗（negative control），
+> 否則新增的是一個假綠燈，而非一道守門。
+
+- [x] 1.1 **⚡F** 於 `scripts/run-tests.sh` 依 `LAYER` 注入測試旗標至 `docker compose run -e`：
+  `integration → RUN_INTEGRATION=1`、`e2e → RUN_E2E=1`、`all → 兩者`、`unit → 皆不注入`。
+  注入規則為決定性查表，不得用啟發式判斷。
+  _Requirements: 1.1, 1.5_
+
+- [x] 1.2 **⚡F** 於 `docker-compose.dev.yml` 加入 external network `aichatbot_default`，
+  使測試容器可解析 `DB_HOST=postgres`（該 alias 已實查存在於該網路，無須改連線設定）。
+  _Requirements: 1.2_
+
+- [x] 1.3 **⚡F** 使兩類 skip 在輸出上可分辨：於 `tests/conftest.py` 為 **gate skip**
+  （`pytest_collection_modifyitems` 內的兩處）加 `[gate]` 前綴；
+  並於 `pytest.ini` 的 `addopts` 加 `-ra` 使 skip 原因進入摘要。
+  ⚠️ **實作方式（v1.6 細化）**：分類採「reason 以 `[gate]` 開頭者為 gate，其餘為 env」，
+  **不逐一改動 69 處測試檔內的 `pytest.skip()`**——那些是各測試自己的環境判定，
+  改它們違反「既有測試判定邏輯零改動」。env 前綴由摘要 hook 於顯示時補上。
+  _Requirements: 1.3_
+
+- [x] 1.4 **🧠主** 實作空跑守門：以 `pytest_sessionfinish` 判定「被請求層的 gate-skip 數 == 0」，
+  違反則設 `EXIT_STRUCTURAL_FAILURE = 10`（避開 pytest 保留的 0–5）。
+  退出碼在此決定，**shell 不得解析人類可讀 summary**。
+  _Requirements: 1.4_
+
+- [x] 1.5 **🧠主** 定案 CI 與本地入口分工（design.md 元件 1-C）：
+  不變量（旗標語義、skip 型別、空跑守門、DB 守門）掛 pytest 層兩邊共用；
+  供裝（容器、network、pip）各自負責。**修正 `run-tests.sh` 檔頭「本地與 CI 同一支」的假宣稱**，
+  不強迫 CI 改走該腳本。
+  _Requirements: 1.1, 1.5_
+
+- [x] 1.6 **🧠主 🔍V** 修改 `.github/workflows/tests.yml` 的 integration job，
+  使結構性失效穿透既有的雙層吞噬：移除 job 級 `continue-on-error: true`；
+  step 改為判斷 `rc == 10` 則 `exit 1`（硬擋），其餘 `exit 0`（維持測試失敗非阻擋的既有決定）。
+  **🔍V 理由**：此任務的正確性決定了整套守門在 CI 端是否真的有訊號——
+  若做錯，失效模式正是本 spec 的起因（量測工具靜默失效）。
+  _Requirements: 1.1, 1.4_
+
+- [x] 1.8 **🧠主** **requested-layer 的權威來源改為明示，不 parse `-m` 運算式**
+  （2026-08-23 業主裁示；1.4 的 regex 作法由本項取代）。
+
+  **問題**：`_requested_gated_layers` 以 `re.search(r"\bintegration\b", markexpr)` 推導執行意圖，
+  實測 `-m "not integration"` → `requested={'integration'}`、`-m "not e2e"` → `{'e2e'}`，
+  **誤判成「已請求該層」→ 無辜硬擋（假紅燈）**。
+  繼續補 regex（排除 `not`、括號…）等於自己寫一個 pytest `-m` 布林運算式 parser，
+  與本 spec「不自行重建 production semantics」的精神相違。
+
+  **修法**：由 runner／CI **明示 intent**，pytest hook 只讀該變數；
+  `-m` 只負責 pytest 自己的 selection，**不拿來推導執行意圖**。
+
+  | 入口 | 設定 |
+  |---|---|
+  | `run-tests.sh` `LAYER=integration` | `REQUESTED_TEST_LAYERS=integration` ＋ `RUN_INTEGRATION=1` |
+  | `run-tests.sh` `LAYER=e2e` | `REQUESTED_TEST_LAYERS=e2e` ＋ `RUN_E2E=1` |
+  | `run-tests.sh` `LAYER=all` | `REQUESTED_TEST_LAYERS=integration,e2e` ＋ 兩旗標 |
+  | CI integration job `env` | `REQUESTED_TEST_LAYERS: integration` ＋ `RUN_INTEGRATION: "1"` |
+  | 裸跑 `pytest` / `LAYER=unit` | 不設 → 不受空跑守門管轄 |
+
+  **明文語義**：裸跑 pytest **不保證** structural guard 的 requested-layer 語義；
+  **正式驗收入口是 `make` / `run-tests.sh` 與 CI job**。
+  （若日後要讓裸跑也完整支援，另做第二層 fallback；**regex 不得作為唯一權威來源**。）
+  _Requirements: 1.1, 1.4, 1.5_
+
+- [x] 1.10 **🧠主** **雙來源交叉守門**（2026-08-23 業主裁示，取代單一宣告來源）。
+  共因失效：`RUN_*` 旗標與 `REQUESTED_TEST_LAYERS` 出自 `run-tests.sh` 同一個 `case`，
+  該注入壞掉則兩者一起消失 → 守門判「未請求」→ 不管轄 → **守門連同它要防的東西一起消失**。
+  改為兩個獨立來源互相校驗：
+  **A（declared）** `REQUESTED_TEST_LAYERS`；**B（selected）** pytest 完成 selection 後的 item 集合。
+  `I1` declared layer → 旗標須在，且該層須有 item 被選中；
+  `I2` selected gated layer → 旗標須在，**不論有無宣告**。
+  ⚠️ I2 使**裸跑 pytest 也受管轄**——業主接受此行為改變：
+  裸跑整套卻讓 integration／e2e 靜默 skip，本來就不該回綠。
+  來源 B **不解析 `-m`**，只讀 pytest 已解析完的結果（否定式／`-k`／路徑選取語義全留給 pytest）。
+  _Requirements: 1.1, 1.4, 1.5_
+
+- [x] 1.11 **🧠主** **runner 層級契約測試**（第三層，防「整組注入被一起改壞」）：
+  `tests/unit/_meta/test_runner_layer_contract_req.py` 斷言
+  `LAYER → pytest selection → REQUESTED_TEST_LAYERS → RUN_* flags` 四種成套對應
+  （`unit`／`integration`／`e2e`／`all`），並鎖 CI job 的成對宣告與
+  「job 級 `continue-on-error` 不得復活」。7 passed。
+  _Requirements: 1.1, 1.4, 1.5_
+
+- [x] 1.12 **🧠主** **修正層級判定：`item.keywords` → marker**（1.10 實測逼出的既存 bug）。
+  `keywords` 含 parametrize 的**參數值**，因此
+  `@pytest.mark.parametrize("layer", ["integration", ...])` 的 **unit** 測試
+  會被誤判成 integration 層而 gate-skip——**又一個會靜默製造假綠燈的類別**。
+  全套 1274 筆實測：`keywords` 與 marker 判定僅 **2 筆分歧**，且都是該類參數化測試，
+  **既有測試分層零變動**；改後該 2 筆由「靜默 skip」恢復為實跑通過。
+  _Requirements: 1.3, 1.4_
+
+- [x] 1.9 **🧠主** 1.8 改完後重跑空跑守門實測——**11 情境全數符合**：
+  宣告+旗標→0／宣告但旗標漏→10（integration、e2e、all 三者皆驗）／
+  `-m "not integration"` 未宣告→**0（誤擋已消除）**／未知層名→忽略。
+  **1.10 後補測 8 情境**（新語義）：共因失效（宣告+旗標同時消失）→**10**／
+  裸跑 pytest →**10**／路徑選取 `tests/integration/` →**10**／
+  `-m "not integration"` →0／`-m unit` →0／宣告 e2e 但未選中（I1 後半）→**10**／all 全設→0。
+  _Requirements: 1.4_
+
+- [ ] 1.7 **🧠主** ⛔ **BLOCKED BY 2.1 + 2.4** — 執行驗收：`make test-integration` 的
+  passed/failed/skipped 三個數字與繞過 runner 直跑一致，並記錄實際數字（作為任務 3 的判定基準）。
+
+  ⚠️ **阻塞理由（不得為求「任務 1 全綠」提前繞過）**：
+  網路已於 1.2 打通，但 **2.1 的 DB fail-closed 守門尚未完成、`aichatbot_test` 尚未供裝**。
+  此刻為取數字而把 integration 真跑起來，會直接連上 production DB——
+  正好違背本任務自己剛建立的安全邊界。
+  _Requirements: 1.1, 1.2, 1.3, 1.4_
+
+---
+
+## 2. 測試資料庫安全邊界與供裝
+
+**目標**：接上共用網路後，測試不得觸及 production database。
+⚠️ **本任務的守門一旦落地，`aichatbot_test` 供裝完成前 integration 與 e2e 皆會全數拒絕連線——
+這是預期行為，不是回歸。**
+
+- [ ] 2.1 **🧠主 🔍V** 實作 `assert_non_production_db`：fail closed 雙驗
+  （`DB_ENV != "production"`，缺值視為未證明即拒絕；`db_name ∈ ALLOWED_TEST_DATABASES` 白名單），
+  違反時 `raise ProductionDatabaseRefused`，**不得降級為 skip 或 warning**。
+  掛於 `tests/conftest.py` 的 session 級 autouse fixture，先於任何 `asyncpg.create_pool`。
+  **🔍V 理由**：安全邊界；做錯的後果是測試寫進 production DB。
+  _Requirements: 1.2_
+
+- [ ] 2.2 **⚡F** 注入 `DB_ENV`：`docker-compose.dev.yml` 加 `DB_ENV: ${DB_ENV:-test}`；
+  `.github/workflows/tests.yml` integration job env 加 `DB_ENV: test`。
+  （實查：`DB_ENV` 目前在整個 repo 不存在，不注入即全紅。）
+  _Requirements: 1.2_
+
+- [ ] 2.3 **⚡F** 統一測試庫名為 `aichatbot_test`：
+  `docker-compose.dev.yml` 的 `DB_NAME` 預設、CI 的 `POSTGRES_DB` 與 job `DB_NAME` 三處。
+  **不得改為把 `aichatbot_admin` 加進白名單**——那會在所有環境一併解除對真 production 庫的保護。
+  _Requirements: 1.2_
+
+- [ ] 2.4 **🧠主** 供裝 `aichatbot_test`【**IN SCOPE**，2026-08-23 業主定案】。
+  **2.5 決定的是本項的「供裝深度」，不是本項是否納入範圍。**
+
+  **必備（無條件納入）**：
+  ① database 本身；② schema／migrations；③ 本 spec integration 所需 seed；
+  ④ Face configs；⑤ system context；⑥ dialogue rules；⑦ C4 deterministic fixture 所需狀態。
+
+  **條件式（預設不納入）**：⑧ 完整 KB；⑨ embedding／semantic-model index。
+  → 條件式項目**僅在 2.5 證明 `trigger_facet_key` 無法 production-faithful 地直達 C4b 所需 Face 時**，
+  才升格為本 spec 的必要供裝。
+  _Requirements: 1.2_
+
+- [ ] 2.5 **🧠主** 先驗證 `trigger_facet_key` 收窄候選是否成立，再決定 e2e 供裝規模：
+  確認 Step 0.4 直達路徑（`handle_trigger_facet` → `_seed_repair_facet`）對**診斷面向**
+  是否與分類路由出口的 `_conversational_respond` 等價。
+  成立 → 2.4 只做必備七項；不成立 → 2.4 追加條件式兩項（完整 KB ＋ embedding）。
+  ⚠️ **本項為 spike，先於 2.4 執行**；屆時只做**一次**範圍展開判定，不重新討論架構。
+  _Requirements: 1.5, 3.2_
+
+---
+
+## 3. 面向進場路由回歸改走 production seam (P)
+
+**目標**：把進場路由回歸從「自行重演決策鏈」改為「呼叫 production 決策函式」，
+使 Requirement 2 的失敗判定有意義。
+
+- [ ] 3.1 **🧠主** 實作 `route_via_production`：內部只做兩件事——
+  呼叫 production `retrieve_knowledge_hybrid` 取 `best_knowledge`，
+  再呼叫 `routers.chat._diagnosis_config_for_knowledge(db_pool, best_knowledge, DecisionConfig.load(), user_message=question)`。
+  檢索參數一律取自 production 讀值點（`DecisionConfig.load().kb_threshold`、`top_k` 對齊 production 預設），
+  harness 不得自行 `os.getenv`。門檻、雙欄位退化、pre-entry gate 皆不在本函式內複刻。
+  _Requirements: 2.1, 9.4_
+
+- [ ] 3.2 **⚡F** 改寫 `test_facet_entry_routing_req.py` 的 `_route` 為呼叫 `route_via_production`；
+  **所有既有案例（DIALOG／SINGLE／BOUNDARY，含五域）與斷言文字一字不改**。
+  `RouteOutcome.reason` 僅用於失敗訊息，**永不進斷言**。
+  _Requirements: 2.1, 9.4_
+
+- [ ] 3.3 **🧠主** 對浮現的每一個失敗案例做三向判定並記錄依據：
+  `REGRESSION`（修程式）／`EXPECTATION_DRIFT`（更新斷言，須書面依據且不得為「測試沒過」本身）／
+  `HARNESS_DRIFT`（須從四項分歧擇一**指名**：進場門檻讀值點／雙欄位退化／`_preentry_routable` 缺席／
+  檢索呼叫參數；無法指名者一律回退為 `REGRESSION`）。
+  **不得以「更新斷言」作為預設處置**，亦不得調整 `FORM_TRIGGER_THRESHOLD`。
+  _Requirements: 2.1, 2.2, 2.3_
+
+- [ ] 3.4 **🧠主 🔍V** 依 3.3 的判定執行修復，並確認全部案例通過。
+  **🔍V 理由**：Requirement 2 的結論（哪些是真回歸）是後續工作的判定基準，
+  且三向判定有「改 harness 就綠」的隱蔽逃生門。
+  _Requirements: 2.1, 2.2_
+
+---
+
+## 4. JGB 替身邊界下移至 HTTP transport (P)
+
+**目標**：讓 `bill_ref` adapter、參數組裝、client 端防衛過濾在測試中真正執行，
+消除「mock 造假通過」的結構可能。
+
+- [ ] 4.1 **🧠主** 定義 `Transport` Protocol 與 `TransportResponse`／`Pagination` 型別，
+  使 `JGBSystemAPI` 僅依賴該 Protocol；`_send` 依 `use_mock` 派發至 real 或 mock 實作。
+  _Requirements: 4.1, 4.3_
+
+- [ ] 4.2 **🧠主** 實作 `JGBMockTransport.resolve_endpoint`：以**樣板比對**（`{bill_id}` 比對單一 path segment、
+  段數不同不匹配）解析 `(method, path) → endpoint_key`。
+  ⚠️ **不得以 `path in WHITELIST` 判定**——detail path 實際為 `/api/external/v1/bills/12345`，
+  字面永遠不會命中樣板。
+  _Requirements: 4.1_
+
+- [ ] 4.3 **🧠主 🔍V** 實作未遷移端點的 fail loudly：`resolve_endpoint` 回 None
+  或 `endpoint_key ∉ MIGRATED_ENDPOINTS` → `raise UnmigratedMockEndpointError`，
+  **SHALL NOT fallback 至真實 HTTP**。
+  **🔍V 理由**：外部副作用邊界；做錯的失效模式是 integration 測試靜默對 jgb2 發真請求。
+  _Requirements: 4.1, 4.3_
+
+- [ ] 4.4 **⚡F** 依 research.md 主題 7 的契約盤查（附 file:line）建 `BillFixtureTable`：
+  至少 3 筆分屬 2 個 `contract_id`；每筆 `bit_status`／`invoice_status` 互異
+  （使 C4a 能區分「引用對的那一筆」與「引用錯的那一筆」）；
+  欄位限於 External 白名單投影，**不得新增真 API 不存在的欄位**；**不得含任何真實個資**。
+  _Requirements: 4.1, 4.2_
+
+- [ ] 4.5 **⚡F** 實作 `/bills` 與 `/bills/{bill_id}` 的 mock 回應，依真 API **實際存在**的參數過濾
+  （`role_id` 必填缺則 400、`user_id`、`contract_id` 單數、`bill_id`、`status`、`type`、
+  `month` 以 `YYYY-MM` 比對 `date_expire` 整數區間、`sort_by` 白名單、`page`／`per_page` 上限 200）；
+  補齊 `pagination` 五鍵與 `show` 的 `cvs_info`；`mapping` 沿用既有（已確認與真契約一致）。
+  ⚠️ **絕不可實作 `bill_ref` 過濾**——真 API 無此參數，它是 rag 端 adapter。
+  _Requirements: 4.1_
+
+- [ ] 4.6 **🧠主** 移除 `get_bills`／`get_bill_detail` 的方法級 mock 短路，使 adapter 實際執行；
+  其餘約 18 個端點維持既有方法級 mock。
+  於設計文件與程式註解記錄**混合邊界狀態**：adapter 的**非數字分支**會呼叫未遷移的 `get_contracts`，
+  故本階段僅**數字分支**被端到端執行，**不得聲稱 adapter 已全分支證實**。
+  _Requirements: 4.1, 4.3_
+
+---
+
+## 5. API-grounded Face 執行鏈閉環（C4a）
+
+**目標**：以 deterministic control-flow 證實執行鏈閉環，並使失敗型 (a)/(b)/(c) 可判。
+⚠️ **依賴任務 4**——mock 不依真參數過濾即無法收斂單筆，C4a 無從驗證。
+
+- [ ] 5.1 **🧠主** 定義 `ChainClosureAssertion` 與 `assert_chain_closure`：
+  斷言對象為 grounding，**明文禁止對最終回答文字下斷言**（腳本化 brain 的輸出是測試自己寫的，
+  對它斷言等於自證）。兩個正交維度——`grounding_must_contain`（送達性）與
+  `required_grounding_facts`（充分性，比對 formatter 產出的 facts 鍵，不看 LLM 措辭）。
+  _Requirements: 3.1, 4.2_
+
+- [ ] 5.2 **🧠主** 為每個 C4a 案例明列 `required_grounding_facts`（執行前明示為斷言基準）。
+  ⚠️ **`required_grounding_facts` 為空的案例不構成 C4a 通過的證據**——那等於沒驗充分性。
+  例：「為什麼發不出去」需失敗原因類事實；「這期帳單多少錢」只需金額與期別。
+  _Requirements: 3.1, 3.2, 4.2_
+
+- [ ] 5.3 **⚡F** 實作 `bill_diagnosis` 的 C4a 測試：真 DB ＋ 真 `ConversationalEngine` ＋
+  **真 `APICallHandler`** ＋ 真 `JGBSystemAPI` ＋ `JGBMockTransport` ＋ 腳本化 brain（零 OpenAI）。
+  涵蓋：反問 → 收齊 `bill_ref` → adapter 數字分支 → transport → `secondary_call: jgb_bill_detail`
+  → grounding。
+  _Requirements: 3.1, 7.1_
+
+- [ ] 5.4 **⚡F** 實作 `billing_anomaly` 的 C4a 測試（第二面向，**無 `secondary_call`** 的對照組）。
+  兩面向共用同一份 `jgb_bills` 契約與 fixture 表。
+  _Requirements: 3.1, 3.3, 7.1_
+
+- [ ] 5.5 **🧠主 🔍V** 執行 C4a 並依判型流程分類失敗（若有）：
+  (a) 鏈路未跑通／(b) mock 契約不保真／**(c) grounding insufficiency**（充分性維度判出）。
+  依業主裁示：**(a) 與 (c) 觸發 Req.3.4 降級**（routing 工作降 P1 以下、執行鏈修復升 P0）；
+  (b) 不觸發（修 mock 即可）；(c) 的修法（擴 External 欄位或改打 Internal）**另立案**，
+  不進本 spec 的修復迴圈。
+  **🔍V 理由**：本任務的結論直接決定整個 spec 的優先序走向。
+  _Requirements: 3.1, 3.3, 3.4, 3.5_
+
+---
+
+## 6. C4b production-brain smoke 與上線 gate
+
+**目標**：證明真 brain 會**使用** grounding 作答（C4a 只證明 grounding 送達）。
+⚠️ **依賴任務 2.5**（e2e 供裝規模）與任務 5（C4a 先通過）。
+
+- [ ] 6.1 **🧠主** 定義 `BrainGroundingAssertion` 與 `assert_brain_uses_grounding`：
+  斷言僅鎖「該筆實際值字面是否出現」與「是否退回泛用 KB 答案」，**不鎖措辭**（真 LLM 非決定性）。
+  _Requirements: 3.2_
+
+- [ ] 6.2 **⚡F** 實作兩面向的 C4b e2e 測試（真 `conversational_step`、少量案例）；
+  於檔頭標明預期成本量級；掛 `@pytest.mark.e2e` 使其預設略過、不擋 CI。
+  _Requirements: 3.2, 7.2_
+
+- [ ] 6.3 **🧠主 🔍V** 執行 C4b 並產出**上線 gate 放行報告**：逐面向列出斷言結果與實際引用字面。
+  ⚠️ **放行人為業主，人工放行；不得由測試綠燈自動視為放行。**
+  未放行前，本 spec 的三項 production-facing 變更（任務 4.6、任務 8、任務 9）**不得上線**。
+  C4b 失敗**不觸發** Req.3.4 降級，該案例併入任務 11 的 `grounding_utilization_rate` 分母分子。
+  **🔍V 理由**：上線 gate；且需獨立確認「引用字面」不是測試自己餵進去的。
+  _Requirements: 3.2_
+
+- [ ] 6.4 **🧠主** 報告紀律落實：C4b 未過而僅 C4a 過時，
+  所有對外表述 SHALL 為「執行鏈閉環已證實，**最終答案能力尚未放行**」，
+  SHALL NOT 為「最終答案能力已證實」。
+  _Requirements: 3.2, 9.1_
+
+---
+
+## 7. 已知缺陷：`skip_refine` 語義定案
+
+⚠️ **依賴任務 4**。**不得在任務 4 完成前先改 `skip_refine` 的實作**——那會在錯誤的症狀上動刀。
+
+- [ ] 7.1 **🧠主** 以 `bill_diagnosis` 重現原觀測情境（候選 > `candidate_cap` 分流 → 選定候選 → 重查）。
+  _Requirements: 5.1_
+
+- [ ] 7.2 **🧠主** 依重現結果定案並記錄哪一邊是正確語義：
+  若重查後收斂至單筆 → 判定宣告與行為**一致**，處置為文件與命名
+  （於配置鍵註解與 `steering/dialogue.md` 明寫「跳過補識別輪，非跳過重查」）；
+  若仍不收斂 → 回到 Req.5.1 原始二選一，修正其一。
+  _Requirements: 5.1_
+
+- [ ] 7.3* **⚡F** 補 unit 測試鎖定 `skip_refine` 語義（候選 > cap 時不追問直接列候選；
+  選定後重查收斂單筆）。
+  _Requirements: 5.1_
+
+---
+
+## 8. 已知缺陷：`conversational_step` 契約分層
+
+**目標**：`action` 越界時不再連同可用的 `scope` 一併丟棄，且**不引入 `action=None` 半合法狀態**。
+⚠️ ［需求 5.2］此修復**須獨立上線，不得與其他改動同批**。
+
+- [ ] 8.1 **🧠主** 實作 `_parse_conversational_step() → StepResult`（解析層）：
+  先正規化 `scope`／`face`、再驗 `action`。不變量——`payload` 非 None 時
+  `payload['action'] ∈ VALID_ACTIONS` 必然成立，**payload 內永不出現 `action=None` 或越界值**。
+  _Requirements: 5.2_
+
+- [ ] 8.2 **🧠主** 新增 `conversational_step_result()` 為主要介面；
+  將 `conversational_step()` 改為相容層（`return result.payload if result else None`），
+  **簽章與回傳形狀與現行逐位一致**，現有 caller 零感知。
+  _Requirements: 5.2_
+
+- [ ] 8.3 **🧠主** 遷移兩個呼叫點至新介面：`conversational_engine`（進場輪與續輪）
+  與 `chat._preentry_routable`。以 `FACET_SCOPE_SALVAGE`（預設 off）控制
+  **呼叫端在 `payload is None` 時是否依 `scope` 行動**——旗標不改變解析結果，
+  回退時不需回退解析層。
+  _Requirements: 5.2_
+
+- [ ] 8.4 **⚡F** 補 unit 測試：`action` 合法時輸出與現行**逐位一致**（零回歸鎖）；
+  `action` 越界 ＋ `scope=switch` 時 `payload is None` 且 `scope == 'switch'`；相容層回 None。
+  _Requirements: 5.2_
+
+- [ ] 8.5 **🧠主 🔍V** 獨立驗收並獨立上線：確認兩項 delta——
+  `decision_snapshot` 歸因由 `facet_engine_degraded` 改為 switch 語義；
+  `_preentry_routable` 由 fail-open 轉為實際擋下進場（受 `PREENTRY_ROUTABILITY_GATE` 預設 off 二重保護）。
+  **🔍V 理由**：［需求 5.2］明文要求獨立驗收；且此變更會改變面向退出的歸因值域。
+  _Requirements: 5.2_
+
+---
+
+## 9. `repair_create` 進場點（先判型，再補 metadata）
+
+⚠️ 實查：`修繕報修` 目前 **0 個知識進場點**；kb3365（修繕進度查詢）與 kb4249（業者受理，
+`target_user` 僅 `property_manager`）與面向的 `tenant`／`b2c` **意圖與角色皆不符**，
+且 `config_for_category` **不比對 `target_user`／`mode`**。
+
+- [ ] 9.1 **🧠主** 依設計決策 3 採**選項 C**：新增語義正確的**租客向報修觸發知識**
+  （`categories=['修繕報修']`、`target_user=['tenant']`），
+  **不替 kb3365／kb4249 加標**（照字面補標會替 b2b 業者開出通往 b2c 租客面向的路徑）。
+  _Requirements: 5.3, 6.6_
+
+- [ ] 9.2 **🧠主** 明確記錄新增的 **Face entry points**（`EntryPointChange` 的
+  `declared_entry_points`），並以**現行 production routing 規則**執行回歸。
+  _Requirements: 5.3, 6.6_
+
+- [ ] 9.3 **🧠主 🔍V** 驗證新增 trigger **不造成已知資訊型問題誤進 `repair_create`**
+  （`misroute_probe_cases`），並確認 `make audit` 不變量 1 的掛帳清單與不變量 4 的狀態變化
+  符合預期（**注意：3365／1558 的 WARN 在不變量 1，非 requirements.md 所記的不變量 4**）。
+  **🔍V 理由**：metadata 變更即 routing 變更（R6.6）；且此面向為**交易型**，
+  誤進場的後果是替錯的角色建報修單。
+  _Requirements: 5.3, 6.6_
+
+- [ ] 9.4 **🧠主** 通過 9.3 且通過任務 6.3 的上線 gate 後，始得上線。
+  _Requirements: 5.3_
+
+---
+
+## 10. Routing Hint／Action／Execution 三層責任分層文件化
+
+**目標**：語義分層落於文件與審查流程。⚠️ **不變更 DB schema、不新建任何 decision component**。
+
+- [ ] 10.1 **⚡F** 更新 `docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md`：
+  以 Routing Hint／Action Declaration／Execution Configuration 三層描述 KB 攜帶的資訊；
+  明確標示「`categories` 命中 ≠ 決定」「帶 `form_id` ≠ 直接開表單（`trigger_mode` 另有分支）」
+  「`grounding_scope` 僅在選定後生效，非 routing 階段選項」。
+  _Requirements: 6.1, 6.2, 6.3, 6.4_
+
+- [ ] 10.2 **⚡F** 回寫母圖的已知過時處：`QUERY_REWRITE_MODEL`（已改 gpt-4o-mini）、
+  `KNOWLEDGE_MIN_THRESHOLD`（實際為 `KB_SIMILARITY_THRESHOLD`）、`LLM_SYNTHESIS_TEMP`（實際 0.1）；
+  補上 `FORM_TRIGGER_THRESHOLD`、`RELEVANCE_GATE_*`、`ENABLE_QUERY_REWRITE_B2B`、
+  `PREENTRY_ROUTABILITY_GATE`。**母圖只引用不複製**——參數唯一真實來源仍為 `docs/retrieval-parameters.md`。
+  _Requirements: 6.1_
+
+- [ ] 10.3 **⚡F** 更新 `docs/architecture/facet-architecture.md`、`.kiro/steering/dialogue.md`
+  （補三層速查表與 `skip_refine` 語義）、`.kiro/steering/knowledge.md`
+  （明確區分 `knowledge_categories` 與 `routing_faces`）。
+  _Requirements: 6.1, 6.5_
+
+- [ ] 10.4 **🧠主** 建立審查流程條款：routing／action metadata 變更 ＝ 程式碼變更等級審查
+  （PR checklist），並明寫「補 34 筆 `categories` ≠ 資料完整性修復，而是新增 34 個 Face entry point」。
+  _Requirements: 6.6, 6.7, 6.8_
+
+---
+
+## 11. 面向對話品質基準（先量現況，不調規則）
+
+⚠️ ［需求 10.5］**本 spec 到 baseline 落檔為止，SHALL NOT 調整任何對話規則文字。**
+⚠️ 本元件為 `scripts/backtest/` 下的**獨立腳本，不是 pytest 測試**，不在 DB 守門作用域內。
+
+- [ ] 11.1 **🧠主 🔍V** 落實 production 存取的四條安全條件：
+  ①所有請求 `session_id` 帶 `INTERNAL_RULES` 認得的前綴（建議新增 `r10_` 並補進 `_SMOKE_PREFIXES`），
+  使 `is_internal=True` 自動成立、不污染計量與額度；
+  ②`usage_events` 保留不清（那正是要聚合的資料，且已標 internal）；
+  ③`form_sessions` 依 prefix 清除；
+  ④**業務資料零寫入——SHALL NOT 驅動任何交易面向**（`execute_endpoint` 存在者），那會真的建單。
+  **🔍V 理由**：對 production 的寫入邊界；第 4 條做錯會產生真實報修單。
+  _Requirements: 9.4, 10.1_
+
+- [ ] 11.2 **🧠主** 以 `freeze_measurement.py` 凍結判準、分母、雜訊標記、尺版本，**再開始量測**。
+  量測後任一項變更即為換尺，須重跑前後兩側。
+  _Requirements: 9.3, 10.5_
+
+- [ ] 11.3 **⚡F** 以既有埋點 SQL 聚合兩項指標：`turns_p50`／`turns_p90`
+  （`usage_events.facet_key` ＋ `turn_number`，per-session MAX）與 `repeat_ask_rate`。
+  無須新增埋點。
+  _Requirements: 10.1_
+
+- [ ] 11.4 **🧠主** 建立三項需判定的指標之判定程序並執行：`on_target_ask_rate`（反問對題率）、
+  `premise_honored_rate`（前提衝突處理率）、**`grounding_utilization_rate`**
+  （分母＝grounding 已具備必要事實的收斂輪；分子＝最終回答正確採用者）。
+  ⚠️ ［需求 7.3］由人／協作代理直接判斷，**SHALL NOT 外包給大量 LLM 呼叫產生不可靠標註**。
+  _Requirements: 10.1, 10.2, 10.3, 7.3_
+
+- [ ] 11.5 **🧠主** 評估 `required_slots` 設計合理性：是否索取面向實際不需要的欄位、是否遺漏必要欄位。
+  _Requirements: 10.4_
+
+- [ ] 11.6 **🧠主** baseline 落檔並標註結論分級：僅通過現有基準者
+  SHALL 僅聲稱「技術可行／regression-safe」；「routing 品質確實提升」SHALL 僅在通過
+  production holdout 後聲稱。比較性結論須 ≥30 可判定案例。
+  _Requirements: 9.1, 9.2, 9.3, 10.5_
+
+---
+
+## 12. Real API contract smoke（橫向）
+
+- [ ] 12.1 **🧠主** 實作 `smoke_contract`：少量打 staging／真 API，僅比對
+  params → endpoint → response schema 的漂移；**不比對資料值**（真資料會變）。
+  掛 e2e 層預設略過，不進 CI 阻擋路徑。
+  _Requirements: 4.4, 7.2_
+
+- [ ] 12.2 **🧠主** 對 `jgb_bills`／`jgb_bill_detail` 執行漂移偵測。
+  ⚠️ **結果 SHALL NOT 作為 Requirement 3 的主要驗收證據**——真 API 只用於確認
+  mock 假設與現實 contract 是否漂移。
+  _Requirements: 4.4_
+
+---
+
+## 需求覆蓋對照
+
+| 需求 | 任務 |
+|---|---|
+| 1.1 | 1.1, 1.5, 1.6, 1.7 |
+| 1.2 | 1.2, 1.7, 2.1, 2.2, 2.3, 2.4 |
+| 1.3 | 1.3, 1.7 |
+| 1.4 | 1.4, 1.6, 1.7 |
+| 1.5 | 1.1, 1.5, 2.5 |
+| 2.1 | 3.1, 3.2, 3.3, 3.4 |
+| 2.2 | 3.3, 3.4 |
+| 2.3 | 3.3 |
+| 3.1 | 5.1, 5.2, 5.3, 5.4, 5.5 |
+| 3.2 | 2.5, 5.2, 6.1, 6.2, 6.3, 6.4 |
+| 3.3 | 5.4, 5.5 |
+| 3.4 | 5.5 |
+| 3.5 | 5.5 |
+| 4.1 | 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 7.2 |
+| 4.2 | 4.4, 5.1, 5.2 |
+| 4.3 | 4.1, 4.3, 4.6 |
+| 4.4 | 12.1, 12.2 |
+| 5.1 | 7.1, 7.2, 7.3 |
+| 5.2 | 8.1, 8.2, 8.3, 8.4, 8.5 |
+| 5.3 | 9.1, 9.2, 9.3, 9.4 |
+| 6.1 | 10.1, 10.2, 10.3 |
+| 6.2 | 10.1 |
+| 6.3 | 10.1 |
+| 6.4 | 10.1 |
+| 6.5 | 10.3 |
+| 6.6 | 9.1, 9.2, 9.3, 10.4 |
+| 6.7 | 10.4 |
+| 6.8 | 10.4 |
+| 7.1 | 5.3, 5.4 |
+| 7.2 | 6.2, 12.1 |
+| 7.3 | 11.4 |
+| 8 | 全程約束：本任務清單**未包含**任何 always-on query rewrite、新全域 routing selector、pre-entry gate 上線、KB 全面結構化、hybrid recall、澄清分岔之工作 |
+| 9.1 | 6.4, 11.6 |
+| 9.2 | 11.6 |
+| 9.3 | 11.2, 11.6 |
+| 9.4 | 3.1, 3.2, 11.1 |
+| 10.1 | 11.1, 11.3, 11.4 |
+| 10.2 | 11.4 |
+| 10.3 | 11.4 |
+| 10.4 | 11.5 |
+| 10.5 | 11.2, 11.6 |
+
+---
+
+## 註記統計
+
+| 註記 | 數量 | 任務 |
+|---|---|---|
+| **⚡F**（可交 Fable）| 17 | 1.1, 1.2, 1.3, 2.2, 2.3, 3.2, 4.4, 4.5, 5.3, 5.4, 6.2, 7.3, 8.4, 10.1, 10.2, 10.3, 11.3 |
+| **🧠主**（主 session）| 38 | 其餘 |
+| **🔍V**（須獨立驗證）| 9 | 1.6, 2.1, 3.4, 4.3, 5.5, 6.3, 8.5, 9.3, 11.1 |
+| **(P)**（可並行）| 2 組 | 任務 3 與任務 4（無共享檔案）|
+
+**🔍V 的九項全部落在四類風險上**：
+安全邊界（2.1、11.1）、外部副作用（4.3）、驗收結論所依賴（1.6、3.4、5.5、6.3）、
+需求明訂獨立驗收（8.5）、交易面向誤進場（9.3）。
+
+
+---
+
+## 已知 advisory（1.6 獨立驗證產出，尚未處置）
+
+| # | 等級 | 內容 | 狀態 |
+|---|---|---|---|
+| A1 | P3 | `-m "not integration"` 被 regex 誤判為請求該層 → 無辜硬擋 | ✅ **已修**（任務 1.8，改讀 `REQUESTED_TEST_LAYERS`）|
+| A2 | P3 | 守門的管轄權來自宣告，**宣告本身若消失，守門會靜默自我停用** | ✅ **已修**（任務 1.10 雙來源交叉守門 ＋ 1.11 契約測試）|
+| A3 | P4 | `tests.yml` 註解把 rc=10 語義寫成含「DB 無法證明為非 production」，但該守門（任務 2.1）尚未實作 | ✅ **已修**（註解改為標註待實作）|
+| A4 | P4 | 移除 job 級 `continue-on-error` 後，`checkout`／`setup-python`／`pip install` 任一失敗都會擋合併 | ✅ **裁示：接受，不恢復**（2026-08-23）——「環境沒建起來」與「測試沒全綠」不共用非阻擋政策；若 PyPI 常故障，改用 pip cache ＋ 2–3 次 bounded backoff retry，**retry 全失敗仍 hard fail** |
+
+### A2 的精確形狀（比原始 advisory 更嚴重，重新表述）
+
+驗證代理原本擔心的是「`all` 不受管轄」——**該半已由任務 1.8 關閉**
+（`LAYER=all` 現在明示 `REQUESTED_TEST_LAYERS=integration,e2e`）。
+
+但同一份 `case` 同時注入**旗標**與**宣告**，因此殘留一個更根本的問題：
+
+```text
+若 run-tests.sh 的 ENV_ARGS 注入日後回歸（重構、複製貼上、新增 layer 漏補）
+  → RUN_INTEGRATION 消失      → 整層 gate-skip
+  → REQUESTED_TEST_LAYERS 消失 → 守門判定「未請求」→ 不管轄 → rc=0
+  → 靜默假綠燈
+```
+
+**守門會連同它要防的東西一起消失。** 這正是本 spec 的起因形態。
+
+**候選解法（第二層 fallback，業主先前已預留此門）**：
+在 `pytest_sessionfinish` 改看 **pytest 自己實際收集到的 item**——
+某層有 item 被收集且該層旗標未設 → 結構性失效，**不論有無宣告**。
+這不是解析 `-m`（不重建 selection 語義），而是讀 pytest 已解析完的結果，
+可同時覆蓋否定式、`-k` 過濾、路徑選取（`pytest tests/integration/`）、`all` 四種情形。
+
+⚠️ **代價**：開發者裸跑 `pytest tests/integration/` 而未設旗標時會硬擋（rc=10）。
+這與業主先前定的「裸跑不保證 requested-layer 語義」是**兩種不同的取捨**，故列為裁示項。
+
+
+---
+
+## U0：Baseline Hygiene（**不屬本 spec**，但曾阻擋執行）
+
+> **定位**：`Baseline Hygiene Blocker — outside spec, blocking execution`。
+> 不新增 Req.11、不塞進 Task 1。理由：main 的 unit baseline 已紅 →
+> 本 spec 任何改動的 PR 仍紅 → **無法判斷「本 spec 是否 regression-safe」**，
+> 歸因被污染。與「判定期不動被判定的東西」是同一種量測紀律。
+
+- [x] U0.1 兩筆既存 unit 失敗窄幅 triage → **兩筆皆 `EXPECTATION_DRIFT`，Category A（局部可修）**。
+  判定依據為 **commit 級證據**，不是「測試沒過就改斷言」。
+
+| 測試 | 產品變更 commit | 性質 | 判定 |
+|---|---|---|---|
+| `test_score_shift_probe_req::test_malformed_shift_raises[""]` | `d5c9848` SCORE_SHIFT_PROBE 空字串視為未設定（**線上地雷**）| validation contract drift | 測試落後於產品定案 |
+| `test_relevance_gate_req::test_high_vector_similarity_skips_gate` | `7d6fb03` 直答適用性把關改 precision-first（Baseline A）| 產品語義刻意變更 | 測試落後於產品定案 |
+
+**兩筆的產品側證據都指向「不得回退」**：
+① `""` 事故——`docker-compose.prod.yml` 的 `${SCORE_SHIFT_PROBE:-}` 在主機未設時展開為空字串，
+舊碼 `float("")` 拋錯 → **每一次知識檢索都 500**，且任何容器重建都會再觸發。
+② 高向量免判——**高語意相似正是該閘門要擋的錯題型態**，拿它當免判理由自相矛盾（業主定案）。
+
+- [x] U0.2 修復並保住兩邊分支覆蓋（commit `f696e68`，**僅動測試、未改產品碼**）：
+  `""`／純空白 自 malformed 清單移出，另立測試鎖「＝未設定、精確 no-op」語義並記下事故；
+  高向量免判拆成「預設不跳過」與「顯式設 `RELEVANCE_GATE_SKIP_VEC` 才跳過」兩測試。
+  兩處 docstring 的過時描述同步修正，防日後改回。
+
+- [x] U0.3 驗收：容器內 `-m unit` → **1012 passed / 0 failed**（修前 2 failed）。
+  main unit baseline 已清乾淨，本 spec 後續 checkpoint 不再背既存紅燈。
