@@ -185,7 +185,7 @@ protocol v1 PASS
   ⚠️ **不得靠 exception → fail-open 間接達成**：靠例外的行為不會被型別或測試鎖住。
   _Requirements: 3.1_
 
-- [ ] 2.5 **🧠主 🔍V** 建立抽取器的**不變量測試**：零 LLM 呼叫、零 IO、
+- [x] 2.5 **🧠主 🔍V** 建立抽取器的**不變量測試**：零 LLM 呼叫、零 IO、
   **不讀取任何相似度分數**。
   **🔍V 理由**：與相似度正交是本元件存在的唯一理由（Req.3.1）；
   若它偷讀分數，整個方案退化為「換個地方做相似度競爭」（Req.2.3）。
@@ -745,3 +745,31 @@ SHALL 拋出而非靜默回空。否則這兩件事在型別上不可區分：
 ```
 
 fail-open 的正確位置在 production seam（任務 4.4），**不在抽取器內部**。
+
+### ✅ 2.5（2026-08-23）
+
+`tests/unit/decision/test_instance_evidence_invariants_req.py`——25 筆全綠。
+
+鎖六件事：**零 LLM／零 IO／不讀相似度／決定性／真 immutable／spans 只保存命中片段**。
+
+| 不變量 | 鎖法 |
+|---|---|
+| 零相依 | AST 走訪全部 import（含函式內延後 import），須 ⊆ `{re, dataclasses, typing}` |
+| 零 IO | monkeypatch `builtins.open`／`socket.socket` 成拋出，抽取器仍須正常運作 |
+| 不讀相似度 | AST 識別字中不得出現 similarity／score／rerank／embedding／llm；**且 `extract` 的參數只有 `question`——多一個參數就是分數的入口** |
+| 決定性 | 同輸入跨 20 次、跨實例完全同輸出 |
+| immutable | `FrozenInstanceError` ＋ `spans` 為 tuple（`frozen=True` 只凍欄位綁定，容器本身也須不可變）|
+| spans | 每個 span 皆須出現在原文，且其標的須在證據集合內 |
+
+**identifier 同步守門以 behavioral equivalence 鎖定，不比 regex 字串**：
+15 筆 token 矩陣（整句純數字上下限／句中 token／日期斜線與連字號／四位數金額／
+中英混合／小數／三位數／無數字／空字串／None）同時餵
+`instance_evidence` 與 `conversational_engine._extract_identifier`，要求**逐筆同判**。
+字串相等只證明兩行字一樣，證明不了 flags／邊界／日期排除／整句上下限在兩邊同樣生效。
+
+**突變驗證 M14**：把 `_ID_TOKEN_RE` 的 `\d{4,15}` 改成 `\d{2,15}` →
+矩陣中「三位數且非整句」立即轉紅。**守門會咬。**
+
+⚠️ 寫本檔時抓到一筆**自己的測試 bug**（大小寫比對寫錯，恆真的 `import` 檢查）——
+已刪除該冗餘檢查（AST 那條本就涵蓋任意位置的 import）。屬 1.5 分類的 **C**，
+發現當下即修，未進 commit。
