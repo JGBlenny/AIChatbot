@@ -1,0 +1,81 @@
+{
+  "task": "5.4 blast radius measurement",
+  "frozen_expectations_source": "/.kiro/specs/routing-disambiguation/evidence/task-5-4-frozen-expectations.json",
+  "freeze_commit": "0fb13c8",
+  "authorization": "synthetic matching PASS（production manifest 仍 not_run）",
+  "adjudicated_regression": "6/6",
+  "observation_recorded": "7/7",
+  "reporting_rule": "SHALL 寫成 `BLAST adjudicated regression = X/6` ＋ `BLAST observation = 7/7 recorded`；SHALL NOT 寫成 `BLAST 7/7 PASS`",
+  "results": [
+    {
+      "n": 1,
+      "question": "帳單為什麼發不出去",
+      "status": "ADJUDICATED",
+      "expected": "dialog:條件診斷：帳單",
+      "actual": "dialog:條件診斷：帳單",
+      "gate_verdict": "allow",
+      "decision_margin": 0.0306,
+      "verdict": "pass"
+    },
+    {
+      "n": 2,
+      "question": "帳單為什麼取消不了",
+      "status": "ADJUDICATED",
+      "expected": "dialog:條件診斷：帳單",
+      "actual": "dialog:條件診斷：帳單",
+      "gate_verdict": "allow",
+      "decision_margin": 0.1278,
+      "verdict": "pass"
+    },
+    {
+      "n": 3,
+      "question": "為什麼被收逾期費",
+      "status": "ADJUDICATED",
+      "expected": "dialog:條件診斷：帳單",
+      "actual": "dialog:條件診斷：帳單",
+      "gate_verdict": "allow",
+      "decision_margin": 0.3322,
+      "verdict": "pass"
+    },
+    {
+      "n": 4,
+      "question": "帳單手動到帳失敗",
+      "status": "ADJUDICATED",
+      "expected": "dialog:條件診斷：帳單",
+      "actual": "dialog:條件診斷：帳單",
+      "gate_verdict": "allow",
+      "decision_margin": 0.039,
+      "verdict": "pass"
+    },
+    {
+      "n": 5,
+      "question": "這張帳單的收據金額多少",
+      "status": "ADJUDICATED",
+      "expected": "dialog:條件診斷：帳單",
+      "actual": "dialog:條件診斷：帳單",
+      "gate_verdict": "allow",
+      "decision_margin": 0.2672,
+      "verdict": "pass"
+    },
+    {
+      "n": 6,
+      "question": "我要查帳單 編號 12345",
+      "status": "UNADJUDICATED",
+      "expected": null,
+      "actual": "dialog:條件診斷：帳單",
+      "gate_verdict": "allow",
+      "decision_margin": null,
+      "verdict": "unscored"
+    },
+    {
+      "n": 7,
+      "question": "幫我查點退帳單金額",
+      "status": "ADJUDICATED",
+      "expected": "dialog:條件診斷：帳單",
+      "actual": "dialog:條件診斷：帳單",
+      "gate_verdict": "allow",
+      "decision_margin": 0.0243,
+      "verdict": "pass"
+    }
+  ]
+}

@@ -272,7 +272,7 @@ protocol v1 PASS
   用於證明判別**不靠邊際**，而非把邊際拉大就算過。
   _Requirements: 3.1, 3.4_
 
-- [ ] 5.4 **🧠主 🔍V** blast radius：先依 Req.5.2 逐筆判定 20260731 同批七筆的
+- [x] 5.4 **🧠主 🔍V** blast radius：先依 Req.5.2 逐筆判定 20260731 同批七筆的
   **intended behavior**（產品裁示或既有規格），僅有產品依據支持者入 assertion；
   七筆**全數實測記錄**（不論是否入 assertion）。
   **🔍V 理由**：此處最容易把「現行行為」直接當成「應維持的行為」（Req.7.3）。
@@ -1121,3 +1121,58 @@ service HTTP 200                                                     → service
 這一輪擾動在效果上可能近乎 no-op。
 
 證據：`evidence/protocol-v1-p1-corpus-sibling.json`／`-p2-model-rebuild.json`／`-p3-phrasing.json`。
+
+### ✅ 5.4（2026-08-24）—— 先裁定、後實測
+
+**freeze commit `0fb13c8`**（裁定與期望凍結）→ **之後**才跑實測
+（`evidence/task-5-4-measurement.json`）。順序沒有顛倒。
+
+```text
+BLAST adjudicated regression = 6/6
+BLAST observation            = 7/7 recorded
+```
+
+⚠️ **SHALL NOT 寫成「BLAST 7/7 PASS」**——#6 沒有產品 expectation，**無 PASS 可言**。
+
+| # | 案例 | 裁定 | expected | actual | 判定 |
+|---|---|---|---|---|---|
+| 1 | 帳單為什麼發不出去 | ADJUDICATED | `dialog:條件診斷：帳單` | 同 | ✅ |
+| 2 | 帳單為什麼取消不了 | ADJUDICATED | 同上 | 同 | ✅ |
+| 3 | 為什麼被收逾期費 | ADJUDICATED | 同上 | 同 | ✅ |
+| 4 | 帳單手動到帳失敗 | ADJUDICATED | 同上 | 同 | ✅ |
+| 5 | 這張帳單的收據金額多少 | ADJUDICATED（限 instance value lookup）| 同上 | 同 | ✅ |
+| 6 | 我要查帳單 編號 12345 | **UNADJUDICATED** | — | `dialog:條件診斷：帳單` | **—（只記錄）** |
+| 7 | 幫我查點退帳單金額 | ADJUDICATED | `dialog:條件診斷：帳單` | 同 | ✅ |
+
+⚠️ **#5 的裁定範圍限縮（不得引用它擴張）**：
+限於 **instance-specific value lookup**；不延伸至「金額組成／為何如此」等
+explanation／anomaly 問句，後者仍依 Face scope 規則另行分流。
+
+⚠️ **#6 的 actual 是 `dialog:條件診斷：帳單`，但它不是 PASS 也不是 FAIL**——
+兩個面向的產品 scope 都未涵蓋「純查詢帳單」，
+依 Req.7.3 不得讓現況自動升格為 non-regression contract。
+
+---
+
+## ✅ Task 5 收束（2026-08-24）
+
+```text
+5.1 bilateral_pass            8/8                     PASS
+5.2 formal robustness         4/40 = 10.0% ≤ 12.5%    PASS
+    ├ P1 corpus_add_sibling   0/24
+    ├ P2 model_rebuild        0/8   （validity VALID／strength LIMITED）
+    └ P3 phrasing_variant     4/8   **ADVERSE FINDING（獨立保留）**
+5.3 decision_margin           只記錄（最小 0.0114／0.0119）
+5.4 blast adjudicated         6/6   ＋ observation 7/7 recorded
+```
+
+**Task 5 只能宣稱到這裡**：
+
+> 在 frozen protocol v1、已裁定的 Level A assertions，以及 **synthetic matching
+> authorization** 之下，candidate **技術上 regression-safe／robustness-safe**。
+
+**SHALL NOT 宣稱**：可上線／已泛化／routing 品質提升／phrasing robust。
+真正的生死點是 **Task 6 unseen holdout**。
+
+⚠️ **Task 6 不得沿用 5.4 的程序**（5.4 為非盲標，已揭露）：
+holdout SHALL 先取 unseen utterances → **盲標** → **freeze labels** → 才跑 candidate。
