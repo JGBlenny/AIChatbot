@@ -1,0 +1,232 @@
+{
+  "task": "Q2 offline replay — step 2: blind pair-applicability labels",
+  "pairs_digest": "9f4929b586d29cbc",
+  "labels_digest": "95fae69d07f090ca",
+  "labeler": {
+    "session": "isolated（全新 general-purpose agent，無本案上下文）",
+    "labeler_gate_blind": true,
+    "labeler_tool_uses": 0,
+    "inputs_given": [
+      "33 筆 query × KB pair（欄位與 gate 輸入同格式）",
+      "產品裁示判準",
+      "窄 label schema"
+    ],
+    "withheld": [
+      "gate prompt 原文",
+      "gate 任何輸出",
+      "similarity／ranking margin",
+      "現行 route／Face",
+      "v1 D2 intended-route labels",
+      "categories／Routing Hint",
+      "哪些 case 在 v1 失敗過"
+    ]
+  },
+  "evidence_limitation": "**Normative independence is not claimed.** human ground truth 與 gate prompt 共享同一產品 applicability criterion；故本實驗評估的是 gate 對既定 criterion 的 **execution discrimination**，**不是**獨立驗證 criterion 本身是否正確。",
+  "distribution": {
+    "YES": 16,
+    "NO": 15,
+    "UNDECIDABLE": 2
+  },
+  "count": 33,
+  "gate_replayed": false,
+  "labels": [
+    {
+      "pair_id": "1-1",
+      "judgement": "YES",
+      "reason": "直接說明帳單收回的可行狀態、影響與時機，正面回答已發送帳單能否收回。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "1-2",
+      "judgement": "NO",
+      "reason": "前提是「已封存」帳單的退回與重開，非已發送帳單的收回。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "4-1",
+      "judgement": "YES",
+      "reason": "明確指出線上收款手續費由房東（業者）負擔並附費率，正面回答負擔方。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "6-1",
+      "judgement": "YES",
+      "reason": "說明週期帳單在合約中設定繳費週期與約定日、系統排程自動產生，涵蓋自動產生租金單的設定方式。",
+      "confidence": "medium"
+    },
+    {
+      "pair_id": "6-2",
+      "judgement": "YES",
+      "reason": "收款設置的帳單自動排程發送正是「自動發送」那一半的設定入口。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "7-1",
+      "judgement": "UNDECIDABLE",
+      "reason": "問句未表明提問者是房東或租客，知識僅適用租客視角看不到帳單的前提。",
+      "confidence": "medium"
+    },
+    {
+      "pair_id": "7-2",
+      "judgement": "NO",
+      "reason": "回答的是如何新增帳單，與找不到既有帳單是不同問題。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "8-1",
+      "judgement": "YES",
+      "reason": "明說點退帳單由系統自動產生並列出算式與正負號意義，正面回答不需自行計算。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "8-2",
+      "judgement": "YES",
+      "reason": "直接說明點退完成後系統自動產生帳單並結算水電、賠償與押金互抵。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "10-1",
+      "judgement": "YES",
+      "reason": "完整說明滯納金兩種機制與計算公式，正面回答計算方式。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "10-2",
+      "judgement": "YES",
+      "reason": "列出各客製版本的計算基礎（百分比、固定費率、固定金額），同樣回答計算方式。",
+      "confidence": "medium"
+    },
+    {
+      "pair_id": "11-1",
+      "judgement": "YES",
+      "reason": "明說已產生帳單金額是合約租金的寫死存值、要改須走複製重簽或異動申請，回答了能否改與出口。",
+      "confidence": "medium"
+    },
+    {
+      "pair_id": "11-2",
+      "judgement": "NO",
+      "reason": "處理的是帳單品名顯示，非金額修改。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "12-1",
+      "judgement": "UNDECIDABLE",
+      "reason": "問句未指明要群發的是訊息或帳單，只有前者才適用大聲公。",
+      "confidence": "medium"
+    },
+    {
+      "pair_id": "13-1",
+      "judgement": "NO",
+      "reason": "前提是提前終止後多產生的帳單需封存，與租客已繳但狀態未更新無關。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "14-1",
+      "judgement": "YES",
+      "reason": "明確區分一般虛擬帳號每張帳單一組、固定虛擬帳號綁合約永久，正面回答對應關係。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "15-1",
+      "judgement": "YES",
+      "reason": "說明未滿整月時系統按實際天數與週期天數比例自動計算，正面回答是否自動抓天數。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "18-1",
+      "judgement": "NO",
+      "reason": "只講超商繳費的狀態流轉與撥付時程，完全未涉及金額上限。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "20-1",
+      "judgement": "YES",
+      "reason": "公式中含「緩衝天數」且說明排程對逾期帳單開單，回答了起算門檻的機制與依團隊設定。",
+      "confidence": "medium"
+    },
+    {
+      "pair_id": "21-1",
+      "judgement": "NO",
+      "reason": "只說明發票開立時點，未涉及收據與發票是否同時產生或需分開處理。",
+      "confidence": "medium"
+    },
+    {
+      "pair_id": "23-1",
+      "judgement": "NO",
+      "reason": "講的是帳單「建立」方式的手動與自動，非入帳（收款確認）方式的差別。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "23-2",
+      "judgement": "YES",
+      "reason": "直接對比線上金流自動對帳入帳與銀行帳戶需手動確認收款的差別。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "24-1",
+      "judgement": "NO",
+      "reason": "前提是續約帳單的起算時點，與退租點退結算帳單何時產生不同。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "26-1",
+      "judgement": "YES",
+      "reason": "各版本費率與加重門檻的差異正可解釋實際金額高於自行試算的原因。",
+      "confidence": "medium"
+    },
+    {
+      "pair_id": "30-1",
+      "judgement": "NO",
+      "reason": "前提是退房換新租客的銜接流程，未回答押金退還是否需要開立帳單。",
+      "confidence": "medium"
+    },
+    {
+      "pair_id": "30-2",
+      "judgement": "YES",
+      "reason": "明說相關款項不另開帳單、點退時自動列入點退帳單與押金一起結算，適用於押金退還的處理方式。",
+      "confidence": "medium"
+    },
+    {
+      "pair_id": "31-1",
+      "judgement": "NO",
+      "reason": "講的是發票未成功開立時的補開，非買受人抬頭／統編的變更。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "34-1",
+      "judgement": "NO",
+      "reason": "只說明電費六種收費模式的設定，未回答代收水電是否與租金併入同一張帳單。",
+      "confidence": "medium"
+    },
+    {
+      "pair_id": "34-2",
+      "judgement": "NO",
+      "reason": "前提是點交完成後的後續流程與水電度數基準，非帳單開立方式。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "44-1",
+      "judgement": "NO",
+      "reason": "前提是租客不同意點交後修改清單重發，與免收某筆費用無關。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "44-2",
+      "judgement": "NO",
+      "reason": "講身分切換，與是否可將某筆費用改為不向租客收取無關。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "46-1",
+      "judgement": "NO",
+      "reason": "說明的是可開放哪些繳費通道的設定，非查詢租客實際使用的繳費管道。",
+      "confidence": "high"
+    },
+    {
+      "pair_id": "47-2",
+      "judgement": "YES",
+      "reason": "提供帳單未送達／看不到的排查條件與 email 帳號不符情境，適用於租客反映沒收到通知。",
+      "confidence": "medium"
+    }
+  ]
+}
