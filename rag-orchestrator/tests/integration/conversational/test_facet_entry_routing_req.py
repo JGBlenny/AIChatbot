@@ -1,9 +1,15 @@
 """integration:面向進場路由回歸（contract-conversational-facets 收尾／R8.3, R11.2）。
 
-忠實重演 chat.py 進場決策鏈（決定性、零 LLM）：
-  retrieve_knowledge_hybrid(top1) → similarity ≥ FORM_TRIGGER_THRESHOLD(0.75)
-  → 知識 categories → config_for_category 命中 → 進對話；否則單發。
+**驅動 production 進場決策鏈**（決定性、零 LLM）：
+  retrieve_knowledge_hybrid(top1) → `routers.chat._diagnosis_config_for_knowledge`
 （真 DB＋真 embedding＋真 reranker；不含 SOP 比分——SOP 勝出時不進對話，本測試聚焦知識路徑。）
+
+⚠️ **本檔曾自行重演該決策鏈**（自行比門檻、自行取 categories、自行查 config），
+與 R9.4「離線驗證須完整複刻該版本 production 實際啟用的候選變換與執行順序」相違：
+複刻與 production 的分歧（門檻讀值點、雙欄位退化、`_preentry_routable` 缺席、
+檢索呼叫參數）會讓紅綠變化無法歸因——**測試沒過究竟是產品壞了，還是複本走偏了？**
+spec conversational-routing-execution 任務 3.1 改為呼叫 production seam；
+門檻、雙欄位退化、pre-entry gate 一律**不在本檔內複刻**。
 
 期望準則（設計定案）：
   - 模糊起手/需 ground 的問句 → 進對話（錨點句本尊＋高頻口語＋既有狀態判斷保證句）；
@@ -18,8 +24,15 @@ import pytest
 pytestmark = pytest.mark.integration
 
 VENDOR_ID = int(os.getenv("TEST_VENDOR_ID", "2"))
-ENTRY_THRESHOLD = float(os.getenv("FORM_TRIGGER_THRESHOLD", "0.75"))
-KB_THRESHOLD = float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.65"))
+
+# ⚠️ **門檻不在本檔讀取**——一律取自 production 唯一讀值點 `DecisionConfig.load()`
+#    （任務 3.1）。舊碼在此自行 `os.getenv("FORM_TRIGGER_THRESHOLD"/"KB_SIMILARITY_THRESHOLD")`，
+#    連預設值都與 production 不同（KB 門檻：舊碼預設 0.65 vs DecisionConfig 預設 0.55），
+#    env 未設的環境會靜默用不同候選集跑，而結果「看起來合理」。
+#: 檢索 top_k：對齊 production 請求模型的預設（`VendorChatRequest.top_k` Field(5)）
+PRODUCTION_TOP_K = 5
+TARGET_USER = "property_manager"
+MODE = "b2b"
 FACES = {"狀態判斷", "合約異動", "退租收尾", "續約", "建約引導", "簽署排障"}
 BILLING_FACES = {"繳費金流排障", "帳單異常", "發票", "滯納金", "帳單設定引導", "條件診斷：帳單"}
 
@@ -54,24 +67,37 @@ async def pool():
 
 
 async def _route(retriever, pool, question):
-    """重演進場決策：回 ('dialog', 面向, top1) 或 ('single', 原因, top1)。"""
-    from services.conversational_config import config_for_category
+    """驅動 **production** 進場決策：回 ('dialog', 面向分類, top1) 或 ('single', 原因, top1)。
+
+    本函式只做兩件事，其餘一律交給 production：
+      1. 呼叫 production `retrieve_knowledge_hybrid` 取 best_knowledge
+         （門檻取自 `DecisionConfig.load().kb_threshold`，top_k 對齊請求模型預設）；
+      2. 呼叫 production `routers.chat._diagnosis_config_for_knowledge`。
+
+    ⚠️ 回傳的 `reason`（'no-hit'／'not-routed'）**僅供 pytest 失敗訊息可讀性，
+    永不進斷言**。production seam 只回 `cfg | None`，不區分
+    below-threshold／no-facet-config／preentry-blocked；若要區分就得事後推導，
+    那仍是複刻——只是從主路徑挪進診斷路徑。
+    """
+    from routers.chat import _diagnosis_config_for_knowledge
+    from services.decision_layer import DecisionConfig
+
+    cfg_thresholds = DecisionConfig.load()
     rows = await retriever.retrieve_knowledge_hybrid(
-        query=question, vendor_id=VENDOR_ID, top_k=5,
-        similarity_threshold=KB_THRESHOLD,
-        target_user="property_manager", mode="b2b")
+        query=question, vendor_id=VENDOR_ID, top_k=PRODUCTION_TOP_K,
+        similarity_threshold=cfg_thresholds.kb_threshold,
+        target_user=TARGET_USER, mode=MODE)
     best = rows[0] if rows else None
     if not best:
         return ("single", "no-hit", None)
-    if best.get("similarity", 0) < ENTRY_THRESHOLD:
-        return ("single", f"below-threshold({best.get('similarity', 0):.3f})", best)
-    cats = [c for c in (best.get("categories") or []) if c] or \
-           ([best.get("category")] if best.get("category") else [])
-    for cat in cats:
-        cfg = await config_for_category(pool, cat)
-        if cfg is not None:
-            return ("dialog", cat, best)
-    return ("single", "no-facet-config", best)
+
+    cfg = await _diagnosis_config_for_knowledge(
+        pool, best, cfg_thresholds, user_message=question)
+    if cfg is None:
+        return ("single", "not-routed", best)
+    # 觸發的分類讀自 config 本身（by_category 索引鍵＝topic_scope.category），非重新推導
+    cat = (getattr(cfg, "topic_scope", None) or {}).get("category") or getattr(cfg, "key", "?")
+    return ("dialog", cat, best)
 
 
 def _fmt(best):
