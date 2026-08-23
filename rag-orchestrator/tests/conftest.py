@@ -50,6 +50,95 @@ _GATED_LAYERS: "dict[str, str]" = {
 }
 
 
+# ════════════════════════════════════════════════════════════════════
+# 測試資料庫安全邊界（spec conversational-routing-execution 任務 2.1｜R1.2）
+# ════════════════════════════════════════════════════════════════════
+#
+# 為什麼需要：任務 1.2 把測試容器接上 aichatbot_default 網路後，
+# 它就**看得見 production database**。`session_id` 前綴隔離與 `finally` 清理
+# 是**清理機制，不是隔離機制**——它們假設測試已經連到正確的庫；
+# 連錯庫時，它們清的就是 production 的資料。
+#
+# ⚠️ 連線目標的單一來源（2026-08-23 讀碼確認）：
+#    全 repo **無任何 `DATABASE_URL`／DSN 覆蓋來源**（該字串僅出現在 docstring
+#    的 psql 指令說明中）；`services/db_utils.get_db_config()` 與 35 個測試檔的
+#    `_conn_kwargs()` 一律取 `os.getenv("DB_NAME", "aichatbot_admin")`。
+#    故驗 `DB_NAME` 的**解析結果**即等於驗實際生效的連線目標。
+#
+# ⚠️ **預設值本身就是 production**：`DB_NAME` 未設 → 解析為 `aichatbot_admin`。
+#    因此守門必須驗「解析後」的值，不能只驗「有沒有設」——
+#    未設不是「未知」，是「已經指向 production」。
+
+class ProductionDatabaseRefused(RuntimeError):
+    """解析出的資料庫無法被證明為非 production → 拒絕連線。
+
+    ⚠️ 本例外**不得**被降級為 skip 或 warning：可能寫到 production DB
+    不在可 fail-open 之列（見 design.md「錯誤處理」的三處例外判準）。
+    """
+
+
+#: 唯一允許的測試資料庫（**白名單**，非黑名單——不在此列者一律拒絕）
+ALLOWED_TEST_DATABASES: "frozenset[str]" = frozenset({"aichatbot_test", "aichatbot_ci"})
+
+#: 宣告執行環境；缺值視為「未證明」→ 拒絕
+_DB_ENV_KEY: str = "DB_ENV"
+_DB_NAME_KEY: str = "DB_NAME"
+_PRODUCTION_DB_DEFAULT: str = "aichatbot_admin"   # 產線碼的 DB_NAME 預設值
+
+
+def resolve_db_target() -> "tuple[str, str | None]":
+    """回傳（實際生效的 database 名稱, DB_ENV 宣告值）。
+
+    database 名稱套用與產線碼**相同的預設值**——未設 `DB_NAME` 即等同指向
+    production，這正是守門必須攔下的情形。
+    """
+    return (os.getenv(_DB_NAME_KEY, _PRODUCTION_DB_DEFAULT) or "").strip(), os.getenv(_DB_ENV_KEY)
+
+
+def assert_non_production_db(*, db_name: str, db_env: "str | None") -> None:
+    """Fail closed：**除非**能明確證明目標為非 production，否則拒絕。
+
+    兩道皆須通過：
+      1. `DB_ENV` 已設且不等於 "production"（**缺值＝未證明 → 拒絕**）
+      2. `db_name ∈ ALLOWED_TEST_DATABASES`（白名單）
+
+    違反 → raise ProductionDatabaseRefused。
+    """
+    env = (db_env or "").strip().lower()
+    if not env:
+        raise ProductionDatabaseRefused(
+            f"{_DB_ENV_KEY} 未設定——無法證明目標非 production（fail closed）。"
+            f"解析出的 database＝{db_name!r}")
+    if env == "production":
+        raise ProductionDatabaseRefused(
+            f"{_DB_ENV_KEY}=production——拒絕對 production 執行測試。")
+    if db_name not in ALLOWED_TEST_DATABASES:
+        raise ProductionDatabaseRefused(
+            f"database {db_name!r} 不在測試白名單 {sorted(ALLOWED_TEST_DATABASES)} 內。"
+            + (f"（{_DB_NAME_KEY} 未設 → 套用產線預設 {_PRODUCTION_DB_DEFAULT!r}）"
+               if os.getenv(_DB_NAME_KEY) is None else ""))
+
+
+#: 由 collection hook 記下守門失敗原因，供 sessionfinish 決定退出碼
+_DB_GUARD_PROBLEM: "list[str]" = []
+
+
+def _apply_db_guard(items) -> None:
+    """gated layer 有 item 被選中時才檢查；失敗 → 全數標 skip（阻止連線）並記錄。"""
+    gated = [it for it in items
+             if any(it.get_closest_marker(l) is not None for l in _GATED_LAYERS)]
+    if not gated:
+        return
+    try:
+        name, env = resolve_db_target()
+        assert_non_production_db(db_name=name, db_env=env)
+    except ProductionDatabaseRefused as e:
+        _DB_GUARD_PROBLEM.append(str(e))
+        block = pytest.mark.skip(reason=f"{GATE_SKIP_PREFIX} 測試 DB 守門拒絕連線：{e}")
+        for it in gated:
+            it.add_marker(block)
+
+
 def _selected_gated_layers(session) -> "set[str]":
     """來源 B：pytest **實際選中**了哪些受 gate 管轄的層級（任務 1.10）。
 
@@ -164,6 +253,9 @@ def pytest_collection_modifyitems(config, items):
         if item.get_closest_marker("e2e") is not None and not run_e2e:
             item.add_marker(skip_e2e)
 
+    # 測試 DB 安全邊界（任務 2.1）：在任何 fixture 建立連線**之前**攔下。
+    _apply_db_guard(items)
+
 
 @pytest.fixture(scope="session")
 def anyio_backend() -> str:
@@ -253,7 +345,7 @@ def pytest_sessionfinish(session, exitstatus) -> None:
     declared = _requested_gated_layers(session.config)
     selected = _selected_gated_layers(session)
 
-    problems = []
+    problems = list(_DB_GUARD_PROBLEM)                 # 測試 DB 守門（任務 2.1）
     for layer in sorted(declared | selected):          # I1 前半 ＋ I2
         env_key = _GATED_LAYERS[layer]
         if os.getenv(env_key) != "1":
