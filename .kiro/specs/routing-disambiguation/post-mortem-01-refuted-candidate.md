@@ -45,12 +45,20 @@ cross-face  未見 rule 問句被 **8 個不同 Face** 吸走，橫跨 3 個 fam
 A 覆蓋不足 7｜B 權限不及 2｜其他 1
 ```
 
-⚠️ **#4 是第三種失敗形態**，不屬 A 也不屬 B：gate 判 `allow`，
-理由 `positive=['problem_report']`——「誰要**吸收**」的「收」命中了 problem_report 的
-`不出|不了|卡|失敗|怪怪的|為什麼|怎麼會` 之外的…實際是 `收` 未命中，
-命中的是 **`吸收`** 中的字面片段所在規則之一。**正向特徵誤命中**（false positive）
-使一個 rule 問句被判為 instance-like。此形態在 holdout 中僅 1 筆，
-但它證明 lexical 特徵**兩個方向都會錯**，不只是覆蓋不足。
+⚠️ **#4 是第三種失敗形態**，不屬 A 也不屬 B——**正向特徵誤命中**（false positive）。
+實測 span 逐字如下：
+
+```text
+utterance : 刷卡繳的話手續費是誰要吸收
+pattern   : problem_report = 為什麼|怎麼會|怪怪的|失敗|不了|不出|卡
+matched   : 「卡」          ← 來自「刷**卡**」（信用卡），非「**卡**住」
+verdict   : allow（有正向、無反向）→ 不抑制
+```
+
+`卡` 作為「卡住」的問題徵候被寫進正向特徵，卻在「刷卡」中命中——
+**字面規則沒有詞義邊界**。此形態在 holdout 僅 1 筆，
+但它證明 lexical 特徵**兩個方向都會錯**：不只覆蓋不足（漏判），也會誤判。
+⚠️ 這一筆同時說明：把單字加進 pattern 表的做法，**每加一條就同時擴大漏判與誤判的風險面**。
 
 ## instance 側 3 筆未命中
 
@@ -148,7 +156,8 @@ CONFIRMED
 - A／B 可分離；任一單獨修復不足（holdout 內建雙向對照：#11/#30 vs #8/#43）
 - failure 已跨越 bill_diagnosis 單一 Face：8 個 Face、3 個 family
 - deterministic lexical representation 對 unseen wording 覆蓋不足（abstain 64%）
-- lexical 特徵**雙向皆會錯**：除覆蓋不足外，另有 1 筆正向特徵誤命中（#4）
+- lexical 特徵**雙向皆會錯**：除覆蓋不足外，另有 1 筆正向特徵誤命中
+  （#4：`problem_report` 的 `卡` 命中「刷**卡**」，字面規則無詞義邊界）
 - gate 未參與 instance 側 3 筆 facet 錯誤（屬既有 retrieval 行為）
 
 SUPPORTED HYPOTHESIS
