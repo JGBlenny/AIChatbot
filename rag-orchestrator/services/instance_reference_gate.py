@@ -231,3 +231,44 @@ def in_gate_rollout_scope(config) -> bool:
 def gate_applies_to(config) -> bool:
     """**C ∧ D**。此處刻意只有一行——任何額外推論都會讓兩層契約失效。"""
     return is_instance_requiring_face(config) and in_gate_rollout_scope(config)
+
+
+# ════════════════════════════════════════════════════════════════════
+# 啟用狀態（任務 4.1｜R7.1, R3.5）
+# ════════════════════════════════════════════════════════════════════
+#
+# ⚠️ **requested 與 authorized 是兩件事，不得摺疊成「flag=true → gate active」**：
+#
+#   requested  = 有人把旗標打開（運維意圖）
+#   authorized = 規則集已通過 **matching** holdout（證據授權）
+#   active     = requested AND authorized
+#
+# 於是「把 env 設成 true」**不足以**讓 gate 真正生效——
+# Task 6 的 unseen holdout 裁決前，production candidate 一律處於「不可真正放行」狀態。
+
+#: 運維旗標；**預設 false**
+INSTANCE_REFERENCE_GATE_FLAG: Final[str] = "INSTANCE_REFERENCE_GATE"
+
+
+def gate_requested() -> bool:
+    """運維意圖：旗標是否被打開（預設 false）。"""
+    import os
+    return os.getenv(INSTANCE_REFERENCE_GATE_FLAG, "false").lower() == "true"
+
+
+def gate_authorized() -> bool:
+    """證據授權：當前規則集是否已通過 matching holdout。
+
+    ⚠️ 這裡**吞掉的是 `GateNotEnablable`，不是任意例外**——
+    把所有例外都當成「未授權」會讓「守門壞掉」與「尚未通過」無法區分。
+    """
+    try:
+        assert_gate_enablable(current_manifest(), active_protocol_digest=ACTIVE_PROTOCOL_DIGEST)
+        return True
+    except GateNotEnablable:
+        return False
+
+
+def gate_active() -> bool:
+    """`requested AND authorized`。**此處只有一行合取，沒有第三條旁路。**"""
+    return gate_requested() and gate_authorized()

@@ -785,6 +785,50 @@ async def _preentry_routable(db_pool, cfg, user_message: Optional[str]) -> bool:
         return True
 
 
+def _instance_gate_decision(user_message: Optional[str]):
+    """query 級判定（spec routing-disambiguation 任務 4.2／4.4）。
+
+    回 `GateDecision`；gate 未真正啟用時回 `None`（＝不參與決策）。
+
+    ⚠️ **兩種 fail-open 的原因不得被摺疊**：
+
+    ```text
+    證據不足        → verdict="abstain" → 維持既有 routing（有 verdict 可稽核）
+    抽取/判定例外    → 回 None ＋ 印可觀測訊號 → 維持既有 routing
+    ```
+
+    **SHALL NOT 在例外時偽造空 evidence 再送進 gate**——那會讓「壞掉」
+    偽裝成「沒有訊號」，正是任務 2.4 刻意不讓抽取器吞例外的理由。
+    exception boundary 屬於本層（seam），不屬於抽取器。
+    """
+    try:
+        from services.instance_reference_gate import gate_active, instance_reference_gate
+        if not gate_active():
+            return None
+        from services.instance_evidence import InstanceEvidenceExtractor
+        evidence = InstanceEvidenceExtractor().extract(user_message)
+        return instance_reference_gate(evidence, face_requires_instance=True)
+    except Exception as e:
+        print(f"⚠️ [instance-reference-gate] 判定失敗，fail-open 照舊進場（非 abstain）：{e}")
+        return None
+
+
+def _instance_hint_suppressed(decision, cfg) -> bool:
+    """本 query 的判定是否抑制**這個 Face** 的 Routing Hint。
+
+    抑制集合**只由 C ∧ D 決定**（`gate_applies_to`）——
+    SHALL NOT 擴成「所有 categories」「所有 bill_ref Face」「所有 dialog Face」。
+    """
+    if decision is None or decision.verdict != "block":
+        return False
+    try:
+        from services.instance_reference_gate import gate_applies_to
+        return gate_applies_to(cfg)
+    except Exception as e:
+        print(f"⚠️ [instance-reference-gate] 納管判定失敗，fail-open 不抑制：{e}")
+        return False
+
+
 async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: DecisionConfig,
                                           user_message: Optional[str] = None):
     """分類路由決策（conversational-diagnosis 元件 5 / R1.1,1.2,1.4,7.2）。
@@ -797,9 +841,20 @@ async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: Decis
     if not facet_entry_eligible(best_knowledge, config):
         return None
     from services.conversational_config import config_for_category
+    # ⚠️ instance-reference gate（spec routing-disambiguation 任務 4.2）：
+    #    位置固定在 config_for_category **之後**、_preentry_routable **之前**——
+    #    之前不行（gate 需要 Face 的語義契約），之後也不行（那會讓 LLM 的機率判定
+    #    先對 query 下手，deterministic 契約反而後到，責任順序顛倒）。
+    #    判定**每個 query 只做一次**：否則同一責任可被 category 順序繞過。
+    decision = _instance_gate_decision(user_message)
     for cat in _knowledge_category(best_knowledge):
         cfg = await config_for_category(db_pool, cat)
         if cfg is not None:
+            if _instance_hint_suppressed(decision, cfg):
+                print(f"🚧 [instance-reference-gate] 「{(user_message or '')[:20]}」"
+                      f"判 rule 型問句 → 抑制面向 {getattr(cfg, 'key', '?')} 的 Hint"
+                      f"（{decision.reason}）")
+                continue      # 抑制同型 Hint：**不 commit 本面向**，且不因順序而放行
             if await _preentry_routable(db_pool, cfg, user_message):
                 return cfg
             continue          # 判不適用 → 不 commit 本面向，續試該知識的下一個分類

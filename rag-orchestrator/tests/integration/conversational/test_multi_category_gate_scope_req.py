@@ -115,13 +115,21 @@ async def _seam(pool, categories, question):
 
 
 # ── 紅：契約要逼出的未決設計問題 ─────────────────────────────
+@pytest.mark.xfail(strict=True, reason=(
+    "待兩件事：① `billing_anomaly` 的產品責任**尚未逐 Face 裁定**（erratum 01：不得因 N4 "
+    "技術需要就宣告它屬於 scope）；② holdout 未過（任務 6），gate 尚未獲授權。"
+    "⚠️ strict=True：若哪天它**意外轉綠**，代表有人在裁定完成前動了 membership 或授權——"
+    "那必須當場被看見，而不是安靜地變綠。"
+    "機制面的同型契約已由 test_instance_gate_seam_req.py 的合成第二 Face 覆蓋並通過。"))
 @pytest.mark.req("routing-disambiguation:1.2")
 @pytest.mark.parametrize("categories", [MULTI_CATEGORY, list(reversed(MULTI_CATEGORY))],
                          ids=["diagnosis_first", "anomaly_first"])
 async def test_multi_category_rule_query_stays_single(pool, monkeypatch, categories):
-    """**目前應為紅**（Level A 白名單只涵蓋一個 Face，rule 問句仍會 continue 進 `billing_anomaly`）。
+    """**production membership 版本**：第二個 Face 是真實的 `billing_anomaly`。
 
     ⚠️ 兩種順序都測：只修第一順位等於沒修——`continue` 的語義問題與順序無關。
+    ⚠️ **這條紅不是實作缺陷**，是產品裁定尚未做完（見上方 xfail 理由）。
+    **不得**為了讓它轉綠而提前宣告 `billing_anomaly`。
     """
     monkeypatch.setenv("INSTANCE_REFERENCE_GATE", "true")
     route, facet = await _seam(pool, categories, RULE_CASE)

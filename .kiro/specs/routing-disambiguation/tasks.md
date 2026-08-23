@@ -208,7 +208,7 @@ protocol v1 PASS
   explanation_request，veto 會誤殺，正是 3.4 那類「修一邊傷另一邊」。
   _Requirements: 1.3_
 
-- [ ] 3.3 **🧠主**（⚠️ **改排入 Task 4**：本條要求的是 **seam-level suppression semantics**，
+- [x] 3.3 **🧠主**（⚠️ **改排入 Task 4**：本條要求的是 **seam-level suppression semantics**，
   gate 純函式階段做不到，也不該偷做——業主 2026-08-23 裁示）
   實作 `block` 的**作用域**：抑制該問句對**白名單內所有 instance-requiring Face**
   的 Hint，**不是** `continue` 下一個分類。非白名單 Face 不受影響。
@@ -240,18 +240,18 @@ protocol v1 PASS
   `billing_anomaly` 待逐 Face 裁定；`billing_invoice`／`billing_flow` 不得自動跟進。
   _Requirements: 2.5, 5.2, 8_
 
-- [ ] 4.2 **🧠主** 於 `_diagnosis_config_for_knowledge` 串接：
+- [x] 4.2 **🧠主** 於 `_diagnosis_config_for_knowledge` 串接：
   `config_for_category` 命中之後、`_preentry_routable` 之前。
   旗標 `INSTANCE_REFERENCE_GATE` **預設 `false`**。
   _Requirements: 1.1, 1.2, 7.1_
 
-- [ ] 4.3 **🧠主 🔍V** 驗證 `facet_entry_eligible` 的**等價契約未被破壞**——
+- [x] 4.3 **🧠主 🔍V** 驗證 `facet_entry_eligible` 的**等價契約未被破壞**——
   `decision_layer` 檔頭明訂該函式對任意輸入須與搬移前 inline 邏輯嚴格同輸出。
   新 gate SHALL 為獨立函式，不改動既有門檻判定。
   **🔍V 理由**：破壞等價契約會使前案建立的 171 條整合護欄失去對照意義。
   _Requirements: 8_
 
-- [ ] 4.4 **⚡F** 實作 fail-open：抽取或判定例外 → `abstain` → 不阻擋
+- [x] 4.4 **⚡F** 實作 fail-open：抽取或判定例外 → `abstain` → 不阻擋
   （沿 `_preentry_routable` 慣例）。
   _Requirements: 1.3_
 
@@ -910,3 +910,79 @@ A semantic effectiveness proven   33 / 33
 B scaffold                         0 / 33
 C contract defect                  0 / 33
 ```
+
+### ✅ Task 4（2026-08-24）—— GateDecision 第一次取得 production authority
+
+`routers/chat.py`（**+55 行，全為新增**）＋ `services/instance_reference_gate.py`
+（啟用狀態）＋ `tests/integration/conversational/test_instance_gate_seam_req.py`（15 筆全綠）
+＋ `tests/unit/decision/test_instance_gate_activation_req.py`（12 筆全綠）。
+
+**啟用是兩層，不是一個旗標**（業主 2026-08-23 裁示）：
+
+```text
+requested  = 旗標打開（運維意圖）
+authorized = 規則集通過 matching holdout（證據授權）
+active     = requested AND authorized
+```
+
+⚠️ **現階段把 env 設成 `INSTANCE_REFERENCE_GATE=true` 也不會生效**——
+production manifest 仍 `not_run`。凍結案例集**全體 20 筆**（RULE／INSTANCE／CONTROL／
+BLAST／UNDECIDED）在「OFF」與「ON 但未授權」兩種狀態下 routing **逐筆完全相同**。
+
+**seam 位置照 design 不重排**：`config_for_category` 之後、`_preentry_routable` 之前。
+之前不行（gate 需要 Face 的語義契約）；之後也不行（LLM 的機率判定會先對 query 下手，
+deterministic 契約反而後到，責任順序顛倒）。**判定每個 query 只做一次**。
+
+**抑制語義（原任務 3.3，改排於此）**：`block` 時抑制**所有 `gate_applies_to` 為真**的 Face
+Hint，**不是** `continue` 下一分類；抑制集合**只由 C ∧ D 決定**，
+未擴成「所有 categories／所有 bill_ref Face／所有 dialog Face／所有 required_slots Face」。
+
+**4.3 等價契約未被破壞**：`services/decision_layer.py` **本輪零改動**（git diff 可證），
+`facet_entry_eligible` 逐字未動；既有等價 suite（`test_decision_layer_equivalence_req.py`／
+`test_facet_entry_equivalence_config_req.py`）全綠。新 gate 是**多一道 Routing Hint
+authorization**，不是門檻或 eligibility 的替代品：
+
+```text
+原 eligibility：這筆 KB 有資格提出某個 Face Hint
+新 gate      ：這個 query 是否允許此類 Hint 生效
+```
+
+**4.4 兩種 fail-open 的原因不得摺疊**：
+
+```text
+證據不足     → verdict="abstain" → 維持既有 routing（有 verdict 可稽核）
+抽取/判定例外 → 回 None ＋ 印「fail-open…（非 abstain）」→ 維持既有 routing
+```
+
+exception boundary 放在 **seam**（不是抽取器——2.4 已刻意讓抽取器不吞例外）；
+**SHALL NOT 在例外時偽造空 evidence 再送進 gate**，那會讓「壞掉」偽裝成「沒有訊號」。
+
+**突變驗證（4 個，全數被殺）**：
+
+| ID | 突變 | 被殺的 test |
+|---|---|---|
+| M30 | 抑制擴成「所有 Face」（溢出 C∧D）| suppression_does_not_leak_to_unmanaged_faces |
+| M31 | 只跳過當前分類（沿用 `continue` 語義）| category_order 兩序 ＋ 4 筆 rule 抑制 |
+| M32 | active 只看 requested（丟掉授權）| flag_off_and_requested_but_unauthorized_are_both_inert |
+| M33 | 例外偽造成 abstain | exception_fails_open_and_is_not_disguised_as_abstain |
+
+**N4 拆成兩層，機制與產品裁定分離**（業主裁示）：
+
+| 契約 | 第二個 Face | 現況 |
+|---|---|---|
+| **機制**：category 順序不得繞過抑制 | **合成** Face（明示 `requires_instance_reference=true` ＋ D scope=true）| 🟢 兩序皆綠 |
+| **production membership** | 真實 `billing_anomaly` | **strict xfail**：待逐 Face 裁定 ＋ 授權 |
+
+⚠️ `strict=True` 是刻意的：若哪天它**意外轉綠**，代表有人在裁定完成前動了 membership
+或授權——**那必須當場被看見，而不是安靜地變綠**。
+
+**另有一條會隨裁定改判的斷言**（已於測試內註明）：
+`suppression_does_not_leak_to_unmanaged_faces` 目前斷言「帳單異常仍可接手」，
+因為它未宣告 C。`billing_anomaly` 完成裁定並宣告後，該條應改判為 `single`。
+
+**2.0 falsifier 的第三次確認（seam 層）**：兩筆未決問句在 gate 真正生效時仍**未被抑制**。
+Req.4 **仍未被 Task 4 裁定**。
+
+**紅綠現況**：integration `205 passed／4 failed／2 xfailed`——
+4 failed 即原本那 4 筆 known-red REGRESSION，**旗標 OFF 時本就應維持紅**；
+它們要到任務 6 授權、任務 7 啟用後才會轉綠。unit `1107 passed`（13 failed 全為具名 `_meta` 環境錯配）。
