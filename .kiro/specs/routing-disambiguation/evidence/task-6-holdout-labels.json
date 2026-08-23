@@ -1,0 +1,503 @@
+{
+  "dataset_id": "holdout-2026Q3-D1",
+  "utterance_dataset_digest": "84134fc929554f00",
+  "labels_digest": "bc76fb74215d9852",
+  "labeler": {
+    "role": "D2 isolated blind labeler",
+    "session": "isolated（全新 general-purpose agent，無本案上下文）",
+    "labeler_candidate_blind": true,
+    "labeler_tool_uses": 0,
+    "labeler_tool_uses_note": "標註者全程 0 次工具呼叫 → 未讀取任何檔案、未搜尋 codebase",
+    "inputs_given": [
+      "50 句凍結問句",
+      "single／dialog 回應模式的產品定義",
+      "六個帳務面向的 key ＋ 自述範疇（逐字引自 seed 規格）",
+      "label schema"
+    ],
+    "withheld": [
+      "candidate／extractor／ruleset",
+      "P3 finding",
+      "現行 production route",
+      "similarity／retrieval 結果",
+      "protocol expected labels",
+      "D1 階段 withheld 的全部項目"
+    ],
+    "owner_involvement": "NONE —— 未送任何一句給已知 candidate failure mode 的判斷者預先裁定"
+  },
+  "denominators": {
+    "total": 50,
+    "exactly_judgeable": 41,
+    "exactly_judgeable_rule_side": 33,
+    "exactly_judgeable_instance_side": 8,
+    "route_level_only": 5,
+    "route_level_only_ids": [
+      5,
+      9,
+      19,
+      27,
+      39
+    ],
+    "fully_undecidable": 4,
+    "fully_undecidable_ids": [
+      6,
+      17,
+      42,
+      49
+    ],
+    "req_9_3_threshold": "≥30 個已盲標可判定 unseen cases",
+    "threshold_met": true
+  },
+  "candidate_contact": "NONE —— 本檔 commit 之前 candidate 未看過任何一句",
+  "labels": [
+    {
+      "n": 1,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "帳單發出去之後還可以收回嗎",
+      "evidence": "single 定義:『規則、制度、功能有沒有』——問的是平台是否允許收回,不需查任何一筆帳單"
+    },
+    {
+      "n": 2,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "想問一下「待對帳」是什麼意思啊",
+      "evidence": "single 定義:『名詞是什麼意思』"
+    },
+    {
+      "n": 3,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "high",
+      "utterance": "我上禮拜排好的那張怎麼到現在都還沒寄出去",
+      "evidence": "bill_diagnosis 自述:『這筆帳單為什麼發不出去』的單筆操作問題;句中『那張』指涉特定一筆"
+    },
+    {
+      "n": 4,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "刷卡繳的話手續費是誰要吸收",
+      "evidence": "single 定義:『平台的通則——規則、制度』,不需查使用者任一筆資料"
+    },
+    {
+      "n": 5,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "undecidable",
+      "confidence": "medium",
+      "utterance": "為什麼有一筆自己變成失效了，我根本沒動過它",
+      "evidence": "『一筆』指涉特定帳單故為 instance;但『帳單自行失效』不在 bill_diagnosis 的四類,也不在 billing_anomaly 的三類,規格不足以在面向間定案"
+    },
+    {
+      "n": 6,
+      "intent_class": "rule",
+      "intended_route": "undecidable",
+      "intended_facet": "undecidable",
+      "confidence": "medium",
+      "utterance": "怎麼設定每個月自動產生並發送租金單",
+      "evidence": "single 定義涵蓋『怎麼操作』;但 billing_setup_guide 自述『幫管理者選對收款與帳單設定的路徑』且明示『本面向不查帳單 API』,同一句同時落入兩者,規格未給優先序"
+    },
+    {
+      "n": 7,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "billing_anomaly",
+      "confidence": "high",
+      "utterance": "3F 那間八月的租金帳單我找不到",
+      "evidence": "billing_anomaly 自述:『帳單沒出現』;指涉 3F 八月這一筆特定資料"
+    },
+    {
+      "n": 8,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "點退完之後的費用是系統幫我算，還是我要自己算一遍",
+      "evidence": "single 定義:『功能有沒有／制度』——問系統行為通則,未指涉特定一筆"
+    },
+    {
+      "n": 9,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "undecidable",
+      "confidence": "medium",
+      "utterance": "帳但重複寄了兩次，房客來問我要怎麼跟他講",
+      "evidence": "指涉實際發生的特定帳單故為 instance;『重複寄送』不在任一面向自述範疇,無法定案面向"
+    },
+    {
+      "n": 10,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "utterance": "滯納金到底是用什麼方式在計算的？",
+      "evidence": "billing_late_fee 自述限定於『這份合約／這筆帳單的滯納金』;本句未指涉任一筆,屬 single 的『規則、制度』"
+    },
+    {
+      "n": 11,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "已經發給房客的帳單還能改金額嗎",
+      "evidence": "single 定義:『規則、制度、功能有沒有』——問平台是否允許改額,不需查特定帳單"
+    },
+    {
+      "n": 12,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "有辦法一次發給整棟的租客嗎，一戶一戶點好久",
+      "evidence": "single 定義:『功能有沒有』(批次發送)"
+    },
+    {
+      "n": 13,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "billing_flow",
+      "confidence": "high",
+      "utterance": "房客說他早就繳了，可是這邊還是顯示應到帳 = =",
+      "evidence": "billing_flow 自述逐字:『租客說繳了但錢沒進來／帳單狀態沒動』"
+    },
+    {
+      "n": 14,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "虛擬帳號是一個房客固定一組，還是每張單都不一樣？",
+      "evidence": "single 定義:『平台的通則——規則、制度』,問虛擬帳號配發機制"
+    },
+    {
+      "n": 15,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "中途才搬進來的，租金要按比例算，系統會自己抓天數嗎",
+      "evidence": "single 定義:『功能有沒有』——問系統是否自動按比例計算,未指涉特定合約"
+    },
+    {
+      "n": 16,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "utterance": "剛剛手滑把一張設成失效了，還救得回來嗎",
+      "evidence": "single 定義:『功能有沒有』——失效是否可復原是平台通則,回答不需查該筆實際值"
+    },
+    {
+      "n": 17,
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "undecidable",
+      "confidence": "medium",
+      "utterance": "我想查六月到現在還沒收到的款有哪些",
+      "evidence": "instance 定義限於『他自己的某一筆特定資料』,本句為跨筆清單查詢;現有六個面向自述皆為單筆診斷,規格不足以歸類"
+    },
+    {
+      "n": 18,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "超商代碼繳費金額有沒有上限啊",
+      "evidence": "single 定義:『平台的通則——規則、制度』"
+    },
+    {
+      "n": 19,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "undecidable",
+      "confidence": "medium",
+      "utterance": "幫我看一下王先生那張現在跑到哪個狀態了",
+      "evidence": "指涉『王先生那張』特定帳單,必須查實際值故為 instance;但純狀態查詢未陳述任何異常,不落入任一面向,無法定案"
+    },
+    {
+      "n": 20,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "utterance": "逾期要幾天以後才開始算滯那金",
+      "evidence": "billing_late_fee 自述限定『這份合約／這筆帳單』;本句未指涉任一筆,屬 single 的通則問法"
+    },
+    {
+      "n": 21,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "收據跟發票是同一時間出的嗎，還是要分開處理",
+      "evidence": "billing_invoice 自述為單筆診斷;本句問制度上的出具時序,符合 single 定義"
+    },
+    {
+      "n": 22,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "medium",
+      "utterance": "為什麼我按了發送之後完全沒反應",
+      "evidence": "bill_diagnosis 自述:『這筆帳單為什麼發不出去』;按下發送無反應即發送失敗的單筆操作問題"
+    },
+    {
+      "n": 23,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "手動確認到帳跟系統自動入帳，差別在哪",
+      "evidence": "single 定義:『名詞是什麼意思／制度差異』,不需查任何一筆"
+    },
+    {
+      "n": 24,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "utterance": "退租結算那張單子大概什麼時候會跑出來",
+      "evidence": "single 定義:『規則、制度』——問退租結算單的產生時點通則;句中未給可辨識的特定合約或帳單"
+    },
+    {
+      "n": 25,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "帳單明細可以自己加項目嗎，像是修繕分攤那種",
+      "evidence": "single 定義:『功能有沒有』"
+    },
+    {
+      "n": 26,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "billing_late_fee",
+      "confidence": "high",
+      "utterance": "這張的滯納金怎麼比我自己算的還多",
+      "evidence": "billing_late_fee 自述逐字:『這份合約／這筆帳單的滯納金怎麼算、為什麼收這麼多』;『這張』指涉特定帳單"
+    },
+    {
+      "n": 27,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "undecidable",
+      "confidence": "medium",
+      "utterance": "那個…就是我改了金額，但房客收到的通知好像還是舊的",
+      "evidence": "指涉自己改過的那一筆故為 instance;『通知內容為舊值』與 billing_anomaly 只部分重疊,亦可能屬發送類問題,規格不足以定案"
+    },
+    {
+      "n": 28,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "失效跟取消差在哪，我每次都分不清楚",
+      "evidence": "single 定義:『名詞是什麼意思』"
+    },
+    {
+      "n": 29,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "utterance": "要怎麼快速看出哪些戶已經逾期了",
+      "evidence": "single 定義:『怎麼操作』——問查看逾期的操作路徑,而非要求列出實際欠款戶"
+    },
+    {
+      "n": 30,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "押金退還也需要開一張帳單嗎",
+      "evidence": "single 定義:『規則、制度』"
+    },
+    {
+      "n": 31,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "utterance": "發票能不能改成開公司抬頭",
+      "evidence": "billing_invoice 自述不含抬頭設定;本句為功能是否支援的通則,符合 single 定義"
+    },
+    {
+      "n": 32,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "排程發送最早可以排幾點送出",
+      "evidence": "single 定義:『規則、制度』——排程時間限制為平台通則"
+    },
+    {
+      "n": 33,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "已到帳的還可以再動嗎",
+      "evidence": "single 定義:『規則、制度、功能有沒有』——問已到帳狀態的可操作性通則"
+    },
+    {
+      "n": 34,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "utterance": "代收的水電費要另外開一張，還是可以跟租金併在同一張",
+      "evidence": "single 定義:『規則、制度、功能有沒有』——問帳單組成方式是否被允許,不需查任何一筆"
+    },
+    {
+      "n": 35,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "medium",
+      "utterance": "狀態一直卡在待發送，是不是哪裡出問題",
+      "evidence": "bill_diagnosis 自述:『這筆帳單為什麼發不出去』;卡在待發送屬發送未完成的單筆操作問題,而 billing_flow 限於繳費金流"
+    },
+    {
+      "n": 36,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "有沒有辦法批次確認到帳，一筆一筆點真的很累",
+      "evidence": "single 定義:『功能有沒有』(批次確認到帳)"
+    },
+    {
+      "n": 37,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "點交那天的費用是算到當天還是算到前一天",
+      "evidence": "single 定義:『規則、制度』——計費起訖規則,未指涉特定合約"
+    },
+    {
+      "n": 38,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "系統會自動幫我發催繳通知嗎，還是得自己來",
+      "evidence": "single 定義:『功能有沒有』"
+    },
+    {
+      "n": 39,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "undecidable",
+      "confidence": "medium",
+      "utterance": "幫我查 A 棟五樓那戶目前有沒有欠款",
+      "evidence": "指名特定戶並要求查實際欠款狀況,符合 instance 定義;但『欠款查詢』不在六個面向任一自述範疇內,不足以定案面向"
+    },
+    {
+      "n": 40,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "utterance": "房客只付了一部分，系統認得出來嗎",
+      "evidence": "single 定義:『功能有沒有』——問系統是否辨識部分繳款的能力,而非查某一筆的實際入帳"
+    },
+    {
+      "n": 41,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "上個月的對帳資料要去哪裡下載",
+      "evidence": "single 定義:『怎麼操作』——問下載路徑"
+    },
+    {
+      "n": 42,
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "undecidable",
+      "confidence": "medium",
+      "utterance": "為什麼同一個租客身上會出現兩組虛擬帳號",
+      "evidence": "可能是虛擬帳號配發機制的通則說明(single),也可能須查該租客實際資料(instance);規格未界定,且無對應面向自述"
+    },
+    {
+      "n": 43,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "utterance": "這個月總共收了多少，哪裡看得到",
+      "evidence": "single 定義:『怎麼操作』——句尾『哪裡看得到』要的是檢視路徑;現有面向亦無彙總金額查詢範疇"
+    },
+    {
+      "n": 44,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "utterance": "我想把某一筆改成不用向房客收，可以做到嗎",
+      "evidence": "single 定義:『功能有沒有』——『可以做到嗎』問的是平台是否支援免收設定,未指名可辨識的特定帳單"
+    },
+    {
+      "n": 45,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "已經排定的發送時間還能不能往後調",
+      "evidence": "single 定義:『規則、制度、功能有沒有』——問排程是否可改的通則"
+    },
+    {
+      "n": 46,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "utterance": "看得出來房客是用哪一種管道繳的嗎",
+      "evidence": "single 定義:『功能有沒有』——問系統是否呈現繳費管道,未指涉特定一筆"
+    },
+    {
+      "n": 47,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "billing_anomaly",
+      "confidence": "medium",
+      "utterance": "房客一直反應沒收到帳單通知……",
+      "evidence": "billing_anomaly 自述:『租客看不到帳單』;指涉自己實際發出的帳單通知狀況"
+    },
+    {
+      "n": 48,
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "utterance": "收據上面印的日期是繳費當天還是入帳那天",
+      "evidence": "single 定義:『規則、制度』——收據日期取值規則"
+    },
+    {
+      "n": 49,
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "undecidable",
+      "confidence": "medium",
+      "utterance": "我要取消一張，可是找不到按鈕在哪裡",
+      "evidence": "可能是不知道取消功能位置(single 的『怎麼操作』),也可能是該筆狀態不允許取消而按鈕不出現(bill_diagnosis 的『這筆帳單為什麼取消不了』);規格不足以判定屬哪一類"
+    },
+    {
+      "n": 50,
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "billing_flow",
+      "confidence": "high",
+      "utterance": "講起來有點亂，就是錢明明進來了，但單子的狀態沒有跟著變",
+      "evidence": "billing_flow 自述逐字:『租客說繳了但錢沒進來／帳單狀態沒動』"
+    }
+  ]
+}
