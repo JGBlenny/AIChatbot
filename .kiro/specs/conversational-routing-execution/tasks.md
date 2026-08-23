@@ -974,3 +974,65 @@ lexical／structural instance signal｜routing-specific metadata／trigger repre
 intent stage｜applicability gate｜clarification｜KB responsibility 拆分。
 
 ⚠️ **不得因為 embedding 排名分不開，就在本 spec 內偷塞全域 heuristic**（Req.8 明文排除）。
+
+
+---
+
+## U1：corpus-exposure triage（**不屬本 spec**，已結案）
+
+- [x] U1.1 兩筆 known-red 窄幅 triage → **同一根因，Category A（provisioning drift）**
+
+| 測試 | 依賴機制 | 缺什麼 |
+|---|---|---|
+| `test_grounding_by_parent_expands_to_children` | `_grounding_by_category` 父層展開：`SELECT category_value FROM category_config WHERE parent_value=$1` | 父子分類對照 |
+| `test_three_layer_context_isolated` | `system_context._domain_chain` 以 `category_config` 遞迴父鏈組三層脈絡 | 同上 |
+
+三問：①**穩定重現**——凍結 corpus 下每次皆紅；②**判型**——provisioning 缺口，
+非 corpus collision、非 production regression（`category_config` 是 `knowledge_base`
+之外的獨立對照表，最小供裝漏列）；③**最小處置**——加進 `SEED_TABLES`。
+
+實查：測試庫僅 **23 列**（前幾輪 integration 殘留），prod 為 **98 列**。
+
+- [x] U1.2 補 `category_config` 至供裝（98 列）→ 針對性重跑 **6 passed / 0 failed**
+
+### ⚠️ 「最小供裝」的邊界只能靠實跑劃，不能靠讀 schema 推
+
+這是第三次由實跑逼出必備項：
+
+```text
+form_schemas     ← form_sessions.form_id 有 FK，缺它任何面向會話都 ForeignKeyViolationError
+provenance FK    ← knowledge_base 四條 FK 的父表鏈太深 → 改為載入時置 NULL
+category_config  ← 父子分類對照，缺它父層展開與三層脈絡失效
+```
+
+三者皆已在 `scripts/provision-test-db.sh` 逐條註記理由，避免日後被當成可省項。
+
+---
+
+## 本 spec baseline 封存（2026-08-23）
+
+```text
+unit         1025 passed / 0 failed
+integration   177 passed / 4 failed / 11 env-skipped / gate_skipped=0 / rc=1
+```
+
+**唯一的 4 筆 known-red 全部是 3.3 已判定的 `REGRESSION`**，且已在雙向 suite 中
+與 instance 側能力綁定描述——修好任何一邊都會讓另一邊紅：
+
+```text
+收據 PDF 在哪裡下載
+點退帳單的金額是怎麼算的
+系統怎麼算點退帳單的金額
+點退做完後，帳單會自動出來嗎？
+```
+
+⚠️ **這 4 筆不得為求綠燈調整斷言**；修復由 `routing-disambiguation` 新案處理。
+
+### Known limitations（隨 spec 封存）
+
+| # | 限制 | 出處 |
+|---|---|---|
+| 1 | harness 繞過 SOP 仲裁——`_diagnosis_config_for_knowledge` 僅在 `decision['type']=='knowledge'` 時可達；本 spec 無結果可證 SOP 勝出時的端到端行為 | 3.4 verifier A3（既有限制，非本輪引入）|
+| 2 | 「我的收據在哪」／「我這筆點退的錢怎麼怪怪的」進「帳單異常」而非「條件診斷：帳單」，**產品歸屬未定案** | `BILLING_INSTANCE_FACET_UNDECIDED` |
+| 3 | CI 無從零建 schema 的路徑（service container 為空庫，供裝腳本依賴本機來源庫做 schema dump）| 2.4（既有狀態）|
+| 4 | `DecisionConfig` 程式預設 `kb_threshold=0.55` 與參數台帳 `0.65` 不一致，靠 env 覆蓋而無害；env 未設的環境會靜默跑 0.55 | 3.1 對碼（範圍外，建議 follow-up）|

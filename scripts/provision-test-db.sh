@@ -95,7 +95,13 @@ fi
 #    target_user／embedding）。載入時一律置 NULL，既保住參照完整性又維持最小供裝。
 KB_NULL_COLS="intent_id,source_test_scenario_id,source_loop_id,source_loop_knowledge_id"
 
+# ⚠️ category_config（父子分類對照）是**必備而非可選**：
+#    `_grounding_by_category` 以 `SELECT category_value FROM category_config WHERE parent_value=$1`
+#    做父層展開，`system_context._domain_chain` 以其遞迴父鏈組三層脈絡。
+#    缺它 → 父層接地撈不到子分類知識、面向缺母層脈絡（2026-08-23 U1 triage 實跑逼出，
+#    當時測試庫只有 23 列殘留、prod 為 98 列）。
 SEED_TABLES=(
+  "category_config|TRUE|"
   "vendors|TRUE|"
   "vendor_configs|TRUE|"
   "form_schemas|TRUE|"
