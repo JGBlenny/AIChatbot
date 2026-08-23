@@ -4,10 +4,17 @@
 ⚠️ 本檔**只做檢索**，不呼叫 gate、不做任何 applicability 判定。
 ⚠️ 取的欄位**與 gate 實際看到的完全一致**：`question_summary` ＋ `answer[:180]`
    （見 `routers/chat.py` 的 gate user message 組法）——多給或少給都會讓 replay 失真。
+
+⚠️ **前處理必須複刻 production 的執行順序**（R9.4 慣例）：
+   `handle_retrieval` 在 gate **之前**先跑 `_drop_empty_answer_rows`（chat.py:1234 → 1244），
+   把「answer 空且無動作」的**面向進場錨點**濾掉。
+   首版本檔漏了這一步，44 pairs 中有 18 筆知識內容為空——
+   **那是 gate 在 production 根本收不到的輸入**，拿去量它的鑑別力會失真。
 """
 import argparse, asyncio, json, os, sys
 sys.path.insert(0, "/app"); sys.path.insert(0, "/app/services")
 from scripts.routing.run_protocol_v1 import _conn_kwargs  # noqa: E402
+from routers.chat import _drop_empty_answer_rows  # noqa: E402  ← 直接複用 production 函式
 
 SRC = "/.kiro/specs/routing-disambiguation/evidence/task-6-holdout-utterances.json"
 VENDOR_ID = int(os.getenv("TEST_VENDOR_ID", "2"))
@@ -30,6 +37,7 @@ async def main(out):
         rows = await retriever.retrieve_knowledge_hybrid(
             query=q, vendor_id=VENDOR_ID, top_k=TOP_K,
             similarity_threshold=cfg.kb_threshold, target_user=TARGET_USER, mode=MODE)
+        rows = _drop_empty_answer_rows(rows)      # ⚠️ 複刻 production 前處理
         if not rows:
             no_hit.append({"n": i, "utterance": q})
             continue
@@ -54,6 +62,7 @@ async def main(out):
         },
         "fields_note": "kb_answer_excerpt 取 answer[:180]，與 gate 實際輸入完全一致",
         "pair_count": len(pairs), "no_hit_count": len(no_hit), "no_hit": no_hit,
+        "preprocessing": "_drop_empty_answer_rows（複用 production 函式，複刻 chat.py:1234 的執行順序）",
         "labels": "NOT YET LABELLED", "gate_replayed": False,
         "pairs": pairs,
     }

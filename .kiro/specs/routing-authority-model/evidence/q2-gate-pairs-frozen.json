@@ -16,12 +16,16 @@
     "decision_config_hash": "4b854461"
   },
   "fields_note": "kb_answer_excerpt 取 answer[:180]，與 gate 實際輸入完全一致",
-  "pair_count": 44,
-  "no_hit_count": 22,
+  "pair_count": 36,
+  "no_hit_count": 25,
   "no_hit": [
     {
       "n": 2,
       "utterance": "想問一下「待對帳」是什麼意思啊"
+    },
+    {
+      "n": 3,
+      "utterance": "我上禮拜排好的那張怎麼到現在都還沒寄出去"
     },
     {
       "n": 5,
@@ -68,6 +72,10 @@
       "utterance": "已到帳的還可以再動嗎"
     },
     {
+      "n": 35,
+      "utterance": "狀態一直卡在待發送，是不是哪裡出問題"
+    },
+    {
       "n": 36,
       "utterance": "有沒有辦法批次確認到帳，一筆一筆點真的很累"
     },
@@ -96,6 +104,10 @@
       "utterance": "為什麼同一個租客身上會出現兩組虛擬帳號"
     },
     {
+      "n": 43,
+      "utterance": "這個月總共收了多少，哪裡看得到"
+    },
+    {
       "n": 45,
       "utterance": "已經排定的發送時間還能不能往後調"
     },
@@ -108,6 +120,7 @@
       "utterance": "我要取消一張，可是找不到按鈕在哪裡"
     }
   ],
+  "preprocessing": "_drop_empty_answer_rows（複用 production 函式，複刻 chat.py:1234 的執行順序）",
   "labels": "NOT YET LABELLED",
   "gate_replayed": false,
   "pairs": [
@@ -121,7 +134,8 @@
       "kb_answer_excerpt": "帳單收回（取消發送）會把帳單退回「待發送」，且會斷開原本的繳費資訊——重新發送時系統會產生新的虛擬帳號/繳費代碼。適用時機：繳費資訊失效或有疑慮、租客反映帳號無法使用、需要修改帳單內容再發。注意：只有「應到帳（待繳費）」與「排定發送」狀態的帳單可以收回；租客已付款（待對帳）或已到帳的帳單不能收回。",
       "similarity": 0.9616,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "1-2",
@@ -133,19 +147,8 @@
       "kb_answer_excerpt": "帳單封存後若要退回，需透過異動單申請變更；若只是需要再開一張帳單，可直接在「待發送帳單」頁新增，重新選取物件、繳費截止日與金額等項目即可。",
       "similarity": 0.7733,
       "action_type": "direct_answer",
-      "form_id": null
-    },
-    {
-      "pair_id": "3-1",
-      "n": 3,
-      "rank": 1,
-      "utterance": "我上禮拜排好的那張怎麼到現在都還沒寄出去",
-      "kb_id": 3935,
-      "kb_question_summary": "這期帳單怎麼還沒出來",
-      "kb_answer_excerpt": "",
-      "similarity": 0.8888,
-      "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "4-1",
@@ -157,55 +160,60 @@
       "kb_answer_excerpt": "線上收款的手續費由房東（業者）方負擔，租客付款時系統自動從入帳金額扣除。以藍新為例：信用卡、Google Pay、Samsung Pay 約 2.4%，ATM 轉帳約 1% 加 15 元，實際費率以您與金流商的簽約內容為準。申請開通時可以勾選要啟用哪些支付方式（信用卡、ATM、超商代碼等），系統預設啟用信用卡。",
       "similarity": 0.8481,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "6-1",
       "n": 6,
       "rank": 1,
       "utterance": "怎麼設定每個月自動產生並發送租金單",
-      "kb_id": 3941,
-      "kb_question_summary": "要開始收租 帳單要怎麼設定",
-      "kb_answer_excerpt": "",
-      "similarity": 0.9082,
+      "kb_id": 3399,
+      "kb_question_summary": "週期帳單 自動產生規則",
+      "kb_answer_excerpt": "週期帳單在建立合約時設定，系統依合約期間自動產生各期帳單。繳費週期共 6 種選項：每月、每 2 個月、每 3 個月、每 4 個月、每 6 個月、每年；並可設定每期的約定繳費日（每月 1～31 日擇一）。帳單到期日依合約的週期與約定日自動計算，系統每日排程檢查並產生新一期帳單。另外，為避免租客首筆帳單一建立就逾期，超過繳費期限的「首月帳單」系統會自動增加 5 ",
+      "similarity": 0.8734,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "6-2",
       "n": 6,
       "rank": 2,
       "utterance": "怎麼設定每個月自動產生並發送租金單",
-      "kb_id": 3399,
-      "kb_question_summary": "週期帳單 自動產生規則",
-      "kb_answer_excerpt": "週期帳單在建立合約時設定，系統依合約期間自動產生各期帳單。繳費週期共 6 種選項：每月、每 2 個月、每 3 個月、每 4 個月、每 6 個月、每年；並可設定每期的約定繳費日（每月 1～31 日擇一）。帳單到期日依合約的週期與約定日自動計算，系統每日排程檢查並產生新一期帳單。另外，為避免租客首筆帳單一建立就逾期，超過繳費期限的「首月帳單」系統會自動增加 5 ",
-      "similarity": 0.8734,
+      "kb_id": 3553,
+      "kb_question_summary": "收款設置 收訖章與帳單自動發送",
+      "kb_answer_excerpt": "收款設置頁除了金流綁定，還有幾個常用設定：上傳收款收訖章圖片（會顯示在收據上）；選擇收據類型（一般收據或財政部包租業範本）；設定帳單自動排程發送——設定天數後，系統每天會自動把「到期日在 N 天內」的待發送帳單寄出，等於在到期日前 N 天自動發送，不用手動逐張寄。",
+      "similarity": 0.8222,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "7-1",
       "n": 7,
       "rank": 1,
       "utterance": "3F 那間八月的租金帳單我找不到",
-      "kb_id": 3936,
-      "kb_question_summary": "租客說看不到帳單 找不到",
-      "kb_answer_excerpt": "",
-      "similarity": 0.9695,
+      "kb_id": 3927,
+      "kb_question_summary": "租客看不到帳單 三條件與信箱情境",
+      "kb_answer_excerpt": "租客要在系統看到帳單，三個條件缺一不可：一、租客是該帳單的付款方；二、帳單已發送（「待發送」「排定發送」狀態租客都看不到，發送後才可見）；三、帳單未封存。三者都符合仍看不到時，依官方排查：請租客確認左上角已切換成「租客」角色（而非房東視角）、確認在「帳務管理」頁面；仍不行則多半是帳號情境——當初合約發給的 email 與租客實際登入帳號不同（如租客用 FB ",
+      "similarity": 0.9407,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "7-2",
       "n": 7,
       "rank": 2,
       "utterance": "3F 那間八月的租金帳單我找不到",
-      "kb_id": 3927,
-      "kb_question_summary": "租客看不到帳單 三條件與信箱情境",
-      "kb_answer_excerpt": "租客要在系統看到帳單，三個條件缺一不可：一、租客是該帳單的付款方；二、帳單已發送（「待發送」「排定發送」狀態租客都看不到，發送後才可見）；三、帳單未封存。三者都符合仍看不到時，依官方排查：請租客確認左上角已切換成「租客」角色（而非房東視角）、確認在「帳務管理」頁面；仍不行則多半是帳號情境——當初合約發給的 email 與租客實際登入帳號不同（如租客用 FB ",
-      "similarity": 0.9407,
+      "kb_id": 4650,
+      "kb_question_summary": "新增帳單 手動開帳單給租客 操作入口",
+      "kb_answer_excerpt": "要在系統新增帳單，到「待發送帳單」頁面即可直接新增：選擇物件、設定繳費截止日與收費項目金額後建立，確認無誤再發送給租客。",
+      "similarity": 0.7379,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "8-1",
@@ -217,7 +225,8 @@
       "kb_answer_excerpt": "點退帳單是租客同意點退後系統自動產生的，金額算法是：水電費等結算費用，加上設備損壞賠償和違約金，再扣掉應退還的押金。帳單總額是負數就代表要退錢給租客，是正數則代表押金扣完還不夠，租客需要補繳差額。舉例：押金 20,000 元、水電結算 700 元、設備賠償 5,000 元，帳單總額就是 -14,300 元，即退還租客 14,300 元。每個項目都會列在帳單明",
       "similarity": 0.8769,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "8-2",
@@ -229,31 +238,34 @@
       "kb_answer_excerpt": "點退完成後系統自動產生點退帳單，內容包含：（1）水電等未結費用：依點退時記錄的度數結算；（2）設施損壞賠償：依點退檢查結果列出的賠償金額；（3）其他費用：房東自訂的額外費用。點退帳單的到期日依合約設定或點退當天計算。帳單金額會與押金互抵，多退少補。",
       "similarity": 0.8632,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "10-1",
       "n": 10,
       "rank": 1,
       "utterance": "滯納金到底是用什麼方式在計算的？",
-      "kb_id": 3939,
-      "kb_question_summary": "滯納金怎麼收這麼多",
-      "kb_answer_excerpt": "",
-      "similarity": 0.9608,
+      "kb_id": 3531,
+      "kb_question_summary": "滯納金帳單產生 付款後結算規則",
+      "kb_answer_excerpt": "系統的滯納金有兩種機制，依團隊採用而定：（一）延遲金（付款後結算）：租客實際付款當下若逾期，以「租金 ×（實際付款日 − 繳費期限 − 緩衝天數）× 費率」結算，開立一張獨立的延遲金帳單（到期日為產生當日），帳單附完整計算過程備註；（二）排程滯納金（對逾期未付款的帳單開單）：每日排程檢查逾期帳單並依團隊設定開立滯納金帳單。共同規則：每張逾期帳單各自結算、不累",
+      "similarity": 0.9002,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "10-2",
       "n": 10,
       "rank": 2,
       "utterance": "滯納金到底是用什麼方式在計算的？",
-      "kb_id": 3940,
-      "kb_question_summary": "這筆延遲金是怎麼算的",
-      "kb_answer_excerpt": "",
-      "similarity": 0.9524,
+      "kb_id": 3532,
+      "kb_question_summary": "滯納金客製版本 固定金額階梯式",
+      "kb_answer_excerpt": "滯納金的客製版本行為差異：（1）延遲金版（付款後結算）：百分比計算、帳單附三行式計算過程備註、到期日為產生當日；（2）階梯式版（排程對未付款開單）：以租金乘固定費率（不乘逾期天數），逾期超過門檻（預設 30 天）改用加重費率，每張帳單最多開兩筆，到期日為合約迄日；（3）固定金額版（排程對未付款開單）：逾期滿一定天數（如 5 天）收取一次固定金額，到期日為當月",
+      "similarity": 0.8999,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "11-1",
@@ -265,19 +277,21 @@
       "kb_answer_excerpt": "帳單金額的來源是「合約上的租金」，不是物件的刊登租金——簽約時租金已快照進合約，之後每期帳單都從合約租金計算，已產生的帳單金額也是寫死的存值。所以調整物件刊登價不會影響任何帳單，已產生和未來的都不會。要改實際收款金額必須改合約租金：已簽署的合約不能直接改，出口是複製重建新約重簽，或填資料異動申請書由客服評估調整（只調資料不重簽，PDF 藍字與收款會不一致，風",
       "similarity": 0.932,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "11-2",
       "n": 11,
       "rank": 2,
       "utterance": "已經發給房客的帳單還能改金額嗎",
-      "kb_id": 3934,
-      "kb_question_summary": "帳單金額怪怪的 跟預期不一樣",
-      "kb_answer_excerpt": "",
-      "similarity": 0.8216,
+      "kb_id": 4642,
+      "kb_question_summary": "帳單品名修改 租金改停車位費",
+      "kb_answer_excerpt": "帳單的「品名」是依合約的租金項目命名的，所以會固定顯示為「租金」，現有合約無法直接改品名。若希望品名顯示為停車位費等其他名稱，需在建立合約時把租金金額設為 0、再單獨設定該筆費用，品項名稱就會依設定的費用名稱顯示；已存在的合約要套用此做法需重新簽立。",
+      "similarity": 0.6508,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "12-1",
@@ -289,31 +303,21 @@
       "kb_answer_excerpt": "大聲公是房東向租客群發訊息的功能：在租客管理頁面選擇要通知的租客，撰寫訊息內容後發送，系統會透過站內通知和 Email 傳達給選定的租客。適合用於公告社區規範、維修通知、節日問候等用途。訊息發送後租客可在通知中心查看。此功能僅限房東/物管角色使用。",
       "similarity": 0.7439,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "13-1",
       "n": 13,
       "rank": 1,
       "utterance": "房客說他早就繳了，可是這邊還是顯示應到帳 = =",
-      "kb_id": 3931,
-      "kb_question_summary": "租客說繳了 錢還沒進來",
-      "kb_answer_excerpt": "",
-      "similarity": 0.8974,
+      "kb_id": 3852,
+      "kb_question_summary": "提前終止後帳單仍產生 需封存",
+      "kb_answer_excerpt": "帳單是提前一個月的 1 號自動產生的，所以辦理提前終止時，終止日之後的帳單可能已經先產生了。這些多出來的帳單系統不會自動處理，需要到帳單總表以合約編號搜尋，把不再收款的帳單批次封存，否則會一直掛在待繳列表。提前解約的違約金則不用另外開帳單——系統會在點退時自動列入點退帳單，與押金一起結算。",
+      "similarity": 0.7847,
       "action_type": "direct_answer",
-      "form_id": null
-    },
-    {
-      "pair_id": "13-2",
-      "n": 13,
-      "rank": 2,
-      "utterance": "房客說他早就繳了，可是這邊還是顯示應到帳 = =",
-      "kb_id": 3936,
-      "kb_question_summary": "租客說看不到帳單 找不到",
-      "kb_answer_excerpt": "",
-      "similarity": 0.8181,
-      "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "14-1",
@@ -325,7 +329,8 @@
       "kb_answer_excerpt": "固定虛擬帳號和一般虛擬帳號的差別在效期和對應關係：一般虛擬帳號是每張帳單產生一組、效期約 3-7 天，過期要重新產生；固定虛擬帳號則是綁定在合約上的永久帳號，不會過期，租客可以隨時匯款，一份合約也可以綁定多組帳號。合約的收款方式設定為固定虛擬帳號後，帳單顯示的就是這組固定帳號，不再每次向銀行申請一次性帳號，續約時也會自動沿用。",
       "similarity": 0.821,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "15-1",
@@ -337,7 +342,8 @@
       "kb_answer_excerpt": "租金依合約設定的月租金額為基準。整月帳單直接收取全額月租；若帳單期間未滿整月（如合約起始日非月初、或提前終止），系統會按實際天數與帳單週期天數的比例計算租金。例如月租 10,000 元，帳單週期 30 天但實際只有 15 天，則租金為 10,000 × (15/30) = 5,000 元。",
       "similarity": 0.7679,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "17-1",
@@ -349,7 +355,9 @@
       "kb_answer_excerpt": "",
       "similarity": 0.695,
       "action_type": "form_fill",
-      "form_id": "jgb_bill_query"
+      "form_id": "jgb_bill_query",
+      "gate_exempt": true,
+      "exempt_reason": "表單／API 觸發列——gate 豁免不判（docstring：『豁免：表單/API 觸發列不判』）"
     },
     {
       "pair_id": "18-1",
@@ -361,31 +369,21 @@
       "kb_answer_excerpt": "租客在超商繳完費、系統狀態卻沒馬上變，是超商通道的正常時程，分四段：一、租客已在超商繳款、超商尚未通知銀行——狀態不會跳；二、超商通知國泰已繳費——帳單轉「待對帳」；三、超商把款項轉出給國泰——帳單轉「已到帳」；四、銀行出款（撥付）為每月 5、15、25 日，遇假日順延至下個銀行營業日。所以超商繳費停在「待對帳」不是異常，等最近的撥付日就會入帳；若過了撥付日",
       "similarity": 0.8617,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "20-1",
       "n": 20,
       "rank": 1,
       "utterance": "逾期要幾天以後才開始算滯那金",
-      "kb_id": 3940,
-      "kb_question_summary": "這筆延遲金是怎麼算的",
-      "kb_answer_excerpt": "",
-      "similarity": 0.8494,
-      "action_type": "direct_answer",
-      "form_id": null
-    },
-    {
-      "pair_id": "20-2",
-      "n": 20,
-      "rank": 2,
-      "utterance": "逾期要幾天以後才開始算滯那金",
       "kb_id": 3531,
       "kb_question_summary": "滯納金帳單產生 付款後結算規則",
       "kb_answer_excerpt": "系統的滯納金有兩種機制，依團隊採用而定：（一）延遲金（付款後結算）：租客實際付款當下若逾期，以「租金 ×（實際付款日 − 繳費期限 − 緩衝天數）× 費率」結算，開立一張獨立的延遲金帳單（到期日為產生當日），帳單附完整計算過程備註；（二）排程滯納金（對逾期未付款的帳單開單）：每日排程檢查逾期帳單並依團隊設定開立滯納金帳單。共同規則：每張逾期帳單各自結算、不累",
       "similarity": 0.7327,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "21-1",
@@ -397,7 +395,8 @@
       "kb_answer_excerpt": "發票開立時點取決於設定：（1）合約層「自動開立發票」開關：開啟後該合約的帳單完成收款後由系統自動開立，無需手動操作；（2）團隊層「預先開立發票」設定：若啟用，系統每日排程依團隊設定的時點提前開立（不必等收款完成）；（3）特例：台大金流（ntupay）的帳單在轉為「已到帳」時即時自動開立。差額發票群組則於每月 1 日排程開立。若發票遲未開出，可查帳單的發票狀態",
       "similarity": 0.7269,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "23-1",
@@ -409,7 +408,8 @@
       "kb_answer_excerpt": "JGB 帳單有三種建立方式：（1）自動產生：合約生效後系統依週期設定自動產生租金帳單；（2）手動建立：管理者可針對單一或多個物件批次建立帳單，自訂收費項目和金額；（3）系統自動觸發：特定事件會自動產生帳單，如點退時產生點退帳單（含押金結算和賠償）、修繕結單時若有費用也會自動產生修繕費帳單。",
       "similarity": 0.8541,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "23-2",
@@ -421,7 +421,8 @@
       "kb_answer_excerpt": "除了線上金流，收款設置也可以建立現金/銀行帳戶收款：可新增多筆帳戶，每筆設定帳戶別名、銀行、戶名和帳號，建好後帳單可以指定用這些帳戶收款。和線上金流的差別在入帳方式：線上金流是租客線上付款、系統自動對帳入帳；銀行帳戶收款則是租客自行轉帳之後，需要您手動在帳單上確認收款，系統才會把帳單標記為已付。",
       "similarity": 0.7875,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "24-1",
@@ -433,31 +434,21 @@
       "kb_answer_excerpt": "續約的新合約簽署完成後，帳單就會自動開始產生，租期從原合約結束日的隔天起算、無縫銜接，租客的固定虛擬帳號也會沿用，繳費帳號不變。和一般合約相同，帳單是提前一個月的 1 號產生；若續約簽得晚（新租期已開始才完成簽署），簽完當下會即刻補產帳單，不足月依比例計算。",
       "similarity": 0.839,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "26-1",
       "n": 26,
       "rank": 1,
       "utterance": "這張的滯納金怎麼比我自己算的還多",
-      "kb_id": 3939,
-      "kb_question_summary": "滯納金怎麼收這麼多",
-      "kb_answer_excerpt": "",
-      "similarity": 0.9506,
+      "kb_id": 3532,
+      "kb_question_summary": "滯納金客製版本 固定金額階梯式",
+      "kb_answer_excerpt": "滯納金的客製版本行為差異：（1）延遲金版（付款後結算）：百分比計算、帳單附三行式計算過程備註、到期日為產生當日；（2）階梯式版（排程對未付款開單）：以租金乘固定費率（不乘逾期天數），逾期超過門檻（預設 30 天）改用加重費率，每張帳單最多開兩筆，到期日為合約迄日；（3）固定金額版（排程對未付款開單）：逾期滿一定天數（如 5 天）收取一次固定金額，到期日為當月",
+      "similarity": 0.7617,
       "action_type": "direct_answer",
-      "form_id": null
-    },
-    {
-      "pair_id": "26-2",
-      "n": 26,
-      "rank": 2,
-      "utterance": "這張的滯納金怎麼比我自己算的還多",
-      "kb_id": 3940,
-      "kb_question_summary": "這筆延遲金是怎麼算的",
-      "kb_answer_excerpt": "",
-      "similarity": 0.873,
-      "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "30-1",
@@ -469,7 +460,8 @@
       "kb_answer_excerpt": "前一位租客退房、要簽給新租客時的銜接流程：（1）先把舊合約收尾——就算押金已經私下退還給租客，仍建議走「點退押金」讓系統結案（點退清單可如實結算，金額列零也可以），舊合約才會正常結束轉歷史；（2）物件不需要刪除也不需要重開新物件——物件資料與合約互相獨立（簽約時已快照），舊約結束後把物件重新「刊登」即可；（3）對新租客走正常建立合約（建約前提是物件為刊登中）",
       "similarity": 0.9231,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "30-2",
@@ -481,31 +473,21 @@
       "kb_answer_excerpt": "帳單是提前一個月的 1 號自動產生的，所以辦理提前終止時，終止日之後的帳單可能已經先產生了。這些多出來的帳單系統不會自動處理，需要到帳單總表以合約編號搜尋，把不再收款的帳單批次封存，否則會一直掛在待繳列表。提前解約的違約金則不用另外開帳單——系統會在點退時自動列入點退帳單，與押金一起結算。",
       "similarity": 0.8915,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "31-1",
       "n": 31,
       "rank": 1,
       "utterance": "發票能不能改成開公司抬頭",
-      "kb_id": 3938,
-      "kb_question_summary": "發票開錯了 要作廢重開",
-      "kb_answer_excerpt": "",
-      "similarity": 0.8355,
-      "action_type": "direct_answer",
-      "form_id": null
-    },
-    {
-      "pair_id": "31-2",
-      "n": 31,
-      "rank": 2,
-      "utterance": "發票能不能改成開公司抬頭",
       "kb_id": 3423,
       "kb_question_summary": "發票補開 特殊處理",
       "kb_answer_excerpt": "發票補開用於處理原應開立但因系統異常或設定問題而未成功開立的發票。操作方式：由管理者在後台客服專區中使用「發票補開」功能，選擇需要補開的帳單，確認發票資訊（買受人、統一編號、載具等）後執行補開。補開的發票會與原帳單關聯，開立成功後狀態同步更新。若補開仍失敗，需檢查發票服務商的 API 狀態或帳單的發票設定是否正確。",
       "similarity": 0.7465,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "34-1",
@@ -517,7 +499,8 @@
       "kb_answer_excerpt": "電費的收法在「建立/編輯合約」的租金費用步驟設定，共六種模式：（1）租金已包含——電費含在租金內不另收；（2）租客自繳——租客自行向台電繳納；（3）每月固定金額；（4）按度數計費——設定每度單價，可另設夏季電價；（5）依當期每度平均電價——依電費單平均電價計收；（6）依儲值電錶設定——台科電儲值電表專用，租客預付儲值扣抵（此模式收款方式限信用卡/ATM/現金",
       "similarity": 0.9449,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "34-2",
@@ -529,31 +512,8 @@
       "kb_answer_excerpt": "租客同意點交後，合約就進入「已點交（執行中）」，點交這一步已經完成，不需要再送出什麼。點交當下抄錄的水電度數，會作為之後帳單的計算基準；帳單依合約週期自動產生，與點交與否無關（未點交也會照常發送帳單）。接下來就是日常管理——收租對帳、修繕處理；合約到期前 30 天起，再依情況走續約或發送點退。",
       "similarity": 0.6741,
       "action_type": "direct_answer",
-      "form_id": null
-    },
-    {
-      "pair_id": "35-1",
-      "n": 35,
-      "rank": 1,
-      "utterance": "狀態一直卡在待發送，是不是哪裡出問題",
-      "kb_id": 3932,
-      "kb_question_summary": "帳單卡在待對帳 狀態一直沒跳",
-      "kb_answer_excerpt": "",
-      "similarity": 0.8527,
-      "action_type": "direct_answer",
-      "form_id": null
-    },
-    {
-      "pair_id": "43-1",
-      "n": 43,
-      "rank": 1,
-      "utterance": "這個月總共收了多少，哪裡看得到",
-      "kb_id": 4640,
-      "kb_question_summary": "帳單收據金額 收據多少錢",
-      "kb_answer_excerpt": "",
-      "similarity": 0.8523,
-      "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "44-1",
@@ -565,7 +525,8 @@
       "kb_answer_excerpt": "租客不同意點交時，這次點交會被退回，合約回到「已簽署」狀態，您會收到通知，也能看到租客填寫的不同意原因。處理方式很單純：依照租客反映的問題修改點交清單，再重新發送一次就好，重發沒有次數限制。另外，如果租客遲遲沒有回應，您也可以先取消這次點交邀請，內容整理好再重發。",
       "similarity": 0.7249,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "44-2",
@@ -577,7 +538,8 @@
       "kb_answer_excerpt": "同一帳號可以同時擁有多個身分（例如既是房東也是租客，或加入多個團隊）。切換方式：點畫面左上角的身分選單，選擇要切換的身分即可。系統會記住你上次使用的身分，下次登入直接落在該身分。提醒：每個身分看到的資料範圍不同——租客的合約、帳單、電表要在租客身分下才看得到，登入後覺得「資料不見了」多半是身分沒切對。",
       "similarity": 0.6539,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "46-1",
@@ -589,31 +551,35 @@
       "kb_answer_excerpt": "租客可用的繳費方式由兩層設定決定：（1）團隊層「收款帳戶設定」：啟用哪些金流商通道（如藍新、永豐、國泰、中信），未啟用的通道所有合約都不能用；（2）合約層「線上付款方式」：建立合約時從團隊已啟用的通道中，選擇這份合約開放哪些付款方式（信用卡、超商、虛擬帳號等）。要調整某位租客的繳費方式，先確認團隊收款帳戶已啟用該通道，再查看該合約的付款設定；已生效合約若無法",
       "similarity": 0.7205,
       "action_type": "direct_answer",
-      "form_id": null
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "47-1",
       "n": 47,
       "rank": 1,
       "utterance": "房客一直反應沒收到帳單通知……",
-      "kb_id": 3936,
-      "kb_question_summary": "租客說看不到帳單 找不到",
+      "kb_id": 3361,
+      "kb_question_summary": "帳單沒到帳 帳單狀態",
       "kb_answer_excerpt": "",
-      "similarity": 0.9342,
-      "action_type": "direct_answer",
-      "form_id": null
+      "similarity": 0.9059,
+      "action_type": "form_fill",
+      "form_id": "jgb_bill_query",
+      "gate_exempt": true,
+      "exempt_reason": "表單／API 觸發列——gate 豁免不判（docstring：『豁免：表單/API 觸發列不判』）"
     },
     {
       "pair_id": "47-2",
       "n": 47,
       "rank": 2,
       "utterance": "房客一直反應沒收到帳單通知……",
-      "kb_id": 3361,
-      "kb_question_summary": "帳單沒到帳 帳單狀態",
-      "kb_answer_excerpt": "",
-      "similarity": 0.9059,
-      "action_type": "form_fill",
-      "form_id": "jgb_bill_query"
+      "kb_id": 3927,
+      "kb_question_summary": "租客看不到帳單 三條件與信箱情境",
+      "kb_answer_excerpt": "租客要在系統看到帳單，三個條件缺一不可：一、租客是該帳單的付款方；二、帳單已發送（「待發送」「排定發送」狀態租客都看不到，發送後才可見）；三、帳單未封存。三者都符合仍看不到時，依官方排查：請租客確認左上角已切換成「租客」角色（而非房東視角）、確認在「帳務管理」頁面；仍不行則多半是帳號情境——當初合約發給的 email 與租客實際登入帳號不同（如租客用 FB ",
+      "similarity": 0.8879,
+      "action_type": "direct_answer",
+      "form_id": null,
+      "gate_exempt": false
     },
     {
       "pair_id": "50-1",
@@ -625,34 +591,32 @@
       "kb_answer_excerpt": "已付款但帳單未更新是最常見的客服問題。原因完全藏在後端，用戶看不到。",
       "similarity": 0.8937,
       "action_type": "form_fill",
-      "form_id": "jgb_payment_diagnosis"
-    },
-    {
-      "pair_id": "50-2",
-      "n": 50,
-      "rank": 2,
-      "utterance": "講起來有點亂，就是錢明明進來了，但單子的狀態沒有跟著變",
-      "kb_id": 3932,
-      "kb_question_summary": "帳單卡在待對帳 狀態一直沒跳",
-      "kb_answer_excerpt": "",
-      "similarity": 0.8116,
-      "action_type": "direct_answer",
-      "form_id": null
+      "form_id": "jgb_payment_diagnosis",
+      "gate_exempt": true,
+      "exempt_reason": "表單／API 觸發列——gate 豁免不判（docstring：『豁免：表單/API 觸發列不判』）"
     }
   ],
   "execution_conditions": {
     "git_head": "afe02c9",
     "gate_model_resolved": "gpt-4o-mini（RELEVANCE_GATE_MODEL/LLM_MODEL 未設 → OPENAI_MODEL）",
-    "gate_model_parity_note": "dev compose 的行為設定走 env_file 與 production **同源**（設計如此），但本輪**未**檢視 production 環境變數本身 → 模型 parity 為**設計推定**，非實查。若日後確認 production 使用不同模型，本 replay SHALL 標為 local/current-model discrimination",
-    "reranker_image": "sha256:fceedf9c18f02a565cb02f6633135a65e1baac2dc245ef974180101feaf2985f",
+    "gate_model_parity_note": "dev compose 行為設定與 production **同源 env_file**（設計如此），但**未實查 production 環境變數** → 模型 parity 為設計推定。若日後確認不同，本 replay SHALL 標為 local/current-model discrimination，不得稱 production gate accuracy",
+    "reranker_image": "sha256:fceedf9c18f0…",
     "corpus_digest": "918b69ce70fbb8f1660819c3774eb24b",
     "flags": {
       "PREENTRY_ROUTABILITY_GATE": "false",
       "RELEVANCE_GATE_ENABLED": "未設（＝啟用）",
       "RELEVANCE_GATE_SKIP_VEC": "未設（＝不跳過）"
     },
-    "data_parity": "業主回報 production data == local data（口頭，未貼查詢輸出）",
-    "scope_limit": "⚠️ 資料一致 ≠ 執行結果一致；且本輪**不能**推出 production frequency——線上有多少 request 走到這道 gate、多少被前面的 Face early-return 截走，仍是 runtime 問題"
+    "data_parity": "業主回報 production data == local data（口頭）",
+    "scope_limit": "資料一致 ≠ 執行結果一致；本輪不可推出 production frequency"
   },
-  "pairs_digest": "a9c8cb03396861d3"
+  "fidelity_fix": "首版漏跑 `_drop_empty_answer_rows`，44 pairs 中 18 筆知識內容為空——那是 gate 在 production 收不到的輸入。已改為**直接複用 production 函式**並複刻其執行順序，pairs 44→36；其餘 2 筆空內容為表單觸發列（gate 豁免），標 `gate_exempt` 並排除於鑑別力分母",
+  "denominators": {
+    "pairs_total": 36,
+    "gate_exempt": 3,
+    "judged_pairs": 33,
+    "utterances_with_pairs": 25,
+    "no_hit_utterances": 25
+  },
+  "pairs_digest": "9f4929b586d29cbc"
 }
