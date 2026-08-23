@@ -1121,5 +1121,10 @@
     "why_blocks_had_no_effect": "11 筆判 block 者：8 筆本來就 single（無 Hint 可抑制）、3 筆落在 Level A rollout scope 之外的 Face（物件操作引導／退租收尾等）→ gate_applies_to=False → 未抑制",
     "abstain_rate": "32/50 = 64%（正反證據皆空，lexical ruleset 對自然說法覆蓋不足）"
   },
-  "THRESHOLD_NOTE": "⚠️ **holdout 的數值通過門檻從未被凍結**（Req.9.3 只定 ≥30 可判定案例，未定 accuracy 門檻）。依 Req.3.5 紀律，**SHALL NOT 於看見結果後才設門檻**——本檔只陳述量測值與歸因，PASS／REFUTED 由業主裁定。"
+  "THRESHOLD_NOTE": "⚠️ **holdout 的數值通過門檻從未被凍結**（Req.9.3 只定 ≥30 可判定案例，未定 accuracy 門檻）。依 Req.3.5 紀律，**SHALL NOT 於看見結果後才設門檻**——本檔只陳述量測值與歸因，PASS／REFUTED 由業主裁定。",
+  "BURNED": {
+    "status": "BURNED（永久）",
+    "burned_at": "2026-08-24",
+    "rule": "candidate 已接觸本資料集 → **不得**補 regex／擴 scope 後重跑這 50 句證明新版泛化；僅得用於 failure analysis。新版須另取真正未見的 holdout。"
+  }
 }

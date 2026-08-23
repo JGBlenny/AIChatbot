@@ -30,17 +30,23 @@ def _m():
 
 
 @pytest.mark.req("routing-disambiguation:3.5")
-def test_production_manifest_holdout_is_not_run():
-    """⚠️ 本檔最重要的一條：**現階段 production manifest 不得宣稱 passed**。"""
+def test_production_manifest_holdout_is_never_passed():
+    """⚠️ 本檔最重要的一條：**production manifest 不得宣稱 passed**。
+
+    任務 6 已於 2026-08-24 裁決 **REFUTED**，故狀態由 `not_run` 轉為 `failed`。
+    ⚠️ 兩者在啟用守門上同樣拒絕，但語義不得互換：
+    `failed` ＝**已驗且未通過**（本次反證），`not_run` ＝**尚未驗**。
+    改回 `not_run` 會抹掉反證；改成 `passed` 則是本 spec 一路在防的事。
+    """
     m = _m()
-    assert m.current_manifest().holdout.status == "not_run", (
-        "production manifest 宣稱 holdout 已過——任務 6 尚未裁決，"
-        "這是把『量尺測得出放行路徑』誤當成『候選已通過驗證』")
+    status = m.current_manifest().holdout.status
+    assert status != "passed", "production manifest 宣稱 holdout 已過——與任務 6 的 REFUTED 裁決矛盾"
+    assert status == "failed", f"任務 6 已裁決 REFUTED，狀態應為 failed（實得 {status!r}）"
 
 
 @pytest.mark.req("routing-disambiguation:3.5")
 def test_production_manifest_cannot_enable_the_gate_today():
-    """即使其他 digest 都對得上，`not_run` 仍須擋下。"""
+    """即使三重 digest 全部相符，`failed` 仍須擋下——這正是 1.1 特別鎖的那一路。"""
     m = _m()
     with pytest.raises(m.GateNotEnablable):
         m.assert_gate_enablable(m.current_manifest(),

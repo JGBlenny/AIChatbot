@@ -499,5 +499,10 @@
       "utterance": "講起來有點亂，就是錢明明進來了，但單子的狀態沒有跟著變",
       "evidence": "billing_flow 自述逐字:『租客說繳了但錢沒進來／帳單狀態沒動』"
     }
-  ]
+  ],
+  "BURNED": {
+    "status": "BURNED（永久）",
+    "burned_at": "2026-08-24",
+    "rule": "candidate 已接觸本資料集 → **不得**補 regex／擴 scope 後重跑這 50 句證明新版泛化；僅得用於 failure analysis。新版須另取真正未見的 holdout。"
+  }
 }

@@ -83,9 +83,20 @@ def ruleset_digest(version: str, positive: Mapping[str, str], counter: Mapping[s
 def current_manifest() -> RulesetManifest:
     """當前規則集的 manifest。
 
-    ⚠️ `holdout.status` **恆為 `not_run`，直到任務 6 的 unseen holdout 做出裁決**。
-    此處不得先寫 `passed`——量尺測得出「PASS 時會放行」，
-    **不等於** production manifest 現在可以寫 PASS。
+    ⚠️ **任務 6 已於 2026-08-24 裁決：`REFUTED`** → `holdout.status = "failed"`。
+
+    裁決依據不是「準確率低於某條事後訂的門檻」（該門檻從未凍結，事後訂即違反 Req.3.5），
+    而是一個**不依賴數值的結構性反證**：
+
+    ```text
+    50 筆未見語料，gate ON 與 OFF 的 routing 逐筆完全相同 → routing effect = 0/50
+    block 11 筆，實際抑制 Hint = 0 筆
+    abstain 32/50 = 64%
+    ```
+
+    ⚠️ `failed` 與 `not_run` **在啟用守門上同樣拒絕**，但語義不同、且不得互換：
+    前者代表**已驗且未通過**，後者代表**尚未驗**。寫成 `not_run` 會抹掉這次反證。
+    ⚠️ **SHALL NOT** 因為想讓 gate 可啟用而把它改回 `not_run` 或改成 `passed`。
     """
     from services.instance_evidence import (COUNTER_PATTERNS, POSITIVE_PATTERNS,
                                             InstanceEvidenceExtractor)
@@ -95,7 +106,13 @@ def current_manifest() -> RulesetManifest:
         positive_patterns=POSITIVE_PATTERNS,
         counter_patterns=COUNTER_PATTERNS,
         digest=ruleset_digest(version, POSITIVE_PATTERNS, COUNTER_PATTERNS),
-        holdout=HoldoutRecord(status="not_run"),
+        holdout=HoldoutRecord(
+            status="failed",
+            ruleset_digest=ruleset_digest(version, POSITIVE_PATTERNS, COUNTER_PATTERNS),
+            protocol_digest=ACTIVE_PROTOCOL_DIGEST,
+            dataset_id="holdout-2026Q3-D1",
+            dataset_digest="84134fc929554f00",   # labels_digest bc76fb74215d9852
+        ),
     )
 
 

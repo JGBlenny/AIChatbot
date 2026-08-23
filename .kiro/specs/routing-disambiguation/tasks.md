@@ -284,25 +284,25 @@ protocol v1 PASS
 
 ⚠️ **順序不可對調**——五步做完才跑 extractor。
 
-- [ ] 6.1 **🧠主** 自 exposure KB／domains 抽樣，記錄抽樣方法與 seed。
+- [x] 6.1 **🧠主** 自 exposure KB／domains 抽樣，記錄抽樣方法與 seed。
   _Requirements: 9.3_
 
-- [ ] 6.2 **🧠主** 取得**未參與 ruleset 建構**的 user utterances
+- [x] 6.2 **🧠主** 取得**未參與 ruleset 建構**的 user utterances
   （優先取真實回報／既有語料；生成者須與規則作者隔離）。
   ⚠️ **不得**「抽 30 個 KB → 照其 wording 改寫 query」——那與 source text 高度同源，
   是換個形式的 overfit。
   _Requirements: 9.3, 9.2_
 
-- [ ] 6.3 **🧠主** **盲標**：在不知道 extractor 判定結果的情況下做產品標註，
+- [x] 6.3 **🧠主** **盲標**：在不知道 extractor 判定結果的情況下做產品標註，
   完成即**凍結 labels** 並計入 `dataset_digest`。
   ⚠️ rule 與 instance **兩側都必須有案例**——只驗一側會重演前案的單邊假綠。
   _Requirements: 9.3, 1.3_
 
-- [ ] 6.4 **🧠主** 最後才跑 extractor，產出 `HoldoutRecord`
+- [x] 6.4 **🧠主** 最後才跑 extractor，產出 `HoldoutRecord`
   （status／ruleset digest／protocol digest／dataset id＋digest）。
   _Requirements: 3.5_
 
-- [ ] 6.5 **🧠主 🔍V** **裁決**：
+- [x] 6.5 **🧠主 🔍V** **裁決**：
 
   | 結果 | 處置 |
   |---|---|
@@ -316,6 +316,10 @@ protocol v1 PASS
 ---
 
 ## 7. Level A 範圍宣告與啟用
+
+> ⛔ **本節 SHALL NOT 執行**——任務 6 已裁決 **REFUTED**（2026-08-24）。
+> candidate 不得進入 activation；真實 manifest 為 `holdout.status = "failed"`，
+> `assert_gate_enablable` 於三重 digest 全部相符時**仍拒絕**。
 
 - [ ] 7.1 **🧠主** 依實測宣告 Req.2.5 的**適用範圍**：
   Level A（帳單域驗證）或 Level B（跨 exposure surface，需 ≥30 跨域可判定案例）。
@@ -1176,3 +1180,96 @@ explanation／anomaly 問句，後者仍依 Face scope 規則另行分流。
 
 ⚠️ **Task 6 不得沿用 5.4 的程序**（5.4 為非盲標，已揭露）：
 holdout SHALL 先取 unseen utterances → **盲標** → **freeze labels** → 才跑 candidate。
+
+---
+
+## ⛔ Task 6（2026-08-24）：**REFUTED**
+
+> **Candidate REFUTED：在真正未見語料上，候選機制沒有改變任何一筆 routing outcome；
+> 其失敗同時來自 lexical evidence coverage 不足與 Level-A routing authority 過窄。**
+
+⚠️ **本裁定不建立任何事後 accuracy 門檻**。Req.9.3 只凍結「≥30 可判定案例」，
+從未凍結 accuracy threshold；看到 `28/41` 才補一條門檻會違反本 spec 自己的量測紀律。
+裁定依據是**不依賴數值的結構性反證**。
+
+### 證據分層
+
+```text
+Holdout integrity
+✅ 50 unseen utterances（隔離作者，tool_uses=0）
+✅ D1 candidate-isolated ／ D2 candidate-blind（皆 tool_uses=0）
+✅ 41 exactly judgeable ≥ 30
+✅ labels frozen before candidate exposure
+   author prompt de4a78c7e44fd865 → utterances 84134fc929554f00 → labels bc76fb74215d9852
+
+Observed quality（分側，不得只給 aggregate）
+rule/single              23/33
+instance route            7/8
+instance exact facet      5/8
+overall exact            28/41
+（route-level-only 5 筆、undecidable 4 筆 **不併入**核心成功率）
+
+Structural falsifier
+gate ON vs OFF routing delta = **0/50**
+
+Mechanism findings
+abstain                  32/50（64%）
+block                    11/50
+effective suppression     **0/50**
+```
+
+### 為何 0/50 足以 REFUTED（不需數值門檻）
+
+candidate 存在的目的是作為 **routing intervention**：
+
+```text
+unseen query → 取得 applicability evidence → authorization gate
+→ 修正過寬 Routing Hint → 改變錯誤 Face entry
+```
+
+binary falsifier：**有沒有任何 holdout case 因 candidate 而得到不同的 routing outcome？**
+→ **沒有。** 訊號即使產生，也沒有在未見分布上完成它存在的產品作用。
+
+### 兩個失敗原因，分開記，兩者都成立
+
+**A. Signal coverage failure**：`abstain 32/50 = 64%`。
+P3 原本只顯示「保義改寫會讓 lexical counter signal 掉失」；
+holdout 把它升格為「**自然語句的大多數沒有形成足以作 decision 的 lexical evidence**」
+——已非幾個 pattern 少寫的 isolated bug。
+
+**B. Routing authority／scope failure**：11 個 block 中 8 個本來就 single、
+3 個要救的 routing 落在 Level A scope 外 → **實際 suppression 0**。
+病灶已不只是「`bill_diagnosis` 的 content KB Hint 太寬」，而是
+**rule-style knowledge questions 會被不同 Face family 的 Routing Hints 吸走**
+（實測落點：物件操作引導／退租收尾／建約引導）。單一 `bill_diagnosis` 的 Level-A rollout
+本來就不足以承擔 cross-surface 問題。
+
+### ⛔ 明令禁止的「補救」
+
+```text
+❌ 多補幾個 regex               → 只處理 A，且這 50 句已燒毀，不能拿來證明新版
+❌ 把 Level A allowlist 擴大     → 只處理 B，且不回答「哪些 Face 應納入 suppression responsibility」
+❌ 兩個一起做 → 宣稱 candidate v2 → 需要**新的設計版本 ＋ 新的 unseen holdout**
+```
+
+### holdout 永久燒毀
+
+三個 evidence 檔已標 `BURNED`：candidate 已接觸，**不得**補 regex／擴 scope 後重跑同一批
+證明新版泛化；僅得用於 failure analysis。
+
+### Task 5 的 PASS 不撤回
+
+```text
+Task 5 PASS      → frozen development acceptance 下 technically regression-safe
+Task 6 REFUTED   → unseen distribution 下核心 candidate 不成立
+```
+
+兩者不矛盾，正是這套流程存在的意義：
+**Task 5 證明 candidate 沒有被已知案例反證；Task 6 證明 candidate 不能泛化到未見資料。**
+P3 的 adverse finding 至此取得外部驗證，不再是孤立現象。
+
+### 下一步的身分定位
+
+failure analysis 是 **REFUTED candidate 的 post-mortem**，
+**不是**「再分析一下看要不要判 REFUTED」。它用來決定下一版該研究什麼：
+結束本案另立 v2，或在本案回到 design phase。
