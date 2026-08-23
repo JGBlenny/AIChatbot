@@ -1,8 +1,8 @@
 {
   "feature_name": "routing-disambiguation",
   "created_at": "2026-08-23T09:27:38Z",
-  "updated_at": "2026-08-23T10:30:00Z",
-  "phase": "design-generated",
+  "updated_at": "2026-08-23T10:55:00Z",
+  "phase": "tasks-generated",
   "language": "zh-TW",
   "project_description": "同一語義主題同時包含教學／規則型與 instance-specific 問句時，routing 應在哪一層取得足夠訊號把兩者可靠分開。起點問題已由 spec conversational-routing-execution 的 3.3／3.4 證實，**不需重做「有沒有問題」的 discovery**：(a) 3.3 evidence packet 判定 HARNESS_DRIFT 0／EXPECTATION_DRIFT 0／REGRESSION 3，根因為 routing metadata overreach（20260731 T-1 把面向分類掛到三筆內容型 KB，使規則問句也被帶進 Face）；(b) 3.4 嘗試的 in-scope 修法（卸下 Hint ＋ 新增 instance-oriented 空答案錨點）已由獨立 verifier REFUTED 並 revert——合理 instance query 會掉回 single（差 0.003）、合理 rule query 反被錨點拉進 Face（差 0.004），判別完全依賴 0.003～0.005 的相似度競爭，corpus 或 semantic-model 一動即翻面；(c) 雙向 regression suite 已上線並證明兩邊共用同一份 metadata、以現行機制拆不開（177 passed／4 known-red）。本案研究判別訊號應落在哪一層，候選：lexical／structural instance signal、routing-specific metadata 或 trigger representation、intent stage、applicability gate、clarification、KB responsibility 拆分。明確不做：更多 anchor tuning、對測試集調向量排名、在既有 spec 內偷塞全域 routing heuristic（Req.8 排除）。",
   "approvals": {
@@ -12,10 +12,10 @@
     },
     "design": {
       "generated": true,
-      "approved": false
+      "approved": true
     },
     "tasks": {
-      "generated": false,
+      "generated": true,
       "approved": false
     }
   },
