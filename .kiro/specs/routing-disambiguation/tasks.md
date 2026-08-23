@@ -191,7 +191,7 @@ protocol v1 PASS
   若它偷讀分數，整個方案退化為「換個地方做相似度競爭」（Req.2.3）。
   _Requirements: 2.3, 3.1, 3.4_
 
-- [ ] 2.6 **🧠主** 建立 `RulesetManifest`：規則集內容雜湊、版本、`HoldoutRecord`。
+- [x] 2.6 **🧠主** 建立 `RulesetManifest`：規則集內容雜湊、版本、`HoldoutRecord`。
   規則集為**版本化資產**，變更即須重跑並保留前版結果。
   _Requirements: 3.5, 7.2_
 
@@ -773,3 +773,52 @@ fail-open 的正確位置在 production seam（任務 4.4），**不在抽取器
 ⚠️ 寫本檔時抓到一筆**自己的測試 bug**（大小寫比對寫錯，恆真的 `import` 檢查）——
 已刪除該冗餘檢查（AST 那條本就涵蓋任意位置的 import）。屬 1.5 分類的 **C**，
 發現當下即修，未進 commit。
+
+### ✅ 2.6（2026-08-23）—— Task 2 收束
+
+`services/instance_reference_gate.py`（manifest ＋ 啟用守門；**不含 gate 判定，那是 3.1**）
+＋ `tests/unit/decision/test_ruleset_manifest_req.py`（6 筆）。
+
+**硬邊界已成為可執行契約**：
+
+```text
+ruleset digest   ✓
+protocol digest  ✓
+dataset digest   ✓
+holdout not_run  ✗   → 仍不得啟用
+```
+
+`current_manifest().holdout.status` **恆為 `not_run`**，直到任務 6 的 unseen holdout 裁決。
+⚠️ **測得出「PASS 時會放行」≠ production manifest 現在可以寫 PASS**——
+第四種路徑用 synthetic manifest 測邏輯，不代表真實候選已通過 holdout。
+
+其餘鎖定：規則集內容雜湊（正向／反向／版本任一改動 → digest 變 → 舊 PASS 失效）、
+manifest digest 由**當前實際生效**的規則集算出（非寫死字串）、
+pattern 表以 `MappingProxyType` 保**副本**（改來源 dict 不動既有 manifest）。
+
+**1.1 六條 B → A 升格**：再跑 5 個突變（M15 退回 `result != None`／M16 拿掉 ruleset 綁定／
+M17 拿掉 protocol 綁定／M18 降級為 warning／**M19 恆拒**），**全數被殺、0 survived**，
+六條各自至少被一個殺掉。1.x 契約母體 32：**A 28／B 4／C 0**，
+剩下 4 條 B 全部指向任務 4.1。
+
+**2.0 的上膛條件已修正**：原本靠「模組存在」上膛，但 2.6 正好建立了同一個模組
+（manifest 用），會讓它變成 `AttributeError` 紅、看起來像 falsifier 失敗。
+改為以**判定函式存在**上膛（`hasattr(gate, "instance_reference_gate")`）。
+
+---
+
+## ✅ Task 2 收束判定
+
+> **問句側 signal 是否已成為 deterministic、版本化、可稽核，
+> 但尚未獲准影響 production routing 的 candidate asset？**
+
+**是。** 四項逐一有據：
+
+| 主張 | 依據 |
+|---|---|
+| deterministic | 2.5：零 LLM／零 IO／不讀相似度／同輸入跨 20 次跨實例同輸出 |
+| 版本化 | 2.6：規則集內容雜湊，任一 pattern 或版本變動即改 digest |
+| 可稽核 | 2.1／2.5：`spans` 保存命中片段且必在原文中；manifest 綁定三重 digest |
+| **尚未獲准影響 routing** | 2.6：`holdout=not_run` → `assert_gate_enablable` 拒絕；**seam 尚未串接**（任務 4.2）|
+
+**下一步進 Task 3**——那是這個 signal **第一次**取得 routing decision semantics。

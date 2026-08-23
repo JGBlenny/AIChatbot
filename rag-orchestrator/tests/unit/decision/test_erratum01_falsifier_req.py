@@ -50,7 +50,12 @@ def test_undecided_utterances_are_never_blocked(utterance):
     """
     gate = pytest.importorskip(
         "services.instance_reference_gate",
-        reason="[env] gate 尚未實作（任務 3.1）——本條於 gate 落地後自動生效")
+        reason="[env] gate 模組尚未存在（任務 3.1）——本條於 gate 落地後自動生效")
+    # ⚠️ 上膛條件是**判定函式**存在，不是模組存在：任務 2.6 已建立同一個模組
+    #    （manifest／啟用守門），若只靠模組存在就上膛，這裡會變成 AttributeError 紅，
+    #    看起來像 falsifier 失敗，其實只是 gate 還沒寫。
+    if not hasattr(gate, "instance_reference_gate"):
+        pytest.skip("[env] gate 判定尚未實作（任務 3.1）——本條於判定函式落地後自動生效")
     from services.instance_evidence import InstanceEvidenceExtractor
 
     evidence = InstanceEvidenceExtractor().extract(utterance)

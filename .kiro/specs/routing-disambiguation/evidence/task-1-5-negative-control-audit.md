@@ -165,3 +165,30 @@ C contract defect                  0 / 32
 
 ⚠️ **分母變動必須明記**：本輪 A 的絕對數未變（22），
 但若只更新分子而不更新分母，覆蓋率會被讀成上升。
+
+## 附記二（2026-08-23，任務 2.6 之後）：1.1 六條 **B → A 升格**
+
+`services/instance_reference_gate.py`（manifest ＋ 啟用守門）落地後，
+1.1 六條全綠。依 1.5 紀律，**綠不等於有效**，故再跑一輪突變：
+
+| ID | 突變內容 | 被殺的 test ID |
+|---|---|---|
+| M15 | 啟用守門退回原設計 `result != None`（只防 missing、不防 failed）| not_run／failed／not_downgraded |
+| M16 | 拿掉 ruleset digest 綁定 | passed_on_a_different_ruleset |
+| M17 | 拿掉 protocol digest 綁定 | passed_under_a_different_protocol |
+| M18 | 拒絕降級為 warning（印訊息後放行）| not_run／failed／not_downgraded |
+| M19 | 守門恆拒（恆紅）| allow_only_when_all_three_match |
+
+**5 個突變、全數被殺、0 survived**；六條各自至少被一個突變殺掉
+（含**恆紅方向**的 M19——只守恆綠不夠）。
+
+```text
+1.x 契約母體 32（不含 Task 2 自身的測試，另行追蹤）
+
+A semantic effectiveness proven   28 / 32   ← ＋1.1 六條
+B scaffold（待任務 4.1）             4 / 32   ← 1.4 的成員資格二 ＋ 兩層分離二
+C contract defect                   0 / 32
+```
+
+⚠️ 剩下 4 條 B 全部指向**任務 4.1**（`is_instance_requiring_face`／
+`in_gate_rollout_scope`／`gate_applies_to`），與 erratum 01 的兩層契約同步落地才能升格。
