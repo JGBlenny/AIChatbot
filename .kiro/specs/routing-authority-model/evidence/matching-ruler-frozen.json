@@ -1,0 +1,48 @@
+{
+  "task": "matching ruler derivation（依 premises commit 3bcfb94）",
+  "premises_commit": "3bcfb94",
+  "label_blind": true,
+  "outputs_withheld": [
+    "配對候選",
+    "適合配對的 utterance",
+    "applicability labels",
+    "candidate/member outputs",
+    "實際 opposite-pair 數"
+  ],
+  "population": {
+    "utterances_total": 70,
+    "with_gap": 26,
+    "excluded_lt2_rows": 44,
+    "sources": [
+      "v1 holdout utterances（僅取分數）",
+      "protocol v1 case sets"
+    ]
+  },
+  "score_field": "similarity（production final score）",
+  "matching_statistic": "g = |similarity(rank1) − similarity(rank2)|，後處理後 ≥2 列者",
+  "descriptive_statistics": {
+    "n": 26,
+    "min": 0.000272,
+    "max": 0.281187,
+    "mean": 0.089755,
+    "median": 0.058928,
+    "stdev": 0.082942,
+    "p10": 0.01219,
+    "p25": 0.025672,
+    "p75": 0.145493,
+    "p90": 0.204349
+  },
+  "derivation_algorithm": "tolerance = median(g)（事前指定，無備選）",
+  "TOLERANCE": 0.058928,
+  "matching_rule": {
+    "same_routing_category": true,
+    "same_relevant_face_responsibility_context": true,
+    "score_proximity": "abs(score_a - score_b) <= 0.058928",
+    "opposite_ground_truth_applicability": true
+  },
+  "minimum_required_pairs": 20,
+  "insufficient_consequence": "實配 < 20 → INSUFFICIENT_EVIDENCE；不得放寬 tolerance／換統計量／擴 population",
+  "frozen_at": "2026-08-24",
+  "frozen_note": "⚠️ tolerance 於**得知任何 opposite-pair 產量之前**算出並凍結。依 premises：實配 <20 → INSUFFICIENT_EVIDENCE，**不得**放寬 tolerance／換統計量／擴 population。",
+  "ruler_digest": "1e6afd527d2ed79e"
+}
