@@ -1,6 +1,8 @@
 # D3 representation proposal（v2）：責任宣告能否從枚舉清單換成可泛化表示
 
 > 2026-08-24｜語言 zh-TW
+> **v2 裁定：APPROVED（業主）**——B／C **仍未通過 G1**，不得 freeze member-2；
+> 查核程序見 `g1-audit-protocol-frozen.md`（凍結於讀取任何 source 內容之前）。
 > **v1 裁定：REVISE / MUST-FIX（業主，非 reject）**——verifier 打穿的是「B／C 已具備准入資格」
 > 這個論證，**不是**把「從開放措辭枚舉改成組合式 responsibility representation」這個方向反證掉。
 > 本版回應 M1／M2／M3／M4 ＋ 兩項更正。v1 見 git `d88df25`。
@@ -329,7 +331,9 @@ Round 1 的 `過度放行 0` 是目前唯一的好性質，**不得在新版丟�
   ↓
 步驟 2  review representation only（本版待審）
   ↓
-步驟 3  **G1 執行**：由獨立 authoritative source 導出 dimensions 與 domains
+步驟 2.5 **freeze G1 audit protocol**（已完成：`g1-audit-protocol-frozen.md`）
+  ↓
+步驟 3  **G1 執行**：依該協議、由獨立 authoritative source 導出 dimensions 與 domains
         （唯讀查核；不改任何檔、不進 production seam）
         → 任一層無法證明有限 → **B／C 退場**，D3 回到 member-shape discovery
   ↓
