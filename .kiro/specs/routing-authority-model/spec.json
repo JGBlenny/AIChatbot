@@ -1,7 +1,7 @@
 {
   "feature_name": "routing-authority-model",
   "created_at": "2026-08-24T12:30:00Z",
-  "updated_at": "2026-08-24T18:30:00Z",
+  "updated_at": "2026-08-24T21:00:00Z",
   "phase": "requirements-approved",
   "language": "zh-TW",
   "predecessor": {
@@ -80,6 +80,20 @@
       "derived_from": "R-e discovery — 結局 C（responsibility-binding surface 內無既有 qualified R-e，且不可機械導出）",
       "scope_limit": "audited architecture only —— 不得擴寫為『整個 production 不存在』",
       "note": "**不改寫已凍結的 R1–R5**；以獨立 derived design constraint 記錄，requirements approvals 未變動"
+    }
+  },
+  "external_dependencies": {
+    "responsibility_governance_origin": {
+      "status": "UNAVAILABLE — B/C unresolved",
+      "recorded_in": "authority-origin-discovery-closure.md",
+      "provenance_commit": "d5cc0fa（repo-side inventory）",
+      "must_identify_before_carrier_activation": [
+        "authorized responsibility decision owner / role",
+        "approval 或 veto semantics",
+        "enrollment authority for new Faces",
+        "versioned normative decision artifact"
+      ],
+      "note": "**不是** requirement 層新條文（未新增 R7）；亦不聲稱歷史上不存在治理。`not evidenced` ≠ `does not exist`。在 origin 被識別前，設計上 authority_origin = unresolved，不得由 seed／Face self-declaration／categories／LLM verdict／實作者決策頂替。"
     }
   }
 }
