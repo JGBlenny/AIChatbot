@@ -426,11 +426,31 @@ A4（移除 job 級 `continue-on-error` 使 `pip install` 暫時性故障會擋�
   針對性：`-k jgb` **19 passed**；四支直接觸及 `JGBSystemAPI` 的測試 **31 passed / 0 failed**。
   行為探針：mock 模式呼叫 `_send` 如期拋 `UnexpectedRealNetworkError`。
 
-- [ ] 4.2 **🧠主** 實作 `JGBMockTransport.resolve_endpoint`：以**樣板比對**（`{bill_id}` 比對單一 path segment、
+- [x] 4.2 **🧠主** 實作 `JGBMockTransport.resolve_endpoint`：以**樣板比對**（`{bill_id}` 比對單一 path segment、
   段數不同不匹配）解析 `(method, path) → endpoint_key`。
   ⚠️ **不得以 `path in WHITELIST` 判定**——detail path 實際為 `/api/external/v1/bills/12345`，
   字面永遠不會命中樣板。
   _Requirements: 4.1_
+
+  **實作**（`services/jgb/transport.py`）：`match_template()` ＋ `ROUTES` ＋ `resolve_endpoint()`。
+  **matching 與 parameter extraction 刻意分開**——`match_template` 命中即回傳抽出的 path 參數
+  （`{"bill_id": "987654321"}`），使 adapter 測試日後能驗「`bill_id` 確實是從 concrete path 解析出來」，
+  而不只是「有命中 detail 路由」。
+
+  ⚠️ **歧義即失敗**：多樣板同時命中 → `raise UnresolvedEndpointError(reason="ambiguous")`，
+  **不取宣告順序第一筆**（否則 correctness 綁在 registry 的 incidental ordering 上）。
+  ⚠️ **4.2 ≠ 4.3**：`resolve_endpoint` 只回答 endpoint identity，**不消費** `MIGRATED_ENDPOINTS`
+  （該常數刻意尚未定義），避免 `resolved == safe-to-mock` 變成隱性 fallback。
+  ⚠️ **偏離 design 一處（已知並刻意）**：design 把 `ROUTES`／`resolve_endpoint` 掛在
+  `JGBMockTransport` 上，本任務改為模組級函式——因該類的 `__init__` 需要 `BillFixtureTable`（4.4），
+  提前建類會把 4.4 的相依拉進 4.2。內容與 design 一致，僅載體位置與引入時機不同。
+
+  **驗收（容器內）**：新增 `tests/unit/api/test_transport_endpoint_resolution_req.py`
+  → **14 passed / 0 failed**，逐條對應七項驗收＋歧義＋registry 去重＋「resolver 不查遷移狀態」守衛。
+  **尺會咬的反證**：同一條 detail path 下，字面 whitelist 實作回 `None`、
+  本實作回 `bill_detail` 並抽出 `bill_id=987654321`（該 ID 刻意未在任何原始碼／範例中出現）。
+  全域回歸：`make test-unit` → **1121 passed / 13 failed**（1107 → 1121，即本組 14 筆全新增），
+  13 筆仍全數落在 `tests/unit/_meta/`（既有 container mount known-red，與本次改動無關）。
 
 - [ ] 4.3 **🧠主 🔍V** 實作未遷移端點的 fail loudly：`resolve_endpoint` 回 None
   或 `endpoint_key ∉ MIGRATED_ENDPOINTS` → `raise UnmigratedMockEndpointError`，

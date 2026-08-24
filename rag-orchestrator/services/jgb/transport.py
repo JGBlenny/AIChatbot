@@ -73,7 +73,19 @@ class TransportError(Exception):
 
 
 class UnresolvedEndpointError(TransportError):
-    """`(method, path)` 無法解析為任何 logical endpoint（4.2 使用）。"""
+    """`(method, path)` 無法解析為 **唯一** logical endpoint。
+
+    `reason` 目前有一個值：
+
+    * ``"ambiguous"`` —— 有多於一個樣板同時命中同一條 concrete path。
+
+    ⚠️ **不設 "no_match"**：查無對應時 `resolve_endpoint` 依 design 回 `None`，
+    由 4.3 在 transport 邊界決定如何處置（見該處三態決定表）。
+    """
+
+    def __init__(self, message: str, *, reason: str) -> None:
+        super().__init__(message)
+        self.reason = reason
 
 
 class UnmigratedMockEndpointError(TransportError):
@@ -135,3 +147,66 @@ class RealHttpTransport:
         except httpx.HTTPError as e:
             logger.error(f"JGB API {method} 錯誤: {url} - {e}")
             return self._fallback_response()
+
+
+# ── 4.2：template endpoint 解析 ────────────────────────────────────────────
+def match_template(template: str, path: str) -> Optional[dict[str, str]]:
+    """以 **樣板語義** 比對，命中回傳抽出的 path 參數，未命中回 `None`。
+
+    ⚠️ 刻意與 resolver 分開：`match_template` 只回答「這條 path 是否符合這個樣板、
+    以及各 placeholder 吃到什麼」，不知道 endpoint 的存在。
+    如此 adapter 測試日後能直接驗「`bill_id` 確實是從 concrete path 解析出來的」，
+    而不只是「有命中 detail 路由」。
+
+    規則（逐條對應驗收）：
+
+    1. 靜態段必須**完全相同**；
+    2. `{name}` 只吃**單一** path segment——`{bill_id}` 不得匹配 ``123/456``；
+    3. 段數不同一律不匹配；
+    4. 空 segment（如 ``/bills/``）不算有效 placeholder 值。
+
+    ⚠️ **不得**改成 `path in WHITELIST` 或任何等價的 literal membership 判定——
+    detail path 實際為 ``/api/external/v1/bills/12345``，字面永遠不會命中樣板。
+    """
+    t_segs = template.strip("/").split("/")
+    p_segs = path.strip("/").split("/")
+    if len(t_segs) != len(p_segs):
+        return None
+
+    extracted: dict[str, str] = {}
+    for t, p in zip(t_segs, p_segs):
+        if t.startswith("{") and t.endswith("}"):
+            if not p:                      # `/bills/` → 空值不算命中
+                return None
+            extracted[t[1:-1]] = p
+        elif t != p:                       # 靜態段須完全相同
+            return None
+    return extracted
+
+
+#: 路由表：`(method, path template, endpoint_key)`。
+#: 契約基準 design.md §元件 3（對齊 jgb2 `External\BillApiController@index/@show`）。
+ROUTES: "tuple[tuple[HttpMethod, str, str], ...]" = (
+    ("GET", "/api/external/v1/bills", "bills"),
+    ("GET", "/api/external/v1/bills/{bill_id}", "bill_detail"),
+)
+
+
+def resolve_endpoint(method: HttpMethod, path: str) -> Optional[str]:
+    """以樣板比對解析 `endpoint_key`；查無對應回 `None`。
+
+    ⚠️ **歧義即失敗**：若多於一個樣板同時命中，`raise UnresolvedEndpointError`
+    （`reason="ambiguous"`），**不得**取宣告順序的第一筆——
+    否則 correctness 會被綁在 registry 的 incidental ordering 上。
+
+    ⚠️ **本函式只回答 endpoint identity，不回答「可否在 mock 執行」**：
+    「已遷移」（`MIGRATED_ENDPOINTS`）屬 4.3 的責任，刻意不在此消費，
+    避免 `resolved == safe-to-mock` 再次變成隱性 fallback。
+    """
+    hits = [key for m, template, key in ROUTES
+            if m == method and match_template(template, path) is not None]
+    if len(hits) > 1:
+        raise UnresolvedEndpointError(
+            f"多個樣板同時命中 {method} {path}：{hits}", reason="ambiguous"
+        )
+    return hits[0] if hits else None
