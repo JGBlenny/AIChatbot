@@ -601,11 +601,36 @@ bill_id  contract_id  bit_status  invoice_status  date_expire
 **目標**：以 deterministic control-flow 證實執行鏈閉環，並使失敗型 (a)/(b)/(c) 可判。
 ⚠️ **依賴任務 4**——mock 不依真參數過濾即無法收斂單筆，C4a 無從驗證。
 
-- [ ] 5.1 **🧠主** 定義 `ChainClosureAssertion` 與 `assert_chain_closure`：
+- [x] 5.1 **🧠主** 定義 `ChainClosureAssertion` 與 `assert_chain_closure`：
   斷言對象為 grounding，**明文禁止對最終回答文字下斷言**（腳本化 brain 的輸出是測試自己寫的，
   對它斷言等於自證）。兩個正交維度——`grounding_must_contain`（送達性）與
   `required_grounding_facts`（充分性，比對 formatter 產出的 facts 鍵，不看 LLM 措辭）。
   _Requirements: 3.1, 4.2_
+
+  **實作**：`tests/support/chain_closure.py`（**測試基礎設施，不進 production 程式**）——
+  `ChainClosureAssertion`（frozen dataclass）＋ `assert_chain_closure()` ＋ `extract_fact_keys()`
+  ＋ `CLOSURE_SCOPES`。三條禁令**以拋例外實現，不只寫在註解**：
+  ① 傳入 dict／非字串（疑似最終回應）→ `AnswerTextAssertionError`
+     （腳本化 brain 的輸出是測試自己寫的，對它斷言等於自證）；
+  ② `required_grounding_facts` 為空 → `SufficiencyNotAssertedError`
+     （任務 5.2 的紀律在**機制上**強制，無法靠忘記填繞過）；
+  ③ 未知 `closure_scope` → `ChainClosureScopeError`。
+
+  ⚠️ **closure scope 只承認 `numeric_bill_ref`（部分閉環）**：`bill_ref` adapter 的非數字分支
+  會呼叫**尚未遷移**的 `get_contracts`，故該分支不在 claim 內。
+  `not_covered` 欄位會原樣帶進結果摘要——**5.5 報告不得把部分閉環寫成 full closure**。
+
+  **驗收（容器內）**：`tests/unit/api/test_chain_closure_assertion_req.py` → **15 passed / 0 failed**；
+  `tests/unit/api` 全目錄綠。**尺會咬的兩項實證**：
+  ① 送達性過、充分性缺 → 仍紅（防「查到了就算閉環」）；
+  ② 對真 formatter 實跑——`build_bill_diagnosis_facts` 在 fixture 900001 上產出事實鍵
+     `['取消判定','手動到帳判定','發送判定']`，量尺可正確抽出並斷言。
+
+  ⚠️ **本任務逼出的一個 5.2 必須先決的問題（實測，非推測）**：
+  `build_bill_anomaly_facts` 在同一筆上產出的事實鍵為 **`[]`**——
+  該 formatter **不使用** `【鍵】` 標記（輸出為「• 狀態／金額／期間」條列）。
+  故 5.4（`billing_anomaly` 對照組）的充分性維度**無法沿用同一種鍵抽取**；
+  5.2 必須先決定其充分性如何表達，否則 5.4 只會得到「必然紅」或「乾脆不驗充分性」兩種假結果。
 
 - [ ] 5.2 **🧠主** 為每個 C4a 案例明列 `required_grounding_facts`（執行前明示為斷言基準）。
   ⚠️ **`required_grounding_facts` 為空的案例不構成 C4a 通過的證據**——那等於沒驗充分性。
