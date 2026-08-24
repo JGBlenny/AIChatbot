@@ -4,13 +4,37 @@
 > ⚠️ **DEFERRED ≠ 放棄**。本檔的作用是**鎖住 re-entry condition**，
 > 使未來重開 D1 時不能只是「換 prompt 再重跑」。
 
-## 狀態
+## 狀態（2026-08-24 更新：由 DEFERRED 改記為 **PARTIALLY SATISFIED**）
 
 ```text
 D1 family          INSUFFICIENT_EVIDENCE     （M1：不得由 member 失敗外推 family）
 D1-member-1        REJECTED for R1           （paired discrimination 12/29；單向過度拒絕 17）
-D1 next-member     DEFERRED — new member shape required
+
+D1 re-entry status **PARTIALLY SATISFIED**
+  ✅ 已找到新的 admissible demand-side information source：
+     N1／N2 runtime instance-binding facts（`evidence-source-inventory.md`）
+     —— 不再是 text specification ＋ generic evaluator；runtime-binding；與 similarity/category 正交
+  ❌ 仍缺：facet-specific responsibility authority（**R-e**）
 ```
+
+⚠️ **不得**因 re-entry condition 的一半已滿足就開 D1-member-2：
+`candidate Face = Hint 給的 X ＋ N1／N2 = 這是某一筆真實帳單 → allow X`
+只是把「這是 instance」偷換成「所以 Hint 提的 Face X 是對的」——**重演 v1 的核心錯誤**。
+N1／N2 是**必要**輸入，**尚非充分**輸入。R-e 見 `re-mapping-discovery-frozen.md`。
+
+## D3 對照狀態（同日更新，兩者走到**同一個缺口**前）
+
+```text
+D3 family          INSUFFICIENT_EVIDENCE
+D3-member-1        REJECTED for R1
+B／C representation RETIRED（G1 FAIL）
+
+D3 re-entry status **PARTIALLY SATISFIED**
+  ✅ 已找到 runtime executable prerequisite facts（N1／N2／N3）
+  ❌ 仍缺：從那些 facts 到 Face responsibility 的 **authoritative binding**（同為 R-e）
+```
+
+⚠️ 這是本輪 inventory 的意外收斂：**D1 與 D3 缺的是同一條箭頭。**
 
 ## 為什麼是 DEFERRED 而不是「改 representation 就好」
 
