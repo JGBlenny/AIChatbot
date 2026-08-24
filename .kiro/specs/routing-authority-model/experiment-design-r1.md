@@ -23,6 +23,35 @@ Design-discovery challenge set        Final unseen holdout
 
 ---
 
+## ⭐ M1：**member disposition ≠ family disposition**（業主 must-fix）
+
+D1／D2／D3／D4 都是**很寬的 family**。單一 member 的成敗**不可**直接外推到 family。
+
+```text
+member disposition:   SUPPORTED ／ REJECTED ／ INSUFFICIENT_EVIDENCE
+
+family disposition:
+  SUPPORTED            ← **至少一個 admissible member 提供 existence proof**
+  REJECTED             ← family **defining premise 本身**被 falsify，
+                         或 admissible design space **已事前有限枚舉**並全部淘汰
+  INSUFFICIENT_EVIDENCE ← tested members 失敗，但**不能推出 family 不可能成立**
+```
+
+⚠️ **證據不對稱**（兩個方向不同）：
+
+```text
+member 失敗 → family **不因此** REJECTED
+member 通過 production-shaped B → 可作 **existence proof** → family SUPPORTED
+```
+
+**既有先例**：v1 lexical candidate 已 REJECTED，但它只是 **D2 的一個 member**——
+這正是 D2 至今維持 `INSUFFICIENT_EVIDENCE` 的理由。
+⚠️ 禁止的推論形態：「測了三種 intent representation 都失敗 → H2 死了」。
+⚠️ D4 同理：某一個 adapter 未增加 correctness property，
+**不代表**任何 source-adapter architecture 都只是 elegance。
+
+---
+
 ## Experiment A — causal independence test（對 R1.1／R1.2）
 
 **介入形式**（受控 seam，不依賴自然檢索剛好撞出相同浮點數）：
@@ -41,6 +70,24 @@ Case B: query=Q2, expected=not_applicable, similarity=S, category=C
 
 - 不能 → **R1 falsified**，該 family 出局。
 - **本層量的是 `information independence`，不是 production accuracy。**
+
+**⚠️ control vector 須逐 family 定義**（不得只寫 `hold(similarity, category)`）：
+
+```text
+D1／D3   hold: candidate Face identity｜Face contract/version｜similarity｜category
+              ｜其他 baseline authority inputs
+         vary: semantic case
+         ⚠️ 若 pair 兩側**連 Face 都換了**，即使 similarity／category 相同，
+            「判不同」也**不能乾淨證明** information independence
+
+D2       hold: 所有允許的 non-query context
+         vary: query semantics
+
+D4       hold: **完全相同的上游 evidence**
+         vary: adapter／enforcement 的有無
+```
+
+⚠️ 並非所有 case 都能做到最強控制——**可分 evidence strength，但 confound SHALL 逐項明列**。
 
 **Negative control（必跑）**：
 
@@ -69,13 +116,35 @@ abs(score_a − score_b) ≤ **frozen tolerance**
 opposite ground-truth applicability
 ```
 
-⚠️ **`tolerance` 現在不訂**。程序為：
+## ⭐ M3：tolerance 的推導 SHALL 與 labels／pair yield **解耦**（業主 must-fix）
+
+⚠️ **`tolerance` 現在不訂**，且**推導過程不得看見結果**。程序為：
 
 ```text
-① 先研究既有 score distribution，導出**可重現的 matching protocol**
-② freeze tolerance ＋ matching rule
-③ **才**開始配對產資料
+① **先凍結**：source population｜score field｜matching statistic
+              ｜tolerance derivation algorithm｜minimum required pair count
+              ｜insufficient-pair consequence
+② 依該演算法研究 score distribution → 導出 tolerance
+③ freeze tolerance ＋ matching rule
+④ **才**開始配對產資料
 ```
+
+**推導階段 SHALL NOT 看見**：
+
+```text
+applicability labels ｜ candidate outputs
+哪個 tolerance 會讓某 family 比較好看 ｜ **後續實際配出的 opposite-pair 數**
+```
+
+⚠️ **明令封死的後門**：
+
+```text
+0.01 → 配不到 → 0.02 → 還是不夠 → 0.04 → 終於有 30 組 → freeze 0.04
+```
+
+那是**用 challenge-set feasibility 調量尺**。
+**若依 frozen rule 最後只配出 8 組而最低要求 20 → 結果就是 `INSUFFICIENT_EVIDENCE`**，
+**不是**放寬尺去湊。
 
 **本層回答**：在 production-shaped ambiguity 下，新 evidence source **是否真的帶來 discrimination**。
 
@@ -181,13 +250,34 @@ R5 scope assumptions ｜ false-reject exposure ｜ operational cost
 ⚠️ 否則 architecture selection 會被降級成 **benchmark 排名**——
 「D1 82%、D3 86%，所以 D3 贏」是本檔明令禁止的推論形態。
 
+## ⭐ M2：第一輪的 concrete member SHALL 在 challenge 揭露**之前** freeze（業主 must-fix）
+
+⚠️ 否則會變成：
+
+```text
+先產 paired cases → implementation 作者看到 cases → **才**設計 member
+→ 跑 A/B → 宣稱 SUPPORTED        ← 雖非 final holdout，仍**不能**證明
+                                   candidate 是在**預先存在的 falsifier** 下成立
+```
+
 ## 執行順序（**不得對調**）
 
 ```text
 ① 本設計稿 approve
-② 研究 score distribution → freeze matching protocol／tolerance
+② **先凍結** M3 的六項推導前提 → 研究 score distribution → freeze matching protocol／tolerance
 ③ freeze 樣本來源規則、label schema、falsifier、negative controls、穩定性維度
-④ **才**產生 cases（S1 抽取／S2 建構／S3 隔離作者）
-⑤ 執行 Experiment A → 通過者執行 Experiment B
-⑥ 逐 family 出具 disposition（允許全部出局）
+④ **concrete member contract／implementation freeze**          ← M2
+⑤ 產生 challenge cases（S1 抽取／S2 建構／S3 隔離作者）並 freeze
+   ⚠️ cases **可以**比 member 更早產生，但**必須封存且不讓 candidate 作者看到**（效果等價）
+⑥ blind labels freeze（需要時）
+   ──────────────────────────────────────────
+⑦ member **第一次**執行 Experiment A → 通過者執行 Experiment B
+⑧ 出具 **member disposition**，再依 M1 規則推導 **family disposition**（允許全部出局）
+```
+
+**接續的 reuse rule（證據身份完整化）**：
+
+```text
+member 看過 challenge → 可用它做 failure analysis
+→ 若修改 member → **同一 cohort 不再能證明新版改善** → 需新的 challenge cohort
 ```
