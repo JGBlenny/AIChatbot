@@ -20,8 +20,36 @@
     }
   },
   "implementation": {
-    "started": false,
+    "started": true,
     "completed": false,
-    "tasks_completed": []
+    "tasks_completed": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "1.5",
+      "1.6",
+      "1.7",
+      "1.8",
+      "1.9",
+      "1.10",
+      "1.11",
+      "1.12",
+      "2.1",
+      "2.2",
+      "2.3",
+      "2.4",
+      "2.5",
+      "3.0",
+      "3.1",
+      "3.2",
+      "3.3",
+      "U0.1",
+      "U0.2",
+      "U0.3",
+      "U1.1",
+      "U1.2"
+    ],
+    "ledger_note": "2026-08-24 帳面校正：tasks.md 已勾 26 項且有 U0/U1 實測與 provisioning 修復（89d9462），故 started 由 false 改 true。**未**改 phase、**未**改 completed——tasks.md 有進度不等於 implementation 已完成。"
   }
 }
