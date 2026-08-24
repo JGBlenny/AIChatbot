@@ -689,7 +689,7 @@ Layer 2  哪些事實存在才叫 grounding sufficient → **同一個** ChainCl
   為 `帳單金額 NT$ 18,000（系統存值）`（`_bill_head()`）。觀測契約以**實際輸出**為準——
   故 `• 金額：1,000` **不**被觀測成 `amount_stored`（已寫成具名測試），否則觀測的是想像中的 formatter。
 
-- [ ] 5.2 **🧠主** 為每個 C4a 案例明列 `required_grounding_facts`（執行前明示為斷言基準）。
+- [x] 5.2 **🧠主** 為每個 C4a 案例明列 `required_grounding_facts`（執行前明示為斷言基準）。
   ⚠️ **`required_grounding_facts` 為空的案例不構成 C4a 通過的證據**——那等於沒驗充分性。
   例：「為什麼發不出去」需失敗原因類事實；「這期帳單多少錢」只需金額與期別。
   _Requirements: 3.1, 3.2, 4.2_
@@ -799,8 +799,11 @@ anomaly   frozen cases   secondary dispatch = 0
 **目標**：證明真 brain 會**使用** grounding 作答（C4a 只證明 grounding 送達）。
 ⚠️ **依賴任務 2.5**（e2e 供裝規模）與任務 5（C4a 先通過）。
 
-- [ ] 6.1 **🧠主** 定義 `BrainGroundingAssertion` 與 `assert_brain_uses_grounding`：
+- [x] 6.1 **🧠主** 定義 `BrainGroundingAssertion` 與 `assert_brain_uses_grounding`：
   斷言僅鎖「該筆實際值字面是否出現」與「是否退回泛用 KB 答案」，**不鎖措辭**（真 LLM 非決定性）。
+  實作 `tests/support/brain_grounding.py`；量尺自驗 `tests/unit/api/test_brain_grounding_assertion_req.py`（17 passed）。
+  逐案尺 `c4b-ruler-frozen.md`（FROZEN）；執行參數 `c4b-run-parameters-frozen.md`（FROZEN）；
+  進場與供裝前置 `c4b-entry-path-equivalence-resolved.md`（已解除）。
   _Requirements: 3.2_
 
 - [ ] 6.2 **⚡F** 實作兩面向的 C4b e2e 測試（真 `conversational_step`、少量案例）；

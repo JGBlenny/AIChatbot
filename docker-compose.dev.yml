@@ -79,6 +79,12 @@ services:
       FORM_TRIGGER_THRESHOLD: ${FORM_TRIGGER_THRESHOLD:-0.75}
       ENABLE_QUERY_REWRITE_B2B: ${ENABLE_QUERY_REWRITE_B2B:-false}
       PREENTRY_ROUTABILITY_GATE: ${PREENTRY_ROUTABILITY_GATE:-false}
+      # ── LLM 模型參數：**逐字鏡射 prod**（C4b 凍結參數，spec conversational-routing-execution 6.1/③）──
+      # `.env` 只設 OPENAI_MODEL，未設 PRESALES_SYNTH_MODEL；prod compose 以 ${VAR:-gpt-4o} 宣告。
+      # 不補這一行，測試容器的 brain（`conversational_step`）會落回 gpt-4o-mini，
+      # 而 production 的 brain 是 **gpt-4o**——C4b 就會在「不是 production 的 brain」上取證。
+      # 與 KB_SIMILARITY_THRESHOLD 是同一類 runner 保真度 bug，只是換了參數。
+      PRESALES_SYNTH_MODEL: ${PRESALES_SYNTH_MODEL:-gpt-4o}
     command: ["sleep", "infinity"]        # 維持容器；測試以 run --rm 進入
 
 # 接上共用基礎設施網路（spec conversational-routing-execution 任務 1.2｜R1.2）
