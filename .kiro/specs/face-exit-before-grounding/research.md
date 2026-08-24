@@ -112,7 +112,7 @@ Core question 假定該 query「產品上屬於 `bill_diagnosis`」。目前唯�
 
 ---
 
-## 3. 對 R5 分流的影響（**提請業主裁示，本檔不自行擴充分類**）
+## 3. 對 R5 分流的影響（**業主 2026-08-25 已裁：新增第五類**）
 
 R5 目前只允許四種結論。若 F-2／F-3 在後續查證後成立，實際形狀可能是：
 
@@ -131,18 +131,88 @@ AUTHORITY_CONFLICT_CONFIRMED      ？ 字面是「相反決定」；此處是「
 INSUFFICIENT_EVIDENCE             ✓ 目前尚未完成 R1／R3／R4，仍為誠實的當前狀態
 ```
 
-⚠️ **本檔不自行新增第五類**。是否需要（例如 `RESPONSIBILITY_GAP_CONFIRMED`）由業主裁示。
+**裁示結果（2026-08-25）**：新增第五類 **`RESPONSIBILITY_GAP_CONFIRMED`**（定義與三條護欄見
+`requirements.md` R5），理由是硬塞既有四類會污染語義——
+`AUTHORITY_CONFLICT` 是「兩邊相反」，此處是「兩邊都說不是我」；
+`CONTRACT_DEFECT` 已定窄為傳遞／一致性問題，把「規則內容彼此留洞」也算進去，
+會把 **contract implementation defect** 與 **responsibility allocation defect** 混成一類。
 
-## 4. 尚未做的（R1／R3／R4 的缺口）
+⚠️ **但不得提前套用**：`outcome` 維持 `INSUFFICIENT_EVIDENCE`，直到 R1／R3／R4 完成。
+
+---
+
+## 5. R3 contract map（**只記錄、不裁決**）
+
+### 5.1 兩次 entry 分開記
+
+| | **A. `trigger_facet_key` 直達** | **B. reroute 後的 classification entry** |
+|---|---|---|
+| entry producer | 呼叫端（`POST /api/v1/message` 的 `trigger_facet_key` 欄，`chat.py:3867`）；Step 0.4 派發 `chat.py:4158-4165` | `_diagnosis_config_for_knowledge()`（`chat.py:832`） |
+| entry evidence | **呼叫端給的字串本身**——無任何 query 側證據 | 檢索 top-1 知識的 `similarity` ＋ 其 `category` |
+| entry authority | registry 存在且 `enabled`（`config_for_key` → `_cache["by_key"]`） | `facet_entry_eligible()`：`similarity ≥ form_trigger_threshold`（0.75，`decision_layer.py:191-199`）＋ `config_for_category` 的 category→Face 索引 |
+| 額外抑制器 | **無** | `_instance_gate_decision`／`_instance_hint_suppressed`；`_preentry_routable`（**預設關閉**，見 F-5） |
+| commit 點 | `_seed_repair_facet` → `_conversational_respond(start_if_absent=True)` → 引擎開會話 | 同左 |
+
+⚠️ **兩者都沒有查過任何 responsibility contract**：
+A 只看「這個 key 存在嗎」，B 只看「檢索夠像嗎、分類對得上嗎」。
+
+### 5.2 scope 側
 
 ```text
-R1  最小 reproduction 尚未建立（目前僅有 C4b 的 e2e 重現）
-R2  已完成 producer→inputs→consumer 主幹；尚未列全 system_context 與 faces 清單的實際內容
-R3  contract map 尚未成表（entry producer/evidence/authority 那三格尚未逐項填）
-R4  六個 deterministic defect candidate 中，
-    「載錯 rules」與「responsibility context 未傳入」已有初步證據（F-1／F-2），
-    其餘四項（context 截斷／Face identity·state 不一致／reroute 殘留／
-    producer-consumer contract mismatch）**尚未證偽**
+scope producer   LLM（gpt-4o@0.4/400，json_object）於 conversational_step()
+scope inputs     system_context_md ＋ rules_text ＋ faces 清單 ＋ 狀態六欄
+                 （進場輪：collected={}／asked_count=0／recommended=False／
+                   grounding_note=""／dialog=[]）→ **實際只餵原始問句**
+scope contract   該 persona「對話規則」列的【本輪範疇 scope】條款（DB，見 F-2）
+scope consumer   engine：`if step.get("scope")=="switch": await self._close(session_id); return None`
+                 **無條件**——不看是否進場輪、不看 entry 由誰決定、不看有無 grounding
+irreversible     會話關閉、該輪重路由；grounding 從未取得；brain 的那次付費呼叫已花掉
+```
+
+### 5.3 這張表直接顯示的不對稱
+
+```text
+entry 的證據語言   = 「呼叫端指定」或「檢索相似度＋分類」
+scope 的證據語言   = 「責任範疇 wording」
+兩者在現行系統中**沒有任何交集**：
+  entry 從不查 responsibility wording；
+  scope 從不知道 entry 發生過（F-1）。
+```
+
+⇒ 支持前提修正：**「成功進場」是 mechanism-level commitment，
+不是 responsibility contract 對該 query 的認領。**
+
+## F-5（初步）：早退這個形狀是**已知且被刻意停用**的設計狀態
+
+`chat.py:737-762` 的 `_preentry_routable()` 是 entry-scoped gate，其 docstring 自述：
+
+> 現況：「KB 很像 + KB 掛 category + score ≥ 0.75 → 直接進 workflow」——
+> 沒有先問「使用者這題真的適合這個 workflow 嗎」。而 brain **已經會判**…
+> 只是判得太晚：**先進場、判錯再退出**。
+
+它把同一個 scope 判斷挪到 commit 之前，但 `PREENTRY_ROUTABILITY_GATE` 現行為 **false**：
+`.env:164` 明設 `false`，兩份 compose 亦皆宣告 `${PREENTRY_ROUTABILITY_GATE:-false}`
+（prod:224／dev:81）——三處一致，故現行不生效。
+
+⚠️ **關鍵推論（待 R4 證偽）**：即使打開它，本案也只是**更早退出**——
+`bill_diagnosis` 仍不接這句 query，`billing_anomaly` 的規則也把它推走。
+**責任覆蓋的洞不會因為退出時機提前而被補上。**
+
+⇒ 「先進場再退出」比較像**時機問題**，F-2 的互推比較像**責任分配問題**——
+兩者不同層，R5 分流時不得混為一談。
+
+## 6. 更新後的缺口（對齊業主 2026-08-25 裁示）
+
+```text
+R5 分類  已新增第五類 RESPONSIBILITY_GAP_CONFIRMED（業主 2026-08-25）；
+         **目前 outcome 仍為 INSUFFICIENT_EVIDENCE，不得提前套用**
+R3       ✅ 本次完成（§5.1／5.2／5.3）；但「不存在 responsibility 層的 entry authority」
+         這個結論本身仍待 R4 交叉驗證
+R2       主幹完成；尚未列全 system_context 與 faces 清單的實際內容
+R1       ❌ 最小 reproduction 尚未建立（目前僅有 C4b 的 e2e 重現）
+R4       載錯 rules ✗ 已證偽（F-2）／responsibility context 未傳入 ✅ 有證據（F-1）
+         **尚未證偽**：context 截斷 ／ Face identity·state 不一致 ／
+         reroute 殘留 ／ producer-consumer contract mismatch
 ```
 
 ⚠️ 依 R7，「讓 `diag-01` 不再退出」不是本 spec 的 acceptance criterion；

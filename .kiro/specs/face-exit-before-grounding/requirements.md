@@ -12,6 +12,21 @@
 
 ⚠️ **不得**改寫成「修正 `bill_diagnosis` 的 scope 判斷」——那會把題目降格成優化一句 prompt。
 
+### ⚠️ 前提修正（業主 2026-08-25 定調，**先釘死**）
+
+core question 寫的是「**已成功進入**且**產品上屬於**該 Face」——目前證據顯示
+這句話混了**兩個不同命題**：
+
+```text
+成功進場   mechanism-level commitment（有人指定，或 retrieval 提議了這個 Face）
+責任已成立 responsibility contract 認領了這個 query
+```
+
+`c4a-case-set-frozen.md` 明文 `execution_face` **不是** routing ownership label，
+故「產品上屬於 `bill_diagnosis`」目前**無 production artifact 支持**（見 research.md F-3）。
+本 spec 因此**不得**把「成功進場」當成「責任已成立」的證據；
+兩者的關係正是 R3 contract map 要查清楚的東西。
+
 ### Escalation question（**不是**本 spec 要回答的問題）
 
 > 當已成立的 Face entry 與 in-Face `scope` 判斷衝突時，什麼 authority 有權推翻 entry？
@@ -68,14 +83,42 @@ producer 與 consumer 的 contract mismatch
 
 ## R5 唯一的分流裁決
 
-**THEN** 本 spec 的結論 **SHALL** 落在且僅落在下列四者之一：
+**THEN** 本 spec 的結論 **SHALL** 落在且僅落在下列五者之一：
 
 ```text
 IMPLEMENTATION_DEFECT_CONFIRMED
 CONTRACT_DEFECT_CONFIRMED
 AUTHORITY_CONFLICT_CONFIRMED
+RESPONSIBILITY_GAP_CONFIRMED     ← 業主 2026-08-25 新增
 INSUFFICIENT_EVIDENCE
 ```
+
+**目前 outcome：`INSUFFICIENT_EVIDENCE`**（R1／R3／R4 未完成；第五類已存在但**不得提前套用**）。
+
+### `RESPONSIBILITY_GAP_CONFIRMED`（業主定義，逐字）
+
+> 在 authoritative responsibility contracts 均被正確載入、傳遞並依其既有語義執行的前提下，
+> 同一產品 query 未被任何候選 Face 接受為自身責任，
+> 或形成 mutual delegation ／ no-owner 狀態，
+> 使 execution 無法取得一個可持續承擔該 query 的 Face。
+>
+> 此分類只證明「責任覆蓋有洞」，不決定哪個 Face 應該擁有該 query，
+> 也不得藉此修改任一 Face responsibility contract。
+
+三條護欄：
+
+```text
+❌ 不等於「diag-01 應該屬於 bill_diagnosis」
+❌ 不等於「billing_anomaly 的規則寫錯」
+❌ 不等於「選一邊改到測試變綠」
+✅ 只允許證明：現有 authoritative contracts 的**聯集**沒有形成完整 responsibility coverage
+```
+
+⚠️ **為何不硬塞既有兩類**：`AUTHORITY_CONFLICT_CONFIRMED` 的語義是「兩套契約各自正確卻
+給出**相反**決定」，此處是「兩邊都說**不是我**」——no-owner／mutual-delegation，不是 winner conflict。
+`CONTRACT_DEFECT_CONFIRMED` 已刻意定窄為**傳遞／一致性**問題，而 F-2 顯示規則載對、
+brain 也照規則走；若把「規則內容彼此留下責任洞」也叫 contract defect，
+就會把 **contract implementation defect** 與 **responsibility allocation defect** 混成一類。
 
 ### `CONTRACT_DEFECT_CONFIRMED` 的窄定義（**不得放寬**）
 
@@ -98,6 +141,23 @@ SHALL NOT 修改任一 authority contract 以求測試變綠
 → 後續交由 routing-authority-model / Responsibility Governance Decision Record
 → 升級方式＝產生新的 escalation artifact，**不是**改對方的歷史快照或狀態
 ```
+
+### R6.2 第二條停止條件（責任洞）
+
+**IF** R1／R3／R4 共同支持下列全部：
+
+```text
+correct rules loaded
+＋ correct Face identity／state
+＋ no context truncation
+＋ no reroute contamination
+＋ no producer／consumer mismatch
+＋ reproducible mutual rejection
+```
+
+**THEN** 本 spec **SHALL** 停止於 `RESPONSIBILITY_GAP_CONFIRMED`，
+且 **SHALL NOT** 自行指定 owner；同樣以新 escalation artifact 升級至
+`Responsibility Governance Decision Record`。
 
 ## R7 反假綠：「讓 `diag-01` 不再退出」**不是** acceptance criterion
 

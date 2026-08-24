@@ -4,14 +4,17 @@
   "updated_at": "2026-08-25T00:00:00Z",
   "phase": "discovery",
   "status": "active",
-  "outcome": "unset",
+  "outcome": "INSUFFICIENT_EVIDENCE",
   "language": "zh-TW",
   "project_description": "Discovery spec：Face 已成功進場後，production brain 於 grounding 執行前判 scope=switch、導致該次 Face execution 未走到 answer stage。本 spec 只做判別——execution／contract defect，還是兩套既有 authority contract 的真實衝突——不預設修法、不選 authority winner。發現於 conversational-routing-execution 的 C4b（6.3 簽核，gate CLOSED），正式診斷分類 face_exit_before_grounding。",
   "dependency": {
     "routing-authority-model": {
       "type": "conditional",
       "blocking_now": false,
-      "becomes_blocking_if": "AUTHORITY_CONFLICT_CONFIRMED",
+      "becomes_blocking_if": [
+        "AUTHORITY_CONFLICT_CONFIRMED",
+        "RESPONSIBILITY_GAP_CONFIRMED"
+      ],
       "note": "該線為 BLOCKED_BY_EXTERNAL_DECISION（等 Responsibility Governance Decision Record）。本線現在**不** blocked；僅在本線收斂為 AUTHORITY_CONFLICT_CONFIRMED 時，產生新的 escalation artifact 送過去，**不**回頭改該線的歷史快照或狀態。"
     },
     "conversational-routing-execution": {
@@ -20,9 +23,23 @@
     }
   },
   "approvals": {
-    "requirements": { "generated": true, "approved": false },
-    "design": { "generated": false, "approved": false },
-    "tasks": { "generated": false, "approved": false }
+    "requirements": {
+      "generated": true,
+      "approved": false
+    },
+    "design": {
+      "generated": false,
+      "approved": false
+    },
+    "tasks": {
+      "generated": false,
+      "approved": false
+    }
   },
-  "implementation": { "started": false, "completed": false, "tasks_completed": [] }
+  "implementation": {
+    "started": false,
+    "completed": false,
+    "tasks_completed": []
+  },
+  "outcome_note": "暫定值：第五類 RESPONSIBILITY_GAP_CONFIRMED 已於 2026-08-25 由業主新增，但 R1／R3／R4 未完成，**不得提前套用**。"
 }
