@@ -1,8 +1,10 @@
-# 6.3 上線 gate 放行報告（**草稿，待業主簽署**）
+# 6.3 上線 gate 放行報告（**業主已簽署**）
 
-> 2026-08-25｜語言 zh-TW｜狀態：**DRAFT — 放行人為業主，本檔不自行放行**
+> 2026-08-25｜語言 zh-TW｜狀態：**APPROVED（業主簽核）**
+> 簽核內容：**6.3 APPROVED；C4b NOT PASSED；production-facing gate CLOSED；可進 6.4**
+> 草稿身分見 `fdc9019`；本版為簽署版（檔名去 `-draft`），內容除簽核欄位外未改。
 > 撰寫本檔**未呼叫任何 OpenAI API**；所有數字與字面均取自已歸檔 evidence。
-> 每一項裁決標明來源：**【業主已裁】** ／ **【提請裁決】**
+> 每一項裁決標明來源：**【業主已裁】**
 
 ```text
 結論（先講）
@@ -117,7 +119,7 @@ human verdict     accepted / ruler_false_red
 依據：回答已實際使用正確的 `2026-09-01 ~ 2026-09-30`；差異只在空格與日期補零的表面形式。
 **不修改 ruler、不重跑**——這筆是 v2 已觀測到的 limitation，由本層 adjudicate 掉。
 
-### 3.2 `diag-02` 的方向語義　【提請裁決】
+### 3.2 `diag-02` 的方向語義　【業主已裁】
 
 v2 已事前縮窄：
 
@@ -128,7 +130,17 @@ v2 已事前縮窄：
 對照 production contract `Bill::canCancel()`：條件為 `status ∈ {2, 32}`，
 fixture 900001 的 `status = 2` → **可收回為真**。
 
-⇒ 提請裁為 **human-confirmed correct**。此為人工判讀，**非機器證明**。
+⇒ 裁為 **human adjudication = accepted / direction correct**。
+
+⚠️ **證據分層必須維持原樣，不得上滾**：
+
+```text
+machine-proven      grounded status/value was used
+human-adjudicated   「待繳費 → 可以收回」方向正確
+```
+
+**不得**反寫成「ruler machine-proved direction correctness」——那正是 v2 amendment
+之後的 claim ceiling。
 
 ### 3.3 `adjudication_flags`
 
@@ -162,12 +174,12 @@ external_calls  **精確 5**（telemetry 修復後）
 → 最終回應 intent_type=None、action_type=direct_answer（通用兜底文案）
 ```
 
-### 4.3 診斷分類名（**只存在於 6.3 diagnostic taxonomy**）　【業主已裁】
+### 4.3 正式診斷分類（**只存在於 6.3 diagnostic taxonomy**）　【業主已裁】
 
-**`face_exit_before_grounding`**
+**`face_exit_before_grounding`**（已由暫名升為本工作線的正式 6.3 diagnostic classification）
 
 > Face 已成功進場，但 production brain 在 grounding 執行前以 `scope=switch`
-> 判離開責任範圍，使該次 Face execution 未取得 grounding。
+> 判定離開該 Face，致使 grounding 未被取得、Face execution 未走到 answer stage。
 
 **不回寫 6.2 frozen machine taxonomy。** 排除理由逐項：
 
@@ -186,7 +198,15 @@ C4a plumbing 回歸  ✗ 無證據；且 C4a 用腳本化 brain，該 brain 結�
 ⇒ **不得**把責任推給 `trigger_facet_key` 這個 harness shortcut。
 ⇒ 直達進場等價性（`c4b-entry-path-equivalence-resolved.md`）在活體上再獲一次佐證。
 
-### 4.5 root cause **尚未** adjudicated
+### 4.5 因果射程（**已簽核的三段**）
+
+```text
+SUPPORTED       真 brain 的 scope／stay-switch 行為是直接造成此次退出的 mechanism。
+SUPPORTED       trigger_facet_key 不是充分原因——重新分類進場後同樣再次被 scope=switch 退出。
+NOT ESTABLISHED 為什麼 brain 會判 switch。
+```
+
+### 4.6 root cause **尚未** adjudicated
 
 `face_exit_before_grounding` 已被實例重現；**根因未定**。
 至少仍有下列互斥性未排除：persona `scope` 規則本身／該 Face 的 responsibility wording／
@@ -217,7 +237,19 @@ diag-01   NOT ACCEPTED
 > 6.3 ruler-false-red adjudication; 1 case remains unaccepted, with diagnostic replay
 > exposing a real pre-grounding Face-exit failure.**
 
-### 5.2 決定　【業主已裁】
+### 5.2 簽核（2026-08-25，業主）
+
+| 項目 | 裁決 |
+|---|---|
+| `diag-02` | **ACCEPTED** — machine 3/3 ＋ human direction accepted |
+| `anom-02` | **ACCEPTED** — machine 3/3 |
+| `anom-01` | **ACCEPTED after 6.3 adjudication** — 原 machine `value_not_used` 保留；正式歸類 `ruler_false_red` |
+| `diag-01` | **NOT ACCEPTED** — first execution 維持 `INDETERMINATE / HARNESS_EVIDENCE_LOSS`；diagnostic replay 證實 `face_exit_before_grounding` |
+| C4a | **CONFIRMED** |
+| C4b | **NOT PASSED** |
+| production-facing gate | **CLOSED** |
+
+### 5.3 決定　【業主已裁】
 
 ```text
 C4a execution-chain closure   remains CONFIRMED
@@ -227,13 +259,13 @@ production-facing gate        **CLOSED**
   → 任務 9.4 的前置（通過 6.3 上線 gate）**未滿足**
 ```
 
-### 5.3 對外表述（任務 6.4，唯一合規句）
+### 5.4 對外表述（任務 6.4，唯一合規句）
 
 > **執行鏈閉環已證實，最終答案能力尚未放行。**
 
 **SHALL NOT** 表述為「最終答案能力已證實」。
 
-### 5.4 這一輪真正的收穫
+### 5.5 這一輪真正的收穫
 
 C4b 找到的不是「LLM 沒引用值」，而是腳本化 C4a **結構上看不到**的一層：
 
@@ -247,8 +279,8 @@ C4b 才驗真 brain 是否真的走完並使用它。
 ## 本檔**未**做
 
 ```text
-❌ 未放行（放行人為業主；本檔為草稿）
 ❌ 未修改 ruler v2、未改案例／fixture／凍結參數
 ❌ 未回填 diag-01 的第一次結果
-❌ 未對 face_exit_before_grounding 提出修法——root cause 未 adjudicated
+❌ 未對 face_exit_before_grounding 提出修法——root cause 未 adjudicated，另立工作線
+❌ 簽核為 **CLOSED**，不是放行——4.6／8／9 維持不得上線
 ```

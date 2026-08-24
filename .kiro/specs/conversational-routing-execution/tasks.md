@@ -808,20 +808,25 @@ anomaly   frozen cases   secondary dispatch = 0
   進場與供裝前置 `c4b-entry-path-equivalence-resolved.md`（已解除）。
   _Requirements: 3.2_
 
-- [ ] 6.2 **⚡F** 實作兩面向的 C4b e2e 測試（真 `conversational_step`、少量案例）；
+- [x] 6.2 **⚡F** 實作兩面向的 C4b e2e 測試（真 `conversational_step`、少量案例）；
   於檔頭標明預期成本量級；掛 `@pytest.mark.e2e` 使其預設略過、不擋 CI。
+  `tests/e2e/conversational/test_c4b_brain_grounding_e2e_req.py`；已執行一次（真 OpenAI）。
+  ⚠️ **實作完成 ≠ C4b 通過**——執行結果為 **NOT PASSED**（見 6.3）。
   _Requirements: 3.2, 7.2_
 
-- [ ] 6.3 **🧠主 🔍V** 執行 C4b 並產出**上線 gate 放行報告**：逐面向列出斷言結果與實際引用字面。
+- [x] 6.3 **🧠主 🔍V** 執行 C4b 並產出**上線 gate 放行報告**：逐面向列出斷言結果與實際引用字面。
+  `c4b-release-gate-report.md`（**業主已簽核** 2026-08-25）：C4b **NOT PASSED**、
+  production-facing gate **CLOSED**；evidence 見 `evidence/`。
   ⚠️ **放行人為業主，人工放行；不得由測試綠燈自動視為放行。**
   未放行前，本 spec 的三項 production-facing 變更（任務 4.6、任務 8、任務 9）**不得上線**。
   C4b 失敗**不觸發** Req.3.4 降級，該案例併入任務 11 的 `grounding_utilization_rate` 分母分子。
   **🔍V 理由**：上線 gate；且需獨立確認「引用字面」不是測試自己餵進去的。
   _Requirements: 3.2_
 
-- [ ] 6.4 **🧠主** 報告紀律落實：C4b 未過而僅 C4a 過時，
+- [x] 6.4 **🧠主** 報告紀律落實：C4b 未過而僅 C4a 過時，
   所有對外表述 SHALL 為「執行鏈閉環已證實，**最終答案能力尚未放行**」，
   SHALL NOT 為「最終答案能力已證實」。
+  `c4b-report-discipline-record.md` ＋ 機器檢查 `tests/unit/_meta/test_c4b_report_discipline_req.py`。
   _Requirements: 3.2, 9.1_
 
 ---
