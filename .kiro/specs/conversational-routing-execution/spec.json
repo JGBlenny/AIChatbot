@@ -64,13 +64,14 @@
       "7.3",
       "10.1",
       "10.2",
+      "10.3",
       "U0.1",
       "U0.2",
       "U0.3",
       "U1.1",
       "U1.2"
     ],
-    "ledger_note": "2026-08-24 帳面校正：tasks.md 已勾 26 項且有 U0/U1 實測與 provisioning 修復（89d9462），故 started 由 false 改 true。**未**改 phase、**未**改 completed——tasks.md 有進度不等於 implementation 已完成。 ｜2026-08-25 續補：5.2（尺凍結 1dbf94c）／5.3／5.4／5.5（C4a 判型並經 fresh verifier CONFIRMED，8968986）／6.1（C4b 尺 ＋ 逐案尺 ＋ 執行參數三份 FROZEN）補入 tasks_completed。**未**改 phase／completed／release_gate——6.2 未執行、6.3 未放行。 ｜2026-08-25 續補：6.2（harness 實作並執行一次，結果 NOT PASSED）／6.3（報告經業主簽核，gate CLOSED）／6.4（報告紀律＋機器檢查）補入。**未**改 phase／completed——gate CLOSED 意味 4.6／8／9 仍不得上線，且 face_exit_before_grounding 根因未定、另立工作線。 ｜2026-08-25：任務 7（skip_refine 語義定案）7.1/7.2/7.3 完成，判定為『宣告與行為一致』，**未改行為**，處置為文件與命名。 ｜2026-08-25：任務 10.1／10.2 完成（母圖 §0 三層責任分層＋參數回寫）；10.3 僅 steering/dialogue.md 的 skip_refine 速查已順帶完成，**其餘未做、維持未勾**；10.4 未做。",
+    "ledger_note": "2026-08-24 帳面校正：tasks.md 已勾 26 項且有 U0/U1 實測與 provisioning 修復（89d9462），故 started 由 false 改 true。**未**改 phase、**未**改 completed——tasks.md 有進度不等於 implementation 已完成。 ｜2026-08-25 續補：5.2（尺凍結 1dbf94c）／5.3／5.4／5.5（C4a 判型並經 fresh verifier CONFIRMED，8968986）／6.1（C4b 尺 ＋ 逐案尺 ＋ 執行參數三份 FROZEN）補入 tasks_completed。**未**改 phase／completed／release_gate——6.2 未執行、6.3 未放行。 ｜2026-08-25 續補：6.2（harness 實作並執行一次，結果 NOT PASSED）／6.3（報告經業主簽核，gate CLOSED）／6.4（報告紀律＋機器檢查）補入。**未**改 phase／completed——gate CLOSED 意味 4.6／8／9 仍不得上線，且 face_exit_before_grounding 根因未定、另立工作線。 ｜2026-08-25：任務 7（skip_refine 語義定案）7.1/7.2/7.3 完成，判定為『宣告與行為一致』，**未改行為**，處置為文件與命名。 ｜2026-08-25：任務 10.1／10.2 完成（母圖 §0 三層責任分層＋參數回寫）；10.3 僅 steering/dialogue.md 的 skip_refine 速查已順帶完成，**其餘未做、維持未勾**；10.4 未做。 ｜10.3 完成（facet §〇＋knowledge §6＋dialogue 候選分流）；**10.4 業主裁定 intentionally deferred**。",
     "release_gate": {
       "gate": "任務 6.3（人工放行，不得由測試綠燈自動視為放行）",
       "blocked_until_released": [

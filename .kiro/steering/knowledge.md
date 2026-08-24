@@ -206,6 +206,30 @@ AI 生成 → pending_review（待審核）
 - 必須經人工批准才生效
 - AI 僅輔助，最終決策權在人工
 
+## 6. `categories`：entry nomination metadata（**不是 ownership 宣告**）
+
+知識列上的 `categories`（多值優先，無則退單值 `category`）是**進場提名用的中介資料**：
+它讓「檢索到這列」能夠**提出**某個面向作為候選，僅此而已。
+
+```text
+categories 命中          ＝ 這列知識**可以提名**該面向
+                        ≠ 該面向**應該**承擔這個 query（那是 persona scope contract 的事）
+                        ≠ 進場一定成立（仍須 similarity ≥ FORM_TRIGGER_THRESHOLD 0.75）
+```
+
+- **它是目前 responsibility 與 nomination 之間唯一的耦合，而且是人工維護的間接連結。**
+  entry 層**不讀** persona 的 responsibility contract；兩層各走各的契約（母圖 §0.3）。
+- **禁止的推論**：實測曾出現「responsibility owner 存在且穩定接受，但 entry 從未提出它」
+  （分類 `OWNER_EXISTS_BUT_NOT_PROPOSED`）。**不得**據此推導「某列應該補上某個 category」——
+  那是在決定**誰該擁有這個 query**，屬 governance 的 normative decision，不是資料完整性修復。
+- 對齊母圖 §0.5 的三層讀法：`categories`＝① Routing Hint；`form_id`／`action_type`／
+  `trigger_mode`＝② Action Declaration（**帶 `form_id` ≠ 直接開表單**，`trigger_mode` 另有分支）；
+  面向配置的 `grounding_scope`＝③ Execution Configuration（**僅在選定後生效**，非 routing 選項）。
+- `result_mapping.skip_refine` 屬對話政策，不屬 routing：它跳過的是「請補更明確識別」那一輪，
+  **不是**選定候選後的重查（重查仍會發生並收斂單筆）。
+
+---
+
 ## 核心原則總結
 
 ### 1. 測試驅動知識完善

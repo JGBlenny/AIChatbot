@@ -2,6 +2,34 @@
 
 > 建立：2026-07-01。本檔記錄「per-領域系統脈絡」在實作審視後演進到「**面向化（facet）三層疊加**」的完整邏輯與資料佈局，取代 design.md 元件1/D2 的兩層版本（design.md 變更歷史已標注）。
 
+## 〇、三層責任分層（與母圖 §0 對齊，2026-08-25）
+
+本檔其餘章節談的是**面向怎麼組裝與執行**；先把它與另外兩層分開，否則「進場」很容易
+被讀成「這個面向已經對這句話負責」。
+
+```text
+① Entry / Routing Hint    誰**被提出**——檢索知識的 categories ＋ 門檻，或 trigger_facet_key 直達
+② Face Responsibility     這個面向**該不該承擔本輪 query**——persona 的【本輪範疇 scope】契約
+③ Execution               進場後**怎麼做**——本檔第二～七章的內容
+```
+
+```text
+**Face entry ≠ responsibility ownership。**
+`scope=stay/switch` 屬**第②層的責任判定**，不是 entry evidence，也不能反推 entry 是否正確。
+進場成立只代表「有人／有檢索證據提出了這個面向」。
+```
+
+⚠️ 已證實：**第①層不消費第②層的契約**——entry nomination 不讀 responsibility contract，
+兩者唯一的間接耦合是 knowledge-row 上人工維護的 `categories`
+（見母圖 §0.3 與 `.kiro/specs/face-exit-before-grounding/`）。
+**本檔刻意不畫「應有的 bridge」**——那屬 governance 尚未做的 normative decision。
+
+⚠️ `PREENTRY_ROUTABILITY_GATE`（現行 `false`）把第②層的判定提前到進場之前，但**不是**
+「同一判定提前」：它以 `cfg.key` 取 system context，而 in-session 用的是
+`_domain_key(config)`（`topic_scope.category`）——**evaluation context 不同源**（實測 digest 不同）。
+
+---
+
 ## 一、問題與演進
 
 初版設計把系統脈絡做成「base（target_user NULL）＋ 領域 append（target_user）」兩層，領域鍵＝`persona_role`（=target_user）。實作審視發現三個問題，逐一修正：
@@ -106,6 +134,9 @@ psql "$DATABASE_URL" -f rag-orchestrator/database/migrations/backfill_contract_k
 | ①分類路由（既有機制） | 意圖錨點知識（`vendor_ids` 空、`question` 主題關鍵字式、掛「修繕報修」分類）命中，觸發門檻 similarity≥0.75 | `by_category` 1:1 → 面向配置。**模糊敘述**（如「房子有點問題」）<0.75 不進面向、先澄清 |
 | ②Step 0.5 改道 | 損傷照片 `is_damage` 且信心足 | **不打 SOP 檢索**、直接 seed 修繕面向並攜帶 RecognitionResult；找不到面向配置→降級回原行為（安全網）；非損傷/信心不足維持現行降級。非租約標的（公共區域）損傷仍進面向、由對話處理，不另設分支 |
 | ③`trigger_facet_key` 直達（chat API 新選填參數） | 命中 conversational config registry（by_key）且 enabled | 跳過意圖辨識直接 seed（帶本次訊息與圖）；**未命中→照常管線不報錯**（防呆） |
+
+⚠️ 三路都只是**第①層的提名**；進場後仍由第②層（`scope=stay/switch`）決定要不要承擔，
+可在 grounding 之前關閉會話並重路由（見 §〇）。
 
 **gate（`enabled_gate`）**：面向配置有 `enabled_gate` 鍵（修繕＝`"repair_enabled"`）才檢查——`vendor_configs` 讀值、**缺值預設 true**；`false`→不進面向、回 `degraded_messages.gate_disabled` 文案並注入客服管道參數（預設鍵 `service_hotline`，可由 `contact_config_key` 覆蓋）。gate 僅對「宣告 `enabled_gate` 的面向」生效（配置驅動，引擎/進場不硬編修繕字樣）。
 

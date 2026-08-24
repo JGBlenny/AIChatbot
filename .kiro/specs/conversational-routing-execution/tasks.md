@@ -931,12 +931,17 @@ anomaly   frozen cases   secondary dispatch = 0
   `PREENTRY_ROUTABILITY_GATE`。**母圖只引用不複製**——參數唯一真實來源仍為 `docs/retrieval-parameters.md`。
   _Requirements: 6.1_
 
-- [ ] 10.3 **⚡F** 更新 `docs/architecture/facet-architecture.md`、`.kiro/steering/dialogue.md`
+- [x] 10.3 **⚡F** 更新 `docs/architecture/facet-architecture.md`、`.kiro/steering/dialogue.md`
   （補三層速查表與 `skip_refine` 語義）、`.kiro/steering/knowledge.md`
   （明確區分 `knowledge_categories` 與 `routing_faces`）。
+  → facet 加 §〇 三層責任分層（`Face entry ≠ responsibility ownership`；`scope=stay/switch`
+  屬第②層非 entry evidence；`PREENTRY_ROUTABILITY_GATE` 的 evaluation context 不同源）；
+  dialogue 加「候選分流速查」（`skip_refine`）；knowledge 加 §6
+  （`categories`＝entry nomination metadata，非 ownership 宣告；禁由
+  `OWNER_EXISTS_BUT_NOT_PROPOSED` 推導補 category）。⚠️ 三份皆**不畫**應有的 bridge。
   _Requirements: 6.1, 6.5_
 
-- [ ] 10.4 **🧠主** 建立審查流程條款：routing／action metadata 變更 ＝ 程式碼變更等級審查
+- [ ] 10.4 **🧠主**（**業主 2026-08-25 裁定：intentionally deferred，不做**）建立審查流程條款：routing／action metadata 變更 ＝ 程式碼變更等級審查
   （PR checklist），並明寫「補 34 筆 `categories` ≠ 資料完整性修復，而是新增 34 個 Face entry point」。
   _Requirements: 6.6, 6.7, 6.8_
 
