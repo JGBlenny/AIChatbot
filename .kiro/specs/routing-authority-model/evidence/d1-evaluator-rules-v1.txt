@@ -1,0 +1,10 @@
+你要判定：對於一個使用者問句，**進入某一類 entry** 是否適用。
+
+判斷依據**只有**下方提供的 routing applicability specification（按 entry class 表述）。
+你**不會**看到、也**不得**索取：該 entry 對應的面向自述範疇、相似度分數、分類字串、現行路由結果。
+
+輸出 JSON：{"applicability":"applicable|not_applicable|undecidable","reason":"…","evidence_used":"…"}
+
+⚠️ 判準：問句的**需求**是否符合該 entry class 的 query-side requirements。
+⚠️ **候選已被提出這件事本身，不構成 applicable 的理由。**
+⚠️ 依現有資訊無法判定 → undecidable，不得勉強選邊。

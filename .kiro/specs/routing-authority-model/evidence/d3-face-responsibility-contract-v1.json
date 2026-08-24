@@ -1,0 +1,108 @@
+{
+  "artifact": "d3-face-responsibility-contract",
+  "version": "v1",
+  "carrier": "design-side versioned artifact —— **NOT production Face config schema**",
+  "provenance": {
+    "owner": "Face owner",
+    "source": "各 Face 的 seed RULES 自述範疇（`seed_bill_diagnosis_facet.sql`／`seed_billing_facet_configs.sql`）",
+    "authored_by": "Face 側（非 routing 側）",
+    "note": "本 artifact 為 Face 的**供給宣告**（我負責什麼／不負責什麼），非 routing 的需求模型"
+  },
+  "hard_constraint": "evaluator SHALL 以 `query ＋ responsibility contract` 判斷 query 是否符合 Face 責任；**SHALL NOT** 以 `face says applicable=true` 當答案。Face-owned contract ＝ 可被外部 evaluator 檢驗的 responsibility semantics，**≠ Face-owned verdict**",
+  "faces": [
+    {
+      "face_key": "bill_diagnosis",
+      "category": "條件診斷：帳單",
+      "handles": [
+        "某一筆帳單為什麼發不出去",
+        "某一筆帳單為什麼取消不了",
+        "某一筆帳單為什麼被收逾期費",
+        "某一筆帳單手動到帳失敗"
+      ],
+      "does_not_handle": [
+        "帳單金額組成／為什麼是這個數字（→帳單異常）",
+        "租客看不到帳單（→帳單異常）",
+        "繳費入帳問題（→繳費金流排障）",
+        "平台通則／制度／功能有無／操作教學"
+      ],
+      "entity_reference_required": "單一帳單（bill）",
+      "self_scope_rule": "帳單操作可否／原因相關 → stay；金額組成／看不到帳單／繳費入帳 → switch"
+    },
+    {
+      "face_key": "billing_anomaly",
+      "category": "帳單異常",
+      "handles": [
+        "某一筆帳單金額不對",
+        "某一筆帳單沒出現",
+        "租客看不到某一筆帳單"
+      ],
+      "does_not_handle": [
+        "帳單操作可否執行（發送／取消／逾期費／手動到帳）（→條件診斷：帳單）",
+        "繳費入帳流程問題（→繳費金流排障）",
+        "平台通則／制度／操作教學"
+      ],
+      "entity_reference_required": "單一帳單（bill）",
+      "self_scope_rule": "帳單內容／顯示相關 → stay；封存／點退處理 → switch"
+    },
+    {
+      "face_key": "billing_flow",
+      "category": "繳費金流排障",
+      "handles": [
+        "租客說繳了但錢沒進來",
+        "某一筆帳單狀態沒動（繳費側）"
+      ],
+      "does_not_handle": [
+        "帳單金額組成（→帳單異常）",
+        "帳單操作可否（→條件診斷：帳單）",
+        "金流商設定／通道開通（→帳單設定引導）",
+        "平台通則／制度"
+      ],
+      "entity_reference_required": "單一帳單（bill）",
+      "self_scope_rule": "繳費／入帳相關 → stay"
+    },
+    {
+      "face_key": "billing_late_fee",
+      "category": "滯納金",
+      "handles": [
+        "這份合約／這筆帳單的滯納金怎麼算",
+        "為什麼收這麼多",
+        "可不可以調"
+      ],
+      "does_not_handle": [
+        "滯納金**制度通則**（不指涉任一筆）",
+        "帳單操作可否",
+        "繳費入帳"
+      ],
+      "entity_reference_required": "單一合約（contract）或單一帳單（bill）",
+      "self_scope_rule": "指涉某一筆的滯納金 → stay"
+    },
+    {
+      "face_key": "billing_invoice",
+      "category": "發票",
+      "handles": [
+        "某一筆的發票開了沒",
+        "什麼時候開",
+        "要補開或作廢"
+      ],
+      "does_not_handle": [
+        "發票制度通則（開立時點規則／抬頭設定等功能問題）",
+        "帳單金額組成"
+      ],
+      "entity_reference_required": "單一帳單（bill）",
+      "self_scope_rule": "指涉某一筆的發票狀態 → stay"
+    },
+    {
+      "face_key": "billing_setup_guide",
+      "category": "帳單設定引導",
+      "handles": [
+        "收款與帳單設定該走哪條路徑（引導）"
+      ],
+      "does_not_handle": [
+        "查任何一筆帳單的實際狀況（本面向不查帳單 API）"
+      ],
+      "entity_reference_required": null,
+      "self_scope_rule": "設定路徑選擇 → stay"
+    }
+  ],
+  "contract_digest": "9b1c12e154b0c85a"
+}

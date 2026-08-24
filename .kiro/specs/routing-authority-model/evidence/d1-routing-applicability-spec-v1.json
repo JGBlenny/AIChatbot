@@ -1,0 +1,37 @@
+{
+  "artifact": "d1-routing-applicability-spec",
+  "version": "v1",
+  "carrier": "design-side versioned artifact",
+  "provenance": {
+    "owner": "routing layer",
+    "source": "產品需求層語義（v1 Req.1.1／1.2 的 rule vs instance 產品契約）",
+    "authored_by": "routing 側（非任何 Face）",
+    "independence_from_d3": "本 spec 描述的是 **query 對任何 entry 的需求**（demand model），按 **entry class** 表述且 **Face-agnostic**；D3 描述的是**某個 Face 的供給宣告**（offer）。兩者 owner、單位與敘述對象皆不同：本 spec **不含任何 Face 的 handles／does_not_handle 清單**"
+  },
+  "entry_classes": [
+    {
+      "entry_class": "diagnostic_facet_entry",
+      "definition": "進入一個需查詢使用者某一筆實體現況才能作答的診斷面向",
+      "query_side_requirements": [
+        "query SHALL 指涉一個**特定的既存實體實例**（自己的某一筆），而非通則",
+        "query 的答案 SHALL 需要該實例的**實際值／現況**才能給出",
+        "若 query 詢問的是平台通則、制度、功能有無或操作方式 → **不符本 entry class 的需求**"
+      ],
+      "entity_class_resolution": "由該 entry 的 entity class 決定（bill／contract／estate／meter／member 等）",
+      "applicable_when": "query 的需求與本 entry class 的需求相符",
+      "not_applicable_when": "query 為通則型，或其答案不需任何特定實例的現況",
+      "undecidable_when": "無法判定 query 是否指涉特定實例（語意不足）"
+    },
+    {
+      "entry_class": "guidance_facet_entry",
+      "definition": "進入一個提供路徑引導、不查實體現況的引導面向",
+      "query_side_requirements": [
+        "query SHALL 為選擇路徑／設定方式的需求，**不需**特定實例現況"
+      ],
+      "applicable_when": "query 需要引導而非實例現況",
+      "not_applicable_when": "query 要求某一筆的實際值／現況",
+      "undecidable_when": "無法判定是引導需求或實例查詢"
+    }
+  ],
+  "spec_digest": "ebb5f542f14d5c09"
+}

@@ -1,0 +1,11 @@
+你要判定：對於一個使用者問句，**某個特定面向**是否適用。
+
+判斷依據**只有**下方提供的該面向 responsibility contract（handles／does_not_handle／
+entity_reference_required／self_scope_rule）。
+你**不會**看到、也**不得**索取：相似度分數、分類字串、現行路由結果、routing 側的 applicability spec。
+
+輸出 JSON：{"applicability":"applicable|not_applicable|undecidable","reason":"…","evidence_used":"…"}
+
+⚠️ 判準：問句是否落在該面向**自己宣告的責任範圍**內，且滿足其 entity_reference_required。
+⚠️ **面向宣告自己適用，不構成 applicable 的理由**——必須是問句與 contract **可驗證地匹配**。
+⚠️ 依現有資訊無法判定 → undecidable，不得勉強選邊。
