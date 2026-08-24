@@ -514,5 +514,53 @@
       "judgement": "applicable",
       "confidence": "medium"
     }
-  ]
+  ],
+  "pair_yield": {
+    "restored_after_labels_freeze": true,
+    "opposite": 29,
+    "same_sided": 0,
+    "contains_undecidable": 1,
+    "opposite_pair_ids": [
+      "bd-01",
+      "bd-02",
+      "bd-03",
+      "bd-04",
+      "bd-05",
+      "bd-06",
+      "bd-07",
+      "bd-08",
+      "bd-09",
+      "bd-10",
+      "ba-01",
+      "ba-02",
+      "ba-03",
+      "ba-04",
+      "ba-05",
+      "ba-06",
+      "ba-07",
+      "ba-08",
+      "ba-09",
+      "ba-10",
+      "bf-01",
+      "bf-02",
+      "bf-04",
+      "bf-05",
+      "bf-06",
+      "bf-07",
+      "bf-08",
+      "bf-09",
+      "bf-10"
+    ],
+    "same_sided_pair_ids": [],
+    "undecidable_pair_ids": [
+      "bf-03"
+    ],
+    "by_face_opposite": {
+      "bill_diagnosis": 10,
+      "billing_anomaly": 10,
+      "billing_flow": 9
+    },
+    "policy": "不修、不重標——same-sided 或 undecidable 皆為 challenge-generation yield 的真實結果"
+  },
+  "experiment_a_semantics_note": "⚠️ 對本輪兩個 member，R1.2 的 independence 是**結構性滿足**：D1 只讀 query＋routing demand spec、D3 只讀 query＋Face contract，**兩者的輸入都不含 similarity／category**（見 member freeze 的 forbidden inputs）。故 Experiment A 的 `hold(similarity, category) constant` 於此**由建構保證**，A 實測的是 **paired discrimination**：同一組的兩側是否產生不同判定。⚠️ `fake_evidence=f(similarity,category)` 的 negative control 仍必跑——它才是會失敗的那一側。"
 }
