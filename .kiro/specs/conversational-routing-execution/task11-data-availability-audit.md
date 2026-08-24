@@ -1,13 +1,38 @@
-# 任務 11 前置：production 量測資料可用性稽核
+# 任務 11：observability-blocked report
+# （production telemetry inventory ／ 原定的 dialogue-quality baseline 已證明不可量測）
 
 > 2026-08-25｜語言 zh-TW｜**唯讀，只有 SELECT；未驅動任何 production 請求、未寫入任何一列**
 > 授權範圍：業主 2026-08-25「只到 11.1 四條安全條件內的 production read-only measurement」
 
-## 0. 結論（先講）
+## 0. 裁定與結論（業主 2026-08-25）
 
-> **「先量現況」的第一個現況是：現行 production 量不到對話品質。**
-> 11.3 的 `turns_p50/p90` 與 11.4 的三項判定指標，**在現有資料下皆不可計算**——
-> 不是授權問題，是資料不存在。
+> **Task 11 原定的 production dialogue-quality baseline，
+> 已被證明在現有 telemetry contract 下不可量測。**
+> 可以完成的是 **production telemetry baseline**；**不得**把它偽裝成 dialogue-quality baseline。
+
+```text
+Task 11 outcome = **BLOCKED_BY_OBSERVABILITY**
+```
+
+⚠️ 這**不是** `INSUFFICIENT_EVIDENCE`（那表示資料存在、只是量不夠），
+也**不是** `FAILED`（沒有跑出「品質很差」或「樣本不足」）。
+本輪證明的是 **measurement contract 與 production instrumentation 不相容**：
+至少兩類指標的**觀測欄位根本不存在**。
+
+### 逐項狀態
+
+```text
+11.1 production read-only safety preconditions   **SATISFIED**
+11.2 quality ruler freeze                        **NOT PERFORMED / NOT APPLICABLE**
+     reason: required observables unavailable；在確立可量測性之前凍結量尺沒有意義
+11.3 turn-distribution metrics                   **NOT MEASURABLE AS SPECIFIED**
+     turn_number：diagnostic 側無任何資料｜decision_snapshot.user_turns：亦無資料
+     僅有 facet-row-count-per-session 作為 proxy，**SHALL NOT** 改標為 conversation turns
+11.4 dialogue-quality judgments                  **NOT MEASURABLE**
+     無 transcript／user message／final answer 材料 → **judgeable N = 0**
+11.5 required_slots 設計合理性                    **NOT STARTED**（不需 production 資料，未在本輪範圍）
+11.6 ≥30 judgeable production cases              **PRECONDITION UNSATISFIED**
+```
 
 ## 1. 四條安全條件的現況（11.1）
 
@@ -80,25 +105,98 @@ usage_events          只有 message_len，**無** message／answer 欄位
 ✅ 每 session 的 facet 列數分布——**turns 的 proxy**（一請求一列；
    須標為 proxy，且不得改稱 turns_p50/p90）
 ✅ processing_path 分布
-⚠️ 近 30 天的實況：facet session 中 rows=1 者 294、rows=3 者 21、rows=2 者 3、rows=5 者 1
-   ——樣本以單輪為主，任何「多輪品質」的 aggregate claim 都缺可判樣本
+⚠️ **指標名稱：`facet_event_rows_per_session`**（近 30 天）rows=1:294／rows=3:21／rows=2:3／rows=5:1
+   ⚠️ **只能說**「facet telemetry 以每 session 單列為主」；
+   **不得**推論「production conversation 以單輪為主」——目前沒有可靠的 turn observable 支持後者。
 ```
 
-## 5. 提請裁示（互斥三選一，本檔不自行選）
+## 4.4 正式缺口登記：OBS-1／OBS-2／OBS-3（**Task 11 的產物**）
 
 ```text
-(a) 窄化 Task 11 → **telemetry baseline**（第 4 節可算項）＋ 明文記錄不可算項與盲點，然後收。
-    優點：零 production 變更、立即可得、且「量不到」本身就是有價值的 baseline 事實。
-    代價：11.3／11.4 的原指標維持未達成，11.6 的比較性結論（≥30 可判案例）無法成立。
+OBS-1  diagnostic conversational turns lack a reliable turn counter
+       缺在哪：set_facet(turn_number=…) 只在交易面向呼叫；分類進場只帶 facet_key
+       證據：usage_events.turn_number 非空 0 列；decision_snapshot->>'user_turns' 非空 0 列
+       → **blocks 11.3**
 
-(b) 先補埋點（turn_number 於診斷面向、scope=switch 的 exit 事件、可選的逐字留存）
-    → 屬 **production 變更**，需另外授權；且 gate CLOSED 期間不上線 → **短期內產不出資料**。
+OBS-2  scope=switch exits lack an observable facet lifecycle event
+       缺在哪：engine 於 scope=switch 走 `_close(session_id)` 後 return None，未發 facet_event
+       證據：現有 exit 事件只有 exit_degraded(84)／exit_user_cancel(1)
+       → **blocks scope-exit baseline**
 
-(c) 以 branch e2e 自造樣本量測 → 那不是 production 現況，**會失去 baseline 的意義**。
+OBS-3  semantic quality metrics lack judgeable user/assistant evidence
+       缺在哪：usage_events 僅有 message_len；chat_history／conversation_logs／
+               unclear_questions 皆 0 列
+       → **blocks 11.4 / 11.6**
 ```
+
+### ⚠️ 責任邊界：**Task 11 指出要補哪裡，不負責把資料補出來**
+
+```text
+✅ 留在 Task 11    缺口定義（OBS-1/2/3）、缺在哪個 execution point、各自阻塞哪個 requirement
+❌ 不屬 Task 11    新增 facet_turn event／新增 exit_scope_switch event／
+                   決定是否保存 transcript／retention・privacy 處置
+                   ——那些是**新的 production observability design**
+```
+
+⚠️ 這與剛處理完的 `skip_refine` 是同一種病：把 measurement 與 instrumentation design
+塞進同一格。**不重蹈。** Task 11 到 `BLOCKED_BY_OBSERVABILITY` 為止即 STOP。
+
+```text
+Conversational Observability（**另開的線，尚未開**）
+        │  provides required observables
+        ▼
+Task 11 resumes → freeze ruler → collect judgeable production sample → establish baseline
+```
+
+## 4.5 三個發現各自的 claim ceiling（**分開，不得互相加碼**）
+
+```text
+F1 turn observables 缺席
+   ✅ 可說：11.3 指定的 turns_p50/p90 **無法從 production 現有資料計算**
+   ❌ 不可說：由 facet rows/session 回推 turns；不可把 proxy 改名為 turns
+
+F2 無逐字內容
+   ✅ 可說：反問對題率／前提衝突處理率／grounding utilization **structurally unjudgeable**，
+           **judgeable N = 0**（不是「<30」——資料契約上根本無法形成判讀單位）
+   ❌ 不可說：品質好或差
+
+F3 scope=switch 無 exit telemetry
+   ✅ 可說：**若**發生此路徑，現有 `facet_event` taxonomy 無法直接統計它
+   ❌ 不可說：production 其實常常發生 face-exit，只是我們看不到
+```
+
+## 5. 決策紀錄（業主已裁：採 (a)）
+
+```text
+(a) **採用**：窄化為 telemetry inventory／observability baseline ＋ 明文記錄不可算項與盲點。
+(b) 排除：補埋點在 gate CLOSED 下無法上 production → 只會產生「未部署 instrumentation 存貨」，
+    不會完成 Task 11；且「逐字留存」牽涉比一般 telemetry 更大的資料治理問題，
+    **不得**當成 Task 11 的小修補順手決定。
+(c) 排除：branch 自造樣本可測 evaluator／harness，但回答不了「production 現況如何」；
+    拿 synthetic cases 補滿 30 只會製造**假 baseline**。
+```
+
+### 若未來要開 observability 工作線，題目應為（本輪**不偷做**，且**不掛在 Task 11 底下**）
+
+> **為了讓 production conversational-quality baseline 可重複量測，
+> 最小必要 telemetry contract 是什麼？**
+
+該線才負責判：turn lifecycle 記在哪／`scope=switch` exit 記在哪／grounding utilization
+可用哪些結構化欄位／哪些指標真的需要 user・assistant content／retention・privacy 怎麼處理／
+哪些 instrumentation 能先做、哪些涉及 production release。
+
+⚠️ 這樣即使未來決定「不保存逐字稿，只量結構化 grounding 指標」，
+也**不會**是在 Task 11 裡偷偷改掉原本的 measurement contract。
 
 ⚠️ 依 Requirement 10.5 與業主的 claim ceiling，本輪**未**調整任何規則、routing、metadata，
 也**未**因量測缺口順手補埋點。
+
+## 5.5 本輪最根本的結果
+
+> **目前 production 不具備驗證「多輪對話品質是否改善」所需的觀測面。**
+
+這解釋了為什麼 C4b 與 face-exit 都只能自建專用 evidence harness——
+但**反過來不成立**：那些 harness **不得**用來宣稱 production aggregate quality。
 
 ## 6. 本檔**未**做
 
@@ -107,4 +205,5 @@ usage_events          只有 message_len，**無** message／answer 欄位
 ❌ 未產出任何 baseline 數字作為結論（第 2 節為可用性佐證，非 baseline）
 ❌ 未新增 r10_ 前綴（本輪不驅動請求即不需要；要驅動時再補）
 ❌ 未做 11.4／11.5／11.6
+❌ **未設計、未實作任何埋點**——OBS-1/2/3 只登記缺口，補法屬另一條 observability 線
 ```

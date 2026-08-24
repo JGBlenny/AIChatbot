@@ -949,28 +949,37 @@ anomaly   frozen cases   secondary dispatch = 0
 
 ## 11. 面向對話品質基準（先量現況，不調規則）
 
+> **Task 11 outcome（業主 2026-08-25 裁定）＝ `BLOCKED_BY_OBSERVABILITY`**
+> 原定的 dialogue-quality baseline 在現有 telemetry contract 下**不可量測**；
+> 實際交付為 **telemetry inventory／observability baseline**，見
+> `task11-data-availability-audit.md`。⚠️ 不得以 facet-row proxy 冒充 turns，
+> 亦不得以 synthetic cases 補 production baseline。
+
 ⚠️ ［需求 10.5］**本 spec 到 baseline 落檔為止，SHALL NOT 調整任何對話規則文字。**
 ⚠️ 本元件為 `scripts/backtest/` 下的**獨立腳本，不是 pytest 測試**，不在 DB 守門作用域內。
 
-- [ ] 11.1 **🧠主 🔍V** 落實 production 存取的四條安全條件：
+- [x] 11.1 **🧠主 🔍V** 落實 production 存取的四條安全條件：
   ①所有請求 `session_id` 帶 `INTERNAL_RULES` 認得的前綴（建議新增 `r10_` 並補進 `_SMOKE_PREFIXES`），
   使 `is_internal=True` 自動成立、不污染計量與額度；
   ②`usage_events` 保留不清（那正是要聚合的資料，且已標 internal）；
   ③`form_sessions` 依 prefix 清除；
   ④**業務資料零寫入——SHALL NOT 驅動任何交易面向**（`execute_endpoint` 存在者），那會真的建單。
   **🔍V 理由**：對 production 的寫入邊界；第 4 條做錯會產生真實報修單。
+  → **SATISFIED**（2026-08-25）：本輪**未驅動任何 production 請求**，全程僅 SELECT——
+  ①③不適用且無污染、②未清除、④**零寫入**。🔍V 所防的風險（驅動請求誤建單）本輪未發生；
+  **日後若要驅動 production 流量，仍須先補 `r10_` 前綴並重新獨立驗證**。
   _Requirements: 9.4, 10.1_
 
-- [ ] 11.2 **🧠主** 以 `freeze_measurement.py` 凍結判準、分母、雜訊標記、尺版本，**再開始量測**。
+- [ ] 11.2 **🧠主**（**NOT APPLICABLE**：required observables unavailable，在確立可量測性前凍結量尺無意義）以 `freeze_measurement.py` 凍結判準、分母、雜訊標記、尺版本，**再開始量測**。
   量測後任一項變更即為換尺，須重跑前後兩側。
   _Requirements: 9.3, 10.5_
 
-- [ ] 11.3 **⚡F** 以既有埋點 SQL 聚合兩項指標：`turns_p50`／`turns_p90`
+- [ ] 11.3 **⚡F**（**NOT MEASURABLE AS SPECIFIED**：turn_number 與 decision_snapshot.user_turns 皆無資料；facet-row proxy **不得**改標為 turns）以既有埋點 SQL 聚合兩項指標：`turns_p50`／`turns_p90`
   （`usage_events.facet_key` ＋ `turn_number`，per-session MAX）與 `repeat_ask_rate`。
   無須新增埋點。
   _Requirements: 10.1_
 
-- [ ] 11.4 **🧠主** 建立三項需判定的指標之判定程序並執行：`on_target_ask_rate`（反問對題率）、
+- [ ] 11.4 **🧠主**（**NOT MEASURABLE**：無 transcript／user message／final answer，**judgeable N = 0**）建立三項需判定的指標之判定程序並執行：`on_target_ask_rate`（反問對題率）、
   `premise_honored_rate`（前提衝突處理率）、**`grounding_utilization_rate`**
   （分母＝grounding 已具備必要事實的收斂輪；分子＝最終回答正確採用者）。
   ⚠️ ［需求 7.3］由人／協作代理直接判斷，**SHALL NOT 外包給大量 LLM 呼叫產生不可靠標註**。
@@ -979,7 +988,7 @@ anomaly   frozen cases   secondary dispatch = 0
 - [ ] 11.5 **🧠主** 評估 `required_slots` 設計合理性：是否索取面向實際不需要的欄位、是否遺漏必要欄位。
   _Requirements: 10.4_
 
-- [ ] 11.6 **🧠主** baseline 落檔並標註結論分級：僅通過現有基準者
+- [ ] 11.6 **🧠主**（**PRECONDITION UNSATISFIED**：現行 telemetry 無法構成可判案例）baseline 落檔並標註結論分級：僅通過現有基準者
   SHALL 僅聲稱「技術可行／regression-safe」；「routing 品質確實提升」SHALL 僅在通過
   production holdout 後聲稱。比較性結論須 ≥30 可判定案例。
   _Requirements: 9.1, 9.2, 9.3, 10.5_

@@ -65,6 +65,7 @@
       "10.1",
       "10.2",
       "10.3",
+      "11.1",
       "U0.1",
       "U0.2",
       "U0.3",
@@ -89,6 +90,14 @@
         "report": "c4b-release-gate-report.md",
         "note": "2 cases machine-confirmed 3/3；1 case substantively accepted after a predeclared 6.3 ruler-false-red adjudication；1 case remains unaccepted（diag-01：first execution INDETERMINATE / HARNESS_EVIDENCE_LOSS，replay 證實 face_exit_before_grounding）。**不得**表述為 3/4 cases passed。"
       }
+    },
+    "task_11_outcome": {
+      "outcome": "BLOCKED_BY_OBSERVABILITY",
+      "decided_by": "業主",
+      "date": "2026-08-25",
+      "delivered": "production telemetry inventory / observability baseline",
+      "not_delivered": "dialogue-quality baseline（11.2 N/A、11.3 not measurable as specified、11.4 not measurable、11.6 precondition unsatisfied、11.5 not started）",
+      "record": "task11-data-availability-audit.md"
     }
   }
 }
