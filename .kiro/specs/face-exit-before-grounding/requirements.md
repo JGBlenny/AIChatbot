@@ -95,15 +95,17 @@ INSUFFICIENT_EVIDENCE
 
 **目前 outcome：`INSUFFICIENT_EVIDENCE`**（R1／R3／R4 未完成；第五類已存在但**不得提前套用**）。
 
-### `RESPONSIBILITY_GAP_CONFIRMED`（業主定義，逐字）
+### `RESPONSIBILITY_GAP_CONFIRMED`（**操作化定義**，2026-08-25 第二版）
 
-> 在 authoritative responsibility contracts 均被正確載入、傳遞並依其既有語義執行的前提下，
-> 同一產品 query 未被任何候選 Face 接受為自身責任，
-> 或形成 mutual delegation ／ no-owner 狀態，
-> 使 execution 無法取得一個可持續承擔該 query 的 Face。
->
-> 此分類只證明「責任覆蓋有洞」，不決定哪個 Face 應該擁有該 query，
-> 也不得藉此修改任一 Face responsibility contract。
+> 在本 query 的 **runtime delegation closure 已被追至終點**，
+> 且所有被 authoritative responsibility evaluation **實際提出為候選 owner** 的 Face，
+> 在其 **production-equivalent in-session context** 下均不接受責任，
+> 並且**不存在尚未檢驗的新 delegation target**。
+
+⚠️ 第一版措辭為「未被**任何候選 Face** 接受為自身責任／形成 mutual delegation
+／no-owner 狀態」。B′ 實測發現 candidate set **不是封閉的兩元素集合**
+（runtime 指名了第三個 Face），故將「任何候選 Face」**操作化**為上述 closure 條件。
+**這不是改結論救測試**，而是把原本模糊的量詞定死；三條護欄不變。
 
 三條護欄：
 
@@ -183,3 +185,22 @@ correct rules loaded
 ❌ 把本線的發現回填 6.2／6.3 的結果
 ❌ 一邊修 production 行為、一邊改變要量的東西
 ```
+
+## R9 candidate set 的界定（**descriptive discovery rule**）
+
+**THE** candidate set for this query **SHALL NOT** be bounded by researcher-selected Faces;
+it **SHALL** be bounded by the Face delegation closure explicitly produced by
+runtime authoritative scope evaluation.
+
+```text
+初始已觀測候選   bill_diagnosis
+runtime 明確 delegate → billing_anomaly → contract_closeout → （續）
+
+終止條件（任一）
+A. 某 Face stable stay（接受責任）
+B. delegation 回到已測 Face → cycle
+C. Face switch 但沒有可辨識的新 owner
+D. 指向不存在／disabled／非 Face 的 destination
+```
+
+⚠️ 這是**描述性**規則，**不**替 governance 決定誰「應該」負責。
