@@ -123,6 +123,40 @@ veto 權：    □ 有，持有者：______________  □ 無
    若新治理提供外部 admission，那已是**新的 shape**，須以新版身分受審
 ```
 
+#### ⚠️ 解鎖時的關鍵紀律：**治理成立是「新 evidence」，不是自動替所有 carrier 補滿 X-1**
+
+```text
+❌ 不得因為本記錄填完，就直接把 A 的 X-1 改成 PASS
+
+✅ 正確順序：
+   ① 先把填寫結果轉成一個**可引用的 authority-origin artifact**
+      （有版本、有裁定者、有生效範圍）
+   ② 再**逐 carrier** 問：
+
+      A  這個 governance decision **是否真的**為 A 的 central binding 提供 X-1？
+      B  它**是否改變** B 原本的 self-enrollment shape？
+         若改變 → B 是**新 version**，不是舊 B 翻案
+      C  它**是否足以**建立 C 的 `Face ↔ capability` **右半邊** binding？
+         （左半邊平台權限本來就 authoritative，缺的一直是右半邊）
+```
+
+⚠️ 三個問題的答案**可以不同**：治理成立**可能只解鎖其中一個或兩個 carrier**，
+也可能一個都不解鎖（例如裁定成立但無法版本化、或無法轉成 machine binding）。
+**不得**把「治理有了」直接等同於「carrier 可以選了」。
+
+### 若四題的答案是「目前沒有固定規則」
+
+```text
+沒有固定 authority owner ／ 沒有 final veto ／ 新增 Face 不需裁決 ／ 責任只靠討論或口頭
+```
+
+⚠️ **這不是 decision record 填失敗**，而是得到一個清楚的產品治理結論：
+
+> **responsibility governance 本身需要先被建立。**
+
+此時 v2 design 可正式停在 `external dependency unresolved`，
+且該結論**本身**就是這條線的有效產出，不需要再由工程端補洞。
+
 ---
 
 ## 在本記錄成立之前，工程端的既定約束（**已凍結，不因等待而放寬**）
