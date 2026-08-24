@@ -20,11 +20,36 @@ recall     9/16 = 56%
 
 ## 兩個方向的解讀，都要留
 
-**正面：訊號有資訊價值，而且不靠分數。**
-15 筆人判不適用者**全數被擋**（TN 15/15、FP 0），而這些 pair 的
-similarity 多在 0.73–0.93——**分數切不開的東西，`query × KB` 的語義判定切得開**。
-這是 P7（similarity-based representation 不構成新 authority）的**反面佐證**：
-存在一種不靠 similarity 的判別來源。
+**正面：訊號有資訊價值——但價值在「錯誤形態」，不在整體正確率。**
+
+⚠️ **本節首版高估了語義判定的優勢，以下為更正後的實算。**
+
+```text
+人判適用    n=16   sim 0.733–0.962
+人判不適用  n=15   sim 0.651–0.945     ← 兩組**大幅重疊**，無任何門檻能分開
+
+整體正確率：最佳單一 similarity 門檻(0.762) 23/31 = 74%
+            gate 語義判定                    24/31 = 77%   ← **差距僅 1 筆**
+```
+
+**所以「分數切不開、語義切得開」在整體正確率上並不成立。**
+真正的差異在**錯誤形態**：
+
+```text
+若要用門檻達到 gate 那樣的「零放行錯位」，門檻須 > 0.945
+  → 真正適用的知識只剩 **1/16** 通過（誤殺 15/16）
+gate 在零放行的同時，適用者仍通過 **9/16**
+```
+
+**這才是這輪的 existence proof**（業主 2026-08-24 措辭修正，取代原「反面佐證」）：
+
+> P7 說「把 routing metadata 換地方、再做一次 similarity，不會產生新 authority」。
+> 本輪證明：production 內**確實存在**一種**不由 similarity margin 決定**的
+> `query × KB` semantic applicability signal，它能在**零放行錯位**的前提下
+> 保留 9/16 的適用知識，而任何單一門檻在同條件下只能保留 1/16。
+>
+> **新資訊不是「P7 可能錯」，而是：除了 similarity，系統確實能取得額外語義資訊；
+> 問題在於這份資訊目前只是局部 veto，沒有成為 first-class routing evidence。**
 
 **負面：它以 44% 的誤殺換取零放行。**
 16 筆真正適用的知識中**擋掉 7 筆**。誤殺樣本：
@@ -78,8 +103,11 @@ similarity 多在 0.73–0.93——**分數切不開的東西，`query × KB` �
 
 ## 本輪對三個假說的增量
 
-- **H2（缺 first-class query semantics）**：**增強**。存在一種
-  「不靠 similarity、由 query × 內容語義判定」的訊號，且對不適用者 15/15 全中。
+- **H2（缺 first-class query semantics）**：**SUPPORTED, but narrowly**（業主措辭）。
+  `_top1_relevance_gate` 判的是 `query × KB applicability`，**不是獨立的
+  query intent representation**。它支持的是：
+  **query 裡存在可被語義判斷器抽取、且 similarity 沒有表達出來的 applicability information**。
+  ⚠️ 這對 H2 是增量，但**尚未證明** intent taxonomy 是正確的承載方式。
 - **H1**：**無增量**。本輪未測「把 Hint 搬離 answer row 是否產生新 authority」。
 - **H3**：**無增量**，且再次凸顯限制——這道 veto **不知道 Face**，
   無法承擔「該進哪一個面向」的判定。
