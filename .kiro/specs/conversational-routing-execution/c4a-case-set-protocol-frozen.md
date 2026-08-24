@@ -3,6 +3,7 @@
 > 2026-08-24｜語言 zh-TW｜業主裁定：走 **(2) 另立 case-set freeze**——
 > 不得把 routing cohort 或 tasks 的「例：」升格為正式案例。
 > 前置：任務 5.1 已完成（`e75e7c3`）；**5.2 尚未開始**；**4.6／5.3／5.4 皆未執行**。
+> **狀態：FROZEN**（業主 APPROVE WITH 1 FINAL MUST-FIX，已套用：§2 的 C-1a／C-1b）。
 
 ## 為何需要本檔
 
@@ -82,9 +83,30 @@ grounded_property_asked 該題要求的是哪一類 grounded 事實（狀態／�
 **跨案硬性條件**：
 
 ```text
-C-1  同一面向的兩案 MUST 使用**不同**的 fixture_bill_id
+C-1a 每個 case SHALL 指定**唯一**的 fixture_bill_id；
+     同一面向的兩案 MUST 使用**不同**的 fixture_bill_id
+C-1b ⚠️ **後續 C4a execution SHALL machine-assert**：實際送出的 numeric bill_ref ／
+     resolved detail request **對應該 case 的 fixture_bill_id**。
+     **僅因 grounding 最終包含相同 fact-key 集合，不得視為 case→fixture binding 已證成。**
 C-2  四案合計 MUST 至少涵蓋 2 個不同的 contract_id（4.4 矩陣：700100／700200）
 C-3  兩個面向的 secondary_call_required MUST 相反（有／無的對照即本組存在的理由）
+```
+
+### ⚠️ C-1b 是 N=2 論證的**成立前提**（final must-fix，業主指定）
+
+「兩案綁不同 fixture → 恆回同一筆的實作必然有一案失敗」這個推論，
+**只有在 execution 真的驗『本案使用了指定 fixture』時才成立**。若 5.3／5.4 只驗
+
+```text
+adapter 有呼叫 ／ transport 有走 ／ grounding 有送達 ／ required ⊆ observed
+```
+
+那麼一個**永遠查 900001** 的錯誤實作，只要兩筆帳單最後產生**相同的 canonical fact keys**，
+兩案仍可能一起綠。C-1b 就是把這個漏洞封在協議層：
+
+```text
+case A expects 900001 → 實際請求 900001   ✅
+case B expects 900002 → 實際仍請求 900001 ❌（MUST 紅）
 ```
 
 ## 3. 作者可看與不可看（**防事後適配**）
@@ -197,3 +219,25 @@ admission:              （pre_existing 須逐條記錄 A-1～A-4 的判定）
 
 ⚠️ 4.6 動手之前，我們會同時擁有：**案例 ✅、充分性量尺 ✅、execution implementation 尚未改**。
 這是最乾淨的實驗順序，也是本次另立 freeze 的全部目的。
+
+---
+
+## 9. Claim ceiling（**寫在產生案例之前**）
+
+本組案例由**已知 formatter／fixtures／adapter 架構**的作者產生，故**即使完全遵守本協議**，
+其證據身份也只能是：
+
+```text
+✅ protocol-frozen design/acceptance cohort
+❌ blind ／ generalization evidence
+```
+
+**因此 5.5 報告 SHALL NOT 出現**：
+
+```text
+❌ 「grounding 對一般使用者問法已穩健」
+❌ 「執行鏈對未見問法已證實」
+✅ 只能：「在 predeclared C4a execution cases 上，執行鏈閉環已證實（scope: numeric_bill_ref）」
+```
+
+⚠️ 這**不是** blocker，是**事前**收窄 claim——避免之後把證據強度講過頭。
