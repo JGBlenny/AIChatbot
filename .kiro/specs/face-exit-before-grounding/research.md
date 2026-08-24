@@ -681,5 +681,17 @@ missing bridge         **entry nomination 完全不讀 responsibility contract**
   以及**哪個 authority 有權決定候選集合**？
 ```
 
-⚠️ **尚未送出**：依業主裁示，等 descriptive 段落定稿後再作為 governance input 升級；
-本檔**不**產生 normative 建議、**不**提修法。
+**已產出 escalation artifact**（2026-08-25，業主放行）：
+`evidence/responsibility-entry-nomination-escalation.md`
+——四層：已證實 findings／已排除替代解釋／確切架構落差／升級的 normative 問題＋decision boundary。
+⚠️ 該檔**不改動** `routing-authority-model` 的狀態，也不代填 Responsibility Governance
+Decision Record 的答案；本檔仍**不**產生 normative 建議、**不**提修法。
+
+### 最終 discovery correction（強化版，取代 §12.4 的措辭）
+
+> 問題已從「責任沒有 owner」修正為
+> 「owner 存在，但**現行 entry nomination 不讀 responsibility contract**；
+> 兩者僅透過 knowledge categories 間接耦合，因此本 query 的 owner 未被提出」。
+
+⚠️ 較 §12.4 更強：Q6 已查完——**不是**「尚未證實有橋」，
+而是已確認 entry 側的耦合只有 knowledge categories，entry 本身完全不讀 responsibility contract。

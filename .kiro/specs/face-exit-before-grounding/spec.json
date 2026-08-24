@@ -2,7 +2,7 @@
   "feature_name": "face-exit-before-grounding",
   "created_at": "2026-08-25T00:00:00Z",
   "updated_at": "2026-08-25T00:00:00Z",
-  "phase": "discovery",
+  "phase": "discovery-complete",
   "status": "active",
   "outcome": "OWNER_EXISTS_BUT_NOT_PROPOSED",
   "language": "zh-TW",
@@ -41,5 +41,7 @@
     "completed": false,
     "tasks_completed": []
   },
-  "outcome_note": "業主 2026-08-25 裁定：RESPONSIBILITY_GAP_CONFIRMED 為 REFUTED（B″ 3/3 stay）；新增並套用第六類 OWNER_EXISTS_BUT_NOT_PROPOSED。更強的 OWNER_UNREACHABLE_BY_CURRENT_ENTRY_CONTRACT 保留、現在不得使用。descriptive tracing 仍在本線權限內續行（entry nomination chain）。"
+  "outcome_note": "業主 2026-08-25 裁定：RESPONSIBILITY_GAP_CONFIRMED 為 REFUTED（B″ 3/3 stay）；新增並套用第六類 OWNER_EXISTS_BUT_NOT_PROPOSED。更強的 OWNER_UNREACHABLE_BY_CURRENT_ENTRY_CONTRACT 保留、現在不得使用。descriptive tracing 仍在本線權限內續行（entry nomination chain）。 ｜2026-08-25 收束：descriptive discovery COMPLETE，escalation artifact 已產出並交付 routing-authority-model / Responsibility Governance Decision Record（新檔，未改動對方狀態）。後續 normative 決定不屬本線。",
+  "descriptive_discovery": "COMPLETE",
+  "escalation_artifact": "evidence/responsibility-entry-nomination-escalation.md"
 }
