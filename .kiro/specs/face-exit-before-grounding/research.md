@@ -402,3 +402,30 @@ billing_anomaly   in-session key=帳單異常       → **2158ebdc2d8fe7e6**
 ❌ 「兩個 Face 都拒絕」                  **尚未成立**——billing_anomaly 2/3，且帶 confounder
 ⇒ RESPONSIBILITY_GAP_CONFIRMED **不得**套用
 ```
+
+---
+
+## 9. F-5 降級（獨立 discovery，2026-08-25）
+
+§8.3 實測證明：`_preentry_routable` 對 `billing_anomaly` 取到的 system context
+（`get_system_context(db, cfg.key)` → base，digest `d1f88c90…`）
+**與該面向真正的 in-session context**（`_domain_key(config)`＝「帳單異常」，digest `2158ebdc…`）
+**不同**。
+
+因此 F-5 原本引述 `_preentry_routable` docstring 的那句「**只是把同一判定提前**」
+**必須降級**。目前證據只支持：
+
+```text
+✅ 它重用同一個 scope evaluator（同一支 conversational_step、同一組 model/config）
+❌ 它**不一定**重建相同的 evaluation context
+```
+
+⚠️ **先不要叫它 implementation defect**：gate 現為 disabled，且此 context 差異是否為
+設計允許尚未查證。但下列表述自本日起**不得再使用**：
+
+```text
+❌ 「pre-entry 使用的是同一個 scope 判斷」（作為 production-equivalent 的完整命題）
+❌ 以 R1 Goal B 的結果替 pre-entry gate 背書
+```
+
+⇒ 本項**不阻擋 B′**，也不需先修；記錄於此，避免日後被誤引。
