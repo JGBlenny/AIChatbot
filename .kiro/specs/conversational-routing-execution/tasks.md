@@ -771,13 +771,22 @@ anomaly   frozen cases   secondary dispatch = 0
   5.4 PASS **SHALL NOT** 寫成「使用者問『帳單現在的狀態』就應 route billing_anomaly」——
   那會越界到 `routing-authority-model`（BLOCKED_BY_EXTERNAL_DECISION）。
 
-- [ ] 5.5 **🧠主 🔍V** 執行 C4a 並依判型流程分類失敗（若有）：
+- [x] 5.5 **🧠主 🔍V** 執行 C4a 並依判型流程分類失敗（若有）：
   (a) 鏈路未跑通／(b) mock 契約不保真／**(c) grounding insufficiency**（充分性維度判出）。
   依業主裁示：**(a) 與 (c) 觸發 Req.3.4 降級**（routing 工作降 P1 以下、執行鏈修復升 P0）；
   (b) 不觸發（修 mock 即可）；(c) 的修法（擴 External 欄位或改打 Internal）**另立案**，
   不進本 spec 的修復迴圈。
   **🔍V 理由**：本任務的結論直接決定整個 spec 的優先序走向。
   _Requirements: 3.1, 3.3, 3.4, 3.5_
+  ⏳ **獨立驗證：待派**（結果補記於 `c4a-classification-result.md`）
+
+  **結果**：見 `c4a-classification-result.md`——四案皆抵達 frozen 流程圖的 **PASS 節點**
+  → **C4a PASS**；`(a) 0/4｜(b) 0/4｜(c) 0/4` → **不觸發 Req.3.4 降級**。
+  ⚠️ **未重新解釋 (a)/(b)/(c)、未新增第四種結果**（`PASS` 本就是流程圖終點之一）。
+  ⚠️ **判型依據為 execution evidence**（逐案的 fixture identity／送達性／充分性／
+  secondary dispatch），`10 passed` 僅為驗收摘要、**不是**判型依據。
+  ⚠️ **射程寫窄**：只證 4 個 protocol-frozen cases × `numeric_bill_ref` × 兩個 execution_face；
+  **不得**升格為非數字分支／一般自然語言／routing ownership／adapter 全分支／最終答案能力。
 
 ---
 
