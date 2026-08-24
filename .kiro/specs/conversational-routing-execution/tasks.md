@@ -694,11 +694,42 @@ Layer 2  哪些事實存在才叫 grounding sufficient → **同一個** ChainCl
   例：「為什麼發不出去」需失敗原因類事實；「這期帳單多少錢」只需金額與期別。
   _Requirements: 3.1, 3.2, 4.2_
 
-- [ ] 5.3 **⚡F** 實作 `bill_diagnosis` 的 C4a 測試：真 DB ＋ 真 `ConversationalEngine` ＋
+- [x] 5.3 **⚡F** 實作 `bill_diagnosis` 的 C4a 測試：真 DB ＋ 真 `ConversationalEngine` ＋
   **真 `APICallHandler`** ＋ 真 `JGBSystemAPI` ＋ `JGBMockTransport` ＋ 腳本化 brain（零 OpenAI）。
   涵蓋：反問 → 收齊 `bill_ref` → adapter 數字分支 → transport → `secondary_call: jgb_bill_detail`
   → grounding。
   _Requirements: 3.1, 7.1_
+
+  **實作**：`tests/integration/conversational/test_c4a_bill_diagnosis_closure_req.py`
+  → **4 passed / 0 failed**（真 DB，非 skip）。
+
+  ⚠️ **scope（業主裁定）**：本檔帶 **OB-3**；**OB-1／OB-2 屬 `c4a-anom-01`，在 5.4 落地**——
+  本檔只提供通用 primitive（`_RecordingTransport`），**不得**宣稱 OB-1／OB-2 已由 5.3 驗收。
+
+  **六項鎖定逐條落地**：
+  ① 真的走 frozen chain（真 DB／真 engine／真 `APICallHandler`／真 `JGBSystemAPI`／
+     `JGBMockTransport`／腳本化 brain，零 OpenAI）——**非**直接呼 formatter 或 fixture helper；
+  ② **OB-3 驗實際 request identity**：以 `_RecordingTransport` 記錄每次 transport 請求，
+     斷言 detail 請求的 bill_id **集合**等於該案 fixture；
+  ③ `secondary_call_required=true` **machine-observable**：斷言 `endpoint_keys()` 含 `bill_detail`，
+     **不以** grounding 內容反推；
+  ④ sufficiency 用 **frozen 5.2**：diag-01 `{amount_due}`／diag-02 `{cancel_determination}`，
+     未因 formatter 另吐其他 determination 而改 required set；
+  ⑤ **送達 ≠ 充分的 negative control（完整 chain 上）**：chain 正常查到帳單、
+     但把該案 required key 自觀測移除 → 必須紅（實測拋「充分性缺事實鍵」）；
+  ⑥ claim ceiling 寫在檔頭。
+
+  ⚠️ **實測逼出的既有 production 行為（記錄，非缺陷）**：detail 端點在一次收斂中被呼叫**兩次**——
+  adapter 數字分支直查一次、面向 `secondary_call` 再一次。故 OB-3 斷言「**集合**相符且非空」，
+  **不鎖次數**；原以為只會有一次的寫法已修正。
+
+  **OB-3 反證（component negative control，未新增第五個 case）**：
+  把期望綁到另一筆 fixture 時斷言必須紅——實測 `{900001} != {900003}` 成立，
+  證明「兩案綁不同 fixture」真能殺掉 constant-record 實作。
+
+  ⚠️ **claim ceiling**：5.3 PASS 只證明兩個 frozen case 的 **numeric branch** chain closure；
+  **不得**升格為「bill_diagnosis 全自然語言穩健」「非數字分支已證」
+  「routing 到 bill_diagnosis 正確」「adapter 全分支已 closure」。
 
 - [ ] 5.4 **⚡F** 實作 `billing_anomaly` 的 C4a 測試（第二面向，**無 `secondary_call`** 的對照組）。
   兩面向共用同一份 `jgb_bills` 契約與 fixture 表。
