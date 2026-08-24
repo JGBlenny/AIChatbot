@@ -11,20 +11,26 @@ C4a 用的是腳本化 brain——它的輸出是測試自己寫的，對它下�
     只證明「查到的東西送到了」，**不證明**送到的東西足以回答問題。
 
 ``required_grounding_facts``
-    **充分性**——formatter 是否產出了回答該問題所必需的**事實鍵**
-    （grounding 中的 ``【鍵】`` 標記，例：``發送判定``）。
+    **充分性**——是否觀測到回答該問題所必需的 **canonical fact keys**。
     比對的是鍵，**不看 LLM 措辭**。
+
+⚠️ **本模組不認識任何 formatter**（業主裁定 (b)）：觀測由面向專屬的 extractor 負責
+（見 ``tests/support/fact_extractors.py``），觀測結果以 ``observed_fact_keys`` 注入。
+
+```text
+formatter-specific extractor  →  observation
+ChainClosureAssertion         →  judgment（delivery ＋ sufficiency）
+```
+
+故充分性判準**仍然唯一**：``required_grounding_facts ⊆ observed_fact_keys``。
+不同面向不同的是**怎麼觀測**，不是**什麼叫充分**。
 
 ⚠️ ``required_grounding_facts`` 為空即視為**未驗充分性**，本模組直接拒絕
 （任務 5.2 的紀律由此在機制上強制，無法靠忘記填而繞過）。
 """
 
-import re
 from dataclasses import dataclass, field
 from typing import Any
-
-#: grounding 中事實鍵的標記形式：`【鍵】`（各面向 formatter 共用，見 services/jgb/bills.py）
-_FACT_KEY = re.compile(r"【([^】]+)】")
 
 #: 疑似「最終回應物件」的鍵——出現任一即拒絕（防止把腳本化 brain 的輸出當斷言對象）
 _ANSWER_LIKE_KEYS = frozenset({"answer", "message", "content", "reply", "text"})
@@ -51,11 +57,6 @@ class SufficiencyNotAssertedError(AssertionError):
 #: 尚未遷移的 `get_contracts`，故該分支**不在**本次 closure claim 之內。
 #: 任務 5.5 報告時 **SHALL NOT** 把部分閉環寫成 full closure。
 CLOSURE_SCOPES: "frozenset[str]" = frozenset({"numeric_bill_ref"})
-
-
-def extract_fact_keys(grounding: str) -> "set[str]":
-    """取出 grounding 中所有事實鍵（`【鍵】` 的鍵名）。"""
-    return set(_FACT_KEY.findall(grounding or ""))
 
 
 @dataclass(frozen=True)
@@ -87,8 +88,17 @@ class ChainClosureAssertion:
             )
 
 
-def assert_chain_closure(grounding: Any, spec: ChainClosureAssertion) -> "dict[str, Any]":
+def assert_chain_closure(
+    grounding: Any,
+    spec: ChainClosureAssertion,
+    *,
+    observed_fact_keys: "set[str]",
+) -> "dict[str, Any]":
     """對 grounding 執行送達性與充分性兩維度斷言；通過回傳可入報告的結果摘要。
+
+    :param grounding: 底稿字串（送達性維度的比對對象）。
+    :param observed_fact_keys: 由**面向專屬 extractor** 觀測出的 canonical fact keys
+        （充分性維度的比對對象）。本函式**不自行觀測**——框架不認識任何 formatter。
 
     ⚠️ `grounding` **必須是字串**。傳入 dict／物件（疑似最終回應）一律拒絕——
     這是「不得對最終回答文字下斷言」在機制上的落點，而非只寫在註解裡。
@@ -105,7 +115,7 @@ def assert_chain_closure(grounding: Any, spec: ChainClosureAssertion) -> "dict[s
         )
 
     missing_literals = [s for s in spec.grounding_must_contain if s not in grounding]
-    present_keys = extract_fact_keys(grounding)
+    present_keys = set(observed_fact_keys)
     missing_facts = [k for k in spec.required_grounding_facts if k not in present_keys]
 
     if missing_literals or missing_facts:

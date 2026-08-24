@@ -626,11 +626,39 @@ bill_id  contract_id  bit_status  invoice_status  date_expire
   ② 對真 formatter 實跑——`build_bill_diagnosis_facts` 在 fixture 900001 上產出事實鍵
      `['取消判定','手動到帳判定','發送判定']`，量尺可正確抽出並斷言。
 
-  ⚠️ **本任務逼出的一個 5.2 必須先決的問題（實測，非推測）**：
-  `build_bill_anomaly_facts` 在同一筆上產出的事實鍵為 **`[]`**——
-  該 formatter **不使用** `【鍵】` 標記（輸出為「• 狀態／金額／期間」條列）。
-  故 5.4（`billing_anomaly` 對照組）的充分性維度**無法沿用同一種鍵抽取**；
-  5.2 必須先決定其充分性如何表達，否則 5.4 只會得到「必然紅」或「乾脆不驗充分性」兩種假結果。
+  ⚠️ **本任務逼出的一個問題（實測，非推測）**：
+  `build_bill_anomaly_facts` 在同一筆上產出的 `【鍵】` 為 **`[]`**——該 formatter 不用此表示法。
+
+  ### ✅ 業主裁定（2026-08-24）：採 (b)，但**觀測分離、判準唯一**
+
+```text
+Layer 1  事實怎麼從 formatter 輸出被觀測      → 面向專屬 extractor（可不同）
+Layer 2  哪些事實存在才叫 grounding sufficient → **同一個** ChainClosureAssertion
+```
+
+  `(a)` 跨 formatter 萬用 parser **不採**——會讓 renderer syntax 變成從未宣告的 grounding contract，
+  且普通句子裡的「• 金額：1000」可能被誤認為 evidence。
+  `(c)` 為測試一致性改 production formatter **不採**——那是 test harness 反過來塑造 production contract；
+  目前只證明「它沒用 diagnosis 的表示法」，**未**證明它缺必要 facts。
+
+  **5.1 的最小演進（核心三禁令未改）**：`assert_chain_closure(grounding, spec, *, observed_fact_keys)`
+  —— 觀測改為**注入**，框架**完全不認識 formatter**。新增守衛測試：
+  `extract_fact_keys` 已自框架移除、框架程式碼不得出現 `【` 標記語法、`observed_fact_keys` 為必填。
+
+  **新增** `tests/support/fact_extractors.py`（兩個 observation adapter，輸出**同一組 canonical key**）：
+  - `diagnosis_bracket_fact_extractor`：`【發送判定/取消判定/手動到帳判定】` → `send_/cancel_/manual_complete_determination`
+  - `anomaly_labeled_field_extractor`：語義欄位 → `bill_status`／`amount_stored`／`due_date`／`billing_period`
+
+  三條硬限制逐條落地並實測（`tests/unit/api/test_fact_extractors_req.py` → **17 passed**）：
+  - **B-1 observer ≠ judge**：以 `inspect.signature` **結構檢查**（非文字掃描）——
+    公開 callable 只吃 `grounding`，模組不得暴露含 required／sufficient／assert 的介面；
+  - **B-2 不綁排版**：`• 狀態：X`／`狀態：X`／`  狀態 ： X`／半形冒號皆觀測到 `bill_status`；
+  - **B-3 negative controls**：「目前帳單看起來正常」→ 空；「金額可能有問題」→ 無 `amount_stored`；
+    `狀態：`（無值）→ 空；未登錄括號鍵 → 忽略；兩觀測器**互不越界**（各自認不得對方的語法）。
+
+  ⚠️ **與業主示例的一處刻意差異**：示例寫 `• 金額：1,000 → amount`，但**真 formatter 實際輸出**
+  為 `帳單金額 NT$ 18,000（系統存值）`（`_bill_head()`）。觀測契約以**實際輸出**為準——
+  故 `• 金額：1,000` **不**被觀測成 `amount_stored`（已寫成具名測試），否則觀測的是想像中的 formatter。
 
 - [ ] 5.2 **🧠主** 為每個 C4a 案例明列 `required_grounding_facts`（執行前明示為斷言基準）。
   ⚠️ **`required_grounding_facts` 為空的案例不構成 C4a 通過的證據**——那等於沒驗充分性。

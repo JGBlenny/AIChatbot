@@ -7,6 +7,8 @@
 2. `required_grounding_facts` 為空 → 拒絕（未驗充分性）；
 3. 未知 `closure_scope` → 拒絕（避免部分閉環被報成 full closure）。
 """
+import io
+
 import pytest
 
 from tests.support.chain_closure import (
@@ -15,53 +17,60 @@ from tests.support.chain_closure import (
     ChainClosureScopeError,
     SufficiencyNotAssertedError,
     assert_chain_closure,
-    extract_fact_keys,
 )
+from tests.support.fact_extractors import diagnosis_bracket_fact_extractor
 
 pytestmark = pytest.mark.unit
 
 GROUNDING = (
     "900001｜2026年8月租金\n"
-    "【帳單狀態】待繳費\n"
     "【發送判定】已發送，不可再次發送\n"
     "【取消判定】可收回\n"
     "【手動到帳判定】尚未到帳"
 )
+
+#: 觀測由面向專屬 extractor 負責；框架本身不認識 formatter
+OBSERVED = diagnosis_bracket_fact_extractor(GROUNDING)
 
 
 def _spec(**kw):
     base = dict(
         case="bill_diagnosis/為什麼發不出去",
         grounding_must_contain=["900001"],
-        required_grounding_facts=["發送判定"],
+        required_grounding_facts=["send_determination"],
     )
     base.update(kw)
     return ChainClosureAssertion(**base)
 
 
-# ── 事實鍵抽取 ────────────────────────────────────────────────────────────
-def test_extract_fact_keys_reads_bracket_markers():
-    assert extract_fact_keys(GROUNDING) == {
-        "帳單狀態", "發送判定", "取消判定", "手動到帳判定"
-    }
+# ── 框架不認識 formatter ──────────────────────────────────────────────────
+def test_framework_has_no_formatter_knowledge():
+    """⚠️ 業主裁定 (b)：觀測與判定分離——框架不得內建任何 formatter 表示法。"""
+    import tests.support.chain_closure as cc
+
+    assert not hasattr(cc, "extract_fact_keys"), "觀測應由面向專屬 extractor 負責"
+    src = io.open(cc.__file__, encoding="utf-8").read()
+    assert "【" not in src.split('"""', 2)[2], "框架程式碼不得出現 formatter 的標記語法"
 
 
-def test_extract_fact_keys_on_empty_grounding():
-    assert extract_fact_keys("") == set()
+def test_observed_keys_must_be_injected():
+    """`observed_fact_keys` 為必填 keyword——框架不會自行觀測。"""
+    with pytest.raises(TypeError):
+        assert_chain_closure(GROUNDING, _spec())      # type: ignore[call-arg]
 
 
 # ── 通過路徑 ─────────────────────────────────────────────────────────────
 def test_passes_when_both_dimensions_satisfied():
-    result = assert_chain_closure(GROUNDING, _spec())
+    result = assert_chain_closure(GROUNDING, _spec(), observed_fact_keys=OBSERVED)
     assert result["case"].startswith("bill_diagnosis/")
     assert result["closure_scope"] == "numeric_bill_ref"
-    assert "發送判定" in result["facts_present"]
+    assert "send_determination" in result["facts_present"]
 
 
 def test_result_carries_not_covered_into_report():
     """部分閉環的限制必須原樣進報告——5.5 才不會把它寫成 full closure。"""
     spec = _spec(not_covered=["bill_ref 非數字分支（get_contracts 未遷移）"])
-    result = assert_chain_closure(GROUNDING, spec)
+    result = assert_chain_closure(GROUNDING, spec, observed_fact_keys=OBSERVED)
     assert result["not_covered"] == ["bill_ref 非數字分支（get_contracts 未遷移）"]
 
 
@@ -69,7 +78,8 @@ def test_result_carries_not_covered_into_report():
 def test_delivery_failure_is_caught():
     """送達性：該筆的實際值字面沒進底稿。"""
     with pytest.raises(AssertionError) as ei:
-        assert_chain_closure(GROUNDING, _spec(grounding_must_contain=["900003"]))
+        assert_chain_closure(GROUNDING, _spec(grounding_must_contain=["900003"]),
+                             observed_fact_keys=OBSERVED)
     assert "送達性缺字面" in str(ei.value)
 
 
@@ -79,7 +89,8 @@ def test_sufficiency_failure_is_caught_even_when_delivery_passes():
     這一條防的是「查到了就算閉環」——送達性不能替代充分性。
     """
     with pytest.raises(AssertionError) as ei:
-        assert_chain_closure(GROUNDING, _spec(required_grounding_facts=["逾期費判定"]))
+        assert_chain_closure(GROUNDING, _spec(required_grounding_facts=["late_fee_determination"]),
+                             observed_fact_keys=OBSERVED)
     msg = str(ei.value)
     assert "充分性缺事實鍵" in msg
     assert "送達性缺字面：[]" in msg          # 送達性其實是過的
@@ -89,19 +100,20 @@ def test_sufficiency_failure_is_caught_even_when_delivery_passes():
 def test_rejects_assertion_against_final_answer_object():
     """禁令 1：傳入疑似最終回應物件 → 拒絕。"""
     with pytest.raises(AnswerTextAssertionError) as ei:
-        assert_chain_closure({"answer": "您這張帳單已發送，無法再次發送"}, _spec())
+        assert_chain_closure({"answer": "您這張帳單已發送，無法再次發送"}, _spec(),
+                             observed_fact_keys=OBSERVED)
     assert "answer" in str(ei.value)
 
 
 @pytest.mark.parametrize("key", ["message", "content", "reply", "text"])
 def test_rejects_other_answer_like_shapes(key):
     with pytest.raises(AnswerTextAssertionError):
-        assert_chain_closure({key: "任何最終文字"}, _spec())
+        assert_chain_closure({key: "任何最終文字"}, _spec(), observed_fact_keys=OBSERVED)
 
 
 def test_rejects_non_string_grounding():
     with pytest.raises(AnswerTextAssertionError):
-        assert_chain_closure(["900001"], _spec())
+        assert_chain_closure(["900001"], _spec(), observed_fact_keys=OBSERVED)
 
 
 def test_rejects_empty_required_facts():
