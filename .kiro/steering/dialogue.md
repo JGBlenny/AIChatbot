@@ -72,6 +72,14 @@
 - **輪數可觀測**：usage_events 埋 `facet_key`／`turn_number`（M3）；P50/P90 以 per-session MAX 聚合，上線目標 P50≤4／P90≤6（含岔題），未達標觸發設計覆核。
 - **詳節**：面向配置結構、grounding_scope、確認 gate 完整流程見 [docs/architecture/facet-architecture.md](../../docs/architecture/facet-architecture.md)。
 
+## 候選分流速查（診斷面向）
+
+API grounding 回 N 筆時：`N ≤ candidate_cap` → 直接列候選供選序號；`N > cap` → 預設先請使用者「補更明確的識別」，補不動才截斷列前 cap 筆。
+
+- **`result_mapping.skip_refine`（預設關）**：同母體多期資料（如同一合約的 26 期帳單）用關鍵字縮不了，補識別是**問使用者答不出來的問題** → 設 true 直接列候選，少一輪。
+- ⚠️ **跳過的是「補識別輪」，不是「重查」**：使用者選定候選後仍會填回 `required_slots[0]` 並**重查 API**，實證收斂單筆（任務 7 定案）。誤讀成跳過重查 → 有人會拿候選列欄位當 grounding，底稿就失去 API 權威來源。
+- 旗標住在 `result_mapping`，管的卻是對話政策；它同時承載「此實體集合無法以關鍵字縮小」這個資料形狀事實。**不改鍵名**（改名＝改既有 DB 配置列），靠本條與程式註解防誤讀。
+
 ## 表單狀態機速查
 
 ```

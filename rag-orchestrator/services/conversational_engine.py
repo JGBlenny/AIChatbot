@@ -938,6 +938,11 @@ class ConversationalEngine:
                 #   不同名大集合可靠「補更明確識別」縮小關鍵字；同名多份補條件重查無效，只能列候選/給精確 id。
                 #   skip_refine（設定驅動，預設關）：同母體多期資料（如同一合約的帳單）
                 #   補識別縮不了 → 跳過補識別輪直接截斷列候選（帳單診斷 e2e 逼出）。
+                #   ⚠️ **跳過的是「補識別輪」，不是「重查」**（任務 7 定案）：
+                #      使用者選定候選後仍走插點 A → 填 required_slots[0] → **重查 API**，
+                #      並已實證收斂單筆（tests/.../test_skip_refine_semantics_req.py）。
+                #      誤讀成「跳過重查」會導致有人拿候選列的欄位當 grounding，
+                #      使底稿失去 API 權威來源——那是修一個不存在的缺陷。
                 noun = mapping.get("entity_noun", "合約")
                 if not mapping.get("skip_refine") and not state.get("_refine_requested"):
                     state["_refine_requested"] = True  # prepare 隨後 _save（供下一輪判斷是否補不動）

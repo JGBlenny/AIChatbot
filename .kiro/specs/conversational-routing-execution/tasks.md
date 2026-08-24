@@ -835,17 +835,19 @@ anomaly   frozen cases   secondary dispatch = 0
 
 ⚠️ **依賴任務 4**。**不得在任務 4 完成前先改 `skip_refine` 的實作**——那會在錯誤的症狀上動刀。
 
-- [ ] 7.1 **🧠主** 以 `bill_diagnosis` 重現原觀測情境（候選 > `candidate_cap` 分流 → 選定候選 → 重查）。
+- [x] 7.1 **🧠主** 以 `bill_diagnosis` 重現原觀測情境（候選 > `candidate_cap` 分流 → 選定候選 → 重查）。
   _Requirements: 5.1_
 
-- [ ] 7.2 **🧠主** 依重現結果定案並記錄哪一邊是正確語義：
+- [x] 7.2 **🧠主** 依重現結果定案並記錄哪一邊是正確語義：
   若重查後收斂至單筆 → 判定宣告與行為**一致**，處置為文件與命名
   （於配置鍵註解與 `steering/dialogue.md` 明寫「跳過補識別輪，非跳過重查」）；
   若仍不收斂 → 回到 Req.5.1 原始二選一，修正其一。
   _Requirements: 5.1_
 
-- [ ] 7.3* **⚡F** 補 unit 測試鎖定 `skip_refine` 語義（候選 > cap 時不追問直接列候選；
+- [x] 7.3* **⚡F** 補 unit 測試鎖定 `skip_refine` 語義（候選 > cap 時不追問直接列候選；
   選定後重查收斂單筆）。
+  → `skip-refine-semantics-decision.md`；重現 `tests/unit/conversational/test_skip_refine_semantics_req.py`
+  （2 passed）；**行為未改**（重查確實收斂），處置為註解＋`steering/dialogue.md` 候選分流速查。
   _Requirements: 5.1_
 
 ---
