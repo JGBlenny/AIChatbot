@@ -13,6 +13,7 @@
 """
 
 import logging
+import re
 from typing import Any, Literal, Optional, Protocol, TypedDict
 
 import httpx
@@ -239,6 +240,24 @@ class JGBMockTransport:
     「跑到真網路」在此**結構上不可達**，而不只是靠沒有寫那行 fallback。
     """
 
+    #: 分頁常數（`BillApiController:13-14`）
+    DEFAULT_PER_PAGE: int = 50
+    MAX_PER_PAGE: int = 200
+
+    #: `sort_by` 白名單（`BillApiController:88`）——不在其中者回退 `created_at`
+    ALLOWED_SORT_FIELDS: "frozenset[str]" = frozenset({
+        "date_expire", "created_at", "total", "updated_at",
+    })
+
+    #: `getMapping()` 逐鍵（`BillApiController:173-197`）
+    MAPPING: "dict[str, dict[int, str]]" = {
+        "status": {1: "待發送", 2: "待繳費", 8: "待對帳", 16: "已繳費",
+                   32: "排定發送", 64: "已失效"},
+        "invoice_status": {0: "未開發票", 1: "已開發票", 2: "發票異常"},
+        "type": {1: "一般租金", 2: "點退", 3: "新增帳單",
+                 4: "罰款", 5: "儲值", 6: "押金設算息"},
+    }
+
     def __init__(self, fixtures: Optional[Any] = None) -> None:
         #: fixture 表由 4.4 提供；未裝配時「已遷移」端點一律 `MissingFixtureError`
         self.fixtures = fixtures
@@ -262,4 +281,93 @@ class JGBMockTransport:
             raise MissingFixtureError(
                 f"endpoint 已遷移但未裝配 fixture 表：{endpoint_key}（{method} {path}）"
             )
-        raise NotImplementedError("回應建構屬任務 4.5")
+
+        params = params or {}
+        if endpoint_key == "bills":
+            return self._bills_index(params)
+        if endpoint_key == "bill_detail":
+            bill_id = match_template(
+                "/api/external/v1/bills/{bill_id}", path
+            )["bill_id"]                                    # 4.2 已保證命中
+            return self._bills_show(bill_id, params)
+        raise MissingFixtureError(f"已遷移但無回應實作：{endpoint_key}")
+
+    # ── 4.5：依真 API **實際存在**的參數過濾 ──────────────────────────────
+    @staticmethod
+    def _error(code: int, message: str) -> TransportResponse:
+        """對齊 `errorResponse()`（EstateApiController:560-569）。"""
+        return {"success": False, "error": {"code": code, "message": message}}
+
+    def _bills_index(self, params: "dict[str, Any]") -> TransportResponse:
+        """`GET /bills`（`BillApiController@index:19-125`）。
+
+        ⚠️ 逐條對齊 production，**包含它的怪癖**——mock 的價值在保真，不在「比較合理」：
+
+        * `month` 非法格式 → **靜默忽略**（不報錯）：production 只在 `preg_match` 命中時才加條件（:78-85）；
+        * `month` 區間為 ``YYYYMM01 ~ YYYYMM31`` **inclusive**（:81-83），
+          **不是** ``[月初, 次月初)``——2 月同樣用 31，這是 production 的實際行為；
+        * `sort_by` 不在白名單 → **回退 `created_at`**（非拒絕，:88-96）；
+        * `sort_direction` 非 asc/desc → 回退 `desc`。
+        """
+        if not params.get("role_id"):
+            return self._error(400, "role_id 為必填參數")
+
+        rows = list(self.fixtures.rows())
+
+        for key in ("contract_id", "status", "type"):
+            if params.get(key) not in (None, ""):
+                rows = [r for r in rows if r[key] == int(params[key])]
+        if params.get("bill_id") not in (None, ""):
+            rows = [r for r in rows if r["id"] == int(params["bill_id"])]
+
+        month = params.get("month")
+        # production：`preg_match('/^\d{4}-\d{2}$/')` 命中才加條件；不命中＝靜默忽略
+        if month not in (None, "") and re.fullmatch(r"\d{4}-\d{2}", str(month)):
+            ym = int(str(month).replace("-", ""))
+            start, end = ym * 100 + 1, ym * 100 + 31
+            rows = [r for r in rows if start <= r["date_expire"] <= end]
+
+        sort_by = params.get("sort_by")
+        if sort_by not in self.ALLOWED_SORT_FIELDS:
+            sort_by = "created_at"
+        direction = str(params.get("sort_direction", "desc")).lower()
+        if direction not in ("asc", "desc"):
+            direction = "desc"
+        rows.sort(key=lambda r: r[sort_by], reverse=(direction == "desc"))
+
+        page = max(1, int(params.get("page", 1) or 1))
+        per_page = min(self.MAX_PER_PAGE,
+                       max(1, int(params.get("per_page", self.DEFAULT_PER_PAGE) or 1)))
+        total = len(rows)
+        total_pages = -(-total // per_page) if total else 0
+        offset = (page - 1) * per_page
+
+        return {
+            "success": True,
+            "mapping": self.MAPPING,
+            "data": rows[offset:offset + per_page],
+            "pagination": {
+                "current_page": page, "per_page": per_page, "total": total,
+                "total_pages": total_pages, "has_more": page < total_pages,
+            },
+        }
+
+    def _bills_show(self, bill_id: str, params: "dict[str, Any]") -> TransportResponse:
+        """`GET /bills/{bill_id}`（`BillApiController@show:203-231`）。
+
+        ⚠️ **404 的資訊折疊必須照抄**：production 對「不存在」與「無權存取」回**同一句**
+        「帳單不存在或無權存取」（:230）。
+        mock **不得**偷偷拆成 404-not-found ／ 403-no-access——
+        否則上層會取得 production 根本沒有的辨識能力（同 N1 的 E5 結論：404 仍是 ambiguous fact）。
+
+        ⚠️ **無 pagination**：detail 回應不帶 `pagination`（對齊 :232-260 的回應組裝）。
+        """
+        if not params.get("role_id"):
+            return self._error(400, "role_id 為必填參數")
+        try:
+            row = self.fixtures.by_id(int(bill_id))
+        except (TypeError, ValueError):
+            row = None
+        if row is None:
+            return self._error(404, "帳單不存在或無權存取")
+        return {"success": True, "mapping": self.MAPPING, "data": row}

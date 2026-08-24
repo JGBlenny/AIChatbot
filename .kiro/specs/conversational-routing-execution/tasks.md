@@ -551,13 +551,43 @@ bill_id  contract_id  bit_status  invoice_status  date_expire
   全域回歸：`make test-unit` → **1145 passed / 13 failed**（1132 → 1145，即本組 13 筆全新增），
   13 筆仍全數落在 `tests/unit/_meta/`（既有 container mount known-red）。
 
-- [ ] 4.5 **⚡F** 實作 `/bills` 與 `/bills/{bill_id}` 的 mock 回應，依真 API **實際存在**的參數過濾
+- [x] 4.5 **⚡F** 實作 `/bills` 與 `/bills/{bill_id}` 的 mock 回應，依真 API **實際存在**的參數過濾
   （`role_id` 必填缺則 400、`user_id`、`contract_id` 單數、`bill_id`、`status`、`type`、
   `month` 以 `YYYY-MM` 比對 `date_expire` 整數區間、`sort_by` 白名單、`page`／`per_page` 上限 200）；
   補齊 `pagination` 五鍵與 `show` 的 `cvs_info`；`mapping` 沿用既有（已確認與真契約一致）。
   ⚠️ **絕不可實作 `bill_ref` 過濾**——真 API 無此參數，它是 rag 端 adapter。
   _Requirements: 4.1_
 
+
+  **實作**（`services/jgb/transport.py`：`_bills_index()`／`_bills_show()` ＋ 類別常數
+  `DEFAULT_PER_PAGE=50`／`MAX_PER_PAGE=200`／`ALLOWED_SORT_FIELDS`／`MAPPING`）。
+  過濾**實算**、不查表：`month` 走 `^\d{4}-\d{2}$` → `YYYYMM01~YYYYMM31` 與 `date_expire` 比對。
+
+  ⚠️ **三個 production 怪癖照抄，不「修正」**（mock 的價值在保真）：
+  - `month` 非法格式 → **靜默忽略、不報錯**（`BillApiController:78-85` 只在 preg_match 命中才加條件）；
+  - `month` 區間是 `YYYYMM01~YYYYMM31` **inclusive**，**非**「次月初」開區間——2 月同樣用 31（:81-83）；
+  - `sort_by` 非白名單 → **回退 `created_at`**、`sort_direction` 非 asc/desc → 回退 `desc`（:88-96），
+    皆非拒絕。此條同時殺掉 `getattr(record, user_supplied_field)` 寫法。
+
+  ⚠️ **404 的資訊折疊照抄**：「不存在」與「無權存取」回**同一句**「帳單不存在或無權存取」（:230），
+  **不得**在 mock 端拆成 404-not-found／403-no-access——否則上層取得 production 根本沒有的辨識能力
+  （同 N1 的 E5 結論：404 仍是 ambiguous fact）。
+  ⚠️ **list／detail 外殼分開**：detail **不帶** `pagination`（`TransportResponse total=False` 的用途即在此，
+  避免假對稱）。
+
+  **已知未建模（誠實記錄，非遺漏）**：`role_id` 為必填但**不做 owner 圈定**、`user_id`（經
+  `belongContract.to_user_id`）過濾未實作、detail 的 `pay_info`／`cvs_info`／`details` 未附——
+  fixture 投影不含這些欄位，補上等同虛構真 API 沒有的資料。`MIGRATED_ENDPOINTS` 仍只有兩個端點。
+
+  **驗收（容器內）**：新增 `tests/unit/api/test_bill_mock_responses_req.py` → **28 passed / 0 failed**。
+  沿用 4.4 差異矩陣實測：contract 700100→{900001,900002}｜2026-08→{900001}｜2026-09→{900002,900003}｜
+  detail 900001→單筆且**無 pagination**｜unknown id→`{'code':404,'message':'帳單不存在或無權存取'}`｜
+  非法 month `2026-8`→三筆全回（靜默忽略）。
+  **`bill_ref` 反證（response 層再驗一次）**：即使請求帶 `bill_ref`，list 與 detail 的資料列皆不含該鍵——
+  防的是 `{**fixture, "bill_ref": requested}` 這種繞過 fixture guard 的方便寫法。
+  全域回歸：`make test-unit` → **1173 passed / 13 failed**（1145 → 1173，即本組 28 筆全新增）；
+  逐檔查證 13 筆**全數**落在 `tests/unit/_meta/`（單獨跑該目錄：13 failed / 23 passed），
+  且非 _meta 的 api／conversational／retrieval 三目錄 **796 passed / 0 failed**。
 - [ ] 4.6 **🧠主** 移除 `get_bills`／`get_bill_detail` 的方法級 mock 短路，使 adapter 實際執行；
   其餘約 18 個端點維持既有方法級 mock。
   於設計文件與程式註解記錄**混合邊界狀態**：adapter 的**非數字分支**會呼叫未遷移的 `get_contracts`，
