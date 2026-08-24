@@ -17,6 +17,7 @@ from typing import Any, Optional
 
 from services.jgb.transport import (  # noqa: F401  (FALLBACK_MESSAGE 對外沿用)
     FALLBACK_MESSAGE,
+    JGBMockTransport,
     RealHttpTransport,
     Transport,
     TransportResponse,
@@ -47,7 +48,11 @@ class JGBSystemAPI:
         self._real_transport: Transport = RealHttpTransport(
             self.api_base_url, self.api_key, self.timeout
         )
-        self._mock_transport: Optional[Transport] = None
+        #: 4.3：mock 模式裝配替身；fixture 表由 4.4 提供，未裝配前「已遷移」端點
+        #: 一律 MissingFixtureError——**任何失敗都不會退回 real transport**。
+        self._mock_transport: Optional[Transport] = (
+            JGBMockTransport() if self.use_mock else None
+        )
 
         logger.info(
             f"JGBSystemAPI 初始化 "

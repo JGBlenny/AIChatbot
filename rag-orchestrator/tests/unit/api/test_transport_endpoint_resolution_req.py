@@ -110,14 +110,17 @@ def test_routes_registry_has_no_duplicate_keys():
     assert len(keys) == len(set(keys))
 
 
-def test_resolver_does_not_consult_migration_state():
+def test_resolver_does_not_consult_migration_state(monkeypatch):
     """4.2 ≠ 4.3：resolver 只回答 identity，**不得**回答「可否在 mock 執行」。
 
-    `MIGRATED_ENDPOINTS` 刻意尚未在本模組定義——若日後被加入，
-    本測試確保 `resolve_endpoint` 仍不消費它（避免 resolved == safe-to-mock）。
+    ⚠️ 4.3 加入 `MIGRATED_ENDPOINTS` 後，本測試由「該常數尚未存在」改為
+    **行為證明**：未列入 admission set 的 endpoint 仍必須能被正確 resolve。
+    （同一條 invariant 在 `test_transport_migration_gate_req.py` 亦有對應斷言。）
     """
     import services.jgb.transport as t
 
-    assert not hasattr(t, "MIGRATED_ENDPOINTS"), (
-        "MIGRATED_ENDPOINTS 屬 4.3；若已加入，請確認 resolve_endpoint 未消費它"
-    )
+    monkeypatch.setattr(t, "ROUTES", (
+        ("GET", "/api/external/v1/repairs", "repairs"),
+    ))
+    assert "repairs" not in t.MIGRATED_ENDPOINTS
+    assert t.resolve_endpoint("GET", "/api/external/v1/repairs") == "repairs"

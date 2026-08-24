@@ -452,11 +452,33 @@ A4（移除 job 級 `continue-on-error` 使 `pip install` 暫時性故障會擋�
   全域回歸：`make test-unit` → **1121 passed / 13 failed**（1107 → 1121，即本組 14 筆全新增），
   13 筆仍全數落在 `tests/unit/_meta/`（既有 container mount known-red，與本次改動無關）。
 
-- [ ] 4.3 **🧠主 🔍V** 實作未遷移端點的 fail loudly：`resolve_endpoint` 回 None
+- [x] 4.3 **🧠主 🔍V** 實作未遷移端點的 fail loudly：`resolve_endpoint` 回 None
   或 `endpoint_key ∉ MIGRATED_ENDPOINTS` → `raise UnmigratedMockEndpointError`，
   **SHALL NOT fallback 至真實 HTTP**。
   **🔍V 理由**：外部副作用邊界；做錯的失效模式是 integration 測試靜默對 jgb2 發真請求。
   _Requirements: 4.1, 4.3_
+  ⏳ **獨立驗證：待派**（本欄於 verifier 回報後補結果）
+
+  **實作**（`services/jgb/transport.py`）：`MIGRATED_ENDPOINTS` ＋ `JGBMockTransport`（僅 admission gate，
+  回應建構屬 4.5）。三態：resolve 回 None → `UnresolvedEndpointError(reason="no_match")`；
+  命中但不在 admission set → `UnmigratedMockEndpointError`；已遷移但未裝配 fixture → `MissingFixtureError`。
+  `JGBSystemAPI` 於 mock 模式裝配替身（22 個公開方法仍前置短路，故現行行為不變）。
+
+  ⚠️ **admission set 只放 endpoint identity**，不放 concrete path、不再做一次樣板比對——
+  endpoint identity 的唯一權威仍是 4.2 的 `resolve_endpoint`。
+  ⚠️ **結構性保證**：`JGBMockTransport` **不持有也不 import** real transport，
+  「跑到真網路」是**不可達**，而非「剛好沒寫那行 fallback」。
+
+  **驗收（容器內）**：新增 `tests/unit/api/test_transport_migration_gate_req.py` → **11 passed**；
+  併 4.2 一組共 **25 passed / 0 failed**。
+  **反事實控制（本 task 核心）**：三條失敗路徑下 real transport 的 `calls == 0`；
+  以 sentinel real transport 反證——刻意寫一個「失敗後 fallback 到 real」的壞實作，
+  `spy.calls = 1`（測試會紅）；現行實作 `MissingFixtureError` 且 `spy.calls = 0`。
+  這條專門殺掉「先發真請求 → 出錯 → 包成正確例外」的假綠。
+  **層次分離**：4.2 的守衛測試改寫為行為證明（未列入 admission set 的 endpoint 仍能被正確 resolve），
+  4.3 後仍綠 → endpoint identity 語義未被本任務改動。
+  全域回歸：`make test-unit` → **1132 passed / 13 failed**（1121 → 1132，即本組 11 筆全新增），
+  13 筆仍全數落在 `tests/unit/_meta/`（既有 container mount known-red）。
 
 - [ ] 4.4 **⚡F** 依 research.md 主題 7 的契約盤查（附 file:line）建 `BillFixtureTable`：
   至少 3 筆分屬 2 個 `contract_id`；每筆 `bit_status`／`invoice_status` 互異

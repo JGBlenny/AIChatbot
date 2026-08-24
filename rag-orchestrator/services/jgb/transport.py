@@ -75,12 +75,14 @@ class TransportError(Exception):
 class UnresolvedEndpointError(TransportError):
     """`(method, path)` 無法解析為 **唯一** logical endpoint。
 
-    `reason` 目前有一個值：
+    `reason` 目前有兩個值：
 
-    * ``"ambiguous"`` —— 有多於一個樣板同時命中同一條 concrete path。
+    * ``"ambiguous"`` —— 有多於一個樣板同時命中同一條 concrete path（4.2 拋出）；
+    * ``"no_match"``  —— `resolve_endpoint` 回 `None`，由 transport 邊界拋出（4.3）。
 
-    ⚠️ **不設 "no_match"**：查無對應時 `resolve_endpoint` 依 design 回 `None`，
-    由 4.3 在 transport 邊界決定如何處置（見該處三態決定表）。
+    ⚠️ `resolve_endpoint` **本身**對查無仍回 `None`（design 三態決定表），
+    「回 None → 拋例外」的決定發生在 `JGBMockTransport.send`，
+    使 endpoint identity 與 admission 兩層維持分離。
     """
 
     def __init__(self, message: str, *, reason: str) -> None:
@@ -210,3 +212,54 @@ def resolve_endpoint(method: HttpMethod, path: str) -> Optional[str]:
             f"多個樣板同時命中 {method} {path}：{hits}", reason="ambiguous"
         )
     return hits[0] if hits else None
+
+
+# ── 4.3：migration admission gate ─────────────────────────────────────────
+#: 已遷移至 transport 層的 **endpoint_key**（migration admission set）。
+#: ⚠️ 只放 endpoint identity，**不放 concrete path**、不再做一次樣板比對——
+#:    endpoint identity 的唯一權威是 4.2 的 `resolve_endpoint`。
+MIGRATED_ENDPOINTS: "frozenset[str]" = frozenset({"bills", "bill_detail"})
+
+
+class JGBMockTransport:
+    """契約保真替身（4.3 只做 admission gate；回應建構屬 4.5）。
+
+    三態決定（`use_mock` 為真且請求抵達本類）：
+
+    ==========================  ==========================  =========================
+    `resolve_endpoint`          `∈ MIGRATED_ENDPOINTS`      行為
+    ==========================  ==========================  =========================
+    回 `None`                   —                           `UnresolvedEndpointError`
+    命中                        ❌                          `UnmigratedMockEndpointError`
+    命中                        ✅                          依契約回應（4.5）
+    ==========================  ==========================  =========================
+
+    ⚠️ **上述任何一種失敗都 SHALL NOT fallback 至真實 HTTP。**
+    本類**不持有** real transport、也不 import 它——
+    「跑到真網路」在此**結構上不可達**，而不只是靠沒有寫那行 fallback。
+    """
+
+    def __init__(self, fixtures: Optional[Any] = None) -> None:
+        #: fixture 表由 4.4 提供；未裝配時「已遷移」端點一律 `MissingFixtureError`
+        self.fixtures = fixtures
+
+    async def send(
+        self, method: HttpMethod, path: str, *,
+        params: Optional[dict[str, Any]] = None,
+        data: Optional[dict[str, Any]] = None,
+    ) -> TransportResponse:
+        endpoint_key = resolve_endpoint(method, path)   # 歧義 → ambiguous（4.2）
+
+        if endpoint_key is None:
+            raise UnresolvedEndpointError(
+                f"無法解析為任何 logical endpoint：{method} {path}", reason="no_match"
+            )
+        if endpoint_key not in MIGRATED_ENDPOINTS:
+            raise UnmigratedMockEndpointError(
+                f"endpoint 尚未遷移至 mock transport：{endpoint_key}（{method} {path}）"
+            )
+        if self.fixtures is None:
+            raise MissingFixtureError(
+                f"endpoint 已遷移但未裝配 fixture 表：{endpoint_key}（{method} {path}）"
+            )
+        raise NotImplementedError("回應建構屬任務 4.5")
