@@ -1,0 +1,518 @@
+{
+  "task": "Step ⑥ blind applicability labels（pair-hidden，逐句獨立）",
+  "cohort_digest": "543d3e97b0a6afe6",
+  "labels_digest": "a3cf08354f180960",
+  "labeler": {
+    "session": "isolated（全新 general-purpose agent，無本案上下文）",
+    "labeler_tool_uses": 0,
+    "pair_mapping_hidden": true,
+    "shuffle_seed": 20260824,
+    "told_about_R1": false,
+    "ground_truth_source": "第 2 級：Face seed 原始 authoritative text（逐字）",
+    "inputs_given": [
+      "pair-hidden randomized 單句",
+      "fixed candidate Face",
+      "該 Face 的 seed 權威文本",
+      "三值 schema"
+    ],
+    "withheld": [
+      "D3 executable artifact",
+      "D1 demand spec",
+      "member 身份",
+      "member prompt／rules",
+      "similarity／category",
+      "current route",
+      "pair mapping",
+      "作者原本的正反方向"
+    ]
+  },
+  "distribution": {
+    "not_applicable": 30,
+    "applicable": 29,
+    "undecidable": 1
+  },
+  "count": 60,
+  "members_executed": false,
+  "labels": [
+    {
+      "n": 1,
+      "item_id": "ba-06-b",
+      "face_key": "billing_anomaly",
+      "query": "帳單期間可以跨月嗎",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 2,
+      "item_id": "ba-01-b",
+      "face_key": "billing_anomaly",
+      "query": "按比例算的帳單金額公式是什麼，給我看一下",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 3,
+      "item_id": "bd-03-a",
+      "face_key": "bill_diagnosis",
+      "query": "剛剛那筆想作廢，系統跳說不行，為什麼",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 4,
+      "item_id": "ba-02-b",
+      "face_key": "billing_anomaly",
+      "query": "租客說他手機上看到的金額跟我後台的不一樣",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 5,
+      "item_id": "ba-04-a",
+      "face_key": "billing_anomaly",
+      "query": "想加一筆管理費到帳單裡，操作要怎麼走",
+      "judgement": "not_applicable",
+      "confidence": "medium"
+    },
+    {
+      "n": 6,
+      "item_id": "bf-06-a",
+      "face_key": "billing_flow",
+      "query": "租客要是多繳了，一般都怎麼退",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 7,
+      "item_id": "bf-01-b",
+      "face_key": "billing_flow",
+      "query": "超商代碼繳費一般要幾天才會入帳",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 8,
+      "item_id": "bd-01-a",
+      "face_key": "bill_diagnosis",
+      "query": "這張帳單我按收回都沒反應，是卡在哪",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 9,
+      "item_id": "bd-05-b",
+      "face_key": "bill_diagnosis",
+      "query": "這筆一直停在待發送，是不是我有步驟沒做完",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 10,
+      "item_id": "ba-10-b",
+      "face_key": "billing_anomaly",
+      "query": "收據上要帶公司統編的話去哪裡設定",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 11,
+      "item_id": "bd-10-b",
+      "face_key": "bill_diagnosis",
+      "query": "一張帳單的明細最多能加幾筆",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 12,
+      "item_id": "ba-08-a",
+      "face_key": "billing_anomaly",
+      "query": "同一個租客同一個月冒出兩張一樣的帳單",
+      "judgement": "applicable",
+      "confidence": "medium"
+    },
+    {
+      "n": 13,
+      "item_id": "bf-02-b",
+      "face_key": "billing_flow",
+      "query": "這張帳單的虛擬帳號一直沒跑出來",
+      "judgement": "applicable",
+      "confidence": "medium"
+    },
+    {
+      "n": 14,
+      "item_id": "ba-10-a",
+      "face_key": "billing_anomaly",
+      "query": "這筆的收據金額顯示 0，明明有收到錢",
+      "judgement": "applicable",
+      "confidence": "medium"
+    },
+    {
+      "n": 15,
+      "item_id": "ba-03-a",
+      "face_key": "billing_anomaly",
+      "query": "這筆帳單上面的房號是別間的，顯示錯了",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 16,
+      "item_id": "bd-05-a",
+      "face_key": "bill_diagnosis",
+      "query": "系統裡帳單狀態總共幾種，可以列一下嗎",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 17,
+      "item_id": "bf-07-a",
+      "face_key": "billing_flow",
+      "query": "八月租金那張，租客說錢匯出去了，我後台沒看到",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 18,
+      "item_id": "bd-10-a",
+      "face_key": "bill_diagnosis",
+      "query": "改完明細之後還是存不了檔，這張是怎麼了",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 19,
+      "item_id": "bf-06-b",
+      "face_key": "billing_flow",
+      "query": "這張租客多匯了一千，系統還顯示沒繳清",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 20,
+      "item_id": "ba-07-b",
+      "face_key": "billing_anomaly",
+      "query": "這張開出來的發票金額跟帳單本身對不上",
+      "judgement": "applicable",
+      "confidence": "medium"
+    },
+    {
+      "n": 21,
+      "item_id": "bf-09-b",
+      "face_key": "billing_flow",
+      "query": "虛擬帳號入帳會被扣手續費嗎，通常多少",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 22,
+      "item_id": "bd-09-a",
+      "face_key": "bill_diagnosis",
+      "query": "這筆的到帳日我想往後延，改得了嗎",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 23,
+      "item_id": "bd-06-a",
+      "face_key": "bill_diagnosis",
+      "query": "9/15 那張我想再重發一次，可以喔？",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 24,
+      "item_id": "ba-02-a",
+      "face_key": "billing_anomaly",
+      "query": "租客端的帳單畫面長怎樣，有示意圖嗎",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 25,
+      "item_id": "bd-04-b",
+      "face_key": "bill_diagnosis",
+      "query": "這張的發送鈕是灰的，點不下去",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 26,
+      "item_id": "bf-08-a",
+      "face_key": "billing_flow",
+      "query": "平台有支援分期繳嗎",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 27,
+      "item_id": "bd-08-a",
+      "face_key": "bill_diagnosis",
+      "query": "點退的結算帳單一般什麼時候開比較好",
+      "judgement": "not_applicable",
+      "confidence": "medium"
+    },
+    {
+      "n": 28,
+      "item_id": "bf-08-b",
+      "face_key": "billing_flow",
+      "query": "租客這筆分兩次匯，結果只認到第一筆",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 29,
+      "item_id": "bf-09-a",
+      "face_key": "billing_flow",
+      "query": "這筆實際入帳比帳單金額少，是被扣手續費了嗎",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 30,
+      "item_id": "bf-05-b",
+      "face_key": "billing_flow",
+      "query": "待對帳那邊多久會跑一次",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 31,
+      "item_id": "bd-07-a",
+      "face_key": "bill_diagnosis",
+      "query": "帳單刪掉以後單號會被重複用到嗎",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 32,
+      "item_id": "bd-03-b",
+      "face_key": "bill_diagnosis",
+      "query": "作廢掉的帳單之後還會出現在報表裡嗎",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 33,
+      "item_id": "ba-07-a",
+      "face_key": "billing_anomaly",
+      "query": "發票品名通常都帶什麼內容",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 34,
+      "item_id": "bd-08-b",
+      "face_key": "bill_diagnosis",
+      "query": "這張點退帳單想取消，取消的地方在哪找不到",
+      "judgement": "applicable",
+      "confidence": "medium"
+    },
+    {
+      "n": 35,
+      "item_id": "bf-04-a",
+      "face_key": "billing_flow",
+      "query": "信用卡繳費的手續費是誰吸收",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 36,
+      "item_id": "bd-09-b",
+      "face_key": "bill_diagnosis",
+      "query": "到帳日有預設值嗎，是怎麼帶出來的",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 37,
+      "item_id": "ba-08-b",
+      "face_key": "billing_anomaly",
+      "query": "系統本身會擋重複開單嗎",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 38,
+      "item_id": "bf-04-b",
+      "face_key": "billing_flow",
+      "query": "租客刷卡連兩次失敗，這筆現在算什麼狀態",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 39,
+      "item_id": "bf-01-a",
+      "face_key": "billing_flow",
+      "query": "租客說他昨天去超商繳掉了，可是這張還是未繳",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 40,
+      "item_id": "bf-07-b",
+      "face_key": "billing_flow",
+      "query": "匯款一定要備註單號才對得起來嗎",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 41,
+      "item_id": "bf-03-b",
+      "face_key": "billing_flow",
+      "query": "手動確認到帳是誰有權限做",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 42,
+      "item_id": "bf-10-a",
+      "face_key": "billing_flow",
+      "query": "繳費成功後租客那邊會收到什麼通知",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 43,
+      "item_id": "ba-09-b",
+      "face_key": "billing_anomaly",
+      "query": "這張帳單上的租客姓名還是舊房客那位",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 44,
+      "item_id": "bd-02-b",
+      "face_key": "bill_diagnosis",
+      "query": "8月那張水電費現在還改得動嗎",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 45,
+      "item_id": "bd-07-b",
+      "face_key": "bill_diagnosis",
+      "query": "為什麼這張帳單沒辦法刪",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 46,
+      "item_id": "bf-10-b",
+      "face_key": "billing_flow",
+      "query": "這張顯示已到帳，但租客說他根本沒繳過",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 47,
+      "item_id": "ba-04-b",
+      "face_key": "billing_anomaly",
+      "query": "帳單裡管理費那項不見了，只剩租金",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 48,
+      "item_id": "bd-06-b",
+      "face_key": "bill_diagnosis",
+      "query": "重發帳單的話租客通常會收到兩次通知嗎",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 49,
+      "item_id": "bf-03-a",
+      "face_key": "billing_flow",
+      "query": "我手動確認到帳了，狀態卻沒變成已到帳",
+      "judgement": "undecidable",
+      "confidence": "medium"
+    },
+    {
+      "n": 50,
+      "item_id": "ba-09-a",
+      "face_key": "billing_anomaly",
+      "query": "換約之後舊房客的資料會留多久",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 51,
+      "item_id": "bd-01-b",
+      "face_key": "bill_diagnosis",
+      "query": "帳單收回跟取消到底差在哪啊",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 52,
+      "item_id": "ba-06-a",
+      "face_key": "billing_anomaly",
+      "query": "這筆的期間寫 7/1-7/31，但明明應該是八月份的",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 53,
+      "item_id": "bf-05-a",
+      "face_key": "billing_flow",
+      "query": "錢明明已經進來了，這筆一直卡在待對帳",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 54,
+      "item_id": "ba-05-a",
+      "face_key": "billing_anomaly",
+      "query": "滯納金的計算方式在哪裡設定",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 55,
+      "item_id": "bd-04-a",
+      "face_key": "bill_diagnosis",
+      "query": "帳單通知是走 email 還是簡訊？",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 56,
+      "item_id": "ba-03-b",
+      "face_key": "billing_anomaly",
+      "query": "房號是綁合約還是綁物件？",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 57,
+      "item_id": "bd-02-a",
+      "face_key": "bill_diagnosis",
+      "query": "一般來說帳單發出去之後還能改金額嗎，流程是怎樣",
+      "judgement": "not_applicable",
+      "confidence": "medium"
+    },
+    {
+      "n": 58,
+      "item_id": "bf-02-a",
+      "face_key": "billing_flow",
+      "query": "虛擬帳號是一張帳單一組，還是一個租客一組",
+      "judgement": "not_applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 59,
+      "item_id": "ba-01-a",
+      "face_key": "billing_anomaly",
+      "query": "這張的總額跟我明細加起來差 300，怪怪的",
+      "judgement": "applicable",
+      "confidence": "high"
+    },
+    {
+      "n": 60,
+      "item_id": "ba-05-b",
+      "face_key": "billing_anomaly",
+      "query": "這張逾期的滯納金看起來多算了耶",
+      "judgement": "applicable",
+      "confidence": "medium"
+    }
+  ]
+}
