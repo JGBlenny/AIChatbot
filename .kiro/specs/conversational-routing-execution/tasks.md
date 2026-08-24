@@ -588,11 +588,40 @@ bill_id  contract_id  bit_status  invoice_status  date_expire
   全域回歸：`make test-unit` → **1173 passed / 13 failed**（1145 → 1173，即本組 28 筆全新增）；
   逐檔查證 13 筆**全數**落在 `tests/unit/_meta/`（單獨跑該目錄：13 failed / 23 passed），
   且非 _meta 的 api／conversational／retrieval 三目錄 **796 passed / 0 failed**。
-- [ ] 4.6 **🧠主** 移除 `get_bills`／`get_bill_detail` 的方法級 mock 短路，使 adapter 實際執行；
+- [x] 4.6 **🧠主** 移除 `get_bills`／`get_bill_detail` 的方法級 mock 短路，使 adapter 實際執行；
   其餘約 18 個端點維持既有方法級 mock。
   於設計文件與程式註解記錄**混合邊界狀態**：adapter 的**非數字分支**會呼叫未遷移的 `get_contracts`，
   故本階段僅**數字分支**被端到端執行，**不得聲稱 adapter 已全分支證實**。
   _Requirements: 4.1, 4.3_
+
+  ⚠️ **三層狀態必須分開讀（業主裁定 2026-08-24）**：
+
+```text
+4.6 implemented on branch      ✅ 本 commit
+4.6 verified / evidence ready  ✅ 見下方驗收
+4.6 production-released        ❌ **6.3 人工放行前禁止**
+```
+
+  ⚠️ 看到 `4.6 ✅` **不等於**已獲准上線；release decision 屬 6.3，且**不得由測試綠燈自動視為放行**。
+
+  **實作**：`jgb_system_api.py` 移除 `get_bills`／`get_bill_detail` 的
+  `if self.use_mock: return self._mock_*` 兩處短路（原處留註解記錄理由與混合邊界），
+  並於 `__init__` 裝配 `JGBMockTransport(BillFixtureTable())`。其餘約 18 個端點**不動**。
+
+  ⚠️ **混合邊界（實測確認）**：`bill_ref` 的**非數字分支**呼叫 `get_contracts`，
+  而 `jgb_contracts` **未遷移**（仍走方法級 mock）→ 本階段端到端執行的只有**數字分支**。
+
+  **驗收（容器內）**：
+  - 端到端探針：`get_bills(bill_ref='900001')` → `success=True`，資料列 `[900001]`
+    （**經 adapter 數字分支 → transport → detail → 包成單列**）；
+    `get_bill_detail(900003)` → `900003`；未知 id → `{'code':404,'message':'帳單不存在或無權存取'}`；
+    未遷移端點 `get_invoices` 仍走方法級 mock（`success=True`）。
+  - **既有 no-real-network 斷言同步加強**：原本只涵蓋失敗路徑，4.6 後
+    `/bills` 與 detail 已非失敗路徑 → 改為涵蓋**成功路徑**，
+    斷言 mock 模式下**任何**路徑的 real transport 呼叫次數皆為 0
+    （只測失敗路徑會漏掉「成功路徑其實打了真 API」）。
+  - `make test-unit` → **1211 passed / 13 failed**（1145 → 1211）；
+    13 筆全數落在 `tests/unit/_meta/`（單獨跑該目錄：13 failed / 23 passed）。
 
 ---
 

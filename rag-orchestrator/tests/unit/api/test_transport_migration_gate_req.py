@@ -78,16 +78,18 @@ def test_migrated_but_missing_fixture_fails_loudly(mock_transport):
 
 
 # ── 4. 反事實：真網路 call count == 0 ─────────────────────────────────────
-@pytest.mark.parametrize("method,path", [
-    ("GET", "/api/external/v1/contracts/12345"),   # unresolved
-    ("GET", BILLS),                                # migrated 但缺 fixture
-    ("GET", f"{BILLS}/987654321"),                 # 同上（detail 樣板）
+@pytest.mark.parametrize("method,path,expect_raises", [
+    ("GET", "/api/external/v1/contracts/12345", True),    # unresolved → 仍須炸
+    ("GET", f"{BILLS}/123456789", False),                 # 已遷移、查無 → 404 形狀，非例外
+    ("GET", BILLS, False),                                # 已遷移、有 fixture（4.6 起）
+    ("GET", f"{BILLS}/900001", False),                    # 同上（detail 樣板）
 ])
-def test_no_real_network_touched_on_any_failure(method, path):
-    """任何失敗路徑下，real transport 的呼叫次數 MUST 為 0。
+def test_no_real_network_touched_on_any_path(method, path, expect_raises):
+    """⚠️ mock 模式下**任何**路徑（失敗或成功）real transport 呼叫次數 MUST 為 0。
 
-    ⚠️ 這一條才是本 task 的核心；只斷言「有拋例外」會漏掉
-    「先打真請求、再把錯誤包成正確例外」這種假綠。
+    4.6 裝配 fixture 後，`/bills` 與 detail 不再是失敗路徑；本斷言因此**加強**為
+    涵蓋成功路徑——只斷言「有拋例外」會漏掉「先打真請求、再把錯誤包成正確例外」的假綠，
+    而只測失敗路徑則會漏掉「成功路徑其實打了真 API」。
     """
     import os
 
@@ -98,10 +100,14 @@ def test_no_real_network_touched_on_any_failure(method, path):
     spy = SentinelRealTransport()
     api._real_transport = spy
 
-    with pytest.raises(Exception) as ei:
-        _run(api._send(method, path))
+    if expect_raises:
+        with pytest.raises(Exception) as ei:
+            _run(api._send(method, path, params={"role_id": "R001"}))
+        assert not isinstance(ei.value, RealNetworkTouched), "invariant 失敗：真網路被碰到"
+    else:
+        resp = _run(api._send(method, path, params={"role_id": "R001"}))
+        assert isinstance(resp, dict)
 
-    assert not isinstance(ei.value, RealNetworkTouched), "invariant 失敗：真網路被碰到"
     assert spy.calls == 0, f"真 transport 被呼叫 {spy.calls} 次"
 
 

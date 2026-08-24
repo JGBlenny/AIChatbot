@@ -15,6 +15,7 @@ import re
 import logging
 from typing import Any, Optional
 
+from services.jgb.fixtures import BillFixtureTable
 from services.jgb.transport import (  # noqa: F401  (FALLBACK_MESSAGE 對外沿用)
     FALLBACK_MESSAGE,
     JGBMockTransport,
@@ -50,8 +51,10 @@ class JGBSystemAPI:
         )
         #: 4.3：mock 模式裝配替身；fixture 表由 4.4 提供，未裝配前「已遷移」端點
         #: 一律 MissingFixtureError——**任何失敗都不會退回 real transport**。
+        #: 4.6：裝配 4.4 fixture 表，使 bills／bill_detail 兩個**已遷移**端點
+        #: 能依契約回應；其餘約 18 個端點仍走方法級 mock。
         self._mock_transport: Optional[Transport] = (
-            JGBMockTransport() if self.use_mock else None
+            JGBMockTransport(BillFixtureTable()) if self.use_mock else None
         )
 
         logger.info(
@@ -147,9 +150,12 @@ class JGBSystemAPI:
                 or (role_id and (contract_ids or bill_ref))):
             return self._degraded_response()
 
-        if self.use_mock:
-            return self._mock_get_bills(role_id, user_id, month, status)
-
+        # ⚠️ 任務 4.6：**已移除** `if self.use_mock: return self._mock_get_bills(...)`
+        #   目的是讓 bill_ref adapter、參數組裝、client 端防衛過濾在測試中**真的執行**，
+        #   mock 改由 `_send` 依 `use_mock` 派發至 `JGBMockTransport`（4.1–4.5）。
+        #   ⚠️ **混合邊界狀態**：下方非數字分支呼叫 `get_contracts`，而 `jgb_contracts`
+        #      **尚未遷移**（仍走方法級 mock）→ 本階段端到端執行的只有**數字分支**；
+        #      **不得**聲稱 adapter 已全分支證實。
         # bill_ref 識別解析（後端當裁判：逐層試、命中即止）
         if bill_ref is not None and contract_ids is None:
             ref = str(bill_ref).strip()
@@ -441,9 +447,8 @@ class JGBSystemAPI:
         if not role_id:
             return self._degraded_response()
 
-        if self.use_mock:
-            return self._mock_get_bill_detail(role_id, bill_id)
-
+        # ⚠️ 任務 4.6：**已移除** `if self.use_mock: return self._mock_get_bill_detail(...)`
+        #   （理由同 get_bills；mock 改由 transport 層依契約回應）
         params: dict[str, Any] = {"role_id": role_id}
         return await self._request(
             f"/api/external/v1/bills/{bill_id}", params
