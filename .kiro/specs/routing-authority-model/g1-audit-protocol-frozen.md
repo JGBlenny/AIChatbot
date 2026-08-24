@@ -1,6 +1,8 @@
 # G1 audit protocol（**凍結於讀取任何 source 內容之前**）
 
 > 2026-08-24｜語言 zh-TW｜業主裁定：representation proposal **APPROVED**；
+> 本協議 **APPROVE WITH 1 MUST-FIX（已套用）**：S3 須附 authoritative binding argument；
+> ＋ §3 可執行性註解、§2 衝突適用範圍 wording guard。§3 導出順序經業主裁定**保留**。
 > B／C **仍未通過 G1**，不得 freeze member-2；**先凍結 G1 查核程序，再唯讀執行 G1**。
 > 前置：`d3-representation-proposal.md`（v2，`68f53ed`）
 
@@ -38,10 +40,30 @@
 |---|---|---|
 | **S1 executable enumeration** | 程式碼中的 Enum／DB enum type／state machine transition table／constant registry | 全集由建構決定：不在其中的值無法被實例化 |
 | **S2 dispatch registry** | API operation contract／route registry／command registry | 全集由分派機制決定：**不在其中的 operation 無法被執行** |
-| **S3 explicit-totality specification** | 明文宣告「本清單即全集」的產品規格 | 全集由規格自述並可被追責 |
+| **S3 binding exhaustive specification** | 明文宣告「本清單即全集」，**且能證明該規格對本次 audited system／version 具 authoritative binding**，使規格外的值無法成為合法系統狀態／操作 | 全集由規格＋其 enforcement 共同保證 |
 
 ⚠️ **S2 的資格條件**：它必須**就是**分派機制。若某 registry 只是「文件裡的一份 API 列表」，
 而系統實際上可繞過它執行 operation，則 S2 不成立，降為 S4。
+
+⚠️ **S3 的資格條件（binding argument，業主 must-fix）**：
+單靠「規格寫了這是全集」**不足以**推出「runtime 中不可能存在規格外的值」。
+
+```text
+spec：operation ∈ {A, B, C}
+runtime：其實接受任意字串
+→ 該 spec 雖明文宣告全集，仍**不**滿足 §4 的 totality argument
+```
+
+故 S3 **MUST** 另附一段 **binding argument**：說明該規格憑什麼對本次 audited
+system／version 具強制力（enforcement 機制何在／規格外值為何無法成為合法狀態）。
+若僅有文件寫「目前支援 A／B／C」而 runtime 無 enforcement、亦無其他機制保證集合封閉：
+
+```text
+S3 qualification = FAIL  →  該 domain NOT PROVEN
+```
+
+⚠️ **不得**因為文件用了「僅／全部／共三種」這類措辭就直接過關。
+此條使 S1／S2／S3 服從**同一個**資格原則，S3 不得成為文字版後門。
 
 ### **非法** source class（列出來是為了不得事後追認）
 
@@ -63,7 +85,7 @@ S8 LLM 生成的候選清單
 ## 2. Source precedence（多來源衝突時誰優先）
 
 ```text
-S1 executable enumeration  >  S2 dispatch registry  >  S3 explicit-totality specification
+S1 executable enumeration  >  S2 dispatch registry  >  S3 binding exhaustive specification
 ```
 
 ⚠️ **但衝突不得被 precedence 靜靜吃掉**：
@@ -74,6 +96,15 @@ S1 executable enumeration  >  S2 dispatch registry  >  S3 explicit-totality spec
 > 若衝突影響到某 domain 的邊界，該 domain 判 **NOT PROVEN**。
 
 理由：兩個都自稱全集的來源互相矛盾，本身就是「該系統沒有單一權威全集」的證據。
+
+⚠️ **衝突的適用範圍（wording guard）**：本條只適用於
+**對同一 audited scope／version 都已通過資格認定**的全集來源之間的矛盾。
+
+```text
+❌ 不算 conflict：舊版 spec vs 現行 registry／dead code vs 生效路徑／非 binding 文件
+   → 這些應在 **source qualification 階段就被淘汰**，不得混進 conflict 記錄稀釋判定
+✅ 算 conflict：兩個對同一 audited scope／version 都被認定 authoritative 的全集來源互相矛盾
+```
 
 ---
 
@@ -98,11 +129,23 @@ MUST NOT 為了涵蓋某個 exhibit 而追加
 ### 導出順序（防污染）
 
 ```text
-① 先指名來源並記錄其全集論證  →  ② 導出完整值集並凍結
-                              →  ③ 才可與 F2 exhibits 對照
+① 指名 candidate authoritative source
+② **只**查核它的 authority／totality semantics
+   → 它為什麼有資格定義全集？（S1／S2／S3 資格條件、§4 totality argument）
+③ totality argument 成立後
+④ 才從該 source 導出 dimensions／values
+⑤ freeze
+⑥ **最後**才與 F2 exhibits 對照
 ```
 
-⚠️ **步驟 ③ 只用於觀察**，不得回頭修改 ①②。
+⚠️ **本條不是「盲讀 source」**（那不可執行）。為了判斷
+「這是不是 executable enum／真 dispatch registry／binding exhaustive spec？」
+**可以**讀該 source。
+
+> **禁止的是**：在 totality qualification 完成之前，
+> **利用從該 source 看到的具體 values 去塑造 schema**。
+
+⚠️ **步驟 ⑥ 只用於觀察**，不得回頭修改 ①–⑤。
 **導出後才追加、且僅由 exhibit 動機支持的值 → 不得計入封閉性證據。**
 
 ---
