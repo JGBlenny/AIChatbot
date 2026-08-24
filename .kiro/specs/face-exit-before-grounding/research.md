@@ -217,3 +217,92 @@ R4       載錯 rules ✗ 已證偽（F-2）／responsibility context 未傳入 
 
 ⚠️ 依 R7，「讓 `diag-01` 不再退出」不是本 spec 的 acceptance criterion；
 上列缺口補齊、證據足以歸因，才是。
+
+---
+
+## 7. R4-static：三項候選的證偽（**零 OpenAI 成本**）
+
+### 7.0 方法：capture-then-raise（不送網路）
+
+把 `provider.chat_completion` 換成「記錄參數後**拋例外**」的替身，走**真 HTTP 路徑**
+（`POST /api/v1/message` 帶 `trigger_facet_key=bill_diagnosis`）進場一次。
+brain 呼叫因此**從未送出**，但送進 producer 的 `messages` 已被逐字捕捉；
+brain 失敗 → 引擎關會話 → 落回檢索 → 分類路由再進場 → 第二次捕捉。
+
+⚠️ 這**不是** R1 的 reproduction：它不重現 `scope=switch` 的判定（沒有 LLM），
+只捕捉**輸入**與 **session lineage**。判定的重現仍屬 R1。
+
+一次請求捕到 5 次 provider 呼叫：
+
+```text
+#1 gpt-4o      0.4 / 400 / json_object   ← entry A（trigger 直達）的 brain
+#2 gpt-4o      0.4 / 400 / json_object   ← entry B（分類路由）的 brain
+#3 gpt-4o-mini 0    / 32                 ← 適用性把關（非 brain）
+#4 gpt-4o-mini 0    / 32                 ← 適用性把關（非 brain）
+#5 gpt-3.5-turbo 0.2 / 800               ← 兜底答案合成（非 brain）
+```
+
+（#3–#5 再次印證：共用 provider 的呼叫計數**不等於** brain 呼叫數。）
+
+### 7.1 `context truncation` → **FALSIFIED**
+
+```text
+value flow   DB knowledge_base.answer（id 4252，888 字）
+             → conversational_rules.load_rules()：**原樣回傳**，無切片（僅進程快取）
+             → system_context.get_system_context()：base ＋ appends 以 "\n\n" 串接；
+               超過 MAX_CHARS_WARN 只 **print 警告**，**不裁切**
+             → conversational_step()：system_prompt = system_context_md + rules_text
+               + faces_note + schema_note + tool_note（純串接，無切片）
+runtime 佐證 捕捉到的 system message：len=1737，且**逐字包含**授權原文：
+             「【本輪範疇 scope】…帳單金額組成/看不到帳單（帳單異常）、繳費入帳（繳費金流排障）、
+               其他領域完整新問題 → scope="switch"。不確定 → stay 並澄清。」
+             亦包含【本領域可用面向】與 JSON schema 段。
+```
+
+⇒ 關鍵 scope 條款**確實存在於實際送進 producer 的 prompt**，未被裁切或替換。
+
+### 7.2 `Face identity / state mismatch` → **FALSIFIED**
+
+```text
+session lineage（同一 sid，實查 form_sessions）
+  row 759  state=COMPLETED  config_key=bill_diagnosis  collected={}  asked=0   ← entry A 開、退出時關
+  row 760  state=COMPLETED  config_key=bill_diagnosis  collected={}  asked=0   ← entry B 另開、再關
+prompt 同一性
+  #1 與 #2 的 system message **byte-identical**（同 sha1），user message 亦然
+```
+
+⇒ 兩次進場都是 `bill_diagnosis`、都是全新空狀態、consumer 關掉的正是自己開的那一列。
+**沒有 identity 漂移，沒有跨列狀態污染。**
+
+⚠️ 附帶（正式判定屬 R1）：`reroute 殘留` 已取得強證據——第二次不但沒有殘留，
+連 prompt 都與第一次逐字相同。
+
+### 7.3 `producer / consumer contract mismatch` → **FALSIFIED**
+
+```text
+producer 正規化   data['scope'] = 'switch' if data.get('scope') == 'switch' else 'stay'
+                  → **只有字面 'switch' 會活下來**；缺省／越界／大小寫不同一律 'stay'
+consumer 判斷     if step.get("scope") == "switch": await self._close(session_id); return None
+                  → 精確等值比對，無 fallback／default 會把別的值轉成 switch
+其他寫入點        全庫僅此一處寫 data['scope']；引擎不另行改寫 step['scope']
+可區分的鄰近失效  action 越界 → 整包 JSON 丟棄回 None（**不是** switch），
+                  引擎走「brain 失敗」分支，log 行不同
+```
+
+⇒ 對位完整；且實際 log 印的是 `🔀 brain 判定離題(scope=switch)`，
+可與「brain 失敗」分支明確區分——本案確為 producer 真的輸出了 `switch`。
+
+### 7.4 三項結論與**尚未成立**的部分
+
+```text
+context truncation                FALSIFIED
+Face identity / state mismatch    FALSIFIED
+producer / consumer mismatch      FALSIFIED
+reroute 殘留                       強證據支持排除，正式判定留 R1
+```
+
+⚠️ **mutual delegation 目前仍是規則文字推論，不是 runtime 觀測**：
+本次兩次進場**都是 `bill_diagnosis`**（entry B 的檢索分類同樣落回 `條件診斷：帳單`），
+`billing_anomaly` 從未實際被進場過。F-2 對 `billing_anomaly` 的「也會 switch」是讀規則得出的，
+**必須由 R1 以 diagnostic invocation 實測**，否則 `RESPONSIBILITY_GAP_CONFIRMED`
+的關鍵支柱只有一半。
