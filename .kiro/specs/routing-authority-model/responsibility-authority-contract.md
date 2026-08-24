@@ -3,8 +3,11 @@
 > 2026-08-24｜語言 zh-TW｜業主裁定：封口 R-e discovery；下一步**不是**再掃 source、
 > 也**不是**直接做 D1／D3 member，而是**先定義 first-class Responsibility Authority Contract**。
 > 前置：`r6-derived-design-constraint.md`｜`re-mapping-discovery-result.md`（`63351cd`）
-> **裁定：R6 APPROVED；本 Contract APPROVE WITH 4 MUST-FIX（M-1～M-4，已通過）
-> ＋ FINAL MUST-FIX（M-5，已套用）。Carrier comparison NOT STARTED。**
+> **狀態：APPROVED ／ FROZEN（業主 2026-08-24）。M-1～M-5 全部 CLOSED。**
+> R6 APPROVED。**Carrier comparison NOT STARTED**——比較前須先凍結 comparison ruler。
+> ⚠️ 本檔凍結後，A／B／C 三個 carrier **MUST 吃同一套 input／evidence roles／composition
+> algebra／三值語義**；它們能競爭的只剩 authority 從哪來、如何 enrollment、如何 machine-enforce、
+> Face 新增時 correctness 如何持續成立。
 
 ## 0. 兩種 authority 必須先分開（寫在首頁，防 carrier 比較時混掉）
 
@@ -143,6 +146,27 @@ M-1（補全）   ＋ applicable 需**正向支持**、not_applicable 需**正�
 | **EXCLUSION** | 正向反證：authoritative fact 違反必要條件，或落入 executable exclusion | MUST 符合 M-1 的 positive-counterevidence 標準；**不得**由 absence 推出 |
 | **OBSERVATION** | 其餘一切（含未背書的 classifier／LLM verdict、M-3 未過門者） | **永遠不得直接產生 verdict** |
 
+#### ⚠️ role **不是 source 的固有屬性**（Contract 語義解讀，隨凍結生效）
+
+> **evidence role 是 `proof × candidate Face × responsibility binding` 之下的角色，
+> 不是某個 source type 永久綁定的標籤。**
+
+同一個 runtime fact 在不同 Face 下可能扮演不同角色，例如 `viewer_user_id` 可見性 proof：
+
+```text
+對 Face A   可能是 REQUIRED PREREQUISITE
+對 Face B   可能構成某種 RESPONSIBILITY_SUPPORT
+對 Face C   可能只是 OBSERVATION
+```
+
+```text
+❌ 不得建立「viewer visibility proof ＝ 永遠都是 PREREQUISITE」這類固定對應
+```
+
+⚠️ 否則就是把 **entity-side fact 偷偷升格成 R-e**——正是 semantic-role review 判定不成立的那一步。
+⚠️ 本節為**語義解讀**：若下文任何 wording 讀起來像「source type 固定對應 role」，
+   **一律以本節為準**。
+
 ### 2. Composition rules（**事前寫死，逐條可判定**）
 
 ```text
@@ -158,9 +182,15 @@ C-3  只有 evidence absence（沒找到／0 rows／mapping 不完整／score �
      → verdict = unknown
      （M-1 已凍結，此處重申於組合層同樣成立）
 
-C-4  兩份**皆為 authoritative** 的 evidence 互相矛盾
+C-4  兩份**皆為 authoritative** 的 evidence **對同一命題**、
+     或對**邏輯上不可同時成立的命題**互相矛盾
      → **carrier MUST NOT 自行選 precedence**
      → verdict = unknown，且 MUST 標記 explicit **conflict** 狀態（見下）
+
+     ⚠️ **「SUPPORT 與 EXCLUSION 同時存在」本身不構成 C-4。**
+        support =「它屬於帳單操作責任」／exclusion =「某必要 session／entity condition
+        已明確不成立」——這兩者**可以同時為真**，故走 prerequisite／exclusion 邏輯，
+        **不是** conflict。
 
 C-5  存在**明確、無衝突**的 authoritative EXCLUSION
      → verdict = not_applicable
@@ -173,9 +203,11 @@ C-5  存在**明確、無衝突**的 authoritative EXCLUSION
 ### 3. 業主點名的四個組合情境（**逐一裁定**）
 
 ```text
-① positive support ＋ exclusion 同時存在
-   → 兩者對**同一個 Face 的同一件事**給出相反主張 → **C-4 衝突** → unknown ＋ conflict
+① positive support ＋ exclusion 同時存在，**且兩者針對同一命題**
+   （或邏輯上不可同時成立的命題）
+   → **C-4 衝突** → unknown ＋ conflict
    ❌ 不得自動判 not_applicable
+   ⚠️ 若兩者陳述的是**不同命題**且可同時為真 → 不是 C-4，走情境④／C-5
 
 ② positive support ＋ 必要 prerequisite = unknown
    → **C-1** → unknown
@@ -190,6 +222,24 @@ C-5  存在**明確、無衝突**的 authoritative EXCLUSION
    理由：兩者**並不矛盾**——它們陳述的是**不同命題**（「主題吻合」vs「必要前置條件被正向證否」）。
         必要條件被正向證否即滿足 M-1 的 not_applicable 標準。
    ⚠️ 這是一條**裁定**，非推導；若日後認為 ④ 應與 ① 同視為衝突，須明確改判並記錄。
+   ✅ **業主已 approve 此裁定（2026-08-24）**，其形式為：
+
+```text
+support ∧ required(P) ∧ authoritative(¬P)  →  not_applicable
+```
+
+   ⚠️ 但**必須守死兩個前提**（Contract 語義解讀，隨凍結生效）：
+
+```text
+前提一  該 PREREQUISITE MUST 真的由 **authoritative responsibility binding** 宣告為必要條件。
+        ❌ 不得因某個 runtime fact「看起來很重要」就臨時把它叫 prerequisite。
+
+前提二  `false` MUST 由 qualified authoritative evidence **正向確立**。
+        ❌ absence ／ 404 的歧義 ／ 0 rows 的歧義 → 仍只能 unknown（M-1、C-3）
+```
+
+   ⚠️ 若失去前提一，Contract 就會退化成「任何 entity-side fact 都能否決任何 Face」；
+      若失去前提二，就是把 absence 折成拒絕——第四次 precision-first collapse。
 ```
 
 ### 4. Conflict 的表示方式（維持三值輸出）
@@ -333,8 +383,7 @@ neutral／capability-owned            → 可能讓 D1／D3 這個分類**本身
 ## 下一步（待業主裁定，**不預選**）
 
 ```text
-① 本版已套用 M-1～M-5（M-1～M-4 已通過複審；M-5 為 final must-fix）；
-   待業主複審 M-5 後才判正式 **APPROVED／FROZEN**
+① ✅ 已完成：M-1～M-5 全部 CLOSED，本 Contract **APPROVED／FROZEN**
 ② **Carrier 比較尚不開始**。開始前 MUST 先凍結比較量尺，且該量尺至少要比較：
      - authority **真正從哪來**
      - 如何 **enrollment**（新 Face 如何取得 binding）
