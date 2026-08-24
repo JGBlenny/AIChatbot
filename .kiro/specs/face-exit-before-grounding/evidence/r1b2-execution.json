@@ -1,0 +1,109 @@
+{
+  "protocol": "r1b2-protocol-frozen.md",
+  "variant": "B-double-prime",
+  "query": "幫我查點退帳單金額",
+  "query_sha": "c0d220cc3f1d47cb",
+  "repetitions": 3,
+  "runs": [
+    {
+      "repetition": 1,
+      "session_id": "r1b2-1-c26f667e",
+      "http_status": 200,
+      "session_rows": [
+        {
+          "row_id": 773,
+          "state": "COLLECTING",
+          "config_key": "contract_closeout",
+          "asked_count": 1
+        }
+      ],
+      "counted_call": {
+        "face_identity": "contract_closeout",
+        "rules_digest": "363ed0d0da3ca23c",
+        "system_context_key": "退租收尾",
+        "system_context_in_prompt": true,
+        "system_context_digest_expected": "16b107f0aaf4eb5f",
+        "system_sha": "e1d2ccc0a3c10a31",
+        "system_len": 2748,
+        "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+        "user_sha": "f045d139cadedf95",
+        "history_block": false,
+        "scope_result_raw": "stay",
+        "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{},\"next_question\":\"請問是哪一份合約或物件名稱呢？\",\"scope\":\"stay\",\"face\":\"退租收尾\"}"
+      },
+      "uncounted_calls": [],
+      "answer": "請問是哪一份合約或物件名稱呢？"
+    },
+    {
+      "repetition": 2,
+      "session_id": "r1b2-2-0dc674bc",
+      "http_status": 200,
+      "session_rows": [
+        {
+          "row_id": 774,
+          "state": "COLLECTING",
+          "config_key": "contract_closeout",
+          "asked_count": 1
+        }
+      ],
+      "counted_call": {
+        "face_identity": "contract_closeout",
+        "rules_digest": "363ed0d0da3ca23c",
+        "system_context_key": "退租收尾",
+        "system_context_in_prompt": true,
+        "system_context_digest_expected": "16b107f0aaf4eb5f",
+        "system_sha": "e1d2ccc0a3c10a31",
+        "system_len": 2748,
+        "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+        "user_sha": "f045d139cadedf95",
+        "history_block": false,
+        "scope_result_raw": "stay",
+        "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{},\"next_question\":\"請問是哪份合約或物件名稱呢？需要合約編號或物件名稱來查詢。\",\"scope\":\"stay\",\"face\":\"退租收尾\"}"
+      },
+      "uncounted_calls": [],
+      "answer": "請問是哪份合約或物件名稱呢？需要合約編號或物件名稱來查詢。"
+    },
+    {
+      "repetition": 3,
+      "session_id": "r1b2-3-0105a0b3",
+      "http_status": 200,
+      "session_rows": [
+        {
+          "row_id": 775,
+          "state": "COLLECTING",
+          "config_key": "contract_closeout",
+          "asked_count": 1
+        }
+      ],
+      "counted_call": {
+        "face_identity": "contract_closeout",
+        "rules_digest": "363ed0d0da3ca23c",
+        "system_context_key": "退租收尾",
+        "system_context_in_prompt": true,
+        "system_context_digest_expected": "16b107f0aaf4eb5f",
+        "system_sha": "e1d2ccc0a3c10a31",
+        "system_len": 2748,
+        "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+        "user_sha": "f045d139cadedf95",
+        "history_block": false,
+        "scope_result_raw": "stay",
+        "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{},\"next_question\":\"請提供合約編號或物件名稱，以便我查詢相關資訊。\",\"scope\":\"stay\",\"face\":\"退租收尾\"}"
+      },
+      "uncounted_calls": [],
+      "answer": "請提供合約編號或物件名稱，以便我查詢相關資訊。"
+    }
+  ],
+  "face_context": {
+    "rules_digest": "363ed0d0da3ca23c",
+    "insession_ctx_key": "退租收尾",
+    "insession_ctx_digest": "16b107f0aaf4eb5f"
+  },
+  "verdicts": [
+    "stay",
+    "stay",
+    "stay"
+  ],
+  "switch_count": 0,
+  "all_provider_calls": 3,
+  "target_scope_calls": 3
+}

@@ -41,5 +41,5 @@
     "completed": false,
     "tasks_completed": []
   },
-  "outcome_note": "暫定值：第五類 RESPONSIBILITY_GAP_CONFIRMED 已於 2026-08-25 由業主新增，但 R1／R3／R4 未完成，**不得提前套用**。"
+  "outcome_note": "RESPONSIBILITY_GAP_CONFIRMED 已由 B″ **反證**（contract_closeout 3/3 stay）。實測形狀為『owner exists but unreachable / not proposed by current entry-routing authority』，R5 五類皆不對應——待業主裁定是否新增第六類。descriptive discovery 的證據面已相當充分。"
 }

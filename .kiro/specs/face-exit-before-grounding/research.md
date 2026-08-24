@@ -505,3 +505,85 @@ contract_closeout ──?──▶  **未測**
 (b) 候選集須含被指名的 contract_closeout → 先凍結 B″ 再測（+3 次 target 呼叫），
     結果不得回填 B′
 ```
+
+---
+
+## 11. B″ execution（runtime-delegated candidate expansion，2026-08-25）
+
+> 協議：`r1b2-protocol-frozen.md`（**先於執行 commit**，`b14c09c`）
+> evidence：`evidence/r1b2-execution.json` ＋ `…-stdout.log`
+> 預算：`target_scope_calls = 3`（上限 8）／`all_provider_calls = 3`（上限 20）／retry 0
+
+### 11.1 結果：**3/3 stay** → 凍結表列 1 ＝ **responsibility owner exists**
+
+```text
+成立條件  三次的 system message 皆含 in-session（退租收尾）脈絡：ctx_in_prompt=True
+          sys sha e1d2ccc0a3c10a31（2748）／rules digest 363ed0d0da3ca23c（協議一致）
+rep1 stay {"action":"ask","next_question":"請問是哪一份合約或物件名稱呢？","scope":"stay","face":"退租收尾"}
+rep2 stay {"action":"ask","next_question":"請問是哪份合約或物件名稱呢？…","scope":"stay","face":"退租收尾"}
+rep3 stay {"action":"ask","next_question":"請提供合約編號或物件名稱，…","scope":"stay","face":"退租收尾"}
+session   773／774／775 皆 **COLLECTING**（留在面向內，未被關閉）
+uncounted 0（沒有落回分類路由——因為它根本沒退出）
+```
+
+⇒ **`contract_closeout` 接受這句 query，且穩定（3/3）。**
+
+### 11.2 `RESPONSIBILITY_GAP_CONFIRMED` → **假說被反證（refuted）**
+
+依 R9 的 closure 規則，delegation closure 於**終止條件 A（stable stay）**收斂：
+
+```text
+bill_diagnosis ──「金額組成」──▶ billing_anomaly ──「封存/點退處理」──▶ contract_closeout ──▶ **STAY**
+```
+
+⇒ 候選集已追至終點，且終點**接受**責任。第五類的操作化定義（§R5 第二版）
+要求「所有實際被提出的候選 owner 皆不接受」——**不成立**。
+
+### 11.3 觀測到的實際形狀（依協議 §5，**不得硬塞既有分類**）
+
+```text
+responsibility owner exists      contract_closeout accepts（3/3 stay，in-session context）
+observed routing path            retrieval／classification → **bill_diagnosis**
+                                 → scope rejects → reroute → **bill_diagnosis** again
+                                 （§8.1 六次、§10.1 三次 uncounted 呼叫，皆為 bill_diagnosis）
+從未發生                          任何一次 entry-routing 提出 contract_closeout
+```
+
+⇒ 形狀是：
+
+> **responsibility owner exists but is unreachable /
+> not proposed by current entry-routing authority.**
+
+⚠️ 依協議 §5：**不是** responsibility gap，**不得**硬塞 `IMPLEMENTATION_DEFECT`。
+
+### 11.4 R5 五類**沒有**對應這個形狀（提請裁示）
+
+```text
+IMPLEMENTATION_DEFECT_CONFIRMED   ✗ 協議 §5 明文不得硬塞；且 rules 載對、evaluator 照契約走
+CONTRACT_DEFECT_CONFIRMED         ✗ 窄定義是傳遞／一致性問題；此處 contract 傳遞正確
+AUTHORITY_CONFLICT_CONFIRMED      ✗ 不是「兩邊相反」——三個 Face 的判定彼此**一致且互補**
+RESPONSIBILITY_GAP_CONFIRMED      ✗ **已被 B″ 反證**
+INSUFFICIENT_EVIDENCE             ？ 就 descriptive discovery 而言，證據其實已相當充分
+```
+
+⇒ **本檔不自行新增第六類**。目前 `outcome` 維持 `INSUFFICIENT_EVIDENCE`，
+並記錄：五類皆不對應，需業主裁定分類（例如
+`OWNER_EXISTS_BUT_UNREACHABLE` 之類的名稱與定義）。
+
+### 11.5 這一輪把治理問題換掉了
+
+```text
+原本要交給 governance 的  「責任配置沒有 owner，誰該接？」
+實測後應交給 governance 的 「owner 已存在且會接，為什麼 entry-routing authority
+                            從來不提出它？該由誰決定 entry 提名的依據？」
+```
+
+⚠️ 兩者是**完全不同**的治理問題。若當初在 B′ 之後就收 gap，交出去的會是錯的那一個。
+
+### 11.6 仍未回答（不得順手做）
+
+```text
+❌ 為什麼 retrieval／classification 從不提出 contract_closeout（entry 提名機制的問題）
+❌ 是否該讓它被提出（**normative**，屬 routing-authority-model）
+❌ 任何修法——root cause 於 entry 側尚未 adjudicated
+```
