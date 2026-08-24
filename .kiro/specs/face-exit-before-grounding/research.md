@@ -429,3 +429,79 @@ billing_anomaly   in-session key=帳單異常       → **2158ebdc2d8fe7e6**
 ```
 
 ⇒ 本項**不阻擋 B′**，也不需先修；記錄於此，避免日後被誤引。
+
+---
+
+## 10. B′ execution（production-equivalent variant，2026-08-25）
+
+> 協議：`r1b-prime-protocol-frozen.md`（**先於執行 commit**，`322029e`）
+> evidence：`evidence/r1b-prime-execution.json` ＋ `…-stdout.log`
+> 預算：`target_scope_calls = 6`（上限 8）／`all_provider_calls = 15`（上限 20）／retry 0
+
+### 10.1 confounder 已消掉（協議 §3 成立條件通過）
+
+```text
+in-session ctx key      帳單異常
+ctx 出現在 prompt        三次皆 True（system sha 9dbd5c13a31b95c9，len 2177）
+rules digest            aefa054899cdd7e6（＝billing_anomaly，與協議一致）
+session rows            每次兩列：#1 billing_anomaly、#2 bill_diagnosis（switch 後落回分類路由）
+                        後者以 rules digest 判定為 **uncounted**（協議 §2）
+```
+
+### 10.2 結果：**3/3 switch** → 依凍結表列 1 ＝ **stable in-session rejection**
+
+```text
+rep1 switch  「點退帳單屬合約退租收尾範疇，涉及封存處理時轉由合約領域接手，不在此重複解答。」
+rep2 switch  （extracted_fields={"symptom":"金額"}，仍 scope=switch）
+rep3 switch  「點退帳單處理屬於合約退租收尾範疇…建議您向合約管理專員詢問。」
+```
+
+三次的 uncounted 呼叫（落回後的 `bill_diagnosis`）亦皆 `switch`，與 §8.1 一致。
+
+### 10.3 五項前提現況
+
+```text
+bill_diagnosis 拒絕          stable  6/6 switch（§8.1）
+billing_anomaly 拒絕（in-session） stable  3/3 switch（本節）
+reroute residue              FALSIFIED（§8.1）
+context truncation           FALSIFIED（§7.1）
+identity／state mismatch      FALSIFIED（§7.2）
+producer／consumer mismatch   FALSIFIED（§7.3）
+```
+
+⇒ 凍結表列 1 的條件**全部滿足**。
+
+### 10.4 ⚠️ 一個 B′ 意外帶出、且會影響 R5 標籤範圍的事實
+
+`billing_anomaly` 的 runtime 輸出**指名了第三個接手方**：
+
+```text
+「點退帳單屬**合約退租收尾**範疇…轉由**合約領域**接手」
+```
+
+對照 §F-2 的規則文字，delegation 其實是**鏈**而非雙向迴圈：
+
+```text
+bill_diagnosis  ──「金額組成」──▶  billing_anomaly
+billing_anomaly ──「封存/點退處理」──▶  合約退租收尾（contract_closeout）
+contract_closeout ──?──▶  **未測**
+```
+
+⚠️ R5 對 `RESPONSIBILITY_GAP_CONFIRMED` 的定義是「未被**任何候選 Face** 接受為自身責任」。
+本線實測的候選只有**兩個**；被指名的第三個（`contract_closeout`）**尚未測**。
+
+⇒ 目前可安全成立的敘述是：
+
+```text
+✅ 在本 query 上，**已測的兩個候選 Face** 於各自 authoritative in-session context 下
+   皆 stable 拒絕，且四項 execution 解釋皆已排除。
+❓ 「不存在任何 owner」尚未成立——候選集是否應含 contract_closeout，屬**範圍裁定**。
+```
+
+**本檔不自行裁定候選集邊界**，亦不自行套用 R5 標籤。提請裁示（互斥）：
+
+```text
+(a) 候選集＝本線既定的兩個 Face → 條件已滿足 → 套 RESPONSIBILITY_GAP_CONFIRMED → STOP → 升級
+(b) 候選集須含被指名的 contract_closeout → 先凍結 B″ 再測（+3 次 target 呼叫），
+    結果不得回填 B′
+```

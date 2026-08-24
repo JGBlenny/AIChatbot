@@ -1,0 +1,142 @@
+{
+  "protocol": "r1b-prime-protocol-frozen.md",
+  "variant": "B-prime",
+  "query": "幫我查點退帳單金額",
+  "query_sha": "c0d220cc3f1d47cb",
+  "repetitions": 3,
+  "runs": [
+    {
+      "repetition": 1,
+      "session_id": "r1bp-1-c4c5f089",
+      "http_status": 200,
+      "session_rows": [
+        {
+          "row_id": 767,
+          "state": "COMPLETED",
+          "config_key": "billing_anomaly",
+          "asked_count": 0
+        },
+        {
+          "row_id": 768,
+          "state": "COMPLETED",
+          "config_key": "bill_diagnosis",
+          "asked_count": 0
+        }
+      ],
+      "counted_call": {
+        "face_identity": "billing_anomaly",
+        "rules_digest": "aefa054899cdd7e6",
+        "system_context_key": "帳單異常",
+        "system_context_in_prompt": true,
+        "system_context_digest_expected": "2158ebdc2d8fe7e6",
+        "system_sha": "9dbd5c13a31b95c9",
+        "system_len": 2177,
+        "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+        "user_sha": "f045d139cadedf95",
+        "history_block": false,
+        "scope_result_raw": "switch",
+        "raw_json": "{\"action\":\"converge\",\"converge_kind\":\"answer\",\"extracted_fields\":{},\"next_question\":\"點退帳單屬合約退租收尾範疇，涉及封存處理時轉由合約領域接手，不在此重複解答。\",\"scope\":\"switch\",\"face\":\"\"}"
+      },
+      "uncounted_calls": [
+        {
+          "system_sha": "2285acc53f410396",
+          "scope_result_raw": "switch"
+        }
+      ],
+      "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？"
+    },
+    {
+      "repetition": 2,
+      "session_id": "r1bp-2-28b86753",
+      "http_status": 200,
+      "session_rows": [
+        {
+          "row_id": 769,
+          "state": "COMPLETED",
+          "config_key": "billing_anomaly",
+          "asked_count": 0
+        },
+        {
+          "row_id": 770,
+          "state": "COMPLETED",
+          "config_key": "bill_diagnosis",
+          "asked_count": 0
+        }
+      ],
+      "counted_call": {
+        "face_identity": "billing_anomaly",
+        "rules_digest": "aefa054899cdd7e6",
+        "system_context_key": "帳單異常",
+        "system_context_in_prompt": true,
+        "system_context_digest_expected": "2158ebdc2d8fe7e6",
+        "system_sha": "9dbd5c13a31b95c9",
+        "system_len": 2177,
+        "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+        "user_sha": "f045d139cadedf95",
+        "history_block": false,
+        "scope_result_raw": "switch",
+        "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{\"symptom\":\"金額\"},\"next_question\":\"請提供帳單編號或合約編號，以便查詢相關帳單。\",\"scope\":\"switch\",\"face\":\"帳單異常\"}"
+      },
+      "uncounted_calls": [
+        {
+          "system_sha": "2285acc53f410396",
+          "scope_result_raw": "switch"
+        }
+      ],
+      "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？"
+    },
+    {
+      "repetition": 3,
+      "session_id": "r1bp-3-882f3721",
+      "http_status": 200,
+      "session_rows": [
+        {
+          "row_id": 771,
+          "state": "COMPLETED",
+          "config_key": "billing_anomaly",
+          "asked_count": 0
+        },
+        {
+          "row_id": 772,
+          "state": "COMPLETED",
+          "config_key": "bill_diagnosis",
+          "asked_count": 0
+        }
+      ],
+      "counted_call": {
+        "face_identity": "billing_anomaly",
+        "rules_digest": "aefa054899cdd7e6",
+        "system_context_key": "帳單異常",
+        "system_context_in_prompt": true,
+        "system_context_digest_expected": "2158ebdc2d8fe7e6",
+        "system_sha": "9dbd5c13a31b95c9",
+        "system_len": 2177,
+        "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+        "user_sha": "f045d139cadedf95",
+        "history_block": false,
+        "scope_result_raw": "switch",
+        "raw_json": "{\"action\":\"converge\",\"converge_kind\":\"answer\",\"extracted_fields\":{},\"next_question\":\"點退帳單處理屬於合約退租收尾範疇，涉及封存處理時轉由合約領域接手，建議您向合約管理專員詢問。\",\"scope\":\"switch\",\"face\":\"帳單異常\"}"
+      },
+      "uncounted_calls": [
+        {
+          "system_sha": "2285acc53f410396",
+          "scope_result_raw": "switch"
+        }
+      ],
+      "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？"
+    }
+  ],
+  "face_context": {
+    "rules_digest": "aefa054899cdd7e6",
+    "insession_ctx_key": "帳單異常",
+    "insession_ctx_digest": "2158ebdc2d8fe7e6"
+  },
+  "verdicts": [
+    "switch",
+    "switch",
+    "switch"
+  ],
+  "switch_count": 3,
+  "all_provider_calls": 15,
+  "target_scope_calls": 6
+}
