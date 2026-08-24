@@ -1,13 +1,112 @@
 # 完整對話架構
 
-**最後更新**: 2026-07-11
-**版本**: 2.1（＋§14 交易面向流程：conversational-repair）
+**最後更新**: 2026-08-25
+**版本**: 2.2（＋§0 三層責任分層；§12 參數回寫至實況）
 
 > **相關文件**：
 > - Retriever Pipeline 分數欄位：[retriever-pipeline.md](./retriever-pipeline.md)
 > - 知識資料結構：[DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)
 > - **端到端合併大圖**（§1–§14＋全景圖合成單一流程圖，技術版）：[conversation-flow-complete.mmd](./conversation-flow-complete.mmd)／[.svg](./conversation-flow-complete.svg)
 > - **業務版流程圖**（給非技術受眾，白話無術語）：[conversation-flow-business.mmd](./conversation-flow-business.mmd)／[.svg](./conversation-flow-business.svg)／[.png](./conversation-flow-business.png)
+
+---
+
+## 0. 三層責任分層（**讀本文件其餘部分之前先讀這節**）
+
+「routing」一詞在本系統裡曾被用來含混指涉三件**責任不同**的事。本節把它們拆開；
+之後各節出現的「routing」，一律指第一層。
+
+### 0.1 三層
+
+```text
+① Entry / Routing Hint（進場提名）
+   決定    **哪個 Face 被提出／進場**
+   證據    檢索 top-1 知識的 categories ＋ 相似度門檻（FORM_TRIGGER_THRESHOLD）
+           或 trigger_facet_key 直達（呼叫端指定，不看 query）
+   ⚠️ 提名成立**不代表** responsibility ownership 成立
+
+② Face Responsibility / Conversational Action（責任判定）
+   決定    **這個 Face 是否應承擔本輪 query**
+   證據    persona responsibility／scope contract（「對話規則」列的【本輪範疇 scope】）
+   輸出    stay ／ switch（switch → 關會話、重路由當前訊息）
+   ⚠️ 與第①層**目前沒有直接的 contract bridge**（見 0.3）
+
+③ Execution（執行）
+   決定    **進場後實際怎麼做**
+   內容    Form ／ API grounding ／ Direct Answer ／ secondary_call ／ formatter facts
+   ⚠️ Face 具備某種 execution capability，**不能反推** entry 應該提名它；
+      測試用的 `execution_face` 標籤更不是 routing ownership 證據
+```
+
+### 0.2 三條**禁止推論**（寫死）
+
+```text
+成功 entry                    ≠ responsibility 已成立
+Face 有 execution capability   ≠ entry 應提名該 Face
+responsibility owner 存在      ≠ current entry path 一定會提出它
+```
+
+### 0.3 已證實的 architecture fact（2026-08-25）
+
+```text
+Responsibility Contract
+        ╳
+        │  no direct consumption
+        ╳
+Entry Nomination
+
+唯一的間接耦合：knowledge-row 的 `categories`（人工維護的標註）
+```
+
+實證：某 query 的 responsibility owner（`contract_closeout`）在其 in-session context 下
+**穩定接受**（3/3 stay），但現行 entry nomination 從未提出它（9/9 只提出會拒絕的 Face）。
+分類為 **`OWNER_EXISTS_BUT_NOT_PROPOSED`**。
+
+⚠️ **這不是**「categories 標錯了」，**也不是**「某個 Face 應該有更高 priority」——
+兩者都是 responsibility allocation 的 normative decision，屬
+`routing-authority-model / Responsibility Governance Decision Record`，
+**不得**在文件或程式裡當成 metadata／routing fix 順手做掉。
+本節**刻意不畫**「應有的 bridge」，那會提前替 governance 設計答案。
+（來源：`.kiro/specs/face-exit-before-grounding/`）
+
+### 0.4 實際流程（含中間的責任判定，不可省略）
+
+```text
+Retrieval ／ Direct Entry
+        │
+        ▼
+Entry Nomination            ← ①（categories ＋ 門檻／trigger_facet_key）
+        │
+        ▼
+Face Session（開啟）
+        │
+        ▼
+Responsibility / Scope Evaluation   ← ②（persona scope contract）
+      ├─ stay ───▶ Execution / Grounding    ← ③
+      └─ switch ─▶ Close / Reroute（grounding 從未取得）
+```
+
+⚠️ 舊圖把「Face entry → execution」畫成直線，會讓人以為進場即執行。
+**進場與執行之間永遠隔著第②層**，且它可以在 grounding 前把會話關掉。
+
+### 0.5 KB 一列同時攜帶三層資訊（**分開讀**）
+
+| 層 | 欄位 | 語義 | 常見誤讀 |
+|---|---|---|---|
+| ① Routing Hint | `categories`／`category` | 這列知識**可以提名**哪些 Face | ⚠️ **`categories` 命中 ≠ 決定**——仍須 `similarity ≥ FORM_TRIGGER_THRESHOLD`，且面向可在進場後判 switch |
+| ② Action Declaration | `form_id`／`action_type`／`trigger_mode` | 這列宣告了什麼動作 | ⚠️ **帶 `form_id` ≠ 直接開表單**——`trigger_mode` 另有分支（`manual`／`immediate` 需等確認，`auto` 才直開） |
+| ③ Execution Configuration | 面向配置的 `grounding_scope` | 選定後怎麼取事實／怎麼寫入 | ⚠️ **`grounding_scope` 僅在 Face 被選定後生效**，**不是** routing 階段的候選條件 |
+
+### 0.6 對話政策旗標放這裡，不要放進 routing
+
+```text
+result_mapping.skip_refine（預設關）
+  作用   N > candidate_cap 時**跳過「請補更明確識別」那一輪**，直接列前 cap 筆候選
+  不是   ✗ routing responsibility  ✗ 「跳過選定後的重查」
+  實證   選定候選後仍會填回 required_slots[0] 並**重查 API**，收斂單筆
+         （任務 7 定案；tests/unit/conversational/test_skip_refine_semantics_req.py）
+  ⚠️ 誤讀成「跳過重查」→ 有人會拿候選列的欄位當 grounding，底稿即失去 API 權威來源
+```
 
 ---
 
@@ -281,7 +380,7 @@ flowchart LR
 
 **閾值定義**：
 - `SOP_MIN_THRESHOLD = 0.55`
-- `KNOWLEDGE_MIN_THRESHOLD = 0.6`
+- `KB_SIMILARITY_THRESHOLD = 0.65`（⚠️ 舊文寫 `KNOWLEDGE_MIN_THRESHOLD = 0.6`，**該鍵名與值皆已過時**）
 - `SCORE_GAP_THRESHOLD = 0.15`（顯著差異）
 
 **決策樹**：
@@ -445,7 +544,8 @@ LLM Prompt: """
 | `SYNTHESIS_THRESHOLD` | 0.80 | 答案合成閾值 |
 | `FAST_PATH_THRESHOLD` | 0.75 | 快速路徑閾值 |
 | `LLM_ANSWER_TEMPERATURE` | 0.7 | 答案生成溫度 |
-| `LLM_SYNTHESIS_TEMP` | 0.5 | 合成專用溫度 |
+| `LLM_SYNTHESIS_TEMP` | **0.1** | 合成專用溫度（舊文寫 0.5，已過時） |
+| `LLM_ANSWER_SYNTH_TEMP` | 0.2 | 事實型收斂（`cta_mode=factual/suppress`）專用低溫 |
 | `LLM_ANSWER_MAX_TOKENS` | 800 | 最大 token 數 |
 
 ---
@@ -925,11 +1025,16 @@ flowchart LR
 
 ## 12. 關鍵參數配置
 
+> ⚠️ **母圖只引用、不複製**：參數的唯一真實來源是
+> [docs/retrieval-parameters.md](../retrieval-parameters.md) 與兩份 compose 的宣告。
+> 本節僅為速查；**發現不一致時以該檔與 compose 為準，並回寫本節**。
+
 ```yaml
-# 分數閾值（硬編碼於 routers/chat.py）
+# 分數閾值
 SOP_MIN_THRESHOLD: 0.55          # SOP 最低分數
-KNOWLEDGE_MIN_THRESHOLD: 0.6     # 知識庫最低分數
+KB_SIMILARITY_THRESHOLD: 0.65    # 知識庫最低分數（⚠️ 取代舊文的 KNOWLEDGE_MIN_THRESHOLD: 0.6）
 SCORE_GAP_THRESHOLD: 0.15        # 顯著差距閾值
+FORM_TRIGGER_THRESHOLD: 0.75     # 表單觸發／**面向進場提名**共用門檻（§0.5 ①）
 
 # 優化閾值（環境變數，可配置）
 PERFECT_MATCH_THRESHOLD: 0.90    # 完美匹配閾值（比對 vector_similarity）
@@ -946,13 +1051,17 @@ OPENAI_MODEL: gpt-4o-mini              # 答案優化模型（預設）
 INTENT_CLASSIFIER_MODEL: gpt-3.5-turbo # 意圖分類模型
 KNOWLEDGE_GEN_MODEL: gpt-4o-mini       # 知識生成模型
 DOCUMENT_CONVERTER_MODEL: gpt-4o       # 文件轉換模型（fallback: KNOWLEDGE_GEN_MODEL）
-QUERY_REWRITE_MODEL: gpt-3.5-turbo     # 查詢改寫模型（fallback: OPENAI_MODEL）
+QUERY_REWRITE_MODEL: gpt-4o-mini       # 查詢改寫模型（舊文寫 gpt-3.5-turbo，已過時）
+PRESALES_SYNTH_MODEL: gpt-4o           # 對話 brain（conversational_step）與推薦型合成
+RELEVANCE_GATE_MODEL: —                # 未設 → LLM_MODEL → OPENAI_MODEL（gpt-4o-mini）
 EMBEDDING_MODEL: text-embedding-3-small # Embedding 模型
 
 # LLM 溫度與 token 配置（環境變數）
 LLM_ANSWER_TEMPERATURE: 0.7            # 答案生成溫度
 LLM_ANSWER_MAX_TOKENS: 800             # 答案最大 token 數
-LLM_SYNTHESIS_TEMP: 0.5                # 合成專用溫度
+LLM_SYNTHESIS_TEMP: 0.1                # 合成專用溫度（舊文寫 0.5，已過時）
+LLM_ANSWER_SYNTH_TEMP: 0.2             # 事實型收斂（factual/suppress）低溫
+ADVISOR_TEMP: 0.4                      # 對話 brain（conversational_step）溫度
 LLM_TONE_ADJUSTMENT_TEMP: 0.3          # 語氣調整溫度（已停用）
 INTENT_CLASSIFIER_TEMPERATURE: 0.1     # 意圖分類溫度
 INTENT_CLASSIFIER_MAX_TOKENS: 500      # 意圖分類最大 token 數
@@ -960,6 +1069,13 @@ KNOWLEDGE_GEN_TEMPERATURE: 0.7         # 知識生成溫度
 KNOWLEDGE_GEN_MAX_TOKENS: 800          # 知識生成最大 token 數
 QUERY_REWRITE_TEMPERATURE: 0.3         # 查詢改寫溫度
 QUERY_REWRITE_MAX_TOKENS: 100          # 查詢改寫最大 token 數
+
+# 進場／閘門旗標（**皆為現行值**）
+ENABLE_QUERY_REWRITE_B2B: false        # b2b 查詢改寫（現行停用）
+PREENTRY_ROUTABILITY_GATE: false       # 進場前 scope 預判閘（現行停用；⚠️ 它與 in-session
+                                       #   取到的 system context **不同源**，不等於「同一判定提前」）
+RELEVANCE_GATE_ENABLED: true           # 單發答題的適用性把關
+RELEVANCE_GATE_SKIP_VEC: —             # 未設＝不跳過
 
 # 觸發配置
 DEFAULT_TRIGGER_KEYWORDS:

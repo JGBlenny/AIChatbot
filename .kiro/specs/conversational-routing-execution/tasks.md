@@ -916,13 +916,16 @@ anomaly   frozen cases   secondary dispatch = 0
 
 **目標**：語義分層落於文件與審查流程。⚠️ **不變更 DB schema、不新建任何 decision component**。
 
-- [ ] 10.1 **⚡F** 更新 `docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md`：
+- [x] 10.1 **⚡F** 更新 `docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md`：
   以 Routing Hint／Action Declaration／Execution Configuration 三層描述 KB 攜帶的資訊；
   明確標示「`categories` 命中 ≠ 決定」「帶 `form_id` ≠ 直接開表單（`trigger_mode` 另有分支）」
   「`grounding_scope` 僅在選定後生效，非 routing 階段選項」。
+  → 新增 **§0 三層責任分層**（含三條禁止推論、0.3 的 architecture fact
+  「entry nomination 不消費 responsibility contract」、0.4 含責任判定的實際流程圖、
+  0.5 KB 三層欄位對照、0.6 `skip_refine` 定位）。⚠️ 刻意**不畫**應有的 bridge。
   _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 10.2 **⚡F** 回寫母圖的已知過時處：`QUERY_REWRITE_MODEL`（已改 gpt-4o-mini）、
+- [x] 10.2 **⚡F** 回寫母圖的已知過時處：`QUERY_REWRITE_MODEL`（已改 gpt-4o-mini）、
   `KNOWLEDGE_MIN_THRESHOLD`（實際為 `KB_SIMILARITY_THRESHOLD`）、`LLM_SYNTHESIS_TEMP`（實際 0.1）；
   補上 `FORM_TRIGGER_THRESHOLD`、`RELEVANCE_GATE_*`、`ENABLE_QUERY_REWRITE_B2B`、
   `PREENTRY_ROUTABILITY_GATE`。**母圖只引用不複製**——參數唯一真實來源仍為 `docs/retrieval-parameters.md`。
