@@ -479,8 +479,21 @@ A4（移除 job 級 `continue-on-error` 使 `pip install` 暫時性故障會擋�
     現有 `test_mock_transport_holds_no_real_transport` 只檢查實例屬性名，抓不到這種寫法。
     → 建議補「原始碼（去 docstring）不得出現 `httpx`／`RealHttpTransport`」的斷言，
       或把 mock 移出獨立模組。verifier 已實測該斷言在現行實作下為綠。
-    ⚠️ **本輪不動**：A2 屬 claim-relevant 的加固，落地後需重跑主驗收＋一次 fresh verifier；
-      故留待業主裁定，不在 CONFIRMED 之後偷改。
+    ⚠️ **業主裁定（2026-08-24）：A1／A2 皆 P4 deferred，不改 production/test code。**
+      A2 揭露的是**我們對證據強度的描述過頭**，不是 invariant 被反證，故改以
+      **收窄 claim ceiling** 處理：
+
+```text
+✅ 可宣稱：目前 implementation path 經反事實驗證不會產生 real-network side effect
+❌ 不得宣稱：mock transport 在**模組邊界**上結構性無法碰真網路
+             （transport.py 自身 import httpx，且 mock/real 共檔）
+```
+
+      ⚠️ 亦**不補** source-text assertion：它只證明「目前 class body 沒寫這個名字」，
+      不是 architectural isolation，反而容易讓後人看到 green test 就重新說成「結構上不可能」。
+      若日後真要把 invariant 升級為「mock 在架構上取不到 real-network capability」，
+      選的是**拆模組**（`transport/protocol.py`／`real_http.py`（唯一 import httpx）／`mock.py`）
+      ＋ import boundary test——那才是與 claim 同強度的 enforcement。**屬後續 architecture hardening。**
 
   **實作**（`services/jgb/transport.py`）：`MIGRATED_ENDPOINTS` ＋ `JGBMockTransport`（僅 admission gate，
   回應建構屬 4.5）。三態：resolve 回 None → `UnresolvedEndpointError(reason="no_match")`；
@@ -503,11 +516,40 @@ A4（移除 job 級 `continue-on-error` 使 `pip install` 暫時性故障會擋�
   全域回歸：`make test-unit` → **1132 passed / 13 failed**（1121 → 1132，即本組 11 筆全新增），
   13 筆仍全數落在 `tests/unit/_meta/`（既有 container mount known-red）。
 
-- [ ] 4.4 **⚡F** 依 research.md 主題 7 的契約盤查（附 file:line）建 `BillFixtureTable`：
+- [x] 4.4 **⚡F** 依 research.md 主題 7 的契約盤查（附 file:line）建 `BillFixtureTable`：
   至少 3 筆分屬 2 個 `contract_id`；每筆 `bit_status`／`invoice_status` 互異
   （使 C4a 能區分「引用對的那一筆」與「引用錯的那一筆」）；
   欄位限於 External 白名單投影，**不得新增真 API 不存在的欄位**；**不得含任何真實個資**。
   _Requirements: 4.1, 4.2_
+
+  **實作**：新增 `services/jgb/fixtures.py`——`EXTERNAL_BILL_FIELDS`（33 欄，逐鍵取自
+  jgb2 `External/BillApiController.php:130-167` `formatBill`）＋ `BillFixture` ＋ `BillFixtureTable`
+  ＋ `assert_external_projection()`／`ForeignFixtureFieldError`。
+  ⚠️ **`archive_at` 不在投影內**——真 API 輸出的是衍生的 `is_archived`（:163）；
+  照 select 清單抄會憑空多一個 production 拿不到的欄位。
+
+  **差異矩陣（刻意設計，非隨機湊數）**：
+
+```text
+bill_id  contract_id  bit_status  invoice_status  date_expire
+900001   700100       3           0               20260815
+900002   700100       19          1               20260915
+900003   700200       3           1               20260915
+```
+
+  **每一對只共用一個維度** → 任何單一過濾條件都**無法複製**另一條件的結果集
+  （contract={900001,900002}／bit={900001,900003}／invoice={900002,900003}，兩兩相異），
+  且 month 亦可分辨（8月{900001}／9月{900002,900003}）。
+  ⚠️ **identity 靠 `by_id()`，不靠 list position**——日後加第四筆不改變既有測試語義。
+
+  **驗收（容器內）**：新增 `tests/unit/api/test_bill_fixture_table_req.py` → **13 passed / 0 failed**。
+  **兩個 negative control 皆實測會咬**：
+  ① 白名單 guard——`assert_external_projection({"id":1,"bill_ref":"900001"})` 拋
+     `ForeignFixtureFieldError`（`bill_ref` 是 rag 端 adapter 參數，真 API 不存在）；
+  ② 差異矩陣——反證「三筆只有 id 不同」的弱 fixture 會讓三個過濾集合**完全相同**（測試會紅），
+     本 fixture 則三集合兩兩相異。
+  全域回歸：`make test-unit` → **1145 passed / 13 failed**（1132 → 1145，即本組 13 筆全新增），
+  13 筆仍全數落在 `tests/unit/_meta/`（既有 container mount known-red）。
 
 - [ ] 4.5 **⚡F** 實作 `/bills` 與 `/bills/{bill_id}` 的 mock 回應，依真 API **實際存在**的參數過濾
   （`role_id` 必填缺則 400、`user_id`、`contract_id` 單數、`bill_id`、`status`、`type`、
