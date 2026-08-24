@@ -802,7 +802,9 @@ anomaly   frozen cases   secondary dispatch = 0
 - [x] 6.1 **🧠主** 定義 `BrainGroundingAssertion` 與 `assert_brain_uses_grounding`：
   斷言僅鎖「該筆實際值字面是否出現」與「是否退回泛用 KB 答案」，**不鎖措辭**（真 LLM 非決定性）。
   實作 `tests/support/brain_grounding.py`；量尺自驗 `tests/unit/api/test_brain_grounding_assertion_req.py`（17 passed）。
-  逐案尺 `c4b-ruler-frozen.md`（FROZEN）；執行參數 `c4b-run-parameters-frozen.md`（FROZEN）；
+  逐案尺 `c4b-ruler-frozen.md`（v1，FROZEN 未執行，經執行前 audit 反證）
+  → **現行為 `c4b-ruler-v2-amendment.md`（FROZEN）**；執行參數 `c4b-run-parameters-frozen.md`
+  （FROZEN，失敗分類與 evidence 欄位由 v2 §5 併同修訂）；
   進場與供裝前置 `c4b-entry-path-equivalence-resolved.md`（已解除）。
   _Requirements: 3.2_
 
