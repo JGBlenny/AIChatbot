@@ -1,8 +1,8 @@
 {
   "feature_name": "routing-authority-model",
   "created_at": "2026-08-24T12:30:00Z",
-  "updated_at": "2026-08-24T14:00:00Z",
-  "phase": "requirements-generated",
+  "updated_at": "2026-08-24T15:00:00Z",
+  "phase": "requirements-approved",
   "language": "zh-TW",
   "predecessor": {
     "spec": "routing-disambiguation",
@@ -28,7 +28,17 @@
     },
     "requirements": {
       "generated": true,
-      "approved": false
+      "approved": true,
+      "approved_at": "2026-08-24",
+      "review": {
+        "R1": "APPROVED — NECESSARY / N1",
+        "R2": "APPROVED — NECESSARY / N2",
+        "R3": "APPROVED — SUPPORTED, NOT NECESSARY",
+        "R4": "APPROVED — CONFIRMED institutional failure",
+        "R5": "APPROVED — SUPPORTED, NOT NECESSARY",
+        "META-RULE": "APPROVED"
+      },
+      "frozen": "requirements 已凍結；EARS 展開不得變更其強度標記"
     },
     "design": {
       "generated": false,
@@ -57,5 +67,10 @@
       "H1/H2/H3 是否有單一 root-cause winner"
     ],
     "key_conclusion": "目前沒有證據支持「選一層」就能解本案；N1 是 information contract，N2 是 enforcement contract，兩者可能天然跨層"
+  },
+  "unresolved": {
+    "main_responsibility_layer": "INSUFFICIENT EVIDENCE（L2/L3/L4/L6）",
+    "single_root_cause": "INSUFFICIENT EVIDENCE（H1/H2/H3）",
+    "routing_false_reject_cost": "PRODUCT DECISION PENDING —— ⚠️ **僅當** design candidate 可能以「拒絕本來應進場的 Face」作為 trade-off 時，才必須先取得該裁示；**不得**現在為尚未存在的 candidate 訂 5%／10% 之類的 threshold"
   }
 }
