@@ -1,0 +1,695 @@
+{
+  "spec": "conversational-routing-execution / 6.2 C4b",
+  "ruler": "c4b-ruler-v2-amendment.md",
+  "parameters": "c4b-run-parameters-frozen.md (+ v2 §5)",
+  "runs_per_case": 3,
+  "nominal_calls": 24,
+  "hard_cap_calls": 30,
+  "executed_cases": 3,
+  "skipped_cases": 1,
+  "external_calls": null,
+  "retries": 0,
+  "cases": [
+    {
+      "case": "c4b-diag-02",
+      "runs": [
+        {
+          "case": "c4b-diag-02",
+          "execution_face": "bill_diagnosis",
+          "fixture_bill_id": 900001,
+          "passed": true,
+          "raw_answer": "帳單「2026年8月租金」的資訊如下：\n\n- **狀態**：待繳費\n- **金額**：NT$ 18,000\n- **繳費期限**：2026/08/15\n\n目前這筆帳單的狀態為「待繳費」，因此不需要再發送。如果您需要取消這筆帳單，可以進行收回，這樣帳單會退回「待發送」狀態，您可以修改內容後重新發送。請注意，原繳費資訊會失效，重發時會產生新的虛擬帳號／繳費代碼。如需操作，請重新整理頁面後再試。\n\n如果您想手動標記這筆帳單為到帳，狀態正確，應該可以進行操作。如果操作時出現錯誤，可能是系統暫時忙碌，建議稍後再試。",
+          "matched_spans": [
+            {
+              "group_key": "待繳費",
+              "literal": "待繳費",
+              "start": 30,
+              "context": "6年8月租金」的資訊如下：\n\n- **狀態**：待繳費\n- **金額**：NT$ 18,000\n- *"
+            },
+            {
+              "group_key": "待繳費",
+              "literal": "待繳費",
+              "start": 88,
+              "context": "：2026/08/15\n\n目前這筆帳單的狀態為「待繳費」，因此不需要再發送。如果您需要取消這筆帳單，可"
+            }
+          ],
+          "missing_groups": [],
+          "wrong_instance_hits": [],
+          "fallback_hits": [],
+          "adjudication_hits": [],
+          "violated_dimensions": [],
+          "literal_provenance": {
+            "待繳費": "fixtures 900001.status→STATUS_LABELS"
+          },
+          "foil_provenance": {
+            "7,500": "fixtures 900003.total",
+            "7500": "fixtures 900003.total",
+            "1,200": "fixtures 900002.total",
+            "1200": "fixtures 900002.total",
+            "2026年9月管理費": "fixtures 900002.title",
+            "2026年9月點退結算": "fixtures 900003.title"
+          },
+          "known_non_discriminating": [],
+          "fallback_markers_checked": [
+            "請洽客服",
+            "請聯繫客服",
+            "聯繫客服",
+            "一般來說",
+            "通常來說",
+            "無法查詢",
+            "查詢不到",
+            "請提供帳單編號",
+            "NO_MATCH"
+          ],
+          "adjudication_flags_checked": [
+            "待對帳",
+            "已繳費",
+            "無法收回",
+            "不能收回",
+            "不可收回",
+            "已失效"
+          ],
+          "run": 1,
+          "attempt": 0,
+          "session_id": "c4b-c4b-diag-02-r1a0-0580bf9989",
+          "calls": [
+            {
+              "model": "gpt-4o",
+              "temperature": 0.4,
+              "max_tokens": 400,
+              "has_response_format": true
+            },
+            {
+              "model": "gpt-4o-mini",
+              "temperature": 0.2,
+              "max_tokens": 800,
+              "has_response_format": false
+            }
+          ]
+        },
+        {
+          "case": "c4b-diag-02",
+          "execution_face": "bill_diagnosis",
+          "fixture_bill_id": 900001,
+          "passed": true,
+          "raw_answer": "帳單「2026年8月租金」的資訊如下：\n\n- 狀態：待繳費\n- 金額：NT$ 18,000\n- 繳費期限：2026/08/15\n\n目前帳單狀態為「待繳費」，因此不需要再發送。如果您想要取消此帳單，可以進行收回，這樣帳單會退回「待發送」狀態，您可以修改內容後重新發送。請注意，原繳費資訊會失效，重發時會產生新的虛擬帳號／繳費代碼。如需操作，請重新整理頁面後再試。\n\n如果您需要手動標記此帳單為到帳，狀態正確，應該可以進行此操作。如果遇到任何錯誤，可能是系統暫時忙碌，建議稍後再試。",
+          "matched_spans": [
+            {
+              "group_key": "待繳費",
+              "literal": "待繳費",
+              "start": 26,
+              "context": "「2026年8月租金」的資訊如下：\n\n- 狀態：待繳費\n- 金額：NT$ 18,000\n- 繳費期限："
+            },
+            {
+              "group_key": "待繳費",
+              "literal": "待繳費",
+              "start": 73,
+              "context": "費期限：2026/08/15\n\n目前帳單狀態為「待繳費」，因此不需要再發送。如果您想要取消此帳單，可以"
+            }
+          ],
+          "missing_groups": [],
+          "wrong_instance_hits": [],
+          "fallback_hits": [],
+          "adjudication_hits": [],
+          "violated_dimensions": [],
+          "literal_provenance": {
+            "待繳費": "fixtures 900001.status→STATUS_LABELS"
+          },
+          "foil_provenance": {
+            "7,500": "fixtures 900003.total",
+            "7500": "fixtures 900003.total",
+            "1,200": "fixtures 900002.total",
+            "1200": "fixtures 900002.total",
+            "2026年9月管理費": "fixtures 900002.title",
+            "2026年9月點退結算": "fixtures 900003.title"
+          },
+          "known_non_discriminating": [],
+          "fallback_markers_checked": [
+            "請洽客服",
+            "請聯繫客服",
+            "聯繫客服",
+            "一般來說",
+            "通常來說",
+            "無法查詢",
+            "查詢不到",
+            "請提供帳單編號",
+            "NO_MATCH"
+          ],
+          "adjudication_flags_checked": [
+            "待對帳",
+            "已繳費",
+            "無法收回",
+            "不能收回",
+            "不可收回",
+            "已失效"
+          ],
+          "run": 2,
+          "attempt": 0,
+          "session_id": "c4b-c4b-diag-02-r2a0-a7377de12f",
+          "calls": [
+            {
+              "model": "gpt-4o",
+              "temperature": 0.4,
+              "max_tokens": 400,
+              "has_response_format": true
+            },
+            {
+              "model": "gpt-4o-mini",
+              "temperature": 0.2,
+              "max_tokens": 800,
+              "has_response_format": false
+            }
+          ]
+        },
+        {
+          "case": "c4b-diag-02",
+          "execution_face": "bill_diagnosis",
+          "fixture_bill_id": 900001,
+          "passed": true,
+          "raw_answer": "帳單「2026年8月租金」的資訊如下：\n\n- 狀態：待繳費\n- 金額：NT$ 18,000\n- 繳費期限：2026/08/15\n\n目前帳單狀態為「待繳費」，因此不需要再發送。如果您想要取消這筆帳單，可以進行收回，這樣帳單會退回「待發送」狀態，您可以修改內容後重新發送。請注意，原繳費資訊會失效，重發時會產生新的虛擬帳號或繳費代碼。\n\n如果您需要手動標記到帳，這筆帳單的狀態正確，應該可以進行操作。如果在操作時出現錯誤，可能是系統暫時忙碌，建議稍後再試。\n\n如需進一步操作，請參考相關功能或重新整理頁面。",
+          "matched_spans": [
+            {
+              "group_key": "待繳費",
+              "literal": "待繳費",
+              "start": 26,
+              "context": "「2026年8月租金」的資訊如下：\n\n- 狀態：待繳費\n- 金額：NT$ 18,000\n- 繳費期限："
+            },
+            {
+              "group_key": "待繳費",
+              "literal": "待繳費",
+              "start": 73,
+              "context": "費期限：2026/08/15\n\n目前帳單狀態為「待繳費」，因此不需要再發送。如果您想要取消這筆帳單，可"
+            }
+          ],
+          "missing_groups": [],
+          "wrong_instance_hits": [],
+          "fallback_hits": [],
+          "adjudication_hits": [],
+          "violated_dimensions": [],
+          "literal_provenance": {
+            "待繳費": "fixtures 900001.status→STATUS_LABELS"
+          },
+          "foil_provenance": {
+            "7,500": "fixtures 900003.total",
+            "7500": "fixtures 900003.total",
+            "1,200": "fixtures 900002.total",
+            "1200": "fixtures 900002.total",
+            "2026年9月管理費": "fixtures 900002.title",
+            "2026年9月點退結算": "fixtures 900003.title"
+          },
+          "known_non_discriminating": [],
+          "fallback_markers_checked": [
+            "請洽客服",
+            "請聯繫客服",
+            "聯繫客服",
+            "一般來說",
+            "通常來說",
+            "無法查詢",
+            "查詢不到",
+            "請提供帳單編號",
+            "NO_MATCH"
+          ],
+          "adjudication_flags_checked": [
+            "待對帳",
+            "已繳費",
+            "無法收回",
+            "不能收回",
+            "不可收回",
+            "已失效"
+          ],
+          "run": 3,
+          "attempt": 0,
+          "session_id": "c4b-c4b-diag-02-r3a0-5a7dcbaa3d",
+          "calls": [
+            {
+              "model": "gpt-4o",
+              "temperature": 0.4,
+              "max_tokens": 400,
+              "has_response_format": true
+            },
+            {
+              "model": "gpt-4o-mini",
+              "temperature": 0.2,
+              "max_tokens": 800,
+              "has_response_format": false
+            }
+          ]
+        }
+      ],
+      "retries": 0,
+      "outcome": "PASSED"
+    },
+    {
+      "case": "c4b-anom-01",
+      "runs": [
+        {
+          "case": "c4b-anom-01",
+          "execution_face": "billing_anomaly",
+          "fixture_bill_id": 900002,
+          "passed": true,
+          "raw_answer": "編號｜900002\n\n帳單「2026年9月管理費」狀態：已繳費。帳單金額為 NT$ 1,200，繳費期限是 2026/09/15，計費期間為 2026/09/01 至 2026/09/30。\n\n如有其他問題或需要進一步的協助，請隨時告訴我！",
+          "matched_spans": [
+            {
+              "group_key": "2026/09/01",
+              "literal": "2026/09/01",
+              "start": 71,
+              "context": "，繳費期限是 2026/09/15，計費期間為 2026/09/01 至 2026/09/30。\n\n如有其他問題或需"
+            },
+            {
+              "group_key": "2026/09/30",
+              "literal": "2026/09/30",
+              "start": 84,
+              "context": "9/15，計費期間為 2026/09/01 至 2026/09/30。\n\n如有其他問題或需要進一步的協助，請隨時告訴"
+            }
+          ],
+          "missing_groups": [],
+          "wrong_instance_hits": [],
+          "fallback_hits": [],
+          "adjudication_hits": [],
+          "violated_dimensions": [],
+          "literal_provenance": {
+            "2026/09/01": "fixtures 900002.date_start",
+            "2026/09/30": "fixtures 900002.date_end"
+          },
+          "foil_provenance": {
+            "2026/08/01": "fixtures 900001.date_start",
+            "2026年8月1日": "fixtures 900001.date_start",
+            "20260801": "fixtures 900001.date_start",
+            "2026/08/31": "fixtures 900001.date_end",
+            "2026年8月31日": "fixtures 900001.date_end",
+            "20260831": "fixtures 900001.date_end",
+            "18,000": "fixtures 900001.total",
+            "18000": "fixtures 900001.total",
+            "7,500": "fixtures 900003.total",
+            "7500": "fixtures 900003.total",
+            "2026年8月租金": "fixtures 900001.title",
+            "2026年9月點退結算": "fixtures 900003.title"
+          },
+          "known_non_discriminating": [
+            "known_non_discriminating for instance identity at C4b layer：900003 期間與 900002 相同；identity 屬 C4a OB-3，非本層聲稱之能力"
+          ],
+          "fallback_markers_checked": [
+            "請洽客服",
+            "請聯繫客服",
+            "聯繫客服",
+            "一般來說",
+            "通常來說",
+            "無法查詢",
+            "查詢不到",
+            "請提供帳單編號",
+            "NO_MATCH"
+          ],
+          "adjudication_flags_checked": [],
+          "run": 1,
+          "attempt": 0,
+          "session_id": "c4b-c4b-anom-01-r1a0-2f8e4617d5",
+          "calls": [
+            {
+              "model": "gpt-4o",
+              "temperature": 0.4,
+              "max_tokens": 400,
+              "has_response_format": true
+            },
+            {
+              "model": "gpt-4o-mini",
+              "temperature": 0.2,
+              "max_tokens": 800,
+              "has_response_format": false
+            }
+          ]
+        },
+        {
+          "case": "c4b-anom-01",
+          "execution_face": "billing_anomaly",
+          "fixture_bill_id": 900002,
+          "passed": true,
+          "raw_answer": "編號｜900002\n\n帳單「2026年9月管理費」的狀態是已繳費，金額為 NT$ 1,200，繳費期限是 2026/09/15，計費期間為 2026/09/01 ~ 2026/09/30。\n\n如需進一步查詢或操作，請前往帳務管理頁查看相關資訊。",
+          "matched_spans": [
+            {
+              "group_key": "2026/09/01",
+              "literal": "2026/09/01",
+              "start": 70,
+              "context": "，繳費期限是 2026/09/15，計費期間為 2026/09/01 ~ 2026/09/30。\n\n如需進一步查詢或"
+            },
+            {
+              "group_key": "2026/09/30",
+              "literal": "2026/09/30",
+              "start": 83,
+              "context": "9/15，計費期間為 2026/09/01 ~ 2026/09/30。\n\n如需進一步查詢或操作，請前往帳務管理頁查看"
+            }
+          ],
+          "missing_groups": [],
+          "wrong_instance_hits": [],
+          "fallback_hits": [],
+          "adjudication_hits": [],
+          "violated_dimensions": [],
+          "literal_provenance": {
+            "2026/09/01": "fixtures 900002.date_start",
+            "2026/09/30": "fixtures 900002.date_end"
+          },
+          "foil_provenance": {
+            "2026/08/01": "fixtures 900001.date_start",
+            "2026年8月1日": "fixtures 900001.date_start",
+            "20260801": "fixtures 900001.date_start",
+            "2026/08/31": "fixtures 900001.date_end",
+            "2026年8月31日": "fixtures 900001.date_end",
+            "20260831": "fixtures 900001.date_end",
+            "18,000": "fixtures 900001.total",
+            "18000": "fixtures 900001.total",
+            "7,500": "fixtures 900003.total",
+            "7500": "fixtures 900003.total",
+            "2026年8月租金": "fixtures 900001.title",
+            "2026年9月點退結算": "fixtures 900003.title"
+          },
+          "known_non_discriminating": [
+            "known_non_discriminating for instance identity at C4b layer：900003 期間與 900002 相同；identity 屬 C4a OB-3，非本層聲稱之能力"
+          ],
+          "fallback_markers_checked": [
+            "請洽客服",
+            "請聯繫客服",
+            "聯繫客服",
+            "一般來說",
+            "通常來說",
+            "無法查詢",
+            "查詢不到",
+            "請提供帳單編號",
+            "NO_MATCH"
+          ],
+          "adjudication_flags_checked": [],
+          "run": 2,
+          "attempt": 0,
+          "session_id": "c4b-c4b-anom-01-r2a0-a4973724df",
+          "calls": [
+            {
+              "model": "gpt-4o",
+              "temperature": 0.4,
+              "max_tokens": 400,
+              "has_response_format": true
+            },
+            {
+              "model": "gpt-4o-mini",
+              "temperature": 0.2,
+              "max_tokens": 800,
+              "has_response_format": false
+            }
+          ]
+        },
+        {
+          "case": "c4b-anom-01",
+          "execution_face": "billing_anomaly",
+          "fixture_bill_id": 900002,
+          "passed": false,
+          "raw_answer": "帳單編號 900002 的狀態為「已繳費」，金額為 NT$ 1,200，繳費期限是 2026 年 9 月 15 日，計費期間為 2026 年 9 月 01 日至 2026 年 9 月 30 日。如需進一步查詢或操作，請前往 [帳務管理頁](https://www.jgbsmart.com/pricing)。",
+          "matched_spans": [],
+          "missing_groups": [
+            [
+              "2026/09/01",
+              "2026年9月1日",
+              "20260901"
+            ],
+            [
+              "2026/09/30",
+              "2026年9月30日",
+              "20260930"
+            ]
+          ],
+          "wrong_instance_hits": [],
+          "fallback_hits": [],
+          "adjudication_hits": [],
+          "violated_dimensions": [
+            "value_not_used"
+          ],
+          "literal_provenance": {
+            "2026/09/01": "fixtures 900002.date_start",
+            "2026/09/30": "fixtures 900002.date_end"
+          },
+          "foil_provenance": {
+            "2026/08/01": "fixtures 900001.date_start",
+            "2026年8月1日": "fixtures 900001.date_start",
+            "20260801": "fixtures 900001.date_start",
+            "2026/08/31": "fixtures 900001.date_end",
+            "2026年8月31日": "fixtures 900001.date_end",
+            "20260831": "fixtures 900001.date_end",
+            "18,000": "fixtures 900001.total",
+            "18000": "fixtures 900001.total",
+            "7,500": "fixtures 900003.total",
+            "7500": "fixtures 900003.total",
+            "2026年8月租金": "fixtures 900001.title",
+            "2026年9月點退結算": "fixtures 900003.title"
+          },
+          "known_non_discriminating": [
+            "known_non_discriminating for instance identity at C4b layer：900003 期間與 900002 相同；identity 屬 C4a OB-3，非本層聲稱之能力"
+          ],
+          "fallback_markers_checked": [
+            "請洽客服",
+            "請聯繫客服",
+            "聯繫客服",
+            "一般來說",
+            "通常來說",
+            "無法查詢",
+            "查詢不到",
+            "請提供帳單編號",
+            "NO_MATCH"
+          ],
+          "adjudication_flags_checked": [],
+          "run": 3,
+          "attempt": 0,
+          "session_id": "c4b-c4b-anom-01-r3a0-39a318c07e",
+          "calls": [
+            {
+              "model": "gpt-4o",
+              "temperature": 0.4,
+              "max_tokens": 400,
+              "has_response_format": true
+            },
+            {
+              "model": "gpt-4o-mini",
+              "temperature": 0.2,
+              "max_tokens": 800,
+              "has_response_format": false
+            }
+          ]
+        }
+      ],
+      "retries": 0,
+      "outcome": "FAILED"
+    },
+    {
+      "case": "c4b-anom-02",
+      "runs": [
+        {
+          "case": "c4b-anom-02",
+          "execution_face": "billing_anomaly",
+          "fixture_bill_id": 900003,
+          "passed": true,
+          "raw_answer": "編號｜名稱：900003｜2026年9月點退結算  \n帳單狀態：待對帳。  \n帳單金額：NT$ 7,500（系統存值）。  \n繳費期限：2026/09/15。  \n計費期間：2026/09/01 ~ 2026/09/30。\n\n如需進一步查詢或處理，請前往帳務管理頁查看相關資訊。",
+          "matched_spans": [
+            {
+              "group_key": "待對帳",
+              "literal": "待對帳",
+              "start": 32,
+              "context": "0003｜2026年9月點退結算  \n帳單狀態：待對帳。  \n帳單金額：NT$ 7,500（系統存值）"
+            }
+          ],
+          "missing_groups": [],
+          "wrong_instance_hits": [],
+          "fallback_hits": [],
+          "adjudication_hits": [],
+          "violated_dimensions": [],
+          "literal_provenance": {
+            "待對帳": "fixtures 900003.status→STATUS_LABELS"
+          },
+          "foil_provenance": {
+            "18,000": "fixtures 900001.total",
+            "18000": "fixtures 900001.total",
+            "1,200": "fixtures 900002.total",
+            "1200": "fixtures 900002.total",
+            "2026/08/01": "fixtures 900001.date_start",
+            "2026年8月1日": "fixtures 900001.date_start",
+            "20260801": "fixtures 900001.date_start",
+            "2026年8月租金": "fixtures 900001.title",
+            "2026年9月管理費": "fixtures 900002.title"
+          },
+          "known_non_discriminating": [],
+          "fallback_markers_checked": [
+            "請洽客服",
+            "請聯繫客服",
+            "聯繫客服",
+            "一般來說",
+            "通常來說",
+            "無法查詢",
+            "查詢不到",
+            "請提供帳單編號",
+            "NO_MATCH"
+          ],
+          "adjudication_flags_checked": [
+            "待繳費",
+            "已繳費",
+            "待發送",
+            "排定發送",
+            "已失效"
+          ],
+          "run": 1,
+          "attempt": 0,
+          "session_id": "c4b-c4b-anom-02-r1a0-869c51bb49",
+          "calls": [
+            {
+              "model": "gpt-4o",
+              "temperature": 0.4,
+              "max_tokens": 400,
+              "has_response_format": true
+            },
+            {
+              "model": "gpt-4o-mini",
+              "temperature": 0.2,
+              "max_tokens": 800,
+              "has_response_format": false
+            }
+          ]
+        },
+        {
+          "case": "c4b-anom-02",
+          "execution_face": "billing_anomaly",
+          "fixture_bill_id": 900003,
+          "passed": true,
+          "raw_answer": "編號｜名稱：900003｜2026年9月點退結算\n\n帳單狀態：待對帳。  \n帳單金額：NT$ 7,500（系統存值）。  \n繳費期限：2026/09/15。  \n計費期間：2026/09/01 ~ 2026/09/30。\n\n如需進一步查詢或操作，請前往帳務管理頁查看相關資訊。",
+          "matched_spans": [
+            {
+              "group_key": "待對帳",
+              "literal": "待對帳",
+              "start": 31,
+              "context": "00003｜2026年9月點退結算\n\n帳單狀態：待對帳。  \n帳單金額：NT$ 7,500（系統存值）"
+            }
+          ],
+          "missing_groups": [],
+          "wrong_instance_hits": [],
+          "fallback_hits": [],
+          "adjudication_hits": [],
+          "violated_dimensions": [],
+          "literal_provenance": {
+            "待對帳": "fixtures 900003.status→STATUS_LABELS"
+          },
+          "foil_provenance": {
+            "18,000": "fixtures 900001.total",
+            "18000": "fixtures 900001.total",
+            "1,200": "fixtures 900002.total",
+            "1200": "fixtures 900002.total",
+            "2026/08/01": "fixtures 900001.date_start",
+            "2026年8月1日": "fixtures 900001.date_start",
+            "20260801": "fixtures 900001.date_start",
+            "2026年8月租金": "fixtures 900001.title",
+            "2026年9月管理費": "fixtures 900002.title"
+          },
+          "known_non_discriminating": [],
+          "fallback_markers_checked": [
+            "請洽客服",
+            "請聯繫客服",
+            "聯繫客服",
+            "一般來說",
+            "通常來說",
+            "無法查詢",
+            "查詢不到",
+            "請提供帳單編號",
+            "NO_MATCH"
+          ],
+          "adjudication_flags_checked": [
+            "待繳費",
+            "已繳費",
+            "待發送",
+            "排定發送",
+            "已失效"
+          ],
+          "run": 2,
+          "attempt": 0,
+          "session_id": "c4b-c4b-anom-02-r2a0-767fab4cd1",
+          "calls": [
+            {
+              "model": "gpt-4o",
+              "temperature": 0.4,
+              "max_tokens": 400,
+              "has_response_format": true
+            },
+            {
+              "model": "gpt-4o-mini",
+              "temperature": 0.2,
+              "max_tokens": 800,
+              "has_response_format": false
+            }
+          ]
+        },
+        {
+          "case": "c4b-anom-02",
+          "execution_face": "billing_anomaly",
+          "fixture_bill_id": 900003,
+          "passed": true,
+          "raw_answer": "編號｜900003  \n名稱｜2026年9月點退結算  \n\n帳單「2026年9月點退結算」的狀態為待對帳，金額為 NT$ 7,500，繳費期限為 2026/09/15，計費期間為 2026/09/01 至 2026/09/30。  \n\n如需進一步查詢或處理，建議您查看帳務管理頁面。",
+          "matched_spans": [
+            {
+              "group_key": "待對帳",
+              "literal": "待對帳",
+              "start": 49,
+              "context": "算  \n\n帳單「2026年9月點退結算」的狀態為待對帳，金額為 NT$ 7,500，繳費期限為 202"
+            }
+          ],
+          "missing_groups": [],
+          "wrong_instance_hits": [],
+          "fallback_hits": [],
+          "adjudication_hits": [],
+          "violated_dimensions": [],
+          "literal_provenance": {
+            "待對帳": "fixtures 900003.status→STATUS_LABELS"
+          },
+          "foil_provenance": {
+            "18,000": "fixtures 900001.total",
+            "18000": "fixtures 900001.total",
+            "1,200": "fixtures 900002.total",
+            "1200": "fixtures 900002.total",
+            "2026/08/01": "fixtures 900001.date_start",
+            "2026年8月1日": "fixtures 900001.date_start",
+            "20260801": "fixtures 900001.date_start",
+            "2026年8月租金": "fixtures 900001.title",
+            "2026年9月管理費": "fixtures 900002.title"
+          },
+          "known_non_discriminating": [],
+          "fallback_markers_checked": [
+            "請洽客服",
+            "請聯繫客服",
+            "聯繫客服",
+            "一般來說",
+            "通常來說",
+            "無法查詢",
+            "查詢不到",
+            "請提供帳單編號",
+            "NO_MATCH"
+          ],
+          "adjudication_flags_checked": [
+            "待繳費",
+            "已繳費",
+            "待發送",
+            "排定發送",
+            "已失效"
+          ],
+          "run": 3,
+          "attempt": 0,
+          "session_id": "c4b-c4b-anom-02-r3a0-2b3f31d43a",
+          "calls": [
+            {
+              "model": "gpt-4o",
+              "temperature": 0.4,
+              "max_tokens": 400,
+              "has_response_format": true
+            },
+            {
+              "model": "gpt-4o-mini",
+              "temperature": 0.2,
+              "max_tokens": 800,
+              "has_response_format": false
+            }
+          ]
+        }
+      ],
+      "retries": 0,
+      "outcome": "PASSED"
+    }
+  ]
+}

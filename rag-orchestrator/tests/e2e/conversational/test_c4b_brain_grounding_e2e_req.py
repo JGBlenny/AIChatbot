@@ -349,6 +349,8 @@ def ledger(client, preflight):
         return real(*args, **kwargs)   # 原樣委派，回傳不加工
 
     provider.chat_completion = spy
+    global _LEDGER
+    _LEDGER = led
     yield led
     provider.chat_completion = real
 
@@ -426,6 +428,9 @@ def _one_run(client, ledger, spec, run_idx, attempt):
     from tests.support.brain_grounding import evaluate_brain_grounding
 
     sid = _new_session_id(spec.case, run_idx, attempt)
+    partial = {"case": spec.case, "run": run_idx, "attempt": attempt, "session_id": sid,
+               "passed": False, "raw_answer": None, "violated_dimensions": ["harness"]}
+    _PARTIAL.setdefault(spec.case, []).append(partial)
     assert _conversational_rows(sid) == 0, \
         f"session {sid} 起點不乾淨——本次量測不是從全新會話開始"
     mark = len(ledger)
@@ -434,6 +439,8 @@ def _one_run(client, ledger, spec, run_idx, attempt):
                    trigger_facet_key=FACET_KEY[spec.execution_face])
         assert r1.status_code == 200, r1.text
         j1 = r1.json()
+        partial["turn1_answer"] = j1.get("answer")
+        partial["turn1_intent_type"] = j1.get("intent_type")
         assert (j1.get("answer") or "").strip(), "第 1 輪無回覆"
         # F3：直達確實進了對話（不是落回單發知識）
         assert j1.get("intent_type") == "conversational", \
@@ -451,6 +458,7 @@ def _one_run(client, ledger, spec, run_idx, attempt):
         r2 = _post(client, spec.user_turns[1], sid)     # 續對話：**不帶** trigger_facet_key
         assert r2.status_code == 200, r2.text
         answer = (r2.json().get("answer") or "")
+        partial["raw_answer"] = answer
         assert answer.strip(), "第 2 輪無回覆"
         # F5：第 2 輪必須是 factual 合成組態（與第 1 輪不同模型）
         turn2 = ledger.since(mark2)
@@ -463,6 +471,7 @@ def _one_run(client, ledger, spec, run_idx, attempt):
              f"執行路徑已偏離凍結形狀（harness／exec-path divergence，非 brain 失敗）：{turn2}")
 
         record = evaluate_brain_grounding(answer, spec)
+        _PARTIAL[spec.case].remove(partial)      # 已有完整紀錄，撤下暫存
         record["run"] = run_idx
         record["attempt"] = attempt
         record["session_id"] = sid
@@ -500,12 +509,24 @@ def _run_case(client, ledger, spec):
 
 
 _EVIDENCE: "list[dict]" = []
+#: 逐案的部分紀錄（harness 紅時仍取得回原文；case → list[dict]）
+_PARTIAL: "dict[str, list]" = {}
+#: teardown 取用；fixture 收掉後 getfixturevalue 取不到，evidence 會少記 external_calls
+_LEDGER = None
 
 
 @pytest.mark.req("conversational-routing-execution:3.2")
 @pytest.mark.parametrize("spec", _build_specs(), ids=lambda s: s.case)
 def test_c4b_brain_uses_grounding(client, ledger, spec):
-    records, retries = _run_case(client, ledger, spec)
+    try:
+        records, retries = _run_case(client, ledger, spec)
+    except BaseException as e:                              # noqa: BLE001
+        # ⚠️ harness／exec-path 斷言紅也**必須**留下 evidence——
+        #    否則該案在報告裡會整個消失（首次執行實際踩到，2026-08-25）。
+        _EVIDENCE.append({"case": spec.case, "runs": list(_PARTIAL.get(spec.case, [])),
+                          "retries": 0, "outcome": "FAILED",
+                          "harness_error": f"{type(e).__name__}: {e}"})
+        raise
     _EVIDENCE.append({"case": spec.case, "runs": records, "retries": retries,
                       "outcome": "PASSED" if all(r["passed"] for r in records) else "FAILED"})
     failed = [r for r in records if not r["passed"]]
@@ -519,11 +540,8 @@ def test_c4b_brain_uses_grounding(client, ledger, spec):
 def _write_evidence(request):
     """evidence **MUST** 記錄 executed／skipped／external_calls，不得只貼 pytest summary。"""
     yield
-    total_calls = None
-    try:
-        total_calls = len(request.getfixturevalue("ledger"))
-    except Exception:
-        pass
+    total_calls = len(_LEDGER) if _LEDGER is not None else None
+    call_log = list(_LEDGER.calls) if _LEDGER is not None else []
     executed = len(_EVIDENCE)
     payload = {
         "spec": "conversational-routing-execution / 6.2 C4b",
@@ -536,6 +554,7 @@ def _write_evidence(request):
         "skipped_cases": len(_build_specs()) - executed,
         "external_calls": total_calls,
         "retries": sum(e.get("retries", 0) for e in _EVIDENCE),
+        "call_log": call_log,
         "cases": _EVIDENCE,
     }
     with open(EVIDENCE_PATH, "w", encoding="utf-8") as fh:
