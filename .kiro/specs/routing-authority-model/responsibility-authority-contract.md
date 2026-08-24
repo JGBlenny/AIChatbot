@@ -3,7 +3,8 @@
 > 2026-08-24｜語言 zh-TW｜業主裁定：封口 R-e discovery；下一步**不是**再掃 source、
 > 也**不是**直接做 D1／D3 member，而是**先定義 first-class Responsibility Authority Contract**。
 > 前置：`r6-derived-design-constraint.md`｜`re-mapping-discovery-result.md`（`63351cd`）
-> **裁定：R6 APPROVED；本 Contract APPROVE WITH 4 MUST-FIX（M-1～M-4，已套用）。Carrier 尚不比較。**
+> **裁定：R6 APPROVED；本 Contract APPROVE WITH 4 MUST-FIX（M-1～M-4，已通過）
+> ＋ FINAL MUST-FIX（M-5，已套用）。Carrier comparison NOT STARTED。**
 
 ## 0. 兩種 authority 必須先分開（寫在首頁，防 carrier 比較時混掉）
 
@@ -119,6 +120,109 @@ M-1（補全）   ＋ applicable 需**正向支持**、not_applicable 需**正�
 
 ---
 
+## 1-B. M-5｜Evidence roles ＋ composition／conflict algebra（**final must-fix，carrier-independent**）
+
+### 為何這屬於 Contract，而不是 carrier 的自由設計空間
+
+若 Responsibility Authority 自身沒有固定的 evidence composition：
+
+```text
+同一批 inputs  →  Carrier A: applicable ／ Carrier B: unknown ／ Carrier C: not_applicable
+```
+
+那就無法分辨差異來自 **authority carrier**、**responsibility representation**、
+還是 **evidence precedence**——比較的其實不是 carrier，而是三種**判決哲學**。
+那是新的事後自由度。**故 composition semantics 於此凍結。**
+
+### 1. Evidence roles（欄位名可換，**角色區分不可省**）
+
+| role | 定義 | 硬性限制 |
+|---|---|---|
+| **PREREQUISITE** | 該 Face 成立所必需的前置條件（如：指涉解析到實體、actor 有權存取） | 其 `unknown` **MUST NOT** 被其他 positive evidence 掩蓋 |
+| **RESPONSIBILITY_SUPPORT** | **candidate-Face-specific** 的責任依據 | ⚠️ N1／N2／N3 這類**只有 entity binding／visibility** 的 proof **不得**因此自動升成 `applicable`（semantic-role review 已判它們 R-e ❌） |
+| **EXCLUSION** | 正向反證：authoritative fact 違反必要條件，或落入 executable exclusion | MUST 符合 M-1 的 positive-counterevidence 標準；**不得**由 absence 推出 |
+| **OBSERVATION** | 其餘一切（含未背書的 classifier／LLM verdict、M-3 未過門者） | **永遠不得直接產生 verdict** |
+
+### 2. Composition rules（**事前寫死，逐條可判定**）
+
+```text
+C-1  任一必要 PREREQUISITE = unknown
+     → verdict = unknown
+     （不得被 RESPONSIBILITY_SUPPORT 或任何 positive evidence 掩蓋）
+
+C-2  沒有 facet-specific RESPONSIBILITY_SUPPORT
+     → **MUST NOT** applicable
+     （可能是 unknown，或由 C-4／C-5 決定）
+
+C-3  只有 evidence absence（沒找到／0 rows／mapping 不完整／score 不夠）
+     → verdict = unknown
+     （M-1 已凍結，此處重申於組合層同樣成立）
+
+C-4  兩份**皆為 authoritative** 的 evidence 互相矛盾
+     → **carrier MUST NOT 自行選 precedence**
+     → verdict = unknown，且 MUST 標記 explicit **conflict** 狀態（見下）
+
+C-5  存在**明確、無衝突**的 authoritative EXCLUSION
+     → verdict = not_applicable
+     ⚠️ C-5 與 C-4 是**兩回事**：「一份乾淨的排除證據」≠「兩份權威證據打架」
+```
+
+⚠️ **C-4 是防第四次 precision-first collapse 的關鍵**：
+**不得**用「因為 precision-first，所以衝突時一律 not_applicable」把 collapse 偷帶回來。
+
+### 3. 業主點名的四個組合情境（**逐一裁定**）
+
+```text
+① positive support ＋ exclusion 同時存在
+   → 兩者對**同一個 Face 的同一件事**給出相反主張 → **C-4 衝突** → unknown ＋ conflict
+   ❌ 不得自動判 not_applicable
+
+② positive support ＋ 必要 prerequisite = unknown
+   → **C-1** → unknown
+   （prerequisite 的未知不因主題吻合而被覆蓋）
+
+③ 兩個 authoritative sources 互相矛盾
+   → **C-4** → unknown ＋ conflict；precedence **不由 carrier 決定**
+
+④ 一個 prerequisite **明確為 false**（正向確立，非 absence）
+   ＋ 另一個 responsibility proof positive
+   → **not_applicable**
+   理由：兩者**並不矛盾**——它們陳述的是**不同命題**（「主題吻合」vs「必要前置條件被正向證否」）。
+        必要條件被正向證否即滿足 M-1 的 not_applicable 標準。
+   ⚠️ 這是一條**裁定**，非推導；若日後認為 ④ 應與 ① 同視為衝突，須明確改判並記錄。
+```
+
+### 4. Conflict 的表示方式（維持三值輸出）
+
+```text
+verdict 仍為三值：applicable ／ not_applicable ／ unknown
+conflict **不是**第四個 verdict，而是 unknown 上的**必填標記**：
+
+  verdict = unknown
+  conflict = true
+  conflicting_sources = [...]        ← G-f 可追溯性要求
+
+⚠️ 標記 conflict 而非新增第四值，是為了讓 Final Routing Authority
+   能區分「證據不足」與「證據打架」——兩者的 routing policy 可能不同，
+   但**該差異的處置屬 routing policy，本 Contract 不決定**。
+```
+
+### 5. 評估順序（**決定性，carrier 不得變更**）
+
+```text
+① 剔除所有 OBSERVATION（不參與 verdict）
+② 檢查 authoritative evidence 是否互相矛盾    → 有：C-4，止
+③ 檢查必要 PREREQUISITE                      → 任一 unknown：C-1，止
+                                              → 任一正向為 false：情境④，not_applicable，止
+④ 檢查 EXCLUSION（明確且無衝突）              → 有：C-5，not_applicable，止
+⑤ 檢查 facet-specific RESPONSIBILITY_SUPPORT → 無：C-2 → unknown
+                                              → 有：applicable
+```
+
+⚠️ 順序本身是契約的一部分：**同一批 inputs 在任何 carrier 上 MUST 得到同一個 verdict**。
+
+---
+
 ## 2. Admission gates（**R1–R5 在新發現下的具體化**）
 
 | gate | 要求 | 對應既有 requirement／證據 |
@@ -218,7 +322,7 @@ neutral／capability-owned            → 可能讓 D1／D3 這個分類**本身
 ## 5. 本檔的界線
 
 ```text
-✅ 只定 contract semantics ＋ admission gates ＋ 並列 carrier shapes
+✅ 只定 contract semantics ＋ evidence composition algebra ＋ admission gates ＋ 並列 carrier shapes
 ❌ 不選 carrier、不設計 schema、不主張新增某張表／某個 registry
 ❌ 不開 D1-member-2／D3-member-next／D4；D2 仍 deferred
 ❌ 不改 family disposition（D1／D3 皆維持 INSUFFICIENT_EVIDENCE）
@@ -229,7 +333,8 @@ neutral／capability-owned            → 可能讓 D1／D3 這個分類**本身
 ## 下一步（待業主裁定，**不預選**）
 
 ```text
-① 本版已套用 M-1～M-4；待業主複審後才判正式 APPROVED
+① 本版已套用 M-1～M-5（M-1～M-4 已通過複審；M-5 為 final must-fix）；
+   待業主複審 M-5 後才判正式 **APPROVED／FROZEN**
 ② **Carrier 比較尚不開始**。開始前 MUST 先凍結比較量尺，且該量尺至少要比較：
      - authority **真正從哪來**
      - 如何 **enrollment**（新 Face 如何取得 binding）
