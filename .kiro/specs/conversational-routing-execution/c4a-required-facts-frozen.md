@@ -1,7 +1,8 @@
-# 5.2 草案：`required_grounding_facts`（**待審，尚未 FROZEN**）
+# 5.2：`required_grounding_facts`（**FROZEN**）
 
 > 2026-08-24｜語言 zh-TW｜對象：`c4a-case-set-frozen.md`（FROZEN，`451c0d2`）的 4 案
 > **四案一字未改。** 本檔只定尺，不動案例、不動 extractor、不動 fixture。
+> **狀態：FROZEN（業主 2026-08-24）**——①（`amount_due`）走 β 已完成；②（`billing_period`）已裁定。
 
 ## 判定原則（每案適用）
 
@@ -204,27 +205,92 @@ cancel_determination 等判定
 
 ---
 
-## 待業主裁定（**本檔不預選**）
+## 業主裁定（2026-08-24）：兩題皆已結
+
+### ① `c4a-diag-01` → 走 **(β)**，已完成（見上方 §c4a-diag-01）
+
+### ② `c4a-anom-01` → **5.2 只凍結 `billing_period`；底層雙值送達證明交 5.3**
 
 ```text
-① c4a-diag-01 的充分性無法在 frozen observation contract 下表達（金額不是 diagnosis 的 canonical key）
-   可能方向（皆需裁定，我不選）：
-     (α) 該案的充分性維度**明示不適用**，只驗送達性——但這會與「空 required 不構成通過」抵觸
-     (β) 擴充 diagnosis observation contract 使金額成為 canonical key
-         ⚠️ 那是**改觀測契約以配合案例**，因果與本輪相反
-     (γ) 承認 case↔extractor 配對本身有問題 → 但案例已 FROZEN，不得由本檔改動
-
-② c4a-anom-01 的 `billing_period` 是複合觀測，是否要求 5.3 以送達性補足兩個底層日期字面
+Sufficiency semantics（5.2）  「回答『計費期間是哪一段』最低需要什麼事實？」→ billing_period
+Delivery / provenance（5.3）  「該 billing_period 是否真由 start ＋ end 兩個來源值送達？」
+                              → date_start 與 date_end **皆須 machine-assert**
 ```
 
-### ① 已裁定並完成（β 成功）
-
-四案的尺**皆已非空**。剩下 ② 仍待裁定：
+⚠️ **為何不把 `date_start`／`date_end` 列為 required**：那會把 API／source schema 欄位
+**提升成回答層的 semantic facts**。與本檔排除 `bill_status`（`cancel_determination` 的輸入）
+是**同一原則**：
 
 ```text
-② c4a-anom-01 的 `billing_period` 是複合觀測——是否要求 5.3 以送達性
-   補足 `date_start`／`date_end` 兩個底層日期字面？
-   （本檔立場：屬 5.3 斷言規格，不在 5.2 決定；此處僅標記）
+計算／組成答案所需的**底層輸入** ≠ 回答層的 required fact
 ```
 
-⚠️ ② 裁定後即可 FROZEN。
+`billing_period` 才是問句要求的 proposition；`date_start + date_end` 是它的 **grounding provenance**。
+
+---
+
+## 交給 5.3 的 execution obligations（**由本次 freeze 補出，不得事後再議**）
+
+⚠️ 下列為 **frozen 5.2 補出的 execution obligation**——
+**不得**等看到實跑結果後才決定要不要加。
+
+### OB-1｜`c4a-anom-01` 的雙值 delivery assertion
+
+```text
+grounding_must_contain:
+  - fixture 900002 的 date_start 之 production-rendered value
+  - fixture 900002 的 date_end   之 production-rendered value
+AND
+observed_fact_keys ∋ billing_period
+```
+
+⚠️ **expected value 一律自 frozen fixture 取得**，**不得**在測試中另抄一份日期——
+否則會產生第二個 truth source。
+
+三層必須分得乾淨，缺任何一層都不算 closure：
+
+```text
+兩個來源值有送達      → delivery
+billing_period 被觀測  → semantic observation
+billing_period 是必需  → sufficiency
+```
+
+### OB-2｜`c4a-anom-01` 的 negative control
+
+```text
+只有 date_start、缺 date_end（反向亦然）
+→ 即使 grounding 出現「計費期間」標籤
+→ **MUST NOT** 通過該 case 的 chain closure
+```
+
+⚠️ 這條直接殺掉本檔指出的假綠：**欄位名在、來源值只送一半**。
+⚠️ **不因此修改 anomaly observer**——observer 仍只負責 canonical semantic observation，
+來源完整性由 delivery assertion 負責。
+
+### OB-3｜C-1b（承 case-set protocol）
+
+```text
+每案 MUST machine-assert 實際請求的 bill_ref／detail path 對應該案 fixture_bill_id
+```
+
+---
+
+## 四案定案
+
+| case | required_grounding_facts | 額外 execution obligation |
+|---|---|---|
+| `c4a-diag-01` | `amount_due` | — |
+| `c4a-diag-02` | `cancel_determination` | — |
+| `c4a-anom-01` | `billing_period` | **OB-1／OB-2**（date_start＋date_end） |
+| `c4a-anom-02` | `bill_status` | — |
+
+**全案共同**：OB-3（case→fixture identity）。
+
+## 持續守住的三條否定式
+
+```text
+required_grounding_facts
+  ≠ underlying API columns
+  ≠ all formatter output
+  ≠ all computation inputs
+```
