@@ -3,6 +3,25 @@
 > 2026-08-24｜語言 zh-TW｜業主裁定：封口 R-e discovery；下一步**不是**再掃 source、
 > 也**不是**直接做 D1／D3 member，而是**先定義 first-class Responsibility Authority Contract**。
 > 前置：`r6-derived-design-constraint.md`｜`re-mapping-discovery-result.md`（`63351cd`）
+> **裁定：R6 APPROVED；本 Contract APPROVE WITH 4 MUST-FIX（M-1～M-4，已套用）。Carrier 尚不比較。**
+
+## 0. 兩種 authority 必須先分開（寫在首頁，防 carrier 比較時混掉）
+
+```text
+Responsibility Authority   回答：「Face X 對這次 query 是否有責任依據？」
+Final Routing Authority    回答：「在所有候選與其他 routing constraints 下，最後進哪裡？」
+```
+
+由此推出四條關係（**與 R2／R3 對齊**）：
+
+```text
+applicable      ≠  must enter
+not_applicable  ⇒  candidate X **MUST NOT** irreversibly enter
+unknown         ≠  applicable
+unknown         ≠  not_applicable
+```
+
+⚠️ 本 Contract 治的是**前者**。**Responsibility Authority 不得自我膨脹成完整 router。**
 
 ## 為何先定 contract，而不是先選 carrier
 
@@ -22,22 +41,76 @@
 ### Input
 
 ```text
-- candidate Face                     （由 retrieval Hint／trigger／session 等來源提出者）
+- candidate Face                     （被審對象；語義見 M-2）
 - qualified runtime proofs           （N1／N2／N3 類；已於 1f077f6 通過 E1–E6）
-- 必要的 query-derived structured evidence（若有；本輪尚未證成任何一項）
+- query-derived structured evidence  （僅限通過 M-3 admissibility 者；本輪尚未證成任何一項）
 ```
 
-### Output
+#### M-2｜candidate proposal 是 **non-evidentiary input**（must-fix）
+
+Contract 需要 `candidate Face` 才知道**正在審誰**，但「它為什麼成為 candidate」
+**MUST NOT** 回流成 applicability evidence：
 
 ```text
-applicable ／ not_applicable ／ unknown
+similarity／category 提出 Face X
+        ↓
+Responsibility Authority 審 Face X       ← Face X 在此**只是被審對象**
 ```
 
-### E5 硬綁（**不因進入設計層而放寬**）
+```text
+❌ 不得因「retrieval 已經選到 X」而增加 applicable 的證據權重
+❌ 不得因「LLM switch 選到 X」而增加證據權重
+❌ 不得因「Face 自己說自己是 X」而增加證據權重
+```
+
+⚠️ 沒有這條隔離，B2（category→Face）／B3（LLM→Face）只是**換路徑被洗回 authority**。
+G-d／G-e 接近這件事，但本條直接寫進 **input semantics**，不只依賴 gate。
+
+#### M-3｜query-derived evidence 的 admissibility（must-fix）
+
+原稿「必要的 query-derived evidence」**太寬**，會成為新後門：
 
 ```text
-proof 不足  →  unknown
-proof 不足  ≠  not_applicable
+LLM(query) → 「這像 billing_anomaly」  → 叫它 query-derived evidence
+→ R6 形式滿足、實質退回 B3
+```
+
+**故：任何 query-derived evidence 在能影響三值 verdict 之前，MUST 先具備**
+
+```text
+evidence type            這是什麼類型的事實
+provenance               誰產生、誰擁有、runtime semantics 為何
+admissibility contract   憑什麼可被 Responsibility Authority 採信
+```
+
+```text
+未背書的 classifier／LLM verdict  →  最多是 **observation**，
+                                   **不得**自己成為 responsibility authority
+「query → Face」本身              →  **MUST NOT** 作為 query-derived evidence 餵回本 Contract
+                                   （circular selection）
+```
+
+### Output（**三值語義釘死**）
+
+```text
+applicable      有 qualified evidence **正向支持這個 candidate Face 的責任條件**
+                ⚠️ **不等於**「它是唯一正確的 Face」，**不等於**「立刻 enter」
+                ⚠️ **多個 Face 理論上可同時 applicable**；最後選誰是 Final Routing Authority 的責任
+
+not_applicable  MUST 來自**正向的反證**——authoritative fact 明確**違反**該 Face 的必要條件，
+                或落入其 **executable exclusion**
+                ❌ 不得由「proof 沒找到」「0 rows」「mapping 不完整」「score 不夠高」推出
+
+unknown         兩邊都證不成
+                ❌ **絕不得**默默 collapse 成 applicable 或 not_applicable
+```
+
+#### M-1｜這是 E5 的**完整對稱版**（must-fix）
+
+```text
+E5（原）      proof 不足 → unknown ≠ not_applicable
+M-1（補全）   ＋ applicable 需**正向支持**、not_applicable 需**正向反證**
+              ＋ applicable **不獨佔**、不等於 enter
 ```
 
 ⚠️ 這是本線連續三次 precision-first collapse 的唯一防線
@@ -52,13 +125,38 @@ proof 不足  ≠  not_applicable
 |---|---|---|
 | **G-a｜Face-specific** | 在**同一組 instance proof** 下，能真正區別候選 Face | 直接來自 semantic-role review：N1／N2／N3 皆 R-e ❌。⚠️ 分不開＝沒有 R-e |
 | **G-b｜Runtime enforceable** | 結果**不是 advisory**；接上 seam 後 MUST 能**反事實改變** entry | R2（N2）＋ META-RULE：驗收不得只證元件存在 |
-| **G-c｜Open-Face compatible** | 新增 Face **不要求**先封閉全世界 Face taxonomy | G1 FAIL 的直接教訓：Face 集合後台可增、零改程式 |
+| **G-c｜Open-Face compatible ＋ enrollment** | 新增 Face **不要求**先封閉全世界 Face taxonomy；**且** MUST 定義新增時的行為（見 M-4） | G1 FAIL 的直接教訓：Face 集合後台可增、零改程式 |
 | **G-d｜No self-attestation** | Face **不得**僅因自己宣告「我負責」即成立 | 沿用 D3-member-1 已明訂的 self-attestation 禁令；B4（`grounding_scope` 宣告無 enforcement）即反例 |
-| **G-e｜No similarity laundering** | **不得**把 similarity／category 換個名字塞進 authority | R1 §1.2（已實測 REFUTED）；B2 即現行違例形態 |
-| **G-f｜Traceable** | **proof provider ／ responsibility authority ／ final routing authority** 三者可區分 | R3：三種責任（candidate proposal／applicability evidence／final enter-reject）必須可追溯 |
+| **G-e｜No similarity laundering ＋ candidate isolation** | **不得**把 similarity／category 換名塞進 authority；**且** candidate proposal 為 non-evidentiary（M-2） | R1 §1.2（已實測 REFUTED）；B2／B3 即現行違例形態 |
+| **G-f｜Traceable** | **proposer ／ evidence provider ／ responsibility authority ／ final routing authority** 四者的關係皆可追溯 | R3：三種責任（candidate proposal／applicability evidence／final enter-reject）必須可追溯 |
 
 ⚠️ **G-b 與 G-d 是一組**：只有宣告而無獨立 enforcer，兩條同時不過（B4 的形態）。
 ⚠️ **B5 證明這一組是做得到的**（宣告＋consumer 強制），但那是 feasibility precedent，**不是**方案。
+⚠️ **G-b 的 counterfactual outcome requirement 不得弱化**：只讀 verdict／寫 log 而 entry 照舊，
+形式符合、實質違反（R2 §2.2 已明列此形式滿足）。
+
+### M-4｜Open-Face enrollment semantics（must-fix）
+
+對 R6 所治理的 routing path：
+
+> 新 Face **可以**被新增，但若它尚未取得一份**通過本 Contract 的 binding**，
+> 它**不得**因為有 category、有 builder、有 RULES、或存在於 DB 就自動取得 `applicable`。
+
+Contract 層最安全的語義：
+
+```text
+Face exists
+＋ responsibility authority binding absent
+→ responsibility verdict = **unknown**
+```
+
+⚠️ **`unknown` 之後怎麼辦（回 Knowledge／clarify／保留原路徑／其他 recovery），
+本 Contract 一律不決定**——那是 **routing policy**。
+
+⚠️ 且若某種 recovery 會造成**本來正確的 Face 被阻止**，
+即正式觸發 `spec.json` 中尚未裁定的
+`unresolved.routing_false_reject_cost`（PRODUCT DECISION PENDING）——
+**必須先取得該裁示**，不得在此偷訂。
 
 ---
 
@@ -131,7 +229,13 @@ neutral／capability-owned            → 可能讓 D1／D3 這個分類**本身
 ## 下一步（待業主裁定，**不預選**）
 
 ```text
-① 逐條審這份 contract semantics 與 G-a～G-f
-② 通過後才進 carrier 比較（A／B／C），且比較前應先凍結比較判準
+① 本版已套用 M-1～M-4；待業主複審後才判正式 APPROVED
+② **Carrier 比較尚不開始**。開始前 MUST 先凍結比較量尺，且該量尺至少要比較：
+     - authority **真正從哪來**
+     - 如何 **enrollment**（新 Face 如何取得 binding）
+     - 如何 **machine-enforce**
+     - **unknown 如何保真**（不被沿路折成其他兩值）
+     - Face 新增時 **correctness 如何維持**
+   ❌ 不得比較「哪個 carrier 比較漂亮／比較好實作」
    —— 與 G1 的教訓一致：判準要在看到候選之前定
 ```
