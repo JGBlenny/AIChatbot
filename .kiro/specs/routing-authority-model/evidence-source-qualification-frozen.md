@@ -4,6 +4,8 @@
 > 下一步是**跨 D1/D3 的 runtime-binding applicability evidence inventory**，
 > **不是**直接設計下一版 member。
 > 前置：`g1-audit-result.md`（G1 **FAIL**，B／C 退場，`6242d62`）
+> **裁定：APPROVE WITH 1 MUST-FIX（已補）**——F-1～F-5（搜尋空間／程序／記錄／停止規則／分開統計）
+> 已凍結於執行之前；第四種結局措辭已收窄；E5 補上「qualified ≠ routing authority」對稱條款。
 
 ## 這一輪問的問題（與上一輪根本不同）
 
@@ -166,7 +168,104 @@ candidate Face ＋ 某個 machine-bound entity／action／state evidence
 
 ⚠️ 「我沒看懂 → 所以不准進」正是前三輪的病灶。本輪**不得**把 abstain 當成拒絕。
 
+⚠️ **另一邊同樣要守住**：**positive proof 本身不自動取得 routing authority。**
+
+```text
+E1–E6 全過  →  最多得到：QUALIFIED applicability evidence source
+             ✗ 不等於：Face SHALL enter
+```
+
+後者仍須回到 **R2 ／ authority design** 回答，不在本輪。
+
 ⚠️ **這只是研究方向**：本檔**不宣稱** positive-proof architecture 已成立。
+
+---
+
+## ⚠️ 補凍結（業主 must-fix）：搜尋空間、程序、記錄與停止規則
+
+E1–E6 只回答「某個**已找到**的 source 合不合格」，回答不了
+「**你憑什麼說該找的已經找完？**」。在已有 prior exposure 的情況下，缺這一節會使
+最終的負面結論證據力不足，或使正面結論停在第一個好看的 candidate 上。
+
+### F-1｜AUDITED SCOPE（**凍結於執行之前**）
+
+本輪搜索範圍＝**一次 Face routing decision 發生時，其前後可觸及的 production authority surface**：
+
+```text
+L1 對話入口 seam        rag-orchestrator/routers/（請求進入、路由分歧、early-return 點）
+L2 檢索與決策層          services/decision_layer.py、檢索管線、面向進場判斷
+L3 面向設定／註冊        services/conversational_config.py、面向設定的**儲存結構**
+                        （knowledge_base 的欄位／約束層級，**非**知識內容）
+L4 對話引擎狀態          services/conversational_engine.py、session／state 的持久化結構
+L5 平台 API client 面    services/jgb_system_api.py、services/jgb/*
+L6 平台 authority 面     jgb2：routes/api.php 的 External API 契約、request validation、
+                        DB migration 的 constraint／欄位型別、model 的 cast／狀態機
+L7 身分與呼叫端斷言      role_id／user_id／mode／target_user 的取得與驗證路徑、API 金鑰驗證
+L8 chatbot 自身持久層    rag-orchestrator 的 migration／schema constraint
+```
+
+**明確在 scope 外**（列出以免被誤讀為已查）：
+
+```text
+✗ 知識內容本身（KB rows 的文字）——那是 S5 型，非 runtime binding
+✗ 前端／後台 UI 程式碼
+✗ 尚未上線的分支功能（preview-only 未進 master 者，若遇到須標記為 out-of-scope）
+✗ 第三方金流／發票供應商內部
+```
+
+⚠️ **scope 覆蓋範圍的限度必須誠實承認**：本 scope **未**證明自己覆蓋了
+「整個 relevant production authority surface」。因此第四種結局的措辭依業主裁定收窄（見下）。
+
+### F-2｜DISCOVERY PROCEDURE（**系統性尋找，不靠記憶**）
+
+每一層 MUST 以**來源類別**逐項掃過，而非「想到什麼查什麼」：
+
+```text
+① entry seams              進場／early-return／不可逆點
+② API registries           對外契約、路由、client 方法面
+③ state machines           狀態常數、轉移條件、生命週期
+④ DB constraints           enum／check／NOT NULL／FK／unique／欄位型別
+⑤ request schema           validation rule、必填參數、型別強制
+⑥ session state            會話持久化的欄位與其寫入點
+⑦ caller assertions        呼叫端宣稱的身分／模式／角色及其驗證
+⑧ execution bindings       實際綁定到某個實體／動作的執行時事實
+```
+
+⚠️ 每一層 × 每一類別 MUST 留下記錄：**查過但無所獲**也要寫，
+否則無法區分「沒有」與「沒查」。
+
+### F-3｜RECORD-ALL RULE
+
+進入 qualification 的**每一個** source MUST 留下：
+
+```text
+source                 可 grep 的符號／檔案位置
+runtime semantics      它在 runtime 實際保證什麼
+discovered_from        L? × 類別?（如 L6 × ④ DB constraints）
+prior_exposed          true ／ false
+E1–E6                  逐條判定
+disposition            QUALIFIED ／ REJECTED ／ INSUFFICIENT_EVIDENCE
+reason                 REJECT／INSUFFICIENT 須指出是**哪一條**不成立、依據為何
+```
+
+### F-4｜STOPPING RULE
+
+```text
+MUST 完成 F-1 凍結 scope × F-2 全部來源類別的 inventory 後才可收束。
+❌ 找到第一個 QUALIFIED source **不得**提前停止。
+❌ 已知位置查完沒過 **不得**直接宣稱「production 沒有」。
+```
+
+### F-5｜分開統計（業主指定）
+
+最終報告 MUST 把兩組**分開**呈現：
+
+```text
+prior-exposed sources     QUALIFIED ／ REJECTED ／ INSUFFICIENT
+newly-discovered sources  QUALIFIED ／ REJECTED ／ INSUFFICIENT
+```
+
+⚠️ 目的**不是**比較準確率，而是讓人看得出**結果是否完全由先驗曝光項目主導**。
 
 ---
 
@@ -211,8 +310,11 @@ qualified source 主要是 Face 自己可證明的 executable facts
   → D4（共同 authority envelope）在那之後才有資格進場
 
 **完全沒有 qualified source**
-  → 明確結論：現有 production **沒有**足以形成下一個 member 的 runtime applicability evidence
-  → 那才是「需要新增 first-class authority source／新產品語義」的真正證據
+  → 結論措辭**收窄為**（業主裁定）：
+    **在事前凍結且已完成的 audited scope（F-1）內，沒有 qualified source。**
+  → ⚠️ **不得**寫成「production 沒有」——除非 audited scope 本身能證明
+    覆蓋整個 relevant production authority surface，而本輪**不能**如此宣稱。
+  → 在該收窄措辭下，它才構成「需要新增 first-class authority source／新產品語義」的證據
 ```
 
 ⚠️ **現在不預選**。
