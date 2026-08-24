@@ -1,0 +1,581 @@
+{
+  "dataset_id": "round1-challenge-cohort",
+  "task": "Step ⑤ raw challenge cohort（**原封不動，未刪任何 case**）",
+  "provenance": {
+    "author_session": "isolated（全新 general-purpose agent，無本案上下文）",
+    "author_tool_uses": 0,
+    "author_tool_uses_note": "0 次工具呼叫 → 未讀檔、未搜 codebase",
+    "member_blind": true,
+    "axis_blind": false,
+    "axis_exposure": [
+      "candidate Face 的粗粒度角色（一行）",
+      "instance-specific real-state orientation"
+    ],
+    "not_exposed": [
+      "D1 demand artifact",
+      "D3 responsibility contract",
+      "細部 applicability 規則",
+      "member evaluator（class／model／prompt）",
+      "member outputs",
+      "v1／Q1／Q2 failure cases 與 wording",
+      "similarity scores",
+      "numeric matching tolerance（0.058928）",
+      "讓 case 通過 B matching 的技巧"
+    ],
+    "author_did_not_label": "作者未標註哪句該／不該由該面向處理；順序隨機",
+    "classification_frozen_at_commit": "4f59298"
+  },
+  "counts": {
+    "pairs": 30,
+    "items": 60,
+    "faces": 3,
+    "pairs_per_face": 10
+  },
+  "cohort_digest": "543d3e97b0a6afe6",
+  "labels": "NOT YET LABELLED",
+  "members_executed": false,
+  "pairs": [
+    {
+      "face_key": "bill_diagnosis",
+      "pair_id": "bd-01",
+      "question_a": "這張帳單我按收回都沒反應，是卡在哪",
+      "question_b": "帳單收回跟取消到底差在哪啊"
+    },
+    {
+      "face_key": "bill_diagnosis",
+      "pair_id": "bd-02",
+      "question_a": "一般來說帳單發出去之後還能改金額嗎，流程是怎樣",
+      "question_b": "8月那張水電費現在還改得動嗎"
+    },
+    {
+      "face_key": "bill_diagnosis",
+      "pair_id": "bd-03",
+      "question_a": "剛剛那筆想作廢，系統跳說不行，為什麼",
+      "question_b": "作廢掉的帳單之後還會出現在報表裡嗎"
+    },
+    {
+      "face_key": "bill_diagnosis",
+      "pair_id": "bd-04",
+      "question_a": "帳單通知是走 email 還是簡訊？",
+      "question_b": "這張的發送鈕是灰的，點不下去"
+    },
+    {
+      "face_key": "bill_diagnosis",
+      "pair_id": "bd-05",
+      "question_a": "系統裡帳單狀態總共幾種，可以列一下嗎",
+      "question_b": "這筆一直停在待發送，是不是我有步驟沒做完"
+    },
+    {
+      "face_key": "bill_diagnosis",
+      "pair_id": "bd-06",
+      "question_a": "9/15 那張我想再重發一次，可以喔？",
+      "question_b": "重發帳單的話租客通常會收到兩次通知嗎"
+    },
+    {
+      "face_key": "bill_diagnosis",
+      "pair_id": "bd-07",
+      "question_a": "帳單刪掉以後單號會被重複用到嗎",
+      "question_b": "為什麼這張帳單沒辦法刪"
+    },
+    {
+      "face_key": "bill_diagnosis",
+      "pair_id": "bd-08",
+      "question_a": "點退的結算帳單一般什麼時候開比較好",
+      "question_b": "這張點退帳單想取消，取消的地方在哪找不到"
+    },
+    {
+      "face_key": "bill_diagnosis",
+      "pair_id": "bd-09",
+      "question_a": "這筆的到帳日我想往後延，改得了嗎",
+      "question_b": "到帳日有預設值嗎，是怎麼帶出來的"
+    },
+    {
+      "face_key": "bill_diagnosis",
+      "pair_id": "bd-10",
+      "question_a": "改完明細之後還是存不了檔，這張是怎麼了",
+      "question_b": "一張帳單的明細最多能加幾筆"
+    },
+    {
+      "face_key": "billing_anomaly",
+      "pair_id": "ba-01",
+      "question_a": "這張的總額跟我明細加起來差 300，怪怪的",
+      "question_b": "按比例算的帳單金額公式是什麼，給我看一下"
+    },
+    {
+      "face_key": "billing_anomaly",
+      "pair_id": "ba-02",
+      "question_a": "租客端的帳單畫面長怎樣，有示意圖嗎",
+      "question_b": "租客說他手機上看到的金額跟我後台的不一樣"
+    },
+    {
+      "face_key": "billing_anomaly",
+      "pair_id": "ba-03",
+      "question_a": "這筆帳單上面的房號是別間的，顯示錯了",
+      "question_b": "房號是綁合約還是綁物件？"
+    },
+    {
+      "face_key": "billing_anomaly",
+      "pair_id": "ba-04",
+      "question_a": "想加一筆管理費到帳單裡，操作要怎麼走",
+      "question_b": "帳單裡管理費那項不見了，只剩租金"
+    },
+    {
+      "face_key": "billing_anomaly",
+      "pair_id": "ba-05",
+      "question_a": "滯納金的計算方式在哪裡設定",
+      "question_b": "這張逾期的滯納金看起來多算了耶"
+    },
+    {
+      "face_key": "billing_anomaly",
+      "pair_id": "ba-06",
+      "question_a": "這筆的期間寫 7/1-7/31，但明明應該是八月份的",
+      "question_b": "帳單期間可以跨月嗎"
+    },
+    {
+      "face_key": "billing_anomaly",
+      "pair_id": "ba-07",
+      "question_a": "發票品名通常都帶什麼內容",
+      "question_b": "這張開出來的發票金額跟帳單本身對不上"
+    },
+    {
+      "face_key": "billing_anomaly",
+      "pair_id": "ba-08",
+      "question_a": "同一個租客同一個月冒出兩張一樣的帳單",
+      "question_b": "系統本身會擋重複開單嗎"
+    },
+    {
+      "face_key": "billing_anomaly",
+      "pair_id": "ba-09",
+      "question_a": "換約之後舊房客的資料會留多久",
+      "question_b": "這張帳單上的租客姓名還是舊房客那位"
+    },
+    {
+      "face_key": "billing_anomaly",
+      "pair_id": "ba-10",
+      "question_a": "這筆的收據金額顯示 0，明明有收到錢",
+      "question_b": "收據上要帶公司統編的話去哪裡設定"
+    },
+    {
+      "face_key": "billing_flow",
+      "pair_id": "bf-01",
+      "question_a": "租客說他昨天去超商繳掉了，可是這張還是未繳",
+      "question_b": "超商代碼繳費一般要幾天才會入帳"
+    },
+    {
+      "face_key": "billing_flow",
+      "pair_id": "bf-02",
+      "question_a": "虛擬帳號是一張帳單一組，還是一個租客一組",
+      "question_b": "這張帳單的虛擬帳號一直沒跑出來"
+    },
+    {
+      "face_key": "billing_flow",
+      "pair_id": "bf-03",
+      "question_a": "我手動確認到帳了，狀態卻沒變成已到帳",
+      "question_b": "手動確認到帳是誰有權限做"
+    },
+    {
+      "face_key": "billing_flow",
+      "pair_id": "bf-04",
+      "question_a": "信用卡繳費的手續費是誰吸收",
+      "question_b": "租客刷卡連兩次失敗，這筆現在算什麼狀態"
+    },
+    {
+      "face_key": "billing_flow",
+      "pair_id": "bf-05",
+      "question_a": "錢明明已經進來了，這筆一直卡在待對帳",
+      "question_b": "待對帳那邊多久會跑一次"
+    },
+    {
+      "face_key": "billing_flow",
+      "pair_id": "bf-06",
+      "question_a": "租客要是多繳了，一般都怎麼退",
+      "question_b": "這張租客多匯了一千，系統還顯示沒繳清"
+    },
+    {
+      "face_key": "billing_flow",
+      "pair_id": "bf-07",
+      "question_a": "八月租金那張，租客說錢匯出去了，我後台沒看到",
+      "question_b": "匯款一定要備註單號才對得起來嗎"
+    },
+    {
+      "face_key": "billing_flow",
+      "pair_id": "bf-08",
+      "question_a": "平台有支援分期繳嗎",
+      "question_b": "租客這筆分兩次匯，結果只認到第一筆"
+    },
+    {
+      "face_key": "billing_flow",
+      "pair_id": "bf-09",
+      "question_a": "這筆實際入帳比帳單金額少，是被扣手續費了嗎",
+      "question_b": "虛擬帳號入帳會被扣手續費嗎，通常多少"
+    },
+    {
+      "face_key": "billing_flow",
+      "pair_id": "bf-10",
+      "question_a": "繳費成功後租客那邊會收到什麼通知",
+      "question_b": "這張顯示已到帳，但租客說他根本沒繳過"
+    }
+  ],
+  "items_for_labeling": [
+    {
+      "item_id": "bd-01-a",
+      "pair_id": "bd-01",
+      "face_key": "bill_diagnosis",
+      "query": "這張帳單我按收回都沒反應，是卡在哪"
+    },
+    {
+      "item_id": "bd-01-b",
+      "pair_id": "bd-01",
+      "face_key": "bill_diagnosis",
+      "query": "帳單收回跟取消到底差在哪啊"
+    },
+    {
+      "item_id": "bd-02-a",
+      "pair_id": "bd-02",
+      "face_key": "bill_diagnosis",
+      "query": "一般來說帳單發出去之後還能改金額嗎，流程是怎樣"
+    },
+    {
+      "item_id": "bd-02-b",
+      "pair_id": "bd-02",
+      "face_key": "bill_diagnosis",
+      "query": "8月那張水電費現在還改得動嗎"
+    },
+    {
+      "item_id": "bd-03-a",
+      "pair_id": "bd-03",
+      "face_key": "bill_diagnosis",
+      "query": "剛剛那筆想作廢，系統跳說不行，為什麼"
+    },
+    {
+      "item_id": "bd-03-b",
+      "pair_id": "bd-03",
+      "face_key": "bill_diagnosis",
+      "query": "作廢掉的帳單之後還會出現在報表裡嗎"
+    },
+    {
+      "item_id": "bd-04-a",
+      "pair_id": "bd-04",
+      "face_key": "bill_diagnosis",
+      "query": "帳單通知是走 email 還是簡訊？"
+    },
+    {
+      "item_id": "bd-04-b",
+      "pair_id": "bd-04",
+      "face_key": "bill_diagnosis",
+      "query": "這張的發送鈕是灰的，點不下去"
+    },
+    {
+      "item_id": "bd-05-a",
+      "pair_id": "bd-05",
+      "face_key": "bill_diagnosis",
+      "query": "系統裡帳單狀態總共幾種，可以列一下嗎"
+    },
+    {
+      "item_id": "bd-05-b",
+      "pair_id": "bd-05",
+      "face_key": "bill_diagnosis",
+      "query": "這筆一直停在待發送，是不是我有步驟沒做完"
+    },
+    {
+      "item_id": "bd-06-a",
+      "pair_id": "bd-06",
+      "face_key": "bill_diagnosis",
+      "query": "9/15 那張我想再重發一次，可以喔？"
+    },
+    {
+      "item_id": "bd-06-b",
+      "pair_id": "bd-06",
+      "face_key": "bill_diagnosis",
+      "query": "重發帳單的話租客通常會收到兩次通知嗎"
+    },
+    {
+      "item_id": "bd-07-a",
+      "pair_id": "bd-07",
+      "face_key": "bill_diagnosis",
+      "query": "帳單刪掉以後單號會被重複用到嗎"
+    },
+    {
+      "item_id": "bd-07-b",
+      "pair_id": "bd-07",
+      "face_key": "bill_diagnosis",
+      "query": "為什麼這張帳單沒辦法刪"
+    },
+    {
+      "item_id": "bd-08-a",
+      "pair_id": "bd-08",
+      "face_key": "bill_diagnosis",
+      "query": "點退的結算帳單一般什麼時候開比較好"
+    },
+    {
+      "item_id": "bd-08-b",
+      "pair_id": "bd-08",
+      "face_key": "bill_diagnosis",
+      "query": "這張點退帳單想取消，取消的地方在哪找不到"
+    },
+    {
+      "item_id": "bd-09-a",
+      "pair_id": "bd-09",
+      "face_key": "bill_diagnosis",
+      "query": "這筆的到帳日我想往後延，改得了嗎"
+    },
+    {
+      "item_id": "bd-09-b",
+      "pair_id": "bd-09",
+      "face_key": "bill_diagnosis",
+      "query": "到帳日有預設值嗎，是怎麼帶出來的"
+    },
+    {
+      "item_id": "bd-10-a",
+      "pair_id": "bd-10",
+      "face_key": "bill_diagnosis",
+      "query": "改完明細之後還是存不了檔，這張是怎麼了"
+    },
+    {
+      "item_id": "bd-10-b",
+      "pair_id": "bd-10",
+      "face_key": "bill_diagnosis",
+      "query": "一張帳單的明細最多能加幾筆"
+    },
+    {
+      "item_id": "ba-01-a",
+      "pair_id": "ba-01",
+      "face_key": "billing_anomaly",
+      "query": "這張的總額跟我明細加起來差 300，怪怪的"
+    },
+    {
+      "item_id": "ba-01-b",
+      "pair_id": "ba-01",
+      "face_key": "billing_anomaly",
+      "query": "按比例算的帳單金額公式是什麼，給我看一下"
+    },
+    {
+      "item_id": "ba-02-a",
+      "pair_id": "ba-02",
+      "face_key": "billing_anomaly",
+      "query": "租客端的帳單畫面長怎樣，有示意圖嗎"
+    },
+    {
+      "item_id": "ba-02-b",
+      "pair_id": "ba-02",
+      "face_key": "billing_anomaly",
+      "query": "租客說他手機上看到的金額跟我後台的不一樣"
+    },
+    {
+      "item_id": "ba-03-a",
+      "pair_id": "ba-03",
+      "face_key": "billing_anomaly",
+      "query": "這筆帳單上面的房號是別間的，顯示錯了"
+    },
+    {
+      "item_id": "ba-03-b",
+      "pair_id": "ba-03",
+      "face_key": "billing_anomaly",
+      "query": "房號是綁合約還是綁物件？"
+    },
+    {
+      "item_id": "ba-04-a",
+      "pair_id": "ba-04",
+      "face_key": "billing_anomaly",
+      "query": "想加一筆管理費到帳單裡，操作要怎麼走"
+    },
+    {
+      "item_id": "ba-04-b",
+      "pair_id": "ba-04",
+      "face_key": "billing_anomaly",
+      "query": "帳單裡管理費那項不見了，只剩租金"
+    },
+    {
+      "item_id": "ba-05-a",
+      "pair_id": "ba-05",
+      "face_key": "billing_anomaly",
+      "query": "滯納金的計算方式在哪裡設定"
+    },
+    {
+      "item_id": "ba-05-b",
+      "pair_id": "ba-05",
+      "face_key": "billing_anomaly",
+      "query": "這張逾期的滯納金看起來多算了耶"
+    },
+    {
+      "item_id": "ba-06-a",
+      "pair_id": "ba-06",
+      "face_key": "billing_anomaly",
+      "query": "這筆的期間寫 7/1-7/31，但明明應該是八月份的"
+    },
+    {
+      "item_id": "ba-06-b",
+      "pair_id": "ba-06",
+      "face_key": "billing_anomaly",
+      "query": "帳單期間可以跨月嗎"
+    },
+    {
+      "item_id": "ba-07-a",
+      "pair_id": "ba-07",
+      "face_key": "billing_anomaly",
+      "query": "發票品名通常都帶什麼內容"
+    },
+    {
+      "item_id": "ba-07-b",
+      "pair_id": "ba-07",
+      "face_key": "billing_anomaly",
+      "query": "這張開出來的發票金額跟帳單本身對不上"
+    },
+    {
+      "item_id": "ba-08-a",
+      "pair_id": "ba-08",
+      "face_key": "billing_anomaly",
+      "query": "同一個租客同一個月冒出兩張一樣的帳單"
+    },
+    {
+      "item_id": "ba-08-b",
+      "pair_id": "ba-08",
+      "face_key": "billing_anomaly",
+      "query": "系統本身會擋重複開單嗎"
+    },
+    {
+      "item_id": "ba-09-a",
+      "pair_id": "ba-09",
+      "face_key": "billing_anomaly",
+      "query": "換約之後舊房客的資料會留多久"
+    },
+    {
+      "item_id": "ba-09-b",
+      "pair_id": "ba-09",
+      "face_key": "billing_anomaly",
+      "query": "這張帳單上的租客姓名還是舊房客那位"
+    },
+    {
+      "item_id": "ba-10-a",
+      "pair_id": "ba-10",
+      "face_key": "billing_anomaly",
+      "query": "這筆的收據金額顯示 0，明明有收到錢"
+    },
+    {
+      "item_id": "ba-10-b",
+      "pair_id": "ba-10",
+      "face_key": "billing_anomaly",
+      "query": "收據上要帶公司統編的話去哪裡設定"
+    },
+    {
+      "item_id": "bf-01-a",
+      "pair_id": "bf-01",
+      "face_key": "billing_flow",
+      "query": "租客說他昨天去超商繳掉了，可是這張還是未繳"
+    },
+    {
+      "item_id": "bf-01-b",
+      "pair_id": "bf-01",
+      "face_key": "billing_flow",
+      "query": "超商代碼繳費一般要幾天才會入帳"
+    },
+    {
+      "item_id": "bf-02-a",
+      "pair_id": "bf-02",
+      "face_key": "billing_flow",
+      "query": "虛擬帳號是一張帳單一組，還是一個租客一組"
+    },
+    {
+      "item_id": "bf-02-b",
+      "pair_id": "bf-02",
+      "face_key": "billing_flow",
+      "query": "這張帳單的虛擬帳號一直沒跑出來"
+    },
+    {
+      "item_id": "bf-03-a",
+      "pair_id": "bf-03",
+      "face_key": "billing_flow",
+      "query": "我手動確認到帳了，狀態卻沒變成已到帳"
+    },
+    {
+      "item_id": "bf-03-b",
+      "pair_id": "bf-03",
+      "face_key": "billing_flow",
+      "query": "手動確認到帳是誰有權限做"
+    },
+    {
+      "item_id": "bf-04-a",
+      "pair_id": "bf-04",
+      "face_key": "billing_flow",
+      "query": "信用卡繳費的手續費是誰吸收"
+    },
+    {
+      "item_id": "bf-04-b",
+      "pair_id": "bf-04",
+      "face_key": "billing_flow",
+      "query": "租客刷卡連兩次失敗，這筆現在算什麼狀態"
+    },
+    {
+      "item_id": "bf-05-a",
+      "pair_id": "bf-05",
+      "face_key": "billing_flow",
+      "query": "錢明明已經進來了，這筆一直卡在待對帳"
+    },
+    {
+      "item_id": "bf-05-b",
+      "pair_id": "bf-05",
+      "face_key": "billing_flow",
+      "query": "待對帳那邊多久會跑一次"
+    },
+    {
+      "item_id": "bf-06-a",
+      "pair_id": "bf-06",
+      "face_key": "billing_flow",
+      "query": "租客要是多繳了，一般都怎麼退"
+    },
+    {
+      "item_id": "bf-06-b",
+      "pair_id": "bf-06",
+      "face_key": "billing_flow",
+      "query": "這張租客多匯了一千，系統還顯示沒繳清"
+    },
+    {
+      "item_id": "bf-07-a",
+      "pair_id": "bf-07",
+      "face_key": "billing_flow",
+      "query": "八月租金那張，租客說錢匯出去了，我後台沒看到"
+    },
+    {
+      "item_id": "bf-07-b",
+      "pair_id": "bf-07",
+      "face_key": "billing_flow",
+      "query": "匯款一定要備註單號才對得起來嗎"
+    },
+    {
+      "item_id": "bf-08-a",
+      "pair_id": "bf-08",
+      "face_key": "billing_flow",
+      "query": "平台有支援分期繳嗎"
+    },
+    {
+      "item_id": "bf-08-b",
+      "pair_id": "bf-08",
+      "face_key": "billing_flow",
+      "query": "租客這筆分兩次匯，結果只認到第一筆"
+    },
+    {
+      "item_id": "bf-09-a",
+      "pair_id": "bf-09",
+      "face_key": "billing_flow",
+      "query": "這筆實際入帳比帳單金額少，是被扣手續費了嗎"
+    },
+    {
+      "item_id": "bf-09-b",
+      "pair_id": "bf-09",
+      "face_key": "billing_flow",
+      "query": "虛擬帳號入帳會被扣手續費嗎，通常多少"
+    },
+    {
+      "item_id": "bf-10-a",
+      "pair_id": "bf-10",
+      "face_key": "billing_flow",
+      "query": "繳費成功後租客那邊會收到什麼通知"
+    },
+    {
+      "item_id": "bf-10-b",
+      "pair_id": "bf-10",
+      "face_key": "billing_flow",
+      "query": "這張顯示已到帳，但租客說他根本沒繳過"
+    }
+  ]
+}
