@@ -106,3 +106,48 @@ D3（F2 主導，觸發 B）→ 仍留在 D3／Face-owned contract family，
 ❌ 未把 F1/F2 的診斷結果拿去主動找新的 misrouting 案例（N3 升格另案處理）
 ❌ 未動 production Face config／matching ruler／manifest
 ```
+
+---
+
+## ⚠️ ERRATA（2026-08-24，由 D3 proposal 的 falsification review 查出）
+
+> 原文正文**保留不改**，以下為更正。查證依據：`evidence/round1-experiment-a.json` 的
+> `d3_raw.reason`／`evidence_used` 與 `evidence/d3-face-responsibility-contract-v1.json`。
+
+### E1｜`bd-10-a` 重複計數，`7+3+2+5=17` 的加總不成立
+
+`bd-10-a` 同時被列入 F2（約 7 筆）與 F1（約 3 筆），故上述加總把它算了兩次。
+查其 `d3_raw` 的實際依據為 `entity_reference_required`——屬 **F1 型**。
+**處置**：標為**雙因**，其期望結果**不計入任一側**。
+
+### E2｜`bf-05-a` 的 F2 歸因不成立
+
+原文將其歸為「『待對帳』不是列舉過的狀態措辭」（枚舉缺口）。但其 `d3_raw` 實為
+「該面向的責任範圍不包括對帳相關的問題」，`evidence_used` 標為「該面向的 does_not_handle 列表」，
+而 `billing_flow` 的 `does_not_handle` 僅四項（帳單金額組成／帳單操作可否／金流商設定／平台通則），
+**無任何對帳條目**。這是**對 contract 內容的錯誤陳述**，與 F1 同型的執行失效，**不是枚舉缺口**。
+**處置**：移出 F2 標靶集合。
+
+### E3｜「F2 ≈ 7 筆」不得再作任何量化基礎
+
+E1／E2 之後，正確表述為：
+
+```text
+Round 1 中存在 confirmed F2 exhibits，但**精確基數需重新逐筆去重歸因**。
+這批 burned cases 只作 post-mortem，**不進入** member-2 的 acceptance denominator。
+```
+
+### E4｜「效果上限」措辭收窄
+
+原文的「**唯一**標靶」「最多只能影響 N 筆」過硬。改為：
+**representation revision 的事前主要可歸因標靶是 F2 類失敗**；
+若未來 F1 類亦改善，記為 **observed collateral improvement，須經 ablation 才可歸因**。
+
+### E5｜不影響的部分（明列以免被誤讀）
+
+```text
+D1 的 F1 歸因（16/17 明含指示詞而 reason 否認其存在）**未受影響**——
+E1／E2 只更動 D3 側的分類與基數，不觸及 D1 側證據。
+停止條件 A＋B 同時達成的判定**維持不變**。
+member／family disposition **維持不變**。
+```
