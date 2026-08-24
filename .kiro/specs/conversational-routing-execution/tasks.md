@@ -457,7 +457,30 @@ A4（移除 job 級 `continue-on-error` 使 `pip install` 暫時性故障會擋�
   **SHALL NOT fallback 至真實 HTTP**。
   **🔍V 理由**：外部副作用邊界；做錯的失效模式是 integration 測試靜默對 jgb2 發真請求。
   _Requirements: 4.1, 4.3_
-  ⏳ **獨立驗證：待派**（本欄於 verifier 回報後補結果）
+  ✅ **獨立驗證：CONFIRMED**（fresh verifier，2026-08-24）。三項驗收皆由其**自建探針**支持，
+  未重用作者斷言：三態逐一驅動（未遷移那條改 monkeypatch `MIGRATED_ENDPOINTS` 而非改 `ROUTES`）；
+  **在作者未驗的縫再驗一次**——patch `services.jgb.transport.httpx.AsyncClient` ＋ 封住
+  `socket.socket`(AF_INET/INET6)／`getaddrinfo`／`create_connection`：三條失敗路徑下
+  **無 AsyncClient 建構、無 INET socket、無 DNS/connect**。
+  並反證量尺不瞎：直呼 `RealHttpTransport.send` 當場被同組 patch 抓到；
+  `USE_MOCK_JGB_API=false` 時 `_send` 確實走到 real 分支 → mock 模式的 0 次是被 gate 擋掉，
+  非路徑不存在。另以 **AST 去 docstring** 確認 `JGBMockTransport` 本體不含
+  `httpx`／`RealHttpTransport`／`_real_transport`，實例屬性恰為 `{"fixtures"}`。
+  補查：`jgb_system_api.py` 唯一的 `except Exception` 位於 real 分支內，結構上吞不到 mock 的 `TransportError`。
+
+  ⚠️ **verifier 的兩則非阻斷 advisory（P4，已記錄，本輪不改）**：
+  - **A1**：`MIGRATED_ENDPOINTS` 與 `ROUTES` 的 key 集合**目前完全相同**，故
+    `UnmigratedMockEndpointError` 分支在正式組態下**不可達**，只能靠 monkeypatch 驅動。
+    這是 4.3 階段的正常樣態（gate 先於端點就位），但該分支的「真實可達性」尚無非 patch 證據。
+    → 日後新增未遷移端點時補一條非 patch 實例。
+  - **A2**：結構不可達的強度是「類別本體無引用」而非「模組邊界隔離」——
+    `transport.py` 頂層有 `import httpx`，且兩個 transport 同檔；未來同檔編輯可在
+    `JGBMockTransport.send` 內直接建 client 而不需新增 import。
+    現有 `test_mock_transport_holds_no_real_transport` 只檢查實例屬性名，抓不到這種寫法。
+    → 建議補「原始碼（去 docstring）不得出現 `httpx`／`RealHttpTransport`」的斷言，
+      或把 mock 移出獨立模組。verifier 已實測該斷言在現行實作下為綠。
+    ⚠️ **本輪不動**：A2 屬 claim-relevant 的加固，落地後需重跑主驗收＋一次 fresh verifier；
+      故留待業主裁定，不在 CONFIRMED 之後偷改。
 
   **實作**（`services/jgb/transport.py`）：`MIGRATED_ENDPOINTS` ＋ `JGBMockTransport`（僅 admission gate，
   回應建構屬 4.5）。三態：resolve 回 None → `UnresolvedEndpointError(reason="no_match")`；
