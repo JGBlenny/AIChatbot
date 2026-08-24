@@ -15,13 +15,18 @@ import re
 import logging
 from typing import Any, Optional
 
-import httpx
+from services.jgb.transport import (  # noqa: F401  (FALLBACK_MESSAGE 對外沿用)
+    FALLBACK_MESSAGE,
+    RealHttpTransport,
+    Transport,
+    TransportResponse,
+    UnexpectedRealNetworkError,
+)
 
 logger = logging.getLogger(__name__)
 
-# 降級回答訊息
+# 降級回答訊息（FALLBACK_MESSAGE 已隨 _send 下移至 services/jgb/transport.py）
 DEGRADED_MESSAGE = "請先登入以查詢您的個人資料。"
-FALLBACK_MESSAGE = "目前無法查詢資料，請稍後再試或聯繫您的管理師。"
 
 
 class JGBSystemAPI:
@@ -34,6 +39,15 @@ class JGBSystemAPI:
         self.api_key = os.getenv("JGB_API_KEY", "")
         self.use_mock = os.getenv("USE_MOCK_JGB_API", "true").lower() == "true"
         self.timeout = 10.0
+
+        # 任務 4.1：只依賴 Transport Protocol，不直接碰 httpx。
+        # mock transport 於 4.2–4.5 裝配；在那之前 mock 模式**不會**走到 _send
+        # （22 個公開方法皆有 `if self.use_mock` 前置短路），
+        # 故此處留 None，並由 _send 對「mock 模式卻走到真實網路」fail loudly。
+        self._real_transport: Transport = RealHttpTransport(
+            self.api_base_url, self.api_key, self.timeout
+        )
+        self._mock_transport: Optional[Transport] = None
 
         logger.info(
             f"JGBSystemAPI 初始化 "
@@ -63,31 +77,28 @@ class JGBSystemAPI:
             "error": {"code": 500, "message": FALLBACK_MESSAGE},
         }
 
-    def _headers(self) -> dict[str, str]:
-        return {"X-API-Key": self.api_key}
-
     async def _send(
         self, method: str, path: str, *,
         params: Optional[dict[str, Any]] = None,
         data: Optional[dict[str, Any]] = None,
-    ) -> dict[str, Any]:
-        """Send HTTP request to JGB API with error/timeout handling."""
-        url = f"{self.api_base_url}{path}"
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.request(
-                    method, url,
-                    params=params, json=data,
-                    headers=self._headers(),
+    ) -> TransportResponse:
+        """依 `use_mock` 派發至 transport 實作（任務 4.1）。
+
+        ⚠️ mock 模式下若未裝配 mock transport，**fail loudly**——
+        絕不 fallback 至真實 HTTP（靜默 fallback 的失效模式是
+        integration 測試對 jgb2 發出真請求）。
+        """
+        if self.use_mock:
+            if self._mock_transport is None:
+                raise UnexpectedRealNetworkError(
+                    f"use_mock=True 但未裝配 mock transport：{method} {path}"
                 )
-                response.raise_for_status()
-                return response.json()
-        except httpx.TimeoutException as e:
-            logger.error(f"JGB API {method} 逾時: {url} - {e}")
-            return self._fallback_response(f"API 逾時: {str(e)}")
-        except httpx.HTTPError as e:
-            logger.error(f"JGB API {method} 錯誤: {url} - {e}")
-            return self._fallback_response(f"API 錯誤: {str(e)}")
+            return await self._mock_transport.send(
+                method, path, params=params, data=data
+            )
+        return await self._real_transport.send(
+            method, path, params=params, data=data
+        )
 
     async def _request(
         self, path: str, params: dict[str, Any]

@@ -400,9 +400,31 @@ A4（移除 job 級 `continue-on-error` 使 `pip install` 暫時性故障會擋�
 **目標**：讓 `bill_ref` adapter、參數組裝、client 端防衛過濾在測試中真正執行，
 消除「mock 造假通過」的結構可能。
 
-- [ ] 4.1 **🧠主** 定義 `Transport` Protocol 與 `TransportResponse`／`Pagination` 型別，
+- [x] 4.1 **🧠主** 定義 `Transport` Protocol 與 `TransportResponse`／`Pagination` 型別，
   使 `JGBSystemAPI` 僅依賴該 Protocol；`_send` 依 `use_mock` 派發至 real 或 mock 實作。
   _Requirements: 4.1, 4.3_
+
+  **實作**：新增 `services/jgb/transport.py`——`HttpMethod`／`Pagination`／`TransportResponse`
+  ／`Transport` Protocol ＋ `RealHttpTransport`（httpx 與 `_headers` 由 `jgb_system_api` 下移）
+  ＋ 失敗型別**宣告**（`TransportError` 基底、`UnresolvedEndpointError`、
+  `UnmigratedMockEndpointError`、`MissingFixtureError`、`UnexpectedRealNetworkError`）。
+  `FALLBACK_MESSAGE` 隨 `_send` 一併下移，`jgb_system_api` 再匯出以維持相容。
+
+  ⚠️ **本任務只定契約，不做 resolver**（業主指定）：endpoint 樣板解析屬 4.2、
+  未遷移端點 fail loudly 屬 4.3；本檔僅先宣告其失敗型別。
+  ⚠️ **mock 與 real 共用同一份 caller-facing Protocol**，避免 4.4／4.5 長出「測試專用 API」。
+
+  **fail-loudly 已生效**：`use_mock=True` 但未裝配 mock transport → `_send` 直接
+  `raise UnexpectedRealNetworkError`，**不 fallback 至真實 HTTP**。
+  實查 22 個公開方法皆有 `if self.use_mock` 前置短路 → 目前 mock 模式走不到 `_send`，
+  故此舉**不改變現行行為**，只封住「靜默對 jgb2 發真請求」這條路。
+
+  **驗收（容器內）**：`make test-unit` → **1107 passed / 13 failed**，
+  13 筆全數落在 `tests/unit/_meta/`（`test_env_parity_req.py` 6 ＋
+  `test_runner_layer_contract_req.py` 7），為既有 container mount 錯配 known-red，
+  **與本次改動無關**（基準值同為 1107 passed）。
+  針對性：`-k jgb` **19 passed**；四支直接觸及 `JGBSystemAPI` 的測試 **31 passed / 0 failed**。
+  行為探針：mock 模式呼叫 `_send` 如期拋 `UnexpectedRealNetworkError`。
 
 - [ ] 4.2 **🧠主** 實作 `JGBMockTransport.resolve_endpoint`：以**樣板比對**（`{bill_id}` 比對單一 path segment、
   段數不同不匹配）解析 `(method, path) → endpoint_key`。
