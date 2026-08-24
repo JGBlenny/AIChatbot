@@ -1,7 +1,7 @@
 {
   "feature_name": "routing-authority-model",
   "created_at": "2026-08-24T12:30:00Z",
-  "updated_at": "2026-08-24T21:00:00Z",
+  "updated_at": "2026-08-24T21:40:00Z",
   "phase": "requirements-approved",
   "language": "zh-TW",
   "predecessor": {
@@ -95,5 +95,11 @@
       ],
       "note": "**不是** requirement 層新條文（未新增 R7）；亦不聲稱歷史上不存在治理。`not evidenced` ≠ `does not exist`。在 origin 被識別前，設計上 authority_origin = unresolved，不得由 seed／Face self-declaration／categories／LLM verdict／實作者決策頂替。"
     }
+  },
+  "design_status": {
+    "state": "BLOCKED_BY_EXTERNAL_DECISION",
+    "blocked_by": "external_dependencies.responsibility_governance_origin",
+    "decision_record": "responsibility-governance-decision-record.md（空白待產品決策方填寫／批准）",
+    "note": "**不是** design failure，也**不是** implementation incomplete。解除條件＝該記錄的四項裁定完成；屆時只需對 A／B／C 補 X-1 evidence 重審，**A 不是預設答案**。在此之前不重開 D1／D3 member、不選 carrier、不設計 registry schema、不做新的 routing candidate。"
   }
 }
