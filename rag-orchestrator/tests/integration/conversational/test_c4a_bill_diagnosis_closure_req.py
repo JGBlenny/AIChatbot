@@ -65,36 +65,6 @@ async def pool():
     await p.close()
 
 
-class _RecordingTransport:
-    """記錄每一次 transport 請求，再委派給真 mock transport。
-
-    ⚠️ 這是 **OB-3／secondary_call 可觀測性**的落點：
-    斷言的是**實際送出的請求**，不是從 grounding 反推。
-    """
-
-    def __init__(self, inner):
-        self.inner = inner
-        self.calls = []          # [(method, path, params)]
-
-    async def send(self, method, path, *, params=None, data=None):
-        self.calls.append((method, path, dict(params or {})))
-        return await self.inner.send(method, path, params=params, data=data)
-
-    # ── 觀測輔助 ────────────────────────────────────────────────────────
-    def endpoint_keys(self):
-        from services.jgb.transport import resolve_endpoint
-        return [resolve_endpoint(m, p) for m, p, _ in self.calls]
-
-    def detail_bill_ids(self):
-        from services.jgb.transport import match_template
-        out = []
-        for _, path, _ in self.calls:
-            hit = match_template(DETAIL_TMPL, path)
-            if hit:
-                out.append(int(hit["bill_id"]))
-        return out
-
-
 class _Brain:
     """腳本化 brain：第 1 輪追問，第 2 輪收斂並帶 `bill_ref`（數字分支）。"""
 
@@ -117,13 +87,10 @@ def _engine(pool, brain, recorder_box):
     from services.conversational_engine import ConversationalEngine
     from services.conversational_rules import load_rules
     from services import system_context as sc
+    from tests.support.c4a_harness import install_recorders
 
-    handler = APICallHandler(db_pool=None)
-    inner = handler.jgb_api._mock_transport
-    assert inner is not None, "mock transport 未裝配（4.6 應已裝配 fixture 表）"
-    rec = _RecordingTransport(inner)
-    handler.jgb_api._mock_transport = rec
-    recorder_box.append(rec)
+    handler, rec = install_recorders(APICallHandler(db_pool=None))
+    recorder_box.append((rec, handler))
 
     return ConversationalEngine(
         db_pool=pool, optimizer=brain, retriever=None,
@@ -145,7 +112,7 @@ async def _run_case(pool, query: str, bill_ref: int):
         assert d1["kind"] == "ask", f"第 1 輪應追問，實得 {d1['kind']}"
         d2 = await eng.prepare(sid, "u1", 7, str(bill_ref), config=None, role_id="20151")
         assert d2["kind"] == "converge", f"第 2 輪應收斂，實得 {d2['kind']}｜{d2}"
-        return d2["grounding"], box[0]
+        return (d2["grounding"], *box[0])
     finally:
         await pool.execute("DELETE FROM form_sessions WHERE session_id=$1", sid)
 
@@ -157,7 +124,7 @@ async def test_c4a_diag_01_closure(pool):
     from tests.support.chain_closure import ChainClosureAssertion, assert_chain_closure
     from tests.support.fact_extractors import diagnosis_bracket_fact_extractor
 
-    grounding, rec = await _run_case(pool, "幫我查點退帳單金額", 900003)
+    grounding, rec, handler = await _run_case(pool, "幫我查點退帳單金額", 900003)
 
     # OB-3：**所有**實際 detail 請求都必須指向本案 fixture
     # ⚠️ 實測 detail 會被呼叫兩次（adapter 數字分支直查 ＋ 面向 secondary_call）——
@@ -165,8 +132,10 @@ async def test_c4a_diag_01_closure(pool):
     ids = rec.detail_bill_ids()
     assert ids and set(ids) == {900003}, (
         f"OB-3 失敗：實際 detail 請求 {ids}，本案 fixture 為 900003")
-    # secondary_call_required=true：primary ＋ detail 皆須真的發生
-    assert "bill_detail" in rec.endpoint_keys(), f"未觀測到 secondary detail call：{rec.endpoint_keys()}"
+    # secondary_call_required=true：**由 execute_api_call 的派發次數**正向證明
+    # ⚠️ 不以「bill_detail 有沒有被呼叫」代表——adapter 數字分支也會打 detail（見 5.4 對照）
+    assert handler.secondary_dispatch_count() > 0, (
+        f"應有 Face secondary dispatch，實得 {handler.dispatched}")
 
     assert_chain_closure(
         grounding,
@@ -187,12 +156,12 @@ async def test_c4a_diag_02_closure(pool):
     from tests.support.chain_closure import ChainClosureAssertion, assert_chain_closure
     from tests.support.fact_extractors import diagnosis_bracket_fact_extractor
 
-    grounding, rec = await _run_case(pool, "這張帳單現在還能不能收回", 900001)
+    grounding, rec, handler = await _run_case(pool, "這張帳單現在還能不能收回", 900001)
 
     ids = rec.detail_bill_ids()
     assert ids and set(ids) == {900001}, (
         f"OB-3 失敗：實際 detail 請求 {ids}，本案 fixture 為 900001")
-    assert "bill_detail" in rec.endpoint_keys()
+    assert handler.secondary_dispatch_count() > 0
 
     assert_chain_closure(
         grounding,
@@ -216,7 +185,7 @@ async def test_sufficiency_still_bites_on_full_chain(pool):
     from tests.support.chain_closure import ChainClosureAssertion, assert_chain_closure
     from tests.support.fact_extractors import diagnosis_bracket_fact_extractor
 
-    grounding, _ = await _run_case(pool, "幫我查點退帳單金額", 900003)
+    grounding, _, _ = await _run_case(pool, "幫我查點退帳單金額", 900003)
     observed = diagnosis_bracket_fact_extractor(grounding) - {"amount_due"}
 
     with pytest.raises(AssertionError) as ei:
@@ -237,6 +206,6 @@ async def test_ob3_binding_bites_when_fixture_mismatches(pool):
     這證明「兩案綁不同 fixture」真的能殺掉 constant-record 實作
     （component negative control；**不新增第五個 C4a case**）。
     """
-    _, rec = await _run_case(pool, "這張帳單現在還能不能收回", 900001)
+    _, rec, _ = await _run_case(pool, "這張帳單現在還能不能收回", 900001)
     assert set(rec.detail_bill_ids()) == {900001}
     assert set(rec.detail_bill_ids()) != {900003}, "OB-3 綁定無鑑別力"

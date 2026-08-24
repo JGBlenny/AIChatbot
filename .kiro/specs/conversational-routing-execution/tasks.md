@@ -731,9 +731,45 @@ Layer 2  哪些事實存在才叫 grounding sufficient → **同一個** ChainCl
   **不得**升格為「bill_diagnosis 全自然語言穩健」「非數字分支已證」
   「routing 到 bill_diagnosis 正確」「adapter 全分支已 closure」。
 
-- [ ] 5.4 **⚡F** 實作 `billing_anomaly` 的 C4a 測試（第二面向，**無 `secondary_call`** 的對照組）。
+- [x] 5.4 **⚡F** 實作 `billing_anomaly` 的 C4a 測試（第二面向，**無 `secondary_call`** 的對照組）。
   兩面向共用同一份 `jgb_bills` 契約與 fixture 表。
   _Requirements: 3.1, 3.3, 7.1_
+
+  **實作**：`tests/integration/conversational/test_c4a_billing_anomaly_closure_req.py`
+  → **6 passed**；併 5.3 共 **10 passed / 0 failed**（真 DB，非 skip）。
+  共用 primitive 抽到 `tests/support/c4a_harness.py`（`RecordingTransport`＋`RecordingHandler`）。
+
+  ⚠️ **本檔要證的不是「grounding 會動」，而是：chain closure 不依賴 `secondary_call` 才能成立。**
+
+  **本檔最容易假紅之處（已實測並寫成具名測試）**：
+  `billing_anomaly` 沒有 `secondary_call`，但 **adapter 的數字分支仍會打一次 `bill_detail` 端點**。
+  故 secondary call 的有無 **MUST** 由 `execute_api_call` 的**派發次數**判定
+  （`conversational_engine.py:985-987` 的第二次派發），
+  **不得**以「`bill_detail` 有沒有被呼叫」代表——後者在兩個面向都成立。
+
+  **對照 invariant（由 execution trace 證明，非從文字推得）**：
+
+```text
+diagnosis frozen cases   secondary dispatch > 0   ← 5.3 已同步改為正向斷言
+anomaly   frozen cases   secondary dispatch = 0
+兩邊                      OB-3 ✅｜delivery ✅｜sufficiency ✅
+```
+
+  **OB-1 落地**：`c4a-anom-01` 同時斷言 `billing_period` 已觀測 ＋ `date_start`／`date_end`
+  **兩個來源值**皆送達；expected 一律自 frozen fixture 取值、經 **production 渲染器**
+  （`_format_date_int`）產生，**不在測試中手抄日期**（避免第二個 truth source）。
+
+  **OB-2 落地且實測會咬**：分別抽掉 start／end 之一 →
+  **即使「計費期間」label 仍在、observer 仍觀測到 `billing_period`**，仍必須紅（拋「送達性缺字面」）。
+  兩個前提各有具名斷言，證明紅來自 **delivery** 而非 label 消失或 observation 失效。
+  → 這證成：**`billing_period` observer green ≠ provenance delivery complete**。
+
+  **`c4a-anom-02`**：required 僅 `bill_status`，**未**加入 `bit_status`、
+  **未**因 formatter 同時帶金額／期間而擴尺；並有完整 chain 的充分性 negative control。
+
+  ⚠️ **claim ceiling**：`execution_face = billing_anomaly` 只是 test context。
+  5.4 PASS **SHALL NOT** 寫成「使用者問『帳單現在的狀態』就應 route billing_anomaly」——
+  那會越界到 `routing-authority-model`（BLOCKED_BY_EXTERNAL_DECISION）。
 
 - [ ] 5.5 **🧠主 🔍V** 執行 C4a 並依判型流程分類失敗（若有）：
   (a) 鏈路未跑通／(b) mock 契約不保真／**(c) grounding insufficiency**（充分性維度判出）。
