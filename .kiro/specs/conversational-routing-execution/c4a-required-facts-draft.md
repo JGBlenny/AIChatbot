@@ -32,8 +32,18 @@ secondary_call_required true
 **required_grounding_facts**
 
 ```text
-（本案無法在既有 observation contract 下列出——見 unresolved_requirement）
+- amount_due
+    requirement source
+      **產品語義**：應收金額——jgb2 `total` 欄（BillApiController.php:143，在 33 欄投影內）；
+      rag 端定義 `_bill_amount_due()`「應收金額（帳單明細合計）。無值回 None，不代 0。」
+      （services/jgb/bills.py:50-53）。
+    why necessary
+      問句直接問金額；缺此事實即無 grounded answer。
 ```
+
+⚠️ 本 key 由 **observation-contract v2 amendment** 才得以觀測——
+其正當性來自 production grounding **本來就有**該表示（audit O-1／O-2 已查證），
+**不是**為了讓本案可測而新增。
 
 **explicitly_not_required**
 
@@ -45,20 +55,26 @@ send_determination／cancel_determination／manual_complete_determination
   → 「金額多少」不需要任何可否操作的判定
 ```
 
-**⚠️ unresolved_requirement（本案最重要的一項，**不猜**）**
+**✅ 原 unresolved_requirement 已解除（β 成功）**
 
 ```text
-問句所需的 production fact 是**應收金額**（jgb2 `total`；rag 端 `_bill_amount_due()`
-rag-orchestrator/services/jgb/bills.py:50-53「應收金額（帳單明細合計）。無值回 None，不代 0。」）。
-
-但 `bill_diagnosis` 的 frozen observation contract
-（`diagnosis_bracket_fact_extractor`）只映射三個 canonical key：
-send_／cancel_／manual_complete_determination——**沒有任何金額 key**。
-
-→ 「金額已作為 fact 送達」在**充分性維度上無法表達**（送達性維度仍可驗字面）。
-⚠️ 本檔**不**自行擴充 extractor 來救本案——那是「為了讓案例可測而改觀測契約」，
-   與本輪因果順序相反。**須業主裁定。**
+原狀    `bill_diagnosis` 的 observer 只映射三個 determination key，無金額 key
+        → 「金額已作為 fact 送達」在充分性維度無法表達
+處置    業主裁定走 (β) measurement-instrument amendment：
+        先凍結 audit rule（a221c11 的 O-1～O-6），再查核 production grounding
+查核結果 O-1 ✅ `_format_bill_status()`（services/jgb/bills.py:526-538）確有
+             `• 金額：{_money(total)}`，且 `total = _bill_amount_due(bill)`（:531）
+         O-2 ✅ 可用 deterministic label ＋ 金額渲染觀測：`金額\s*[：:]\s*NT\$`
+             （不綁 bullet；`（系統未記錄）` 缺值標記刻意不匹配）
+         O-3 ✅ observer 仍不含 sufficiency policy
+         O-4 ✅ 未改 production formatter
+         O-5 ✅ 未查看 5.3／5.4（尚未執行）
+→ **β 成功，未落入 γ**；observer 已加入 `amount_due` 並重新 freeze。
 ```
+
+⚠️ **`amount_due` ≠ `amount_stored`**：前者是本問句所需的**應收**事實，
+後者是 anomaly observer 對 `帳單金額 …（系統存值）` 的呈現語義。
+兩觀測器**互不越界**（已具名測試）。
 
 ---
 
@@ -201,5 +217,14 @@ cancel_determination 等判定
 ② c4a-anom-01 的 `billing_period` 是複合觀測，是否要求 5.3 以送達性補足兩個底層日期字面
 ```
 
-⚠️ 在 ① 未裁定前，**本檔不得 FROZEN**——因為四案中有一案的尺仍是空的，
-而「`required_grounding_facts` 為空不構成 C4a 通過的證據」是已凍結的紀律。
+### ① 已裁定並完成（β 成功）
+
+四案的尺**皆已非空**。剩下 ② 仍待裁定：
+
+```text
+② c4a-anom-01 的 `billing_period` 是複合觀測——是否要求 5.3 以送達性
+   補足 `date_start`／`date_end` 兩個底層日期字面？
+   （本檔立場：屬 5.3 斷言規格，不在 5.2 決定；此處僅標記）
+```
+
+⚠️ ② 裁定後即可 FROZEN。

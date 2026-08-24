@@ -33,17 +33,30 @@ _DIAGNOSIS_BRACKET_MAP = {
 
 _BRACKET = re.compile(r"【([^】]+)】")
 
+#: v2 amendment（`diagnosis-observation-audit-rule-frozen.md` 的 O-1／O-2 已查證）：
+#: `_format_bill_status()`（services/jgb/bills.py:526-538）以
+#: `• 金額：{_money(total)}` 呈現**應收金額**（`_bill_amount_due()` → `total`）。
+#: ⚠️ 綁的是 **label ＋ 金額渲染**（`_money()` 的 `NT$ ` 形式），**不綁 bullet**（B-2）。
+#: ⚠️ `（系統未記錄）` 是**缺值標記**，故意不匹配——沒有值就不是「fact 已送達」。
+_DIAGNOSIS_FIELD_PATTERNS = {
+    "amount_due": re.compile(r"金額\s*[：:]\s*NT\$"),
+}
+
 
 def diagnosis_bracket_fact_extractor(grounding: str) -> "set[str]":
-    """`bill_diagnosis` 的觀測器：`【鍵】` → canonical key。
+    """`bill_diagnosis` 的觀測器：`【鍵】` ＋ 已查證的語義欄位 → canonical key。
 
     ⚠️ 未登錄的括號鍵**一律忽略**，不猜——未知鍵不是 fact，是尚未建立觀測契約的東西。
+    ⚠️ 欄位型觀測僅限經 audit rule（O-1～O-6）證成者；**不得**因某個 case 需要就加。
     """
-    return {
+    text = grounding or ""
+    keys = {
         _DIAGNOSIS_BRACKET_MAP[k]
-        for k in _BRACKET.findall(grounding or "")
+        for k in _BRACKET.findall(text)
         if k in _DIAGNOSIS_BRACKET_MAP
     }
+    keys |= {key for key, pat in _DIAGNOSIS_FIELD_PATTERNS.items() if pat.search(text)}
+    return keys
 
 
 # ── billing_anomaly：語義欄位表示法 ───────────────────────────────────────

@@ -26,9 +26,11 @@ def row():
 
 # ── 對真 formatter 實跑（不是對自製字串）──────────────────────────────────
 def test_diagnosis_extractor_on_real_formatter_output(row):
+    """⚠️ 期望集合含 `amount_due`——observation contract v2 amendment 後的完整契約。"""
     keys = diagnosis_bracket_fact_extractor(build_bill_diagnosis_facts(row, ""))
     assert keys == {
-        "send_determination", "cancel_determination", "manual_complete_determination"
+        "send_determination", "cancel_determination", "manual_complete_determination",
+        "amount_due",
     }
 
 
@@ -121,3 +123,34 @@ def test_diagnosis_extractor_ignores_anomaly_syntax():
 
 def test_anomaly_extractor_ignores_bracket_syntax():
     assert anomaly_labeled_field_extractor("【發送判定】已發送") == set()
+
+
+# ── observation-contract v2 amendment：amount_due（O-1～O-6 已查證）────────
+def test_diagnosis_observes_amount_due_from_real_formatter(row):
+    """O-1：`_format_bill_status()` 以 `• 金額：NT$ N` 呈現應收金額（`_bill_amount_due` → total）。"""
+    keys = diagnosis_bracket_fact_extractor(build_bill_diagnosis_facts(row, ""))
+    assert "amount_due" in keys
+
+
+def test_amount_due_requires_the_money_rendering():
+    """O-2：綁 label ＋ `NT$` 金額渲染，不靠自由文字猜測。"""
+    assert "amount_due" in diagnosis_bracket_fact_extractor("• 金額：NT$ 18,000")
+    assert "amount_due" in diagnosis_bracket_fact_extractor("金額：NT$ 1")   # 不綁 bullet（B-2）
+
+
+def test_amount_due_not_observed_when_value_missing():
+    """⚠️ `（系統未記錄）` 是缺值標記——沒有值就不是「fact 已送達」。"""
+    assert "amount_due" not in diagnosis_bracket_fact_extractor("• 金額：（系統未記錄）")
+
+
+def test_amount_due_is_not_keyword_spotting():
+    assert "amount_due" not in diagnosis_bracket_fact_extractor("金額可能有問題，請再確認")
+    assert "amount_due" not in diagnosis_bracket_fact_extractor("• 金額：1,000")
+
+
+def test_amount_due_and_amount_stored_stay_distinct():
+    """⚠️ 兩者是不同產品語義（應收 vs 系統存值呈現），不得因都涉及金額就合併。"""
+    anomaly_text = "帳單金額 NT$ 18,000（系統存值）。"
+    assert diagnosis_bracket_fact_extractor(anomaly_text) == set()
+    assert "amount_stored" in anomaly_labeled_field_extractor(anomaly_text)
+    assert "amount_due" not in anomaly_labeled_field_extractor(anomaly_text)
