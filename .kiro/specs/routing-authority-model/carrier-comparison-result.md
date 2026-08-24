@@ -3,6 +3,7 @@
 > 2026-08-24｜語言 zh-TW｜依 `carrier-comparison-ruler-frozen.md`（凍結於比較之前，`fa2dbb3`）執行
 > 同一份 frozen Contract（`responsibility-authority-contract.md`，APPROVED／FROZEN）。
 > **本輪不評實作成本、不選 winner、不邊比邊新增概念救方案。**
+> **狀態：CLOSED（業主 2026-08-24）｜ADMISSIBLE = 0｜不再設計第四種 carrier。**
 
 ## 判定
 
@@ -257,6 +258,73 @@ capability certification        Face ↔ capability 綁定的權威依據       
 > R6 所要求的 first-class responsibility authority，**其困難不在承載形態，也不在強制手段**，
 > 而在**制定權**——誰有資格宣告「Face X 對這類 query 負責」，且該宣告不是自述、不是分類、
 > 不是未背書的判斷。
+
+## 封口時確立的三層模型（本輪最重要的新模型）
+
+```text
+Runtime Evidence          「這張 bill 存在／屬於誰／誰看得到」        ✅ 已找到 qualified sources
+        ↓
+Responsibility Authority  「這類情境由 Face X 負責」                  ❌ **authority origin 未定**
+        ↓
+Carrier / Enforcement     「存在哪、如何 machine-enforce」            ✅ 多形態技術上可做，
+                                                                       但**無權威內容可承載**
+```
+
+> **這解釋了為何 X-3 三者都 PASS**：
+> 系統一直不缺「擋得住」的機制，缺的是**憑什麼擋／憑什麼放**的正當來源。
+
+### A 的兩個 PASS 如何解讀（**不得升格**）
+
+```text
+✅ 可說：一旦 responsibility truth **已經存在**，集中式 carrier 有能力保存、enforce、
+        並處理新 Face 的 enrollment（X-3／X-5 PASS 的實際射程）
+❌ 不得說：「中央 registry 最接近答案」——A **沒有回答 truth 從哪來**
+→ 維持 INSUFFICIENT_EVIDENCE（ruler 已要求 X-1）
+```
+
+### B 的 REJECTED 射程（**精確化**）
+
+```text
+B 被反證的**不是**「Face-local declaration 永遠錯」，
+而是目前 B 的 enrollment model：
+    新增 Face row → Face 自己宣告 responsibility → **無外部 normative admission**
+→ self-enrollment 失敗
+
+⚠️ 未來若存在：Face proposal → external authorized approval → certified responsibility binding
+   → external enforcer，那**已不是本輪被反證的 B**，屬新 member／新版本，須重新受審。
+⚠️ **不得**現在拿這段去救 B——REJECTED 的射程是**目前 frozen carrier shape**。
+```
+
+### B3 保留為制度性反例（與本線既有教訓同一套）
+
+```text
+LLM 可以逐 query 選 Face              ✅
+系統可以保證選到的是**合法 Face key** ✅
+系統不能保證選到的是**責任正確**的 Face ❌
+
+→ **Decision existence ≠ decision authority**
+```
+
+與本線一路累積的同型教訓並列：
+
+```text
+signal exists      ≠ signal authorized      （v1：manifest not_run → 恆不生效）
+consumer exists    ≠ veto works             （R2 must-fix 的由來）
+declaration exists ≠ responsibility truth   （B4／N6）
+decision exists    ≠ decision authority     （B3，本輪新增）
+```
+
+### 四個 undefined dependencies 收斂為**同一個缺口**
+
+```text
+誰有權制定？               → authority owner
+誰批准新 Face？            → enrollment approver
+用什麼規則判合法？         → admissibility standard
+怎麼把批准轉成機器 binding？ → certification
+
+→ 四者可能只是同一件事的四個投影：**responsibility governance 尚未 first-class 化**
+⚠️ 此收斂為**待驗**，下一輪（Authority-Origin Discovery）驗證，不在此當成結論。
+```
 
 ## 本輪**未**做
 
