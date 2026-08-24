@@ -1,7 +1,7 @@
 {
   "feature_name": "routing-authority-model",
   "created_at": "2026-08-24T12:30:00Z",
-  "updated_at": "2026-08-24T15:00:00Z",
+  "updated_at": "2026-08-24T18:30:00Z",
   "phase": "requirements-approved",
   "language": "zh-TW",
   "predecessor": {
@@ -72,5 +72,14 @@
     "main_responsibility_layer": "INSUFFICIENT EVIDENCE（L2/L3/L4/L6）",
     "single_root_cause": "INSUFFICIENT EVIDENCE（H1/H2/H3）",
     "routing_false_reject_cost": "PRODUCT DECISION PENDING —— ⚠️ **僅當** design candidate 可能以「拒絕本來應進場的 Face」作為 trade-off 時，才必須先取得該裁示；**不得**現在為尚未存在的 candidate 訂 5%／10% 之類的 threshold"
+  },
+  "derived_constraints": {
+    "R6": {
+      "file": "r6-derived-design-constraint.md",
+      "provenance_commit": "63351cd",
+      "derived_from": "R-e discovery — 結局 C（responsibility-binding surface 內無既有 qualified R-e，且不可機械導出）",
+      "scope_limit": "audited architecture only —— 不得擴寫為『整個 production 不存在』",
+      "note": "**不改寫已凍結的 R1–R5**；以獨立 derived design constraint 記錄，requirements approvals 未變動"
+    }
   }
 }
