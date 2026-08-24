@@ -10,14 +10,15 @@
 ```text
 QUALIFIED              3   （N1／N2／N3，全部為 newly-discovered，全部在**平台 external API** 側）
 REJECTED               9
-INSUFFICIENT_EVIDENCE  2
+INSUFFICIENT_EVIDENCE  3   （N5／N7／N11）
 ```
 
 **依 F-5 分開統計**：
 
 ```text
 prior-exposed（7 項）      QUALIFIED 0 ｜ REJECTED 7 ｜ INSUFFICIENT 0
-newly-discovered（7 項）   QUALIFIED 3 ｜ REJECTED 2 ｜ INSUFFICIENT 2
+newly-discovered（8 項）   QUALIFIED 3 ｜ REJECTED 2 ｜ INSUFFICIENT 3
+（另 N10／N12 為「掃查無 source 可判」，不計入 disposition 統計）
 ```
 
 ⚠️ **結果並非由先驗曝光項目主導**：G1 期間看過的七項**全數 REJECTED**，
@@ -34,10 +35,10 @@ newly-discovered（7 項）   QUALIFIED 3 ｜ REJECTED 2 ｜ INSUFFICIENT 2
 |---|---|---|---|---|---|---|---|---|
 | **L1** 對話入口 | ✔ N8 | — | — | — | ✔ 無所獲 | ✔ N7 | ✔ 無所獲 | — |
 | **L2** 檢索/決策 | ✔ N8 | — | — | — | — | — | — | — |
-| **L3** 面向設定 | ✔ P4 | ✔ N6 | ✖ 未掃 | ✔ P4／P5 | — | — | — | ✔ N6 |
-| **L4** 引擎狀態 | ✔ N9 | — | ✖ 未掃 | ✔ N7 | — | ✔ N7 | ✔ N9 | ✔ N6 |
+| **L3** 面向設定 | ✔ P4 | ✔ N6 | ✔ N10（無所獲） | ✔ P4／P5 | — | — | — | ✔ N6 |
+| **L4** 引擎狀態 | ✔ N9 | — | ✔ N11 | ✔ N7 | — | ✔ N7 | ✔ N9 | ✔ N6 |
 | **L5** API client | — | ✔ P6 | — | — | ✔ 無所獲（純 Python 預設值） | — | ✔ 無所獲（`_validate_identity` 僅檢查非空） | — |
-| **L6** 平台 authority | — | ✔ N1／N2／P3 | ✔ P1／P7 | ✔ 部分（`bills` 建表 migration 不在 repo） | ✔ N1／N2 | — | — | ✔ N1／N2 |
+| **L6** 平台 authority | — | ✔ N1／N2／P3 | ✔ P1／P7 | ✔ N12（全庫掃描，見下） | ✔ N1／N2 | — | — | ✔ N1／N2 |
 | **L7** 身分/斷言 | — | — | — | — | — | — | ✔ N3／N4／N5 | ✔ N3 |
 | **L8** chatbot 持久層 | — | — | — | ✔ N7（`form_sessions`） | — | ✔ N7 | — | — |
 
@@ -45,15 +46,30 @@ newly-discovered（7 項）   QUALIFIED 3 ｜ REJECTED 2 ｜ INSUFFICIENT 2
 ✔ 已掃    ✖ 未掃    — 該格不適用
 ```
 
-⚠️ **F-4 停止規則的誠實聲明**：
+### F-4 停止規則：**scope 已補完**（程序義務，非研究選擇）
+
+初版留下三個未掃格。業主裁定：**凡本來就在 `ad12269` 凍結 scope 內者，依 stopping rule 必須補完**
+——`L3/L4 × ③ state machines` 與 `L6 × ④ DB constraints` 皆在 F-1／F-2 的凍結範圍內，
+故已於本版補掃（N10／N11／N12），**非**看到結果後才擴大範圍。
 
 ```text
-✅ 本輪**未**在找到第一個 QUALIFIED 後停止——N1 之後仍續掃 L7／L8 並產出 N3～N9
-✅ 正面結論（存在 3 個 qualified source）成立，且不受未掃格影響
-❌ 本輪**不宣稱**負面結論：L3／L4 的 ③ state machines 未掃、
-   L6 的 ④ 因 legacy 表無 migration 而只能部分查核
-   → **不得**寫成「audited scope 內沒有其他 qualified source」
+✅ 本輪**未**在找到第一個 QUALIFIED 後停止——N1 之後仍續掃 L7／L8，並回頭補完三個未掃格
+✅ 正面結論（3 個 qualified source）成立
+⚠️ 負面結論的**界線**：可說「在已完成的 audited scope 內未再找到其他 qualified source」，
+   **仍不得**寫成「production 沒有」——F-1 已自陳本 scope 未證明覆蓋整個 relevant authority surface，
+   且 legacy 表（含 `bills`）的建表 DDL 不在 repo，該部分**永遠**只能記為查不到（≠ 不存在）
 ```
+
+### 補掃結果（N10／N11／N12）
+
+| id | source | 掃查結果 | disposition |
+|---|---|---|---|
+| **N10** | L3 × ③：面向設定是否宣告狀態機 | **無所獲**。`answer_mode`／`topic_scope` 皆為帶 code 預設的設定值（`services/conversational_config.py:29,38,115,119`），無狀態與轉移定義。另見 `by_category` 索引（`:161-167`）＝以 `topic_scope.category` 建的分類路由索引 | 無 source 可判；`by_category` 併入 **N8**（E4 不成立，分類命中） |
+| **N11** | L4 × ③：會話狀態機 | `form_sessions.state` 的轉移**由 SQL WHERE 子句守衛**：完成動作為 `UPDATE ... SET state='COMPLETED' ... WHERE ... AND state='COLLECTING'`（`services/conversational_engine.py:488-489`；載入與建立見 `:450,471,481`）。即「非 COLLECTING 不能被完成」為 runtime 強制 | **INSUFFICIENT_EVIDENCE（E3）**——與 N7 同因：講的是會話生命週期，非新 entry 的 applicability |
+| **N12** | L6 × ④：jgb2 全部 migration 的 enum／check 約束 | **決定性負面**：`grep -rc "->enum(" database/migrations/*.php` **零命中**；`CHECK (` 亦零命中；`App\Bill` **無** `$casts` 定義 | 無 source 可判。⚠️ 此結果**強化** P1／P2／P7 的 E1 判定：該層**根本不存在** DDL 級枚舉約束，故常數集無論如何都不會是 enforcement |
+
+⚠️ N12 是本輪唯一一個**可以說得比較滿**的負面：在 repo 內**所有** migration 中，
+enum／check 約束的數量是 **0**。但它仍**不涵蓋** legacy 表的原始 DDL。
 
 ---
 
@@ -206,6 +222,7 @@ D1 側需要的是新的 information shape，本輪未找到。
 ❌ 未設計任何 member（D1／D3／組合皆無）
 ❌ 未宣稱 positive-proof architecture 成立
 ❌ 未改任何 family disposition（D1／D3 皆維持 INSUFFICIENT_EVIDENCE）
-❌ 未宣稱「audited scope 內沒有其他 qualified source」（F-4：仍有未掃格）
+⚠️ scope 已補完（N10／N11／N12），故**可**說「在已完成的 audited scope 內未再找到其他 qualified source」；
+   **仍不得**說「production 沒有」——legacy 表 DDL 不在 repo，且 F-1 未證明覆蓋整個 authority surface
 ❌ 未動 production；未產測資；ruler 0.058928 仍凍結未用
 ```
