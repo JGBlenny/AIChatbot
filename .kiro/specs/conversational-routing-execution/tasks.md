@@ -778,7 +778,11 @@ anomaly   frozen cases   secondary dispatch = 0
   不進本 spec 的修復迴圈。
   **🔍V 理由**：本任務的結論直接決定整個 spec 的優先序走向。
   _Requirements: 3.1, 3.3, 3.4, 3.5_
-  ⏳ **獨立驗證：待派**（結果補記於 `c4a-classification-result.md`）
+  ✅ **獨立驗證：CONFIRMED**（fresh verifier，2026-08-24，covered bytes = `8968986`）。
+  它另注入 probe 逐節點重建判斷，並實做三組對抗破壞（翻轉 anomaly dispatch 期望／
+  改綁他筆 fixture／drop required key）皆如期變紅 → 證明判型由 execution facts 驅動。
+  ⚠️ **其後依 advisories A-1／A-2／A-3 之文字修正屬 post-verifier owner adjudication**，
+  **未**經該 verifier 覆核；implementation／test bytes 與判型輸入皆未更動，故不重跑 verifier。
 
   **結果**：見 `c4a-classification-result.md`——四案皆抵達 frozen 流程圖的 **PASS 節點**
   → **C4a PASS**；`(a) 0/4｜(b) 0/4｜(c) 0/4` → **不觸發 Req.3.4 降級**。
