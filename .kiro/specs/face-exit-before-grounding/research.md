@@ -306,3 +306,99 @@ reroute 殘留                       強證據支持排除，正式判定留 R1
 `billing_anomaly` 從未實際被進場過。F-2 對 `billing_anomaly` 的「也會 switch」是讀規則得出的，
 **必須由 R1 以 diagnostic invocation 實測**，否則 `RESPONSIBILITY_GAP_CONFIRMED`
 的關鍵支柱只有一半。
+
+---
+
+## 8. R1 first execution（**diagnostic reproduction**，2026-08-25）
+
+> 協議：`r1-protocol-frozen.md`（**先於本次執行 commit**，`535a2e1`）
+> evidence：`evidence/r1-first-execution.json` ＋ `evidence/r1-first-execution-stdout.log`
+> 預算：`target_scope_calls = 9`（上限 12）／`all_provider_calls = 18`（上限 30）／`retries = 0`
+> query sha1（前 16）：`c0d220cc3f1d47cb`
+
+### 8.1 Goal A：bill_diagnosis 的 reroute residue → **FALSIFIED**
+
+3 次 repetition，每次都捕到兩次 brain 呼叫（entry #1 直達／entry #2 分類路由）：
+
+| rep | session rows | call#1 | call#2 |
+|---|---|---|---|
+| 1 | 761／762 皆 `bill_diagnosis`・`asked=0`・COMPLETED | sys `2285acc5…` user `f045d139…` → **switch** | 同 digest → **switch** |
+| 2 | 763／764 同上 | 同 digest → **switch** | 同 digest → **switch** |
+| 3 | 765／766 同上 | 同 digest → **switch** | 同 digest → **switch** |
+
+```text
+七欄比對   face identity   兩次皆 bill_diagnosis（session row 的 config_key 與 rules digest 一致）
+           rules digest    b2dfdc465e1182a5（888 字）— 六次呼叫全同
+           sys ctx digest  d1f88c90a2e0c9d2（key=條件診斷：帳單）— 六次呼叫全同
+           state           collected={}／asked_count=0／recommended=False — 全同
+           query           逐字相同
+           history         六次皆**無**【最近對話】區塊
+           scope result    **6/6 switch**（取自回應 JSON 的原始值，正規化前）
+```
+
+⇒ 第二次進場的輸入除 session row id／生命週期外**逐位元等價**，判定亦相同。
+**reroute residue → FALSIFIED**（協議 §5 判準）。
+
+⇒ 併帶：`bill_diagnosis` 對本 query 的拒絕為 **6/6 → stable observed rejection**。
+
+### 8.2 Goal B：billing_anomaly 的 runtime 判定 → **2/3 switch**
+
+以 production `_preentry_routable` 判定 seam，同一句 query：
+
+```text
+rep1  switch   {"action":"ask","scope":"switch", next_question:"…需要帳單編號或合約編號/物件名稱…"}
+rep2  **stay** {"action":"ask","scope":"stay",  next_question:"…是帳單金額不對嗎？還是有其他異常？"}
+rep3  switch   {"action":"ask","scope":"switch", next_question:"…這筆帳單的編號或相關合約編號是什麼？"}
+```
+
+依協議 §3：**2/3 switch ＝ rejection reproduced, stability not established**。
+
+⚠️ **F-2 對 billing_anomaly 的「一定 switch」推論，被 runtime 反證為「不一定」。**
+
+### 8.3 事前揭露的 confounder **已成真**，且是 B 的首要保留
+
+協議 §1 事前寫下兩個 seam 的 system-context key 分歧。實測 digest：
+
+```text
+bill_diagnosis    in-session key=條件診斷：帳單 → d1f88c90a2e0c9d2
+                  pre-entry  key=bill_diagnosis → d1f88c90a2e0c9d2   （相同：都落回 base）
+billing_anomaly   in-session key=帳單異常       → **2158ebdc2d8fe7e6**
+                  pre-entry  key=billing_anomaly → d1f88c90a2e0c9d2   （**不同**：落回 base）
+```
+
+⇒ **Goal B 實測時，billing_anomaly 拿到的是 base system context，
+不是 in-session 會拿到的「帳單異常」領域脈絡。**
+故 B 的 2/3 **不能**直接當成「in-session 的 billing_anomaly 也會這樣判」。
+
+### 8.4 對裁決表的對位（**不自行解釋，提請裁示**）
+
+協議 §5 的四列裡：
+
+```text
+列1  需要「billing_anomaly switch」——實測為 2/3，**非**一致 switch
+列2  需要「billing_anomaly stay」——實測**也不是**一致 stay
+列3  reroute 輸入實質不同——**已排除**（8.1 逐位元等價）
+列4  「LLM 結果不穩定」→ INSUFFICIENT_EVIDENCE——§3 對 2/3 的定義是
+     「reproduced, stability not established」，與「unstable（1/3）」**不是同一格**
+```
+
+⇒ 觀測結果落在列 1 與列 4 之間，凍結的表**沒有涵蓋這一格**。
+**本檔不自行補格**（那正是「臨場發明分類」）。目前 outcome 維持 **`INSUFFICIENT_EVIDENCE`**。
+
+提請裁示的兩個選項（互斥）：
+
+```text
+(a) 直接裁定 2/3 在本表如何對位（例如視為未達列 1 的門檻 → 維持 INSUFFICIENT_EVIDENCE）
+(b) 先移除 8.3 的 confounder 再判：以 **in-session 的 system-context key**（帳單異常）
+    重跑 B 三次（+3 次 target 呼叫）。⚠️ 這會是**變體 seam**，須先凍結為 B′ 再跑，
+    且其結果**不得**回填 B 的原始紀錄。
+```
+
+### 8.5 本次可以確定的三件事
+
+```text
+✅ reroute residue                      FALSIFIED
+✅ bill_diagnosis 對本 query 的拒絕      stable（6/6）
+❌ 「兩個 Face 都拒絕」                  **尚未成立**——billing_anomaly 2/3，且帶 confounder
+⇒ RESPONSIBILITY_GAP_CONFIRMED **不得**套用
+```

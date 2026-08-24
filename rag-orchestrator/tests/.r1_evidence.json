@@ -1,0 +1,350 @@
+{
+  "protocol": "r1-protocol-frozen.md",
+  "query": "幫我查點退帳單金額",
+  "query_sha": "c0d220cc3f1d47cb",
+  "repetitions": 3,
+  "goal_a": [
+    {
+      "repetition": 1,
+      "session_id": "r1-a-1-add42126",
+      "http_status": 200,
+      "brain_calls": [
+        {
+          "model": "gpt-4o",
+          "temperature": 0.4,
+          "max_tokens": 400,
+          "system_sha": "2285acc53f410396",
+          "system_len": 1737,
+          "user_sha": "f045d139cadedf95",
+          "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+          "query_in_prompt": true,
+          "history_block": null,
+          "scope_result_raw": "switch",
+          "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{},\"next_question\":\"請提供該帳單的編號或相關合約編號、物件名稱，以便進行查詢。\",\"scope\":\"switch\",\"face\":\"\"}"
+        },
+        {
+          "model": "gpt-4o",
+          "temperature": 0.4,
+          "max_tokens": 400,
+          "system_sha": "2285acc53f410396",
+          "system_len": 1737,
+          "user_sha": "f045d139cadedf95",
+          "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+          "query_in_prompt": true,
+          "history_block": null,
+          "scope_result_raw": "switch",
+          "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{},\"next_question\":\"請提供帳單編號或相關合約編號，讓我幫您查詢。\",\"scope\":\"switch\",\"face\":\"\"}"
+        }
+      ],
+      "session_rows": [
+        {
+          "row_id": 761,
+          "state": "COMPLETED",
+          "config_key": "bill_diagnosis",
+          "collected_fields": {},
+          "asked_count": 0
+        },
+        {
+          "row_id": 762,
+          "state": "COMPLETED",
+          "config_key": "bill_diagnosis",
+          "collected_fields": {},
+          "asked_count": 0
+        }
+      ],
+      "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？"
+    },
+    {
+      "repetition": 2,
+      "session_id": "r1-a-2-2fb57c47",
+      "http_status": 200,
+      "brain_calls": [
+        {
+          "model": "gpt-4o",
+          "temperature": 0.4,
+          "max_tokens": 400,
+          "system_sha": "2285acc53f410396",
+          "system_len": 1737,
+          "user_sha": "f045d139cadedf95",
+          "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+          "query_in_prompt": true,
+          "history_block": null,
+          "scope_result_raw": "switch",
+          "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{},\"next_question\":\"請提供帳單編號或合約編號，以便進行查詢。\",\"scope\":\"switch\",\"face\":\"\"}"
+        },
+        {
+          "model": "gpt-4o",
+          "temperature": 0.4,
+          "max_tokens": 400,
+          "system_sha": "2285acc53f410396",
+          "system_len": 1737,
+          "user_sha": "f045d139cadedf95",
+          "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+          "query_in_prompt": true,
+          "history_block": null,
+          "scope_result_raw": "switch",
+          "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{},\"next_question\":\"請提供該帳單的編號或相關合約編號、物件名稱，以便進行查詢。\",\"scope\":\"switch\",\"face\":\"\"}"
+        }
+      ],
+      "session_rows": [
+        {
+          "row_id": 763,
+          "state": "COMPLETED",
+          "config_key": "bill_diagnosis",
+          "collected_fields": {},
+          "asked_count": 0
+        },
+        {
+          "row_id": 764,
+          "state": "COMPLETED",
+          "config_key": "bill_diagnosis",
+          "collected_fields": {},
+          "asked_count": 0
+        }
+      ],
+      "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？"
+    },
+    {
+      "repetition": 3,
+      "session_id": "r1-a-3-246f2f75",
+      "http_status": 200,
+      "brain_calls": [
+        {
+          "model": "gpt-4o",
+          "temperature": 0.4,
+          "max_tokens": 400,
+          "system_sha": "2285acc53f410396",
+          "system_len": 1737,
+          "user_sha": "f045d139cadedf95",
+          "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+          "query_in_prompt": true,
+          "history_block": null,
+          "scope_result_raw": "switch",
+          "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{},\"next_question\":\"請提供帳單編號或合約編號，讓我幫您查詢該帳單的詳細資訊。\",\"scope\":\"switch\",\"face\":\"\"}"
+        },
+        {
+          "model": "gpt-4o",
+          "temperature": 0.4,
+          "max_tokens": 400,
+          "system_sha": "2285acc53f410396",
+          "system_len": 1737,
+          "user_sha": "f045d139cadedf95",
+          "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+          "query_in_prompt": true,
+          "history_block": null,
+          "scope_result_raw": "switch",
+          "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{},\"next_question\":\"請提供該帳單的編號或相關合約編號，以便進一步查詢。\",\"scope\":\"switch\",\"face\":\"\"}"
+        }
+      ],
+      "session_rows": [
+        {
+          "row_id": 765,
+          "state": "COMPLETED",
+          "config_key": "bill_diagnosis",
+          "collected_fields": {},
+          "asked_count": 0
+        },
+        {
+          "row_id": 766,
+          "state": "COMPLETED",
+          "config_key": "bill_diagnosis",
+          "collected_fields": {},
+          "asked_count": 0
+        }
+      ],
+      "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？"
+    }
+  ],
+  "goal_b": [
+    {
+      "repetition": 1,
+      "routable": false,
+      "verdict": "switch",
+      "brain_calls": [
+        {
+          "model": "gpt-4o",
+          "temperature": 0.4,
+          "max_tokens": 400,
+          "system_sha": "42426ab2a7999f29",
+          "system_len": 1450,
+          "user_sha": "f045d139cadedf95",
+          "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+          "query_in_prompt": true,
+          "history_block": null,
+          "scope_result_raw": "switch",
+          "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{},\"next_question\":\"請問您是要查哪一筆帳單的金額？我需要帳單編號或合約編號/物件名稱來協助您。\",\"scope\":\"switch\",\"face\":\"\"}"
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "routable": true,
+      "verdict": "stay",
+      "brain_calls": [
+        {
+          "model": "gpt-4o",
+          "temperature": 0.4,
+          "max_tokens": 400,
+          "system_sha": "42426ab2a7999f29",
+          "system_len": 1450,
+          "user_sha": "f045d139cadedf95",
+          "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+          "query_in_prompt": true,
+          "history_block": null,
+          "scope_result_raw": "stay",
+          "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{},\"next_question\":\"請問您遇到的問題是帳單金額不對嗎？還是有其他異常？\",\"scope\":\"stay\",\"face\":\"\"}"
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "routable": false,
+      "verdict": "switch",
+      "brain_calls": [
+        {
+          "model": "gpt-4o",
+          "temperature": 0.4,
+          "max_tokens": 400,
+          "system_sha": "42426ab2a7999f29",
+          "system_len": 1450,
+          "user_sha": "f045d139cadedf95",
+          "user_prompt": "【已知欄位】{}\n【asked_count】0\n【已給過推薦】False\n【使用者最新訊息】幫我查點退帳單金額\n\n請依規則輸出 JSON。",
+          "query_in_prompt": true,
+          "history_block": null,
+          "scope_result_raw": "switch",
+          "raw_json": "{\"action\":\"ask\",\"extracted_fields\":{},\"next_question\":\"請問這筆帳單的編號或相關合約編號是什麼？\",\"scope\":\"switch\",\"face\":\"\"}"
+        }
+      ]
+    }
+  ],
+  "context_digests": {
+    "bill_diagnosis": {
+      "rules_digest": "b2dfdc465e1182a5",
+      "rules_len": 888,
+      "in_session_ctx_key": "條件診斷：帳單",
+      "in_session_ctx_digest": "d1f88c90a2e0c9d2",
+      "preentry_ctx_key": "bill_diagnosis",
+      "preentry_ctx_digest": "d1f88c90a2e0c9d2"
+    },
+    "billing_anomaly": {
+      "rules_digest": "aefa054899cdd7e6",
+      "rules_len": 698,
+      "in_session_ctx_key": "帳單異常",
+      "in_session_ctx_digest": "2158ebdc2d8fe7e6",
+      "preentry_ctx_key": "billing_anomaly",
+      "preentry_ctx_digest": "d1f88c90a2e0c9d2"
+    }
+  },
+  "all_provider_calls": 18,
+  "target_scope_calls": 9,
+  "all_call_log": [
+    {
+      "model": "gpt-4o",
+      "temperature": 0.4,
+      "max_tokens": 400,
+      "target": true
+    },
+    {
+      "model": "gpt-4o",
+      "temperature": 0.4,
+      "max_tokens": 400,
+      "target": true
+    },
+    {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "max_tokens": 32,
+      "target": false
+    },
+    {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "max_tokens": 32,
+      "target": false
+    },
+    {
+      "model": "gpt-3.5-turbo",
+      "temperature": 0.2,
+      "max_tokens": 800,
+      "target": false
+    },
+    {
+      "model": "gpt-4o",
+      "temperature": 0.4,
+      "max_tokens": 400,
+      "target": true
+    },
+    {
+      "model": "gpt-4o",
+      "temperature": 0.4,
+      "max_tokens": 400,
+      "target": true
+    },
+    {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "max_tokens": 32,
+      "target": false
+    },
+    {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "max_tokens": 32,
+      "target": false
+    },
+    {
+      "model": "gpt-3.5-turbo",
+      "temperature": 0.2,
+      "max_tokens": 800,
+      "target": false
+    },
+    {
+      "model": "gpt-4o",
+      "temperature": 0.4,
+      "max_tokens": 400,
+      "target": true
+    },
+    {
+      "model": "gpt-4o",
+      "temperature": 0.4,
+      "max_tokens": 400,
+      "target": true
+    },
+    {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "max_tokens": 32,
+      "target": false
+    },
+    {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "max_tokens": 32,
+      "target": false
+    },
+    {
+      "model": "gpt-3.5-turbo",
+      "temperature": 0.2,
+      "max_tokens": 800,
+      "target": false
+    },
+    {
+      "model": "gpt-4o",
+      "temperature": 0.4,
+      "max_tokens": 400,
+      "target": true
+    },
+    {
+      "model": "gpt-4o",
+      "temperature": 0.4,
+      "max_tokens": 400,
+      "target": true
+    },
+    {
+      "model": "gpt-4o",
+      "temperature": 0.4,
+      "max_tokens": 400,
+      "target": true
+    }
+  ]
+}
