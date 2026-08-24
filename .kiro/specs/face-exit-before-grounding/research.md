@@ -587,3 +587,99 @@ INSUFFICIENT_EVIDENCE             ？ 就 descriptive discovery 而言，證據�
 ❌ 是否該讓它被提出（**normative**，屬 routing-authority-model）
 ❌ 任何修法——root cause 於 entry 側尚未 adjudicated
 ```
+
+---
+
+## 12. entry nomination chain tracing（**零 OpenAI**，2026-08-25）
+
+> 授權範圍：仍是 descriptive——「**現行系統為什麼實際上沒有提出已存在的 owner**」，
+> 不是「未來應該由誰決定 owner」。
+
+### 12.1 提名鏈的實際依據
+
+```text
+query
+→ 檢索 top-1（本 query 實測：id 3519「點退帳單金額計算 押金結算」sim=0.947）
+→ _knowledge_category(best)：**categories 多值優先**，無則退 category 單值（chat.py:722-734）
+→ config_for_category(cat)：只索引 topic_scope.mode=='category' 且 enabled 的面向
+→ facet_entry_eligible：similarity ≥ form_trigger_threshold（0.75）
+→ 抑制器：_instance_hint_suppressed ／ _preentry_routable（後者預設 false）
+→ entry proposal
+```
+
+### 12.2 六個問題的實查答案
+
+```text
+Q1 contract_closeout 在可被提名的 Face index 內嗎？
+   **在。** topic_scope={mode:category, category:退租收尾}，enabled=True
+   → 落在 by_category['退租收尾']；且該分類實際有 **11 筆** active 知識。
+
+Q2 什麼證據才能提名它？
+   檢索 top-1 的 categories（或 category）**含「退租收尾」** 且 similarity ≥ 0.75。
+
+Q3 為何 diag-01 的 query 只導向 bill_diagnosis？
+   top-1 id 3519 categories = ['合約管理', '條件診斷：帳單'] → 命中 bill_diagnosis；
+   top-2 id 3518 categories = ['合約管理'] → 不對應任何面向。
+   另有 id 4657「合約的點退帳單金額 查點退金額」categories = ['條件診斷：帳單']
+   ——**與本 query 幾乎同義的知識，也只掛 bill_diagnosis 的分類**。
+   實查「點退」相關 22 筆中，掛 '退租收尾' 的只有 id 3526（提前解約生效後…）與
+   id 4216（退房後換新租客…），**沒有一筆是在講「查點退帳單金額」**。
+
+Q4 entry layer 看得到 billing_anomaly→contract_closeout 這條 delegation 嗎？
+   **看不到。** 該 delegation 只存在於 persona 規則列的 answer 文字（【本輪範疇 scope】），
+   而 entry 只讀「檢索知識的 categories ＋ 門檻」（§5.1）。兩者無交集。
+
+Q5 有 deterministic suppression 把它排掉嗎？
+   **沒有。** 抑制器只能作用在**已被 category 命中的**面向；
+   contract_closeout 從未被提名，因此不存在「被抑制」這回事。
+
+Q6 固定現行 routing inputs，contract_closeout 在 candidate set 內嗎？
+   **對本 query：不在**（沒有任何檢索到的知識掛 '退租收尾'）。
+   ⚠️ 但對其他 query **可以在**（該索引鍵有 11 筆知識）——
+   故**不得**說它「架構上 unreachable」。這正是第六類刻意不叫 unreachable 的理由。
+```
+
+### 12.3 三種形狀的判定
+
+```text
+A. mapping／metadata 明確缺漏          ⚠️ **部分觀測到，但不得逕稱 defect**
+   事實：與本 query 同義的知識（3519／4657）只掛 '條件診斷：帳單'。
+   要說「應該也掛 退租收尾」就是在**判定誰該擁有**——那是 normative，不屬本線。
+
+B. entry contract 只看 retrieval category，responsibility contract 不參與 nomination
+   ✅ **CONFIRMED**——程式面（§5.1）＋ Q4 實查雙重支持。這是結構性答案。
+
+C. contract_closeout 本可被提名，但 ranking 永遠把別人推上來
+   ✗ **REFUTED**——不是排序問題：能提名它的證據（掛 '退租收尾' 的知識）
+   在本 query 的候選集中**根本不存在**，換排序也提不出來。
+```
+
+### 12.4 缺的那座橋（本輪 discovery correction 的一句話）
+
+```text
+responsibility layer   contract_closeout → STAY 3/3（§11）
+entry layer            observed proposals → bill_diagnosis only（9/9）
+missing bridge         **entry nomination 完全不讀 responsibility contract**；
+                       兩層之間唯一的耦合是「知識列的 categories」這個人工標註
+```
+
+> **問題已從「責任沒有 owner」修正為
+> 「owner 存在，但 responsibility ownership 與 entry nomination 之間
+> 沒有被證實存在可達的橋」。**
+
+### 12.5 升級用的問題（**descriptive 半段已完成；normative 半段尚未送出**）
+
+```text
+本線已回答（descriptive）
+  現行 entry nomination 依賴：檢索 top-1 的 categories ＋ 相似度門檻。
+  contract_closeout 未被提出，因為本 query 的候選知識沒有一筆掛 '退租收尾'，
+  且 entry 從不讀 responsibility contract。
+
+待升級（normative，屬 Responsibility Governance Decision Record）
+  當 responsibility owner 已存在且會接受 query，但現行 entry-routing authority
+  未將其納入／選為候選時，entry nomination 應如何取得 responsibility evidence，
+  以及**哪個 authority 有權決定候選集合**？
+```
+
+⚠️ **尚未送出**：依業主裁示，等 descriptive 段落定稿後再作為 governance input 升級；
+本檔**不**產生 normative 建議、**不**提修法。

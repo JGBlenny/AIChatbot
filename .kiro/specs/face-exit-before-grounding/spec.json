@@ -4,7 +4,7 @@
   "updated_at": "2026-08-25T00:00:00Z",
   "phase": "discovery",
   "status": "active",
-  "outcome": "INSUFFICIENT_EVIDENCE",
+  "outcome": "OWNER_EXISTS_BUT_NOT_PROPOSED",
   "language": "zh-TW",
   "project_description": "Discovery spec：Face 已成功進場後，production brain 於 grounding 執行前判 scope=switch、導致該次 Face execution 未走到 answer stage。本 spec 只做判別——execution／contract defect，還是兩套既有 authority contract 的真實衝突——不預設修法、不選 authority winner。發現於 conversational-routing-execution 的 C4b（6.3 簽核，gate CLOSED），正式診斷分類 face_exit_before_grounding。",
   "dependency": {
@@ -41,5 +41,5 @@
     "completed": false,
     "tasks_completed": []
   },
-  "outcome_note": "RESPONSIBILITY_GAP_CONFIRMED 已由 B″ **反證**（contract_closeout 3/3 stay）。實測形狀為『owner exists but unreachable / not proposed by current entry-routing authority』，R5 五類皆不對應——待業主裁定是否新增第六類。descriptive discovery 的證據面已相當充分。"
+  "outcome_note": "業主 2026-08-25 裁定：RESPONSIBILITY_GAP_CONFIRMED 為 REFUTED（B″ 3/3 stay）；新增並套用第六類 OWNER_EXISTS_BUT_NOT_PROPOSED。更強的 OWNER_UNREACHABLE_BY_CURRENT_ENTRY_CONTRACT 保留、現在不得使用。descriptive tracing 仍在本線權限內續行（entry nomination chain）。"
 }

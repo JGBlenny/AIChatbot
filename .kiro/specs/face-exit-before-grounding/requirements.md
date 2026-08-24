@@ -89,11 +89,38 @@ producer 與 consumer 的 contract mismatch
 IMPLEMENTATION_DEFECT_CONFIRMED
 CONTRACT_DEFECT_CONFIRMED
 AUTHORITY_CONFLICT_CONFIRMED
-RESPONSIBILITY_GAP_CONFIRMED     ← 業主 2026-08-25 新增
+RESPONSIBILITY_GAP_CONFIRMED     ← 業主 2026-08-25 新增（**其後由 B″ 反證**）
+OWNER_EXISTS_BUT_NOT_PROPOSED    ← 業主 2026-08-25 新增（第六類）
 INSUFFICIENT_EVIDENCE
 ```
 
-**目前 outcome：`INSUFFICIENT_EVIDENCE`**（R1／R3／R4 未完成；第五類已存在但**不得提前套用**）。
+### `OWNER_EXISTS_BUT_NOT_PROPOSED`（業主定義，逐字）
+
+> 已找到至少一個 Face，在其 authoritative、production-equivalent in-session context 下
+> **穩定接受**該 query；但實際 entry-routing path 在**已觀測的重現**中未提出該 Face，
+> 而提出其他會拒絕該 query 的 Face。
+
+三條護欄：
+
+```text
+❌ 不等於 contract_closeout 應取得更高 routing priority
+❌ 不等於目前 routing implementation 一定有 bug
+❌ 不等於已證明 contract_closeout 在架構上 unreachable
+```
+
+⚠️ **保留但現在不得使用**的更強子結論：若後續 static tracing 證明現行 entry mechanism
+**根本沒有任何 production path** 能從本 query 提出 `contract_closeout`，才可升級為
+`OWNER_UNREACHABLE_BY_CURRENT_ENTRY_CONTRACT`。
+
+**目前 outcome（2026-08-25，業主裁定）**：
+
+```text
+RESPONSIBILITY_GAP_CONFIRMED    **REFUTED**（B″：contract_closeout 3/3 stay）
+OWNER_EXISTS_BUT_NOT_PROPOSED   **CONFIRMED**
+```
+
+⚠️ 不再是 `INSUFFICIENT_EVIDENCE`——現在不是「不知道發生什麼」，
+而是原分類空間漏了一個已被實驗辨識出的形狀。
 
 ### `RESPONSIBILITY_GAP_CONFIRMED`（**操作化定義**，2026-08-25 第二版）
 
