@@ -56,7 +56,10 @@ import pytest
 pytestmark = pytest.mark.e2e
 
 # ── 凍結參數（與 c4b-run-parameters-frozen.md 逐項對應；此處為斷言基準，不是預設值）──
-FROZEN_BRAIN = {"model": "gpt-4o", "temperature": 0.4, "max_tokens": 400}
+# ⚠️ 2026-08-26「統一 mini」後，brain 與第 2 輪合成**同為 gpt-4o-mini**，
+#    故 target-call 辨識**不得再以 model 名區分**，一律以 max_tokens=400 認 brain 輪。
+FROZEN_BRAIN = {"model": os.getenv("PRESALES_SYNTH_MODEL", "gpt-4o-mini"),
+                "temperature": 0.4, "max_tokens": 400}
 FROZEN_SYNTH = {"model": "gpt-4o-mini", "temperature": 0.2, "max_tokens": 800}
 RUNS_PER_CASE = 3
 NOMINAL_CALLS = 24

@@ -33,7 +33,10 @@ PERSONA = "pm_billing_anomaly"
 EXPECTED_INSESSION_CTX = "2158ebdc2d8fe7e6"     # 協議 §3 的成立條件
 EXPECTED_RULES_DIGEST = "aefa054899cdd7e6"      # 以此區分 billing_anomaly 的那次呼叫
 
-FROZEN_BRAIN = {"model": "gpt-4o", "temperature": 0.4, "max_tokens": 400}
+# ⚠️ 2026-08-26「統一 mini」後，brain 與第 2 輪合成**同為 gpt-4o-mini**，
+#    故 target-call 辨識**不得再以 model 名區分**，一律以 max_tokens=400 認 brain 輪。
+FROZEN_BRAIN = {"model": os.getenv("PRESALES_SYNTH_MODEL", "gpt-4o-mini"),
+                "temperature": 0.4, "max_tokens": 400}
 REPETITIONS = 3
 MAX_TARGET_SCOPE_CALLS = 8
 MAX_ALL_PROVIDER_CALLS = 20

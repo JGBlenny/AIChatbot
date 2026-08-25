@@ -32,13 +32,16 @@ TURN2 = "678"                      # 方法級 mock 的合約 id（決定性）
 SEED, MID, TARGET = "bill_diagnosis", "billing_anomaly", "contract_closeout"
 EXPECTED_CHAIN = [(SEED, "switch", MID), (MID, "switch", TARGET), (TARGET, "stay", None)]
 
-FROZEN_BRAIN = {"model": "gpt-4o", "temperature": 0.4, "max_tokens": 400}
+# ⚠️ 2026-08-26「統一 mini」後，brain 與第 2 輪合成**同為 gpt-4o-mini**，
+#    故 target-call 辨識**不得再以 model 名區分**，一律以 max_tokens=400 認 brain 輪。
+FROZEN_BRAIN = {"model": os.getenv("PRESALES_SYNTH_MODEL", "gpt-4o-mini"),
+                "temperature": 0.4, "max_tokens": 400}
 REPETITIONS = 3
 MAX_TARGET_CALLS, MAX_ALL_CALLS = 30, 60
 INFRA_RETRIES = 2
 _INFRA = ("timeout", "timed out", "rate limit", "429", "500", "502", "503", "504", "connection")
 
-EVIDENCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".c4b_gated_v5_evidence.json")
+EVIDENCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".p3_true_brain_evidence.json")
 
 
 def _conn_kwargs():
@@ -180,14 +183,13 @@ def rig(client):
     real_cc = provider.chat_completion
     from services import responsibility as resp_mod
     from services.llm_answer_optimizer import LLMAnswerOptimizer
-    from tests.support.resolver_capture import build_hop_evidence
+    from tests.support.resolver_capture import build_hop_evidence, classify_delegate_drop
     real_resolve = resp_mod.resolve_entry_candidate
-    real_step = LLMAnswerOptimizer.conversational_step
+    real_step = LLMAnswerOptimizer.conversational_step_result
     state = {"all": [], "target": [], "resolutions": [], "raw": [], "hops": []}
 
     def spy_cc(*a, **kw):
-        is_target = (kw.get("model") == FROZEN_BRAIN["model"]
-                     and kw.get("max_tokens") == FROZEN_BRAIN["max_tokens"])
+        is_target = kw.get("max_tokens") == FROZEN_BRAIN["max_tokens"]
         if len(state["all"]) + 1 > MAX_ALL_CALLS:
             raise BudgetExceeded(f"all_provider_calls > {MAX_ALL_CALLS}")
         if is_target and len(state["target"]) + 1 > MAX_TARGET_CALLS:
@@ -213,23 +215,32 @@ def rig(client):
         仍只回正規化後的 dict。
         """
         mark = len(state["raw"])
-        normalized = await real_step(self, rules, system_md, st, msg, **kw)
+        result = await real_step(self, rules, system_md, st, msg, **kw)   # 任務 8：回 StepResult
+        normalized = result.payload if result else None
         raw = state["raw"][mark] if len(state["raw"]) > mark else None
         specs = kw.get("delegates") or []
         allowed = [d if isinstance(d, str) else d[0] for d in specs]
         if allowed:                              # 只記 resolver 的那幾跳（進場後的 brain 不帶白名單）
             state["hops"].append(build_hop_evidence("(pending)", raw, allowed, normalized))
-        return normalized
+        # ★ P3-B：即使 payload 被 action validator 擋掉，parsed scope 仍要看得到
+        state.setdefault("parsed", []).append({
+            "payload_is_none": normalized is None,
+            "scope": getattr(result, "scope", None),
+            "delegate": getattr(result, "delegate_facet_key", None),
+            "reject_reason": getattr(result, "reject_reason", None),
+            "raw_scope": classify_delegate_drop(raw, allowed or ["_"], normalized).get("raw_scope"),
+        })
+        return result
 
     provider.chat_completion = spy_cc
     resp_mod.resolve_entry_candidate = spy_resolve
-    LLMAnswerOptimizer.conversational_step = spy_step
+    LLMAnswerOptimizer.conversational_step_result = spy_step
     global _RIG
     _RIG = state
     yield state
     provider.chat_completion = real_cc
     resp_mod.resolve_entry_candidate = real_resolve
-    LLMAnswerOptimizer.conversational_step = real_step
+    LLMAnswerOptimizer.conversational_step_result = real_step
 
 
 def _session_rows(sid):
@@ -273,7 +284,18 @@ def _cleanup(sid):
 
 
 def _ruler():
-    """沿用 C4b v2 尺；期望值取自方法級 contracts mock（決定性）。"""
+    """**P3 起改用 v6 regression ruler**（`tests/support/v6_regression_ruler.py`，已凍結）。
+
+    ⚠️ 舊的 v2 尺（下方保留供追溯）期望的是 contracts **方法級 mock** 的字面
+    （「25,000」等）；contracts 已於 2026-08-25 遷入 transport 替身，
+    且 formatter 對點退 action **不渲染租金**——那正是 v5 被誤判為 value_not_used 的成因。
+    """
+    from tests.support.v6_regression_ruler import v6_regression_ruler
+    return v6_regression_ruler()
+
+
+def _ruler_v2_superseded():
+    """（已被 v6 取代，保留供追溯，不再使用）"""
     from tests.support.brain_grounding import BrainGroundingAssertion
     return BrainGroundingAssertion(
         case="c4b-gated-resolver", execution_face=TARGET, fixture_bill_id=678,
@@ -289,8 +311,10 @@ def _ruler():
         rationale="grounding 來自 contract_closeout 的 jgb_contracts execution")
 
 
-_EVIDENCE = {"protocol": "c4b-gated-resolver-validation-v5-protocol-frozen.md",
-             "variant": "C4b-gated-resolver-validation-v5", "runs": []}
+_EVIDENCE = {"protocol": "p3-run-parameters-frozen.md",
+             "variant": "P3-true-brain-regression（A：delegation／B：mid-session salvage）",
+             "brain_model_env": os.getenv("PRESALES_SYNTH_MODEL", "(unset→config default)"),
+             "runs": [], "mid_session": []}
 
 
 def _post(client, message, sid):
@@ -380,6 +404,88 @@ def test_gated_resolver_vertical_slice(client, rig):
     _EVIDENCE["verdict"] = "GATED_RESOLVER_VALIDATED" if not failures else "NOT_VALIDATED"
     _EVIDENCE["failures"] = failures
     assert not failures, "五項未同時成立：\n  " + "\n  ".join(failures)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# P3-B：mid-session scope salvage regression（Task 8 新增的 production behavior）
+# ════════════════════════════════════════════════════════════════════════════
+
+MID_SESSION_OFFTOPIC = "我要看團隊成員的權限設定"     # 明顯不屬 contract_closeout 職責
+
+
+def _run_mid_session(client, rig, salvage: str):
+    """三輪：進場 → 給識別碼 → **岔到別領域**；回傳該輪的 parsed 紀錄與控制流觀察。"""
+    os.environ["FACET_SCOPE_SALVAGE"] = salvage
+    sid = f"p3b-{salvage}-{uuid.uuid4().hex[:8]}"
+    parsed_before = len(rig.get("parsed", []))
+    _post(client, QUERY, sid)
+    _post(client, TURN2, sid)
+    r3 = _post(client, MID_SESSION_OFFTOPIC, sid)
+    parsed = rig.get("parsed", [])[parsed_before:]
+    rows = _session_rows(sid)
+    _cleanup(sid)
+    return {"salvage": salvage, "session_id": sid, "http3": r3.status_code,
+            "answer3": (r3.json().get("answer") or "")[:200] if r3.status_code == 200 else None,
+            "parsed_turns": parsed,
+            "session_rows": rows,
+            # 控制流可觀察量：會話是否被關掉（switch 語義）＝ 沒有殘留 COLLECTING
+            "left_collecting": [r["state"] for r in rows if r["state"] == "COLLECTING"]}
+
+
+@pytest.mark.req("conversational-routing-execution:5.2")
+def test_mid_session_scope_salvage(client, rig):
+    """B：raw payload 的 scope=switch 必須活著走到 consumer。
+
+    判準（p3-run-parameters-frozen.md §三）：
+      ① raw payload 確實含 scope=switch
+      ② 即使 action 越界，parsed StepResult.scope 仍為 'switch'
+         ——**若真模型本輪未自然產生越界 action，如實記錄「未觀察到」**，
+           不得以決定性注入冒充（該分支已由 unit 16 條覆蓋）
+      ③ SALVAGE=on 時 observable control flow 真的改變（payload 被擋仍退出）
+      ④ SALVAGE=off 時維持舊行為
+    """
+    prev = os.environ.get("FACET_SCOPE_SALVAGE")
+    try:
+        off = _run_mid_session(client, rig, "false")
+        on = _run_mid_session(client, rig, "true")
+    finally:
+        if prev is None:
+            os.environ.pop("FACET_SCOPE_SALVAGE", None)
+        else:
+            os.environ["FACET_SCOPE_SALVAGE"] = prev
+
+    _EVIDENCE["mid_session"] = [off, on]
+    failures = []
+
+    # ① 真模型在岔題輪是否輸出 switch（raw 層）
+    def _switch_turns(rec):
+        return [t for t in rec["parsed_turns"] if t.get("scope") == "switch"]
+
+    if not _switch_turns(off) and not _switch_turns(on):
+        failures.append("①: 兩次執行的 raw payload 都沒有 scope=switch——"
+                        "本情境未觸發中途切換，B 無法取證（非 salvage 邏輯的紅）")
+
+    # ② action 越界是否自然發生（不得偽造）
+    rejected = [t for rec in (off, on) for t in rec["parsed_turns"] if t["payload_is_none"]]
+    _EVIDENCE["b2_out_of_range_observed"] = bool(rejected)
+    _EVIDENCE["b2_note"] = ("真模型自然產生 action 越界並保住 scope" if rejected else
+                            "**未觀察到** action 越界：本輪真模型輸出皆為合法 action；"
+                            "越界分支由 unit test_step_contract_layers_req.py 覆蓋，不以注入冒充")
+    for t in rejected:
+        if t.get("scope") != t.get("raw_scope"):
+            failures.append(f"②: 越界輪的 parsed scope={t['scope']} 與 raw={t['raw_scope']} 不一致")
+
+    # ③④ 控制流：有越界輪時 on/off 必須不同；沒有時兩者應一致（零回歸）
+    if rejected:
+        if off["left_collecting"] == on["left_collecting"]:
+            failures.append("③: 出現越界輪，但 SALVAGE on/off 的控制流相同——salvage 未生效")
+    else:
+        if off["left_collecting"] != on["left_collecting"]:
+            failures.append("④: 未出現越界輪，SALVAGE 卻改變了控制流——旗標越權")
+
+    _EVIDENCE["b_verdict"] = "B_OK" if not failures else "B_NOT_VALIDATED"
+    _EVIDENCE["b_failures"] = failures
+    assert not failures, "B 未成立：\n  " + "\n  ".join(failures)
 
 
 @pytest.fixture(scope="module", autouse=True)
