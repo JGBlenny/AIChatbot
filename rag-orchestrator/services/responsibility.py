@@ -88,3 +88,21 @@ async def build_responsibility_context(
     return ResponsibilityContext(
         config_key=getattr(config, "key", None), context_key=context_key,
         rules_text=rules_text, system_md=system_md)
+
+
+# ── delegation 白名單（slice 2）────────────────────────────────────────────────
+
+def allowed_delegates(config: Any) -> "tuple[str, ...]":
+    """本面向 contract 宣告的可轉交目標（面向鍵白名單）。
+
+    ⚠️ **白名單是 contract 給的，不是模型給的**：`billing_anomaly → contract_closeout`
+    這條 edge 原本只存在於 persona 的自然語言裡（實測要讀 LLM 輸出才發現），
+    routing 無法使用。本函式讓它成為結構化資料。
+    """
+    spec = getattr(config, "responsibility", None) or {}
+    out: "list[str]" = []
+    for item in spec.get("delegates") or []:
+        target = item.get("target") if isinstance(item, dict) else item
+        if isinstance(target, str) and target and target not in out:
+            out.append(target)
+    return tuple(out)

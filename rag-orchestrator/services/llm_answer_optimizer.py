@@ -867,6 +867,7 @@ class LLMAnswerOptimizer:
         user_message: str,
         faces: Optional[List[str]] = None,
         kb_search: Optional[KbSearch] = None,
+        delegates: Optional[List[str]] = None,
     ) -> Optional[dict]:
         """
         對話式回答 brain（option-routing R14/R15/R19）：structured-output LLM call。
@@ -907,6 +908,15 @@ class LLMAnswerOptimizer:
             # search_kb 工具契約（brain-kb-grounding 元件 3｜R3.1/3.2）：僅在 kb_search 注入時附加，
             # 使 kb_search=None 路徑的 prompt 與現行逐字一致（R1.3 回歸鎖）。落地規則：查了再答、
             # 據結果組話不加庫外事實、NO_MATCH 誠實回退不憑印象補答、答完接回槽位。
+            # delegation 白名單（face-exit-before-grounding slice 2）：**未提供即完全不注入**，
+            #   使既有呼叫點的 prompt 逐字不變（R1.3 回歸鎖）。
+            delegate_note = (
+                "\n\n【轉交對象 delegate_facet_key（僅在 scope=\"switch\" 時）】"
+                f"本領域責任契約允許轉交的對象：{'、'.join(delegates)}。"
+                "若你判定本輪不屬本面向責任，且其中**某一個**明確該接，"
+                "請在 delegate_facet_key 放該鍵；"
+                "**只能從上列選一個**，不得自創或改寫鍵名；無法判定就省略此欄。"
+            ) if delegates else ""
             tool_note = (
                 "\n\n【知識查詢工具 search_kb（僅本輪可用）】"
                 "使用者岔出事實性問題（費用歸屬/時程/規定等）時，先呼叫 search_kb 查知識庫再答，"
@@ -916,7 +926,7 @@ class LLMAnswerOptimizer:
                 "不得自行編造事實。答完岔題後於 next_question 接回槽位收集（先答再接）。"
                 "純槽位填寫、閒聊、可由既有規則回答者不呼叫工具。"
             ) if kb_search is not None else ""
-            system_prompt = f"{system_context_md}\n\n{rules_text}{faces_note}{schema_note}{tool_note}".strip()
+            system_prompt = f"{system_context_md}\n\n{rules_text}{faces_note}{schema_note}{tool_note}{delegate_note}".strip()
             # 對話史（引擎 ask 返回點記入 state.dialog）：brain 必須知道自己問過什麼——
             # 否則純中文名稱回覆對不上槽位、且會原句重問（2026-07-07 線上實測缺陷）。
             # 已鎖定底稿摘要（引擎收斂時記入）：現況值直接取用，不回頭問使用者系統已有的資料。
@@ -975,6 +985,12 @@ class LLMAnswerOptimizer:
                 data.pop('inline_answer', None)
             # scope 正規化（防越界）：非 'switch' 一律視為 'stay'（缺省＝現狀行為，向後相容）
             data['scope'] = 'switch' if data.get('scope') == 'switch' else 'stay'
+            # delegate 正規化（slice 2）：**只接受白名單內、且 scope=switch 時**的目標；
+            #   其餘一律移除——模型不得自創 Face key，也不得在 stay 時指定轉交。
+            _dele = data.get('delegate_facet_key')
+            if not (delegates and data['scope'] == 'switch'
+                    and isinstance(_dele, str) and _dele in set(delegates)):
+                data.pop('delegate_facet_key', None)
             return data
         except Exception as e:
             print(f"❌ conversational_step 失敗（呼叫端降級）：{e}")

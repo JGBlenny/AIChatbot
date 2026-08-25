@@ -40,6 +40,12 @@ class ConversationalConfig:
     # answer_rules：本對話的「收斂作答規則」（如：底稿在手直接答、禁推託語、只有一份時比較請補識別）。
     #   屬對話行為、隨設定走（換面向不消失、新領域不用抄面向脈絡）；收斂組答時附加於系統脈絡後。
     answer_rules: Optional[str] = None
+    # responsibility：**責任契約**（face-exit-before-grounding slice 2）。
+    #   與 grounding_scope 分開，因為它不是執行組態而是「這個面向該不該接」的宣告。
+    #   第一版只用 `delegates`：宣告本面向可把 query 轉交的**白名單**面向鍵。
+    #     {"delegates": [{"target": "billing_anomaly"}, {"target": "contract_closeout"}]}
+    #   ⚠️ 模型只能從此白名單中選 delegate，**不得自行創造 Face key**。
+    responsibility: Dict[str, Any] = field(default_factory=dict)
     # cta_rules：推薦型收斂（cta_mode=force）才附加的 CTA/排版塊（時機仍由程式決定，保持確定性；
     #   內容資料化——業務連結/收束格式不再硬編在共用合成程式）。
     cta_rules: Optional[str] = None
@@ -120,6 +126,7 @@ def _config_from_row(target_user: Optional[List[str]], metadata: Any) -> Optiona
         enabled=md.get("enabled", True),
         answer_rules=md.get("answer_rules"),
         cta_rules=md.get("cta_rules"),
+        responsibility=md.get("responsibility") or {},
     )
 
 
