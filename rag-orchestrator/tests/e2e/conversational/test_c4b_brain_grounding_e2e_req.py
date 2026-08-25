@@ -469,9 +469,14 @@ def _one_run(client, ledger, spec, run_idx, attempt):
                    and c["temperature"] == FROZEN_SYNTH["temperature"]
                    and c["max_tokens"] == FROZEN_SYNTH["max_tokens"] for c in turn2), \
             f"第 2 輪呼叫參數不符凍結的合成組態：{turn2}"
-        assert not [c for c in turn2 if c["model"] == FROZEN_BRAIN["model"]], \
-            (f"第 2 輪出現 brain 模型呼叫——決定性填槽路徑未生效，"
-             f"執行路徑已偏離凍結形狀（harness／exec-path divergence，非 brain 失敗）：{turn2}")
+        # ⚠️ 2026-08-26「統一 mini」後 brain 與合成**同模型**，**不得再以 model 名區分**。
+        #    brain 輪的辨識特徵是 max_tokens=400 ＋ response_format=json_object。
+        assert not [c for c in turn2
+                    if c["max_tokens"] == FROZEN_BRAIN["max_tokens"]
+                    and c.get("has_response_format")], \
+            (f"第 2 輪出現 brain 組態呼叫（max_tokens=400＋json_object）——"
+             f"決定性填槽路徑未生效，執行路徑已偏離凍結形狀"
+             f"（harness／exec-path divergence，非 brain 失敗）：{turn2}")
 
         record = evaluate_brain_grounding(answer, spec)
         _PARTIAL[spec.case].remove(partial)      # 已有完整紀錄，撤下暫存
