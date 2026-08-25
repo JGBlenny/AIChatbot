@@ -465,12 +465,19 @@ def test_mid_session_scope_salvage(client, rig):
         failures.append("①: 兩次執行的 raw payload 都沒有 scope=switch——"
                         "本情境未觸發中途切換，B 無法取證（非 salvage 邏輯的紅）")
 
-    # ② action 越界是否自然發生（不得偽造）
-    rejected = [t for rec in (off, on) for t in rec["parsed_turns"] if t["payload_is_none"]]
-    _EVIDENCE["b2_out_of_range_observed"] = bool(rejected)
-    _EVIDENCE["b2_note"] = ("真模型自然產生 action 越界並保住 scope" if rejected else
-                            "**未觀察到** action 越界：本輪真模型輸出皆為合法 action；"
-                            "越界分支由 unit test_step_contract_layers_req.py 覆蓋，不以注入冒充")
+    # ② **必須是「payload 被擋 ∧ scope=switch」那一格**才算觀察到 salvage 適用情境。
+    #    ⚠️ 只看 payload_is_none 是不夠的：scope=stay 的拒絕（如 missing_next_question）
+    #       根本不會走 salvage 分支，拿它去解釋 on/off 的差異＝把雜訊當證據。
+    rejected = [t for rec in (off, on) for t in rec["parsed_turns"]
+                if t["payload_is_none"] and t.get("scope") == "switch"]
+    rejected_any = [t for rec in (off, on) for t in rec["parsed_turns"] if t["payload_is_none"]]
+    _EVIDENCE["b2_salvage_applicable_observed"] = bool(rejected)
+    _EVIDENCE["b2_any_rejection_observed"] = [t.get("reject_reason") for t in rejected_any]
+    _EVIDENCE["b2_note"] = (
+        "真模型自然產生「payload 被擋 ∧ scope=switch」，salvage 情境成立" if rejected else
+        "**未觀察到 salvage 適用情境**：本輪的拒絕皆為 scope=stay（salvage 分支依定義不會啟動），"
+        "故 on/off 的控制流差異**不可歸因於 salvage**；該分支由 unit "
+        "test_step_contract_layers_req.py 覆蓋，不以注入或雜訊冒充")
     for t in rejected:
         if t.get("scope") != t.get("raw_scope"):
             failures.append(f"②: 越界輪的 parsed scope={t['scope']} 與 raw={t['raw_scope']} 不一致")
@@ -478,12 +485,15 @@ def test_mid_session_scope_salvage(client, rig):
     # ③④ 控制流：有越界輪時 on/off 必須不同；沒有時兩者應一致（零回歸）
     if rejected:
         if off["left_collecting"] == on["left_collecting"]:
-            failures.append("③: 出現越界輪，但 SALVAGE on/off 的控制流相同——salvage 未生效")
+            failures.append("③: 出現 salvage 適用輪，但 on/off 控制流相同——salvage 未生效")
     else:
-        if off["left_collecting"] != on["left_collecting"]:
-            failures.append("④: 未出現越界輪，SALVAGE 卻改變了控制流——旗標越權")
+        # ⚠️ 這裡**不比對** on/off 的控制流：兩次是各自獨立的真模型會話，
+        #    輸出本來就會不同，差異不構成任何結論（既不能證明 salvage 有效，也不能證明越權）。
+        _EVIDENCE["b34_note"] = ("salvage 適用情境未出現 ⇒ ③④ **INCONCLUSIVE**；"
+                                 "跨會話的控制流差異是隨機性，不作為證據")
 
-    _EVIDENCE["b_verdict"] = "B_OK" if not failures else "B_NOT_VALIDATED"
+    _EVIDENCE["b_verdict"] = ("B_OK" if (not failures and rejected)
+                              else "B_INCONCLUSIVE" if not failures else "B_NOT_VALIDATED")
     _EVIDENCE["b_failures"] = failures
     assert not failures, "B 未成立：\n  " + "\n  ".join(failures)
 

@@ -1,0 +1,410 @@
+{
+  "protocol": "p3-run-parameters-frozen.md",
+  "variant": "P3-true-brain-regression（A：delegation／B：mid-session salvage）",
+  "brain_model_env": "gpt-4o-mini",
+  "runs": [
+    {
+      "repetition": 1,
+      "session_id": "c4bg-1-3ef297eb",
+      "http": [
+        200,
+        200
+      ],
+      "turn1_answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+      "resolutions": [
+        {
+          "committed": null,
+          "stop_reason": "switch_without_delegate",
+          "chain": [
+            {
+              "facet_key": "bill_diagnosis",
+              "verdict": "switch",
+              "delegate_to": null,
+              "reason": "responsibility_contract",
+              "config_key": "bill_diagnosis",
+              "context_key": "條件診斷：帳單",
+              "rules_digest": "8b1457659dbd4249",
+              "context_digest": "d1f88c90a2e0c9d2",
+              "fail_open": false
+            }
+          ]
+        }
+      ],
+      "hop_attribution": [
+        {
+          "candidate_face": "bill_diagnosis",
+          "raw_model_payload": {
+            "action": "ask",
+            "converge_kind": "",
+            "extracted_fields": {},
+            "next_question": "請提供帳單編號或合約編號，以便我幫您查詢退帳單金額。",
+            "scope": "switch",
+            "face": "",
+            "delegate_facet_key": ""
+          },
+          "raw_scope": "switch",
+          "raw_delegate_related_keys": [
+            "face",
+            "delegate_facet_key"
+          ],
+          "normalized_scope": "switch",
+          "normalized_delegate_facet_key": null,
+          "allowed_delegates": [
+            "billing_anomaly"
+          ],
+          "normalization_drop_reason": "not_allowed",
+          "dropped_value": ""
+        }
+      ],
+      "session_rows": [],
+      "grounding_record": {
+        "case": "c4b-v6-regression",
+        "execution_face": "contract_closeout",
+        "fixture_bill_id": 678,
+        "passed": false,
+        "raw_answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+        "matched_spans": [],
+        "missing_groups": [
+          [
+            "已點交（執行中）",
+            "已點交"
+          ],
+          [
+            "2026/12/31",
+            "2026/12/01",
+            "到期前 30 天"
+          ]
+        ],
+        "wrong_instance_hits": [],
+        "fallback_hits": [],
+        "adjudication_hits": [],
+        "violated_dimensions": [
+          "value_not_used"
+        ],
+        "literal_provenance": {
+          "已點交（執行中）": "build_closeout_facts 首句 get_current_stage(fixture 678)",
+          "2026/12/31": "check_can_move_out(fixture 678).blockers（date_end 20261231 推得）"
+        },
+        "foil_provenance": {
+          "中山區雅房B": "contract fixture 600.title",
+          "2025/12/31": "contract fixture 600.date_end",
+          "18,000": "contract fixture 600.rent ／ bills fixture 900001.total",
+          "1,200": "bills fixture 900002.total"
+        },
+        "known_non_discriminating": [
+          "未要求標題：instance identity 由 execution chain 獨立證明，不由本尺重複要求"
+        ],
+        "fallback_markers_checked": [
+          "請洽客服",
+          "請聯繫客服",
+          "一般來說",
+          "通常來說",
+          "無法查詢",
+          "查詢不到",
+          "NO_MATCH"
+        ],
+        "adjudication_flags_checked": [
+          "歷史完成",
+          "已歸檔"
+        ]
+      }
+    },
+    {
+      "repetition": 2,
+      "session_id": "c4bg-2-cd9e22b3",
+      "http": [
+        200,
+        200
+      ],
+      "turn1_answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+      "resolutions": [
+        {
+          "committed": null,
+          "stop_reason": "switch_without_delegate",
+          "chain": [
+            {
+              "facet_key": "bill_diagnosis",
+              "verdict": "switch",
+              "delegate_to": null,
+              "reason": "responsibility_contract",
+              "config_key": "bill_diagnosis",
+              "context_key": "條件診斷：帳單",
+              "rules_digest": "8b1457659dbd4249",
+              "context_digest": "d1f88c90a2e0c9d2",
+              "fail_open": false
+            }
+          ]
+        }
+      ],
+      "hop_attribution": [
+        {
+          "candidate_face": "bill_diagnosis",
+          "raw_model_payload": {
+            "action": "ask",
+            "converge_kind": "",
+            "extracted_fields": {},
+            "next_question": "請提供帳單編號或合約編號/物件名稱，以便查詢退帳單金額。",
+            "scope": "switch",
+            "face": "",
+            "delegate_facet_key": ""
+          },
+          "raw_scope": "switch",
+          "raw_delegate_related_keys": [
+            "face",
+            "delegate_facet_key"
+          ],
+          "normalized_scope": "switch",
+          "normalized_delegate_facet_key": null,
+          "allowed_delegates": [
+            "billing_anomaly"
+          ],
+          "normalization_drop_reason": "not_allowed",
+          "dropped_value": ""
+        }
+      ],
+      "session_rows": [],
+      "grounding_record": {
+        "case": "c4b-v6-regression",
+        "execution_face": "contract_closeout",
+        "fixture_bill_id": 678,
+        "passed": false,
+        "raw_answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+        "matched_spans": [],
+        "missing_groups": [
+          [
+            "已點交（執行中）",
+            "已點交"
+          ],
+          [
+            "2026/12/31",
+            "2026/12/01",
+            "到期前 30 天"
+          ]
+        ],
+        "wrong_instance_hits": [],
+        "fallback_hits": [],
+        "adjudication_hits": [],
+        "violated_dimensions": [
+          "value_not_used"
+        ],
+        "literal_provenance": {
+          "已點交（執行中）": "build_closeout_facts 首句 get_current_stage(fixture 678)",
+          "2026/12/31": "check_can_move_out(fixture 678).blockers（date_end 20261231 推得）"
+        },
+        "foil_provenance": {
+          "中山區雅房B": "contract fixture 600.title",
+          "2025/12/31": "contract fixture 600.date_end",
+          "18,000": "contract fixture 600.rent ／ bills fixture 900001.total",
+          "1,200": "bills fixture 900002.total"
+        },
+        "known_non_discriminating": [
+          "未要求標題：instance identity 由 execution chain 獨立證明，不由本尺重複要求"
+        ],
+        "fallback_markers_checked": [
+          "請洽客服",
+          "請聯繫客服",
+          "一般來說",
+          "通常來說",
+          "無法查詢",
+          "查詢不到",
+          "NO_MATCH"
+        ],
+        "adjudication_flags_checked": [
+          "歷史完成",
+          "已歸檔"
+        ]
+      }
+    },
+    {
+      "repetition": 3,
+      "session_id": "c4bg-3-0b8e8423",
+      "http": [
+        200,
+        200
+      ],
+      "turn1_answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+      "resolutions": [
+        {
+          "committed": null,
+          "stop_reason": "switch_without_delegate",
+          "chain": [
+            {
+              "facet_key": "bill_diagnosis",
+              "verdict": "switch",
+              "delegate_to": null,
+              "reason": "responsibility_contract",
+              "config_key": "bill_diagnosis",
+              "context_key": "條件診斷：帳單",
+              "rules_digest": "8b1457659dbd4249",
+              "context_digest": "d1f88c90a2e0c9d2",
+              "fail_open": false
+            }
+          ]
+        }
+      ],
+      "hop_attribution": [
+        {
+          "candidate_face": "bill_diagnosis",
+          "raw_model_payload": {
+            "action": "ask",
+            "converge_kind": "",
+            "extracted_fields": {},
+            "next_question": "請提供帳單編號或合約編號，讓我幫您查詢退帳單金額。",
+            "scope": "switch",
+            "face": "",
+            "delegate_facet_key": ""
+          },
+          "raw_scope": "switch",
+          "raw_delegate_related_keys": [
+            "face",
+            "delegate_facet_key"
+          ],
+          "normalized_scope": "switch",
+          "normalized_delegate_facet_key": null,
+          "allowed_delegates": [
+            "billing_anomaly"
+          ],
+          "normalization_drop_reason": "not_allowed",
+          "dropped_value": ""
+        }
+      ],
+      "session_rows": [],
+      "grounding_record": {
+        "case": "c4b-v6-regression",
+        "execution_face": "contract_closeout",
+        "fixture_bill_id": 678,
+        "passed": false,
+        "raw_answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+        "matched_spans": [],
+        "missing_groups": [
+          [
+            "已點交（執行中）",
+            "已點交"
+          ],
+          [
+            "2026/12/31",
+            "2026/12/01",
+            "到期前 30 天"
+          ]
+        ],
+        "wrong_instance_hits": [],
+        "fallback_hits": [],
+        "adjudication_hits": [],
+        "violated_dimensions": [
+          "value_not_used"
+        ],
+        "literal_provenance": {
+          "已點交（執行中）": "build_closeout_facts 首句 get_current_stage(fixture 678)",
+          "2026/12/31": "check_can_move_out(fixture 678).blockers（date_end 20261231 推得）"
+        },
+        "foil_provenance": {
+          "中山區雅房B": "contract fixture 600.title",
+          "2025/12/31": "contract fixture 600.date_end",
+          "18,000": "contract fixture 600.rent ／ bills fixture 900001.total",
+          "1,200": "bills fixture 900002.total"
+        },
+        "known_non_discriminating": [
+          "未要求標題：instance identity 由 execution chain 獨立證明，不由本尺重複要求"
+        ],
+        "fallback_markers_checked": [
+          "請洽客服",
+          "請聯繫客服",
+          "一般來說",
+          "通常來說",
+          "無法查詢",
+          "查詢不到",
+          "NO_MATCH"
+        ],
+        "adjudication_flags_checked": [
+          "歷史完成",
+          "已歸檔"
+        ]
+      }
+    }
+  ],
+  "mid_session": [
+    {
+      "salvage": "false",
+      "session_id": "p3b-false-cd353521",
+      "http3": 200,
+      "answer3": "請提供成員的 Email 或名字，以便查詢該成員的權限設定。",
+      "parsed_turns": [
+        {
+          "payload_is_none": false,
+          "scope": "switch",
+          "delegate": null,
+          "reject_reason": null,
+          "raw_scope": "switch"
+        },
+        {
+          "payload_is_none": false,
+          "scope": "stay",
+          "delegate": null,
+          "reject_reason": null,
+          "raw_scope": "stay"
+        }
+      ],
+      "session_rows": [
+        {
+          "row_id": 1547,
+          "state": "COLLECTING",
+          "config_key": "account_team"
+        }
+      ],
+      "left_collecting": [
+        "COLLECTING"
+      ]
+    },
+    {
+      "salvage": "true",
+      "session_id": "p3b-true-50aa1da1",
+      "http3": 200,
+      "answer3": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+      "parsed_turns": [
+        {
+          "payload_is_none": false,
+          "scope": "switch",
+          "delegate": null,
+          "reject_reason": null,
+          "raw_scope": "switch"
+        },
+        {
+          "payload_is_none": true,
+          "scope": "stay",
+          "delegate": null,
+          "reject_reason": "missing_next_question",
+          "raw_scope": "stay"
+        }
+      ],
+      "session_rows": [
+        {
+          "row_id": 1548,
+          "state": "COMPLETED",
+          "config_key": "account_team"
+        }
+      ],
+      "left_collecting": []
+    }
+  ],
+  "verdict": "NOT_VALIDATED",
+  "failures": [
+    "rep1①: chain=[('bill_diagnosis', 'switch', None)]",
+    "rep1②: committed=None",
+    "rep1②: session rows=[]",
+    "rep1③④: grounding／answer 未通過 → ['value_not_used']",
+    "rep2①: chain=[('bill_diagnosis', 'switch', None)]",
+    "rep2②: committed=None",
+    "rep2②: session rows=[]",
+    "rep2③④: grounding／answer 未通過 → ['value_not_used']",
+    "rep3①: chain=[('bill_diagnosis', 'switch', None)]",
+    "rep3②: committed=None",
+    "rep3②: session rows=[]",
+    "rep3③④: grounding／answer 未通過 → ['value_not_used']"
+  ],
+  "b2_out_of_range_observed": true,
+  "b2_note": "真模型自然產生 action 越界並保住 scope",
+  "b_verdict": "B_OK",
+  "b_failures": [],
+  "target_scope_calls": 7,
+  "all_provider_calls": 30
+}
