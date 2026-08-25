@@ -51,14 +51,14 @@ D  mock 存在但 production **無對應端點**（不可遷移，屬缺口）  
 | `jgb_estate_status` | `get_estate_status` | `GET /estates` | `EstateApiController@index` | estate | ✅ **已稽核**（estates-source-audit.md） |
 | `jgb_estates` | `get_estates` | `GET /estates` | 同上 | repair 表單（*註1*） | ✅ **已稽核**；與上共用端點、**語義不同勿混用** |
 | `jgb_estate_detail` | `get_estate_detail` | `GET /estates/{id}` | `EstateApiController@show` | estate | ✅ **已稽核** |
-| `jgb_meters` | `get_meters` | `GET /meters` | `MeterApiController@index` | iot | 中（208 行／1 format） |
-| `jgb_invoices` | `get_invoices` | `GET /invoices` | `InvoiceApiController@index` | billing | 中（181 行／1 format） |
-| `jgb_payment_logs` | `get_payment_logs` | `GET /payment-logs` | `PaymentLogApiController@index` | billing | 中（140 行／inline 投影） |
-| `jgb_team_members` | `get_team_members` | `GET /roles/{role_id}/members` | `TeamMemberApiController@members` | account | 中（203 行） |
-| `jgb_member_permissions` | `get_member_permissions` | `GET /roles/{id}/members/{uid}/permissions` | `TeamMemberApiController@permissions` | account・contract | 中（同檔） |
-| `jgb_tenant_registration` | `get_tenant_registration` | `GET /tenants/registration-status` | `TenantApiController@registrationStatus` | account | 低（168 行） |
-| `jgb_bill_visibility` | `get_bill_visibility` | `GET /bills` | `BillApiController@index` | account | **最低——見下** |
-| `jgb_create_repair` | `create_repair` | `POST /repairs` | `RepairApiController@store` | repair | **高＋寫入語義**（485 行） |
+| `jgb_meters` | `get_meters` | `GET /meters` | `MeterApiController@index` | iot | ✅ **已稽核**（iot-account-source-audit.md） |
+| `jgb_invoices` | `get_invoices` | `GET /invoices` | `InvoiceApiController@index` | billing | ✅ **已稽核**（invoices-payment-logs-source-audit.md） |
+| `jgb_payment_logs` | `get_payment_logs` | `GET /payment-logs` | `PaymentLogApiController@index` | billing | ✅ **已稽核**；信封曾整個不同 |
+| `jgb_team_members` | `get_team_members` | `GET /roles/{role_id}/members` | `TeamMemberApiController@members` | account | ✅ **已稽核**（iot-account-source-audit.md） |
+| `jgb_member_permissions` | `get_member_permissions` | `GET /roles/{id}/members/{uid}/permissions` | `TeamMemberApiController@permissions` | account・contract | ✅ **已稽核** |
+| `jgb_tenant_registration` | `get_tenant_registration` | `GET /tenants/registration-status` | `TenantApiController@registrationStatus` | account | ⛔ **未盤查**（低，168 行）——見 §11 |
+| `jgb_bill_visibility` | `get_bill_visibility` | `GET /bills` | `BillApiController@index` | account | ⚠️ **止血完成、fixture 未做**（GAP-B2） |
+| `jgb_create_repair` | `create_repair` | `POST /repairs` | `RepairApiController@store` | repair | ⛔ **未盤查**（高＋寫入語義，485 行）——見 §11 |
 
 *註1*：`jgb_estates` 在 repo 的 `seed_*facet*.sql` 內**只出現在註解裡**（`seed_estate_facet_configs.sql:5`
 「修繕報修表單現役鍵勿用」）。它列為 B 級的依據是 `api_call_handler.py:78` 與
@@ -138,6 +138,12 @@ GAP-B2  viewer 權限圈定（viewer_user_id）無 fixture 模型；替身改為
 GAP-I1  GET /invoices 的 `user_id` 替身不過濾（production 走 invoices→bills→contracts
         三張表的 whereExists）。與 GAP-B1 同源：三個 fixture 宇宙不連通。
         現況由 tests/unit/api/test_invoices_mock_fidelity_req.py 具名鎖住。
+GAP-L1  invoice_logs 的原始 `response_data`／`request_data` production **不外露**
+        （含買受人 email、載具號碼），只回白名單化的 `response_parsed`。
+        消費端已改讀 parsed；原始欄位的內容**無法**在外部 API 驗證。
+GAP-C1  checkin-eligibility 的三個 blocker 分支（contract_not_signed／first_bill_unpaid／
+        deposit_insufficient）與「無帳單」label，替身只有 eligible=true 一種情境。
+        押金計算兩條路（deposit_type=1 固定金額／否則 deposit × rent）亦未覆蓋。
 GAP-P1  payment_logs 的 `response` 欄 production **不投影**（DB 有、API 不回），
         故 services/jgb/payments.py 的原因碼分析在線上無資料可用，只能退回 note。
         要驗證那段邏輯，得先讓 jgb2 把 response 加進投影。
@@ -230,4 +236,30 @@ WHERE form_id IN ('billing_inquiry_guest','maintenance_request') GROUP BY 1;
 ```sql
 UPDATE form_schemas SET is_active = false, updated_at = now()
 WHERE form_id IN ('billing_inquiry_guest', 'maintenance_request');
+```
+
+## 11. 自稽核（2026-08-25，業主質問「這三條機制還在嗎」）
+
+逐條查證，不採信自述：
+
+```text
+① 六步稽核協議        **部分退化**。estates 檔完整六段（①-⑥ 標題齊）；
+                      invoices／iot-account 兩檔改用「契約／偏差／未涵蓋」自由結構，
+                      內容涵蓋但**沒有逐項標題**；remaining-endpoints 檔退化最多
+                      （無「恆定 where」「分頁排序」「過度寬鬆」的獨立段）。
+                      → 判定：內容沒漏，**格式飄了**，少一項不再一眼看得出來。
+② 具名測試＋行號依據  **成立**。7 個測試檔、67 條測試、104 處 production 行號引用。
+③ 清單逐項標記        **當時是半飄的**：§8 九項有逐項打勾，但 §4 的 B 級表格只更新了
+                      estate 三列，另外五列仍停在「稽核成本」估算欄；且
+                      `jgb_tenant_registration` 與 `jgb_create_repair` **兩鍵從未盤查**
+                      卻沒有任何標記——看起來像做完了。**本節同時修正了這兩處**。
+```
+
+### 尚未盤查（明確登記，不是漏掉）
+
+```text
+jgb_tenant_registration  TenantApiController@registrationStatus（168 行）——單純沒排到
+jgb_create_repair        RepairApiController@store（485 行）——**寫入端點**，
+                         需先定義「mock 寫入」的驗收語義（回傳什麼算成功、
+                         要不要模擬副作用），屬另一個 slice，不是逐鍵對照就能收
 ```
