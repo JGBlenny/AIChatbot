@@ -168,11 +168,13 @@ def _domain_key(config) -> Optional[str]:
       - 診斷型面向（topic_scope.mode=='category'）→ 用其**母/子分類值** topic_scope.category
         （每個診斷領域唯一，如 '條件診斷：合約'；同角色多領域不撞鍵）；
       - 角色級面向（如售前 mode=='all'）→ 用 persona_role（=target_user，如 'prospect'）。
-    全讀設定，程式不硬編任何領域字面。"""
-    ts = getattr(config, "topic_scope", None) or {}
-    if ts.get("mode") == "category" and ts.get("category"):
-        return ts.get("category")
-    return getattr(config, "persona_role", None)
+    全讀設定，程式不硬編任何領域字面。
+
+    ⚠️ **定義已收斂至 `services/responsibility.responsibility_context_key`**（slice 1）：
+    pre-entry 曾以 `cfg.key` 取脈絡，與此處不同源（實測 digest 不同），
+    導致「進場前的判定」不是「進場後的判定」。本函式改為委派，保留名稱供既有呼叫點使用。"""
+    from services.responsibility import responsibility_context_key
+    return responsibility_context_key(config)
 
 
 async def _domain_faces(db_pool, config) -> List[str]:

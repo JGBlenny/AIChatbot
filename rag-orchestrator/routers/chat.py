@@ -763,16 +763,18 @@ async def _preentry_routable(db_pool, cfg, user_message: Optional[str]) -> bool:
     if not user_message:
         return True
     try:
-        from services.conversational_rules import load_rules
-        from services.system_context import get_system_context
         from services.llm_answer_optimizer import LLMAnswerOptimizer
+        from services.responsibility import build_responsibility_context
 
-        rules_text = await load_rules(db_pool, getattr(cfg, "persona_role", None))
-        if not rules_text:
+        # ⚠️ slice 1：與 in-session **同源**的 responsibility context。
+        #    舊碼以 `cfg.key` 取 system context，而 in-session 用 `_domain_key`
+        #    （topic_scope.category）——實測 digest 不同（billing_anomaly
+        #    d1f88c90… vs 2158ebdc…），等於進場前判的不是進場後那件事。
+        rctx = await build_responsibility_context(db_pool, cfg)
+        if rctx is None:                      # 規則取不到 → 與引擎同款誠實降級
             return True
-        system_md = await get_system_context(db_pool, getattr(cfg, "key", None)) or ""
         data = await LLMAnswerOptimizer().conversational_step(
-            rules_text, system_md,
+            rctx.rules_text, rctx.system_md,
             {"collected_fields": {}, "asked_count": 0, "recommended": False},
             user_message)
         if data and data.get("scope") == "switch":
