@@ -910,13 +910,17 @@ class LLMAnswerOptimizer:
             # 據結果組話不加庫外事實、NO_MATCH 誠實回退不憑印象補答、答完接回槽位。
             # delegation 白名單（face-exit-before-grounding slice 2）：**未提供即完全不注入**，
             #   使既有呼叫點的 prompt 逐字不變（R1.3 回歸鎖）。
+            _dele_specs = [(d, None) if isinstance(d, str) else (d[0], d[1] if len(d) > 1 else None)
+                           for d in (delegates or [])]
+            _dele_keys = [t for t, _ in _dele_specs]
             delegate_note = (
                 "\n\n【轉交對象 delegate_facet_key（僅在 scope=\"switch\" 時）】"
-                f"本領域責任契約允許轉交的對象：{'、'.join(delegates)}。"
+                "本領域責任契約允許轉交的對象（括號內為該對象負責的情況）："
+                + "、".join(f"{t}（{w}）" if w else t for t, w in _dele_specs) + "。"
                 "若你判定本輪不屬本面向責任，且其中**某一個**明確該接，"
                 "請在 delegate_facet_key 放該鍵；"
                 "**只能從上列選一個**，不得自創或改寫鍵名；無法判定就省略此欄。"
-            ) if delegates else ""
+            ) if _dele_specs else ""
             tool_note = (
                 "\n\n【知識查詢工具 search_kb（僅本輪可用）】"
                 "使用者岔出事實性問題（費用歸屬/時程/規定等）時，先呼叫 search_kb 查知識庫再答，"
@@ -988,8 +992,8 @@ class LLMAnswerOptimizer:
             # delegate 正規化（slice 2）：**只接受白名單內、且 scope=switch 時**的目標；
             #   其餘一律移除——模型不得自創 Face key，也不得在 stay 時指定轉交。
             _dele = data.get('delegate_facet_key')
-            if not (delegates and data['scope'] == 'switch'
-                    and isinstance(_dele, str) and _dele in set(delegates)):
+            if not (_dele_keys and data['scope'] == 'switch'
+                    and isinstance(_dele, str) and _dele in set(_dele_keys)):
                 data.pop('delegate_facet_key', None)
             return data
         except Exception as e:

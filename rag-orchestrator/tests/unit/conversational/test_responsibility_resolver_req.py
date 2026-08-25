@@ -84,8 +84,8 @@ async def test_delegation_chain_commits_only_the_staying_face():
     assert res.committed_key == "contract_closeout" and res.stop_reason == "stay"
     assert [h["facet_key"] for h in res.chain] == \
         ["bill_diagnosis", "billing_anomaly", "contract_closeout"]
-    # 白名單確實被傳進 evaluator（模型不能自創目標）
-    assert brain.calls[0][1] == ["billing_anomaly"]
+    # 白名單確實被傳進 evaluator（模型不能自創目標）；v2 起元素為 (target, when)
+    assert [t for t, _ in brain.calls[0][1]] == ["billing_anomaly"]
     assert brain.calls[2][1] is None            # 末端無 delegates → 不注入
 
 

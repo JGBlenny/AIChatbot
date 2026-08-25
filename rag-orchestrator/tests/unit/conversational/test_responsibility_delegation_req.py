@@ -115,3 +115,47 @@ async def test_prompt_unchanged_when_no_delegates():
 
     await _step(opt, delegates=["contract_closeout"])
     assert "轉交對象" in seen["calls"][2] and "contract_closeout" in seen["calls"][2]
+
+
+# ── `when`：語義條件（v2 修法）─────────────────────────────────────────────────
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_delegate_specs_carry_when_and_allowed_keys_ignore_it():
+    from services.responsibility import allowed_delegates as keys, delegate_specs
+    cfg = ConversationalConfig(key="x", responsibility={"delegates": [
+        {"target": "billing_anomaly", "when": "帳單金額組成/看不到帳單"},
+        {"target": "contract_closeout"}, "plain_key"]})
+    assert delegate_specs(cfg) == (("billing_anomaly", "帳單金額組成/看不到帳單"),
+                                   ("contract_closeout", None), ("plain_key", None))
+    assert keys(cfg) == ("billing_anomaly", "contract_closeout", "plain_key")
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+async def test_when_is_rendered_into_the_prompt():
+    """第一次 gated validation 3/3 停在第一跳的直接修法：把語義條件寫進 prompt。"""
+    seen = {}
+
+    def capture(**kw):
+        seen["sys"] = kw["messages"][0]["content"]
+        return {"content": json.dumps({"action": "ask", "next_question": "q"})}
+
+    opt = LLMAnswerOptimizer(llm_provider=MagicMock())
+    opt.llm_provider.chat_completion = MagicMock(side_effect=lambda **kw: capture(**kw))
+    await _step(opt, delegates=[("billing_anomaly", "帳單金額組成/看不到帳單")])
+    assert "billing_anomaly（帳單金額組成/看不到帳單）" in seen["sys"]
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+async def test_when_does_not_widen_the_whitelist():
+    """`when` 只增加理解——**不得**讓模型獲得自創 destination 的能力。"""
+    opt = _optimizer({"action": "ask", "next_question": "q", "scope": "switch",
+                      "delegate_facet_key": "帳單金額組成/看不到帳單"})   # 拿 when 當 key
+    out = await _step(opt, delegates=[("billing_anomaly", "帳單金額組成/看不到帳單")])
+    assert "delegate_facet_key" not in out
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+async def test_tuple_form_still_validates_against_target_only():
+    opt = _optimizer({"action": "ask", "next_question": "q", "scope": "switch",
+                      "delegate_facet_key": "billing_anomaly"})
+    out = await _step(opt, delegates=[("billing_anomaly", "帳單金額組成/看不到帳單")])
+    assert out["delegate_facet_key"] == "billing_anomaly"

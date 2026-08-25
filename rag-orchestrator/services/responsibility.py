@@ -92,20 +92,39 @@ async def build_responsibility_context(
 
 # ── delegation 白名單（slice 2）────────────────────────────────────────────────
 
-def allowed_delegates(config: Any) -> "tuple[str, ...]":
-    """本面向 contract 宣告的可轉交目標（面向鍵白名單）。
+def delegate_specs(config: Any) -> "tuple[tuple[str, Optional[str]], ...]":
+    """本面向 contract 宣告的可轉交目標及其**語義條件**：`(target, when)`。
 
     ⚠️ **白名單是 contract 給的，不是模型給的**：`billing_anomaly → contract_closeout`
     這條 edge 原本只存在於 persona 的自然語言裡（實測要讀 LLM 輸出才發現），
     routing 無法使用。本函式讓它成為結構化資料。
+
+    ⚠️ `when` 的身分（2026-08-25 業主定界）：
+    **responsibility delegation semantics——供 evaluator 判斷何時可選該白名單 target，
+    不是 resolver 自己拿去做 keyword routing 的條件。** 程式**不得**出現
+    `if "帳單金額" in query: delegate_to(...)` 這種比對；authority 仍在 evaluator，
+    `target` 只是合法 destination，`when` 只補足它的語義。
+
+    背景：第一次 gated validation 3/3 都停在第一跳——模型判了 switch 卻沒填 delegate，
+    因為白名單只給英文面向鍵，而規則講的是中文分類名，兩者之間沒有對應。
     """
     spec = getattr(config, "responsibility", None) or {}
-    out: "list[str]" = []
+    out: "list[tuple[str, Optional[str]]]" = []
+    seen: "set[str]" = set()
     for item in spec.get("delegates") or []:
-        target = item.get("target") if isinstance(item, dict) else item
-        if isinstance(target, str) and target and target not in out:
-            out.append(target)
+        if isinstance(item, dict):
+            target, when = item.get("target"), item.get("when")
+        else:
+            target, when = item, None
+        if isinstance(target, str) and target and target not in seen:
+            seen.add(target)
+            out.append((target, when if isinstance(when, str) and when else None))
     return tuple(out)
+
+
+def allowed_delegates(config: Any) -> "tuple[str, ...]":
+    """白名單的**鍵**（驗證用）——`when` 一律不參與合法性判定。"""
+    return tuple(t for t, _ in delegate_specs(config))
 
 
 # ── responsibility decision ／ pre-commit resolver（slice 3）────────────────────
@@ -167,7 +186,7 @@ async def evaluate_responsibility(
         data = await optimizer.conversational_step(
             rctx.rules_text, rctx.system_md,
             {"collected_fields": {}, "asked_count": 0, "recommended": False},
-            user_message, delegates=list(allowed_delegates(config)) or None)
+            user_message, delegates=list(delegate_specs(config)) or None)
         if not data:
             return ResponsibilityDecision(facet_key, "stay",
                                           reason="brain_unavailable_fail_open",

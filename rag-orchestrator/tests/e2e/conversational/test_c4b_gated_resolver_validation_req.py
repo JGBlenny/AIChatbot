@@ -38,7 +38,7 @@ MAX_TARGET_CALLS, MAX_ALL_CALLS = 30, 60
 INFRA_RETRIES = 2
 _INFRA = ("timeout", "timed out", "rate limit", "429", "500", "502", "503", "504", "connection")
 
-EVIDENCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".c4b_gated_evidence.json")
+EVIDENCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".c4b_gated_v2_evidence.json")
 
 
 def _conn_kwargs():
@@ -65,13 +65,17 @@ def _delegates_fixture():
 
     import asyncpg
 
-    edges = {SEED: MID, MID: TARGET}
+    # ⚠️ `when` **逐字取自現有 authoritative persona responsibility wording**，不自行發明 ownership：
+    #    bill_diagnosis 規則：「帳單金額組成/看不到帳單（帳單異常）… → scope="switch"」
+    #    billing_anomaly 規則：「封存/點退帳單處理、其他領域完整新問題 → scope="switch"」
+    edges = {SEED: {"target": MID, "when": "帳單金額組成/看不到帳單"},
+             MID: {"target": TARGET, "when": "封存/點退帳單處理"}}
     saved = {}
 
     async def _apply():
         conn = await asyncpg.connect(**_conn_kwargs())
         try:
-            for facet, target in edges.items():
+            for facet, edge in edges.items():
                 row = await conn.fetchrow(
                     "SELECT id, generation_metadata FROM knowledge_base "
                     "WHERE category='對話規則' AND is_active "
@@ -82,7 +86,7 @@ def _delegates_fixture():
                 md = json.loads(md) if isinstance(md, str) else dict(md)
                 saved[row["id"]] = json.dumps(md, ensure_ascii=False)
                 md.setdefault("conversational_config", {})["responsibility"] = {
-                    "delegates": [{"target": target}]}
+                    "delegates": [dict(edge)]}
                 await conn.execute("UPDATE knowledge_base SET generation_metadata=$2::jsonb "
                                    "WHERE id=$1", row["id"], json.dumps(md, ensure_ascii=False))
             return True
@@ -229,8 +233,8 @@ def _ruler():
         rationale="grounding 來自 contract_closeout 的 jgb_contracts execution")
 
 
-_EVIDENCE = {"protocol": "c4b-gated-resolver-validation-protocol-frozen.md",
-             "variant": "C4b-gated-resolver-validation", "runs": []}
+_EVIDENCE = {"protocol": "c4b-gated-resolver-validation-v2-protocol-frozen.md",
+             "variant": "C4b-gated-resolver-validation-v2", "runs": []}
 
 
 def _post(client, message, sid):
@@ -265,6 +269,9 @@ def test_gated_resolver_vertical_slice(client, rig):
         resolutions = rig["resolutions"][before:]
         answer = (r2.json().get("answer") or "") if r2.status_code == 200 else ""
         record = evaluate_brain_grounding(answer, spec) if answer else {"passed": False}
+        for _res in resolutions:
+            for _h in _res["chain"]:
+                _h["fail_open"] = _h.get("reason") != "responsibility_contract"
         rec = {"repetition": rep, "session_id": sid,
                "http": [r1.status_code, r2.status_code],
                "turn1_answer": (r1.json().get("answer") if r1.status_code == 200 else None),
