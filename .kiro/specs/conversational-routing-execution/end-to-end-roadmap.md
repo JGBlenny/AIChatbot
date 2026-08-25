@@ -11,7 +11,20 @@
 ✅ 結案 = 真 brain 回歸過 ＋ Stage-1 上線 ＋ telemetry 看得到效果 ＋ 業主放行
 ```
 
-## 一、五個階段，依賴是單向的
+## ⚠️ 2026-08-26 業主裁定：本檔的階段定義被下列順序取代
+
+```text
+P1 Task 8 / Req.5.2   mid-session scope=switch 被 validator 吃掉 → 真正的「對話中換面向」
+P2 Task 9 / Req.5.3   repair_create 沒有有效進場點 → 真正的「對話能力可被觸發」
+P3 真 brain regression（C4b-resolver）
+P4 Req.10 對話品質 baseline（含 observability prerequisite）
+P5 staging → limited rollout
+```
+
+**API fidelity（原 P0）全面降為 supporting debt**，只在實際阻塞 P1-P5 時才拉回。
+**gate 擋的是 deploy，不擋 development**——8.x／9.1-9.3 現在就能完整實作。
+
+## 一、（已被上方取代）原五階段，保留供追溯
 
 ```text
 P0  資料保真（現在做，免費，不需授權）

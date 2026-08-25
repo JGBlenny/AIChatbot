@@ -2,7 +2,7 @@
   "feature_name": "conversational-routing-execution",
   "created_at": "2026-08-22T17:47:33Z",
   "updated_at": "2026-08-25T00:00:00Z",
-  "phase": "tasks-generated",
+  "phase": "tasks-approved",
   "language": "zh-TW",
   "project_description": "對話式路由與面向執行架構。收斂自 2026-08-22~23 檢索盤查：架構重新定義為「檢索主幹 + 路由決策 + 澄清分岔 + 面向執行 + 直答把關」五區塊。本 spec 涵蓋三類工作——(A) 測試基礎設施失效修復（make test-integration 結構上永遠 skip，實跑後 5 failed 被遮住）；(B) API-grounded Face 端到端閉環驗證（C1/C2 已過，C3 已有測試守著且通過，C4 待驗）；(C) 一批已知缺陷與語義債。明確不做：always-on query rewrite、新全域 routing selector、pre-entry gate 上線、KB 全面結構化、硬加 hybrid recall。",
   "approvals": {
@@ -16,7 +16,14 @@
     },
     "tasks": {
       "generated": true,
-      "approved": false
+      "approved": true,
+      "approved_at": "2026-08-26",
+      "approved_by": "owner",
+      "ruling": "主線恢復：以 tasks.md 為唯一施工帳本。順序 Task 8 → Task 9 → 真 brain regression → Req.10 對話品質 baseline → staging/limited rollout。API fidelity 全面降為 supporting debt，無主線排程權，僅在實際阻塞 P1-P5 驗證時才拉回。",
+      "notes": [
+        "gate 擋的是 deploy，不擋 development：8.x/9.1-9.3 可完整實作；8.5/9.4 的上線仍受 6.3 的 CLOSED gate 約束。",
+        "自 2026-08-26 起停用另一套 T1-T8 編號（api-fidelity-architecture-and-tasks.md 降級為 supporting debt 清單）。"
+      ]
     }
   },
   "implementation": {

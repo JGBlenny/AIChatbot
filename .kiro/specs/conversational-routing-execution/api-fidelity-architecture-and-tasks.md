@@ -1,4 +1,10 @@
-# JGB 資料保真架構與任務定義
+# JGB 資料保真架構與 **supporting debt** 清單
+
+> ⛔ **2026-08-26 業主裁定：本檔降級為 supporting debt，不再擁有主線排程權。**
+> T1-T8 編號**停用**——唯一施工帳本是 `tasks.md` 的既有編號。
+> 本檔的內容（架構分層、D1-D5 判準、E1-E4 證據等級）仍然有效，
+> 但這裡的任何一項**只有在實際阻塞 tasks.md 的 P1-P5 驗證時**才可拉回主線。
+> 已做完的部分不撤銷：它抓到三個 production 真 bug（tenant contracts／payment logs／invoice logs）。
 
 > 2026-08-26｜語言 zh-TW｜零 OpenAI 呼叫、未碰 staging／production
 > 目的：先把**架構**講清楚，再從架構推出**任務**。避免像先前那樣做到哪算到哪。
