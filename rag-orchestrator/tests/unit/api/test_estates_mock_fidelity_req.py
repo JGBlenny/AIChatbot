@@ -1,0 +1,161 @@
+"""`/estates` 替身逐條對照 `EstateApiController`（inventory §8 第 4 項的稽核產出）。
+
+M2 在 contracts 上抓到的三類偏差，estates 全中：投影外欄位、過度寬鬆的比對、
+恆定 where 漏條件。本檔把修好的行為具名鎖住——每一條都對得上 production 的一行。
+
+⚠️ 仍未涵蓋（mock 結構上證不到，只有真 API 會現形）：
+   API key 的 applyAccessibleEstateScope 圈定、show 的 403／404 之分、
+   5 分鐘 Cache::remember 造成的陳舊、mapping 的 countries 三表組裝、真實標題分佈。
+"""
+import asyncio
+
+import pytest
+
+from services.jgb.estate_fixtures import (
+    EXTERNAL_ESTATE_FIELDS,
+    INTERNAL_ESTATE_FIELDS,
+    EstateFixtureTable,
+    ForeignEstateFieldError,
+    assert_estate_projection,
+    build_contract_required_fields,
+)
+
+pytestmark = pytest.mark.unit
+
+ROLE = "20151"          # fixture 三列的 role_id
+OPEN_IDS = [54126, 54200]
+CLOSED_ID = 54305       # is_open=0
+
+
+def _run(coro):
+    return asyncio.get_event_loop().run_until_complete(coro)
+
+
+@pytest.fixture
+def api(monkeypatch):
+    monkeypatch.setenv("USE_MOCK_JGB_API", "true")
+    from services.jgb_system_api import JGBSystemAPI
+    return JGBSystemAPI()
+
+
+# ── 恆定 where：active=1 且 is_open=1（:52-53、:121-124）──────────────────
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_only_published_estates_are_visible(api):
+    r = _run(api.get_estates(role_id=ROLE))
+    assert sorted(e["id"] for e in r["data"]) == OPEN_IDS
+    assert CLOSED_ID not in [e["id"] for e in r["data"]]
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_unpublished_estate_detail_is_not_found(api):
+    """`show()` 同樣過濾 is_open=1 → 非刊登中即 404（我方折疊為 success:False）。"""
+    assert _run(api.get_estate_detail(estate_id=CLOSED_ID))["success"] is False
+    assert _run(api.get_estate_detail(estate_id=OPEN_IDS[0]))["success"] is True
+
+
+# ── applyFilters 的參數語義 ──────────────────────────────────────────────
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_keyword_matches_title_only_not_address(api):
+    """production：`where('title','like',...)`（:189-192）。
+
+    舊替身連 `full_address` 一起比＝**過度寬鬆**：用地址關鍵字在替身查得到、
+    在 production 查不到。
+    """
+    by_title = _run(api.get_estates(role_id=ROLE, keyword="信義區精緻套房"))
+    assert [e["id"] for e in by_title["data"]] == [54126]
+    by_address = _run(api.get_estates(role_id=ROLE, keyword="信義路五段7號"))
+    assert by_address["data"] == []
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_role_id_is_a_filter_not_an_echo(api):
+    """舊替身把傳入的 role_id 寫進每一列 → 任何 role 都命中。"""
+    assert _run(api.get_estates(role_id="99999"))["data"] == []
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_use_for_outside_whitelist_is_silently_ignored(api):
+    """production 只在三個合法值時才加條件（:149-155）——非法值**不報錯也不過濾**。"""
+    kept = api._mock_get_estates(ROLE, "", 50, use_for="不存在的用途")
+    assert sorted(e["id"] for e in kept["data"]) == OPEN_IDS
+    narrowed = api._mock_get_estates(ROLE, "", 50, use_for="business")
+    assert narrowed["data"] == []
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_sort_by_outside_whitelist_falls_back_to_updated_at(api):
+    """白名單外回退 `updated_at desc`（:60-66），非拒絕。"""
+    bogus = api._mock_get_estates(ROLE, "", 50, sort_by="rent; DROP TABLE")
+    fallback = api._mock_get_estates(ROLE, "", 50, sort_by="updated_at")
+    assert [e["id"] for e in bogus["data"]] == [e["id"] for e in fallback["data"]]
+    ascending = api._mock_get_estates(ROLE, "", 50, sort_by="rent", sort_direction="asc")
+    assert [e["rent"] for e in ascending["data"]] == sorted(
+        e["rent"] for e in ascending["data"])
+
+
+# ── 分頁 ────────────────────────────────────────────────────────────────
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_pagination_bounds_match_production(api):
+    capped = api._mock_get_estates(ROLE, "", 9999)
+    assert capped["pagination"]["per_page"] == 200          # MAX_PER_PAGE
+    one = api._mock_get_estates(ROLE, "", 1)
+    assert one["pagination"] == {"current_page": 1, "per_page": 1, "total": 2,
+                                 "total_pages": 2, "has_more": True}
+    empty = api._mock_get_estates("99999", "", 50)
+    assert empty["pagination"]["total_pages"] == 0 and empty["pagination"]["has_more"] is False
+
+
+# ── 投影 ────────────────────────────────────────────────────────────────
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_no_foreign_field_and_no_internal_leak(api):
+    """`estate_room_number` 是 `/repairs` 的欄位（RepairApiController.php:323），
+    `/estates` 從來不回它；`active`／`is_open` 是內部欄位，過濾用、不投影。"""
+    rows = _run(api.get_estates(role_id=ROLE))["data"]
+    for row in rows:
+        assert "estate_room_number" not in row
+        assert not (set(row) & INTERNAL_ESTATE_FIELDS)
+        assert set(row) <= EXTERNAL_ESTATE_FIELDS
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_projection_guard_bites():
+    with pytest.raises(ForeignEstateFieldError):
+        assert_estate_projection({"id": 1, "estate_room_number": "3F-1"})
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_contract_required_fields_shape_matches_production(api):
+    """production 一律列 16 欄（`all_filled` 為真時亦然）；舊 mock 的 `fields: []` 產不出來。"""
+    crf = _run(api.get_estate_detail(estate_id=OPEN_IDS[0]))["data"][0]["contract_required_fields"]
+    assert crf["all_filled"] is True and len(crf["fields"]) == 16
+    assert set(crf["fields"][0]) == {"field", "label", "is_filled"}
+    missing = build_contract_required_fields(("rent", "size"))
+    assert missing["all_filled"] is False
+    assert [f["label"] for f in missing["fields"] if not f["is_filled"]] == ["面積", "租金"]
+
+
+# ── get_estate_status 與 get_estates 共用同一份事實 ──────────────────────
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_estate_status_mock_shares_the_same_visible_set(api):
+    rows = _run(api.get_estate_status(role_id=ROLE))["data"]
+    assert sorted(e["id"] for e in rows) == OPEN_IDS
+    assert all("status_zh" in e for e in rows)
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_estate_status_sentinel_now_reachable_in_mock(api):
+    """舊版寫死一列 → 永遠有結果；sentinel（found:False）在替身上測不到。"""
+    rows = _run(api.get_estate_status(role_id=ROLE, keyword="不存在的物件"))["data"]
+    assert rows == [{"found": False, "keyword": "不存在的物件"}]
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_fixture_rows_declare_the_closed_case():
+    table = EstateFixtureTable()
+    assert len(table.rows()) == 3 and len(table.visible_rows()) == 2
+    assert table.by_id(CLOSED_ID) is None

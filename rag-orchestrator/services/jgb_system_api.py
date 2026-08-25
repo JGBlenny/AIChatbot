@@ -16,6 +16,14 @@ import logging
 from typing import Any, Optional
 
 from services.jgb.contract_fixtures import ContractFixtureTable
+from services.jgb.estate_fixtures import (
+    ALLOWED_SORT_FIELDS,
+    DEFAULT_PER_PAGE as ESTATE_DEFAULT_PER_PAGE,
+    MAX_PER_PAGE as ESTATE_MAX_PER_PAGE,
+    EstateFixtureTable,
+    build_contract_required_fields,
+    project_estate,
+)
 from services.jgb.fixtures import BillFixtureTable
 from services.jgb.transport import (  # noqa: F401  (FALLBACK_MESSAGE 對外沿用)
     FALLBACK_MESSAGE,
@@ -55,6 +63,9 @@ class JGBSystemAPI:
         #: 4.6：裝配 fixture 表，使 bills／bill_detail／contracts 三個**已遷移**端點
         #: 能依契約回應；其餘端點仍走方法級 mock——逐端點現況與稽核成本見
         #: `.kiro/specs/conversational-routing-execution/transport-migration-inventory.md`。
+        #: estates 尚未遷入 transport（見 transport-migration-inventory.md），
+        #: 但替身資料已對照 EstateApiController 逐鍵，改由 fixture 表供應。
+        self._estate_fixtures = EstateFixtureTable()
         self._mock_transport: Optional[Transport] = (
             JGBMockTransport(BillFixtureTable(), ContractFixtureTable())
             if self.use_mock else None
@@ -377,7 +388,7 @@ class JGBSystemAPI:
             return self._degraded_response()
 
         if self.use_mock:
-            return self._mock_get_estates(role_id, keyword)
+            return self._mock_get_estates(role_id, keyword, per_page)
 
         params: dict[str, Any] = {
             "role_id": role_id,
@@ -711,12 +722,9 @@ class JGBSystemAPI:
         from services.jgb.estates import estate_status_zh   # 延遲匯入（分層慣例）
 
         if self.use_mock:
-            rows = [{
-                "id": 8801, "serial_id": "E-8801", "title": "新莊富貴500-14B05",
-                "status": 2, "use_for": "residential",
-                "display_address": "新北市新莊區富貴路",
-                "full_display_address": "新北市新莊區富貴路",
-                "rent": 15800, "currency": "TWD"}]
+            # 與 get_estates 共用同一份 fixture（含 is_open=1 硬過濾）——
+            # 舊版是一列寫死的手抄資料，永遠有結果，sentinel 分支測不到。
+            rows = [project_estate(e) for e in self._estate_fixtures.visible_rows()]
         else:
             params: dict[str, Any] = {"per_page": 200}
             if role_id:
@@ -761,9 +769,19 @@ class JGBSystemAPI:
             return {"success": False, "data": []}
 
         if self.use_mock:
-            return {"success": True, "data": [{
-                "id": int(eid), "title": "新莊富貴500-14B05", "status": 2,
-                "contract_required_fields": {"all_filled": True, "fields": []}}]}
+            # `show()` 同樣硬過濾 active=1／is_open=1，不在其中即 404（:121-128）。
+            row = self._estate_fixtures.by_id(int(eid))
+            if row is None:
+                return {"success": False, "data": []}
+            detail = project_estate(row)
+            # `formatEstate($estate, true)` 才有的四個欄位（:280-286）；
+            # fixture 未賦值故為 None（皆為可空欄位），不假造內容。
+            detail.update({"description": None, "traffic": None,
+                           "nearby": None, "notes": None})
+            # ⚠️ production **一律列出 16 個必填欄位**；舊 mock 的 `fields: []`
+            #    是 production 產不出來的形狀。
+            detail["contract_required_fields"] = build_contract_required_fields()
+            return {"success": True, "data": [detail]}
 
         raw = await self._request(f"/api/external/v1/estates/{eid}", {})
         if not (raw or {}).get("success"):
@@ -1536,194 +1554,69 @@ class JGBSystemAPI:
         self,
         role_id: str,
         keyword: str = "",
+        per_page: int = 10,
+        **params: Any,
     ) -> dict[str, Any]:
-        """對齊 EstateApiController@index"""
-        logger.info(f"[MOCK] get_estates: role_id={role_id}, keyword={keyword}")
-        all_estates = [
-            {
-                "id": 54126,
-                "url": "https://www.jgbsmart.com/house/AABBCC?living=1",
-                "user_id": 1001,
-                "role_id": int(role_id) if role_id else 20151,
-                "role_id_comment": "房東編號",
-                "team_id": int(role_id) if role_id else 20151,
-                "team_id_comment": "團隊編號（同 role_id）",
-                "team_name": "好租管理",
-                "team_name_comment": "物件歸屬",
-                "serial_id": None,
-                "title": "信義區精緻套房",
-                "status": 2,
-                "country": "TW",
-                "country_id": 1,
-                "city": "台北市",
-                "city_id": 2,
-                "district": "信義區",
-                "district_id": 10,
-                "address": "信義路五段7號",
-                "full_address": "台北市信義區信義路五段7號3樓",
-                "display_address": "信義路五段7號",
-                "full_display_address": "台北市信義區信義路五段7號3樓",
-                "latitude": "25.03360000",
-                "longitude": "121.56480000",
-                "use_for": "residential",
-                "space_type": "flat",
-                "building": "condo",
-                "room_count": 1,
-                "size": 15,
-                "size_data": {"size": {"m2": 15, "sqm": 4.54, "sq_ft": 161.46}},
-                "direction": "south",
-                "floor": "3",
-                "total_floor": "12",
-                "rent": 25000,
-                "currency": "TWD",
-                "deposit": 2,
-                "deposit_type": 0,
-                "deposit_amount": 50000,
-                "fees": None,
-                "management_fee": 0,
-                "facilities": None,
-                "labels_fees": None,
-                "avatar": None,
-                "gallery": None,
-                "floor_plan": None,
-                "vr_url": None,
-                "community_id": None,
-                "community_name": None,
-                "property_purpose_key": 1,
-                "bit_status": 1026,
-                "created_at": "2025-01-15 10:30:00",
-                "updated_at": "2025-03-20 14:25:00",
-                "estate_room_number": "3F-1",
-            },
-            {
-                "id": 54200,
-                "url": "https://www.jgbsmart.com/house/DDEEFF?living=1",
-                "user_id": 1001,
-                "role_id": int(role_id) if role_id else 20151,
-                "role_id_comment": "房東編號",
-                "team_id": int(role_id) if role_id else 20151,
-                "team_id_comment": "團隊編號（同 role_id）",
-                "team_name": "好租管理",
-                "team_name_comment": "物件歸屬",
-                "serial_id": None,
-                "title": "中山區溫馨雅房",
-                "status": 2,
-                "country": "TW",
-                "country_id": 1,
-                "city": "台北市",
-                "city_id": 2,
-                "district": "中山區",
-                "district_id": 4,
-                "address": "中山北路二段10號",
-                "full_address": "台北市中山區中山北路二段10號5樓",
-                "display_address": "中山北路二段10號",
-                "full_display_address": "台北市中山區中山北路二段10號5樓",
-                "latitude": "25.06120000",
-                "longitude": "121.52250000",
-                "use_for": "residential",
-                "space_type": "flat",
-                "building": "apartment",
-                "room_count": 1,
-                "size": 8,
-                "size_data": {"size": {"m2": 8, "sqm": 2.42, "sq_ft": 86.11}},
-                "direction": "east",
-                "floor": "5",
-                "total_floor": "7",
-                "rent": 12000,
-                "currency": "TWD",
-                "deposit": 2,
-                "deposit_type": 0,
-                "deposit_amount": 24000,
-                "fees": None,
-                "management_fee": 0,
-                "facilities": None,
-                "labels_fees": None,
-                "avatar": None,
-                "gallery": None,
-                "floor_plan": None,
-                "vr_url": None,
-                "community_id": None,
-                "community_name": None,
-                "property_purpose_key": 1,
-                "bit_status": 1026,
-                "created_at": "2025-02-01 09:00:00",
-                "updated_at": "2025-04-10 11:00:00",
-                "estate_room_number": "5F-2",
-            },
-            {
-                "id": 54305,
-                "url": "https://www.jgbsmart.com/house/GGHHII?living=1",
-                "user_id": 1001,
-                "role_id": int(role_id) if role_id else 20151,
-                "role_id_comment": "房東編號",
-                "team_id": int(role_id) if role_id else 20151,
-                "team_id_comment": "團隊編號（同 role_id）",
-                "team_name": "好租管理",
-                "team_name_comment": "物件歸屬",
-                "serial_id": None,
-                "title": "大安區景觀兩房",
-                "status": 2,
-                "country": "TW",
-                "country_id": 1,
-                "city": "台北市",
-                "city_id": 2,
-                "district": "大安區",
-                "district_id": 6,
-                "address": "敦化南路一段100號",
-                "full_address": "台北市大安區敦化南路一段100號12樓",
-                "display_address": "敦化南路一段100號",
-                "full_display_address": "台北市大安區敦化南路一段100號12樓",
-                "latitude": "25.04210000",
-                "longitude": "121.54920000",
-                "use_for": "residential",
-                "space_type": "flat",
-                "building": "condo",
-                "room_count": 2,
-                "size": 25,
-                "size_data": {"size": {"m2": 25, "sqm": 7.56, "sq_ft": 269.10}},
-                "direction": "west",
-                "floor": "12",
-                "total_floor": "15",
-                "rent": 35000,
-                "currency": "TWD",
-                "deposit": 2,
-                "deposit_type": 0,
-                "deposit_amount": 70000,
-                "fees": None,
-                "management_fee": 2000,
-                "facilities": None,
-                "labels_fees": None,
-                "avatar": None,
-                "gallery": None,
-                "floor_plan": None,
-                "vr_url": None,
-                "community_id": None,
-                "community_name": None,
-                "property_purpose_key": 1,
-                "bit_status": 1026,
-                "created_at": "2025-03-10 14:00:00",
-                "updated_at": "2025-05-01 16:30:00",
-                "estate_room_number": "12F-A",
-            },
-        ]
-        # 簡易關鍵字過濾
-        if keyword:
-            filtered = [
-                e for e in all_estates
-                if keyword in e["title"] or keyword in e["full_address"]
-            ]
-        else:
-            filtered = all_estates
+        """`GET /estates`（`EstateApiController@index`）——**已對照 jgb2 原始碼**（2026-08-25）。
 
+        逐條照抄 production，包含它的怪癖：
+
+        * 恆定 where `active=1` **且 `is_open=1`**（:52-53）——只回**招租刊登中**的物件。
+          舊版 mock 沒有這道過濾 ⇒ 會回 production 根本查不到的物件；
+          「查無＝非刊登中」那條 sentinel 口徑因此在替身上從未被走到。
+        * `role_id` 是 **applyFilters 的一般篩選**（:184-186），不是授權——寫錯就換一組結果集。
+          舊版 mock 把 role_id 直接寫進每一列 ⇒ **任何 role 都命中**（過度寬鬆）。
+        * `keyword` 只比 `title`（:189-192），**不含 address**；production 先跳脫
+          `%`／`_` 再 LIKE，故使用者輸入的萬用字元是字面值——Python 的 `in` 同語義。
+        * `use_for` 不在 residential／business／parking_space 三者內 → **靜默忽略**（:149-155）。
+        * 排序白名單 id／created_at／updated_at／rent／size，其餘**回退 `updated_at`**（:60-66）；
+          方向非 asc 一律 desc。
+        * 分頁：預設 50、上限 200；`total_pages = ceil(total/per_page)`（**不特判 total=0**，
+          結果同為 0）；`has_more = page < total_pages`。
+        * `mapping`：production 回 `{countries, building}`，`countries` 由 countrys／citys／
+          districts 三張表組出（:490-536）。**本替身不模擬**，故不輸出該鍵（沿用舊行為，
+          消費端目前無人讀取——見 estates-source-audit.md「未涵蓋」）。
+        """
+        logger.info(f"[MOCK] get_estates: role_id={role_id}, keyword={keyword}")
+        rows = self._estate_fixtures.visible_rows()
+
+        if role_id:
+            rows = [e for e in rows if e.get("role_id") == int(role_id)]
+        if params.get("user_id"):
+            rows = [e for e in rows if e.get("user_id") == int(params["user_id"])]
+        if params.get("status") not in (None, ""):
+            rows = [e for e in rows if e.get("status") == int(params["status"])]
+        use_for = params.get("use_for")
+        if use_for in ("residential", "business", "parking_space"):
+            rows = [e for e in rows if e.get("use_for") == use_for]
+        for key in ("city_id", "district_id"):
+            if params.get(key) not in (None, ""):
+                rows = [e for e in rows if e.get(key) == int(params[key])]
+        if params.get("rent_min") not in (None, ""):
+            rows = [e for e in rows if (e.get("rent") or 0) >= int(params["rent_min"])]
+        if params.get("rent_max") not in (None, ""):
+            rows = [e for e in rows if (e.get("rent") or 0) <= int(params["rent_max"])]
+        if keyword:
+            rows = [e for e in rows if str(keyword) in str(e.get("title") or "")]
+
+        sort_by = params.get("sort_by")
+        if sort_by not in ALLOWED_SORT_FIELDS:
+            sort_by = "updated_at"
+        descending = str(params.get("sort_direction", "desc")).lower() != "asc"
+        rows.sort(key=lambda e: (e.get(sort_by) is None, e.get(sort_by)),
+                  reverse=descending)
+
+        page = max(1, int(params.get("page", 1) or 1))
+        size = min(ESTATE_MAX_PER_PAGE, max(1, int(per_page or ESTATE_DEFAULT_PER_PAGE)))
+        total = len(rows)
+        total_pages = -(-total // size)
+        offset = (page - 1) * size
         return {
             "success": True,
-            "data": filtered,
+            "data": [project_estate(e) for e in rows[offset:offset + size]],
             "pagination": {
-                "current_page": 1,
-                "per_page": 10,
-                "total": len(filtered),
-                "total_pages": 1,
-                "has_more": False,
+                "current_page": page, "per_page": size, "total": total,
+                "total_pages": total_pages, "has_more": page < total_pages,
             },
         }
 

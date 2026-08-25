@@ -48,9 +48,9 @@ D  mock 存在但 production **無對應端點**（不可遷移，屬缺口）  
 
 | 註冊鍵 | rag 方法 | 路徑 | jgb2 controller@method | 使用面向（seed） | 稽核成本 |
 |---|---|---|---|---|---|
-| `jgb_estate_status` | `get_estate_status` | `GET /estates` | `EstateApiController@index` | estate | **高**（570 行／5 個 format） |
-| `jgb_estates` | `get_estates` | `GET /estates` | 同上 | repair 表單（*註1*） | 與上共用端點、**語義不同勿混用** |
-| `jgb_estate_detail` | `get_estate_detail` | `GET /estates/{id}` | `EstateApiController@show` | estate | 高（同檔） |
+| `jgb_estate_status` | `get_estate_status` | `GET /estates` | `EstateApiController@index` | estate | ✅ **已稽核**（estates-source-audit.md） |
+| `jgb_estates` | `get_estates` | `GET /estates` | 同上 | repair 表單（*註1*） | ✅ **已稽核**；與上共用端點、**語義不同勿混用** |
+| `jgb_estate_detail` | `get_estate_detail` | `GET /estates/{id}` | `EstateApiController@show` | estate | ✅ **已稽核** |
 | `jgb_meters` | `get_meters` | `GET /meters` | `MeterApiController@index` | iot | 中（208 行／1 format） |
 | `jgb_invoices` | `get_invoices` | `GET /invoices` | `InvoiceApiController@index` | billing | 中（181 行／1 format） |
 | `jgb_payment_logs` | `get_payment_logs` | `GET /payment-logs` | `PaymentLogApiController@index` | billing | 中（140 行／inline 投影） |
@@ -157,7 +157,11 @@ GAP-B2  viewer 權限圈定（viewer_user_id）無 fixture 模型；替身改為
 2  ✅ **已完成** B 級 jgb_bill_visibility 的**止血**（拒答取代捏造）；
       真正的 viewer 權限 fixture 仍未做，成本改判中高
 3  D 級 billing_api ×4              查證後刪除，減少 4 個假綠面
-4  B 級 estate 三鍵（共 2 端點）     物件面向是業主點名的第一項；成本最高但一次涵蓋三個註冊鍵
+4  ✅ **已完成** B 級 estate 三鍵（estates-source-audit.md）——抓到 6 處偏差並修好：
+      投影外欄位 estate_room_number／keyword 連地址一起比／role_id 被寫成 echo 而非篩選／
+      缺 is_open=1 恆定 where（sentinel 分支因此測不到）／分頁排序寫死／
+      contract_required_fields 回 production 產不出的空 fields。
+      ⚠️ estates **仍未遷入 transport**（MIGRATED_ENDPOINTS 未變），本次只對齊方法級 mock
 5  B 級 invoices ＋ payment_logs    發票面向；兩者都在 billing facet 的 live 路徑上
 6  B 級 meters                      IoT 面向，單一端點單一 format
 7  B 級 team_members ＋ permissions  account 面向，兩鍵共用一個 controller
