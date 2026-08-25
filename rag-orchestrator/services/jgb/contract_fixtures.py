@@ -30,26 +30,43 @@ EXTERNAL_CONTRACT_FIELDS: "frozenset[str]" = frozenset({
 })
 
 
+#: **內部欄位**：production `index()` 有 `select` 也**確實用來過濾**，但 `formatContract()`
+#: **不投影**（見 ContractApiController.php:45 select vs :108-155 formatContract）。
+#: fixture 需要它才能重現 `user_id` 過濾，故存在於列上、但**不得出現在回應**。
+INTERNAL_CONTRACT_FIELDS: "frozenset[str]" = frozenset({"to_user_id"})
+
+
 class ForeignContractFieldError(ValueError):
     """fixture 出現投影不存在的欄位（契約保真失效）。"""
 
 
 def assert_contract_projection(record: "dict[str, Any]") -> None:
-    foreign = set(record) - EXTERNAL_CONTRACT_FIELDS
+    """fixture 列只能由「投影欄位 ∪ 內部欄位」組成。"""
+    foreign = set(record) - EXTERNAL_CONTRACT_FIELDS - INTERNAL_CONTRACT_FIELDS
     if foreign:
         raise ForeignContractFieldError(f"合約 fixture 含投影外欄位：{sorted(foreign)}")
+
+
+def project_contract(record: "dict[str, Any]") -> "dict[str, Any]":
+    """輸出投影：剝掉內部欄位，使回應與 `formatContract()` 的鍵集一致。"""
+    return {k: v for k, v in record.items() if k not in INTERNAL_CONTRACT_FIELDS}
 
 
 class ContractFixtureTable:
     """可依 **request 參數**收斂的合約資料集。
 
     差異矩陣（刻意）：兩列的 `id`／`title`／`city・district`／`rent`／期間／
-    `is_history` 皆不同——**任一過濾條件寫錯都會得到不同結果集**。
+    `is_history`／`to_user_id` 皆不同——**任一過濾條件寫錯都會得到不同結果集**。
+
+    ⚠️ 兩列分屬**不同租客**（9001／9002），故 `user_id` 過濾可證「1 筆」與「0 筆」兩型；
+    「N 筆」型**不在本表射程**——它由 `tests/unit/conversational/test_repair_prefill_req.py`
+    的 `_MANY` 測試替身涵蓋。不要為了湊 N 筆在此加第三列（會動到已被 4 個斷言
+    釘住的 `[678, 600]` 差異矩陣）。
     """
 
     _ROWS: "tuple[dict[str, Any], ...]" = (
         {
-            "id": 678, "status": 5, "bit_status": 47, "active": 1,
+            "id": 678, "to_user_id": 9001, "status": 5, "bit_status": 47, "active": 1,
             "is_history": 0, "is_history_done": 0, "estate_id": 456,
             "title": "信義區套房A", "city": "台北市", "district": "信義區",
             "address": "信義路五段7號", "currency": "TWD",
@@ -72,7 +89,7 @@ class ContractFixtureTable:
             "created_at": "2025-12-10 09:00:00", "updated_at": "2026-01-01 00:00:00",
         },
         {
-            "id": 600, "status": 10, "bit_status": 3087, "active": 1,
+            "id": 600, "to_user_id": 9002, "status": 10, "bit_status": 3087, "active": 1,
             "is_history": 1, "is_history_done": 1, "estate_id": 400,
             "title": "中山區雅房B", "city": "台北市", "district": "中山區",
             "address": "中山北路二段10號", "currency": "TWD",

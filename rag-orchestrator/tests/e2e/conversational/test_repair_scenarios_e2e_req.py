@@ -11,8 +11,11 @@ TestClient(app) 程序內起整服務，POST /api/v1/message 走正常管線
   - F 直達參數：trigger_facet_key='repair_create' 進同一面向（跳意圖辨識，R1.3）。
   - 冪等：建單後再說「好」→ 回單號不重複建單（execute 一次，R4.4）。
 
-身分：b2c、mode=b2c、target_user=tenant；role_id/user_id 隨 mock 語義任意組合
-（R001/U001→1 筆租約——見 jgb_system_api._mock_get_tenant_contracts）。
+身分：b2c、mode=b2c、target_user=tenant。
+⚠️ 2026-08-25 起 `get_tenant_contracts` 走**真端點** `/contracts/status-overview` 帶 `user_id`，
+mock 端由 `ContractFixtureTable` 依 `to_user_id` 過濾（production 語義 `(int) user_id`）——
+故 user_id **必須是 fixture 的租客編號**：9001 → 1 筆有效租約（678）。
+舊的 R001/U001 語義（任意組合都回 1 筆）已隨方法級 mock 一併移除。
 
 **照片（A 案）**：ENABLE_IMAGE_RECOGNITION=true 時 Vision 真打 GPT-4o 不穩定且需真圖，
 故 A 案採「文字推斷版」為穩定收案主軸（描述「冷氣壞了」即足夠進面向、推斷分類），
@@ -31,8 +34,8 @@ import pytest
 pytestmark = pytest.mark.e2e
 
 VENDOR_ID = int(os.getenv("TEST_REPAIR_VENDOR_ID", "1"))
-ROLE_ID = os.getenv("TEST_REPAIR_ROLE_ID", "R001")     # mock → 1 筆有效租約
-USER_ID = os.getenv("TEST_REPAIR_USER_ID", "U001")
+ROLE_ID = os.getenv("TEST_REPAIR_ROLE_ID", "R001")
+USER_ID = os.getenv("TEST_REPAIR_USER_ID", "9001")    # fixture 678 的 to_user_id → 1 筆有效租約
 MOCK_TICKET = os.getenv("TEST_REPAIR_MOCK_TICKET", "12346")   # _mock_create_repair data.id
 
 

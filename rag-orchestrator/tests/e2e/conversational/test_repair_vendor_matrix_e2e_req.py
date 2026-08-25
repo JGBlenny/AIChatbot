@@ -14,7 +14,8 @@ only_sop_qualified / close_scores_sop_* / sop_triggered_* 等 sop_ 勝出前綴�
 **gate e2e（另補）**：把某 vendor 的 repair_enabled 設 false（fixture 自建自清）→
 不進面向、回降級文案＋客服管道（R1.5）。
 
-身分：mock get_tenant_contracts 對任意 role_id/user_id 預設回 1 筆租約（見 _mock_get_tenant_contracts），
+身分：`get_tenant_contracts` 走真端點 `/contracts/status-overview` 帶 `user_id`，
+mock 端依 fixture `to_user_id` 過濾 → **user_id 必須是 9001** 才有 1 筆有效租約（678），
 故四業者共用同一 mock 租客身份、僅 vendor_id 變動即可驗矩陣。
 需 RUN_E2E=1 ＋ 整服務 ＋ USE_MOCK_JGB_API=true。
 """
@@ -29,7 +30,7 @@ pytestmark = pytest.mark.e2e
 VENDOR_IDS = [int(v) for v in os.getenv("TEST_REPAIR_VENDOR_IDS", "1,2,3,4").split(",")]
 SOP_SWITCHED_VENDORS = {2, 4}   # M2 停用修繕 SOP 的業者（decision_case 佐證對象）
 ROLE_ID = os.getenv("TEST_REPAIR_ROLE_ID", "R001")
-USER_ID = os.getenv("TEST_REPAIR_USER_ID", "U001")
+USER_ID = os.getenv("TEST_REPAIR_USER_ID", "9001")    # fixture 678 的 to_user_id
 MOCK_TICKET = os.getenv("TEST_REPAIR_MOCK_TICKET", "12346")
 
 

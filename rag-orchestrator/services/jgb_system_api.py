@@ -52,8 +52,9 @@ class JGBSystemAPI:
         )
         #: 4.3：mock 模式裝配替身；fixture 表由 4.4 提供，未裝配前「已遷移」端點
         #: 一律 MissingFixtureError——**任何失敗都不會退回 real transport**。
-        #: 4.6：裝配 4.4 fixture 表，使 bills／bill_detail 兩個**已遷移**端點
-        #: 能依契約回應；其餘約 18 個端點仍走方法級 mock。
+        #: 4.6：裝配 fixture 表，使 bills／bill_detail／contracts 三個**已遷移**端點
+        #: 能依契約回應；其餘端點仍走方法級 mock——逐端點現況與稽核成本見
+        #: `.kiro/specs/conversational-routing-execution/transport-migration-inventory.md`。
         self._mock_transport: Optional[Transport] = (
             JGBMockTransport(BillFixtureTable(), ContractFixtureTable())
             if self.use_mock else None
@@ -605,7 +606,14 @@ class JGBSystemAPI:
         if not (role_id and viewer_user_id and bill_id):
             return self._degraded_response()
         if self.use_mock:
-            return {"success": True, "data": []}   # mock 預設看不到（owner-scoped 未指派）
+            # ⚠️ mock **不回答可見性**（2026-08-25 盤查改判）。
+            # production 的圈定來自 viewer_user_id → ExternalViewerScope → VisibleScope::resolve
+            # → Bill::queryThisUser，依 roleType 與 show_* 權限旗標過濾 owner_role_id／
+            # issue_target_role_id 等**非投影欄位**，替身射程外（見 transport 的 GAP 說明）。
+            # 舊版在此回 {"success": True, "data": []} ＝ **捏造一個「看不到」**，
+            # 而 accounts.build_team_permission_facts 會把它當事實講給使用者。
+            # 改回降級：secondary attach 只在 success 時掛，故面向自然走「未確認具體資源」措辭。
+            return self._degraded_response()
         raw = await self._request("/api/external/v1/bills",
                                   {"role_id": role_id, "viewer_user_id": viewer_user_id,
                                    "bill_id": bill_id})
@@ -776,22 +784,56 @@ class JGBSystemAPI:
         """查詢租客名下的有效租約清單（含物件資訊，供修繕報修自動預填）。
 
         契約形狀（conversational-repair research.md 決策 1 / G1）：
-          data: [{contract_id, estate_id, estate_title, display_address, room}]
+          data: [{contract_id, estate_id, estate_title, display_address}]
+          （`room` 無來源——見下方投影對映）
+
+        **真端點（2026-08-25 盤查改判）**：走 `GET /contracts/status-overview` 帶 `user_id`。
+        production `ContractApiController@index:63-65` 對該參數施加
+        `where('to_user_id', (int) user_id)`，語義即「這位租客名下的合約」。
+        ⚠️ 原判定「jgb2 尚未提供租客視角端點」（J 清單 G1）**已作廢**——
+        該缺口不存在，先前的 `NotImplementedError` 使本方法在真實模式必然拋例外，
+        而呼叫端 `repair_prefill._fetch_contracts` 會吞掉例外 → production 的物件預填
+        **靜默失效**，且所有 mock 測試皆綠。本次改為真的接上該端點。
+
+        投影對映（`formatContract` 逐鍵 → 預填契約鍵）：
+          contract_id ← `id`｜estate_id ← `estate_id`｜estate_title ← `title`
+          display_address ← `city` + `district` + `address`（缺段跳過）
+          room ← **無來源**：`formatContract` 沒有房號欄位；`_estate_display` 對缺鍵已容忍，
+                 故不輸出此鍵，**不得**拿其他欄位假造。
+
+        「有效」的界線在**本 adapter**：production index 只加 `active=1`／`is_newest=1`，
+        **不濾歷史合約**；預填一張已歸檔的租約是錯的，故在此濾掉
+        `is_history`／`is_history_done`。此為 adapter 語義，不是 API 語義。
 
         授權：role_id + user_id 雙證，缺一降級（_validate_identity 慣例）。
-        真端點：jgb2 尚未提供租客視角的租約清單端點（G1 缺口）；
-                real 分支留 NotImplementedError 占位，待與 jgb2 確認後對接。
         """
         if not self._validate_identity(role_id, user_id):
             return self._degraded_response()
 
-        if self.use_mock:
-            return self._mock_get_tenant_contracts(role_id, user_id)
-
-        # TODO: 真端點待 jgb2 提供（J 清單 G1）
-        raise NotImplementedError(
-            "get_tenant_contracts 真端點尚未由 jgb2 提供，請使用 mock 模式。"
+        raw = await self._request(
+            "/api/external/v1/contracts/status-overview",
+            {"role_id": role_id, "user_id": user_id},
         )
+        if not raw or not raw.get("success"):
+            return {"success": False, "data": []}
+
+        rows = raw.get("data")
+        rows = rows if isinstance(rows, list) else []
+        active = [r for r in rows
+                  if not r.get("is_history") and not r.get("is_history_done")]
+        return {"success": True, "data": [self._as_prefill_contract(r) for r in active]}
+
+    @staticmethod
+    def _as_prefill_contract(row: "dict[str, Any]") -> "dict[str, Any]":
+        """`formatContract` 一列 → 修繕預填契約（對映見 `get_tenant_contracts`）。"""
+        return {
+            "contract_id": row.get("id"),
+            "estate_id": row.get("estate_id"),
+            "estate_title": row.get("title"),
+            "display_address": "".join(
+                str(row.get(k) or "") for k in ("city", "district", "address")
+            ),
+        }
 
     async def get_iot_manufacturers(
         self,
@@ -2016,50 +2058,6 @@ class JGBSystemAPI:
                 },
             },
         }
-
-    def _mock_get_tenant_contracts(
-        self, role_id: str, user_id: str
-    ) -> dict[str, Any]:
-        """租客視角租約清單（conversational-repair G1 mock；真端點待 jgb2 提供）。
-
-        三種形狀以 role_id/user_id 組合區分：
-          R001/U001 → 1 筆（典型單租約租客）
-          R002/U002 → 2 筆（多租約）
-          R003/U003 → 0 筆（無有效租約）
-          其他      → 1 筆（預設）
-        """
-        logger.info(
-            f"[MOCK] get_tenant_contracts: role_id={role_id}, user_id={user_id}"
-        )
-        # 多租約形狀
-        multi = [
-            {
-                "contract_id": 678,
-                "estate_id": 456,
-                "estate_title": "信義區套房A",
-                "display_address": "信義路五段7號",
-                "room": "3F-1",
-            },
-            {
-                "contract_id": 701,
-                "estate_id": 512,
-                "estate_title": "中山區雅房B",
-                "display_address": "中山北路二段10號",
-                "room": "5F-2",
-            },
-        ]
-        single = [multi[0]]
-        zero: list = []
-
-        if role_id == "R002" and user_id == "U002":
-            data = multi
-        elif role_id == "R003" and user_id == "U003":
-            data = zero
-        else:
-            # R001/U001 或其他預設回 1 筆
-            data = single
-
-        return {"success": True, "data": data}
 
     def _mock_get_iot_manufacturers(self, role_id: str) -> dict[str, Any]:
         """對齊 IotManufacturerApiController@index"""

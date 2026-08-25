@@ -18,6 +18,8 @@ from typing import Any, Literal, Optional, Protocol, TypedDict
 
 import httpx
 
+from services.jgb.contract_fixtures import project_contract
+
 logger = logging.getLogger(__name__)
 
 # transport 層對外的降級訊息（原位於 jgb_system_api，隨 _send 一併下移）
@@ -101,6 +103,14 @@ class UnmigratedMockEndpointError(TransportError):
 
 class MissingFixtureError(TransportError):
     """endpoint 已遷移，但 fixture 表缺對應資料（4.4／4.5 使用）。"""
+
+
+class UnsupportedMockParameterError(TransportError):
+    """production 會據以過濾、但替身**無法忠實模擬**的參數。
+
+    ⚠️ 一律 raise，**不得靜默忽略**——靜默忽略等於替身自行捏造一個答案，
+    而呼叫端會把它當成事實（`viewer_user_id` 舊行為即為此類）。
+    """
 
 
 class UnexpectedRealNetworkError(TransportError):
@@ -320,6 +330,8 @@ class JGBMockTransport:
 
         * `role_id` 必填，缺 → 400（:23-25）；
         * 恆加 `active=1` 與 `is_newest=1` 兩條 where（:51-52）；
+        * `user_id`：`where('to_user_id', (int) user_id)`（:63-65）——⚠️ `to_user_id`
+          **不在 formatContract 投影內**，故它在 fixture 是內部欄位、回應中不得出現；
         * `contract_ids`：`array_map('intval', explode(','))` → `whereIn('id')`（:67-70）——
           **`intval` 語義**：取前綴數字，無數字得 0（故 "abc" 變 0、匹配不到）；
         * `keyword`：先跳脫 `%`／`_`，再 `title LIKE '%kw%'`（:72-75）——
@@ -332,6 +344,10 @@ class JGBMockTransport:
 
         rows = [r for r in self.contract_fixtures.rows()
                 if r.get("active") == 1 and r.get("is_newest") == 1]
+
+        user_id = params.get("user_id")
+        if user_id not in (None, ""):
+            rows = [r for r in rows if r.get("to_user_id") == _php_intval(str(user_id))]
 
         raw_ids = params.get("contract_ids")
         if raw_ids not in (None, ""):
@@ -354,7 +370,7 @@ class JGBMockTransport:
         return {
             "success": True,
             "mapping": getattr(self.contract_fixtures, "MAPPING", {}),
-            "data": rows[offset:offset + per_page],
+            "data": [project_contract(r) for r in rows[offset:offset + per_page]],
             "pagination": {"current_page": page, "per_page": per_page, "total": total,
                            "total_pages": total_pages, "has_more": page < total_pages},
         }
@@ -369,9 +385,30 @@ class JGBMockTransport:
           **不是** ``[月初, 次月初)``——2 月同樣用 31，這是 production 的實際行為；
         * `sort_by` 不在白名單 → **回退 `created_at`**（非拒絕，:88-96）；
         * `sort_direction` 非 asc/desc → 回退 `desc`。
+
+        **兩個 production 有、替身沒有的過濾**（2026-08-25 盤查登記，不得讀成已證）：
+
+        * `viewer_user_id`（:41-47）——經 `ExternalViewerScope` → `VisibleScope::resolve`
+          → `Bill::queryThisUser`，依 roleType（owner／agent／biglandlord／tenant）與
+          `show_*` 權限旗標，過濾 `owner_role_id`／`issue_target_role_id`／`estate_id`／
+          `contract_id`。前兩者**不在 33 欄投影內**，權限表也不在 fixture 射程 →
+          **一律 raise**（見 `UnsupportedMockParameterError`），不假裝答得出可見性。
+        * `user_id`（:50-55）——production 是
+          `whereHas('belongContract', to_user_id = user_id AND active = 1)`；
+          本表的帳單掛在合約 700100／700200，而合約 fixture 只有 678／600，
+          **兩個 fixture 宇宙目前不連通**，忠實實作會讓所有租客情境變 0 筆。
+          ⚠️ 登記為 **GAP-B1**：目前**照舊忽略**，故「帶了 user_id 仍拿到全部帳單」
+          是替身的缺口、**不是** production 行為。要修必須動 C4a 已凍結的 fixture 值，
+          屬另一個需要授權的 slice（見 transport-migration-inventory.md）。
         """
         if not params.get("role_id"):
             return self._error(400, "role_id 為必填參數")
+
+        if params.get("viewer_user_id") not in (None, ""):
+            raise UnsupportedMockParameterError(
+                "GET /bills 的 viewer_user_id 圈定依賴權限主體（UserData）與非投影欄位，"
+                "替身無法忠實模擬；不得以忽略該參數的結果回答可見性問題。"
+            )
 
         rows = list(self.fixtures.rows())
 

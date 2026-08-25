@@ -19,7 +19,7 @@ pytestmark = pytest.mark.e2e
 
 VENDOR_ID = int(os.getenv("TEST_REPAIR_VENDOR_ID", "1"))
 ROLE_ID = os.getenv("TEST_REPAIR_ROLE_ID", "R001")
-USER_ID = os.getenv("TEST_REPAIR_USER_ID", "U001")
+USER_ID = os.getenv("TEST_REPAIR_USER_ID", "9001")    # fixture 678 的 to_user_id（租約預填）
 
 
 def _conn_kwargs():
