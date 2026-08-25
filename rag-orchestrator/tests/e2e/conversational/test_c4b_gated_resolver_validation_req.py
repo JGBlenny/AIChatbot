@@ -147,9 +147,13 @@ def _delegates_fixture():
 
 @pytest.fixture(scope="module")
 def _env(_delegates_fixture):
-    prev = {k: os.environ.get(k) for k in ("USE_MOCK_JGB_API", "PREENTRY_ROUTABILITY_GATE")}
+    prev = {k: os.environ.get(k) for k in ("USE_MOCK_JGB_API", "PREENTRY_ROUTABILITY_GATE",
+                                           "PREENTRY_ROUTABILITY_FACETS")}
     os.environ["USE_MOCK_JGB_API"] = "true"
     os.environ["PREENTRY_ROUTABILITY_GATE"] = "true"          # ⚠️ 只在本行程
+    # ⚠️ facet-scoped rollout：只開旗標**不會**啟用 resolver（fail-safe）。
+    #    這一行漏掉的話，本檔會安靜地驗到舊路徑——M0 修的就是這個。
+    os.environ["PREENTRY_ROUTABILITY_FACETS"] = ",".join((SEED, MID, TARGET))
     yield
     for k, v in prev.items():
         if v is None:
@@ -300,6 +304,13 @@ def test_gated_resolver_vertical_slice(client, rig):
     from tests.support.brain_grounding import evaluate_brain_grounding
 
     spec = _ruler()
+    # ── M0 守門：resolver 必須真的被啟用，否則直接紅（不得安靜驗到舊路） ──
+    assert os.getenv("PREENTRY_ROUTABILITY_GATE", "").lower() == "true", "gate 未開"
+    _allow = {f.strip() for f in os.getenv("PREENTRY_ROUTABILITY_FACETS", "").split(",") if f.strip()}
+    assert SEED in _allow, (
+        f"seed 面向 {SEED} 不在 PREENTRY_ROUTABILITY_FACETS={_allow}——"
+        "resolver 不會啟用，本檔會驗到舊路徑（feature flag 語義改變時的靜默失效）")
+
     for rep in range(1, REPETITIONS + 1):
         sid = f"c4bg-{rep}-{uuid.uuid4().hex[:8]}"
         before = len(rig["resolutions"])

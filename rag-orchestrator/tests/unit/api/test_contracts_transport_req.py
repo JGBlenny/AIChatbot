@@ -46,6 +46,8 @@ async def test_no_identifier_returns_all():
 @pytest.mark.parametrize("ids,expected", [
     ("678", [678]), ("600", [600]), ("678,600", [678, 600]), ("999", []),
     (" 678 ", [678]),                       # adapter 可能夾空白
+    ("678abc", [678]),                      # ★ PHP intval 取前綴數字（照抄 production）
+    ("abc", []),                            # intval("abc")=0 → 匹配不到
 ])
 async def test_contract_ids_converges(ids, expected):
     """★ 這條就是 v4 卡住的地方：帶 id 重查必須收斂。"""
@@ -55,8 +57,9 @@ async def test_contract_ids_converges(ids, expected):
 
 @pytest.mark.req("face-exit-before-grounding:1")
 @pytest.mark.parametrize("kw,expected", [
-    ("信義區套房A", [678]), ("中山區雅房B", [600]),
-    ("信義路五段", [678]),                  # address 亦可命中
+    ("信義區套房A", [678]), ("中山區雅房B", [600]), ("區", [678, 600]),
+    # ★ M2 source audit：production 只比 title（`title LIKE %kw%`），**不含 address**
+    ("信義路五段", []),
     ("不存在的物件", []),
 ])
 async def test_keyword_filters(kw, expected):
@@ -90,3 +93,25 @@ def test_envelope_shape_matches_adapter_expectations():
     r = t._contracts_index({"role_id": "20151"})
     assert set(r) == {"success", "mapping", "data", "pagination"}
     assert "bit_status" in r["mapping"] and r["pagination"]["total"] == 2
+    assert r["pagination"]["total_pages"] == 1 and r["pagination"]["has_more"] is False
+    assert [x["id"] for x in r["data"]] == [678, 600]        # orderBy id desc
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_empty_result_pagination_matches_production():
+    """production：total=0 時 total_pages 為 **0**（非 1）。"""
+    r = _t()._contracts_index({"role_id": "20151", "keyword": "查無此物件"})
+    assert r["pagination"]["total"] == 0 and r["pagination"]["total_pages"] == 0
+    assert r["pagination"]["has_more"] is False
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_projection_matches_formatcontract_keys():
+    """M2：fixture 欄位集需覆蓋 formatContract 逐鍵（含 G1/G2/G4 三組）。"""
+    from services.jgb.contract_fixtures import EXTERNAL_CONTRACT_FIELDS
+    for k in ("contract_inviting_at", "contract_inviting_expire_at",
+              "contract_inviting_sign_at", "contract_finish_sign_at",
+              "to_user_login_email", "is_newest"):
+        assert k in EXTERNAL_CONTRACT_FIELDS, f"投影缺 {k}"
+    row = ContractFixtureTable().by_id(678)
+    assert row["is_newest"] == 1 and row["to_user_login_email"]

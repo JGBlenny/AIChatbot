@@ -216,6 +216,13 @@ def resolve_endpoint(method: HttpMethod, path: str) -> Optional[str]:
     return hits[0] if hits else None
 
 
+def _php_intval(token: str) -> int:
+    """PHP `intval()` 的取前綴數字語義（照抄 production 的 contract_ids 解析）。"""
+    import re as _re
+    m = _re.match(r"\s*([+-]?\d+)", token or "")
+    return int(m.group(1)) if m else 0
+
+
 # ── 4.3：migration admission gate ─────────────────────────────────────────
 #: 已遷移至 transport 層的 **endpoint_key**（migration admission set）。
 #: ⚠️ 只放 endpoint identity，**不放 concrete path**、不再做一次樣板比對——
@@ -307,44 +314,49 @@ class JGBMockTransport:
         return {"success": False, "error": {"code": code, "message": message}}
 
     def _contracts_index(self, params: "dict[str, Any]") -> TransportResponse:
-        """`GET /contracts/status-overview`（transport-extension）。
+        """`GET /contracts/status-overview`（`ContractApiController@index`）。
 
-        **要讓它可被實測的行為**：第一次無識別 → 回全部；使用者給識別後，
-        adapter 以 `contract_ids`／`keyword` 重查 → **依 request 收斂**。
-        方法級 mock 的簽章不吃這兩個參數，恆回全部，於是「重查收斂」這段
-        execution 行為被替身吃掉——本方法即為修正該處。
+        **已對照 jgb2 原始碼**（2026-08-25 M2 audit），逐條照抄其實際行為：
 
-        ⚠️ **保真度聲明**：`contract_ids`／`keyword` 的**伺服器端**語義本輪未經
-        jgb2 原始碼核對（見 `contract_fixtures.py` 開頭）；此處採 adapter 實際會送的
-        參數做**保守**過濾：`contract_ids` 為 CSV 精確 id 比對、`keyword` 為
-        `title`／`address` 子字串比對。**不得**據此宣稱與 production 逐條等價。
+        * `role_id` 必填，缺 → 400（:23-25）；
+        * 恆加 `active=1` 與 `is_newest=1` 兩條 where（:51-52）；
+        * `contract_ids`：`array_map('intval', explode(','))` → `whereIn('id')`（:67-70）——
+          **`intval` 語義**：取前綴數字，無數字得 0（故 "abc" 變 0、匹配不到）；
+        * `keyword`：先跳脫 `%`／`_`，再 `title LIKE '%kw%'`（:72-75）——
+          ⚠️ **只比 `title`，不含 `address`**（本 mock 首版誤加 address，M2 已修）；
+        * `orderBy('id','desc')`（:77）；
+        * 分頁：`total_pages` 在 total=0 時為 **0**、`has_more = page < total_pages`（:80-101）。
         """
         if not params.get("role_id"):
             return self._error(400, "role_id 為必填參數")
 
-        rows = list(self.contract_fixtures.rows())
+        rows = [r for r in self.contract_fixtures.rows()
+                if r.get("active") == 1 and r.get("is_newest") == 1]
 
         raw_ids = params.get("contract_ids")
         if raw_ids not in (None, ""):
-            wanted = set()
-            for token in str(raw_ids).split(","):
-                token = token.strip()
-                if token.isdigit():
-                    wanted.add(int(token))
+            wanted = {_php_intval(t) for t in str(raw_ids).split(",")}
             rows = [r for r in rows if r["id"] in wanted]
 
         keyword = params.get("keyword")
         if keyword not in (None, ""):
-            kw = str(keyword).strip()
-            rows = [r for r in rows
-                    if kw in str(r.get("title") or "") or kw in str(r.get("address") or "")]
+            kw = str(keyword)
+            rows = [r for r in rows if kw in str(r.get("title") or "")]
 
+        rows.sort(key=lambda r: r["id"], reverse=True)
+
+        page = max(1, int(params.get("page", 1) or 1))
+        per_page = min(self.MAX_PER_PAGE,
+                       max(1, int(params.get("per_page", self.DEFAULT_PER_PAGE) or 1)))
+        total = len(rows)
+        total_pages = -(-total // per_page) if total > 0 else 0
+        offset = (page - 1) * per_page
         return {
             "success": True,
             "mapping": getattr(self.contract_fixtures, "MAPPING", {}),
-            "data": rows,
-            "pagination": {"current_page": 1, "per_page": self.DEFAULT_PER_PAGE,
-                           "total": len(rows), "total_pages": 1, "has_more": False},
+            "data": rows[offset:offset + per_page],
+            "pagination": {"current_page": page, "per_page": per_page, "total": total,
+                           "total_pages": total_pages, "has_more": page < total_pages},
         }
 
     def _bills_index(self, params: "dict[str, Any]") -> TransportResponse:

@@ -4,13 +4,10 @@
 使 production adapter「第一次查回 N 筆 → 使用者給識別 → 第二次依 request 重查」
 這段行為**可被實測**，而不是被方法級 mock 吃掉。
 
-⚠️ **保真度聲明（與 bills 不同，必須誠實標示）**：
-`fixtures.py` 的 33 欄投影是逐鍵對照 jgb2 `BillApiController::formatBill` 的行號取得；
-本檔的欄位集**取自現行方法級 mock `_mock_get_contracts`**，該處自述
-「對齊 `ContractApiController@index`（含 d2b0117 診斷欄位）」。
-本輪**未**重新閱讀 jgb2 原始碼核對——故本檔的 projection 權威性**弱於** bills，
-且**兩列資料值逐欄沿用原方法級 mock**，使遷移對既有測試為行為保持。
-⚠️ 日後若要提升為與 bills 同級的保真度，須重盤 jgb2 `ContractApiController@index` 後再改本檔。
+**保真度：已對照 jgb2 原始碼**（2026-08-25，M2 audit）——
+`jgb2/app/Http/Controllers/External/ContractApiController.php::formatContract()` 逐鍵，
+與 `index()` 的 where 條件（`active=1`、`is_newest=1`、`contract_ids`、`keyword`）。
+兩列資料值沿用原方法級 mock，使遷移對既有呼叫點為行為保持。
 """
 
 from typing import Any, Optional
@@ -26,6 +23,9 @@ EXTERNAL_CONTRACT_FIELDS: "frozenset[str]" = frozenset({
     "enable_late_fee", "calc_late_fee_buffer_days", "late_fee_percent",
     "early_termination_penalty_type", "early_termination_penalty",
     "early_termination_penalty_amount", "early_termination_notice_date",
+    # G1 簽約邀請/完成簽約時間點、G2 承租方登入 email、G4 是否最新版本（formatContract 逐鍵）
+    "contract_inviting_at", "contract_inviting_expire_at", "contract_inviting_sign_at",
+    "contract_finish_sign_at", "to_user_login_email", "is_newest",
     "created_at", "updated_at",
 })
 
@@ -64,6 +64,11 @@ class ContractFixtureTable:
             "early_termination_penalty_type": 1, "early_termination_penalty": 1.0,
             "early_termination_penalty_amount": 25000.00,
             "early_termination_notice_date": None,
+            "contract_inviting_at": "2025-12-10 10:00:00",
+            "contract_inviting_expire_at": "2026-01-09 10:00:00",
+            "contract_inviting_sign_at": "2025-12-12 11:00:00",
+            "contract_finish_sign_at": "2025-12-13 09:30:00",
+            "to_user_login_email": "tenant@example.com", "is_newest": 1,
             "created_at": "2025-12-10 09:00:00", "updated_at": "2026-01-01 00:00:00",
         },
         {
@@ -82,6 +87,11 @@ class ContractFixtureTable:
             "early_termination_penalty_type": None, "early_termination_penalty": 0.0,
             "early_termination_penalty_amount": 0.0,
             "early_termination_notice_date": None,
+            "contract_inviting_at": "2024-12-05 10:00:00",
+            "contract_inviting_expire_at": "2025-01-04 10:00:00",
+            "contract_inviting_sign_at": "2024-12-06 11:00:00",
+            "contract_finish_sign_at": "2024-12-07 09:30:00",
+            "to_user_login_email": "tenant2@example.com", "is_newest": 1,
             "created_at": "2024-12-05 09:00:00", "updated_at": "2025-12-31 23:59:59",
         },
     )
