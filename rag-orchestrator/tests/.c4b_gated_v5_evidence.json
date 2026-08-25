@@ -1,0 +1,480 @@
+{
+  "protocol": "c4b-gated-resolver-validation-v5-protocol-frozen.md",
+  "variant": "C4b-gated-resolver-validation-v5",
+  "runs": [
+    {
+      "repetition": 1,
+      "session_id": "c4bg-1-7c456f65",
+      "http": [
+        200,
+        200
+      ],
+      "turn1_answer": "請提供合約編號或物件名稱，以便我查詢相關資訊。",
+      "resolutions": [
+        {
+          "committed": "contract_closeout",
+          "stop_reason": "stay",
+          "chain": [
+            {
+              "facet_key": "bill_diagnosis",
+              "verdict": "switch",
+              "delegate_to": "billing_anomaly",
+              "reason": "responsibility_contract",
+              "config_key": "bill_diagnosis",
+              "context_key": "條件診斷：帳單",
+              "rules_digest": "8b1457659dbd4249",
+              "context_digest": "d1f88c90a2e0c9d2",
+              "fail_open": false
+            },
+            {
+              "facet_key": "billing_anomaly",
+              "verdict": "switch",
+              "delegate_to": "contract_closeout",
+              "reason": "responsibility_contract",
+              "config_key": "billing_anomaly",
+              "context_key": "帳單異常",
+              "rules_digest": "548ffa8d2c04961f",
+              "context_digest": "2158ebdc2d8fe7e6",
+              "fail_open": false
+            },
+            {
+              "facet_key": "contract_closeout",
+              "verdict": "stay",
+              "delegate_to": null,
+              "reason": "responsibility_contract",
+              "config_key": "contract_closeout",
+              "context_key": "退租收尾",
+              "rules_digest": "363ed0d0da3ca23c",
+              "context_digest": "16b107f0aaf4eb5f",
+              "fail_open": false
+            }
+          ]
+        }
+      ],
+      "hop_attribution": [
+        {
+          "candidate_face": "bill_diagnosis",
+          "raw_model_payload": {
+            "action": "ask",
+            "extracted_fields": {},
+            "next_question": "請提供帳單編號，或合約編號、物件名稱以便查詢該帳單的詳細資訊。",
+            "scope": "switch",
+            "face": "",
+            "delegate_facet_key": "billing_anomaly"
+          },
+          "raw_scope": "switch",
+          "raw_delegate_related_keys": [
+            "face",
+            "delegate_facet_key"
+          ],
+          "normalized_scope": "switch",
+          "normalized_delegate_facet_key": "billing_anomaly",
+          "allowed_delegates": [
+            "billing_anomaly"
+          ],
+          "normalization_drop_reason": "kept"
+        },
+        {
+          "candidate_face": "billing_anomaly",
+          "raw_model_payload": {
+            "action": "ask",
+            "extracted_fields": {
+              "symptom": "金額"
+            },
+            "next_question": "請提供帳單編號（bill_ref），以便進一步查詢。",
+            "scope": "switch",
+            "face": "金額",
+            "delegate_facet_key": "contract_closeout"
+          },
+          "raw_scope": "switch",
+          "raw_delegate_related_keys": [
+            "face",
+            "delegate_facet_key"
+          ],
+          "normalized_scope": "switch",
+          "normalized_delegate_facet_key": "contract_closeout",
+          "allowed_delegates": [
+            "contract_closeout"
+          ],
+          "normalization_drop_reason": "kept"
+        }
+      ],
+      "session_rows": [
+        {
+          "row_id": 968,
+          "state": "COLLECTING",
+          "config_key": "contract_closeout"
+        }
+      ],
+      "grounding_record": {
+        "case": "c4b-gated-resolver",
+        "execution_face": "contract_closeout",
+        "fixture_bill_id": 678,
+        "passed": false,
+        "raw_answer": "編號｜信義區套房A\n\n合約「信義區套房A」目前狀態為「已點交（執行中）」。目前尚不可點退，因為合約不在可點退的階段；合約到期日為 2026/12/31，需到期前 30 天（2026/12/01）起才可發送點退。\n\n如果您考慮提前解約，目前尚未發起。您可以在合約操作中選擇「提前解約」，填寫希望終止日並送出，租客回簽效期預設為 30 天。請注意，提前解約造成的已產出帳單需進行封存處理。\n\n如需進一步操作，請前往合約操作頁面。",
+        "matched_spans": [
+          {
+            "group_key": "信義區套房A",
+            "literal": "信義區套房A",
+            "start": 3,
+            "context": "編號｜信義區套房A\n\n合約「信義區套房A」目前狀態為「已點交（執行"
+          },
+          {
+            "group_key": "信義區套房A",
+            "literal": "信義區套房A",
+            "start": 14,
+            "context": "編號｜信義區套房A\n\n合約「信義區套房A」目前狀態為「已點交（執行中）」。目前尚不可點退"
+          }
+        ],
+        "missing_groups": [
+          [
+            "25,000",
+            "25000"
+          ]
+        ],
+        "wrong_instance_hits": [],
+        "fallback_hits": [],
+        "adjudication_hits": [],
+        "violated_dimensions": [
+          "value_not_used"
+        ],
+        "literal_provenance": {
+          "信義區套房A": "_mock_get_contracts data[0].title",
+          "25,000": "_mock_get_contracts data[0].rent"
+        },
+        "foil_provenance": {
+          "7,500": "bills fixture 900003.total",
+          "18,000": "bills fixture 900001.total",
+          "1,200": "bills fixture 900002.total"
+        },
+        "known_non_discriminating": [],
+        "fallback_markers_checked": [
+          "請洽客服",
+          "一般來說",
+          "無法查詢",
+          "NO_MATCH"
+        ],
+        "adjudication_flags_checked": []
+      }
+    },
+    {
+      "repetition": 2,
+      "session_id": "c4bg-2-d9973c04",
+      "http": [
+        200,
+        200
+      ],
+      "turn1_answer": "請問是哪一份合約或物件名稱？",
+      "resolutions": [
+        {
+          "committed": "contract_closeout",
+          "stop_reason": "stay",
+          "chain": [
+            {
+              "facet_key": "bill_diagnosis",
+              "verdict": "switch",
+              "delegate_to": "billing_anomaly",
+              "reason": "responsibility_contract",
+              "config_key": "bill_diagnosis",
+              "context_key": "條件診斷：帳單",
+              "rules_digest": "8b1457659dbd4249",
+              "context_digest": "d1f88c90a2e0c9d2",
+              "fail_open": false
+            },
+            {
+              "facet_key": "billing_anomaly",
+              "verdict": "switch",
+              "delegate_to": "contract_closeout",
+              "reason": "responsibility_contract",
+              "config_key": "billing_anomaly",
+              "context_key": "帳單異常",
+              "rules_digest": "548ffa8d2c04961f",
+              "context_digest": "2158ebdc2d8fe7e6",
+              "fail_open": false
+            },
+            {
+              "facet_key": "contract_closeout",
+              "verdict": "stay",
+              "delegate_to": null,
+              "reason": "responsibility_contract",
+              "config_key": "contract_closeout",
+              "context_key": "退租收尾",
+              "rules_digest": "363ed0d0da3ca23c",
+              "context_digest": "16b107f0aaf4eb5f",
+              "fail_open": false
+            }
+          ]
+        }
+      ],
+      "hop_attribution": [
+        {
+          "candidate_face": "bill_diagnosis",
+          "raw_model_payload": {
+            "action": "ask",
+            "extracted_fields": {},
+            "next_question": "請問這筆帳單的編號是什麼？如果沒有編號，可以提供合約編號或物件名稱，我們會列出相關的帳單供您選擇。",
+            "scope": "switch",
+            "face": "",
+            "delegate_facet_key": "billing_anomaly"
+          },
+          "raw_scope": "switch",
+          "raw_delegate_related_keys": [
+            "face",
+            "delegate_facet_key"
+          ],
+          "normalized_scope": "switch",
+          "normalized_delegate_facet_key": "billing_anomaly",
+          "allowed_delegates": [
+            "billing_anomaly"
+          ],
+          "normalization_drop_reason": "kept"
+        },
+        {
+          "candidate_face": "billing_anomaly",
+          "raw_model_payload": {
+            "action": "ask",
+            "extracted_fields": {
+              "symptom": "金額"
+            },
+            "next_question": "請提供帳單編號（bill_ref）或合約編號/物件名稱，以便系統列出帳單候選。",
+            "scope": "switch",
+            "face": "",
+            "delegate_facet_key": "contract_closeout"
+          },
+          "raw_scope": "switch",
+          "raw_delegate_related_keys": [
+            "face",
+            "delegate_facet_key"
+          ],
+          "normalized_scope": "switch",
+          "normalized_delegate_facet_key": "contract_closeout",
+          "allowed_delegates": [
+            "contract_closeout"
+          ],
+          "normalization_drop_reason": "kept"
+        }
+      ],
+      "session_rows": [
+        {
+          "row_id": 969,
+          "state": "COLLECTING",
+          "config_key": "contract_closeout"
+        }
+      ],
+      "grounding_record": {
+        "case": "c4b-gated-resolver",
+        "execution_face": "contract_closeout",
+        "fixture_bill_id": 678,
+        "passed": false,
+        "raw_answer": "編號｜信義區套房A\n\n合約「信義區套房A」目前狀態為「已點交（執行中）」。目前尚不可點退，因為合約不在可點退的階段；合約到期日為 2026/12/31，需到期前 30 天（2026/12/01）起才可發送點退。\n\n如果您有需要提前解約的需求，目前尚未發起。您可以在合約操作中選擇「提前解約」，填寫希望終止日並送出，租客回簽效期預設 30 天。請注意，提前解約造成的已產出帳單需進行封存處理。\n\n如需進一步操作或查詢，請告訴我！",
+        "matched_spans": [
+          {
+            "group_key": "信義區套房A",
+            "literal": "信義區套房A",
+            "start": 3,
+            "context": "編號｜信義區套房A\n\n合約「信義區套房A」目前狀態為「已點交（執行"
+          },
+          {
+            "group_key": "信義區套房A",
+            "literal": "信義區套房A",
+            "start": 14,
+            "context": "編號｜信義區套房A\n\n合約「信義區套房A」目前狀態為「已點交（執行中）」。目前尚不可點退"
+          }
+        ],
+        "missing_groups": [
+          [
+            "25,000",
+            "25000"
+          ]
+        ],
+        "wrong_instance_hits": [],
+        "fallback_hits": [],
+        "adjudication_hits": [],
+        "violated_dimensions": [
+          "value_not_used"
+        ],
+        "literal_provenance": {
+          "信義區套房A": "_mock_get_contracts data[0].title",
+          "25,000": "_mock_get_contracts data[0].rent"
+        },
+        "foil_provenance": {
+          "7,500": "bills fixture 900003.total",
+          "18,000": "bills fixture 900001.total",
+          "1,200": "bills fixture 900002.total"
+        },
+        "known_non_discriminating": [],
+        "fallback_markers_checked": [
+          "請洽客服",
+          "一般來說",
+          "無法查詢",
+          "NO_MATCH"
+        ],
+        "adjudication_flags_checked": []
+      }
+    },
+    {
+      "repetition": 3,
+      "session_id": "c4bg-3-98bf07c1",
+      "http": [
+        200,
+        200
+      ],
+      "turn1_answer": "請問是哪一份合約或物件呢？我需要合約編號或物件名稱來進行查詢。",
+      "resolutions": [
+        {
+          "committed": "contract_closeout",
+          "stop_reason": "stay",
+          "chain": [
+            {
+              "facet_key": "bill_diagnosis",
+              "verdict": "switch",
+              "delegate_to": "billing_anomaly",
+              "reason": "responsibility_contract",
+              "config_key": "bill_diagnosis",
+              "context_key": "條件診斷：帳單",
+              "rules_digest": "8b1457659dbd4249",
+              "context_digest": "d1f88c90a2e0c9d2",
+              "fail_open": false
+            },
+            {
+              "facet_key": "billing_anomaly",
+              "verdict": "switch",
+              "delegate_to": "contract_closeout",
+              "reason": "responsibility_contract",
+              "config_key": "billing_anomaly",
+              "context_key": "帳單異常",
+              "rules_digest": "548ffa8d2c04961f",
+              "context_digest": "2158ebdc2d8fe7e6",
+              "fail_open": false
+            },
+            {
+              "facet_key": "contract_closeout",
+              "verdict": "stay",
+              "delegate_to": null,
+              "reason": "responsibility_contract",
+              "config_key": "contract_closeout",
+              "context_key": "退租收尾",
+              "rules_digest": "363ed0d0da3ca23c",
+              "context_digest": "16b107f0aaf4eb5f",
+              "fail_open": false
+            }
+          ]
+        }
+      ],
+      "hop_attribution": [
+        {
+          "candidate_face": "bill_diagnosis",
+          "raw_model_payload": {
+            "action": "ask",
+            "extracted_fields": {},
+            "next_question": "請提供該帳單的編號，或合約編號、物件名稱，以便查詢相關資訊。",
+            "scope": "switch",
+            "face": "",
+            "delegate_facet_key": "billing_anomaly"
+          },
+          "raw_scope": "switch",
+          "raw_delegate_related_keys": [
+            "face",
+            "delegate_facet_key"
+          ],
+          "normalized_scope": "switch",
+          "normalized_delegate_facet_key": "billing_anomaly",
+          "allowed_delegates": [
+            "billing_anomaly"
+          ],
+          "normalization_drop_reason": "kept"
+        },
+        {
+          "candidate_face": "billing_anomaly",
+          "raw_model_payload": {
+            "action": "ask",
+            "extracted_fields": {
+              "bill_ref": "",
+              "symptom": "金額"
+            },
+            "next_question": "請提供帳單編號或相關合約編號，以便查詢帳單的詳細資訊。",
+            "scope": "switch",
+            "face": "",
+            "delegate_facet_key": "contract_closeout"
+          },
+          "raw_scope": "switch",
+          "raw_delegate_related_keys": [
+            "face",
+            "delegate_facet_key"
+          ],
+          "normalized_scope": "switch",
+          "normalized_delegate_facet_key": "contract_closeout",
+          "allowed_delegates": [
+            "contract_closeout"
+          ],
+          "normalization_drop_reason": "kept"
+        }
+      ],
+      "session_rows": [
+        {
+          "row_id": 970,
+          "state": "COLLECTING",
+          "config_key": "contract_closeout"
+        }
+      ],
+      "grounding_record": {
+        "case": "c4b-gated-resolver",
+        "execution_face": "contract_closeout",
+        "fixture_bill_id": 678,
+        "passed": false,
+        "raw_answer": "編號｜信義區套房A\n\n合約「信義區套房A」目前狀態為「已點交（執行中）」，因此目前尚不可點退。合約到期日為 2026/12/31，您需在到期前 30 天（即 2026/12/01）起才可發送點退。\n\n如果您考慮提前解約，目前尚未發起。您可以在合約操作中選擇「提前解約」，填寫希望終止日並送出，租客回簽效期預設為 30 天。請注意，提前解約可能會產生帳單，這些帳單需要進行封存處理。\n\n如需進一步操作或查詢，請隨時告訴我！",
+        "matched_spans": [
+          {
+            "group_key": "信義區套房A",
+            "literal": "信義區套房A",
+            "start": 3,
+            "context": "編號｜信義區套房A\n\n合約「信義區套房A」目前狀態為「已點交（執行"
+          },
+          {
+            "group_key": "信義區套房A",
+            "literal": "信義區套房A",
+            "start": 14,
+            "context": "編號｜信義區套房A\n\n合約「信義區套房A」目前狀態為「已點交（執行中）」，因此目前尚不可"
+          }
+        ],
+        "missing_groups": [
+          [
+            "25,000",
+            "25000"
+          ]
+        ],
+        "wrong_instance_hits": [],
+        "fallback_hits": [],
+        "adjudication_hits": [],
+        "violated_dimensions": [
+          "value_not_used"
+        ],
+        "literal_provenance": {
+          "信義區套房A": "_mock_get_contracts data[0].title",
+          "25,000": "_mock_get_contracts data[0].rent"
+        },
+        "foil_provenance": {
+          "7,500": "bills fixture 900003.total",
+          "18,000": "bills fixture 900001.total",
+          "1,200": "bills fixture 900002.total"
+        },
+        "known_non_discriminating": [],
+        "fallback_markers_checked": [
+          "請洽客服",
+          "一般來說",
+          "無法查詢",
+          "NO_MATCH"
+        ],
+        "adjudication_flags_checked": []
+      }
+    }
+  ],
+  "verdict": "NOT_VALIDATED",
+  "failures": [
+    "rep1③④: grounding／answer 未通過 → ['value_not_used']",
+    "rep2③④: grounding／answer 未通過 → ['value_not_used']",
+    "rep3③④: grounding／answer 未通過 → ['value_not_used']"
+  ],
+  "target_scope_calls": 12,
+  "all_provider_calls": 15
+}
