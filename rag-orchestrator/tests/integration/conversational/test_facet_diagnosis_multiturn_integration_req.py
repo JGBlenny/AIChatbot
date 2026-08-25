@@ -106,8 +106,13 @@ async def test_multiturn_ambiguous_then_distinguishing_candidates(pool):
         d1 = await eng.prepare(sid, "u1", 7, "我的合約狀態怪怪的", config=cfg, role_id="20151")
         assert d1["kind"] == "ask"
 
-        d2 = await eng.prepare(sid, "u1", 7, "套房", config=None, role_id="20151")
-        assert d2["kind"] == "ask"        # mock 回多筆 → 列候選
+        # ⚠️ 2026-08-25：contracts 遷入 JGBMockTransport 後，替身**會依 request 過濾**。
+        #    原本這裡送「套房」——只有「信義區套房A」命中，如今會收斂單筆。
+        #    舊斷言之所以綠，是因為方法級 mock 不吃 keyword、恆回全部：
+        #    **那正是「mock 吃掉正在驗的行為」**。本測試的意圖是「模糊 → 列候選」，
+        #    故改送在 fixture 世界裡**真的模糊**的詞（兩列標題都含「區」）。
+        d2 = await eng.prepare(sid, "u1", 7, "區", config=None, role_id="20151")
+        assert d2["kind"] == "ask"        # 真的多筆 → 列候選
         state = await eng.get_state(sid)
         labels = [c["label"] for c in (state.get("pending_candidates") or [])]
         assert len(labels) >= 2

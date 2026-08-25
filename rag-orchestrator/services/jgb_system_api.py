@@ -15,6 +15,7 @@ import re
 import logging
 from typing import Any, Optional
 
+from services.jgb.contract_fixtures import ContractFixtureTable
 from services.jgb.fixtures import BillFixtureTable
 from services.jgb.transport import (  # noqa: F401  (FALLBACK_MESSAGE 對外沿用)
     FALLBACK_MESSAGE,
@@ -54,7 +55,8 @@ class JGBSystemAPI:
         #: 4.6：裝配 4.4 fixture 表，使 bills／bill_detail 兩個**已遷移**端點
         #: 能依契約回應；其餘約 18 個端點仍走方法級 mock。
         self._mock_transport: Optional[Transport] = (
-            JGBMockTransport(BillFixtureTable()) if self.use_mock else None
+            JGBMockTransport(BillFixtureTable(), ContractFixtureTable())
+            if self.use_mock else None
         )
 
         logger.info(
@@ -240,9 +242,9 @@ class JGBSystemAPI:
         if not role_id:
             return self._degraded_response()
 
-        if self.use_mock:
-            return self._mock_get_contracts(role_id, user_id, status)
-
+        # ⚠️ 方法級短路已移除（transport-extension）：contracts 已遷入 JGBMockTransport，
+        #    第二次依識別重查才會真的收斂——那正是要驗的 execution 行為，
+        #    不得再被恆回全部的方法級 mock 吃掉。`_mock_get_contracts` 保留供其他呼叫點。
         params: dict[str, Any] = {"role_id": role_id}
         if contract_ids:
             params["contract_ids"] = contract_ids

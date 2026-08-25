@@ -192,6 +192,7 @@ def match_template(template: str, path: str) -> Optional[dict[str, str]]:
 ROUTES: "tuple[tuple[HttpMethod, str, str], ...]" = (
     ("GET", "/api/external/v1/bills", "bills"),
     ("GET", "/api/external/v1/bills/{bill_id}", "bill_detail"),
+    ("GET", "/api/external/v1/contracts/status-overview", "contracts"),
 )
 
 
@@ -219,7 +220,7 @@ def resolve_endpoint(method: HttpMethod, path: str) -> Optional[str]:
 #: 已遷移至 transport 層的 **endpoint_key**（migration admission set）。
 #: ⚠️ 只放 endpoint identity，**不放 concrete path**、不再做一次樣板比對——
 #:    endpoint identity 的唯一權威是 4.2 的 `resolve_endpoint`。
-MIGRATED_ENDPOINTS: "frozenset[str]" = frozenset({"bills", "bill_detail"})
+MIGRATED_ENDPOINTS: "frozenset[str]" = frozenset({"bills", "bill_detail", "contracts"})
 
 
 class JGBMockTransport:
@@ -258,9 +259,12 @@ class JGBMockTransport:
                  4: "罰款", 5: "儲值", 6: "押金設算息"},
     }
 
-    def __init__(self, fixtures: Optional[Any] = None) -> None:
+    def __init__(self, fixtures: Optional[Any] = None,
+                 contract_fixtures: Optional[Any] = None) -> None:
         #: fixture 表由 4.4 提供；未裝配時「已遷移」端點一律 `MissingFixtureError`
         self.fixtures = fixtures
+        #: 合約 fixture（transport-extension）；未裝配時 contracts 亦為 `MissingFixtureError`
+        self.contract_fixtures = contract_fixtures
 
     async def send(
         self, method: HttpMethod, path: str, *,
@@ -285,6 +289,10 @@ class JGBMockTransport:
         params = params or {}
         if endpoint_key == "bills":
             return self._bills_index(params)
+        if endpoint_key == "contracts":
+            if self.contract_fixtures is None:
+                raise MissingFixtureError("contracts 已遷移但未裝配合約 fixture 表")
+            return self._contracts_index(params)
         if endpoint_key == "bill_detail":
             bill_id = match_template(
                 "/api/external/v1/bills/{bill_id}", path
@@ -297,6 +305,47 @@ class JGBMockTransport:
     def _error(code: int, message: str) -> TransportResponse:
         """對齊 `errorResponse()`（EstateApiController:560-569）。"""
         return {"success": False, "error": {"code": code, "message": message}}
+
+    def _contracts_index(self, params: "dict[str, Any]") -> TransportResponse:
+        """`GET /contracts/status-overview`（transport-extension）。
+
+        **要讓它可被實測的行為**：第一次無識別 → 回全部；使用者給識別後，
+        adapter 以 `contract_ids`／`keyword` 重查 → **依 request 收斂**。
+        方法級 mock 的簽章不吃這兩個參數，恆回全部，於是「重查收斂」這段
+        execution 行為被替身吃掉——本方法即為修正該處。
+
+        ⚠️ **保真度聲明**：`contract_ids`／`keyword` 的**伺服器端**語義本輪未經
+        jgb2 原始碼核對（見 `contract_fixtures.py` 開頭）；此處採 adapter 實際會送的
+        參數做**保守**過濾：`contract_ids` 為 CSV 精確 id 比對、`keyword` 為
+        `title`／`address` 子字串比對。**不得**據此宣稱與 production 逐條等價。
+        """
+        if not params.get("role_id"):
+            return self._error(400, "role_id 為必填參數")
+
+        rows = list(self.contract_fixtures.rows())
+
+        raw_ids = params.get("contract_ids")
+        if raw_ids not in (None, ""):
+            wanted = set()
+            for token in str(raw_ids).split(","):
+                token = token.strip()
+                if token.isdigit():
+                    wanted.add(int(token))
+            rows = [r for r in rows if r["id"] in wanted]
+
+        keyword = params.get("keyword")
+        if keyword not in (None, ""):
+            kw = str(keyword).strip()
+            rows = [r for r in rows
+                    if kw in str(r.get("title") or "") or kw in str(r.get("address") or "")]
+
+        return {
+            "success": True,
+            "mapping": getattr(self.contract_fixtures, "MAPPING", {}),
+            "data": rows,
+            "pagination": {"current_page": 1, "per_page": self.DEFAULT_PER_PAGE,
+                           "total": len(rows), "total_pages": 1, "has_more": False},
+        }
 
     def _bills_index(self, params: "dict[str, Any]") -> TransportResponse:
         """`GET /bills`（`BillApiController@index:19-125`）。

@@ -129,9 +129,9 @@ async def test_resolution_commits_the_delegated_face_without_creating_sessions(p
     assert res.stop_reason == "stay"
     assert [h["facet_key"] for h in res.chain] == list(FACETS)
     assert [k for k, _ in brain.seen] == list(FACETS)
-    # 白名單確實由 contract 提供
-    assert brain.seen[0][1] == ["billing_anomaly"]
-    assert brain.seen[1][1] == ["contract_closeout"]
+    # 白名單確實由 contract 提供（元素為 (target, when)，when 未宣告時為 None）
+    assert [t for t, _ in brain.seen[0][1]] == ["billing_anomaly"]
+    assert [t for t, _ in brain.seen[1][1]] == ["contract_closeout"]
     assert brain.seen[2][1] is None
     # ★ 因果重點：整段解析沒有建立任何 session
     assert await _conversational_rows(sid) == 0, "解析期間不得建立 session"

@@ -135,8 +135,14 @@ def test_resolver_still_ignores_migration_state(monkeypatch):
 
 
 def test_migrated_endpoints_holds_identities_not_paths():
-    """admission set 只放 endpoint identity，不得放 concrete path／樣板。"""
-    assert MIGRATED_ENDPOINTS == frozenset({"bills", "bill_detail"})
+    """admission set 只放 endpoint identity，不得放 concrete path／樣板。
+
+    ⚠️ 這是**遷移進度的帳本**：新增條目必須是被明確授權的遷移，不得為了讓別的測試變綠而加。
+    `contracts` 於 2026-08-25 經業主裁定 (i) 遷入（transport-extension），
+    理由：方法級 mock 不吃 contract_ids/keyword，吃掉了「依識別重查並收斂」這段
+    正在被驗的 execution 行為。
+    """
+    assert MIGRATED_ENDPOINTS == frozenset({"bills", "bill_detail", "contracts"})
     assert not any("/" in key for key in MIGRATED_ENDPOINTS)
 
 
