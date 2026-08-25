@@ -1,0 +1,314 @@
+"""e2e：`C4b-gated-resolver-validation`（spec face-exit-before-grounding）。
+
+⚠️ **不是重跑舊 C4b**：舊歷史（C4a CONFIRMED／C4b NOT PASSED／gate CLOSED）不動、不回填。
+本檔是**新 implementation 的 acceptance evidence**。
+
+凍結協議：`.kiro/specs/face-exit-before-grounding/c4b-gated-resolver-validation-protocol-frozen.md`
+
+要同時成立五項（只看最終答案不算過）：
+
+```text
+① chain     bill_diagnosis → billing_anomaly → contract_closeout（逐跳 verdict／delegate）
+② session   只 commit contract_closeout
+③ grounding contract_closeout 的 execution 真的跑到
+④ answer    最終回答使用該 grounding（沿用 C4b v2 尺）
+⑤ verdict   每一跳的 reason 必須是 responsibility_contract——**fail_open 不算過**
+```
+
+⚠️ 隔離：delegates 只寫**測試庫**兩列並於結束**還原**；`PREENTRY_ROUTABILITY_GATE`
+只在本行程開啟（`.env`／compose 一律不動）。⚠️ 會真的花錢（名目 5 次／run × 3 runs）。
+"""
+import json
+import os
+import time
+import uuid
+
+import pytest
+
+pytestmark = pytest.mark.e2e
+
+QUERY = "幫我查點退帳單金額"
+TURN2 = "678"                      # 方法級 mock 的合約 id（決定性）
+SEED, MID, TARGET = "bill_diagnosis", "billing_anomaly", "contract_closeout"
+EXPECTED_CHAIN = [(SEED, "switch", MID), (MID, "switch", TARGET), (TARGET, "stay", None)]
+
+FROZEN_BRAIN = {"model": "gpt-4o", "temperature": 0.4, "max_tokens": 400}
+REPETITIONS = 3
+MAX_TARGET_CALLS, MAX_ALL_CALLS = 30, 60
+INFRA_RETRIES = 2
+_INFRA = ("timeout", "timed out", "rate limit", "429", "500", "502", "503", "504", "connection")
+
+EVIDENCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".c4b_gated_evidence.json")
+
+
+def _conn_kwargs():
+    return dict(host=os.getenv("DB_HOST", "localhost"), port=int(os.getenv("DB_PORT", "5432")),
+                user=os.getenv("DB_USER", "aichatbot"),
+                password=os.getenv("DB_PASSWORD", "aichatbot_password"),
+                database=os.getenv("DB_NAME", "aichatbot_test"))
+
+
+class BudgetExceeded(RuntimeError):
+    pass
+
+
+def _is_infra(e) -> bool:
+    if isinstance(e, (AssertionError, BudgetExceeded)):
+        return False
+    return any(m in f"{type(e).__name__} {e}".lower() for m in _INFRA)
+
+
+# ── fixture：只動測試庫，結束還原 ────────────────────────────────────────────
+@pytest.fixture(scope="module")
+def _delegates_fixture():
+    import asyncio
+
+    import asyncpg
+
+    edges = {SEED: MID, MID: TARGET}
+    saved = {}
+
+    async def _apply():
+        conn = await asyncpg.connect(**_conn_kwargs())
+        try:
+            for facet, target in edges.items():
+                row = await conn.fetchrow(
+                    "SELECT id, generation_metadata FROM knowledge_base "
+                    "WHERE category='對話規則' AND is_active "
+                    "  AND generation_metadata->'conversational_config'->>'key' = $1", facet)
+                if row is None:
+                    return False
+                md = row["generation_metadata"]
+                md = json.loads(md) if isinstance(md, str) else dict(md)
+                saved[row["id"]] = json.dumps(md, ensure_ascii=False)
+                md.setdefault("conversational_config", {})["responsibility"] = {
+                    "delegates": [{"target": target}]}
+                await conn.execute("UPDATE knowledge_base SET generation_metadata=$2::jsonb "
+                                   "WHERE id=$1", row["id"], json.dumps(md, ensure_ascii=False))
+            return True
+        finally:
+            await conn.close()
+
+    async def _restore():
+        conn = await asyncpg.connect(**_conn_kwargs())
+        try:
+            for kid, original in saved.items():
+                await conn.execute("UPDATE knowledge_base SET generation_metadata=$2::jsonb "
+                                   "WHERE id=$1", kid, original)
+        finally:
+            await conn.close()
+
+    try:
+        ok = asyncio.run(_apply())
+    except Exception as e:                                   # pragma: no cover
+        pytest.skip(f"無法寫入測試庫 delegates fixture：{e}")
+        return
+    if not ok:
+        asyncio.run(_restore())
+        pytest.skip("面向設定未供裝")
+        return
+    yield edges
+    asyncio.run(_restore())                                   # ★ 一定還原
+
+
+@pytest.fixture(scope="module")
+def _env(_delegates_fixture):
+    prev = {k: os.environ.get(k) for k in ("USE_MOCK_JGB_API", "PREENTRY_ROUTABILITY_GATE")}
+    os.environ["USE_MOCK_JGB_API"] = "true"
+    os.environ["PREENTRY_ROUTABILITY_GATE"] = "true"          # ⚠️ 只在本行程
+    yield
+    for k, v in prev.items():
+        if v is None:
+            os.environ.pop(k, None)
+        else:
+            os.environ[k] = v
+
+
+@pytest.fixture(scope="module")
+def client(_env):
+    from fastapi.testclient import TestClient
+    from app import app
+    with TestClient(app) as c:
+        yield c
+
+
+_RIG = None
+
+
+@pytest.fixture(scope="module")
+def rig(client):
+    """passthrough spy：記呼叫預算＋攔截 resolver 結果（原樣委派）。"""
+    provider = client.app.state.llm_answer_optimizer.llm_provider
+    real_cc = provider.chat_completion
+    from services import responsibility as resp_mod
+    real_resolve = resp_mod.resolve_entry_candidate
+    state = {"all": [], "target": [], "resolutions": []}
+
+    def spy_cc(*a, **kw):
+        is_target = (kw.get("model") == FROZEN_BRAIN["model"]
+                     and kw.get("max_tokens") == FROZEN_BRAIN["max_tokens"])
+        if len(state["all"]) + 1 > MAX_ALL_CALLS:
+            raise BudgetExceeded(f"all_provider_calls > {MAX_ALL_CALLS}")
+        if is_target and len(state["target"]) + 1 > MAX_TARGET_CALLS:
+            raise BudgetExceeded(f"target_scope_calls > {MAX_TARGET_CALLS}")
+        state["all"].append(kw.get("model"))
+        if is_target:
+            state["target"].append(kw.get("model"))
+        return real_cc(*a, **kw)
+
+    async def spy_resolve(*a, **kw):
+        res = await real_resolve(*a, **kw)
+        state["resolutions"].append({"committed": res.committed_key,
+                                     "stop_reason": res.stop_reason,
+                                     "chain": list(res.chain or [])})
+        return res
+
+    provider.chat_completion = spy_cc
+    resp_mod.resolve_entry_candidate = spy_resolve
+    global _RIG
+    _RIG = state
+    yield state
+    provider.chat_completion = real_cc
+    resp_mod.resolve_entry_candidate = real_resolve
+
+
+def _session_rows(sid):
+    import asyncio
+
+    import asyncpg
+
+    async def _q():
+        conn = await asyncpg.connect(**_conn_kwargs())
+        try:
+            rs = await conn.fetch(
+                "SELECT id, state, collected_data FROM form_sessions "
+                "WHERE session_id=$1 AND form_id='conversational' ORDER BY id", sid)
+            out = []
+            for r in rs:
+                cd = r["collected_data"]
+                cd = json.loads(cd) if isinstance(cd, str) else (cd or {})
+                out.append({"row_id": r["id"], "state": r["state"],
+                            "config_key": cd.get("config_key")})
+            return out
+        finally:
+            await conn.close()
+    return asyncio.run(_q())
+
+
+def _cleanup(sid):
+    import asyncio
+
+    import asyncpg
+
+    async def _d():
+        conn = await asyncpg.connect(**_conn_kwargs())
+        try:
+            await conn.execute("DELETE FROM form_sessions WHERE session_id=$1", sid)
+        finally:
+            await conn.close()
+    try:
+        asyncio.run(_d())
+    except Exception:
+        pass
+
+
+def _ruler():
+    """沿用 C4b v2 尺；期望值取自方法級 contracts mock（決定性）。"""
+    from tests.support.brain_grounding import BrainGroundingAssertion
+    return BrainGroundingAssertion(
+        case="c4b-gated-resolver", execution_face=TARGET, fixture_bill_id=678,
+        user_turns=(QUERY, TURN2),
+        answer_must_contain=(("信義區套房A",), ("25,000", "25000")),
+        answer_must_not_contain=("7,500", "18,000", "1,200"),
+        foil_provenance={"7,500": "bills fixture 900003.total",
+                         "18,000": "bills fixture 900001.total",
+                         "1,200": "bills fixture 900002.total"},
+        generic_fallback_markers=("請洽客服", "一般來說", "無法查詢", "NO_MATCH"),
+        literal_provenance={"信義區套房A": "_mock_get_contracts data[0].title",
+                            "25,000": "_mock_get_contracts data[0].rent"},
+        rationale="grounding 來自 contract_closeout 的 jgb_contracts execution")
+
+
+_EVIDENCE = {"protocol": "c4b-gated-resolver-validation-protocol-frozen.md",
+             "variant": "C4b-gated-resolver-validation", "runs": []}
+
+
+def _post(client, message, sid):
+    return client.post("/api/v1/message", json={
+        "message": message, "vendor_id": 2, "target_user": "property_manager",
+        "mode": "b2b", "role_id": "20151", "session_id": sid, "stream": False})
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_gated_resolver_vertical_slice(client, rig):
+    from tests.support.brain_grounding import evaluate_brain_grounding
+
+    spec = _ruler()
+    for rep in range(1, REPETITIONS + 1):
+        sid = f"c4bg-{rep}-{uuid.uuid4().hex[:8]}"
+        before = len(rig["resolutions"])
+        attempt = 0
+        while True:
+            try:
+                r1 = _post(client, QUERY, sid)
+                r2 = _post(client, TURN2, sid)
+                break
+            except BudgetExceeded:
+                raise
+            except BaseException as e:                        # noqa: BLE001
+                if _is_infra(e) and attempt < INFRA_RETRIES:
+                    attempt += 1
+                    time.sleep(2 ** attempt)
+                    continue
+                raise
+
+        resolutions = rig["resolutions"][before:]
+        answer = (r2.json().get("answer") or "") if r2.status_code == 200 else ""
+        record = evaluate_brain_grounding(answer, spec) if answer else {"passed": False}
+        rec = {"repetition": rep, "session_id": sid,
+               "http": [r1.status_code, r2.status_code],
+               "turn1_answer": (r1.json().get("answer") if r1.status_code == 200 else None),
+               "resolutions": resolutions,
+               "session_rows": _session_rows(sid),
+               "grounding_record": record}
+        _EVIDENCE["runs"].append(rec)
+        _cleanup(sid)
+
+    # ── 逐項裁決（五項須同時成立）──
+    failures = []
+    for rec in _EVIDENCE["runs"]:
+        tag = f"rep{rec['repetition']}"
+        res = rec["resolutions"][0] if rec["resolutions"] else None
+        if not res:
+            failures.append(f"{tag}: resolver 未被呼叫（gate 未生效？）")
+            continue
+        chain = [(h.get("facet_key"), h.get("verdict"), h.get("delegate_to"))
+                 for h in res["chain"]]
+        if chain != EXPECTED_CHAIN:
+            failures.append(f"{tag}①: chain={chain}")
+        if res["committed"] != TARGET:
+            failures.append(f"{tag}②: committed={res['committed']}")
+        keys = [r["config_key"] for r in rec["session_rows"]]
+        if keys != [TARGET]:
+            failures.append(f"{tag}②: session rows={keys}")
+        # ⑤ 防假綠：任一跳 fail_open 即不算過
+        reasons = [h.get("reason") for h in res["chain"]]
+        if any(r != "responsibility_contract" for r in reasons):
+            failures.append(f"{tag}⑤: stay_source 非 model_verdict → {reasons}")
+        if not rec["grounding_record"].get("passed"):
+            failures.append(f"{tag}③④: grounding／answer 未通過 → "
+                            f"{rec['grounding_record'].get('violated_dimensions')}")
+
+    _EVIDENCE["verdict"] = "GATED_RESOLVER_VALIDATED" if not failures else "NOT_VALIDATED"
+    _EVIDENCE["failures"] = failures
+    assert not failures, "五項未同時成立：\n  " + "\n  ".join(failures)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _write_evidence():
+    yield
+    _EVIDENCE["target_scope_calls"] = len(_RIG["target"]) if _RIG else None
+    _EVIDENCE["all_provider_calls"] = len(_RIG["all"]) if _RIG else None
+    with open(EVIDENCE_PATH, "w", encoding="utf-8") as fh:
+        json.dump(_EVIDENCE, fh, ensure_ascii=False, indent=2)
+    print(f"\n📄 gated-resolver evidence → {os.path.abspath(EVIDENCE_PATH)}")
