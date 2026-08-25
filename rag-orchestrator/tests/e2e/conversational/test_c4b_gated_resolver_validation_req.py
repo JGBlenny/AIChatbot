@@ -38,7 +38,7 @@ MAX_TARGET_CALLS, MAX_ALL_CALLS = 30, 60
 INFRA_RETRIES = 2
 _INFRA = ("timeout", "timed out", "rate limit", "429", "500", "502", "503", "504", "connection")
 
-EVIDENCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".c4b_gated_v2_evidence.json")
+EVIDENCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".c4b_gated_v4_evidence.json")
 
 
 def _conn_kwargs():
@@ -72,23 +72,52 @@ def _delegates_fixture():
              MID: {"target": TARGET, "when": "封存/點退帳單處理"}}
     saved = {}
 
+    def _extend_declared_schema(rules_text: str) -> str:
+        """(a) output-contract repair：把 `delegate_facet_key` 升格進**規則宣告的 JSON 形狀**。
+
+        v3 證據：模型輸出的鍵集合與 persona 宣告的形狀逐鍵吻合，且不含附加在規則之後的
+        delegation instruction。⇒ 該改的是 schema declaration，不是再堆 wording。
+
+        ⚠️ 作用域只限**本 fixture 修改的兩個面向**（有宣告 delegates 者）；
+        其餘 Face 的 prompt／output shape 逐位元不變。
+        """
+        marker = "每輪輸出 JSON："
+        i = rules_text.find(marker)
+        if i < 0:
+            return rules_text                     # 沒有宣告行 → 不動（由斷言在下方擋下）
+        j = rules_text.find("\n", i)
+        line = rules_text[i:j if j > 0 else len(rules_text)]
+        k = line.rfind("}")
+        if k < 0:
+            return rules_text
+        extended = (line[:k] + ',"delegate_facet_key":"…（見下）"' + line[k:]
+                    + "\n【delegate_facet_key 規則】"
+                      "scope=\"stay\" → 必須為 \"\"；"
+                      "scope=\"switch\" 且符合上列已宣告的轉交對象 → 必須填該對象的鍵；"
+                      "scope=\"switch\" 但無法對應合法轉交對象 → \"\"。")
+        return rules_text[:i] + extended + (rules_text[j:] if j > 0 else "")
+
     async def _apply():
         conn = await asyncpg.connect(**_conn_kwargs())
         try:
             for facet, edge in edges.items():
                 row = await conn.fetchrow(
-                    "SELECT id, generation_metadata FROM knowledge_base "
+                    "SELECT id, generation_metadata, answer FROM knowledge_base "
                     "WHERE category='對話規則' AND is_active "
                     "  AND generation_metadata->'conversational_config'->>'key' = $1", facet)
                 if row is None:
                     return False
                 md = row["generation_metadata"]
                 md = json.loads(md) if isinstance(md, str) else dict(md)
-                saved[row["id"]] = json.dumps(md, ensure_ascii=False)
+                saved[row["id"]] = (json.dumps(md, ensure_ascii=False), row["answer"])
                 md.setdefault("conversational_config", {})["responsibility"] = {
                     "delegates": [dict(edge)]}
-                await conn.execute("UPDATE knowledge_base SET generation_metadata=$2::jsonb "
-                                   "WHERE id=$1", row["id"], json.dumps(md, ensure_ascii=False))
+                new_rules = _extend_declared_schema(row["answer"] or "")
+                if "delegate_facet_key" not in new_rules:
+                    return False                  # 宣告行找不到＝前提不成立，不硬跑
+                await conn.execute(
+                    "UPDATE knowledge_base SET generation_metadata=$2::jsonb, answer=$3 "
+                    "WHERE id=$1", row["id"], json.dumps(md, ensure_ascii=False), new_rules)
             return True
         finally:
             await conn.close()
@@ -96,9 +125,10 @@ def _delegates_fixture():
     async def _restore():
         conn = await asyncpg.connect(**_conn_kwargs())
         try:
-            for kid, original in saved.items():
-                await conn.execute("UPDATE knowledge_base SET generation_metadata=$2::jsonb "
-                                   "WHERE id=$1", kid, original)
+            for kid, (original_md, original_rules) in saved.items():
+                await conn.execute(
+                    "UPDATE knowledge_base SET generation_metadata=$2::jsonb, answer=$3 "
+                    "WHERE id=$1", kid, original_md, original_rules)
         finally:
             await conn.close()
 
@@ -255,8 +285,8 @@ def _ruler():
         rationale="grounding 來自 contract_closeout 的 jgb_contracts execution")
 
 
-_EVIDENCE = {"protocol": "c4b-gated-resolver-validation-v2-protocol-frozen.md",
-             "variant": "C4b-gated-resolver-validation-v2", "runs": []}
+_EVIDENCE = {"protocol": "c4b-gated-resolver-validation-v4-protocol-frozen.md",
+             "variant": "C4b-gated-resolver-validation-v4", "runs": []}
 
 
 def _post(client, message, sid):
