@@ -106,3 +106,126 @@ def allowed_delegates(config: Any) -> "tuple[str, ...]":
         if isinstance(target, str) and target and target not in out:
             out.append(target)
     return tuple(out)
+
+
+# ── responsibility decision ／ pre-commit resolver（slice 3）────────────────────
+
+#: 一條 delegation chain 最多跳幾次（決定性上界，防無限轉交）
+MAX_DELEGATION_HOPS = 3
+
+
+@dataclass(frozen=True)
+class ResponsibilityDecision:
+    """一個候選面向對本輪 query 的責任判定。
+
+    ⚠️ 刻意**不是** boolean：舊的 `_preentry_routable` 只回 true/false，
+    資訊少到無法據以續走 delegation——「不適用」與「該給誰」是兩件事。
+    """
+
+    facet_key: Optional[str]
+    verdict: str                      # "stay" ｜ "switch"
+    delegate_to: Optional[str] = None
+    reason: str = ""                  # 判定來源（含 fail-open 種類）
+    evidence: "dict[str, Any]" = None  # type: ignore[assignment]
+
+    @property
+    def stay(self) -> bool:
+        return self.verdict == "stay"
+
+
+@dataclass(frozen=True)
+class EntryResolution:
+    """pre-commit 解析結果。`committed` 為 None ＝ 不進任何面向（走既有 fallback）。"""
+
+    committed_key: Optional[str]
+    committed_config: Any = None
+    chain: "list[dict[str, Any]]" = None   # type: ignore[assignment]
+    stop_reason: str = ""
+
+
+async def evaluate_responsibility(
+    db_pool: Any, config: Any, user_message: str, *, optimizer: Any = None,
+) -> ResponsibilityDecision:
+    """以**進場前的空狀態**問該面向的責任契約：這輪該不該由你接？
+
+    ⚠️ 空狀態是刻意的、也是保真的：實測捕捉證實**進場輪**送進 brain 的狀態六欄本來就全空
+    （collected={}／asked_count=0／recommended=False／無 grounding_note／無 dialog），
+    所以把判定提前**不會**因為少了會話狀態而變弱。
+
+    ⚠️ 任何失敗一律 **fail-open（stay）**：規則取不到、brain 失敗、例外——
+    維持既有「照舊進場」行為，不因新機制故障而擋掉原本會成立的進場。
+    """
+    facet_key = getattr(config, "key", None)
+    try:
+        rctx = await build_responsibility_context(db_pool, config)
+        if rctx is None:
+            return ResponsibilityDecision(facet_key, "stay",
+                                          reason="rules_unavailable_fail_open", evidence={})
+        if optimizer is None:
+            from services.llm_answer_optimizer import LLMAnswerOptimizer
+            optimizer = LLMAnswerOptimizer()
+        data = await optimizer.conversational_step(
+            rctx.rules_text, rctx.system_md,
+            {"collected_fields": {}, "asked_count": 0, "recommended": False},
+            user_message, delegates=list(allowed_delegates(config)) or None)
+        if not data:
+            return ResponsibilityDecision(facet_key, "stay",
+                                          reason="brain_unavailable_fail_open",
+                                          evidence=rctx.as_evidence())
+        verdict = "switch" if data.get("scope") == "switch" else "stay"
+        return ResponsibilityDecision(
+            facet_key, verdict, delegate_to=data.get("delegate_facet_key"),
+            reason="responsibility_contract", evidence=rctx.as_evidence())
+    except Exception as e:                                     # noqa: BLE001
+        print(f"⚠️ [responsibility] 判定失敗，fail-open 照舊進場：{e}")
+        return ResponsibilityDecision(facet_key, "stay",
+                                      reason=f"error_fail_open:{type(e).__name__}", evidence={})
+
+
+async def resolve_entry_candidate(
+    db_pool: Any, seed_config: Any, user_message: str,
+    *, config_lookup: Any = None, optimizer: Any = None,
+) -> EntryResolution:
+    """沿 delegation chain 解析出**唯一可 commit 的面向**；期間**不建立任何 session**。
+
+    ```text
+    seed → responsibility 判定
+             ├─ stay          → commit（迴圈結束）
+             ├─ switch + 白名單內的 delegate → 換下一個候選，續判
+             └─ switch 無可用 delegate       → 不 commit，走既有 fallback
+    ```
+
+    決定性護欄：`visited`（同一面向不重評，A→B→A 不成環）與 `MAX_DELEGATION_HOPS`。
+    ⚠️ **未知或停用的 delegate 一律 fail closed**（不 commit）——白名單指向不存在的面向
+    是設定錯誤，硬進場只會把錯誤藏起來。
+    """
+    if config_lookup is None:
+        from services.conversational_config import config_for_key as config_lookup  # type: ignore
+
+    chain: "list[dict[str, Any]]" = []
+    visited: "list[str]" = []
+    config = seed_config
+    for _hop in range(MAX_DELEGATION_HOPS + 1):
+        key = getattr(config, "key", None)
+        if key in visited:
+            chain.append({"facet_key": key, "verdict": "cycle"})
+            return EntryResolution(None, None, chain, "delegation_cycle")
+        visited.append(key)
+
+        decision = await evaluate_responsibility(db_pool, config, user_message,
+                                                 optimizer=optimizer)
+        chain.append({"facet_key": key, "verdict": decision.verdict,
+                      "delegate_to": decision.delegate_to, "reason": decision.reason,
+                      **(decision.evidence or {})})
+        if decision.stay:
+            return EntryResolution(key, config, chain, "stay")
+        if not decision.delegate_to:
+            return EntryResolution(None, None, chain, "switch_without_delegate")
+
+        nxt = await config_lookup(db_pool, decision.delegate_to)
+        if nxt is None or not getattr(nxt, "enabled", False):
+            chain.append({"facet_key": decision.delegate_to, "verdict": "unavailable"})
+            return EntryResolution(None, None, chain, "unknown_or_disabled_delegate")
+        config = nxt
+
+    return EntryResolution(None, None, chain, "max_hops_exceeded")

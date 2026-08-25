@@ -787,6 +787,38 @@ async def _preentry_routable(db_pool, cfg, user_message: Optional[str]) -> bool:
         return True
 
 
+async def _resolve_pre_commit_candidate(db_pool, cfg, user_message: Optional[str]):
+    """pre-commit responsibility resolver（spec face-exit-before-grounding，slice 3）。
+
+    ```text
+    gate 關（**預設**）→ 維持既有行為：檢索提名了誰就 commit 誰
+    gate 開            → 沿 delegation chain 解析，**只有判 stay 的面向能 commit**；
+                          期間不建立任何 session
+    ```
+
+    回傳「要 commit 的面向設定」或 `None`（不進面向，走既有 fallback）。
+    ⚠️ 回傳的可能**不是**傳入的那個面向——這正是本 slice 的重點：
+    責任契約可以把 query 交給白名單內的下一個面向，而不是先進場再退出。
+    """
+    if os.getenv("PREENTRY_ROUTABILITY_GATE", "false").lower() != "true":
+        return cfg
+    if not user_message:
+        return cfg
+    try:
+        from services.responsibility import resolve_entry_candidate
+        res = await resolve_entry_candidate(db_pool, cfg, user_message)
+        _path = " → ".join(f"{h.get('facet_key')}[{h.get('verdict')}]" for h in (res.chain or []))
+        if res.committed_key:
+            print(f"🧭 [responsibility resolver] {_path} → commit {res.committed_key}")
+        else:
+            print(f"🧭 [responsibility resolver] {_path} → 不進面向（{res.stop_reason}）")
+        return res.committed_config
+    except Exception as e:                                     # noqa: BLE001
+        # ⚠️ fail-open 與既有 gate 一致：新機制故障不得擋掉原本會成立的進場。
+        print(f"⚠️ [responsibility resolver] 解析失敗，fail-open 照舊進場：{e}")
+        return cfg
+
+
 def _instance_gate_decision(user_message: Optional[str]):
     """query 級判定（spec routing-disambiguation 任務 4.2／4.4）。
 
@@ -857,8 +889,9 @@ async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: Decis
                       f"判 rule 型問句 → 抑制面向 {getattr(cfg, 'key', '?')} 的 Hint"
                       f"（{decision.reason}）")
                 continue      # 抑制同型 Hint：**不 commit 本面向**，且不因順序而放行
-            if await _preentry_routable(db_pool, cfg, user_message):
-                return cfg
+            _resolved = await _resolve_pre_commit_candidate(db_pool, cfg, user_message)
+            if _resolved is not None:
+                return _resolved
             continue          # 判不適用 → 不 commit 本面向，續試該知識的下一個分類
     return None
 
