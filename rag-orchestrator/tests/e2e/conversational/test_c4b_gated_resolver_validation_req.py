@@ -145,8 +145,11 @@ def rig(client):
     provider = client.app.state.llm_answer_optimizer.llm_provider
     real_cc = provider.chat_completion
     from services import responsibility as resp_mod
+    from services.llm_answer_optimizer import LLMAnswerOptimizer
+    from tests.support.resolver_capture import build_hop_evidence
     real_resolve = resp_mod.resolve_entry_candidate
-    state = {"all": [], "target": [], "resolutions": []}
+    real_step = LLMAnswerOptimizer.conversational_step
+    state = {"all": [], "target": [], "resolutions": [], "raw": [], "hops": []}
 
     def spy_cc(*a, **kw):
         is_target = (kw.get("model") == FROZEN_BRAIN["model"]
@@ -156,9 +159,11 @@ def rig(client):
         if is_target and len(state["target"]) + 1 > MAX_TARGET_CALLS:
             raise BudgetExceeded(f"target_scope_calls > {MAX_TARGET_CALLS}")
         state["all"].append(kw.get("model"))
+        result = real_cc(*a, **kw)
         if is_target:
             state["target"].append(kw.get("model"))
-        return real_cc(*a, **kw)
+            state["raw"].append(result)          # ★ 原始 provider JSON（歸因用）
+        return result
 
     async def spy_resolve(*a, **kw):
         res = await real_resolve(*a, **kw)
@@ -167,13 +172,30 @@ def rig(client):
                                      "chain": list(res.chain or [])})
         return res
 
+    async def spy_step(self, rules, system_md, st, msg, **kw):
+        """★ raw output attribution：原始 payload ／ 白名單 ／ 正規化結果三者並列。
+
+        只在測試側 spy，**不改 production 契約**——production 的 conversational_step
+        仍只回正規化後的 dict。
+        """
+        mark = len(state["raw"])
+        normalized = await real_step(self, rules, system_md, st, msg, **kw)
+        raw = state["raw"][mark] if len(state["raw"]) > mark else None
+        specs = kw.get("delegates") or []
+        allowed = [d if isinstance(d, str) else d[0] for d in specs]
+        if allowed:                              # 只記 resolver 的那幾跳（進場後的 brain 不帶白名單）
+            state["hops"].append(build_hop_evidence("(pending)", raw, allowed, normalized))
+        return normalized
+
     provider.chat_completion = spy_cc
     resp_mod.resolve_entry_candidate = spy_resolve
+    LLMAnswerOptimizer.conversational_step = spy_step
     global _RIG
     _RIG = state
     yield state
     provider.chat_completion = real_cc
     resp_mod.resolve_entry_candidate = real_resolve
+    LLMAnswerOptimizer.conversational_step = real_step
 
 
 def _session_rows(sid):
@@ -267,6 +289,13 @@ def test_gated_resolver_vertical_slice(client, rig):
                 raise
 
         resolutions = rig["resolutions"][before:]
+        hops_before = rig["_hops_mark"] if "_hops_mark" in rig else 0
+        attribution = rig["hops"][hops_before:]
+        rig["_hops_mark"] = len(rig["hops"])
+        for _res in resolutions:                 # 依序把候選面向補回 attribution
+            for _i, _h in enumerate(_res["chain"]):
+                if _i < len(attribution):
+                    attribution[_i]["candidate_face"] = _h.get("facet_key")
         answer = (r2.json().get("answer") or "") if r2.status_code == 200 else ""
         record = evaluate_brain_grounding(answer, spec) if answer else {"passed": False}
         for _res in resolutions:
@@ -276,6 +305,7 @@ def test_gated_resolver_vertical_slice(client, rig):
                "http": [r1.status_code, r2.status_code],
                "turn1_answer": (r1.json().get("answer") if r1.status_code == 200 else None),
                "resolutions": resolutions,
+               "hop_attribution": attribution,
                "session_rows": _session_rows(sid),
                "grounding_record": record}
         _EVIDENCE["runs"].append(rec)
