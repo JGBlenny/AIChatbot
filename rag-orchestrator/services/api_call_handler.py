@@ -19,7 +19,6 @@ from asyncpg.pool import Pool
 from difflib import get_close_matches, SequenceMatcher
 
 # 導入具體的 API 服務（根據需要擴展）
-from .billing_api import BillingAPIService
 from .universal_api_handler import UniversalAPICallHandler
 from .jgb_system_api import JGBSystemAPI
 
@@ -39,18 +38,19 @@ class APICallHandler:
                     - 如果不提供，僅支持自定義代碼實作的 API
         """
         self.db_pool = db_pool
-        self.billing_api = BillingAPIService()
         self.jgb_api = JGBSystemAPI()
 
         # 初始化通用 API 處理器（用於動態配置的 API）
         self.universal_handler = UniversalAPICallHandler(db_pool) if db_pool else None
 
         # API endpoint 映射到具體服務（自定義代碼實作的 API）
+        # ⚠️ billing_inquiry／verify_tenant_identity／resend_invoice／maintenance_request
+        #    四個 legacy 端點已於 2026-08-25 移除（services/billing_api.py 一併刪除）。
+        #    它們指向 BILLING_API_BASE_URL（預設 http://localhost:8000）的 /api/billing/*、
+        #    /api/maintenance/*，**jgb2 external/v1 路由表無任何對應**；且 USE_MOCK_BILLING_API
+        #    未在任何 compose 宣告 → 預設 true，等於在真實環境回**編造的**帳單金額與
+        #    隨機報修單號（MNT-######）。刪除依據見 transport-migration-inventory.md §6。
         self.api_registry = {
-            'billing_inquiry': self.billing_api.get_invoice_status,
-            'verify_tenant_identity': self.billing_api.verify_tenant_identity,
-            'resend_invoice': self.billing_api.resend_invoice,
-            'maintenance_request': self.billing_api.submit_maintenance_request,
             'lookup': self._handle_lookup_api,  # 內部 lookup API 處理器
             'branch_answer': self._handle_branch_answer,  # 選項分歧知識回覆（純內部，不打外部 API）
             # JGB 系統 API 端點
@@ -158,12 +158,16 @@ class APICallHandler:
                 return self._error_response(f"不支援的 API endpoint: {endpoint}")
 
             # 5. 身份驗證（如果需要）
+            # ⚠️ **fail closed**：唯一的驗證器實作（billing_api.verify_tenant_identity）已隨 legacy 端點移除。
+            #    配置若仍要求先驗身分，**不得**因為驗證器不在就照跑——那等於靜默跳過身分驗證。
+            #    此處直接拒絕，由配置端改掉或另接驗證器。
             if api_config.get('verify_identity_first'):
-                verification_result = await self._verify_identity(
-                    api_config, session_data, form_data
+                return self._error_response(
+                    "此 API 配置要求先驗證身分，但身分驗證器已隨 legacy billing_api 移除；"
+                    "在補上驗證器之前不執行此 API。",
+                    fallback_message=api_config.get('fallback_message'),
+                    knowledge_answer=knowledge_answer
                 )
-                if not verification_result['success']:
-                    return verification_result
 
             # 6. 準備參數
             params = self._prepare_params(
@@ -200,37 +204,6 @@ class APICallHandler:
                 fallback_message=api_config.get('fallback_message'),
                 knowledge_answer=knowledge_answer
             )
-
-    async def _verify_identity(
-        self,
-        api_config: Dict[str, Any],
-        session_data: Optional[Dict[str, Any]],
-        form_data: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
-        """執行身份驗證"""
-        verification_params = api_config.get('verification_params', {})
-
-        # 準備驗證參數
-        params = {}
-        for api_param, source_field in verification_params.items():
-            value = self._resolve_param_value(
-                source_field, session_data, form_data, {}
-            )
-            if not value:
-                return self._error_response(f"身份驗證參數缺失: {api_param}")
-            params[api_param] = value
-
-        logger.info(f"🔐 執行身份驗證，參數: {params}")
-
-        # 調用驗證 API
-        verify_result = await self.billing_api.verify_tenant_identity(**params)
-
-        if not verify_result.get('verified'):
-            return self._error_response(
-                verify_result.get('message', '身份驗證失敗，請確認您的資訊是否正確')
-            )
-
-        return {'success': True}
 
     def _prepare_params(
         self,

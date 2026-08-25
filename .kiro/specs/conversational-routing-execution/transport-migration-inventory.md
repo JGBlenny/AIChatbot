@@ -103,8 +103,23 @@ get_tenant_contracts   ✅ **2026-08-25 改判並修復**——G1「jgb2 沒有�
                        「物件自動帶入」**靜默失效**而 mock 測試全綠。
 billing_api.py ×4      billing_inquiry／verify_tenant_identity／resend_invoice／maintenance_request
                        指向 BILLING_API_BASE_URL（預設 localhost:8000）的 /api/billing/*、
-                       /api/maintenance/*；**jgb2 external/v1 路由表無任何對應**，
-                       且 repo 內 seed 零引用 ⇒ 疑似 legacy 死碼，處置為「查證後刪除」而非遷移。
+                       /api/maintenance/*；**jgb2 external/v1 路由表無任何對應**。
+                       **2026-08-25 逐條查證（dev DB）**：
+                         · repo：除 api_registry 四行外零引用；tests/ 零引用（無測試保護）
+                         · knowledge_base／vendor_sop_items／intents／api_endpoints：0 命中
+                         · form_schemas：**2 筆命中且 is_active=true**——
+                           `billing_inquiry_guest`（含 verify_identity_first）與 `maintenance_request`，
+                           vendor_id 為 NULL＝**全業者可選**（form_manager.py:152 的
+                           `vendor_id = %s OR vendor_id IS NULL`）
+                         · 但兩張表的 trigger_intents（帳單查詢／查詢帳單／報修／維修申請／設備故障）
+                           **在 intents 表全部不存在** → `trigger_intents @> [intent]` 永不命中
+                         · knowledge_base.form_id／next_form_id／form_sessions／form_submissions
+                           對這兩個 form_id 皆 **0 列**（連歷史使用都沒有）
+                       ⇒ dev 判定 **unreachable**；⚠️ **production DB 未查證**（見 §10）。
+                       ⚠️ 若 production 真的可觸發，後果不是「壞掉」而是**編造**：
+                          USE_MOCK_BILLING_API 沒有任何 compose 宣告 → 預設 true，
+                          `_mock_submit_maintenance_request` 回**隨機**單號 `MNT-######`，
+                          而表單模板照樣講「✅ 報修申請已送出，報修單號：…」。
 ```
 
 ## 6b. 已登記缺口（**不得讀成已證**）
@@ -158,4 +173,38 @@ GAP-B2  viewer 權限圈定（viewer_user_id）無 fixture 模型；替身改為
 ❌ 把 estate 的兩個註冊鍵當同一語義（`jgb_estates` 是修繕報修表單現役鍵）
 ❌ 讓任何遷移失敗 fallback 到真網路（4.3 的三態原則不因新端點而放寬）
 ❌ 把本檔的「成本估算」當成工時承諾——行數只是原始碼閱讀量的 proxy
+```
+
+## 10. production 端證據缺口——**已關閉**（2026-08-25 業主裁定）
+
+> 業主聲明：**本地與線上資料相同**。故 §6 的 dev DB 查證結果直接適用於 production：
+> `billing_inquiry_guest`／`maintenance_request` 兩張表單雖 `is_active=true`，
+> 但其 trigger_intents 在 `intents` 表不存在 → 線上同樣**觸發不了**，
+> 且 form_sessions／form_submissions 零列。
+> ⇒ `refactor(billing-api)` 那筆是**純清理**，部署前**不需要**先停用表單。
+
+⚠️ 證據性質要標清楚：這是**業主對自家環境的裁定**，不是我實測 production 的輸出。
+日後若 dev／prod 出現分歧（例如線上另外建過表單或意圖），本節結論即失效，須重跑下列唯讀查詢：
+
+```sql
+SELECT form_id, form_name, is_active, vendor_id, trigger_intents
+FROM form_schemas
+WHERE api_config::text ~ 'billing_inquiry|verify_tenant_identity|resend_invoice|maintenance_request|verify_identity_first';
+
+SELECT name, is_enabled FROM intents
+WHERE name IN ('帳單查詢','查詢帳單','報修','維修申請','設備故障');
+
+SELECT form_id, count(*) FROM form_sessions
+WHERE form_id IN ('billing_inquiry_guest','maintenance_request') GROUP BY 1;
+```
+
+### 建議的收尾（可選，不阻擋部署）
+
+那兩張表單會變成「active 但指向已不存在的 endpoint」的孤兒列。現在觸發不到，
+但只要日後有人建一個叫「報修」或「帳單查詢」的意圖，它們就會被選中並拿到
+「不支援的 API endpoint」錯誤。要斷這條路，在**同一份資料**上停用即可：
+
+```sql
+UPDATE form_schemas SET is_active = false, updated_at = now()
+WHERE form_id IN ('billing_inquiry_guest', 'maintenance_request');
 ```
