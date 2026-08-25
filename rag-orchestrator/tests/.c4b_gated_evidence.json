@@ -1,0 +1,227 @@
+{
+  "protocol": "c4b-gated-resolver-validation-protocol-frozen.md",
+  "variant": "C4b-gated-resolver-validation",
+  "runs": [
+    {
+      "repetition": 1,
+      "session_id": "c4bg-1-3889a526",
+      "http": [
+        200,
+        200
+      ],
+      "turn1_answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+      "resolutions": [
+        {
+          "committed": null,
+          "stop_reason": "switch_without_delegate",
+          "chain": [
+            {
+              "facet_key": "bill_diagnosis",
+              "verdict": "switch",
+              "delegate_to": null,
+              "reason": "responsibility_contract",
+              "config_key": "bill_diagnosis",
+              "context_key": "條件診斷：帳單",
+              "rules_digest": "b2dfdc465e1182a5",
+              "context_digest": "d1f88c90a2e0c9d2"
+            }
+          ]
+        }
+      ],
+      "session_rows": [],
+      "grounding_record": {
+        "case": "c4b-gated-resolver",
+        "execution_face": "contract_closeout",
+        "fixture_bill_id": 678,
+        "passed": false,
+        "raw_answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+        "matched_spans": [],
+        "missing_groups": [
+          [
+            "信義區套房A"
+          ],
+          [
+            "25,000",
+            "25000"
+          ]
+        ],
+        "wrong_instance_hits": [],
+        "fallback_hits": [],
+        "adjudication_hits": [],
+        "violated_dimensions": [
+          "value_not_used"
+        ],
+        "literal_provenance": {
+          "信義區套房A": "_mock_get_contracts data[0].title",
+          "25,000": "_mock_get_contracts data[0].rent"
+        },
+        "foil_provenance": {
+          "7,500": "bills fixture 900003.total",
+          "18,000": "bills fixture 900001.total",
+          "1,200": "bills fixture 900002.total"
+        },
+        "known_non_discriminating": [],
+        "fallback_markers_checked": [
+          "請洽客服",
+          "一般來說",
+          "無法查詢",
+          "NO_MATCH"
+        ],
+        "adjudication_flags_checked": []
+      }
+    },
+    {
+      "repetition": 2,
+      "session_id": "c4bg-2-f03d4f0e",
+      "http": [
+        200,
+        200
+      ],
+      "turn1_answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+      "resolutions": [
+        {
+          "committed": null,
+          "stop_reason": "switch_without_delegate",
+          "chain": [
+            {
+              "facet_key": "bill_diagnosis",
+              "verdict": "switch",
+              "delegate_to": null,
+              "reason": "responsibility_contract",
+              "config_key": "bill_diagnosis",
+              "context_key": "條件診斷：帳單",
+              "rules_digest": "b2dfdc465e1182a5",
+              "context_digest": "d1f88c90a2e0c9d2"
+            }
+          ]
+        }
+      ],
+      "session_rows": [],
+      "grounding_record": {
+        "case": "c4b-gated-resolver",
+        "execution_face": "contract_closeout",
+        "fixture_bill_id": 678,
+        "passed": false,
+        "raw_answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+        "matched_spans": [],
+        "missing_groups": [
+          [
+            "信義區套房A"
+          ],
+          [
+            "25,000",
+            "25000"
+          ]
+        ],
+        "wrong_instance_hits": [],
+        "fallback_hits": [],
+        "adjudication_hits": [],
+        "violated_dimensions": [
+          "value_not_used"
+        ],
+        "literal_provenance": {
+          "信義區套房A": "_mock_get_contracts data[0].title",
+          "25,000": "_mock_get_contracts data[0].rent"
+        },
+        "foil_provenance": {
+          "7,500": "bills fixture 900003.total",
+          "18,000": "bills fixture 900001.total",
+          "1,200": "bills fixture 900002.total"
+        },
+        "known_non_discriminating": [],
+        "fallback_markers_checked": [
+          "請洽客服",
+          "一般來說",
+          "無法查詢",
+          "NO_MATCH"
+        ],
+        "adjudication_flags_checked": []
+      }
+    },
+    {
+      "repetition": 3,
+      "session_id": "c4bg-3-02c1a07e",
+      "http": [
+        200,
+        200
+      ],
+      "turn1_answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+      "resolutions": [
+        {
+          "committed": null,
+          "stop_reason": "switch_without_delegate",
+          "chain": [
+            {
+              "facet_key": "bill_diagnosis",
+              "verdict": "switch",
+              "delegate_to": null,
+              "reason": "responsibility_contract",
+              "config_key": "bill_diagnosis",
+              "context_key": "條件診斷：帳單",
+              "rules_digest": "b2dfdc465e1182a5",
+              "context_digest": "d1f88c90a2e0c9d2"
+            }
+          ]
+        }
+      ],
+      "session_rows": [],
+      "grounding_record": {
+        "case": "c4b-gated-resolver",
+        "execution_face": "contract_closeout",
+        "fixture_bill_id": 678,
+        "passed": false,
+        "raw_answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+        "matched_spans": [],
+        "missing_groups": [
+          [
+            "信義區套房A"
+          ],
+          [
+            "25,000",
+            "25000"
+          ]
+        ],
+        "wrong_instance_hits": [],
+        "fallback_hits": [],
+        "adjudication_hits": [],
+        "violated_dimensions": [
+          "value_not_used"
+        ],
+        "literal_provenance": {
+          "信義區套房A": "_mock_get_contracts data[0].title",
+          "25,000": "_mock_get_contracts data[0].rent"
+        },
+        "foil_provenance": {
+          "7,500": "bills fixture 900003.total",
+          "18,000": "bills fixture 900001.total",
+          "1,200": "bills fixture 900002.total"
+        },
+        "known_non_discriminating": [],
+        "fallback_markers_checked": [
+          "請洽客服",
+          "一般來說",
+          "無法查詢",
+          "NO_MATCH"
+        ],
+        "adjudication_flags_checked": []
+      }
+    }
+  ],
+  "verdict": "NOT_VALIDATED",
+  "failures": [
+    "rep1①: chain=[('bill_diagnosis', 'switch', None)]",
+    "rep1②: committed=None",
+    "rep1②: session rows=[]",
+    "rep1③④: grounding／answer 未通過 → ['value_not_used']",
+    "rep2①: chain=[('bill_diagnosis', 'switch', None)]",
+    "rep2②: committed=None",
+    "rep2②: session rows=[]",
+    "rep2③④: grounding／answer 未通過 → ['value_not_used']",
+    "rep3①: chain=[('bill_diagnosis', 'switch', None)]",
+    "rep3②: committed=None",
+    "rep3②: session rows=[]",
+    "rep3③④: grounding／answer 未通過 → ['value_not_used']"
+  ],
+  "target_scope_calls": 3,
+  "all_provider_calls": 15
+}
