@@ -503,6 +503,10 @@ def _write_evidence():
     yield
     _EVIDENCE["target_scope_calls"] = len(_RIG["target"]) if _RIG else None
     _EVIDENCE["all_provider_calls"] = len(_RIG["all"]) if _RIG else None
+    # ⚠️ **每一次 brain 呼叫的解析結果**都留檔（不只 resolver hop）——
+    #    P3 第 2 次執行時，in-session 那一輪被擋在哪一條規則上只能用猜的，
+    #    因為當時只保存了 resolver hop 的 attribution。
+    _EVIDENCE["all_parsed_turns"] = (_RIG.get("parsed") if _RIG else None) or []
     with open(EVIDENCE_PATH, "w", encoding="utf-8") as fh:
         json.dump(_EVIDENCE, fh, ensure_ascii=False, indent=2)
     print(f"\n📄 gated-resolver evidence → {os.path.abspath(EVIDENCE_PATH)}")
