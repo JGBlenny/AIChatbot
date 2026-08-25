@@ -5,6 +5,14 @@ JGB 付款日誌診斷引擎
 - P01：已付款但帳單狀態沒有更新
 - P02：信用卡付款失敗
 - P03：信用卡自動扣款失敗
+
+⚠️ **`response` 欄外部 API 不投影**（2026-08-25 盤查）：`payment_logs` 表確實有
+`request`／`response`（App/Payment.php:4263 等處寫入），但 `PaymentLogApiController`
+的列映射（:92-105）只回 source／id／payment_id／role_id／transaction_id／manufacturer／
+action／type／amount／note／created_at。本檔多處讀 `response.Status`／`Message`——
+那些分支**在 production 永遠取不到值**，會退回 `note`（`note` 有投影）。
+要真的拿到原因碼，得先讓 jgb2 把 `response` 加進投影；在那之前不得宣稱
+「原因碼診斷已驗」。
 """
 
 from typing import Any

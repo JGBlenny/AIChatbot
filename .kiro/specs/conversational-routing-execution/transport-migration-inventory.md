@@ -135,6 +135,12 @@ GAP-B1  GET /bills 的 `user_id` 替身**不過濾**（production：
         ⚠️ 這是 A 級端點內部的缺口——**「已達 transport 保真」指投影與 where 條件，
            不等於每個參數都已實作**。
 GAP-B2  viewer 權限圈定（viewer_user_id）無 fixture 模型；替身改為拒答。
+GAP-I1  GET /invoices 的 `user_id` 替身不過濾（production 走 invoices→bills→contracts
+        三張表的 whereExists）。與 GAP-B1 同源：三個 fixture 宇宙不連通。
+        現況由 tests/unit/api/test_invoices_mock_fidelity_req.py 具名鎖住。
+GAP-P1  payment_logs 的 `response` 欄 production **不投影**（DB 有、API 不回），
+        故 services/jgb/payments.py 的原因碼分析在線上無資料可用，只能退回 note。
+        要驗證那段邏輯，得先讓 jgb2 把 response 加進投影。
 ```
 
 ## 7. 逐端點稽核協議（M2 recipe，六步；每個端點重跑一次）
@@ -162,7 +168,11 @@ GAP-B2  viewer 權限圈定（viewer_user_id）無 fixture 模型；替身改為
       缺 is_open=1 恆定 where（sentinel 分支因此測不到）／分頁排序寫死／
       contract_required_fields 回 production 產不出的空 fields。
       ⚠️ estates **仍未遷入 transport**（MIGRATED_ENDPOINTS 未變），本次只對齊方法級 mock
-5  B 級 invoices ＋ payment_logs    發票面向；兩者都在 billing facet 的 live 路徑上
+5  ✅ **已完成** B 級 invoices ＋ payment_logs（invoices-payment-logs-source-audit.md）
+      invoices：參數被忽略／排序反了／分頁寫死（投影與三組枚舉本來就對）
+      payment-logs：**回應信封整個不同**——production 是 {bill_id, payments, payment_logs,
+      summary}，舊 mock 回 {mapping, data, pagination}，而消費端讀 data
+      ⇒ 線上這個面向一律回「查無金流日誌」。另修 bill_id 必填與兩個 production 不讀的參數。
 6  B 級 meters                      IoT 面向，單一端點單一 format
 7  B 級 team_members ＋ permissions  account 面向，兩鍵共用一個 controller
 8  B 級 create_repair               寫入語義，需先定「mock 寫入」的驗收語義，留最後

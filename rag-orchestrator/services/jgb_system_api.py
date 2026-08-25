@@ -476,21 +476,41 @@ class JGBSystemAPI:
         transaction_id: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
-        """查詢付款交易的金流 API 日誌"""
-        if not role_id:
+        """查詢某張帳單的付款紀錄與金流日誌（`GET /payment-logs`）。
+
+        **2026-08-25 盤查修正**：
+
+        * production **要求 `role_id` 與 `bill_id` 皆必填**（缺任一即 400）。舊版允許
+          只帶 role_id／payment_id ⇒ 線上必然 400，mock 卻回得漂亮。改為缺 bill_id
+          即降級，不發那個注定失敗的請求。
+        * `payment_id`／`transaction_id` **production 完全不讀**（controller 只取
+          role_id 與 bill_id）。保留簽名以相容既有呼叫端，但**不再送出**。
+        * 回應信封是 `{bill_id, payments, payment_logs, summary}`，**沒有 `data`**，
+          而 `jgb_response_formatter` → `diagnose_payment_logs` 讀的是 `data`。
+          在此做 adapter 層正規化：`data` = `payment_logs` 逐列（值全部來自回應本身，
+          不補欄位），並帶出 `payments`／`summary`／`bill_id`。
+          ⚠️ 這是**正規化**不是捏造。
+        """
+        if not role_id or bill_id in (None, ""):
             return self._degraded_response()
 
         if self.use_mock:
-            return self._mock_get_payment_logs(role_id, payment_id, bill_id)
+            raw = self._mock_get_payment_logs(role_id, payment_id, bill_id)
+        else:
+            raw = await self._request("/api/external/v1/payment-logs",
+                                      {"role_id": role_id, "bill_id": bill_id})
+        if not (raw or {}).get("success"):
+            return {"success": False, "data": []}
 
-        params: dict[str, Any] = {"role_id": role_id}
-        if payment_id is not None:
-            params["payment_id"] = payment_id
-        if bill_id is not None:
-            params["bill_id"] = bill_id
-        if transaction_id:
-            params["transaction_id"] = transaction_id
-        return await self._request("/api/external/v1/payment-logs", params)
+        logs = raw.get("payment_logs")
+        payments = raw.get("payments")
+        return {
+            "success": True,
+            "data": logs if isinstance(logs, list) else [],
+            "payments": payments if isinstance(payments, list) else [],
+            "summary": raw.get("summary") or {},
+            "bill_id": raw.get("bill_id"),
+        }
 
     async def get_invoice_logs(
         self,
@@ -1015,104 +1035,124 @@ class JGBSystemAPI:
             },
         }
 
+    #: 發票 fixture（`formatInvoice` 逐鍵，26 欄）——**已對照 jgb2 原始碼**（2026-08-25）。
+    #: `App\Invoice` **無 $casts、無 accessor**，故所有欄位都是原始欄位值；
+    #: 唯一由控制器加工的是 `tax_rate`：`$invoice->tax_rate ? (float) : null`
+    #: ⇒ **0 會變成 null**（InvoiceApiController:125）。
+    _INVOICE_ROWS: "tuple[dict[str, Any], ...]" = (
+
+            {
+                "id": 5001,
+                "bill_id": 12345,
+                "payment_id": 9876,
+                "manufacturer": "ezpay",
+                "number": "AZ00000123",
+                "random_num": "1234",
+                "status": 1,
+                "upload_status": 1,
+                "category": "B2C",
+                "buyer_name": None,
+                "buyer_ubn": None,
+                "buyer_address": None,
+                "buyer_email": "tenant@example.com",
+                "carrier_type": None,
+                "carrier_number": None,
+                "love_code": None,
+                "print_flag": "N",
+                "tax_type": 1,
+                "tax_rate": 0.05,
+                "tax_amt": 1190,
+                "amt": 23810,
+                "total_amt": 25000,
+                "item_data": None,
+                "bar_code": None,
+                "url": None,
+                "added_at": "2026-04-01 10:00:00",
+                "invalid_at": None,
+                "allowanced_at": None,
+            },
+            {
+                "id": 5002,
+                "bill_id": 12340,
+                "payment_id": 9870,
+                "manufacturer": "ezpay",
+                "number": "AZ00000120",
+                "random_num": "5678",
+                "status": 2,
+                "upload_status": 1,
+                "category": "B2C",
+                "buyer_name": None,
+                "buyer_ubn": None,
+                "buyer_address": None,
+                "buyer_email": "tenant@example.com",
+                "carrier_type": None,
+                "carrier_number": None,
+                "love_code": None,
+                "print_flag": "N",
+                "tax_type": 1,
+                "tax_rate": 0.05,
+                "tax_amt": 1190,
+                "amt": 23810,
+                "total_amt": 25000,
+                "item_data": None,
+                "bar_code": None,
+                "url": None,
+                "added_at": "2026-03-01 10:00:00",
+                "invalid_at": "2026-03-15 10:00:00",
+                "allowanced_at": None,
+            },
+    )
+
+    #: `getMapping()`（:139-160）的三組枚舉，值取自 `App\Invoice` 常數（:9-23）
+    _INVOICE_MAPPING: "dict[str, dict[str, str]]" = {
+        "status": {"0": "未開立", "1": "已開立", "2": "作廢",
+                   "3": "折讓", "4": "作廢折讓"},
+        "category": {"B2B": "企業對企業發票", "B2C": "企業對消費者發票"},
+        "tax_type": {"1": "應稅", "2": "零稅率", "3": "免稅", "9": "混合"},
+    }
+
     def _mock_get_invoices(
         self,
         role_id: str,
-        user_id: str,
+        user_id: str = None,
         bill_id: Optional[int] = None,
         status: Optional[int] = None,
+        page: int = 1,
+        per_page: int = 50,
     ) -> dict[str, Any]:
-        """對齊 InvoiceApiController@index"""
+        """`GET /invoices`（`InvoiceApiController@index`）——**已對照 jgb2 原始碼**。
+
+        * `role_id` 必填，缺 → 400（:19-22）；恆定 join `bills` 且 `bills.active=1`（:40-41）；
+        * `bill_id` → `where invoices.bill_id`（:63-65）；`status` → `where invoices.status`（:67-69）；
+        * `orderBy('invoices.id','desc')`（:71）——**舊 mock 固定升冪，且兩個參數全部忽略**；
+        * 分頁：預設 50、上限 200、`total_pages` 在 total=0 時為 0、`has_more = page < total_pages`。
+
+        ⚠️ **GAP-I1（已登記缺口）**：`user_id` 在 production 是
+        `whereExists(contracts.id = bills.contract_id AND contracts.to_user_id = ? AND active=1)`
+        ——跨三張表。本替身的發票掛在 bill 12345／12340，帳單 fixture 是 900001-3、
+        合約 fixture 是 678／600，**三個 fixture 宇宙不連通**（與 GAP-B1 同源），
+        故此參數**照舊忽略**；接通屬另一個 slice。
+        """
         logger.info(f"[MOCK] get_invoices: role_id={role_id}, user_id={user_id}")
+        rows = [dict(r) for r in self._INVOICE_ROWS]
+        if bill_id not in (None, ""):
+            rows = [r for r in rows if r["bill_id"] == int(bill_id)]
+        if status not in (None, ""):
+            rows = [r for r in rows if r["status"] == int(status)]
+        rows.sort(key=lambda r: r["id"], reverse=True)
+
+        page = max(1, int(page or 1))
+        size = min(200, max(1, int(per_page or 50)))
+        total = len(rows)
+        total_pages = -(-total // size) if total > 0 else 0
+        offset = (page - 1) * size
         return {
             "success": True,
-            "mapping": {
-                "status": {
-                    "0": "未開立",
-                    "1": "已開立",
-                    "2": "作廢",
-                    "3": "折讓",
-                    "4": "作廢折讓",
-                },
-                "category": {
-                    "B2B": "企業對企業發票",
-                    "B2C": "企業對消費者發票",
-                },
-                "tax_type": {
-                    "1": "應稅",
-                    "2": "零稅率",
-                    "3": "免稅",
-                    "9": "混合",
-                },
-            },
-            "data": [
-                {
-                    "id": 5001,
-                    "bill_id": 12345,
-                    "payment_id": 9876,
-                    "manufacturer": "ezpay",
-                    "number": "AZ00000123",
-                    "random_num": "1234",
-                    "status": 1,
-                    "upload_status": 1,
-                    "category": "B2C",
-                    "buyer_name": None,
-                    "buyer_ubn": None,
-                    "buyer_address": None,
-                    "buyer_email": "tenant@example.com",
-                    "carrier_type": None,
-                    "carrier_number": None,
-                    "love_code": None,
-                    "print_flag": "N",
-                    "tax_type": 1,
-                    "tax_rate": 0.05,
-                    "tax_amt": 1190,
-                    "amt": 23810,
-                    "total_amt": 25000,
-                    "item_data": None,
-                    "bar_code": None,
-                    "url": None,
-                    "added_at": "2026-04-01 10:00:00",
-                    "invalid_at": None,
-                    "allowanced_at": None,
-                },
-                {
-                    "id": 5002,
-                    "bill_id": 12340,
-                    "payment_id": 9870,
-                    "manufacturer": "ezpay",
-                    "number": "AZ00000120",
-                    "random_num": "5678",
-                    "status": 2,
-                    "upload_status": 1,
-                    "category": "B2C",
-                    "buyer_name": None,
-                    "buyer_ubn": None,
-                    "buyer_address": None,
-                    "buyer_email": "tenant@example.com",
-                    "carrier_type": None,
-                    "carrier_number": None,
-                    "love_code": None,
-                    "print_flag": "N",
-                    "tax_type": 1,
-                    "tax_rate": 0.05,
-                    "tax_amt": 1190,
-                    "amt": 23810,
-                    "total_amt": 25000,
-                    "item_data": None,
-                    "bar_code": None,
-                    "url": None,
-                    "added_at": "2026-03-01 10:00:00",
-                    "invalid_at": "2026-03-15 10:00:00",
-                    "allowanced_at": None,
-                },
-            ],
+            "mapping": self._INVOICE_MAPPING,
+            "data": rows[offset:offset + size],
             "pagination": {
-                "current_page": 1,
-                "per_page": 50,
-                "total": 2,
-                "total_pages": 1,
-                "has_more": False,
+                "current_page": page, "per_page": size, "total": total,
+                "total_pages": total_pages, "has_more": page < total_pages,
             },
         }
 
@@ -1847,40 +1887,61 @@ class JGBSystemAPI:
         self, role_id: str, payment_id: Optional[int] = None,
         bill_id: Optional[int] = None,
     ) -> dict[str, Any]:
-        """對齊 PaymentLogApiController@index"""
-        logger.info(f"[MOCK] get_payment_logs: role_id={role_id}, payment_id={payment_id}, bill_id={bill_id}")
+        """`GET /payment-logs`（`PaymentLogApiController@index`）——**已對照 jgb2 原始碼**。
+
+        ⚠️ 這支端點的**回應信封與其他端點都不同**（:110-119）：
+        `{success, bill_id, payments:[...], payment_logs:[...], summary:{...}}`
+        ——**沒有 `data`、沒有 `mapping`、沒有 `pagination`**。舊 mock 三個都回了，
+        且把日誌放在 `data`；消費端 `diagnose_payment_logs` 讀的正是 `data`
+        ⇒ 在 production 永遠拿到空清單（同 get_tenant_contracts 的靜默失效類型）。
+
+        其他照抄：
+        * `role_id` 與 `bill_id` **皆必填**，缺任一 → 400（:24-30）；
+        * 帳單需 `owner_role_id = role_id` 且 `active=1`，否則 → 404（:34-43）；
+        * `payments` 取自 payments 表（`paymentable_type='App\\Bill'`），**涵蓋手動到帳**，
+          `price`／`final_price` 被 `(float)` 轉型（:71-72）；
+        * `payment_logs` 只取 `whereIn payment_id`（來自上一步），兩者皆 id desc；
+        * `summary.has_successful_payment` = payments 中存在 `status == 2`（:116）。
+
+        ⚠️ **`response` 欄不在投影內**：payment_logs 表有 `request`／`response`
+        （App/Payment.php:4263 等處寫入），但列映射（:92-105）不回它。舊 mock 憑空給了它，
+        而診斷引擎的原因碼分析正是讀它——那段邏輯在 production 沒有資料可用。
+        """
+        logger.info(f"[MOCK] get_payment_logs: role_id={role_id}, bill_id={bill_id}")
+        payments = [
+            {
+                "source": "payments", "id": 9876, "no": "P20260401001",
+                "transaction_id": "TXN20260401123456", "user_id": 9001,
+                "role_id": int(role_id) if role_id else 0,
+                "type": 1, "status": 1, "manufacturer": "newebpay",
+                "payment_method": "credit_card",
+                "price": 25000.0, "final_price": 25000.0,
+                "invoice_status": 0, "invoice_number": None,
+                "note": "信用卡授權失敗", "payment_completed_at": None,
+                "created_at": "2026-04-01 14:00:00",
+                "updated_at": "2026-04-01 14:00:05",
+            },
+        ]
+        logs = [
+            {
+                "source": "payment_logs", "id": 50001, "payment_id": 9876,
+                "role_id": int(role_id) if role_id else 0,
+                "transaction_id": "TXN20260401123456",
+                "manufacturer": "newebpay", "action": "credit_card",
+                "type": "bill", "amount": "25000",
+                "note": "信用卡授權失敗，請確認卡片資訊",
+                "created_at": "2026-04-01 14:00:00",
+            },
+        ]
         return {
             "success": True,
-            "mapping": {
-                "action": {
-                    "credit_card": "信用卡", "atm": "ATM 轉帳",
-                    "cvs": "超商代碼", "cvs_barcode": "超商條碼",
-                    "icashpay": "愛金卡",
-                    "google_pay": "Google Pay", "samsung_pay": "Samsung Pay",
-                },
-                "type": {"bill": "帳單付款", "subscription": "訂閱付款", "topup": "儲值"},
-            },
-            "data": [
-                {
-                    "id": 50001,
-                    "role_id": int(role_id) if role_id else 0,
-                    "payment_id": payment_id or 9876,
-                    "transaction_id": "TXN20260401123456",
-                    "manufacturer": "newebpay",
-                    "action": "credit_card",
-                    "type": "bill",
-                    "amount": "25000",
-                    "note": "信用卡授權失敗",
-                    "response": {
-                        "Status": "LIB10002",
-                        "Message": "信用卡授權失敗，請確認卡片資訊",
-                    },
-                    "created_at": "2026-04-01T14:00:00+08:00",
-                },
-            ],
-            "pagination": {
-                "current_page": 1, "per_page": 50,
-                "total": 1, "total_pages": 1, "has_more": False,
+            "bill_id": int(bill_id),
+            "payments": payments,
+            "payment_logs": logs,
+            "summary": {
+                "payment_count": len(payments),
+                "payment_log_count": len(logs),
+                "has_successful_payment": any(p["status"] == 2 for p in payments),
             },
         }
 

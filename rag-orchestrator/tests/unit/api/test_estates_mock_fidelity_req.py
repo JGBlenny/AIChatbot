@@ -162,9 +162,26 @@ def test_accessor_shaped_empty_values(api):
     **永遠不是 null**；而 `gallery`／`floor_plan` 由 controller `formatGallery()` 收尾，
     空值回 **null**（:429-432）。兩者方向相反，是這一層最容易抄錯的地方。
     """
-    row = _run(api.get_estates(role_id=ROLE))["data"][0]
+    row = _run(api.get_estates(role_id=ROLE))["data"][0]   # 任一列皆可（三列同型）
     assert row["facilities"] == [] and row["fees"] == []
     assert row["gallery"] is None and row["floor_plan"] is None
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_uncast_json_columns_stay_strings(api):
+    """沒有 accessor、也不在 `$casts` 裡的 JSON 欄位，API 回的是**原始字串**。
+
+    `size_data`（Estate.php:1803 json_encode 寫入）與 `labels_fees`（:1890）都是這種；
+    `$casts`（:120-127）只宣告 mrt／big_landlords／label_ids／agent_user_ids／
+    building_registration_transcript。fixture 首版把 size_data 寫成巢狀 dict——
+    任何 `row["size_data"]["size"]` 的消費端在 production 都會炸。
+    """
+    import json as _json
+    rows = _run(api.get_estates(role_id=ROLE))["data"]
+    row = next(e for e in rows if e["id"] == 54126)      # 預設排序是 updated_at desc，不能取 [0]
+    assert isinstance(row["size_data"], str)
+    assert _json.loads(row["size_data"])["size"]["m2"] == 15
+    assert isinstance(row["labels_fees"], str)
 
 
 @pytest.mark.req("face-exit-before-grounding:1")

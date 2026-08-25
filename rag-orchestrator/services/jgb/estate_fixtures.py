@@ -20,6 +20,11 @@ from typing import Any, Optional
 #      · `getRentAttribute`（:506）空值回 0；設了 trans_currency_to 時回**千分位字串**
 #      · `getCountryAttribute`（:224）回 `Address::getCountryKey(country_id)` 而非原欄位值
 #      · `gallery`／`floor_plan` 由 controller `formatGallery()` 收尾，**空值回 null**（:429-432）
+#    ⚠️ **沒有 accessor 也沒有 cast 的 JSON 欄位，API 回的是原始字串不是物件**：
+#      `size_data`（寫入處 Estate.php:1803 json_encode）與 `labels_fees`（:1890 json_encode
+#      Estate::feeLabels()）——`$casts` 只宣告 mrt／big_landlords／label_ids／
+#      agent_user_ids／building_registration_transcript（:120-127），**不含這兩欄**。
+#      fixture 首版把 size_data 寫成巢狀 dict，**錯，已修為 JSON 字串**。
 #    ⚠️ 仍未證：DDL 層（型別、nullable、預設）與 `Address` 對照表——見 estates-source-audit.md
 #: External 投影（`formatEstate()` 逐鍵；`include_relations=False` 的列表形狀）
 EXTERNAL_ESTATE_FIELDS: "frozenset[str]" = frozenset({
@@ -145,7 +150,7 @@ class EstateFixtureTable:
             "building": "condo",
             "room_count": 1,
             "size": 15,
-            "size_data": {"size": {"m2": 15, "sqm": 4.54, "sq_ft": 161.46}},
+            "size_data": "{\"size\": {\"m2\": 15, \"sqm\": 4.54, \"sq_ft\": 161.46}}",
             "direction": "south",
             "floor": "3",
             "total_floor": "12",
@@ -157,7 +162,7 @@ class EstateFixtureTable:
             "fees": [],
             "management_fee": 0,
             "facilities": [],
-            "labels_fees": None,
+            "labels_fees": "{\"電費\": \"電費\", \"水費\": \"水費\", \"瓦斯費\": \"瓦斯費\", \"網路費\": \"網路費\", \"第四台\": \"第四台\", \"管理費\": \"管理費\", \"車位管理費\": \"車位管理費\", \"清潔費\": \"清潔費\", \"押金設算息\": \"押金設算息\"}",
             "avatar": None,
             "gallery": None,
             "floor_plan": None,
@@ -201,7 +206,7 @@ class EstateFixtureTable:
             "building": "apartment",
             "room_count": 1,
             "size": 8,
-            "size_data": {"size": {"m2": 8, "sqm": 2.42, "sq_ft": 86.11}},
+            "size_data": "{\"size\": {\"m2\": 8, \"sqm\": 2.42, \"sq_ft\": 86.11}}",
             "direction": "east",
             "floor": "5",
             "total_floor": "7",
@@ -213,7 +218,7 @@ class EstateFixtureTable:
             "fees": [],
             "management_fee": 0,
             "facilities": [],
-            "labels_fees": None,
+            "labels_fees": "{\"電費\": \"電費\", \"水費\": \"水費\", \"瓦斯費\": \"瓦斯費\", \"網路費\": \"網路費\", \"第四台\": \"第四台\", \"管理費\": \"管理費\", \"車位管理費\": \"車位管理費\", \"清潔費\": \"清潔費\", \"押金設算息\": \"押金設算息\"}",
             "avatar": None,
             "gallery": None,
             "floor_plan": None,
@@ -257,7 +262,7 @@ class EstateFixtureTable:
             "building": "condo",
             "room_count": 2,
             "size": 25,
-            "size_data": {"size": {"m2": 25, "sqm": 7.56, "sq_ft": 269.1}},
+            "size_data": "{\"size\": {\"m2\": 25, \"sqm\": 7.56, \"sq_ft\": 269.1}}",
             "direction": "west",
             "floor": "12",
             "total_floor": "15",
@@ -269,7 +274,7 @@ class EstateFixtureTable:
             "fees": [],
             "management_fee": 2000,
             "facilities": [],
-            "labels_fees": None,
+            "labels_fees": "{\"電費\": \"電費\", \"水費\": \"水費\", \"瓦斯費\": \"瓦斯費\", \"網路費\": \"網路費\", \"第四台\": \"第四台\", \"管理費\": \"管理費\", \"車位管理費\": \"車位管理費\", \"清潔費\": \"清潔費\", \"押金設算息\": \"押金設算息\"}",
             "avatar": None,
             "gallery": None,
             "floor_plan": None,
