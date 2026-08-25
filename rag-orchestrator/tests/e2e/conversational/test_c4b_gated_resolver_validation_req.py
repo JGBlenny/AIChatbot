@@ -38,7 +38,7 @@ MAX_TARGET_CALLS, MAX_ALL_CALLS = 30, 60
 INFRA_RETRIES = 2
 _INFRA = ("timeout", "timed out", "rate limit", "429", "500", "502", "503", "504", "connection")
 
-EVIDENCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".c4b_gated_v4_evidence.json")
+EVIDENCE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".c4b_gated_v5_evidence.json")
 
 
 def _conn_kwargs():
@@ -285,8 +285,8 @@ def _ruler():
         rationale="grounding 來自 contract_closeout 的 jgb_contracts execution")
 
 
-_EVIDENCE = {"protocol": "c4b-gated-resolver-validation-v4-protocol-frozen.md",
-             "variant": "C4b-gated-resolver-validation-v4", "runs": []}
+_EVIDENCE = {"protocol": "c4b-gated-resolver-validation-v5-protocol-frozen.md",
+             "variant": "C4b-gated-resolver-validation-v5", "runs": []}
 
 
 def _post(client, message, sid):
