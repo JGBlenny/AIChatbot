@@ -895,23 +895,27 @@ anomaly   frozen cases   secondary dispatch = 0
 `target_user` 僅 `property_manager`）與面向的 `tenant`／`b2c` **意圖與角色皆不符**，
 且 `config_for_category` **不比對 `target_user`／`mode`**。
 
-- [ ] 9.1 **🧠主** 依設計決策 3 採**選項 C**：新增語義正確的**租客向報修觸發知識**
+- [x] 9.1 **🧠主** 依設計決策 3 採**選項 C**：新增語義正確的**租客向報修觸發知識**
   （`categories=['修繕報修']`、`target_user=['tenant']`），
   **不替 kb3365／kb4249 加標**（照字面補標會替 b2b 業者開出通往 b2c 租客面向的路徑）。
   _Requirements: 5.3, 6.6_
 
-- [ ] 9.2 **🧠主** 明確記錄新增的 **Face entry points**（`EntryPointChange` 的
+- [x] 9.2 **🧠主** 明確記錄新增的 **Face entry points**（`EntryPointChange` 的
   `declared_entry_points`），並以**現行 production routing 規則**執行回歸。
   _Requirements: 5.3, 6.6_
 
-- [ ] 9.3 **🧠主 🔍V** 驗證新增 trigger **不造成已知資訊型問題誤進 `repair_create`**
+- [x] 9.3 **🧠主 🔍V** 驗證新增 trigger **不造成已知資訊型問題誤進 `repair_create`**
   （`misroute_probe_cases`），並確認 `make audit` 不變量 1 的掛帳清單與不變量 4 的狀態變化
   符合預期（**注意：3365／1558 的 WARN 在不變量 1，非 requirements.md 所記的不變量 4**）。
   **🔍V 理由**：metadata 變更即 routing 變更（R6.6）；且此面向為**交易型**，
   誤進場的後果是替錯的角色建報修單。
   _Requirements: 5.3, 6.6_
 
-- [ ] 9.4 **🧠主** 通過 9.3 且通過任務 6.3 的上線 gate 後，始得上線。
+- [~] 9.4 **🧠主**（**9.3 已過；上線仍受 6.3 CLOSED gate 約束**）通過 9.3 且通過任務 6.3 的上線 gate 後，始得上線。
+  → 落實紀錄 `task9-repair-entry-points-record.md`；
+    ⚠️ **9.1 的前提已過期**：5 筆進場點早由 conversational-repair 任務 3.3（646743a0，2026-07-12）
+    以選項 C 種下，本任務查證後改判為「已滿足」，未重複新增；
+    回歸 `tests/integration/conversational/test_repair_entry_points_req.py`（10 passed）。
   _Requirements: 5.3_
 
 ---
