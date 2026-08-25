@@ -788,25 +788,42 @@ async def _preentry_routable(db_pool, cfg, user_message: Optional[str]) -> bool:
 
 
 async def _resolve_pre_commit_candidate(db_pool, cfg, user_message: Optional[str]):
-    """pre-commit responsibility resolver（spec face-exit-before-grounding，slice 3）。
+    """pre-commit responsibility resolver（spec face-exit-before-grounding，slice 3 ＋ rollout）。
 
     ```text
-    gate 關（**預設**）→ 維持既有行為：檢索提名了誰就 commit 誰
-    gate 開            → 沿 delegation chain 解析，**只有判 stay 的面向能 commit**；
-                          期間不建立任何 session
+    gate 關（預設）／seed 不在 allowlist → 維持既有行為：檢索提名了誰就 commit 誰
+    gate 開且 seed 在 allowlist         → 沿 delegation chain 解析，**只有判 stay 的面向能 commit**；
+                                          期間不建立任何 session
     ```
 
+    ⚠️ **facet-scoped rollout（刻意不用單一 global bool 全開）**：
+    `PREENTRY_ROUTABILITY_GATE=true` **且** seed 面向列於 `PREENTRY_ROUTABILITY_FACETS`
+    才走新路。**allowlist 未設或為空＝停用**（fail-safe）——避免「把旗標打開」
+    意外變成 normal classification 全站每候選多一次 brain 呼叫。
+
     回傳「要 commit 的面向設定」或 `None`（不進面向，走既有 fallback）。
-    ⚠️ 回傳的可能**不是**傳入的那個面向——這正是本 slice 的重點：
-    責任契約可以把 query 交給白名單內的下一個面向，而不是先進場再退出。
+    ⚠️ 回傳的可能**不是**傳入的那個面向——責任契約可把 query 交給白名單內的下一個面向。
     """
     if os.getenv("PREENTRY_ROUTABILITY_GATE", "false").lower() != "true":
         return cfg
     if not user_message:
         return cfg
+    allow = {f.strip() for f in os.getenv("PREENTRY_ROUTABILITY_FACETS", "").split(",")
+             if f.strip()}
+    if not allow:
+        # fail-safe：旗標開了但沒指定範圍 → 不啟用（並留下可觀測訊號）
+        print("⚠️ [responsibility resolver] GATE=true 但 PREENTRY_ROUTABILITY_FACETS 未設 → 停用")
+        return cfg
+    seed_key = getattr(cfg, "key", None)
+    if seed_key not in allow:
+        return cfg
+
+    t0 = time.time()
     try:
         from services.responsibility import resolve_entry_candidate
         res = await resolve_entry_candidate(db_pool, cfg, user_message)
+        _meter_decision(snapshot={"resolver": _resolver_telemetry(
+            seed_key, res, int((time.time() - t0) * 1000))})
         _path = " → ".join(f"{h.get('facet_key')}[{h.get('verdict')}]" for h in (res.chain or []))
         if res.committed_key:
             print(f"🧭 [responsibility resolver] {_path} → commit {res.committed_key}")
@@ -816,7 +833,40 @@ async def _resolve_pre_commit_candidate(db_pool, cfg, user_message: Optional[str
     except Exception as e:                                     # noqa: BLE001
         # ⚠️ fail-open 與既有 gate 一致：新機制故障不得擋掉原本會成立的進場。
         print(f"⚠️ [responsibility resolver] 解析失敗，fail-open 照舊進場：{e}")
+        _meter_decision(snapshot={"resolver": {
+            "seed_facet": seed_key, "final_committed_facet": seed_key,
+            "fallback_reason": f"resolver_error:{type(e).__name__}",
+            "fail_open": True, "hop_count": 0, "resolver_model_calls": 0,
+            "resolver_latency_ms": int((time.time() - t0) * 1000)}})
         return cfg
+
+
+def _resolver_telemetry(seed_key, res, latency_ms: int) -> dict:
+    """rollout telemetry（**不保存聊天內容**，只記決策形狀）。
+
+    可據以算出：`fail_open` 率／`switch_without_delegate` 率／hop 分布／
+    resolved-to-stay 率／fallback 率／每 request 的 LLM 呼叫數／延遲。
+    ⚠️ 這是**上線觀測**，不是 Task 11 的對話品質基準——不記問句與答案。
+    """
+    hops = []
+    model_calls = 0
+    for h in (res.chain or []):
+        reason = h.get("reason")
+        if reason and reason != "rules_unavailable_fail_open":
+            model_calls += 1
+        hops.append({"candidate_facet": h.get("facet_key"), "scope": h.get("verdict"),
+                     "delegate_facet_key": h.get("delegate_to"), "decision_source": reason,
+                     "fail_open": bool(reason) and reason != "responsibility_contract"})
+    return {
+        "seed_facet": seed_key,
+        "final_committed_facet": res.committed_key,
+        "hop_count": len(hops),
+        "hops": hops,
+        "fail_open": any(h["fail_open"] for h in hops),
+        "fallback_reason": None if res.committed_key else res.stop_reason,
+        "resolver_model_calls": model_calls,
+        "resolver_latency_ms": latency_ms,
+    }
 
 
 def _instance_gate_decision(user_message: Optional[str]):
