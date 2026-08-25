@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock, MagicMock
 from services import conversational_config as cc
 from services.conversational_engine import ConversationalEngine
 from services.conversational_config import ConversationalConfig
+from tests.support.brain_stub import stub_step
 
 pytestmark = pytest.mark.unit
 
@@ -81,7 +82,7 @@ async def test_candidate_pick_converge_appends_answer_rules():
 @pytest.mark.req("domain-conversational-facets:3.2")
 async def test_brain_converge_appends_answer_rules(monkeypatch):
     eng = _engine()
-    eng.optimizer.conversational_step = AsyncMock(return_value={
+    stub_step(eng.optimizer, {
         "action": "converge", "converge_kind": "answer",
         "extracted_fields": {"contract_ref": "84800"}, "scope": "stay"})
     eng.get_state = AsyncMock(return_value={"config_key": "contract_diag",

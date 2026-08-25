@@ -68,6 +68,11 @@ class _Brain:
     def __init__(self, steps):
         self.steps, self.turn, self.seen = steps, 0, []
 
+    async def conversational_step_result(self, *a, **kw):
+        """任務 8 後引擎改呼叫這支；轉呼下方既有腳本並包成 StepResult。"""
+        from tests.support.brain_stub import as_step_result
+        return as_step_result(await self.conversational_step(*a, **kw))
+
     async def conversational_step(self, rules, system_md, state, msg, faces=None, kb_search=None):
         self.seen.append({"faces": faces, "md": system_md, "rules": rules})
         step = self.steps[min(self.turn, len(self.steps) - 1)]

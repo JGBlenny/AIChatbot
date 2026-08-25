@@ -12,13 +12,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 from services.conversational_engine import ConversationalEngine
 from services.conversational_config import ConversationalConfig
+from tests.support.brain_stub import stub_step
 
 pytestmark = pytest.mark.unit
 
 
 def _engine(step):
     optimizer = MagicMock()
-    optimizer.conversational_step = AsyncMock(return_value=step)
+    stub_step(optimizer, step)
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),
         get_system_context=AsyncMock(return_value="SYS"),
@@ -50,7 +51,7 @@ async def test_presales_converge_uses_knowledge_grounding_not_api():
     assert decision["kind"] == "converge"
     assert decision["grounding"] == "KNOWLEDGE_G"
     eng._ground_by_api.assert_not_awaited()          # 插點 B 不觸發
-    eng.optimizer.conversational_step.assert_called_once()
+    eng.optimizer.conversational_step_result.assert_called_once()
     eng._converge_grounding.assert_awaited_once()
 
 

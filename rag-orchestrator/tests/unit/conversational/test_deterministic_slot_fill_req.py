@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from services.conversational_engine import ConversationalEngine, _looks_like_identifier
 from services.conversational_config import ConversationalConfig
+from tests.support.brain_stub import stub_step
 
 pytestmark = pytest.mark.unit
 
@@ -41,7 +42,7 @@ def test_extract_identifier():
 
 def _engine(ground_result):
     optimizer = MagicMock()
-    optimizer.conversational_step = AsyncMock()  # 用來斷言「沒被呼叫」
+    stub_step(optimizer, called=False)           # 兩個介面都掛，用來斷言「沒被呼叫」
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),
         get_system_context=AsyncMock(return_value="MD"),
@@ -69,7 +70,7 @@ async def test_pure_number_fills_slot_and_converges_without_brain():
     d = await eng.prepare("s", "u", 7, "84800", config=_cfg())
     assert d["kind"] == "converge" and d["grounding"] == "G"
     assert state["collected_fields"]["contract_ref"] == "84800"   # 確定性填入
-    eng.optimizer.conversational_step.assert_not_called()          # 沒經 brain
+    eng.optimizer.conversational_step_result.assert_not_called()          # 沒經 brain
 
 
 # ── 錯誤情況①：編號查無（0 筆）→ ask 查無，不崩 ──
@@ -79,7 +80,7 @@ async def test_invalid_number_zero_rows_asks_not_crash():
     eng.get_state = AsyncMock(return_value={"config_key": "contract_diag", "collected_fields": {}, "asked_count": 1})
     d = await eng.prepare("s", "u", 7, "99999999", config=_cfg())
     assert d["kind"] == "ask" and "查無" in d["answer"]
-    eng.optimizer.conversational_step.assert_not_called()
+    eng.optimizer.conversational_step_result.assert_not_called()
 
 
 # ── 錯誤情況②：編號查到多筆同名 → 存 pending_candidates + 列候選 ──
@@ -98,14 +99,14 @@ async def test_number_many_rows_lists_candidates():
 @pytest.mark.req("domain-conversational-facets:4.4")
 async def test_opening_sentence_goes_to_brain():
     eng = _engine({"kind": "converge", "grounding": "G"})
-    eng.optimizer.conversational_step = AsyncMock(return_value={
+    stub_step(eng.optimizer, {
         "action": "ask", "next_question": "請提供合約編號或物件名稱", "extracted_fields": {}, "scope": "stay"})
     state = {"config_key": "contract_diag", "collected_fields": {}, "asked_count": 0}
     eng.get_state = AsyncMock(return_value=state)
     d = await eng.prepare("s", "u", 7, "我的合約狀態怪怪的", config=_cfg())
     assert d["kind"] == "ask"
     assert "contract_ref" not in state.get("collected_fields", {})  # 未確定性填
-    eng.optimizer.conversational_step.assert_called_once()           # 走了 brain
+    eng.optimizer.conversational_step_result.assert_called_once()           # 走了 brain
 
 
 # ── 錯誤情況④：候選選擇中（pending_candidates）→ 插點A 處理，不誤走填槽 ──
@@ -163,16 +164,16 @@ async def test_switch_contract_via_text_number():
     d = await eng.prepare("s", "u", 7, "那換 84328 呢?", config=_cfg())
     assert d["kind"] == "converge"
     assert state["collected_fields"]["contract_ref"] == "84328"   # 換成新編號
-    eng.optimizer.conversational_step.assert_not_called()
+    eng.optimizer.conversational_step_result.assert_not_called()
 
 
 # ── 同一編號的追問（84328 已填 + 問題）→ 不攔截、走 brain ──
 @pytest.mark.req("domain-conversational-facets:4.4")
 async def test_same_number_followup_goes_to_brain():
     eng = _engine({"kind": "converge", "grounding": "G"})
-    eng.optimizer.conversational_step = AsyncMock(return_value={
+    stub_step(eng.optimizer, {
         "action": "converge", "converge_kind": "answer", "extracted_fields": {}, "scope": "stay"})
     state = {"config_key": "contract_diag", "collected_fields": {"contract_ref": "84328"}, "asked_count": 2}
     eng.get_state = AsyncMock(return_value=state)
     await eng.prepare("s", "u", 7, "84328 可以點退嗎?", config=_cfg())  # 同編號 → 非切換
-    eng.optimizer.conversational_step.assert_called_once()  # 走 brain（追問，非重新識別）
+    eng.optimizer.conversational_step_result.assert_called_once()  # 走 brain（追問，非重新識別）

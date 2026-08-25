@@ -14,13 +14,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 from services.conversational_engine import ConversationalEngine, MAX_ASKS
 from services.conversational_config import ConversationalConfig
+from tests.support.brain_stub import stub_step
 
 pytestmark = pytest.mark.unit
 
 
 def _engine(brain_step, ground=None):
     optimizer = MagicMock()
-    optimizer.conversational_step = AsyncMock(return_value=brain_step)
+    stub_step(optimizer, brain_step)
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),
         get_system_context=AsyncMock(return_value="MD"),

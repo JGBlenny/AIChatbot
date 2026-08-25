@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from services.conversational_engine import ConversationalEngine, _domain_faces
 from services.conversational_config import ConversationalConfig
+from tests.support.brain_stub import stub_step
 
 pytestmark = pytest.mark.unit
 
@@ -24,7 +25,7 @@ def _sysctx():
 
 def _engine(step_result):
     optimizer = MagicMock()
-    optimizer.conversational_step = AsyncMock(return_value=step_result)
+    stub_step(optimizer, step_result)
     optimizer.synthesize_presales_answer = MagicMock(return_value="ans")
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),
@@ -119,7 +120,7 @@ async def test_pending_candidates_not_switched():
     decision = await eng.prepare("s1", "u1", 7, "2", config=_cfg())  # 選第 2 筆
     assert decision["kind"] == "converge"   # 候選選擇成立，未被 switch
     eng._close.assert_not_awaited()
-    eng.optimizer.conversational_step.assert_not_called()  # 插點A 不跑 brain
+    eng.optimizer.conversational_step_result.assert_not_called()  # 插點A 不跑 brain
 
 
 # ── face 在集合內 → 收斂 system_md 取當輪 face 脈絡 + 記入 state ──
@@ -155,5 +156,5 @@ async def test_previous_face_used_for_step_context():
         "config_key": "contract_diag", "collected_fields": {}, "asked_count": 1, "face": "違約金"})
     await eng.prepare("s1", "u1", 7, "再問一下", config=_cfg(faces=["狀態判斷", "違約金"]))
     # step 的 system_md 應以上一輪面向（違約金）載入
-    args, kwargs = eng.optimizer.conversational_step.call_args
+    args, kwargs = eng.optimizer.conversational_step_result.call_args
     assert args[1] == "MD:違約金"

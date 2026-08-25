@@ -11,13 +11,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 from services.conversational_engine import ConversationalEngine
 from services.conversational_config import ConversationalConfig
+from tests.support.brain_stub import stub_step
 
 pytestmark = pytest.mark.unit
 
 
 def _engine():
     optimizer = MagicMock()
-    optimizer.conversational_step = AsyncMock(return_value={
+    stub_step(optimizer, {
         "action": "converge", "converge_kind": "answer", "extracted_fields": {}})
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),

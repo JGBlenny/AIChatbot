@@ -71,6 +71,11 @@ class ScriptedEvaluator:
         self.rules_by_facet = rules_by_facet
         self.seen = []
 
+    async def conversational_step_result(self, *a, **kw):
+        """任務 8 後引擎改呼叫這支；轉呼下方既有腳本並包成 StepResult。"""
+        from tests.support.brain_stub import as_step_result
+        return as_step_result(await self.conversational_step(*a, **kw))
+
     async def conversational_step(self, rules, system_md, state, msg, **kw):
         facet = next(f for f, r in self.rules_by_facet.items() if r == rules)
         scope, delegate = self.script.get(facet, ("stay", None))
@@ -79,7 +84,7 @@ class ScriptedEvaluator:
         out = {"action": "ask", "next_question": "q", "scope": scope}
         if delegate:
             out["delegate_facet_key"] = delegate
-        return out
+        return out          # 相容層回 payload；上方 adapter 負責包成 StepResult
 
 
 async def _rules_map(pool, facets):
@@ -251,7 +256,7 @@ def test_resolver_telemetry_persists_to_usage_events(migrated_db, monkeypatch):
     from services.llm_answer_optimizer import LLMAnswerOptimizer
     reset_cache()
 
-    real_step = LLMAnswerOptimizer.conversational_step
+    real_step = LLMAnswerOptimizer.conversational_step_result
 
     async def scripted(self, rules, system_md, state, msg, **kw):
         """以 delegates 白名單反查目前是哪一跳（末端無白名單＝TARGET）。"""
@@ -263,7 +268,8 @@ def test_resolver_telemetry_persists_to_usage_events(migrated_db, monkeypatch):
         out = {"action": "ask", "next_question": "q", "scope": scope}
         if delegate:
             out["delegate_facet_key"] = delegate
-        return out
+        from tests.support.brain_stub import as_step_result
+        return as_step_result(out)          # 任務 8：引擎/resolver 改吃 StepResult
 
     async def _q(sid):
         conn = await asyncpg.connect(**_conn_kwargs())
@@ -274,7 +280,7 @@ def test_resolver_telemetry_persists_to_usage_events(migrated_db, monkeypatch):
         finally:
             await conn.close()
 
-    LLMAnswerOptimizer.conversational_step = scripted
+    LLMAnswerOptimizer.conversational_step_result = scripted
     sid = f"rollout-tm-{uuid.uuid4().hex[:8]}"
     snap = None
     try:
@@ -293,7 +299,7 @@ def test_resolver_telemetry_persists_to_usage_events(migrated_db, monkeypatch):
                     break
                 time.sleep(0.2)
     finally:
-        LLMAnswerOptimizer.conversational_step = real_step
+        LLMAnswerOptimizer.conversational_step_result = real_step
     assert snap is not None, "resolver telemetry 未落庫"
     snap = json.loads(snap) if isinstance(snap, str) else snap
     t = snap["resolver"]

@@ -61,6 +61,11 @@ class _Brain:
         self.turn = 0
         self.bill_ref = str(bill_ref)
 
+    async def conversational_step_result(self, *a, **kw):
+        """任務 8 後引擎改呼叫這支；轉呼下方既有腳本並包成 StepResult。"""
+        from tests.support.brain_stub import as_step_result
+        return as_step_result(await self.conversational_step(*a, **kw))
+
     async def conversational_step(self, rules, system_md, state, msg, faces=None, kb_search=None):
         self.turn += 1
         if self.turn == 1:

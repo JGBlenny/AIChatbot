@@ -65,6 +65,11 @@ class _Brain:
         self._scope, self._face = scope, face
         self.seen = {}
 
+    async def conversational_step_result(self, *a, **kw):
+        """任務 8 後引擎改呼叫這支；轉呼下方既有腳本並包成 StepResult。"""
+        from tests.support.brain_stub import as_step_result
+        return as_step_result(await self.conversational_step(*a, **kw))
+
     async def conversational_step(self, rules, system_md, state, msg, faces=None, kb_search=None):
         self.turn += 1
         # 三層脈絡標記＝現行種子（seed_domain_contract_system_context.sql）的獨有語句：

@@ -91,7 +91,7 @@ async def test_over_cap_then_pick_then_requery_converges_to_single_row():
     assert st.get("pending_candidates") is None, "候選未清除（會影響下一輪）"
     assert "2026-03 房租" in decision["grounding"]
     # brain 未被呼叫——插點 A 是 pre-LLM
-    eng.optimizer.conversational_step.assert_not_called()
+    eng.optimizer.conversational_step_result.assert_not_called()
 
 
 @pytest.mark.req("conversational-routing-execution:5.1")

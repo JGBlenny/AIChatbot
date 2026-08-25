@@ -36,14 +36,16 @@ class _Brain:
         self.table = table
         self.calls = []
 
-    async def conversational_step(self, rules, system_md, state, msg, **kw):
+    async def conversational_step_result(self, rules, system_md, state, msg, **kw):
+        """任務 8.2 後 responsibility 走 `conversational_step_result`（回 StepResult）。"""
+        from services.llm_answer_optimizer import StepResult
         key = rules.split("::")[1]          # rules 由下方 patch 產生，帶 facet key
         self.calls.append((key, kw.get("delegates")))
         scope, delegate = self.table[key]
         out = {"action": "ask", "next_question": "q", "scope": scope}
         if delegate:
             out["delegate_facet_key"] = delegate
-        return out
+        return StepResult(payload=out, scope=scope, delegate_facet_key=delegate)
 
 
 def _patched(registry, brain):
@@ -152,7 +154,7 @@ async def test_missing_rules_fails_open_to_stay():
 @pytest.mark.req("face-exit-before-grounding:1")
 async def test_brain_failure_fails_open_to_stay():
     brain = MagicMock()
-    brain.conversational_step = AsyncMock(return_value=None)
+    brain.conversational_step_result = AsyncMock(return_value=None)   # 模型連可解析內容都沒給
     with patch("services.conversational_rules.load_rules", new=AsyncMock(return_value="R")), \
          patch("services.system_context.get_system_context", new=AsyncMock(return_value="C")):
         d = await evaluate_responsibility(MagicMock(), _cfg("a"), "問句", optimizer=brain)

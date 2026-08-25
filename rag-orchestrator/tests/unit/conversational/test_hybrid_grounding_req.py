@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from services.conversational_engine import ConversationalEngine
 from services.conversational_config import ConversationalConfig
+from tests.support.brain_stub import stub_step
 
 pytestmark = pytest.mark.unit
 
@@ -19,7 +20,7 @@ DOMAIN_MD = "BASE_PRODUCT\n\n合約架構：12 里程碑…（領域）"
 
 def _engine():
     optimizer = MagicMock()
-    optimizer.conversational_step = AsyncMock(return_value={
+    stub_step(optimizer, {
         "action": "converge", "converge_kind": "answer", "extracted_fields": {}})
     optimizer.synthesize_presales_answer = MagicMock(return_value="合成後回覆")
     eng = ConversationalEngine(

@@ -18,6 +18,7 @@ from unittest.mock import AsyncMock, MagicMock
 from services.llm_answer_optimizer import LLMAnswerOptimizer
 from services.conversational_engine import ConversationalEngine
 from services.conversational_config import ConversationalConfig
+from tests.support.brain_stub import stub_step
 
 pytestmark = pytest.mark.unit
 
@@ -73,7 +74,7 @@ async def test_dialog_renders_only_recent_tail():
 
 def _engine(step_result):
     optimizer = MagicMock()
-    optimizer.conversational_step = AsyncMock(return_value=step_result)
+    stub_step(optimizer, step_result)
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),
         get_system_context=AsyncMock(return_value="SYS"),

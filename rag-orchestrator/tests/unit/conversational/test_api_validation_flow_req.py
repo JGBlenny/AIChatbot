@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from services.conversational_engine import ConversationalEngine, _extract_identifier
 from services.conversational_config import ConversationalConfig
+from tests.support.brain_stub import stub_step
 
 pytestmark = pytest.mark.unit
 
@@ -159,7 +160,7 @@ async def test_backward_compat_single_params():
 # ════════ prepare 切換識別：先搜後提交（rollback / commit）════════
 def _engine_prepare(ground_side):
     optimizer = MagicMock()
-    optimizer.conversational_step = AsyncMock(return_value={
+    stub_step(optimizer, {
         "action": "converge", "converge_kind": "answer", "extracted_fields": {}, "scope": "stay"})
     eng = ConversationalEngine(
         db_pool=MagicMock(), optimizer=optimizer, retriever=MagicMock(),
@@ -192,7 +193,7 @@ async def test_switch_hit_commits_new_contract():
     d = await eng.prepare("s", "u", 7, "那換 84328 呢?", config=_cfg())
     assert d["kind"] == "converge"
     assert state["collected_fields"]["contract_ref"] == "84328"   # 換成新合約
-    eng.optimizer.conversational_step.assert_not_called()          # 命中即止、不經 brain
+    eng.optimizer.conversational_step_result.assert_not_called()          # 命中即止、不經 brain
 
 
 # ── 切換識別查無（0 筆）→ 回滾保留原合約、落回 brain（不誤切、不清有效槽）──
@@ -214,7 +215,7 @@ async def test_switch_zero_rows_rolls_back_and_falls_to_brain():
     await eng.prepare("s", "u", 7, "月租 27000 對嗎?", config=_cfg())
     # 先搜後提交：27000 查無 → 回滾原合約、當作對 84921 的追問走 brain
     assert state["collected_fields"]["contract_ref"] == "84921"    # 原合約保留
-    eng.optimizer.conversational_step.assert_called_once()          # 落回 brain
+    eng.optimizer.conversational_step_result.assert_called_once()          # 落回 brain
 
 
 # ── 首次識別查無（原槽本空）→ 回追問請重新識別（無可回滾）──
@@ -230,4 +231,4 @@ async def test_first_identify_zero_rows_asks_again():
     d = await eng.prepare("s", "u", 7, "99999999", config=_cfg())
     assert d["kind"] == "ask" and "查無" in d["answer"]
     assert "contract_ref" not in state["collected_fields"]         # 清空、下句可重識別
-    eng.optimizer.conversational_step.assert_not_called()           # 首次查無不必走 brain
+    eng.optimizer.conversational_step_result.assert_not_called()           # 首次查無不必走 brain

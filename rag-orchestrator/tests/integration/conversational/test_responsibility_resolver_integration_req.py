@@ -108,6 +108,11 @@ async def test_resolution_commits_the_delegated_face_without_creating_sessions(p
         def __init__(self):
             self.seen = []
 
+        async def conversational_step_result(self, *a, **kw):
+            """任務 8 後引擎改呼叫這支；轉呼下方既有腳本並包成 StepResult。"""
+            from tests.support.brain_stub import as_step_result
+            return as_step_result(await self.conversational_step(*a, **kw))
+
         async def conversational_step(self, rules, system_md, state, msg, **kw):
             facet = rules_to_facet[rules]          # 餵錯規則會在此 KeyError
             scope, delegate = script[facet]

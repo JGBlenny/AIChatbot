@@ -734,6 +734,16 @@ def _knowledge_category(best_knowledge) -> list:
     return [cat] if cat else []
 
 
+def _scope_salvage_enabled() -> bool:
+    """`FACET_SCOPE_SALVAGE`（預設 **off**）：`action` 越界時，呼叫端是否仍依 `scope` 行動。
+
+    任務 8.3／需求 5.2：需求明文要求此修復**獨立驗收、獨立上線**，
+    因為它會啟用一條 blast radius 未量的 **mid-session switch** 能力。
+    旗標**只管呼叫端要不要行動**——解析層一律照新順序執行，回退時不需回退解析層。
+    """
+    return os.getenv("FACET_SCOPE_SALVAGE", "false").lower() == "true"
+
+
 async def _preentry_routable(db_pool, cfg, user_message: Optional[str]) -> bool:
     """Pre-entry routability gate（entry-scoped；env `PREENTRY_ROUTABILITY_GATE=true` 才生效）。
 
@@ -749,12 +759,13 @@ async def _preentry_routable(db_pool, cfg, user_message: Optional[str]) -> bool:
     （collected_fields={}／asked_count=0／recommended=False／grounding_note=""／dialog=[]），
     實際只餵原始問句。所以這不是搬程式，是把同一次呼叫挪到 commit 之前。
 
-    ⚠️ **entry-scoped，刻意不動全域 validator。**
-    `llm_answer_optimizer.conversational_step` 的 `action` 驗證在 `scope` 正規化之前，
-    `action` 越界即整包丟棄（實測「停用租客帳號」brain 5/5 正確輸出 `scope=switch`，
-    卻因 `action` 也被填 "switch" 而全數丟棄）。修那個 validator 會同時啟用一條
-    blast radius 未量的 **mid-session switch** 能力——**另開 ticket，不得順手修**。
-    本函式取不到被丟棄的原始 JSON，故 `data is None` 時保守 fail-open。
+    ✅ **2026-08-26（任務 8／需求 5.2）：上述 validator 已修。**
+    舊碼的 `action` 驗證在 `scope` 正規化**之前**，`action` 越界即整包丟棄
+    （實測「停用租客帳號」brain 5/5 正確輸出 `scope=switch`，卻因 `action` 也被填
+    "switch" 而全數丟棄）——本函式因此取不到被丟棄的 JSON，只能保守 fail-open。
+    現在改用 `conversational_step_result()`：`action` 越界時 `payload is None`，
+    但 `scope` **仍在**。是否據以擋下進場由 `FACET_SCOPE_SALVAGE`（預設 off）控制，
+    與 `PREENTRY_ROUTABILITY_GATE` 構成二重保護。
 
     失敗一律 fail-open（回 True＝照舊進場），確保 gate 故障不阻斷既有行為。
     """
@@ -773,13 +784,22 @@ async def _preentry_routable(db_pool, cfg, user_message: Optional[str]) -> bool:
         rctx = await build_responsibility_context(db_pool, cfg)
         if rctx is None:                      # 規則取不到 → 與引擎同款誠實降級
             return True
-        data = await LLMAnswerOptimizer().conversational_step(
+        result = await LLMAnswerOptimizer().conversational_step_result(
             rctx.rules_text, rctx.system_md,
             {"collected_fields": {}, "asked_count": 0, "recommended": False},
             user_message)
-        if data and data.get("scope") == "switch":
+        if result is None:                    # 模型連可解析的東西都沒給 → fail-open
+            return True
+        if result.scope == "switch":
+            # payload is None（action 越界）時是否據以擋下，由 FACET_SCOPE_SALVAGE 決定。
+            # 旗標只影響**呼叫端要不要行動**，不影響解析結果——回退時不需回退解析層。
+            if result.payload is None and not _scope_salvage_enabled():
+                print(f"🛡️ [pre-entry routability] scope=switch 但 action 越界"
+                      f"（{result.reject_reason}）；FACET_SCOPE_SALVAGE 未開 → 照舊進場")
+                return True
+            _salvaged = "（salvaged）" if result.payload is None else ""
             print(f"🛡️ [pre-entry routability] 「{user_message[:20]}」"
-                  f"判不適用面向 {getattr(cfg, 'key', '?')} → 不進場")
+                  f"判不適用面向 {getattr(cfg, 'key', '?')} → 不進場{_salvaged}")
             return False
         return True
     except Exception as e:

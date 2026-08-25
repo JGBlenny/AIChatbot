@@ -857,30 +857,34 @@ anomaly   frozen cases   secondary dispatch = 0
 **目標**：`action` 越界時不再連同可用的 `scope` 一併丟棄，且**不引入 `action=None` 半合法狀態**。
 ⚠️ ［需求 5.2］此修復**須獨立上線，不得與其他改動同批**。
 
-- [ ] 8.1 **🧠主** 實作 `_parse_conversational_step() → StepResult`（解析層）：
+- [x] 8.1 **🧠主** 實作 `_parse_conversational_step() → StepResult`（解析層）：
   先正規化 `scope`／`face`、再驗 `action`。不變量——`payload` 非 None 時
   `payload['action'] ∈ VALID_ACTIONS` 必然成立，**payload 內永不出現 `action=None` 或越界值**。
   _Requirements: 5.2_
 
-- [ ] 8.2 **🧠主** 新增 `conversational_step_result()` 為主要介面；
+- [x] 8.2 **🧠主** 新增 `conversational_step_result()` 為主要介面；
   將 `conversational_step()` 改為相容層（`return result.payload if result else None`），
   **簽章與回傳形狀與現行逐位一致**，現有 caller 零感知。
   _Requirements: 5.2_
 
-- [ ] 8.3 **🧠主** 遷移兩個呼叫點至新介面：`conversational_engine`（進場輪與續輪）
+- [x] 8.3 **🧠主** 遷移兩個呼叫點至新介面：`conversational_engine`（進場輪與續輪）
   與 `chat._preentry_routable`。以 `FACET_SCOPE_SALVAGE`（預設 off）控制
   **呼叫端在 `payload is None` 時是否依 `scope` 行動**——旗標不改變解析結果，
   回退時不需回退解析層。
   _Requirements: 5.2_
 
-- [ ] 8.4 **⚡F** 補 unit 測試：`action` 合法時輸出與現行**逐位一致**（零回歸鎖）；
+- [x] 8.4 **⚡F** 補 unit 測試：`action` 合法時輸出與現行**逐位一致**（零回歸鎖）；
   `action` 越界 ＋ `scope=switch` 時 `payload is None` 且 `scope == 'switch'`；相容層回 None。
   _Requirements: 5.2_
 
-- [ ] 8.5 **🧠主 🔍V** 獨立驗收並獨立上線：確認兩項 delta——
+- [~] 8.5 **🧠主 🔍V**（**實作完成；獨立驗收待付費 e2e，上線受 6.3 CLOSED gate**）獨立驗收並獨立上線：確認兩項 delta——
   `decision_snapshot` 歸因由 `facet_engine_degraded` 改為 switch 語義；
   `_preentry_routable` 由 fail-open 轉為實際擋下進場（受 `PREENTRY_ROUTABILITY_GATE` 預設 off 二重保護）。
   **🔍V 理由**：［需求 5.2］明文要求獨立驗收；且此變更會改變面向退出的歸因值域。
+  → 落實紀錄 `task8-scope-salvage-record.md`；解析層 `LLMAnswerOptimizer._parse_conversational_step`
+    ＋ `StepResult`；旗標 `FACET_SCOPE_SALVAGE`（預設 off）；
+    測試 `tests/unit/conversational/test_step_contract_layers_req.py`（16 passed）；
+    替身遷移 `tests/support/brain_stub.py`。unit 基線 1389 passed / 13 failed（known-red 不變）。
   _Requirements: 5.2_
 
 ---

@@ -405,6 +405,11 @@ def _apply_prefill(state: Dict[str, Any], prefill: Optional[Dict[str, Any]]) -> 
         state["pending_candidates"] = candidates
 
 
+def _scope_salvage_enabled() -> bool:
+    """`FACET_SCOPE_SALVAGE`（預設 off）——語義見 `routers/chat.py` 的同名函式（任務 8.3）。"""
+    return os.getenv("FACET_SCOPE_SALVAGE", "false").lower() == "true"
+
+
 class ConversationalEngine:
     def __init__(self, db_pool, optimizer, retriever, get_system_context, rules_loader,
                  api_handler=None):
@@ -676,9 +681,19 @@ class ConversationalEngine:
             # SEARCH_KB_ENABLED=false → 不注入（快速回退＝現行行為，免重推程式）。
             _kb_enabled = os.getenv("SEARCH_KB_ENABLED", "true").lower() != "false"
             _kb_search = self._make_kb_search(config, state) if (_tx and _kb_enabled) else None
-            step = await self.optimizer.conversational_step(
+            _result = await self.optimizer.conversational_step_result(
                 rules_text, system_md, state, user_message, faces=faces, kb_search=_kb_search)
+            step = _result.payload if _result else None
             if step is None:
+                # 任務 8.3／需求 5.2：`action` 越界時 payload 為 None，但 **scope 仍在**。
+                # 舊碼把這一態一律歸為「引擎降級」，於是「使用者其實已離題」的訊號被吃掉。
+                # 是否據以行動由 FACET_SCOPE_SALVAGE（預設 off）控制。
+                if (_result is not None and _result.scope == "switch"
+                        and _scope_salvage_enabled()):
+                    print(f"🔀 [conversational] action 越界（{_result.reject_reason}）"
+                          "但 scope=switch → 依 switch 語義關會話重路由（salvaged）")
+                    await self._close(session_id)
+                    return None
                 if state.get("asked_count", 0) == 0:
                     await self._close(session_id)  # 新會話 brain 失敗 → 關掉殘留 COLLECTING
                 return None

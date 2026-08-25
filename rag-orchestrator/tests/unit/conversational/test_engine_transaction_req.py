@@ -21,6 +21,7 @@ from unittest.mock import AsyncMock, MagicMock
 import services.conversational_engine as ce_mod
 from services.conversational_engine import ConversationalEngine
 from services.conversational_config import ConversationalConfig
+from tests.support.brain_stub import stub_step
 
 pytestmark = pytest.mark.unit
 
@@ -60,7 +61,7 @@ def _collected():
 
 def _engine(step_return=None, execute_result=None):
     optimizer = MagicMock()
-    optimizer.conversational_step = AsyncMock(return_value=step_return)
+    stub_step(optimizer, step_return)
     api_handler = MagicMock()
     api_handler.execute_api_call = AsyncMock(
         return_value=execute_result if execute_result is not None
@@ -208,7 +209,7 @@ async def test_edit_reconfirms_via_brain_and_keeps_slots():
     eng.get_state = AsyncMock(return_value=state)
     decision = await eng.prepare("s1", "u1", 7, "不是不製冷，是漏水", config=_tx_cfg())
     # 走 brain（不是直接 execute）
-    eng.optimizer.conversational_step.assert_called_once()
+    eng.optimizer.conversational_step_result.assert_called_once()
     eng.api_handler.execute_api_call.assert_not_awaited()
     # 局部更新：item 換新、estate/urgency 保留
     assert state["collected_fields"]["item"] == "冷氣漏水"
@@ -228,7 +229,7 @@ async def test_edit_button_routes_to_brain():
              "session_id": "s1", "user_id": "u1"}
     eng.get_state = AsyncMock(return_value=state)
     decision = await eng.prepare("s1", "u1", 7, "confirm_edit", config=_tx_cfg())
-    eng.optimizer.conversational_step.assert_called_once()
+    eng.optimizer.conversational_step_result.assert_called_once()
     eng.api_handler.execute_api_call.assert_not_awaited()
     assert state.get("awaiting_confirm") is not True   # 離開 confirm 待決
 
@@ -326,7 +327,7 @@ async def test_non_transaction_consent_word_not_intercepted():
     eng.get_state = AsyncMock(return_value=state)
     decision = await eng.prepare("s1", "u1", 7, "好", config=_plain_cfg())
     # 一般面向「好」交 brain（不被交易攔截）
-    eng.optimizer.conversational_step.assert_called_once()
+    eng.optimizer.conversational_step_result.assert_called_once()
     eng.api_handler.execute_api_call.assert_not_awaited()
 
 

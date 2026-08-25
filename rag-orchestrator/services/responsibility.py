@@ -25,6 +25,7 @@ billing_anomaly 兩者 digest 不同（d1f88c90… vs 2158ebdc…）
 
 import hashlib
 from dataclasses import dataclass
+import os
 from typing import Any, Optional
 
 
@@ -67,6 +68,11 @@ class ResponsibilityContext:
         """可直接入 evidence／log 的識別資料（不含全文）。"""
         return {"config_key": self.config_key, "context_key": self.context_key,
                 "rules_digest": self.rules_digest, "context_digest": self.context_digest}
+
+
+def _scope_salvage_enabled() -> bool:
+    """`FACET_SCOPE_SALVAGE`（預設 off）——語義見 `routers/chat.py` 的同名函式（任務 8.3）。"""
+    return os.getenv("FACET_SCOPE_SALVAGE", "false").lower() == "true"
 
 
 async def build_responsibility_context(
@@ -183,17 +189,30 @@ async def evaluate_responsibility(
         if optimizer is None:
             from services.llm_answer_optimizer import LLMAnswerOptimizer
             optimizer = LLMAnswerOptimizer()
-        data = await optimizer.conversational_step(
+        result = await optimizer.conversational_step_result(
             rctx.rules_text, rctx.system_md,
             {"collected_fields": {}, "asked_count": 0, "recommended": False},
             user_message, delegates=list(delegate_specs(config)) or None)
-        if not data:
+        if result is None:
             return ResponsibilityDecision(facet_key, "stay",
                                           reason="brain_unavailable_fail_open",
                                           evidence=rctx.as_evidence())
-        verdict = "switch" if data.get("scope") == "switch" else "stay"
+        if result.payload is None:
+            # 任務 8.3／需求 5.2：`action` 越界不再連同 `scope` 一起丟。
+            # ⚠️ 這條路徑對本模組特別致命——舊碼一律 fail-open 成 stay，
+            #    等於**責任委派整條鏈被靜默停用**（delegate 永遠不會發生）。
+            if result.scope == "switch" and _scope_salvage_enabled():
+                return ResponsibilityDecision(
+                    facet_key, "switch", delegate_to=result.delegate_facet_key,
+                    reason=f"responsibility_contract_salvaged:{result.reject_reason}",
+                    evidence=rctx.as_evidence())
+            return ResponsibilityDecision(
+                facet_key, "stay",
+                reason=f"action_rejected_fail_open:{result.reject_reason}",
+                evidence=rctx.as_evidence())
+        verdict = "switch" if result.scope == "switch" else "stay"
         return ResponsibilityDecision(
-            facet_key, verdict, delegate_to=data.get("delegate_facet_key"),
+            facet_key, verdict, delegate_to=result.delegate_facet_key,
             reason="responsibility_contract", evidence=rctx.as_evidence())
     except Exception as e:                                     # noqa: BLE001
         print(f"⚠️ [responsibility] 判定失敗，fail-open 照舊進場：{e}")

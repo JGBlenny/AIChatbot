@@ -7,7 +7,8 @@ Phase 4 擴展：業態語氣配置從資料庫動態載入
 """
 import os
 import re
-from typing import Awaitable, Callable, List, Dict, Optional
+from dataclasses import dataclass
+from typing import Any, Awaitable, Callable, List, Dict, Optional
 import time
 import psycopg2
 import psycopg2.extras
@@ -56,6 +57,23 @@ def _tool_call_to_dict(tc) -> dict:
         "type": "function",
         "function": {"name": tc.function.name, "arguments": tc.function.arguments or "{}"},
     }
+
+
+@dataclass(frozen=True)
+class StepResult:
+    """`conversational_step` 的解析結果（任務 8.1／需求 5.2）。
+
+    ⚠️ **`payload is None` 不等於「模型沒回應」**——它只代表這一包的 `action` 不合法。
+    `scope` 永遠有值，呼叫端因此仍能看見「使用者已離題」這個訊號。
+    模型根本沒給出可解析內容時，`conversational_step_result()` 回的是 **None**（非 StepResult），
+    兩者語義不同，不可混用。
+    """
+
+    payload: Optional[dict]          # action 合法時的完整輸出；否則 None
+    scope: str                       # 'stay' | 'switch'，永遠有值
+    face: Optional[str] = None
+    delegate_facet_key: Optional[str] = None
+    reject_reason: Optional[str] = None   # None／action_out_of_range／missing_next_question
 
 
 class LLMAnswerOptimizer:
@@ -859,6 +877,65 @@ class LLMAnswerOptimizer:
     # 對話 brain 規則（人格）已外移至 services/conversational_rules.py（R19 reframe：
     # advisor→conversational，DB category='對話規則' 載入 + code fallback）；brain 不綁角色。
 
+    #: `conversational_step` 的合法 action 值域（任務 8.1）。
+    #: ⚠️ 不得新增 `None`——payload 存在即代表 action 合法，**不引入半合法狀態**。
+    VALID_ACTIONS: "tuple[str, ...]" = ("ask", "converge", "confirm")
+
+    @staticmethod
+    def _parse_conversational_step(
+        data: Any, delegates: Optional[List[str]] = None,
+    ) -> Optional["StepResult"]:
+        """解析層（任務 8.1／需求 5.2）：**先正規化 `scope`／`face`／`delegate`，再驗 `action`**。
+
+        修的是這個缺陷：舊碼在 `action` 越界時 `return None`，把**同一包裡正確的
+        `scope=switch` 一起丟掉**（實測 brain 5/5 正確輸出全遭丟棄），
+        呼叫端只看得到「引擎降級」，看不到「使用者其實已經離題、該換面向」。
+
+        不變量：
+          · 回傳非 None ⇒ `scope ∈ {'stay','switch'}` 必然成立（永遠有值可用）
+          · `payload` 非 None ⇒ `payload['action'] ∈ VALID_ACTIONS` 必然成立
+          · `payload` 內**永不**出現 `action=None` 或越界值（不製造半合法狀態）
+          · 硬失敗（非 dict）→ 回 None，代表「模型根本沒給出可解析的東西」
+        """
+        if not isinstance(data, dict):
+            return None
+
+        # ① scope 正規化（防越界）：非 'switch' 一律視為 'stay'（缺省＝現狀行為）
+        scope = "switch" if data.get("scope") == "switch" else "stay"
+        data["scope"] = scope
+
+        # ② face 原樣帶出（面向集合的驗證屬引擎，不在解析層做）
+        face = data.get("face") if isinstance(data.get("face"), str) else None
+
+        # ③ delegate 正規化：**只接受白名單內、且 scope=switch 時**的目標；
+        #    其餘一律移除——模型不得自創 Face key，也不得在 stay 時指定轉交。
+        _dele = data.get("delegate_facet_key")
+        delegate = (_dele if (delegates and scope == "switch"
+                              and isinstance(_dele, str) and _dele in set(delegates))
+                    else None)
+        if delegate is None:
+            data.pop("delegate_facet_key", None)
+
+        # ④ 到這裡才驗 action。越界 → payload=None，但上面三項**已經保住**。
+        if data.get("action") not in LLMAnswerOptimizer.VALID_ACTIONS:
+            return StepResult(payload=None, scope=scope, face=face,
+                              delegate_facet_key=delegate,
+                              reject_reason="action_out_of_range")
+
+        if not isinstance(data.get("extracted_fields", {}), dict):
+            data["extracted_fields"] = {}
+        if data["action"] == "ask" and not data.get("next_question"):
+            return StepResult(payload=None, scope=scope, face=face,
+                              delegate_facet_key=delegate,
+                              reject_reason="missing_next_question")
+
+        # inline_answer（岔題即答，R3.1）：非 str 一律丟棄（絕不半吊子透傳）
+        if "inline_answer" in data and not isinstance(data.get("inline_answer"), str):
+            data.pop("inline_answer", None)
+
+        return StepResult(payload=data, scope=scope, face=face,
+                          delegate_facet_key=delegate, reject_reason=None)
+
     async def conversational_step(
         self,
         rules_text: str,
@@ -869,6 +946,27 @@ class LLMAnswerOptimizer:
         kb_search: Optional[KbSearch] = None,
         delegates: Optional[List[str]] = None,
     ) -> Optional[dict]:
+        """**相容層**（任務 8.2）：等價於 `conversational_step_result(...).payload`。
+
+        簽章與回傳形狀與改動前**逐位一致**，現有 caller 零感知。
+        ⚠️ 新程式請改用 `conversational_step_result()`——只有它看得到
+        「action 越界但 scope=switch」這一態（需求 5.2）。
+        """
+        result = await self.conversational_step_result(
+            rules_text, system_context_md, state, user_message,
+            faces=faces, kb_search=kb_search, delegates=delegates)
+        return result.payload if result else None
+
+    async def conversational_step_result(
+        self,
+        rules_text: str,
+        system_context_md: str,
+        state: dict,
+        user_message: str,
+        faces: Optional[List[str]] = None,
+        kb_search: Optional[KbSearch] = None,
+        delegates: Optional[List[str]] = None,
+    ) -> Optional["StepResult"]:
         """
         對話式回答 brain（option-routing R14/R15/R19）：structured-output LLM call。
         規則（人格）由外部依角色載入後傳入（資料驅動，見 conversational_rules）；brain 不綁角色。
@@ -975,27 +1073,10 @@ class LLMAnswerOptimizer:
                 # 工具圈：首呼帶 tools，回 tool_call → await kb_search → 續呼取最終 JSON（R1.1/1.2）
                 content = await self._brain_tool_loop(model, temperature, messages, kb_search)
                 data = json.loads(content or "{}")
-            # 驗證（防越界輸出）。'confirm'（交易面向）：槽位收齊→出確認摘要，
-            # 收齊≠送出；confirm 不需 next_question/converge_kind（R4.1）。
-            if data.get('action') not in ('ask', 'converge', 'confirm'):
-                return None
-            if not isinstance(data.get('extracted_fields', {}), dict):
-                data['extracted_fields'] = {}
-            if data['action'] == 'ask' and not data.get('next_question'):
-                return None
-            # inline_answer（岔題即答，R3.1）：有則先答再接 next_question；
-            # 非 str 一律丟棄（絕不半吊子透傳），缺省不帶鍵（向後相容）。
-            if 'inline_answer' in data and not isinstance(data.get('inline_answer'), str):
-                data.pop('inline_answer', None)
-            # scope 正規化（防越界）：非 'switch' 一律視為 'stay'（缺省＝現狀行為，向後相容）
-            data['scope'] = 'switch' if data.get('scope') == 'switch' else 'stay'
-            # delegate 正規化（slice 2）：**只接受白名單內、且 scope=switch 時**的目標；
-            #   其餘一律移除——模型不得自創 Face key，也不得在 stay 時指定轉交。
-            _dele = data.get('delegate_facet_key')
-            if not (_dele_keys and data['scope'] == 'switch'
-                    and isinstance(_dele, str) and _dele in set(_dele_keys)):
-                data.pop('delegate_facet_key', None)
-            return data
+            # 驗證與正規化一律走解析層（任務 8.1）——**先保住 scope，再驗 action**。
+            # 'confirm'（交易面向）：槽位收齊→出確認摘要，收齊≠送出；
+            # confirm 不需 next_question/converge_kind（R4.1）。
+            return self._parse_conversational_step(data, _dele_keys)
         except Exception as e:
             print(f"❌ conversational_step 失敗（呼叫端降級）：{e}")
             return None
