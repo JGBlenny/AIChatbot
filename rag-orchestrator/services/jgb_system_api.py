@@ -588,9 +588,7 @@ class JGBSystemAPI:
         if not role_id or not keyword:
             return self._degraded_response()
         if self.use_mock:
-            return {"success": True, "data": [{
-                "member_user_id": 292, "character_id": 1151, "character_name": "檢視者",
-                "is_owner": False, "match_field": "email"}]}
+            return self._mock_team_members(role_id, keyword)
         raw = await self._request(
             f"/api/external/v1/roles/{role_id}/members", {"keyword": keyword})
         data = (raw or {}).get("data")
@@ -611,16 +609,91 @@ class JGBSystemAPI:
         if not role_id or not user_id:
             return self._degraded_response()
         if self.use_mock:
-            return {"success": True, "data": [{
-                "character_name": "檢視者",
-                "abilities": {"show_bill": False, "show_owner_bill": True,
-                              "show_contract": False, "show_owner_contract": True,
-                              "show_estate": False, "show_owner_estate": True}}]}
+            return self._mock_member_permissions(role_id, user_id)
         raw = await self._request(
             f"/api/external/v1/roles/{role_id}/members/{user_id}/permissions", {})
         data = (raw or {}).get("data")
         return {"success": bool((raw or {}).get("success")),
                 "data": [data] if isinstance(data, dict) else []}
+
+    #: `TeamMemberApiController::ABILITY_WHITELIST`（:17-32）逐鍵 **32 個**。
+    #: production 一律回滿 32 鍵（成員取 `Role::getPermissionByCharacter` 的值，
+    #: 擁有者全 true）——舊 mock 只回 6 鍵，是 production 產不出來的形狀。
+    _ABILITY_WHITELIST: "tuple[str, ...]" = (
+        "show_estate", "show_owner_estate", "add_estate", "edit_estate",
+        "assign_estate", "export_estate",
+        "show_contract", "show_owner_contract", "add_contract", "edit_contract",
+        "send_contract_invitation", "sign_contract", "assign_contract", "export_contract",
+        "show_bill", "show_owner_bill", "add_bill", "receive_bill", "pay_bill", "export_bill",
+        "show_role", "edit_role", "show_role_team", "edit_role_team",
+        "edit_role_payment", "edit_role_subscription",
+        "show_repair", "show_owner_repair", "edit_repair", "export_repair",
+        "show_recharge_account", "edit_recharge_account",
+    )
+
+    #: 團隊成員替身（`members()`:113-183）。三種形狀刻意併存：
+    #: 擁有者（character_id=0、character_name='團隊擁有者'）／一般成員／
+    #: **character_name 為 None** 的成員（pivot 無 character_id，:135-137 的 null 分支）。
+    _TEAM_MEMBERS: "tuple[dict[str, Any], ...]" = (
+        {"member_user_id": 100, "character_id": 0, "character_name": "團隊擁有者",
+         "is_owner": True, "_email": "owner@example.com", "_name": "王小明"},
+        {"member_user_id": 292, "character_id": 1151, "character_name": "檢視者",
+         "is_owner": False, "_email": "viewer@example.com", "_name": "陳小美"},
+        {"member_user_id": 305, "character_id": None, "character_name": None,
+         "is_owner": False, "_email": "nochar@example.com", "_name": "李小華"},
+    )
+
+    def _mock_team_members(self, role_id: str, keyword: str) -> dict[str, Any]:
+        """`GET /roles/{role_id}/members`（`TeamMemberApiController@members`）。
+
+        照抄：`keyword` 必填（缺→400，adapter 已擋）；對 **email 與 name** 做
+        **不分大小寫的 contains** 比對，email 先判、命中即 `match_field='email'`，
+        否則才比 name（:161-170）；同一人只回一次；**不回 email／phone 明文**（:112）。
+        ⚠️ 舊 mock 不論 keyword 一律回同一列 ⇒ 「查無此成員」分支在替身上測不到。
+        """
+        kw = str(keyword).lower()
+        data = []
+        for m in self._TEAM_MEMBERS:
+            if kw in m["_email"].lower():
+                field = "email"
+            elif kw in m["_name"].lower():
+                field = "name"
+            else:
+                continue
+            data.append({"member_user_id": m["member_user_id"],
+                         "character_id": m["character_id"],
+                         "character_name": m["character_name"],
+                         "is_owner": m["is_owner"], "match_field": field})
+        return {"success": True, "data": data}
+
+    def _mock_member_permissions(self, role_id: str, user_id: str) -> dict[str, Any]:
+        """`GET /roles/{id}/members/{uid}/permissions`（同檔 `permissions()`:42-98）。
+
+        照抄回應形狀：`data = {role_id, user_id, is_member, is_owner, character, abilities}`
+        ——`character` 是 **{id, name, display} 物件**，production **沒有** `character_name` 這個鍵
+        （舊 mock 憑空給了它）；`abilities` 一律 32 鍵。
+        擁有者 → 全 true（:64-69）；查無此成員 → 404（我方折疊為 success:False）。
+        """
+        member = next((m for m in self._TEAM_MEMBERS
+                       if str(m["member_user_id"]) == str(user_id)), None)
+        if member is None:
+            return {"success": False, "data": []}
+
+        if member["is_owner"]:
+            abilities = {k: True for k in self._ABILITY_WHITELIST}
+            character = {"id": 0, "name": "團隊擁有者", "display": None}
+        else:
+            granted = {"show_owner_bill", "show_owner_contract", "show_owner_estate",
+                       "show_repair", "show_owner_repair"}
+            abilities = {k: (k in granted) for k in self._ABILITY_WHITELIST}
+            character = ({"id": member["character_id"], "name": member["character_name"],
+                          "display": None} if member["character_id"] else None)
+        return {"success": True, "data": [{
+            "role_id": int(role_id) if str(role_id).isdigit() else role_id,
+            "user_id": int(user_id) if str(user_id).isdigit() else user_id,
+            "is_member": True, "is_owner": member["is_owner"],
+            "character": character, "abilities": abilities,
+        }]}
 
     async def get_bill_visibility(
         self,
@@ -677,8 +750,12 @@ class JGBSystemAPI:
     ) -> dict[str, Any]:
         """電表列表（IoT 電表排障識別 adapter）。
 
-        端點無 keyword 參數 → 拉全列（per_page=200）後 client 端以 keyword 對
-        estate_name/name 過濾（後端當裁判精神：查無回空列不拋）；estate_id 原生透傳。
+        ⚠️ **舊註解說「端點無 keyword 參數」是錯的**（2026-08-25 盤查）：
+        `MeterApiController@index:41-56` 有 `keyword`，比對 `iots.name` **或**
+        綁定物件的 `estates.title`（皆 LIKE，且 estates 需 active=1）。
+        本 adapter 仍**刻意**改走 client 端過濾——理由不是端點沒有，而是端點的
+        整串 LIKE 對口語多詞配不中（真資料 e2e 逼出），需要 token 化比對。
+        故維持拉全頁（per_page=200，正好是 MAX_PER_PAGE）後自行過濾；estate_id 原生透傳。
         欄位：is_online/is_poweron/balance/available_meter/current_reading/synced_at 等
         （消費端注意：離線時皆為最後同步快照；is_poweron 三態失真見 J-I1，builder 端防護）。
         """
@@ -686,13 +763,35 @@ class JGBSystemAPI:
             return self._degraded_response()
 
         if self.use_mock:
-            rows = [{
-                "id": 501, "estate_id": 9001, "estate_name": "海大質感獨立套房",
-                "name": "3F 分電表", "manufacturer": "DAE", "meter_type": "cloud",
-                "is_online": True, "is_topup": True, "enable_topup": True,
-                "balance": 350.0, "available_meter": 87.5, "current_reading": 1234.5,
-                "is_poweron": True, "is_low_battery": False,
-                "synced_at": "2026-07-04 10:35:00"}]
+            # `formatMeter()` 逐鍵 15 欄（MeterApiController:152-172）。三列刻意涵蓋
+            # production 的兩個衍生規則：
+            #   · meter_type = manufacturer ∈ {Miezo, DAE, SkyWatch} ? cloud : manual（:157/:162）
+            #   · is_poweron 的**三態**：-1（從未連線）→ **null**，0/1 → false/true（:167）
+            #     ——舊 mock 只有 True，null 這一態在替身上從來測不到。
+            rows = [
+                {"id": 501, "estate_id": 9001, "estate_name": "海大質感獨立套房",
+                 "name": "3F 分電表", "manufacturer": "DAE", "meter_type": "cloud",
+                 "is_online": True, "is_topup": True, "enable_topup": True,
+                 "balance": 350.0, "available_meter": 87.5, "current_reading": 1234.5,
+                 "is_poweron": True, "is_low_battery": False,
+                 "synced_at": "2026-07-04 10:35:00"},
+                {"id": 502, "estate_id": 9002, "estate_name": "新北新莊-富貴500-14B05",
+                 "name": "總電表", "manufacturer": "Panasonic", "meter_type": "manual",
+                 "is_online": False, "is_topup": False, "enable_topup": False,
+                 "balance": 0.0, "available_meter": 0.0, "current_reading": 8890.0,
+                 "is_poweron": None, "is_low_battery": True,
+                 "synced_at": "2026-06-30 08:00:00"},
+                {"id": 503, "estate_id": None, "estate_name": None,
+                 "name": "未綁定物件的電表", "manufacturer": "SkyWatch",
+                 "meter_type": "cloud",
+                 "is_online": True, "is_topup": False, "enable_topup": True,
+                 "balance": 12.5, "available_meter": 3.0, "current_reading": 42.0,
+                 "is_poweron": False, "is_low_battery": False,
+                 "synced_at": "2026-07-04 10:30:00"},
+            ]
+            # production 以 iot_estate 中間表過濾 estate_id（:31-39）——未綁定者查不到。
+            if estate_id:
+                rows = [m for m in rows if str(m.get("estate_id")) == str(estate_id)]
         else:
             params: dict[str, Any] = {"role_id": role_id, "per_page": 200}
             if estate_id:

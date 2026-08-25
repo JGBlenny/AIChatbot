@@ -173,8 +173,13 @@ GAP-P1  payment_logs 的 `response` 欄 production **不投影**（DB 有、API 
       payment-logs：**回應信封整個不同**——production 是 {bill_id, payments, payment_logs,
       summary}，舊 mock 回 {mapping, data, pagination}，而消費端讀 data
       ⇒ 線上這個面向一律回「查無金流日誌」。另修 bill_id 必填與兩個 production 不讀的參數。
-6  B 級 meters                      IoT 面向，單一端點單一 format
-7  B 級 team_members ＋ permissions  account 面向，兩鍵共用一個 controller
+6  ✅ **已完成** B 級 meters（iot-account-source-audit.md）——adapter 註解宣稱
+      「端點無 keyword」是錯的（:41-56 有）；替身只有一列，兩條衍生規則
+      （meter_type 白名單、is_poweron **三態**）從未被走到；estate_id 被忽略。
+7  ✅ **已完成** B 級 team_members ＋ permissions（同上稽核檔）——keyword 比對沒實作、
+      擁有者與 null character 兩種形狀缺席、abilities 只回 6/32 鍵，
+      且替身憑空回了 production 沒有的 `character_name`（production 是 `character` 物件），
+      而 accounts.py 正是讀那個鍵 ⇒ 線上取不到值。已修 accounts.py 改讀 character.name。
 8  B 級 create_repair               寫入語義，需先定「mock 寫入」的驗收語義，留最後
 9  C 級                             先查 production conversational_configs 再決定是否進場
 ```

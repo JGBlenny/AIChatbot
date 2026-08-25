@@ -148,7 +148,12 @@ def build_team_permission_facts(member: dict, user_question: str = "") -> str:
                 "多半是角色權限未開或未指派——請到團隊管理的成員列表對他「變更角色」檢視與調整權限。")
 
     abilities = perm.get("abilities") or {}
-    role_name = perm.get("character_name") or role_name
+    # ⚠️ production 回的是 `character: {id, name, display}` 物件
+    #    （TeamMemberApiController@permissions:88-96），**沒有** `character_name` 鍵。
+    #    舊碼只讀 character_name（那是替身憑空給的），在線上永遠取不到值、
+    #    只能退回 T1 成員列的名稱。兩者都讀，character 優先。
+    character = perm.get("character") if isinstance(perm.get("character"), dict) else {}
+    role_name = character.get("name") or perm.get("character_name") or role_name
     # 資源類型（問句含關鍵字 → 對應旗標；預設帳單）
     kind = next((k for k in _VISIBILITY_FLAGS if k in (user_question or "")), "帳單")
     show_all, show_owner = _VISIBILITY_FLAGS[kind]
