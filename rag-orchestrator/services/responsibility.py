@@ -152,6 +152,11 @@ class ResponsibilityDecision:
     delegate_to: Optional[str] = None
     reason: str = ""                  # 判定來源（含 fail-open 種類）
     evidence: "dict[str, Any]" = None  # type: ignore[assignment]
+    #: **轉交目標由誰決定**——telemetry 必須分得開，否則看不出模型到底有沒有在做這件事。
+    #:   model_delegate      模型自己填了合法目標
+    #:   contract_singleton  模型沒填，且契約白名單**只有一個**合法目標 → 決定性補上
+    #:   None                沒有轉交（stay，或 switch 但無法解析目標）
+    delegate_source: Optional[str] = None
 
     @property
     def stay(self) -> bool:
@@ -166,6 +171,41 @@ class EntryResolution:
     committed_config: Any = None
     chain: "list[dict[str, Any]]" = None   # type: ignore[assignment]
     stop_reason: str = ""
+
+
+def _resolve_delegate(config: Any, verdict: str, result: Any) -> "tuple[Optional[str], Optional[str]]":
+    """決定轉交目標：**模型負責語義，程式負責無歧義的 machine decision**。
+
+    P3 第 1 次付費執行（2026-08-26，gpt-4o-mini）實測 3/3：
+    模型穩定判對 `scope=switch`，卻把 `delegate_facet_key` 回成**空字串**——
+    也就是「知道不該由我接」，但沒有把**唯一合法的 machine key 再複述一次**。
+    要模型重複一個決定性映射沒有必要；那一格改由契約解。
+
+    **規則刻意很窄**（業主 2026-08-26 裁定）——三個條件同時成立才補：
+
+    ```text
+    verdict == 'switch'
+    ∧ 模型**沒填**（delegate_drop_reason == 'missing'：缺鍵／None／空字串／全空白）
+    ∧ 契約白名單**恰好一個**合法目標
+    ```
+
+    ⚠️ 以下情形**一律不補**，且必須保留各自語義：
+      · 白名單有多個 → 不得「隨便選第一個」（那是替模型做選擇）
+      · 模型填了**不合法**的 target（`not_allowed`）→ 不得自動改成唯一值
+        （那是替模型的錯誤決定背書；它與「沒填」是兩件不同的事）
+      · `verdict == 'stay'` → 不轉交
+    """
+    delegate = getattr(result, "delegate_facet_key", None)
+    if delegate:
+        return delegate, "model_delegate"
+    if verdict != "switch":
+        return None, None
+    if getattr(result, "delegate_drop_reason", None) != "missing":
+        return None, None                      # not_allowed／scope_not_switch：不補
+    allowed = allowed_delegates(config)
+    if len(allowed) == 1:
+        return allowed[0], "contract_singleton"
+    return None, None                          # 0 個或多個 → switch_without_delegate
 
 
 async def evaluate_responsibility(
@@ -202,8 +242,9 @@ async def evaluate_responsibility(
             # ⚠️ 這條路徑對本模組特別致命——舊碼一律 fail-open 成 stay，
             #    等於**責任委派整條鏈被靜默停用**（delegate 永遠不會發生）。
             if result.scope == "switch" and _scope_salvage_enabled():
+                _d, _src = _resolve_delegate(config, "switch", result)
                 return ResponsibilityDecision(
-                    facet_key, "switch", delegate_to=result.delegate_facet_key,
+                    facet_key, "switch", delegate_to=_d, delegate_source=_src,
                     reason=f"responsibility_contract_salvaged:{result.reject_reason}",
                     evidence=rctx.as_evidence())
             return ResponsibilityDecision(
@@ -211,8 +252,9 @@ async def evaluate_responsibility(
                 reason=f"action_rejected_fail_open:{result.reject_reason}",
                 evidence=rctx.as_evidence())
         verdict = "switch" if result.scope == "switch" else "stay"
+        delegate, source = _resolve_delegate(config, verdict, result)
         return ResponsibilityDecision(
-            facet_key, verdict, delegate_to=result.delegate_facet_key,
+            facet_key, verdict, delegate_to=delegate, delegate_source=source,
             reason="responsibility_contract", evidence=rctx.as_evidence())
     except Exception as e:                                     # noqa: BLE001
         print(f"⚠️ [responsibility] 判定失敗，fail-open 照舊進場：{e}")
@@ -253,7 +295,9 @@ async def resolve_entry_candidate(
         decision = await evaluate_responsibility(db_pool, config, user_message,
                                                  optimizer=optimizer)
         chain.append({"facet_key": key, "verdict": decision.verdict,
-                      "delegate_to": decision.delegate_to, "reason": decision.reason,
+                      "delegate_to": decision.delegate_to,
+                      "delegate_source": decision.delegate_source,
+                      "reason": decision.reason,
                       **(decision.evidence or {})})
         if decision.stay:
             return EntryResolution(key, config, chain, "stay")

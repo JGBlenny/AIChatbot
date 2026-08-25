@@ -74,6 +74,10 @@ class StepResult:
     face: Optional[str] = None
     delegate_facet_key: Optional[str] = None
     reject_reason: Optional[str] = None   # None／action_out_of_range／missing_next_question
+    #: delegate **為什麼**沒有留下——`None` 代表留下了。
+    #: ⚠️ 「模型沒填」與「模型填了但不合法」必須分開：前者可由契約 singleton 決定性補上，
+    #:    後者**不得**自動改成合法值（那是替模型的錯誤決定背書）。
+    delegate_drop_reason: Optional[str] = None   # missing／not_allowed／scope_not_switch
 
 
 class LLMAnswerOptimizer:
@@ -909,10 +913,19 @@ class LLMAnswerOptimizer:
 
         # ③ delegate 正規化：**只接受白名單內、且 scope=switch 時**的目標；
         #    其餘一律移除——模型不得自創 Face key，也不得在 stay 時指定轉交。
+        #    ⚠️ 同時記錄**丟棄原因**：P3 實測 mini 會回**空字串**，
+        #       與「填了一個不合法的 key」語義完全不同，下游的處置也不同。
         _dele = data.get("delegate_facet_key")
-        delegate = (_dele if (delegates and scope == "switch"
-                              and isinstance(_dele, str) and _dele in set(delegates))
-                    else None)
+        _dele_str = _dele.strip() if isinstance(_dele, str) else ""
+        delegate, drop_reason = None, None
+        if scope != "switch":
+            drop_reason = "scope_not_switch" if _dele_str else None
+        elif not _dele_str:
+            drop_reason = "missing"          # 缺鍵／None／空字串／全空白 —— 模型**沒填**
+        elif delegates and _dele_str in set(delegates):
+            delegate = _dele_str
+        else:
+            drop_reason = "not_allowed"      # 模型**填了**，但不在白名單內
         if delegate is None:
             data.pop("delegate_facet_key", None)
 
@@ -920,21 +933,24 @@ class LLMAnswerOptimizer:
         if data.get("action") not in LLMAnswerOptimizer.VALID_ACTIONS:
             return StepResult(payload=None, scope=scope, face=face,
                               delegate_facet_key=delegate,
-                              reject_reason="action_out_of_range")
+                              reject_reason="action_out_of_range",
+                              delegate_drop_reason=drop_reason)
 
         if not isinstance(data.get("extracted_fields", {}), dict):
             data["extracted_fields"] = {}
         if data["action"] == "ask" and not data.get("next_question"):
             return StepResult(payload=None, scope=scope, face=face,
                               delegate_facet_key=delegate,
-                              reject_reason="missing_next_question")
+                              reject_reason="missing_next_question",
+                              delegate_drop_reason=drop_reason)
 
         # inline_answer（岔題即答，R3.1）：非 str 一律丟棄（絕不半吊子透傳）
         if "inline_answer" in data and not isinstance(data.get("inline_answer"), str):
             data.pop("inline_answer", None)
 
         return StepResult(payload=data, scope=scope, face=face,
-                          delegate_facet_key=delegate, reject_reason=None)
+                          delegate_facet_key=delegate, reject_reason=None,
+                          delegate_drop_reason=drop_reason)
 
     async def conversational_step(
         self,

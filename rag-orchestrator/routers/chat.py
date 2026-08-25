@@ -865,7 +865,10 @@ def _resolver_telemetry(seed_key, res, latency_ms: int) -> dict:
     """rollout telemetry（**不保存聊天內容**，只記決策形狀）。
 
     可據以算出：`fail_open` 率／`switch_without_delegate` 率／hop 分布／
-    resolved-to-stay 率／fallback 率／每 request 的 LLM 呼叫數／延遲。
+    resolved-to-stay 率／fallback 率／每 request 的 LLM 呼叫數／延遲，
+    以及 **delegate_source 分布**（model_delegate vs contract_singleton）——
+    後者是 2026-08-26 P3 實測後新增：mini 判對 switch 但常不填目標，
+    若不分開記，上線後會看不出模型退化。
     ⚠️ 這是**上線觀測**，不是 Task 11 的對話品質基準——不記問句與答案。
     """
     hops = []
@@ -874,9 +877,15 @@ def _resolver_telemetry(seed_key, res, latency_ms: int) -> dict:
         reason = h.get("reason")
         if reason and reason != "rules_unavailable_fail_open":
             model_calls += 1
+        # ⚠️ **轉交目標由誰決定**必須看得出來，否則上線後無從得知
+        #    「模型有沒有在做這件事」與「是不是全靠契約 singleton 撐著」。
+        #    值域：model_delegate／contract_singleton／None（無轉交）
+        _fail_open = bool(reason) and not str(reason).startswith("responsibility_contract")
         hops.append({"candidate_facet": h.get("facet_key"), "scope": h.get("verdict"),
-                     "delegate_facet_key": h.get("delegate_to"), "decision_source": reason,
-                     "fail_open": bool(reason) and reason != "responsibility_contract"})
+                     "delegate_facet_key": h.get("delegate_to"),
+                     "delegate_source": h.get("delegate_source"),
+                     "decision_source": reason,
+                     "fail_open": _fail_open})
     return {
         "seed_facet": seed_key,
         "final_committed_facet": res.committed_key,
@@ -886,6 +895,7 @@ def _resolver_telemetry(seed_key, res, latency_ms: int) -> dict:
         "fallback_reason": None if res.committed_key else res.stop_reason,
         "resolver_model_calls": model_calls,
         "resolver_latency_ms": latency_ms,
+        "delegate_sources": [h["delegate_source"] for h in hops if h["delegate_source"]],
     }
 
 
