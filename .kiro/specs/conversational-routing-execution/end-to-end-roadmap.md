@@ -59,13 +59,25 @@ P4  routing-authority-model（**BLOCKED_BY_EXTERNAL_DECISION**，與 P1-P3 平�
       測試容器會靜默落回 mini —— 本專案**已三次因 runner 保真度不足而結論作廢**。
 ```
 
-**分岔（需要業主決定，會改變 P1 的時機）**
+**業主定案（2026-08-26）：統一 mini**
 
 ```text
-A 維持 gpt-4o → 直接跑 M3。得到的是「現行 production 組態」的回歸證據。
-B 想升級 brain 模型 → **先換再跑 M3**，否則量的是一個即將被丟掉的組態。
-  換模型是產品決策，代價是所有面向的答話都會位移，需要自己的回歸預算。
-⚠️ 不論 A/B，M3 都必須跑在**與 production 同一個模型**上，否則證據無效。
+已改 docker-compose.prod.yml／dev.yml 的預設值（**尚未部署**）：
+  PRESALES_SYNTH_MODEL    gpt-4o → **gpt-4o-mini**   ← production brain，會位移所有面向答話
+  DOCUMENT_CONVERTER_MODEL gpt-4o → gpt-4o-mini
+  IMAGE_RECOGNITION_MODEL  gpt-4o → gpt-4o-mini      ← ⚠️ 見下
+  （OPENAI_MODEL／QUERY_REWRITE_MODEL 本來就是 mini）
+
+⚠️ **視覺這條要盯**：修繕預填是**依 Vision 信心分型**決定直接填槽或退化為候選
+   （services/jgb/repair_prefill.py）。mini 有 vision 但辨識信心會下降 ⇒
+   「退化為候選讓使用者多選一輪」的比例預期上升。這是**對話流會被看到的變化**，
+   不是效能問題，上線後應優先觀察這一項。
+
+⚠️ **對 M3 的影響**：C4b 凍結參數（c4b-run-parameters-frozen.md）記載的 brain 是 gpt-4o，
+   那份**不改**——它記錄的是當時的量測條件。M3 屬 v6 regression，
+   須在**新組態（mini）**下跑，並在結果檔明記「brain=gpt-4o-mini，與 C4b 首測不同模型」。
+   ⇒ M3 的結果**不可**與 C4b 的 v1-v5 逐案比較，只能當作新組態的回歸基準。
+   好消息：成本再降一個數量級。
 ```
 
 ## 三、每個階段的停止條件（防止「做完就當結案」）

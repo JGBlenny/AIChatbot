@@ -130,8 +130,11 @@ services:
       TZ: Asia/Taipei
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
-      # presales 葉答案/自由問答合成模型（可獨立切換；預設 gpt-4o：售前體驗優先）
-      PRESALES_SYNTH_MODEL: ${PRESALES_SYNTH_MODEL:-gpt-4o}
+      # presales 葉答案/自由問答合成模型（可獨立切換）
+      # 2026-08-26 業主定案「統一 mini」：預設由 gpt-4o 改為 gpt-4o-mini。
+      # ⚠️ 這是 **production brain** 的組態變更，會位移所有面向的答話；
+      #    C4b/M3 的取證必須跑在與此處一致的模型上（見 end-to-end-roadmap.md §二）。
+      PRESALES_SYNTH_MODEL: ${PRESALES_SYNTH_MODEL:-gpt-4o-mini}
       # 意圖分類器配置
       INTENT_CLASSIFIER_MODEL: ${INTENT_CLASSIFIER_MODEL:-gpt-3.5-turbo}
       INTENT_CLASSIFIER_TEMPERATURE: ${INTENT_CLASSIFIER_TEMPERATURE:-0.1}
@@ -143,7 +146,7 @@ services:
       DB_PASSWORD: aichatbot_password
       EMBEDDING_API_URL: http://embedding-api:5000/api/v1/embeddings
       KNOWLEDGE_GEN_MODEL: ${KNOWLEDGE_GEN_MODEL:-gpt-3.5-turbo}
-      DOCUMENT_CONVERTER_MODEL: ${DOCUMENT_CONVERTER_MODEL:-gpt-4o}
+      DOCUMENT_CONVERTER_MODEL: ${DOCUMENT_CONVERTER_MODEL:-gpt-4o-mini}
       # Redis 緩存配置
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -236,7 +239,10 @@ services:
       BACKTEST_ROLE_ID: ${BACKTEST_ROLE_ID:-37305}
       # 圖片辨識配置（2026-04-28）
       ENABLE_IMAGE_RECOGNITION: ${ENABLE_IMAGE_RECOGNITION:-false}
-      IMAGE_RECOGNITION_MODEL: ${IMAGE_RECOGNITION_MODEL:-gpt-4o}
+      # ⚠️ 視覺模型：mini 支援 vision，但辨識信心會下降，而修繕預填是
+      #    **依 Vision 信心分型**決定要不要直接填槽（services/jgb/repair_prefill.py）。
+      #    統一 mini 後，低信心 → 退化為候選讓使用者選的比例預期會上升。
+      IMAGE_RECOGNITION_MODEL: ${IMAGE_RECOGNITION_MODEL:-gpt-4o-mini}
       IMAGE_RECOGNITION_DETAIL: ${IMAGE_RECOGNITION_DETAIL:-low}
       IMAGE_MAX_DIMENSION: ${IMAGE_MAX_DIMENSION:-1024}
       IMAGE_COMPRESS_QUALITY: ${IMAGE_COMPRESS_QUALITY:-85}
