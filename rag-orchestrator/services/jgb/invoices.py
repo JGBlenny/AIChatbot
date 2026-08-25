@@ -9,6 +9,31 @@ JGB 發票日誌診斷引擎
 from typing import Any
 
 
+def _log_response(log: dict) -> dict:
+    """取出一筆發票日誌的回應欄位，統一成本檔既有的大寫鍵。
+
+    ⚠️ **production 不回 `response_data`**（2026-08-25 盤查）：`InvoiceLogApiController`
+    明示不外露原始 request_data／response_data（含買受人 email、載具號碼），
+    只回白名單化的 `response_parsed = {status, message, invoice_number,
+    random_number, invoice_date}`（:77-79、:97-131）。
+    本檔原本三處只讀 `response_data` ⇒ 線上永遠取不到回應內容。
+    此處以 `response_parsed` 為主、`response_data` 為相容備援。
+    """
+    parsed = log.get("response_parsed")
+    if isinstance(parsed, dict):
+        return {
+            "Status": parsed.get("status"),
+            "Message": parsed.get("message"),
+            "InvoiceNumber": parsed.get("invoice_number"),
+            "RandomNumber": parsed.get("random_number"),
+            "InvoiceDate": parsed.get("invoice_date"),
+            "RtnCode": parsed.get("status"),
+            "RtnMsg": parsed.get("message"),
+        }
+    raw = log.get("response_data")
+    return raw if isinstance(raw, dict) else {}
+
+
 def diagnose_invoice_logs(logs: list, user_question: str = "") -> str:
     """
     發票日誌診斷入口
@@ -43,7 +68,7 @@ def _diagnose_issue_failure(logs: list) -> str:
     has_failure = False
     for log in issue_logs:
         created = log.get("created_at", "?")
-        response = log.get("response_data") or {}
+        response = _log_response(log)
         note = log.get("note", "")
         http_code = log.get("http_code")
 
@@ -102,7 +127,7 @@ def _diagnose_invalid_failure(logs: list) -> str:
     has_failure = False
     for log in invalid_logs:
         created = log.get("created_at", "?")
-        response = log.get("response_data") or {}
+        response = _log_response(log)
         note = log.get("note", "")
 
         status_val = response.get("Status", "")
@@ -148,7 +173,7 @@ def _format_invoice_logs(logs: list) -> str:
     for log in logs:
         action = ACTION_LABELS.get(log.get("action", ""), log.get("action", "?"))
         created = log.get("created_at", "?")
-        response = log.get("response_data", {})
+        response = _log_response(log)
         rtn_msg = response.get("RtnMsg", "")
         inv_number = response.get("InvoiceNumber", "")
 

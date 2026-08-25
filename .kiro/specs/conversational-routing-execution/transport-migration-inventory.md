@@ -181,7 +181,11 @@ GAP-P1  payment_logs 的 `response` 欄 production **不投影**（DB 有、API 
       且替身憑空回了 production 沒有的 `character_name`（production 是 `character` 物件），
       而 accounts.py 正是讀那個鍵 ⇒ 線上取不到值。已修 accounts.py 改讀 character.name。
 8  B 級 create_repair               寫入語義，需先定「mock 寫入」的驗收語義，留最後
-9  C 級                             先查 production conversational_configs 再決定是否進場
+9  ✅ **已完成（且改判）** 原 C 級八鍵——查 DB 後**全部是 live**，C 級不存在。
+      逐一盤查見 remaining-endpoints-source-audit.md：invoice-logs 三處問題最大
+      （production 只回白名單化的 response_parsed，而消費端讀 response_data ⇒ 線上取不到）；
+      payments／repairs 的篩選與排序全被忽略；categories／subscription／iot-manufacturers／
+      tenant-summary／checkin-eligibility 四支本來就忠實，只補測試釘住。
 ```
 
 ## 9. 勿違

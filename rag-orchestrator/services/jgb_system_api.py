@@ -524,8 +524,12 @@ class JGBSystemAPI:
         if not role_id:
             return self._degraded_response()
 
+        if invoice_id in (None, "") and bill_id in (None, ""):
+            # production：bill_id 或 invoice_id 至少一個，皆缺即 400（:23-25）
+            return self._degraded_response()
+
         if self.use_mock:
-            return self._mock_get_invoice_logs(role_id, invoice_id, bill_id)
+            return self._mock_get_invoice_logs(role_id, invoice_id, bill_id, action)
 
         params: dict[str, Any] = {"role_id": role_id}
         if invoice_id is not None:
@@ -1401,11 +1405,98 @@ class JGBSystemAPI:
     def _mock_get_payments(
         self,
         role_id: str,
-        user_id: str,
+        user_id: str = None,
         month: Optional[str] = None,
+        bill_id: Optional[int] = None,
+        status: Optional[int] = None,
     ) -> dict[str, Any]:
-        """對齊 PaymentApiController@index"""
+        """`GET /payments`（`PaymentApiController@index`）——**已對照 jgb2 原始碼**。
+
+        照抄：`role_id` 必填；恆定 `payments.paymentable_type = 'App\\Bill'`（:42）
+        且帳單需 `owner_role_id = role_id` 且 `active=1`（:50-51）；
+        篩選 `user_id`（payments.user_id）／`bill_id`（**payments.paymentable_id**）／
+        `status`／`month`；`orderBy('payments.id','desc')`（:80）；
+        分頁 50／200，`total_pages` 在 total=0 時為 0。
+        ⚠️ 舊 mock **四個篩選參數全部忽略**、順序固定、pagination 寫死 total=2。
+        投影 28 鍵（formatPayment:113-143）本來就對，未動。
+        """
         logger.info(f"[MOCK] get_payments: role_id={role_id}, user_id={user_id}")
+        rows = [
+
+            {
+                "id": 9876,
+                "bill_id": 12345,
+                "no": "JGB20260401001",
+                "transaction_id": "TXN20260401123456",
+                "user_id": int(user_id) if user_id else 0,
+                "role_id": int(role_id) if role_id else 0,
+                "creditor_role_id": None,
+                "type": 1,
+                "status": 2,
+                "manufacturer": "newebpay",
+                "payment_method": "credit_card",
+                "currency": "TWD",
+                "orig_currency": "TWD",
+                "orig_price": 25000.00,
+                "price": 25000.00,
+                "final_currency": "TWD",
+                "final_price": 25000.00,
+                "discount_cash": 0.00,
+                "discount_price": 0.00,
+                "payment_times": 0,
+                "data": None,
+                "note": None,
+                "items": None,
+                "invoice_status": 1,
+                "invoice_number": "AZ00000123",
+                "ymd": 20260401,
+                "payment_completed_ymd": 20260401,
+                "payment_completed_at": "2026-04-01 15:30:00",
+                "created_at": "2026-04-01 14:00:00",
+                "updated_at": "2026-04-01 15:30:00",
+            },
+            {
+                "id": 9870,
+                "bill_id": 12340,
+                "no": "JGB20260301001",
+                "transaction_id": "TXN20260301098765",
+                "user_id": int(user_id) if user_id else 0,
+                "role_id": int(role_id) if role_id else 0,
+                "creditor_role_id": None,
+                "type": 1,
+                "status": 0,
+                "manufacturer": "newebpay",
+                "payment_method": "atm",
+                "currency": "TWD",
+                "orig_currency": "TWD",
+                "orig_price": 25000.00,
+                "price": 25000.00,
+                "final_currency": "TWD",
+                "final_price": 25000.00,
+                "discount_cash": 0.00,
+                "discount_price": 0.00,
+                "payment_times": 0,
+                "data": None,
+                "note": None,
+                "items": None,
+                "invoice_status": 0,
+                "invoice_number": None,
+                "ymd": 20260301,
+                "payment_completed_ymd": None,
+                "payment_completed_at": None,
+                "created_at": "2026-03-01 14:00:00",
+                "updated_at": "2026-03-01 14:00:00",
+            },
+        ]
+        if bill_id not in (None, ""):
+            rows = [r for r in rows if r["bill_id"] == int(bill_id)]
+        if status not in (None, ""):
+            rows = [r for r in rows if r["status"] == int(status)]
+        if month:
+            ym = str(month).replace("-", "")[:6]
+            rows = [r for r in rows if str(r.get("ymd") or "").startswith(ym)]
+        rows.sort(key=lambda r: r["id"], reverse=True)
+        total = len(rows)
         return {
             "success": True,
             "mapping": {
@@ -1436,77 +1527,10 @@ class JGBSystemAPI:
                     "icashpay": "愛金卡",
                 },
             },
-            "data": [
-                {
-                    "id": 9876,
-                    "bill_id": 12345,
-                    "no": "JGB20260401001",
-                    "transaction_id": "TXN20260401123456",
-                    "user_id": int(user_id) if user_id else 0,
-                    "role_id": int(role_id) if role_id else 0,
-                    "creditor_role_id": None,
-                    "type": 1,
-                    "status": 2,
-                    "manufacturer": "newebpay",
-                    "payment_method": "credit_card",
-                    "currency": "TWD",
-                    "orig_currency": "TWD",
-                    "orig_price": 25000.00,
-                    "price": 25000.00,
-                    "final_currency": "TWD",
-                    "final_price": 25000.00,
-                    "discount_cash": 0.00,
-                    "discount_price": 0.00,
-                    "payment_times": 0,
-                    "data": None,
-                    "note": None,
-                    "items": None,
-                    "invoice_status": 1,
-                    "invoice_number": "AZ00000123",
-                    "ymd": 20260401,
-                    "payment_completed_ymd": 20260401,
-                    "payment_completed_at": "2026-04-01 15:30:00",
-                    "created_at": "2026-04-01 14:00:00",
-                    "updated_at": "2026-04-01 15:30:00",
-                },
-                {
-                    "id": 9870,
-                    "bill_id": 12340,
-                    "no": "JGB20260301001",
-                    "transaction_id": "TXN20260301098765",
-                    "user_id": int(user_id) if user_id else 0,
-                    "role_id": int(role_id) if role_id else 0,
-                    "creditor_role_id": None,
-                    "type": 1,
-                    "status": 0,
-                    "manufacturer": "newebpay",
-                    "payment_method": "atm",
-                    "currency": "TWD",
-                    "orig_currency": "TWD",
-                    "orig_price": 25000.00,
-                    "price": 25000.00,
-                    "final_currency": "TWD",
-                    "final_price": 25000.00,
-                    "discount_cash": 0.00,
-                    "discount_price": 0.00,
-                    "payment_times": 0,
-                    "data": None,
-                    "note": None,
-                    "items": None,
-                    "invoice_status": 0,
-                    "invoice_number": None,
-                    "ymd": 20260301,
-                    "payment_completed_ymd": None,
-                    "payment_completed_at": None,
-                    "created_at": "2026-03-01 14:00:00",
-                    "updated_at": "2026-03-01 14:00:00",
-                },
-            ],
+            "data": rows,
             "pagination": {
-                "current_page": 1,
-                "per_page": 50,
-                "total": 2,
-                "total_pages": 1,
+                "current_page": 1, "per_page": 50, "total": total,
+                "total_pages": -(-total // 50) if total > 0 else 0,
                 "has_more": False,
             },
         }
@@ -1514,11 +1538,118 @@ class JGBSystemAPI:
     def _mock_get_repairs(
         self,
         role_id: str,
-        user_id: str,
-        status: Optional[str] = None,
+        user_id: str = None,
+        status: Optional[int] = None,
+        estate_id: Optional[int] = None,
+        category_id: Optional[int] = None,
+        is_urgent: Optional[int] = None,
+        keyword: Optional[str] = None,
     ) -> dict[str, Any]:
-        """對齊 RepairApiController@index"""
+        """`GET /repairs`（`RepairApiController@index`）——**已對照 jgb2 原始碼**。
+
+        照抄：`role_id` 必填（:25）；恆定 `role_id` 與 `active=1`（:47-48）；
+        篩選 `status`／`estate_id`／`category_id`／`is_urgent`（→ **emergency_status**，:64）／
+        `keyword`（`estate_title` 等欄位 LIKE，:67-75）；分頁 50／200。
+        ⚠️ 舊 mock **所有篩選參數都忽略**、pagination 寫死。投影 38 鍵（formatRepair）本來就對。
+        ⚠️ `is_urgent` 對映的是 `emergency_status`——**這個欄位的語義曾經反轉過**
+        （見 conversational-repair 的地雷紀錄），不可望文生義。
+        """
         logger.info(f"[MOCK] get_repairs: role_id={role_id}, user_id={user_id}")
+        rows = [
+
+            {
+                "id": 3001,
+                "status": 16,
+                "emergency_status": 1,  # 非緊急（漏水已完成修繕）
+                "estate_id": 456,
+                "estate_title": "信義區套房A",
+                "estate_full_address": "台北市信義區信義路五段7號3樓",
+                "estate_room_number": "3F-1",
+                "contract_id": 678,
+                "category_id": 2,
+                "category_name": "衛浴維修",
+                "item_id": 202,
+                "item_name": "水龍頭",
+                "broken_reason": "漏水",
+                "broken_note": "廚房水龍頭持續滴水",
+                "broken_photos": [],
+                "currency": "TWD",
+                "total": 3500.00,
+                "manufacturer_name": "信義水電行",
+                "manufacturer_phone": "02-2345-6789",
+                "user_id": 1001,
+                "user_name": "張管理",
+                "user_phone": "0911-111-111",
+                "user_email": "manager@example.com",
+                "to_user_id": int(user_id) if user_id else 2001,
+                "to_user_name": "王小明",
+                "to_user_phone": "0912-345-678",
+                "to_user_email": "tenant@example.com",
+                "agent_user_id": None,
+                "agent_name": None,
+                "user_note": "已完成修繕",
+                "to_user_note": None,
+                "apply_at": "20260405090000",
+                "assign_at": "20260407100000",
+                "complete_at": "20260412140000",
+                "finish_at": None,
+                "archive_at": None,
+                "created_at": "2026-04-05 09:00:00",
+                "updated_at": "2026-04-12 14:00:00",
+            },
+            {
+                "id": 3002,
+                "status": 1,
+                "emergency_status": 2,  # 緊急（冷氣不冷、天氣熱盼盡快）
+                "estate_id": 456,
+                "estate_title": "信義區套房A",
+                "estate_full_address": "台北市信義區信義路五段7號3樓",
+                "estate_room_number": "3F-1",
+                "contract_id": 678,
+                "category_id": 1,
+                "category_name": "家電維修",
+                "item_id": 101,
+                "item_name": "冷氣機",
+                "broken_reason": "不冷",
+                "broken_note": "開機後完全沒有冷風，已檢查過濾網",
+                "broken_photos": [],
+                "currency": "TWD",
+                "total": None,
+                "manufacturer_name": None,
+                "manufacturer_phone": None,
+                "user_id": 1001,
+                "user_name": "張管理",
+                "user_phone": "0911-111-111",
+                "user_email": "manager@example.com",
+                "to_user_id": int(user_id) if user_id else 2001,
+                "to_user_name": "王小明",
+                "to_user_phone": "0912-345-678",
+                "to_user_email": "tenant@example.com",
+                "agent_user_id": None,
+                "agent_name": None,
+                "user_note": None,
+                "to_user_note": "希望能盡快處理，天氣很熱",
+                "apply_at": "20260415140000",
+                "assign_at": None,
+                "complete_at": None,
+                "finish_at": None,
+                "archive_at": None,
+                "created_at": "2026-04-15 14:00:00",
+                "updated_at": "2026-04-15 14:00:00",
+            },
+        ]
+        if status not in (None, ""):
+            rows = [r for r in rows if r["status"] == int(status)]
+        if estate_id not in (None, ""):
+            rows = [r for r in rows if r["estate_id"] == int(estate_id)]
+        if category_id not in (None, ""):
+            rows = [r for r in rows if r["category_id"] == int(category_id)]
+        if is_urgent not in (None, ""):
+            rows = [r for r in rows if r["emergency_status"] == int(is_urgent)]
+        if keyword:
+            kw = str(keyword)
+            rows = [r for r in rows if kw in str(r.get("estate_title") or "")]
+        total = len(rows)
         return {
             "success": True,
             "mapping": {
@@ -1534,93 +1665,10 @@ class JGBSystemAPI:
                     "2": "緊急",
                 },
             },
-            "data": [
-                {
-                    "id": 3001,
-                    "status": 16,
-                    "emergency_status": 1,  # 非緊急（漏水已完成修繕）
-                    "estate_id": 456,
-                    "estate_title": "信義區套房A",
-                    "estate_full_address": "台北市信義區信義路五段7號3樓",
-                    "estate_room_number": "3F-1",
-                    "contract_id": 678,
-                    "category_id": 2,
-                    "category_name": "衛浴維修",
-                    "item_id": 202,
-                    "item_name": "水龍頭",
-                    "broken_reason": "漏水",
-                    "broken_note": "廚房水龍頭持續滴水",
-                    "broken_photos": [],
-                    "currency": "TWD",
-                    "total": 3500.00,
-                    "manufacturer_name": "信義水電行",
-                    "manufacturer_phone": "02-2345-6789",
-                    "user_id": 1001,
-                    "user_name": "張管理",
-                    "user_phone": "0911-111-111",
-                    "user_email": "manager@example.com",
-                    "to_user_id": int(user_id) if user_id else 2001,
-                    "to_user_name": "王小明",
-                    "to_user_phone": "0912-345-678",
-                    "to_user_email": "tenant@example.com",
-                    "agent_user_id": None,
-                    "agent_name": None,
-                    "user_note": "已完成修繕",
-                    "to_user_note": None,
-                    "apply_at": "20260405090000",
-                    "assign_at": "20260407100000",
-                    "complete_at": "20260412140000",
-                    "finish_at": None,
-                    "archive_at": None,
-                    "created_at": "2026-04-05 09:00:00",
-                    "updated_at": "2026-04-12 14:00:00",
-                },
-                {
-                    "id": 3002,
-                    "status": 1,
-                    "emergency_status": 2,  # 緊急（冷氣不冷、天氣熱盼盡快）
-                    "estate_id": 456,
-                    "estate_title": "信義區套房A",
-                    "estate_full_address": "台北市信義區信義路五段7號3樓",
-                    "estate_room_number": "3F-1",
-                    "contract_id": 678,
-                    "category_id": 1,
-                    "category_name": "家電維修",
-                    "item_id": 101,
-                    "item_name": "冷氣機",
-                    "broken_reason": "不冷",
-                    "broken_note": "開機後完全沒有冷風，已檢查過濾網",
-                    "broken_photos": [],
-                    "currency": "TWD",
-                    "total": None,
-                    "manufacturer_name": None,
-                    "manufacturer_phone": None,
-                    "user_id": 1001,
-                    "user_name": "張管理",
-                    "user_phone": "0911-111-111",
-                    "user_email": "manager@example.com",
-                    "to_user_id": int(user_id) if user_id else 2001,
-                    "to_user_name": "王小明",
-                    "to_user_phone": "0912-345-678",
-                    "to_user_email": "tenant@example.com",
-                    "agent_user_id": None,
-                    "agent_name": None,
-                    "user_note": None,
-                    "to_user_note": "希望能盡快處理，天氣很熱",
-                    "apply_at": "20260415140000",
-                    "assign_at": None,
-                    "complete_at": None,
-                    "finish_at": None,
-                    "archive_at": None,
-                    "created_at": "2026-04-15 14:00:00",
-                    "updated_at": "2026-04-15 14:00:00",
-                },
-            ],
+            "data": rows,
             "pagination": {
-                "current_page": 1,
-                "per_page": 50,
-                "total": 2,
-                "total_pages": 1,
+                "current_page": 1, "per_page": 50, "total": total,
+                "total_pages": -(-total // 50) if total > 0 else 0,
                 "has_more": False,
             },
         }
@@ -2046,40 +2094,71 @@ class JGBSystemAPI:
 
     def _mock_get_invoice_logs(
         self, role_id: str, invoice_id: Optional[int] = None,
-        bill_id: Optional[int] = None,
+        bill_id: Optional[int] = None, action: Optional[str] = None,
     ) -> dict[str, Any]:
-        """對齊 InvoiceLogApiController@index"""
-        logger.info(f"[MOCK] get_invoice_logs: role_id={role_id}, invoice_id={invoice_id}, bill_id={bill_id}")
+        """`GET /invoice-logs`（`InvoiceLogApiController@index`）——**已對照 jgb2 原始碼**。
+
+        照抄：
+
+        * **`bill_id` 或 `invoice_id` 至少一個**，皆缺 → 400（:23-25）；
+          ⚠️ 本端點**完全不看 role_id**（controller 沒有任何 role 圈定）；
+        * 篩選 `bill_id`／`invoice_id`／`action`（:34-44）；`orderBy('id','desc')`；
+        * 回應只有 `data` 與 `pagination`——**沒有 `mapping`**（:60-70）；舊 mock 憑空給了。
+
+        ⚠️ **最關鍵的一處**：production **不回原始 `response_data`**（含買受人 email、
+        載具號碼），只回白名單化的 `response_parsed = {status, message, invoice_number,
+        random_number, invoice_date}`（:77-79、:97-131）；`Result` 巢狀 JSON 由它先解一層。
+        舊 mock 回的是原始 `response_data`，而 `services/jgb/invoices.py` 三處都讀那個鍵
+        ⇒ 線上永遠取不到回應內容。已一併修正消費端（改讀 response_parsed）。
+        """
+        logger.info(f"[MOCK] get_invoice_logs: invoice_id={invoice_id}, bill_id={bill_id}")
+        rows = [
+            {
+                "id": 60001, "invoice_id": 5001, "bill_id": 12345,
+                "manufacturer": "ezpay", "action": "issue", "type": "bill",
+                "http_code": 200,
+                "response_parsed": {
+                    "status": "SUCCESS", "message": "開立發票成功",
+                    "invoice_number": "AZ00000123", "random_number": "1234",
+                    "invoice_date": "2026-04-01",
+                },
+                "note": None, "created_at": "2026-04-01T10:00:00+08:00",
+            },
+            {
+                "id": 60002, "invoice_id": 5002, "bill_id": 12340,
+                "manufacturer": "ezpay", "action": "invalid", "type": "bill",
+                "http_code": 200,
+                "response_parsed": {
+                    "status": "SUCCESS", "message": "作廢發票成功",
+                    "invoice_number": "AZ00000120", "random_number": "5678",
+                    "invoice_date": "2026-03-01",
+                },
+                "note": None, "created_at": "2026-03-15T10:00:00+08:00",
+            },
+            {
+                "id": 60003, "invoice_id": 5003, "bill_id": 12333,
+                "manufacturer": "ezpay", "action": "issue", "type": "bill",
+                "http_code": 500,
+                # production 的 parseResponseData 對空回應回 **null**（:100-103）
+                "response_parsed": None,
+                "note": "上游逾時", "created_at": "2026-02-01T10:00:00+08:00",
+            },
+        ]
+        if bill_id not in (None, ""):
+            rows = [r for r in rows if r["bill_id"] == int(bill_id)]
+        if invoice_id not in (None, ""):
+            rows = [r for r in rows if r["invoice_id"] == int(invoice_id)]
+        if action:
+            rows = [r for r in rows if r["action"] == action]
+        rows.sort(key=lambda r: r["id"], reverse=True)
+        total = len(rows)
         return {
             "success": True,
-            "mapping": {
-                "action": {
-                    "issue": "開立", "invalid": "作廢",
-                    "allowance": "折讓", "allowance_invalid": "作廢折讓",
-                    "search": "查詢",
-                },
-            },
-            "data": [
-                {
-                    "id": 60001,
-                    "invoice_id": invoice_id or 5001,
-                    "bill_id": bill_id or 12345,
-                    "manufacturer": "ezpay",
-                    "action": "issue",
-                    "type": "bill",
-                    "http_code": 200,
-                    "response_data": {
-                        "RtnCode": 1,
-                        "RtnMsg": "開立發票成功",
-                        "InvoiceNumber": "AZ00000123",
-                    },
-                    "note": None,
-                    "created_at": "2026-04-01T10:00:00+08:00",
-                },
-            ],
+            "data": rows,
             "pagination": {
-                "current_page": 1, "per_page": 50,
-                "total": 1, "total_pages": 1, "has_more": False,
+                "current_page": 1, "per_page": 50, "total": total,
+                "total_pages": -(-total // 50) if total > 0 else 0,
+                "has_more": False,
             },
         }
 
