@@ -12,6 +12,15 @@
 
 from typing import Any, Optional
 
+# ⚠️ **值的形狀由三層決定，控制器只是最後一層**：
+#    ① DDL（型別／nullable／預設）② Eloquent $casts ③ Model accessor。
+#    `formatEstate()` 多數欄位是 `$estate->x` 直通，故 accessor 會改寫真正輸出：
+#      · `getFacilitiesAttribute`／`getFeesAttribute`（Estate.php:325／:339）
+#        **空值回 `[]`，永遠不是 null** → 本表兩欄用 `[]`（首版誤用 None）
+#      · `getRentAttribute`（:506）空值回 0；設了 trans_currency_to 時回**千分位字串**
+#      · `getCountryAttribute`（:224）回 `Address::getCountryKey(country_id)` 而非原欄位值
+#      · `gallery`／`floor_plan` 由 controller `formatGallery()` 收尾，**空值回 null**（:429-432）
+#    ⚠️ 仍未證：DDL 層（型別、nullable、預設）與 `Address` 對照表——見 estates-source-audit.md
 #: External 投影（`formatEstate()` 逐鍵；`include_relations=False` 的列表形狀）
 EXTERNAL_ESTATE_FIELDS: "frozenset[str]" = frozenset({
     "id", "url", "user_id", "role_id", "role_id_comment", "team_id", "team_id_comment",
@@ -145,9 +154,9 @@ class EstateFixtureTable:
             "deposit": 2,
             "deposit_type": 0,
             "deposit_amount": 50000,
-            "fees": None,
+            "fees": [],
             "management_fee": 0,
-            "facilities": None,
+            "facilities": [],
             "labels_fees": None,
             "avatar": None,
             "gallery": None,
@@ -201,9 +210,9 @@ class EstateFixtureTable:
             "deposit": 2,
             "deposit_type": 0,
             "deposit_amount": 24000,
-            "fees": None,
+            "fees": [],
             "management_fee": 0,
-            "facilities": None,
+            "facilities": [],
             "labels_fees": None,
             "avatar": None,
             "gallery": None,
@@ -257,9 +266,9 @@ class EstateFixtureTable:
             "deposit": 2,
             "deposit_type": 0,
             "deposit_amount": 70000,
-            "fees": None,
+            "fees": [],
             "management_fee": 2000,
-            "facilities": None,
+            "facilities": [],
             "labels_fees": None,
             "avatar": None,
             "gallery": None,

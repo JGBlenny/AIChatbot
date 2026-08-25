@@ -73,6 +73,30 @@ has_more = page < total_pages
 sort_by 白名單外 → updated_at；sort_direction 非 'asc' → desc
 ```
 
+## ⑤b 值的形狀不是控制器決定的（**本次盤查的方法論修正**）
+
+`formatEstate()` 多數欄位是 `$estate->x` 直通，所以真正決定輸出形狀的是**下面三層**：
+
+```text
+① DDL          欄位型別／nullable／預設值   ⚠️ 建表 migration 不在 repo（同 G1 對 bills 的發現）
+② $casts       Eloquent 型別轉換             ⚠️ Estate.php 未宣告 $casts
+③ accessor     getXxxAttribute 改寫輸出      ✅ 已讀，且**已抓到錯**
+```
+
+accessor 逐條（`app/Estate.php`）：
+
+```text
+getFacilitiesAttribute :325  空值回 **[]**，永不為 null   → fixture 首版寫 None，**錯，已修**
+getFeesAttribute       :339  同上                          → 同上，**已修**
+getRentAttribute       :506  空值回 **0**；設了 trans_currency_to 時回**千分位字串**（型別會變）
+getCountryAttribute    :224  回 Address::getCountryKey(country_id)，**不是**原欄位值
+gallery／floor_plan          由 controller formatGallery() 收尾，空值回 **null**（:429-432）
+                             ⚠️ 與 facilities／fees **方向相反**——這是本層最容易抄錯的地方
+```
+
+**這一層之前完全沒查。**「鍵集與 where 對得上」只證了契約的一半；
+值的形狀要一路追到 DDL 才算完，而 DDL 目前拿不到（見下）。
+
 ## ⑥ 仍未涵蓋（mock 結構上證不到，只有真 API 會現形）
 
 ```text
@@ -82,6 +106,13 @@ sort_by 白名單外 → updated_at；sort_direction 非 'asc' → desc
 · mapping.countries：由 countrys／citys／districts 三張表組出，替身不輸出 mapping 鍵
 · 真實標題分佈（口語多詞配不中 title LIKE 是既有已知問題，非本次新增）
 · updated_after 篩選：production 有，我方 adapter 從不傳
+· **DDL 層**：欄位型別／nullable／預設值——建表 migration 不在 repo（與 G1 稽核對 bills 的
+  發現同型）。唯一權威是線上 information_schema，屬唯讀查詢、由業主執行。
+· **Address 對照表**：`country`／`display_country` 走 `Address::getCountryKey()`，
+  值域由 DB 或 Redis 供應，靜態讀碼證不到。
+· **真實分佈**：標題格式、null 比例、status×is_open 組合比例、單一 role 的物件筆數量級——
+  只有線上聚合查詢能給；建議走 jgb2 既有的 `internal/v1` 唯讀 API 或聚合式 SQL，
+  **不得**把逐列真資料搬進 repo 或對話（個資紅線）。
 ```
 
 ## 附帶查核：status 枚舉正確

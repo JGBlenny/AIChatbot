@@ -155,6 +155,19 @@ def test_estate_status_sentinel_now_reachable_in_mock(api):
 
 
 @pytest.mark.req("face-exit-before-grounding:1")
+def test_accessor_shaped_empty_values(api):
+    """空值形狀由 **Model accessor** 決定，不是欄位本身——控制器只是最後一層。
+
+    `getFacilitiesAttribute`／`getFeesAttribute`（Estate.php:325／:339）空值回 `[]`，
+    **永遠不是 null**；而 `gallery`／`floor_plan` 由 controller `formatGallery()` 收尾，
+    空值回 **null**（:429-432）。兩者方向相反，是這一層最容易抄錯的地方。
+    """
+    row = _run(api.get_estates(role_id=ROLE))["data"][0]
+    assert row["facilities"] == [] and row["fees"] == []
+    assert row["gallery"] is None and row["floor_plan"] is None
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
 def test_fixture_rows_declare_the_closed_case():
     table = EstateFixtureTable()
     assert len(table.rows()) == 3 and len(table.visible_rows()) == 2
