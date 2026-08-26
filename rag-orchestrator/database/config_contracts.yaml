@@ -1,0 +1,118 @@
+# 設定契約 registry（knowledge-config-governance R1）
+#
+# 這份檔案是**唯一來源**：欄位必填性、值域、跨表指向。
+# 在此之前這些規則散在 migration、測試、steering 與 persona rules 裡，
+# 於是「資料沒設好」只能等 E2E 撞到才發現。
+#
+# ⚠️ 規則必須支援**條件式**（R1.2）：把合法變體判成錯誤會製造誤報，
+#    而誤報會讓人學會忽略稽核——那比沒有稽核更糟。
+#
+# level：L1 structural（可決定性 autofix）／L2 consistency（需明確規則）／
+#        L3 semantic ownership（**只提案，人裁**）
+
+version: 1
+
+sources:
+  conversational_config:
+    table: knowledge_base
+    where: "category = '對話規則'"
+    payload: "generation_metadata -> 'conversational_config'"
+    loader: "services/conversational_config.py::_config_from_row"
+  knowledge:
+    table: knowledge_base
+    where: "category IS DISTINCT FROM '對話規則'"
+  form_schema:
+    table: form_schemas
+  endpoint_universe:
+    note: |
+      合法 endpoint ＝ **兩個來源的聯集**（只讀其一即製造誤報）：
+      ① services/api_call_handler.py::APICallHandler.api_registry（自訂程式實作）
+      ② api_endpoints 表的 endpoint_id（implementation_type='dynamic'，universal handler 分派）
+    errata: |
+      初版契約只寫 ①，掃描器因此把 lookup_generic／demo_form／trial_form 等
+      **8 筆合法設定**判成違規（10 筆裡 8 筆誤報）。依 R5.1，誤報是缺陷，已修規則。
+
+rules:
+
+  - id: C1
+    level: L1
+    subject: conversational_config
+    rule: "每列『對話規則』必須能組出設定：payload 非空 **或** target_user 非空"
+    why: "兩者皆空時 loader 回 None，該列等於不存在——但它仍佔著一個看起來有效的位置"
+    ref: "_config_from_row:116"
+
+  - id: C2
+    level: L1
+    subject: conversational_config
+    rule: "config.key 全庫唯一"
+    why: "by_key 索引後載入者覆蓋前者，且**不報錯**"
+
+  - id: C3
+    level: L1
+    subject: conversational_config
+    rule: "topic_scope.mode == 'category' ⇒ topic_scope.category 非空"
+    variant_ok: "無 topic_scope（loader 預設 {mode:'all'}）＝ role-routed 合法變體，如 presales"
+    why: "category 模式卻沒有 category，該面向永遠不會被 config_for_category 命中"
+
+  - id: C4
+    level: L1
+    subject: conversational_config
+    rule: "topic_scope.category 全庫唯一"
+    why: "by_category 索引同樣是後載入者覆蓋——兩個面向搶同一 category 會靜默丟掉一個"
+
+  - id: C5
+    level: L1
+    subject: conversational_config
+    rule: "responsibility.delegates[].target 必須是存在且 enabled 的 config key"
+    why: "resolver 對未知/停用 delegate **fail closed**（不 commit）——設定錯只會表現成『不進場』"
+    ref: "services/responsibility.py::resolve_entry_candidate"
+
+  - id: C6
+    level: L1
+    subject: conversational_config
+    rule: "responsibility.delegates[] 必須帶 when（語義條件）"
+    why: "migration 契約：delegates 元素自 v2 起是 (target, when)，缺 when 的舊形狀會讓斷言與規則生成落空"
+
+  - id: C7
+    level: L2
+    subject: conversational_config
+    rule: "宣告了 responsibility.delegates ⇒ 該面向的 answer_rules／persona 規則必須含 delegate_facet_key"
+    why: "v3 實證：模型只產出 persona **宣告形狀內**的欄位；規則沒宣告該鍵 ⇒ 委派永遠不會發生"
+    ref: "seed_responsibility_delegates_v1.sql 的第 (2) 段"
+
+  - id: C8
+    level: L1
+    subject: conversational_config
+    rule: "grounding_scope.endpoint 必須存在於 endpoint_universe（registry ∪ api_endpoints）"
+    variant_ok: "無 endpoint（role-routed／純知識面向）合法"
+    why: "執行期才會回『不支援的 API endpoint』，而那時使用者已經在對話中"
+
+  - id: C9
+    level: L1
+    subject: knowledge
+    rule: "knowledge_base.api_config->>'endpoint' 必須存在於 endpoint_universe（registry ∪ api_endpoints）"
+    why: "知識掛的 endpoint 被刪或改名時，只有使用者問到那題才會炸"
+    errata: |
+      本條初版寫成「knowledge.trigger_facet_key 必須存在」——**立錯了**：
+      `trigger_facet_key` 是 **request 參數**（routers/chat.py:1130），
+      不是 knowledge_base 的欄位（該表只有 trigger_mode／trigger_keywords）。
+      規則若立在不存在的欄位上，掃描器只會噴錯或恆綠——兩者都比沒有規則更糟。
+
+  - id: C10
+    level: L1
+    subject: form_schema
+    rule: "form_schemas.api_config.endpoint 必須存在於 endpoint_universe（registry ∪ api_endpoints）"
+    why: "2026-08-26 實例：billing_inquiry／maintenance_request 指向已刪除的 legacy 端點"
+
+  - id: C11
+    level: L3
+    subject: knowledge
+    rule: "knowledge.categories 指向某面向 category 時，其 target_user 應與該面向的角色相容"
+    why: "跨角色進場路徑（b2b 業者問句進 b2c 租客面向）——但『相容』的判準屬產品語義"
+    disposition: "**只提案，人裁**；不得自動加標或改標"
+
+  - id: C12
+    level: L3
+    subject: knowledge
+    rule: "responsibility／category／nomination 三者的語義是否一致"
+    disposition: "**只提案，人裁**——這是在回答『這個 query 應該由誰擁有』，即 routing-authority-model 的題"
