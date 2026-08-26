@@ -1,7 +1,7 @@
 {
   "feature_name": "knowledge-config-governance",
   "language": "zh-TW",
-  "phase": "requirements-generated",
+  "phase": "tasks-generated",
   "approvals": {
     "requirements": {
       "generated": true,
@@ -12,8 +12,9 @@
       "approved": false
     },
     "tasks": {
-      "generated": false,
-      "approved": false
+      "generated": true,
+      "approved": false,
+      "note": "待業主核准施工順序——本線一開始就要求核准，避免重演 tasks.approved=false 造成的漂移"
     }
   },
   "created_at": "2026-08-26",
