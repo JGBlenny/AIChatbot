@@ -79,6 +79,16 @@ services:
       FORM_TRIGGER_THRESHOLD: ${FORM_TRIGGER_THRESHOLD:-0.75}
       ENABLE_QUERY_REWRITE_B2B: ${ENABLE_QUERY_REWRITE_B2B:-false}
       PREENTRY_ROUTABILITY_GATE: ${PREENTRY_ROUTABILITY_GATE:-false}
+      # ⚠️ 下面三個旗標**必須宣告**，否則 compose 不會把 .env 的值傳進容器——
+      #    Stage-1 會在「旗標看起來設了、實際沒生效」的狀態下上線（fail-safe 停用）。
+      #    本專案已三次因 runner／env 保真度不足而結論作廢，故一律顯式宣告。
+      # 進場委派 resolver 的面向白名單：GATE=true **且** 面向列於此才啟用；
+      # 只開 GATE 不設白名單 ＝ fail-safe 停用（見 routers/chat.py:831）
+      PREENTRY_ROUTABILITY_FACETS: ${PREENTRY_ROUTABILITY_FACETS:-}
+      # 任務 8：action 越界時呼叫端是否仍依 scope 行動（預設 off，需獨立驗收）
+      FACET_SCOPE_SALVAGE: ${FACET_SCOPE_SALVAGE:-false}
+      # conversational-step 的 strict json_schema 輸出契約（預設 on；false 回退 json_object）
+      BRAIN_STRICT_SCHEMA: ${BRAIN_STRICT_SCHEMA:-true}
       # ── LLM 模型參數：**逐字鏡射 prod**（C4b 凍結參數，spec conversational-routing-execution 6.1/③）──
       # 逐字鏡射 prod compose 的宣告——**唯一目的是讓測試容器的 brain 與 production 同款**。
       # 2026-08-26 業主定案「統一 mini」後兩邊同為 gpt-4o-mini；

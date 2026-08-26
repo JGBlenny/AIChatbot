@@ -1,0 +1,260 @@
+# P2 Rollout Runbook：Stage-1 scoped enablement
+
+> 2026-08-26｜語言 zh-TW｜**本檔只是 runbook，寫它不代表執行**。
+> 真正碰 staging／production 一律由業主逐條執行（[[feedback_prod_ops_self_run]]）；
+> 本檔**不提供打包腳本**，只給逐條指令與**預期輸出**。
+> 前置證據：`p3-run3-result.md`（mini true-brain regression A：3/3 PASS、零 fail-open）。
+
+## 〇、這次要上的是什麼、不是什麼
+
+```text
+上   pre-commit responsibility resolver，**限這條已驗證鏈**：
+     bill_diagnosis → billing_anomaly → contract_closeout
+不上 其餘 18 個面向的 delegation；Task 8 的 salvage（見旗標表）；
+     Req.10 對話品質改善的任何宣稱
+```
+
+⚠️ **Stage-1 的安全觀測已經有，對話品質觀測沒有——兩者不得混為一談：**
+
+```text
+resolver telemetry（已落 usage_events，M1 實證）
+  candidate_facet／scope／delegate_facet_key／delegate_source／decision_source／
+  fail_open／hop_count／fallback_reason／resolver_model_calls／resolver_latency_ms
+  ⇒ 足以回答 Stage-1 的安全問題（fail_open 率、switch_without_delegate、hop 異常、
+     fallback 暴增、成本／延遲、最後 commit 到哪個 Face）
+Req.10 對話品質觀測（**沒有**：turn／transcript／judgeable evidence 皆缺）
+  ⇒ 缺它**不擋** Stage-1；但**不得**據此宣稱「整體對話品質已改善」
+```
+
+## 一、旗標表（**全部顯式列出，不留環境預設猜測**）
+
+| 旗標 | Stage-1 值 | 作用 | 理由 |
+|---|---|---|---|
+| `PREENTRY_ROUTABILITY_GATE` | `true` | 啟用 pre-commit resolver | Stage-1 主體 |
+| `PREENTRY_ROUTABILITY_FACETS` | `bill_diagnosis,billing_anomaly,contract_closeout` | 面向白名單 | **只開已驗證鏈**；⚠️ GATE=true 但白名單未設 ＝ fail-safe **停用**（`routers/chat.py:831`） |
+| `FACET_SCOPE_SALVAGE` | **`false`** | action 越界時是否仍依 scope 行動 | **reason: not part of Stage-1 acceptance scope**——P3 三次執行**零拒絕**，此分支未被真 brain 因果驗證（B 仍 INCONCLUSIVE），不列入本次驗收 |
+| `BRAIN_STRICT_SCHEMA` | `true` | conversational-step 的 strict json_schema | P3-A 通過的**必要條件**（A2 由 3/3 → 0/24 靠它）；關掉即回退 json_object |
+| `PRESALES_SYNTH_MODEL` | `gpt-4o-mini` | production brain | 業主 2026-08-26 定案統一 mini；P3 即在此組態取證 |
+| `USE_MOCK_JGB_API` | `false` | 走真 JGB API | staging／production 的意義所在 |
+| `JGB_API_BASE_URL` | preview／prod 對應值 | jgb2 端點 | prod compose 預設 `https://preview.jgbsmart.com` |
+
+⚠️ **前置修正（已於 repo 完成，需隨版更部署）**：`PREENTRY_ROUTABILITY_FACETS`／
+`FACET_SCOPE_SALVAGE`／`BRAIN_STRICT_SCHEMA` 原本**未在 compose 宣告**——
+compose 不宣告就不會把 `.env` 的值傳進容器，會出現「旗標設了卻沒生效」。
+兩份 compose 已補宣告，並納入 `_meta` 的 env parity 契約清單。
+
+## 二、⚠️ 一個必須先確認的前提
+
+repo 內**查無獨立的 RAG staging 環境**（`docs/deployment*` 無 staging 章節、
+無 staging compose）。本 runbook 因此把 P2.1–P2.6 定義為：
+
+```text
+「一個非 production 的 RAG 執行環境（本機容器即可），
+  但 USE_MOCK_JGB_API=false、JGB_API_BASE_URL 指向 jgb2 **preview**」
+```
+
+**若貴司另有獨立 staging 主機，請告知，本節指令的執行位置改為該主機。**
+
+---
+
+# P2.1 staging config snapshot
+
+```bash
+# 在 staging 環境執行
+docker exec aichatbot-rag-orchestrator env | grep -E \
+  'PREENTRY_ROUTABILITY|FACET_SCOPE_SALVAGE|BRAIN_STRICT_SCHEMA|USE_MOCK_JGB_API|PRESALES_SYNTH_MODEL|JGB_API_BASE_URL' \
+  | sort
+```
+
+**預期輸出**：上表七個旗標**逐一出現**。
+⚠️ 任一個**沒出現**＝ compose 未宣告，先停下修 compose，不要繼續（否則後面全部白做）。
+
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -Atc \
+  "SELECT migration_name, executed_at FROM schema_migrations ORDER BY executed_at DESC LIMIT 5;"
+```
+
+**預期輸出**：帳本表存在且可讀（內容視環境而定）。
+
+# P2.2 staging migration（dry-run → apply）
+
+```bash
+cd <repo 根目錄>
+bash rag-orchestrator/database/migrate.sh
+```
+
+**預期輸出**：待辦清單包含 `seed_responsibility_delegates_v1.sql`（尚未記帳者）。
+
+```bash
+bash rag-orchestrator/database/migrate.sh --apply
+```
+
+**預期輸出**：該支 `APPLIED` 並寫入 `schema_migrations`。⚠️ 冪等，重跑安全。
+
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -Atc \
+  "SELECT generation_metadata->'conversational_config'->'responsibility'->'delegates'
+   FROM knowledge_base WHERE category='對話規則'
+     AND generation_metadata->'conversational_config'->>'key'='bill_diagnosis';"
+```
+
+**預期輸出**：非 NULL，且含 `billing_anomaly` 與 `when` 條件。
+
+# P2.3 staging flags
+
+在 staging 的 `.env` 設定第一節表格的七個值，然後：
+
+```bash
+docker compose -f docker-compose.prod.yml up -d rag-orchestrator
+docker exec aichatbot-rag-orchestrator env | grep -E 'PREENTRY_ROUTABILITY|FACET_SCOPE_SALVAGE|BRAIN_STRICT_SCHEMA'
+```
+
+**預期輸出**：
+`PREENTRY_ROUTABILITY_GATE=true`／`PREENTRY_ROUTABILITY_FACETS=bill_diagnosis,billing_anomaly,contract_closeout`／
+`FACET_SCOPE_SALVAGE=false`／`BRAIN_STRICT_SCHEMA=true`。
+
+⚠️ 換庫或推版後 **reranker semantic model 需重建**，否則排序與新資料不同步
+（[[project_deploy_semantic_model]]）。
+
+# P2.4 staging real API contract smoke（**只驗替身證不到的**）
+
+M0–M2 已把替身能證的證完，此處**不重複** mock assertion。真邊界只驗六項：
+
+```text
+① authentication／authorization：帶／不帶 API key、錯 key 的實際回應
+② user_id／viewer scope 的真實行為（GAP-B1／B2 只有這裡能證）
+③ 真實 contract title／identifier 形狀（口語多詞對 title LIKE 的實際命中率）
+④ **contract_ids 重查是否真的收斂到單筆**（v5／v6 vertical slice 最重要的 external assumption）
+⑤ response／error envelope（403 與 404 之分、欄位鍵集是否與投影一致）
+⑥ timeout／latency 量級
+```
+
+```bash
+# ④ 的最小驗證：初查 N 筆 → 指定 678 重查 → 應為單筆
+curl -s -H "X-API-Key: $JGB_API_KEY" \
+  "$JGB_API_BASE_URL/api/external/v1/contracts/status-overview?role_id=<ROLE>" \
+  | python3 -c "import json,sys; d=json.load(sys.stdin); print('total=', d['pagination']['total'])"
+
+curl -s -H "X-API-Key: $JGB_API_KEY" \
+  "$JGB_API_BASE_URL/api/external/v1/contracts/status-overview?role_id=<ROLE>&contract_ids=678" \
+  | python3 -c "import json,sys; d=json.load(sys.stdin); print('total=', d['pagination']['total'], '| ids=', [r['id'] for r in d['data']])"
+```
+
+**預期輸出**：第一次 `total=N`（N>1）；第二次 `total=1`、`ids=[678]`。
+⚠️ 若第二次**未收斂**，Stage-1 **停止**——vertical slice 的外部前提不成立。
+
+```bash
+# ⑤ 鍵集比對：真 API 的鍵集是否與我方投影一致（多一鍵是捏造、少一鍵是失真）
+curl -s -H "X-API-Key: $JGB_API_KEY" \
+  "$JGB_API_BASE_URL/api/external/v1/contracts/status-overview?role_id=<ROLE>&per_page=1" \
+  | python3 -c "import json,sys; print(sorted(json.load(sys.stdin)['data'][0].keys()))"
+```
+
+**預期輸出**：與 `services/jgb/contract_fixtures.EXTERNAL_CONTRACT_FIELDS` 逐鍵相同。
+差異即為 **D1 漂移**，逐項記錄後再決定是否續行。
+
+# P2.5 staging true-brain vertical acceptance
+
+```bash
+# 在 staging 對真 API 跑一次 P3-A 的同一條鏈（真 brain、真 JGB API）
+curl -s -X POST "$RAG_BASE_URL/api/v1/message" -H 'Content-Type: application/json' -d '{
+  "message":"幫我查點退帳單金額","vendor_id":2,"target_user":"property_manager",
+  "mode":"b2b","role_id":"<ROLE>","session_id":"stg-p25-1","stream":false}'
+curl -s -X POST "$RAG_BASE_URL/api/v1/message" -H 'Content-Type: application/json' -d '{
+  "message":"<真實合約識別碼>","vendor_id":2,"target_user":"property_manager",
+  "mode":"b2b","role_id":"<ROLE>","session_id":"stg-p25-1","stream":false}'
+```
+
+**預期輸出**：第 2 輪答句含該合約的**現況狀態**與**到期／可點退時點**
+（對應 v6 ruler 的兩組必含字面，但字面值改為該真合約的實際值）。
+
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -Atc \
+  "SELECT decision_snapshot->'resolver' FROM usage_events
+   WHERE session_id='stg-p25-1' AND decision_snapshot ? 'resolver' ORDER BY id DESC LIMIT 1;"
+```
+
+**預期輸出**：`final_committed_facet=contract_closeout`、`fail_open=false`、
+`hop_count=3`、`delegate_sources` 為 `model_delegate`／`contract_singleton` 的組合。
+
+# P2.6 rollback rehearsal（**production 之前先演練**）
+
+```bash
+# ① 旗標回退（最快、零資料變更）——單獨即可停用整個 Stage-1
+#    .env 改 PREENTRY_ROUTABILITY_GATE=false 後：
+docker compose -f docker-compose.prod.yml up -d rag-orchestrator
+docker exec aichatbot-rag-orchestrator env | grep PREENTRY_ROUTABILITY_GATE
+```
+**預期輸出**：`PREENTRY_ROUTABILITY_GATE=false`；再打一次 P2.5 第 1 輪，
+`decision_snapshot` 應**沒有** `resolver` 鍵（resolver 未參與）。
+
+```bash
+# ② 資料回退（僅在需要時）
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin \
+  < rag-orchestrator/database/migrations/seed_responsibility_delegates_v1_rollback.sql
+```
+**預期輸出**：兩段 UPDATE 各回報受影響列數；重跑冪等。
+⚠️ 回退後 `bill_diagnosis` 的 `responsibility` 鍵消失、規則 answer 的
+`delegate_facet_key` 宣告被移除——**delegation 不會再發生**，這正是回退的定義。
+
+# P2.7 production migration
+
+與 P2.2 相同的三條指令，**在 production 執行**（由業主）。
+⚠️ 先確認 `schema_migrations` 帳本已 bootstrap（見 `docs/deployment-runbook.md` §17）。
+
+# P2.8 Stage-1 scoped enablement
+
+production `.env` 設定第一節表格的值 → 重啟 rag-orchestrator → 以 P2.1 的指令**回讀確認**。
+⚠️ **只開白名單那三個面向**；不因 P3-A 通過就擴其他 Faces。
+
+# P2.9 resolver telemetry 觀察（Stage-1 的安全問題）
+
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c "
+SELECT
+  count(*)                                                   AS resolver_requests,
+  count(*) FILTER (WHERE (decision_snapshot->'resolver'->>'fail_open')::bool) AS fail_open,
+  count(*) FILTER (WHERE decision_snapshot->'resolver'->>'fallback_reason'
+                         = 'switch_without_delegate')        AS switch_without_delegate,
+  round(avg((decision_snapshot->'resolver'->>'hop_count')::int), 2)          AS avg_hops,
+  round(avg((decision_snapshot->'resolver'->>'resolver_latency_ms')::int))   AS avg_latency_ms,
+  round(avg((decision_snapshot->'resolver'->>'resolver_model_calls')::int),2) AS avg_model_calls
+FROM usage_events
+WHERE decision_snapshot ? 'resolver' AND created_at > now() - interval '24 hours';"
+```
+
+**觀察門檻（超過即回退旗標，不必等討論）**：
+
+```text
+fail_open 率 > 10%                    → 模型或規則供應出問題
+switch_without_delegate > 5%          → 委派契約或模型輸出退化（singleton 應已擋掉大部分）
+avg_hops > 3.5                        → 出現非預期的長鏈
+avg_model_calls 明顯 > 3              → 每請求成本異常
+avg_latency_ms 較上線前基準 +50%       → 延遲退化
+```
+
+```bash
+# delegate 由誰決定的分布——看得出模型是否退化成全靠契約撐著
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c "
+SELECT jsonb_array_elements_text(decision_snapshot->'resolver'->'delegate_sources') AS src,
+       count(*)
+FROM usage_events
+WHERE decision_snapshot ? 'resolver' AND created_at > now() - interval '24 hours'
+GROUP BY 1 ORDER BY 2 DESC;"
+```
+
+# P2.10 owner release decision
+
+放行需同時成立：
+
+```text
+① P2.4 六項真 API 邊界皆有結論（未過者逐項記錄，不得留白）
+② P2.5 真 API 下的 vertical slice 成立（含 telemetry 三欄）
+③ P2.6 回退演練成功（旗標與資料兩條路都試過）
+④ P2.9 觀察窗內五個門檻皆未觸發
+⑤ 業主簽核並記錄於本檔尾
+```
+
+⚠️ **放行的射程**：只代表「這條鏈在真環境可運作」。
+**不得**擴寫成「對話品質已改善」——那需要 Req.10 的 baseline，而它仍
+`BLOCKED_BY_OBSERVABILITY`（OBS-1／2／3）。

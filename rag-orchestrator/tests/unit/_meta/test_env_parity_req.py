@@ -27,6 +27,11 @@ ROUTING_PARAMS = (
     "FORM_TRIGGER_THRESHOLD",
     "ENABLE_QUERY_REWRITE_B2B",
     "PREENTRY_ROUTABILITY_GATE",
+    # Stage-1 rollout 會實際設定的三個（2026-08-26 P2 runbook 前置）：
+    # 任一邊漏宣告 ⇒ .env 的值傳不進容器，旗標看起來設了卻沒生效。
+    "PREENTRY_ROUTABILITY_FACETS",
+    "FACET_SCOPE_SALVAGE",
+    "BRAIN_STRICT_SCHEMA",
 )
 
 
