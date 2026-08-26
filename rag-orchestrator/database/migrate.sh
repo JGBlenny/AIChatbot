@@ -38,6 +38,11 @@ echo "═══ A. SQL migrations ═══"
 sql_ran=0; sql_skip=0; sql_destr=0
 for f in $(ls "$MIG_DIR"/*.sql 2>/dev/null | sort); do
   name="$(basename "$f" .sql)"
+  # ⚠️ **rollback 檔永遠不得被當成 migration 套用**（2026-08-26 P2.2 dry-run 抓到）：
+  #    慣例是放 migrations/rollback/（glob 掃不到），但曾有檔案落在主目錄，
+  #    於是 runner 會「先套 seed、再立刻把它 rollback」——淨效果是什麼都沒發生，
+  #    而且帳本會記成兩支都已套。放錯位置不該造成錯誤結果，故在此再擋一層。
+  case "$name" in *rollback*|*.rollback) echo "↩️  rollback 檔·跳過（不得自動套用）：$name"; continue;; esac
   if is_applied "$name"; then sql_skip=$((sql_skip+1)); continue; fi
   if is_destructive "$f"; then echo "⚠️  破壞性·跳過（手動跑並記帳）：$name"; sql_destr=$((sql_destr+1)); continue; fi
   if [[ $APPLY == 1 ]]; then
