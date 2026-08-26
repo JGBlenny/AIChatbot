@@ -404,6 +404,16 @@ USE_MOCK_JGB_API=true
 docker compose -f docker-compose.prod.yml up -d --force-recreate rag-orchestrator
 ```
 
-**建議的永久防護**（尚未實作，需業主決定是否納入）：
-在 `scripts/run-tests.sh` 的 `ENV_ARGS` 強制注入 `USE_MOCK_JGB_API=true`，
-使**測試層永遠不可能打到真 API**——與既有的 `assert_non_production_db` 同款 fail-closed 思路。
+**永久防護（2026-08-26 已實作）**：`scripts/run-tests.sh` 一律注入
+`-e USE_MOCK_JGB_API=true`；要打真 API 必須顯式 `ALLOW_REAL_JGB_API=1`，且會印警告。
+與既有 `assert_non_production_db` 同款 fail-closed：預設安全，例外要說出口。
+
+實證（正負對照，非推論）：
+
+```text
+有注入   docker compose run --rm -e USE_MOCK_JGB_API=true … → **true**
+無注入   docker compose run --rm …                          → **false**（.env 的值真的會滲進來）
+```
+
+⇒ 風險是實際存在的，不是假設。契約由 `tests/unit/_meta/test_runner_layer_contract_req.py`
+的 `test_runner_forces_the_jgb_mock_by_default` 鎖住（注入存在／豁免旗標名稱／豁免必須吵）。

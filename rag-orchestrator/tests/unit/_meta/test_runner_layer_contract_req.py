@@ -90,3 +90,23 @@ def test_ci_integration_job_has_no_job_level_swallow():
     job = spec["jobs"]["integration"]
     assert "continue-on-error" not in job, \
         "integration job 出現 job 級 continue-on-error——會使結構性失效在 CI 無訊號"
+
+
+# ── 真 API 防護（2026-08-26）────────────────────────────────────────────────
+
+@pytest.mark.req("conversational-routing-execution:1.11")
+def test_runner_forces_the_jgb_mock_by_default():
+    """runner **必須**強制注入 `USE_MOCK_JGB_API=true`，且只能以顯式旗標豁免。
+
+    起因：本機 stack 被接到 production JGB（`.env` 的 USE_MOCK_JGB_API=false），
+    而 runner 與 dev compose 都沒有覆寫該值 ⇒ 跑一次測試就對線上發真請求。
+    ⚠️ 危險不只是讀：`create_repair` 是 **POST /repairs**，走到送出會在線上開真報修單。
+
+    本測試鎖三件事：注入存在、豁免旗標是 `ALLOW_REAL_JGB_API`、且豁免會印警告。
+    """
+    src = open(_RUNNER, encoding="utf-8").read()
+    assert "-e USE_MOCK_JGB_API=true" in src, \
+        "runner 未強制注入 USE_MOCK_JGB_API=true——測試層可能打到真 JGB API"
+    assert "ALLOW_REAL_JGB_API" in src, "缺顯式豁免旗標：例外必須說得出口，不能靠改預設"
+    guard = src[src.index("ALLOW_REAL_JGB_API"):]
+    assert "⚠️" in guard[:400], "豁免路徑未印警告——真 API 模式必須是吵的"

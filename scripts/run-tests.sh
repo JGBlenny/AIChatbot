@@ -75,6 +75,23 @@ case "$LAYER" in
   *)           ;;   # unit 與自訂 marker 運算式：兩者皆不注入（維持離線、不受守門管轄）
 esac
 
+# ── 真 API 防護（fail-closed；2026-08-26 加）────────────────────────────────
+#
+# 起因：業主把本機 stack 接到 production JGB（JGB_API_BASE_URL=https://www.jgbsmart.com、
+# USE_MOCK_JGB_API=false）。而 runner 與 docker-compose.dev.yml **都沒有**覆寫該值，
+# 於是 `.env` 的設定會直接被測試容器吃到——跑一次 integration/e2e 就會對線上發真請求。
+#
+# ⚠️ 危險不只是讀：`create_repair` 是 **POST /api/external/v1/repairs**
+#    （jgb_system_api 唯一的寫入端點），走到送出會在**線上開出真的報修單**。
+#
+# 故一律強制注入替身；要打真 API 必須**顯式**開 ALLOW_REAL_JGB_API=1，且會印警告。
+# 同 assert_non_production_db 的 fail-closed 思路：預設安全，例外要說出口。
+if [[ "${ALLOW_REAL_JGB_API:-0}" == "1" ]]; then
+  echo "⚠️  ALLOW_REAL_JGB_API=1 —— 測試將對 **真 JGB API** 發請求（含可能的寫入端點）"
+else
+  ENV_ARGS+=(-e USE_MOCK_JGB_API=true)
+fi
+
 echo "▶ layer=${LAYER}  →  ${PYTEST_CMD[*]}"
 
 # 在容器內先裝測試相依（正式 image 不含），再跑 pytest。
