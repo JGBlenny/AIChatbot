@@ -59,6 +59,90 @@ def _tool_call_to_dict(tc) -> dict:
     }
 
 
+#: `conversational_step` 的 **strict output contract**（業主 2026-08-26 裁定）。
+#:
+#: 為什麼要它：P3 第 2 次付費執行 3/3 都踩到 `action=ask` 卻**沒有 `next_question`**——
+#: `json_object` 只保證「是 JSON」，欄位在不在全靠模型自律，而 mini 不可靠。
+#: strict `json_schema` 由 **API 契約**強制形狀，不是再寫一句 prompt 叫模型乖一點。
+#:
+#: ⚠️ **射程只有這個 evaluator**（`conversational_step_result`）——
+#:    其餘 brain／合成呼叫一律不動（業主明令縮小範圍）。
+#:
+#: ⚠️ **不取代 parser**：schema 只管「欄位在不在、值域對不對」；
+#:    跨欄位的語義矛盾（如 `action=ask` 但 `next_question` 為空字串）
+#:    仍由 `_parse_conversational_step` 判 `missing_next_question`。
+#:    用了 strict schema **不得**把 parser 放寬。
+#:
+#: ⚠️ **不移除 singleton delegation**：schema 保證 `delegate_facet_key` 這個鍵存在，
+#:    但值仍可能是空字串；「唯一合法目標」的決定性補值仍屬契約層。
+#:
+#: 空值約定：沒有轉交／沒有問題要問／沒有面向 → 一律回 **空字串**，不得省略欄位。
+#: `extracted_fields` 的形狀差異：strict 模式不允許自由 key 的物件
+#: （每個 object 都必須 `additionalProperties:false` 且列出所有 key），
+#: 故 API 契約用 `[{field, value}]` 陣列，於解析層還原為 dict——**內部契約不變**。
+CONVERSATIONAL_STEP_SCHEMA: "dict[str, Any]" = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "conversational_step",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["action", "scope", "face", "delegate_facet_key",
+                         "extracted_fields", "next_question", "converge_kind",
+                         "inline_answer"],
+            "properties": {
+                "action": {"type": "string", "enum": ["ask", "converge", "confirm"]},
+                "scope": {"type": "string", "enum": ["stay", "switch"]},
+                "face": {"type": "string", "description": "本輪最貼近的面向；無指向回空字串"},
+                "delegate_facet_key": {
+                    "type": "string",
+                    "description": "scope=switch 時的轉交目標；沒有時回空字串（**不得省略**）"},
+                "extracted_fields": {
+                    "type": "array",
+                    "description": "本輪抽取到的欄位；沒有時回空陣列",
+                    "items": {
+                        "type": "object", "additionalProperties": False,
+                        "required": ["field", "value"],
+                        "properties": {"field": {"type": "string"},
+                                       "value": {"type": "string"}},
+                    }},
+                "next_question": {
+                    "type": "string",
+                    "description": "action=ask 時的下一題；其餘回空字串（**不得省略**）"},
+                "converge_kind": {"type": "string",
+                                  "description": "action=converge 時的收斂類型；其餘回空字串"},
+                "inline_answer": {"type": "string",
+                                  "description": "岔題即答內容；沒有時回空字串"},
+            },
+        },
+    },
+}
+
+
+def _strict_schema_enabled() -> bool:
+    """`BRAIN_STRICT_SCHEMA`（**預設 on**）：關掉即回退 `json_object`（原行為）。
+
+    留旗標的理由不是猶豫，是**可回退**——它改的是 production 的 provider 呼叫形狀。
+    """
+    return os.getenv("BRAIN_STRICT_SCHEMA", "true").lower() != "false"
+
+
+def _normalize_extracted_fields(data: "dict[str, Any]") -> None:
+    """把 strict 契約的 `[{field, value}]` 還原成內部契約的 dict（原地）。
+
+    ⚠️ 只在**確實是那個形狀**時轉換；已經是 dict 就不動——
+    旗標關閉或非 OpenAI provider 時仍走 `json_object`，形狀本來就是 dict。
+    """
+    ef = data.get("extracted_fields")
+    if isinstance(ef, list):
+        data["extracted_fields"] = {
+            item.get("field"): item.get("value")
+            for item in ef
+            if isinstance(item, dict) and item.get("field")
+        }
+
+
 @dataclass(frozen=True)
 class StepResult:
     """`conversational_step` 的解析結果（任務 8.1／需求 5.2）。
@@ -904,6 +988,9 @@ class LLMAnswerOptimizer:
         if not isinstance(data, dict):
             return None
 
+        # ⓪ strict 契約的 `[{field, value}]` → 內部契約的 dict（形狀差異只存在於 API 邊界）
+        _normalize_extracted_fields(data)
+
         # ① scope 正規化（防越界）：非 'switch' 一律視為 'stay'（缺省＝現狀行為）
         scope = "switch" if data.get("scope") == "switch" else "stay"
         data["scope"] = scope
@@ -1079,10 +1166,13 @@ class LLMAnswerOptimizer:
                 {"role": "user", "content": user_prompt},
             ]
             if kb_search is None:
-                # 現行行為：單次 json_object 呼叫（kb_search 未注入＝不掛工具，R1.3 逐位一致）
+                # 單次呼叫：**strict json_schema**（業主 2026-08-26 裁定，射程只有本 evaluator）；
+                # `BRAIN_STRICT_SCHEMA=false` 回退 json_object＝改動前行為。
+                _fmt = (CONVERSATIONAL_STEP_SCHEMA if _strict_schema_enabled()
+                        else {"type": "json_object"})
                 result = self.llm_provider.chat_completion(
                     model=model, temperature=temperature, max_tokens=400,
-                    messages=messages, response_format={"type": "json_object"},
+                    messages=messages, response_format=_fmt,
                 )
                 data = json.loads((result or {}).get('content') or "{}")
             else:
@@ -1111,8 +1201,13 @@ class LLMAnswerOptimizer:
         tool_calls_made = 0
         while True:
             use_tools = tool_calls_made < MAX_TOOL_CALLS
+            # ⚠️ **掛工具的那幾呼不套 strict schema**：模型此時的合法輸出可能是 tool_call
+            #    而非最終 JSON，強制 schema 會與工具語義打架。
+            #    只有**收斂呼叫**（已去 tools）才套——那一呼的輸出契約與非工具路徑相同。
+            _fmt = ({"type": "json_object"} if use_tools or not _strict_schema_enabled()
+                    else CONVERSATIONAL_STEP_SCHEMA)
             kwargs = dict(model=model, temperature=temperature, max_tokens=400,
-                          messages=msgs, response_format={"type": "json_object"})
+                          messages=msgs, response_format=_fmt)
             if use_tools:                          # 未達上限才掛工具；達限→去 tools 強制收斂
                 kwargs["tools"] = [SEARCH_KB_TOOL]
                 kwargs["tool_choice"] = "auto"
