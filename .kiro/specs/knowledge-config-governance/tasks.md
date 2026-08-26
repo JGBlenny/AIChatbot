@@ -53,12 +53,21 @@
 
 ## 4. 現存 L1 findings 的處置（**需業主裁定：這是資料變更**）
 
-- [~] 4.1 `form:billing_inquiry_guest`／`form:maintenance_request` 的 endpoint
-  （`billing_inquiry`／`maintenance_request`）已隨 legacy `billing_api` 刪除
+- [ ] 4.1 **🧠主**（**業主 2026-08-26 已裁定處置**）`form:billing_inquiry_guest`／
+  `form:maintenance_request` 的 endpoint 已隨 legacy `billing_api` 刪除
   ⇒ 兩張表單 `is_active` 但**完成後必然失敗**。
-  掃描器已抓到；**處置需業主裁定**（停用表單 vs 重新接端點），
-  且執行位置是承載 production 等價資料的 DB。
-  → 停用 SQL 已寫在 `conversational-routing-execution/transport-migration-inventory.md` §10。
+
+  **裁定的 L1 deterministic remediation ＝ 停用表單，不是猜一個 replacement endpoint**：
+
+  ```text
+  missing endpoint + active form → is_active = 0（＋對應 rollback 還原原值）
+  ❌ 不得自動映射到名稱相近的 endpoint
+  ❌ 不得自動重建 legacy endpoint
+  ❌ 不得讓 Skill 猜應該接哪支 API
+  ```
+
+  理由：以上三者都已跨入**產品語義**。若日後要恢復功能，
+  另開產品決策決定 replacement endpoint。
   _Requirements: 2.1_
 
 ## 5. Skill：knowledge governance reviewer（**不寫 DB**）
@@ -76,19 +85,32 @@
 
 ## 6. 併入既有稽核體系（**待決定**）
 
-- [ ] 6.1 **🧠主** 決定 `make audit-config` 與 `make audit` 的關係：
+- [~] 6.1 **🧠主**（**業主 2026-08-26 裁定 DEFERRED**：只有第一次全庫結果，
+  不足以證明低誤報率；先累積治理掃描實績再談）決定 `make audit-config` 與 `make audit` 的關係：
   併入（部署前必跑）或並列（獨立節奏）。
   ⚠️ 併入前要先確定誤報率夠低——`check_invariants.sh` 的維護準則第 5 條：
   **FAIL 才擋部署，WARN 是雷達**；稽核疲勞會讓人習慣性跳過。
   _Requirements: 5.2, 5.3_
 
-## 排序與門檻
+## 排序與門檻（**業主 2026-08-26 核准**）
 
 ```text
-不需授權、不碰資料：2.1 → 2.2 → 3.1 → 3.2 → 3.3 → 5.1 → 5.2
-需業主裁定（資料變更）：4.1
-需先有低誤報率的實績：6.1
+APPROVED：2 → 3 → 4 → 5，中間不再逐格詢問
+DEFERRED：6（併入 make audit，需先有低誤報率實績）
 ```
+
+## 新增治理不變量（C9／C10 事件推導出來的）
+
+> **治理規則本身也必須有 provenance 與 executable coverage。**
+
+否則會出現兩種都很危險的情況：
+
+```text
+規則引用不存在的資料欄位      → 永遠不可能正確（C9：立在 request 參數上）
+契約檔宣告規則但 scanner 沒實作 → 看起來受治理，實際沒人在驗
+```
+
+⚠️ 這條由 **Task 2.2**（契約檔 ↔ 掃描器一致性）封住，**不另開研究線**。
 
 ⚠️ 本線與 `conversational-routing-execution` 的 P2 rollout **並行但不互擋**；
 P2 停在業主對「production 等價資料庫」的 A／B 裁定。
