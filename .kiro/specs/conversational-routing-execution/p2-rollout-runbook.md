@@ -108,7 +108,8 @@ hostname
 ```bash
 # ② RAG DB ≠ production DB
 docker exec aichatbot-rag-orchestrator env | grep -E '^DB_(HOST|NAME)='
-docker exec aichatbot-postgres psql -U aichatbot -Atc "SELECT current_database();"
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -Atc \
+  "SELECT current_database(), inet_server_addr();"
 ```
 **預期**：`DB_NAME` 與 production 不同（例如 `aichatbot_admin` 但在非 prod 主機上，
 或另立測試庫）。**兩者同時指向 production 即 STOP。**
