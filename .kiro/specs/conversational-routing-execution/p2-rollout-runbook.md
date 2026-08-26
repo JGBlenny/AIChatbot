@@ -43,6 +43,18 @@ Req.10 對話品質觀測（**沒有**：turn／transcript／judgeable evidence 
 compose 不宣告就不會把 `.env` 的值傳進容器，會出現「旗標設了卻沒生效」。
 兩份 compose 已補宣告，並納入 `_meta` 的 env parity 契約清單。
 
+## 一之二、known-red 基線的變動（誠實記錄）
+
+補宣告三個旗標並納入 env parity 契約後，`_meta` 的 known-red 由 **13 → 16**：
+新增的三筆是同一個既有原因——**測試容器沒有掛 repo 根目錄**，
+`docker-compose.*.yml` 在容器內是 `FileNotFoundError`，與旗標宣告本身無關。
+
+```text
+基線：unit 1407 passed / **16 failed（全部在 tests/unit/_meta/**，逐筆為容器掛載 known-red）
+⚠️ 這三筆要真的變綠，需要讓測試容器看得到 repo 根的 compose 檔——屬 runner 的債，
+   不在 Stage-1 範圍；但**不得**因為「反正本來就紅」而不記。
+```
+
 ## 二、⚠️ 一個必須先確認的前提
 
 repo 內**查無獨立的 RAG staging 環境**（`docs/deployment*` 無 staging 章節、
