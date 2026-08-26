@@ -16,7 +16,7 @@
 ```text
 P1 Task 8 / Req.5.2   mid-session scope=switch 被 validator 吃掉 → 真正的「對話中換面向」
 P2 Task 9 / Req.5.3   repair_create 沒有有效進場點 → 真正的「對話能力可被觸發」
-P3 真 brain regression（C4b-resolver）
+P3 真 brain regression（C4b-resolver）  ✅ **A 通過（2026-08-26，run3，mini，3/3）**；B 仍 INCONCLUSIVE
 P4 Req.10 對話品質 baseline（含 observability prerequisite）
 P5 staging → limited rollout
 ```
