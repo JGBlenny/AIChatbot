@@ -35,9 +35,23 @@ ROUTING_PARAMS = (
 )
 
 
+def _require(path: str) -> str:
+    """compose 檔必須讀得到——讀不到是**測試環境缺陷**，不得被當成產品 known-red。
+
+    容器內經 `docker-compose.dev.yml` 的唯讀掛載提供（`/docker-compose.*.yml`）；
+    掛載若被拿掉，這裡直接說出原因，而不是丟一個 FileNotFoundError 讓人以為是產品紅燈。
+    """
+    if not os.path.exists(path):
+        raise AssertionError(
+            f"讀不到 {path}——測試容器未掛載 compose 檔，parity 契約無法取證。"
+            "請確認 docker-compose.dev.yml 的 volumes 仍含 "
+            "`./docker-compose.prod.yml:/docker-compose.prod.yml:ro` 兩行。")
+    return path
+
+
 def _declared(path: str, key: str) -> "str | None":
     """取 compose 檔中該鍵的宣告字串（去註解與前後空白）；未宣告回 None。"""
-    for line in open(path, encoding="utf-8").read().splitlines():
+    for line in open(_require(path), encoding="utf-8").read().splitlines():
         m = re.match(rf"\s*{re.escape(key)}:\s*(.+?)\s*(?:#.*)?$", line)
         if m:
             return m.group(1).strip()

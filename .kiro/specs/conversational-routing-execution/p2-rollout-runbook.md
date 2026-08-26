@@ -43,16 +43,38 @@ Req.10 對話品質觀測（**沒有**：turn／transcript／judgeable evidence 
 compose 不宣告就不會把 `.env` 的值傳進容器，會出現「旗標設了卻沒生效」。
 兩份 compose 已補宣告，並納入 `_meta` 的 env parity 契約清單。
 
-## 一之二、known-red 基線的變動（誠實記錄）
+## 一之二、P2.1 的前置條件：harness red 已修（**13 → 16 → 0**）
 
-補宣告三個旗標並納入 env parity 契約後，`_meta` 的 known-red 由 **13 → 16**：
-新增的三筆是同一個既有原因——**測試容器沒有掛 repo 根目錄**，
-`docker-compose.*.yml` 在容器內是 `FileNotFoundError`，與旗標宣告本身無關。
+業主裁定「三筆新 red 不得被吸收成新基線」。查證後結論更強：
+**原本那 13 筆也全是同一個缺陷**——測試容器看不到 repo 根的檔案。
 
 ```text
-基線：unit 1407 passed / **16 failed（全部在 tests/unit/_meta/**，逐筆為容器掛載 known-red）
-⚠️ 這三筆要真的變綠，需要讓測試容器看得到 repo 根的 compose 檔——屬 runner 的債，
-   不在 Stage-1 範圍；但**不得**因為「反正本來就紅」而不記。
+test_env_parity_req.py        讀 /docker-compose.{prod,dev}.yml   → FileNotFoundError
+test_runner_layer_contract_req.py  讀 /scripts/run-tests.sh、/.github/workflows/tests.yml → 同上
+```
+
+⚠️ **它們不是「產品既知缺陷」，是測試拿不到它宣稱要驗的證據**。
+更嚴重的推論：這些 parity／runner 契約在紅的期間**完全沒有在保護任何東西**——
+真的出現宣告分歧也看不到。這正是本專案三次因 runner 保真度不足而結論作廢的同一條裂縫。
+
+處置（沿用 `./docs:/docs:ro`、`./.kiro:/.kiro:ro` 的既有慣例，掛在根層對齊 `/app` 的上兩層）：
+
+```yaml
+- ./docker-compose.prod.yml:/docker-compose.prod.yml:ro
+- ./docker-compose.dev.yml:/docker-compose.dev.yml:ro
+- ./scripts:/scripts:ro
+- ./.github:/.github:ro
+```
+
+並在 `_env_parity` 加一道 `_require()`：掛載若被拿掉，直接說出「測試環境未掛載 compose」，
+而不是丟 FileNotFoundError 讓人誤判成產品紅燈。
+
+```text
+現行基線：unit **1423 passed / 0 failed**（_meta 全綠，含新增的三個旗標 parity）
+          integration **237 passed / 4 failed**（`tasks.md:1369` 具名 known-red，**性質不同**：
+          那 4 筆是 3.4 REFUTED 後轉入 routing-authority-model 的 routing regression，
+          屬**產品**已登記缺陷，不得為求綠燈調斷言）
+⚠️ 舊文件記載的「unit 13 known-red」自此作廢；再看到該說法即為過期。
 ```
 
 ## 二、⚠️ 一個必須先確認的前提
