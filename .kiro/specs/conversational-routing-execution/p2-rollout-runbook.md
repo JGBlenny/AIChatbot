@@ -371,3 +371,39 @@ GROUP BY 1 ORDER BY 2 DESC;"
 ⚠️ **放行的射程**：只代表「這條鏈在真環境可運作」。
 **不得**擴寫成「對話品質已改善」——那需要 Req.10 的 baseline，而它仍
 `BLOCKED_BY_OBSERVABILITY`（OBS-1／2／3）。
+
+
+---
+
+# 附錄：本機 stack 目前的連線狀態（2026-08-26，業主指示）
+
+```text
+JGB_API_BASE_URL = **https://www.jgbsmart.com**（production）
+USE_MOCK_JGB_API = false
+Stage-1 五旗標   = GATE true／白名單三面向／SALVAGE false／STRICT_SCHEMA true／SYNTH mini
+adapter 實測     = JGBSystemAPI(use_mock=False, base=www) → get_contracts success，total=509
+```
+
+⚠️ **兩個因此成立的風險，寫在版控裡不靠人記得**（`.env` 不進版控）：
+
+```text
+① **唯一的寫入端點是 create_repair**（POST /api/external/v1/repairs，
+   jgb_system_api.py 的 `_post_request` 唯一呼叫點）。其餘 21 個公開方法都是 GET。
+   修繕面向若走到「送出」，會在**線上開出真的報修單**。
+② **`.env` 的 USE_MOCK_JGB_API=false 會被測試容器吃到**——
+   `scripts/run-tests.sh` 與 `docker-compose.dev.yml` **都沒有**強制覆寫該值，
+   所以此刻跑 integration／e2e 會對 production JGB 發真請求，且可能觸發 ①。
+```
+
+**還原方式**（改回替身，一行）：
+
+```bash
+# .env 改回
+JGB_API_BASE_URL=https://preview.jgbsmart.com
+USE_MOCK_JGB_API=true
+docker compose -f docker-compose.prod.yml up -d --force-recreate rag-orchestrator
+```
+
+**建議的永久防護**（尚未實作，需業主決定是否納入）：
+在 `scripts/run-tests.sh` 的 `ENV_ARGS` 強制注入 `USE_MOCK_JGB_API=true`，
+使**測試層永遠不可能打到真 API**——與既有的 `assert_non_production_db` 同款 fail-closed 思路。
