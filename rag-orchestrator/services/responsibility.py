@@ -139,6 +139,34 @@ def allowed_delegates(config: Any) -> "tuple[str, ...]":
 MAX_DELEGATION_HOPS = 3
 
 
+# ── decision source（裁定 001 ④：technical fail-open ≠ model stay）─────────────
+#
+# 正本：`.kiro/specs/routing-authority-model/responsibility-governance-decision-record.md`
+#
+# ```text
+# responsibility_contract ／ model stay  → **有** commit authority
+# technical_fail_open（brain 例外／schema 或 API 失敗／timeout）
+#                                        → compatibility fallback，
+#                                          **不得**藉此壓過已成立的 direct-answer candidate
+# ```
+#
+# ⚠️ 為什麼不能只看 `verdict == "stay"`：兩者的 verdict 都是 `stay`，
+#    布林值分不出「模型判這輪該由我接」與「評估器壞掉、照舊放行」。
+#    若讓後者也能搶走 Knowledge path，等於**技術故障取得 routing authority**。
+
+#: 模型真的判了——`conversational_step_result` 回了可用 payload，verdict 出自模型。
+DECISION_SOURCE_MODEL = "model"
+#: 技術故障造成的相容性 fallback：規則取不到／brain 無回應／`action` 越界／例外。
+#: ⚠️ 這種 `stay` **沒有** commit authority（見 `has_commit_authority`）。
+DECISION_SOURCE_TECHNICAL_FAIL_OPEN = "technical_fail_open"
+#: `action` 越界但 `scope` 仍可信時的救援（`FACET_SCOPE_SALVAGE`）。
+#: 只會產生 `switch`，永遠不會產生 `stay`，因此不涉及 commit authority。
+DECISION_SOURCE_CONTRACT_SALVAGE = "contract_salvage"
+#: 決定性護欄造成的終止（delegation cycle／未知或停用的 delegate）。
+#: ⚠️ **不是** fail-open：這些是設定或圖形問題，硬歸進技術故障率會把設定錯誤洗掉。
+DECISION_SOURCE_GUARD = "guard"
+
+
 @dataclass(frozen=True)
 class ResponsibilityDecision:
     """一個候選面向對本輪 query 的責任判定。
@@ -150,17 +178,41 @@ class ResponsibilityDecision:
     facet_key: Optional[str]
     verdict: str                      # "stay" ｜ "switch"
     delegate_to: Optional[str] = None
-    reason: str = ""                  # 判定來源（含 fail-open 種類）
+    reason: str = ""                  # 判定來源的**細節字串**（含 fail-open 種類）
     evidence: "dict[str, Any]" = None  # type: ignore[assignment]
     #: **轉交目標由誰決定**——telemetry 必須分得開，否則看不出模型到底有沒有在做這件事。
     #:   model_delegate      模型自己填了合法目標
     #:   contract_singleton  模型沒填，且契約白名單**只有一個**合法目標 → 決定性補上
     #:   None                沒有轉交（stay，或 switch 但無法解析目標）
     delegate_source: Optional[str] = None
+    #: **verdict 出自誰**——`DECISION_SOURCE_*` 之一。
+    #: ⚠️ 預設刻意是 `technical_fail_open`：漏填時**失去** commit authority（可回復的錯），
+    #:    而不是憑空取得（不可回復的越權）。任何新建構點都必須明寫本欄。
+    decision_source: str = DECISION_SOURCE_TECHNICAL_FAIL_OPEN
 
     @property
     def stay(self) -> bool:
+        """**行為述詞**：這條 delegation chain 是否停在本面向。
+
+        ⚠️ **不是 authority 述詞**。fail-open 也會回 True（刻意的：新機制故障
+        不得擋掉原本會成立的進場）。要判「能不能搶走 Knowledge path」請用
+        `has_commit_authority`，**不得**用本布林值（裁定 001 ④）。
+        """
         return self.verdict == "stay"
+
+    @property
+    def is_technical_fail_open(self) -> bool:
+        """verdict 是技術故障頂上去的，不是模型判的。"""
+        return self.decision_source == DECISION_SOURCE_TECHNICAL_FAIL_OPEN
+
+    @property
+    def has_commit_authority(self) -> bool:
+        """**真實 responsibility stay**——唯一能搶走 Knowledge direct-answer path 的東西。
+
+        裁定 001 ③：`category exists`／`candidate generated`／`scope=switch`／
+        fail-open **一律不算**。這裡把那條規則寫成一個述詞，讓呼叫端沒有偷懶的餘地。
+        """
+        return self.verdict == "stay" and self.decision_source == DECISION_SOURCE_MODEL
 
 
 @dataclass(frozen=True)
@@ -171,6 +223,18 @@ class EntryResolution:
     committed_config: Any = None
     chain: "list[dict[str, Any]]" = None   # type: ignore[assignment]
     stop_reason: str = ""
+    #: **這個 commit 出自誰**——`DECISION_SOURCE_*` 之一；沒 commit 時為 None。
+    #: ⚠️ 預設 None 而非 model：漏填要往「失去 authority」的方向錯。
+    commit_source: Optional[str] = None
+
+    @property
+    def has_commit_authority(self) -> bool:
+        """committed 的面向是否由**真實 model stay** 取得（裁定 001 ③④）。
+
+        ⚠️ `committed_key is not None` **不等於**有 authority：fail-open 也會 commit
+        （相容性照舊進場），但那不足以壓過已成立的 direct-answer candidate。
+        """
+        return bool(self.committed_key) and self.commit_source == DECISION_SOURCE_MODEL
 
 
 def _resolve_delegate(config: Any, verdict: str, result: Any) -> "tuple[Optional[str], Optional[str]]":
@@ -219,13 +283,18 @@ async def evaluate_responsibility(
 
     ⚠️ 任何失敗一律 **fail-open（stay）**：規則取不到、brain 失敗、例外——
     維持既有「照舊進場」行為，不因新機制故障而擋掉原本會成立的進場。
+
+    ⚠️ 但那種 stay 一律標 `decision_source=technical_fail_open`，
+    **沒有** commit authority（裁定 001 ④）：照舊進場是相容性行為，
+    不等於「這個面向贏得了這輪的責任」。兩者由 `has_commit_authority` 分開。
     """
     facet_key = getattr(config, "key", None)
     try:
         rctx = await build_responsibility_context(db_pool, config)
         if rctx is None:
-            return ResponsibilityDecision(facet_key, "stay",
-                                          reason="rules_unavailable_fail_open", evidence={})
+            return ResponsibilityDecision(
+                facet_key, "stay", reason="rules_unavailable_fail_open", evidence={},
+                decision_source=DECISION_SOURCE_TECHNICAL_FAIL_OPEN)
         if optimizer is None:
             from services.llm_answer_optimizer import LLMAnswerOptimizer
             optimizer = LLMAnswerOptimizer()
@@ -234,9 +303,10 @@ async def evaluate_responsibility(
             {"collected_fields": {}, "asked_count": 0, "recommended": False},
             user_message, delegates=list(delegate_specs(config)) or None)
         if result is None:
-            return ResponsibilityDecision(facet_key, "stay",
-                                          reason="brain_unavailable_fail_open",
-                                          evidence=rctx.as_evidence())
+            return ResponsibilityDecision(
+                facet_key, "stay", reason="brain_unavailable_fail_open",
+                evidence=rctx.as_evidence(),
+                decision_source=DECISION_SOURCE_TECHNICAL_FAIL_OPEN)
         if result.payload is None:
             # 任務 8.3／需求 5.2：`action` 越界不再連同 `scope` 一起丟。
             # ⚠️ 這條路徑對本模組特別致命——舊碼一律 fail-open 成 stay，
@@ -246,20 +316,24 @@ async def evaluate_responsibility(
                 return ResponsibilityDecision(
                     facet_key, "switch", delegate_to=_d, delegate_source=_src,
                     reason=f"responsibility_contract_salvaged:{result.reject_reason}",
-                    evidence=rctx.as_evidence())
+                    evidence=rctx.as_evidence(),
+                    decision_source=DECISION_SOURCE_CONTRACT_SALVAGE)
             return ResponsibilityDecision(
                 facet_key, "stay",
                 reason=f"action_rejected_fail_open:{result.reject_reason}",
-                evidence=rctx.as_evidence())
+                evidence=rctx.as_evidence(),
+                decision_source=DECISION_SOURCE_TECHNICAL_FAIL_OPEN)
         verdict = "switch" if result.scope == "switch" else "stay"
         delegate, source = _resolve_delegate(config, verdict, result)
         return ResponsibilityDecision(
             facet_key, verdict, delegate_to=delegate, delegate_source=source,
-            reason="responsibility_contract", evidence=rctx.as_evidence())
+            reason="responsibility_contract", evidence=rctx.as_evidence(),
+            decision_source=DECISION_SOURCE_MODEL)
     except Exception as e:                                     # noqa: BLE001
         print(f"⚠️ [responsibility] 判定失敗，fail-open 照舊進場：{e}")
-        return ResponsibilityDecision(facet_key, "stay",
-                                      reason=f"error_fail_open:{type(e).__name__}", evidence={})
+        return ResponsibilityDecision(
+            facet_key, "stay", reason=f"error_fail_open:{type(e).__name__}", evidence={},
+            decision_source=DECISION_SOURCE_TECHNICAL_FAIL_OPEN)
 
 
 async def resolve_entry_candidate(
@@ -275,6 +349,10 @@ async def resolve_entry_candidate(
              └─ switch 無可用 delegate       → 不 commit，走既有 fallback
     ```
 
+    ⚠️ commit 了**不等於**贏得責任：fail-open 的 stay 一樣會 commit（相容性照舊進場），
+    但 `commit_source=technical_fail_open`、`has_commit_authority` 為 False。
+    要用這個結果去壓過 Knowledge direct answer 的呼叫端，必須讀 `has_commit_authority`。
+
     決定性護欄：`visited`（同一面向不重評，A→B→A 不成環）與 `MAX_DELEGATION_HOPS`。
     ⚠️ **未知或停用的 delegate 一律 fail closed**（不 commit）——白名單指向不存在的面向
     是設定錯誤，硬進場只會把錯誤藏起來。
@@ -288,25 +366,33 @@ async def resolve_entry_candidate(
     for _hop in range(MAX_DELEGATION_HOPS + 1):
         key = getattr(config, "key", None)
         if key in visited:
-            chain.append({"facet_key": key, "verdict": "cycle"})
+            chain.append({"facet_key": key, "verdict": "cycle",
+                          "decision_source": DECISION_SOURCE_GUARD})
             return EntryResolution(None, None, chain, "delegation_cycle")
         visited.append(key)
 
         decision = await evaluate_responsibility(db_pool, config, user_message,
                                                  optimizer=optimizer)
-        chain.append({"facet_key": key, "verdict": decision.verdict,
+        chain.append({# ⚠️ evidence 先展開，決策欄位後寫：evidence 是外來 dict，
+                      #    不得覆蓋掉 authority 相關的欄位。
+                      **(decision.evidence or {}),
+                      "facet_key": key, "verdict": decision.verdict,
                       "delegate_to": decision.delegate_to,
                       "delegate_source": decision.delegate_source,
                       "reason": decision.reason,
-                      **(decision.evidence or {})})
+                      # ⚠️ 結構化欄位，**不是** `reason` 的複述：telemetry 與
+                      #    authority 判定都讀這格，不得回頭用字串前綴嗅探 `reason`。
+                      "decision_source": decision.decision_source})
         if decision.stay:
-            return EntryResolution(key, config, chain, "stay")
+            return EntryResolution(key, config, chain, "stay",
+                                   commit_source=decision.decision_source)
         if not decision.delegate_to:
             return EntryResolution(None, None, chain, "switch_without_delegate")
 
         nxt = await config_lookup(db_pool, decision.delegate_to)
         if nxt is None or not getattr(nxt, "enabled", False):
-            chain.append({"facet_key": decision.delegate_to, "verdict": "unavailable"})
+            chain.append({"facet_key": decision.delegate_to, "verdict": "unavailable",
+                          "decision_source": DECISION_SOURCE_GUARD})
             return EntryResolution(None, None, chain, "unknown_or_disabled_delegate")
         config = nxt
 

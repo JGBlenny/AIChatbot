@@ -187,6 +187,8 @@ async def test_responsibility_stays_when_salvage_disabled(monkeypatch):
     d = await _decide(_brain_rejecting_with_switch(), _cfg("a"))
     assert d.stay
     assert d.reason == "action_rejected_fail_open:action_out_of_range"
+    # 裁定 001 ④：這種 stay 是技術故障頂上去的，不得取得 commit authority
+    assert d.is_technical_fail_open and not d.has_commit_authority
 
 
 @pytest.mark.req("conversational-routing-execution:5.2")
@@ -197,6 +199,10 @@ async def test_responsibility_switches_when_salvage_enabled(monkeypatch):
                       _cfg("a", delegates=("contract_closeout",)))
     assert not d.stay and d.delegate_to == "contract_closeout"
     assert d.reason == "responsibility_contract_salvaged:action_out_of_range"
+    # salvage 是**契約**救援，不是技術故障；但它是 switch，一樣沒有 commit authority
+    from services.responsibility import DECISION_SOURCE_CONTRACT_SALVAGE
+    assert d.decision_source == DECISION_SOURCE_CONTRACT_SALVAGE
+    assert not d.is_technical_fail_open and not d.has_commit_authority
 
 
 @pytest.mark.req("conversational-routing-execution:5.2")
@@ -208,6 +214,7 @@ async def test_unparseable_output_still_fails_open_regardless_of_flag(monkeypatc
         monkeypatch.setenv("FACET_SCOPE_SALVAGE", flag)
         d = await _decide(brain, _cfg("a"))
         assert d.stay and d.reason == "brain_unavailable_fail_open"
+        assert d.is_technical_fail_open and not d.has_commit_authority
 
 
 @pytest.mark.req("conversational-routing-execution:5.2")

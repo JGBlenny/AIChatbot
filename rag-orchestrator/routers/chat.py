@@ -856,7 +856,8 @@ async def _resolve_pre_commit_candidate(db_pool, cfg, user_message: Optional[str
         _meter_decision(snapshot={"resolver": {
             "seed_facet": seed_key, "final_committed_facet": seed_key,
             "fallback_reason": f"resolver_error:{type(e).__name__}",
-            "fail_open": True, "hop_count": 0, "resolver_model_calls": 0,
+            "fail_open": True, "commit_source": "technical_fail_open",
+            "has_commit_authority": False, "hop_count": 0, "resolver_model_calls": 0,
             "resolver_latency_ms": int((time.time() - t0) * 1000)}})
         return cfg
 
@@ -869,8 +870,13 @@ def _resolver_telemetry(seed_key, res, latency_ms: int) -> dict:
     以及 **delegate_source 分布**（model_delegate vs contract_singleton）——
     後者是 2026-08-26 P3 實測後新增：mini 判對 switch 但常不填目標，
     若不分開記，上線後會看不出模型退化。
+    以及 **commit authority**（`commit_source`／`has_commit_authority`）——
+    2026-08-27 裁定 001 ④ 後新增：fail-open 的 stay 一樣會 commit，
+    若不分開記，「技術故障率」會被記成「面向命中率」。
     ⚠️ 這是**上線觀測**，不是 Task 11 的對話品質基準——不記問句與答案。
     """
+    from services.responsibility import DECISION_SOURCE_TECHNICAL_FAIL_OPEN
+
     hops = []
     model_calls = 0
     for h in (res.chain or []):
@@ -880,11 +886,18 @@ def _resolver_telemetry(seed_key, res, latency_ms: int) -> dict:
         # ⚠️ **轉交目標由誰決定**必須看得出來，否則上線後無從得知
         #    「模型有沒有在做這件事」與「是不是全靠契約 singleton 撐著」。
         #    值域：model_delegate／contract_singleton／None（無轉交）
-        _fail_open = bool(reason) and not str(reason).startswith("responsibility_contract")
+        #
+        # ⚠️ **verdict 出自誰**改讀結構化欄位（裁定 001 ④）。
+        #    舊碼用 `reason.startswith("responsibility_contract")` 嗅探字串——
+        #    改一個 reason 字面值就會靜默翻轉 fail-open 統計，正是不該留的耦合。
+        #    缺欄位一律當 technical_fail_open：漏填要往「失去 authority」的方向錯。
+        _source = h.get("decision_source") or DECISION_SOURCE_TECHNICAL_FAIL_OPEN
+        _fail_open = _source == DECISION_SOURCE_TECHNICAL_FAIL_OPEN
         hops.append({"candidate_facet": h.get("facet_key"), "scope": h.get("verdict"),
                      "delegate_facet_key": h.get("delegate_to"),
                      "delegate_source": h.get("delegate_source"),
-                     "decision_source": reason,
+                     "decision_source": _source,
+                     "decision_reason": reason,
                      "fail_open": _fail_open})
     return {
         "seed_facet": seed_key,
@@ -892,6 +905,10 @@ def _resolver_telemetry(seed_key, res, latency_ms: int) -> dict:
         "hop_count": len(hops),
         "hops": hops,
         "fail_open": any(h["fail_open"] for h in hops),
+        # ⚠️ 上線後要能分開統計「真的判給這個面向」與「評估器壞掉照舊進場」——
+        #    兩者的 committed_facet 長得一模一樣，只有這格分得開。
+        "commit_source": getattr(res, "commit_source", None),
+        "has_commit_authority": bool(getattr(res, "has_commit_authority", False)),
         "fallback_reason": None if res.committed_key else res.stop_reason,
         "resolver_model_calls": model_calls,
         "resolver_latency_ms": latency_ms,

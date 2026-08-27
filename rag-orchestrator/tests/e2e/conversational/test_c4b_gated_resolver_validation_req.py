@@ -365,7 +365,8 @@ def test_gated_resolver_vertical_slice(client, rig):
         record = evaluate_brain_grounding(answer, spec) if answer else {"passed": False}
         for _res in resolutions:
             for _h in _res["chain"]:
-                _h["fail_open"] = _h.get("reason") != "responsibility_contract"
+                # 裁定 001 ④：讀結構化 decision_source，缺欄位一律當技術故障。
+                _h["fail_open"] = _h.get("decision_source", "technical_fail_open") != "model"
         rec = {"repetition": rep, "session_id": sid,
                "http": [r1.status_code, r2.status_code],
                "turn1_answer": (r1.json().get("answer") if r1.status_code == 200 else None),
@@ -394,9 +395,10 @@ def test_gated_resolver_vertical_slice(client, rig):
         if keys != [TARGET]:
             failures.append(f"{tag}②: session rows={keys}")
         # ⑤ 防假綠：任一跳 fail_open 即不算過
-        reasons = [h.get("reason") for h in res["chain"]]
-        if any(r != "responsibility_contract" for r in reasons):
-            failures.append(f"{tag}⑤: stay_source 非 model_verdict → {reasons}")
+        sources = [h.get("decision_source", "technical_fail_open") for h in res["chain"]]
+        if any(sc != "model" for sc in sources):
+            reasons = [h.get("reason") for h in res["chain"]]
+            failures.append(f"{tag}⑤: decision_source 非 model → {sources} / {reasons}")
         if not rec["grounding_record"].get("passed"):
             failures.append(f"{tag}③④: grounding／answer 未通過 → "
                             f"{rec['grounding_record'].get('violated_dimensions')}")

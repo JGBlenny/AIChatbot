@@ -14,6 +14,9 @@ import pytest
 
 from services.conversational_config import ConversationalConfig
 from services.responsibility import (
+    DECISION_SOURCE_GUARD,
+    DECISION_SOURCE_MODEL,
+    DECISION_SOURCE_TECHNICAL_FAIL_OPEN,
     MAX_DELEGATION_HOPS,
     evaluate_responsibility,
     resolve_entry_candidate,
@@ -149,6 +152,8 @@ async def test_missing_rules_fails_open_to_stay():
     with patch("services.conversational_rules.load_rules", new=AsyncMock(return_value=None)):
         d = await evaluate_responsibility(MagicMock(), _cfg("a"), "問句", optimizer=MagicMock())
     assert d.stay and d.reason == "rules_unavailable_fail_open"
+    assert d.decision_source == DECISION_SOURCE_TECHNICAL_FAIL_OPEN
+    assert d.is_technical_fail_open and not d.has_commit_authority
 
 
 @pytest.mark.req("face-exit-before-grounding:1")
@@ -159,6 +164,8 @@ async def test_brain_failure_fails_open_to_stay():
          patch("services.system_context.get_system_context", new=AsyncMock(return_value="C")):
         d = await evaluate_responsibility(MagicMock(), _cfg("a"), "問句", optimizer=brain)
     assert d.stay and d.reason == "brain_unavailable_fail_open"
+    assert d.decision_source == DECISION_SOURCE_TECHNICAL_FAIL_OPEN
+    assert d.is_technical_fail_open and not d.has_commit_authority
 
 
 # ── chat.py 接線：預設不改變行為 ─────────────────────────────────────────────
@@ -226,16 +233,23 @@ def test_resolver_telemetry_shape_supports_the_rollout_rates():
     from services.responsibility import EntryResolution
 
     chain = [{"facet_key": "bill_diagnosis", "verdict": "switch",
-              "delegate_to": "billing_anomaly", "reason": "responsibility_contract"},
+              "delegate_to": "billing_anomaly", "reason": "responsibility_contract",
+              "decision_source": DECISION_SOURCE_MODEL},
              {"facet_key": "billing_anomaly", "verdict": "stay",
-              "delegate_to": None, "reason": "brain_unavailable_fail_open"}]
-    t = _resolver_telemetry("bill_diagnosis",
-                            EntryResolution("billing_anomaly", None, chain, "stay"), 42)
+              "delegate_to": None, "reason": "brain_unavailable_fail_open",
+              "decision_source": DECISION_SOURCE_TECHNICAL_FAIL_OPEN}]
+    t = _resolver_telemetry(
+        "bill_diagnosis",
+        EntryResolution("billing_anomaly", None, chain, "stay",
+                        commit_source=DECISION_SOURCE_TECHNICAL_FAIL_OPEN), 42)
 
     assert t["seed_facet"] == "bill_diagnosis" and t["final_committed_facet"] == "billing_anomaly"
     assert t["hop_count"] == 2 and t["resolver_latency_ms"] == 42
     assert t["fail_open"] is True                      # 第二跳是 fail-open
     assert t["hops"][0]["fail_open"] is False and t["hops"][1]["fail_open"] is True
+    # 裁定 001 ④：commit 了不等於贏得責任——fail-open 頂上去的 commit 沒有 authority
+    assert t["commit_source"] == DECISION_SOURCE_TECHNICAL_FAIL_OPEN
+    assert t["has_commit_authority"] is False
     assert t["fallback_reason"] is None                # 有 commit → 非 fallback
     assert t["resolver_model_calls"] == 2
     blob = json.dumps(t, ensure_ascii=False)
@@ -252,3 +266,128 @@ def test_telemetry_records_fallback_reason_when_nothing_committed():
     t = _resolver_telemetry("a", EntryResolution(None, None, chain, "switch_without_delegate"), 7)
     assert t["final_committed_facet"] is None
     assert t["fallback_reason"] == "switch_without_delegate"
+
+
+# ── 裁定 001 ④：technical fail-open ≠ model stay ─────────────────────────────
+#
+# 正本：`.kiro/specs/routing-authority-model/responsibility-governance-decision-record.md`
+# 要鎖的命題：
+#
+# > **只有真實 responsibility `stay` 有 commit authority；
+# >   技術故障頂上去的 `stay` 只是相容性 fallback，不得藉此壓過 direct-answer candidate。**
+#
+# ⚠️ 這裡刻意**不**測 `d.stay`：那格對兩者都是 True，正是它分不出來才要有本節。
+
+
+def _fail_open_cases():
+    """四條 fail-open 路徑，一條都不能漏——漏掉的那條就是取得越權的那條。"""
+    from services.llm_answer_optimizer import StepResult
+
+    async def _no_rules(_pool, _role):
+        return None
+
+    ok_ctx = AsyncMock(return_value="C")
+
+    def _brain(ret=None, exc=None):
+        b = MagicMock()
+        b.conversational_step_result = AsyncMock(return_value=ret, side_effect=exc)
+        return b
+
+    return [
+        # (id, load_rules, optimizer, 期望 reason 前綴)
+        ("rules_unavailable", _no_rules, MagicMock(), "rules_unavailable_fail_open"),
+        ("brain_unavailable", None, _brain(None), "brain_unavailable_fail_open"),
+        ("action_rejected", None,
+         _brain(StepResult(payload=None, scope="stay", reject_reason="action_out_of_range")),
+         "action_rejected_fail_open"),
+        ("exception", None, _brain(exc=RuntimeError("boom")), "error_fail_open"),
+    ], ok_ctx
+
+
+@pytest.mark.req("routing-authority-model:ruling-001-4")
+@pytest.mark.parametrize("idx", range(4))
+async def test_technical_fail_open_stays_but_has_no_commit_authority(idx):
+    cases, ok_ctx = _fail_open_cases()
+    name, rules, brain, prefix = cases[idx]
+    rules_patch = (patch("services.conversational_rules.load_rules", new=rules) if rules
+                   else patch("services.conversational_rules.load_rules",
+                              new=AsyncMock(return_value="R")))
+    with rules_patch, patch("services.system_context.get_system_context", new=ok_ctx):
+        d = await evaluate_responsibility(MagicMock(), _cfg("a"), "問句", optimizer=brain)
+
+    assert d.stay, f"{name}：fail-open 仍須照舊進場（相容性行為不得改變）"
+    assert d.reason.startswith(prefix), f"{name}：reason={d.reason}"
+    assert d.decision_source == DECISION_SOURCE_TECHNICAL_FAIL_OPEN, name
+    assert d.is_technical_fail_open, name
+    assert not d.has_commit_authority, (
+        f"{name}：技術故障不得取得 routing authority（裁定 001 ④）")
+
+
+@pytest.mark.req("routing-authority-model:ruling-001-4")
+async def test_model_stay_is_the_only_thing_with_commit_authority():
+    """對照組：同樣是 `stay`，出自模型的那個**必須**有 authority——
+    否則本測試只是把所有 stay 一律否決，鑑別力為零。"""
+    brain = _Brain({"a": ("stay", None)})
+    r_patch, c_patch, _ = _patched({}, brain)
+    with r_patch, c_patch:
+        d = await evaluate_responsibility(MagicMock(), _cfg("a"), "問句", optimizer=brain)
+    assert d.stay and d.decision_source == DECISION_SOURCE_MODEL
+    assert not d.is_technical_fail_open
+    assert d.has_commit_authority
+
+
+@pytest.mark.req("routing-authority-model:ruling-001-4")
+async def test_switch_never_has_commit_authority_even_from_the_model():
+    """裁定 001 ③：`scope=switch` 一律不算「贏得責任」，即使是模型判的。"""
+    brain = _Brain({"a": ("switch", "b")})
+    r_patch, c_patch, _ = _patched({}, brain)
+    with r_patch, c_patch:
+        d = await evaluate_responsibility(MagicMock(), _cfg("a", ["b"]), "問句", optimizer=brain)
+    assert d.verdict == "switch" and d.decision_source == DECISION_SOURCE_MODEL
+    assert not d.has_commit_authority
+
+
+@pytest.mark.req("routing-authority-model:ruling-001-4")
+async def test_entry_resolution_carries_the_authority_of_its_commit():
+    """`committed_key is not None` **不等於**有 authority——兩種 commit 都要驗到。"""
+    # (a) 真實 model stay → 有 authority
+    registry = {"a": _cfg("a")}
+    res = await _resolve(registry, _Brain({"a": ("stay", None)}), "a")
+    assert res.committed_key == "a" and res.commit_source == DECISION_SOURCE_MODEL
+    assert res.has_commit_authority
+
+    # (b) brain 掛掉 → 一樣 commit（相容性），但**沒有** authority
+    dead = MagicMock()
+    dead.conversational_step_result = AsyncMock(return_value=None)
+    res2 = await _resolve(registry, dead, "a")
+    assert res2.committed_key == "a", "fail-open 仍須照舊進場"
+    assert res2.commit_source == DECISION_SOURCE_TECHNICAL_FAIL_OPEN
+    assert not res2.has_commit_authority
+
+
+@pytest.mark.req("routing-authority-model:ruling-001-4")
+def test_missing_decision_source_defaults_to_losing_authority():
+    """漏填要往**可回復**的方向錯：失去 authority，而不是憑空取得。"""
+    from services.responsibility import EntryResolution, ResponsibilityDecision
+
+    d = ResponsibilityDecision("a", "stay")                     # 沒寫 decision_source
+    assert d.stay and not d.has_commit_authority and d.is_technical_fail_open
+    assert not EntryResolution("a", None, [], "stay").has_commit_authority
+
+
+@pytest.mark.req("routing-authority-model:ruling-001-4")
+def test_guard_terminations_are_not_counted_as_technical_fail_open():
+    """cycle／unknown delegate 是**設定問題**，不是技術故障——
+    混進 fail-open 率會把設定錯誤洗成「模型服務不穩」。"""
+    from routers.chat import _resolver_telemetry
+    from services.responsibility import EntryResolution
+
+    chain = [{"facet_key": "a", "verdict": "switch", "delegate_to": "b",
+              "reason": "responsibility_contract", "decision_source": DECISION_SOURCE_MODEL},
+             {"facet_key": "b", "verdict": "unavailable",
+              "decision_source": DECISION_SOURCE_GUARD}]
+    t = _resolver_telemetry("a", EntryResolution(None, None, chain,
+                                                 "unknown_or_disabled_delegate"), 7)
+    assert t["fail_open"] is False, "護欄終止不得被記成技術故障"
+    assert t["has_commit_authority"] is False and t["commit_source"] is None
+    assert t["fallback_reason"] == "unknown_or_disabled_delegate"
