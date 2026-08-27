@@ -46,19 +46,23 @@
 
 ## 3. `fix-config`（L1 決定性修正）
 
-- [ ] 3.1 **🧠主** `make fix-config --dry-run`：輸出**將要執行**的變更，不寫入。
+- [x] 3.1 **🧠主** `make fix-config --dry-run`：輸出**將要執行**的變更，不寫入。
   _Requirements: 3.1_
 
-- [ ] 3.2 **🧠主** 每一筆寫入產生對應 rollback SQL（沿用 `seed_*_rollback.sql` 慣例）。
+- [x] 3.2 **🧠主** 每一筆寫入產生對應 rollback SQL（沿用 `seed_*_rollback.sql` 慣例）。
   _Requirements: 3.2_
 
-- [ ] 3.3 **🧠主 🔍V** autofix 範圍**只限 L1**，且逐條列出「可修」與「不可修」的理由；
+- [x] 3.3 **🧠主 🔍V** autofix 範圍**只限 L1**，且逐條列出「可修」與「不可修」的理由；
   L2 需先寫得出明確規則才可自動化，寫不出來就降 L3。
-  _Requirements: 3.3, 2.2_
+  → 實作 `rag-orchestrator/tools/fix_config.py` ＋ `make fix-config`（預設 dry-run，
+    `APPLY=1` 才真跑並同步產生 rollback SQL）。
+    **可自動修的只有 C10**（active 表單指向不存在的 endpoint → is_active=false）——
+    其餘 C1／C2／C3／C4／C5／C6／C8／C9 逐條寫明**為何不可修**（都要猜語義）。
+  _Requirements: 3.1, 3.2, 3.3, 2.2_
 
 ## 4. 現存 L1 findings 的處置（**需業主裁定：這是資料變更**）
 
-- [ ] 4.1 **🧠主**（**業主 2026-08-26 已裁定處置**）`form:billing_inquiry_guest`／
+- [x] 4.1 **🧠主**（**業主 2026-08-26 裁定，2026-08-27 執行**）`form:billing_inquiry_guest`／
   `form:maintenance_request` 的 endpoint 已隨 legacy `billing_api` 刪除
   ⇒ 兩張表單 `is_active` 但**完成後必然失敗**。
 
@@ -73,6 +77,13 @@
 
   理由：以上三者都已跨入**產品語義**。若日後要恢復功能，
   另開產品決策決定 replacement endpoint。
+
+  **執行結果（2026-08-27）**：兩張表單 `is_active` 已改為 false；
+  rollback 寫入 `database/migrations/rollback/fix_config_disable_broken_forms_rollback.sql`；
+  `make audit-config` 由 2 筆 L1 → **0 筆**。
+  ⚠️ 射程：這是**斷未來的地雷**，不是修正在流血的傷口——
+  實查該兩張表單的 trigger intent 在 `intents` 表**皆不存在**（正對照：intents 共 54 筆），
+  且 form_sessions／form_submissions 各 0 筆、無知識以 form_id 直指、無 next_form_id 串接。
   _Requirements: 2.1_
 
 ## 5. Skill：knowledge governance reviewer（**不寫 DB**）

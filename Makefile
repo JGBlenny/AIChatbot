@@ -22,6 +22,9 @@ test-cov:                  ## unit + 覆蓋率報告
 trace:                     ## 產生追溯矩陣報告
 	python3 tools/traceability/scan.py
 
+fix-config:                ## L1 決定性修正（預設 dry-run；`make fix-config APPLY=1` 才真跑並產生 rollback）
+	APPLY=$(APPLY) python3 rag-orchestrator/tools/fix_config.py
+
 audit-config:              ## 設定契約稽核（knowledge-config-governance；唯讀，L3 只提案不擋）
 	python3 rag-orchestrator/tools/audit_config.py
 
