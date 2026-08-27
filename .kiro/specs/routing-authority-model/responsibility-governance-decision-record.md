@@ -183,3 +183,103 @@ authority_origin = **unresolved**
 
 > ⚠️ 本檔目前**全部空白**。在填寫並由決策方確認之前，
 > **不得**被任何設計文件引用為 authority origin。
+
+---
+
+## 裁定 001｜`_top1_relevance_gate` 的 authority 射程與 precedence
+
+> 2026-08-27｜裁定者：**業主（產品決策方）**｜觸發：P2.5 canary 被該 gate 攔截
+> 依據：`decision-record-top1-gate-authority.md`（三案並列稿）
+
+### ① Authority 射程：採 A，gate 縮回「Direct Answer」
+
+> **`_top1_relevance_gate` 只具有「這筆 Knowledge 能不能直接回答使用者」的否決權；
+> 不具有消滅該 Knowledge 所攜帶 Face nomination evidence 的權力。**
+
+```text
+gate = NO
+  ✅ 可推出：這筆 knowledge **不可直接回答**
+  ❌ 不可推出：這筆 knowledge 的 categories **不得提供 Face candidate**
+```
+
+理由**不是**「這次 slice 剛好需要」，而是兩者本就是不同命題：
+
+```text
+knowledge applicability          這份內容足不足以直接回答？
+Face responsibility applicability 這個 Face 是否應接下這個 query？
+```
+
+現行把第一個 NO 擴張成第二個 NO ＝ **authority overreach**。
+⚠️ 這**不是**讓 category 重新取得 authority——D1／D2 不變：
+`category = nomination evidence only`；`commit authority = pre-entry responsibility`。
+
+### ② Precedence：兩條路徑從 retrieval evidence **分岔**，不串成父子
+
+```text
+retrieved knowledge
+  ├─ Direct Answer path ─ _top1_relevance_gate ─ YES → knowledge answer candidate
+  │                                             └ NO  → 禁止該筆直接回答
+  └─ Face nomination path ─ categories → candidate Face
+                              └ pre-entry responsibility ─ stay → commit
+                                                          └ switch／reject → 不 commit
+```
+
+同輪衝突時的優先序（**業主裁定**）：
+
+> **已通過 responsibility applicability 的 Face，優先於一般 Knowledge direct answer。**
+
+因為 `stay` 回答的是更高階的責任命題（「這個 query 屬於我的處理範圍」），
+而 direct-answer gate 只回答「這份文字足不足以回答」。
+
+控制流：
+
+```text
+1 retrieval 產生 nomination evidence
+2 若有符合 Stage-1 allowlist 的 Face candidate
+3 跑 pre-entry responsibility
+4 stay → commit Face
+5 沒有 Face stay → 才用通過 direct-answer applicability 的 Knowledge candidate
+6 兩邊都沒有 → 既有 fallback
+```
+
+### ③ **只有真實 responsibility `stay` 能搶走 Knowledge path**
+
+以下**一律不得**被當成「Face 優先」：
+
+```text
+❌ category exists
+❌ candidate generated
+❌ scope = switch
+❌ responsibility unavailable ／ fail-open
+```
+
+### ④ fail-open 必須與 model stay 分開（**實作前必補的 contract**）
+
+```text
+responsibility_contract ／ model stay  → **有** commit authority
+technical_fail_open（brain 例外／schema 或 API 失敗／timeout）
+                                       → compatibility fallback，
+                                         **不得**藉此壓過已成立的 direct-answer candidate
+```
+
+⚠️ 否則等於「responsibility evaluator 壞掉 → 被當成 stay → Face 取得優先權」，
+即**技術故障取得 routing authority**。
+現行 `stay` 為布林語義，不足以區分 ⇒ **實作前必須補上 decision source 的區分**，
+不得沿用布林值。
+
+### 本裁定**未**涵蓋的部分（不得擴讀）
+
+```text
+本節裁定的是「gate 的 authority 射程與 precedence」。
+決策 1–4（責任裁決權歸屬／approve-veto 語義／enrollment authority／留存形式）
+**仍未逐題填寫**；本裁定不等於那四題已有普遍性答案。
+⇒ 後續若要為**其他** Face 或**其他** entry source 主張責任歸屬，仍須回到決策 1–4。
+```
+
+### 連帶處置
+
+```text
+③ B 案（新一輪標註治理）暫不啟動｜④ C 案（Stage-1 暫停期限）N/A
+31 pairs／16 applicable 的研究**保留為 supporting evidence**，
+**不再**用它估 production 誤殺率（n=16 < 30）。
+```

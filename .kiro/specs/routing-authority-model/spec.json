@@ -84,7 +84,7 @@
   },
   "external_dependencies": {
     "responsibility_governance_origin": {
-      "status": "UNAVAILABLE — B/C unresolved",
+      "status": "PARTIALLY_RESOLVED — 裁定 001 已由產品決策方作出並留存；決策 1-4 仍未逐題填寫",
       "recorded_in": "authority-origin-discovery-closure.md",
       "provenance_commit": "d5cc0fa（repo-side inventory）",
       "must_identify_before_carrier_activation": [
@@ -97,9 +97,12 @@
     }
   },
   "design_status": {
-    "state": "BLOCKED_BY_EXTERNAL_DECISION",
-    "blocked_by": "external_dependencies.responsibility_governance_origin",
-    "decision_record": "responsibility-governance-decision-record.md（空白待產品決策方填寫／批准）",
-    "note": "**不是** design failure，也**不是** implementation incomplete。解除條件＝該記錄的四項裁定完成；屆時只需對 A／B／C 補 X-1 evidence 重審，**A 不是預設答案**。在此之前不重開 D1／D3 member、不選 carrier、不設計 registry schema、不做新的 routing candidate。"
+    "state": "DECISION_ADOPTED",
+    "adopted_at": "2026-08-27",
+    "adopted_by": "owner (product decision authority)",
+    "decision_record": "responsibility-governance-decision-record.md §裁定 001",
+    "supersedes": "BLOCKED_BY_EXTERNAL_DECISION",
+    "scope": "本次裁定的是 `_top1_relevance_gate` 的 authority 射程與 precedence，**不是**決策 1-4 的普遍性答案；其他 Face／其他 entry source 的責任歸屬仍須回到那四題。",
+    "note": "解除的是「無法在不偷答責任歸屬的前提下前進」這個阻塞。D1/D2 不變：category = nomination evidence only；commit authority = pre-entry responsibility。"
   }
 }
