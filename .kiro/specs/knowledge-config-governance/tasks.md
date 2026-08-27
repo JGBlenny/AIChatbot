@@ -27,16 +27,21 @@
 
 ## 2. 掃描器自身的回歸（**下一步，零授權**）
 
-- [ ] 2.1 **⚡F** 把 1.3 的兩次錯誤變成測試（「修一類 bug ＝ 加一條不變量」）：
+- [x] 2.1 **⚡F** 把 1.3 的兩次錯誤變成測試（「修一類 bug ＝ 加一條不變量」）：
   · 合法變體不得被判違規：role-routed config（無 topic_scope／無 endpoint）→ 0 findings；
   · dynamic 端點（`api_endpoints` 有、Python registry 無）→ 0 findings；
   · 真違規必須被抓到：endpoint 兩邊都沒有 → 1 finding。
   以**注入的假資料**驗規則，不依賴當下 DB 內容（否則資料一變測試就漂）。
   _Requirements: 5.1_
 
-- [ ] 2.2 **⚡F** 契約檔與掃描器的一致性測試：`config_contracts.yaml` 列出的每條 rule id
+- [x] 2.2 **⚡F** 契約檔與掃描器的一致性測試：`config_contracts.yaml` 列出的每條 rule id
   必須在掃描器中有對應實作（或明確標 `not_implemented`），反之亦然。
   **防的是**：契約寫了一條漂亮的規則，但沒有人在跑它。
+  → 實作 `tests/unit/_meta/test_config_audit_rules_req.py`（**15 passed**）；
+    掃描器先抽出**純規則層** `scan(configs, endpoints, kb_endpoints, form_endpoints)`
+    ——規則要能用注入的假資料驗，否則測試會跟著當下 DB 內容漂。
+    比對實況：契約宣告 12 條、掃描器實作 10 條、L3 兩條（C11／C12）依定義不由掃描器判定，
+    兩向差集皆空。
   _Requirements: 1.1_
 
 ## 3. `fix-config`（L1 決定性修正）

@@ -74,20 +74,28 @@ def check(findings, level, rule_id, subject, detail):
     findings.append({"level": level, "rule": rule_id, "subject": subject, "detail": detail})
 
 
-def main() -> int:
-    findings: "list[dict]" = []
-    configs = load_configs()
-    registry = known_endpoints()
+def scan(configs, endpoints, kb_endpoints=(), form_endpoints=()) -> "list[dict]":
+    """**純規則層**：輸入資料 → 輸出 findings，不碰 DB、不碰檔案（任務 2.1）。
 
+    抽出來的理由：規則要能用**注入的假資料**驗，否則測試會跟著當下 DB 內容漂
+    ——資料一改測試就紅／綠，而那紅綠與規則對錯無關。
+
+    參數（皆為已讀好的資料，呼叫端負責 IO）：
+      configs        [{id, md(dict|None), target_user(str), answer(str)}]
+      endpoints      set[str]：**registry ∪ api_endpoints** 的聯集
+      kb_endpoints   [(kb_id, endpoint)]
+      form_endpoints [(form_id, endpoint)]
+    """
+    findings: "list[dict]" = []
     by_key, by_cat = {}, {}
     for c in configs:
-        md, kid = c["md"], c["id"]
-        if not md and not c["target_user"]:
+        md, kid = c.get("md"), c.get("id")
+        if not md and not c.get("target_user"):
             check(findings, "L1", "C1", f"kb{kid}",
                   "『對話規則』列既無 conversational_config 也無 target_user → loader 回 None，該列等於不存在")
             continue
         md = md or {}
-        key = md.get("key") or md.get("persona_role") or (c["target_user"].split(",")[0] or "default")
+        key = md.get("key") or md.get("persona_role") or ((c.get("target_user") or "").split(",")[0] or "default")
         if key in by_key:
             check(findings, "L1", "C2", f"kb{kid}",
                   f"config.key 重複：{key!r} 也出現在 kb{by_key[key]} → 後載入者靜默覆蓋")
@@ -106,47 +114,53 @@ def main() -> int:
                 by_cat[cat] = key
 
         endpoint = ((md.get("grounding_scope") or {}).get("endpoint") or "").strip()
-        if endpoint and endpoint not in registry:
+        if endpoint and endpoint not in endpoints:
             check(findings, "L1", "C8", f"{key}(kb{kid})",
                   f"grounding_scope.endpoint={endpoint!r} 不在 api_registry ∪ api_endpoints → 執行期回「不支援的 API endpoint」")
 
-    # delegates 需在 by_key 建好後才驗
-    for c in configs:
-        md = c["md"] or {}
+    for c in configs:                      # delegates 需在 by_key 建好後才驗
+        md = c.get("md") or {}
         key = md.get("key") or md.get("persona_role")
-        for d in ((md.get("responsibility") or {}).get("delegates") or []):
+        delegates = (md.get("responsibility") or {}).get("delegates") or []
+        for d in delegates:
             target = (d or {}).get("target")
             if not target or target not in by_key:
-                check(findings, "L1", "C5", f"{key}(kb{c['id']})",
+                check(findings, "L1", "C5", f"{key}(kb{c.get('id')})",
                       f"delegate target={target!r} 不存在於 config registry → resolver fail closed（不進場）")
             if not (d or {}).get("when"):
-                check(findings, "L1", "C6", f"{key}(kb{c['id']})",
+                check(findings, "L1", "C6", f"{key}(kb{c.get('id')})",
                       f"delegate {target!r} 缺 when（語義條件）→ 規則生成與斷言會落空")
-        if (md.get("responsibility") or {}).get("delegates"):
-            rules = (md.get("answer_rules") or "")
-            answer = q(f"SELECT coalesce(answer,'') FROM knowledge_base WHERE id={c['id']};")
-            if "delegate_facet_key" not in rules and "delegate_facet_key" not in answer:
-                check(findings, "L2", "C7", f"{key}(kb{c['id']})",
+        if delegates:
+            declared = (md.get("answer_rules") or "") + (c.get("answer") or "")
+            if "delegate_facet_key" not in declared:
+                check(findings, "L2", "C7", f"{key}(kb{c.get('id')})",
                       "宣告了 delegates，但 persona 規則未宣告 delegate_facet_key → 模型不會產出該欄位，委派永不發生")
 
-    # C9 knowledge_base.api_config.endpoint
-    #  ⚠️ 本條初版立在 `trigger_facet_key` 上——那是 **request 參數**不是欄位，規則本身是錯的。
-    ke = q("""SELECT id, coalesce(api_config->>'endpoint','') FROM knowledge_base
-              WHERE api_config ? 'endpoint' AND is_active ORDER BY id;""")
-    for line in filter(None, ke.splitlines()):
-        kid, endpoint = line.split("|", 1)
-        if endpoint and endpoint not in registry:
+    for kid, endpoint in kb_endpoints:
+        if endpoint and endpoint not in endpoints:
             check(findings, "L1", "C9", f"kb{kid}",
                   f"api_config.endpoint={endpoint!r} 不在 api_registry ∪ api_endpoints → 問到該題才會炸")
-
-    # C10 form_schemas.api_config.endpoint
-    fs = q("""SELECT form_id, coalesce(api_config->>'endpoint','') FROM form_schemas
-              WHERE is_active AND api_config ? 'endpoint' ORDER BY form_id;""")
-    for line in filter(None, fs.splitlines()):
-        form_id, endpoint = line.split("|", 1)
-        if endpoint and endpoint not in registry:
+    for form_id, endpoint in form_endpoints:
+        if endpoint and endpoint not in endpoints:
             check(findings, "L1", "C10", f"form:{form_id}",
                   f"api_config.endpoint={endpoint!r} 不在 api_registry ∪ api_endpoints → 表單完成後必然失敗")
+    return findings
+
+
+def main() -> int:
+    """IO 層：讀 DB → 呼叫純規則層 → 輸出。"""
+    configs = load_configs()
+    for c in configs:                      # C7 需要 persona 規則的 answer 全文
+        c["answer"] = q(f"SELECT coalesce(answer,'') FROM knowledge_base WHERE id={c['id']};")
+    endpoints = known_endpoints()
+    kb_endpoints = [tuple(l.split("|", 1)) for l in q(
+        """SELECT id, coalesce(api_config->>'endpoint','') FROM knowledge_base
+           WHERE api_config ? 'endpoint' AND is_active ORDER BY id;""").splitlines() if l]
+    form_endpoints = [tuple(l.split("|", 1)) for l in q(
+        """SELECT form_id, coalesce(api_config->>'endpoint','') FROM form_schemas
+           WHERE is_active AND api_config ? 'endpoint' ORDER BY form_id;""").splitlines() if l]
+    findings = scan(configs, endpoints, kb_endpoints, form_endpoints)
+    registry = endpoints
 
     if JSON_OUT:
         print(json.dumps({"findings": findings, "configs": len(configs),
