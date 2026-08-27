@@ -112,5 +112,17 @@ DEFERRED：6（併入 make audit，需先有低誤報率實績）
 
 ⚠️ 這條由 **Task 2.2**（契約檔 ↔ 掃描器一致性）封住，**不另開研究線**。
 
-⚠️ 本線與 `conversational-routing-execution` 的 P2 rollout **並行但不互擋**；
-P2 停在業主對「production 等價資料庫」的 A／B 裁定。
+⚠️ 本線與 `conversational-routing-execution` 的 P2 rollout **並行但不互擋**——
+**兩條線之間沒有任何先後依賴**，治理線做完不是回主線的前提，反之亦然。
+
+P2 的阻塞已更新（原記「停在 A／B 裁定」**已過期**：業主 2026-08-26 裁定選 A，
+P2.1–P2.4 已執行完畢）。現行阻塞為：
+
+```text
+P2.5   需業主授權（真 brain 對線上資料跑完整對話流程＋付費）
+P2.4   在 preview 上仍不可取證（jgb2 preview 版本落後，合約端點 500）——
+       已改在 production 唯讀取證，六項全過
+6.3    production-facing gate 仍 CLOSED（人工放行）
+```
+
+治理線本身**沒有任何外部阻塞**，未完成項目一律屬「尚未開工」。
