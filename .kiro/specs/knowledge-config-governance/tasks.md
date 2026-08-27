@@ -88,16 +88,24 @@
 
 ## 5. Skill：knowledge governance reviewer（**不寫 DB**）
 
-- [ ] 5.1 **🧠主** Skill 讀 knowledge／persona／config，產出
+- [x] 5.1 **🧠主** Skill 讀 knowledge／persona／config，產出
   **proposed patch ＋ reason ＋ evidence**，並標明屬 L1／L2／L3。
   _Requirements: 4.1, 4.3_
 
-- [ ] 5.2 **🧠主** Skill **SHALL NOT** 直接寫 DB：變更一律走 migration／admin action，
+- [x] 5.2 **🧠主** Skill **SHALL NOT** 直接寫 DB：變更一律走 migration／admin action，
   且先過掃描器的機械檢查。
   ⚠️ L3 提案必須明寫「這是產品語義決定」——替某筆知識加面向標籤看起來像資料清理，
   實際是在回答「**這個 query 應該由誰擁有**」，而那正是 `routing-authority-model`
   BLOCKED 的題。
-  _Requirements: 4.2, 4.3_
+  → 實作 `.claude/skills/config-governance-review/SKILL.md`（user_invocable）。
+    邊界寫在檔頭第一段：**只提案、絕不寫 DB**；變更路徑固定為
+    「提案 → 人裁 → migration／admin action → `make audit-config` 機械複驗」。
+    第 0 步強制先跑 `make audit-config`——**結構還壞著時談語義，結論不可信**；
+    四類語義矛盾（S1 category/responsibility 脫節／S2 跨角色進場／
+    S3 宣告與 delegates 不一致／S4 同義知識分屬不同面向）；
+    提案格式含**必填的「反對意見」欄**（說不出自己可能錯在哪＝還沒查夠）
+    與上限 10 條（超過代表沒分優先序，人會整份略過）。
+  _Requirements: 4.1, 4.2, 4.3_
 
 ## 6. 併入既有稽核體系（**待決定**）
 
