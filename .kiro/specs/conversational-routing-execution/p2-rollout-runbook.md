@@ -417,3 +417,107 @@ docker compose -f docker-compose.prod.yml up -d --force-recreate rag-orchestrato
 
 ⇒ 風險是實際存在的，不是假設。契約由 `tests/unit/_meta/test_runner_layer_contract_req.py`
 的 `test_runner_forces_the_jgb_mock_by_default` 鎖住（注入存在／豁免旗標名稱／豁免必須吵）。
+
+
+---
+
+# 附錄二：前提更正 ＋ production canary preflight（2026-08-27）
+
+## ⚠️ 先更正一個我寫錯的前提
+
+```text
+❌ 我先前的框法：「preview 壞掉 → 改接 production」，暗示 production 尚未接真 API
+✅ 實況（業主指正）：**線上 RAG 本來就打 production JGB API**
+```
+
+因此 preview 的 500 只阻塞**一件事**：
+
+```text
+BLOCKED_BY_PREVIEW_VERSION_DRIFT
+→ 只擋 preview／staging 的取證，**不**代表 production 還沒接真 API
+```
+
+而 P2.5 的正確定義隨之改變：
+
+```text
+❌ 不是「把 endpoint 從 preview 切到 production」
+✅ 是「**在既有的 production runtime 上做 controlled acceptance**」
+```
+
+## preflight：canary 之前必須先確認的兩件事（**唯讀，由業主在 production 執行**）
+
+### ① production runtime 的七旗標
+
+```bash
+docker exec aichatbot-rag-orchestrator sh -lc '
+for k in PREENTRY_ROUTABILITY_GATE PREENTRY_ROUTABILITY_FACETS FACET_SCOPE_SALVAGE \
+         BRAIN_STRICT_SCHEMA PRESALES_SYNTH_MODEL USE_MOCK_JGB_API JGB_API_BASE_URL; do
+  v=$(printenv "$k"); printf "%-30s = %s\n" "$k" "${v:-<UNSET>}"
+done'
+```
+
+**預期**：
+
+```text
+PREENTRY_ROUTABILITY_GATE      = true
+PREENTRY_ROUTABILITY_FACETS    = bill_diagnosis,billing_anomaly,contract_closeout
+FACET_SCOPE_SALVAGE            = false
+BRAIN_STRICT_SCHEMA            = true
+PRESALES_SYNTH_MODEL           = gpt-4o-mini
+USE_MOCK_JGB_API               = false
+JGB_API_BASE_URL               = <production>
+```
+
+⚠️ `PREENTRY_ROUTABILITY_FACETS` 為 `<UNSET>`／空 → **STOP**（fail-safe 停用，
+會在「看起來開了、其實沒開」的狀態下被驗成沒問題）。
+⚠️ 三個新旗標需**新版 compose 已部署**才會傳進容器（本輪補的宣告）。
+
+### ② production DB 是否已有 responsibility delegates ＋ 新 persona output contract
+
+⚠️ **本機 P2.2 PASS 不代表 production DB 已套**——兩者必須分開確認。
+
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -Atc "
+SELECT generation_metadata->'conversational_config'->>'key'
+       || ' → delegates=' ||
+       coalesce((generation_metadata->'conversational_config'->'responsibility'->'delegates')::text,'NULL')
+FROM knowledge_base WHERE category='對話規則'
+  AND generation_metadata->'conversational_config'->>'key' IN ('bill_diagnosis','billing_anomaly')
+ORDER BY 1;"
+```
+
+**預期**（兩條皆需帶 `when`）：
+
+```text
+bill_diagnosis  → delegates=[{"when": "帳單金額組成/看不到帳單", "target": "billing_anomaly"}]
+billing_anomaly → delegates=[{"when": "封存/點退帳單處理", "target": "contract_closeout"}]
+```
+
+```bash
+# persona output contract：規則本身必須宣告 delegate_facet_key，否則模型不會產出該欄位
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -Atc "
+SELECT generation_metadata->'conversational_config'->>'key' || ' declares_delegate_key=' ||
+       (position('delegate_facet_key' in coalesce(answer,'')) > 0)::text
+FROM knowledge_base WHERE category='對話規則'
+  AND generation_metadata->'conversational_config'->>'key' IN ('bill_diagnosis','billing_anomaly');"
+```
+
+**預期**：兩筆皆 `declares_delegate_key=true`。
+
+```bash
+# 帳本
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -Atc \
+  "SELECT migration_name, created_by, executed_at FROM schema_migrations
+   WHERE migration_name = 'seed_responsibility_delegates_v1';"
+```
+
+**預期**：有一列。**沒有** ⇒ production 尚未套 → 依 P2.7 套用（單檔 scoped apply，
+**不要用全量 `--apply`**——它會順帶跑無關 migration 與 `regenerate_all_embeddings`）。
+
+## 判讀
+
+```text
+①②皆符合 → 可進 production controlled canary（P2.5）
+①不符合   → 先補旗標／部署新版 compose，不得直接 canary
+②不符合   → 先做 P2.7（scoped migration），再回頭確認 ②
+```
