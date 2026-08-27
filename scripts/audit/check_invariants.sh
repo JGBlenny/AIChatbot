@@ -186,10 +186,20 @@ echo "═══ 不變量 7：JGB 金額欄位一律走語義層（20260810 真�
 # 不變量：services/jgb/ 內除 bills.py 的語義層（_bill_amount_due/_bill_amount_received）
 # 外，任何檔案都不得直接讀 final_total——狀態走 _bill_status 的同一範式。
 # 允許清單只有一行：語義層本體的取值。註解行（含說明 jgb2 語義的段落）不算違反。
+#
+# 2026-08-27 修正誤報：`fixtures.py`（2026-08-24 加入）是 External API 投影的**合成產生端**，
+# 欄位名逐鍵對齊 jgb2 `formatBill`，其檔頭明文「不得新增真 API 不存在的欄位」——
+# 它**不可能**不寫出 `final_total` 這個鍵，否則 fixture 就不再是 API 的實際投影。
+# ⚠️ 但**不是**整檔豁免：本不變量管的是「讀值繞過語義層」，
+#    所以 fixtures.py 內只放行型別／資料宣告，**讀值形式照樣違反**
+#    （`.get(`／`["final_total"]`／`.final_total`）——否則消費端只要搬進 fixtures.py 就隱形了。
 AMOUNT_VIOL=$(grep -rn 'final_total' rag-orchestrator/services/jgb/ 2>/dev/null \
   | awk -F: '{ body = $0; sub(/^[^:]*:[0-9]+:/, "", body);
                if (body ~ /^[[:space:]]*#/) next;
                if ($1 ~ /bills\.py$/ && body ~ /^[[:space:]]*v = bill\.get\("final_total"\)$/) next;
+               if ($1 ~ /fixtures\.py$/) {
+                 if (body ~ /get\(|\.final_total|\[[[:space:]]*"final_total"/) print;
+                 next; }
                print }' || true)
 if [ -n "$AMOUNT_VIOL" ]; then
   echo "❌ FAIL：以下位置直接讀 final_total，未經金額語義層："
