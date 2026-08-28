@@ -283,3 +283,82 @@ technical_fail_open（brain 例外／schema 或 API 失敗／timeout）
 31 pairs／16 applicable 的研究**保留為 supporting evidence**，
 **不再**用它估 production 誤殺率（n=16 < 30）。
 ```
+
+---
+
+## 裁定 001-A｜④ 的 contract 驗收，以及 ② 的 precedence 表精確化
+
+> 2026-08-28 業主審查 commit `b62965e` 後作出。本節**不新增射程**，
+> 只把 ② 從敘述精確成可實作的四列表，並釘死 ④ 那一刀的 claim ceiling。
+
+### ④ 的實作驗收：**APPROVED**，但 claim ceiling 釘死
+
+`decision_source` 四值（`model`／`technical_fail_open`／`contract_salvage`／`guard`）
+與兩個 default（決定不了就**失去** authority）**皆通過**。
+`guard` 第四類獲採納——cycle／unknown／disabled delegate 是 **configuration/control guard**，
+不是模型或服務的技術故障；硬塞進 `technical_fail_open` 會污染 rollout telemetry。
+
+⚠️ **這一刀的 claim ceiling（不得逾越）**：
+
+```text
+✅ 可以宣稱：Responsibility authority provenance 已結構化並經 mutation validation；
+             production routing semantics 未改變。
+❌ 不得宣稱：fail-open 已經無法取得 Face routing authority。
+```
+
+理由：`resolve_entry_candidate` 內 `if decision.stay:` 仍在，
+`technical_fail_open + stay` **仍然**產生 commit-like control flow。
+`has_commit_authority` 目前只是**可觀測／可測／可供下一層使用**，
+**尚未**成為 production routing 的 authority。
+
+### ② Precedence 的精確形式（下一刀的驗收表）
+
+```text
+Face 結果                  Direct-answer gate      結果
+authoritative stay         YES                     Face
+authoritative stay         NO                      Face
+no authoritative stay      YES                     **Knowledge（必須保住）**
+no authoritative stay      NO                      既有 fallback
+```
+
+其中 `technical_fail_open + stay` 歸類為 **no authoritative stay**。
+⇒ 已有合法 Knowledge answer 時，responsibility 技術故障**不得**把它擠掉。
+這才真正落實「技術故障不得取得 routing authority」。
+
+⚠️ 邊界（刻意保留的相容性）：**沒有** Knowledge candidate、且 responsibility 為
+technical fail-open 時，**可以**維持既有行為照舊進 Face；
+但 **不得**把那個行為稱為 responsibility-confirmed commit——telemetry 必須看得出差別。
+
+### 下一刀的目標控制流
+
+```text
+retrieved top1
+  ├─ direct-answer evidence
+  │    └─ _top1_relevance_gate
+  │         ├─ YES → Knowledge answer candidate
+  │         └─ NO  → 僅禁止 Knowledge **直接回答**
+  └─ Face nomination evidence（**不因 gate=NO 被消滅**）
+       └─ category → scoped candidate
+            └─ responsibility resolver
+                 └─ 只有 has_commit_authority == true 才取得 Face precedence
+```
+
+**不是** `resolution.stay`；更**不是** `candidate exists`／`category exists`／
+`switch`／`technical_fail_open`。
+
+### 附帶裁決
+
+```text
+`.stay` 改名（stay → stops_chain_here）：**DEFER**
+  現階段 `.stay` 仍有 compatibility control-flow 語義，全面 rename 只換來大量無關 churn。
+  改以 has_commit_authority／decision_source／tests／docstring／mutation tests 守住。
+  ⚠️ 但下一刀必須補一條 guard：**authority-sensitive arbitration 不得讀 `.stay`
+     判斷 Face precedence，必須讀 has_commit_authority**——當作 regression/不變量，
+     比改名有效。
+e2e harness 內的 wire literal（"model"／"technical_fail_open"）：**保留**
+  那是對 serialized contract 的獨立 oracle；改成 import production constant，
+  常數被錯改時測試會跟著一起綠。這種 duplication 有意義，不是字串耦合。
+不變量 7 AST 化：**不插隊**，維持 supporting debt。
+  現行 grep 已證不誤殺 declaration、會抓直接 consumption、且有正反向對照。
+  `k = "final_total"; bill[k]` 確實繞得過，但目前無證據顯示那是現行 defect。
+```

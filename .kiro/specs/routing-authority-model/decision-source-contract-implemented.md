@@ -66,6 +66,19 @@ integration  同一檔在**乾淨基線**上重跑得到的失敗是本次結果
   M2 `EntryResolution` 改成「有 commit 就有 authority」→ 3 條轉紅
 ```
 
+## Claim ceiling（2026-08-28 業主審查後釘死，見裁定 001-A）
+
+```text
+✅ 可以宣稱：Responsibility authority provenance 已結構化並經 mutation validation；
+             production routing semantics 未改變。
+❌ 不得宣稱：fail-open 已經無法取得 Face routing authority。
+```
+
+`resolve_entry_candidate` 內 `if decision.stay:` 仍在 ⇒ `technical_fail_open + stay`
+**仍然**產生 commit-like control flow。`has_commit_authority` 目前的地位是
+**可觀測／可測／可供下一層使用**，**還不是** production routing 的 authority。
+產線消費者只有 `_resolver_telemetry` 三行，沒有任何判定分支讀它。
+
 ⚠️ 未做、且**不在**本步射程：nomination evidence 保留、gate 分岔、precedence 接線。
 本步只補 contract，**沒有任何 routing 行為改變**——所有既有進場路徑逐字不動。
 
