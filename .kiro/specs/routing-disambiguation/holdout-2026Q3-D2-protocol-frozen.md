@@ -237,3 +237,59 @@ PASS → authorized=true → 寫回 manifest → enable gate → 才跑 3.4
 ❌ 不得宣稱 production block precision（需另行以 production 流量取樣）
 ❌ n<30 的子群不得做穩定率宣稱
 ```
+
+---
+
+# 附錄 D3｜下一輪語料設計（**產生前凍結**，2026-08-29）
+
+## 為什麼是混合語料，不是全合成
+
+D2 的實質發現：**幫助中心衍生文件結構性缺 instance-type**——它記載制度與操作，
+本來就不會出現「我這張帳單多少錢」。盲標者在 80 句中找到 0 筆 instance。
+且 assistant-reports 全部燒毀、production 不存 user message 原文。
+
+⇒ 真實語料能供 rule-side，供不了 instance-side。合成只用來補**現實拿不到的那一半**。
+
+```text
+strata A  rule-side     ← **真實語料**：D2 sealed pool 的保留區（未動、未跑過 classifier）
+strata B  instance-side ← **隔離作者合成**（現實無來源，只能構造）
+⚠️ 兩側 provenance 不同 ⇒ accuracy **各自報告，不合併**（§6 本來就這樣規定）
+```
+
+## 凍結的取樣（**產生語料之前**）
+
+```text
+strata A  40 句｜來源＝保留池 496 句依 sha256 升冪取前 40（D2 已用的 80 句排除）
+          digest = 5e9c1b40d44277a9
+strata B  60 句｜隔離作者合成，見下方 brief
+合計      100 句 → 目標 judgeable ≥30、gate opportunity ≥10
+```
+
+## strata B 的作者紀律（沿用 D1 已驗證的隔離）
+
+```text
+全新 general-purpose agent｜**0 次工具呼叫**（harness usage 計數驗證，非自述）
+交付：未標註、順序打散的平面清單
+withheld：candidate 存在與否｜機制為 lexical ruleset｜任何特徵名稱
+         possessive／explanation_request 等概念｜現行 route｜KB wording
+         D1 50 句｜D2 80 句｜4 筆 regression｜strata A 的 40 句｜本次要證明什麼
+⛔ **不得提供任何範例句**——給範例＝把答案洩漏成模板
+```
+
+## claim ceiling（合成語料的固有上限）
+
+```text
+✅ 可宣稱：mechanism 在**構造出的** instance-type 案例上是否具鑑別力
+❌ 不得宣稱：production instance-type 的 precision／recall
+   （合成分布 ≠ 真實分布；真實 instance 語料目前**無合格來源**）
+⇒ 若 D3 PASS，授權的語義是「機制在可控條件下成立」，
+  production 表現仍須待前瞻性採集（需先做隱私與 schema 決定）才能量。
+```
+
+## 仍然適用的鎖
+
+```text
+⛔ coverage 不足 → INCONCLUSIVE，不得回頭補題
+⛔ 看到結果前不得修改 classifier
+⛔ 標註回來後不得修改 label definition
+```
