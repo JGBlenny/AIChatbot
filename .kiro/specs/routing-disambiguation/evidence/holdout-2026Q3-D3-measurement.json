@@ -55,7 +55,7 @@
     "gate_opportunity_n": 1,
     "precondition": "≥10",
     "verdict": "INCONCLUSIVE",
-    "root_cause": "gate scope = {bill_diagnosis} 單一 Face；60 句真實 instance 中僅 1 句的 nomination 落在其中",
+    "root_cause": "gate scope = {bill_diagnosis} 單一 Face；**盲標為 instance 的 60 句**中僅 1 句的 nomination 落在其中",
     "instance_nomination_faces": {
       "billing_anomaly": 6,
       "contract_diag": 3,
@@ -77,7 +77,7 @@
   "AUTHORIZATION": {
     "result": "NOT AUTHORIZED",
     "reason": "B 層 INCONCLUSIVE（coverage 1 < 10）",
-    "⚠️_new_finding": "本輪已排除『語料缺 instance』這個解釋——供了 60 句真實 instance 仍只得 1 次 opportunity。⇒ 在現行 scope 下 B 層**實質不可驗**：期望 10 次 opportunity 需要約 600 句 instance 語料。"
+    "⚠️_new_finding": "本輪已排除『語料完全沒有 instance』這個解釋——供了 60 句**合成且經盲標為 instance** 的問句，仍只得 1 次 opportunity。⇒ 在現行 scope 下 B 層實質不可驗。"
   },
   "BURNED": {
     "status": "BURNED（永久）",
@@ -857,5 +857,9 @@
         "billing_anomaly"
       ]
     }
-  ]
+  ],
+  "ERRATUM_20260829": {
+    "correction_1": "⛔ 原記錄與 commit d1f7e90 誤稱『60 句**真實** instance』。strata B 是**隔離作者合成**（strata A 40 句才是真實語料）。⇒ 『36/60 沒有 nomination』只能推出：**在這批合成且被盲標為 instance 的問句裡**，現行 nomination 對 36 句未產生 Face candidate。**不得**據此估 production coverage，也不得說『真實使用者有六成進不了面向』。",
+    "correction_2": "⛔ 不得把架構前提寫成『top1 categories 決定該由哪個面向負責』——裁定 001 已定：category = **nomination evidence only**；commit authority = responsibility resolver。⇒ 真正待驗的是『retrieval + category 這套 nomination mechanism能否產生足夠且正確的 responsibility candidates』。"
+  }
 }
