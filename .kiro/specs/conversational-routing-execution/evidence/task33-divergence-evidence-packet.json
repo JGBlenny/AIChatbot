@@ -1,0 +1,1564 @@
+[
+  {
+    "question": "點退的前置條件是什麼",
+    "expect": "單發",
+    "old_route": [
+      "single",
+      "no-facet-config"
+    ],
+    "prod_route": [
+      "single",
+      "no-facet-config"
+    ],
+    "first_divergence": null,
+    "old": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3379,
+          "sim": 0.9714,
+          "summary": "合約點退 前置條件",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        },
+        {
+          "id": 3377,
+          "sim": 0.8883,
+          "summary": "合約點交需要哪些條件 點交前置條件說明",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        },
+        {
+          "id": 3384,
+          "sim": 0.7741,
+          "summary": "合約續約 前置條件",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        },
+        {
+          "id": 3848,
+          "sim": 0.7043,
+          "summary": "點退時間窗 到期前30天起",
+          "categories": null,
+          "category": null
+        },
+        {
+          "id": 3526,
+          "sim": 0.6964,
+          "summary": "提前解約生效後 點退與違約金結算",
+          "categories": [
+            "合約管理",
+            "退租收尾"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3379,
+        "sim": 0.9714,
+        "summary": "合約點退 前置條件",
+        "categories": [
+          "合約管理"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9713824796998237,
+        "eligible": true
+      },
+      "cats_derived": [
+        "合約管理"
+      ],
+      "config_lookup": [
+        {
+          "cat": "合約管理",
+          "cfg": null
+        }
+      ],
+      "route": [
+        "single",
+        "no-facet-config"
+      ]
+    },
+    "prod": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3379,
+          "sim": 0.9714,
+          "summary": "合約點退 前置條件",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        },
+        {
+          "id": 3377,
+          "sim": 0.8883,
+          "summary": "合約點交需要哪些條件 點交前置條件說明",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        },
+        {
+          "id": 3384,
+          "sim": 0.7741,
+          "summary": "合約續約 前置條件",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        },
+        {
+          "id": 3848,
+          "sim": 0.7043,
+          "summary": "點退時間窗 到期前30天起",
+          "categories": null,
+          "category": null
+        },
+        {
+          "id": 3526,
+          "sim": 0.6964,
+          "summary": "提前解約生效後 點退與違約金結算",
+          "categories": [
+            "合約管理",
+            "退租收尾"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3379,
+        "sim": 0.9714,
+        "summary": "合約點退 前置條件",
+        "categories": [
+          "合約管理"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9713824796998237,
+        "eligible": true
+      },
+      "cats_derived": [
+        "合約管理"
+      ],
+      "instance_gate": null,
+      "per_cat": [
+        {
+          "cat": "合約管理",
+          "cfg": null
+        }
+      ],
+      "route": [
+        "single",
+        "no-facet-config"
+      ]
+    }
+  },
+  {
+    "question": "合約快到期了，系統會自動提醒我嗎？",
+    "expect": "單發",
+    "old_route": [
+      "single",
+      "no-facet-config"
+    ],
+    "prod_route": [
+      "single",
+      "no-facet-config"
+    ],
+    "first_divergence": null,
+    "old": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3388,
+          "sim": 0.9647,
+          "summary": "合約即將到期 到期提醒",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        },
+        {
+          "id": 3879,
+          "sim": 0.8186,
+          "summary": "合約快到期 要續約怎麼辦",
+          "categories": [
+            "續約"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3388,
+        "sim": 0.9647,
+        "summary": "合約即將到期 到期提醒",
+        "categories": [
+          "合約管理"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9647218290971006,
+        "eligible": true
+      },
+      "cats_derived": [
+        "合約管理"
+      ],
+      "config_lookup": [
+        {
+          "cat": "合約管理",
+          "cfg": null
+        }
+      ],
+      "route": [
+        "single",
+        "no-facet-config"
+      ]
+    },
+    "prod": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3388,
+          "sim": 0.9647,
+          "summary": "合約即將到期 到期提醒",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        },
+        {
+          "id": 3879,
+          "sim": 0.8186,
+          "summary": "合約快到期 要續約怎麼辦",
+          "categories": [
+            "續約"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3388,
+        "sim": 0.9647,
+        "summary": "合約即將到期 到期提醒",
+        "categories": [
+          "合約管理"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9647218290971006,
+        "eligible": true
+      },
+      "cats_derived": [
+        "合約管理"
+      ],
+      "instance_gate": null,
+      "per_cat": [
+        {
+          "cat": "合約管理",
+          "cfg": null
+        }
+      ],
+      "route": [
+        "single",
+        "no-facet-config"
+      ]
+    }
+  },
+  {
+    "question": "我的合約狀態怪怪的",
+    "expect": "進對話",
+    "old_route": [
+      "dialog",
+      "狀態判斷"
+    ],
+    "prod_route": [
+      "dialog",
+      "狀態判斷"
+    ],
+    "first_divergence": null,
+    "old": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 4563,
+          "sim": 0.9731,
+          "summary": "合約狀態怪怪的 不太對勁",
+          "categories": [
+            "狀態判斷"
+          ],
+          "category": null
+        },
+        {
+          "id": 3510,
+          "sim": 0.929,
+          "summary": "合約目前是什麼狀態",
+          "categories": [
+            "條件診斷：合約",
+            "狀態判斷"
+          ],
+          "category": null
+        },
+        {
+          "id": 3372,
+          "sim": 0.8863,
+          "summary": "合約狀態查詢 目前狀態",
+          "categories": [
+            "狀態判斷"
+          ],
+          "category": null
+        },
+        {
+          "id": 3389,
+          "sim": 0.8381,
+          "summary": "合約執行中 包含狀態",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 4563,
+        "sim": 0.9731,
+        "summary": "合約狀態怪怪的 不太對勁",
+        "categories": [
+          "狀態判斷"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9731203552926029,
+        "eligible": true
+      },
+      "cats_derived": [
+        "狀態判斷"
+      ],
+      "config_lookup": [
+        {
+          "cat": "狀態判斷",
+          "cfg": "contract_diag"
+        }
+      ],
+      "route": [
+        "dialog",
+        "狀態判斷"
+      ]
+    },
+    "prod": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 4563,
+          "sim": 0.9731,
+          "summary": "合約狀態怪怪的 不太對勁",
+          "categories": [
+            "狀態判斷"
+          ],
+          "category": null
+        },
+        {
+          "id": 3510,
+          "sim": 0.929,
+          "summary": "合約目前是什麼狀態",
+          "categories": [
+            "條件診斷：合約",
+            "狀態判斷"
+          ],
+          "category": null
+        },
+        {
+          "id": 3372,
+          "sim": 0.8863,
+          "summary": "合約狀態查詢 目前狀態",
+          "categories": [
+            "狀態判斷"
+          ],
+          "category": null
+        },
+        {
+          "id": 3389,
+          "sim": 0.8381,
+          "summary": "合約執行中 包含狀態",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 4563,
+        "sim": 0.9731,
+        "summary": "合約狀態怪怪的 不太對勁",
+        "categories": [
+          "狀態判斷"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9731203552926029,
+        "eligible": true
+      },
+      "cats_derived": [
+        "狀態判斷"
+      ],
+      "instance_gate": null,
+      "per_cat": [
+        {
+          "cat": "狀態判斷",
+          "cfg": "contract_diag",
+          "hint_suppressed": false,
+          "resolver": {
+            "committed": "contract_diag",
+            "authority": "unevaluated"
+          },
+          "final_cat": "狀態判斷"
+        }
+      ],
+      "route": [
+        "dialog",
+        "狀態判斷"
+      ]
+    }
+  },
+  {
+    "question": "點退帳單的金額是怎麼算的",
+    "expect": "單發",
+    "old_route": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "prod_route": [
+      "single",
+      "no-facet-config"
+    ],
+    "first_divergence": "applicability(instance_gate/resolver)",
+    "old": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3519,
+          "sim": 0.9781,
+          "summary": "點退帳單金額計算 押金結算",
+          "categories": [
+            "合約管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3402,
+          "sim": 0.9524,
+          "summary": "點退帳單 自動產生 費用結算",
+          "categories": [
+            "帳單管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 4657,
+          "sim": 0.9458,
+          "summary": "合約的點退帳單金額 查點退金額",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3526,
+          "sim": 0.8702,
+          "summary": "提前解約生效後 點退與違約金結算",
+          "categories": [
+            "合約管理",
+            "退租收尾"
+          ],
+          "category": null
+        },
+        {
+          "id": 3518,
+          "sim": 0.8452,
+          "summary": "點退清單填寫 費用與賠償項目",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3519,
+        "sim": 0.9781,
+        "summary": "點退帳單金額計算 押金結算",
+        "categories": [
+          "合約管理",
+          "條件診斷：帳單"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9781039076909142,
+        "eligible": true
+      },
+      "cats_derived": [
+        "合約管理",
+        "條件診斷：帳單"
+      ],
+      "config_lookup": [
+        {
+          "cat": "合約管理",
+          "cfg": null
+        },
+        {
+          "cat": "條件診斷：帳單",
+          "cfg": "bill_diagnosis"
+        }
+      ],
+      "route": [
+        "dialog",
+        "條件診斷：帳單"
+      ]
+    },
+    "prod": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3519,
+          "sim": 0.9781,
+          "summary": "點退帳單金額計算 押金結算",
+          "categories": [
+            "合約管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3402,
+          "sim": 0.9524,
+          "summary": "點退帳單 自動產生 費用結算",
+          "categories": [
+            "帳單管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 4657,
+          "sim": 0.9458,
+          "summary": "合約的點退帳單金額 查點退金額",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3526,
+          "sim": 0.8702,
+          "summary": "提前解約生效後 點退與違約金結算",
+          "categories": [
+            "合約管理",
+            "退租收尾"
+          ],
+          "category": null
+        },
+        {
+          "id": 3518,
+          "sim": 0.8452,
+          "summary": "點退清單填寫 費用與賠償項目",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3519,
+        "sim": 0.9781,
+        "summary": "點退帳單金額計算 押金結算",
+        "categories": [
+          "合約管理",
+          "條件診斷：帳單"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9781039076909142,
+        "eligible": true
+      },
+      "cats_derived": [
+        "合約管理",
+        "條件診斷：帳單"
+      ],
+      "instance_gate": null,
+      "per_cat": [
+        {
+          "cat": "合約管理",
+          "cfg": null
+        },
+        {
+          "cat": "條件診斷：帳單",
+          "cfg": "bill_diagnosis",
+          "hint_suppressed": false,
+          "resolver": {
+            "committed": null,
+            "authority": "no_face"
+          }
+        }
+      ],
+      "route": [
+        "single",
+        "no-facet-config"
+      ]
+    }
+  },
+  {
+    "question": "點退做完後，帳單會自動出來嗎？",
+    "expect": "單發",
+    "old_route": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "prod_route": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "first_divergence": null,
+    "old": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3402,
+          "sim": 0.9672,
+          "summary": "點退帳單 自動產生 費用結算",
+          "categories": [
+            "帳單管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3852,
+          "sim": 0.9191,
+          "summary": "提前終止後帳單仍產生 需封存",
+          "categories": [
+            "退租收尾"
+          ],
+          "category": null
+        },
+        {
+          "id": 3401,
+          "sim": 0.8371,
+          "summary": "帳單建立方式 手動自動",
+          "categories": [
+            "帳單管理"
+          ],
+          "category": null
+        },
+        {
+          "id": 3457,
+          "sim": 0.6805,
+          "summary": "訂閱付款紀錄 自動續訂",
+          "categories": [
+            "訂閱方案"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3402,
+        "sim": 0.9672,
+        "summary": "點退帳單 自動產生 費用結算",
+        "categories": [
+          "帳單管理",
+          "條件診斷：帳單"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9672200602644051,
+        "eligible": true
+      },
+      "cats_derived": [
+        "帳單管理",
+        "條件診斷：帳單"
+      ],
+      "config_lookup": [
+        {
+          "cat": "帳單管理",
+          "cfg": null
+        },
+        {
+          "cat": "條件診斷：帳單",
+          "cfg": "bill_diagnosis"
+        }
+      ],
+      "route": [
+        "dialog",
+        "條件診斷：帳單"
+      ]
+    },
+    "prod": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3402,
+          "sim": 0.9672,
+          "summary": "點退帳單 自動產生 費用結算",
+          "categories": [
+            "帳單管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3852,
+          "sim": 0.9191,
+          "summary": "提前終止後帳單仍產生 需封存",
+          "categories": [
+            "退租收尾"
+          ],
+          "category": null
+        },
+        {
+          "id": 3401,
+          "sim": 0.8371,
+          "summary": "帳單建立方式 手動自動",
+          "categories": [
+            "帳單管理"
+          ],
+          "category": null
+        },
+        {
+          "id": 3457,
+          "sim": 0.6805,
+          "summary": "訂閱付款紀錄 自動續訂",
+          "categories": [
+            "訂閱方案"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3402,
+        "sim": 0.9672,
+        "summary": "點退帳單 自動產生 費用結算",
+        "categories": [
+          "帳單管理",
+          "條件診斷：帳單"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9672200602644051,
+        "eligible": true
+      },
+      "cats_derived": [
+        "帳單管理",
+        "條件診斷：帳單"
+      ],
+      "instance_gate": null,
+      "per_cat": [
+        {
+          "cat": "帳單管理",
+          "cfg": null
+        },
+        {
+          "cat": "條件診斷：帳單",
+          "cfg": "bill_diagnosis",
+          "hint_suppressed": false,
+          "resolver": {
+            "committed": "bill_diagnosis",
+            "authority": "authoritative"
+          },
+          "final_cat": "條件診斷：帳單"
+        }
+      ],
+      "route": [
+        "dialog",
+        "條件診斷：帳單"
+      ]
+    }
+  },
+  {
+    "question": "收據 PDF 在哪裡下載",
+    "expect": "單發",
+    "old_route": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "prod_route": [
+      "dialog",
+      "帳單異常"
+    ],
+    "first_divergence": "applicability(instance_gate/resolver)",
+    "old": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3406,
+          "sim": 0.925,
+          "summary": "帳單收據 繳費證明 PDF 下載",
+          "categories": [
+            "帳單管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3474,
+          "sim": 0.7745,
+          "summary": "委託合約 PDF 文件下載",
+          "categories": [
+            "委託合約"
+          ],
+          "category": null
+        },
+        {
+          "id": 3390,
+          "sim": 0.692,
+          "summary": "合約 PDF 下載 各種文件",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3406,
+        "sim": 0.925,
+        "summary": "帳單收據 繳費證明 PDF 下載",
+        "categories": [
+          "帳單管理",
+          "條件診斷：帳單"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9249957386109454,
+        "eligible": true
+      },
+      "cats_derived": [
+        "帳單管理",
+        "條件診斷：帳單"
+      ],
+      "config_lookup": [
+        {
+          "cat": "帳單管理",
+          "cfg": null
+        },
+        {
+          "cat": "條件診斷：帳單",
+          "cfg": "bill_diagnosis"
+        }
+      ],
+      "route": [
+        "dialog",
+        "條件診斷：帳單"
+      ]
+    },
+    "prod": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3406,
+          "sim": 0.925,
+          "summary": "帳單收據 繳費證明 PDF 下載",
+          "categories": [
+            "帳單管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3474,
+          "sim": 0.7745,
+          "summary": "委託合約 PDF 文件下載",
+          "categories": [
+            "委託合約"
+          ],
+          "category": null
+        },
+        {
+          "id": 3390,
+          "sim": 0.692,
+          "summary": "合約 PDF 下載 各種文件",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3406,
+        "sim": 0.925,
+        "summary": "帳單收據 繳費證明 PDF 下載",
+        "categories": [
+          "帳單管理",
+          "條件診斷：帳單"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9249957386109454,
+        "eligible": true
+      },
+      "cats_derived": [
+        "帳單管理",
+        "條件診斷：帳單"
+      ],
+      "instance_gate": null,
+      "per_cat": [
+        {
+          "cat": "帳單管理",
+          "cfg": null
+        },
+        {
+          "cat": "條件診斷：帳單",
+          "cfg": "bill_diagnosis",
+          "hint_suppressed": false,
+          "resolver": {
+            "committed": "billing_anomaly",
+            "authority": "authoritative"
+          },
+          "final_cat": "帳單異常"
+        }
+      ],
+      "route": [
+        "dialog",
+        "帳單異常"
+      ]
+    }
+  },
+  {
+    "question": "系統怎麼算點退帳單的金額",
+    "expect": "單發",
+    "old_route": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "prod_route": [
+      "single",
+      "no-facet-config"
+    ],
+    "first_divergence": "applicability(instance_gate/resolver)",
+    "old": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3519,
+          "sim": 0.9628,
+          "summary": "點退帳單金額計算 押金結算",
+          "categories": [
+            "合約管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 4657,
+          "sim": 0.9508,
+          "summary": "合約的點退帳單金額 查點退金額",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3402,
+          "sim": 0.9485,
+          "summary": "點退帳單 自動產生 費用結算",
+          "categories": [
+            "帳單管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 4640,
+          "sim": 0.857,
+          "summary": "帳單收據金額 收據多少錢",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3934,
+          "sim": 0.7351,
+          "summary": "帳單金額怪怪的 跟預期不一樣",
+          "categories": [
+            "帳單異常"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3519,
+        "sim": 0.9628,
+        "summary": "點退帳單金額計算 押金結算",
+        "categories": [
+          "合約管理",
+          "條件診斷：帳單"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9627613747930501,
+        "eligible": true
+      },
+      "cats_derived": [
+        "合約管理",
+        "條件診斷：帳單"
+      ],
+      "config_lookup": [
+        {
+          "cat": "合約管理",
+          "cfg": null
+        },
+        {
+          "cat": "條件診斷：帳單",
+          "cfg": "bill_diagnosis"
+        }
+      ],
+      "route": [
+        "dialog",
+        "條件診斷：帳單"
+      ]
+    },
+    "prod": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3519,
+          "sim": 0.9628,
+          "summary": "點退帳單金額計算 押金結算",
+          "categories": [
+            "合約管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 4657,
+          "sim": 0.9508,
+          "summary": "合約的點退帳單金額 查點退金額",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3402,
+          "sim": 0.9485,
+          "summary": "點退帳單 自動產生 費用結算",
+          "categories": [
+            "帳單管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 4640,
+          "sim": 0.857,
+          "summary": "帳單收據金額 收據多少錢",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3934,
+          "sim": 0.7351,
+          "summary": "帳單金額怪怪的 跟預期不一樣",
+          "categories": [
+            "帳單異常"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3519,
+        "sim": 0.9628,
+        "summary": "點退帳單金額計算 押金結算",
+        "categories": [
+          "合約管理",
+          "條件診斷：帳單"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9627613747930501,
+        "eligible": true
+      },
+      "cats_derived": [
+        "合約管理",
+        "條件診斷：帳單"
+      ],
+      "instance_gate": null,
+      "per_cat": [
+        {
+          "cat": "合約管理",
+          "cfg": null
+        },
+        {
+          "cat": "條件診斷：帳單",
+          "cfg": "bill_diagnosis",
+          "hint_suppressed": false,
+          "resolver": {
+            "committed": null,
+            "authority": "no_face"
+          }
+        }
+      ],
+      "route": [
+        "single",
+        "no-facet-config"
+      ]
+    }
+  },
+  {
+    "question": "幫我查點退帳單金額",
+    "expect": "條件診斷：帳單",
+    "old_route": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "prod_route": [
+      "dialog",
+      "退租收尾"
+    ],
+    "first_divergence": "applicability(instance_gate/resolver)",
+    "old": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 4657,
+          "sim": 0.9717,
+          "summary": "合約的點退帳單金額 查點退金額",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3519,
+          "sim": 0.9474,
+          "summary": "點退帳單金額計算 押金結算",
+          "categories": [
+            "合約管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3934,
+          "sim": 0.8917,
+          "summary": "帳單金額怪怪的 跟預期不一樣",
+          "categories": [
+            "帳單異常"
+          ],
+          "category": null
+        },
+        {
+          "id": 4640,
+          "sim": 0.8596,
+          "summary": "帳單收據金額 收據多少錢",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3518,
+          "sim": 0.8565,
+          "summary": "點退清單填寫 費用與賠償項目",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 4657,
+        "sim": 0.9717,
+        "summary": "合約的點退帳單金額 查點退金額",
+        "categories": [
+          "條件診斷：帳單"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9716839690455261,
+        "eligible": true
+      },
+      "cats_derived": [
+        "條件診斷：帳單"
+      ],
+      "config_lookup": [
+        {
+          "cat": "條件診斷：帳單",
+          "cfg": "bill_diagnosis"
+        }
+      ],
+      "route": [
+        "dialog",
+        "條件診斷：帳單"
+      ]
+    },
+    "prod": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 4657,
+          "sim": 0.9717,
+          "summary": "合約的點退帳單金額 查點退金額",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3519,
+          "sim": 0.9474,
+          "summary": "點退帳單金額計算 押金結算",
+          "categories": [
+            "合約管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3934,
+          "sim": 0.8917,
+          "summary": "帳單金額怪怪的 跟預期不一樣",
+          "categories": [
+            "帳單異常"
+          ],
+          "category": null
+        },
+        {
+          "id": 4640,
+          "sim": 0.8596,
+          "summary": "帳單收據金額 收據多少錢",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3518,
+          "sim": 0.8565,
+          "summary": "點退清單填寫 費用與賠償項目",
+          "categories": [
+            "合約管理"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 4657,
+        "sim": 0.9717,
+        "summary": "合約的點退帳單金額 查點退金額",
+        "categories": [
+          "條件診斷：帳單"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9716839690455261,
+        "eligible": true
+      },
+      "cats_derived": [
+        "條件診斷：帳單"
+      ],
+      "instance_gate": null,
+      "per_cat": [
+        {
+          "cat": "條件診斷：帳單",
+          "cfg": "bill_diagnosis",
+          "hint_suppressed": false,
+          "resolver": {
+            "committed": "contract_closeout",
+            "authority": "authoritative"
+          },
+          "final_cat": "退租收尾"
+        }
+      ],
+      "route": [
+        "dialog",
+        "退租收尾"
+      ]
+    }
+  },
+  {
+    "question": "我的這張點退帳單金額怎麼算出來的",
+    "expect": "條件診斷：帳單",
+    "old_route": [
+      "dialog",
+      "條件診斷：帳單"
+    ],
+    "prod_route": [
+      "dialog",
+      "帳單異常"
+    ],
+    "first_divergence": "applicability(instance_gate/resolver)",
+    "old": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3519,
+          "sim": 0.9707,
+          "summary": "點退帳單金額計算 押金結算",
+          "categories": [
+            "合約管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3402,
+          "sim": 0.9592,
+          "summary": "點退帳單 自動產生 費用結算",
+          "categories": [
+            "帳單管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 4657,
+          "sim": 0.9382,
+          "summary": "合約的點退帳單金額 查點退金額",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3526,
+          "sim": 0.8549,
+          "summary": "提前解約生效後 點退與違約金結算",
+          "categories": [
+            "合約管理",
+            "退租收尾"
+          ],
+          "category": null
+        },
+        {
+          "id": 4640,
+          "sim": 0.8332,
+          "summary": "帳單收據金額 收據多少錢",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3519,
+        "sim": 0.9707,
+        "summary": "點退帳單金額計算 押金結算",
+        "categories": [
+          "合約管理",
+          "條件診斷：帳單"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9706510593040608,
+        "eligible": true
+      },
+      "cats_derived": [
+        "合約管理",
+        "條件診斷：帳單"
+      ],
+      "config_lookup": [
+        {
+          "cat": "合約管理",
+          "cfg": null
+        },
+        {
+          "cat": "條件診斷：帳單",
+          "cfg": "bill_diagnosis"
+        }
+      ],
+      "route": [
+        "dialog",
+        "條件診斷：帳單"
+      ]
+    },
+    "prod": {
+      "retrieval_kwargs": {
+        "top_k": 5,
+        "similarity_threshold": 0.65
+      },
+      "candidates": [
+        {
+          "id": 3519,
+          "sim": 0.9707,
+          "summary": "點退帳單金額計算 押金結算",
+          "categories": [
+            "合約管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3402,
+          "sim": 0.9592,
+          "summary": "點退帳單 自動產生 費用結算",
+          "categories": [
+            "帳單管理",
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 4657,
+          "sim": 0.9382,
+          "summary": "合約的點退帳單金額 查點退金額",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        },
+        {
+          "id": 3526,
+          "sim": 0.8549,
+          "summary": "提前解約生效後 點退與違約金結算",
+          "categories": [
+            "合約管理",
+            "退租收尾"
+          ],
+          "category": null
+        },
+        {
+          "id": 4640,
+          "sim": 0.8332,
+          "summary": "帳單收據金額 收據多少錢",
+          "categories": [
+            "條件診斷：帳單"
+          ],
+          "category": null
+        }
+      ],
+      "best": {
+        "id": 3519,
+        "sim": 0.9707,
+        "summary": "點退帳單金額計算 押金結算",
+        "categories": [
+          "合約管理",
+          "條件診斷：帳單"
+        ],
+        "category": null
+      },
+      "threshold": {
+        "entry": 0.75,
+        "sim": 0.9706510593040608,
+        "eligible": true
+      },
+      "cats_derived": [
+        "合約管理",
+        "條件診斷：帳單"
+      ],
+      "instance_gate": null,
+      "per_cat": [
+        {
+          "cat": "合約管理",
+          "cfg": null
+        },
+        {
+          "cat": "條件診斷：帳單",
+          "cfg": "bill_diagnosis",
+          "hint_suppressed": false,
+          "resolver": {
+            "committed": "billing_anomaly",
+            "authority": "authoritative"
+          },
+          "final_cat": "帳單異常"
+        }
+      ],
+      "route": [
+        "dialog",
+        "帳單異常"
+      ]
+    }
+  }
+]
