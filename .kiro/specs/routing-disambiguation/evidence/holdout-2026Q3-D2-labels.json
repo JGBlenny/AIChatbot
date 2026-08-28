@@ -1,0 +1,744 @@
+{
+  "dataset_id": "holdout-2026Q3-D2",
+  "labels_digest": "e11878755bf0f4d1",
+  "labeler": {
+    "role": "isolated blind labeler",
+    "session": "全新 general-purpose agent，無本案上下文",
+    "tool_uses": 0,
+    "tool_uses_source": "harness usage 計數，非自述",
+    "withheld": [
+      "candidate/extractor/ruleset",
+      "block/allow/abstain",
+      "explanation_request",
+      "LEVEL_A scope",
+      "現行 routing",
+      "4 筆 regression",
+      "D1 舊 50 筆",
+      "本次驗證目的"
+    ]
+  },
+  "candidate_contact": "NONE —— 本檔凍結之前 classifier 未跑過任何一句",
+  "n": 80,
+  "labels": [
+    {
+      "n": 1,
+      "utterance": "開通後可以取消嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問「開通後能否取消」屬服務／功能的制度規則，同一段說明對所有使用者成立，不需查特定單據。"
+    },
+    {
+      "n": 2,
+      "utterance": "點退流程是什麼",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "直接問平台的點退（退租點交）流程，是通用流程說明。"
+    },
+    {
+      "n": 3,
+      "utterance": "加了之後有什麼好處",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "low",
+      "evidence": "承前句的省略問法，但問的是某功能的效益說明，答案對所有人一致，不需查單筆資料。"
+    },
+    {
+      "n": 4,
+      "utterance": "可以提早關掉嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "「可以…嗎」是能力／規則詢問，回答的是平台是否允許，不必查特定一筆。"
+    },
+    {
+      "n": 5,
+      "utterance": "可以改別的方式嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "low",
+      "evidence": "省略主詞但屬「是否可切換設定方式」的功能規則問句，非查單筆資料。"
+    },
+    {
+      "n": 6,
+      "utterance": "進階搜尋要怎麼用",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "詢問平台功能操作方式，屬通用教學。"
+    },
+    {
+      "n": 7,
+      "utterance": "先分辨是哪一種",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "祈使句、無問句形式，像是客服引導使用者的話術而非使用者問句。"
+    },
+    {
+      "n": 8,
+      "utterance": "房租有沒有進來要看哪裡",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問的是「要看哪裡」＝介面位置的操作指引，不是要系統回答某筆租金是否入帳。"
+    },
+    {
+      "n": 9,
+      "utterance": "28  點退押金的找補費用在哪裡操作呢？",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "雖帶題號雜訊，語意是問功能在哪裡操作，屬通用操作指引。"
+    },
+    {
+      "n": 10,
+      "utterance": "租客怎麼刷卡",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問租客刷卡的通用操作流程，與特定帳單無關。"
+    },
+    {
+      "n": 11,
+      "utterance": "那我要怎麼知道",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "完全依賴前文指涉，脫離語境無法判斷問的是規則還是某一筆資料。"
+    },
+    {
+      "n": 12,
+      "utterance": "帳單可以下載PDF嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "詢問平台是否具備該功能，屬功能有無。"
+    },
+    {
+      "n": 13,
+      "utterance": "項目名稱可以自己打嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問欄位是否可自訂，是功能規則問題。"
+    },
+    {
+      "n": 14,
+      "utterance": "我要怎麼確認這筆真的入帳",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "雖提到「這筆」，但問的是確認入帳的方法／查看位置，通用說明即可回答。"
+    },
+    {
+      "n": 15,
+      "utterance": "電費怎麼計算",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問電費的計算規則，屬制度說明而非某一筆帳單金額。"
+    },
+    {
+      "n": 16,
+      "utterance": "這關係到你能不能拿回損失",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "陳述句且以「你」稱呼對方，是客服說明的話，不是使用者問句。"
+    },
+    {
+      "n": 17,
+      "utterance": "待對帳在哪裡",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "詢問功能在介面的位置，屬通用操作指引。"
+    },
+    {
+      "n": 18,
+      "utterance": "歷史合約也有嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問某功能是否也涵蓋歷史合約，屬功能適用範圍的規則。"
+    },
+    {
+      "n": 19,
+      "utterance": "帳單設定在哪裡",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問設定入口位置，通用操作說明。"
+    },
+    {
+      "n": 20,
+      "utterance": "證明跟證照一樣嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "詢問兩個名詞概念是否相同，屬制度／定義說明。"
+    },
+    {
+      "n": 21,
+      "utterance": "真的沒有期限嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "確認某項規則是否無期限限制，答案對所有使用者一致。"
+    },
+    {
+      "n": 22,
+      "utterance": "房東怎麼追蹤沒簽的合約",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問通用的追蹤操作方式，不需查特定合約。"
+    },
+    {
+      "n": 23,
+      "utterance": "篩出來就能直接退嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問篩選後能否直接執行退的流程規則，屬功能流程說明。"
+    },
+    {
+      "n": 24,
+      "utterance": "可以改的東西多嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "low",
+      "evidence": "省略主詞，但問的是可修改範圍的規則，非查單筆資料。"
+    },
+    {
+      "n": 25,
+      "utterance": "沒有權限的成員可以簽約嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問團隊權限的制度規則，通用答案成立。"
+    },
+    {
+      "n": 26,
+      "utterance": "現況確認書要看哪裡",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "詢問文件在系統中的位置，屬操作指引。"
+    },
+    {
+      "n": 27,
+      "utterance": "改完要按儲存嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問操作步驟是否需要儲存，屬通用操作規則。"
+    },
+    {
+      "n": 28,
+      "utterance": "出門在外要怎麼查",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問行動裝置上的查詢方式，屬功能操作說明。"
+    },
+    {
+      "n": 29,
+      "utterance": "可以設上下限嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問系統是否支援上下限設定，屬功能有無。"
+    },
+    {
+      "n": 30,
+      "utterance": "用哪一種由合約約定，租客不能自選",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "為陳述性說明句，是客服的回答內容而非使用者問句。"
+    },
+    {
+      "n": 31,
+      "utterance": "設置一定要做嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問某項設定是否為必要步驟，屬制度規則。"
+    },
+    {
+      "n": 32,
+      "utterance": "關鍵是哪一個",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "語意殘缺、無指涉對象，脫離語境無法判斷屬規則或單筆查詢。"
+    },
+    {
+      "n": 33,
+      "utterance": "手機可以匯出嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問行動端是否支援匯出功能，屬功能有無。"
+    },
+    {
+      "n": 34,
+      "utterance": "藍新的帳號要去哪拿",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問金流服務商帳號的取得途徑，屬通用設定指引。"
+    },
+    {
+      "n": 35,
+      "utterance": "另計費用要自己填嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問欄位填寫規則，屬帳單設定的通用說明。"
+    },
+    {
+      "n": 36,
+      "utterance": "帳單可以排時間嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問是否支援排程開帳功能，屬功能有無。"
+    },
+    {
+      "n": 37,
+      "utterance": "04  如何寄送合約邀請？",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "帶題號雜訊但語意完整，問通用操作步驟。"
+    },
+    {
+      "n": 38,
+      "utterance": "還沒簽回的合約在哪個分類",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問系統分類邏輯與列表位置，屬通用介面說明，非查某一份合約狀態。"
+    },
+    {
+      "n": 39,
+      "utterance": "它直接關係到你能不能取得公益出租人資格與稅務優惠，猜錯的代價是整年的稅務規劃",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "長篇陳述與勸說語氣，明顯是客服說明的話而非使用者提問。"
+    },
+    {
+      "n": 40,
+      "utterance": "跟團隊資訊不一樣嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "low",
+      "evidence": "省略主詞的比較問句，但比較的是兩個平台概念的定義差異，通用說明可答。"
+    },
+    {
+      "n": 41,
+      "utterance": "那我上傳的也能追修繕？",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問功能適用範圍（自行上傳者是否也支援修繕追蹤），屬功能有無。"
+    },
+    {
+      "n": 42,
+      "utterance": "可以設成預設嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問是否支援設為預設值，屬功能規則。"
+    },
+    {
+      "n": 43,
+      "utterance": "點退之後合約會跑去哪",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問點退後的系統流轉規則，通用流程說明即可回答。"
+    },
+    {
+      "n": 44,
+      "utterance": "額外帳單怎麼開",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問建立額外帳單的通用操作步驟。"
+    },
+    {
+      "n": 45,
+      "utterance": "可以改預設密碼嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問帳號功能是否允許修改預設密碼，屬功能規則。"
+    },
+    {
+      "n": 46,
+      "utterance": "以前不是有獨立按鈕嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問介面元素是否存在／變更，屬功能與介面說明。"
+    },
+    {
+      "n": 47,
+      "utterance": "房租可以刷卡分期嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問金流支援的付款方式規則，通用答案成立。"
+    },
+    {
+      "n": 48,
+      "utterance": "不是在密碼欄旁邊嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "確認介面元素位置，屬操作指引，不需查任何一筆資料。"
+    },
+    {
+      "n": 49,
+      "utterance": "要怎麼批次發送帳單",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問批次操作的通用步驟。"
+    },
+    {
+      "n": 50,
+      "utterance": "社區總表在哪",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問功能／報表在介面的位置，屬操作指引而非查某一物件的數值。"
+    },
+    {
+      "n": 51,
+      "utterance": "在哪裡可以點",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "low",
+      "evidence": "省略受詞的介面位置詢問，方向仍是通用操作指引。"
+    },
+    {
+      "n": 52,
+      "utterance": "過期的連結點下去會顯示什麼",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問系統在特定情境下的固定行為，屬規則說明。"
+    },
+    {
+      "n": 53,
+      "utterance": "可以存搜尋條件嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問功能是否支援儲存搜尋條件，屬功能有無。"
+    },
+    {
+      "n": 54,
+      "utterance": "可以填負數嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問欄位輸入限制規則，通用答案成立。"
+    },
+    {
+      "n": 55,
+      "utterance": "那他能簽約嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "low",
+      "evidence": "承前的權限問句，回答依權限規則即可，不必查某一筆合約。"
+    },
+    {
+      "n": 56,
+      "utterance": "那有沒有接近的做法",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "low",
+      "evidence": "問是否有替代做法，屬功能／流程說明。"
+    },
+    {
+      "n": 57,
+      "utterance": "那我想用的功能怎麼辦",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "low",
+      "evidence": "指涉不明但問的是功能可用性與替代方案，仍屬通用說明範疇。"
+    },
+    {
+      "n": 58,
+      "utterance": "那還要驗證email嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問驗證流程是否必要，屬註冊／帳號的制度規則。"
+    },
+    {
+      "n": 59,
+      "utterance": "附件傳錯了可以刪掉嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問系統是否允許刪除附件，屬功能規則。"
+    },
+    {
+      "n": 60,
+      "utterance": "物件詳情有什麼",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問物件詳情頁包含哪些欄位／區塊，是功能說明而非查某一物件的實際內容。"
+    },
+    {
+      "n": 61,
+      "utterance": "沒收到怎麼辦",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問未收到通知／信件的通用排除步驟，屬標準處理流程。"
+    },
+    {
+      "n": 62,
+      "utterance": "刷卡的步驟是什麼",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問通用操作步驟。"
+    },
+    {
+      "n": 63,
+      "utterance": "37  未刊登的物件也可以新增合約嗎？",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "帶題號雜訊但問的是建約前提條件的規則，通用答案成立。"
+    },
+    {
+      "n": 64,
+      "utterance": "改了要重新驗證嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問修改後是否觸發重新驗證，屬系統規則。"
+    },
+    {
+      "n": 65,
+      "utterance": "具體包含什麼，請向管理業者確認",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "後半為指示對方去確認的建議語，是客服回覆內容而非使用者問句。"
+    },
+    {
+      "n": 66,
+      "utterance": "歷史合約裡面放什麼",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問該分類的定義與收納內容，屬功能說明。"
+    },
+    {
+      "n": 67,
+      "utterance": "個人房東跟公司團隊要看哪個",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問不同身分對應的功能／頁面選擇原則，屬制度說明。"
+    },
+    {
+      "n": 68,
+      "utterance": "可以直接在上面簽嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問是否支援線上直接簽署，屬功能有無。"
+    },
+    {
+      "n": 69,
+      "utterance": "已支出是什麼意思",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問系統名詞定義，通用說明即可回答。"
+    },
+    {
+      "n": 70,
+      "utterance": "照片也會複製嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問複製功能涵蓋範圍的規則，不需查特定物件。"
+    },
+    {
+      "n": 71,
+      "utterance": "簽約後要修改怎麼辦",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問簽約後異動的標準處理流程，屬制度說明。"
+    },
+    {
+      "n": 72,
+      "utterance": "編輯點退清單怎麼進去",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問功能入口與操作路徑，屬通用操作指引。"
+    },
+    {
+      "n": 73,
+      "utterance": "公會版跟內政部版差在哪",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問兩種合約範本的差異，屬制度／文件說明。"
+    },
+    {
+      "n": 74,
+      "utterance": "您的帳單上顯示的是哪一家的虛擬帳號？",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "使用「您」反問對方，是客服向使用者澄清的提問，不是使用者問句。"
+    },
+    {
+      "n": 75,
+      "utterance": "社宅那邊有寫嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "low",
+      "evidence": "承前省略，但問的是某規範／文件是否有相關記載，屬制度說明。"
+    },
+    {
+      "n": 76,
+      "utterance": "動產租金跟不動產差在哪",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問兩類租金的制度差異，通用說明即可回答。"
+    },
+    {
+      "n": 77,
+      "utterance": "合約還沒到期可以先點退嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問平台是否允許提前點退，屬流程規則而非查某一份合約狀態。"
+    },
+    {
+      "n": 78,
+      "utterance": "email通知的語言在哪裡改",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問設定位置，屬通用操作指引。"
+    },
+    {
+      "n": 79,
+      "utterance": "那功能有少嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "low",
+      "evidence": "省略主詞的功能比較問句，回答的是功能差異，不需查單筆資料。"
+    },
+    {
+      "n": 80,
+      "utterance": "簽約流程走完長什麼樣",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問完整簽約流程的樣貌，屬通用流程說明。"
+    }
+  ]
+}
