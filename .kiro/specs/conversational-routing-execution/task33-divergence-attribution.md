@@ -94,4 +94,25 @@ Q2 「幫我查點退帳單金額」凍結期望是進「條件診斷：帳單�
    ⚠️ 3.3-c 明訂依據**不得為「測試沒過」本身**——需要你判定裁定 001 是否即為該依據。
 ```
 
-**在 Q1／Q2 裁定前，3.4 不得開始**——否則只能靠改斷言收尾，那正是 3.3-c 禁止的預設處置。
+## 裁定結果（2026-08-28，業主）
+
+```text
+Q1 → **裁定 002**：eligibility authority 歸 deterministic instance-reference gate，
+     resolver 不得兼職。⚠️ 但裁定的是 authority 歸屬，**不等於**授權開 gate。
+Q2 → **裁定 003**：EXPECTATION_DRIFT 成立。依據＝2026-08-27 的 responsibility
+     authority contract supersede 2026-08-23 的 terminal-routing expectation，
+     **不是**「測試沒過」。⚠️ 被 supersede 的是「nomination = final owner」這個假設，
+     nomination 本身（條件診斷：帳單）仍是正確期望，斷言拆成兩條而非放寬。
+```
+
+已套用：`test_billing_instance_questions_enter_diagnosis_facet` 改為
+①仍須進對話 ②nomination 須含「條件診斷：帳單」③**不再**要求 final commit 等於 nomination。
+該檔失敗數 6 → 4，且剩下 4 筆**全是**規則型問句被吸進面向（Q1 那一類）。
+
+## 3.4 仍 BLOCKED，blocker 已改名並完成對帳
+
+見 `task33-gate-authorization-reconciliation.md`：現行 gate implementation
+**就是**被 holdout 反證的那一版（ruleset／protocol digest 三者全同、status=failed）。
+
+> blocker ＝ **deterministic eligibility authority 的現行實作已被反證，
+> 且尚未產生新的、通過 matching holdout 的替代品。**

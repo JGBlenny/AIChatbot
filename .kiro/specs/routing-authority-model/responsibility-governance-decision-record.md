@@ -432,3 +432,107 @@ e2e harness 內的 wire literal（"model"／"technical_fail_open"）：**保留*
 ❌ integration fully deterministic
 ❌ P2.5 fixed
 ```
+
+---
+
+## 裁定 002｜eligibility authority 與 responsibility authority 分家
+
+> 2026-08-28 業主裁定。觸發：任務 3.3 歸因證實 instance-reference gate 未啟用，
+> 於是 resolver 的 LLM 同時兼職判「這是不是 instance 問題」與「這個 Face 是否負責」。
+> 證據：`conversational-routing-execution/task33-divergence-attribution.md`。
+
+### ① Authority 拆分（**這是本裁定的主體**）
+
+```text
+Instance-reference gate      這一輪是否具有「需要進 instance-specific Face」的最低前提
+                             → **deterministic eligibility authority**
+Responsibility resolver      在**已具備 instance 前提**的候選之間，這個 Face 是否真正負責
+                             → **semantic responsibility authority**
+```
+
+⛔ resolver **不應兼職**判斷「這其實只是規則說明，所以根本不該進 Face」。
+**能機械判定的問題，必須在它前面解決。**
+
+實證（同一環境、語義極接近的兩句得到相反結果）：
+
+```text
+「點退帳單的金額是怎麼算的」   → resolver no_face          → 單發
+「點退做完後，帳單會自動出來嗎？」 → resolver authoritative    → 進對話
+⇒ 這條邊界不適合當 regression oracle。
+```
+
+### ② ⚠️ 裁定的是 **authority 歸屬**，**不等於**授權把現在那顆 gate 打開
+
+```text
+gate_active() = gate_requested() ∧ gate_authorized()
+⛔ authorization **不得跳過**，也**不得**因為「resolver 有噪音」就繞過。
+⛔ 不得為了讓 3.4 穩定而拿掉 authorization condition。
+```
+
+正確順序（**固定**）：
+
+```text
+1 Q1 authority decision = deterministic gate                      ✅ 本裁定
+2 對帳既有 holdout evidence：現有 implementation 是否就是當初被 REFUTED 的那版
+3 若同一 implementation 已被 holdout REFUTED
+    → **不得直接 enable**；先修改 deterministic classifier，
+      再用**新的、未看過的** matching holdout 驗證
+  若與舊 refuted candidate 已有實質變更
+    → 用 matching holdout 驗現在這版
+4 PASS → authorized=true → 才能 enable → 才能進 3.4
+```
+
+⇒ **3.4 仍 BLOCKED，但 blocker 已改名**：
+
+> 不是「routing divergence 尚未歸因」，
+> 而是「規則型／instance 型的 **deterministic eligibility authority 尚未取得 holdout authorization**」。
+
+### ③ 3.4 之後的 acceptance 紀律
+
+```text
+不得再讓 live LLM randomness 決定「規則型 query 要不要進 Face」。
+resolver 仍可判 responsibility，但**只能在 instance eligibility 已成立的候選上工作**。
+```
+
+---
+
+## 裁定 003｜「幫我查點退帳單金額」的終局期望 = `EXPECTATION_DRIFT`
+
+> 2026-08-28 業主裁定。
+
+### 判定與依據（**依據不是「測試沒過」**）
+
+```text
+Frozen expectation           2026-08-23
+        ↓
+Normative authority decision 2026-08-27（裁定 001／001-A）
+        ↓
+Structured responsibility delegation contract
+        ↓
+later authority **supersedes** old terminal-routing expectation
+```
+
+> **EXPECTATION_DRIFT — frozen expectation predates the adopted responsibility
+> authority model and treats nomination as terminal routing, while the later
+> normative contract grants the responsibility resolver authority to delegate
+> before final commit.**
+
+### ⚠️ 被 supersede 的是「nomination = final owner」這個假設，**不是 nomination 本身**
+
+```text
+initial candidate / nomination  → 「條件診斷：帳單」   ✅ **保留**，仍是正確期望
+final authoritative commit      → 依 responsibility chain 決定
+                                 ⛔ **不再要求**等於 initial nomination
+```
+
+⛔ 不得把舊 expectation 整筆刪掉。斷言要**拆成兩條**——
+否則日後有人看到 expectation 被改，會以為我們為了綠燈改答案。
+本注記必須同時寫進 3.3 的 evidence，理由同上。
+
+### 射程
+
+```text
+本裁定只涵蓋「終局 Face 期望」與 nomination 的關係。
+⛔ 不得擴成「所有紅都是 expectation drift」——
+   規則型問句進場那一類的根因是 ①（eligibility authority 缺位），與本題**完全不同**。
+```

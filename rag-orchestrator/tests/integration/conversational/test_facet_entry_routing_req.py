@@ -103,6 +103,19 @@ async def _route(retriever, pool, question):
     return ("dialog", cat, best)
 
 
+def nomination_categories(best) -> "list[str]":
+    """檢索為這一輪提出的 **Face nomination**（尚未經 responsibility 收斂）。
+
+    ⚠️ 裁定 003：被 supersede 的是「nomination = final owner」這個舊假設，
+    **不是 nomination 本身**。2026-08-23 凍結的「條件診斷：帳單」作為
+    *initial nomination* 仍然正確；只是不能再拿它當 *final committed Face*——
+    2026-08-27 的 responsibility authority contract 允許 resolver 在 commit 前委派。
+    ⛔ 看到 expectation 被改的人請讀這段：**斷言是被拆成兩條，不是被放寬。**
+    """
+    from routers.chat import _knowledge_category
+    return _knowledge_category(best)
+
+
 def _fmt(best):
     if not best:
         return "（無命中）"
@@ -383,11 +396,30 @@ async def test_billing_openers_enter_dialog(retriever, pool, question):
 @pytest.mark.req("conversational-routing-execution:2.1")
 @pytest.mark.parametrize("question", BILLING_INSTANCE_CASES)
 async def test_billing_instance_questions_enter_diagnosis_facet(retriever, pool, question):
-    """instance-specific 問法必須進「條件診斷：帳單」——斷言到 facet，非僅 dialog。"""
+    """instance-specific 問法必須**進對話**，且 nomination 為「條件診斷：帳單」。
+
+    ⚠️ 裁定 003（EXPECTATION_DRIFT）：本測試原本斷言 *final committed Face* 等於
+    「條件診斷：帳單」。該期望凍結於 2026-08-23，早於 2026-08-27 採用的
+    responsibility authority contract——後者明訂 retrieval/category 只是
+    **nomination evidence**，resolver 有權在 commit 前沿契約白名單委派
+    （bill_diagnosis → billing_anomaly → contract_closeout）。
+
+    ⛔ **斷言是被拆成兩條，不是被放寬**：
+    ```text
+    ① 仍進對話                    ← T-1 要保住的查實值能力，未動
+    ② nomination = 條件診斷：帳單   ← 舊期望原封保留，只是改掛在 nomination 上
+    ③ final committed Face        ← **不再要求**等於 nomination（由 responsibility chain 決定）
+    ```
+    落回單發仍算失敗——那代表使用者拿到通則說明而非自己那筆的資料。
+    """
     kind, detail, best = await _route(retriever, pool, question)
-    assert kind == "dialog" and detail == BILLING_INSTANCE_FACET, (
-        f"instance 問法應進「{BILLING_INSTANCE_FACET}」卻為 {kind}/{detail}：{question}｜{_fmt(best)}"
+    assert kind == "dialog", (
+        f"instance 問法應進對話卻為 {kind}/{detail}：{question}｜{_fmt(best)}"
         "\n（此為 T-1 要保住的查實值能力；落回單發＝使用者拿到通則說明而非自己那筆的資料）")
+    noms = nomination_categories(best)
+    assert BILLING_INSTANCE_FACET in noms, (
+        f"nomination 應含「{BILLING_INSTANCE_FACET}」卻為 {noms}：{question}｜{_fmt(best)}"
+        "\n（裁定 003 只 supersede『nomination = final owner』，nomination 本身仍須正確）")
 
 
 @pytest.mark.req("billing-conversational-facets:11.2")
