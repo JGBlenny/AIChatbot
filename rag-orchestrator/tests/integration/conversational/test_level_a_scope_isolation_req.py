@@ -122,8 +122,10 @@ async def _best_knowledge(retriever, question):
 async def _production_seam(pool, best, question):
     from routers.chat import _diagnosis_config_for_knowledge
     from services.decision_layer import DecisionConfig
-    return await _diagnosis_config_for_knowledge(
+    # 裁定 001-A：回傳改為 (config, face authority)；本 seam 只驗 config。
+    cfg, _face_authority = await _diagnosis_config_for_knowledge(
         pool, best, DecisionConfig.load(), user_message=question)
+    return cfg
 
 
 def _overbroad_stub(blocked_keys=None):

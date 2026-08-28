@@ -91,7 +91,10 @@ async def _route(retriever, pool, question):
     if not best:
         return ("single", "no-hit", None)
 
-    cfg = await _diagnosis_config_for_knowledge(
+    # 裁定 001-A：回傳改為 (config, face authority)。
+    # ⚠️ 本 harness 驗的是「進哪個面向」，authority 由 unit 層的 precedence grid 管；
+    #    這裡只需正確解包，不得把 tuple 當 config 用（會靜默變成 detail='?'）。
+    cfg, _face_authority = await _diagnosis_config_for_knowledge(
         pool, best, cfg_thresholds, user_message=question)
     if cfg is None:
         return ("single", "not-routed", best)

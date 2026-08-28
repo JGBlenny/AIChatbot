@@ -74,38 +74,49 @@ def test_knowledge_category_none():
     assert _knowledge_category(None) == []
 
 
+from services.responsibility import FACE_NONE, FACE_UNEVALUATED  # noqa: E402
+
+
 # ── _diagnosis_config_for_knowledge：門檻 + 分類命中 ──
 @pytest.mark.req("conversational-diagnosis:1.1")
 async def test_routes_when_threshold_met_and_category_hits():
     pool = _FakePool([_diag_row()])
     bk = {"id": 1, "similarity": 0.9, "categories": ["條件診斷:合約"]}
-    cfg = await _diagnosis_config_for_knowledge(pool, bk, DecisionConfig(form_trigger_threshold=0.75))
+    cfg, authority = await _diagnosis_config_for_knowledge(
+        pool, bk, DecisionConfig(form_trigger_threshold=0.75))
+    # 裁定 001-A：回傳改為 (config, face authority)。旗標預設關 → resolver 沒跑 → unevaluated
     assert cfg is not None and cfg.key == "contract_diag"
+    assert authority == FACE_UNEVALUATED
 
 
 @pytest.mark.req("conversational-diagnosis:7.2")
 async def test_no_route_below_threshold():
     pool = _FakePool([_diag_row()])
     bk = {"id": 1, "similarity": 0.5, "categories": ["條件診斷:合約"]}  # < 門檻
-    assert await _diagnosis_config_for_knowledge(pool, bk, DecisionConfig(form_trigger_threshold=0.75)) is None
+    assert await _diagnosis_config_for_knowledge(
+        pool, bk, DecisionConfig(form_trigger_threshold=0.75)) == (None, FACE_NONE)
 
 
 @pytest.mark.req("conversational-diagnosis:1.2")
 async def test_no_route_when_category_misses():
     pool = _FakePool([_diag_row()])
     bk = {"id": 1, "similarity": 0.9, "categories": ["一般合約知識"]}  # 非診斷分類
-    assert await _diagnosis_config_for_knowledge(pool, bk, DecisionConfig(form_trigger_threshold=0.75)) is None
+    assert await _diagnosis_config_for_knowledge(
+        pool, bk, DecisionConfig(form_trigger_threshold=0.75)) == (None, FACE_NONE)
 
 
 @pytest.mark.req("conversational-diagnosis:1.4")
 async def test_multi_category_second_hits():
     pool = _FakePool([_diag_row()])
     bk = {"id": 1, "similarity": 0.9, "categories": ["一般合約知識", "條件診斷:合約"]}
-    cfg = await _diagnosis_config_for_knowledge(pool, bk, DecisionConfig(form_trigger_threshold=0.75))
+    cfg, authority = await _diagnosis_config_for_knowledge(
+        pool, bk, DecisionConfig(form_trigger_threshold=0.75))
     assert cfg is not None and cfg.key == "contract_diag"
+    assert authority == FACE_UNEVALUATED
 
 
 @pytest.mark.req("conversational-diagnosis:7.2")
 async def test_no_route_when_best_knowledge_none():
     pool = _FakePool([_diag_row()])
-    assert await _diagnosis_config_for_knowledge(pool, None, DecisionConfig(form_trigger_threshold=0.75)) is None
+    assert await _diagnosis_config_for_knowledge(
+        pool, None, DecisionConfig(form_trigger_threshold=0.75)) == (None, FACE_NONE)

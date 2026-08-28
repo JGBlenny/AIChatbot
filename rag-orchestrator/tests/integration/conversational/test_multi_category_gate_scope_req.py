@@ -109,7 +109,7 @@ async def _seam(pool, categories, question):
     from services.decision_layer import DecisionConfig
 
     config = DecisionConfig.load()
-    cfg = await _diagnosis_config_for_knowledge(
+    cfg, _face_authority = await _diagnosis_config_for_knowledge(
         pool, _synthetic_knowledge(config, categories), config, user_message=question)
     return ("single", None) if cfg is None else ("dialog", getattr(cfg, "key", "?"))
 

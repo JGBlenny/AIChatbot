@@ -174,7 +174,10 @@ async def test_chat_wiring_is_a_noop_while_gate_is_off(monkeypatch):
     from routers import chat as chat_mod
     monkeypatch.delenv("PREENTRY_ROUTABILITY_GATE", raising=False)
     cfg = _cfg("bill_diagnosis")
-    assert await chat_mod._resolve_pre_commit_candidate(MagicMock(), cfg, "問句") is cfg
+    out, authority = await chat_mod._resolve_pre_commit_candidate(MagicMock(), cfg, "問句")
+    # 旗標關 → resolver 沒跑：既有行為（照舊進場），但**不是** authority（裁定 001-A）
+    from services.responsibility import FACE_UNEVALUATED
+    assert out is cfg and authority == FACE_UNEVALUATED
 
 
 @pytest.mark.req("face-exit-before-grounding:1")
@@ -185,13 +188,17 @@ async def test_chat_wiring_returns_delegated_config_when_gate_on(monkeypatch):
     target = _cfg("contract_closeout")
 
     async def fake_resolve(*_a, **_k):
-        from services.responsibility import EntryResolution
+        from services.responsibility import DECISION_SOURCE_MODEL, EntryResolution
         return EntryResolution("contract_closeout", target,
-                               [{"facet_key": "bill_diagnosis", "verdict": "switch"}], "stay")
+                               [{"facet_key": "bill_diagnosis", "verdict": "switch"}], "stay",
+                               commit_source=DECISION_SOURCE_MODEL)
 
     monkeypatch.setattr("services.responsibility.resolve_entry_candidate", fake_resolve)
-    out = await chat_mod._resolve_pre_commit_candidate(MagicMock(), _cfg("bill_diagnosis"), "問句")
+    out, authority = await chat_mod._resolve_pre_commit_candidate(
+        MagicMock(), _cfg("bill_diagnosis"), "問句")
+    from services.responsibility import FACE_AUTHORITATIVE
     assert out is target, "resolver 判給別的面向時，進場的必須是那個面向"
+    assert authority == FACE_AUTHORITATIVE, "真實 model stay 必須帶 authority"
 
 
 # ── rollout：facet-scoped gate ＋ telemetry ──────────────────────────────────
@@ -212,17 +219,21 @@ async def test_scoped_rollout_gate(monkeypatch, gate, facets, expect_resolver):
     called = {"n": 0}
 
     async def fake_resolve(*_a, **_k):
-        from services.responsibility import EntryResolution
+        from services.responsibility import DECISION_SOURCE_MODEL, EntryResolution
         called["n"] += 1
         return EntryResolution("contract_closeout", target,
                                [{"facet_key": "bill_diagnosis", "verdict": "switch",
                                  "delegate_to": "contract_closeout",
-                                 "reason": "responsibility_contract"}], "stay")
+                                 "reason": "responsibility_contract",
+                                 "decision_source": DECISION_SOURCE_MODEL}], "stay",
+                               commit_source=DECISION_SOURCE_MODEL)
 
     monkeypatch.setattr("services.responsibility.resolve_entry_candidate", fake_resolve)
-    out = await chat_mod._resolve_pre_commit_candidate(MagicMock(), seed, "問句")
+    out, authority = await chat_mod._resolve_pre_commit_candidate(MagicMock(), seed, "問句")
+    from services.responsibility import FACE_AUTHORITATIVE, FACE_UNEVALUATED
     assert (called["n"] == 1) is expect_resolver
     assert out is (target if expect_resolver else seed)
+    assert authority == (FACE_AUTHORITATIVE if expect_resolver else FACE_UNEVALUATED)
 
 
 @pytest.mark.req("face-exit-before-grounding:1")
@@ -391,3 +402,105 @@ def test_guard_terminations_are_not_counted_as_technical_fail_open():
     assert t["fail_open"] is False, "護欄終止不得被記成技術故障"
     assert t["has_commit_authority"] is False and t["commit_source"] is None
     assert t["fallback_reason"] == "unknown_or_disabled_delegate"
+
+
+@pytest.mark.req("routing-authority-model:ruling-001A-2")
+async def test_wiring_marks_fail_open_commit_as_compat_not_authoritative(monkeypatch):
+    """resolver 跑了、也 commit 了，但 commit 出自技術故障 ⇒ **不得**回 authoritative。
+
+    這格是裁定 001-A 第 3 列在接線層的入口：回錯了，Knowledge 就會被擠掉。
+    """
+    from routers import chat as chat_mod
+    from services.responsibility import (DECISION_SOURCE_TECHNICAL_FAIL_OPEN,
+                                         EntryResolution, FACE_COMPAT_FAIL_OPEN)
+    monkeypatch.setenv("PREENTRY_ROUTABILITY_GATE", "true")
+    monkeypatch.setenv("PREENTRY_ROUTABILITY_FACETS", "bill_diagnosis")
+    seed = _cfg("bill_diagnosis")
+
+    async def fake_resolve(*_a, **_k):
+        return EntryResolution("bill_diagnosis", seed,
+                               [{"facet_key": "bill_diagnosis", "verdict": "stay",
+                                 "reason": "brain_unavailable_fail_open",
+                                 "decision_source": DECISION_SOURCE_TECHNICAL_FAIL_OPEN}],
+                               "stay", commit_source=DECISION_SOURCE_TECHNICAL_FAIL_OPEN)
+
+    monkeypatch.setattr("services.responsibility.resolve_entry_candidate", fake_resolve)
+    out, authority = await chat_mod._resolve_pre_commit_candidate(MagicMock(), seed, "問句")
+    assert out is seed, "相容性候選仍要帶回來（沒有 Knowledge 時才用得到）"
+    assert authority == FACE_COMPAT_FAIL_OPEN
+
+
+@pytest.mark.req("routing-authority-model:ruling-001A-2")
+async def test_wiring_reports_no_face_when_resolver_declines(monkeypatch):
+    """resolver 明確判不 commit → FACE_NONE，且**不得**把 seed 當相容性候選塞回去。"""
+    from routers import chat as chat_mod
+    from services.responsibility import EntryResolution, FACE_NONE
+    monkeypatch.setenv("PREENTRY_ROUTABILITY_GATE", "true")
+    monkeypatch.setenv("PREENTRY_ROUTABILITY_FACETS", "bill_diagnosis")
+    seed = _cfg("bill_diagnosis")
+
+    async def fake_resolve(*_a, **_k):
+        return EntryResolution(None, None,
+                               [{"facet_key": "bill_diagnosis", "verdict": "switch"}],
+                               "switch_without_delegate")
+
+    monkeypatch.setattr("services.responsibility.resolve_entry_candidate", fake_resolve)
+    out, authority = await chat_mod._resolve_pre_commit_candidate(MagicMock(), seed, "問句")
+    assert out is None and authority == FACE_NONE
+
+
+# ── 刀 A 的安全性主張：**config 輸出與改動前逐格相同** ────────────────────────
+#
+# 背景（2026-08-28）：`test_facet_entry_routing_req.py` 曾疑似多一筆回歸，
+# 但同碼連跑三次得到 7／6／5 ——該套件的 resolver 會打**真 LLM**，
+# 失敗數本身有 ±2 噪音，無法用來判斷 config 行為是否改變。
+# ⇒ 把命題換成決定性的：對每一種 resolver 結果形狀，
+#   `_resolve_pre_commit_candidate` 回的 config 必須等於改動前會回的那一個。
+#   authority 是**新增**的第二格，不影響第一格。
+
+@pytest.mark.req("routing-authority-model:ruling-001A-2")
+@pytest.mark.parametrize("shape", ["model_commit", "fail_open_commit", "no_commit",
+                                   "resolver_exception", "flag_off"])
+async def test_returned_config_is_identical_to_pre_change_behaviour(monkeypatch, shape):
+    from routers import chat as chat_mod
+    from services.responsibility import (DECISION_SOURCE_MODEL,
+                                         DECISION_SOURCE_TECHNICAL_FAIL_OPEN,
+                                         EntryResolution, FACE_AUTHORITATIVE,
+                                         FACE_COMPAT_FAIL_OPEN, FACE_NONE, FACE_UNEVALUATED)
+    seed = _cfg("bill_diagnosis")
+    target = _cfg("contract_closeout")
+
+    if shape == "flag_off":
+        monkeypatch.delenv("PREENTRY_ROUTABILITY_GATE", raising=False)
+        expected_cfg, expected_auth = seed, FACE_UNEVALUATED
+    else:
+        monkeypatch.setenv("PREENTRY_ROUTABILITY_GATE", "true")
+        monkeypatch.setenv("PREENTRY_ROUTABILITY_FACETS", "bill_diagnosis")
+        if shape == "model_commit":
+            res = EntryResolution("contract_closeout", target, [], "stay",
+                                  commit_source=DECISION_SOURCE_MODEL)
+            expected_cfg, expected_auth = target, FACE_AUTHORITATIVE
+        elif shape == "fail_open_commit":
+            res = EntryResolution("bill_diagnosis", seed, [], "stay",
+                                  commit_source=DECISION_SOURCE_TECHNICAL_FAIL_OPEN)
+            # ★ 改動前回的也是這個 config——**第一格不變**，變的只有第二格
+            expected_cfg, expected_auth = seed, FACE_COMPAT_FAIL_OPEN
+        elif shape == "no_commit":
+            res = EntryResolution(None, None, [], "switch_without_delegate")
+            expected_cfg, expected_auth = None, FACE_NONE
+        else:                                   # resolver_exception
+            res = None
+
+        async def fake_resolve(*_a, **_k):
+            if res is None:
+                raise RuntimeError("boom")
+            return res
+
+        monkeypatch.setattr("services.responsibility.resolve_entry_candidate", fake_resolve)
+        if shape == "resolver_exception":
+            expected_cfg, expected_auth = seed, FACE_COMPAT_FAIL_OPEN
+
+    cfg_out, authority = await chat_mod._resolve_pre_commit_candidate(MagicMock(), seed, "問句")
+    assert cfg_out is expected_cfg, (
+        f"{shape}：config 輸出與改動前不同——刀 A 只該新增第二格，不得動第一格")
+    assert authority == expected_auth, f"{shape}：authority 標錯"

@@ -821,22 +821,30 @@ async def _resolve_pre_commit_candidate(db_pool, cfg, user_message: Optional[str
     才走新路。**allowlist 未設或為空＝停用**（fail-safe）——避免「把旗標打開」
     意外變成 normal classification 全站每候選多一次 brain 呼叫。
 
-    回傳「要 commit 的面向設定」或 `None`（不進面向，走既有 fallback）。
+    回傳 `(要 commit 的面向設定 或 None, face authority)`——authority 為
+    `services.responsibility.FACE_*` 之一。
     ⚠️ 回傳的可能**不是**傳入的那個面向——責任契約可把 query 交給白名單內的下一個面向。
+
+    ⚠️ **為什麼要回傳 authority 而不是只回設定**（裁定 001-A）：
+    resolver 沒跑（旗標關／不在 allowlist）、判了 model stay、以及技術故障 fail-open，
+    三者過去都回同一個 `cfg`，呼叫端只看得到「有沒有面向」。
+    於是 `technical_fail_open` 會冒充 responsibility-confirmed commit 並搶走 Knowledge path。
     """
+    from services.responsibility import (FACE_AUTHORITATIVE, FACE_COMPAT_FAIL_OPEN,
+                                         FACE_NONE, FACE_UNEVALUATED)
     if os.getenv("PREENTRY_ROUTABILITY_GATE", "false").lower() != "true":
-        return cfg
+        return cfg, FACE_UNEVALUATED
     if not user_message:
-        return cfg
+        return cfg, FACE_UNEVALUATED
     allow = {f.strip() for f in os.getenv("PREENTRY_ROUTABILITY_FACETS", "").split(",")
              if f.strip()}
     if not allow:
         # fail-safe：旗標開了但沒指定範圍 → 不啟用（並留下可觀測訊號）
         print("⚠️ [responsibility resolver] GATE=true 但 PREENTRY_ROUTABILITY_FACETS 未設 → 停用")
-        return cfg
+        return cfg, FACE_UNEVALUATED
     seed_key = getattr(cfg, "key", None)
     if seed_key not in allow:
-        return cfg
+        return cfg, FACE_UNEVALUATED
 
     t0 = time.time()
     try:
@@ -845,21 +853,28 @@ async def _resolve_pre_commit_candidate(db_pool, cfg, user_message: Optional[str
         _meter_decision(snapshot={"resolver": _resolver_telemetry(
             seed_key, res, int((time.time() - t0) * 1000))})
         _path = " → ".join(f"{h.get('facet_key')}[{h.get('verdict')}]" for h in (res.chain or []))
-        if res.committed_key:
-            print(f"🧭 [responsibility resolver] {_path} → commit {res.committed_key}")
-        else:
+        if not res.committed_key:
             print(f"🧭 [responsibility resolver] {_path} → 不進面向（{res.stop_reason}）")
-        return res.committed_config
+            return None, FACE_NONE
+        # ⚠️ 這裡**必須**讀 has_commit_authority，⛔ 不得讀 `.stay`／`committed_key`——
+        #    fail-open 的 commit 長得跟 model stay 一模一樣（裁定 001 ③④）。
+        if res.has_commit_authority:
+            print(f"🧭 [responsibility resolver] {_path} → commit {res.committed_key}")
+            return res.committed_config, FACE_AUTHORITATIVE
+        print(f"🧭 [responsibility resolver] {_path} → commit {res.committed_key} "
+              f"**但無 authority**（{res.commit_source}）→ 延後，讓 Knowledge 先競爭")
+        return res.committed_config, FACE_COMPAT_FAIL_OPEN
     except Exception as e:                                     # noqa: BLE001
         # ⚠️ fail-open 與既有 gate 一致：新機制故障不得擋掉原本會成立的進場。
-        print(f"⚠️ [responsibility resolver] 解析失敗，fail-open 照舊進場：{e}")
+        #    但它**沒有** authority——只能在最後沒有 Knowledge candidate 時相容性進場。
+        print(f"⚠️ [responsibility resolver] 解析失敗，fail-open（無 authority）：{e}")
         _meter_decision(snapshot={"resolver": {
             "seed_facet": seed_key, "final_committed_facet": seed_key,
             "fallback_reason": f"resolver_error:{type(e).__name__}",
             "fail_open": True, "commit_source": "technical_fail_open",
             "has_commit_authority": False, "hop_count": 0, "resolver_model_calls": 0,
             "resolver_latency_ms": int((time.time() - t0) * 1000)}})
-        return cfg
+        return cfg, FACE_COMPAT_FAIL_OPEN
 
 
 def _resolver_telemetry(seed_key, res, latency_ms: int) -> dict:
@@ -960,6 +975,55 @@ def _instance_hint_suppressed(decision, cfg) -> bool:
         return False
 
 
+async def _enter_diagnosis_facet(request, req, cfg, best_knowledge, face_authority: str):
+    """實際把這一輪交給面向（兩個 precedence 判定點**共用同一段進場**）。
+
+    ⚠️ 抽出來的理由不是省行數，是**避免相容性進場另寫一份**：
+    兩份進場程式遲早會在 telemetry 或交易面向前置上分岔，
+    而分岔處正好是「相容性 Face 被誤記成 responsibility-confirmed」的地方。
+
+    回傳回應物件；引擎降級時回 None（呼叫端落回既有處理，不阻斷）。
+    """
+    from services.responsibility import FACE_AUTHORITATIVE
+    # 交易面向（宣告 enabled_gate/prefill_api，如修繕）經共用進場：gate＋prefill＋圖片
+    #   （conversational-repair 三路共用，R1.5/2.6）；一般診斷面向走既有 respond。
+    if _gate_switch_key(cfg) or (getattr(cfg, "grounding_scope", None) or {}).get(_PREFILL_API_KEY):
+        resp = await _seed_repair_facet(request, req, cfg)
+    else:
+        resp = await _conversational_respond(request, req, start_if_absent=True, config=cfg)
+    if resp is None:
+        return None
+    _authoritative = face_authority == FACE_AUTHORITATIVE
+    print(f"💬 [conversational-diagnosis] 分類命中 {cfg.key} → 進診斷對話"
+          + ("（串流）" if request.stream else "")
+          + ("" if _authoritative else f"｜⚠️ 相容性進場，非 responsibility-confirmed"
+                                       f"（{face_authority}）"))
+    # R8.3：面向接管事件落快照（與仲裁快照同輪合併，key 不衝突）
+    _meter_decision(
+        snapshot={"routing_verdict": "enter_facet",
+                  "facet_key": cfg.key,
+                  "facet_entry": {
+                      "kb_top1_final": (best_knowledge or {}).get('similarity'),
+                      "threshold": DecisionConfig.load().form_trigger_threshold,
+                      # ⚠️ 裁定 001-A：相容性進場**不得**在 telemetry 裡變成
+                      #    responsibility-confirmed，否則技術故障率會被記成面向命中率。
+                      "face_authority": face_authority,
+                      "responsibility_confirmed": _authoritative,
+                  }},
+        facet_event="enter")
+    try:
+        from services.usage_metering import set_facet as _um_sf2
+        _um_sf2(facet_key=cfg.key)
+    except Exception:
+        pass
+    try:
+        from services.usage_metering import set_path as _um_sp
+        _um_sp("conversational", answer_source=cfg.key)
+    except Exception:
+        pass
+    return resp
+
+
 async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: DecisionConfig,
                                           user_message: Optional[str] = None):
     """分類路由決策（conversational-diagnosis 元件 5 / R1.1,1.2,1.4,7.2）。
@@ -968,9 +1032,14 @@ async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: Decis
     未達門檻 / 未命中任何面向 → None（呼叫端落回既有表單/直接知識處理）。
     門檻 gate 收斂至決策中樞（retrieval-decision-layer 任務 1.3）：判定式原樣、
     讀值點唯一化；分類→面向設定的 DB 查詢留在本函式。
+
+    回傳 `(config 或 None, face authority)`——authority 為 `FACE_*` 之一，
+    呼叫端**必須**把它交給 `face_precedence()` 仲裁，⛔ 不得只判 `config is not None`
+    （裁定 001-A：那會讓 technical fail-open 冒充 responsibility-confirmed commit）。
     """
+    from services.responsibility import FACE_NONE
     if not facet_entry_eligible(best_knowledge, config):
-        return None
+        return None, FACE_NONE
     from services.conversational_config import config_for_category
     # ⚠️ instance-reference gate（spec routing-disambiguation 任務 4.2）：
     #    位置固定在 config_for_category **之後**、_preentry_routable **之前**——
@@ -986,11 +1055,12 @@ async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: Decis
                       f"判 rule 型問句 → 抑制面向 {getattr(cfg, 'key', '?')} 的 Hint"
                       f"（{decision.reason}）")
                 continue      # 抑制同型 Hint：**不 commit 本面向**，且不因順序而放行
-            _resolved = await _resolve_pre_commit_candidate(db_pool, cfg, user_message)
+            _resolved, _authority = await _resolve_pre_commit_candidate(
+                db_pool, cfg, user_message)
             if _resolved is not None:
-                return _resolved
+                return _resolved, _authority
             continue          # 判不適用 → 不 commit 本面向，續試該知識的下一個分類
-    return None
+    return None, FACE_NONE
 
 
 # ── 修繕交易面向進場（conversational-repair 元件 4/5｜任務 2.4/3.1/3.2）──
@@ -1324,42 +1394,28 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
             # 串流/表單分支之前攔截——最高順位知識達門檻且分類命中診斷面向 → 進對話引擎；
             # 引擎降級（回 None）或未命中 → 落回既有處理（不阻斷）。
             _best_knowledge = decision['knowledge_list'][0] if decision.get('knowledge_list') else None
-            _diag_cfg = await _diagnosis_config_for_knowledge(
+            _diag_cfg, _face_authority = await _diagnosis_config_for_knowledge(
                 req.app.state.db_pool, _best_knowledge, DecisionConfig.load(),
                 user_message=request.message)
+            # ⚠️ 裁定 001-A 的仲裁**唯一** oracle。⛔ 不得改成 `if _diag_cfg is not None`
+            #    或任何讀 `.stay` 的判定——那正是「技術故障取得 routing authority」的路徑。
+            #    此刻 knowledge_list 必非空（本分支的前提），故 knowledge_present=True：
+            #    問的是「Face 現在就能不能贏下這輪」。
+            from services.responsibility import face_precedence as _face_precedence
+            _deferred_face = None
             if _diag_cfg is not None:
-                # 交易面向（宣告 enabled_gate/prefill_api，如修繕）經共用進場：gate＋prefill＋圖片
-                #   （conversational-repair 三路共用，R1.5/2.6）；一般診斷面向走既有 respond。
-                if _gate_switch_key(_diag_cfg) or (getattr(_diag_cfg, "grounding_scope", None)
-                                                   or {}).get(_PREFILL_API_KEY):
-                    _diag_resp = await _seed_repair_facet(request, req, _diag_cfg)
+                _verdict = _face_precedence(_face_authority, knowledge_present=True)
+                if _verdict == "face":
+                    _diag_resp = await _enter_diagnosis_facet(
+                        request, req, _diag_cfg, _best_knowledge, _face_authority)
+                    if _diag_resp is not None:
+                        return _diag_resp
+                    print("⚠️ [conversational-diagnosis] 引擎降級 → 落回既有知識/表單處理")
                 else:
-                    _diag_resp = await _conversational_respond(
-                        request, req, start_if_absent=True, config=_diag_cfg)
-                if _diag_resp is not None:
-                    print(f"💬 [conversational-diagnosis] 分類命中 {_diag_cfg.key} → 進診斷對話"
-                          + ("（串流）" if request.stream else ""))
-                    # R8.3：面向接管事件落快照（與仲裁快照同輪合併，key 不衝突）
-                    _meter_decision(
-                        snapshot={"routing_verdict": "enter_facet",
-                                  "facet_key": _diag_cfg.key,
-                                  "facet_entry": {
-                                      "kb_top1_final": (_best_knowledge or {}).get('similarity'),
-                                      "threshold": DecisionConfig.load().form_trigger_threshold,
-                                  }},
-                        facet_event="enter")
-                    try:
-                        from services.usage_metering import set_facet as _um_sf2
-                        _um_sf2(facet_key=_diag_cfg.key)
-                    except Exception:
-                        pass
-                    try:
-                        from services.usage_metering import set_path as _um_sp
-                        _um_sp("conversational", answer_source=_diag_cfg.key)
-                    except Exception:
-                        pass
-                    return _diag_resp
-                print("⚠️ [conversational-diagnosis] 引擎降級 → 落回既有知識/表單處理")
+                    # compat_fail_open：**不 commit**，暫存後讓 Knowledge 先競爭。
+                    _deferred_face = _diag_cfg
+                    print(f"⏸️ [face-precedence] {_diag_cfg.key} 無 authority"
+                          f"（{_face_authority}）→ 延後，Knowledge path 先走")
 
             # 錨點防呆（P0）：進場判定已用過 top1；未進面向 → 空答案錨點退出答題候選
             _pre_n = len(decision.get('knowledge_list') or [])
@@ -1375,6 +1431,24 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
                 or (getattr(request, 'mode', None) == 'b2b')
             decision['knowledge_list'] = await _top1_relevance_gate(
                 request.message, decision['knowledge_list'], b2b=_is_b2b)
+
+            # ── 裁定 001-A 第 4 列：Knowledge 已被打光，相容性 Face 才接手 ──────
+            # ⚠️ 這是**同一個 oracle** 的第二次呼叫，語義換成
+            #    「相容性 Face 該不該接手」（knowledge_present=False）。
+            #    ⛔ 它進的場**不是** responsibility-confirmed commit——telemetry 必須分得開。
+            if _deferred_face is not None:
+                _knowledge_present = bool(decision['knowledge_list'])
+                if _face_precedence(_face_authority,
+                                    knowledge_present=_knowledge_present) == "compat_face":
+                    _compat_resp = await _enter_diagnosis_facet(
+                        request, req, _deferred_face, _best_knowledge, _face_authority)
+                    if _compat_resp is not None:
+                        return _compat_resp
+                    print("⚠️ [face-precedence] 相容性 Face 進場亦降級 → 落回既有處理")
+                else:
+                    print(f"✅ [face-precedence] Knowledge candidate 存續 → Knowledge 勝出，"
+                          f"{getattr(_deferred_face, 'key', '?')} 不進場"
+                          f"（技術故障不得取得 routing authority）")
 
             # 串流模式：先檢查是否有表單/API 動作需要完整處理
             if request.stream:

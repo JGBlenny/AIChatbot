@@ -78,7 +78,7 @@ async def _route(retriever, pool, question):
     best = rows[0] if rows else None
     if not best:
         return ("single", "no-hit", None)
-    cfg = await _diagnosis_config_for_knowledge(
+    cfg, _face_authority = await _diagnosis_config_for_knowledge(
         pool, best, cfg_thresholds, user_message=question)
     if cfg is None:
         return ("single", "not-routed", best)

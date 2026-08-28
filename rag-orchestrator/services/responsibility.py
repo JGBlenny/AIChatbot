@@ -237,6 +237,54 @@ class EntryResolution:
         return bool(self.committed_key) and self.commit_source == DECISION_SOURCE_MODEL
 
 
+# ── Face vs Knowledge 的 precedence（裁定 001-A 的四列表）─────────────────────
+#
+# 正本：`.kiro/specs/routing-authority-model/responsibility-governance-decision-record.md`
+#       §裁定 001-A「② Precedence 的精確形式」
+#
+# ⚠️ 這是**唯一** oracle：產線兩個判定點與測試都呼叫本函式。
+#    ⛔ 呼叫端**不得**自行用 `.stay` 或 `committed_key is not None` 另判一次——
+#    那正是裁定 001 ③④ 要堵的越權路徑（fail-open 冒充 responsibility-confirmed）。
+
+#: resolver 判了、且是真實 model stay → 有資格壓過 Knowledge direct answer。
+FACE_AUTHORITATIVE = "authoritative"
+#: resolver 判了，但 commit 出自技術故障 fail-open → **不得**壓過 Knowledge；
+#: 只有在最後真的沒有 Knowledge candidate 時，才以相容性身分進場。
+FACE_COMPAT_FAIL_OPEN = "compat_fail_open"
+#: resolver **沒有跑**（rollout 旗標關／面向不在 allowlist／無 user_message）。
+#: ⚠️ 這不是 fail-open，也不是 authority——是「這個面向根本沒被責任評估過」。
+#:    維持既有行為（照舊立即進場），否則 allowlist 外的所有面向會被一次改掉語義。
+FACE_UNEVALUATED = "unevaluated"
+#: 沒有面向候選，或 resolver 明確判不 commit。
+FACE_NONE = "no_face"
+
+
+def face_precedence(face_authority: str, knowledge_present: bool) -> str:
+    """Face 與 Knowledge direct answer 的同輪仲裁。
+
+    ```text
+    Face authority             Knowledge      結果
+    authoritative              YES / NO       face
+    unevaluated（resolver 未跑）YES / NO       face（既有行為，不在本裁定射程）
+    compat_fail_open           YES            **knowledge**  ← 技術故障不得取得 routing authority
+    compat_fail_open           NO             compat_face（相容性進場，**非** responsibility-confirmed）
+    no_face                    YES            knowledge
+    no_face                    NO             fallback
+    ```
+
+    ⚠️ `knowledge_present` 的兩次語義**刻意不同**，呼叫端必須分清楚：
+      · 進 direct-answer gate **之前**傳 True——此時 knowledge_list 必非空，
+        問的是「Face 現在就能不能贏下這輪」。
+      · gate **之後**、knowledge_list 已空時傳 False——問的是
+        「相容性 Face 該不該接手」。
+    """
+    if face_authority in (FACE_AUTHORITATIVE, FACE_UNEVALUATED):
+        return "face"
+    if face_authority == FACE_COMPAT_FAIL_OPEN:
+        return "knowledge" if knowledge_present else "compat_face"
+    return "knowledge" if knowledge_present else "fallback"
+
+
 def _resolve_delegate(config: Any, verdict: str, result: Any) -> "tuple[Optional[str], Optional[str]]":
     """決定轉交目標：**模型負責語義，程式負責無歧義的 machine decision**。
 

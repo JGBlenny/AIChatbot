@@ -144,7 +144,8 @@ async def test_scoped_gate_out_of_allowlist_is_untouched(pool, monkeypatch):
     monkeypatch.setenv("PREENTRY_ROUTABILITY_GATE", "true")
     monkeypatch.setenv("PREENTRY_ROUTABILITY_FACETS", SEED)
 
-    out = await chat_mod._resolve_pre_commit_candidate(pool, other_cfg, "問句")
+    # 裁定 001-A：回傳改為 (config, face authority)
+    out, authority = await chat_mod._resolve_pre_commit_candidate(pool, other_cfg, "問句")
     assert out is other_cfg and calls["n"] == 0, "allowlist 外的面向不得走新路"
 
 
@@ -168,8 +169,11 @@ async def test_scoped_gate_inside_allowlist_uses_resolver(pool, monkeypatch):
     monkeypatch.setenv("PREENTRY_ROUTABILITY_GATE", "true")
     monkeypatch.setenv("PREENTRY_ROUTABILITY_FACETS", SEED)
 
-    out = await chat_mod._resolve_pre_commit_candidate(pool, seed_cfg, "問句")
+    out, authority = await chat_mod._resolve_pre_commit_candidate(pool, seed_cfg, "問句")
     assert seen["n"] == 1 and getattr(out, "key", None) == SEED
+    # 腳本化 evaluator 判的是真 model stay ⇒ 必須帶 authority（裁定 001-A 第 1 列）
+    from services.responsibility import FACE_AUTHORITATIVE
+    assert authority == FACE_AUTHORITATIVE
 
 
 @pytest.mark.req("face-exit-before-grounding:1")
@@ -187,8 +191,11 @@ async def test_gate_open_without_allowlist_is_fail_safe(pool, monkeypatch):
     monkeypatch.setattr(resp_mod, "resolve_entry_candidate", counting)
     monkeypatch.setenv("PREENTRY_ROUTABILITY_GATE", "true")
     monkeypatch.delenv("PREENTRY_ROUTABILITY_FACETS", raising=False)
-    out = await chat_mod._resolve_pre_commit_candidate(pool, seed_cfg, "問句")
+    out, authority = await chat_mod._resolve_pre_commit_candidate(pool, seed_cfg, "問句")
+    from services.responsibility import FACE_UNEVALUATED
     assert out is seed_cfg and calls["n"] == 0, "只開旗標不得等於全站啟用"
+    # resolver 沒跑 ⇒ unevaluated（既有行為），**不是** authority、也不是 fail-open
+    assert authority == FACE_UNEVALUATED
 
 
 # ── ⑤ fallback：三條路都不 commit，且不建立 transient session ─────────────────

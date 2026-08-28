@@ -346,7 +346,7 @@ retrieved top1
 **不是** `resolution.stay`；更**不是** `candidate exists`／`category exists`／
 `switch`／`technical_fail_open`。
 
-### 附帶裁決
+### 附帶裁決（001-A）
 
 ```text
 `.stay` 改名（stay → stops_chain_here）：**DEFER**
@@ -361,4 +361,74 @@ e2e harness 內的 wire literal（"model"／"technical_fail_open"）：**保留*
 不變量 7 AST 化：**不插隊**，維持 supporting debt。
   現行 grep 已證不誤殺 declaration、會抓直接 consumption、且有正反向對照。
   `k = "final_total"; bill[k]` 確實繞得過，但目前無證據顯示那是現行 defect。
+```
+
+---
+
+## 裁定 001-B｜刀 A（authority-aware Face precedence）准予提交
+
+> 2026-08-28 業主裁定。
+
+### 結論
+
+> **刀 A APPROVED FOR COMMIT。原先那筆「新增 regression」的判定作廢——
+> 它不是已證回歸，而是會呼叫真 LLM 的 integration suite 本身具有非決定性噪音。**
+
+### ① 舊結論 **REFUTED / INVALIDATED**
+
+```text
+作廢的宣稱：「刀 A 新增一筆 regression
+             test_billing_operation_questions_stay_single_shot[系統怎麼算點退帳單的金額]」
+作廢的依據：該宣稱建立在「帶刀 A 整檔 3/3 紅、乾淨基線 0/2 紅」之上。
+推翻的證據：同一份程式、同一組 selection 連跑三次得到 failed = 7 / 6 / 5。
+⇒ 原判定是在隨機訊號上做功效不足的推論，不是回歸。
+```
+
+### ② 准予提交的三層理由
+
+```text
+一、compatibility contract 已**決定性**證明（不靠「routing 看起來差不多」）
+    舊行為第一格：回哪個 config ── 刀 A 第一格：仍回同一個 config
+    新增第二格：這個 config 是否具有 commit authority
+    五種結果形狀逐格對上舊行為：
+      model_commit → committed_config｜fail_open_commit → committed_config
+      no_commit → None｜resolver_exception → seed cfg｜flag_off → seed cfg
+二、三個 mutation 各自對應不同失敗模式，全部被殺——
+    證明測試同時保護「不能越權」**與**「不能破壞舊 compatibility」兩個方向：
+      M3 重新用 stay 布林判 authority                    → 抓到
+      M4 technical fail-open 冒充 authoritative stay      → 抓到
+      M5 為了阻止越權乾脆把 compatibility candidate 丟掉  → 抓到
+三、integration 不得再作 deterministic gate（見 ③）：
+    刀 A 235/6 vs 乾淨基線 236/6，passed 差 1 不足以判 regression。
+```
+
+### ③ **integration 非決定性規約**（永久，措辭刻意不寫死數字）
+
+```text
+`tests/integration/conversational/test_facet_entry_routing_req.py` 在目前配置下
+會經由 pre-entry resolver 呼叫**真 LLM**，因此**不是 deterministic regression oracle**。
+⛔ 不得以單次 run、少量重跑、或總 failure count 差異單獨宣稱 production regression。
+涉及 routing semantic change 時，必須改用 deterministic stub/fixture、causal assertion，
+或其他**已證有鑑別力**的量尺（例如逐形狀等價測試＋mutation）。
+⚠️ 本次觀測到 failure count 在 5–7 之間變動——那是**一次觀測**，不是永久保證的區間，
+   不得反過來把「±2」寫成通過條件。
+```
+
+### ④ 新登記的 test harness debt（**不阻塞刀 A**）
+
+```text
+名稱／身分像 integration regression suite，實際卻含 live LLM nondeterminism。
+⇒ 未來應提供可切換的 deterministic evaluator，讓該套件能同時當回歸 oracle 用。
+現在不為此阻塞任何 slice。
+```
+
+### ⑤ claim ceiling（commit 只能宣稱到這裡）
+
+```text
+✅ Implement authority-aware Face precedence while preserving pre-change config
+   selection semantics. Technical fail-open retains compatibility candidate but
+   cannot obtain responsibility commit authority.
+❌ routing regression fixed
+❌ integration fully deterministic
+❌ P2.5 fixed
 ```
