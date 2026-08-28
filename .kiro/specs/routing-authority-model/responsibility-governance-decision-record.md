@@ -536,3 +536,79 @@ final authoritative commit      → 依 responsibility chain 決定
 ⛔ 不得擴成「所有紅都是 expectation drift」——
    規則型問句進場那一類的根因是 ①（eligibility authority 缺位），與本題**完全不同**。
 ```
+
+---
+
+## 裁定 004｜修正裁定 002 ② 的後續推論（**撤銷推論，不改寫舊事實**）
+
+> 2026-08-28 業主裁定。觸發：`conversational-routing-execution/task33-four-red-gate-measurement.md`
+> 證明 4 筆已知 regression cases 全部 `block`、全部落在納管 Face、gate ON 時 4/4 在
+> resolver 之前被抑制——而裁定 002 ② 假設「必須先修 classifier」已無證據支持。
+
+### ① 舊 holdout 的事實**原封保留**，不得改寫
+
+```text
+50 筆未見語料｜block 11 / abstain 32 / allow 7｜routing effect = 0/50
+authorization = **FAILED**
+⛔ 不得改成 PASS，⛔ 不得宣稱舊反證「錯了」，⛔ 不得把 status 改回 not_run。
+```
+
+**被撤銷的只有一個後續推論**：「既然 FAILED，就必須先修改 classifier」。
+
+### ② 為什麼那個推論不成立
+
+```text
+舊 11 個 block → 9 個根本沒有 Face nomination
+                → 2 個 nomination 落在 gate scope 外
+                → **0 個**具有「block 可實際作用」的機會
+新 4 個 regression cases → 全部 block、全部 bill_diagnosis、全部 gate_applies_to=true
+                        → gate ON 時 4/4 在 resolver 前被 suppress
+⇒ 舊的 0/50 只能證明「**在那批抽樣組成下**沒有出現可觀測 routing effect」，
+  **不能**解讀成「這版 classifier／wiring 是惰性的」。兩者不是同一命題。
+```
+
+⚠️ 這**不是**「測不過就換考卷」：我們沒有看完舊題後去調 classifier；
+反而是**在完全沒有改 classifier 的前提下**，先證明舊測量為何沒有機會觀測到效果。
+
+### ③ 裁定 002 ② 改寫為
+
+```text
+same implementation ＋ prior authorization FAILED
+  → 先判斷 failure 是否已被**定位為 implementation defect**
+
+  有已證 implementation defect
+    → 必須先修 → 再取新的未見 holdout
+  沒有已證 implementation defect，
+  且 failure 來自 authorization sample **未覆蓋實際可施力的 target condition**
+    → **不為了形式硬改 implementation**
+    → 得以相同 implementation 重新接受新的 matching holdout authorization
+```
+
+**現況落在第二支。**
+
+### ④ Scope 維持不變
+
+```text
+LEVEL_A_INSTANCE_GATE_SCOPE = {"bill_diagnosis"}   ← **不擴**
+理由：3.4 的 4 個已知問題全部 C=true ∧ D=true，沒有任何證據要求納入
+      billing_anomaly／contract_closeout／物件操作引導。
+⛔ 舊 50 筆裡有 2 筆 block 落在 scope 外 ≠ 那兩個 Face「應受此 gate 管」。
+   若未來新 holdout 證明其他 Face 有相同 eligibility requirement，再另裁。
+```
+
+### ⑤ 現在 3.4 的 blocker（單一句）
+
+```text
+❌ classifier 要先修改｜❌ scope 要先擴張｜❌ wiring 要修｜❌ resolver 要再調
+✅ **現行 deterministic gate 尚未取得有效 matching holdout authorization**
+```
+
+### ⑥ n=4 的 claim ceiling
+
+```text
+✅ 可宣稱：mechanism can work on these four known cases.
+❌ 不得宣稱：gate 已有良好準確率／會穩定解掉 production rule queries。
+   n=4 且已看過。同理舊的 11 block 也不得用來估 production block precision。
+aggregate／generalization claim 仍須 **≥30 個 judgeable unseen cases**；
+子群 rate 亦不得以少數筆數做穩定率宣稱。
+```
