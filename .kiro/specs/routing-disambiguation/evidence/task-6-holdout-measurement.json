@@ -1118,7 +1118,7 @@
       "allow": 7
     },
     "blocks_that_actually_suppressed": 0,
-    "why_blocks_had_no_effect": "11 筆判 block 者：8 筆本來就 single（無 Hint 可抑制）、3 筆落在 Level A rollout scope 之外的 Face（物件操作引導／退租收尾等）→ gate_applies_to=False → 未抑制",
+    "why_blocks_had_no_effect": "11 筆判 block 者：**9 筆**本來就 single（無 Hint 可抑制）、**2 筆**落在 Level A rollout scope 之外的 Face（物件操作引導／退租收尾）→ gate_applies_to=False → 未抑制。〔2026-08-28 evidence hygiene 更正：原敘述誤寫『8 筆／3 筆』，與同檔 all_rows 對不上；逐筆重數為 9／2。結論方向不變，**舊敘述的數字不可引用**。〕",
     "abstain_rate": "32/50 = 64%（正反證據皆空，lexical ruleset 對自然說法覆蓋不足）"
   },
   "THRESHOLD_NOTE": "⚠️ **holdout 的數值通過門檻從未被凍結**（Req.9.3 只定 ≥30 可判定案例，未定 accuracy 門檻）。依 Req.3.5 紀律，**SHALL NOT 於看見結果後才設門檻**——本檔只陳述量測值與歸因，PASS／REFUTED 由業主裁定。",

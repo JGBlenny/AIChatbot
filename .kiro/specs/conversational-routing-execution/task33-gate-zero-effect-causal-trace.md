@@ -39,6 +39,8 @@
 ⚠️ **原 measurement 檔的敘述句與同檔 `all_rows` 對不上**：
 它寫「8 筆本來就 single、3 筆落在 scope 外」，逐筆重數是 **9 筆 single、2 筆 scope 外**。
 結論方向不變，但**該敘述的數字不可引用**。
+✅ 2026-08-28 已就地更正 `task-6-holdout-measurement.json` 的
+`CANDIDATE_FOOTPRINT.why_blocks_had_no_effect`，並在該欄註明舊敘述不可引用（evidence hygiene）。
 
 ## 抑制集合有多小（實測）
 
