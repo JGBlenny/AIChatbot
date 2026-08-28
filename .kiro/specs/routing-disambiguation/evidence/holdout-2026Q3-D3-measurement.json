@@ -1,0 +1,861 @@
+{
+  "dataset_id": "holdout-2026Q3-D3",
+  "frozen_inputs": {
+    "corpus_digest": "f7523eed270d7e39",
+    "labels_digest": "b9a09f192ec460dc",
+    "strata_A_digest": "5e9c1b40d44277a9",
+    "strata_B_digest": "04db539a7d23caba",
+    "ruleset_digest": "80b2f570b10c2e20",
+    "protocol_digest": "4690a258f502d98d",
+    "code_revision": "b9df7ca"
+  },
+  "blind_label_cross_check": {
+    "note": "盲標者看不到 strata，其判斷與設計幾乎完全對上",
+    "strata_A_real_rule_40": {
+      "rule": 29,
+      "undecidable": 10,
+      "instance": 1
+    },
+    "strata_B_synth_instance_60": {
+      "instance": 59,
+      "rule": 1
+    }
+  },
+  "denominators": {
+    "total": 100,
+    "judgeable": 90,
+    "rule_side": 30,
+    "instance_side": 60,
+    "undecidable": 10,
+    "threshold_ge_30": true
+  },
+  "A_classifier_correctness": {
+    "rule_side": {
+      "expect": "block",
+      "dist": {
+        "abstain": 15,
+        "block": 13,
+        "allow": 2
+      },
+      "accuracy": "13/30 = 43.3%"
+    },
+    "instance_side": {
+      "expect": "allow",
+      "dist": {
+        "block": 9,
+        "abstain": 38,
+        "allow": 13
+      },
+      "accuracy": "13/60 = 21.7%"
+    },
+    "overall_abstain": "57/100 = 57%",
+    "⚠️_false_block_on_instance": 9
+  },
+  "B_routing_causal_effect": {
+    "gate_opportunity_n": 1,
+    "precondition": "≥10",
+    "verdict": "INCONCLUSIVE",
+    "root_cause": "gate scope = {bill_diagnosis} 單一 Face；60 句真實 instance 中僅 1 句的 nomination 落在其中",
+    "instance_nomination_faces": {
+      "billing_anomaly": 6,
+      "contract_diag": 3,
+      "billing_flow": 2,
+      "contract_renew": 2,
+      "contract_closeout": 2,
+      "estate_diag": 1,
+      "bill_diagnosis": 1,
+      "billing_late_fee": 1,
+      "iot_meter": 1,
+      "account_register": 1,
+      "estate_guide": 1,
+      "contract_change": 1,
+      "billing_setup_guide": 1,
+      "contract_sign": 1
+    },
+    "instance_with_no_facet_nomination": 36
+  },
+  "AUTHORIZATION": {
+    "result": "NOT AUTHORIZED",
+    "reason": "B 層 INCONCLUSIVE（coverage 1 < 10）",
+    "⚠️_new_finding": "本輪已排除『語料缺 instance』這個解釋——供了 60 句真實 instance 仍只得 1 次 opportunity。⇒ 在現行 scope 下 B 層**實質不可驗**：期望 10 次 opportunity 需要約 600 句 instance 語料。"
+  },
+  "BURNED": {
+    "status": "BURNED（永久）",
+    "burned_at": "2026-08-29"
+  },
+  "all_rows": [
+    {
+      "n": 1,
+      "intent_class": "instance",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": [
+        "estate_diag"
+      ]
+    },
+    {
+      "n": 2,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 3,
+      "intent_class": "instance",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 4,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 5,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 6,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": true,
+      "faces": [
+        "bill_diagnosis"
+      ]
+    },
+    {
+      "n": 7,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "billing_flow"
+      ]
+    },
+    {
+      "n": 8,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 9,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 10,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 11,
+      "intent_class": "undecidable",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 12,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 13,
+      "intent_class": "undecidable",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 14,
+      "intent_class": "undecidable",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 15,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 16,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 17,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_diag"
+      ]
+    },
+    {
+      "n": 18,
+      "intent_class": "rule",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_sign"
+      ]
+    },
+    {
+      "n": 19,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 20,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 21,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 22,
+      "intent_class": "undecidable",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": [
+        "estate_diag"
+      ]
+    },
+    {
+      "n": 23,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 24,
+      "intent_class": "undecidable",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 25,
+      "intent_class": "rule",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 26,
+      "intent_class": "instance",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 27,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 28,
+      "intent_class": "undecidable",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_closeout"
+      ]
+    },
+    {
+      "n": 29,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 30,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "estate_guide"
+      ]
+    },
+    {
+      "n": 31,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 32,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "iot_setup"
+      ]
+    },
+    {
+      "n": 33,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 34,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": [
+        "billing_anomaly"
+      ]
+    },
+    {
+      "n": 35,
+      "intent_class": "undecidable",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 36,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 37,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 38,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 39,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 40,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_renew"
+      ]
+    },
+    {
+      "n": 41,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 42,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_create_guide"
+      ]
+    },
+    {
+      "n": 43,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 44,
+      "intent_class": "undecidable",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 45,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_create_guide",
+        "estate_diag"
+      ]
+    },
+    {
+      "n": 46,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 47,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": [
+        "billing_flow"
+      ]
+    },
+    {
+      "n": 48,
+      "intent_class": "undecidable",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 49,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_sign"
+      ]
+    },
+    {
+      "n": 50,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 51,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 52,
+      "intent_class": "rule",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_change"
+      ]
+    },
+    {
+      "n": 53,
+      "intent_class": "undecidable",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 54,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": [
+        "billing_anomaly"
+      ]
+    },
+    {
+      "n": 55,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_diag"
+      ]
+    },
+    {
+      "n": 56,
+      "intent_class": "instance",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 57,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 58,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 59,
+      "intent_class": "instance",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": [
+        "billing_late_fee"
+      ]
+    },
+    {
+      "n": 60,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": [
+        "billing_anomaly"
+      ]
+    },
+    {
+      "n": 61,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 62,
+      "intent_class": "instance",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 63,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 64,
+      "intent_class": "instance",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 65,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "iot_meter"
+      ]
+    },
+    {
+      "n": 66,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 67,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 68,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "account_register"
+      ]
+    },
+    {
+      "n": 69,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "billing_anomaly"
+      ]
+    },
+    {
+      "n": 70,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_renew"
+      ]
+    },
+    {
+      "n": 71,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 72,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 73,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_closeout"
+      ]
+    },
+    {
+      "n": 74,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_renew"
+      ]
+    },
+    {
+      "n": 75,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 76,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 77,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 78,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 79,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 80,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_diag"
+      ]
+    },
+    {
+      "n": 81,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 82,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 83,
+      "intent_class": "instance",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_closeout"
+      ]
+    },
+    {
+      "n": 84,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "billing_anomaly"
+      ]
+    },
+    {
+      "n": 85,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 86,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "estate_guide"
+      ]
+    },
+    {
+      "n": 87,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 88,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 89,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 90,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 91,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 92,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_change"
+      ]
+    },
+    {
+      "n": 93,
+      "intent_class": "instance",
+      "verdict": "block",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 94,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 95,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_diag"
+      ]
+    },
+    {
+      "n": 96,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "billing_setup_guide"
+      ]
+    },
+    {
+      "n": 97,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_sign"
+      ]
+    },
+    {
+      "n": 98,
+      "intent_class": "instance",
+      "verdict": "allow",
+      "gate_opportunity": false,
+      "faces": []
+    },
+    {
+      "n": 99,
+      "intent_class": "rule",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "contract_diag"
+      ]
+    },
+    {
+      "n": 100,
+      "intent_class": "instance",
+      "verdict": "abstain",
+      "gate_opportunity": false,
+      "faces": [
+        "billing_anomaly"
+      ]
+    }
+  ]
+}

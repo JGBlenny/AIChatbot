@@ -1,0 +1,913 @@
+{
+  "dataset_id": "holdout-2026Q3-D3",
+  "labels_digest": "b9a09f192ec460dc",
+  "labeler": {
+    "role": "isolated blind labeler",
+    "tool_uses": 0,
+    "tool_uses_source": "harness usage 計數"
+  },
+  "candidate_contact": "NONE —— 本檔凍結之前 classifier 未跑過任何一句",
+  "n": 100,
+  "labels": [
+    {
+      "n": 1,
+      "utterance": "頂樓加蓋那間有租客嗎",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "estate_diag",
+      "confidence": "high",
+      "evidence": "指定某一間物件的出租現況，必須查該物件才能答"
+    },
+    {
+      "n": 2,
+      "utterance": "我那間套房目前是空的還是租出去了",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "estate_diag",
+      "confidence": "high",
+      "evidence": "問自己特定物件的空租狀態，需查該筆物件資料"
+    },
+    {
+      "n": 3,
+      "utterance": "點交拍照那部分做了嗎",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_closeout",
+      "confidence": "medium",
+      "evidence": "問某一次退租點交的實際完成進度，需查該筆點交紀錄"
+    },
+    {
+      "n": 4,
+      "utterance": "新莊那間房子的押金設定是幾個月",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "estate_diag",
+      "confidence": "medium",
+      "evidence": "指名地點的特定物件既有設定值，必須查那一筆"
+    },
+    {
+      "n": 5,
+      "utterance": "退租那筆錢什麼時候會撥給我",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_closeout",
+      "confidence": "medium",
+      "evidence": "以「那筆錢」指涉特定退租款項的撥付狀態，需查該筆"
+    },
+    {
+      "n": 6,
+      "utterance": "上個月那筆點交的退款金額多少啊",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_closeout",
+      "confidence": "high",
+      "evidence": "問特定一筆點交的實際退款金額，非通則"
+    },
+    {
+      "n": 7,
+      "utterance": "帳單狀態顯示未收 但錢我收到了",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "billing_anomaly",
+      "confidence": "high",
+      "evidence": "特定帳單狀態與實際收款不符，屬單筆帳單異常"
+    },
+    {
+      "n": 8,
+      "utterance": "A棟那個電表現在跑到幾度",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "iot_meter",
+      "confidence": "high",
+      "evidence": "問指定電表的當前度數，必須讀該表資料"
+    },
+    {
+      "n": 9,
+      "utterance": "這筆退租的扣款明細給我看看",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_closeout",
+      "confidence": "high",
+      "evidence": "要求調閱特定退租的扣款明細"
+    },
+    {
+      "n": 10,
+      "utterance": "民生東路那戶的租金設定是多少",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "estate_diag",
+      "confidence": "medium",
+      "evidence": "指名某一戶的既有租金設定值，需查該物件"
+    },
+    {
+      "n": 11,
+      "utterance": "取決於房東什麼時候確認",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "這是陳述句、像客服的回覆內容，不是使用者問句"
+    },
+    {
+      "n": 12,
+      "utterance": "國泰ATM要怎麼繳",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問繳費管道的通用操作方式，對所有人同一套說明"
+    },
+    {
+      "n": 13,
+      "utterance": "裡面能看到什麼",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "「裡面」無指涉對象，脫離上文無法判斷主題"
+    },
+    {
+      "n": 14,
+      "utterance": "對外也會馬上看到嗎",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "承接前文的追問，缺少主體，無法獨立判定"
+    },
+    {
+      "n": 15,
+      "utterance": "不知道哪幾筆是遲繳的",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "medium",
+      "evidence": "要找出自己名下哪幾筆帳單遲繳，須查實際帳單資料"
+    },
+    {
+      "n": 16,
+      "utterance": "逾期後每天都會發？",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問逾期通知的發送規則，屬制度說明不需查單筆"
+    },
+    {
+      "n": 17,
+      "utterance": "可以看合約嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問平台是否具備檢視合約的功能／權限，屬功能有無"
+    },
+    {
+      "n": 18,
+      "utterance": "那我的邀請過期了怎麼辦",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "邀請過期的處理流程對所有使用者相同，不需查特定資料"
+    },
+    {
+      "n": 19,
+      "utterance": "哪些銀行有虛擬ATM",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問平台支援的銀行清單，屬通用制度資訊"
+    },
+    {
+      "n": 20,
+      "utterance": "那上傳的要自己負責內容嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問上傳文件的責任歸屬規則，答案對所有人一致"
+    },
+    {
+      "n": 21,
+      "utterance": "可以篩選哪些狀態",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問系統提供的篩選選項，屬功能說明"
+    },
+    {
+      "n": 22,
+      "utterance": "一定要是租客嗎",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "缺主詞，不知在問誰一定要是租客，語意殘缺"
+    },
+    {
+      "n": 23,
+      "utterance": "國泰跟永豐怎麼申請",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問申請流程，通用說明即可回答"
+    },
+    {
+      "n": 24,
+      "utterance": "已經發送了怎麼辦",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "未指明發送的是帳單、邀請或合約，主題殘缺"
+    },
+    {
+      "n": 25,
+      "utterance": "角色資料卡怎麼用",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問功能的使用方式，屬通用操作說明"
+    },
+    {
+      "n": 26,
+      "utterance": "退租那天的水電費算進去了嗎",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_closeout",
+      "confidence": "high",
+      "evidence": "問特定一次退租結算是否含水電，需查該筆點交"
+    },
+    {
+      "n": 27,
+      "utterance": "角色管理跟邀請差在哪",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "比較兩個平台功能的差異，屬制度說明"
+    },
+    {
+      "n": 28,
+      "utterance": "那我還要做什麼嗎",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "純承接語，無任何主題可辨識"
+    },
+    {
+      "n": 29,
+      "utterance": "可以用自己的表格嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問系統是否允許自訂表格，屬功能有無"
+    },
+    {
+      "n": 30,
+      "utterance": "物件狀態要怎麼改成刊登中",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問操作步驟，同一段說明對所有使用者成立"
+    },
+    {
+      "n": 31,
+      "utterance": "可以把我的房子分享給別人看嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問分享功能是否存在，不需查特定物件"
+    },
+    {
+      "n": 32,
+      "utterance": "智慧電錶要怎麼綁定",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問綁定的通用設定流程"
+    },
+    {
+      "n": 33,
+      "utterance": "開通後舊合約也能刷卡嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問開通後的適用範圍規則，屬制度問題"
+    },
+    {
+      "n": 34,
+      "utterance": "有個房客說他沒收到帳單 幫我查",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "high",
+      "evidence": "明確要求查某位房客的帳單狀況"
+    },
+    {
+      "n": 35,
+      "utterance": "兩篇說法不同，建議直接洽客服確認你的業態該用哪一版，這會影響合約效力",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "這是客服端的建議話術，不是使用者問句"
+    },
+    {
+      "n": 36,
+      "utterance": "貝殼跟鏈家是什麼關係",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "low",
+      "evidence": "外部業界常識問題，不需查任何一筆資料，可一次答完"
+    },
+    {
+      "n": 37,
+      "utterance": "一定要用email嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問是否限定 email 作為方式的規則，答案通用"
+    },
+    {
+      "n": 38,
+      "utterance": "繳費有金額上下限嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問繳費限額制度，不涉特定帳單"
+    },
+    {
+      "n": 39,
+      "utterance": "可以去提款機繳房租嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問繳費管道是否支援，屬功能有無"
+    },
+    {
+      "n": 40,
+      "utterance": "之前的租約紀錄還在嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "傾向問歷史紀錄是否保留的制度，非查特定合約內容"
+    },
+    {
+      "n": 41,
+      "utterance": "那手機號碼要是當初綁的嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問綁定驗證的規則要求，答案對所有人一致"
+    },
+    {
+      "n": 42,
+      "utterance": "上傳的合約有沒有法律效力",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問制度性的效力問題，不需查特定合約"
+    },
+    {
+      "n": 43,
+      "utterance": "包租代管333補助什麼",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問政策知識，通用說明可答"
+    },
+    {
+      "n": 44,
+      "utterance": "有建議的天數嗎",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "未指明是什麼事的天數，主題殘缺"
+    },
+    {
+      "n": 45,
+      "utterance": "未刊登的物件可以新增合約嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問系統限制條件，屬通用規則"
+    },
+    {
+      "n": 46,
+      "utterance": "帳單裡面有哪些資訊",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問帳單的欄位組成，通用說明即可"
+    },
+    {
+      "n": 47,
+      "utterance": "有沒有哪個租客這期還沒繳的",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "high",
+      "evidence": "要查自己名下本期未繳的租客，需實際帳單資料"
+    },
+    {
+      "n": 48,
+      "utterance": "有規定時間嗎",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "未指明何事的時間規定，語意殘缺"
+    },
+    {
+      "n": 49,
+      "utterance": "那我怎麼知道他簽了沒",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "問查看簽署狀態的方法，屬操作說明而非查某一份"
+    },
+    {
+      "n": 50,
+      "utterance": "紙本簽約在哪裡選",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問介面上的操作位置，通用說明"
+    },
+    {
+      "n": 51,
+      "utterance": "一般租約需要公證嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問一般性法規慣例，不需查特定合約"
+    },
+    {
+      "n": 52,
+      "utterance": "已經簽好的合約可以補進來嗎",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "問系統是否支援補建既有合約，屬功能有無"
+    },
+    {
+      "n": 53,
+      "utterance": "跟方案有關嗎",
+      "intent_class": "undecidable",
+      "intended_route": "undecidable",
+      "intended_facet": "none",
+      "confidence": "high",
+      "evidence": "純追問語，無可辨識主題"
+    },
+    {
+      "n": 54,
+      "utterance": "為什麼這張帳單多了一筆管理費",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "billing_anomaly",
+      "confidence": "high",
+      "evidence": "針對特定帳單的異常項目，須查該筆明細"
+    },
+    {
+      "n": 55,
+      "utterance": "合約現在是在哪個階段 我看不太懂",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_diag",
+      "confidence": "high",
+      "evidence": "問自己某份合約的當前狀態，需查該筆"
+    },
+    {
+      "n": 56,
+      "utterance": "李小姐這個月房租繳了嗎",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "high",
+      "evidence": "指名租客與期別的繳款狀態，需查帳單"
+    },
+    {
+      "n": 57,
+      "utterance": "電表這個月用超多 幫我看一下",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "iot_meter",
+      "confidence": "high",
+      "evidence": "要求檢視特定電表本月用量，須讀實際度數"
+    },
+    {
+      "n": 58,
+      "utterance": "租客都簽名了嗎 我上禮拜發的那份",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_sign",
+      "confidence": "high",
+      "evidence": "指涉特定一份合約的簽署完成狀態"
+    },
+    {
+      "n": 59,
+      "utterance": "帳單裡的滯納金是怎麼算出來的",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "billing_late_fee",
+      "confidence": "medium",
+      "evidence": "以某張帳單既有的滯納金金額為對象要求拆解，需查該筆"
+    },
+    {
+      "n": 60,
+      "utterance": "帳單 B20260812 收到款了沒",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "high",
+      "evidence": "給定帳單編號查收款狀態"
+    },
+    {
+      "n": 61,
+      "utterance": "上期跟這期的電表差幾度",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "iot_meter",
+      "confidence": "high",
+      "evidence": "需讀取該電表兩期實際度數才能計算"
+    },
+    {
+      "n": 62,
+      "utterance": "文山路那間現在還有人在住嗎",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "estate_diag",
+      "confidence": "high",
+      "evidence": "指名物件的目前入住現況"
+    },
+    {
+      "n": 63,
+      "utterance": "陳太太那邊押金退了沒",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_closeout",
+      "confidence": "high",
+      "evidence": "指名對象的退租押金退還狀態，需查該筆"
+    },
+    {
+      "n": 64,
+      "utterance": "現在這份約還能加租客進去嗎",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_change",
+      "confidence": "high",
+      "evidence": "答案取決於這份合約當下的狀態，須先查該筆"
+    },
+    {
+      "n": 65,
+      "utterance": "水電那個表是不是壞了 度數都沒動",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "iot_meter",
+      "confidence": "high",
+      "evidence": "針對特定電表的異常判斷，需查該表讀數紀錄"
+    },
+    {
+      "n": 66,
+      "utterance": "這張單子是誰開的 為什麼有兩期合在一起",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "billing_anomaly",
+      "confidence": "high",
+      "evidence": "針對特定帳單的組成異常，須查該筆來源"
+    },
+    {
+      "n": 67,
+      "utterance": "我名下那間店面現在租給誰",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "estate_diag",
+      "confidence": "high",
+      "evidence": "問特定物件目前的承租人，需查該物件"
+    },
+    {
+      "n": 68,
+      "utterance": "有個租客一直沒註冊帳號 是哪一位來著",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "account_register",
+      "confidence": "medium",
+      "evidence": "要找出哪一位租客未完成註冊，須查實際帳號資料"
+    },
+    {
+      "n": 69,
+      "utterance": "9月的帳單我怎麼找不到",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "medium",
+      "evidence": "須查該期帳單是否存在與其狀態才能回答"
+    },
+    {
+      "n": 70,
+      "utterance": "有誰的合約快到期了 我這邊",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_diag",
+      "confidence": "medium",
+      "evidence": "要盤點自己名下即將到期的合約，需查實際資料"
+    },
+    {
+      "n": 71,
+      "utterance": "點交金額跟我算的對不上耶",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_closeout",
+      "confidence": "high",
+      "evidence": "針對特定點交金額的爭議，須查該筆明細"
+    },
+    {
+      "n": 72,
+      "utterance": "五樓那間現在的狀態是什麼",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "estate_diag",
+      "confidence": "high",
+      "evidence": "指名物件的當前狀態，需查該筆"
+    },
+    {
+      "n": 73,
+      "utterance": "幫我查一下這份合約什麼時候到期",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_diag",
+      "confidence": "high",
+      "evidence": "明確要求查特定合約的到期日"
+    },
+    {
+      "n": 74,
+      "utterance": "合約到期後會自動續嗎 我這份",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_renew",
+      "confidence": "medium",
+      "evidence": "以「我這份」限定，答案取決於該合約的續約設定"
+    },
+    {
+      "n": 75,
+      "utterance": "空房那間的水電有沒有停掉",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "estate_diag",
+      "confidence": "medium",
+      "evidence": "問特定物件的水電現況，需查該筆"
+    },
+    {
+      "n": 76,
+      "utterance": "這期帳單有沒有包含車位費",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "high",
+      "evidence": "須查該期帳單的實際費用項目"
+    },
+    {
+      "n": 77,
+      "utterance": "那間房的照片跟坪數我當初填多少",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "estate_diag",
+      "confidence": "high",
+      "evidence": "查某一物件已登錄的資料內容"
+    },
+    {
+      "n": 78,
+      "utterance": "6月那次抄表的度數是多少",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "iot_meter",
+      "confidence": "high",
+      "evidence": "問特定一次抄表的實際度數"
+    },
+    {
+      "n": 79,
+      "utterance": "後面那間的電表號碼是多少",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "iot_meter",
+      "confidence": "high",
+      "evidence": "查指定物件所綁電表的實際編號"
+    },
+    {
+      "n": 80,
+      "utterance": "這份合約可以續約嗎 現在",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_renew",
+      "confidence": "high",
+      "evidence": "取決於這份合約當下的階段與條件，須先查該筆"
+    },
+    {
+      "n": 81,
+      "utterance": "這個月總共開了幾張帳單給我看",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "high",
+      "evidence": "要求統計自己本月實際開立的帳單筆數"
+    },
+    {
+      "n": 82,
+      "utterance": "租客張先生註冊了沒 我發連結給他了",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "account_register",
+      "confidence": "high",
+      "evidence": "查指名租客的註冊完成狀態"
+    },
+    {
+      "n": 83,
+      "utterance": "退租點交做完了嗎",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_closeout",
+      "confidence": "high",
+      "evidence": "問某一筆退租點交的完成狀態，須查該筆進度"
+    },
+    {
+      "n": 84,
+      "utterance": "王先生的帳單是不是還沒付",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "high",
+      "evidence": "指名對象的帳單付款狀態，需查資料"
+    },
+    {
+      "n": 85,
+      "utterance": "3樓的電表度數現在是多少",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "iot_meter",
+      "confidence": "high",
+      "evidence": "查指定電表的即時度數"
+    },
+    {
+      "n": 86,
+      "utterance": "合約上寫的租金跟帳單金額不一樣",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "billing_anomaly",
+      "confidence": "high",
+      "evidence": "特定合約與帳單金額不符，須比對兩筆實際資料"
+    },
+    {
+      "n": 87,
+      "utterance": "租客小陳到底簽了沒",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_sign",
+      "confidence": "high",
+      "evidence": "查指名租客在某份合約上的簽署狀態"
+    },
+    {
+      "n": 88,
+      "utterance": "電表最新一次抄表是什麼時候",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "iot_meter",
+      "confidence": "high",
+      "evidence": "須讀取該電表的實際抄表紀錄時間"
+    },
+    {
+      "n": 89,
+      "utterance": "電表是不是重新歸零過",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "iot_meter",
+      "confidence": "high",
+      "evidence": "針對特定電表讀數歷程的判斷，需查資料"
+    },
+    {
+      "n": 90,
+      "utterance": "點交單上面扣的錢是扣什麼",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_closeout",
+      "confidence": "high",
+      "evidence": "問某張點交單上的實際扣款項目"
+    },
+    {
+      "n": 91,
+      "utterance": "合約什麼時候簽的 我忘了",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_diag",
+      "confidence": "high",
+      "evidence": "查特定合約的實際簽署日期"
+    },
+    {
+      "n": 92,
+      "utterance": "我想改租金 但這份合約好像不能改了？",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_change",
+      "confidence": "high",
+      "evidence": "可否異動取決於這份合約當前狀態，須查該筆"
+    },
+    {
+      "n": 93,
+      "utterance": "板橋那個物件我設定過瓦斯費嗎",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "estate_diag",
+      "confidence": "medium",
+      "evidence": "查指定物件是否已建立該項費用設定"
+    },
+    {
+      "n": 94,
+      "utterance": "點交還缺什麼沒做完",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_closeout",
+      "confidence": "high",
+      "evidence": "須查該筆點交的實際待辦項目"
+    },
+    {
+      "n": 95,
+      "utterance": "合約編號 C202601 那份現在怎樣了",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_diag",
+      "confidence": "high",
+      "evidence": "給定合約編號查其目前狀態"
+    },
+    {
+      "n": 96,
+      "utterance": "電表度數我覺得抄錯了 幫我確認",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "iot_meter",
+      "confidence": "high",
+      "evidence": "要求核對特定電表的實際抄表值"
+    },
+    {
+      "n": 97,
+      "utterance": "點交進度現在到哪一步了",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "contract_closeout",
+      "confidence": "high",
+      "evidence": "查某一筆退租點交的當前進度"
+    },
+    {
+      "n": 98,
+      "utterance": "這張帳單的付款期限到哪天",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "bill_diagnosis",
+      "confidence": "high",
+      "evidence": "問特定帳單的實際到期日"
+    },
+    {
+      "n": 99,
+      "utterance": "合約還能不能提前終止",
+      "intent_class": "rule",
+      "intended_route": "single",
+      "intended_facet": "none",
+      "confidence": "medium",
+      "evidence": "未指涉特定合約，讀為提前終止的制度與條件說明"
+    },
+    {
+      "n": 100,
+      "utterance": "我這張8月的帳單金額怎麼是這個數字，可以幫我看一下嗎",
+      "intent_class": "instance",
+      "intended_route": "dialog",
+      "intended_facet": "billing_anomaly",
+      "confidence": "high",
+      "evidence": "指定某月自己帳單的金額疑義，須查該筆明細"
+    }
+  ]
+}
