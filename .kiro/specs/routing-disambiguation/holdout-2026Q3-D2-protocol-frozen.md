@@ -63,6 +63,29 @@ ruleset 自述來源＝research.md 主題 1 的 20 筆樣本（非本文件）
 ⚠️ 無法由工程端證明「當初寫特徵表的人未曾看過本文件」——該點由業主確認。
 ```
 
+### 3.2b 來源鏈時序查核（2026-08-28 追加，**把 provenance gate 收到證據能到的極限**）
+
+```text
+① 規則集寫入時間  916c63e8  2026-08-23 23:29:39
+   git log -S"COUNTER_PATTERNS" -- services/instance_evidence.py
+   → **只有這一筆**，此後 patterns 從未變更 ⇒ 規則集自 08-23 起凍結
+② 本文件在本機的 birth time  2026-08-28 23:26:12（晚五天）
+③ 規則集自述來源＝protocol v1 凍結案例集的 20 筆（repo 內建物）
+   該案例集（robustness-protocol.json／evidence/protocol-v1-baseline.json）
+   與本文件的交集 = **1 句**「帳單有哪幾種狀態」
+   → 該句已被污染過濾機械排除：**不在 sealed pool、不在 D2 sample**
+④ D1 holdout ∩ 文件 = 0｜KB question_summary ∩ 文件 = 0
+```
+
+**殘留的唯一缺口**（證據到不了，需業主確認）：
+
+```text
+檔名為 v2 ⇒ 可能存在更早的 v1（不在 ~/jgb）。
+birth time 只證明「這個檔案何時出現在本機」，不證明內容何時被撰寫。
+⇒ 若 v1 於 2026-08-23 之前存在且被特徵表作者參考過，本批語料仍屬污染。
+   除此之外，時序與來源鏈皆支持「未被參考」。
+```
+
 ### 3.3 機械抽取規則（**先凍結，執行後不回頭調**）
 
 ```text
