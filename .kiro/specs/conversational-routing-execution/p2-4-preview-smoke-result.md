@@ -1,3 +1,15 @@
+> ## ⚠️ 2026-08-28 業主裁定：本檔結論**降級為獨立部署債務**
+>
+> `preview` 的 `/contracts/status-overview` 500（`early_termination_notice_date` schema drift）
+> **不再是 routing rollout 的解鎖條件**——真正的 production boundary `www` 已於
+> `p2-5-www-acceptance-result.md` 完成 controlled end-to-end acceptance。
+>
+> ```text
+> preview FAIL  ≠  Stage-1 blocked
+> ```
+>
+> 修 preview 仍值得做，但屬 deployment/environment debt，不阻塞主線。
+
 # P2.4 real API smoke（jgb2 **preview**）：**STOP** — 合約端點 500
 
 > 2026-08-26｜`USE_MOCK_JGB_API=false`、`JGB_API_BASE_URL=https://preview.jgbsmart.com`

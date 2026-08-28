@@ -67,6 +67,62 @@ status=2｜bit_status=3｜date_start=20260814｜date_end=20261113
 → grounded final answer（四項事實對帳全中）
 ```
 
+## 收案（2026-08-28 業主裁定 P2.5 **PASS**）
+
+| 項目 | 狀態 |
+|---|---|
+| authority provenance ／ telemetry | ✅ VALIDATED |
+| 刀 A precedence | ✅ VALIDATED |
+| 刀 A 第 3 列 real-control-flow | ✅ CONFIRMED |
+| 刀 A 第 4 列 complete lifecycle | ⚠️ PARTIAL runtime ＋ unit/M5 |
+| Face entry reachability | ✅ CONFIRMED |
+| `www` real API grounding | ✅ CONFIRMED |
+| identifier → single contract narrowing | ✅ CONFIRMED |
+| grounded final answer | ✅ CONFIRMED |
+| **P2.5 controlled E2E acceptance** | **✅ PASS** |
+| preview | ⚠️ independent deployment debt |
+
+### 寫入安全的 claim 邊界（**不得擴讀**）
+
+```text
+✅ 可宣稱：本次 canary 僅可達 read-only grounding path；production write path 未被觸及。
+❌ 不得擴成：整個系統不可能寫 production。
+   射程只有這三個 Face（bill_diagnosis／billing_anomaly／contract_closeout）
+   與本 vertical slice。
+```
+
+### 單一 89557 樣本的身分：coverage ceiling，**不是** P2.5 failure
+
+```text
+P2.5 驗的命題是「這條 vertical slice 能否從真入口一路走到真 API grounding，
+並產出可對帳的答案」——一個 deterministic known case 足以證明**存在性與 causal correctness**。
+它**不**證明：所有 contract lifecycle states 正確／所有 bit_status 組合正確／
+所有 production contract 都能收斂。
+⇒ 未來若要宣稱「contract_closeout across lifecycle states 已驗證」，
+   才需要另建 state matrix。**現在不為 P2.5 再加樣本。**
+```
+
+### 刀 A 第 4 列：不是 Stage-1 blocker
+
+```text
+runtime        已證明選到 compat_face 並嘗試進場
+completion     尚未由真 runtime 完整跑完（注入手法限制，非刀 A 缺陷）
+deterministic  M5／unit 已鎖住「candidate 不得被丟掉」
+⇒ 不得宣稱「第 4 列 E2E validated」，但它**不阻塞 Stage-1**。
+```
+
+### 驗收所用組態＝Stage-1 目標組態（實測 container runtime）
+
+```text
+PREENTRY_ROUTABILITY_GATE=true
+PREENTRY_ROUTABILITY_FACETS=bill_diagnosis,billing_anomaly,contract_closeout
+FACET_SCOPE_SALVAGE=false
+BRAIN_STRICT_SCHEMA=true
+PRESALES_SYNTH_MODEL=gpt-4o-mini
+（四個 routing 旗標皆由 docker-compose.prod.yml 透傳；未透傳＝production 設了也不生效）
+⇒ 本次 acceptance **不是**跑在另一組組態上。
+```
+
 ## 射程外／仍未涵蓋
 
 ```text
