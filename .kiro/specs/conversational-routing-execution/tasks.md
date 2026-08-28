@@ -1005,12 +1005,12 @@ anomaly   frozen cases   secondary dispatch = 0
 
 ## 12. Real API contract smoke（橫向）
 
-- [ ] 12.1 **🧠主** 實作 `smoke_contract`：少量打 staging／真 API，僅比對
+- [x] 12.1 **🧠主** 實作 `smoke_contract`：少量打 staging／真 API，僅比對
   params → endpoint → response schema 的漂移；**不比對資料值**（真資料會變）。
   掛 e2e 層預設略過，不進 CI 阻擋路徑。
   _Requirements: 4.4, 7.2_
 
-- [ ] 12.2 **🧠主** 對 `jgb_bills`／`jgb_bill_detail` 執行漂移偵測。
+- [x] 12.2 **🧠主** 對 `jgb_bills`／`jgb_bill_detail` 執行漂移偵測。
   ⚠️ **結果 SHALL NOT 作為 Requirement 3 的主要驗收證據**——真 API 只用於確認
   mock 假設與現實 contract 是否漂移。
   _Requirements: 4.4_

@@ -88,6 +88,11 @@ esac
 # 同 assert_non_production_db 的 fail-closed 思路：預設安全，例外要說出口。
 if [[ "${ALLOW_REAL_JGB_API:-0}" == "1" ]]; then
   echo "⚠️  ALLOW_REAL_JGB_API=1 —— 測試將對 **真 JGB API** 發請求（含可能的寫入端點）"
+  # ⚠️ 旗標必須**傳進容器**：測試自己也要看得見它才能決定跑不跑
+  #    （任務 12.1 的契約 smoke 以此當顯式閘門）。
+  #    2026-08-28 實跑逼出：原本只在 host 端判斷，容器內恆為 unset，
+  #    於是「開了旗標卻永遠 gate_skipped」，而略過訊息看起來完全正常。
+  ENV_ARGS+=(-e ALLOW_REAL_JGB_API=1)
 else
   ENV_ARGS+=(-e USE_MOCK_JGB_API=true)
 fi
