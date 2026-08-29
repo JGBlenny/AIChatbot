@@ -1,0 +1,1533 @@
+{
+ "protocol": {
+  "protocol_sha256": "01b4d49e68fe5b44b393c0156e92e8d3b0fbcbb510724564b327ca8e18787c67",
+  "n_selection_sha256": "206f3923cd9e39d6c00a427aec5f2d9099f1c471c8b0969e859eaffe20b2695e"
+ },
+ "generated_at": "2026-08-29",
+ "generation": {
+  "isolation": "兩個彼此隔離的 generator，同一輪產生；harness 記錄 tool_uses=0（兩者皆未使用任何工具）",
+  "p_generator_sees": "依 row 類型的 authoritative source（general=frozen answer；instance=Face 責任契約＋capability 原始碼，docstring/註解已剝除）",
+  "p_generator_blind_to": [
+   "retrieval_representation",
+   "question_summary 欄位值",
+   "任何歷史 failure 或 A0x/R6-R8 結果",
+   "任何檢索分數或 system output"
+  ],
+  "n_generator_sees": "24 個相鄰列的 authoritative source（frozen answer，或共用對話規則＋該 face capability）",
+  "n_generator_blind_to": [
+   "全部 Level-A specs",
+   "retrieval_representation",
+   "任何檢索分數"
+  ],
+  "n_generator_not_instructed_to": "產生『容易與帳單診斷混淆但其實不是』的對抗性題目——⛔ 僅要求依相鄰列責任產生自然 query",
+  "known_residual_overlap": [
+   "P 側：Face 責任契約原文本身含『這筆帳單為什麼發不出去／取消不了／被收逾期費／手動到帳失敗』，與 3495/3496/3498/3499 的 question_summary 重疊。⛔ 移除即違反『引用整個 config，不手挑語義句』；⚠️ 偏誤方向**有利於 legacy arm**，故為保守偏誤。",
+   "N 側：build_bill_anomaly_facts 有一行轉交提示提到『點退帳單』；⚠️ 該行指向**別的**領域，只會使 N 更遠離 Level-A。"
+  ],
+  "materialization_note": "N 的 24 列中有 10 列 answer 為空，比照已凍的 instance 規則以『共用對話規則＋該 face capability 原始碼』作為責任來源。⚠️ 這是同一條規則的延伸，⛔ 不是改選列（改選列＝內容導向挑樣）。"
+ },
+ "P": [
+  {
+   "row": 3402,
+   "q": "點退做完之後系統會自己開一張帳單嗎？",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "退租點交完，那張結算的單子是自動跑出來的還是我要手開？",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "點交後產生的那張單裡面通常會有哪些東西",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "水電還沒結清的部分會被放進點退的帳單嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "點交時記的電表度數會怎麼被算進去？",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "房子有東西被弄壞，賠償金額會自動列在結算單上嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "我想在退租結算單多加一筆清潔費，可以自己加嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "除了水電跟賠償，還能放其他自訂的費用進去嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "點退那張單的到期日是怎麼決定的",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "結算帳單的繳費期限會不會就是點交當天",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "押金會直接跟這張結算單抵掉嗎？還是要另外處理",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "聽說押金會互抵多退少補，是這樣運作沒錯吧",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3402,
+   "q": "我退租了，房東說會有一張結算的單子，那是什麼",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3402,
+   "q": "點交檢查發現的損壞會不會自己變成一筆費用",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "退租結算單成立的條件是什麼？一定要先完成點交嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "點交那天抄的水錶會拿來跟上期比對算錢嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "這張單子的內容是誰決定的，系統帶還是我填",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "合約裡設定的到期日跟點交日不一樣，結算單會用哪個",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "想知道退租那張單一般會包含幾個大類的費用",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3402,
+   "q": "點交完成的當下，需要我按什麼才會有結算單嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3406,
+   "q": "繳完錢之後可以拿到證明嗎",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "收據要去哪裡下載啊，找了半天沒看到",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "付款證明可以存成 PDF 嗎",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "我還沒繳，可不可以先把收據開出來給我",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "為什麼沒繳費就不能印收據？",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "收據上面會有哪些欄位？看得到付款方式嗎",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "公司要報帳，這個收據可以當繳費證明用嗎",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "收據跟發票是一樣的東西嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3406,
+   "q": "租客跟我要統一發票，系統這張收據可以直接給他嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3406,
+   "q": "要開正式發票的話流程不一樣對吧？",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3406,
+   "q": "收據會不會列出每一筆費用的明細",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "帳單頁面裡下載收據的按鈕在哪一區",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "繳費日期會顯示在收據上嗎",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "收據可以重複下載幾次嗎",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "租客說要留存證明，我這邊要怎麼給他",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3406,
+   "q": "收據上面會不會有帳單編號可以對照",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3406,
+   "q": "想問一下平台的繳費證明是什麼格式的檔案",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "我剛付完款，馬上就能下載證明了嗎",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3406,
+   "q": "收據是系統自動產生的還是要人工開",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3406,
+   "q": "報稅用得上這張收據嗎，還是一定要發票",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3519,
+   "q": "點退帳單的錢到底是怎麼算出來的",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "退租結算的公式是什麼？押金怎麼扣",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "為什麼結算單的數字是負的，是不是算錯了",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "單子上面出現負數代表什麼意思",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3519,
+   "q": "總額是正的的話是我要再付錢嗎",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3519,
+   "q": "押金扣完不夠的話租客要補差額嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "違約金會不會被算進退租的結算裡",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "設備賠償跟押金是相加還是相減",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "押金兩萬、水電七百、賠五千，這樣最後會是多少",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "退多少錢的計算邏輯可以講解一下嗎",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3519,
+   "q": "我押金三萬，結算完剩下的怎麼判斷要退我多少",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3519,
+   "q": "每一筆扣款租客那邊看得到嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "結算的項目會不會列成明細，還是只有一個總數",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3519,
+   "q": "點退的單是租客同意之後才會有嗎，還是我單方面就能開",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "水電結算跟賠償金是先加起來再扣押金嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "想確認一下負號到底是退還是欠，我怕看反",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "如果沒有損壞也沒違約，結算的算法會怎麼跑",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "退租算下來要我補錢，這個數字是怎麼來的",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3519,
+   "q": "押金抵扣的順序是什麼，先扣賠償還是先扣水電",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3519,
+   "q": "為什麼我看到的金額前面有一個減號",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3495,
+   "q": "這張單一直送不出去，是怎麼回事",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "按了發送都沒反應，可以幫我看哪裡卡住嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "帳單 B20260812001 發不出去，幫我查一下原因",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "為什麼系統不讓我把這張單寄給租客",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "我這筆帳單送出時一直失敗，是不是有欄位沒填",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "發送鍵是灰的按不下去，什麼情況",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "這張單裡面好像少了收費項目，所以才不能發嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "電費那條的度數沒填會擋住發送嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "我這期水錶抄得比上期小，系統就不給我送了",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "某一筆金額是 0，會不會就是它讓我發不出去",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "和約 C-2026-118 那張還沒寄出的單，麻煩查一下為什麼卡著",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "帳單狀態好像已經不是待發送了，那還能寄嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "我明明都填好了還是送不出，重整也沒用",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "費用名稱空著會影響寄送嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "忠孝東路那間的帳單怎麼樣都寄不出去，急",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "發送失敗有沒有辦法知道具體是哪一項有問題",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "這張單的明細我加了三筆，還是不能送，幫我看看",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "系統說驗證沒過，是指我哪裡沒設定好",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "單子已經送出去過了，為什麼還叫我再發一次",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3495,
+   "q": "要把帳單推給房客，卻一直卡在最後一步",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "這張單想收回來改，可是取消不了",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "發錯了想撤回，系統不讓我撤，為什麼",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "帳單 20260701-A 可以取消嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "我想把已經寄出去的單抽回來重發，行不行",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "收回之後帳單會變成什麼狀態",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "租客已經匯款了，我還能不能取消這張",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "這筆已經在對帳中了，撤回會怎樣",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "還沒寄出的單需要按取消嗎？還是直接改就好",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "帳單失效了還要不要取消",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "取消掉的話原本的匯款帳號還能用嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "重發之後繳費代碼會換一組新的嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "哪些狀態的帳單才准撤回",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "排定要寄的那張還來得及喊停嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "開錯金額了，想作廢重來，這張單可以嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "合約 A-889 底下那張單我要收回，幫我確認能不能",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "取消按鈕點下去沒動作，是狀態的問題嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "我不想取消，只想把它藏起來，該怎麼辦",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "這張帳單撤回後租客那邊會看到什麼",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "款項已經到帳的單還能不能反悔",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3496,
+   "q": "信義路那戶的帳單開重複了，能砍一張嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "這張單為什麼被多收了一筆滯納的錢",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3498,
+   "q": "我晚幾天付就要罰款喔？幫我看那張單",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3498,
+   "q": "帳單 B0925 的遲繳費是怎麼算的",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "租客晚繳，系統有沒有自動加錢",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "這筆的繳款期限是哪一天，我想確認有沒有超過",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "他是什麼時候付的？有超過期限嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "逾期的加收費用是照租金比例算的嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "合約有設寬限幾天，那這張單還會被罰嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "我這期還沒繳，之後會被加多少",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3498,
+   "q": "晚了三天就被加錢，這合理嗎，幫我查那張帳單",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3498,
+   "q": "想確認這張單有沒有進入逾期狀態",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "緩衝天數會不會影響這筆的滯納計算",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "這張到帳時間比期限晚，系統會怎麼處理",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "和平東路那戶上個月的租金單，有沒有被加罰",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "我想知道逾期的錢是誰決定的，合約裡設的嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "這筆已經過期很久了，罰的錢會一直往上加嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "為什麼我看不到這張單的遲繳金額",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "合約編號 C-2025-77 的帳單有逾期費嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "房客說他有準時繳，但單上顯示逾期，幫我對一下",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3498,
+   "q": "這張帳單超過期限沒付，接下來會發生什麼",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "我要把這張標成已收款，可是一直失敗",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "手動入帳按下去跳錯誤，怎麼辦",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "租客用現金給我，我想直接在系統上結掉那張單",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "帳單 20260815-3 沒辦法手動標記到帳，幫我看原因",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "為什麼這張不能人工銷帳",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "什麼狀態的單才可以自己標到帳",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "這筆是不是早就完成了，所以不給我按",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "還沒發出去的單能不能先標成收到錢",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "對帳中的帳單可以直接手動結案嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "我按了確認收款卻沒有變化，是不是壞了",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "合約 D-102 那張單想手動入帳，可以嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "房客轉帳到我私人戶頭，系統這邊要怎麼註記",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "標記到帳失敗會不會是狀態不對",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "這張已經顯示完成了，我還需要再操作一次嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "手動銷帳的條件到底是什麼，我這張符合嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "系統一直說不能操作，可是我確定錢收到了",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "松山那間的租金單，我想改成已付款",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "失效的帳單還可以標成到帳嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "剛剛入帳跳出錯誤訊息，是我操作錯還是系統忙",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3499,
+   "q": "這筆已經是待繳費了，為什麼還是不給我確認收款",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "那張收據上的金額到底是多少",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "帳單 A-20260530 的繳費證明是多少錢",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "我想確認這筆繳了多少，收據寫多少",
+   "perspective": "tenant"
+  },
+  {
+   "row": 4640,
+   "q": "這張單的收據可以看了嗎，金額幫我報一下",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "房客付的錢跟單上的數字一樣嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "實收跟應收有沒有差，收據是照哪個",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "這筆現在有收據了嗎？還是要等",
+   "perspective": "tenant"
+  },
+  {
+   "row": 4640,
+   "q": "我剛繳完，證明什麼時候會出來",
+   "perspective": "tenant"
+  },
+  {
+   "row": 4640,
+   "q": "合約 C-441 那張租金單的收據數字給我",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "還在對帳中的話收據會有嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "這張還沒繳，是不是就查不到收據",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "想知道這筆的收據金額，順便看有沒有 PDF 可載",
+   "perspective": "tenant"
+  },
+  {
+   "row": 4640,
+   "q": "為什麼我這張單看不到繳費證明",
+   "perspective": "tenant"
+  },
+  {
+   "row": 4640,
+   "q": "七月那張水電費的收據是多少錢",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "系統記的實收金額跟帳單對不起來，幫我查那張",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "這張帳單的收據開出來了沒",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "我要跟公司報這筆，收據金額幫我確認一下",
+   "perspective": "tenant"
+  },
+  {
+   "row": 4640,
+   "q": "中山北路那戶上期的收據金額是多少",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "款項還沒到帳的話收據是不是就沒有",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4640,
+   "q": "這筆收據跟我實際匯的錢金額對得上嗎",
+   "perspective": "tenant"
+  },
+  {
+   "row": 4656,
+   "q": "這張單現在是什麼情況",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "帳單 B-20260801 的狀態幫我看一下",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "那筆到底繳了沒",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "我想知道這張的金額跟期限",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "這張單一共多少錢",
+   "perspective": "tenant"
+  },
+  {
+   "row": 4656,
+   "q": "上個月那張是不是還在待繳",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "合約 C-556 的帳單現在跑到哪一步了",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "這筆的收費項目有哪些，明細列給我",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "我要看那張單的繳款期限是哪天",
+   "perspective": "tenant"
+  },
+  {
+   "row": 4656,
+   "q": "那張單是還沒寄出還是已經寄了",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "幫我查一下這筆的細項跟總額",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "這張帳單裡水電各是多少錢",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "大安區那間這期的帳單狀況如何",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "這筆是不是已經失效了",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "我的租金單顯示什麼狀態，還要繳嗎",
+   "perspective": "tenant"
+  },
+  {
+   "row": 4656,
+   "q": "排定要發的那張，金額多少",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "這張單的資訊整個給我看一下",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "想確認這筆是待對帳還是已完成",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "帳單編號 R-9982 現在的狀態跟金額",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4656,
+   "q": "那張單有列管理費嗎，明細看得到嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "我這份合約的退租結算單現在是多少錢",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "合約 C-2026-33 底下那張點退的單，狀態如何",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "幫我調出這份租約的結算帳單金額",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "這個合約有沒有開過點退的帳單",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "我要看退租那張單繳了沒",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "忠孝三段那戶的合約，點退帳單出來了嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "這份合約的退租結算，最後金額是正還是負",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "我退租的那張單現在什麼狀態，錢退了嗎",
+   "perspective": "tenant"
+  },
+  {
+   "row": 4657,
+   "q": "合約 A-77 有幾張點退帳單？我想確認",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "這個租約結算那張還在待發送嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "查一下這份合約點退類型的帳單細節",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "退租的單找不到，是不是根本沒開",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "合約結束那張單的到期日是哪天",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "我想知道這份租約的點退帳單有沒有明細",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "這戶已經點交完了，結算單金額幫我報",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "合約編號 D-2025-06，退租的帳單金額是多少",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "那份合約的點退單是不是已經發給租客了",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "我的退租結算帳單有沒有產生，金額多少",
+   "perspective": "tenant"
+  },
+  {
+   "row": 4657,
+   "q": "這個合約下面除了租金單，有點退那種的嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4657,
+   "q": "退租那張單目前是待繳還是已到帳",
+   "perspective": "landlord"
+  }
+ ],
+ "N": [
+  {
+   "row": 3923,
+   "q": "我房客去7-11繳了，為什麼系統還是沒動靜？",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3923,
+   "q": "超商代收的錢大概幾天會真的進到帳戶",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3923,
+   "q": "在全家繳的租金，狀態一直沒更新是不是出問題了",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3923,
+   "q": "便利商店繳費從繳完到入帳中間會經過哪些階段？",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3923,
+   "q": "超商繳款的撥款日是固定的嗎 剛好遇到連假怎麼辦",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3398,
+   "q": "電費是怎麼被算出來的？",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3398,
+   "q": "這期的起始度數哪裡來的 我沒有自己填",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3398,
+   "q": "第一張帳單沒有上一期，用電量要抓哪個數字當基準",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3398,
+   "q": "我電錶數字打錯了還能改嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3398,
+   "q": "每度多少錢乘完就是金額嗎，還是還有其他加減",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3366,
+   "q": "我上禮拜匯的那筆到底有沒有成功？",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3366,
+   "q": "哪裡可以看到房客實際的付款紀錄",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3366,
+   "q": "想確認這張單子系統有沒有收到錢",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3366,
+   "q": "我已經轉帳了，可是不確定它有沒有進去，怎麼查",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3366,
+   "q": "這筆有繳費成功嗎？有沒有留下什麼交易紀錄可以看",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3407,
+   "q": "有沒有辦法看到每個月收了多少錢的圖表",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3407,
+   "q": "我想知道租金跟水電各佔多少比例",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3407,
+   "q": "收支的資料可以拉成excel嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3407,
+   "q": "報表能不能只看某一個大房東名下的物件",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3407,
+   "q": "想比較上半年跟下半年的收入變化，系統做得到嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3497,
+   "q": "錢明明收到了，單子卻還是紅字沒變",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3497,
+   "q": "為什麼付了款帳單狀態還是沒跟著更新",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3497,
+   "q": "房客說他繳了，可是我這邊看起來還是未繳，很困擾",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3497,
+   "q": "已付款卻沒反映在系統上，是不是後台哪裡卡住了",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4637,
+   "q": "永豐要我提供某筆交易的畫面存證，我要去哪裡撈",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4637,
+   "q": "金流公司抽查交易，我只有虛擬帳號，怎麼找到對應的單",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4637,
+   "q": "要用代收帳號反查是哪一張帳單，後台有這功能嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4637,
+   "q": "銀行要求截圖佐證，好幾筆都要，一筆一筆怎麼查比較快",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4647,
+   "q": "還沒送出的帳單可以一次改嗎？我想加一個清潔費",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4647,
+   "q": "批次編輯好像只能動水電，其他項目要怎麼處理",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4647,
+   "q": "想在之後每一期都多收一筆錢，有沒有比較省事的做法",
+   "perspective": "landlord"
+  },
+  {
+   "row": 4647,
+   "q": "未發送的那幾張要統一加項目，一張一張改太累了",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3502,
+   "q": "房客說虛擬帳號轉不進去，我該從哪裡開始查",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3502,
+   "q": "代收帳號會不會過期？重新發一次會換新的嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3502,
+   "q": "小額可以轉大額卻失敗，這是什麼狀況",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3502,
+   "q": "要怎麼測試繳費管道是不是通的，不想拿真的租金去試",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3934,
+   "q": "這張的金額跟我算的對不起來，是不是哪裡算錯",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3934,
+   "q": "為什麼第一個月的租金比合約寫的少",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3934,
+   "q": "帳單裡面那幾個項目加起來跟總額不一樣耶",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3934,
+   "q": "金額怪怪的，可以幫我看一下明細是怎麼組成的嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3938,
+   "q": "發票買受人打錯了，要重開一張",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3938,
+   "q": "開出去的發票金額有誤，可以作廢嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3938,
+   "q": "統編填錯的發票怎麼處理 需要折讓還是作廢",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3938,
+   "q": "已經開好的發票開錯對象了，我想取消後重新開一次",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3935,
+   "q": "這份合約九月的單子到現在都還沒看到",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3935,
+   "q": "幫我查一下為什麼這間的帳單沒有跑出來",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3935,
+   "q": "其他戶都有了就這一戶沒有，是不是漏掉",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3935,
+   "q": "這期的還沒出現，可以看看是卡在哪嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3532,
+   "q": "聽說有階梯式的算法，跟一般的差在哪",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3532,
+   "q": "我們公司想改成逾期滿五天收固定一筆，做得到嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3532,
+   "q": "不同版本的到期日設定不太一樣？",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3532,
+   "q": "逾期太久費率會加重的那種是哪一種版本，要怎麼開通",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3924,
+   "q": "房客一直說轉帳失敗，該叫他確認什麼",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3924,
+   "q": "兩個月押金加一個月租金太大筆轉不過去怎麼辦",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3924,
+   "q": "金額少打了幾塊會不會就進不去",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3924,
+   "q": "轉帳一直被擋，是不是我銀行的上限問題",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3936,
+   "q": "我租客說他登入後根本沒看到這張單",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3936,
+   "q": "我在APP裡面找不到這個月要繳的錢",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3936,
+   "q": "房客那邊帳務列表是空的，是不是我漏了什麼步驟",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3936,
+   "q": "為什麼承租人看不到我開給他的帳單",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3420,
+   "q": "發票遲遲沒開，有沒有一套檢查的順序",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3420,
+   "q": "零元的帳單也會開發票嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3420,
+   "q": "一般來說沒開立出來會是哪些原因造成的",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3420,
+   "q": "要開發票需要先滿足什麼條件？我想確認設定有沒有漏",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3937,
+   "q": "這張錢都收好幾天了，發票怎麼還沒來",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3937,
+   "q": "房客催我發票，可以幫我看這筆現在到底怎麼了嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3937,
+   "q": "我繳完租金到現在都沒收到電子發票",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3937,
+   "q": "這期的發票遲遲沒下來，是不是要手動補",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3932,
+   "q": "這張停在待對帳好幾天了正常嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3932,
+   "q": "顯示已繳但還沒入帳，要等多久",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3932,
+   "q": "對帳中的狀態一直不會跳，需要我做什麼嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3932,
+   "q": "為什麼這筆還卡在待對帳沒變成已到帳",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3500,
+   "q": "刷卡付不過去，到底是什麼原因",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3500,
+   "q": "房客用信用卡繳一直被退，可以幫忙查嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3500,
+   "q": "我的卡沒問題啊，為什麼這裡刷不過",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3500,
+   "q": "信用卡交易失敗有沒有辦法知道詳細的錯誤",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3940,
+   "q": "這張延遲金的金額是怎麼跑出來的",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3940,
+   "q": "我收到一筆滯納的帳單，想知道算式",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3940,
+   "q": "這筆逾期費用是抓幾天去乘的",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3940,
+   "q": "幫我拆解一下這張滯納單的計算過程",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3362,
+   "q": "幫我看這張的發票現在是什麼狀態",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3362,
+   "q": "這筆到底開了沒？",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3362,
+   "q": "發票欄位顯示異常，那是什麼意思",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3362,
+   "q": "查一下這張單子有沒有對應的發票號碼",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3531,
+   "q": "逾期沒繳系統會自動加錢嗎，怎麼運作的",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3531,
+   "q": "欠兩個月的話費用會不會一直往上疊",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3531,
+   "q": "是繳款當下才結算，還是每天跑排程開單",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3531,
+   "q": "逾期費用的單子本身再逾期會不會又被加一次",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3928,
+   "q": "下個月的租金單通常什麼時候會自己跑出來",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3928,
+   "q": "合約是回溯簽的，前面幾期會補嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3928,
+   "q": "帳單是自動產生還是要我手動建",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3928,
+   "q": "系統排程做出來的單子預設會直接寄給租客嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3501,
+   "q": "約定扣款沒扣成功，房客會知道嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3501,
+   "q": "自動代扣失敗了要怎麼查原因",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3501,
+   "q": "我設定的自動扣繳這個月沒扣到",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3501,
+   "q": "定期扣款沒過系統有寄信通知嗎",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3939,
+   "q": "這筆逾期費用怎麼這麼貴，是不是算錯",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3939,
+   "q": "房客抱怨滯納金收太多，我要怎麼跟他解釋",
+   "perspective": "landlord"
+  },
+  {
+   "row": 3939,
+   "q": "才晚幾天而已就要付這麼多喔？",
+   "perspective": "tenant"
+  },
+  {
+   "row": 3939,
+   "q": "金額看起來偏高，想確認是不是照設定跑的",
+   "perspective": "landlord"
+  }
+ ]
+}

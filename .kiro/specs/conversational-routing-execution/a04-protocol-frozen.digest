@@ -1,10 +1,14 @@
 # A04 protocol digest
 FROZEN_AT=2026-08-29
-STATUS=FROZEN_PENDING_ONE_RATIFICATION
-# 唯一待追認項：N-A 選列的「母體由小到大處理」機械規則（見 protocol 第 10 節）。
-# 業主凍的是 24 列／exactly 100；實測發現「條件診斷：付款」4 列全部同屬
-# 「繳費金流排障」，不加此規則只會得到 22 列／92 筆。
-# 若業主不採此規則，必須改凍數字並重算本 digest。
+STATUS=FROZEN
+RATIFIED_AT=2026-08-29
+# 業主已追認「category 母體由小到大處理」為 deterministic allocation rule：
+#   它是在 membership overlap 被發現後、為忠實實作**已凍結的 stratification 意圖**
+#   所補的 tie/allocation rule，⛔ 不是事後為湊 100 筆而改 sampling。
+#   若反而接受 22/92，才會違背「避免大 category 擠掉小 category」的原始設計目的。
+#   分配只依 generation 前已知的三項機械資訊：category membership count／category name／
+#   stable hash ⇒ ⛔ 未引入 outcome-conditioned sampling。
+# ⚠️ 追認記於本 sidecar，**protocol bytes 未變** ⇒ PROTOCOL_SHA256 維持 01b4d49e…
 PROTOCOL_SHA256=01b4d49e68fe5b44b393c0156e92e8d3b0fbcbb510724564b327ca8e18787c67
 N_SELECTION_SHA256=206f3923cd9e39d6c00a427aec5f2d9099f1c471c8b0969e859eaffe20b2695e
 # ⚠️ N_SELECTION 是在 PROTOCOL 之後才 commit 的檔案，故**不在** PROTOCOL_SHA256 涵蓋範圍；
@@ -13,3 +17,9 @@ N_SELECTION_SHA256=206f3923cd9e39d6c00a427aec5f2d9099f1c471c8b0969e859eaffe20b26
 # 已作廢
 SUPERSEDED_DRAFT_SHA256=e724b818466150b07182a2026a3d5dc5538d3d6946854cf230534706c543e7f6
 SUPERSEDED_STATUS=DRAFT_SUPERSEDED
+
+# 語料封存（2026-08-29，P/N 同一輪生成）
+CORPUS_SHA256=83a7907065600830cf7e47fdb322868b3d44254805112525165c285f15867e30
+CORPUS_STATUS=SEALED_UNBURNED
+# SEALED_UNBURNED = 已封存、尚未接觸任何 system output。
+# 一旦看過檢索結果即轉為 BURNED，⛔ 不得再作為 holdout 使用。
