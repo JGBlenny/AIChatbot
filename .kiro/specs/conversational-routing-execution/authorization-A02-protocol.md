@@ -1,4 +1,7 @@
-# A02 synthetic semantic authorization —— 協議（業主裁定已納入；**尚待 §3 確認後凍結**）
+# A02 synthetic semantic authorization —— **協議已凍結**（2026-08-29）
+
+⚠️ 本檔於 **corpus 生成之前**凍結。
+⛔ 凍結後無論哪一 row 表現差，都不得合併 strata、擴 oracle 或補題。
 
 ## 0. Claim ceiling（業主原文，先寫死）
 
@@ -33,23 +36,37 @@ instance  3495 帳單為什麼發不出去                （deterministic）
 ## 2. Corpus 規格（事前固定，⛔ 不補題）
 
 ```text
-6 strata × 20 = 120（general 60／instance 60）
-G1 點退帳單是否／何時自動產生、結算流程
-G2 收據或繳費證明 PDF 如何取得
-G3 點退帳單金額的計算規則
-I1 查自己的某張收據實際金額
-I2 查自己的某筆帳單目前狀態／找出某一筆帳單
-I3 查自己某份合約的點退帳單實際金額
+**10 strata × 20 = 200**（general 60／instance 140）
 ```
 
-⚠️ **I2 的措辭已收緊**（見 §3 說明）：
-⛔ 不含「為什麼發不出去／取消不了／被收逾期費／手動到帳失敗」這類**故障診斷**。
+⚠️ 這個不平衡**不是問題**——A02 ⛔ 不估 prevalence／production distribution。
+⛔ **不得**為了做成 100/100 而額外製造 general 題：那是**為了統計外觀改 semantic scope**。
+
+| Stratum | 任務 |
+|---|---|
+| G1 | 點退帳單是否／何時自動產生、費用結算流程 |
+| G2 | 收據／繳費證明 PDF 如何取得 |
+| G3 | 點退帳單金額計算規則 |
+| I1 | 查自己的某張收據實際金額 |
+| I2 | 查自己的某筆帳單目前狀態／找到某筆帳單 |
+| I3 | 查自己某份合約的點退帳單實際金額 |
+| I4 | 自己某筆帳單為什麼發不出去 |
+| I5 | 自己某筆帳單為什麼取消不了 |
+| I6 | 自己某筆帳單為什麼被收逾期費 |
+| I7 | 自己某筆帳單手動到帳為什麼失敗 |
+
+⚠️ **I2 措辭已收緊**：⛔ 不含「為什麼發不出去／取消不了／被收逾期費／手動到帳失敗」
+——那四種**各自獨立為 I4–I7**。
 
 ## 3. `allowed_top1_ids`（**oracle 定義——必須在生成前凍結**）
 
+**全部維持單一 row oracle**——10 個 semantic task 與 10 個 frozen Level-A rows **一對一**。
+⚠️ 這比允許多 row 的 oracle **更強**，且讓失敗歸因非常乾淨。
+
 ```text
-G1 → {3402}     G2 → {3406}     G3 → {3519}
-I1 → {4640}     I2 → {4656}     I3 → {4657}
+G1 → {3402}   G2 → {3406}   G3 → {3519}
+I1 → {4640}   I2 → {4656}   I3 → {4657}
+I4 → {3495}   I5 → {3496}   I6 → {3498}   I7 → {3499}
 ```
 
 Layer A 單題 PASS 的定義（業主裁定）：
@@ -60,20 +77,22 @@ query judgeable AND top1 ∈ allowed_top1_ids[its_stratum]
    「收據 PDF 怎麼下載」命中「點退帳單怎麼算」兩者都 general，但 retrieval 顯然錯了）
 ```
 
-### ⚠️ 兩件需業主確認才凍結
+### 業主裁定（2026-08-29，**corpus 生成前最後一次 scope／oracle 修訂**）
 
 ```text
-【確認 1】I2 是否維持 {4656} 的窄定義
-  若放寬成 {4656, 3495, 3496, 3498, 3499}，幾乎任何「帳單相關的個別問句」都算對齊
-  ⇒ oracle 會**自我放寬**，⛔ 我不主動採用。
-  代價：作者若自然寫出故障診斷語氣，會命中 3495–3499 而被計為 misalignment
-  ⇒ 已在 §2 收緊 I2 任務措辭以對齊此 oracle。
+【確認 1】I2 = {4656}，**維持窄定義** ✅
+  ⛔ 不採 {4656,3495,3496,3498,3499}——那會把「帳單個別查詢」與「四種不同故障診斷」
+     揉成一個 oracle，80% alignment 極易因 oracle 過寬而**假綠**。
+  ⚠️ 若作者偏離 I2 任務、寫成故障診斷而 top1 命中 3495–3499
+     → **就應算 I2 misalignment**。
+     這是在測 authoring／retrieval 是否忠於 preregistered semantic stratum，
+     ⛔ 不是測「系統有沒有找到某個差不多的 instance row」。
 
-【確認 2】A02 只會操練 **10 筆中的 6 筆**
-  3495／3496／3498／3499（皆 instance、deterministic）**不屬任何 stratum**，
-  本設計不會碰到它們。
-  ⇒ 若要涵蓋，需**現在**新增 stratum（⛔ 事後再加即為 adaptive）；
-    否則須寫進 PASS claim ceiling：A02 未操練該 4 筆。
+【確認 2】**現在**新增 I4–I7 ✅
+  corpus 未生成、oracle 未凍結 ⇒ 合法 preregistration；⛔ 看到結果再補才是 adaptive。
+  不補的話 A02 最多只能授權「6 of 10 Level-A rows」，
+  ⛔ 不能升格成整個 bill_diagnosis Level-A scope 的 synthetic semantic authorization。
+  而下一關是 gate authorization，⛔ 不是只驗其中六個漂亮案例。
 ```
 
 ## 4. 判準（業主裁定，四項）
@@ -84,12 +103,13 @@ Label quality        L1 exact agreement >= 90%；Cohen's kappa >= 0.70
                      ⚠️ 措辭：沿用**同一套事前 label-process quality criterion**，
                         ⛔ 不主張它對所有來源天然適用
 
-Corpus sufficiency   **每個 stratum** judgeable >= 15／20，否則 CORPUS_INSUFFICIENT
+Corpus sufficiency   **每個 stratum**（含新增 I4–I7）judgeable >= 15／20
+                     否則 CORPUS_INSUFFICIENT
                      「有效」＝ authoring integrity 通過 AND 兩位標註者一致
                        AND label ∈ {instance, general}
                      ⛔ 不得以 general 合併 45 掩蓋某 stratum 只剩 8
 
-Layer A              **每個 stratum** alignment >= 80%
+Layer A              **每個 stratum**（10 個）alignment >= 80%
 （retrieval support） 任一 stratum < 80% → **RETRIEVAL_INSUFFICIENT**，⛔ 不得怪 gate
 
 Layer B              只在 Layer-A-aligned 案例上判；**accuracy = 100%**
@@ -111,7 +131,11 @@ Layer B              只在 Layer-A-aligned 案例上判；**accuracy = 100%**
      期待：這些 query 的 authority result **全數翻轉**；
           其他 top1 != R 的 query **不得**因此翻轉
      ⇒ 直接證明 **row truth 是實際 causal input**
-     至少各做一個：一個 general row、一個 instance row
+     **最低要求**：一個 general row ＋ 一個 instance row 即足以證明 causal wiring
+     ⚠️ A02 本體成功後可機械跑 **10-row mutation census**：對每個 row R，
+        只看 top1 == R 的 aligned queries，翻轉 R 宣告 → 該集合全數翻轉、
+        top1 != R 全數不受影響 ⇒ deterministic control，
+        ⛔ 不增加 synthetic authorization claim，也不需再生成題目
 
 ② non-Level-A negative control
      用 A01 **burned** corpus 中 top1 ∉ Level-A 的案例（burned 僅供失敗分析，此用途合法）
@@ -147,7 +171,8 @@ Layer B              只在 Layer-A-aligned 案例上判；**accuracy = 100%**
 ## 8. PASS 時只能宣稱（業主原文）
 
 > **P1f passed synthetic semantic authorization for the frozen Level-A
-> bill_diagnosis scope across the six preregistered task strata.**
+> bill_diagnosis scope across the ten preregistered task strata
+> (all 10 frozen Level-A rows exercised, one dedicated stratum each).**
 
 ```text
 ✅ 支持：scope-matched semantic retrieval；
