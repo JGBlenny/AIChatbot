@@ -8,7 +8,10 @@
 母體      POPULATION 51c04b887a16b05f…／IDSET 00581c42771fa3b0…
 本檔性質  frozen proposal ＋ DB 既有 reviewed 事實的**投影**；⛔ 本檔不代裁
 裁定正本  r10p/p3-verdicts.json（P3 authority record；⛔ proposal 不得反向定義它）
-已裁批次  **Batch A（5 群）已由業主裁定 2026-08-29**；B／C／D 仍留空
+已裁批次  **Batch A（5 群）＋ Batch B（9 群）已由業主裁定 2026-08-29**；C／D 仍留空
+LEVEL_A_V2 期中普查  9 列 → CONFIRMED 8／INSUFFICIENT 1（[3499]）
+  ⛔ 不得宣稱「LEVEL_A_V2 = 9 unique responsibilities」，⛔ 也不得宣稱「只有 8 個」
+  ⇒ A05 維持 PAUSED：denominator ⛔ 尚不得從 row-count 9 轉成 responsibility-count 9
 ```
 
 ## 讀法（四條規約）
@@ -529,21 +532,21 @@ HINT_ONLY  same categories  「帳單管理,條件診斷：帳單」⇒ [3402, 3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ responsibility ＝「點退完成後何時／何條件產生帳單並進入結算」，⛔ 不是查某筆實值
+II.  MEMBERSHIP      CONFIRMED（3402：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=general
+IV.  OWNERSHIP       CONFIRMED　owner=Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  df24d420de768a776dd92db0111190926071b89946e8719978b7b4ce8d8ebef5
+review_input_scope   本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -593,21 +596,21 @@ HINT_ONLY  same categories  「帳單管理,條件診斷：帳單」⇒ [3402, 3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ 與 4640 有**既有** positive semantic partition：「取得方式」≠「某張收據實際金額」
+II.  MEMBERSHIP      CONFIRMED（3406：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=general
+IV.  OWNERSHIP       CONFIRMED　owner=Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  4341984adb1d3c3709adbeff80a00493ac1984cd46ef92483c070d7d8d67ba53
+review_input_scope   本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -660,21 +663,21 @@ HINT_ONLY  same categories  「條件診斷：帳單」⇒ [3495, 3496, 3498, 34
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ 有**可區分的** deterministic sub-responsibility（具名分支 B01）
+II.  MEMBERSHIP      CONFIRMED（3495：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_send
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  41253010f10da608d1c1fe23a78a8871780701f7c0729c8ee401a8ee3ccfca01
+review_input_scope   本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -727,21 +730,21 @@ HINT_ONLY  same categories  「條件診斷：帳單」⇒ [3495, 3496, 3498, 34
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ 有**可區分的** deterministic sub-responsibility（具名分支 B02）
+II.  MEMBERSHIP      CONFIRMED（3496：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_cancel
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  edd9d408151ecc734dc410ce040691631bd62d1b04056fa382d42dcd04c46448
+review_input_scope   本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -791,21 +794,25 @@ HINT_ONLY  same categories  「條件診斷：帳單」⇒ [3495, 3496, 3498, 34
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+- no deterministic sub-intent capability or dispatch evidence distinguishing manual-arrival failure from sibling bill_diagnosis responsibilities
+- shared form mapping establishes execution domain only, not responsibility identity or ownership
+- reviewed instance applicability does not by itself establish a distinct responsibility
+⚠️ 同 form 在母體內橫跨 5 列（3495／3496／3498／3499／3502）⇒ form ⛔ 無法區分它們
+轉 CONFIRMED 的正向證據（任一即可）：既有具名 deterministic branch／可證明的 question→fact 分流／原始 authoring responsibility spec／runtime causal／mutation 證明它確實有獨立 execution semantics
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        NOT_ESTABLISHED_AS_DISTINCT_RESPONSIBILITY
+       └ 語義上看似「手動到帳失敗」，但唯一 execution evidence 是一個同時服務 5 列的 form
+II.  MEMBERSHIP      NOT_YET_CONFIRMED（3499：candidate member —— 其所屬 responsibility identity 尚未建立）
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       NOT_ESTABLISHED
+VERDICT              **INSUFFICIENT_EVIDENCE**
+       └ APPLICABILITY 軸**已 reviewed（instance）**，但 IDENTITY／OWNERSHIP 未建立。⛔ 不得因單一 axis 已 reviewed 就把整個 responsibility 升格為 CONFIRMED。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  ebf4d0aa4c8e6fea0de1d4bcab02235491c276f415aaa62982334e1793dafc92
+review_input_scope   本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -854,21 +861,21 @@ HINT_ONLY  same scope       bill_diagnosis (LEVEL_A_INSTANCE_GATE_SCOPE) ⇒ [34
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ 與 4657 的「查實際點退帳單」已有正面書面分工
+II.  MEMBERSHIP      CONFIRMED（3519：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=general
+IV.  OWNERSHIP       CONFIRMED　owner=Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  74047ecbbd32d7b51c5be72a672988c88842d8e8faaae0bb924c1ffdc44f98e5
+review_input_scope   本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -918,21 +925,21 @@ HINT_ONLY  same categories  「條件診斷：帳單」⇒ [3495, 3496, 3498, 34
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ 與 3406 的 general download responsibility 有正面分工，且 B05 取的是 runtime actual value
+II.  MEMBERSHIP      CONFIRMED（4640：ANSWER_KNOWLEDGE（active；empty-answer Face-entry anchor））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=bill_diagnosis 的 receipt-amount deterministic capability（B05）
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  726146ecb2748216862bfb59cd09751f4d1e4d47f572acb72253e56878aa0e58
+review_input_scope   本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -982,21 +989,21 @@ HINT_ONLY  same categories  「條件診斷：帳單」⇒ [3495, 3496, 3498, 34
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ identity 由 `bill_ref` referent ＋ status capability 定義
+II.  MEMBERSHIP      CONFIRMED（4656：ANSWER_KNOWLEDGE（active；empty-answer Face-entry anchor））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_format_bill_status 路徑
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  752b204f140c18aebe4eae5fc8ffad270194122442dcfdfc20c2a25901a6c2f7
+review_input_scope   本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -1046,21 +1053,21 @@ HINT_ONLY  same categories  「條件診斷：帳單」⇒ [3495, 3496, 3498, 34
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ defining operation 含「由合約找出 type=2 點退帳單」，⛔ 不是單純既知 bill_ref 的狀態查詢
+II.  MEMBERSHIP      CONFIRMED（4657：ANSWER_KNOWLEDGE（active；empty-answer Face-entry anchor））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=POINT_REFUND_BILL_SELECTION ＋ downstream bill facts
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  c35b55a23b4e6c927ecb60e17c5c87b906e01672c3de3c1d56761622c78df149
+review_input_scope   本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 # Batch C —— 其餘已有 applicability declaration 的 singleton

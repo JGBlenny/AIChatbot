@@ -7,7 +7,8 @@
  "population_digest": "51c04b887a16b05f9b19ca7f7e2b2a3b352b4ff26dcf639095593e2fb0647899",
  "_digest_rule": "review_basis_digest = sha256(canonical JSON of {candidate_group_id, review_input_scope, evidence, absence_observations})，sort_keys=True／ensure_ascii=False／separators=(',',':')。",
  "batches_reviewed": [
-  "A"
+  "A",
+  "B"
  ],
  "records": [
   {
@@ -426,6 +427,618 @@
     "authoritative owner/capability not established"
    ],
    "review_basis_digest": "2d71994bb51dbafb32e2b0dd7c1d87b50a981a45b20a3c2c8651713fad8ad345"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3402",
+   "batch": "B",
+   "members": [
+    3402
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "responsibility ＝「點退完成後何時／何條件產生帳單並進入結算」，⛔ 不是查某筆實值"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3402": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "general"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3402）：instance_applicability=general",
+     "claim_supported": "reviewed 理由：問的是系統流程與產生機制，正確回答不需知道是哪份合約或哪張帳單",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 3402）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility；非空 answer 本身即承載該責任",
+     "supports": [
+      "identity",
+      "membership",
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "df24d420de768a776dd92db0111190926071b89946e8719978b7b4ce8d8ebef5"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3406",
+   "batch": "B",
+   "members": [
+    3406
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "與 4640 有**既有** positive semantic partition：「取得方式」≠「某張收據實際金額」"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3406": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "general"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3406）：instance_applicability=general",
+     "claim_supported": "reviewed 理由明文：「4640 已另立『查實際收據金額』錨點，形成**正面語義分工**」",
+     "supports": [
+      "applicability",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 3406）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility；非空 answer 本身即承載該責任",
+     "supports": [
+      "identity",
+      "membership",
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "4341984adb1d3c3709adbeff80a00493ac1984cd46ef92483c070d7d8d67ba53"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3519",
+   "batch": "B",
+   "members": [
+    3519
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "與 4657 的「查實際點退帳單」已有正面書面分工"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3519": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "general"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3519）：instance_applicability=general",
+     "claim_supported": "reviewed 理由明文：「190 字承載計算規則、算式與例子…**KB 有意把規則與查值拆開**」",
+     "supports": [
+      "applicability",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 3519）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility；非空 answer 本身即承載該責任",
+     "supports": [
+      "identity",
+      "membership",
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "74047ecbbd32d7b51c5be72a672988c88842d8e8faaae0bb924c1ffdc44f98e5"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3495",
+   "batch": "B",
+   "members": [
+    3495
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "有**可區分的** deterministic sub-responsibility（具名分支 B01）"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3495": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_send"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_send（B01）",
+     "claim_supported": "帳單無法發送 由**具名** deterministic 分支負責，與同 Face 的其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3495）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 3495）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "41253010f10da608d1c1fe23a78a8871780701f7c0729c8ee401a8ee3ccfca01"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3496",
+   "batch": "B",
+   "members": [
+    3496
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "有**可區分的** deterministic sub-responsibility（具名分支 B02）"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3496": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_cancel"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_cancel（B02）",
+     "claim_supported": "帳單無法取消／作廢 由**具名** deterministic 分支負責，與同 Face 的其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3496）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 3496）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "edd9d408151ecc734dc410ce040691631bd62d1b04056fa382d42dcd04c46448"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3499",
+   "batch": "B",
+   "members": [
+    3499
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "NOT_ESTABLISHED_AS_DISTINCT_RESPONSIBILITY",
+     "reason": "語義上看似「手動到帳失敗」，但唯一 execution evidence 是一個同時服務 5 列的 form"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "NOT_YET_CONFIRMED",
+     "per_row": {
+      "3499": "candidate member —— 其所屬 responsibility identity 尚未建立"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "NOT_ESTABLISHED",
+     "owner": null
+    }
+   },
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3499）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（**僅** E2_IDENTIFIER_FORM）——⚠️ 只支持 applicability 軸",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "form=jgb_bill_diagnosis → jgb_bill_detail",
+     "claim_supported": "只證明 3499 與 bill_diagnosis **execution domain** 有關；⛔ 不支持 responsibility identity 或 ownership",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "no deterministic sub-intent capability or dispatch evidence distinguishing manual-arrival failure from sibling bill_diagnosis responsibilities",
+    "shared form mapping establishes execution domain only, not responsibility identity or ownership",
+    "reviewed instance applicability does not by itself establish a distinct responsibility",
+    "⚠️ 同 form 在母體內橫跨 5 列（3495／3496／3498／3499／3502）⇒ form ⛔ 無法區分它們"
+   ],
+   "_scope_of_insufficiency": "⚠️ APPLICABILITY 軸**已 reviewed（instance）**，但 IDENTITY／OWNERSHIP 未建立。⛔ 不得因單一 axis 已 reviewed 就把整個 responsibility 升格為 CONFIRMED。",
+   "evidence_gaps": [
+    "no deterministic sub-intent capability or dispatch evidence distinguishing manual-arrival failure from sibling bill_diagnosis responsibilities",
+    "shared form mapping establishes execution domain only, not responsibility identity or ownership",
+    "reviewed instance applicability does not by itself establish a distinct responsibility"
+   ],
+   "_unblock_paths": [
+    "既有具名 deterministic branch",
+    "可證明的 question→fact 分流",
+    "原始 authoring responsibility spec",
+    "runtime causal／mutation 證明它確實有獨立 execution semantics"
+   ],
+   "review_basis_digest": "ebf4d0aa4c8e6fea0de1d4bcab02235491c276f415aaa62982334e1793dafc92"
+  },
+  {
+   "candidate_group_id": "CG-ROW-4640",
+   "batch": "B",
+   "members": [
+    4640
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "與 3406 的 general download responsibility 有正面分工，且 B05 取的是 runtime actual value"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "4640": "ANSWER_KNOWLEDGE（active；empty-answer Face-entry anchor）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "bill_diagnosis 的 receipt-amount deterministic capability（B05）"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py（B05：收據查詢 R-31）",
+     "claim_supported": "取的是某一筆收據的 runtime 實值 ⇒ 支持 instance 與 owner",
+     "supports": [
+      "ownership",
+      "applicability",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 4640）：instance_applicability=instance",
+     "claim_supported": "reviewed 理由：不讀該帳單／收據資料無法知道「多少錢」；本列是 empty-answer Face-entry anchor",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 4640）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "726146ecb2748216862bfb59cd09751f4d1e4d47f572acb72253e56878aa0e58"
+  },
+  {
+   "candidate_group_id": "CG-ROW-4656",
+   "batch": "B",
+   "members": [
+    4656
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "identity 由 `bill_ref` referent ＋ status capability 定義"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "4656": "ANSWER_KNOWLEDGE（active；empty-answer Face-entry anchor）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_format_bill_status 路徑"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py::_format_bill_status",
+     "claim_supported": "已取得 bill_ref → 找該筆 → 回目前 status，為其 defining operation",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 4656）：instance_applicability=instance",
+     "claim_supported": "reviewed 理由：bill_diagnosis 的 required_slots=[bill_ref]；無特定 referent 無法完成 intent",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 4656）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "752b204f140c18aebe4eae5fc8ffad270194122442dcfdfc20c2a25901a6c2f7"
+  },
+  {
+   "candidate_group_id": "CG-ROW-4657",
+   "batch": "B",
+   "members": [
+    4657
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "defining operation 含「由合約找出 type=2 點退帳單」，⛔ 不是單純既知 bill_ref 的狀態查詢"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "4657": "ANSWER_KNOWLEDGE（active；empty-answer Face-entry anchor）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "POINT_REFUND_BILL_SELECTION ＋ downstream bill facts"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/point_refund_selection.py::select_point_refund（經 bills.py::_point_refund_response 呼叫）",
+     "claim_supported": "selection prerequisite 與 4656 不同：指定 contract → deterministic 選 type=2 →無 type=2 ⛔ 不 fallback → 多筆 type=2 ⛔ 不取 data[0]",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "RUNTIME_CAUSAL_EVIDENCE",
+     "source": "rag-orchestrator/tests/unit/conversational/test_point_refund_selection_req.py（six guards ＋ guard 6 mutation：拿掉 type filter／改回 data[0] 測試必須紅）",
+     "claim_supported": "type selection ⛔ 非裝飾——拿掉就會選錯帳單；R9 史實 FACET_TYPE_SELECTION_MISSING 於 POINT_REFUND_BILL_SELECTION 實作後才解",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 4657）：instance_applicability=instance",
+     "claim_supported": "reviewed 理由：要求該份合約／帳單的實際值，不讀 runtime data 無法回答",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 4657）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "c35b55a23b4e6c927ecb60e17c5c87b906e01672c3de3c1d56761622c78df149"
   }
- ]
+ ],
+ "_level_a_v2_census_interim": {
+  "level_a_v2_rows": 9,
+  "confirmed_responsibility": 8,
+  "insufficient_evidence": 1,
+  "unresolved_rows": [
+   3499
+  ],
+  "may_claim": "8 個 responsibility 已確認；第 9 列 3499 的 responsibility identity 尚未建立。",
+  "must_not_claim": [
+   "LEVEL_A_V2 = 9 unique responsibilities ✅",
+   "LEVEL_A_V2 only has 8 responsibilities"
+  ],
+  "why": "3499 可能最後是第九個，也可能需要 merge 到另一 responsibility——現在不知道。",
+  "a05_status": "PAUSED —— denominator ⛔ 尚不得從 row-count 9 轉成 responsibility-count 9。"
+ }
 }
