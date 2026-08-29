@@ -1,6 +1,6 @@
 {
  "dataset_id": "authorization-2026Q3-A01",
- "status": "COMMITTED-TO-TEST — 未標註、未執行",
+ "status": "**BURNED** — frozen implementation 已於 2026-08-29 執行過本 corpus，⛔ 不得再作任何 holdout",
  "source": {
   "pool_file": "holdout-2026Q3-D2-sealed-pool.json",
   "pool_n": 576,
