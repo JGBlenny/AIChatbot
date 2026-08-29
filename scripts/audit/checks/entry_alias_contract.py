@@ -1,6 +1,22 @@
 #!/usr/bin/env python3
 """不變量 16：**entry alias ⛔ 不得各自擁有 semantic contract**（業主裁定 2026-08-29）。
 
+⚠️ **狀態：TRANSITIONAL_GUARD，⛔ 不是終局契約**（業主明示）。
+「允許同 facet 共用**逐字相同**的 canonical contract」只是避免 migration 卡死，
+⛔ **不代表終局允許兩份相同 semantic document 各自進 ranking**。
+R10 已裁 target architecture＝C＋C2（explicit `responsibility_id`＋
+threshold／truncation／reranker **之前** collapse），終局應升級為：
+
+```text
+ENTRY_ALIAS MUST reference exactly one active responsibility_id
+ENTRY_ALIAS MUST NOT own authoritative retrieval_representation
+ENTRY_ALIAS MUST NOT own authoritative applicability
+canonical retrieval_representation MUST belong to responsibility
+applicability MUST belong to responsibility
+multiple aliases of same responsibility
+  MUST collapse before threshold／truncation／reranking
+```
+
 源起（T3 provenance audit）：`billing-knowledge-review.md` 明文「錨點（12 筆，
 answer 空、**一種講法一筆**）」，且批次 schema 每筆只有 facet／question／keywords
 ⇒ 錨點的單位是**講法**，責任單位是 **facet**。
