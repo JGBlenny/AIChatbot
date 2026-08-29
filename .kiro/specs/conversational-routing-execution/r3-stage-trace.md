@@ -92,10 +92,23 @@ winner ∈ Level-A：**2／11**
 （與 pair-competition 已被反證一致）
 ```
 
+## ⚠️ claim ceiling 修正（業主 2026-08-29）
+
+```text
+✅ 已證明：**23/40 confirmed retrieval failures 的直接失效 seam 是 Step 7 threshold filtering**
+⛔ **未證明**：`0.65` 這個 policy 本身有錯
+
+因為「有效的 expected row → final similarity < 0.65 → 被擋掉」可由兩種根因造成，
+而 R3 **沒有分離**它們：
+  T1 CUTOFF_POLICY_PROBLEM   final similarity 合理，但 0.65 對這類合法 intent 過嚴
+  T2 SCORE_CALIBRATION       0.65 未必錯，而是 Step 6 把本該高分的 expected row 算太低
+⚠️ 長尾也支持「不是單純 cutoff」：只有 9/23 落在 −0.05 內，其餘有些差得非常遠。
+```
+
 ## 可以下的 claim
 
 ```text
-✅ confirmed retrieval failures 中，**主要機制是 threshold policy**（58%）
+✅ confirmed retrieval failures 中，**主要失效 seam 是 threshold stage**（58%）
 ✅ candidate generation miss **確實存在但次要**（15%）
 ✅ ranking loss 佔 28%，且多為非-Level-A KB 超車
 ⛔ 不得說「降門檻即可修好」——未做該實驗，且分佈長尾
@@ -106,9 +119,11 @@ winner ∈ Level-A：**2／11**
 
 ```text
 retrieval implementation defect   ESTABLISHED
-threshold-policy defect           **ESTABLISHED as primary mechanism**（23／40）
-candidate-generation defect       **ESTABLISHED as secondary**（6／40）
-ranking defect                    **ESTABLISHED as secondary**（11／40）
+**threshold-stage loss**          **ESTABLISHED as primary**（23／40）
+threshold-policy defect           **NOT YET ESTABLISHED**   ← ⚠️ 措辭修正
+score/calibration defect          **OPEN**
+candidate-generation defect       ESTABLISHED secondary（6／40）
+ranking defect                    ESTABLISHED secondary（11／40）
 knowledge coverage defect         確有 11 筆 mismatch（R2），⛔ 非主因
 pair-competition hypothesis       REFUTED
 ⛔ 本檔不提修法（業主指示）
