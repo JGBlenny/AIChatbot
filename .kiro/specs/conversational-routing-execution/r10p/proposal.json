@@ -1,0 +1,1706 @@
+{
+ "_doc": "R10-P2 proposal-only grouping（54-row governance population）。",
+ "_prime_directive": "Proposal is allowed to reduce search cost, never to establish responsibility truth.",
+ "_authority": "⛔ NONE。本檔 ⛔ 不建立 responsibility identity／applicability／ownership；P3 human review 可**引用**本檔索引證據，⛔ 不得引用本檔作為真相來源。",
+ "stage": "R10-P2",
+ "schema_version": "R10P-SCHEMA-2",
+ "schema_digest": "b72e749e0c452f0d0b86dfedc1e68e69b76912653240d02ea029d8d913272cf2",
+ "population_digest": "51c04b887a16b05f9b19ca7f7e2b2a3b352b4ff26dcf639095593e2fb0647899",
+ "population_idset_digest": "00581c42771fa3b01d5f9d9fe537f872ea501178e395dbf86203124771e0feff",
+ "generated_at": "2026-08-29",
+ "grouping_rules_applied": [
+  {
+   "rule": "same explicit entry-alias registry responsibility",
+   "groups_produced": 5,
+   "rows_covered": 12,
+   "basis": "entry-alias registry 的**明文裁定**（responsibility_owner=facet），⛔ 非「同 facet 自動合併」"
+  },
+  {
+   "rule": "same existing reviewed owner contract",
+   "groups_produced": 0,
+   "rows_covered": 0,
+   "basis": "母體內沒有任何兩列共用一份**已 reviewed 的 owner contract**；provenance.scope 是 review 範圍而非 owner contract ⇒ ⛔ 不採"
+  },
+  {
+   "rule": "same deterministic mapping（同一 capability 函式）",
+   "groups_produced": 0,
+   "rows_covered": 0,
+   "basis": "E1_ENGINE_TITLE 的函式名兩兩相異；form→API 是識別欄位收集，⛔ 不是 capability 函式"
+  },
+  {
+   "rule": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "groups_produced": 42,
+   "rows_covered": 42,
+   "basis": "singleton 是**合法**輸出——R10-P 問的是「有多少真正的責任」，⛔ 不是「怎麼把 54 列壓成最少群」"
+  }
+ ],
+ "summary": {
+  "population_rows": 54,
+  "candidate_groups": 47,
+  "multi_row_groups": 5,
+  "singletons": 42
+ },
+ "_partition_invariant": "candidates 的 proposed_members 必須是 54-row 母體的**嚴格分割**：聯集 == 母體、兩兩不相交、無重複 id。",
+ "candidates": [
+  {
+   "candidate_group_id": "CG-ALIAS-01",
+   "proposed_members": [
+    3931,
+    3932,
+    3933
+   ],
+   "mechanical_grouping_reason": "same explicit entry-alias registry responsibility",
+   "candidate_facet": "繳費金流排障",
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "entry-alias-registry.json（業主裁定 2026-08-29；responsibility_owner=facet、per-row semantic contract REJECTED）",
+    ".kiro/specs/billing-conversational-facets/billing-knowledge-review.md（「錨點 12 筆，answer 空、一種講法一筆」）",
+    ".kiro/specs/billing-conversational-facets/billing-knowledge-batch.json（anchors 每筆僅 facet/question/keywords）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3931,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "租客說繳了 錢還沒進來"
+    },
+    {
+     "row_id": 3932,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "帳單卡在待對帳 狀態一直沒跳"
+    },
+    {
+     "row_id": 3933,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "租客繳不了費 一直失敗"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3931,
+     "declared_value": null,
+     "provenance_source": null,
+     "provenance_scope": null,
+     "_authority": "undeclared —— ⛔ 不得序列化成 unknown"
+    },
+    {
+     "row_id": 3932,
+     "declared_value": null,
+     "provenance_source": null,
+     "provenance_scope": null,
+     "_authority": "undeclared —— ⛔ 不得序列化成 unknown"
+    },
+    {
+     "row_id": 3933,
+     "declared_value": null,
+     "provenance_source": null,
+     "provenance_scope": null,
+     "_authority": "undeclared —— ⛔ 不得序列化成 unknown"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ALIAS-02",
+   "proposed_members": [
+    3934,
+    3935,
+    3936
+   ],
+   "mechanical_grouping_reason": "same explicit entry-alias registry responsibility",
+   "candidate_facet": "帳單異常",
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "entry-alias-registry.json（業主裁定 2026-08-29；responsibility_owner=facet、per-row semantic contract REJECTED）",
+    ".kiro/specs/billing-conversational-facets/billing-knowledge-review.md（「錨點 12 筆，answer 空、一種講法一筆」）",
+    ".kiro/specs/billing-conversational-facets/billing-knowledge-batch.json（anchors 每筆僅 facet/question/keywords）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3934,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "帳單金額怪怪的 跟預期不一樣"
+    },
+    {
+     "row_id": 3935,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "這期帳單怎麼還沒出來"
+    },
+    {
+     "row_id": 3936,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "租客說看不到帳單 找不到"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3934,
+     "declared_value": null,
+     "provenance_source": null,
+     "provenance_scope": null,
+     "_authority": "undeclared —— ⛔ 不得序列化成 unknown"
+    },
+    {
+     "row_id": 3935,
+     "declared_value": null,
+     "provenance_source": null,
+     "provenance_scope": null,
+     "_authority": "undeclared —— ⛔ 不得序列化成 unknown"
+    },
+    {
+     "row_id": 3936,
+     "declared_value": null,
+     "provenance_source": null,
+     "provenance_scope": null,
+     "_authority": "undeclared —— ⛔ 不得序列化成 unknown"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ALIAS-03",
+   "proposed_members": [
+    3937,
+    3938
+   ],
+   "mechanical_grouping_reason": "same explicit entry-alias registry responsibility",
+   "candidate_facet": "發票",
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "entry-alias-registry.json（業主裁定 2026-08-29；responsibility_owner=facet、per-row semantic contract REJECTED）",
+    ".kiro/specs/billing-conversational-facets/billing-knowledge-review.md（「錨點 12 筆，answer 空、一種講法一筆」）",
+    ".kiro/specs/billing-conversational-facets/billing-knowledge-batch.json（anchors 每筆僅 facet/question/keywords）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3937,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "發票怎麼還沒開 沒收到發票"
+    },
+    {
+     "row_id": 3938,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "發票開錯了 要作廢重開"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3937,
+     "declared_value": null,
+     "provenance_source": null,
+     "provenance_scope": null,
+     "_authority": "undeclared —— ⛔ 不得序列化成 unknown"
+    },
+    {
+     "row_id": 3938,
+     "declared_value": null,
+     "provenance_source": null,
+     "provenance_scope": null,
+     "_authority": "undeclared —— ⛔ 不得序列化成 unknown"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ALIAS-04",
+   "proposed_members": [
+    3939,
+    3940
+   ],
+   "mechanical_grouping_reason": "same explicit entry-alias registry responsibility",
+   "candidate_facet": "滯納金",
+   "candidate_owner_hint": "late_fee face（⛔ 不在 LEVEL_A_V2 內）",
+   "evidence_refs": [
+    "entry-alias-registry.json（業主裁定 2026-08-29；responsibility_owner=facet、per-row semantic contract REJECTED）",
+    ".kiro/specs/billing-conversational-facets/billing-knowledge-review.md（「錨點 12 筆，answer 空、一種講法一筆」）",
+    ".kiro/specs/billing-conversational-facets/billing-knowledge-batch.json（anchors 每筆僅 facet/question/keywords）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3939,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "滯納金怎麼收這麼多"
+    },
+    {
+     "row_id": 3940,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "這筆延遲金是怎麼算的"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3939,
+     "declared_value": "instance",
+     "provenance_source": "reviewed_product_declaration",
+     "provenance_scope": "late_fee face（⛔ 不在 LEVEL_A_V2 內）",
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    },
+    {
+     "row_id": 3940,
+     "declared_value": "instance",
+     "provenance_source": "reviewed_product_declaration",
+     "provenance_scope": "late_fee face（⛔ 不在 LEVEL_A_V2 內）",
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ALIAS-05",
+   "proposed_members": [
+    3941,
+    3942
+   ],
+   "mechanical_grouping_reason": "same explicit entry-alias registry responsibility",
+   "candidate_facet": "帳單設定引導",
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "entry-alias-registry.json（業主裁定 2026-08-29；responsibility_owner=facet、per-row semantic contract REJECTED）",
+    ".kiro/specs/billing-conversational-facets/billing-knowledge-review.md（「錨點 12 筆，answer 空、一種講法一筆」）",
+    ".kiro/specs/billing-conversational-facets/billing-knowledge-batch.json（anchors 每筆僅 facet/question/keywords）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3941,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "要開始收租 帳單要怎麼設定"
+    },
+    {
+     "row_id": 3942,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "收款帳戶怎麼綁 金流怎麼申請"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3941,
+     "declared_value": null,
+     "provenance_source": null,
+     "provenance_scope": null,
+     "_authority": "undeclared —— ⛔ 不得序列化成 unknown"
+    },
+    {
+     "row_id": 3942,
+     "declared_value": null,
+     "provenance_source": null,
+     "provenance_scope": null,
+     "_authority": "undeclared —— ⛔ 不得序列化成 unknown"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3361",
+   "proposed_members": [
+    3361
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_bill_query → jgb_bills（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3361,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "帳單沒到帳 帳單狀態"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3361,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3362",
+   "proposed_members": [
+    3362
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_invoice_query → jgb_invoices（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3362,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "發票沒開 發票狀態"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3362,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3365",
+   "proposed_members": [
+    3365
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_repair_query → jgb_repairs（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3365,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "修繕進度 修繕查詢"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3365,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3366",
+   "proposed_members": [
+    3366
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_payment_query → jgb_payments（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3366,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "繳費成功 繳費紀錄"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3366,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3368",
+   "proposed_members": [
+    3368
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3368,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "合約簽約邀請 發送邀請 為什麼不能發送"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3368,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3370",
+   "proposed_members": [
+    3370
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3370,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "合約提前解約 可以解約嗎 提前終止"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3370,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3371",
+   "proposed_members": [
+    3371
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3371,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "合約續約 可以續約嗎 延長合約"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3371,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3372",
+   "proposed_members": [
+    3372
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3372,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "合約狀態查詢 目前狀態"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3372,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3402",
+   "proposed_members": [
+    3402
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [],
+   "row_state": [
+    {
+     "row_id": 3402,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": true,
+     "question_summary": "點退帳單 自動產生 費用結算"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3402,
+     "declared_value": "general",
+     "provenance_source": "reviewed_product_declaration",
+     "provenance_scope": "bill_diagnosis (LEVEL_A_INSTANCE_GATE_SCOPE)",
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3406",
+   "proposed_members": [
+    3406
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [],
+   "row_state": [
+    {
+     "row_id": 3406,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": true,
+     "question_summary": "帳單收據 繳費證明 PDF 下載"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3406,
+     "declared_value": "general",
+     "provenance_source": "reviewed_product_declaration",
+     "provenance_scope": "bill_diagnosis (LEVEL_A_INSTANCE_GATE_SCOPE)",
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3490",
+   "proposed_members": [
+    3490
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3490,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "合約為什麼不能發送簽約邀請"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3490,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3491",
+   "proposed_members": [
+    3491
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3491,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "合約為什麼不能點交"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3491,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3492",
+   "proposed_members": [
+    3492
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3492,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "合約為什麼不能點退"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3492,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3493",
+   "proposed_members": [
+    3493
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3493,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "合約為什麼不能提前解約"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3493,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3494",
+   "proposed_members": [
+    3494
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3494,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "合約為什麼不能續約"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3494,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3495",
+   "proposed_members": [
+    3495
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": "services/jgb/bills.py::_diagnose_cannot_send（B01）",
+   "evidence_refs": [
+    "services/jgb/bills.py::_diagnose_cannot_send（B01）",
+    "form=jgb_bill_diagnosis → jgb_bill_detail（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3495,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": true,
+     "question_summary": "帳單為什麼發不出去"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3495,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3496",
+   "proposed_members": [
+    3496
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": "services/jgb/bills.py::_diagnose_cannot_cancel（B02）",
+   "evidence_refs": [
+    "services/jgb/bills.py::_diagnose_cannot_cancel（B02）",
+    "form=jgb_bill_diagnosis → jgb_bill_detail（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3496,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": true,
+     "question_summary": "帳單為什麼取消不了"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3496,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3497",
+   "proposed_members": [
+    3497
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": "services/jgb/payments.py::_diagnose_payment_not_reflected（P01）",
+   "evidence_refs": [
+    "services/jgb/payments.py::_diagnose_payment_not_reflected（P01）",
+    "form=jgb_payment_diagnosis → jgb_payment_logs（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3497,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "已付款但帳單狀態沒有更新"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3497,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3498",
+   "proposed_members": [
+    3498
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_bill_diagnosis → jgb_bill_detail（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3498,
+     "is_active": false,
+     "retired": true,
+     "has_answer": true,
+     "has_reviewed_representation": true,
+     "question_summary": "為什麼被收逾期費（延遲金）"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3498,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3499",
+   "proposed_members": [
+    3499
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_bill_diagnosis → jgb_bill_detail（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3499,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": true,
+     "question_summary": "帳單手動到帳或標記已收款失敗"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3499,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3500",
+   "proposed_members": [
+    3500
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": "services/jgb/payments.py::_diagnose_credit_card_failure（P02）",
+   "evidence_refs": [
+    "services/jgb/payments.py::_diagnose_credit_card_failure（P02）",
+    "form=jgb_payment_diagnosis → jgb_payment_logs（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3500,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "信用卡付款失敗"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3500,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3501",
+   "proposed_members": [
+    3501
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_payment_diagnosis → jgb_payment_logs（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3501,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "信用卡自動扣款失敗"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3501,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3502",
+   "proposed_members": [
+    3502
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_bill_diagnosis → jgb_bill_detail（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3502,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "虛擬帳號過期或轉帳失敗"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3502,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3503",
+   "proposed_members": [
+    3503
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": "services/jgb/invoices.py::_diagnose_issue_failure（I01）",
+   "evidence_refs": [
+    "services/jgb/invoices.py::_diagnose_issue_failure（I01）",
+    "form=jgb_invoice_diagnosis → jgb_invoice_logs（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3503,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "發票為什麼沒有開出來"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3503,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3504",
+   "proposed_members": [
+    3504
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": "services/jgb/invoices.py::_diagnose_invalid_failure（I02）",
+   "evidence_refs": [
+    "services/jgb/invoices.py::_diagnose_invalid_failure（I02）",
+    "form=jgb_invoice_diagnosis → jgb_invoice_logs（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3504,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "發票為什麼作廢不了"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3504,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3505",
+   "proposed_members": [
+    3505
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": "services/jgb/subscription.py::_diagnose_cannot_add_estate（E01）",
+   "evidence_refs": [
+    "services/jgb/subscription.py::_diagnose_cannot_add_estate（E01）",
+    "form=jgb_subscription_diagnosis → jgb_subscription（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3505,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "為什麼不能新增物件"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3505,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3506",
+   "proposed_members": [
+    3506
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": "services/jgb/subscription.py::_diagnose_estates_delisted（E02）",
+   "evidence_refs": [
+    "services/jgb/subscription.py::_diagnose_estates_delisted（E02）",
+    "form=jgb_subscription_diagnosis → jgb_subscription（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3506,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "物件為什麼突然全部下架"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3506,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3507",
+   "proposed_members": [
+    3507
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3507,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "物件為什麼不能建立合約"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3507,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3508",
+   "proposed_members": [
+    3508
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_iot_diagnosis → jgb_iot_manufacturers（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3508,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "IoT 廠商帳號綁定失敗"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3508,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3510",
+   "proposed_members": [
+    3510
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3510,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "合約目前是什麼狀態"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3510,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3511",
+   "proposed_members": [
+    3511
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3511,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "合約的點交/點退/提前解約/續約按鈕是否可用"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3511,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3512",
+   "proposed_members": [
+    3512
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3512,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "為什麼不能取消點交或點退"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3512,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3513",
+   "proposed_members": [
+    3513
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3513,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "為什麼不能取消或作廢合約"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3513,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3514",
+   "proposed_members": [
+    3514
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_tenant_query → jgb_tenant_summary（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 3514,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "查詢租客概況 合約帳單修繕"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3514,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3519",
+   "proposed_members": [
+    3519
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [],
+   "row_state": [
+    {
+     "row_id": 3519,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": true,
+     "question_summary": "點退帳單金額計算 押金結算"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3519,
+     "declared_value": "general",
+     "provenance_source": "reviewed_product_declaration",
+     "provenance_scope": "bill_diagnosis (LEVEL_A_INSTANCE_GATE_SCOPE)",
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3531",
+   "proposed_members": [
+    3531
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [],
+   "row_state": [
+    {
+     "row_id": 3531,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "滯納金帳單產生 付款後結算規則"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3531,
+     "declared_value": "general",
+     "provenance_source": "reviewed_product_declaration",
+     "provenance_scope": "late_fee face（⛔ 不在 LEVEL_A_V2 內）",
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-3532",
+   "proposed_members": [
+    3532
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [],
+   "row_state": [
+    {
+     "row_id": 3532,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "滯納金客製版本 固定金額階梯式"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 3532,
+     "declared_value": "general",
+     "provenance_source": "reviewed_product_declaration",
+     "provenance_scope": "late_fee face（⛔ 不在 LEVEL_A_V2 內）",
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-4255",
+   "proposed_members": [
+    4255
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "form=jgb_contract_query → jgb_contracts（收 1 個識別欄位）"
+   ],
+   "row_state": [
+    {
+     "row_id": 4255,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": false,
+     "question_summary": "取消點交邀請 取消點退邀請 收回邀請"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 4255,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-4420",
+   "proposed_members": [
+    4420
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [
+    "action=api_call → jgb_repairs"
+   ],
+   "row_state": [
+    {
+     "row_id": 4420,
+     "is_active": true,
+     "retired": false,
+     "has_answer": true,
+     "has_reviewed_representation": false,
+     "question_summary": "修繕進度 報修單 修得怎樣了 處理到哪"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 4420,
+     "declared_value": "instance",
+     "provenance_source": "deterministic",
+     "provenance_scope": null,
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-4640",
+   "proposed_members": [
+    4640
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [],
+   "row_state": [
+    {
+     "row_id": 4640,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": true,
+     "question_summary": "帳單收據金額 收據多少錢"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 4640,
+     "declared_value": "instance",
+     "provenance_source": "reviewed_product_declaration",
+     "provenance_scope": "bill_diagnosis (LEVEL_A_INSTANCE_GATE_SCOPE)",
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-4656",
+   "proposed_members": [
+    4656
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [],
+   "row_state": [
+    {
+     "row_id": 4656,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": true,
+     "question_summary": "查帳單 帳單編號查詢"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 4656,
+     "declared_value": "instance",
+     "provenance_source": "reviewed_product_declaration",
+     "provenance_scope": "bill_diagnosis (LEVEL_A_INSTANCE_GATE_SCOPE)",
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  },
+  {
+   "candidate_group_id": "CG-ROW-4657",
+   "proposed_members": [
+    4657
+   ],
+   "mechanical_grouping_reason": "SINGLETON_NO_ALLOWED_RULE_APPLIES",
+   "candidate_facet": null,
+   "candidate_owner_hint": null,
+   "evidence_refs": [],
+   "row_state": [
+    {
+     "row_id": 4657,
+     "is_active": true,
+     "retired": false,
+     "has_answer": false,
+     "has_reviewed_representation": true,
+     "question_summary": "合約的點退帳單金額 查點退金額"
+    }
+   ],
+   "existing_applicability_evidence": [
+    {
+     "row_id": 4657,
+     "declared_value": "instance",
+     "provenance_source": "reviewed_product_declaration",
+     "provenance_scope": "bill_diagnosis (LEVEL_A_INSTANCE_GATE_SCOPE)",
+     "_authority": "row-level legacy declaration —— ⛔ 僅作 evidence index，responsibility-level applicability 只在 P3 review 後建立"
+    }
+   ]
+  }
+ ],
+ "non_authoritative_hints": {
+  "_authority": "⛔ NONE —— 以下僅供 reviewer 縮小搜尋範圍；⛔ 不得作為 grouping 依據（schema forbidden_grouping_rules）。",
+  "shared_identifier_form": {
+   "_why_not_a_grouping_rule": "form 只決定**收哪個識別欄位**，⛔ 不決定回答哪個問題——同一個 form 底下明顯存在數個不同責任（例：jgb_contract_query 同時涵蓋「為什麼不能點交」與「可以續約嗎」）。",
+   "cohorts": {
+    "form=jgb_bill_diagnosis → jgb_bill_detail": [
+     3495,
+     3496,
+     3498,
+     3499,
+     3502
+    ],
+    "form=jgb_contract_query → jgb_contracts": [
+     3368,
+     3370,
+     3371,
+     3372,
+     3490,
+     3491,
+     3492,
+     3493,
+     3494,
+     3507,
+     3510,
+     3511,
+     3512,
+     3513,
+     4255
+    ],
+    "form=jgb_invoice_diagnosis → jgb_invoice_logs": [
+     3503,
+     3504
+    ],
+    "form=jgb_payment_diagnosis → jgb_payment_logs": [
+     3497,
+     3500,
+     3501
+    ],
+    "form=jgb_subscription_diagnosis → jgb_subscription": [
+     3505,
+     3506
+    ]
+   }
+  },
+  "shared_engine_module": {
+   "_why_not_a_grouping_rule": "同模組≠同 capability；每列的 E1_ENGINE_TITLE **函式名皆相異**（54 列中無任何兩列共用同一函式）⇒ 允許規則三（同 deterministic mapping）在本母體上**產生不到任何合併**。",
+   "cohorts": {
+    "services/jgb/bills.py": [
+     3495,
+     3496
+    ],
+    "services/jgb/invoices.py": [
+     3503,
+     3504
+    ],
+    "services/jgb/payments.py": [
+     3497,
+     3500
+    ],
+    "services/jgb/subscription.py": [
+     3505,
+     3506
+    ]
+   }
+  },
+  "shared_reviewed_scope": {
+   "_why_not_a_grouping_rule": "provenance.scope 是**當初 review 的範圍**，⛔ 不是 responsibility identity；scope=late_fee face 內部已知同時存在 general 與 instance 兩個責任（R10-Q1 淘汰 B 的理由）。",
+   "cohorts": {
+    "bill_diagnosis (LEVEL_A_INSTANCE_GATE_SCOPE)": [
+     3402,
+     3406,
+     3519,
+     4640,
+     4656,
+     4657
+    ],
+    "late_fee face（⛔ 不在 LEVEL_A_V2 內）": [
+     3531,
+     3532,
+     3939,
+     3940
+    ]
+   }
+  },
+  "content_relation_notes": [
+   "3531／3532：T2 判定 union(3531,3532) 承接了 3498 的全部有效 claim（K1 FULLY_SUBSUMED）⇒ 兩列**可能**同屬一個 general late-fee mechanism 責任；⚠️ 但 proposal ⛔ 不代裁。",
+   "3498：is_active=false ＋ retirement（失效不失憶）——若 review 認定它屬於某責任，其 member_role 應為 HISTORICAL_RETIRED／operational_status=inactive。"
+  ]
+ }
+}

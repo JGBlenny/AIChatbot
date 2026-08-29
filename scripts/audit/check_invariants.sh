@@ -411,6 +411,24 @@ else
   echo "✅ PASS（含少一列／少一多一／母體漂移 三組正對照）"
 fi
 
+echo "═══ 不變量 18：R10-P2 proposal 的分割身分與 authority 邊界（P2）═══"
+# 源起：17 擋的是「母體少列而不報錯」；proposal 有**第二種**同形失效——
+# 54 列分群後某列被漏掉、或同時出現在兩群，而 `sum(len(members))` 仍是 54 ⇒ 假綠。
+# 另擋 authority 偷渡：proposal ⛔ 不得帶 responsibility_id／applicability／review_status，
+# 且**多列合併**只允許來自 entry-alias registry（本母體上唯一能產生合併的允許規則）。
+RPP_CHECK="$REPO/scripts/audit/checks/r10p_proposal_integrity.py"
+if ! python3 "$RPP_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 18 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$RPP_CHECK" --self-test
+  FAIL=1
+elif ! RPP_OUT=$(python3 "$RPP_CHECK" 2>&1); then
+  echo "$RPP_OUT"
+  FAIL=1
+else
+  echo "$RPP_OUT"
+  echo "✅ PASS（含漏列／漏一多一／authority 偷渡／禁用規則合併 四組正對照）"
+fi
+
 # ⚠️ 13 是最後一條 ⇒ 此刻的 FAIL 值**恰好**等於「其他不變量有沒有紅」。
 #    用快照取代事後從輸出回推行數：⛔ 不靠 grep 猜，靠狀態算。
 CODE_FAIL_BEFORE_13=$FAIL
@@ -440,7 +458,7 @@ fi
 # ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
 # （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）
 if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then
-  CODE_REGRESSIONS+=("不變量 1–12／14–17 有失敗（見上方 ❌ FAIL 行）")
+  CODE_REGRESSIONS+=("不變量 1–12／14–18 有失敗（見上方 ❌ FAIL 行）")
 fi
 
 echo ""

@@ -1,5 +1,5 @@
 # R10-P digests（2026-08-29）
-R10P_STAGE=P1_SCHEMA_FROZEN
+R10P_STAGE=P2_PROPOSAL_FROZEN
 POPULATION_ROWS=54
 POPULATION_DIGEST=51c04b887a16b05f9b19ca7f7e2b2a3b352b4ff26dcf639095593e2fb0647899
 POPULATION_IDSET_DIGEST=00581c42771fa3b01d5f9d9fe537f872ea501178e395dbf86203124771e0feff
@@ -10,5 +10,8 @@ SCHEMA_VERSION=R10P-SCHEMA-2
 # R10P-SCHEMA-1 → 2：applicability 改為兩軸（declaration_status + value），
 # 合法 state space 只有四格；unknown 與 INSUFFICIENT_EVIDENCE 明確分界。
 SUPERSEDED_SCHEMA_DIGEST=174d5890d7811bb243780b879d65aee377ce488e2ae4ebf143085cb47b04ba16
-PROPOSAL_DIGEST=（尚未產生——P2）
+PROPOSAL_DIGEST=fe6e5f3feba9b26ff5e98d59eb3ae4f38bdd61172e46cba7bbe5347c9e320426
+# P2 產出：47 個 candidate group ＝ 5 多列群（全部來自 entry-alias registry）＋ 42 singleton。
+# ⚠️ 允許規則二／三在本母體上**產生不到任何合併**（無共用 reviewed owner contract；E1 函式名兩兩相異）。
+# ⛔ 無 authority：applicability／responsibility identity 一律等 P3 human review。
 REGISTRY_DIGEST=（尚未產生——P4）
