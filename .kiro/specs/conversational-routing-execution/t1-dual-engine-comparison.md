@@ -138,3 +138,77 @@ case 6 的 fixture **沒有** date_expire，A 卻被判成「有繳費期限 fac
 
 ⚠️ 業主已定案的分界：**「不再是 instance owner」已成立；「應該成為 general row」尚未成立。**
 ⛔ 不得因 instance owner 搬走，就機械地把 `instance` 翻成 `general`。
+
+---
+
+# Step 2：late-fee instance ownership 收斂（業主授權 2026-08-29）
+
+⚠️ 業主指出的關鍵：**只刪 dispatch 不足以證明「A 不再擁有這個 intent」**——
+它會改落 `bill_diagnosis` 的 generic path，那只是「A 不再專門診斷滯納金」。
+
+## 兩件事一起做
+
+```text
+A execution  移除 `diagnose_bill → _diagnose_late_fee` dispatch
+B authority  late-fee intent 若仍因 legacy nomination 抵達 bill_diagnosis，
+             bill_diagnosis **不得 commit** ⇒ 決定性排除並明示轉交唯一 owner
+```
+實作：`is_late_fee_intent()` ＋ `late_fee_exclusion_facts()`。
+⚠️ 排除點放在 `build_bill_diagnosis_facts` 的**最前面**——`_DIAG_KEYWORDS` 仍含
+逾期／延遲金／滯納金，少了這道排除，query 會被帶進 `diagnose_bill` 再落 generic path，
+**正是業主指出的錯誤綠燈**。
+`_diagnose_late_fee` 保留但標記 `SUPERSEDED / NO AUTHORITY`，⛔ 不得再被任何 dispatch 呼叫。
+
+## `_DIAG_KEYWORDS` ⛔ 未動
+
+```text
+它是「這句有沒有診斷症狀」的 generic discriminator
+⛔ 不是 late-fee ownership declaration
+動它會誤傷發送／取消／手動到帳三種診斷
+```
+判定詞 `LATE_FEE_INTENT_KEYWORDS` **逐字沿用**原 dispatch 那組
+（`逾期／延遲金／滯納金／late fee`）——換一組就是偷偷改 ownership 邊界，有測試鎖住。
+
+## Guard 1–6 ＋ M1／M2（20 條全過）
+
+```text
+1–3 三種 late-fee 提法 → 一律 exclusion，⛔ 不落 generic path、⛔ 無 A 的罐頭句
+4–6 發不出去／取消不了／手動到帳 → 仍由 bill_diagnosis 承接，⛔ 未被吸走
+＋   任何 late-fee 提法 ⛔ 不得抵達 `_diagnose_late_fee`（以 spy 驗呼叫次數＝0）
+M1  關掉 intent 判定（等同恢復舊 dispatch）⇒ ownership guard 必須紅
+M2  拿掉 exclusion（authority transfer）⇒ query 被 A 收斂回答，必須紅
+```
+
+## 不變量 14（三組正對照）
+
+```text
+① late-fee intent ⛔ 不得由 bill_diagnosis 收斂作答（含 generic path）
+② `_DIAG_KEYWORDS` 必須不變
+正對照：關掉判定必紅／誤傷其他診斷必紅／動 `_DIAG_KEYWORDS` 必紅
+```
+
+### ⚠️ 不變量 14 一度**害不變量 7 變紅**（已修）
+
+```text
+本檢查器是唯一從 host 直接 import `services.jgb.bills` 的稽核項，
+產生的 `__pycache__/bills.cpython-*.pyc` 內含原始字串
+⇒ 被**不變量 7**（金額欄位語義層）的原始碼掃描當成違規。
+⇒ 修法：檢查器在 import 前設 `sys.dont_write_bytecode = True`，並清掉殘留 .pyc。
+⚠️ **一條不變量不得因為另一條不變量的副產物而變紅**；
+⛔ 我沒有改不變量 7 的判準來遷就它。
+```
+
+## 狀態
+
+```text
+B_CAPABILITY_SUPERSET          CONFIRMED ✅
+late_fee instance owner        **B ONLY** ✅
+A._diagnose_late_fee           SUPERSEDED / no authority ✅
+_DIAG_KEYWORDS                 UNCHANGED ✅
+other bill diagnosis           REGRESSION-GUARDED ✅
+```
+
+⚠️ **仍未成立**：「3498 應改 general」。Step 2 只證明
+`3498 不再有資格代表 bill_diagnosis 的 late-fee instance ownership`。
+下一刀單獨裁 3498 的 Knowledge identity（純 general／被 3531-3532 吸收後停用／
+另有窄責任），⛔ 不得機械地把 `instance` 翻成 `general`。

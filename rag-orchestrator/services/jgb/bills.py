@@ -325,6 +325,12 @@ def build_bill_diagnosis_facts(row: dict, user_question: str = "") -> str:
     if isinstance(detail, dict) and detail:
         row = {**row, **detail}
     q = user_question or ""
+    # ⚠️ Step 2B：late-fee intent 在**進 diagnose_bill 之前**就排除。
+    #    `_DIAG_KEYWORDS` 仍含逾期/延遲金/滯納金（⛔ 不動它，動了會誤傷發送／取消／
+    #    手動到帳），所以少了這道排除，late-fee query 會被帶進 diagnose_bill，
+    #    再落 generic path ⇒ 正是業主指出的**錯誤綠燈**。
+    if is_late_fee_intent(q):
+        return late_fee_exclusion_facts()
     if any(k in q for k in _DIAG_KEYWORDS):
         return diagnose_bill(row, q)
     return "\n".join([
@@ -393,6 +399,31 @@ def _point_refund_response(rows: list, user_question: str, builder) -> str:
     return "\n".join([_pr.type_fact_line(selected), builder(selected, user_question)])
 
 
+#: late-fee **instance intent** 的判定詞。
+#: ⚠️ 逐字沿用原 dispatch 的那組詞 —— 換一組就等於偷偷改變 ownership 邊界。
+#: ⛔ 與 `_DIAG_KEYWORDS` **不是**同一件事：後者是「這句有沒有診斷症狀」的
+#:    generic discriminator，動它會誤傷發送／取消／手動到帳三種診斷。
+LATE_FEE_INTENT_KEYWORDS = ("逾期", "延遲金", "滯納金", "late fee")
+
+
+def is_late_fee_intent(user_question: Optional[str]) -> bool:
+    q = (user_question or "").lower()
+    return any(k in q for k in LATE_FEE_INTENT_KEYWORDS)
+
+
+def late_fee_exclusion_facts() -> str:
+    """`bill_diagnosis` 對 late-fee instance intent 的**決定性排除**（Step 2B）。
+
+    ⚠️ 業主定案：只刪 dispatch **不足以**證明「A 不再擁有這個 intent」——
+    它會改落 generic path，那只是「A 不再專門診斷滯納金」。
+    ⇒ 本函式讓 `bill_diagnosis` 在此 intent 上**不得 commit**，明示轉交唯一 owner。
+
+    ⛔ 這裡**不回答**滯納金問題（不算金額、不解釋機制）——回答是 B 的責任。
+    """
+    return ("此問題屬滯納金／延遲金領域，本面向不承接：滯納金的產生機制、"
+            "結算方式與該筆實際金額由「滯納金」面向負責，請轉交該面向處理。")
+
+
 def diagnose_bill(bill: dict, user_question: str = "") -> str:
     """
     帳單診斷入口
@@ -413,8 +444,11 @@ def diagnose_bill(bill: dict, user_question: str = "") -> str:
         return _diagnose_cannot_send(bill)
     elif any(k in question for k in ["取消", "作廢", "cancel"]):
         return _diagnose_cannot_cancel(bill)
-    elif any(k in question for k in ["逾期", "延遲金", "滯納金", "late fee"]):
-        return _diagnose_late_fee(bill)
+    elif is_late_fee_intent(question):
+        # Step 2A：**移除** `_diagnose_late_fee` dispatch（業主授權 2026-08-29）。
+        # ⚠️ ⛔ 不得改成「落 generic path 回答」——那是**錯誤綠燈**：
+        #    if 不見了，但 late-fee intent 仍由 bill_diagnosis 收斂作答。
+        return late_fee_exclusion_facts()
     elif any(k in question for k in ["到帳", "收款", "標記已收", "手動"]):
         return _diagnose_manual_complete(bill)
     elif "收據" in question:
@@ -529,7 +563,17 @@ def _diagnose_receipt(bill: dict) -> str:
 
 
 def _diagnose_late_fee(bill: dict) -> str:
-    """B03：為什麼被收逾期費"""
+    """B03：為什麼被收逾期費 —— ⛔ **SUPERSEDED / NO AUTHORITY**（2026-08-29）。
+
+    T1 決定性比對判定本函式為同責任面的 **partial implementation**：
+    ⛔ 無帳單狀態、⛔ 無實際金額、⛔ 無合約設定實值、⛔ 無結算計算實據、
+    ⛔ 認不出滯納金帳單，且會把**合約列**叫成「帳單」。
+    唯一 genuine 的獨有能力（`pay_at`／`complete_at`）已搬入
+    `build_late_fee_facts`，並經 capability closure 確認 B 為 superset。
+
+    ⚠️ 保留本函式僅為可稽核性；**⛔ 不得再被任何 dispatch 呼叫**
+    （守門測試見 `test_late_fee_owner_consolidation_req.py`）。
+    """
     title = bill.get("title", f"帳單 {bill.get('id', '?')}")
     date_expire = bill.get("date_expire")
     complete_at = bill.get("complete_at")

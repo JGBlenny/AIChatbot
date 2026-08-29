@@ -104,3 +104,111 @@ def test_mutation_removing_payment_projection_turns_red(monkeypatch):
                                      complete_at="2026-07-21 09:00:00"))
     assert "2026-07-20 10:00:00" not in out, "移除投影卻仍輸出 ⇒ guard 1 是假綠"
     assert "2026-07-21 09:00:00" not in out
+
+
+# ═════════════ Step 2：ownership consolidation（業主授權 2026-08-29）═════════════
+#
+# ⚠️ 業主指出的關鍵：**只刪 dispatch 不足以證明「A 不再擁有這個 intent」**——
+#    它會改落 generic path，那只是「A 不再專門診斷滯納金」。
+#    ⇒ 必須同時驗 execution（不再 dispatch）與 authority（不得 commit）。
+
+from services.jgb.bills import (               # noqa: E402
+    build_bill_diagnosis_facts,
+    diagnose_bill,
+    is_late_fee_intent,
+    late_fee_exclusion_facts,
+)
+
+FACE = "條件診斷：帳單"
+
+
+def _diag_row(**kw):
+    r = {"id": 901, "title": "2026年8月租金", "status": 2, "total": 25000,
+         "date_expire": 20260805, "details": [
+             {"active": True, "label": "租金", "total_price": 25000}]}
+    r.update(kw)
+    return r
+
+
+@pytest.mark.req("LATE_FEE_OWNER_CONSOLIDATION:2A")
+@pytest.mark.parametrize("q", [
+    "這筆帳單為什麼被收滯納金",
+    "這筆延遲金怎麼算",
+    "我這筆為什麼有逾期費",
+])
+def test_late_fee_intent_is_not_answered_by_bill_diagnosis(q):
+    """guard 1–3：三種 late-fee 提法，bill_diagnosis 一律**不得作答**。"""
+    out = build_bill_diagnosis_facts(_diag_row(), q)
+    assert out == late_fee_exclusion_facts()
+    assert "滯納金" in out and "本面向不承接" in out
+    # ⛔ 不得落 generic path 回答（錯誤綠燈）
+    assert "• 狀態：" not in out and "收費明細" not in out
+    # ⛔ 不得出現 A 的罐頭逾期說明
+    assert "若超過繳費期限仍未付款" not in out
+
+
+@pytest.mark.req("LATE_FEE_OWNER_CONSOLIDATION:2A")
+@pytest.mark.parametrize("q,expect", [
+    ("這張帳單為什麼發不出去", "無法發送"),
+    ("帳單取消不了", "無法取消"),
+    ("手動到帳失敗", "無法手動到帳"),
+])
+def test_other_bill_diagnoses_unchanged(q, expect):
+    """guard 4–6：其他 bill diagnosis ⛔ 不得被排除規則吸走。"""
+    row = _diag_row(status=1, details=[]) if "發不出去" in q else _diag_row(status=64)
+    out = build_bill_diagnosis_facts(row, q)
+    assert out != late_fee_exclusion_facts()
+    assert expect in out
+
+
+@pytest.mark.req("LATE_FEE_OWNER_CONSOLIDATION:2A")
+def test_diagnose_bill_entry_also_excluded():
+    """直接呼叫 `diagnose_bill` 亦不得回答 late-fee intent。"""
+    assert diagnose_bill(_diag_row(), "為什麼被收逾期費") == late_fee_exclusion_facts()
+
+
+@pytest.mark.req("LATE_FEE_OWNER_CONSOLIDATION:2A")
+def test_no_dispatch_reaches_superseded_engine(monkeypatch):
+    """⛔ 任何 late-fee 提法都不得再抵達 `_diagnose_late_fee`。"""
+    called = []
+    monkeypatch.setattr(bills_mod, "_diagnose_late_fee",
+                        lambda bill: called.append(1) or "SHOULD_NOT_APPEAR")
+    for q in ("滯納金", "延遲金怎麼算", "逾期費", "late fee 多少"):
+        out = build_bill_diagnosis_facts(_diag_row(), q)
+        assert "SHOULD_NOT_APPEAR" not in out
+    assert called == [], "superseded 引擎仍被呼叫 ⇒ dispatch 未真正移除"
+
+
+# ───────────────────────── M1／M2 mutation ─────────────────────────
+
+@pytest.mark.req("LATE_FEE_OWNER_CONSOLIDATION:M1")
+def test_M1_restoring_dispatch_turns_red(monkeypatch):
+    """M1：把 late-fee intent 判定關掉（等同恢復舊 dispatch 路徑）⇒ ownership guard 必須紅。"""
+    monkeypatch.setattr(bills_mod, "is_late_fee_intent", lambda q: False)
+    out = build_bill_diagnosis_facts(_diag_row(), "這筆帳單為什麼被收滯納金")
+    assert out != late_fee_exclusion_facts(), "關掉判定卻仍排除 ⇒ guard 測不到 execution 層"
+
+
+@pytest.mark.req("LATE_FEE_OWNER_CONSOLIDATION:M2")
+def test_M2_removing_authority_exclusion_turns_red(monkeypatch):
+    """M2：拿掉排除 facts（authority transfer）⇒ late-fee query 會被 A 收斂回答，必須紅。"""
+    monkeypatch.setattr(bills_mod, "late_fee_exclusion_facts", lambda: "")
+    out = build_bill_diagnosis_facts(_diag_row(), "這筆帳單為什麼被收滯納金")
+    assert out == "", "拿掉 authority 排除卻仍不作答 ⇒ 排除不是唯一來源"
+
+
+@pytest.mark.req("LATE_FEE_OWNER_CONSOLIDATION:2A")
+def test_intent_predicate_keywords_frozen():
+    """⚠️ 判定詞逐字沿用原 dispatch 那組——換一組＝偷偷改 ownership 邊界。"""
+    assert bills_mod.LATE_FEE_INTENT_KEYWORDS == ("逾期", "延遲金", "滯納金", "late fee")
+    assert all(is_late_fee_intent(k) for k in bills_mod.LATE_FEE_INTENT_KEYWORDS)
+    assert not is_late_fee_intent("這張帳單為什麼發不出去")
+
+
+@pytest.mark.req("LATE_FEE_OWNER_CONSOLIDATION:2A")
+def test_diag_keywords_unchanged():
+    """⛔ `_DIAG_KEYWORDS` 不得被動——它是 generic discriminator，⛔ 非 late-fee 宣告。"""
+    for k in ("發不出", "取消", "到帳", "收據", "虛擬帳號"):
+        assert k in bills_mod._DIAG_KEYWORDS
+    for k in ("逾期", "延遲金", "滯納金", "late fee"):
+        assert k in bills_mod._DIAG_KEYWORDS, "⚠️ 不動它是刻意的：動了會誤傷其他診斷"

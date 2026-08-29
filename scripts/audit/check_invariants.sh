@@ -330,7 +330,27 @@ else
   echo "✅ PASS（含 alias 傳遞掃描 ＋ 四項各自的正對照）"
 fi
 
-# ⚠️ 13 是最後一條 ⇒ 此刻的 FAIL 值**恰好**等於「1–12 有沒有紅」。
+echo "═══ 不變量 14：late-fee instance ownership 單一化（T1／Step 2）═══"
+# 源起：`bill_diagnosis._diagnose_late_fee`（A）與 `滯納金.build_late_fee_facts`（B）
+# 曾同時承接「這一筆的滯納金診斷」；T1 決定性比對判 A 為 partial implementation，
+# 且在合約列／滯納金帳單列輸出**錯誤語義** ⇒ 收斂單一 owner B，precedence REJECTED。
+# 不變量：① late-fee intent ⛔ 不得由 bill_diagnosis 收斂作答（含 generic path——
+#        只刪 dispatch 而落 generic 是「錯誤綠燈」）；② `_DIAG_KEYWORDS` 必須不變
+#        （generic discriminator，動它會誤傷發送／取消／手動到帳）。
+LF_CHECK="$REPO/scripts/audit/checks/late_fee_ownership.py"
+if ! python3 "$LF_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 14 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$LF_CHECK" --self-test
+  FAIL=1
+elif ! LF_OUT=$(python3 "$LF_CHECK" 2>&1); then
+  echo "$LF_OUT"
+  FAIL=1
+else
+  echo "$LF_OUT"
+  echo "✅ PASS（含關閉判定／誤傷／動 _DIAG_KEYWORDS 三組正對照）"
+fi
+
+# ⚠️ 13 是最後一條 ⇒ 此刻的 FAIL 值**恰好**等於「其他不變量有沒有紅」。
 #    用快照取代事後從輸出回推行數：⛔ 不靠 grep 猜，靠狀態算。
 CODE_FAIL_BEFORE_13=$FAIL
 
@@ -359,7 +379,7 @@ fi
 # ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
 # （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）
 if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then
-  CODE_REGRESSIONS+=("不變量 1–12 有失敗（見上方 ❌ FAIL 行）")
+  CODE_REGRESSIONS+=("不變量 1–12／14 有失敗（見上方 ❌ FAIL 行）")
 fi
 
 echo ""
