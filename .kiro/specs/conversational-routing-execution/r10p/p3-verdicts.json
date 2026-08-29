@@ -8,8 +8,10 @@
  "_digest_rule": "review_basis_digest = sha256(canonical JSON of {candidate_group_id, review_input_scope, evidence, absence_observations})，sort_keys=True／ensure_ascii=False／separators=(',',':')。",
  "batches_reviewed": [
   "A",
+  "A-epoch2",
   "B",
-  "C-1"
+  "C-1",
+  "C-4"
  ],
  "records": [
   {
@@ -88,7 +90,8 @@
     "applicability authority not established",
     "authoritative owner/capability not established"
    ],
-   "review_basis_digest": "b0bb97f77d5e7363ef3bb78d0266c97ad375ac57e9d325694ec5ed53c8e5f014"
+   "review_basis_digest": "b0bb97f77d5e7363ef3bb78d0266c97ad375ac57e9d325694ec5ed53c8e5f014",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ALIAS-02",
@@ -166,7 +169,8 @@
     "applicability authority not established",
     "authoritative owner/capability not established"
    ],
-   "review_basis_digest": "9273d63fb64005ab1996b7cefa4d935148b9a12e59c47fcd96ba050cd612bb4d"
+   "review_basis_digest": "9273d63fb64005ab1996b7cefa4d935148b9a12e59c47fcd96ba050cd612bb4d",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ALIAS-03",
@@ -242,7 +246,8 @@
     "applicability authority not established",
     "authoritative owner/capability not established"
    ],
-   "review_basis_digest": "42e51d62288b11de04d04f1d1d149fa1fc57c67ba2f0334f51628dc8fb3ce6e5"
+   "review_basis_digest": "42e51d62288b11de04d04f1d1d149fa1fc57c67ba2f0334f51628dc8fb3ce6e5",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ALIAS-04",
@@ -351,7 +356,8 @@
    "evidence_gaps": [],
    "_granularity_note": "同 facet（categories=滯納金）另有 general responsibilities 3531／3532——⚠️ 這是 **granularity evidence**（R10 已裁 facet ≠ responsibility），⛔ 不是本 responsibility 的 unresolved conflict。",
    "_naming": "canonical responsibility_id ⛔ 尚未命名——P3 confirmation 後才命名；⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "52827904e20864fcd9a62233d4ae9f8182062cb163817a3f55e7ac1ce28741d6"
+   "review_basis_digest": "52827904e20864fcd9a62233d4ae9f8182062cb163817a3f55e7ac1ce28741d6",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ALIAS-05",
@@ -427,7 +433,8 @@
     "applicability authority not established",
     "authoritative owner/capability not established"
    ],
-   "review_basis_digest": "2d71994bb51dbafb32e2b0dd7c1d87b50a981a45b20a3c2c8651713fad8ad345"
+   "review_basis_digest": "2d71994bb51dbafb32e2b0dd7c1d87b50a981a45b20a3c2c8651713fad8ad345",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3402",
@@ -485,7 +492,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "df24d420de768a776dd92db0111190926071b89946e8719978b7b4ce8d8ebef5"
+   "review_basis_digest": "df24d420de768a776dd92db0111190926071b89946e8719978b7b4ce8d8ebef5",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3406",
@@ -544,7 +552,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "4341984adb1d3c3709adbeff80a00493ac1984cd46ef92483c070d7d8d67ba53"
+   "review_basis_digest": "4341984adb1d3c3709adbeff80a00493ac1984cd46ef92483c070d7d8d67ba53",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3519",
@@ -603,7 +612,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "74047ecbbd32d7b51c5be72a672988c88842d8e8faaae0bb924c1ffdc44f98e5"
+   "review_basis_digest": "74047ecbbd32d7b51c5be72a672988c88842d8e8faaae0bb924c1ffdc44f98e5",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3495",
@@ -671,7 +681,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "41253010f10da608d1c1fe23a78a8871780701f7c0729c8ee401a8ee3ccfca01"
+   "review_basis_digest": "41253010f10da608d1c1fe23a78a8871780701f7c0729c8ee401a8ee3ccfca01",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3496",
@@ -739,7 +750,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "edd9d408151ecc734dc410ce040691631bd62d1b04056fa382d42dcd04c46448"
+   "review_basis_digest": "edd9d408151ecc734dc410ce040691631bd62d1b04056fa382d42dcd04c46448",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3499",
@@ -810,7 +822,8 @@
     "原始 authoring responsibility spec",
     "runtime causal／mutation 證明它確實有獨立 execution semantics"
    ],
-   "review_basis_digest": "ebf4d0aa4c8e6fea0de1d4bcab02235491c276f415aaa62982334e1793dafc92"
+   "review_basis_digest": "ebf4d0aa4c8e6fea0de1d4bcab02235491c276f415aaa62982334e1793dafc92",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-4640",
@@ -878,7 +891,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "726146ecb2748216862bfb59cd09751f4d1e4d47f572acb72253e56878aa0e58"
+   "review_basis_digest": "726146ecb2748216862bfb59cd09751f4d1e4d47f572acb72253e56878aa0e58",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-4656",
@@ -946,7 +960,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "752b204f140c18aebe4eae5fc8ffad270194122442dcfdfc20c2a25901a6c2f7"
+   "review_basis_digest": "752b204f140c18aebe4eae5fc8ffad270194122442dcfdfc20c2a25901a6c2f7",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-4657",
@@ -1024,7 +1039,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "c35b55a23b4e6c927ecb60e17c5c87b906e01672c3de3c1d56761622c78df149"
+   "review_basis_digest": "c35b55a23b4e6c927ecb60e17c5c87b906e01672c3de3c1d56761622c78df149",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3497",
@@ -1091,7 +1107,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "d19f194484bda9b0736af6adfd2a9ceec86fbabe3302b42025908c97f781885e"
+   "review_basis_digest": "d19f194484bda9b0736af6adfd2a9ceec86fbabe3302b42025908c97f781885e",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3500",
@@ -1158,7 +1175,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "ee03e154f6370a5b546d7b6df5b11150e77ed7b3f6a3fa142f8a5edeffe6f22f"
+   "review_basis_digest": "ee03e154f6370a5b546d7b6df5b11150e77ed7b3f6a3fa142f8a5edeffe6f22f",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3503",
@@ -1225,7 +1243,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "cb5ea81d1891024026e2ce228462f12d3f8601d5b5f7036a14f04a1c08b1bd0b"
+   "review_basis_digest": "cb5ea81d1891024026e2ce228462f12d3f8601d5b5f7036a14f04a1c08b1bd0b",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3504",
@@ -1292,7 +1311,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "3e4676e4c45c9f8c40af6ba64579510246e9d55958febe2a6b3b91d347ae90ca"
+   "review_basis_digest": "3e4676e4c45c9f8c40af6ba64579510246e9d55958febe2a6b3b91d347ae90ca",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3505",
@@ -1359,7 +1379,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "be3d4b77e6baeaac1e95a43c64cf9d81f23de414e052aa20da3e7abe350f4a5d"
+   "review_basis_digest": "be3d4b77e6baeaac1e95a43c64cf9d81f23de414e052aa20da3e7abe350f4a5d",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3506",
@@ -1426,7 +1447,8 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "39e1430d32d65e28a6c7f8e4789d3da51da9b4306d8c1767a23fee3b5e22b5a8"
+   "review_basis_digest": "39e1430d32d65e28a6c7f8e4789d3da51da9b4306d8c1767a23fee3b5e22b5a8",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-4420",
@@ -1492,10 +1514,14 @@
    "absence_observations": [],
    "evidence_gaps": [],
    "merge_target": "CG-ROW-3365",
-   "joint_seal_pending": true,
+   "joint_seal_pending": false,
    "_pending_note": "⚠️ MERGE_WITH_OTHER ⛔ 不代表 target responsibility 已完成 review——本裁定只確定「4420 不是 singleton」；共同 responsibility 等 3365 進 C-④ 時封存。",
    "_not_prejudging": "⛔ 本裁定 ⛔ 不預裁 C-④ 的 3365。",
-   "review_basis_digest": "36542591d4104ec2ee584df519c519c7e68af9b2cb4beb135595dfe1dd6ad31b"
+   "review_basis_digest": "36542591d4104ec2ee584df519c519c7e68af9b2cb4beb135595dfe1dd6ad31b",
+   "epoch": 1,
+   "joint_seal_closed_at": "2026-08-29",
+   "joint_seal_closed_by": "CG-ROW-3365（epoch 1，batch C-4）",
+   "_seal_note": "⚠️ verdict **維持** MERGE_WITH_OTHER——⛔ 不得改寫成 CONFIRMED_RESPONSIBILITY；它的 proposal-level 歷史就是「merge into」，現在只是 target 已 sealed。"
   },
   {
    "candidate_group_id": "CG-ROW-3531",
@@ -1560,7 +1586,8 @@
    ],
    "_canonical_responsibility_draft": "付款後結算型延遲金的產生機制、適用條件與計算規則",
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "548de61b1a65906c05da3918601ca53e1ecd82378ba1cc1296388246e67ec5f3"
+   "review_basis_digest": "548de61b1a65906c05da3918601ca53e1ecd82378ba1cc1296388246e67ec5f3",
+   "epoch": 1
   },
   {
    "candidate_group_id": "CG-ROW-3532",
@@ -1625,7 +1652,704 @@
    ],
    "_canonical_responsibility_draft": "滯納金客製計算版本的機制差異（延遲金／階梯式／固定金額等）",
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
-   "review_basis_digest": "dddaf821e382dc3807bd7bf5dd123704678236514844cdd7f876450b8cef7a07"
+   "review_basis_digest": "dddaf821e382dc3807bd7bf5dd123704678236514844cdd7f876450b8cef7a07",
+   "epoch": 1
+  },
+  {
+   "candidate_group_id": "CG-ALIAS-01",
+   "batch": "A",
+   "epoch": 2,
+   "supersedes_digest": "b0bb97f77d5e7363ef3bb78d0266c97ad375ac57e9d325694ec5ed53c8e5f014",
+   "superseding_axes": [
+    "IV_OWNERSHIP"
+   ],
+   "members": [
+    3931,
+    3932,
+    3933
+   ],
+   "registry_facet": "繳費金流排障",
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "（承 epoch 1，未改）同批 authoring rule「一種講法一筆」＋同 entry-alias registry ⇒ 同一 entry responsibility 的 utterance variants"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3931": "ENTRY_ALIAS",
+      "3932": "ENTRY_ALIAS",
+      "3933": "ENTRY_ALIAS"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "undeclared",
+     "value": null
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "繳費金流排障 Face ／ rag-orchestrator/services/jgb/bills.py::build_payment_flow_facts"
+    }
+   },
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "Batch A 補充 epoch：新增的是**程式面** capability 證據（BILL_FACE_BUILDERS 註冊表 ＋ 具名 builder 函式）。⚠️ 舊 epoch 的 review_input_scope／review_basis_digest／verdict **一律保留**，⛔ 本 epoch 不覆寫既有裁定，只新增 superseding axis 結論。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:344 BILL_FACE_BUILDERS（facet → builder 註冊表）",
+     "claim_supported": "註冊表明文把 facet「繳費金流排障」對應到具名 builder build_payment_flow_facts",
+     "supports": [
+      "ownership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:85::build_payment_flow_facts",
+     "claim_supported": "具名 deterministic builder 存在 ⇒ 該 facet 的 owner domain 已建立",
+     "supports": [
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "applicability 仍為 undeclared ⇒ 依 R10-Q3（applicability = responsibility-level authority，⛔ 不得缺）整筆仍不得升為 CONFIRMED_RESPONSIBILITY"
+   ],
+   "evidence_gaps": [
+    "applicability authority not established"
+   ],
+   "_scope_of_insufficiency": "⚠️ IDENTITY／MEMBERSHIP／**OWNERSHIP** 皆已 CONFIRMED；**只**差 APPLICABILITY。⛔ 不得再寫「無 owner 證據」。",
+   "_epoch_note": "⚠️ epoch 1 的裁定在其當時 scope 下**合法**，⛔ 不得回頭改寫或刪除。",
+   "review_basis_digest": "6fd8465e6e81a44f33881f2fe9e2acd5dc70db0b021c4f832243fd034ad16e69"
+  },
+  {
+   "candidate_group_id": "CG-ALIAS-02",
+   "batch": "A",
+   "epoch": 2,
+   "supersedes_digest": "9273d63fb64005ab1996b7cefa4d935148b9a12e59c47fcd96ba050cd612bb4d",
+   "superseding_axes": [
+    "IV_OWNERSHIP"
+   ],
+   "members": [
+    3934,
+    3935,
+    3936
+   ],
+   "registry_facet": "帳單異常",
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "（承 epoch 1，未改）同上；⚠️ 先前把三句解讀成三個產品 intent 的說法**已被 authoring provenance 推翻**"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3934": "ENTRY_ALIAS",
+      "3935": "ENTRY_ALIAS",
+      "3936": "ENTRY_ALIAS"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "undeclared",
+     "value": null
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "帳單異常 Face ／ rag-orchestrator/services/jgb/bills.py::build_bill_anomaly_facts"
+    }
+   },
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "Batch A 補充 epoch：新增的是**程式面** capability 證據（BILL_FACE_BUILDERS 註冊表 ＋ 具名 builder 函式）。⚠️ 舊 epoch 的 review_input_scope／review_basis_digest／verdict **一律保留**，⛔ 本 epoch 不覆寫既有裁定，只新增 superseding axis 結論。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:344 BILL_FACE_BUILDERS（facet → builder 註冊表）",
+     "claim_supported": "註冊表明文把 facet「帳單異常」對應到具名 builder build_bill_anomaly_facts",
+     "supports": [
+      "ownership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:153::build_bill_anomaly_facts",
+     "claim_supported": "具名 deterministic builder 存在 ⇒ 該 facet 的 owner domain 已建立",
+     "supports": [
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "applicability 仍為 undeclared ⇒ 依 R10-Q3（applicability = responsibility-level authority，⛔ 不得缺）整筆仍不得升為 CONFIRMED_RESPONSIBILITY"
+   ],
+   "evidence_gaps": [
+    "applicability authority not established"
+   ],
+   "_scope_of_insufficiency": "⚠️ IDENTITY／MEMBERSHIP／**OWNERSHIP** 皆已 CONFIRMED；**只**差 APPLICABILITY。⛔ 不得再寫「無 owner 證據」。",
+   "_epoch_note": "⚠️ epoch 1 的裁定在其當時 scope 下**合法**，⛔ 不得回頭改寫或刪除。",
+   "review_basis_digest": "feaa65490775a746c2684e4431579dcf6400d99b940ca23b001dd67e288d88af"
+  },
+  {
+   "candidate_group_id": "CG-ALIAS-03",
+   "batch": "A",
+   "epoch": 2,
+   "supersedes_digest": "42e51d62288b11de04d04f1d1d149fa1fc57c67ba2f0334f51628dc8fb3ce6e5",
+   "superseding_axes": [
+    "IV_OWNERSHIP"
+   ],
+   "members": [
+    3937,
+    3938
+   ],
+   "registry_facet": "發票",
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "（承 epoch 1，未改）同一批「講法 variant」證據成立"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3937": "ENTRY_ALIAS",
+      "3938": "ENTRY_ALIAS"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "undeclared",
+     "value": null
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "發票 Face ／ rag-orchestrator/services/jgb/bills.py::build_invoice_facts"
+    }
+   },
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "Batch A 補充 epoch：新增的是**程式面** capability 證據（BILL_FACE_BUILDERS 註冊表 ＋ 具名 builder 函式）。⚠️ 舊 epoch 的 review_input_scope／review_basis_digest／verdict **一律保留**，⛔ 本 epoch 不覆寫既有裁定，只新增 superseding axis 結論。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:344 BILL_FACE_BUILDERS（facet → builder 註冊表）",
+     "claim_supported": "註冊表明文把 facet「發票」對應到具名 builder build_invoice_facts",
+     "supports": [
+      "ownership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:192::build_invoice_facts",
+     "claim_supported": "具名 deterministic builder 存在 ⇒ 該 facet 的 owner domain 已建立",
+     "supports": [
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "applicability 仍為 undeclared ⇒ 依 R10-Q3（applicability = responsibility-level authority，⛔ 不得缺）整筆仍不得升為 CONFIRMED_RESPONSIBILITY"
+   ],
+   "evidence_gaps": [
+    "applicability authority not established"
+   ],
+   "_scope_of_insufficiency": "⚠️ IDENTITY／MEMBERSHIP／**OWNERSHIP** 皆已 CONFIRMED；**只**差 APPLICABILITY。⛔ 不得再寫「無 owner 證據」。",
+   "_epoch_note": "⚠️ epoch 1 的裁定在其當時 scope 下**合法**，⛔ 不得回頭改寫或刪除。",
+   "review_basis_digest": "60aec8e54e21533503c6bf4441e1034b3116311537f86b2cdae25a82d28af41f"
+  },
+  {
+   "candidate_group_id": "CG-ALIAS-05",
+   "batch": "A",
+   "epoch": 2,
+   "supersedes_digest": "2d71994bb51dbafb32e2b0dd7c1d87b50a981a45b20a3c2c8651713fad8ad345",
+   "superseding_axes": [
+    "IV_OWNERSHIP_EVIDENCE_QUALITY"
+   ],
+   "members": [
+    3941,
+    3942
+   ],
+   "registry_facet": "帳單設定引導",
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "同一 authoring rule 支持 alias identity"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3941": "ENTRY_ALIAS",
+      "3942": "ENTRY_ALIAS"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "undeclared",
+     "value": null
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "NOT_ESTABLISHED",
+     "owner": null
+    }
+   },
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "Batch A 補充 epoch：新增的是**程式面** capability 證據（BILL_FACE_BUILDERS 註冊表 ＋ 具名 builder 函式）。⚠️ 舊 epoch 的 review_input_scope／review_basis_digest／verdict **一律保留**，⛔ 本 epoch 不覆寫既有裁定，只新增 superseding axis 結論。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:350（BILL_FACE_BUILDERS 內註解）",
+     "claim_supported": "程式**正面**指出「帳單設定引導」為輕引導（select='category'），**無 builder**——⚠️ 這是 architecture fact，⛔ 不再是「查不到證據」；但 select='category' ⛔ 尚不能自動當 semantic owner",
+     "supports": [
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [
+    "applicability authority not established",
+    "semantic responsibility owner not established: current code positively identifies this facet as category-only/light guidance and provides no deterministic builder"
+   ],
+   "_scope_of_insufficiency": "⚠️ IDENTITY／MEMBERSHIP 已 CONFIRMED；OWNERSHIP 之「未建立」現在是**正面事實**而非缺證據。",
+   "_epoch_note": "⚠️ epoch 1 的裁定在其當時 scope 下**合法**，⛔ 不得回頭改寫或刪除。",
+   "review_basis_digest": "95d7fbc6e4cb53fbeb59808dddfe919137fa52ed2bf501452626af5386178883"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3508",
+   "batch": "C-4",
+   "epoch": 1,
+   "members": [
+    3508
+   ],
+   "proposal_members": [
+    3508
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "具名診斷引擎存在，符合 P-C1（deterministic applicability 是正面 authoritative declaration）"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3508": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "rag-orchestrator/services/jgb/iot.py::diagnose_iot"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-④ 摘要 ＋ 其中明示引用的 formatter endpoint 分派實查（jgb_response_formatter.py::format_jgb_response 12 個分支全列）、具名 builder／engine、T4 question-sensitivity 稽核；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb_response_formatter.py::format_jgb_response（endpoint == 'jgb_iot_manufacturers' 專屬分支）→ services/jgb/iot.py::diagnose_iot",
+     "claim_supported": "該 endpoint 有**具名**診斷引擎，⛔ 非通用 _format_single",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3508）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定（E2_IDENTIFIER_FORM）——依 P-C1a，authority status 不因 source 標記而降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3508，28 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "review_basis_digest": "9834632c18fafdcde713786cd239e23bd56aba97b5a19fbb2e290f406573e58f"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3514",
+   "batch": "C-4",
+   "epoch": 1,
+   "members": [
+    3514
+   ],
+   "proposal_members": [
+    3514
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "專屬 deterministic capability path 已成立——⚠️ 依 P-C5，「函式名沒有 diagnose」⛔ 不構成降格理由；要驗的是責任是否有 deterministic implementation"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3514": "ANSWER_KNOWLEDGE（active；answer 空）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "jgb_tenant_summary ＋ rag-orchestrator/services/jgb_response_formatter.py::_format_tenant_summary"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-④ 摘要 ＋ 其中明示引用的 formatter endpoint 分派實查（jgb_response_formatter.py::format_jgb_response 12 個分支全列）、具名 builder／engine、T4 question-sensitivity 稽核；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb_response_formatter.py::format_jgb_response（endpoint == 'jgb_tenant_summary' 專屬分支）→ _format_tenant_summary",
+     "claim_supported": "jgb_tenant_query → jgb_tenant_summary → 專屬 formatter，構成一條專屬 deterministic capability path",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3514）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定（E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "knowledge_base（row 3514）：form=jgb_tenant_query → jgb_tenant_summary",
+     "claim_supported": "該列**自身的 wiring** 把它綁到這條 capability path ⇒ membership 證據（⚠️ 依 P-C2，form 唯一性 ⛔ 不用於 ownership）",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "review_basis_digest": "107298ad2c6e4f84500e7cebafd2e768e047bf3dc2c1223a335ec64ed86e16ef"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3365",
+   "batch": "C-4",
+   "epoch": 1,
+   "members": [
+    3365,
+    4420
+   ],
+   "proposal_members": [
+    3365
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "3365 ＋ 4420 = same repair-progress-query responsibility——兩種不同 wiring（form vs action）對**同一 semantic operation** 收斂到同一 execution target 與同一 downstream path（P-C4）"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3365": "ANSWER_KNOWLEDGE（active；answer 空）",
+      "4420": "ANSWER_KNOWLEDGE（active）——經 CG-ROW-4420 的 MERGE_WITH_OTHER 併入"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "jgb_repairs query／action capability"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-④ 摘要 ＋ 其中明示引用的 formatter endpoint 分派實查（jgb_response_formatter.py::format_jgb_response 12 個分支全列）、具名 builder／engine、T4 question-sensitivity 稽核；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "knowledge_base（row 3365）：form=jgb_repair_query → jgb_repairs",
+     "claim_supported": "3365 的 execution target ＝ jgb_repairs",
+     "supports": [
+      "ownership",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "knowledge_base（row 4420）：action=api_call → jgb_repairs",
+     "claim_supported": "4420 的 execution target **同為** jgb_repairs",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb_response_formatter.py::format_jgb_response（jgb_repairs ⛔ 無專屬分支 ⇒ 兩列同落通用 _format_single）",
+     "claim_supported": "兩種 wiring 連**下游格式化路徑**都相同 ⇒ 支持同一 responsibility",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3365）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定（E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "⚠️ 本群的 identity ⛔ 不是靠「form 全 KB 唯一」建立（P-C2 已禁）；是靠兩種 wiring 收斂到同一 execution target ＋ 同一 downstream path"
+   ],
+   "evidence_gaps": [],
+   "seals_merge_from": [
+    "CG-ROW-4420"
+   ],
+   "review_basis_digest": "a8eb7c15cba47da34fa75d6f31cd63540fb615bd501ff0a8c0d092f17fdae808"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3361",
+   "batch": "C-4",
+   "epoch": 1,
+   "members": [
+    3361
+   ],
+   "proposal_members": [
+    3361
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "NOT_ESTABLISHED_AS_DISTINCT",
+     "reason": "owner domain 已建立，但 build_payment_flow_facts 經 T4 判為 **QUESTION_SENSITIVE**，可在內部承接多個 sub-intent ⇒ 同一 builder ⛔ 不等於同一 responsibility（P-C6）"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "NOT_YET_CONFIRMED",
+     "per_row": {
+      "3361": "與 CG-ALIAS-01 的 membership relation = **OPEN**——3361 ⛔ 不受「一種講法一筆」authoring rule 約束，目前無正向 alias 證據"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED_AT_FACE_CAPABILITY_LEVEL",
+     "owner": "繳費金流排障 Face ／ rag-orchestrator/services/jgb/bills.py::build_payment_flow_facts"
+    }
+   },
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-④ 摘要 ＋ 其中明示引用的 formatter endpoint 分派實查（jgb_response_formatter.py::format_jgb_response 12 個分支全列）、具名 builder／engine、T4 question-sensitivity 稽核；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:344 BILL_FACE_BUILDERS（facet → builder 註冊表） → build_payment_flow_facts（categories=繳費金流排障）",
+     "claim_supported": "face 命中時 jgb_bills 由該具名 builder 承接 ⇒ **owner domain** 已建立",
+     "supports": [
+      "ownership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "RUNTIME_CAUSAL_EVIDENCE",
+     "source": ".kiro/specs/conversational-routing-execution/t4-question-dependency-audit.md（build_payment_flow_facts = QUESTION_SENSITIVE）",
+     "claim_supported": "該 builder 對問句敏感 ⇒ 內部可承接多個 sub-intent ⇒⛔ 同 builder 不得推出同 responsibility identity 或 alias membership",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3361）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定（E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "⚠️ 新合法形狀：**owner 已知，⛔ 不代表 responsibility identity 已知。**"
+   ],
+   "evidence_gaps": [
+    "responsibility identity not established despite known owner domain",
+    "membership relation to CG-ALIAS-01 remains OPEN（⛔ 不得機械併入）"
+   ],
+   "review_basis_digest": "042327ced1561e96affd8d2af7d98c363ba83b6abbcf3cdbc7ad64a14de559f5"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3362",
+   "batch": "C-4",
+   "epoch": 1,
+   "members": [
+    3362
+   ],
+   "proposal_members": [
+    3362
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "NOT_ESTABLISHED",
+     "reason": "「發票沒開／發票狀態」目前只有 endpoint 與唯一 form，⛔ 無可區分的 deterministic semantics"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "NOT_YET_CONFIRMED",
+     "per_row": {
+      "3362": "candidate member —— 所屬 responsibility identity 尚未建立"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "NOT_ESTABLISHED",
+     "owner": "jgb_invoices endpoint only"
+    }
+   },
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-④ 摘要 ＋ 其中明示引用的 formatter endpoint 分派實查（jgb_response_formatter.py::format_jgb_response 12 個分支全列）、具名 builder／engine、T4 question-sensitivity 稽核；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb_response_formatter.py::format_jgb_response（endpoint 'jgb_invoices' ⛔ 無專屬分支 ⇒ 落通用 _format_single）",
+     "claim_supported": "只有 endpoint 存在；⛔ 無 responsibility-specific capability evidence",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3362）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定（E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "form 全 KB 唯一 ⛔ 不升格為 ownership（P-C2）",
+    "通用 _format_single ⛔ 不提供 responsibility-specific capability evidence",
+    "⚠️ 即使 CG-ALIAS-03 已知有 build_invoice_facts（CG-ALIAS-03），⛔ 不得直接把 3362 merge 過去：目前**未證明**本列實際走該 Face builder，亦無 authoring alias provenance"
+   ],
+   "evidence_gaps": [
+    "responsibility identity not established",
+    "authoritative owner/capability not established"
+   ],
+   "review_basis_digest": "f01a6cbf34f21a6a944c4da6fa175b65f5119a04d1d87641a7cdb7c15bec8f93"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3366",
+   "batch": "C-4",
+   "epoch": 1,
+   "members": [
+    3366
+   ],
+   "proposal_members": [
+    3366
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "NOT_ESTABLISHED",
+     "reason": "「繳費成功／繳費紀錄」目前只有 endpoint 與唯一 form，⛔ 無可區分的 deterministic semantics"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "NOT_YET_CONFIRMED",
+     "per_row": {
+      "3366": "candidate member —— 所屬 responsibility identity 尚未建立"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "NOT_ESTABLISHED",
+     "owner": "jgb_payments endpoint only"
+    }
+   },
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-④ 摘要 ＋ 其中明示引用的 formatter endpoint 分派實查（jgb_response_formatter.py::format_jgb_response 12 個分支全列）、具名 builder／engine、T4 question-sensitivity 稽核；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb_response_formatter.py::format_jgb_response（endpoint 'jgb_payments' ⛔ 無專屬分支 ⇒ 落通用 _format_single）",
+     "claim_supported": "只有 endpoint 存在；⛔ 無 responsibility-specific capability evidence",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3366）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定（E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "form 全 KB 唯一 ⛔ 不升格為 ownership（P-C2）",
+    "通用 _format_single ⛔ 不提供 responsibility-specific capability evidence"
+   ],
+   "evidence_gaps": [
+    "responsibility identity not established",
+    "authoritative owner/capability not established"
+   ],
+   "review_basis_digest": "d560d945c80e6cb7c2e106d31968c053a82cb98927a92f87df0fe119f0489965"
   }
  ],
  "_level_a_v2_census_interim": {
@@ -1648,6 +2372,14 @@
   "P-C1_named_deterministic_branch": "reviewed instance applicability ＋ semantically specific deterministic branch → 可以建立 responsibility identity ＋ ownership。",
   "P-C2_form_uniqueness": "form unique in KB ≠ responsibility ownership proof。「唯一」只說目前沒有 sibling row，⛔ 不說該 form 的 semantic responsibility 就等於該 row。⇒ C-④ 六列 ⛔ 不得因『全 KB 唯一』直接綠。",
   "P-C3_instance_answer_content": "answer text → 可支持 semantic membership evidence；answer text alone ⛔ 不建立 instance execution ownership。⇒ C-⑤ 有 answer 的 12 個 instance rows ⛔ 不得只靠 answer 變成 CONFIRMED。⚠️ 與 general Knowledge 不同：general 列的 answer 可支持 ownership=Knowledge。",
-  "P-C4_wiring_is_not_responsibility": "不同 row wiring（action vs form）≠ 不同 responsibility——4420／3365 判例。"
+  "P-C4_wiring_is_not_responsibility": "不同 row wiring（action vs form）≠ 不同 responsibility——4420／3365 判例。",
+  "P-C1a_clarification": "⚠️ **澄清，⛔ 不改歷史 precedent**：P-C1 的第一項應理解為 **authoritative positive instance applicability declaration**，⛔ 不限定來源必須是 reviewed_product_declaration。P1e-1 的 deterministic positive declaration **算**（3495／3496 即現成 precedent）。⛔ 不得把 evidence source 與 authority status 混為一談。",
+  "P-C5_dedicated_query_path": "dedicated deterministic query formatter/path can establish responsibility capability; \"diagnose function\" is not required.（3514 判例）",
+  "P-C6_same_builder_is_not_same_responsibility": "same Face/builder establishes owner domain, but if that builder is question-sensitive, same builder alone MUST NOT establish same responsibility identity or alias membership.（3361 判例；T4 判 build_payment_flow_facts = QUESTION_SENSITIVE）"
+ },
+ "_epoch_model": {
+  "_doc": "同一 candidate group 可有多個 epoch；**最高 epoch ＝ 當前裁定**。",
+  "rule": "epoch > 1 的紀錄必須帶 supersedes_digest（＝該群前一 epoch 的 review_basis_digest）與 superseding_axes；⛔ 舊 epoch 的 verdict／digest／scope 一律保留不覆寫。",
+  "why": "舊裁定在其當時的 review_input_scope 下是**合法**的；新證據只新增結論，⛔ 不得讓後見之明抹掉當時的 provenance。"
  }
 }
