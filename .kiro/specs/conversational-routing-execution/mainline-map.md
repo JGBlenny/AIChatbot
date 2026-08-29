@@ -95,42 +95,84 @@ MIXED_CATEGORY_GRANULARITY         合約管理 43／帳單管理 26… 同一 c
 
 ---
 
-## 六、下一個真正的主線決策點
-
-盤完之後，**未解的上游命題只剩兩個**，其餘都是已登記的 debt：
+## 六、Release policy（2026-08-29 業主定案，**修正前一版**）
 
 ```text
-【U1】category 粒度是否足以承擔 nomination evidence
-      證據：MIXED categories（合約管理 43／帳單管理 26／付款金流 24…）
-            同一 category 混載制度說明與實值查詢
-      性質：**架構命題**，延伸裁定 001。若答案是「不足」，
-            那 nomination 的輸入層要換，而不是繼續補 mapping。
-      ⚠️ 這是唯一還會改變 Stage 1 設計前提的命題。
+U2 release = **BLOCKED_BY_VALIDATION_COMPLETION**   ⛔ 不是「待裁」
 
-【U2】release：268 筆要不要進 main
-      性質：**業主決策**。它同時是 U1 的前置——
-            Stage 1 telemetry 要有資料才能回答「流量實際落在哪些 category」，
-            而那是 U1 的實證側證據（靜態側已完成）。
+> 這整條 conversational routing／authority／nomination 架構
+> 在本地完整驗完以前，一律不 push／不進 main／不部署。
+
+目前全部成果只是 **local candidate implementation**。即使
+  unit 1517/0 ・audit 九條全綠 ・runtime container 已同步
+  ・capability smoke 通過 ・Stage 1 observability 完成
+也**都不構成**「先上去收 production data」的理由。
 ```
 
-### 這一輪反覆出現的同一種失敗模式（值得單獨記）
+### 連帶：Stage 1 telemetry 重新定位
 
 ```text
-nomination      ≠ authority          （裁定 001）
-select=api      ≠ capability equivalence（不變量 9 端點涵蓋層）
-有資料流         ≠ 流到正確的語義槽位   （⑧ 候選填錯 estate_id）
+⛔ 舊定位（錯）：先部署 → 收流量 → 才能繼續
+✅ 新定位：**本地驗證與未來上線後監控共用的 observability infrastructure**
 
+現在就可以拿它跑：
+  ・專案內全 KB／config census
+  ・released 真實語料
+  ・已有的未污染 corpus
+  ・mechanically generated scenario matrix
+  ・deterministic fixtures
+  ・isolated synthetic holdout
+⚠️ 但這些結果**不得冒充 production distribution**。
+```
+
+---
+
+## 七、唯一仍屬主線的命題：U1
+
+```text
+【U1】category 是否足以承擔 nomination evidence
+```
+
+⚠️ **問題已改寫**——不再是「等流量」，而是：
+
+> **在不靠 production deployment 的條件下，現有專案與可取得語料，
+> 是否已足以判定 category 作為 nomination primitive 的資訊量是否足夠。**
+
+```text
+U1 的本地證據面
+├─ 靜態全量 evidence（全 KB／config census）
+├─ 真實但未污染語料（若可取得）
+├─ synthetic —— **僅作結構探測**，不得外推覆蓋率
+├─ candidate-generation alternatives（若 U1 被 refute 才需要）
+└─ deterministic / holdout validation（走 holdout-validation skill）
+```
+
+兩種合法結局，⛔ 沒有第三種：
+
+```text
+① 本地證據足夠 → 就地裁掉 U1
+② 本地證據不足 → 明確標成 **NOT_VALIDATABLE_WITH_CURRENT_LOCAL_EVIDENCE**
+⛔ 不得為了收 production data 而提前 release
+```
+
+---
+
+## 八、收束順序
+
+```text
+U1 本地驗完
+→ instance gate authorization
+→ 3.4
+→ subscription authority scope（若仍屬完整架構驗證範圍）
+→ final regression ＋ final audit ＋ clean local runtime acceptance
+→ **才談** push / main / deploy
+```
+
+### 這一輪反覆出現的同一種失敗模式（保留）
+
+```text
+nomination  ≠ authority                （裁定 001）
+select=api  ≠ capability equivalence   （不變量 9 端點涵蓋層）
+有資料流     ≠ 流到正確的語義槽位        （插點 A 候選填錯 estate_id）
 共同形狀：**形式上有接線，不等於語義上接對。**
-每一次都是「看起來已連通」而稽核不到，直到有人逐格追一次 consumer。
-⇒ 這正是不變量 9 與 11.5 census 的方法論價值：追到**消費端**，不停在宣告端。
-```
-
-### 建議順序（⛔ 擴 allowlist 不是預設下一步）
-
-```text
-1. 重建容器讓不變量 3 轉綠（源碼已驗，只差同步）
-2. 業主決策 U2（push / merge / deploy）
-3. 部署後累積 → 跑凍結 SQL → 取得 U1 的實證側證據
-4. 帶著靜態＋實證兩側證據，才回頭裁 U1
-5. authority scope（含 subscription）留到 U1 之後
 ```
