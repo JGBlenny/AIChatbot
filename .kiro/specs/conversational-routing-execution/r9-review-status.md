@@ -296,3 +296,55 @@ FACET_PROMISE_UNIMPLEMENTED：
 ⑧ ⏸ transport verification（DB → retriever → embedding → reranker 同一份 reviewed text）
 ⑨ ⏸ representation candidate validation
 ```
+
+---
+
+# 附錄：⑨ transport 驗證結果（2026-08-29，**本機驗證環境**）
+
+## 四段全部對得上同一份 reviewed text
+
+```text
+① DB declaration      10/10，source=reviewed_product_declaration
+② retriever projection 真實檢索回傳的 4656 帶 retrieval_representation ＋ source
+③ embedding document   sim(stored, embed(representation)) = 1.0000 ×10
+                       sim(stored, embed(question_summary)) = 0.58–0.82（**負對照**）
+④ reranker payload     semantic_score 與直打 /rerank 的 representation 值逐位相同
+```
+
+## reranker 三向對照（query「那筆帳單到底繳了沒」對 4656）
+
+```text
+A surface=representation    0.9191
+B surface=question_summary  0.6398
+C 舊 client（不送 surface）  0.6398
+✅ A≠B  ⇒ server **確實消費** scoring_surface（⛔ 不是送了被忽略）
+✅ B==C ⇒ 舊 client 的 legacy 優先序**逐字保留**
+```
+
+## 真實檢索路徑
+
+```text
+4656 rank=2、score_source=rerank、semantic_score=0.9190772
+     ⇒ 與 A 值**逐位相同** ⇒ 產線管線確實拿 reviewed representation 評分
+     scoring_surface_source=declared_representation
+```
+
+⚠️ **第一次驗證失敗且該失敗有價值**：用 vendor_id=1 預設 b2c 跑，4656 未進前 10。
+查證後為 **scope 過濾**（4656 的 `business_types={system_provider}`、
+`target_user={property_manager,tenant}`）⇒ 呼叫端沒帶對 mode／target_user，
+⛔ 不是檢索缺陷。腳本對「未出現」**大聲失敗**而非靜默跳過，才逼出這件事。
+
+## ⛔ 本輪不宣稱
+
+```text
+⛔ 不宣稱檢索品質已改善——那是 ⑩ candidate validation，**尚未授權**
+⛔ 不宣稱通用 selection capability 完成（只證 point-refund 這一條）
+⛔ production 未動；legacy 全庫重生兩條路徑維持 divergent_pending
+```
+
+## ⚠️ 一個非授權的副作用
+
+`docker compose up -d --build rag-orchestrator` **連帶重建了 semantic-model image**
+（同一時戳），當時的指示是「先不要重建 semantic-model」。
+影響：行為不變——彼時無任何 authoritative 宣告，payload 的 scoring_surface
+等於 question_summary，server 取值與舊版逐字相同。
