@@ -229,6 +229,26 @@ else
   echo "✅ PASS（含 10 種規避寫法自我測試）"
 fi
 
+echo "═══ 不變量 9：Face preemption 的能力保全（2026-08-29 21 筆 census 逼出）═══"
+# 源起：面向分支在表單分支**之前**（chat.py，同一個 form_trigger_threshold），
+# 且 resolver allowlist 未涵蓋的面向一律回 FACE_UNEVALUATED → face_precedence 判 "face"
+# → **無條件 commit** ⇒ 知識掛的 active 表單永遠不會開，且靜默無訊號。
+# 2026-07 面向化遷移期沒有做過「這筆知識原本由誰服務」的反向盤查，本不變量補上。
+# ⚠️ 檢查器用 grounding_scope.select=api／execute_endpoint 當「能力等價」的**可證代理**，
+#    ⛔ 那不是產品公理——出現別種等價能力時要改述詞，不是把違規列進豁免。
+FP_CHECK="$REPO/scripts/audit/checks/face_preemption_capability.py"
+if ! python3 "$FP_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 9 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$FP_CHECK" --self-test
+  FAIL=1
+elif ! FP_OUT=$(python3 "$FP_CHECK" 2>&1); then
+  echo "$FP_OUT"
+  FAIL=1
+else
+  echo "$FP_OUT"
+  echo "✅ PASS（含 A／A'／B／C／C' 五形狀 ＋ 兩組突變控制）"
+fi
+
 echo ""
 if [ $FAIL -eq 0 ]; then
   echo "🎉 稽核通過（$(date +%Y-%m-%d))"
