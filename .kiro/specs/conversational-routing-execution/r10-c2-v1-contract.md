@@ -1,6 +1,126 @@
 # R10-C2-v1 契約（業主凍結 2026-08-30）＋ ⛔ 一個開工前的阻斷發現
 
-## ⛔ 阻斷發現（先讀這段）
+## ✅ 阻斷已解除（2026-08-30 業主裁定 C2-SCORE）——原始發現保留於下
+
+```text
+C2-SCORE 裁定
+  建立 **30 個 reviewed_active canonical responsibility embeddings**
+  final score 仍為 0.1 * canonical responsibility vector similarity
+                 + 0.9 * canonical responsibility reranker similarity
+  ⛔ row／alias vector score 僅用於 nomination，**不得進 final score**
+⚠️ 業主明示收回上一輪「C2-v1 不建 canonical embeddings」的裁定——
+   那是建立在「final score 不硬性依賴 vector」的**錯誤前提**上，production fact 已推翻該前提。
+```
+
+選這條路的理由（業主）：同時做到 ⛔ 不把 nomination evidence 偷渡成 semantic authority、
+⛔ 不改既有 0.1／0.9 policy、⛔ 不引入 rerank-only 新 calibration，
+且 **vector 與 rerank 都在同一個 authority unit：responsibility canonical**。
+
+### canonical embedding 的角色鎖死
+
+```text
+row／alias embeddings              → nomination ／ recall
+canonical responsibility embeddings → **collapse ＋ top20 之後**的 final semantic vector component
+⛔ C2-v1 ⛔ 不新增 canonical vector recall arm（否則同時改 recall architecture，因果變髒）
+```
+
+### 30 個，不是 31 個
+
+```text
+建 30 個 reviewed_active；⛔ 不建 historical（3498）、⛔ 不建 16 個 unresolved rows
+embedding 是 sealed Registry V2 的 **derived runtime artifact**，⛔ 不是 authority source
+⇒ ⛔ 不得回寫 registry-v2.json
+綁定：registry_v2_digest／responsibility_id／canonical_text_digest／
+      embedding_model_id+version／embedding_dimension／embedding
+重建條件：canonical text 改 ｜ Registry authority epoch 改 ｜ embedding model 改
+```
+
+---
+
+## ⚠️ 對先前 contract 的**有 provenance 的修正**（2026-08-30）
+
+```text
+previous uniform-threshold statement:  **REFUTED_BY_PRODUCTION_FACT**
+   舊寫法「responsibility.nomination_score >= 0.3」把 threshold 當成一律適用——
+   但 production 實況是：**vector 路徑套 0.3、keyword_fallback 明確豁免**。
+replacement:  **C2-NOMINATION-ADMISSIBILITY-1**
+   A responsibility is nomination-admissible iff
+       has_keyword_nomination
+       OR best_vector_nomination_score >= 0.3
+   ⇒ keyword fallback → threshold exempt；vector only → >= 0.3（與現行 row policy 一致）
+```
+
+⚠️ 舊句**不刪**，標記為 REFUTED 保留 provenance——⛔ 不得悄悄改寫舊文。
+
+### collapse 後必須保留的三個 nomination facts
+
+```text
+has_keyword_nomination        = ANY contributing row came from keyword_fallback
+has_vector_nomination         = ANY contributing vector row passes existing vector admissibility
+best_vector_nomination_score  = MAX admissible contributing vector-row score
+⚠️ 最後一項的 MAX **仍只是 nomination evidence**。
+```
+
+### top20：keyword **responsibility** 優先，⛔ 不是 keyword row 優先
+
+```text
+keyword_priority = has_keyword_nomination
+一個 responsibility 同時由 keyword row A ＋ vector row B 提名
+  → **ONE** candidate、keyword_priority=true —— ⛔ 不是兩票
+順序：① keyword-priority responsibilities ② vector-only responsibilities
+      ③ 補到 20 個 **distinct** responsibilities
+```
+
+混合來源 ⛔ 不加權：`R-X` 由 keyword alias1 ＋ vector .82 ＋ vector .71 提名 ⇒
+`keyword_priority=true／best_vector_nomination_score=.82／candidate_count=1`。
+
+### keyword bucket 內部排序：preserve-existing-order，⛔ 不發明新 score
+
+```text
+best_keyword_source_rank = earliest／highest-priority contributing keyword row
+                           under the **existing pre-collapse selector ordering**
+現有若為 stable input order → 取 contributing keyword rows 的**最小原始 ordinal**
+現有若已有明確 keyword rank key → 沿用該 key
+⛔ 不新造「keyword score」、⛔ 不 SUM／MAX keyword aliases
+vector-only bucket → 沿用既有 vector selection ordering，取最佳 admissible contributor，⛔ 不相加
+```
+
+> **collapse 可以消除重複，⛔ 但不能趁機重新定義 keyword relevance。**
+
+---
+
+## 附加 guards（業主 2026-08-30 新增）
+
+```text
+G7 final-vector authority   同 query／同 responsibility，任意改 contributing alias vector score
+                            但不改 canonical embedding → final responsibility_vector_similarity
+                            **MUST NOT change**（直接防 alias score 偷渡）
+G8 keyword exemption survives collapse
+                            只有 keyword_fallback contributor、row vector=0
+                            → responsibility 仍 admissible，⛔ 不得被 .3 丟掉
+G9 mixed-source collapse    同責任同時 keyword ＋ vector → exactly 1 candidate、
+                            keyword_priority=true、⛔ 無重複 slot
+G10 canonical embedding completeness
+                            30 reviewed_active ＝ 30 embeddings；canonical text digest 逐字相符；
+                            model／version 相符；historical ＝ 0 —— 漏一筆／text drift／model drift 皆紅
+M5 把 final vector 改回 max(contributing row vector) → **G7 必紅**
+```
+
+## R7.2 ／ SCORE_SHIFT_PROBE 必須版本化
+
+```text
+old probe unit = row        new probe unit = responsibility
+⇒ **R7.2 舊量測 ⛔ 不得直接當 C2 responsibility score 的 calibration baseline**
+⛔ 不刪舊 probe、⛔ 不改寫舊結論；新增標記：
+    score_unit     = responsibility
+    score_contract = canonical-vector-0.1 + canonical-rerank-0.9
+C2 上線前建立**新的** local baseline——公式形式雖仍是 .1／.9，但輸入的 semantic unit 已換，
+絕對值平移本來就可能不同。
+```
+
+---
+
+## 原始阻斷發現（保留，⛔ 不刪：它是 C2-SCORE 的觸發證據）
 
 業主凍結的停止條件二**已經成立**：
 

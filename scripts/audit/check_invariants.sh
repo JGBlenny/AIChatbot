@@ -530,10 +530,29 @@ else
   echo "✅ PASS（含偷改 members／applicability／owner／status／增刪責任／只改 canonical 必綠 等九組對照）"
 fi
 
+echo "═══ 不變量 23（G10）：canonical responsibility embedding index 完整性（C2-SCORE）═══"
+# ⚠️ derived runtime artifact，⛔ 非 authority source。角色鎖死：
+#   row／alias embeddings ＝ nomination／recall；canonical embeddings ＝ collapse＋top20 **之後**
+#   的 responsibility semantic vector component（C2-v1 ⛔ 不新增 canonical vector recall arm）。
+# 重建條件：canonical text 改／registry authority epoch 改／embedding model 改——任一即須重建。
+CE_CHECK="$REPO/scripts/audit/checks/canonical_embedding_index.py"
+if ! python3 "$CE_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 23 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$CE_CHECK" --self-test
+  FAIL=1
+elif ! CE_OUT=$(python3 "$CE_CHECK" 2>&1); then
+  echo "$CE_OUT"
+  FAIL=1
+  CODE_REGRESSIONS+=("INV23 / canonical embedding index 不完整或已漂移")
+else
+  echo "$CE_OUT"
+  echo "✅ PASS（含漏筆／text drift／model 空／epoch 漂移／向量被改／historical 有 embedding 等八組對照）"
+fi
+
 # ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
 # （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）
 if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then
-  CODE_REGRESSIONS+=("不變量 1–12／14–20 有失敗（見上方 ❌ FAIL 行）")
+  CODE_REGRESSIONS+=("不變量 1–12／14–20／22–23 有失敗（見上方 ❌ FAIL 行）")
 fi
 
 echo ""
