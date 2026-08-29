@@ -71,6 +71,24 @@ def face_preserves_capability(row) -> bool:
     return bool(row.get("face_has_execute_endpoint"))
 
 
+def face_covers_form_endpoint(row) -> bool:
+    """更嚴的一層：面向實際取用的端點是否**涵蓋**被攔截表單的端點。
+
+    ⚠️ 為什麼需要這層（2026-08-29 21 筆 census 逼出）：
+    `select=api` 只證明「面向會打某個 API」，**不證明打的是同一份資料**。
+    實例：3503「發票為什麼沒有開出來」的表單打 `jgb_invoice_logs`，
+    而 `services/jgb/invoices.py::_diagnose_issue_failure` 的 docstring 就是
+    「I01：發票為什麼沒有開出來」——那支專屬診斷引擎**只在該端點被取用時才會跑**。
+    但 `billing_invoice` 取的是 `jgb_bills` + secondary `jgb_invoices`
+    ⇒ 引擎存在卻永遠到不了。
+    ⇒ 這正是「⛔ 不得把 select=api 升格成產品公理」的實據。
+    """
+    form_ep = row.get("form_endpoint")
+    if not form_ep:
+        return True                       # 無端點可比 → 本層不表態
+    return form_ep in set(row.get("face_endpoints") or [])
+
+
 def preempted_capability_is_data_fetching(row) -> bool:
     """被攔截的能力是否為「取外部實值」（決定 FAIL／WARN）。"""
     if row.get("action_type") in DIRECT_EXECUTION_ACTIONS:
@@ -81,19 +99,42 @@ def preempted_capability_is_data_fetching(row) -> bool:
 
 
 def evaluate(rows):
-    """rows = 每個 (知識, 被提名面向) 配對。回傳 (fails, warns)。"""
-    fails, warns = [], []
+    """rows = 每個 (知識, 被提名面向) 配對。回傳 (fails, warns, partials)。
+
+    ⚠️ **判定單位是「知識」不是「配對」**（2026-08-29 自身踩過的坑）：
+    一筆知識可被多個 category 提名多個面向，只要**有一個**面向保有能力／涵蓋端點，
+    該能力就沒有遺失（first-commit-wins 之下究竟誰 commit 由 resolver 決定，
+    但「架構上有沒有人接得住」是 row 層事實）。
+    ⛔ 逐配對報錯會把 3507（contract_diag 涵蓋 ＋ estate_diag 未涵蓋）誤判成缺口。
+    """
+    by_kid = {}
     for r in rows:
-        if not knowledge_has_execution_capability(r):
+        by_kid.setdefault(r.get("kid"), []).append(r)
+
+    fails, warns, partials = [], [], []
+    for kid in sorted(by_kid):
+        group = by_kid[kid]
+        head = group[0]
+        if not knowledge_has_execution_capability(head):
             continue                      # shape C：資訊型知識，本不變量不管
-        if face_preserves_capability(r):
-            continue                      # shape A：能力保全
-        item = (f"知識 {r.get('kid')}「{r.get('summary')}」"
-                f" 表單/動作={r.get('form_id') or r.get('action_type')}"
-                f" → 被面向 {r.get('face_key')}"
-                f"（select={r.get('face_select') or '無'}）攔截")
-        (fails if preempted_capability_is_data_fetching(r) else warns).append(item)
-    return fails, warns
+        capable = [r for r in group if face_preserves_capability(r)]
+        faces_desc = "／".join(
+            f"{r.get('face_key')}({r.get('face_select') or '無'})" for r in group)
+        if not capable:
+            item = (f"知識 {kid}「{head.get('summary')}」"
+                    f" 表單/動作={head.get('form_id') or head.get('action_type')}"
+                    f" → 被面向 {faces_desc} 攔截")
+            (fails if preempted_capability_is_data_fetching(head)
+             else warns).append(item)
+            continue
+        if not any(face_covers_form_endpoint(r) for r in capable):
+            # 有能力但**沒有任何一個面向取用同一份資料** → 待辦雷達（不擋部署）
+            actual = sorted({e for r in capable for e in (r.get("face_endpoints") or [])})
+            partials.append(
+                f"知識 {kid}「{head.get('summary')}」"
+                f" 表單端點={head.get('form_endpoint')}"
+                f" → 面向 {faces_desc} 實取 {'／'.join(actual) or '無'}（未涵蓋）")
+    return fails, warns, partials
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -103,7 +144,8 @@ def evaluate(rows):
 def _row(**kw):
     base = dict(kid=0, summary="", action_type="form_fill", form_id=None, form_active=True,
                 form_on_complete="call_api", form_endpoint="jgb_x",
-                face_key="f", face_select="api", face_has_execute_endpoint=False)
+                face_key="f", face_select="api", face_has_execute_endpoint=False,
+                face_endpoints=["jgb_x"])
     base.update(kw)
     return base
 
@@ -114,44 +156,71 @@ def self_test() -> int:
     # ── shape A：有執行能力 ＋ 面向具等價能力 → 不得報 ──
     a = _row(kid=1, summary="A", form_id="jgb_contract_query", face_key="contract_diag",
              face_select="api")
-    cases.append(("A 能力保全不得誤報", evaluate([a]) == ([], [])))
+    cases.append(("A 能力保全不得誤報", evaluate([a]) == ([], [], [])))
 
     # ── shape A'：交易面向以 execute_endpoint 證明能力 → 不得報 ──
     a2 = _row(kid=2, summary="A'", form_id="jgb_repair_create", face_key="repair_create",
               face_select=None, face_has_execute_endpoint=True)
-    cases.append(("A' execute_endpoint 亦屬等價能力", evaluate([a2]) == ([], [])))
+    cases.append(("A' execute_endpoint 亦屬等價能力", evaluate([a2]) == ([], [], [])))
 
     # ── shape B：有執行能力（取實值）＋ 面向無能力 → 必須 FAIL ──
     b = _row(kid=3505, summary="B", form_id="jgb_subscription_diagnosis",
              face_key="estate_guide", face_select="category")
-    b_f, b_w = evaluate([b])
-    cases.append(("B 能力遺失必須 FAIL", len(b_f) == 1 and b_w == []))
+    b_f, b_w, b_p = evaluate([b])
+    cases.append(("B 能力遺失必須 FAIL", len(b_f) == 1 and b_w == [] and b_p == []))
 
     # ── shape C：資訊型知識（無表單、非動作型）→ 不得因本不變量誤報 ──
     c = _row(kid=4, summary="C", action_type="direct_answer", form_id=None,
              face_key="estate_guide", face_select="category")
-    cases.append(("C 資訊型知識不得誤報", evaluate([c]) == ([], [])))
+    cases.append(("C 資訊型知識不得誤報", evaluate([c]) == ([], [], [])))
 
     # ── shape C'：指向 inactive 表單 → 早已無能力可失去，不得報 ──
     c2 = _row(kid=5, summary="C'", form_id="dead_form", form_active=False,
               face_key="estate_guide", face_select="category")
-    cases.append(("C' 停用表單不得誤報", evaluate([c2]) == ([], [])))
+    cases.append(("C' 停用表單不得誤報", evaluate([c2]) == ([], [], [])))
 
     # ── 分流表單被攔截 → WARN 而非 FAIL ──
     d = _row(kid=3548, summary="D", form_id="payment_gateway_select",
              form_endpoint="branch_answer", face_key="billing_setup_guide",
              face_select="category")
-    d_f, d_w = evaluate([d])
+    d_f, d_w, _ = evaluate([d])
     cases.append(("分流表單降為 WARN", d_f == [] and len(d_w) == 1))
+
+    # ── shape E：面向有 API 但**取的不是同一份資料** → 第三層 partial ──
+    e = _row(kid=3503, summary="E", form_id="jgb_invoice_diagnosis",
+             form_endpoint="jgb_invoice_logs", face_key="billing_invoice",
+             face_select="api", face_endpoints=["jgb_bills", "jgb_invoices"])
+    e_f, e_w, e_p = evaluate([e])
+    cases.append(("E 端點未涵蓋須列 partial 而非 FAIL",
+                  e_f == [] and e_w == [] and len(e_p) == 1))
+
+    # ── 突變控制 3：把 E 的面向補上同一端點 → partial 必須消失 ──
+    e_ok = dict(e, face_endpoints=["jgb_bills", "jgb_invoice_logs"])
+    cases.append(("突變控制：涵蓋同端點後 partial 必須消失",
+                  evaluate([e_ok]) == ([], [], [])))
+
+    # ── shape F：同一知識被兩個面向提名，其一涵蓋 → 不得報（row 層彙總）──
+    f1 = _row(kid=3507, summary="F", form_id="jgb_contract_query",
+              form_endpoint="jgb_contracts", face_key="contract_diag",
+              face_select="api", face_endpoints=["jgb_contracts"])
+    f2 = _row(kid=3507, summary="F", form_id="jgb_contract_query",
+              form_endpoint="jgb_contracts", face_key="estate_diag",
+              face_select="api", face_endpoints=["jgb_estate_status"])
+    cases.append(("F 多面向提名須在 row 層彙總", evaluate([f1, f2]) == ([], [], [])))
+
+    # ── 突變控制 4：把 F 唯一涵蓋者拿掉 → partial 必須出現 ──
+    f_bad, _, f_p = evaluate([f2])
+    cases.append(("突變控制：移除唯一涵蓋者後 partial 必須出現",
+                  f_bad == [] and len(f_p) == 1))
 
     # ── 突變控制：把已 PASS 的 A 拔掉能力，scanner 必須轉紅 ──
     mutated = dict(a, face_select="category")
-    m_f, _ = evaluate([mutated])
+    m_f, _, _ = evaluate([mutated])
     cases.append(("突變控制：拔掉能力後必須轉紅", len(m_f) == 1))
 
     # ── 突變控制 2：把 B 的面向補上能力，scanner 必須轉綠（證明它讀的是能力而非知識 id）──
     healed = dict(b, face_select="api")
-    cases.append(("突變控制：補上能力後必須轉綠", evaluate([healed]) == ([], [])))
+    cases.append(("突變控制：補上能力後必須轉綠", evaluate([healed]) == ([], [], [])))
 
     bad = [name for name, ok in cases if not ok]
     for name, ok in cases:
@@ -182,7 +251,9 @@ SELECT COALESCE(json_agg(row_to_json(t)), '[]'::json)::text FROM (
          fs.api_config->>'endpoint'             AS form_endpoint,
          f.fkey                                 AS face_key,
          f.gs->>'select'                        AS face_select,
-         (f.gs ? 'execute_endpoint')            AS face_has_execute_endpoint
+         (f.gs ? 'execute_endpoint')            AS face_has_execute_endpoint,
+         ARRAY_REMOVE(ARRAY[f.gs->>'endpoint',
+                            f.gs->'secondary_call'->>'endpoint'], NULL) AS face_endpoints
   FROM knowledge_base k
   JOIN face f ON f.cat = ANY(k.categories)
   LEFT JOIN form_schemas fs ON fs.form_id = k.form_id
@@ -211,10 +282,12 @@ def main() -> int:
         print("❌ FAIL：母體為 0——被面向提名的動作知識不可能一筆都沒有，"
               "請檢查 DB 連線或 schema（否定結論需正對照組）")
         return 1
-    fails, warns = evaluate(rows)
+    fails, warns, partials = evaluate(rows)
     print(f"（母體：{len(rows)} 組 (知識, 被提名面向) 配對）")
     for w in warns:
         print(f"⚠️  WARN（分流表單，不擋部署）：{w}")
+    for pa in partials:
+        print(f"⚠️  WARN（端點未涵蓋，不擋部署）：{pa}")
     if fails:
         print("❌ FAIL：以下知識的 execution capability 會被無等價能力的面向靜默攔截：")
         for f in fails:
