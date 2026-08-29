@@ -492,6 +492,25 @@ else
   echo "✅ PASS（active version 全數閉合）"
 fi
 
+echo "═══ 不變量 21：active responsibility 的 canonical contract 閉合（R10-CANONICAL-REVIEW）═══"
+# ⚠️ 與 13 同性質的**產品閘**（⛔ 非程式回歸）：C2 用 responsibility-level canonical contract
+# 做 semantic scoring；只要還有 reviewed_active 的責任 canonical=null，跑出來的就不是
+# 已裁定的 target architecture（會被迫臨時決定 fallback，改變 A05 的競爭環境）。
+# ⛔ reviewed_historical 不受此閘拘束。
+CN_CHECK="$REPO/scripts/audit/checks/canonical_population_completeness.py"
+if ! python3 "$CN_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 21 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$CN_CHECK" --self-test
+  FAIL=1
+elif ! CN_OUT=$(python3 "$CN_CHECK" 2>&1); then
+  echo "$CN_OUT"
+  FAIL=1
+  PRODUCT_BLOCKERS+=("INV21 / active responsibility canonical 未閉合（見 r10p/canonical-review-dossier.md）")
+else
+  echo "$CN_OUT"
+  echo "✅ PASS（含 historical 豁免／缺 canonical／未 review／全補齊 四組對照）"
+fi
+
 # ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
 # （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）
 if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then

@@ -160,8 +160,24 @@ candidate responsibility grouping   （proposal，機械產生，⛔ 無 authori
 
 ```text
 A05_STATUS = PAUSED_BEFORE_PROTOCOL_FREEZE
-reason     = judgment unit（validation／scoring／applicability／authority 共用）尚未 review 完
+
+judgment_unit = **RESOLVED**（2026-08-29，R10-P5 census）
+denominator   = **9 reviewed responsibilities**
+                （LEVEL_A_V2 9 列 → 9 個相異 responsibility；multi-membership 0、shared 0）
+
+current_blocker = **TARGET_CANDIDATE_NOT_IMPLEMENTED**
+
+prerequisites:
+  1. active canonical responsibility population complete（30/30；現況 8/30 ⇒ 不變量 21 紅）
+  2. C2 responsibility-level scoring implementation complete
+  3. deterministic guards ／ negative controls pass
 ```
+
+⚠️ **⛔ 不要把此處讀成「R10-P 還沒完成」**——R10-P0…P5 已全數收束；
+現在擋住 A05 的是**另一個層級**的條件：target scoring candidate 尚未可執行。
+
+⚠️ A05 屆時的 validation unit ＝ **responsibility**，與 A04 的 row-level 10 strata
+是**不同世代**的 validation：⛔ 不得沿用 A04 的 corpus、protocol 或 judgment unit。
 
 ⚠️ 先前那項旁證（A04 的 MULTI_OWNER 叢集全部落在 N 層、Level-A 9 rows 未撞到
 alias cluster；4640／4656／4657 與 12 錨點**不同批**）是
