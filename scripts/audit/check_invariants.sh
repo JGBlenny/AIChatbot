@@ -260,7 +260,9 @@ echo "═══ 不變量 10：instance applicability 的三態資料契約（U1
 # 守兩件事：①值域封閉（只准 instance／general，⛔ 不猜變體）
 #          ②讀取唯一化（宣告鍵只能經 services/instance_applicability.py 讀，
 #            否則遲早出現「缺宣告當 general」或「用 form_id 推導」的 fallback）
-# ⚠️ 本不變量**不要求 coverage**：P1a 只建契約，population 是 P1b。
+# ⚠️ P1a/P1b 階段不要求 coverage；**P1d 起改為分期要求**：
+#    2026-08-30 之後建立／修改的情境知識未宣告 → FAIL（UNKNOWN 只允許 legacy）。
+#    ⇒ 存量可慢慢回填，但**不再長出新的洞**。治理規則見 .kiro/steering/knowledge.md。
 IA_CHECK="$REPO/scripts/audit/checks/instance_applicability_contract.py"
 if ! python3 "$IA_CHECK" --self-test >/dev/null 2>&1; then
   echo "❌ FAIL：不變量 10 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"

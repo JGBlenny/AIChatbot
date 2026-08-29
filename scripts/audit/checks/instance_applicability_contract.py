@@ -38,6 +38,12 @@ FACE_KEY_ALLOWED = {CONTRACT_MODULE, "rag-orchestrator/services/instance_referen
 SCAN_DIRS = ["rag-orchestrator/services", "rag-orchestrator/routers", "rag-orchestrator/tools"]
 LEGAL_VALUES = {"instance", "general"}
 
+#: **P1d 生效日**：自此日（含）起建立或修改的情境知識，必須明示 applicability。
+#: ⚠️ 之前的既有列屬 **legacy migration state**，允許 UNKNOWN——
+#:    UNKNOWN 是遷移狀態，⛔ **不是正常終態**。
+#: ⚠️ 定在規則落地的**次日**，⛔ 不製造追溯性違規（當日已有 6 筆因本輪修正被觸碰）。
+P1D_EFFECTIVE_DATE = "2026-08-30"
+
 KNOWLEDGE_KEY = "instance_applicability"
 FACE_KEY = "requires_instance_reference"
 
@@ -98,6 +104,23 @@ def scan_unauthorized_key_reads(root=None):
     return out
 
 
+def undeclared_after_cutoff(rows, cutoff=P1D_EFFECTIVE_DATE):
+    """P1d 治理：cutoff 之後建立／修改的列必須明示 applicability。
+
+    ⚠️ 純函式，供 --self-test 離線驗。`touched_at` ＝ max(created_at, updated_at)。
+    ⛔ 本規則**不改 routing**，只防止資料契約再度失落：
+       否則就算今天把存量標完，下個月新增的 KB 又會重新長出 UNKNOWN。
+    """
+    out = []
+    for r in rows:
+        if r.get("value") in LEGAL_VALUES:
+            continue
+        touched = str(r.get("touched_at") or "")
+        if touched and touched[:10] >= cutoff:
+            out.append(r)
+    return out
+
+
 def illegal_values(rows):
     """回傳值域違規清單。⚠️ 純函式，供 --self-test 離線驗。"""
     return [r for r in rows
@@ -106,9 +129,11 @@ def illegal_values(rows):
 
 SQL = r"""
 SELECT COALESCE(json_agg(row_to_json(t)), '[]'::json)::text FROM (
-  SELECT id, generation_metadata->>'instance_applicability' AS value
+  SELECT id, question_summary,
+         generation_metadata->>'instance_applicability' AS value,
+         GREATEST(created_at, COALESCE(updated_at, created_at))::text AS touched_at
   FROM knowledge_base
-  WHERE is_active AND generation_metadata ? 'instance_applicability'
+  WHERE is_active AND COALESCE(category,'') NOT IN ('對話規則','系統脈絡')
 ) t;
 """
 
@@ -133,6 +158,16 @@ def self_test() -> int:
     cases.append(("大小寫／布林字面／中文變體必須紅", len(bad) == 3))
     cases.append(("未宣告（value=None）不進值域檢查",
                   illegal_values([{"id": 6, "value": None}]) == []))
+    # P1d 治理規則
+    legacy = {"id": 7, "value": None, "touched_at": "2026-08-01 10:00:00"}
+    fresh = {"id": 8, "value": None, "touched_at": "2026-09-01 10:00:00"}
+    declared_fresh = {"id": 9, "value": "general", "touched_at": "2026-09-01 10:00:00"}
+    cases.append(("legacy 未宣告不得誤報", undeclared_after_cutoff([legacy]) == []))
+    cases.append(("cutoff 後未宣告必須紅", len(undeclared_after_cutoff([fresh])) == 1))
+    cases.append(("cutoff 後已宣告不得誤報", undeclared_after_cutoff([declared_fresh]) == []))
+    cases.append(("cutoff 當日即生效（邊界含當日）",
+                  len(undeclared_after_cutoff([{"id": 10, "value": None,
+                                                "touched_at": P1D_EFFECTIVE_DATE + " 00:00:00"}])) == 1))
     # 讀取唯一化的正控制：對一棵植入違規的假樹掃描必須紅
     import tempfile
     with tempfile.TemporaryDirectory() as tmp:
@@ -174,14 +209,29 @@ def main() -> int:
             print(f"   {rel}:{line}  {key}")
         fail = 1
     rows = fetch_rows()
+    if not rows:
+        print("❌ FAIL：母體為 0——大聲失敗，不當成「沒有違規」")
+        return 1
     bad = illegal_values(rows)
     if bad:
         print("❌ FAIL：以下宣告值不在合法值域（instance／general）：")
         for r in bad:
             print(f"   知識 {r['id']}：{r['value']!r}")
         fail = 1
+    stale = undeclared_after_cutoff(rows)
+    if stale:
+        print(f"❌ FAIL：以下情境知識於 {P1D_EFFECTIVE_DATE} 之後建立／修改，"
+              "卻未明示 instance_applicability（UNKNOWN 只允許 legacy）：")
+        for r in stale[:20]:
+            print(f"   知識 {r['id']}「{r.get('question_summary')}」 touched={r.get('touched_at')}")
+        if len(stale) > 20:
+            print(f"   …另有 {len(stale)-20} 筆")
+        fail = 1
     if not fail:
-        print(f"（已宣告 {len(rows)} 筆；未宣告＝UNKNOWN，⛔ 不得取得正向授權含義）")
+        declared = sum(1 for r in rows if r.get("value") in LEGAL_VALUES)
+        print(f"（母體 {len(rows)} 筆；已宣告 {declared} 筆；"
+              f"其餘＝legacy UNKNOWN，⛔ 不得取得正向授權含義。"
+              f"P1d 生效日 {P1D_EFFECTIVE_DATE}）")
     return fail
 
 

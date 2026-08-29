@@ -251,3 +251,60 @@ categories 命中          ＝ 這列知識**可以提名**該面向
 - 記錄來源：manual / auto_generated / loop
 - Loop 生成：關聯 source_loop_id 和 source_loop_knowledge_id
 - 支援回溯與驗證
+
+---
+
+## instance applicability —— 新增／修改知識的**必填契約**（P1d，2026-08-30 生效）
+
+### 規則
+
+```text
+所有**新增或實質修改**的情境知識 row，必須在
+`generation_metadata.instance_applicability` 明示：
+
+  "instance"  正確完成這個問題，需要讀取「這個使用者自己的」
+              帳號／合約／帳單／物件／訂閱／系統狀態等資料
+  "general"   不需要任何該使用者自己的系統資料，
+              僅靠制度、流程、產品通則即可完整回答
+
+⚠️ **UNKNOWN 是 migration state，⛔ 不是正常終態。**
+   2026-08-30 之前的既有列允許 UNKNOWN（legacy）；
+   之後建立／修改的列未宣告 → `make audit` 不變量 10 直接 FAIL。
+```
+
+### 為什麼需要這條（2026-08-29 U1 盤查的結論）
+
+```text
+決定「這一題該不該由對話面向擁有」的屬性——「需不需要使用者自己的資料」——
+**過去沒有被任何欄位記錄**。架構早就為它留了位置
+（`grounding_scope.requires_instance_reference`），但實查宣告數＝0
+⇒ instance gate 的條件恆為 False
+⇒ **授權機制是在一個授權輸入結構性缺席的系統上被評估的**。
+```
+
+### ⛔ 不得用這些推導
+
+```text
+沒有 API／沒有 form／沒有 diagnostic engine  → **不等於** general
+有 form／有 api_config                      → **不等於** 一定 instance
+
+反證：知識 3509「訂閱扣款失敗導致功能異常」是 direct_answer、無 form_id，
+      卻必須查該帳號的訂閱狀態。
+⇒ `form_id`／`action_type`／`api_config` 編碼的是**執行**，不是**實值依賴**。
+```
+
+### 與其他欄位的界線
+
+```text
+`knowledge_base.scope`（global／vendor）＝**可見範圍**，⛔ 語義無關，不可挪用
+`categories`                           ＝ 主題／提名證據（裁定 001）
+`instance_applicability`               ＝ **實值依賴**，與前兩者正交
+```
+
+### 讀取方式
+
+```text
+一律經 `services/instance_applicability.py`：
+  knowledge_instance_applicability(row) → instance / general / unknown
+⛔ 不得在別處直接讀該鍵——不變量 10 會 FAIL（AST 掃描，docstring/註解不誤報）。
+```
