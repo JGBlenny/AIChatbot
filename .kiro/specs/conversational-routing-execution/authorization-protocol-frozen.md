@@ -142,3 +142,53 @@ FAIL           coverage 成立，但一致率未達門檻
 ⛔ 不得說：對其他 Face／其他 scope 的授權結論
 ⛔ 本輪用畢，456 句全部 BURNED，⛔ 不得再作任何 holdout
 ```
+
+---
+
+## 3B. Label-quality precondition（**業主補登，2026-08-29——最後一次 protocol completion**）
+
+⚠️ **補登時機**：在 corpus 固定、任何標註開始**之前**；⛔ 此時尚無任何 label 存在。
+
+⚠️ **為什麼不能等 coverage 通過後才訂**（業主指出的程序漏洞）：
+流程是 `corpus → 盲標 → labels freeze → 才跑 retrieval → 才知 coverage`。
+到 coverage 通過那一刻，**兩位標註者的原始 labels 已經存在**；
+即使刻意不先算 agreement，門檻仍是在「結果已產生」之後訂
+⇒ 留下 **adaptive criterion** 的空間。故一併凍結於此。
+
+```text
+L1  exact agreement  >= 90%
+L2  Cohen's kappa    >= 0.70
+
+任一不成立 → **LABELING_INCONCLUSIVE**
+  ⛔ 不得進 authorization PASS／FAIL
+```
+
+⚠️ **為什麼要 κ 而不只看 agreement**：本來源很可能類別偏斜；
+若 90% 都是 general，raw agreement 會**假高**，κ 才擋得住。
+
+### κ 無定義時的處置（**先寫死，⛔ 不得臨場補公式**）
+
+```text
+若某一類標籤在某位標註者的輸出中變異數為 0（例如全部同一類）
+⇒ kappa mathematically undefined
+⇒ **LABELING_INCONCLUSIVE**
+理由：那本身即表示此 corpus／label process **沒有提供足夠的雙側判別資訊**。
+```
+
+### judgeable truth 的定義（⛔ 不設仲裁者）
+
+```text
+兩者皆 instance／皆 general       → judgeable truth
+任一標註者 = undecidable          → undecidable
+兩者 instance/general 分歧        → undecidable
+⛔ **不得由第三人事後裁決**把分歧補成答案再計入 authorization denominator
+```
+
+### BURNED 的時點（釐清）
+
+```text
+步驟 2 起  456 視為 **committed-to-test corpus**
+步驟 6 起  frozen implementation **第一次看到它們** → 毫無爭議全部 **BURNED**
+若在步驟 6 之前因 procedural invalidity（JSON 壞、代理違反工具隔離等）作廢，
+是否可重做標註依 frozen isolation contract 處理；⛔ 一旦執行步驟 6 即無此空間。
+```
