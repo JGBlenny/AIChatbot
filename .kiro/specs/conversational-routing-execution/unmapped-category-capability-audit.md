@@ -94,3 +94,67 @@
 ⛔ 某 category 應該以多少比例進 Face
 ⇒ 兩者都需要真實 Layer-0 traffic
 ```
+
+---
+
+# ⚠️ 重大更正（2026-08-29，逐筆 census 之後）
+
+## 上面「六個條件診斷分類 → 21 筆缺口」的推論**在 row level 不成立**
+
+逐筆查完 21 筆才發現：**它們大多帶兩個 category**，第二個是有 mapping 的。
+而 `_knowledge_category` 回的是**全部** categories，nomination 迴圈會逐個試——
+所以「某個 category 沒 mapping」**不等於**「這筆知識無法被提名」。
+
+```text
+3490 合約為什麼不能發送簽約邀請  條件診斷：合約 ／ **狀態判斷** → contract_diag  ✅ 可提名
+3497 已付款但帳單狀態沒有更新    條件診斷：付款 ／ **繳費金流排障** → billing_flow ✅
+3503 發票為什麼沒有開出來        條件診斷：發票 ／ **發票** → billing_invoice     ✅
+3505 為什麼不能新增物件          條件診斷：物件 ／ **物件操作引導** → estate_guide ✅
+3507 物件為什麼不能建立合約      → estate_diag, contract_diag                     ✅
+```
+
+### 真正的 row-level 孤兒只有 **2 筆**
+
+```text
+3508  IoT 廠商帳號綁定失敗       僅 條件診斷：IoT     form_fill／jgb_iot_diagnosis
+      ⇒ **已是不變量 1 的明文豁免**（「表單為廠商選擇分流 by design」）
+3509  訂閱扣款失敗導致功能異常   僅 條件診斷：訂閱    direct_answer、無 form_id
+      ⇒ **唯一未被涵蓋、也未被豁免的一筆**
+```
+
+⇒ 實際缺口是 **1 筆知識**，不是 21 筆。
+
+## 連帶：`make audit` 不變量 1 通過是**正確的**
+
+它以 **row level** 判「動作知識必有面向接管或明確豁免」——這正是對的層級。
+我先前以 category level 推論才得到相反的印象。
+
+## 我在這條線上重複犯的錯（記下來，避免第三次）
+
+```text
+① 21.5% 被寫成「production 覆蓋上限」——實為 KB configuration coverage
+② 「六個條件診斷分類零 mapping」被推成「21 筆知識無法提名」——實為 1 筆
+共同形狀：**用 category 層的事實去推 row 層的結論**，
+而 nomination 實際上是 row 層、逐 category 迴圈的行為。
+⇒ 往後任何 category 層統計，都必須先在 row 層驗證再下結論。
+```
+
+## 修正後的 disposition
+
+```text
+3509「訂閱扣款失敗導致功能異常」→ **AMBIGUOUS，需產品裁定**
+  ・它是 direct_answer 且答案自足（已寫明處理方式：到訂閱方案頁確認狀態與付款）
+  ・「訂閱」目前**沒有**任何 Face，也沒有 responsibility contract
+  ⇒ 是要新增 Face、掛到既有 Face、還是維持單發即可？這是產品能力決定，不是設定缺陷。
+3508 → **OWNER_EXISTS（by design 豁免）**，不動。
+其餘 19 筆 → **OWNER_EXISTS**，已可經第二個 category 提名，⛔ 不需補 mapping。
+```
+
+## 另一個獨立事實：responsibility contract 幾乎不存在
+
+```text
+22 個面向中，只有 **bill_diagnosis／billing_anomaly 兩個**宣告了 responsibility。
+其餘 20 個沒有任何 machine-readable 的 accepts／excludes／delegates。
+⇒ 「逐筆對 existing responsibility contract 做 ownership audit」目前**做不到**——
+  可比對的契約只有兩份。ownership 只能從 persona 自然語言推，那不是機器證據。
+```
