@@ -249,6 +249,28 @@ else
   echo "✅ PASS（含 A／A'／B／C／C' 五形狀 ＋ 兩組突變控制）"
 fi
 
+echo "═══ 不變量 10：instance applicability 的三態資料契約（U1／P1a）═══"
+# 源起：決定「該不該由 Face 擁有」的屬性——「回答這題需不需要使用者自己的資料」——
+# **沒有被任何欄位記錄**。架構早就留了位置（grounding_scope.requires_instance_reference），
+# 但實查宣告數＝0 ⇒ instance gate 條件 C 恆為 False
+# ⇒ 授權機制是在一個**授權輸入結構性缺席**的系統上被評估的。
+# 守兩件事：①值域封閉（只准 instance／general，⛔ 不猜變體）
+#          ②讀取唯一化（宣告鍵只能經 services/instance_applicability.py 讀，
+#            否則遲早出現「缺宣告當 general」或「用 form_id 推導」的 fallback）
+# ⚠️ 本不變量**不要求 coverage**：P1a 只建契約，population 是 P1b。
+IA_CHECK="$REPO/scripts/audit/checks/instance_applicability_contract.py"
+if ! python3 "$IA_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 10 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$IA_CHECK" --self-test
+  FAIL=1
+elif ! IA_OUT=$(python3 "$IA_CHECK" 2>&1); then
+  echo "$IA_OUT"
+  FAIL=1
+else
+  echo "$IA_OUT"
+  echo "✅ PASS（含值域變體與越權讀取的正控制）"
+fi
+
 echo ""
 if [ $FAIL -eq 0 ]; then
   echo "🎉 稽核通過（$(date +%Y-%m-%d))"
