@@ -10,8 +10,10 @@
   "A",
   "A-epoch2",
   "B",
+  "B-epoch2",
   "C-1",
-  "C-4"
+  "C-4",
+  "C-5"
  ],
  "records": [
   {
@@ -2350,22 +2352,1026 @@
     "authoritative owner/capability not established"
    ],
    "review_basis_digest": "d560d945c80e6cb7c2e106d31968c053a82cb98927a92f87df0fe119f0489965"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3499",
+   "batch": "B",
+   "epoch": 2,
+   "supersedes_digest": "ebf4d0aa4c8e6fea0de1d4bcab02235491c276f415aaa62982334e1793dafc92",
+   "superseding_axes": [
+    "I_IDENTITY",
+    "II_MEMBERSHIP",
+    "IV_OWNERSHIP",
+    "VERDICT"
+   ],
+   "members": [
+    3499
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "「特定帳單手動到帳／標記已收款失敗」有**獨立 deterministic sub-intent**"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3499": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py:602::_diagnose_manual_complete"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:602::_diagnose_manual_complete",
+     "claim_supported": "具名 deterministic 分支存在",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:427::diagnose_bill（elif 關鍵字 ['到帳','收款','標記已收','手動']）",
+     "claim_supported": "dispatch **可達**該分支——⚠️ 依本 repo 紀律：branch exists ≠ branch reachable，故一併查 dispatch",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3499）：instance_applicability=instance",
+     "claim_supported": "沿用既有 authoritative declaration（P1e-1）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3499，34 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_epoch_note": "⚠️ epoch 1 的 INSUFFICIENT_EVIDENCE 在其當時 basis 下**合法**，⛔ 不改寫、⛔ 不改 digest。新證據足以改變 I／IV 與整體 verdict ⇒ ⛔ 不得只當旁註。",
+   "review_basis_digest": "6e3c8be0531b95fe1184c7ecad0cb29971bfc4d6478185951f672f4707769565"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3501",
+   "batch": "C-5",
+   "epoch": 1,
+   "members": [
+    3501
+   ],
+   "proposal_members": [
+    3501
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "與 C-① 六群同形：具名分支 ＋ 可達 dispatch"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3501": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "diagnose_payment_logs ／ rag-orchestrator/services/jgb/payments.py:120::_diagnose_auto_pay_failure"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/payments.py:120::_diagnose_auto_pay_failure",
+     "claim_supported": "具名分支承接「自動扣款失敗」",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "payments.py:21::diagnose_payment_logs（關鍵字 ['自動扣款','自動付款','auto']）",
+     "claim_supported": "dispatch 可達；與 3497(P01)／3500(P02) 為同層三兄弟、各自分流",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3501）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3501，35 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "review_basis_digest": "74e4d294802871a01fba0969f8f7a097b348f57178f91c23d48806db7b4fbe6f"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3502",
+   "batch": "C-5",
+   "epoch": 1,
+   "members": [
+    3502
+   ],
+   "proposal_members": [
+    3502
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "與 C-① 六群同形：具名分支 ＋ 可達 dispatch"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3502": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "diagnose_bill ／ rag-orchestrator/services/jgb/bills.py:625::_diagnose_atm_expired"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:625::_diagnose_atm_expired",
+     "claim_supported": "具名分支承接「虛擬帳號過期／轉帳失敗」",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "bills.py:427::diagnose_bill（_ATM_KEYWORDS=('虛擬帳號','帳號過期','ATM','轉帳失敗')）",
+     "claim_supported": "dispatch 可達",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3502）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3502，232 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "review_basis_digest": "46218cd0a8c30d3c35fb69a0552dbf7b9e55d60f949cb223c9b519fec18e1c45"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3490",
+   "batch": "C-5",
+   "epoch": 1,
+   "members": [
+    3490,
+    3368
+   ],
+   "proposal_members": [
+    3490
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "canonical responsibility：判斷／診斷某份合約為何不能發送簽約邀請，以及目前是否符合發送條件。"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3490": "ANSWER_KNOWLEDGE（active）",
+      "3368": "ANSWER_KNOWLEDGE（active；answer 空）——經 CG-ROW-3368 的 MERGE 併入"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "rag-orchestrator/services/jgb/contracts.py:128::check_can_invite"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:128::check_can_invite",
+     "claim_supported": "具名 eligibility check 承接 invite",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['邀請', '發送', '簽約邀請', 'invite'] → invite",
+     "claim_supported": "兩列（3490／3368）以其 summary 形狀的問句進來皆 deterministic 落同一 branch——依 P-C8：answer 空／非空、positive／negative 措辭 ⛔ 不足以建立兩個 responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3490）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3490，37 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "⚠️ 依 P-C7：rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流） ⛔ 不讀 row id；capability binding 由 utterance 決定，⛔ 不因「code 沒出現 row id」判定 capability 不存在"
+   ],
+   "evidence_gaps": [],
+   "seals_merge_from": [
+    "CG-ROW-3368"
+   ],
+   "_bookkeeping": "CG-ROW-3490 只是本次 P3 的 joint target（review bookkeeping）——⛔ 不代表最終 responsibility identity 綁在 3490 這一列。",
+   "review_basis_digest": "8a3cfc6a7088966e1b72e212972c61ed6eb3a0895b4d1a63fbd8adfcfeed7db2"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3493",
+   "batch": "C-5",
+   "epoch": 1,
+   "members": [
+    3493,
+    3370
+   ],
+   "proposal_members": [
+    3493
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "canonical responsibility：判斷／診斷某份合約能否提前解約，以及不能的原因。⚠️「可以提前解約嗎」與「為什麼不能提前解約」是同一 eligibility responsibility 的 positive／negative phrasing。"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3493": "ANSWER_KNOWLEDGE（active）",
+      "3370": "ANSWER_KNOWLEDGE（active；answer 空）——經 CG-ROW-3370 的 MERGE 併入"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "rag-orchestrator/services/jgb/contracts.py:257::check_can_early_termination"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:257::check_can_early_termination",
+     "claim_supported": "具名 eligibility check 承接 early_termination",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['提前', '解約', '終止', 'early'] → early_termination",
+     "claim_supported": "兩列（3493／3370）以其 summary 形狀的問句進來皆 deterministic 落同一 branch——依 P-C8：answer 空／非空、positive／negative 措辭 ⛔ 不足以建立兩個 responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3493）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3493，21 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "⚠️ 依 P-C7：rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流） ⛔ 不讀 row id；capability binding 由 utterance 決定，⛔ 不因「code 沒出現 row id」判定 capability 不存在"
+   ],
+   "evidence_gaps": [],
+   "seals_merge_from": [
+    "CG-ROW-3370"
+   ],
+   "_bookkeeping": "CG-ROW-3493 只是本次 P3 的 joint target（review bookkeeping）——⛔ 不代表最終 responsibility identity 綁在 3493 這一列。",
+   "review_basis_digest": "6584f2c75538c988d6674345918b17dcf2a8fafb635e5f6b3d37afcfa4e3d456"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3494",
+   "batch": "C-5",
+   "epoch": 1,
+   "members": [
+    3494,
+    3371
+   ],
+   "proposal_members": [
+    3494
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "canonical responsibility：判斷／診斷某份合約能否續約，以及不能的原因。"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3494": "ANSWER_KNOWLEDGE（active）",
+      "3371": "ANSWER_KNOWLEDGE（active；answer 空）——經 CG-ROW-3371 的 MERGE 併入"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "rag-orchestrator/services/jgb/contracts.py:294::check_can_renew"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:294::check_can_renew",
+     "claim_supported": "具名 eligibility check 承接 renew",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['續約', 'renew', '延長'] → renew",
+     "claim_supported": "兩列（3494／3371）以其 summary 形狀的問句進來皆 deterministic 落同一 branch——依 P-C8：answer 空／非空、positive／negative 措辭 ⛔ 不足以建立兩個 responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3494）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3494，20 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "⚠️ 依 P-C7：rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流） ⛔ 不讀 row id；capability binding 由 utterance 決定，⛔ 不因「code 沒出現 row id」判定 capability 不存在"
+   ],
+   "evidence_gaps": [],
+   "seals_merge_from": [
+    "CG-ROW-3371"
+   ],
+   "_bookkeeping": "CG-ROW-3494 只是本次 P3 的 joint target（review bookkeeping）——⛔ 不代表最終 responsibility identity 綁在 3494 這一列。",
+   "review_basis_digest": "37c6ca63ee8c6744959696a1db0d5b445cc191e330cd541220809e076377074d"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3510",
+   "batch": "C-5",
+   "epoch": 1,
+   "members": [
+    3510,
+    3372
+   ],
+   "proposal_members": [
+    3510
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "canonical responsibility：查詢某份合約目前狀態。"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3510": "ANSWER_KNOWLEDGE（active）",
+      "3372": "ANSWER_KNOWLEDGE（active；answer 空）——經 CG-ROW-3372 的 MERGE 併入"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "rag-orchestrator/services/jgb/contracts.py:744::_format_status_response"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:744::_format_status_response",
+     "claim_supported": "兩列宣稱的 responsibility 本身就是「查合約目前狀態」，與該 fallback 的 deterministic semantic output **正面一致** ⇒ 在此二列足以支持 ownership",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：五組關鍵字皆未命中 → _format_status_response",
+     "claim_supported": "兩列皆 deterministic 落同一 branch（P-C8）",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3510）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3510，22 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "⚠️ **尺度限制**：`_format_status_response` 作為 fallback **本身** ⛔ 不是 ownership proof。它在 3372／3510 足夠，是因為 claimed responsibility 與 fallback 的 semantic output 正面一致；⛔ 不得反過來替 3513（不能取消合約）或 3507（不能建立合約）背書——那兩列是**錯誤地跌進** fallback。"
+   ],
+   "evidence_gaps": [],
+   "seals_merge_from": [
+    "CG-ROW-3372"
+   ],
+   "_bookkeeping": "CG-ROW-3510 只是本次 P3 的 joint target——⛔ 不代表最終 identity 綁在 3510。",
+   "review_basis_digest": "e03e8e67470b0738f2557cd18d23b053125fa679dc1f23319a64f720f5646a80"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3491",
+   "batch": "C-5",
+   "epoch": 1,
+   "members": [
+    3491
+   ],
+   "proposal_members": [
+    3491
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "canonical responsibility：判斷／診斷某份合約能否點交，以及不能的原因。"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3491": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "rag-orchestrator/services/jgb/contracts.py:161::check_can_move_in"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:161::check_can_move_in",
+     "claim_supported": "具名 eligibility check 承接 move_in",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['點交', 'move_in', '入住'] → move_in",
+     "claim_supported": "deterministic 落此 branch",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3491）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3491，24 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "⚠️ ⛔ 與 3491／3492 的另一列**不** merge：雖共用同一 `_build_response` dispatcher，但進的是**不同 deterministic branch、不同 eligibility predicate**"
+   ],
+   "evidence_gaps": [],
+   "review_basis_digest": "6aacc3816ca9dd88746a21a77b36a46b20202eed921387dfd1c8fbccafaf6fce"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3492",
+   "batch": "C-5",
+   "epoch": 1,
+   "members": [
+    3492
+   ],
+   "proposal_members": [
+    3492
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "canonical responsibility：判斷／診斷某份合約能否點退，以及不能的原因。"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3492": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "rag-orchestrator/services/jgb/contracts.py:203::check_can_move_out"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:203::check_can_move_out",
+     "claim_supported": "具名 eligibility check 承接 move_out",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['點退', 'move_out', '退租', '搬離'] → move_out",
+     "claim_supported": "deterministic 落此 branch",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3492）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3492，46 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "⚠️ ⛔ 與 3491／3492 的另一列**不** merge：雖共用同一 `_build_response` dispatcher，但進的是**不同 deterministic branch、不同 eligibility predicate**"
+   ],
+   "evidence_gaps": [],
+   "review_basis_digest": "92ce5906ce6a5b5a110a454e65d5eed6dcaf5ea7b7d869a2149e07a8177a0661"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3368",
+   "batch": "C-5",
+   "epoch": 1,
+   "members": [
+    3368
+   ],
+   "proposal_members": [
+    3368
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "NOT_DISTINCT_AS_SINGLETON",
+     "reason": "semantic intent 與 CG-ROW-3490 等價，且 deterministic 落同一 branch（invite）——依 P-C8，answer 空／非空 ⛔ 不是 responsibility boundary"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "BELONGS_TO_SHARED_RESPONSIBILITY",
+     "per_row": {
+      "3368": "併入 CG-ROW-3490 的共同 responsibility（該 target 已於本輪 sealed）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "SUPPORTED_VIA_MERGE_TARGET",
+     "owner": "見 CG-ROW-3490"
+    }
+   },
+   "verdict": "MERGE_WITH_OTHER",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['邀請', '發送', '簽約邀請', 'invite'] → invite",
+     "claim_supported": "3368 與 CG-ROW-3490 的目標列落**同一** deterministic branch",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3368）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "merge_target": "CG-ROW-3490",
+   "joint_seal_pending": false,
+   "joint_seal_closed_at": "2026-08-29",
+   "joint_seal_closed_by": "CG-ROW-3490（同輪 C-5 裁定）",
+   "_seal_note": "⚠️ verdict 維持 MERGE_WITH_OTHER——⛔ 不得改寫成 CONFIRMED_RESPONSIBILITY。",
+   "review_basis_digest": "6874e56b06354f56aed6d086b473c64ad11f783f3747d7246f1b0919a6357ffd"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3370",
+   "batch": "C-5",
+   "epoch": 1,
+   "members": [
+    3370
+   ],
+   "proposal_members": [
+    3370
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "NOT_DISTINCT_AS_SINGLETON",
+     "reason": "semantic intent 與 CG-ROW-3493 等價，且 deterministic 落同一 branch（early_termination）——依 P-C8，answer 空／非空 ⛔ 不是 responsibility boundary"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "BELONGS_TO_SHARED_RESPONSIBILITY",
+     "per_row": {
+      "3370": "併入 CG-ROW-3493 的共同 responsibility（該 target 已於本輪 sealed）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "SUPPORTED_VIA_MERGE_TARGET",
+     "owner": "見 CG-ROW-3493"
+    }
+   },
+   "verdict": "MERGE_WITH_OTHER",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['提前', '解約', '終止', 'early'] → early_termination",
+     "claim_supported": "3370 與 CG-ROW-3493 的目標列落**同一** deterministic branch",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3370）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "merge_target": "CG-ROW-3493",
+   "joint_seal_pending": false,
+   "joint_seal_closed_at": "2026-08-29",
+   "joint_seal_closed_by": "CG-ROW-3493（同輪 C-5 裁定）",
+   "_seal_note": "⚠️ verdict 維持 MERGE_WITH_OTHER——⛔ 不得改寫成 CONFIRMED_RESPONSIBILITY。",
+   "review_basis_digest": "c3adcc9257a765cb5baea208be402e74ac0776c0bb58ece387f1e094549b7938"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3371",
+   "batch": "C-5",
+   "epoch": 1,
+   "members": [
+    3371
+   ],
+   "proposal_members": [
+    3371
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "NOT_DISTINCT_AS_SINGLETON",
+     "reason": "semantic intent 與 CG-ROW-3494 等價，且 deterministic 落同一 branch（renew）——依 P-C8，answer 空／非空 ⛔ 不是 responsibility boundary"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "BELONGS_TO_SHARED_RESPONSIBILITY",
+     "per_row": {
+      "3371": "併入 CG-ROW-3494 的共同 responsibility（該 target 已於本輪 sealed）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "SUPPORTED_VIA_MERGE_TARGET",
+     "owner": "見 CG-ROW-3494"
+    }
+   },
+   "verdict": "MERGE_WITH_OTHER",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['續約', 'renew', '延長'] → renew",
+     "claim_supported": "3371 與 CG-ROW-3494 的目標列落**同一** deterministic branch",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3371）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "merge_target": "CG-ROW-3494",
+   "joint_seal_pending": false,
+   "joint_seal_closed_at": "2026-08-29",
+   "joint_seal_closed_by": "CG-ROW-3494（同輪 C-5 裁定）",
+   "_seal_note": "⚠️ verdict 維持 MERGE_WITH_OTHER——⛔ 不得改寫成 CONFIRMED_RESPONSIBILITY。",
+   "review_basis_digest": "eca903d149b0fc8fbc6c12c2c26ddb4922557dae16dae6075ee2a268912ce96a"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3372",
+   "batch": "C-5",
+   "epoch": 1,
+   "members": [
+    3372
+   ],
+   "proposal_members": [
+    3372
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "NOT_DISTINCT_AS_SINGLETON",
+     "reason": "semantic intent 與 CG-ROW-3510 等價，且 deterministic 落同一 branch（status fallback）——依 P-C8，answer 空／非空 ⛔ 不是 responsibility boundary"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "BELONGS_TO_SHARED_RESPONSIBILITY",
+     "per_row": {
+      "3372": "併入 CG-ROW-3510 的共同 responsibility（該 target 已於本輪 sealed）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "SUPPORTED_VIA_MERGE_TARGET",
+     "owner": "見 CG-ROW-3510"
+    }
+   },
+   "verdict": "MERGE_WITH_OTHER",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['（五組關鍵字皆未命中）'] → status fallback",
+     "claim_supported": "3372 與 CG-ROW-3510 的目標列落**同一** deterministic branch",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3372）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "merge_target": "CG-ROW-3510",
+   "joint_seal_pending": false,
+   "joint_seal_closed_at": "2026-08-29",
+   "joint_seal_closed_by": "CG-ROW-3510（同輪 C-5 裁定）",
+   "_seal_note": "⚠️ verdict 維持 MERGE_WITH_OTHER——⛔ 不得改寫成 CONFIRMED_RESPONSIBILITY。",
+   "review_basis_digest": "bbfc29d1806afbd85c6822c085f4e15fa0d0bc3fdc80557c9b83b1b7e13ec253"
   }
  ],
  "_level_a_v2_census_interim": {
   "level_a_v2_rows": 9,
-  "confirmed_responsibility": 8,
-  "insufficient_evidence": 1,
-  "unresolved_rows": [
-   3499
-  ],
-  "may_claim": "8 個 responsibility 已確認；第 9 列 3499 的 responsibility identity 尚未建立。",
+  "confirmed_responsibility": 9,
+  "insufficient_evidence": 0,
+  "unresolved_rows": [],
+  "may_claim": "LEVEL_A_V2 的 9 列**各自**都已取得 CONFIRMED_RESPONSIBILITY（3499 於 epoch 2 補齊）。",
   "must_not_claim": [
-   "LEVEL_A_V2 = 9 unique responsibilities ✅",
+   "LEVEL_A_V2 = 9 unique responsibilities ✅（⛔ 仍未成立）",
    "LEVEL_A_V2 only has 8 responsibilities"
   ],
-  "why": "3499 可能最後是第九個，也可能需要 merge 到另一 responsibility——現在不知道。",
-  "a05_status": "PAUSED —— denominator ⛔ 尚不得從 row-count 9 轉成 responsibility-count 9。"
+  "why": "⚠️ 9 個 group 各自 confirmed ⛔ 不等於 9 個**相異** responsibility——R10-P review 尚未完成，Batch C 仍可能提供**跨群 merge evidence**。",
+  "a05_status": "PAUSED —— 相異責任數要等 P5 census（全 47 群裁完、merge 收斂後）才算得出。"
  },
  "_precedents": {
   "_doc": "P3 進行中建立的判準先例（業主 2026-08-29 裁定於 Batch C-①②③）。⚠️ 這些是**後續批次的量尺**，⛔ 不得在 C-④⑤ 被個案推翻。",
@@ -2375,11 +3381,16 @@
   "P-C4_wiring_is_not_responsibility": "不同 row wiring（action vs form）≠ 不同 responsibility——4420／3365 判例。",
   "P-C1a_clarification": "⚠️ **澄清，⛔ 不改歷史 precedent**：P-C1 的第一項應理解為 **authoritative positive instance applicability declaration**，⛔ 不限定來源必須是 reviewed_product_declaration。P1e-1 的 deterministic positive declaration **算**（3495／3496 即現成 precedent）。⛔ 不得把 evidence source 與 authority status 混為一談。",
   "P-C5_dedicated_query_path": "dedicated deterministic query formatter/path can establish responsibility capability; \"diagnose function\" is not required.（3514 判例）",
-  "P-C6_same_builder_is_not_same_responsibility": "same Face/builder establishes owner domain, but if that builder is question-sensitive, same builder alone MUST NOT establish same responsibility identity or alias membership.（3361 判例；T4 判 build_payment_flow_facts = QUESTION_SENSITIVE）"
+  "P-C6_same_builder_is_not_same_responsibility": "same Face/builder establishes owner domain, but if that builder is question-sensitive, same builder alone MUST NOT establish same responsibility identity or alias membership.（3361 判例；T4 判 build_payment_flow_facts = QUESTION_SENSITIVE）",
+  "P-C7_utterance_driven_capability_binding": "production code 不需要知道 knowledge row id，responsibility capability 仍可被確認。必要條件：① responsibility 的 utterance semantics 能 deterministic 命中某 branch；② 該 branch 執行的 capability 與該 responsibility 的 claimed semantics **一致**。⇒ row id 未出現在 code ≠ capability 不存在。⚠️ 反面：utterance 能命中某 branch ≠ responsibility 自動確認——若命中的 branch semantics 與 row 宣稱責任**不一致**，那是 **capability mismatch**，⛔ 不是 ownership evidence。",
+  "P-C8_same_branch_variant_merge": "兩列若 ① applicability 相同 ② semantic responsibility 等價 ③ deterministic 落同一 capability branch，則 answer-empty／answer-bearing、positive／negative 措辭、row wiring 差異，⛔ 不足以建立兩個 responsibility。⚠️「同 branch」單獨仍不夠——**語義等價是必要項**。"
  },
  "_epoch_model": {
   "_doc": "同一 candidate group 可有多個 epoch；**最高 epoch ＝ 當前裁定**。",
   "rule": "epoch > 1 的紀錄必須帶 supersedes_digest（＝該群前一 epoch 的 review_basis_digest）與 superseding_axes；⛔ 舊 epoch 的 verdict／digest／scope 一律保留不覆寫。",
   "why": "舊裁定在其當時的 review_input_scope 下是**合法**的；新證據只新增結論，⛔ 不得讓後見之明抹掉當時的 provenance。"
+ },
+ "_audit_lessons": {
+  "L1_metadata_is_not_capability_census": "`generation_metadata.evidence_detail` ⛔ **不是** capability census 的完整 authority source。它只描述**當時記錄進 metadata** 的證據，⛔ 不能拿來證明「production code 沒有其他 deterministic branch」。⚠️ 本 P3 內連續兩次踩到（Batch A 的 BILL_FACE_BUILDERS、Batch B 的 _diagnose_manual_complete）。處置：⛔ 不因此重開其他已確認 group，**除非**新的 code evidence 會實際改變某個裁定。"
  }
 }

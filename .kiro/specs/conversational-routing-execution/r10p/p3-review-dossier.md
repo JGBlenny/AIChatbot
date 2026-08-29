@@ -8,7 +8,11 @@
 母體      POPULATION 51c04b887a16b05f…／IDSET 00581c42771fa3b0…
 本檔性質  frozen proposal ＋ DB 既有 reviewed 事實的**投影**；⛔ 本檔不代裁
 裁定正本  r10p/p3-verdicts.json（P3 authority record；⛔ proposal 不得反向定義它）
-已裁批次  **A（5）＋A-epoch2（4）＋B（9）＋C-①②③（9）＋C-④（6）已裁**；C-⑤（17）／D（1）仍留空
+已裁批次  **41／47 群已裁**（A5＋A-epoch2(4)＋B9＋B-epoch2(1)＋C-①②③9＋C-④6＋C-⑤13）
+          剩 6 群：3507／3511／3512／3513／4255（capability mismatch 五列）＋ 3498（Batch D）
+  P-C7  capability binding 由 **utterance** 決定，⛔ 不讀 row id ⇒ row id 不在 code ≠ capability 不存在
+        ⚠️ 反面：命中 branch ≠ 責任確認；branch semantics 與宣稱責任不一致 ＝ capability mismatch
+  P-C8  applicability 同 ＋ **語義等價** ＋ 落同一 branch ⇒ answer 空否／正反措辭／wiring ⛔ 不構成兩個責任
 epoch 模型  同群可有多個 epoch，**最高 epoch ＝ 當前裁定**；⛔ 舊 epoch 不得覆寫
             （舊裁定在其當時 scope 下合法，⛔ 不讓後見之明抹掉 provenance）
 判準先例（⛔ 後續批次不得個案推翻，全文見 p3-verdicts.json._precedents）
@@ -22,9 +26,10 @@ epoch 模型  同群可有多個 epoch，**最高 epoch ＝ 當前裁定**；⛔
   P-C5  專屬 deterministic query formatter／path 即可建立 capability，⛔ 不必叫 diagnose
   P-C6  同 builder 只建立 owner domain；builder 若 question-sensitive，
         ⛔ 同 builder 不得推出同 responsibility identity 或 alias membership
-LEVEL_A_V2 期中普查  9 列 → CONFIRMED 8／INSUFFICIENT 1（[3499]）
-  ⛔ 不得宣稱「LEVEL_A_V2 = 9 unique responsibilities」，⛔ 也不得宣稱「只有 8 個」
-  ⇒ A05 維持 PAUSED：denominator ⛔ 尚不得從 row-count 9 轉成 responsibility-count 9
+LEVEL_A_V2 期中普查  9 列 → **9 CONFIRMED**（3499 於 epoch 2 補齊）／0 unresolved
+  ⛔ 仍不得宣稱「LEVEL_A_V2 = 9 unique responsibilities」——9 群各自 confirmed
+     ⛔ 不等於 9 個**相異** responsibility；Batch C 仍可能提供跨群 merge evidence
+  ⇒ A05 維持 PAUSED：相異責任數要等 P5 census（47 群裁完、merge 收斂後）才算得出
 ```
 
 ## 讀法（四條規約）
@@ -913,8 +918,24 @@ review_basis_digest  ebf4d0aa4c8e6fea0de1d4bcab02235491c276f415aaa62982334e1793d
 review_input_scope   本輪 Batch B 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／runtime causal evidence；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
----
+### P3 VERDICT —— epoch 2（補充 review，⛔ 不覆寫 epoch 1）
+```text
+supersedes_digest    ebf4d0aa4c8e6fea0de1d4bcab02235491c276f415aaa62982334e1793dafc92
+superseding_axes     ['I_IDENTITY', 'II_MEMBERSHIP', 'IV_OWNERSHIP', 'VERDICT']
+⚠️ epoch 1 的 INSUFFICIENT_EVIDENCE 在其當時 basis 下**合法**，⛔ 不改寫、⛔ 不改 digest。新證據足以改變 I／IV 與整體 verdict ⇒ ⛔ 不得只當旁註。
 
+I.   IDENTITY        CONFIRMED
+       └ 「特定帳單手動到帳／標記已收款失敗」有**獨立 deterministic sub-intent**
+II.  MEMBERSHIP      CONFIRMED（3499：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py:602::_diagnose_manual_complete
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  6e3c8be0531b95fe1184c7ecad0cb29971bfc4d6478185951f672f4707769565
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
+```
+
+---
 ## `CG-ROW-3519`
 
 ### proposal_basis
@@ -1468,21 +1489,21 @@ HINT_ONLY  same categories  「狀態判斷」⇒ [3368, 3370, 3371, 3372]
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        NOT_DISTINCT_AS_SINGLETON
+       └ semantic intent 與 CG-ROW-3490 等價，且 deterministic 落同一 branch（invite）——依 P-C8，answer 空／非空 ⛔ 不是 responsibility boundary
+II.  MEMBERSHIP      BELONGS_TO_SHARED_RESPONSIBILITY（3368：併入 CG-ROW-3490 的共同 responsibility（該 target 已於本輪 sealed））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       SUPPORTED_VIA_MERGE_TARGET　owner=見 CG-ROW-3490
+VERDICT              **MERGE_WITH_OTHER** → CG-ROW-3490（joint_seal_pending=**False**）
+       └ verdict 維持 MERGE_WITH_OTHER——⛔ 不得改寫成 CONFIRMED_RESPONSIBILITY。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  6874e56b06354f56aed6d086b473c64ad11f783f3747d7246f1b0919a6357ffd
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -1530,21 +1551,21 @@ HINT_ONLY  same categories  「狀態判斷」⇒ [3368, 3370, 3371, 3372]
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        NOT_DISTINCT_AS_SINGLETON
+       └ semantic intent 與 CG-ROW-3493 等價，且 deterministic 落同一 branch（early_termination）——依 P-C8，answer 空／非空 ⛔ 不是 responsibility boundary
+II.  MEMBERSHIP      BELONGS_TO_SHARED_RESPONSIBILITY（3370：併入 CG-ROW-3493 的共同 responsibility（該 target 已於本輪 sealed））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       SUPPORTED_VIA_MERGE_TARGET　owner=見 CG-ROW-3493
+VERDICT              **MERGE_WITH_OTHER** → CG-ROW-3493（joint_seal_pending=**False**）
+       └ verdict 維持 MERGE_WITH_OTHER——⛔ 不得改寫成 CONFIRMED_RESPONSIBILITY。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  c3adcc9257a765cb5baea208be402e74ac0776c0bb58ece387f1e094549b7938
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -1592,21 +1613,21 @@ HINT_ONLY  same categories  「狀態判斷」⇒ [3368, 3370, 3371, 3372]
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        NOT_DISTINCT_AS_SINGLETON
+       └ semantic intent 與 CG-ROW-3494 等價，且 deterministic 落同一 branch（renew）——依 P-C8，answer 空／非空 ⛔ 不是 responsibility boundary
+II.  MEMBERSHIP      BELONGS_TO_SHARED_RESPONSIBILITY（3371：併入 CG-ROW-3494 的共同 responsibility（該 target 已於本輪 sealed））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       SUPPORTED_VIA_MERGE_TARGET　owner=見 CG-ROW-3494
+VERDICT              **MERGE_WITH_OTHER** → CG-ROW-3494（joint_seal_pending=**False**）
+       └ verdict 維持 MERGE_WITH_OTHER——⛔ 不得改寫成 CONFIRMED_RESPONSIBILITY。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  eca903d149b0fc8fbc6c12c2c26ddb4922557dae16dae6075ee2a268912ce96a
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -1654,21 +1675,21 @@ HINT_ONLY  same categories  「狀態判斷」⇒ [3368, 3370, 3371, 3372]
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        NOT_DISTINCT_AS_SINGLETON
+       └ semantic intent 與 CG-ROW-3510 等價，且 deterministic 落同一 branch（status fallback）——依 P-C8，answer 空／非空 ⛔ 不是 responsibility boundary
+II.  MEMBERSHIP      BELONGS_TO_SHARED_RESPONSIBILITY（3372：併入 CG-ROW-3510 的共同 responsibility（該 target 已於本輪 sealed））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       SUPPORTED_VIA_MERGE_TARGET　owner=見 CG-ROW-3510
+VERDICT              **MERGE_WITH_OTHER** → CG-ROW-3510（joint_seal_pending=**False**）
+       └ verdict 維持 MERGE_WITH_OTHER——⛔ 不得改寫成 CONFIRMED_RESPONSIBILITY。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  bbfc29d1806afbd85c6822c085f4e15fa0d0bc3fdc80557c9b83b1b7e13ec253
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -1716,21 +1737,23 @@ HINT_ONLY  same categories  「條件診斷：合約,狀態判斷」⇒ [3490, 3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
+⚠️ 依 P-C7：rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流） ⛔ 不讀 row id；capability binding 由 utterance 決定，⛔ 不因「code 沒出現 row id」判定 capability 不存在
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ canonical responsibility：判斷／診斷某份合約為何不能發送簽約邀請，以及目前是否符合發送條件。
+II.  MEMBERSHIP      CONFIRMED（3490：ANSWER_KNOWLEDGE（active）／3368：ANSWER_KNOWLEDGE（active；answer 空）——經 CG-ROW-3368 的 MERGE 併入）
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=rag-orchestrator/services/jgb/contracts.py:128::check_can_invite
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ 封存併入：['CG-ROW-3368']（該群 verdict 維持 MERGE_WITH_OTHER）
+       └ CG-ROW-3490 只是本次 P3 的 joint target（review bookkeeping）——⛔ 不代表最終 responsibility identity 綁在 3490 這一列。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  8a3cfc6a7088966e1b72e212972c61ed6eb3a0895b4d1a63fbd8adfcfeed7db2
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -1778,21 +1801,21 @@ HINT_ONLY  same categories  「條件診斷：合約,狀態判斷」⇒ [3490, 3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
+⚠️ ⛔ 與 3491／3492 的另一列**不** merge：雖共用同一 `_build_response` dispatcher，但進的是**不同 deterministic branch、不同 eligibility predicate**
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ canonical responsibility：判斷／診斷某份合約能否點交，以及不能的原因。
+II.  MEMBERSHIP      CONFIRMED（3491：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=rag-orchestrator/services/jgb/contracts.py:161::check_can_move_in
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  6aacc3816ca9dd88746a21a77b36a46b20202eed921387dfd1c8fbccafaf6fce
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -1840,21 +1863,21 @@ HINT_ONLY  same categories  「條件診斷：合約,狀態判斷」⇒ [3490, 3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
+⚠️ ⛔ 與 3491／3492 的另一列**不** merge：雖共用同一 `_build_response` dispatcher，但進的是**不同 deterministic branch、不同 eligibility predicate**
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ canonical responsibility：判斷／診斷某份合約能否點退，以及不能的原因。
+II.  MEMBERSHIP      CONFIRMED（3492：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=rag-orchestrator/services/jgb/contracts.py:203::check_can_move_out
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  92ce5906ce6a5b5a110a454e65d5eed6dcaf5ea7b7d869a2149e07a8177a0661
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -1902,21 +1925,23 @@ HINT_ONLY  same categories  「條件診斷：合約,狀態判斷」⇒ [3490, 3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
+⚠️ 依 P-C7：rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流） ⛔ 不讀 row id；capability binding 由 utterance 決定，⛔ 不因「code 沒出現 row id」判定 capability 不存在
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ canonical responsibility：判斷／診斷某份合約能否提前解約，以及不能的原因。⚠️「可以提前解約嗎」與「為什麼不能提前解約」是同一 eligibility responsibility 的 positive／negative phrasing。
+II.  MEMBERSHIP      CONFIRMED（3493：ANSWER_KNOWLEDGE（active）／3370：ANSWER_KNOWLEDGE（active；answer 空）——經 CG-ROW-3370 的 MERGE 併入）
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=rag-orchestrator/services/jgb/contracts.py:257::check_can_early_termination
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ 封存併入：['CG-ROW-3370']（該群 verdict 維持 MERGE_WITH_OTHER）
+       └ CG-ROW-3493 只是本次 P3 的 joint target（review bookkeeping）——⛔ 不代表最終 responsibility identity 綁在 3493 這一列。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  6584f2c75538c988d6674345918b17dcf2a8fafb635e5f6b3d37afcfa4e3d456
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -1964,21 +1989,23 @@ HINT_ONLY  same categories  「條件診斷：合約,狀態判斷」⇒ [3490, 3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
+⚠️ 依 P-C7：rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流） ⛔ 不讀 row id；capability binding 由 utterance 決定，⛔ 不因「code 沒出現 row id」判定 capability 不存在
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ canonical responsibility：判斷／診斷某份合約能否續約，以及不能的原因。
+II.  MEMBERSHIP      CONFIRMED（3494：ANSWER_KNOWLEDGE（active）／3371：ANSWER_KNOWLEDGE（active；answer 空）——經 CG-ROW-3371 的 MERGE 併入）
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=rag-orchestrator/services/jgb/contracts.py:294::check_can_renew
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ 封存併入：['CG-ROW-3371']（該群 verdict 維持 MERGE_WITH_OTHER）
+       └ CG-ROW-3494 只是本次 P3 的 joint target（review bookkeeping）——⛔ 不代表最終 responsibility identity 綁在 3494 這一列。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  37c6ca63ee8c6744959696a1db0d5b445cc191e330cd541220809e076377074d
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -2156,21 +2183,20 @@ HINT_ONLY  same categories  「條件診斷：付款,繳費金流排障」⇒ [3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ 與 C-① 六群同形：具名分支 ＋ 可達 dispatch
+II.  MEMBERSHIP      CONFIRMED（3501：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=diagnose_payment_logs ／ rag-orchestrator/services/jgb/payments.py:120::_diagnose_auto_pay_failure
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  74e4d294802871a01fba0969f8f7a097b348f57178f91c23d48806db7b4fbe6f
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -2218,21 +2244,20 @@ HINT_ONLY  same categories  「條件診斷：付款,繳費金流排障」⇒ [3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ 與 C-① 六群同形：具名分支 ＋ 可達 dispatch
+II.  MEMBERSHIP      CONFIRMED（3502：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=diagnose_bill ／ rag-orchestrator/services/jgb/bills.py:625::_diagnose_atm_expired
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  46218cd0a8c30d3c35fb69a0552dbf7b9e55d60f949cb223c9b519fec18e1c45
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -2661,21 +2686,23 @@ HINT_ONLY  same categories  「條件診斷：合約,狀態判斷」⇒ [3490, 3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
+⚠️ **尺度限制**：`_format_status_response` 作為 fallback **本身** ⛔ 不是 ownership proof。它在 3372／3510 足夠，是因為 claimed responsibility 與 fallback 的 semantic output 正面一致；⛔ 不得反過來替 3513（不能取消合約）或 3507（不能建立合約）背書——那兩列是**錯誤地跌進** fallback。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ canonical responsibility：查詢某份合約目前狀態。
+II.  MEMBERSHIP      CONFIRMED（3510：ANSWER_KNOWLEDGE（active）／3372：ANSWER_KNOWLEDGE（active；answer 空）——經 CG-ROW-3372 的 MERGE 併入）
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=rag-orchestrator/services/jgb/contracts.py:744::_format_status_response
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ 封存併入：['CG-ROW-3372']（該群 verdict 維持 MERGE_WITH_OTHER）
+       └ CG-ROW-3510 只是本次 P3 的 joint target——⛔ 不代表最終 identity 綁在 3510。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  e03e8e67470b0738f2557cd18d23b053125fa679dc1f23319a64f720f5646a80
+review_input_scope   本輪 C-⑤ 摘要 ＋ 其中明示引用的 production dispatch 實查（bills.py::diagnose_bill、payments.py::diagnose_payment_logs、contracts.py::_build_response 的關鍵字分流與具名 check）；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
