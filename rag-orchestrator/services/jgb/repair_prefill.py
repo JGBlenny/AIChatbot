@@ -71,8 +71,14 @@ def _estate_display(row: Dict[str, Any]) -> str:
 
 
 def _estate_candidate(row: Dict[str, Any]) -> Dict[str, Any]:
-    """多租約 → 插點 A 候選（id=estate_id，label=顯示字串）。"""
-    return {"id": row.get("estate_id"), "label": _estate_display(row)}
+    """多租約 → 插點 A 候選（id=estate_id，label=顯示字串）。
+
+    ⚠️ `slot` 明示目標槽位：插點 A 原本一律填 `required_slots[0]`，
+    那對本面向**碰巧**正確（[0]＝estate_id），但對分類候選是錯的。
+    來源端宣告目標，比讓消費端猜索引可靠（2026-08-29 11.5 逐槽稽核）。
+    """
+    return {"id": row.get("estate_id"), "label": _estate_display(row),
+            "slot": "estate_id"}
 
 
 def _classification_candidates(recognition: Dict[str, Any],
@@ -91,7 +97,10 @@ def _classification_candidates(recognition: Dict[str, Any],
         if extra and extra not in labels:
             labels.append(extra)
     labels = labels[:cap]
-    return [{"id": label, "label": label} for label in labels]
+    # ⚠️ `slot="category"`＝**顯示槽**，⛔ 不是 `category_id`：這裡的 id 就是中文名稱，
+    #    沒有真正的分類編號。填顯示槽讓 required_slots 仍未齊 ⇒ 引擎繼續追問，
+    #    **失敗方向朝向「再問一次」而不是「把名稱當 id 送進 API」**。
+    return [{"id": label, "label": label, "slot": "category"} for label in labels]
 
 
 async def resolve_repair_classification(

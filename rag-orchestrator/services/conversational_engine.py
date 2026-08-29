@@ -605,27 +605,44 @@ class ConversationalEngine:
                     await self._save(session_id, state)
                     return {"kind": "ask", "answer": _ask_text}
                 gscope = config.grounding_scope or {}
-                slot = (gscope.get("required_slots") or [None])[0]  # 讀設定，不硬編面向欄位
+                # ⚠️ **候選自帶目標槽位優先**（2026-08-29 11.5 逐槽稽核逼出）：
+                #    原碼一律填 `required_slots[0]`，等於假設「候選永遠對應第一個槽位」。
+                #    對 repair_create 不成立——它的候選有兩種來源：
+                #      ・多租約 → `_estate_candidate`（id=estate_id）          → 槽位 estate_id ✅
+                #      ・Vision 信心不足 → `_classification_candidates`
+                #        （**id 就是中文名稱字串**，如「冷氣」）              → 槽位 **不是** estate_id
+                #    後者被填進 required_slots[0]=estate_id 時，`create_repair(estate_id: int)`
+                #    會收到「冷氣」，而且會覆蓋掉單一租約時已正確 prefill 的 estate_id。
+                #    ⇒ 候選來源端宣告 `slot`，此處優先採用；未宣告才退回 [0]（向後相容）。
+                slot = picked.get("slot") or (gscope.get("required_slots") or [None])[0]
                 if slot:
                     state.setdefault("collected_fields", {})[slot] = picked["id"]
                 state.pop("pending_candidates", None)
                 await self._save(session_id, state)
-                # 以單一 id 走 select:api 單筆收斂（確定性，不經 LLM step）
-                # 領域鍵＝當輪面向（state.face；未曾切換＝進入面向）；插點A 不跑 brain（護欄1：待答中不切）
-                system_md = await self._get_system_context(
+                # ⚠️ 單筆 api 收斂只適用**有 API grounding 的面向**：交易面向（如 repair_create）
+                #    的 grounding_scope 只有 `execute_endpoint`／`prefill_api`，**沒有** `endpoint`，
+                #    原碼仍會呼叫 `_ground_by_api` ⇒ 端點為 None，白白走一趟失敗降級。
+                #    此處改為：非 api 面向填完槽位即落回主流程（brain 繼續問剩餘 required_slots）。
+                if (gscope.get("select") or "").lower() != "api" or not gscope.get("endpoint"):
+                    _note_turn(state, user_message, "")
+                    await self._save(session_id, state)
+                else:
+                  # 以單一 id 走 select:api 單筆收斂（確定性，不經 LLM step）
+                  # 領域鍵＝當輪面向（state.face；未曾切換＝進入面向）；插點A 不跑 brain（護欄1：待答中不切）
+                  system_md = await self._get_system_context(
                     self.db_pool, state.get("face") or _domain_key(config))
-                r = await self._ground_by_api(state, config, user_message=user_message)
-                if r["kind"] == "converge":
+                  r = await self._ground_by_api(state, config, user_message=user_message)
+                  if r["kind"] == "converge":
                     await self._save(session_id, state)   # 落地 grounding_note（後續輪 brain 取現況）
                     return {"kind": "converge", "grounding": r["grounding"], "ctx": None,
                             "cta_mode": "factual", "converge_kind": "answer", "system_md": _synth_context(system_md, config),
                             "session_id": session_id, "state": state, "user_message": user_message}
-                # 仍非單筆（資料異動，少見）→ 安全降級回 ask（含可能新候選）
-                if r.get("candidates"):
+                  # 仍非單筆（資料異動，少見）→ 安全降級回 ask（含可能新候選）
+                  if r.get("candidates"):
                     state["pending_candidates"] = r["candidates"]
-                _note_turn(state, user_message, r["answer"])
-                await self._save(session_id, state)   # 存檔：含 0 筆時清空的無效 slot
-                return {"kind": "ask", "answer": r["answer"]}
+                  _note_turn(state, user_message, r["answer"])
+                  await self._save(session_id, state)   # 存檔：含 0 筆時清空的無效 slot
+                  return {"kind": "ask", "answer": r["answer"]}
 
             # 【確定性識別填槽/切換 — pre-LLM】診斷面向：本句抽得到「明確識別編號」（純數字或
             #   句中 id-like，如「那換 84328 呢?」）、且與現填不同（含未填）→ 直接填/換槽走單筆收斂，
