@@ -5,10 +5,80 @@
 
 | row | status |
 |---|---|
-| 3402 | `APPROVE_WITH_NARROWING` |
-| 3499 | `APPROVE`（responsibility-level）＋另列 `KNOWLEDGE_CONTENT_INCOMPLETE` |
-| 4657 | `HOLD / REVIEW_BLOCKED_CAPABILITY_AMBIGUOUS` |
-| 3406 3495 3496 3498 3519 4640 4656 | `NOT_REVIEWED_BY_OWNER` |
+| 3402 | `APPROVED`（收窄版） |
+| 3406 | `APPROVED` |
+| 3495 | `APPROVED_WITH_EVIDENCE_BOUNDARY` |
+| 3496 | `APPROVED` |
+| 3498 | `APPROVED_AFTER_TEXT_REVISION`（收窄） |
+| 3499 | `APPROVED`（responsibility-level）＋另列 `KNOWLEDGE_CONTENT_INCOMPLETE` |
+| 3519 | `APPROVED`（⛔ **不收窄**） |
+| 4640 | `APPROVED` |
+| 4656 | `APPROVED` |
+| 4657 | ⛔ `BLOCKED_BY_CAPABILITY_CONTRACT` |
+
+⇒ **9 筆完成 review，1 筆 capability blocker。**
+
+---
+
+## ⚠️ 先定案的裁量規則：**兩類 row 不能用同一把尺**
+
+```text
+general row  → representation 對齊 **Knowledge answer responsibility**
+instance row → representation 對齊 **Face／downstream capability responsibility**
+```
+
+3406／3519 已裁為 **general**，其正確產品路徑本就是「由 Knowledge 本身回答」，
+⛔ 不是交給 `bill_diagnosis` grounding。
+⇒ **它們不該因為 `_format_bill_status` 沒有那些能力而收窄。**
+這正是 P1 已拆出的 applicability 差異的下游後果。
+
+### ⚠️ 3519 為什麼不能照 3499 的邏輯收窄（形狀不同）
+
+```text
+3519：frozen answer **明文**寫了「總額負數＝退錢給租客／正數＝需補繳差額」
+     → representation 只是**表示既有 answer truth** ✅
+3499：answer 說「常見三種」但**三種本身沒寫出來**
+     → representation 若補齊，就是**創造 knowledge truth** ❌
+```
+判準是 answer 裡**有沒有**，⛔ 不是「寫得完不完整」。
+
+---
+
+## 逐筆定稿文字（APPROVED 9 筆）
+
+```text
+3402  點退完成後系統何時／在什麼條件下自動產生點退帳單，
+      以及該帳單如何進入費用結算。
+
+3406  如何取得帳單收據／繳費證明：下載的位置與方式、收據可作為繳費證明、
+      未繳費的帳單無法產生收據，以及收據與統一發票的區別。
+
+3495  診斷某一筆帳單為什麼無法發送給租客，包含發送失敗、寄不出、
+      按發送無反應等情形。
+      ⚠️ evidence boundary：發送失敗／寄不出／按發送無反應屬**同一 operational
+      failure family**，可涵蓋；⛔ 不得列出 Face 尚未證明能診斷的具體原因。
+
+3496  診斷某一筆帳單為什麼無法取消或作廢，包含取消按鈕不可用、取消時失敗等情形，
+      以及可取消所需的帳單狀態條件。
+
+3498  診斷某一筆帳單為什麼被收取逾期費、延遲金或滯納金，
+      以及該筆費用的計算依據與金額如何得出。
+      ⚠️ 保留同義詞「滯納金」（R7-B #166 因該詞落空）；
+      ⛔ **刪除**「計費起算的日期認定與緩衝天數」——frozen answer 只證公式，
+      尚不足以證 Face 對這兩項有正式責任。
+
+3499  查詢／診斷特定帳單手動到帳失敗、無法完成手動入帳的原因。
+
+3519  點退帳單金額如何計算：加總哪些結算項目、如何扣抵押金，
+      以及金額為正負時分別代表退款或需補繳差額。
+      ⚠️ ⛔ **不收窄**——正負語義是 frozen answer 明文，屬這筆 general row 的責任。
+
+4640  查詢某一張收據的實際金額，例如某筆帳單的收據實收多少錢。
+
+4656  找出並查詢某一筆帳單目前的狀態，包括是否已繳費、是否已寄出或仍為草稿、
+      到期情形，以及該筆帳單的現況。
+      ⚠️ 這正是 R7-C 證明缺失的 contract。
+```
 
 ---
 
@@ -78,7 +148,39 @@ face_bill_response（bills.py）對多列的處理是 **row = data[0]**
 對照預期 若存在候選列表，應出現與 repair_prefill 同形狀的 candidates 結構——未出現
 ```
 
-### ⇒ 4657 的處置
+### ⇒ 4657 **正式降級為 capability blocker**（2026-08-29 業主定案）
+
+```text
+4657 semantic envelope = REFUTED / NOT ESTABLISHED AS PREVIOUSLY DECLARED
+reason = FACET_PROMISE_UNIMPLEMENTED（point-refund bill selection missing）
+```
+⚠️ 這**不是**「representation 寫窄一點」可以解決的問題。
+
+⛔ **不得**改寫成「查某一筆帳單的金額與狀態」來湊 10/10——
+那會把 4657 變成 4656 的 duplicate responsibility，
+原本的「點退帳單」intent 反而**消失**。
+
+⇒ **4657 暫不 population `retrieval_representation`；
+   Level-A representation completeness 暫為 9/10，狀態 `BLOCKED_BY_CAPABILITY_CONTRACT`。**
+
+### ⚠️ 哪些判斷更新、哪些**不**推翻
+
+```text
+✅ 仍成立：instance_applicability = instance
+          （「查實際點退金額」本質上確實需要個別資料）
+❌ 不成立：該 row 對應的 **Face execution capability 能完成該 intent**
+⇒ nomination／applicability truth 與 execution capability **再一次必須分開**。
+```
+
+### 待業主處理（產品／架構決策，⛔ 不得由 representation migration 偷補）
+
+```text
+A. 補 point-refund bill selection capability
+B. 改／停用這個 KB anchor
+C. 另有既有 owner 應承接
+```
+
+### ⇒ 4657 的處置（原始查證記錄）
 
 ```text
 ❌ 「查詢自己某份合約的實際點退帳單金額」   → REVIEW_BLOCKED（選取步驟不可證）

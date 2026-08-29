@@ -322,6 +322,26 @@ else
   echo "✅ PASS（含 alias 傳遞掃描 ＋ 四項各自的正對照）"
 fi
 
+echo "═══ 不變量 13：Level-A representation population 完整性（D1；業主定案 2026-08-29）═══"
+# ⚠️ **這條現在就是紅的，而且是刻意的。**
+# 4657 卡在 capability blocker（FACET_PROMISE_UNIMPLEMENTED：帳單 face 對多列只取
+# data[0]、不讀 type ⇒「該合約的**點退**帳單」無法被選取）。業主裁示：就讓它紅。
+# ⛔ 不得為了讓 invariant 變綠而寫一個不忠於 row intent 的 representation；
+# ⛔ 不得把 4657 改寫成 4656 的 duplicate 來湊 10/10；⛔ 不得給 legacy exemption。
+# 紅燈語義＝**一個 Level-A authority row 的 execution responsibility 尚未成立**。
+LA_CHECK="$REPO/scripts/audit/checks/level_a_representation_completeness.py"
+if ! python3 "$LA_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 13 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$LA_CHECK" --self-test
+  FAIL=1
+elif ! LA_OUT=$(python3 "$LA_CHECK" 2>&1); then
+  echo "$LA_OUT"
+  FAIL=1
+else
+  echo "$LA_OUT"
+  echo "✅ PASS（10/10 閉合）"
+fi
+
 echo ""
 if [ $FAIL -eq 0 ]; then
   echo "🎉 稽核通過（$(date +%Y-%m-%d))"
