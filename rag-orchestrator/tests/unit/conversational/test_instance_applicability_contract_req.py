@@ -22,7 +22,7 @@ pytestmark = pytest.mark.unit
     ("general", ia.APPLICABILITY_GENERAL),
 ])
 def test_declared_values_are_read_verbatim(declared, expected):
-    assert ia.knowledge_applicability({"generation_metadata": {ia.KNOWLEDGE_APPLICABILITY_KEY: declared}}) == expected
+    assert ia.knowledge_instance_applicability({"generation_metadata": {ia.KNOWLEDGE_APPLICABILITY_KEY: declared}}) == expected
 
 
 @pytest.mark.parametrize("meta", [
@@ -34,7 +34,7 @@ def test_declared_values_are_read_verbatim(declared, expected):
 ])
 def test_missing_or_malformed_is_unknown_never_general(meta):
     """⚠️ **缺宣告 ≠ general**，值寫錯也**不猜**——容忍變體＝讓資料品質問題靜默通過。"""
-    got = ia.knowledge_applicability({"generation_metadata": meta})
+    got = ia.knowledge_instance_applicability({"generation_metadata": meta})
     assert got == ia.APPLICABILITY_UNKNOWN
     assert got != ia.APPLICABILITY_GENERAL, "「不知道」被讀成「不需要」——正是本輪要修的病灶"
 
@@ -54,7 +54,7 @@ def test_execution_capability_never_derives_applicability(row):
     ⚠️ 反證：3509「訂閱扣款失敗導致功能異常」是 direct_answer、無 form_id，
     卻必須查該帳號訂閱狀態 ⇒ 用執行能力當代理會**系統性漏掉**這一類。
     """
-    assert ia.knowledge_applicability(row) == ia.APPLICABILITY_UNKNOWN
+    assert ia.knowledge_instance_applicability(row) == ia.APPLICABILITY_UNKNOWN
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -77,14 +77,15 @@ class _Cfg:
 
 
 @pytest.mark.parametrize("scope,expected", [
-    ({"requires_instance_reference": True}, True),
-    ({"requires_instance_reference": False}, False),
-    ({}, None),
-    ({"requires_instance_reference": "true"}, None),   # 型別不對＝未宣告
-    (None, None),
+    ({"requires_instance_reference": True}, "required"),
+    ({"requires_instance_reference": False}, "not_required"),
+    ({}, "unknown"),
+    ({"requires_instance_reference": "true"}, "unknown"),   # 型別不對＝未宣告
+    (None, "unknown"),
 ])
 def test_face_requirement_is_tri_state(scope, expected):
-    assert ia.face_instance_requirement(_Cfg(scope)) is expected
+    """⚠️ 回字串不回 Optional[bool]：`None` 一個 `is True` 就被悄悄降成 False。"""
+    assert ia.face_instance_requirement(_Cfg(scope)) == expected
 
 
 def test_p1a_does_not_change_live_routing_predicate():
@@ -95,5 +96,5 @@ def test_p1a_does_not_change_live_routing_predicate():
     """
     from services.instance_reference_gate import is_instance_requiring_face
     cfg = _Cfg({})
-    assert is_instance_requiring_face(cfg) is False        # 現役：缺欄位→False
-    assert ia.face_instance_requirement(cfg) is None       # 新契約：缺欄位→未宣告
+    assert is_instance_requiring_face(cfg) is False              # 現役：缺欄位→False
+    assert ia.face_instance_requirement(cfg) == ia.FACE_UNKNOWN  # 新契約：缺欄位→未宣告

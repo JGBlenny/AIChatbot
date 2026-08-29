@@ -80,6 +80,9 @@ SYNC_FILES=(
   services/conversational_engine.py
   services/jgb_system_api.py
   services/jgb/bills.py
+  services/jgb/repair_prefill.py
+  services/instance_reference_gate.py
+  services/instance_applicability.py
   routers/chat.py
   routers/loops.py
   services/usage_metering.py

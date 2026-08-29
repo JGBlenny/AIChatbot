@@ -54,6 +54,18 @@ KNOWLEDGE_APPLICABILITY_KEY = "instance_applicability"
 #: Face 層宣告鍵（與 `instance_reference_gate.INSTANCE_REFERENCE_KEY` 同一個契約）
 FACE_INSTANCE_REQUIREMENT_KEY = "requires_instance_reference"
 
+#: Face 層三態（⛔ 刻意**不用** bool——`None` 很容易在下游被 `is True` 悄悄降成 False，
+#: 而「Face 契約缺失」不得被解讀成「這個 Face 不要求 instance」）
+FACE_REQUIRED = "required"
+FACE_NOT_REQUIRED = "not_required"
+FACE_UNKNOWN = "unknown"
+
+#: 交叉判定的四個結果
+DECISION_ELIGIBLE = "eligible"
+DECISION_INELIGIBLE = "ineligible"
+DECISION_UNKNOWN = "unknown"
+DECISION_NOT_APPLICABLE = "not_applicable"
+
 APPLICABILITY_INSTANCE = "instance"
 APPLICABILITY_GENERAL = "general"
 APPLICABILITY_UNKNOWN = "unknown"
@@ -62,7 +74,7 @@ APPLICABILITY_UNKNOWN = "unknown"
 DECLARED_VALUES = frozenset({APPLICABILITY_INSTANCE, APPLICABILITY_GENERAL})
 
 
-def knowledge_applicability(knowledge: Optional[dict]) -> str:
+def knowledge_instance_applicability(knowledge: Optional[dict]) -> str:
     """讀 knowledge row 的 applicability 宣告。**只讀宣告，⛔ 不推導。**
 
     回三態之一；缺宣告／值不合法／型別不對 → `UNKNOWN`。
@@ -78,21 +90,52 @@ def knowledge_applicability(knowledge: Optional[dict]) -> str:
     return APPLICABILITY_UNKNOWN
 
 
-def face_instance_requirement(config: Any) -> Optional[bool]:
-    """讀 Face 的 responsibility 宣告，**三態**：`True` / `False` / `None`（未宣告）。
+def face_instance_requirement(config: Any) -> str:
+    """讀 Face 的 responsibility 宣告，**三態**：`REQUIRED` / `NOT_REQUIRED` / `UNKNOWN`。
 
-    ⚠️ 與 `instance_reference_gate.is_instance_requiring_face()` 的差別：
-    後者是**現役 routing 述詞**，缺欄位回 `False`（fail-closed by scope）。
-    本函式回 `None`，讓呼叫端能分辨「明示不需要」與「根本沒宣告」——
-    P1a 只建立這個分辨能力，⛔ **不改變現役 routing 行為**（那是 P1c）。
+    ⚠️ 回字串不回 `Optional[bool]`：`None` 在下游一個 `is True` 就會被悄悄降成 False，
+    而那正是本輪要根除的病灶——**Face 契約缺失不等於「這個 Face 不要求 instance」**。
     """
     scope = getattr(config, "grounding_scope", None)
+    if not isinstance(scope, dict) and isinstance(config, dict):
+        scope = config.get("grounding_scope")
     if not isinstance(scope, dict):
-        scope = (config or {}).get("grounding_scope") if isinstance(config, dict) else None
-    if not isinstance(scope, dict):
-        return None
+        return FACE_UNKNOWN
     value = scope.get(FACE_INSTANCE_REQUIREMENT_KEY)
-    return value if isinstance(value, bool) else None
+    if value is True:
+        return FACE_REQUIRED
+    if value is False:
+        return FACE_NOT_REQUIRED
+    return FACE_UNKNOWN
+
+
+def instance_applicability_decision(knowledge: Optional[dict], config: Any) -> str:
+    """兩軸交叉的**純函式**判定。⛔ 這裡只表達契約，**不表達 rollout 政策**。
+
+    ```text
+    knowledge   face            結果
+    instance    REQUIRED     →  ELIGIBLE
+    general     REQUIRED     →  INELIGIBLE
+    UNKNOWN     REQUIRED     →  UNKNOWN          ⛔ 不得取得正向 authorization
+    任意        NOT_REQUIRED →  NOT_APPLICABLE   ⛔ 不得被 instance 規則誤傷
+    任意        UNKNOWN      →  UNKNOWN          ⛔ Face 契約缺失 ≠ 不要求 instance
+    ```
+
+    ⚠️ **本函式刻意不決定 UNKNOWN 未來怎麼 route**。
+    「UNKNOWN → suppress」或「UNKNOWN → allow」都是 rollout／authorization 政策，
+    不是資料契約；把它偷渡進這裡會讓政策變更需要改契約，兩者從此糾纏。
+    """
+    requirement = face_instance_requirement(config)
+    if requirement == FACE_NOT_REQUIRED:
+        return DECISION_NOT_APPLICABLE
+    if requirement == FACE_UNKNOWN:
+        return DECISION_UNKNOWN
+    applicability = knowledge_instance_applicability(knowledge)
+    if applicability == APPLICABILITY_INSTANCE:
+        return DECISION_ELIGIBLE
+    if applicability == APPLICABILITY_GENERAL:
+        return DECISION_INELIGIBLE
+    return DECISION_UNKNOWN
 
 
 def grants_positive_authorization(applicability: str) -> bool:

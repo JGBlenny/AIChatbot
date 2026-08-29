@@ -28,6 +28,8 @@ import os
 import re
 import subprocess
 import sys
+import ast
+import warnings
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
 CONTRACT_MODULE = "rag-orchestrator/services/instance_applicability.py"
@@ -40,10 +42,44 @@ KNOWLEDGE_KEY = "instance_applicability"
 FACE_KEY = "requires_instance_reference"
 
 
+def _key_reads(path):
+    """回傳 [(行號, 出現的鍵)]——**只看非 docstring 的字串常量**。
+
+    ⚠️ 兩次踩坑的結論：
+      ① 只剝 `#` 註解 → **docstring** 提到鍵名被誤判成越權讀取。
+      ② 改用 tokenize 剝掉所有 STRING → **把要偵測的目標一起剝掉了**，
+         因為鍵在程式碼裡本來就是字串常量（`meta.get("instance_applicability")`）。
+    ⇒ 正解是 AST：精確排除 docstring 與 import，其餘字串常量照查。
+    """
+    try:
+        with warnings.catch_warnings():   # 被掃檔案自身的 SyntaxWarning 不屬本不變量
+            warnings.simplefilter("ignore")
+            tree = ast.parse(open(path, encoding="utf-8").read())
+    except (SyntaxError, UnicodeDecodeError):
+        return []
+    docstrings = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            body = getattr(node, "body", None) or []
+            if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) \
+                    and isinstance(body[0].value.value, str):
+                docstrings.add(id(body[0].value))
+    hits = []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            continue
+        if isinstance(node, ast.Constant) and isinstance(node.value, str) \
+                and id(node) not in docstrings:
+            for key in (KNOWLEDGE_KEY, FACE_KEY):
+                if key in node.value:
+                    hits.append((getattr(node, "lineno", 0), key))
+    return hits
+
+
 def scan_unauthorized_key_reads(root=None):
     """回傳 [(相對路徑, 行號, 鍵)]——在契約模組之外直接讀宣告鍵的地方。"""
     root = root or REPO
-    hits = []
+    out = []
     for d in SCAN_DIRS:
         base = os.path.join(root, d)
         if not os.path.isdir(base):
@@ -52,18 +88,14 @@ def scan_unauthorized_key_reads(root=None):
             for fn in files:
                 if not fn.endswith(".py"):
                     continue
-                path = os.path.join(dirpath, fn)
-                rel = os.path.relpath(path, root)
-                with open(path, encoding="utf-8") as fh:
-                    for i, line in enumerate(fh, 1):
-                        code = line.split("#", 1)[0]          # 註解裡提到鍵名是允許的
-                        if KNOWLEDGE_KEY in code and rel != CONTRACT_MODULE:
-                            # import 本模組不算讀鍵
-                            if not re.search(r"(import|from)\s", code):
-                                hits.append((rel, i, KNOWLEDGE_KEY))
-                        if FACE_KEY in code and rel not in FACE_KEY_ALLOWED:
-                            hits.append((rel, i, FACE_KEY))
-    return hits
+                rel = os.path.relpath(os.path.join(dirpath, fn), root)
+                for line_no, key in _key_reads(os.path.join(dirpath, fn)):
+                    if key == KNOWLEDGE_KEY and rel == CONTRACT_MODULE:
+                        continue
+                    if key == FACE_KEY and rel in FACE_KEY_ALLOWED:
+                        continue
+                    out.append((rel, line_no, key))
+    return out
 
 
 def illegal_values(rows):
@@ -114,6 +146,15 @@ def self_test() -> int:
         with open(os.path.join(d, "rogue.py"), "w", encoding="utf-8") as fh:
             fh.write('# 說明：instance_applicability 由契約模組負責\n')
         cases.append(("註解提及鍵名不得誤報", scan_unauthorized_key_reads(tmp) == []))
+        # 突變：**docstring** 提及鍵名亦不得誤報（第一版栽在這裡）
+        with open(os.path.join(d, "rogue.py"), "w", encoding="utf-8") as fh:
+            fh.write('def f():\n    """真值來源已移到 instance_applicability。"""\n    return 1\n')
+        cases.append(("docstring 提及鍵名不得誤報", scan_unauthorized_key_reads(tmp) == []))
+        # 正控制再確認：剝除不得把真正的讀取一起吃掉
+        with open(os.path.join(d, "rogue.py"), "w", encoding="utf-8") as fh:
+            fh.write('def f(meta):\n    """說明。"""\n    return meta.get("instance_applicability")\n')
+        cases.append(("剝除後真正的讀取仍必須被抓到",
+                      len(scan_unauthorized_key_reads(tmp)) == 1))
     for name, ok in cases:
         print(f"{'✅' if ok else '❌'} {name}")
     return 1 if any(not ok for _n, ok in cases) else 0

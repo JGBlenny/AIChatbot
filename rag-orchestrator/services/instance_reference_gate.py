@@ -229,15 +229,20 @@ LEVEL_A_INSTANCE_GATE_SCOPE: Final[frozenset] = frozenset({"bill_diagnosis"})
 
 
 def is_instance_requiring_face(config) -> bool:
-    """**C**：只讀 Face 自己的明示契約 `grounding_scope.requires_instance_reference`。
+    """**C**（⚠️ **compatibility wrapper —— 不再是 authority truth source**）。
+
+    ⚠️ 2026-08-29 P1c：真值來源已移到 `services.instance_applicability`
+    的**三態** `face_instance_requirement()`。本函式保留是因為現役 routing
+    仍以布林判定，**行為逐位元不變**（只有明示 `True` 才回 True）；
+    但布林把 `NOT_REQUIRED` 與 `UNKNOWN` 壓成同一格，
+    ⛔ **新的判定一律改用 `instance_applicability_decision()`，不要再擴用本函式。**
 
     ⚠️ **不得 fallback**：`bool(required_slots)`／`bill_ref ∈ required_slots`／
     `key == "bill_diagnosis"` 一律不得作為推導來源（erratum 01 原則 ①②）。
-    ⚠️ 缺欄位 → `False`（fail-closed by scope）：舊 Face 未補宣告時
-    **不得**被意外納管，Level A 的隔離才是結構性的而非靠運氣。
+    降級發生在此**單一可見處**：三態 → 布林，缺欄位仍 fail-closed by scope。
     """
-    scope = getattr(config, "grounding_scope", None) or {}
-    return scope.get(INSTANCE_REFERENCE_KEY) is True
+    from services.instance_applicability import FACE_REQUIRED, face_instance_requirement
+    return face_instance_requirement(config) == FACE_REQUIRED
 
 
 def in_gate_rollout_scope(config) -> bool:
