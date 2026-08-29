@@ -9,7 +9,7 @@ from __future__ import annotations  # 允許類型提示的前向引用
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, validator
-from typing import Optional, List, Dict
+from typing import Any, Optional, List, Dict
 from dataclasses import dataclass
 from datetime import datetime
 import time
@@ -1024,6 +1024,50 @@ async def _enter_diagnosis_facet(request, req, cfg, best_knowledge, face_authori
     return resp
 
 
+async def _nominate_face_candidates(db_pool, best_knowledge) -> "list[tuple[str, Any]]":
+    """**純 nomination**：依 top1 的 categories 列出可提出的 Face candidates。
+
+    Stage 1（nomination observability）把「提名」抽成明確一段，理由不是好看——
+    是**現行程式觀察不到完整候選集**：舊碼把 `config_for_category` 與 resolver 交錯，
+    第一個 commit 就短路 return，後面的 category 從未被提名過。
+
+    ⛔ 本函式**只做 metadata mapping**：不做 suppression、不做 responsibility 裁決。
+
+    ⚠️ **回傳刻意不去重**——去重會改變行為：同一個 config 若掛在兩個 category 下，
+    舊碼會對它跑**兩次** resolver（LLM 判定不保證兩次相同，第二次可能 commit）。
+    去重只准發生在**回報用**的欄位上（見 `nomination_candidate_keys`），
+    ⛔ 不得洩進執行序列。
+
+    ⚠️ eager enumerate 的安全性是**查證過的**，不是假設：
+    `config_for_category` → `_load()` 有 `loaded` 旗標，整個 process 只讀一次 DB，
+    之後是純 dict lookup；無 per-call side effect，malformed config 在 load 時就處理完。
+    ⇒ 提前列舉**不新增任何 DB round-trip**，也不會讓後面的 category 觸發新的例外面。
+    """
+    from services.conversational_config import config_for_category
+    out: "list[tuple[str, Any]]" = []
+    for cat in _knowledge_category(best_knowledge):
+        cfg = await config_for_category(db_pool, cat)
+        if cfg is not None:
+            out.append((cat, cfg))
+    return out
+
+
+def nomination_candidate_keys(candidates) -> "list[str]":
+    """回報用的候選鍵：**完整、有序、去重**（first-commit-wins 讓順序具語義）。
+
+    ⚠️ 語義是「依當次 top1／categories，在 nomination policy 下**可提出**的候選」，
+    **不是**「真的送進 resolver 的候選」——suppression 會讓兩者不同，
+    而那正是 Stage 1 要觀察的事。
+    """
+    out, seen = [], set()
+    for _cat, cfg in candidates:
+        k = getattr(cfg, "key", None)
+        if k and k not in seen:
+            seen.add(k)
+            out.append(k)
+    return out
+
+
 async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: DecisionConfig,
                                           user_message: Optional[str] = None):
     """分類路由決策（conversational-diagnosis 元件 5 / R1.1,1.2,1.4,7.2）。
@@ -1040,26 +1084,27 @@ async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: Decis
     from services.responsibility import FACE_NONE
     if not facet_entry_eligible(best_knowledge, config):
         return None, FACE_NONE
-    from services.conversational_config import config_for_category
+    # 【第一段】純 nomination：先收齊完整候選（Stage 1 observability 的前提）
+    candidates = await _nominate_face_candidates(db_pool, best_knowledge)
     # ⚠️ instance-reference gate（spec routing-disambiguation 任務 4.2）：
-    #    位置固定在 config_for_category **之後**、_preentry_routable **之前**——
+    #    位置固定在 config lookup **之後**、_preentry_routable **之前**——
     #    之前不行（gate 需要 Face 的語義契約），之後也不行（那會讓 LLM 的機率判定
     #    先對 query 下手，deterministic 契約反而後到，責任順序顛倒）。
     #    判定**每個 query 只做一次**：否則同一責任可被 category 順序繞過。
     decision = _instance_gate_decision(user_message)
-    for cat in _knowledge_category(best_knowledge):
-        cfg = await config_for_category(db_pool, cat)
-        if cfg is not None:
-            if _instance_hint_suppressed(decision, cfg):
-                print(f"🚧 [instance-reference-gate] 「{(user_message or '')[:20]}」"
-                      f"判 rule 型問句 → 抑制面向 {getattr(cfg, 'key', '?')} 的 Hint"
-                      f"（{decision.reason}）")
-                continue      # 抑制同型 Hint：**不 commit 本面向**，且不因順序而放行
-            _resolved, _authority = await _resolve_pre_commit_candidate(
-                db_pool, cfg, user_message)
-            if _resolved is not None:
-                return _resolved, _authority
-            continue          # 判不適用 → 不 commit 本面向，續試該知識的下一個分類
+    # 【第二段】依**原順序**跑 suppression ＋ resolver；first-commit-wins 語義逐字不變。
+    # ⚠️ 迭代的是**未去重**的原序列——去重只用於回報欄位（見 `nomination_candidate_keys`）。
+    for _cat, cfg in candidates:
+        if _instance_hint_suppressed(decision, cfg):
+            print(f"🚧 [instance-reference-gate] 「{(user_message or '')[:20]}」"
+                  f"判 rule 型問句 → 抑制面向 {getattr(cfg, 'key', '?')} 的 Hint"
+                  f"（{decision.reason}）")
+            continue          # 抑制同型 Hint：**不 commit 本面向**，且不因順序而放行
+        _resolved, _authority = await _resolve_pre_commit_candidate(
+            db_pool, cfg, user_message)
+        if _resolved is not None:
+            return _resolved, _authority
+        continue              # 判不適用 → 不 commit 本面向，續試該知識的下一個分類
     return None, FACE_NONE
 
 
