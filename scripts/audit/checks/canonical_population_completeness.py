@@ -20,7 +20,12 @@ import os
 import sys
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
-REG = os.path.join(REPO, ".kiro", "specs", "conversational-routing-execution", "r10p", "registry.json")
+R10P = os.path.join(REPO, ".kiro", "specs", "conversational-routing-execution", "r10p")
+V1 = os.path.join(R10P, "registry.json")
+V2C = os.path.join(R10P, "registry-v2-candidate.json")
+#: ⚠️ 這條閘看的是**當前工作 registry**：canonical migration 期間 ＝ V2 candidate，
+#   否則 ＝ V1。⛔ 不看 V1（V1 是 immutable historical seal，永遠不會轉綠）。
+REG = V2C if os.path.exists(V2C) else V1
 
 
 def load():

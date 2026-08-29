@@ -511,6 +511,25 @@ else
   echo "✅ PASS（含 historical 豁免／缺 canonical／未 review／全補齊 四組對照）"
 fi
 
+echo "═══ 不變量 22：registry V1→V2 只准改 canonical 面（scope lock）═══"
+# ⚠️ 本輪 scope ＝ canonical population，⛔ **不是**第二次 responsibility review。
+# 若填 canonical 時順手改了 members／owner／applicability／status，registry topology 會
+# **無聲漂移**，而 P4/P5 的普查數字（30 active／54 disposition）會在沒有裁定紀錄下失真。
+# ⛔ 真要改 topology，必須另立 responsibility review epoch。
+V2_CHECK="$REPO/scripts/audit/checks/registry_v2_scope_lock.py"
+if ! python3 "$V2_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 22 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$V2_CHECK" --self-test
+  FAIL=1
+elif ! V2_OUT=$(python3 "$V2_CHECK" 2>&1); then
+  echo "$V2_OUT"
+  FAIL=1
+  CODE_REGRESSIONS+=("INV22 / registry V1→V2 topology 漂移")
+else
+  echo "$V2_OUT"
+  echo "✅ PASS（含偷改 members／applicability／owner／status／增刪責任／只改 canonical 必綠 等九組對照）"
+fi
+
 # ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
 # （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）
 if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then
