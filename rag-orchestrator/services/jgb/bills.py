@@ -241,6 +241,27 @@ def build_invoice_facts(bill: dict, user_question: str = "") -> str:
     return "\n".join(lines)
 
 
+def _payment_time_lines(bill: dict) -> list:
+    """付款／到帳時間 facts（業主授權 2026-08-29，Step 1）。
+
+    ⚠️ 來源是 T1 雙引擎比對：`_diagnose_late_fee` **唯一** genuine 的獨有能力就是
+    印出 `pay_at`／`complete_at`；其餘 A-only 項目經查皆為缺陷或量尺誤判。
+    收斂 late-fee instance ownership 到本 face 之前，必須先把這項搬回來，
+    否則收斂就是**丟能力**——「已付款卻仍被收滯納金」正是需要這兩個時間的情境。
+
+    ⚠️ 射程鎖死：**只搬這兩個 deterministic fact**。
+    ⛔ 不搬 A 的罐頭逾期說明、⛔ 不搬 A 的 due-date 推論、
+    ⛔ 不搬 A 的欄位名背誦、⛔ 不搬 A 的任何既有文案。
+    ⚠️ 存在才輸出；⛔ 不臆測、⛔ 不補值。
+    """
+    lines = []
+    if bill.get("pay_at"):
+        lines.append(f"租客繳費時間：{bill.get('pay_at')}。")
+    if bill.get("complete_at"):
+        lines.append(f"款項到帳時間：{bill.get('complete_at')}。")
+    return lines
+
+
 def build_late_fee_facts(row: dict, user_question: str = "") -> str:
     """滯納金（R5.1–5.3；research §四）。
 
@@ -269,6 +290,7 @@ def build_late_fee_facts(row: dict, user_question: str = "") -> str:
     title = str(row.get("title") or "")
     if row.get("type") == 4 or "延遲金" in title or "滯納" in title:
         lines = _bill_head(row)
+        lines += _payment_time_lines(row)
         note = (row.get("date_expire_note") or {}).get("s3") if isinstance(row.get("date_expire_note"), dict) else None
         note = note or ((row.get("late_fee_info") or {}).get("note") if isinstance(row.get("late_fee_info"), dict) else None)
         if note:
@@ -279,6 +301,7 @@ def build_late_fee_facts(row: dict, user_question: str = "") -> str:
 
     # 一般帳單列（無合約設定欄位可判 → 降級引導）
     lines = _bill_head(row)
+    lines += _payment_time_lines(row)
     lines.append("是否產生滯納金取決於該合約的滯納金設定與團隊採用的結算機制"
                  "（本查詢未含合約設定資料）——請查看合約的滯納金設定，或以系統實際產生的滯納金帳單為準；"
                  "個案減免或調整請聯繫客服處理。")

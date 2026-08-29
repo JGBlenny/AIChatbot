@@ -70,3 +70,71 @@ amount calculation   B 有（實際結算備註逐字）；A **無**（只有罐
 ⛔ 未改任何引擎、未改 KB、未改 applicability、未改 routing precedence
 ⛔ 未裁 3498 的 row identity（依業主順序：先裁 ownership capability）
 ```
+
+---
+
+# Step 1：`pay_at`／`complete_at` 搬進 B（業主授權 2026-08-29）
+
+```text
+LATE_FEE_INSTANCE_OWNERSHIP
+  B / late_fee face                        → AUTHORITATIVE OWNER CANDIDATE
+  A / bill_diagnosis._diagnose_late_fee    → SUPERSEDED_PARTIAL_IMPLEMENTATION
+  precedence between A/B                   → **REJECTED**
+```
+⚠️ 理由：在 T1 的證據下設 precedence，等於刻意保留一條**已知會答錯**的 owner，
+只是在前面再加規則避免走到它——沒有產品價值，還擴大 routing state space。
+
+## 射程（⛔ 只搬 T1 判定為 genuine 的那一項）
+
+```text
+✅ pay_at／complete_at，存在才輸出
+⛔ 不臆測、⛔ 不補值
+⛔ 不搬 A 的罐頭逾期說明、⛔ 不搬 A 的 due-date 推論、
+⛔ 不搬 A 的欄位名背誦、⛔ 不搬 A 的任何既有文案
+```
+落點：`_payment_time_lines()`，掛在 B 的**兩個帳單列分支**（一般帳單／滯納金帳單）。
+⚠️ 合約列分支 ⛔ 不掛——合約沒有付款時間語義。
+
+## 5 組 guard ＋ mutation（8 條全過）
+
+```text
+1 已付款且有 pay_at/complete_at → 必須保留，且 B 原有 狀態／金額 不得丟
+2 未付款 → ⛔ 不得偽造付款時間；只有 complete_at 時 ⛔ 不得生出繳費時間
+3 滯納金帳單 → 結算備註與「不累加」規則不變，
+  且 ⛔ 不得繼承 A 的錯誤語義「若超過繳費期限仍未付款…」
+4 合約設定 → 費率／緩衝／兩種機制不變；⛔ 合約列不得出現付款時間
+5 mutation：拿掉 `_payment_time_lines` 投影 ⇒ guard 1 必須紅
+```
+
+## Capability closure：`B_after` vs `A_before ∪ B_before`
+
+```text
+B_after 未覆蓋的 A_before 有效 facts：無 ✅
+B_after 繼承的 A 錯誤 facts：          無 ✅
+⇒ **B_CAPABILITY_SUPERSET = CONFIRMED**
+```
+
+### ⚠️ 量尺第二次收緊（又一次誤判，已修正並重跑）
+
+```text
+case 6 的 fixture **沒有** date_expire，A 卻被判成「有繳費期限 fact」——
+因為純子字串比對打中了 A 的罐頭句「若超過**繳費期限**仍未付款」。
+改為必須是**帶值的標籤** `繳費期限：<數字>` 後，該假缺口消失。
+⚠️ 這是本案第二次「量尺打中罐頭文案」；第一次是 case 3 的「緩衝天數、百分比」。
+⇒ 教訓：比對 formatter 時，**子字串命中 ≠ 該 fact 存在**，罐頭句會製造兩種假象
+  （假能力／假缺口），必須要求帶值。
+```
+
+## ⛔ 本 commit **未**做（業主要求分刀）
+
+```text
+⛔ 未取消 bill_diagnosis 對 late-fee instance intent 的 ownership
+⛔ 未動 `diagnose_bill` 的「逾期／延遲金／滯納金／late fee」關鍵字
+   —— 需先確認它們現在究竟是 nomination keyword、`_diagnose_late_fee` dispatch、
+     還是一般帳單狀態查詢的其他用途；只移除 **owner conflict 的那條 dispatch
+     authority**，⛔ 不得誤傷普通帳單狀態查詢
+⛔ 未裁 3498 的 Knowledge identity
+```
+
+⚠️ 業主已定案的分界：**「不再是 instance owner」已成立；「應該成為 general row」尚未成立。**
+⛔ 不得因 instance owner 搬走，就機械地把 `instance` 翻成 `general`。
