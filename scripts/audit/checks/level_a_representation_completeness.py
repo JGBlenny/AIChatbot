@@ -37,13 +37,31 @@ D1 之後，它們的 `retrieval_representation` 也必須閉合——否則會�
 
 用法：python3 scripts/audit/checks/level_a_representation_completeness.py [--self-test]
 """
+import hashlib
 import json
 import os
 import subprocess
 import sys
 
-#: 凍結的 Level-A scope（與 instance applicability 的 Level-A 同一組 row）
-LEVEL_A_ROWS = [3402, 3406, 3495, 3496, 3498, 3499, 3519, 4640, 4656, 4657]
+#: ⚠️ **Level-A scope 已版本化**（業主裁定 2026-08-29）：
+#:   `LEVEL_A_V1` = 原始 10 rows，**immutable**——A04／P1f／R-series 的證據永遠
+#:   對 V1 解讀，⛔ 不得回寫成 9；`LEVEL_A_V2` = V1 − {3498}（3498 已停用）。
+#:   ⛔ **不得**就地把 10 改成 9——否則回看時無法分辨某份證據講的是哪一版。
+REGISTRY = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", "..",
+    ".kiro", "specs", "conversational-routing-execution", "level-a-scope-registry.json")
+
+
+def _registry():
+    with open(os.path.abspath(REGISTRY), encoding="utf-8") as f:
+        return json.load(f)
+
+
+_REG = _registry()
+ACTIVE_VERSION = _REG["active_version"]
+LEVEL_A_ROWS = _REG["versions"][ACTIVE_VERSION]["rows"]
+V1_ROWS = _REG["versions"]["V1"]["rows"]
+V1_DIGEST = _REG["versions"]["V1"]["population_digest"]
 
 #: 唯一被承認的 provenance（與 services/retrieval_representation.APPROVED_SOURCES 同值）
 APPROVED_SOURCE = "reviewed_product_declaration"
@@ -55,7 +73,8 @@ APPROVED_SOURCE = "reviewed_product_declaration"
 #: 「紅在哪、為什麼紅」，⛔ 不是豁免。
 KNOWN_BLOCKERS = {}
 
-SQL = """
+def _sql(rows):
+    return """
 SELECT COALESCE(json_agg(row_to_json(t)), '[]')::text FROM (
   SELECT id,
          NULLIF(TRIM(COALESCE(generation_metadata->>'retrieval_representation','')), '') AS repr,
@@ -63,17 +82,39 @@ SELECT COALESCE(json_agg(row_to_json(t)), '[]')::text FROM (
   FROM knowledge_base
   WHERE id IN (%s)
 ) t;
-""" % ",".join(str(i) for i in LEVEL_A_ROWS)
+""" % ",".join(str(i) for i in rows)
 
 
-def fetch_rows():
+SQL = _sql(LEVEL_A_ROWS)
+
+
+def fetch_rows(sql=None):
     out = subprocess.run(
         ["docker", "exec", "aichatbot-postgres", "psql", "-U", "aichatbot",
-         "-d", "aichatbot_admin", "-t", "-A", "-c", SQL],
+         "-d", "aichatbot_admin", "-t", "-A", "-c", sql or SQL],
         capture_output=True, text=True, timeout=60)
     if out.returncode != 0:
         raise RuntimeError(f"psql 失敗：{out.stderr.strip()}")
     return json.loads(out.stdout.strip() or "[]")
+
+
+def v1_population_digest():
+    """重算 V1 的 population digest。
+
+    ⚠️ **失效不失憶**：3498 停用時宣告與 provenance 全部保留 ⇒ V1 的 digest
+    **必須仍然算得出原值**。算不出＝有人刪了歷史宣告，那會讓 A04 的證據無法解讀。
+    """
+    sql = """
+SELECT string_agg(id || '|' || (generation_metadata->>'retrieval_representation') || '|' ||
+       (generation_metadata->'retrieval_representation_provenance'->>'source'), E'\n' ORDER BY id)
+FROM knowledge_base WHERE id IN (%s);""" % ",".join(str(i) for i in V1_ROWS)
+    out = subprocess.run(
+        ["docker", "exec", "aichatbot-postgres", "psql", "-U", "aichatbot",
+         "-d", "aichatbot_admin", "-t", "-A", "-c", sql],
+        capture_output=True, text=True, timeout=60)
+    if out.returncode != 0:
+        raise RuntimeError(f"psql 失敗：{out.stderr.strip()}")
+    return hashlib.sha256(out.stdout.encode()).hexdigest()
 
 
 def declared_ids(rows):
@@ -110,8 +151,8 @@ def self_test() -> int:
 
     all_ok = [row(i) for i in LEVEL_A_ROWS]
     cases = [
-        ("10/10 → COMPLETE", classify(all_ok)[0] == "COMPLETE"),
-        ("0/10 → NOT_STARTED", classify([row(i, None, None) for i in LEVEL_A_ROWS])[0]
+        (f"{len(LEVEL_A_ROWS)}/{len(LEVEL_A_ROWS)} → COMPLETE", classify(all_ok)[0] == "COMPLETE"),
+        (f"0/{len(LEVEL_A_ROWS)} → NOT_STARTED", classify([row(i, None, None) for i in LEVEL_A_ROWS])[0]
          == "NOT_STARTED"),
         # ⚠️ 注入合成 blocker：登記簿現為空，但這條路徑必須永遠可被測到
         ("只缺具名 blocker → BLOCKED（**仍非 PASS**）",
@@ -152,7 +193,20 @@ def main() -> int:
         return 1
     state, missing, unnamed = classify(rows)
     present = len(LEVEL_A_ROWS) - len(missing)
-    print(f"（Level-A representation population：{present}/{len(LEVEL_A_ROWS)}，狀態 {state}）")
+    print(f"（LEVEL_A_VERSION: {ACTIVE_VERSION}｜ACTIVE_ROWS: {len(LEVEL_A_ROWS)}｜"
+          f"REPRESENTATION_POPULATION: {present}/{len(LEVEL_A_ROWS)} {state}）")
+    # ⚠️ V1 immutability：歷史宣告必須仍在，否則 A04 的證據無法解讀
+    try:
+        got = v1_population_digest()
+    except Exception as e:                      # noqa: BLE001
+        print(f"❌ FAIL：無法重算 V1 population digest（{e}）——大聲失敗")
+        return 1
+    if got != V1_DIGEST:
+        print(f"❌ FAIL：**V1 population digest 已改變**（期望 {V1_DIGEST[:12]}…、"
+              f"實得 {got[:12]}…）⇒ 有人刪改了歷史宣告；A04 證據將無法解讀。"
+              f"⚠️ 停用 row 必須「失效不失憶」。")
+        return 1
+    print(f"（V1 immutable：10 rows 的歷史宣告完整，digest {V1_DIGEST[:12]}… 未變 ✅）")
     if state == "COMPLETE":
         return 0
     if state == "NOT_STARTED":

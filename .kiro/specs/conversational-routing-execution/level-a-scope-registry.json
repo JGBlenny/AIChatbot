@@ -1,0 +1,62 @@
+{
+ "_doc": "Level-A scope 版本登記簿。⚠️ V1 immutable——A04／P1f／R-series 的證據永遠對 V1 解讀，⛔ 不得回寫成 9。",
+ "active_version": "V2",
+ "versions": {
+  "V1": {
+   "immutable": true,
+   "count": 10,
+   "rows": [
+    3402,
+    3406,
+    3495,
+    3496,
+    3498,
+    3499,
+    3519,
+    4640,
+    4656,
+    4657
+   ],
+   "population_digest": "98a1b8af32aa32f9ef956779b23b7db8d4586cf1b40e70dcbb2b4d0a445d756b",
+   "effective_from": "2026-08-29",
+   "effective_until": "2026-08-29（3498 product retirement）",
+   "used_by": [
+    "P1f",
+    "R-series",
+    "A01",
+    "A02",
+    "A03",
+    "A04"
+   ],
+   "note": "⛔ 不得回寫成 9 rows；A04 的 scope 永遠是 10 rows。"
+  },
+  "V2": {
+   "immutable": false,
+   "count": 9,
+   "rows": [
+    3402,
+    3406,
+    3495,
+    3496,
+    3499,
+    3519,
+    4640,
+    4656,
+    4657
+   ],
+   "population_digest": "fcf67d29513f42c372e52024f59a4a7977e1a51828065d2db7eac4fe74f15fa6",
+   "effective_from": "2026-08-29",
+   "derivation": "LEVEL_A_V1 - {3498}",
+   "removal_reason": [
+    "K1 FULLY_SUBSUMED（3498 全部有效 claim 已被 union(3531,3532) 承接，C5=NONE）",
+    "UNDER_QUALIFIED_DUPLICATE（無條件公式，對階梯式／固定金額版會給錯誤金額）",
+    "late-fee instance ownership 已收斂至 B（滯納金 face）"
+   ],
+   "not_removed_because": [
+    "⛔ **不是** A04 retrieval performance —— A04 根本沒跑 harness",
+    "⛔ **不是** 依 validation outcome 縮 scope —— 這是另案的產品 truth audit 結論"
+   ],
+   "note": "⚠️ V2 就是乾淨的 9 rows，**不是** 9+3531/3532——內容 successor ⛔ 不等於 routing scope successor。"
+  }
+ }
+}

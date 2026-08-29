@@ -71,3 +71,17 @@ CORPUS_FORBIDDEN_USE=A04 authorization；⛔ 亦不得抽出續用於後續 A05
 MANIFEST_SHA256=62d064e330a85d17801dc51c0d6b45a44fc369d51356ac5c1d9d9d1213a28375
 CORPUS_STATUS=SEALED_UNBURNED
 # ⚠️ corpus 仍**未** BURNED——尚未執行任何檢索或 counterfactual harness。
+
+# ── Level-A scope 版本化後的 A04 身分（業主裁定 2026-08-29）──
+A04_SCOPE_VERSION=LEVEL_A_V1
+A04_SCOPE_ROWS=10
+# ⛔ **不重算、不改 digest**：A04 的 scope 永遠是 V1 的 10 rows。
+# 3498 之後被停用（K1 FULLY_SUBSUMED + UNDER_QUALIFIED_DUPLICATE），
+# active scope 改為 LEVEL_A_V2（9 rows，digest fcf67d29…），
+# ⚠️ 但那是**之後**的產品裁定，⛔ 不回寫 A04。
+A04_CORPUS_FORBIDDEN_FOR_AUTHORIZATION=true
+# A04 中 intended=3498 的 20 句，現為 3498/3531/3939/3940 的
+# responsibility-overlap regression set；⛔ 不得拿回來驗「修好了沒」。
+# ⚠️ 註記寫在**本 sidecar**，⛔ 不寫進 a04-corpus.json ——
+#    那份是 freeze artifact，改它的 bytes 就會作廢已凍的 CORPUS_SHA256=83a79070…
+#    （本輪一度誤改，已 git checkout 還原並複驗 digest 相符。）

@@ -350,6 +350,27 @@ else
   echo "✅ PASS（含關閉判定／誤傷／動 _DIAG_KEYWORDS 三組正對照）"
 fi
 
+echo "═══ 不變量 15：退役 row 不得回到 active 路徑（T2／3498 停用）═══"
+# 源起：3498 判 K1 FULLY_SUBSUMED + UNDER_QUALIFIED_DUPLICATE 後停用。
+# mutation 實測：改回 active 時，三個 late-fee 查詢中**兩個**它回到 **rank 1**，
+# 與真正 owner（3939/3940）直接競爭排序 ⇒「保留重複 knowledge 會重製 ranking
+# competition」的實證。
+# 不變量：① 標記 retirement 的 row 必須 is_active=false；
+#        ② 知識檢索每個 SELECT 都要以 is_active 過濾。
+# ⚠️ 「失效不失憶」：⛔ 不要求刪宣告／provenance（刪了 A04 等舊證據無法解讀）。
+RR_ISO="$REPO/scripts/audit/checks/retired_row_isolation.py"
+if ! python3 "$RR_ISO" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 15 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$RR_ISO" --self-test
+  FAIL=1
+elif ! RI_OUT=$(python3 "$RR_ISO" 2>&1); then
+  echo "$RI_OUT"
+  FAIL=1
+else
+  echo "$RI_OUT"
+  echo "✅ PASS（含退役仍 active／SELECT 漏過濾 兩組正對照）"
+fi
+
 # ⚠️ 13 是最後一條 ⇒ 此刻的 FAIL 值**恰好**等於「其他不變量有沒有紅」。
 #    用快照取代事後從輸出回推行數：⛔ 不靠 grep 猜，靠狀態算。
 CODE_FAIL_BEFORE_13=$FAIL
@@ -373,13 +394,13 @@ elif ! LA_OUT=$(python3 "$LA_CHECK" 2>&1); then
   PRODUCT_BLOCKERS+=("INV13 / Level-A representation population 未閉合（見 r9-review-status.md）")
 else
   echo "$LA_OUT"
-  echo "✅ PASS（10/10 閉合）"
+  echo "✅ PASS（active version 全數閉合）"
 fi
 
 # ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
 # （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）
 if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then
-  CODE_REGRESSIONS+=("不變量 1–12／14 有失敗（見上方 ❌ FAIL 行）")
+  CODE_REGRESSIONS+=("不變量 1–12／14／15 有失敗（見上方 ❌ FAIL 行）")
 fi
 
 echo ""
