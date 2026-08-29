@@ -1,0 +1,96 @@
+{
+ "_doc": "R10-P responsibility registry ＋ proposal 的凍結 schema（業主裁定 2026-08-29）。",
+ "_prime_directive": "Proposal is allowed to reduce search cost, never to establish responsibility truth.",
+ "version": "R10P-SCHEMA-1",
+
+ "registry_record": {
+  "responsibility_id": "string（穩定 slug）",
+  "status": ["candidate", "reviewed_active", "reviewed_historical", "rejected"],
+  "canonical_responsibility": "string —— ⛔ 不得由機器自動產生後直接生效",
+  "facet": "string｜null",
+  "applicability": ["instance", "general", "unknown"],
+  "owner": "string（Face／Knowledge／downstream capability 的識別）",
+  "owner_contract": "string —— 該 owner 的契約或 capability 出處",
+  "members": [{
+    "row_id": "int",
+    "member_role": ["ENTRY_ALIAS", "ANSWER_KNOWLEDGE", "HISTORICAL_RETIRED"],
+    "operational_status": ["active", "inactive"]
+  }],
+  "evidence": [{
+    "evidence_type": ["AUTHORING_SPEC", "DETERMINISTIC_CAPABILITY",
+                      "POSITIVE_APPLICABILITY_DECLARATION", "CONTENT_RESPONSIBILITY_REVIEW",
+                      "PROVENANCE_HISTORY", "RUNTIME_CAUSAL_EVIDENCE", "DIAGNOSTIC_CORPUS"],
+    "source": "string（檔案／commit／函式／migration 的可追溯位置）",
+    "claim_supported": "string（這份證據**具體支持哪一句**）",
+    "supports": ["identity", "applicability", "ownership", "membership",
+                 "alias_relation", "canonical_representation"],
+    "digest": "string｜null（immutable reference）"
+  }],
+  "review": {
+   "verdict": ["CONFIRMED_RESPONSIBILITY", "SPLIT_REQUIRED", "MERGE_WITH_OTHER",
+               "MEMBERSHIP_REJECTED", "INSUFFICIENT_EVIDENCE", "HISTORICAL_ONLY"],
+   "reviewer": "string",
+   "reviewed_at": "date",
+   "review_basis_digest": "string —— 本次裁定**實際引用**的 evidence set 之 digest"
+  }
+ },
+
+ "_三個必須分離的欄位": {
+  "responsibility.status": "這個責任本身的狀態",
+  "member.member_role": "這一列在責任中扮演的角色",
+  "member.operational_status": "這一列現在是否仍在 active 路徑上",
+  "why": "⚠️ 否則 3498 這種案例會讓『歷史 member』與『active member』再次混掉——row membership ≠ active authority。"
+ },
+
+ "_evidence 不得萬用": {
+  "example": "billing-knowledge-review.md（AUTHORING_SPEC）可支持 3939/3940 = ENTRY_VARIANTS（supports: alias_relation），⛔ **不能單獨**支持 applicability=instance；後者由 DETERMINISTIC_CAPABILITY ＋ POSITIVE_APPLICABILITY_DECLARATION 支持。",
+  "requirement": "每筆 evidence 必須寫 `supports[]`；⛔ 空的 supports 不合法。"
+ },
+
+ "proposal_record": {
+  "_allowed": {
+   "candidate_group_id": "string",
+   "proposed_members": ["int"],
+   "mechanical_grouping_reason": "string（僅限下方允許的機械規則）",
+   "candidate_facet": "string｜null",
+   "candidate_owner_hint": "string｜null",
+   "evidence_refs": ["string"]
+  },
+  "_forbidden": ["responsibility_id（authoritative）", "applicability",
+                 "review_status", "canonical_responsibility（作為正式 contract）"],
+  "allowed_grouping_rules": [
+   "same explicit entry-alias registry responsibility",
+   "same existing reviewed owner contract",
+   "same deterministic mapping（例如同一 capability 函式）"
+  ],
+  "forbidden_grouping_rules": [
+   "summary 看起來很像",
+   "embedding 很接近",
+   "同 facet 所以自動合併"
+  ],
+  "_forbidden_rules_note": "上述禁用規則**最多**只能輸出成『請 reviewer 注意可能相關』的提示，⛔ 不得作為 grouping 依據。",
+  "singleton_required": "⚠️ 合法 proposal **必須允許** row → singleton candidate。R10-P 問的是『有多少真正的 responsibilities』，⛔ 不是『怎麼把 54 rows 壓成最少群』——clustering 心態很容易偷換這兩者。"
+ },
+
+ "_digest_semantics": {
+  "POPULATION_DIGEST": "54-row mechanical union identity（population.txt 的 sha256）",
+  "SCHEMA_DIGEST": "本檔（review contract／JSON schema 版本）的 sha256",
+  "PROPOSAL_DIGEST": "proposal 產出物的 sha256",
+  "REVIEW_BASIS_DIGEST": "**每個 responsibility** 裁定時實際引用的 evidence set",
+  "REGISTRY_DIGEST": "最終 registry bytes",
+  "why_not_one_hash": "⛔ 不得壓成同一個 hash——四個問題必須分別可答：母體是否同一批？判準是否同一版？此責任當時依據哪些證據？registry bytes 是否被改過？"
+ },
+
+ "_claim_ceiling": {
+  "may_claim": "在此**機械凍結的 54-row governance population** 中，已建立 reviewed responsibility identity／membership／applicability mapping。",
+  "must_not_claim": "全 KB responsibility taxonomy 已完成 —— ⛔ 54 是**治理母體**，不是全站語義宇宙。"
+ },
+
+ "_order": ["R10-P0 freeze population + digest",
+            "R10-P1 freeze schema/evidence classes/verdicts/digest semantics → SCHEMA_DIGEST",
+            "R10-P2 proposal-only grouping（frozen mechanical rules）→ PROPOSAL_DIGEST",
+            "R10-P3 human responsibility review（proposal 只可索引證據，⛔ 不得定義真相）",
+            "R10-P4 seal reviewed registry → REGISTRY_DIGEST",
+            "R10-P5 responsibility census（含 LEVEL_A_V2 9 rows 的相異 responsibility 數）",
+            "ONLY THEN decide A05 judgment unit / denominator"]
+}

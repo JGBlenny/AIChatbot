@@ -1,0 +1,54 @@
+3361|true|instance|false|帳單沒到帳 帳單狀態
+3362|true|instance|false|發票沒開 發票狀態
+3365|true|instance|false|修繕進度 修繕查詢
+3366|true|instance|false|繳費成功 繳費紀錄
+3368|true|instance|false|合約簽約邀請 發送邀請 為什麼不能發送
+3370|true|instance|false|合約提前解約 可以解約嗎 提前終止
+3371|true|instance|false|合約續約 可以續約嗎 延長合約
+3372|true|instance|false|合約狀態查詢 目前狀態
+3402|true|general|false|點退帳單 自動產生 費用結算
+3406|true|general|false|帳單收據 繳費證明 PDF 下載
+3490|true|instance|false|合約為什麼不能發送簽約邀請
+3491|true|instance|false|合約為什麼不能點交
+3492|true|instance|false|合約為什麼不能點退
+3493|true|instance|false|合約為什麼不能提前解約
+3494|true|instance|false|合約為什麼不能續約
+3495|true|instance|false|帳單為什麼發不出去
+3496|true|instance|false|帳單為什麼取消不了
+3497|true|instance|false|已付款但帳單狀態沒有更新
+3498|false|instance|true|為什麼被收逾期費（延遲金）
+3499|true|instance|false|帳單手動到帳或標記已收款失敗
+3500|true|instance|false|信用卡付款失敗
+3501|true|instance|false|信用卡自動扣款失敗
+3502|true|instance|false|虛擬帳號過期或轉帳失敗
+3503|true|instance|false|發票為什麼沒有開出來
+3504|true|instance|false|發票為什麼作廢不了
+3505|true|instance|false|為什麼不能新增物件
+3506|true|instance|false|物件為什麼突然全部下架
+3507|true|instance|false|物件為什麼不能建立合約
+3508|true|instance|false|IoT 廠商帳號綁定失敗
+3510|true|instance|false|合約目前是什麼狀態
+3511|true|instance|false|合約的點交/點退/提前解約/續約按鈕是否可用
+3512|true|instance|false|為什麼不能取消點交或點退
+3513|true|instance|false|為什麼不能取消或作廢合約
+3514|true|instance|false|查詢租客概況 合約帳單修繕
+3519|true|general|false|點退帳單金額計算 押金結算
+3531|true|general|false|滯納金帳單產生 付款後結算規則
+3532|true|general|false|滯納金客製版本 固定金額階梯式
+3931|true|-|false|租客說繳了 錢還沒進來
+3932|true|-|false|帳單卡在待對帳 狀態一直沒跳
+3933|true|-|false|租客繳不了費 一直失敗
+3934|true|-|false|帳單金額怪怪的 跟預期不一樣
+3935|true|-|false|這期帳單怎麼還沒出來
+3936|true|-|false|租客說看不到帳單 找不到
+3937|true|-|false|發票怎麼還沒開 沒收到發票
+3938|true|-|false|發票開錯了 要作廢重開
+3939|true|instance|false|滯納金怎麼收這麼多
+3940|true|instance|false|這筆延遲金是怎麼算的
+3941|true|-|false|要開始收租 帳單要怎麼設定
+3942|true|-|false|收款帳戶怎麼綁 金流怎麼申請
+4255|true|instance|false|取消點交邀請 取消點退邀請 收回邀請
+4420|true|instance|false|修繕進度 報修單 修得怎樣了 處理到哪
+4640|true|instance|false|帳單收據金額 收據多少錢
+4656|true|instance|false|查帳單 帳單編號查詢
+4657|true|instance|false|合約的點退帳單金額 查點退金額
