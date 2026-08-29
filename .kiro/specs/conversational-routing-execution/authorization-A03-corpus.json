@@ -1,0 +1,1413 @@
+{
+ "dataset_id": "authorization-2026Q3-A03",
+ "status": "COMMITTED-TO-TEST — 未標註、未執行",
+ "protocol": "authorization-A03-protocol.md（凍結於 corpus 生成之前）",
+ "n": 200,
+ "units": 17,
+ "digest": "4de39adfb5cb8ab3",
+ "provenance": {
+  "author": "單一 isolated author，tool_uses=0"
+ },
+ "utterances": [
+  {
+   "i": 1,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "想問一下點退的費用結算流程是怎麼走的"
+  },
+  {
+   "i": 2,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "是不是一定要先完成點退才會有結算帳單"
+  },
+  {
+   "i": 3,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "結算單是點退當下產生還是隔天"
+  },
+  {
+   "i": 4,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "結算帳單是自動的還是要我手動開"
+  },
+  {
+   "i": 5,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "結算流程有沒有需要我先做什麼設定"
+  },
+  {
+   "i": 6,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "請問點退結束後費用結算的順序是什麼"
+  },
+  {
+   "i": 7,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "退租結算要走幾個步驟啊"
+  },
+  {
+   "i": 8,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "退租點交做完系統會不會自己開一張結算帳單"
+  },
+  {
+   "i": 9,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "點交完成當下就有帳單了嗎還是要等"
+  },
+  {
+   "i": 10,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "點交沒做完帳單會出來嗎"
+  },
+  {
+   "i": 11,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "點交退還完成後系統會做哪些事"
+  },
+  {
+   "i": 12,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "點退完成之後帳單會自動產生嗎"
+  },
+  {
+   "i": 13,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "點退帳單大概多久會跑出來"
+  },
+  {
+   "i": 14,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "點退帳單產生的條件是什麼"
+  },
+  {
+   "i": 15,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "點退帳單自動產生的時機點想確認一下"
+  },
+  {
+   "i": 16,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "點退帳單需要我按確認才會產生嗎"
+  },
+  {
+   "i": 17,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "點退後如果沒看到帳單是正常的嗎"
+  },
+  {
+   "i": 18,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "點退流程走完帳單要多久才看得到"
+  },
+  {
+   "i": 19,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "點退的錢是怎麼結的可以說明一下嗎"
+  },
+  {
+   "i": 20,
+   "unit": "G1",
+   "stratum": "G1",
+   "form": "na",
+   "utterance": "點退跟結算帳單這兩件事的先後關係是怎樣"
+  },
+  {
+   "i": 21,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "下載收據需要什麼權限嗎"
+  },
+  {
+   "i": 22,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "付款完成的證明文件要如何取得"
+  },
+  {
+   "i": 23,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "後台哪裡可以匯出收據"
+  },
+  {
+   "i": 24,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "怎麼一次下載多張收據"
+  },
+  {
+   "i": 25,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "想問繳費證明的取得方式謝謝"
+  },
+  {
+   "i": 26,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "房客說要正式收據我該給他什麼"
+  },
+  {
+   "i": 27,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "收據下載的路徑麻煩告知一下"
+  },
+  {
+   "i": 28,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "收據是 PDF 檔嗎還是只能截圖"
+  },
+  {
+   "i": 29,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "收據檔案要怎麼寄給房客"
+  },
+  {
+   "i": 30,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "收據的 PDF 要去哪裡下載"
+  },
+  {
+   "i": 31,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "收據的檔案格式跟下載方式想了解一下"
+  },
+  {
+   "i": 32,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "收據能不能直接用email寄出"
+  },
+  {
+   "i": 33,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "收據要怎麼產生出來"
+  },
+  {
+   "i": 34,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "租客要繳費證明我要從哪裡調"
+  },
+  {
+   "i": 35,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "系統有提供收據下載的功能嗎"
+  },
+  {
+   "i": 36,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "繳完款之後收據會在哪邊出現"
+  },
+  {
+   "i": 37,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "繳費證明可以補印嗎"
+  },
+  {
+   "i": 38,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "繳費證明怎麼拿到電子檔"
+  },
+  {
+   "i": 39,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "請問收據可以列印嗎在哪個頁面"
+  },
+  {
+   "i": 40,
+   "unit": "G2",
+   "stratum": "G2",
+   "form": "na",
+   "utterance": "請問繳費證明跟收據是同一份東西嗎要怎麼拿"
+  },
+  {
+   "i": 41,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "想確認點退結算的加減項有哪些"
+  },
+  {
+   "i": 42,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "押金不夠扣的話金額會怎麼呈現"
+  },
+  {
+   "i": 43,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "押金會不會直接在點退帳單裡扣掉"
+  },
+  {
+   "i": 44,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "損壞賠償會算進點退帳單嗎"
+  },
+  {
+   "i": 45,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "最後一期租金是按天算還是整月算"
+  },
+  {
+   "i": 46,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "欠繳的款項會併到點退帳單嗎"
+  },
+  {
+   "i": 47,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "清潔費修繕費是怎麼被計入結算的"
+  },
+  {
+   "i": 48,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "結算帳單的算法是系統自動抓還是我填"
+  },
+  {
+   "i": 49,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "結算的金額怎麼會是負的這是怎麼算"
+  },
+  {
+   "i": 50,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "結算金額包含哪些項目"
+  },
+  {
+   "i": 51,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "退租當月的租金怎麼算比例"
+  },
+  {
+   "i": 52,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "退租結算的計算邏輯麻煩說明一下"
+  },
+  {
+   "i": 53,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "逾期費會不會一起算進點退結算"
+  },
+  {
+   "i": 54,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "點退帳單會不會把水電費算進去"
+  },
+  {
+   "i": 55,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "點退帳單的日期區間是怎麼取的"
+  },
+  {
+   "i": 56,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "點退帳單的計算規則想了解一下"
+  },
+  {
+   "i": 57,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "點退帳單的金額是怎麼算出來的"
+  },
+  {
+   "i": 58,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "點退帳單裡的每個項目分別代表什麼"
+  },
+  {
+   "i": 59,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "點退帳單金額計算有沒有公式"
+  },
+  {
+   "i": 60,
+   "unit": "G3",
+   "stratum": "G3",
+   "form": "na",
+   "utterance": "點退金額計算會參考合約的哪些設定"
+  },
+  {
+   "i": 61,
+   "unit": "I1-explicit",
+   "stratum": "I1",
+   "form": "explicit",
+   "utterance": "A-302 上個月的收據金額是多少"
+  },
+  {
+   "i": 62,
+   "unit": "I1-explicit",
+   "stratum": "I1",
+   "form": "explicit",
+   "utterance": "幫我查一下編號 3021 那張收據的金額"
+  },
+  {
+   "i": 63,
+   "unit": "I1-explicit",
+   "stratum": "I1",
+   "form": "explicit",
+   "utterance": "想確認我七月那張收據上面的數字"
+  },
+  {
+   "i": 64,
+   "unit": "I1-explicit",
+   "stratum": "I1",
+   "form": "explicit",
+   "utterance": "我的收據金額對不上想查一下正確數字"
+  },
+  {
+   "i": 65,
+   "unit": "I1-explicit",
+   "stratum": "I1",
+   "form": "explicit",
+   "utterance": "我這張收據實際金額是多少"
+  },
+  {
+   "i": 66,
+   "unit": "I1-explicit",
+   "stratum": "I1",
+   "form": "explicit",
+   "utterance": "我開的那張收據實收金額幫我看一下"
+  },
+  {
+   "i": 67,
+   "unit": "I1-explicit",
+   "stratum": "I1",
+   "form": "explicit",
+   "utterance": "王小姐那張收據到底收了多少錢"
+  },
+  {
+   "i": 68,
+   "unit": "I1-explicit",
+   "stratum": "I1",
+   "form": "explicit",
+   "utterance": "這筆收據的錢是多少可以查嗎"
+  },
+  {
+   "i": 69,
+   "unit": "I1-explicit",
+   "stratum": "I1",
+   "form": "explicit",
+   "utterance": "那張收據的實際入帳金額幫我確認"
+  },
+  {
+   "i": 70,
+   "unit": "I1-explicit",
+   "stratum": "I1",
+   "form": "explicit",
+   "utterance": "麻煩查我這間房客最新一張收據多少錢"
+  },
+  {
+   "i": 71,
+   "unit": "I1-elliptical",
+   "stratum": "I1",
+   "form": "elliptical",
+   "utterance": "付款收據金額想核對一下數字"
+  },
+  {
+   "i": 72,
+   "unit": "I1-elliptical",
+   "stratum": "I1",
+   "form": "elliptical",
+   "utterance": "實收多少錢 想確認一下"
+  },
+  {
+   "i": 73,
+   "unit": "I1-elliptical",
+   "stratum": "I1",
+   "form": "elliptical",
+   "utterance": "實際收到多少錢幫忙查一下"
+  },
+  {
+   "i": 74,
+   "unit": "I1-elliptical",
+   "stratum": "I1",
+   "form": "elliptical",
+   "utterance": "幫忙看一下收了多少"
+  },
+  {
+   "i": 75,
+   "unit": "I1-elliptical",
+   "stratum": "I1",
+   "form": "elliptical",
+   "utterance": "想知道收據上面的數字"
+  },
+  {
+   "i": 76,
+   "unit": "I1-elliptical",
+   "stratum": "I1",
+   "form": "elliptical",
+   "utterance": "收據上的總額是多少啊"
+  },
+  {
+   "i": 77,
+   "unit": "I1-elliptical",
+   "stratum": "I1",
+   "form": "elliptical",
+   "utterance": "收據實收金額查得到嗎"
+  },
+  {
+   "i": 78,
+   "unit": "I1-elliptical",
+   "stratum": "I1",
+   "form": "elliptical",
+   "utterance": "收據金額多少 謝謝"
+  },
+  {
+   "i": 79,
+   "unit": "I1-elliptical",
+   "stratum": "I1",
+   "form": "elliptical",
+   "utterance": "收據金額是多少"
+  },
+  {
+   "i": 80,
+   "unit": "I1-elliptical",
+   "stratum": "I1",
+   "form": "elliptical",
+   "utterance": "查收據金額"
+  },
+  {
+   "i": 81,
+   "unit": "I2-explicit",
+   "stratum": "I2",
+   "form": "explicit",
+   "utterance": "A-302 十月的帳單在哪裡"
+  },
+  {
+   "i": 82,
+   "unit": "I2-explicit",
+   "stratum": "I2",
+   "form": "explicit",
+   "utterance": "幫我找一下編號 5188 這張帳單"
+  },
+  {
+   "i": 83,
+   "unit": "I2-explicit",
+   "stratum": "I2",
+   "form": "explicit",
+   "utterance": "我上禮拜開的那張帳單狀態幫我看"
+  },
+  {
+   "i": 84,
+   "unit": "I2-explicit",
+   "stratum": "I2",
+   "form": "explicit",
+   "utterance": "我要看這份合約最新那張帳單的狀況"
+  },
+  {
+   "i": 85,
+   "unit": "I2-explicit",
+   "stratum": "I2",
+   "form": "explicit",
+   "utterance": "我這筆帳單現在的狀態是什麼"
+  },
+  {
+   "i": 86,
+   "unit": "I2-explicit",
+   "stratum": "I2",
+   "form": "explicit",
+   "utterance": "編號開頭 202610 的帳單幫我調出來"
+  },
+  {
+   "i": 87,
+   "unit": "I2-explicit",
+   "stratum": "I2",
+   "form": "explicit",
+   "utterance": "請問這張帳單現在是已寄出還是草稿"
+  },
+  {
+   "i": 88,
+   "unit": "I2-explicit",
+   "stratum": "I2",
+   "form": "explicit",
+   "utterance": "那張帳單目前是什麼狀態顯示什麼"
+  },
+  {
+   "i": 89,
+   "unit": "I2-explicit",
+   "stratum": "I2",
+   "form": "explicit",
+   "utterance": "那筆帳單到底繳了沒"
+  },
+  {
+   "i": 90,
+   "unit": "I2-explicit",
+   "stratum": "I2",
+   "form": "explicit",
+   "utterance": "陳先生那筆帳單我找不到幫我查"
+  },
+  {
+   "i": 91,
+   "unit": "I2-elliptical",
+   "stratum": "I2",
+   "form": "elliptical",
+   "utterance": "帳單找不到 要從哪裡看"
+  },
+  {
+   "i": 92,
+   "unit": "I2-elliptical",
+   "stratum": "I2",
+   "form": "elliptical",
+   "utterance": "帳單是已發送還是還沒"
+  },
+  {
+   "i": 93,
+   "unit": "I2-elliptical",
+   "stratum": "I2",
+   "form": "elliptical",
+   "utterance": "帳單狀態顯示什麼"
+  },
+  {
+   "i": 94,
+   "unit": "I2-elliptical",
+   "stratum": "I2",
+   "form": "elliptical",
+   "utterance": "帳單現在狀態是什麼"
+  },
+  {
+   "i": 95,
+   "unit": "I2-elliptical",
+   "stratum": "I2",
+   "form": "elliptical",
+   "utterance": "帳單目前進度到哪"
+  },
+  {
+   "i": 96,
+   "unit": "I2-elliptical",
+   "stratum": "I2",
+   "form": "elliptical",
+   "utterance": "幫忙查帳單狀況 謝謝"
+  },
+  {
+   "i": 97,
+   "unit": "I2-elliptical",
+   "stratum": "I2",
+   "form": "elliptical",
+   "utterance": "想確認帳單有沒有已經繳了"
+  },
+  {
+   "i": 98,
+   "unit": "I2-elliptical",
+   "stratum": "I2",
+   "form": "elliptical",
+   "utterance": "有付款了嗎 想看一下"
+  },
+  {
+   "i": 99,
+   "unit": "I2-elliptical",
+   "stratum": "I2",
+   "form": "elliptical",
+   "utterance": "查一下帳單狀態"
+  },
+  {
+   "i": 100,
+   "unit": "I2-elliptical",
+   "stratum": "I2",
+   "form": "elliptical",
+   "utterance": "要怎麼看到十月的帳單"
+  },
+  {
+   "i": 101,
+   "unit": "I3-explicit",
+   "stratum": "I3",
+   "form": "explicit",
+   "utterance": "A-302 退租那張結算帳單總共多少錢"
+  },
+  {
+   "i": 102,
+   "unit": "I3-explicit",
+   "stratum": "I3",
+   "form": "explicit",
+   "utterance": "上個月結束那份合約的點退帳單多少錢"
+  },
+  {
+   "i": 103,
+   "unit": "I3-explicit",
+   "stratum": "I3",
+   "form": "explicit",
+   "utterance": "幫我查編號 7742 合約的點退帳單金額"
+  },
+  {
+   "i": 104,
+   "unit": "I3-explicit",
+   "stratum": "I3",
+   "form": "explicit",
+   "utterance": "我的點退帳單顯示的金額想確認正確嗎"
+  },
+  {
+   "i": 105,
+   "unit": "I3-explicit",
+   "stratum": "I3",
+   "form": "explicit",
+   "utterance": "我要知道這張點退帳單實際要收多少"
+  },
+  {
+   "i": 106,
+   "unit": "I3-explicit",
+   "stratum": "I3",
+   "form": "explicit",
+   "utterance": "我這份合約的點退帳單金額是多少"
+  },
+  {
+   "i": 107,
+   "unit": "I3-explicit",
+   "stratum": "I3",
+   "form": "explicit",
+   "utterance": "林小姐這份約的點退帳單金額幫我看"
+  },
+  {
+   "i": 108,
+   "unit": "I3-explicit",
+   "stratum": "I3",
+   "form": "explicit",
+   "utterance": "這份合約結算完之後金額是多少"
+  },
+  {
+   "i": 109,
+   "unit": "I3-explicit",
+   "stratum": "I3",
+   "form": "explicit",
+   "utterance": "這間房子的退租結算金額查一下"
+  },
+  {
+   "i": 110,
+   "unit": "I3-explicit",
+   "stratum": "I3",
+   "form": "explicit",
+   "utterance": "那份合約點退完的結算金額是多少"
+  },
+  {
+   "i": 111,
+   "unit": "I3-elliptical",
+   "stratum": "I3",
+   "form": "elliptical",
+   "utterance": "想知道結算帳單的總金額"
+  },
+  {
+   "i": 112,
+   "unit": "I3-elliptical",
+   "stratum": "I3",
+   "form": "elliptical",
+   "utterance": "查點退帳單金額"
+  },
+  {
+   "i": 113,
+   "unit": "I3-elliptical",
+   "stratum": "I3",
+   "form": "elliptical",
+   "utterance": "結算帳單上面的總額多少"
+  },
+  {
+   "i": 114,
+   "unit": "I3-elliptical",
+   "stratum": "I3",
+   "form": "elliptical",
+   "utterance": "結算金額是多少啊"
+  },
+  {
+   "i": 115,
+   "unit": "I3-elliptical",
+   "stratum": "I3",
+   "form": "elliptical",
+   "utterance": "退租後要付的金額是多少"
+  },
+  {
+   "i": 116,
+   "unit": "I3-elliptical",
+   "stratum": "I3",
+   "form": "elliptical",
+   "utterance": "退租結算總共要收多少錢"
+  },
+  {
+   "i": 117,
+   "unit": "I3-elliptical",
+   "stratum": "I3",
+   "form": "elliptical",
+   "utterance": "點退完的帳單金額查得到嗎"
+  },
+  {
+   "i": 118,
+   "unit": "I3-elliptical",
+   "stratum": "I3",
+   "form": "elliptical",
+   "utterance": "點退帳單多少 幫忙看一下"
+  },
+  {
+   "i": 119,
+   "unit": "I3-elliptical",
+   "stratum": "I3",
+   "form": "elliptical",
+   "utterance": "點退帳單金額是多少"
+  },
+  {
+   "i": 120,
+   "unit": "I3-elliptical",
+   "stratum": "I3",
+   "form": "elliptical",
+   "utterance": "點退結算的實際數字想核對"
+  },
+  {
+   "i": 121,
+   "unit": "I4-explicit",
+   "stratum": "I4",
+   "form": "explicit",
+   "utterance": "A-302 的帳單按發送沒反應是為什麼"
+  },
+  {
+   "i": 122,
+   "unit": "I4-explicit",
+   "stratum": "I4",
+   "form": "explicit",
+   "utterance": "我剛開的帳單送不出去是不是哪裡沒填"
+  },
+  {
+   "i": 123,
+   "unit": "I4-explicit",
+   "stratum": "I4",
+   "form": "explicit",
+   "utterance": "我這張帳單卡在草稿發不了急"
+  },
+  {
+   "i": 124,
+   "unit": "I4-explicit",
+   "stratum": "I4",
+   "form": "explicit",
+   "utterance": "我這張帳單為什麼發不出去"
+  },
+  {
+   "i": 125,
+   "unit": "I4-explicit",
+   "stratum": "I4",
+   "form": "explicit",
+   "utterance": "王先生那張帳單為何寄不出去"
+  },
+  {
+   "i": 126,
+   "unit": "I4-explicit",
+   "stratum": "I4",
+   "form": "explicit",
+   "utterance": "編號 4410 這筆帳單一直寄不出去怎麼辦"
+  },
+  {
+   "i": 127,
+   "unit": "I4-explicit",
+   "stratum": "I4",
+   "form": "explicit",
+   "utterance": "這張帳單一直顯示發送中是怎樣"
+  },
+  {
+   "i": 128,
+   "unit": "I4-explicit",
+   "stratum": "I4",
+   "form": "explicit",
+   "utterance": "這筆帳單發送失敗有寫原因嗎"
+  },
+  {
+   "i": 129,
+   "unit": "I4-explicit",
+   "stratum": "I4",
+   "form": "explicit",
+   "utterance": "那筆帳單我按了送出但房客說沒收到"
+  },
+  {
+   "i": 130,
+   "unit": "I4-explicit",
+   "stratum": "I4",
+   "form": "explicit",
+   "utterance": "麻煩看我這筆帳單發不出去的原因"
+  },
+  {
+   "i": 131,
+   "unit": "I4-elliptical",
+   "stratum": "I4",
+   "form": "elliptical",
+   "utterance": "帳單一直卡著送不出去怎麼辦"
+  },
+  {
+   "i": 132,
+   "unit": "I4-elliptical",
+   "stratum": "I4",
+   "form": "elliptical",
+   "utterance": "帳單寄送沒反應 是不是壞了"
+  },
+  {
+   "i": 133,
+   "unit": "I4-elliptical",
+   "stratum": "I4",
+   "form": "elliptical",
+   "utterance": "帳單無法送出 求解"
+  },
+  {
+   "i": 134,
+   "unit": "I4-elliptical",
+   "stratum": "I4",
+   "form": "elliptical",
+   "utterance": "帳單發不出去是什麼原因"
+  },
+  {
+   "i": 135,
+   "unit": "I4-elliptical",
+   "stratum": "I4",
+   "form": "elliptical",
+   "utterance": "按了寄送但沒有寄出去"
+  },
+  {
+   "i": 136,
+   "unit": "I4-elliptical",
+   "stratum": "I4",
+   "form": "elliptical",
+   "utterance": "為什麼寄不出去啊"
+  },
+  {
+   "i": 137,
+   "unit": "I4-elliptical",
+   "stratum": "I4",
+   "form": "elliptical",
+   "utterance": "發不了 是缺什麼資料嗎"
+  },
+  {
+   "i": 138,
+   "unit": "I4-elliptical",
+   "stratum": "I4",
+   "form": "elliptical",
+   "utterance": "發送失敗要怎麼處理"
+  },
+  {
+   "i": 139,
+   "unit": "I4-elliptical",
+   "stratum": "I4",
+   "form": "elliptical",
+   "utterance": "送出後房客沒收到通知"
+  },
+  {
+   "i": 140,
+   "unit": "I4-elliptical",
+   "stratum": "I4",
+   "form": "elliptical",
+   "utterance": "點發送都沒動靜"
+  },
+  {
+   "i": 141,
+   "unit": "I5-explicit",
+   "stratum": "I5",
+   "form": "explicit",
+   "utterance": "A-302 這張帳單刪不掉怎麼辦"
+  },
+  {
+   "i": 142,
+   "unit": "I5-explicit",
+   "stratum": "I5",
+   "form": "explicit",
+   "utterance": "我這筆帳單為什麼取消不了"
+  },
+  {
+   "i": 143,
+   "unit": "I5-explicit",
+   "stratum": "I5",
+   "form": "explicit",
+   "utterance": "我這筆帳單為何不能作廢"
+  },
+  {
+   "i": 144,
+   "unit": "I5-explicit",
+   "stratum": "I5",
+   "form": "explicit",
+   "utterance": "我開錯的那筆帳單要怎麼取消一直失敗"
+  },
+  {
+   "i": 145,
+   "unit": "I5-explicit",
+   "stratum": "I5",
+   "form": "explicit",
+   "utterance": "編號 3390 的帳單按作廢沒用是為什麼"
+  },
+  {
+   "i": 146,
+   "unit": "I5-explicit",
+   "stratum": "I5",
+   "form": "explicit",
+   "utterance": "這張帳單取消時跳錯誤是什麼意思"
+  },
+  {
+   "i": 147,
+   "unit": "I5-explicit",
+   "stratum": "I5",
+   "form": "explicit",
+   "utterance": "這筆帳單已經寄出了還能取消嗎為什麼不行"
+  },
+  {
+   "i": 148,
+   "unit": "I5-explicit",
+   "stratum": "I5",
+   "form": "explicit",
+   "utterance": "那張帳單我想取消但按鈕是灰的"
+  },
+  {
+   "i": 149,
+   "unit": "I5-explicit",
+   "stratum": "I5",
+   "form": "explicit",
+   "utterance": "陳小姐那張帳單取消不了很急"
+  },
+  {
+   "i": 150,
+   "unit": "I5-explicit",
+   "stratum": "I5",
+   "form": "explicit",
+   "utterance": "麻煩查我這張帳單無法取消的原因"
+  },
+  {
+   "i": 151,
+   "unit": "I5-elliptical",
+   "stratum": "I5",
+   "form": "elliptical",
+   "utterance": "刪不掉是什麼原因"
+  },
+  {
+   "i": 152,
+   "unit": "I5-elliptical",
+   "stratum": "I5",
+   "form": "elliptical",
+   "utterance": "取消按鈕點不下去"
+  },
+  {
+   "i": 153,
+   "unit": "I5-elliptical",
+   "stratum": "I5",
+   "form": "elliptical",
+   "utterance": "取消時跳出錯誤訊息"
+  },
+  {
+   "i": 154,
+   "unit": "I5-elliptical",
+   "stratum": "I5",
+   "form": "elliptical",
+   "utterance": "已經收款的還能不能取消 現在取消不了"
+  },
+  {
+   "i": 155,
+   "unit": "I5-elliptical",
+   "stratum": "I5",
+   "form": "elliptical",
+   "utterance": "帳單取消不了怎麼辦"
+  },
+  {
+   "i": 156,
+   "unit": "I5-elliptical",
+   "stratum": "I5",
+   "form": "elliptical",
+   "utterance": "想作廢但一直失敗"
+  },
+  {
+   "i": 157,
+   "unit": "I5-elliptical",
+   "stratum": "I5",
+   "form": "elliptical",
+   "utterance": "按取消沒有反應"
+  },
+  {
+   "i": 158,
+   "unit": "I5-elliptical",
+   "stratum": "I5",
+   "form": "elliptical",
+   "utterance": "為什麼作廢不了"
+  },
+  {
+   "i": 159,
+   "unit": "I5-elliptical",
+   "stratum": "I5",
+   "form": "elliptical",
+   "utterance": "無法取消 是有什麼限制嗎"
+  },
+  {
+   "i": 160,
+   "unit": "I5-elliptical",
+   "stratum": "I5",
+   "form": "elliptical",
+   "utterance": "開錯了要怎麼取消 一直不行"
+  },
+  {
+   "i": 161,
+   "unit": "I6-explicit",
+   "stratum": "I6",
+   "form": "explicit",
+   "utterance": "A-302 這張帳單怎麼被加了逾期費用"
+  },
+  {
+   "i": 162,
+   "unit": "I6-explicit",
+   "stratum": "I6",
+   "form": "explicit",
+   "utterance": "我的帳單金額多了一塊是逾期費嗎為什麼"
+  },
+  {
+   "i": 163,
+   "unit": "I6-explicit",
+   "stratum": "I6",
+   "form": "explicit",
+   "utterance": "我這張帳單的逾期費是怎麼跑出來的"
+  },
+  {
+   "i": 164,
+   "unit": "I6-explicit",
+   "stratum": "I6",
+   "form": "explicit",
+   "utterance": "我這筆帳單為什麼被收逾期費"
+  },
+  {
+   "i": 165,
+   "unit": "I6-explicit",
+   "stratum": "I6",
+   "form": "explicit",
+   "utterance": "王太太那張帳單被扣逾期費想問原因"
+  },
+  {
+   "i": 166,
+   "unit": "I6-explicit",
+   "stratum": "I6",
+   "form": "explicit",
+   "utterance": "編號 2205 的帳單多了一筆滯納金為什麼"
+  },
+  {
+   "i": 167,
+   "unit": "I6-explicit",
+   "stratum": "I6",
+   "form": "explicit",
+   "utterance": "這張帳單逾期費算的日期我覺得不對"
+  },
+  {
+   "i": 168,
+   "unit": "I6-explicit",
+   "stratum": "I6",
+   "form": "explicit",
+   "utterance": "這筆帳單只晚一天也要收逾期費嗎"
+  },
+  {
+   "i": 169,
+   "unit": "I6-explicit",
+   "stratum": "I6",
+   "form": "explicit",
+   "utterance": "那筆帳單房客明明有繳為何還算逾期"
+  },
+  {
+   "i": 170,
+   "unit": "I6-explicit",
+   "stratum": "I6",
+   "form": "explicit",
+   "utterance": "麻煩查我這筆帳單被收滯納金的原因"
+  },
+  {
+   "i": 171,
+   "unit": "I6-elliptical",
+   "stratum": "I6",
+   "form": "elliptical",
+   "utterance": "帳單怎麼多出滯納金"
+  },
+  {
+   "i": 172,
+   "unit": "I6-elliptical",
+   "stratum": "I6",
+   "form": "elliptical",
+   "utterance": "怎麼會算逾期 日期不是還沒到嗎"
+  },
+  {
+   "i": 173,
+   "unit": "I6-elliptical",
+   "stratum": "I6",
+   "form": "elliptical",
+   "utterance": "明明有繳還算逾期是什麼情況"
+  },
+  {
+   "i": 174,
+   "unit": "I6-elliptical",
+   "stratum": "I6",
+   "form": "elliptical",
+   "utterance": "晚繳兩天就被加錢了"
+  },
+  {
+   "i": 175,
+   "unit": "I6-elliptical",
+   "stratum": "I6",
+   "form": "elliptical",
+   "utterance": "沒有遲繳卻出現逾期費用"
+  },
+  {
+   "i": 176,
+   "unit": "I6-elliptical",
+   "stratum": "I6",
+   "form": "elliptical",
+   "utterance": "為什麼被收逾期費"
+  },
+  {
+   "i": 177,
+   "unit": "I6-elliptical",
+   "stratum": "I6",
+   "form": "elliptical",
+   "utterance": "被收滯納金想問原因"
+  },
+  {
+   "i": 178,
+   "unit": "I6-elliptical",
+   "stratum": "I6",
+   "form": "elliptical",
+   "utterance": "逾期費是怎麼算出來的"
+  },
+  {
+   "i": 179,
+   "unit": "I6-elliptical",
+   "stratum": "I6",
+   "form": "elliptical",
+   "utterance": "逾期費用可以取消嗎 為什麼會被收"
+  },
+  {
+   "i": 180,
+   "unit": "I6-elliptical",
+   "stratum": "I6",
+   "form": "elliptical",
+   "utterance": "金額怎麼跟原本不一樣 多了逾期費"
+  },
+  {
+   "i": 181,
+   "unit": "I7-explicit",
+   "stratum": "I7",
+   "form": "explicit",
+   "utterance": "A-302 的帳單手動確認收款按不下去"
+  },
+  {
+   "i": 182,
+   "unit": "I7-explicit",
+   "stratum": "I7",
+   "form": "explicit",
+   "utterance": "我幫房客手動入帳但這張帳單沒變成已繳"
+  },
+  {
+   "i": 183,
+   "unit": "I7-explicit",
+   "stratum": "I7",
+   "form": "explicit",
+   "utterance": "我這張帳單手動登錄到帳沒成功怎麼辦"
+  },
+  {
+   "i": 184,
+   "unit": "I7-explicit",
+   "stratum": "I7",
+   "form": "explicit",
+   "utterance": "我這筆帳單手動到帳為什麼失敗"
+  },
+  {
+   "i": 185,
+   "unit": "I7-explicit",
+   "stratum": "I7",
+   "form": "explicit",
+   "utterance": "我這筆帳單金額對了但手動銷帳還是失敗"
+  },
+  {
+   "i": 186,
+   "unit": "I7-explicit",
+   "stratum": "I7",
+   "form": "explicit",
+   "utterance": "編號 6120 這張帳單手動銷帳一直失敗"
+  },
+  {
+   "i": 187,
+   "unit": "I7-explicit",
+   "stratum": "I7",
+   "form": "explicit",
+   "utterance": "這筆帳單手動對帳失敗是什麼原因"
+  },
+  {
+   "i": 188,
+   "unit": "I7-explicit",
+   "stratum": "I7",
+   "form": "explicit",
+   "utterance": "那筆帳單我手動input入帳跳錯誤"
+  },
+  {
+   "i": 189,
+   "unit": "I7-explicit",
+   "stratum": "I7",
+   "form": "explicit",
+   "utterance": "陳先生那筆帳單手動到帳出現錯誤訊息"
+  },
+  {
+   "i": 190,
+   "unit": "I7-explicit",
+   "stratum": "I7",
+   "form": "explicit",
+   "utterance": "麻煩看我這張帳單手動到帳失敗的原因"
+  },
+  {
+   "i": 191,
+   "unit": "I7-elliptical",
+   "stratum": "I7",
+   "form": "elliptical",
+   "utterance": "入帳登錄不進去是什麼原因"
+  },
+  {
+   "i": 192,
+   "unit": "I7-elliptical",
+   "stratum": "I7",
+   "form": "elliptical",
+   "utterance": "手動入帳後狀態沒有變已繳"
+  },
+  {
+   "i": 193,
+   "unit": "I7-elliptical",
+   "stratum": "I7",
+   "form": "elliptical",
+   "utterance": "手動到帳一直失敗"
+  },
+  {
+   "i": 194,
+   "unit": "I7-elliptical",
+   "stratum": "I7",
+   "form": "elliptical",
+   "utterance": "手動到帳做不起來 求協助"
+  },
+  {
+   "i": 195,
+   "unit": "I7-elliptical",
+   "stratum": "I7",
+   "form": "elliptical",
+   "utterance": "手動對帳失敗要怎麼處理"
+  },
+  {
+   "i": 196,
+   "unit": "I7-elliptical",
+   "stratum": "I7",
+   "form": "elliptical",
+   "utterance": "手動標記已收款出現錯誤"
+  },
+  {
+   "i": 197,
+   "unit": "I7-elliptical",
+   "stratum": "I7",
+   "form": "elliptical",
+   "utterance": "手動銷帳為什麼不成功"
+  },
+  {
+   "i": 198,
+   "unit": "I7-elliptical",
+   "stratum": "I7",
+   "form": "elliptical",
+   "utterance": "現金收款要怎麼登錄 一直失敗"
+  },
+  {
+   "i": 199,
+   "unit": "I7-elliptical",
+   "stratum": "I7",
+   "form": "elliptical",
+   "utterance": "確認收款按了沒反應"
+  },
+  {
+   "i": 200,
+   "unit": "I7-elliptical",
+   "stratum": "I7",
+   "form": "elliptical",
+   "utterance": "自己登錄收款會跳錯誤"
+  }
+ ]
+}
