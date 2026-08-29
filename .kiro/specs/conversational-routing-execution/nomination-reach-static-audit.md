@@ -6,8 +6,15 @@
 
 ## 結論
 
-> **現行 nomination 機制的可作用範圍上限是知識庫的 21.5%。
-> 其餘 78.4% 無論檢索到與否，都不可能產生 Face candidate。**
+> **現行 KB 中，21.5% 的 knowledge rows 具備 category→Face nomination capability；
+> 78.4% 的 rows 若成為 top1，無法透過此 nomination mechanism 產生 Face candidate。
+> 此比例是 KB configuration coverage，不是 production traffic coverage，
+> 也不是需求漏接率。**
+
+⚠️ **2026-08-29 更正**：本檔初版寫成「可作用範圍**上限**是 21.5%，流量只會更低或相等」
+——**錯的**。流量可能高度集中在那 188 筆 mapped rows；極端情況下 production 的 top1
+全部落在 mapped rows，request-level 的 nomination opportunity 可以**遠高於** 21.5%。
+`KB row coverage` 與 `request coverage` 是兩個不同的量，⛔ 不得互推。
 
 ```text
 S3  有 categories 但無 Face mapping → 永不提名   573 筆  65.6%
@@ -46,11 +53,11 @@ Stage 1 規格第七節問：
 
 > retrieval + category 這套 mechanism，在真實 production traffic 上到底有沒有足夠 support？
 
-靜態盤查已能回答**上限**：**最多 21.5%**。
-流量分布只會讓實際數字**更低或相等**，不可能更高。
+靜態盤查回答的是**設定側**：21.5% 的 knowledge rows 具備 nomination capability。
+⛔ 它**不能**推出 request-level 的覆蓋率——流量可能集中在 mapped rows。
 
-⇒ 若後續要主張「nomination 覆蓋足夠」，這條天花板必須先被處理；
-   若要主張「不足」，則仍須 Layer 0 才能說出**該補多少**。
+⇒ 要主張「nomination 覆蓋足夠／不足」，都還需要 request 側的分布；
+   而要說出「**該**補多少」，仍須 Layer 0。
 
 ## 與先前實測的一致性
 
