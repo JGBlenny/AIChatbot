@@ -12,6 +12,9 @@ JGB 帳單診斷引擎
 from datetime import datetime
 from typing import Any, Callable, Optional
 
+# 點退帳單 selection contract（⚠️ 只管 type=2，⛔ 不是通用 bill selector）
+from . import point_refund_selection as _pr
+
 
 # ── 帳務面向 fact-builder 註冊表（billing-conversational-facets 元件 2）────────
 #
@@ -324,17 +327,47 @@ def face_bill_response(endpoint: str, data: Any, user_question: str = "",
     """帳務面向分流入口：face 命中註冊表且有資料列才接手，否則回 None（呼叫端走原路）。
 
     list 正規化為第一列（引擎收斂本為單筆；secondary_call 附掛資料在主列鍵上）。
+
+    ⚠️ **例外：點退帳單意圖走 selection contract**（`POINT_REFUND_BILL_SELECTION`，
+    2026-08-29 業主授權）。原因：「某合約的**點退**帳單」需要先以 `type` 選出那一筆，
+    取第一列會在多筆情境下答錯筆、且收斂後也從未驗證身分。
+    ⛔ 授權只到點退這一種類型——⛔ 不得藉此把本函式改成通用 bill selector。
     """
     builder = BILL_FACE_BUILDERS.get(face) if face else None
     if builder is None:
         return None
     if isinstance(data, dict):
-        row = data
+        rows = [data]
     elif isinstance(data, list) and data:
-        row = data[0]
+        rows = [r for r in data if isinstance(r, dict)]
     else:
         return None   # 無列可 ground → 原路（查無訊息等既有行為）
-    return builder(row, user_question)
+    if not rows:
+        return None
+
+    if _pr.is_point_refund_intent(user_question):
+        return _point_refund_response(rows, user_question, builder)
+    return builder(rows[0], user_question)
+
+
+def _point_refund_response(rows: list, user_question: str, builder) -> str:
+    """點退意圖的決定性分流。⚠️ 每個分支都**不得**退回 `rows[0]`。"""
+    if len(rows) == 1:
+        # 使用者直接指定某一筆（引擎已收斂）→ **身分查核**
+        state = _pr.verify_direct_bill(rows[0])
+        if state == _pr.STATE_TYPE_MISMATCH:
+            return _pr.type_mismatch_facts(rows[0])
+        if state == _pr.STATE_NOT_FOUND:
+            return _pr.not_found_facts()
+        selected = rows[0]
+    else:
+        state, selected, candidates = _pr.select_point_refund(rows)
+        if state == _pr.STATE_NOT_FOUND:
+            return _pr.not_found_facts()
+        if state == _pr.STATE_CANDIDATES:
+            return _pr.candidates_facts(candidates)
+    # ⚠️ provenance 不可斷：type 事實行與 identity／amount／status 一起進 grounding
+    return "\n".join([_pr.type_fact_line(selected), builder(selected, user_question)])
 
 
 def diagnose_bill(bill: dict, user_question: str = "") -> str:

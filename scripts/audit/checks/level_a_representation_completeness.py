@@ -7,9 +7,8 @@ Level-A 的 10 筆是本專案唯一「applicability truth 已閉合」的 autho
 D1 之後，它們的 `retrieval_representation` 也必須閉合——否則會出現
 「一部分 row 走 reviewed surface、一部分走 legacy summary」的半遷移狀態。
 
-⚠️ 目前 4657 卡在 **capability blocker**（`FACET_PROMISE_UNIMPLEMENTED`：
-帳單 face 對多列只取 `data[0]`、不讀 `type` ⇒「該合約的**點退**帳單」無法被選取）。
-業主裁示：**就讓它紅**。
+⚠️ 目前 4657 卡在 **capability blocker**（`FACET_TYPE_SELECTION_MISSING`：
+全流程從未讀 `type` ⇒「該合約的**點退**帳單」無法被辨識／選出）。業主裁示：**就讓它紅**。
 
 ```text
 ⛔ 不得為了讓 invariant 變綠而寫一個不忠於 row intent 的 representation
@@ -50,7 +49,7 @@ APPROVED_SOURCE = "reviewed_product_declaration"
 #: 具名 blocker：**不是豁免**——它仍然讓本不變量 FAIL，
 #: 只是讓訊息能指出「紅在哪、為什麼紅」，避免與無名缺漏混為一談。
 KNOWN_BLOCKERS = {
-    4657: "FACET_PROMISE_UNIMPLEMENTED（point-refund bill selection missing）"
+    4657: "FACET_TYPE_SELECTION_MISSING（點退帳單身分從未以 type 判定）"
            "——見 .kiro/specs/conversational-routing-execution/r9-review-status.md",
 }
 

@@ -148,6 +148,30 @@ face_bill_response（bills.py）對多列的處理是 **row = data[0]**
 對照預期 若存在候選列表，應出現與 repair_prefill 同形狀的 candidates 結構——未出現
 ```
 
+### ⚠️ 更正：前一版對 blocker 的描述有誤（2026-08-29 同日更正）
+
+```text
+❌ 前一版寫：「對話規則承諾的『列出該合約的帳單候選』**查無實作**」
+✅ 實況：候選列表在 conversational_engine 有完整實作
+        （result_mapping／label_fields／candidate_cap／skip_refine；
+         >1 列時引擎直接回 ask 列候選）
+⇒ face_bill_response 的 `data[0]` 拿到的是**已收斂的單列**，⛔ 不是「任取第一筆」
+```
+
+**誤判成因**：否定結論的搜尋只掃 `services/jgb/`，正對照（修繕域 `repair_prefill`）
+也選在同一層 ⇒ 正對照通過只證明**工具能用**，⛔ 證明不了 engine 層沒有。
+教訓：正對照必須跨到**被查機制真正可能存在的那一層**。
+
+**真正的 first causal break（不變）**：
+
+```text
+全流程**從未讀 `type`**（2＝點退）
+⇒ 候選標籤不含類型、收斂後也不驗證選中那筆的身分
+⇒ 「某合約的**點退**帳單」只能靠使用者自己從標題認出來
+```
+⚠️ 業主的裁示因此**完全成立**且 scope 更小：要補的是 `type` 的辨識與選取，
+⛔ 不是候選框架、⛔ 不是通用 selector。blocker 代號改為 `FACET_TYPE_SELECTION_MISSING`。
+
 ### ⇒ 4657 **正式降級為 capability blocker**（2026-08-29 業主定案）
 
 ```text
@@ -217,3 +241,58 @@ FACET_PROMISE_UNIMPLEMENTED：
 ⚠️ **4 與 5 是同一個 migration step**，⛔ 不得只做 4。
 只重建容器而不重生既有 embedding ＝ 製造「形式上新 contract 已接線，
 但 retrieval 前半段仍吃舊 semantic surface」的**假完成**。
+
+---
+
+# 附錄：`POINT_REFUND_BILL_SELECTION` 實作（業主授權 2026-08-29）
+
+## 授權射程
+
+```text
+✅ 只補「點退帳單」的 selection contract
+⛔ 不得順手泛化成所有帳單類型的通用 selector
+```
+
+## 契約
+
+```text
+合約多筆帳單 → filter type == 2
+  0 筆  → NOT_FOUND，明確回報找不到，⛔ 不得 fallback 第一筆
+  1 筆  → SELECTED
+  >1 筆 → CANDIDATES，列出候選，⛔ 不得任取 data[0]
+直接給 bill id → verify type == 2；⛔ 「id 存在＋query 說點退」不足以認定身分
+```
+
+## grounding provenance
+
+要求**不是**「`_format_bill_status` 必須讀 type」，而是
+**最後 grounding 必須能證明所回答的那一列就是 type=2**。
+實作：selection 層產生決定性事實行 `類型：點退帳單（系統依帳單 type 判定）`，
+與 identity／amount／status 一起進 facts ⇒ 三者不斷鏈。
+
+## 六道 guard（`tests/unit/conversational/test_point_refund_selection_req.py`，11 條全過）
+
+```text
+1 first=type1 / second=type2 → 必須選 second（專門殺掉 data[0] 舊行為）
+2 單筆 type=2 → identity ＋ type ＋ amount ＋ status 同時可見
+3 沒有 type=2 → NOT_FOUND，⛔ 不得改用第一筆代答
+4 兩筆 type=2 → 列候選且明示「系統未自行選定任一筆」
+5 直接指定但 type != 2（含 type 缺值、標題含「點退」）→ ⛔ 不得稱為點退帳單
+6 mutation ×3：拿掉 type filter／改回 data[0]／拿掉 type 事實行 → 行為必須改變
+  ⚠️ guard exists ≠ guard can fail
+```
+⚠️ 另有 scope 守門測試：非點退意圖走 legacy 路徑，行為**逐字不變**。
+
+## ⇒ 下一步（⛔ 仍不寫 DB、不重建 semantic-model）
+
+```text
+① ✅ selection capability 完成
+② ⏸ 業主重新裁 4657 semantic envelope（post-fix candidate 已擬，非 authoritative）
+③ ⏸ Level-A representation review → 10/10 COMPLETE
+④ ⏸ 寫入 10 筆 reviewed declarations ＋ provenance
+⑤ ⏸ invariant 13 轉綠
+⑥ ⏸ rebuild semantic-model
+⑦ ⏸ 只跑 scripts/regenerate_level_a_embeddings.py --apply
+⑧ ⏸ transport verification（DB → retriever → embedding → reranker 同一份 reviewed text）
+⑨ ⏸ representation candidate validation
+```

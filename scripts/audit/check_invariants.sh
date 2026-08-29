@@ -21,6 +21,14 @@ set -uo pipefail
 PSQL="docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -t -A"
 FAIL=0
 
+# ── 兩類紅燈必須分開記帳（業主定案 2026-08-29）──
+# 一條**長期預期**的紅燈（產品決策未定）會壓低整份稽核的信噪比：其他不變量真的壞了
+# 也只看到一個 ❌ AUDIT FAILED。但把它抽離主入口又更糟——`make audit → green` 會讓
+# 「程式碼健康」被偷偷等同於「candidate architecture healthy」，重新製造 false green。
+# ⇒ 紅**仍有阻擋力**（OVERALL 仍 FAIL），但**不同的紅不互相掩蓋**。
+CODE_REGRESSIONS=()   # 程式契約回歸：修好就該綠
+PRODUCT_BLOCKERS=()   # 產品／population blocker：等的是決策，不是修 bug
+
 echo "═══ 不變量 1：動作知識必有面向接管（或明確豁免）═══"
 # 豁免（有意為之，非漏網；2026-07-06 六筆掛帳處置定案）：
 #   b2c 租客域舊表單體系（未面向化，target_user 含 tenant）
@@ -322,6 +330,10 @@ else
   echo "✅ PASS（含 alias 傳遞掃描 ＋ 四項各自的正對照）"
 fi
 
+# ⚠️ 13 是最後一條 ⇒ 此刻的 FAIL 值**恰好**等於「1–12 有沒有紅」。
+#    用快照取代事後從輸出回推行數：⛔ 不靠 grep 猜，靠狀態算。
+CODE_FAIL_BEFORE_13=$FAIL
+
 echo "═══ 不變量 13：Level-A representation population 完整性（D1；業主定案 2026-08-29）═══"
 # ⚠️ **這條現在就是紅的，而且是刻意的。**
 # 4657 卡在 capability blocker（FACET_PROMISE_UNIMPLEMENTED：帳單 face 對多列只取
@@ -337,15 +349,33 @@ if ! python3 "$LA_CHECK" --self-test >/dev/null 2>&1; then
 elif ! LA_OUT=$(python3 "$LA_CHECK" 2>&1); then
   echo "$LA_OUT"
   FAIL=1
+  # ⚠️ 歸入 **product blocker**：它等的是 4657 的能力決策，⛔ 不是程式碼壞掉。
+  PRODUCT_BLOCKERS+=("INV13 / row 4657 / FACET_TYPE_SELECTION_MISSING（見 r9-review-status.md）")
 else
   echo "$LA_OUT"
   echo "✅ PASS（10/10 閉合）"
 fi
 
+# ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
+# （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）
+if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then
+  CODE_REGRESSIONS+=("不變量 1–12 有失敗（見上方 ❌ FAIL 行）")
+fi
+
+echo ""
+echo "──────────────── 稽核記帳（兩類紅燈分開）────────────────"
+echo "CODE_CONTRACT_REGRESSIONS: ${#CODE_REGRESSIONS[@]}"
+for r in ${CODE_REGRESSIONS[@]+"${CODE_REGRESSIONS[@]}"}; do echo "  - $r"; done
+echo "PRODUCT / POPULATION BLOCKERS: ${#PRODUCT_BLOCKERS[@]}"
+for b in ${PRODUCT_BLOCKERS[@]+"${PRODUCT_BLOCKERS[@]}"}; do echo "  - $b"; done
 echo ""
 if [ $FAIL -eq 0 ]; then
-  echo "🎉 稽核通過（$(date +%Y-%m-%d))"
+  echo "OVERALL: PASS（$(date +%Y-%m-%d)）"
 else
-  echo "💥 稽核未過——修復後重跑"
+  echo "OVERALL: FAIL"
+  if [ ${#CODE_REGRESSIONS[@]} -eq 0 ]; then
+    echo "⚠️ 本次紅燈**全部**來自產品／population blocker——程式契約無回歸，"
+    echo "   但 ⛔ 這不是綠燈：Level-A authority scope 尚未閉合。"
+  fi
 fi
 exit $FAIL
