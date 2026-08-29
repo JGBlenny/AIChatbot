@@ -391,6 +391,26 @@ else
   echo "✅ PASS（含同 facet 分歧／共用／單列宣告 三組對照）"
 fi
 
+echo "═══ 不變量 17：R10-P governance population 的集合身分（P0）═══"
+# 源起：產 P0 母體時 SQL 的 NULL 傳遞讓 census **少列而不報錯**（兩次：NULL summary、
+# NULL generation_metadata）——12 個 alias 中 10 個被靜默吞掉，母體只剩 44 卻「看起來正常」。
+# 不變量：expected IDs == emitted IDs == distinct IDs == 54，且 **ID-set digest 相符**。
+# ⚠️ 只比 COUNT(*)=54 不夠——「少一列、意外多另一列」會假綠。
+# ⚠️ 母體漂移一律 FAIL：review 中途 governance population ⛔ 不得靜默長大，
+#    需明示版本決策（比照 LEVEL_A_V1→V2）。
+RP_CHECK="$REPO/scripts/audit/checks/r10p_population_integrity.py"
+if ! python3 "$RP_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 17 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$RP_CHECK" --self-test
+  FAIL=1
+elif ! RP_OUT=$(python3 "$RP_CHECK" 2>&1); then
+  echo "$RP_OUT"
+  FAIL=1
+else
+  echo "$RP_OUT"
+  echo "✅ PASS（含少一列／少一多一／母體漂移 三組正對照）"
+fi
+
 # ⚠️ 13 是最後一條 ⇒ 此刻的 FAIL 值**恰好**等於「其他不變量有沒有紅」。
 #    用快照取代事後從輸出回推行數：⛔ 不靠 grep 猜，靠狀態算。
 CODE_FAIL_BEFORE_13=$FAIL
@@ -420,7 +440,7 @@ fi
 # ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
 # （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）
 if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then
-  CODE_REGRESSIONS+=("不變量 1–12／14–16 有失敗（見上方 ❌ FAIL 行）")
+  CODE_REGRESSIONS+=("不變量 1–12／14–17 有失敗（見上方 ❌ FAIL 行）")
 fi
 
 echo ""
