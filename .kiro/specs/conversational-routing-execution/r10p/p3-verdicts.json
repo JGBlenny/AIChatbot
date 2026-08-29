@@ -8,7 +8,8 @@
  "_digest_rule": "review_basis_digest = sha256(canonical JSON of {candidate_group_id, review_input_scope, evidence, absence_observations})，sort_keys=True／ensure_ascii=False／separators=(',',':')。",
  "batches_reviewed": [
   "A",
-  "B"
+  "B",
+  "C-1"
  ],
  "records": [
   {
@@ -1024,6 +1025,607 @@
    "evidence_gaps": [],
    "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
    "review_basis_digest": "c35b55a23b4e6c927ecb60e17c5c87b906e01672c3de3c1d56761622c78df149"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3497",
+   "batch": "C-1",
+   "members": [
+    3497
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "named branch 本身即**正面** identity evidence——⛔ 不是因為 row wording 看起來不同，而是 production deterministic execution **已經**把不同問項分到不同 sub-capability"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3497": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "payment_flow::_diagnose_payment_not_reflected（rag-orchestrator/services/jgb/payments.py::_diagnose_payment_not_reflected）"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/payments.py::_diagnose_payment_not_reflected",
+     "claim_supported": "「已付款但帳單狀態沒有更新」由**具名** deterministic 分支承接，與同 Face 其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3497）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3497）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership 證據）——⚠️ 依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "d19f194484bda9b0736af6adfd2a9ceec86fbabe3302b42025908c97f781885e"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3500",
+   "batch": "C-1",
+   "members": [
+    3500
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "named branch 本身即**正面** identity evidence——⛔ 不是因為 row wording 看起來不同，而是 production deterministic execution **已經**把不同問項分到不同 sub-capability"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3500": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "payment_flow::_diagnose_credit_card_failure（rag-orchestrator/services/jgb/payments.py::_diagnose_credit_card_failure）"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/payments.py::_diagnose_credit_card_failure",
+     "claim_supported": "「信用卡付款失敗」由**具名** deterministic 分支承接，與同 Face 其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3500）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3500）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership 證據）——⚠️ 依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "ee03e154f6370a5b546d7b6df5b11150e77ed7b3f6a3fa142f8a5edeffe6f22f"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3503",
+   "batch": "C-1",
+   "members": [
+    3503
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "named branch 本身即**正面** identity evidence——⛔ 不是因為 row wording 看起來不同，而是 production deterministic execution **已經**把不同問項分到不同 sub-capability"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3503": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "invoice::_diagnose_issue_failure（rag-orchestrator/services/jgb/invoices.py::_diagnose_issue_failure）"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/invoices.py::_diagnose_issue_failure",
+     "claim_supported": "「發票沒有開出來」由**具名** deterministic 分支承接，與同 Face 其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3503）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3503）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership 證據）——⚠️ 依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "cb5ea81d1891024026e2ce228462f12d3f8601d5b5f7036a14f04a1c08b1bd0b"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3504",
+   "batch": "C-1",
+   "members": [
+    3504
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "named branch 本身即**正面** identity evidence——⛔ 不是因為 row wording 看起來不同，而是 production deterministic execution **已經**把不同問項分到不同 sub-capability"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3504": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "invoice::_diagnose_invalid_failure（rag-orchestrator/services/jgb/invoices.py::_diagnose_invalid_failure）"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/invoices.py::_diagnose_invalid_failure",
+     "claim_supported": "「發票無法作廢」由**具名** deterministic 分支承接，與同 Face 其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3504）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3504）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership 證據）——⚠️ 依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "3e4676e4c45c9f8c40af6ba64579510246e9d55958febe2a6b3b91d347ae90ca"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3505",
+   "batch": "C-1",
+   "members": [
+    3505
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "named branch 本身即**正面** identity evidence——⛔ 不是因為 row wording 看起來不同，而是 production deterministic execution **已經**把不同問項分到不同 sub-capability"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3505": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "subscription::_diagnose_cannot_add_estate（rag-orchestrator/services/jgb/subscription.py::_diagnose_cannot_add_estate）"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/subscription.py::_diagnose_cannot_add_estate",
+     "claim_supported": "「無法新增物件」由**具名** deterministic 分支承接，與同 Face 其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3505）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3505）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership 證據）——⚠️ 依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "be3d4b77e6baeaac1e95a43c64cf9d81f23de414e052aa20da3e7abe350f4a5d"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3506",
+   "batch": "C-1",
+   "members": [
+    3506
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "named branch 本身即**正面** identity evidence——⛔ 不是因為 row wording 看起來不同，而是 production deterministic execution **已經**把不同問項分到不同 sub-capability"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3506": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "subscription::_diagnose_estates_delisted（rag-orchestrator/services/jgb/subscription.py::_diagnose_estates_delisted）"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/subscription.py::_diagnose_estates_delisted",
+     "claim_supported": "「物件突然全部下架」由**具名** deterministic 分支承接，與同 Face 其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3506）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3506）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership 證據）——⚠️ 依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "39e1430d32d65e28a6c7f8e4789d3da51da9b4306d8c1767a23fee3b5e22b5a8"
+  },
+  {
+   "candidate_group_id": "CG-ROW-4420",
+   "batch": "C-1",
+   "members": [
+    4420
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "NOT_DISTINCT_AS_SINGLETON",
+     "reason": "positive evidence supports same responsibility as 3365——⛔ 不同 row wiring ≠ 不同 responsibility"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "BELONGS_TO_SHARED_RESPONSIBILITY",
+     "per_row": {
+      "4420": "belongs to the shared repair-progress-query responsibility；3365 membership 待 CG-ROW-3365 review 時共同封存"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "SUPPORTED_PENDING_JOINT_SEAL",
+     "owner": "jgb_repairs execution path is supported；final responsibility record waits for joint 3365 review"
+    }
+   },
+   "verdict": "MERGE_WITH_OTHER",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "knowledge_base（row 4420）：action=api_call → jgb_repairs",
+     "claim_supported": "4420 的 execution target ＝ jgb_repairs",
+     "supports": [
+      "ownership",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "knowledge_base（row 3365）：form=jgb_repair_query → jgb_repairs",
+     "claim_supported": "3365 的 execution target **同為** jgb_repairs；兩列 semantic request 皆為「查既有修繕的進度」且皆為 instance query ⇒ 差異只在 entry／config mechanism",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 4420）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E3_ACTION_API）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "merge_target": "CG-ROW-3365",
+   "joint_seal_pending": true,
+   "_pending_note": "⚠️ MERGE_WITH_OTHER ⛔ 不代表 target responsibility 已完成 review——本裁定只確定「4420 不是 singleton」；共同 responsibility 等 3365 進 C-④ 時封存。",
+   "_not_prejudging": "⛔ 本裁定 ⛔ 不預裁 C-④ 的 3365。",
+   "review_basis_digest": "36542591d4104ec2ee584df519c519c7e68af9b2cb4beb135595dfe1dd6ad31b"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3531",
+   "batch": "C-1",
+   "members": [
+    3531
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "canonical responsibility：付款後結算型延遲金的產生機制、適用條件與計算規則"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3531": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "general"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority）"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3531）：instance_applicability=general",
+     "claim_supported": "reviewed 理由：承接的是規則／機制說明：付款後結算的延遲金機制、公式與適用條件；即使完全不知道是哪份合約、哪張帳單仍能完整正確回答",
+     "supports": [
+      "applicability",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3531，231 字）",
+     "claim_supported": "answer 本文已正面限定責任範圍 ⇒ 支持 identity／membership／ownership=Knowledge（⚠️ general 列適用，⛔ 不適用 instance 列）",
+     "supports": [
+      "identity",
+      "membership",
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_late_fee_notes": [
+    "⛔ `3498.subsumed_by=[3531,3532]` **不得**被當成 merge evidence——它只證明「3498 的過寬內容需要兩者**聯集**才完整吸收」，⛔ 不能反推 3531 = 3532。",
+    "⛔ `3498.ownership_consolidated_to = late_fee Face` 是 **3498 的 instance ownership** 收斂到 B，⛔ 不得把 3531／3532 這兩個 general Knowledge responsibility 偷轉成 Face ownership。",
+    "⛔ 兩列**不因**同 categories=滯納金 而合併——依據是正面內容分工，非 facet。"
+   ],
+   "_canonical_responsibility_draft": "付款後結算型延遲金的產生機制、適用條件與計算規則",
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "548de61b1a65906c05da3918601ca53e1ecd82378ba1cc1296388246e67ec5f3"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3532",
+   "batch": "C-1",
+   "members": [
+    3532
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "canonical responsibility：滯納金客製計算版本的機制差異（延遲金／階梯式／固定金額等）"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3532": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "general"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority）"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3532）：instance_applicability=general",
+     "claim_supported": "reviewed 理由：承接的是不同客製版本的計算機制差異；回答「各版本行為差異」不需先讀任一使用者的合約或帳單實值",
+     "supports": [
+      "applicability",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3532，233 字）",
+     "claim_supported": "answer 本文已正面限定責任範圍 ⇒ 支持 identity／membership／ownership=Knowledge（⚠️ general 列適用，⛔ 不適用 instance 列）",
+     "supports": [
+      "identity",
+      "membership",
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_late_fee_notes": [
+    "⛔ `3498.subsumed_by=[3531,3532]` **不得**被當成 merge evidence——它只證明「3498 的過寬內容需要兩者**聯集**才完整吸收」，⛔ 不能反推 3531 = 3532。",
+    "⛔ `3498.ownership_consolidated_to = late_fee Face` 是 **3498 的 instance ownership** 收斂到 B，⛔ 不得把 3531／3532 這兩個 general Knowledge responsibility 偷轉成 Face ownership。",
+    "⛔ 兩列**不因**同 categories=滯納金 而合併——依據是正面內容分工，非 facet。"
+   ],
+   "_canonical_responsibility_draft": "滯納金客製計算版本的機制差異（延遲金／階梯式／固定金額等）",
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "dddaf821e382dc3807bd7bf5dd123704678236514844cdd7f876450b8cef7a07"
   }
  ],
  "_level_a_v2_census_interim": {
@@ -1040,5 +1642,12 @@
   ],
   "why": "3499 可能最後是第九個，也可能需要 merge 到另一 responsibility——現在不知道。",
   "a05_status": "PAUSED —— denominator ⛔ 尚不得從 row-count 9 轉成 responsibility-count 9。"
+ },
+ "_precedents": {
+  "_doc": "P3 進行中建立的判準先例（業主 2026-08-29 裁定於 Batch C-①②③）。⚠️ 這些是**後續批次的量尺**，⛔ 不得在 C-④⑤ 被個案推翻。",
+  "P-C1_named_deterministic_branch": "reviewed instance applicability ＋ semantically specific deterministic branch → 可以建立 responsibility identity ＋ ownership。",
+  "P-C2_form_uniqueness": "form unique in KB ≠ responsibility ownership proof。「唯一」只說目前沒有 sibling row，⛔ 不說該 form 的 semantic responsibility 就等於該 row。⇒ C-④ 六列 ⛔ 不得因『全 KB 唯一』直接綠。",
+  "P-C3_instance_answer_content": "answer text → 可支持 semantic membership evidence；answer text alone ⛔ 不建立 instance execution ownership。⇒ C-⑤ 有 answer 的 12 個 instance rows ⛔ 不得只靠 answer 變成 CONFIRMED。⚠️ 與 general Knowledge 不同：general 列的 answer 可支持 ownership=Knowledge。",
+  "P-C4_wiring_is_not_responsibility": "不同 row wiring（action vs form）≠ 不同 responsibility——4420／3365 判例。"
  }
 }

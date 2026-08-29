@@ -8,7 +8,13 @@
 母體      POPULATION 51c04b887a16b05f…／IDSET 00581c42771fa3b0…
 本檔性質  frozen proposal ＋ DB 既有 reviewed 事實的**投影**；⛔ 本檔不代裁
 裁定正本  r10p/p3-verdicts.json（P3 authority record；⛔ proposal 不得反向定義它）
-已裁批次  **Batch A（5 群）＋ Batch B（9 群）已由業主裁定 2026-08-29**；C／D 仍留空
+已裁批次  **A（5 群）＋ B（9 群）＋ C-①②③（9 群）已由業主裁定 2026-08-29**；C-④⑤／D 仍留空
+判準先例（⛔ 後續批次不得個案推翻，全文見 p3-verdicts.json._precedents）
+  P-C1  named deterministic branch ＋ reviewed instance applicability → 可建立 identity ＋ ownership
+  P-C2  form unique in KB **≠** ownership proof ⇒ C-④ 六列 ⛔ 不得因『全 KB 唯一』直接綠
+  P-C3  instance 列的 answer 只支持 membership，⛔ 不建立 execution ownership
+        （⚠️ general 列不同：answer 可支持 ownership=Knowledge）
+  P-C4  不同 row wiring（action vs form）**≠** 不同 responsibility——4420／3365 判例
 LEVEL_A_V2 期中普查  9 列 → CONFIRMED 8／INSUFFICIENT 1（[3499]）
   ⛔ 不得宣稱「LEVEL_A_V2 = 9 unique responsibilities」，⛔ 也不得宣稱「只有 8 個」
   ⇒ A05 維持 PAUSED：denominator ⛔ 尚不得從 row-count 9 轉成 responsibility-count 9
@@ -1924,21 +1930,21 @@ HINT_ONLY  same categories  「條件診斷：付款,繳費金流排障」⇒ [3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ named branch 本身即**正面** identity evidence——⛔ 不是因為 row wording 看起來不同，而是 production deterministic execution **已經**把不同問項分到不同 sub-capability
+II.  MEMBERSHIP      CONFIRMED（3497：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=payment_flow::_diagnose_payment_not_reflected（rag-orchestrator/services/jgb/payments.py::_diagnose_payment_not_reflected）
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  d19f194484bda9b0736af6adfd2a9ceec86fbabe3302b42025908c97f781885e
+review_input_scope   本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -1989,21 +1995,21 @@ HINT_ONLY  same categories  「條件診斷：付款,繳費金流排障」⇒ [3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ named branch 本身即**正面** identity evidence——⛔ 不是因為 row wording 看起來不同，而是 production deterministic execution **已經**把不同問項分到不同 sub-capability
+II.  MEMBERSHIP      CONFIRMED（3500：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=payment_flow::_diagnose_credit_card_failure（rag-orchestrator/services/jgb/payments.py::_diagnose_credit_card_failure）
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  ee03e154f6370a5b546d7b6df5b11150e77ed7b3f6a3fa142f8a5edeffe6f22f
+review_input_scope   本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -2178,21 +2184,21 @@ HINT_ONLY  same categories  「條件診斷：發票,發票」⇒ [3503, 3504]
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ named branch 本身即**正面** identity evidence——⛔ 不是因為 row wording 看起來不同，而是 production deterministic execution **已經**把不同問項分到不同 sub-capability
+II.  MEMBERSHIP      CONFIRMED（3503：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=invoice::_diagnose_issue_failure（rag-orchestrator/services/jgb/invoices.py::_diagnose_issue_failure）
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  cb5ea81d1891024026e2ce228462f12d3f8601d5b5f7036a14f04a1c08b1bd0b
+review_input_scope   本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -2243,21 +2249,21 @@ HINT_ONLY  same categories  「條件診斷：發票,發票」⇒ [3503, 3504]
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ named branch 本身即**正面** identity evidence——⛔ 不是因為 row wording 看起來不同，而是 production deterministic execution **已經**把不同問項分到不同 sub-capability
+II.  MEMBERSHIP      CONFIRMED（3504：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=invoice::_diagnose_invalid_failure（rag-orchestrator/services/jgb/invoices.py::_diagnose_invalid_failure）
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  3e4676e4c45c9f8c40af6ba64579510246e9d55958febe2a6b3b91d347ae90ca
+review_input_scope   本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -2308,21 +2314,21 @@ HINT_ONLY  same categories  「條件診斷：訂閱,條件診斷：物件,物�
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ named branch 本身即**正面** identity evidence——⛔ 不是因為 row wording 看起來不同，而是 production deterministic execution **已經**把不同問項分到不同 sub-capability
+II.  MEMBERSHIP      CONFIRMED（3505：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=subscription::_diagnose_cannot_add_estate（rag-orchestrator/services/jgb/subscription.py::_diagnose_cannot_add_estate）
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  be3d4b77e6baeaac1e95a43c64cf9d81f23de414e052aa20da3e7abe350f4a5d
+review_input_scope   本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -2373,21 +2379,21 @@ HINT_ONLY  same categories  「條件診斷：訂閱,條件診斷：物件,物�
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ named branch 本身即**正面** identity evidence——⛔ 不是因為 row wording 看起來不同，而是 production deterministic execution **已經**把不同問項分到不同 sub-capability
+II.  MEMBERSHIP      CONFIRMED（3506：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=subscription::_diagnose_estates_delisted（rag-orchestrator/services/jgb/subscription.py::_diagnose_estates_delisted）
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  39e1430d32d65e28a6c7f8e4789d3da51da9b4306d8c1767a23fee3b5e22b5a8
+review_input_scope   本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -2863,26 +2869,30 @@ HINT_ONLY  content relation CG-ALIAS-04（3939／3940）categories 同為「滯�
 
 ### conflicts / tensions
 ```text
-（無群內衝突）
+GRANULARITY_EVIDENCE  同 categories=滯納金 另有 instance responsibility（3939／3940，已 CONFIRMED）。
+⛔ `3498.subsumed_by=[3531,3532]` **不得**被當成 merge evidence——它只證明「3498 的過寬內容需要兩者**聯集**才完整吸收」，⛔ 不能反推 3531 = 3532。
+⛔ `3498.ownership_consolidated_to = late_fee Face` 是 **3498 的 instance ownership** 收斂到 B，⛔ 不得把 3531／3532 這兩個 general Knowledge responsibility 偷轉成 Face ownership。
+⛔ 兩列**不因**同 categories=滯納金 而合併——依據是正面內容分工，非 facet。
 ```
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ canonical responsibility：付款後結算型延遲金的產生機制、適用條件與計算規則
+II.  MEMBERSHIP      CONFIRMED（3531：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=general
+IV.  OWNERSHIP       CONFIRMED　owner=Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority）
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility（草擬，⛔ 尚未命名 id）：付款後結算型延遲金的產生機制、適用條件與計算規則
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  548de61b1a65906c05da3918601ca53e1ecd82378ba1cc1296388246e67ec5f3
+review_input_scope   本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -2927,26 +2937,30 @@ HINT_ONLY  content relation CG-ALIAS-04（3939／3940）categories 同為「滯�
 
 ### conflicts / tensions
 ```text
-（無群內衝突）
+GRANULARITY_EVIDENCE  同 categories=滯納金 另有 instance responsibility（3939／3940，已 CONFIRMED）。
+⛔ `3498.subsumed_by=[3531,3532]` **不得**被當成 merge evidence——它只證明「3498 的過寬內容需要兩者**聯集**才完整吸收」，⛔ 不能反推 3531 = 3532。
+⛔ `3498.ownership_consolidated_to = late_fee Face` 是 **3498 的 instance ownership** 收斂到 B，⛔ 不得把 3531／3532 這兩個 general Knowledge responsibility 偷轉成 Face ownership。
+⛔ 兩列**不因**同 categories=滯納金 而合併——依據是正面內容分工，非 facet。
 ```
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ canonical responsibility：滯納金客製計算版本的機制差異（延遲金／階梯式／固定金額等）
+II.  MEMBERSHIP      CONFIRMED（3532：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=general
+IV.  OWNERSHIP       CONFIRMED　owner=Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority）
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility（草擬，⛔ 尚未命名 id）：滯納金客製計算版本的機制差異（延遲金／階梯式／固定金額等）
+       └ canonical responsibility_id ⛔ 尚未命名——⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  dddaf821e382dc3807bd7bf5dd123704678236514844cdd7f876450b8cef7a07
+review_input_scope   本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -3055,21 +3069,22 @@ POSITIVE_APPLICABILITY_DECLARATION  4420：instance（P1e-1 業主裁定①）
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+⚠️ 本群 ⛔ 未封存——MERGE_WITH_OTHER → CG-ROW-3365，joint_seal_pending=True
+MERGE_WITH_OTHER ⛔ 不代表 target responsibility 已完成 review——本裁定只確定「4420 不是 singleton」；共同 responsibility 等 3365 進 C-④ 時封存。
+⛔ 本裁定 ⛔ 不預裁 C-④ 的 3365。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        NOT_DISTINCT_AS_SINGLETON
+       └ positive evidence supports same responsibility as 3365——⛔ 不同 row wiring ≠ 不同 responsibility
+II.  MEMBERSHIP      BELONGS_TO_SHARED_RESPONSIBILITY（4420：belongs to the shared repair-progress-query responsibility；3365 membership 待 CG-ROW-3365 review 時共同封存）
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       SUPPORTED_PENDING_JOINT_SEAL　owner=jgb_repairs execution path is supported；final responsibility record waits for joint 3365 review
+VERDICT              **MERGE_WITH_OTHER** → CG-ROW-3365
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  36542591d4104ec2ee584df519c519c7e68af9b2cb4beb135595dfe1dd6ad31b
+review_input_scope   本輪 Batch C-①②③ 摘要 ＋ 其中**明示引用**的既有 reviewed declaration／deterministic capability／answer 本文；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 # Batch D —— HISTORICAL RETIRED

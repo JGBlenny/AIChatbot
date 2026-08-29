@@ -17,6 +17,9 @@ IDENTITY／MEMBERSHIP，也不得順手把 applicability 填成 unknown。
 >    ⛔ IDENTITY CONFIRMED 不自動推出 applicability／ownership。
 > ⑥ 每筆 evidence 的 `supports[]` ⛔ 不得為空（schema「evidence 不得萬用」）。
 > ⑦ review_basis_digest 可由紀錄內容**重算**且相符（⛔ 不得謊報看過哪些證據）。
+> ⑧ `MERGE_WITH_OTHER` 必須指名存在於 frozen proposal 的 `merge_target`（⛔ 不得指向自己），
+>    且 `joint_seal_pending` 必須**等於**「target 尚未被裁定」——⚠️ MERGE ⛔ 不代表 target 已完成
+>    review；反過來，target 裁定後若忘了把 pending 關掉，這條會紅。
 
 用法：python3 scripts/audit/checks/p3_verdict_legality.py [--self-test]
 """
@@ -97,6 +100,24 @@ def violations(st=None):
             if not (r["propositions"]["IV_OWNERSHIP"].get("owner") or "").strip():
                 bad.append(f"{cid}：CONFIRMED_RESPONSIBILITY 卻未寫 owner")
 
+        if r.get("verdict") == "MERGE_WITH_OTHER":
+            tgt = r.get("merge_target")
+            if not tgt:
+                bad.append(f"{cid}：MERGE_WITH_OTHER 卻沒有 merge_target")
+            elif tgt == cid:
+                bad.append(f"{cid}：merge_target 指向自己")
+            elif tgt not in st["group_ids"]:
+                bad.append(f"{cid}：merge_target {tgt} ⛔ 不在 frozen proposal 內")
+            else:
+                target_reviewed = tgt in {x.get("candidate_group_id") for x in recs
+                                          if x is not r}
+                pending = bool(r.get("joint_seal_pending"))
+                if pending == target_reviewed:
+                    bad.append(
+                        f"{cid}：joint_seal_pending={pending} 與 target {tgt} 的裁定狀態不符"
+                        f"（target {'已' if target_reviewed else '尚未'}裁定）"
+                        f"——⚠️ MERGE ⛔ 不得靜默視為已封存，target 裁定後也 ⛔ 不得忘記關掉 pending")
+
         got = basis_digest(r)
         if got != r.get("review_basis_digest"):
             bad.append(f"{cid}：review_basis_digest 重算不符（{got[:12]}… ≠ "
@@ -154,6 +175,36 @@ def self_test() -> int:
     m = mut(lambda rs: rs[0].update({"candidate_group_id": "CG-ROW-999999"}))
     cases.append(("裁定不存在的群必須紅",
                   any("不在 frozen proposal" in x for x in violations(m))))
+
+    def merge_rec(rs):
+        return next(x for x in rs if x["verdict"] == "MERGE_WITH_OTHER")
+
+    if any(x["verdict"] == "MERGE_WITH_OTHER" for x in st["v"]["records"]):
+        m = mut(lambda rs: merge_rec(rs).pop("merge_target"))
+        cases.append(("MERGE 缺 merge_target 必須紅",
+                      any("沒有 merge_target" in x for x in violations(m))))
+        m = mut(lambda rs: merge_rec(rs).update(
+            {"merge_target": merge_rec(rs)["candidate_group_id"]}))
+        cases.append(("merge_target 指向自己必須紅",
+                      any("指向自己" in x for x in violations(m))))
+        m = mut(lambda rs: merge_rec(rs).update({"merge_target": "CG-ROW-999999"}))
+        cases.append(("merge_target 不在 proposal 必須紅",
+                      any("不在 frozen proposal" in x for x in violations(m))))
+        m = mut(lambda rs: merge_rec(rs).update({"joint_seal_pending": False}))
+        cases.append(("target 未裁卻關掉 pending 必須紅",
+                      any("joint_seal_pending" in x for x in violations(m))))
+        def seal_target(rs):
+            r = merge_rec(rs)
+            clone = json.loads(json.dumps(r))
+            clone["candidate_group_id"] = r["merge_target"]
+            clone["verdict"] = "CONFIRMED_RESPONSIBILITY"
+            clone.pop("merge_target", None); clone.pop("joint_seal_pending", None)
+            clone["propositions"]["IV_OWNERSHIP"]["owner"] = "x"
+            clone["review_basis_digest"] = basis_digest(clone)
+            rs.append(clone)
+        m = mut(seal_target)
+        cases.append(("target 已裁卻忘關 pending 必須紅",
+                      any("joint_seal_pending" in x for x in violations(m))))
 
     m = mut(lambda rs: rs[0].update({"verdict": "LOOKS_FINE"}))
     cases.append(("verdict 不在凍結集合必須紅",
