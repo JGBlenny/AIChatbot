@@ -1,0 +1,72 @@
+{
+ "_doc": "Entry-alias 登記簿（業主裁定 2026-08-29）。錨點 row 是**進場講法**，⛔ 不是責任單位。",
+ "_provenance": "billing-knowledge-batch.json 的 anchors（12 筆）＋ billing-knowledge-review.md「一種講法一筆」",
+ "_ruling": {
+  "row_role": "ENTRY_ALIAS",
+  "responsibility_owner": "facet",
+  "keep_both": "KEEP_BOTH_AS_ENTRY_VARIANTS —— ⛔ CONSOLIDATE_ONE REJECTED（退役會丟掉有意建立的 utterance entry surface）",
+  "separate_per_row_semantic_contracts": "REJECTED —— ⛔ 不得為同 facet 的 alias 各寫一份 semantic contract（那是發明不存在的 responsibility distinction）",
+  "representation_status": "NOT_POPULATED_PENDING_ALIAS_GOVERNANCE",
+  "not_precedent_from": "3498 的 RETIRED ⛔ 不適用——3498 是另一個 owner／另一條 capability／過寬內容的**真** responsibility duplication；錨點是同 facet／同 capability／刻意不同 utterance。"
+ },
+ "facets": {
+  "繳費金流排障": [
+   {
+    "id": 3931,
+    "question": "租客說繳了 錢還沒進來"
+   },
+   {
+    "id": 3932,
+    "question": "帳單卡在待對帳 狀態一直沒跳"
+   },
+   {
+    "id": 3933,
+    "question": "租客繳不了費 一直失敗"
+   }
+  ],
+  "帳單異常": [
+   {
+    "id": 3934,
+    "question": "帳單金額怪怪的 跟預期不一樣"
+   },
+   {
+    "id": 3935,
+    "question": "這期帳單怎麼還沒出來"
+   },
+   {
+    "id": 3936,
+    "question": "租客說看不到帳單 找不到"
+   }
+  ],
+  "發票": [
+   {
+    "id": 3937,
+    "question": "發票怎麼還沒開 沒收到發票"
+   },
+   {
+    "id": 3938,
+    "question": "發票開錯了 要作廢重開"
+   }
+  ],
+  "滯納金": [
+   {
+    "id": 3939,
+    "question": "滯納金怎麼收這麼多"
+   },
+   {
+    "id": 3940,
+    "question": "這筆延遲金是怎麼算的"
+   }
+  ],
+  "帳單設定引導": [
+   {
+    "id": 3941,
+    "question": "要開始收租 帳單要怎麼設定"
+   },
+   {
+    "id": 3942,
+    "question": "收款帳戶怎麼綁 金流怎麼申請"
+   }
+  ]
+ }
+}

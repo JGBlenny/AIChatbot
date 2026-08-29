@@ -371,6 +371,26 @@ else
   echo "✅ PASS（含退役仍 active／SELECT 漏過濾 兩組正對照）"
 fi
 
+echo "═══ 不變量 16：entry alias 不得各自擁有 semantic contract（T3 裁定）═══"
+# 源起：billing-knowledge-review.md 明文「錨點（12 筆，answer 空、**一種講法一筆**）」，
+# 且批次 schema 每筆只有 facet/question/keywords ⇒ 錨點單位是**講法**、責任單位是 facet。
+# 不變量：同一 facet 底下的 entry alias ⛔ 不得擁有**彼此不同**的 authoritative
+#        retrieval_representation——那是發明不存在的 responsibility distinction。
+# ⚠️ 允許：全部未宣告（現況）／同 facet 共用逐字相同的 canonical contract。
+# ⚠️ ⛔ 本不變量不要求退役任何 alias（KEEP_BOTH_AS_ENTRY_VARIANTS 是業主定案）。
+EA_CHECK="$REPO/scripts/audit/checks/entry_alias_contract.py"
+if ! python3 "$EA_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 16 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$EA_CHECK" --self-test
+  FAIL=1
+elif ! EA_OUT=$(python3 "$EA_CHECK" 2>&1); then
+  echo "$EA_OUT"
+  FAIL=1
+else
+  echo "$EA_OUT"
+  echo "✅ PASS（含同 facet 分歧／共用／單列宣告 三組對照）"
+fi
+
 # ⚠️ 13 是最後一條 ⇒ 此刻的 FAIL 值**恰好**等於「其他不變量有沒有紅」。
 #    用快照取代事後從輸出回推行數：⛔ 不靠 grep 猜，靠狀態算。
 CODE_FAIL_BEFORE_13=$FAIL
@@ -400,7 +420,7 @@ fi
 # ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
 # （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）
 if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then
-  CODE_REGRESSIONS+=("不變量 1–12／14／15 有失敗（見上方 ❌ FAIL 行）")
+  CODE_REGRESSIONS+=("不變量 1–12／14–16 有失敗（見上方 ❌ FAIL 行）")
 fi
 
 echo ""
