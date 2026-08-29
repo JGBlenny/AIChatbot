@@ -42,7 +42,19 @@ C2 = 10  → 約 **6,840 句**
 ```
 
 ⚠️ 而整個 sealed pool 只有 576 句（已全數消耗）。
-⇒ **這個 authorization 設計（一般性自然語料 × 極窄 scope）在此規模下不可能成立。**
+
+### ⚠️ 更正（業主 2026-08-29）：上列推算是 **planning estimate**，⛔ 不是 impossibility proof
+
+```text
+✅ 可說：**A01 證明此 sealed general-purpose source 對目前 Level-A scope
+        的 matching support 不足。**
+⛔ 不得說：「一般性自然語料 × 1.1% scope 在此規模下必然不可能。」
+
+理由：1,710／6,840 的推算用了比例外推與獨立性直覺。
+1.8% 的**實測**很有價值，可留作規劃用量級參考，
+⛔ 但不得升格成決定性的不可能性證明。
+C1=7、C2=0 已足以判此來源 INCONCLUSIVE，⛔ 不需要把結論推更遠。
+```
 
 ## Corpus 狀態
 
@@ -56,7 +68,11 @@ sealed pool 576 句至此全數消耗（D2 80 ＋ D3 40 ＋ A01 456）
 
 ```text
 ✅ label-quality precondition 首次通過：L1=95.4%、κ=0.902（判準凍結於標註之前）
-   ⇒ query 層 applicability 的盲標**是可靠的**——與 P1e-1 從 KB 答案盲標的失敗形成對照
+   ⚠️ **更正措辭**（業主 2026-08-29）：這支持的是
+     「**這一批 A01 query-level applicability labeling 有高 inter-rater agreement**」，
+   ⛔ **不是**「query 層盲標已證普遍可靠」。
+   3509 對照確實支持「標 query referent 比從 KB answer 推必要性更合適」，
+   但那還不是對所有未來 corpus 的普遍可靠性證明。
 ✅ 證明了失敗屬 **SOURCE_INSUFFICIENT**，而非 gate 判錯：
    coverage 在**看任何一致率之前**就判定，⛔ 沒有任何 adaptive criterion 的空間
 ✅ 取得可據以決策的量化基準（1.8% 命中率、1710／6840 句需求）
@@ -65,10 +81,22 @@ sealed pool 576 句至此全數消耗（D2 80 ＋ D3 40 ＋ A01 456）
 ## 待業主裁定的三條路（⛔ 我不預選）
 
 ```text
-【A】擴大 Level-A scope
-    命中率隨 scope 成正比上升；但擴 scope 本身需要它自己的授權決定
-【B】改用 targeted corpus
-    ⚠️ 依主題挑題＝人為選題 ⇒ 立即污染，⛔ 與本輪紀律衝突
+【A】擴大 Level-A scope —— **業主裁定：保持 PAUSED**
+    ⚠️ ⛔ 不得因本輪 coverage 不足而擴 scope，那是**倒果為因**：
+       「驗證資料不好取得 → 改產品 scope → 讓驗證比較容易通過」
+    `PREENTRY_ROUTABILITY_FACETS` 是產品 responsibility／rollout scope。
+    B 桶 18 筆與其餘 15 個 REQUIRED Face 未來可因**自己的產品理由與 authority 證據**
+    進入擴 scope 決策；⛔ 不得拿 A01 的 SOURCE_INSUFFICIENT 當擴張理由。
+【B】targeted corpus —— ⚠️ **必須拆成兩種**（業主 2026-08-29 更正）
+    ⛔ **content-selected**（人看 456 句挑「像帳單診斷」的題）＝ outcome-aware
+       semantic selection，**禁止**
+    ✅ **source-level pre-registered targeting** 未來**仍可成立**：
+       在讀任何 utterance 之前，先用**來源 metadata** 定義
+       （例：來源＝帳單客服佇列、時間窗＝某固定期間、全部 census）
+       ——那是自然資料的 scope-matched holdout，不是人工挑題
+    ⚠️ 但依已完成的來源盤點，**目前沒有這種來源**
+       （chat_history／conversation_logs = 0；usage_events 無原文；sealed pool 全數 burned）
+    ⇒ B 目前不可執行，⛔ 但不得寫成「targeted natural corpus 原理上永遠污染」
 【C】isolated synthetic authoring（業主已預先核准為 fallback）
     作者不知 Level-A 內容／gate／labels／keywords，只收產品任務分布要求
     ⚠️ claim ceiling 必須降為 **synthetic semantic authorization**，
