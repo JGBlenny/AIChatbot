@@ -10,7 +10,9 @@ canonical embeddings ＝ collapse ＋ top20 **之後**的 responsibility semanti
 > ① 30 個 reviewed_active ＝ **30 筆** embeddings（historical ⛔ 0 筆；16 unresolved rows ⛔ 不建）
 > ② 每筆 `canonical_text_digest` 與 registry V2 的 canonical 文字**逐字相符**（文字 drift → 紅）
 > ③ `registry_v2_digest` 與現行 registry-v2.json 相符（authority epoch drift → 紅）
-> ④ `embedding_model_id` 與 manifest 一致且非空（model drift → 紅）
+> ④ `provider_model_id`／`embedding_service_version`／`embedding_contract_version` 三欄
+>    **分開**且與 manifest 一致（provider model drift 與本地契約版本變更必須可分辨）
+>    ⛔ 不得再出現舊的合併欄位 `embedding_model_id`
 > ⑤ 維度一致，且每筆 `embedding_checksum` 可由向量重算（內容被改 → 紅）
 > ⑥ embeddings 檔 bytes 與 manifest 的 `embeddings_file_digest` 相符
 
@@ -69,10 +71,14 @@ def violations(st=None):
 
     if emb.get("registry_v2_digest") != st["reg_digest"]:
         bad.append("registry_v2_digest 與現行 registry-v2.json 不符——⚠️ authority epoch 已變，必須重建")
-    if not emb.get("embedding_model_id"):
-        bad.append("embedding_model_id 為空")
-    if man.get("embedding_model_id") != emb.get("embedding_model_id"):
-        bad.append("manifest 與 index 的 embedding_model_id 不符")
+    if "embedding_model_id" in emb or "embedding_model_id" in man:
+        bad.append("出現已作廢的合併欄位 embedding_model_id"
+                   "——⛔ provider model ID 與本地版本必須分欄（G10 否則會守錯東西）")
+    for k in ("provider_model_id", "embedding_service_version", "embedding_contract_version"):
+        if not emb.get(k):
+            bad.append(f"{k} 為空")
+        if man.get(k) != emb.get(k):
+            bad.append(f"manifest 與 index 的 {k} 不符")
 
     dim = emb.get("embedding_dimension")
     for rid, e in sorted(entries.items()):
@@ -111,8 +117,17 @@ def self_test() -> int:
     m = mut(drift)
     cases.append(("canonical text drift 必須紅", any("text drift" in x for x in violations(m))))
 
-    m = mut(lambda d: d["emb"].update({"embedding_model_id": ""}))
-    cases.append(("model id 空必須紅", any("embedding_model_id 為空" in x for x in violations(m))))
+    m = mut(lambda d: d["emb"].update({"provider_model_id": ""}))
+    cases.append(("provider_model_id 空必須紅",
+                  any("provider_model_id 為空" in x for x in violations(m))))
+    m = mut(lambda d: d["emb"].update({"provider_model_id": "text-embedding-3-large"}))
+    cases.append(("provider model drift 必須紅（且與本地版本可分辨）",
+                  any("provider_model_id 不符" in x for x in violations(m))))
+    m = mut(lambda d: d["emb"].update({"embedding_contract_version": "C2-SCORE-2"}))
+    cases.append(("本地契約版本變更必須紅（⛔ 不與 provider 混淆）",
+                  any("embedding_contract_version 不符" in x for x in violations(m))))
+    m = mut(lambda d: d["emb"].update({"embedding_model_id": "text-embedding-3-small@1.0.0"}))
+    cases.append(("復活合併欄位必須紅", any("已作廢的合併欄位" in x for x in violations(m))))
 
     m = mut(lambda d: d["emb"].update({"registry_v2_digest": "cafebabe"}))
     cases.append(("registry epoch 漂移必須紅",
@@ -154,8 +169,10 @@ def main() -> int:
             print(f"   · {b}")
         return 1
     st = load()
-    print(f"（canonical embeddings：{st['emb']['count']} 筆／dim={st['emb']['embedding_dimension']}／"
-          f"model={st['emb']['embedding_model_id']}；text digest 逐筆相符；"
+    e = st["emb"]
+    print(f"（canonical embeddings：{e['count']} 筆／dim={e['embedding_dimension']}／"
+          f"provider_model={e['provider_model_id']}／service={e['embedding_service_version']}／"
+          f"contract={e['embedding_contract_version']}；text digest 逐筆相符；"
           f"historical ⛔ 0 筆；⛔ 非 authority source）")
     return 0
 

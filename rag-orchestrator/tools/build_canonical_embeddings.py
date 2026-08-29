@@ -17,7 +17,8 @@ canonical responsibility embeddings → **final semantic vector component**（co
 ```text
 ① canonical text 改      → canonical_text_digest 變
 ② Registry authority epoch 改 → registry_v2_digest 變
-③ embedding model／版本改 → embedding_model_id 變
+③ provider embedding model 改 → provider_model_id 變
+④ 本地 embedding 服務／artifact 契約改 → embedding_service_version／embedding_contract_version 變
 ```
 
 用法（容器內）：python3 tools/build_canonical_embeddings.py [--out DIR]
@@ -40,13 +41,25 @@ def sha(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-async def model_id() -> str:
+#: 本 artifact 自身的契約版本（⛔ 與 provider model 無關）
+EMBEDDING_CONTRACT_VERSION = "C2-SCORE-1"
+
+
+async def service_info() -> tuple:
+    """回傳 `(provider_model_id, embedding_service_version)`。
+
+    ⚠️ **兩者語義不同，⛔ 不得併成一欄**：
+      · provider_model_id        OpenAI 官方 API model ID（request identifier），如 text-embedding-3-small
+      · embedding_service_version 本地 embedding-api **服務**版本，⛔ 不是 provider 的 model 版本
+    ⚠️ 本工具的 request body 只有 `{"text": ...}`——**model 由 embedding-api 服務端決定**，
+       故 provider_model_id 是**服務回報值**，⛔ 不是我們送出的參數。
+    """
     import httpx
     async with httpx.AsyncClient(timeout=10.0) as c:
         r = await c.get(MODEL_INFO_URL)
         r.raise_for_status()
         d = r.json()
-    return f"{d.get('model')}@{d.get('version')}"
+    return d.get("model"), d.get("version")
 
 
 async def main() -> int:
@@ -73,7 +86,10 @@ async def main() -> int:
         return 1
     hist = [r for r in reg["responsibilities"] if r["status"] != "reviewed_active"]
 
-    mid = await model_id()
+    provider_model_id, service_version = await service_info()
+    if not provider_model_id:
+        print("❌ embedding 服務未回報 model——⛔ 不得以未知 model 建 index")
+        return 1
     entries, dim = [], None
     for r in sorted(active, key=lambda x: x["responsibility_id"]):
         text = r["canonical_responsibility"]
@@ -99,14 +115,24 @@ async def main() -> int:
         "_role": "collapse ＋ top20 **之後**的 responsibility semantic vector component；"
                  "⛔ 不參與 recall（C2-v1 ⛔ 不新增 canonical vector recall arm）。",
         "registry_v2_digest": reg_digest,
-        "embedding_model_id": mid,
+        "provider_model_id": provider_model_id,
+        "embedding_service_version": service_version,
+        "embedding_contract_version": EMBEDDING_CONTRACT_VERSION,
+        "_model_field_semantics":
+            "⚠️ provider_model_id ＝ OpenAI 官方 API model ID（request identifier）；"
+            "embedding_service_version ＝ 本地 embedding-api **服務**版本；"
+            "embedding_contract_version ＝ 本 artifact 自身的契約版本。"
+            "⛔ 三者不得併成一欄——否則日後稽核分不清「OpenAI 模型變了」還是"
+            "「我們自己的 artifact contract 版本變了」。",
         "embedding_dimension": dim,
         "count": len(entries),
         "excluded": {"reviewed_historical": [r["responsibility_id"] for r in hist],
                      "_why": "⛔ historical 與 16 個 unresolved rows 一律不建 embedding"},
         "_rebuild_triggers": ["canonical text 改（canonical_text_digest）",
                              "registry authority epoch 改（registry_v2_digest）",
-                             "embedding model／版本改（embedding_model_id）"],
+                             "provider embedding model 改（provider_model_id）",
+                             "本地 embedding 服務／artifact 契約改"
+                             "（embedding_service_version／embedding_contract_version）"],
         "entries": entries,
     }
     path = os.path.join(args.out, "canonical-embeddings.json")
@@ -120,7 +146,8 @@ async def main() -> int:
     with open(mpath, "w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=1)
         f.write("\n")
-    print(f"✅ {len(entries)} 筆／dim={dim}／model={mid}")
+    print(f"✅ {len(entries)} 筆／dim={dim}／provider_model={provider_model_id}"
+          f"／service={service_version}／contract={EMBEDDING_CONTRACT_VERSION}")
     print(f"   {path}")
     print(f"   {mpath}")
     print(f"   EMBEDDINGS_FILE_DIGEST={manifest['embeddings_file_digest']}")

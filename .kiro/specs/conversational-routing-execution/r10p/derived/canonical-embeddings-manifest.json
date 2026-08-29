@@ -3,7 +3,15 @@
  "_authority": "⛔ NONE——authority 在 registry-v2.json；本檔是它的 derived index，⛔ 不得回寫 registry。",
  "_role": "collapse ＋ top20 **之後**的 responsibility semantic vector component；⛔ 不參與 recall（C2-v1 ⛔ 不新增 canonical vector recall arm）。",
  "registry_v2_digest": "2071b7f5c8cca5d99e497f1959de48157a7c21c4d8826fd6ce1942292fd658ba",
- "embedding_model_id": "text-embedding-3-small@1.0.0",
+ "provider_model_id": "text-embedding-3-small",
+ "embedding_service_version": "1.0.0",
+ "embedding_contract_version": "C2-SCORE-1",
+ "_model_field_semantics": "⚠️ provider_model_id ＝ OpenAI 官方 API model ID（request identifier）；embedding_service_version ＝ 本地 embedding-api **服務**版本；embedding_contract_version ＝ 本 artifact 自身的契約版本。⛔ 三者不得併成一欄——否則日後稽核分不清「OpenAI 模型變了」還是「我們自己的 artifact contract 版本變了」。",
+ "_correction_2026_08_30": "⚠️ 本次為 **manifest semantics correction**：builder 的 request body 只有 `{\"text\": ...}`，model 由 embedding-api 服務端決定 ⇒ **向量未重建、內容逐位相同**，只拆欄位與重算檔案 digest。",
+ "_superseded_field": {
+  "embedding_model_id": "text-embedding-3-small@1.0.0",
+  "why": "⛔ 把 provider model ID 與本地服務版本併成一串，會讓 G10 守錯東西"
+ },
  "embedding_dimension": 1536,
  "count": 30,
  "excluded": {
@@ -15,7 +23,8 @@
  "_rebuild_triggers": [
   "canonical text 改（canonical_text_digest）",
   "registry authority epoch 改（registry_v2_digest）",
-  "embedding model／版本改（embedding_model_id）"
+  "provider embedding model 改（provider_model_id）",
+  "本地 embedding 服務／artifact 契約改（embedding_service_version／embedding_contract_version）"
  ],
  "entries": [
   {
@@ -169,5 +178,5 @@
    "embedding_checksum": "39c4bf9e05fa5f3ce4df4d190f1bded0de830ddfb27ca1847d73f819deb1ad95"
   }
  ],
- "embeddings_file_digest": "d55c46a22cb61502cc47d022e16e216786b6ba727a335f5fd8703f9420673dc7"
+ "embeddings_file_digest": "75dab05d1392dc8126a18a5b0ef61c34785e290ab0b96ef877bca5ece3907af6"
 }
