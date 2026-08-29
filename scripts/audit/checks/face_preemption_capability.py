@@ -252,8 +252,17 @@ SELECT COALESCE(json_agg(row_to_json(t)), '[]'::json)::text FROM (
          f.fkey                                 AS face_key,
          f.gs->>'select'                        AS face_select,
          (f.gs ? 'execute_endpoint')            AS face_has_execute_endpoint,
-         ARRAY_REMOVE(ARRAY[f.gs->>'endpoint',
-                            f.gs->'secondary_call'->>'endpoint'], NULL) AS face_endpoints
+         -- ⚠️ 兩種宣告形狀都要讀：單一 `secondary_call` 與清單 `secondary_calls`
+         --    （引擎 `scope.get("secondary_calls") or [secondary_call]`）。
+         --    只讀單數會在設定改成清單後**憑空多報未涵蓋**——2026-08-29 實際踩過。
+         ARRAY_REMOVE(
+           ARRAY[f.gs->>'endpoint', f.gs->'secondary_call'->>'endpoint']
+           || COALESCE(ARRAY(SELECT sc->>'endpoint'
+                             FROM jsonb_array_elements(
+                                    CASE WHEN jsonb_typeof(f.gs->'secondary_calls')='array'
+                                         THEN f.gs->'secondary_calls' ELSE '[]'::jsonb END) sc),
+                       ARRAY[]::text[]),
+           NULL) AS face_endpoints
   FROM knowledge_base k
   JOIN face f ON f.cat = ANY(k.categories)
   LEFT JOIN form_schemas fs ON fs.form_id = k.form_id

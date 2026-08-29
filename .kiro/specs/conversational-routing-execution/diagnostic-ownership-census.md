@@ -81,3 +81,64 @@ responsibility 切法不完整？ ✅ 次要但真實
 ⛔ 通用答案是否對使用者已足夠（那是 Layer 0 問題）
 ⇒ 本 census 只證明**架構上誰接得住、接住後拿不拿得到那份資料**。
 ```
+
+---
+
+# 能力回補後的 census（2026-08-29，業主裁定 YES／YES／YES 之後）
+
+## 實測 first-commit 面向（依 `categories` 陣列順序，first-commit-wins）
+
+```text
+3502 虛擬帳號過期或轉帳失敗 → billing_flow      (api)  ＋ jgb_bill_detail
+3503 發票為什麼沒有開出來   → billing_invoice   (api)  ＋ jgb_invoice_logs
+3504 發票為什麼作廢不了     → billing_invoice   (api)  ＋ jgb_invoice_logs
+3505 為什麼不能新增物件     → **subscription_diag** (api)
+3506 物件為什麼突然全部下架 → **subscription_diag** (api)
+3509 訂閱扣款失敗導致功能異常 → **subscription_diag** (api)
+3507 物件為什麼不能建立合約 → contract_diag    ⛔ 未動（合約建立受阻，非訂閱）
+3508 IoT 廠商帳號綁定失敗   → 無面向，表單照開  ⛔ 未動（by-design 豁免）
+```
+
+⇒ 判定變化與業主預期一致，**其餘 14 筆 ＋ 3508 未動**：
+
+```text
+3502／3503／3504  OWNER_EXISTS_PARTIAL → OWNER_EXISTS
+3505／3506        AMBIGUOUS（能力遺失） → OWNER_EXISTS
+3509              NO_OWNER              → OWNER_EXISTS
+```
+
+## ⚠️ 兩個「設定看起來對、能力仍失效」的假綠已擋掉
+
+```text
+① 診斷引擎是靠 **endpoint 分派** 觸發的，secondary_call 只把資料 attach 到主列
+   ⇒ 只加端點宣告，`_diagnose_issue_failure`／`_diagnose_atm_expired` 仍到不了。
+   已改 consumer（services/jgb/bills.py）以 attach 重用**同一個引擎**，⛔ 不複製判斷邏輯。
+② 引擎把**非 list** 的 secondary 結果丟成 `[]`（主查詢卻會 `[rows]` 包起來）
+   ⇒ `jgb_bill_detail` 回 dict，資料根本不會到達 consumer。
+   已修成與主查詢同式，並用測試鎖住那段程式碼形狀。
+```
+
+## 驗收證據（⛔ 不以「audit 變綠」作為收案）
+
+```text
+Runtime reachability  10 條 unit（容器內）
+  ・invoice_logs attach → 輸出含「發票開立紀錄」**且**含這張帳單實際的失敗訊息
+  ・bill_detail attach → 輸出含該筆虛擬帳號／效期
+  ・三條負控制：無 attach 不虛構、非 ATM 問題不硬塞 ATM 診斷
+Responsibility        訂閱面向只掛 `條件診斷：訂閱`，⛔ 未掛 `訂閱方案`（5 筆制度說明走單發）
+Preemption            `array_prepend` 有測試守住——用 append 會讓 estate_guide 仍先 commit
+不動他人              測試斷言 migration 可執行語句中不得出現 3507
+全 unit 層            1498 passed / 0 failed（無回歸）
+不變量 9              FAIL 0（原 2）；WARN 2＝3548 分流表單、3366 jgb_payments 未涵蓋
+```
+
+## 仍紅／仍 WARN 的，照實記
+
+```text
+❌ 不變量 3：容器與本地不一致 —— 我改了 conversational_engine.py 與 jgb/bills.py 的**源碼**，
+   本機容器仍是舊 image。這是 source 已驗、runtime 未同步，⛔ 不得宣稱線上已生效。
+⚠️ 3366「繳費成功 繳費紀錄」表單端點 `jgb_payments` 未被 billing_flow 涵蓋
+   —— 本輪未授權處置（不在三題裁定內），列為下一輪候選。
+⚠️ 3548 分流表單 —— 同 3508／3522 家族，屬 by-design，維持 WARN。
+⚠️ 不變量 4：`修繕報修` 查無系統脈絡（既有 WARN，與本輪無關）。
+```

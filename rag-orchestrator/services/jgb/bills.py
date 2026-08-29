@@ -75,6 +75,10 @@ def _bill_head(bill: dict) -> list:
     return lines
 
 
+# 虛擬帳號類問題的關鍵字（`diagnose_bill` 與面向 attach 路徑共用，⛔ 不得各自維護）
+_ATM_KEYWORDS = ("虛擬帳號", "帳號過期", "ATM", "轉帳失敗")
+
+
 def build_payment_flow_facts(bill: dict, user_question: str = "") -> str:
     """繳費金流排障（R2.2–2.4；research §一）。
 
@@ -114,8 +118,29 @@ def build_payment_flow_facts(bill: dict, user_question: str = "") -> str:
         last = logs[-1]
         lines.append(f"最後金流事件：{last.get('action')}（{last.get('created_at')}）。")
 
-    # 繳費資訊效期（G 欄位，存在才輸出）
-    expire = (bill.get("atm_info") or {}).get("expire") or (bill.get("pay_info") or {}).get("expire_ymd")
+    # attach：bill_detail（secondary_call 附掛；缺 → 不虛構）
+    # ⚠️ 2026-08-29 不變量 9 逼出的能力回補：知識 3502「虛擬帳號過期或轉帳失敗」
+    #    原本掛表單 jgb_bill_diagnosis → endpoint `jgb_bill_detail`
+    #    → `_diagnose_atm_expired`（docstring「P04：虛擬帳號過期」）。
+    #    面向化後主查詢改成 `jgb_bills`，而診斷引擎是靠 **endpoint 分派**觸發的
+    #    ⇒ 引擎仍在、卻永遠到不了。此處以 attach 重用同一引擎，⛔ 不複製判斷邏輯。
+    # attach 一律為 list（引擎把單物件包成單元素 list）；相容直接掛 dict 的舊資料
+    _bd = bill.get("bill_detail")
+    if isinstance(_bd, list) and _bd and isinstance(_bd[0], dict):
+        detail = _bd[0]
+    elif isinstance(_bd, dict):
+        detail = _bd
+    else:
+        detail = None
+    if detail and any(k in (user_question or "") for k in _ATM_KEYWORDS):
+        lines.append("")
+        lines.append(_diagnose_atm_expired(detail))
+
+    # 繳費資訊效期（G 欄位，存在才輸出；列表回應缺 pay_info 時退到 bill_detail）
+    expire = ((bill.get("atm_info") or {}).get("expire")
+              or (bill.get("pay_info") or {}).get("expire_ymd")
+              or ((detail or {}).get("pay_info") or {}).get("expire_ymd")
+              or (((detail or {}).get("pay_info") or {}).get("atm_info") or {}).get("expire"))
     if expire:
         lines.append(f"繳費帳號效期至 {expire}；若已逾效期，將帳單收回重發即可取得新繳費資訊。")
 
@@ -196,6 +221,18 @@ def build_invoice_facts(bill: dict, user_question: str = "") -> str:
         state = inv_map.get(latest.get("status"), str(latest.get("status")))
         extra = f"（作廢時間 {latest.get('invalid_at')}）" if latest.get("invalid_at") else ""
         lines.append(f"發票紀錄：最新一筆狀態為「{state}」{extra}。")
+
+    # attach：invoice_logs（secondary_call 附掛；缺 → 不虛構）
+    # ⚠️ 2026-08-29 不變量 9 逼出的能力回補：`services/jgb/invoices.py::_diagnose_issue_failure`
+    #    的 docstring 就是知識 3503 的標題「I01：發票為什麼沒有開出來」，
+    #    但它只在 `jgb_invoice_logs` **作為主查詢 endpoint** 時才被分派到。
+    #    面向路徑主查詢是 `jgb_bills` ⇒ 引擎存在卻永遠到不了（上面那段只講得出通用成因，
+    #    講不出這張帳單實際的開立失敗訊息）。此處以 attach 重用同一引擎，⛔ 不複製。
+    inv_logs = bill.get("invoice_logs")
+    if isinstance(inv_logs, list) and inv_logs:
+        from services.jgb.invoices import diagnose_invoice_logs
+        lines.append("")
+        lines.append(diagnose_invoice_logs(inv_logs, user_question))
 
     lines.append("補開規則：帳單已有有效發票時不可重複補開；款項尚未付款的帳單不可開立發票。")
     return "\n".join(lines)
@@ -326,7 +363,7 @@ def diagnose_bill(bill: dict, user_question: str = "") -> str:
         return _diagnose_manual_complete(bill)
     elif "收據" in question:
         return _diagnose_receipt(bill)
-    elif any(k in question for k in ["虛擬帳號", "帳號過期", "ATM", "轉帳失敗"]):
+    elif any(k in question for k in _ATM_KEYWORDS):
         return _diagnose_atm_expired(bill)
 
     # 沒有特定問題 → 回傳帳單現況

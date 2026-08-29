@@ -1009,8 +1009,17 @@ class ConversationalEngine:
                     session_data, form_data)
                 if (sec_result or {}).get("success"):
                     sec_rows = _dig_path(sec_result.get("data"), secondary.get("list_path") or "data")
-                    rows[0][secondary.get("attach_as") or "secondary"] = \
-                        sec_rows if isinstance(sec_rows, list) else []
+                    # ⚠️ 單物件端點（如 jgb_bill_detail）回 dict：**必須包成單元素 list**，
+                    #    與主查詢同式（上方 `elif not isinstance(rows, list): rows = [rows]`）。
+                    #    原本 `else []` 會把 dict 整個丟掉 ⇒ 端點宣告了、資料卻永遠不到，
+                    #    是「設定看起來對、能力仍失效」的假綠來源（2026-08-29 不變量 9 一併修）。
+                    if isinstance(sec_rows, list):
+                        attached = sec_rows
+                    elif sec_rows:
+                        attached = [sec_rows]
+                    else:
+                        attached = []
+                    rows[0][secondary.get("attach_as") or "secondary"] = attached
                     attached_any = True
             except Exception as e:
                 print(f"⚠️ secondary_call 失敗（沿用主查詢底稿，不阻斷）：{e}")
