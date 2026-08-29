@@ -1,0 +1,75 @@
+{
+ "_doc": "R10-P5 responsibility census（由 sealed registry 機械導出；⛔ 不含任何新裁定）。",
+ "source": {
+  "REGISTRY_DIGEST": "3e5bcdc6a8265fbfaf1d7703a863e8b3d8a3d65a42fa4776f168651dec475dfb",
+  "PROJECTION_DIGEST": "0635b469db39fc283114d54a6e9073052e42f361d96950e7b88ea6a75f604c04"
+ },
+ "_two_denominators_never_mixed": {
+  "ROW_COVERAGE_denominator": "frozen 54 rows —— P4 必須做到 **row disposition 完整**",
+  "RESPONSIBILITY_CENSUS_denominator": "sealed distinct reviewed responsibilities",
+  "⚠️": "⛔ 不得互相污染：3511 在前者算 1 row 已覆蓋，在後者算 **0** 個新增 responsibility。"
+ },
+ "ROW_COVERAGE": {
+  "FROZEN_ROWS": 54,
+  "ROWS_WITH_CONFIRMED_MEMBERSHIP": 36,
+  "ROWS_WITH_MULTI_MEMBERSHIP": 1,
+  "ROWS_HISTORICAL_ONLY": 1,
+  "ROWS_UNRESOLVED": 16,
+  "_sum_check": 54
+ },
+ "RESPONSIBILITY_CENSUS": {
+  "ACTIVE_REVIEWED_RESPONSIBILITIES": 30,
+  "HISTORICAL_RESPONSIBILITIES": 1,
+  "_contributed_zero": {
+   "3511（SPLIT_REQUIRED）": "rows_with_multi_membership += 1；active_responsibilities += **0**",
+   "3498（HISTORICAL_ONLY）": "historical_only += 1；active_responsibilities += **0**",
+   "10 個 INSUFFICIENT_EVIDENCE 群（16 列）": "unresolved += 16；active_responsibilities += **0**",
+   "5 筆 MERGE_WITH_OTHER": "併入 target；active_responsibilities += **0**"
+  }
+ },
+ "LEVEL_A_V2_CENSUS": {
+  "rows": 9,
+  "distinct_responsibilities": 9,
+  "rows_with_multi_membership": [],
+  "responsibilities_shared_between_level_a_rows": [],
+  "mapping": {
+   "3402": [
+    "R-06"
+   ],
+   "3406": [
+    "R-07"
+   ],
+   "3495": [
+    "R-10"
+   ],
+   "3496": [
+    "R-11"
+   ],
+   "3499": [
+    "R-14"
+   ],
+   "3519": [
+    "R-25"
+   ],
+   "4640": [
+    "R-29"
+   ],
+   "4656": [
+    "R-30"
+   ],
+   "4657": [
+    "R-31"
+   ]
+  },
+  "verdict": "LEVEL_A_V2 的 9 列對應 **9 個相異 responsibility**，無共用、無多重 membership。",
+  "_why_this_matters": "⚠️ A05 的 denominator 若維持 9，其理由現在是**機器可追溯的 responsibility census**，⛔ 不再是「看起來沒有 aliases」。"
+ },
+ "_claim_ceiling": {
+  "may_claim": "在**機械凍結的 54-row governance population** 內：row disposition 完整（54/54），已建立 30 個 active reviewed responsibility ＋ 1 個 historical。",
+  "must_not_claim": [
+   "全 KB responsibility taxonomy 已完成——⛔ 54 是治理母體，不是全站語義宇宙",
+   "54 列都有 responsibility 歸屬——⛔ 16 列是 D 類未解，這是**誠實的未知**",
+   "30 就是最終責任數——⛔ 16 列未解，其中任一列日後可能新增或併入責任"
+  ]
+ }
+}

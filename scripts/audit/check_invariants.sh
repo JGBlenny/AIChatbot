@@ -448,6 +448,24 @@ else
   echo "✅ PASS（含兩種非法 state／INSUFFICIENT＋unknown／CONFIRMED 缺 ownership／偷加證據 等九組正對照）"
 fi
 
+echo "═══ 不變量 20：R10-P4 registry 投影完整性（P4）═══"
+# 源起：P4 最容易犯的錯是為了讓「每列剛好一個 responsibility」而**製造 authority**——
+# 把 SPLIT 來源列硬塞成第五個責任、或替 INSUFFICIENT_EVIDENCE 的列捏一個 responsibility_id。
+# ⚠️ 業主凍結的規則：**P4 要做到 row disposition 完整，⛔ 不是強迫 responsibility assignment 完整。**
+# 另擋：canonical_responsibility 被機器代填（schema 明文 ⛔ 不得自動產生後直接生效）。
+P4_CHECK="$REPO/scripts/audit/checks/p4_projection_integrity.py"
+if ! python3 "$P4_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 20 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$P4_CHECK" --self-test
+  FAIL=1
+elif ! P4_OUT=$(python3 "$P4_CHECK" 2>&1); then
+  echo "$P4_OUT"
+  FAIL=1
+else
+  echo "$P4_OUT"
+  echo "✅ PASS（含漏掛 split／偽造第五責任／掛錯 target／未解列被塞入／機器代填 canonical 等九組正對照）"
+fi
+
 # ⚠️ 13 是最後一條 ⇒ 此刻的 FAIL 值**恰好**等於「其他不變量有沒有紅」。
 #    用快照取代事後從輸出回推行數：⛔ 不靠 grep 猜，靠狀態算。
 CODE_FAIL_BEFORE_13=$FAIL
@@ -477,7 +495,7 @@ fi
 # ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
 # （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）
 if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then
-  CODE_REGRESSIONS+=("不變量 1–12／14–19 有失敗（見上方 ❌ FAIL 行）")
+  CODE_REGRESSIONS+=("不變量 1–12／14–20 有失敗（見上方 ❌ FAIL 行）")
 fi
 
 echo ""

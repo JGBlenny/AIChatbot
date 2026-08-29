@@ -1,0 +1,2047 @@
+{
+ "_doc": "R10-P4 authoritative responsibility registry（由 P3 裁定機械投影）。",
+ "_authority": "本檔是 responsibility identity 的 authoritative 來源；⛔ proposal 不得反向定義它；⛔ P3 的 proposal 歷史不得污染本檔。",
+ "schema_version": "R10P-SCHEMA-2",
+ "schema_digest": "b72e749e0c452f0d0b86dfedc1e68e69b76912653240d02ea029d8d913272cf2",
+ "population_digest": "51c04b887a16b05f9b19ca7f7e2b2a3b352b4ff26dcf639095593e2fb0647899",
+ "proposal_digest": "fe6e5f3feba9b26ff5e98d59eb3ae4f38bdd61172e46cba7bbe5347c9e320426",
+ "sealed_at": "2026-08-29",
+ "_canonical_naming_note": "⚠️ responsibility_id 是**機械序號**；canonical_responsibility 只在業主已明示陳述時填入，其餘為 PENDING_OWNER_STATEMENT——schema 明文 ⛔ 不得由機器自動產生後直接生效。",
+ "counts": {
+  "reviewed_active": 30,
+  "reviewed_historical": 1
+ },
+ "responsibilities": [
+  {
+   "responsibility_id": "R-01",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3365",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "jgb_repairs query／action capability",
+   "members": [
+    {
+     "row_id": 3365,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    },
+    {
+     "row_id": 4420,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "knowledge_base（row 3365）：form=jgb_repair_query → jgb_repairs",
+     "claim_supported": "3365 的 execution target ＝ jgb_repairs",
+     "supports": [
+      "ownership",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "knowledge_base（row 4420）：action=api_call → jgb_repairs",
+     "claim_supported": "4420 的 execution target **同為** jgb_repairs",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb_response_formatter.py::format_jgb_response（jgb_repairs ⛔ 無專屬分支 ⇒ 兩列同落通用 _format_single）",
+     "claim_supported": "兩種 wiring 連**下游格式化路徑**都相同 ⇒ 支持同一 responsibility",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3365）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定（E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "a8eb7c15cba47da34fa75d6f31cd63540fb615bd501ff0a8c0d092f17fdae808"
+   }
+  },
+  {
+   "responsibility_id": "R-02",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3490",
+   "status": "reviewed_active",
+   "canonical_responsibility": "判斷／診斷某份合約為何不能發送簽約邀請，以及目前是否符合發送條件。",
+   "canonical_responsibility_status": "OWNER_STATED",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "rag-orchestrator/services/jgb/contracts.py:128::check_can_invite",
+   "members": [
+    {
+     "row_id": 3368,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    },
+    {
+     "row_id": 3490,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:128::check_can_invite",
+     "claim_supported": "具名 eligibility check 承接 invite",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['邀請', '發送', '簽約邀請', 'invite'] → invite",
+     "claim_supported": "兩列（3490／3368）以其 summary 形狀的問句進來皆 deterministic 落同一 branch——依 P-C8：answer 空／非空、positive／negative 措辭 ⛔ 不足以建立兩個 responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3490）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3490，37 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "8a3cfc6a7088966e1b72e212972c61ed6eb3a0895b4d1a63fbd8adfcfeed7db2"
+   }
+  },
+  {
+   "responsibility_id": "R-03",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3493",
+   "status": "reviewed_active",
+   "canonical_responsibility": "判斷／診斷某份合約能否提前解約，以及不能的原因。⚠️「可以提前解約嗎」與「為什麼不能提前解約」是同一 eligibility responsibility 的 positive／negative phrasing。",
+   "canonical_responsibility_status": "OWNER_STATED",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "rag-orchestrator/services/jgb/contracts.py:257::check_can_early_termination",
+   "members": [
+    {
+     "row_id": 3370,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    },
+    {
+     "row_id": 3493,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    },
+    {
+     "row_id": 3511,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "SPLIT_REQUIRED"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:257::check_can_early_termination",
+     "claim_supported": "具名 eligibility check 承接 early_termination",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['提前', '解約', '終止', 'early'] → early_termination",
+     "claim_supported": "兩列（3493／3370）以其 summary 形狀的問句進來皆 deterministic 落同一 branch——依 P-C8：answer 空／非空、positive／negative 措辭 ⛔ 不足以建立兩個 responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3493）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3493，21 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "6584f2c75538c988d6674345918b17dcf2a8fafb635e5f6b3d37afcfa4e3d456"
+   }
+  },
+  {
+   "responsibility_id": "R-04",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3494",
+   "status": "reviewed_active",
+   "canonical_responsibility": "判斷／診斷某份合約能否續約，以及不能的原因。",
+   "canonical_responsibility_status": "OWNER_STATED",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "rag-orchestrator/services/jgb/contracts.py:294::check_can_renew",
+   "members": [
+    {
+     "row_id": 3371,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    },
+    {
+     "row_id": 3494,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    },
+    {
+     "row_id": 3511,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "SPLIT_REQUIRED"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:294::check_can_renew",
+     "claim_supported": "具名 eligibility check 承接 renew",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['續約', 'renew', '延長'] → renew",
+     "claim_supported": "兩列（3494／3371）以其 summary 形狀的問句進來皆 deterministic 落同一 branch——依 P-C8：answer 空／非空、positive／negative 措辭 ⛔ 不足以建立兩個 responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3494）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3494，20 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "37c6ca63ee8c6744959696a1db0d5b445cc191e330cd541220809e076377074d"
+   }
+  },
+  {
+   "responsibility_id": "R-05",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3510",
+   "status": "reviewed_active",
+   "canonical_responsibility": "查詢某份合約目前狀態。",
+   "canonical_responsibility_status": "OWNER_STATED",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "rag-orchestrator/services/jgb/contracts.py:744::_format_status_response",
+   "members": [
+    {
+     "row_id": 3372,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    },
+    {
+     "row_id": 3510,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:744::_format_status_response",
+     "claim_supported": "兩列宣稱的 responsibility 本身就是「查合約目前狀態」，與該 fallback 的 deterministic semantic output **正面一致** ⇒ 在此二列足以支持 ownership",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：五組關鍵字皆未命中 → _format_status_response",
+     "claim_supported": "兩列皆 deterministic 落同一 branch（P-C8）",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3510）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3510，22 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "e03e8e67470b0738f2557cd18d23b053125fa679dc1f23319a64f720f5646a80"
+   }
+  },
+  {
+   "responsibility_id": "R-06",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3402",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "general"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）",
+   "members": [
+    {
+     "row_id": 3402,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3402）：instance_applicability=general",
+     "claim_supported": "reviewed 理由：問的是系統流程與產生機制，正確回答不需知道是哪份合約或哪張帳單",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 3402）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility；非空 answer 本身即承載該責任",
+     "supports": [
+      "identity",
+      "membership",
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "df24d420de768a776dd92db0111190926071b89946e8719978b7b4ce8d8ebef5"
+   }
+  },
+  {
+   "responsibility_id": "R-07",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3406",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "general"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）",
+   "members": [
+    {
+     "row_id": 3406,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3406）：instance_applicability=general",
+     "claim_supported": "reviewed 理由明文：「4640 已另立『查實際收據金額』錨點，形成**正面語義分工**」",
+     "supports": [
+      "applicability",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 3406）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility；非空 answer 本身即承載該責任",
+     "supports": [
+      "identity",
+      "membership",
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "4341984adb1d3c3709adbeff80a00493ac1984cd46ef92483c070d7d8d67ba53"
+   }
+  },
+  {
+   "responsibility_id": "R-08",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3491",
+   "status": "reviewed_active",
+   "canonical_responsibility": "判斷／診斷某份合約能否點交，以及不能的原因。",
+   "canonical_responsibility_status": "OWNER_STATED",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "rag-orchestrator/services/jgb/contracts.py:161::check_can_move_in",
+   "members": [
+    {
+     "row_id": 3491,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    },
+    {
+     "row_id": 3511,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "SPLIT_REQUIRED"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:161::check_can_move_in",
+     "claim_supported": "具名 eligibility check 承接 move_in",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['點交', 'move_in', '入住'] → move_in",
+     "claim_supported": "deterministic 落此 branch",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3491）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3491，24 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "6aacc3816ca9dd88746a21a77b36a46b20202eed921387dfd1c8fbccafaf6fce"
+   }
+  },
+  {
+   "responsibility_id": "R-09",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3492",
+   "status": "reviewed_active",
+   "canonical_responsibility": "判斷／診斷某份合約能否點退，以及不能的原因。",
+   "canonical_responsibility_status": "OWNER_STATED",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "rag-orchestrator/services/jgb/contracts.py:203::check_can_move_out",
+   "members": [
+    {
+     "row_id": 3492,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    },
+    {
+     "row_id": 3511,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "SPLIT_REQUIRED"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:203::check_can_move_out",
+     "claim_supported": "具名 eligibility check 承接 move_out",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：['點退', 'move_out', '退租', '搬離'] → move_out",
+     "claim_supported": "deterministic 落此 branch",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3492）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3492，46 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "92ce5906ce6a5b5a110a454e65d5eed6dcaf5ea7b7d869a2149e07a8177a0661"
+   }
+  },
+  {
+   "responsibility_id": "R-10",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3495",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_send",
+   "members": [
+    {
+     "row_id": 3495,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_send（B01）",
+     "claim_supported": "帳單無法發送 由**具名** deterministic 分支負責，與同 Face 的其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3495）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 3495）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "41253010f10da608d1c1fe23a78a8871780701f7c0729c8ee401a8ee3ccfca01"
+   }
+  },
+  {
+   "responsibility_id": "R-11",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3496",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_cancel",
+   "members": [
+    {
+     "row_id": 3496,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_cancel（B02）",
+     "claim_supported": "帳單無法取消／作廢 由**具名** deterministic 分支負責，與同 Face 的其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3496）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 3496）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "edd9d408151ecc734dc410ce040691631bd62d1b04056fa382d42dcd04c46448"
+   }
+  },
+  {
+   "responsibility_id": "R-12",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3497",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "payment_flow::_diagnose_payment_not_reflected（rag-orchestrator/services/jgb/payments.py::_diagnose_payment_not_reflected）",
+   "members": [
+    {
+     "row_id": 3497,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/payments.py::_diagnose_payment_not_reflected",
+     "claim_supported": "「已付款但帳單狀態沒有更新」由**具名** deterministic 分支承接，與同 Face 其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3497）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3497）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership 證據）——⚠️ 依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "d19f194484bda9b0736af6adfd2a9ceec86fbabe3302b42025908c97f781885e"
+   }
+  },
+  {
+   "responsibility_id": "R-13",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3498",
+   "status": "reviewed_historical",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "SUPERSEDED",
+   "owner_contract": "historical A ownership = superseded；active late-fee instance ownership = B（late_fee face／build_late_fee_facts）；general knowledge truth = subsumed by 3531 ＋ 3532",
+   "members": [
+    {
+     "row_id": 3498,
+     "member_role": "HISTORICAL_RETIRED",
+     "operational_status": "inactive",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "PROVENANCE_HISTORY",
+     "source": "knowledge_base.generation_metadata（row 3498）.retirement（t2-3498-knowledge-identity.md）",
+     "claim_supported": "K1_FULLY_SUBSUMED ＋ UNDER_QUALIFIED_DUPLICATE；subsumed_by=[3531,3532]；ownership_consolidated_to=late_fee face；effective_for_routing／scoring／population 皆 false",
+     "supports": [
+      "identity",
+      "membership",
+      "ownership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "p3-verdicts.json：CG-ROW-3531 ／ CG-ROW-3532 皆 CONFIRMED_RESPONSIBILITY",
+     "claim_supported": "兩個 general successor 已各自封住 ⇒ 3498 的內容真相已有歸屬",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3498）：instance_applicability=instance",
+     "claim_supported": "historical declaration = instance；**operational authority = inactive**",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "HISTORICAL_ONLY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "5ef3b3f271001a01ae171bf584bcc8af3691130e40998ac175b66eaa185c08c4"
+   }
+  },
+  {
+   "responsibility_id": "R-14",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3499",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py:602::_diagnose_manual_complete",
+   "members": [
+    {
+     "row_id": 3499,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:602::_diagnose_manual_complete",
+     "claim_supported": "具名 deterministic 分支存在",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:427::diagnose_bill（elif 關鍵字 ['到帳','收款','標記已收','手動']）",
+     "claim_supported": "dispatch **可達**該分支——⚠️ 依本 repo 紀律：branch exists ≠ branch reachable，故一併查 dispatch",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3499）：instance_applicability=instance",
+     "claim_supported": "沿用既有 authoritative declaration（P1e-1）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3499，34 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "6e3c8be0531b95fe1184c7ecad0cb29971bfc4d6478185951f672f4707769565"
+   }
+  },
+  {
+   "responsibility_id": "R-15",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3500",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "payment_flow::_diagnose_credit_card_failure（rag-orchestrator/services/jgb/payments.py::_diagnose_credit_card_failure）",
+   "members": [
+    {
+     "row_id": 3500,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/payments.py::_diagnose_credit_card_failure",
+     "claim_supported": "「信用卡付款失敗」由**具名** deterministic 分支承接，與同 Face 其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3500）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3500）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership 證據）——⚠️ 依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "ee03e154f6370a5b546d7b6df5b11150e77ed7b3f6a3fa142f8a5edeffe6f22f"
+   }
+  },
+  {
+   "responsibility_id": "R-16",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3501",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "diagnose_payment_logs ／ rag-orchestrator/services/jgb/payments.py:120::_diagnose_auto_pay_failure",
+   "members": [
+    {
+     "row_id": 3501,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/payments.py:120::_diagnose_auto_pay_failure",
+     "claim_supported": "具名分支承接「自動扣款失敗」",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "payments.py:21::diagnose_payment_logs（關鍵字 ['自動扣款','自動付款','auto']）",
+     "claim_supported": "dispatch 可達；與 3497(P01)／3500(P02) 為同層三兄弟、各自分流",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3501）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3501，35 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "74e4d294802871a01fba0969f8f7a097b348f57178f91c23d48806db7b4fbe6f"
+   }
+  },
+  {
+   "responsibility_id": "R-17",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3502",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "diagnose_bill ／ rag-orchestrator/services/jgb/bills.py:625::_diagnose_atm_expired",
+   "members": [
+    {
+     "row_id": 3502,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py:625::_diagnose_atm_expired",
+     "claim_supported": "具名分支承接「虛擬帳號過期／轉帳失敗」",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "bills.py:427::diagnose_bill（_ATM_KEYWORDS=('虛擬帳號','帳號過期','ATM','轉帳失敗')）",
+     "claim_supported": "dispatch 可達",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3502）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定——依 P-C1a，authority status ⛔ 不因 evidence source 降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3502，232 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "46218cd0a8c30d3c35fb69a0552dbf7b9e55d60f949cb223c9b519fec18e1c45"
+   }
+  },
+  {
+   "responsibility_id": "R-18",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3503",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "invoice::_diagnose_issue_failure（rag-orchestrator/services/jgb/invoices.py::_diagnose_issue_failure）",
+   "members": [
+    {
+     "row_id": 3503,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/invoices.py::_diagnose_issue_failure",
+     "claim_supported": "「發票沒有開出來」由**具名** deterministic 分支承接，與同 Face 其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3503）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3503）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership 證據）——⚠️ 依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "cb5ea81d1891024026e2ce228462f12d3f8601d5b5f7036a14f04a1c08b1bd0b"
+   }
+  },
+  {
+   "responsibility_id": "R-19",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3504",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "invoice::_diagnose_invalid_failure（rag-orchestrator/services/jgb/invoices.py::_diagnose_invalid_failure）",
+   "members": [
+    {
+     "row_id": 3504,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/invoices.py::_diagnose_invalid_failure",
+     "claim_supported": "「發票無法作廢」由**具名** deterministic 分支承接，與同 Face 其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3504）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3504）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership 證據）——⚠️ 依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "3e4676e4c45c9f8c40af6ba64579510246e9d55958febe2a6b3b91d347ae90ca"
+   }
+  },
+  {
+   "responsibility_id": "R-20",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3505",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "subscription::_diagnose_cannot_add_estate（rag-orchestrator/services/jgb/subscription.py::_diagnose_cannot_add_estate）",
+   "members": [
+    {
+     "row_id": 3505,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/subscription.py::_diagnose_cannot_add_estate",
+     "claim_supported": "「無法新增物件」由**具名** deterministic 分支承接，與同 Face 其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3505）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3505）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership 證據）——⚠️ 依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "be3d4b77e6baeaac1e95a43c64cf9d81f23de414e052aa20da3e7abe350f4a5d"
+   }
+  },
+  {
+   "responsibility_id": "R-21",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3506",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "subscription::_diagnose_estates_delisted（rag-orchestrator/services/jgb/subscription.py::_diagnose_estates_delisted）",
+   "members": [
+    {
+     "row_id": 3506,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/subscription.py::_diagnose_estates_delisted",
+     "claim_supported": "「物件突然全部下架」由**具名** deterministic 分支承接，與同 Face 其他分支可區分",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3506）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 裁定（E1_ENGINE_TITLE ＋ E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3506）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership 證據）——⚠️ 依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "39e1430d32d65e28a6c7f8e4789d3da51da9b4306d8c1767a23fee3b5e22b5a8"
+   }
+  },
+  {
+   "responsibility_id": "R-22",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3507",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "estate-status ／ rag-orchestrator/services/jgb/estates.py:33::build_estate_status_facts",
+   "members": [
+    {
+     "row_id": 3507,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/estates.py:33::build_estate_status_facts",
+     "claim_supported": "docstring 明文建約決策樹：刊登中 ＋ contract_required_fields 欄位齊 → 可建約；缺欄列 label；非刊登中 → 建約前提為刊登中（EstateController.php:279-283 口徑）——與 3507 的 answer 逐項對得上",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/estates.py:96 ESTATE_FACE_BUILDERS＝{'物件現況診斷': build_estate_status_facts}；row 3507 categories 含「物件現況診斷」",
+     "claim_supported": "categories 與 face 註冊表鍵**相符** ⇒ 支持該列屬於此 capability 的責任",
+     "supports": [
+      "membership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3507）：instance_applicability=instance",
+     "claim_supported": "既有 authoritative declaration（P1e-1，⛔ 依 P-C1a 不因 source 降格）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3507，147 字）",
+     "claim_supported": "answer 本文界定該列宣稱什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "6e76fb61c7992572f8b71ba68a68f1a65b8ae0cdfd85ff4c7d6c8b1b6556c962"
+   }
+  },
+  {
+   "responsibility_id": "R-23",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3508",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "rag-orchestrator/services/jgb/iot.py::diagnose_iot",
+   "members": [
+    {
+     "row_id": 3508,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb_response_formatter.py::format_jgb_response（endpoint == 'jgb_iot_manufacturers' 專屬分支）→ services/jgb/iot.py::diagnose_iot",
+     "claim_supported": "該 endpoint 有**具名**診斷引擎，⛔ 非通用 _format_single",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3508）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定（E2_IDENTIFIER_FORM）——依 P-C1a，authority status 不因 source 標記而降格",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3508，28 字）",
+     "claim_supported": "answer 本文界定該列在說什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "9834632c18fafdcde713786cd239e23bd56aba97b5a19fbb2e290f406573e58f"
+   }
+  },
+  {
+   "responsibility_id": "R-24",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3514",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "jgb_tenant_summary ＋ rag-orchestrator/services/jgb_response_formatter.py::_format_tenant_summary",
+   "members": [
+    {
+     "row_id": 3514,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb_response_formatter.py::format_jgb_response（endpoint == 'jgb_tenant_summary' 專屬分支）→ _format_tenant_summary",
+     "claim_supported": "jgb_tenant_query → jgb_tenant_summary → 專屬 formatter，構成一條專屬 deterministic capability path",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3514）：instance_applicability=instance",
+     "claim_supported": "P1e-1 deterministic 正面裁定（E2_IDENTIFIER_FORM）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "knowledge_base（row 3514）：form=jgb_tenant_query → jgb_tenant_summary",
+     "claim_supported": "該列**自身的 wiring** 把它綁到這條 capability path ⇒ membership 證據（⚠️ 依 P-C2，form 唯一性 ⛔ 不用於 ownership）",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "107298ad2c6e4f84500e7cebafd2e768e047bf3dc2c1223a335ec64ed86e16ef"
+   }
+  },
+  {
+   "responsibility_id": "R-25",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3519",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "general"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）",
+   "members": [
+    {
+     "row_id": 3519,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3519）：instance_applicability=general",
+     "claim_supported": "reviewed 理由明文：「190 字承載計算規則、算式與例子…**KB 有意把規則與查值拆開**」",
+     "supports": [
+      "applicability",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 3519）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility；非空 answer 本身即承載該責任",
+     "supports": [
+      "identity",
+      "membership",
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "74047ecbbd32d7b51c5be72a672988c88842d8e8faaae0bb924c1ffdc44f98e5"
+   }
+  },
+  {
+   "responsibility_id": "R-26",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3531",
+   "status": "reviewed_active",
+   "canonical_responsibility": "付款後結算型延遲金的產生機制、適用條件與計算規則",
+   "canonical_responsibility_status": "OWNER_STATED",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "general"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority）",
+   "members": [
+    {
+     "row_id": 3531,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3531）：instance_applicability=general",
+     "claim_supported": "reviewed 理由：承接的是規則／機制說明：付款後結算的延遲金機制、公式與適用條件；即使完全不知道是哪份合約、哪張帳單仍能完整正確回答",
+     "supports": [
+      "applicability",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3531，231 字）",
+     "claim_supported": "answer 本文已正面限定責任範圍 ⇒ 支持 identity／membership／ownership=Knowledge（⚠️ general 列適用，⛔ 不適用 instance 列）",
+     "supports": [
+      "identity",
+      "membership",
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "548de61b1a65906c05da3918601ca53e1ecd82378ba1cc1296388246e67ec5f3"
+   }
+  },
+  {
+   "responsibility_id": "R-27",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-3532",
+   "status": "reviewed_active",
+   "canonical_responsibility": "滯納金客製計算版本的機制差異（延遲金／階梯式／固定金額等）",
+   "canonical_responsibility_status": "OWNER_STATED",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "general"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority）",
+   "members": [
+    {
+     "row_id": 3532,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3532）：instance_applicability=general",
+     "claim_supported": "reviewed 理由：承接的是不同客製版本的計算機制差異；回答「各版本行為差異」不需先讀任一使用者的合約或帳單實值",
+     "supports": [
+      "applicability",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3532，233 字）",
+     "claim_supported": "answer 本文已正面限定責任範圍 ⇒ 支持 identity／membership／ownership=Knowledge（⚠️ general 列適用，⛔ 不適用 instance 列）",
+     "supports": [
+      "identity",
+      "membership",
+      "ownership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "dddaf821e382dc3807bd7bf5dd123704678236514844cdd7f876450b8cef7a07"
+   }
+  },
+  {
+   "responsibility_id": "R-28",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ALIAS-04",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": "滯納金",
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "late_fee Face ／ services/jgb/bills.py::build_late_fee_facts",
+   "members": [
+    {
+     "row_id": 3939,
+     "member_role": "ENTRY_ALIAS",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    },
+    {
+     "row_id": 3940,
+     "member_role": "ENTRY_ALIAS",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "AUTHORING_SPEC",
+     "source": ".kiro/specs/billing-conversational-facets/billing-knowledge-review.md",
+     "claim_supported": "「錨點（12 筆，answer 空、一種講法一筆）」⇒ 同 facet 的多列是刻意的 utterance variants",
+     "supports": [
+      "identity",
+      "alias_relation"
+     ],
+     "digest": "ce5a787befac6a8f50975e0133e80607947ff2ffa2aafa773017f1a92e2b0048"
+    },
+    {
+     "evidence_type": "AUTHORING_SPEC",
+     "source": ".kiro/specs/billing-conversational-facets/billing-knowledge-batch.json",
+     "claim_supported": "anchors 每筆僅 facet／question／keywords ⇒ 唯一語義負載是 facet",
+     "supports": [
+      "identity",
+      "alias_relation"
+     ],
+     "digest": "437f0500cbe36fdbe06a59fa0723abb0e257c198b1b61b2309a1ab70cb05219c"
+    },
+    {
+     "evidence_type": "PROVENANCE_HISTORY",
+     "source": ".kiro/specs/conversational-routing-execution/entry-alias-registry.json",
+     "claim_supported": "T3 裁定 KEEP_BOTH_AS_ENTRY_VARIANTS；每列 member_role = ENTRY_ALIAS",
+     "supports": [
+      "membership",
+      "alias_relation"
+     ],
+     "digest": "f3e14cdd480f09982c4ebbd799d6c7d08ac2c21f8cfe4bfe2e5a5522a0ebac70"
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（rows 3939／3940）：instance_applicability=instance，source=reviewed_product_declaration",
+     "claim_supported": "applicability = instance 的**正面裁定**（⛔ 非由 facet 名稱推導）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py::build_late_fee_facts",
+     "claim_supported": "作答所需的實際金額／狀態／合約設定實值／結算備註／付款到帳時間皆由該 capability 依**某一筆**的實值產生 ⇒ 支持 owner 與 instance 兩者",
+     "supports": [
+      "ownership",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "RUNTIME_CAUSAL_EVIDENCE",
+     "source": "t1-dual-engine-comparison.md（E3 ONE_SIDE_PARTIAL）＋ t3-late-fee-authority-aftermath.md（Step 1 B_CAPABILITY_SUPERSET=CONFIRMED、Step 2 dispatch ＋ commit authority 移除）",
+     "claim_supported": "late_fee instance ownership 已收斂為**唯一** owner（不變量 14 守住）",
+     "supports": [
+      "ownership"
+     ],
+     "digest": "4a4ab53fb1a6dd748db6b1cd582ba6b1d63cbe7d932f9f8cf256c0a8e7fc6b87"
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "r10-decision-and-population-review-design.md（C＋C2；ALIAS_ROLE=NOMINATION_ONLY）",
+     "claim_supported": "同 responsibility 的多個 alias ⛔ 不得各自擁有 semantic contract",
+     "supports": [
+      "alias_relation",
+      "canonical_representation"
+     ],
+     "digest": "8037c7397e4a30bea55f7caed22e9c8dd8c3b289b2ac981902bfb8642e7d9d29"
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "52827904e20864fcd9a62233d4ae9f8182062cb163817a3f55e7ac1ce28741d6"
+   }
+  },
+  {
+   "responsibility_id": "R-29",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-4640",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "bill_diagnosis 的 receipt-amount deterministic capability（B05）",
+   "members": [
+    {
+     "row_id": 4640,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py（B05：收據查詢 R-31）",
+     "claim_supported": "取的是某一筆收據的 runtime 實值 ⇒ 支持 instance 與 owner",
+     "supports": [
+      "ownership",
+      "applicability",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 4640）：instance_applicability=instance",
+     "claim_supported": "reviewed 理由：不讀該帳單／收據資料無法知道「多少錢」；本列是 empty-answer Face-entry anchor",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 4640）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "726146ecb2748216862bfb59cd09751f4d1e4d47f572acb72253e56878aa0e58"
+   }
+  },
+  {
+   "responsibility_id": "R-30",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-4656",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_format_bill_status 路徑",
+   "members": [
+    {
+     "row_id": 4656,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py::_format_bill_status",
+     "claim_supported": "已取得 bill_ref → 找該筆 → 回目前 status，為其 defining operation",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 4656）：instance_applicability=instance",
+     "claim_supported": "reviewed 理由：bill_diagnosis 的 required_slots=[bill_ref]；無特定 referent 無法完成 intent",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 4656）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "752b204f140c18aebe4eae5fc8ffad270194122442dcfdfc20c2a25901a6c2f7"
+   }
+  },
+  {
+   "responsibility_id": "R-31",
+   "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
+   "sealed_from_candidate_group": "CG-ROW-4657",
+   "status": "reviewed_active",
+   "canonical_responsibility": null,
+   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "facet": null,
+   "applicability": {
+    "declaration_status": "reviewed",
+    "value": "instance"
+   },
+   "owner": "CONFIRMED",
+   "owner_contract": "POINT_REFUND_BILL_SELECTION ＋ downstream bill facts",
+   "members": [
+    {
+     "row_id": 4657,
+     "member_role": "ANSWER_KNOWLEDGE",
+     "operational_status": "active",
+     "_membership_origin": "DIRECT"
+    }
+   ],
+   "evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/point_refund_selection.py::select_point_refund（經 bills.py::_point_refund_response 呼叫）",
+     "claim_supported": "selection prerequisite 與 4656 不同：指定 contract → deterministic 選 type=2 →無 type=2 ⛔ 不 fallback → 多筆 type=2 ⛔ 不取 data[0]",
+     "supports": [
+      "ownership",
+      "identity",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "RUNTIME_CAUSAL_EVIDENCE",
+     "source": "rag-orchestrator/tests/unit/conversational/test_point_refund_selection_req.py（six guards ＋ guard 6 mutation：拿掉 type filter／改回 data[0] 測試必須紅）",
+     "claim_supported": "type selection ⛔ 非裝飾——拿掉就會選錯帳單；R9 史實 FACET_TYPE_SELECTION_MISSING 於 POINT_REFUND_BILL_SELECTION 實作後才解",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 4657）：instance_applicability=instance",
+     "claim_supported": "reviewed 理由：要求該份合約／帳單的實際值，不讀 runtime data 無法回答",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.generation_metadata（row 4657）：retrieval_representation（R9 Level-A representation 逐筆裁定 2026-08-29）",
+     "claim_supported": "該列的 reviewed representation 界定其 answer responsibility",
+     "supports": [
+      "identity",
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "review": {
+    "verdict": "CONFIRMED_RESPONSIBILITY",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis_digest": "c35b55a23b4e6c927ecb60e17c5c87b906e01672c3de3c1d56761622c78df149"
+   }
+  }
+ ]
+}

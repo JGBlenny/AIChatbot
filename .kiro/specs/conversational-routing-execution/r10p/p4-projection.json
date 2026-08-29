@@ -1,0 +1,237 @@
+{
+ "_doc": "R10-P4 projection sidecar：投影規則、row disposition 窮盡分割、split membership_origin。",
+ "_why_sidecar": "⚠️ frozen member schema 無 membership_origin 欄位——⛔ 不為此偷擴 schema，改記在本 sidecar（可由 P3 verdict reference 推導）。",
+ "projection_rules_frozen": {
+  "CONFIRMED_RESPONSIBILITY": "建立一筆 reviewed_active responsibility；confirmed members 全數掛入。",
+  "MERGE_WITH_OTHER": "⛔ 不建立 responsibility record；member rows 轉掛到 target responsibility。",
+  "SPLIT_REQUIRED": "⛔ 不建立 source responsibility record；source row 掛到 split_across 的**每一個** target；membership_origin=SPLIT_REQUIRED；⛔ 貢獻 0 個新 responsibility identity。",
+  "HISTORICAL_ONLY": "建立 status=reviewed_historical；可被歷史證據解析，⛔ 不計入 active census、⛔ 不得進 scoring／authority。",
+  "INSUFFICIENT_EVIDENCE": "⛔ 不建立 authoritative responsibility record；row 記為 reviewed_population_status=unresolved——⚠️ ⛔ 不得為了湊滿 54/54 而把 UNKNOWN truth 逼成假 authority。"
+ },
+ "_two_denominators": {
+  "ROW_COVERAGE_denominator": "frozen 54 rows —— P4 必須做到 **row disposition 完整**",
+  "RESPONSIBILITY_CENSUS_denominator": "sealed distinct reviewed responsibilities",
+  "⚠️": "⛔ 不得互相污染：3511 在前者算 1 row 已覆蓋，在後者算 **0** 個新增 responsibility。"
+ },
+ "_row_disposition_partition": {
+  "_doc": "每個 frozen row **必須且只能**落在四類之一——⛔ 不是「每列 exactly one responsibility」。",
+  "classes": [
+   "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "B_MEMBER_OF_MULTIPLE_REVIEWED_RESPONSIBILITIES",
+   "C_HISTORICAL_ONLY_MEMBER",
+   "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP"
+  ],
+  "tally": {
+   "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP": 16,
+   "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY": 36,
+   "C_HISTORICAL_ONLY_MEMBER": 1,
+   "B_MEMBER_OF_MULTIPLE_REVIEWED_RESPONSIBILITIES": 1
+  },
+  "by_row": {
+   "3361": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3362": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3365": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3366": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3368": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3370": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3371": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3372": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3402": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3406": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3490": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3491": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3492": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3493": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3494": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3495": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3496": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3497": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3498": "C_HISTORICAL_ONLY_MEMBER",
+   "3499": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3500": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3501": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3502": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3503": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3504": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3505": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3506": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3507": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3508": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3510": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3511": "B_MEMBER_OF_MULTIPLE_REVIEWED_RESPONSIBILITIES",
+   "3512": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3513": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3514": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3519": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3531": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3532": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3931": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3932": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3933": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3934": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3935": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3936": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3937": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3938": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3939": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3940": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "3941": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "3942": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "4255": "D_UNRESOLVED_NO_AUTHORITATIVE_MEMBERSHIP",
+   "4420": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "4640": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "4656": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY",
+   "4657": "A_MEMBER_OF_ONE_REVIEWED_RESPONSIBILITY"
+  }
+ },
+ "split_projections": [
+  {
+   "source_row": 3511,
+   "source_group": "CG-ROW-3511",
+   "targets": [
+    "CG-ROW-3491",
+    "CG-ROW-3492",
+    "CG-ROW-3493",
+    "CG-ROW-3494"
+   ],
+   "target_responsibility_ids": [
+    "R-08",
+    "R-09",
+    "R-03",
+    "R-04"
+   ],
+   "contributes_new_responsibility_identities": 0
+  }
+ ],
+ "unresolved_groups": [
+  "CG-ALIAS-01",
+  "CG-ALIAS-02",
+  "CG-ALIAS-03",
+  "CG-ALIAS-05",
+  "CG-ROW-3361",
+  "CG-ROW-3362",
+  "CG-ROW-3366",
+  "CG-ROW-3512",
+  "CG-ROW-3513",
+  "CG-ROW-4255"
+ ],
+ "row_to_responsibilities": {
+  "3365": [
+   "R-01"
+  ],
+  "3368": [
+   "R-02"
+  ],
+  "3370": [
+   "R-03"
+  ],
+  "3371": [
+   "R-04"
+  ],
+  "3372": [
+   "R-05"
+  ],
+  "3402": [
+   "R-06"
+  ],
+  "3406": [
+   "R-07"
+  ],
+  "3490": [
+   "R-02"
+  ],
+  "3491": [
+   "R-08"
+  ],
+  "3492": [
+   "R-09"
+  ],
+  "3493": [
+   "R-03"
+  ],
+  "3494": [
+   "R-04"
+  ],
+  "3495": [
+   "R-10"
+  ],
+  "3496": [
+   "R-11"
+  ],
+  "3497": [
+   "R-12"
+  ],
+  "3498": [
+   "R-13"
+  ],
+  "3499": [
+   "R-14"
+  ],
+  "3500": [
+   "R-15"
+  ],
+  "3501": [
+   "R-16"
+  ],
+  "3502": [
+   "R-17"
+  ],
+  "3503": [
+   "R-18"
+  ],
+  "3504": [
+   "R-19"
+  ],
+  "3505": [
+   "R-20"
+  ],
+  "3506": [
+   "R-21"
+  ],
+  "3507": [
+   "R-22"
+  ],
+  "3508": [
+   "R-23"
+  ],
+  "3510": [
+   "R-05"
+  ],
+  "3511": [
+   "R-03",
+   "R-04",
+   "R-08",
+   "R-09"
+  ],
+  "3514": [
+   "R-24"
+  ],
+  "3519": [
+   "R-25"
+  ],
+  "3531": [
+   "R-26"
+  ],
+  "3532": [
+   "R-27"
+  ],
+  "3939": [
+   "R-28"
+  ],
+  "3940": [
+   "R-28"
+  ],
+  "4420": [
+   "R-01"
+  ],
+  "4640": [
+   "R-29"
+  ],
+  "4656": [
+   "R-30"
+  ],
+  "4657": [
+   "R-31"
+  ]
+ }
+}

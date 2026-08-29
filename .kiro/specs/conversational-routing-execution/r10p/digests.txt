@@ -1,5 +1,5 @@
 # R10-P digests（2026-08-29）
-R10P_STAGE=P2_PROPOSAL_FROZEN
+R10P_STAGE=P5_CENSUS_DONE
 POPULATION_ROWS=54
 POPULATION_DIGEST=51c04b887a16b05f9b19ca7f7e2b2a3b352b4ff26dcf639095593e2fb0647899
 POPULATION_IDSET_DIGEST=00581c42771fa3b01d5f9d9fe537f872ea501178e395dbf86203124771e0feff
@@ -14,4 +14,15 @@ PROPOSAL_DIGEST=fe6e5f3feba9b26ff5e98d59eb3ae4f38bdd61172e46cba7bbe5347c9e320426
 # P2 產出：47 個 candidate group ＝ 5 多列群（全部來自 entry-alias registry）＋ 42 singleton。
 # ⚠️ 允許規則二／三在本母體上**產生不到任何合併**（無共用 reviewed owner contract；E1 函式名兩兩相異）。
 # ⛔ 無 authority：applicability／responsibility identity 一律等 P3 human review。
-REGISTRY_DIGEST=（尚未產生——P4）
+REGISTRY_DIGEST=3e5bcdc6a8265fbfaf1d7703a863e8b3d8a3d65a42fa4776f168651dec475dfb
+PROJECTION_DIGEST=0635b469db39fc283114d54a6e9073052e42f361d96950e7b88ea6a75f604c04
+# P4 投影：reviewed_active 30 ＋ reviewed_historical 1。
+# row disposition（窮盡分割 54）：A 36／B 1（3511 多重 membership）／C 1（3498）／D 16（未解）。
+# ⚠️ **兩個 denominator ⛔ 不得互相污染**：row coverage=54；responsibility census=30 active。
+# ⚠️ canonical_responsibility 有 23 筆 PENDING_OWNER_STATEMENT——⛔ 機器不得代填。
+CENSUS_DIGEST=ee8e398deff686f641044ae67f57ea89e79871246c6e0f596819de5a3a7461d2
+# P5 普查（兩個 denominator 分開報，⛔ 不得互相污染）：
+#   ROW COVERAGE      54 ＝ 36 confirmed ＋ 1 multi ＋ 1 historical ＋ **16 unresolved**
+#   RESPONSIBILITY    **30 active** ＋ 1 historical
+#   LEVEL_A_V2        9 列 → **9 個相異 responsibility**（無共用、無多重 membership）
+# ⛔ 30 ⛔ 不是最終責任數——16 列未解，任一列日後可能新增或併入責任。
