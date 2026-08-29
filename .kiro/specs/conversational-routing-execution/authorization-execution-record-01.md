@@ -1,3 +1,28 @@
+# Authorization execution record #01 —— **REFUTED_BY_A03**
+
+> ⚠️ **本記錄的 implementation freeze 已被 A03 反證，⛔ 不再是 frozen candidate。**
+>
+> ```text
+> P1f policy semantics      CONFIRMED
+> P1f consumer logic        CONFIRMED **in isolation**
+> P1f production transport  **FAILED**
+> P1f end-to-end wiring     **FAILED**
+> ```
+>
+> `f89861250d9cd01f4585fc9624a629b75bbcc7d5` ＝ **REFUTED_BY_A03**
+> 理由：retriever 的 production row 未帶 applicability 宣告
+> ⇒ gate 一律讀到 UNKNOWN、一律 suppress（109/109）。
+> 修復見 `authorization-A03-result.md` 與 commit `fa9d74d`（P1g 最小投影版）。
+>
+> ⚠️ successor candidate 必須重走：new SHA → production-shape contract →
+> deterministic matrix → authority-transfer controls → gate-OFF equivalence →
+> non-Level-A equivalence → audit → **new implementation freeze**。
+> ⛔ 在那之前不得以本記錄的 SHA 主張任何 authorization。
+
+---
+
+# （以下為原記錄，保留供追溯）
+
 # Authorization execution record #01 —— 阻斷解除，implementation 重新凍結
 
 日期：2026-08-29
