@@ -335,9 +335,9 @@ fi
 CODE_FAIL_BEFORE_13=$FAIL
 
 echo "═══ 不變量 13：Level-A representation population 完整性（D1；業主定案 2026-08-29）═══"
-# ⚠️ **這條現在就是紅的，而且是刻意的。**
-# 4657 卡在 capability blocker（FACET_PROMISE_UNIMPLEMENTED：帳單 face 對多列只取
-# data[0]、不讀 type ⇒「該合約的**點退**帳單」無法被選取）。業主裁示：就讓它紅。
+# ⚠️ 這條紅是**刻意保留**的產品閘：Level-A authority scope 未閉合就不得綠。
+# 沿革：4657 曾卡 FACET_TYPE_SELECTION_MISSING（全流程從未讀 type），
+# POINT_REFUND_BILL_SELECTION 實作後已解。
 # ⛔ 不得為了讓 invariant 變綠而寫一個不忠於 row intent 的 representation；
 # ⛔ 不得把 4657 改寫成 4656 的 duplicate 來湊 10/10；⛔ 不得給 legacy exemption。
 # 紅燈語義＝**一個 Level-A authority row 的 execution responsibility 尚未成立**。
@@ -350,7 +350,7 @@ elif ! LA_OUT=$(python3 "$LA_CHECK" 2>&1); then
   echo "$LA_OUT"
   FAIL=1
   # ⚠️ 歸入 **product blocker**：它等的是 4657 的能力決策，⛔ 不是程式碼壞掉。
-  PRODUCT_BLOCKERS+=("INV13 / row 4657 / FACET_TYPE_SELECTION_MISSING（見 r9-review-status.md）")
+  PRODUCT_BLOCKERS+=("INV13 / Level-A representation population 未閉合（見 r9-review-status.md）")
 else
   echo "$LA_OUT"
   echo "✅ PASS（10/10 閉合）"

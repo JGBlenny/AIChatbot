@@ -7,8 +7,10 @@ Level-A 的 10 筆是本專案唯一「applicability truth 已閉合」的 autho
 D1 之後，它們的 `retrieval_representation` 也必須閉合——否則會出現
 「一部分 row 走 reviewed surface、一部分走 legacy summary」的半遷移狀態。
 
-⚠️ 目前 4657 卡在 **capability blocker**（`FACET_TYPE_SELECTION_MISSING`：
-全流程從未讀 `type` ⇒「該合約的**點退**帳單」無法被辨識／選出）。業主裁示：**就讓它紅**。
+⚠️ 沿革：4657 一度卡在 `FACET_TYPE_SELECTION_MISSING`（全流程從未讀 `type`
+⇒「該合約的**點退**帳單」無法被辨識／選出）。`POINT_REFUND_BILL_SELECTION` 實作並經
+6 道 guard ＋ 3 個 mutation 後，該 blocker 已 **RESOLVED_LOCALLY**，4657 representation
+亦已 APPROVED ⇒ `KNOWN_BLOCKERS` 現為空。業主當時的裁示仍有效且應保留：
 
 ```text
 ⛔ 不得為了讓 invariant 變綠而寫一個不忠於 row intent 的 representation
@@ -48,10 +50,10 @@ APPROVED_SOURCE = "reviewed_product_declaration"
 
 #: 具名 blocker：**不是豁免**——它仍然讓本不變量 FAIL，
 #: 只是讓訊息能指出「紅在哪、為什麼紅」，避免與無名缺漏混為一談。
-KNOWN_BLOCKERS = {
-    4657: "FACET_TYPE_SELECTION_MISSING（點退帳單身分從未以 type 判定）"
-           "——見 .kiro/specs/conversational-routing-execution/r9-review-status.md",
-}
+#: ⚠️ 目前**為空**：4657 的 capability blocker 已解（見上）。
+#: 未來若再出現具名 blocker，加在這裡——它仍讓本不變量 FAIL，只是讓訊息分得出
+#: 「紅在哪、為什麼紅」，⛔ 不是豁免。
+KNOWN_BLOCKERS = {}
 
 SQL = """
 SELECT COALESCE(json_agg(row_to_json(t)), '[]')::text FROM (
@@ -83,11 +85,16 @@ def declared_ids(rows):
             and r.get("src") == APPROVED_SOURCE}
 
 
-def classify(rows):
-    """回傳 (state, missing_ids, unnamed_missing)。"""
+def classify(rows, blockers=None):
+    """回傳 (state, missing_ids, unnamed_missing)。
+
+    ⚠️ `blockers` 可注入：否則登記簿一旦清空（blocker 解掉），BLOCKED 這條路徑就
+    **再也測不到**——那正是「guard exists ≠ guard can fail」的另一種死法。
+    """
+    blockers = KNOWN_BLOCKERS if blockers is None else blockers
     present = declared_ids(rows)
     missing = sorted(set(LEVEL_A_ROWS) - present)
-    unnamed = [i for i in missing if i not in KNOWN_BLOCKERS]
+    unnamed = [i for i in missing if i not in blockers]
     if not missing:
         return "COMPLETE", missing, unnamed
     if len(present) == 0:
@@ -106,9 +113,10 @@ def self_test() -> int:
         ("10/10 → COMPLETE", classify(all_ok)[0] == "COMPLETE"),
         ("0/10 → NOT_STARTED", classify([row(i, None, None) for i in LEVEL_A_ROWS])[0]
          == "NOT_STARTED"),
+        # ⚠️ 注入合成 blocker：登記簿現為空，但這條路徑必須永遠可被測到
         ("只缺具名 blocker → BLOCKED（**仍非 PASS**）",
          classify([row(i) for i in LEVEL_A_ROWS if i != 4657]
-                  + [row(4657, None, None)])[0] == "BLOCKED"),
+                  + [row(4657, None, None)], blockers={4657: "synthetic"})[0] == "BLOCKED"),
         ("缺無名 row → PARTIAL（比 BLOCKED 更嚴重）",
          classify([row(i) for i in LEVEL_A_ROWS if i != 3406]
                   + [row(3406, None, None)])[0] == "PARTIAL"),
@@ -148,8 +156,8 @@ def main() -> int:
     if state == "COMPLETE":
         return 0
     if state == "NOT_STARTED":
-        print("❌ FAIL：population 尚未開始。依定案順序，DB write 需等 10/10 review 閉合"
-              "（目前卡 4657 capability blocker）。")
+        print("❌ FAIL：population 尚未開始（Level-A 10/10 review 已閉合，"
+              "待執行 migrations/r9_level_a_retrieval_representation.sql）。")
     elif state == "BLOCKED":
         print(f"❌ FAIL：BLOCKED {present}/{len(LEVEL_A_ROWS)}——缺漏全部為**具名 blocker**：")
         for i in missing:
