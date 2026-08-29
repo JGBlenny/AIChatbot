@@ -1,0 +1,1215 @@
+{
+ "dataset_id": "authorization-2026Q3-A02",
+ "status": "COMMITTED-TO-TEST — 未標註、未執行",
+ "protocol": "authorization-A02-protocol.md（凍結於 corpus 生成之前）",
+ "n": 200,
+ "strata": "10 × 20（general 60／instance 140）",
+ "digest": "9921c5f36eafea79",
+ "provenance": {
+  "author1": "9 strata × 20 = 180，tool_uses=0",
+  "author2": "I3 × 20，tool_uses=0",
+  "note": "⚠️ author#1 漏產 I3 整組（180/200）＝ **測量之前的 authoring integrity 失敗**；I3 於協議凍結時即已預先登記，且當時尚無任何 retrieval 或 label ⇒ 依隔離契約重做該組。⛔ 這與協議禁止的『看到結果後補題』是不同的事。corpus 由兩位作者組成，不含混為一位。"
+ },
+ "utterances": [
+  {
+   "stratum": "G1",
+   "utterance": "想了解點退到出帳中間系統做了哪些事",
+   "author": "author1",
+   "i": 1
+  },
+  {
+   "stratum": "G1",
+   "utterance": "我做完點退了 下一步系統會做什麼",
+   "author": "author1",
+   "i": 2
+  },
+  {
+   "stratum": "G1",
+   "utterance": "是不是點退狀態沒完成 帳單就不會出來",
+   "author": "author1",
+   "i": 3
+  },
+  {
+   "stratum": "G1",
+   "utterance": "結算流程是怎麼跑的 點退之後",
+   "author": "author1",
+   "i": 4
+  },
+  {
+   "stratum": "G1",
+   "utterance": "請問點退完成之後費用結算的流程可以說明一下嗎",
+   "author": "author1",
+   "i": 5
+  },
+  {
+   "stratum": "G1",
+   "utterance": "退租結算單什麼時候會生成阿",
+   "author": "author1",
+   "i": 6
+  },
+  {
+   "stratum": "G1",
+   "utterance": "退租點交完系統會不會自己開一張結算單",
+   "author": "author1",
+   "i": 7
+  },
+  {
+   "stratum": "G1",
+   "utterance": "退租點交結束 帳單什麼時候出",
+   "author": "author1",
+   "i": 8
+  },
+  {
+   "stratum": "G1",
+   "utterance": "點交退還完成 帳單產生時機",
+   "author": "author1",
+   "i": 9
+  },
+  {
+   "stratum": "G1",
+   "utterance": "點退完成 系統會自動結算費用嗎還是要我按",
+   "author": "author1",
+   "i": 10
+  },
+  {
+   "stratum": "G1",
+   "utterance": "點退完成後帳單會自動產生嗎",
+   "author": "author1",
+   "i": 11
+  },
+  {
+   "stratum": "G1",
+   "utterance": "點退完是不是要自己手動開帳單",
+   "author": "author1",
+   "i": 12
+  },
+  {
+   "stratum": "G1",
+   "utterance": "點退帳單 自動 還是手動",
+   "author": "author1",
+   "i": 13
+  },
+  {
+   "stratum": "G1",
+   "utterance": "點退帳單會自己產生嗎 還是要我開",
+   "author": "author1",
+   "i": 14
+  },
+  {
+   "stratum": "G1",
+   "utterance": "點退帳單產生的流程麻煩說明 謝謝",
+   "author": "author1",
+   "i": 15
+  },
+  {
+   "stratum": "G1",
+   "utterance": "點退帳單自動產生 條件是什麼",
+   "author": "author1",
+   "i": 16
+  },
+  {
+   "stratum": "G1",
+   "utterance": "點退帳單要多久才會跑出來",
+   "author": "author1",
+   "i": 17
+  },
+  {
+   "stratum": "G1",
+   "utterance": "點退後多久會有帳單 我等好久了",
+   "author": "author1",
+   "i": 18
+  },
+  {
+   "stratum": "G1",
+   "utterance": "點退後帳單沒出來是正常的嗎 一般要等多久",
+   "author": "author1",
+   "i": 19
+  },
+  {
+   "stratum": "G1",
+   "utterance": "點退的費用結算是系統算還是我自己算",
+   "author": "author1",
+   "i": 20
+  },
+  {
+   "stratum": "G2",
+   "utterance": "付款完的證明文件哪裡取得",
+   "author": "author1",
+   "i": 21
+  },
+  {
+   "stratum": "G2",
+   "utterance": "帳單付完之後收據在哪",
+   "author": "author1",
+   "i": 22
+  },
+  {
+   "stratum": "G2",
+   "utterance": "怎麼把收據存成檔案寄出去",
+   "author": "author1",
+   "i": 23
+  },
+  {
+   "stratum": "G2",
+   "utterance": "我想寄收據給房客 有沒有下載連結",
+   "author": "author1",
+   "i": 24
+  },
+  {
+   "stratum": "G2",
+   "utterance": "我要印收據給租客 從哪裡印",
+   "author": "author1",
+   "i": 25
+  },
+  {
+   "stratum": "G2",
+   "utterance": "收據 PDF 要去哪下載",
+   "author": "author1",
+   "i": 26
+  },
+  {
+   "stratum": "G2",
+   "utterance": "收據 pdf 打不開的話有其他方式拿嗎",
+   "author": "author1",
+   "i": 27
+  },
+  {
+   "stratum": "G2",
+   "utterance": "收據下載的位置找不到 麻煩教一下",
+   "author": "author1",
+   "i": 28
+  },
+  {
+   "stratum": "G2",
+   "utterance": "收據列印 步驟",
+   "author": "author1",
+   "i": 29
+  },
+  {
+   "stratum": "G2",
+   "utterance": "收據檔案怎麼匯出",
+   "author": "author1",
+   "i": 30
+  },
+  {
+   "stratum": "G2",
+   "utterance": "租客跟我要繳款證明 我怎麼給他",
+   "author": "author1",
+   "i": 31
+  },
+  {
+   "stratum": "G2",
+   "utterance": "系統有辦法產收據 PDF 嗎",
+   "author": "author1",
+   "i": 32
+  },
+  {
+   "stratum": "G2",
+   "utterance": "繳費證明 PDF 在哪個頁面",
+   "author": "author1",
+   "i": 33
+  },
+  {
+   "stratum": "G2",
+   "utterance": "繳費證明怎麼拿",
+   "author": "author1",
+   "i": 34
+  },
+  {
+   "stratum": "G2",
+   "utterance": "繳費證明是自動寄還是我要自己抓",
+   "author": "author1",
+   "i": 35
+  },
+  {
+   "stratum": "G2",
+   "utterance": "繳費證明檔案要怎麼產生出來",
+   "author": "author1",
+   "i": 36
+  },
+  {
+   "stratum": "G2",
+   "utterance": "能不能給我取得收據 PDF 的流程",
+   "author": "author1",
+   "i": 37
+  },
+  {
+   "stratum": "G2",
+   "utterance": "要怎麼取得收據電子檔 急",
+   "author": "author1",
+   "i": 38
+  },
+  {
+   "stratum": "G2",
+   "utterance": "請問收據可以下載電子檔嗎",
+   "author": "author1",
+   "i": 39
+  },
+  {
+   "stratum": "G2",
+   "utterance": "請問繳費證明可以整批下載嗎",
+   "author": "author1",
+   "i": 40
+  },
+  {
+   "stratum": "G3",
+   "utterance": "想知道點退金額的組成有哪些項目",
+   "author": "author1",
+   "i": 41
+  },
+  {
+   "stratum": "G3",
+   "utterance": "押金抵扣後剩下的怎麼呈現在點退帳單",
+   "author": "author1",
+   "i": 42
+  },
+  {
+   "stratum": "G3",
+   "utterance": "損壞賠償會怎麼計入點退帳單",
+   "author": "author1",
+   "i": 43
+  },
+  {
+   "stratum": "G3",
+   "utterance": "請問點退帳單的算式規則可以講一下嗎",
+   "author": "author1",
+   "i": 44
+  },
+  {
+   "stratum": "G3",
+   "utterance": "退租當月租金在點退帳單怎麼計算",
+   "author": "author1",
+   "i": 45
+  },
+  {
+   "stratum": "G3",
+   "utterance": "退租結算的錢是怎麼算出來的",
+   "author": "author1",
+   "i": 46
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退帳單如果是負的代表什麼 算法上",
+   "author": "author1",
+   "i": 47
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退帳單會不會把水電費算進去",
+   "author": "author1",
+   "i": 48
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退帳單會扣押金嗎 怎麼算",
+   "author": "author1",
+   "i": 49
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退帳單的金額規則想確認一下 謝謝",
+   "author": "author1",
+   "i": 50
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退帳單算法 是按天數還整月",
+   "author": "author1",
+   "i": 51
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退帳單金額包含哪些費用類別",
+   "author": "author1",
+   "i": 52
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退帳單金額是怎麼算的",
+   "author": "author1",
+   "i": 53
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退帳單金額計算方式 麻煩說明",
+   "author": "author1",
+   "i": 54
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退的費用是加總哪些東西",
+   "author": "author1",
+   "i": 55
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退結算的計算規則是什麼",
+   "author": "author1",
+   "i": 56
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退結算規則 有沒有比例分攤",
+   "author": "author1",
+   "i": 57
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退費用計算 是不是照合約條款去帶",
+   "author": "author1",
+   "i": 58
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退金額怎麼決定 是系統自己抓嗎",
+   "author": "author1",
+   "i": 59
+  },
+  {
+   "stratum": "G3",
+   "utterance": "點退金額有含未繳的租金嗎",
+   "author": "author1",
+   "i": 60
+  },
+  {
+   "stratum": "I1",
+   "utterance": "上個月那張收據金額是多少",
+   "author": "author1",
+   "i": 61
+  },
+  {
+   "stratum": "I1",
+   "utterance": "八月那張收據 金額",
+   "author": "author1",
+   "i": 62
+  },
+  {
+   "stratum": "I1",
+   "utterance": "幫忙看下 A 棟那張收據金額",
+   "author": "author1",
+   "i": 63
+  },
+  {
+   "stratum": "I1",
+   "utterance": "幫我查收據 R20260812 的金額",
+   "author": "author1",
+   "i": 64
+  },
+  {
+   "stratum": "I1",
+   "utterance": "想查我某張收據的實際入帳金額",
+   "author": "author1",
+   "i": 65
+  },
+  {
+   "stratum": "I1",
+   "utterance": "我的收據金額查詢 急著對帳",
+   "author": "author1",
+   "i": 66
+  },
+  {
+   "stratum": "I1",
+   "utterance": "我要確認那張收據實際收多少錢",
+   "author": "author1",
+   "i": 67
+  },
+  {
+   "stratum": "I1",
+   "utterance": "我那張收據到底多少錢",
+   "author": "author1",
+   "i": 68
+  },
+  {
+   "stratum": "I1",
+   "utterance": "我那張退租收據收了多少錢",
+   "author": "author1",
+   "i": 69
+  },
+  {
+   "stratum": "I1",
+   "utterance": "我開的那張收據金額對不對 幫我看",
+   "author": "author1",
+   "i": 70
+  },
+  {
+   "stratum": "I1",
+   "utterance": "收據上寫多少我忘了 幫我看一下",
+   "author": "author1",
+   "i": 71
+  },
+  {
+   "stratum": "I1",
+   "utterance": "收據編號 3021 金額多少",
+   "author": "author1",
+   "i": 72
+  },
+  {
+   "stratum": "I1",
+   "utterance": "收據金額 幫我看一下",
+   "author": "author1",
+   "i": 73
+  },
+  {
+   "stratum": "I1",
+   "utterance": "查一下我開給王先生的收據金額",
+   "author": "author1",
+   "i": 74
+  },
+  {
+   "stratum": "I1",
+   "utterance": "查收據金額 上週開的那張",
+   "author": "author1",
+   "i": 75
+  },
+  {
+   "stratum": "I1",
+   "utterance": "能不能查一下編號 88 收據的金額",
+   "author": "author1",
+   "i": 76
+  },
+  {
+   "stratum": "I1",
+   "utterance": "請問我那張收據上的實收金額是多少",
+   "author": "author1",
+   "i": 77
+  },
+  {
+   "stratum": "I1",
+   "utterance": "請幫我調出那張收據金額 謝謝",
+   "author": "author1",
+   "i": 78
+  },
+  {
+   "stratum": "I1",
+   "utterance": "那筆收據是收全額還是部分 金額多少",
+   "author": "author1",
+   "i": 79
+  },
+  {
+   "stratum": "I1",
+   "utterance": "麻煩查一下最近一張收據收了多少",
+   "author": "author1",
+   "i": 80
+  },
+  {
+   "stratum": "I2",
+   "utterance": "上禮拜那張帳單現在是已寄出還是草稿",
+   "author": "author1",
+   "i": 81
+  },
+  {
+   "stratum": "I2",
+   "utterance": "帳單 INV-2026-0731 現在狀況",
+   "author": "author1",
+   "i": 82
+  },
+  {
+   "stratum": "I2",
+   "utterance": "帳單狀態查詢",
+   "author": "author1",
+   "i": 83
+  },
+  {
+   "stratum": "I2",
+   "utterance": "帳單編號 1177 狀態是什麼",
+   "author": "author1",
+   "i": 84
+  },
+  {
+   "stratum": "I2",
+   "utterance": "幫我找一下 8 月的帳單",
+   "author": "author1",
+   "i": 85
+  },
+  {
+   "stratum": "I2",
+   "utterance": "幫我查這個租客的帳單目前是什麼狀況",
+   "author": "author1",
+   "i": 86
+  },
+  {
+   "stratum": "I2",
+   "utterance": "幫我看看王小姐那張帳單狀態",
+   "author": "author1",
+   "i": 87
+  },
+  {
+   "stratum": "I2",
+   "utterance": "幫我確認一下這筆帳單現在的狀況 謝謝",
+   "author": "author1",
+   "i": 88
+  },
+  {
+   "stratum": "I2",
+   "utterance": "怎麼找到我之前開的那筆點退帳單",
+   "author": "author1",
+   "i": 89
+  },
+  {
+   "stratum": "I2",
+   "utterance": "想知道我某筆帳單有沒有被取消掉",
+   "author": "author1",
+   "i": 90
+  },
+  {
+   "stratum": "I2",
+   "utterance": "我想找 A 棟 3 樓那筆帳單",
+   "author": "author1",
+   "i": 91
+  },
+  {
+   "stratum": "I2",
+   "utterance": "我有一張帳單不見了 幫我找",
+   "author": "author1",
+   "i": 92
+  },
+  {
+   "stratum": "I2",
+   "utterance": "我那筆帳單現在是什麼狀態",
+   "author": "author1",
+   "i": 93
+  },
+  {
+   "stratum": "I2",
+   "utterance": "我開的帳單去哪了 找不到",
+   "author": "author1",
+   "i": 94
+  },
+  {
+   "stratum": "I2",
+   "utterance": "查 9 月租金帳單狀態",
+   "author": "author1",
+   "i": 95
+  },
+  {
+   "stratum": "I2",
+   "utterance": "查一下我那張帳單有沒有繳",
+   "author": "author1",
+   "i": 96
+  },
+  {
+   "stratum": "I2",
+   "utterance": "那張帳單是不是還在未發送",
+   "author": "author1",
+   "i": 97
+  },
+  {
+   "stratum": "I2",
+   "utterance": "那筆帳單狀態 急",
+   "author": "author1",
+   "i": 98
+  },
+  {
+   "stratum": "I2",
+   "utterance": "那筆帳單目前進度到哪",
+   "author": "author1",
+   "i": 99
+  },
+  {
+   "stratum": "I2",
+   "utterance": "麻煩幫我查一下那筆帳單是不是已付款",
+   "author": "author1",
+   "i": 100
+  },
+  {
+   "stratum": "I3",
+   "utterance": "3樓那間退租的點退帳單多少錢啊",
+   "author": "author2",
+   "i": 101
+  },
+  {
+   "stratum": "I3",
+   "utterance": "A-302 點退帳單是收多少",
+   "author": "author2",
+   "i": 102
+  },
+  {
+   "stratum": "I3",
+   "utterance": "合約編號 20240915 的點退帳單金額",
+   "author": "author2",
+   "i": 103
+  },
+  {
+   "stratum": "I3",
+   "utterance": "幫我看我那筆點退帳單要收多少",
+   "author": "author2",
+   "i": 104
+  },
+  {
+   "stratum": "I3",
+   "utterance": "急 租客明天要付款 點退那張到底多少錢",
+   "author": "author2",
+   "i": 105
+  },
+  {
+   "stratum": "I3",
+   "utterance": "想問一下我的點退帳單金額",
+   "author": "author2",
+   "i": 106
+  },
+  {
+   "stratum": "I3",
+   "utterance": "想確認我這份合約點退帳單的實際數字",
+   "author": "author2",
+   "i": 107
+  },
+  {
+   "stratum": "I3",
+   "utterance": "我上禮拜點退的合約 帳單開多少",
+   "author": "author2",
+   "i": 108
+  },
+  {
+   "stratum": "I3",
+   "utterance": "我要看點退完那筆結算的錢",
+   "author": "author2",
+   "i": 109
+  },
+  {
+   "stratum": "I3",
+   "utterance": "我這張合約點退結算出來多少",
+   "author": "author2",
+   "i": 110
+  },
+  {
+   "stratum": "I3",
+   "utterance": "請問我剛完成點退的合約帳單金額是多少呢",
+   "author": "author2",
+   "i": 111
+  },
+  {
+   "stratum": "I3",
+   "utterance": "請問我這份合約點交完的帳單總共要付多少錢 謝謝",
+   "author": "author2",
+   "i": 112
+  },
+  {
+   "stratum": "I3",
+   "utterance": "那份合約的點退帳單最後是多少錢",
+   "author": "author2",
+   "i": 113
+  },
+  {
+   "stratum": "I3",
+   "utterance": "那個點退的結算單金額我看不到 你可以幫我看嗎",
+   "author": "author2",
+   "i": 114
+  },
+  {
+   "stratum": "I3",
+   "utterance": "麻煩幫我查一下這份合約點退後系統開出來的帳單是多少",
+   "author": "author2",
+   "i": 115
+  },
+  {
+   "stratum": "I3",
+   "utterance": "點退完那張帳單 總金額",
+   "author": "author2",
+   "i": 116
+  },
+  {
+   "stratum": "I3",
+   "utterance": "點退帳單 金額",
+   "author": "author2",
+   "i": 117
+  },
+  {
+   "stratum": "I3",
+   "utterance": "點退帳單費用是多小",
+   "author": "author2",
+   "i": 118
+  },
+  {
+   "stratum": "I3",
+   "utterance": "點退帳單開出來了 但我不知道金額 幫我查",
+   "author": "author2",
+   "i": 119
+  },
+  {
+   "stratum": "I3",
+   "utterance": "點退那張帳單金額多少 幫我看一下",
+   "author": "author2",
+   "i": 120
+  },
+  {
+   "stratum": "I4",
+   "utterance": "一直顯示發送失敗 這張帳單怎麼了",
+   "author": "author1",
+   "i": 121
+  },
+  {
+   "stratum": "I4",
+   "utterance": "帳單 INV-0912 一直發送失敗",
+   "author": "author1",
+   "i": 122
+  },
+  {
+   "stratum": "I4",
+   "utterance": "帳單傳送不成功的原因幫我查",
+   "author": "author1",
+   "i": 123
+  },
+  {
+   "stratum": "I4",
+   "utterance": "帳單為什麼寄不出來",
+   "author": "author1",
+   "i": 124
+  },
+  {
+   "stratum": "I4",
+   "utterance": "帳單無法寄給租客 怎麼回事",
+   "author": "author1",
+   "i": 125
+  },
+  {
+   "stratum": "I4",
+   "utterance": "帳單發不出去 急 請幫我看原因",
+   "author": "author1",
+   "i": 126
+  },
+  {
+   "stratum": "I4",
+   "utterance": "帳單發送異常 編號 442",
+   "author": "author1",
+   "i": 127
+  },
+  {
+   "stratum": "I4",
+   "utterance": "帳單送不出去是什麼原因",
+   "author": "author1",
+   "i": 128
+  },
+  {
+   "stratum": "I4",
+   "utterance": "帳單送出去卻沒成功 是不是資料有缺",
+   "author": "author1",
+   "i": 129
+  },
+  {
+   "stratum": "I4",
+   "utterance": "帳單開好了卻發不出去 哪裡有問題",
+   "author": "author1",
+   "i": 130
+  },
+  {
+   "stratum": "I4",
+   "utterance": "我的帳單發送一直跳錯誤",
+   "author": "author1",
+   "i": 131
+  },
+  {
+   "stratum": "I4",
+   "utterance": "我那張帳單發不出去",
+   "author": "author1",
+   "i": 132
+  },
+  {
+   "stratum": "I4",
+   "utterance": "我那筆點退帳單發送失敗 原因是",
+   "author": "author1",
+   "i": 133
+  },
+  {
+   "stratum": "I4",
+   "utterance": "按發送沒反應 帳單卡住",
+   "author": "author1",
+   "i": 134
+  },
+  {
+   "stratum": "I4",
+   "utterance": "為什麼帳單發送鈕是灰的",
+   "author": "author1",
+   "i": 135
+  },
+  {
+   "stratum": "I4",
+   "utterance": "為什麼我的帳單寄送一直不成功阿",
+   "author": "author1",
+   "i": 136
+  },
+  {
+   "stratum": "I4",
+   "utterance": "為什麼我這筆帳單無法發送",
+   "author": "author1",
+   "i": 137
+  },
+  {
+   "stratum": "I4",
+   "utterance": "這張帳單為何不能發出",
+   "author": "author1",
+   "i": 138
+  },
+  {
+   "stratum": "I4",
+   "utterance": "麻煩看一下我這張帳單為什麼發不出去 謝謝",
+   "author": "author1",
+   "i": 139
+  },
+  {
+   "stratum": "I4",
+   "utterance": "點了發送但租客沒收到 為什麼",
+   "author": "author1",
+   "i": 140
+  },
+  {
+   "stratum": "I5",
+   "utterance": "取消失敗 帳單編號 771",
+   "author": "author1",
+   "i": 141
+  },
+  {
+   "stratum": "I5",
+   "utterance": "取消帳單一直失敗",
+   "author": "author1",
+   "i": 142
+  },
+  {
+   "stratum": "I5",
+   "utterance": "取消帳單顯示不允許 為什麼",
+   "author": "author1",
+   "i": 143
+  },
+  {
+   "stratum": "I5",
+   "utterance": "帳單 2088 取消不掉 為什麼",
+   "author": "author1",
+   "i": 144
+  },
+  {
+   "stratum": "I5",
+   "utterance": "帳單作廢一直跳錯 幫我看",
+   "author": "author1",
+   "i": 145
+  },
+  {
+   "stratum": "I5",
+   "utterance": "帳單取消不成功 是不是已經發出去了的關係",
+   "author": "author1",
+   "i": 146
+  },
+  {
+   "stratum": "I5",
+   "utterance": "帳單取消鈕消失了 是什麼原因",
+   "author": "author1",
+   "i": 147
+  },
+  {
+   "stratum": "I5",
+   "utterance": "帳單想作廢但按不下去",
+   "author": "author1",
+   "i": 148
+  },
+  {
+   "stratum": "I5",
+   "utterance": "帳單無法取消的原因麻煩說明一下",
+   "author": "author1",
+   "i": 149
+  },
+  {
+   "stratum": "I5",
+   "utterance": "急 這筆帳單取消不了怎麼辦",
+   "author": "author1",
+   "i": 150
+  },
+  {
+   "stratum": "I5",
+   "utterance": "想取消那筆帳單但沒有選項",
+   "author": "author1",
+   "i": 151
+  },
+  {
+   "stratum": "I5",
+   "utterance": "我要取消帳單但系統擋住我",
+   "author": "author1",
+   "i": 152
+  },
+  {
+   "stratum": "I5",
+   "utterance": "我這張帳單為什麼不給我取消",
+   "author": "author1",
+   "i": 153
+  },
+  {
+   "stratum": "I5",
+   "utterance": "我那張帳單取消不了",
+   "author": "author1",
+   "i": 154
+  },
+  {
+   "stratum": "I5",
+   "utterance": "為什麼我那張九月帳單取消不了",
+   "author": "author1",
+   "i": 155
+  },
+  {
+   "stratum": "I5",
+   "utterance": "為什麼這筆帳單不能取消",
+   "author": "author1",
+   "i": 156
+  },
+  {
+   "stratum": "I5",
+   "utterance": "為什麼開錯的帳單刪不掉也取消不了",
+   "author": "author1",
+   "i": 157
+  },
+  {
+   "stratum": "I5",
+   "utterance": "這張帳單為何無法取消",
+   "author": "author1",
+   "i": 158
+  },
+  {
+   "stratum": "I5",
+   "utterance": "這筆帳單取消不掉 請問是哪裡卡住",
+   "author": "author1",
+   "i": 159
+  },
+  {
+   "stratum": "I5",
+   "utterance": "點退帳單取消失敗 原因是什麼",
+   "author": "author1",
+   "i": 160
+  },
+  {
+   "stratum": "I6",
+   "utterance": "帳單 0455 被收滯納金 原因",
+   "author": "author1",
+   "i": 161
+  },
+  {
+   "stratum": "I6",
+   "utterance": "帳單出現逾期費 是我哪裡沒做嗎",
+   "author": "author1",
+   "i": 162
+  },
+  {
+   "stratum": "I6",
+   "utterance": "帳單多了一筆逾期費用 為什麼",
+   "author": "author1",
+   "i": 163
+  },
+  {
+   "stratum": "I6",
+   "utterance": "帳單為何產生逾期費用 麻煩說明",
+   "author": "author1",
+   "i": 164
+  },
+  {
+   "stratum": "I6",
+   "utterance": "帳單被算逾期 但我記得有準時",
+   "author": "author1",
+   "i": 165
+  },
+  {
+   "stratum": "I6",
+   "utterance": "急 幫我看為什麼這張帳單有逾期罰款",
+   "author": "author1",
+   "i": 166
+  },
+  {
+   "stratum": "I6",
+   "utterance": "想問一下我那筆點退帳單為什麼收逾期費",
+   "author": "author1",
+   "i": 167
+  },
+  {
+   "stratum": "I6",
+   "utterance": "我沒遲繳啊怎麼有逾期費",
+   "author": "author1",
+   "i": 168
+  },
+  {
+   "stratum": "I6",
+   "utterance": "我這張帳單被收了兩次逾期費 為什麼",
+   "author": "author1",
+   "i": 169
+  },
+  {
+   "stratum": "I6",
+   "utterance": "我那筆帳單為什麼被收逾期費",
+   "author": "author1",
+   "i": 170
+  },
+  {
+   "stratum": "I6",
+   "utterance": "明明有繳為什麼還算我滯納金",
+   "author": "author1",
+   "i": 171
+  },
+  {
+   "stratum": "I6",
+   "utterance": "滯納金為什麼會加在這張帳單上",
+   "author": "author1",
+   "i": 172
+  },
+  {
+   "stratum": "I6",
+   "utterance": "為什麼我的帳單金額變多 多了逾期",
+   "author": "author1",
+   "i": 173
+  },
+  {
+   "stratum": "I6",
+   "utterance": "為什麼繳款後還是有逾期費在帳單上",
+   "author": "author1",
+   "i": 174
+  },
+  {
+   "stratum": "I6",
+   "utterance": "為何這張帳單被加了逾期金",
+   "author": "author1",
+   "i": 175
+  },
+  {
+   "stratum": "I6",
+   "utterance": "請問我這筆帳單的逾期費是怎麼被收的",
+   "author": "author1",
+   "i": 176
+  },
+  {
+   "stratum": "I6",
+   "utterance": "這筆帳單的逾期費用哪來的",
+   "author": "author1",
+   "i": 177
+  },
+  {
+   "stratum": "I6",
+   "utterance": "逾期費是怎麼跑出來的 我這筆",
+   "author": "author1",
+   "i": 178
+  },
+  {
+   "stratum": "I6",
+   "utterance": "逾期費算錯了吧 幫我查這筆",
+   "author": "author1",
+   "i": 179
+  },
+  {
+   "stratum": "I6",
+   "utterance": "那筆八月帳單為什麼有逾期加收",
+   "author": "author1",
+   "i": 180
+  },
+  {
+   "stratum": "I7",
+   "utterance": "帳單 5510 手動到帳做不了",
+   "author": "author1",
+   "i": 181
+  },
+  {
+   "stratum": "I7",
+   "utterance": "帳單手動到帳一直失敗",
+   "author": "author1",
+   "i": 182
+  },
+  {
+   "stratum": "I7",
+   "utterance": "急 手動入帳按不下去",
+   "author": "author1",
+   "i": 183
+  },
+  {
+   "stratum": "I7",
+   "utterance": "我按手動入帳沒成功 為什麼",
+   "author": "author1",
+   "i": 184
+  },
+  {
+   "stratum": "I7",
+   "utterance": "我要手動核銷但一直失敗 這張帳單",
+   "author": "author1",
+   "i": 185
+  },
+  {
+   "stratum": "I7",
+   "utterance": "我輸入到帳金額後就出錯 這筆帳單",
+   "author": "author1",
+   "i": 186
+  },
+  {
+   "stratum": "I7",
+   "utterance": "手動入帳失敗 是不是金額對不上",
+   "author": "author1",
+   "i": 187
+  },
+  {
+   "stratum": "I7",
+   "utterance": "手動到帳一直跳失敗訊息 幫我看原因",
+   "author": "author1",
+   "i": 188
+  },
+  {
+   "stratum": "I7",
+   "utterance": "手動到帳失敗 編號 993",
+   "author": "author1",
+   "i": 189
+  },
+  {
+   "stratum": "I7",
+   "utterance": "手動對帳失敗的原因是什麼",
+   "author": "author1",
+   "i": 190
+  },
+  {
+   "stratum": "I7",
+   "utterance": "手動登記付款一直失敗 幫我看",
+   "author": "author1",
+   "i": 191
+  },
+  {
+   "stratum": "I7",
+   "utterance": "手動記帳送出後顯示錯誤 怎麼辦",
+   "author": "author1",
+   "i": 192
+  },
+  {
+   "stratum": "I7",
+   "utterance": "手動銷帳失敗 這張帳單",
+   "author": "author1",
+   "i": 193
+  },
+  {
+   "stratum": "I7",
+   "utterance": "為什麼我這筆帳單手動確認到帳跳錯",
+   "author": "author1",
+   "i": 194
+  },
+  {
+   "stratum": "I7",
+   "utterance": "為什麼手動標記已收款會失敗",
+   "author": "author1",
+   "i": 195
+  },
+  {
+   "stratum": "I7",
+   "utterance": "為什麼系統不讓我手動確認這筆款",
+   "author": "author1",
+   "i": 196
+  },
+  {
+   "stratum": "I7",
+   "utterance": "這張帳單無法手動設定為已付款",
+   "author": "author1",
+   "i": 197
+  },
+  {
+   "stratum": "I7",
+   "utterance": "這筆帳單手動確認收款做不起來 是哪裡有問題",
+   "author": "author1",
+   "i": 198
+  },
+  {
+   "stratum": "I7",
+   "utterance": "麻煩查一下我那筆帳單手動到帳為何不成功",
+   "author": "author1",
+   "i": 199
+  },
+  {
+   "stratum": "I7",
+   "utterance": "點退帳單手動到帳失敗 為什麼",
+   "author": "author1",
+   "i": 200
+  }
+ ]
+}
