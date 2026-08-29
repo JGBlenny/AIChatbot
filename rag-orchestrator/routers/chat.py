@@ -9,7 +9,7 @@ from __future__ import annotations  # 允許類型提示的前向引用
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, validator
-from typing import Any, Optional, List, Dict
+from typing import Any, Final, Optional, List, Dict
 from dataclasses import dataclass
 from datetime import datetime
 import time
@@ -683,7 +683,10 @@ async def handle_conversational_entry(request, req, ctx: ChatRequestContext):
     CONVERSATIONAL_ENABLED_ROLES = {'prospect'}
     if request.target_user not in CONVERSATIONAL_ENABLED_ROLES:
         return None
-    return await _maybe_conversational_freetext(request, req)
+    _resp = await _maybe_conversational_freetext(request, req)
+    if _resp is not None:
+        _meter_entry_source(ENTRY_SOURCE_PROSPECT_FREE_QA)
+    return _resp
 
 
 async def handle_cache(request, req, ctx: ChatRequestContext):
@@ -1024,6 +1027,66 @@ async def _enter_diagnosis_facet(request, req, cfg, best_knowledge, face_authori
     return resp
 
 
+# ── Stage 1｜nomination observability（spec stage1-nomination-observability-spec.md）──
+#
+# ⚠️ `entry_source` **必須在入口當下寫，不准事後推理**——
+#    實查證明 `processing_path` 分不了群：production 的 `conversational` 1,849 筆
+#    把「分類路由／trigger 直達／圖片改道／既有 session」全部混在一起。
+#
+# ⚠️ enum 刻意窮舉、**不留 `other`／`direct`／`conversation` 這類模糊值**——
+#    半年後再回頭分群會分不出來。新增進場路徑時必須同步擴這個常數。
+ENTRY_SOURCE_CLASSIFICATION: Final = "classification"        # 正常 retrieval/category nomination
+ENTRY_SOURCE_EXISTING_SESSION: Final = "existing_session"    # 續跑進行中的面向會話
+ENTRY_SOURCE_EXPLICIT_TRIGGER: Final = "explicit_trigger"    # trigger_facet_key 直達
+ENTRY_SOURCE_VISION_REDIRECT: Final = "vision_redirect"      # Step 0.5 損傷圖改道
+ENTRY_SOURCE_PROSPECT_FREE_QA: Final = "prospect_free_qa"    # prospect 自由問答（engine-first）
+ENTRY_SOURCE_TRANSACTION_FORM: Final = "transaction_form"    # 表單收集續跑／交易型直達
+ENTRY_SOURCE_SOP_ARBITRATION: Final = "sop_arbitration"      # 仲裁選了 SOP，classification nomination 未適用
+
+
+def _meter_entry_source(source: str) -> None:
+    """在**進場當下**記錄 entry source。
+
+    ⚠️ 非 classification 的路徑，`nomination_candidate_facet_keys` 一律寫 `null`
+    （代表「classification nomination 根本不適用」），⛔ 不得寫 `[]`
+    ——`[]` 專指「nomination 執行過且零候選」。兩者混用會直接污染比例統計（不變量 I3）。
+    """
+    try:
+        _meter_decision(snapshot={"nomination": {
+            "entry_source": source,
+            "top1_knowledge_id": None,
+            "top1_categories": None,
+            "nomination_candidate_facet_keys": None,
+        }})
+    except Exception as e:                                     # noqa: BLE001
+        print(f"⚠️ [nomination telemetry] entry_source 落點失敗，不影響 routing：{e}")
+
+
+def _meter_nomination(best_knowledge, candidates) -> None:
+    """classification 路徑的 nomination snapshot。
+
+    ⚠️ 三個欄位必須來自**同一次** retrieval／nomination：
+      · `top1_*` 取自 nomination 判斷當下的那一筆 top1
+        ⛔ 不得用 `_drop_empty_answer_rows`／`_top1_relevance_gate`／rerank **之後**的 row 回填
+      · `nomination_candidate_facet_keys` 直接來自 `_nominate_face_candidates`
+        ⛔ 不得從 `facet_key`／resolver hops／final commit 反推
+    ⚠️ `top1_categories` 保留**原值**：未 mapping 的 category 也要留著（不變量 I7）
+       ——「category 存在但沒有 candidate」正是本 Stage 最想量的 failure shape。
+    """
+    # ⚠️ 整段包 try：**快照的組裝本身**也可能拋（畸形 categories／異常 config 物件）。
+    #    只保護 `_meter_decision` 的呼叫不夠——failure injection 實測逼出這一點。
+    #    不變量 I6：serialization／組裝／寫入任一失敗，一律不得改變 production answer path。
+    try:
+        _meter_decision(snapshot={"nomination": {
+            "entry_source": ENTRY_SOURCE_CLASSIFICATION,
+            "top1_knowledge_id": (best_knowledge or {}).get("id"),
+            "top1_categories": _knowledge_category(best_knowledge) if best_knowledge else [],
+            "nomination_candidate_facet_keys": nomination_candidate_keys(candidates),
+        }})
+    except Exception as e:                                     # noqa: BLE001
+        print(f"⚠️ [nomination telemetry] 快照落點失敗，不影響 routing：{e}")
+
+
 async def _nominate_face_candidates(db_pool, best_knowledge) -> "list[tuple[str, Any]]":
     """**純 nomination**：依 top1 的 categories 列出可提出的 Face candidates。
 
@@ -1083,9 +1146,17 @@ async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: Decis
     """
     from services.responsibility import FACE_NONE
     if not facet_entry_eligible(best_knowledge, config):
+        # ⚠️ 未達門檻／無 top1 也必須落 snapshot：欄位**缺席**與 `[]` 是兩件事（不變量 I3）。
+        #    這條路徑 nomination policy 確實執行過且產出零候選 ⇒ `[]`，不是 `null`。
+        #    「未達門檻」與「有 categories 但無 mapping」由既有的
+        #    `kb_top1_final` / `kb_threshold` 區分，不需第五個欄位。
+        _meter_nomination(best_knowledge, [])
         return None, FACE_NONE
     # 【第一段】純 nomination：先收齊完整候選（Stage 1 observability 的前提）
     candidates = await _nominate_face_candidates(db_pool, best_knowledge)
+    # ⚠️ 就地落 snapshot：三欄同源於**這一次** retrieval／nomination，
+    #    ⛔ 不得延後到 resolver 之後再寫（那就變成從結果反推）。
+    _meter_nomination(best_knowledge, candidates)
     # ⚠️ instance-reference gate（spec routing-disambiguation 任務 4.2）：
     #    位置固定在 config lookup **之後**、_preentry_routable **之前**——
     #    之前不行（gate 需要 Face 的語義契約），之後也不行（那會讓 LLM 的機率判定
@@ -1420,6 +1491,8 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
         _meter_comparison(decision.get('comparison'))
 
         if decision['type'] == 'sop':
+            # 仲裁選了 SOP ⇒ classification nomination **未適用** → candidate 欄位為 null
+            _meter_entry_source(ENTRY_SOURCE_SOP_ARBITRATION)
             _t0 = _time.time()
             response = await _build_orchestrator_response(
                 request, req, decision['sop_result'],
@@ -1550,6 +1623,10 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
             return response
 
         elif decision['type'] == 'none':
+            # ⚠️ funnel S1「no_top1」：這是 classification 路徑、nomination **適用**但檢索無果
+            #    ⇒ 三欄照規格落 null／[]／[]，⛔ 不得讓欄位缺席
+            #    （缺席與「跑過且零候選」在統計上無法區分——不變量 I3）
+            _meter_nomination(None, [])
             # 無結果，進入 RAG fallback
             _t0 = _time.time()
             response = await _handle_no_knowledge_found(
@@ -4396,6 +4473,7 @@ async def _dispatch_message(request: VendorChatRequest, req: Request, _path: dic
             resp = await handle_conversational_session(request, req, ctx)
             if resp is not None:
                 _path["name"] = "handle_conversational_session"
+                _meter_entry_source(ENTRY_SOURCE_EXISTING_SESSION)
                 return resp
             # 降級結果(陷阱4)已寫入 ctx.session_state;handle_collecting 內讀 ctx 自行判斷
 
@@ -4403,6 +4481,7 @@ async def _dispatch_message(request: VendorChatRequest, req: Request, _path: dic
             resp = await handle_collecting(request, req, ctx)
             if resp is not None:
                 _path["name"] = "handle_collecting"
+                _meter_entry_source(ENTRY_SOURCE_TRANSACTION_FORM)
                 return resp
             # 取消+pending:request.message 已被 handler 替換,續走一般流程
 
@@ -4412,12 +4491,14 @@ async def _dispatch_message(request: VendorChatRequest, req: Request, _path: dic
         resp = await handle_trigger_facet(request, req, ctx)
         if resp is not None:
             _path["name"] = "handle_trigger_facet"
+            _meter_entry_source(ENTRY_SOURCE_EXPLICIT_TRIGGER)
             return resp
 
         # Step 0.5: 圖片辨識分支（2026-04-28）→ handle_image(Stage 2)
         resp = await handle_image(request, req, ctx)
         if resp is not None:
             _path["name"] = "handle_image"
+            _meter_entry_source(ENTRY_SOURCE_VISION_REDIRECT)
             return resp
 
         # Step 1: 驗證業者（B2B 可不帶 vendor_id）— 原位執行,結果入 ctx
