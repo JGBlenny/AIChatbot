@@ -142,13 +142,22 @@ async def regenerate_knowledge_embeddings(pool: asyncpg.Pool, dry_run: bool = Fa
     print("=" * 60)
 
     from services.embedding_utils import get_embedding_client
+    # D2：scoring surface 的唯一實作點（⛔ 不得在此自寫 summary/answer 優先序）
+    from services.retrieval_representation import scoring_surface
     embedding_client = get_embedding_client()
 
     async with pool.acquire() as conn:
         # 查詢需要更新的知識
         rows = await conn.fetch("""
             SELECT id, question_summary, answer, keywords,
-                   embedding IS NOT NULL as has_embedding
+                   embedding IS NOT NULL as has_embedding,
+                   -- ⚠️ 本腳本跑**全庫**，必然會掃到已宣告 retrieval_representation 的列。
+                   --    不取這兩欄就會把它們的 embedding **靜默改回** legacy surface，
+                   --    造成「reranker 吃新宣告、vector 吃舊 summary」的半遷移狀態。
+                   generation_metadata->>'retrieval_representation'
+                       AS retrieval_representation,
+                   generation_metadata->'retrieval_representation_provenance'->>'source'
+                       AS retrieval_representation_source
             FROM knowledge_base
             WHERE question_summary IS NOT NULL
             ORDER BY id
@@ -192,10 +201,11 @@ async def regenerate_knowledge_embeddings(pool: asyncpg.Pool, dry_run: bool = Fa
                 print(f"\n進度: {i}/{len(rows)}")
 
             try:
-                # 只使用 question_summary 生成 embedding
+                # ⚠️ 已宣告且經審查者以宣告為 surface（與 reranker 同一份契約函式，D2）；
+                #    未宣告者維持原行為：只使用 question_summary 生成 embedding。
                 # 根據實測：加入 answer 會降低 9.2% 的檢索匹配度（30 題測試，86.7% 受負面影響）
                 # 原因：answer 包含的格式化內容、操作步驟會稀釋語意
-                text = question
+                text, surface_source = scoring_surface(dict(row))
                 embedding = await embedding_client.get_embedding(text)
 
                 if embedding:

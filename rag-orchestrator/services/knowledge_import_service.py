@@ -19,6 +19,8 @@ import time
 # 引入統一 Job 服務
 from services.unified_job_service import UnifiedJobService
 from services.llm_provider import get_llm_provider, LLMProvider
+# D2：scoring surface 的唯一實作點（⛔ 不得在此自寫 summary/answer 優先序）
+from services.retrieval_representation import scoring_surface
 
 
 class KnowledgeImportService(UnifiedJobService):
@@ -1219,10 +1221,16 @@ class KnowledgeImportService(UnifiedJobService):
 
         for idx, knowledge in enumerate(knowledge_list, 1):
             try:
-                # 只使用 question_summary（不包含 answer）
+                # ⚠️ **本函式的 UPSERT 路徑會更新既有列的 embedding**（見下方
+                #    `UPDATE knowledge_base SET ... embedding = $9`），因此它**可能跑在
+                #    已有 reviewed retrieval_representation 的列上**。若在此仍用 legacy
+                #    surface，會造成「reranker 吃新 representation、vector 吃舊 summary」
+                #    的**半遷移**狀態——D2 明令不得存在。
+                # ⇒ 已宣告且經審查者一律以宣告為 surface（與 reranker 同一份契約函式）。
+                # 未宣告者維持原行為：只使用 question_summary（不包含 answer）。
                 # 根據實測：加入 answer 會降低 9.2% 的檢索匹配度（30 題測試，86.7% 受負面影響）
                 # 原因：answer 包含的格式化內容、操作步驟會稀釋語意
-                text = knowledge['question_summary']
+                text, _surface_source = scoring_surface(knowledge)
 
                 embedding = await self.llm_provider.async_embedding(
                     text=text,

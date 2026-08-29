@@ -1,5 +1,8 @@
 # Level-A 10 rows 的 `retrieval_representation` —— **PROPOSAL（待 review，⛔ 未寫入）**
 
+> ⚠️ **本檔已被 review 部分覆寫**：3402／3499／4657 的最終裁定見
+> `r9-review-status.md`，以該檔為準。其餘 7 筆仍為 `NOT_REVIEWED_BY_OWNER`。
+
 - 依 **D3**：legacy summary／keywords／answer **只能作 proposal evidence**，
   ⛔ 不得自動生成 authoritative representation
 - 本檔狀態 `RETRIEVAL_REPRESENTATION_PROPOSAL`，⛔ **不得被 production 消費**
@@ -17,8 +20,13 @@
 
 ## general 三列
 
-### 3402
+### 3402 ✅ `APPROVE_WITH_NARROWING`（見 r9-review-status.md）
 ```text
+定稿：點退完成後系統何時／在什麼條件下自動產生點退帳單，
+     以及該帳單如何進入費用結算。
+⛔ 刪除一般帳單繳費期限／到期日規則——那不是本 row 承接的 intent。
+
+原 proposal（已被收窄取代）：
 proposal：點退完成後系統是否自動產生點退帳單、產生的時機，
          以及帳單包含哪些結算項目與如何與押金互抵。
 evidence：answer「點退完成後系統自動產生…水電等未結費用／設施損壞賠償／其他費用…
@@ -79,8 +87,12 @@ evidence：answer「逾期費計算公式：租金 × 遲繳天數 × 費率%；
    ⛔ 但這**不表示** representation 能解 B1 全家族（見 claim ceiling）
 ```
 
-### 3499
+### 3499 ✅ `APPROVE`（responsibility-level）＋另列 answer defect
 ```text
+定稿：查詢／診斷特定帳單手動到帳失敗、無法完成手動入帳的原因。
+⛔ 不得寫成「常見原因包括 A／B／C」——除非 A/B/C 已由 capability 證明。
+
+原 proposal：
 proposal：診斷某一筆帳單手動到帳／標記已收款為什麼失敗，
          包含操作時出現的錯誤情形與可能原因。
 evidence：answer「手動到帳失敗時前端會顯示錯誤訊息，常見三種」（22 字，⚠️ **未列出三種**）
@@ -112,8 +124,14 @@ evidence：answer **空**；capability：bill_diagnosis → jgb_bills → `_form
 ⇒ 這正是 R8 指出「一個字都沒出現」的語義，⛔ 現行任何欄位皆未表示
 ```
 
-### 4657
+### 4657 ⛔ `HOLD / REVIEW_BLOCKED_CAPABILITY_AMBIGUOUS`
 ```text
+⚠️ blocker 是**選取步驟**不是金額：face_bill_response 對多列取 data[0]，
+   _format_bill_status ⛔ 不讀 type ⇒ 「該合約的**點退**帳單」無法被辨識。
+   金額本身**可證**（_bill_amount_due → bill["total"] → 「• 金額」）。
+   完整證據與正對照見 r9-review-status.md。
+
+原 proposal（⛔ 不批准）：
 proposal：查詢某一份合約的點退結算帳單實際金額，例如退租結算最後要收或退多少錢。
 evidence：answer **空**；capability：bill_diagnosis 查該筆點退帳單
 ⚠️ `diagnose_bill` **無點退專用分支** ⇒ 落 `_format_bill_status`

@@ -318,15 +318,38 @@ async def update_knowledge(knowledge_id: int, data: KnowledgeUpdate, user: dict 
 
     try:
         # 1. 檢查知識是否存在
-        cur.execute("SELECT id FROM knowledge_base WHERE id = %s", (knowledge_id,))
-        if not cur.fetchone():
+        # ⚠️ 一併取出 retrieval representation 宣告（D1/D2，2026-08-29）：
+        #    本端點會**重生既有列的 embedding**，因此它跑得到已宣告的列。
+        #    只取 id 就等於「編輯一次，遷移被靜默還原」——reranker 吃新宣告、
+        #    vector 吃舊 summary 的半遷移狀態，D2 明令不得存在。
+        cur.execute(
+            """
+            SELECT generation_metadata->>'retrieval_representation',
+                   generation_metadata->'retrieval_representation_provenance'->>'source'
+            FROM knowledge_base WHERE id = %s
+            """,
+            (knowledge_id,),
+        )
+        _existing = cur.fetchone()
+        if not _existing:
             raise HTTPException(status_code=404, detail="知識不存在")
+        _declared, _declared_source = _existing[0], _existing[1]
 
-        # 2. 生成新向量（使用 question_summary + keywords 以提高檢索準確度）
+        # 2. 生成新向量
         try:
-            # ✅ 方案 A：將 keywords 融入 embedding
-            keywords_str = ", ".join(data.keywords) if data.keywords else ""
-            text_for_embedding = f"{data.question_summary}. 關鍵字: {keywords_str}" if keywords_str else data.question_summary
+            # ⚠️ **本服務與 rag-orchestrator 無法共用 import**（各自的容器），
+            #    因此這裡是 services/retrieval_representation.scoring_surface() 的
+            #    **鏡射**，由稽核不變量 12 檢查項 E 綁住兩邊一致；
+            #    ⛔ 不得在此加入第二套優先序。
+            if _declared and _declared.strip() and _declared_source == "reviewed_product_declaration":
+                text_for_embedding = _declared
+            else:
+                # legacy 路徑，行為**逐字不變**（其與 POST 的分歧見
+                # .kiro/specs/conversational-routing-execution/d2-embedding-surface-divergence.md，
+                # 狀態 divergent_pending，⛔ 不在本輪統一）
+                # ✅ 方案 A：將 keywords 融入 embedding
+                keywords_str = ", ".join(data.keywords) if data.keywords else ""
+                text_for_embedding = f"{data.question_summary}. 關鍵字: {keywords_str}" if keywords_str else data.question_summary
 
             embedding_response = requests.post(
                 EMBEDDING_API_URL,
@@ -601,8 +624,14 @@ async def regenerate_all_embeddings(user: dict = Depends(get_current_user)):
 
     try:
         # 1. 查询所有没有 embedding 的知识
+        # ⚠️ 一併取 retrieval representation 宣告（D1/D2）：本端點是 **backfill**，
+        #    而剛寫入宣告、尚未重生 embedding 的列正是 embedding IS NULL 的那批
+        #    ——不取這兩欄就會在遷移窗口內把它們補成 legacy surface。
         cur.execute("""
-            SELECT id, question_summary, answer, keywords
+            SELECT id, question_summary, answer, keywords,
+                   generation_metadata->>'retrieval_representation' AS retrieval_representation,
+                   generation_metadata->'retrieval_representation_provenance'->>'source'
+                       AS retrieval_representation_source
             FROM knowledge_base
             WHERE embedding IS NULL
             ORDER BY id
@@ -629,10 +658,20 @@ async def regenerate_all_embeddings(user: dict = Depends(get_current_user)):
             answer = row['answer']
             keywords = row.get('keywords', [])
 
-            # ✅ 方案 A：將 keywords 融入 embedding
-            keywords_str = ", ".join(keywords) if keywords else ""
-            base_text = question if question else answer[:200]
-            text_for_embedding = f"{base_text}. 關鍵字: {keywords_str}" if keywords_str else base_text
+            # ⚠️ 鏡射 services/retrieval_representation.scoring_surface()（跨容器無法
+            #    import；由稽核不變量 12 檢查項 E 綁住兩邊一致）。⛔ 不得加第二套優先序。
+            _declared = row.get('retrieval_representation')
+            if _declared and _declared.strip() and \
+                    row.get('retrieval_representation_source') == "reviewed_product_declaration":
+                text_for_embedding = _declared
+            else:
+                # legacy 路徑，行為**逐字不變**（⚠️ 這裡的 legacy surface 與本檔
+                # create_knowledge、與 scripts/regenerate_all_embeddings.py **三者互異**，
+                # 見 d2-embedding-surface-divergence.md，狀態 divergent_pending）
+                # ✅ 方案 A：將 keywords 融入 embedding
+                keywords_str = ", ".join(keywords) if keywords else ""
+                base_text = question if question else answer[:200]
+                text_for_embedding = f"{base_text}. 關鍵字: {keywords_str}" if keywords_str else base_text
 
             try:
                 embedding_response = requests.post(

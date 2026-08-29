@@ -47,11 +47,25 @@ FORBIDDEN_IN_READER = ("question_summary", "answer", "keywords")
 #: embedding surface 的**每一個**產生點都要在這裡，且標明狀態。
 #: `uses_contract`        已改走 scoring_surface()
 #: `divergent_pending`    已知與契約不一致，**待業主裁定**，⛔ 不得默默沿用
+#: `uses_contract`          直接呼叫 scoring_surface()
+#: `uses_contract_mirrored`  跨服務無法 import，鏡射同一規則（由檢查項 E 綁住）
+#: `legacy_new_rows_only`    只建新列 ⇒ 不可能跑在已宣告的列上（⚠️ 這是**宣告的假設**，
+#:                           非證明；假設一旦破（例如 create 開始接受 metadata）必須改判
+#: `divergent_pending`       已知與契約不一致、且**跑得到既有列**，⛔ 不得存在
 EMBEDDING_SITES = {
-    ("knowledge-admin/backend/app.py", "text_for_embedding"): "divergent_pending",
-    ("rag-orchestrator/services/knowledge_import_service.py", "text"): "divergent_pending",
-    ("scripts/regenerate_all_embeddings.py", "text"): "divergent_pending",
+    ("knowledge-admin/backend/app.py", "update_knowledge", "text_for_embedding"):
+        "uses_contract_mirrored",
+    ("knowledge-admin/backend/app.py", "create_knowledge", "text_for_embedding"):
+        "legacy_new_rows_only",
+    ("rag-orchestrator/services/knowledge_import_service.py", "_generate_embeddings", "text"):
+        "uses_contract",
+    ("scripts/regenerate_all_embeddings.py", "regenerate_knowledge_embeddings", "text"):
+        "uses_contract",
+    ("knowledge-admin/backend/app.py", "regenerate_all_embeddings", "text_for_embedding"):
+        "uses_contract_mirrored",
 }
+#: 鏡射站點必須出現的字面（⇒ 兩邊規則同一條）
+MIRROR_TOKENS = ("retrieval_representation", "reviewed_product_declaration")
 #: 會被視為 embedding surface 賦值的變數名
 SURFACE_VAR_NAMES = {"text", "text_for_embedding", "embedding_text"}
 #: 掃描範圍（⛔ 不掃 tests／backtest：那是量測程式，不是 production surface）
@@ -163,19 +177,23 @@ def scan_embedding_sites(root=None):
                 #    （scripts/regenerate_all_embeddings.py 就是這樣）。
                 #    只看 RHS 有沒有直接出現 question_summary 會整個漏掉
                 #    ——本檢查器第一版的自我測試就是這樣紅的。
-                tainted = set()
-                for n in ast.walk(tree):
-                    if not isinstance(n, ast.Assign):
-                        continue
-                    refs = _names(n.value) | set(_strings(n.value))
-                    is_surface = ("question_summary" in refs) or bool(refs & tainted)
-                    tgts = [t.id for t in n.targets if isinstance(t, ast.Name)]
-                    if not is_surface:
-                        continue
-                    tainted.update(tgts)
-                    for t in tgts:
-                        if t in SURFACE_VAR_NAMES:
-                            found.add((rel, t))
+                # ⚠️ 判定單位必須含**所屬函式**：同一檔的 create 與 update 用同一個
+                #    變數名卻是兩種 surface，只用 (檔, 變數) 會把兩者混為一談。
+                for fn in [x for x in ast.walk(tree)
+                           if isinstance(x, (ast.FunctionDef, ast.AsyncFunctionDef))]:
+                    tainted = set()
+                    for n in ast.walk(fn):
+                        if not isinstance(n, ast.Assign):
+                            continue
+                        refs = _names(n.value) | set(_strings(n.value))
+                        is_surface = ("question_summary" in refs) or bool(refs & tainted)
+                        tgts = [t.id for t in n.targets if isinstance(t, ast.Name)]
+                        if not is_surface:
+                            continue
+                        tainted.update(tgts)
+                        for t in tgts:
+                            if t in SURFACE_VAR_NAMES:
+                                found.add((rel, fn.name, t))
     return found
 
 
@@ -183,7 +201,7 @@ def check_register(found):
     bad = []
     for site in sorted(found):
         if site not in EMBEDDING_SITES:
-            bad.append(f"未登記的 embedding surface 產生點：{site[0]} 的 `{site[1]}` "
+            bad.append(f"未登記的 embedding surface 產生點：{site[0]}::{site[1]} 的 `{site[2]}` "
                        f"⇒ D2 要求 divergence 必須明示，⛔ 不得默默新增第二個 semantic universe")
     return bad
 
@@ -198,6 +216,43 @@ def check_reader_no_fallback(tree):
     if hit:
         return [f"{READER_FUNC}() 出現 {hit}——宣告讀取器⛔不得 fallback 猜測"]
     return []
+
+
+# ── E：new-contract path ⛔ 不得繼承 legacy divergence ────────────────────
+def check_new_contract_path(root=None):
+    """已宣告的列，其 embedding surface 必須來自宣告。
+
+    ⚠️ 業主裁定（2026-08-29）：**legacy divergence 可暫留；new-contract
+    divergence 不可存在**——否則 D2「same surface by default」從第一天就破功。
+    """
+    root = root or REPO
+    bad = []
+    for (rel, fname, var), status in sorted(EMBEDDING_SITES.items()):
+        try:
+            with open(os.path.join(root, rel), encoding="utf-8") as f:
+                tree = ast.parse(f.read())
+        except (OSError, SyntaxError):
+            bad.append(f"{rel} 讀不到／解析失敗——大聲失敗，⛔ 不當成沒有違規")
+            continue
+        fn = _func(tree, fname)
+        if fn is None:
+            bad.append(f"{rel} 找不到登記的函式 {fname}()——登記簿與程式已脫節")
+            continue
+        body = _names(fn) | set(_strings(fn))
+        # ⚠️ 鏡射站點的證據多半藏在 **SQL 字面裡**（`generation_metadata->>'…'`），
+        #    用集合相等比對永遠找不到 ⇒ 必須對整段字面做子字串比對。
+        blob = "\n".join(_strings(fn)) + "\n" + "\n".join(sorted(_names(fn)))
+        if status == "uses_contract" and SURFACE_FUNC not in body:
+            bad.append(f"{rel}::{fname} 登記為 uses_contract 卻未呼叫 {SURFACE_FUNC}()")
+        if status == "uses_contract_mirrored":
+            missing = [t for t in MIRROR_TOKENS if t not in blob]
+            if missing:
+                bad.append(f"{rel}::{fname} 鏡射不完整，缺 {missing}"
+                           f"（⇒ 編輯已宣告的列會把 embedding 靜默改回 legacy）")
+        if status == "divergent_pending":
+            bad.append(f"{rel}::{fname} 仍為 divergent_pending 但跑得到既有列"
+                       f"——new-contract path ⛔ 不得繼承 legacy divergence")
+    return bad
 
 
 def self_test():
@@ -219,10 +274,16 @@ def self_test():
     # C 正對照：現況全部登記；植入一個未登記站點必須紅
     found = scan_embedding_sites()
     cases.append(("C 現況全部已登記", check_register(found) == []))
-    cases.append(("C 掃描器抓得到已知站點（否則是掃描器壞了）",
-                  len(found) >= len(EMBEDDING_SITES)))
+    # ⚠️ 正對照必須指名**已知仍為 legacy 的站點**。
+    #    ⛔ 不可用 `len(found) >= len(EMBEDDING_SITES)`——已改走契約的站點本來就
+    #    不再有 legacy 表達式，掃描器抓不到是**正確**行為，那樣寫會逼出假紅。
+    known_legacy = ("knowledge-admin/backend/app.py", "create_knowledge", "text_for_embedding")
+    cases.append(("C 掃描器抓得到已知的 legacy 站點（否則是掃描器壞了）",
+                  known_legacy in found))
     cases.append(("C 未登記站點必須紅",
-                  check_register(found | {("x/y.py", "text")}) != []))
+                  check_register(found | {("x/y.py", "f", "text")}) != []))
+    # E 正對照
+    cases.append(("E 現況乾淨", check_new_contract_path() == []))
     # D 正對照
     csrc = open(os.path.join(REPO, CONTRACT), encoding="utf-8").read()
     cases.append(("D 現況乾淨", check_reader_no_fallback(ast.parse(csrc)) == []))
@@ -251,17 +312,21 @@ def main():
         return 1
     bad += check_register(found)
     bad += check_reader_no_fallback(_tree(CONTRACT))
+    bad += check_new_contract_path()
     if bad:
         print("❌ FAIL：retrieval semantic contract 違規：")
         for b in bad:
             print(f"   {b}")
         return 1
-    pending = [k for k, v in EMBEDDING_SITES.items() if v == "divergent_pending"]
-    print(f"（scoring surface 單一實作點 {SURFACE_FUNC}()；embedding 產生點 {len(found)} 個全部已登記）")
+    pending = [k for k, v in EMBEDDING_SITES.items()
+               if v in ("divergent_pending", "legacy_new_rows_only")]
+    uses = sum(1 for v in EMBEDDING_SITES.values() if v.startswith("uses_contract"))
+    print(f"（scoring surface 單一實作點 {SURFACE_FUNC}()；登記 {len(EMBEDDING_SITES)} 個 embedding "
+          f"產生點，其中 {uses} 個走契約；掃描到的 legacy 表達式 {len(found)} 處全部已登記）")
     if pending:
         print(f"⚠️  登記在案的 **待裁定 divergence** {len(pending)} 處（⛔ 非 PASS 的一部分，是明示欠債）：")
-        for rel, var in sorted(pending):
-            print(f"   {rel} 的 `{var}`")
+        for rel, fname, var in sorted(pending):
+            print(f"   {rel}::{fname} 的 `{var}`（{EMBEDDING_SITES[(rel, fname, var)]}）")
     return 0
 
 
