@@ -1,0 +1,181 @@
+{
+ "seed": "A04-N",
+ "category_order": [
+  "條件診斷：付款",
+  "滯納金",
+  "帳單異常",
+  "發票",
+  "繳費金流排障",
+  "帳單管理"
+ ],
+ "rows": [
+  {
+   "id": 3923,
+   "category": "繳費金流排障",
+   "question_summary": "超商繳費 狀態沒跳 撥付時程",
+   "hash": "029f3a057e02d5990af641dac4eefb97",
+   "n_queries": 5
+  },
+  {
+   "id": 3398,
+   "category": "帳單管理",
+   "question_summary": "電費計費方式 度數計算",
+   "hash": "02d2acd75d53aac3f554b57451d3950c",
+   "n_queries": 5
+  },
+  {
+   "id": 3366,
+   "category": "繳費金流排障",
+   "question_summary": "繳費成功 繳費紀錄",
+   "hash": "077f320291c93882da057db8756a7c83",
+   "n_queries": 5
+  },
+  {
+   "id": 3407,
+   "category": "帳單管理",
+   "question_summary": "帳單統計報表 收支分析",
+   "hash": "07f192c55ede3b6749db1c9679704f61",
+   "n_queries": 5
+  },
+  {
+   "id": 3497,
+   "category": "條件診斷：付款",
+   "question_summary": "已付款但帳單狀態沒有更新",
+   "hash": "0bd3ad055e770d2e1d3731bc51251348",
+   "n_queries": 4
+  },
+  {
+   "id": 4637,
+   "category": "帳單管理",
+   "question_summary": "帳單總表 虛擬帳號查交易 銀行抽查入帳",
+   "hash": "15911812b76a345ee22112d640e9465c",
+   "n_queries": 4
+  },
+  {
+   "id": 4647,
+   "category": "帳單管理",
+   "question_summary": "未發送帳單一次編輯 批次調整範圍",
+   "hash": "180abe15674162c5c4b5e8c095d232cf",
+   "n_queries": 4
+  },
+  {
+   "id": 3502,
+   "category": "條件診斷：付款",
+   "question_summary": "虛擬帳號過期或轉帳失敗",
+   "hash": "254b511c6e4d6699344fa56cdf3a1f17",
+   "n_queries": 4
+  },
+  {
+   "id": 3934,
+   "category": "帳單異常",
+   "question_summary": "帳單金額怪怪的 跟預期不一樣",
+   "hash": "2dd05b85ed77e4d688887fa27a31e911",
+   "n_queries": 4
+  },
+  {
+   "id": 3938,
+   "category": "發票",
+   "question_summary": "發票開錯了 要作廢重開",
+   "hash": "2e04d0ace1d8615f7bca0c4b01fb3f7a",
+   "n_queries": 4
+  },
+  {
+   "id": 3935,
+   "category": "帳單異常",
+   "question_summary": "這期帳單怎麼還沒出來",
+   "hash": "2e8f2f20d8f027690d9185dab28d6339",
+   "n_queries": 4
+  },
+  {
+   "id": 3532,
+   "category": "滯納金",
+   "question_summary": "滯納金客製版本 固定金額階梯式",
+   "hash": "32907fcfe7aaabd9dc22eccb696ea449",
+   "n_queries": 4
+  },
+  {
+   "id": 3924,
+   "category": "繳費金流排障",
+   "question_summary": "租客轉帳失敗 匯款上限 資訊核對",
+   "hash": "32bfd11a50d3a1191a7c276bf85fb43f",
+   "n_queries": 4
+  },
+  {
+   "id": 3936,
+   "category": "帳單異常",
+   "question_summary": "租客說看不到帳單 找不到",
+   "hash": "36adca8699d70cfd25c0db75292ce331",
+   "n_queries": 4
+  },
+  {
+   "id": 3420,
+   "category": "發票",
+   "question_summary": "發票未收到 排查步驟",
+   "hash": "40e15441446421a56f103bd882eb5e6b",
+   "n_queries": 4
+  },
+  {
+   "id": 3937,
+   "category": "發票",
+   "question_summary": "發票怎麼還沒開 沒收到發票",
+   "hash": "4ce3528474ec1ba73a252384498f7f68",
+   "n_queries": 4
+  },
+  {
+   "id": 3932,
+   "category": "繳費金流排障",
+   "question_summary": "帳單卡在待對帳 狀態一直沒跳",
+   "hash": "57a34336cc64ad06bc9fc84261c61899",
+   "n_queries": 4
+  },
+  {
+   "id": 3500,
+   "category": "條件診斷：付款",
+   "question_summary": "信用卡付款失敗",
+   "hash": "624313bc2adb2e39e43a98ae7631aef1",
+   "n_queries": 4
+  },
+  {
+   "id": 3940,
+   "category": "滯納金",
+   "question_summary": "這筆延遲金是怎麼算的",
+   "hash": "745b632ed70c0c9b3250fd971affcdac",
+   "n_queries": 4
+  },
+  {
+   "id": 3362,
+   "category": "發票",
+   "question_summary": "發票沒開 發票狀態",
+   "hash": "76f7db7b238b09d8e9352407f33997e4",
+   "n_queries": 4
+  },
+  {
+   "id": 3531,
+   "category": "滯納金",
+   "question_summary": "滯納金帳單產生 付款後結算規則",
+   "hash": "8f9cd7f2df69e40cb72bc3d78f7e8627",
+   "n_queries": 4
+  },
+  {
+   "id": 3928,
+   "category": "帳單異常",
+   "question_summary": "帳單還沒出現 產生時點規則",
+   "hash": "b20776dd2e1b43e64a0d63c927a5ab45",
+   "n_queries": 4
+  },
+  {
+   "id": 3501,
+   "category": "條件診斷：付款",
+   "question_summary": "信用卡自動扣款失敗",
+   "hash": "c3dce261ef86696c7131cfd3e403849b",
+   "n_queries": 4
+  },
+  {
+   "id": 3939,
+   "category": "滯納金",
+   "question_summary": "滯納金怎麼收這麼多",
+   "hash": "c8931d05158769eb46c1eda40af405ae",
+   "n_queries": 4
+  }
+ ]
+}

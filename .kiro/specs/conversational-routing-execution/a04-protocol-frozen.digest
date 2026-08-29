@@ -1,5 +1,15 @@
-# A04 protocol digest（2026-08-29）
-# ⚠️ 這是**草案**的 digest。業主凍結第 10 節的四項後，protocol 內容會變動，
-#    屆時必須**重算**並以最終值為準；執行前逐項複驗，不符即中止。
-PROTOCOL_SHA256=e724b818466150b07182a2026a3d5dc5538d3d6946854cf230534706c543e7f6
-STATUS=DRAFT_PENDING_OWNER_FREEZE
+# A04 protocol digest
+FROZEN_AT=2026-08-29
+STATUS=FROZEN_PENDING_ONE_RATIFICATION
+# 唯一待追認項：N-A 選列的「母體由小到大處理」機械規則（見 protocol 第 10 節）。
+# 業主凍的是 24 列／exactly 100；實測發現「條件診斷：付款」4 列全部同屬
+# 「繳費金流排障」，不加此規則只會得到 22 列／92 筆。
+# 若業主不採此規則，必須改凍數字並重算本 digest。
+PROTOCOL_SHA256=01b4d49e68fe5b44b393c0156e92e8d3b0fbcbb510724564b327ca8e18787c67
+N_SELECTION_SHA256=206f3923cd9e39d6c00a427aec5f2d9099f1c471c8b0969e859eaffe20b2695e
+# ⚠️ N_SELECTION 是在 PROTOCOL 之後才 commit 的檔案，故**不在** PROTOCOL_SHA256 涵蓋範圍；
+#    執行時兩個 digest 都要複驗。
+
+# 已作廢
+SUPERSEDED_DRAFT_SHA256=e724b818466150b07182a2026a3d5dc5538d3d6946854cf230534706c543e7f6
+SUPERSEDED_STATUS=DRAFT_SUPERSEDED
