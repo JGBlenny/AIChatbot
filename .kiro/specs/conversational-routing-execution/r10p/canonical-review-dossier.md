@@ -5,6 +5,9 @@
 目標      status=reviewed_active ⇒ canonical_responsibility MUST be non-null ＋ reviewed
 排除      reviewed_historical（R-?? / 3498）⛔ 不要求 active scoring canonical
 本檔性質  proposal evidence 的投影；⛔ 不裁定、⛔ 不自動升格 canonical authority
+γ-1 結論  9 個 Level-A reviewed row representation **全部是有效 evidence，但只有少數適合逐字升格**
+          （R-14 幾乎原樣、R-06 近乎逐字；R-07／R-11／R-29／R-30／R-31 皆需修）
+          ⇒ 反證當初**沒有**直接做 migration-copy 是對的
 ```
 
 ## 四條規約
@@ -19,6 +22,13 @@
 ④ 每筆裁定 ∈ {APPROVED, REVISE, INSUFFICIENT}。
 ⑤ ⚠️ **P3 identity 措辭 ⛔ 不等於 canonical authority**——8 筆帶 P3 文字的群一律仍是
    PENDING_CANONICAL_REVIEW，必須逐筆裁定（不變量 21 只認 canonical_review.verdict=APPROVED）。
+
+γ 尺（2026-08-30 凍結）
+  γ-C1  canonical 預設**不列舉** implementation rules／status fields／條件數／examples／
+        utterance variants——問法變體留給 alias/recall surface，⛔ canonical 不兼任 synonym dictionary
+  γ-C2  能區分兩個已確認 responsibilities 的必要 selection operation，要以**產品語義**寫進
+        canonical；⛔ 實作欄位／函式細節不寫（R-31 正例：寫「依指定合約找出其點退帳單」⛔ 不寫 type=2）
+  γ-C3  成對 responsibility 必須在 **canonical 本身**可辨識——⛔ 不能靠 applicability metadata 擦屁股
 
 α 尺（2026-08-30 凍結，γ 一體適用）
   α-C1  eligibility responsibility canonical 描述「能否執行某操作 ＋ 不能的原因」；⛔ 不枚舉當前規則、條件數量或 UI 細節。
@@ -298,9 +308,23 @@ row 3402  summary：點退帳單 自動產生 費用結算
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  說明點退完成後系統何時、在何種條件下自動產生點退帳單，以及該帳單如何進入費用結算。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - row-level reviewed retrieval_representation（R9 逐筆裁定）＝**高品質 evidence**，⛔ 非自動 canonical——本群幾乎逐字沿用，且沿用是**裁定結果**⛔ 非 migration rule
+  - 3402 answer 提供內容佐證（費用組成／到期日／押金互抵）作為 content evidence
+  - reviewed applicability=general；owner=Knowledge
+
+negative boundary
+  與 R-25 分界：R-06＝點退帳單**何時／如何產生並進入結算**；R-25＝**金額如何計算**。
+
+deliberate exclusions
+  - ⛔ 不枚舉水電／損壞賠償／自訂費用
+  - ⛔ 不寫到期日細則
+  - ⛔ 不寫押金多退少補細節
 ```
 
 ---
@@ -323,9 +347,21 @@ row 3406  summary：帳單收據 繳費證明 PDF 下載
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  說明帳單收據／繳費證明的產生條件、取得位置與方式，以及其與統一發票的區別。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - row-level reviewed retrieval_representation（R9 逐筆裁定）＝**高品質 evidence**，⛔ 非自動 canonical——⚠️ 本群**不逐字沿用**：原句四項混了 identity 與內容明細
+  - 「未繳費無法產生」上收為 **產生條件**
+  - 3406 answer 提供下載方式與發票區別的內容佐證
+
+negative boundary
+  R-07 ＝ general acquisition／generation mechanism；⛔ 不查某一張收據實際收了多少錢（instance 屬 R-29）。這是 general／instance 的真正分界。
+
+deliberate exclusions
+  - ⛔ 「收據可作為繳費證明」屬內容 truth，⛔ 不逐項寫進 identity
 ```
 
 ---
@@ -445,9 +481,18 @@ row 3495  summary：帳單為什麼發不出去
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  診斷特定帳單無法發送給租客的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - row-level reviewed retrieval_representation（R9 逐筆裁定）＝**高品質 evidence**，⛔ 非自動 canonical
+  - _diagnose_cannot_send（bills.py:463）deterministic owner
+  - ⚠️ 原句的「發送失敗／寄不出／按發送無反應」是 **utterance／symptom variants**，⛔ 不是規則枚舉——與 α-C1 禁止的是不同類
+
+deliberate exclusions
+  - ⛔ 不列舉問法變體——問法變體是 recall evidence，**canonical ⛔ 不需要兼任 synonym dictionary**
 ```
 
 ---
@@ -470,9 +515,18 @@ row 3496  summary：帳單為什麼取消不了
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  判斷特定帳單目前是否可取消／作廢，並診斷無法取消的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - row-level reviewed retrieval_representation（R9 逐筆裁定）＝**高品質 evidence**，⛔ 非自動 canonical——⚠️ 本群**需修**：原句尾端「可取消所需的帳單狀態條件」屬 capability rule
+  - _diagnose_cannot_cancel（bills.py:514）deterministic owner
+  - 與 α eligibility responsibility **完全同尺**（α-C1）
+
+deliberate exclusions
+  - ⛔ 狀態條件留在 _diagnose_cannot_cancel 的 capability／content，⛔ 不進 canonical
 ```
 
 ---
@@ -519,9 +573,14 @@ row 3499  summary：帳單手動到帳或標記已收款失敗
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  診斷特定帳單手動到帳／標記已收款失敗的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - row-level reviewed retrieval_representation（R9 逐筆裁定）＝**高品質 evidence**，⛔ 非自動 canonical——本群為 **row representation 經人工 review 後幾乎原樣批准的正例**（只做小幅去重）
+  - _diagnose_manual_complete（bills.py:602）＋ 可達 dispatch
 ```
 
 ---
@@ -784,9 +843,22 @@ row 3519  summary：點退帳單金額計算 押金結算
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  說明點退帳單金額與押金結算的計算規則，以及結算差額如何解讀。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - row-level reviewed retrieval_representation（R9 逐筆裁定）＝**高品質 evidence**，⛔ 非自動 canonical
+  - 3519 answer（190+ 字）承載算式與正負差額解讀
+  - 保留 responsibility 的兩個 defining semantic parts：①怎麼算 ②算完差額代表什麼
+  - reviewed applicability=general；owner=Knowledge
+
+negative boundary
+  ⛔ 不負責點退帳單何時自動產生 → R-06；⛔ 不查某份合約實際點退多少錢 → R-31。
+
+deliberate exclusions
+  - ⛔ 不把所有結算項目逐一列進 contract
 ```
 
 ---
@@ -937,9 +1009,21 @@ row 4640  summary：帳單收據金額 收據多少錢
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  查詢特定收據的實際收款金額。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - row-level reviewed retrieval_representation（R9 逐筆裁定）＝**高品質 evidence**，⛔ 非自動 canonical——原句尾端「例如某筆帳單的收據實收多少錢」只是 example，已剪
+  - B05 receipt-amount deterministic capability
+  - reviewed applicability=instance
+
+negative boundary
+  與 R-07 形成最乾淨分工：R-07＝怎麼取得／何時產生；R-29＝這一張實際多少錢。
+
+deliberate exclusions
+  - ⛔ 不留 example
 ```
 
 ---
@@ -961,9 +1045,21 @@ row 4656  summary：查帳單 帳單編號查詢
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  查詢特定帳單目前的實際狀態。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - row-level reviewed retrieval_representation（R9 逐筆裁定）＝**高品質 evidence**，⛔ 非自動 canonical——⚠️ 狀態欄位枚舉全部剪掉
+  - _format_bill_status（bills.py:663）
+  - 理由與 R-05 完全相同：那些是 formatter 能提供的 status dimensions，⛔ 不是 responsibility identity
+
+negative boundary
+  與 R-31 分界：R-30 的**特定 bill 已確定**；R-31 以 contract 為起點，須先辨識正確的點退帳單。
+
+deliberate exclusions
+  - ⛔ 不列：是否繳費／是否寄出／草稿／到期情形
 ```
 
 ---
@@ -985,9 +1081,21 @@ row 4657  summary：合約的點退帳單金額 查點退金額
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  依指定合約找出其點退帳單，並查詢該筆點退帳單的實際金額與目前狀態。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - row-level reviewed retrieval_representation（R9 逐筆裁定）＝**高品質 evidence**，⛔ 非自動 canonical——⚠️ 原句**未寫** selection prerequisite，本群補上（產品語義形式）
+  - P3 mutation 證據：select_point_refund 的 six guards ＋ guard 6（拿掉 type filter／改回 data[0] 測試必須紅）⇒ selection 是 identity 的必要差異
+  - ⚠️ 拿掉前半句會把兩個已被 deterministic capability 證明不同的 responsibilities 寫得幾乎一樣
+
+negative boundary
+  與 R-30 分界：R-30 特定 bill 已確定 → 查 status；R-31 contract 是起點 → 先辨識正確的點退帳單 → 再查 amount／status。
+
+deliberate exclusions
+  - ⛔ 不寫 `type = 2` 這類**實作欄位**——寫的是**產品語義** prerequisite
 ```
 
 ---
