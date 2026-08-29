@@ -1,0 +1,5 @@
+# A04 protocol digest（2026-08-29）
+# ⚠️ 這是**草案**的 digest。業主凍結第 10 節的四項後，protocol 內容會變動，
+#    屆時必須**重算**並以最終值為準；執行前逐項複驗，不符即中止。
+PROTOCOL_SHA256=e724b818466150b07182a2026a3d5dc5538d3d6946854cf230534706c543e7f6
+STATUS=DRAFT_PENDING_OWNER_FREEZE
