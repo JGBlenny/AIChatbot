@@ -8,8 +8,15 @@
 母體      POPULATION 51c04b887a16b05f…／IDSET 00581c42771fa3b0…
 本檔性質  frozen proposal ＋ DB 既有 reviewed 事實的**投影**；⛔ 本檔不代裁
 裁定正本  r10p/p3-verdicts.json（P3 authority record；⛔ proposal 不得反向定義它）
-已裁批次  **41／47 群已裁**（A5＋A-epoch2(4)＋B9＋B-epoch2(1)＋C-①②③9＋C-④6＋C-⑤13）
-          剩 6 群：3507／3511／3512／3513／4255（capability mismatch 五列）＋ 3498（Batch D）
+已裁批次  **47／47 群全數裁定完成（2026-08-29）**——52 筆紀錄（含 5 筆補充 epoch）
+          當前 epoch 統計：{'CONFIRMED_RESPONSIBILITY': 30, 'MERGE_WITH_OTHER': 5, 'INSUFFICIENT_EVIDENCE': 10, 'SPLIT_REQUIRED': 1, 'HISTORICAL_ONLY': 1}
+  ⛔ 仍不得宣稱相異 responsibility 數——MERGE(5)／SPLIT(1)／HISTORICAL(1) 尚未投影成
+     responsibility population，那要等 **P4 seal → P5 census**；⛔ 不得先開 A05
+  P-C9  responsibility ≠ current wiring（wiring defect 必須獨立記錄，⛔ 不降格責任）
+  P-C10 一列問多個已成立責任 ⇒ SPLIT_REQUIRED，⛔ 不發明 aggregate responsibility
+  P-C11 capability absence ⇒ implementation gap，⛔ 不等於 MEMBERSHIP_REJECTED
+  CAPABILITY_ALIGNMENT 是**正交** diagnostic 軸，⛔ 不進 frozen verdict vocabulary、
+     ⛔ 不改 R10P-SCHEMA-2（schema 未定義 propositions／capability_alignment）
   P-C7  capability binding 由 **utterance** 決定，⛔ 不讀 row id ⇒ row id 不在 code ≠ capability 不存在
         ⚠️ 反面：命中 branch ≠ 責任確認；branch semantics 與宣稱責任不一致 ＝ capability mismatch
   P-C8  applicability 同 ＋ **語義等價** ＋ 落同一 branch ⇒ answer 空否／正反措辭／wiring ⛔ 不構成兩個責任
@@ -2564,21 +2571,24 @@ HINT_ONLY  same form        form=jgb_contract_query → jgb_contracts ⇒ 母體
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
+⚠️ 依 P-C9：wiring defect ⛔ 不得把 responsibility 降成 INSUFFICIENT。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ claimed responsibility「這個物件為什麼不能建約」有**非常直接的** deterministic capability evidence，⛔ 非推測
+II.  MEMBERSHIP      CONFIRMED（3507：ANSWER_KNOWLEDGE（active））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=estate-status ／ rag-orchestrator/services/jgb/estates.py:33::build_estate_status_facts
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+CAPABILITY_ALIGNMENT  ['WRONG_EXECUTION_BINDING_CONFIRMED']  ⚠️ 與 verdict **正交**的 diagnostic，⛔ 不是 verdict
+       expected：endpoint jgb_estate_status ＋ face「物件現況診斷」→ build_estate_status_facts
+       current ：form=jgb_contract_query → jgb_contracts → contract status fallback
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  6e76fb61c7992572f8b71ba68a68f1a65b8ae0cdfd85ff4c7d6c8b1b6556c962
+review_input_scope   本輪最後六群摘要 ＋ 其中明示引用的程式面實查（estates.py::build_estate_status_facts ／ESTATE_FACE_BUILDERS ／ contracts.py 五個 check_can_* ＋ elif 分流 ／ 全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」0 命中且有正對照）、answer 本文與 source_type provenance；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -2750,21 +2760,23 @@ HINT_ONLY  same categories  「條件診斷：合約,狀態判斷」⇒ [3490, 3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
+⚠️ 依 P-C10：⛔ 不得為了補這個 execution gap 發明第五個 aggregate responsibility。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        REJECTED_AS_SINGLE_RESPONSIBILITY
+       └ row spans four already-confirmed responsibilities——answer 自己明示「**逐一**檢查各操作的前置條件」⇒ 這是 multi-responsibility request，⛔ 不是第五個獨立 semantic responsibility
+II.  MEMBERSHIP      SPLIT_ACROSS（3511：拆分至 3491 move_in／3492 move_out／3493 early_termination／3494 renew）
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       NO_SINGLE_OWNER　owner=constituent owners ＝ 四個 deterministic check（check_can_move_in／move_out／early_termination／renew）
+VERDICT              **SPLIT_REQUIRED**
+       └ split_across：['CG-ROW-3491', 'CG-ROW-3492', 'CG-ROW-3493', 'CG-ROW-3494']
+CAPABILITY_ALIGNMENT  ['COMPOSITE_EXECUTION_GAP_CONFIRMED']  ⚠️ 與 verdict **正交**的 diagnostic，⛔ 不是 verdict
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  9fd016afcc07fc566fcbfec65883c6cbfc108d07ebaf00009cc58c393f2cefe3
+review_input_scope   本輪最後六群摘要 ＋ 其中明示引用的程式面實查（estates.py::build_estate_status_facts ／ESTATE_FACE_BUILDERS ／ contracts.py 五個 check_can_* ＋ elif 分流 ／ 全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」0 命中且有正對照）、answer 本文與 source_type provenance；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -2812,21 +2824,24 @@ HINT_ONLY  same categories  「條件診斷：合約,狀態判斷」⇒ [3490, 3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+- authoritative responsibility identity not established
+- no deterministic cancel-eligibility capability
+全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」＝ **0 命中**；正對照：同一掃描抓得到 bills.py 的 `_diagnose_cannot_cancel`（3 處）⇒ 掃描有效，⛔ 不是掃不到
+⚠️ 依 P-C11：⛔ 不得用 MEMBERSHIP_REJECTED——我們證明的是「系統沒實作這個 capability」，⛔ 不是「產品上不應存在這個 responsibility」
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        NOT_ESTABLISHED_AS_AUTHORITATIVE_RESPONSIBILITY
+       └ 「能不能點交」≠「能不能**取消**點交」；現況只因含「點交」而錯落 move_in
+II.  MEMBERSHIP      CONTENT_MEMBERSHIP_SUPPORTED（3512：answer 帶正面產品規則（取消點交需 status=16／取消點退需 status=64／租客已同意不能撤回）⇒ 支持 content membership，⚠️ 但**未**完全確認為 authoritative responsibility）
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       NOT_ESTABLISHED　owner=no cancel_move_in ／ cancel_move_out capability found
+VERDICT              **INSUFFICIENT_EVIDENCE**
+CAPABILITY_ALIGNMENT  ['CLAIMED_CAPABILITY_NOT_IMPLEMENTED_CONFIRMED']  ⚠️ 與 verdict **正交**的 diagnostic，⛔ 不是 verdict
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  5d79c9d33faa732795616be7a7b88f2082f70e652852f4cb7a9812c82ab8bc19
+review_input_scope   本輪最後六群摘要 ＋ 其中明示引用的程式面實查（estates.py::build_estate_status_facts ／ESTATE_FACE_BUILDERS ／ contracts.py 五個 check_can_* ＋ elif 分流 ／ 全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」0 命中且有正對照）、answer 本文與 source_type provenance；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -2874,21 +2889,25 @@ HINT_ONLY  same categories  「條件診斷：合約,狀態判斷」⇒ [3490, 3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+- authoritative responsibility identity not established
+- no deterministic contract-cancel capability
+全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」＝ **0 命中**；正對照：同一掃描抓得到 bills.py 的 `_diagnose_cannot_cancel`（3 處）⇒ 掃描有效，⛔ 不是掃不到
+⚠️ answer 指向「改用提前解約」**⛔ 不構成 merge 到 3493**——那是 remediation／action recommendation，⛔ 不是「取消合約 responsibility ＝ 提前解約 responsibility」
+⚠️ ⛔ 不得引 3510 的 status fallback 判例背書：3513 是**錯誤地跌進** fallback
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        NOT_ESTABLISHED_AS_AUTHORITATIVE_RESPONSIBILITY
+       └ claimed「為什麼不能取消或作廢合約」；production 五個 keyword branch 全不命中 → status fallback，與 claimed responsibility **不一致**
+II.  MEMBERSHIP      CONTENT_MEMBERSHIP_SUPPORTED（3513：answer 帶正面規則（status >= 8 已簽署生效不能直接取消，需改走提前解約））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       NOT_ESTABLISHED
+VERDICT              **INSUFFICIENT_EVIDENCE**
+CAPABILITY_ALIGNMENT  ['CLAIMED_CAPABILITY_NOT_IMPLEMENTED_CONFIRMED', 'SEMANTIC_FALLBACK_MISMATCH_CONFIRMED']  ⚠️ 與 verdict **正交**的 diagnostic，⛔ 不是 verdict
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  6173e5f5acab7d415e11360c791f08584c466b25eaa7874dca6130b7be48b4d3
+review_input_scope   本輪最後六群摘要 ＋ 其中明示引用的程式面實查（estates.py::build_estate_status_facts ／ESTATE_FACE_BUILDERS ／ contracts.py 五個 check_can_* ＋ elif 分流 ／ 全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」0 命中且有正對照）、answer 本文與 source_type provenance；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -3132,21 +3151,27 @@ HINT_ONLY  same categories  「條件診斷：合約,狀態判斷」⇒ [3490, 3
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+- responsibility identity not established
+- no content evidence（answer 空）
+- no authoring spec
+- no cancel/withdraw capability
+全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」＝ **0 命中**；正對照：同一掃描抓得到 bills.py 的 `_diagnose_cannot_cancel`（3 處）⇒ 掃描有效，⛔ 不是掃不到
+⚠️ **證據強度低於 3512／3513**：那兩列有非空 answer 可支持 product-rule membership，4255 沒有——⛔ 不得把三者寫成同一強度
+row provenance：source_type=manual、source_file=**無**、created_at=2026-07-06
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        NOT_ESTABLISHED
+       └ send invitation ≠ withdraw invitation；現況因含「邀請」錯落 invite
+II.  MEMBERSHIP      NOT_CONFIRMED（4255：answer **空** ＋ manual provenance ＋ 無 authoring spec⇒ ⛔ 連 content membership 都無法支持）
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       NOT_ESTABLISHED
+VERDICT              **INSUFFICIENT_EVIDENCE**
+CAPABILITY_ALIGNMENT  ['CLAIMED_CAPABILITY_NOT_IMPLEMENTED_CONFIRMED', 'WRONG_BRANCH_CONFIRMED']  ⚠️ 與 verdict **正交**的 diagnostic，⛔ 不是 verdict
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  3bc3a6f736d729c8c2f37e934584be20e5f4de426df6d89e6848b15e4cbfa49c
+review_input_scope   本輪最後六群摘要 ＋ 其中明示引用的程式面實查（estates.py::build_estate_status_facts ／ESTATE_FACE_BUILDERS ／ contracts.py 五個 check_can_* ＋ elif 分流 ／ 全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」0 命中且有正對照）、answer 本文與 source_type provenance；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 ---
@@ -3262,21 +3287,23 @@ HINT_ONLY  same categories  「條件診斷：帳單」⇒ [3495, 3496, 3498, 34
 
 ### evidence gaps
 ```text
-identity       ⛔ 無任何證據說明此列**不能**與他列同屬一責任——singleton 只是 P2 無合法機械規則
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+（無）——I／II／III／IV 四項命題皆已由**各自**的證據成立。
+⚠️ 失效不失憶：宣告與 provenance 保留，⛔ 不刪。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        HISTORICAL_RETIRED_RESPONSIBILITY_RECORD
+       └ no active independent responsibility remains
+II.  MEMBERSHIP      HISTORICAL_RETIRED_ONLY（3498：HISTORICAL_RETIRED member only（is_active=false））
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       SUPERSEDED　owner=historical A ownership = superseded；active late-fee instance ownership = B（late_fee face／build_late_fee_facts）；general knowledge truth = subsumed by 3531 ＋ 3532
+VERDICT              **HISTORICAL_ONLY**
+CAPABILITY_ALIGNMENT  ['RETIRED_NO_ACTIVE_BINDING']  ⚠️ 與 verdict **正交**的 diagnostic，⛔ 不是 verdict
+       └ 這正是 schema 裡 HISTORICAL_ONLY 應該存在的案例。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  5ef3b3f271001a01ae171bf584bcc8af3691130e40998ac175b66eaa185c08c4
+review_input_scope   本輪最後六群摘要 ＋ 其中明示引用的程式面實查（estates.py::build_estate_status_facts ／ESTATE_FACE_BUILDERS ／ contracts.py 五個 check_can_* ＋ elif 分流 ／ 全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」0 命中且有正對照）、answer 本文與 source_type provenance；⛔ 未貼出的 dossier evidence 不屬本次 basis。
 ```
 
 # Batch E —— 其餘（無 applicability declaration 且非 alias）

@@ -13,7 +13,9 @@
   "B-epoch2",
   "C-1",
   "C-4",
-  "C-5"
+  "C-5",
+  "C-5b",
+  "D"
  ],
  "records": [
   {
@@ -3358,6 +3360,494 @@
    "joint_seal_closed_by": "CG-ROW-3510（同輪 C-5 裁定）",
    "_seal_note": "⚠️ verdict 維持 MERGE_WITH_OTHER——⛔ 不得改寫成 CONFIRMED_RESPONSIBILITY。",
    "review_basis_digest": "bbfc29d1806afbd85c6822c085f4e15fa0d0bc3fdc80557c9b83b1b7e13ec253"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3507",
+   "batch": "C-5b",
+   "epoch": 1,
+   "members": [
+    3507
+   ],
+   "proposal_members": [
+    3507
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "claimed responsibility「這個物件為什麼不能建約」有**非常直接的** deterministic capability evidence，⛔ 非推測"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3507": "ANSWER_KNOWLEDGE（active）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "estate-status ／ rag-orchestrator/services/jgb/estates.py:33::build_estate_status_facts"
+    }
+   },
+   "capability_alignment": [
+    "WRONG_EXECUTION_BINDING_CONFIRMED"
+   ],
+   "_capability_alignment_note": "⚠️ capability_alignment 與 responsibility_verdict **正交**：兩句可同時成立，⛔ 不矛盾。⛔ 它不是 verdict，⛔ 不得用來降格或升格 responsibility 裁定。",
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪最後六群摘要 ＋ 其中明示引用的程式面實查（estates.py::build_estate_status_facts ／ESTATE_FACE_BUILDERS ／ contracts.py 五個 check_can_* ＋ elif 分流 ／ 全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」0 命中且有正對照）、answer 本文與 source_type provenance；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/estates.py:33::build_estate_status_facts",
+     "claim_supported": "docstring 明文建約決策樹：刊登中 ＋ contract_required_fields 欄位齊 → 可建約；缺欄列 label；非刊登中 → 建約前提為刊登中（EstateController.php:279-283 口徑）——與 3507 的 answer 逐項對得上",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/estates.py:96 ESTATE_FACE_BUILDERS＝{'物件現況診斷': build_estate_status_facts}；row 3507 categories 含「物件現況診斷」",
+     "claim_supported": "categories 與 face 註冊表鍵**相符** ⇒ 支持該列屬於此 capability 的責任",
+     "supports": [
+      "membership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3507）：instance_applicability=instance",
+     "claim_supported": "既有 authoritative declaration（P1e-1，⛔ 依 P-C1a 不因 source 降格）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3507，147 字）",
+     "claim_supported": "answer 本文界定該列宣稱什麼（membership）——依 P-C3 ⛔ 不單獨建立 ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "⚠️ 依 P-C9：wiring defect ⛔ 不得把 responsibility 降成 INSUFFICIENT。"
+   ],
+   "evidence_gaps": [],
+   "_capability_alignment_detail": {
+    "expected": "endpoint jgb_estate_status ＋ face「物件現況診斷」→ build_estate_status_facts",
+    "current_row_wiring": "form=jgb_contract_query → jgb_contracts → contract status fallback"
+   },
+   "review_basis_digest": "6e76fb61c7992572f8b71ba68a68f1a65b8ae0cdfd85ff4c7d6c8b1b6556c962"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3511",
+   "batch": "C-5b",
+   "epoch": 1,
+   "members": [
+    3511
+   ],
+   "proposal_members": [
+    3511
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "REJECTED_AS_SINGLE_RESPONSIBILITY",
+     "reason": "row spans four already-confirmed responsibilities——answer 自己明示「**逐一**檢查各操作的前置條件」⇒ 這是 multi-responsibility request，⛔ 不是第五個獨立 semantic responsibility"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "SPLIT_ACROSS",
+     "per_row": {
+      "3511": "拆分至 3491 move_in／3492 move_out／3493 early_termination／3494 renew"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "NO_SINGLE_OWNER",
+     "owner": "constituent owners ＝ 四個 deterministic check（check_can_move_in／move_out／early_termination／renew）"
+    }
+   },
+   "capability_alignment": [
+    "COMPOSITE_EXECUTION_GAP_CONFIRMED"
+   ],
+   "_capability_alignment_note": "⚠️ capability_alignment 與 responsibility_verdict **正交**：兩句可同時成立，⛔ 不矛盾。⛔ 它不是 verdict，⛔ 不得用來降格或升格 responsibility 裁定。",
+   "verdict": "SPLIT_REQUIRED",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪最後六群摘要 ＋ 其中明示引用的程式面實查（estates.py::build_estate_status_facts ／ESTATE_FACE_BUILDERS ／ contracts.py 五個 check_can_* ＋ elif 分流 ／ 全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」0 命中且有正對照）、answer 本文與 source_type provenance；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:161/203/257/294 四個 check_can_*",
+     "claim_supported": "四項判斷**分別**已有成立的 deterministic responsibility（3491／3492／3493／3494 皆已 CONFIRMED）",
+     "supports": [
+      "identity",
+      "ownership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：elif 鏈一次只命中一個（含「點交」⇒ move_in 先中）",
+     "claim_supported": "production ⛔ 無 orchestration 能一次回答四項 ⇒ composite execution gap",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3511）：instance_applicability=instance",
+     "claim_supported": "row-level historical declaration——⚠️ 拆分後由四個 responsibility **各自** authority 決定",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3511，40 字）",
+     "claim_supported": "answer 明示「逐一檢查各操作的前置條件」⇒ 支持 multi-responsibility 判讀",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "⚠️ 依 P-C10：⛔ 不得為了補這個 execution gap 發明第五個 aggregate responsibility。"
+   ],
+   "evidence_gaps": [],
+   "split_across": [
+    "CG-ROW-3491",
+    "CG-ROW-3492",
+    "CG-ROW-3493",
+    "CG-ROW-3494"
+   ],
+   "review_basis_digest": "9fd016afcc07fc566fcbfec65883c6cbfc108d07ebaf00009cc58c393f2cefe3"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3512",
+   "batch": "C-5b",
+   "epoch": 1,
+   "members": [
+    3512
+   ],
+   "proposal_members": [
+    3512
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "NOT_ESTABLISHED_AS_AUTHORITATIVE_RESPONSIBILITY",
+     "reason": "「能不能點交」≠「能不能**取消**點交」；現況只因含「點交」而錯落 move_in"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONTENT_MEMBERSHIP_SUPPORTED",
+     "per_row": {
+      "3512": "answer 帶正面產品規則（取消點交需 status=16／取消點退需 status=64／租客已同意不能撤回）⇒ 支持 content membership，⚠️ 但**未**完全確認為 authoritative responsibility"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "NOT_ESTABLISHED",
+     "owner": "no cancel_move_in ／ cancel_move_out capability found"
+    }
+   },
+   "capability_alignment": [
+    "CLAIMED_CAPABILITY_NOT_IMPLEMENTED_CONFIRMED"
+   ],
+   "_capability_alignment_note": "⚠️ capability_alignment 與 responsibility_verdict **正交**：兩句可同時成立，⛔ 不矛盾。⛔ 它不是 verdict，⛔ 不得用來降格或升格 responsibility 裁定。",
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪最後六群摘要 ＋ 其中明示引用的程式面實查（estates.py::build_estate_status_facts ／ESTATE_FACE_BUILDERS ／ contracts.py 五個 check_can_* ＋ elif 分流 ／ 全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」0 命中且有正對照）、answer 本文與 source_type provenance；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3512，43 字）",
+     "claim_supported": "answer 明列 cancel eligibility 的產品規則（status=16／64／租客同意）——依 P-C3，⛔ 不單獨建立 instance execution ownership",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3512）：instance_applicability=instance",
+     "claim_supported": "既有 authoritative declaration（P1e-1，⛔ 依 P-C1a 不因 source 降格）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：含「點交」⇒ 命中 move_in（check_can_move_in）",
+     "claim_supported": "現行 execution 回答的是「能不能點交」，與宣稱責任**不一致** ⇒ 依 P-C7 反面，這是 capability mismatch，⛔ 不是 ownership evidence",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」＝ **0 命中**；正對照：同一掃描抓得到 bills.py 的 `_diagnose_cannot_cancel`（3 處）⇒ 掃描有效，⛔ 不是掃不到",
+    "⚠️ 依 P-C11：⛔ 不得用 MEMBERSHIP_REJECTED——我們證明的是「系統沒實作這個 capability」，⛔ 不是「產品上不應存在這個 responsibility」"
+   ],
+   "evidence_gaps": [
+    "authoritative responsibility identity not established",
+    "no deterministic cancel-eligibility capability"
+   ],
+   "review_basis_digest": "5d79c9d33faa732795616be7a7b88f2082f70e652852f4cb7a9812c82ab8bc19"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3513",
+   "batch": "C-5b",
+   "epoch": 1,
+   "members": [
+    3513
+   ],
+   "proposal_members": [
+    3513
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "NOT_ESTABLISHED_AS_AUTHORITATIVE_RESPONSIBILITY",
+     "reason": "claimed「為什麼不能取消或作廢合約」；production 五個 keyword branch 全不命中 → status fallback，與 claimed responsibility **不一致**"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONTENT_MEMBERSHIP_SUPPORTED",
+     "per_row": {
+      "3513": "answer 帶正面規則（status >= 8 已簽署生效不能直接取消，需改走提前解約）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "NOT_ESTABLISHED",
+     "owner": null
+    }
+   },
+   "capability_alignment": [
+    "CLAIMED_CAPABILITY_NOT_IMPLEMENTED_CONFIRMED",
+    "SEMANTIC_FALLBACK_MISMATCH_CONFIRMED"
+   ],
+   "_capability_alignment_note": "⚠️ capability_alignment 與 responsibility_verdict **正交**：兩句可同時成立，⛔ 不矛盾。⛔ 它不是 verdict，⛔ 不得用來降格或升格 responsibility 裁定。",
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪最後六群摘要 ＋ 其中明示引用的程式面實查（estates.py::build_estate_status_facts ／ESTATE_FACE_BUILDERS ／ contracts.py 五個 check_can_* ＋ elif 分流 ／ 全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」0 命中且有正對照）、answer 本文與 source_type provenance；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "knowledge_base.answer（row 3513，35 字）",
+     "claim_supported": "answer 明列 status>=8 的取消限制與替代路徑",
+     "supports": [
+      "membership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3513）：instance_applicability=instance",
+     "claim_supported": "既有 authoritative declaration（P1e-1，⛔ 依 P-C1a 不因 source 降格）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：五組關鍵字皆未命中 → _format_status_response",
+     "claim_supported": "fallback 只回合約現況，與 claimed responsibility 不一致 ⇒ semantic fallback mismatch",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」＝ **0 命中**；正對照：同一掃描抓得到 bills.py 的 `_diagnose_cannot_cancel`（3 處）⇒ 掃描有效，⛔ 不是掃不到",
+    "⚠️ answer 指向「改用提前解約」**⛔ 不構成 merge 到 3493**——那是 remediation／action recommendation，⛔ 不是「取消合約 responsibility ＝ 提前解約 responsibility」",
+    "⚠️ ⛔ 不得引 3510 的 status fallback 判例背書：3513 是**錯誤地跌進** fallback"
+   ],
+   "evidence_gaps": [
+    "authoritative responsibility identity not established",
+    "no deterministic contract-cancel capability"
+   ],
+   "review_basis_digest": "6173e5f5acab7d415e11360c791f08584c466b25eaa7874dca6130b7be48b4d3"
+  },
+  {
+   "candidate_group_id": "CG-ROW-4255",
+   "batch": "C-5b",
+   "epoch": 1,
+   "members": [
+    4255
+   ],
+   "proposal_members": [
+    4255
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "NOT_ESTABLISHED",
+     "reason": "send invitation ≠ withdraw invitation；現況因含「邀請」錯落 invite"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "NOT_CONFIRMED",
+     "per_row": {
+      "4255": "answer **空** ＋ manual provenance ＋ 無 authoring spec⇒ ⛔ 連 content membership 都無法支持"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "NOT_ESTABLISHED",
+     "owner": null
+    }
+   },
+   "capability_alignment": [
+    "CLAIMED_CAPABILITY_NOT_IMPLEMENTED_CONFIRMED",
+    "WRONG_BRANCH_CONFIRMED"
+   ],
+   "_capability_alignment_note": "⚠️ capability_alignment 與 responsibility_verdict **正交**：兩句可同時成立，⛔ 不矛盾。⛔ 它不是 verdict，⛔ 不得用來降格或升格 responsibility 裁定。",
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪最後六群摘要 ＋ 其中明示引用的程式面實查（estates.py::build_estate_status_facts ／ESTATE_FACE_BUILDERS ／ contracts.py 五個 check_can_* ＋ elif 分流 ／ 全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」0 命中且有正對照）、answer 本文與 source_type provenance；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 4255）：instance_applicability=instance",
+     "claim_supported": "既有 authoritative declaration（P1e-1，⛔ 依 P-C1a 不因 source 降格）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/contracts.py:681::_build_response（關鍵字 elif 分流）：含「邀請」⇒ 命中 invite（check_can_invite）",
+     "claim_supported": "現行 execution 回答的是「能不能**發送**邀請」，claimed 是「收回／取消」⇒ wrong branch",
+     "supports": [
+      "identity"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」＝ **0 命中**；正對照：同一掃描抓得到 bills.py 的 `_diagnose_cannot_cancel`（3 處）⇒ 掃描有效，⛔ 不是掃不到",
+    "⚠️ **證據強度低於 3512／3513**：那兩列有非空 answer 可支持 product-rule membership，4255 沒有——⛔ 不得把三者寫成同一強度",
+    "row provenance：source_type=manual、source_file=**無**、created_at=2026-07-06"
+   ],
+   "evidence_gaps": [
+    "responsibility identity not established",
+    "no content evidence（answer 空）",
+    "no authoring spec",
+    "no cancel/withdraw capability"
+   ],
+   "review_basis_digest": "3bc3a6f736d729c8c2f37e934584be20e5f4de426df6d89e6848b15e4cbfa49c"
+  },
+  {
+   "candidate_group_id": "CG-ROW-3498",
+   "batch": "D",
+   "epoch": 1,
+   "members": [
+    3498
+   ],
+   "proposal_members": [
+    3498
+   ],
+   "registry_facet": null,
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "HISTORICAL_RETIRED_RESPONSIBILITY_RECORD",
+     "reason": "no active independent responsibility remains"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "HISTORICAL_RETIRED_ONLY",
+     "per_row": {
+      "3498": "HISTORICAL_RETIRED member only（is_active=false）"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "SUPERSEDED",
+     "owner": "historical A ownership = superseded；active late-fee instance ownership = B（late_fee face／build_late_fee_facts）；general knowledge truth = subsumed by 3531 ＋ 3532"
+    }
+   },
+   "capability_alignment": [
+    "RETIRED_NO_ACTIVE_BINDING"
+   ],
+   "_capability_alignment_note": "⚠️ capability_alignment 與 responsibility_verdict **正交**：兩句可同時成立，⛔ 不矛盾。⛔ 它不是 verdict，⛔ 不得用來降格或升格 responsibility 裁定。",
+   "verdict": "HISTORICAL_ONLY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "本輪最後六群摘要 ＋ 其中明示引用的程式面實查（estates.py::build_estate_status_facts ／ESTATE_FACE_BUILDERS ／ contracts.py 五個 check_can_* ＋ elif 分流 ／ 全 services 掃「取消點交／取消點退／收回邀請／撤回／cancel_invite」0 命中且有正對照）、answer 本文與 source_type provenance；⛔ 未貼出的 dossier evidence 不屬本次 basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "PROVENANCE_HISTORY",
+     "source": "knowledge_base.generation_metadata（row 3498）.retirement（t2-3498-knowledge-identity.md）",
+     "claim_supported": "K1_FULLY_SUBSUMED ＋ UNDER_QUALIFIED_DUPLICATE；subsumed_by=[3531,3532]；ownership_consolidated_to=late_fee face；effective_for_routing／scoring／population 皆 false",
+     "supports": [
+      "identity",
+      "membership",
+      "ownership"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "p3-verdicts.json：CG-ROW-3531 ／ CG-ROW-3532 皆 CONFIRMED_RESPONSIBILITY",
+     "claim_supported": "兩個 general successor 已各自封住 ⇒ 3498 的內容真相已有歸屬",
+     "supports": [
+      "ownership",
+      "identity"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（row 3498）：instance_applicability=instance",
+     "claim_supported": "historical declaration = instance；**operational authority = inactive**",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    }
+   ],
+   "absence_observations": [
+    "⚠️ 失效不失憶：宣告與 provenance 保留，⛔ 不刪。"
+   ],
+   "evidence_gaps": [],
+   "_historical_note": "這正是 schema 裡 HISTORICAL_ONLY 應該存在的案例。",
+   "review_basis_digest": "5ef3b3f271001a01ae171bf584bcc8af3691130e40998ac175b66eaa185c08c4"
   }
  ],
  "_level_a_v2_census_interim": {
@@ -3383,7 +3873,10 @@
   "P-C5_dedicated_query_path": "dedicated deterministic query formatter/path can establish responsibility capability; \"diagnose function\" is not required.（3514 判例）",
   "P-C6_same_builder_is_not_same_responsibility": "same Face/builder establishes owner domain, but if that builder is question-sensitive, same builder alone MUST NOT establish same responsibility identity or alias membership.（3361 判例；T4 判 build_payment_flow_facts = QUESTION_SENSITIVE）",
   "P-C7_utterance_driven_capability_binding": "production code 不需要知道 knowledge row id，responsibility capability 仍可被確認。必要條件：① responsibility 的 utterance semantics 能 deterministic 命中某 branch；② 該 branch 執行的 capability 與該 responsibility 的 claimed semantics **一致**。⇒ row id 未出現在 code ≠ capability 不存在。⚠️ 反面：utterance 能命中某 branch ≠ responsibility 自動確認——若命中的 branch semantics 與 row 宣稱責任**不一致**，那是 **capability mismatch**，⛔ 不是 ownership evidence。",
-  "P-C8_same_branch_variant_merge": "兩列若 ① applicability 相同 ② semantic responsibility 等價 ③ deterministic 落同一 capability branch，則 answer-empty／answer-bearing、positive／negative 措辭、row wiring 差異，⛔ 不足以建立兩個 responsibility。⚠️「同 branch」單獨仍不夠——**語義等價是必要項**。"
+  "P-C8_same_branch_variant_merge": "兩列若 ① applicability 相同 ② semantic responsibility 等價 ③ deterministic 落同一 capability branch，則 answer-empty／answer-bearing、positive／negative 措辭、row wiring 差異，⛔ 不足以建立兩個 responsibility。⚠️「同 branch」單獨仍不夠——**語義等價是必要項**。",
+  "P-C9_responsibility_is_not_current_wiring": "claimed responsibility 有正面 deterministic capability evidence 且 membership 對得上，即使該 row 現在 wiring 錯誤，responsibility 仍可 CONFIRMED。⚠️ wiring defect 必須**獨立記錄**。",
+  "P-C10_multi_responsibility_utterance": "一列同時詢問多個已成立的 responsibilities，⛔ 不因為它是一列就建立新的 aggregate responsibility。若不存在獨立 aggregate semantics → SPLIT_REQUIRED。",
+  "P-C11_capability_absence_is_not_membership_rejection": "找不到 claimed instance capability 可以確認 implementation gap，⛔ 但不能單獨證明產品 responsibility 不存在。沒有反向 product evidence 時 → INSUFFICIENT_EVIDENCE，⛔ 而非 MEMBERSHIP_REJECTED。"
  },
  "_epoch_model": {
   "_doc": "同一 candidate group 可有多個 epoch；**最高 epoch ＝ 當前裁定**。",
@@ -3392,5 +3885,36 @@
  },
  "_audit_lessons": {
   "L1_metadata_is_not_capability_census": "`generation_metadata.evidence_detail` ⛔ **不是** capability census 的完整 authority source。它只描述**當時記錄進 metadata** 的證據，⛔ 不能拿來證明「production code 沒有其他 deterministic branch」。⚠️ 本 P3 內連續兩次踩到（Batch A 的 BILL_FACE_BUILDERS、Batch B 的 _diagnose_manual_complete）。處置：⛔ 不因此重開其他已確認 group，**除非**新的 code evidence 會實際改變某個裁定。"
+ },
+ "_capability_alignment_vocabulary": {
+  "_doc": "⚠️ 與 responsibility_verdict **正交**的 diagnostic 軸（業主裁定 2026-08-29）。⛔ 不進 frozen verdict vocabulary、⛔ 不改 R10P-SCHEMA-2（該 schema 未定義 propositions／capability_alignment，故新增 ⛔ 不觸及 SCHEMA_DIGEST 凍結面）。",
+  "values": {
+   "WRONG_EXECUTION_BINDING_CONFIRMED": "capability 存在，但該 row 現在接在錯的 endpoint／face 上（3507）",
+   "COMPOSITE_EXECUTION_GAP_CONFIRMED": "各構成能力都在，但缺一次回答多項的 orchestration（3511）",
+   "CLAIMED_CAPABILITY_NOT_IMPLEMENTED_CONFIRMED": "宣稱的 capability 在 production **未實作**（3512／3513／4255）",
+   "SEMANTIC_FALLBACK_MISMATCH_CONFIRMED": "落 fallback，且 fallback 語義與宣稱責任不一致（3513）",
+   "WRONG_BRANCH_CONFIRMED": "命中了語義相反／不同的 branch（4255：send 而非 withdraw）",
+   "RETIRED_NO_ACTIVE_BINDING": "已退役，無 active 執行綁定（3498）"
+  },
+  "orthogonality_example": {
+   "3507": "responsibility_verdict=CONFIRMED_RESPONSIBILITY ＋ capability_alignment=WRONG_EXECUTION_BINDING_CONFIRMED",
+   "3512": "responsibility_verdict=INSUFFICIENT_EVIDENCE ＋ capability_alignment=CLAIMED_CAPABILITY_NOT_IMPLEMENTED_CONFIRMED"
+  }
+ },
+ "p3_complete": true,
+ "_p3_completion": {
+  "groups_reviewed": "47／47",
+  "current_epoch_tally": {
+   "CONFIRMED_RESPONSIBILITY": 30,
+   "MERGE_WITH_OTHER": 5,
+   "INSUFFICIENT_EVIDENCE": 10,
+   "SPLIT_REQUIRED": 1,
+   "HISTORICAL_ONLY": 1
+  },
+  "may_claim": "54-row governance population 的 47 個 candidate group 皆已有 human review 裁定。",
+  "must_not_claim": [
+   "reviewed responsibility 的**相異數**已算出——⛔ 那要等 P4 seal ＋ P5 census；MERGE_WITH_OTHER(5)／SPLIT_REQUIRED(1)／HISTORICAL_ONLY(1) 尚未投影成 responsibility population"
+  ],
+  "next": "R10-P4 registry seal → REGISTRY_DIGEST；然後 P5 census；⛔ 不得先開 A05。"
  }
 }

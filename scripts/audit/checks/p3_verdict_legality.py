@@ -23,6 +23,10 @@ IDENTITY／MEMBERSHIP，也不得順手把 applicability 填成 unknown。
 > ⑨ 同一群可有多個 **epoch**（新證據 → 補充 review），但：每個 epoch 只能出現一次、
 >    epoch>1 必須帶 `supersedes_digest`（＝該群前一 epoch 的 digest）與非空 `superseding_axes`。
 >    ⚠️ 舊 epoch ⛔ 不得被覆寫——「當時 scope 下合法」的裁定必須留著，⛔ 不讓後見之明抹掉 provenance。
+> ⑩ `SPLIT_REQUIRED` 必須指名非空 `split_across`，其成員皆在 frozen proposal 內且 ⛔ 不含自己。
+> ⑪ `capability_alignment` 只能取凍結字彙，且 ⛔ **不得**與任一 verdict 值相同
+>    ——它是與 responsibility review **正交**的 diagnostic，⛔ 不是 verdict 的別名。
+> ⑫ P3 宣告完成後，frozen proposal 的**每一群**都必須有裁定紀錄（⛔ 不得有群被靜默略過）。
 
 用法：python3 scripts/audit/checks/p3_verdict_legality.py [--self-test]
 """
@@ -49,7 +53,9 @@ def load():
         v = json.load(f)
     with open(PROPOSAL, encoding="utf-8") as f:
         p = json.load(f)
-    return {"v": v, "group_ids": {c["candidate_group_id"] for c in p["candidates"]}}
+    return {"v": v, "group_ids": {c["candidate_group_id"] for c in p["candidates"]},
+            "alignment_vocab": set((v.get("_capability_alignment_vocabulary") or {})
+                                   .get("values", {}).keys())}
 
 
 def basis_digest(rec):
@@ -118,6 +124,23 @@ def violations(st=None):
             if not (r["propositions"]["IV_OWNERSHIP"].get("owner") or "").strip():
                 bad.append(f"{cid}：CONFIRMED_RESPONSIBILITY 卻未寫 owner")
 
+        if r.get("verdict") == "SPLIT_REQUIRED":
+            sp = r.get("split_across") or []
+            if not sp:
+                bad.append(f"{cid}：SPLIT_REQUIRED 卻沒有 split_across")
+            for t in sp:
+                if t == cid:
+                    bad.append(f"{cid}：split_across 含自己")
+                elif t not in st["group_ids"]:
+                    bad.append(f"{cid}：split_across 的 {t} ⛔ 不在 frozen proposal 內")
+
+        for a in (r.get("capability_alignment") or []):
+            if a not in st["alignment_vocab"]:
+                bad.append(f"{cid}：capability_alignment {a!r} ⛔ 不在凍結字彙內")
+            if a in VERDICTS_ALLOWED:
+                bad.append(f"{cid}：capability_alignment {a!r} 與 verdict 值同名"
+                           f"——⛔ 它是正交 diagnostic，⛔ 不得當 verdict 別名")
+
         if r.get("verdict") == "MERGE_WITH_OTHER":
             tgt = r.get("merge_target")
             if not tgt:
@@ -142,6 +165,10 @@ def violations(st=None):
                        f"{str(r.get('review_basis_digest'))[:12]}…）⇒ 引用的證據集合已變")
     if not recs:
         bad.append("p3-verdicts.json 沒有任何裁定紀錄")
+    # ⑫ 覆蓋率：⚠️ 大聲失敗——有群沒被裁到就紅，⛔ 不靜默略過
+    uncovered = sorted(st["group_ids"] - set(by_group))
+    if uncovered and st["v"].get("p3_complete"):
+        bad.append(f"P3 宣告完成，但這些群沒有裁定紀錄：{uncovered}")
     return bad
 
 
@@ -250,6 +277,34 @@ def self_test() -> int:
         m = mut(dup_epoch)
         cases.append(("同一 epoch 出現兩次必須紅",
                       any("同一 epoch 被裁定兩次" in x for x in violations(m))))
+
+    if any(r.get("split_across") for r in st["v"]["records"]):
+        def sp(rs):
+            return next(x for x in rs if x.get("split_across"))
+        m = mut(lambda rs: sp(rs).update({"split_across": []}))
+        cases.append(("SPLIT 缺 split_across 必須紅",
+                      any("沒有 split_across" in x for x in violations(m))))
+        m = mut(lambda rs: sp(rs).update({"split_across": ["CG-ROW-999999"]}))
+        cases.append(("split_across 指向不存在的群必須紅",
+                      any("不在 frozen proposal" in x for x in violations(m))))
+    if any(r.get("capability_alignment") for r in st["v"]["records"]):
+        def al(rs):
+            return next(x for x in rs if x.get("capability_alignment"))
+        m = mut(lambda rs: al(rs).update({"capability_alignment": ["MADE_UP"]}))
+        cases.append(("capability_alignment 不在字彙內必須紅",
+                      any("不在凍結字彙" in x for x in violations(m))))
+        m = mut(lambda rs: al(rs).update({"capability_alignment": ["MEMBERSHIP_REJECTED"]}))
+        cases.append(("capability_alignment 與 verdict 同名必須紅",
+                      any("與 verdict 值同名" in x for x in violations(m))))
+    # 覆蓋率正對照：拿掉一群的所有紀錄必須紅（僅在已宣告 p3_complete 時生效）
+    if st["v"].get("p3_complete"):
+        def drop_group(rs):
+            gid = rs[0]["candidate_group_id"]
+            for x in [y for y in rs if y["candidate_group_id"] == gid]:
+                rs.remove(x)
+        m = mut(drop_group)
+        cases.append(("P3 完成後有群沒裁必須紅",
+                      any("沒有裁定紀錄" in x for x in violations(m))))
 
     m = mut(lambda rs: rs[0].update({"verdict": "LOOKS_FINE"}))
     cases.append(("verdict 不在凍結集合必須紅",
