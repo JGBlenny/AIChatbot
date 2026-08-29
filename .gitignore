@@ -109,6 +109,8 @@ backups/
 *.sql.gz
 # …但 migrations/種子是部署必需，不屬備份 → 例外進版控
 !rag-orchestrator/database/migrations/*.sql
+# 量測契約（凍結的分析定義）同樣不屬備份：它是判準本體，改動即構成量尺變更
+!scripts/analysis/*.sql
 
 
 # 覆蓋率執行產物（基準 coverage-baseline.json 才版控）
