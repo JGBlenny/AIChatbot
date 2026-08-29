@@ -60,6 +60,14 @@ L1_EXACT_AGREEMENT=0.9700
 COHEN_KAPPA=0.9682
 GATE=FAIL
 GATE_REASON=CORPUS_INSUFFICIENT_STRATUM_3498（confirmed 13/20 < 15）
+# ── 業主終局裁定（2026-08-29）──
+A04_FINAL=INCONCLUSIVE / CORPUS_INSUFFICIENT
+A04_HARNESS=NOT_EXERCISED
+CORPUS_ALLOWED_USE=diagnostic / responsibility-boundary analysis
+CORPUS_FORBIDDEN_USE=A04 authorization；⛔ 亦不得抽出續用於後續 A05
+# ⛔ 不採「排除 3498 改驗 9 rows」——那是**依 validation outcome 修改 scope**，
+#    即使未看 candidate/legacy 輸出，也已看過 ground-truth distribution。
+# 若要驗其餘 9 rows ⇒ 另開 A05-9，新 scope／新 corpus／新 digest／新隔離標註／新 run。
 MANIFEST_SHA256=62d064e330a85d17801dc51c0d6b45a44fc369d51356ac5c1d9d9d1213a28375
 CORPUS_STATUS=SEALED_UNBURNED
 # ⚠️ corpus 仍**未** BURNED——尚未執行任何檢索或 counterfactual harness。
