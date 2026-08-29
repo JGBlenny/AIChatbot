@@ -44,6 +44,11 @@ LEGAL_VALUES = {"instance", "general"}
 #: ⚠️ 定在規則落地的**次日**，⛔ 不製造追溯性違規（當日已有 6 筆因本輪修正被觸碰）。
 P1D_EFFECTIVE_DATE = "2026-08-30"
 
+#: **Level-A gate scope**（與 `instance_reference_gate.LEVEL_A_INSTANCE_GATE_SCOPE` 同一組）。
+#: ⚠️ 提名到這些 Face 的知識**必須**有明示 applicability——它們是 gate 的授權輸入，
+#:    UNKNOWN 在此處等於「授權輸入缺席」，正是本輪整條線要根除的狀態。
+LEVEL_A_FACES = {"bill_diagnosis"}
+
 KNOWLEDGE_KEY = "instance_applicability"
 FACE_KEY = "requires_instance_reference"
 
@@ -121,6 +126,17 @@ def undeclared_after_cutoff(rows, cutoff=P1D_EFFECTIVE_DATE):
     return out
 
 
+def level_a_undeclared(rows):
+    """Level-A 閉合：提名到 Level-A Face 的知識不得為 UNKNOWN。
+
+    ⚠️ 與 P1d 的 cutoff 規則不同——**這條沒有 legacy 豁免**：
+    Level-A 是目前唯一納管的 gate scope，它的 truth 必須 10/10 明示，
+    ⛔ 不得依賴 lexical inference、execution proxy 或 UNKNOWN fallback。
+    """
+    return [r for r in rows
+            if r.get("nominates_level_a") and r.get("value") not in LEGAL_VALUES]
+
+
 def illegal_values(rows):
     """回傳值域違規清單。⚠️ 純函式，供 --self-test 離線驗。"""
     return [r for r in rows
@@ -129,11 +145,18 @@ def illegal_values(rows):
 
 SQL = r"""
 SELECT COALESCE(json_agg(row_to_json(t)), '[]'::json)::text FROM (
-  SELECT id, question_summary,
-         generation_metadata->>'instance_applicability' AS value,
-         GREATEST(created_at, COALESCE(updated_at, created_at))::text AS touched_at
-  FROM knowledge_base
-  WHERE is_active AND COALESCE(category,'') NOT IN ('對話規則','系統脈絡')
+  WITH la AS (
+    SELECT generation_metadata->'conversational_config'->'topic_scope'->>'category' AS cat
+    FROM knowledge_base
+    WHERE category='對話規則' AND is_active
+      AND generation_metadata->'conversational_config'->>'key' IN ('bill_diagnosis')
+  )
+  SELECT k.id, k.question_summary,
+         k.generation_metadata->>'instance_applicability' AS value,
+         GREATEST(k.created_at, COALESCE(k.updated_at, k.created_at))::text AS touched_at,
+         EXISTS (SELECT 1 FROM la WHERE la.cat = ANY(k.categories)) AS nominates_level_a
+  FROM knowledge_base k
+  WHERE k.is_active AND COALESCE(k.category,'') NOT IN ('對話規則','系統脈絡')
 ) t;
 """
 
@@ -165,6 +188,14 @@ def self_test() -> int:
     cases.append(("legacy 未宣告不得誤報", undeclared_after_cutoff([legacy]) == []))
     cases.append(("cutoff 後未宣告必須紅", len(undeclared_after_cutoff([fresh])) == 1))
     cases.append(("cutoff 後已宣告不得誤報", undeclared_after_cutoff([declared_fresh]) == []))
+    # Level-A 閉合
+    cases.append(("Level-A 已宣告不得誤報",
+                  level_a_undeclared([{"id": 11, "value": "instance", "nominates_level_a": True}]) == []))
+    cases.append(("Level-A 未宣告必須紅（**無 legacy 豁免**）",
+                  len(level_a_undeclared([{"id": 12, "value": None, "nominates_level_a": True,
+                                           "touched_at": "2020-01-01"}])) == 1))
+    cases.append(("非 Level-A 未宣告不得誤報",
+                  level_a_undeclared([{"id": 13, "value": None, "nominates_level_a": False}]) == []))
     cases.append(("cutoff 當日即生效（邊界含當日）",
                   len(undeclared_after_cutoff([{"id": 10, "value": None,
                                                 "touched_at": P1D_EFFECTIVE_DATE + " 00:00:00"}])) == 1))
@@ -218,6 +249,13 @@ def main() -> int:
         for r in bad:
             print(f"   知識 {r['id']}：{r['value']!r}")
         fail = 1
+    la_bad = level_a_undeclared(rows)
+    if la_bad:
+        print("❌ FAIL：以下知識提名 Level-A gate scope 的面向，卻未明示 applicability"
+              "（⛔ Level-A 無 legacy 豁免——UNKNOWN ＝ 授權輸入缺席）：")
+        for r in la_bad[:20]:
+            print(f"   知識 {r['id']}「{r.get('question_summary')}」")
+        fail = 1
     stale = undeclared_after_cutoff(rows)
     if stale:
         print(f"❌ FAIL：以下情境知識於 {P1D_EFFECTIVE_DATE} 之後建立／修改，"
@@ -229,7 +267,9 @@ def main() -> int:
         fail = 1
     if not fail:
         declared = sum(1 for r in rows if r.get("value") in LEGAL_VALUES)
-        print(f"（母體 {len(rows)} 筆；已宣告 {declared} 筆；"
+        la_n = sum(1 for r in rows if r.get("nominates_level_a"))
+        print(f"（Level-A scope {la_n} 筆**全數明示** ✅；"
+              f"母體 {len(rows)} 筆；已宣告 {declared} 筆；"
               f"其餘＝legacy UNKNOWN，⛔ 不得取得正向授權含義。"
               f"P1d 生效日 {P1D_EFFECTIVE_DATE}）")
     return fail

@@ -262,6 +262,9 @@ echo "═══ 不變量 10：instance applicability 的三態資料契約（U1
 #            否則遲早出現「缺宣告當 general」或「用 form_id 推導」的 fallback）
 # ⚠️ P1a/P1b 階段不要求 coverage；**P1d 起改為分期要求**：
 #    2026-08-30 之後建立／修改的情境知識未宣告 → FAIL（UNKNOWN 只允許 legacy）。
+#    ⚠️ **Level-A gate scope（bill_diagnosis）另有更嚴的一條、無 legacy 豁免**：
+#       提名到它的知識必須 100% 明示——UNKNOWN 在該處等於「授權輸入缺席」，
+#       正是整條 U1／P1 線要根除的狀態（2026-08-29 已閉合 10/10）。
 #    ⇒ 存量可慢慢回填，但**不再長出新的洞**。治理規則見 .kiro/steering/knowledge.md。
 IA_CHECK="$REPO/scripts/audit/checks/instance_applicability_contract.py"
 if ! python3 "$IA_CHECK" --self-test >/dev/null 2>&1; then
