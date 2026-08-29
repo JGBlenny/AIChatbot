@@ -1052,11 +1052,13 @@ def _meter_entry_source(source: str) -> None:
     ——`[]` 專指「nomination 執行過且零候選」。兩者混用會直接污染比例統計（不變量 I3）。
     """
     try:
+        from services.conversational_config import mapping_digest
         _meter_decision(snapshot={"nomination": {
             "entry_source": source,
             "top1_knowledge_id": None,
             "top1_categories": None,
             "nomination_candidate_facet_keys": None,
+            "face_mapping_digest": mapping_digest(),
         }})
     except Exception as e:                                     # noqa: BLE001
         print(f"⚠️ [nomination telemetry] entry_source 落點失敗，不影響 routing：{e}")
@@ -1077,11 +1079,16 @@ def _meter_nomination(best_knowledge, candidates) -> None:
     #    只保護 `_meter_decision` 的呼叫不夠——failure injection 實測逼出這一點。
     #    不變量 I6：serialization／組裝／寫入任一失敗，一律不得改變 production answer path。
     try:
+        from services.conversational_config import mapping_digest
         _meter_decision(snapshot={"nomination": {
             "entry_source": ENTRY_SOURCE_CLASSIFICATION,
             "top1_knowledge_id": (best_knowledge or {}).get("id"),
             "top1_categories": _knowledge_category(best_knowledge) if best_knowledge else [],
             "nomination_candidate_facet_keys": nomination_candidate_keys(candidates),
+            # ⚠️ analysis epoch 切分：Face config／category 映射在 DB 裡獨立改，
+            #    既有 config_hash 與 _generate_config_version 都**不涵蓋**它
+            #    ⇒ 沒有這格，改動前後的資料會被混進同一個 funnel。
+            "face_mapping_digest": mapping_digest(),
         }})
     except Exception as e:                                     # noqa: BLE001
         print(f"⚠️ [nomination telemetry] 快照落點失敗，不影響 routing：{e}")

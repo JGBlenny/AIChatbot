@@ -7,9 +7,33 @@
 --   ⛔ 不得說：「漏掉 N%」「category recall」「missing coverage」「漏接率」
 --      ——那些需要 Layer 0 capability truth，而 Stage 1 沒有收使用者原文。
 --
+-- ⚠️ **Analysis epoch**：結果只對「同一套受測系統」成立。跑任何一張表之前，
+--   先用 Q0 確認時間窗內只有一個 `face_mapping_digest`。
+--   實查後才確定需要這格：`DecisionConfig.config_hash()` 只雜湊門檻／env，
+--   `_generate_config_version()` 只有兩個門檻——**都不涵蓋** Face config 與
+--   category→facet 映射，而那是在 DB 裡獨立修改的。
+--   ⛔ 跨 digest 的資料**不得**混成同一個 funnel。
+--
+-- ⚠️ `n < 30` 的紀律要套到**交叉表的每一格**，不只總 N。
+--   例如總體 N=5,000 不代表「category=電表、N=8、candidate=[] 6 筆」
+--   可以宣稱「電表 75% 不產生 nomination」——那格只能報 `6/8 observed`。
+--
 -- ⚠️ 母體一律鎖在 entry_source='classification'。
 --   `sop_arbitration`／`existing_session`／`explicit_trigger`／`vision_redirect`／
 --   `prospect_free_qa`／`transaction_form` **不得**進 denominator——混入會污染 S3。
+
+-- ════════════════════════════════════════════════════════════════════
+-- Q0｜analysis epoch 對帳（**先跑這張**；多於一個 digest 就不得合併分析）
+-- ════════════════════════════════════════════════════════════════════
+
+SELECT decision_snapshot->'nomination'->>'face_mapping_digest' AS face_mapping_digest,
+       min(ts) AS first_seen,
+       max(ts) AS last_seen,
+       count(*) AS requests
+FROM usage_events
+WHERE decision_snapshot ? 'nomination' AND is_internal = FALSE
+GROUP BY 1
+ORDER BY first_seen;
 
 -- ════════════════════════════════════════════════════════════════════
 -- Q1｜S1–S5 funnel ＋ instrumentation sentinel

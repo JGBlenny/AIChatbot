@@ -104,6 +104,34 @@ _CODE_DEFAULTS: Dict[str, ConversationalConfig] = {PRESALES_CONFIG.key: PRESALES
 _cache: Dict[str, Any] = {"loaded": False, "by_key": {}, "by_role": {}, "by_category": {}}
 
 
+def mapping_digest() -> Optional[str]:
+    """`category → facet key` 映射的摘要——**analysis epoch 切分用**。
+
+    ## 為什麼需要它（實查後才確定的）
+
+    既有兩個版本標記都**不涵蓋**這份映射：
+
+    ```text
+    DecisionConfig.config_hash()   只雜湊 DecisionConfig 的欄位（門檻／env）
+    _generate_config_version()     只有 PERFECT_MATCH／SYNTHESIS 兩個門檻
+    ```
+
+    而 Face config 與 category 是**在 DB 裡獨立修改**的：改一個面向的
+    `topic_scope.category`、新增或停用一個面向，兩個標記都不會動
+    ⇒ epoch 邊界在 telemetry 裡**看不見**，修改前後的資料會被混進同一個 funnel。
+
+    ⚠️ **不觸發載入**：快取未載入時回 `None`。
+    為了記錄而讓觀測產生 side effect（多一次 DB 讀）是本末倒置。
+    """
+    import hashlib
+    if not _cache["loaded"]:
+        return None
+    body = json.dumps({c: getattr(cfg, "key", None)
+                       for c, cfg in _cache["by_category"].items()},
+                      sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()[:12]
+
+
 def _config_from_row(target_user: Optional[List[str]], metadata: Any) -> Optional[ConversationalConfig]:
     """由一列「對話規則」的 target_user + generation_metadata 組出設定（無 config metadata → None）。"""
     if isinstance(metadata, str):

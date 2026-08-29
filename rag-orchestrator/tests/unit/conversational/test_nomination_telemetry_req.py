@@ -201,3 +201,50 @@ async def test_telemetry_write_failure_does_not_change_routing(monkeypatch):
     assert cfg is base_cfg and auth == base_auth, \
         "telemetry 故障改變了 routing → observability 成了 execution dependency"
     assert cfg is b, "基準本身要有意義（應由第二候選 commit），否則此測試無鑑別力"
+
+
+# ── ④ analysis epoch：face mapping digest ──────────────────────────────────
+#
+# ⚠️ 為什麼要這格（實查後才確定）：既有 `DecisionConfig.config_hash()` 只雜湊門檻／env，
+#    `_generate_config_version()` 只有兩個門檻——**都不涵蓋** Face config 與
+#    category→facet 映射，而那是在 DB 裡獨立修改的。
+#    沒有這格，改動前後的 production 資料會被混進同一個 funnel。
+
+@pytest.mark.req("conversational-routing-execution:stage1-epoch")
+def test_mapping_digest_moves_when_mapping_changes():
+    """★ 正控制＋突變：映射改變 → digest 必須跟著變；同映射 → 必須穩定。"""
+    from services import conversational_config as cc
+
+    def _fake(key):
+        return ConversationalConfig(key=key, persona_role=f"pm_{key}", enabled=True,
+                                    topic_scope={"mode": "category", "category": f"cat_{key}"})
+
+    orig_loaded, orig_bycat = cc._cache["loaded"], cc._cache["by_category"]
+    try:
+        cc._cache["loaded"] = True
+        cc._cache["by_category"] = {"甲": _fake("a"), "乙": _fake("b")}
+        d1 = cc.mapping_digest()
+        d1_again = cc.mapping_digest()
+        assert d1 and d1 == d1_again, "同一份映射的 digest 必須穩定（否則無法切 epoch）"
+
+        # 突變①：改掉某 category 指向的面向
+        cc._cache["by_category"] = {"甲": _fake("a"), "乙": _fake("CHANGED")}
+        assert cc.mapping_digest() != d1, "面向改指向卻 digest 不變 → epoch 邊界看不見"
+
+        # 突變②：移除一個 mapping
+        cc._cache["by_category"] = {"甲": _fake("a")}
+        assert cc.mapping_digest() != d1, "移除 mapping 卻 digest 不變 → epoch 邊界看不見"
+    finally:
+        cc._cache["loaded"], cc._cache["by_category"] = orig_loaded, orig_bycat
+
+
+@pytest.mark.req("conversational-routing-execution:stage1-epoch")
+def test_mapping_digest_never_triggers_a_load():
+    """⚠️ 觀測不得產生 side effect：快取未載入時回 None，**不得**去讀 DB。"""
+    from services import conversational_config as cc
+    orig = cc._cache["loaded"]
+    try:
+        cc._cache["loaded"] = False
+        assert cc.mapping_digest() is None, "未載入時應回 None，不得為了記錄而觸發載入"
+    finally:
+        cc._cache["loaded"] = orig
