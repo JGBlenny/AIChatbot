@@ -6,7 +6,9 @@
 來源      r10p/proposal.json（PROPOSAL_DIGEST=fe6e5f3feba9b26f…，P2_PROPOSAL_FROZEN）
 判準      R10P-SCHEMA-2（SCHEMA_DIGEST=b72e749e0c452f0d…）
 母體      POPULATION 51c04b887a16b05f…／IDSET 00581c42771fa3b0…
-本檔性質  frozen proposal ＋ DB 既有 reviewed 事實的**投影**；⛔ 本檔不裁定、不合併、不拆分、不填 authority
+本檔性質  frozen proposal ＋ DB 既有 reviewed 事實的**投影**；⛔ 本檔不代裁
+裁定正本  r10p/p3-verdicts.json（P3 authority record；⛔ proposal 不得反向定義它）
+已裁批次  **Batch A（5 群）已由業主裁定 2026-08-29**；B／C／D 仍留空
 ```
 
 ## 讀法（四條規約）
@@ -118,21 +120,24 @@ HINT_ONLY  same categories  「繳費金流排障」⇒ [3361, 3366, 3931, 3932,
 
 ### evidence gaps
 ```text
-identity       registry 明文支持「同 facet 的不同講法」，⚠️ 但 facet **⛔ 不等同** responsibility（R10-Q1 已證同一 facet 內可有多個責任）
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  缺：正面裁定（undeclared ⇒ 不得填 unknown）
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+applicability authority not established
+authoritative owner/capability not established
+⚠️ identity ／ membership **已 CONFIRMED**（authoring provenance ＋ registry）——⛔ 不得再列為 gap，⛔ 後續讀到 INSUFFICIENT_EVIDENCE 者不得重審 alias relation。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ 同批 authoring rule「一種講法一筆」＋同 entry-alias registry ⇒ 同一 entry responsibility 的 utterance variants
+II.  MEMBERSHIP      CONFIRMED（逐列：3931=ENTRY_ALIAS／3932=ENTRY_ALIAS／3933=ENTRY_ALIAS）
+III. APPLICABILITY   declaration_status=undeclared／value=null
+       └ ⛔ 不得填 unknown——undeclared 是「尚未建立 authority」，unknown 是「已 review 且確認無法固定」
+IV.  OWNERSHIP       NOT_ESTABLISHED
+VERDICT              **INSUFFICIENT_EVIDENCE**
+       └ **只**不足在 APPLICABILITY／OWNERSHIP。IDENTITY 與 MEMBERSHIP 已 CONFIRMED，⛔ 後續看到 INSUFFICIENT_EVIDENCE 者不得重審 alias relation。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  b0bb97f77d5e7363ef3bb78d0266c97ad375ac57e9d325694ec5ed53c8e5f014
+review_input_scope   本批裁定**只**使用 (a) 主 session 訊息中貼出的 Batch A 證據摘要、(b) 已完成的 late-fee T1／T2／H2 證據鏈。⛔ 業主未取得 r10p/p3-review-dossier.md 的 3126 行原文，故 dossier 內**未被貼出**的證據 ⛔ 不屬於本次 review basis。
 ```
 
 ---
@@ -205,21 +210,24 @@ PROVENANCE_HISTORY          entry-alias-registry.json（T3 裁定 KEEP_BOTH_AS_E
 
 ### evidence gaps
 ```text
-identity       registry 明文支持「同 facet 的不同講法」，⚠️ 但 facet **⛔ 不等同** responsibility（R10-Q1 已證同一 facet 內可有多個責任）
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  缺：正面裁定（undeclared ⇒ 不得填 unknown）
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+applicability authority not established
+authoritative owner/capability not established
+⚠️ identity ／ membership **已 CONFIRMED**（authoring provenance ＋ registry）——⛔ 不得再列為 gap，⛔ 後續讀到 INSUFFICIENT_EVIDENCE 者不得重審 alias relation。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ 同上；⚠️ 先前把三句解讀成三個產品 intent 的說法**已被 authoring provenance 推翻**
+II.  MEMBERSHIP      CONFIRMED（逐列：3934=ENTRY_ALIAS／3935=ENTRY_ALIAS／3936=ENTRY_ALIAS）
+III. APPLICABILITY   declaration_status=undeclared／value=null
+       └ ⛔ 不得填 unknown——undeclared 是「尚未建立 authority」，unknown 是「已 review 且確認無法固定」
+IV.  OWNERSHIP       NOT_ESTABLISHED
+VERDICT              **INSUFFICIENT_EVIDENCE**
+       └ **只**不足在 APPLICABILITY／OWNERSHIP。IDENTITY 與 MEMBERSHIP 已 CONFIRMED，⛔ 後續看到 INSUFFICIENT_EVIDENCE 者不得重審 alias relation。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  9273d63fb64005ab1996b7cefa4d935148b9a12e59c47fcd96ba050cd612bb4d
+review_input_scope   本批裁定**只**使用 (a) 主 session 訊息中貼出的 Batch A 證據摘要、(b) 已完成的 late-fee T1／T2／H2 證據鏈。⛔ 業主未取得 r10p/p3-review-dossier.md 的 3126 行原文，故 dossier 內**未被貼出**的證據 ⛔ 不屬於本次 review basis。
 ```
 
 ---
@@ -280,21 +288,24 @@ HINT_ONLY  same categories  「發票」⇒ [3362, 3937, 3938]
 
 ### evidence gaps
 ```text
-identity       registry 明文支持「同 facet 的不同講法」，⚠️ 但 facet **⛔ 不等同** responsibility（R10-Q1 已證同一 facet 內可有多個責任）
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  缺：正面裁定（undeclared ⇒ 不得填 unknown）
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+applicability authority not established
+authoritative owner/capability not established
+⚠️ identity ／ membership **已 CONFIRMED**（authoring provenance ＋ registry）——⛔ 不得再列為 gap，⛔ 後續讀到 INSUFFICIENT_EVIDENCE 者不得重審 alias relation。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ 同一批「講法 variant」證據成立
+II.  MEMBERSHIP      CONFIRMED（逐列：3937=ENTRY_ALIAS／3938=ENTRY_ALIAS）
+III. APPLICABILITY   declaration_status=undeclared／value=null
+       └ ⛔ 不得填 unknown——undeclared 是「尚未建立 authority」，unknown 是「已 review 且確認無法固定」
+IV.  OWNERSHIP       NOT_ESTABLISHED
+VERDICT              **INSUFFICIENT_EVIDENCE**
+       └ **只**不足在 APPLICABILITY／OWNERSHIP。IDENTITY 與 MEMBERSHIP 已 CONFIRMED，⛔ 後續看到 INSUFFICIENT_EVIDENCE 者不得重審 alias relation。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  42e51d62288b11de04d04f1d1d149fa1fc57c67ba2f0334f51628dc8fb3ce6e5
+review_input_scope   本批裁定**只**使用 (a) 主 session 訊息中貼出的 Batch A 證據摘要、(b) 已完成的 late-fee T1／T2／H2 證據鏈。⛔ 業主未取得 r10p/p3-review-dossier.md 的 3126 行原文，故 dossier 內**未被貼出**的證據 ⛔ 不屬於本次 review basis。
 ```
 
 ---
@@ -362,28 +373,31 @@ HINT_ONLY  content relation 3531／3532（general late-fee mechanism，T2 K1 承
 
 ### conflicts / tensions
 ```text
-⚠️ facet 內責任分歧（R10-Q1 淘汰 B 的原始理由）：categories=滯納金 底下同時存在
-   general（3531／3532）與 instance（3939／3940）兩種 authority semantics
-3939：representation 未寫（NOT_POPULATED_PENDING_ALIAS_GOVERNANCE）⇒ 不變量 16 TRANSITIONAL_GUARD 仍在生效
+GRANULARITY_EVIDENCE  同 facet（categories=滯納金）另有 general responsibilities 3531／3532。
+⚠️ 這是**粒度證據**——正是 R10-Q1 裁定 facet ≠ responsibility 的原始理由；
+⛔ **不是**本 responsibility 的 unresolved conflict，⛔ 不得讓 registry 看起來像
+   3939／3940 的 instance identity 仍與 3531／3532 衝突。
+3939／3940：representation 未寫（NOT_POPULATED_PENDING_ALIAS_GOVERNANCE）
+⇒ 不變量 16 TRANSITIONAL_GUARD 仍在生效。
 ```
 
 ### evidence gaps
 ```text
-identity       registry 明文支持「同 facet 的不同講法」，⚠️ 但 facet **⛔ 不等同** responsibility（R10-Q1 已證同一 facet 內可有多個責任）
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  現有僅**列層** legacy declaration；缺 responsibility-level 正面裁定
-owner          已有 owner 線索（scope／engine），缺**正式** owner_contract 出處
+（無）——I／II／III／IV 四項命題皆已由獨立證據各自成立。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ H2 VARIANTS_BY_DESIGN
+II.  MEMBERSHIP      CONFIRMED（逐列：3939=ENTRY_ALIAS／3940=ENTRY_ALIAS）
+III. APPLICABILITY   declaration_status=reviewed／value=instance
+IV.  OWNERSHIP       CONFIRMED　owner=late_fee Face ／ services/jgb/bills.py::build_late_fee_facts
+VERDICT              **CONFIRMED_RESPONSIBILITY**
+       └ canonical responsibility_id ⛔ 尚未命名——P3 confirmation 後才命名；⛔ 不回頭改 P2 candidate id。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  52827904e20864fcd9a62233d4ae9f8182062cb163817a3f55e7ac1ce28741d6
+review_input_scope   本批裁定**只**使用 (a) 主 session 訊息中貼出的 Batch A 證據摘要、(b) 已完成的 late-fee T1／T2／H2 證據鏈。⛔ 業主未取得 r10p/p3-review-dossier.md 的 3126 行原文，故 dossier 內**未被貼出**的證據 ⛔ 不屬於本次 review basis。
 ```
 
 ---
@@ -444,21 +458,24 @@ PROVENANCE_HISTORY          entry-alias-registry.json（T3 裁定 KEEP_BOTH_AS_E
 
 ### evidence gaps
 ```text
-identity       registry 明文支持「同 facet 的不同講法」，⚠️ 但 facet **⛔ 不等同** responsibility（R10-Q1 已證同一 facet 內可有多個責任）
-membership     缺：逐列「該列是否真的落在此責任的 answer responsibility 內」的內容比對
-applicability  缺：正面裁定（undeclared ⇒ 不得填 unknown）
-owner          ⛔ 無 owner 證據——缺 capability／Face 歸屬
+applicability authority not established
+authoritative owner/capability not established
+⚠️ identity ／ membership **已 CONFIRMED**（authoring provenance ＋ registry）——⛔ 不得再列為 gap，⛔ 後續讀到 INSUFFICIENT_EVIDENCE 者不得重審 alias relation。
 ```
 
 ### P3 VERDICT
 ```text
-I.   IDENTITY        ____
-II.  MEMBERSHIP      ____（逐列）
-III. APPLICABILITY   ____  declaration_status=____／value=____
-IV.  OWNERSHIP       ____
-VERDICT              ____  ∈ {CONFIRMED_RESPONSIBILITY, SPLIT_REQUIRED, MERGE_WITH_OTHER,
-                            MEMBERSHIP_REJECTED, INSUFFICIENT_EVIDENCE, HISTORICAL_ONLY}
-reviewer             ____   reviewed_at ____   review_basis_digest ____
+I.   IDENTITY        CONFIRMED
+       └ 同一 authoring rule 支持 alias identity
+II.  MEMBERSHIP      CONFIRMED（逐列：3941=ENTRY_ALIAS／3942=ENTRY_ALIAS）
+III. APPLICABILITY   declaration_status=undeclared／value=null
+       └ ⛔ 不得填 unknown——undeclared 是「尚未建立 authority」，unknown 是「已 review 且確認無法固定」
+IV.  OWNERSHIP       NOT_ESTABLISHED
+VERDICT              **INSUFFICIENT_EVIDENCE**
+       └ **只**不足在 APPLICABILITY／OWNERSHIP。IDENTITY 與 MEMBERSHIP 已 CONFIRMED，⛔ 後續看到 INSUFFICIENT_EVIDENCE 者不得重審 alias relation。
+reviewer             業主   reviewed_at 2026-08-29
+review_basis_digest  2d71994bb51dbafb32e2b0dd7c1d87b50a981a45b20a3c2c8651713fad8ad345
+review_input_scope   本批裁定**只**使用 (a) 主 session 訊息中貼出的 Batch A 證據摘要、(b) 已完成的 late-fee T1／T2／H2 證據鏈。⛔ 業主未取得 r10p/p3-review-dossier.md 的 3126 行原文，故 dossier 內**未被貼出**的證據 ⛔ 不屬於本次 review basis。
 ```
 
 # Batch B —— LEVEL_A_V2 相關 singleton（9 群／9 列）

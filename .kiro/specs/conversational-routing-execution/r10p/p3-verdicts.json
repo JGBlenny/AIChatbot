@@ -1,0 +1,431 @@
+{
+ "_doc": "R10-P3 human responsibility review 的裁定紀錄（逐批 append）。",
+ "_authority": "本檔是 **P3 authority record**；⛔ proposal 不得反向定義本檔。",
+ "schema_version": "R10P-SCHEMA-2",
+ "schema_digest": "b72e749e0c452f0d0b86dfedc1e68e69b76912653240d02ea029d8d913272cf2",
+ "proposal_digest": "fe6e5f3feba9b26ff5e98d59eb3ae4f38bdd61172e46cba7bbe5347c9e320426",
+ "population_digest": "51c04b887a16b05f9b19ca7f7e2b2a3b352b4ff26dcf639095593e2fb0647899",
+ "_digest_rule": "review_basis_digest = sha256(canonical JSON of {candidate_group_id, review_input_scope, evidence, absence_observations})，sort_keys=True／ensure_ascii=False／separators=(',',':')。",
+ "batches_reviewed": [
+  "A"
+ ],
+ "records": [
+  {
+   "candidate_group_id": "CG-ALIAS-01",
+   "batch": "A",
+   "members": [
+    3931,
+    3932,
+    3933
+   ],
+   "registry_facet": "繳費金流排障",
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "同批 authoring rule「一種講法一筆」＋同 entry-alias registry ⇒ 同一 entry responsibility 的 utterance variants"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3931": "ENTRY_ALIAS",
+      "3932": "ENTRY_ALIAS",
+      "3933": "ENTRY_ALIAS"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "undeclared",
+     "value": null
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "NOT_ESTABLISHED",
+     "owner": null
+    }
+   },
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "業主明示的證據邊界：本批裁定**只**使用 (a) 主 session 訊息中貼出的 Batch A 證據摘要、(b) 已完成的 late-fee T1／T2／H2 證據鏈。⛔ 業主未取得 r10p/p3-review-dossier.md 的 3126 行原文，故 dossier 內**未被貼出**的證據 ⛔ 不屬於本次 review basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "AUTHORING_SPEC",
+     "source": ".kiro/specs/billing-conversational-facets/billing-knowledge-review.md",
+     "claim_supported": "「錨點（12 筆，answer 空、一種講法一筆）」⇒ 同 facet 的多列是刻意的 utterance variants",
+     "supports": [
+      "identity",
+      "alias_relation"
+     ],
+     "digest": "ce5a787befac6a8f50975e0133e80607947ff2ffa2aafa773017f1a92e2b0048"
+    },
+    {
+     "evidence_type": "AUTHORING_SPEC",
+     "source": ".kiro/specs/billing-conversational-facets/billing-knowledge-batch.json",
+     "claim_supported": "anchors 每筆僅 facet／question／keywords ⇒ 唯一語義負載是 facet",
+     "supports": [
+      "identity",
+      "alias_relation"
+     ],
+     "digest": "437f0500cbe36fdbe06a59fa0723abb0e257c198b1b61b2309a1ab70cb05219c"
+    },
+    {
+     "evidence_type": "PROVENANCE_HISTORY",
+     "source": ".kiro/specs/conversational-routing-execution/entry-alias-registry.json",
+     "claim_supported": "T3 裁定 KEEP_BOTH_AS_ENTRY_VARIANTS；每列 member_role = ENTRY_ALIAS",
+     "supports": [
+      "membership",
+      "alias_relation"
+     ],
+     "digest": "f3e14cdd480f09982c4ebbd799d6c7d08ac2c21f8cfe4bfe2e5a5522a0ebac70"
+    }
+   ],
+   "absence_observations": [
+    "本群母體內**無任何** positive applicability declaration（4 列 applicability 皆 undeclared）⇒ declaration_status 維持 undeclared／value=null，⛔ 不得填 unknown",
+    "本群母體內**無任何** owner／capability 證據（無 reviewed scope、無 engine 函式、無 form→API 映射）⇒ OWNERSHIP = NOT_ESTABLISHED"
+   ],
+   "_scope_of_insufficiency": "⚠️ **只**不足在 APPLICABILITY／OWNERSHIP。IDENTITY 與 MEMBERSHIP 已 CONFIRMED，⛔ 後續看到 INSUFFICIENT_EVIDENCE 者不得重審 alias relation。",
+   "evidence_gaps": [
+    "applicability authority not established",
+    "authoritative owner/capability not established"
+   ],
+   "review_basis_digest": "b0bb97f77d5e7363ef3bb78d0266c97ad375ac57e9d325694ec5ed53c8e5f014"
+  },
+  {
+   "candidate_group_id": "CG-ALIAS-02",
+   "batch": "A",
+   "members": [
+    3934,
+    3935,
+    3936
+   ],
+   "registry_facet": "帳單異常",
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "同上；⚠️ 先前把三句解讀成三個產品 intent 的說法**已被 authoring provenance 推翻**"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3934": "ENTRY_ALIAS",
+      "3935": "ENTRY_ALIAS",
+      "3936": "ENTRY_ALIAS"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "undeclared",
+     "value": null
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "NOT_ESTABLISHED",
+     "owner": null
+    }
+   },
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "業主明示的證據邊界：本批裁定**只**使用 (a) 主 session 訊息中貼出的 Batch A 證據摘要、(b) 已完成的 late-fee T1／T2／H2 證據鏈。⛔ 業主未取得 r10p/p3-review-dossier.md 的 3126 行原文，故 dossier 內**未被貼出**的證據 ⛔ 不屬於本次 review basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "AUTHORING_SPEC",
+     "source": ".kiro/specs/billing-conversational-facets/billing-knowledge-review.md",
+     "claim_supported": "「錨點（12 筆，answer 空、一種講法一筆）」⇒ 同 facet 的多列是刻意的 utterance variants",
+     "supports": [
+      "identity",
+      "alias_relation"
+     ],
+     "digest": "ce5a787befac6a8f50975e0133e80607947ff2ffa2aafa773017f1a92e2b0048"
+    },
+    {
+     "evidence_type": "AUTHORING_SPEC",
+     "source": ".kiro/specs/billing-conversational-facets/billing-knowledge-batch.json",
+     "claim_supported": "anchors 每筆僅 facet／question／keywords ⇒ 唯一語義負載是 facet",
+     "supports": [
+      "identity",
+      "alias_relation"
+     ],
+     "digest": "437f0500cbe36fdbe06a59fa0723abb0e257c198b1b61b2309a1ab70cb05219c"
+    },
+    {
+     "evidence_type": "PROVENANCE_HISTORY",
+     "source": ".kiro/specs/conversational-routing-execution/entry-alias-registry.json",
+     "claim_supported": "T3 裁定 KEEP_BOTH_AS_ENTRY_VARIANTS；每列 member_role = ENTRY_ALIAS",
+     "supports": [
+      "membership",
+      "alias_relation"
+     ],
+     "digest": "f3e14cdd480f09982c4ebbd799d6c7d08ac2c21f8cfe4bfe2e5a5522a0ebac70"
+    }
+   ],
+   "absence_observations": [
+    "本群母體內**無任何** positive applicability declaration（4 列 applicability 皆 undeclared）⇒ declaration_status 維持 undeclared／value=null，⛔ 不得填 unknown",
+    "本群母體內**無任何** owner／capability 證據（無 reviewed scope、無 engine 函式、無 form→API 映射）⇒ OWNERSHIP = NOT_ESTABLISHED"
+   ],
+   "_scope_of_insufficiency": "⚠️ **只**不足在 APPLICABILITY／OWNERSHIP。IDENTITY 與 MEMBERSHIP 已 CONFIRMED，⛔ 後續看到 INSUFFICIENT_EVIDENCE 者不得重審 alias relation。",
+   "evidence_gaps": [
+    "applicability authority not established",
+    "authoritative owner/capability not established"
+   ],
+   "review_basis_digest": "9273d63fb64005ab1996b7cefa4d935148b9a12e59c47fcd96ba050cd612bb4d"
+  },
+  {
+   "candidate_group_id": "CG-ALIAS-03",
+   "batch": "A",
+   "members": [
+    3937,
+    3938
+   ],
+   "registry_facet": "發票",
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "同一批「講法 variant」證據成立"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3937": "ENTRY_ALIAS",
+      "3938": "ENTRY_ALIAS"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "undeclared",
+     "value": null
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "NOT_ESTABLISHED",
+     "owner": null
+    }
+   },
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "業主明示的證據邊界：本批裁定**只**使用 (a) 主 session 訊息中貼出的 Batch A 證據摘要、(b) 已完成的 late-fee T1／T2／H2 證據鏈。⛔ 業主未取得 r10p/p3-review-dossier.md 的 3126 行原文，故 dossier 內**未被貼出**的證據 ⛔ 不屬於本次 review basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "AUTHORING_SPEC",
+     "source": ".kiro/specs/billing-conversational-facets/billing-knowledge-review.md",
+     "claim_supported": "「錨點（12 筆，answer 空、一種講法一筆）」⇒ 同 facet 的多列是刻意的 utterance variants",
+     "supports": [
+      "identity",
+      "alias_relation"
+     ],
+     "digest": "ce5a787befac6a8f50975e0133e80607947ff2ffa2aafa773017f1a92e2b0048"
+    },
+    {
+     "evidence_type": "AUTHORING_SPEC",
+     "source": ".kiro/specs/billing-conversational-facets/billing-knowledge-batch.json",
+     "claim_supported": "anchors 每筆僅 facet／question／keywords ⇒ 唯一語義負載是 facet",
+     "supports": [
+      "identity",
+      "alias_relation"
+     ],
+     "digest": "437f0500cbe36fdbe06a59fa0723abb0e257c198b1b61b2309a1ab70cb05219c"
+    },
+    {
+     "evidence_type": "PROVENANCE_HISTORY",
+     "source": ".kiro/specs/conversational-routing-execution/entry-alias-registry.json",
+     "claim_supported": "T3 裁定 KEEP_BOTH_AS_ENTRY_VARIANTS；每列 member_role = ENTRY_ALIAS",
+     "supports": [
+      "membership",
+      "alias_relation"
+     ],
+     "digest": "f3e14cdd480f09982c4ebbd799d6c7d08ac2c21f8cfe4bfe2e5a5522a0ebac70"
+    }
+   ],
+   "absence_observations": [
+    "本群母體內**無任何** positive applicability declaration（4 列 applicability 皆 undeclared）⇒ declaration_status 維持 undeclared／value=null，⛔ 不得填 unknown",
+    "本群母體內**無任何** owner／capability 證據（無 reviewed scope、無 engine 函式、無 form→API 映射）⇒ OWNERSHIP = NOT_ESTABLISHED"
+   ],
+   "_scope_of_insufficiency": "⚠️ **只**不足在 APPLICABILITY／OWNERSHIP。IDENTITY 與 MEMBERSHIP 已 CONFIRMED，⛔ 後續看到 INSUFFICIENT_EVIDENCE 者不得重審 alias relation。",
+   "evidence_gaps": [
+    "applicability authority not established",
+    "authoritative owner/capability not established"
+   ],
+   "review_basis_digest": "42e51d62288b11de04d04f1d1d149fa1fc57c67ba2f0334f51628dc8fb3ce6e5"
+  },
+  {
+   "candidate_group_id": "CG-ALIAS-04",
+   "batch": "A",
+   "members": [
+    3939,
+    3940
+   ],
+   "registry_facet": "滯納金",
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "H2 VARIANTS_BY_DESIGN"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3939": "ENTRY_ALIAS",
+      "3940": "ENTRY_ALIAS"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "CONFIRMED",
+     "owner": "late_fee Face ／ services/jgb/bills.py::build_late_fee_facts"
+    }
+   },
+   "verdict": "CONFIRMED_RESPONSIBILITY",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "業主明示的證據邊界：本批裁定**只**使用 (a) 主 session 訊息中貼出的 Batch A 證據摘要、(b) 已完成的 late-fee T1／T2／H2 證據鏈。⛔ 業主未取得 r10p/p3-review-dossier.md 的 3126 行原文，故 dossier 內**未被貼出**的證據 ⛔ 不屬於本次 review basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "AUTHORING_SPEC",
+     "source": ".kiro/specs/billing-conversational-facets/billing-knowledge-review.md",
+     "claim_supported": "「錨點（12 筆，answer 空、一種講法一筆）」⇒ 同 facet 的多列是刻意的 utterance variants",
+     "supports": [
+      "identity",
+      "alias_relation"
+     ],
+     "digest": "ce5a787befac6a8f50975e0133e80607947ff2ffa2aafa773017f1a92e2b0048"
+    },
+    {
+     "evidence_type": "AUTHORING_SPEC",
+     "source": ".kiro/specs/billing-conversational-facets/billing-knowledge-batch.json",
+     "claim_supported": "anchors 每筆僅 facet／question／keywords ⇒ 唯一語義負載是 facet",
+     "supports": [
+      "identity",
+      "alias_relation"
+     ],
+     "digest": "437f0500cbe36fdbe06a59fa0723abb0e257c198b1b61b2309a1ab70cb05219c"
+    },
+    {
+     "evidence_type": "PROVENANCE_HISTORY",
+     "source": ".kiro/specs/conversational-routing-execution/entry-alias-registry.json",
+     "claim_supported": "T3 裁定 KEEP_BOTH_AS_ENTRY_VARIANTS；每列 member_role = ENTRY_ALIAS",
+     "supports": [
+      "membership",
+      "alias_relation"
+     ],
+     "digest": "f3e14cdd480f09982c4ebbd799d6c7d08ac2c21f8cfe4bfe2e5a5522a0ebac70"
+    },
+    {
+     "evidence_type": "POSITIVE_APPLICABILITY_DECLARATION",
+     "source": "knowledge_base.generation_metadata（rows 3939／3940）：instance_applicability=instance，source=reviewed_product_declaration",
+     "claim_supported": "applicability = instance 的**正面裁定**（⛔ 非由 facet 名稱推導）",
+     "supports": [
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "DETERMINISTIC_CAPABILITY",
+     "source": "rag-orchestrator/services/jgb/bills.py::build_late_fee_facts",
+     "claim_supported": "作答所需的實際金額／狀態／合約設定實值／結算備註／付款到帳時間皆由該 capability 依**某一筆**的實值產生 ⇒ 支持 owner 與 instance 兩者",
+     "supports": [
+      "ownership",
+      "applicability"
+     ],
+     "digest": null
+    },
+    {
+     "evidence_type": "RUNTIME_CAUSAL_EVIDENCE",
+     "source": "t1-dual-engine-comparison.md（E3 ONE_SIDE_PARTIAL）＋ t3-late-fee-authority-aftermath.md（Step 1 B_CAPABILITY_SUPERSET=CONFIRMED、Step 2 dispatch ＋ commit authority 移除）",
+     "claim_supported": "late_fee instance ownership 已收斂為**唯一** owner（不變量 14 守住）",
+     "supports": [
+      "ownership"
+     ],
+     "digest": "4a4ab53fb1a6dd748db6b1cd582ba6b1d63cbe7d932f9f8cf256c0a8e7fc6b87"
+    },
+    {
+     "evidence_type": "CONTENT_RESPONSIBILITY_REVIEW",
+     "source": "r10-decision-and-population-review-design.md（C＋C2；ALIAS_ROLE=NOMINATION_ONLY）",
+     "claim_supported": "同 responsibility 的多個 alias ⛔ 不得各自擁有 semantic contract",
+     "supports": [
+      "alias_relation",
+      "canonical_representation"
+     ],
+     "digest": "8037c7397e4a30bea55f7caed22e9c8dd8c3b289b2ac981902bfb8642e7d9d29"
+    }
+   ],
+   "absence_observations": [],
+   "evidence_gaps": [],
+   "_granularity_note": "同 facet（categories=滯納金）另有 general responsibilities 3531／3532——⚠️ 這是 **granularity evidence**（R10 已裁 facet ≠ responsibility），⛔ 不是本 responsibility 的 unresolved conflict。",
+   "_naming": "canonical responsibility_id ⛔ 尚未命名——P3 confirmation 後才命名；⛔ 不回頭改 P2 candidate id。",
+   "review_basis_digest": "52827904e20864fcd9a62233d4ae9f8182062cb163817a3f55e7ac1ce28741d6"
+  },
+  {
+   "candidate_group_id": "CG-ALIAS-05",
+   "batch": "A",
+   "members": [
+    3941,
+    3942
+   ],
+   "registry_facet": "帳單設定引導",
+   "propositions": {
+    "I_IDENTITY": {
+     "verdict": "CONFIRMED",
+     "reason": "同一 authoring rule 支持 alias identity"
+    },
+    "II_MEMBERSHIP": {
+     "verdict": "CONFIRMED",
+     "per_row": {
+      "3941": "ENTRY_ALIAS",
+      "3942": "ENTRY_ALIAS"
+     }
+    },
+    "III_APPLICABILITY": {
+     "declaration_status": "undeclared",
+     "value": null
+    },
+    "IV_OWNERSHIP": {
+     "verdict": "NOT_ESTABLISHED",
+     "owner": null
+    }
+   },
+   "verdict": "INSUFFICIENT_EVIDENCE",
+   "reviewer": "業主",
+   "reviewed_at": "2026-08-29",
+   "review_input_scope": "業主明示的證據邊界：本批裁定**只**使用 (a) 主 session 訊息中貼出的 Batch A 證據摘要、(b) 已完成的 late-fee T1／T2／H2 證據鏈。⛔ 業主未取得 r10p/p3-review-dossier.md 的 3126 行原文，故 dossier 內**未被貼出**的證據 ⛔ 不屬於本次 review basis。",
+   "review_basis_evidence": [
+    {
+     "evidence_type": "AUTHORING_SPEC",
+     "source": ".kiro/specs/billing-conversational-facets/billing-knowledge-review.md",
+     "claim_supported": "「錨點（12 筆，answer 空、一種講法一筆）」⇒ 同 facet 的多列是刻意的 utterance variants",
+     "supports": [
+      "identity",
+      "alias_relation"
+     ],
+     "digest": "ce5a787befac6a8f50975e0133e80607947ff2ffa2aafa773017f1a92e2b0048"
+    },
+    {
+     "evidence_type": "AUTHORING_SPEC",
+     "source": ".kiro/specs/billing-conversational-facets/billing-knowledge-batch.json",
+     "claim_supported": "anchors 每筆僅 facet／question／keywords ⇒ 唯一語義負載是 facet",
+     "supports": [
+      "identity",
+      "alias_relation"
+     ],
+     "digest": "437f0500cbe36fdbe06a59fa0723abb0e257c198b1b61b2309a1ab70cb05219c"
+    },
+    {
+     "evidence_type": "PROVENANCE_HISTORY",
+     "source": ".kiro/specs/conversational-routing-execution/entry-alias-registry.json",
+     "claim_supported": "T3 裁定 KEEP_BOTH_AS_ENTRY_VARIANTS；每列 member_role = ENTRY_ALIAS",
+     "supports": [
+      "membership",
+      "alias_relation"
+     ],
+     "digest": "f3e14cdd480f09982c4ebbd799d6c7d08ac2c21f8cfe4bfe2e5a5522a0ebac70"
+    }
+   ],
+   "absence_observations": [
+    "本群母體內**無任何** positive applicability declaration（4 列 applicability 皆 undeclared）⇒ declaration_status 維持 undeclared／value=null，⛔ 不得填 unknown",
+    "本群母體內**無任何** owner／capability 證據（無 reviewed scope、無 engine 函式、無 form→API 映射）⇒ OWNERSHIP = NOT_ESTABLISHED"
+   ],
+   "_scope_of_insufficiency": "⚠️ **只**不足在 APPLICABILITY／OWNERSHIP。IDENTITY 與 MEMBERSHIP 已 CONFIRMED，⛔ 後續看到 INSUFFICIENT_EVIDENCE 者不得重審 alias relation。",
+   "evidence_gaps": [
+    "applicability authority not established",
+    "authoritative owner/capability not established"
+   ],
+   "review_basis_digest": "2d71994bb51dbafb32e2b0dd7c1d87b50a981a45b20a3c2c8651713fad8ad345"
+  }
+ ]
+}

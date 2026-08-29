@@ -429,6 +429,25 @@ else
   echo "✅ PASS（含漏列／漏一多一／authority 偷渡／禁用規則合併 四組正對照）"
 fi
 
+echo "═══ 不變量 19：R10-P3 裁定紀錄的合法性（P3）═══"
+# 源起：SCHEMA-2 把 applicability 拆兩軸，就是為了擋「還沒 review」被序列化成 unknown。
+# ⚠️ Batch A 業主再點名第二種偷換：INSUFFICIENT_EVIDENCE ⛔ 不得順手填 value=unknown，
+#    也 ⛔ 不得抹掉已 CONFIRMED 的 IDENTITY／MEMBERSHIP。
+# 另擋：CONFIRMED_RESPONSIBILITY 必須四項命題**各自**有證據（IDENTITY 不推出 ownership）、
+#      evidence 的 supports[] 不得為空、review_basis_digest 必須可重算（⛔ 不得謊報看過什麼）。
+P3_CHECK="$REPO/scripts/audit/checks/p3_verdict_legality.py"
+if ! python3 "$P3_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 19 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$P3_CHECK" --self-test
+  FAIL=1
+elif ! P3_OUT=$(python3 "$P3_CHECK" 2>&1); then
+  echo "$P3_OUT"
+  FAIL=1
+else
+  echo "$P3_OUT"
+  echo "✅ PASS（含兩種非法 state／INSUFFICIENT＋unknown／CONFIRMED 缺 ownership／偷加證據 等九組正對照）"
+fi
+
 # ⚠️ 13 是最後一條 ⇒ 此刻的 FAIL 值**恰好**等於「其他不變量有沒有紅」。
 #    用快照取代事後從輸出回推行數：⛔ 不靠 grep 猜，靠狀態算。
 CODE_FAIL_BEFORE_13=$FAIL
@@ -458,7 +477,7 @@ fi
 # ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
 # （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）
 if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then
-  CODE_REGRESSIONS+=("不變量 1–12／14–18 有失敗（見上方 ❌ FAIL 行）")
+  CODE_REGRESSIONS+=("不變量 1–12／14–19 有失敗（見上方 ❌ FAIL 行）")
 fi
 
 echo ""
