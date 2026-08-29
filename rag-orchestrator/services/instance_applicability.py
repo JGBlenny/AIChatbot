@@ -79,6 +79,11 @@ from typing import Any, Optional
 #: ——那是 global/vendor 的**可見範圍**，語義完全不同）
 KNOWLEDGE_APPLICABILITY_KEY = "instance_applicability"
 
+#: **production transport 欄位**（`VendorKnowledgeRetrieverV2` 的扁平投影）。
+#: ⚠️ 這不是第二份 authority source——唯一權威仍是
+#: `knowledge_base.generation_metadata.instance_applicability`，此欄只是 projection。
+TRANSPORT_FIELD = "knowledge_instance_applicability"
+
 #: Face 層宣告鍵（與 `instance_reference_gate.INSTANCE_REFERENCE_KEY` 同一個契約）
 FACE_INSTANCE_REQUIREMENT_KEY = "requires_instance_reference"
 
@@ -109,10 +114,16 @@ def knowledge_instance_applicability(knowledge: Optional[dict]) -> str:
     ⚠️ 值不合法時**刻意**不猜（例如 "Instance"、"true"、"是"）——
     容忍變體等於讓資料品質問題靜默通過，而這一層的整個重點就是「不知道要說不知道」。
     """
-    meta = (knowledge or {}).get("generation_metadata")
-    if not isinstance(meta, dict):
-        return APPLICABILITY_UNKNOWN
-    value = meta.get(KNOWLEDGE_APPLICABILITY_KEY)
+    row = knowledge or {}
+    # ⚠️ **production transport 優先**（A03 逼出）：retriever 回傳的知識列以扁平欄位
+    #    `knowledge_instance_applicability` 帶出宣告，⛔ **沒有** `generation_metadata`。
+    #    先前只讀後者 ⇒ production 一律 UNKNOWN、gate 結構性失效，而單元測試因為
+    #    餵的是手寫 dict（**production 從不產生的形狀**）而全過。
+    #    ⇒ 兩種形狀都讀：扁平欄位（production）優先，巢狀（既有測試／其他來源）備援。
+    value = row.get(TRANSPORT_FIELD)
+    if value is None:
+        meta = row.get("generation_metadata")
+        value = meta.get(KNOWLEDGE_APPLICABILITY_KEY) if isinstance(meta, dict) else None
     if isinstance(value, str) and value in DECLARED_VALUES:
         return value
     return APPLICABILITY_UNKNOWN

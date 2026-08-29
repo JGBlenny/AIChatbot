@@ -103,6 +103,21 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     kb.api_config,
                     kb.category,
                     kb.categories,
+                    -- ⚠️ **routing authority 的 transport 欄位**（A03 逼出，業主裁定 2026-08-29）：
+                    --    P1f 的 gate 讀 knowledge applicability 宣告來決定是否抑制面向進場，
+                    --    但本 projection 過去**沒有帶出它** ⇒ gate 一律讀到 UNKNOWN、一律 suppress。
+                    --    contract 已存在、consumer 已接線，斷的是 **transport shape**。
+                    -- ⚠️ 這**不是第二份 authority source**：唯一權威仍是
+                    --    `knowledge_base.generation_metadata.instance_applicability`，
+                    --    此處只是 projection ⇒ 無 cache 與 DB truth 不一致的問題。
+                    -- ⛔ **只帶這一個最小欄位，不帶整包 generation_metadata**——
+                    --    那包還有其他 authoring/runtime metadata，為一個三態值把整個 JSONB
+                    --    帶過 hot path 會把 transport contract 擴得沒有必要。
+                    -- ⛔ **retriever 只負責原值搬運**：不得在此做 "INSTANCE"→instance、
+                    --    true→instance、missing→general 之類的 normalization；
+                    --    值域封閉與 UNKNOWN 語義一律由 services/instance_applicability.py 負責。
+                    kb.generation_metadata->>'instance_applicability'
+                        AS knowledge_instance_applicability,
                     kb.trigger_mode,
                     kb.trigger_keywords,
                     kb.immediate_prompt,
@@ -213,6 +228,21 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     kb.api_config,
                     kb.category,
                     kb.categories,
+                    -- ⚠️ **routing authority 的 transport 欄位**（A03 逼出，業主裁定 2026-08-29）：
+                    --    P1f 的 gate 讀 knowledge applicability 宣告來決定是否抑制面向進場，
+                    --    但本 projection 過去**沒有帶出它** ⇒ gate 一律讀到 UNKNOWN、一律 suppress。
+                    --    contract 已存在、consumer 已接線，斷的是 **transport shape**。
+                    -- ⚠️ 這**不是第二份 authority source**：唯一權威仍是
+                    --    `knowledge_base.generation_metadata.instance_applicability`，
+                    --    此處只是 projection ⇒ 無 cache 與 DB truth 不一致的問題。
+                    -- ⛔ **只帶這一個最小欄位，不帶整包 generation_metadata**——
+                    --    那包還有其他 authoring/runtime metadata，為一個三態值把整個 JSONB
+                    --    帶過 hot path 會把 transport contract 擴得沒有必要。
+                    -- ⛔ **retriever 只負責原值搬運**：不得在此做 "INSTANCE"→instance、
+                    --    true→instance、missing→general 之類的 normalization；
+                    --    值域封閉與 UNKNOWN 語義一律由 services/instance_applicability.py 負責。
+                    kb.generation_metadata->>'instance_applicability'
+                        AS knowledge_instance_applicability,
                     kb.trigger_mode,
                     kb.trigger_keywords,
                     kb.immediate_prompt,
@@ -332,6 +362,10 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             # 分類（conversational-diagnosis 元件 5：分類路由用）；category 單值、categories 多值
             'category': row.get('category'),
             'categories': row.get('categories'),
+            # ⚠️ Knowledge 軸的 applicability 宣告（原值搬運；⛔ 不在此 normalize）。
+            #    命名刻意帶 `knowledge_` 前綴——downstream 一眼分得出這是 Knowledge 軸，
+            #    ⛔ 不會與 Face 的 `requires_instance_reference` 混。
+            'knowledge_instance_applicability': row.get('knowledge_instance_applicability'),
             'intent_id': row.get('intent_id'),
             # ─── 觸發配置（spec trigger-vocabulary-debt 元件 1：修檢索斷鏈，透傳至消費層 chat.py:2948）───
             # trigger_mode=varchar／immediate_prompt=text → str|None；trigger_keywords=text[] → list|None（比照 keywords）

@@ -279,6 +279,29 @@ else
   echo "✅ PASS（含值域變體與越權讀取的正控制）"
 fi
 
+echo "═══ 不變量 11：routing authority 的 producer-consumer transport contract ═══"
+# 源起（2026-08-29，A03 抓到的 integration false-green）：P1f 的 gate 讀 knowledge 的
+# applicability 宣告，consumer 已接線、契約已存在——但 retriever 回傳的知識列**沒有那個欄位**
+# ⇒ production 上 109/109 一律讀到 UNKNOWN、一律 suppress。
+# ⚠️ 而 P1f 的 23 條單元測試全過，因為它們餵的是手寫 {"generation_metadata": {...}}
+#    ——**production 從不產生的形狀**。
+# 不變量：任何 routing authority consumer 所需的 semantic contract，
+#        必須由其 **production producer shape** 明示提供；
+#        ⛔ fixture 不得擁有 production producer 不可能提供的 authority 欄位。
+# 判定：consumer 從知識列讀取的鍵（含常數間接）⊆ producer 回傳 dict 的鍵。
+AT_CHECK="$REPO/scripts/audit/checks/authority_transport_contract.py"
+if ! python3 "$AT_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 11 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$AT_CHECK" --self-test
+  FAIL=1
+elif ! AT_OUT=$(python3 "$AT_CHECK" 2>&1); then
+  echo "$AT_OUT"
+  FAIL=1
+else
+  echo "$AT_OUT"
+  echo "✅ PASS（含常數間接解析 ＋ 植入缺漏的正對照）"
+fi
+
 echo ""
 if [ $FAIL -eq 0 ]; then
   echo "🎉 稽核通過（$(date +%Y-%m-%d))"

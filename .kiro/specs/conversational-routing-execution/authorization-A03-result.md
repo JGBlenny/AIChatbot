@@ -3,7 +3,12 @@
 ```text
 A03-LABELS    = **PASS**（L1 98.0%／κ 0.969，四類 raw）
 A03-SEMANTIC  = **FAIL ／ RETRIEVAL_SEMANTIC_MISALIGNMENT**
-A03-AUTHORITY = **INCONCLUSIVE ／ ELLIPTICAL_AUTHORITY_NOT_SUFFICIENTLY_EXERCISED**
+A03-AUTHORITY = **INCONCLUSIVE**
+  primary precondition : ELLIPTICAL_AUTHORITY_NOT_SUFFICIENTLY_EXERCISED
+  additional confirmed defect : **AUTHORITY_INPUT_TRANSPORT_MISSING**
+  ⚠️ ⛔ **不得**把 109 筆 UNKNOWN 當成 authority accuracy failure——
+     候選 implementation 根本沒收到 frozen truth。
+     「未 exercised／input absent」與「做錯」必須分開。
 corpus authorization-2026Q3-A03（digest 4de39adfb5cb8ab3）＝ **BURNED**
 ```
 
@@ -98,7 +103,37 @@ I2 2/10 ❌  I4 4/10 ❌  I5 2/10 ❌  I6 4/10 ❌  I7 7/10 ❌
 
 ---
 
-## 建議的修法（⛔ 未執行，待裁）
+## 業主裁定與修復（2026-08-29）——採**甲的最小投影版**
+
+```text
+✅ retriever 在原 transport 中明示帶出 `knowledge_instance_applicability`
+⛔ **不帶**整包 generation_metadata（那包還有其他 authoring/runtime metadata；
+   為一個三態值把整個 JSONB 帶過 hot path，會把 transport contract 擴得沒必要）
+⛔ **不讓 gate 依 knowledge id 反查**（那會把 retrieval layer 的契約缺失
+   補成「consumer 自己去找」，ownership 變差：日後每個 downstream 缺欄位都可能自行反查）
+⚠️ 這**不是新 authority source**：唯一權威仍是
+   `knowledge_base.generation_metadata.instance_applicability`，retriever 只是 projection
+   ⇒ 無 cache 與 DB truth 不一致的問題
+⛔ retriever **只搬運原值**：不得做 "INSTANCE"→instance／true→instance／missing→general
+   —— 值域封閉與 UNKNOWN 語義一律由 services/instance_applicability.py 負責
+命名採 `knowledge_instance_applicability`：downstream 一眼分得出這是 Knowledge 軸，
+⛔ 不會與 Face 的 requires_instance_reference 混
+```
+
+### 驗證方式已升級（⛔ 不得再用手寫 dict 當 wiring proof）
+
+```text
+① production-shape contract  producer row keys ⊇ gate required keys（AST 取真實投影）
+② 三態 transport matrix       用 **production shape**（扁平欄位、⛔ 無 generation_metadata）
+③ mutation 打 transport seam  移除欄位 → 契約不成立；投影回 null → instance/general 分不開
+④ 正對照（真實 retriever path，本地 DB）
+     3503→instance｜3402→general｜3406→general｜4640→instance  **全部 OK**
+     且確認 production row **不含** generation_metadata
+⑤ **不變量 11**（新增）：consumer 從知識列讀取的鍵（含常數間接）⊆ producer 提供的鍵
+     ⚠️ 自我測試含「植入缺漏必須被抓到」的正對照——第一版就是因為漏解常數間接而失敗
+```
+
+## 原修法選項（保留紀錄）
 
 ```text
 【甲】retriever 回傳列加上 `generation_metadata`（或只加 applicability 宣告欄）

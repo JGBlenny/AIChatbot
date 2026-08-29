@@ -35,6 +35,16 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 CONTRACT_MODULE = "rag-orchestrator/services/instance_applicability.py"
 #: Face 層的鍵早於本模組存在，其現役讀取點是 gate 自身（P1c 才會改它）
 FACE_KEY_ALLOWED = {CONTRACT_MODULE, "rag-orchestrator/services/instance_reference_gate.py"}
+
+#: **producer 豁免**（2026-08-29，A03 修復後）：`VendorKnowledgeRetrieverV2` 必須提到這個鍵，
+#: 因為它是 **transport 的 producer**——SQL projection 與 row 組裝都要指名該欄位。
+#: ⚠️ 它的角色是**搬運**，⛔ 不是 interpret：
+#:    「不得在 retriever 做 normalization」由 unit test
+#:    `test_producer_does_not_normalize_the_value` 以 AST 守住
+#:    （斷言該格賦值恰為 `row.get(...)`，⛔ 無包裝、⛔ 無預設值）。
+#: ⇒ 這是**有理由的窄豁免**，⛔ 不是把 retriever 變成第二個 authority 讀取點。
+KNOWLEDGE_KEY_ALLOWED = {CONTRACT_MODULE,
+                         "rag-orchestrator/services/vendor_knowledge_retriever_v2.py"}
 SCAN_DIRS = ["rag-orchestrator/services", "rag-orchestrator/routers", "rag-orchestrator/tools"]
 LEGAL_VALUES = {"instance", "general"}
 
@@ -101,7 +111,7 @@ def scan_unauthorized_key_reads(root=None):
                     continue
                 rel = os.path.relpath(os.path.join(dirpath, fn), root)
                 for line_no, key in _key_reads(os.path.join(dirpath, fn)):
-                    if key == KNOWLEDGE_KEY and rel == CONTRACT_MODULE:
+                    if key == KNOWLEDGE_KEY and rel in KNOWLEDGE_KEY_ALLOWED:
                         continue
                     if key == FACE_KEY and rel in FACE_KEY_ALLOWED:
                         continue
