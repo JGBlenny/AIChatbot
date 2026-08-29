@@ -548,9 +548,20 @@ row 3497  summary：已付款但帳單狀態沒有更新
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  診斷特定款項已完成支付，但帳單付款狀態尚未同步更新的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 confirmed responsibility
+  - _diagnose_payment_not_reflected（payments.py:50，P01）
+  - summary「已付款但帳單狀態沒有更新」
+  - ⚠️ γ-C4：本群 answer 為**佔位型**，⛔ 不承擔主要證據角色；identity 由 P3 confirmed responsibility ＋ summary ＋ 具名 deterministic branch 支撐
+
+deliberate exclusions
+  - ⛔「最常見客服問題」
+  - ⛔「原因藏在後端」——那些只是問題描述／調查方式
 ```
 
 ---
@@ -602,9 +613,19 @@ row 3500  summary：信用卡付款失敗
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  診斷特定信用卡單次付款失敗的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 confirmed responsibility
+  - _diagnose_credit_card_failure（payments.py:85，P02）
+  - ⚠️「**單次**」是與 R-16 正交的 defining boundary，⛔ 不是額外細節（γ-C5）
+  - ⚠️ γ-C4：本群 answer 為**佔位型**，⛔ 不承擔主要證據角色；identity 由 P3 confirmed responsibility ＋ summary ＋ 具名 deterministic branch 支撐
+
+negative boundary
+  與 R-16 的機器可讀分界：R-15＝信用卡「單次付款」失敗；R-16＝「週期性自動扣款／自動付款」失敗。
 ```
 
 ---
@@ -626,9 +647,22 @@ row 3501  summary：信用卡自動扣款失敗
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  診斷信用卡週期性自動扣款／自動付款失敗的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 confirmed responsibility
+  - _diagnose_auto_pay_failure（payments.py:120）
+  - ⚠️ γ-C5：與 R-15 的主要差異是**交易模式**，canonical 必須保留該模式差異
+
+negative boundary
+  ⛔ 不得與 R-15 都縮成「信用卡付款失敗」。
+
+deliberate exclusions
+  - ⛔ email notification 不進 canonical
+  - ⛔ 「查 DB」不進 canonical
 ```
 
 ---
@@ -650,9 +684,22 @@ row 3502  summary：虛擬帳號過期或轉帳失敗
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  診斷特定帳單的虛擬帳號失效、過期或轉帳失敗的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 confirmed responsibility
+  - _diagnose_atm_expired（bills.py:625）＋ _ATM_KEYWORDS dispatch
+  - 3502 answer（232 字）作為 content evidence
+
+deliberate exclusions
+  - ⛔ 國泰／藍新／永豐等金流商名稱
+  - ⛔ 180 天／7 天等效期
+  - ⛔ 1 元測試帳單
+  - ⛔ 月收款上限、額度調整天數——全部是 γ-C1 標準排除項
+  - ⛔ 不寫「提供處理方式」：目前 confirmed identity 是 **diagnosis**；answer 的 remediation 豐富 ⛔ 不代表 responsibility 要擴成 troubleshooting workflow owner
 ```
 
 ---
@@ -674,9 +721,18 @@ row 3503  summary：發票為什麼沒有開出來
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  診斷特定發票未成功開立的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 confirmed responsibility
+  - _diagnose_issue_failure（invoices.py，I01）
+  - ⚠️ γ-C4：本群 answer 為**佔位型**，⛔ 不承擔主要證據角色；identity 由 P3 confirmed responsibility ＋ summary ＋ 具名 deterministic branch 支撐
+
+deliberate exclusions
+  - ⛔ 不寫「多層條件」——implementation／problem-solving detail
 ```
 
 ---
@@ -698,9 +754,18 @@ row 3504  summary：發票為什麼作廢不了
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  診斷特定發票無法作廢的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 confirmed responsibility
+  - _diagnose_invalid_failure（invoices.py，I02）
+  - ⚠️ γ-C4：本群 answer 為**佔位型**，⛔ 不承擔主要證據角色；identity 由 P3 confirmed responsibility ＋ summary ＋ 具名 deterministic branch 支撐
+
+deliberate exclusions
+  - ⛔ 不寫「狀態」「API 回應」——它們是診斷 facts，⛔ 不是責任 identity
 ```
 
 ---
@@ -722,9 +787,17 @@ row 3505  summary：為什麼不能新增物件
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  診斷目前無法新增物件的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 confirmed responsibility
+  - _diagnose_cannot_add_estate（subscription.py，E01）
+
+deliberate exclusions
+  - ⛔ 不寫「訂閱額度已滿」「權限不足」——那是目前 capability 的原因枚舉；未來增加第三種原因時 canonical ⛔ 不應因此改版
 ```
 
 ---
@@ -746,9 +819,17 @@ row 3506  summary：物件為什麼突然全部下架
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  診斷既有物件突然被下架或停止刊登的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 confirmed responsibility
+  - _diagnose_estates_delisted（subscription.py，E02）
+
+deliberate exclusions
+  - ⛔ 不寫訂閱續約扣款失敗／方案失效／必填欄位驗證失敗
 ```
 
 ---
@@ -770,9 +851,22 @@ row 3507  summary：物件為什麼不能建立合約
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  診斷特定物件目前為何不符合建立合約的條件。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 confirmed responsibility（owner = estates.py:33::build_estate_status_facts）
+  - ⚠️ **P-C9 完全生效**：canonical 描述的是**已確認的 responsibility truth**，⛔ 不是目前錯接的 jgb_contract_query
+
+negative boundary
+  capability_alignment=WRONG_EXECUTION_BINDING_CONFIRMED 繼續留在**正交 diagnostic axis**，⛔ 不污染 canonical。
+
+deliberate exclusions
+  - ⛔ 不寫 jgb_contract_query
+  - ⛔ 不寫目前 fallback 行為
+  - ⛔ 不列舉「刊登中／必填欄位齊備」——capability rules
 ```
 
 ---
@@ -794,9 +888,19 @@ row 3508  summary：IoT 廠商帳號綁定失敗
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  診斷 IoT 廠商帳號無法完成綁定的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 confirmed responsibility
+  - services/jgb/iot.py::diagnose_iot（formatter 專屬分支）
+  - ⚠️ γ-C4：本群 answer 為**佔位型**，⛔ 不承擔主要證據角色；identity 由 P3 confirmed responsibility ＋ summary ＋ 具名 deterministic branch 支撐
+
+deliberate exclusions
+  - ⛔ 不寫 DB、role
+  - ⛔ ⛔ 不把「已被別人綁定」寫成唯一原因——目前 answer 只呈現 diagnose_iot 的其中一種 diagnosis outcome
 ```
 
 ---
@@ -818,9 +922,18 @@ row 3514  summary：查詢租客概況 合約帳單修繕
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  查詢特定租客的整體概況，包括其合約、帳單與修繕資訊。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 confirmed responsibility
+  - jgb_tenant_summary ＋ _format_tenant_summary 專屬 path
+  - ⚠️ **γ-C6 第一個正例**：「合約／帳單／修繕」⛔ 不是 API 欄位枚舉、⛔ 不是 formatter status fields、⛔ 不是規則細項、⛔ 不是 example——它們就是 _format_tenant_summary 代表的**跨域摘要範圍**，即 responsibility 的 semantic coverage boundary
+
+deliberate exclusions
+  - ⛔ 不得縮成「查詢租客概況」——那會失去目前**唯一**能證明此 responsibility scope 的 semantic boundary
 ```
 
 ---

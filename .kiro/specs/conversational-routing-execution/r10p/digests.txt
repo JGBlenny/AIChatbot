@@ -1,5 +1,5 @@
 # R10-P digests（2026-08-29）
-R10P_STAGE=P5_CENSUS_DONE
+R10P_STAGE=CANONICAL_MIGRATION_SEALED（registry epoch 2）
 POPULATION_ROWS=54
 POPULATION_DIGEST=51c04b887a16b05f9b19ca7f7e2b2a3b352b4ff26dcf639095593e2fb0647899
 POPULATION_IDSET_DIGEST=00581c42771fa3b01d5f9d9fe537f872ea501178e395dbf86203124771e0feff
@@ -26,3 +26,9 @@ CENSUS_DIGEST=ee8e398deff686f641044ae67f57ea89e79871246c6e0f596819de5a3a7461d2
 #   RESPONSIBILITY    **30 active** ＋ 1 historical
 #   LEVEL_A_V2        9 列 → **9 個相異 responsibility**（無共用、無多重 membership）
 # ⛔ 30 ⛔ 不是最終責任數——16 列未解，任一列日後可能新增或併入責任。
+REGISTRY_V2_DIGEST=2071b7f5c8cca5d99e497f1959de48157a7c21c4d8826fd6ce1942292fd658ba
+V2_EQUIVALENCE_DIGEST=ac9108d0e53eb753622405838b835f6a974baaba66202b58a75153903185a3fc
+# registry epoch 2（canonical migration）已封存：active canonical **30/30 reviewed**。
+# ⚠️ V1（3e5bcdc6…）維持 immutable historical seal；P5 census（ee8e398d…）⛔ 不改寫。
+# V1↔V2 structural-equivalence = STRUCTURALLY_EQUIVALENT（8 項數字 ＋ 逐列 disposition
+#   ＋ LEVEL_A_V2 對應全部相同）⇒ 只有 canonical 面改變，topology 零漂移。

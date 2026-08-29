@@ -31,7 +31,8 @@ import sys
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
 R10P = os.path.join(REPO, ".kiro", "specs", "conversational-routing-execution", "r10p")
 V1 = os.path.join(R10P, "registry.json")
-V2C = os.path.join(R10P, "registry-v2-candidate.json")
+V2C = (os.path.join(R10P, "registry-v2.json") if os.path.exists(os.path.join(R10P, "registry-v2.json"))
+       else os.path.join(R10P, "registry-v2-candidate.json"))
 #: ⚠️ 只有這三個欄位可變；其餘一律鎖死
 MUTABLE = {"canonical_responsibility", "canonical_responsibility_status", "canonical_review"}
 LOCKED_SCALARS = ["responsibility_id", "status", "facet", "owner", "owner_contract",
@@ -78,7 +79,31 @@ def violations(st=None):
         if extra:
             bad.append(f"{rid}：V2 出現非 canonical 面的新欄位 {sorted(extra)}")
     if st["v2"].get("seal_status") not in ("unsealed", "sealed"):
-        bad.append("V2 candidate 的 seal_status 非法")
+        bad.append("V2 的 seal_status 非法")
+    # ⚠️ sealed 後必須附 structural-equivalence 驗證——⛔ 不得只換 digest 就宣稱等價
+    if st["v2"].get("seal_status") == "sealed":
+        eq_path = os.path.join(R10P, "v2-structural-equivalence.json")
+        if not os.path.exists(eq_path):
+            bad.append("V2 已 sealed 但缺 v2-structural-equivalence.json"
+                       "——⛔ 封存必須附 V1↔V2 一致性驗證")
+        else:
+            with open(eq_path, encoding="utf-8") as f:
+                eq = json.load(f)
+            if eq.get("result") != "STRUCTURALLY_EQUIVALENT":
+                bad.append(f"structural-equivalence 結果為 {eq.get('result')!r}"
+                           f"：{eq.get('mismatches')}")
+            for c in eq.get("numeric_checks", []):
+                if not c.get("match"):
+                    bad.append(f"structural-equivalence 數字不符：{c['name']} "
+                               f"V2={c['v2_derived']} ≠ P5={c['p5_frozen']}")
+            if not eq.get("row_disposition_identical"):
+                bad.append("V2 導出的 row disposition 與 P4 投影不同——⛔ topology 漂移")
+            if not eq.get("level_a_v2_mapping_identical"):
+                bad.append("LEVEL_A_V2 的 responsibility 對應改變了")
+            if eq.get("v2_registry_digest") != hashlib.sha256(
+                    open(V2C, "rb").read()).hexdigest():
+                bad.append("structural-equivalence 記錄的 V2 digest 與現檔不符"
+                           "——⚠️ 驗證後 registry 又被改過")
     return bad
 
 
@@ -121,6 +146,27 @@ def self_test() -> int:
                                          "reviewed_at": "2026-08-29", "review_basis": "…"}
     m = mut(canon_only)
     cases.append(("只改 canonical 面必須綠", violations(m) == []))
+
+    # 正對照：sealed 但驗證結果為 DRIFT 必須紅（以 monkeypatch 方式模擬）
+    import types
+    eqp = os.path.join(R10P, "v2-structural-equivalence.json")
+    if st["v2"].get("seal_status") == "sealed" and os.path.exists(eqp):
+        orig = json.load(open(eqp, encoding="utf-8"))
+        try:
+            bad_eq = copy.deepcopy(orig); bad_eq["result"] = "DRIFT_DETECTED"
+            bad_eq["mismatches"] = [{"name": "x", "v2": 1, "p5": 2}]
+            json.dump(bad_eq, open(eqp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+            cases.append(("驗證結果為 DRIFT 必須紅",
+                          any("DRIFT_DETECTED" in x for x in violations(load()))))
+            bad_eq2 = copy.deepcopy(orig)
+            bad_eq2["numeric_checks"][0]["match"] = False
+            bad_eq2["numeric_checks"][0]["v2_derived"] = 999
+            json.dump(bad_eq2, open(eqp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+            cases.append(("驗證數字不符必須紅",
+                          any("數字不符" in x for x in violations(load()))))
+        finally:
+            with open(eqp, "w", encoding="utf-8") as f:
+                json.dump(orig, f, ensure_ascii=False, indent=1); f.write("\n")
 
     # 正對照：V1 bytes 被改必須紅
     m = copy.deepcopy(st); m["raw1"] = m["raw1"] + b" "

@@ -1,0 +1,74 @@
+{
+ "_doc": "V1↔V2 **structural-equivalence verification**（registry epoch 2 封存後的一致性驗證）。",
+ "_why_not_rewrite_p5": "⚠️ P5 census（ee8e398d…）是 V1 當時的**合法歷史結果**，⛔ 不改寫；V2 的一致性以本檔表達，⛔ 不是回頭改 CENSUS_DIGEST。",
+ "verified_at": "2026-08-30",
+ "v1_registry_digest": "3e5bcdc6a8265fbfaf1d7703a863e8b3d8a3d65a42fa4776f168651dec475dfb",
+ "v2_registry_digest": "2071b7f5c8cca5d99e497f1959de48157a7c21c4d8826fd6ce1942292fd658ba",
+ "topology_unchanged": true,
+ "numeric_checks": [
+  {
+   "name": "active responsibilities",
+   "v2_derived": 30,
+   "p5_frozen": 30,
+   "match": true
+  },
+  {
+   "name": "historical responsibilities",
+   "v2_derived": 1,
+   "p5_frozen": 1,
+   "match": true
+  },
+  {
+   "name": "rows_with_confirmed_membership",
+   "v2_derived": 36,
+   "p5_frozen": 36,
+   "match": true
+  },
+  {
+   "name": "rows_with_multi_membership",
+   "v2_derived": 1,
+   "p5_frozen": 1,
+   "match": true
+  },
+  {
+   "name": "rows_historical_only",
+   "v2_derived": 1,
+   "p5_frozen": 1,
+   "match": true
+  },
+  {
+   "name": "rows_unresolved",
+   "v2_derived": 16,
+   "p5_frozen": 16,
+   "match": true
+  },
+  {
+   "name": "frozen_rows",
+   "v2_derived": 54,
+   "p5_frozen": 54,
+   "match": true
+  },
+  {
+   "name": "level_a_v2_distinct_responsibilities",
+   "v2_derived": 9,
+   "p5_frozen": 9,
+   "match": true
+  }
+ ],
+ "row_disposition_identical": true,
+ "level_a_v2_mapping_identical": true,
+ "level_a_v2_responsibilities": [
+  "R-06",
+  "R-07",
+  "R-10",
+  "R-11",
+  "R-14",
+  "R-25",
+  "R-29",
+  "R-30",
+  "R-31"
+ ],
+ "result": "STRUCTURALLY_EQUIVALENT",
+ "mismatches": [],
+ "_claim": "V2 只改了 canonical 面：responsibility population、membership projection、row disposition 與 LEVEL_A_V2 對應**逐項相同**。"
+}

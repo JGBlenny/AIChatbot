@@ -1,11 +1,11 @@
 {
- "_doc": "R10 registry **V2 candidate**（canonical migration 工作副本）。",
+ "_doc": "R10 registry **V2**（canonical migration 已封存）。",
  "_authority": "本檔是 responsibility identity 的 authoritative 來源；⛔ proposal 不得反向定義它；⛔ P3 的 proposal 歷史不得污染本檔。",
  "schema_version": "R10P-SCHEMA-2",
  "schema_digest": "b72e749e0c452f0d0b86dfedc1e68e69b76912653240d02ea029d8d913272cf2",
  "population_digest": "51c04b887a16b05f9b19ca7f7e2b2a3b352b4ff26dcf639095593e2fb0647899",
  "proposal_digest": "fe6e5f3feba9b26ff5e98d59eb3ae4f38bdd61172e46cba7bbe5347c9e320426",
- "sealed_at": "2026-08-29",
+ "sealed_at": "2026-08-30",
  "_canonical_naming_note": "⚠️ responsibility_id 是**機械序號**；canonical_responsibility 只在業主已明示陳述時填入，其餘為 PENDING_OWNER_STATEMENT——schema 明文 ⛔ 不得由機器自動產生後直接生效。",
  "counts": {
   "reviewed_active": 30,
@@ -937,8 +937,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3497",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "診斷特定款項已完成支付，但帳單付款狀態尚未同步更新的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -992,10 +992,19 @@
     "review_basis_digest": "d19f194484bda9b0736af6adfd2a9ceec86fbabe3302b42025908c97f781885e"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 confirmed responsibility",
+     "_diagnose_payment_not_reflected（payments.py:50，P01）",
+     "summary「已付款但帳單狀態沒有更新」",
+     "⚠️ γ-C4：本群 answer 為**佔位型**，⛔ 不承擔主要證據角色；identity 由 P3 confirmed responsibility ＋ summary ＋ 具名 deterministic branch 支撐"
+    ],
+    "deliberate_exclusions": [
+     "⛔「最常見客服問題」",
+     "⛔「原因藏在後端」——那些只是問題描述／調查方式"
+    ]
    }
   },
   {
@@ -1149,8 +1158,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3500",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "診斷特定信用卡單次付款失敗的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1204,10 +1213,17 @@
     "review_basis_digest": "ee03e154f6370a5b546d7b6df5b11150e77ed7b3f6a3fa142f8a5edeffe6f22f"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 confirmed responsibility",
+     "_diagnose_credit_card_failure（payments.py:85，P02）",
+     "⚠️「**單次**」是與 R-16 正交的 defining boundary，⛔ 不是額外細節（γ-C5）",
+     "⚠️ γ-C4：本群 answer 為**佔位型**，⛔ 不承擔主要證據角色；identity 由 P3 confirmed responsibility ＋ summary ＋ 具名 deterministic branch 支撐"
+    ],
+    "deliberate_exclusions": [],
+    "negative_boundary": "與 R-16 的機器可讀分界：R-15＝信用卡「單次付款」失敗；R-16＝「週期性自動扣款／自動付款」失敗。"
    }
   },
   {
@@ -1215,8 +1231,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3501",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "診斷信用卡週期性自動扣款／自動付款失敗的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1279,10 +1295,19 @@
     "review_basis_digest": "74e4d294802871a01fba0969f8f7a097b348f57178f91c23d48806db7b4fbe6f"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 confirmed responsibility",
+     "_diagnose_auto_pay_failure（payments.py:120）",
+     "⚠️ γ-C5：與 R-15 的主要差異是**交易模式**，canonical 必須保留該模式差異"
+    ],
+    "deliberate_exclusions": [
+     "⛔ email notification 不進 canonical",
+     "⛔ 「查 DB」不進 canonical"
+    ],
+    "negative_boundary": "⛔ 不得與 R-15 都縮成「信用卡付款失敗」。"
    }
   },
   {
@@ -1290,8 +1315,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3502",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "診斷特定帳單的虛擬帳號失效、過期或轉帳失敗的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1354,10 +1379,21 @@
     "review_basis_digest": "46218cd0a8c30d3c35fb69a0552dbf7b9e55d60f949cb223c9b519fec18e1c45"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 confirmed responsibility",
+     "_diagnose_atm_expired（bills.py:625）＋ _ATM_KEYWORDS dispatch",
+     "3502 answer（232 字）作為 content evidence"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 國泰／藍新／永豐等金流商名稱",
+     "⛔ 180 天／7 天等效期",
+     "⛔ 1 元測試帳單",
+     "⛔ 月收款上限、額度調整天數——全部是 γ-C1 標準排除項",
+     "⛔ 不寫「提供處理方式」：目前 confirmed identity 是 **diagnosis**；answer 的 remediation 豐富 ⛔ 不代表 responsibility 要擴成 troubleshooting workflow owner"
+    ]
    }
   },
   {
@@ -1365,8 +1401,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3503",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "診斷特定發票未成功開立的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1420,10 +1456,17 @@
     "review_basis_digest": "cb5ea81d1891024026e2ce228462f12d3f8601d5b5f7036a14f04a1c08b1bd0b"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 confirmed responsibility",
+     "_diagnose_issue_failure（invoices.py，I01）",
+     "⚠️ γ-C4：本群 answer 為**佔位型**，⛔ 不承擔主要證據角色；identity 由 P3 confirmed responsibility ＋ summary ＋ 具名 deterministic branch 支撐"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 不寫「多層條件」——implementation／problem-solving detail"
+    ]
    }
   },
   {
@@ -1431,8 +1474,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3504",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "診斷特定發票無法作廢的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1486,10 +1529,17 @@
     "review_basis_digest": "3e4676e4c45c9f8c40af6ba64579510246e9d55958febe2a6b3b91d347ae90ca"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 confirmed responsibility",
+     "_diagnose_invalid_failure（invoices.py，I02）",
+     "⚠️ γ-C4：本群 answer 為**佔位型**，⛔ 不承擔主要證據角色；identity 由 P3 confirmed responsibility ＋ summary ＋ 具名 deterministic branch 支撐"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 不寫「狀態」「API 回應」——它們是診斷 facts，⛔ 不是責任 identity"
+    ]
    }
   },
   {
@@ -1497,8 +1547,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3505",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "診斷目前無法新增物件的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1552,10 +1602,16 @@
     "review_basis_digest": "be3d4b77e6baeaac1e95a43c64cf9d81f23de414e052aa20da3e7abe350f4a5d"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 confirmed responsibility",
+     "_diagnose_cannot_add_estate（subscription.py，E01）"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 不寫「訂閱額度已滿」「權限不足」——那是目前 capability 的原因枚舉；未來增加第三種原因時 canonical ⛔ 不應因此改版"
+    ]
    }
   },
   {
@@ -1563,8 +1619,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3506",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "診斷既有物件突然被下架或停止刊登的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1618,10 +1674,16 @@
     "review_basis_digest": "39e1430d32d65e28a6c7f8e4789d3da51da9b4306d8c1767a23fee3b5e22b5a8"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 confirmed responsibility",
+     "_diagnose_estates_delisted（subscription.py，E02）"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 不寫訂閱續約扣款失敗／方案失效／必填欄位驗證失敗"
+    ]
    }
   },
   {
@@ -1629,8 +1691,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3507",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "診斷特定物件目前為何不符合建立合約的條件。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1693,10 +1755,19 @@
     "review_basis_digest": "6e76fb61c7992572f8b71ba68a68f1a65b8ae0cdfd85ff4c7d6c8b1b6556c962"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 confirmed responsibility（owner = estates.py:33::build_estate_status_facts）",
+     "⚠️ **P-C9 完全生效**：canonical 描述的是**已確認的 responsibility truth**，⛔ 不是目前錯接的 jgb_contract_query"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 不寫 jgb_contract_query",
+     "⛔ 不寫目前 fallback 行為",
+     "⛔ 不列舉「刊登中／必填欄位齊備」——capability rules"
+    ],
+    "negative_boundary": "capability_alignment=WRONG_EXECUTION_BINDING_CONFIRMED 繼續留在**正交 diagnostic axis**，⛔ 不污染 canonical。"
    }
   },
   {
@@ -1704,8 +1775,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3508",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "診斷 IoT 廠商帳號無法完成綁定的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1759,10 +1830,18 @@
     "review_basis_digest": "9834632c18fafdcde713786cd239e23bd56aba97b5a19fbb2e290f406573e58f"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 confirmed responsibility",
+     "services/jgb/iot.py::diagnose_iot（formatter 專屬分支）",
+     "⚠️ γ-C4：本群 answer 為**佔位型**，⛔ 不承擔主要證據角色；identity 由 P3 confirmed responsibility ＋ summary ＋ 具名 deterministic branch 支撐"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 不寫 DB、role",
+     "⛔ ⛔ 不把「已被別人綁定」寫成唯一原因——目前 answer 只呈現 diagnose_iot 的其中一種 diagnosis outcome"
+    ]
    }
   },
   {
@@ -1770,8 +1849,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3514",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "查詢特定租客的整體概況，包括其合約、帳單與修繕資訊。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1825,10 +1904,17 @@
     "review_basis_digest": "107298ad2c6e4f84500e7cebafd2e768e047bf3dc2c1223a335ec64ed86e16ef"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 confirmed responsibility",
+     "jgb_tenant_summary ＋ _format_tenant_summary 專屬 path",
+     "⚠️ **γ-C6 第一個正例**：「合約／帳單／修繕」⛔ 不是 API 欄位枚舉、⛔ 不是 formatter status fields、⛔ 不是規則細項、⛔ 不是 example——它們就是 _format_tenant_summary 代表的**跨域摘要範圍**，即 responsibility 的 semantic coverage boundary"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 不得縮成「查詢租客概況」——那會失去目前**唯一**能證明此 responsibility scope 的 semantic boundary"
+    ]
    }
   },
   {
@@ -2387,14 +2473,14 @@
    }
   }
  ],
- "registry_version": "V2_CANDIDATE",
+ "registry_version": "V2",
  "based_on": {
   "version": "V1",
   "registry_digest": "3e5bcdc6a8265fbfaf1d7703a863e8b3d8a3d65a42fa4776f168651dec475dfb",
   "status": "immutable historical seal",
   "meaning": "P4／P5 當時的 responsibility population"
  },
- "seal_status": "unsealed",
+ "seal_status": "sealed",
  "_scope_lock": "⚠️ 本輪 scope ＝ **canonical population**，⛔ 不是第二次 responsibility review。V1→V2 只准改 canonical 面（canonical_responsibility／canonical_responsibility_status／canonical_review）；responsibility_id／status／facet／applicability／owner／owner_contract／members（含 member_role／operational_status／_membership_origin）**一律不得變動**。⛔ 若 canonical review 期間發現證據足以推翻 identity／membership／owner，必須**另立** responsibility review epoch，⛔ 不得趁填 canonical 順手改 registry topology。",
  "_epoch_rule": "⛔ 不得每補一筆 canonical 就宣稱一個新 registry epoch——**epoch 2 是整輪 canonical migration 的單一 successor**。30/30 review 完成、INV21 轉綠後才 seal 成 REGISTRY_V2 並產生新 REGISTRY_DIGEST。",
  "_canonical_status_semantics": {
@@ -2426,5 +2512,12 @@
    "R-06 general 帳單產生／結算流程": "（無成對 instance）"
   }
  },
- "_canonical_review_finding": "⚠️ γ-1 的結論：**9 個 Level-A reviewed row representations 全部是有效 evidence，但只有少數適合逐字升格**（R-14 幾乎原樣、R-06 近乎逐字；R-07／R-11／R-29／R-30／R-31 都需修）。⇒ responsibility-level canonical 確實需要獨立人工 review——這反證了當初**沒有**直接做 migration-copy 是對的。"
+ "_canonical_review_finding": "⚠️ γ-1 的結論：**9 個 Level-A reviewed row representations 全部是有效 evidence，但只有少數適合逐字升格**（R-14 幾乎原樣、R-06 近乎逐字；R-07／R-11／R-29／R-30／R-31 都需修）。⇒ responsibility-level canonical 確實需要獨立人工 review——這反證了當初**沒有**直接做 migration-copy 是對的。",
+ "_gamma2_rulers_frozen": {
+  "γ-C4_placeholder_answer": "已確認的 responsibility **不要求** answer 本身足以生成 canonical。若 P3 identity 已成立，且 summary ＋ deterministic owner branch 能正面界定責任，佔位型 answer ⛔ 不構成 canonical blocker。⚠️ ⛔ 不得倒推成「summary ＋ branch 永遠足以確認**新** responsibility」——那是 P3 的問題，本輪不重審。",
+  "γ-C5_sibling_mode_distinction": "同一大類問題但 confirmed responsibility 的**交易／執行模式**不同 → canonical 必須保留 distinguishing mode。正例：R-15 單次信用卡付款 ／ R-16 週期自動扣款。",
+  "γ-C6_semantic_dimension_enumeration": "canonical 預設不枚舉；**例外**：枚舉項本身就是 responsibility 的 coverage boundary。正例：R-24 租客概況 ＝ 合約 ＋ 帳單 ＋ 修繕。"
+ },
+ "_canonical_review_scope_note": "⚠️ canonical review 這一步**不是**重新證明 responsibility identity（P3 已確認 identity／owner，INV22 又鎖住 topology）。它只問：**能否依既有 confirmed responsibility，寫出不超過證據邊界的 semantic identity？**",
+ "_seal_note": "⚠️ epoch 2 ＝ 整輪 canonical migration 的**單一 successor**。V1（digest 3e5bcdc6…）維持 immutable historical seal，⛔ 不覆寫；P5 census（ee8e398d…）⛔ 不改寫——V2 的一致性另以 structural-equivalence verification 表達。"
 }
