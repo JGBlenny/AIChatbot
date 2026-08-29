@@ -302,6 +302,26 @@ else
   echo "✅ PASS（含常數間接解析 ＋ 植入缺漏的正對照）"
 fi
 
+echo "═══ 不變量 12：retrieval semantic contract 與 scoring surface 的單一實作（D1/D2/D3）═══"
+# 源起（2026-08-29，R8）：系統宣告某 row 承接的責任**比** scoring 看到的文字更寬
+# ⇒ 4656 的 capability 是「該筆帳單完整現況」，surface 卻連「已繳／未繳」都沒有。
+# 更深一層：scoring surface 過去**沒有單一實作點**——embedding 端與 reranker 端
+# 各自寫一份 `question_summary or answer` 優先序 ⇒ 兩份實作＝兩個 semantic universe。
+# 不變量：① scoring 文字由唯一契約函式決定；② 宣告讀取器⛔不得 fallback 猜測；
+#        ③ 任何 stage-specific divergence 必須在登記簿上明示（D2）。
+RR_CHECK="$REPO/scripts/audit/checks/retrieval_representation_contract.py"
+if ! python3 "$RR_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 12 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$RR_CHECK" --self-test
+  FAIL=1
+elif ! RR_OUT=$(python3 "$RR_CHECK" 2>&1); then
+  echo "$RR_OUT"
+  FAIL=1
+else
+  echo "$RR_OUT"
+  echo "✅ PASS（含 alias 傳遞掃描 ＋ 四項各自的正對照）"
+fi
+
 echo ""
 if [ $FAIL -eq 0 ]; then
   echo "🎉 稽核通過（$(date +%Y-%m-%d))"

@@ -118,6 +118,20 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     --    值域封閉與 UNKNOWN 語義一律由 services/instance_applicability.py 負責。
                     kb.generation_metadata->>'instance_applicability'
                         AS knowledge_instance_applicability,
+                    -- ⚠️ **retrieval semantic contract 的 transport 欄位**（D1，2026-08-29）：
+                    --    scoring surface 由 services/retrieval_representation.scoring_surface()
+                    --    決定，該函式讀的就是這兩欄；不投影＝所有 row 永遠落 legacy 分支。
+                    -- ⚠️ **兩欄必須成對投影**：只投影文字不投影 provenance，consumer 就分不出
+                    --    reviewed declaration 與 proposal ⇒ 未經審查的文字會直接進 scoring，
+                    --    那正是 D3 要擋的事。
+                    -- ⛔ **只帶這兩個最小欄位**，比照上方 applicability 的理由。
+                    -- ⛔ **retriever 只負責原值搬運**：不得在此做 fallback 到 question_summary、
+                    --    不得在此判 provenance 是否合格——值域與授權一律由
+                    --    services/retrieval_representation.py 負責。
+                    kb.generation_metadata->>'retrieval_representation'
+                        AS retrieval_representation,
+                    kb.generation_metadata->'retrieval_representation_provenance'->>'source'
+                        AS retrieval_representation_source,
                     kb.trigger_mode,
                     kb.trigger_keywords,
                     kb.immediate_prompt,
@@ -243,6 +257,20 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     --    值域封閉與 UNKNOWN 語義一律由 services/instance_applicability.py 負責。
                     kb.generation_metadata->>'instance_applicability'
                         AS knowledge_instance_applicability,
+                    -- ⚠️ **retrieval semantic contract 的 transport 欄位**（D1，2026-08-29）：
+                    --    scoring surface 由 services/retrieval_representation.scoring_surface()
+                    --    決定，該函式讀的就是這兩欄；不投影＝所有 row 永遠落 legacy 分支。
+                    -- ⚠️ **兩欄必須成對投影**：只投影文字不投影 provenance，consumer 就分不出
+                    --    reviewed declaration 與 proposal ⇒ 未經審查的文字會直接進 scoring，
+                    --    那正是 D3 要擋的事。
+                    -- ⛔ **只帶這兩個最小欄位**，比照上方 applicability 的理由。
+                    -- ⛔ **retriever 只負責原值搬運**：不得在此做 fallback 到 question_summary、
+                    --    不得在此判 provenance 是否合格——值域與授權一律由
+                    --    services/retrieval_representation.py 負責。
+                    kb.generation_metadata->>'retrieval_representation'
+                        AS retrieval_representation,
+                    kb.generation_metadata->'retrieval_representation_provenance'->>'source'
+                        AS retrieval_representation_source,
                     kb.trigger_mode,
                     kb.trigger_keywords,
                     kb.immediate_prompt,
@@ -366,6 +394,10 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             #    命名刻意帶 `knowledge_` 前綴——downstream 一眼分得出這是 Knowledge 軸，
             #    ⛔ 不會與 Face 的 `requires_instance_reference` 混。
             'knowledge_instance_applicability': row.get('knowledge_instance_applicability'),
+            # ⚠️ Retrieval semantic contract（D1）＋其 provenance（D3）。
+            #    ⛔ 兩欄一起搬或一起不搬；⛔ 不在此 fallback、不在此判授權。
+            'retrieval_representation': row.get('retrieval_representation'),
+            'retrieval_representation_source': row.get('retrieval_representation_source'),
             'intent_id': row.get('intent_id'),
             # ─── 觸發配置（spec trigger-vocabulary-debt 元件 1：修檢索斷鏈，透傳至消費層 chat.py:2948）───
             # trigger_mode=varchar／immediate_prompt=text → str|None；trigger_keywords=text[] → list|None（比照 keywords）

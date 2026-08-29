@@ -58,6 +58,11 @@ PROVENANCE_KEY = "retrieval_representation_provenance"
 
 #: production transport 欄位（retriever 的扁平投影；比照 knowledge_instance_applicability）
 TRANSPORT_FIELD = "retrieval_representation"
+#: provenance 的扁平投影欄位。
+#: ⚠️ **必須**與 representation 一起投影：production row 不帶 generation_metadata，
+#: 只投影文字而不投影 provenance 會讓 consumer 無法分辨 reviewed 與 proposal
+#: —— 那正是 D3 要擋的事。
+PROVENANCE_TRANSPORT_FIELD = "retrieval_representation_source"
 
 #: 唯一被承認的 provenance（⛔ 自動拼接／自動摘要皆不在此列）
 APPROVED_SOURCES = frozenset({"reviewed_product_declaration"})
@@ -83,11 +88,61 @@ def retrieval_representation(knowledge: Optional[dict]) -> Optional[str]:
     return None
 
 
+def representation_source(knowledge: Optional[dict]) -> Optional[str]:
+    """讀 provenance 的 source 字串。扁平投影優先、巢狀為相容備援。"""
+    row = knowledge or {}
+    src = row.get(PROVENANCE_TRANSPORT_FIELD)
+    if src is None:
+        meta = row.get("generation_metadata")
+        prov = meta.get(PROVENANCE_KEY) if isinstance(meta, dict) else None
+        src = prov.get("source") if isinstance(prov, dict) else None
+    return src if isinstance(src, str) and src.strip() else None
+
+
 def is_authoritative(knowledge: Optional[dict]) -> bool:
     """provenance 是否為被承認的來源。⛔ proposal 不算。"""
-    meta = (knowledge or {}).get("generation_metadata")
-    if not isinstance(meta, dict):
-        return False
-    prov = meta.get(PROVENANCE_KEY)
-    src = prov.get("source") if isinstance(prov, dict) else None
-    return src in APPROVED_SOURCES
+    return representation_source(knowledge) in APPROVED_SOURCES
+
+
+# --------------------------------------------------------------------------
+# D2 的**唯一**實作點：scoring surface
+# --------------------------------------------------------------------------
+#: 本 row 的 scoring 文字取自 reviewed declaration
+SURFACE_SOURCE_DECLARED = "declared_representation"
+#: 本 row 尚未 migrate，仍用 legacy question_summary
+SURFACE_SOURCE_LEGACY_SUMMARY = "legacy_question_summary"
+#: 連 question_summary 都沒有（⚠️ 應為 0；出現即為資料缺陷）
+SURFACE_SOURCE_EMPTY = "empty"
+
+#: 送進 reranker payload 的欄位名（api_server 優先採用它）
+SURFACE_FIELD = "scoring_surface"
+SURFACE_SOURCE_FIELD = "scoring_surface_source"
+
+
+def scoring_surface(knowledge: Optional[dict]) -> tuple:
+    """回傳 `(text, source)` —— **retrieval scoring 實際看到的那段文字**。
+
+    ⚠️ 這是 D2「embedding surface ＝ reranker surface」的**唯一**實作點：
+    embedding 產生端與 reranker payload 端都必須呼叫本函式，
+    ⛔ 不得各自寫一份 `question_summary or answer` 的優先序
+    —— 兩份實作就是兩個 semantic universe，那正是 R8 診斷出的病灶。
+
+    ## ⚠️ `SURFACE_SOURCE_LEGACY_SUMMARY` **不是** contract fallback
+
+    ```text
+    `retrieval_representation()` ⛔ 不 fallback ——「宣告是什麼」不得被猜測。
+    `scoring_surface()`   **必須**有 legacy 分支 —— 否則未 migrate 的 row
+                          會在 scoring 階段拿到空字串，那是**擴大**故障而非修復。
+    ⇒ 兩者不同層：前者是 truth 的讀取，後者是 migration 期間的**明示**降級，
+      且降級**必被計數**（source 欄位隨 payload 一起傳，可統計覆蓋率）。
+    ```
+    ⚠️ 這個 legacy 分支是**過渡**，⛔ 不是終局；覆蓋率到 100% 前不得移除。
+    """
+    row = knowledge or {}
+    declared = retrieval_representation(row)
+    if declared is not None and is_authoritative(row):
+        return declared, SURFACE_SOURCE_DECLARED
+    summary = row.get("question_summary")
+    if isinstance(summary, str) and summary.strip():
+        return summary, SURFACE_SOURCE_LEGACY_SUMMARY
+    return "", SURFACE_SOURCE_EMPTY

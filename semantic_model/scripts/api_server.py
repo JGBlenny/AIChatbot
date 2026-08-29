@@ -170,13 +170,23 @@ async def rerank(request: RerankRequest):
         raise HTTPException(status_code=503, detail="Model not loaded")
 
     # 準備模型輸入
-    # 只用 question_summary 評分（與 embedding 一致）
-    # 原因：answer/content 會稀釋標題的意圖訊號，
-    # 實測拿掉後差距提升 99%，正確率不變（見 knowledge.md §5）
+    # ⚠️ **scoring surface 的決定權已上移到 client**（D2，2026-08-29）：
+    #    client 端 services/retrieval_representation.scoring_surface() 是唯一實作點，
+    #    embedding 產生端與此處吃的是同一份文字 ⇒ 不會再出現
+    #    「embedding 看得到、reranker 看不到」的分裂 semantic universe。
+    # ⚠️ 舊行為（只用 question_summary，answer/content 僅作備援）**完整保留**給
+    #    沒有送 scoring_surface 的 client（例如 pipeline health check）。
+    #    原註記：answer/content 會稀釋標題的意圖訊號，實測拿掉後差距提升 99%、
+    #    正確率不變（見 knowledge.md §5）——該結論針對「summary vs summary+answer」，
+    #    ⛔ 不構成「reviewed representation 不得作為 scoring surface」的證據。
     pairs = []
     for candidate in request.candidates:
-        question = candidate.get("question_summary", "")
-        text = question if question else (candidate.get("answer") or candidate.get("content", ""))
+        surface = candidate.get("scoring_surface")
+        if isinstance(surface, str) and surface.strip():
+            text = surface
+        else:
+            question = candidate.get("question_summary", "")
+            text = question if question else (candidate.get("answer") or candidate.get("content", ""))
         pairs.append([request.query, text])
 
     # 計算分數

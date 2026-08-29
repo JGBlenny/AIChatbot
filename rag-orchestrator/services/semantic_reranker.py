@@ -17,6 +17,19 @@ except ImportError:
         # 如果都沒有，稍後會處理
         use_httpx = None
 
+try:  # package import（production 路徑）
+    from .retrieval_representation import (
+        SURFACE_FIELD,
+        SURFACE_SOURCE_FIELD,
+        scoring_surface,
+    )
+except ImportError:  # 直接以 script 執行時的相容路徑
+    from retrieval_representation import (  # type: ignore
+        SURFACE_FIELD,
+        SURFACE_SOURCE_FIELD,
+        scoring_surface,
+    )
+
 logger = logging.getLogger(__name__)
 
 class SemanticReranker:
@@ -76,19 +89,29 @@ class SemanticReranker:
 
         try:
             # 準備請求數據
-            # 傳送原始欄位，讓 API server 決定如何組合
-            # （避免客戶端預先串接導致 question_summary 資訊遺失）
+            # ⚠️ **scoring surface 在此端解析一次**（D2，2026-08-29）：
+            #    舊註解寫「傳原始欄位讓 API server 決定如何組合」——那讓
+            #    embedding 端與 reranker 端各自持有一份優先序，兩份實作＝兩個
+            #    semantic universe，正是 R8 診斷出的結構性病灶。
+            #    現在唯一實作點是 retrieval_representation.scoring_surface()。
+            # ⚠️ answer／content／question_summary **仍照舊送**：api_server 對
+            #    沒有 scoring_surface 的舊 client 仍需維持原優先序（向後相容），
+            #    ⛔ 不可為了「乾淨」把它們拿掉。
+            # ⚠️ `scoring_surface_source` 一併送出 ⇒ migration 覆蓋率可被統計。
+            payload_candidates = []
+            for c in candidates:
+                surface, surface_source = scoring_surface(c)
+                payload_candidates.append({
+                    "id": c.get("id"),
+                    "answer": c.get("answer", ""),
+                    "content": c.get("content", ""),
+                    "question_summary": c.get("question_summary", ""),
+                    SURFACE_FIELD: surface,
+                    SURFACE_SOURCE_FIELD: surface_source,
+                })
             request_data = {
                 "query": query,
-                "candidates": [
-                    {
-                        "id": c.get("id"),
-                        "answer": c.get("answer", ""),
-                        "content": c.get("content", ""),
-                        "question_summary": c.get("question_summary", ""),
-                    }
-                    for c in candidates
-                ],
+                "candidates": payload_candidates,
                 "top_k": top_k
             }
 

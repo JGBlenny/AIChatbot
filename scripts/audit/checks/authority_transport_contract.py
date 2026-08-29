@@ -40,7 +40,13 @@ import sys
 import textwrap
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
-CONSUMER = "rag-orchestrator/services/instance_applicability.py"
+#: ⚠️ **每新增一個 authority contract 模組就要加進來**——不變量守的是
+#:    「consumer 讀得到的鍵，producer 必須提供」，不是守單一欄位。
+CONSUMERS = [
+    "rag-orchestrator/services/instance_applicability.py",
+    "rag-orchestrator/services/retrieval_representation.py",
+]
+CONSUMER = CONSUMERS[0]  # 相容：自我測試的正對照仍以第一個為樣本
 PRODUCER = "rag-orchestrator/services/vendor_knowledge_retriever_v2.py"
 PRODUCER_FUNC = "_format_result"
 #: 明文豁免：相容備援，⛔ 不得作為 production wiring 證明
@@ -117,7 +123,9 @@ def self_test() -> int:
     cases.append(("齊備不得誤報", violations({"a"}, {"a", "c"}) == []))
     cases.append(("相容備援鍵豁免", violations({"generation_metadata"}, set()) == []))
     # ⚠️ 正對照：把真實 consumer 的 transport 欄位從 producer 拿掉，必須被抓到
-    real_c = consumer_row_keys(open(os.path.join(REPO, CONSUMER), encoding="utf-8").read())
+    real_c = set()
+    for _rel in CONSUMERS:
+        real_c |= consumer_row_keys(open(os.path.join(REPO, _rel), encoding="utf-8").read())
     real_p = producer_row_keys(open(os.path.join(REPO, PRODUCER), encoding="utf-8").read(),
                                PRODUCER_FUNC)
     planted = violations(real_c, real_p - {"knowledge_instance_applicability"})
@@ -131,7 +139,9 @@ def self_test() -> int:
 def main() -> int:
     if "--self-test" in sys.argv:
         return self_test()
-    c = consumer_row_keys(open(os.path.join(REPO, CONSUMER), encoding="utf-8").read())
+    c = set()
+    for rel in CONSUMERS:
+        c |= consumer_row_keys(open(os.path.join(REPO, rel), encoding="utf-8").read())
     p = producer_row_keys(open(os.path.join(REPO, PRODUCER), encoding="utf-8").read(),
                           PRODUCER_FUNC)
     if not c or not p:
