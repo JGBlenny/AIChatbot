@@ -221,6 +221,26 @@ def suppresses_hint(decision: GateDecision) -> bool:
 #    語義契約會退化成 rollout 清單——那正是 erratum 否決「明列 key 作為 membership」的理由。
 
 #: Face 自身宣告的鍵（`grounding_scope` 內，與 `required_slots`／`enabled_gate` 同處）
+#:
+#: ⚠️ **語義定案（業主裁定③，2026-08-29）——採 (B) 不採 (A)**：
+#:
+#:   This Face is applicable only when correctly fulfilling the user's intent
+#:   depends on user-specific or instance-specific runtime data.
+#:   The required instance reference may already be present, deterministically
+#:   extractable, or need to be collected later.
+#:
+#: 也就是 `reference` 指的是**語義上的 referent**，
+#: ⛔ **不是**「缺一個 required slot、必須追問識別碼」。
+#:
+#: 反證（H6 已拆開兩者）：「合約 89557 現在狀態？」明確 instance-dependent，
+#: 但識別碼**已在原句**、deterministic fast path 可直接 grounding，不需追問。
+#: 若定義成「必須追問」，會與已證實的 runtime semantics 衝突。
+#:
+#: 兩軸因此完全對齊：
+#:   Knowledge `instance_applicability=instance` → 此 intent 的正確完成依賴 user-specific runtime data
+#:   Face      `requires_instance_reference=true` → 此 Face 的責任適用條件即上述 intent
+#: 而「identifier 現在有沒有」是 **execution 層**的另一個問題，⛔ 不得混回 applicability：
+#:   instance-dependent? → yes → identifier available? → yes: direct grounding／no: 追問收集
 INSTANCE_REFERENCE_KEY: Final[str] = "requires_instance_reference"
 
 #: **D：本次 release 已驗證可納管者**（Level A）。

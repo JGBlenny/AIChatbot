@@ -33,6 +33,34 @@ Knowledge 層  `generation_metadata.instance_applicability`
 缺 / 無法辨識 → **UNKNOWN**
 ```
 
+### ⚠️ 兩個值的**證據門檻不對稱**（業主裁定②，2026-08-29）
+
+```text
+instance  可由**可重播的 machine capability evidence**（診斷引擎契約／識別碼表單／
+          動作端點）建立，或由 reviewed declaration 建立
+general   **必須**有正面的 reviewed declaration：
+          「此 knowledge intent 的正確完成不依賴任何使用者特定 runtime state，
+            即使相關 user-specific capability 存在也不需要讀取」
+          ⛔ **不得**由 absence-of-instance-evidence 推導
+unknown   正常的 migration state
+```
+
+⚠️ 實證依據：P1e-1 兩位隔離標註者對 839 筆達成 97.5% 一致，
+但把**已證實需要實值**的知識 3509 合議判成 `general`——
+因為它的答案文字寫成通用指引。⇒ **knowledge text alone is insufficient
+evidence for authoritative `general` classification.**
+
+⚠️ 也因此，⛔ 不得用「這一題若能讀到使用者自己的資料會不會答得更好」來判 general：
+那是把判準從**必要性**偷換成**有沒有增益**。
+「合約有哪些狀態？」讀到我的合約當然能答得更貼近，但它仍是純制度問題。
+
+```text
+user-specific data would improve answer  ≠  user-specific data is required
+```
+
+⚠️ UNKNOWN **比 false general 安全**，也比假的資料完整度誠實——
+⛔ 不得為了壓低 UNKNOWN 而放寬 general 的證據門檻。
+
 ⛔ **UNKNOWN 不得取得任何正向授權含義。** 這正是本輪要修掉的病灶：
 `is_instance_requiring_face()` 的 `scope.get(KEY) is True` 讓「不知道」被
 默默讀成「不需要」，於是 gate 的條件 C 恆為 False——**授權機制是在一個

@@ -267,7 +267,26 @@ categories 命中          ＝ 這列知識**可以提名**該面向
   "general"   不需要任何該使用者自己的系統資料，
               僅靠制度、流程、產品通則即可完整回答
 
-⚠️ **UNKNOWN 是 migration state，⛔ 不是正常終態。**
+### ⚠️ 兩個值的**證據門檻不對稱**（2026-08-29 業主裁定②）
+
+```text
+instance  可由可重播的 machine capability evidence（診斷引擎契約／識別碼表單／
+          動作端點）建立，或由 reviewed declaration 建立
+general   **必須**有正面的 reviewed declaration：
+          「此 intent 的正確完成不依賴任何使用者特定 runtime state，
+            即使相關 user-specific capability 存在也不需要讀取」
+          ⛔ **不得**由 absence-of-instance-evidence 推導
+```
+
+⚠️ 實證：兩位隔離標註者對 839 筆達成 97.5% 一致，卻把**已證實需要實值**的
+知識 3509 合議判成 `general`（因為它的答案文字寫成通用指引）。
+⇒ **knowledge text alone is insufficient evidence for authoritative `general`.**
+
+⛔ 也不得用「能讀到使用者資料會不會答得更好」判 general——
+那是把判準從**必要性**偷換成**有沒有增益**。
+
+⚠️ **UNKNOWN 是 migration state，⛔ 不是正常終態；
+   但 UNKNOWN 比 false general 安全，⛔ 不得為了壓低 UNKNOWN 而放寬 general 門檻。**
    2026-08-30 之前的既有列允許 UNKNOWN（legacy）；
    之後建立／修改的列未宣告 → `make audit` 不變量 10 直接 FAIL。
 ```
