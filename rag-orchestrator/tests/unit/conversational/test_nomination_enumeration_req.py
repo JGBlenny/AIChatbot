@@ -55,14 +55,17 @@ async def _run(monkeypatch, cats, registry, resolver_table,
     from services.decision_layer import DecisionConfig
 
     rec = _Recorder(resolver_table)
-    # ⚠️ 有抑制情境時必須給真的 decision 物件：production 的
-    #    `_instance_hint_suppressed(None, cfg)` 恆為 False，
-    #    「decision=None 卻回報抑制」是替身造出來的、production 不存在的狀態。
+    # ⚠️ **P1f 後抑制接縫換人**：production 改呼叫 `_applicability_suppressed(top1, cfg)`，
+    #    回 `(suppressed, reason)`；lexical 判定只留作 telemetry，不再具 authority。
+    #    替身照新接縫給值——⛔ 不得繼續 stub 已卸任的 `_instance_hint_suppressed`，
+    #    否則測試會在 production 早已不看它的情況下仍然「通過」（假綠）。
     _decision = _GateDecision() if suppressed else None
     monkeypatch.setattr(chat_mod, "_knowledge_category", lambda _b: list(cats))
     monkeypatch.setattr(chat_mod, "_instance_gate_decision", lambda _m: _decision)
-    monkeypatch.setattr(chat_mod, "_instance_hint_suppressed",
-                        lambda _d, cfg: getattr(cfg, "key", None) in suppressed)
+    monkeypatch.setattr(
+        chat_mod, "_applicability_suppressed",
+        lambda _k, cfg: ((True, "stub_suppressed")
+                         if getattr(cfg, "key", None) in suppressed else (False, None)))
     monkeypatch.setattr(chat_mod, "_resolve_pre_commit_candidate", rec.resolve)
 
     async def _lookup(_pool, cat):

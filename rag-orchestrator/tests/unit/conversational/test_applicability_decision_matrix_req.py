@@ -160,14 +160,25 @@ def test_gate_scope_unchanged_and_still_paused():
     assert LEVEL_A_INSTANCE_GATE_SCOPE == frozenset({"bill_diagnosis"})
 
 
-def test_no_consumer_reads_the_new_decision_yet():
-    """⛔ P1c **不接政策**：routing 尚未依 `instance_applicability_decision` 改變行為。
+def test_consumer_is_wired_at_the_level_a_seam_only():
+    """⚠️ **本測試是前一版的繼任者**（P1c 的 `test_no_consumer_reads_the_new_decision_yet`）。
 
-    ⚠️ 這條是刻意的「尚未接線」斷言——它會在 P1d／authorization 時被有意改掉，
-    改的時候必須同時提出新的授權證據，而不是悄悄接上。
+    前一版刻意斷言「routing 尚未消費 `instance_applicability_decision`」，
+    並註明：「它會在授權時被有意改掉，改的時候必須同時提出新的授權證據，
+    而不是悄悄接上。」——授權證據見 `test_p1f_authority_transfer_req.py`
+    （7 形狀 matrix ＋ 三組 mutation ＋ 兩條 lexical 死亡證明 ＋ gate-OFF／非 Level-A 等價）。
+
+    現在改為斷言**接線範圍正確**：
+    ```text
+    routers/chat.py                       ✅ 已接（Level-A suppression seam）
+    services/conversational_engine.py     ⛔ 不得接——面向引擎不參與進場授權
+    services/instance_reference_gate.py   ⛔ 不得接——避免兩套 authority 互相呼叫
+    ```
     """
-    for rel in ("routers/chat.py", "services/conversational_engine.py",
-                "services/instance_reference_gate.py"):
+    consumer = _executable_source(APP / "routers/chat.py")
+    assert "instance_applicability_decision" in consumer, \
+        "Level-A seam 未接線 ⇒ 授權會量到舊的 lexical gate"
+    for rel in ("services/conversational_engine.py", "services/instance_reference_gate.py"):
         code = _executable_source(APP / rel)
         assert "instance_applicability_decision" not in code, \
-            f"{rel} 已消費新判定 ⇒ P1c 的『不接政策』界線被跨越"
+            f"{rel} 也消費了新判定 ⇒ 接線範圍溢出 Level-A seam"

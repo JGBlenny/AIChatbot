@@ -962,11 +962,93 @@ def _instance_gate_decision(user_message: Optional[str]):
         return None
 
 
-def _instance_hint_suppressed(decision, cfg) -> bool:
-    """本 query 的判定是否抑制**這個 Face** 的 Routing Hint。
+#: P1f 的抑制理由（**必須分得出 general 與 unknown**——rollout 動作相同，語義不同）
+SUPPRESS_REASON_INELIGIBLE = "knowledge_declared_general"
+SUPPRESS_REASON_UNKNOWN = "applicability_unknown_not_authorized"
 
-    抑制集合**只由 C ∧ D 決定**（`gate_applies_to`）——
-    SHALL NOT 擴成「所有 categories」「所有 bill_ref Face」「所有 dialog Face」。
+
+def _applicability_suppressed(best_knowledge, cfg):
+    """**P1f：Level-A 的 suppression authority 改由 applicability cross-product 決定。**
+
+    ```text
+    retrieval top1 → knowledge_instance_applicability(top1)
+                   → face_instance_requirement(face)
+                   → instance_applicability_decision(...)
+    ```
+
+    ⚠️ **舊的 `InstanceEvidenceExtractor(user_message)` 不再具有 Level-A suppression
+    authority**。它可續作 diagnostic telemetry／failure analysis，
+    ⛔ **但不得在 cross-product 為 UNKNOWN 時 fallback 回 lexical evidence**——
+    那會讓 authority truth 變成兩套來源競爭，正是本輪要根除的狀態。
+
+    政策（業主裁定 2026-08-29）：
+
+    ```text
+    ELIGIBLE        → 不 suppress
+    INELIGIBLE      → suppress（reason=knowledge_declared_general）
+    NOT_APPLICABLE  → gate 不介入
+    UNKNOWN         → suppress（reason=applicability_unknown_not_authorized）
+    ```
+
+    ⚠️ UNKNOWN 之所以也 suppress，**不是因為 UNKNOWN ＝ general**，而是因為
+    「這個 Face 要求明示 instance applicability，而目前沒有足夠 authority input
+    證明它成立」。資料語義上兩者完全不同（general＝已知不適格／
+    UNKNOWN＝未證明適格），只是 rollout 動作同為不授權進場——
+    ⇒ 所以 reason 必須分得開，⛔ 不得把 UNKNOWN 偽裝成 general。
+
+    ⚠️ 兩道範圍鎖，⛔ 皆不得放寬：
+      gate 未啟用            → 回 (False, None)，routing 與 P1f 前逐位元相同
+      face ∉ Level-A scope   → 回 (False, None)，其餘 15 個 REQUIRED Face 不受影響
+
+    回 `(suppressed: bool, reason: Optional[str])`。
+    """
+    from services.instance_applicability import (DECISION_ELIGIBLE, DECISION_INELIGIBLE,
+                                                 DECISION_NOT_APPLICABLE,
+                                                 instance_applicability_decision)
+    from services.instance_reference_gate import gate_active, in_gate_rollout_scope
+    try:
+        if not gate_active():
+            return False, None
+        if not in_gate_rollout_scope(cfg):
+            return False, None
+        verdict = instance_applicability_decision(best_knowledge, cfg)
+        if verdict in (DECISION_ELIGIBLE, DECISION_NOT_APPLICABLE):
+            return False, None
+        if verdict == DECISION_INELIGIBLE:
+            return True, SUPPRESS_REASON_INELIGIBLE
+        return True, SUPPRESS_REASON_UNKNOWN
+    except Exception as e:
+        # ⚠️ fail-open **不抑制**：守門壞掉不得靜默變成「全部擋下」
+        print(f"⚠️ [applicability-gate] 判定失敗，fail-open 不抑制：{e}")
+        return False, None
+
+
+def _meter_applicability(best_knowledge, cfg, reason, lexical_decision) -> None:
+    """P1f 抑制事件的 provenance——⚠️ 報表**必須**分得出 lexical gate 與 truth-contract gate。
+
+    ⛔ 不得只記 `block`：半年後看到抑制卻不知道 authority 來自哪一套，
+    正是本輪要根除的「兩套來源競爭」。全段包 try：telemetry 失敗絕不影響 routing。
+    """
+    try:
+        from services.instance_applicability import (face_instance_requirement,
+                                                     instance_applicability_decision,
+                                                     knowledge_instance_applicability)
+        print("📊 [applicability-gate] "
+              f"knowledge_applicability={knowledge_instance_applicability(best_knowledge)}"
+              f" face_requirement={face_instance_requirement(cfg)}"
+              f" applicability_decision={instance_applicability_decision(best_knowledge, cfg)}"
+              f" decision_source=applicability_contract"
+              f" suppress_reason={reason}"
+              f" lexical_verdict={getattr(lexical_decision, 'verdict', None)}")
+    except Exception as e:
+        print(f"⚠️ [applicability-gate] telemetry 失敗（不影響 routing）：{e}")
+
+
+def _instance_hint_suppressed(decision, cfg) -> bool:
+    """⚠️ **已卸任（P1f）——lexical gate 不再具有 Level-A suppression authority。**
+
+    保留僅供 diagnostic telemetry 與 failure analysis 比對，
+    ⛔ **不得**再被 routing 呼叫作為抑制依據。
     """
     if decision is None or decision.verdict != "block":
         return False
@@ -1169,14 +1251,17 @@ async def _diagnosis_config_for_knowledge(db_pool, best_knowledge, config: Decis
     #    之前不行（gate 需要 Face 的語義契約），之後也不行（那會讓 LLM 的機率判定
     #    先對 query 下手，deterministic 契約反而後到，責任順序顛倒）。
     #    判定**每個 query 只做一次**：否則同一責任可被 category 順序繞過。
+    # ⚠️ P1f：lexical 判定**只留作 telemetry**，⛔ 不再參與抑制決策（authority 已換手）。
     decision = _instance_gate_decision(user_message)
     # 【第二段】依**原順序**跑 suppression ＋ resolver；first-commit-wins 語義逐字不變。
     # ⚠️ 迭代的是**未去重**的原序列——去重只用於回報欄位（見 `nomination_candidate_keys`）。
     for _cat, cfg in candidates:
-        if _instance_hint_suppressed(decision, cfg):
-            print(f"🚧 [instance-reference-gate] 「{(user_message or '')[:20]}」"
-                  f"判 rule 型問句 → 抑制面向 {getattr(cfg, 'key', '?')} 的 Hint"
-                  f"（{decision.reason}）")
+        _suppressed, _reason = _applicability_suppressed(best_knowledge, cfg)
+        if _suppressed:
+            _meter_applicability(best_knowledge, cfg, _reason, decision)
+            print(f"🚧 [applicability-gate] 抑制面向 {getattr(cfg, 'key', '?')} 的 Hint"
+                  f"（reason={_reason}；lexical 對照="
+                  f"{getattr(decision, 'verdict', 'n/a')}）")
             continue          # 抑制同型 Hint：**不 commit 本面向**，且不因順序而放行
         _resolved, _authority = await _resolve_pre_commit_candidate(
             db_pool, cfg, user_message)
