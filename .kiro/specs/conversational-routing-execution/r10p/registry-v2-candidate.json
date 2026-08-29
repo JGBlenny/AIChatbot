@@ -17,8 +17,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3365",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility": "查詢既有修繕／報修案件目前的處理進度或狀態。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -87,10 +87,21 @@
     "review_basis_digest": "a8eb7c15cba47da34fa75d6f31cd63540fb615bd501ff0a8c0d092f17fdae808"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis": [
+     "P3 identity ruling：3365＋4420 已確認為同一 repair-progress-query responsibility",
+     "3365 summary「修繕進度／修繕查詢」",
+     "4420 summary「修繕進度／報修單修得怎樣了／處理到哪」",
+     "4420 answer 的**第一責任句**（查詢報修單處理進度）",
+     "兩列由 form／action wiring 收斂到同一 jgb_repairs execution target 且同走 _format_single——⚠️ 此證據支持**共同 capability**，⛔ 不用於擴張 canonical",
+     "reviewed applicability=instance ⇒ canonical 描述的是**既有案件查值**，⛔ 非 general repair mechanism"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 不寫「需要的話協助建立報修單」——那是 4420 answer 的後續引導，對應另一個 jgb_create_repair 能力，⛔ 不屬於兩列已確認 responsibility 的 intersection",
+     "⛔ 不寫「名下所有報修單」——「名下」只來自 4420 文案，3365 無文字證據支持此額外範圍"
+    ]
    }
   },
   {
@@ -99,7 +110,7 @@
    "sealed_from_candidate_group": "CG-ROW-3490",
    "status": "reviewed_active",
    "canonical_responsibility": "判斷／診斷某份合約為何不能發送簽約邀請，以及目前是否符合發送條件。",
-   "canonical_responsibility_status": "OWNER_STATED",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -171,7 +182,8 @@
     "verdict": null,
     "reviewer": null,
     "reviewed_at": null,
-    "review_basis": null
+    "review_basis": null,
+    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
    }
   },
   {
@@ -180,7 +192,7 @@
    "sealed_from_candidate_group": "CG-ROW-3493",
    "status": "reviewed_active",
    "canonical_responsibility": "判斷／診斷某份合約能否提前解約，以及不能的原因。⚠️「可以提前解約嗎」與「為什麼不能提前解約」是同一 eligibility responsibility 的 positive／negative phrasing。",
-   "canonical_responsibility_status": "OWNER_STATED",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -258,7 +270,8 @@
     "verdict": null,
     "reviewer": null,
     "reviewed_at": null,
-    "review_basis": null
+    "review_basis": null,
+    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
    }
   },
   {
@@ -267,7 +280,7 @@
    "sealed_from_candidate_group": "CG-ROW-3494",
    "status": "reviewed_active",
    "canonical_responsibility": "判斷／診斷某份合約能否續約，以及不能的原因。",
-   "canonical_responsibility_status": "OWNER_STATED",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -345,7 +358,8 @@
     "verdict": null,
     "reviewer": null,
     "reviewed_at": null,
-    "review_basis": null
+    "review_basis": null,
+    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
    }
   },
   {
@@ -354,7 +368,7 @@
    "sealed_from_candidate_group": "CG-ROW-3510",
    "status": "reviewed_active",
    "canonical_responsibility": "查詢某份合約目前狀態。",
-   "canonical_responsibility_status": "OWNER_STATED",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -426,7 +440,8 @@
     "verdict": null,
     "reviewer": null,
     "reviewed_at": null,
-    "review_basis": null
+    "review_basis": null,
+    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
    }
   },
   {
@@ -435,7 +450,7 @@
    "sealed_from_candidate_group": "CG-ROW-3402",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -492,7 +507,7 @@
    "sealed_from_candidate_group": "CG-ROW-3406",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -550,7 +565,7 @@
    "sealed_from_candidate_group": "CG-ROW-3491",
    "status": "reviewed_active",
    "canonical_responsibility": "判斷／診斷某份合約能否點交，以及不能的原因。",
-   "canonical_responsibility_status": "OWNER_STATED",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -621,7 +636,8 @@
     "verdict": null,
     "reviewer": null,
     "reviewed_at": null,
-    "review_basis": null
+    "review_basis": null,
+    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
    }
   },
   {
@@ -630,7 +646,7 @@
    "sealed_from_candidate_group": "CG-ROW-3492",
    "status": "reviewed_active",
    "canonical_responsibility": "判斷／診斷某份合約能否點退，以及不能的原因。",
-   "canonical_responsibility_status": "OWNER_STATED",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -701,7 +717,8 @@
     "verdict": null,
     "reviewer": null,
     "reviewed_at": null,
-    "review_basis": null
+    "review_basis": null,
+    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
    }
   },
   {
@@ -710,7 +727,7 @@
    "sealed_from_candidate_group": "CG-ROW-3495",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -777,7 +794,7 @@
    "sealed_from_candidate_group": "CG-ROW-3496",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -844,7 +861,7 @@
    "sealed_from_candidate_group": "CG-ROW-3497",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -977,7 +994,7 @@
    "sealed_from_candidate_group": "CG-ROW-3499",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1052,7 +1069,7 @@
    "sealed_from_candidate_group": "CG-ROW-3500",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1118,7 +1135,7 @@
    "sealed_from_candidate_group": "CG-ROW-3501",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1193,7 +1210,7 @@
    "sealed_from_candidate_group": "CG-ROW-3502",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1268,7 +1285,7 @@
    "sealed_from_candidate_group": "CG-ROW-3503",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1334,7 +1351,7 @@
    "sealed_from_candidate_group": "CG-ROW-3504",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1400,7 +1417,7 @@
    "sealed_from_candidate_group": "CG-ROW-3505",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1466,7 +1483,7 @@
    "sealed_from_candidate_group": "CG-ROW-3506",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1532,7 +1549,7 @@
    "sealed_from_candidate_group": "CG-ROW-3507",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1607,7 +1624,7 @@
    "sealed_from_candidate_group": "CG-ROW-3508",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1673,7 +1690,7 @@
    "sealed_from_candidate_group": "CG-ROW-3514",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1739,7 +1756,7 @@
    "sealed_from_candidate_group": "CG-ROW-3519",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1797,7 +1814,7 @@
    "sealed_from_candidate_group": "CG-ROW-3531",
    "status": "reviewed_active",
    "canonical_responsibility": "付款後結算型延遲金的產生機制、適用條件與計算規則",
-   "canonical_responsibility_status": "OWNER_STATED",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1846,7 +1863,8 @@
     "verdict": null,
     "reviewer": null,
     "reviewed_at": null,
-    "review_basis": null
+    "review_basis": null,
+    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
    }
   },
   {
@@ -1855,7 +1873,7 @@
    "sealed_from_candidate_group": "CG-ROW-3532",
    "status": "reviewed_active",
    "canonical_responsibility": "滯納金客製計算版本的機制差異（延遲金／階梯式／固定金額等）",
-   "canonical_responsibility_status": "OWNER_STATED",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1904,7 +1922,8 @@
     "verdict": null,
     "reviewer": null,
     "reviewed_at": null,
-    "review_basis": null
+    "review_basis": null,
+    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
    }
   },
   {
@@ -1912,8 +1931,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ALIAS-04",
    "status": "reviewed_active",
-   "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility": "依特定帳單或合約的實際資料，查明該筆滯納金／延遲金為何產生、實際收取金額及其計算依據。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": "滯納金",
    "applicability": {
     "declaration_status": "reviewed",
@@ -2012,10 +2031,23 @@
     "review_basis_digest": "52827904e20864fcd9a62233d4ae9f8182062cb163817a3f55e7ac1ce28741d6"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-29",
+    "review_basis": [
+     "H2 VARIANTS_BY_DESIGN：3939／3940 是同一 facet responsibility 的不同 utterance entry variants",
+     "P3 identity：兩列已確認同一 responsibility",
+     "兩筆 positive applicability declaration：reviewed／instance",
+     "sole owner：late_fee Face／services/jgb/bills.py::build_late_fee_facts",
+     "T1 ＋ Step 1/2：B 已成 capability superset 且 late-fee instance ownership = B ONLY",
+     "builder 對特定 contract／late-fee bill 取得實際設定、金額、狀態、付款時間與結算備註⇒ 支持「依實際資料查明」"
+    ],
+    "negative_boundary": "MUST NOT generalize to system-wide late-fee mechanism explanation; R-26 / R-27 own the general mechanism responsibilities.",
+    "deliberate_exclusions": [
+     "⛔ 明確排除 builder 內的**一般機制文字**（兩機制並述／階梯式／固定金額版本）作為 responsibility identity evidence——那是 R-26／R-27 的 general responsibility",
+     "⛔ 不把 builder 的每一項 fact（付款時間／到帳時間／目前狀態／緩衝天數／費率／結算備註）升格成 canonical wording——它們是**支撐 instance diagnosis 的 deterministic facts**",
+     "⛔ 開頭的「依特定帳單或合約的實際資料」是把它鎖在 instance 的關鍵，⛔ 不得退化成「說明滯納金怎麼計算」"
+    ]
    }
   },
   {
@@ -2024,7 +2056,7 @@
    "sealed_from_candidate_group": "CG-ROW-4640",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -2091,7 +2123,7 @@
    "sealed_from_candidate_group": "CG-ROW-4656",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -2158,7 +2190,7 @@
    "sealed_from_candidate_group": "CG-ROW-4657",
    "status": "reviewed_active",
    "canonical_responsibility": null,
-   "canonical_responsibility_status": "PENDING_OWNER_STATEMENT",
+   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -2239,5 +2271,15 @@
  },
  "seal_status": "unsealed",
  "_scope_lock": "⚠️ 本輪 scope ＝ **canonical population**，⛔ 不是第二次 responsibility review。V1→V2 只准改 canonical 面（canonical_responsibility／canonical_responsibility_status／canonical_review）；responsibility_id／status／facet／applicability／owner／owner_contract／members（含 member_role／operational_status／_membership_origin）**一律不得變動**。⛔ 若 canonical review 期間發現證據足以推翻 identity／membership／owner，必須**另立** responsibility review epoch，⛔ 不得趁填 canonical 順手改 registry topology。",
- "_epoch_rule": "⛔ 不得每補一筆 canonical 就宣稱一個新 registry epoch——**epoch 2 是整輪 canonical migration 的單一 successor**。30/30 review 完成、INV21 轉綠後才 seal 成 REGISTRY_V2 並產生新 REGISTRY_DIGEST。"
+ "_epoch_rule": "⛔ 不得每補一筆 canonical 就宣稱一個新 registry epoch——**epoch 2 是整輪 canonical migration 的單一 successor**。30/30 review 完成、INV21 轉綠後才 seal 成 REGISTRY_V2 並產生新 REGISTRY_DIGEST。",
+ "_canonical_status_semantics": {
+  "PENDING_CANONICAL_REVIEW": "尚未取得 canonical review 裁定——⚠️ **即使已有來自 P3 identity ruling 的文字**也算 pending：那句話當時裁的是 identity，⛔ 不是 canonical contract。",
+  "REVIEWED": "canonical_review.verdict = APPROVED ⇒ 本句已成為 authoritative semantic contract。",
+  "_why": "⛔ 不得把 P3 的 identity 措辭直接當成 canonical authority——authority unit 不同。"
+ },
+ "_beta_rulers_frozen": {
+  "β-C1": "multi-member canonical = confirmed responsibility **intersection**, ⛔ not member-text union.",
+  "β-C2": "deterministic builder facts **support** the canonical, but capability output breadth ⛔ does not automatically define responsibility breadth.",
+  "_applies_to": "α／γ 全批一體適用；尤其帶 3511 multi-membership 的 R-03／R-04／R-08／R-09——⚠️ 3511 的 composite wording ⛔ 不得把各 responsibility 的 canonical 寫寬。"
+ }
 }

@@ -43,9 +43,12 @@ def violations(reg=None):
         if not r.get("canonical_responsibility"):
             bad.append(f"{r['responsibility_id']}（{r['sealed_from_candidate_group']}）："
                        f"reviewed_active 但 canonical_responsibility 為 null")
-        elif r.get("canonical_responsibility_status") != "OWNER_STATED":
-            bad.append(f"{r['responsibility_id']}：canonical 有值但狀態為 "
-                       f"{r.get('canonical_responsibility_status')!r}——⛔ 未經 review 不算閉合")
+        elif (r.get("canonical_responsibility_status") != "REVIEWED"
+              or (r.get("canonical_review") or {}).get("verdict") != "APPROVED"):
+            bad.append(f"{r['responsibility_id']}：canonical 有值但**未經 canonical review**"
+                       f"（status={r.get('canonical_responsibility_status')!r}／"
+                       f"verdict={(r.get('canonical_review') or {}).get('verdict')!r}）"
+                       f"——⚠️ P3 identity 措辭 ⛔ 不等於 canonical authority")
     return bad
 
 
@@ -60,22 +63,23 @@ def self_test() -> int:
     m = copy.deepcopy(reg)
     tgt = next(r for r in m["responsibilities"] if r["status"] == "reviewed_active")
     tgt["canonical_responsibility"] = None
-    tgt["canonical_responsibility_status"] = "PENDING_OWNER_STATEMENT"
+    tgt["canonical_responsibility_status"] = "PENDING_CANONICAL_REVIEW"
     cases.append(("active 缺 canonical 必須紅",
                   any(tgt["responsibility_id"] in v for v in violations(m))))
     # 正對照：canonical 有值但未 review 必須紅
     m2 = copy.deepcopy(reg)
     t2 = next(r for r in m2["responsibilities"] if r["status"] == "reviewed_active")
     t2["canonical_responsibility"] = "某段文字"
-    t2["canonical_responsibility_status"] = "PENDING_OWNER_STATEMENT"
-    cases.append(("canonical 未經 review 必須紅",
-                  any("未經 review 不算閉合" in v for v in violations(m2))))
+    t2["canonical_responsibility_status"] = "PENDING_CANONICAL_REVIEW"
+    cases.append(("canonical 有文字但未經 canonical review 必須紅",
+                  any("未經 canonical review" in v for v in violations(m2))))
     # 正對照：全部補齊必須綠
     m3 = copy.deepcopy(reg)
     for r in m3["responsibilities"]:
         if r["status"] == "reviewed_active":
             r["canonical_responsibility"] = "x"
-            r["canonical_responsibility_status"] = "OWNER_STATED"
+            r["canonical_responsibility_status"] = "REVIEWED"
+            r["canonical_review"] = {"verdict": "APPROVED"}
     cases.append(("全部補齊必須綠", violations(m3) == []))
     for n, ok in cases:
         print(f"{'✅' if ok else '❌'} {n}")
@@ -91,7 +95,8 @@ def main() -> int:
     reg = load()
     active = [r for r in reg["responsibilities"] if r["status"] == "reviewed_active"]
     done = [r for r in active if r.get("canonical_responsibility")
-            and r.get("canonical_responsibility_status") == "OWNER_STATED"]
+            and r.get("canonical_responsibility_status") == "REVIEWED"
+            and (r.get("canonical_review") or {}).get("verdict") == "APPROVED"]
     bad = violations(reg)
     if bad:
         print(f"❌ FAIL：active canonical 未閉合（{len(done)}/{len(active)}）")

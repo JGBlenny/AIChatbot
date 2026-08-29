@@ -17,6 +17,13 @@
 ③ responsibility_id `R-xx` 是**永久 opaque identity**（業主裁定）——
    語義放 canonical_responsibility／facet／owner，⛔ 不塞進 primary key，⛔ 不做語義重新命名。
 ④ 每筆裁定 ∈ {APPROVED, REVISE, INSUFFICIENT}。
+⑤ ⚠️ **P3 identity 措辭 ⛔ 不等於 canonical authority**——8 筆帶 P3 文字的群一律仍是
+   PENDING_CANONICAL_REVIEW，必須逐筆裁定（不變量 21 只認 canonical_review.verdict=APPROVED）。
+
+β 尺（2026-08-29 凍結，α／γ 一體適用）
+  β-C1  multi-member canonical ＝ confirmed responsibility **intersection**，⛔ 非 member-text union
+  β-C2  deterministic builder facts **支撐** canonical，但 capability output breadth
+        ⛔ 不自動定義 responsibility breadth
 ```
 
 ⚠️ **8 個 multi-member responsibility 適用規約②**：R-01(3365,4420)／R-02(3368,3490)／R-03(3370,3493,3511)／R-04(3371,3494,3511)／R-05(3372,3510)／R-08(3491,3511)／R-09(3492,3511)／R-28(3939,3940)
@@ -48,9 +55,22 @@ row 4420  summary：修繕進度 報修單 修得怎樣了 處理到哪
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  查詢既有修繕／報修案件目前的處理進度或狀態。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-29
+
+review basis（此句實際依賴的證據）
+  - P3 identity ruling：3365＋4420 已確認為同一 repair-progress-query responsibility
+  - 3365 summary「修繕進度／修繕查詢」
+  - 4420 summary「修繕進度／報修單修得怎樣了／處理到哪」
+  - 4420 answer 的**第一責任句**（查詢報修單處理進度）
+  - 兩列由 form／action wiring 收斂到同一 jgb_repairs execution target 且同走 _format_single——⚠️ 此證據支持**共同 capability**，⛔ 不用於擴張 canonical
+  - reviewed applicability=instance ⇒ canonical 描述的是**既有案件查值**，⛔ 非 general repair mechanism
+
+deliberate exclusions
+  - ⛔ 不寫「需要的話協助建立報修單」——那是 4420 answer 的後續引導，對應另一個 jgb_create_repair 能力，⛔ 不屬於兩列已確認 responsibility 的 intersection
+  - ⛔ 不寫「名下所有報修單」——「名下」只來自 4420 文案，3365 無文字證據支持此額外範圍
 ```
 
 ---
@@ -787,9 +807,26 @@ row 3940  summary：這筆延遲金是怎麼算的
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  依特定帳單或合約的實際資料，查明該筆滯納金／延遲金為何產生、實際收取金額及其計算依據。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-29
+
+review basis（此句實際依賴的證據）
+  - H2 VARIANTS_BY_DESIGN：3939／3940 是同一 facet responsibility 的不同 utterance entry variants
+  - P3 identity：兩列已確認同一 responsibility
+  - 兩筆 positive applicability declaration：reviewed／instance
+  - sole owner：late_fee Face／services/jgb/bills.py::build_late_fee_facts
+  - T1 ＋ Step 1/2：B 已成 capability superset 且 late-fee instance ownership = B ONLY
+  - builder 對特定 contract／late-fee bill 取得實際設定、金額、狀態、付款時間與結算備註⇒ 支持「依實際資料查明」
+
+negative boundary
+  MUST NOT generalize to system-wide late-fee mechanism explanation; R-26 / R-27 own the general mechanism responsibilities.
+
+deliberate exclusions
+  - ⛔ 明確排除 builder 內的**一般機制文字**（兩機制並述／階梯式／固定金額版本）作為 responsibility identity evidence——那是 R-26／R-27 的 general responsibility
+  - ⛔ 不把 builder 的每一項 fact（付款時間／到帳時間／目前狀態／緩衝天數／費率／結算備註）升格成 canonical wording——它們是**支撐 instance diagnosis 的 deterministic facts**
+  - ⛔ 開頭的「依特定帳單或合約的實際資料」是把它鎖在 instance 的關鍵，⛔ 不得退化成「說明滯納金怎麼計算」
 ```
 
 ---
