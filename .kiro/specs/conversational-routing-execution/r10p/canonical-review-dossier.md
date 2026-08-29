@@ -20,6 +20,11 @@
 ⑤ ⚠️ **P3 identity 措辭 ⛔ 不等於 canonical authority**——8 筆帶 P3 文字的群一律仍是
    PENDING_CANONICAL_REVIEW，必須逐筆裁定（不變量 21 只認 canonical_review.verdict=APPROVED）。
 
+α 尺（2026-08-30 凍結，γ 一體適用）
+  α-C1  eligibility responsibility canonical 描述「能否執行某操作 ＋ 不能的原因」；⛔ 不枚舉當前規則、條件數量或 UI 細節。
+  α-C2  general responsibilities 可以同 facet 共存，但 canonical 必須把 semantic operation 明確分開：single-mechanism explanation ≠ cross-version comparison ≠ instance diagnosis。
+  late-fee 三角：R-26 general 單一機制詳解／R-27 general 跨版本比較／R-28 instance 實際診斷
+
 β 尺（2026-08-29 凍結，α／γ 一體適用）
   β-C1  multi-member canonical ＝ confirmed responsibility **intersection**，⛔ 非 member-text union
   β-C2  deterministic builder facts **支撐** canonical，但 capability output breadth
@@ -106,9 +111,19 @@ row 3490  summary：合約為什麼不能發送簽約邀請
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  判斷某份合約目前是否符合發送簽約邀請的條件，並診斷無法發送的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 identity ruling（本句只是語序整理，⛔ 責任未擴張）
+  - check_can_invite（contracts.py:128）deterministic owner
+  - 3368 summary 同時含正反兩面（發送邀請／為什麼不能發送）
+  - 3490 answer 的責任句
+
+deliberate exclusions
+  - ⛔ 3490 的「欄位未填寫完整」及後續條件清單是 capability／content evidence，⛔ 不進 canonical
 ```
 
 ---
@@ -146,9 +161,19 @@ row 3511  summary：合約的點交/點退/提前解約/續約按鈕是否可用
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  判斷某份合約目前是否符合提前解約條件，並診斷無法提前解約的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 identity ruling
+  - check_can_early_termination（contracts.py:257）deterministic owner
+  - 3370「可以提前解約嗎」＋ 3493「為什麼不能」⇒ 支持同一句同時涵蓋正反問法
+  - 3511 只支持涵蓋關係
+
+deliberate exclusions
+  - ⛔ P3 尾句「positive／negative phrasing 是同一 eligibility responsibility」只屬 review rationale，⛔ 不進 canonical
 ```
 
 ---
@@ -186,9 +211,19 @@ row 3511  summary：合約的點交/點退/提前解約/續約按鈕是否可用
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  判斷某份合約目前是否符合續約條件，並診斷無法續約的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 identity ruling
+  - check_can_renew（contracts.py:294）deterministic owner
+  - 3371「可以續約嗎」＋ 3494「為什麼不能續約」
+  - 3511 只支持涵蓋關係
+
+deliberate exclusions
+  - ⛔ 3494 的「7 個條件」不進 canonical——`7` 是當前 implementation／content detail；responsibility identity ⛔ 不應因條件從 7 變 8 就得改 contract
 ```
 
 ---
@@ -224,9 +259,23 @@ row 3510  summary：合約目前是什麼狀態
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  查詢某份合約目前的狀態或所處階段。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - 3372「合約狀態查詢／目前狀態」
+  - 3510「合約目前是什麼狀態」
+  - _format_status_response（contracts.py:744）與此 responsibility 的 semantic output **正面一致**
+
+negative boundary
+  ⚠️ 本群必須**最窄**：一寫進 eligibility 就會破壞 P3 對 fallback 的尺度限制，開始吃掉 R-02／R-03／R-04／R-08／R-09。
+
+deliberate exclusions
+  - ⛔ 不寫「判斷可執行哪些操作」
+  - ⛔ 不寫「診斷為什麼不能操作」
+  - ⛔ 不寫任何 eligibility
 ```
 
 ---
@@ -312,9 +361,20 @@ row 3511  summary：合約的點交/點退/提前解約/續約按鈕是否可用
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  判斷某份合約目前是否符合點交條件，並診斷無法點交的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 identity ruling
+  - check_can_move_in（contracts.py:161）deterministic owner
+  - 3491 answer「合約點交按鈕灰色時，需查詢合約資料判斷具體原因」
+  - 3511 **只**支持它確實涵蓋此 responsibility——⛔ 不採「各操作」的 composite wording
+
+deliberate exclusions
+  - ⛔ 不寫「檢查各操作」
+  - ⛔ 不寫前端按鈕是否顯示原因
 ```
 
 ---
@@ -350,9 +410,19 @@ row 3511  summary：合約的點交/點退/提前解約/續約按鈕是否可用
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  判斷某份合約目前是否符合點退條件，並診斷無法點退的原因。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 identity ruling
+  - check_can_move_out（contracts.py:203）deterministic owner
+  - 3492 answer「合約點退按鈕灰色時，需查詢合約資料判斷原因」
+  - 3511 只支持涵蓋關係，⛔ 不採 composite wording
+
+deliberate exclusions
+  - ⛔ 3492 的「不需先點交也可點退／合約過期仍可點退」是 responsibility **內**的產品規則 evidence，⛔ 不是 identity 本身——放進去會讓 canonical 從「我要解決什麼問題」退化成「目前實作有哪些規則」
 ```
 
 ---
@@ -744,9 +814,18 @@ row 3531  summary：滯納金帳單產生 付款後結算規則
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  說明付款後結算型延遲金的產生條件、計算方式與結算規則。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 identity ruling（「適用條件」→「產生條件」只是讓 semantic object 更明確，⛔ 未改責任）
+  - 3531 answer（231 字）承載該機制的規則、公式與適用條件
+  - reviewed applicability=general；owner=Knowledge
+
+negative boundary
+  不負責比較不同滯納金客製版本；版本間差異屬 R-27。
 ```
 
 ---
@@ -774,9 +853,19 @@ row 3532  summary：滯納金客製版本 固定金額階梯式
 
 ### CANONICAL VERDICT
 ```text
-canonical_responsibility  ____
-verdict                   ____  ∈ {APPROVED, REVISE, INSUFFICIENT}
-reviewer                  ____   reviewed_at ____
+canonical_responsibility  比較滯納金不同客製計算版本，包括付款後結算延遲金、階梯式與固定金額版本的機制與計算差異。
+verdict                   **APPROVED**
+status                    REVIEWED
+reviewer                  業主   reviewed_at 2026-08-30
+
+review basis（此句實際依賴的證據）
+  - P3 identity ruling
+  - 3532 answer（233 字）承載跨版本差異
+  - reviewed applicability=general；owner=Knowledge
+  - 核心動詞必須是**比較不同版本**——這樣才與 R-26 正交
+
+negative boundary
+  不承接特定帳單／合約的實際滯納金查值或診斷；instance responsibility 屬 R-28。若問題只要求付款後結算型延遲金**自身**的詳細規則、而非版本比較，責任屬 R-26。
 ```
 
 ---

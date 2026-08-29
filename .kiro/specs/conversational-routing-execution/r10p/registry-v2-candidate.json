@@ -109,8 +109,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3490",
    "status": "reviewed_active",
-   "canonical_responsibility": "判斷／診斷某份合約為何不能發送簽約邀請，以及目前是否符合發送條件。",
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "判斷某份合約目前是否符合發送簽約邀請的條件，並診斷無法發送的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -179,11 +179,18 @@
     "review_basis_digest": "8a3cfc6a7088966e1b72e212972c61ed6eb3a0895b4d1a63fbd8adfcfeed7db2"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null,
-    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 identity ruling（本句只是語序整理，⛔ 責任未擴張）",
+     "check_can_invite（contracts.py:128）deterministic owner",
+     "3368 summary 同時含正反兩面（發送邀請／為什麼不能發送）",
+     "3490 answer 的責任句"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 3490 的「欄位未填寫完整」及後續條件清單是 capability／content evidence，⛔ 不進 canonical"
+    ]
    }
   },
   {
@@ -191,8 +198,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3493",
    "status": "reviewed_active",
-   "canonical_responsibility": "判斷／診斷某份合約能否提前解約，以及不能的原因。⚠️「可以提前解約嗎」與「為什麼不能提前解約」是同一 eligibility responsibility 的 positive／negative phrasing。",
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "判斷某份合約目前是否符合提前解約條件，並診斷無法提前解約的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -267,11 +274,18 @@
     "review_basis_digest": "6584f2c75538c988d6674345918b17dcf2a8fafb635e5f6b3d37afcfa4e3d456"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null,
-    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 identity ruling",
+     "check_can_early_termination（contracts.py:257）deterministic owner",
+     "3370「可以提前解約嗎」＋ 3493「為什麼不能」⇒ 支持同一句同時涵蓋正反問法",
+     "3511 只支持涵蓋關係"
+    ],
+    "deliberate_exclusions": [
+     "⛔ P3 尾句「positive／negative phrasing 是同一 eligibility responsibility」只屬 review rationale，⛔ 不進 canonical"
+    ]
    }
   },
   {
@@ -279,8 +293,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3494",
    "status": "reviewed_active",
-   "canonical_responsibility": "判斷／診斷某份合約能否續約，以及不能的原因。",
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "判斷某份合約目前是否符合續約條件，並診斷無法續約的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -355,11 +369,18 @@
     "review_basis_digest": "37c6ca63ee8c6744959696a1db0d5b445cc191e330cd541220809e076377074d"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null,
-    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 identity ruling",
+     "check_can_renew（contracts.py:294）deterministic owner",
+     "3371「可以續約嗎」＋ 3494「為什麼不能續約」",
+     "3511 只支持涵蓋關係"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 3494 的「7 個條件」不進 canonical——`7` 是當前 implementation／content detail；responsibility identity ⛔ 不應因條件從 7 變 8 就得改 contract"
+    ]
    }
   },
   {
@@ -367,8 +388,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3510",
    "status": "reviewed_active",
-   "canonical_responsibility": "查詢某份合約目前狀態。",
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "查詢某份合約目前的狀態或所處階段。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -437,11 +458,20 @@
     "review_basis_digest": "e03e8e67470b0738f2557cd18d23b053125fa679dc1f23319a64f720f5646a80"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null,
-    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "3372「合約狀態查詢／目前狀態」",
+     "3510「合約目前是什麼狀態」",
+     "_format_status_response（contracts.py:744）與此 responsibility 的 semantic output **正面一致**"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 不寫「判斷可執行哪些操作」",
+     "⛔ 不寫「診斷為什麼不能操作」",
+     "⛔ 不寫任何 eligibility"
+    ],
+    "negative_boundary": "⚠️ 本群必須**最窄**：一寫進 eligibility 就會破壞 P3 對 fallback 的尺度限制，開始吃掉 R-02／R-03／R-04／R-08／R-09。"
    }
   },
   {
@@ -564,8 +594,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3491",
    "status": "reviewed_active",
-   "canonical_responsibility": "判斷／診斷某份合約能否點交，以及不能的原因。",
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "判斷某份合約目前是否符合點交條件，並診斷無法點交的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -633,11 +663,19 @@
     "review_basis_digest": "6aacc3816ca9dd88746a21a77b36a46b20202eed921387dfd1c8fbccafaf6fce"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null,
-    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 identity ruling",
+     "check_can_move_in（contracts.py:161）deterministic owner",
+     "3491 answer「合約點交按鈕灰色時，需查詢合約資料判斷具體原因」",
+     "3511 **只**支持它確實涵蓋此 responsibility——⛔ 不採「各操作」的 composite wording"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 不寫「檢查各操作」",
+     "⛔ 不寫前端按鈕是否顯示原因"
+    ]
    }
   },
   {
@@ -645,8 +683,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3492",
    "status": "reviewed_active",
-   "canonical_responsibility": "判斷／診斷某份合約能否點退，以及不能的原因。",
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "判斷某份合約目前是否符合點退條件，並診斷無法點退的原因。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -714,11 +752,18 @@
     "review_basis_digest": "92ce5906ce6a5b5a110a454e65d5eed6dcaf5ea7b7d869a2149e07a8177a0661"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null,
-    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 identity ruling",
+     "check_can_move_out（contracts.py:203）deterministic owner",
+     "3492 answer「合約點退按鈕灰色時，需查詢合約資料判斷原因」",
+     "3511 只支持涵蓋關係，⛔ 不採 composite wording"
+    ],
+    "deliberate_exclusions": [
+     "⛔ 3492 的「不需先點交也可點退／合約過期仍可點退」是 responsibility **內**的產品規則 evidence，⛔ 不是 identity 本身——放進去會讓 canonical 從「我要解決什麼問題」退化成「目前實作有哪些規則」"
+    ]
    }
   },
   {
@@ -1813,8 +1858,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3531",
    "status": "reviewed_active",
-   "canonical_responsibility": "付款後結算型延遲金的產生機制、適用條件與計算規則",
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "說明付款後結算型延遲金的產生條件、計算方式與結算規則。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1860,11 +1905,16 @@
     "review_basis_digest": "548de61b1a65906c05da3918601ca53e1ecd82378ba1cc1296388246e67ec5f3"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null,
-    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 identity ruling（「適用條件」→「產生條件」只是讓 semantic object 更明確，⛔ 未改責任）",
+     "3531 answer（231 字）承載該機制的規則、公式與適用條件",
+     "reviewed applicability=general；owner=Knowledge"
+    ],
+    "deliberate_exclusions": [],
+    "negative_boundary": "不負責比較不同滯納金客製版本；版本間差異屬 R-27。"
    }
   },
   {
@@ -1872,8 +1922,8 @@
    "_id_semantics": "⚠️ 機械序號（依 sealing group 最小 row id 排序）——⛔ 不承載語義、⛔ 不綁定在任何單一 row 上",
    "sealed_from_candidate_group": "CG-ROW-3532",
    "status": "reviewed_active",
-   "canonical_responsibility": "滯納金客製計算版本的機制差異（延遲金／階梯式／固定金額等）",
-   "canonical_responsibility_status": "PENDING_CANONICAL_REVIEW",
+   "canonical_responsibility": "比較滯納金不同客製計算版本，包括付款後結算延遲金、階梯式與固定金額版本的機制與計算差異。",
+   "canonical_responsibility_status": "REVIEWED",
    "facet": null,
    "applicability": {
     "declaration_status": "reviewed",
@@ -1919,11 +1969,17 @@
     "review_basis_digest": "dddaf821e382dc3807bd7bf5dd123704678236514844cdd7f876450b8cef7a07"
    },
    "canonical_review": {
-    "verdict": null,
-    "reviewer": null,
-    "reviewed_at": null,
-    "review_basis": null,
-    "_note": "⚠️ 現有文字來自 P3 identity ruling ＝ **proposal evidence**，⛔ 非 canonical authority；α 批仍須逐筆裁定"
+    "verdict": "APPROVED",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "review_basis": [
+     "P3 identity ruling",
+     "3532 answer（233 字）承載跨版本差異",
+     "reviewed applicability=general；owner=Knowledge",
+     "核心動詞必須是**比較不同版本**——這樣才與 R-26 正交"
+    ],
+    "deliberate_exclusions": [],
+    "negative_boundary": "不承接特定帳單／合約的實際滯納金查值或診斷；instance responsibility 屬 R-28。若問題只要求付款後結算型延遲金**自身**的詳細規則、而非版本比較，責任屬 R-26。"
    }
   },
   {
@@ -2281,5 +2337,14 @@
   "β-C1": "multi-member canonical = confirmed responsibility **intersection**, ⛔ not member-text union.",
   "β-C2": "deterministic builder facts **support** the canonical, but capability output breadth ⛔ does not automatically define responsibility breadth.",
   "_applies_to": "α／γ 全批一體適用；尤其帶 3511 multi-membership 的 R-03／R-04／R-08／R-09——⚠️ 3511 的 composite wording ⛔ 不得把各 responsibility 的 canonical 寫寬。"
+ },
+ "_alpha_rulers_frozen": {
+  "α-C1": "eligibility responsibility canonical 描述「能否執行某操作 ＋ 不能的原因」；⛔ 不枚舉當前規則、條件數量或 UI 細節。",
+  "α-C2": "general responsibilities 可以同 facet 共存，但 canonical 必須把 semantic operation 明確分開：single-mechanism explanation ≠ cross-version comparison ≠ instance diagnosis。",
+  "_late_fee_triangle": {
+   "R-26": "general／單一機制詳解",
+   "R-27": "general／跨版本比較",
+   "R-28": "instance／實際帳單或合約的診斷"
+  }
  }
 }
