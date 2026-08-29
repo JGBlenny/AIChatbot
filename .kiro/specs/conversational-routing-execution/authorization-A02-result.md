@@ -76,16 +76,46 @@ gate        仍 OFF｜Level-A population 與 implementation 維持凍結
 ⏸ 3.4／gate enable／擴 scope／release 全部維持 PAUSED
 ```
 
-## 待業主裁定（⛔ 我不預選）
+## 業主裁定（2026-08-29）——A02 正式收案
 
 ```text
-【甲】接受本輪 INCONCLUSIVE，另開 A03，並在**新協議**中處理「無指涉診斷句」
-     ⚠️ 若作法是「要求作者在 instance 題都加上『我的／這張』」，
-        那等於**為了讓 oracle 一致而改題目**——⛔ 需明確意識到這是在調整測試使其通過
-【乙】改變 truth oracle：把「無指涉的故障診斷句」定義成**第三類**（如 `context_dependent`），
-     並在協議中預先規定它不進 Layer B 分母
-【丙】重新檢視 query 層 truth 是否為正確的評估 oracle
-     （受測系統其實是依 **top1 knowledge 宣告**判定，而非依 query）
-⚠️ 另需裁定：是否要在 INCONCLUSIVE 之下仍執行一次 implementation 取得診斷資訊
-   ——代價是 corpus 就此 BURNED，且結果**不得**用於授權。
+A02 = INCONCLUSIVE ／ reason = CORPUS_INSUFFICIENT（I4 = 14/20、I5 = 14/20）
+⛔ 不修改原 protocol       ⛔ 不把 context_dependent 偷補進 A02
+⛔ 不補題                  ⛔ **不跑 frozen implementation**
+```
+
+⚠️ **不為診斷而跑的理由**：失敗發生在 implementation **之前**；
+而 P1f 的 consumer wiring 已有 deterministic matrix、authority-transfer death controls、
+mutation 證明。現在燒掉只會得到「在一份不能用於授權的 corpus 上系統跑出了什麼」，
+對主線價值不高，卻會失去一批 implementation-unseen 語料。
+
+### ⚠️ A02 corpus 的精確狀態（⛔ 不可含混）
+
+```text
+**尚未被 implementation burn**，但**已因 protocol outcome 被看過**
+⇒ ⛔ 不得在修改後的 A03 protocol 中重新拿來形成新的 authorization claim
+✅ 可留作日後 **diagnostic corpus**，⛔ 但不是 A03 holdout
+```
+
+## 本輪找到的架構邊界（**比失敗本身重要**）
+
+> **Applicability truth 是 Knowledge contract 的事實；
+> 但 ambiguous query 要映射到哪個 Knowledge truth，
+> 仍然是 retrieval／context interpretation 的責任。**
+
+```text
+⛔ 不能要求 applicability gate 去解決
+   「帳單寄不出去」到底是在問一般原因、還是在診斷我的帳單
+
+P1f 的責任**從這裡才開始**：
+   retrieval 已選 3495 → 3495 明示 instance → bill_diagnosis REQUIRED → ELIGIBLE
+```
+
+⇒ 延續整條線的同一原則：**authority 不應偷偷承擔 nomination／interpretation 的責任。**
+
+## 後續
+
+```text
+A03 另開協議（query oracle 改三態，semantic 與 authority 分開授權）
+⏸ gate enable／3.4／release 繼續 PAUSED
 ```

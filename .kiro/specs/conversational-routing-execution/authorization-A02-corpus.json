@@ -1,6 +1,6 @@
 {
  "dataset_id": "authorization-2026Q3-A02",
- "status": "COMMITTED-TO-TEST — 未標註、未執行",
+ "status": "**NOT BURNED by implementation**，但**已因 protocol outcome 被看過** ⇒ ⛔ 不得在 A03 或任何後續 protocol 中形成新的 authorization claim；✅ 可留作 diagnostic corpus",
  "protocol": "authorization-A02-protocol.md（凍結於 corpus 生成之前）",
  "n": 200,
  "strata": "10 × 20（general 60／instance 140）",
