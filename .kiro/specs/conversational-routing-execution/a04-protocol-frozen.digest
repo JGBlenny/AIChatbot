@@ -23,3 +23,43 @@ CORPUS_SHA256=83a7907065600830cf7e47fdb322868b3d44254805112525165c285f15867e30
 CORPUS_STATUS=SEALED_UNBURNED
 # SEALED_UNBURNED = 已封存、尚未接觸任何 system output。
 # 一旦看過檢索結果即轉為 BURNED，⛔ 不得再作為 holdout 使用。
+
+# ── PROTOCOL_CLARIFICATION_AFTER_GENERATION（業主追認 2026-08-29）──
+# 事項：N 的 24 列中有 10 列 answer 為空（Face-entry anchor），比照已凍的
+#      instance-row source rule，以「共用對話責任契約 ＋ 該 Face 指定 capability
+#      實作全文」作為責任來源。
+# observed_before_ratification: corpus structure/counts、source-material leakage audit
+# not_observed:                 retrieval outputs、labels、candidate-vs-legacy results
+# effect:                       no corpus regeneration、no row/sample replacement
+# 前提（皆已成立）：① row selection 不變 ② capability source 依既有 Face mapping
+#      機械決定 ③ 未依生成結果手挑 function 或語義句
+# 業主裁示：docstring 剝除漏洞在 generation **之前**修掉，且為 AST 層級機械規則，
+#      ⛔ 不構成污染。
+
+# ── Labeling 階段（②，業主凍結）──
+LABELING_MODE=OPEN_34WAY_ANONYMOUS
+LABEL_SET=OWNER_A01..A34 | OUT_OF_SET | MULTI_OWNER | UNDECIDABLE
+LABEL_ANON_SEED=A04-LABEL
+# owner 代號與 query 順序皆以 md5(seed|x) 定序 ⇒ ⛔ 順序不含 P/N 或 Level-A 資訊
+# labeler 可見：query ＋ 34 份匿名 responsibility spec（**與 generation 同一份凍結快照**）
+# labeler 不可見：query 來源層(P/N)、intended row、KB row id、category、
+#                question_summary、retrieval_representation、keywords、歷史 failure、
+#                任何 candidate/legacy 輸出、另一位 labeler 的答案
+# ⚠️ judgeable 語義已精確化（業主定案）：
+#   per P stratum 需 **single-owner truth == intended row** ≥ 15/20，
+#   ⛔ 不是「句子可判」；不足 ⇒ 該 stratum CORPUS_INSUFFICIENT，⛔ 不得由他列補足。
+# ⚠️ κ 於**原始互斥 label** 上計算；MULTI_OWNER 視為單一 raw label，
+#   其 multi[] 僅作診斷欄位，⛔ 不進 κ 類別空間。
+# ⚠️ ⛔ 不得宣稱與 A03 的 label quality 可比——task 複雜度不同（34-way vs 少數類別），
+#   只能說「通過 A04 自己**預先凍結**的 label-quality threshold」。
+
+# ── Label gate 結果（2026-08-29）──
+LABELER_A_TOOL_USES=3
+LABELER_B_TOOL_USES=3
+L1_EXACT_AGREEMENT=0.9700
+COHEN_KAPPA=0.9682
+GATE=FAIL
+GATE_REASON=CORPUS_INSUFFICIENT_STRATUM_3498（confirmed 13/20 < 15）
+MANIFEST_SHA256=62d064e330a85d17801dc51c0d6b45a44fc369d51356ac5c1d9d9d1213a28375
+CORPUS_STATUS=SEALED_UNBURNED
+# ⚠️ corpus 仍**未** BURNED——尚未執行任何檢索或 counterfactual harness。
