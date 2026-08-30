@@ -2662,5 +2662,21 @@
   "_conclusion": "⚠️ R-29 的 ENTITY_INPUT_REACHABILITY **仍為 NOT_ESTABLISHED**——⛔ 不得因設計已裁就升級。"
  },
  "_pending_guard_B_G5": "B-G5 NO HIDDEN FIRST-ROW SELECTION（**待 B3 加**）：fixture 非數字 bill ref → contract lookup 回 [C1,C2] ⇒ 必須 AMBIGUOUS；mutation `contracts[0]` 必紅。⚠️ 與 B-M1 **不重複**：B-M1 防 resolver 拿到 candidates 後自己取第一筆；B-G5 防 **upstream adapter 在 resolver 看見 candidates 之前就先偷偷取第一筆**。⇒ 兩層都要守（本次 jgb_system_api.py:190 的發現即證據）。",
- "_migration_ledger_finding": "⚠️ 本地帳本與實況不符：`migrate.sh` dry-run 顯示 **10 支待跑**，但其中 9 支的效果（3498 退役／Level-A representation／applicability 宣告等）**在本機 DB 早已存在** ⇒ 當時是手動套用、⛔ 未記帳。本刀 ⛔ 不順手補記那 9 支（非本 scope）；僅本刀自己的 migration 以 created_by='claude-local-t4b2' 記入。⚠️ prod 部署前需另行核對帳本，⛔ 不得假設 dry-run 的「待跑」等於「prod 未套」。"
+ "_migration_ledger_finding": {
+  "id": "MIGRATION-LEDGER-01",
+  "status": "NOT_A_C2_BLOCKER",
+  "local_debt": "⚠️ 本地帳本與實況不符：dry-run 列 10 支待跑，其中 9 支效果早已存在於本機 DB（當時手動套用、未記帳）＝ **local bookkeeping debt only**。⛔ 不要求逐支重播那 9 支。",
+  "⚠️_premise_correction": {
+   "claimed": "本地已完成 migration 的資料庫 → **整體替換**線上資料庫",
+   "documented_reality": "⛔ **這不是既有 prod 的現行模型**。docs/deployment-runbook.md 明文：「🚩 現行部署路徑（2026-07-22 §17 收斂後正統）：既有 prod 的增量部署＝git pull → **migrate.sh dry-run → --apply（逐支 migration ＋ 記帳）** → §4 重建 → 煙囪 → make audit」；「**附錄 A 全庫搬遷＝僅新環境建置**（空庫從 dump 還原）；drop-restore 會蓋掉 prod-only 計量歷史，**勿用於既有 prod**」。",
+   "history": "2026-07-07 曾以全庫搬遷把 facet 大批整批上線（已完成），但 **07-22 §17 已明文取代**，並註明該裁定「專指 07-07 那批，⛔ 非往後通則」。",
+   "conclusion": "⇒ ⛔ 不能以「反正整庫替換」為由撤掉 ledger 紀律；但也 ⛔ 不需要為那 9 支開一輪修復——它們的效果**本來就只在本機**，prod 是否已套是**另一個獨立事實**，需在部署時由 dry-run 對 prod 帳本判定（runner 本來就會做）。"
+  },
+  "form_sessions_is_runtime_data": {
+   "verdict": "**CONFIRMED — mutable production runtime table**",
+   "evidence": "本機 admin：739 completed ／ **1301 in-flight** ／ 最近活動 2026-08-29⇒ 明確是使用者 session 進度資料，⛔ 不是治理表。正對照：knowledge_base 1043 列＝本地即 authority 的治理表。",
+   "ruling": "⇒ **即使某些治理表採 snapshot 發布，`form_sessions` 仍是 migration semantics，⛔ 不是 snapshot data replacement**——⛔ 不得以本地 rows 覆蓋線上 rows。T4-B2 的五個新欄位在 prod 必須走 additive ALTER（本刀的 migration 檔已是 additive、冪等）。"
+  },
+  "deployment_requirement": "⛔ 不要求逐支重播 9 支舊 migration；**只要求**：發布方式能讓 production 取得 T4-B2 的新 form_sessions schema，**且 ⛔ 不覆蓋 production runtime rows**。⚠️ 依現行 runbook，這正好就是 `migrate.sh --apply` 會做的事（additive、冪等、自動記帳）。"
+ }
 }
