@@ -2664,7 +2664,7 @@
  "_pending_guard_B_G5": "B-G5 NO HIDDEN FIRST-ROW SELECTION（**待 B3 加**）：fixture 非數字 bill ref → contract lookup 回 [C1,C2] ⇒ 必須 AMBIGUOUS；mutation `contracts[0]` 必紅。⚠️ 與 B-M1 **不重複**：B-M1 防 resolver 拿到 candidates 後自己取第一筆；B-G5 防 **upstream adapter 在 resolver 看見 candidates 之前就先偷偷取第一筆**。⇒ 兩層都要守（本次 jgb_system_api.py:190 的發現即證據）。",
  "_migration_ledger_finding": {
   "id": "MIGRATION-LEDGER-01",
-  "status": "NOT_A_C2_BLOCKER",
+  "status": "CLOSED",
   "local_debt": "⚠️ 本地帳本與實況不符：dry-run 列 10 支待跑，其中 9 支效果早已存在於本機 DB（當時手動套用、未記帳）＝ **local bookkeeping debt only**。⛔ 不要求逐支重播那 9 支。",
   "⚠️_premise_correction": {
    "claimed": "本地已完成 migration 的資料庫 → **整體替換**線上資料庫",
@@ -2677,6 +2677,7 @@
    "evidence": "本機 admin：739 completed ／ **1301 in-flight** ／ 最近活動 2026-08-29⇒ 明確是使用者 session 進度資料，⛔ 不是治理表。正對照：knowledge_base 1043 列＝本地即 authority 的治理表。",
    "ruling": "⇒ **即使某些治理表採 snapshot 發布，`form_sessions` 仍是 migration semantics，⛔ 不是 snapshot data replacement**——⛔ 不得以本地 rows 覆蓋線上 rows。T4-B2 的五個新欄位在 prod 必須走 additive ALTER（本刀的 migration 檔已是 additive、冪等）。"
   },
-  "deployment_requirement": "⛔ 不要求逐支重播 9 支舊 migration；**只要求**：發布方式能讓 production 取得 T4-B2 的新 form_sessions schema，**且 ⛔ 不覆蓋 production runtime rows**。⚠️ 依現行 runbook，這正好就是 `migrate.sh --apply` 會做的事（additive、冪等、自動記帳）。"
+  "_owner_ruling_2026_08_30": "業主裁定：**線上也不是運作版，將直接替換資料庫**。⇒ ① MIGRATION-LEDGER-01 **關閉**——本地帳本落差不影響發布，⛔ 不需重播那 9 支。② form_sessions 雖為 runtime-shaped table，但線上無需保留的營運資料 ⇒ 其 rows 可隨整庫替換被覆蓋。③ T4-B2 的五個新欄位**隨 snapshot 一起到位**，⛔ 不需要 prod 端另跑 additive ALTER。⚠️ 本判定的**成立條件**是「線上非運作版」；一旦線上開始承載真實使用者資料，本條即失效，須回到 runbook §17 的逐支 migration 路徑。",
+  "_doc_conflict": "⚠️ docs/deployment-runbook.md 的「🚩 現行部署路徑」與附錄 A 註記（2026-07-22 §17：附錄 A 僅限新環境建置、勿用於既有 prod）與本裁定**相衝突**。⛔ 本 session **未**修改該部署正本——待業主指示。"
  }
 }
