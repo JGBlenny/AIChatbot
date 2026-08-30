@@ -56,6 +56,44 @@ class CanonicalArtifactError(RuntimeError):
     """canonical artifact 不可用——⚠️ **必須大聲失敗**，⛔ 不得降級。"""
 
 
+class ResponsibilitySemanticScoreIncomplete(RuntimeError):
+    """C2-RERANK-REQUIRED-1 違反——⚠️ semantic scoring 不完整即**整批**失敗。
+
+    ```text
+    canonical vector        REQUIRED
+    canonical rerank score  REQUIRED
+    rerank absent／partial／invalid → fail loudly
+    ⛔ NO fallback to：keyword score／row vector／nomination vector／
+                       canonical-vector-only／legacy row finalization
+    ```
+
+    ⚠️ 連 **canonical-vector-only** 都不允許：把 10% 的 arm 在 outage 時變成 100%，
+    是**新的 scoring policy**，⛔ 不是 parity fallback——其 threshold／排序／calibration
+    從未被驗證。要做 reranker 掛掉仍可工作，必須另立 `C2-RERANK-DEGRADATION` 獨立校準。
+    """
+
+
+def finalize_responsibility_score(responsibility_vector_similarity: Any,
+                                  responsibility_rerank_similarity: Any) -> float:
+    """**responsibility 專用**的 finalizer（⛔ 與 legacy `_finalize_scores` 分離）。
+
+    ⚠️ 刻意**不**在 `_finalize_scores` 裡加 `if responsibility_mode`：那樣日後很容易讓
+    C2 candidate 意外穿進 legacy `keyword_score` 分支。既然已證明
+    **nomination provenance ≠ semantic score**，函式邊界上也要把兩種概念拆開。
+    """
+    for name, v in (("responsibility_vector_similarity", responsibility_vector_similarity),
+                    ("responsibility_rerank_similarity", responsibility_rerank_similarity)):
+        if v is None:
+            raise ResponsibilitySemanticScoreIncomplete(
+                f"{name} 缺失——⛔ 不得改用 keyword score／row vector／nomination vector／"
+                f"canonical-vector-only／legacy row finalization")
+        if not isinstance(v, (int, float)) or not math.isfinite(float(v)):
+            raise ResponsibilitySemanticScoreIncomplete(
+                f"{name} 非有限數值（{v!r}）——⛔ 不得以 0 或丟棄帶過")
+    return (VECTOR_WEIGHT * float(responsibility_vector_similarity)
+            + RERANK_WEIGHT * float(responsibility_rerank_similarity))
+
+
 def cosine_similarity(a: List[float], b: List[float]) -> float:
     """與現行 retrieval 相同語義的 cosine：pgvector 的 `1 - (a <=> b)`。
 
@@ -134,3 +172,59 @@ class ResponsibilityScorer:
     def score_all(self, candidates: List[Dict[str, Any]], user_query: str,
                   query_embedding: List[float]) -> List[Dict[str, Any]]:
         return [self.score(c, user_query, query_embedding) for c in candidates]
+
+    # ── 批次：exact-set rerank contract（G17）────────────────────────────
+    def score_batch(self, candidates: List[Dict[str, Any]], user_query: str,
+                    query_embedding: List[float],
+                    batch_rerank_fn: Callable[[str, Dict[str, str]], Dict[str, Any]]
+                    ) -> List[Dict[str, Any]]:
+        """整批打分。⚠️ **requested IDs == returned IDs**，⛔ 只比數量會假綠。
+
+        partial response ⛔ 不得「19 筆正常算、1 筆 vector-only」，也 ⛔ 不得直接丟掉那筆
+        ——否則 ranking population 被 technical failure 改變，且從最終結果看不出來。
+        """
+        rids = [c["responsibility_id"] for c in candidates]
+        dup = sorted({r for r in rids if rids.count(r) > 1})
+        if dup:
+            raise ResponsibilitySemanticScoreIncomplete(f"candidate 內出現重複 responsibility：{dup}")
+        payload = {rid: self.canonical_text(rid) for rid in rids}
+        try:
+            returned = batch_rerank_fn(user_query, payload)
+        except Exception as exc:                      # timeout／exception 一律同一契約
+            raise ResponsibilitySemanticScoreIncomplete(
+                f"reranker 失敗（{type(exc).__name__}: {exc}）——⛔ 不得降級為 vector-only") from exc
+        if not isinstance(returned, dict):
+            raise ResponsibilitySemanticScoreIncomplete("reranker 回傳格式不是 id→score 對應")
+        missing = sorted(set(rids) - set(returned))
+        extra = sorted(set(returned) - set(rids))
+        if missing or extra:
+            raise ResponsibilitySemanticScoreIncomplete(
+                f"rerank 回傳集合不符（缺 {missing}／多 {extra}）"
+                f"——⚠️ exact-set contract：⛔ 只比 count 會假綠")
+        out = []
+        for c in candidates:
+            rid = c["responsibility_id"]
+            vec = self.vector_arm(rid, query_embedding)
+            rer = returned[rid]
+            row = {"responsibility_id": rid}
+            for k in NOMINATION_FIELDS:
+                row[k] = c.get(k)
+            row["responsibility_vector_similarity"] = vec
+            row["responsibility_rerank_similarity"] = rer
+            row["final_similarity"] = finalize_responsibility_score(vec, rer)
+            out.append(row)
+        return out
+
+
+def to_downstream_result(scored: Dict[str, Any]) -> Dict[str, Any]:
+    """把 responsibility 結果投影成 downstream 形狀。
+
+    ⚠️ 寫進 `similarity` 的**只能**是 `final_similarity`——
+    ⛔ 不得是 best_vector_nomination_score／keyword provenance／row similarity。
+    """
+    if "final_similarity" not in scored:
+        raise ResponsibilitySemanticScoreIncomplete("尚未 finalize，⛔ 不得投影至 downstream")
+    out = dict(scored)
+    out["similarity"] = scored["final_similarity"]
+    out["score_source"] = "responsibility_rerank"
+    return out
