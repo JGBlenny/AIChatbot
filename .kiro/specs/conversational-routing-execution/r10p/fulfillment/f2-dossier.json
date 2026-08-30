@@ -2567,7 +2567,10 @@
   "F-C6_RESOLVER_MUST_PRECEDE_LEGACY_FIRST_ROW_ADAPTER": "responsibility path 的 `bill.by_ref.v1` ⛔ **不得**呼叫會在內部做 rows[0] authority commit 的 legacy `get_bills` 非數字分支。⚠️ 業主明示：**⛔ 不把 bill.by_ref.v1 收窄成只接受數字** —— 目前證據只證明 legacy 實作不符 F-C3，⛔ 未證明 responsibility 的**產品** input contract 本來就只允許數字 ID。把 execution limitation 錯寫成 responsibility semantics ＝ 3507 wiring mismatch 的同一種錯。⇒ 非數字 ref 應在 responsibility resolver 層**拆成顯式 stages**：contract candidate lookup → 0 NO_MATCH／1 verified／>1 AMBIGUOUS；取得唯一 verified contract 後才查該合約的 bill candidates，同樣四態收斂（除非另有 reviewed deterministic selection contract）。",
   "B2_no_db_constraints_this_cut": "⛔ 本刀 **不加 enum／CHECK／NOT NULL**（業主明示）：先讓 application invariant 與 persistence round-trip 證成；等 legacy NULL sessions 自然退出再議。⚠️ 現在加 constraint 會**改變 legacy acceptance boundary**——那是另一件事。",
   "F-C7_EXECUTABLE_BINDING_AUTHORITY": "runtime capability dispatch **只能**由 reviewed `fulfillment_binding_id → executable adapter` registry 決定；`owner`／`owner_contract` 僅是 **review evidence**，⛔ 不得成為 runtime dispatch source。⚠️ 本 registry 是 **operational binding registry**，⛔ 不是 Registry V2。⚠️ binding **必須綁 responsibility_id**：⛔ 不可只有 binding_id → callable，否則 session corruption 成 `R-05 + receipt.actual_amount.v1` 時 runtime 仍會執行成功、但 semantic authority 已錯。",
-  "T4-D1_dispatch_before_legacy": "業主裁定：**另立 responsibility completion handler，由上層在進入 legacy completion 之前依 `session_authority_mode` 分流**；⛔ 不在 legacy 函式內塞 `if responsibility_mode`。實作：`_complete_form` 改為**極薄 authority dispatcher**，legacy 本體原封改名為 `_legacy_complete_form`（8 個內部呼叫點與 routers/chat.py:412 皆不需改）。⚠️ 共用的是 **transport**，⛔ 不是 completion authority。⚠️ 只讀**已持久化**的 mode，⛔ 不靠「有沒有 responsibility_id」猜；未知 mode **大聲失敗**，⛔ 不得默默落 legacy（那會讓 authority 靜默降級）。"
+  "T4-D1_dispatch_before_legacy": "業主裁定：**另立 responsibility completion handler，由上層在進入 legacy completion 之前依 `session_authority_mode` 分流**；⛔ 不在 legacy 函式內塞 `if responsibility_mode`。實作：`_complete_form` 改為**極薄 authority dispatcher**，legacy 本體原封改名為 `_legacy_complete_form`（8 個內部呼叫點與 routers/chat.py:412 皆不需改）。⚠️ 共用的是 **transport**，⛔ 不是 completion authority。⚠️ 只讀**已持久化**的 mode，⛔ 不靠「有沒有 responsibility_id」猜；未知 mode **大聲失敗**，⛔ 不得默默落 legacy（那會讓 authority 靜默降級）。",
+  "D1-E-C1_FINAL_TEXT_ENVELOPE_MAPPING": "`FulfillmentExecutionResult.text` → `VendorChatResponse.answer` = **APPROVED_AS_ENVELOPE_MAPPING**。⚠️ 兩個 answer 不同層：`knowledge_base.answer` ＝ Knowledge row 內容／舊 row fulfillment source；`VendorChatResponse.answer` ＝ 對 client 輸出的文字欄位。F-C4 禁的是「winning responsibility → 找 member row → member.answer 當 authority」，⛔ 不是禁止最終文字寫入 API 的 answer 欄。⚠️ FINAL_TEXT 的 text 缺漏／空 ⇒ **hard fail**，⛔ 不得 default ''（silent semantic loss）。",
+  "D1-E_envelope_metadata_transport_only": "D1-E v1：`action_type='form_fill'` ／ `form_id` ＝ **persisted session** 的值。⚠️ `action_type` 是 interaction-envelope metadata，⛔ 不得用來恢復 responsibility authority 或選 fulfillment binding。⛔ **不新增 `responsibility_fulfillment`**——那會第一次修改 public response enum／frontend contract，而尚無 consumer audit（frontend 認不認、cache/analytics 是否枚舉、UI 是否靠它關表單、mobile/web 有無 switch default）⇒ 會把 D1-E 變成 client-protocol migration。未來若需讓 client 知道，應另案 consumer audit ＋ additive metadata。",
+  "D1-E_two_result_families": "responsibility completion 對外**兩個 result family**（依**型別**分流，⛔ 不靠 key 猜）：A `FulfillmentExecutionResult`（FINAL_TEXT）；B `ResponsibilityInputResolutionResult`（AMBIGUOUS／NO_MATCH／INVALID_INPUT）。⚠️ `RESOLVED` ⛔ 不得從 converter 對外出現——那代表 T4-C executor 被跳過 ⇒ hard fail。⚠️ envelope answer 有**兩個**合法來源：FINAL_TEXT＝fulfilled semantic answer；INPUT_RESOLUTION＝transport／clarification prompt ⇒ ⛔ 不得規定「responsibility response 的 answer 一定來自 capability final text」（否則 AMBIGUOUS 流程會被誤判）。精確不變量：**envelope answer 必須來自當前 result type 的 reviewed output field，⛔ 絕不從 knowledge／member row fallback。**"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -2620,7 +2623,7 @@
   "T4-B_entity_resolution": "**B1 ✅ ／ B2 ✅ ／ B3 ✅ module**（2026-08-30）——services/responsibility_bill_resolution.py 把 legacy adapter 裡**隱藏**的「keyword → first contract」拆成顯式兩階段；legacy 逐位未動。",
   "T4-C_direct_fulfillment_execution": "**C1 ✅ module（R-29 only）**（2026-08-30）——services/fulfillment_registry.py ＋ 19 guards；⛔ 只註冊 R-29 一個 binding，⛔ 未從 25 筆 proposed owner 自動生成。",
   "T4-D_output_adaptation": {
-   "FINAL_TEXT": "**D1 ✅ PASS（R-29 wiring）**（2026-08-30）——13/13 guards、unit 1759 PASS。⚠️ **⛔ 不得寫成「E2E PASS」**：full e2e suite 的精確狀態是 `KNOWN PREEXISTING FAILURE = 1`（E2E-DEBT-01）／`NEW D1 E2E REGRESSION = 0`。",
+   "FINAL_TEXT": "**D1 ✅ wiring ／ D1-E ✅ envelope**（2026-08-30）——13＋16 guards；chat.py +123/-1（刪掉的一行是原本的單行 return，改為 type dispatcher），legacy `_convert_form_result_to_response` **本體逐位未改**。⚠️ full e2e：KNOWN PREEXISTING FAILURE 1（E2E-DEBT-01）／NEW REGRESSION 0。",
    "GROUNDING_FACTS": "NOT_ESTABLISHED（T4-D2；presentation portion 待抽）"
   },
   "_note": "⚠️ 不是四個獨立產品問題，是**同一 T4 transport 的四個 seam**。③ 拆成 execution 與 presentation，因為 R-28／R-31 已證 output 不是 final text。"
@@ -2648,10 +2651,10 @@
   "T4-B2 ✅",
   "T4-B3 ✅",
   "T4-C1 ✅",
-  "T4-D1 ✅（wiring）",
-  "**D1-E** FulfillmentExecutionResult(FINAL_TEXT) → existing response envelope／tracking／cache（本地 deterministic data；⚠️ 若一進 routers/chat 就撞 row-shaped assumption ⇒ **立即停**，那是下一個 semantic-slot blocker）",
-  "**D1-R** real JGB API → B3 resolver → exact bill → R-29 binding → FINAL_TEXT downstream（⚠️ 分兩刀的目的：真實 API 測試**只**回答 entity input 可不可達，⛔ 不必同時排查 downstream envelope）",
-  "→ 兩者皆綠才裁 R-29 APPROVED_CAPABILITY"
+  "T4-D1 ✅",
+  "D1-E ✅ envelope",
+  "**D1-R** real JGB API → B3 resolver → exact bill → R-29 binding → FINAL_TEXT downstream（⚠️ 這一刀**只**回答：entity input 在真實 production-shaped adapter 上可不可達）",
+  "→ D1-R 綠才裁 R-29 APPROVED_CAPABILITY"
  ],
  "_first_vertical_slice": "⚠️ 第一條 vertical slice 走 **R-29／FINAL_TEXT**：commit → form round-trip → resolve exact bill → direct _diagnose_receipt → FINAL_TEXT downstream。⇒ presentation extraction ⛔ 不必同時肩負「證明整個新 transport 架構能跑」的責任。",
  "_new_finding_2026_08_30": {
@@ -2693,7 +2696,7 @@
   "ENTITY_INPUT_REACHABILITY": "⚠️ 仍 **NOT_ESTABLISHED**——wired path 以 FakeApi 驗證，**尚未經真實 JGB API**；⛔ 不得因 13 guards 全綠就升級",
   "F2_VERDICT": "⚠️ **維持 INSUFFICIENT_EVIDENCE**",
   "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED（T4-A ＋ B2 persistence）",
-  "FINAL_TEXT_OUTPUT_TRANSPORT": "⚠️ **PARTIAL**——completion handler 已產出 FINAL_TEXT result，但**尚未**接到 routers/chat 的 response envelope／cache（D1 刻意停在此處）"
+  "FINAL_TEXT_OUTPUT_TRANSPORT": "**CONFIRMED（本地 deterministic）**——FulfillmentExecutionResult → VendorChatResponse 已閉合；⚠️ 仍未經真實 JGB API（D1-R）。"
  },
  "_e2e_debt": {
   "id": "E2E-DEBT-01",
@@ -2715,5 +2718,8 @@
    "⛔ count as C2 regression",
    "⛔ investigate inside current C2 line unless it later blocks discrimination"
   ]
+ },
+ "_audit_lessons": {
+  "L2_same_field_name_is_not_same_authority": "⚠️ **同名欄位 ≠ 同一 authority**。`knowledge.answer` 是內容來源；`VendorChatResponse.answer` 是 API envelope。真正的風險**不是**寫入 `answer` 這個名字，而是 ① 從**錯誤 semantic slot** 取值、② 用 **silent default** 把型別錯誤吃掉（`form_result.get('answer','')` 對 responsibility result 會靜默產出空回答）。"
  }
 }
