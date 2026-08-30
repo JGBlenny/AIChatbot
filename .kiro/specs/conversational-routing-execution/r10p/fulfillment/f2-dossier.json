@@ -619,8 +619,23 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/contracts.py::check_can_invite",
+     "file": "services/jgb/contracts.py",
      "line": 128,
-     "signature": "def check_can_invite(contract: dict) -> dict:"
+     "signature": "def check_can_invite(contract: dict) -> dict",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "⚠️ 回 **dict**（can_do／blockers／operation），⛔ 非 final text：判斷可否發送簽約邀請 ＋ blockers 清單",
+     "_question_sensitive": "NO（簽名不含 user_question）"
+    },
+    {
+     "symbol": "services/jgb/contracts.py::_format_operation_response",
+     "file": "services/jgb/contracts.py",
+     "line": 722,
+     "signature": "def _format_operation_response(contract: dict, check: dict, operation: str) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "把 check dict 轉成 final text（合約抬頭 ＋ 可否 ＋ 原因清單）",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -630,34 +645,51 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（composition of two pure functions）",
+    "evidence": [
+     "`check_can_invite(contract)` 與 `_format_operation_response(contract, check, operation)` **皆不含 user_question**（S7）",
+     "⚠️ 但 **check 回 dict、需再過 formatter 才是 final text** ⇒ binding 是**兩段組合**，⛔ 不是單一 callable——與 R-29 的單函式形狀不同"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "指定合約（contract dict）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "contract.current_entity.v1（T4-B1 已註冊；多筆 → AMBIGUOUS）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ legacy `contracts.py:648 matched[0]`——responsibility path 已繞開（S1）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S1"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "FINAL_TEXT",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "是（D1-E envelope 已建立）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "_why": "check dict → _format_operation_response → final text"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "contracts.py:681 `_build_response`（6 個 question 分支，S6）",
+    "allowed_entry": "直接 `check_can_invite(contract)` → `_format_operation_response(...)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "⚠️ 是——若經 _build_response，含「點交」的問句會先命中 move_in（3511/3512 判例）",
+    "needs_fixed_builder": "是（operation 字串必須由 binding 固定，⛔ 不由 utterance 決定）"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -669,7 +701,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "contract.invite_eligibility.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-03",
@@ -699,8 +736,23 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/contracts.py::check_can_early_termination",
+     "file": "services/jgb/contracts.py",
      "line": 257,
-     "signature": "def check_can_early_termination(contract: dict) -> dict:"
+     "signature": "def check_can_early_termination(contract: dict) -> dict",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "⚠️ 回 **dict**（can_do／blockers／operation），⛔ 非 final text：判斷可否提前解約 ＋ blockers",
+     "_question_sensitive": "NO（簽名不含 user_question）"
+    },
+    {
+     "symbol": "services/jgb/contracts.py::_format_operation_response",
+     "file": "services/jgb/contracts.py",
+     "line": 722,
+     "signature": "def _format_operation_response(contract: dict, check: dict, operation: str) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "把 check dict 轉成 final text（合約抬頭 ＋ 可否 ＋ 原因清單）",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -710,34 +762,51 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（composition of two pure functions）",
+    "evidence": [
+     "`check_can_early_termination(contract)` 與 `_format_operation_response(contract, check, operation)` **皆不含 user_question**（S7）",
+     "⚠️ 但 **check 回 dict、需再過 formatter 才是 final text** ⇒ binding 是**兩段組合**，⛔ 不是單一 callable——與 R-29 的單函式形狀不同"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "指定合約（contract dict）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "contract.current_entity.v1（T4-B1 已註冊；多筆 → AMBIGUOUS）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ legacy `contracts.py:648 matched[0]`——responsibility path 已繞開（S1）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S1"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "FINAL_TEXT",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "是（D1-E envelope 已建立）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "_why": "check dict → _format_operation_response → final text"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "contracts.py:681 `_build_response`（6 個 question 分支，S6）",
+    "allowed_entry": "直接 `check_can_early_termination(contract)` → `_format_operation_response(...)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "⚠️ 是——若經 _build_response，含「點交」的問句會先命中 move_in（3511/3512 判例）",
+    "needs_fixed_builder": "是（operation 字串必須由 binding 固定，⛔ 不由 utterance 決定）"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -749,7 +818,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "contract.early_termination_eligibility.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-04",
@@ -779,8 +853,23 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/contracts.py::check_can_renew",
+     "file": "services/jgb/contracts.py",
      "line": 294,
-     "signature": "def check_can_renew(contract: dict) -> dict:"
+     "signature": "def check_can_renew(contract: dict) -> dict",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "⚠️ 回 **dict**（can_do／blockers／operation），⛔ 非 final text：判斷可否續約 ＋ blockers",
+     "_question_sensitive": "NO（簽名不含 user_question）"
+    },
+    {
+     "symbol": "services/jgb/contracts.py::_format_operation_response",
+     "file": "services/jgb/contracts.py",
+     "line": 722,
+     "signature": "def _format_operation_response(contract: dict, check: dict, operation: str) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "把 check dict 轉成 final text（合約抬頭 ＋ 可否 ＋ 原因清單）",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -790,34 +879,51 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（composition of two pure functions）",
+    "evidence": [
+     "`check_can_renew(contract)` 與 `_format_operation_response(contract, check, operation)` **皆不含 user_question**（S7）",
+     "⚠️ 但 **check 回 dict、需再過 formatter 才是 final text** ⇒ binding 是**兩段組合**，⛔ 不是單一 callable——與 R-29 的單函式形狀不同"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "指定合約（contract dict）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "contract.current_entity.v1（T4-B1 已註冊；多筆 → AMBIGUOUS）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ legacy `contracts.py:648 matched[0]`——responsibility path 已繞開（S1）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S1"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "FINAL_TEXT",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "是（D1-E envelope 已建立）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "_why": "check dict → _format_operation_response → final text"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "contracts.py:681 `_build_response`（6 個 question 分支，S6）",
+    "allowed_entry": "直接 `check_can_renew(contract)` → `_format_operation_response(...)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "⚠️ 是——若經 _build_response，含「點交」的問句會先命中 move_in（3511/3512 判例）",
+    "needs_fixed_builder": "是（operation 字串必須由 binding 固定，⛔ 不由 utterance 決定）"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -829,7 +935,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "contract.renew_eligibility.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-08",
@@ -858,8 +969,23 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/contracts.py::check_can_move_in",
+     "file": "services/jgb/contracts.py",
      "line": 161,
-     "signature": "def check_can_move_in(contract: dict) -> dict:"
+     "signature": "def check_can_move_in(contract: dict) -> dict",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "⚠️ 回 **dict**（can_do／blockers／operation），⛔ 非 final text：判斷可否點交 ＋ blockers",
+     "_question_sensitive": "NO（簽名不含 user_question）"
+    },
+    {
+     "symbol": "services/jgb/contracts.py::_format_operation_response",
+     "file": "services/jgb/contracts.py",
+     "line": 722,
+     "signature": "def _format_operation_response(contract: dict, check: dict, operation: str) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "把 check dict 轉成 final text（合約抬頭 ＋ 可否 ＋ 原因清單）",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -869,34 +995,51 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（composition of two pure functions）",
+    "evidence": [
+     "`check_can_move_in(contract)` 與 `_format_operation_response(contract, check, operation)` **皆不含 user_question**（S7）",
+     "⚠️ 但 **check 回 dict、需再過 formatter 才是 final text** ⇒ binding 是**兩段組合**，⛔ 不是單一 callable——與 R-29 的單函式形狀不同"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "指定合約（contract dict）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "contract.current_entity.v1（T4-B1 已註冊；多筆 → AMBIGUOUS）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ legacy `contracts.py:648 matched[0]`——responsibility path 已繞開（S1）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S1"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "FINAL_TEXT",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "是（D1-E envelope 已建立）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "_why": "check dict → _format_operation_response → final text"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "contracts.py:681 `_build_response`（6 個 question 分支，S6）",
+    "allowed_entry": "直接 `check_can_move_in(contract)` → `_format_operation_response(...)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "⚠️ 是——若經 _build_response，含「點交」的問句會先命中 move_in（3511/3512 判例）",
+    "needs_fixed_builder": "是（operation 字串必須由 binding 固定，⛔ 不由 utterance 決定）"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -908,7 +1051,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "contract.move_in_eligibility.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-09",
@@ -937,8 +1085,23 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/contracts.py::check_can_move_out",
+     "file": "services/jgb/contracts.py",
      "line": 203,
-     "signature": "def check_can_move_out(contract: dict) -> dict:"
+     "signature": "def check_can_move_out(contract: dict) -> dict",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "⚠️ 回 **dict**（can_do／blockers／operation），⛔ 非 final text：判斷可否點退 ＋ blockers",
+     "_question_sensitive": "NO（簽名不含 user_question）"
+    },
+    {
+     "symbol": "services/jgb/contracts.py::_format_operation_response",
+     "file": "services/jgb/contracts.py",
+     "line": 722,
+     "signature": "def _format_operation_response(contract: dict, check: dict, operation: str) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "把 check dict 轉成 final text（合約抬頭 ＋ 可否 ＋ 原因清單）",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -948,34 +1111,51 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（composition of two pure functions）",
+    "evidence": [
+     "`check_can_move_out(contract)` 與 `_format_operation_response(contract, check, operation)` **皆不含 user_question**（S7）",
+     "⚠️ 但 **check 回 dict、需再過 formatter 才是 final text** ⇒ binding 是**兩段組合**，⛔ 不是單一 callable——與 R-29 的單函式形狀不同"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "指定合約（contract dict）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "contract.current_entity.v1（T4-B1 已註冊；多筆 → AMBIGUOUS）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ legacy `contracts.py:648 matched[0]`——responsibility path 已繞開（S1）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S1"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "FINAL_TEXT",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "是（D1-E envelope 已建立）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "_why": "check dict → _format_operation_response → final text"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "contracts.py:681 `_build_response`（6 個 question 分支，S6）",
+    "allowed_entry": "直接 `check_can_move_out(contract)` → `_format_operation_response(...)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "⚠️ 是——若經 _build_response，含「點交」的問句會先命中 move_in（3511/3512 判例）",
+    "needs_fixed_builder": "是（operation 字串必須由 binding 固定，⛔ 不由 utterance 決定）"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -987,7 +1167,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "contract.move_out_eligibility.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-10",
@@ -1015,8 +1200,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/bills.py::_diagnose_cannot_send",
+     "file": "services/jgb/bills.py",
      "line": 463,
-     "signature": "def _diagnose_cannot_send(bill: dict) -> str:"
+     "signature": "def _diagnose_cannot_send(bill: dict) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "帳單無法發送 的具名診斷分支",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -1026,34 +1216,52 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_diagnose_cannot_send(bill)` 簽名不含 user_question（S7）",
+     "入口 `diagnose_bill` 以 keyword 分流才到它 ⇒ 必須繞開（S6）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "單筆帳單（bill dict）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "bill.by_ref.v1（T4-B3 顯式兩階段）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ legacy `bills.py:379 builder(rows[0])` 與 `jgb_system_api.py:190`——已繞開（S2）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S2"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "bills.py:427 `diagnose_bill`",
+    "allowed_entry": "直接 `_diagnose_cannot_send(bill)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是（經入口時）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -1065,7 +1273,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "bill.cannot_send_diagnosis.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-11",
@@ -1093,8 +1306,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/bills.py::_diagnose_cannot_cancel",
+     "file": "services/jgb/bills.py",
      "line": 514,
-     "signature": "def _diagnose_cannot_cancel(bill: dict) -> str:"
+     "signature": "def _diagnose_cannot_cancel(bill: dict) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "帳單無法取消／作廢 的具名診斷分支",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -1104,34 +1322,52 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_diagnose_cannot_cancel(bill)` 簽名不含 user_question（S7）",
+     "入口 `diagnose_bill` 以 keyword 分流才到它 ⇒ 必須繞開（S6）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "單筆帳單（bill dict）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "bill.by_ref.v1（T4-B3 顯式兩階段）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ legacy `bills.py:379 builder(rows[0])` 與 `jgb_system_api.py:190`——已繞開（S2）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S2"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "bills.py:427 `diagnose_bill`",
+    "allowed_entry": "直接 `_diagnose_cannot_cancel(bill)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是（經入口時）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -1143,7 +1379,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "bill.cannot_cancel_diagnosis.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-12",
@@ -1171,8 +1412,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/payments.py::_diagnose_payment_not_reflected",
+     "file": "services/jgb/payments.py",
      "line": 50,
-     "signature": "def _diagnose_payment_not_reflected(logs: list) -> str:"
+     "signature": "def _diagnose_payment_not_reflected(logs: list) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "已付款但狀態未更新 的具名分支（吃 logs 全集）",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -1182,34 +1428,52 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_diagnose_payment_not_reflected(logs)` 簽名不含 user_question（S7）",
+     "入口 `diagnose_payment_logs` 有 4 個 keyword 分支 ⇒ 必須繞開（S6）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "該帳單的金流日誌集合（logs: list）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_CONTRACT_NOT_REGISTERED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "⚠️ **未註冊**（proposed `payment_logs.by_bill.v1`）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ 分支吃**整個 list**、⛔ 不取第一筆 ⇒ 無 first-row 風險",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S3"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "payments.py:21 `diagnose_payment_logs`",
+    "allowed_entry": "直接 `_diagnose_payment_not_reflected(logs)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是（經入口時）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -1221,7 +1485,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "payment.not_reflected_diagnosis.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-14",
@@ -1249,8 +1518,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/bills.py::_diagnose_manual_complete",
+     "file": "services/jgb/bills.py",
      "line": 602,
-     "signature": "def _diagnose_manual_complete(bill: dict) -> str:"
+     "signature": "def _diagnose_manual_complete(bill: dict) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "手動到帳失敗 的具名診斷分支",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -1260,34 +1534,52 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_diagnose_manual_complete(bill)` 簽名不含 user_question（S7）",
+     "入口 `diagnose_bill` 以 keyword 分流才到它 ⇒ 必須繞開（S6）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "單筆帳單（bill dict）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "bill.by_ref.v1（T4-B3 顯式兩階段）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ legacy `bills.py:379 builder(rows[0])` 與 `jgb_system_api.py:190`——已繞開（S2）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S2"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "bills.py:427 `diagnose_bill`",
+    "allowed_entry": "直接 `_diagnose_manual_complete(bill)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是（經入口時）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -1299,7 +1591,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "bill.manual_complete_diagnosis.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-15",
@@ -1327,8 +1624,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/payments.py::_diagnose_credit_card_failure",
+     "file": "services/jgb/payments.py",
      "line": 85,
-     "signature": "def _diagnose_credit_card_failure(logs: list) -> str:"
+     "signature": "def _diagnose_credit_card_failure(logs: list) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "信用卡單次付款失敗 的具名分支（吃 logs 全集）",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -1338,34 +1640,52 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_diagnose_credit_card_failure(logs)` 簽名不含 user_question（S7）",
+     "入口 `diagnose_payment_logs` 有 4 個 keyword 分支 ⇒ 必須繞開（S6）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "該帳單的金流日誌集合（logs: list）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_CONTRACT_NOT_REGISTERED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "⚠️ **未註冊**（proposed `payment_logs.by_bill.v1`）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ 分支吃**整個 list**、⛔ 不取第一筆 ⇒ 無 first-row 風險",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S3"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "payments.py:21 `diagnose_payment_logs`",
+    "allowed_entry": "直接 `_diagnose_credit_card_failure(logs)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是（經入口時）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -1377,7 +1697,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "payment.credit_card_failure_diagnosis.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-16",
@@ -1405,8 +1730,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/payments.py::_diagnose_auto_pay_failure",
+     "file": "services/jgb/payments.py",
      "line": 120,
-     "signature": "def _diagnose_auto_pay_failure(logs: list) -> str:"
+     "signature": "def _diagnose_auto_pay_failure(logs: list) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "週期自動扣款失敗 的具名分支（吃 logs 全集）",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -1416,34 +1746,52 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_diagnose_auto_pay_failure(logs)` 簽名不含 user_question（S7）",
+     "入口 `diagnose_payment_logs` 有 4 個 keyword 分支 ⇒ 必須繞開（S6）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "該帳單的金流日誌集合（logs: list）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_CONTRACT_NOT_REGISTERED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "⚠️ **未註冊**（proposed `payment_logs.by_bill.v1`）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ 分支吃**整個 list**、⛔ 不取第一筆 ⇒ 無 first-row 風險",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S3"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "payments.py:21 `diagnose_payment_logs`",
+    "allowed_entry": "直接 `_diagnose_auto_pay_failure(logs)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是（經入口時）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -1455,7 +1803,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "payment.auto_pay_failure_diagnosis.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-17",
@@ -1483,8 +1836,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/bills.py::_diagnose_atm_expired",
+     "file": "services/jgb/bills.py",
      "line": 625,
-     "signature": "def _diagnose_atm_expired(bill: dict) -> str:"
+     "signature": "def _diagnose_atm_expired(bill: dict) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "虛擬帳號過期／轉帳失敗 的具名診斷分支",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -1494,34 +1852,52 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_diagnose_atm_expired(bill)` 簽名不含 user_question（S7）",
+     "入口 `diagnose_bill` 以 keyword 分流才到它 ⇒ 必須繞開（S6）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "單筆帳單（bill dict）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "bill.by_ref.v1（T4-B3 顯式兩階段）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ legacy `bills.py:379 builder(rows[0])` 與 `jgb_system_api.py:190`——已繞開（S2）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S2"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "bills.py:427 `diagnose_bill`",
+    "allowed_entry": "直接 `_diagnose_atm_expired(bill)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是（經入口時）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -1533,7 +1909,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "bill.atm_expired_diagnosis.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-18",
@@ -1561,8 +1942,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/invoices.py::_diagnose_issue_failure",
+     "file": "services/jgb/invoices.py",
      "line": 57,
-     "signature": "def _diagnose_issue_failure(logs: list) -> str:"
+     "signature": "def _diagnose_issue_failure(logs: list) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "發票未開立 的具名分支",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -1572,34 +1958,52 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_diagnose_issue_failure(logs)` 簽名不含 user_question（S7）",
+     "入口 `diagnose_invoice_logs` 有 3 個 keyword 分支 ⇒ 必須繞開（S6）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "發票日誌集合（logs: list）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_CONTRACT_NOT_REGISTERED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "⚠️ **未註冊**（proposed `invoice_logs.by_bill.v1`）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "無（吃全集）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S4"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "invoices.py:37 `diagnose_invoice_logs`",
+    "allowed_entry": "直接 `_diagnose_issue_failure(logs)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是（經入口時）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -1611,7 +2015,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "invoice.issue_failure_diagnosis.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-19",
@@ -1639,8 +2048,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/invoices.py::_diagnose_invalid_failure",
+     "file": "services/jgb/invoices.py",
      "line": 116,
-     "signature": "def _diagnose_invalid_failure(logs: list) -> str:"
+     "signature": "def _diagnose_invalid_failure(logs: list) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "發票無法作廢 的具名分支",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -1650,34 +2064,52 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_diagnose_invalid_failure(logs)` 簽名不含 user_question（S7）",
+     "入口 `diagnose_invoice_logs` 有 3 個 keyword 分支 ⇒ 必須繞開（S6）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "發票日誌集合（logs: list）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_CONTRACT_NOT_REGISTERED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "⚠️ **未註冊**（proposed `invoice_logs.by_bill.v1`）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "無（吃全集）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S4"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "invoices.py:37 `diagnose_invoice_logs`",
+    "allowed_entry": "直接 `_diagnose_invalid_failure(logs)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是（經入口時）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -1689,7 +2121,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "invoice.invalid_failure_diagnosis.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-20",
@@ -1717,8 +2154,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/subscription.py::_diagnose_cannot_add_estate",
+     "file": "services/jgb/subscription.py",
      "line": 35,
-     "signature": "def _diagnose_cannot_add_estate(data: dict) -> str:"
+     "signature": "def _diagnose_cannot_add_estate(data: dict) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "無法新增物件 的具名分支",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -1728,34 +2170,52 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_diagnose_cannot_add_estate(data)` 簽名不含 user_question（S7）",
+     "入口 `diagnose_subscription` 有 4 個 keyword 分支 ⇒ 必須繞開（S6）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "訂閱方案物件（data: dict）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_CONTRACT_NOT_REGISTERED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "⚠️ **未註冊**（proposed `subscription.current.v1`）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "無（單物件）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S5"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "subscription.py:13 `diagnose_subscription`",
+    "allowed_entry": "直接 `_diagnose_cannot_add_estate(data)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是（經入口時）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -1767,7 +2227,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "subscription.cannot_add_estate_diagnosis.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-21",
@@ -1795,8 +2260,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/subscription.py::_diagnose_estates_delisted",
+     "file": "services/jgb/subscription.py",
      "line": 63,
-     "signature": "def _diagnose_estates_delisted(data: dict) -> str:"
+     "signature": "def _diagnose_estates_delisted(data: dict) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "物件全部下架 的具名分支",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -1806,34 +2276,52 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_diagnose_estates_delisted(data)` 簽名不含 user_question（S7）",
+     "入口 `diagnose_subscription` 有 4 個 keyword 分支 ⇒ 必須繞開（S6）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "訂閱方案物件（data: dict）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_CONTRACT_NOT_REGISTERED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "⚠️ **未註冊**（proposed `subscription.current.v1`）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "無（單物件）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S5"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "subscription.py:13 `diagnose_subscription`",
+    "allowed_entry": "直接 `_diagnose_estates_delisted(data)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是（經入口時）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -1845,7 +2333,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "subscription.estates_delisted_diagnosis.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-22",
@@ -1873,8 +2366,23 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/estates.py::build_estate_status_facts",
+     "file": "services/jgb/estates.py",
      "line": 33,
-     "signature": "def build_estate_status_facts(estate: dict, detail: Optional[dict] = None, user_question: str = \"\") -> str:"
+     "signature": "def build_estate_status_facts(estate: dict, detail: Optional[dict] = None, user_question: str = '') -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "建約決策樹：刊登中 ＋ contract_required_fields 欄位齊 → 可建約；缺欄列 label",
+     "_question_sensitive": "⚠️ 簽名含 user_question——見該筆 _7"
+    },
+    {
+     "symbol": "services/jgb/estates.py::face_estate_response",
+     "file": "services/jgb/estates.py",
+     "line": 101,
+     "signature": "def face_estate_response(rows, user_question='', face=None)",
+     "output_shape": "Optional[str]",
+     "single_callable": true,
+     "_what": "⚠️ **face 分發入口**——`ESTATE_FACE_BUILDERS.get(face)` ＋ `rows[0]`；⛔ 必須繞開",
+     "_question_sensitive": "⚠️ 簽名含 face ＋ user_question"
     }
    ],
    "_4_direct_after_commit": {
@@ -1884,34 +2392,53 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（對 builder 本身）",
+    "evidence": [
+     "`build_estate_status_facts(estate, detail=None, user_question='')` ⚠️ **簽名含 user_question，但實查其 body ⛔ 不讀它**（question_branches=0）⇒ 與 R-28 的 build_late_fee_facts 同形：**NOT_QUESTION_SENSITIVE**",
+     "⚠️ 入口 `face_estate_response` 以 **face** 選 builder 且取 `rows[0]` ⇒ 必須繞開"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "物件（estate: dict）",
+     "⚠️ 可選 detail（secondary_call attach）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_CONTRACT_NOT_REGISTERED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "⚠️ **未註冊**（proposed `estate.by_ref.v1`）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ 入口取 `rows[0]` ⇒ **必須由 responsibility resolver 取代**",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": null
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "estates.py:101 `face_estate_response`（face 選 builder ＋ rows[0]）",
+    "allowed_entry": "直接 `build_estate_status_facts(estate, detail)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "⚠️ face 會改（category 驅動），utterance 不會",
+    "needs_fixed_builder": "是（binding 必須固定 builder，⛔ 不由 face 選）"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -1923,7 +2450,13 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（⚠️ 另有 wiring mismatch）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "estate.contract_eligibility_facts.v1",
+   "review_status": "proposed",
+   "_capability_alignment_reminder": "⚠️ 本筆 P3 已標 **WRONG_EXECUTION_BINDING_CONFIRMED**（row wiring 到 jgb_contract_query，而 capability 在 jgb_estate_status）——依 **P-C9**，wiring defect ⛔ 不降格 responsibility，但 fulfillment binding 必須接到**正確**的 endpoint／entity。"
   },
   {
    "responsibility_id": "R-23",
@@ -1950,9 +2483,14 @@
    },
    "_3_production_capability_candidates": [
     {
-     "symbol": "services/jgb/iot.py::diagnose_iot",
-     "line": 108,
-     "signature": "def diagnose_iot(data: list, user_question: str = \"\") -> str:"
+     "symbol": "services/jgb/iot.py::_diagnose_binding_failure",
+     "file": "services/jgb/iot.py",
+     "line": 126,
+     "signature": "def _diagnose_binding_failure(data: list) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "IoT 廠商帳號綁定失敗的具名分支",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -1962,34 +2500,52 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "⚠️ registry 的 owner prose 寫的是 `diagnose_iot`（**入口**），但實查其內有 1 個 keyword 分支 → `_diagnose_binding_failure(data)`；**真正的 capability 是後者**，⛔ 不是入口",
+     "`_diagnose_binding_failure(data)` 簽名不含 user_question（S7）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "IoT 廠商清單（data: list）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_CONTRACT_NOT_REGISTERED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "⚠️ **未註冊**（proposed `iot.manufacturers.v1`）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "無（吃全集）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": null
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "GROUNDING_FACTS（**待裁**：亦可能是 FINAL_TEXT）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ **待裁**——回傳為多行事實字串，形狀與 R-28 的 build_late_fee_facts 相近（皆 `'\\n'.join(lines)`），但也可能足以直接當 final text",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "若判 GROUNDING_FACTS → D2 present() 已就緒（需 outcome 分類）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "outcome_already_classified": "⚠️ **否**——這些分支只回字串，⛔ 無 outcome 欄位 ⇒ 若走 D2 需由 binding adapter 包成 {'outcome':'FACTS', ...}",
+    "needs_reviewed_outcome_note": "⚠️ 僅當出現 NOT_FOUND／CANDIDATES 類狀態才需要；本組多為單一 entity 診斷，暫不需要"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "iot.py:108 `diagnose_iot`（keyword：綁定失敗／綁不上／無法綁定／連不上）",
+    "allowed_entry": "直接 `_diagnose_binding_failure(data)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是——⚠️ 未命中關鍵字會落 `_format_iot_status`（**不同語義**）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -2001,7 +2557,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "iot.binding_failure_diagnosis.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-24",
@@ -2029,8 +2590,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb_response_formatter.py::_format_tenant_summary",
+     "file": "services/jgb_response_formatter.py",
      "line": 375,
-     "signature": "def _format_tenant_summary(data: dict) -> str:"
+     "signature": "def _format_tenant_summary(data: dict) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "租客跨域摘要（合約／帳單／修繕）——formatter 專屬分支",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -2040,34 +2606,51 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_format_tenant_summary(data)` 為純函式、⛔ 不含 user_question",
+     "⚠️ 依 **P-C5**：專屬 deterministic query path 即可建立 capability，⛔ 不必叫 diagnose"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "租客摘要物件（jgb_tenant_summary 單物件）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "（未註冊）tenant.by_ref.v1",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ 端點回單物件；⛔ 但 resolver 尚未建立",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": null
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "FINAL_TEXT",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "是（D1-E envelope 已建立）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "_why": "直接回 final text"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "jgb_response_formatter.format_jgb_response 的 endpoint 分派（S6 類）",
+    "allowed_entry": "直接 `_format_tenant_summary(data)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "否（該分支只看 endpoint，不看 question）",
+    "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -2079,7 +2662,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "tenant.summary.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-30",
@@ -2107,8 +2695,13 @@
    "_3_production_capability_candidates": [
     {
      "symbol": "services/jgb/bills.py::_format_bill_status",
+     "file": "services/jgb/bills.py",
      "line": 663,
-     "signature": "def _format_bill_status(bill: dict) -> str:"
+     "signature": "def _format_bill_status(bill: dict) -> str",
+     "output_shape": "str",
+     "single_callable": true,
+     "_what": "單筆帳單現況敘述（是否已繳／已寄出／草稿／到期）",
+     "_question_sensitive": "NO（簽名不含 user_question）"
     }
    ],
    "_4_direct_after_commit": {
@@ -2118,34 +2711,51 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "`_format_bill_status(bill)` 簽名不含 user_question（S7）",
+     "⚠️ 它同時是 `diagnose_bill` 的 **fallback 分支**——與 R-05 的 `_format_status_response` 同形：**claimed responsibility 與 fallback 的 semantic output 正面一致**才成立"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [
+     "單筆帳單（bill dict）"
+    ],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "input_resolver": "bill.by_ref.v1（T4-B3 顯式兩階段）",
+    "needs_form_round_trip": true,
+    "first_row_risk": "⚠️ legacy `bills.py:379 builder(rows[0])` 與 `jgb_system_api.py:190`——已繞開（S2）",
+    "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED",
+    "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+    "shared_blocker": "S2"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
-    "can_feed_current_downstream": null,
-    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+    "output_type": "FINAL_TEXT",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "是（D1-E envelope 已建立）",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "_why": "直接回 final text"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
-    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+    "must_bypass": "bills.py:427 `diagnose_bill`（6 個 question 分支，S6）",
+    "allowed_entry": "直接 `_format_bill_status(bill)`",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "changing_utterance_can_change_owner": "是（含「收據」「取消」等字會改走別的分支）",
+    "needs_fixed_builder": "否（單一 callable）"
    },
    "_8_f2_verdict": {
     "verdict": null,
@@ -2157,7 +2767,12 @@
     ],
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
    },
-   "proposed_strategy": "CAPABILITY"
+   "proposed_strategy": "CAPABILITY",
+   "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
+   "binding_semantics": "CONFIRMED",
+   "execution_closure": "BLOCKED_INPUT",
+   "proposed_capability_id": "bill.current_status.v1",
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-06",
@@ -2792,5 +3407,111 @@
   "SELECTION_PROVENANCE": "CONFIRMED（C2-G5：type_fact_line 必在 facts；mutation 拿掉即紅——證明 provenance ⛔ 沒被 adapter 吃掉）",
   "ENTITY_INPUT_REACHABILITY": "⚠️ **NOT_ESTABLISHED**（未經 production-shaped wired path）",
   "F2_VERDICT": "⚠️ **維持 INSUFFICIENT_EVIDENCE**——⛔ 不因 C2 成功就提前 APPROVED。"
+ },
+ "_f2b_shared_facts": {
+  "S1_contract_entity_input": {
+   "id": "S1",
+   "kind": "SHARED_INPUT_BLOCKER",
+   "input_contract": "contract.current_entity.v1",
+   "affected": [
+    "R-02",
+    "R-03",
+    "R-04",
+    "R-08",
+    "R-09",
+    "R-30(否)"
+   ],
+   "fact": "皆需**指定合約**：form jgb_contract_query → jgb_contracts → 多筆時 legacy `matched[0]`。T4-B1 已有 responsibility-only resolver（多筆 → AMBIGUOUS），⚠️ 但**尚未 externally validated**（D1-R BLOCKED）。",
+   "session_transport_reachability": "CONFIRMED（T4-A／B2）",
+   "entity_input_reachability": "**NOT_ESTABLISHED**"
+  },
+  "S2_bill_entity_input": {
+   "id": "S2",
+   "kind": "SHARED_INPUT_BLOCKER",
+   "input_contract": "bill.by_ref.v1",
+   "affected": [
+    "R-10",
+    "R-11",
+    "R-14",
+    "R-17",
+    "R-30"
+   ],
+   "fact": "皆需**單筆帳單**：form jgb_bill_diagnosis → jgb_bill_detail。T4-B3 已有顯式兩階段 resolver，⚠️ 但 numeric／nonnumeric 兩條 branch 皆 **NOT_EXTERNALLY_VALIDATED**（D1-R BLOCKED）。",
+   "entity_input_reachability": "**NOT_ESTABLISHED**"
+  },
+  "S3_payment_logs_input": {
+   "id": "S3",
+   "kind": "SHARED_INPUT_BLOCKER",
+   "input_contract": "（未註冊）payment_logs.by_bill.v1",
+   "affected": [
+    "R-12",
+    "R-15",
+    "R-16"
+   ],
+   "fact": "三筆共用 `diagnose_payment_logs(logs, question)` 的三個具名分支；input 是 **logs: list**（jgb_payment_logs 端點回的日誌集合），⚠️ **尚無**對應的 reviewed input contract 與 resolver ⇒ 需新增。",
+   "entity_input_reachability": "**NOT_ESTABLISHED**"
+  },
+  "S4_invoice_logs_input": {
+   "id": "S4",
+   "kind": "SHARED_INPUT_BLOCKER",
+   "input_contract": "（未註冊）invoice_logs.by_bill.v1",
+   "affected": [
+    "R-18",
+    "R-19"
+   ],
+   "fact": "共用 `diagnose_invoice_logs(logs, question)` 的兩個具名分支；input 為 logs: list。",
+   "entity_input_reachability": "**NOT_ESTABLISHED**"
+  },
+  "S5_subscription_input": {
+   "id": "S5",
+   "kind": "SHARED_INPUT_BLOCKER",
+   "input_contract": "（未註冊）subscription.current.v1",
+   "affected": [
+    "R-20",
+    "R-21"
+   ],
+   "fact": "共用 `diagnose_subscription(data, question)` 的兩個具名分支；input 為 **data: dict**（jgb_subscription 端點單物件）。",
+   "entity_input_reachability": "**NOT_ESTABLISHED**"
+  },
+  "S6_dispatcher_bypass": {
+   "id": "S6",
+   "kind": "SHARED_PRODUCTION_FACT",
+   "fact": "⚠️ 每個領域都有一個 **question-keyword dispatcher** 必須 bypass：contracts.py:681 `_build_response`（6 個 question 分支）／bills.py:427 `diagnose_bill`（6）／payments.py:21 `diagnose_payment_logs`（4）／invoices.py:37 `diagnose_invoice_logs`（3）／subscription.py:13 `diagnose_subscription`（4）／iot.py:108 `diagnose_iot`（1）。⇒ **所有 F2-B binding 都必須直接呼叫具名分支**，⛔ 不得走這些入口（F-C1）。",
+   "affected": "全 20 筆"
+  },
+  "S7_named_branches_are_question_insensitive": {
+   "id": "S7",
+   "kind": "SHARED_PRODUCTION_FACT",
+   "fact": "⚠️ 機器實查（AST／簽名）結果：**所有**候選具名分支的簽名皆 ⛔ **不含** user_question——`check_can_*(contract)`／`_diagnose_*(bill|logs|data)`／`_format_*(...)`。⇒ 它們本身 **NOT_QUESTION_SENSITIVE**；question-sensitivity 全部集中在**入口 dispatcher**（S6）。⚠️ 這正是 R-28 的形狀（builder 不讀 question，入口才讀），所以 F2-B 大多數可落進 **P-F2-1／P-F2-2**，⛔ 不需要新形狀。"
+  }
+ },
+ "_f2b_shape_summary": {
+  "P-F2-1_direct_FINAL_TEXT": [
+   "R-02",
+   "R-03",
+   "R-04",
+   "R-08",
+   "R-09",
+   "R-24",
+   "R-30"
+  ],
+  "P-F2-2_direct_GROUNDING_FACTS": [
+   "R-10",
+   "R-11",
+   "R-12",
+   "R-14",
+   "R-15",
+   "R-16",
+   "R-17",
+   "R-18",
+   "R-19",
+   "R-20",
+   "R-21",
+   "R-22",
+   "R-23"
+  ],
+  "P-F2-3_composite": [],
+  "NEW_SHAPE_CANDIDATE": [],
+  "_conclusion": "⚠️ **20 筆全部落進既有三型的前兩型**，⛔ 無需第四／第五種形狀。⚠️ 但 B1 的五筆合約 eligibility 是**兩段組合**（check → formatter），與 R-29 的單函式略有差異——已在各筆 _4 標明。"
  }
 }
