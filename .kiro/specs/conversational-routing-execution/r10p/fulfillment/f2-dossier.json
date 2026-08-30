@@ -2566,7 +2566,8 @@
   "session_persistence_decision": "沿用既有 `form_sessions` 做 **additive migration**（新增 nullable：session_authority_mode／responsibility_id／fulfillment_binding_id／fulfillment_strategy／input_contract_id），⛔ 不另建第二張 session table——否則立刻新增兩套 expiry／lookup／retry／cleanup，且 on_complete handler 得先猜 session 存哪張表。",
   "F-C6_RESOLVER_MUST_PRECEDE_LEGACY_FIRST_ROW_ADAPTER": "responsibility path 的 `bill.by_ref.v1` ⛔ **不得**呼叫會在內部做 rows[0] authority commit 的 legacy `get_bills` 非數字分支。⚠️ 業主明示：**⛔ 不把 bill.by_ref.v1 收窄成只接受數字** —— 目前證據只證明 legacy 實作不符 F-C3，⛔ 未證明 responsibility 的**產品** input contract 本來就只允許數字 ID。把 execution limitation 錯寫成 responsibility semantics ＝ 3507 wiring mismatch 的同一種錯。⇒ 非數字 ref 應在 responsibility resolver 層**拆成顯式 stages**：contract candidate lookup → 0 NO_MATCH／1 verified／>1 AMBIGUOUS；取得唯一 verified contract 後才查該合約的 bill candidates，同樣四態收斂（除非另有 reviewed deterministic selection contract）。",
   "B2_no_db_constraints_this_cut": "⛔ 本刀 **不加 enum／CHECK／NOT NULL**（業主明示）：先讓 application invariant 與 persistence round-trip 證成；等 legacy NULL sessions 自然退出再議。⚠️ 現在加 constraint 會**改變 legacy acceptance boundary**——那是另一件事。",
-  "F-C7_EXECUTABLE_BINDING_AUTHORITY": "runtime capability dispatch **只能**由 reviewed `fulfillment_binding_id → executable adapter` registry 決定；`owner`／`owner_contract` 僅是 **review evidence**，⛔ 不得成為 runtime dispatch source。⚠️ 本 registry 是 **operational binding registry**，⛔ 不是 Registry V2。⚠️ binding **必須綁 responsibility_id**：⛔ 不可只有 binding_id → callable，否則 session corruption 成 `R-05 + receipt.actual_amount.v1` 時 runtime 仍會執行成功、但 semantic authority 已錯。"
+  "F-C7_EXECUTABLE_BINDING_AUTHORITY": "runtime capability dispatch **只能**由 reviewed `fulfillment_binding_id → executable adapter` registry 決定；`owner`／`owner_contract` 僅是 **review evidence**，⛔ 不得成為 runtime dispatch source。⚠️ 本 registry 是 **operational binding registry**，⛔ 不是 Registry V2。⚠️ binding **必須綁 responsibility_id**：⛔ 不可只有 binding_id → callable，否則 session corruption 成 `R-05 + receipt.actual_amount.v1` 時 runtime 仍會執行成功、但 semantic authority 已錯。",
+  "T4-D1_dispatch_before_legacy": "業主裁定：**另立 responsibility completion handler，由上層在進入 legacy completion 之前依 `session_authority_mode` 分流**；⛔ 不在 legacy 函式內塞 `if responsibility_mode`。實作：`_complete_form` 改為**極薄 authority dispatcher**，legacy 本體原封改名為 `_legacy_complete_form`（8 個內部呼叫點與 routers/chat.py:412 皆不需改）。⚠️ 共用的是 **transport**，⛔ 不是 completion authority。⚠️ 只讀**已持久化**的 mode，⛔ 不靠「有沒有 responsibility_id」猜；未知 mode **大聲失敗**，⛔ 不得默默落 legacy（那會讓 authority 靜默降級）。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -2619,8 +2620,8 @@
   "T4-B_entity_resolution": "**B1 ✅ ／ B2 ✅ ／ B3 ✅ module**（2026-08-30）——services/responsibility_bill_resolution.py 把 legacy adapter 裡**隱藏**的「keyword → first contract」拆成顯式兩階段；legacy 逐位未動。",
   "T4-C_direct_fulfillment_execution": "**C1 ✅ module（R-29 only）**（2026-08-30）——services/fulfillment_registry.py ＋ 19 guards；⛔ 只註冊 R-29 一個 binding，⛔ 未從 25 筆 proposed owner 自動生成。",
   "T4-D_output_adaptation": {
-   "FINAL_TEXT": "EXISTING_PATH_IDENTIFIED",
-   "GROUNDING_FACTS": "NOT_ESTABLISHED（見 _grounding_facts_adapter_audit）"
+   "FINAL_TEXT": "**D1 ✅ WIRED（R-29）**（2026-08-30）——responsibility completion handler 已接上；13 guards。⚠️ 第一次觸碰 production 檔（form_manager.py）：+31/-1，且刪掉的唯一一行是 legacy 函式的 docstring（本體逐位未改，僅改名為 _legacy_complete_form）。",
+   "GROUNDING_FACTS": "NOT_ESTABLISHED（T4-D2；presentation portion 待抽）"
   },
   "_note": "⚠️ 不是四個獨立產品問題，是**同一 T4 transport 的四個 seam**。③ 拆成 execution 與 presentation，因為 R-28／R-31 已證 output 不是 final text。"
  },
@@ -2688,7 +2689,9 @@
   "BINDING_EXECUTABILITY": "CONFIRMED（C-G4：unknown binding hard fail；owner prose 結構上不可用）",
   "NO_REROUTE": "CONFIRMED（C-G1：execute() 簽名**沒有** user_question／face／category）",
   "OUTPUT_MODE_FINAL_TEXT": "CONFIRMED（C-G6：宣告與實際不符即 hard fail）",
-  "ENTITY_INPUT_REACHABILITY": "⚠️ **仍 NOT_ESTABLISHED**——尚未經 form completion → responsibility resume → real API → B3 resolver → RESOLVED bill 的**完整 wired path**",
-  "F2_VERDICT": "⚠️ **維持 INSUFFICIENT_EVIDENCE**——⛔ 不因 C module 全綠就升 APPROVED_CAPABILITY；須待 T4-D1 的 FINAL_TEXT vertical slice 端到端全綠。"
+  "ENTITY_INPUT_REACHABILITY": "⚠️ 仍 **NOT_ESTABLISHED**——wired path 以 FakeApi 驗證，**尚未經真實 JGB API**；⛔ 不得因 13 guards 全綠就升級",
+  "F2_VERDICT": "⚠️ **維持 INSUFFICIENT_EVIDENCE**",
+  "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED（T4-A ＋ B2 persistence）",
+  "FINAL_TEXT_OUTPUT_TRANSPORT": "⚠️ **PARTIAL**——completion handler 已產出 FINAL_TEXT result，但**尚未**接到 routers/chat 的 response envelope／cache（D1 刻意停在此處）"
  }
 }

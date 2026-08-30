@@ -2401,7 +2401,37 @@ class FormManager:
         form_schema: Dict,
         collected_data: Dict
     ) -> Dict:
-        """完成表單填寫"""
+        """表單完成的 **authority-mode dispatcher**（T4-D1，業主裁定 2026-08-30）。
+
+        ```text
+        form completion transport
+        ↓ authority-mode dispatch          ← ⚠️ **判別發生在 legacy completion semantics 之前**
+        ├─ _legacy_complete_form           （row authority；⛔ 本體不含 responsibility branch）
+        └─ responsibility completion       （responsibility authority）
+        ```
+
+        ⚠️ 只讀**已持久化**的 `session_authority_mode`，⛔ 不得靠「有沒有 responsibility_id」猜。
+        ⚠️ 共用的是 **transport**，⛔ 不是 completion authority——兩者只有「都是表單完成」
+        這個共性，authority semantics 完全不同。
+        """
+        mode = session_state.get("session_authority_mode")
+        if mode == "responsibility":
+            from services.responsibility_completion import complete_responsibility_form
+            return await complete_responsibility_form(
+                session_state, form_schema, collected_data, db_pool=self.db_pool)
+        if mode not in (None, "", "legacy_row"):
+            # ⚠️ 大聲失敗：未知 mode ⛔ 不得默默落 legacy（那會讓 authority 靜默降級）
+            raise ValueError(
+                f"未知的 session_authority_mode：{mode!r}——⛔ 不得默默走 legacy completion")
+        return await self._legacy_complete_form(session_state, form_schema, collected_data)
+
+    async def _legacy_complete_form(
+        self,
+        session_state: Dict,
+        form_schema: Dict,
+        collected_data: Dict
+    ) -> Dict:
+        """完成表單填寫（**legacy row authority**；⛔ 本體逐位未改，⛔ 不含 responsibility branch）"""
         # 1. ⭐ 新架構：檢查是否需要調用 API（提前執行，檢查結果）
         on_complete_action = form_schema.get('on_complete_action', 'show_knowledge')
         api_config = form_schema.get('api_config')
