@@ -2572,7 +2572,8 @@
   "D1-E_envelope_metadata_transport_only": "D1-E v1：`action_type='form_fill'` ／ `form_id` ＝ **persisted session** 的值。⚠️ `action_type` 是 interaction-envelope metadata，⛔ 不得用來恢復 responsibility authority 或選 fulfillment binding。⛔ **不新增 `responsibility_fulfillment`**——那會第一次修改 public response enum／frontend contract，而尚無 consumer audit（frontend 認不認、cache/analytics 是否枚舉、UI 是否靠它關表單、mobile/web 有無 switch default）⇒ 會把 D1-E 變成 client-protocol migration。未來若需讓 client 知道，應另案 consumer audit ＋ additive metadata。",
   "D1-E_two_result_families": "responsibility completion 對外**兩個 result family**（依**型別**分流，⛔ 不靠 key 猜）：A `FulfillmentExecutionResult`（FINAL_TEXT）；B `ResponsibilityInputResolutionResult`（AMBIGUOUS／NO_MATCH／INVALID_INPUT）。⚠️ `RESOLVED` ⛔ 不得從 converter 對外出現——那代表 T4-C executor 被跳過 ⇒ hard fail。⚠️ envelope answer 有**兩個**合法來源：FINAL_TEXT＝fulfilled semantic answer；INPUT_RESOLUTION＝transport／clarification prompt ⇒ ⛔ 不得規定「responsibility response 的 answer 一定來自 capability final text」（否則 AMBIGUOUS 流程會被誤判）。精確不變量：**envelope answer 必須來自當前 result type 的 reviewed output field，⛔ 絕不從 knowledge／member row fallback。**",
   "D1-R_branch_coverage_rule": "⚠️ 業主採**較嚴格**標準：`bill.by_ref.v1` 既然正式允許 numeric ＋ nonnumeric，`APPROVED_CAPABILITY` 前應把**兩條合法 branch 都 externally validated**，或把尚未驗的 branch **明確標成未授權 runtime path**。⛔ 不得出現「contract 宣稱支援兩條／verification 只證一條／runtime 卻兩條全開」。",
-  "SEC-01_derived_log_rule": "`test logs ／ failure output MUST NOT contain credential/token values`——⚠️ 要防的是**第二次不是 env，而是 exception／debug log 又把 secret 帶進 transcript**。已落為 4 條 unit guard（transport repr／init log／模組文件字串／硬編金鑰形狀），其中一條附**正對照**：先確認環境確實有秘密可洩，否則該檢查恆真＝假綠。"
+  "SEC-01_derived_log_rule": "`test logs ／ failure output MUST NOT contain credential/token values`——⚠️ 要防的是**第二次不是 env，而是 exception／debug log 又把 secret 帶進 transcript**。已落為 4 條 unit guard（transport repr／init log／模組文件字串／硬編金鑰形狀），其中一條附**正對照**：先確認環境確實有秘密可洩，否則該檢查恆真＝假綠。",
+  "F-C8_PRESENTATION_AFTER_AUTHORITY": "GROUNDING_FACTS adapter **只能**做 presentation／packaging；semantic owner、builder、responsibility 必須在**進 adapter 之前**已經確定。⚠️ 判斷抽取邊界是否夠 post-authority 的檢查：若為了讓它工作必須把 user_question／face／config／endpoint／mapping 塞回來 ⇒ **邊界不夠，應停**。⚠️ D2 收的是 **already-classified outcome**，⛔ 不是 raw rows：T4-C 做 selection／capability execution（select_point_refund 在那裡跑）；T4-D2 只把**已決定好的** outcome 呈現出去 ⇒ 本層 ⛔ 不重跑 selection。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -2626,7 +2627,7 @@
   "T4-C_direct_fulfillment_execution": "**C1 ✅ module（R-29 only）**（2026-08-30）——services/fulfillment_registry.py ＋ 19 guards；⛔ 只註冊 R-29 一個 binding，⛔ 未從 25 筆 proposed owner 自動生成。",
   "T4-D_output_adaptation": {
    "FINAL_TEXT": "**D1 ✅ wiring ／ D1-E ✅ envelope**（2026-08-30）——13＋16 guards；chat.py +123/-1（刪掉的一行是原本的單行 return，改為 type dispatcher），legacy `_convert_form_result_to_response` **本體逐位未改**。⚠️ full e2e：KNOWN PREEXISTING FAILURE 1（E2E-DEBT-01）／NEW REGRESSION 0。",
-   "GROUNDING_FACTS": "NOT_ESTABLISHED（T4-D2；presentation portion 待抽）"
+   "GROUNDING_FACTS": "**GROUNDING_FACTS_PRESENTATION_ADAPTER = ESTABLISHED**（2026-08-30）——services/grounding_presentation.py ＋ 18 guards；⚠️ **⛔ 不是**把 conversational_engine 那段搬過來，而是從需求反推的純輸入 contract。production 檔（conversational_engine／chat／bills）**零改動**。⚠️ ⛔ 尚不得宣稱 `R-28 FINAL USER RESPONSE = END_TO_END CONFIRMED`——本刀 ⛔ 不處理 LLM 最終生成 correctness（另一層）。"
   },
   "_note": "⚠️ 不是四個獨立產品問題，是**同一 T4 transport 的四個 seam**。③ 拆成 execution 與 presentation，因為 R-28／R-31 已證 output 不是 final text。"
  },
@@ -2754,5 +2755,27 @@
    "D1-R1": "numeric positive control——已知 numeric bill_ref → real get_bill_detail → exactly one bill → RESOLVED → R-29 binding → _diagnose_receipt → FINAL_TEXT → VendorChatResponse.answer",
    "D1-R2": "nonnumeric ambiguity-safe path——unique keyword→unique contract→unique bill→RESOLVED；另補 keyword→>1 contracts→AMBIGUOUS 且 ⛔ get_bills 不得提前被呼叫（若 staging 難造 ambiguity，可保留 deterministic adapter test，⚠️ 但 **external evidence 與 deterministic evidence 必須分開記**）"
   }
+ },
+ "_d2_scope_and_limits": {
+  "allowed_extracted": [
+   "head（id／label）組裝",
+   "facts 串接",
+   "grounding_note 寫回 state",
+   "多筆候選的 presentation／ask 形狀"
+  ],
+  "banned_in_adapter": [
+   "face",
+   "category",
+   "_domain_key(config)",
+   "BILL_FACE_BUILDERS.get(face)",
+   "is_point_refund_intent(user_question)",
+   "任何依 user_message 重新選 owner 的 branch",
+   "任何 knowledge／member row answer fallback"
+  ],
+  "signature": "present(payload) —— ⛔ 無 user_question／face／category／config／endpoint／mapping",
+  "_enforcement": "⚠️ D2-G1 以 **AST** 檢查可執行碼的識別字（⛔ 不用行首字元猜註解——那種 heuristic 會把 docstring 裡的**禁止清單說明**誤判成違規，我第一版就踩到）；並附**掃描器自身正對照**：對已知違規原始碼必須抓得到，否則 D2-G1 是假綠。",
+  "r28_positive_control": "3939／3940 answer 皆空（實查 registry-v2 members）⇒ presentation 仍完整成立；row answer 即使被塞進 payload 也**不會**混進輸出。",
+  "r31_multi_outcome": "FACTS→converge；CANDIDATES→ask（⛔ 不自行 candidates[0]）；NOT_FOUND／TYPE_MISMATCH→需 T4-C 提供 reviewed outcome_note（⛔ 本層不自行編話術）。",
+  "_still_open": "⚠️ R-28／R-31 的 F2 verdict **維持 INSUFFICIENT_EVIDENCE**——presentation adapter 已 ESTABLISHED，但 input reachability 與 wired end-to-end 皆未證。"
  }
 }
