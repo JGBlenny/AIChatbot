@@ -2607,7 +2607,7 @@
   ]
  },
  "_t4_seams": {
-  "T4-A_responsibility_session_carrier": "DESIGN_RESOLVED / NOT_IMPLEMENTED",
+  "T4-A_responsibility_session_carrier": "**MODULE_IMPLEMENTED / NOT_WIRED**（2026-08-30）——services/responsibility_session.py＋20 個 guard（A-G1…A-G5）；legacy 逐位未動（form_manager／api_call_handler／conversational_engine／formatter／bills／contracts／base_retriever git diff 皆空）。⚠️ 只證了 **authority 可跨 form round-trip 不變**，⛔ 未接 DB schema、⛔ 未接 production 流程。",
   "T4-B_entity_resolution": "PARTIAL_EXISTING / NOT_CONTRACTUALLY_CLOSED",
   "T4-C_direct_fulfillment_execution": "DESIGN_RESOLVED / NOT_IMPLEMENTED",
   "T4-D_output_adaptation": {
@@ -2627,5 +2627,17 @@
   "_positive_example": "select_point_refund（explicit selection states）／conversational_engine 的多筆列候選 ask 分支",
   "_negative_example": "generic `matched[0]`"
  },
- "_f2a_verdicts_unchanged": "⚠️ transport audit 讓我們知道**如何解** blocker，但**未新增足以升 verdict 的執行證據** ⇒ F2-A 五筆維持原判；⛔ 不得因『resume 架構已看懂』就把後四筆提前 APPROVED。"
+ "_f2a_verdicts_unchanged": "⚠️ transport audit 讓我們知道**如何解** blocker，但**未新增足以升 verdict 的執行證據** ⇒ F2-A 五筆維持原判；⛔ 不得因『resume 架構已看懂』就把後四筆提前 APPROVED。｜⚠️ T4-A PASS **仍不升 verdict**：只新證 committed authority can survive form round-trip；specific entity 正確解析（T4-B）／direct capability 真的執行（T4-C）／GROUNDING_FACTS 正確呈現（T4-D）三者皆未證。",
+ "_reachability_split": {
+  "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED（T4-A module 層）",
+  "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED（T4-B）",
+  "_why_split": "⚠️ ⛔ 不得因為 input carrier 有了就把 INPUT_REACHABILITY 寫成 CONFIRMED——「authority 活過 round-trip」與「解析到正確的那一筆 entity」是兩件事。"
+ },
+ "_next_order": [
+  "T4-A ✅ module",
+  "T4-B entity-resolution contract",
+  "T4-C direct committed execution",
+  "T4-D FINAL_TEXT transport → 之後才 GROUNDING_FACTS presentation extraction"
+ ],
+ "_first_vertical_slice": "⚠️ 第一條 vertical slice 走 **R-29／FINAL_TEXT**：commit → form round-trip → resolve exact bill → direct _diagnose_receipt → FINAL_TEXT downstream。⇒ presentation extraction ⛔ 不必同時肩負「證明整個新 transport 架構能跑」的責任。"
 }
