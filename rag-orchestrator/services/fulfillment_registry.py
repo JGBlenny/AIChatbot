@@ -76,7 +76,7 @@ def lookup(binding_id: str, responsibility_id: str) -> BindingSpec:
 
 
 class FulfillmentExecutionResult(dict):
-    pass
+    """⚠️ **typed** result——D1-E 的 converter 依**型別**分流，⛔ 不靠 `"text" in result` 猜。"""
 
 
 def execute(plan: Mapping[str, Any], resolution: Mapping[str, Any],

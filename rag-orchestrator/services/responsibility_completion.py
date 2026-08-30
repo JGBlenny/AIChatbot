@@ -33,6 +33,14 @@ from services import responsibility_session as rsess
 _RESOLVERS = {"bill.by_ref.v1": rbr.resolve_bill_by_ref}
 
 
+class ResponsibilityInputResolutionResult(dict):
+    """responsibility path 的**未解析**結果（AMBIGUOUS／NO_MATCH／INVALID_INPUT）。
+
+    ⚠️ 與 `FulfillmentExecutionResult` 是**兩個 result family**——D1-E converter 依型別分流。
+    ⚠️ `RESOLVED` **⛔ 不得**以本型別對外出現：那代表 T4-C executor 被跳過了。
+    """
+
+
 class ResponsibilityCompletionError(RuntimeError):
     """responsibility completion 前置不成立——⚠️ 大聲失敗，⛔ 不得落回 legacy。"""
 
@@ -74,16 +82,17 @@ async def complete_responsibility_form(session_state: Mapping[str, Any], form_sc
     if resolution["state"] != rer.STATE_RESOLVED:                                  # ③
         # ⚠️ 走既有 UX 通道，但 **仍是 responsibility 結果**——⛔ 不轉成 legacy row 形狀，
         #    ⛔ 且下一輪 resume 必須再回到本 handler（F-C5 多回合）。
-        return {"kind": "responsibility_entity_unresolved",
-                "responsibility_id": plan["responsibility_id"],
-                "fulfillment_binding_id": plan["fulfillment_binding_id"],
-                "input_contract_id": plan["input_contract_id"],
-                "resolution": resolution,
-                "_no_execution": "⚠️ 非 RESOLVED ⇒ executor **未被呼叫**"}
+        return ResponsibilityInputResolutionResult(
+            kind="responsibility_entity_unresolved",
+            responsibility_id=plan["responsibility_id"],
+            fulfillment_binding_id=plan["fulfillment_binding_id"],
+            input_contract_id=plan["input_contract_id"],
+            state=resolution["state"], resolution=resolution,
+            _no_execution="⚠️ 非 RESOLVED ⇒ executor **未被呼叫**")
 
     result = fr.execute(plan, resolution)                                          # ④
     if result["output_mode"] != fr.OUTPUT_FINAL_TEXT:                              # ⑤
         raise ResponsibilityCompletionError(
             f"D1 第一版只服務 FINAL_TEXT，實際 {result['output_mode']}"
             f"——⛔ GROUNDING_FACTS 的 presentation adapter 尚未建立（T4-D2）")
-    return dict(result)                                                            # ⑥
+    return result                                                                  # ⑥

@@ -411,7 +411,11 @@ async def handle_form_session(request, req, ctx: ChatRequestContext):
             form_schema = await form_manager.get_form_schema(session_state['form_id'], request.vendor_id)
             form_result = await form_manager._complete_form(
                 session_state, form_schema, session_state['collected_data'])
-            return _finalize_response(_convert_form_result_to_response(form_result, request), request, req)
+            # ⚠️ **依型別**分流（D1-E，業主裁定 2026-08-30）——⛔ 不靠 `"text" in result`
+            #    或 `result.get("responsibility_id")` 猜；legacy converter 逐位不動。
+            return _finalize_response(
+                _convert_responsibility_or_form_result(form_result, session_state, request),
+                request, req)
         elif user_choice.lower() in ["取消", "cancel", "放棄"]:
             form_result = await form_manager.cancel_form(request.session_id)
             req.app.state.sop_orchestrator.trigger_handler.delete_context(request.session_id)
@@ -1825,6 +1829,124 @@ async def _maybe_conversational_freetext(request, req):
     except Exception as e:
         print(f"❌ prospect 自由問答 dispatch 失敗（落回兜底）：{e}")
         return None
+
+
+class ResponsibilityEnvelopeError(RuntimeError):
+    """responsibility → envelope 映射違約——⚠️ **大聲失敗**，⛔ 不得 silent default。"""
+
+
+def _convert_responsibility_result_to_response(
+    result, session_state: dict, request: 'VendorChatRequest'
+) -> 'VendorChatResponse':
+    """responsibility path 專用 envelope converter（D1-E，業主裁定 2026-08-30）。
+
+    ## D1-E-C1 — FINAL_TEXT_ENVELOPE_MAPPING
+
+    ```text
+    FulfillmentExecutionResult.text → VendorChatResponse.answer
+    ```
+    ⚠️ 這是 **presentation／envelope mapping**，⛔ 不構成 row authority recovery——
+    `knowledge_base.answer`（內容來源）與 `VendorChatResponse.answer`（API 輸出欄位）
+    **同名但不同層**。F-C4 禁的是「winning responsibility → 找 member row → member.answer
+    當 authority」，⛔ 不是禁止最終文字寫入 API 的 answer 欄。
+
+    ## ⚠️ envelope `answer` 有**兩個**合法來源
+
+    ```text
+    FINAL_TEXT       answer ＝ fulfilled semantic answer
+    INPUT_RESOLUTION answer ＝ transport／clarification prompt
+    ```
+    ⇒ ⛔ 不得規定「responsibility response 的 answer 一定來自 capability final text」，
+    否則 AMBIGUOUS 流程會被誤判。精確不變量是：
+    **envelope answer 必須來自當前 result type 的 reviewed output field，
+    ⛔ 絕不從 knowledge／member row fallback。**
+
+    ## envelope metadata 是 transport-only
+
+    `action_type='form_fill'` ／ `form_id` 來源一律是 **persisted session**，
+    ⛔ 不是 winning member row。⚠️ `action_type` ⛔ 不得用來恢復 responsibility authority
+    或選 fulfillment binding；D1-E v1 ⛔ 不新增 `responsibility_fulfillment`
+    （那會變成 client-protocol migration，需先做 consumer audit）。
+    """
+    from datetime import datetime
+
+    from services.fulfillment_registry import FulfillmentExecutionResult
+    from services.responsibility_completion import ResponsibilityInputResolutionResult
+    from services.responsibility_entity_resolution import STATE_RESOLVED
+
+    def _envelope(answer: str, completed: bool, quick_replies=None):
+        return VendorChatResponse(
+            answer=answer, intent_name='表單填寫', intent_type='form_filling', confidence=1.0,
+            # ⚠️ transport-only：來源是 persisted session，⛔ 不是 winning member row
+            action_type='form_fill', sources=[] if request.include_sources else None,
+            source_count=0, vendor_id=request.vendor_id, mode=request.mode or 'b2c',
+            session_id=request.session_id, timestamp=datetime.utcnow().isoformat(),
+            form_triggered=False, form_completed=completed, form_cancelled=False,
+            form_id=session_state.get('form_id'), quick_replies=quick_replies,
+            debug_info=None)
+
+    if isinstance(result, FulfillmentExecutionResult):
+        if result.get('output_mode') != 'FINAL_TEXT':
+            raise ResponsibilityEnvelopeError(
+                f"D1-E v1 只處理 FINAL_TEXT，實得 {result.get('output_mode')!r}")
+        text = result.get('text')
+        # ⚠️ **strict required text**：⛔ 不得 default ''（那正是 silent semantic loss 的形狀）
+        if not isinstance(text, str) or not text.strip():
+            raise ResponsibilityEnvelopeError(
+                "FINAL_TEXT 的 text 缺漏／為空——⛔ 不得以 '' 帶過，"
+                "⛔ 更不得改用 result['answer'] 或 member row 的 answer 補值")
+        return _envelope(text, completed=True)
+
+    if isinstance(result, ResponsibilityInputResolutionResult):
+        if result.get('state') == STATE_RESOLVED:
+            # ⚠️ RESOLVED ⛔ 不得以未解析型別對外——那代表 T4-C executor 被跳過
+            raise ResponsibilityEnvelopeError(
+                "RESOLVED 不得繞過 executor 直接進 converter")
+        prompt, quick = _responsibility_resolution_prompt(result)
+        return _envelope(prompt, completed=False, quick_replies=quick)
+
+    raise ResponsibilityEnvelopeError(
+        f"未知的 responsibility result 型別：{type(result).__name__}")
+
+
+def _responsibility_resolution_prompt(result) -> tuple:
+    """AMBIGUOUS／NO_MATCH／INVALID_INPUT 的 **Input Resolution UI response**。
+
+    ⚠️ 這裡的 answer 是 **clarification prompt**，⛔ 不是 fulfilled semantic answer；
+    ⛔ 一律不得從 knowledge／member row 取值。
+    """
+    from services.responsibility_entity_resolution import (STATE_AMBIGUOUS, STATE_INVALID_INPUT,
+                                                           STATE_NO_MATCH)
+    res = result.get('resolution') or {}
+    state = result.get('state')
+    if state == STATE_AMBIGUOUS:
+        cands = res.get('candidates') or []
+        listing = "\n".join(
+            f"{i + 1}. {c.get('title') or c.get('name') or c.get('id')}"
+            for i, c in enumerate(cands))
+        # ⚠️ quick_replies 是 **QuickReply 模型**（text/value），⛔ 不是字串陣列——
+        #    pydantic 會擋下來；這裡照既有 envelope contract 組。
+        quick = [{"text": (c.get('title') or c.get('name') or str(c.get('id'))),
+                  "value": str(c.get('id'))} for c in cands] or None
+        return (f"找到多筆資料，請問您指的是哪一筆？\n{listing}", quick)
+    if state == STATE_NO_MATCH:
+        return ("查無符合的資料，請確認您提供的編號或名稱是否正確。", None)
+    if state == STATE_INVALID_INPUT:
+        missing = res.get('missing_fields') or []
+        return (f"還需要以下資訊才能為您查詢：{'、'.join(str(m) for m in missing)}", None)
+    raise ResponsibilityEnvelopeError(f"未知的 resolution state：{state!r}")
+
+
+def _convert_responsibility_or_form_result(
+    form_result, session_state: dict, request: 'VendorChatRequest'
+) -> 'VendorChatResponse':
+    """極薄 **type dispatcher**——⚠️ legacy converter 逐位不動。"""
+    from services.fulfillment_registry import FulfillmentExecutionResult
+    from services.responsibility_completion import ResponsibilityInputResolutionResult
+
+    if isinstance(form_result, (FulfillmentExecutionResult, ResponsibilityInputResolutionResult)):
+        return _convert_responsibility_result_to_response(form_result, session_state, request)
+    return _convert_form_result_to_response(form_result, request)
 
 
 def _convert_form_result_to_response(
