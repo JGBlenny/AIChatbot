@@ -2563,7 +2563,9 @@
   "T4-B_legacy_untouched": "業主裁定：`contracts.py:648 matched[0]` 與 `bills.py:379 rows[0]` **legacy 原地不動**；⛔ 不把 `if responsibility_mode:` 散落進各處 ⇒ 抽成 responsibility-only resolver layer，只在 responsibility execution seam 呼叫。",
   "resolver_id_is_separate_identity": "`fulfillment_binding_id`（找到 entity **之後怎麼回答**）與 `resolver_id`（**怎麼找到** entity）是兩個 operational identity——R-31 本身即證據。⛔ resolver 不存 Python callable path 當 authority。",
   "LEGACY_SESSION_COMPATIBILITY": "historical row session：mode NULL ＋ valid legacy fields → accepted as legacy；**new session：mode MUST be explicit**。⛔ **不得 backfill** 舊 session 為 legacy_row（那是 production data mutation、對 C2 無必要、且會把 migration 與 runtime feature 混在一起）。等 legacy sessions 自然過期後再考慮是否收緊 NULL。",
-  "session_persistence_decision": "沿用既有 `form_sessions` 做 **additive migration**（新增 nullable：session_authority_mode／responsibility_id／fulfillment_binding_id／fulfillment_strategy／input_contract_id），⛔ 不另建第二張 session table——否則立刻新增兩套 expiry／lookup／retry／cleanup，且 on_complete handler 得先猜 session 存哪張表。"
+  "session_persistence_decision": "沿用既有 `form_sessions` 做 **additive migration**（新增 nullable：session_authority_mode／responsibility_id／fulfillment_binding_id／fulfillment_strategy／input_contract_id），⛔ 不另建第二張 session table——否則立刻新增兩套 expiry／lookup／retry／cleanup，且 on_complete handler 得先猜 session 存哪張表。",
+  "F-C6_RESOLVER_MUST_PRECEDE_LEGACY_FIRST_ROW_ADAPTER": "responsibility path 的 `bill.by_ref.v1` ⛔ **不得**呼叫會在內部做 rows[0] authority commit 的 legacy `get_bills` 非數字分支。⚠️ 業主明示：**⛔ 不把 bill.by_ref.v1 收窄成只接受數字** —— 目前證據只證明 legacy 實作不符 F-C3，⛔ 未證明 responsibility 的**產品** input contract 本來就只允許數字 ID。把 execution limitation 錯寫成 responsibility semantics ＝ 3507 wiring mismatch 的同一種錯。⇒ 非數字 ref 應在 responsibility resolver 層**拆成顯式 stages**：contract candidate lookup → 0 NO_MATCH／1 verified／>1 AMBIGUOUS；取得唯一 verified contract 後才查該合約的 bill candidates，同樣四態收斂（除非另有 reviewed deterministic selection contract）。",
+  "B2_no_db_constraints_this_cut": "⛔ 本刀 **不加 enum／CHECK／NOT NULL**（業主明示）：先讓 application invariant 與 persistence round-trip 證成；等 legacy NULL sessions 自然退出再議。⚠️ 現在加 constraint 會**改變 legacy acceptance boundary**——那是另一件事。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -2613,7 +2615,7 @@
  },
  "_t4_seams": {
   "T4-A_responsibility_session_carrier": "**MODULE_IMPLEMENTED / NOT_WIRED**（2026-08-30）——services/responsibility_session.py＋20 個 guard（A-G1…A-G5）；legacy 逐位未動（form_manager／api_call_handler／conversational_engine／formatter／bills／contracts／base_retriever git diff 皆空）。⚠️ 只證了 **authority 可跨 form round-trip 不變**，⛔ 未接 DB schema、⛔ 未接 production 流程。",
-  "T4-B_entity_resolution": "**B1 MODULE_IMPLEMENTED / B2-B3 NOT_STARTED**（2026-08-30）——services/responsibility_entity_resolution.py ＋ 12 guards；legacy first-row sites 逐位未動（C2 **根本不走到**它們，⛔ 不是進去後加 branch 修正）。",
+  "T4-B_entity_resolution": "**B1 ✅ module ／ B2 ✅ migration＋persistence ／ B3 NOT_STARTED**（2026-08-30）——legacy first-row sites 逐位未動。",
   "T4-C_direct_fulfillment_execution": "DESIGN_RESOLVED / NOT_IMPLEMENTED",
   "T4-D_output_adaptation": {
    "FINAL_TEXT": "EXISTING_PATH_IDENTIFIED",
@@ -2650,5 +2652,15 @@
  "_new_finding_2026_08_30": {
   "third_first_row_site": "⚠️ T4-B 盤查另外撈到**第三處** first-row authority（先前未記）：`services/jgb_system_api.py:190` —— bill_ref **非數字**分支：get_contracts(keyword=ref) → `contract_ids = rows[0].get('id')` ⇒ 取第一筆合約。程式註解自陳「非數字 → 取第一筆合約」。⚠️ 這代表 R-29 的 bill.by_ref 在**非數字 ref** 時，legacy adapter 內部就已經違反 F-C3。⇒ responsibility path 必須**繞開**該 adapter 的非數字分支，或只接受數字 ref。⛔ legacy 依裁定不動。",
   "_also": "同檔註解另記：`jgb_contracts` **尚未遷移**（仍走方法級 mock），故該 adapter 端到端只證過**數字分支** ⇒ ⛔ 不得聲稱 adapter 全分支已證。"
- }
+ },
+ "_bill_by_ref_status": {
+  "numeric_branch": "END_TO_END_ADAPTER_EVIDENCE = PARTIALLY_ESTABLISHED（仍待 B3 wired transport）",
+  "nonnumeric_branch": {
+   "LEGACY_PATH": "REJECTED_FOR_RESPONSIBILITY_USE（F-C6）",
+   "RESPONSIBILITY_RESOLUTION_PATH": "NOT_IMPLEMENTED"
+  },
+  "_conclusion": "⚠️ R-29 的 ENTITY_INPUT_REACHABILITY **仍為 NOT_ESTABLISHED**——⛔ 不得因設計已裁就升級。"
+ },
+ "_pending_guard_B_G5": "B-G5 NO HIDDEN FIRST-ROW SELECTION（**待 B3 加**）：fixture 非數字 bill ref → contract lookup 回 [C1,C2] ⇒ 必須 AMBIGUOUS；mutation `contracts[0]` 必紅。⚠️ 與 B-M1 **不重複**：B-M1 防 resolver 拿到 candidates 後自己取第一筆；B-G5 防 **upstream adapter 在 resolver 看見 candidates 之前就先偷偷取第一筆**。⇒ 兩層都要守（本次 jgb_system_api.py:190 的發現即證據）。",
+ "_migration_ledger_finding": "⚠️ 本地帳本與實況不符：`migrate.sh` dry-run 顯示 **10 支待跑**，但其中 9 支的效果（3498 退役／Level-A representation／applicability 宣告等）**在本機 DB 早已存在** ⇒ 當時是手動套用、⛔ 未記帳。本刀 ⛔ 不順手補記那 9 支（非本 scope）；僅本刀自己的 migration 以 created_by='claude-local-t4b2' 記入。⚠️ prod 部署前需另行核對帳本，⛔ 不得假設 dry-run 的「待跑」等於「prod 未套」。"
 }
