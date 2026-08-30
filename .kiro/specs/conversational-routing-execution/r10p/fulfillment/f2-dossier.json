@@ -133,14 +133,23 @@
     "_flag": "⚠️ **FULFILLMENT_NOT_ESTABLISHED 的主要候選**；⛔ 不得為了補齊而造 fake capability"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "FULFILLMENT_NOT_ESTABLISHED",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "confirmed_parts": [
+     "已證目前**缺責任專屬** capability：get_repairs ＝ 身分範圍 retrieval；_format_single ＝ generic formatter；jgb_repairs 無專屬 formatter；repair_prefill 是建單",
+     "⚠️ input 本身其實可達——缺的是 capability"
+    ],
+    "open_blockers": [],
+    "upgrade_path": null,
+    "note": "⚠️ 這是本 verdict 的**標準案例**：⛔ 不是不知道 capability 在哪，而是已有足夠證據確認目前**沒有**一條符合 F-C1 的 executable fulfillment binding。⛔ 不得造 `repair.progress_query → get_repairs + _format_single` 湊數，除非另案真的設計並驗證一個 repair-progress capability。"
    },
    "proposed_strategy": "CAPABILITY"
   },
@@ -223,14 +232,26 @@
     "_owner_ruling": "⚠️ 業主已先裁方向：R-05 若 APPROVED，binding **必須**是 _format_status_response 的 direct adapter，⛔ 不得經 _build_response"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "confirmed_parts": [
+     "BINDING_SEMANTICS = CONFIRMED：direct `_format_status_response(contract)`",
+     "FORBIDDEN：`_build_response(contract, user_question)`",
+     "DIRECT_AFTER_COMMIT = YES"
+    ],
+    "open_blockers": [
+     "INPUT_REACHABILITY = NOT_ESTABLISHED：目前只證到 form → jgb_contracts → data[0]，⛔ 不足以證明「某份合約」被正確 resolve"
+    ],
+    "upgrade_path": "contract identifier／explicit selection → exactly intended contract → direct _format_status_response(contract) 證成後才可升 APPROVED_CAPABILITY",
+    "note": null
    },
    "proposed_strategy": "CAPABILITY"
   },
@@ -314,14 +335,28 @@
     "_positive_control": "⚠️ **CAPABILITY 正對照**：members 3939／3940 answer 皆空，fulfillment 仍須完整成立；任何 pick-member-answer 的實作立刻失敗"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "confirmed_parts": [
+     "STRATEGY = CAPABILITY CONFIRMED",
+     "BINDING_SEMANTICS = CONFIRMED（build_late_fee_facts）",
+     "F-C1 = SATISFIED（NOT_QUESTION_SENSITIVE）",
+     "⚠️ positive control **未被推翻**：R-28 必須走 CAPABILITY 而非 member answer——已證成"
+    ],
+    "open_blockers": [
+     "input contract 需寫成 **tagged alternatives**：accepted input ＝ resolved_contract OR resolved_late_fee_bill，⛔ 不是模糊的 `row`；且須證 Input Resolution Layer 取得其一",
+     "output_adapter：GROUNDING_FACTS → ? 尚未裁定 ⇒ ⛔ 不得假裝 final fulfillment 已成立"
+    ],
+    "upgrade_path": null,
+    "note": null
    },
    "proposed_strategy": "CAPABILITY"
   },
@@ -410,14 +445,27 @@
     "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "confirmed_parts": [
+     "BINDING_SEMANTICS = CONFIRMED（direct `_diagnose_receipt(bill)`）",
+     "QUESTION_SENSITIVE = NO",
+     "must bypass = diagnose_bill 的 keyword dispatch",
+     "OUTPUT_CONTRACT = FINAL_TEXT"
+    ],
+    "open_blockers": [
+     "bill_ref → jgb_bill_detail → intended bill 的 input resolution 未證"
+    ],
+    "upgrade_path": "bill identity path 證成後，屬**很直接的** APPROVED_CAPABILITY 候選",
+    "note": null
    },
    "proposed_strategy": "CAPABILITY"
   },
@@ -520,14 +568,27 @@
     "_flag": "⚠️ builder 若 question-sensitive，需在 binding 明確固定為 **NOT_QUESTION_SENSITIVE** 的那支"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "confirmed_parts": [
+     "COMPOSITE_BINDING_SHAPE = CONFIRMED（selection ＋ 身分/型別 provenance → downstream facts）",
+     "與 R-31 canonical 的 defining prerequisite **完全一致**"
+    ],
+    "open_blockers": [
+     "input resolution：指定 contract／candidate rows 如何在 commit 後取得",
+     "fixed builder：`_point_refund_response(..., builder)` 必須**固定**成已確認 NOT_QUESTION_SENSITIVE 的 builder，⛔ 不得留成 runtime 再選（F-C1 SAFETY = NOT_YET_CLOSED）",
+     "output adapter：grounding facts；且 NOT_FOUND／CANDIDATES／TYPE_MISMATCH **都是合法 fulfillment outcomes**，必須進正式 output contract"
+    ],
+    "upgrade_path": null,
+    "note": "⛔ 現在不替它造 capability_id——等 composite 每一段都封住再命名"
    },
    "proposed_strategy": "CAPABILITY"
   },
@@ -2458,5 +2519,32 @@
    },
    "proposed_strategy": "KNOWLEDGE_CONTENT"
   }
- ]
+ ],
+ "_f2a_result": {
+  "FULFILLMENT_NOT_ESTABLISHED": [
+   "R-01"
+  ],
+  "INSUFFICIENT_EVIDENCE": [
+   "R-05",
+   "R-28",
+   "R-29",
+   "R-31"
+  ],
+  "_critical_distinction": "⚠️ `FULFILLMENT_NOT_ESTABLISHED` **≠** input 尚未接好；它是「已有充分證據確認目前**沒有**合法 fulfillment capability」。⇒ 目前**只有 R-01** 夠格用它。"
+ },
+ "_frozen_contracts_added": {
+  "F-C2_COMMIT_SURVIVES_INPUT_RESOLUTION": "form／action 流程**保留**，但降格為 **Input Resolution Layer**：可收識別欄位、載入 entity、驗證 entity selection；⛔ 不得重新跑 retrieval／⛔ 不得依 category／utterance 重決 owner／⛔ 不得再進 keyword dispatcher／⛔ 不得改 responsibility_id。round-trip 必須攜帶 immutable：responsibility_id／fulfillment strategy／capability binding／required input contract。**填完是 resume，⛔ 不是重新 routing。**",
+  "F-C3_NO_FIRST_ROW_ENTITY_AUTHORITY": "`data[0]`／first returned contract／first returned bill ⛔ 皆不得因「有資料」就當正確 referent。canonical 寫「特定合約／特定帳單」者，entity 必須由明確 identifier、唯一且可證的 selection contract、或使用者完成選擇取得；**多筆時 ⛔ 不得默默取第一筆**。",
+  "output_modes_frozen": {
+   "FINAL_TEXT": [
+    "R-05",
+    "R-29"
+   ],
+   "GROUNDING_FACTS": [
+    "R-28",
+    "R-31"
+   ],
+   "_caution": "⚠️ GROUNDING_FACTS 的 downstream adapter **現在先不自行定義**——須先實查現有 Face／facts 如何被轉成最終回答。否則會再犯一次：**builder 存在 ≠ builder output 已經是 consumer 需要的 semantic slot**。"
+  }
+ }
 }
