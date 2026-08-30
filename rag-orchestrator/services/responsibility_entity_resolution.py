@@ -11,7 +11,14 @@ first-row authority sites**，而不是「進去後再加 branch 修正」。
    input_contract_id ＋ form_data ＋ endpoint rows → ResolutionResult
 ```
 
-## T4-B-C1 — EXACT ENTITY RESOLUTION（凍結）
+## 三種 cardinality_mode（業主裁定 2026-08-30）
+
+⚠️ **entity-selection contract 與 collection-input contract 是兩件事**，
+⛔ 不得把 `>1` 一律解讀成 ambiguity。
+
+### T4-B-C1 — SELECT_ONE EXACT ENTITY RESOLUTION
+
+⚠️ **Applies only when `cardinality_mode = SELECT_ONE`。**
 
 ```text
 0 valid entity                                    → NO_MATCH
@@ -20,6 +27,39 @@ first-row authority sites**，而不是「進去後再加 branch 修正」。
 
 MUST NOT: choose first ／ choose highest DB order ／ choose earliest returned
 ```
+
+### T4-B-C2 — SINGLETON INPUT
+
+```text
+semantic singleton absent            → NO_MATCH
+single valid object                  → RESOLVED
+multiple competing singleton objects → AMBIGUOUS ／ contract violation
+```
+⚠️ 若 API 回傳型別**本來就是單一 dict**，⛔ 不要為了套 cardinality 人工轉成 list 再數量判斷。
+
+### T4-B-C3 — COLLECTION INPUT（F-C11 COLLECTION IS THE ENTITY）
+
+```text
+0 valid scoped members  → 依 **empty_collection_policy**（NO_MATCH ／ RESOLVED_EMPTY）
+>=1 valid scoped members → RESOLVED，resolved_entity ＝ **collection 本身**
+
+⛔ member count MUST NOT trigger AMBIGUOUS
+⛔ first-member selection is forbidden
+```
+
+⚠️ **collection 仍要有 scope identity**——⛔ 不是「API 回什麼 list 就全吃」：
+contract 必須宣告 `collection_scope_key`（例：`resolved_bill_id`）；
+若成員混入不同 scope ⇒ **INPUT_CONTRACT_VIOLATION**，⛔ 不當合法 collection。
+
+## ⚠️ 兩件事先前被混在一起
+
+```text
+entity exists?                      ／  capability input is sufficiently resolved?
+```
+對 collection responsibility，`0 rows` **不一定**表示 entity 不存在——可能是
+「bill 已 resolved，但 payment_logs = []」。⇒ `NO_MATCH` 保留給**上游 required entity／scope
+本身找不到**；空集合則由 `empty_collection_policy` 決定，讓診斷 capability 有機會
+**把「沒有紀錄」當證據**。
 
 **唯一例外**：已被 review 過的 deterministic selection contract 能把集合唯一化
 （正例：`select_point_refund()`；⛔ 反例：`rows[0]`）。
@@ -41,11 +81,27 @@ fulfillment_binding_id ／ input_contract_id——⛔ 使用者選了一筆 enti
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
 STATE_RESOLVED = "RESOLVED"
+#: RESOLVED 的子態：collection 已 scope 鎖定但成員為 0（**邏輯上仍是 RESOLVED**）
+STATE_RESOLVED_EMPTY = "RESOLVED_EMPTY"
 STATE_AMBIGUOUS = "AMBIGUOUS"
 STATE_NO_MATCH = "NO_MATCH"
 STATE_INVALID_INPUT = "INVALID_INPUT"
 #: ⚠️ 只有 RESOLVED 能進 T4-C direct capability
-TERMINAL_STATES = (STATE_RESOLVED, STATE_AMBIGUOUS, STATE_NO_MATCH, STATE_INVALID_INPUT)
+TERMINAL_STATES = (STATE_RESOLVED, STATE_RESOLVED_EMPTY, STATE_AMBIGUOUS,
+                   STATE_NO_MATCH, STATE_INVALID_INPUT)
+#: ⚠️ 只有這兩態能進 T4-C direct capability
+EXECUTABLE_STATES = (STATE_RESOLVED, STATE_RESOLVED_EMPTY)
+
+#: ⚠️ **cardinality_mode 是 input contract 的一部分，⛔ 不是 runtime 猜出來的**（業主裁定 2026-08-30）
+CARD_SINGLETON = "SINGLETON"
+CARD_SELECT_ONE = "SELECT_ONE"
+CARD_COLLECTION = "COLLECTION"
+VALID_CARDINALITY = (CARD_SINGLETON, CARD_SELECT_ONE, CARD_COLLECTION)
+
+#: COLLECTION 專屬：空集合是「查無」還是「合法的空」——⛔ 不得全域拍死
+EMPTY_NO_MATCH = "NO_MATCH"
+EMPTY_RESOLVED_EMPTY = "RESOLVED_EMPTY"
+VALID_EMPTY_POLICY = (EMPTY_NO_MATCH, EMPTY_RESOLVED_EMPTY)
 
 AMBIGUITY_EXACT_IDENTIFIER = "exact_identifier"
 AMBIGUITY_REVIEWED_SELECTION_CONTRACT = "reviewed_selection_contract"
@@ -59,18 +115,21 @@ class EntityResolutionError(RuntimeError):
 INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
     "bill.by_ref.v1": {
         "entity_type": "bill",
+        "cardinality_mode": CARD_SELECT_ONE,
         "required_fields": ["bill_ref"],
         "resolver_id": "bill.by_ref",
         "ambiguity_policy": AMBIGUITY_EXACT_IDENTIFIER,
     },
     "contract.current_entity.v1": {
         "entity_type": "contract",
+        "cardinality_mode": CARD_SELECT_ONE,
         "required_fields": ["contract_ref"],
         "resolver_id": "contract.by_ref",
         "ambiguity_policy": AMBIGUITY_EXACT_IDENTIFIER,
     },
     "point_refund.bill_by_contract.v1": {
         "entity_type": "bill",
+        "cardinality_mode": CARD_SELECT_ONE,
         "required_fields": ["contract_ref"],
         "resolver_id": "point_refund_bill.by_contract",
         "ambiguity_policy": AMBIGUITY_REVIEWED_SELECTION_CONTRACT,
@@ -79,11 +138,82 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
     },
     "late_fee.bill_or_contract.v1": {
         "entity_type": "bill_or_contract",
+        "cardinality_mode": CARD_SELECT_ONE,
         "required_fields": [],          # ⚠️ tagged alternatives，見 _accepts
         "_accepts": ["resolved_contract", "resolved_late_fee_bill"],
         "resolver_id": "late_fee.entity",
         "ambiguity_policy": AMBIGUITY_EXACT_IDENTIFIER,
         "_note": "⚠️ ⛔ 不是模糊的 `row`——必須是 tagged alternatives 之一",
+    },
+    # ── 六個新 machine contracts（T4-B input-contract closure，2026-08-30）─────
+    # ⚠️ cardinality_mode 由業主裁定；**empty_collection_policy 尚待逐筆裁定**（留 None）。
+    "payment_logs.by_bill.v1": {
+        "entity_type": "payment_logs",
+        "cardinality_mode": CARD_COLLECTION,
+        "collection_scope_key": "resolved_bill_id",
+        "empty_collection_policy": None,        # ⚠️ **待裁**
+        "required_fields": ["resolved_bill_id"],
+        "resolver_id": "payment_logs.by_bill",
+        "ambiguity_policy": None,               # ⚠️ COLLECTION ⛔ 不適用 ambiguity policy
+        "_capability_empty_behavior":
+            "實測 `_diagnose_payment_not_reflected([])` → '以下是此帳單的付款交易紀錄：\n'"
+            "（**退化**：只剩空標題）；⚠️ 有意義的空集合說明在**入口** diagnose_payment_logs，"
+            "⛔ 不在具名分支 ⇒ 若裁 RESOLVED_EMPTY，adapter 必須自行處理空態。",
+    },
+    "invoice_logs.by_bill.v1": {
+        "entity_type": "invoice_logs",
+        "cardinality_mode": CARD_COLLECTION,
+        "collection_scope_key": "resolved_bill_id",
+        "empty_collection_policy": None,        # ⚠️ **待裁**
+        "required_fields": ["resolved_bill_id"],
+        "resolver_id": "invoice_logs.by_bill",
+        "ambiguity_policy": None,
+        "_capability_empty_behavior":
+            "實測 `_diagnose_issue_failure([])` → '查無發票開立紀錄。可能的原因：…'；"
+            "`_diagnose_invalid_failure([])` → '查無發票作廢紀錄。…' ⇒ **兩者對空集合都有意義**。",
+    },
+    "iot.manufacturers.v1": {
+        "entity_type": "iot_manufacturers",
+        "cardinality_mode": CARD_COLLECTION,
+        "collection_scope_key": "role_id",
+        "empty_collection_policy": None,        # ⚠️ **待裁**
+        "required_fields": [],
+        "resolver_id": "iot.manufacturers",
+        "ambiguity_policy": None,
+        "_capability_empty_behavior":
+            "⚠️ **實測發現語義缺陷**：`_diagnose_binding_failure([])` → "
+            "'目前已綁定的 IoT 廠商：\n\n\n所有 IoT 廠商帳號狀態正常…' "
+            "——**空清單卻宣稱「所有廠商狀態正常」**。"
+            "有意義的空態說明在入口 `diagnose_iot`（'目前沒有綁定任何 IoT 廠商…'）。"
+            "⇒ 若裁 RESOLVED_EMPTY 而不處理空態，會**產出錯誤語義**。",
+    },
+    "subscription.current.v1": {
+        "entity_type": "subscription",
+        "cardinality_mode": CARD_SINGLETON,
+        "empty_collection_policy": None,        # ⚠️ SINGLETON 不適用
+        "required_fields": [],
+        "resolver_id": "subscription.current",
+        "ambiguity_policy": AMBIGUITY_EXACT_IDENTIFIER,
+        "_note": "⚠️ API 回傳本來就是單一 dict ⇒ ⛔ 不得為了套 cardinality 人工轉 list 再數量判斷"
+                 "（T4-B-C2）。dict present → RESOLVED；absent → NO_MATCH。",
+    },
+    "tenant.summary.v1": {
+        "entity_type": "tenant_summary",
+        "cardinality_mode": CARD_SINGLETON,
+        "empty_collection_policy": None,
+        "required_fields": ["tenant_ref"],
+        "resolver_id": "tenant.summary",
+        "ambiguity_policy": AMBIGUITY_EXACT_IDENTIFIER,
+        "_note": "⚠️ 需確認 production contract 是否**保證**單一 tenant summary；"
+                 "若可能回多筆競爭物件 ⇒ AMBIGUOUS／contract violation。",
+    },
+    "estate.by_ref.v1": {
+        "entity_type": "estate",
+        "cardinality_mode": CARD_SELECT_ONE,
+        "required_fields": ["estate_ref"],
+        "resolver_id": "estate.by_ref",
+        "ambiguity_policy": AMBIGUITY_EXACT_IDENTIFIER,
+        "_note": "⚠️ 與 bill.by_ref 同形；⛔ 必須取代 `face_estate_response` 的 `rows[0]`。",
     },
 }
 
@@ -93,10 +223,46 @@ def result(state: str, input_contract_id: str, entity_type: str, **extra: Any) -
         raise EntityResolutionError(f"未知的 resolution state：{state!r}")
     out = {"state": state, "input_contract_id": input_contract_id, "entity_type": entity_type}
     out.update(extra)
-    if state != STATE_RESOLVED:
+    if state not in EXECUTABLE_STATES:
         out["_not_executable"] = ("⚠️ 只有 RESOLVED 能進 T4-C direct capability；"
                                   "本 state 走既有 UX 通道，⛔ 但 ⛔ 不得重新 retrieval")
     return out
+
+
+def resolve_collection(input_contract_id: str, members, scope_value=None) -> Dict[str, Any]:
+    """COLLECTION 型 input 的解析（T4-B-C3 ／ F-C11）。
+
+    ⚠️ **member count ⛔ 永不觸發 AMBIGUOUS**；⛔ 也不得取第一筆。
+    """
+    spec = INPUT_CONTRACTS.get(input_contract_id)
+    if spec is None:
+        raise EntityResolutionError(f"未註冊的 input_contract_id：{input_contract_id!r}")
+    if spec.get("cardinality_mode") != CARD_COLLECTION:
+        raise EntityResolutionError(
+            f"{input_contract_id} 的 cardinality_mode 是 {spec.get('cardinality_mode')!r}"
+            f"——⛔ 不得以 collection 方式解析")
+    policy = spec.get("empty_collection_policy")
+    if policy not in VALID_EMPTY_POLICY:
+        # ⚠️ 大聲失敗：⛔ 不得預設成 NO_MATCH——那正是「0 rows 被錯當不存在」的對稱 bug
+        raise EntityResolutionError(
+            f"{input_contract_id} 的 empty_collection_policy 尚未裁定（{policy!r}）"
+            f"——⛔ 不得全域拍死；先逐筆 review")
+    items = [m for m in (members or []) if isinstance(m, dict)]
+    scope_key = spec.get("collection_scope_key")
+    if scope_key and scope_value is not None:
+        # ⚠️ collection 必須已被上游 scope 鎖定；混入其他 scope ⇒ INPUT_CONTRACT_VIOLATION
+        bad = [m for m in items if scope_key in m and m.get(scope_key) != scope_value]
+        if bad:
+            raise EntityResolutionError(
+                f"{input_contract_id}：collection 混入其他 {scope_key}"
+                f"（{sorted({m.get(scope_key) for m in bad})}）——INPUT_CONTRACT_VIOLATION")
+    if not items:
+        state = (STATE_NO_MATCH if policy == EMPTY_NO_MATCH else STATE_RESOLVED_EMPTY)
+        return result(state, input_contract_id, spec["entity_type"],
+                      resolved_entity=[], member_count=0, empty_collection_policy=policy)
+    return result(STATE_RESOLVED, input_contract_id, spec["entity_type"],
+                  resolved_entity=items, member_count=len(items),
+                  uniqueness="collection_is_the_entity")
 
 
 def resolve(input_contract_id: str, form_data: Mapping[str, Any], rows: Optional[List[dict]],

@@ -3481,7 +3481,10 @@
   "F-C8_PRESENTATION_AFTER_AUTHORITY": "GROUNDING_FACTS adapter **只能**做 presentation／packaging；semantic owner、builder、responsibility 必須在**進 adapter 之前**已經確定。⚠️ 判斷抽取邊界是否夠 post-authority 的檢查：若為了讓它工作必須把 user_question／face／config／endpoint／mapping 塞回來 ⇒ **邊界不夠，應停**。⚠️ D2 收的是 **already-classified outcome**，⛔ 不是 raw rows：T4-C 做 selection／capability execution（select_point_refund 在那裡跑）；T4-D2 只把**已決定好的** outcome 呈現出去 ⇒ 本層 ⛔ 不重跑 selection。",
   "F-C9_COMPOSITE_BINDING_FIXES_ALL_SEMANTIC_CHOICES": "對 composite capability：responsibility commit 後 **selection algorithm／downstream builder／outcome mapping 三者皆固定於 binding 內**。⚠️ runtime **可以**依**資料狀態**分支（SELECTED／CANDIDATES／NOT_FOUND／TYPE_MISMATCH），⛔ 但不得依 utterance／face／category／member row 決定 semantic path。**data-dependent branching 是合法 fulfillment；semantic re-routing 不是。**",
   "P-F2-1a_DETERMINISTIC_ADAPTER_COMPOSITION": "一個 fulfillment binding **可以由多個固定 callable 組成**，只要 responsibility commit 後：callable sequence 固定／semantic operation 固定／⛔ 不依 utterance／face／category 重選／⛔ 不做新的 entity 或 responsibility selection ⇒ **仍屬 direct fulfillment shape**，⛔ 不因 implementation 有兩個函式就升格為 composite responsibility binding。⚠️ 架構差異不在「用了幾個函式」，而在 **binding 執行過程是否還需要做具有責任語義的 selection／outcome routing**——五個 contract eligibility 沒有；R-31 有。⚠️ `operation` 字串必須由 binding **固定**，⛔ 不得從 question derive。",
-  "F-C10_INPUT_CONTRACT_PRECEDES_REACHABILITY": "若 responsibility 所需 input contract **尚未 machine-register**：⇒ entity reachability ⛔ 不得標 CONFIRMED，⛔ 也不得標 NOT_CONFIRMED-by-test，應標 **NOT_YET_JUDGEABLE**。**先建立 input contract，再驗 transport／entity reachability。**⚠️ 兩種 BLOCKED_INPUT 必須分開：類 A **validation blocker**（contract ESTABLISHED、reachability NOT_ESTABLISHED）；類 B **contract-definition blocker**（contract NOT_REGISTERED、reachability NOT_YET_JUDGEABLE）。"
+  "F-C10_INPUT_CONTRACT_PRECEDES_REACHABILITY": "若 responsibility 所需 input contract **尚未 machine-register**：⇒ entity reachability ⛔ 不得標 CONFIRMED，⛔ 也不得標 NOT_CONFIRMED-by-test，應標 **NOT_YET_JUDGEABLE**。**先建立 input contract，再驗 transport／entity reachability。**⚠️ 兩種 BLOCKED_INPUT 必須分開：類 A **validation blocker**（contract ESTABLISHED、reachability NOT_ESTABLISHED）；類 B **contract-definition blocker**（contract NOT_REGISTERED、reachability NOT_YET_JUDGEABLE）。",
+  "F-C11_COLLECTION_IS_THE_ENTITY": "若 reviewed input contract 定義**整個 collection** 為 capability input，collection member count **⛔ 不構成 entity ambiguity**：`>1` 是**正常資料形狀**，⛔ 不得套用 SELECT_ONE 的 first-row／ambiguity policy。⚠️ 但 collection 仍要有 **scope identity**——⛔ 不是「API 回什麼 list 就全吃」：contract 必須宣告 `collection_scope_key`；混入其他 scope ⇒ **INPUT_CONTRACT_VIOLATION**。",
+  "cardinality_mode_three_shapes": "**cardinality_mode 是 input contract 的一部分，⛔ 不是 runtime 猜出來的**：T4-B-C1 SELECT_ONE（0→NO_MATCH／1→RESOLVED／>1→AMBIGUOUS，僅此模式適用）；T4-B-C2 SINGLETON（absent→NO_MATCH／single→RESOLVED／multiple competing→AMBIGUOUS；⚠️ API 回單一 dict 時 ⛔ 不得人工轉 list 再數量判斷）；T4-B-C3 COLLECTION（0→依 empty_collection_policy／>=1→RESOLVED，resolved_entity＝collection）。",
+  "empty_collection_policy": "⚠️ **兩件事先前被混在一起**：`entity exists?` 與 `capability input is sufficiently resolved?`。對 collection responsibility，`0 rows` **不一定**表示 entity 不存在（可能是 bill 已 resolved 但 payment_logs=[]）。⇒ `NO_MATCH` 保留給**上游 required entity／scope 本身找不到**；空集合由 `empty_collection_policy ∈ {NO_MATCH, RESOLVED_EMPTY}` 決定，**⛔ 不得全域拍死**，由每個 input contract 逐筆 review。⚠️ 實作以 **大聲失敗** 落實：policy 未裁定時 `resolve_collection` 直接 raise，⛔ 不預設成 NO_MATCH（那正是「0 rows 被錯當不存在」的對稱 bug）。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -3845,5 +3848,38 @@
   },
   "_how_to_read": "⚠️ **⛔ 不得解讀成「20 筆都 unresolved，所以 capability audit 沒成果」**。恰恰相反：**20/20 的 fulfillment binding semantics 都已 CONFIRMED**，唯一沒閉合的是 input execution contract。⇒ 剩下的工作已從「20 個 capability 到底是誰」壓縮成**少數幾個 shared input contracts／reachability seams**。",
   "_registry_discipline": "⛔ **不要立刻把 20 個 binding 註冊進 executable registry**——F-G1 的終態是「reviewed_active responsibility → exactly one **reviewed** fulfillment strategy」，⛔ 不是「找到具名函式就先啟用」。20 筆維持 `proposed`，待 input contract／execution closure 完成後逐筆升 APPROVED_CAPABILITY，再進 sealed Fulfillment V1。"
+ },
+ "_input_contract_closure": {
+  "status": "**SHAPE_FROZEN ／ empty_collection_policy 待逐筆裁**（2026-08-30）",
+  "registered": {
+   "payment_logs.by_bill.v1": "COLLECTION（scope=resolved_bill_id）",
+   "invoice_logs.by_bill.v1": "COLLECTION（scope=resolved_bill_id）",
+   "iot.manufacturers.v1": "COLLECTION（scope=role_id）",
+   "subscription.current.v1": "SINGLETON",
+   "tenant.summary.v1": "SINGLETON",
+   "estate.by_ref.v1": "SELECT_ONE"
+  },
+  "_existing_backfilled": "既有四筆（bill.by_ref／contract.current_entity／point_refund.bill_by_contract／late_fee.bill_or_contract）已補 cardinality_mode=SELECT_ONE。",
+  "⚠️_capability_empty_behavior_probe": {
+   "_method": "實測呼叫各具名分支傳入 `[]`（⛔ 不憑印象）",
+   "meaningful_on_empty": [
+    "invoices._diagnose_issue_failure → 「查無發票開立紀錄。可能的原因：…」",
+    "invoices._diagnose_invalid_failure → 「查無發票作廢紀錄。…」",
+    "payments._diagnose_credit_card_failure → 「查無信用卡付款紀錄，可能是透過其他方式繳費。」"
+   ],
+   "degenerate_on_empty": [
+    "payments._diagnose_payment_not_reflected → 「以下是此帳單的付款交易紀錄：\\n」（**只剩空標題**）"
+   ],
+   "**semantically_wrong_on_empty**": [
+    "iot._diagnose_binding_failure → 「目前已綁定的 IoT 廠商：\\n\\n\\n**所有 IoT 廠商帳號狀態正常**…」——⚠️ 空清單卻宣稱「所有廠商狀態正常」，**語義錯誤**"
+   ],
+   "_key_finding": "⚠️ **有意義的空集合說明全部在入口 dispatcher**（diagnose_payment_logs／diagnose_invoice_logs／diagnose_iot），⛔ **不在**具名分支。而 responsibility binding 依 F-C1 必須繞開入口 ⇒ **若裁 RESOLVED_EMPTY，binding adapter 必須自行處理空態**，否則會產出退化甚至**錯誤**語義（iot 即實例）。"
+  },
+  "_pending_rulings": [
+   "payment_logs.by_bill.v1 的 empty_collection_policy",
+   "invoice_logs.by_bill.v1 的 empty_collection_policy",
+   "iot.manufacturers.v1 的 empty_collection_policy",
+   "⚠️ tenant.summary：需確認 production contract 是否**保證**單一 summary"
+  ]
  }
 }
