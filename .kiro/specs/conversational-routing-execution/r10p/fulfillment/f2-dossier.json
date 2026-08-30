@@ -2620,7 +2620,7 @@
   "T4-B_entity_resolution": "**B1 ✅ ／ B2 ✅ ／ B3 ✅ module**（2026-08-30）——services/responsibility_bill_resolution.py 把 legacy adapter 裡**隱藏**的「keyword → first contract」拆成顯式兩階段；legacy 逐位未動。",
   "T4-C_direct_fulfillment_execution": "**C1 ✅ module（R-29 only）**（2026-08-30）——services/fulfillment_registry.py ＋ 19 guards；⛔ 只註冊 R-29 一個 binding，⛔ 未從 25 筆 proposed owner 自動生成。",
   "T4-D_output_adaptation": {
-   "FINAL_TEXT": "**D1 ✅ WIRED（R-29）**（2026-08-30）——responsibility completion handler 已接上；13 guards。⚠️ 第一次觸碰 production 檔（form_manager.py）：+31/-1，且刪掉的唯一一行是 legacy 函式的 docstring（本體逐位未改，僅改名為 _legacy_complete_form）。",
+   "FINAL_TEXT": "**D1 ✅ PASS（R-29 wiring）**（2026-08-30）——13/13 guards、unit 1759 PASS。⚠️ **⛔ 不得寫成「E2E PASS」**：full e2e suite 的精確狀態是 `KNOWN PREEXISTING FAILURE = 1`（E2E-DEBT-01）／`NEW D1 E2E REGRESSION = 0`。",
    "GROUNDING_FACTS": "NOT_ESTABLISHED（T4-D2；presentation portion 待抽）"
   },
   "_note": "⚠️ 不是四個獨立產品問題，是**同一 T4 transport 的四個 seam**。③ 拆成 execution 與 presentation，因為 R-28／R-31 已證 output 不是 final text。"
@@ -2647,10 +2647,11 @@
   "T4-B1 ✅",
   "T4-B2 ✅",
   "T4-B3 ✅",
-  "T4-C1 ✅（R-29 only）",
-  "T4-D1 R-29 FINAL_TEXT production vertical slice",
-  "→ 若 end-to-end guards 全綠：R-29 F2 → APPROVED_CAPABILITY",
-  "→ 再用同一架構擴 R-05；R-28／R-31 等 GROUNDING_FACTS adapter 另解"
+  "T4-C1 ✅",
+  "T4-D1 ✅（wiring）",
+  "**D1-E** FulfillmentExecutionResult(FINAL_TEXT) → existing response envelope／tracking／cache（本地 deterministic data；⚠️ 若一進 routers/chat 就撞 row-shaped assumption ⇒ **立即停**，那是下一個 semantic-slot blocker）",
+  "**D1-R** real JGB API → B3 resolver → exact bill → R-29 binding → FINAL_TEXT downstream（⚠️ 分兩刀的目的：真實 API 測試**只**回答 entity input 可不可達，⛔ 不必同時排查 downstream envelope）",
+  "→ 兩者皆綠才裁 R-29 APPROVED_CAPABILITY"
  ],
  "_first_vertical_slice": "⚠️ 第一條 vertical slice 走 **R-29／FINAL_TEXT**：commit → form round-trip → resolve exact bill → direct _diagnose_receipt → FINAL_TEXT downstream。⇒ presentation extraction ⛔ 不必同時肩負「證明整個新 transport 架構能跑」的責任。",
  "_new_finding_2026_08_30": {
@@ -2693,5 +2694,26 @@
   "F2_VERDICT": "⚠️ **維持 INSUFFICIENT_EVIDENCE**",
   "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED（T4-A ＋ B2 persistence）",
   "FINAL_TEXT_OUTPUT_TRANSPORT": "⚠️ **PARTIAL**——completion handler 已產出 FINAL_TEXT result，但**尚未**接到 routers/chat 的 response envelope／cache（D1 刻意停在此處）"
+ },
+ "_e2e_debt": {
+  "id": "E2E-DEBT-01",
+  "test": "tests/e2e/chat_flow/test_message_branches_gap_req.py::test_digression_cancel_answers_pending_question_e2e",
+  "status": "PREEXISTING_FAILURE_CONFIRMED",
+  "evidence": [
+   "fails on d4e6c89（D1 commit）",
+   "fails **identically** with form_manager.py restored from 0425132（parent file 回放）",
+   "sources=[] ／ vendor_sop retrieval missing；answer 落「沒有找到符合您問題的資訊」"
+  ],
+  "failure_locus": "retrieval ／ vendor_sop source missing",
+  "d1_changed_locus": "form completion authority dispatch",
+  "verdicts": {
+   "PREEXISTING_E2E_FAILURE": "CONFIRMED",
+   "C2-D1_REGRESSION": "NOT_SUPPORTED"
+  },
+  "must_not": [
+   "⛔ xfail merely to make suite green",
+   "⛔ count as C2 regression",
+   "⛔ investigate inside current C2 line unless it later blocks discrimination"
+  ]
  }
 }
