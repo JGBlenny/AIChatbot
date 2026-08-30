@@ -3485,7 +3485,8 @@
   "F-C11_COLLECTION_IS_THE_ENTITY": "若 reviewed input contract 定義**整個 collection** 為 capability input，collection member count **⛔ 不構成 entity ambiguity**：`>1` 是**正常資料形狀**，⛔ 不得套用 SELECT_ONE 的 first-row／ambiguity policy。⚠️ 但 collection 仍要有 **scope identity**——⛔ 不是「API 回什麼 list 就全吃」：contract 必須宣告 `collection_scope_key`；混入其他 scope ⇒ **INPUT_CONTRACT_VIOLATION**。",
   "cardinality_mode_three_shapes": "**cardinality_mode 是 input contract 的一部分，⛔ 不是 runtime 猜出來的**：T4-B-C1 SELECT_ONE（0→NO_MATCH／1→RESOLVED／>1→AMBIGUOUS，僅此模式適用）；T4-B-C2 SINGLETON（absent→NO_MATCH／single→RESOLVED／multiple competing→AMBIGUOUS；⚠️ API 回單一 dict 時 ⛔ 不得人工轉 list 再數量判斷）；T4-B-C3 COLLECTION（0→依 empty_collection_policy／>=1→RESOLVED，resolved_entity＝collection）。",
   "empty_collection_policy": "⚠️ **兩件事先前被混在一起**：`entity exists?` 與 `capability input is sufficiently resolved?`。對 collection responsibility，`0 rows` **不一定**表示 entity 不存在（可能是 bill 已 resolved 但 payment_logs=[]）。⇒ `NO_MATCH` 保留給**上游 required entity／scope 本身找不到**；空集合由 `empty_collection_policy ∈ {NO_MATCH, RESOLVED_EMPTY}` 決定，**⛔ 不得全域拍死**，由每個 input contract 逐筆 review。⚠️ 實作以 **大聲失敗** 落實：policy 未裁定時 `resolve_collection` 直接 raise，⛔ 不預設成 NO_MATCH（那正是「0 rows 被錯當不存在」的對稱 bug）。",
-  "F-C12_EMPTY_RESOLUTION_IS_NOT_EMPTY_ANSWER_SEMANTICS": "`empty_collection_policy` **只決定** `[]` 是否為已成功解析的 capability input；⛔ **不決定** capability 對 `[]` 要說什麼——那是 **fulfillment binding** 的責任。⚠️ 因此同一 shared input contract 底下，不同 responsibility 對同一個 `[]` **可以有不同回答**⇒ empty answer semantics ⛔ 本來就不能塞進 shared input contract。每個 binding 另有 proposition：`empty_input_handling ∈ {DIRECT_SUPPORTED, ADAPTER_REQUIRED, NOT_YET_REVIEWED}`。"
+  "F-C12_EMPTY_RESOLUTION_IS_NOT_EMPTY_ANSWER_SEMANTICS": "`empty_collection_policy` **只決定** `[]` 是否為已成功解析的 capability input；⛔ **不決定** capability 對 `[]` 要說什麼——那是 **fulfillment binding** 的責任。⚠️ 因此同一 shared input contract 底下，不同 responsibility 對同一個 `[]` **可以有不同回答**⇒ empty answer semantics ⛔ 本來就不能塞進 shared input contract。每個 binding 另有 proposition：`empty_input_handling ∈ {DIRECT_SUPPORTED, ADAPTER_REQUIRED, NOT_YET_REVIEWED}`。",
+  "F-C13_SINGLETON_SHAPE_DOES_NOT_PROVE_IDENTITY": "API 回傳單一 dict **只證 output cardinality**。若 request identity 未經 reviewed resolution，⛔ 不得因此把 input 標 RESOLVED。⇒ resolver 必須要求 **verified** identity（verified_role_id／verified_user_id），⛔ 不得接受模糊的 keyword。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -3561,9 +3562,12 @@
   "_why_split": "⚠️ ⛔ 不得因為 input carrier 有了就把 INPUT_REACHABILITY 寫成 CONFIRMED——「authority 活過 round-trip」與「解析到正確的那一筆 entity」是兩件事。"
  },
  "_next_order": [
-  "**下一刀：input-contract closure**（⛔ 不是 F2-C）——F2-C 五個 Knowledge fulfillment 大概率解不了 T4 的 execution blocker；F2-B 已把真正的共同 blocker 暴露清楚。",
-  "六個未註冊 contract 做成與 bill.by_ref.v1／contract.current_entity.v1 同級的 machine contracts：payment_logs.by_bill／invoice_logs.by_bill／subscription.current／iot.manufacturers／estate.by_ref／tenant.summary，再跑 B1-style resolver review",
-  "→ 之後再處理已註冊但待 external validation 的 S1／S2 路徑（D1-R 仍 BLOCKED）"
+  "T4-B4 ✅ 三個 resolver execution closure",
+  "**下一步**：重新盤點那 10 筆 NOT_YET_JUDGEABLE ——哪些已轉成真正的 reachability 問題、哪些還有新的 identity blocker",
+  "R-16 empty review（completeness debt，⛔ 非共同 blocker）",
+  "PROD-DEFECT-01 修不修（業主裁定）",
+  "F2-C 五筆 KNOWLEDGE_CONTENT",
+  "D1-R 仍 BLOCKED"
  ],
  "_first_vertical_slice": "⚠️ 第一條 vertical slice 走 **R-29／FINAL_TEXT**：commit → form round-trip → resolve exact bill → direct _diagnose_receipt → FINAL_TEXT downstream。⇒ presentation extraction ⛔ 不必同時肩負「證明整個新 transport 架構能跑」的責任。",
  "_new_finding_2026_08_30": {
@@ -3887,6 +3891,11 @@
    "invoice_logs.by_bill.v1": "empty_collection_policy = **RESOLVED_EMPTY**",
    "iot.manufacturers.v1": "empty_collection_policy = **RESOLVED_EMPTY**",
    "tenant.summary.v1": "cardinality_mode = SINGLETON（**proposal 保留**）／**singleton_runtime_contract = NOT_ESTABLISHED**"
+  },
+  "execution_closure_2026_08_30": {
+   "estate.by_ref.v1": "**RESOLVER_IMPLEMENTED**——exact-ID path 優先（get_estate_detail），keyword path 走 get_estates；0→NO_MATCH／1→RESOLVED／>1→**AMBIGUOUS**；⚠️ sentinel `{'found': False}` ⛔ 不得被當成一筆物件；⛔ 絕不 rows[0]。",
+   "subscription.current.v1": "**RESOLVER_IMPLEMENTED**——`GET /roles/{role_id}/subscription` 回單一 dict；⛔ 不套 list cardinality、⛔ 不人工轉 list；list／純量 ⇒ **contract violation**；需 **verified_role_id**，否則 IdentityNotResolved。",
+   "tenant.summary.v1": "**RESOLVER_SEMANTICS_ESTABLISHED ／ IDENTITY_REACHABILITY_BLOCKED**——⚠️ 這是本刀最重要的**負控制**：只給 tenant_keyword 時**大聲失敗**且 **⛔ 不呼叫 summary endpoint**（測試斷言 api.calls == []）。⇒ 目前沒有合法的 keyword→user_id resolver，**這比把錯誤 legacy wiring 包進新 contract 更有價值**。"
   }
  },
  "_empty_input_handling": {
@@ -3905,12 +3914,14 @@
  },
  "_prod_defect_01": {
   "id": "PROD-DEFECT-01",
-  "status": "RECORDED（⛔ 未修）",
+  "status": "**CONFIRMED PREEXISTING PRODUCTION DEFECT**（業主裁定 2026-08-30）",
   "symbol": "rag-orchestrator/services/jgb/payments.py::_diagnose_payment_not_reflected",
   "defect": "`code` 只在 `if response:` 內指派，卻在迴圈末**無條件讀取** ⇒ **第一筆 log 缺 `response` 即 UnboundLocalError**（實測確認）。",
   "trigger": "第一筆 log 無／空 response；若第一筆有、第二筆缺，則**沿用前一筆的 code**（⚠️ 亦可疑）",
   "reachability": "legacy 路徑：diagnose_payment_logs 命中「沒到帳／沒更新／付了款／已付款」→ 該分支",
-  "scope": "⚠️ **不在本輪 scope**、⛔ **非本輪造成**；已寫成記錄現況的 guard，⛔ 未 xfail 掩蓋、⛔ 未修 production。修不修由業主裁定。"
+  "scope": "⚠️ **不在本輪 scope**、⛔ **非本輪造成**；已寫成記錄現況的 guard，⛔ 未 xfail 掩蓋、⛔ 未修 production。修不修由業主裁定。",
+  "stale_state_propagation": "「第一筆有 response、第二筆缺 → 沿用前一筆 code」＝ **STALE_STATE_PROPAGATION_RISK = CONFIRMED_BY_CODE_SHAPE**（⚠️ 尚未有 deterministic reproduction 證明它造成**錯誤輸出**，故未升 CONFIRMED_BEHAVIOR）。",
+  "_impact_on_r12": "⚠️ resolver 做完後，R-12 會從 `BLOCKED_INPUT` 變成 **INPUT_CLOSED ／ EXECUTION_BLOCKED_BY_PROD_DEFECT**——這是**正確進展**，⛔ 不必為了讓 R-12 變綠而順手擴 scope 去修它。"
  },
  "_tenant_singleton_probe": {
   "supports_singleton": [

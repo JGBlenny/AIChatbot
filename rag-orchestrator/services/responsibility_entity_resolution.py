@@ -78,7 +78,7 @@ resolver_id              **怎麼找到** entity
 AMBIGUOUS 可沿用既有列候選 UI，但 resume 回來**仍須回到同一** responsibility_id ／
 fulfillment_binding_id ／ input_contract_id——⛔ 使用者選了一筆 entity ⛔ 不得因此重新 retrieval。
 """
-from typing import Any, Callable, Dict, List, Mapping, Optional
+from typing import Any, Callable, Dict, List, Mapping, Optional, Protocol
 
 STATE_RESOLVED = "RESOLVED"
 #: RESOLVED 的子態：collection 已 scope 鎖定但成員為 0（**邏輯上仍是 RESOLVED**）
@@ -327,3 +327,147 @@ def assert_executable(res: Mapping[str, Any]) -> Dict[str, Any]:
         raise EntityResolutionError(
             f"resolution state={res.get('state')!r}，⛔ 不得進 direct capability")
     return dict(res)
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# T4-B4：SINGLETON ／ SELECT_ONE 的 **execution closure**（2026-08-30）
+#
+# ⚠️ resolver signature **只收已審核 transport input**——⛔ 無 user_question／face／
+#    category：input resolution 本身 ⛔ 不得變成另一個 semantic rerouter。
+# ══════════════════════════════════════════════════════════════════════════
+
+class IdentityNotResolved(EntityResolutionError):
+    """**F-C13**：request identity 未經 reviewed resolution——⚠️ 大聲失敗。
+
+    ```text
+    API 回傳單一 dict **只證 output cardinality**。
+    若 request identity 未經 reviewed resolution，⛔ 不得因此把 input 標 RESOLVED。
+    ```
+    """
+
+
+class EstateApi(Protocol):
+    async def get_estate_detail(self, estate_id: Any = None, **kw) -> Dict[str, Any]: ...
+    async def get_estates(self, role_id: str, keyword: str = "", **kw) -> Dict[str, Any]: ...
+
+
+async def resolve_estate_by_ref(api: "EstateApi", role_id: str,
+                                estate_ref: Optional[str]) -> Dict[str, Any]:
+    """`estate.by_ref.v1`（SELECT_ONE）——比照 `bill.by_ref` precedent。
+
+    ⚠️ **exact path 優先**：production 有 `GET /estates/{id}` 的單筆深查
+    （`get_estate_detail`）⇒ 數字 ref 直接走它，⛔ 不為了重用 legacy search 而製造候選歧義。
+    ⛔ 一律不得使用 `rows[0]`／`face_estate_response` 的既有 first-row path。
+    """
+    cid, etype = "estate.by_ref.v1", "estate"
+    ref = str(estate_ref).strip() if estate_ref is not None else ""
+    if not ref:
+        return result(STATE_INVALID_INPUT, cid, etype, missing_fields=["estate_ref"])
+
+    if ref.isdigit():                       # ⚠️ exact-ID path 優先
+        resp = await api.get_estate_detail(estate_id=int(ref))
+        rows = _normalize_rows(resp)
+        if not rows:
+            return result(STATE_NO_MATCH, cid, etype, estate_ref=ref, stage="estate_detail")
+        if len(rows) > 1:
+            return result(STATE_AMBIGUOUS, cid, etype, candidates=rows, stage="estate_detail")
+        return result(STATE_RESOLVED, cid, etype, resolved_id=rows[0].get("id"),
+                      resolved_entity=rows[0], uniqueness="exact_estate_id",
+                      stage="estate_detail")
+
+    rows = _normalize_rows(await api.get_estates(role_id, keyword=ref))
+    # ⚠️ sentinel（{"found": False}）不是實體 ⇒ 視為查無
+    rows = [r for r in rows if r.get("found") is not False]
+    if not rows:
+        return result(STATE_NO_MATCH, cid, etype, estate_ref=ref, stage="estate_search")
+    if len(rows) > 1:
+        # ⛔ **絕不** rows[0]
+        return result(STATE_AMBIGUOUS, cid, etype, candidates=rows, stage="estate_search")
+    return result(STATE_RESOLVED, cid, etype, resolved_id=rows[0].get("id"),
+                  resolved_entity=rows[0], uniqueness="unique_keyword_match",
+                  stage="estate_search")
+
+
+class SubscriptionApi(Protocol):
+    async def get_subscription(self, role_id: str, **kw) -> Dict[str, Any]: ...
+
+
+async def resolve_subscription_current(api: "SubscriptionApi",
+                                       verified_role_id: Optional[str]) -> Dict[str, Any]:
+    """`subscription.current.v1`（SINGLETON）。
+
+    ⚠️ ⛔ 不套 list cardinality：endpoint `GET /roles/{role_id}/subscription` 回單一 dict。
+    ⚠️ **lookup scope 必須已唯一**——`verified_role_id` 是**已驗證**的身分；
+    ⛔ identity 若是猜的，⛔ 不得只因 endpoint 回 dict 就叫 resolved（F-C13）。
+    """
+    cid, etype = "subscription.current.v1", "subscription"
+    if not verified_role_id:
+        raise IdentityNotResolved(
+            "subscription.current.v1 需要 **verified_role_id**"
+            "——⛔ 不得以未驗證的身分呼叫（F-C13）")
+    resp = await api.get_subscription(str(verified_role_id))
+    if not (resp or {}).get("success"):
+        return result(STATE_NO_MATCH, cid, etype, role_id=verified_role_id)
+    data = (resp or {}).get("data")
+    if data is None:
+        return result(STATE_NO_MATCH, cid, etype, role_id=verified_role_id)
+    if not isinstance(data, dict):
+        # ⚠️ 回了 list／純量 ＝ contract violation，⛔ 不得人工轉成 list 再數量判斷（T4-B-C2）
+        return result(STATE_INVALID_INPUT, cid, etype,
+                      contract_violation=f"expected dict, got {type(data).__name__}")
+    if not data:
+        return result(STATE_NO_MATCH, cid, etype, role_id=verified_role_id)
+    return result(STATE_RESOLVED, cid, etype, resolved_id=verified_role_id,
+                  resolved_entity=data, uniqueness="semantic_singleton_by_verified_role")
+
+
+class TenantSummaryApi(Protocol):
+    async def get_tenant_summary(self, role_id: str, user_id: str, **kw) -> Dict[str, Any]: ...
+
+
+async def resolve_tenant_summary(api: "TenantSummaryApi", verified_role_id: Optional[str],
+                                 verified_user_id: Optional[str] = None,
+                                 tenant_keyword: Optional[str] = None) -> Dict[str, Any]:
+    """`tenant.summary.v1`（SINGLETON）——⚠️ 本 resolver 的重點是**負控制**。
+
+    ## F-C13 在這裡的具體形狀
+
+    ```text
+    endpoint 回單一 dict  →  只證 **output cardinality**
+    tenant_keyword        →  ⛔ **不得**原樣當 user_id（legacy api_config 正是如此）
+    ```
+
+    ⚠️ 目前**沒有**合法的 `keyword → user_id` resolver ⇒ 只給 keyword 時本函式
+    **大聲失敗**，⛔ 不呼叫 summary endpoint。這比把錯誤 legacy wiring 包進新 contract 更有價值。
+    """
+    cid, etype = "tenant.summary.v1", "tenant_summary"
+    if not verified_role_id:
+        raise IdentityNotResolved("tenant.summary.v1 需要 verified_role_id")
+    if not verified_user_id:
+        raise IdentityNotResolved(
+            "tenant.summary.v1 需要 **verified_user_id**；"
+            f"僅有 tenant_keyword={tenant_keyword!r} ⛔ 不得原樣當 user_id"
+            "——identity assumed, not resolved（F-C13）")
+    resp = await api.get_tenant_summary(str(verified_role_id), str(verified_user_id))
+    if not (resp or {}).get("success"):
+        return result(STATE_NO_MATCH, cid, etype, user_id=verified_user_id)
+    data = (resp or {}).get("data")
+    if not isinstance(data, dict):
+        return result(STATE_INVALID_INPUT, cid, etype,
+                      contract_violation=f"expected dict, got {type(data).__name__}")
+    if not data:
+        return result(STATE_NO_MATCH, cid, etype, user_id=verified_user_id)
+    return result(STATE_RESOLVED, cid, etype, resolved_id=verified_user_id,
+                  resolved_entity=data, uniqueness="verified_user_id")
+
+
+def _normalize_rows(resp: Optional[Dict[str, Any]]) -> List[dict]:
+    """API 回應 → 列表。⚠️ 單物件 dict **包成單元素 list**（⛔ `else []` 會整個丟掉）。"""
+    if not resp or not resp.get("success"):
+        return []
+    data = resp.get("data")
+    if isinstance(data, list):
+        return [r for r in data if isinstance(r, dict) and r]
+    if isinstance(data, dict) and data:
+        return [data]
+    return []
