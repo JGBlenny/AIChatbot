@@ -1,0 +1,2462 @@
+{
+ "_doc": "R10-FULFILLMENT F2 逐筆 **evidence dossier**。",
+ "_authority": "⛔ NONE——本檔是 evidence dossier，⛔ **不是 proposal authority**。核心任務：把「owner 看起來像誰」與「**真的能被 responsibility commit 後直接執行**」拆開。",
+ "_review_order": "⚠️ 按**風險**排，⛔ 不按 R 編號：F2-A 特殊／高風險 → F2-B 其餘具名 CAPABILITY → F2-C KNOWLEDGE_CONTENT。⚠️ CAPABILITY **先**審——真正可能阻塞 T4 的是 executable binding；Knowledge 五筆大概率只是 grounding authority 封裝問題。",
+ "schema_digest": "e3f774ddaea5378b4d0dd51fa3489332bda498466a83aa21f0bd3ab3874a2a31",
+ "registry_v2_digest": "2071b7f5c8cca5d99e497f1959de48157a7c21c4d8826fd6ce1942292fd658ba",
+ "proposal_digest": "ffc564fe0843dc01eaee2d4e6da6d6858cb94ae5e83536b545c17563f22d3929",
+ "batches": {
+  "F2-A": [
+   "R-01",
+   "R-05",
+   "R-28",
+   "R-29",
+   "R-31"
+  ],
+  "F2-B": [
+   "R-02",
+   "R-03",
+   "R-04",
+   "R-08",
+   "R-09",
+   "R-10",
+   "R-11",
+   "R-12",
+   "R-14",
+   "R-15",
+   "R-16",
+   "R-17",
+   "R-18",
+   "R-19",
+   "R-20",
+   "R-21",
+   "R-22",
+   "R-23",
+   "R-24",
+   "R-30"
+  ],
+  "F2-C": [
+   "R-06",
+   "R-07",
+   "R-25",
+   "R-26",
+   "R-27"
+  ]
+ },
+ "rows": [
+  {
+   "responsibility_id": "R-01",
+   "review_batch": "F2-A",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "查詢既有修繕／報修案件目前的處理進度或狀態。",
+    "members": [
+     3365,
+     4420
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "jgb_repairs query／action capability",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb_system_api.py::get_repairs",
+     "line": 342,
+     "signature": "async def get_repairs(self, role_id: str, user_id: str, status: Optional[str] = None, **kwargs) -> dict",
+     "_what": "endpoint retrieval：只以身分查**清單**，⛔ 無 responsibility-specific 執行語義"
+    },
+    {
+     "symbol": "services/jgb_response_formatter.py::_format_single",
+     "line": 297,
+     "signature": "def _format_single(item: dict, mapping: dict) -> str",
+     "_what": "**通用** formatter——jgb_repairs ⛔ 無專屬分支"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "NO_WRONG_ABSTRACTION",
+    "evidence": [
+     "formatter 12 個 endpoint 分支中 **無** jgb_repairs（實查 grep）⇒ 落通用 _format_single",
+     "services/jgb/repair_prefill.py 是**建單**的 slot prefill，⛔ 不是「查既有案件進度」的能力",
+     "⇒ 目前只有 endpoint retrieval ＋ generic formatter，⛔ 無 responsibility-specific executable binding"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定，F2 verdict 仍空"
+   },
+   "_5_input_contract": {
+    "required_inputs": [
+     "role_id",
+     "user_id",
+     "（可選）status"
+    ],
+    "available_at_C2_runtime": "身分 context 通常可得",
+    "missing_inputs": [
+     "⚠️ 無——但這正是問題：不缺輸入，缺的是**能力本身**"
+    ],
+    "input_resolution_path": "api_call_handler['jgb_repairs'] → JGBSystemAPI.get_repairs",
+    "verdict": "INPUT_REACHABLE（⚠️ 但與 binding 是否存在無關）",
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": "通用欄位條列字串",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "可能（未驗）",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "⚠️ 可，但那是**通用格式化**，⛔ 不代表責任被實現",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": "（無 dispatcher 可 bypass——問題是沒有能力，⛔ 不是被繞路）",
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "_flag": "⚠️ **FULFILLMENT_NOT_ESTABLISHED 的主要候選**；⛔ 不得為了補齊而造 fake capability"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-05",
+   "review_batch": "F2-A",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "查詢某份合約目前的狀態或所處階段。",
+    "members": [
+     3372,
+     3510
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "rag-orchestrator/services/jgb/contracts.py:744::_format_status_response",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/contracts.py::_format_status_response",
+     "line": 744,
+     "signature": "def _format_status_response(contract: dict) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "_format_status_response(contract) 為純函式，⛔ 不讀 user_question",
+     "⚠️ 但**唯一呼叫者**是 contracts.py:719 的 _build_response——若經 _build_response 進入，keyword elif 會**再判一次**（違反 F-C1）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定，F2 verdict 仍空"
+   },
+   "_5_input_contract": {
+    "required_inputs": [
+     "contract dict（jgb_contracts 端點列）"
+    ],
+    "available_at_C2_runtime": "⚠️ 需先完成 jgb_contract_query 表單取得識別欄位 → 端點載入",
+    "missing_inputs": [
+     "若 slot 未填，contract 物件不存在"
+    ],
+    "input_resolution_path": "form jgb_contract_query → jgb_contracts → data[0]（⚠️ 現行取第一筆）",
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED（⚠️ 取決於 T4 是否保留表單流程）",
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": "final text（合約現況敘述）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": true,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": "services/jgb/contracts.py:681::_build_response（keyword elif 會重判）",
+    "allowed_entry": "services/jgb/contracts.py:744::_format_status_response(contract) 的 direct adapter",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "_owner_ruling": "⚠️ 業主已先裁方向：R-05 若 APPROVED，binding **必須**是 _format_status_response 的 direct adapter，⛔ 不得經 _build_response"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-28",
+   "review_batch": "F2-A",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "依特定帳單或合約的實際資料，查明該筆滯納金／延遲金為何產生、實際收取金額及其計算依據。",
+    "members": [
+     3939,
+     3940
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "late_fee Face ／ services/jgb/bills.py::build_late_fee_facts",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/bills.py::build_late_fee_facts",
+     "line": 265,
+     "signature": "def build_late_fee_facts(row: dict, user_question: str = '') -> str",
+     "_what": "三分流：合約列（設定實值）／滯納金帳單列（結算存值＋備註原樣）／一般帳單列（降級引導）"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES",
+    "evidence": [
+     "T4 稽核實測：build_late_fee_facts ＝ **NOT_QUESTION_SENSITIVE**（0 個 question 分支）⇒ 直接呼叫不會因 utterance 改變輸出",
+     "⚠️ 但入口 face_bill_response(bills.py:377) 有 `if _pr.is_point_refund_intent(user_question)` 的**utterance 分流**——binding 必須繞開該入口，直接呼叫 builder"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定，F2 verdict 仍空"
+   },
+   "_5_input_contract": {
+    "required_inputs": [
+     "row dict（合約列或帳單列）"
+    ],
+    "available_at_C2_runtime": "⚠️ 同 R-05：需端點載入的資料列",
+    "missing_inputs": [
+     "未取得 referent 時無列可 ground"
+    ],
+    "input_resolution_path": "jgb_bill_diagnosis／jgb_contracts → data row",
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": "**grounding facts**（多行事實），⛔ 非 final answer",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ 是——facts→話術仍由 LLM／formatter 組",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "需 execution adapter",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": "services/jgb/bills.py:377::face_bill_response 的 is_point_refund_intent 分流",
+    "allowed_entry": "直接 build_late_fee_facts(row)",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "_positive_control": "⚠️ **CAPABILITY 正對照**：members 3939／3940 answer 皆空，fulfillment 仍須完整成立；任何 pick-member-answer 的實作立刻失敗"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-29",
+   "review_batch": "F2-A",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "查詢特定收據的實際收款金額。",
+    "members": [
+     4640
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "bill_diagnosis 的 receipt-amount deterministic capability（B05）",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/bills.py::_diagnose_receipt",
+     "line": 541,
+     "signature": "def _diagnose_receipt(bill: dict) -> str",
+     "_what": "B05：依 bit_status 分三態（已繳＝金額＋下載指引／待對帳／未繳＝明說尚無收據）"
+    },
+    {
+     "symbol": "services/jgb/bills.py::diagnose_bill",
+     "line": 427,
+     "signature": "def diagnose_bill(bill: dict, user_question: str = '') -> str",
+     "_what": "⚠️ 現行入口——以 `'收據' in question` 的 **utterance 分流**才到 _diagnose_receipt"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（但必須繞開 diagnose_bill）",
+    "evidence": [
+     "_diagnose_receipt(bill) 為純函式、⛔ 不讀 user_question ⇒ commit 後可直接呼叫",
+     "⚠️ 若走 diagnose_bill(bill, question)，`收據` keyword 會**再判一次**（違反 F-C1）"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定，F2 verdict 仍空"
+   },
+   "_5_input_contract": {
+    "required_inputs": [
+     "bill dict（jgb_bill_detail 單筆）"
+    ],
+    "available_at_C2_runtime": "⚠️ 需 bill_ref slot → jgb_bill_diagnosis → jgb_bill_detail",
+    "missing_inputs": [
+     "未指定帳單時無 bill 物件"
+    ],
+    "input_resolution_path": "form jgb_bill_diagnosis（收 1 個識別欄位）→ jgb_bill_detail",
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "_composite_note": "⚠️ 業主提示：若能力是多步（如何選定 receipt/bill → 讀實際 amount），可定義 **composition capability_id**，⛔ 不必硬找單一函式"
+   },
+   "_6_output_contract": {
+    "output_type": "final text（含金額與下載指引）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": true,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": "services/jgb/bills.py:427::diagnose_bill（'收據' keyword 分流）",
+    "allowed_entry": "直接 _diagnose_receipt(bill)",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-31",
+   "review_batch": "F2-A",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "依指定合約找出其點退帳單，並查詢該筆點退帳單的實際金額與目前狀態。",
+    "members": [
+     4657
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "POINT_REFUND_BILL_SELECTION ＋ downstream bill facts",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/point_refund_selection.py::select_point_refund",
+     "line": 95,
+     "signature": "def select_point_refund(rows: Optional[List[dict]]) -> Tuple[str, Optional[dict], List[dict]]",
+     "_what": "由合約的候選帳單決定性選出 type=2；回 (state, selected, candidates)"
+    },
+    {
+     "symbol": "services/jgb/point_refund_selection.py::verify_direct_bill",
+     "line": 109,
+     "signature": "def verify_direct_bill(bill: Optional[dict]) -> str",
+     "_what": "單筆時的身分查核"
+    },
+    {
+     "symbol": "services/jgb/point_refund_selection.py::type_fact_line",
+     "line": 116,
+     "signature": "def type_fact_line(bill: dict) -> str",
+     "_what": "type 事實行（provenance 不可斷）"
+    },
+    {
+     "symbol": "services/jgb/bills.py::_point_refund_response",
+     "line": 382,
+     "signature": "def _point_refund_response(rows: list, user_question: str, builder) -> str",
+     "_what": "⚠️ 現行**組合器**：selection → 身分查核／NOT_FOUND／CANDIDATES → type_fact_line ＋ builder"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（composite binding）",
+    "evidence": [
+     "業主已允許 composite：select point-refund bill → downstream bill facts",
+     "⚠️ 但 _point_refund_response 的**進入**條件是 face_bill_response 的 `is_point_refund_intent(user_question)` ⇒ 該 utterance gate 必須 bypass",
+     "⚠️ _point_refund_response 仍把 user_question 透傳給 builder——若 builder 是 question-sensitive 者（如 build_bill_diagnosis_facts），F-C1 風險未消"
+    ],
+    "_status": "FINDING（唯讀實查）——⛔ 非裁定，F2 verdict 仍空"
+   },
+   "_5_input_contract": {
+    "required_inputs": [
+     "rows：某合約的候選帳單列表"
+    ],
+    "available_at_C2_runtime": "⚠️ 需合約識別 → 端點載入其帳單集合",
+    "missing_inputs": [
+     "只給單張帳單時走 verify_direct_bill 身分查核路徑"
+    ],
+    "input_resolution_path": "contract 識別 → bills 集合 → select_point_refund",
+    "verdict": "INPUT_REACHABILITY_NOT_ESTABLISHED",
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": "**grounding facts**（type 事實行 ＋ builder facts）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": "⚠️ 是",
+    "returns_action_or_form_metadata": false,
+    "can_feed_current_downstream": "需 execution adapter",
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter",
+    "_states": "⚠️ 三種非正常態亦是合法輸出：NOT_FOUND／CANDIDATES（多筆列候選）／TYPE_MISMATCH"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": "services/jgb/bills.py:377 的 is_point_refund_intent gate",
+    "allowed_entry": "composite：select_point_refund(rows) → type_fact_line ＋ 指定 builder",
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）",
+    "_flag": "⚠️ builder 若 question-sensitive，需在 binding 明確固定為 **NOT_QUESTION_SENSITIVE** 的那支"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-02",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "判斷某份合約目前是否符合發送簽約邀請的條件，並診斷無法發送的原因。",
+    "members": [
+     3368,
+     3490
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "rag-orchestrator/services/jgb/contracts.py:128::check_can_invite",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/contracts.py::check_can_invite",
+     "line": 128,
+     "signature": "def check_can_invite(contract: dict) -> dict:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-03",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "判斷某份合約目前是否符合提前解約條件，並診斷無法提前解約的原因。",
+    "members": [
+     3370,
+     3493,
+     3511
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "rag-orchestrator/services/jgb/contracts.py:257::check_can_early_termination",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/contracts.py::check_can_early_termination",
+     "line": 257,
+     "signature": "def check_can_early_termination(contract: dict) -> dict:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-04",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "判斷某份合約目前是否符合續約條件，並診斷無法續約的原因。",
+    "members": [
+     3371,
+     3494,
+     3511
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "rag-orchestrator/services/jgb/contracts.py:294::check_can_renew",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/contracts.py::check_can_renew",
+     "line": 294,
+     "signature": "def check_can_renew(contract: dict) -> dict:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-08",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "判斷某份合約目前是否符合點交條件，並診斷無法點交的原因。",
+    "members": [
+     3491,
+     3511
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "rag-orchestrator/services/jgb/contracts.py:161::check_can_move_in",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/contracts.py::check_can_move_in",
+     "line": 161,
+     "signature": "def check_can_move_in(contract: dict) -> dict:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-09",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "判斷某份合約目前是否符合點退條件，並診斷無法點退的原因。",
+    "members": [
+     3492,
+     3511
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "rag-orchestrator/services/jgb/contracts.py:203::check_can_move_out",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/contracts.py::check_can_move_out",
+     "line": 203,
+     "signature": "def check_can_move_out(contract: dict) -> dict:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-10",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "診斷特定帳單無法發送給租客的原因。",
+    "members": [
+     3495
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_send",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/bills.py::_diagnose_cannot_send",
+     "line": 463,
+     "signature": "def _diagnose_cannot_send(bill: dict) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-11",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "判斷特定帳單目前是否可取消／作廢，並診斷無法取消的原因。",
+    "members": [
+     3496
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_cancel",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/bills.py::_diagnose_cannot_cancel",
+     "line": 514,
+     "signature": "def _diagnose_cannot_cancel(bill: dict) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-12",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "診斷特定款項已完成支付，但帳單付款狀態尚未同步更新的原因。",
+    "members": [
+     3497
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "payment_flow::_diagnose_payment_not_reflected（rag-orchestrator/services/jgb/payments.py::_diagnose_payment_not_reflected）",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/payments.py::_diagnose_payment_not_reflected",
+     "line": 50,
+     "signature": "def _diagnose_payment_not_reflected(logs: list) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-14",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "診斷特定帳單手動到帳／標記已收款失敗的原因。",
+    "members": [
+     3499
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py:602::_diagnose_manual_complete",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/bills.py::_diagnose_manual_complete",
+     "line": 602,
+     "signature": "def _diagnose_manual_complete(bill: dict) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-15",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "診斷特定信用卡單次付款失敗的原因。",
+    "members": [
+     3500
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "payment_flow::_diagnose_credit_card_failure（rag-orchestrator/services/jgb/payments.py::_diagnose_credit_card_failure）",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/payments.py::_diagnose_credit_card_failure",
+     "line": 85,
+     "signature": "def _diagnose_credit_card_failure(logs: list) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-16",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "診斷信用卡週期性自動扣款／自動付款失敗的原因。",
+    "members": [
+     3501
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "diagnose_payment_logs ／ rag-orchestrator/services/jgb/payments.py:120::_diagnose_auto_pay_failure",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/payments.py::_diagnose_auto_pay_failure",
+     "line": 120,
+     "signature": "def _diagnose_auto_pay_failure(logs: list) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-17",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "診斷特定帳單的虛擬帳號失效、過期或轉帳失敗的原因。",
+    "members": [
+     3502
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "diagnose_bill ／ rag-orchestrator/services/jgb/bills.py:625::_diagnose_atm_expired",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/bills.py::_diagnose_atm_expired",
+     "line": 625,
+     "signature": "def _diagnose_atm_expired(bill: dict) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-18",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "診斷特定發票未成功開立的原因。",
+    "members": [
+     3503
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "invoice::_diagnose_issue_failure（rag-orchestrator/services/jgb/invoices.py::_diagnose_issue_failure）",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/invoices.py::_diagnose_issue_failure",
+     "line": 57,
+     "signature": "def _diagnose_issue_failure(logs: list) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-19",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "診斷特定發票無法作廢的原因。",
+    "members": [
+     3504
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "invoice::_diagnose_invalid_failure（rag-orchestrator/services/jgb/invoices.py::_diagnose_invalid_failure）",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/invoices.py::_diagnose_invalid_failure",
+     "line": 116,
+     "signature": "def _diagnose_invalid_failure(logs: list) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-20",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "診斷目前無法新增物件的原因。",
+    "members": [
+     3505
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "subscription::_diagnose_cannot_add_estate（rag-orchestrator/services/jgb/subscription.py::_diagnose_cannot_add_estate）",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/subscription.py::_diagnose_cannot_add_estate",
+     "line": 35,
+     "signature": "def _diagnose_cannot_add_estate(data: dict) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-21",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "診斷既有物件突然被下架或停止刊登的原因。",
+    "members": [
+     3506
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "subscription::_diagnose_estates_delisted（rag-orchestrator/services/jgb/subscription.py::_diagnose_estates_delisted）",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/subscription.py::_diagnose_estates_delisted",
+     "line": 63,
+     "signature": "def _diagnose_estates_delisted(data: dict) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-22",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "診斷特定物件目前為何不符合建立合約的條件。",
+    "members": [
+     3507
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "estate-status ／ rag-orchestrator/services/jgb/estates.py:33::build_estate_status_facts",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/estates.py::build_estate_status_facts",
+     "line": 33,
+     "signature": "def build_estate_status_facts(estate: dict, detail: Optional[dict] = None, user_question: str = \"\") -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-23",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "診斷 IoT 廠商帳號無法完成綁定的原因。",
+    "members": [
+     3508
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "rag-orchestrator/services/jgb/iot.py::diagnose_iot",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/iot.py::diagnose_iot",
+     "line": 108,
+     "signature": "def diagnose_iot(data: list, user_question: str = \"\") -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-24",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "查詢特定租客的整體概況，包括其合約、帳單與修繕資訊。",
+    "members": [
+     3514
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "jgb_tenant_summary ＋ rag-orchestrator/services/jgb_response_formatter.py::_format_tenant_summary",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb_response_formatter.py::_format_tenant_summary",
+     "line": 375,
+     "signature": "def _format_tenant_summary(data: dict) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-30",
+   "review_batch": "F2-B",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "查詢特定帳單目前的實際狀態。",
+    "members": [
+     4656
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "instance"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_format_bill_status 路徑",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [
+    {
+     "symbol": "services/jgb/bills.py::_format_bill_status",
+     "line": 663,
+     "signature": "def _format_bill_status(bill: dict) -> str:"
+    }
+   ],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "CAPABILITY"
+  },
+  {
+   "responsibility_id": "R-06",
+   "review_batch": "F2-C",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "說明點退完成後系統何時、在何種條件下自動產生點退帳單，以及該帳單如何進入費用結算。",
+    "members": [
+     3402
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "general"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "KNOWLEDGE_CONTENT"
+  },
+  {
+   "responsibility_id": "R-07",
+   "review_batch": "F2-C",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "說明帳單收據／繳費證明的產生條件、取得位置與方式，以及其與統一發票的區別。",
+    "members": [
+     3406
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "general"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "KNOWLEDGE_CONTENT"
+  },
+  {
+   "responsibility_id": "R-25",
+   "review_batch": "F2-C",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "說明點退帳單金額與押金結算的計算規則，以及結算差額如何解讀。",
+    "members": [
+     3519
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "general"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "KNOWLEDGE_CONTENT"
+  },
+  {
+   "responsibility_id": "R-26",
+   "review_batch": "F2-C",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "說明付款後結算型延遲金的產生條件、計算方式與結算規則。",
+    "members": [
+     3531
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "general"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority）",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "KNOWLEDGE_CONTENT"
+  },
+  {
+   "responsibility_id": "R-27",
+   "review_batch": "F2-C",
+   "_1_responsibility_truth": {
+    "canonical_responsibility": "比較滯納金不同客製計算版本，包括付款後結算延遲金、階梯式與固定金額版本的機制與計算差異。",
+    "members": [
+     3532
+    ],
+    "applicability": {
+     "declaration_status": "reviewed",
+     "value": "general"
+    },
+    "_note": "只讀 Registry V2，⛔ 本輪不重審 responsibility identity"
+   },
+   "_2_existing_owner_evidence": {
+    "owner": "CONFIRMED",
+    "owner_contract": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority）",
+    "status": [
+     "EVIDENCE_ONLY",
+     "NOT_EXECUTABLE_BINDING"
+    ],
+    "_note": "⚠️ prose owner ⛔ 不得被當成 capability_id"
+   },
+   "_3_production_capability_candidates": [],
+   "_4_direct_after_commit": {
+    "verdict": null,
+    "_allowed_values": [
+     "YES",
+     "NO_REROUTES_BY_UTTERANCE",
+     "NO_WRONG_ABSTRACTION"
+    ],
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+   },
+   "_5_input_contract": {
+    "required_inputs": null,
+    "available_at_C2_runtime": null,
+    "missing_inputs": null,
+    "input_resolution_path": null,
+    "verdict": null,
+    "_allowed_values": [
+     "INPUT_REACHABLE",
+     "INPUT_NOT_REACHABLE",
+     "INPUT_REACHABILITY_NOT_ESTABLISHED"
+    ],
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+   },
+   "_6_output_contract": {
+    "output_type": null,
+    "contains_grounded_facts": null,
+    "contains_template_placeholders": null,
+    "needs_answer_formatter": null,
+    "returns_action_or_form_metadata": null,
+    "can_feed_current_downstream": null,
+    "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
+   },
+   "_7_negative_reroute_evidence": {
+    "must_bypass": null,
+    "allowed_entry": null,
+    "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
+   },
+   "_8_f2_verdict": {
+    "verdict": null,
+    "_allowed_values": [
+     "APPROVED_CAPABILITY",
+     "APPROVED_KNOWLEDGE_CONTENT",
+     "FULFILLMENT_NOT_ESTABLISHED",
+     "INSUFFICIENT_EVIDENCE"
+    ],
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+   },
+   "proposed_strategy": "KNOWLEDGE_CONTENT"
+  }
+ ]
+}
