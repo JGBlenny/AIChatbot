@@ -2558,7 +2558,12 @@
    "_binding_id_not_callable": "⚠️ ⛔ 不把 callable／function path 直接存 session——存**穩定 binding ID**（例：`receipt.actual_amount.v1`），resume 時再由 sealed executable fulfillment registry 解析。如此函式搬檔案 ⛔ 不會使既有 session contract 失效。",
    "_two_modes_coexist": "legacy row flow（knowledge_id ＋ show_knowledge）**保留**，⛔ 不為 C2 順手重構。⛔ 不得做混合 session 讓 runtime 猜誰優先 ⇒ 以 `session_authority_mode ∈ {legacy_row, responsibility}` 明確判別。invariant：responsibility mode → responsibility_id REQUIRED、**knowledge_id MUST NOT be authority**。",
    "_knowledge_content_note": "KNOWLEDGE_CONTENT 未來仍可能有 grounding_source_row_id，但那是 **FulfillmentPlan 裡的 reviewed storage reference**，⛔ 不是 session authority。"
-  }
+  },
+  "T4-B-C1_EXACT_ENTITY_RESOLUTION": "0 valid entity → NO_MATCH；1 verified → RESOLVED；**>1 valid entities without deterministic uniqueness proof → AMBIGUOUS**。MUST NOT：choose first ／ choose highest DB order ／ choose earliest returned。唯一例外：已 review 的 deterministic selection contract（正例 select_point_refund；⛔ 反例 rows[0]）。⚠️ 可重用 AMBIGUOUS 的 UX 通道，⛔ 但不重用其 authority logic——resume 必須回到同一 responsibility_id／fulfillment_binding_id／input_contract_id，⛔ 選了 entity 不得重新 retrieval。",
+  "T4-B_legacy_untouched": "業主裁定：`contracts.py:648 matched[0]` 與 `bills.py:379 rows[0]` **legacy 原地不動**；⛔ 不把 `if responsibility_mode:` 散落進各處 ⇒ 抽成 responsibility-only resolver layer，只在 responsibility execution seam 呼叫。",
+  "resolver_id_is_separate_identity": "`fulfillment_binding_id`（找到 entity **之後怎麼回答**）與 `resolver_id`（**怎麼找到** entity）是兩個 operational identity——R-31 本身即證據。⛔ resolver 不存 Python callable path 當 authority。",
+  "LEGACY_SESSION_COMPATIBILITY": "historical row session：mode NULL ＋ valid legacy fields → accepted as legacy；**new session：mode MUST be explicit**。⛔ **不得 backfill** 舊 session 為 legacy_row（那是 production data mutation、對 C2 無必要、且會把 migration 與 runtime feature 混在一起）。等 legacy sessions 自然過期後再考慮是否收緊 NULL。",
+  "session_persistence_decision": "沿用既有 `form_sessions` 做 **additive migration**（新增 nullable：session_authority_mode／responsibility_id／fulfillment_binding_id／fulfillment_strategy／input_contract_id），⛔ 不另建第二張 session table——否則立刻新增兩套 expiry／lookup／retry／cleanup，且 on_complete handler 得先猜 session 存哪張表。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -2608,7 +2613,7 @@
  },
  "_t4_seams": {
   "T4-A_responsibility_session_carrier": "**MODULE_IMPLEMENTED / NOT_WIRED**（2026-08-30）——services/responsibility_session.py＋20 個 guard（A-G1…A-G5）；legacy 逐位未動（form_manager／api_call_handler／conversational_engine／formatter／bills／contracts／base_retriever git diff 皆空）。⚠️ 只證了 **authority 可跨 form round-trip 不變**，⛔ 未接 DB schema、⛔ 未接 production 流程。",
-  "T4-B_entity_resolution": "PARTIAL_EXISTING / NOT_CONTRACTUALLY_CLOSED",
+  "T4-B_entity_resolution": "**B1 MODULE_IMPLEMENTED / B2-B3 NOT_STARTED**（2026-08-30）——services/responsibility_entity_resolution.py ＋ 12 guards；legacy first-row sites 逐位未動（C2 **根本不走到**它們，⛔ 不是進去後加 branch 修正）。",
   "T4-C_direct_fulfillment_execution": "DESIGN_RESOLVED / NOT_IMPLEMENTED",
   "T4-D_output_adaptation": {
    "FINAL_TEXT": "EXISTING_PATH_IDENTIFIED",
@@ -2635,9 +2640,15 @@
  },
  "_next_order": [
   "T4-A ✅ module",
-  "T4-B entity-resolution contract",
+  "T4-B1 ✅ module",
+  "T4-B2 form_sessions additive migration ＋ persistence round-trip",
+  "T4-B3 responsibility-only form completion → resolver（**第一次接 production session infrastructure**）",
   "T4-C direct committed execution",
-  "T4-D FINAL_TEXT transport → 之後才 GROUNDING_FACTS presentation extraction"
+  "T4-D FINAL_TEXT → 之後才 GROUNDING_FACTS presentation"
  ],
- "_first_vertical_slice": "⚠️ 第一條 vertical slice 走 **R-29／FINAL_TEXT**：commit → form round-trip → resolve exact bill → direct _diagnose_receipt → FINAL_TEXT downstream。⇒ presentation extraction ⛔ 不必同時肩負「證明整個新 transport 架構能跑」的責任。"
+ "_first_vertical_slice": "⚠️ 第一條 vertical slice 走 **R-29／FINAL_TEXT**：commit → form round-trip → resolve exact bill → direct _diagnose_receipt → FINAL_TEXT downstream。⇒ presentation extraction ⛔ 不必同時肩負「證明整個新 transport 架構能跑」的責任。",
+ "_new_finding_2026_08_30": {
+  "third_first_row_site": "⚠️ T4-B 盤查另外撈到**第三處** first-row authority（先前未記）：`services/jgb_system_api.py:190` —— bill_ref **非數字**分支：get_contracts(keyword=ref) → `contract_ids = rows[0].get('id')` ⇒ 取第一筆合約。程式註解自陳「非數字 → 取第一筆合約」。⚠️ 這代表 R-29 的 bill.by_ref 在**非數字 ref** 時，legacy adapter 內部就已經違反 F-C3。⇒ responsibility path 必須**繞開**該 adapter 的非數字分支，或只接受數字 ref。⛔ legacy 依裁定不動。",
+  "_also": "同檔註解另記：`jgb_contracts` **尚未遷移**（仍走方法級 mock），故該 adapter 端到端只證過**數字分支** ⇒ ⛔ 不得聲稱 adapter 全分支已證。"
+ }
 }
