@@ -2615,7 +2615,7 @@
  },
  "_t4_seams": {
   "T4-A_responsibility_session_carrier": "**MODULE_IMPLEMENTED / NOT_WIRED**（2026-08-30）——services/responsibility_session.py＋20 個 guard（A-G1…A-G5）；legacy 逐位未動（form_manager／api_call_handler／conversational_engine／formatter／bills／contracts／base_retriever git diff 皆空）。⚠️ 只證了 **authority 可跨 form round-trip 不變**，⛔ 未接 DB schema、⛔ 未接 production 流程。",
-  "T4-B_entity_resolution": "**B1 ✅ module ／ B2 ✅ migration＋persistence ／ B3 NOT_STARTED**（2026-08-30）——legacy first-row sites 逐位未動。",
+  "T4-B_entity_resolution": "**B1 ✅ ／ B2 ✅ ／ B3 ✅ module**（2026-08-30）——services/responsibility_bill_resolution.py 把 legacy adapter 裡**隱藏**的「keyword → first contract」拆成顯式兩階段；legacy 逐位未動。",
   "T4-C_direct_fulfillment_execution": "DESIGN_RESOLVED / NOT_IMPLEMENTED",
   "T4-D_output_adaptation": {
    "FINAL_TEXT": "EXISTING_PATH_IDENTIFIED",
@@ -2654,14 +2654,14 @@
   "_also": "同檔註解另記：`jgb_contracts` **尚未遷移**（仍走方法級 mock），故該 adapter 端到端只證過**數字分支** ⇒ ⛔ 不得聲稱 adapter 全分支已證。"
  },
  "_bill_by_ref_status": {
-  "numeric_branch": "END_TO_END_ADAPTER_EVIDENCE = PARTIALLY_ESTABLISHED（仍待 B3 wired transport）",
+  "numeric_branch": "**RESOLVER_IMPLEMENTED**（get_bill_detail 直查；0→NO_MATCH／1→RESOLVED／>1→AMBIGUOUS 亦守）",
   "nonnumeric_branch": {
-   "LEGACY_PATH": "REJECTED_FOR_RESPONSIBILITY_USE（F-C6）",
-   "RESPONSIBILITY_RESOLUTION_PATH": "NOT_IMPLEMENTED"
+   "LEGACY_PATH": "REJECTED_FOR_RESPONSIBILITY_USE（F-C6，測試以 FakeApi 在 get_bills 收到 bill_ref 時直接 AssertionError）",
+   "RESPONSIBILITY_RESOLUTION_PATH": "**IMPLEMENTED**——顯式兩階段：get_contracts(keyword) 四態 → 唯一 verified contract → get_bills(contract_ids) 四態；⚠️ **合約唯一 ⛔ 不代表帳單唯一**，第二階段仍會 AMBIGUOUS"
   },
-  "_conclusion": "⚠️ R-29 的 ENTITY_INPUT_REACHABILITY **仍為 NOT_ESTABLISHED**——⛔ 不得因設計已裁就升級。"
+  "_still_open": "⚠️ R-29 的 ENTITY_INPUT_REACHABILITY 仍 **NOT_ESTABLISHED**——resolver 已具備，但尚未接上 form completion（T4-B3 wiring）且未經真實 API 端到端；⛔ 不得因 module 綠就升級。"
  },
- "_pending_guard_B_G5": "B-G5 NO HIDDEN FIRST-ROW SELECTION（**待 B3 加**）：fixture 非數字 bill ref → contract lookup 回 [C1,C2] ⇒ 必須 AMBIGUOUS；mutation `contracts[0]` 必紅。⚠️ 與 B-M1 **不重複**：B-M1 防 resolver 拿到 candidates 後自己取第一筆；B-G5 防 **upstream adapter 在 resolver 看見 candidates 之前就先偷偷取第一筆**。⇒ 兩層都要守（本次 jgb_system_api.py:190 的發現即證據）。",
+ "_pending_guard_B_G5": "✅ **已落地**（test_t4b3_bill_ref_resolution_req.py，10 passed）：非數字 ref → contract lookup 回 [C1,C2] ⇒ AMBIGUOUS，且 ⛔ 不繼續查帳單；mutation `contracts[0]`（＝legacy jgb_system_api.py:190 的行為）真的跑紅。⚠️ 與 B-M1 不重複：B-M1 防 resolver 自取第一筆；B-G5 防 upstream 在 resolver 看見 candidates 前先取。",
  "_migration_ledger_finding": {
   "id": "MIGRATION-LEDGER-01",
   "status": "CLOSED",
