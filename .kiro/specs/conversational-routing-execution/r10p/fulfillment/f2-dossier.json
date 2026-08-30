@@ -2545,6 +2545,87 @@
     "R-31"
    ],
    "_caution": "⚠️ GROUNDING_FACTS 的 downstream adapter **現在先不自行定義**——須先實查現有 Face／facts 如何被轉成最終回答。否則會再犯一次：**builder 存在 ≠ builder output 已經是 consumer 需要的 semantic slot**。"
+  },
+  "F-C4_ROW_SHOW_ACTION_NOT_VALID_AFTER_COMMIT": "C2 responsibility path：`on_complete_action = show_knowledge` → **FORBIDDEN**。⛔ 不是名稱問題——它的 contract 本身就是 **row authority**。⛔ 尤其不得改成「show_knowledge 但 knowledge_id 偷塞 responsibility_id」：欄位名稱與實際 authority 錯位，後面一定再出事故。⇒ C2 另立 `on_complete_action = resume_fulfillment`。",
+  "F-C5_RESUME_SAME_AUTHORITY": "input collection 完成 → resume **exact committed** responsibility_id ＋ fulfillment binding。MUST NOT：re-retrieve／re-categorize／re-dispatch by utterance／**recover authority from knowledge_id**。",
+  "session_carrier_contract": {
+   "required_in_responsibility_mode": [
+    "responsibility_id",
+    "fulfillment_strategy",
+    "fulfillment_binding_id",
+    "input_contract_id / required_inputs"
+   ],
+   "_binding_id_not_callable": "⚠️ ⛔ 不把 callable／function path 直接存 session——存**穩定 binding ID**（例：`receipt.actual_amount.v1`），resume 時再由 sealed executable fulfillment registry 解析。如此函式搬檔案 ⛔ 不會使既有 session contract 失效。",
+   "_two_modes_coexist": "legacy row flow（knowledge_id ＋ show_knowledge）**保留**，⛔ 不為 C2 順手重構。⛔ 不得做混合 session 讓 runtime 猜誰優先 ⇒ 以 `session_authority_mode ∈ {legacy_row, responsibility}` 明確判別。invariant：responsibility mode → responsibility_id REQUIRED、**knowledge_id MUST NOT be authority**。",
+   "_knowledge_content_note": "KNOWLEDGE_CONTENT 未來仍可能有 grounding_source_row_id，但那是 **FulfillmentPlan 裡的 reviewed storage reference**，⛔ 不是 session authority。"
   }
- }
+ },
+ "_grounding_facts_adapter_audit": {
+  "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
+  "_scope": "只查業主指定的四題，⛔ 不設計替代方案。",
+  "Q1_entry_condition_depends_on_face_or_utterance": {
+   "answer": "**YES ⇒ 依賴**",
+   "evidence": [
+    "conversational_engine.py:938／1047／1089：`face=state.get('face') or _domain_key(config)`——face 由 state／domain config 決定，並**貫穿**傳入 api_handler 重格式化",
+    "該 face 進 api_call_handler → jgb_response_formatter → BILL_FACE_BUILDERS.get(face)⇒ **builder（semantic owner）由 face 選**",
+    "conversational_engine.py:689 `entry_key = _domain_key(config)`——整段由 domain config 驅動"
+   ],
+   "_implication": "⚠️ 進入條件與內部重格式化**都**會依 face 重新選 semantic path ⇒ 違反 F-C2"
+  },
+  "Q2_adapter_input_contract": {
+   "inputs": [
+    "rows（API 回傳資料列）",
+    "result['formatted_response']（formatter 產出的 facts 字串）",
+    "mapping（result_mapping 的 id_field／label_field／suppress_head_id）",
+    "scope（grounding_scope，含 secondary_call／secondary_calls）",
+    "state（face／_refine_requested／grounding_note）",
+    "form_data",
+    "user_message",
+    "endpoint",
+    "config"
+   ],
+   "_note": "⚠️ 遠不只 facts string——它同時吃 **config 驅動的 mapping／scope** 與 **face／user_message**。⇒ ⛔ 不是一個純 presentation 函式。"
+  },
+  "Q3_output_is_final_text": {
+   "answer": "**NO ⇒ 尚非 final conversational text**",
+   "evidence": [
+    "回傳 `{'kind':'converge','grounding': grounding}`——程式註解明寫「由 formatter 產**乾淨中文 facts 餵 LLM 組話**」（⛔ 不餵原始碼，已證 LLM 解碼會幻覺）",
+    "conversational_engine.py:635-667 上層再包 `{kind:'converge', grounding, ctx, cta_mode, converge_kind, system_md, ...}` ⇒ **後面仍有 converge_kind／CTA 等決策**",
+    "⚠️ 另一分支 `{'kind':'ask', 'answer': ..., 'candidates': ...}` 是**多筆歧義**時列候選"
+   ],
+   "_positive_finding": "✅ 這段**已經**拒絕 first-row authority：多筆時列候選請使用者選（含 cap 截斷與「請提供編號」的補條件路徑）⇒ 這是 F-C3 在既有程式中的**正例**，與 contracts.py:648／bills.py:379 的 `[0]` 形成對照。"
+  },
+  "Q4_callable_directly_after_commit": {
+   "answer": "**NO_WITHOUT_EXTRACTION**",
+   "reason": "需 config／scope／mapping 才能運作，且會以 face 重新選 builder ⇒ ⛔ 無法在 responsibility committed 後以固定 adapter 直接呼叫並保證 owner 不變。",
+   "_what_is_reusable": "⚠️ 依業主尺度，需抽出其中 **post-authority 的 presentation portion**：① head（id｜label）組裝 ② facts 串接 ③ grounding_note 回饋 state ④ 多筆列候選的 ask 分支。這四段本身**不重新決定 owner**；重新決定 owner 的是它們**上游**的 face／config 分派。"
+  },
+  "_verdict": "NOT_DIRECTLY_REUSABLE ⇒ **T4-D 的 GROUNDING_FACTS 仍 NOT_ESTABLISHED**；⛔ 不代表要重寫 conversational engine，只代表必須抽出 post-authority presentation portion。",
+  "_blocks": [
+   "R-28 升 APPROVED_CAPABILITY",
+   "R-31 升 APPROVED_CAPABILITY"
+  ]
+ },
+ "_t4_seams": {
+  "T4-A_responsibility_session_carrier": "DESIGN_RESOLVED / NOT_IMPLEMENTED",
+  "T4-B_entity_resolution": "PARTIAL_EXISTING / NOT_CONTRACTUALLY_CLOSED",
+  "T4-C_direct_fulfillment_execution": "DESIGN_RESOLVED / NOT_IMPLEMENTED",
+  "T4-D_output_adaptation": {
+   "FINAL_TEXT": "EXISTING_PATH_IDENTIFIED",
+   "GROUNDING_FACTS": "NOT_ESTABLISHED（見 _grounding_facts_adapter_audit）"
+  },
+  "_note": "⚠️ 不是四個獨立產品問題，是**同一 T4 transport 的四個 seam**。③ 拆成 execution 與 presentation，因為 R-28／R-31 已證 output 不是 final text。"
+ },
+ "_first_row_authority_ruling": {
+  "verdict": "contracts.py:648 `matched[0]` 與 bills.py:379 `builder(rows[0])` 在 responsibility path **皆不合法**（F-C3 已足夠，⛔ 不需另開 policy）",
+  "allowed_states": [
+   "0 match → no_match",
+   "**>1 plausible match → ambiguous_match**",
+   "1 verified match → resolved entity"
+  ],
+  "_only_exception": "僅當「結果集合本身由 **deterministic selection contract** 證明唯一」才可直接取單筆。",
+  "_positive_example": "select_point_refund（explicit selection states）／conversational_engine 的多筆列候選 ask 分支",
+  "_negative_example": "generic `matched[0]`"
+ },
+ "_f2a_verdicts_unchanged": "⚠️ transport audit 讓我們知道**如何解** blocker，但**未新增足以升 verdict 的執行證據** ⇒ F2-A 五筆維持原判；⛔ 不得因『resume 架構已看懂』就把後四筆提前 APPROVED。"
 }
