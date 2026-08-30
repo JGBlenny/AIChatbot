@@ -151,7 +151,7 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
         "entity_type": "payment_logs",
         "cardinality_mode": CARD_COLLECTION,
         "collection_scope_key": "resolved_bill_id",
-        "empty_collection_policy": None,        # ⚠️ **待裁**
+        "empty_collection_policy": EMPTY_RESOLVED_EMPTY,   # ⚠️ 業主裁定 2026-08-30
         "required_fields": ["resolved_bill_id"],
         "resolver_id": "payment_logs.by_bill",
         "ambiguity_policy": None,               # ⚠️ COLLECTION ⛔ 不適用 ambiguity policy
@@ -164,7 +164,7 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
         "entity_type": "invoice_logs",
         "cardinality_mode": CARD_COLLECTION,
         "collection_scope_key": "resolved_bill_id",
-        "empty_collection_policy": None,        # ⚠️ **待裁**
+        "empty_collection_policy": EMPTY_RESOLVED_EMPTY,   # ⚠️ 業主裁定 2026-08-30
         "required_fields": ["resolved_bill_id"],
         "resolver_id": "invoice_logs.by_bill",
         "ambiguity_policy": None,
@@ -176,7 +176,7 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
         "entity_type": "iot_manufacturers",
         "cardinality_mode": CARD_COLLECTION,
         "collection_scope_key": "role_id",
-        "empty_collection_policy": None,        # ⚠️ **待裁**
+        "empty_collection_policy": EMPTY_RESOLVED_EMPTY,   # ⚠️ 業主裁定 2026-08-30
         "required_fields": [],
         "resolver_id": "iot.manufacturers",
         "ambiguity_policy": None,
@@ -199,13 +199,24 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
     },
     "tenant.summary.v1": {
         "entity_type": "tenant_summary",
-        "cardinality_mode": CARD_SINGLETON,
+        "cardinality_mode": CARD_SINGLETON,          # ⚠️ **proposal**——見 _singleton_runtime_contract
+        "singleton_runtime_contract": "NOT_ESTABLISHED",
         "empty_collection_policy": None,
         "required_fields": ["tenant_ref"],
         "resolver_id": "tenant.summary",
         "ambiguity_policy": AMBIGUITY_EXACT_IDENTIFIER,
-        "_note": "⚠️ 需確認 production contract 是否**保證**單一 tenant summary；"
-                 "若可能回多筆競爭物件 ⇒ AMBIGUOUS／contract violation。",
+        "_note": "⚠️ 唯讀盤查（2026-08-30）：API 層形狀支持 SINGLETON，但 **identity resolution 未證**。"
+                 "① endpoint `/api/external/v1/tenants/{user_id}/summary` —— user_id **已在 path**，"
+                 "⇒ 呼叫前身分即已固定，⛔ 無候選清單、⛔ 無 rows[0]／data[0]；"
+                 "② `data` 為單一 dict（mock 對齊 TenantApiController@summary 的 ExistedLessee 模型）；"
+                 "③ formatter `_format_tenant_summary(data if isinstance(data, dict) else {})` "
+                 "——契約即預期 dict。"
+                 "⚠️ **但**：form `jgb_tenant_query` 的 api_config 是 "
+                 "`user_id: '{form.tenant_keyword}'` —— 欄位名為 **keyword**，卻**逐字**當作 "
+                 "user_id 塞進 URL path。⇒ **沒有 tenant identity resolution 這一步**："
+                 "使用者若輸入姓名而非 id，會被當成 id 使用。"
+                 "⚠️ 這**不是** F-C3 的 first-row 問題（根本沒有清單），而是 "
+                 "**identity assumed, not resolved** ⇒ singleton_runtime_contract = NOT_ESTABLISHED。",
     },
     "estate.by_ref.v1": {
         "entity_type": "estate",

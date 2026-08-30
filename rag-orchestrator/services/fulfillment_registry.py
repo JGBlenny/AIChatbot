@@ -139,6 +139,69 @@ def receipt_actual_amount_adapter(resolved_bill: Dict[str, Any],
     return _diagnose_receipt(resolved_bill)
 
 
+# ── F-C12：empty input 的 **binding 層**處理（⚠️ ⛔ 未註冊，仍為 proposed）────
+#
+# ```text
+# COLLECTION 的 empty_collection_policy 只決定：[] 是否為**已成功解析**的 capability input。
+# ⛔ 它不決定 capability 對 [] 要說什麼 —— 那是 **fulfillment binding** 的責任。
+# ```
+# ⚠️ 因此同一個 shared input contract（如 payment_logs.by_bill.v1）底下，
+#    不同 responsibility 對同一個 `[]` **可以有不同回答**
+#    ⇒ empty answer semantics ⛔ 本來就不能塞進 shared input contract。
+
+#: ⚠️ reviewed empty-state facts。⛔ **不呼叫 legacy dispatcher** 取得（那會把 question 帶回來）；
+#: 文字與 legacy 空態一致由 guard 比對（drift 會被抓到）。
+EMPTY_PAYMENT_LOGS_FACTS = (
+    "查無此帳單的金流交易日誌。可能原因：\n"
+    "• 租客尚未操作線上付款（帳單處於待繳費狀態）\n"
+    "• 帳單是透過手動到帳（非線上金流），不會產生金流日誌\n"
+    "• 帳單編號不正確\n\n"
+    "如果帳單已顯示「已繳費」但您仍有疑問，請查詢帳單詳情確認付款時間。")
+
+EMPTY_IOT_MANUFACTURERS_FACTS = (
+    "目前沒有綁定任何 IoT 廠商。若要使用 IoT 功能（門鎖、電表等），"
+    "請先至「IoT 裝置」頁面綁定廠商帳號。")
+
+
+def payment_not_reflected_facts_adapter(resolved_logs, context: Mapping[str, Any]
+                                        ) -> Dict[str, Any]:
+    """R-12 的 proposed adapter —— **EMPTY_ADAPTER_REQUIRED**。
+
+    ⚠️ 實證：`_diagnose_payment_not_reflected([])` → 「以下是此帳單的付款交易紀錄：\n」
+    （**退化**：只剩空標題）⇒ 空態必須由 binding 攔下。
+    ⛔ **不得**改呼叫 `diagnose_payment_logs(logs, question)` 來重用空態文字（違反 F-C1）。
+    """
+    logs = resolved_logs or []
+    if not logs:
+        return {"outcome": "FACTS", "grounding_facts": EMPTY_PAYMENT_LOGS_FACTS,
+                "empty_input": True}
+    from services.jgb.payments import _diagnose_payment_not_reflected
+    return {"outcome": "FACTS", "grounding_facts": _diagnose_payment_not_reflected(logs),
+            "empty_input": False}
+
+
+def iot_binding_failure_facts_adapter(resolved_manufacturers, context: Mapping[str, Any]
+                                      ) -> Dict[str, Any]:
+    """R-23 的 proposed adapter —— **EMPTY_ADAPTER_REQUIRED**。
+
+    ⚠️ 實證：`_diagnose_binding_failure([])` → 「…**所有 IoT 廠商帳號狀態正常**」
+    ——空清單卻宣稱全部正常，**語義錯誤**。
+
+    ⚠️ 定性為 **RESPONSIBILITY_BINDING_DOMAIN_GAP**，⛔ **不是** production capability defect：
+    legacy 的 entry dispatcher 會先處理 `[]`，故該 branch 的實際 domain 一直被上游限制為
+    「已有 manufacturer data 後的綁定失敗診斷」；是 responsibility architecture **擴張了它的
+    輸入 domain**。⇒ 在 adapter 補空態，⛔ 不修改共享的 `_diagnose_binding_failure`
+    （除非日後有 docstring／test 明確宣稱它本就必須支援空 list）。
+    """
+    rows = resolved_manufacturers or []
+    if not rows:
+        return {"outcome": "FACTS", "grounding_facts": EMPTY_IOT_MANUFACTURERS_FACTS,
+                "empty_input": True}
+    from services.jgb.iot import _diagnose_binding_failure
+    return {"outcome": "FACTS", "grounding_facts": _diagnose_binding_failure(rows),
+            "empty_input": False}
+
+
 # ── R-28：direct GROUNDING_FACTS capability ────────────────────────────────
 def late_fee_facts_adapter(resolved_entity: Dict[str, Any],
                            context: Mapping[str, Any]) -> Dict[str, Any]:

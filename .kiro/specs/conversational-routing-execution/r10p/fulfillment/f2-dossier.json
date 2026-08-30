@@ -3484,7 +3484,8 @@
   "F-C10_INPUT_CONTRACT_PRECEDES_REACHABILITY": "若 responsibility 所需 input contract **尚未 machine-register**：⇒ entity reachability ⛔ 不得標 CONFIRMED，⛔ 也不得標 NOT_CONFIRMED-by-test，應標 **NOT_YET_JUDGEABLE**。**先建立 input contract，再驗 transport／entity reachability。**⚠️ 兩種 BLOCKED_INPUT 必須分開：類 A **validation blocker**（contract ESTABLISHED、reachability NOT_ESTABLISHED）；類 B **contract-definition blocker**（contract NOT_REGISTERED、reachability NOT_YET_JUDGEABLE）。",
   "F-C11_COLLECTION_IS_THE_ENTITY": "若 reviewed input contract 定義**整個 collection** 為 capability input，collection member count **⛔ 不構成 entity ambiguity**：`>1` 是**正常資料形狀**，⛔ 不得套用 SELECT_ONE 的 first-row／ambiguity policy。⚠️ 但 collection 仍要有 **scope identity**——⛔ 不是「API 回什麼 list 就全吃」：contract 必須宣告 `collection_scope_key`；混入其他 scope ⇒ **INPUT_CONTRACT_VIOLATION**。",
   "cardinality_mode_three_shapes": "**cardinality_mode 是 input contract 的一部分，⛔ 不是 runtime 猜出來的**：T4-B-C1 SELECT_ONE（0→NO_MATCH／1→RESOLVED／>1→AMBIGUOUS，僅此模式適用）；T4-B-C2 SINGLETON（absent→NO_MATCH／single→RESOLVED／multiple competing→AMBIGUOUS；⚠️ API 回單一 dict 時 ⛔ 不得人工轉 list 再數量判斷）；T4-B-C3 COLLECTION（0→依 empty_collection_policy／>=1→RESOLVED，resolved_entity＝collection）。",
-  "empty_collection_policy": "⚠️ **兩件事先前被混在一起**：`entity exists?` 與 `capability input is sufficiently resolved?`。對 collection responsibility，`0 rows` **不一定**表示 entity 不存在（可能是 bill 已 resolved 但 payment_logs=[]）。⇒ `NO_MATCH` 保留給**上游 required entity／scope 本身找不到**；空集合由 `empty_collection_policy ∈ {NO_MATCH, RESOLVED_EMPTY}` 決定，**⛔ 不得全域拍死**，由每個 input contract 逐筆 review。⚠️ 實作以 **大聲失敗** 落實：policy 未裁定時 `resolve_collection` 直接 raise，⛔ 不預設成 NO_MATCH（那正是「0 rows 被錯當不存在」的對稱 bug）。"
+  "empty_collection_policy": "⚠️ **兩件事先前被混在一起**：`entity exists?` 與 `capability input is sufficiently resolved?`。對 collection responsibility，`0 rows` **不一定**表示 entity 不存在（可能是 bill 已 resolved 但 payment_logs=[]）。⇒ `NO_MATCH` 保留給**上游 required entity／scope 本身找不到**；空集合由 `empty_collection_policy ∈ {NO_MATCH, RESOLVED_EMPTY}` 決定，**⛔ 不得全域拍死**，由每個 input contract 逐筆 review。⚠️ 實作以 **大聲失敗** 落實：policy 未裁定時 `resolve_collection` 直接 raise，⛔ 不預設成 NO_MATCH（那正是「0 rows 被錯當不存在」的對稱 bug）。",
+  "F-C12_EMPTY_RESOLUTION_IS_NOT_EMPTY_ANSWER_SEMANTICS": "`empty_collection_policy` **只決定** `[]` 是否為已成功解析的 capability input；⛔ **不決定** capability 對 `[]` 要說什麼——那是 **fulfillment binding** 的責任。⚠️ 因此同一 shared input contract 底下，不同 responsibility 對同一個 `[]` **可以有不同回答**⇒ empty answer semantics ⛔ 本來就不能塞進 shared input contract。每個 binding 另有 proposition：`empty_input_handling ∈ {DIRECT_SUPPORTED, ADAPTER_REQUIRED, NOT_YET_REVIEWED}`。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -3850,7 +3851,7 @@
   "_registry_discipline": "⛔ **不要立刻把 20 個 binding 註冊進 executable registry**——F-G1 的終態是「reviewed_active responsibility → exactly one **reviewed** fulfillment strategy」，⛔ 不是「找到具名函式就先啟用」。20 筆維持 `proposed`，待 input contract／execution closure 完成後逐筆升 APPROVED_CAPABILITY，再進 sealed Fulfillment V1。"
  },
  "_input_contract_closure": {
-  "status": "**SHAPE_FROZEN ／ empty_collection_policy 待逐筆裁**（2026-08-30）",
+  "status": "**SHAPE_FROZEN ＋ empty policy 已裁**（2026-08-30）",
   "registered": {
    "payment_logs.by_bill.v1": "COLLECTION（scope=resolved_bill_id）",
    "invoice_logs.by_bill.v1": "COLLECTION（scope=resolved_bill_id）",
@@ -3880,6 +3881,47 @@
    "invoice_logs.by_bill.v1 的 empty_collection_policy",
    "iot.manufacturers.v1 的 empty_collection_policy",
    "⚠️ tenant.summary：需確認 production contract 是否**保證**單一 summary"
-  ]
+  ],
+  "rulings_2026_08_30": {
+   "payment_logs.by_bill.v1": "empty_collection_policy = **RESOLVED_EMPTY**（前提：bill scope 已先正確 resolve；「沒有 payment log」本身是付款診斷的有效事實。判 NO_MATCH 會把『bill 存在但無付款紀錄』錯寫成『找不到要診斷的 entity』）",
+   "invoice_logs.by_bill.v1": "empty_collection_policy = **RESOLVED_EMPTY**",
+   "iot.manufacturers.v1": "empty_collection_policy = **RESOLVED_EMPTY**",
+   "tenant.summary.v1": "cardinality_mode = SINGLETON（**proposal 保留**）／**singleton_runtime_contract = NOT_ESTABLISHED**"
+  }
+ },
+ "_empty_input_handling": {
+  "payment_not_reflected（R-12）": "**ADAPTER_REQUIRED**——實證退化（只剩空標題）",
+  "iot_binding_failure（R-23）": "**ADAPTER_REQUIRED**——實證語義錯誤（空清單卻說「全部正常」）",
+  "invoice_issue_failure（R-18）": "DIRECT_SUPPORTED",
+  "invoice_invalid_failure（R-19）": "DIRECT_SUPPORTED",
+  "credit_card_failure（R-15）": "DIRECT_SUPPORTED",
+  "auto_pay_failure（R-16）": "**NOT_YET_REVIEWED** —— ⚠️ ⛔ 不得因同 family 就自動繼承 R-15",
+  "_adapters_written": "⚠️ R-12／R-23 的 empty adapter 已寫入 fulfillment_registry，但 **⛔ 未註冊**（F-G1：⛔ 不得『找到具名函式就先啟用』）。⛔ 未呼叫 legacy dispatcher 取空態文字（會把 question 帶回來）；改以 **drift guard** 比對 adapter 文字與 legacy 空態是否一致。"
+ },
+ "_iot_domain_gap": {
+  "verdict": "**RESPONSIBILITY_BINDING_DOMAIN_GAP = CONFIRMED**（⛔ 不定性為 production capability defect）",
+  "reason": "legacy entry dispatcher 會先處理 `[]`，故 `_diagnose_binding_failure` 的實際 domain 一直被上游限制為「已有 manufacturer data 後的綁定失敗診斷」；是 **responsibility architecture 擴張了它的輸入 domain**。",
+  "action": "在 `iot.binding_failure` adapter 補空態，⛔ **不修改**共享的 `_diagnose_binding_failure`——除非日後找到 docstring／test 明確宣稱它本就必須支援空 list，那才另定為 capability regression。"
+ },
+ "_prod_defect_01": {
+  "id": "PROD-DEFECT-01",
+  "status": "RECORDED（⛔ 未修）",
+  "symbol": "rag-orchestrator/services/jgb/payments.py::_diagnose_payment_not_reflected",
+  "defect": "`code` 只在 `if response:` 內指派，卻在迴圈末**無條件讀取** ⇒ **第一筆 log 缺 `response` 即 UnboundLocalError**（實測確認）。",
+  "trigger": "第一筆 log 無／空 response；若第一筆有、第二筆缺，則**沿用前一筆的 code**（⚠️ 亦可疑）",
+  "reachability": "legacy 路徑：diagnose_payment_logs 命中「沒到帳／沒更新／付了款／已付款」→ 該分支",
+  "scope": "⚠️ **不在本輪 scope**、⛔ **非本輪造成**；已寫成記錄現況的 guard，⛔ 未 xfail 掩蓋、⛔ 未修 production。修不修由業主裁定。"
+ },
+ "_tenant_singleton_probe": {
+  "supports_singleton": [
+   "endpoint `/api/external/v1/tenants/{user_id}/summary`——**user_id 已在 path** ⇒ 呼叫前身分即固定，⛔ 無候選清單、⛔ 無 rows[0]／data[0]",
+   "`data` 為單一 dict（mock 對齊 TenantApiController@summary 的 ExistedLessee 模型）",
+   "formatter `_format_tenant_summary(data if isinstance(data, dict) else {})` ⇒ 契約即預期 dict"
+  ],
+  "**blocks_singleton_guarantee**": [
+   "⚠️ form `jgb_tenant_query` 的 api_config 為 `user_id: '{form.tenant_keyword}'` —— 欄位名是 **keyword**，卻**逐字**當 user_id 塞進 URL path⇒ **沒有 tenant identity resolution 這一步**；使用者輸入姓名時會被當成 id 使用"
+  ],
+  "classification": "⚠️ 這**不是** F-C3 的 first-row 問題（根本沒有清單），而是 **identity assumed, not resolved**",
+  "verdict": "singleton_runtime_contract = **NOT_ESTABLISHED**"
  }
 }

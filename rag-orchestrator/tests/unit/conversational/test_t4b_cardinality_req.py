@@ -84,9 +84,14 @@ def test_empty_no_match_policy(monkeypatch):
 
 
 @pytest.mark.req("T4B_C3:5")
-def test_undecided_policy_hard_fails():
-    """⚠️ **大聲失敗**：⛔ 不得預設成 NO_MATCH——那是「0 rows 被錯當不存在」的對稱 bug。"""
-    assert rer.INPUT_CONTRACTS[COLL]["empty_collection_policy"] is None, "前提：尚未裁定"
+def test_undecided_policy_hard_fails(monkeypatch):
+    """⚠️ **大聲失敗**：⛔ 不得預設成 NO_MATCH——那是「0 rows 被錯當不存在」的對稱 bug。
+
+    ⚠️ 三個 collection contract 已於 2026-08-30 裁定 RESOLVED_EMPTY，
+    故此處**注入**未裁定狀態來驗守門仍在（⛔ 不依賴「剛好還沒裁」的暫時狀態，
+    否則這條 guard 會在裁定後靜默失效）。
+    """
+    monkeypatch.setitem(rer.INPUT_CONTRACTS[COLL], "empty_collection_policy", None)
     with pytest.raises(EntityResolutionError, match="尚未裁定"):
         rer.resolve_collection(COLL, [], scope_value=716317)
 
