@@ -1,0 +1,505 @@
+{
+ "_doc": "R10-FULFILLMENT F1 機械 proposal（⛔ 無 authority）。",
+ "_authority": "⛔ NONE——⛔ 不得自動升格；capability_id／grounding／input contract 一律 null，待 F2 逐筆 review。",
+ "schema_version": "FULFILL-SCHEMA-1",
+ "schema_digest": "e3f774ddaea5378b4d0dd51fa3489332bda498466a83aa21f0bd3ab3874a2a31",
+ "registry_v2_digest": "2071b7f5c8cca5d99e497f1959de48157a7c21c4d8826fd6ce1942292fd658ba",
+ "summary": {
+  "active": 30,
+  "proposed_KNOWLEDGE_CONTENT": 5,
+  "proposed_CAPABILITY": 25
+ },
+ "_note": "⚠️ owner_contract_prose 是**人類 provenance**，⛔ 不是 runtime contract——F2 必須為每筆 CAPABILITY 另定穩定 capability_id 並證明 input contract 可達。",
+ "proposals": [
+  {
+   "responsibility_id": "R-01",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "jgb_repairs query／action capability",
+   "members": [
+    3365,
+    4420
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-02",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "rag-orchestrator/services/jgb/contracts.py:128::check_can_invite",
+   "members": [
+    3368,
+    3490
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-03",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "rag-orchestrator/services/jgb/contracts.py:257::check_can_early_termination",
+   "members": [
+    3370,
+    3493,
+    3511
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-04",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "rag-orchestrator/services/jgb/contracts.py:294::check_can_renew",
+   "members": [
+    3371,
+    3494,
+    3511
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-05",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "rag-orchestrator/services/jgb/contracts.py:744::_format_status_response",
+   "members": [
+    3372,
+    3510
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-06",
+   "proposed_strategy": "KNOWLEDGE_CONTENT",
+   "mechanical_basis": "registry owner_contract 以 Knowledge 起始",
+   "owner_contract_prose": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）",
+   "members": [
+    3402
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-07",
+   "proposed_strategy": "KNOWLEDGE_CONTENT",
+   "mechanical_basis": "registry owner_contract 以 Knowledge 起始",
+   "owner_contract_prose": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）",
+   "members": [
+    3406
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-08",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "rag-orchestrator/services/jgb/contracts.py:161::check_can_move_in",
+   "members": [
+    3491,
+    3511
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-09",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "rag-orchestrator/services/jgb/contracts.py:203::check_can_move_out",
+   "members": [
+    3492,
+    3511
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-10",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_send",
+   "members": [
+    3495
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-11",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_diagnose_cannot_cancel",
+   "members": [
+    3496
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-12",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "payment_flow::_diagnose_payment_not_reflected（rag-orchestrator/services/jgb/payments.py::_diagnose_payment_not_reflected）",
+   "members": [
+    3497
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-14",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py:602::_diagnose_manual_complete",
+   "members": [
+    3499
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-15",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "payment_flow::_diagnose_credit_card_failure（rag-orchestrator/services/jgb/payments.py::_diagnose_credit_card_failure）",
+   "members": [
+    3500
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-16",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "diagnose_payment_logs ／ rag-orchestrator/services/jgb/payments.py:120::_diagnose_auto_pay_failure",
+   "members": [
+    3501
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-17",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "diagnose_bill ／ rag-orchestrator/services/jgb/bills.py:625::_diagnose_atm_expired",
+   "members": [
+    3502
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-18",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "invoice::_diagnose_issue_failure（rag-orchestrator/services/jgb/invoices.py::_diagnose_issue_failure）",
+   "members": [
+    3503
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-19",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "invoice::_diagnose_invalid_failure（rag-orchestrator/services/jgb/invoices.py::_diagnose_invalid_failure）",
+   "members": [
+    3504
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-20",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "subscription::_diagnose_cannot_add_estate（rag-orchestrator/services/jgb/subscription.py::_diagnose_cannot_add_estate）",
+   "members": [
+    3505
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-21",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "subscription::_diagnose_estates_delisted（rag-orchestrator/services/jgb/subscription.py::_diagnose_estates_delisted）",
+   "members": [
+    3506
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-22",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "estate-status ／ rag-orchestrator/services/jgb/estates.py:33::build_estate_status_facts",
+   "members": [
+    3507
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-23",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "rag-orchestrator/services/jgb/iot.py::diagnose_iot",
+   "members": [
+    3508
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-24",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "jgb_tenant_summary ＋ rag-orchestrator/services/jgb_response_formatter.py::_format_tenant_summary",
+   "members": [
+    3514
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-25",
+   "proposed_strategy": "KNOWLEDGE_CONTENT",
+   "mechanical_basis": "registry owner_contract 以 Knowledge 起始",
+   "owner_contract_prose": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority；⛔ 不要求另有 engine）",
+   "members": [
+    3519
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-26",
+   "proposed_strategy": "KNOWLEDGE_CONTENT",
+   "mechanical_basis": "registry owner_contract 以 Knowledge 起始",
+   "owner_contract_prose": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority）",
+   "members": [
+    3531
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-27",
+   "proposed_strategy": "KNOWLEDGE_CONTENT",
+   "mechanical_basis": "registry owner_contract 以 Knowledge 起始",
+   "owner_contract_prose": "Knowledge（非空 answer ＋ reviewed content responsibility 即為 authority）",
+   "members": [
+    3532
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-28",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "late_fee Face ／ services/jgb/bills.py::build_late_fee_facts",
+   "members": [
+    3939,
+    3940
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-29",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "bill_diagnosis 的 receipt-amount deterministic capability（B05）",
+   "members": [
+    4640
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-30",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "bill_diagnosis ／ rag-orchestrator/services/jgb/bills.py::_format_bill_status 路徑",
+   "members": [
+    4656
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  },
+  {
+   "responsibility_id": "R-31",
+   "proposed_strategy": "CAPABILITY",
+   "mechanical_basis": "registry owner_contract 指向 deterministic／query／action capability",
+   "owner_contract_prose": "POINT_REFUND_BILL_SELECTION ＋ downstream bill facts",
+   "members": [
+    4657
+   ],
+   "review_status": "proposed",
+   "capability_id": null,
+   "input_contract": null,
+   "output_contract": null,
+   "grounding_source_row_id": null,
+   "grounding_content_digest": null,
+   "review_evidence": null
+  }
+ ]
+}

@@ -1,0 +1,68 @@
+{
+ "_doc": "R10-FULFILLMENT V1 schema（業主凍結 2026-08-30）。**Responsibility Fulfillment Contract**。",
+ "_why_separate_artifact": "```text\nRegistry V2   回答：這個 responsibility **是什麼**？\nFulfillment V1 回答：它勝出後，**由什麼東西完成回答**？\n```\n⚠️ fulfillment／execution 是 **operational binding**，⛔ 不是 responsibility identity。塞回 Registry V2 會把穩定的 semantic authority 與較易隨程式重構的 execution binding 綁死。⇒ 本檔綁 registry_v2_digest，但 ⛔ **不修改 registry-v2.json、⛔ 不開 Registry epoch 3**。未來函式改位置只需 fulfillment binding migration，⛔ 不應造成 registry 新 epoch。",
+ "_three_layers": {
+  "row／alias": "nomination",
+  "responsibility": "semantic authority／scoring",
+  "fulfillment contract": "answer／grounding／executable capability"
+ },
+ "_rejected_option": "⛔ **① 勝出後回頭挑一個 member 當 winner row：REJECTED**。R-28 即反例（3939／3940 answer 皆空），且 alias 本來就被裁成 nomination-only。",
+ "registry_v2_digest": "2071b7f5c8cca5d99e497f1959de48157a7c21c4d8826fd6ce1942292fd658ba",
+ "version": "FULFILL-SCHEMA-1",
+ "strategies": {
+  "KNOWLEDGE_CONTENT": {
+   "_when": "owner ＝ Knowledge 的 general responsibilities",
+   "required": [
+    "grounding_source_row_id",
+    "grounding_content_digest"
+   ],
+   "_semantics": "⚠️ 使用既有 Knowledge answer **不是因為那列 recall 贏了**，而是 fulfillment review 明確把該內容**升格**為此 responsibility 的 grounding source。⇒ row 是**內容的 storage location**，⛔ 不是 semantic authority。",
+   "_runtime": "runtime 可仍從 KB 取 answer，但**必須驗證與 reviewed digest 一致**；漂移即 fail loudly。⛔ 只存 row_id 而不鎖 digest ＝ 日後有人改 answer 就會在**沒有 responsibility review** 的情況下改變 fulfillment truth。"
+  },
+  "CAPABILITY": {
+   "_when": "其餘 instance responsibilities",
+   "required": [
+    "capability_id",
+    "input_contract",
+    "output_contract"
+   ],
+   "_semantics": "⛔ **不得**直接拿 Registry V2 的 `owner` 字串執行——`services/jgb/bills.py:602::_diagnose_manual_complete` 是**人類 provenance**，⛔ 不是 runtime contract。必須另建穩定 capability_id，由 **code-side executable registry** 對映到實際函式。",
+   "_input_contract_why": "⚠️ 下一個**不能再犯**的推論：「owner capability 存在 ⇒ C2 runtime 一定有足夠輸入可呼叫」——**不成立**。capability 可能需要 bill／contract／tenant／selected repair／user-vendor context。每個 CAPABILITY binding 必須證明 `C2 downstream runtime context → required capability inputs` **真的可達**——這是 fulfillment review 的一部分，⛔ 不是接線後才猜。"
+  }
+ },
+ "record_fields": [
+  "responsibility_id",
+  "strategy",
+  "review_status",
+  "review_evidence"
+ ],
+ "review_status_values": [
+  "proposed",
+  "reviewed_active",
+  "FULFILLMENT_NOT_ESTABLISHED"
+ ],
+ "_not_established": "若某筆既不是合法 Knowledge grounding、也沒有 executable capability binding → `FULFILLMENT_NOT_ESTABLISHED`，**T4 blocker remains**；⛔ 不得 fallback 回 member row。",
+ "_downstream_shape": "⛔ responsibility result **不得**為了餵舊 consumer 而假造 row-shaped result（answer／form_id／action_type）——那是錯的 abstraction。中介物是 **FulfillmentPlan**：KNOWLEDGE_CONTENT → 取 reviewed grounding answer → 再送既有 template／AnswerFormatter；CAPABILITY → 執行 reviewed capability → 產生該 capability 的合法 downstream output。⚠️ 若某 capability 需要 form／action，那是 **capability binding 的 output／dispatch contract**，⛔ 不是從 winning alias 的 form_id／action_type 抄回來。",
+ "invariants_frozen": {
+  "F-C1_AUTHORITY_COMMIT_NO_REROUTE": "responsibility 一旦由 C2 semantic scoring commit，fulfillment **必須執行該 responsibility 的 reviewed binding**；⛔ 不得再依 utterance／category／row metadata 重新選另一 semantic owner。⚠️ 例：R-03 應直接綁 check_can_early_termination，⛔ 不得把原問句丟回 `_build_response(contract, user_question)` 讓「點交／續約／提前」keyword elif 再決定一次；R-14 → _diagnose_manual_complete、R-28 → build_late_fee_facts，⛔ 皆不重走 diagnose_bill(question) 二次判斷。否則 C2 建立的 responsibility authority 會被 keyword dispatcher 改寫。",
+  "F-G1": "每個 reviewed_active responsibility → **exactly one** reviewed fulfillment strategy",
+  "F-G2": "KNOWLEDGE_CONTENT → grounding row 必須明確指定、reviewed answer digest **exact match**，⛔ 不得因 recall member 不同而改變 grounding",
+  "F-G3": "CAPABILITY → capability_id 必須存在於 **executable registry**，⛔ 不得用 owner prose／file:line 字串直接 dispatch",
+  "F-G4": "responsibility committed 後，mutation 原 utterance 中的**其他 dispatch keywords** → fulfillment capability **MUST remain unchanged**（直接證 F-C1）",
+  "F-G5": "沒有 fulfillment binding → **hard fail**；⛔ 不得 fallback：best member／non-empty answer member／first member／canonical text 當 answer／legacy row result（這條把 ① 永久堵住）"
+ },
+ "_positive_controls": {
+  "R-28": "members 3939／3940 **answer 皆空** ⇒ 勝出後必須走 CAPABILITY（build_late_fee_facts）；任何 implementation 嘗試 pick member answer **立刻失敗**",
+  "R-26": "⇒ KNOWLEDGE_CONTENT（reviewed 3531 grounding content）；⛔ 不應因 owner=Knowledge 就去找一個 executable Face",
+  "_why_both": "這一對證明**兩種 strategy 都是真的**，⛔ 不是只有 schema。"
+ },
+ "_order": [
+  "F0 schema freeze",
+  "F1 30 active strategy census（**proposal only**）",
+  "F2 CAPABILITY executable binding review ＋ KNOWLEDGE grounding review",
+  "F3 seal Fulfillment V1",
+  "F4 deterministic guards／mutations",
+  "→ 才做 C2-I4 T4 production transport（⛔ 現在不碰 routers/chat.py）"
+ ],
+ "_proposal_discipline": "proposal 可機械產生，⛔ 但不得自動升格成 execution authority：⛔ 不得自動填 capability_id／grounding authority／input contract，⛔ 更不得自動 seal。"
+}

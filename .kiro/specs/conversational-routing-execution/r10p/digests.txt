@@ -1,5 +1,5 @@
 # R10-P digests（2026-08-29）
-R10P_STAGE=CANONICAL_MIGRATION_SEALED（registry epoch 2）
+R10P_STAGE=FULFILLMENT_F0_F1（schema 凍結＋機械 proposal；⛔ 未 seal）
 POPULATION_ROWS=54
 POPULATION_DIGEST=51c04b887a16b05f9b19ca7f7e2b2a3b352b4ff26dcf639095593e2fb0647899
 POPULATION_IDSET_DIGEST=00581c42771fa3b01d5f9d9fe537f872ea501178e395dbf86203124771e0feff
@@ -32,3 +32,9 @@ V2_EQUIVALENCE_DIGEST=ac9108d0e53eb753622405838b835f6a974baaba66202b58a751539031
 # ⚠️ V1（3e5bcdc6…）維持 immutable historical seal；P5 census（ee8e398d…）⛔ 不改寫。
 # V1↔V2 structural-equivalence = STRUCTURALLY_EQUIVALENT（8 項數字 ＋ 逐列 disposition
 #   ＋ LEVEL_A_V2 對應全部相同）⇒ 只有 canonical 面改變，topology 零漂移。
+FULFILL_SCHEMA_DIGEST=e3f774ddaea5378b4d0dd51fa3489332bda498466a83aa21f0bd3ab3874a2a31
+FULFILL_PROPOSAL_DIGEST=ffc564fe0843dc01eaee2d4e6da6d6858cb94ae5e83536b545c17563f22d3929
+# R10-FULFILLMENT V1：**獨立 sealed artifact**，綁 registry_v2_digest 但 ⛔ 不改 registry-v2.json、
+#   ⛔ 不開 Registry epoch 3——fulfillment 是 operational binding，⛔ 不是 responsibility identity。
+# F1 機械 proposal：30 active → KNOWLEDGE_CONTENT 5 ／ CAPABILITY 25（⛔ 無 authority，待 F2）
+# FULFILLMENT_REGISTRY_DIGEST（F3 seal 後才產生）
