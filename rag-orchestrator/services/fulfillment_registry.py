@@ -111,12 +111,18 @@ def execute(plan: Mapping[str, Any], resolution: Mapping[str, Any],
         raise FulfillmentExecutionError(
             f"binding 宣告 FINAL_TEXT 但 adapter 回 {type(out).__name__}"
             f"——⛔ runtime 不得猜 output mode")
-    if mode == OUTPUT_GROUNDING_FACTS and not isinstance(out, str):
-        raise FulfillmentExecutionError("GROUNDING_FACTS adapter 必須回事實字串")
+    if mode == OUTPUT_GROUNDING_FACTS:
+        # ⚠️ GROUNDING_FACTS 的 adapter 回的是 **outcome dict**（交給 D2 present()），
+        #    ⛔ 不是單純字串——四種 outcome 的形狀不同（FACTS／CANDIDATES／NOT_FOUND／
+        #    TYPE_MISMATCH），壓成字串會把 candidate 態的結構弄丟。
+        if not isinstance(out, dict) or "outcome" not in out:
+            raise FulfillmentExecutionError(
+                f"GROUNDING_FACTS adapter 必須回帶 outcome 的 dict，實得 {type(out).__name__}"
+                f"——⛔ runtime 不得猜 output mode")
     return FulfillmentExecutionResult(
         responsibility_id=rid, binding_id=spec["binding_id"], output_mode=mode,
         entity_id=resolution.get("resolved_id"),
-        **({"text": out} if mode == OUTPUT_FINAL_TEXT else {"facts": out}),
+        **({"text": out} if mode == OUTPUT_FINAL_TEXT else {"grounding_outcome": out}),
         _not_transported="⚠️ T4-C 只證 direct execution 正確；"
                          "⛔ 尚未接 routers/chat 或 AnswerFormatter（那是 T4-D）")
 
@@ -132,6 +138,89 @@ def receipt_actual_amount_adapter(resolved_bill: Dict[str, Any],
     from services.jgb.bills import _diagnose_receipt
     return _diagnose_receipt(resolved_bill)
 
+
+# ── R-28：direct GROUNDING_FACTS capability ────────────────────────────────
+def late_fee_facts_adapter(resolved_entity: Dict[str, Any],
+                           context: Mapping[str, Any]) -> Dict[str, Any]:
+    """`late_fee.facts.v1` → `bills.build_late_fee_facts(row)`。
+
+    ⚠️ **⛔ 不呼叫 `face_bill_response`**——那裡有 `BILL_FACE_BUILDERS.get(face)` 與
+    `is_point_refund_intent(user_question)` 兩道 semantic dispatch（違反 F-C1）。
+    ⚠️ builder 經 T4 稽核判為 **NOT_QUESTION_SENSITIVE**，故 ⛔ 不傳 user_question。
+
+    ⚠️ input contract 是 **tagged alternatives**：呼叫端必須已標明 entity 是
+    `resolved_contract` 還是 `resolved_late_fee_bill`——⛔ 不得退化成模糊的 `row`。
+    """
+    tag = context.get("entity_tag")
+    if tag not in ("resolved_contract", "resolved_late_fee_bill"):
+        raise FulfillmentExecutionError(
+            f"late_fee.facts.v1 的 entity_tag 必須是 resolved_contract 或 "
+            f"resolved_late_fee_bill，實得 {tag!r}——⛔ 不得退化成模糊的 row")
+    from services.jgb.bills import build_late_fee_facts
+    facts = build_late_fee_facts(resolved_entity)
+    return {"outcome": "FACTS", "grounding_facts": facts,
+            "entity_id": resolved_entity.get("id"),
+            "entity_label": resolved_entity.get("title"), "entity_tag": tag}
+
+
+# ── R-31：composite GROUNDING_FACTS capability ─────────────────────────────
+def point_refund_bill_facts_adapter(resolved_rows: Any,
+                                    context: Mapping[str, Any]) -> Dict[str, Any]:
+    """`point_refund.bill_facts.v1` —— **composite**：selection → outcome → fixed builder。
+
+    ## F-C9 三段全部在 binding 內固定
+
+    ```text
+    selection algorithm  select_point_refund      （固定）
+    downstream builder   build_late_fee_facts     （固定；⛔ 不由 utterance／face 選）
+    outcome mapping      SELECTED／CANDIDATES／NOT_FOUND／TYPE_MISMATCH（固定）
+    ```
+
+    ⚠️ runtime 可依**資料狀態**分支，⛔ 但不得依 utterance／face／category／member row
+    決定 semantic path——**data-dependent branching 是合法 fulfillment；semantic re-routing 不是。**
+
+    ⚠️ ⛔ 不重用 `_point_refund_response(rows, user_question, builder)`：它仍要求
+    `user_question` 且 builder 由呼叫端傳入 ⇒ 不符合 fixed-builder 契約。
+    """
+    from services.jgb import point_refund_selection as pr
+    from services.jgb.bills import build_late_fee_facts   # ⚠️ **固定** builder
+
+    rows = resolved_rows if isinstance(resolved_rows, list) else [resolved_rows]
+    if len(rows) == 1 and context.get("direct_bill"):
+        # 使用者直接指定某一筆 → 身分查核
+        state = pr.verify_direct_bill(rows[0])
+        selected = rows[0] if state == pr.STATE_SELECTED else None
+        candidates = []
+    else:
+        state, selected, candidates = pr.select_point_refund(rows)
+
+    if state == pr.STATE_SELECTED and selected is not None:
+        # ⚠️ provenance 不可斷：type 事實行與 amount／status facts **一起**進 grounding
+        facts = "\n".join([pr.type_fact_line(selected), build_late_fee_facts(selected)])
+        return {"outcome": "FACTS", "grounding_facts": facts,
+                "entity_id": selected.get("id"), "entity_label": selected.get("title"),
+                "selection_state": state}
+    if state == pr.STATE_CANDIDATES:
+        # ⚠️ ⛔ builder **不執行**——多筆時系統不自行選定任一筆
+        return {"outcome": "CANDIDATES",
+                "candidates": [{"id": c.get("id"), "label": c.get("title")} for c in candidates],
+                "outcome_note": pr.candidates_facts(candidates), "selection_state": state}
+    if state == pr.STATE_TYPE_MISMATCH:
+        return {"outcome": "TYPE_MISMATCH",
+                "outcome_note": pr.type_mismatch_facts(rows[0]), "selection_state": state}
+    return {"outcome": "NOT_FOUND", "outcome_note": pr.not_found_facts(),
+            "selection_state": state}
+
+
+register("late_fee.facts.v1", responsibility_id="R-28",
+         adapter=late_fee_facts_adapter,
+         input_contract_id="late_fee.bill_or_contract.v1", entity_type="bill_or_contract",
+         output_mode=OUTPUT_GROUNDING_FACTS)
+
+register("point_refund.bill_facts.v1", responsibility_id="R-31",
+         adapter=point_refund_bill_facts_adapter,
+         input_contract_id="point_refund.bill_by_contract.v1", entity_type="bill",
+         output_mode=OUTPUT_GROUNDING_FACTS)
 
 register("receipt.actual_amount.v1", responsibility_id="R-29",
          adapter=receipt_actual_amount_adapter,

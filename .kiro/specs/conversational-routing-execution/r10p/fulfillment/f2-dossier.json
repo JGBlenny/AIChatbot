@@ -2573,7 +2573,8 @@
   "D1-E_two_result_families": "responsibility completion 對外**兩個 result family**（依**型別**分流，⛔ 不靠 key 猜）：A `FulfillmentExecutionResult`（FINAL_TEXT）；B `ResponsibilityInputResolutionResult`（AMBIGUOUS／NO_MATCH／INVALID_INPUT）。⚠️ `RESOLVED` ⛔ 不得從 converter 對外出現——那代表 T4-C executor 被跳過 ⇒ hard fail。⚠️ envelope answer 有**兩個**合法來源：FINAL_TEXT＝fulfilled semantic answer；INPUT_RESOLUTION＝transport／clarification prompt ⇒ ⛔ 不得規定「responsibility response 的 answer 一定來自 capability final text」（否則 AMBIGUOUS 流程會被誤判）。精確不變量：**envelope answer 必須來自當前 result type 的 reviewed output field，⛔ 絕不從 knowledge／member row fallback。**",
   "D1-R_branch_coverage_rule": "⚠️ 業主採**較嚴格**標準：`bill.by_ref.v1` 既然正式允許 numeric ＋ nonnumeric，`APPROVED_CAPABILITY` 前應把**兩條合法 branch 都 externally validated**，或把尚未驗的 branch **明確標成未授權 runtime path**。⛔ 不得出現「contract 宣稱支援兩條／verification 只證一條／runtime 卻兩條全開」。",
   "SEC-01_derived_log_rule": "`test logs ／ failure output MUST NOT contain credential/token values`——⚠️ 要防的是**第二次不是 env，而是 exception／debug log 又把 secret 帶進 transcript**。已落為 4 條 unit guard（transport repr／init log／模組文件字串／硬編金鑰形狀），其中一條附**正對照**：先確認環境確實有秘密可洩，否則該檢查恆真＝假綠。",
-  "F-C8_PRESENTATION_AFTER_AUTHORITY": "GROUNDING_FACTS adapter **只能**做 presentation／packaging；semantic owner、builder、responsibility 必須在**進 adapter 之前**已經確定。⚠️ 判斷抽取邊界是否夠 post-authority 的檢查：若為了讓它工作必須把 user_question／face／config／endpoint／mapping 塞回來 ⇒ **邊界不夠，應停**。⚠️ D2 收的是 **already-classified outcome**，⛔ 不是 raw rows：T4-C 做 selection／capability execution（select_point_refund 在那裡跑）；T4-D2 只把**已決定好的** outcome 呈現出去 ⇒ 本層 ⛔ 不重跑 selection。"
+  "F-C8_PRESENTATION_AFTER_AUTHORITY": "GROUNDING_FACTS adapter **只能**做 presentation／packaging；semantic owner、builder、responsibility 必須在**進 adapter 之前**已經確定。⚠️ 判斷抽取邊界是否夠 post-authority 的檢查：若為了讓它工作必須把 user_question／face／config／endpoint／mapping 塞回來 ⇒ **邊界不夠，應停**。⚠️ D2 收的是 **already-classified outcome**，⛔ 不是 raw rows：T4-C 做 selection／capability execution（select_point_refund 在那裡跑）；T4-D2 只把**已決定好的** outcome 呈現出去 ⇒ 本層 ⛔ 不重跑 selection。",
+  "F-C9_COMPOSITE_BINDING_FIXES_ALL_SEMANTIC_CHOICES": "對 composite capability：responsibility commit 後 **selection algorithm／downstream builder／outcome mapping 三者皆固定於 binding 內**。⚠️ runtime **可以**依**資料狀態**分支（SELECTED／CANDIDATES／NOT_FOUND／TYPE_MISMATCH），⛔ 但不得依 utterance／face／category／member row 決定 semantic path。**data-dependent branching 是合法 fulfillment；semantic re-routing 不是。**"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -2624,7 +2625,7 @@
  "_t4_seams": {
   "T4-A_responsibility_session_carrier": "**MODULE_IMPLEMENTED / NOT_WIRED**（2026-08-30）——services/responsibility_session.py＋20 個 guard（A-G1…A-G5）；legacy 逐位未動（form_manager／api_call_handler／conversational_engine／formatter／bills／contracts／base_retriever git diff 皆空）。⚠️ 只證了 **authority 可跨 form round-trip 不變**，⛔ 未接 DB schema、⛔ 未接 production 流程。",
   "T4-B_entity_resolution": "**B1 ✅ ／ B2 ✅ ／ B3 ✅ module**（2026-08-30）——services/responsibility_bill_resolution.py 把 legacy adapter 裡**隱藏**的「keyword → first contract」拆成顯式兩階段；legacy 逐位未動。",
-  "T4-C_direct_fulfillment_execution": "**C1 ✅ module（R-29 only）**（2026-08-30）——services/fulfillment_registry.py ＋ 19 guards；⛔ 只註冊 R-29 一個 binding，⛔ 未從 25 筆 proposed owner 自動生成。",
+  "T4-C_direct_fulfillment_execution": "**C1 ✅（R-29 FINAL_TEXT）／C2 ✅（R-28 direct GROUNDING_FACTS、R-31 composite）**（2026-08-30）——19＋24 guards；production 檔（jgb/bills、point_refund_selection、conversational_engine、chat）**git diff 全空**。",
   "T4-D_output_adaptation": {
    "FINAL_TEXT": "**D1 ✅ wiring ／ D1-E ✅ envelope**（2026-08-30）——13＋16 guards；chat.py +123/-1（刪掉的一行是原本的單行 return，改為 type dispatcher），legacy `_convert_form_result_to_response` **本體逐位未改**。⚠️ full e2e：KNOWN PREEXISTING FAILURE 1（E2E-DEBT-01）／NEW REGRESSION 0。",
    "GROUNDING_FACTS": "**GROUNDING_FACTS_PRESENTATION_ADAPTER = ESTABLISHED**（2026-08-30）——services/grounding_presentation.py ＋ 18 guards；⚠️ **⛔ 不是**把 conversational_engine 那段搬過來，而是從需求反推的純輸入 contract。production 檔（conversational_engine／chat／bills）**零改動**。⚠️ ⛔ 尚不得宣稱 `R-28 FINAL USER RESPONSE = END_TO_END CONFIRMED`——本刀 ⛔ 不處理 LLM 最終生成 correctness（另一層）。"
@@ -2650,14 +2651,13 @@
  },
  "_next_order": [
   "T4-A ✅",
-  "T4-B1 ✅",
-  "T4-B2 ✅",
-  "T4-B3 ✅",
+  "T4-B1/B2/B3 ✅",
   "T4-C1 ✅",
-  "T4-D1 ✅",
-  "D1-E ✅ envelope",
-  "**D1-R** real JGB API → B3 resolver → exact bill → R-29 binding → FINAL_TEXT downstream（⚠️ 這一刀**只**回答：entity input 在真實 production-shaped adapter 上可不可達）",
-  "→ D1-R 綠才裁 R-29 APPROVED_CAPABILITY"
+  "D1-E ✅",
+  "T4-D2 ✅",
+  "T4-C2 ✅",
+  "**F2-B 20 筆逐筆 review**（三種 fulfillment 形狀的 precedent 已具備）",
+  "D1-R 仍 BLOCKED_EXTERNAL_TEST_INPUT"
  ],
  "_first_vertical_slice": "⚠️ 第一條 vertical slice 走 **R-29／FINAL_TEXT**：commit → form round-trip → resolve exact bill → direct _diagnose_receipt → FINAL_TEXT downstream。⇒ presentation extraction ⛔ 不必同時肩負「證明整個新 transport 架構能跑」的責任。",
  "_new_finding_2026_08_30": {
@@ -2777,5 +2777,20 @@
   "r28_positive_control": "3939／3940 answer 皆空（實查 registry-v2 members）⇒ presentation 仍完整成立；row answer 即使被塞進 payload 也**不會**混進輸出。",
   "r31_multi_outcome": "FACTS→converge；CANDIDATES→ask（⛔ 不自行 candidates[0]）；NOT_FOUND／TYPE_MISMATCH→需 T4-C 提供 reviewed outcome_note（⛔ 本層不自行編話術）。",
   "_still_open": "⚠️ R-28／R-31 的 F2 verdict **維持 INSUFFICIENT_EVIDENCE**——presentation adapter 已 ESTABLISHED，但 input reachability 與 wired end-to-end 皆未證。"
+ },
+ "_three_fulfillment_shapes": {
+  "R-29": "**direct FINAL_TEXT** capability —— receipt.actual_amount.v1 → _diagnose_receipt",
+  "R-28": "**direct GROUNDING_FACTS** capability —— late_fee.facts.v1 → build_late_fee_facts；input 為 **tagged alternatives**（entity_tag 必須是 resolved_contract 或 resolved_late_fee_bill，⛔ 不得退化成模糊的 row）",
+  "R-31": "**composite GROUNDING_FACTS** capability —— point_refund.bill_facts.v1：selection(select_point_refund) → outcome mapping → **fixed** builder(build_late_fee_facts)；⛔ 不重用 _point_refund_response（它仍要 user_question 且 builder 由呼叫端傳入）",
+  "_why_matters": "⚠️ 有這三個 precedent，F2-B 的 20 筆才不需要**每遇到不同函式形狀就重新發明一套規則**。"
+ },
+ "_r28_r31_status": {
+  "BINDING_EXECUTABILITY": "CONFIRMED（C2-G7 pair 檢查；C2-G8 output mode exactness）",
+  "NO_REROUTE": "CONFIRMED（C2-G1／G3：四種 noise 下 payload 逐位相同；adapter 可執行碼不含 face_bill_response／BILL_FACE_BUILDERS／is_point_refund_intent）",
+  "GROUNDING_OUTPUT_CONTRACT": "CONFIRMED（四種 outcome 皆有 reviewed 形狀；CANDIDATES 時 builder **不執行**；NOT_FOUND／TYPE_MISMATCH 必帶 reviewed outcome_note）",
+  "PRESENTATION_ADAPTER": "CONFIRMED（C2 outcome 直接餵進 D2 present() 全綠）",
+  "SELECTION_PROVENANCE": "CONFIRMED（C2-G5：type_fact_line 必在 facts；mutation 拿掉即紅——證明 provenance ⛔ 沒被 adapter 吃掉）",
+  "ENTITY_INPUT_REACHABILITY": "⚠️ **NOT_ESTABLISHED**（未經 production-shaped wired path）",
+  "F2_VERDICT": "⚠️ **維持 INSUFFICIENT_EVIDENCE**——⛔ 不因 C2 成功就提前 APPROVED。"
  }
 }

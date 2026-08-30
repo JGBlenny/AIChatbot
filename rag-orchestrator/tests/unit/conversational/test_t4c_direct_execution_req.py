@@ -77,7 +77,10 @@ def test_c_g3_responsibility_binding_mismatch():
 # ───────────────────────── C-G4 ＋ C-M2 ─────────────────────────
 @pytest.mark.req("T4C_G4:1")
 def test_c_g4_unknown_binding_hard_fails():
-    bad = {**PLAN, "fulfillment_binding_id": "late_fee.facts.v1"}
+    # ⚠️ 用一個**確定未註冊**的 id：late_fee.facts.v1 已於 T4-C2 註冊給 R-28，
+    #    再拿它當「未知」會讓本 guard 隨 registry 成長而失效（原版即如此）。
+    bad = {**PLAN, "fulfillment_binding_id": "definitely.not.registered.v0"}
+    assert "definitely.not.registered.v0" not in fr._REGISTRY, "前提失效：該 id 竟已註冊"
     with pytest.raises(ExecutableBindingNotFound, match="未註冊於 executable registry"):
         fr.execute(bad, _res())
 
