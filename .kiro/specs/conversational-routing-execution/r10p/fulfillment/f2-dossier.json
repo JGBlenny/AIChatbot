@@ -692,14 +692,27 @@
     "needs_fixed_builder": "是（operation 字串必須由 binding 固定，⛔ 不由 utterance 決定）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "FINAL_TEXT",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "INPUT_CONTRACT": "ESTABLISHED",
+     "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+     "_blocker_class": "**類 A — validation blocker**（contract 已存在，reachability 未證）"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
@@ -809,14 +822,27 @@
     "needs_fixed_builder": "是（operation 字串必須由 binding 固定，⛔ 不由 utterance 決定）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "FINAL_TEXT",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "INPUT_CONTRACT": "ESTABLISHED",
+     "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+     "_blocker_class": "**類 A — validation blocker**（contract 已存在，reachability 未證）"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
@@ -926,14 +952,27 @@
     "needs_fixed_builder": "是（operation 字串必須由 binding 固定，⛔ 不由 utterance 決定）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "FINAL_TEXT",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "INPUT_CONTRACT": "ESTABLISHED",
+     "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+     "_blocker_class": "**類 A — validation blocker**（contract 已存在，reachability 未證）"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
@@ -1042,14 +1081,27 @@
     "needs_fixed_builder": "是（operation 字串必須由 binding 固定，⛔ 不由 utterance 決定）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "FINAL_TEXT",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "INPUT_CONTRACT": "ESTABLISHED",
+     "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+     "_blocker_class": "**類 A — validation blocker**（contract 已存在，reachability 未證）"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
@@ -1158,14 +1210,27 @@
     "needs_fixed_builder": "是（operation 字串必須由 binding 固定，⛔ 不由 utterance 決定）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "FINAL_TEXT",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "INPUT_CONTRACT": "ESTABLISHED",
+     "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+     "_blocker_class": "**類 A — validation blocker**（contract 已存在，reachability 未證）"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
@@ -1264,14 +1329,29 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "ESTABLISHED",
+     "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+     "_blocker_class": "**類 A — validation blocker**（contract 已存在，reachability 未證）"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
@@ -1370,14 +1450,29 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "ESTABLISHED",
+     "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+     "_blocker_class": "**類 A — validation blocker**（contract 已存在，reachability 未證）"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
@@ -1476,14 +1571,29 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "NOT_REGISTERED",
+     "ENTITY_INPUT_REACHABILITY": "**NOT_YET_JUDGEABLE**",
+     "_blocker_class": "**類 B — contract-definition blocker**（F-C10）⚠️ ⛔ 不得寫成 NOT_ESTABLISHED——那看起來像只是少跑一個 test。"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
@@ -1582,14 +1692,29 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "ESTABLISHED",
+     "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+     "_blocker_class": "**類 A — validation blocker**（contract 已存在，reachability 未證）"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
@@ -1688,14 +1813,29 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "NOT_REGISTERED",
+     "ENTITY_INPUT_REACHABILITY": "**NOT_YET_JUDGEABLE**",
+     "_blocker_class": "**類 B — contract-definition blocker**（F-C10）⚠️ ⛔ 不得寫成 NOT_ESTABLISHED——那看起來像只是少跑一個 test。"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
@@ -1794,14 +1934,29 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "NOT_REGISTERED",
+     "ENTITY_INPUT_REACHABILITY": "**NOT_YET_JUDGEABLE**",
+     "_blocker_class": "**類 B — contract-definition blocker**（F-C10）⚠️ ⛔ 不得寫成 NOT_ESTABLISHED——那看起來像只是少跑一個 test。"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
@@ -1900,14 +2055,29 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "ESTABLISHED",
+     "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+     "_blocker_class": "**類 A — validation blocker**（contract 已存在，reachability 未證）"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
@@ -2006,14 +2176,29 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "NOT_REGISTERED",
+     "ENTITY_INPUT_REACHABILITY": "**NOT_YET_JUDGEABLE**",
+     "_blocker_class": "**類 B — contract-definition blocker**（F-C10）⚠️ ⛔ 不得寫成 NOT_ESTABLISHED——那看起來像只是少跑一個 test。"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
@@ -2112,14 +2297,29 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "NOT_REGISTERED",
+     "ENTITY_INPUT_REACHABILITY": "**NOT_YET_JUDGEABLE**",
+     "_blocker_class": "**類 B — contract-definition blocker**（F-C10）⚠️ ⛔ 不得寫成 NOT_ESTABLISHED——那看起來像只是少跑一個 test。"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
@@ -2218,14 +2418,29 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "NOT_REGISTERED",
+     "ENTITY_INPUT_REACHABILITY": "**NOT_YET_JUDGEABLE**",
+     "_blocker_class": "**類 B — contract-definition blocker**（F-C10）⚠️ ⛔ 不得寫成 NOT_ESTABLISHED——那看起來像只是少跑一個 test。"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
@@ -2324,14 +2539,29 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "NOT_REGISTERED",
+     "ENTITY_INPUT_REACHABILITY": "**NOT_YET_JUDGEABLE**",
+     "_blocker_class": "**類 B — contract-definition blocker**（F-C10）⚠️ ⛔ 不得寫成 NOT_ESTABLISHED——那看起來像只是少跑一個 test。"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
@@ -2441,14 +2671,31 @@
     "needs_fixed_builder": "是（binding 必須固定 builder，⛔ 不由 face 選）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "NOT_REGISTERED",
+     "ENTITY_INPUT_REACHABILITY": "**NOT_YET_JUDGEABLE**",
+     "_blocker_class": "**類 B — contract-definition blocker**（F-C10）⚠️ ⛔ 不得寫成 NOT_ESTABLISHED——那看起來像只是少跑一個 test。",
+     "NOT_QUESTION_SENSITIVE": "**CONFIRMED**（簽名含 user_question 不影響裁定——AST／body 證據已證不讀）",
+     "_wrong_binding_axis": "⚠️ P3 的 WRONG_EXECUTION_BINDING_CONFIRMED **仍在正交 diagnostic axis**。本筆 F2 不足 ⛔ **不是**那個 P3 defect 重新污染 responsibility truth，而是 `estate.by_ref` input contract 尚未註冊 ⇒ 故為 INSUFFICIENT_EVIDENCE，⛔ 不是 FULFILLMENT_NOT_ESTABLISHED。"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（⚠️ 另有 wiring mismatch）",
@@ -2548,14 +2795,31 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "GROUNDING_FACTS",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "D2_PRESENTATION_SHAPE": "AVAILABLE",
+     "_d2_caveat": "⚠️ D2 adapter 已存在 **≠** 這些 binding 已 automatically executable。F2 只確認它們**可以合法落入**此 fulfillment shape，⛔ 不是現在就註冊。",
+     "INPUT_CONTRACT": "NOT_REGISTERED",
+     "ENTITY_INPUT_REACHABILITY": "**NOT_YET_JUDGEABLE**",
+     "_blocker_class": "**類 B — contract-definition blocker**（F-C10）⚠️ ⛔ 不得寫成 NOT_ESTABLISHED——那看起來像只是少跑一個 test。",
+     "OWNER_PROSE_EXECUTABILITY": "**REFUTED**",
+     "_owner_prose_correction": "⚠️ registry owner prose `iot.py::diagnose_iot` ＝ **ENTRY／DISPATCH EVIDENCE ONLY，⛔ NOT EXECUTABLE BINDING**；真正 binding 是 `_diagnose_binding_failure(data)`。⛔ **不回頭改 Registry V2 owner topology**——這正好再次證明 F-C7。⚠️ ⛔ 也不得說「反正只有一個 keyword branch、效果一樣」：未命中時會落 `_format_iot_status`，**語義確實不同** ⇒ bypass 是必要的。"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-2_direct_GROUNDING_FACTS（output 形狀待裁）",
@@ -2653,14 +2917,27 @@
     "needs_fixed_builder": "否"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "FINAL_TEXT",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "INPUT_CONTRACT": "NOT_REGISTERED",
+     "ENTITY_INPUT_REACHABILITY": "**NOT_YET_JUDGEABLE**",
+     "_blocker_class": "**類 B — contract-definition blocker**（F-C10）⚠️ ⛔ 不得寫成 NOT_ESTABLISHED——那看起來像只是少跑一個 test。"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
@@ -2758,14 +3035,27 @@
     "needs_fixed_builder": "否（單一 callable）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-30",
+    "propositions": {
+     "BINDING_SEMANTICS": "CONFIRMED",
+     "DIRECT_AFTER_COMMIT": "CONFIRMED",
+     "OUTPUT_MODE": "FINAL_TEXT",
+     "NO_REROUTE_SHAPE": "CONFIRMED",
+     "EXECUTION_CLOSURE": "BLOCKED_INPUT",
+     "INPUT_CONTRACT": "ESTABLISHED",
+     "ENTITY_INPUT_REACHABILITY": "NOT_ESTABLISHED",
+     "_blocker_class": "**類 A — validation blocker**（contract 已存在，reachability 未證）"
+    },
+    "_not_fulfillment_not_established": "⚠️ **⛔ 不是** FULFILLMENT_NOT_ESTABLISHED——那個 verdict 的標準案例仍是 R-01（有輸入、卻**沒有**合法 responsibility-specific capability）。本筆**恰好相反**：capability 已找到，binding semantics 已 CONFIRMED。"
    },
    "proposed_strategy": "CAPABILITY",
    "_f2b_shape": "P-F2-1_direct_FINAL_TEXT",
@@ -3189,7 +3479,9 @@
   "D1-R_branch_coverage_rule": "⚠️ 業主採**較嚴格**標準：`bill.by_ref.v1` 既然正式允許 numeric ＋ nonnumeric，`APPROVED_CAPABILITY` 前應把**兩條合法 branch 都 externally validated**，或把尚未驗的 branch **明確標成未授權 runtime path**。⛔ 不得出現「contract 宣稱支援兩條／verification 只證一條／runtime 卻兩條全開」。",
   "SEC-01_derived_log_rule": "`test logs ／ failure output MUST NOT contain credential/token values`——⚠️ 要防的是**第二次不是 env，而是 exception／debug log 又把 secret 帶進 transcript**。已落為 4 條 unit guard（transport repr／init log／模組文件字串／硬編金鑰形狀），其中一條附**正對照**：先確認環境確實有秘密可洩，否則該檢查恆真＝假綠。",
   "F-C8_PRESENTATION_AFTER_AUTHORITY": "GROUNDING_FACTS adapter **只能**做 presentation／packaging；semantic owner、builder、responsibility 必須在**進 adapter 之前**已經確定。⚠️ 判斷抽取邊界是否夠 post-authority 的檢查：若為了讓它工作必須把 user_question／face／config／endpoint／mapping 塞回來 ⇒ **邊界不夠，應停**。⚠️ D2 收的是 **already-classified outcome**，⛔ 不是 raw rows：T4-C 做 selection／capability execution（select_point_refund 在那裡跑）；T4-D2 只把**已決定好的** outcome 呈現出去 ⇒ 本層 ⛔ 不重跑 selection。",
-  "F-C9_COMPOSITE_BINDING_FIXES_ALL_SEMANTIC_CHOICES": "對 composite capability：responsibility commit 後 **selection algorithm／downstream builder／outcome mapping 三者皆固定於 binding 內**。⚠️ runtime **可以**依**資料狀態**分支（SELECTED／CANDIDATES／NOT_FOUND／TYPE_MISMATCH），⛔ 但不得依 utterance／face／category／member row 決定 semantic path。**data-dependent branching 是合法 fulfillment；semantic re-routing 不是。**"
+  "F-C9_COMPOSITE_BINDING_FIXES_ALL_SEMANTIC_CHOICES": "對 composite capability：responsibility commit 後 **selection algorithm／downstream builder／outcome mapping 三者皆固定於 binding 內**。⚠️ runtime **可以**依**資料狀態**分支（SELECTED／CANDIDATES／NOT_FOUND／TYPE_MISMATCH），⛔ 但不得依 utterance／face／category／member row 決定 semantic path。**data-dependent branching 是合法 fulfillment；semantic re-routing 不是。**",
+  "P-F2-1a_DETERMINISTIC_ADAPTER_COMPOSITION": "一個 fulfillment binding **可以由多個固定 callable 組成**，只要 responsibility commit 後：callable sequence 固定／semantic operation 固定／⛔ 不依 utterance／face／category 重選／⛔ 不做新的 entity 或 responsibility selection ⇒ **仍屬 direct fulfillment shape**，⛔ 不因 implementation 有兩個函式就升格為 composite responsibility binding。⚠️ 架構差異不在「用了幾個函式」，而在 **binding 執行過程是否還需要做具有責任語義的 selection／outcome routing**——五個 contract eligibility 沒有；R-31 有。⚠️ `operation` 字串必須由 binding **固定**，⛔ 不得從 question derive。",
+  "F-C10_INPUT_CONTRACT_PRECEDES_REACHABILITY": "若 responsibility 所需 input contract **尚未 machine-register**：⇒ entity reachability ⛔ 不得標 CONFIRMED，⛔ 也不得標 NOT_CONFIRMED-by-test，應標 **NOT_YET_JUDGEABLE**。**先建立 input contract，再驗 transport／entity reachability。**⚠️ 兩種 BLOCKED_INPUT 必須分開：類 A **validation blocker**（contract ESTABLISHED、reachability NOT_ESTABLISHED）；類 B **contract-definition blocker**（contract NOT_REGISTERED、reachability NOT_YET_JUDGEABLE）。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -3265,14 +3557,9 @@
   "_why_split": "⚠️ ⛔ 不得因為 input carrier 有了就把 INPUT_REACHABILITY 寫成 CONFIRMED——「authority 活過 round-trip」與「解析到正確的那一筆 entity」是兩件事。"
  },
  "_next_order": [
-  "T4-A ✅",
-  "T4-B1/B2/B3 ✅",
-  "T4-C1 ✅",
-  "D1-E ✅",
-  "T4-D2 ✅",
-  "T4-C2 ✅",
-  "**F2-B 20 筆逐筆 review**（三種 fulfillment 形狀的 precedent 已具備）",
-  "D1-R 仍 BLOCKED_EXTERNAL_TEST_INPUT"
+  "**下一刀：input-contract closure**（⛔ 不是 F2-C）——F2-C 五個 Knowledge fulfillment 大概率解不了 T4 的 execution blocker；F2-B 已把真正的共同 blocker 暴露清楚。",
+  "六個未註冊 contract 做成與 bill.by_ref.v1／contract.current_entity.v1 同級的 machine contracts：payment_logs.by_bill／invoice_logs.by_bill／subscription.current／iot.manufacturers／estate.by_ref／tenant.summary，再跑 B1-style resolver review",
+  "→ 之後再處理已註冊但待 external validation 的 S1／S2 路徑（D1-R 仍 BLOCKED）"
  ],
  "_first_vertical_slice": "⚠️ 第一條 vertical slice 走 **R-29／FINAL_TEXT**：commit → form round-trip → resolve exact bill → direct _diagnose_receipt → FINAL_TEXT downstream。⇒ presentation extraction ⛔ 不必同時肩負「證明整個新 transport 架構能跑」的責任。",
  "_new_finding_2026_08_30": {
@@ -3513,5 +3800,50 @@
   "P-F2-3_composite": [],
   "NEW_SHAPE_CANDIDATE": [],
   "_conclusion": "⚠️ **20 筆全部落進既有三型的前兩型**，⛔ 無需第四／第五種形狀。⚠️ 但 B1 的五筆合約 eligibility 是**兩段組合**（check → formatter），與 R-29 的單函式略有差異——已在各筆 _4 標明。"
+ },
+ "_f2b_result": {
+  "groups_reviewed": "20/20",
+  "binding_semantics": {
+   "CONFIRMED": 20
+  },
+  "fulfillment_shape": {
+   "P-F2-1 FINAL_TEXT": 7,
+   "P-F2-2 GROUNDING_FACTS": 13,
+   "P-F2-3 composite": 0,
+   "NEW_SHAPE": 0
+  },
+  "f2_verdict": {
+   "APPROVED_CAPABILITY": 0,
+   "INSUFFICIENT_EVIDENCE": 20,
+   "FULFILLMENT_NOT_ESTABLISHED": 0
+  },
+  "blocker_class": {
+   "類 A validation blocker": [
+    "R-02",
+    "R-03",
+    "R-04",
+    "R-08",
+    "R-09",
+    "R-10",
+    "R-11",
+    "R-14",
+    "R-17",
+    "R-30"
+   ],
+   "類 B contract-definition blocker": [
+    "R-12",
+    "R-15",
+    "R-16",
+    "R-18",
+    "R-19",
+    "R-20",
+    "R-21",
+    "R-22",
+    "R-23",
+    "R-24"
+   ]
+  },
+  "_how_to_read": "⚠️ **⛔ 不得解讀成「20 筆都 unresolved，所以 capability audit 沒成果」**。恰恰相反：**20/20 的 fulfillment binding semantics 都已 CONFIRMED**，唯一沒閉合的是 input execution contract。⇒ 剩下的工作已從「20 個 capability 到底是誰」壓縮成**少數幾個 shared input contracts／reachability seams**。",
+  "_registry_discipline": "⛔ **不要立刻把 20 個 binding 註冊進 executable registry**——F-G1 的終態是「reviewed_active responsibility → exactly one **reviewed** fulfillment strategy」，⛔ 不是「找到具名函式就先啟用」。20 筆維持 `proposed`，待 input contract／execution closure 完成後逐筆升 APPROVED_CAPABILITY，再進 sealed Fulfillment V1。"
  }
 }
