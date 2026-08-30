@@ -2570,7 +2570,9 @@
   "T4-D1_dispatch_before_legacy": "業主裁定：**另立 responsibility completion handler，由上層在進入 legacy completion 之前依 `session_authority_mode` 分流**；⛔ 不在 legacy 函式內塞 `if responsibility_mode`。實作：`_complete_form` 改為**極薄 authority dispatcher**，legacy 本體原封改名為 `_legacy_complete_form`（8 個內部呼叫點與 routers/chat.py:412 皆不需改）。⚠️ 共用的是 **transport**，⛔ 不是 completion authority。⚠️ 只讀**已持久化**的 mode，⛔ 不靠「有沒有 responsibility_id」猜；未知 mode **大聲失敗**，⛔ 不得默默落 legacy（那會讓 authority 靜默降級）。",
   "D1-E-C1_FINAL_TEXT_ENVELOPE_MAPPING": "`FulfillmentExecutionResult.text` → `VendorChatResponse.answer` = **APPROVED_AS_ENVELOPE_MAPPING**。⚠️ 兩個 answer 不同層：`knowledge_base.answer` ＝ Knowledge row 內容／舊 row fulfillment source；`VendorChatResponse.answer` ＝ 對 client 輸出的文字欄位。F-C4 禁的是「winning responsibility → 找 member row → member.answer 當 authority」，⛔ 不是禁止最終文字寫入 API 的 answer 欄。⚠️ FINAL_TEXT 的 text 缺漏／空 ⇒ **hard fail**，⛔ 不得 default ''（silent semantic loss）。",
   "D1-E_envelope_metadata_transport_only": "D1-E v1：`action_type='form_fill'` ／ `form_id` ＝ **persisted session** 的值。⚠️ `action_type` 是 interaction-envelope metadata，⛔ 不得用來恢復 responsibility authority 或選 fulfillment binding。⛔ **不新增 `responsibility_fulfillment`**——那會第一次修改 public response enum／frontend contract，而尚無 consumer audit（frontend 認不認、cache/analytics 是否枚舉、UI 是否靠它關表單、mobile/web 有無 switch default）⇒ 會把 D1-E 變成 client-protocol migration。未來若需讓 client 知道，應另案 consumer audit ＋ additive metadata。",
-  "D1-E_two_result_families": "responsibility completion 對外**兩個 result family**（依**型別**分流，⛔ 不靠 key 猜）：A `FulfillmentExecutionResult`（FINAL_TEXT）；B `ResponsibilityInputResolutionResult`（AMBIGUOUS／NO_MATCH／INVALID_INPUT）。⚠️ `RESOLVED` ⛔ 不得從 converter 對外出現——那代表 T4-C executor 被跳過 ⇒ hard fail。⚠️ envelope answer 有**兩個**合法來源：FINAL_TEXT＝fulfilled semantic answer；INPUT_RESOLUTION＝transport／clarification prompt ⇒ ⛔ 不得規定「responsibility response 的 answer 一定來自 capability final text」（否則 AMBIGUOUS 流程會被誤判）。精確不變量：**envelope answer 必須來自當前 result type 的 reviewed output field，⛔ 絕不從 knowledge／member row fallback。**"
+  "D1-E_two_result_families": "responsibility completion 對外**兩個 result family**（依**型別**分流，⛔ 不靠 key 猜）：A `FulfillmentExecutionResult`（FINAL_TEXT）；B `ResponsibilityInputResolutionResult`（AMBIGUOUS／NO_MATCH／INVALID_INPUT）。⚠️ `RESOLVED` ⛔ 不得從 converter 對外出現——那代表 T4-C executor 被跳過 ⇒ hard fail。⚠️ envelope answer 有**兩個**合法來源：FINAL_TEXT＝fulfilled semantic answer；INPUT_RESOLUTION＝transport／clarification prompt ⇒ ⛔ 不得規定「responsibility response 的 answer 一定來自 capability final text」（否則 AMBIGUOUS 流程會被誤判）。精確不變量：**envelope answer 必須來自當前 result type 的 reviewed output field，⛔ 絕不從 knowledge／member row fallback。**",
+  "D1-R_branch_coverage_rule": "⚠️ 業主採**較嚴格**標準：`bill.by_ref.v1` 既然正式允許 numeric ＋ nonnumeric，`APPROVED_CAPABILITY` 前應把**兩條合法 branch 都 externally validated**，或把尚未驗的 branch **明確標成未授權 runtime path**。⛔ 不得出現「contract 宣稱支援兩條／verification 只證一條／runtime 卻兩條全開」。",
+  "SEC-01_derived_log_rule": "`test logs ／ failure output MUST NOT contain credential/token values`——⚠️ 要防的是**第二次不是 env，而是 exception／debug log 又把 secret 帶進 transcript**。已落為 4 條 unit guard（transport repr／init log／模組文件字串／硬編金鑰形狀），其中一條附**正對照**：先確認環境確實有秘密可洩，否則該檢查恆真＝假綠。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -2693,7 +2695,7 @@
   "BINDING_EXECUTABILITY": "CONFIRMED（C-G4：unknown binding hard fail；owner prose 結構上不可用）",
   "NO_REROUTE": "CONFIRMED（C-G1：execute() 簽名**沒有** user_question／face／category）",
   "OUTPUT_MODE_FINAL_TEXT": "CONFIRMED（C-G6：宣告與實際不符即 hard fail）",
-  "ENTITY_INPUT_REACHABILITY": "⚠️ 仍 **NOT_ESTABLISHED**——wired path 以 FakeApi 驗證，**尚未經真實 JGB API**；⛔ 不得因 13 guards 全綠就升級",
+  "ENTITY_INPUT_REACHABILITY": "⚠️ **NOT_ESTABLISHED**——D1-R 為 BLOCKED_EXTERNAL_TEST_INPUT；numeric path 與 nonnumeric path 皆 **NOT_EXTERNALLY_VALIDATED**。",
   "F2_VERDICT": "⚠️ **維持 INSUFFICIENT_EVIDENCE**",
   "SESSION_TRANSPORT_REACHABILITY": "CONFIRMED（T4-A ＋ B2 persistence）",
   "FINAL_TEXT_OUTPUT_TRANSPORT": "**CONFIRMED（本地 deterministic）**——FulfillmentExecutionResult → VendorChatResponse 已閉合；⚠️ 仍未經真實 JGB API（D1-R）。"
@@ -2721,5 +2723,36 @@
  },
  "_audit_lessons": {
   "L2_same_field_name_is_not_same_authority": "⚠️ **同名欄位 ≠ 同一 authority**。`knowledge.answer` 是內容來源；`VendorChatResponse.answer` 是 API envelope。真正的風險**不是**寫入 `answer` 這個名字，而是 ① 從**錯誤 semantic slot** 取值、② 用 **silent default** 把型別錯誤吃掉（`form_result.get('answer','')` 對 responsibility result 會靜默產出空回答）。"
+ },
+ "_d1r_status": {
+  "verdict": "**BLOCKED_EXTERNAL_TEST_INPUT**（2026-08-30）",
+  "_probe_method": "⚠️ 只探測「有沒有設／長度／host 類別」，⛔ **未印出任何值**（SEC-01 紀律）。",
+  "environment_finding": {
+   "USE_MOCK_JGB_API": "false ⇒ 本機容器**已設定為打真實 API**",
+   "JGB_API_KEY": "SET（長度 36）——⛔ 值未讀取、未印出",
+   "JGB_API_BASE_URL": "SET；判定為 **production-like**（www 正式站，非 preview／test）"
+  },
+  "why_blocked": [
+   "⚠️ **業主明示 D1-R 用 test/staging 即可，⛔ 不必碰 production**；但本機唯一可用的設定指向正式站 ⇒ 執行等同打 production JGB。",
+   "⚠️ 缺 **known test bill reference**——業主明示「⛔ 不要從 API 結果裡隨便挑第一筆再拿來驗自己」。",
+   "⚠️ 讀取正式站資料會把**真實客戶資料**帶進 transcript ⇒ 與 SEC-01 同一風險類別。"
+  ],
+  "missing": [
+   "secure JGB **test/staging** credential context（⛔ 不要貼進對話）",
+   "known test bill reference（已知存在且狀態可預期）"
+  ],
+  "evidence_split": {
+   "mock vertical slice": "PASS（D1-E／D1 guards 全綠）",
+   "real adapter reachability": "**NOT_ESTABLISHED**"
+  },
+  "must_not": [
+   "⛔ 用 mock 取代 D1-R 並宣稱完成",
+   "⛔ 把 ENTITY_INPUT_REACHABILITY 升成 CONFIRMED",
+   "⛔ 為了跑通而降低證據標準"
+  ],
+  "planned_when_unblocked": {
+   "D1-R1": "numeric positive control——已知 numeric bill_ref → real get_bill_detail → exactly one bill → RESOLVED → R-29 binding → _diagnose_receipt → FINAL_TEXT → VendorChatResponse.answer",
+   "D1-R2": "nonnumeric ambiguity-safe path——unique keyword→unique contract→unique bill→RESOLVED；另補 keyword→>1 contracts→AMBIGUOUS 且 ⛔ get_bills 不得提前被呼叫（若 staging 難造 ambiguity，可保留 deterministic adapter test，⚠️ 但 **external evidence 與 deterministic evidence 必須分開記**）"
+  }
  }
 }
