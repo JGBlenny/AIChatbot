@@ -41,9 +41,11 @@ def _vrow(rid, score, boost=1.0):
             "search_method": "vector"}
 
 
-def _krow(rid):
-    # keyword_fallback 的 vector_similarity=0 是**設計預設值**，⛔ 不代表低相關
-    return {"id": rid, "vector_similarity": 0.0, "search_method": rc.KEYWORD_METHOD}
+def _krow(rid, rank=0):
+    # keyword_fallback 的 vector_similarity=0 是**設計預設值**，⛔ 不代表低相關。
+    # ⚠️ rank ＝ **keyword selector 自己回傳順序**中的位置（C2-I3），⛔ 非 global ordinal。
+    return {"id": rid, "vector_similarity": 0.0, "search_method": rc.KEYWORD_METHOD,
+            rc.KEYWORD_RANK_FIELD: rank}
 
 
 # ───────────────────────── G1：alias collapse ─────────────────────────

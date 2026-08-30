@@ -21,6 +21,27 @@ A responsibility is nomination-admissible iff
      「走 keyword 路徑」的設計預設值，⛔ 不代表低相關）
 ```
 
+## preserve **source-local** ordering，⛔ 不是 container assembly ordering（C2-I3）
+
+```text
+best_keyword_source_rank = MIN(keyword_source_rank of contributing keyword rows)
+                         ＝ **keyword selector 自己回傳順序**中最早的那一筆
+⛔ NOT global concatenated results ordinal
+   （後者只是 vector results ＋ keyword fallback 的容器組裝順序；C2 已把兩條 nomination
+     provenance 拆開，再把 container order 升格成 ranking authority 等於把它們混回去）
+```
+
+## tie-break：`responsibility_id ASC`——**deterministic only，zero semantic meaning**
+
+```text
+一個 keyword row → 多個 responsibility（multi-membership）時，
+這些 responsibility 的 best_keyword_source_rank **完全相同**，
+而舊世界只有一個 row，⛔ 沒有「既有 row order」可 preserve。
+⇒ 以 responsibility_id ASC 打破平手，理由只有三個：
+   clean checkout 可重現／⛔ 不依 dict accidental order／top20 boundary 可稽核。
+⚠️ responsibility_id **永遠不得**成為 relevance signal。
+```
+
 ## ⛔ 禁止事項（業主凍結）
 
 ```text
@@ -40,6 +61,29 @@ NOMINATION_AGGREGATOR: Callable[[Iterable[float]], float] = max
 DEFAULT_VECTOR_FLOOR = 0.3
 
 KEYWORD_METHOD = "keyword_fallback"
+
+#: keyword row 攜帶 **selector-local** rank 的欄位（C2-I3 業主裁定 2026-08-30）
+KEYWORD_RANK_FIELD = "keyword_source_rank"
+
+
+class KeywordRankMissing(RuntimeError):
+    """keyword_fallback row 未攜帶 selector-local rank——⚠️ **大聲失敗**。
+
+    ⛔ 不得靜默改用 global results ordinal：那是**容器組裝順序**（implementation artifact），
+    ⛔ 不是 keyword nomination path 自己產生的順序。
+    """
+
+
+def annotate_keyword_source_rank(keyword_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """在 **keyword 產生點**就把 selector-local rank 蓋上去（⛔ 不要等 concat 完才算）。
+
+    ```text
+    keyword_source_rank = index in keyword_fallback selector output
+    ```
+    """
+    for i, r in enumerate(keyword_rows):
+        r[KEYWORD_RANK_FIELD] = i
+    return keyword_rows
 
 
 class ResponsibilityCandidate(dict):
@@ -83,15 +127,22 @@ def collapse(rows: List[Dict[str, Any]], mapping: Dict[int, List[str]],
                     responsibility_id=resp, contributing_row_ids=[],
                     has_keyword_nomination=False, has_vector_nomination=False,
                     best_keyword_source_rank=None, best_vector_nomination_score=0.0,
-                    _vector_scores=[], first_ordinal=ordinal)
+                    _vector_scores=[])
                 acc[resp] = c
             c["contributing_row_ids"].append(rid)
             if is_keyword:
                 c["has_keyword_nomination"] = True
-                # preserve-existing-order：取 contributing keyword rows 的**最小原始 ordinal**，
-                # ⛔ 不新造 keyword score、⛔ 不 SUM／MAX keyword aliases
-                if c["best_keyword_source_rank"] is None or ordinal < c["best_keyword_source_rank"]:
-                    c["best_keyword_source_rank"] = ordinal
+                # preserve **source-local** ordering：取 contributing keyword rows 在
+                # **keyword selector 自己回傳順序**中的最小 rank。
+                # ⛔ 不新造 keyword score、⛔ 不 SUM／MAX keyword aliases、
+                # ⛔ 不退回 global results ordinal。
+                rank = row.get(KEYWORD_RANK_FIELD)
+                if rank is None:
+                    raise KeywordRankMissing(
+                        f"row {rid}：keyword_fallback 未帶 {KEYWORD_RANK_FIELD}"
+                        f"——⛔ 不得靜默改用 global results ordinal")
+                if c["best_keyword_source_rank"] is None or rank < c["best_keyword_source_rank"]:
+                    c["best_keyword_source_rank"] = rank
             elif boosted >= vector_floor:
                 # ⚠️ 只有**通過既有 admissibility** 的 vector row 才算 vector nomination
                 c["has_vector_nomination"] = True
@@ -123,9 +174,13 @@ def select_nominated(rows: List[Dict[str, Any]], mapping: Dict[int, List[str]],
     ⚠️ `collapse_first=False` 是 **mutation 縫**（M1：把 collapse 移到 truncation 之後，
     slot-recovery guard 必須紅）；⛔ production 永遠是 True。
 
-    順序：① keyword-priority responsibilities（依 best_keyword_source_rank）
-          ② vector-only responsibilities（依 best_vector_nomination_score 遞減，同分取較早 ordinal）
+    順序：① keyword-priority responsibilities（依 **selector-local** best_keyword_source_rank）
+          ② vector-only responsibilities（依 best_vector_nomination_score 遞減）
           ③ 補到 limit 個 **distinct** responsibilities
+
+    ⚠️ 兩桶的 tie-break 皆為 `responsibility_id ASC`——**deterministic only，zero semantic meaning**。
+    ⛔ keyword bucket **不得**用 vector 分數重排：現行 policy 是「keyword fallback 優先保留」，
+       ⛔ 不是「keyword 先取得資格、再用 vector 重排」。
     """
     if collapse_first:
         cands = collapse(rows, mapping, vector_floor, allow_row_id_fallback)
@@ -136,8 +191,9 @@ def select_nominated(rows: List[Dict[str, Any]], mapping: Dict[int, List[str]],
     admissible = [c for c in cands if is_nomination_admissible(c, vector_floor)]
     kw = [c for c in admissible if c["has_keyword_nomination"]]
     vec = [c for c in admissible if not c["has_keyword_nomination"]]
-    kw.sort(key=lambda c: (c["best_keyword_source_rank"], c["first_ordinal"]))
-    vec.sort(key=lambda c: (-c["best_vector_nomination_score"], c["first_ordinal"]))
+    # ⛔ keyword bucket 只看 selector-local rank，**完全不看** vector 分數
+    kw.sort(key=lambda c: (c["best_keyword_source_rank"], c["responsibility_id"]))
+    vec.sort(key=lambda c: (-c["best_vector_nomination_score"], c["responsibility_id"]))
     return (kw + vec)[:limit]
 
 
