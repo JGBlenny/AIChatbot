@@ -90,7 +90,10 @@ def execute(plan: Mapping[str, Any], resolution: Mapping[str, Any],
     spec = lookup(plan["fulfillment_binding_id"], rid)
 
     # defense in depth：executor 自己再驗 resolution state（⛔ 不只依賴 upstream）
-    if resolution.get("state") != "RESOLVED":
+    from services.responsibility_entity_resolution import (CARD_COLLECTION, EXECUTABLE_STATES,
+                                                           INPUT_CONTRACTS, STATE_RESOLVED,
+                                                           STATE_RESOLVED_EMPTY)
+    if resolution.get("state") not in EXECUTABLE_STATES:
         raise FulfillmentExecutionError(
             f"resolution state={resolution.get('state')!r} ⛔ 不得進 direct capability")
     if resolution.get("input_contract_id") != spec["input_contract_id"]:
@@ -101,9 +104,29 @@ def execute(plan: Mapping[str, Any], resolution: Mapping[str, Any],
         raise FulfillmentExecutionError(
             f"entity_type {resolution.get('entity_type')!r} 與 binding 要求的 "
             f"{spec['entity_type']!r} 不符——⛔ 即使函式碰巧讀得到同名欄位也不得執行")
+    # ⚠️ **contract-aware entity 形狀檢查**（2026-08-31）：
+    #    SELECT_ONE／SINGLETON 的合法 entity 是**非空 dict**；
+    #    COLLECTION 的合法 entity 是 **list 本身**（F-C11 COLLECTION IS THE ENTITY），
+    #    且空 list 只有在 `RESOLVED_EMPTY` 時合法（empty policy 已裁）。
+    #    ⛔ 原本一律要求 dict 是 SELECT_ONE 時代的殘留；⛔ 放寬**僅限** COLLECTION，
+    #    ⛔ 單筆契約仍不得以 member row／list 代替。
     entity = resolution.get("resolved_entity")
-    if not isinstance(entity, dict) or not entity:
-        raise FulfillmentExecutionError("resolved_entity 缺漏——⛔ 不得以 member row 代替")
+    is_collection = (INPUT_CONTRACTS.get(spec["input_contract_id"], {}).get("cardinality_mode")
+                     == CARD_COLLECTION)
+    if is_collection:
+        if not isinstance(entity, list):
+            raise FulfillmentExecutionError(
+                f"COLLECTION binding 的 resolved_entity 必須是 list，實得 "
+                f"{type(entity).__name__}——⛔ 不得以單筆 member row 代替（F-C11）")
+        if not entity and resolution.get("state") != STATE_RESOLVED_EMPTY:
+            raise FulfillmentExecutionError(
+                "空 collection 只有在 RESOLVED_EMPTY 才合法——⛔ 不得默默當成已解析")
+    else:
+        if resolution.get("state") != STATE_RESOLVED:
+            raise FulfillmentExecutionError(
+                f"非 COLLECTION contract ⛔ 不得以 {resolution.get('state')!r} 執行")
+        if not isinstance(entity, dict) or not entity:
+            raise FulfillmentExecutionError("resolved_entity 缺漏——⛔ 不得以 member row 代替")
 
     out = spec["adapter"](entity, dict(context or {}))
     mode = spec["output_mode"]

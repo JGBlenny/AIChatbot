@@ -241,35 +241,54 @@ async def test_envelope_scope_mismatch_is_hard_fail():
 
 @pytest.mark.req("B3_G7:4")
 @pytest.mark.asyncio
-async def test_payment_member_scope_is_reported_not_established():
-    """⚠️ 負控制：payment_logs 的 member **無** bill identity ⇒ ⛔ 不得回報成 VERIFIED。"""
+async def test_payment_scope_proof_is_split_not_collapsed():
+    """**F-C18**：member 沒 scope id 是**已知 schema 事實**；envelope 有沒有強制過濾是**還沒查**。
+
+    ⚠️ 兩者 ⛔ 不得揉成一個結論——所以拆成兩個鍵，各自有自己的狀態。
+    """
     r = await rer.fetch_payment_logs_by_bill(FakePaymentLogsApi(_plogs(3)), ROLE, BILL)
     prov = r["scope_provenance"]
-    assert prov["member_scope_verification"] == "NOT_ESTABLISHED", \
-        "member 無 scope 欄位卻宣稱已驗 ⇒ vacuous check 冒充證據"
-    assert prov["envelope_scope_verification"] == "VERIFIED"
+    assert prov["member_scope_proof"] == "UNAVAILABLE_BY_RESPONSE_SCHEMA", \
+        "⛔ 不得寫成 NOT_ESTABLISHED——那看起來像只是還沒驗"
+    assert prov["envelope_scope_proof"] == "NOT_ESTABLISHED", \
+        "⛔ 信封 echo 相符不得升成 VERIFIED（F-C18：簽名／參數／回吐值都不算證據）"
+    assert prov["_echo_matched"] is True, "echo 檢查本身仍要跑（不符時要 hard fail）"
 
 
 @pytest.mark.req("B3_G7:5")
 @pytest.mark.asyncio
 async def test_verifiable_contracts_do_report_verified():
-    """⚠️ 正對照組：⛔ 不能全部都回 NOT_ESTABLISHED——那量尺就是瞎的。"""
+    """⚠️ 正對照組：⛔ 不能全部都回未證——那量尺就是瞎的。"""
     r = await rer.fetch_invoice_logs_by_bill(FakeInvoiceLogsApi(_ilogs(3)), ROLE, BILL)
-    assert r["scope_provenance"]["member_scope_verification"] == "VERIFIED"
+    assert r["scope_provenance"]["member_scope_proof"] == "VERIFIED"
     r2 = await rer.fetch_iot_manufacturers(FakeIotApi(_iot(3)), ROLE)
-    assert r2["scope_provenance"]["member_scope_verification"] == "VERIFIED"
+    assert r2["scope_provenance"]["member_scope_proof"] == "VERIFIED"
+
+
+@pytest.mark.req("B3_G7:8")
+def test_payment_logs_scope_proof_mode_is_candidate_not_established():
+    """**F-C18**：payment_logs 只能是**候選** B，⛔ 不得假裝已成立。"""
+    spec = rer.INPUT_CONTRACTS["payment_logs.by_bill.v1"]
+    assert spec["scope_proof_mode"] == "ENVELOPE_VERIFIABLE_CANDIDATE"
+    assert spec["scope_provenance_status"] == "NOT_ESTABLISHED"
+    for cid in ("invoice_logs.by_bill.v1", "iot.manufacturers.v1"):
+        assert rer.INPUT_CONTRACTS[cid]["scope_proof_mode"] == "MEMBER_VERIFIABLE"
+        assert rer.INPUT_CONTRACTS[cid]["scope_provenance_status"] == "CONFIRMED"
 
 
 @pytest.mark.req("B3_G7:7")
 @pytest.mark.asyncio
 async def test_empty_collection_scope_is_not_reported_verified():
-    """⚠️ 空集合時「沒有不合 scope 的 member」恆真 ⇒ ⛔ 不得冒充成 VERIFIED。"""
+    """**F-C19 EMPTY COLLECTION CANNOT PROVE MEMBER SCOPE**。
+
+    ⚠️ 沒有反例 ≠ 有正面 scope 證據 ⇒ ⛔ 不得冒充成 VERIFIED。
+    """
     r = await rer.fetch_invoice_logs_by_bill(FakeInvoiceLogsApi([]), ROLE, BILL)
     assert r["state"] == rer.STATE_RESOLVED_EMPTY
-    assert r["scope_provenance"]["member_scope_verification"] == "N/A_EMPTY", \
-        "空集合被回報成 VERIFIED ⇒ vacuous truth 冒充 scope 證據"
+    assert r["scope_provenance"]["member_scope_proof"] == "N/A_EMPTY", \
+        "空集合被回報成 VERIFIED ⇒ vacuous truth 冒充 scope 證據（F-C19）"
     r2 = await rer.fetch_iot_manufacturers(FakeIotApi([]), ROLE)
-    assert r2["scope_provenance"]["member_scope_verification"] == "N/A_EMPTY"
+    assert r2["scope_provenance"]["member_scope_proof"] == "N/A_EMPTY"
 
 
 # ───────────────────────── B3-G8 ─────────────────────────

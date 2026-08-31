@@ -150,6 +150,15 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
     "payment_logs.by_bill.v1": {
         "member_scope_field": None,          # ⚠️ member 列**無** bill identity（實查）
         "scope_verification": "ENVELOPE_ONLY",
+        "scope_proof_mode": "ENVELOPE_VERIFIABLE_CANDIDATE",   # ⚠️ **候選**，⛔ 尚未成立
+        "scope_provenance_status": "NOT_ESTABLISHED",
+        "_f_c18_note":
+            "⚠️ **F-C18**：member 不帶 scope identity ⛔ 不等於 scope 無法證明——若 production fetch "
+            "本身以已解析 scope **強制過濾**且有可稽核實作證據，可由 transport envelope 建立 provenance。"
+            "⚠️ 但 `get_payment_logs(bill_id=…)` 的**函式簽名／請求參數 ⛔ 都不算證據**；"
+            "信封回吐的 `bill_id` 只是**把我們送過去的值回傳**，⛔ 更不是過濾證據。"
+            "⇒ 需唯讀實查 controller／repository／SQL 的 `WHERE bill_id = :resolved_bill_id` "
+            "並附 negative control（拿掉 filter → guard RED）才可升 ENVELOPE_VERIFIABLE。",
         "envelope_scope_key": "bill_id",     # 信封層 top-level bill_id（adapter 已帶出）
         "_scope_note":
             "⚠️ `collection_scope_key='resolved_bill_id'` 是**上游變數名**，⛔ 不是 member 欄位名："
@@ -169,6 +178,8 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
             "⛔ 不在具名分支 ⇒ 若裁 RESOLVED_EMPTY，adapter 必須自行處理空態。",
     },
     "invoice_logs.by_bill.v1": {
+        "scope_proof_mode": "MEMBER_VERIFIABLE",
+        "scope_provenance_status": "CONFIRMED",
         "member_scope_field": "bill_id",     # ⚠️ member 列**帶** bill_id（實查）⇒ 可逐筆驗
         "scope_verification": "MEMBER_VERIFIABLE",
         "envelope_scope_key": None,
@@ -187,6 +198,8 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
             "`_diagnose_invalid_failure([])` → '查無發票作廢紀錄。…' ⇒ **兩者對空集合都有意義**。",
     },
     "iot.manufacturers.v1": {
+        "scope_proof_mode": "MEMBER_VERIFIABLE",
+        "scope_provenance_status": "CONFIRMED",
         "member_scope_field": "role_id",     # ⚠️ 三者中**唯一**與 collection_scope_key 同名
         "scope_verification": "MEMBER_VERIFIABLE",
         "envelope_scope_key": None,
@@ -596,20 +609,22 @@ def _verify_member_scope(cid: str, members: List[dict], scope_value: Any) -> Dic
     spec = INPUT_CONTRACTS[cid]
     field = spec.get("member_scope_field")
     if not field:
-        return {"member_scope_verification": "NOT_ESTABLISHED",
-                "_why": f"{cid} 的 member 列無 scope 欄位（scope_verification="
-                        f"{spec.get('scope_verification')!r}）——⛔ 不得當已驗"}
+        return {"member_scope_proof": "UNAVAILABLE_BY_RESPONSE_SCHEMA",
+                "_why": f"{cid} 的 member 列無 scope 欄位（scope_proof_mode="
+                        f"{spec.get('scope_proof_mode')!r}）——⚠️ 這是**已知 schema 事實**，"
+                        f"⛔ 不是「還沒驗」，也 ⛔ 不得當已驗"}
     if not members:
         # ⚠️ 空集合時「沒有不合 scope 的 member」是**恆真**的 ⇒ ⛔ 不得回報 VERIFIED，
         #    那會讓一個 vacuous truth 冒充成 scope 證據（與本檔開頭記的 vacuous check 同一種病）。
-        return {"member_scope_verification": "N/A_EMPTY", "_field": field, "_checked": 0}
+        # **F-C19**：EMPTY COLLECTION CANNOT PROVE MEMBER SCOPE
+        return {"member_scope_proof": "N/A_EMPTY", "_field": field, "_checked": 0}
     bad = [m for m in members if str(m.get(field)) != str(scope_value)]
     if bad:
         raise InputScopeViolation(
             f"{cid}：{len(bad)}/{len(members)} 筆 member 的 {field} 不等於請求 scope "
             f"{scope_value!r}（實得 {sorted({str(m.get(field)) for m in bad})}）"
             f"——INPUT_SCOPE_VIOLATION，⛔ 不得 filter 掉後繼續")
-    return {"member_scope_verification": "VERIFIED",
+    return {"member_scope_proof": "VERIFIED",
             "_field": field, "_checked": len(members)}
 
 
@@ -617,15 +632,19 @@ def _verify_envelope_scope(cid: str, resp: Dict[str, Any], scope_value: Any) -> 
     spec = INPUT_CONTRACTS[cid]
     key = spec.get("envelope_scope_key")
     if not key:
-        return {"envelope_scope_verification": "N/A"}
+        return {"envelope_scope_proof": "N/A"}
     if key not in resp:
-        return {"envelope_scope_verification": "NOT_ESTABLISHED",
+        return {"envelope_scope_proof": "NOT_ESTABLISHED",
                 "_why": f"回應信封缺 {key!r}——⛔ 不得因 endpoint 簽名有 scope 參數就當已證"}
     if str(resp.get(key)) != str(scope_value):
         raise InputScopeViolation(
             f"{cid}：信封 {key}={resp.get(key)!r} 與請求 scope {scope_value!r} 不符"
             f"——INPUT_SCOPE_VIOLATION")
-    return {"envelope_scope_verification": "VERIFIED", "_field": key}
+    # ⚠️ **F-C18**：信封值相符只證「回吐了我們送過去的值」，⛔ **不是** production 有強制過濾的證據。
+    return {"envelope_scope_proof": INPUT_CONTRACTS[cid].get("scope_provenance_status")
+            or "NOT_YET_REVIEWED",
+            "_echo_matched": True, "_field": key,
+            "_why": "⚠️ 信封 echo 相符 ⛔ 不構成 filtering proof（F-C18）"}
 
 
 async def fetch_payment_logs_by_bill(api: "PaymentLogsApi", verified_role_id: Optional[str],

@@ -1630,15 +1630,15 @@
    },
    "primary_closure_lane": "B1_EXECUTION_BLOCKED_BY_PROD_DEFECT",
    "required_blockers": {
-    "INPUT_FETCH_RESOLVER": "IMPLEMENTED_NOT_WIRED——`fetch_*` 已實作、41 條 guard 綠、三個 real-source mutation 皆讓 guard 變紅；⛔ 但未進 `responsibility_completion._RESOLVERS`",
+    "INPUT_FETCH_RESOLVER": "WIRED（**UPSTREAM_REF 兩階段**）——先經 `bill.by_ref` 解析出 resolved_bill_id 才跑 fetch；⛔ 上游未 RESOLVED 一律不呼叫下游",
     "IDENTITY_RESOLUTION": "OK-BY-CONTRACT——scope 來自 resolved_bill_id（bill.by_ref resolver 已存在）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "**BLOCKED_BY_PROD_DEFECT_01**（UnboundLocalError；⚠️ 本筆 lane 即此條）",
     "EMPTY_INPUT_SEMANTICS": "ADAPTER_WRITTEN_NOT_REGISTERED（`payment_not_reflected_facts_adapter`）",
-    "COMPLETION_SEAM": "**ABSENT**——GROUNDING_FACTS 尚無 completion 出口（responsibility_completion 步驟⑤ 只放行 FINAL_TEXT，T4-D2 未建）",
+    "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
-    "MEMBER_SCOPE_VERIFICATION": "**NOT_ESTABLISHED**（2026-08-31 新發現）——payment_logs member 列**無任何 bill identity** ⇒ 只能驗信封（ENVELOPE_ONLY）。⛔ 不得因 resolver 綠就當 member scope 已證。"
+    "PAYMENT_LOG_SCOPE_PROVENANCE": "**NOT_ESTABLISHED**（業主裁定 2026-08-31，**live blocker**）——reason: member-level proof unavailable（已知 schema 事實）; transport-envelope proof not yet established（尚未查）。⚠️ ⛔ 這條 ⛔ 不因 `_RESOLVERS` 接線完成而消失。"
    },
    "_b3_cut": "見頂層 `_b3_execution_record_2026_08_31`"
   },
@@ -1905,15 +1905,15 @@
    },
    "primary_closure_lane": "B4_EXECUTION_WIRING_PENDING",
    "required_blockers": {
-    "INPUT_FETCH_RESOLVER": "IMPLEMENTED_NOT_WIRED——`fetch_*` 已實作、41 條 guard 綠、三個 real-source mutation 皆讓 guard 變紅；⛔ 但未進 `responsibility_completion._RESOLVERS`",
+    "INPUT_FETCH_RESOLVER": "WIRED（**UPSTREAM_REF 兩階段**）——先經 `bill.by_ref` 解析出 resolved_bill_id 才跑 fetch；⛔ 上游未 RESOLVED 一律不呼叫下游",
     "IDENTITY_RESOLUTION": "OK-BY-CONTRACT——scope 來自 resolved_bill_id（bill.by_ref resolver 已存在）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "OK——`code` 於迴圈內無條件指派 ⇒ ⛔ 不受 PROD-DEFECT-01 影響（實查）",
     "EMPTY_INPUT_SEMANTICS": "DIRECT_SUPPORTED（實測「查無信用卡付款紀錄…」）",
-    "COMPLETION_SEAM": "**ABSENT**——GROUNDING_FACTS 尚無 completion 出口（responsibility_completion 步驟⑤ 只放行 FINAL_TEXT，T4-D2 未建）",
+    "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
-    "MEMBER_SCOPE_VERIFICATION": "**NOT_ESTABLISHED**（2026-08-31 新發現）——payment_logs member 列**無任何 bill identity** ⇒ 只能驗信封（ENVELOPE_ONLY）。⛔ 不得因 resolver 綠就當 member scope 已證。"
+    "PAYMENT_LOG_SCOPE_PROVENANCE": "**NOT_ESTABLISHED**（業主裁定 2026-08-31，**live blocker**）——reason: member-level proof unavailable（已知 schema 事實）; transport-envelope proof not yet established（尚未查）。⚠️ ⛔ 這條 ⛔ 不因 `_RESOLVERS` 接線完成而消失。"
    },
    "_lane_history": [
     {
@@ -2068,15 +2068,15 @@
    },
    "primary_closure_lane": "B4_EXECUTION_WIRING_PENDING",
    "required_blockers": {
-    "INPUT_FETCH_RESOLVER": "IMPLEMENTED_NOT_WIRED——`fetch_*` 已實作、41 條 guard 綠、三個 real-source mutation 皆讓 guard 變紅；⛔ 但未進 `responsibility_completion._RESOLVERS`",
+    "INPUT_FETCH_RESOLVER": "WIRED（**UPSTREAM_REF 兩階段**）——先經 `bill.by_ref` 解析出 resolved_bill_id 才跑 fetch；⛔ 上游未 RESOLVED 一律不呼叫下游",
     "IDENTITY_RESOLUTION": "OK-BY-CONTRACT——scope 來自 resolved_bill_id（bill.by_ref resolver 已存在）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "OK——`code` 於迴圈內無條件指派 ⇒ ⛔ 不受 PROD-DEFECT-01 影響（2026-08-31 實查結清；同 R-15，⛔ 不同於 R-12）",
     "EMPTY_INPUT_SEMANTICS": "**ADAPTER_REQUIRED**（2026-08-31 裁定；adapter **未寫**）——實測空清單卻斷言失敗原因＝語義錯誤；RESPONSIBILITY_BINDING_DOMAIN_GAP，⛔ 非 production defect",
-    "COMPLETION_SEAM": "**ABSENT**——GROUNDING_FACTS 尚無 completion 出口（responsibility_completion 步驟⑤ 只放行 FINAL_TEXT，T4-D2 未建）",
+    "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
-    "MEMBER_SCOPE_VERIFICATION": "**NOT_ESTABLISHED**（2026-08-31 新發現）——payment_logs member 列**無任何 bill identity** ⇒ 只能驗信封（ENVELOPE_ONLY）。⛔ 不得因 resolver 綠就當 member scope 已證。"
+    "PAYMENT_LOG_SCOPE_PROVENANCE": "**NOT_ESTABLISHED**（業主裁定 2026-08-31，**live blocker**）——reason: member-level proof unavailable（已知 schema 事實）; transport-envelope proof not yet established（尚未查）。⚠️ ⛔ 這條 ⛔ 不因 `_RESOLVERS` 接線完成而消失。"
    },
    "_r16_empty_review": "見頂層 `_r16_empty_review_2026_08_31`（ADAPTER_REQUIRED；lane 不變）",
    "_lane_history": [
@@ -2352,15 +2352,15 @@
    },
    "primary_closure_lane": "B4_EXECUTION_WIRING_PENDING",
    "required_blockers": {
-    "INPUT_FETCH_RESOLVER": "IMPLEMENTED_NOT_WIRED——`fetch_*` 已實作、41 條 guard 綠、三個 real-source mutation 皆讓 guard 變紅；⛔ 但未進 `responsibility_completion._RESOLVERS`",
+    "INPUT_FETCH_RESOLVER": "WIRED（**UPSTREAM_REF 兩階段**）——先經 `bill.by_ref` 解析出 resolved_bill_id 才跑 fetch；⛔ 上游未 RESOLVED 一律不呼叫下游",
     "IDENTITY_RESOLUTION": "OK-BY-CONTRACT——scope 來自 resolved_bill_id（bill.by_ref resolver 已存在）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "未見同型缺陷（⚠️ 僅 code shape 觀察，⛔ 未逐分支實跑）",
     "EMPTY_INPUT_SEMANTICS": "DIRECT_SUPPORTED（實測「查無發票開立紀錄…」）",
-    "COMPLETION_SEAM": "**ABSENT**——GROUNDING_FACTS 尚無 completion 出口（responsibility_completion 步驟⑤ 只放行 FINAL_TEXT，T4-D2 未建）",
+    "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
-    "MEMBER_SCOPE_VERIFICATION": "VERIFIED（member 帶 bill_id，逐筆驗；⚠️ 另見 F-OPEN-02：該 endpoint production 不做 role 圈定）"
+    "SCOPE_PROVENANCE": "CONFIRMED（MEMBER_VERIFIABLE：member 帶 bill_id 逐筆驗）；⚠️ 另見 F-OPEN-02"
    },
    "_lane_history": [
     {
@@ -2514,15 +2514,15 @@
    },
    "primary_closure_lane": "B4_EXECUTION_WIRING_PENDING",
    "required_blockers": {
-    "INPUT_FETCH_RESOLVER": "IMPLEMENTED_NOT_WIRED——`fetch_*` 已實作、41 條 guard 綠、三個 real-source mutation 皆讓 guard 變紅；⛔ 但未進 `responsibility_completion._RESOLVERS`",
+    "INPUT_FETCH_RESOLVER": "WIRED（**UPSTREAM_REF 兩階段**）——先經 `bill.by_ref` 解析出 resolved_bill_id 才跑 fetch；⛔ 上游未 RESOLVED 一律不呼叫下游",
     "IDENTITY_RESOLUTION": "OK-BY-CONTRACT——scope 來自 resolved_bill_id（bill.by_ref resolver 已存在）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "未見同型缺陷（⚠️ 僅 code shape 觀察，⛔ 未逐分支實跑）",
     "EMPTY_INPUT_SEMANTICS": "DIRECT_SUPPORTED（實測「查無發票作廢紀錄…」）",
-    "COMPLETION_SEAM": "**ABSENT**——GROUNDING_FACTS 尚無 completion 出口（responsibility_completion 步驟⑤ 只放行 FINAL_TEXT，T4-D2 未建）",
+    "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
-    "MEMBER_SCOPE_VERIFICATION": "VERIFIED（member 帶 bill_id，逐筆驗；⚠️ 另見 F-OPEN-02：該 endpoint production 不做 role 圈定）"
+    "SCOPE_PROVENANCE": "CONFIRMED（MEMBER_VERIFIABLE：member 帶 bill_id 逐筆驗）；⚠️ 另見 F-OPEN-02"
    },
    "_lane_history": [
     {
@@ -2676,11 +2676,11 @@
    },
    "primary_closure_lane": "B4_EXECUTION_WIRING_PENDING",
    "required_blockers": {
-    "INPUT_FETCH_RESOLVER": "IMPLEMENTED_NOT_WIRED——函式已實作且 unit 覆蓋，⛔ 但未進 `responsibility_completion._RESOLVERS`",
+    "INPUT_FETCH_RESOLVER": "WIRED——已進 `responsibility_completion._RESOLVER_SPECS`（W-G1 明示對照，⛔ 非動態猜名）",
     "IDENTITY_RESOLUTION": "⚠️ 依賴 **verified_role_id** 前提——見 F-OPEN-01（provenance NOT_YET_ESTABLISHED）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "未見同型缺陷（⚠️ 僅 code shape 觀察）",
     "EMPTY_INPUT_SEMANTICS": "N/A（SINGLETON；absent → NO_MATCH）",
-    "COMPLETION_SEAM": "**ABSENT**——GROUNDING_FACTS 尚無 completion 出口（responsibility_completion 步驟⑤ 只放行 FINAL_TEXT，T4-D2 未建）",
+    "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。"
@@ -2828,11 +2828,11 @@
    },
    "primary_closure_lane": "B4_EXECUTION_WIRING_PENDING",
    "required_blockers": {
-    "INPUT_FETCH_RESOLVER": "IMPLEMENTED_NOT_WIRED——函式已實作且 unit 覆蓋，⛔ 但未進 `responsibility_completion._RESOLVERS`",
+    "INPUT_FETCH_RESOLVER": "WIRED——已進 `responsibility_completion._RESOLVER_SPECS`（W-G1 明示對照，⛔ 非動態猜名）",
     "IDENTITY_RESOLUTION": "⚠️ 依賴 **verified_role_id** 前提——見 F-OPEN-01（provenance NOT_YET_ESTABLISHED）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "未見同型缺陷（⚠️ 僅 code shape 觀察）",
     "EMPTY_INPUT_SEMANTICS": "N/A（SINGLETON）",
-    "COMPLETION_SEAM": "**ABSENT**——GROUNDING_FACTS 尚無 completion 出口（responsibility_completion 步驟⑤ 只放行 FINAL_TEXT，T4-D2 未建）",
+    "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。"
@@ -2994,11 +2994,11 @@
    },
    "primary_closure_lane": "B4_EXECUTION_WIRING_PENDING",
    "required_blockers": {
-    "INPUT_FETCH_RESOLVER": "IMPLEMENTED_NOT_WIRED——函式已實作且 unit 覆蓋，⛔ 但未進 `responsibility_completion._RESOLVERS`",
+    "INPUT_FETCH_RESOLVER": "WIRED——已進 `responsibility_completion._RESOLVER_SPECS`（W-G1 明示對照，⛔ 非動態猜名）",
     "IDENTITY_RESOLUTION": "⚠️ 依賴 **verified_role_id** 前提——見 F-OPEN-01（provenance NOT_YET_ESTABLISHED）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "未見同型缺陷（⚠️ 僅 code shape 觀察）",
     "EMPTY_INPUT_SEMANTICS": "N/A（SELECT_ONE；0→NO_MATCH／>1→AMBIGUOUS）",
-    "COMPLETION_SEAM": "**ABSENT**——GROUNDING_FACTS 尚無 completion 出口（responsibility_completion 步驟⑤ 只放行 FINAL_TEXT，T4-D2 未建）",
+    "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。"
@@ -3149,17 +3149,17 @@
    },
    "primary_closure_lane": "B4_EXECUTION_WIRING_PENDING",
    "required_blockers": {
-    "INPUT_FETCH_RESOLVER": "IMPLEMENTED_NOT_WIRED——`fetch_*` 已實作、41 條 guard 綠、三個 real-source mutation 皆讓 guard 變紅；⛔ 但未進 `responsibility_completion._RESOLVERS`",
+    "INPUT_FETCH_RESOLVER": "WIRED——已進 `responsibility_completion._RESOLVER_SPECS`（W-G1 明示對照，⛔ 非動態猜名）",
     "IDENTITY_RESOLUTION": "⚠️ 依賴 **verified_role_id** 前提——見 F-OPEN-01（provenance NOT_YET_ESTABLISHED）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "未見同型缺陷（⚠️ 僅 code shape 觀察）",
     "EMPTY_INPUT_SEMANTICS": "ADAPTER_WRITTEN_NOT_REGISTERED（`iot_binding_failure_facts_adapter`；RESPONSIBILITY_BINDING_DOMAIN_GAP，⛔ 非 production defect）",
-    "COMPLETION_SEAM": "**ABSENT**——GROUNDING_FACTS 尚無 completion 出口（responsibility_completion 步驟⑤ 只放行 FINAL_TEXT，T4-D2 未建）",
+    "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
-    "MEMBER_SCOPE_VERIFICATION": "VERIFIED（member 帶 role_id，三者中唯一與 collection_scope_key 同名）",
     "FETCH_RESOLVER_EXECUTABILITY": "**CONFIRMED**（module 層）",
-    "ROLE_SCOPE_REACHABILITY": "**BLOCKED_F_OPEN_01**——⛔ resolver 完成 ⛔ 不等於 role scope 可信；`ROLE_ID_VERIFICATION_PROVENANCE` 仍 NOT_YET_ESTABLISHED ⇒ ⛔ **不是** input closed"
+    "ROLE_SCOPE_REACHABILITY": "**BLOCKED_F_OPEN_01**——⛔ resolver 完成 ⛔ 不等於 role scope 可信；`ROLE_ID_VERIFICATION_PROVENANCE` 仍 NOT_YET_ESTABLISHED ⇒ ⛔ **不是** input closed",
+    "SCOPE_PROVENANCE": "CONFIRMED（MEMBER_VERIFIABLE：member 帶 role_id）"
    },
    "_lane_history": [
     {
@@ -3310,11 +3310,11 @@
    },
    "primary_closure_lane": "B2_IDENTITY_BLOCKED",
    "required_blockers": {
-    "INPUT_FETCH_RESOLVER": "IMPLEMENTED_NOT_WIRED——函式已實作且 unit 覆蓋，⛔ 但未進 `responsibility_completion._RESOLVERS`",
+    "INPUT_FETCH_RESOLVER": "**DELIBERATELY_NOT_WIRED**——`resolve_tenant_summary` 已實作，但需 verified_user_id 而 production 無 keyword→user_id resolver ⇒ ⛔ 刻意不接（明示缺席才看得見）",
     "IDENTITY_RESOLUTION": "**BLOCKED**——production 無合法 `keyword → user_id` resolver；`resolve_tenant_summary` 只給 keyword 時 raise IdentityNotResolved 且 ⛔ 不呼叫 endpoint（⚠️ 本筆 lane 即此條）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "未見同型缺陷（⚠️ 僅 code shape 觀察）",
     "EMPTY_INPUT_SEMANTICS": "N/A（SINGLETON）",
-    "COMPLETION_SEAM": "AVAILABLE——FINAL_TEXT，D1-E envelope 已建立",
+    "COMPLETION_SEAM": "AVAILABLE（FINAL_TEXT，D1-E envelope 已建立）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。"
@@ -3864,7 +3864,11 @@
   "F-C14_CONTRACT_REGISTRATION_IS_NOT_EXECUTION_CLOSURE": "⚠️ input contract 進了 machine registry **只證 contract 已定義**，⛔ 不證 execution 可閉合。⇒ contract 註冊後，該筆**必須立刻離開** `NOT_YET_JUDGEABLE`（F-C10 的前提已消失），並改標**真正還缺的那一樣**：fetch resolver（B3）／wiring（B4）／identity（B2）／production defect（B1）。⛔ 不得讓 `NOT_YET_JUDGEABLE` 在前提消失後續掛——那會把『已可判、未判』偽裝成『不可判』。",
   "F-C15_SHAPE_RESOLVER_IS_NOT_FETCH_RESOLVER": "⚠️ `resolve_collection(input_contract_id, members, scope_value)` 的簽名**只收已取回的 members** ⇒ 它是 **shape resolver**（判 cardinality／empty policy／scope 一致性），⛔ **不是** fetch resolver。⇒ COLLECTION contract 就算 empty policy 已裁、cardinality 已凍，只要沒有一個函式把 scope key （`resolved_bill_id`／`role_id`）換成 members，該筆的 execution closure 仍是 **INPUT_FETCH_RESOLVER_ABSENT**。⚠️ 對照組：SELECT_ONE／SINGLETON 的 `resolve_estate_by_ref`／`resolve_subscription_current`／`resolve_tenant_summary` 皆自帶 api 參數 ⇒ 它們**是** fetch resolver。",
   "F-C16_BLOCKERS_ARE_CONJUNCTIVE": "⚠️ **closure lane 只表示目前最具決定性的解封工作，⛔ 不代表其他 blocker 消失。**Fulfillment 只有在 **所有 required blockers 都解除後**才能升級（合取，⛔ 非析取）。⇒ 每一筆必須維護 `required_blockers` 全表；⛔ 不得只留 lane。⚠️ 正例：R-12 lane=B1 但 `INPUT_FETCH_RESOLVER=ABSENT` 仍在表上。",
-  "F-C17_FETCH_RESOLVER_IS_TRANSPORT_NOT_SEMANTIC_ROUTING": "⚠️ fetch resolver **可以**：接收已確定的 scope identity／呼叫**固定** API endpoint／驗證回傳 scope／把 members 交給既有 `resolve_collection()`。\n⛔ fetch resolver **不可以**：接 user_question／face／category；呼叫 `diagnose_payment_logs`／`diagnose_invoice_logs`／`diagnose_iot`；挑 `member[0]`；選 capability／binding；依資料內容改 responsibility。\n⚠️ 真正的風險⛔ 不是演算法，而是 **fetch resolver 不小心重新長成 dispatcher**。"
+  "F-C17_FETCH_RESOLVER_IS_TRANSPORT_NOT_SEMANTIC_ROUTING": "⚠️ fetch resolver **可以**：接收已確定的 scope identity／呼叫**固定** API endpoint／驗證回傳 scope／把 members 交給既有 `resolve_collection()`。\n⛔ fetch resolver **不可以**：接 user_question／face／category；呼叫 `diagnose_payment_logs`／`diagnose_invoice_logs`／`diagnose_iot`；挑 `member[0]`；選 capability／binding；依資料內容改 responsibility。\n⚠️ 真正的風險⛔ 不是演算法，而是 **fetch resolver 不小心重新長成 dispatcher**。",
+  "F-C18_SCOPE_PROOF_MAY_COME_FROM_TRANSPORT_BUT_MUST_BE_PROVEN": "⚠️ Collection member **不必**一定攜帶 scope identity。若 production fetch／query 本身以**已解析 scope 強制過濾**，而且此約束有**可稽核實作證據**，則 collection 可以靠 transport envelope 建立 scope provenance。\n```text\nCOLLECTION_SCOPE_PROOF\n  A. MEMBER_VERIFIABLE     每個 member 自帶 scope identity → runtime 可逐筆驗證\n  B. ENVELOPE_VERIFIABLE   member 不帶 → 但 production fetch 本身被證明只能回指定 scope 的資料\n```\n⛔ **以下都不算證據**：函式名 `get_payment_logs(bill_id)`／request 帶 bill_id 參數／回應信封把我們送過去的 bill_id **回吐**。\n⚠️ 至少要實查到 controller／repository／SQL 的 `WHERE bill_id = requested_bill_id` 或等價強制限制，且**最好附 negative control**（拿掉／放寬 filter → scope contract guard RED）。",
+  "F-C19_EMPTY_COLLECTION_CANNOT_PROVE_MEMBER_SCOPE": "⚠️ **沒有反例 ≠ 有正面 scope 證據。** empty member set 對 member-level scope verification ⛔ 沒有任何正證據 ⇒ scope provenance 必須來自其他已證來源。\n```text\nmembers = []\n  member_scope_proof   = N/A_EMPTY      ⛔ 不是 VERIFIED\n  envelope_scope_proof = 由 transport 證據獨立決定\n```\n⚠️ 兩者 ⛔ 不得揉成一個 bool。",
+  "W-G1_EXACT_REGISTERED_RESOLVER": "⚠️ responsibility `input_contract_id` → **exact registered resolver**。⛔ 不允許 fallback／動態組名 getattr／猜函式；⛔ 查不到 resolver 也不得走 legacy 查詢路徑（F-C6）。⚠️ 每個 contract 的 resolver 簽名不同 ⇒ 用**顯式 spec 表**（`_RESOLVER_SPECS`），⛔ 不做統一 arity 假設。⚠️ `tenant.summary.v1` **刻意缺席**（R-24 IDENTITY_BLOCKED）——明示缺席才看得見。",
+  "W-G2_GROUNDING_EXIT_KEEPS_RESPONSIBILITY_AUTHORITY": "⚠️ `GROUNDING_FACTS execution result → D2 present() → responsibility converter` **整條** ⛔ 不得重入 legacy dispatcher／`show_knowledge`／`row.answer`。\n⚠️ payload 的 `responsibility_id` 一律取自 **plan（committed authority）**，⛔ 不從 adapter 輸出讀（adapter 若回別的 id 必須被覆寫掉）。\n⚠️ unresolved（NO_MATCH／AMBIGUOUS／INVALID_INPUT）仍保持**同一 responsibility authority**，⛔ 不得因 `_RESOLVERS` 接上後掉回 form／legacy path。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -4441,7 +4445,7 @@
    "fetch": "`JGBSystemAPI.get_payment_logs(role_id, bill_id=...)` —— 固定 endpoint",
    "scope_invariant": "every returned member belongs to resolved_bill_id",
    "then": "`resolve_collection('payment_logs.by_bill.v1', members, ...)`",
-   "⚠️_SCOPE_VERIFICATION": "**ENVELOPE_ONLY**——⚠️ 實查 member 形狀：`payment_logs` 列有 `payment_id`／`role_id`／`transaction_id`，**⛔ 沒有任何 bill identity**。信封層有 top-level `bill_id`（adapter 已帶出）⇒ 只能驗信封。⛔ **不得**因 endpoint 叫 `get_payment_logs(bill_id=…)` 就當 member scope 已證（F-C10 同理）。⇒ `member_scope_verification = NOT_ESTABLISHED`。",
+   "⚠️_SCOPE_VERIFICATION": "**PAYMENT_LOG_SCOPE_PROVENANCE = NOT_ESTABLISHED**（業主裁定 2026-08-31）\n```text\nmember_scope_proof   = UNAVAILABLE_BY_RESPONSE_SCHEMA\nenvelope_scope_proof = NOT_YET_REVIEWED\n```\n⚠️ 兩者狀態不同**不是筆誤**：member 沒有 bill_id 是**已知 schema 事實**（查過了、就是沒有）；endpoint 到底有沒有強制 bill filter 則是**還沒查**。⛔ 不得合寫成 `COLLECTION_SCOPE_VERIFICATION = NOT_ESTABLISHED`——那會把「已證不可得」與「尚未查」混為一談。\n⚠️ 依 F-C18，本 contract 目前是 **ENVELOPE_VERIFIABLE 的候選**，⛔ 尚未成立。\n⇒ 下一輪唯讀 audit production fetch，三選一：MEMBER_VERIFIABLE ／ ENVELOPE_VERIFIABLE ／ **SCOPE_CONTRACT_REFUTED**。若確認 `WHERE bill_id = :resolved_bill_id` 且無旁路 ⇒ 即使 member 永遠沒有 bill_id 也可升 CONFIRMED；若只是收 bill_id 而未嚴格 filter ⇒ **SCOPE_CONTRACT_REFUTED**，必須修 fetch／API 或增加可驗 provenance，⛔ 不得靠 resolver 猜。⛔ 本輪不修 API。",
    "⚠️_vacuous_check_found": "⚠️ contract 宣告 `collection_scope_key='resolved_bill_id'`，但**真實 member 沒有這個欄位** ⇒ `resolve_collection` 的 `if scope_key in m` 對本 contract **恆為空檢查（vacuous）**。⚠️ 既有測試用 `{'id': i, 'resolved_bill_id': scope}` 造 member，所以這條檢查**從未對真實形狀跑過**。⇒ member-level 驗證改由 fetch resolver 顯式負責。"
   },
   "invoice_logs.by_bill.v1": {
@@ -4492,7 +4496,8 @@
   "status": "**NOT_YET_RULED**（⛔ 本刀只記錄，⛔ 未裁、⛔ 未據此改分類）",
   "finding": "⚠️ `GET /invoice-logs` 的 production controller **不做任何 role 圈定**（依 get_invoice_logs docstring 的 jgb2 原始碼對照紀錄）⇒ 只要知道 bill_id／invoice_id 即可取得該筆日誌。",
   "_distinct_from_F_OPEN_01": "⚠️ F-OPEN-01 問的是「request.role_id 可不可信」；本條問的是「endpoint 根本不用 role 圈定」。⛔ 兩者不得混為一談。",
-  "_not_a_security_ruling": "⛔ 唯讀觀察，⛔ 未評估外部可達性、⛔ 未定性為漏洞。"
+  "_not_a_security_ruling": "⛔ 唯讀觀察，⛔ 未評估外部可達性、⛔ 未定性為漏洞。",
+  "_precise_question": "⚠️ 正確的問題**不是**「controller 沒 role filter ⇒ 有漏洞」，而是：\n> **invoice-log endpoint 的 bill scope，是否足以繼承已驗 bill 的 authority，還是存在跨 role 以 bill_id 讀取的可能？**\n```text\nauthenticated role → resolved/authorized bill → invoice_logs(bill_id)\n```\n⚠️ 需看**完整 provenance 鏈**才可裁。⛔ 不得因 controller 沒 role filter 就直接判錯，⛔ 也不得因『bill 已授權』就直接關閉。⚠️ 本輪的 UPSTREAM_REF 兩階段接線讓 bill 必須先經 `bill.by_ref` 解析 ⇒ 這是**鏈上的一環已就位**，⛔ 但仍未證整條。"
  },
  "_b3_execution_record_2026_08_31": {
   "id": "B3_FETCH_RESOLVER_EXECUTION",
@@ -4528,5 +4533,65 @@
    "⛔ D1-R 仍 BLOCKED ⇒ 三個 fetch resolver 皆 NOT_EXTERNALLY_VALIDATED。",
    "⛔ 未改任何 production capability（payments／invoices／iot 一行未動）。"
   ]
+ },
+ "_w_wiring_record_2026_08_31": {
+  "id": "W_RESOLVER_WIRING_AND_T4D2_EXIT",
+  "what": [
+   "`_RESOLVER_SPECS`：6 個 contract 明示接線（bill／estate／subscription／iot／payment_logs／invoice_logs）",
+   "`KIND_UPSTREAM_REF` 兩階段：payment_logs／invoice_logs 先經 `bill.by_ref` 解析出 **resolved_bill_id**",
+   "`ResponsibilityGroundingResult`：**第三個 result family**（GROUNDING_FACTS 經 D2 present()）",
+   "D1-E converter 認第三個 family（`presentation.grounding`／`presentation.answer` 兩個合法來源）",
+   "executor 的 entity 形狀檢查改為 **contract-aware**（COLLECTION 的合法 entity 是 list 本身）"
+  ],
+  "⚠️_why_two_stage_matters": "⚠️ `payment_logs.by_bill.v1` 的 `resolved_bill_id` 依定義是**已解析的帳單 id**。若直接拿 form 的 `bill_ref`（使用者輸入）當它，『已解析』就變成假設 ⇒ 與 R-24 的 `tenant_keyword` 當 user_id **是同一種病**。⇒ 上游未 RESOLVED 一律原樣交還上游結果，⛔ 不呼叫下游 fetch（有 guard W-G1:5 斷言 `get_payment_logs` 未被呼叫）。",
+  "⚠️_executor_guard_widened": "⚠️ `fr.execute` 原本一律要求 `resolved_entity` 是**非空 dict**——那是 SELECT_ONE 時代的殘留，會把所有 COLLECTION binding 擋死。已改為 contract-aware：COLLECTION 要 list（空 list 僅 RESOLVED_EMPTY 合法），**其餘契約維持原樣**。⚠️ 放寬有負控制：W-G2:8 斷言 `bill.by_ref.v1` 收到 list 仍必須 hard fail。",
+  "guards": "W-G1×6 ＋ W-G2×9 ＋ mutation×2 ＝ 17 條全綠。",
+  "_real_source_mutations": {
+   "W-M1 getattr 動態猜函式": "RED：AST guard ＋ unregistered hard-fail（15/2）",
+   "W-M2 上游未 RESOLVED 仍拿 raw ref 硬跑下游": "RED：`get_payment_logs` 被呼叫即抓（16/1）",
+   "W-M3 authority 改由 adapter 輸出決定": "RED：R-99-EVIL 竄改被抓（16/1）",
+   "_restore": "還原後 17/17 綠、diff 位元相同。"
+  },
+  "⛔_still_not_closed": [
+   "⛔ **0 個 F2-B binding 進 executable registry**——接線完成 ⛔ 不等於 8 筆可執行；`_REGISTRY` 仍只有 R-28／R-29／R-31（F-G1）。",
+   "⛔ 0 筆升 APPROVED_CAPABILITY；F2-B verdict 仍 20/20 INSUFFICIENT_EVIDENCE。",
+   "⛔ R-12：PROD-DEFECT-01 ＋ PAYMENT_LOG_SCOPE_PROVENANCE ＋ empty adapter 未註冊，三條都還在。",
+   "⛔ R-15／R-16：PAYMENT_LOG_SCOPE_PROVENANCE；R-16 另有 empty adapter 未寫。",
+   "⛔ R-23：ROLE_SCOPE_REACHABILITY = BLOCKED_F_OPEN_01。",
+   "⛔ R-24：仍 IDENTITY_BLOCKED，**刻意未接線**。",
+   "⛔ D1-R 仍 BLOCKED ⇒ 整條 wired seam **NOT_EXTERNALLY_VALIDATED**（只有 module／unit 證據）。",
+   "⛔ 未改任何 production capability（payments／invoices／iot／bills 一行未動）。"
+  ],
+  "_how_to_read": "⚠️ **『B4 清掉』⛔ 不等於八筆變 APPROVED**（F-C16）：execution wiring blocker 一次解除 8 筆的**那一條**，各 row 的其他 required_blockers 照舊存在。"
+ },
+ "_integration_attribution_2026_08_31": {
+  "id": "W_CUT_INTEGRATION_ATTRIBUTION",
+  "verdict": "**NO_REGRESSION_ATTRIBUTABLE_TO_THIS_CUT**",
+  "_method": "⚠️ ⛔ 不以「我改的地方看起來無關」收案——實跑對照組。",
+  "matched_runs": {
+   "_scope": "同樣兩檔、同樣 collected 103 items、三輪皆 reranker 正常（『服務不可用』0 次）",
+   "base（開工前碼 6681973）": "95 passed / **8 failed**",
+   "mine #1": "94 passed / **9 failed**",
+   "mine #2": "95 passed / **8 failed**",
+   "_delta": "差集永遠落在**同一個 parametrized family** `test_billing_operation_questions_stay_single_shot`（點退帳單的金額是怎麼算的／系統怎麼算點退帳單的金額／收據 PDF 在哪裡下載）——成員逐輪輪替、總數不變。"
+  },
+  "_structural_proof": "⚠️ 失敗路徑印的是 `🧭 [responsibility resolver] bill_diagnosis[switch] → billing_anomaly[switch] → contract_closeout[stay]`，出自 **routers/chat.py:818 的 pre-commit responsibility resolver**。本輪對 chat.py 的四個 hunk 全在 **1874 行之後**的 `_convert_responsibility_result_to_response`／`_convert_responsibility_or_form_result` 內 ⇒ **結構上不相交**。",
+  "full_suite_17_failures": "**環境造成**：該輪應用啟動印了 `⚠️ SemanticReranker 服務不可用，Reranker 未啟用`（×7），所有失敗案例的 `分數來源: rerank=0`（×16），且 reranker 的**專責健康測試** `test_reranker_ranks_relevant_candidate_highest` 自己也紅。對照兩輪 targeted run：『服務不可用』0 次、`rerank=5`。",
+  "⚠️_evidence_limits": "⚠️ baseline 只跑了 **1 輪**，mine 跑了 2 輪 ⇒ 對單一案例的浮動性，樣本不足以做統計宣稱。本裁定依據的是**總數相同 ＋ 差集永遠在同一 family 內輪替 ＋ 結構上不相交**三者合取，⛔ 不是單看『數字一樣』。"
+ },
+ "_environment_debts_found_2026_08_31": {
+  "E-DEBT-01_RUNNER_SPLITS_K_EXPRESSION": {
+   "status": "**CONFIRMED PREEXISTING**（⛔ 本輪未修）",
+   "what": "`scripts/run-tests.sh` 把 `-k \"a or b\"` 逐字拆給 pytest ⇒ `or` 被當成檔案路徑：`ERROR: file or directory not found: or` ＋ `no tests ran`，但 runner 記帳仍印 **`passed=0  failed=0`**。",
+   "⚠️_why_dangerous": "⚠️ 若只讀 `failed=0` 就收案，會把**空跑**當成綠燈——本輪跑基準線時實際踩到，當時若誤讀就會得出『基準線全綠 ⇒ 是我造成的回歸』這個**完全相反**的結論。",
+   "workaround": "改跑整檔、⛔ 不用 `-k`。"
+  },
+  "E-DEBT-02_TEST_DB_POLLUTED_EVERY_INTEGRATION_RUN": {
+   "status": "**CONFIRMED PREEXISTING**（⛔ 本輪未修；來源 commit b2990af，本輪 integration 測試一行未動）",
+   "what": "`tests/integration/conversational/test_resolver_rollout_integration_req.py:22` 的 `ROLLBACK = \"/app/database/migrations/seed_responsibility_delegates_v1_rollback.sql\"` **路徑少一層**；檔案實際在 `/app/database/migrations/**rollback/**seed_responsibility_delegates_v1_rollback.sql`。",
+   "consequence": "⚠️ `migrated_db` fixture 套用 seed migration 後，teardown 必 `FileNotFoundError` ⇒ **永遠無法還原** ⇒ responsibility delegate 設定殘留在 `aichatbot_test`，每跑一次 integration 就污染一次。",
+   "⚠️_impact_on_this_attribution": "⚠️ base 與 mine 三輪**都**在已污染的 DB 上跑 ⇒ 條件一致、對照仍成立，⛔ 但那個 baseline 本身**不乾淨**。⇒ 未來要拿它當 regression baseline 前必須先修這條。",
+   "remedy": "一行改路徑（加 `rollback/`）。⛔ 不在本輪 approved scope 內，待業主裁定。"
+  }
  }
 }

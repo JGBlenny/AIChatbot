@@ -1871,7 +1871,8 @@ def _convert_responsibility_result_to_response(
     from datetime import datetime
 
     from services.fulfillment_registry import FulfillmentExecutionResult
-    from services.responsibility_completion import ResponsibilityInputResolutionResult
+    from services.responsibility_completion import (ResponsibilityGroundingResult,
+                                                     ResponsibilityInputResolutionResult)
     from services.responsibility_entity_resolution import STATE_RESOLVED
 
     def _envelope(answer: str, completed: bool, quick_replies=None):
@@ -1896,6 +1897,27 @@ def _convert_responsibility_result_to_response(
                 "FINAL_TEXT 的 text 缺漏／為空——⛔ 不得以 '' 帶過，"
                 "⛔ 更不得改用 result['answer'] 或 member row 的 answer 補值")
         return _envelope(text, completed=True)
+
+    if isinstance(result, ResponsibilityGroundingResult):
+        # ⚠️ **W-G2**（T4-D2，2026-08-31）：GROUNDING_FACTS 的 envelope 來源只有兩個合法欄位——
+        #    `presentation.grounding`（KIND_CONVERGE）／`presentation.answer`（KIND_ASK）。
+        #    ⛔ 絕不從 knowledge／member row／show_knowledge fallback；缺值即 hard fail。
+        from services.grounding_presentation import KIND_ASK, KIND_CONVERGE
+        pres = result.get('presentation') or {}
+        kind = pres.get('kind')
+        if kind == KIND_CONVERGE:
+            text, completed, quick = pres.get('grounding'), True, None
+        elif kind == KIND_ASK:
+            text, completed = pres.get('answer'), False
+            quick = pres.get('quick_replies')
+        else:
+            raise ResponsibilityEnvelopeError(
+                f"未知的 D2 presentation kind：{kind!r}——⛔ 不得猜")
+        if not isinstance(text, str) or not text.strip():
+            raise ResponsibilityEnvelopeError(
+                f"D2 presentation（kind={kind!r}）缺文字——⛔ 不得以 '' 帶過，"
+                f"⛔ 更不得改用 knowledge／member row 的 answer 補值")
+        return _envelope(text, completed=completed, quick_replies=quick)
 
     if isinstance(result, ResponsibilityInputResolutionResult):
         if result.get('state') == STATE_RESOLVED:
@@ -1942,9 +1964,11 @@ def _convert_responsibility_or_form_result(
 ) -> 'VendorChatResponse':
     """極薄 **type dispatcher**——⚠️ legacy converter 逐位不動。"""
     from services.fulfillment_registry import FulfillmentExecutionResult
-    from services.responsibility_completion import ResponsibilityInputResolutionResult
+    from services.responsibility_completion import (ResponsibilityGroundingResult,
+                                                     ResponsibilityInputResolutionResult)
 
-    if isinstance(form_result, (FulfillmentExecutionResult, ResponsibilityInputResolutionResult)):
+    if isinstance(form_result, (FulfillmentExecutionResult, ResponsibilityGroundingResult,
+                                ResponsibilityInputResolutionResult)):
         return _convert_responsibility_result_to_response(form_result, session_state, request)
     return _convert_form_result_to_response(form_result, request)
 
