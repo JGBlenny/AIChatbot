@@ -1633,12 +1633,13 @@
     "INPUT_FETCH_RESOLVER": "WIRED（**UPSTREAM_REF 兩階段**）——先經 `bill.by_ref` 解析出 resolved_bill_id 才跑 fetch；⛔ 上游未 RESOLVED 一律不呼叫下游",
     "IDENTITY_RESOLUTION": "OK-BY-CONTRACT——scope 來自 resolved_bill_id（bill.by_ref resolver 已存在）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "**CONFIRMED（2026-08-31 解除）**——PROD-DEFECT-01 已 FIXED_LOCAL；19 條回歸守衛 ＋ 真實 source mutation 證明非裝飾。",
-    "EMPTY_INPUT_SEMANTICS": "ADAPTER_WRITTEN_NOT_REGISTERED（`payment_not_reflected_facts_adapter`）",
+    "EMPTY_INPUT_SEMANTICS": "**CONFIRMED（2026-08-31，F-C24）**——adapter 已存在、empty output 已 reviewed、dispatcher bypass 已由 AST 證明、deterministic guards 已證。⚠️ 「是否已註冊」屬 `BINDING_REGISTRATION`，⛔ 不併入本條。",
     "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
-    "PAYMENT_LOG_SCOPE_PROVENANCE": "**CONFIRMED（2026-08-31 解除）**——ENVELOPE_VERIFIABLE：server-side 兩段述詞（payments.paymentable_id=$billId → payment_logs.payment_id IN 那批 id）＋ 無旁路。⚠️ 傳遞性約束，⛔ 非直接 bill_id 述詞。詳見 `_payment_logs_scope_audit_2026_08_31`。"
+    "PAYMENT_LOG_SCOPE_PROVENANCE": "**CONFIRMED（2026-08-31 解除）**——ENVELOPE_VERIFIABLE：server-side 兩段述詞（payments.paymentable_id=$billId → payment_logs.payment_id IN 那批 id）＋ 無旁路。⚠️ 傳遞性約束，⛔ 非直接 bill_id 述詞。詳見 `_payment_logs_scope_audit_2026_08_31`。",
+    "EMPTY_ADAPTER_EXECUTABILITY": "**CONFIRMED**——adapter 可 deterministic 執行其合法 input domain（含空集合）。⚠️ ⛔ 這 ⛔ 不表示 runtime 已獲授權執行它（F-C24）。"
    },
    "_b3_cut": "見頂層 `_b3_execution_record_2026_08_31`",
    "_bugfix_note": "⚠️ ⛔ **不得因 bugfix 成功就升 APPROVED_CAPABILITY**——R-12 仍有 EMPTY_INPUT_SEMANTICS／BINDING_REGISTRATION／EXTERNAL_VALIDATION。F2 verdict 不動。"
@@ -2072,12 +2073,13 @@
     "INPUT_FETCH_RESOLVER": "WIRED（**UPSTREAM_REF 兩階段**）——先經 `bill.by_ref` 解析出 resolved_bill_id 才跑 fetch；⛔ 上游未 RESOLVED 一律不呼叫下游",
     "IDENTITY_RESOLUTION": "OK-BY-CONTRACT——scope 來自 resolved_bill_id（bill.by_ref resolver 已存在）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "OK——`code` 於迴圈內無條件指派 ⇒ ⛔ 不受 PROD-DEFECT-01 影響（2026-08-31 實查結清；同 R-15，⛔ 不同於 R-12）",
-    "EMPTY_INPUT_SEMANTICS": "**CONFIRMED（2026-08-31 解除）**——F-C22：`auto_pay_failure_facts_adapter` 已寫入，空態沿用 reviewed 常數、non-empty 逐字等同具名分支、AST 證明未進 dispatcher。⚠️ adapter ⛔ 未註冊（那屬 BINDING_REGISTRATION）。",
+    "EMPTY_INPUT_SEMANTICS": "**CONFIRMED（2026-08-31，F-C24）**——adapter 已存在、empty output 已 reviewed、dispatcher bypass 已由 AST 證明、deterministic guards 已證。⚠️ 「是否已註冊」屬 `BINDING_REGISTRATION`，⛔ 不併入本條。",
     "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
-    "PAYMENT_LOG_SCOPE_PROVENANCE": "**CONFIRMED（2026-08-31 解除）**——ENVELOPE_VERIFIABLE：server-side 兩段述詞（payments.paymentable_id=$billId → payment_logs.payment_id IN 那批 id）＋ 無旁路。⚠️ 傳遞性約束，⛔ 非直接 bill_id 述詞。詳見 `_payment_logs_scope_audit_2026_08_31`。"
+    "PAYMENT_LOG_SCOPE_PROVENANCE": "**CONFIRMED（2026-08-31 解除）**——ENVELOPE_VERIFIABLE：server-side 兩段述詞（payments.paymentable_id=$billId → payment_logs.payment_id IN 那批 id）＋ 無旁路。⚠️ 傳遞性約束，⛔ 非直接 bill_id 述詞。詳見 `_payment_logs_scope_audit_2026_08_31`。",
+    "EMPTY_ADAPTER_EXECUTABILITY": "**CONFIRMED**——adapter 可 deterministic 執行其合法 input domain（含空集合）。⚠️ ⛔ 這 ⛔ 不表示 runtime 已獲授權執行它（F-C24）。"
    },
    "_r16_empty_review": "見頂層 `_r16_empty_review_2026_08_31`（ADAPTER_REQUIRED；lane 不變）",
    "_lane_history": [
@@ -3153,14 +3155,15 @@
     "INPUT_FETCH_RESOLVER": "WIRED——已進 `responsibility_completion._RESOLVER_SPECS`（W-G1 明示對照，⛔ 非動態猜名）",
     "IDENTITY_RESOLUTION": "⚠️ 依賴 **verified_role_id** 前提——見 F-OPEN-01（provenance NOT_YET_ESTABLISHED）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "未見同型缺陷（⚠️ 僅 code shape 觀察）",
-    "EMPTY_INPUT_SEMANTICS": "ADAPTER_WRITTEN_NOT_REGISTERED（`iot_binding_failure_facts_adapter`；RESPONSIBILITY_BINDING_DOMAIN_GAP，⛔ 非 production defect）",
+    "EMPTY_INPUT_SEMANTICS": "**CONFIRMED（2026-08-31，F-C24）**——adapter 已存在、empty output 已 reviewed、dispatcher bypass 已由 AST 證明、deterministic guards 已證。⚠️ 「是否已註冊」屬 `BINDING_REGISTRATION`，⛔ 不併入本條。",
     "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
     "FETCH_RESOLVER_EXECUTABILITY": "**CONFIRMED**（module 層）",
     "ROLE_SCOPE_REACHABILITY": "**BLOCKED_F_OPEN_01**——⛔ resolver 完成 ⛔ 不等於 role scope 可信；`ROLE_ID_VERIFICATION_PROVENANCE` 仍 NOT_YET_ESTABLISHED ⇒ ⛔ **不是** input closed",
-    "SCOPE_PROVENANCE": "CONFIRMED（MEMBER_VERIFIABLE：member 帶 role_id）"
+    "SCOPE_PROVENANCE": "CONFIRMED（MEMBER_VERIFIABLE：member 帶 role_id）",
+    "EMPTY_ADAPTER_EXECUTABILITY": "**CONFIRMED**——adapter 可 deterministic 執行其合法 input domain（含空集合）。⚠️ ⛔ 這 ⛔ 不表示 runtime 已獲授權執行它（F-C24）。"
    },
    "_lane_history": [
     {
@@ -3818,7 +3821,7 @@
     "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
    },
    "_8_f2_verdict": {
-    "verdict": "INSUFFICIENT_EVIDENCE",
+    "verdict": "APPROVED_KNOWLEDGE_CONTENT",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
@@ -3828,10 +3831,9 @@
     "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
     "reviewer": "業主",
     "reviewed_at": "2026-08-31",
-    "reason": "**KNOWLEDGE_CONTENT_SCOPE_OVER_COVERAGE**",
     "propositions": {
-     "CONTENT_COVERS_CANONICAL": "CONFIRMED（三要素完整）",
-     "SCOPE_CONTAINED": "**NOT_CONFIRMED**——answer 另行說明『排程滯納金』機制，實質踏入 R-27 的核心問題（跨版本比較）⇒ fulfillment scope leakage（F-C23）",
+     "CONTENT_COVERS_CANONICAL": "CONFIRMED（三要素片段逐一實查，見 FC23_R26:1）",
+     "SCOPE_CONTAINED": "**CONFIRMED（F-C23）**——範圍外標記全數不存在；⚠️ 附 R-27 鑑別力對照：R-27 自身仍含 ≥2 個該類標記 ⇒ 標記組**有鑑別力**，⛔ 不是恰好不存在的恆真判準。",
      "ROW_STATE": "is_active=true／action_type=direct_answer",
      "NO_INSTANCE_RUNTIME_DEPENDENCY": "CONFIRMED",
      "MEMBER_CHOICE_AMBIGUITY": "NONE"
@@ -3854,13 +3856,13 @@
       "⛔ 不用改 R-27",
       "⛔ 不用重做 responsibility identity review"
      ],
-     "status": "⚠️ **PROPOSED，⛔ 未執行**——這是 knowledge_base 內容變更，待業主明確指示。"
+     "status": "**EXECUTED（2026-08-31，業主授權）**"
     }
    },
    "proposed_strategy": "KNOWLEDGE_CONTENT",
    "_f2c_evidence_2026_08_31": {
     "row": 3531,
-    "answer_digest": "b3a73b7694f12dc45711b9a17419fe7fedb08f75e722931c4bb94f6da42889f7",
+    "answer_digest": "b98ec93620c14e5da836218fef96414f5b0dc97ec8acca409017de810cf762c0",
     "canonical_responsibility": "說明付款後結算型延遲金的產生條件、計算方式與結算規則。",
     "categories": [
      "帳單管理",
@@ -3882,9 +3884,29 @@
      "_canonical_content_is_present": "⚠️ canonical 所要的三件事（產生條件／計算方式／結算規則）**都在**且完整 ⇒ ⛔ **不是** FULFILLMENT_NOT_ESTABLISHED。",
      "_overlap_with_R27": "⚠️ 溢出的部分與 **R-27**（canonical 即「比較不同客製版本」）的領域重疊 ⇒ 兩個責任若都核准，會有內容邊界重疊（⛔ 但**非** authority 衝突——各自 member 唯一且不共用）。",
      "_decision_needed": "⚠️ 「範圍溢出是否阻擋 APPROVED_KNOWLEDGE_CONTENT」是**產品裁定**，⛔ 我不代決。"
+    },
+    "answer_digest_before": "b3a73b7694f12dc45711b9a17419fe7fedb08f75e722931c4bb94f6da42889f7",
+    "_repair_2026_08_31": {
+     "scope": "⚠️ **僅本機 reviewed Knowledge content**——`aichatbot_test` 與 `aichatbot_admin` 兩庫；⛔ 未改 Registry V2、⛔ 未改 R-27、⛔ 未碰 identity、⛔ 未碰 production、⛔ 未 push／deploy。",
+     "digest_before": "b3a73b7694f12dc45711b9a17419fe7fedb08f75e722931c4bb94f6da42889f7",
+     "digest_after": "b98ec93620c14e5da836218fef96414f5b0dc97ec8acca409017de810cf762c0",
+     "length": "231 → 181",
+     "kept": [
+      "產生條件（實際付款當下若已逾期／滯納金設定已啟用）",
+      "計算方式（租金 ×（實際付款日 − 繳費期限 − 緩衝天數）× 費率）",
+      "結算規則（獨立延遲金帳單／到期日為產生當日／各自結算不累加／本身逾期不再產生）",
+      "必要共同背景（僅特定客製團隊開通）"
+     ],
+     "removed": [
+      "「系統的滯納金有兩種機制」的比較框架",
+      "（二）排程滯納金的獨立機制說明"
+     ],
+     "verification": "5 條 integration guard 全綠（FC23_R26:1…4 ＋ 負控制 FC23_M1:1）；兩庫寫入後 digest 與預先計算值**三方一致**。",
+     "_negative_control": "⚠️ 把「第二種排程滯納金機制」段落加回去 ⇒ guard 變紅（純字串層模擬，⛔ 未寫 DB）。",
+     "_digest_pinned": "⚠️ digest 已釘進 guard ⇒ 日後內容漂移會被看見，⛔ 不得靜默改動。"
     }
    },
-   "review_status": "proposed"
+   "review_status": "approved_knowledge_content"
   },
   {
    "responsibility_id": "R-27",
@@ -4065,7 +4087,8 @@
   "F-C20_REQUEST_SCOPE_IS_NOT_DATA_SCOPE": "⚠️ request 帶了 `bill_id`、response envelope **echo** 了 `bill_id`，⛔ **都不能單獨證明**回傳的 members 被該 bill 強制圈定。必須有 **server-side filtering／provenance evidence**（controller／repository／SQL 述詞）。\n⚠️ 升 `CONFIRMED` 時**必須附可稽核的證據引用**，⛔ 不得只把狀態字串改掉（已落成 guard B3-G7:8：檢查 `_scope_provenance_evidence` 有指名 controller 與述詞）。\n⚠️ **data scope ≠ authorization**：證明「只回這張 bill 的資料」⛔ 不等於證明「呼叫者有權看這張 bill」。",
   "F-C21_ENVELOPE_REFERENCE_INTEGRITY_IS_NOT_SCOPE_AUTHORITY": "⚠️ child member 對 envelope parent 的 **reference integrity** 可以偵測 **response inconsistency**，⛔ **不得取代** server-side bill scope provenance——兩條證據負責不同的事。\n```text\npayment_ids = {p.id for p in envelope.payments}\n∀ log ∈ payment_logs:  log.payment_id ∈ payment_ids\n```\n⚠️ 違反 ⇒ **hard fail**，⛔ 絕不 silent filter。\n⚠️ 空 member 集合 ⇒ **N/A_EMPTY**，⛔ 不得寫 VERIFIED（與 F-C19 同一種 vacuous truth）。\n⚠️ 有 member 卻無 parent 清單 ⇒ **無從驗** ⇒ hard fail，⛔ 不當成通過。",
   "F-C22_EMPTY_ADAPTER_EXTENDS_REVIEWED_BRANCH_DOMAIN": "⚠️ 當 legacy dispatcher **原本負責空集合**，而 responsibility binding 依 F-C1 必須繞過 dispatcher 時，可由 **reviewed binding adapter 補足空態 domain**。\n⚠️ 這 ⛔ **不改變** underlying capability identity，⛔ **也不構成** semantic reroute。\n⇒ 定性為 **RESPONSIBILITY_BINDING_DOMAIN_GAP**，⛔ 不是 production capability defect。\n⚠️ 空態文字**沿用同一 input contract 的 reviewed 空態常數**，⛔ 不重新發明、⛔ 不呼叫 dispatcher 取得（會把 user_question 帶回來）；漂移由既有 drift guard 比對。",
-  "F-C23_KNOWLEDGE_CONTENT_MUST_BE_SCOPE_CONTAINED": "⚠️ `APPROVED_KNOWLEDGE_CONTENT` 要求 reviewed answer **不只完整覆蓋** canonical responsibility，**也不得實質回答另一個已存在 responsibility 的核心問題**。額外背景**只有在為本 responsibility 所必需時**才可保留。\n```text\nKnowledge fulfillment 不只要「涵蓋 canonical」，\n還必須被 canonical 的責任邊界所**包含**。\n```\n⚠️ 若允許『只要答到自己的 responsibility，順便答鄰近的也可以』，等於把 **responsibility = semantic authority boundary** 重新鬆掉 ⇒ **fulfillment scope leakage**，⛔ 即使 member 未共用也一樣不可接受。"
+  "F-C23_KNOWLEDGE_CONTENT_MUST_BE_SCOPE_CONTAINED": "⚠️ `APPROVED_KNOWLEDGE_CONTENT` 要求 reviewed answer **不只完整覆蓋** canonical responsibility，**也不得實質回答另一個已存在 responsibility 的核心問題**。額外背景**只有在為本 responsibility 所必需時**才可保留。\n```text\nKnowledge fulfillment 不只要「涵蓋 canonical」，\n還必須被 canonical 的責任邊界所**包含**。\n```\n⚠️ 若允許『只要答到自己的 responsibility，順便答鄰近的也可以』，等於把 **responsibility = semantic authority boundary** 重新鬆掉 ⇒ **fulfillment scope leakage**，⛔ 即使 member 未共用也一樣不可接受。",
+  "F-C24_IMPLEMENTED_SEMANTICS_IS_NOT_RUNTIME_AUTHORIZATION": "⚠️ Reviewed adapter 已能 **deterministic 地處理其合法 input domain**，即可關閉 semantic／executability proposition；**是否已進 executable registry 是獨立的 authority-registration blocker**。\n```text\nEMPTY_INPUT_SEMANTICS        adapter 在 empty domain 上「應執行什麼語義」已成立\nEMPTY_ADAPTER_EXECUTABILITY  該 adapter 已可 deterministic 執行\nBINDING_REGISTRATION         runtime 是否已被**授權／接線**去執行它  ← 另一件事\n```\n⚠️ 兩者 ⛔ 不得綁成同一個 blocker。⚠️ 反方向亦然：**adapter 沒註冊 ⛔ ≠ adapter semantics 未建立**。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -4938,36 +4961,47 @@
  "_f2c_result": {
   "groups_reviewed": "5/5",
   "verdicts": {
-   "APPROVED_KNOWLEDGE_CONTENT": 4,
-   "INSUFFICIENT_EVIDENCE": 1
+   "APPROVED_KNOWLEDGE_CONTENT": 5,
+   "INSUFFICIENT_EVIDENCE": 0
   },
   "approved": [
    "R-06",
    "R-07",
    "R-25",
+   "R-26",
    "R-27"
   ],
-  "insufficient": {
-   "R-26": "KNOWLEDGE_CONTENT_SCOPE_OVER_COVERAGE（F-C23）"
-  },
-  "_evidence": "逐筆見各列 `_f2c_evidence_2026_08_31`（含 answer digest）。"
+  "insufficient": {},
+  "_evidence": "逐筆見各列 `_f2c_evidence_2026_08_31`（含 answer digest）。",
+  "_r26_history": "⚠️ R-26 曾因 KNOWLEDGE_CONTENT_SCOPE_OVER_COVERAGE 被裁 INSUFFICIENT_EVIDENCE，經窄內容收斂後於同日升 APPROVED_KNOWLEDGE_CONTENT。⛔ 歷史不刪。"
  },
  "_f2_coverage_2026_08_31": {
   "⚠️_two_numbers_must_not_be_conflated": "⚠️ **審查覆蓋率**與**核准閉合率**是兩件事，⛔ 不得混報。",
   "F2_STRATEGY_REVIEW_COVERAGE": "**30/30**——active responsibility 的 fulfillment strategy **全部審完**（F2-A 5／F2-B 20／F2-C 5）。⚠️ 這是本 spec 第一次達成。",
-  "F2_APPROVAL_CLOSURE": "**29/30**（業主 2026-08-31 記法）——定義：30 筆中有 **29 筆的本階段裁定已定案**（含 4 筆 APPROVED_KNOWLEDGE_CONTENT、25 筆 INSUFFICIENT_EVIDENCE、⚠️ 其中 R-01 為 FULFILLMENT_NOT_ESTABLISHED，亦屬已定案）；**唯一未定案者為 R-26**——其 review 無法在不改內容的前提下收束。\n⚠️ ⛔ **29/30 ⛔ 不是『29 筆已核准』**——實際核准僅 4 筆，且 APPROVED_CAPABILITY 仍為 0。",
+  "F2_APPROVAL_CLOSURE": "**30/30**（2026-08-31 達成）——30 筆的 fulfillment strategy review **全部有最終裁定**。\n⚠️ ⛔ **這 ⛔ 不代表 30 筆可執行**：25 筆 instance responsibility 仍因 execution／external blocker 維持 INSUFFICIENT_EVIDENCE，**APPROVED_CAPABILITY 仍為 0**。",
   "_breakdown": {
    "_machine_counted": {
     "FULFILLMENT_NOT_ESTABLISHED": 1,
-    "INSUFFICIENT_EVIDENCE": 25,
-    "APPROVED_KNOWLEDGE_CONTENT": 4
+    "INSUFFICIENT_EVIDENCE": 24,
+    "APPROVED_KNOWLEDGE_CONTENT": 5
    },
-   "APPROVED_KNOWLEDGE_CONTENT": "4（R-06／R-07／R-25／R-27）",
-   "INSUFFICIENT_EVIDENCE": "25 —— F2-A **4** ＋ F2-B 20 ＋ R-26 1",
+   "APPROVED_KNOWLEDGE_CONTENT": "5（R-06／R-07／R-25／R-26／R-27）",
+   "INSUFFICIENT_EVIDENCE": "24 —— F2-A 4 ＋ F2-B 20",
    "FULFILLMENT_NOT_ESTABLISHED": "1（R-01——有輸入卻**沒有**合法 responsibility-specific capability）",
    "APPROVED_CAPABILITY": "**0** ⚠️ 至今仍是 0（⛔ 不得因 F2-C 有核准就以為 capability 側也動了）",
-   "⚠️_self_correction": "⚠️ 我先前手寫成『INSUFFICIENT_EVIDENCE = 26（F2-A 5 ＋ …）』——**錯**。F2-A 是 4 筆 INSUFFICIENT ＋ 1 筆 FULFILLMENT_NOT_ESTABLISHED（R-01）。已改為機器點算，⛔ 不再手寫。"
+   "⚠️_self_correction": "⚠️ 我先前手寫成『INSUFFICIENT_EVIDENCE = 26（F2-A 5 ＋ …）』——**錯**。F2-A 是 4 筆 INSUFFICIENT ＋ 1 筆 FULFILLMENT_NOT_ESTABLISHED（R-01）。已改為機器點算，⛔ 不再手寫。 ⚠️ R-26 升等後再次以機器點算更新。"
   },
   "_what_29_of_30_does_not_mean": "⛔ 不代表 29 筆可執行——26 筆仍 INSUFFICIENT_EVIDENCE；4 筆 APPROVED_KNOWLEDGE_CONTENT 也**未註冊**任何 executable binding（F-G1）。"
+ },
+ "_f_c24_application_2026_08_31": {
+  "ruling": "業主 2026-08-31：EMPTY_INPUT_SEMANTICS 可關閉，⛔ 不需等 binding registration。",
+  "precedent": "R-16（F-C22）已建立：adapter 存在 ＋ empty output reviewed ＋ dispatcher bypass 已證 ＋ guards 已證。",
+  "applied_to": [
+   "R-12",
+   "R-16",
+   "R-23"
+  ],
+  "⚠️_applied_beyond_R12": "⚠️ 業主明點 R-12；我**一致套用到 R-23**——它的 `iot_binding_failure_facts_adapter` 同樣已寫、空態已 reviewed（RESPONSIBILITY_BINDING_DOMAIN_GAP）、guards 已證 ⇒ 條件相同。⛔ 只關 R-12 會讓同一判準對兩筆結論不一致。⚠️ 若業主認為 R-23 情況有別，請指出。",
+  "_unchanged": "⛔ F2 verdict 全部不動（仍 INSUFFICIENT_EVIDENCE）；⛔ 0 個 binding 進 registry。"
  }
 }
