@@ -2058,13 +2058,14 @@
    "required_blockers": {
     "INPUT_FETCH_RESOLVER": "**ABSENT**（F-C15：`resolve_collection()` 是 shape resolver，⛔ 非 fetch resolver）",
     "IDENTITY_RESOLUTION": "OK-BY-CONTRACT——scope 來自 resolved_bill_id（bill.by_ref resolver 已存在）",
-    "NON_EMPTY_CAPABILITY_EXECUTION": "**NOT_YET_ESTABLISHED**——⛔ 不得因同檔就繼承 R-15 的 OK 或 R-12 的 BLOCKED",
-    "EMPTY_INPUT_SEMANTICS": "**NOT_YET_REVIEWED**（⛔ 不得因同 family 繼承 R-15；屬下一刀）",
+    "NON_EMPTY_CAPABILITY_EXECUTION": "OK——`code` 於迴圈內無條件指派 ⇒ ⛔ 不受 PROD-DEFECT-01 影響（2026-08-31 實查結清；同 R-15，⛔ 不同於 R-12）",
+    "EMPTY_INPUT_SEMANTICS": "**ADAPTER_REQUIRED**（2026-08-31 裁定；adapter **未寫**）——實測空清單卻斷言失敗原因＝語義錯誤；RESPONSIBILITY_BINDING_DOMAIN_GAP，⛔ 非 production defect",
     "COMPLETION_SEAM": "**ABSENT**——GROUNDING_FACTS 尚無 completion 出口（responsibility_completion 步驟⑤ 只放行 FINAL_TEXT，T4-D2 未建）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。"
-   }
+   },
+   "_r16_empty_review": "見頂層 `_r16_empty_review_2026_08_31`（ADAPTER_REQUIRED；lane 不變）"
   },
   {
    "responsibility_id": "R-17",
@@ -3885,8 +3886,9 @@
  },
  "_next_order": [
   "✅ **已完成（2026-08-31）**：F2-B 10 筆 NOT_YET_JUDGEABLE 重分類 → B1×1／B2×1／B3×5／B4×3",
+  "✅ **已完成（2026-08-31）**：R-16 empty review → ADAPTER_REQUIRED（RESPONSIBILITY_BINDING_DOMAIN_GAP）",
+  "▶ **主線**：B3 的三個 fetch resolver（payment_logs／invoice_logs／iot.manufacturers）——一次推進 5 筆",
   "T4-B4 ✅ 三個 resolver execution closure",
-  "R-16 empty review（completeness debt，⛔ 非共同 blocker）",
   "PROD-DEFECT-01 修不修（業主裁定）",
   "F2-C 五筆 KNOWLEDGE_CONTENT",
   "D1-R 仍 BLOCKED"
@@ -4273,7 +4275,7 @@
   "invoice_issue_failure（R-18）": "DIRECT_SUPPORTED",
   "invoice_invalid_failure（R-19）": "DIRECT_SUPPORTED",
   "credit_card_failure（R-15）": "DIRECT_SUPPORTED",
-  "auto_pay_failure（R-16）": "**NOT_YET_REVIEWED** —— ⚠️ ⛔ 不得因同 family 就自動繼承 R-15",
+  "auto_pay_failure（R-16）": "**ADAPTER_REQUIRED**——實證**語義錯誤**：空清單卻斷言「自動扣款失敗可能原因：信用卡授權已過期／額度不足／設定已關閉」⇒ 在**沒有任何紀錄**的前提下宣告失敗診斷。⚠️ 比 R-12 的退化更重（R-12 只剩空標題，⛔ 未做因果斷言），與 R-23 同型。⚠️ 定性為 **RESPONSIBILITY_BINDING_DOMAIN_GAP**，⛔ **不是** production defect——legacy dispatcher 對 `[]` 先攔（實測三個 utterance 皆未進具名分支）。",
   "_adapters_written": "⚠️ R-12／R-23 的 empty adapter 已寫入 fulfillment_registry，但 **⛔ 未註冊**（F-G1：⛔ 不得『找到具名函式就先啟用』）。⛔ 未呼叫 legacy dispatcher 取空態文字（會把 question 帶回來）；改以 **drift guard** 比對 adapter 文字與 legacy 空態是否一致。"
  },
  "_iot_domain_gap": {
@@ -4316,5 +4318,33 @@
   "what_to_check_next": "⚠️ 下次要裁必須查**完整 provenance 鏈**，⛔ 不得繼續只搜 chat.py：\n```text\nauthenticated principal\n→ request role_id\n→ equality / authorization relationship\n→ responsibility resolver\n```",
   "_scope_note": "⚠️ 跨切面前提，影響所有以 role_id 為 scope 的 binding——affected scope includes the **already-registered R-28／R-29／R-31 executable bindings**。⚠️ ⛔ 那三筆的 F2 verdict **並非** APPROVED_CAPABILITY：它們是 executable binding 已註冊、相關 capability propositions 已 CONFIRMED，F2 overall 仍因 external／entity reachability 維持 **INSUFFICIENT_EVIDENCE**。⛔ 不得混寫。",
   "_not_a_security_ruling": "⛔ 本條只記錄唯讀觀察，⛔ 未評估外部可達性、⛔ 未定性為漏洞。"
+ },
+ "_r16_empty_review_2026_08_31": {
+  "id": "R-16_EMPTY_INPUT_REVIEW",
+  "scope": "⚠️ 極窄：只裁 `R-16 empty_input_handling`。⛔ 未碰 registry、⛔ 未改 production、⛔ 未寫 adapter、⛔ 未改 lane／verdict。",
+  "ruling": "**empty_input_handling(R-16) = ADAPTER_REQUIRED**",
+  "classification": "**RESPONSIBILITY_BINDING_DOMAIN_GAP**（⛔ **不是** PREEXISTING_PRODUCTION_DEFECT）",
+  "_container_consistency": "⚠️ 不變量 3 先驗：`services/jgb/payments.py` local 與 aichatbot-rag-orchestrator sha256 相同（ddb7daeb…）⇒ 觀察建立在與本機一致的碼上。",
+  "_positive_controls": {
+   "R-15 `_diagnose_credit_card_failure([])`": "重現既有結論『查無信用卡付款紀錄，可能是透過其他方式繳費。』✅",
+   "R-12 `_diagnose_payment_not_reflected([])`": "重現既有結論『以下是此帳單的付款交易紀錄：\\n』（只剩空標題）✅",
+   "_why": "⚠️ 兩個已知結論都重現 ⇒ import 路徑／容器組態正確；否則本次 R-16 觀察不成立（腳本會 exit 2）。",
+   "reachability_control": "non-empty ＋ utterance『自動扣款失敗』→ 確實命中 `_diagnose_auto_pay_failure` ✅（證明這條具名分支在 legacy 下真的可達，⛔ 不是死碼）"
+  },
+  "step1_named_branch_on_empty": {
+   "call": "`_diagnose_auto_pay_failure([])`（容器內實跑，⛔ 不憑印象）",
+   "output": "自動扣款相關紀錄：\n\n\n自動扣款失敗可能原因：\n• 信用卡授權已過期，需要租客重新綁定卡片\n• 信用卡額度不足\n• 合約中的自動扣款設定已關閉\n\n建議請租客至繳費頁面手動付款，並確認是否需要重新設定自動扣款。",
+   "verdict": "⛔ **不是** DIRECT_SUPPORTED——空標題 ＋ **錯誤推論**（無紀錄卻斷言失敗原因）。"
+  },
+  "step2_dispatcher_on_empty": {
+   "call": "`diagnose_payment_logs([], utt)`，utt ∈ {『自動扣款失敗』,『自動付款沒成功』,『auto pay 失敗』}",
+   "result": "三個 utterance **全部**回 legacy 空態文字『查無此帳單的金流交易日誌。可能原因：…』，⛔ 皆未進具名分支。",
+   "why": "`diagnose_payment_logs` 的 `if not logs:` 在 keyword 分支**之前** ⇒ dispatcher 已正確攔空。",
+   "verdict": "⇒ production 真實可達路徑**不會**把 `[]` 送進錯誤 branch ⇒ ⛔ **不得**升為 PREEXISTING_PRODUCTION_DEFECT；錯誤只在 responsibility architecture 繞開入口後才暴露 ⇒ **RESPONSIBILITY_BINDING_DOMAIN_GAP**（同 R-23 判法）。"
+  },
+  "_drift_guard_status": "⚠️ 該 input contract 的 reviewed 空態文字**已被 pin**：tests/unit/conversational/test_f_c12_empty_handling_req.py 斷言 `diagnose_payment_logs([], '') == fr.EMPTY_PAYMENT_LOGS_FACTS`。⇒ R-16 日後的 adapter 直接沿用 `EMPTY_PAYMENT_LOGS_FACTS` 即被同一條 guard 覆蓋，⛔ responsibility runtime 仍**不得**為取得文字而實際呼叫 dispatcher（會把 question 帶回來，違反 F-C1）。",
+  "_not_done_this_cut": "⚠️ adapter **未寫**（R-12／R-23 已寫但未註冊，R-16 連寫都還沒）⇒ R-16 的 `EMPTY_INPUT_SEMANTICS` 由 NOT_YET_REVIEWED 轉為 **ADAPTER_REQUIRED（adapter 未寫）**，⛔ 仍是 live blocker。",
+  "_side_finding": "⚠️ 順帶結清：`_diagnose_auto_pay_failure` 的 `code` 在迴圈內**無條件**指派後才使用 ⇒ ⛔ **不**受 PROD-DEFECT-01 影響（與 R-15 同，⛔ 與 R-12 不同）。據此把 R-16 的 `NON_EMPTY_CAPABILITY_EXECUTION` 由 NOT_YET_ESTABLISHED 結清為 OK。",
+  "_lane_unchanged": "⚠️ R-16 的 `primary_closure_lane` 仍為 **B3_INPUT_FETCH_RESOLVER_ABSENT**——本裁定解除的是 required_blockers 之一，⛔ 依 F-C16 ⛔ 不改 lane、⛔ 不升 verdict。"
  }
 }
