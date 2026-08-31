@@ -4263,7 +4263,8 @@
     ],
     "evidence_split": {
       "mock vertical slice": "PASS（D1-E／D1 guards 全綠）",
-      "real adapter reachability": "**NOT_ESTABLISHED**"
+      "real adapter reachability": "**CONFIRMED（2026-08-31，D1-R1 Stage 1）**",
+      "real end-to-end entry": "**NOT_ESTABLISHED**（D1-R1 Stage 2，見 _d1r1_execution_2026_08_31）"
     },
     "must_not": [
       "⛔ 用 mock 取代 D1-R 並宣稱完成",
@@ -4333,7 +4334,51 @@
       "⛔ 把 ENTITY_INPUT_REACHABILITY 升成 CONFIRMED（未執行前）",
       "⛔ 為了跑通而降低證據標準",
       "⚠️ `evidence_split.real adapter reachability` 仍 **NOT_ESTABLISHED** —— 待 D1-R1 執行"
-    ]
+    ],
+    "_d1r1_execution_2026_08_31": {
+      "executed_at": "2026-08-31",
+      "boundary": "www.jgbsmart.com｜USE_MOCK_JGB_API=false｜role_id=20151（測試團隊）",
+      "_container_consistency_gate": {
+        "_why": "⚠️ 陳舊容器會讓整輪結論翻盤 ⇒ 執行前先稽核",
+        "found": "**STALE**——4 檔缺（grounding_presentation／responsibility_bill_resolution／responsibility_scoring／responsibility_session）＋ 3 檔內容不同（form_manager／responsibility_collapse／build_canonical_embeddings）",
+        "action": "依不變量 3 docker cp ＋ restart",
+        "after": "**CONTAINER_MATCHES_SOURCE = True**（213/213，零缺零差異）——此後結果才採計"
+      },
+      "STAGE_1_resolver_and_binding": {
+        "verdict": "**PASS（EXTERNAL_EVIDENCE）**",
+        "use_mock": false,
+        "resolver": "`bill.by_ref.v1` → state=**RESOLVED**，resolved_id=759304，EXACTLY_ONE=True",
+        "binding": "`fulfillment_registry.execute` → output_mode=**FINAL_TEXT**，responsibility_id=**R-29**",
+        "final_text": "帳單「測試物件」目前狀態為「待發送」，尚未繳費，因此還沒有收據可查（帳單金額 NT$ 3,100）。收據會在租客完成繳費、款項到帳後產生。",
+        "_ground_truth_reconciliation": [
+          "名稱「測試物件」 ← API title 逐字 ✅",
+          "狀態「待發送」 ← **API 自帶 mapping.status[\"1\"]=\"待發送\"** ＋ GT status=1 ✅（伺服器端決定性依據，非模型臆測）",
+          "「尚未繳費」 ← status≠16(已繳費)、complete_at=None、is_paid_on_time=0 ✅",
+          "「還沒有收據可查」 ← final_total=0 ＋ 未繳費 ✅",
+          "「帳單金額 NT$ 3,100」 ← GT total=3100 ✅"
+        ],
+        "_claims_verified": "5/5，**無編造欄位**",
+        "_negative_control": "bill_ref=999999999 → 伺服器 404 → state=**NO_MATCH**；`execute` 正確拋 FulfillmentExecutionError（⛔ 未接受未解析 resolution）"
+      },
+      "STAGE_2_end_to_end_entry": {
+        "verdict": "**NOT_ESTABLISHED**——⛔ 不得記為 PASS",
+        "observed": "`POST /api/v1/message` 多種問法（含 row 4640 的 question_summary 逐字）皆回 intent_name=unknown／confidence=0／source_count=0 ⇒ **從未進入 R-29**",
+        "_positive_controls": "檢索層健康：『如何新增合約』sources=3、『為什麼不能新增物件』sources=5、『帳單收據 繳費證明 PDF 下載』sources=3、『帳單為什麼取消不了』sources=2 ⇒ ⛔ 不是基礎設施或 pool 問題（不帶 vendor_id 亦正常）",
+        "_narrowing": [
+          "row 4640（R-29 member）in DB：is_active=True、**embedding 存在**、categories=['條件診斷：帳單']、business_types=['system_provider']、**answer 長度 0**",
+          "帶 vendor_id=2 時被 b2b `&&` 嚴格過濾排除（vendor 2 業態＝property_management/full_service）——⚠️ 但不帶 vendor_id 後仍 0 筆 ⇒ pool 不是主因",
+          "**runtime DB = `aichatbot_admin`**，其中 ⛔ **無** `conversational_facets`、⛔ **無** `responsibility_delegates` 表（`aichatbot_test` 亦無；正對照 knowledge_base 存在）",
+          "同面向但**有答案**的列（3406／3496）可正常檢索 ⇒ 差異落在 **answer 為空的面向進場列**"
+        ],
+        "_two_live_hypotheses": [
+          "H1 空 answer 列不進檢索結果 ⇒ facet 進場永不觸發",
+          "H2 責任／面向路由在此 runtime **根本未啟用**（缺表、delegates seed 只在測試 DB）",
+          "⚠️ 兩者皆指向同一結論：**責任路徑在此 runtime 不活躍**；⛔ 未區分前不得宣稱已修或已知根因"
+        ],
+        "_impact": "⇒ `VendorChatResponse.answer` 這一段仍 NOT_ESTABLISHED，⛔ 不得據此升級任何 responsibility 的 verdict"
+      },
+      "_net_effect_on_blockers": "⚠️ EXTERNAL_VALIDATION **僅部分履行**：real adapter reachability（Stage 1）已取得外部證據；end-to-end entry（Stage 2）未取得 ⇒ ⛔ 10 筆的 EXTERNAL_VALIDATION **維持 BLOCKED**，APPROVED_CAPABILITY 維持 0。"
+    }
   },
   "_d2_scope_and_limits": {
     "allowed_extracted": [
