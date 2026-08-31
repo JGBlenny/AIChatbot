@@ -3469,46 +3469,79 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（N/A-by-shape）",
+    "_status": "FINDING——KNOWLEDGE_CONTENT ⛔ 無 capability dispatch 可言"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABLE（**無輸入**——⛔ 不需 entity resolution）",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "_why": "⚠️ `form_id`／`api_config` 皆空 ⇒ ⛔ 無 instance runtime dependency"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
+    "output_type": "FINAL_TEXT（reviewed content）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
     "can_feed_current_downstream": null,
     "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
+    "must_bypass": "（無）——⛔ 無 legacy dispatcher 參與",
+    "allowed_entry": "reviewed content row 直出",
     "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "APPROVED_KNOWLEDGE_CONTENT",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-31",
+    "propositions": {
+     "CONTENT_COVERS_CANONICAL": "CONFIRMED",
+     "SCOPE_CONTAINED": "CONFIRMED（F-C23：⛔ 未實質回答其他 responsibility 的核心問題）",
+     "ROW_STATE": "is_active=true／action_type=direct_answer",
+     "NO_INSTANCE_RUNTIME_DEPENDENCY": "CONFIRMED（form_id 空、api_config 空）",
+     "MEMBER_CHOICE_AMBIGUITY": "NONE（members=1 且未被其他責任共用；共用偵測有正對照）",
+     "_row_is_storage_not_authority": "⚠️ row 僅為 **reviewed content storage source**；⛔ 仍不得回頭說 row 是 semantic authority（F-C4／L2 不變）。"
+    }
    },
-   "proposed_strategy": "KNOWLEDGE_CONTENT"
+   "proposed_strategy": "KNOWLEDGE_CONTENT",
+   "_f2c_evidence_2026_08_31": {
+    "row": 3402,
+    "answer_digest": "d7fd05cda29fbce880f3ac2a3a8f108cfebc2dfe3d33ea94471a6e2625dcb933",
+    "canonical_responsibility": "說明點退完成後系統何時、在何種條件下自動產生點退帳單，以及該帳單如何進入費用結算。",
+    "categories": [
+     "帳單管理",
+     "條件診斷：帳單"
+    ],
+    "target_user": [
+     "property_manager",
+     "tenant"
+    ],
+    "storage_source": "`knowledge_base`（本機 aichatbot_admin／aichatbot_test 兩庫**逐欄一致**）",
+    "row_state": "`is_active = true`、`action_type = 'direct_answer'`",
+    "no_instance_runtime_dependency": "⚠️ **`form_id` 為空、`api_config` 為空** ⇒ ⛔ 無表單往返、⛔ 無 API 取數 ⇒ 確為 KNOWLEDGE_CONTENT 形狀，⛔ 不是被誤分類的 instance capability。",
+    "member_choice": "⚠️ Registry V2 交叉核對：本責任 **members 恰為 1 筆**，且該 row ⛔ 未被其他責任共用 ⇒ **無 member-choice ambiguity**。（正對照：全 registry 38 個 member 中確實掃出唯一一筆共用列 3511 屬 R-03/04/08/09 ⇒ 共用偵測有效，⛔ 非因掃描失效而全綠。）",
+    "_row_is_storage_not_authority": "⚠️ row 在此僅作 **reviewed content storage source**；⛔ 仍不得回頭說 row 是 semantic authority（F-C4／L2 不變）。",
+    "answer_fits_canonical": "✅ **FITS**——canonical 問「何時／何種條件自動產生點退帳單 ＋ 如何進入費用結算」；answer 逐項對上：產生時機（點退完成後自動）、內容三類、到期日規則、**與押金互抵多退少補**（即進入費用結算）。"
+   },
+   "review_status": "approved_knowledge_content"
   },
   {
    "responsibility_id": "R-07",
@@ -3541,46 +3574,79 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（N/A-by-shape）",
+    "_status": "FINDING——KNOWLEDGE_CONTENT ⛔ 無 capability dispatch 可言"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABLE（**無輸入**——⛔ 不需 entity resolution）",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "_why": "⚠️ `form_id`／`api_config` 皆空 ⇒ ⛔ 無 instance runtime dependency"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
+    "output_type": "FINAL_TEXT（reviewed content）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
     "can_feed_current_downstream": null,
     "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
+    "must_bypass": "（無）——⛔ 無 legacy dispatcher 參與",
+    "allowed_entry": "reviewed content row 直出",
     "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "APPROVED_KNOWLEDGE_CONTENT",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-31",
+    "propositions": {
+     "CONTENT_COVERS_CANONICAL": "CONFIRMED",
+     "SCOPE_CONTAINED": "CONFIRMED（F-C23：⛔ 未實質回答其他 responsibility 的核心問題）",
+     "ROW_STATE": "is_active=true／action_type=direct_answer",
+     "NO_INSTANCE_RUNTIME_DEPENDENCY": "CONFIRMED（form_id 空、api_config 空）",
+     "MEMBER_CHOICE_AMBIGUITY": "NONE（members=1 且未被其他責任共用；共用偵測有正對照）",
+     "_row_is_storage_not_authority": "⚠️ row 僅為 **reviewed content storage source**；⛔ 仍不得回頭說 row 是 semantic authority（F-C4／L2 不變）。"
+    }
    },
-   "proposed_strategy": "KNOWLEDGE_CONTENT"
+   "proposed_strategy": "KNOWLEDGE_CONTENT",
+   "_f2c_evidence_2026_08_31": {
+    "row": 3406,
+    "answer_digest": "b81b003d8ffc3cfc977049d5d6d9d66a7fad2814e130da6607c673e9bbd40de6",
+    "canonical_responsibility": "說明帳單收據／繳費證明的產生條件、取得位置與方式，以及其與統一發票的區別。",
+    "categories": [
+     "帳單管理",
+     "條件診斷：帳單"
+    ],
+    "target_user": [
+     "property_manager",
+     "tenant"
+    ],
+    "storage_source": "`knowledge_base`（本機 aichatbot_admin／aichatbot_test 兩庫**逐欄一致**）",
+    "row_state": "`is_active = true`、`action_type = 'direct_answer'`",
+    "no_instance_runtime_dependency": "⚠️ **`form_id` 為空、`api_config` 為空** ⇒ ⛔ 無表單往返、⛔ 無 API 取數 ⇒ 確為 KNOWLEDGE_CONTENT 形狀，⛔ 不是被誤分類的 instance capability。",
+    "member_choice": "⚠️ Registry V2 交叉核對：本責任 **members 恰為 1 筆**，且該 row ⛔ 未被其他責任共用 ⇒ **無 member-choice ambiguity**。（正對照：全 registry 38 個 member 中確實掃出唯一一筆共用列 3511 屬 R-03/04/08/09 ⇒ 共用偵測有效，⛔ 非因掃描失效而全綠。）",
+    "_row_is_storage_not_authority": "⚠️ row 在此僅作 **reviewed content storage source**；⛔ 仍不得回頭說 row 是 semantic authority（F-C4／L2 不變）。",
+    "answer_fits_canonical": "✅ **FITS**——canonical 四要素全中：產生條件（繳費完成後／未繳費無法產生）、取得位置（帳單詳情頁）、方式（點選下載收據）、**與統一發票的區別**（末句明確指向發票開立功能）。"
+   },
+   "review_status": "approved_knowledge_content"
   },
   {
    "responsibility_id": "R-25",
@@ -3613,46 +3679,79 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（N/A-by-shape）",
+    "_status": "FINDING——KNOWLEDGE_CONTENT ⛔ 無 capability dispatch 可言"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABLE（**無輸入**——⛔ 不需 entity resolution）",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "_why": "⚠️ `form_id`／`api_config` 皆空 ⇒ ⛔ 無 instance runtime dependency"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
+    "output_type": "FINAL_TEXT（reviewed content）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
     "can_feed_current_downstream": null,
     "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
+    "must_bypass": "（無）——⛔ 無 legacy dispatcher 參與",
+    "allowed_entry": "reviewed content row 直出",
     "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "APPROVED_KNOWLEDGE_CONTENT",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-31",
+    "propositions": {
+     "CONTENT_COVERS_CANONICAL": "CONFIRMED",
+     "SCOPE_CONTAINED": "CONFIRMED（F-C23：⛔ 未實質回答其他 responsibility 的核心問題）",
+     "ROW_STATE": "is_active=true／action_type=direct_answer",
+     "NO_INSTANCE_RUNTIME_DEPENDENCY": "CONFIRMED（form_id 空、api_config 空）",
+     "MEMBER_CHOICE_AMBIGUITY": "NONE（members=1 且未被其他責任共用；共用偵測有正對照）",
+     "_row_is_storage_not_authority": "⚠️ row 僅為 **reviewed content storage source**；⛔ 仍不得回頭說 row 是 semantic authority（F-C4／L2 不變）。"
+    }
    },
-   "proposed_strategy": "KNOWLEDGE_CONTENT"
+   "proposed_strategy": "KNOWLEDGE_CONTENT",
+   "_f2c_evidence_2026_08_31": {
+    "row": 3519,
+    "answer_digest": "3e7162c095fb7ca267a767314cde99aa6a0929a1d2ee44167b5edf144099ff4d",
+    "canonical_responsibility": "說明點退帳單金額與押金結算的計算規則，以及結算差額如何解讀。",
+    "categories": [
+     "合約管理",
+     "條件診斷：帳單"
+    ],
+    "target_user": [
+     "property_manager",
+     "tenant"
+    ],
+    "storage_source": "`knowledge_base`（本機 aichatbot_admin／aichatbot_test 兩庫**逐欄一致**）",
+    "row_state": "`is_active = true`、`action_type = 'direct_answer'`",
+    "no_instance_runtime_dependency": "⚠️ **`form_id` 為空、`api_config` 為空** ⇒ ⛔ 無表單往返、⛔ 無 API 取數 ⇒ 確為 KNOWLEDGE_CONTENT 形狀，⛔ 不是被誤分類的 instance capability。",
+    "member_choice": "⚠️ Registry V2 交叉核對：本責任 **members 恰為 1 筆**，且該 row ⛔ 未被其他責任共用 ⇒ **無 member-choice ambiguity**。（正對照：全 registry 38 個 member 中確實掃出唯一一筆共用列 3511 屬 R-03/04/08/09 ⇒ 共用偵測有效，⛔ 非因掃描失效而全綠。）",
+    "_row_is_storage_not_authority": "⚠️ row 在此僅作 **reviewed content storage source**；⛔ 仍不得回頭說 row 是 semantic authority（F-C4／L2 不變）。",
+    "answer_fits_canonical": "✅ **FITS**——canonical 問「金額與押金結算的計算規則 ＋ 差額如何解讀」；answer 給算式、正負號解讀、並附具體數字例。"
+   },
+   "review_status": "approved_knowledge_content"
   },
   {
    "responsibility_id": "R-26",
@@ -3685,46 +3784,106 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（N/A-by-shape）",
+    "_status": "FINDING——KNOWLEDGE_CONTENT ⛔ 無 capability dispatch 可言"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABLE（**無輸入**——⛔ 不需 entity resolution）",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "_why": "⚠️ `form_id`／`api_config` 皆空 ⇒ ⛔ 無 instance runtime dependency"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
+    "output_type": "FINAL_TEXT（reviewed content）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
     "can_feed_current_downstream": null,
     "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
+    "must_bypass": "（無）——⛔ 無 legacy dispatcher 參與",
+    "allowed_entry": "reviewed content row 直出",
     "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-31",
+    "reason": "**KNOWLEDGE_CONTENT_SCOPE_OVER_COVERAGE**",
+    "propositions": {
+     "CONTENT_COVERS_CANONICAL": "CONFIRMED（三要素完整）",
+     "SCOPE_CONTAINED": "**NOT_CONFIRMED**——answer 另行說明『排程滯納金』機制，實質踏入 R-27 的核心問題（跨版本比較）⇒ fulfillment scope leakage（F-C23）",
+     "ROW_STATE": "is_active=true／action_type=direct_answer",
+     "NO_INSTANCE_RUNTIME_DEPENDENCY": "CONFIRMED",
+     "MEMBER_CHOICE_AMBIGUITY": "NONE"
+    },
+    "_not_fulfillment_not_established": "⚠️ ⛔ **不是** FULFILLMENT_NOT_ESTABLISHED——合法內容**明明存在**且 canonical 三要素已完整回答；只是**現有 reviewed storage content 還不能直接被授權成該 responsibility 的 fulfillment**。",
+    "_narrow_remediation_PROPOSED_NOT_EXECUTED": {
+     "row": 3531,
+     "keep": [
+      "付款後結算型延遲金的產生條件",
+      "計算方式",
+      "結算規則",
+      "真正必要的共同背景"
+     ],
+     "remove": [
+      "排程滯納金的獨立機制說明",
+      "任何實質跨版本比較"
+     ],
+     "⛔_not_needed": [
+      "⛔ 不用改 Registry V2",
+      "⛔ 不用改 R-27",
+      "⛔ 不用重做 responsibility identity review"
+     ],
+     "status": "⚠️ **PROPOSED，⛔ 未執行**——這是 knowledge_base 內容變更，待業主明確指示。"
+    }
    },
-   "proposed_strategy": "KNOWLEDGE_CONTENT"
+   "proposed_strategy": "KNOWLEDGE_CONTENT",
+   "_f2c_evidence_2026_08_31": {
+    "row": 3531,
+    "answer_digest": "b3a73b7694f12dc45711b9a17419fe7fedb08f75e722931c4bb94f6da42889f7",
+    "canonical_responsibility": "說明付款後結算型延遲金的產生條件、計算方式與結算規則。",
+    "categories": [
+     "帳單管理",
+     "滯納金"
+    ],
+    "target_user": [
+     "property_manager"
+    ],
+    "storage_source": "`knowledge_base`（本機 aichatbot_admin／aichatbot_test 兩庫**逐欄一致**）",
+    "row_state": "`is_active = true`、`action_type = 'direct_answer'`",
+    "no_instance_runtime_dependency": "⚠️ **`form_id` 為空、`api_config` 為空** ⇒ ⛔ 無表單往返、⛔ 無 API 取數 ⇒ 確為 KNOWLEDGE_CONTENT 形狀，⛔ 不是被誤分類的 instance capability。",
+    "member_choice": "⚠️ Registry V2 交叉核對：本責任 **members 恰為 1 筆**，且該 row ⛔ 未被其他責任共用 ⇒ **無 member-choice ambiguity**。（正對照：全 registry 38 個 member 中確實掃出唯一一筆共用列 3511 屬 R-03/04/08/09 ⇒ 共用偵測有效，⛔ 非因掃描失效而全綠。）",
+    "_row_is_storage_not_authority": "⚠️ row 在此僅作 **reviewed content storage source**；⛔ 仍不得回頭說 row 是 semantic authority（F-C4／L2 不變）。",
+    "answer_fits_canonical": "⚠️ 見 `_over_coverage_finding`",
+    "_over_coverage_finding": {
+     "verdict": "⚠️ **SCOPE_OVER_COVERAGE**——⛔ 不是 answer 錯，而是**範圍超出 canonical**。",
+     "canonical": "說明**付款後結算型延遲金**的產生條件、計算方式與結算規則。",
+     "answer_actually_covers": "開場即宣告「系統的滯納金有**兩種機制**」：（一）延遲金（付款後結算）＝ canonical 範圍內、（二）**排程滯納金**（對逾期未付款開單）＝ **canonical 範圍外**，再加共同規則。",
+     "_canonical_content_is_present": "⚠️ canonical 所要的三件事（產生條件／計算方式／結算規則）**都在**且完整 ⇒ ⛔ **不是** FULFILLMENT_NOT_ESTABLISHED。",
+     "_overlap_with_R27": "⚠️ 溢出的部分與 **R-27**（canonical 即「比較不同客製版本」）的領域重疊 ⇒ 兩個責任若都核准，會有內容邊界重疊（⛔ 但**非** authority 衝突——各自 member 唯一且不共用）。",
+     "_decision_needed": "⚠️ 「範圍溢出是否阻擋 APPROVED_KNOWLEDGE_CONTENT」是**產品裁定**，⛔ 我不代決。"
+    }
+   },
+   "review_status": "proposed"
   },
   {
    "responsibility_id": "R-27",
@@ -3757,46 +3916,78 @@
      "NO_REROUTES_BY_UTTERANCE",
      "NO_WRONG_ABSTRACTION"
     ],
-    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？"
+    "_question": "已知 responsibility_id 後，可否**直接執行**該 capability，而⛔ 不再依 query 做 semantic dispatch？",
+    "finding": "YES（N/A-by-shape）",
+    "_status": "FINDING——KNOWLEDGE_CONTENT ⛔ 無 capability dispatch 可言"
    },
    "_5_input_contract": {
-    "required_inputs": null,
+    "required_inputs": [],
     "available_at_C2_runtime": null,
     "missing_inputs": null,
     "input_resolution_path": null,
-    "verdict": null,
+    "verdict": "INPUT_REACHABLE（**無輸入**——⛔ 不需 entity resolution）",
     "_allowed_values": [
      "INPUT_REACHABLE",
      "INPUT_NOT_REACHABLE",
      "INPUT_REACHABILITY_NOT_ESTABLISHED"
     ],
-    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來"
+    "_note": "⛔ 不得因簽名只有 (row, user_question) 就判可達——必須追 `row` 從哪裡來",
+    "_why": "⚠️ `form_id`／`api_config` 皆空 ⇒ ⛔ 無 instance runtime dependency"
    },
    "_6_output_contract": {
-    "output_type": null,
-    "contains_grounded_facts": null,
-    "contains_template_placeholders": null,
-    "needs_answer_formatter": null,
-    "returns_action_or_form_metadata": null,
+    "output_type": "FINAL_TEXT（reviewed content）",
+    "contains_grounded_facts": true,
+    "contains_template_placeholders": false,
+    "needs_answer_formatter": false,
+    "returns_action_or_form_metadata": false,
     "can_feed_current_downstream": null,
     "_note": "⚠️ 要辨識：output 已是 final text，還是仍是 grounding facts 需另一層 formatter"
    },
    "_7_negative_reroute_evidence": {
-    "must_bypass": null,
-    "allowed_entry": null,
+    "must_bypass": "（無）——⛔ 無 legacy dispatcher 參與",
+    "allowed_entry": "reviewed content row 直出",
     "_note": "標出**哪個舊 dispatcher 必須 bypass**（F-C1 逐筆可稽核）"
    },
    "_8_f2_verdict": {
-    "verdict": null,
+    "verdict": "APPROVED_KNOWLEDGE_CONTENT",
     "_allowed_values": [
      "APPROVED_CAPABILITY",
      "APPROVED_KNOWLEDGE_CONTENT",
      "FULFILLMENT_NOT_ESTABLISHED",
      "INSUFFICIENT_EVIDENCE"
     ],
-    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用"
+    "_dont_conflate": "FULFILLMENT_NOT_ESTABLISHED ＝ 已有足夠證據證明目前 production 沒有合法 binding；INSUFFICIENT_EVIDENCE ＝ 還無法判斷有沒有。⛔ 兩者不得混用",
+    "reviewer": "業主",
+    "reviewed_at": "2026-08-31",
+    "propositions": {
+     "CONTENT_COVERS_CANONICAL": "CONFIRMED",
+     "SCOPE_CONTAINED": "CONFIRMED（F-C23：⛔ 未實質回答其他 responsibility 的核心問題）",
+     "ROW_STATE": "is_active=true／action_type=direct_answer",
+     "NO_INSTANCE_RUNTIME_DEPENDENCY": "CONFIRMED（form_id 空、api_config 空）",
+     "MEMBER_CHOICE_AMBIGUITY": "NONE（members=1 且未被其他責任共用；共用偵測有正對照）",
+     "_row_is_storage_not_authority": "⚠️ row 僅為 **reviewed content storage source**；⛔ 仍不得回頭說 row 是 semantic authority（F-C4／L2 不變）。"
+    }
    },
-   "proposed_strategy": "KNOWLEDGE_CONTENT"
+   "proposed_strategy": "KNOWLEDGE_CONTENT",
+   "_f2c_evidence_2026_08_31": {
+    "row": 3532,
+    "answer_digest": "3c0ad3cb98de4dcdc92a3db8593797330075dcb5814f66e3456ce2f701df61b9",
+    "canonical_responsibility": "比較滯納金不同客製計算版本，包括付款後結算延遲金、階梯式與固定金額版本的機制與計算差異。",
+    "categories": [
+     "帳單管理",
+     "滯納金"
+    ],
+    "target_user": [
+     "property_manager"
+    ],
+    "storage_source": "`knowledge_base`（本機 aichatbot_admin／aichatbot_test 兩庫**逐欄一致**）",
+    "row_state": "`is_active = true`、`action_type = 'direct_answer'`",
+    "no_instance_runtime_dependency": "⚠️ **`form_id` 為空、`api_config` 為空** ⇒ ⛔ 無表單往返、⛔ 無 API 取數 ⇒ 確為 KNOWLEDGE_CONTENT 形狀，⛔ 不是被誤分類的 instance capability。",
+    "member_choice": "⚠️ Registry V2 交叉核對：本責任 **members 恰為 1 筆**，且該 row ⛔ 未被其他責任共用 ⇒ **無 member-choice ambiguity**。（正對照：全 registry 38 個 member 中確實掃出唯一一筆共用列 3511 屬 R-03/04/08/09 ⇒ 共用偵測有效，⛔ 非因掃描失效而全綠。）",
+    "_row_is_storage_not_authority": "⚠️ row 在此僅作 **reviewed content storage source**；⛔ 仍不得回頭說 row 是 semantic authority（F-C4／L2 不變）。",
+    "answer_fits_canonical": "✅ **FITS（且最精確）**——canonical 即「比較三種客製版本的機制與計算差異」，answer 逐版本列出計算方式／到期日／開單對象差異。"
+   },
+   "review_status": "approved_knowledge_content"
   }
  ],
  "_f2a_result": {
@@ -3872,7 +4063,8 @@
   "E-C1_BASELINE_IDENTITY_IS_SET_BASED_NOT_COUNT_BASED": "⚠️ Known-failure baseline 由 **case identity** 決定；failure count **只能作摘要**，⛔ 不得單獨作 regression 判準。\n```text\nactual_red − KNOWN_STABLE_FAILURES − FLAKY_RED_ALLOWLIST ≠ ∅  ⇒  NEW_REGRESSION\n```\n⚠️ 只看數字會假綠的具體形狀：**穩定紅少 1 筆 ＋ 冒出一筆全新的紅 ＝ 總數不變**。\n⚠️ flaky 一律用**具名白名單** `FLAKY_RED_ALLOWLIST`（列出 case ID／parameter），⛔ 不得寫成 `FLAKY_SLOT = 0..N`——那會讓未來**任意** N 筆 failure 看似可接受。\n⚠️ `KNOWN_STABLE_FAILURES` 是 **observed**，⛔ 不是「保證每次必紅」的產品契約：其一突然變綠 ⇒ **UNEXPECTED_BASELINE_IMPROVEMENT**，⛔ 不叫 regression，且查清原因前 ⛔ 不得從 baseline 刪除。",
   "F-C20_REQUEST_SCOPE_IS_NOT_DATA_SCOPE": "⚠️ request 帶了 `bill_id`、response envelope **echo** 了 `bill_id`，⛔ **都不能單獨證明**回傳的 members 被該 bill 強制圈定。必須有 **server-side filtering／provenance evidence**（controller／repository／SQL 述詞）。\n⚠️ 升 `CONFIRMED` 時**必須附可稽核的證據引用**，⛔ 不得只把狀態字串改掉（已落成 guard B3-G7:8：檢查 `_scope_provenance_evidence` 有指名 controller 與述詞）。\n⚠️ **data scope ≠ authorization**：證明「只回這張 bill 的資料」⛔ 不等於證明「呼叫者有權看這張 bill」。",
   "F-C21_ENVELOPE_REFERENCE_INTEGRITY_IS_NOT_SCOPE_AUTHORITY": "⚠️ child member 對 envelope parent 的 **reference integrity** 可以偵測 **response inconsistency**，⛔ **不得取代** server-side bill scope provenance——兩條證據負責不同的事。\n```text\npayment_ids = {p.id for p in envelope.payments}\n∀ log ∈ payment_logs:  log.payment_id ∈ payment_ids\n```\n⚠️ 違反 ⇒ **hard fail**，⛔ 絕不 silent filter。\n⚠️ 空 member 集合 ⇒ **N/A_EMPTY**，⛔ 不得寫 VERIFIED（與 F-C19 同一種 vacuous truth）。\n⚠️ 有 member 卻無 parent 清單 ⇒ **無從驗** ⇒ hard fail，⛔ 不當成通過。",
-  "F-C22_EMPTY_ADAPTER_EXTENDS_REVIEWED_BRANCH_DOMAIN": "⚠️ 當 legacy dispatcher **原本負責空集合**，而 responsibility binding 依 F-C1 必須繞過 dispatcher 時，可由 **reviewed binding adapter 補足空態 domain**。\n⚠️ 這 ⛔ **不改變** underlying capability identity，⛔ **也不構成** semantic reroute。\n⇒ 定性為 **RESPONSIBILITY_BINDING_DOMAIN_GAP**，⛔ 不是 production capability defect。\n⚠️ 空態文字**沿用同一 input contract 的 reviewed 空態常數**，⛔ 不重新發明、⛔ 不呼叫 dispatcher 取得（會把 user_question 帶回來）；漂移由既有 drift guard 比對。"
+  "F-C22_EMPTY_ADAPTER_EXTENDS_REVIEWED_BRANCH_DOMAIN": "⚠️ 當 legacy dispatcher **原本負責空集合**，而 responsibility binding 依 F-C1 必須繞過 dispatcher 時，可由 **reviewed binding adapter 補足空態 domain**。\n⚠️ 這 ⛔ **不改變** underlying capability identity，⛔ **也不構成** semantic reroute。\n⇒ 定性為 **RESPONSIBILITY_BINDING_DOMAIN_GAP**，⛔ 不是 production capability defect。\n⚠️ 空態文字**沿用同一 input contract 的 reviewed 空態常數**，⛔ 不重新發明、⛔ 不呼叫 dispatcher 取得（會把 user_question 帶回來）；漂移由既有 drift guard 比對。",
+  "F-C23_KNOWLEDGE_CONTENT_MUST_BE_SCOPE_CONTAINED": "⚠️ `APPROVED_KNOWLEDGE_CONTENT` 要求 reviewed answer **不只完整覆蓋** canonical responsibility，**也不得實質回答另一個已存在 responsibility 的核心問題**。額外背景**只有在為本 responsibility 所必需時**才可保留。\n```text\nKnowledge fulfillment 不只要「涵蓋 canonical」，\n還必須被 canonical 的責任邊界所**包含**。\n```\n⚠️ 若允許『只要答到自己的 responsibility，順便答鄰近的也可以』，等於把 **responsibility = semantic authority boundary** 重新鬆掉 ⇒ **fulfillment scope leakage**，⛔ 即使 member 未共用也一樣不可接受。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -4715,5 +4907,40 @@
   },
   "_what_would_close_it": "① AIChatbot 端把端點呼叫者綁到 role（authenticated principal → role 的 equality 檢查）；或 ② 明確裁定 AIChatbot 的呼叫者本身即受信任邊界（需 deployment 佐證，repo 外）。⚠️ 兩者皆屬**另案**。",
   "_not_a_security_ruling": "⛔ 唯讀觀察；⛔ 未評估外部可達性、⛔ 未定性為漏洞、⛔ 未查 production 設定。"
+ },
+ "_f2c_result": {
+  "groups_reviewed": "5/5",
+  "verdicts": {
+   "APPROVED_KNOWLEDGE_CONTENT": 4,
+   "INSUFFICIENT_EVIDENCE": 1
+  },
+  "approved": [
+   "R-06",
+   "R-07",
+   "R-25",
+   "R-27"
+  ],
+  "insufficient": {
+   "R-26": "KNOWLEDGE_CONTENT_SCOPE_OVER_COVERAGE（F-C23）"
+  },
+  "_evidence": "逐筆見各列 `_f2c_evidence_2026_08_31`（含 answer digest）。"
+ },
+ "_f2_coverage_2026_08_31": {
+  "⚠️_two_numbers_must_not_be_conflated": "⚠️ **審查覆蓋率**與**核准閉合率**是兩件事，⛔ 不得混報。",
+  "F2_STRATEGY_REVIEW_COVERAGE": "**30/30**——active responsibility 的 fulfillment strategy **全部審完**（F2-A 5／F2-B 20／F2-C 5）。⚠️ 這是本 spec 第一次達成。",
+  "F2_APPROVAL_CLOSURE": "**29/30**（業主 2026-08-31 記法）——定義：30 筆中有 **29 筆的本階段裁定已定案**（含 4 筆 APPROVED_KNOWLEDGE_CONTENT、25 筆 INSUFFICIENT_EVIDENCE、⚠️ 其中 R-01 為 FULFILLMENT_NOT_ESTABLISHED，亦屬已定案）；**唯一未定案者為 R-26**——其 review 無法在不改內容的前提下收束。\n⚠️ ⛔ **29/30 ⛔ 不是『29 筆已核准』**——實際核准僅 4 筆，且 APPROVED_CAPABILITY 仍為 0。",
+  "_breakdown": {
+   "_machine_counted": {
+    "FULFILLMENT_NOT_ESTABLISHED": 1,
+    "INSUFFICIENT_EVIDENCE": 25,
+    "APPROVED_KNOWLEDGE_CONTENT": 4
+   },
+   "APPROVED_KNOWLEDGE_CONTENT": "4（R-06／R-07／R-25／R-27）",
+   "INSUFFICIENT_EVIDENCE": "25 —— F2-A **4** ＋ F2-B 20 ＋ R-26 1",
+   "FULFILLMENT_NOT_ESTABLISHED": "1（R-01——有輸入卻**沒有**合法 responsibility-specific capability）",
+   "APPROVED_CAPABILITY": "**0** ⚠️ 至今仍是 0（⛔ 不得因 F2-C 有核准就以為 capability 側也動了）",
+   "⚠️_self_correction": "⚠️ 我先前手寫成『INSUFFICIENT_EVIDENCE = 26（F2-A 5 ＋ …）』——**錯**。F2-A 是 4 筆 INSUFFICIENT ＋ 1 筆 FULFILLMENT_NOT_ESTABLISHED（R-01）。已改為機器點算，⛔ 不再手寫。"
+  },
+  "_what_29_of_30_does_not_mean": "⛔ 不代表 29 筆可執行——26 筆仍 INSUFFICIENT_EVIDENCE；4 筆 APPROVED_KNOWLEDGE_CONTENT 也**未註冊**任何 executable binding（F-G1）。"
  }
 }
