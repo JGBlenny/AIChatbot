@@ -2071,7 +2071,7 @@
     "INPUT_FETCH_RESOLVER": "WIRED（**UPSTREAM_REF 兩階段**）——先經 `bill.by_ref` 解析出 resolved_bill_id 才跑 fetch；⛔ 上游未 RESOLVED 一律不呼叫下游",
     "IDENTITY_RESOLUTION": "OK-BY-CONTRACT——scope 來自 resolved_bill_id（bill.by_ref resolver 已存在）",
     "NON_EMPTY_CAPABILITY_EXECUTION": "OK——`code` 於迴圈內無條件指派 ⇒ ⛔ 不受 PROD-DEFECT-01 影響（2026-08-31 實查結清；同 R-15，⛔ 不同於 R-12）",
-    "EMPTY_INPUT_SEMANTICS": "**ADAPTER_REQUIRED**（2026-08-31 裁定；adapter **未寫**）——實測空清單卻斷言失敗原因＝語義錯誤；RESPONSIBILITY_BINDING_DOMAIN_GAP，⛔ 非 production defect",
+    "EMPTY_INPUT_SEMANTICS": "**CONFIRMED（2026-08-31 解除）**——F-C22：`auto_pay_failure_facts_adapter` 已寫入，空態沿用 reviewed 常數、non-empty 逐字等同具名分支、AST 證明未進 dispatcher。⚠️ adapter ⛔ 未註冊（那屬 BINDING_REGISTRATION）。",
     "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
@@ -3871,7 +3871,8 @@
   "W-G2_GROUNDING_EXIT_KEEPS_RESPONSIBILITY_AUTHORITY": "⚠️ `GROUNDING_FACTS execution result → D2 present() → responsibility converter` **整條** ⛔ 不得重入 legacy dispatcher／`show_knowledge`／`row.answer`。\n⚠️ payload 的 `responsibility_id` 一律取自 **plan（committed authority）**，⛔ 不從 adapter 輸出讀（adapter 若回別的 id 必須被覆寫掉）。\n⚠️ unresolved（NO_MATCH／AMBIGUOUS／INVALID_INPUT）仍保持**同一 responsibility authority**，⛔ 不得因 `_RESOLVERS` 接上後掉回 form／legacy path。",
   "E-C1_BASELINE_IDENTITY_IS_SET_BASED_NOT_COUNT_BASED": "⚠️ Known-failure baseline 由 **case identity** 決定；failure count **只能作摘要**，⛔ 不得單獨作 regression 判準。\n```text\nactual_red − KNOWN_STABLE_FAILURES − FLAKY_RED_ALLOWLIST ≠ ∅  ⇒  NEW_REGRESSION\n```\n⚠️ 只看數字會假綠的具體形狀：**穩定紅少 1 筆 ＋ 冒出一筆全新的紅 ＝ 總數不變**。\n⚠️ flaky 一律用**具名白名單** `FLAKY_RED_ALLOWLIST`（列出 case ID／parameter），⛔ 不得寫成 `FLAKY_SLOT = 0..N`——那會讓未來**任意** N 筆 failure 看似可接受。\n⚠️ `KNOWN_STABLE_FAILURES` 是 **observed**，⛔ 不是「保證每次必紅」的產品契約：其一突然變綠 ⇒ **UNEXPECTED_BASELINE_IMPROVEMENT**，⛔ 不叫 regression，且查清原因前 ⛔ 不得從 baseline 刪除。",
   "F-C20_REQUEST_SCOPE_IS_NOT_DATA_SCOPE": "⚠️ request 帶了 `bill_id`、response envelope **echo** 了 `bill_id`，⛔ **都不能單獨證明**回傳的 members 被該 bill 強制圈定。必須有 **server-side filtering／provenance evidence**（controller／repository／SQL 述詞）。\n⚠️ 升 `CONFIRMED` 時**必須附可稽核的證據引用**，⛔ 不得只把狀態字串改掉（已落成 guard B3-G7:8：檢查 `_scope_provenance_evidence` 有指名 controller 與述詞）。\n⚠️ **data scope ≠ authorization**：證明「只回這張 bill 的資料」⛔ 不等於證明「呼叫者有權看這張 bill」。",
-  "F-C21_ENVELOPE_REFERENCE_INTEGRITY_IS_NOT_SCOPE_AUTHORITY": "⚠️ child member 對 envelope parent 的 **reference integrity** 可以偵測 **response inconsistency**，⛔ **不得取代** server-side bill scope provenance——兩條證據負責不同的事。\n```text\npayment_ids = {p.id for p in envelope.payments}\n∀ log ∈ payment_logs:  log.payment_id ∈ payment_ids\n```\n⚠️ 違反 ⇒ **hard fail**，⛔ 絕不 silent filter。\n⚠️ 空 member 集合 ⇒ **N/A_EMPTY**，⛔ 不得寫 VERIFIED（與 F-C19 同一種 vacuous truth）。\n⚠️ 有 member 卻無 parent 清單 ⇒ **無從驗** ⇒ hard fail，⛔ 不當成通過。"
+  "F-C21_ENVELOPE_REFERENCE_INTEGRITY_IS_NOT_SCOPE_AUTHORITY": "⚠️ child member 對 envelope parent 的 **reference integrity** 可以偵測 **response inconsistency**，⛔ **不得取代** server-side bill scope provenance——兩條證據負責不同的事。\n```text\npayment_ids = {p.id for p in envelope.payments}\n∀ log ∈ payment_logs:  log.payment_id ∈ payment_ids\n```\n⚠️ 違反 ⇒ **hard fail**，⛔ 絕不 silent filter。\n⚠️ 空 member 集合 ⇒ **N/A_EMPTY**，⛔ 不得寫 VERIFIED（與 F-C19 同一種 vacuous truth）。\n⚠️ 有 member 卻無 parent 清單 ⇒ **無從驗** ⇒ hard fail，⛔ 不當成通過。",
+  "F-C22_EMPTY_ADAPTER_EXTENDS_REVIEWED_BRANCH_DOMAIN": "⚠️ 當 legacy dispatcher **原本負責空集合**，而 responsibility binding 依 F-C1 必須繞過 dispatcher 時，可由 **reviewed binding adapter 補足空態 domain**。\n⚠️ 這 ⛔ **不改變** underlying capability identity，⛔ **也不構成** semantic reroute。\n⇒ 定性為 **RESPONSIBILITY_BINDING_DOMAIN_GAP**，⛔ 不是 production capability defect。\n⚠️ 空態文字**沿用同一 input contract 的 reviewed 空態常數**，⛔ 不重新發明、⛔ 不呼叫 dispatcher 取得（會把 user_question 帶回來）；漂移由既有 drift guard 比對。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -4365,7 +4366,7 @@
   "invoice_issue_failure（R-18）": "DIRECT_SUPPORTED",
   "invoice_invalid_failure（R-19）": "DIRECT_SUPPORTED",
   "credit_card_failure（R-15）": "DIRECT_SUPPORTED",
-  "auto_pay_failure（R-16）": "**ADAPTER_REQUIRED**——實證**語義錯誤**：空清單卻斷言「自動扣款失敗可能原因：信用卡授權已過期／額度不足／設定已關閉」⇒ 在**沒有任何紀錄**的前提下宣告失敗診斷。⚠️ 比 R-12 的退化更重（R-12 只剩空標題，⛔ 未做因果斷言），與 R-23 同型。⚠️ 定性為 **RESPONSIBILITY_BINDING_DOMAIN_GAP**，⛔ **不是** production defect——legacy dispatcher 對 `[]` 先攔（實測三個 utterance 皆未進具名分支）。",
+  "auto_pay_failure（R-16）": "**CONFIRMED（2026-08-31）**——adapter `auto_pay_failure_facts_adapter` 已寫入，沿用 `EMPTY_PAYMENT_LOGS_FACTS`；non-empty 路徑逐字等同 `_diagnose_auto_pay_failure`。⚠️ ⛔ **仍未註冊**（F-G1）。F-C22 precedent。",
   "_adapters_written": "⚠️ R-12／R-23 的 empty adapter 已寫入 fulfillment_registry，但 **⛔ 未註冊**（F-G1：⛔ 不得『找到具名函式就先啟用』）。⛔ 未呼叫 legacy dispatcher 取空態文字（會把 question 帶回來）；改以 **drift guard** 比對 adapter 文字與 legacy 空態是否一致。"
  },
  "_iot_domain_gap": {
@@ -4435,7 +4436,8 @@
   "_drift_guard_status": "⚠️ 該 input contract 的 reviewed 空態文字**已被 pin**：tests/unit/conversational/test_f_c12_empty_handling_req.py 斷言 `diagnose_payment_logs([], '') == fr.EMPTY_PAYMENT_LOGS_FACTS`。⇒ R-16 日後的 adapter 直接沿用 `EMPTY_PAYMENT_LOGS_FACTS` 即被同一條 guard 覆蓋，⛔ responsibility runtime 仍**不得**為取得文字而實際呼叫 dispatcher（會把 question 帶回來，違反 F-C1）。",
   "_not_done_this_cut": "⚠️ adapter **未寫**（R-12／R-23 已寫但未註冊，R-16 連寫都還沒）⇒ R-16 的 `EMPTY_INPUT_SEMANTICS` 由 NOT_YET_REVIEWED 轉為 **ADAPTER_REQUIRED（adapter 未寫）**，⛔ 仍是 live blocker。",
   "_side_finding": "⚠️ 順帶結清：`_diagnose_auto_pay_failure` 的 `code` 在迴圈內**無條件**指派後才使用 ⇒ ⛔ **不**受 PROD-DEFECT-01 影響（與 R-15 同，⛔ 與 R-12 不同）。據此把 R-16 的 `NON_EMPTY_CAPABILITY_EXECUTION` 由 NOT_YET_ESTABLISHED 結清為 OK。",
-  "_lane_unchanged": "⚠️ R-16 的 `primary_closure_lane` 仍為 **B3_INPUT_FETCH_RESOLVER_ABSENT**——本裁定解除的是 required_blockers 之一，⛔ 依 F-C16 ⛔ 不改 lane、⛔ 不升 verdict。"
+  "_lane_unchanged": "⚠️ R-16 的 `primary_closure_lane` 仍為 **B3_INPUT_FETCH_RESOLVER_ABSENT**——本裁定解除的是 required_blockers 之一，⛔ 依 F-C16 ⛔ 不改 lane、⛔ 不升 verdict。",
+  "_adapter_written_2026_08_31": "⚠️ 裁定當時記的『adapter 未寫』已解除：本刀寫入 `auto_pay_failure_facts_adapter`（F-C22）。⇒ R-16 進入與 R-15／R-18／R-19 同一 bucket：**只剩 BINDING_REGISTRATION ＋ EXTERNAL_VALIDATION**。"
  },
  "_b3_fetch_resolver_contract": {
   "_authority": "⚠️ 業主凍結 2026-08-31（F-C17）。⛔ 本節是 execution contract，⛔ 不是 proposal。",

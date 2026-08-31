@@ -107,6 +107,45 @@ def test_r23_adapter_handles_empty():
     assert "所有 IoT 廠商帳號狀態正常" not in out["grounding_facts"]
 
 
+# ───────────────── R-16（F-C22）：auto_pay 空態 adapter ─────────────────
+@pytest.mark.req("FC22_R16:1")
+def test_r16_empty_adapter_replaces_causal_assertion_with_reviewed_facts():
+    """⚠️ 空清單時 ⛔ 不得再宣告「自動扣款失敗可能原因」——那是無事件卻斷言成因。"""
+    out = fr.auto_pay_failure_facts_adapter([], {})
+    assert out["outcome"] == "FACTS" and out["empty_input"] is True
+    assert out["grounding_facts"] == fr.EMPTY_PAYMENT_LOGS_FACTS, \
+        "⛔ 不得重新發明空態文字——沿用同一 input contract 的 reviewed 空態"
+    assert "自動扣款失敗可能原因" not in out["grounding_facts"]
+    assert "信用卡授權已過期" not in out["grounding_facts"]
+
+
+@pytest.mark.req("FC22_R16:2")
+def test_r16_non_empty_still_uses_the_named_branch_unchanged():
+    """⚠️ **F-C22**：補的是空態 domain，⛔ 不改變 underlying capability identity。"""
+    from services.jgb.payments import _diagnose_auto_pay_failure
+    logs = [{"created_at": "2026-08-01T10:00:00", "action": "auto_pay",
+             "response": {"Status": "FAIL", "Message": "額度不足"}, "note": ""}]
+    out = fr.auto_pay_failure_facts_adapter(logs, {})
+    assert out["empty_input"] is False
+    assert out["grounding_facts"] == _diagnose_auto_pay_failure(logs), \
+        "non-empty 路徑必須逐字等同具名分支——⛔ adapter 不得改寫語義"
+
+
+@pytest.mark.req("FC22_R16:3")
+def test_r16_adapter_never_enters_the_dispatcher():
+    """⚠️ ⛔ 不得呼叫 `diagnose_payment_logs`（會把 user_question 帶回來，違反 F-C1）。"""
+    import ast
+    import inspect
+    import textwrap
+    names = set()
+    for node in ast.walk(ast.parse(textwrap.dedent(
+            inspect.getsource(fr.auto_pay_failure_facts_adapter)))):
+        if isinstance(node, (ast.Attribute, ast.Name)):
+            names.add(getattr(node, "attr", None) or getattr(node, "id", ""))
+    assert "diagnose_payment_logs" not in names
+    assert "_diagnose_auto_pay_failure" in names, "⚠️ 正對照：必須真的呼叫到具名分支"
+
+
 # ───────────────── drift 偵測：adapter 文字須與 legacy 空態一致 ─────────────
 @pytest.mark.req("FC12_DRIFT:1")
 def test_adapter_empty_text_matches_legacy_dispatcher_text():
@@ -124,6 +163,7 @@ def test_adapters_are_not_registered_yet():
     ids = set(fr._REGISTRY)
     assert "payment.not_reflected_diagnosis.v1" not in ids
     assert "iot.binding_failure_diagnosis.v1" not in ids
+    assert "payment.auto_pay_failure_diagnosis.v1" not in ids   # R-16（F-C22）同樣仍 proposed
 
 
 # ───────────────── PROD-DEFECT-01（僅記錄現況，⛔ 不修）─────────────────
