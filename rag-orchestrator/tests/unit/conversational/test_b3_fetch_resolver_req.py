@@ -38,8 +38,12 @@ ROLE = "20151"
 class FakePaymentLogsApi:
     """`{success, bill_id, payments, payment_logs, summary}` 經 adapter 正規化後的 `data`。"""
 
-    def __init__(self, logs=None, envelope_bill_id=BILL, resp=None, exc=None):
+    def __init__(self, logs=None, envelope_bill_id=BILL, resp=None, exc=None, payments=None):
         self._logs, self._env, self._resp, self._exc = logs or [], envelope_bill_id, resp, exc
+        # ⚠️ 預設讓 payments 覆蓋 logs 的 payment_id（F-C21 的正常態）
+        self._payments = payments if payments is not None else [
+            {"id": p} for p in sorted({l.get("payment_id") for l in (logs or [])
+                                       if l.get("payment_id") is not None})]
         self.calls = []
 
     async def get_payment_logs(self, role_id, bill_id=None, **kw):
@@ -48,7 +52,7 @@ class FakePaymentLogsApi:
             raise self._exc
         if self._resp is not None:
             return self._resp
-        return {"success": True, "data": self._logs, "payments": [],
+        return {"success": True, "data": self._logs, "payments": self._payments,
                 "summary": {}, "bill_id": self._env}
 
 
@@ -299,6 +303,67 @@ async def test_empty_collection_scope_is_not_reported_verified():
         "空集合被回報成 VERIFIED ⇒ vacuous truth 冒充 scope 證據（F-C19）"
     r2 = await rer.fetch_iot_manufacturers(FakeIotApi([]), ROLE)
     assert r2["scope_provenance"]["member_scope_proof"] == "N/A_EMPTY"
+
+
+# ───────────────── F-C21：envelope reference integrity ─────────────────
+@pytest.mark.req("B3_G9:1")
+@pytest.mark.asyncio
+async def test_envelope_reference_integrity_verified_on_consistent_response():
+    r = await rer.fetch_payment_logs_by_bill(FakePaymentLogsApi(_plogs(3)), ROLE, BILL)
+    prov = r["scope_provenance"]
+    assert prov["envelope_reference_integrity"] == "VERIFIED"
+    assert "不是 bill scope proof" in prov["_not_scope_proof"], \
+        "⛔ 必須明示它不等於 scope proof（F-C21）"
+
+
+@pytest.mark.req("B3_G9:2")
+@pytest.mark.asyncio
+async def test_orphan_member_is_hard_fail_not_filtered():
+    """⚠️ member 的 payment_id 不在 envelope payments 內 ⇒ **hard fail**，⛔ 不 silent filter。"""
+    logs = _plogs(2) + [{"source": "payment_logs", "id": 59999, "payment_id": 777001,
+                         "role_id": int(ROLE), "action": "atm"}]
+    api = FakePaymentLogsApi(logs, payments=[{"id": 9876}])
+    with pytest.raises(InputScopeViolation, match="ENVELOPE_REFERENCE_INTEGRITY"):
+        await rer.fetch_payment_logs_by_bill(api, ROLE, BILL)
+
+
+@pytest.mark.req("B3_G9:3")
+@pytest.mark.asyncio
+async def test_empty_members_report_na_empty_not_verified():
+    """**F-C19／F-C21**：空集合對參照完整性 ⛔ 無正證據。"""
+    r = await rer.fetch_payment_logs_by_bill(FakePaymentLogsApi([]), ROLE, BILL)
+    assert r["scope_provenance"]["envelope_reference_integrity"] == "N/A_EMPTY"
+
+
+@pytest.mark.req("B3_G9:4")
+@pytest.mark.asyncio
+async def test_missing_parent_list_with_members_is_hard_fail():
+    """⚠️ 有 member 卻沒有 parent 清單 ⇒ 無從驗 ⇒ hard fail，⛔ 不當成通過。"""
+    api = FakePaymentLogsApi(resp={"success": True, "data": _plogs(2), "bill_id": BILL})
+    with pytest.raises(InputScopeViolation, match="無從驗參照完整性"):
+        await rer.fetch_payment_logs_by_bill(api, ROLE, BILL)
+
+
+@pytest.mark.req("B3_G9:5")
+def test_reference_integrity_is_declared_in_contract_not_hardcoded():
+    spec = rer.INPUT_CONTRACTS["payment_logs.by_bill.v1"]
+    assert spec["envelope_parent_key"] == "payments"
+    assert spec["envelope_parent_id_field"] == "id"
+    assert spec["member_parent_ref_field"] == "payment_id"
+    # ⚠️ 負控制：⛔ 不得外溢到沒有 parent／child 結構的 contract
+    for cid in ("invoice_logs.by_bill.v1", "iot.manufacturers.v1"):
+        assert not rer.INPUT_CONTRACTS[cid].get("envelope_parent_key"), cid
+
+
+@pytest.mark.req("B3_G9:6")
+@pytest.mark.asyncio
+async def test_reference_integrity_does_not_replace_scope_provenance():
+    """**F-C21**：兩條證據各自獨立存在，⛔ 不得互相取代。"""
+    r = await rer.fetch_payment_logs_by_bill(FakePaymentLogsApi(_plogs(2)), ROLE, BILL)
+    prov = r["scope_provenance"]
+    assert prov["envelope_scope_proof"] == "CONFIRMED"          # server-side 述詞
+    assert prov["envelope_reference_integrity"] == "VERIFIED"   # envelope 內部參照
+    assert prov["member_scope_proof"] == "UNAVAILABLE_BY_RESPONSE_SCHEMA"
 
 
 # ───────────────────────── B3-G8 ─────────────────────────

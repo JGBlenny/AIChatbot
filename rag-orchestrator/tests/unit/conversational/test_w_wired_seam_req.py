@@ -45,8 +45,16 @@ class FakeApi:
         return {"success": True, "data": []}
 
     async def get_payment_logs(self, role_id, bill_id=None, **kw):
+        """⚠️ 必須模擬**真實信封**：`{success, bill_id, payments[], payment_logs→data[]}`。
+
+        ⚠️ F-C21 會驗 `payment_logs[].payment_id ∈ {payments[].id}`——
+        替身若省略 `payments`，resolver 會（正確地）hard fail。⛔ 不得為了讓測試過而放寬 guard。
+        """
         self.calls.append(("get_payment_logs", bill_id))
-        return {"success": True, "data": self._logs or [], "bill_id": self._env}
+        logs = self._logs or []
+        payments = [{"id": p} for p in sorted({l.get("payment_id") for l in logs
+                                               if l.get("payment_id") is not None})]
+        return {"success": True, "data": logs, "payments": payments, "bill_id": self._env}
 
     async def get_iot_manufacturers(self, role_id, **kw):
         self.calls.append(("get_iot_manufacturers", role_id))
@@ -103,7 +111,7 @@ def test_tenant_summary_is_deliberately_absent_from_wiring():
 @pytest.mark.asyncio
 async def test_upstream_unresolved_never_forges_a_resolved_id():
     """**W-M2 的正面版**：上游 NO_MATCH ⇒ ⛔ 不得拿 raw ref 當 resolved_bill_id 硬跑下游。"""
-    api = FakeApi(bill_rows=[], logs=[{"id": 1}])
+    api = FakeApi(bill_rows=[], logs=[{"id": 1, "payment_id": 9876}])
     r = await rc._resolve_input("payment_logs.by_bill.v1", api, ROLE, {"bill_ref": "999"})
     assert r["state"] == rer.STATE_NO_MATCH
     assert r["_blocked_downstream"] == "payment_logs.by_bill.v1"
@@ -115,7 +123,8 @@ async def test_upstream_unresolved_never_forges_a_resolved_id():
 @pytest.mark.asyncio
 async def test_upstream_resolved_feeds_downstream_the_resolved_id():
     """⚠️ 正對照組：上游成功時，下游收到的必須是**上游解析出的 id**，⛔ 不是使用者輸入。"""
-    api = FakeApi(bill_rows=[{"id": BILL, "title": "四月租金"}], logs=[{"id": 1}])
+    api = FakeApi(bill_rows=[{"id": BILL, "title": "四月租金"}],
+                  logs=[{"id": 1, "payment_id": 9876}])
     r = await rc._resolve_input("payment_logs.by_bill.v1", api, ROLE, {"bill_ref": "716317"})
     assert r["state"] == rer.STATE_RESOLVED
     assert ("get_payment_logs", BILL) in api.calls

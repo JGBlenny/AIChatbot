@@ -3870,7 +3870,8 @@
   "W-G1_EXACT_REGISTERED_RESOLVER": "⚠️ responsibility `input_contract_id` → **exact registered resolver**。⛔ 不允許 fallback／動態組名 getattr／猜函式；⛔ 查不到 resolver 也不得走 legacy 查詢路徑（F-C6）。⚠️ 每個 contract 的 resolver 簽名不同 ⇒ 用**顯式 spec 表**（`_RESOLVER_SPECS`），⛔ 不做統一 arity 假設。⚠️ `tenant.summary.v1` **刻意缺席**（R-24 IDENTITY_BLOCKED）——明示缺席才看得見。",
   "W-G2_GROUNDING_EXIT_KEEPS_RESPONSIBILITY_AUTHORITY": "⚠️ `GROUNDING_FACTS execution result → D2 present() → responsibility converter` **整條** ⛔ 不得重入 legacy dispatcher／`show_knowledge`／`row.answer`。\n⚠️ payload 的 `responsibility_id` 一律取自 **plan（committed authority）**，⛔ 不從 adapter 輸出讀（adapter 若回別的 id 必須被覆寫掉）。\n⚠️ unresolved（NO_MATCH／AMBIGUOUS／INVALID_INPUT）仍保持**同一 responsibility authority**，⛔ 不得因 `_RESOLVERS` 接上後掉回 form／legacy path。",
   "E-C1_BASELINE_IDENTITY_IS_SET_BASED_NOT_COUNT_BASED": "⚠️ Known-failure baseline 由 **case identity** 決定；failure count **只能作摘要**，⛔ 不得單獨作 regression 判準。\n```text\nactual_red − KNOWN_STABLE_FAILURES − FLAKY_RED_ALLOWLIST ≠ ∅  ⇒  NEW_REGRESSION\n```\n⚠️ 只看數字會假綠的具體形狀：**穩定紅少 1 筆 ＋ 冒出一筆全新的紅 ＝ 總數不變**。\n⚠️ flaky 一律用**具名白名單** `FLAKY_RED_ALLOWLIST`（列出 case ID／parameter），⛔ 不得寫成 `FLAKY_SLOT = 0..N`——那會讓未來**任意** N 筆 failure 看似可接受。\n⚠️ `KNOWN_STABLE_FAILURES` 是 **observed**，⛔ 不是「保證每次必紅」的產品契約：其一突然變綠 ⇒ **UNEXPECTED_BASELINE_IMPROVEMENT**，⛔ 不叫 regression，且查清原因前 ⛔ 不得從 baseline 刪除。",
-  "F-C20_REQUEST_SCOPE_IS_NOT_DATA_SCOPE": "⚠️ request 帶了 `bill_id`、response envelope **echo** 了 `bill_id`，⛔ **都不能單獨證明**回傳的 members 被該 bill 強制圈定。必須有 **server-side filtering／provenance evidence**（controller／repository／SQL 述詞）。\n⚠️ 升 `CONFIRMED` 時**必須附可稽核的證據引用**，⛔ 不得只把狀態字串改掉（已落成 guard B3-G7:8：檢查 `_scope_provenance_evidence` 有指名 controller 與述詞）。\n⚠️ **data scope ≠ authorization**：證明「只回這張 bill 的資料」⛔ 不等於證明「呼叫者有權看這張 bill」。"
+  "F-C20_REQUEST_SCOPE_IS_NOT_DATA_SCOPE": "⚠️ request 帶了 `bill_id`、response envelope **echo** 了 `bill_id`，⛔ **都不能單獨證明**回傳的 members 被該 bill 強制圈定。必須有 **server-side filtering／provenance evidence**（controller／repository／SQL 述詞）。\n⚠️ 升 `CONFIRMED` 時**必須附可稽核的證據引用**，⛔ 不得只把狀態字串改掉（已落成 guard B3-G7:8：檢查 `_scope_provenance_evidence` 有指名 controller 與述詞）。\n⚠️ **data scope ≠ authorization**：證明「只回這張 bill 的資料」⛔ 不等於證明「呼叫者有權看這張 bill」。",
+  "F-C21_ENVELOPE_REFERENCE_INTEGRITY_IS_NOT_SCOPE_AUTHORITY": "⚠️ child member 對 envelope parent 的 **reference integrity** 可以偵測 **response inconsistency**，⛔ **不得取代** server-side bill scope provenance——兩條證據負責不同的事。\n```text\npayment_ids = {p.id for p in envelope.payments}\n∀ log ∈ payment_logs:  log.payment_id ∈ payment_ids\n```\n⚠️ 違反 ⇒ **hard fail**，⛔ 絕不 silent filter。\n⚠️ 空 member 集合 ⇒ **N/A_EMPTY**，⛔ 不得寫 VERIFIED（與 F-C19 同一種 vacuous truth）。\n⚠️ 有 member 卻無 parent 清單 ⇒ **無從驗** ⇒ hard fail，⛔ 不當成通過。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -4397,7 +4398,7 @@
  },
  "_open_finding_2026_08_31": {
   "id": "F-OPEN-01_ROLE_ID_VERIFICATION_PROVENANCE",
-  "status": "**NOT_YET_ESTABLISHED**（⛔ **不是** `role_id is unverified`；⛔ 本次未據此改動任何一筆分類）",
+  "status": "**RESOLVED_AS** REQUEST_CLAIM_UNRESTRICTED（AIChatbot 邊界） ＋ INCONCLUSIVE（jgb2 實例設定）——詳見 `_f_open_01_provenance_audit_2026_08_31`",
   "what_is_actually_proven": [
    "① routers/chat.py：`role_id`／`user_id` 取自 **request 欄位**（`request.role_id`／`request.user_id`）",
    "② **在 chat.py 檔內**未發現 verify／auth／validate／token 的 provenance（搜尋正對照組：`class ChatRequest` 命中該檔）"
@@ -4661,12 +4662,56 @@
   "⚠️_new_finding_member_check_is_partially_possible": {
    "what": "⚠️ 業主的決策樹寫 `member_scope_proof = UNAVAILABLE_BY_SCHEMA`——對 **bill identity** 成立，但實查後發現**還有一層可驗**：回應信封同時帶 `payments[]`（含 id），而 member 帶 `payment_id` ⇒ 可斷言 `每個 payment_logs[].payment_id ∈ {payments[].id}`。",
    "value": "這**不是** bill-scope proof，而是 **envelope 內部參照完整性**；它能抓到 server 端 scope 出錯（回了不屬於這批 payments 的 log）。",
-   "status": "**PROPOSED，⛔ 未實作**——業主授權的是**唯讀 audit**，加這道檢查會改變 resolver 行為（可能新拋 InputScopeViolation）⇒ 待裁。"
+   "status": "**IMPLEMENTED**（2026-08-31，業主批准）——F-C21；contract 宣告驅動（`envelope_parent_key`／`envelope_parent_id_field`／`member_parent_ref_field`），⛔ 未寫死在函式裡。",
+   "guards": "B3-G9:1…6 共 6 條；⚠️ 含負控制：invoice_logs／iot ⛔ 不得宣告本欄位（⛔ 不外溢）。",
+   "mutations": "⚠️ 實際改原始碼：M4 孤兒改 silent filter → RED；M5 空集合回報 VERIFIED → RED；還原後位元一致、48/48 綠。"
   },
   "⚠️_authorization_is_a_separate_question": {
    "finding": "⚠️ `ExternalApiAuth` middleware：驗 API Key（sha256）＋ rate limit ＋ resource/action 權限；但 **role_id 白名單是 opt-in**——該 key 若**沒設**任何 role 白名單，`role_id` 不受限（程式註解明載這是刻意放寬）。",
    "meaning": "⇒ ② 的 `owner_role_id=$roleId` 保證的是「資料屬於**所宣稱的** role」，⛔ **不保證**呼叫者有權使用該 role_id——那取決於該 API Key 的白名單設定。",
    "⛔_do_not_conflate": "⛔ 這 ⛔ 不影響 **data scope** 的 CONFIRMED 裁定（F-C20：兩者是兩件事），但它是 **F-OPEN-01** 的直接材料 ⇒ 併入下一刀，⛔ 本刀不裁。"
   }
+ },
+ "_f_open_01_provenance_audit_2026_08_31": {
+  "id": "F-OPEN-01_ROLE_ID_VERIFICATION_PROVENANCE — FULL CHAIN AUDIT",
+  "_method": "⚠️ 唯讀，⛔ 不只搜 chat.py。追：API key → ExternalApiAuth → key configuration → role whitelist semantics → request.role_id → authorization/equality constraint → controller → resolver。",
+  "DATA_ROLE_SCOPE": {
+   "verdict": "**CONFIRMED**",
+   "evidence": "`request.role_id → bills.owner_role_id = role_id → scoped data`（PaymentLogApiController 實查；見 `_payment_logs_scope_audit_2026_08_31`）。",
+   "_meaning": "⚠️ 這只證『回傳的資料屬於**所宣稱的** role』。"
+  },
+  "CALLER_ROLE_AUTHORITY": {
+   "verdict": "**REQUEST_CLAIM_UNRESTRICTED**（AIChatbot 邊界，repo 內已證） ＋ **INCONCLUSIVE**（jgb2 邊界，取決於 production key 設定）",
+   "layer_1_aichatbot": [
+    "`VendorChatRequest.role_id: Optional[str]` ＝ **純 request 欄位**（routers/chat.py:4409）",
+    "`/api/v1/message` 端點 ⛔ 無任何 `Depends(...)` 認證相依",
+    "服務對服務認證 `verify_api_key` 只回 `{id, name}` ⇒ **⛔ 完全不綁 role**",
+    "`RAG_API_AUTH_ENFORCE` **預設關**（關→整層不強制）",
+    "⛔ 查無任何伺服器端推導／覆寫 role_id 的程式",
+    "正對照：`is_exempt('/api/v1/message')=False`、`/api/v1/health`=True ⇒ 判斷函式有效"
+   ],
+   "layer_2_jgb2": [
+    "`ExternalApiAuth`：驗 API Key（sha256＋快取）／rate limit／resource-action 權限",
+    "⚠️ **role 白名單是 opt-in**：`if (!$apiKey->is_root && $request->filled('role_id'))` 內，只有 `!empty($allowedRoleIds)` 才強制；未設白名單 ⇒ **不限團隊**（程式註解明載為刻意放寬）",
+    "`is_root` 直接跳過該 role 檢查",
+    "⇒ **機制面** = `UNRESTRICTED_BY_DESIGN`；**實例面**（JGB_API_KEY 這把是否設了白名單）位於 **production DB**，⛔ 本輪不查、不得憑猜 ⇒ INCONCLUSIVE"
+   ],
+   "⚠️_why_a_jgb_whitelist_still_would_not_close_it": "⚠️ 即使 JGB_API_KEY 設了 role 白名單，它限制的是「**這個服務**能觸及哪一組 role」，⛔ **不是**「**哪個呼叫者**有權使用哪個 role」。AIChatbot 這一層完全不綁 ⇒ 其呼叫者仍可在該組內任選 role_id。**信任止於服務，⛔ 不傳遞到端點呼叫者。**",
+   "_trust_model_note": "⚠️ JGB_API_KEY 很可能本來就被設計成『全 role server credential』（service-to-service 整合常見）。若是，那 jgb2 端不算缺陷——**缺的是 AIChatbot 這一層把端點呼叫者綁到 role 的那一步**。⛔ 本輪不定性為 security defect。"
+  },
+  "CLASSIFICATION": {
+   "AUTHENTICATED_DERIVED": "⛔ 否——role_id ⛔ 非由 authenticated identity 產生",
+   "REQUEST_CLAIM_VERIFIED": "⛔ 否——⛔ 查無任何 equality/authorization 約束",
+   "REQUEST_CLAIM_UNRESTRICTED": "✅ **成立**（AIChatbot 邊界）",
+   "INCONCLUSIVE": "⚠️ 部分——jgb2 端的實例設定在 production DB，repo 內無法證"
+  },
+  "CONSEQUENCE": {
+   "verified_role_id": "⚠️ **⛔ 不得**把 `request.role_id` 升格為 `verified_role_id`（F-C13）。",
+   "affected": "R-20／R-21／R-22／R-23 的 `IDENTITY_RESOLUTION` blocker **維持**，⛔ 不解封。",
+   "R-23": "`ROLE_SCOPE_REACHABILITY = BLOCKED_F_OPEN_01` **維持**。",
+   "⛔_do_not": "⛔ 不得因 DATA_ROLE_SCOPE 已 CONFIRMED 就整批解封——那正是 F-C20 要擋的混淆。"
+  },
+  "_what_would_close_it": "① AIChatbot 端把端點呼叫者綁到 role（authenticated principal → role 的 equality 檢查）；或 ② 明確裁定 AIChatbot 的呼叫者本身即受信任邊界（需 deployment 佐證，repo 外）。⚠️ 兩者皆屬**另案**。",
+  "_not_a_security_ruling": "⛔ 唯讀觀察；⛔ 未評估外部可達性、⛔ 未定性為漏洞、⛔ 未查 production 設定。"
  }
 }

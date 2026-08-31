@@ -162,6 +162,11 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
             "旁路檢查：`routes/api.php` 只有一條 `/payment-logs` 路由、External 15 個 controller 中"
             "只有這支碰 payment_logs（正對照：目錄確有 15 支）。"
             "⚠️ 三份 checkout（master／兩個 ticket 分支）的 controller **sha256 相同** 30dff554…",
+        # ⚠️ **F-C21**：envelope 內 parent(payments) ↔ child(payment_logs) 的參照完整性宣告。
+        #    ⛔ 這**不是** bill scope proof——見 F-C21。
+        "envelope_parent_key": "payments",
+        "envelope_parent_id_field": "id",
+        "member_parent_ref_field": "payment_id",
         "⚠️_transitive_not_direct":
             "⚠️ member 的 bill 約束是**傳遞性**的（經 payments.paymentable_id），"
             "⛔ **不是** payment_logs 上的直接 bill_id 述詞 ⇒ 保證繫於 `payments.paymentable_id=billId` 正確。",
@@ -661,6 +666,46 @@ def _verify_envelope_scope(cid: str, resp: Dict[str, Any], scope_value: Any) -> 
             "_why": "⚠️ 信封 echo 相符 ⛔ 不構成 filtering proof（F-C18）"}
 
 
+def _verify_envelope_reference_integrity(cid: str, resp: Dict[str, Any],
+                                        members: List[dict]) -> Dict[str, Any]:
+    """**F-C21**：child member 對 envelope parent 的參照完整性。
+
+    ```text
+    payment_ids = {p.id for p in envelope.payments}
+    ∀ log ∈ payment_logs:  log.payment_id ∈ payment_ids
+    ```
+    ⚠️ 這能偵測 **response inconsistency**（server 回了不屬於這批 parent 的 child），
+    ⛔ **不得取代** server-side bill scope provenance——兩條證據負責不同的事。
+    ⚠️ 違反 ⇒ **hard fail**，⛔ 絕不 silent filter。
+    ⚠️ 空 member 集合 ⇒ **N/A_EMPTY**，⛔ 不得寫 VERIFIED（F-C19 同一種 vacuous truth）。
+    """
+    spec = INPUT_CONTRACTS[cid]
+    parent_key = spec.get("envelope_parent_key")
+    if not parent_key:
+        return {"envelope_reference_integrity": "N/A_NOT_DECLARED"}
+    ref_field = spec["member_parent_ref_field"]
+    pid_field = spec["envelope_parent_id_field"]
+    if not members:
+        return {"envelope_reference_integrity": "N/A_EMPTY",
+                "_why": "空 member 集合對參照完整性 ⛔ 無正證據（F-C19／F-C21）"}
+    parents = resp.get(parent_key)
+    if not isinstance(parents, list):
+        raise InputScopeViolation(
+            f"{cid}：envelope 缺 {parent_key!r}（或型別錯：{type(parents).__name__}）"
+            f"，卻有 {len(members)} 筆 member ⇒ ⛔ 無從驗參照完整性（F-C21）")
+    parent_ids = {str(p.get(pid_field)) for p in parents if isinstance(p, dict)}
+    orphans = [m for m in members if str(m.get(ref_field)) not in parent_ids]
+    if orphans:
+        raise InputScopeViolation(
+            f"{cid}：{len(orphans)}/{len(members)} 筆 member 的 {ref_field} 不在 envelope "
+            f"{parent_key} 的 id 集合內（孤兒 {sorted({str(m.get(ref_field)) for m in orphans})}；"
+            f"parent ids {sorted(parent_ids)}）——ENVELOPE_REFERENCE_INTEGRITY 違反，"
+            f"⛔ 不得 filter 掉後繼續（F-C21）")
+    return {"envelope_reference_integrity": "VERIFIED",
+            "_parent": parent_key, "_checked": len(members),
+            "_not_scope_proof": "⚠️ ⛔ 這不是 bill scope proof（F-C21）"}
+
+
 async def fetch_payment_logs_by_bill(api: "PaymentLogsApi", verified_role_id: Optional[str],
                                      resolved_bill_id: Optional[Any]) -> Dict[str, Any]:
     """`payment_logs.by_bill.v1`（COLLECTION）的 fetch resolver。
@@ -684,6 +729,7 @@ async def fetch_payment_logs_by_bill(api: "PaymentLogsApi", verified_role_id: Op
     members = _members(cid, resp)
     prov = dict(_verify_envelope_scope(cid, resp, resolved_bill_id))
     prov.update(_verify_member_scope(cid, members, resolved_bill_id))
+    prov.update(_verify_envelope_reference_integrity(cid, resp, members))   # F-C21
     out = resolve_collection(cid, members)
     out["scope_provenance"] = prov
     out["scope_value"] = resolved_bill_id
