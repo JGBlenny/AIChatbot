@@ -1628,7 +1628,7 @@
      "⚠️_do_not": "⛔ 修掉 PROD-DEFECT-01 後**不得**因此把 R-12 判成 input closed——fetch resolver 仍缺（F-C16）。"
     }
    },
-   "primary_closure_lane": "B1_EXECUTION_BLOCKED_BY_PROD_DEFECT",
+   "primary_closure_lane": "B4_EXECUTION_WIRING_PENDING",
    "required_blockers": {
     "INPUT_FETCH_RESOLVER": "WIRED（**UPSTREAM_REF 兩階段**）——先經 `bill.by_ref` 解析出 resolved_bill_id 才跑 fetch；⛔ 上游未 RESOLVED 一律不呼叫下游",
     "IDENTITY_RESOLUTION": "OK-BY-CONTRACT——scope 來自 resolved_bill_id（bill.by_ref resolver 已存在）",
@@ -1642,7 +1642,15 @@
     "EMPTY_ADAPTER_EXECUTABILITY": "**CONFIRMED**——adapter 可 deterministic 執行其合法 input domain（含空集合）。⚠️ ⛔ 這 ⛔ 不表示 runtime 已獲授權執行它（F-C24）。"
    },
    "_b3_cut": "見頂層 `_b3_execution_record_2026_08_31`",
-   "_bugfix_note": "⚠️ ⛔ **不得因 bugfix 成功就升 APPROVED_CAPABILITY**——R-12 仍有 EMPTY_INPUT_SEMANTICS／BINDING_REGISTRATION／EXTERNAL_VALIDATION。F2 verdict 不動。"
+   "_bugfix_note": "⚠️ ⛔ **不得因 bugfix 成功就升 APPROVED_CAPABILITY**——R-12 仍有 EMPTY_INPUT_SEMANTICS／BINDING_REGISTRATION／EXTERNAL_VALIDATION。F2 verdict 不動。",
+   "_lane_history": [
+    {
+     "from": "B1_EXECUTION_BLOCKED_BY_PROD_DEFECT",
+     "to": "B4_EXECUTION_WIRING_PENDING",
+     "when": "2026-08-31",
+     "why": "PROD-DEFECT-01 已 FIXED_LOCAL ⇒ 最具決定性的剩餘工作變回接線／註冊（F-C16）"
+    }
+   ]
   },
   {
    "responsibility_id": "R-14",
@@ -4479,14 +4487,13 @@
     "R-17",
     "R-30"
    ],
-   "類 B1 EXECUTION_BLOCKED_BY_PROD_DEFECT": [
-    "R-12"
-   ],
+   "類 B1 EXECUTION_BLOCKED_BY_PROD_DEFECT": [],
    "類 B2 IDENTITY_BLOCKED": [
     "R-24"
    ],
    "類 B3 INPUT_FETCH_RESOLVER_ABSENT": [],
    "類 B4 EXECUTION_WIRING_PENDING": [
+    "R-12",
     "R-15",
     "R-16",
     "R-18",
@@ -4529,7 +4536,8 @@
     "R-21",
     "R-22"
    ]
-  }
+  },
+  "_lane_note_20260831": "⚠️ B1 與 B3 皆已清空（PROD-DEFECT-01 已修／三個 fetch resolver 已落地並接線）。⛔ lane 空 ⛔ 不代表該筆已完成——見 required_blockers（F-C16）。"
  },
  "_input_contract_closure": {
   "status": "**SHAPE_FROZEN ＋ empty policy 已裁**（2026-08-30）",
