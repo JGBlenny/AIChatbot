@@ -1636,7 +1636,7 @@
         "EMPTY_INPUT_SEMANTICS": "**CONFIRMED（2026-08-31，F-C24）**——adapter 已存在、empty output 已 reviewed、dispatcher bypass 已由 AST 證明、deterministic guards 已證。⚠️ 「是否已註冊」屬 `BINDING_REGISTRATION`，⛔ 不併入本條。",
         "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
         "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
-        "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
+        "EXTERNAL_VALIDATION": "**BLOCKED（D1-R1／D1-R2 尚未執行）**——⚠️ 但**外部測試輸入條件已於 2026-08-31 具備**（業主裁定 www＋role 20151＝測試團隊；known test bill 759304）。⛔ 仍不得因 unit 綠就當已驗；⛔ 亦不得因『環境已備』就升級——需 D1-R 實跑。詳見 `_d1r_status._premise_change_2026_08_31`／`_known_test_entity_2026_08_31`。",
         "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
         "PAYMENT_LOG_SCOPE_PROVENANCE": "**CONFIRMED（2026-08-31 解除）**——ENVELOPE_VERIFIABLE：server-side 兩段述詞（payments.paymentable_id=$billId → payment_logs.payment_id IN 那批 id）＋ 無旁路。⚠️ 傳遞性約束，⛔ 非直接 bill_id 述詞。詳見 `_payment_logs_scope_audit_2026_08_31`。",
         "EMPTY_ADAPTER_EXECUTABILITY": "**CONFIRMED**——adapter 可 deterministic 執行其合法 input domain（含空集合）。⚠️ ⛔ 這 ⛔ 不表示 runtime 已獲授權執行它（F-C24）。"
@@ -1921,7 +1921,7 @@
         "EMPTY_INPUT_SEMANTICS": "DIRECT_SUPPORTED（實測「查無信用卡付款紀錄…」）",
         "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
         "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
-        "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
+        "EXTERNAL_VALIDATION": "**BLOCKED（D1-R1／D1-R2 尚未執行）**——⚠️ 但**外部測試輸入條件已於 2026-08-31 具備**（業主裁定 www＋role 20151＝測試團隊；known test bill 759304）。⛔ 仍不得因 unit 綠就當已驗；⛔ 亦不得因『環境已備』就升級——需 D1-R 實跑。詳見 `_d1r_status._premise_change_2026_08_31`／`_known_test_entity_2026_08_31`。",
         "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
         "PAYMENT_LOG_SCOPE_PROVENANCE": "**CONFIRMED（2026-08-31 解除）**——ENVELOPE_VERIFIABLE：server-side 兩段述詞（payments.paymentable_id=$billId → payment_logs.payment_id IN 那批 id）＋ 無旁路。⚠️ 傳遞性約束，⛔ 非直接 bill_id 述詞。詳見 `_payment_logs_scope_audit_2026_08_31`。"
       },
@@ -2084,7 +2084,7 @@
         "EMPTY_INPUT_SEMANTICS": "**CONFIRMED（2026-08-31，F-C24）**——adapter 已存在、empty output 已 reviewed、dispatcher bypass 已由 AST 證明、deterministic guards 已證。⚠️ 「是否已註冊」屬 `BINDING_REGISTRATION`，⛔ 不併入本條。",
         "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
         "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
-        "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
+        "EXTERNAL_VALIDATION": "**BLOCKED（D1-R1／D1-R2 尚未執行）**——⚠️ 但**外部測試輸入條件已於 2026-08-31 具備**（業主裁定 www＋role 20151＝測試團隊；known test bill 759304）。⛔ 仍不得因 unit 綠就當已驗；⛔ 亦不得因『環境已備』就升級——需 D1-R 實跑。詳見 `_d1r_status._premise_change_2026_08_31`／`_known_test_entity_2026_08_31`。",
         "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
         "PAYMENT_LOG_SCOPE_PROVENANCE": "**CONFIRMED（2026-08-31 解除）**——ENVELOPE_VERIFIABLE：server-side 兩段述詞（payments.paymentable_id=$billId → payment_logs.payment_id IN 那批 id）＋ 無旁路。⚠️ 傳遞性約束，⛔ 非直接 bill_id 述詞。詳見 `_payment_logs_scope_audit_2026_08_31`。",
         "EMPTY_ADAPTER_EXECUTABILITY": "**CONFIRMED**——adapter 可 deterministic 執行其合法 input domain（含空集合）。⚠️ ⛔ 這 ⛔ 不表示 runtime 已獲授權執行它（F-C24）。"
@@ -2369,7 +2369,7 @@
         "EMPTY_INPUT_SEMANTICS": "DIRECT_SUPPORTED（實測「查無發票開立紀錄…」）",
         "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
         "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
-        "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
+        "EXTERNAL_VALIDATION": "**BLOCKED（D1-R1／D1-R2 尚未執行）**——⚠️ 但**外部測試輸入條件已於 2026-08-31 具備**（業主裁定 www＋role 20151＝測試團隊；known test bill 759304）。⛔ 仍不得因 unit 綠就當已驗；⛔ 亦不得因『環境已備』就升級——需 D1-R 實跑。詳見 `_d1r_status._premise_change_2026_08_31`／`_known_test_entity_2026_08_31`。",
         "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
         "SCOPE_PROVENANCE": "CONFIRMED（MEMBER_VERIFIABLE：member 帶 bill_id 逐筆驗）；⚠️ 另見 F-OPEN-02"
       },
@@ -2531,7 +2531,7 @@
         "EMPTY_INPUT_SEMANTICS": "DIRECT_SUPPORTED（實測「查無發票作廢紀錄…」）",
         "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
         "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
-        "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
+        "EXTERNAL_VALIDATION": "**BLOCKED（D1-R1／D1-R2 尚未執行）**——⚠️ 但**外部測試輸入條件已於 2026-08-31 具備**（業主裁定 www＋role 20151＝測試團隊；known test bill 759304）。⛔ 仍不得因 unit 綠就當已驗；⛔ 亦不得因『環境已備』就升級——需 D1-R 實跑。詳見 `_d1r_status._premise_change_2026_08_31`／`_known_test_entity_2026_08_31`。",
         "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
         "SCOPE_PROVENANCE": "CONFIRMED（MEMBER_VERIFIABLE：member 帶 bill_id 逐筆驗）；⚠️ 另見 F-OPEN-02"
       },
@@ -2693,7 +2693,7 @@
         "EMPTY_INPUT_SEMANTICS": "N/A（SINGLETON；absent → NO_MATCH）",
         "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
         "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
-        "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
+        "EXTERNAL_VALIDATION": "**BLOCKED（D1-R1／D1-R2 尚未執行）**——⚠️ 但**外部測試輸入條件已於 2026-08-31 具備**（業主裁定 www＋role 20151＝測試團隊；known test bill 759304）。⛔ 仍不得因 unit 綠就當已驗；⛔ 亦不得因『環境已備』就升級——需 D1-R 實跑。詳見 `_d1r_status._premise_change_2026_08_31`／`_known_test_entity_2026_08_31`。",
         "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。"
       }
     },
@@ -2845,7 +2845,7 @@
         "EMPTY_INPUT_SEMANTICS": "N/A（SINGLETON）",
         "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
         "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
-        "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
+        "EXTERNAL_VALIDATION": "**BLOCKED（D1-R1／D1-R2 尚未執行）**——⚠️ 但**外部測試輸入條件已於 2026-08-31 具備**（業主裁定 www＋role 20151＝測試團隊；known test bill 759304）。⛔ 仍不得因 unit 綠就當已驗；⛔ 亦不得因『環境已備』就升級——需 D1-R 實跑。詳見 `_d1r_status._premise_change_2026_08_31`／`_known_test_entity_2026_08_31`。",
         "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。"
       }
     },
@@ -3011,7 +3011,7 @@
         "EMPTY_INPUT_SEMANTICS": "N/A（SELECT_ONE；0→NO_MATCH／>1→AMBIGUOUS）",
         "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
         "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
-        "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
+        "EXTERNAL_VALIDATION": "**BLOCKED（D1-R1／D1-R2 尚未執行）**——⚠️ 但**外部測試輸入條件已於 2026-08-31 具備**（業主裁定 www＋role 20151＝測試團隊；known test bill 759304）。⛔ 仍不得因 unit 綠就當已驗；⛔ 亦不得因『環境已備』就升級——需 D1-R 實跑。詳見 `_d1r_status._premise_change_2026_08_31`／`_known_test_entity_2026_08_31`。",
         "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。"
       }
     },
@@ -3166,7 +3166,7 @@
         "EMPTY_INPUT_SEMANTICS": "**CONFIRMED（2026-08-31，F-C24）**——adapter 已存在、empty output 已 reviewed、dispatcher bypass 已由 AST 證明、deterministic guards 已證。⚠️ 「是否已註冊」屬 `BINDING_REGISTRATION`，⛔ 不併入本條。",
         "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
         "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
-        "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
+        "EXTERNAL_VALIDATION": "**BLOCKED（D1-R1／D1-R2 尚未執行）**——⚠️ 但**外部測試輸入條件已於 2026-08-31 具備**（業主裁定 www＋role 20151＝測試團隊；known test bill 759304）。⛔ 仍不得因 unit 綠就當已驗；⛔ 亦不得因『環境已備』就升級——需 D1-R 實跑。詳見 `_d1r_status._premise_change_2026_08_31`／`_known_test_entity_2026_08_31`。",
         "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
         "FETCH_RESOLVER_EXECUTABILITY": "**CONFIRMED**（module 層）",
         "ROLE_SCOPE_REACHABILITY": "**RESOLVED（2026-08-31，F-C25）**——原 BLOCKED_F_OPEN_01 前提已由產品裁決解除。⚠️ SCOPE_PROVENANCE（MEMBER_VERIFIABLE）為獨立證據，⛔ 不因本條而改變。",
@@ -3328,7 +3328,7 @@
         "EMPTY_INPUT_SEMANTICS": "N/A（SINGLETON）",
         "COMPLETION_SEAM": "AVAILABLE（FINAL_TEXT，D1-E envelope 已建立）",
         "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
-        "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
+        "EXTERNAL_VALIDATION": "**BLOCKED（D1-R1／D1-R2 尚未執行）**——⚠️ 但**外部測試輸入條件已於 2026-08-31 具備**（業主裁定 www＋role 20151＝測試團隊；known test bill 759304）。⛔ 仍不得因 unit 綠就當已驗；⛔ 亦不得因『環境已備』就升級——需 D1-R 實跑。詳見 `_d1r_status._premise_change_2026_08_31`／`_known_test_entity_2026_08_31`。",
         "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。"
       }
     },
@@ -4245,7 +4245,7 @@
     "L2_same_field_name_is_not_same_authority": "⚠️ **同名欄位 ≠ 同一 authority**。`knowledge.answer` 是內容來源；`VendorChatResponse.answer` 是 API envelope。真正的風險**不是**寫入 `answer` 這個名字，而是 ① 從**錯誤 semantic slot** 取值、② 用 **silent default** 把型別錯誤吃掉（`form_result.get('answer','')` 對 responsibility result 會靜默產出空回答）。"
   },
   "_d1r_status": {
-    "verdict": "**BLOCKED_EXTERNAL_TEST_INPUT**（2026-08-30）",
+    "verdict": "**UNBLOCKED（2026-08-31）**——外部測試輸入條件已具備；⚠️ D1-R1／D1-R2 **尚未執行**",
     "_probe_method": "⚠️ 只探測「有沒有設／長度／host 類別」，⛔ **未印出任何值**（SEC-01 紀律）。",
     "environment_finding": {
       "USE_MOCK_JGB_API": "false ⇒ 本機容器**已設定為打真實 API**",
@@ -4273,7 +4273,67 @@
     "planned_when_unblocked": {
       "D1-R1": "numeric positive control——已知 numeric bill_ref → real get_bill_detail → exactly one bill → RESOLVED → R-29 binding → _diagnose_receipt → FINAL_TEXT → VendorChatResponse.answer",
       "D1-R2": "nonnumeric ambiguity-safe path——unique keyword→unique contract→unique bill→RESOLVED；另補 keyword→>1 contracts→AMBIGUOUS 且 ⛔ get_bills 不得提前被呼叫（若 staging 難造 ambiguity，可保留 deterministic adapter test，⚠️ 但 **external evidence 與 deterministic evidence 必須分開記**）"
-    }
+    },
+    "_premise_change_2026_08_31": {
+      "ruled_by": "業主（產品裁決）",
+      "ruled_at": "2026-08-31",
+      "ruling": "**www ＋ role_id=20151 可用於 D1-R**——20151 是**測試團隊**，⛔ 原封鎖理由『讀取正式站資料會把真實客戶資料帶進 transcript』**不成立**。",
+      "_evidence": "唯讀實查：role 20151 共 **516 份合約**（pagination.total），標題多為『測試物件』『DEMO』類 ⇒ 確為測試資料集。",
+      "_precedent": "P2.5（2026-08-28）已在 www 完成 owner-authorized、唯讀的 controlled end-to-end acceptance（role_id=20151／合約 89557），本次沿用同一模式。",
+      "_safety_boundary_reproved_2026_08_31": {
+        "_request": "→ `_send(\"GET\", …)` 唯讀",
+        "_post_request": "→ `_send(\"POST\", …)`；全檔呼叫點 **1 處**，僅 `/api/external/v1/repairs`（create_repair）",
+        "put_delete_patch_helpers": "**0 個**",
+        "R-29_adapter": "`receipt_actual_amount_adapter` → `_diagnose_receipt(bill)` = **純函式，無 API 呼叫**",
+        "registered_bindings": [
+          "late_fee.facts.v1 → R-28",
+          "point_refund.bill_facts.v1 → R-31",
+          "receipt.actual_amount.v1 → R-29"
+        ],
+        "conclusion": "⇒ D1-R 路徑**不可能產生寫入**；本輪實際只發出 GET。"
+      }
+    },
+    "_known_test_entity_2026_08_31": {
+      "role_id": "20151（測試團隊）",
+      "contract": "89071『測試物件』status=8／bit_status=15（已簽約）——其下 **2 筆帳單**",
+      "bill_ref": "**759304**（D1-R1 的 numeric 輸入）",
+      "GROUND_TRUTH_at_2026_08_31": {
+        "id": 759304,
+        "contract_id": 89071,
+        "title": "測試物件",
+        "status": 1,
+        "bit_status": 1,
+        "total": 3100,
+        "final_total": 0,
+        "date_start": 20260815,
+        "date_end": 20260914,
+        "date_expire": 20260815,
+        "complete_at": null,
+        "is_paid_on_time": 0,
+        "is_auto_pay": false,
+        "invoice_status": 0,
+        "cycle": 1,
+        "category": 3,
+        "_all_field_count": 36
+      },
+      "_controls": {
+        "positive": "已簽約合約 89071 → bill_count=2",
+        "negative_contract": "假合約 999999999 → bill_count=0",
+        "negative_bill": "假帳單 999999999 → 伺服器 **404**、success=False",
+        "_meaning": "⇒ 『有資料／無資料』這把尺具鑑別力（⚠️ 首次探針用 89557 時正負對照同為 0，**無鑑別力**，已作廢——89557 當時 bit_status=3 尚未生效，本就無帳單）。"
+      },
+      "⚠️_ground_truth_is_a_snapshot": "⚠️ 帳單狀態會漂移。日後重跑 D1-R **必須重新抓一次 ground truth**，⛔ 不得沿用本區塊的數值當期望值。"
+    },
+    "_probe_defect_found_2026_08_31": "⚠️ `get_bills(role_id=…)` 若未帶 `user_id`、且未帶 `contract_ids`／`bill_ref`，`_validate_identity` 回 False ⇒ 回傳**本地** `_degraded_response()`（硬編碼 `code:401` ＋ DEGRADED_MESSAGE『請先登入以查詢您的個人資料。』）。⚠️ **請求根本沒送出**。⛔ 不得把這個 401 讀成外部 API 認證失敗——它與 preview smoke 記載的 `401 API Key 未提供`（真伺服器回應）是**不同來源**。",
+    "_verdict_history": [
+      "**BLOCKED_EXTERNAL_TEST_INPUT**（2026-08-30）→ UNBLOCKED（2026-08-31，業主裁定 www+20151 為測試團隊）"
+    ],
+    "_still_true": [
+      "⛔ 用 mock 取代 D1-R 並宣稱完成",
+      "⛔ 把 ENTITY_INPUT_REACHABILITY 升成 CONFIRMED（未執行前）",
+      "⛔ 為了跑通而降低證據標準",
+      "⚠️ `evidence_split.real adapter reachability` 仍 **NOT_ESTABLISHED** —— 待 D1-R1 執行"
+    ]
   },
   "_d2_scope_and_limits": {
     "allowed_extracted": [
