@@ -4264,7 +4264,7 @@
     "evidence_split": {
       "mock vertical slice": "PASS（D1-E／D1 guards 全綠）",
       "real adapter reachability": "**CONFIRMED（2026-08-31，D1-R1 Stage 1）**",
-      "real end-to-end entry": "**NOT_ESTABLISHED**（D1-R1 Stage 2，見 _d1r1_execution_2026_08_31）"
+      "real end-to-end entry": "**PARTIAL**——conversational facet 路徑 CONFIRMED（真 API grounding 正確）；⛔ responsibility binding 路徑 **NOT_REACHED**（見 _entry_activation_audit_2026_08_31）"
     },
     "must_not": [
       "⛔ 用 mock 取代 D1-R 並宣稱完成",
@@ -4378,6 +4378,38 @@
         "_impact": "⇒ `VendorChatResponse.answer` 這一段仍 NOT_ESTABLISHED，⛔ 不得據此升級任何 responsibility 的 verdict"
       },
       "_net_effect_on_blockers": "⚠️ EXTERNAL_VALIDATION **僅部分履行**：real adapter reachability（Stage 1）已取得外部證據；end-to-end entry（Stage 2）未取得 ⇒ ⛔ 10 筆的 EXTERNAL_VALIDATION **維持 BLOCKED**，APPROVED_CAPABILITY 維持 0。"
+    },
+    "_entry_activation_audit_2026_08_31": {
+      "id": "ENTRY-ACTIVATION-AUDIT — 因果定位（⛔ 本刀不修任何東西）",
+      "_supersedes": "⚠️ 本區塊**更正** `_d1r1_execution_2026_08_31.STAGE_2` 的初判。原記「責任路徑在此 runtime 不活躍」**係探針缺陷所致**，⛔ 不成立。",
+      "_probe_defect_root": "⚠️ 我的 curl **未帶 `session_id`** ⇒ `form_sessions.session_id` NOT NULL 違反 ⇒ `❌ 對話引擎 prepare 失敗（降級）` ⇒ 落回 legacy 知識路徑 ⇒ 通用兜底句。⛔ 這是**探針缺陷，不是產品缺陷**。補上 session_id 後全鏈正常。",
+      "seam_trace": {
+        "1_legacy_retrieval": "**CALLED**——rerank 5 筆、閾值過濾後 2–5 筆（正對照多題 2–5 sources）",
+        "2_responsibility_resolver": "**CALLED ＋ COMMITTED**——『幫我查點退帳單金額』→ bill_diagnosis[switch] → billing_anomaly[switch] → contract_closeout[stay] → **commit contract_closeout**（與 P2.5 逐字相同）；『查收據實際收了多少錢』→ bill_diagnosis[switch] → billing_anomaly[stay] → **commit billing_anomaly**",
+        "3_conversational_engine": "**CALLED**——`💬 [conversational-diagnosis] 分類命中 → 進診斷對話`，action_type=**conversational**",
+        "4_responsibility_fulfillment_binding": "⛔ **NOT CALLED**——⚠️ 這才是真正的斷點"
+      },
+      "hypothesis_verdicts": {
+        "H2b_RESPONSIBILITY_ENTRY_WIRING_MISSING": "**REFUTED**——resolver 已接進 `/api/v1/message`，旗標 `PREENTRY_ROUTABILITY_GATE=true`／`PREENTRY_ROUTABILITY_FACETS=bill_diagnosis,billing_anomaly,contract_closeout` 皆已設且生效",
+        "H2a_RESPONSIBILITY_BOOTSTRAP_MISSING": "**REFUTED**——缺 `conversational_facets`／`responsibility_delegates` 表**並未**中斷此路徑（對話規則由 DB 載入成功：`✅ [對話規則] 由 DB 載入（role=pm_contract_closeout）`）。⚠️ 原『缺表＝根因』推論**不成立**",
+        "H1_EMPTY_ANSWER_NOMINATION_LOSS": "**PARTIALLY_CONFIRMED（但非主因）**——實測日誌 `🛡️ [錨點防呆] 濾除 N 筆空答案錨點（不進單發答題）` ⇒ 空 answer 錨點列確實被排除於**單發答題（legacy direct-answer）**路徑。⚠️ 但該路徑**只在引擎降級時才走到**，⛔ 不是 R-29 未被執行的原因",
+        "NEW_SEAM_COMMIT_GRANULARITY": "**CONFIRMED —— 這是真正的根因**"
+      },
+      "NEW_SEAM_COMMIT_GRANULARITY": {
+        "statement": "⚠️ 實際入口的 authority commit 發生在 **facet 粒度**（`billing_anomaly`／`contract_closeout`），答案由**該 facet 自己的 grounding** 產生；⛔ **從未**下沉到 responsibility 粒度、⛔ 從未選取或執行任何 fulfillment binding。",
+        "evidence": "R-29 兩輪實跑：turn1 commit billing_anomaly → 追問帳單編號；turn2『759304』→ 回覆 grounded 帳單摘要，⛔ 日誌無任何 fulfillment/binding/R-29 訊號。",
+        "_grounding_is_real": "⚠️ 該答案**確實**來自真 API 且與 ground truth 相符：編號 759304 ✅／狀態待發送 ✅（mapping.status[\"1\"]）／NT$ 3,100 ✅（total=3100）／繳費期限 2026/08/15 ✅（date_expire）／計費期間 2026/08/15~2026/09/14 ✅（date_start/date_end）／明細 1000+2000+0+100=3100 內部一致 ✅",
+        "_quality_defect_noted": "⚠️ 明細列的**項目名稱為空**（『項目：NT$ 1,000』×4）——另案，本刀不修",
+        "_why_this_explains_zero_capability": "⇒ `APPROVED_CAPABILITY = 0` **不是文書問題**：production-shaped entry 目前在 facet 層就完成回答，responsibility binding 沒有進場點。⛔ 再註冊更多 binding 不會改變這件事。"
+      },
+      "_what_this_audit_did_NOT_do": [
+        "⛔ 未補 4640 answer",
+        "⛔ 未補 delegates",
+        "⛔ 未改 migration",
+        "⛔ 未改 routing threshold",
+        "⛔ 未註冊任何 binding",
+        "⛔ 未修 form_sessions／session_id 相關程式"
+      ]
     }
   },
   "_d2_scope_and_limits": {
