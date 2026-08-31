@@ -1632,7 +1632,7 @@
    "required_blockers": {
     "INPUT_FETCH_RESOLVER": "WIRED（**UPSTREAM_REF 兩階段**）——先經 `bill.by_ref` 解析出 resolved_bill_id 才跑 fetch；⛔ 上游未 RESOLVED 一律不呼叫下游",
     "IDENTITY_RESOLUTION": "OK-BY-CONTRACT——scope 來自 resolved_bill_id（bill.by_ref resolver 已存在）",
-    "NON_EMPTY_CAPABILITY_EXECUTION": "**BLOCKED_BY_PROD_DEFECT_01**（UnboundLocalError；⚠️ 本筆 lane 即此條）",
+    "NON_EMPTY_CAPABILITY_EXECUTION": "**CONFIRMED（2026-08-31 解除）**——PROD-DEFECT-01 已 FIXED_LOCAL；19 條回歸守衛 ＋ 真實 source mutation 證明非裝飾。",
     "EMPTY_INPUT_SEMANTICS": "ADAPTER_WRITTEN_NOT_REGISTERED（`payment_not_reflected_facts_adapter`）",
     "COMPLETION_SEAM": "AVAILABLE——T4-D2 出口已開（present() → `ResponsibilityGroundingResult` → D1-E converter，W-G2 守護）",
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
@@ -1640,7 +1640,8 @@
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
     "PAYMENT_LOG_SCOPE_PROVENANCE": "**CONFIRMED（2026-08-31 解除）**——ENVELOPE_VERIFIABLE：server-side 兩段述詞（payments.paymentable_id=$billId → payment_logs.payment_id IN 那批 id）＋ 無旁路。⚠️ 傳遞性約束，⛔ 非直接 bill_id 述詞。詳見 `_payment_logs_scope_audit_2026_08_31`。"
    },
-   "_b3_cut": "見頂層 `_b3_execution_record_2026_08_31`"
+   "_b3_cut": "見頂層 `_b3_execution_record_2026_08_31`",
+   "_bugfix_note": "⚠️ ⛔ **不得因 bugfix 成功就升 APPROVED_CAPABILITY**——R-12 仍有 EMPTY_INPUT_SEMANTICS／BINDING_REGISTRATION／EXTERNAL_VALIDATION。F2 verdict 不動。"
   },
   {
    "responsibility_id": "R-14",
@@ -4568,14 +4569,40 @@
  },
  "_prod_defect_01": {
   "id": "PROD-DEFECT-01",
-  "status": "**CONFIRMED PREEXISTING PRODUCTION DEFECT**（業主裁定 2026-08-30）",
+  "status": "**FIXED_LOCAL**（BUGFIX-PAYMENT-NOT-REFLECTED-01，2026-08-31）",
   "symbol": "rag-orchestrator/services/jgb/payments.py::_diagnose_payment_not_reflected",
   "defect": "`code` 只在 `if response:` 內指派，卻在迴圈末**無條件讀取** ⇒ **第一筆 log 缺 `response` 即 UnboundLocalError**（實測確認）。",
   "trigger": "第一筆 log 無／空 response；若第一筆有、第二筆缺，則**沿用前一筆的 code**（⚠️ 亦可疑）",
   "reachability": "legacy 路徑：diagnose_payment_logs 命中「沒到帳／沒更新／付了款／已付款」→ 該分支",
   "scope": "⚠️ **不在本輪 scope**、⛔ **非本輪造成**；已寫成記錄現況的 guard，⛔ 未 xfail 掩蓋、⛔ 未修 production。修不修由業主裁定。",
-  "stale_state_propagation": "「第一筆有 response、第二筆缺 → 沿用前一筆 code」＝ **STALE_STATE_PROPAGATION_RISK = CONFIRMED_BY_CODE_SHAPE**（⚠️ 尚未有 deterministic reproduction 證明它造成**錯誤輸出**，故未升 CONFIRMED_BEHAVIOR）。",
-  "_impact_on_r12": "⚠️ resolver 做完後，R-12 會從 `BLOCKED_INPUT` 變成 **INPUT_CLOSED ／ EXECUTION_BLOCKED_BY_PROD_DEFECT**——這是**正確進展**，⛔ 不必為了讓 R-12 變綠而順手擴 scope 去修它。"
+  "stale_state_propagation": "**CONFIRMED_STATE_LEAKAGE ／ NOT_OUTPUT_OBSERVABLE**（2026-08-31 實測後**下修**）\n⚠️ 業主要求「若能重現就升 CONFIRMED_BEHAVIOR」——**實測後不予升等**，理由如下。\n```text\n窮舉 8 種 log 形狀 × 長度 1–3 ＝ 584 組合，逐案比對修前／修後：\n  修前 crash          219 組   ← defect A 的可達面\n  修前/修後輸出不同    **0 組**  ← defect B ⛔ 不改變任何輸出\n```\n⚠️ 機制：stale code 若落在成功集合，設定它的那一筆**本身**必然已被判成功（`_get_log_status` 與迴圈末用同一組欄位）⇒ `has_success` 早已為 True；stale code 若非成功值，`status_text` 那一項會短路。\n⚠️ **我先前的『決定性檢查』是設計錯的**：`[成功,缺]` vs `[失敗,缺]` 的差異來自**第一筆自己**的狀態，⛔ 不是 stale 造成的。已改用修正版逐案對照才得到上述結論。\n⚠️ 這同時證明本修對所有非 crash 輸入是**行為保持**的。",
+  "_impact_on_r12": "⚠️ resolver 做完後，R-12 會從 `BLOCKED_INPUT` 變成 **INPUT_CLOSED ／ EXECUTION_BLOCKED_BY_PROD_DEFECT**——這是**正確進展**，⛔ 不必為了讓 R-12 變綠而順手擴 scope 去修它。",
+  "introduced_before_T4": "**CONFIRMED**——⛔ 非 responsibility 架構造成",
+  "_historical_record_kept": "⚠️ 原 defect 描述（下方 `defect`／`trigger`／`reachability` 欄）**刻意保留**，⛔ 不刪——否則日後看 history 會不知道 R-12 為何曾被 blocker 擋住。",
+  "fix": {
+   "slice": "**BUGFIX-PAYMENT-NOT-REFLECTED-01**（獨立 production bugfix slice，⛔ 未與 fulfillment architecture 混做）",
+   "change": "`services/jgb/payments.py::_diagnose_payment_not_reflected` 迴圈內新增 per-iteration `code = \"\"`",
+   "diff_shape": "**6 行純新增（5 行註解 ＋ 1 行程式），零刪除、零修改**",
+   "⛔_not_touched": [
+    "dispatcher keyword routing",
+    "response 文案",
+    "payment classification 規則",
+    "empty-list handling",
+    "R-12 adapter",
+    "executable registry",
+    "任何 responsibility wiring"
+   ]
+  },
+  "regression_guards": {
+   "file": "tests/unit/api/test_bugfix_payment_not_reflected_01_req.py（19 條）",
+   "G1": "第一筆缺 response 不 crash（三種缺法：無鍵／None／空 dict）＋ 584 組合全面不 crash",
+   "G2": "後續缺 response ⛔ 不得沿用前一筆 code——合併 has_success 必等於各自判定的 OR",
+   "G3": "多筆皆有 response：輸出以既有語義**重算**期望值比對（⛔ 不抄現行輸出當期望）",
+   "G4": "六種 code 分支 classification 逐一不變",
+   "G5": "`[]` 邊界不受影響 ×3：函式空態／legacy dispatcher 空態／responsibility empty adapter",
+   "M1": "⚠️ **實際改原始碼**移除該行 → 19 中 8 紅（G1×4／G2／G4／584 矩陣／M1）；還原後位元一致、19 綠",
+   "_historical_guard_converted": "⚠️ `test_f_c12_empty_handling_req::test_r12_records_known_production_defect` 由「記錄缺陷仍在」**轉為**「守住缺陷不回歸」，⛔ 未刪除——歷史段落保留在 docstring。"
+  }
  },
  "_tenant_singleton_probe": {
   "supports_singleton": [

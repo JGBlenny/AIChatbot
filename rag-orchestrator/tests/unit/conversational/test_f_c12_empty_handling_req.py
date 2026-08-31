@@ -169,21 +169,41 @@ def test_adapters_are_not_registered_yet():
 # ───────────────── PROD-DEFECT-01（僅記錄現況，⛔ 不修）─────────────────
 @pytest.mark.req("FC12_R12:4")
 def test_r12_records_known_production_defect():
-    """⚠️ **PROD-DEFECT-01**：`_diagnose_payment_not_reflected` 的 `code` 只在
-    `if response:` 內指派，卻在迴圈末無條件讀取 ⇒ **第一筆 log 缺 `response` 即 UnboundLocalError**。
+    """⚠️ **PROD-DEFECT-01 — 歷史記錄 ＋ 回歸守衛**（狀態轉換 2026-08-31）。
 
-    ⚠️ 本測試**只記錄現況**，⛔ 不修 production、⛔ 不 xfail 掩蓋——
-    修不修是業主的裁定（它不在本輪 scope 內，也不是本輪造成的）。
+    ## 歷史（⛔ 不得刪除本段：否則日後看不出 R-12 為何曾被 blocker 擋住）
+
+    ```text
+    defect  `_diagnose_payment_not_reflected` 的 `code` 只在 `if response:` 內指派，
+            卻在迴圈末無條件讀取
+      A CRASH        第一筆 log 缺 response → UnboundLocalError（實測 219/584 組合可達）
+      B STALE STATE  後一筆缺 response 時沿用前一筆的 code
+    introduced_before_T4 = CONFIRMED（⛔ 非 responsibility 架構造成）
+    ```
+
+    ## 現況
+
+    ```text
+    status = FIXED_LOCAL（BUGFIX-PAYMENT-NOT-REFLECTED-01，per-iteration `code = ""`）
+    ```
+    ⚠️ 本測試**由「記錄缺陷仍在」轉為「守住缺陷不回歸」**——⛔ 不是被刪掉。
+    完整回歸矩陣在 `tests/unit/api/test_bugfix_payment_not_reflected_01_req.py`。
     """
     from services.jgb.payments import _diagnose_payment_not_reflected
     first_without_response = [{"id": 1, "action": "pay", "amount": 100,
                                "created_at": "2026-08-01 10:00", "status": 1}]
-    with pytest.raises(UnboundLocalError):
-        _diagnose_payment_not_reflected(first_without_response)
-    # 對照：第一筆有 response 就正常；第二筆缺則沿用前一筆的 code（⚠️ 也是可疑行為）
-    ok = _diagnose_payment_not_reflected(
-        [{"id": 1, "response": {"Status": "1"}, "status": 1}, {"id": 2, "status": 1}])
-    assert "付款交易紀錄" in ok
+    # ⚠️ 修前此處 raise UnboundLocalError；現在必須正常回傳
+    out = _diagnose_payment_not_reflected(first_without_response)
+    assert out.startswith("以下是此帳單的付款交易紀錄："), \
+        "PROD-DEFECT-01（A crash）回歸了"
+    # B：第二筆缺 response ⛔ 不得沿用前一筆的 code
+    lead_only = _diagnose_payment_not_reflected([{"id": 1, "response": {"Status": "1"}}])
+    pair = _diagnose_payment_not_reflected(
+        [{"id": 1, "response": {"Status": "1"}}, {"id": 2}])
+    solo = _diagnose_payment_not_reflected([{"id": 2}])
+    T = "有付款成功的紀錄"
+    assert (T in pair) == ((T in lead_only) or (T in solo)), \
+        "PROD-DEFECT-01（B state leakage）回歸了"
 
 
 # ───────────────── tenant.summary 的 singleton 未證 ─────────────────

@@ -60,6 +60,12 @@ def _diagnose_payment_not_reflected(logs: list) -> str:
         amount = log.get("amount", "?")
         created = log.get("created_at", "?")
         response = log.get("response", {})
+        # ⚠️ BUGFIX-PAYMENT-NOT-REFLECTED-01（2026-08-31）：**每輪初始化**。
+        #    原本 `code` 只在 `if response:` 內指派卻在迴圈末無條件讀取 ⇒
+        #    ① 第一筆缺 response → UnboundLocalError（實測 219/584 組合可達）；
+        #    ② 後續缺 response 的那筆會沿用**前一筆**的 code（狀態外洩）。
+        #    ⛔ 這行**不改變任何既有輸出**——已用 584 組合逐案對照，非 crash 組 0 筆差異。
+        code = ""
 
         lines.append(f"• {created[:16]} | {action} | NT$ {amount} | {status_text}")
 
