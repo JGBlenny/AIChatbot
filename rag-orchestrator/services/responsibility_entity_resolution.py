@@ -148,6 +148,14 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
     # ── 六個新 machine contracts（T4-B input-contract closure，2026-08-30）─────
     # ⚠️ cardinality_mode 由業主裁定；**empty_collection_policy 尚待逐筆裁定**（留 None）。
     "payment_logs.by_bill.v1": {
+        "member_scope_field": None,          # ⚠️ member 列**無** bill identity（實查）
+        "scope_verification": "ENVELOPE_ONLY",
+        "envelope_scope_key": "bill_id",     # 信封層 top-level bill_id（adapter 已帶出）
+        "_scope_note":
+            "⚠️ `collection_scope_key='resolved_bill_id'` 是**上游變數名**，⛔ 不是 member 欄位名："
+            "payment_logs 列只有 payment_id／role_id／transaction_id ⇒ `resolve_collection` 的 "
+            "`if scope_key in m` 對本 contract **恆為空檢查**。⛔ 不得因此當 scope 已證 —— "
+            "member 層 verification 由 fetch resolver 顯式負責，且結論是 **NOT_ESTABLISHED**（F-C17）。",
         "entity_type": "payment_logs",
         "cardinality_mode": CARD_COLLECTION,
         "collection_scope_key": "resolved_bill_id",
@@ -161,6 +169,12 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
             "⛔ 不在具名分支 ⇒ 若裁 RESOLVED_EMPTY，adapter 必須自行處理空態。",
     },
     "invoice_logs.by_bill.v1": {
+        "member_scope_field": "bill_id",     # ⚠️ member 列**帶** bill_id（實查）⇒ 可逐筆驗
+        "scope_verification": "MEMBER_VERIFIABLE",
+        "envelope_scope_key": None,
+        "_scope_note":
+            "⚠️ 欄位名 `bill_id` ≠ contract 的 `collection_scope_key='resolved_bill_id'` "
+            "⇒ `resolve_collection` 的檢查同樣 vacuous；由 fetch resolver 以 member_scope_field 顯式驗。",
         "entity_type": "invoice_logs",
         "cardinality_mode": CARD_COLLECTION,
         "collection_scope_key": "resolved_bill_id",
@@ -173,6 +187,9 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
             "`_diagnose_invalid_failure([])` → '查無發票作廢紀錄。…' ⇒ **兩者對空集合都有意義**。",
     },
     "iot.manufacturers.v1": {
+        "member_scope_field": "role_id",     # ⚠️ 三者中**唯一**與 collection_scope_key 同名
+        "scope_verification": "MEMBER_VERIFIABLE",
+        "envelope_scope_key": None,
         "entity_type": "iot_manufacturers",
         "cardinality_mode": CARD_COLLECTION,
         "collection_scope_key": "role_id",
@@ -471,3 +488,239 @@ def _normalize_rows(resp: Optional[Dict[str, Any]]) -> List[dict]:
     if isinstance(data, dict) and data:
         return [data]
     return []
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# T4-B5 / B3：三個 COLLECTION contract 的 **fetch resolver**（2026-08-31，業主凍結）
+#
+# ## F-C17 — FETCH RESOLVER IS TRANSPORT, NOT SEMANTIC ROUTING
+#
+# ```text
+# 可以：接收已確定的 scope identity ／ 呼叫固定 API endpoint ／ 驗證回傳 scope
+#       ／ 把 members 交給既有 resolve_collection()
+# 不可以：接 user_question／face／category ／ 呼叫 diagnose_* dispatcher
+#         ／ 挑 member[0] ／ 選 capability／binding ／ 依資料內容改 responsibility
+# ```
+# ⚠️ 真正的風險 ⛔ 不是演算法，而是 **fetch resolver 不小心重新長成 dispatcher**。
+#
+# ## 三層分工（⛔ 不得在本層重做 empty semantics）
+#
+# ```text
+# fetch  →  resolve input  →  execute binding  →  empty adapter ／ direct branch
+# ```
+# 三個 contract 的 `empty_collection_policy` 皆已裁 **RESOLVED_EMPTY** ⇒ 本層只負責把 `[]`
+# 交給 `resolve_collection()`。⛔ **不得** `if not rows: return "查無付款紀錄…"`——
+# 那是 fulfillment adapter 的責任（F-C12）。
+#
+# ## ⚠️ scope 檢查為什麼不能只靠 resolve_collection
+#
+# `collection_scope_key` 記的是**上游變數名**（`resolved_bill_id`），⛔ 不是 member 欄位名。
+# 實查三個真實 member 形狀後：
+#
+# ```text
+# payment_logs   member 無任何 bill identity  → scope_verification = ENVELOPE_ONLY
+# invoice_logs   member 帶 bill_id            → MEMBER_VERIFIABLE（欄位名不同名）
+# iot            member 帶 role_id            → MEMBER_VERIFIABLE（唯一同名）
+# ```
+# ⇒ `resolve_collection` 的 `if scope_key in m` 對前兩者**恆為空檢查**。member 層驗證改由
+# 本層依 `member_scope_field` **顯式**執行；⛔ 不得因 endpoint 叫 `get_payment_logs(bill_id=…)`
+# 就當 member scope 已證。
+# ══════════════════════════════════════════════════════════════════════════
+
+class InputScopeViolation(EntityResolutionError):
+    """**B3-G7**：回傳的 member 不屬於請求的 scope——⚠️ 大聲失敗。
+
+    ⛔ **不得** filter 掉不合 scope 的 member 然後假裝沒看到：silent filtering 會把
+    upstream ／ API contract defect **藏掉**。
+    """
+
+
+class TransportFailure(EntityResolutionError):
+    """**B3-G8**：API exception ／ `success=False` ／ malformed response。
+
+    ```text
+    NO_MATCH 是合法 domain result；HTTP／API failure ⛔ 不是「沒有資料」。
+    ```
+    ⚠️ `resolved_bill_id` 依定義**已由上游 bill.by_ref 解析過** ⇒ 本層再遇 404 屬 transport／
+    authorization 異常，⛔ 不是「查無帳單」。⚠️ JGBSystemAPI 把 404 與 5xx 都收斂成
+    `success=False` ⇒ **domain_vs_transport_discrimination = NOT_ESTABLISHED**，第一版一律 hard fail。
+    """
+
+
+class PaymentLogsApi(Protocol):
+    async def get_payment_logs(self, role_id: str, bill_id: Any = None,
+                               **kw) -> Dict[str, Any]: ...
+
+
+class InvoiceLogsApi(Protocol):
+    async def get_invoice_logs(self, role_id: str, bill_id: Any = None,
+                               **kw) -> Dict[str, Any]: ...
+
+
+class IotManufacturersApi(Protocol):
+    async def get_iot_manufacturers(self, role_id: str, **kw) -> Dict[str, Any]: ...
+
+
+def _require_success(cid: str, resp: Any, what: str) -> Dict[str, Any]:
+    """B3-G8：⛔ 失敗一律 hard fail，⛔ 不得轉成 NO_MATCH。"""
+    if not isinstance(resp, dict):
+        raise TransportFailure(
+            f"{cid}：{what} 回了 {type(resp).__name__}，非 dict——malformed response"
+            f"，⛔ 不得當成『沒有資料』")
+    if not resp.get("success"):
+        err = (resp.get("error") or {})
+        raise TransportFailure(
+            f"{cid}：{what} success=False（code={err.get('code')!r}）"
+            f"——⚠️ transport／authorization 失敗，⛔ 不得轉成 NO_MATCH")
+    return resp
+
+
+def _members(cid: str, resp: Dict[str, Any]) -> List[dict]:
+    data = resp.get("data")
+    if data is None:
+        raise TransportFailure(f"{cid}：回應缺 `data` 鍵——malformed，⛔ 不得當成空集合")
+    if not isinstance(data, list):
+        raise TransportFailure(
+            f"{cid}：`data` 是 {type(data).__name__}，COLLECTION contract 要求 list"
+            f"——⛔ 不得人工轉型")
+    return [m for m in data if isinstance(m, dict) and m]
+
+
+def _verify_member_scope(cid: str, members: List[dict], scope_value: Any) -> Dict[str, Any]:
+    """依 contract 的 `member_scope_field` 逐筆驗 scope。
+
+    ⚠️ **⛔ 絕不 filter**——不合 scope 即 `InputScopeViolation`（B3-G7）。
+    ⚠️ 若 contract 宣告 member 無 scope 欄位，回報 **NOT_ESTABLISHED**，
+    ⛔ 不得因「檢查沒報錯」就當已驗（那正是 vacuous check 的陷阱）。
+    """
+    spec = INPUT_CONTRACTS[cid]
+    field = spec.get("member_scope_field")
+    if not field:
+        return {"member_scope_verification": "NOT_ESTABLISHED",
+                "_why": f"{cid} 的 member 列無 scope 欄位（scope_verification="
+                        f"{spec.get('scope_verification')!r}）——⛔ 不得當已驗"}
+    if not members:
+        # ⚠️ 空集合時「沒有不合 scope 的 member」是**恆真**的 ⇒ ⛔ 不得回報 VERIFIED，
+        #    那會讓一個 vacuous truth 冒充成 scope 證據（與本檔開頭記的 vacuous check 同一種病）。
+        return {"member_scope_verification": "N/A_EMPTY", "_field": field, "_checked": 0}
+    bad = [m for m in members if str(m.get(field)) != str(scope_value)]
+    if bad:
+        raise InputScopeViolation(
+            f"{cid}：{len(bad)}/{len(members)} 筆 member 的 {field} 不等於請求 scope "
+            f"{scope_value!r}（實得 {sorted({str(m.get(field)) for m in bad})}）"
+            f"——INPUT_SCOPE_VIOLATION，⛔ 不得 filter 掉後繼續")
+    return {"member_scope_verification": "VERIFIED",
+            "_field": field, "_checked": len(members)}
+
+
+def _verify_envelope_scope(cid: str, resp: Dict[str, Any], scope_value: Any) -> Dict[str, Any]:
+    spec = INPUT_CONTRACTS[cid]
+    key = spec.get("envelope_scope_key")
+    if not key:
+        return {"envelope_scope_verification": "N/A"}
+    if key not in resp:
+        return {"envelope_scope_verification": "NOT_ESTABLISHED",
+                "_why": f"回應信封缺 {key!r}——⛔ 不得因 endpoint 簽名有 scope 參數就當已證"}
+    if str(resp.get(key)) != str(scope_value):
+        raise InputScopeViolation(
+            f"{cid}：信封 {key}={resp.get(key)!r} 與請求 scope {scope_value!r} 不符"
+            f"——INPUT_SCOPE_VIOLATION")
+    return {"envelope_scope_verification": "VERIFIED", "_field": key}
+
+
+async def fetch_payment_logs_by_bill(api: "PaymentLogsApi", verified_role_id: Optional[str],
+                                     resolved_bill_id: Optional[Any]) -> Dict[str, Any]:
+    """`payment_logs.by_bill.v1`（COLLECTION）的 fetch resolver。
+
+    ⚠️ ⛔ 不呼叫 `diagnose_payment_logs`——那是 question-keyword dispatcher（S6／F-C1）。
+    ⚠️ member 層 scope **無法驗**（列無 bill identity）⇒ 結果帶 `NOT_ESTABLISHED` 供上游判讀。
+    """
+    cid = "payment_logs.by_bill.v1"
+    if not verified_role_id:
+        raise IdentityNotResolved(f"{cid} 需要 verified_role_id（F-C13）")
+    if resolved_bill_id in (None, ""):
+        return result(STATE_INVALID_INPUT, cid, INPUT_CONTRACTS[cid]["entity_type"],
+                      missing_fields=["resolved_bill_id"])
+    try:
+        resp = await api.get_payment_logs(str(verified_role_id), bill_id=resolved_bill_id)
+    except TransportFailure:
+        raise
+    except Exception as exc:                      # B3-G8：⛔ 不得吞成 NO_MATCH
+        raise TransportFailure(f"{cid}：get_payment_logs 拋出 {type(exc).__name__}: {exc}") from exc
+    resp = _require_success(cid, resp, "get_payment_logs")
+    members = _members(cid, resp)
+    prov = dict(_verify_envelope_scope(cid, resp, resolved_bill_id))
+    prov.update(_verify_member_scope(cid, members, resolved_bill_id))
+    out = resolve_collection(cid, members)
+    out["scope_provenance"] = prov
+    out["scope_value"] = resolved_bill_id
+    return out
+
+
+async def fetch_invoice_logs_by_bill(api: "InvoiceLogsApi", verified_role_id: Optional[str],
+                                     resolved_bill_id: Optional[Any]) -> Dict[str, Any]:
+    """`invoice_logs.by_bill.v1`（COLLECTION）的 fetch resolver。
+
+    ⚠️ ⛔ 不呼叫 `diagnose_invoice_logs`。
+    ⚠️ member 列帶 `bill_id` ⇒ 逐筆驗；不符即 `InputScopeViolation`，⛔ 不 filter。
+    ⚠️ 另見 F-OPEN-02：該 endpoint 在 production **不做 role 圈定**（⛔ 本層不代為裁定）。
+    """
+    cid = "invoice_logs.by_bill.v1"
+    if not verified_role_id:
+        raise IdentityNotResolved(f"{cid} 需要 verified_role_id（F-C13）")
+    if resolved_bill_id in (None, ""):
+        return result(STATE_INVALID_INPUT, cid, INPUT_CONTRACTS[cid]["entity_type"],
+                      missing_fields=["resolved_bill_id"])
+    try:
+        resp = await api.get_invoice_logs(str(verified_role_id), bill_id=resolved_bill_id)
+    except TransportFailure:
+        raise
+    except Exception as exc:
+        raise TransportFailure(f"{cid}：get_invoice_logs 拋出 {type(exc).__name__}: {exc}") from exc
+    resp = _require_success(cid, resp, "get_invoice_logs")
+    members = _members(cid, resp)
+    prov = dict(_verify_envelope_scope(cid, resp, resolved_bill_id))
+    prov.update(_verify_member_scope(cid, members, resolved_bill_id))
+    out = resolve_collection(cid, members)
+    out["scope_provenance"] = prov
+    out["scope_value"] = resolved_bill_id
+    return out
+
+
+async def fetch_iot_manufacturers(api: "IotManufacturersApi",
+                                  verified_role_id: Optional[str]) -> Dict[str, Any]:
+    """`iot.manufacturers.v1`（COLLECTION）的 fetch resolver。
+
+    ⚠️ ⛔ 不呼叫 `diagnose_iot`。
+    ⚠️ **F-OPEN-01 ⛔ 不因本 resolver 完成而關閉**：本層可以要求 `verified_role_id`，但
+    production 是否真能提供 verified provenance 仍是 `ROLE_ID_VERIFICATION_PROVENANCE =
+    NOT_YET_ESTABLISHED` ⇒ R-23 應為 `FETCH_RESOLVER_EXECUTABILITY = CONFIRMED` ＋
+    `ROLE_SCOPE_REACHABILITY = BLOCKED_F_OPEN_01`，⛔ **不是** input closed。
+    """
+    cid = "iot.manufacturers.v1"
+    if not verified_role_id:
+        raise IdentityNotResolved(f"{cid} 需要 verified_role_id（F-C13）")
+    try:
+        resp = await api.get_iot_manufacturers(str(verified_role_id))
+    except TransportFailure:
+        raise
+    except Exception as exc:
+        raise TransportFailure(f"{cid}：get_iot_manufacturers 拋出 {type(exc).__name__}: {exc}") from exc
+    resp = _require_success(cid, resp, "get_iot_manufacturers")
+    members = _members(cid, resp)
+    prov = dict(_verify_envelope_scope(cid, resp, verified_role_id))
+    prov.update(_verify_member_scope(cid, members, verified_role_id))
+    out = resolve_collection(cid, members)
+    out["scope_provenance"] = prov
+    out["scope_value"] = verified_role_id
+    out["_f_open_01"] = ("⚠️ ROLE_SCOPE_REACHABILITY 仍受 F-OPEN-01 限制"
+                         "——⛔ 本 resolver green ⛔ 不代表 role scope 已可信")
+    return out
+
+
+#: fetch resolver 的 contract 對照（⛔ 存 contract_id → callable，⛔ 不存 prose）
+FETCH_RESOLVERS = {
+    "payment_logs.by_bill.v1": fetch_payment_logs_by_bill,
+    "invoice_logs.by_bill.v1": fetch_invoice_logs_by_bill,
+    "iot.manufacturers.v1": fetch_iot_manufacturers,
+}
