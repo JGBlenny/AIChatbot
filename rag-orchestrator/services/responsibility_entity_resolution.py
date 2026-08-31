@@ -150,15 +150,29 @@ INPUT_CONTRACTS: Dict[str, Dict[str, Any]] = {
     "payment_logs.by_bill.v1": {
         "member_scope_field": None,          # ⚠️ member 列**無** bill identity（實查）
         "scope_verification": "ENVELOPE_ONLY",
-        "scope_proof_mode": "ENVELOPE_VERIFIABLE_CANDIDATE",   # ⚠️ **候選**，⛔ 尚未成立
-        "scope_provenance_status": "NOT_ESTABLISHED",
+        "scope_proof_mode": "ENVELOPE_VERIFIABLE",     # ⚠️ **已證**（2026-08-31 server-side audit）
+        "scope_provenance_status": "CONFIRMED",
+        "_scope_provenance_evidence":
+            "jgb2 `App\\Http\\Controllers\\External\\PaymentLogApiController@index` 唯讀實查："
+            "① role_id／bill_id 皆必填（缺即 400）；"
+            "② `bills WHERE id=$billId AND owner_role_id=$roleId AND active=1`，查無即 404；"
+            "③ `payments WHERE paymentable_type='App\\Bill' AND paymentable_id=$billId`（**直接** bill 述詞）；"
+            "④ `payment_logs WHERE payment_id IN (③ 的 ids)`（**傳遞性** bill 述詞），"
+            "且外層有 `if (!empty($paymentIds))` 守衛 ⇒ ⛔ 無未過濾路徑。"
+            "旁路檢查：`routes/api.php` 只有一條 `/payment-logs` 路由、External 15 個 controller 中"
+            "只有這支碰 payment_logs（正對照：目錄確有 15 支）。"
+            "⚠️ 三份 checkout（master／兩個 ticket 分支）的 controller **sha256 相同** 30dff554…",
+        "⚠️_transitive_not_direct":
+            "⚠️ member 的 bill 約束是**傳遞性**的（經 payments.paymentable_id），"
+            "⛔ **不是** payment_logs 上的直接 bill_id 述詞 ⇒ 保證繫於 `payments.paymentable_id=billId` 正確。",
         "_f_c18_note":
             "⚠️ **F-C18**：member 不帶 scope identity ⛔ 不等於 scope 無法證明——若 production fetch "
             "本身以已解析 scope **強制過濾**且有可稽核實作證據，可由 transport envelope 建立 provenance。"
             "⚠️ 但 `get_payment_logs(bill_id=…)` 的**函式簽名／請求參數 ⛔ 都不算證據**；"
             "信封回吐的 `bill_id` 只是**把我們送過去的值回傳**，⛔ 更不是過濾證據。"
-            "⇒ 需唯讀實查 controller／repository／SQL 的 `WHERE bill_id = :resolved_bill_id` "
-            "並附 negative control（拿掉 filter → guard RED）才可升 ENVELOPE_VERIFIABLE。",
+            "⇒ 已於 2026-08-31 唯讀實查 controller ⇒ **升為 ENVELOPE_VERIFIABLE／CONFIRMED**"
+            "（見 `_scope_provenance_evidence`）。⚠️ ⛔ 這隻證的是 **data scope**，"
+            "⛔ **不是** authorization——role_id 本身可不可信仍屬 F-OPEN-01。",
         "envelope_scope_key": "bill_id",     # 信封層 top-level bill_id（adapter 已帶出）
         "_scope_note":
             "⚠️ `collection_scope_key='resolved_bill_id'` 是**上游變數名**，⛔ 不是 member 欄位名："

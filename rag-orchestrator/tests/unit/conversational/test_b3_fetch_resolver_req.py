@@ -250,8 +250,9 @@ async def test_payment_scope_proof_is_split_not_collapsed():
     prov = r["scope_provenance"]
     assert prov["member_scope_proof"] == "UNAVAILABLE_BY_RESPONSE_SCHEMA", \
         "⛔ 不得寫成 NOT_ESTABLISHED——那看起來像只是還沒驗"
-    assert prov["envelope_scope_proof"] == "NOT_ESTABLISHED", \
-        "⛔ 信封 echo 相符不得升成 VERIFIED（F-C18：簽名／參數／回吐值都不算證據）"
+    assert prov["envelope_scope_proof"] == "CONFIRMED", \
+        "2026-08-31 已完成 server-side audit ⇒ ENVELOPE_VERIFIABLE（⛔ 依據是 controller 實查，"\
+        "⛔ 不是信封 echo——echo 只證 transport 沒改掉我們送出的值）"
     assert prov["_echo_matched"] is True, "echo 檢查本身仍要跑（不符時要 hard fail）"
 
 
@@ -266,11 +267,20 @@ async def test_verifiable_contracts_do_report_verified():
 
 
 @pytest.mark.req("B3_G7:8")
-def test_payment_logs_scope_proof_mode_is_candidate_not_established():
-    """**F-C18**：payment_logs 只能是**候選** B，⛔ 不得假裝已成立。"""
+def test_payment_logs_scope_proof_is_envelope_verifiable_with_cited_evidence():
+    """**F-C18／F-C20**：升為 ENVELOPE_VERIFIABLE **必須附可稽核的 server-side 證據引用**。
+
+    ⚠️ ⛔ 不得只把狀態字串改成 CONFIRMED 就算數——那正是 F-C20 要擋的「request scope
+    冒充 data scope」。故本 guard 同時檢查**證據欄位存在且指名 controller**。
+    """
     spec = rer.INPUT_CONTRACTS["payment_logs.by_bill.v1"]
-    assert spec["scope_proof_mode"] == "ENVELOPE_VERIFIABLE_CANDIDATE"
-    assert spec["scope_provenance_status"] == "NOT_ESTABLISHED"
+    assert spec["scope_proof_mode"] == "ENVELOPE_VERIFIABLE"
+    assert spec["scope_provenance_status"] == "CONFIRMED"
+    ev = spec.get("_scope_provenance_evidence", "")
+    assert "PaymentLogApiController" in ev and "paymentable_id" in ev, \
+        "CONFIRMED 卻沒有引用 server-side 過濾證據 ⇒ 違反 F-C20"
+    assert spec["member_scope_field"] is None, \
+        "member 仍無 bill identity——⛔ 不得因 envelope 已證就改寫成 member 可驗"
     for cid in ("invoice_logs.by_bill.v1", "iot.manufacturers.v1"):
         assert rer.INPUT_CONTRACTS[cid]["scope_proof_mode"] == "MEMBER_VERIFIABLE"
         assert rer.INPUT_CONTRACTS[cid]["scope_provenance_status"] == "CONFIRMED"

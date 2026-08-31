@@ -1638,7 +1638,7 @@
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
-    "PAYMENT_LOG_SCOPE_PROVENANCE": "**NOT_ESTABLISHED**（業主裁定 2026-08-31，**live blocker**）——reason: member-level proof unavailable（已知 schema 事實）; transport-envelope proof not yet established（尚未查）。⚠️ ⛔ 這條 ⛔ 不因 `_RESOLVERS` 接線完成而消失。"
+    "PAYMENT_LOG_SCOPE_PROVENANCE": "**CONFIRMED（2026-08-31 解除）**——ENVELOPE_VERIFIABLE：server-side 兩段述詞（payments.paymentable_id=$billId → payment_logs.payment_id IN 那批 id）＋ 無旁路。⚠️ 傳遞性約束，⛔ 非直接 bill_id 述詞。詳見 `_payment_logs_scope_audit_2026_08_31`。"
    },
    "_b3_cut": "見頂層 `_b3_execution_record_2026_08_31`"
   },
@@ -1913,7 +1913,7 @@
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
-    "PAYMENT_LOG_SCOPE_PROVENANCE": "**NOT_ESTABLISHED**（業主裁定 2026-08-31，**live blocker**）——reason: member-level proof unavailable（已知 schema 事實）; transport-envelope proof not yet established（尚未查）。⚠️ ⛔ 這條 ⛔ 不因 `_RESOLVERS` 接線完成而消失。"
+    "PAYMENT_LOG_SCOPE_PROVENANCE": "**CONFIRMED（2026-08-31 解除）**——ENVELOPE_VERIFIABLE：server-side 兩段述詞（payments.paymentable_id=$billId → payment_logs.payment_id IN 那批 id）＋ 無旁路。⚠️ 傳遞性約束，⛔ 非直接 bill_id 述詞。詳見 `_payment_logs_scope_audit_2026_08_31`。"
    },
    "_lane_history": [
     {
@@ -2076,7 +2076,7 @@
     "BINDING_REGISTRATION": "**NOT_REGISTERED**（F-G1：⛔ 不得『找到具名函式就先啟用』）",
     "EXTERNAL_VALIDATION": "**BLOCKED**（D1-R BLOCKED_EXTERNAL_TEST_INPUT）——⛔ 全 20 筆共同，⛔ 不得因 unit 綠就當已驗",
     "_semantics": "⚠️ **F-C16 合取**：以上**全部**解除才可升級；`primary_closure_lane` 只指出目前最具決定性的一條，⛔ 不代表其餘已消失。",
-    "PAYMENT_LOG_SCOPE_PROVENANCE": "**NOT_ESTABLISHED**（業主裁定 2026-08-31，**live blocker**）——reason: member-level proof unavailable（已知 schema 事實）; transport-envelope proof not yet established（尚未查）。⚠️ ⛔ 這條 ⛔ 不因 `_RESOLVERS` 接線完成而消失。"
+    "PAYMENT_LOG_SCOPE_PROVENANCE": "**CONFIRMED（2026-08-31 解除）**——ENVELOPE_VERIFIABLE：server-side 兩段述詞（payments.paymentable_id=$billId → payment_logs.payment_id IN 那批 id）＋ 無旁路。⚠️ 傳遞性約束，⛔ 非直接 bill_id 述詞。詳見 `_payment_logs_scope_audit_2026_08_31`。"
    },
    "_r16_empty_review": "見頂層 `_r16_empty_review_2026_08_31`（ADAPTER_REQUIRED；lane 不變）",
    "_lane_history": [
@@ -3869,7 +3869,8 @@
   "F-C19_EMPTY_COLLECTION_CANNOT_PROVE_MEMBER_SCOPE": "⚠️ **沒有反例 ≠ 有正面 scope 證據。** empty member set 對 member-level scope verification ⛔ 沒有任何正證據 ⇒ scope provenance 必須來自其他已證來源。\n```text\nmembers = []\n  member_scope_proof   = N/A_EMPTY      ⛔ 不是 VERIFIED\n  envelope_scope_proof = 由 transport 證據獨立決定\n```\n⚠️ 兩者 ⛔ 不得揉成一個 bool。",
   "W-G1_EXACT_REGISTERED_RESOLVER": "⚠️ responsibility `input_contract_id` → **exact registered resolver**。⛔ 不允許 fallback／動態組名 getattr／猜函式；⛔ 查不到 resolver 也不得走 legacy 查詢路徑（F-C6）。⚠️ 每個 contract 的 resolver 簽名不同 ⇒ 用**顯式 spec 表**（`_RESOLVER_SPECS`），⛔ 不做統一 arity 假設。⚠️ `tenant.summary.v1` **刻意缺席**（R-24 IDENTITY_BLOCKED）——明示缺席才看得見。",
   "W-G2_GROUNDING_EXIT_KEEPS_RESPONSIBILITY_AUTHORITY": "⚠️ `GROUNDING_FACTS execution result → D2 present() → responsibility converter` **整條** ⛔ 不得重入 legacy dispatcher／`show_knowledge`／`row.answer`。\n⚠️ payload 的 `responsibility_id` 一律取自 **plan（committed authority）**，⛔ 不從 adapter 輸出讀（adapter 若回別的 id 必須被覆寫掉）。\n⚠️ unresolved（NO_MATCH／AMBIGUOUS／INVALID_INPUT）仍保持**同一 responsibility authority**，⛔ 不得因 `_RESOLVERS` 接上後掉回 form／legacy path。",
-  "E-C1_BASELINE_IDENTITY_IS_SET_BASED_NOT_COUNT_BASED": "⚠️ Known-failure baseline 由 **case identity** 決定；failure count **只能作摘要**，⛔ 不得單獨作 regression 判準。\n```text\nactual_red − KNOWN_STABLE_FAILURES − FLAKY_RED_ALLOWLIST ≠ ∅  ⇒  NEW_REGRESSION\n```\n⚠️ 只看數字會假綠的具體形狀：**穩定紅少 1 筆 ＋ 冒出一筆全新的紅 ＝ 總數不變**。\n⚠️ flaky 一律用**具名白名單** `FLAKY_RED_ALLOWLIST`（列出 case ID／parameter），⛔ 不得寫成 `FLAKY_SLOT = 0..N`——那會讓未來**任意** N 筆 failure 看似可接受。\n⚠️ `KNOWN_STABLE_FAILURES` 是 **observed**，⛔ 不是「保證每次必紅」的產品契約：其一突然變綠 ⇒ **UNEXPECTED_BASELINE_IMPROVEMENT**，⛔ 不叫 regression，且查清原因前 ⛔ 不得從 baseline 刪除。"
+  "E-C1_BASELINE_IDENTITY_IS_SET_BASED_NOT_COUNT_BASED": "⚠️ Known-failure baseline 由 **case identity** 決定；failure count **只能作摘要**，⛔ 不得單獨作 regression 判準。\n```text\nactual_red − KNOWN_STABLE_FAILURES − FLAKY_RED_ALLOWLIST ≠ ∅  ⇒  NEW_REGRESSION\n```\n⚠️ 只看數字會假綠的具體形狀：**穩定紅少 1 筆 ＋ 冒出一筆全新的紅 ＝ 總數不變**。\n⚠️ flaky 一律用**具名白名單** `FLAKY_RED_ALLOWLIST`（列出 case ID／parameter），⛔ 不得寫成 `FLAKY_SLOT = 0..N`——那會讓未來**任意** N 筆 failure 看似可接受。\n⚠️ `KNOWN_STABLE_FAILURES` 是 **observed**，⛔ 不是「保證每次必紅」的產品契約：其一突然變綠 ⇒ **UNEXPECTED_BASELINE_IMPROVEMENT**，⛔ 不叫 regression，且查清原因前 ⛔ 不得從 baseline 刪除。",
+  "F-C20_REQUEST_SCOPE_IS_NOT_DATA_SCOPE": "⚠️ request 帶了 `bill_id`、response envelope **echo** 了 `bill_id`，⛔ **都不能單獨證明**回傳的 members 被該 bill 強制圈定。必須有 **server-side filtering／provenance evidence**（controller／repository／SQL 述詞）。\n⚠️ 升 `CONFIRMED` 時**必須附可稽核的證據引用**，⛔ 不得只把狀態字串改掉（已落成 guard B3-G7:8：檢查 `_scope_provenance_evidence` 有指名 controller 與述詞）。\n⚠️ **data scope ≠ authorization**：證明「只回這張 bill 的資料」⛔ 不等於證明「呼叫者有權看這張 bill」。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -4636,5 +4637,36 @@
   "precise_statement": "⚠️ delegation 已解決 **instance 可達性**，但缺少足夠的 **applicability boundary**。⛔ **不得**把「關掉 delegates」當修復——那只是把缺陷換一面。",
   "scope": "⚠️ **另案**，⛔ 不在 baseline 修復裡順手處理；⛔ 不改測試 expectation。",
   "_why_invisible_before": "⚠️ 先前 DB 長期髒著，沒人知道自己量的是哪個狀態 ⇒ 這個對缺陷從未被看見。⇒ E-DEBT-02 的價值不只是『測試變乾淨』，而是**讓一個真缺陷第一次可被觀察**。"
+ },
+ "_payment_logs_scope_audit_2026_08_31": {
+  "id": "PAYMENT_LOG_SCOPE_PROVENANCE_AUDIT",
+  "verdict": "**A. ENVELOPE_VERIFIABLE — PAYMENT_LOG_SCOPE_PROVENANCE = CONFIRMED**",
+  "_method": "⚠️ **唯讀**，一路追到 DB 述詞：fetch resolver → JGBSystemAPI → HTTP route → controller → query。⛔ 未改任何 production 程式、⛔ 未碰 production DB。",
+  "source": "jgb2 `app/Http/Controllers/External/PaymentLogApiController.php`（checkout `~/jgb/project/jgb_1/jgb2`，master）⚠️ 三份 checkout（master ＋ 兩個 ticket 分支）的該檔 **sha256 相同**：30dff554654df49b… ⇒ 不是只在某一條分支成立。",
+  "server_side_chain": [
+   "① `role_id` 與 `bill_id` **皆必填**，缺任一 → 400",
+   "② **授權**：`bills WHERE id=$billId AND owner_role_id=$roleId AND active=1`，查無 → 404",
+   "③ `payments WHERE paymentable_type='App\\Bill' AND paymentable_id=$billId` ← **直接** bill 述詞",
+   "④ `payment_logs WHERE payment_id IN (③ 的 ids)` ← **傳遞性** bill 述詞",
+   "⑤ `if (!empty($paymentIds))` 守衛 ⇒ 無 id 時**根本不發查詢** ⇒ ⛔ 無未過濾路徑"
+  ],
+  "bypass_check": "⚠️ `routes/api.php` 只有**一條** `/payment-logs` 路由；External 15 個 controller 中**只有**這支碰 payment_logs（正對照：目錄確有 15 支）。其餘觸及該表的是 Internal／Admin／Console，⛔ 不在 external API surface（我們的 resolver 只打 external API）。",
+  "⚠️_transitive_not_direct": "⚠️ member 的 bill 約束是**傳遞性**（經 `payments.paymentable_id`），⛔ **不是** `payment_logs` 上的直接 `bill_id` 述詞 ⇒ 保證繫於 `payments.paymentable_id=$billId` 正確。⚠️ 這點必須記著：若日後 payments 的 polymorphic 關聯改動，本 provenance 需重驗。",
+  "resulting_state": {
+   "scope_proof_mode": "ENVELOPE_VERIFIABLE",
+   "member_scope_proof": "UNAVAILABLE_BY_RESPONSE_SCHEMA（member 仍無 bill identity——⛔ 不因 envelope 已證就改寫）",
+   "envelope_scope_proof": "CONFIRMED",
+   "PAYMENT_LOG_SCOPE_PROVENANCE": "**CONFIRMED** ⇒ R-12／R-15／R-16 的這條 blocker **解除**"
+  },
+  "⚠️_new_finding_member_check_is_partially_possible": {
+   "what": "⚠️ 業主的決策樹寫 `member_scope_proof = UNAVAILABLE_BY_SCHEMA`——對 **bill identity** 成立，但實查後發現**還有一層可驗**：回應信封同時帶 `payments[]`（含 id），而 member 帶 `payment_id` ⇒ 可斷言 `每個 payment_logs[].payment_id ∈ {payments[].id}`。",
+   "value": "這**不是** bill-scope proof，而是 **envelope 內部參照完整性**；它能抓到 server 端 scope 出錯（回了不屬於這批 payments 的 log）。",
+   "status": "**PROPOSED，⛔ 未實作**——業主授權的是**唯讀 audit**，加這道檢查會改變 resolver 行為（可能新拋 InputScopeViolation）⇒ 待裁。"
+  },
+  "⚠️_authorization_is_a_separate_question": {
+   "finding": "⚠️ `ExternalApiAuth` middleware：驗 API Key（sha256）＋ rate limit ＋ resource/action 權限；但 **role_id 白名單是 opt-in**——該 key 若**沒設**任何 role 白名單，`role_id` 不受限（程式註解明載這是刻意放寬）。",
+   "meaning": "⇒ ② 的 `owner_role_id=$roleId` 保證的是「資料屬於**所宣稱的** role」，⛔ **不保證**呼叫者有權使用該 role_id——那取決於該 API Key 的白名單設定。",
+   "⛔_do_not_conflate": "⛔ 這 ⛔ 不影響 **data scope** 的 CONFIRMED 裁定（F-C20：兩者是兩件事），但它是 **F-OPEN-01** 的直接材料 ⇒ 併入下一刀，⛔ 本刀不裁。"
+  }
  }
 }
