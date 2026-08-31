@@ -3868,7 +3868,8 @@
   "F-C18_SCOPE_PROOF_MAY_COME_FROM_TRANSPORT_BUT_MUST_BE_PROVEN": "⚠️ Collection member **不必**一定攜帶 scope identity。若 production fetch／query 本身以**已解析 scope 強制過濾**，而且此約束有**可稽核實作證據**，則 collection 可以靠 transport envelope 建立 scope provenance。\n```text\nCOLLECTION_SCOPE_PROOF\n  A. MEMBER_VERIFIABLE     每個 member 自帶 scope identity → runtime 可逐筆驗證\n  B. ENVELOPE_VERIFIABLE   member 不帶 → 但 production fetch 本身被證明只能回指定 scope 的資料\n```\n⛔ **以下都不算證據**：函式名 `get_payment_logs(bill_id)`／request 帶 bill_id 參數／回應信封把我們送過去的 bill_id **回吐**。\n⚠️ 至少要實查到 controller／repository／SQL 的 `WHERE bill_id = requested_bill_id` 或等價強制限制，且**最好附 negative control**（拿掉／放寬 filter → scope contract guard RED）。",
   "F-C19_EMPTY_COLLECTION_CANNOT_PROVE_MEMBER_SCOPE": "⚠️ **沒有反例 ≠ 有正面 scope 證據。** empty member set 對 member-level scope verification ⛔ 沒有任何正證據 ⇒ scope provenance 必須來自其他已證來源。\n```text\nmembers = []\n  member_scope_proof   = N/A_EMPTY      ⛔ 不是 VERIFIED\n  envelope_scope_proof = 由 transport 證據獨立決定\n```\n⚠️ 兩者 ⛔ 不得揉成一個 bool。",
   "W-G1_EXACT_REGISTERED_RESOLVER": "⚠️ responsibility `input_contract_id` → **exact registered resolver**。⛔ 不允許 fallback／動態組名 getattr／猜函式；⛔ 查不到 resolver 也不得走 legacy 查詢路徑（F-C6）。⚠️ 每個 contract 的 resolver 簽名不同 ⇒ 用**顯式 spec 表**（`_RESOLVER_SPECS`），⛔ 不做統一 arity 假設。⚠️ `tenant.summary.v1` **刻意缺席**（R-24 IDENTITY_BLOCKED）——明示缺席才看得見。",
-  "W-G2_GROUNDING_EXIT_KEEPS_RESPONSIBILITY_AUTHORITY": "⚠️ `GROUNDING_FACTS execution result → D2 present() → responsibility converter` **整條** ⛔ 不得重入 legacy dispatcher／`show_knowledge`／`row.answer`。\n⚠️ payload 的 `responsibility_id` 一律取自 **plan（committed authority）**，⛔ 不從 adapter 輸出讀（adapter 若回別的 id 必須被覆寫掉）。\n⚠️ unresolved（NO_MATCH／AMBIGUOUS／INVALID_INPUT）仍保持**同一 responsibility authority**，⛔ 不得因 `_RESOLVERS` 接上後掉回 form／legacy path。"
+  "W-G2_GROUNDING_EXIT_KEEPS_RESPONSIBILITY_AUTHORITY": "⚠️ `GROUNDING_FACTS execution result → D2 present() → responsibility converter` **整條** ⛔ 不得重入 legacy dispatcher／`show_knowledge`／`row.answer`。\n⚠️ payload 的 `responsibility_id` 一律取自 **plan（committed authority）**，⛔ 不從 adapter 輸出讀（adapter 若回別的 id 必須被覆寫掉）。\n⚠️ unresolved（NO_MATCH／AMBIGUOUS／INVALID_INPUT）仍保持**同一 responsibility authority**，⛔ 不得因 `_RESOLVERS` 接上後掉回 form／legacy path。",
+  "E-C1_BASELINE_IDENTITY_IS_SET_BASED_NOT_COUNT_BASED": "⚠️ Known-failure baseline 由 **case identity** 決定；failure count **只能作摘要**，⛔ 不得單獨作 regression 判準。\n```text\nactual_red − KNOWN_STABLE_FAILURES − FLAKY_RED_ALLOWLIST ≠ ∅  ⇒  NEW_REGRESSION\n```\n⚠️ 只看數字會假綠的具體形狀：**穩定紅少 1 筆 ＋ 冒出一筆全新的紅 ＝ 總數不變**。\n⚠️ flaky 一律用**具名白名單** `FLAKY_RED_ALLOWLIST`（列出 case ID／parameter），⛔ 不得寫成 `FLAKY_SLOT = 0..N`——那會讓未來**任意** N 筆 failure 看似可接受。\n⚠️ `KNOWN_STABLE_FAILURES` 是 **observed**，⛔ 不是「保證每次必紅」的產品契約：其一突然變綠 ⇒ **UNEXPECTED_BASELINE_IMPROVEMENT**，⛔ 不叫 regression，且查清原因前 ⛔ 不得從 baseline 刪除。"
  },
  "_grounding_facts_adapter_audit": {
   "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -4587,11 +4588,53 @@
    "workaround": "改跑整檔、⛔ 不用 `-k`。"
   },
   "E-DEBT-02_TEST_DB_POLLUTED_EVERY_INTEGRATION_RUN": {
-   "status": "**CONFIRMED PREEXISTING**（⛔ 本輪未修；來源 commit b2990af，本輪 integration 測試一行未動）",
+   "status": "**CLOSED**（2026-08-31）",
    "what": "`tests/integration/conversational/test_resolver_rollout_integration_req.py:22` 的 `ROLLBACK = \"/app/database/migrations/seed_responsibility_delegates_v1_rollback.sql\"` **路徑少一層**；檔案實際在 `/app/database/migrations/**rollback/**seed_responsibility_delegates_v1_rollback.sql`。",
    "consequence": "⚠️ `migrated_db` fixture 套用 seed migration 後，teardown 必 `FileNotFoundError` ⇒ **永遠無法還原** ⇒ responsibility delegate 設定殘留在 `aichatbot_test`，每跑一次 integration 就污染一次。",
    "⚠️_impact_on_this_attribution": "⚠️ base 與 mine 三輪**都**在已污染的 DB 上跑 ⇒ 條件一致、對照仍成立，⛔ 但那個 baseline 本身**不乾淨**。⇒ 未來要拿它當 regression baseline 前必須先修這條。",
-   "remedy": "一行改路徑（加 `rollback/`）。⛔ 不在本輪 approved scope 內，待業主裁定。"
+   "remedy": "一行改路徑（加 `rollback/`）。⛔ 不在本輪 approved scope 內，待業主裁定。",
+   "⚠️_original_description_was_wrong": "⚠️ 我最初把它講成「DB path」——**錯的**。壞的是 **rollback SQL 檔的路徑**；而且這台機器上**沒有另一顆乾淨 DB 可換**（只有 aichatbot_admin／aichatbot_test／postgres）⇒ 業主要求的 E2-G2／G4 依語義改寫成 **state-neutral**（跑完逐欄位回到跑之前），⛔ 不是「換一顆庫／換一個檔名」。此校正已寫進測試 docstring，⛔ 未默默重定義。",
+   "fix": [
+    "① `ROLLBACK` 路徑補上 `rollback/`",
+    "② fixture 進場 **snapshot** 受影響列（id 3916／4252）",
+    "③ teardown **以 snapshot 還原**——⛔ **不跑 rollback 腳本**",
+    "④ E2-G1…G4 共 16 條 guard 全綠"
+   ],
+   "⚠️_why_teardown_must_not_run_the_rollback_script": "⚠️ 這是修的過程中才浮出的：canonical baseline 既然是**seed 已套用**，teardown 跑 rollback 腳本就會把正典狀態裡本來就該有的 delegates 拔掉 ⇒ **破壞性**。⇒ 還原一律以 snapshot 為準。⚠️ 另：MIGRATION 有冪等守衛，baseline 已套用時是 no-op，這是**正常**的——⛔ 不得因此判測試失效，但也**⛔ 不得拿 no-op 的通過當『還原正確』的證據**（E2-G2:2 因此改用 ROLLBACK 當 mutator，先確認狀態真的變了再還原）。",
+   "_guard_is_decision_neutral": "⚠️ E2-G2:1 原本硬寫「delegates 必須不存在」＝替業主把產品題答了。已改為**帳本一致性雙向判準**：`delegates 存在 ⇔ schema_migrations 有該筆`。兩種正典狀態都合法；殘留（有產物、無帳本）與漏套（有帳本、無產物）都紅。"
   }
+ },
+ "_canonical_test_db_baseline_2026_08_31": {
+  "id": "AICHATBOT_TEST_CANONICAL_BASELINE_EPOCH_1",
+  "ruling": "**seed_responsibility_delegates_v1 APPLIED ＋ schema_migrations ledger PRESENT**（業主裁定 2026-08-31）",
+  "_rationale": "⚠️ 選它**不是因為比較綠**（兩種狀態都是 8 紅），而是：**regression baseline 應重現正式 migration 後的 production-equivalent state，⛔ 不能為了避開產品缺陷而省略正式 migration。**",
+  "how_established": [
+   "跑正式 `seed_responsibility_delegates_v1.sql`（⛔ 不手改資料列）",
+   "補帳本 `INSERT INTO schema_migrations ... 'runbook-20260831-canonical-baseline'`",
+   "⚠️ **交叉核對**：套用後的兩列與 session 開始時的備份（id 3916／4252）**逐欄位相同** ⇒ 證明正典狀態＝本 session 開始時的狀態，⛔ 我沒有把 DB 帶到一個新的位置"
+  ],
+  "KNOWN_BASELINE_FAILURES": {
+   "_superseded": "⚠️ 先前記為『8（5＋3）』——實測 epoch 跑出 **7**，攤開四輪後真實結構是 **7 stable ＋ 2 flaky**。⛔ 不封成任何單一數字。",
+   "KNOWN_STABLE_FAILURES": 7,
+   "FLAKY_RED_ALLOWLIST": 2,
+   "observed_total_red_range": "7..9（描述性）"
+  },
+  "⛔_must_not": [
+   "⛔ 不得改 expectation 讓那 3 紅變綠——它們是 PROD-DEFECT-02 的證據",
+   "⛔ 不得把先前 dirty-DB 期間的數字追溯改寫成 clean evidence（保留原樣）"
+  ],
+  "_prior_dirty_era_numbers_kept": "base2 8／mine2 9／mine3 8／clean1 8——皆保留，標記為 **dirty 或 pre-epoch**，⛔ 未改寫。",
+  "STATUS": "**SEALED — CANONICAL BASELINE EPOCH 1**（2026-08-31）",
+  "artifact": "`.kiro/specs/conversational-routing-execution/evidence/baseline-epoch-1.json`",
+  "digest": "2b5d353dec38fc5bbdac86c103e8ca321f82f7d58f6a6d15ada751299b578543"
+ },
+ "_prod_defect_02": {
+  "id": "PROD-DEFECT-02_DELEGATION_SCOPE_TOO_BROAD",
+  "status": "**CONFIRMED**（業主裁定 2026-08-31）",
+  "chain": "bill_diagnosis → billing_anomaly → contract_closeout",
+  "evidence_ab": "```text\ndelegates ON   instance routing 進得去；**operation／制度型問句被過度吸入**\ndelegates OFF  operation／general 不再被吸；**instance 問句進不去**\n```\n⚠️ 兩種狀態各 8 紅、**互換**失敗族 ⇒ 這是 A/B 對照，⛔ 不是浮動。\n\n⚠️ **四輪攤開後的補強**（⛔ 不把兩個 flaky case 當獨立 defect）：\n```text\noperation/general family evidence\n  stable boundary violations = 2\n  boundary-flaky members     = 2\n```\n⇒ 同一 semantic family 裡，有些 case **穩定越界**，有些在 routing boundary 附近**非決定性擺盪**。這支持 **applicability boundary 不足**，⛔ 不是兩個不同的產品問題。⚠️ 浮動率 ⛔ 不必精算。",
+  "precise_statement": "⚠️ delegation 已解決 **instance 可達性**，但缺少足夠的 **applicability boundary**。⛔ **不得**把「關掉 delegates」當修復——那只是把缺陷換一面。",
+  "scope": "⚠️ **另案**，⛔ 不在 baseline 修復裡順手處理；⛔ 不改測試 expectation。",
+  "_why_invisible_before": "⚠️ 先前 DB 長期髒著，沒人知道自己量的是哪個狀態 ⇒ 這個對缺陷從未被看見。⇒ E-DEBT-02 的價值不只是『測試變乾淨』，而是**讓一個真缺陷第一次可被觀察**。"
  }
 }

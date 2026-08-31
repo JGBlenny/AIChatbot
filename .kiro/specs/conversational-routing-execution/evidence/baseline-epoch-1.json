@@ -1,0 +1,42 @@
+{
+ "_doc": "CANONICAL BASELINE EPOCH 1（業主封存 2026-08-31）——regression oracle 的機器可讀正本。",
+ "epoch": 1,
+ "sealed_at": "2026-08-31",
+ "scope": "tests/integration/conversational/{test_facet_entry_routing_req,test_instance_gate_seam_req}.py（collected 103）",
+ "DB_STATE": {
+  "seed_responsibility_delegates_v1": "APPLIED",
+  "migration_ledger": "PRESENT（created_by=runbook-20260831-canonical-baseline）",
+  "state_consistency": "CONFIRMED（E2-G2:1 帳本一致性雙向 guard）",
+  "_cross_check": "套用後 id 3916／4252 與 session 開始時的備份**逐欄位相同**"
+ },
+ "KNOWN_STABLE_FAILURES": [
+  "tests/integration/conversational/test_facet_entry_routing_req.py::test_billing_operation_questions_stay_single_shot[收據 PDF 在哪裡下載]",
+  "tests/integration/conversational/test_facet_entry_routing_req.py::test_operation_questions_stay_single_shot[點退做完後，帳單會自動出來嗎？]",
+  "tests/integration/conversational/test_instance_gate_seam_req.py::test_exception_fails_open_and_is_not_disguised_as_abstain",
+  "tests/integration/conversational/test_instance_gate_seam_req.py::test_instance_questions_survive_activation[幫我查點退帳單金額]",
+  "tests/integration/conversational/test_instance_gate_seam_req.py::test_instance_questions_survive_activation[我的這張點退帳單金額怎麼算出來的]",
+  "tests/integration/conversational/test_instance_gate_seam_req.py::test_instance_questions_survive_activation[我這筆點退帳單怎麼會是這個數字]",
+  "tests/integration/conversational/test_instance_gate_seam_req.py::test_instance_questions_survive_activation[這張帳單的收據金額多少]"
+ ],
+ "FLAKY_RED_ALLOWLIST": [
+  "tests/integration/conversational/test_facet_entry_routing_req.py::test_billing_operation_questions_stay_single_shot[系統怎麼算點退帳單的金額]",
+  "tests/integration/conversational/test_facet_entry_routing_req.py::test_billing_operation_questions_stay_single_shot[點退帳單的金額是怎麼算的]"
+ ],
+ "_descriptive_metadata_only": {
+  "observed_total_red_range": "7..9",
+  "⛔": "⚠️ **僅供摘要**，⛔ 不得單獨作 regression 判準（E-C1）"
+ },
+ "REGRESSION_ORACLE": {
+  "required": "KNOWN_STABLE_FAILURES 必須仍能重現——除非該 defect 已**明確修復**",
+  "permitted_extra": "額外的紅**只能**來自 FLAKY_RED_ALLOWLIST",
+  "rule": "actual_red − KNOWN_STABLE_FAILURES − FLAKY_RED_ALLOWLIST ≠ ∅  ⇒  **NEW_REGRESSION**",
+  "⚠️_why_not_count": "⚠️ 只看 7..9 會假綠：**穩定紅少 1 筆 ＋ 冒出一筆全新的紅 ＝ 總數仍 7**。"
+ },
+ "UNEXPECTED_BASELINE_IMPROVEMENT": {
+  "trigger": "KNOWN_STABLE_FAILURES 之一突然變綠",
+  "⛔_not": "⛔ **不叫 regression**",
+  "must": "查清是產品真的修好／模型或 threshold drift／harness drift；⚠️ **查清前 ⛔ 不得從 baseline 偷偷刪掉**"
+ },
+ "_sample_basis": "4 輪 delegates-ON 觀測（base2／mine2／mine3／epoch1）。⚠️ 這四輪的 delegates 資料**位元相同**（dirty 期與正典期只差一列帳本）⇒ 皆為有效樣本。⚠️ 業主裁定 ⛔ 不為兩個 flaky case 加跑輪數——精算浮動率對 regression authorization 無新增資訊。",
+ "_digest": "2b5d353dec38fc5bbdac86c103e8ca321f82f7d58f6a6d15ada751299b578543"
+}

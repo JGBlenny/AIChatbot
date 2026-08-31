@@ -19,7 +19,13 @@ pytestmark = pytest.mark.integration
 
 SEED, MID, TARGET = "bill_diagnosis", "billing_anomaly", "contract_closeout"
 MIGRATION = "/app/database/migrations/seed_responsibility_delegates_v1.sql"
-ROLLBACK = "/app/database/migrations/seed_responsibility_delegates_v1_rollback.sql"
+#: ⚠️ **E-DEBT-02**（2026-08-31）：本檔原本指向 `migrations/` 根目錄，但檔案實際在
+#: `migrations/rollback/` ⇒ teardown 每次 FileNotFoundError ⇒ seed **永遠沒被還原**，
+#: 每跑一次 integration 就把 delegates 殘留進 `aichatbot_test`，污染所有 regression baseline。
+ROLLBACK = "/app/database/migrations/rollback/seed_responsibility_delegates_v1_rollback.sql"
+
+#: 受本 migration 影響的兩個面向——snapshot／還原與 dirty sentinel 都以它們為準
+AFFECTED_FACETS = (SEED, MID)
 
 
 def _conn_kwargs():
@@ -38,18 +44,67 @@ async def _exec_sql(path):
         await conn.close()
 
 
+async def _snapshot_affected():
+    """擷取受影響兩列的完整內容——⚠️ 還原以**快照**為準，⛔ 不假設 rollback SQL 是完美逆運算。"""
+    import asyncpg
+    conn = await asyncpg.connect(**_conn_kwargs())
+    try:
+        rows = await conn.fetch(
+            "SELECT id, generation_metadata::text AS gm, answer FROM knowledge_base "
+            "WHERE category = '對話規則' AND is_active "
+            "  AND generation_metadata->'conversational_config'->>'key' = ANY($1::text[]) "
+            "ORDER BY id", list(AFFECTED_FACETS))
+        return [dict(r) for r in rows]
+    finally:
+        await conn.close()
+
+
+async def _restore_affected(snap):
+    import asyncpg
+    conn = await asyncpg.connect(**_conn_kwargs())
+    try:
+        for r in snap:
+            await conn.execute(
+                "UPDATE knowledge_base SET generation_metadata = $2::jsonb, answer = $3 "
+                "WHERE id = $1", r["id"], r["gm"], r["answer"])
+    finally:
+        await conn.close()
+
+
 @pytest.fixture(scope="module")
 def migrated_db():
-    """★ ② 走**正式 migration 產出的 DB 狀態**，不再直接塞 config 物件。"""
+    """★ ② 走**正式 migration 產出的 DB 狀態**，不再直接塞 config 物件。
+
+    ## E-DEBT-02 —— REGRESSION_BASELINE_DB_ISOLATION（2026-08-31 業主裁定）
+
+    ```text
+    fixture 必須是 **state-neutral**：跑完後 aichatbot_test 逐欄位回到跑之前
+    ```
+    ⚠️ 原本 teardown 只呼叫 `ROLLBACK` 腳本，而該路徑是錯的 ⇒ 靜默失敗、殘留累積。
+
+    ## ⛔ 為什麼 teardown **不能**跑 rollback 腳本
+
+    業主 2026-08-31 裁定：canonical baseline ＝ **seed 已套用 ＋ 帳本已記**。
+    在那個 baseline 上跑 rollback 腳本是**破壞性**的——它會把正典狀態裡本來就該有的
+    delegates 拔掉。⇒ teardown 一律以 **snapshot 還原**，⛔ 不以「跑逆向腳本」代替還原。
+    ⚠️ `MIGRATION` 本身有冪等守衛（`responsibility IS NULL`），baseline 已套用時是 no-op；
+    這是**正常**的，⛔ 不得因此判測試失效。
+    """
     if not os.path.exists(MIGRATION):
         pytest.skip("migration 檔不在容器內")
+    snap = asyncio.run(_snapshot_affected())
+    assert snap, "snapshot 為空 ⇒ 受影響的規則列不存在，測試前提不成立（⛔ 不是『乾淨』）"
     try:
         asyncio.run(_exec_sql(MIGRATION))
     except Exception as e:                                   # pragma: no cover
         pytest.skip(f"無法套用 migration：{e}")
         return
     yield
-    asyncio.run(_exec_sql(ROLLBACK))
+    # ⚠️ 無條件以 snapshot 還原——⛔ 不判斷「應該沒變吧」就跳過（那是 E-DEBT-02 的病）
+    asyncio.run(_restore_affected(snap))
+    after = asyncio.run(_snapshot_affected())
+    if after != snap:                                        # pragma: no cover
+        raise AssertionError("snapshot 還原後仍與進場狀態不符 ⇒ 還原機制本身失效")
 
 
 @pytest.fixture
