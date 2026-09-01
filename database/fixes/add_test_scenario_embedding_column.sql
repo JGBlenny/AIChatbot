@@ -10,10 +10,14 @@ ALTER TABLE test_scenarios
 ADD COLUMN IF NOT EXISTS question_embedding vector(1536);
 
 -- 添加索引以加速向量搜尋
+-- ⚠️ 2026-09-01：原為 IVFFlat `lists=100`。實測該參數在小資料量下**靜默漏召回**
+--    （knowledge_base 992 筆向量 ⇒ 每 list 約 10 筆、probes 預設 1 且全 repo 從未設定
+--     ⇒ top-20 候選池召回率 31%、top-1 與精確掃描不同 46%，且**不會報錯**）。
+--    改用 HNSW：⛔ 沒有 lists／probes 可以配錯，召回率不隨資料量崩塌。
+--    證據 .kiro/specs/conversational-routing-execution/ivfflat-index-defect.md
 CREATE INDEX IF NOT EXISTS idx_test_scenarios_question_embedding
 ON test_scenarios
-USING ivfflat (question_embedding vector_cosine_ops)
-WITH (lists = 100);
+USING hnsw (question_embedding vector_cosine_ops);
 
 COMMENT ON COLUMN test_scenarios.question_embedding IS '測試問題的向量嵌入（1536 維度），用於語意相似度搜尋';
 

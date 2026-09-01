@@ -113,3 +113,94 @@ USING hnsw (embedding vector_cosine_ops);
 ⛔ 我沒有修改任何索引、資料或程式
 ⛔ 35 題的「該命中哪筆」仍未經業主確認 ⇒ 上面的率是診斷，不是收案證據
 ⛔ b2c／SOP 側的同類影響未量測
+
+---
+
+# 修復 runbook（⛔ 業主自行執行；我已改完 repo 端）
+
+## 已完成（repo 端，commit 內）
+
+```text
+6 處建索引 DDL 全部 ivfflat → hnsw：
+  database/init-legacy/02-create-knowledge-base.sql          idx_kb_embedding
+  database/init-legacy/09-create-test-scenarios.sql          idx_test_scenarios_embedding
+  database/fixes/add_test_scenario_embedding_column.sql      idx_test_scenarios_question_embedding
+  database/fixes/add_vendor_sop_groups_group_embedding.sql   idx_vendor_sop_groups_group_embedding
+  database/fixes/add_similarity_check_functions.sql          idx_ai_candidates_question_embedding
+  rag-orchestrator/.../create_indexes.py                     idx_vendor_sop_items_primary_embedding_ivfflat
+稽核不變量 26：向量索引 ⛔ 不得用 IVFFlat（含正對照）
+驗證：git grep "USING ivfflat" -- '*.sql' '*.py'   ⇒ 應無輸出（legacy 註解除外）
+```
+
+⚠️ **一個線上索引在 repo 找不到定義**：`knowledge_review_queue.idx_krq_embedding`。
+它是手動建的或來自已刪的腳本；⇒ 重建它時請直接用 HNSW，⛔ 別再照舊寫法。
+
+## 線上重建（逐條，⛔ 一次一條，看到預期輸出再下一條）
+
+⚠️ 先確認你在哪個環境：`docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c "SELECT current_database(), inet_server_addr();"`
+
+### ① knowledge_base（最重要，992 筆）
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "DROP INDEX IF EXISTS idx_kb_embedding;"
+```
+預期輸出：`DROP INDEX`
+
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "CREATE INDEX idx_kb_embedding ON knowledge_base USING hnsw (embedding vector_cosine_ops);"
+```
+預期輸出：`CREATE INDEX`（992 筆約數秒）
+
+⚠️ **正式環境**請改用 `CREATE INDEX CONCURRENTLY`（不鎖表），且 ⛔ 不可放在交易內。
+
+### ② 其餘四張（可一次下）
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c "
+DROP INDEX IF EXISTS idx_vendor_sop_items_primary_embedding_ivfflat;
+CREATE INDEX idx_vendor_sop_items_primary_embedding_ivfflat ON vendor_sop_items USING hnsw (primary_embedding vector_cosine_ops);
+DROP INDEX IF EXISTS idx_vendor_sop_groups_group_embedding;
+CREATE INDEX idx_vendor_sop_groups_group_embedding ON vendor_sop_groups USING hnsw (group_embedding vector_cosine_ops);
+DROP INDEX IF EXISTS idx_test_scenarios_question_embedding;
+CREATE INDEX idx_test_scenarios_question_embedding ON test_scenarios USING hnsw (question_embedding vector_cosine_ops);
+DROP INDEX IF EXISTS idx_ai_candidates_question_embedding;
+CREATE INDEX idx_ai_candidates_question_embedding ON ai_generated_knowledge_candidates USING hnsw (question_embedding vector_cosine_ops);
+DROP INDEX IF EXISTS idx_krq_embedding;
+CREATE INDEX idx_krq_embedding ON knowledge_review_queue USING hnsw (question_embedding vector_cosine_ops);"
+```
+預期輸出：交替出現 `DROP INDEX` / `CREATE INDEX`，共 10 行
+
+## 驗收（⛔ 別只看延遲）
+
+### ① 不變量
+```bash
+bash scripts/audit/check_invariants.sh 2>&1 | grep -A3 "不變量 26"
+```
+預期：`✅ PASS（全部向量索引皆為 HNSW）`
+
+### ② 現況查詢
+```bash
+python3 scripts/status.py | grep -A8 "向量索引"
+```
+預期：不再出現 `⛔ ... lists=` 行
+
+### ③ ⭐ 真正的驗收：召回率回來了沒
+⚠️ **⛔ 延遲沒變不代表修好了**——索引丟答案時延遲反而更低。
+必須重跑 b2b 那 35 題，對照 `t1-batch01-*` 與本檔的「精確」欄：
+
+```text
+預期：ANN 結果 ≈ 精確掃描結果
+      top-1 不同的題數  46% → 應趨近 0
+      top-20 召回率     31% → 應趨近 100%
+單題快驗：「通知信箱的群組設定要怎麼做？」的 top1 應為 kb:3451（sim ≈ 0.83），
+          ⛔ 不是 kb:3435（sim 0.4568）
+```
+
+## 修完之後要重新評估的事
+
+```text
+⚠️ 本 session 所有「語義召不回／表示法不佳」的歸因，⛔ 修完前不可信
+⚠️「補 retrieval_representation 提升召回」的前提要重新評估——
+   目前召回低的主因可能是索引，不是表示法
+⚠️ 歷來回測（含 69.7%）都跑在壞索引上 ⇒ 那些數字**低估**了系統能力，
+   ⛔ 但不要直接宣稱「修完就會變好多少」——沒量之前那是猜的

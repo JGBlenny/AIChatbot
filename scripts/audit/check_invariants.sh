@@ -679,6 +679,39 @@ if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then
 fi
 
 echo ""
+echo "═══ 不變量 26：向量索引 ⛔ 不得用參數會崩塌的 IVFFlat ═══"
+# 為何需要（2026-09-01 b2b 35 題實測逼出）：
+#   idx_kb_embedding 為 ivfflat lists=100，而全表僅 992 筆向量 ⇒ 每 list 約 10 筆；
+#   ivfflat.probes 預設 1 且**全 repo 從未設定** ⇒ 每次檢索只掃到全庫約 1%。
+#   實測：top-20 候選池平均召回率 31%、top-1 與精確掃描不同 46%。
+#   ⛔ **最危險的是它不會報錯**——多數情況回滿了 k 筆、延遲反而更低，
+#     表面完全正常，只是每一筆都不是對的那筆。
+#   ⇒ 本專案一律用 HNSW（⛔ 沒有 lists／probes 可以配錯）。
+#   證據 .kiro/specs/conversational-routing-execution/ivfflat-index-defect.md
+INV26_BAD=$($PSQL -c "
+SELECT string_agg(tablename||'.'||indexname, ', ')
+  FROM pg_indexes
+ WHERE indexdef LIKE '%USING ivfflat%'")
+# 正對照：確認查詢路徑是通的（必然存在至少一個向量索引）
+INV26_ANY=$($PSQL -c "
+SELECT count(*) FROM pg_indexes
+ WHERE indexdef LIKE '%USING ivfflat%' OR indexdef LIKE '%USING hnsw%'")
+if [ "${INV26_ANY:-0}" = "0" ]; then
+  echo "❌ FAIL：查無任何向量索引——正對照失敗，⛔ 這是查詢或環境壞了，不是通過"
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 26：向量索引正對照失敗（查不到任何向量索引）")
+elif [ -n "$INV26_BAD" ]; then
+  echo "❌ FAIL：以下索引仍是 IVFFlat，⛔ 會靜默漏召回："
+  echo "   $INV26_BAD"
+  echo "   修法：DROP INDEX 後改 USING hnsw(...)；⛔ 同時要改 repo 內的建表 DDL，"
+  echo "         否則下次重建資料庫缺陷回歸（git grep 'USING ivfflat'）"
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 26：仍有 IVFFlat 向量索引（$INV26_BAD）")
+else
+  echo "✅ PASS（全部向量索引皆為 HNSW）"
+fi
+
+echo ""
 echo "──────────────── 稽核記帳（兩類紅燈分開）────────────────"
 echo "CODE_CONTRACT_REGRESSIONS: ${#CODE_REGRESSIONS[@]}"
 for r in ${CODE_REGRESSIONS[@]+"${CODE_REGRESSIONS[@]}"}; do echo "  - $r"; done

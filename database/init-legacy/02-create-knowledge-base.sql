@@ -74,11 +74,13 @@ CREATE INDEX IF NOT EXISTS idx_kb_is_active ON knowledge_base(is_active);
 CREATE INDEX IF NOT EXISTS idx_kb_source_type ON knowledge_base(source_type);
 CREATE INDEX IF NOT EXISTS idx_kb_category ON knowledge_base(category);
 
--- 向量索引（IVFFlat 演算法加速向量搜尋）
--- lists 參數：建議設為 sqrt(總資料筆數)，這裡預估 1000 筆，設為 100
+-- ⚠️ 2026-09-01：原為 IVFFlat `lists=100`。實測該參數在小資料量下**靜默漏召回**
+--    （knowledge_base 992 筆向量 ⇒ 每 list 約 10 筆、probes 預設 1 且全 repo 從未設定
+--     ⇒ top-20 候選池召回率 31%、top-1 與精確掃描不同 46%，且**不會報錯**）。
+--    改用 HNSW：⛔ 沒有 lists／probes 可以配錯，召回率不隨資料量崩塌。
+--    證據 .kiro/specs/conversational-routing-execution/ivfflat-index-defect.md
 CREATE INDEX IF NOT EXISTS idx_kb_embedding ON knowledge_base
-USING ivfflat (embedding vector_cosine_ops)
-WITH (lists = 100);
+USING hnsw (embedding vector_cosine_ops);
 
 -- GIN 索引（陣列欄位）
 CREATE INDEX IF NOT EXISTS idx_kb_keywords ON knowledge_base USING GIN(keywords);

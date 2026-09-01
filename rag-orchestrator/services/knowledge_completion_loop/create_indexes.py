@@ -47,11 +47,14 @@ def create_missing_indexes():
             print("（這可能需要幾分鐘，取決於資料量）")
 
             try:
+                # ⚠️ 2026-09-01：原為 IVFFlat lists=100，在小資料量下靜默漏召回
+                #    （vendor_sop_items 407 筆 ⇒ 每 list 約 4 筆）。改 HNSW，⛔ 無參數可配錯。
+                #    證據 .kiro/specs/conversational-routing-execution/ivfflat-index-defect.md
+                #    ⚠️ 索引名沿用（含 _ivfflat 字樣）以免與線上既有索引脫節；⛔ 勿改名。
                 cur.execute("""
                     CREATE INDEX CONCURRENTLY idx_vendor_sop_items_primary_embedding_ivfflat
                     ON vendor_sop_items
-                    USING ivfflat (primary_embedding vector_cosine_ops)
-                    WITH (lists = 100)
+                    USING hnsw (primary_embedding vector_cosine_ops)
                 """)
                 print("✅ 索引建立成功！")
             except Exception as e:

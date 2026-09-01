@@ -9,11 +9,14 @@ ALTER TABLE vendor_sop_groups
 ADD COLUMN IF NOT EXISTS group_embedding vector(1536);
 
 -- 步骤 2: 为 group_embedding 创建向量索引（提升检索性能）
--- 使用 ivfflat 索引算法，适合大规模向量检索
+-- ⚠️ 2026-09-01：原為 IVFFlat `lists=100`。實測該參數在小資料量下**靜默漏召回**
+--    （knowledge_base 992 筆向量 ⇒ 每 list 約 10 筆、probes 預設 1 且全 repo 從未設定
+--     ⇒ top-20 候選池召回率 31%、top-1 與精確掃描不同 46%，且**不會報錯**）。
+--    改用 HNSW：⛔ 沒有 lists／probes 可以配錯，召回率不隨資料量崩塌。
+--    證據 .kiro/specs/conversational-routing-execution/ivfflat-index-defect.md
 CREATE INDEX IF NOT EXISTS idx_vendor_sop_groups_group_embedding
 ON vendor_sop_groups
-USING ivfflat (group_embedding vector_cosine_ops)
-WITH (lists = 100);
+USING hnsw (group_embedding vector_cosine_ops);
 
 -- 步骤 3: 添加注释
 COMMENT ON COLUMN vendor_sop_groups.group_embedding IS 'Group 名称的向量表示，用于 Group 隔离检索的第一阶段（Group 识别）';

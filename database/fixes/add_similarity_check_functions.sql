@@ -210,9 +210,10 @@ BEGIN
         ADD COLUMN question_embedding vector(1536);
 
         -- 添加索引以加速向量搜尋
+        -- ⚠️ 2026-09-01：IVFFlat 在小資料量下靜默漏召回（見 ivfflat-index-defect.md），改 HNSW
         CREATE INDEX idx_ai_candidates_question_embedding
         ON ai_generated_knowledge_candidates
-        USING ivfflat (question_embedding vector_cosine_ops);
+        USING hnsw (question_embedding vector_cosine_ops);
 
         RAISE NOTICE 'Added question_embedding column to ai_generated_knowledge_candidates';
     ELSE

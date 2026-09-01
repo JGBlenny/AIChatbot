@@ -666,10 +666,14 @@ COMMENT ON COLUMN test_scenarios.knowledge_generation_requested_at IS 'AI 生成
 COMMENT ON COLUMN test_scenarios.question_embedding IS '問題的向量表示（用於相似度搜尋）';
 
 -- 為 question_embedding 建立索引
+-- ⚠️ 2026-09-01：原為 IVFFlat `lists=100`。實測該參數在小資料量下**靜默漏召回**
+--    （knowledge_base 992 筆向量 ⇒ 每 list 約 10 筆、probes 預設 1 且全 repo 從未設定
+--     ⇒ top-20 候選池召回率 31%、top-1 與精確掃描不同 46%，且**不會報錯**）。
+--    改用 HNSW：⛔ 沒有 lists／probes 可以配錯，召回率不隨資料量崩塌。
+--    證據 .kiro/specs/conversational-routing-execution/ivfflat-index-defect.md
 CREATE INDEX IF NOT EXISTS idx_test_scenarios_embedding
 ON test_scenarios
-USING ivfflat (question_embedding vector_cosine_ops)
-WITH (lists = 100);
+USING hnsw (question_embedding vector_cosine_ops);
 
 -- ========================================
 -- 擴展 knowledge_base 表：標註知識來源
