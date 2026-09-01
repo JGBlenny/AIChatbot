@@ -1,0 +1,211 @@
+[
+  {
+    "ts_id": 10068,
+    "q": "系統顯示「僅能刪除待發送狀態的合約」",
+    "my_read": "弱",
+    "proposed": 4254,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 3,
+    "top1": 3846,
+    "top1_score": 0.661
+  },
+  {
+    "ts_id": 10089,
+    "q": "業者這邊租客提前解約要設定多少天的預告期？",
+    "my_read": "弱",
+    "proposed": 3522,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 3,
+    "top1": 3851,
+    "top1_score": 0.9486
+  },
+  {
+    "ts_id": 10243,
+    "q": "請問報稅資料房東要幫忙嗎？",
+    "my_read": "弱",
+    "proposed": 3233,
+    "filtered_rank": 2,
+    "unfiltered_rank": 2,
+    "n_returned": 5,
+    "top1": 3234,
+    "top1_score": 0.9714
+  },
+  {
+    "ts_id": 9537,
+    "q": "帳單顯示「應到帳」是什麼意思",
+    "my_read": "強",
+    "proposed": 3335,
+    "filtered_rank": 1,
+    "unfiltered_rank": 1,
+    "n_returned": 1,
+    "top1": 3335,
+    "top1_score": 0.9491
+  },
+  {
+    "ts_id": 9538,
+    "q": "收到帳單通知，要去哪裡看",
+    "my_read": "強",
+    "proposed": 4223,
+    "filtered_rank": 1,
+    "unfiltered_rank": 1,
+    "n_returned": 3,
+    "top1": 4223,
+    "top1_score": 0.945
+  },
+  {
+    "ts_id": 9620,
+    "q": "超商繳費的代碼我怎麼獲得啊？",
+    "my_read": "強",
+    "proposed": 3411,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 1,
+    "top1": 4268,
+    "top1_score": 0.635
+  },
+  {
+    "ts_id": 9645,
+    "q": "我轉帳金額和帳單不一樣，怎麼辦呢？",
+    "my_read": "強",
+    "proposed": 3416,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 0,
+    "top1": null,
+    "top1_score": null
+  },
+  {
+    "ts_id": 9758,
+    "q": "收到一封簽約邀請的 email，接下來要做什麼",
+    "my_read": "強",
+    "proposed": 3442,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 0,
+    "top1": null,
+    "top1_score": null
+  },
+  {
+    "ts_id": 9974,
+    "q": "我能不能用 Excel 來一次性匯入租客？",
+    "my_read": "強",
+    "proposed": 3476,
+    "filtered_rank": 1,
+    "unfiltered_rank": 1,
+    "n_returned": 4,
+    "top1": 3476,
+    "top1_score": 0.9739
+  },
+  {
+    "ts_id": 9994,
+    "q": "儲值金回充帳戶這個功能到底是幹嘛的？",
+    "my_read": "強",
+    "proposed": 3417,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 0,
+    "top1": null,
+    "top1_score": null
+  },
+  {
+    "ts_id": 10320,
+    "q": "想知道有沒有功能可同時看到本月到期＋無合約的物件。",
+    "my_read": "強",
+    "proposed": 4655,
+    "filtered_rank": 1,
+    "unfiltered_rank": 1,
+    "n_returned": 1,
+    "top1": 4655,
+    "top1_score": 0.96
+  },
+  {
+    "ts_id": 10323,
+    "q": "另外年繳的帳單可以拆成今年和明年兩張嗎？",
+    "my_read": "強",
+    "proposed": 4651,
+    "filtered_rank": 1,
+    "unfiltered_rank": 1,
+    "n_returned": 1,
+    "top1": 4651,
+    "top1_score": 0.9089
+  },
+  {
+    "ts_id": 7617,
+    "q": "發票幾天內要作廢？",
+    "my_read": "疑似無覆蓋",
+    "proposed": null,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 2,
+    "top1": 3938,
+    "top1_score": 0.8985
+  },
+  {
+    "ts_id": 8149,
+    "q": "管理費都含啥服務？",
+    "my_read": "疑似無覆蓋",
+    "proposed": null,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 1,
+    "top1": 3601,
+    "top1_score": 0.7494
+  },
+  {
+    "ts_id": 9596,
+    "q": "為什麼電子簽章畫面載不出來？",
+    "my_read": "疑似無覆蓋",
+    "proposed": null,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 0,
+    "top1": null,
+    "top1_score": null
+  },
+  {
+    "ts_id": 9631,
+    "q": "刷卡時顯示錯誤，這是什麼問題啊？",
+    "my_read": "疑似無覆蓋",
+    "proposed": null,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 0,
+    "top1": null,
+    "top1_score": null
+  },
+  {
+    "ts_id": 9900,
+    "q": "資料會不會在取消訂閱後就不見了？",
+    "my_read": "疑似無覆蓋",
+    "proposed": null,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 0,
+    "top1": null,
+    "top1_score": null
+  },
+  {
+    "ts_id": 10236,
+    "q": "租約要報稅務局嗎？",
+    "my_read": "疑似無覆蓋",
+    "proposed": null,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 6,
+    "top1": 3012,
+    "top1_score": 0.969
+  },
+  {
+    "ts_id": 10314,
+    "q": "已退押金，但「待發送帳單草稿」裡的帳單一般要如何銷賬？",
+    "my_read": "疑似無覆蓋",
+    "proposed": null,
+    "filtered_rank": null,
+    "unfiltered_rank": null,
+    "n_returned": 2,
+    "top1": 3336,
+    "top1_score": 0.7137
+  }
+]

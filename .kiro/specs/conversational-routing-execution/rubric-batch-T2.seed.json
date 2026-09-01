@@ -1,0 +1,163 @@
+{
+  "_doc": "P0-2-T2 種子：從 25 案分型出的 API 查詢題，⛔ 尺不同（決定性逐欄比對），本輪不判。",
+  "type": "T2 API 查詢題",
+  "status": "SEED_ONLY",
+  "cases": [
+    {
+      "case_id": "31|1",
+      "type": "T2",
+      "question": "716317 帳單收據金額是多少",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#31|1",
+        "confidence": "explicit",
+        "reference_answer": "正確應於租客帳單內查看收據實際金額"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "應於租客帳單內查看收據的實際金額（不是回覆收據金額的算法或通用知識）"
+        },
+        {
+          "id": "M2",
+          "claim": "帳單 716317 的收據金額應為 NT$ 3,999,996（實值出自登錄簿 P1-a 對 preview API 的查證：status=16 已繳費、total=3,999,996，非客服原文）"
+        }
+      ],
+      "must_not": [
+        {
+          "id": "N1",
+          "claim": "不得回覆「收據金額為 NT$ 0」"
+        }
+      ],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "35|1",
+      "type": "T2",
+      "question": "合約822032點退帳單金額為多少?",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#35|1",
+        "confidence": "explicit",
+        "reference_answer": "正確處理順序，應該要先去看該份合約先關帳單，並找到帳單ID:739330，提供我該帳單的細節作為答覆。"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "應先查該份合約（822032）的先關帳單"
+        },
+        {
+          "id": "M2",
+          "claim": "找到帳單 ID 739330"
+        },
+        {
+          "id": "M3",
+          "claim": "回覆該帳單的細節作為答覆"
+        }
+      ],
+      "must_not": [
+        {
+          "id": "N1",
+          "claim": "不得以「點退帳單金額算法」的通用知識條目搪塞"
+        }
+      ],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "36|1",
+      "type": "T2",
+      "question": "租客:陳佳琳，他的合約ID是多少?",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#36|1",
+        "confidence": "explicit",
+        "reference_answer": "他合約ID應該是87197"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "租客「陳佳琳」的合約 ID 為 87197"
+        },
+        {
+          "id": "M2",
+          "claim": "若能力不足（external API keyword 只搜合約 title）應誠實引導，不得編造合約 ID"
+        }
+      ],
+      "must_not": [
+        {
+          "id": "N1",
+          "claim": "不得吐出未替換的 {{service_hotline}} 佔位符"
+        }
+      ],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "37|1",
+      "type": "T2",
+      "question": "合約ID:86829，是否曾有續約的紀錄?",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#37|1",
+        "confidence": "explicit",
+        "reference_answer": "應去尋找合約86829，與其相關的合約為81918來做回答。"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "應實際查合約 86829 的續約歷程"
+        },
+        {
+          "id": "M2",
+          "claim": "與其相關（續約）的合約為 81918"
+        }
+      ],
+      "must_not": [
+        {
+          "id": "N1",
+          "claim": "不得以「續約歷史機制說明」的通用知識條目搪塞"
+        }
+      ],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,830 @@
+{
+  "_doc": "P0-2-T1 接受範圍 rubric（草稿）。⛔ 業主核可前不得凍結、不得用於任何判定。",
+  "batch": "batch-01-T1",
+  "type": "T1 單筆知識題",
+  "status": "DRAFT_PENDING_OWNER_APPROVAL",
+  "drafted_at": "2026-09-01",
+  "source_of_truth": "docs/backtest/corpus-20260810/expected_answers.json（逐字取自客服回報逐字稿的『標準答案』欄）",
+  "construction_rule": [
+    "must_have  = key_points 中的正面命題，逐字保留，⛔ 未改寫、未增補",
+    "must_not   = key_points 中以「不得」開頭者",
+    "owner_review.notes = 以「（」開頭的元註記——非可打勾命題，⛔ 需業主裁如何處置",
+    "allowed    = 四條固定的不影響判定差異",
+    "⛔ 草擬者未加入任何來源以外的知識",
+    "同一 key_point 內混有正／負命題者 ⇒ 移入 owner_review.needs_split，⛔ 草擬者不逕行改寫"
+  ],
+  "claim_ceiling": [
+    "⛔ 本批 21 題出自 corpus-20260810，該語料**已驅動過修正**（P1-a 等）⇒ 對它們而言是**回歸尺**，不是留出集",
+    "⛔ 本批通過率不得當作泛化能力或線上答案品質的證據",
+    "⛔ 不得與 T2／T3 合成單一「答案正確率」"
+  ],
+  "target_n": 30,
+  "current_n": 21,
+  "shortfall": 9,
+  "cases": [
+    {
+      "case_id": "07|7",
+      "type": "T1",
+      "question": "國泰的ATM為什麼不能設置",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#07|7",
+        "confidence": "derivable",
+        "reference_answer": "開通國泰ATM需要聯絡專人處理，不能自行設置"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "國泰 ATM 無法自行設置"
+        },
+        {
+          "id": "M2",
+          "claim": "開通國泰 ATM 需要聯絡專人處理"
+        }
+      ],
+      "must_not": [
+        {
+          "id": "N1",
+          "claim": "不得回覆「可在後台自行設定/開通國泰 ATM」"
+        }
+      ],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "09|13",
+      "type": "T1",
+      "question": "合約已經簽約了但我想修改可以嗎？",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#09|13",
+        "confidence": "derivable",
+        "reference_answer": "合約已經簽約了就不能修改"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "合約已經簽約後就不能修改"
+        }
+      ],
+      "must_not": [
+        {
+          "id": "N1",
+          "claim": "不得回覆「可直接編輯已簽約的合約」"
+        }
+      ],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": [
+          "（相容參照）正解方向與 #19 標準答案一致：需以複製合約／創建新合約處理，非直接改原約"
+        ]
+      }
+    },
+    {
+      "case_id": "10|14",
+      "type": "T1",
+      "question": "押金最多只能兩個月嗎？",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#10|14",
+        "confidence": "derivable",
+        "reference_answer": "押金最多就是只能兩個月"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "押金上限為兩個月（最多只能兩個月）"
+        }
+      ],
+      "must_not": [
+        {
+          "id": "N1",
+          "claim": "不得回覆押金可設三個月或無上限"
+        }
+      ],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "13|1",
+      "type": "T1",
+      "question": "詢問帳單「品名」能否由「租金」更改為「停車位費」。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#13|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～關於帳單「品名」的部分跟您說明：這張帳單的品名是依「租金」命名的，所以會固定顯示為租金，現有合約沒辦法直接改名喔。如果未來想讓品名顯示成「停車位費」，可以在建立合約時把租金金額設為 0、再單獨設定這筆費用，品項名稱就會依您設定的費用顯示囉！現有這份就需要重新簽立才能套用，提供給您參考，有需要協助設定都歡迎再找我們"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "帳單品名依「租金」命名，固定顯示為租金"
+        },
+        {
+          "id": "M2",
+          "claim": "現有合約沒辦法直接改名"
+        },
+        {
+          "id": "M3",
+          "claim": "若要顯示「停車位費」須在建立合約時把租金金額設為 0、再單獨設定該筆費用"
+        },
+        {
+          "id": "M4",
+          "claim": "現有這份合約需重新簽立才能套用新品名"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "15|1",
+      "type": "T1",
+      "question": "詢問退租時如何建立「已到帳」帳單；並反映建立帳單時系統會同時自動寄送，但因該租客聯繫方式未驗證而無法寄送，擔心類似情況不少。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#15|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～關於退租帳單的部分跟您說明：系統在建立帳單時會同時直接寄送，但因為該租客的聯繫方式尚未驗證，所以暫時沒辦法寄出。建議可以將租客「轉為註冊」，或維持「免註冊」但補驗證聯絡方式（Email 或電話），這樣帳單就能順利發送囉！後續若有類似情況也是同樣處理方式，有需要協助都歡迎再找我們"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "系統在建立帳單時會同時直接寄送"
+        },
+        {
+          "id": "M2",
+          "claim": "寄不出的原因是該租客的聯繫方式尚未驗證"
+        },
+        {
+          "id": "M3",
+          "claim": "解法一：將租客「轉為註冊」"
+        },
+        {
+          "id": "M4",
+          "claim": "解法二：維持「免註冊」但補驗證聯絡方式（Email 或電話）"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "16|1",
+      "type": "T1",
+      "question": "簽約時租客少簽一個名，系統未檢查出來，導致送租補因缺簽名未通過；詢問系統是否有簽名防呆機制。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#16|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～關於簽名的部分跟您說明：系統目前不會檢查租客簽名的內容，租客只要在簽名頁面有觸碰紀錄（即使只是肉眼難辨的一點）就會視為已簽、可進行下一步。因此把關的時機在管理者「回簽」：管理者回簽的位置和租客需簽名的位置相同，建議回簽時逐頁確認租客都已確實簽立，再完成當頁回簽，就能避免送租補時因缺簽名被退件囉"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "系統目前不會檢查租客簽名的內容"
+        },
+        {
+          "id": "M2",
+          "claim": "租客只要在簽名頁面有觸碰紀錄即視為已簽、可進行下一步"
+        },
+        {
+          "id": "M3",
+          "claim": "把關時機在管理者「回簽」；回簽位置與租客簽名位置相同"
+        },
+        {
+          "id": "M4",
+          "claim": "建議回簽時逐頁確認租客已確實簽立再完成當頁回簽，以免送租補被退件"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "17|1",
+      "type": "T1",
+      "question": "雙人簽約時詢問承租方資料的填寫方式：姓名欄兩位簽約人不知如何輸入（姓、名分開打會跑版，顯示成「姓:宋 名:宋維光/宋紹光」看起來怪）；身分證欄位也無法輸入兩位的證號。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#17|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～雙人簽約的填寫方式跟您說明：身分證的部分，證件種類下拉選「第三個」選項（此選項不檢核格式），就可以一次輸入兩位的證號囉！姓名的部分，建議打「姓：宋維光、名：/宋紹光」，這樣兩位簽約人就會完整顯示。也附上「簽約流程-雙人簽約」PDF 教學給仲介參考，操作上有任何問題都歡迎再找我們"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "身分證：證件種類下拉選「第三個」選項（不檢核格式），可一次輸入兩位證號"
+        },
+        {
+          "id": "M2",
+          "claim": "姓名：建議打「姓：宋維光、名：/宋紹光」，兩位簽約人才會完整顯示"
+        },
+        {
+          "id": "M3",
+          "claim": "另附「簽約流程-雙人簽約」PDF 教學"
+        }
+      ],
+      "must_not": [
+        {
+          "id": "N1",
+          "claim": "不得回覆「系統只支援一位簽署人／只能填一位證號」"
+        }
+      ],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "18|2",
+      "type": "T1",
+      "question": "合約 ID 64488（紙本合約）續約 12 個月後，在帳單頁找不到續約後的帳單，詢問原因（年繳）。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#18|2",
+        "confidence": "explicit",
+        "reference_answer": "您好～合約 64488 續約後找不到帳單的狀況說明給您：續約的帳單是系統每月逐筆產出的，您這份續約在 6/5 完成，系統每天固定時間會掃描並把符合條件的帳單加入排程，所以這份會在 6/6 產出對應帳單，屆時就看得到囉。若希望一次顯示所有期數，建議改用重建新合約的方式"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "續約的帳單是系統每月逐筆產出的"
+        },
+        {
+          "id": "M2",
+          "claim": "該續約在 6/5 完成，系統每天固定時間掃描並把符合條件的帳單加入排程"
+        },
+        {
+          "id": "M3",
+          "claim": "所以 6/6 才會產出對應帳單、屆時才看得到"
+        },
+        {
+          "id": "M4",
+          "claim": "若希望一次顯示所有期數，建議改用重建新合約的方式"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING_SPLIT",
+        "notes": [],
+        "needs_split": [
+          {
+            "original": "此題為知識型問句，不需查實值（不得以查無帳單／索取編號作結）",
+            "why": "同一條裡混了正面命題（知識型問句）與禁止命題（不得以查無帳單／索取編號作結）⇒ 無法逐條打勾",
+            "proposed_must_have": "此題為知識型問句，不需查實值",
+            "proposed_must_not": "⛔ 不得以查無帳單／索取編號作結",
+            "⛔": "草擬者未逕行改寫，兩條提案待業主核可"
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "19|1",
+      "type": "T1",
+      "question": "合約已與房客修改好，想更新現有合約：①紙本上傳修改後合約，其他資料含帳務要重填嗎？②合約在待發送，如何不發送邀請就改成執行中？",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#19|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～合約修改後要更新的話：①可以用「複製合約功能」，依您需要的項目選擇複製、再調整即可，不必整份重填；②建議直接「創建新合約」，因為紙本已和房客修改好，只需租客同意、不必再次簽名。舊的合約可提交異動單移到歷史合約、過去帳單手動封存，之後就以新合約與帳單為準囉"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "可用「複製合約功能」依需要的項目複製再調整，不必整份重填"
+        },
+        {
+          "id": "M2",
+          "claim": "建議直接「創建新合約」；紙本已與房客改好，只需租客同意、不必再次簽名"
+        },
+        {
+          "id": "M3",
+          "claim": "舊合約可提交異動單移到歷史合約"
+        },
+        {
+          "id": "M4",
+          "claim": "過去帳單手動封存，之後以新合約與帳單為準"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "20|2",
+      "type": "T1",
+      "question": "簽約時承租人身分證已無法用「斜線」補上兩個人的，之前可以、最近開始無法。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#20|2",
+        "confidence": "explicit",
+        "reference_answer": "您好～雙人簽約輸入身分證時，請把身分證欄位改選「其他身分證」，就可以順利輸入兩個人的證號了（此選項不檢核格式）。"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "雙人簽約輸入身分證時，身分證欄位要改選「其他身分證」"
+        },
+        {
+          "id": "M2",
+          "claim": "「其他身分證」不檢核格式，可順利輸入兩個人的證號"
+        }
+      ],
+      "must_not": [
+        {
+          "id": "N1",
+          "claim": "不得回覆「系統只支援一位簽署人／只能填一位證號」"
+        }
+      ],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "21|3",
+      "type": "T1",
+      "question": "想在目前執行中的租約加入新的帳單項目，總表只能一筆一筆編輯，詢問有沒有一次編輯後面未發送帳單的地方。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#21|3",
+        "confidence": "explicit",
+        "reference_answer": "您好～一次編輯未發送帳單的功能，目前僅支援批次調整水電費用。如果是要新增帳單品項（例如加收項目），建議單獨為該項目「新增一筆週期帳單」，就會套用到後續未發送的帳單囉"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "一次編輯未發送帳單的功能目前僅支援批次調整水電費用"
+        },
+        {
+          "id": "M2",
+          "claim": "要新增帳單品項（例如加收項目）應單獨為該項目「新增一筆週期帳單」"
+        },
+        {
+          "id": "M3",
+          "claim": "週期帳單會套用到後續未發送的帳單"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "22|1",
+      "type": "T1",
+      "question": "詢問即時物件出租率「已出租 65（91.33%）」的資料來源從哪裡來。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#22|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～即時物件出租率的「已出租」數字，是以「合約中的物件總數量 ÷ 物件總數」計算出來的，所以會隨合約綁定的物件變動唷"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "即時物件出租率的「已出租」數字＝合約中的物件總數量 ÷ 物件總數"
+        },
+        {
+          "id": "M2",
+          "claim": "該數字會隨合約綁定的物件變動"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "23|1",
+      "type": "T1",
+      "question": "租客（獨角獸 6/3、和昌 204）有儲值電費，但因直接匯款而非後台儲值，沒有帳單紀錄，詢問如何新增帳單。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#23|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～租客若是直接匯款、沒有走後台儲值，可以到「待發送帳單」幫他新增一筆帳單來建立紀錄，並手動在電表加上對應度數，這樣紀錄就完整囉"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "租客直接匯款、沒走後台儲值時，到「待發送帳單」幫他新增一筆帳單來建立紀錄"
+        },
+        {
+          "id": "M2",
+          "claim": "並手動在電表加上對應度數，紀錄才完整"
+        }
+      ],
+      "must_not": [
+        {
+          "id": "N1",
+          "claim": "不得反問索取帳單編號而不給操作方法"
+        }
+      ],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "24|1",
+      "type": "T1",
+      "question": "詢問如何在系統新增帳單。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#24|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～新增帳單的方式跟您說明：到「待發送帳單」頁面就可以直接新增帳單囉！操作上有任何問題都歡迎再找我們"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "到「待發送帳單」頁面就可以直接新增帳單"
+        }
+      ],
+      "must_not": [
+        {
+          "id": "N1",
+          "claim": "不得給出「帳單管理頁面」等不存在的入口（幻覺入口）"
+        }
+      ],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "25|1",
+      "type": "T1",
+      "question": "詢問：租客逾期未繳費時，原提供的虛擬帳戶是否就不能繳款？可否再發一次虛擬帳號？年繳合約的帳單可否拆分今年與跨年度部分？",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#25|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～租客逾期未繳時，原本的虛擬帳號還是可以用來繳款的，通常可沿用很長一段時間；至於年繳跨年度的帳單目前無法自動拆分，建議可以在帳單品項備註上註明，或由我們人工另開一張帳單來做拆算"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "租客逾期未繳時，原本的虛擬帳號還是可以用來繳款"
+        },
+        {
+          "id": "M2",
+          "claim": "虛擬帳號通常可沿用很長一段時間"
+        },
+        {
+          "id": "M3",
+          "claim": "年繳跨年度的帳單目前無法自動拆分"
+        },
+        {
+          "id": "M4",
+          "claim": "替代做法：在帳單品項備註註明，或由客服人工另開一張帳單拆算"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "26|1",
+      "type": "T1",
+      "question": "反映頁面文字變得不正常（出現英文/怪字），詢問是否哪裡設定錯誤。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#26|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～您頁面文字變得不正常，是因為手機瀏覽器開了 google 自動翻譯造成的，麻煩您把自動翻譯關閉，或點一下翻譯圖示選「繁體中文」，畫面就會恢復正常囉"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "頁面文字不正常的原因是手機瀏覽器開了 Google 自動翻譯"
+        },
+        {
+          "id": "M2",
+          "claim": "解法：關閉自動翻譯，或點翻譯圖示選「繁體中文」"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "27|1",
+      "type": "T1",
+      "question": "詢問帳單封存後如何再退回？或是否可以新建帳單？並詢問可否協助教學。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#27|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～帳單封存後若要退回，需要透過異動單來變更；如果只是要再開帳單，也可以直接在「待發送帳單」頁新增一張，物件、繳費截止日、金額等項目重新選取編輯就可以了"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "帳單封存後若要退回，需要透過異動單來變更"
+        },
+        {
+          "id": "M2",
+          "claim": "若只是要再開帳單，可直接在「待發送帳單」頁新增一張"
+        },
+        {
+          "id": "M3",
+          "claim": "新增時物件、繳費截止日、金額等項目需重新選取編輯"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "28|1",
+      "type": "T1",
+      "question": "修繕管理時，浴室三個東西要報修，是否一定要 KEY 三張報修單/能否複選；一批物件要修同一東西是否也要多張。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#28|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～修繕品項若預設選項不夠用，您可以選「其他」自行輸入，這樣就能把多個品項整合寫在同一張報修單裡，不必開多張囉"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "修繕品項若預設選項不夠用，可以選「其他」自行輸入"
+        },
+        {
+          "id": "M2",
+          "claim": "可把多個品項整合寫在同一張報修單，不必開多張"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "30|1",
+      "type": "T1",
+      "question": "想知道有沒有功能可同時看到本月到期＋無合約的物件。",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#30|1",
+        "confidence": "explicit",
+        "reference_answer": "您好～在物件總表上方的欄位就能篩選喔：選「本月到期」，再看標籤是「無合約／洽談中」的就是目前沒有合約的物件；標籤「合約中」的則是本月即將到期的"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "在物件總表上方的欄位就能篩選"
+        },
+        {
+          "id": "M2",
+          "claim": "選「本月到期」"
+        },
+        {
+          "id": "M3",
+          "claim": "標籤「無合約／洽談中」＝目前沒有合約的物件"
+        },
+        {
+          "id": "M4",
+          "claim": "標籤「合約中」＝本月即將到期的物件"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "32|1",
+      "type": "T1",
+      "question": "我們剛收到永豐的信需要抽查這三筆交易需要截圖系統的畫面傳給永豐，請問我們可以怎麼在系統查詢交易？",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#32|1",
+        "confidence": "explicit",
+        "reference_answer": "帳單總表，下拉篩選單，搜尋虛擬帳號"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "到「帳單總表」"
+        },
+        {
+          "id": "M2",
+          "claim": "使用下拉篩選單"
+        },
+        {
+          "id": "M3",
+          "claim": "以虛擬帳號搜尋該筆交易"
+        }
+      ],
+      "must_not": [],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    },
+    {
+      "case_id": "33|1",
+      "type": "T1",
+      "question": "您好，想請教一下，若是免註冊合約的租客，實際繳款金額與系統租金繳費單金額不一致，一般正確的操作流程是什麼呢？  目前我的做法是先取消發送帳單 → 修改帳單金額 → 再將帳單移至「已到帳」，想確認這樣的操作方式是否正確？還是系統有其他建議的處理方式，謝謝！",
+      "truth_source": {
+        "kind": "transcript",
+        "ref": "expected_answers.json#33|1",
+        "confidence": "explicit",
+        "reference_answer": "已發送的應到帳是可以取消的"
+      },
+      "must_have": [
+        {
+          "id": "M1",
+          "claim": "已發送的「應到帳」帳單可以取消（收回）"
+        },
+        {
+          "id": "M2",
+          "claim": "取消（收回）後可改金額再重發，重發會產生新的繳費資訊（依 jgb2 Bill::canCancel：應到帳／排定發送可收回、待對帳／已到帳不可；出自登錄簿 R-33 狀態欄，非客服原文）"
+        }
+      ],
+      "must_not": [
+        {
+          "id": "N1",
+          "claim": "不得回覆「已發送的帳單無法撤回」"
+        }
+      ],
+      "allowed": [
+        "講法與語序不拘",
+        "詳略不拘",
+        "加不加 CTA／招呼語不拘",
+        "引用來源格式不拘"
+      ],
+      "verdict_rule": "must_have 全中 且 must_not 全不中 ⇒ PASS；任一條無法從回答判定 ⇒ UNJUDGEABLE",
+      "owner_review": {
+        "status": "PENDING",
+        "notes": []
+      }
+    }
+  ]
+}

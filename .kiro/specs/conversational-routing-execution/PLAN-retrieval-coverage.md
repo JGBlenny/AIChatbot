@@ -1,6 +1,7 @@
 # 檢索覆蓋率主線計畫（v2）
 
-> 建立 2026-09-01｜v2 依獨立審查全面改寫｜狀態：**PROPOSED，等待業主批准**
+> 建立 2026-09-01｜v2 依獨立審查全面改寫｜**v2.1 2026-09-01：併入 P0-3 結果與答案驗證軌**
+> 狀態：**PROPOSED，等待業主批准**
 > 業主目標序列：驗證架構 → 治「單一知識點覆蓋率不足」→ 擴測試情境 → 大量回測驗證 → 補知識庫 → 上版
 > v1 已作廢：其 P0-1 建立在錯誤前提上，且漏掉真正的阻塞（量測 harness 不存在）
 
@@ -9,9 +10,14 @@
 ## 0. 事實基準（2026-09-01 經二輪獨立稽核；⛔ 無出處者不得寫入本檔）
 
 ```text
-知識庫
+知識庫（⚠️ 分母已由 P0-3 修正，見 p0-3-knowledge-coverage-census.md）
   active 知識                     922
-  有 retrieval_representation       9   ← **1%**；913 筆每次檢索仍用 legacy question_summary
+  − 設定列（系統脈絡27＋對話規則23＋4253）51  ⛔ 不是知識，retriever 兩條路都寫死排除
+  − 錨點列（answer 空，⛔ 不可補造）       98  （與設定列交集 0，非重複扣除）
+  = **適格母體                     773**
+    其中已宣告 representation         6   ⇒ **覆蓋率 6/773 = 0.78%**
+  ⛔ **913 不得當分母**（把設定列與錨點列都算進去了）
+  有 retrieval_representation       9   ← 9 = Level-A V2 全體；其中 3 筆落在上面的 98 內
   有 embedding                    871   ← 51 筆 active 無向量
     ⚠️ 這 51 筆**兩條路都進不去**：vector 路徑要求 embedding IS NOT NULL
        （vendor_knowledge_retriever_v2.py:142）；keyword 路徑要求 keywords 非空（:285-286）
@@ -21,8 +27,10 @@
 
 測試資料
   test_scenarios                4,875   全 active
-    有 expected_category        3,533   72%
-    有 related_knowledge_ids       24  0.5%
+    有 expected_category        3,533   72%  ⚠️ **全部來自 imported 2,608／auto_generated 690／
+                                          manual 235；user_question 佔 0** ⇒ 路由正確率若只跑這
+                                          3,533 題，母體裡**沒有任何一句真實使用者問句**
+    有 related_knowledge_ids       24  0.5%  ⛔ **實際可用 = 0**，24 筆全為懸空引用（見 D-3）
     有 expected_answer              0    0%   ⚠️ 見 §2 P0-0 的裁決缺口
     collection_id 非空              0    ⚠️ **與能否批次無關**，見下
     來源  imported 2608／auto_generated 1035／user_question 982／manual 250
@@ -112,23 +120,32 @@ scripts/audit/check_invariants.sh（25 條）｜scripts/audit/baseline_oracle.py
 ✅ 架構驗證 —— 二輪獨立稽核（2026-09-01），證據落在本檔 §0／§4 與兩份代理報告
    分數合成公式與其適用條件、15 項機制實作狀態、spec 範圍歸屬、文件與程式碼 5 處不符
    ⛔ 本項不再重做
+
+✅ P0-3 知識庫覆蓋率盤查（2026-09-01，唯讀）
+   出口達成：適格母體 **773**（不是 913）、覆蓋率 6/773
+   落檔 `p0-3-knowledge-coverage-census.md`
+   ⚠️ 順帶推翻 P0-4 前提（見下）＋抓到未記錄缺陷 D-1（見 §4）
 ```
 
 ### P0 建尺（⛔ 不動任何產品行為）
 
 ```text
-P0-0  裁決缺口盤點與呈核                                        我做＋業主裁
-  待裁 ① expected_answer 全 0 ⇒ 答案正確性只有 heuristic 尺
-          （evaluate_answer_v2 門檻硬編在被驗方 repo——freeze_measurement docstring
-           自己就把「及格線在被驗方手上」列為系統性缺陷）
-          ⇒ 明文接受此尺，或排補 expected_answer 的工作
-       ② 療效訊號門檻 —— **業主裁定：屆時再評估，取決於測試資料品質**
-          ⚠️ 參考下限：同 HEAD 重跑變異 13%（14/107）
-  出口  兩項各有明文裁決並落檔
+P0-0  裁決缺口盤點與呈核                                        ✅ 兩項均已裁
+  ① 答案正確性的尺 —— **業主定案 2026-09-01：⛔ 不補 expected_answer**
+     改為「先自己建情境與接受範圍的回答，再派代理驗證」
+     ⇒ 代理當**對帳員**（拿人工指定的來源對帳），⛔ 不當裁判（憑自身常識判對錯）
+     ⇒ 及格線因此離開被驗方 repo，`evaluate_answer_v2` 的系統性缺陷被繞開
+     ⇒ 執行協議固化為 skill `answer-acceptance-verify`；情境建置＝新的 P0-2
+     ⚠️ claim ceiling：三型的率**分開報**，⛔ 不得合成單一「答案正確率」
+  ② 療效訊號門檻 —— **業主裁定：屆時再評估，取決於測試資料品質**
+     ⚠️ 參考下限：同 HEAD 重跑變異 13%（14/107）
+  出口  ✅ 兩項均已明文裁決並落檔（本節即落檔處）
 
 P0-1  量測 harness 擴充（**取代 v1 的 collection 接線，為真前置**）    我做
   目的  現有工具產不出計畫承諾的任何數字
   步驟  ① 選題端補讀 expected_category、related_knowledge_ids
+           ⚠️ related_knowledge_ids 現有 24 筆**全懸空**（D-3）⇒ 補讀本身沒錯，
+              但 ⛔ 不得預期它產出任何命中真相；命中母體必須由 P0-2 新標
         ② 判定端新增兩個獨立指標：路由分類正確率、檢索命中正確率
            ⛔ 不改既有 evaluate_answer_v2／_gold_checks 的行為（避免動到既有判定）
         ③ 修掉或明確繞開 backtest_framework_async.py:1304 的斷裂入口
@@ -136,25 +153,76 @@ P0-1  量測 harness 擴充（**取代 v1 的 collection 接線，為真前置**
   出口  以 20 題小樣本跑出「路由正確率」「命中率」兩個數字，且獨立重算一致
   ⚠️ 這是**開發任務**，不是「跑既有工具」
 
-P0-2  檢索命中 ground truth 標註（100 筆）                      我做＋業主核判準
-  前置  P0-0①
-  步驟  ① 判準先寫死並經業主核可（什麼叫「該命中這筆」）
-        ② 從 user_question 來源 982 筆真實問題挑 100 筆
-        ③ 逐筆標「應命中知識 id」＋「是否該進面向」
-           ⚠️ 可用 test_scenarios.question_embedding 做候選推薦，⛔ 但不得取代人工判定
-        ④ 正負對照：含已知會過與已知會敗各數筆
-  出口  100 筆標註凍結（sha256），且尺在 3 樣本下看得見已知病灶
-  ⛔ 標註不得由實作方單獨完成
+P0-2  三型測試情境與接受範圍建置                              我草擬＋業主核
+  前置  P0-0①（已裁）｜協議 `.claude/skills/answer-acceptance-verify/SKILL.md`
+  ⚠️ **業主定案 2026-09-01：對話流程／API 查詢／單筆知識，三型各別建集、各別報率。**
+     正解的**來源**不同，尺就必須不同；⛔ 不得混批，⛔ 不得合成單一正確率。
 
-P0-3  知識庫覆蓋率盤查                                          我做，唯讀
+  P0-2-T1  單筆知識題                                        第一批，先做
+    正解來源  人工標「該命中哪筆」⇒ 該 knowledge_base row 的 answer 欄位即答案本體
+              ⇒ **標了命中就免費得到答案尺**，不必另寫標準答案
+    尺        rubric 三欄：必含事實／禁止內容／允許差異（逐條可打勾）
+    母體      適格母體 773 中的 direct_answer 739
+    起手      25 案現成（`corpus-20260810/expected_answers.json`，逐字取自客服逐字稿
+              的「標準答案」欄）＋業主指定痛點若干
+    ⚠️ 逐字標準答案 ⛔ 不得直接當 must_have——換講法就誤殺，率會被壓成雜訊
+
+  P0-2-T2  API 查詢題                                        次做
+    正解來源  API 回傳本身；formatter 的決定性輸出（facts）
+    尺        **決定性逐欄比對**；LLM 只判一條：有沒有超出 facts 亂講／自己算數字
+    母體      api_call 錨點 27 筆 ＋ grounding_scope.select='api' 的面向
+    ⛔ 機械可解碼的事實不交 LLM 判（本專案已裁：formatter 算 facts、LLM 只組話）
+    ⚠️ 跑之前先確認 USE_MOCK_JGB_API 實際值——mock 與真 API 的正解不同
+
+  P0-2-T3  對話流程題                                        末做，門檻最高
+    正解來源  逐輪期望的**動作**（該追問什麼／進哪個面向／該收斂／該退出），⛔ 非字句
+    母體      corpus-20260810：37 案／107 輪
+    判定單位  **以案為單位**，⛔ 不以輪報率（同 HEAD 重跑變異 13%）
+    ⚠️ 已知引擎級缺口（追問不帶上下文 E-2、面向誤搶接與黏著 E-3）會集中在這一型
+       ⇒ 這一型的 FAIL ⛔ 不得直接歸因為知識覆蓋率不足
+
+  出口  ① 每型各自的 rubric 凍結（sha256）＋業主核可紀錄
+        ② **尺自證通過**：三個已裁定病灶（收據 NT$0／iot 搶接反向否定／3863 矛盾知識）
+           餵給判官必須全紅；任一漏抓 ⇒ 尺是瞎的，⛔ 該輪停止
+        ③ 判官散度（同輸出重跑 ≥3 次）小於系統側 13%
+  ⛔ rubric 不得由實作方單獨定案；我草擬並機械抽候選，業主核可才生效
+  ⛔ 沒有真相來源的情境不進批次——不得用代理生一個答案來湊
+  ✅ **業主定案 2026-09-01：T1 第一批 30 題**
+
+  ### T1 batch-01 組成（草稿已產出 2026-09-01）
+```text
+  已有        21 案  出自 corpus-20260810 的 25 案，扣掉分型為 T2 的 4 案
+                     （31|1 收據金額、35|1 點退金額、36|1 租客合約 ID、37|1 續約歷程）
+                     ⇒ must_have 57 條、must_not 8 條，逐字取自客服標準答案，⛔ 未改寫
+  待補         9 案  ⛔ 選題規則須先凍結、且**在跑系統之前**定案
+  草稿檔      rubric-batch-01-T1.draft.json（DRAFT_PENDING_OWNER_APPROVAL）
+  T2 種子檔   rubric-batch-T2.seed.json（4 案，本輪不判）
+  待業主逐條裁 09|13（含元註記）、18|2（同一條混了正／負命題，已提兩條拆分提案）
+```
+  ⚠️ **claim ceiling（本批專屬）**：這 21 案的語料**已驅動過修正**（P1-a 等）
+     ⇒ 對它們而言是**回歸尺**（不得再壞），⛔ **不是**留出集，
+     ⛔ 通過率不得當作泛化能力或線上答案品質的證據。
+  ⚠️ 型別判定規則已在**看過任何系統輸出之前**寫死：
+     T2 ＝ 問句要求某一筆實體記錄的**現值**；T1 ＝ 其餘（機制／規則／操作方法），
+     句中出現編號但正解不依實值者仍為 T1（例 18|2）
+
+P0-3  知識庫覆蓋率盤查                                    ✅ **已完成 2026-09-01**
   步驟  ① 913 筆缺 declaration 的清單與分型
         ② **扣除不變量 16 管的 alias／錨點**與「answer 缺的不可補造」列 ⇒ 得**適格母體**
         ③ 51 筆無 embedding 的成因｜④ 98 筆空 answer 錨點分型
-  出口  適格母體數字（⚠️ 913 是毛數字，⛔ 不得當分母）
+  出口  ✅ 適格母體 **773**｜落檔 `p0-3-knowledge-coverage-census.md`
+        ⚠️ 913 是毛數字，⛔ 不得當分母
 
-P0-4  51 筆無 embedding 處理（**從 v1 的 P3-2 提前**）           我做
-  理由  獨立、便宜、立刻消滅「絕對檢索不到」族群（兩條檢索路都進不去）
-  ⚠️ 走 Level-A 批准路徑；⛔ 禁用 regenerate_all_embeddings
+P0-4  51 筆無 embedding 處理                    ⛔ **業主定案 2026-09-01：不做**（前提已被推翻）
+  ⚠️ 原文的理由「兩條檢索路都進不去 ⇒ 絕對檢索不到，優先消滅」**是錯的**。
+     P0-3 實查：51 筆 = 系統脈絡 27 ＋ 對話規則 23 ＋ id 4253，
+     全是**設定列**（system_context.py／load_rules 依 category 載入後注入 prompt），
+     且 retriever 的向量路徑與 keyword 路徑**都寫死** `category IS DISTINCT FROM` 排除。
+     ⇒ 沒有 embedding 是**正確狀態**；補了等於把系統提示詞丟進檢索候選池、直接污染排序。
+  ⇒ ✅ 已從 P0 移除，記入 §5「明確不做」
+  ⚠️ `tools/embed_missing.py` 已有前綴防護，今天跑它會選出 **0 筆**（已實測；
+     正對照：`embedding IS NULL` 確實有 51 筆，查詢路徑是通的）
+     ⛔ 但不得改用「補完所有 NULL embedding」的其他寫法
 
 P0-5  collection 連結（**降級為選配**）                          我做，低優先
   ⚠️ 非批次前置（runner 不讀它）；四個 collection 已存在（init-legacy seed），⛔ 不需建立
@@ -171,7 +239,7 @@ P1-1  建立 test_scenarios 母體的量測凍結物                       我�
   出口  凍結物落檔含 sha256
 
 P1-2  跑第一次大量回測                                          我做
-  前置  P0-1、P0-2、P1-1
+  前置  P0-1、P0-2（至少 T1 已凍結且尺自證通過）、P1-1
   步驟  ① 先驗容器與 HEAD 一致（舊 image 會讓整輪翻盤）
         ② 確認 ENABLE_RERANKER 實際值（程式預設 false／compose true）
         ③ 分批跑 3,533 題（有 expected_category）＋ 100 筆命中標註集
@@ -179,6 +247,8 @@ P1-2  跑第一次大量回測                                          我做
         多輪模擬器與生產 chat 全程呼叫 OpenAI ⇒ 費用需先估並呈報
   ⚠️ **與 SEC-01 換 key 時點協調**——回測中途換 key 會整輪作廢
   出口  路由正確率、命中率各有數字與分母
+  ⚠️ **claim ceiling**：3,533 題母體裡 user_question 佔 0 ⇒ ⛔ 不得宣稱「真實使用者問句的
+     路由正確率」，只能宣稱「imported／auto_generated／manual 題庫上的路由正確率」
 
 P1-3  錯誤分型                                                  我做
   分成  召回不到／召回到但排序輸／路由錯／答案錯
@@ -251,6 +321,35 @@ COMPLETE_CONVERSATION_ARCHITECTURE.md §3（實際行號 432-434）
 chat.py:2624  註解引用「既有 append_turn 統一出口」——**全 repo 無此函式**
 ```
 
+### D-1（P0-3 新發現，⚠️ 此前全 repo 未記錄）⏸ **業主定案 2026-09-01：先不動**，排在 P1 基準之後
+
+```text
+id 4253  question_summary =「系統脈絡：帳務領域-帳單診斷(子面向)」
+         實際 category = '條件診斷：帳單'（其他 26 筆同型列都是 '系統脈絡'）
+後果     system_context 的三條查詢都要求 category='系統脈絡' ⇒ 三條全不命中；
+         又因無 embedding、無 keywords 而檢索不到 ⇒ **這一列在系統裡是死的**
+         ⇒ **帳單診斷面向只拿到通用 base，領域脈絡層從未載入**
+實證     pm_bill_diagnosis 的 topic_scope.category='條件診斷：帳單'，
+         父鏈 ['條件診斷','條件診斷：帳單'] 兩層命中的系統脈絡列皆 0
+正對照   '帳單異常' = 1 ✅｜'條件診斷：訂閱' = 1 ✅（⇒ 查詢路徑是通的）
+⚠️ 這正是 HANDOFF-20260901 §2 收線實測走的那個面向
+⚠️ 修法是一筆 UPDATE category ＋容器重啟（system_context 有進程級快取），
+   但 ⛔ 在 P1 基準之前動它，會讓第一次回測失去乾淨基準（見 §5）
+
+D-2  tenant_repair（修繕報修）同樣 own_layer = 0，且**從來沒寫過**系統脈絡列
+     22 個 category 模式面向逐一盤查，只有 D-1／D-2 兩個缺；其餘 20 個都有
+     ⚠️ 是否刻意設計**尚未查證**
+
+D-3  ⛔ **`related_knowledge_ids` 的 24 筆標註全部懸空——可用的檢索命中 ground truth ＝ 0**
+     實查   被引用的 distinct knowledge id 共 25 個，**存在於 knowledge_base 者 0 個**
+            （引用值為 48–59 等小號；knowledge_base 的 min(id) = 1345）
+     正對照 id 3402 查得到 ⇒ 查詢路徑是通的，不是查詢寫錯
+     後果   ① §0「有 related_knowledge_ids 24」不得再當成「有 24 筆命中真相」
+            ② P0-1 步驟①「選題端補讀 related_knowledge_ids」讀到的每一筆都是死引用
+            ③ P0-2-T1 的 9 個缺額**不能**靠既有標註補——必須新標
+     ⚠️ 分布：user_question 9 筆／manual 15 筆；imported 與 auto_generated 皆 0
+```
+
 ---
 
 ## 5. 明確不做
@@ -264,6 +363,10 @@ chat.py:2624  註解引用「既有 append_turn 統一出口」——**全 repo 
 ⛔ 以 913 為覆蓋率分母（毛數字，須扣不變量 16 的 alias／錨點）
 ⛔ 照 §4 的錯誤文件改程式碼
 ⛔ 把 collection 連結當成批次前置
+⛔ 為 `embedding IS NULL` 的設定列補向量（P0-4 改判，理由見上）
+⛔ 讓判官代理憑自身常識判 JGB 專有語義——它會替「聽起來合理但與庫相反」的錯蓋章
+⛔ 把三型（單筆知識／API 查詢／對話流程）混批或合成單一「答案正確率」
+⛔ 把 UNJUDGEABLE 併入 PASS 或 FAIL——它是第三格，單獨報
 ```
 
 ---
