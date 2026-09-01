@@ -77,7 +77,9 @@ _RESOLVER_SPECS = {
 #: ⛔ 輸入 shape 相同 ⛔ 不等於 semantic responsibility 相同——⛔ 不得共用他人的 form。
 RESPONSIBILITY_FORMS = {
     "R-29": {"form_id": "resp_r29_receipt_actual_amount",
-             "input_contract_id": "bill.by_ref.v1"},
+             "input_contract_id": "bill.by_ref.v1",
+             # ⚠️ 取自 registry-v2 的 proposed_strategy，⛔ 不得於 runtime 推導
+             "fulfillment_strategy": "CAPABILITY"},
 }
 
 #: 相容既有呼叫端／測試的視圖（⛔ 只讀）
@@ -161,8 +163,15 @@ async def complete_responsibility_form(session_state: Mapping[str, Any], form_sc
     if api is None:
         from services.jgb_system_api import JGBSystemAPI
         api = JGBSystemAPI()
-    role_id = (session_state.get("vendor_id") if session_state.get("vendor_id") is not None
-               else (session_state.get("metadata") or {}).get("role_id"))
+    # ⚠️ F-C25：role_id 是**上游 API 已授權**的角色識別，與 vendor_id 是不同身分軸。
+    #    2026-09-01 實測：舊碼優先取 vendor_id ⇒ 打出 role_id=2（實為業者 id），
+    #    API 回 404 ⇒ 使用者看到「查無符合的資料」這種**假陰性**（不報錯、看起來像帳單不存在）。
+    #    ⇒ 只讀 handoff 時持久化的 role_id，⛔ 不得回退 vendor_id、⛔ 不得推導。
+    role_id = (session_state.get("metadata") or {}).get("role_id")
+    if not role_id:
+        raise ResponsibilityCompletionError(
+            "responsibility session 缺 metadata.role_id"
+            "——⛔ 不得以 vendor_id 代替（F-C25：role_id 由上游 API 授權後傳入）")
 
     resolution = await _resolve_input(plan["input_contract_id"], api, str(role_id),
                                       collected_data)                              # ②

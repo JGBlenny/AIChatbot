@@ -571,7 +571,12 @@ async def handle_collecting(request, req, ctx: ChatRequestContext):
         print(f"📋 用戶取消表單，但沒有待處理的問題")
         return _finalize_response(_convert_form_result_to_response(form_result, request), request, req)
 
-    return _finalize_response(_convert_form_result_to_response(form_result, request), request, req)
+    # ⚠️ **依型別分流**（D1-E）：`skip_review=TRUE` 的表單在 COLLECTING 路徑就會完成，
+    #    此時 responsibility mode 回的是 FulfillmentExecutionResult（帶 `text` 非 `answer`）。
+    #    2026-09-01 實測：此處原本只用 legacy converter ⇒ 責任結果被轉成**空回應**。
+    #    ⚠️ dispatcher 對 legacy 結果會原樣落回舊 converter，legacy 行為逐位不變。
+    return _finalize_response(
+        _convert_responsibility_or_form_result(form_result, session_state, request), request, req)
 
 
 async def handle_image(request, req, ctx: ChatRequestContext):
@@ -1617,6 +1622,7 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
             # ⚠️ ⛔ 不寫 session、⛔ 不呼叫 build_responsibility_session、⛔ 不改回應。
             # ⚠️ 整段包在 try 內：telemetry 故障 ⛔ 不得打死使用者請求；但錯誤必須明確留痕
             #    （observe() 內部已保證回 status=ERROR 而非偽裝成「無 winner」）。
+            _obs = None
             try:
                 from services import responsibility_telemetry as _rtel
                 if _rtel.enabled():
@@ -1628,7 +1634,44 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
                     if _line:
                         print(_line)
             except Exception as _e:                                    # noqa: BLE001
+                _obs = None
                 print(f"❌ [responsibility-telemetry] 觀測層自身異常（⛔ 不影響本輪回應）：{_e}")
+
+            # ── S2 AUTHORITY HANDOFF ──────────────────────────────────────
+            # ⚠️ 這是**第一次**把 authority 從 facet 交給 responsibility。
+            # ⚠️ 進到這裡時 winner 已由 canonical scorer 決定（decision layer），
+            #    ⛔ 此處不做任何 semantic 選擇、⛔ 不看 facet、⛔ 不改選 runner-up。
+            # ⚠️ handoff_eligible 已含：winner ∈ allowlist ＋ winner 有 registered binding。
+            if _obs and _obs.get("handoff_eligible"):
+                _rid = _obs["winner"]
+                if not request.session_id:
+                    # ⚠️ 無 session 無法持久化 authority ⇒ ⛔ 不得 handoff。
+                    #    ⛔ 這不是 responsibility success，明確記錄後走既有路徑。
+                    print(f"⚠️ [responsibility-handoff] {_rid} 具備資格但**無 session_id**"
+                          f" → ⛔ 不 handoff（無法持久化 authority），走既有 facet")
+                else:
+                    try:
+                        _fm = req.app.state.form_manager
+                        _hres = await _fm.trigger_responsibility_form(
+                            session_id=request.session_id,
+                            user_id=request.user_id,
+                            vendor_id=request.vendor_id,
+                            responsibility_id=_rid,
+                            role_id=request.role_id,      # ⚠️ F-C25：上游已授權的 role
+                        )
+                        _a = _hres["_authority"]
+                        print(f"🎯 [responsibility-handoff] AUTHORITY_COMMITTED "
+                              f"{_a['responsibility_id']} → {_a['fulfillment_binding_id']} "
+                              f"（input_contract={_a['input_contract_id']}"
+                              f"｜strategy={_a['fulfillment_strategy']}）"
+                              f"｜⛔ facet engine bypassed")
+                        return _convert_form_result_to_response(_hres, request)
+                    except Exception as _he:                           # noqa: BLE001
+                        # ⚠️ handoff 執行失敗 ⇒ **明確失敗**，⛔ 不得假裝 responsibility success。
+                        #    仍讓使用者被既有 facet 服務，但本輪 ⛔ 不得被計為 handoff 成功。
+                        print(f"❌ [responsibility-handoff] HANDOFF_FAILED {_rid}: "
+                              f"{type(_he).__name__}: {_he}"
+                              f"｜⛔ 非 responsibility success；本輪落回既有 facet")
 
             # ⚠️ 裁定 001-A 的仲裁**唯一** oracle。⛔ 不得改成 `if _diag_cfg is not None`
             #    或任何讀 `.stay` 的判定——那正是「技術故障取得 routing authority」的路徑。

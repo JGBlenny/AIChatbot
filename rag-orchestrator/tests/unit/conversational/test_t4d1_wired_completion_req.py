@@ -27,6 +27,10 @@ PAID = {"id": 716317, "title": "8月房租", "status": 16, "total": 18000}
 def _sess(**over):
     s = rsess.build_responsibility_session(**R29)
     s["vendor_id"] = 24
+    # ⚠️ F-C25（2026-09-01 業主裁定）：role_id 由上游 API 授權後傳入並持久化於 session；
+    #    ⛔ 不得以 vendor_id 代替——兩者是不同身分軸（實測曾打出 role_id=2 而非 20151，
+    #    API 404 ⇒ 使用者看到「查無符合的資料」這種假陰性）。
+    s["metadata"] = {"role_id": "24"}
     s.update(over)
     return s
 

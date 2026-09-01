@@ -52,6 +52,15 @@ ACTION_RESUME_FULFILLMENT = "resume_fulfillment"
 AUTHORITY_FIELDS = ("responsibility_id", "fulfillment_binding_id",
                     "fulfillment_strategy", "input_contract_id")
 
+#: **F-C28 的唯一來源**：`validate_session()` 視為 authority contract 的欄位，
+#: 若跨 turn 需要成立，就必須由 persisted session carrier **原樣**承載。
+#: ⚠️ writer（form_manager）一律引用本常數，⛔ 不得另外手抄一份欄位清單——
+#:    2026-09-01 曾因手抄漏掉 `fulfillment_strategy` 而在 turn 2 才炸。
+#: ⚠️ restore 端**只讀 DB 原值**，⛔ 不推導、⛔ 不補值：
+#:    自動補值會讓 validate_session 對還原路徑恆真（normalization 而非 validation）。
+PERSISTED_AUTHORITY_FIELDS = ("session_authority_mode", *AUTHORITY_FIELDS,
+                              "on_complete_action")
+
 
 class SessionAuthorityError(RuntimeError):
     """session authority 契約違反——⚠️ 一律**大聲失敗**，⛔ 不得默默降級或猜測。"""

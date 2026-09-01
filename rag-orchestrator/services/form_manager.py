@@ -228,9 +228,17 @@ class FormManager:
         vendor_id: int,
         form_id: str,
         trigger_question: str = None,
-        knowledge_id: int = None
+        knowledge_id: int = None,
+        authority: Optional[Dict] = None,
+        metadata: Optional[Dict] = None
     ) -> Optional[Dict]:
-        """創建新的表單會話（同步）"""
+        """創建新的表單會話（同步）。
+
+        ⚠️ `authority`（S2）：responsibility-mode 的 carrier 欄位，
+        由 `responsibility_session.build_responsibility_session()` 產生後原樣傳入。
+        ⛔ **不得**在此處自行組裝或推導 authority——那會讓 authority 有第二個來源。
+        ⚠️ 未帶 `authority` 時，INSERT 的欄位與參數**與既有行為逐字相同**（legacy 不受影響）。
+        """
         try:
             # 先獲取表單定義
             form_schema = self._get_form_schema_sync(form_id, vendor_id)
@@ -241,20 +249,35 @@ class FormManager:
             # 初始化空的 collected_data
             collected_data = {field['field_name']: None for field in form_schema['fields']}
 
+            cols = ["session_id", "user_id", "vendor_id", "form_id",
+                    "state", "current_field_index", "collected_data",
+                    "trigger_question", "knowledge_id"]
+            vals = [session_id, user_id, vendor_id, form_id,
+                    FormState.COLLECTING, 0, json.dumps(collected_data),
+                    trigger_question, knowledge_id]
+            if authority:
+                # ⚠️ 白名單逐欄取用：⛔ 不得把整包 dict 展開進 SQL
+                # ⚠️ 欄位清單一律取自 **單一來源** PERSISTED_AUTHORITY_FIELDS（F-C28）。
+                #    ⛔ 不得在此手抄——2026-09-01 曾手抄漏掉 fulfillment_strategy，
+                #    turn 2 resume 才炸（unit 測試餵記憶體 dict 看不到）。
+                from services.responsibility_session import PERSISTED_AUTHORITY_FIELDS
+                for col in PERSISTED_AUTHORITY_FIELDS:
+                    if col not in authority:
+                        raise ValueError(
+                            f"responsibility session 缺 authority 欄位 {col!r}"
+                            f"——⛔ 不得以部分 authority 建立 session")
+                    cols.append(col)
+                    vals.append(authority[col])
+            if metadata is not None:
+                cols.append("metadata")
+                vals.append(json.dumps(metadata))
+
             with get_db_cursor(dict_cursor=True) as cursor:
-                cursor.execute("""
-                    INSERT INTO form_sessions (
-                        session_id, user_id, vendor_id, form_id,
-                        state, current_field_index, collected_data, trigger_question, knowledge_id
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                cursor.execute(f"""
+                    INSERT INTO form_sessions ({', '.join(cols)})
+                    VALUES ({', '.join(['%s'] * len(cols))})
                     RETURNING *
-                """, (
-                    session_id, user_id, vendor_id, form_id,
-                    FormState.COLLECTING, 0,
-                    json.dumps(collected_data),
-                    trigger_question,
-                    knowledge_id
-                ))
+                """, tuple(vals))
 
                 result = cursor.fetchone()
                 return dict(result) if result else None
@@ -269,12 +292,15 @@ class FormManager:
         vendor_id: int,
         form_id: str,
         trigger_question: str = None,
-        knowledge_id: int = None
+        knowledge_id: int = None,
+        authority: Optional[Dict] = None,
+        metadata: Optional[Dict] = None
     ) -> Optional[Dict]:
         """創建新的表單會話（異步）"""
         return await asyncio.to_thread(
             self._create_form_session_sync,
-            session_id, user_id, vendor_id, form_id, trigger_question, knowledge_id
+            session_id, user_id, vendor_id, form_id, trigger_question,
+            knowledge_id, authority, metadata
         )
 
     def _update_session_state_sync(
@@ -433,6 +459,88 @@ class FormManager:
     # ========================================
     # 業務邏輯方法
     # ========================================
+
+    async def trigger_responsibility_form(
+        self,
+        session_id: str,
+        user_id: str,
+        vendor_id: Optional[int],
+        responsibility_id: str,
+        role_id: Optional[str] = None,
+    ) -> Dict:
+        """S2 authority handoff：以 **responsibility authority** 開啟輸入表單。
+
+        ```text
+        canonical winner（已在 decision layer 決定）
+          → build_responsibility_session()      ← authority 的唯一組裝點
+          → create_form_session(authority=...)  ← 持久化到 form_sessions
+          → 回傳第一欄 prompt（bypass facet engine）
+        ```
+
+        ⚠️ ⛔ 本方法**不做任何 semantic 選擇**：responsibility 已由 canonical scorer 決定，
+        傳進來就是定案（F-C26／F-C1 no-reroute 由結構保證）。
+        ⚠️ ⛔ 不接受 knowledge_id——responsibility mode 下它是 authority conflict 來源（F-C5）。
+        ⚠️ form 與 input contract 的對應取自 `RESPONSIBILITY_FORMS`（F-C27 稽核來源），
+           ⛔ 不得在此處臨時決定要用哪張表單。
+        """
+        from services.responsibility_completion import RESPONSIBILITY_FORMS
+        from services import responsibility_session as rsess
+
+        spec = RESPONSIBILITY_FORMS.get(responsibility_id)
+        if spec is None:
+            raise ValueError(
+                f"{responsibility_id} 未登記於 RESPONSIBILITY_FORMS"
+                f"——⛔ 不得臨時挑一張 form（F-C27）")
+
+        from services.fulfillment_registry import bindings_for
+        bindings = bindings_for(responsibility_id)
+        if not bindings:
+            # ⚠️ 呼叫端應已用 handoff_eligible 擋掉；此處是 defense in depth。
+            raise ValueError(
+                f"{responsibility_id} 無已註冊 binding——⛔ 不得建立 responsibility session")
+        if len(bindings) > 1:
+            raise ValueError(
+                f"{responsibility_id} 有多個已註冊 binding {bindings}"
+                f"——⛔ 不得由本方法任選（authority 必須唯一）")
+
+        session = rsess.build_responsibility_session(
+            responsibility_id=responsibility_id,
+            fulfillment_binding_id=bindings[0],
+            fulfillment_strategy=spec["fulfillment_strategy"],
+            input_contract_id=spec["input_contract_id"],
+        )
+
+        form_schema = await self.get_form_schema(spec["form_id"], vendor_id)
+        if not form_schema or not form_schema.get("fields"):
+            raise ValueError(f"responsibility form {spec['form_id']!r} 不存在或無欄位")
+
+        # ⚠️ F-C25：role_id 由**上游 API 完成權限判斷**後傳入，AIChatbot 只消費結果。
+        #    此處把它原樣持久化，供 turn 2 resume 時取用。
+        #    ⛔ 不驗權、⛔ 不推導、⛔ 不得以 vendor_id 代替（那是另一個身分軸）。
+        if not role_id:
+            raise ValueError(
+                "responsibility handoff 缺 role_id——⛔ 不得以 vendor_id 代替（F-C25）")
+
+        created = await self.create_form_session(
+            session_id=session_id, user_id=user_id, vendor_id=vendor_id,
+            form_id=spec["form_id"], trigger_question=None,
+            knowledge_id=None,                       # ⚠️ 明示 NULL（F-C5）
+            # ⚠️ 逐項取自 build_responsibility_session 的輸出；欄位集合＝F-C28 單一來源
+            authority={k: session[k] for k in rsess.PERSISTED_AUTHORITY_FIELDS},
+            metadata={"role_id": str(role_id)},
+        )
+        if not created:
+            raise RuntimeError("responsibility session 建立失敗——⛔ 不得靜默落回 facet")
+
+        first = form_schema["fields"][0]
+        return {
+            "answer": first["prompt"],
+            "form_triggered": True,
+            "form_id": spec["form_id"],
+            "current_field": first["field_name"],
+            "current_field_type": first.get("field_type"),
+            "_authority": {k: session[k] for k in rsess.PERSISTED_AUTHORITY_FIELDS},
+        }
 
     async def trigger_form_filling(
         self,
@@ -2416,9 +2524,21 @@ class FormManager:
         """
         mode = session_state.get("session_authority_mode")
         if mode == "responsibility":
-            from services.responsibility_completion import complete_responsibility_form
-            return await complete_responsibility_form(
+            from services.responsibility_completion import (
+                complete_responsibility_form, ResponsibilityInputResolutionResult)
+            result = await complete_responsibility_form(
                 session_state, form_schema, collected_data, db_pool=self.db_pool)
+            # ⚠️ **終端結果才收掉 session**（2026-09-01 實測逼出）：
+            #    舊碼直接 return，session 永遠停在 COLLECTING ⇒ 下一句使用者輸入
+            #    會被當成表單欄位覆蓋掉（實測「謝謝」蓋掉 bill_ref → 查無資料）。
+            # ⚠️ `ResponsibilityInputResolutionResult`（AMBIGUOUS／NO_MATCH／INVALID_INPUT）
+            #    ⛔ **不得**收掉：它走既有 UX 通道但仍是 responsibility 結果，
+            #    下一輪 resume 必須再回到本 handler（F-C5 多回合）。
+            _sid = session_state.get("session_id")
+            if _sid and not isinstance(result, ResponsibilityInputResolutionResult):
+                await self.update_session_state(
+                    session_id=_sid, state=FormState.COMPLETED)
+            return result
         if mode not in (None, "", "legacy_row"):
             # ⚠️ 大聲失敗：未知 mode ⛔ 不得默默落 legacy（那會讓 authority 靜默降級）
             raise ValueError(
