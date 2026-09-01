@@ -160,3 +160,99 @@ def test_disabled_by_default(monkeypatch):
     assert rt.enabled() is False
     assert _observe(ROWS)["status"] == rt.STATUS_DISABLED
     assert rt.log_line({"status": rt.STATUS_DISABLED}) is None
+
+
+# ══════════════════════════════════════════════════════════════════
+# S2：cheap activation gate ＋ handoff 資格
+# ══════════════════════════════════════════════════════════════════
+
+@pytest.fixture()
+def counting_scorer(monkeypatch):
+    """記錄 canonical scorer 是否真的被呼叫（latency 最佳化的唯一硬證據）。"""
+    calls = []
+
+    def _factory():
+        def _fn(user_query, payload):
+            calls.append(sorted(payload.keys()))
+            return {rid: {"R-29": 0.99, "R-31": 0.80}.get(rid, 0.5) for rid in payload}
+        return _fn
+
+    monkeypatch.setattr(rt, "_batch_rerank_fn", _factory)
+    return calls
+
+
+def test_cheap_gate_miss_never_invokes_scorer(wired, counting_scorer, monkeypatch):
+    """nominated 不含 allowlist 成員 ⇒ ⛔ 完全不跑 canonical scorer。"""
+    monkeypatch.setenv(rt.ENV_ALLOWLIST, "R-29")
+    obs = _observe([r for r in ROWS if r["id"] != 4640], facet="billing_anomaly")
+    assert obs["status"] == rt.STATUS_SKIPPED_NOT_CANDIDATE
+    assert obs["scorer_invocations"] == 0
+    assert obs["handoff_eligible"] is False
+    assert counting_scorer == [], "cheap gate 未命中卻仍呼叫 scorer ⇒ latency 最佳化失效"
+
+
+def test_cheap_gate_miss_is_not_error_nor_no_nomination(wired, monkeypatch):
+    """⚠️ 省成本的正常路徑 ⛔ 不得與 ERROR／NO_NOMINATION 混為一談。"""
+    monkeypatch.setenv(rt.ENV_ALLOWLIST, "R-29")
+    obs = _observe([r for r in ROWS if r["id"] != 4640], facet="billing_anomaly")
+    assert obs["status"] not in (rt.STATUS_ERROR, rt.STATUS_NO_NOMINATION)
+    assert obs["nominated"], "cheap gate 未命中 ⛔ 不代表沒有提名"
+
+
+def test_cheap_gate_hit_scores_all_nominated_not_only_allowlisted(wired, counting_scorer,
+                                                                  monkeypatch):
+    """⚠️ 閘門只省成本：命中後必須對**全部** nominated 打分，
+    ⛔ 不得只留 allowlisted responsibilities 再選 winner。"""
+    monkeypatch.setenv(rt.ENV_ALLOWLIST, "R-29")
+    obs = _observe(ROWS, facet="billing_anomaly")
+    assert obs["status"] == rt.STATUS_OK
+    assert obs["scorer_invocations"] == 1
+    assert counting_scorer == [["R-29", "R-31"]], "scoring 候選被 allowlist 閹割"
+    assert set(obs["scores"]) == {"R-29", "R-31"}
+
+
+def test_only_one_canonical_scoring_per_turn(wired, counting_scorer, monkeypatch):
+    monkeypatch.setenv(rt.ENV_ALLOWLIST, "R-29")
+    obs = _observe(ROWS, facet="billing_anomaly")
+    assert len(counting_scorer) == 1 and obs["scorer_invocations"] == 1
+
+
+def test_handoff_eligible_when_winner_in_allowlist_with_binding(wired, monkeypatch):
+    monkeypatch.setenv(rt.ENV_ALLOWLIST, "R-29")
+    obs = _observe(ROWS, facet="billing_anomaly")
+    assert obs["winner"] == "R-29"
+    assert obs["winner_in_allowlist"] is True
+    assert obs["binding_available"] is True
+    assert obs["handoff_eligible"] is True
+
+
+def test_winner_not_in_allowlist_blocks_handoff_without_substitution(wired, monkeypatch):
+    """canonical winner 不在 allowlist ⇒ 走 legacy facet，⛔ 不得改選 runner-up。"""
+    monkeypatch.setenv(rt.ENV_ALLOWLIST, "R-29")
+    monkeypatch.setattr(rt, "_batch_rerank_fn",
+                        lambda: (lambda q, p: {"R-29": 0.10, "R-31": 0.99}))
+    obs = _observe(ROWS, facet="billing_anomaly")
+    assert obs["winner"] == "R-31"
+    assert obs["handoff_eligible"] is False
+    assert obs["winner"] != "R-29", "⛔ 不得因 R-29 在 allowlist 就改選它"
+
+
+def test_winner_without_binding_is_explicit_failure_not_fallback(wired, monkeypatch):
+    """winner 在 allowlist 但無 registered binding ⇒ **明確失敗**，
+    ⛔ 不得 fallback runner-up、⛔ 不得標成 responsibility success。"""
+    monkeypatch.setenv(rt.ENV_ALLOWLIST, "R-29")
+    monkeypatch.setattr(rt, "binding_available", lambda rid: False)
+    obs = _observe(ROWS, facet="billing_anomaly")
+    assert obs["winner"] == "R-29", "⛔ 不得 fallback 成 R-31"
+    assert obs["handoff_eligible"] is False
+    assert "WINNER_HAS_NO_REGISTERED_BINDING" in obs["handoff_failure"]
+
+
+def test_empty_allowlist_keeps_s1_diagnostic_scoring(wired, counting_scorer, monkeypatch):
+    """allowlist 為空＝S1 診斷模式：仍對全部 nominated 打分，但 ⛔ 不得 handoff。"""
+    monkeypatch.delenv(rt.ENV_ALLOWLIST, raising=False)
+    obs = _observe(ROWS, facet="billing_anomaly")
+    assert obs["status"] == rt.STATUS_OK
+    assert obs["scorer_invocations"] == 1
+    assert obs["handoff_eligible"] is False
+    assert obs["migration_allowlist"] == []

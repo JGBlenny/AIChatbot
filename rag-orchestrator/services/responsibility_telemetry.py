@@ -4,9 +4,21 @@
 pre_drop_rows → mapping → collapse → canonical scoring → winner → binding_available
 ```
 
-⚠️ **本模組只觀測，⛔ 不做任何 authority handoff**：
-⛔ 不寫 session、⛔ 不呼叫 `build_responsibility_session`、⛔ 不改 facet flow、
-⛔ 不影響回應內容。S2 才會打開 handoff。
+⚠️ **本模組只計算 decision，⛔ 自身不做 authority handoff**：
+⛔ 不寫 session、⛔ 不呼叫 `build_responsibility_session`、⛔ 不改 facet flow。
+handoff 由呼叫端（chat.py）依 `handoff_eligible` 決定——**一輪只 canonical score 一次**，
+⛔ 不得 telemetry 算一次、authority 再算一次。
+
+⚠️ **cheap activation gate（業主裁定 2026-09-01）**：
+```text
+pre-drop rows → row→responsibility mapping（便宜，無網路）
+  nominated ∩ MIGRATION_ALLOWLIST == ∅ → ⛔ 完全不跑 canonical scorer，走既有 facet
+  否則                                  → 對**全部** nominated 做 canonical scoring
+```
+⚠️ 閘門只省成本，⛔ **不決定 authority**——authority 仍由 canonical winner 決定。
+⛔ **不得**用 committed facet 當閘門：facet 與 responsibility 無 machine mapping
+（`FACET_RESPONSIBILITY_COMPATIBILITY_CONTRACT = NOT_ESTABLISHED`），
+用 facet 當開關等於讓 facet 決定 responsibility 能不能進場。
 
 ⚠️ **失敗語義（業主裁定 2026-09-01）**：artifact／mapping／scorer 失敗一律回
 `status=ERROR`，⛔ **不得**折疊成「沒有 responsibility winner」——
@@ -26,8 +38,12 @@ STATUS_OK = "OK"
 STATUS_NO_NOMINATION = "NO_NOMINATION"
 STATUS_ERROR = "ERROR"
 STATUS_DISABLED = "DISABLED"
+#: cheap gate 未命中——⚠️ 這是**省成本的正常路徑**，⛔ 不是 ERROR、⛔ 也不是 NO_NOMINATION
+STATUS_SKIPPED_NOT_CANDIDATE = "SKIPPED_NOT_CANDIDATE"
 
 ENV_FLAG = "RESPONSIBILITY_TELEMETRY"
+#: 逗號分隔的 responsibility id；空＝不啟用任何 handoff（S2 預設關閉）
+ENV_ALLOWLIST = "RESPONSIBILITY_MIGRATION_ALLOWLIST"
 
 #: ⚠️ 快取只存**已驗證通過**的 artifact；驗證失敗 ⛔ 不快取（否則一次故障會被記住）
 _CACHE: Dict[str, Any] = {}
@@ -35,6 +51,13 @@ _CACHE: Dict[str, Any] = {}
 
 def enabled() -> bool:
     return os.getenv(ENV_FLAG, "false").strip().lower() == "true"
+
+
+def migration_allowlist() -> frozenset:
+    """⚠️ 只作 **cheap activation gate** 與 handoff 資格判斷，
+    ⛔ 不得用來過濾 canonical scoring 的候選集合（否則 semantic winner 會被閹割）。"""
+    raw = os.getenv(ENV_ALLOWLIST, "")
+    return frozenset(x.strip() for x in raw.split(",") if x.strip())
 
 
 def _artifacts():
@@ -102,11 +125,29 @@ async def observe(pre_drop_rows: Optional[List[Mapping[str, Any]]],
         import services.responsibility_collapse as rc
         nominated = rc.select_nominated(list(pre_drop_rows or []), mapping, limit=20)
         base["nominated"] = [c["responsibility_id"] for c in nominated]
+        allow = migration_allowlist()
+        base["migration_allowlist"] = sorted(allow)
         if not nominated:
             base["status"] = STATUS_NO_NOMINATION
             base["winner"] = None
             base["_semantics"] = "⚠️ 合法的『本輪沒有責任被提名』，⛔ 與 ERROR 不同"
             base["elapsed_ms"] = int((time.time() - t0) * 1000)
+            return base
+
+        # ── cheap activation gate ────────────────────────────────────
+        # ⚠️ allowlist 非空時才啟用閘門；allowlist 為空且 telemetry 開啟＝
+        #    **診斷模式**（對全部 nominated 打分，成本較高），⛔ 非 production 預設。
+        if allow and not (set(base["nominated"]) & allow):
+            base.update({
+                "status": STATUS_SKIPPED_NOT_CANDIDATE,
+                "winner": None,
+                "scorer_invocations": 0,
+                "handoff_eligible": False,
+                "_semantics": ("⚠️ nominated 未包含任何 migration-enabled responsibility ⇒ "
+                               "⛔ 不跑 canonical scorer（省成本），走既有 facet；"
+                               "⛔ 這不是 ERROR、⛔ 也不是 NO_NOMINATION"),
+                "elapsed_ms": int((time.time() - t0) * 1000),
+            })
             return base
 
         from services.embedding_utils import get_embedding_client
@@ -129,8 +170,19 @@ async def observe(pre_drop_rows: Optional[List[Mapping[str, Any]]],
             "winner_final_similarity": round(scored[0]["final_similarity"], 4),
             # ⚠️ availability 在 winner **決定之後**才查——⛔ 不得用它過濾候選
             "binding_available": binding_available(winner),
+            "scorer_invocations": 1,      # ⚠️ 一輪只打一次分（S1 記錄與 S2 authority 共用同一份）
             "elapsed_ms": int((time.time() - t0) * 1000),
         })
+        # ── handoff 資格（⚠️ 只回報，handoff 動作由呼叫端執行）──────────
+        # ⛔ winner 不在 allowlist ⇒ 不 handoff，且 ⛔ 不得改選 runner-up
+        # ⛔ winner 在 allowlist 但無 binding ⇒ **明確 handoff 失敗**，
+        #    ⛔ 不得 fallback runner-up、⛔ 不得標成 responsibility success
+        in_allow = winner in allow
+        base["winner_in_allowlist"] = in_allow
+        base["handoff_eligible"] = bool(in_allow and base["binding_available"])
+        if in_allow and not base["binding_available"]:
+            base["handoff_failure"] = ("WINNER_HAS_NO_REGISTERED_BINDING"
+                                       "——⛔ 不得 fallback runner-up、⛔ 不得標成 responsibility success")
         return base
     except Exception as exc:                                     # noqa: BLE001
         base.update({
@@ -138,6 +190,7 @@ async def observe(pre_drop_rows: Optional[List[Mapping[str, Any]]],
             "winner": None,
             "error_class": type(exc).__name__,
             "error": str(exc)[:300],
+            "handoff_eligible": False,      # ⚠️ 失敗一律不得 handoff
             "_semantics": ("⚠️ RESPONSIBILITY_TELEMETRY_ERROR ⛔ **不等於**"
                            "『沒有 responsibility winner』——⛔ 不得折疊成 NO_NOMINATION，"
                            "本輪 telemetry 驗收 ⛔ 不得算 PASS"),
