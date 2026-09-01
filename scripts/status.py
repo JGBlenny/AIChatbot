@@ -327,8 +327,35 @@ def print_env() -> None:
     print()
 
 
+def print_worktree() -> None:
+    """⛔ 未 commit 的改動置頂警告。
+
+    **為什麼**（2026-09-01 收線驗證抓到）：那一天最重要的一項成果
+    （架構母圖 §3 過濾機制逐行對碼修正）只存在工作樹、未進版控。
+    下一個 session 若跑 `git checkout .`／`git stash`／`git reset --hard`
+    清理工作樹，**那份修正會無聲消失**，而 BACKLOG 不會提醒任何人。
+    ⇒ 讓它每次開工都被印出來。
+    """
+    try:
+        out = subprocess.run(["git", "status", "--porcelain"], cwd=str(ROOT),
+                             capture_output=True, text=True, timeout=30).stdout
+    except Exception:
+        return
+    lines = [l for l in out.splitlines() if l.strip()]
+    if not lines:
+        return
+    print(f"⚠️ **工作樹有 {len(lines)} 項未 commit 的改動** —— ⛔ 清理工作樹前務必先看")
+    for l in lines[:8]:
+        print(f"   {l}")
+    if len(lines) > 8:
+        print(f"   …另 {len(lines)-8} 項")
+    print("   ⛔ `git checkout .` / `git stash` / `git reset --hard` 會讓它們無聲消失")
+    print("   ⇒ 先 `git diff` 看清楚是什麼；不確定就**先 commit 再說**\n")
+
+
 def main() -> int:
     brief = "--brief" in sys.argv
+    print_worktree()
     print_backlog()
     if brief:
         return 0

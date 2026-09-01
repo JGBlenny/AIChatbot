@@ -15,7 +15,7 @@
 > 分兩個檔就是同一件事寫兩遍，漏改的那一處會變成假警訊。
 
 - [x] (P2) 2026-09-01 向量索引 IVFFlat lists=100 — repo DDL 六處已改 HNSW、本機已重建、不變量 26 已加。⚠️ **降級**：原判「靜默丟答案影響生產」**是錯的**（生產 ORDER BY 寫法用不上索引，35 題修前後逐筆相同）；實為**潛在地雷**——有人把 ORDER BY 改成正規寫法就會引爆。⛔ **線上尚未重建**，見 `ivfflat-index-defect.md` runbook
-- [ ] (⛔) 2026-09-01 架構母圖 §3 過濾機制五處全錯 — 照它給 b2b 補 IS NULL 會打穿池隔離；以 `b2b-ground-truth.md` 為準。證據 `b2b-doc-status-ledger.md`
+- [ ] (⛔) 2026-09-01 **架構母圖 §3 的修正只在工作樹、未 commit** — 三條過濾公式已逐行對碼改好（`git diff docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md` 可見 +25/-7），但**沒進版控**。⛔ **勿跑 `git checkout .` / `git stash` / `git reset --hard`**，那會讓一整天查證出來的修正無聲消失。⇒ 收成 commit 後才可把本條打勾。⚠️ 在那之前，若有人重新 clone 或還原工作樹，母圖 §3 仍是錯的（照它給 b2b 補 IS NULL 會打穿池隔離；以 `b2b-ground-truth.md` 為準）
 - [ ] (⛔) 2026-09-01 Reranker 可用性判定會靜默永久停用 — `semantic_reranker._check_service` 建構期只探測一次（原 timeout=2）失敗即整個 process 停用；rerank 佔最終分數 **90%**，一停就落到詞面分支、純詞面命中得 1.0 壓過正解 ⇒ 使用者收到「請撥打客服專線」。⚠️ 容器 healthy、`/api/v1/system/pipeline-health` 都會回綠（該健檢自己重探測，⛔ 不反映正在服務的物件）。**B 已修**（每 60 秒自動重試、probe timeout 5s、base_retriever 改用 `available()`），⛔ **線上要重 build image 才生效**
 - [ ] (⛔) 2026-09-01 semantic-model CPU 推論撐不住 — 實測延遲 >90 秒、CPU 600%+（老毛病，`.kiro/issues/reranker-returning-zero.md` 2026-04-17 已有 hotfix）。B 只讓它能復原，⛔ 沒治產能。加資源／換模型／改 GPU 待裁
 - [ ] (P1) 2026-09-01 `include_debug_info` 對面向進場路徑無效 — `_conversational_to_response` 組回應時硬編碼不傳 `debug_info`，不論旗標為何恆 None；`processing_path='conversational'` 佔實測流量 **23%（59/261）** ⇒ 那些題的候選與分數**無法觀測**，回測會誤讀成「沒有候選」。⚠️ 這是**觀測性缺陷**，不影響使用者，但會讓量測失真
