@@ -127,6 +127,65 @@ def print_kb() -> None:
     print()
 
 
+# ── b2b 答題面：型別分布與面向覆蓋 ────────────────────────────────────
+#: ⚠️ 型別由系統自己編碼，逐筆機械可算（⛔ 不靠印象、⛔ 不手寫清單）：
+#:   表單型  action_type='form_fill' 或 form_id 非空
+#:   T2 API  action_type='api_call'，或 categories 命中的面向 grounding_scope.select='api'
+#:   T3 對話 categories 命中面向但該面向非 api 型（純引導）
+#:   T1 直答 以上皆非
+#: ⛔ 四型的「對」不是同一件事 ⇒ ⛔ 一批一型，混批的率讀不出意義
+#:   （判準見 .claude/skills/retrieval-improvement-loop/rules/型別分批.md）
+_B2B = ("is_active AND business_types && ARRAY['system_provider']::text[] "
+        "AND (target_user IS NULL OR 'property_manager' = ANY(target_user)) "
+        "AND COALESCE(category,'') NOT IN ('系統脈絡','對話規則') AND id <> 4253 "
+        "AND answer IS NOT NULL AND btrim(answer) <> ''")
+
+
+def print_b2b_surface() -> None:
+    print("🎯 b2b 答題面（⛔ 一批一型；四型的『對』不是同一件事）")
+    rs = rows(f"""
+      WITH b2b AS (SELECT * FROM knowledge_base WHERE {_B2B}),
+       fac AS (SELECT generation_metadata->'conversational_config'->'topic_scope'->>'category' cat,
+               COALESCE(generation_metadata->'conversational_config'->'grounding_scope'->>'select','none') sel
+               FROM knowledge_base WHERE is_active AND category='對話規則'
+               AND generation_metadata->'conversational_config'->'topic_scope'->>'mode'='category'),
+       t AS (SELECT b.id, b.action_type, b.form_id,
+             (SELECT max(f.sel) FROM fac f WHERE f.cat = ANY(b.categories)) sel FROM b2b b)
+      SELECT CASE
+        WHEN action_type='form_fill' OR form_id IS NOT NULL THEN '表單型'
+        WHEN action_type='api_call' OR sel='api'            THEN 'T2 對話＋API'
+        WHEN sel IS NOT NULL                                THEN 'T3 對話引導'
+        ELSE 'T1 單一知識直答' END, count(*)
+      FROM t GROUP BY 1 ORDER BY 2 DESC;""")
+    tot = sum(int(n) for _, n in rs)
+    for k, n in rs:
+        print(f"   {k:<16}{int(n):>4}  {bar(int(n)/tot if tot else 0)}")
+    print(f"   {'合計':<16}{tot:>4}")
+
+    nocat = one(f"SELECT count(*) FROM knowledge_base WHERE {_B2B} "
+                "AND cardinality(COALESCE(categories,'{}')) = 0;")
+    if nocat:
+        print(f"   ⛔ {nocat} 筆 categories 空 ⇒ **面向進場對它們靜默失效**（知識已寫好，只是沒掛分類）")
+        print("      ⚠️ 補分類是**行為變更**（繞過適用性把關）⇒ ⛔ 不得一次全掛，分批補、每批補完立刻回測")
+
+    print("\n   面向覆蓋（知識數由少到多；⚠️ 薄 ⛔ 不等於缺，要對照真實問句）")
+    fr = rows(f"""
+      WITH b2b AS (SELECT * FROM knowledge_base WHERE {_B2B})
+      SELECT gm->'topic_scope'->>'category',
+             COALESCE(gm->'grounding_scope'->>'select','引導'),
+             COALESCE(gm->'grounding_scope'->>'required_slots','-'),
+             (SELECT count(*) FROM b2b WHERE gm->'topic_scope'->>'category' = ANY(b2b.categories))
+      FROM (SELECT generation_metadata->'conversational_config' gm FROM knowledge_base
+            WHERE is_active AND category='對話規則'
+            AND generation_metadata->'conversational_config'->'topic_scope'->>'mode'='category') f
+      ORDER BY 4, 1;""")
+    for cat, sel, slots, n in fr[:8]:
+        flag = "⛔" if int(n) == 0 else ("⚠️" if int(n) <= 3 else "  ")
+        print(f"   {flag} {cat:<14} {sel:<9} 知識 {int(n):>2}  槽位 {slots[:34]}")
+    print(f"   …共 {len(fr)} 個面向（完整清單見本節查詢條件）")
+    print()
+
+
 # ── 測試資料 ──────────────────────────────────────────────────────────
 def print_scenarios() -> None:
     print("🧪 測試資料（test_scenarios）")
@@ -275,6 +334,7 @@ def main() -> int:
         return 0
     try:
         print_kb()
+        print_b2b_surface()
         print_scenarios()
         print_traffic()
         print_env()
