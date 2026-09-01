@@ -1,3 +1,7 @@
+> ✅ **已完成並封存（2026-09-01）**——R-29 authority handoff 三輪走通（commit 6382c93）。
+> ⛔ **責任架構就此停止橫向擴張**，⛔ 不接 R-28／R-31／其餘 27 條。
+> ⚠️ 現行主線計畫是 `PLAN-retrieval-coverage.md`（v2），⛔ 不是本檔。
+
 # PLAN：R-29 facet → responsibility commit vertical slice
 
 > 狀態：**APPROVED（2026-09-01）**，D2 經業主改寫。⛔ S2 前須先完成 R2 packaging。
