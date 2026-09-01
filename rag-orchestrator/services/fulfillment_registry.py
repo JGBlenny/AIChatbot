@@ -61,6 +61,18 @@ def register(binding_id: str, *, responsibility_id: str, adapter: Callable[..., 
         input_contract_id=input_contract_id, entity_type=entity_type, output_mode=output_mode)
 
 
+def bindings_for(responsibility_id: str) -> list:
+    """回傳某 responsibility 已註冊的 binding_id 清單（**唯讀觀測**）。
+
+    ⚠️ 供 S1-B telemetry 判斷 `binding_available`，⛔ 本函式**不建立任何 authority**：
+    有 binding ⛔ 不代表可執行（仍受 external validation／approval 約束，F-C14／F-C24），
+    沒有 binding 也 ⛔ 不得反過來影響 semantic winner 的選取（業主裁定 2026-09-01：
+    先選 semantic winner，再看是否有 registered binding）。
+    """
+    return sorted(b for b, s in _REGISTRY.items()
+                  if s["responsibility_id"] == responsibility_id)
+
+
 def lookup(binding_id: str, responsibility_id: str) -> BindingSpec:
     """⚠️ 必須同時給 responsibility_id——binding 單獨查得到 ⛔ 不代表它屬於這個責任。"""
     spec = _REGISTRY.get(binding_id)

@@ -225,6 +225,8 @@ services:
       ENABLE_QUERY_REWRITE_B2B: ${ENABLE_QUERY_REWRITE_B2B:-false}
       # pre-entry routability gate（entry-scoped 實驗，預設關）
       PREENTRY_ROUTABILITY_GATE: ${PREENTRY_ROUTABILITY_GATE:-false}
+      # S1-B：responsibility observation（⛔ 零 authority；預設關閉）
+      RESPONSIBILITY_TELEMETRY: ${RESPONSIBILITY_TELEMETRY:-false}
       # ⚠️ 下面三個旗標**必須宣告**，否則 compose 不會把 .env 的值傳進容器——
       #    Stage-1 會在「旗標看起來設了、實際沒生效」的狀態下上線（fail-safe 停用）。
       #    本專案已三次因 runner／env 保真度不足而結論作廢，故一律顯式宣告。

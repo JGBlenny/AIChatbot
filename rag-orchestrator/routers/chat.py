@@ -1611,6 +1611,25 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
             _diag_cfg, _face_authority = await _diagnosis_config_for_knowledge(
                 req.app.state.db_pool, _best_knowledge, DecisionConfig.load(),
                 user_message=request.message)
+            # ── S1-B responsibility telemetry（**唯讀觀測，⛔ 零 authority**）─────
+            # ⚠️ 位置刻意在 `_drop_empty_answer_rows` **之前**：空答案錨點（如 4640）
+            #    是 responsibility 的 nomination evidence，被單發答題過濾掉之前必須先看到。
+            # ⚠️ ⛔ 不寫 session、⛔ 不呼叫 build_responsibility_session、⛔ 不改回應。
+            # ⚠️ 整段包在 try 內：telemetry 故障 ⛔ 不得打死使用者請求；但錯誤必須明確留痕
+            #    （observe() 內部已保證回 status=ERROR 而非偽裝成「無 winner」）。
+            try:
+                from services import responsibility_telemetry as _rtel
+                if _rtel.enabled():
+                    _obs = await _rtel.observe(
+                        decision.get('knowledge_list'), request.message,
+                        committed_facet=(getattr(_diag_cfg, "key", None)
+                                         if _diag_cfg is not None else None))
+                    _line = _rtel.log_line(_obs)
+                    if _line:
+                        print(_line)
+            except Exception as _e:                                    # noqa: BLE001
+                print(f"❌ [responsibility-telemetry] 觀測層自身異常（⛔ 不影響本輪回應）：{_e}")
+
             # ⚠️ 裁定 001-A 的仲裁**唯一** oracle。⛔ 不得改成 `if _diag_cfg is not None`
             #    或任何讀 `.stay` 的判定——那正是「技術故障取得 routing authority」的路徑。
             #    此刻 knowledge_list 必非空（本分支的前提），故 knowledge_present=True：
