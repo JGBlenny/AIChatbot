@@ -1,5 +1,16 @@
 # 知識範圍遷移指南
 
+> ⛔ **已退休（2026-09-01 歸檔）。本文件描述的機制已不存在，⛔ 不得依據它改碼或改資料。**
+>
+> - 它引用的 `vendor_knowledge_retriever.py` 與 `rag_engine.py` **兩個檔案都已不存在**
+>   （現行是 `services/vendor_knowledge_retriever_v2.py`）。
+> - 它主張「可見性僅由 vendor_id 決定」——現行是 `business_types` ／ `target_user` ／ `vendor_ids`
+>   **三軸**，且 b2b 與 b2c 是兩條不同分支。
+> - 現行事實見 `.kiro/specs/conversational-routing-execution/b2b-ground-truth.md`；
+>   判定依據見同目錄的 `b2b-doc-status-ledger.md`。
+>
+> 保留原文僅供追溯 2026-02-09 當時的遷移決策。
+
 ## 執行摘要
 
 本指南提供從舊的基於 scope 的知識可見性系統遷移到新的簡化 vendor_id 方法的逐步說明。

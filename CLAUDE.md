@@ -2,6 +2,22 @@
 
 Kiro-style Spec-Driven Development on an agentic SDLC
 
+## 事實紀律（CANON，⛔ 優先於本檔其餘各節）
+
+**⛔ 禁止推測。任何關於「系統現在怎麼跑」的陳述，都必須來自實際程式、DB 或實跑輸出。**
+
+1. **動任何子系統之前先起盤查**：`/canon-audit <功能鍵>`。功能鍵見 `.claude/MAP.md`
+   （例：測對話邏輯用 `dialogue-logic`）。⚠️ **唯讀任務同樣要起**——M1 只擋 Edit/Write，
+   盤查從頭到尾不寫檔，閘門一次都不會觸發，而「讀了一部分就下結論」正是這套系統的起點。
+2. **回報事實一律附可重跑的查證指令**（檔案路徑＋可 grep 的符號，⛔ 不寫行號當事實，行號會漂）。
+   查不到就說查不到，⛔ 不從文件補值。
+3. **否定結論（沒有／找不到／不存在）必須帶正對照組**：檢查清單裡要有一個「已知必然存在」的項目；
+   它若也沒中，就是工具或條件壞了，不是目標不存在。⛔ 沒有正對照組的否定結論一律不得回報。
+4. **文件與程式衝突時 ⛔ 不自行選邊**：指出反證並交回裁決。
+   ⚠️ 已知錯誤文件清單見 `.kiro/specs/conversational-routing-execution/HANDOFF-*.md` 的「已知錯誤文件」節——
+   例如 `docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md` §3 漏了 b2b 嚴格分支，
+   **照它補 `IS NULL` 會打穿刻意設計的跨業者隔離**。
+
 ## Project Context
 
 ### Paths

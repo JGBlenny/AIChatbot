@@ -96,7 +96,7 @@ guides/
 
 | 文檔 | 說明 |
 |------|------|
-| [KNOWLEDGE_SCOPE_MIGRATION_GUIDE.md](./migration/KNOWLEDGE_SCOPE_MIGRATION_GUIDE.md) | 知識庫範圍遷移指南 |
+| ~~KNOWLEDGE_SCOPE_MIGRATION_GUIDE.md~~ | ⛔ **已於 2026-09-01 退休**，移至 [`docs/archive/2026-09/`](../archive/2026-09/KNOWLEDGE_SCOPE_MIGRATION_GUIDE.md)——引用的檔案已不存在、過濾模型已被 v2 取代 |
 | [TEST_SCENARIOS_MIGRATION_GUIDE.md](./migration/TEST_SCENARIOS_MIGRATION_GUIDE.md) | 測試場景遷移指南 |
 
 ---

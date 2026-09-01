@@ -380,7 +380,10 @@ flowchart LR
 
 **閾值定義**：
 - `SOP_MIN_THRESHOLD = 0.55`
-- `KB_SIMILARITY_THRESHOLD = 0.65`（⚠️ 舊文寫 `KNOWLEDGE_MIN_THRESHOLD = 0.6`，**該鍵名與值皆已過時**）
+- `KB_SIMILARITY_THRESHOLD`：部署值 **0.65**（程式 fallback `0.55`，見 `decision_layer.DecisionConfig`）
+  ⚠️ 它與決策樹用的 `knowledge_min = 0.6` 是**兩顆不同的常數，⛔ 不可互相取代**：
+  前者是檢索過濾門檻，後者是六 case 答題仲裁的最低分（**硬編碼、刻意不開 env**）。
+  （舊版寫「`KNOWLEDGE_MIN_THRESHOLD = 0.6` 鍵名與值皆已過時」——**兩件事都錯**，2026-09-01 修正）
 - `SCORE_GAP_THRESHOLD = 0.15`（顯著差異）
 
 **決策樹**：
@@ -430,9 +433,24 @@ return unclear_response
 
 ### 過濾機制
 
-- **業者隔離**：`vendor_ids @> ARRAY[$vendor_id]`
-- **角色隔離**：`target_user @> ARRAY[$user_role]`
-- **業態過濾**：`business_types IS NULL OR business_types @> ARRAY[$business_type]`
+> ✅ **本節公式已於 2026-09-01 逐行對碼修正**，來源＝`services/vendor_knowledge_retriever_v2.py`
+> 的 `_vector_search`／`_keyword_search`。查證用的尺是
+> [`b2b-ground-truth.md`](../../.kiro/specs/conversational-routing-execution/b2b-ground-truth.md)；
+> 全文件可信度分流見
+> [`b2b-doc-status-ledger.md`](../../.kiro/specs/conversational-routing-execution/b2b-doc-status-ledger.md)。
+> ⚠️ 修改本節前請重新對碼——**行號會漂,以符號名 grep**。
+
+
+- **業者隔離**：`array_length(vendor_ids, 1) IS NULL OR vendor_ids && ARRAY[$vendor_id]`
+  ——運算子是 `&&`（交集），**不是** `@>`；⚠️ `vendor_ids` 為空＝全業者共用，**必須放行**
+- **角色隔離**：`target_user IS NULL OR target_user && ARRAY[$target_user]`
+  ——b2c 另放行 `'all_users'`；⚠️ 未知／空的 `target_user` 會被 `_effective_target_user`
+  **靜默正規化為 `tenant`**（測試打錯角色名不會報錯，只會安靜地測到別的池）
+- **業態過濾**：⚠️ **b2b 與 b2c 是兩條不同的分支，⛔ 不是同一條公式**
+  - b2b（`target_user ∈ {property_manager, system_admin}` **或** `mode='b2b'`）：
+    `business_types && ARRAY['system_provider']` —— **無 `IS NULL` 放行**
+    🔴 補上 `IS NULL` 會打穿刻意設計的跨業者隔離
+  - b2c：`business_types IS NULL OR business_types && ARRAY[$vendor_business_types]`
 - **啟用狀態**：`is_active = true`
 
 ### 優先級與加成（知識庫專屬）
@@ -544,7 +562,7 @@ LLM Prompt: """
 | `SYNTHESIS_THRESHOLD` | 0.80 | 答案合成閾值 |
 | `FAST_PATH_THRESHOLD` | 0.75 | 快速路徑閾值 |
 | `LLM_ANSWER_TEMPERATURE` | 0.7 | 答案生成溫度 |
-| `LLM_SYNTHESIS_TEMP` | **0.1** | 合成專用溫度（舊文寫 0.5，已過時） |
+| `LLM_SYNTHESIS_TEMP` | **0.1**（部署值） | 合成專用溫度。⚠️ 程式 fallback 是 `0.5`，env 未設的環境會跑 0.5 |
 | `LLM_ANSWER_SYNTH_TEMP` | 0.2 | 事實型收斂（`cta_mode=factual/suppress`）專用低溫 |
 | `LLM_ANSWER_MAX_TOKENS` | 800 | 最大 token 數 |
 
@@ -1032,7 +1050,7 @@ flowchart LR
 ```yaml
 # 分數閾值
 SOP_MIN_THRESHOLD: 0.55          # SOP 最低分數
-KB_SIMILARITY_THRESHOLD: 0.65    # 知識庫最低分數（⚠️ 取代舊文的 KNOWLEDGE_MIN_THRESHOLD: 0.6）
+KB_SIMILARITY_THRESHOLD: 0.65    # 檢索過濾門檻（程式 fallback 0.55）。⛔ 不取代 knowledge_min=0.6，那是另一顆
 SCORE_GAP_THRESHOLD: 0.15        # 顯著差距閾值
 FORM_TRIGGER_THRESHOLD: 0.75     # 表單觸發／**面向進場提名**共用門檻（§0.5 ①）
 
@@ -1059,7 +1077,7 @@ EMBEDDING_MODEL: text-embedding-3-small # Embedding 模型
 # LLM 溫度與 token 配置（環境變數）
 LLM_ANSWER_TEMPERATURE: 0.7            # 答案生成溫度
 LLM_ANSWER_MAX_TOKENS: 800             # 答案最大 token 數
-LLM_SYNTHESIS_TEMP: 0.1                # 合成專用溫度（舊文寫 0.5，已過時）
+LLM_SYNTHESIS_TEMP: 0.1                # 合成專用溫度（部署值；程式 fallback 0.5）
 LLM_ANSWER_SYNTH_TEMP: 0.2             # 事實型收斂（factual/suppress）低溫
 ADVISOR_TEMP: 0.4                      # 對話 brain（conversational_step）溫度
 LLM_TONE_ADJUSTMENT_TEMP: 0.3          # 語氣調整溫度（已停用）
