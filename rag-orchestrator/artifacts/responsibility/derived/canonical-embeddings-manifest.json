@@ -1,0 +1,182 @@
+{
+ "_doc": "C2-SCORE canonical responsibility embeddings（derived runtime artifact）。",
+ "_authority": "⛔ NONE——authority 在 registry-v2.json；本檔是它的 derived index，⛔ 不得回寫 registry。",
+ "_role": "collapse ＋ top20 **之後**的 responsibility semantic vector component；⛔ 不參與 recall（C2-v1 ⛔ 不新增 canonical vector recall arm）。",
+ "registry_v2_digest": "2071b7f5c8cca5d99e497f1959de48157a7c21c4d8826fd6ce1942292fd658ba",
+ "provider_model_id": "text-embedding-3-small",
+ "embedding_service_version": "1.0.0",
+ "embedding_contract_version": "C2-SCORE-1",
+ "_model_field_semantics": "⚠️ provider_model_id ＝ OpenAI 官方 API model ID（request identifier）；embedding_service_version ＝ 本地 embedding-api **服務**版本；embedding_contract_version ＝ 本 artifact 自身的契約版本。⛔ 三者不得併成一欄——否則日後稽核分不清「OpenAI 模型變了」還是「我們自己的 artifact contract 版本變了」。",
+ "_correction_2026_08_30": "⚠️ 本次為 **manifest semantics correction**：builder 的 request body 只有 `{\"text\": ...}`，model 由 embedding-api 服務端決定 ⇒ **向量未重建、內容逐位相同**，只拆欄位與重算檔案 digest。",
+ "_superseded_field": {
+  "embedding_model_id": "text-embedding-3-small@1.0.0",
+  "why": "⛔ 把 provider model ID 與本地服務版本併成一串，會讓 G10 守錯東西"
+ },
+ "embedding_dimension": 1536,
+ "count": 30,
+ "excluded": {
+  "reviewed_historical": [
+   "R-13"
+  ],
+  "_why": "⛔ historical 與 16 個 unresolved rows 一律不建 embedding"
+ },
+ "_rebuild_triggers": [
+  "canonical text 改（canonical_text_digest）",
+  "registry authority epoch 改（registry_v2_digest）",
+  "provider embedding model 改（provider_model_id）",
+  "本地 embedding 服務／artifact 契約改（embedding_service_version／embedding_contract_version）"
+ ],
+ "entries": [
+  {
+   "responsibility_id": "R-01",
+   "canonical_text_digest": "8c79d827465ba40dbae540473cb95fab57209a88f64589b1756f871929f97ba5",
+   "embedding_checksum": "9543d452baf328a10bd0987d142b4423ea52254f2ae1ca56f2ad91865b393ada"
+  },
+  {
+   "responsibility_id": "R-02",
+   "canonical_text_digest": "420f0575473bdb75a4f4665a954f97057f196469402f7498b1e817f78200a8c5",
+   "embedding_checksum": "bc3ef0b15ea91cfc5eca508f5becd76007a4b5c2a32a813e6b34ad6ea610a156"
+  },
+  {
+   "responsibility_id": "R-03",
+   "canonical_text_digest": "14a5f1dbbcb37bbeb9418620aea924b61cc35e2ee532e51d830a6aab0cc23ca7",
+   "embedding_checksum": "0356b86254020234a0895f070d1981e36502da1b3525b5c16ad6765852d46015"
+  },
+  {
+   "responsibility_id": "R-04",
+   "canonical_text_digest": "423fd6bd1df86854e711c17956c78f9bfdc0cae493b839c6bbdc41e0cc51ef1d",
+   "embedding_checksum": "7585963205ece9b8c3ca118b274cbccab1a70731ad26d07b4b2b9132c2bae9c3"
+  },
+  {
+   "responsibility_id": "R-05",
+   "canonical_text_digest": "8fe12a485f4b6f7381b2d0c1ac571e7f9e12590bee8eb8112e7ef63436e3e5b8",
+   "embedding_checksum": "81d63f205ca5951d59b4c796d46d16c6956b5df15e35d86c2f716a7c56f8a882"
+  },
+  {
+   "responsibility_id": "R-06",
+   "canonical_text_digest": "80c9adf21ae2ade58e07b559a2c65bdad02831bea45ad2512fb7ff670ab6d6f7",
+   "embedding_checksum": "900ddd19a57aecfc7ec178a5d442be9d91dcfd5835a50b99d58d4a71ec1d15c4"
+  },
+  {
+   "responsibility_id": "R-07",
+   "canonical_text_digest": "573e1bbd6a7e58259da88bd1068169295cf7627a9a95e78340de4b28a7ff4fc5",
+   "embedding_checksum": "1f6291d88e56ff585ead0835583a381e429fabbd0678ab4cf81bad9b5ade81a1"
+  },
+  {
+   "responsibility_id": "R-08",
+   "canonical_text_digest": "d169208be015d5ebeb4f3a4aacde24d496f66840af2249f47609fc44d15744b1",
+   "embedding_checksum": "9d6e661d88b080e30c3efc7d52b80bfc6afb7b7b86532fed428683c3abce5034"
+  },
+  {
+   "responsibility_id": "R-09",
+   "canonical_text_digest": "0306137596054e65db8cf44aca063505fbe1268e9b788b695e6d871a4def2f80",
+   "embedding_checksum": "fdf87d4c9ec33ad912b9c9e35293cecdf48cddd8ebfb30c5afcb2189c0eaca88"
+  },
+  {
+   "responsibility_id": "R-10",
+   "canonical_text_digest": "184f025d191d789eb0bb8eda1d5b8e6562b0b760cec0985df4c6847815baba8d",
+   "embedding_checksum": "aeff08f636f54d1926108a511d74fb2cfdd91f78d1fd0a93953f20ff9ef83faf"
+  },
+  {
+   "responsibility_id": "R-11",
+   "canonical_text_digest": "8e29b9a23ae03a8edea99dd38c95addbf780af5bec78ceacbfa710be758b260b",
+   "embedding_checksum": "f48cc0f3c3271e23087fe6499172c474dfa3f0b15ee07fda3c7dfda0d579de15"
+  },
+  {
+   "responsibility_id": "R-12",
+   "canonical_text_digest": "e108a4fe08b80c185add0473dc59a58a7346678b24e2073ceb00f89a7b5cbf7b",
+   "embedding_checksum": "cee0335c97254a9658e86c55faf86a62b87c1c284783a5fac18ae417021015da"
+  },
+  {
+   "responsibility_id": "R-14",
+   "canonical_text_digest": "14ecd0476fa52b40a4381c0650bec78eba12e112a43bd3bef67e51c7c506f819",
+   "embedding_checksum": "f6eb33fdfaab8d69865f90bd239e7f7c4cfd2c14c4401c6240bb123979215b06"
+  },
+  {
+   "responsibility_id": "R-15",
+   "canonical_text_digest": "1b3896aaac960d90fcba731ec530488f90df1f6824d0a6df958ae42522cfc581",
+   "embedding_checksum": "eabbf8b11a7ca34c6492d1c9b90a9b6b2c1d847a5455c270087a08e6baa17d6e"
+  },
+  {
+   "responsibility_id": "R-16",
+   "canonical_text_digest": "40f349b46882fc779f22c8a2d5020f7d1daea29f87b8b3d171eb313fca7ff0ee",
+   "embedding_checksum": "2a475c289f6462dfc7dd7f8a6b526eba57d89425a092e4451634fa1915cf9d67"
+  },
+  {
+   "responsibility_id": "R-17",
+   "canonical_text_digest": "3124045d63c1111fe743941c8e0f02348ee11564a49648e2671d12ebbe3938b4",
+   "embedding_checksum": "4c6264c7a04bb82d8bf3c924b21ceb494864b3f0669d93b2741eb79b4f28703c"
+  },
+  {
+   "responsibility_id": "R-18",
+   "canonical_text_digest": "974494495381ffb899e51ddd74f5a2268f7d3de5b7913481c174c5ae7c0b10b0",
+   "embedding_checksum": "d0bc11823daf08af8cfe52d6dc0623ed8c06ff23b6715e174af282a8f677ab69"
+  },
+  {
+   "responsibility_id": "R-19",
+   "canonical_text_digest": "dc5933eecf02c0c7178b1d1018c80e05172e07919ac8103d32f7383d9b5c8669",
+   "embedding_checksum": "ec000641ee9080c400d19b3af6382781cb92ca33f9c6e2fac4e9a48a13ccadf4"
+  },
+  {
+   "responsibility_id": "R-20",
+   "canonical_text_digest": "7fe2ffad99f6ec03ddaa690c308220aeaee5e3b66e95aee48d17f74ba167762c",
+   "embedding_checksum": "8cd6b11b709409de02c78820f8503365c5ece4f9c813b113c4978fcea0d166a9"
+  },
+  {
+   "responsibility_id": "R-21",
+   "canonical_text_digest": "17205910b92dda3fac3100fffc413b5e4df4f41fd75bfddc4a085cff1d97c3e0",
+   "embedding_checksum": "cf2ac2931ff54b772daf291bf132cb478adae5f39fa3f3e66da667ddb9b544ac"
+  },
+  {
+   "responsibility_id": "R-22",
+   "canonical_text_digest": "3d9eb79276a39279d9242343b36ddfade7e7786a203e6a1204bf5f71532988c6",
+   "embedding_checksum": "97d60f3ee420d81e02d47f4409188a464cfea4b19a68f10e005c38e0d962f044"
+  },
+  {
+   "responsibility_id": "R-23",
+   "canonical_text_digest": "f6d6723522b06c6cf89d455042f592cb98be9dde3c7fde7766b1d53374f3564c",
+   "embedding_checksum": "7b7a4f0d9794bbb49fc60d0524bd6113099669eab569a6a0ce453dced448562f"
+  },
+  {
+   "responsibility_id": "R-24",
+   "canonical_text_digest": "9231a04908dc375e2edb56b94ebbe15c19c726c11b7bd7be7e7ba40b7a00612a",
+   "embedding_checksum": "c35d849c541e9777a2a2451b88c27b97f19ab3ebe5c150efd9efd5ba08311b8b"
+  },
+  {
+   "responsibility_id": "R-25",
+   "canonical_text_digest": "db00ff1cfb24de632feb58321bd2ced07abe1a78acaef7362a2b65ce5d6b93f7",
+   "embedding_checksum": "503948e4106eb855ad889100bc19fcb0cd274cd193b73ab316a08c1ecee983fe"
+  },
+  {
+   "responsibility_id": "R-26",
+   "canonical_text_digest": "f82363f5145527e6b02de68d98729e6ecd127de17cfdf8c7229d2cf8ee2afe20",
+   "embedding_checksum": "78f2e8f4c1063689b7f7d5a7cca09ee4f92d5b53b3a83836eb29fdb1a1b82d25"
+  },
+  {
+   "responsibility_id": "R-27",
+   "canonical_text_digest": "4a65b42dd52ffd3558a0f939ccf68d7f40472c79d1d34479fdd733b7694edc83",
+   "embedding_checksum": "5eaa5d058d235a6c6dd69bb2a7490d89b0157b9052b8d9ab2274aad4c60ad7ab"
+  },
+  {
+   "responsibility_id": "R-28",
+   "canonical_text_digest": "a120c3d45eae748040c7268b02438d29cf70816eb665df20037f494e7d6b6b0e",
+   "embedding_checksum": "85d8c85ea48d56ac5323337e1b04d333173cccbf5cd06c14d3326ba20d1cc3b2"
+  },
+  {
+   "responsibility_id": "R-29",
+   "canonical_text_digest": "233e8ec609b33c3bdf78dbec5f92ad86d4293a148877d416e5eee063f0f6c7a6",
+   "embedding_checksum": "ef75d3eea905747dba8b1cfa9c4be14662f81a3435fbd323e57836b3f89892a3"
+  },
+  {
+   "responsibility_id": "R-30",
+   "canonical_text_digest": "9136f0220289cfc1a0a6bdfaf99c31e20e06c3133d529e8e78c5a386e6667628",
+   "embedding_checksum": "50d2d6c586d2299f86795761b3bba415819dd8d001b2cbebfcf913149f6a1987"
+  },
+  {
+   "responsibility_id": "R-31",
+   "canonical_text_digest": "89668f294d6f6d52ef5c6a5726751212150e4260a9d472e0b62a25b24561cbe2",
+   "embedding_checksum": "39c4bf9e05fa5f3ce4df4d190f1bded0de830ddfb27ca1847d73f819deb1ad95"
+  }
+ ],
+ "embeddings_file_digest": "75dab05d1392dc8126a18a5b0ef61c34785e290ab0b96ef877bca5ece3907af6"
+}

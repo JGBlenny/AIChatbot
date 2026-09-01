@@ -95,6 +95,7 @@ SYNC_FILES=(
   routers/loops.py
   services/usage_metering.py
   services/decision_layer.py
+  services/responsibility_artifacts.py
   services/base_retriever.py
   services/llm_provider.py
   services/llm_answer_optimizer.py
@@ -548,6 +549,75 @@ else
   echo "$CE_OUT"
   echo "✅ PASS（含漏筆／text drift／model 空／epoch 漂移／向量被改／historical 有 embedding 等八組對照）"
 fi
+
+echo ""
+echo "═══ 不變量 24：R10P sealed artifact —— replica 逐位元同步 ＋ 容器內可驗 ═══"
+# 為何需要（2026-09-01 逼出）：artifacts 曾以 `docker cp` 放進容器 /spec，
+# 到 2026-09-01 已與 .kiro 正本 drift（embeddings 與 manifest 皆不符，且舊 manifest
+# 連 embeddings_file_digest 欄位都沒有）。⛔ docker cp 不得作為 runtime prerequisite。
+# 現制：正本在 .kiro/.../r10p/；build context 內放 replica；本不變量把關兩者逐位元相同。
+R10P_SRC="$REPO/.kiro/specs/conversational-routing-execution/r10p"
+R10P_REPLICA="$REPO/rag-orchestrator/artifacts/responsibility"
+R10P_PAIRS=(
+  "registry-v2.json|registry-v2.json"
+  "derived/canonical-embeddings.json|derived/canonical-embeddings.json"
+  "derived/canonical-embeddings-manifest.json|derived/canonical-embeddings-manifest.json"
+)
+INV24_FAIL=0
+for pair in "${R10P_PAIRS[@]}"; do
+  SRC="${pair%%|*}"; DST="${pair##*|}"
+  if [ ! -f "$R10P_SRC/$SRC" ]; then
+    echo "❌ FAIL：正本缺檔 $SRC"; INV24_FAIL=1; continue
+  fi
+  if [ ! -f "$R10P_REPLICA/$DST" ]; then
+    echo "❌ FAIL：replica 缺檔 $DST（⛔ 不得只改正本不同步）"; INV24_FAIL=1; continue
+  fi
+  if ! cmp -s "$R10P_SRC/$SRC" "$R10P_REPLICA/$DST"; then
+    echo "❌ FAIL：$DST replica 與正本 drift——⛔ 先改 .kiro 正本再同步，⛔ 不得只改 replica"
+    INV24_FAIL=1
+  fi
+done
+
+# 檢查器自身的規避測試（仿不變量 8）：造一個假 drift，檢查器必須抓到；
+# 抓不到代表比對邏輯失效，其 PASS 不可信。
+INV24_TMP="$(mktemp -d)"
+cp "$R10P_SRC/registry-v2.json" "$INV24_TMP/a.json" 2>/dev/null
+printf 'x' >> "$INV24_TMP/a.json"
+if cmp -s "$R10P_SRC/registry-v2.json" "$INV24_TMP/a.json"; then
+  echo "❌ FAIL：不變量 24 檢查器的規避測試未過（cmp 對已改動檔仍判相同）——其 PASS 不可信"
+  INV24_FAIL=1
+fi
+rm -rf "$INV24_TMP"
+
+# 容器內 artifact 必須通過 validator（image 內建，⛔ 不讀 /spec）
+INV24_OUT=$(docker exec aichatbot-rag-orchestrator python3 -c \
+  "import sys;sys.path.insert(0,'/app');from services.responsibility_artifacts import validate;r=validate();print('OK',r['registry_digest'][:16],r['embedding_count'],r['embedding_dimension'])" 2>&1)
+case "$INV24_OUT" in
+  OK*) : ;;
+  *) echo "❌ FAIL：容器內 R10P artifact 驗證未過 → $INV24_OUT"; INV24_FAIL=1 ;;
+esac
+
+# 容器內 replica 必須與本地 replica 逐位元相同（image 是否為最新建置）
+for DST in registry-v2.json derived/canonical-embeddings.json derived/canonical-embeddings-manifest.json; do
+  C=$(docker exec aichatbot-rag-orchestrator md5sum "/app/artifacts/responsibility/$DST" 2>/dev/null | awk '{print $1}')
+  L=$(md5 -q "$R10P_REPLICA/$DST" 2>/dev/null || md5sum "$R10P_REPLICA/$DST" 2>/dev/null | awk '{print $1}')
+  if [ -z "$C" ] || [ "$C" != "$L" ]; then
+    echo "❌ FAIL：容器內 artifacts/responsibility/$DST 與本地不一致（需重建 image）"
+    INV24_FAIL=1
+  fi
+done
+
+# 殘留偵測：/spec 若存在且與 replica 不符，屬歷史 docker cp 殘留，必須清掉
+if docker exec aichatbot-rag-orchestrator test -e /spec 2>/dev/null; then
+  SPEC_MD5=$(docker exec aichatbot-rag-orchestrator md5sum /spec/derived/canonical-embeddings.json 2>/dev/null | awk '{print $1}')
+  REPL_MD5=$(md5 -q "$R10P_REPLICA/derived/canonical-embeddings.json" 2>/dev/null || md5sum "$R10P_REPLICA/derived/canonical-embeddings.json" | awk '{print $1}')
+  if [ -n "$SPEC_MD5" ] && [ "$SPEC_MD5" != "$REPL_MD5" ]; then
+    echo "❌ FAIL：容器 /spec 存在且與 replica drift（歷史 docker cp 殘留）——⛔ 清除之，runtime 一律讀 /app/artifacts/responsibility"
+    INV24_FAIL=1
+  fi
+fi
+
+if [ $INV24_FAIL -eq 0 ]; then echo "✅ PASS"; else FAIL=1; fi
 
 # ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
 # （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）
