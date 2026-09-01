@@ -4097,7 +4097,8 @@
     "F-C22_EMPTY_ADAPTER_EXTENDS_REVIEWED_BRANCH_DOMAIN": "⚠️ 當 legacy dispatcher **原本負責空集合**，而 responsibility binding 依 F-C1 必須繞過 dispatcher 時，可由 **reviewed binding adapter 補足空態 domain**。\n⚠️ 這 ⛔ **不改變** underlying capability identity，⛔ **也不構成** semantic reroute。\n⇒ 定性為 **RESPONSIBILITY_BINDING_DOMAIN_GAP**，⛔ 不是 production capability defect。\n⚠️ 空態文字**沿用同一 input contract 的 reviewed 空態常數**，⛔ 不重新發明、⛔ 不呼叫 dispatcher 取得（會把 user_question 帶回來）；漂移由既有 drift guard 比對。",
     "F-C23_KNOWLEDGE_CONTENT_MUST_BE_SCOPE_CONTAINED": "⚠️ `APPROVED_KNOWLEDGE_CONTENT` 要求 reviewed answer **不只完整覆蓋** canonical responsibility，**也不得實質回答另一個已存在 responsibility 的核心問題**。額外背景**只有在為本 responsibility 所必需時**才可保留。\n```text\nKnowledge fulfillment 不只要「涵蓋 canonical」，\n還必須被 canonical 的責任邊界所**包含**。\n```\n⚠️ 若允許『只要答到自己的 responsibility，順便答鄰近的也可以』，等於把 **responsibility = semantic authority boundary** 重新鬆掉 ⇒ **fulfillment scope leakage**，⛔ 即使 member 未共用也一樣不可接受。",
     "F-C24_IMPLEMENTED_SEMANTICS_IS_NOT_RUNTIME_AUTHORIZATION": "⚠️ Reviewed adapter 已能 **deterministic 地處理其合法 input domain**，即可關閉 semantic／executability proposition；**是否已進 executable registry 是獨立的 authority-registration blocker**。\n```text\nEMPTY_INPUT_SEMANTICS        adapter 在 empty domain 上「應執行什麼語義」已成立\nEMPTY_ADAPTER_EXECUTABILITY  該 adapter 已可 deterministic 執行\nBINDING_REGISTRATION         runtime 是否已被**授權／接線**去執行它  ← 另一件事\n```\n⚠️ 兩者 ⛔ 不得綁成同一個 blocker。⚠️ 反方向亦然：**adapter 沒註冊 ⛔ ≠ adapter semantics 未建立**。",
-    "F-C25_UPSTREAM_AUTHORIZED_ROLE_IS_TRUSTED_INPUT": "⚠️ AIChatbot ⛔ **不重複執行 role authorization**。只要系統契約保證 `role_id` 來自**已完成權限判斷的上游 API**，即可作為 responsibility resolver 的 `verified_role_id`。\n⇒ `verified_role_id` = **role_id authorized by trusted upstream API**，⛔ **不得**表述為「AIChatbot verified role_id」——它實際沒有驗，驗證責任在上游。\n⛔ **不得**在 AIChatbot 補 `request.user == role` 或 authorization middleware：那會重複授權責任，並可能與上游規則不一致。\n⚠️ 本契約**只涵蓋 role identity**。⛔ 不延伸至 user identity——模糊 keyword → user_id 仍受 F-C13 禁止（見 R-24）。\n⚠️ 成立**條件**（產品不變量，非工程斷言）：所有到達 `/api/v1/message` 的 `role_id` 皆經該上游 API 授權。若未來出現繞過上游、直接呼叫端點的呼叫者，本契約前提即破，需重開 F-OPEN-01。"
+    "F-C25_UPSTREAM_AUTHORIZED_ROLE_IS_TRUSTED_INPUT": "⚠️ AIChatbot ⛔ **不重複執行 role authorization**。只要系統契約保證 `role_id` 來自**已完成權限判斷的上游 API**，即可作為 responsibility resolver 的 `verified_role_id`。\n⇒ `verified_role_id` = **role_id authorized by trusted upstream API**，⛔ **不得**表述為「AIChatbot verified role_id」——它實際沒有驗，驗證責任在上游。\n⛔ **不得**在 AIChatbot 補 `request.user == role` 或 authorization middleware：那會重複授權責任，並可能與上游規則不一致。\n⚠️ 本契約**只涵蓋 role identity**。⛔ 不延伸至 user identity——模糊 keyword → user_id 仍受 F-C13 禁止（見 R-24）。\n⚠️ 成立**條件**（產品不變量，非工程斷言）：所有到達 `/api/v1/message` 的 `role_id` 皆經該上游 API 授權。若未來出現繞過上游、直接呼叫端點的呼叫者，本契約前提即破，需重開 F-OPEN-01。",
+    "F-C26_FACET_MAY_IMPLEMENT_BUT_MAY_NOT_OWN": "⚠️ **Responsibility 才是最終 semantic authority；facet 只負責 routing／context narrowing，⛔ 不是最終答題單位。**\nfacet-specific 的 grounding mechanics **可以**被 responsibility fulfillment 重用（降為 implementation）；但 `facet commit → 直接答題` ⛔ **不得**被計為 responsibility architecture 的終態。\n必須走完 `facet routing → responsibility commit → fixed execution`，才可宣稱 `RESPONSIBILITY_AUTHORITY = CONFIRMED`。\n⚠️ 鐵則：**進入 fulfillment 之前 responsibility 已經決定；裡面 ⛔ 不得再依 question／facet 重選 semantic owner**（與 D2 adapter 抽離原則一致，亦即 F-C1 no-reroute 由結構保證的延伸）。\n⚠️ 推論：facet 答對 ⛔ 不等於 responsibility 已履行——『能不能把答案做對』與『該不該因此取得 authority』是兩件事，⛔ 不得混談。"
   },
   "_grounding_facts_adapter_audit": {
     "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -5182,5 +5183,53 @@
       "R-23"
     ],
     "_r24_explicitly_excluded": "R-24 lane 維持 B2_IDENTITY_BLOCKED，⛔ 本裁定不觸及。"
+  },
+  "_production_path_ruling_2026_09_01": {
+    "ruled_by": "業主（架構裁決）",
+    "ruled_at": "2026-09-01",
+    "canonical_production_path": [
+      "user question",
+      "↓ facet routing            —— 將搜尋空間縮小",
+      "↓ responsibility nomination / resolution",
+      "↓ **RESPONSIBILITY COMMIT** —— 決定到底在回答哪一件事",
+      "↓ reviewed fulfillment binding —— 決定怎麼執行",
+      "↓ final answer / grounding"
+    ],
+    "_three_layer_division": {
+      "facet": "路由與能力實作的組織單位",
+      "responsibility": "最終 semantic authority",
+      "binding": "執行方式"
+    },
+    "_why_not_facet_as_final_unit": "⚠️ 若 authority 停在 `billing_anomaly`，只能知道『這題大概是帳務異常』，⛔ 無法知道『這一輪究竟被授權執行哪個 capability』。同一 facet 內並存帳單狀態／收據實收金額／滯納金原因／點退帳單／付款未反映／信用卡失敗等 responsibility，它們的 input contract、applicability、capability、output contract 皆不同（有的 FINAL_TEXT、有的 GROUNDING_FACTS、有的需 composite selection）。⇒ 這正是 `nomination ≠ authority`／`facet ≠ responsibility` 的由來。⛔ 裁 facet 為終端答題單位等同推翻 R10／T4 的核心。",
+    "_existing_facet_grounding_is_not_discarded": "⚠️ ⛔ **不得**因為『不是 responsibility binding』就把現有 facet grounding 砍掉。正確做法是把它**降成 fulfillment implementation**，供 reviewed binding 重用（例：R-29 committed → receipt.actual_amount.v1 → fixed bill grounding mechanics → FINAL_TEXT）。",
+    "MIGRATION_MODE": {
+      "_shape": "**雙軌，但 authority 明確標記**——⛔ 不得為了架構純度把現在能答的能力關掉，⛔ 也不得因 facet 偶爾答對就宣布 responsibility architecture 已上線。",
+      "track_A_has_reviewed_executable_binding": {
+        "members": [
+          "R-28",
+          "R-29",
+          "R-31"
+        ],
+        "rule": "⚠️ 一旦 nomination 能確定它們 ⇒ **responsibility commit ⇒ 必須走 binding**，⛔ 不得再讓 facet 搶答。此為第一批 vertical migration。"
+      },
+      "track_B_no_executable_approved_path": {
+        "rule": "暫時可續走 facet legacy answer，但**必須明確標記** `authority_mode = legacy_facet`，⛔ 不得假裝 `responsibility fulfilled`。",
+        "consequence": "⇒ 這些答案可繼續服務使用者，但 `APPROVED_CAPABILITY` **仍不得增加**。"
+      }
+    },
+    "_current_gap_is_narrower_than_believed": "⚠️ 好消息：⛔ **不是**『責任架構全部沒接』。facet 已接進 production（resolver CALLED＋COMMITTED），fulfillment 也能對真 API 執行（D1-R1 Stage 1 PASS）。**兩端都有，只差中間把 commit 從 facet 下沉到 responsibility** 這一段 authority handoff。",
+    "_next_cut_scope": {
+      "name": "R-29 facet → responsibility commit vertical slice",
+      "⛔_out_of_scope": "⛔ 不碰 24 個 proposed bindings",
+      "target_flow": [
+        "turn 1「這張帳單的收據金額多少」→ facet routing → nominate R-29 → **commit R-29** → collect bill ref",
+        "turn 2「759304」→ resume **SAME** R-29 → real resolver → receipt.actual_amount.v1 → FINAL_TEXT"
+      ],
+      "acceptance": [
+        "`billing_anomaly` grounding direct-answer call count = **0**",
+        "R-29 binding execution call count = **1**"
+      ],
+      "_meaning": "通過後才第一次有資格討論 `R-29 APPROVED_CAPABILITY`，⛔ 不得以 facet 答對代替。"
+    }
   }
 }
