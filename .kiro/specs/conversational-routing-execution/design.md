@@ -154,7 +154,7 @@ graph LR
 | 測試入口 | `scripts/run-tests.sh` ＋ `Makefile` | 既有 | 元件 1 在其上補旗標與網路，入口不新增 |
 | 容器編排 | docker compose | `docker-compose.dev.yml`（`name: aichatbot-test`）| 元件 1 新增 external network 參照 |
 | HTTP client | `httpx.AsyncClient` | 既有 `jgb_system_api._send` | 元件 3 的替身掛點 |
-| 決策讀值 | `services/decision_layer.DecisionConfig` | 既有唯一讀值點（**spec `retrieval-decision-layer` R7.4**）| 元件 2 改由此取門檻，不自行 `os.getenv` |
+| 決策讀值 | `services/decision_layer.DecisionConfig` | 既有唯一讀值點（**spec `retrieval-decision-layer` R7.4**；該 spec 已封存至 `.kiro/specs/archive/`，但本元件仍在生產環境運行）| 元件 2 改由此取門檻，不自行 `os.getenv` |
 | 量測凍結 | `scripts/backtest/freeze_measurement.py` | 既有 | 元件 7 沿用，不另起爐灶 |
 | 埋點 | `usage_events`（`facet_key`／`turn_number`／`facet_event`／`decision_snapshot`）| 既有 | 元件 7 直接 SQL 聚合，不新增欄位 |
 
