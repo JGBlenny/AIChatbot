@@ -109,6 +109,9 @@ backups/
 *.sql.gz
 # …但 migrations/種子是部署必需，不屬備份 → 例外進版控
 !rag-orchestrator/database/migrations/*.sql
+# ⚠️ rollback/ 子目錄同樣是部署必需：上面那條只涵蓋主目錄，
+#    2026-09-01 發現 3 支 rollback 檔因此從未進版控（含 T4-B2 carrier migration 的那支）。
+!rag-orchestrator/database/migrations/rollback/*.sql
 # 量測契約（凍結的分析定義）同樣不屬備份：它是判準本體，改動即構成量尺變更
 !scripts/analysis/*.sql
 
