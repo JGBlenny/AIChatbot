@@ -48,11 +48,14 @@ class BaseRetriever(ABC):
             try:
                 from .semantic_reranker import get_semantic_reranker
                 sr = get_semantic_reranker()
+                # ⚠️ 2026-09-01：**一律掛上**，可用與否改由呼叫時 `sr.available()` 決定。
+                #    舊碼在此用建構期的一次性布林值鎖死 ⇒ 探測失敗即永久停用、且不報錯。
+                self.semantic_reranker = sr
                 if sr.is_available:
-                    self.semantic_reranker = sr
                     print("✅ Reranker 已啟用（SemanticReranker）")
                 else:
-                    print("⚠️ SemanticReranker 服務不可用，Reranker 未啟用")
+                    print("⚠️ SemanticReranker 建構期探測失敗——"
+                          f"已掛上，將每 {int(getattr(sr, '_recheck_sec', 60))} 秒自動重試")
             except Exception as e:
                 print(f"⚠️ SemanticReranker 載入失敗: {e}，Reranker 未啟用")
 
@@ -294,7 +297,8 @@ class BaseRetriever(ABC):
         #      不代表「低相關」而是「走 keyword 路徑」）
         #   b) 若剩餘候選仍超過 RERANKER_INPUT_LIMIT，優先保留 keyword_fallback，
         #      再以 vector_similarity 補足 vector 項
-        if self.semantic_reranker and len(results) > 0:
+        # ⚠️ 用 available()（會自我復原），⛔ 不用建構期的 is_available 布林值。
+        if self.semantic_reranker and self.semantic_reranker.available() and len(results) > 0:
             rerank_input_limit = int(os.getenv("RERANKER_INPUT_LIMIT", "20"))
             rerank_min_vec = float(os.getenv("RERANKER_MIN_VECTOR_SIMILARITY", "0.3"))
 

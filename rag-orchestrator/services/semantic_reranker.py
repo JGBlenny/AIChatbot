@@ -43,11 +43,40 @@ class SemanticReranker:
             'http://aichatbot-semantic-model:8000'
         )
 
-        # 檢查服務是否可用
+        #: ⚠️ 2026-09-01：可用性判定改成**可自我復原**。
+        #: 舊行為：`__init__` 只探測一次（timeout=2），失敗即 `is_available=False`，
+        #: 整個 process 生命週期不再重查 ⇒ semantic-model 一次忙碌（實測推論可達 90 秒、
+        #: CPU 600%+）就讓 reranker **永久靜默關閉**，而容器 healthy、
+        #: `/api/v1/system/pipeline-health` 也照樣回綠（那支是獨立重探測，
+        #: ⛔ 不反映正在服務的物件狀態）。
+        #: 實際後果：rerank 佔最終分數 90%（0.1×vector + 0.9×rerank），一停就落到
+        #: `max(vector, keyword) × boost` 分支，**純詞面命中得 1.0 壓過正解**。
+        #: 2026-09-01 實例：同一題從「請撥打客服專線」變成正確作答，只因 reranker 回來。
+        self._recheck_sec = float(os.getenv("RERANKER_RECHECK_INTERVAL", "60"))
+        self._probe_timeout = float(os.getenv("RERANKER_PROBE_TIMEOUT", "5"))
+        self._last_probe_ts = 0.0
+        self._last_probe_ok = False
         self.is_available = self._check_service()
 
+    def available(self) -> bool:
+        """目前是否可用（**失敗會在 `RERANKER_RECHECK_INTERVAL` 秒後自動重試**）。
+
+        ⛔ 呼叫端請用本方法，⛔ 不要快取 `is_available` 的布林值——那正是舊行為的病灶。
+        成功時不重探（避免每次請求多一次 HTTP）；失敗時才週期性重試。
+        """
+        import time as _t
+        if self._last_probe_ok:
+            return True
+        if (_t.time() - self._last_probe_ts) >= self._recheck_sec:
+            if self._check_service():
+                logger.info("✅ 語義模型服務已復原，Reranker 重新啟用")
+        return self._last_probe_ok
+
     def _check_service(self) -> bool:
-        """檢查語義模型服務是否可用"""
+        """檢查語義模型服務是否可用（同時記錄探測時間與結果，供 `available()` 用）。"""
+        import time as _t
+        self._last_probe_ts = _t.time()
+        self._last_probe_ok = False
         if use_httpx is None:
             logger.warning("⚠️ httpx 和 requests 都未安裝，無法使用語義模型服務")
             return False
@@ -55,12 +84,16 @@ class SemanticReranker:
         try:
             if use_httpx:
                 with httpx.Client() as client:
-                    response = client.get(f"{self.semantic_api_url}/", timeout=2)
+                    response = client.get(f"{self.semantic_api_url}/",
+                                          timeout=self._probe_timeout)
             else:
-                response = requests.get(f"{self.semantic_api_url}/", timeout=2)
+                response = requests.get(f"{self.semantic_api_url}/",
+                                        timeout=self._probe_timeout)
 
             if response.status_code == 200:
                 logger.info(f"✅ 語義模型服務可用: {self.semantic_api_url}")
+                self._last_probe_ok = True
+                self.is_available = True
                 return True
         except Exception as e:
             logger.warning(f"⚠️ 語義模型服務不可用: {e}")

@@ -42,6 +42,20 @@ def retriever():
     return r
 
 
+class _AvailableReranker:
+    """Step 5 閘控用的最小 stub。
+
+    ⚠️ 2026-09-01：閘控條件由 `if self.semantic_reranker` 改為
+    `if self.semantic_reranker and self.semantic_reranker.available()`——
+    可用性改成**可自我復原**（舊碼一次探測失敗即整個 process 永久停用，
+    且容器與健檢 API 都不會報錯）。因此 stub 必須滿足新契約，
+    ⛔ 不能再用裸 `object()`。
+    """
+
+    def available(self) -> bool:
+        return True
+
+
 def _ids(results):
     return [r.get("id") for r in results]
 
@@ -63,7 +77,7 @@ async def test_reranker_input_floor_drops_low_vector_keeps_keyword_fallback(retr
         {"id": 5, "vector_similarity": 0.0, "search_method": "keyword_fallback"},  # 留
     ]
     retriever._vector_search = AsyncMock(return_value=candidates)
-    retriever.semantic_reranker = object()  # 觸發 Step 5 閘控
+    retriever.semantic_reranker = _AvailableReranker()  # 觸發 Step 5 閘控
     spy = MagicMock(side_effect=lambda q, cands, k: cands)
     retriever._apply_semantic_reranker = spy
 
@@ -87,7 +101,7 @@ async def test_reranker_input_limit_prefers_keyword_then_top_vector(retriever, m
         {"id": 4, "vector_similarity": 0.0, "search_method": "keyword_fallback"},
     ]
     retriever._vector_search = AsyncMock(return_value=candidates)
-    retriever.semantic_reranker = object()
+    retriever.semantic_reranker = _AvailableReranker()
     spy = MagicMock(side_effect=lambda q, cands, k: cands)
     retriever._apply_semantic_reranker = spy
 

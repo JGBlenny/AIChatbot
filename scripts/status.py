@@ -188,24 +188,67 @@ def print_env() -> None:
     except Exception as e:
         print(f"   ⛔ 讀不到容器環境：{e}")
 
+    # ── Reranker 實際狀態（2026-09-01 血證：整天的結論因它作廢）──────────────
+    # ⛔ 不看容器 healthy、⛔ 不打 /api/v1/system/pipeline-health：
+    #    那支健檢**自己另外重新探測一次**，與正在服務請求的物件狀態無關 ⇒ 會給假綠。
+    # 唯一可靠的外部證據是 app 自己印的那兩行，取**最後一行**為準。
+    # 成因：semantic_reranker.__init__ 只在建構當下打一次 GET /（timeout=2），
+    #      失敗即 is_available=False 且整個 process 生命週期不再重查。
+    print("\n   Reranker（佔最終分數 90%：0.1×vector + 0.9×rerank）")
+    try:
+        lg = subprocess.run(["docker", "logs", APP], capture_output=True, text=True,
+                            timeout=60).stderr or ""
+        lg += subprocess.run(["docker", "logs", APP], capture_output=True, text=True,
+                             timeout=60).stdout or ""
+        marks = [ln for ln in lg.splitlines()
+                 if "Reranker 已啟用" in ln or "SemanticReranker 服務不可用" in ln]
+        fin = [ln for ln in lg.splitlines() if "[Finalize]" in ln][-3:]
+        if not marks:
+            print("   ⚠️ 日誌查無 reranker 初始化訊息——⛔ 別當成正常，去看 app 啟動日誌")
+        elif "服務不可用" in marks[-1]:
+            print(f"   ⛔ **最後一次判定＝服務不可用，reranker 沒在跑**（共 {len(marks)} 次判定）")
+            print("      ⇒ 分數落到 max(vector,keyword)×boost 分支，純詞面命中得 1.0 壓過正解")
+            print("      ⇒ ⛔ 本輪任何檢索/回測數字作廢，先修 reranker")
+        else:
+            print(f"   ✅ 最後一次判定＝已啟用（共 {len(marks)} 次判定）")
+        for ln in fin:
+            rr = ln.split("rerank=")[1].split(",")[0] if "rerank=" in ln else "?"
+            flag = "⛔" if rr == "0" else "✅"
+            print(f"   {flag} 最近 Finalize：rerank={rr}  {ln.strip()[:60]}")
+        if not fin:
+            print("   ⚠️ 近期無 Finalize 記錄——沒有流量，無法確認實際有沒有在用")
+    except Exception as e:
+        print(f"   ⛔ 讀不到 app 日誌：{e}")
+
     # 向量索引健檢：IVFFlat 的 lists 相對於資料量是否合理
     # pgvector 建議：<1M 筆用 lists ≈ 筆數/1000。lists 過大 ⇒ probes=1 只掃到極小片段。
-    print("\n   向量索引（lists 過大 ⇒ 靜默漏召回，且不會報錯）")
+    print("\n   向量索引（IVFFlat 的 lists 過大 ⇒ 靜默漏召回，且不會報錯；HNSW 無此問題）")
     # ⚠️ 表與欄位一律**從 indexdef 解析**，⛔ 不寫死清單——寫死的那幾張會變成
     #    「筆數未查」而靜默跳過，那正是這支要防的事（漏檢與檢查通過長得一樣）。
+    # ⚠️ 一律比對 `USING <method>`，⛔ 不比對索引**名稱**——
+    #    `idx_vendor_sop_items_primary_embedding_ivfflat` 已改建為 HNSW 但名稱沿用，
+    #    用名稱比對會產生假警訊（2026-09-01 實際踩到）。
+    # ⚠️ 同時列出 HNSW，⛔ 別讓這一節在修好後變成空白——空白的健檢等於沒有健檢。
     idx = rows("""SELECT i.tablename,
-                    COALESCE((regexp_match(i.indexdef, 'ivfflat \\(([a-z_]+)'))[1],'-'),
+                    COALESCE((regexp_match(i.indexdef, 'USING (ivfflat|hnsw) \\(([a-z_]+)'))[1],'-'),
+                    COALESCE((regexp_match(i.indexdef, 'USING (ivfflat|hnsw) \\(([a-z_]+)'))[2],'-'),
                     COALESCE((regexp_match(i.indexdef, 'lists\\s*=\\s*''?(\\d+)'))[1],'-')
-                  FROM pg_indexes i WHERE i.indexdef LIKE '%ivfflat%' ORDER BY 1;""")
+                  FROM pg_indexes i
+                 WHERE i.indexdef LIKE '%USING ivfflat%' OR i.indexdef LIKE '%USING hnsw%'
+                 ORDER BY 1;""")
     bad = unknown = 0
-    for tbl, col, lists in idx:
-        if col == "-":
-            print(f"   ?  {tbl:<26} ⛔ 解析不出向量欄位，未檢查")
+    for tbl, method, col, lists in idx:
+        if col == "-" or method == "-":
+            print(f"   ?  {tbl:<26} ⛔ 解析不出索引方法或向量欄位，未檢查")
             unknown += 1
             continue
         n = one(f"SELECT count(*) FROM {tbl} WHERE {col} IS NOT NULL;")
+        if method == "hnsw":
+            # HNSW ⛔ 沒有 lists／probes 可以配錯 ⇒ 不屬於本檢查要防的那一類
+            print(f"   ✅ {tbl:<26} HNSW        向量 {n}")
+            continue
         if lists == "-":
-            print(f"   ✅ {tbl:<26} 未指定 lists（走預設）  向量 {n}")
+            print(f"   ⚠️ {tbl:<26} IVFFlat 未指定 lists（走預設）  向量 {n}")
             continue
         li = int(lists)
         per = n / li if li else 0
@@ -213,10 +256,10 @@ def print_env() -> None:
         if n == 0:
             # ⚠️ 無資料 ⇒ 現在不會出事，但參數留著，有資料的那天就會靜默漏召回。
             #    ⛔ 不併入 bad（避免警訊疲勞），但也 ⛔ 不印成 ✅（那是假綠）。
-            print(f"   ⚠️ {tbl:<26} lists={li:<4} 向量 0     目前無資料；⛔ 有資料時會致命")
+            print(f"   ⚠️ {tbl:<26} IVFFlat lists={li:<4} 向量 0  目前無資料；⛔ 有資料時會致命")
             continue
         bad += 0 if ok else 1
-        print(f"   {'✅' if ok else '⛔'} {tbl:<26} lists={li:<4} 向量 {n:<5} "
+        print(f"   {'✅' if ok else '⛔'} {tbl:<26} IVFFlat lists={li:<4} 向量 {n:<5} "
               f"每 list 約 {per:.0f} 筆{'' if ok else '  ← 建議 lists ≈ 筆數/1000'}")
     if bad:
         print(f"   ⛔ {bad} 個索引參數不合理 ⇒ **本輪任何檢索數字都不可信**，先修索引")

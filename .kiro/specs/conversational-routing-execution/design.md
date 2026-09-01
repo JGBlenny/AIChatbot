@@ -1127,25 +1127,59 @@ class EntryPointChange(TypedDict):
 
 ---
 
-### 元件 9：Routing Hint／Action Declaration／Execution Configuration 三層文件化
+### 元件 9：KB 單列三欄（Routing Hint／Action Declaration／Execution Configuration）文件化
 
-**責任**：把三層責任模型落於文件與審查流程，**不變更 DB schema、不新建 component**［需求 6.8、6.7］。
+> ⛔ **2026-09-01 更正：本節講的是母圖 §0.5，⛔ 不是母圖 §0.1 的「責任三層」。**
+> 母圖裡有**兩張刻意分開的三層表**，舊版本節把它們混為一談：
+>
+> ```text
+> 母圖 §0.1  流程責任三層   ① Entry Nomination ② Face Responsibility ③ Execution
+>                          → 講「這一輪的責任判給誰」
+> 母圖 §0.5  KB 單列三欄    Routing Hint ／ Action Declaration ／ Execution Configuration
+>                          → 講「一列知識攜帶什麼欄位」   ← **本節是這一張**
+> ```
+>
+> ⚠️ 舊版圖把 `Routing Hint --> Execution Configuration` 畫成**直線**，
+> 等於母圖 §0.4 明文警告的錯誤：「舊圖把 Face entry → execution 畫成直線，
+> 會讓人以為進場即執行。**進場與執行之間永遠隔著第②層**，
+> 且它可以在 grounding 前把會話關掉。」
+> 下圖已把第②層補回，並以虛線框標明它**不是 KB 欄位**、而是流程層。
+
+**責任**：把 KB 單列攜帶的三欄落於文件與審查流程，**不變更 DB schema、不新建 component**［需求 6.8、6.7］。
 
 ```mermaid
 graph TD
     KE["Knowledge Evidence<br/>（內容本身）"]
-    KE --> RH["Routing Hint<br/>categories → 可能的 Face<br/>（21 組面向）"]
-    KE --> AD["Action Declaration<br/>action_type / form_id / trigger_mode<br/>（336 direct_answer / 37 form_fill）"]
-    RH -->|Face 被選定之後| EC["Execution Configuration<br/>grounding_scope / required_slots<br/>execute_endpoint / execute_params<br/>（15/21 面向為 API-grounded）"]
+    KE --> RH["Routing Hint（母圖 §0.5）<br/>categories → 可能的 Face<br/>對應流程層 ① Entry Nomination"]
+    KE --> AD["Action Declaration（母圖 §0.5）<br/>action_type / form_id / trigger_mode"]
+
+    RH -->|提名成立，⛔ 責任尚未成立| FR["② Face Responsibility（母圖 §0.1）<br/>⚠️ 這一層不是 KB 欄位，是流程判定<br/>persona scope contract<br/>brain 每輪輸出 scope：stay ／ switch<br/>實作：StepResult.scope（元件 6）"]
+
+    FR -->|stay| EC["Execution Configuration（母圖 §0.5）<br/>grounding_scope / required_slots<br/>execute_endpoint / execute_params<br/>對應流程層 ③ Execution"]
+    FR -->|switch| CLOSE["關會話、對當前訊息重路由<br/>⛔ grounding 從未取得"]
+
     AD -->|Action 被選定之後| EC
 
     RH -.->|提議，非決定| N1["6.2 命中 ≠ 決定"]
     AD -.->|宣告，非執行| N2["6.3 有 form_id ≠ 直接開表單<br/>trigger_mode 另有分支"]
     EC -.->|選定後才生效| N3["6.4 不是 routing 階段的選項"]
+    FR -.->|母圖 §0.2| N4["⛔ 成功 entry ≠ responsibility 已成立<br/>⛔ 有 execution capability ≠ entry 應提名它<br/>⛔ owner 存在 ≠ entry 一定會提出它"]
 
+    style FR fill:#e6f0ff,stroke:#2563eb,stroke-width:2px
+    style CLOSE fill:#fde8e8,stroke:#dc2626
     style N1 fill:#fff5e6,stroke:#d97706
     style N2 fill:#fff5e6,stroke:#d97706
     style N3 fill:#fff5e6,stroke:#d97706
+    style N4 fill:#fff5e6,stroke:#d97706
+```
+
+⚠️ **第②層在程式裡確實存在且運行中**（2026-09-01 對碼實查）：
+
+```text
+進場前  chat.py 符號 _preentry_routable      旗標 PREENTRY_ROUTABILITY_GATE
+進場後  conversational_engine.py             `if step.get("scope") == "switch"` → 關會話重路由
+解析    llm_answer_optimizer.py 符號 _parse_conversational_step（strict schema enum stay/switch）
+⚠️ 旗標實際生效值一律 printenv 實查，⛔ 不從本檔取值（會腐化）
 ```
 
 **文件改動清單**：
