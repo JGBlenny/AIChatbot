@@ -142,7 +142,29 @@ P0-0  裁決缺口盤點與呈核                                        ✅ 兩
   出口  ✅ 兩項均已明文裁決並落檔（本節即落檔處）
 
 P0-1  量測 harness 擴充（**取代 v1 的 collection 接線，為真前置**）    我做
-  目的  現有工具產不出計畫承諾的任何數字
+  ⚠️ **2026-09-01 改寫**：原本只寫「加路由正確率、命中率兩個數字」——**不夠**。
+     實測發現：沒有背景資訊，「轉客服 +2」這種數字**無法判斷是缺陷還是正確行為**
+     （b2b 是 precision-first，「該轉客服、也轉了」是正確的）。
+     ⇒ 真正要做的是**輸出契約**：正本 `.claude/skills/retrieval-improvement-loop/steps/03-回測輸出契約.md`
+
+  ### P0-1 的實際內容＝實作那份契約
+```text
+  跑前凍結（人裁兩格）
+    expected_owner   knowledge_direct｜facet:<鍵>｜api｜**escalate**｜out_of_scope
+    expected_kb_id   正解 id 或 NO_COVERAGE
+  每輪自動落盤（機械，⛔ 不事後撈 log）
+    ① 走了哪條路   usage_events：processing_path／facet_key／decision_case／分數
+    ② 候選與分數   生產 debug 開關（⛔ 不自寫 SQL）
+    ③ **可見性**   對 expected_kb_id 機械算三軸過濾 ⇒ 直接標「正解存在但這角色看不到」
+    ④ 面向職責     該面向的 topic_scope／grounding_scope／responsibility
+    ⑤ 環境指紋     printenv 實查 ＋ reranker 實際狀態 ＋ **USE_MOCK_JGB_API**
+  ⇒ 有了 A＋B，每題自動歸類：門檻／排序／**可見性錯配**／知識缺口／進場錯／**正確轉客服**
+```
+  ⚠️ 實證：kb:3336 是 ts9885 的正解，但業態不含 system_provider ⇒ b2b 看不到
+     **改一個欄位就好，補再多知識都沒用** —— 沒有第③格就會誤判成知識缺口
+  ⚠️ API 型（T2）判準完全不同：**逐欄比對 API 回傳**，⛔ 不用知識庫、⛔ 不交 LLM 判語義
+     LLM 只判一件事：有沒有超出 facts 亂講。詳見契約 §D
+
   步驟  ① 選題端補讀 expected_category、related_knowledge_ids
            ⚠️ related_knowledge_ids 現有 24 筆**全懸空**（D-3）⇒ 補讀本身沒錯，
               但 ⛔ 不得預期它產出任何命中真相；命中母體必須由 P0-2 新標
@@ -150,7 +172,9 @@ P0-1  量測 harness 擴充（**取代 v1 的 collection 接線，為真前置**
            ⛔ 不改既有 evaluate_answer_v2／_gold_checks 的行為（避免動到既有判定）
         ③ 修掉或明確繞開 backtest_framework_async.py:1304 的斷裂入口
         ④ pass 判定規則凍結於單一檔案，⛔ 不散落
-  出口  以 20 題小樣本跑出「路由正確率」「命中率」兩個數字，且獨立重算一致
+  出口  20 題小樣本跑完後，**每題可直接歸類**（含可見性判定），
+        且「路由正確率」「命中率」兩個數字獨立重算一致
+        ⛔ 只有數字、無法歸類 ⇒ 不算完成
   ⚠️ 這是**開發任務**，不是「跑既有工具」
 
 P0-2  三型測試情境與接受範圍建置                              我草擬＋業主核

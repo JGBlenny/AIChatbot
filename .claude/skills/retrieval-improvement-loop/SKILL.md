@@ -81,6 +81,7 @@ G3 單一變因閘門                       ⛔ 一輪只動一類成因；跨�
 | **成因六類的判準與修法**（分錯類就白做） ★ | [`rules/成因分類.md`](rules/成因分類.md) |
 | **⛔ 已經走過並否決的路**（別重提） ★ | [`rules/已否決的路.md`](rules/已否決的路.md) |
 | ① 收斂情境：選題規則、改版紀律、命中提名 | [`steps/01-收斂情境.md`](steps/01-收斂情境.md) |
+| **③ 回測輸出契約**：跑前凍結兩格＋每輪自動落五組＋API 型判準 ★ | [`steps/03-回測輸出契約.md`](steps/03-回測輸出契約.md) |
 | ⑦ 入庫：rollback／不變量／DDL／燒毀標記 | [`steps/07-入庫.md`](steps/07-入庫.md) |
 
 
@@ -166,12 +167,13 @@ N 知識缺口     寫新知識
 ## 第 3 步與第 6 步的兩個硬性要求
 
 ```text
-③ 回測基準  **走正式入口 POST /api/v1/message**，記錄使用者實際拿到的東西：
-            answer 全文／action_type／form_id／sources／confidence
+③ 回測基準  **走正式入口 POST /api/v1/message** ＋ **輸出契約**（steps/03）
+            跑前凍結：expected_owner／expected_kb_id（人裁兩格）
+            每輪自動落：走了哪條路／候選與分數／**可見性**／面向職責／環境指紋
+            ⇒ 跑完直接可歸類，⛔ 不事後撈 log 拼背景（2026-09-01 拼三次錯三次）
             ⛔ 不是 retrieve_knowledge_hybrid，⛔ 更不是自寫 SQL
-            ⚠️ 診斷用的中間狀態改用生產程式的 debug 開關
-              （`return_unfiltered=True` / `return_debug_info=True`）
             ⚠️ 非決定性：每邊 ≥3 輪取變異；成本先估並呈報
+            ⚠️ **「該轉客服、也轉了」＝正確**，⛔ 不得算失敗（b2b 是 precision-first）
 
 ⑥ 對照回測  同一批凍結樣本、同一把尺、**同一個正式入口**，⛔ 不得換題不得補題
             先重跑 G2（改動可能動到管線）
