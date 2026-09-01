@@ -70,6 +70,16 @@ _RESOLVER_SPECS = {
     #    ⛔ 接上去只會讓它在 runtime 才炸；此處**明示缺席**才看得見。
 }
 
+#: responsibility-owned form ↔ input contract 對應（F-C27 的稽核來源）。
+#: ⚠️ **本表目前僅供靜態稽核使用，尚無 runtime 消費者**——S2 handoff 才會讀它。
+#: ⚠️ 每新增一個 responsibility binding 要接 production 前，必須在此登記，
+#:    稽核才會自動比對 `form field_name == input contract form_ref_field`（不變量 25）。
+#: ⛔ 輸入 shape 相同 ⛔ 不等於 semantic responsibility 相同——⛔ 不得共用他人的 form。
+RESPONSIBILITY_FORMS = {
+    "R-29": {"form_id": "resp_r29_receipt_actual_amount",
+             "input_contract_id": "bill.by_ref.v1"},
+}
+
 #: 相容既有呼叫端／測試的視圖（⛔ 只讀）
 _RESOLVERS = {cid: spec["fn"] for cid, spec in _RESOLVER_SPECS.items()}
 

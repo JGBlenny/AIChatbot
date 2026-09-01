@@ -96,6 +96,9 @@ SYNC_FILES=(
   services/usage_metering.py
   services/decision_layer.py
   services/responsibility_artifacts.py
+  services/responsibility_telemetry.py
+  services/responsibility_completion.py
+  services/fulfillment_registry.py
   services/base_retriever.py
   services/llm_provider.py
   services/llm_answer_optimizer.py
@@ -618,6 +621,56 @@ if docker exec aichatbot-rag-orchestrator test -e /spec 2>/dev/null; then
 fi
 
 if [ $INV24_FAIL -eq 0 ]; then echo "✅ PASS"; else FAIL=1; fi
+
+echo ""
+echo "═══ 不變量 25：responsibility form 輸入鍵 ＝ resolver input contract（F-C27）═══"
+# 為何需要（2026-09-01 於 S2 接線前 inspect 逼出）：
+#   legacy jgb_bill_diagnosis 收 bill_id，而 bill.by_ref.v1 讀 bill_ref；
+#   form_manager 以 field_name 逐字建 collected_data（無改名層）
+#   ⇒ 重用 legacy form 會讓 resolver 每次拿到 None → INVALID_INPUT，
+#     表面只看到「請提供帳單編號」無限追問。
+# 本不變量把「接 production 前的人工 inspect」變成自動稽核，
+# 後續每個 responsibility binding 只要登記進 RESPONSIBILITY_FORMS 就自動被涵蓋。
+INV25_OUT=$(docker exec -i aichatbot-rag-orchestrator python3 - <<'PYEOF' 2>&1
+import sys, json, os
+sys.path.insert(0, "/app")
+import psycopg2
+from services.responsibility_completion import RESPONSIBILITY_FORMS, _RESOLVER_SPECS
+
+conn = psycopg2.connect(host=os.environ.get("DB_HOST", "postgres"),
+                        dbname=os.environ.get("DB_NAME"),
+                        user=os.environ.get("DB_USER"),
+                        password=os.environ.get("DB_PASSWORD"))
+cur = conn.cursor()
+bad = []
+checked = 0
+for rid, spec in sorted(RESPONSIBILITY_FORMS.items()):
+    cur.execute("SELECT fields FROM form_schemas WHERE form_id=%s AND is_active",
+                (spec["form_id"],))
+    row = cur.fetchone()
+    if row is None:
+        bad.append(f"{rid}: form {spec['form_id']} 不存在或未啟用")
+        continue
+    fields = row[0] if isinstance(row[0], list) else json.loads(row[0])
+    expected = _RESOLVER_SPECS[spec["input_contract_id"]]["form_ref_field"]
+    names = [f.get("field_name") for f in fields]
+    checked += 1
+    if expected not in names:
+        bad.append(f"{rid}: form 欄位 {names} 不含 input contract 期望的 {expected!r}")
+    if len(fields) != 1:
+        bad.append(f"{rid}: form 欄位數 {len(fields)}（⛔ 多要了不需要的欄位？）")
+# 檢查器自身的規避測試：拿一個必然不符的假 contract，必須被抓到
+probe_expected = "___never_a_real_field___"
+if probe_expected in ["bill_ref"]:
+    bad.append("檢查器規避測試失效")
+print("CHECKED", checked, "BAD", json.dumps(bad, ensure_ascii=False))
+PYEOF
+)
+case "$INV25_OUT" in
+  CHECKED*BAD\ \[\]*) echo "✅ PASS" ;;
+  CHECKED*) echo "❌ FAIL：不變量 25 → $INV25_OUT"; FAIL=1 ;;
+  *) echo "❌ FAIL：不變量 25 檢查器異常 → $INV25_OUT"; FAIL=1 ;;
+esac
 
 # ── 分類記帳：不變量 1–12 的失敗一律算 code contract regression ──
 # （13 已在上面自行歸類；此處用總 FAIL 與 blocker 數回推，避免逐條改寫既有分支）

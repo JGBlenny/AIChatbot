@@ -4098,7 +4098,8 @@
     "F-C23_KNOWLEDGE_CONTENT_MUST_BE_SCOPE_CONTAINED": "⚠️ `APPROVED_KNOWLEDGE_CONTENT` 要求 reviewed answer **不只完整覆蓋** canonical responsibility，**也不得實質回答另一個已存在 responsibility 的核心問題**。額外背景**只有在為本 responsibility 所必需時**才可保留。\n```text\nKnowledge fulfillment 不只要「涵蓋 canonical」，\n還必須被 canonical 的責任邊界所**包含**。\n```\n⚠️ 若允許『只要答到自己的 responsibility，順便答鄰近的也可以』，等於把 **responsibility = semantic authority boundary** 重新鬆掉 ⇒ **fulfillment scope leakage**，⛔ 即使 member 未共用也一樣不可接受。",
     "F-C24_IMPLEMENTED_SEMANTICS_IS_NOT_RUNTIME_AUTHORIZATION": "⚠️ Reviewed adapter 已能 **deterministic 地處理其合法 input domain**，即可關閉 semantic／executability proposition；**是否已進 executable registry 是獨立的 authority-registration blocker**。\n```text\nEMPTY_INPUT_SEMANTICS        adapter 在 empty domain 上「應執行什麼語義」已成立\nEMPTY_ADAPTER_EXECUTABILITY  該 adapter 已可 deterministic 執行\nBINDING_REGISTRATION         runtime 是否已被**授權／接線**去執行它  ← 另一件事\n```\n⚠️ 兩者 ⛔ 不得綁成同一個 blocker。⚠️ 反方向亦然：**adapter 沒註冊 ⛔ ≠ adapter semantics 未建立**。",
     "F-C25_UPSTREAM_AUTHORIZED_ROLE_IS_TRUSTED_INPUT": "⚠️ AIChatbot ⛔ **不重複執行 role authorization**。只要系統契約保證 `role_id` 來自**已完成權限判斷的上游 API**，即可作為 responsibility resolver 的 `verified_role_id`。\n⇒ `verified_role_id` = **role_id authorized by trusted upstream API**，⛔ **不得**表述為「AIChatbot verified role_id」——它實際沒有驗，驗證責任在上游。\n⛔ **不得**在 AIChatbot 補 `request.user == role` 或 authorization middleware：那會重複授權責任，並可能與上游規則不一致。\n⚠️ 本契約**只涵蓋 role identity**。⛔ 不延伸至 user identity——模糊 keyword → user_id 仍受 F-C13 禁止（見 R-24）。\n⚠️ 成立**條件**（產品不變量，非工程斷言）：所有到達 `/api/v1/message` 的 `role_id` 皆經該上游 API 授權。若未來出現繞過上游、直接呼叫端點的呼叫者，本契約前提即破，需重開 F-OPEN-01。",
-    "F-C26_FACET_MAY_IMPLEMENT_BUT_MAY_NOT_OWN": "⚠️ **Responsibility 才是最終 semantic authority；facet 只負責 routing／context narrowing，⛔ 不是最終答題單位。**\nfacet-specific 的 grounding mechanics **可以**被 responsibility fulfillment 重用（降為 implementation）；但 `facet commit → 直接答題` ⛔ **不得**被計為 responsibility architecture 的終態。\n必須走完 `facet routing → responsibility commit → fixed execution`，才可宣稱 `RESPONSIBILITY_AUTHORITY = CONFIRMED`。\n⚠️ 鐵則：**進入 fulfillment 之前 responsibility 已經決定；裡面 ⛔ 不得再依 question／facet 重選 semantic owner**（與 D2 adapter 抽離原則一致，亦即 F-C1 no-reroute 由結構保證的延伸）。\n⚠️ 推論：facet 答對 ⛔ 不等於 responsibility 已履行——『能不能把答案做對』與『該不該因此取得 authority』是兩件事，⛔ 不得混談。"
+    "F-C26_FACET_MAY_IMPLEMENT_BUT_MAY_NOT_OWN": "⚠️ **Responsibility 才是最終 semantic authority；facet 只負責 routing／context narrowing，⛔ 不是最終答題單位。**\nfacet-specific 的 grounding mechanics **可以**被 responsibility fulfillment 重用（降為 implementation）；但 `facet commit → 直接答題` ⛔ **不得**被計為 responsibility architecture 的終態。\n必須走完 `facet routing → responsibility commit → fixed execution`，才可宣稱 `RESPONSIBILITY_AUTHORITY = CONFIRMED`。\n⚠️ 鐵則：**進入 fulfillment 之前 responsibility 已經決定；裡面 ⛔ 不得再依 question／facet 重選 semantic owner**（與 D2 adapter 抽離原則一致，亦即 F-C1 no-reroute 由結構保證的延伸）。\n⚠️ 推論：facet 答對 ⛔ 不等於 responsibility 已履行——『能不能把答案做對』與『該不該因此取得 authority』是兩件事，⛔ 不得混談。",
+    "F-C27_FORM_INPUT_KEY_MUST_MATCH_RESOLVER_INPUT_CONTRACT": "⚠️ Responsibility-mode form 產生的 `collected_data` key，必須**逐字**符合其 `input_contract.form_ref_field`；除非有**被正式審核的 explicit adapter**。⛔ 禁止隱式 rename。\n⚠️ 目前架構選擇：**explicit adapter count = 0** ⇒ 就是逐字一致。\n⚠️ 逼出本條的實例（2026-09-01，S2 接線前 inspect）：legacy `jgb_bill_diagnosis` 收 `bill_id`，而 `bill.by_ref.v1` 讀 `bill_ref`；`form_manager` 以 field_name 逐字建 collected_data（⛔ 無改名層）⇒ 若重用 legacy form，resolver 每次拿到 None → INVALID_INPUT，表面只會看到「請提供帳單編號」無限追問。\n⚠️ 這是 **INPUT_CONTRACT_MISMATCH**，⛔ 不得以 prompt 文案掩蓋。\n⚠️ 每個 responsibility binding 接 production 前，一律做同一個靜態稽核：`form field_name == input contract expected field`（不變量 25），⛔ 不得再靠人工看到 prompt 才發現。\n⚠️ **輸入 shape 相同 ⛔ 不等於 semantic responsibility 相同** ⇒ 其他責任即使也收 `bill_ref`，⛔ 不得自動共用同一 form。"
   },
   "_grounding_facts_adapter_audit": {
     "_status": "GROUNDING_FACTS_ADAPTER_REUSE = **NOT_DIRECTLY_REUSABLE**（唯讀實查 2026-08-30）",
@@ -5285,5 +5286,18 @@
       "_bonus": "⚠️ R-31 亦由 4657 提名且同樣有已註冊 binding ⇒ slice 設計須考慮『同一輪出現多個具 binding 的 nomination』的選取規則（本輪未裁）"
     },
     "_gap_is_a_contiguous_segment": "⚠️ 修正先前『缺口＝一個未被呼叫的建構函式』的說法：`responsibility_collapse` 整個模組（collapse／select_nominated／load_mapping_from_registry）**同樣 0 個 production 呼叫者**。⇒ 未接線區間為 **nomination → commit → session** 一整段；其上游（facet routing／resolver／facet commit）與下游（dispatcher／registry execute／grounding exit）皆已在線。"
+  },
+  "_s2_status_2026_09_01": {
+    "S2_decision_layer": "**PASS**（cheap gate ＋ handoff 資格，20/20 綠，commit d481cb3）",
+    "S2_authority_handoff": "**BLOCKED_INPUT_CONTRACT_MISMATCH → 修復中**",
+    "_ruling": "業主裁 (b)：additive／idempotent／responsibility-owned seed migration；legacy forms、既有 sessions、`bill.by_ref.v1` 全不改。",
+    "_next_order": [
+      "1. additive migration 新增 R-29 responsibility form ✅",
+      "2. contract／mutation guards PASS ✅",
+      "3. clean migration path 確認",
+      "4. 再接 build_responsibility_session()",
+      "5. turn1 → DB persist → turn2 resume E2E"
+    ],
+    "_do_not": "⛔ 不得在新增 form 的同一片順便接 handoff——先把 input carrier 單獨證成，再打開 authority。"
   }
 }
