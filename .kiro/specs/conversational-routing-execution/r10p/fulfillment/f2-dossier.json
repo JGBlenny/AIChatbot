@@ -5289,15 +5289,35 @@
   },
   "_s2_status_2026_09_01": {
     "S2_decision_layer": "**PASS**（cheap gate ＋ handoff 資格，20/20 綠，commit d481cb3）",
-    "S2_authority_handoff": "**BLOCKED_INPUT_CONTRACT_MISMATCH → 修復中**",
+    "S2_authority_handoff": "**UNBLOCKED（2026-09-01）**——INPUT_CONTRACT_MISMATCH 已修並驗證；⚠️ handoff 本身**尚未接**",
     "_ruling": "業主裁 (b)：additive／idempotent／responsibility-owned seed migration；legacy forms、既有 sessions、`bill.by_ref.v1` 全不改。",
     "_next_order": [
-      "1. additive migration 新增 R-29 responsibility form ✅",
-      "2. contract／mutation guards PASS ✅",
-      "3. clean migration path 確認",
-      "4. 再接 build_responsibility_session()",
-      "5. turn1 → DB persist → turn2 resume E2E"
+      "1. 驗證並納入 T4-B2 carrier rollback ✅",
+      "2. review fix_config rollback（裁定不納入）✅",
+      "3. R-29 migration isolated clean-state round trip ✅",
+      "4. F-C27 ／ invariant 25 再綠 ✅",
+      "5. 接 build_responsibility_session()（**下一刀**，尚未開始）"
     ],
-    "_do_not": "⛔ 不得在新增 form 的同一片順便接 handoff——先把 input carrier 單獨證成，再打開 authority。"
+    "_do_not": "⛔ 不得在新增 form 的同一片順便接 handoff——先把 input carrier 單獨證成，再打開 authority。",
+    "_input_carrier_roundtrip": {
+      "method": "isolated clean-state round trip——臨時 DB，前置狀態由真實 schema `pg_dump --schema-only` 匯出（⛔ 非手寫 DDL），並植入一筆 legacy form 作為『不得被動到』的對照。⛔ 未跑其餘 9 支 pending migration、⛔ 未重算全庫 embedding。",
+      "results": [
+        "基線起始 0 筆",
+        "① 首次套用 → 恰好 1 筆，bill_ref／請提供帳單編號／欄位數 1",
+        "② 重跑 → 仍 1 筆且 definition 未突變（冪等）",
+        "③ rollback → target 歸 0，legacy **全列 md5 指紋**不變",
+        "④ 再套 → 1 筆且與首次逐字相同；legacy 指紋全程不變"
+      ],
+      "verdict": "**ROUND_TRIP = PASS**",
+      "_probe_defect_noted": "⚠️ 首版判定把布林期望值寫成 't'（實際字串串接得 'true'）⇒ 誤判 2 條 FAIL。已改為**與基線比對**而非硬編字面，並把 legacy 檢查升級為全列 md5 指紋（⛔ 只看單欄會漏掉其他欄位被動到）。",
+      "proposition_proven": "⇒ R-29 form definition **可由受版控的 migration 在乾淨、合法的前置狀態下自然產生**，⛔ 不依賴人工 SQL、⛔ 不依賴既有本機資料。",
+      "guards_after": "F-C27 8/8 ／ 不變量 24 ✅ ／ 不變量 25 ✅"
+    },
+    "_migration_hygiene": {
+      "included": "20260830_form_sessions_responsibility_carrier_rollback.sql —— 四項配對驗證全過，as-is 納入",
+      "⚠️_defect_found_not_fixed": "該 rollback **不移除 schema_migrations 帳本列** ⇒ rollback 後帳本仍記已套，之後 migrate.sh 會跳過它 ⇒ 欄位持續缺失而無人察覺。⛔ 本輪未修，待裁示。",
+      "excluded": "fix_config_disable_broken_forms_rollback.sql —— 無 forward、無帳本列，由 tools/fix_config.py:91 於 `make fix-config APPLY=1` 自動重寫 ⇒ 工具產物非 migration artifact；.gitignore 精準排除該單檔（⛔ 未放寬整個 rollback/ 規則）",
+      "vcs_gap_fixed": "`.gitignore` 的 `*.sql` 例外原本只涵蓋 migrations/ 主目錄，rollback/ 子目錄下 3 支檔從未進版控（含 T4-B2 carrier 的那支）"
+    }
   }
 }
