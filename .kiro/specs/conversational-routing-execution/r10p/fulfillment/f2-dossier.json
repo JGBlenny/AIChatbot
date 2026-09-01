@@ -5231,5 +5231,59 @@
       ],
       "_meaning": "通過後才第一次有資格討論 `R-29 APPROVED_CAPABILITY`，⛔ 不得以 facet 答對代替。"
     }
+  },
+  "_r29_slice_readonly_diagnostics_2026_09_01": {
+    "id": "R-29 vertical slice —— 唯讀設計收斂（⛔ 本輪零程式碼變更）",
+    "_scope_kept": [
+      "⛔ 未寫任何 code",
+      "⛔ 未改 threshold",
+      "⛔ 未補 4640 answer",
+      "⛔ 未註冊新 binding"
+    ],
+    "SUMMARY_TABLE": {
+      "Q1_nomination_source": "**NOMINATION_ELIGIBLE**",
+      "Q2_facet_compatibility": "**FACET_MAPPING_MISSING**（⚠️ 但不阻塞：nomination 本就不吃 facet）",
+      "Q3_authority_carrier": "**form_sessions.session_authority_mode**（同一 session authority carrier）",
+      "negative_control": "**PASS**"
+    },
+    "Q1_NOMINATION_ELIGIBLE": {
+      "verdict": "**NOMINATION_ELIGIBLE**",
+      "static": "`_drop_empty_answer_rows`（chat.py:1445，錨點防呆）在 **facet 進場判定之後**才套用，且只改 `decision['knowledge_list']`（單發答題候選）。進場判定用的是**未過濾**清單。原碼註解自述：『進場判定已用過 top1；未進面向 → 空答案錨點退出答題候選』。",
+      "runtime": "實測查詢『我要查這張帳單的收據實際收了多少錢』：過濾前候選 4 筆，**4640 為 top-1**（rerank 0.974／vector_similarity 0.739×boost 1.2＝0.887）；過濾後剩 2 筆，dropped=[4640, 4657]。",
+      "conclusion": "⇒ 只要 nomination 插在 facet 進場判定同一位置（過濾之前），row/member identity **完整保留**。⛔ 不是 NOMINATION_LOST_BEFORE_RESPONSIBILITY。"
+    },
+    "Q2_FACET_MAPPING_MISSING": {
+      "verdict": "**FACET_MAPPING_MISSING**",
+      "facts": [
+        "resolver 實測 commit 的 facet identity＝**billing_anomaly**",
+        "registry-v2 中 R-29 的 `facet` 欄位＝**null**（無 machine 綁定）",
+        "R-29 `owner_contract` 為 **prose**：『bill_diagnosis 的 receipt-amount deterministic capability（B05）』",
+        "registry blob 含 'bill_diagnosis'（prose）、⛔ 不含 'billing_anomaly'、⛔ 不含 '條件診斷'",
+        "4640 的 DB categories＝['條件診斷：帳單']，與 registry 用語不同體系"
+      ],
+      "_why_not_blocking": "⚠️ `select_nominated(rows, mapping, …)` 的簽名**只吃 rows 與 row→responsibility mapping**，⛔ 不吃 facet ⇒ nomination 在設計上就是 facet-independent。因此此缺口**不阻塞** R-29 slice。",
+      "_open_for_owner": "⚠️ 但 committed facet（billing_anomaly）與 prose owner_contract（bill_diagnosis）**不一致**。是否要建立 facet↔responsibility 的 machine 約束（並據以裁定何者為準），屬**產品/架構裁決**，⛔ 本輪未裁、⛔ 未據此改任何分類。"
+    },
+    "Q3_AUTHORITY_CARRIER": {
+      "verdict": "**同一 session authority carrier**（與業主傾向一致，⛔ 不另開 chat response metadata）",
+      "carrier": "`form_sessions` 列 ↔ `session_state` dict；欄位 `session_authority_mode` ＋ `responsibility_id` ／ `fulfillment_binding_id` ／ `input_contract_id`",
+      "runtime_schema": "⚠️ 四個欄位在 runtime DB（aichatbot_admin）**皆已存在且 nullable**（T4-B2 migration 已套用）——此為 H2a REFUTED 的再一佐證。⚠️ `session_id` 為 **NOT NULL**（我先前探針失敗之源）。",
+      "writer": "`responsibility_session.build_responsibility_session()` —— **production 呼叫者 0 個**（僅 13 處測試）。這就是缺口本體。",
+      "readers": [
+        "`form_manager._complete_form`（authority-mode dispatcher，T4-D1）",
+        "`responsibility_session.validate_session` ／ `resume_fulfillment`"
+      ],
+      "legacy_state": "⚠️ legacy facet 路徑目前**沒有**等價的 persisted mode：form_sessions 全部 2042 列 `session_authority_mode` 皆為 NULL，帶 responsibility_id 者 0 列。`_complete_form` 把 None/''/legacy_row 視為 legacy。",
+      "⚠️_legacy_facet_requires_enum_change": "⚠️ `VALID_MODES = ('legacy_row','responsibility')` ——`legacy_facet` **目前不是合法值**：`validate_session` 會拋、`_complete_form` 會大聲失敗（該大聲失敗是刻意設計，防 authority 靜默降級）。⇒ 導入 `legacy_facet` 必須**同時**擴充 VALID_MODES 與 dispatcher 接受清單，屬 Plan 內須明列的變更，⛔ 不得順手加。"
+    },
+    "NEGATIVE_CONTROL": {
+      "design": "若把 4640 從候選中移除 ⇒ R-29 nomination 必須消失",
+      "method": "用**真實檢索回傳列**（非手造 dict）餵 `select_nominated`＋registry-v2 mapping",
+      "result": "WITH 4640 → nominated=['R-29','R-31']（R-29 rows=[4640] vec=0.887）；WITHOUT 4640 → nominated=['R-31'] ⇒ **PASS**",
+      "conclusion": "⇒ R-29 的提名證據**唯一**來自 4640，⛔ 非其他 row／keyword／fallback 偷偷提供",
+      "_probe_defect_noted": "⚠️ 首版負對照用手造 dict（欄位名 `score`）⇒ 兩組皆空、判 FAIL。真實欄位是 `vector_similarity`／`search_method`／`keyword_boost`。⛔ 該 FAIL 是探針缺陷，非證據。",
+      "_bonus": "⚠️ R-31 亦由 4657 提名且同樣有已註冊 binding ⇒ slice 設計須考慮『同一輪出現多個具 binding 的 nomination』的選取規則（本輪未裁）"
+    },
+    "_gap_is_a_contiguous_segment": "⚠️ 修正先前『缺口＝一個未被呼叫的建構函式』的說法：`responsibility_collapse` 整個模組（collapse／select_nominated／load_mapping_from_registry）**同樣 0 個 production 呼叫者**。⇒ 未接線區間為 **nomination → commit → session** 一整段；其上游（facet routing／resolver／facet commit）與下游（dispatcher／registry execute／grounding exit）皆已在線。"
   }
 }
