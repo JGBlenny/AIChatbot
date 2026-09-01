@@ -112,6 +112,9 @@ backups/
 # ⚠️ rollback/ 子目錄同樣是部署必需：上面那條只涵蓋主目錄，
 #    2026-09-01 發現 3 支 rollback 檔因此從未進版控（含 T4-B2 carrier migration 的那支）。
 !rag-orchestrator/database/migrations/rollback/*.sql
+# ⚠️ 但 tools/fix_config.py 每次 `make fix-config APPLY=1` 會**重寫**這支：
+#    它是工具產物、無 forward migration、無帳本紀錄 ⇒ ⛔ 不屬 migration artifact
+rag-orchestrator/database/migrations/rollback/fix_config_disable_broken_forms_rollback.sql
 # 量測契約（凍結的分析定義）同樣不屬備份：它是判準本體，改動即構成量尺變更
 !scripts/analysis/*.sql
 
