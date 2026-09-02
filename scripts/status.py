@@ -190,11 +190,15 @@ def print_b2b_surface() -> None:
         print(f"   ⛔ {nocat} 筆 categories 空 ⇒ **面向進場對它們靜默失效**（知識已寫好，只是沒掛分類）")
         print("      ⚠️ 補分類是**行為變更**（繞過適用性把關）⇒ ⛔ 不得一次全掛，分批補、每批補完立刻回測")
 
-    print("\n   面向覆蓋（答題知識數由少到多；⚠️ 薄 ⛔ 不等於缺，要對照真實問句）")
-    # ⚠️ **兩個數都要印**（2026-09-02 獨立驗證抓到）：舊版只印答題數（_B2B，排除空 answer），
-    #    而被排除的 61 筆**正是面向進場錨點** ⇒ 「⚠️ 帳單異常 知識 2」被讀成「候選池裡沒東西」，
-    #    實際上加回錨點是 5。⛔ 警訊必須標明它算在哪個母體上。
-    #    `候選` 欄＝retriever 向量路實際撈得到的（含空 answer 錨點）。
+    print("\n   面向覆蓋（⚠️ **api 型與對話型的『知識數』不是答案覆蓋**，見下）")
+    # ⛔ **業主定案 2026-09-02**：
+    #   ① 空 answer 錨點 ⛔ **不計為覆蓋** —— 它不能成為答案。
+    #   ② **api 型／對話型面向的答案不來自 KB 的 answer 欄**：
+    #      `conversational_engine._ground_by_api` 收斂時以 **API 回傳**為合成底稿
+    #      （spec conversational-diagnosis 核心元件 1、domain-conversational-facets 元件 2）。
+    #      ⇒ 對這些面向，「知識數」量到的是**提名入口數**（有幾筆知識能把使用者導進來），
+    #        ⛔ **不是答案覆蓋** —— 拿它當覆蓋率會把「API 供料正常但入口少」誤判成「缺知識」。
+    #   ⇒ 依 select 分開標示，⛔ 不再用同一個 ⚠️ 門檻套所有面向。
     fr = rows(f"""
       WITH b2b AS (SELECT * FROM knowledge_base WHERE {_B2B}),
            cand AS (SELECT * FROM knowledge_base kb
@@ -217,10 +221,15 @@ def print_b2b_surface() -> None:
       ORDER BY 4, 1;""")
     for cat, sel, slots, n, c in fr[:8]:
         n, c = int(n), int(c)
-        # ⛔ 只有「答題 0 且候選也 0」才是真的沒東西；答題薄但候選厚 ⇒ 缺的是 answer 不是知識
-        flag = "⛔" if c == 0 else ("⚠️" if n <= 3 and c <= 3 else ("◐" if n <= 3 else "  "))
-        print(f"   {flag} {cat:<14} {sel:<9} 答題 {n:>2} ／候選 {c:>2}  槽位 {slots[:28]}")
-    print(f"   …共 {len(fr)} 個面向　◐＝答題薄但候選池有東西（缺的是 answer，⛔ 不是缺知識）")
+        if sel == "api":
+            # ⛔ api 型：答案來自 API ⇒ 這個數是**入口**。只有 0 才是問題（進不來）。
+            flag, label = ("⛔" if c == 0 else "  "), "入口"
+        else:
+            # 對話／引導型：答案來自 KB ⇒ 這個數才是覆蓋。空 answer ⛔ 不計（業主定案）。
+            flag, label = ("⛔" if n == 0 else ("⚠️" if n <= 3 else "  ")), "覆蓋"
+        print(f"   {flag} {cat:<14} {sel:<9} {label} {n:>2}（候選 {c:>2}）  槽位 {slots[:24]}")
+    print(f"   …共 {len(fr)} 個面向　⚠️ **api 型印的是入口數，⛔ 不是答案覆蓋**"
+          f"（答案來自 API）；候選＝進得了池的筆數（含空 answer 錨點，⛔ 不計覆蓋）")
     print()
 
 
