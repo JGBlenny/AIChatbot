@@ -135,6 +135,12 @@ def print_kb() -> None:
 #:   T1 直答 以上皆非
 #: ⛔ 四型的「對」不是同一件事 ⇒ ⛔ 一批一型，混批的率讀不出意義
 #:   （判準見 .claude/skills/retrieval-improvement-loop/rules/型別分批.md）
+#: ⛔ **母體定義的唯一正本**（2026-09-02 業主指出）。
+#: ⚠️ 那天同一個 session 用過**四個**不同母體、產出四組數字，沒有一次對齊：
+#:   772 全庫適格（ELIGIBLE）／381 只濾 business_types／320 少了 target_user 與 id<>4253／
+#:   **293 才是對的**。之後每一句「業者池 N 筆中…」的母體都偏大。
+#: ⇒ 任何腳本要用 b2b 母體，**逐條複製本常數並註明出處**，⛔ 不得自己重寫一個 where。
+#: ⇒ 改本常數＝改全專案的分母，⛔ 改之前先確認 retriever 的過濾邏輯真的變了。
 _B2B = ("is_active AND business_types && ARRAY['system_provider']::text[] "
         "AND (target_user IS NULL OR 'property_manager' = ANY(target_user)) "
         "AND COALESCE(category,'') NOT IN ('系統脈絡','對話規則') AND id <> 4253 "

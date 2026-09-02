@@ -136,6 +136,7 @@ services/conversational_engine.py  面向進場、槽位、grounding
 ### ⑤ 當下現況（⛔ 不看文件裡的數字，一律現查）
 ```bash
 python3 scripts/status.py      # 危害／待裁決置頂＋母體／流量／環境／索引
+                               # ⛔ **它也是母體定義的正本**（_B2B／ELIGIBLE），見〈母體定義只有一份〉
 make audit                     # 26 條不變量
 ```
 
@@ -197,6 +198,31 @@ G3 單一變因   一輪只動一類成因，**且一批只做一型**
               ⚠️ 四型（T1 直答／T2 API／T3 對話／表單）的「對」不是同一件事，
                  混批的率無法歸因 → [`rules/型別分批.md`](rules/型別分批.md)
 ```
+
+## ⛔ 母體定義只有一份（2026-09-02 業主指出）
+
+```text
+正本   scripts/status.py 的 _B2B（b2b 業者可見）與 ELIGIBLE（全庫適格母體）
+用法   任何腳本要用，**逐條複製並註明出處**；⛔ 不得自己重寫一個 where
+驗法   跑 `python3 scripts/status.py`，你的數字必須與「各池可見」那行對得上
+```
+
+⚠️ **一天四個母體的實錄**：同一個 session 我用過
+
+```text
+772  全庫適格（ELIGIBLE）        ← 這不是 b2b
+381  只濾 business_types          ← 少了適格條件與 target_user
+320  少了 target_user 與 id<>4253
+293  **正本**
+```
+
+⇒ 之後每一句「業者池 N 筆中…」的分母都偏大，而**四個數字都長得像對的**。
+⛔ 分母錯不會報錯，只會讓所有比率一起偏——這是最難自己發現的那種錯。
+
+⚠️ **同源的還有型別判定**：`status.py` 的 `print_b2b_surface` 與
+[`rules/型別分批.md`](rules/型別分批.md) 是同一套 T1/T2/T3/表單判準，
+⛔ 不得各自實作（已知 `kb_vs_helpcenter` 與 status.py 對「一列命中多面向」
+取法不同，差 2 筆，尚未收斂）。
 
 ## 權威來源在哪（G0 用；⛔ 不憑印象，一律對這兩個）
 
