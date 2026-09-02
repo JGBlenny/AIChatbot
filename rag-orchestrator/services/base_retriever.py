@@ -140,6 +140,7 @@ class BaseRetriever(ABC):
         enable_keyword_fallback: bool = None,
         enable_keyword_boost: bool = None,
         return_unfiltered: bool = False,
+        unfiltered_sink: List[Dict] = None,
         **kwargs
     ) -> List[Dict]:
         """
@@ -159,6 +160,15 @@ class BaseRetriever(ABC):
                 仍會套用 top_k 與 final similarity 排序。
                 僅供 chat.py 在 include_debug_info=True 時使用，
                 產線流量維持 False（預設）。
+            unfiltered_sink: **觀測用出口**（預設 None＝完全不動）。傳入 list 時，
+                於 Step 7 過濾**之前**把候選原樣放進去（同一批 dict 物件，非複本）。
+                ⚠️ 存在的理由：`similarity_threshold` 把候選砍到 0 筆時，回傳值為空
+                ⇒ 呼叫端看不出「沒走檢索」與「走了但全數落榜」的差別，
+                而後者正是 T 類（門檻）歸因的目標事件。
+                ⛔ 不得改用「再跑一次 return_unfiltered=True」來取代——那是第二次檢索，
+                在產線流量上是實質成本。
+                ⚠️ 放進去的是**同一批 dict 參考**：呼叫端若之後會就地 pop 欄位，
+                必須先用完 sink（chat.py `_retrieve_knowledge` 即先遙測再剝欄）。
             **kwargs: 傳遞給子類的額外參數
 
         Returns:
@@ -354,6 +364,11 @@ class BaseRetriever(ABC):
 
         # Step 6: 統一計算 final similarity 與 score_source（task 4.3）
         results = self._finalize_scores(results)
+
+        # 觀測出口：過濾**之前**先讓候選流出（⛔ 不影響下方任何判斷與回傳值）。
+        # 全數落榜時回傳為空，`unfiltered_sink` 是唯一還留著那批分數的地方。
+        if unfiltered_sink is not None:
+            unfiltered_sink.extend(results)
 
         # Step 7: application 端 threshold 過濾（比對 final similarity）
         # followup-debug-visibility 選項 A：return_unfiltered=True 時跳過過濾，

@@ -2613,6 +2613,72 @@ def _meter_decision(snapshot: dict = None, facet_event: str = None) -> None:
         pass
 
 
+#: `retrieve_knowledge_hybrid(return_debug_info=False)` 尾端會 pop 掉的內部欄位。
+#: ⛔ 必須與 `vendor_knowledge_retriever_v2.retrieve_knowledge_hybrid` 的 pop 清單逐項相同——
+#: `_retrieve_knowledge` 一律以 True 取回分數供遙測、再依請求剝回，
+#: 少剝一欄就是**靜默的行為變更**（下游看到本來看不到的 key）。
+_KB_DEBUG_ONLY_KEYS = ('search_method', 'keyword_matches', 'keyword_boost',
+                       'original_similarity', 'rerank_score')
+
+#: 落進 decision_snapshot 的候選上限（JSONB 膨脹防護）。
+#: ⚠️ **這條註解曾經寫錯**（2026-09-02 第二輪獨立驗證抓到）：原文說上界是
+#: `RERANKER_INPUT_LIMIT`（20）。實況是 reranker 在 Step 5 就已經截到 `top_k`
+#: （`_apply_semantic_reranker(query, results, top_k)` 回傳已截斷），而 sink 填在其後
+#: ⇒ **reranker 健康時上界＝`request.top_k`（Pydantic `le=10`）**，本 cap 不會觸發。
+#: 只有 reranker 降級（None／全 0／拋例外）走 fallback 回傳未截斷候選時才會生效。
+#: ⇒ **`kb_candidates` 的射程是「rerank 之後的 top_k」，⛔ 不是「檢索考慮過的全部候選」**。
+#: 被 rerank 截掉的那批（實測 21→20→5）看不到 ⇒ R 類（排序）歸因僅限 top_k 之內。
+_KB_CANDIDATE_CAP = 10
+
+
+def _meter_kb_candidates(filtered: list, candidates: list = None) -> None:
+    """usage-metering：檢索候選與分數埋點（無條件；同 `_meter_comparison` 房式）。
+
+    **為什麼要有這支**（P0-1 回測輸出契約 §B②）：面向進場路徑的
+    `_conversational_to_response` 組回應時不帶 `debug_info`，`param_answer` 帶了卻沒傳
+    `knowledge_candidates` ⇒ 2026-09-02 實查 b2b 非內部事件只有 **14.7%**
+    （no_knowledge_found 235 ＋ knowledge 19，母體 1731）拿得到候選分數。
+    缺了它，「正解可見卻沒被選中」分不出是門檻（T）還是排序（R）。
+    ⛔ 不掛在 `_build_debug_info`——那支被 `include_debug_info` 閘住，正式流量永不執行
+    （trigger-vocabulary-debt/design.md 元件 3 v1.1 已為 set_comparison 記過同一個錯）。
+    改走 `decision_snapshot`，由 `_finalize_decision_snapshot` 的 finally 統一落地，
+    所有 processing_path 一次到位。
+
+    `candidates` ＝ `retrieve()` 的 `unfiltered_sink`，是**門檻過濾前**的候選。
+    ⚠️ **這裡曾經是錯的**（2026-09-02 獨立驗證抓到）：初版拿回傳值（過濾後）當母體，
+    於是「候選全部落在門檻以下」的請求整段不落盤——而那正是最純粹的 T 類事件。
+    實例：問「客服專線電話是多少？」日誌印 `閾值過濾: 5 → 0 筆`，那 5 筆分數當場消失。
+    ⛔ 不得改回用回傳值當母體。
+
+    ⚠️ `candidates` 為空 list 時**照樣落一筆空陣列**：「沒走檢索」與「走了但零候選」
+    必須在 SQL 上分得開（同 `_finalize_decision_snapshot` 的 `incomplete` 用意）。
+    欄位名沿用 `_handle_no_knowledge_found` 既有的 `knowledge_candidates_debug`，⛔ 不自創。
+    """
+    if candidates is None:                               # 未提供 sink＝本輪未走檢索
+        return
+    try:
+        passing = {k['id'] for k in (filtered or []) if k.get('id') is not None}
+        # 依 final similarity 排序後才截斷——⛔ sink 是 Step 8 排序**之前**放進來的。
+        ranked = sorted(candidates, key=lambda k: k.get('similarity') or 0, reverse=True)
+        cands = [{
+            'id': k.get('id'),
+            # base_similarity＝純向量分數（與 knowledge_candidates_debug 同一組回退順序）
+            'base_similarity': k.get('vector_similarity',
+                                     k.get('original_similarity', k.get('similarity'))),
+            'rerank_score': k.get('rerank_score'),
+            'boosted_similarity': k.get('similarity'),
+            'score_source': k.get('score_source'),
+            'is_selected': k.get('id') in passing,
+        } for k in ranked[:_KB_CANDIDATE_CAP]]
+        _meter_decision(snapshot={
+            'kb_candidates': cands,
+            'kb_candidates_scope': 'prefilter',
+            'kb_candidates_total': len(candidates),      # 被 cap 截掉幾筆看得出來
+        })
+    except Exception:                                    # 計量失敗零影響回答
+        pass
+
+
 # 快照「完整」的必要欄位（D-19；A2 的 routing_verdict 併入後同步擴充）：
 # 至少要有一個判定去向，否則這輪等於沒被決策層記錄到。
 _DECISION_REQUIRED_KEYS = ("verdict", "routing_verdict")
@@ -3500,6 +3566,12 @@ async def _retrieve_knowledge(
     kb_similarity_threshold = DecisionConfig.load().kb_threshold
 
     # 產線路徑：過濾後的候選（傳入預計算結果避免重複呼叫）
+    # ⚠️ 一律 `return_debug_info=True`：分數欄（rerank_score 等）要留到下方**無條件**候選遙測。
+    #    不帶 debug flag 的請求在遙測後把內部欄位剝回（`_KB_DEBUG_ONLY_KEYS`），
+    #    對呼叫端而言 dict 形狀與本改動前逐欄相同 ⇒ ⛔ 非行為變更。
+    # ⚠️ `unfiltered_sink`：接住**門檻過濾前**的候選。回傳值被門檻砍到 0 筆時，
+    #    它是唯一還留著那批分數的地方（⛔ 不加第二次檢索，見 base_retriever 該參數說明）。
+    _kb_sink: list = []
     knowledge_list = await retriever.retrieve_knowledge_hybrid(
         query=request.message,
         vendor_id=request.vendor_id,
@@ -3507,7 +3579,8 @@ async def _retrieve_knowledge(
         similarity_threshold=kb_similarity_threshold,
         target_user=request.target_user,
         mode=request.mode,
-        return_debug_info=request.include_debug_info,
+        return_debug_info=True,
+        unfiltered_sink=_kb_sink,
         precomputed_embedding=precomputed_embedding,
         precomputed_rewrites=precomputed_rewrites
     )
@@ -3528,6 +3601,18 @@ async def _retrieve_knowledge(
             precomputed_embedding=precomputed_embedding,
             precomputed_rewrites=precomputed_rewrites
         )
+
+    # 候選與分數遙測：**無條件**（繞開 include_debug_info 閘，同 _meter_path／_meter_comparison）。
+    # ⛔ 母體用 `_kb_sink`（過濾前），不是 `knowledge_list`（過濾後）——後者在
+    #    「候選全數落在門檻以下」時為空，那正是要歸因的 T 類事件。
+    _meter_kb_candidates(knowledge_list, _kb_sink)
+
+    # 剝回內部欄位：本函式上方一律以 return_debug_info=True 取值，未要求 debug 的請求
+    # 必須拿到與改動前**逐欄相同**的 dict（⛔ 少剝一欄即靜默行為變更）。
+    if not request.include_debug_info:
+        for _row in knowledge_list:
+            for _k in _KB_DEBUG_ONLY_KEYS:
+                _row.pop(_k, None)
 
     return knowledge_list, knowledge_list_unfiltered
 

@@ -428,6 +428,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         mode: str = 'b2c',
         return_debug_info: bool = False,
         return_unfiltered: bool = False,
+        unfiltered_sink: List[Dict] = None,
         precomputed_embedding=None,
         precomputed_rewrites=None,
         **kwargs
@@ -444,6 +445,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             enable_keyword_fallback=True,
             enable_keyword_boost=True,
             return_unfiltered=return_unfiltered,
+            unfiltered_sink=unfiltered_sink,
             target_user=target_user,
             mode=mode,
             precomputed_embedding=precomputed_embedding,
