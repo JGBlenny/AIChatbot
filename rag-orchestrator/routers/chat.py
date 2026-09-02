@@ -1510,7 +1510,34 @@ async def _top1_relevance_gate(question: str, rows: list, max_checks: int = 2,
     categories 等於把它移進一條繞過本閘門的路徑，補標時須一併考量。
     """
     rows = list(rows or [])
+    _n_rows = len(rows)
+    _checks: list = []          # 每筆的判定與理由（契約 §B⑥）
+    _fail_closed = 0            # b2b fail-closed 次數 —— ⚠️ 與一般 NO **分開計**
+
+    def _veto(outcome: str, admitted_from: int = None) -> None:
+        """留痕。⚠️ 每個 return 點都要叫——⛔ 少一個就會出現無聲的否決。"""
+        _reviewed = {c["id"] for c in _checks if c.get("id") is not None}
+        _unrev = [k.get("id") for k in rows if k.get("id") not in _reviewed]
+        if admitted_from is not None:                    # 放行者及其後續不算被丟棄
+            _kept = {k.get("id") for k in rows[admitted_from:]}
+            _unrev = [i for i in _unrev if i not in _kept]
+        _meter_veto({
+            "layer": "relevance_gate",
+            "outcome": outcome,                          # cleared｜admitted｜exempt_*｜skipped｜fail_open_b2c
+            "max_checks": max_checks,
+            "b2b": bool(b2b),
+            "n_rows": _n_rows,
+            "n_checked": len(_checks),
+            "checks": _checks,
+            # (b) 未受審即被丟棄 —— ❓ 業主未裁，⛔ 不得算成正確行為
+            "n_unreviewed": len(_unrev),
+            "unreviewed_ids": _unrev[:_VETO_TRAIL_MAX],
+            # (c) b2b fail-closed —— ❓ 業主未裁，且必須與 (b) 分得開
+            "fail_closed_used": _fail_closed,
+        })
+
     if not rows or os.getenv("RELEVANCE_GATE_ENABLED", "true").lower() == "false":
+        _veto("skipped", admitted_from=0)
         return rows
 
     _skip_raw = os.getenv("RELEVANCE_GATE_SKIP_VEC")      # 未設＝不跳過（預設關）
@@ -1519,8 +1546,10 @@ async def _top1_relevance_gate(question: str, rows: list, max_checks: int = 2,
     for i in range(min(max_checks, len(rows))):
         k = rows[i]
         if k.get('form_id') or k.get('action_type') in ('form_fill', 'api_call', 'form_then_api'):
+            _veto("exempt_form_api", admitted_from=i)
             return rows[i:]                                   # 表單/API 觸發不判
         if _skip_vec is not None and (k.get('vector_similarity') or 0) >= _skip_vec:
+            _veto("exempt_skip_vec", admitted_from=i)
             return rows[i:]                                   # 僅在顯式開啟時免判
         try:
             resp = await asyncio.to_thread(
@@ -1544,14 +1573,29 @@ async def _top1_relevance_gate(question: str, rows: list, max_checks: int = 2,
             verdict = raw.upper()
         except Exception as e:
             if b2b:
+                _fail_closed += 1
+                _checks.append({"rank": i + 1, "id": k.get("id"),
+                                "sim": k.get("similarity"), "verdict": "FAIL_CLOSED",
+                                "reason": f"{type(e).__name__}"[:_VETO_REASON_MAX]})
                 print(f"⚠️ [適用性把關] LLM 失敗，b2b fail-closed 視同不適用：{e}")
                 continue                                      # 不放行，續判次筆
+            _checks.append({"rank": i + 1, "id": k.get("id"),
+                            "sim": k.get("similarity"), "verdict": "FAIL_OPEN",
+                            "reason": f"{type(e).__name__}"[:_VETO_REASON_MAX]})
             print(f"⚠️ [適用性把關] LLM 失敗放行（b2c fail-open）：{e}")
+            _veto("fail_open_b2c", admitted_from=i)
             return rows[i:]
+        _checks.append({"rank": i + 1, "id": k.get("id"), "sim": k.get("similarity"),
+                        "verdict": "YES" if verdict.startswith("YES") else "NO",
+                        "reason": raw[:_VETO_REASON_MAX]})
         if verdict.startswith("YES"):
+            _veto("admitted", admitted_from=i)
             return rows[i:]
         print(f"🛡️ [適用性把關] top{i+1}「{k.get('question_summary','')[:24]}」判不適用"
               f"（sim={k.get('similarity',0):.3f}｜{raw[:40]}）→ 次筆晉位")
+    # ⚠️ 走到這裡＝受審的都判 NO ⇒ **整列清空**，含未受審的第 max_checks+1 筆之後。
+    #    ⛔ 這不是「全不適用」——`n_unreviewed` 就是沒被判過就被丟掉的那些。
+    _veto("cleared")
     return []
 
 
@@ -1694,9 +1738,17 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
                           f"（{_face_authority}）→ 延後，Knowledge path 先走")
 
             # 錨點防呆（P0）：進場判定已用過 top1；未進面向 → 空答案錨點退出答題候選
-            _pre_n = len(decision.get('knowledge_list') or [])
+            _pre_ids = [k.get('id') for k in (decision.get('knowledge_list') or [])]
+            _pre_n = len(_pre_ids)
             decision['knowledge_list'] = _drop_empty_answer_rows(decision.get('knowledge_list'))
             if _pre_n != len(decision['knowledge_list']):
+                _kept = {k.get('id') for k in decision['knowledge_list']}
+                _removed = [i for i in _pre_ids if i not in _kept]
+                # 否決軌跡（契約 §B⑥）：這一層也會把已過門檻的候選整批拿掉
+                # ⇒ ⛔ 不記就與「未過門檻」在資料上分不出來（2026-09-02 ts9833 即此型）
+                _meter_veto({"layer": "empty_answer_anchor", "outcome": "removed",
+                             "n_rows": _pre_n, "removed_ids": _removed[:_VETO_TRAIL_MAX],
+                             "n_removed": len(_removed)})
                 print(f"🛡️ [錨點防呆] 濾除 {_pre_n - len(decision['knowledge_list'])} 筆空答案錨點（不進單發答題）")
 
             # 適用性把關（51 題抽驗逼出）：reranker 高分錯位直答比查無更糟——
@@ -2610,6 +2662,45 @@ def _meter_decision(snapshot: dict = None, facet_event: str = None) -> None:
         from services.usage_metering import set_decision as _sd
         _sd(snapshot=snapshot, facet_event=facet_event)
     except Exception:
+        pass
+
+
+#: 一輪最多記幾筆否決軌跡（JSONB 膨脹防護）。⚠️ 面向內續輪會累積。
+_VETO_TRAIL_MAX = 8
+
+#: 判定理由截斷長度——⚠️ 理由是 LLM 自由文字，⛔ 不得整段落盤。
+_VETO_REASON_MAX = 60
+
+
+def _meter_veto(entry: dict) -> None:
+    """usage-metering：**否決軌跡**埋點（回測輸出契約 §B⑥；無條件，同 `_meter_comparison` 房式）。
+
+    **為什麼要有這支**（2026-09-02 獨立設計審查 REVISE）：①–⑤ 沒有任何一格涵蓋
+    「檢索之後、回應之前」那一段，於是「未過門檻／被 gate 清空／被錨點防呆清空／
+    b2b fail-closed」四種**在落盤資料上分不出來** ⇒ 契約 §C 的「轉客服」整欄算不出來。
+    實證：2026-09-02 那 35 題的成因是**逐題翻 log 拼**出來的，正是契約開篇禁止的做法
+    （「拼三次錯三次，且無法覆核」）。
+
+    ⚠️ 兩個裁決狀態不同的子命題必須**分開計**，⛔ 不得混為一談：
+      (b) `max_checks` 未受審即丟棄  → `n_unreviewed` / `unreviewed_ids`
+      (c) b2b fail-closed 清空       → `fail_closed_used`
+    兩者皆**未經業主裁決**（2026-08-22 的裁示射程只到「判準從『相關』改為『適用』」）。
+
+    ⚠️ 直接就地 append 到 `decision_snapshot['veto_trail']`，⛔ 不走 `set_decision` 的
+    淺層合併——那條路對同 key 衝突會把舊值推進 `prior`，而這裡要的是**累加**語義
+    （一輪可能經過多道否決層）。
+    """
+    try:
+        from services.usage_metering import _ctx as _um_ctx
+        c = _um_ctx.get()
+        if c is None or c._finalized:
+            return
+        if c.decision_snapshot is None:
+            c.decision_snapshot = {}
+        trail = c.decision_snapshot.setdefault("veto_trail", [])
+        if len(trail) < _VETO_TRAIL_MAX:
+            trail.append(entry)
+    except Exception:                                    # 計量失敗零影響回答
         pass
 
 
