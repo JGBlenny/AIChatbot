@@ -42,6 +42,15 @@ import sys
 HELP_DIR = os.path.expanduser("~/jgb/幫助中心/JGB幫助中心_HTML_交付_20260818")
 PG = "aichatbot-postgres"
 
+#: ⛔ **b2b 業者可見的唯一定義**——與 `scripts/status.py` 的 `_B2B` 逐條同源。
+#: ⚠️ 本檔 `--b2b` 初版少了 `target_user` 與 `id <> 4253` ⇒ 母體 320（正本 **293**）；
+#: 而我同一天還用過另外兩種寫法（381／772）⇒ **一天四個母體、四組數字，沒有一次對齊**。
+#: ⛔ 母體定義只能有一份：改這裡之前先改 `status.py`，再同步過來。
+B2B_VISIBLE = ("is_active AND business_types && ARRAY['system_provider']::text[] "
+               "AND (target_user IS NULL OR 'property_manager' = ANY(target_user)) "
+               "AND COALESCE(category,'') NOT IN ('系統脈絡','對話規則') AND id <> 4253 "
+               "AND answer IS NOT NULL AND btrim(answer) <> ''")
+
 #: 一律排除的頁面（部落格／行銷文，⛔ 不是產品規格來源）
 _BLOG = re.compile(r"esg|beike|sea-internet|rentallaw|propmarket|law", re.I)
 
@@ -364,9 +373,7 @@ def main(argv=None) -> int:
         lo, _, hi = a.ids.partition("-")
         where = f"id between {int(lo)} and {int(hi or lo)}"
     elif a.b2b:
-        where = ("is_active and coalesce(category,'') not in ('系統脈絡','對話規則') "
-                 "and answer is not null and btrim(answer)<>'' "
-                 "and business_types && ARRAY['system_provider']")
+        where = B2B_VISIBLE
     else:
         ap.error("需要 --ids 或 --b2b（或 --self-test）")
 
