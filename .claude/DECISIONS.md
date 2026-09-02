@@ -35,3 +35,4 @@
 ⚠️ 本表的 `D-0xx` 與已封存 spec `archive/retrieval-decision-layer/decisions/DECISIONS.md`
 的 `D-01` 系列是**兩套獨立編號**，⛔ 不得互相引用。
 ⚠️ `D-007` 來源為**代理**⇒ 依本檔規約算 unresolved，⛔ 在業主裁決前不會變成 current。
+| DSP-001 | ⚠️爭議:面向 grounding_scope.requires_instance_reference=true 是否構成該面向所屬知識的 knowledge 層 instance machine evidence | 代理 | rag-orchestrator/services/instance_applicability.py 模組 docstring（裁定②證據門檻不對稱 vs 兩層契約語義不同） ／ 實作:instance_applicability_decision 允許 general×REQUIRED→INELIGIBLE；contract_closeout/contract_change/contract_sign/contract_renew 四面向 requires_instance_reference=true |  |  |

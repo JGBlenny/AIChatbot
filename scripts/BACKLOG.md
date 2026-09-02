@@ -40,6 +40,9 @@
 - [ ] (❓) 2026-09-02 3327-3360 的 `instance_applicability` 怎麼標 —— `make audit` **不變量 10 現為 FAIL**（我 09:54 改 business_types 觸發 updated_at，34 筆未明示宣告）。⚠️ 獨立驗證**推翻**了我的「全部 general」：契約明文「knowledge text alone is insufficient evidence for authoritative general」（P1e-1 以 kb3509 為反證），而我正是憑文字判的。安全子集 **27 筆**可宣告 general；**4 筆待裁**（3327/3329/3331/3333 —— 其面向 `requires_instance_reference=true`）；3352 待內容審查。⚠️ 3331 是最強反例：答案自承「效期可申請調整為 7 天或 30 天」⇒ 正解依該團隊設定值
 - [ ] (❓) 2026-09-02 **DSP-001**：面向的 `requires_instance_reference=true` 算不算該面向所屬知識的 instance 機器證據 —— 契約留白：裁定②說 instance 可由「診斷引擎契約／識別碼表單／動作端點」建立（四面向三者全中），但同 docstring 又說兩層契約「語義不同、⛔ 不得同名靠上下文猜」，且 `instance_applicability_decision` 允許 `general×REQUIRED→INELIGIBLE` 這個合法組合。⇒ 上面那 4 筆卡在這條
 - [ ] (P3) 2026-09-02 不變量 10 的觸發訊號與 general 門檻相乘會產生壞誘因 — `updated_at` 分不出欄位別，任何 bulk 欄位維護都會一次把整批 legacy 拉進 ratchet；而被拉進 34 筆時最省事的出路正好是**整批宣告 general**，也就是契約 ⛔ 明文禁止的那條路。⚠️ 我這次的判斷就落在那個壓力方向上。⛔ 不建議改綠、也不建議改觸發訊號，僅記錄
+- [ ] (P3) 2026-09-02 售前（prospect）池從未被任何回測涵蓋 — 3327-3360 那 34 筆 `target_user IS NULL`，補 business_types 時 prospect 池 **18→52（+189%）**、回滾又回 18。⚠️ 相對衝擊比 b2b（285→319，+12%）**大三倍**，而 35 題樣本全是 b2b ⇒ 售前側完全沒量。⇒ 任何可見度改動前先跑 `status.py` 記三池
+- [ ] (P3) 2026-09-02 `make audit` 的紅燈計數不可靠，⛔ 別用 grep 數 — `CODE_CONTRACT_REGRESSIONS: 1` 是**陣列長度**不是紅燈條數；「不變量 1–12／14–20／22–23 有失敗」是 `check_invariants.sh` 裡**寫死的字串**、⛔ 不代表那些不變量都紅。⚠️ 不變量 4 只印 WARN、從頭到尾不印 PASS ⇒ 用「數 PASS 行」當尺會誤判。正解：`grep -n '❌' ` 逐條看
+- [ ] (P3) 2026-09-02 `trigger_sync_api_endpoint_kb_ids` 會讓知識 UPDATE 靜默改到 `api_endpoints` — AFTER UPDATE 觸發器會重算 `api_endpoints.related_kb_ids`。本次 34 筆因 `form_id IS NULL AND api_config IS NULL` 而未觸發，⚠️ **但若改到有 form_id 的列，回滾會連帶改另一張表，而 `updated_at` 檢查完全看不到**
 - [ ] (P1) 2026-09-01 D-1：id 4253 分類錯誤致帳單診斷面向領域脈絡從未載入 — 業主裁「先不動」，排在 P1 基準之後
 - [ ] (P2) 2026-09-01 不變量 4 與生產程式判準不同源 — 4253 讓它變綠但功能是壞的；需改成與 `system_context.py` 同源
 - [ ] (P2) 2026-09-01 D-2：tenant_repair 面向從未寫過系統脈絡列 — 是否刻意設計尚未查證
