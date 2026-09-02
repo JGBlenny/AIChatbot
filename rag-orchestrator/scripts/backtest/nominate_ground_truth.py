@@ -101,6 +101,9 @@ def exact_neighbours(vec: list, limit: int = TOP_N) -> list:
         "BEGIN; SET LOCAL enable_indexscan = off; SET LOCAL enable_bitmapscan = off; "
         "SELECT coalesce(json_agg(row_to_json(t) ORDER BY t.dist),'[]'::json) FROM ("
         "  SELECT id, question_summary, category, categories, "
+        # ⚠️ 帶內容摘要：判「庫裡有沒有這題的答案」必須看 answer，
+        #    光看標題會誤判（標題是短關鍵字，⛔ 不是答案本體）
+        "        left(regexp_replace(answer, E'\\\\s+', ' ', 'g'), 150) AS answer_head, "
         f"        (embedding <=> '{v}'::vector) AS dist "
         f"  FROM knowledge_base WHERE {ELIGIBLE} AND embedding IS NOT NULL "
         f"  ORDER BY embedding <=> '{v}'::vector LIMIT {limit}"
@@ -194,8 +197,10 @@ def build_sheet(batch_path: str, out_path: str) -> int:
             cats = c.get("categories") or []
             cat_mark = "　⚠️ categories 空" if not cats else ""
             summary = (c.get("question_summary") or "").replace("\n", " ")[:46]
-            lines.append(f"- [ ] `{c['id']}` dist={c['dist']:.4f}　{summary}{cat_mark}{mark}")
-        lines.append("- [ ] `NO_COVERAGE`　庫裡沒有這題的答案")
+            lines.append(f"- [ ] `{c['id']}` dist={c['dist']:.4f}　**{summary}**{cat_mark}{mark}")
+            # ⚠️ 內容必附：標題是短關鍵字，⛔ 光看標題判不出「這是不是答案」
+            lines.append(f"      {(c.get('answer_head') or '(無內容)').strip()}")
+        lines.append("- [ ] `NO_COVERAGE`　**庫裡沒有這題的答案**（合法且有價值的答案）")
         lines.append("")
         lines.append("  why: ")
         lines.append("")

@@ -1,0 +1,72 @@
+[
+ {
+  "ts": 9815,
+  "q": "系統顯示「您尚未上傳合約檔案」，這是什麼意思？",
+  "elapsed": 6.7,
+  "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+  "action_type": "direct_answer",
+  "form_id": null,
+  "sources": [],
+  "confidence": 0.0,
+  "intent": null
+ },
+ {
+  "ts": 9885,
+  "q": "這條系統訊息「以下帳單將統一於本日12:00發送」在說什麼？",
+  "elapsed": 3.6,
+  "answer": "這條系統訊息表示有一批帳單將會在今天中午12:00統一發送。\n\n請提供帳單編號或合約編號，以便我進一步協助您。",
+  "action_type": "conversational",
+  "form_id": null,
+  "sources": [],
+  "confidence": 1.0,
+  "intent": null
+ },
+ {
+  "ts": 8143,
+  "q": "如何提供營業網址和合約文件給永豐審查？",
+  "elapsed": 4.6,
+  "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+  "action_type": "direct_answer",
+  "form_id": null,
+  "sources": [],
+  "confidence": 0.0,
+  "intent": null
+ },
+ {
+  "ts": 9834,
+  "q": "怎麼幫房客辦點交",
+  "elapsed": 4.3,
+  "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+  "action_type": "direct_answer",
+  "form_id": null,
+  "sources": [],
+  "confidence": 0.0,
+  "intent": null
+ },
+ {
+  "ts": 124,
+  "q": "如何提供營業網址和合約文件給永豐審查？",
+  "elapsed": 5.3,
+  "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-8765-4321。請問您方便提供更詳細的內容嗎？",
+  "action_type": "direct_answer",
+  "form_id": null,
+  "sources": [],
+  "confidence": 0.0,
+  "intent": null
+ },
+ {
+  "ts": 9848,
+  "q": "好啦，主要是合約到期跟收租常常忘記",
+  "elapsed": 2.5,
+  "answer": "合約即將到期 到期提醒\n\n系統提供合約到期倒數提醒功能，預設在到期前 30 天提示。建議在合約到期前 30-60 天評估是否續約：若要續約，需在到期前完成整個續約簽署流程，以確保新舊合約無縫銜接。若不續約，合約到期後系統自動轉為歷史合約，建議在到期後 30 天內完成點退手續。",
+  "action_type": "direct_answer",
+  "form_id": null,
+  "sources": [
+   3388,
+   3471,
+   3380
+  ],
+  "confidence": 0.0,
+  "intent": null
+ }
+]
