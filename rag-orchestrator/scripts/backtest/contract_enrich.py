@@ -414,22 +414,39 @@ def self_test() -> int:
               f" ⇒ 期望翻成不可見，實得 visible={got['visible']} {got['blocked_by']}")
         ok = ok and flipped
 
-    # C2：b2b 的「無 IS NULL 放行」是不是真的在這把尺裡起作用——
-    #     拿母圖 §3 的錯謂詞（多放行 IS NULL）跑同一列，必須得到**不同**答案。
-    #     兩者相同 ⇒ 嚴格分支根本沒被實作，V 類判定會整批放行、打穿跨業者隔離。
-    if kb3336:
-        strict = visibility(kb3336, mode="b2b", target_user="property_manager", vendor_id=2)
+    # C2：b2b 的「無 IS NULL 放行」是不是真的在**這把尺裡**起作用。
+    #
+    # ⚠️ **第一版的 C2 是假的**（2026-09-02 獨立驗證抓到）：它拿 kb:3336
+    #    （business_types 非 NULL）跑 strict 臂，另一臂是函式內自己寫的
+    #    `_wrong_doc_predicate`——**從來沒有把 NULL 那種列餵進 visibility()**。
+    #    結果是：把母圖 §3 的錯法直接寫進 visibility() 的 b2b 分支，C2 仍然全綠。
+    #    ⇒ 它量的是「retriever 與一個 local 常數」，不是這把尺。
+    #    影響面不小：適格母體 773 列中有 253 列 business_types IS NULL，
+    #    真發生此回歸會被整批誤判為 b2b 可見（V 類被當成 T／N）。
+    #
+    # 正確做法：直接把 business_types=NULL 的列餵進 visibility()，b2b 必須判不可見。
+    _null_bt_row = {
+        "id": -1, "is_active": True, "category": None,
+        "business_types": None, "target_user": None, "vendor_ids": None,
+        "keywords": ["x"], "has_embedding": True,
+    }
+    got_b2b = visibility(_null_bt_row, mode="b2b",
+                         target_user="property_manager", vendor_id=2)
+    strict_ok = got_b2b["visible"] is False and "business_types" in got_b2b["blocked_by"]
+    print(f"{'✅' if strict_ok else '⛔'} 突變控制 C2：business_types=NULL 的列 × b2b"
+          f" ⇒ 期望不可見（無 IS NULL 放行），實得 visible={got_b2b['visible']}"
+          f" {got_b2b['blocked_by']}")
+    ok = ok and strict_ok
 
-        def _wrong_doc_predicate(kb):
-            """母圖 §3 的錯法：b2b 業態軸補上 IS NULL 放行（⛔ 這是反例，不是實作）。"""
-            bt = kb.get("business_types")
-            return bt is None or bool(set(bt) & set(B2B_BUSINESS_TYPES))
-
-        differs = strict["visible"] is False and _wrong_doc_predicate(
-            dict(kb3336, business_types=None)) is True
-        print(f"{'✅' if differs else '⛔'} 突變控制 C2：嚴格分支 vs 母圖 §3 錯謂詞"
-              f" ⇒ 期望結論不同，實得 strict.visible={strict['visible']}")
-        ok = ok and differs
+    # C3：同一列換 b2c 必須翻成可見——證明擋它的是 b2b 的嚴格分支本身，
+    #     ⛔ 而不是「這把尺對 NULL 業態一律說不」。
+    got_b2c = visibility(_null_bt_row, mode="b2c", target_user="tenant",
+                         vendor_id=2, vendor_business_types=["full_service"])
+    b2c_ok = got_b2c["visible"] is True
+    print(f"{'✅' if b2c_ok else '⛔'} 突變控制 C3：同一列 × b2c"
+          f" ⇒ 期望可見（b2c 有 IS NULL 放行），實得 visible={got_b2c['visible']}"
+          f" {got_b2c['blocked_by']}")
+    ok = ok and b2c_ok
 
     print("\n結論：", "尺可用" if ok else "⛔ 尺是瞎的，本輪任何 ③ 結論作廢")
     return 0 if ok else 1
