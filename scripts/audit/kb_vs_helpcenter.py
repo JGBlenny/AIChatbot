@@ -120,10 +120,28 @@ def numbers_with_context(text: str, width: int = 45) -> list:
 
 
 def audit_row(row: dict, corpus: list) -> dict:
+    # ⚠️ **型別在這裡是標記，⛔ 不是閘門**（2026-09-02 兩次修正後的定案）。
+    #
+    #   第一版：無差別跑 ⇒ 業主指出 T2/T3 的「對」不是這樣判的。
+    #   第二版：型別不是 T1 就跳過 ⇒ **也錯**，而且當場被自己的資料打臉：
+    #           `kb3330`（「保存 5 年」vs 官方「沒有期限」，已列 ⛔ 危害）被判為 T3
+    #           而遭跳過——但那是**事實錯誤**，與型別無關。
+    #
+    #   ⇒ 正確的切法是分開兩個命題：
+    #        「這筆是不是那一題的正解」  ← **型別相關**，只有 T1 走
+    #                                     `rules/正解判定.md` 的協議
+    #        「這筆的內容有沒有講錯事實」← **型別無關**，任何型的 answer 文字
+    #                                     都可能寫錯數字／時限／流程 ⇒ 本工具照跑
+    #
+    #   ⚠️ 但**修正**非 T1 列要更小心：它們的文字可能是機制說明或模板，
+    #      下游（面向 grounding／formatter）可能依賴其措辭 ⇒ 標 `fix_caution`。
     ks = f"{row.get('question_summary') or ''} {row.get('answer') or ''}"
     terms = key_terms(ks)
     pages = find_pages(corpus, terms)
     res = {"id": row["id"], "summary": row.get("question_summary"),
+           "kb_type": row.get("kb_type"),
+           # ⚠️ 非 T1 的修正要更小心：文字可能被面向 grounding／formatter 依賴
+           "fix_caution": (row.get("kb_type") or "T1") != "T1",
            "terms": terms, "pages": [p[1] for p in pages[:3]]}
     if not pages:
         # ⛔ 「官方沒寫」是**待查**，不是「知識錯」——也可能是關鍵詞取得不好
@@ -175,11 +193,33 @@ def self_test(corpus: list) -> int:
     return 0 if ok else 1
 
 
+#: 型別判定（機械）——⛔ 判準與 `rules/型別分批.md` 同源，改一處要同步。
+#: ⚠️ **本工具只對 T1 有效**：T2 的正解是 API 回傳、T3 是逐輪動作，
+#: 拿幫助中心去比對它們的知識文字是**錯的軸**，且可能把 API 路徑需要的模板改壞。
+_TYPE_SQL = """
+  case
+    when k.action_type = 'form_fill' or k.form_id is not null then 'FORM'
+    when k.action_type = 'api_call' then 'T2'
+    when exists (select 1 from facet f where f.cat = any(k.categories) and f.sel = 'api') then 'T2'
+    when exists (select 1 from facet f where f.cat = any(k.categories)) then 'T3'
+    else 'T1' end
+"""
+_FACET_CTE = """
+with facet as (
+  select cc->'topic_scope'->>'category' cat, cc->'grounding_scope'->>'select' sel
+  from knowledge_base, lateral (select generation_metadata->'conversational_config' cc) x
+  where category = '對話規則' and cc->'topic_scope'->>'category' is not null)
+"""
+
+
 def fetch(where: str) -> list:
     return json.loads(psql(
+        _FACET_CTE +
         "select coalesce(json_agg(row_to_json(t)),'[]'::json) from ("
-        "  select id, question_summary, regexp_replace(answer, E'\\\\s+', ' ', 'g') answer"
-        f"  from knowledge_base where {where} order by id"
+        "  select k.id, k.question_summary,"
+        "         regexp_replace(k.answer, E'\\\\s+', ' ', 'g') answer,"
+        f"        {_TYPE_SQL} as kb_type"
+        f"  from knowledge_base k where {where.replace('id ', 'k.id ')} order by k.id"
         ") t"))
 
 
