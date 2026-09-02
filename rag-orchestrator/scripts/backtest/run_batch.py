@@ -20,6 +20,7 @@
    併發會讓 reranker 逾時而靜默落到詞面分支，整輪數字作廢
 ⚠️ session_id 前綴決定 usage_events.is_internal（backtest_／loop_／kcl_／smoke_ 為內部）
    ⇒ 診斷輪用內部前綴，⛔ 不汙染真實流量統計
+⛔ 前綴**必須**以 `backtest_session_` 起頭——⚠️ 兩個豁免的前綴**不一樣**（見 _REQUIRED_PREFIX）
 ```
 
 ## 跑法
@@ -38,6 +39,14 @@ import urllib.error
 import urllib.request
 
 API = os.environ.get("RUN_BATCH_API", "http://localhost:8100/api/v1/message")
+
+#: ⛔ session_id 必須以此起頭。⚠️ **兩個豁免用的前綴不一樣，這是血證**（2026-09-02）：
+#:   `usage_metering.INTERNAL_RULES`    比對 `backtest_`        → 標成內部流量
+#:   `chat._record_no_knowledge_scenario` 比對 `backtest_session_` → 不寫生產題庫
+#: 首跑用了 `backtest_smoke0902_`：內部標記有生效，**題庫豁免沒有** ⇒
+#: 那輪 11 題查無各把 `suggested_intents` 的頻率推高了一次（實測 id 1084／1399 被遞增）。
+#: ⇒ 兩個都要吃到，只能用較長的那個當前綴。⛔ 不得為了好看而縮短。
+_REQUIRED_PREFIX = "backtest_session_"
 
 
 def ask(question: str, session_id: str, *, vendor_id: int, role_id: str,
@@ -78,7 +87,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="批次打正式入口")
     ap.add_argument("--batch", required=True, help="含 ts／q 的 JSON 陣列")
     ap.add_argument("--prefix", required=True,
-                    help="session_id 前綴（⚠️ backtest_／loop_／smoke_ 會被標成內部流量）")
+                    help=f"session_id 前綴，⛔ 必須以 {_REQUIRED_PREFIX} 起頭")
     ap.add_argument("--vendor-id", type=int, required=True)
     ap.add_argument("--role-id", required=True)
     ap.add_argument("--mode", default="b2b")
@@ -86,11 +95,27 @@ def main(argv=None) -> int:
     ap.add_argument("--out", required=True)
     args = ap.parse_args(argv)
 
+    # ⚠️ 大聲失敗，⛔ 不自動改寫前綴——改寫會讓報告裡的 session_id 與實際打出去的不符。
+    if not args.prefix.startswith(_REQUIRED_PREFIX):
+        print(f"⛔ --prefix 必須以 {_REQUIRED_PREFIX!r} 起頭，實得 {args.prefix!r}。\n"
+              f"   理由：`_record_no_knowledge_scenario` 的回測豁免比對的是這個較長的前綴；"
+              f"只用 'backtest_' 會被標成內部流量，但**仍會寫生產題庫與 suggested_intents**。")
+        return 1
+
     with open(args.batch, encoding="utf-8") as f:
         batch = json.load(f)
     if not batch:
         print(f"⛔ {args.batch} 是空的——這不是『沒有題目』，是檔案或路徑錯了")
         return 1
+
+    seen = {}
+    for it in batch:
+        seen.setdefault(it.get("q"), []).append(it.get("ts"))
+    dupes = {q: t for q, t in seen.items() if len(t) > 1}
+    if dupes:
+        # ⚠️ 相異問句數 < 題數 ⇒ 任何比率的分母含重複，⛔ 引用比率時必須註明。
+        print(f"⚠️ 批次含重複問句 {len(dupes)} 組：{[t for t in dupes.values()]}"
+              f"　⇒ 題數 {len(batch)}、相異問句 {len(seen)}；⛔ 報比率時分母須註明")
 
     results, t0 = [], time.time()
     for i, item in enumerate(batch, 1):
