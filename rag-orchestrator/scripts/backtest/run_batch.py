@@ -16,8 +16,12 @@
 ```text
 ⛔ 不走元件層（retrieve_knowledge_hybrid 等）——那量到的是工具不是系統
 ⛔ 不自寫 SQL 當系統行為
-⛔ 不並行——semantic-model 是 CPU 推論（實測延遲 >90s、CPU 600%+），
-   併發會讓 reranker 逾時而靜默落到詞面分支，整輪數字作廢
+⛔ 不並行。⚠️ **原本寫的理由被實測推翻**（2026-09-03）：舊理由「semantic-model 併發會
+   逾時（>90s、CPU 600%+）」——那組數字出自 2026-09-01 的**靜默永久停用事件**
+   （建構期單次探測失敗），⛔ 不是併發實測。實測 `/rerank` 20 筆候選：
+   併發 5 最壞 6.33s、併發 10 最壞 6.15s，而 RERANKER_HTTP_TIMEOUT 預設 **60s**。
+   ⇒ 不並行的正確理由是**可重現性**：同 HEAD 重跑變異已達 13%，
+     ⛔ 不該再加一個不可控變因
 ⚠️ session_id 前綴決定 usage_events.is_internal（backtest_／loop_／kcl_／smoke_ 為內部）
    ⇒ 診斷輪用內部前綴，⛔ 不汙染真實流量統計
 ⛔ 前綴**必須**以 `backtest_session_` 起頭——⚠️ 兩個豁免的前綴**不一樣**（見 _REQUIRED_PREFIX）
