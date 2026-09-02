@@ -46,7 +46,14 @@ PG = "aichatbot-postgres"
 _BLOG = re.compile(r"esg|beike|sea-internet|rentallaw|propmarket|law", re.I)
 
 #: 抓「有單位的數字」——純數字誤報太多（條列編號、id）。
-_NUM = re.compile(r"(\d{1,2}:\d{2}|\d+\s*(?:小時|分鐘|天|日|個月|年|次|筆|元|%|％|MB|GB|碼|位))")
+#: ⚠️ **邊界必須吃完整數字**（含小數點與千分位），否則會從「1.6%」切出「6%」、
+#: 從「20,000 元」切出「000 元」當成獨立主張（2026-09-02 代理實測各抓到一例）。
+#: `(?<![\d.,])` 確保左邊不是數字/小數點/逗號。
+_NUM = re.compile(
+    r"(?<![\d.,])(\d{1,2}:\d{2}|\d[\d,]*(?:\.\d+)?\s*(?:小時|分鐘|天|日|個月|年|次|筆|元|%|％|MB|GB|碼|位))")
+
+#: ⚠️ 這些詞之後的數值是**示意值不是事實主張**（例如／舉例／設為…）⇒ 降級不比對。
+_ILLUSTRATIVE = re.compile(r"(例如|舉例|如：|設為|常見是|假設|比方)")
 
 
 class SourceError(RuntimeError):
@@ -155,12 +162,42 @@ def find_pages(corpus: list, terms: list, min_hits: int = 2) -> list:
     return sorted(scored, key=lambda x: -x[0])
 
 
+def _norm(v: str) -> str:
+    """比對用正規化：去空白。
+
+    ⚠️ HC **同一份文件裡**「30天」與「30 天」混用，知識固定寫「30 天」
+    ⇒ 不正規化會把明明寫著的值判成查無（2026-09-02 代理實測 kb3848 即是）。
+    """
+    return re.sub(r"\s+", "", v)
+
+
 def numbers_with_context(text: str, width: int = 45) -> list:
     out = []
     for m in _NUM.finditer(text):
         s = max(0, m.start() - width)
-        out.append((m.group(0), text[s:m.end() + width].strip()))
+        ctx = text[s:m.end() + width].strip()
+        # ⚠️ 示意值（例如／舉例／設為…之後）⛔ 不是事實主張，不納入比對
+        lead = text[max(0, m.start() - 12):m.start()]
+        if _ILLUSTRATIVE.search(lead):
+            continue
+        out.append((m.group(0), ctx))
     return out
+
+
+#: 全語料的數值集合（正規化後）——只算一次。
+_CORPUS_NUMS: set = set()
+
+
+def _corpus_numbers(corpus: list) -> set:
+    """官方 84 篇的所有數值（正規化後）。⚠️ 全掃，⛔ 不限 top-3。"""
+    global _CORPUS_NUMS
+    if not _CORPUS_NUMS:
+        for _b, _t, body in corpus:
+            _CORPUS_NUMS |= {_norm(n) for n, _ in numbers_with_context(body)}
+        if not _CORPUS_NUMS:
+            raise SourceError("官方語料抽不到任何數值——解析壞了，⛔ 不得靜默通過")
+    return _CORPUS_NUMS
+
 
 
 def audit_row(row: dict, corpus: list, toks: list) -> dict:
@@ -192,15 +229,39 @@ def audit_row(row: dict, corpus: list, toks: list) -> dict:
         return res
 
     kb_nums = numbers_with_context(row.get("answer") or "")
-    # ⚠️ **必須取聯集**：某值在 A 頁沒有、B 頁有，那不是衝突。
-    #    第一版逐頁比對，把「A 頁查無」也記成衝突 ⇒ 3336 的「12:00」被誤報，
-    #    而官方 onboarding12 逐字寫著 12:00。⛔ 逐頁比對會製造大量假陽性。
+    # ⚠️ **數值查證用全語料，⛔ 不沿用檢索的 top-3**（2026-09-02 代理實測）：
+    #    kb4053 的「4 天」白紙黑字在 billexpired 頁，但 top-3 選到的是別的頁；
+    #    kb3484 的「72 小時」在 slug13/48/73，top-3 一個都沒選到。
+    #    ⇒ 定位頁面用檢索（給人看上下文），**判有沒有這個值用全掃**。
+    # ⚠️ **⛔ 機械層不做抑制，只給兩個訊號**（2026-09-02 兩次過頭後的定案）：
+    #   只看 top-3      ⇒ 假陽性 71%（值寫在別頁就誤報）
+    #   改看全語料      ⇒ 假**陰**性：某無關頁剛好有那個數字就把真衝突吞掉（實測吞 4 筆）
+    #   剝數字查 jgb2   ⇒ 「7 天」變 grep `7`，整個 codebase 都中 ⇒ 38 筆全吞
+    # ⇒ 字串比對**分不出「這頁在講永豐 7 天」與「別頁剛好提到 7 天」**——那需要語義。
+    #   定案：判定沿用 top-3（保召回），另附 `found_in` 讓代理**一眼刷掉**假陽性。
+    #   ⛔ 機械層只是粗篩，⛔ 不是判定。
     top = pages[:3]
-    union = set()
-    for _, _base, _t, body, _h in top:
-        union |= {n for n, _ in numbers_with_context(body)}
-    conflicts = [{"pages": [p[1] for p in top], "kb_value": n, "kb_context": ctx[:110]}
-                 for n, ctx in kb_nums if n not in union]
+    top_nums = set()
+    for _, _b, _t, body, _h in top:
+        top_nums |= {_norm(n) for n, _ in numbers_with_context(body)}
+    conflicts = []
+    for n, ctx in kb_nums:
+        if _norm(n) in top_nums:
+            continue
+        elsewhere = [b for b, _t, body in corpus
+                     if _norm(n) in {_norm(x) for x, _ in numbers_with_context(body)}]
+        conflicts.append({"pages": [p[1] for p in top], "kb_value": n,
+                          "kb_context": ctx[:110],
+                          # ⚠️ 非空 ⇒ 這個值官方其他頁有寫，多半是假陽性（代理先刷這批）
+                          "found_in": elsewhere[:3]})
+    # ⚠️ 幫助中心查無 ⛔ 不等於憑空——**大量事實只存在於 jgb2 原始碼**
+    #    （2026-09-02 代理實測：38 筆中 14 筆是這個成因）。
+    # ⛔ **但機械層不做這個判斷**：程式碼寫的是 `+30 days`、`$verCodeExpireSec = 300`，
+    #    與知識的「30 天」「5 分鐘」字面不同，機械比對必然失準。
+    #    ⚠️ 我試過「剝成純數字去 grep」——「7 天」變成 grep `7`，整個 codebase 都中
+    #    ⇒ NUMBER_MISMATCH 從 38 變 **0**，27 個誤報清掉的同時**11 個真問題也全被吞**。
+    #    那是把假陽性換成假陰性，⛔ 比原本更糟。
+    # ⇒ 定案：機械層只回報「**官方幫助中心**查無」，jgb2 那一層**交代理判**（需要語義）。
     res["verdict"] = "NUMBER_MISMATCH" if conflicts else "CONSISTENT"
     res["conflicts"] = conflicts[:6]
     return res
