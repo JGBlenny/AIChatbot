@@ -37,6 +37,9 @@
 - [ ] (P2) 2026-09-02 kb3332「自動儲存操作後 10 秒」與程式不符 — `useAutoSaveOld.js` debounce 5000ms、`useAutoSave.js` 預設 3000ms；⚠️ 同檔註解 `// 會delay x秒才顯示 已於 10 秒前儲存` ⇒ 知識很可能把**畫面提示字**當成觸發條件
 - [ ] (P2) 2026-09-02 kb3327 點退草稿帳單的產生時機與官方不符 — 官方：房東**主動發起點退**時產生；知識：提前終止雙方簽名完成後自動產生。流程骨架其餘與官方一致
 - [ ] (P3) 2026-09-02 官方 `slug22`／`onboarding8`「線上付款不會出現在待對帳」的通則會誤導 — 超商條碼是兩階段 T+N 結算，碼上確實會停在 status=8（kb3343 是對的）。⇒ 建議回報文件方加註例外
+- [ ] (❓) 2026-09-02 3327-3360 的 `instance_applicability` 怎麼標 —— `make audit` **不變量 10 現為 FAIL**（我 09:54 改 business_types 觸發 updated_at，34 筆未明示宣告）。⚠️ 獨立驗證**推翻**了我的「全部 general」：契約明文「knowledge text alone is insufficient evidence for authoritative general」（P1e-1 以 kb3509 為反證），而我正是憑文字判的。安全子集 **27 筆**可宣告 general；**4 筆待裁**（3327/3329/3331/3333 —— 其面向 `requires_instance_reference=true`）；3352 待內容審查。⚠️ 3331 是最強反例：答案自承「效期可申請調整為 7 天或 30 天」⇒ 正解依該團隊設定值
+- [ ] (❓) 2026-09-02 **DSP-001**：面向的 `requires_instance_reference=true` 算不算該面向所屬知識的 instance 機器證據 —— 契約留白：裁定②說 instance 可由「診斷引擎契約／識別碼表單／動作端點」建立（四面向三者全中），但同 docstring 又說兩層契約「語義不同、⛔ 不得同名靠上下文猜」，且 `instance_applicability_decision` 允許 `general×REQUIRED→INELIGIBLE` 這個合法組合。⇒ 上面那 4 筆卡在這條
+- [ ] (P3) 2026-09-02 不變量 10 的觸發訊號與 general 門檻相乘會產生壞誘因 — `updated_at` 分不出欄位別，任何 bulk 欄位維護都會一次把整批 legacy 拉進 ratchet；而被拉進 34 筆時最省事的出路正好是**整批宣告 general**，也就是契約 ⛔ 明文禁止的那條路。⚠️ 我這次的判斷就落在那個壓力方向上。⛔ 不建議改綠、也不建議改觸發訊號，僅記錄
 - [ ] (P1) 2026-09-01 D-1：id 4253 分類錯誤致帳單診斷面向領域脈絡從未載入 — 業主裁「先不動」，排在 P1 基準之後
 - [ ] (P2) 2026-09-01 不變量 4 與生產程式判準不同源 — 4253 讓它變綠但功能是壞的；需改成與 `system_context.py` 同源
 - [ ] (P2) 2026-09-01 D-2：tenant_repair 面向從未寫過系統脈絡列 — 是否刻意設計尚未查證
