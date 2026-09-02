@@ -143,8 +143,8 @@ def print_kb() -> None:
 #:   ⇒ 下方「面向覆蓋」的知識數把錨點整批排除（狀態判斷 −9／繳費金流排障 −5／
 #:     合約異動 −4／續約 −3／帳單異常 −3…），⚠️ 那些 ⚠️／⛔ 警訊是在**答題母體**上算的，
 #:     ⛔ 不等於「候選池裡沒有東西」。
-#: ⚠️ 本常數也**無法表達兩條檢索路母體不同**（向量路 293／詞面路 264）——
-#:   扁平 where 在結構上做不到。要判「這一筆這個角色看不看得到」請用
+#: ⚠️ 本常數也**無法表達兩條檢索路母體不同**
+#:   （向量路 **354**／詞面路 **320**）——扁平 where 在結構上做不到。
 #:   `rag-orchestrator/scripts/backtest/contract_enrich.py` 的 `visibility()`（兩路取聯集）。
 #:   ⇒ 兩者何為正本已登記 **DSP-002**，⛔ 未裁前不得互相取代。
 #: ⚠️ 本常數只涵蓋 `property_manager`；retriever 的 `is_b2b_mode` 還認 `system_admin`
@@ -152,7 +152,10 @@ def print_kb() -> None:
 #: ⚠️ 那天同一個 session 用過**四個**不同母體、產出四組數字，沒有一次對齊：
 #:   772 全庫適格（ELIGIBLE）／381 只濾 business_types／320 少了 target_user 與 id<>4253／
 #:   **293 才是對的**。之後每一句「業者池 N 筆中…」的母體都偏大。
-#: ⇒ 任何腳本要用 b2b 母體，**逐條複製本常數並註明出處**，⛔ 不得自己重寫一個 where。
+#: ⇒ **為了報數字**要用 b2b 母體：逐條複製本常數並註明出處。
+#: ⛔ **但這條 ⛔ 不適用於「實作可見性模型」** —— 判「這一筆這個角色看不看得到」
+#:   必須模型兩條檢索路（見上），⛔ 不得拿本常數代替。初版寫成無條件禁止，
+#:   那會把已修正過的可見性尺改回錯版（2026-09-02 獨立驗證抓到）。
 #: ⇒ 改本常數＝改全專案的分母，⛔ 改之前先確認 retriever 的過濾邏輯真的變了。
 _B2B = ("is_active AND business_types && ARRAY['system_provider']::text[] "
         "AND (target_user IS NULL OR 'property_manager' = ANY(target_user)) "
@@ -187,21 +190,37 @@ def print_b2b_surface() -> None:
         print(f"   ⛔ {nocat} 筆 categories 空 ⇒ **面向進場對它們靜默失效**（知識已寫好，只是沒掛分類）")
         print("      ⚠️ 補分類是**行為變更**（繞過適用性把關）⇒ ⛔ 不得一次全掛，分批補、每批補完立刻回測")
 
-    print("\n   面向覆蓋（知識數由少到多；⚠️ 薄 ⛔ 不等於缺，要對照真實問句）")
+    print("\n   面向覆蓋（答題知識數由少到多；⚠️ 薄 ⛔ 不等於缺，要對照真實問句）")
+    # ⚠️ **兩個數都要印**（2026-09-02 獨立驗證抓到）：舊版只印答題數（_B2B，排除空 answer），
+    #    而被排除的 61 筆**正是面向進場錨點** ⇒ 「⚠️ 帳單異常 知識 2」被讀成「候選池裡沒東西」，
+    #    實際上加回錨點是 5。⛔ 警訊必須標明它算在哪個母體上。
+    #    `候選` 欄＝retriever 向量路實際撈得到的（含空 answer 錨點）。
     fr = rows(f"""
-      WITH b2b AS (SELECT * FROM knowledge_base WHERE {_B2B})
+      WITH b2b AS (SELECT * FROM knowledge_base WHERE {_B2B}),
+           cand AS (SELECT * FROM knowledge_base kb
+                    WHERE kb.is_active
+                      AND kb.category IS DISTINCT FROM '系統脈絡'
+                      AND kb.category IS DISTINCT FROM '對話規則'
+                      AND kb.embedding IS NOT NULL
+                      AND (array_length(kb.vendor_ids,1) IS NULL OR kb.vendor_ids && ARRAY[0])
+                      AND kb.business_types && ARRAY['system_provider']::text[]
+                      AND (kb.target_user IS NULL
+                           OR kb.target_user && ARRAY['property_manager']::text[]))
       SELECT gm->'topic_scope'->>'category',
              COALESCE(gm->'grounding_scope'->>'select','引導'),
              COALESCE(gm->'grounding_scope'->>'required_slots','-'),
-             (SELECT count(*) FROM b2b WHERE gm->'topic_scope'->>'category' = ANY(b2b.categories))
+             (SELECT count(*) FROM b2b  WHERE gm->'topic_scope'->>'category' = ANY(b2b.categories)),
+             (SELECT count(*) FROM cand WHERE gm->'topic_scope'->>'category' = ANY(cand.categories))
       FROM (SELECT generation_metadata->'conversational_config' gm FROM knowledge_base
             WHERE is_active AND category='對話規則'
             AND generation_metadata->'conversational_config'->'topic_scope'->>'mode'='category') f
       ORDER BY 4, 1;""")
-    for cat, sel, slots, n in fr[:8]:
-        flag = "⛔" if int(n) == 0 else ("⚠️" if int(n) <= 3 else "  ")
-        print(f"   {flag} {cat:<14} {sel:<9} 知識 {int(n):>2}  槽位 {slots[:34]}")
-    print(f"   …共 {len(fr)} 個面向（完整清單見本節查詢條件）")
+    for cat, sel, slots, n, c in fr[:8]:
+        n, c = int(n), int(c)
+        # ⛔ 只有「答題 0 且候選也 0」才是真的沒東西；答題薄但候選厚 ⇒ 缺的是 answer 不是知識
+        flag = "⛔" if c == 0 else ("⚠️" if n <= 3 and c <= 3 else ("◐" if n <= 3 else "  "))
+        print(f"   {flag} {cat:<14} {sel:<9} 答題 {n:>2} ／候選 {c:>2}  槽位 {slots[:28]}")
+    print(f"   …共 {len(fr)} 個面向　◐＝答題薄但候選池有東西（缺的是 answer，⛔ 不是缺知識）")
     print()
 
 
