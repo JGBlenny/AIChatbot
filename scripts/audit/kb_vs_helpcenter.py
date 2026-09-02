@@ -82,12 +82,56 @@ def load_help_corpus() -> list:
     return out
 
 
-def key_terms(text: str, top: int = 6) -> list:
-    """取知識裡最有辨識度的詞——用來在官方頁面裡定位同主題段落。
+def _tokenize(text: str) -> list:
+    """中文斷詞。
 
-    ⚠️ 刻意只取 2–6 字的中文詞與英數詞，⛔ 不做斷詞（沒有斷詞器就別假裝有）。
+    ⚠️ **初版是壞的**（2026-09-02 全庫首跑當場發現）：用 `[一-鿿]{2,6}` 正則，
+    對連續中文會**貪婪切出固定長度的窗**——實際產出如 `租客收不到通`、`合約簽署分兩`、
+    `房東建立點交`，那些**不是詞**，在官方頁面裡當然找不到。
+    後果：320 筆裡 216 筆（67.5%）被判 `NO_MATCHING_PAGE`，
+    ⛔ 而那是工具的錯，不是「官方沒寫」。差一點就把 216 筆丟給代理去查一個假問題。
+
+    ⇒ 改用 jieba（容器內已有 0.42.1）。⚠️ host 沒裝 ⇒ 走 `docker exec` 借用。
     """
-    toks = re.findall(r"[一-鿿]{2,6}|[A-Za-z][A-Za-z0-9]{2,}", text)
+    return _tokenize_batch([text])[0]
+
+
+#: 批次斷詞的分隔符——⚠️ 必須是不會出現在知識內容裡的字串。
+_SEP = "\x1e@@KBSEP@@\x1e"
+
+
+def _tokenize_batch(texts: list) -> list:
+    """一次把所有文字送進容器斷詞。
+
+    ⚠️ **為什麼是批次**：逐筆 `docker exec` 每次約 0.8 秒，320 筆跑超過 10 分鐘而逾時。
+    ⛔ 不是把逾時調長就好——那只是把等待藏起來。
+    """
+    if not texts:
+        return []
+    payload = _SEP.join(texts)
+    script = (
+        "import sys,jieba\n"
+        f"SEP={_SEP!r}\n"
+        "parts=sys.stdin.read().split(SEP)\n"
+        "print(SEP.join(' '.join(jieba.cut(p)) for p in parts), end='')\n"
+    )
+    out = subprocess.run(
+        ["docker", "exec", "-i", "aichatbot-rag-orchestrator", "python3", "-c", script],
+        input=payload, capture_output=True, text=True, timeout=600)
+    if out.returncode:
+        raise SourceError(f"斷詞失敗（容器內 jieba）：{out.stderr.strip()[:200]}")
+    got = out.stdout.split(_SEP)
+    if len(got) != len(texts):
+        # ⚠️ 大聲失敗：分隔符若被內容撞到，對位會整批錯，⛔ 不得靜默截斷
+        raise SourceError(f"斷詞回傳段數不符：送 {len(texts)} 段、回 {len(got)} 段")
+    return [[t for t in seg.split(" ") if t.strip()] for seg in got]
+
+
+def key_terms_from_tokens(toks: list, top: int = 6) -> list:
+    """從已斷好的詞取最有辨識度的幾個——用來在官方頁面裡定位同主題段落。"""
+    toks = [t for t in toks
+            if (len(t) >= 2 and re.fullmatch(r"[一-鿿]+", t))
+            or re.fullmatch(r"[A-Za-z][A-Za-z0-9]{2,}", t)]
     stop = {"可以", "系統", "如果", "建議", "設定", "使用", "進行", "相關", "資訊",
             "功能", "選擇", "需要", "這個", "以及", "或是", "方式", "狀態", "帳單"}
     seen, out = set(), []
@@ -119,7 +163,7 @@ def numbers_with_context(text: str, width: int = 45) -> list:
     return out
 
 
-def audit_row(row: dict, corpus: list) -> dict:
+def audit_row(row: dict, corpus: list, toks: list) -> dict:
     # ⚠️ **型別在這裡是標記，⛔ 不是閘門**（2026-09-02 兩次修正後的定案）。
     #
     #   第一版：無差別跑 ⇒ 業主指出 T2/T3 的「對」不是這樣判的。
@@ -135,8 +179,7 @@ def audit_row(row: dict, corpus: list) -> dict:
     #
     #   ⚠️ 但**修正**非 T1 列要更小心：它們的文字可能是機制說明或模板，
     #      下游（面向 grounding／formatter）可能依賴其措辭 ⇒ 標 `fix_caution`。
-    ks = f"{row.get('question_summary') or ''} {row.get('answer') or ''}"
-    terms = key_terms(ks)
+    terms = key_terms_from_tokens(toks)
     pages = find_pages(corpus, terms)
     res = {"id": row["id"], "summary": row.get("question_summary"),
            "kb_type": row.get("kb_type"),
@@ -175,6 +218,17 @@ def self_test(corpus: list) -> int:
         print("⛔ 找不到 onboarding12 頁——語料載入壞了")
         return 1
     print(f"✅ 語料載入 {len(corpus)} 篇（已排除部落格頁）")
+
+    # ⛔ 斷詞自證：初版用正則貪婪切窗，產出「租客收不到通」這種**非詞**，
+    #    導致全庫 320 筆裡 216 筆（67.5%）被誤判為 NO_MATCHING_PAGE。
+    #    ⚠️ 差一點就把 216 筆假問題丟給代理去查。
+    toks = _tokenize("合約點交流程 搬入：房東建立點交清單並發送給租客")
+    good = [t for t in toks if t in ("合約", "點交", "流程", "搬入", "房東", "建立", "清單", "租客")]
+    junk = [t for t in toks if len(t) >= 5 and re.fullmatch(r"[一-鿿]+", t)]
+    tok_ok = len(good) >= 4 and not junk
+    print(f"{'✅' if tok_ok else '⛔'} 斷詞自證：切出可用詞 {len(good)} 個"
+          + (f"；⛔ 出現長度≥5 的可疑片段 {junk}" if junk else ""))
+    ok = ok and tok_ok
 
     hit12 = "12:00" in body
     print(f"{'✅' if hit12 else '⛔'} 負對照：官方頁含『12:00』= {hit12}")
@@ -259,7 +313,10 @@ def main(argv=None) -> int:
     if not rows:
         raise SourceError(f"查無知識列（{where}）——⛔ 這是查不到，不是『沒有問題』")
 
-    res = [audit_row(r, corpus) for r in rows]
+    # ⚠️ 一次批次斷詞（逐筆 docker exec 320 筆會超過 10 分鐘）
+    all_toks = _tokenize_batch(
+        [f"{r.get('question_summary') or ''} {r.get('answer') or ''}" for r in rows])
+    res = [audit_row(r, corpus, t) for r, t in zip(rows, all_toks)]
     tally = {}
     for r in res:
         tally[r["verdict"]] = tally.get(r["verdict"], 0) + 1
