@@ -48,6 +48,10 @@
 - [ ] (P3) 2026-09-02 還有第 7、第 8 個母體 — `rag-orchestrator/scripts/routing/run_p1_corpus_sibling.py`（符號 `exposure_surface`，母體 **146**，且**已寫進凍結協定當判準**）／`scripts/g2_selftest.py` 的 `ORACLE_Q`（**870**，註解自陳刻意不複製生產過濾，屬已宣告例外）。⚠️ 連「一共有幾個母體」都還沒數完
 - [ ] (P3) 2026-09-02 還有第 6 個母體（871）— `scripts/analysis/p1b_applicability_census.py:82` 與 `scripts/audit/checks/instance_applicability_contract.py:169` 少了 `id<>4253` 與 `answer` 非空，母體 871（正本 772，差 99），且無同源註記
 - [ ] (P3) 2026-09-02 `_B2B` 未宣告只涵蓋 `property_manager` — retriever 的 `is_b2b_mode` 還認 `system_admin`（該身分僅 8 筆可見）。窄化刻意，但讀者會以為 293 涵蓋整個 b2b。已於 status.py 與 SKILL.md 補宣告
+- [ ] (⛔) 2026-09-03 **五個回測入口併發跑且吃不到題庫豁免** — `backtest_framework_async` 的 `run_backtest_concurrent`（asyncio.gather）／`run_backtest_with_db_progress`（`BACKTEST_CONCURRENCY` 預設 5）／**knowledge-admin 後台「執行回測」按鈕**（設 CONCURRENCY=5 啟動它）／KCL 的 `backtest_client`＋`run_first_loop`（**生產服務碼**）。⚠️ 兩個實害：①併發讓 semantic-model 逾時 ⇒ reranker 靜默落到詞面分支、**整輪數字作廢**；②前綴是 `backtest_` 而非 `backtest_session_` ⇒ 吃不到 `_record_no_knowledge_scenario` 的豁免，**仍在寫 test_scenarios／suggested_intents**。⛔ 只有 `run_batch.py` 合規
+- [ ] (❓) 2026-09-03 **DSP-003**：回測 session 前綴的兩條規則互相矛盾 — `量測層級.md` 說「⛔ 避開 `backtest_`（否則被標成內部流量）」，`run_batch.py` 說「⛔ 必須 `backtest_session_`（否則寫生產題庫）」。**兩者都自稱 ⛔、依任一條做都會違反另一條**。⛔ 未裁前不得單方選邊
+- [ ] (❓) 2026-09-03 適用性稽核是否應涵蓋空 answer 面向錨點 — `p1b_applicability_census`／`instance_applicability_contract` 的母體（871）不含 `id<>4253` 與 answer 非空。⚠️ 我原本標成「未同源缺陷」，**獨立審查指出那未經證成**：它們稽核「誰需要適用性契約」，而錨點正是面向進場錨點。⛔ **實害**：`p1e_corpus.py` 的母體繼承自 P1b census ⇒ 逕行「同源」會讓一份**已凍結的標註 corpus** 變動
+- [ ] (P2) 2026-09-03 `rules/規則綁在哪.md` 沒有任何強制機制 — 表中路徑／符號改名後不會有任何東西變紅（**初版自證用的兩條測試路徑當天就是錯的**）。⇒ 建議做成 `scripts/audit/checks/*.py`：讀該檔每個「路徑＋符號」，開不了或 grep 不到即 exit 1，比照既有 `--self-test` 慣例掛進 `check_invariants.sh`
 - [ ] (P1) 2026-09-01 D-1：id 4253 分類錯誤致帳單診斷面向領域脈絡從未載入 — 業主裁「先不動」，排在 P1 基準之後
 - [ ] (P2) 2026-09-01 不變量 4 與生產程式判準不同源 — 4253 讓它變綠但功能是壞的；需改成與 `system_context.py` 同源
 - [ ] (P2) 2026-09-01 D-2：tenant_repair 面向從未寫過系統脈絡列 — 是否刻意設計尚未查證
