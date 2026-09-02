@@ -43,6 +43,10 @@
 - [ ] (P3) 2026-09-02 售前（prospect）池從未被任何回測涵蓋 — 3327-3360 那 34 筆 `target_user IS NULL`，補 business_types 時 prospect 池 **18→52（+189%）**、回滾又回 18。⚠️ 相對衝擊比 b2b（285→319，+12%）**大三倍**，而 35 題樣本全是 b2b ⇒ 售前側完全沒量。⇒ 任何可見度改動前先跑 `status.py` 記三池
 - [ ] (P3) 2026-09-02 `make audit` 的紅燈計數不可靠，⛔ 別用 grep 數 — `CODE_CONTRACT_REGRESSIONS: 1` 是**陣列長度**不是紅燈條數；「不變量 1–12／14–20／22–23 有失敗」是 `check_invariants.sh` 裡**寫死的字串**、⛔ 不代表那些不變量都紅。⚠️ 不變量 4 只印 WARN、從頭到尾不印 PASS ⇒ 用「數 PASS 行」當尺會誤判。正解：`grep -n '❌' ` 逐條看
 - [ ] (P3) 2026-09-02 `trigger_sync_api_endpoint_kb_ids` 會讓知識 UPDATE 靜默改到 `api_endpoints` — AFTER UPDATE 觸發器會重算 `api_endpoints.related_kb_ids`。本次 34 筆因 `form_id IS NULL AND api_config IS NULL` 而未觸發，⚠️ **但若改到有 form_id 的列，回滾會連帶改另一張表，而 `updated_at` 檢查完全看不到**
+- [ ] (❓) 2026-09-02 **DSP-002**：b2b「可見」的正本是 `status.py` 的 `_B2B` 還是 `contract_enrich` 的 `visibility()` — `_B2B`=293（可見**且有 answer**）／retriever 實撈 **354**（差 61 筆空 answer 的面向進場錨點，它們 embedding 非空、確實進候選池）／兩條檢索路母體還不同（向量 293／詞面 264，扁平 where 表達不了）。⚠️ `visibility()` 在檢索語義上**比正本對**，但規約立 `_B2B` 為正本 ⇒ **正本與最佳實作指向相反**
+- [ ] (P2) 2026-09-02 `status.py` 的「面向覆蓋」警訊算在錯的母體上 — 它用 `_B2B`（排除空 answer），而被排除的 61 筆**正是面向進場錨點**（狀態判斷 −9／繳費金流排障 −5／合約異動 −4／續約 −3／帳單異常 −3）。⇒「⚠️ 帳單異常 知識 2」「⛔ 修繕報修 知識 0」這類判讀 ⛔ 不等於「候選池裡沒東西」
+- [ ] (P3) 2026-09-02 還有第 6 個母體（871）— `scripts/analysis/p1b_applicability_census.py:82` 與 `scripts/audit/checks/instance_applicability_contract.py:169` 少了 `id<>4253` 與 `answer` 非空，母體 871（正本 772，差 99），且無同源註記
+- [ ] (P3) 2026-09-02 `_B2B` 未宣告只涵蓋 `property_manager` — retriever 的 `is_b2b_mode` 還認 `system_admin`（該身分僅 8 筆可見）。窄化刻意，但讀者會以為 293 涵蓋整個 b2b。已於 status.py 與 SKILL.md 補宣告
 - [ ] (P1) 2026-09-01 D-1：id 4253 分類錯誤致帳單診斷面向領域脈絡從未載入 — 業主裁「先不動」，排在 P1 基準之後
 - [ ] (P2) 2026-09-01 不變量 4 與生產程式判準不同源 — 4253 讓它變綠但功能是壞的；需改成與 `system_context.py` 同源
 - [ ] (P2) 2026-09-01 D-2：tenant_repair 面向從未寫過系統脈絡列 — 是否刻意設計尚未查證

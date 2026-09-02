@@ -202,10 +202,29 @@ G3 單一變因   一輪只動一類成因，**且一批只做一型**
 ## ⛔ 母體定義只有一份（2026-09-02 業主指出）
 
 ```text
-正本   scripts/status.py 的 _B2B（b2b 業者可見）與 ELIGIBLE（全庫適格母體）
-用法   任何腳本要用，**逐條複製並註明出處**；⛔ 不得自己重寫一個 where
-驗法   跑 `python3 scripts/status.py`，你的數字必須與「各池可見」那行對得上
+答題母體   scripts/status.py 的 _B2B（**b2b 可見且有 answer**）與 ELIGIBLE（全庫適格）
+           用法：逐條複製並註明出處；⛔ 不得為了報數字自己另寫一個 where
+可見性     `rag-orchestrator/scripts/backtest/contract_enrich.py` 的 `visibility()`
+           ——判「這一筆這個角色看不看得到」**必須**用它，⛔ 不得用 _B2B 代替
+驗法       跑 `python3 scripts/status.py`，報數字時必須與「各池可見」那行對得上
 ```
+
+⛔ **⚠️ 這兩個不是同一件事，⛔ 不得互相取代**（2026-09-02 獨立驗證抓到）：
+
+```text
+_B2B          293   ⛔ **不是可見** —— 是「可見**且有 answer**」
+retriever 實撈 354   差的 61 筆是空 answer 的**面向進場錨點**，
+                     它們 embedding 非空、確實會進候選池
+兩條路母體還不同     向量路 293／詞面路 264 ⇒ **扁平 where 在結構上表達不了**
+```
+
+⚠️ 本節初版寫「⛔ 不得自己重寫一個 where」——那條**會把已修正的可見性尺改回錯版**：
+`contract_enrich.visibility()` 註解明寫它曾因只模型單一路徑而出錯、後來改成兩路聯集。
+⇒ **⛔ 禁的是「為了報數字另寫母體」，⛔ 不是禁「實作可見性模型」。**
+⇒ 何者為正本已登記 **DSP-002**，⛔ 未裁前兩者並存、各司其職。
+
+⚠️ `_B2B` 只涵蓋 `property_manager`；retriever 的 `is_b2b_mode` 還認 `system_admin`
+（該身分僅 8 筆可見）⇒ 窄化刻意但此前未宣告。
 
 ⚠️ **一天四個母體的實錄**：同一個 session 我用過
 

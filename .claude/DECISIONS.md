@@ -36,3 +36,4 @@
 的 `D-01` 系列是**兩套獨立編號**，⛔ 不得互相引用。
 ⚠️ `D-007` 來源為**代理**⇒ 依本檔規約算 unresolved，⛔ 在業主裁決前不會變成 current。
 | DSP-001 | ⚠️爭議:面向 grounding_scope.requires_instance_reference=true 是否構成該面向所屬知識的 knowledge 層 instance machine evidence | 代理 | rag-orchestrator/services/instance_applicability.py 模組 docstring（裁定②證據門檻不對稱 vs 兩層契約語義不同） ／ 實作:instance_applicability_decision 允許 general×REQUIRED→INELIGIBLE；contract_closeout/contract_change/contract_sign/contract_renew 四面向 requires_instance_reference=true |  |  |
+| DSP-002 | ⚠️爭議:b2b 可見母體的正本是 status.py 的 _B2B 還是 contract_enrich 的 visibility() | 代理 | .claude/skills/retrieval-improvement-loop/SKILL.md〈⛔ 母體定義只有一份〉立 _B2B 為唯一正本並禁止自寫 where ／ 實作:contract_enrich.py 的 visibility() 實作 vendor_ids/embedding/keywords 三軸並取兩路聯集，對 b2b 判 354 可見；_B2B 判 293，差 61 筆空 answer 錨點——而那 61 筆 retriever 確實撈得到 |  |  |
