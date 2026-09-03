@@ -14,6 +14,23 @@ import jieba
 import os
 
 
+def _rerank_fusion_weight() -> float:
+    """rerank 在最終分數的權重 w：final = (1-w)×vector + w×rerank。
+
+    ⚠️ 2026-09-03 業主問「不是建議 6:4 嗎」——全 repo 查無任何 6:4 建議；0.9 自 2026-04
+    之前即硬編碼、無實測依據，而 `project_retrieval_ranking_findings` 記錄它造成**頂端飽和**。
+    ⇒ 開 env 只為了跑對照回測，**預設 0.9 ＝ 與舊碼逐位元相同**。
+    ⛔ 壞值不得靜默當預設（會誤以為換了臂）；空字串視同未設（compose 展開慣例）。
+    """
+    raw = os.getenv("RERANK_FUSION_WEIGHT", "")
+    if raw.strip() == "":
+        return 0.9
+    w = float(raw)
+    if not (0.0 <= w <= 1.0):
+        raise ValueError(f"RERANK_FUSION_WEIGHT 必須在 [0,1]，實得 {raw!r}")
+    return w
+
+
 class BaseRetriever(ABC):
     """
     統一的檢索器基類
@@ -523,7 +540,8 @@ class BaseRetriever(ABC):
 
                 candidate['original_similarity'] = original_score
                 candidate['rerank_score'] = rerank_score
-                candidate['similarity'] = original_score * 0.1 + rerank_score * 0.9
+                _w = _rerank_fusion_weight()
+                candidate['similarity'] = original_score * (1.0 - _w) + rerank_score * _w
 
             # 重新排序
             candidates.sort(key=lambda x: x['similarity'], reverse=True)
@@ -601,7 +619,8 @@ class BaseRetriever(ABC):
             rerank = r.get('rerank_score')
 
             if rerank is not None:
-                r['similarity'] = 0.1 * vector + 0.9 * rerank
+                _w = _rerank_fusion_weight()
+                r['similarity'] = (1.0 - _w) * vector + _w * rerank
                 r['score_source'] = 'rerank'
                 rerank_count += 1
             elif keyword is not None:

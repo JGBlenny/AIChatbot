@@ -223,6 +223,8 @@ services:
       QUERY_REWRITE_TEMPERATURE: ${QUERY_REWRITE_TEMPERATURE:-0}
       # b2b 停用改寫（A/B 實測零差異）；b2c/SOP 未測維持啟用
       ENABLE_QUERY_REWRITE_B2B: ${ENABLE_QUERY_REWRITE_B2B:-false}
+      # rerank 融合權重對照回測用（2026-09-03）；空＝程式預設 0.9，與舊碼逐位元相同
+      RERANK_FUSION_WEIGHT: ${RERANK_FUSION_WEIGHT:-}
       # pre-entry routability gate（entry-scoped 實驗，預設關）
       PREENTRY_ROUTABILITY_GATE: ${PREENTRY_ROUTABILITY_GATE:-false}
       # S1-B：responsibility observation（⛔ 零 authority；預設關閉）
