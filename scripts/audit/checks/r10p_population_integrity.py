@@ -18,6 +18,11 @@
 R10-P review 進行中，母體變動必須是**明示的版本決策**（比照 LEVEL_A_V1→V2），
 ⛔ 不得在 review 中途靜默長大——否則已完成的 review 涵蓋範圍立刻失真。
 
+**明示版本決策的落點（2026-09-04，DSP-007 選 D）**：`r10p/v1-scope-exclusions.txt`。
+凍結**之後**才宣告的 id 登記在該檔 ⇒ 不併入 V1、排隊等 V2；本檢查器只對**未登記**的新宣告判漂移。
+⛔ 排除清單不得含凍結 54 內的 id（拿它藏凍結成員 ⇒ 紅）。不變量 10 與 17 的互斥由此解開：
+滿足 10 的宣告不再是「靜默長大」，而是留下可稽核的登記。
+
 用法：python3 scripts/audit/checks/r10p_population_integrity.py [--self-test]
 """
 import hashlib
@@ -30,6 +35,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 BASE = os.path.join(REPO, ".kiro", "specs", "conversational-routing-execution", "r10p")
 POP = os.path.join(BASE, "population.txt")
 DIG = os.path.join(BASE, "digests.txt")
+EXC = os.path.join(BASE, "v1-scope-exclusions.txt")    # 凍結後宣告、經版本決策排除於 V1 的 id（DSP-007 D）
 EXPECTED_ROWS = 54
 
 #: P0 的機械聯集規則（凍結）
@@ -55,6 +61,22 @@ def frozen():
             "lines": lines, "ids": ids}
 
 
+def exclusions(path=EXC):
+    """讀 V1 scope 排除清單：一行一個 id，`#` 起頭為註解。檔不存在 ⇒ 空集合（⇒ 任何漂移照樣紅，fail-closed）。"""
+    if not os.path.exists(path):
+        return set()
+    with open(path, encoding="utf-8") as f:
+        ids = set()
+        for line in f:
+            s = line.split("#", 1)[0].strip()
+            if not s:
+                continue
+            if not s.isdigit():
+                raise RuntimeError(f"v1-scope-exclusions.txt 含非 id 行：{s!r}——大聲失敗")
+            ids.add(s)
+    return ids
+
+
 def db_ids():
     out = subprocess.run(["docker", "exec", "aichatbot-postgres", "psql", "-U", "aichatbot",
                           "-d", "aichatbot_admin", "-t", "-A", "-c", SQL_UNION],
@@ -69,9 +91,13 @@ def idset_digest(ids):
     return hashlib.sha256(",".join(sorted(ids, key=int)).encode()).hexdigest()
 
 
-def violations(fz=None, live=None):
+def violations(fz=None, live=None, excl=None):
     fz = frozen() if fz is None else fz
+    excl = exclusions() if excl is None else set(excl)
     bad = []
+    hide = sorted(excl & set(fz["ids"]), key=int)
+    if hide:
+        bad.append(f"排除清單含凍結母體內的 id：{hide}——⛔ 排除清單只能登記凍結後的新宣告，不得用來藏凍結成員")
     n_lines, n_ids, n_uniq = len(fz["lines"]), len(fz["ids"]), len(set(fz["ids"]))
     if not (n_lines == n_ids == n_uniq == EXPECTED_ROWS):
         bad.append(f"凍結母體不自洽：lines={n_lines} ids={n_ids} distinct={n_uniq}"
@@ -83,13 +109,14 @@ def violations(fz=None, live=None):
         bad.append("ID-set digest 與凍結值不符")
     live = db_ids() if live is None else live
     if live:
-        extra = sorted(set(live) - set(fz["ids"]), key=int)
+        extra = sorted(set(live) - set(fz["ids"]) - excl, key=int)
         missing = sorted(set(fz["ids"]) - set(live), key=int)
         if missing:
             bad.append(f"凍結母體中的 id 已不在聯集結果內：{missing}——⚠️ 真實破壞")
         if extra:
-            bad.append(f"聯集結果**多出** id：{extra} ⇒ governance population 漂移。"
-                       f"⚠️ review 中途母體不得靜默長大——需明示**版本決策**（比照 LEVEL_A_V1→V2）")
+            bad.append(f"聯集結果**多出未登記** id：{extra} ⇒ governance population 漂移。"
+                       f"⚠️ review 中途母體不得靜默長大——需明示**版本決策**：登記到 r10p/v1-scope-exclusions.txt"
+                       f"（排 V2）或升版母體（比照 LEVEL_A_V1→V2）")
     return bad
 
 
@@ -107,8 +134,14 @@ def self_test() -> int:
     swap["ids"] = fz["ids"][:-1] + ["999999"]
     v = violations(swap, fz["ids"])
     cases.append(("少一列＋多一列（COUNT 仍 54）必須紅", v != []))
-    # 正對照：聯集多出 id ⇒ 漂移必紅
-    cases.append(("母體漂移必須紅", any("漂移" in x for x in violations(fz, fz["ids"] + ["888888"]))))
+    # 正對照：聯集多出**未登記** id ⇒ 漂移必紅（排除清單給空集合，證明不是靠清單放水）
+    cases.append(("母體漂移必須紅", any("漂移" in x for x in violations(fz, fz["ids"] + ["888888"], excl=set()))))
+    # 正對照：已登記於 v1-scope-exclusions 的新宣告 ⇒ 不算漂移（DSP-007 D）
+    cases.append(("已登記的凍結後宣告不算漂移", violations(fz, fz["ids"] + ["888888"], excl={"888888"}) == []))
+    # 正對照：排除清單不得拿來藏凍結成員 ⇒ 必紅
+    cases.append(("排除清單含凍結成員必須紅", any("藏凍結成員" in x for x in violations(fz, fz["ids"], excl={fz["ids"][0]}))))
+    # 正對照：真實清單本身不得含凍結成員（否則現況乾淨是假的）
+    cases.append(("實際排除清單與凍結 54 不相交", not (exclusions() & set(fz["ids"]))))
     for n, ok in cases:
         print(f"{'✅' if ok else '❌'} {n}")
     return 1 if any(not ok for _n, ok in cases) else 0
@@ -127,8 +160,10 @@ def main() -> int:
         for b in bad:
             print(f"   {b}")
         return 1
+    excl = exclusions()
     print(f"（R10-P governance population：{EXPECTED_ROWS} 列，lines＝ids＝distinct 皆相符；"
-          f"population 與 ID-set 兩個 digest 均未變；聯集無漂移）")
+          f"population 與 ID-set 兩個 digest 均未變；聯集無未登記漂移；"
+          f"V1 scope 排除清單 {len(excl)} 筆凍結後宣告排隊等 V2）")
     return 0
 
 
