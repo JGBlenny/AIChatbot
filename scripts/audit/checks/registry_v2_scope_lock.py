@@ -48,7 +48,16 @@ def load():
             "v2": json.load(open(V2C, encoding="utf-8"))}
 
 
-def violations(st=None):
+def violations(st=None, eq_override=None):
+    """`eq_override`：**只給自我測試用**的 structural-equivalence 內容覆寫。
+
+    ⛔ 舊版自我測試是**直接改寫真檔**再靠 `finally` 還原——2026-09-03 實際壞掉：
+    `make audit`（Stop hook 觸發）與手動 `--self-test` 併發時，B 進程的
+    `orig = json.load(...)` 讀到 A 進程**已注入**的內容 ⇒ B 的 `finally` 把注入態當原狀寫回，
+    **永久留在工作樹**。殘留態是 `999/match=false`（來自 bad_eq2）**疊加**
+    `DRIFT_DETECTED/mismatches=[x]`（來自 bad_eq）——兩個注入各出一半，
+    單一進程不可能產生，是併發的鐵證。⇒ 改成記憶體覆寫，⛔ 自我測試不再寫任何檔。
+    """
     st = load() if st is None else st
     bad = []
     if st["frozen"] and hashlib.sha256(st["raw1"]).hexdigest() != st["frozen"]:
@@ -89,6 +98,8 @@ def violations(st=None):
         else:
             with open(eq_path, encoding="utf-8") as f:
                 eq = json.load(f)
+            if eq_override is not None:
+                eq = eq_override          # ⚠️ 自我測試專用；⛔ 產線呼叫一律不傳
             if eq.get("result") != "STRUCTURALLY_EQUIVALENT":
                 bad.append(f"structural-equivalence 結果為 {eq.get('result')!r}"
                            f"：{eq.get('mismatches')}")
@@ -147,26 +158,21 @@ def self_test() -> int:
     m = mut(canon_only)
     cases.append(("只改 canonical 面必須綠", violations(m) == []))
 
-    # 正對照：sealed 但驗證結果為 DRIFT 必須紅（以 monkeypatch 方式模擬）
-    import types
+    # 正對照：sealed 但驗證結果為 DRIFT 必須紅
+    # ⛔ **不寫真檔**——見 violations() 的 eq_override docstring：舊寫法在併發下會把注入態
+    #    當原狀寫回，永久污染工作樹，讓本檢查的兩個「必須綠」正對照持續紅（2026-09-03 實例）。
     eqp = os.path.join(R10P, "v2-structural-equivalence.json")
     if st["v2"].get("seal_status") == "sealed" and os.path.exists(eqp):
         orig = json.load(open(eqp, encoding="utf-8"))
-        try:
-            bad_eq = copy.deepcopy(orig); bad_eq["result"] = "DRIFT_DETECTED"
-            bad_eq["mismatches"] = [{"name": "x", "v2": 1, "p5": 2}]
-            json.dump(bad_eq, open(eqp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-            cases.append(("驗證結果為 DRIFT 必須紅",
-                          any("DRIFT_DETECTED" in x for x in violations(load()))))
-            bad_eq2 = copy.deepcopy(orig)
-            bad_eq2["numeric_checks"][0]["match"] = False
-            bad_eq2["numeric_checks"][0]["v2_derived"] = 999
-            json.dump(bad_eq2, open(eqp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-            cases.append(("驗證數字不符必須紅",
-                          any("數字不符" in x for x in violations(load()))))
-        finally:
-            with open(eqp, "w", encoding="utf-8") as f:
-                json.dump(orig, f, ensure_ascii=False, indent=1); f.write("\n")
+        bad_eq = copy.deepcopy(orig); bad_eq["result"] = "DRIFT_DETECTED"
+        bad_eq["mismatches"] = [{"name": "x", "v2": 1, "p5": 2}]
+        cases.append(("驗證結果為 DRIFT 必須紅",
+                      any("DRIFT_DETECTED" in x for x in violations(st, eq_override=bad_eq))))
+        bad_eq2 = copy.deepcopy(orig)
+        bad_eq2["numeric_checks"][0]["match"] = False
+        bad_eq2["numeric_checks"][0]["v2_derived"] = 999
+        cases.append(("驗證數字不符必須紅",
+                      any("數字不符" in x for x in violations(st, eq_override=bad_eq2))))
 
     # 正對照：V1 bytes 被改必須紅
     m = copy.deepcopy(st); m["raw1"] = m["raw1"] + b" "
