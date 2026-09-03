@@ -1,0 +1,49 @@
+{
+  "feature_name": "documind-ocr-mapping",
+  "created_at": "2026-09-03T19:21:04+08:00",
+  "updated_at": "2026-09-04T00:04:49+08:00",
+  "phase": "implementation",
+  "language": "zh-TW",
+  "project_description": "chatai 接收 DocuMind OCR 的結構化 JSON（謄本 transcript／合約 contract），做領域映射與規則校驗後回給 line-bot LIFF 當「待人確認的草稿」。⛔ chatai 不碰檔案、不呼叫 DocuMind、不打 JGB；同步端點、秒回。範圍：①謄本 5 欄→物件欄位草稿；②通用合約欄位→JGB 租約欄位（line-bot docs/chatai-integration-scenario.md §7.2），含押金二選一⛔不推算另一邊（§7.3）、民國曆→西元 YYYY-MM-DD 與「租期壹年」→月數（§7.4）、對不到欄位的條款原樣進 unmapped_clauses[]（§7.5）；③逐欄信心度與 needs_confirmation 透傳，needs_review=true 一律標草稿。已知限制：DocuMind contract 型只有通用欄位（party_a／contract_amount／signing_date），租約特有欄位（deposit_type／cycle_date／cycle）需二擇一：請 DocuMind 開 lease 型，或 chatai 以 ocr_raw.text 做第二段抽取——design 階段由業主選。安全前提：DocuMind 目前無認證、公網 IP，上線前 line-bot 側須加 auth＋IP 白名單（非本 spec 範圍但列為前置條件）。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "implementation": {
+    "started": true,
+    "completed": false,
+    "tasks_completed": [
+      "1.1",
+      "1.2",
+      "2.1",
+      "2.2",
+      "3.1",
+      "4.1",
+      "5.1",
+      "5.2",
+      "5.3",
+      "6.1",
+      "7.1",
+      "8.1",
+      "8.2",
+      "10.2",
+      "10.3",
+      "11.1",
+      "11.2",
+      "11.3",
+      "9.1",
+      "12.1",
+      "12.2"
+    ]
+  }
+}

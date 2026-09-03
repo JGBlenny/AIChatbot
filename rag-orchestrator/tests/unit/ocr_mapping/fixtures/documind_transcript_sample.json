@@ -1,0 +1,77 @@
+{
+  "_note": "來源：DocuMind 串接文件的謄本樣本（4 頁，文件只揭露第 1 頁 structured_data）；第 2–4 頁依同一 schema 補齊以覆蓋多頁合併情境。已去識別化：所有權人改假名、地號段名改假段。⚠️ 非真實回應原文；真實回應到位後以同名覆蓋、⛔ 不改測試。",
+  "file_name": "建物土地謄本.pdf",
+  "file_url": null,
+  "document_type": "transcript",
+  "total_pages": 4,
+  "pages": [
+    {
+      "page_number": 1,
+      "ocr_raw": {"text": "土地登記第一類謄本 竹田鄉測試段0555-0000地號 面積 3,406.98 平方公尺 所有權人 王大明 權利範圍 全部", "confidence": 0.691},
+      "rule_postprocessed": {"text": "…", "stats": {}},
+      "llm_postprocessed": {"text": "…", "stats": {}, "used": true},
+      "structured_data": {
+        "land_number": "竹田鄉測試段0555-0000地號",
+        "building_number": null,
+        "area": "3,406.98",
+        "rights_scope": "全部",
+        "owner": "王大明",
+        "field_confidences": {"land_number": 0.8, "area": 0.9, "owner": 0.9},
+        "needs_confirmation": ["building_number"],
+        "extraction_confidence": 0.700
+      },
+      "field_confidences": {},
+      "consensus": null
+    },
+    {
+      "page_number": 2,
+      "ocr_raw": {"text": "建物登記第一類謄本 建號 測試段01234-000 主要用途 住家用", "confidence": 0.62},
+      "rule_postprocessed": {"text": "…", "stats": {}},
+      "llm_postprocessed": null,
+      "structured_data": {
+        "land_number": null,
+        "building_number": "測試段01234-000建號",
+        "area": null,
+        "rights_scope": null,
+        "owner": null,
+        "field_confidences": {"building_number": 0.75},
+        "needs_confirmation": ["area"],
+        "extraction_confidence": 0.55
+      },
+      "field_confidences": {},
+      "consensus": null
+    },
+    {
+      "page_number": 3,
+      "ocr_raw": {"text": "所有權部 所有權人 王大明、李小華 權利範圍 各二分之一", "confidence": 0.58},
+      "rule_postprocessed": {"text": "…", "stats": {}},
+      "llm_postprocessed": {"text": "…", "stats": {}, "used": true},
+      "structured_data": {
+        "land_number": null,
+        "building_number": null,
+        "area": null,
+        "rights_scope": "各二分之一",
+        "owner": "王大明、李小華",
+        "field_confidences": {"owner": 0.7, "rights_scope": 0.65},
+        "needs_confirmation": [],
+        "extraction_confidence": 0.60
+      },
+      "field_confidences": {},
+      "consensus": null
+    },
+    {
+      "page_number": 4,
+      "ocr_raw": {"text": "他項權利部 抵押權 無", "confidence": 0.44},
+      "rule_postprocessed": {"text": "…", "stats": {}},
+      "llm_postprocessed": null,
+      "structured_data": {},
+      "field_confidences": {},
+      "consensus": null
+    }
+  ],
+  "answer": null,
+  "stats": {"total_time_ms": 150861, "total_pages": 4, "llm_pages_used": 2, "estimated_cost": 0.1112},
+  "needs_review": true,
+  "review_item_id": "98563520-43ad-43cb-a4ac-d04eb901f436",
+  "field_confidences": {}
+}

@@ -1,0 +1,62 @@
+{
+  "_note": "⚠️ 非真實 DocuMind 回應——依串接文件的 contract 型 schema（contract_metadata／parties／financial_terms）手構，用來覆蓋需求 4–7 的規則。內容全為假資料。真實回應待 line-bot 團隊提供（Q2），到位後以同名覆蓋、⛔ 不改測試；⛔ 不得以本檔充當 e2e（需求 10.2）。",
+  "file_name": "租賃契約書_sample.pdf",
+  "file_url": null,
+  "document_type": "contract",
+  "total_pages": 3,
+  "pages": [
+    {
+      "page_number": 1,
+      "ocr_raw": {"text": "房屋租賃契約書\n立契約書人 出租人 張三（以下簡稱甲方） 承租人 歐陽小美（以下簡稱乙方）\n第一條 租賃標的 台北市信義區信義路五段7號8樓\n第二條 租賃期間 租期壹年 自中華民國114年1月21日起至中華民國115年1月20日止\n第三條 租金 每月租金新台幣壹萬參仟捌佰元整 乙方應於每月五日前繳納", "confidence": 0.66},
+      "rule_postprocessed": {"text": "…", "stats": {}},
+      "llm_postprocessed": {"text": "…", "stats": {}, "used": true},
+      "structured_data": {
+        "contract_metadata": {"contract_number": null, "signing_date": "中華民國114年1月15日", "effective_date": "中華民國114年1月21日"},
+        "parties": {"party_a": "張三", "party_b": "歐陽小美", "party_a_address": "台北市信義區信義路五段7號8樓", "party_b_address": null},
+        "financial_terms": {"contract_amount": "每月租金新台幣壹萬參仟捌佰元整", "currency": "TWD", "payment_method": "轉帳至甲方指定帳戶", "payment_deadline": "每月五日前"},
+        "field_confidences": {"signing_date": 0.85, "effective_date": 0.9, "party_a": 0.8, "party_b": 0.8, "contract_amount": 0.9, "payment_deadline": 0.7},
+        "needs_confirmation": ["contract_number", "party_b_address"],
+        "extraction_confidence": 0.72
+      },
+      "field_confidences": {},
+      "consensus": null
+    },
+    {
+      "page_number": 2,
+      "ocr_raw": {"text": "第四條 押金 押金新台幣貳萬柒仟陸佰元整 於簽約時一次付清\n第五條 半年繳整年優惠6000\n第六條 電費預繳1000/月共6個月\n第七條 乙方不得飼養寵物", "confidence": 0.61},
+      "rule_postprocessed": {"text": "…", "stats": {}},
+      "llm_postprocessed": null,
+      "structured_data": {
+        "contract_metadata": {"contract_number": null, "signing_date": null, "effective_date": null},
+        "parties": {"party_a": null, "party_b": null, "party_a_address": null, "party_b_address": null},
+        "financial_terms": {"contract_amount": null, "currency": null, "payment_method": null, "payment_deadline": null},
+        "field_confidences": {},
+        "needs_confirmation": [],
+        "extraction_confidence": 0.40
+      },
+      "field_confidences": {},
+      "consensus": null
+    },
+    {
+      "page_number": 3,
+      "ocr_raw": {"text": "第八條 提前終止 任一方須於三十日前以書面通知\n立契約書人 甲方 張三 乙方 歐陽小美 中華民國 114 年 1 月 15 日", "confidence": 0.58},
+      "rule_postprocessed": {"text": "…", "stats": {}},
+      "llm_postprocessed": null,
+      "structured_data": {
+        "contract_metadata": {"contract_number": null, "signing_date": "2025/1/15", "effective_date": null},
+        "parties": {"party_a": "張三", "party_b": "歐陽小美", "party_a_address": null, "party_b_address": null},
+        "financial_terms": {"contract_amount": null, "currency": null, "payment_method": null, "payment_deadline": null},
+        "field_confidences": {"signing_date": 0.6, "party_a": 0.7, "party_b": 0.7},
+        "needs_confirmation": [],
+        "extraction_confidence": 0.50
+      },
+      "field_confidences": {},
+      "consensus": null
+    }
+  ],
+  "answer": null,
+  "stats": {"total_time_ms": 108000, "total_pages": 3, "llm_pages_used": 1, "estimated_cost": 0.08},
+  "needs_review": true,
+  "review_item_id": "0f3c1a2e-0000-4000-8000-000000000001",
+  "field_confidences": {}
+}
