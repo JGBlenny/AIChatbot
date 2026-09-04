@@ -58,3 +58,43 @@ php artisan external-api-key:run permission-add --key-id=<id> --resource=<缺的
 完成後告訴我「五個都有」，我再跑對測試團隊 role 20151 的真 API smoke（`RUN_INTEGRATION=1`，容器內讀 env，⛔ 金鑰不進 argv）。
 
 ## 4. 1.7b 回來後（我做）：重建本機 image、跑 M0 整合六案＋MCP client 端到端、派 1.9 security review。
+
+## 5. 售前池審核旗標（M1 前置，任務 3.3，R11.6）
+
+> 背景：DSP-012 裁決發現 `knowledge_base` 查無任何審核旗標，售前大綱組裝現況等於
+> 「有 KB 寫入權＝有 system prompt 寫入權」。`build_prospect_outline`（3.2）SHALL
+> 只取 `outline_approved_by IS NOT NULL` 的列，故上線前要先把現有售前池標記為已審核。
+
+```bash
+bash rag-orchestrator/database/migrate.sh --apply
+```
+預期：印出套用 `20260905_knowledge_base_outline_approval.sql` 成功並記帳；再跑一次
+`bash rag-orchestrator/database/migrate.sh`（不帶 `--apply`）應顯示已套（冪等）。
+
+驗證欄位就緒：
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tA -c \
+  "SELECT column_name FROM information_schema.columns WHERE table_name='knowledge_base' AND column_name IN ('outline_approved_by','outline_approved_at') ORDER BY 1;"
+```
+預期：兩行 `outline_approved_at`、`outline_approved_by`。
+
+預覽要標記的列數（`.kiro/specs/agentic-mcp-orchestration/sql/mark-prospect-pool-approved-20260905.sql` Step 1）：
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tA -f \
+  <(sed -n '/^SELECT count(\*) AS matched/,/^-- 預期：31$/p' .kiro/specs/agentic-mcp-orchestration/sql/mark-prospect-pool-approved-20260905.sql | sed '$d')
+```
+預期：`31`。⚠️ 若不是 31，⛔ 不要往下執行 UPDATE——回報實際數字，回到 SQL 檔核對
+`build_visibility_predicate` 條件是否與售前池現況仍一致（售前池可能已變動）。
+
+確認為 31 後，執行標記（Step 2）與驗證（Step 3）：
+```bash
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin \
+  < .kiro/specs/agentic-mcp-orchestration/sql/mark-prospect-pool-approved-20260905.sql
+```
+預期：`UPDATE 31`，最後一段 `SELECT count(*) FROM knowledge_base WHERE outline_approved_by IS NOT NULL;` 印出 `31`。
+
+Rollback（僅在標記錯誤時使用，還原本次以 `owner-20260905` 寫入的列）：
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "UPDATE knowledge_base SET outline_approved_by = NULL, outline_approved_at = NULL WHERE outline_approved_by = 'owner-20260905';"
+```
