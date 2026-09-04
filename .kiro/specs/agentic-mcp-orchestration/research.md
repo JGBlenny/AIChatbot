@@ -112,3 +112,10 @@ MCP Python SDK（server／client／ASGI 掛載／授權／結構化輸出／錯�
 - https://py.sdk.modelcontextprotocol.io/run/asgi/ ；/run/authorization/ ；/handlers/context/ ；/servers/structured-output/ ；/servers/handling-errors/
 - https://developers.openai.com/api/docs/api-reference/chat/create ；/guides/function-calling ；/guides/tools-connectors-mcp
 - https://github.com/modelcontextprotocol/python-sdk
+
+## 主題 6（1.1 追加）：授權邊界與 jgb2 事實來源
+- **業主裁決 DSP-011（2026-09-04）**：「權限的部分由 API 全權處理；此系統只管額度。」⇒ 本系統不建授權層，`role_id`／`user_id` 為上游信任輸入（沿用 `F-C25`）；本系統對呼叫者的閘只有 `services/api_key_auth.py:api_key_guard`（服務層）與 `services/usage_metering.py:quota_check`（額度）。MCP 門面因此定為非公開認證面，⛔ 不用 SDK 的 `TokenVerifier`／`AuthSettings`。
+- **jgb2 兩層權限**（`jgb2-source-index.md` §3.5）：Layer 1 `external_api_key_permissions`／whitelists；Layer 2 `viewer_user_id`→`VisibleScope::resolve()`，僅 `bills`／`contracts/status-overview`／`payments`／`invoices` 四端點生效。本 repo `services/jgb_system_api.py` 已有 `viewer_user_id` 用法（grep `viewer_user_id`）。
+- **L1 自同步**：9 支 External controller 回應自帶 `mapping`；`services/jgb_response_formatter.py` 已讀 `mapping`，而 `services/jgb/bills.py:STATUS_LABELS` 是重複硬表（缺口 7）⇒ agent 路徑只讀 `mapping`。
+- **security-reviewer 查證**（2026-09-04）：全 repo 無入站 bearer 驗證（正對照 `verify_api_key` 存在）；`_grounding_by_ids` SQL 無業者過濾；隔離謂詞 4 份手抄各不相同 ⇒ `build_visibility_predicate` 列 M0 首項。
+- **待裁**：jgb2-source-index §10.1 MCP 工具面掛 `external/v1`（現況）或加掛 `agent/v1`（ed25519＋IP 白名單）。
