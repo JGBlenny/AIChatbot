@@ -6,20 +6,20 @@
 `Budget`／`TurnTrace`／`AgentRuntime`／`TurnResult`、預算計數表、同題重問
 快取段）。
 
+**2.5 收尾註記（本檔已接妥的三條，取代下方舊的「刻意留白」敘述）**：
+- `AgentOutput`／`VerifierVerdict`／`Citation`／`SentenceCite` 的權威定義已
+  搬到 `services/agent/output_schema.py`（任務 2.3），本檔全部改
+  `from services.agent.output_schema import ...`，⛔ 不再本地重複定義。
+- 工具回傳的 `text_for_model` 已改經 `services.agent.prompt_assembler.wrap_tool_data
+  (name, text_for_model, nonce)` 包裝成資料段才進 `role="tool"` 訊息。
+- `assembler.build(...)` 與 `assembler.build_messages(...)` 二選一：本檔選
+  `build_messages()`——它直接回傳 `list[dict]`，與 `AssemblerProtocol` 的
+  既有形狀（本檔、`services/agent/mcp_facade.py` 等呼叫端）一致，不必額外
+  拆 `BuiltPrompt(messages, meta)`；`outline_sha`／`rules_sha` 這兩個 trace
+  欄位本檔已經直接從 `outline.sha256`／`self.verifier.rules_sha` 讀（見下方
+  `_outline_sha`／`_rules_sha`），不需要 `build()` 回傳的 `PromptMeta`。
+
 **本任務刻意留白（由後續任務補上，⛔ 不是這裡漏做）**：
-- `Verifier`（元件 6）本體是任務 2.3；這裡只定義它的呼叫介面
-  `verify(out, tool_results, user_message, handoff) -> VerifierVerdict`，
-  `VerifierVerdict` 也只先給 `ok`／`reason` 兩欄的最小形狀——2.3 落地後那邊
-  的完整 `VerifierRules`／11 拒因值域才是唯一權威，這裡的定義屆時應改成
-  `from services.agent.verifier import VerifierVerdict` 之類的 import。
-- `PromptAssembler`（元件 5）本體是任務 3.1／3.2；這裡只呼叫
-  `assembler.build(identity, outline, slots, dialog, tool_specs, nonce)`，
-  `outline`／`slots`／`dialog` 從 `state["agent"]` 讀（3.2 的 `OutlineAssembler`
-  接妥前，呼叫端自行決定要不要填）。`wrap_tool_data(nonce)` 是 3.1 的
-  函式，目前尚不存在——工具回傳的 `text_for_model` **暫時原樣**塞進
-  `role="tool"` 訊息，3.1 落地後這裡要改成
-  `wrap_tool_data(name, text_for_model, nonce)`（見下方 `_TOOL_MESSAGE_TODO`
-  常數旁的呼叫點）。
 - `AgentOutput.model_json_schema()` 轉成 OpenAI strict `json_schema` 目前只
   在頂層補 `additionalProperties: false`／`required`，未遞迴處理巢狀
   `Citation`／`SentenceCite`／`$defs`——這支任務全程用假 provider（⛔ 不呼叫
@@ -43,19 +43,22 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import os
-import secrets
 import time
 import unicodedata
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Literal, Optional, Protocol
 
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
+from services import usage_metering
 from services.agent.budget import Budget, BudgetCounters
 from services.agent.identity import Identity, Stage
 from services.agent.mcp_facade import current_stage
+from services.agent.output_schema import AgentOutput, VerifierVerdict
+from services.agent.prompt_assembler import new_nonce, wrap_tool_data
 from services.agent.tools.registry import ToolRegistry, ToolResult
 from services.conversational_config import (
     effective_handoff_channel,
@@ -63,41 +66,13 @@ from services.conversational_config import (
 )
 from services.presales_gate import FactClass
 
+logger = logging.getLogger(__name__)
+
 # ---------------------------------------------------------------------------
-# `AgentOutput`（design 元件 6 的形狀；本任務只需拿它做「模型最終輸出」的
-# 契約與 schema 來源，Verifier 的判定邏輯是 2.3 的事）。
+# `AgentOutput`／`VerifierVerdict` 權威定義在 `services/agent/output_schema.py`
+# （任務 2.3）；本檔只 import，⛔ 不再本地重複定義（2.5 收尾註記，見模組
+# docstring）。`Citation`／`SentenceCite` 本檔不直接使用，不重複 import。
 # ---------------------------------------------------------------------------
-
-
-class Citation(BaseModel):
-    tool_call_id: str
-    source: str
-    quote: str
-
-
-class SentenceCite(BaseModel):
-    sent: int
-    kind: Literal["fact", "question", "greeting", "routing"]
-    cite: list[int] = []
-
-
-class AgentOutput(BaseModel):
-    kind: Literal["answer", "ask", "recommend", "handoff"]
-    answer: str
-    citations: list[Citation] = []
-    sentence_map: list[SentenceCite] = []
-    fact_class: FactClass
-    handoff_reason: Optional[str] = None
-
-
-class VerifierVerdict(BaseModel):
-    """佔位形狀——2.3 的 `OutputVerifier` 本體會有完整 11 拒因值域與
-    `sent`／`term_id`／`quote_len`。這裡的迴圈只讀 `ok`／`reason` 兩欄，
-    ⛔ 不對外洩原文（`reason` 是結構化代碼，不是自然語言）。
-    """
-
-    ok: bool
-    reason: Optional[str] = None
 
 
 class VerifierProtocol(Protocol):
@@ -111,7 +86,7 @@ class VerifierProtocol(Protocol):
 
 
 class AssemblerProtocol(Protocol):
-    def build(
+    def build_messages(
         self,
         identity: Identity,
         outline: Any,
@@ -249,6 +224,71 @@ def _assistant_tool_call_message(message: Any, tool_calls: list) -> dict:
     }
 
 
+def _replayed_from(violations: list) -> Optional[str]:
+    for v in violations:
+        if v.startswith("replayed_from:"):
+            return v.split(":", 1)[1]
+    return None
+
+
+def _emit_agent_decision(trace: TurnTrace) -> None:
+    """每回合把結構化 trace 落 `decision_snapshot.agent`（design 附錄 B
+    不變量 30／任務 2.5）。
+
+    ⚠️ 呼叫點必須是**字面 dict**（不得先組成變數再傳入）——
+    `scripts/audit/checks/agent_boundary.py:check_30_decision_snapshot_no_verbatim`
+    是靜態掃描這個呼叫的 dict 字面量鍵名，傳變數等於讓這條不變量看不見
+    自己在保護什麼。⛔ 鍵集合是封閉白名單（任務 brief），多一鍵就是這條
+    不變量要抓的事：無 `answer`／`quote`／`text`／`user_message`。
+    """
+    usage_metering.set_agent_decision(
+        {
+            "trace_id": trace.trace_id,
+            "tool_calls": [
+                {
+                    "name": tc.name,
+                    "args_hash": tc.args_hash,
+                    "args_summary": tc.args_summary,
+                    "ms": tc.ms,
+                    "status": tc.status,
+                    "n_items": tc.n_items,
+                }
+                for tc in trace.tool_calls
+            ],
+            "llm_calls": trace.llm_calls,
+            "prompt_tokens": trace.prompt_tokens,
+            "completion_tokens": trace.completion_tokens,
+            "verifier": [
+                {
+                    "reason": v.reason,
+                    "sent": v.sent,
+                    "term_id": v.term_id,
+                    "quote_len": v.quote_len,
+                }
+                for v in trace.verifier
+            ],
+            "final_kind": trace.final_kind,
+            "handoff_reason": trace.handoff_reason,
+            "latency_ms": trace.latency_ms,
+            "rules_sha": trace.rules_sha,
+            "outline_sha": trace.outline_sha,
+            "violations": trace.violations,
+            "replayed_from": _replayed_from(trace.violations),
+        }
+    )
+    # 日誌只印 kind／拒因／計數，⛔ 不印 answer／quote 原文（任務 brief）。
+    logger.info(
+        "agent_turn trace_id=%s kind=%s handoff_reason=%s tool_calls=%d "
+        "verifier_rejects=%d llm_calls=%d",
+        trace.trace_id,
+        trace.final_kind,
+        trace.handoff_reason,
+        len(trace.tool_calls),
+        sum(1 for v in trace.verifier if not v.ok),
+        trace.llm_calls,
+    )
+
+
 class AgentRuntime:
     """迴圈本體（design 元件 1）。
 
@@ -309,6 +349,7 @@ class AgentRuntime:
                 latency_ms=int((self._clock() - start) * 1000),
                 violations=[f"replayed_from:{cached.get('trace_id', '')}"],
             )
+            _emit_agent_decision(trace)
             return TurnResult(
                 kind="handoff",
                 answer=cached.get("answer", ""),
@@ -326,7 +367,11 @@ class AgentRuntime:
         prompt_tokens = 0
         completion_tokens = 0
 
-        nonce = secrets.token_urlsafe(16)
+        # `new_nonce()`（`services.agent.prompt_assembler`）＝ 16 位十六進位，
+        # 符合 `wrap_tool_data`／`PromptAssembler` 的 nonce 形狀守門；
+        # ⛔ 不用 `secrets.token_urlsafe`——它會產出 `-`／`_`，被 `_require_nonce`
+        # 的 `^[0-9A-Za-z]{8,64}$` 擋下（2.5 接線時發現，見任務回報）。
+        nonce = new_nonce()
         slots = agent_state.get("slots", {})
         dialog = agent_state.get("dialog", [])
         outline = agent_state.get("outline")
@@ -336,7 +381,7 @@ class AgentRuntime:
         )
         visible_names = {t["function"]["name"] for t in tool_specs}
 
-        messages = self.assembler.build(identity, outline, slots, dialog, tool_specs, nonce)
+        messages = self.assembler.build_messages(identity, outline, slots, dialog, tool_specs, nonce)
 
         def _outline_sha() -> str:
             return getattr(outline, "sha256", "") if outline is not None else ""
@@ -386,6 +431,7 @@ class AgentRuntime:
             agent_state["fixed_streak"] = (
                 agent_state.get("fixed_streak", 0) + 1 if is_fixed else 0
             )
+            _emit_agent_decision(result.trace)
             return result
 
         while True:
@@ -482,12 +528,20 @@ class AgentRuntime:
                         )
                     )
                     tool_results_by_id[tc.id] = tool_result
-                    # 3.1 落地前的暫時作法，見模組 docstring「本任務刻意留白」段：
-                    # 這裡本應是 wrap_tool_data(name, tool_result.text_for_model, nonce)。
-                    tool_content = tool_result.text_for_model or json.dumps(
+                    # 2.5 接線：工具回傳一律經 wrap_tool_data 包成資料段
+                    # （同回合共用一個 nonce，見上方 `nonce = new_nonce()`）。
+                    raw_tool_text = tool_result.text_for_model or json.dumps(
                         {"ok": tool_result.ok, "error": tool_result.error},
                         ensure_ascii=False,
                     )
+                    try:
+                        tool_content = wrap_tool_data(name, raw_tool_text, nonce)
+                    except ValueError:
+                        # 模型送的 tool 名不合 wrap_tool_data 的形狀守門（例如空白／
+                        # 標記字元）——registry.call 已經用它判過 NO_MATCH／
+                        # FORBIDDEN，這裡只是包裝層，⛔ 不因此讓整回合崩潰。
+                        violations.append(f"BAD_TOOL_NAME:{name!r}")
+                        tool_content = wrap_tool_data("tool", raw_tool_text, nonce)
                     messages.append(
                         {
                             "role": "tool",
@@ -520,9 +574,14 @@ class AgentRuntime:
 
             handoff_dict: Optional[dict] = None
             if out.kind == "handoff":
+                # `output_schema.AgentOutput.fact_class` 型別是 `Optional[str]`
+                # （刻意放寬，讓 verifier 能判「缺／非法」，見 output_schema.py
+                # 模組 docstring）——已經是字串，⛔ 不再 `.value`；缺值時落
+                # `FactClass.other`（Runtime 自己決定轉人，不是模型判斷出的
+                # 事實類別，沿用既有 `_build_fixed` 的慣例）。
                 handoff_dict = {
                     "reason": out.handoff_reason or "no_grounding",
-                    "fact_class": out.fact_class.value,
+                    "fact_class": out.fact_class or FactClass.other.value,
                     "channel": effective_handoff_channel(None),
                     "message": effective_handoff_message(None),
                 }
@@ -531,13 +590,29 @@ class AgentRuntime:
             verifier_verdicts.append(verdict)
             if not verdict.ok:
                 counters.rewrites += 1
+                logger.info(
+                    "agent_verifier_reject trace_id=%s reason=%s rewrites=%d/%d",
+                    trace_id, verdict.reason, counters.rewrites, self.budget.max_rewrites,
+                )
                 if counters.rewrite_exhausted(self.budget):
                     return _finalize(_build_fixed("budget_exhausted"), is_fixed=True)
                 messages.append({"role": "assistant", "content": content})
+                # 拒因回模型用 role="user"（⛔ 不用 role="system"）：system 訊息
+                # 依 PromptAssembler 契約整回合只有一則（見 prompt_assembler.py
+                # 「system 訊息只有一則」），迴圈裡補第二則 system 會破壞這個
+                # 不變量；role="user" 與既有 SCHEMA 不符重寫走同一慣例（上面
+                # `json.JSONDecodeError` 分支）。內容是 `VerifierVerdict.model_dump()`
+                # 的結構化拒因（ok/reason/sent/term_id/quote_len），⛔ 無原文
+                # ——被拒的 `answer` 只留在 `messages`（模型自己的重寫上下文），
+                # ⛔ 不進 `TurnTrace`／`TurnResult`。
                 messages.append(
                     {
                         "role": "user",
-                        "content": f"VERIFIER_REJECT:{verdict.reason or 'UNKNOWN'}",
+                        "content": (
+                            "VERIFIER_REJECT: "
+                            + json.dumps(verdict.model_dump(), ensure_ascii=False)
+                            + "　請依上述結構化拒因修正後重新輸出符合 AgentOutput schema 的 JSON。"
+                        ),
                     }
                 )
                 continue

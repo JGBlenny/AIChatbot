@@ -276,6 +276,20 @@ def set_decision(snapshot: Optional[Dict[str, Any]] = None,
         ctx.facet_event = facet_event[:30]
 
 
+def set_agent_decision(trace: Dict[str, Any]) -> None:
+    """薄包裝（spec agentic-mcp-orchestration・任務 2.5）：把 agent 回合的結構化
+    trace 塞進 `decision_snapshot.agent`。等於 `set_decision({"agent": trace})`——
+    `set_decision` 既有語意（ctx None／已定稿靜默略過、同 key 衝突推進 `prior`）
+    原樣沿用，本函式不重新實作、不加任何額外邏輯。
+
+    存在的理由只是給 `services/agent/**` 一個**專名**呼叫點，讓
+    `scripts/audit/checks/agent_boundary.py:check_30_decision_snapshot_no_verbatim`
+    能明確辨識「agent 路徑有沒有落地計量」，而不必用字串巧合去猜
+    `set_decision(...)` 的某次呼叫是不是 agent 那條路的。
+    """
+    set_decision({"agent": trace})
+
+
 def _compute_cost(ctx: UsageContext) -> None:
     """按 model_breakdown 逐模型計價；任一模型缺價 → 整筆成本留空不臆造（R2.4）。"""
     if not ctx.model_breakdown:

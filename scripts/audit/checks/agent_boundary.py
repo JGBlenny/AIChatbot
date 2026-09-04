@@ -331,15 +331,24 @@ def check_29_predicate_single_source(targets=None):
 
 # ───────────────────────── 30（design 21）decision_snapshot.agent* 無原文鍵 ─────────────────────────
 
+_DECISION_CALL_NAMES = frozenset({"set_decision", "set_agent_decision"})
+
+
 def _set_decision_dict_literals(tree):
-    """找 `set_decision(...)` 呼叫裡的字典字面量引數（含關鍵字 `snapshot=`
-    與位置引數），回傳每個字典字面量的鍵集合清單。"""
+    """找 `set_decision(...)`／`set_agent_decision(...)` 呼叫裡的字典字面量
+    引數（含關鍵字 `snapshot=` 與位置引數），回傳每個字典字面量的鍵集合清單。
+
+    ⚠️ **只認字面量**：這是靜態掃描，掃不到「先組成變數再傳進去」的呼叫——
+    這是刻意的邊界，不是漏洞（見 `runtime.py:_emit_agent_decision` 的呼叫點
+    docstring）：呼叫端若真的把 dict 拆成變數再傳，等於自己選擇跳出這條
+    不變量的可視範圍，責任在呼叫端，不是這條 checker 該用執行期手段去追。
+    """
     out = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             fname = node.func.id if isinstance(node.func, ast.Name) else (
                 node.func.attr if isinstance(node.func, ast.Attribute) else "")
-            if fname != "set_decision":
+            if fname not in _DECISION_CALL_NAMES:
                 continue
             dicts = [a for a in node.args if isinstance(a, ast.Dict)]
             dicts += [kw.value for kw in node.keywords if isinstance(kw.value, ast.Dict)]
@@ -359,11 +368,25 @@ def _flatten_dict_keys(d: ast.Dict):
     return keys
 
 
-def check_30_decision_snapshot_no_verbatim(paths=None):
-    """design 21：`set_decision(...)` 傳入的字典字面量鍵名不得為
-    `answer`／`quote`／`text`／`user_message`（原文外洩到 decision_snapshot）。"""
-    paths = paths or ["services/usage_metering.py"]
-    agent_dir = os.path.join(RAG, "services", "agent")
+def _agent_rel(rel: str) -> bool:
+    return rel.replace(os.sep, "/").startswith("services/agent/")
+
+
+def check_30_decision_snapshot_no_verbatim(paths=None, agent_root=None):
+    """design 21：`set_decision(...)`／`set_agent_decision(...)` 傳入的字典
+    字面量鍵名（遞迴掃巢狀字典）不得為 `answer`／`quote`／`text`／
+    `user_message`（原文外洩到 decision_snapshot）。
+
+    **r7 處置**：比照 `check_27`——`services/agent/**` 路徑下 0 個這類呼叫
+    ⇒ **大聲失敗**，⛔ 不再印「空集合通過」。理由同 27：這條不變量的價值
+    全靠「真的掃到 agent 路徑有落地計量」，2.5 接線後 `runtime.py` 一定會
+    有至少一個呼叫，掃到 0 個只可能是接線斷了或這條不變量自己失焦。
+
+    `agent_root` 只給自測用（覆寫 `services/agent/` 目錄的實際掃描位置，
+    讓自測能建構「agent 路徑真的 0 個呼叫」這個情境而不必動到真檔案）。
+    """
+    paths = list(paths) if paths is not None else ["services/usage_metering.py"]
+    agent_dir = agent_root if agent_root is not None else os.path.join(RAG, "services", "agent")
     if os.path.isdir(agent_dir):
         for root, _dirs, files in os.walk(agent_dir):
             for fn in files:
@@ -374,6 +397,7 @@ def check_30_decision_snapshot_no_verbatim(paths=None):
     bad = []
     notes = []
     checked = 0
+    agent_calls = 0
     for rel in paths:
         src = _read(os.path.join(RAG, rel))
         if src is None:
@@ -385,13 +409,27 @@ def check_30_decision_snapshot_no_verbatim(paths=None):
             continue
         calls = _set_decision_dict_literals(tree)
         checked += len(calls)
+        if _agent_rel(rel):
+            agent_calls += len(calls)
         for lineno, d in calls:
             hit = _flatten_dict_keys(d) & DECISION_BANNED_KEYS
             if hit:
-                bad.append(f"{rel} 第 {lineno} 行 set_decision(...) 字典含原文鍵 {sorted(hit)}")
+                bad.append(
+                    f"{rel} 第 {lineno} 行 set_decision/set_agent_decision(...) "
+                    f"字典含原文鍵 {sorted(hit)}"
+                )
     if bad:
         return False, "；".join(bad)
-    detail = f"{checked} 個 set_decision(...) 字典字面量已檢查，均無原文鍵" if checked else "0 個呼叫，通過（空集合）"
+    if agent_calls == 0:
+        detail = (
+            "services/agent/** 路徑下 0 個 set_decision/set_agent_decision 呼叫——"
+            "大聲失敗（agent runtime 應該要落 decision_snapshot.agent，見 tasks 2.5；"
+            "掃到 0 個代表 2.5 的計量接線斷了，不是「還沒有原文外洩」）"
+        )
+        if notes:
+            detail += "；" + "；".join(notes)
+        return False, detail
+    detail = f"{checked} 個字典字面量已檢查（其中 agent 路徑 {agent_calls} 個），均無原文鍵"
     if notes:
         detail += "；" + "；".join(notes)
     return True, detail
@@ -534,12 +572,20 @@ def _self_test_30():
     clean_src = "def f():\n    set_decision(snapshot={'presales': {'gate': 'B'}})\n"
     dirty_src = "def f():\n    set_decision(snapshot={'agent': {'answer': a}})\n"
     dirty_nested = "def f():\n    set_decision(snapshot={'agent': {'meta': {'quote': q}}})\n"
+    # agent 路徑的假呼叫（給「有呼叫、無原文鍵」與「set_agent_decision 別名」兩案用）。
+    agent_clean_src = (
+        "def f():\n"
+        "    usage_metering.set_agent_decision({'trace_id': t, 'final_kind': k})\n"
+    )
+    agent_zero_src = "def f():\n    return 1\n"  # agent 路徑存在但 0 個呼叫
 
     orig_read = _read
     fakes = {
         os.path.join(RAG, "services/_fake_um_clean.py"): clean_src,
         os.path.join(RAG, "services/_fake_um_dirty.py"): dirty_src,
         os.path.join(RAG, "services/_fake_um_nested.py"): dirty_nested,
+        os.path.join(RAG, "services/agent/_fake_agent_clean.py"): agent_clean_src,
+        os.path.join(RAG, "services/agent/_fake_agent_zero.py"): agent_zero_src,
     }
 
     def fake_read(path):
@@ -547,16 +593,27 @@ def _self_test_30():
 
     _read = fake_read
     try:
-        cases = [
-            ("正對照：現況 usage_metering.py + services/agent/** 通過",
-             check_30_decision_snapshot_no_verbatim()[0] is True),
-            ("假檔：無原文鍵 → 通過",
-             check_30_decision_snapshot_no_verbatim(paths=["services/_fake_um_clean.py"])[0] is True),
-            ("假檔：answer 鍵 → 必須紅",
-             check_30_decision_snapshot_no_verbatim(paths=["services/_fake_um_dirty.py"])[0] is False),
-            ("假檔：巢狀字典裡的 quote 鍵 → 必須紅",
-             check_30_decision_snapshot_no_verbatim(paths=["services/_fake_um_nested.py"])[0] is False),
-        ]
+        with tempfile.TemporaryDirectory() as empty_agent_dir:
+            cases = [
+                ("正對照：現況 usage_metering.py + services/agent/** 通過（真的掃到 agent 呼叫）",
+                 check_30_decision_snapshot_no_verbatim()[0] is True),
+                ("假檔：無原文鍵（非 agent 路徑，但真實 agent 路徑仍會被自動併入）→ 通過",
+                 check_30_decision_snapshot_no_verbatim(paths=["services/_fake_um_clean.py"])[0] is True),
+                ("假檔：answer 鍵 → 必須紅",
+                 check_30_decision_snapshot_no_verbatim(paths=["services/_fake_um_dirty.py"])[0] is False),
+                ("假檔：巢狀字典裡的 quote 鍵 → 必須紅",
+                 check_30_decision_snapshot_no_verbatim(paths=["services/_fake_um_nested.py"])[0] is False),
+                ("假檔：agent 路徑用 set_agent_decision 別名、無原文鍵 → 通過",
+                 check_30_decision_snapshot_no_verbatim(
+                     paths=["services/agent/_fake_agent_clean.py"],
+                     agent_root=empty_agent_dir,  # 蓋掉真實 agent 目錄，只看這一個假檔
+                 )[0] is True),
+                ("正對照：agent 路徑存在但 0 個 set_decision/set_agent_decision 呼叫 → 必須紅",
+                 check_30_decision_snapshot_no_verbatim(
+                     paths=["services/agent/_fake_agent_zero.py"],
+                     agent_root=empty_agent_dir,
+                 )[0] is False),
+            ]
     finally:
         _read = orig_read
     return cases
