@@ -23,6 +23,7 @@ from services.sop_orchestrator import SOPOrchestrator
 # 導入路由
 from routers import chat, unclear_questions, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, platform_sop, cache, videos, images, business_types, document_converter, target_user_config, forms, api_endpoints, lookup, loops, loop_knowledge, system_health, conversational_configs
 from routers import ocr_mapping  # documind-ocr-mapping：DocuMind OCR → JGB 欄位草稿（同步端點）
+from routers import agent as agent_router  # agentic-mcp-orchestration 1.8：/api/v1/agent/openapi.json・/health
 
 # 全局變數
 db_pool: Pool = None
@@ -352,6 +353,7 @@ app.include_router(loops.router, prefix="/api/v1/loops", tags=["loops"])  # Know
 app.include_router(loop_knowledge.router, prefix="/api/v1/loops", tags=["loop_knowledge"])  # Loop Knowledge Review API (知識審核 API)
 app.include_router(system_health.router, tags=["system_health"])  # Pipeline Health Dashboard (系統健康檢查)
 app.include_router(ocr_mapping.router, tags=["ocr-mapping"])  # documind-ocr-mapping（prefix 在 router 內）
+app.include_router(agent_router.router, tags=["agent"])  # agentic-mcp-orchestration 1.8（prefix 在 router 內）
 
 
 @app.get("/")

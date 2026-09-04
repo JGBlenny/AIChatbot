@@ -28,6 +28,8 @@ DEGRADATION_IMPACTS = {
     "Reranker": "重排序不可用，回答排序品質可能下降",
     "Vector Search": "向量檢索不可用，僅能使用關鍵字備選",
     "Keyword Search": "關鍵字備選不可用，僅能依賴向量檢索",
+    "Agent": "agentic-mcp-orchestration 工具面／DSP-011 前提偵測異常，"
+             "非核心對話流程（/api/v1/message）不受影響",
 }
 
 
@@ -60,6 +62,10 @@ class PipelineHealthService:
         self.redis_host = os.getenv("REDIS_HOST", "localhost")
         self.redis_port = int(os.getenv("REDIS_PORT", "6379"))
 
+        # Agent（agentic-mcp-orchestration 1.8）：延遲建，避免 import 期做 I/O
+        self._agent_kb_pool_instance = None
+        self._agent_registry_instance = None
+
         # OpenAI
         self.openai_api_key = os.getenv("OPENAI_API_KEY", "")
 
@@ -87,15 +93,18 @@ class PipelineHealthService:
             self._check_llm,
             self._check_vector_search,
             self._check_keyword_search,
+            self._check_agent,
         ]
 
         checker_names = [
             "PostgreSQL", "Redis", "Embedding API",
             "Reranker", "LLM API", "Vector Search", "Keyword Search",
+            "Agent",
         ]
         checker_is_core = [
             True, False, True,
             False, True, False, False,
+            False,
         ]
 
         tasks = [asyncio.wait_for(checker(), timeout=5.0) for checker in checkers]
@@ -753,4 +762,70 @@ class PipelineHealthService:
                 "error": str(e),
                 "is_core": False,
                 "degradation_impact": DEGRADATION_IMPACTS["Keyword Search"],
+            }
+
+    # ------------------------------------------------------------------
+    # Agent（agentic-mcp-orchestration 任務 1.8）
+    # ------------------------------------------------------------------
+    # ⚠️ 這裡建的 registry／kb_pool 與 `routers/agent.py`／`app.py` 為 `/mcp` 建的
+    # 各是獨立實例——三處都呼叫同一個 `mcp_facade.build_registry()` 純接線函式，
+    # ⛔ 不是各自手刻工具清單。`_check_agent` 呼叫的是與 `/api/v1/agent/health`
+    # 同一個 `compute_agent_health()`，⛔ 不複製判定邏輯。
+    def _get_agent_kb_pool(self):
+        if self._agent_kb_pool_instance is None:
+            from services.agent import mcp_facade as _mcp_facade
+
+            self._agent_kb_pool_instance = _mcp_facade.LazyPsycopg2Pool()
+        return self._agent_kb_pool_instance
+
+    def _get_agent_registry(self):
+        if self._agent_registry_instance is None:
+            from services.agent import mcp_facade as _mcp_facade
+
+            deps = _mcp_facade.FacadeDeps(
+                get_db_pool=lambda: None,
+                get_kb_pool=self._get_agent_kb_pool,
+                get_retriever=None,
+                stage=_mcp_facade.current_stage(),
+            )
+            self._agent_registry_instance = _mcp_facade.build_registry(deps)
+        return self._agent_registry_instance
+
+    async def _check_agent(self) -> Dict[str, Any]:
+        """Agent 健康檢查：薄接線呼叫 `services.agent.health.compute_agent_health`。
+
+        非核心——`/api/v1/agent/*` 與 `/mcp` 是 DSP-011 的非公開通道，
+        與 `/api/v1/message` 主對話流程互相獨立。
+        """
+        start = time.time()
+        try:
+            from services.agent import mcp_facade as _mcp_facade
+            from services.agent.health import compute_agent_health
+
+            result = await compute_agent_health(
+                registry=self._get_agent_registry(),
+                get_kb_pool=self._get_agent_kb_pool,
+                stage=_mcp_facade.current_stage(),
+            )
+            latency = (time.time() - start) * 1000
+            healthy = result.get("status") == "ok"
+            return {
+                "name": "Agent",
+                "status": "healthy" if healthy else "unhealthy",
+                "latency_ms": round(latency, 2),
+                "version": None,
+                "error": None if healthy else str(result.get("checks")),
+                "is_core": False,
+                "degradation_impact": DEGRADATION_IMPACTS["Agent"],
+            }
+        except Exception as e:
+            latency = (time.time() - start) * 1000
+            return {
+                "name": "Agent",
+                "status": "unhealthy",
+                "latency_ms": round(latency, 2),
+                "version": None,
+                "error": str(e),
+                "is_core": False,
+                "degradation_impact": DEGRADATION_IMPACTS["Agent"],
             }
