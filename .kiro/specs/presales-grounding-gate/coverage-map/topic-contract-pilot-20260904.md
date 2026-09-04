@@ -27,3 +27,16 @@ top-1 分布：3600 由 5 句升到 24 句；5375 7→6、5379 8→5、3358 大�
 - ③ 已刪 5375（含已推翻的「委託合約／社宅線上簽」舊文案）：`DELETE … WHERE id=5375 AND created_by='import_script'`，正對照 5376 仍在，`make audit` PASS。
 - ② 表示法宣告提案 `representation-3600-proposal.json`（202 字，provenance=reviewed_product_declaration），派 verifier 依 D3 審核中；核過再寫 DB、重量 46＋8 句。
 - ① 引擎（brain `ask` 且 `fact_class≠other` 且有知識 ⇒ 有據作答）排在 ② 結果之後。
+
+## ② 表示法宣告後（第三欄）與 D2 分歧實驗
+
+| 指標 | 基準 | 主題頁 | ＋表示法（embedding 也換宣告） |
+|---|---|---|---|
+| owner 命中 | 11% | 52% | 46% |
+| 答到題 | 30% | 46% | 39% |
+| rubric 命中 | 11% | 20% | 26% |
+| 邊界不硬答 | 88% | 88% | 75% |
+| 禁止詞 | 4 | 3 | 2 |
+
+宣告讓「邀請」子題 2/6→3/6（審閱期題 0.05→0.92 的 reranker 提升），但**範本子題 2/7→1/7**：「既存合約跟制式合約差在哪」「JGB 有哪些公版合約」等五句從有答變固定句，3600 只剩 0.19–0.35 甚至不在 top-3。判讀：embedding 改用 273 字宣告句後，短問句的向量相似度掉到候選池門檻（vector ≥ 0.3）之下，3600 沒進池，reranker 讀得到宣告也沒用。
+⇒ 做 D2「明示分歧」實驗（契約允許，需 reason＋validation）：3600 的 embedding 改回 `question_summary`，reranker 仍讀宣告；`generation_metadata.embedding_representation` 記 reason；驗證＝同 54 句第四次量測（第四欄，待補）。
