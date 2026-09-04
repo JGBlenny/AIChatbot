@@ -51,6 +51,10 @@
 - [ ] 1.9 M0 security review（1.1–1.8 後；`security-reviewer` 唯讀）：範圍＝隔離同源（謂詞四消費點）、身分 header fail-closed、注入面（工具回傳封閉欄位）、`/mcp` 兩道閘與額度落點；READY 為 M0 done 條件之一。
   - 需求：2.6, 11.3
   - 執行：security-reviewer／effort 高——唯讀；READY 是 M0 done 條件
+  - **進度（2026-09-04）**：security-reviewer REVISE（1 P1：tenant 缺 user_id 的 bills／contracts 洩整 role；5 P2；6 P3，正本 `reviews/m0-security-review.md`）→ 1.10 處置中；fresh verifier 對 M0 邊界 CONFIRMED（1.10 前，同檔）。1.10 收回後對 P1 做一次定向 recheck 再收 M0。
+- [ ] 1.10 處置 1.9 審查（security-executor，worktree）：P1 雙證強制（非 pm）＋文件；不變量 27 掃 `services/agent/**`＋0 spec 即紅；`registry.call` 剝身分鍵＋`additionalProperties` 預設 false；`verify_api_key` 偵測 TTL＋health 紅旗 `api_keys_agent_scope_ready`；文件 SDK 狀態同步。M1 備註：不變量 29 抽取繞法、候選列投影、blocked 事件列、`facade_only` 在 `/mcp` 語義、`help.read` audience。
+  - 需求：2.1, 2.2, 10.4, 11.3
+  - 執行：security-executor／effort 中——已診斷、修法明確
   - **M0 收案前置（2026-09-04 容器事故）**：本機 `:8100` image 不含 `services/agent/**`，1.1 後 retriever import `services.agent.identity` ⇒ 只 docker cp 單檔重啟會 `ModuleNotFoundError` 起不來（已以 cp 整個套件暫救、health 200）。M0 收案一律 **rebuild image**（⛔ 不靠 docker cp）；`scripts/audit/check_invariants.sh` 的容器一致性清單要加 `services/agent/**`、`services/jgb/transport.py`（現只抓 `jgb_system_api.py`，retriever 先前不一致也沒紅）。
 
 ## 2. M1 Runtime、Verifier、確認契約（1.3 後；2.1／2.3／2.4 可平行）
