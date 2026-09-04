@@ -406,6 +406,42 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ⚠️ 2026-09-04 曾因只搜 `rag-orchestrator/routers/` 而誤判「RBAC 權限系統查無 API 面」——
 正對照組當時取自同一目錄,只證明 grep 會動、不證明範圍對。
 
+## 部署與使用手冊 {#deploy-and-manuals}
+
+⚠️ 這 8 份於 2026-09-04 逐份判讀後列入。同批另有 9 份判為快照,見文末。
+
+### 部署(四份分工明確,⛔ 別挑錯本)
+
+- 路由 | `docs/deployment/README.md` | 這次部署該讀哪一本;⚠️ 版本歷史區段停在 2026-01-28,且宣稱歷史紀錄已遷至 `archive/deployment-logs/` 但實際在 `records/`
+- 產線 | `docs/deployment/DEPLOY_GUIDE.md` | **無遷移需求的日常小版更**怎麼部署;⚠️ 檔內第 3 行逐字:「2026-07-06 起,五域面向＋計量額度批次的部署一律走 `docs/deployment-runbook.md`……本文件僅適用『無遷移需求的日常小版更』」
+- 判準 | `docs/deployment/DEPLOY_CHECKLIST.md` | 每次部署都必須逐項確認什麼(自稱「不要跳過任何步驟」)
+
+⚠️ 主線 runbook 是 `docs/deployment-runbook.md`,已列於〈專案層級索引〉。
+
+### 使用手冊
+
+- 產線 | `docs/user-guides/MAINTENANCE_FORM_USER_GUIDE.md` | 租戶維修請求的表單機制怎麼操作(業者管理／客服／系統操作員);🔴 **檔內 2026-07-12 現況註記逐字**:「b2c 租客報修已改走對話式修繕面向(conversational-repair,commit 646743a)……逐欄位表單機制**仍保留但不再是租客報修的主路徑**」;表單 schema `jgb_repair_create` 仍是欄位契約
+- 產線 | `docs/user-guides/VENDOR_SOP_USER_GUIDE.md` | Platform 與 Vendor 兩種角色各自怎麼配置 SOP 流程
+- 產線 | `docs/user-guides/knowledge_completion_loop.md` | 知識完善迴圈的標準使用手冊(概念＋操作＋最佳實踐＋FAQ)
+- 產線 | `docs/user-guides/knowledge_loop_workflow.md` | 同一迴圈的流程深度版:完整流程圖、逐步邏輯與實例
+- 產線 | `docs/user-guides/quick_start.md` | 同一迴圈的 5 分鐘入門版
+
+⚠️ 上三份是**同主題的入門／標準／深度三層**,同日(2026-05-18)更新,**無任何一份明說取代關係**。
+
+⚠️ **同批已判快照、⛔ 不在此列**:`docs/maintenance/audit_2026-06-26.md`(全 repo 文件健全度稽核)、
+`docs/deployment/records/20260729_{deploy,steps}.md`(某次部署的紀錄與逐步手冊)、
+`docs/changelog/2026-02-10-remove-none-auto-trigger-modes.md`、
+`docs/frontend/{batch_review,loop_management}_requirements.md`(檔頭「版本 1.0／建立時間 2026-03-27／對應任務 Task 9.2、9.3」,是**已交付的需求快照**——其引用的 `.kiro/specs/backtest-knowledge-refinement/` 已不存在,但子系統仍活)、
+以及 `docs/archive/2026-06/` 三份(見下)。
+
+🔴 **`docs/archive/2026-06/` 三份的翻案紀錄**:`FORM_FILLING_INTEGRATION_PLAN.md`、
+`FORM_FILLING_CODE_CHANGES.md`、`KNOWLEDGE_ACTION_IMPLEMENTATION_EXAMPLE.md` 先前判 `unsure`
+(代理判 index、主 session 因「說不出排除理由」覆寫)。2026-09-04 找到決定性證據翻為快照:
+`docs/maintenance/audit_2026-06-26.md` §B「封存(多餘/歷史)→ `docs/archive/2026-06/`」逐字列出
+「form-filling(5):FORM_FILLING **規劃/草案**(保留 DIALOG_DESIGN)」與
+「knowledge-action(3):KNOWLEDGE_ACTION **實作筆記**(保留 SYSTEM_DESIGN、QUICK_REFERENCE)」。
+⚠️ 這是 `unsure` 的正確用法:當時查無證據就掛著,證據出現才翻案,⛔ 不是硬選一個。
+
 ## 架構、回測、測試 {#arch-backtest-testing}
 
 ⚠️ 這 12 份於 2026-09-04 逐份判讀後列入,其中 3 份為時點紀錄——沿用〈jgb2 盤查結論〉
