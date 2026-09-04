@@ -1,0 +1,143 @@
+"""2.2 agent 入口分流（design 元件 8；R1.4／R9.1／R9.3／R9.4）。"""
+from __future__ import annotations
+
+import asyncio
+import json
+from types import SimpleNamespace
+
+import pytest
+
+from routers import agent_entry as ae
+from services.agent.runtime import TurnResult, TurnTrace
+
+
+def _req(**kw):
+    base = dict(vendor_id=1, target_user="prospect", mode="b2c", role_id=None, user_id="u1",
+                session_id="backtest_session_ae", message="可以線上簽約嗎", stream=False)
+    base.update(kw)
+    return SimpleNamespace(**base)
+
+
+class FakeStore:
+    def __init__(self, state=None):
+        self.state = state
+        self.saved = []
+        self.started = []
+
+    async def load(self, session_id):
+        return self.state
+
+    async def start(self, session_id, user_id, vendor_id, role_id, config_key):
+        self.started.append(config_key)
+        self.state = {"config_key": config_key, "collected_fields": {}}
+        return self.state
+
+    async def save(self, session_id, state):
+        self.saved.append(json.loads(json.dumps(state)))
+
+
+class FakeRuntime:
+    def __init__(self, answer="好的", handoff=None, delay=0.0, fixed=False):
+        self.answer, self.handoff, self.delay, self.fixed = answer, handoff, delay, fixed
+        self.calls = 0
+
+    async def run_turn(self, identity, message, state):
+        self.calls += 1
+        if self.delay:
+            await asyncio.sleep(self.delay)
+        agent = state.setdefault("agent", {})
+        agent["fixed_streak"] = agent.get("fixed_streak", 0) + 1 if self.fixed else 0
+        return TurnResult(kind="handoff" if self.handoff else "answer", answer=self.answer,
+                          handoff=self.handoff, quick_replies=[], trace=TurnTrace(trace_id="t-1"))
+
+
+def _app(runtime, engine=None):
+    state = SimpleNamespace(agent_runtime=runtime, conversational_engine=engine, db_pool=None)
+    return SimpleNamespace(state=state)
+
+
+@pytest.mark.unit
+def test_not_in_agent_audiences_returns_none(monkeypatch):
+    monkeypatch.setenv("AGENT_AUDIENCES", "tenant")
+    store = FakeStore()
+    out = asyncio.run(ae.handle_agent_entry(_req(), SimpleNamespace(app=_app(FakeRuntime())),
+                                            None, store=store))
+    assert out is None and store.started == []      # 正對照見下一測試
+
+
+@pytest.mark.unit
+def test_prospect_in_agent_audiences_runs_turn_and_persists(monkeypatch):
+    monkeypatch.setenv("AGENT_AUDIENCES", "prospect")
+    store, rt = FakeStore(), FakeRuntime(answer="可以，租約管理支援線上簽章。")
+    out = asyncio.run(ae.handle_agent_entry(_req(), SimpleNamespace(app=_app(rt)), None, store=store))
+    assert rt.calls == 1 and store.started == ["agent:prospect"]
+    assert out["answer"].startswith("可以") and out["handoff"] is None
+    assert store.saved and store.saved[-1]["agent"]["fixed_streak"] == 0
+
+
+@pytest.mark.unit
+def test_runtime_missing_returns_none(monkeypatch):
+    monkeypatch.setenv("AGENT_AUDIENCES", "prospect")
+    app = _app(None)
+    out = asyncio.run(ae.handle_agent_entry(_req(), SimpleNamespace(app=app), None, store=FakeStore()))
+    assert out is None
+
+
+@pytest.mark.unit
+def test_fixed_streak_three_marks_fallback_and_next_turn_routes_old_chain(monkeypatch):
+    monkeypatch.setenv("AGENT_AUDIENCES", "prospect")
+    store = FakeStore(state={"config_key": "agent:prospect", "agent": {"fixed_streak": 2}})
+    rt = FakeRuntime(answer="這題我幫您轉專人", handoff={"reason": "no_grounding"}, fixed=True)
+    out = asyncio.run(ae.handle_agent_entry(_req(), SimpleNamespace(app=_app(rt)), None, store=store))
+    assert out["handoff"] == {"reason": "no_grounding"}
+    assert store.saved[-1]["agent"]["fallback_old_chain"] is True
+    # 下一回合：已標回退 ⇒ None（走舊鏈），runtime 不再被呼叫
+    out2 = asyncio.run(ae.handle_agent_entry(_req(), SimpleNamespace(app=_app(rt)), None, store=store))
+    assert out2 is None and rt.calls == 1
+
+
+@pytest.mark.unit
+def test_stream_event_sequence_and_keepalive(monkeypatch):
+    monkeypatch.setenv("AGENT_AUDIENCES", "prospect")
+    monkeypatch.setattr(ae, "KEEPALIVE_INTERVAL_S", 0.01)
+    store = FakeStore()
+    rt = FakeRuntime(answer="整段答案", handoff={"reason": "partial_grounding"}, delay=0.05)
+
+    async def sse(kind, data):
+        return f"event: {kind}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+    async def collect():
+        resp = await ae.handle_agent_entry(_req(stream=True), SimpleNamespace(app=_app(rt)), None,
+                                           store=store, sse_event=sse)
+        chunks = []
+        async for c in resp.body_iterator:
+            chunks.append(c)
+        return chunks
+
+    chunks = asyncio.run(collect())
+    events = [c.split("\n", 1)[0] for c in chunks if c.startswith("event:")]
+    assert events == ["event: start", "event: intent", "event: answer_chunk", "event: metadata", "event: done"]
+    assert any(c.startswith(": keepalive") for c in chunks)          # 心跳是註解行，不是事件
+    meta = json.loads([c for c in chunks if c.startswith("event: metadata")][0].split("data: ", 1)[1])
+    assert meta["handoff"] == {"reason": "partial_grounding"} and meta["trace_id"] == "t-1"
+    assert store.saved                                                  # 串流結束才存
+
+
+@pytest.mark.unit
+def test_build_identity_is_trusted_input_and_audience_derived():
+    ident = ae.build_identity(_req(target_user="property_manager", mode="b2b", role_id="20151"))
+    assert ident.audience == "property_manager" and ident.role_id == "20151"
+    ident2 = ae.build_identity(_req(target_user="prospect", role_id="99"))
+    assert ident2.audience == "prospect"                                 # prospect ⛔ 不看 role_id
+
+
+@pytest.mark.unit
+def test_schedule_shadow_noop_without_runner_and_swallows_errors():
+    app = SimpleNamespace(state=SimpleNamespace())
+    ae.schedule_shadow(app, _req(), None, "old")                         # 無 runner ⇒ 不炸
+
+    class Boom:
+        def enabled(self, identity):
+            raise RuntimeError("x")
+    app2 = SimpleNamespace(state=SimpleNamespace(shadow_runner=Boom()))
+    ae.schedule_shadow(app2, _req(), None, "old")                        # 例外被吞
