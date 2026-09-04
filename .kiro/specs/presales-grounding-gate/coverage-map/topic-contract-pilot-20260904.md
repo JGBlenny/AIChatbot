@@ -22,3 +22,8 @@ top-1 分布：3600 由 5 句升到 24 句；5375 7→6、5379 8→5、3358 大�
 
 ## 結論
 主題頁對「撈得到誰」有效（owner 11→52%），對「答不答」只推到一半，因為卡在兩件不是知識的事：陳述句形事實題被反問（引擎路徑）、摘要承載不了子題（表示法）。別名 5375 含已推翻內容，應刪。
+
+## 依序處理紀錄（業主 2026-09-04）
+- ③ 已刪 5375（含已推翻的「委託合約／社宅線上簽」舊文案）：`DELETE … WHERE id=5375 AND created_by='import_script'`，正對照 5376 仍在，`make audit` PASS。
+- ② 表示法宣告提案 `representation-3600-proposal.json`（202 字，provenance=reviewed_product_declaration），派 verifier 依 D3 審核中；核過再寫 DB、重量 46＋8 句。
+- ① 引擎（brain `ask` 且 `fact_class≠other` 且有知識 ⇒ 有據作答）排在 ② 結果之後。
