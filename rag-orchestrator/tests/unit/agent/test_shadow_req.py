@@ -431,3 +431,18 @@ def test_schedule_without_running_loop_does_not_raise(caplog):
     with caplog.at_level("WARNING"):
         runner.schedule(_identity(), "問題", {}, "舊答案")
     assert any("無事件迴圈" in r.message for r in caplog.records)
+
+
+@pytest.mark.unit
+def test_trace_with_tool_calls_serializes_without_args_hash():
+    """M1 verifier REFUTED 回歸：ToolCallRecord 已無 args_hash，序列化不得再讀它；
+    帶一筆工具呼叫的 trace 必須能落成 dict 且鍵集合封閉。"""
+    from services.agent.runtime import ToolCallRecord
+    from services.agent import shadow as sh
+    tr = _trace()
+    tr.tool_calls = [ToolCallRecord(id="c1", name="kb.get", args_summary={"k": 1},
+                                    ms=12, status="ok", n_items=1)]
+    d = sh._trace_to_dict(tr)
+    assert d["tool_calls"][0]["name"] == "kb.get"
+    assert set(d["tool_calls"][0].keys()) == {"name", "args_summary", "ms", "status", "n_items"}
+    assert "args_hash" not in d["tool_calls"][0]

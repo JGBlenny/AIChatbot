@@ -114,6 +114,9 @@ async def pool():
         await p.execute(
             "DELETE FROM agent_confirmation_tokens WHERE session_id LIKE $1",
             _ROW_PREFIX + "%" + _SESSION_PREFIX + "%")
+        await p.execute(   # 2.9 命名空間化之前留下的裸鍵孤兒列也一併清（M1 verifier 抓到 1 筆）
+            "DELETE FROM agent_confirmation_tokens WHERE session_id LIKE $1",
+            _SESSION_PREFIX + "%")
         await p.close()
         _reset_agent_scope_detection()
 

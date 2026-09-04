@@ -135,8 +135,7 @@ def _trace_to_dict(trace: TurnTrace) -> dict:
         "tool_calls": [
             {
                 "name": tc.name,
-                "args_hash": tc.args_hash,
-                "args_summary": tc.args_summary,
+                "args_summary": tc.args_summary,   # 2.6 刪 args_hash（低熵可反解）；M1 verifier 抓到此處仍讀 ⇒ 有工具呼叫即整輪靜默丟棄
                 "ms": tc.ms,
                 "status": tc.status,
                 "n_items": tc.n_items,
