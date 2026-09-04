@@ -61,3 +61,7 @@ top-1 分布：3600 由 5 句升到 24 句；5375 7→6、5379 8→5、3358 大�
 | 邊界 | 88% | 88% | 88% | 62% |
 
 **R2.13 幾乎沒觸發**：本輪容器 log 只有 1 次 `kind=ask_fact`；閘門分布是 inline 36 次（feature 26／other 10）、ask_sentence 1、ask_clause 1。反問的 15 句是 brain 回純 `ask`（無 inline）且 `fact_class=other`——brain 把「舊約要輸入系統」這種陳述句判成非事實題，R2.13 的前提（fact_class≠other）不成立。⇒ 槓桿在 brain 分類（規則 3645 的【fact_class】段），不在引擎。邊界 62% 是兩題被 3600 有據作答（「合約生效後只能重簽嗎」頁面確有此內容）＋一題反問，屬尺的邊界定義與頁面內容重疊，非硬答。
+
+### 第六欄（＋規則 3645「句形不是判準」）
+owner 48%／答到 41%／rubric 24%／邊界 75%／禁止詞 1；entry 分布 {'ask_back': 14, 'answered': 18, 'fixed': 13, 'answered_handoff': 1}。
+判讀：規則補句與 R2.13 合計只把答到率從 35% 推回 41%、rubric 24%，與第四欄（41%／22%）在同一雜訊帶；反問仍占約三分之一。**現行「程式閘門＋brain 分類」架構在這個主題上到頂**：知識到了（owner 48%）但路徑接不上，且每加一條規則只換到幾個百分點。這是業主 2026-09-04 決定主線改為 agent 自選工具架構（spec agentic-mcp-orchestration，分支 feat/agentic-mcp）的量化依據。
