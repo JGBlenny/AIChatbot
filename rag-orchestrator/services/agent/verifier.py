@@ -71,6 +71,24 @@ def _meaningful_chars(text: str) -> set[str]:
     return {ch for ch in _nfkc(text) if ch not in _STOPWORD_CHARS}
 
 
+def _rule_id(index: int) -> str:
+    """`VerifierVerdict.term_id` 的**唯一**形式：`rule#<規則集內索引>`。
+
+    2.6 前置 security review P2：原本這裡填的是**字面詞／regex 本身**
+    （`pattern.pattern`／`term`），而 verdict 會被 `_emit_agent_decision` 落進
+    `usage_events.decision_snapshot.agent`、也會由 2.7 的 trace 端點印出來
+    ⇒ 等於把「我們在擋什麼」逐字外洩（敏感樣式、禁詞表、否定詞表）。
+
+    改存索引後，`(reason, term_id)` 兩者合起來才定位得到規則——`reason` 決定
+    查哪一張表（`SENSITIVE_TOPIC`→`sensitive_patterns`、`FORBIDDEN_TERM`→
+    `forbid_terms`、`POLARITY_MISMATCH`→`negation_terms`），`term_id` 是該表內
+    的 0-based 索引；再配上同一份 trace 裡的 `rules_sha` 才對得回具體規則集
+    版本。⛔ 索引**不跨表全域編號**：那需要固定表的串接順序，規則集加一張表
+    就會讓歷史 trace 的編號整批漂掉。
+    """
+    return f"rule#{index}"
+
+
 def _is_legal_fact_class(value: Optional[str]) -> bool:
     return isinstance(value, str) and value in {fc.value for fc in FactClass}
 
@@ -95,9 +113,10 @@ class OutputVerifier:
         if fact_class in SENSITIVE:
             return VerifierVerdict(ok=False, reason="SENSITIVE_TOPIC")
         answer_nfkc = _nfkc(out.answer)
-        for pattern in self._sensitive_patterns:
+        for i, pattern in enumerate(self._sensitive_patterns):
             if pattern.search(answer_nfkc):
-                return VerifierVerdict(ok=False, reason="SENSITIVE_TOPIC", term_id=pattern.pattern)
+                return VerifierVerdict(
+                    ok=False, reason="SENSITIVE_TOPIC", term_id=_rule_id(i))
 
         # ② 白名單句型：schema 覆蓋檢查
         sents = _split_sentences(out.answer)
@@ -131,9 +150,10 @@ class OutputVerifier:
             return route_verdict
 
         # ⑥ 禁詞
-        for term in self.rules.forbid_terms:
+        for i, term in enumerate(self.rules.forbid_terms):
             if term in answer_nfkc:
-                return VerifierVerdict(ok=False, reason="FORBIDDEN_TERM", term_id=term)
+                return VerifierVerdict(
+                    ok=False, reason="FORBIDDEN_TERM", term_id=_rule_id(i))
 
         # ⑦ handoff 詞後置掃描
         if scan_handoff_mentions(out.answer) and not handoff:
@@ -202,11 +222,12 @@ class OutputVerifier:
             return VerifierVerdict(ok=False, reason="QUOTE_NOT_COVERING", sent=sent, quote_len=len(quote_nfkc))
 
         sentence_nfkc = _nfkc(sentence_text)
-        for term in self.rules.negation_terms:
+        for i, term in enumerate(self.rules.negation_terms):
             in_sentence = term in sentence_nfkc
             in_quote = term in quote_nfkc
             if in_sentence != in_quote:
-                return VerifierVerdict(ok=False, reason="POLARITY_MISMATCH", sent=sent, term_id=term)
+                return VerifierVerdict(
+                    ok=False, reason="POLARITY_MISMATCH", sent=sent, term_id=_rule_id(i))
 
         if not matched.citable:
             return VerifierVerdict(ok=False, reason="SOURCE_NOT_CITABLE", sent=sent)

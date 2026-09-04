@@ -367,6 +367,8 @@ _mcp_deps = _mcp_facade.FacadeDeps(
     get_kb_pool=lambda: _mcp_kb_pool,
     get_retriever=_get_mcp_retriever,
     stage=_mcp_facade.current_stage(),
+    get_app=lambda: app,                                                       # 2.6 agent.turn
+    get_outline_resolver=lambda: getattr(app.state, "outline_resolver", None),  # 3.2／kb.get("outline:*")
 )
 _mcp_registry = _mcp_facade.build_registry(_mcp_deps)
 app.state.tool_registry = _mcp_registry

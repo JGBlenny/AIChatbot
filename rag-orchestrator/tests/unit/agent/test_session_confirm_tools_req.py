@@ -303,6 +303,12 @@ async def test_slots_get_tolerates_json_string_and_missing_session():
 # ════════════════════════════════════════════════════════════════════
 
 
+#: 合法 JSON 但**不是物件**（純量）——`confirm_request` 必須拒。
+JSON_SCALAR = json.dumps("just a string")
+#: 超過 `CONFIRM_PAYLOAD_MAX_CHARS`（8000）的字串。
+OVERSIZED_PAYLOAD = "x" * 8001
+
+
 def _confirm_pool():
     pool = AsyncMock()
     pool.execute = AsyncMock(return_value="INSERT 0 1")
@@ -317,7 +323,8 @@ async def test_confirm_request_returns_three_machine_values_reusing_engine_const
 
     pool = _confirm_pool()
     result = await confirm_request(
-        _identity(), {"summary": "要送出修繕單嗎？", "payload": {"a": 1}}, db_pool=pool
+        _identity(), {"summary": "要送出修繕單嗎？", "payload": json.dumps({"a": 1})},
+        db_pool=pool,
     )
     assert result.ok is True
     assert result.data["quick_replies"] == ["confirm_submit", "confirm_edit", "confirm_cancel"]
@@ -329,7 +336,7 @@ async def test_confirm_request_never_returns_the_token():
     pool = _confirm_pool()
     payload = {"repair_id": 12, "note": "水管漏水"}
     result = await confirm_request(
-        _identity(), {"summary": "確認送出", "payload": payload}, db_pool=pool
+        _identity(), {"summary": "確認送出", "payload": json.dumps(payload)}, db_pool=pool
     )
 
     insert_args = pool.execute.await_args.args
@@ -350,25 +357,62 @@ async def test_confirm_request_never_returns_the_token():
 
 @pytest.mark.req(_REQ)
 async def test_confirm_request_rejects_malformed_input():
+    """2.6 處置⑧：`payload` 已改成 **JSON 字串**（strict function calling 不吃
+    開放 object）——非字串、非法 JSON、以及「合法 JSON 但不是物件」三型都要拒。"""
     pool = _confirm_pool()
     for args in (
-        {"summary": "", "payload": {}},
-        {"summary": "   ", "payload": {}},
-        {"summary": "ok", "payload": "not-a-dict"},
-        {"summary": 1, "payload": {}},
+        {"summary": "", "payload": "{}"},
+        {"summary": "   ", "payload": "{}"},
+        {"summary": 1, "payload": "{}"},
+        {"summary": "ok", "payload": {"a": 1}},           # 舊形狀：dict ⇒ 不再收
+        {"summary": "ok", "payload": "not-json"},         # 非法 JSON
+        {"summary": "ok", "payload": "[1, 2]"},           # 合法 JSON 但不是物件
+        {"summary": "ok", "payload": JSON_SCALAR},        # 同上（純量）
+        {"summary": "ok", "payload": OVERSIZED_PAYLOAD},  # 超過 CONFIRM_PAYLOAD_MAX_CHARS
     ):
         result = await confirm_request(_identity(), args, db_pool=pool)
-        assert result.ok is False and result.error == "INVALID_INPUT"
+        assert result.ok is False and result.error == "INVALID_INPUT", args
     # 正對照組：形狀正確就會過
-    ok = await confirm_request(_identity(), {"summary": "ok", "payload": {}}, db_pool=pool)
+    ok = await confirm_request(_identity(), {"summary": "ok", "payload": "{}"}, db_pool=pool)
     assert ok.ok is True
+
+
+@pytest.mark.req(_REQ)
+def test_confirm_spec_payload_is_a_json_string_not_an_object():
+    """2.6 處置⑧ 的形狀斷言：schema 上 `payload` 必須是 string。
+
+    ⛔ 不得改回 `{"type": "object"}`——那是 2.4 收案註記裡明寫「與 strict
+    function calling 相衝、2.6 接線時處理」的那一條。
+    """
+    from services.agent.tools.confirm import CONFIRM_PAYLOAD_MAX_CHARS, CONFIRM_SPEC
+
+    props = CONFIRM_SPEC["input_schema"]["properties"]
+    assert props["payload"]["type"] == "string"
+    assert props["payload"]["maxLength"] == CONFIRM_PAYLOAD_MAX_CHARS
+    assert set(props) == {"summary", "payload"}
+
+
+@pytest.mark.req(_REQ)
+async def test_confirm_request_digest_matches_redeem_side_object_digest():
+    """字串進、dict 出：存進 DB 的雜湊必須等於**兌現端對 dict 算的雜湊**。
+
+    兌現端（`redeem_token`）收到的是動作工具的 `payload` **物件**；若這裡改成
+    對原始字串取雜湊，鍵順序或空白差一點就永遠兌現不了。
+    """
+    pool = _confirm_pool()
+    payload = {"b": 2, "a": 1}
+    # 故意用「鍵順序相反、帶空白」的序列化字串
+    await confirm_request(
+        _identity(), {"summary": "s", "payload": json.dumps(payload, indent=1)}, db_pool=pool
+    )
+    assert pool.execute.await_args.args[3] == payload_digest(payload)
 
 
 @pytest.mark.req(_REQ)
 async def test_confirm_request_requires_session_id():
     pool = _confirm_pool()
     result = await confirm_request(
-        _identity(session_id=""), {"summary": "ok", "payload": {}}, db_pool=pool
+        _identity(session_id=""), {"summary": "ok", "payload": "{}"}, db_pool=pool
     )
     assert result.ok is False and result.error == "INVALID_INPUT"
     pool.execute.assert_not_awaited()

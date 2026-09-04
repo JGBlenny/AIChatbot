@@ -71,17 +71,32 @@ CONFIRM_TEXT_FOR_MODEL: Final[str] = (
     "已建立確認請求，請等待使用者從送出／修改／取消三個選項擇一，⛔ 不要自行假設他已同意。"
 )
 
+#: `payload` JSON 字串的長度上限（本任務的實作決定，⛔ 不在 design）：
+#: 這個字串會被 `json.loads` 後算 sha256 並存進 `agent_confirmation_tokens`，
+#: 沒有上限就等於讓模型（乃至外部 MCP client）用一句話塞任意大小的字串進解析器。
+#: 8000 對「一張修繕單的完整參數」綽綽有餘；不夠時是動作設計有問題，不是這裡該放寬。
+CONFIRM_PAYLOAD_MAX_CHARS: Final[int] = 8000
+
 CONFIRM_SPEC: ToolSpec = {
     "name": "confirm.request",
     "description": (
         "在執行任何會改變資料的動作之前，先向使用者出示摘要並請他確認。"
-        "summary 是給人看的摘要；payload 是待執行動作的完整參數。"
+        "summary 是給人看的摘要；payload 是待執行動作的完整參數，"
+        "以 JSON 物件序列化成的字串傳入。"
     ),
     "input_schema": {
         "type": "object",
         "properties": {
             "summary": {"type": "string", "maxLength": 2000},
-            "payload": {"type": "object"},
+            # ⚠️ **JSON 字串，不是 object**（2.6 前置 security review P2／處置⑧）：
+            #    OpenAI strict function calling 要求每一層 object 都得把
+            #    `properties` 與 `required` 列全，而 `payload` 的形狀依動作而異、
+            #    本來就是開放集合 ⇒ 只有兩條路，封閉子 schema（要為每個動作各列
+            #    一份、且 registry 端無法表達 oneOf）或 JSON 字串。選字串：
+            #    形狀檢查改由**動作工具自己**在兌現時做（它才知道自己要什麼），
+            #    這一層只負責「原封不動地把使用者看到的那份參數綁進 token」。
+            #    ⛔ 不要改回 `{"type": "object"}`——那會讓整包工具清單過不了 strict。
+            "payload": {"type": "string", "maxLength": CONFIRM_PAYLOAD_MAX_CHARS},
         },
         "required": ["summary", "payload"],
         "additionalProperties": False,
@@ -163,7 +178,9 @@ async def confirm_request(
     """`confirm.request` 入口。
 
     Args:
-        args: `{"summary": str, "payload": dict}`。
+        args: `{"summary": str, "payload": str}`——`payload` 是 **JSON 物件序列化
+            後的字串**（見 `CONFIRM_SPEC` 的註解：strict function calling 不吃
+            開放 object）。本函式 `json.loads` 後必須是 dict，否則 `INVALID_INPUT`。
         db_pool: asyncpg pool（寫 `agent_confirmation_tokens`）。
         ttl_s: token 存活秒數，預設 600（10 分鐘）。
 
@@ -172,9 +189,19 @@ async def confirm_request(
         ⛔ `data`／`text_for_model`／`provenance` 一律不含 token。
     """
     summary = args.get("summary")
-    payload = args.get("payload")
+    raw_payload = args.get("payload")
     if not isinstance(summary, str) or not summary.strip():
         return ToolResult(ok=False, error="INVALID_INPUT")
+    if not isinstance(raw_payload, str) or len(raw_payload) > CONFIRM_PAYLOAD_MAX_CHARS:
+        return ToolResult(ok=False, error="INVALID_INPUT")
+    try:
+        payload = json.loads(raw_payload)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return ToolResult(ok=False, error="INVALID_INPUT")
+    # 解析後一律**回到 dict 這個唯一的正規形式**再算 canonical/digest——
+    # 兌現端（`redeem_token`）拿到的是動作工具的 `payload` 物件，兩邊都對
+    # `canonical_json(dict)` 取雜湊才對得上；⛔ 不可改成對原始字串取雜湊
+    # （鍵順序／空白不同就兌現不了）。
     if not isinstance(payload, dict):
         return ToolResult(ok=False, error="INVALID_INPUT")
 

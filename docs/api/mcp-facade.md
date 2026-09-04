@@ -18,6 +18,7 @@
 | 服務層閘（X-API-Key／Origin／X-JGB-Identity） | **已上線可用**，且已有整合測試 |
 | 額度計量（一次工具呼叫一列 `usage_events`） | **已實作並實測** |
 | MCP 工具面（`tools/list`／`tools/call`） | **SDK 已為正式相依**（DSP-014 裁 A）——`requirements.txt` 已升 web stack 承載 `mcp==2.1.1` |
+| 整回合工具 `agent.turn`（§7.1） | **已實作**（任務 2.6）；預設 **關閉**，要 `AGENT_TURN_ENABLED=true` ＋ `AGENT_STAGE=M1` 才註冊。僅 prospect |
 
 > **DSP-014（2026-09-04 裁 A）**：原本的 `fastapi==0.104.1` × `mcp==2.1.1` 相依
 > 衝突（fastapi 要 `anyio<4.0.0`、mcp 要 `anyio>=4.9`）已藉由升級 web stack 解除：
@@ -109,8 +110,11 @@ X-JGB-Identity: {"vendor_id":1,"session_id":"jgb2-web-8f3c…","mode":"b2c",
 ### 4.1 `session_id` 由呼叫端產生，且**跨回合穩定**
 
 - 同一段對話的每一次呼叫**必須帶同一個 `session_id`**——服務端以它為鍵存
-  對話歷史與 slots（`form_sessions.collected_data`，與 REST 路徑同源）。
+  對話歷史與 slots（`form_sessions.collected_data`，與 REST 路徑同一張表）。
   換 `session_id` ＝ 換一段新對話，先前的上下文不會被看到。
+- ⚠️ `/mcp` 的實際鍵是 **`mcp:{api_key_id}:{vendor_id}:{session_id}`**（命名空間，
+  見 §7.1）：同一個 `session_id` 換 key／換 vendor 就是另一段對話，與 REST 路徑
+  也不互通。整把鍵受 `VARCHAR(100)` 限制 ⇒ `session_id` 請留在 80 字以內。
 - ⛔ **不要**把 `session_id` 拿來當免額度的開關：`/mcp` 的內部判定只看 key（§3）。
 - 速率限制的桶是 `(api_key_id, vendor_id)`，**不含 `session_id`**——換 session
   不會重置計數，這是刻意的。
@@ -193,14 +197,121 @@ M0 階段：
 | `help.read` | ✅ | ✅ | ✅ |
 | `jgb2.query.{bills,contracts,accounts,meters,estates}` | — | ✅ | ✅ |
 
+M1 階段另加一支**整回合**工具（見 §7.1）：
+
+| 工具 | prospect | property_manager | tenant |
+|---|---|---|---|
+| `agent.turn` | ✅（且需 `AGENT_TURN_ENABLED=true`） | — | — |
+
 工具錯誤以 MCP `ToolError` 拋出，**訊息只含業務代碼**（⛔ 無 SQL、無例外文字、
 無身分、無原文）：`NO_MATCH`／`TOOL_TIMEOUT`／`INVALID_INPUT`／`RATE_LIMITED`／
 `CONFIRMATION_REQUIRED`，加上門面層的 `API_KEY_REQUIRED`／`ORIGIN_NOT_ALLOWED`／
 `VENDOR_UNKNOWN`／`VENDOR_NOT_IN_KEY_SCOPE`／`IDENTITY_*`／`QUOTA_EXCEEDED`／
-`METERING_UNAVAILABLE`。
+`METERING_UNAVAILABLE`／`AGENT_UNAVAILABLE`（僅 `agent.turn`，見 §7.1）。
 
 > ⚠️ 「查不到」與「沒權限」對呼叫端**一律是 `NO_MATCH`**——這是刻意的，
 > 避免 `/mcp` 變成一支「這筆資料存不存在」的探測 API。
+
+## 7.1 `agent.turn`：一次呼叫跑完一整個回合（M1）
+
+> spec `agentic-mcp-orchestration` 任務 2.6｜design 元件 4「`agent.turn` 工具」段、
+> 決策 15、R3.7
+
+其餘工具是**零件**（查一筆知識、查一張帳單），`agent.turn` 是**成品**：你丟一句
+使用者說的話，服務端跑完「模型選工具 → 取事實 → 產出 → Output Verifier 逐句驗
+引用 → 過不了就固定句＋轉人」整條鏈，回你一段可以直接顯示的答覆。
+
+**M1 只開 prospect（售前）身分。** 租客／業者的對話能力在子 spec
+（`agent-tenant-audience`），此處 `stage` 缺鍵＝**永不可見**，⛔ 不是「還沒開」。
+
+### 輸入
+
+```jsonc
+// tools/call → name: "agent.turn"
+{ "message": "我有 600 戶，你們的合約怎麼建立？" }   // 1–2000 字，必填
+```
+
+**只有 `message` 這一個參數**。⛔ 沒有 `dialog_ref`、⛔ 不能帶對話歷史、
+⛔ 不能帶任何身分鍵（`vendor_id`／`role_id`／`user_id`／`target_user`／`mode`
+一律在服務端被剝掉並記進 trace）。身分與 session 全部來自 `X-JGB-Identity`。
+
+### 輸出
+
+```jsonc
+{
+  "answer": "…",              // 要顯示給使用者的那段話（已經過 Verifier）
+  "kind": "answer",           // answer | ask | recommend | handoff
+  "handoff": null,            // 轉人時是 {reason, fact_class, channel, message}
+  "quick_replies": [],        // 機器值清單，直接當按鈕用
+  "trace_id": "…"             // 對得回 usage_events.decision_snapshot.agent（任務 2.7）
+}
+```
+
+⛔ **不回 `citations`**：引用是 Verifier 的內部證據，回給你只會外洩「哪一列知識的
+哪一段字」。⛔ **不回被拒的草稿**：Verifier 拒兩次時 `answer` 是固定句，模型那兩
+份被拒的文字只留在服務端的重寫上下文裡，一個字都不外流。
+
+### 對話怎麼接起來（session 契約）
+
+- `session_id` **由你產生**，同一段對話跨回合用同一個（放在 `X-JGB-Identity`）。
+- 對話歷史與 slots **由服務端保存**，⛔ 你不需要、也不能回傳歷史。
+- 服務端存放位置是 `form_sessions.collected_data`，鍵是
+  **`mcp:{api_key_id}:{vendor_id}:{session_id}`**（命名空間）。這代表：
+  - 換一把 key、或換一個 `vendor_id`，即使 `session_id` 一模一樣，**讀到的是另
+    一段對話**，也改不到原本那一列。這是刻意的隔離，⛔ 不是 bug；
+  - `/api/v1/message`（REST）走裸 `session_id`，與 `/mcp` **天然分池**——同一個
+    `session_id` 在兩條入口是兩段對話，⛔ 不要指望互通；
+  - 整把鍵受 `form_sessions.session_id` 的 `VARCHAR(100)` 限制 ⇒ 你的
+    `session_id` 太長時會拿到 `INVALID_INPUT`。實務上留 80 字以內即可。
+
+### 一次性回傳，⛔ 沒有逐字串流
+
+MCP 工具結果是一次回完的，**首字＝整段完成**（決策 15 明列的代價）。要逐字串流
+請走 REST 的 `POST /api/v1/message` + SSE。
+
+### 逾時
+
+`AGENT_TURN_TIMEOUT_S`（預設 **30 秒**）——刻意大於回合預算 `Budget.deadline_s`
+（20 秒），⛔ 不是門面對其他工具那個 3 秒。逾時或呼叫被取消 ⇒ 回 `TOOL_TIMEOUT`，
+而且**這一回合的狀態不會被存下來**（⛔ 不落半寫），你可以直接重試。
+
+### 每小時上限
+
+`AGENT_TURN_CAP`（預設 **120 次／小時**），計數 key 是 **`(api_key_id, vendor_id)`**
+——⛔ 換 `session_id` 不會重置。超過回 `RATE_LIMITED`。
+⚠️ 這個計數器是**行程內記憶體**，多 worker 部署時實際上限是
+`AGENT_TURN_CAP × worker 數`（與既有的 `RATE_PER_MIN`／`KB_GET_CAP` 同一個限制）。
+真正的花費控制在額度層（`usage_events`），這裡只是護欄。
+
+### 回切開關 `AGENT_TURN_ENABLED`
+
+**預設 `false`**。關閉 ⇒ 這支工具**根本不註冊**，`tools/list` 看不到它、呼叫它
+回 `NO_MATCH`——⛔ 不是「註冊了但拒絕」。要回切就把 env 改回 false 再重啟，
+其餘工具面不受影響（5.1 回切演練含這一格）。
+⚠️ `AGENT_AUDIENCES` **管不到它**：那支 env 只管 REST 入口
+（`routers/agent_entry.py`）要不要把哪些身分導進 agent 鏈。
+
+### ⚠️ 給外部 MCP client 的一句話：`facade_only` 對你是**單層**設計
+
+`agent.turn` 標了 `facade_only=True`，意思是「**服務端內部那個模型**看不到它」
+（模型工具清單與影子視圖都不含），因此模型不可能自己呼叫 `agent.turn` 造成遞迴。
+
+但**你**——連上 `/mcp` 的那個 MCP client——本身就是一個模型（或由模型驅動）。
+對你而言這一層不存在：你看得到、也叫得動 `agent.turn`。這是**設計意圖**，不是
+漏洞，代價要講清楚：
+
+- 你每呼叫一次 `agent.turn`，服務端就跑一整個回合（多次 LLM 呼叫），
+  **每一次都計額**（一次呼叫恰一列 `usage_events`，token 彙總在該列）；
+- 所以 ⛔ 不要在你自己的工具迴圈裡把 `agent.turn` 當成「便宜的知識查詢」。
+  要查知識就用 `kb.get`／`kb.search`／`help.read`；`agent.turn` 是要**整段客服
+  回覆**時才用的。
+
+### 服務未接妥時
+
+`AGENT_UNAVAILABLE`：服務端的 agent runtime 還沒建起來（或建立失敗）。
+這是伺服器狀態，⛔ 不是你的請求有問題；重試前先看 `GET /api/v1/agent/health`
+的 `checks.rules_sha`——它是這個行程實際帶著的那把 Verifier 規則尺的 sha256，
+`"pending"` 代表 runtime 尚未接上。
 
 ## 8. 前提偵測（DSP-011 破了要重開）
 
@@ -222,5 +333,9 @@ DSP-011 成立的前提是「`/mcp` 只有上游／內部呼叫者」。以下�
 | `rag-orchestrator/services/agent/mcp_facade.py` | 門面本體（三道閘、額度落點、工具接線、MCP server 建構） |
 | `rag-orchestrator/services/api_key_auth.py` | `require_api_key_unconditional`／`verify_api_key` |
 | `rag-orchestrator/database/migrations/20260904_api_keys_agent_scope.sql` | `api_keys.is_internal`／`vendor_ids` |
+| `rag-orchestrator/services/agent/state_store.py` | `agent.turn` 的狀態命名空間鍵（`NamespacedStateStore`） |
+| `rag-orchestrator/services/agent/runtime.py` | `AgentRuntime.run_turn`——`agent.turn` 與 REST 共用的**同一條**回合邏輯 |
 | `rag-orchestrator/tests/integration/agent/test_mcp_facade_req.py` | 兩道閘與額度落點的整合驗收（不變量 31 的覆蓋來源） |
+| `rag-orchestrator/tests/integration/agent/test_agent_turn_req.py` | `agent.turn` 的整合驗收（跨業者隔離、兩回合、Verifier 拒兩次、計量） |
+| `rag-orchestrator/tests/unit/agent/test_agent_turn_req.py` | `agent.turn` 的 unit 驗收（可見性、命名空間、逾時、上限） |
 | `.kiro/specs/agentic-mcp-orchestration/design.md` | 元件 4（本文件的規格母本）、附錄 B 不變量 27–31 |

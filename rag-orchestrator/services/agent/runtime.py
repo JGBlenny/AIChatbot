@@ -104,9 +104,13 @@ class AssemblerProtocol(Protocol):
 
 @dataclass
 class ToolCallRecord:
+    """⛔ **無 `args_hash`**（2.6 前置 security review P2）：低熵參數（`kb_id`、
+    `face` enum、短 `keyword`）的 sha256 可字典反解，等於把原值以另一種形式
+    落進 `decision_snapshot`。只留 `args_summary` 的形狀摘要。
+    """
+
     id: str
     name: str
-    args_hash: str
     args_summary: dict
     ms: int
     status: Literal["ok", "error", "timeout", "rejected"]
@@ -147,6 +151,19 @@ SSEEvent = dict
 _IDENTITY_ARG_KEYS = frozenset(
     {"vendor_id", "role_id", "user_id", "target_user", "mode", "viewer_user_id"}
 )
+
+
+#: `state["agent"]["handoff_cache"]` 每 session 的筆數上限（2.6 前置 security
+#: review P3）。快取跟著 `form_sessions.collected_data` 一起序列化，無上限等於讓
+#: 呼叫端用不同訊息把單一 jsonb 列無限撐大。超過即以 **FIFO** 擠掉最早插入的一筆
+#: （dict 保序；⛔ 不是 LRU——重問命中時不重排，那會讓熱門題永遠擠不掉冷門題）。
+HANDOFF_CACHE_MAX = 50
+
+
+def _trim_handoff_cache(cache: dict, limit: int = HANDOFF_CACHE_MAX) -> None:
+    """把 `cache` 修到 `limit` 筆以內，先進先出。"""
+    while len(cache) > limit:
+        cache.pop(next(iter(cache)))
 
 
 def _cache_key(user_message: str) -> str:
@@ -247,7 +264,6 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
             "tool_calls": [
                 {
                     "name": tc.name,
-                    "args_hash": tc.args_hash,
                     "args_summary": tc.args_summary,
                     "ms": tc.ms,
                     "status": tc.status,
@@ -428,6 +444,7 @@ class AgentRuntime:
                     "quick_replies": list(result.quick_replies),
                     "trace_id": result.trace.trace_id,
                 }
+                _trim_handoff_cache(cache)
             agent_state["fixed_streak"] = (
                 agent_state.get("fixed_streak", 0) + 1 if is_fixed else 0
             )
@@ -447,8 +464,21 @@ class AgentRuntime:
                 response_format=_agent_output_response_format(),
             )
             usage = getattr(response, "usage", None)
-            prompt_tokens += getattr(usage, "prompt_tokens", 0) or 0
-            completion_tokens += getattr(usage, "completion_tokens", 0) or 0
+            turn_pt = int(getattr(usage, "prompt_tokens", 0) or 0)
+            turn_ct = int(getattr(usage, "completion_tokens", 0) or 0)
+            prompt_tokens += turn_pt
+            completion_tokens += turn_ct
+            # 2.6 前置 security review P2：Runtime 直呼 `chat.completions.create`
+            # 繞過 `services/llm_provider.py` 的統一出口 ⇒ token／費用不進事件層，
+            # 而 `/mcp` 的內部 key 又免額度 ⇒ 這條路徑等於沒有量。這裡按
+            # `usage_metering.add_llm_usage(model, usage_dict)` 的簽名把每一次
+            # 模型呼叫灌回**當前請求的計量 context**（`/mcp` 由
+            # `mcp_facade._invoke` 的 `begin()` 建、REST 由 middleware 建）；
+            # 非計量路徑（ctx 為 None）它自己靜默略過，⛔ 這裡不另外判斷。
+            usage_metering.add_llm_usage(
+                self._model,
+                {"prompt_tokens": turn_pt, "completion_tokens": turn_ct},
+            )
             message = response.choices[0].message
             tool_calls = list(getattr(message, "tool_calls", None) or [])
 
@@ -516,11 +546,6 @@ class AgentRuntime:
                         ToolCallRecord(
                             id=tc.id,
                             name=name,
-                            args_hash=hashlib.sha256(
-                                json.dumps(raw_args, sort_keys=True, ensure_ascii=False).encode(
-                                    "utf-8"
-                                )
-                            ).hexdigest(),
                             args_summary=_args_summary(raw_args),
                             ms=ms,
                             status=_tool_result_status(tool_result),

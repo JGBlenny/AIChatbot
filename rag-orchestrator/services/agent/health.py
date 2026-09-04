@@ -9,8 +9,13 @@
    必然不存在的數字 `kb_id` 直呼（**不經 `registry.call()`**，避免混進速率限制／
    計量——這是健康探針，不是一次真實工具呼叫）。`ToolResult(error="NO_MATCH")`
    即代表 DB／可見性謂詞這條路線可達；探針本身丟例外（連線失敗等）才算紅。
-2. **大綱 version／sha**（3.2 未落地）與 **rules_sha**（2.3 未落地）：固定回
-   `"pending"`，⛔ 不算紅——這是「尚未建置」不是「建置後壞了」。
+2. **大綱 version／sha**（3.2 未接線）固定回 `"pending"`；**`rules_sha`**（任務 2.6）
+   改讀 `app.state.agent_runtime.rules_sha`（由 `bootstrap.build_runtime` 在啟動
+   時掛上，值＝`VerifierRules.load()` 對規則檔位元組算的 sha256）——**呼叫端要用
+   `get_runtime` 把那個物件的 getter 交進來**；沒交、或 runtime 還沒建起來 ⇒ 回
+   `"pending"`。兩者皆 ⛔ 不算紅：「尚未建置」不是「建置後壞了」。
+   ⚠️ `rules_sha` 是**觀測值**——要判「這台機器帶的是哪一版尺」得拿它跟預期的
+   sha 比對，那是部署驗收的事（5.1 回切演練），⛔ 不在本函式裡硬編一個期望值。
 3. **DSP-011 前提偵測四項**（`mcp_facade.premise_stats()`；design 元件 4）：
    第一項（任務 2.8 修正語義）改判 `mcp_calls_flagged_by_api_key`——`/mcp`
    出現**未登錄**（`verify_api_key` 查無）或**已登錄但非 `is_internal`** 的
@@ -94,6 +99,22 @@ async def _check_agent_scope_ready(get_api_key_pool) -> tuple:
                    "⛔ 不把「不知道」當成 ready")
 
 
+def _rules_sha(get_runtime: Optional[Callable[[], Any]]) -> str:
+    """`app.state.agent_runtime.rules_sha`；取不到一律 `"pending"`（任務 2.6）。
+
+    ⛔ 不在這裡 fallback 去 `VerifierRules.load(DEFAULT_RULES_PATH)` 自己算一次——
+    健檢要回報的是「**這個行程實際帶著的那把尺**是哪一版」，重讀檔案只會得到
+    「磁碟上現在是哪一版」，兩者不同時（改了檔沒重啟）健檢會給出綠色的假象。
+    """
+    if get_runtime is None:
+        return "pending"
+    try:
+        runtime = get_runtime()
+    except Exception:  # noqa: BLE001 — 健檢不因取值失敗而崩
+        return "pending"
+    return str(getattr(runtime, "rules_sha", "") or "") or "pending"
+
+
 def _premise_flags(stats: dict) -> list:
     """DSP-011 前提偵測四項：前三項任一非零，或第四項為真 ⇒ 列名。
 
@@ -119,6 +140,7 @@ async def compute_agent_health(
     get_kb_pool: Optional[Callable[[], Any]],
     stage: Stage,
     get_api_key_pool: Optional[Callable[[], Any]] = None,
+    get_runtime: Optional[Callable[[], Any]] = None,
 ) -> dict:
     """`/api/v1/agent/health` 與 `system_health` 的 `Agent` 子項共用的核心邏輯。
 
@@ -128,6 +150,10 @@ async def compute_agent_health(
         stage: 部署里程碑（`mcp_facade.current_stage()`）。
         get_api_key_pool: `api_keys` 欄位偵測用的 **asyncpg** pool getter
             （可為 `None`；沒給就只讀行程級偵測快取，見模組 docstring 第 5 點）。
+        get_runtime: `AgentRuntime` 的 getter，正產線傳
+            `lambda: getattr(request.app.state, "agent_runtime", None)`；
+            用來讀 `rules_sha`。`None`／getter 回 `None`／物件沒有該屬性
+            ⇒ `rules_sha` 回 `"pending"`（⛔ 不致紅）。
 
     Returns:
         `{"status": "ok" | "red", "checks": {...}}`。
@@ -144,6 +170,8 @@ async def compute_agent_health(
 
     scope_ready, scope_detail = await _check_agent_scope_ready(get_api_key_pool)
 
+    rules_sha = _rules_sha(get_runtime)
+
     red = spec_count == 0 or not kb_reachable or bool(flags) or not scope_ready
 
     return {
@@ -155,7 +183,7 @@ async def compute_agent_health(
                 "detail": kb_detail,
             },
             "outline_version": "pending",
-            "rules_sha": "pending",
+            "rules_sha": rules_sha,
             "premise": {
                 "mcp_calls_by_api_key": stats.get("mcp_calls_by_api_key", {}),
                 "mcp_calls_flagged_by_api_key": stats.get(

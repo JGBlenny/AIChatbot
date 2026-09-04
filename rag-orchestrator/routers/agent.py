@@ -243,4 +243,5 @@ async def agent_health(request: Request):
         # `api_keys` 欄位偵測要 asyncpg pool——`deps.get_db_pool` 就是
         # `app.state.db_pool`（1.10 P2 的 `api_keys_agent_scope_ready` 一項）。
         get_api_key_pool=deps.get_db_pool,
+        get_runtime=lambda: getattr(request.app.state, "agent_runtime", None),
     )

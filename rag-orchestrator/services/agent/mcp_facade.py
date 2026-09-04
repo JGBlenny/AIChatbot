@@ -1,7 +1,22 @@
 """MCP 門面（spec agentic-mcp-orchestration・任務 1.7）。
 
 契約基準：`.kiro/specs/agentic-mcp-orchestration/design.md` **元件 4**、附錄 B
-不變量 27／28／31、附錄 C2／C3 相關列。⛔ `agent.turn` 是任務 2.6，本檔不做。
+不變量 27／28／31、附錄 C2／C3 相關列。
+
+## `agent.turn`（任務 2.6，本檔下半段）
+一支**門面專屬**（`facade_only=True`）的整回合工具：呼叫端給一句 `message`，
+門面以 `X-JGB-Identity` 解析出的 `Identity` 呼叫同一個
+`AgentRuntime.run_turn`（Verifier／固定句／預算／計量全同，⛔ 不另寫第二條
+回合邏輯），一次性回 `{answer, kind, handoff, quick_replies, trace_id}`。
+四個必讀約束（前置 security review 處置，見
+`.kiro/specs/agentic-mcp-orchestration/reviews/m1-security-review-2.6-2.7.md`）：
+- **狀態命名空間**：回合狀態一律以 `mcp:{api_key_id}:{vendor_id}:{session_id}`
+  為 `form_sessions` 鍵（`services/agent/state_store.py`），⛔ 不得裸 `session_id`；
+- **schema 只收 `message`**（⛔ 無 `dialog_ref`）；
+- **獨立逾時** `AGENT_TURN_TIMEOUT_S`（預設 30 > `Budget.deadline_s`），逾時／
+  取消 ⇒ 不 save；
+- **每小時上限** `AGENT_TURN_CAP`（預設 120，key `(api_key_id, vendor_id)`）。
+註冊本身受 `AGENT_TURN_ENABLED`（預設 false）管，⛔ 不受 `AGENT_AUDIENCES` 左右。
 
 ## 這一層在守什麼（DSP-011）
 授權（誰能看到誰的個資）由 jgb2 `external/v1` 全權處理，本系統 ⛔ 不建授權層。
@@ -84,14 +99,19 @@
 """
 from __future__ import annotations
 
+import asyncio
 import inspect
 import json
 import logging
 import os
+import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Optional
 
+from pydantic import BaseModel
+
 from services.agent.identity import Identity, Stage
+from services.agent.state_store import NamespacedStateStore
 from services.agent.tools.registry import (
     Provenance,
     ToolResult,
@@ -149,6 +169,11 @@ ERR_VENDOR_OUT_OF_KEY_SCOPE = "VENDOR_NOT_IN_KEY_SCOPE"
 # 429／503（額度與計量）
 ERR_QUOTA = "QUOTA_EXCEEDED"
 ERR_METERING = "METERING_UNAVAILABLE"
+
+#: `agent.turn` 專屬：`app.state.agent_runtime`／`app.state.conversational_engine`
+#: 任一缺席（2.2 尚未接線、或啟動時 `bootstrap.build_runtime` 失敗）⇒ 回這個碼。
+#: ⛔ 不退化成「就地建一個 runtime」——那會繞過 `build_runtime` 的 Verifier 自證。
+ERR_AGENT_UNAVAILABLE = "AGENT_UNAVAILABLE"
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -389,11 +414,24 @@ class FacadeDeps:
       `kb.get`——`build_visibility_predicate` 回傳 `%s` 佔位符，⛔ 不可餵 asyncpg
       （任務 1.4 收案註記）。
     - `get_retriever`：`VendorKnowledgeRetrieverV2` 實例，給 `kb.search`。
+    - `get_outline_resolver`：回 `tools/kb.py:OutlineResolver`（`(identity, "outline:x")
+      -> ToolResult`）或 `None`，給 `kb.get("outline:*")`。`None` ⇒ `kb.get` 對
+      `outline:*` 一律 `NO_MATCH`（fail-closed，⛔ 不退化成查 KB 整數 id）。
+      正產線由 `app.py` 以 `services.agent.outline.make_outline_resolver(cache)`
+      建好放 `app.state.outline_resolver`，這個 getter 讀它。
+    - `get_app`：回 FastAPI/Starlette 的 app 物件（`agent.turn` 用）。門面靠它讀
+      `app.state.agent_runtime`（2.2 建的 `AgentRuntime`）、
+      `app.state.conversational_engine`（狀態存取用的引擎）、
+      `app.state.agent_outline`（行程級大綱物件）。⛔ 門面**不自建** runtime——
+      `bootstrap.build_runtime` 的 Verifier 自證只跑在啟動路徑上，就地新建一個
+      等於帶著一把沒驗過的尺上線。缺 ⇒ `ToolError("AGENT_UNAVAILABLE")`。
     """
 
     get_db_pool: Callable[[], Any]
     get_kb_pool: Optional[Callable[[], Any]] = None
     get_retriever: Optional[Callable[[], Any]] = None
+    get_outline_resolver: Optional[Callable[[], Any]] = None
+    get_app: Optional[Callable[[], Any]] = None
     stage: Stage = _DEFAULT_STAGE
     tool_timeout_s: float = _DEFAULT_TOOL_TIMEOUT_S
 
@@ -402,6 +440,92 @@ def current_stage() -> Stage:
     """部署里程碑（env `AGENT_STAGE`，預設 M0）。"""
     raw = (os.getenv("AGENT_STAGE") or "").strip().upper()
     return raw if raw in ("M0", "M1", "M2", "M3", "M4", "M5") else _DEFAULT_STAGE
+
+
+# ════════════════════════════════════════════════════════════════════
+# `agent.turn` 的三個 env 旋鈕（任務 2.6：回切開關／逾時／每小時上限）
+# ════════════════════════════════════════════════════════════════════
+#: `agent.turn` 的工具名（一處定義，⛔ 別在字面量之間漂）。
+AGENT_TURN_NAME = "agent.turn"
+
+_AGENT_TURN_ENABLED_ENV = "AGENT_TURN_ENABLED"
+_AGENT_TURN_TIMEOUT_ENV = "AGENT_TURN_TIMEOUT_S"
+_AGENT_TURN_CAP_ENV = "AGENT_TURN_CAP"
+
+#: 預設 **30 秒 > `Budget.deadline_s`（20）**（2.6 前置 security review P2）：
+#: 門面對一般唯讀工具的 3 秒逾時是給「一次 DB／API 查詢」用的，整回合會跑
+#: 多次模型呼叫，3 秒必然砍在半路。⛔ 不要把兩者合成同一個值。
+_DEFAULT_AGENT_TURN_TIMEOUT_S = 30.0
+
+#: `registry.call()` 外層 `wait_for` 相對於內層回合逾時的寬限（秒）。
+#: 內層（`_agent_turn` 自己的 `wait_for`）先炸 ⇒ 保證「逾時不 save」；
+#: 外層只是**卡死的 save 也有出口**的保險，⛔ 不該是先觸發的那一個。
+_AGENT_TURN_OUTER_MARGIN_S = 5.0
+
+#: 每小時每 `(api_key_id, vendor_id)` 的 `agent.turn` 次數上限（比照 `KB_GET_CAP`）。
+_DEFAULT_AGENT_TURN_CAP = 120
+_AGENT_TURN_WINDOW_S = 3600.0
+
+#: 滑動視窗：`(api_key_id, vendor_id) -> [呼叫時戳]`。
+#: ⚠️ **行程內記憶體**——多 worker 部署時每個 worker 各有一份，實際上限是
+#: `cap × worker 數`。這與 `ToolRegistry` 既有的 `RATE_PER_MIN`／`KB_GET_CAP`
+#: 同一個限制，⛔ 不在 2.6 另建共享計數器（那是額度層 `usage_metering` 的事）。
+#: ⚠️ 這段滑動視窗與 `tools/registry.py:_check_and_record_rate` 是**兩份實作**：
+#: registry.py 不在 2.6 的可改檔案清單內，而 `agent.turn` 的上限依 brief 歸門面。
+#: 之後若要合併，合併點是 registry 的 `_prune`／`_check_and_record_*`。
+_agent_turn_calls: dict = {}
+
+
+def agent_turn_enabled() -> bool:
+    """`AGENT_TURN_ENABLED`（**預設 false**）——關閉 ⇒ `build_registry` 不註冊，
+    `/mcp` 的 `tools/list` 就看不到它。與 `AGENT_AUDIENCES` 同性質的回切開關，
+    但兩者**互不管轄**：`AGENT_AUDIENCES` 只管 REST 入口（`routers/agent_entry.py`），
+    ⛔ 不左右 `agent.turn`（design 1.4.6）。
+    """
+    return (os.getenv(_AGENT_TURN_ENABLED_ENV) or "").strip().lower() in _ENFORCE_TRUTHY
+
+
+def agent_turn_timeout_s() -> float:
+    """`AGENT_TURN_TIMEOUT_S`（預設 30，> `Budget.deadline_s`）；非法值回預設。"""
+    raw = (os.getenv(_AGENT_TURN_TIMEOUT_ENV) or "").strip()
+    if not raw:
+        return _DEFAULT_AGENT_TURN_TIMEOUT_S
+    try:
+        value = float(raw)
+    except ValueError:
+        return _DEFAULT_AGENT_TURN_TIMEOUT_S
+    return value if value > 0 else _DEFAULT_AGENT_TURN_TIMEOUT_S
+
+
+def agent_turn_cap() -> int:
+    """`AGENT_TURN_CAP`（預設 120／小時／`(api_key_id, vendor_id)`）；非法值回預設。"""
+    raw = (os.getenv(_AGENT_TURN_CAP_ENV) or "").strip()
+    if not raw:
+        return _DEFAULT_AGENT_TURN_CAP
+    try:
+        value = int(raw)
+    except ValueError:
+        return _DEFAULT_AGENT_TURN_CAP
+    return value if value >= 0 else _DEFAULT_AGENT_TURN_CAP
+
+
+def check_and_record_agent_turn(key: tuple, now: Optional[float] = None) -> bool:
+    """滑動視窗記一次 `agent.turn`；已達上限 ⇒ `False`（且**不記**這一次）。"""
+    now = time.monotonic() if now is None else now
+    cap = agent_turn_cap()
+    calls = _agent_turn_calls.setdefault(key, [])
+    cutoff = now - _AGENT_TURN_WINDOW_S
+    while calls and calls[0] <= cutoff:
+        calls.pop(0)
+    if len(calls) >= cap:
+        return False
+    calls.append(now)
+    return True
+
+
+def reset_agent_turn_cap() -> None:
+    """測試用：清掉行程內的滑動視窗（⛔ 產品路徑不呼叫）。"""
+    _agent_turn_calls.clear()
 
 
 class LazyPsycopg2Pool:
@@ -480,6 +604,148 @@ def _jgb2_spec(domain: str, faces: list) -> ToolSpec:
     }
 
 
+# ════════════════════════════════════════════════════════════════════
+# `agent.turn`：整回合工具（任務 2.6｜design 元件 4「agent.turn 工具」段、決策 15、R3.7）
+# ════════════════════════════════════════════════════════════════════
+class AgentTurnOutput(BaseModel):
+    """`agent.turn` 的回傳形狀（R3.7 明列的五個鍵）。
+
+    ⛔ **不含 `citations`**：引用是 Verifier 的內部證據，對呼叫端沒有用途，
+    卻會把「我們從哪一列知識取的哪一段字」外送。
+    ⛔ **不含被拒文字**：Verifier 拒兩次時 `answer` 是固定句，被拒的草稿只留在
+    Runtime 的 `messages`（模型自己的重寫上下文），⛔ 不進 `TurnResult`、
+    自然也不會流到這裡（見 `runtime.py` 的 VERIFIER_REJECT 分支註解）。
+    """
+
+    answer: str
+    kind: str
+    handoff: Optional[dict] = None
+    quick_replies: list = []
+    trace_id: str
+
+
+AGENT_TURN_SPEC: ToolSpec = {
+    "name": AGENT_TURN_NAME,
+    "description": (
+        "把一句使用者訊息交給客服 agent 跑完一整個回合，回傳最終答覆。"
+        "對話歷史由服務端依 session 保存，呼叫端只要每回合帶同一個 session_id。"
+    ),
+    "input_schema": {
+        "type": "object",
+        # ⛔ **只有 `message`**（2.6 前置 security review P2／處置②）：
+        #    原 design 的 `dialog_ref` 查無任何實作、也沒有語義，留著只會變成
+        #    「呼叫端可以指定要接哪一段歷史」的洞。歷史一律由服務端依
+        #    `X-JGB-Identity.session_id` 取（見 `NamespacedStateStore`）。
+        "properties": {"message": {"type": "string", "minLength": 1, "maxLength": 2000}},
+        "required": ["message"],
+        "additionalProperties": False,
+    },
+    "output_model": AgentTurnOutput,
+    # 回合本身不改任何外部系統（寫入要另外走 confirm token）⇒ read。
+    "scope": "read",
+    # ⛔ 但它**會寫 session 狀態**（`form_sessions.collected_data`）⇒ 影子
+    #    （`readonly_view=True`）一律不可見，否則影子回合會污染正式對話。
+    "mutates_session": True,
+    # 門面專屬：⛔ 不進模型工具清單（`for_model=True` 不可見 ⇒ 模型捏造這個名字
+    # 只會拿到 NO_MATCH，沒有自呼遞迴）、⛔ 不進影子視圖。
+    "facade_only": True,
+    # 本 spec 的對話對象只有 prospect（範圍聲明）；tenant／pm **缺鍵＝永不可見**。
+    "stage": {"prospect": "M1"},
+}
+
+
+def _app_state(deps: FacadeDeps, name: str) -> Any:
+    """讀 `app.state.<name>`；沒有 `get_app`／沒有該屬性一律 `None`（fail-closed）。"""
+    if deps.get_app is None:
+        return None
+    app = deps.get_app()
+    state = getattr(app, "state", None)
+    return getattr(state, name, None) if state is not None else None
+
+
+def _open_state_store(deps: FacadeDeps, identity: Identity) -> NamespacedStateStore:
+    """建 `NamespacedStateStore` 並**當場驗一次鍵**（超長／缺 id ⇒ `ValueError`）。
+
+    `_invoke` 的 preflight 與 `_agent_turn` 各呼叫一次：前者是為了把失敗轉成
+    正確的錯誤碼（registry 內拋例外一律被吞成 `NO_MATCH`），後者才是真的用它。
+    兩次都是純運算、無 I/O，⛔ 不值得為此在 `ToolFn` 簽名上開洞傳物件。
+    """
+    engine = _app_state(deps, "conversational_engine")
+    store = NamespacedStateStore(engine, identity.api_key_id, identity.vendor_id)
+    store.key(identity.session_id)  # 形狀／長度先驗
+    return store
+
+
+def _make_agent_turn(deps: FacadeDeps) -> Callable:
+    """`agent.turn` 的 `ToolFn`：載入命名空間狀態 → `run_turn` → 存回。
+
+    ⛔ **不另寫第二條回合邏輯**（R3.7）：Verifier、固定句、預算、計量全都在
+    `AgentRuntime.run_turn` 裡，這裡只負責狀態的載入與存回。
+    """
+
+    async def _agent_turn(identity: Identity, args: dict) -> ToolResult:
+        message = args.get("message")
+        if not isinstance(message, str) or not message.strip():
+            return ToolResult(ok=False, error="INVALID_INPUT")
+
+        runtime = _app_state(deps, "agent_runtime")
+        if runtime is None:
+            # `_invoke` 的 preflight 已經擋過（回 AGENT_UNAVAILABLE）；走到這裡
+            # 代表有人繞過門面直接呼 `registry.call()` ⇒ 用封閉錯誤值域裡的
+            # `NO_MATCH`，⛔ 不在對模型可見的值域上多開一個碼。
+            return ToolResult(ok=False, error="NO_MATCH")
+        try:
+            store = _open_state_store(deps, identity)
+        except ValueError:
+            return ToolResult(ok=False, error="INVALID_INPUT")
+
+        session_id = identity.session_id
+        state = await store.load(session_id)
+        if state is None:
+            state = await store.start(
+                session_id,
+                identity.user_id or "anonymous",
+                identity.vendor_id,
+                identity.role_id,
+            )
+
+        agent_state = state.setdefault("agent", {})
+        # 大綱是**行程級共用物件**（`app.state.agent_outline`）。Runtime 從
+        # `state["agent"]["outline"]` 取，故這裡進場前塞、存檔前 pop——
+        # ⛔ 不得讓它被序列化進 `form_sessions.collected_data`（每個 session 存一份
+        # 幾千字的大綱，而且會就此凍結在舊版本）。與 `routers/agent_entry.py`
+        # 的 REST 路徑同一個處置。
+        outline = _app_state(deps, "agent_outline")
+        if outline is not None:
+            agent_state["outline"] = outline
+        try:
+            # 逾時**只包住 run_turn**（2.6 前置 security review P2／處置③）：
+            # 逾時或被取消 ⇒ 直接跳出，`store.save` ⛔ 不執行，落不了半寫狀態。
+            result = await asyncio.wait_for(
+                runtime.run_turn(identity, message, state),
+                timeout=agent_turn_timeout_s(),
+            )
+        except asyncio.TimeoutError:
+            return ToolResult(ok=False, error="TOOL_TIMEOUT")
+        agent_state.pop("outline", None)
+        await store.save(session_id, state)
+
+        return ToolResult(
+            ok=True,
+            data=AgentTurnOutput(
+                answer=result.answer,
+                kind=result.kind,
+                handoff=result.handoff,
+                quick_replies=list(result.quick_replies or []),
+                trace_id=result.trace.trace_id,
+            ).model_dump(),
+            provenance=[],
+            text_for_model="",
+        )
+
+    return _agent_turn
+
+
 def _as_tool_result(raw: Any) -> ToolResult:
     """把任務 1.5／1.6 的「未包裝 dict」轉成 `ToolResult`（⛔ 不改那些檔案）。"""
     if isinstance(raw, ToolResult):
@@ -514,7 +780,11 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
 
     async def _kb_get(identity: Identity, args: dict) -> ToolResult:
         pool = deps.get_kb_pool() if deps.get_kb_pool else None
-        return await kb_get(identity, args, db_pool=pool)
+        # ⚠️ resolver 在**每次呼叫**才取（⛔ 不在 build_registry 當下取一次）：
+        #    `build_registry` 跑在 import／啟動早期，而 `app.state.outline_resolver`
+        #    要到 lifespan 之後才有；取太早會永遠拿到 None。
+        resolver = deps.get_outline_resolver() if deps.get_outline_resolver else None
+        return await kb_get(identity, args, db_pool=pool, outline_resolver=resolver)
 
     async def _kb_search(identity: Identity, args: dict) -> ToolResult:
         retriever = deps.get_retriever() if deps.get_retriever else None
@@ -546,6 +816,12 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
             return _query
 
         reg.register(_jgb2_spec(domain, sorted(builders.keys())), _make())
+
+    # `agent.turn`：**受 env 回切開關管**（任務 2.6）。關閉 ⇒ 根本不註冊，
+    # 於是 `union_specs`／`tools/list`／`registry.call` 三處同時看不到它——
+    # ⛔ 不是「註冊了但呼叫時才拒」，回切要的是整條路徑消失。
+    if agent_turn_enabled():
+        reg.register(AGENT_TURN_SPEC, _make_agent_turn(deps))
 
     return reg
 
@@ -643,6 +919,44 @@ def _build_wrapper(spec: ToolSpec, invoke: Callable, context_cls: Any) -> Callab
     return fn
 
 
+def _agent_turn_visible(registry: ToolRegistry, deps: FacadeDeps,
+                        identity: Identity) -> bool:
+    """`agent.turn` 對這個身分是否可見（門面視角 `for_model=False`）。
+
+    ⛔ 不讀 registry 的私有字典——`specs_for` 才是唯一的可見性規則，
+    未註冊（`AGENT_TURN_ENABLED=false`）與 stage/audience 不合都由它回答。
+    """
+    return any(
+        spec["name"] == AGENT_TURN_NAME
+        for spec in registry.specs_for(identity, deps.stage, for_model=False)
+    )
+
+
+def _agent_turn_preflight(deps: FacadeDeps, identity: Identity) -> Optional[str]:
+    """`agent.turn` 專屬前置檢查；通過回 `None`，否則回**業務代碼字串**。
+
+    順序刻意如此：
+    ① runtime／engine 缺席 ⇒ `AGENT_UNAVAILABLE`（服務沒接好，⛔ 不燒配額）。
+    ② 命名空間鍵組不出來（缺 `api_key_id`／`vendor_id`、或鍵超過
+       `form_sessions.session_id` 的 100 字）⇒ `INVALID_INPUT`。
+       這條在 registry 內部只會變成一個被吞掉的例外（`NO_MATCH`），
+       所以必須在門面這一層先判，呼叫端才知道是自己的 `session_id` 太長。
+    ③ 每小時上限 ⇒ `RATE_LIMITED`。放最後：前兩者都是「這次呼叫根本不成立」，
+       不該把配額算在呼叫端頭上。
+    """
+    if _app_state(deps, "agent_runtime") is None or _app_state(
+        deps, "conversational_engine"
+    ) is None:
+        return ERR_AGENT_UNAVAILABLE
+    try:
+        _open_state_store(deps, identity)
+    except ValueError:
+        return "INVALID_INPUT"
+    if not check_and_record_agent_turn((identity.api_key_id, identity.vendor_id)):
+        return "RATE_LIMITED"
+    return None
+
+
 def _make_invoke(registry: ToolRegistry, deps: FacadeDeps) -> Callable:
     """產生 `_invoke(name, ctx, args)`——三道檢查 ＋ 計量 ＋ registry.call。"""
 
@@ -674,9 +988,29 @@ def _make_invoke(registry: ToolRegistry, deps: FacadeDeps) -> Callable:
             um.finalize("blocked", 429, db_pool=pool)
             raise tool_error(_tool_error_message(ERR_QUOTA))
 
+        timeout_s = deps.tool_timeout_s
+        # ⚠️ preflight 只在 `agent.turn` **對這個身分可見**時才跑。不可見時
+        #    （tenant／pm、或 stage 未到）一律讓 `registry.call()` 統一回
+        #    `NO_MATCH`——否則一個看不到這支工具的身分還能從
+        #    `AGENT_UNAVAILABLE`／`RATE_LIMITED` 分辨出「服務存在但沒起來」，
+        #    等於把後端狀態洩給不該知道的人，也白燒他的配額。
+        if name == AGENT_TURN_NAME and _agent_turn_visible(registry, deps, identity):
+            # `agent.turn` 的三道 preflight（任務 2.6）。都在 `begin()`／
+            # `quota_check()` **之後**——不變量 31 要的是「一次呼叫恰一列
+            # `usage_events`」，被擋掉的呼叫同樣得留下那一列，⛔ 不能是免費的探測。
+            code = _agent_turn_preflight(deps, identity)
+            if code is not None:
+                um.set_path(f"mcp:{AGENT_TURN_NAME}:{code}")
+                um.finalize("blocked" if code == "RATE_LIMITED" else "error",
+                            429 if code == "RATE_LIMITED" else 503, db_pool=pool)
+                raise tool_error(_tool_error_message(code))
+            # 外層只是保險（見 `_AGENT_TURN_OUTER_MARGIN_S`）；真正決定
+            # 「逾時不 save」的是 `_agent_turn` 內層那個 `wait_for`。
+            timeout_s = agent_turn_timeout_s() + _AGENT_TURN_OUTER_MARGIN_S
+
         try:
             result = await registry.call(
-                identity, name, args, deps.tool_timeout_s, stage=deps.stage
+                identity, name, args, timeout_s, stage=deps.stage
             )
         except Exception:
             um.finalize("error", 500, db_pool=pool)

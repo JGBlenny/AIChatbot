@@ -8,6 +8,7 @@ payload 改一個鍵拒。無法連 DB → skip（非 fail）。測試列於 fin
    本任務唯一沒有純 Python 對應物的東西——mock pool 只證明「我們傳了這些參數」，
    證明不了 Postgres 收得下、路徑建得對。故此處真跑一次來回。
 """
+import json
 import os
 import uuid
 
@@ -80,9 +81,16 @@ async def pool():
 
 
 async def _issue_token(pool, session_id: str, payload: dict, summary: str = "確認送出這筆"):
-    """走真的 `confirm.request`，再從表裡把 token 撈回來（工具本身 ⛔ 不回 token）。"""
+    """走真的 `confirm.request`，再從表裡把 token 撈回來（工具本身 ⛔ 不回 token）。
+
+    ⚠️ 2.6 處置⑧：`confirm.request` 的 `payload` 已改成 **JSON 字串**（strict
+    function calling 不吃開放 object）；兌現端 `redeem_token` 收到的仍是**物件**，
+    兩邊都對 `canonical_json(dict)` 取雜湊，所以這裡序列化一次即可。
+    """
     result = await confirm_request(
-        _identity(session_id), {"summary": summary, "payload": payload}, db_pool=pool
+        _identity(session_id),
+        {"summary": summary, "payload": json.dumps(payload, ensure_ascii=False)},
+        db_pool=pool,
     )
     assert result.ok is True, result
     row = await pool.fetchrow(

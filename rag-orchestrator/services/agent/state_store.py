@@ -1,0 +1,98 @@
+"""`NamespacedStateStore`（spec agentic-mcp-orchestration・任務 2.6）。
+
+`/mcp` 進來的回合狀態**不得以裸 `session_id` 存取**——這是 2.6／2.7 前置
+security review 的唯一 P1（`.kiro/specs/agentic-mcp-orchestration/reviews/
+m1-security-review-2.6-2.7.md`）：
+
+> `conversational_engine.get_state/_save/_close` 與
+> `form_manager._get_session_state_sync` 都**沒有 vendor 條件**（正對照：
+> `form_manager.py` 另一處有 `vendor_id` 條件，證明 grep 有效）⇒ 持 vendor 2
+> 的 key、帶他人的 `session_id`，就能讀寫他人的對話。
+
+處置＝**命名空間鍵**：`mcp:{api_key_id}:{vendor_id}:{session_id}`。
+REST 路徑（`routers/agent_entry.py:EngineStateStore`）維持裸 `session_id` 不變，
+兩條路徑因此**天然分池**，⛔ 不共用會話列。
+
+## 為什麼前綴不會被撞開
+`api_key_id` 與 `vendor_id` 都是**整數**（`api_keys.id`／`vendors.id`），
+前綴 `mcp:<int>:<int>:` 裡不可能出現由呼叫端控制的 `:`；唯一由呼叫端控制的
+是最後一段 `session_id`。因此「不同 (key, vendor) 卻算出同一把鍵」在型別層
+就不可能發生——⛔ 這不是靠字串跳脫維持的，別把兩個 id 改成字串。
+
+## 為什麼不另寫 SQL
+`load`／`start`／`save` 一律轉呼 `ConversationalEngine.get_state`／`_start`／
+`_save`（同一張 `form_sessions`、同一組 SQL）。⛔ 不在本檔寫第二份 SQL——
+兩份 SQL 會各自演化，而「隔離謂詞單一來源」是本專案的既有紀律。
+
+## fail-closed
+`api_key_id`／`vendor_id` 缺、或算出的鍵超過 `form_sessions.session_id`
+的 `VARCHAR(100)`（實查 2026-09-05）⇒ 建構當下 `raise ValueError`。
+⛔ 不「退回裸 session_id」——那正是被擋掉的那條路。
+"""
+from __future__ import annotations
+
+from typing import Any, Optional
+
+#: `form_sessions.session_id` 的欄位長度（實查測試庫 information_schema，2026-09-05）。
+#: 超過會在 INSERT 當下被 DB 拒；寧可在組鍵時就明說，⛔ 不讓它變成一次 500。
+SESSION_ID_MAX_LEN = 100
+
+#: `_start` 的 `config_key`（任務 2.6 brief）——M1 的 `/mcp` 對話對象只有 prospect。
+DEFAULT_CONFIG_KEY = "agent:prospect"
+
+#: 命名空間前綴，⛔ 不得省略（見模組 docstring）。
+NAMESPACE = "mcp"
+
+
+class NamespacedStateStore:
+    """`/mcp` 回合狀態的存取點；介面與 `routers/agent_entry.py:EngineStateStore` 同形。"""
+
+    def __init__(self, engine: Any, api_key_id: Optional[int], vendor_id: Optional[int]) -> None:
+        if api_key_id is None or vendor_id is None:
+            raise ValueError(
+                "NamespacedStateStore 需要 api_key_id 與 vendor_id 才能組出隔離鍵"
+                "（fail-closed：⛔ 不退回裸 session_id）"
+            )
+        self._engine = engine
+        self._api_key_id = api_key_id
+        self._vendor_id = vendor_id
+        self._prefix = f"{NAMESPACE}:{api_key_id}:{vendor_id}:"
+
+    # ------------------------------------------------------------------
+    @property
+    def prefix(self) -> str:
+        return self._prefix
+
+    def key(self, session_id: str) -> str:
+        """`mcp:{api_key_id}:{vendor_id}:{session_id}`；超長 ⇒ `ValueError`。"""
+        if not isinstance(session_id, str) or not session_id:
+            raise ValueError("session_id 必須是非空字串")
+        namespaced = self._prefix + session_id
+        if len(namespaced) > SESSION_ID_MAX_LEN:
+            raise ValueError(
+                f"命名空間鍵長度 {len(namespaced)} 超過 form_sessions.session_id "
+                f"上限 {SESSION_ID_MAX_LEN}"
+            )
+        return namespaced
+
+    # ------------------------------------------------------------------
+    async def load(self, session_id: str) -> Optional[dict]:
+        return await self._engine.get_state(self.key(session_id))
+
+    async def start(
+        self,
+        session_id: str,
+        user_id: Any,
+        vendor_id: Any,
+        role_id: Any,
+        config_key: str = DEFAULT_CONFIG_KEY,
+    ) -> dict:
+        return await self._engine._start(
+            self.key(session_id), user_id, vendor_id, config_key, role_id=role_id
+        )
+
+    async def save(self, session_id: str, state: dict) -> None:
+        await self._engine._save(self.key(session_id), state)
+
+
+__all__ = ["NamespacedStateStore", "SESSION_ID_MAX_LEN", "DEFAULT_CONFIG_KEY", "NAMESPACE"]

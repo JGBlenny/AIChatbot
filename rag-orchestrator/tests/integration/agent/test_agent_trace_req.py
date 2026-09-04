@@ -66,20 +66,20 @@ def _agent_snapshot_from_real_trace(trace_id: str) -> dict:
         trace_id=trace_id,
         tool_calls=[
             agent_runtime.ToolCallRecord(
-                id="call_1", name="kb.search", args_hash="0f1e2d3c4b5a6978",
+                id="call_1", name="kb.search",
                 args_summary={"has_keyword": True, "k": 5},
                 ms=84, status="ok", n_items=3,
             ),
             agent_runtime.ToolCallRecord(
-                id="call_2", name="jgb2.query.bills", args_hash="89abcdef01234567",
+                id="call_2", name="jgb2.query.bills",
                 args_summary={"face": "bill_status", "has_ref": True},
                 ms=210, status="ok", n_items=1,
             ),
         ],
         llm_calls=3, prompt_tokens=4210, completion_tokens=318,
         verifier=[
-            VerifierVerdict(ok=False, reason="FORBIDDEN_TERM", sent=2,
-                            term_id=_LITERAL_TERM, quote_len=0),
+            VerifierVerdict.model_construct(ok=False, reason="FORBIDDEN_TERM", sent=2,
+                            term_id=_LITERAL_TERM, quote_len=0),  # model_construct：2.6 後正式路徑不可能出現字面詞，此處故意繞過驗證測遮罩
             VerifierVerdict(ok=True, quote_len=12),
         ],
         final_kind="answer", handoff_reason=None, latency_ms=1930,

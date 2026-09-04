@@ -59,12 +59,27 @@ VerdictReason = Literal[
 ]
 
 
+#: `term_id` 的唯一合法形式（2.6 前置 security review P2）：`rule#<規則集內索引>`。
+#: ⛔ **不得填字面詞／regex 本身**——verdict 會落進
+#: `usage_events.decision_snapshot.agent`，也會被 2.7 的 trace 端點印出來，
+#: 填字面值等於把敏感樣式表／禁詞表／否定詞表逐字外洩。
+#: 產生點是 `services/agent/verifier.py:_rule_id()`；這裡用 pydantic `pattern`
+#: 把契約釘在型別上，任何想塞字面詞的呼叫端會在建構當下就炸。
+TERM_ID_PATTERN = r"^rule#\d+$"
+
+
 class VerifierVerdict(BaseModel):
-    """結構化拒因。⛔ 不放原文（`sent`／`term_id`／`quote_len` 是索引與長度，不是內容）。"""
+    """結構化拒因。⛔ 不放原文（`sent`／`term_id`／`quote_len` 是索引與長度，不是內容）。
+
+    `term_id` 只認 `rule#<n>`：`reason` 決定查哪一張規則表
+    （`SENSITIVE_TOPIC`→`sensitive_patterns`、`FORBIDDEN_TERM`→`forbid_terms`、
+    `POLARITY_MISMATCH`→`negation_terms`），`n` 是該表內 0-based 索引，
+    再配 trace 的 `rules_sha` 才對得回具體規則集版本。
+    """
     ok: bool
     reason: Optional[VerdictReason] = None
     sent: Optional[int] = None
-    term_id: Optional[str] = None
+    term_id: Optional[str] = Field(default=None, pattern=TERM_ID_PATTERN)
     quote_len: Optional[int] = None
 
 
@@ -91,4 +106,5 @@ class VerifierRules(BaseModel):
         return cls.model_validate(data)
 
 
-__all__ = ["Citation", "SentenceCite", "AgentOutput", "VerdictReason", "VerifierVerdict", "VerifierRules"]
+__all__ = ["Citation", "SentenceCite", "AgentOutput", "VerdictReason", "VerifierVerdict",
+           "VerifierRules", "TERM_ID_PATTERN"]
