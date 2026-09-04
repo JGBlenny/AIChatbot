@@ -195,3 +195,220 @@ def test_embedding_and_keywords_conditions_stay_out_of_predicate():
         sql, _params = _build(mode=mode)
         assert "embedding" not in sql
         assert "keywords" not in sql
+
+
+# ════════════════════════════════════════════════════════════════════
+# 1.1 留項①：把差分等價的「不需 DB」那半搬進 unit（spec 1.2）
+# ════════════════════════════════════════════════════════════════════
+# 源起：`tests/integration/agent/test_visibility_predicate_equiv.py` 的
+# SQL 形狀等價比對（`test_sql_shape_matches_oracle`）不碰 DB，卻只掛在
+# integration 層——CI 主力只跑 unit（見 `scripts/run-tests.sh` 檔頭），
+# 這代表謂詞回歸要等 integration 才被擋到。本節把「重構前字面 oracle」
+# 複製一份到 unit（⛔ 不 import integration 檔——那樣量尺會跟著production
+# 碼一起漂移，變成拿產線碼驗產線碼）。
+#
+# ⚠️ 這是**獨立的第二份**字面複製，不是同一份被兩檔共用：
+# `test_visibility_predicate_equiv.py` 的 oracle 若被改動（含刻意植入的
+# 回歸），本節不會跟著變——這正是「單元測試不依賴整合測試環境」的代價，
+# 兩邊各自維護、⛔ 改一邊不必然帶動另一邊，需人工同步。
+
+#: 重構前 `VendorKnowledgeRetrieverV2.KNOWN_TARGET_USERS` 的字面複製
+_UNIT_ORACLE_KNOWN_TARGET_USERS = {
+    'tenant', 'landlord', 'property_manager', 'system_admin', 'prospect'}
+
+
+def _unit_oracle_effective_target_user(target_user):
+    if isinstance(target_user, list):
+        target_user = target_user[0] if target_user else None
+    return target_user if target_user in _UNIT_ORACLE_KNOWN_TARGET_USERS else 'tenant'
+
+
+def _unit_oracle_branch(kind, target_user, mode, vendor_business_types):
+    """重構前兩處分支邏輯的字面複製（⛔ 不「順手統一」兩處字串差異）。"""
+    lead = "AND " if kind == "keyword" else ""
+    is_b2b_mode = (target_user in ['property_manager', 'system_admin']) or (mode == 'b2b')
+    target_user_param = [_unit_oracle_effective_target_user(target_user)]
+    if is_b2b_mode:
+        bt = ['system_provider']
+        business_type_filter_sql = f"{lead}kb.business_types && %s::text[]"
+    else:
+        bt = vendor_business_types
+        business_type_filter_sql = (
+            f"{lead}(kb.business_types IS NULL OR kb.business_types && %s::text[])")
+        target_user_param = [_unit_oracle_effective_target_user(target_user), 'all_users']
+    target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
+    return business_type_filter_sql, target_user_filter_sql, bt, target_user_param
+
+
+def _unit_oracle_where(kind, target_user, mode, vendor_id, vendor_business_types):
+    bt_sql, tu_sql, bt, tu = _unit_oracle_branch(kind, target_user, mode, vendor_business_types)
+    if kind == "vector":
+        where = f"""
+                    (array_length(kb.vendor_ids, 1) IS NULL OR kb.vendor_ids && %s::int[])
+                    AND kb.embedding IS NOT NULL
+                    AND kb.is_active = TRUE
+                    AND kb.category IS DISTINCT FROM '{KB.SYSTEM_DOC_CATEGORY}'
+                    AND kb.category IS DISTINCT FROM '{KB.RULES_DOC_CATEGORY}'
+                    AND {bt_sql}
+                    {tu_sql}
+        """
+    else:
+        where = f"""
+                    (array_length(kb.vendor_ids, 1) IS NULL OR kb.vendor_ids && %s::int[])
+                    AND kb.is_active = TRUE
+                    AND kb.category IS DISTINCT FROM '{KB.SYSTEM_DOC_CATEGORY}'
+                    AND kb.category IS DISTINCT FROM '{KB.RULES_DOC_CATEGORY}'
+                    AND kb.keywords IS NOT NULL
+                    AND array_length(kb.keywords, 1) > 0
+                    {bt_sql}
+                    {tu_sql}
+        """
+    return where, [[vendor_id], bt, tu]
+
+
+def _unit_refactored_where(kind, target_user, mode, vendor_id, vendor_business_types):
+    resolver = _resolver(vendor_business_types)
+    sql, params = build_visibility_predicate(
+        Identity(vendor_id=vendor_id, target_user=target_user, mode=mode),
+        param_resolver=resolver,
+    )
+    own = ("kb.embedding IS NOT NULL" if kind == "vector"
+           else "kb.keywords IS NOT NULL\n AND array_length(kb.keywords, 1) > 0")
+    return f"{own}\n{sql}", params
+
+
+def _unit_conditions(where_sql):
+    """WHERE 文字 → 正規化條件集合（去縮排／開頭 AND／空行後排序）。"""
+    out = []
+    for line in where_sql.splitlines():
+        s = " ".join(line.split())
+        if not s:
+            continue
+        if s.startswith("AND "):
+            s = s[4:]
+        out.append(s)
+    return sorted(out)
+
+
+_UNIT_IDENTITY_CELLS = [
+    pytest.param(mode, tu, id=f"{mode}-{tu}")
+    for mode in ("b2b", "b2c")
+    for tu in ("property_manager", "tenant", "unknown_role")
+]
+
+
+@pytest.mark.req(_SPEC)
+@pytest.mark.parametrize("kind", ["vector", "keyword"])
+@pytest.mark.parametrize("mode,target_user", _UNIT_IDENTITY_CELLS)
+@pytest.mark.parametrize("vendor_bt", [["landlord_individual"], None],
+                         ids=["vendor-found", "vendor-missing"])
+def test_sql_shape_matches_oracle_unit(kind, mode, target_user, vendor_bt):
+    """CI unit 層版本的差分等價：條件集合與參數與重構前字面 oracle 逐項相同。
+
+    ⛔ 這條紅了不是「改壞了謂詞」就是「oracle 需要跟 production 一起演化」——
+    兩者都要人裁決，不得直接改本測試讓它變綠。
+    """
+    o_where, o_params = _unit_oracle_where(
+        kind, target_user, mode, 42, [] if vendor_bt is None else vendor_bt)
+    r_where, r_params = _unit_refactored_where(kind, target_user, mode, 42, vendor_bt)
+    assert _unit_conditions(r_where) == _unit_conditions(o_where), (
+        f"[{kind} {mode}/{target_user}] 條件集合與重構前 oracle 不同\n"
+        f"  多：{sorted(set(_unit_conditions(r_where)) - set(_unit_conditions(o_where)))}\n"
+        f"  少：{sorted(set(_unit_conditions(o_where)) - set(_unit_conditions(r_where)))}"
+    )
+    assert r_params == o_params, f"[{kind} {mode}/{target_user}] 參數與重構前 oracle 不同"
+
+
+@pytest.mark.req(_SPEC)
+def test_oracle_unit_detects_a_planted_difference():
+    """量尺自證：oracle 若被改壞（例如漏掉業態分支），比對必須紅——
+    否則上面那批「相同」是瞎尺量出來的。"""
+    o_where, o_params = _unit_oracle_where("vector", "property_manager", "b2b", 42, [])
+    # 植入差異：把 oracle 的業態條件改成永遠不過濾（模擬「有人把過濾拿掉」）
+    broken_where = o_where.replace(
+        "kb.business_types && %s::text[]", "TRUE")
+    assert _unit_conditions(broken_where) != _unit_conditions(o_where), (
+        "植入的差異沒被抓到——比對函式本身是瞎的，上面所有『等價』結論一律作廢"
+    )
+
+
+# ════════════════════════════════════════════════════════════════════
+# 1.1 留項②：production 函式送出的 params 改為位置斷言（spec 1.2）
+# ════════════════════════════════════════════════════════════════════
+# 源起：`test_visibility_predicate_equiv.py::test_production_function_emits_the_predicate`
+# 用 `for p in expected_params: assert p in params`——membership 測試，
+# ⛔ 抓不到「參數順序被打亂」（例如 business_types 與 target_user 兩個
+# list 剛好等長時互換，membership 兩邊都成立、位置斷言才會紅）。
+
+@pytest.mark.req(_SPEC)
+@pytest.mark.parametrize("kind", ["vector", "keyword"])
+async def test_production_function_emits_predicate_params_in_order(kind):
+    """攔 cursor.execute 驗 production 函式送出的 SQL 與**參數順序**。
+
+    ⚠️ 與 integration 版本的差異：這裡用位置比對
+    （`params[-len(expected_params):] == expected_params`），membership
+    測試（`p in params`）抓不到參數順序錯位（例如 business_types 與
+    target_user 兩個 list 剛好等長時互換）。
+    """
+    store = {"calls": []}
+
+    class _Cur:
+        def execute(self, sql, params=None):
+            store["calls"].append((sql, list(params or [])))
+
+        def fetchall(self):
+            return []
+
+        def close(self):
+            pass
+
+    class _Conn:
+        def cursor(self, *a, **k):
+            return _Cur()
+
+        def close(self):
+            pass
+
+    r = object.__new__(KB)
+    r._get_db_connection = lambda: _Conn()
+    r.param_resolver = _resolver(("landlord_individual",))
+
+    vendor_id = 42
+    if kind == "vector":
+        await r._vector_search([0.0] * 4, vendor_id=vendor_id, top_k=5,
+                               similarity_threshold=0.6, target_user="tenant", mode="b2c")
+    else:
+        await r._keyword_search("租金 繳費", vendor_id=vendor_id, limit=5,
+                                target_user="tenant", mode="b2c")
+
+    assert store["calls"], "產線函式沒有送出任何 query——攔截壞了，⛔ 不得靜默通過"
+    sql, params = store["calls"][0]
+    expected_sql, expected_params = build_visibility_predicate(
+        Identity(vendor_id=vendor_id, target_user="tenant", mode="b2c"),
+        param_resolver=_resolver(("landlord_individual",)))
+    for cond in _unit_conditions(expected_sql):
+        assert cond in " ".join(sql.split()), f"[{kind}] 送出的 SQL 缺可見性條件：{cond}"
+
+    # 位置斷言：可見性謂詞的參數必須是送出參數列裡**連續且順序不變**的子序列
+    # ——⛔ 不是「每個都出現在某處」（membership），是「照這個順序連續出現」。
+    # ⚠️ 不假設在頭或尾：vector 路徑謂詞夾在 [vector_str, ...謂詞..., vector_str,
+    # limit] 中間、keyword 路徑謂詞前面還有 query token 陣列，兩處位置本就不同，
+    # 位置斷言驗的是「順序不變」而非「固定偏移」。
+    n = len(expected_params)
+    windows = [params[i:i + n] for i in range(len(params) - n + 1)]
+    assert expected_params in windows, (
+        f"[{kind}] 可見性謂詞參數未以原順序連續出現：實得 {params}，"
+        f"期待子序列 {expected_params}（membership 測試會漏抓這種順序/連續性錯位）"
+    )
+
+
+@pytest.mark.req(_SPEC)
+async def test_positional_assertion_catches_swapped_params():
+    """量尺自證：位置斷言必須抓得到「兩個等長 list 互換」——
+    membership 測試（`p in params`）在這個案例仍然會綠，是它的已知盲點。"""
+    expected_params = [[1], ["a", "b"], ["c", "d"]]
+    swapped = [[1], ["c", "d"], ["a", "b"]]  # 後兩個 list 互換位置
+    # membership 兩邊都成立（正是舊斷言抓不到錯位的原因）
+    assert all(p in swapped for p in expected_params)
+    # 位置比對必須紅
+    assert swapped != expected_params, "互換過的參數序列不該與期待值相等"

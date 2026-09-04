@@ -679,6 +679,28 @@ if [ "$CODE_FAIL_BEFORE_13" -ne 0 ]; then
 fi
 
 echo ""
+echo "═══ 不變量 27–31：Agent／MCP 邊界（spec agentic-mcp-orchestration・任務 1.2）═══"
+# ⚠️ 編號說明：design.md 附錄 B 稱這五條為「不變量 18–22」，但合併後發現
+#   check_invariants.sh 現況的 18–22 已被另一條工作線（R10-P2/P3/P4、canonical
+#   contract、registry V2 scope lock）占用——兩條工作線各自遞增到相同號碼後才
+#   合併，是編號衝突，非同一件事被覆寫。已記錄 DSP-013（見
+#   `python3 ~/.claude/canon/decisions.py unresolved`），業主裁決前一律採用
+#   不衝突的新編號 27–31（checker 輸出內同時附 design.md 原始編號對照）。
+AB_CHECK="$REPO/scripts/audit/checks/agent_boundary.py"
+if ! python3 "$AB_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 27–31 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$AB_CHECK" --self-test
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 27–31：agent_boundary.py 自我測試未過")
+elif ! AB_OUT=$(python3 "$AB_CHECK" 2>&1); then
+  echo "$AB_OUT"
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 27–31：Agent/MCP 邊界違規（見上方 ❌ 行）")
+else
+  echo "$AB_OUT"
+fi
+
+echo ""
 echo "═══ 不變量 26：向量索引 ⛔ 不得用參數會崩塌的 IVFFlat ═══"
 # 為何需要（2026-09-01 b2b 35 題實測逼出）：
 #   idx_kb_embedding 為 ivfflat lists=100，而全表僅 992 筆向量 ⇒ 每 list 約 10 筆；

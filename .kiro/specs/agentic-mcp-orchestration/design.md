@@ -454,8 +454,8 @@ requirements.md、research.md、validation_gap.md、jgb2-source-index.md、`docs
 ## 附錄
 ### A. 名詞
 Identity／Audience／ToolSpec／ToolResult／AgentOutput／Citation／VerifierRules／VerifierVerdict／OutlineDoc／ShadowRecord 見各元件；敏感五類、固定句、影子模式見 requirements.md。
-### B. 新增不變量
-18 `ToolSpec.input_schema` 無身分鍵；19 `_EXEMPT_PREFIX` 無 `/mcp` 且 `/mcp`／`/api/v1/agent/*` 的 X-API-Key 檢查不引用 `auth_enforced()`（AST）；20 `build_visibility_predicate` 為 `_vector_search`／`_keyword_search`／`fetch_visible_row` 唯一謂詞來源（AST：三處無內嵌 `vendor_ids`／`business_types` 字面 SQL）＋差分等價測試；21 `decision_snapshot.agent*` 無 `answer`／`quote`／`text` 原文鍵；22 `/mcp` 每次工具呼叫對應一列 `usage_events`（整合測試計數）。
+### B. 新增不變量（**實際編號 27–31**；DSP-013：原稿 18–22 與 `check_invariants.sh` 既有 18–22 衝突，2026-09-04 裁以 27–31 落地，`scripts/audit/checks/agent_boundary.py` 每行印 `design N` 對照）
+27（原 18）`ToolSpec.input_schema` 無身分鍵；28（原 19）`_EXEMPT_PREFIX` 無 `/mcp` 且 `/mcp`／`/api/v1/agent/*` 的 X-API-Key 檢查不引用 `auth_enforced()`（AST）；29（原 20）`build_visibility_predicate` 為 `_vector_search`／`_keyword_search`／`fetch_visible_row`／`build_prospect_outline` 唯一謂詞來源（AST 限 WHERE 片段：無內嵌 `vendor_ids`／`business_types` 字面）＋差分等價測試（integration）＋shape 比對（unit）；30（原 21）`decision_snapshot.agent*` 無 `answer`／`quote`／`text` 原文鍵；31（原 22）`/mcp` 每次工具呼叫對應一列 `usage_events`（整合測試 `test_mcp_facade_req.py`；1.7 前 WARN）。
 ### C. 1.1 審查處置紀錄
 | 來源 | 級別 | 發現 | 處置 | 落點 |
 |---|---|---|---|---|
@@ -535,6 +535,7 @@ Identity／Audience／ToolSpec／ToolResult／AgentOutput／Citation／VerifierR
 | 日期 | 版本 | 變更 | 修改者 |
 |---|---|---|---|
 | 2026-09-04 | 1.0 | 初始版本（full discovery） | AI |
+| 2026-09-04T21:40:36+08:00 | 1.4.3 | 不變量編號 18–22 → 27–31（DSP-013） | AI |
 | 2026-09-04T20:18:50+08:00 | 1.4.2 | 心智模型節（業主問答定稿）；「找帳單」詳細時序 | AI |
 | 2026-09-04T20:07:54+08:00 | 1.4.1 | r6 增量審查 2 P1：`facade_only`、Origin 三態；決策順序；roadmap 標記 | AI |
 | 2026-09-04T20:02:56+08:00 | 1.4 | `agent.turn` 進 M1；身分與 session 契約；範圍僅 prospect；語音／tenant 子 spec | AI |
