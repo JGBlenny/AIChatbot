@@ -22,7 +22,7 @@
 - [ ] 1.4 (P) `kb.get`／`kb.search`（TDD）：`services/agent/tools/kb.py`——`kb.get(kb_id: str)`：`outline:*` 交 OutlineAssembler（3.2）、整數字串走 `fetch_visible_row(identity, id)`＝`SELECT id, question_summary, answer WHERE id=$1 AND <build_visibility_predicate>`；回傳封閉四欄、`provenance.text=answer`；池外 ⇒ `NO_MATCH`。`kb.search(query, k≤5)`：`retrieve(query, vendor_id, top_k=k, similarity_threshold=DecisionConfig, target_user=…, mode=…)`（後兩者走 `**kwargs`，照現況含 reranker），只回摘要清單、⛔ 不回全文、⛔ 不回 `generation_metadata`。測試：整合——池外 NO_MATCH（含保留分類 id）、`kb.search` 與 `retrieve()` 逐筆同；unit——回傳欄位封閉、prospect 不可見 `kb.search`。
   - 需求：2.1, 2.3, 2.5, 3.1, 3.2, 5.2, 12.3
   - 執行：executor／effort 中——只呼叫 1.1 的謂詞，⛔ 不另寫 SQL；`retrieve()` kwargs 對接
-- [ ] 1.5 (P) `jgb2.query.<domain>` 五域（TDD）：`services/agent/tools/jgb2.py`——依 design 域映射表：bills→`get_bills`＋`BILL_FACE_BUILDERS`；contracts→`get_contracts`＋`FACE_BUILDERS`；accounts→`get_team_members`／`get_member_permissions`＋`ACCOUNT_FACE_BUILDERS`；meters→`get_meters`＋`METER_FACE_BUILDERS`；estates→`get_estates`＋`get_estate_status`＋secondary `get_estate_detail`＋`ESTATE_FACE_BUILDERS`（三參數轉接）。`face` 為各表鍵的封閉 enum；`ref`／`keyword` 綁 session slot 範圍，無 slot 時候選 ≤ `CANDIDATE_CAP`（5）並回 `skip_refine`；facts 由 builder 決定性算、⛔ 不回原始 payload；標籤讀回應 `mapping` ⛔ 不用 `bills.STATUS_LABELS`。`JGBSystemAPI.get_bills`／`get_contracts` 增顯式 `viewer_user_id` 轉發（現被 `**kwargs` 吞）；**mock `_bills_index` 的 `UnsupportedMockParameterError` 保留 ⛔ 不放寬**，新增 recording `Transport` 包裝（`services/jgb/transport.py` 現無鉤子，列為新增）驗出向參數。測試：unit 每域 face 分發與 enum 拒；整合——bills／contracts 出向 params 含 `viewer_user_id==identity.user_id`（recording transport），其餘三域缺 `user_id` ⇒ `NO_MATCH`。
+- [ ] 1.5 (P) `jgb2.query.<domain>` 五域（TDD）：`services/agent/tools/jgb2.py`——依 design 域映射表：bills→`get_bills`＋`BILL_FACE_BUILDERS`；contracts→`get_contracts`＋`FACE_BUILDERS`；accounts→`get_team_members`／`get_member_permissions`＋`ACCOUNT_FACE_BUILDERS`；meters→`get_meters`＋`METER_FACE_BUILDERS`；estates→`get_estates`＋`get_estate_status`＋secondary `get_estate_detail`＋`ESTATE_FACE_BUILDERS`（三參數轉接）。`face` 為各表鍵的封閉 enum；`ref`／`keyword` 綁 session slot 範圍，無 slot 時候選 ≤ `CANDIDATE_CAP`（5）並回 `skip_refine`；facts 由 builder 決定性算、⛔ 不回原始 payload；標籤讀回應 `mapping` ⛔ 不用 `bills.STATUS_LABELS`。`JGBSystemAPI.get_bills`／`get_contracts` 增顯式 `viewer_user_id` 轉發（現被 `**kwargs` 吞）；**mock `_bills_index` 的 `UnsupportedMockParameterError` 保留 ⛔ 不放寬**，新增 recording `Transport` 包裝（`services/jgb/transport.py` 現無鉤子，列為新增）驗出向參數。**jgb2 端前置**：確認本機 `JGB_API_KEY` 在 jgb2 Layer 1 有 bills／contracts／estates／meters／roles 五個 resource 的 read 權限（jgb2 `external-api-key:run permission-list`，缺則 `permission-add`；由業主在 jgb2 執行，⛔ 金鑰不進 argv／transcript）。測試：unit 每域 face 分發與 enum 拒；整合——bills／contracts 出向 params 含 `viewer_user_id==identity.user_id`（recording transport），其餘三域缺 `user_id` ⇒ `NO_MATCH`；`RUN_INTEGRATION=1` 對 www 測試團隊 role 20151 真打一次五域 smoke（記錄回應 `mapping` 鍵，⛔ 不落個資）。
   - 需求：2.1, 3.1, 3.3, 12.1
   - 執行：executor／effort 高——五域映射、estates 三參數轉接、recording Transport 為新增縫線
 - [ ] 1.6 (P) `help.read` 與 `help_center_pages`（TDD）：migration 新表 `help_center_pages(slug PK, title, text, version, source_url, content_sha256, citable bool default false, approved_by, imported_at)`（SQL 檔 `git add -f`，執行由業主）；`services/agent/tools/help.py` 回 `{slug, title, text, version, citable}`，未匯入 ⇒ `NO_MATCH`；`provenance.citable` 隨列。匯入工具與 `citable=true` 人工核可流程屬子 spec `help-center-source`（D3 裁後），本任務只建表與讀取。測試：缺列 NO_MATCH、`citable=false` 列可讀且 provenance 標記正確。
@@ -67,13 +67,16 @@
 - [ ] 3.3 (P) `knowledge_base` 審核旗標（R11.6；3.2 前置）：migration 加 `outline_approved_by text null`、`outline_approved_at timestamptz null`（比照 `help_center_pages.approved_by`；SQL 檔 `git add -f`，執行由業主）；一次性 UPDATE 把現有售前池 31 筆（以 `build_visibility_predicate(prospect)` 選出）標記為已審核——**DB 寫入需業主授權**，⛔ 不得因審核 UI 未完成而放行未審核列；審核 UI 另案。測試：migration 冪等；標記後 `build_prospect_outline` 的 `source_ids` 數＝31。
   - 需求：11.6, 5.1
   - 執行：mech-executor／effort 低——兩欄一 UPDATE，規格已在 DSP-012；UPDATE 由業主執行
+- [ ] 3.4 (P) M2 前知識前置（知識線，非程式）：售前缺口地圖批次 2（`scripts/knowledge-batches/presales-gapmap-batch2-20260904.json` 18 筆）dry-run 後由業主放行匯入；3600／3610 口語講法補強（「線上簽約」「費用怎麼算」）依 `retrieval-improvement-loop` 流程補列；DSP-010 範本數、C52 系統管理模組歸屬列待裁不擋；匯入後重跑 `tools/gapmap/presales_gap_map.py` topics 模式留基準。⛔ 未做則 4.2 對照表要標「知識缺口未補」欄，不得把知識缺口算成 agent 缺口。
+  - 需求：5.1, 8.3
+  - 執行：main／effort 中——匯入需業主放行、講法要人工寫；工具已存在
 
 ## 4. M1–M2 影子與評估（2.x、3.x 後）
 
 - [ ] 4.1 ShadowRunner（TDD）：`services/agent/shadow.py`——`AGENT_SHADOW_AUDIENCES`（預設空）、`asyncio.create_task` 於舊鏈回應送出後、Runtime 以 `readonly_view=True` 建構；`ShadowRecord{trace, agent_answer_sha256, len, old_answer_sha256, len, diff_flags, cost_usd}` 落 `decision_snapshot.agent_shadow`、`is_internal=True`、⛔ 無原文；全文比對走 migration 新表 `agent_shadow_texts`（僅 prospect、30 天清、讀取需 X-API-Key）；月度成本 `AGENT_SHADOW_MONTHLY_USD_CAP` 超過 ⇒ 自動關＋告警。測試：不阻塞 SSE（p95 差 ≤200ms 以假 Runtime 量）；write 工具不可見；快照無原文；月上限關閉。
   - 需求：8.1, 8.5, 10.1, 13.2
   - 執行：executor／effort 中——背景 task、唯讀視圖、無原文；月上限關閉
-- [ ] 4.2 離線評估 `tools/agent_eval.py`（4.1 後）：三組凍結樣本（`coverage-map/topics-v2.json` 54 句、五套 e2e 劇本、真實流量抽樣）sha256 記錄；對兩條鏈跑（`backtest_session_` 前綴）輸出逐題對照（answered／rubric／敏感漏／邊界不硬答／延遲／成本）；收案線判定：D2 未裁前只出對照與「敏感五類 0 漏、無捏造、固定句率 ≤ 基準」三項，⛔ 看過結果不改樣本或線。測試：樣本 sha 校驗失敗 ⇒ 退出非 0；報表欄位形狀。
+- [ ] 4.2 離線評估 `tools/agent_eval.py`（4.1 後）：三組凍結樣本（`coverage-map/topics-v2.json` 54 句、五套 e2e 劇本、真實流量抽樣——由業主從線上 `usage_events` 匯出 prospect 問句、本機去識別腳本剝除人名／電話／地址後凍結，⛔ 不在線上跑影子、匯出檔不進 commit）sha256 記錄；對兩條鏈跑（`backtest_session_` 前綴）輸出逐題對照（answered／rubric／敏感漏／邊界不硬答／延遲／成本）；收案線判定：D2 未裁前只出對照與「敏感五類 0 漏、無捏造、固定句率 ≤ 基準」三項，⛔ 看過結果不改樣本或線。測試：樣本 sha 校驗失敗 ⇒ 退出非 0；報表欄位形狀。
   - 需求：8.2, 8.3, 13.1, 13.2
   - 執行：mech-executor／effort 中——樣本與報表欄位已定，照 `scripts/backtest/run_batch.py` 慣例
 - [ ] 4.3 影子跑動與收案（4.2 後；需業主開影子 env）：本機 `:8100` 對 prospect 開影子、跑三組樣本，派獨立 `verifier` 重跑同一組樣本（CONFIRMED 為 M2 done）；產出 `perf-agent-<date>.md`。
@@ -82,7 +85,7 @@
 
 ## 5. M3 prospect 切換、回切與退休（4.3 後）
 
-- [ ] 5.1 切換演練與回切：`AGENT_AUDIENCES=prospect` 本機切換（不重建 image）、五套情境 e2e 劇本（敏感五類 0 漏、無捏造句、固定句率 ≤ `perf-20260904.md` §9 基準）、回切演練一次 ≤5 分鐘且無資料修復；舊鏈程式與測試保留。測試：`tests/e2e/agent/` 五劇本；契約測試全綠。
+- [ ] 5.1 切換演練與回切：`AGENT_AUDIENCES=prospect` 本機切換（不重建 image）、五套情境 e2e 劇本（敏感五類 0 漏、無捏造句、固定句率 ≤ `perf-20260904.md` §9 基準）、回切演練一次 ≤5 分鐘且無資料修復；舊鏈程式與測試保留。**外部依賴**：jgb2 面板「找真人」按鈕讀 `handoff{channel, message}`（契約在 `docs/api/conversational-api.md`，jgb2 前端另案；未對齊前 e2e 以回應 JSON 驗 handoff 欄位，不驗按鈕）。測試：`tests/e2e/agent/` 五劇本；契約測試全綠。
   - 需求：9.1, 9.2, 9.3, 13.1, 13.5
   - 執行：main＋verifier／effort 高——情境 e2e 五劇本是收案必要條件；回切演練親做
 - [ ] 5.2 (P) 退休標記與相容文件：`tests/unit/agent/test_retired_symbols_req.py` AST 掃 `services/agent/` 不 import `_top1_relevance_gate`／`decide_arbitration`／categories 提名；`docs/architecture/` 加「agent 路徑不使用清單」與 `instance_applicability`「消費者已退休、待除役（另案）」註記；`retrieval_representation` D3 紀律保留註記；`docs/api/conversational-api.md` 加 agent 路徑不改契約與 `trace_id` 說明。
