@@ -1,13 +1,14 @@
 {
  "id": 3600,
  "proposal_date": "2026-09-04",
- "retrieval_representation": "售前客戶詢問在金箍棒建立與簽署一般租賃合約的任何面向：建約方式（電子合約公版／客製化契約書／上傳既有紙本合約）、合約範本種類與身分版本、只有刊登中物件能建約的前提、表單填寫與預覽、簽約邀請的通道（簡訊／Email）與 72 小時時效及逾期退回、租客免註冊或邀請中註冊、線上電子簽名與管理者回簽、簽約後修改的四種情境與藍字不可改、複製重建新約、個人或法人團隊身分、社會住宅須紙本公證、建約逐份與續約可批次。",
+ "retrieval_representation": "在金箍棒建立與簽署一般租賃合約的下列面向：建約方式（電子合約公版範本／客製化契約書／上傳既有紙本合約留存）、電子合約範本種類與身分版本、只有刊登中的物件才能建約、表單逐項填寫與合約預覽、簽約邀請以簡訊或 Email 送出、邀請 72 小時有效並同為契約審閱期、逾期連結失效與合約退回、租客免註冊或於邀請流程中註冊、線上電子簽名與管理者回簽、合約在未發送／已送邀請／已簽回未回簽／雙方簽完四種情境下能否修改、簽署參數（租金、電價、租期）簽後不可更動、複製合約重建新約、個人或法人團隊身分建約、社會住宅須列印紙本公證非線上簽署、建約逐份與續約可批次。",
  "provenance": {
-  "source": "reviewed_product_declaration",
-  "ruling": "PLAN P2-1 表示法 pilot 第一筆（業主 2026-09-04 依序處理 ②）；宣告文字由獨立 verifier 對照主題頁與幫助中心逐句核",
+  "source": "retrieval_representation_proposal",
+  "ruling": "PLAN P2-1 表示法 pilot 第一筆（業主 2026-09-04 依序處理 ②）；第一位 reviewer REFUTED（藍字借詞／受眾前綴／任何面向／漏審閱期／source 預填）→ 逐條修 → 第二位 reviewer 核",
   "evidence": "scripts/knowledge-batches/presales-topic-contract-3600-20260904.json（兩輪 verifier：REFUTED→CONFIRMED）",
   "recorded": "2026-09-04",
   "scope": "presales prospect pool（非 LEVEL_A）"
  },
- "note": "⛔ 依 D3：本檔是 proposal；verifier 核過、業主放行後才以 SQL 寫進 generation_metadata。embedding 不動（reranker 佔最終分數九成，先量 reranker 面）。"
+ "note": "⛔ D3：本檔是 proposal（source 已用 proposal 字串）；第二位 reviewer CONFIRMED 後，寫入 SQL 時置換 source=reviewed_product_declaration，並以宣告文字重算 3600 embedding。",
+ "revision": "v2：R1 刪「藍字」改 answer 措辭「簽署參數（租金、電價、租期）簽後不可更動」；R2 刪句首「售前客戶詢問」；R3「任何面向」→「下列面向」；R4 補「同為契約審閱期」；R5 修改四情境改寫；R7 source 改 proposal 字串，放行寫入時置換為 reviewed_product_declaration；R6 批次句**保留原文**「建約逐份與續約可批次」——reviewer 實測原句下 5379 仍以 0.9916 對 0.8522 居首未翻盤，改寫版會讓續約召回從 0.73 掉到 0.32，取捨選召回；R8 寫入時同步以此宣告重算 3600 embedding（維持 D2 同一份 surface，不走 divergence 鍵）。"
 }
