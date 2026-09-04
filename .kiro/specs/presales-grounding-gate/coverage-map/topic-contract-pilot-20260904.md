@@ -40,3 +40,14 @@ top-1 分布：3600 由 5 句升到 24 句；5375 7→6、5379 8→5、3358 大�
 
 宣告讓「邀請」子題 2/6→3/6（審閱期題 0.05→0.92 的 reranker 提升），但**範本子題 2/7→1/7**：「既存合約跟制式合約差在哪」「JGB 有哪些公版合約」等五句從有答變固定句，3600 只剩 0.19–0.35 甚至不在 top-3。判讀：embedding 改用 273 字宣告句後，短問句的向量相似度掉到候選池門檻（vector ≥ 0.3）之下，3600 沒進池，reranker 讀得到宣告也沒用。
 ⇒ 做 D2「明示分歧」實驗（契約允許，需 reason＋validation）：3600 的 embedding 改回 `question_summary`，reranker 仍讀宣告；`generation_metadata.embedding_representation` 記 reason；驗證＝同 54 句第四次量測（第四欄，待補）。
+
+### 第四欄（D2 分歧：embedding＝摘要、reranker＝宣告）
+| 指標 | 基準 | 主題頁 | 宣告＋emb | 宣告／emb 摘要 |
+|---|---|---|---|---|
+| owner 命中 | 11% | 52% | 46% | 48% |
+| 答到 | 30% | 46% | 39% | 41% |
+| rubric | 11% | 20% | 26% | 22% |
+| 邊界 | 88% | 88% | 75% | 88% |
+
+判讀：主題頁是主要槓桿；273 字宣告在 reranker 面對「邀請／審閱期」有效（2/6→3/6）、整體接近中性；當 embedding 面用宣告會傷短問句召回（邊界 75%）。決定：保留宣告、embedding 用摘要（`generation_metadata.embedding_representation` 記 reason，D2 明示分歧）。PLAN P2-1 的單筆 pilot 數據：general 型主題頁的長宣告，reranker 面小益、embedding 面有害。
+剩餘：3600 已 top-1 的 12 句未答到＝反問 5／固定句 2／答偏 5 ⇒ 進 ①（R2.13）。
