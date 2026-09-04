@@ -159,3 +159,19 @@ def test_outline_injected_for_run_but_not_persisted(monkeypatch):
     assert seen["outline"] is app.state.agent_outline          # 回合看得到
     assert "outline" not in store.saved[-1]["agent"]           # 存檔沒有（正對照：agent 鍵存在）
     assert "agent" in store.saved[-1]
+
+
+@pytest.mark.unit
+def test_app_agent_configured_is_plain_bool_and_lifespan_is_context_manager(monkeypatch):
+    """2026-09-05 事故回歸：函式被插在 @asynccontextmanager 與 lifespan 之間，裝飾器套錯對象 ⇒
+    `_agent_configured()` 回 context manager（恆真）⇒ 業主未跑 migration 時 app 起不來。"""
+    for k in ("AGENT_AUDIENCES", "AGENT_SHADOW_AUDIENCES", "AGENT_TURN_ENABLED"):
+        monkeypatch.delenv(k, raising=False)
+    import app as app_module
+    v = app_module._agent_configured()
+    assert v is False                                   # 不是 truthy 物件
+    monkeypatch.setenv("AGENT_AUDIENCES", "prospect")
+    assert app_module._agent_configured() is True
+    assert hasattr(app_module.lifespan, "__wrapped__") or app_module.lifespan.__name__ == "lifespan"
+    import inspect
+    assert not inspect.isasyncgenfunction(app_module.lifespan)   # 已被 asynccontextmanager 包裝

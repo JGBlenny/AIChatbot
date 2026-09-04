@@ -38,7 +38,6 @@ form_manager: FormManager = None
 sop_orchestrator: SOPOrchestrator = None
 
 
-@asynccontextmanager
 def _agent_configured() -> bool:
     """任一 agent 開關有值 ⇒ agent 路徯「被使用」⇒ 組裝失敗要啟動紅；否則 fail-soft 只警告。"""
     return any(os.getenv(k, "").strip() not in ("", "0", "false", "False")
@@ -86,6 +85,7 @@ async def _init_agent_runtime(app: FastAPI) -> None:
         print(f"⚠️ [agent] runtime 未初始化（agent 開關皆關，fail-soft）：{type(e).__name__}: {e}")
 
 
+@asynccontextmanager
 async def lifespan(app: FastAPI):
     """應用生命週期管理"""
     # 啟動時初始化
