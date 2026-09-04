@@ -394,3 +394,135 @@ def test_validate_identity_sanity_positive_control():
     assert JGBSystemAPI._validate_identity("1", "9") is True
     assert JGBSystemAPI._validate_identity("1", None) is False
     assert JGBSystemAPI._validate_identity(None, "9") is False
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 1.10 P1：bills／contracts 缺 user_id 時洩整個 role
+#
+# 病灶（1.9 security review）：兩域原本只查 `if not role_id`，而
+# `viewer_user_id` 空值不會被轉發 ⇒ jgb2 只認 role_id ⇒ 回整個 role 的資料。
+# 修法：受眾非 property_manager ⇒ 一律雙證（`_validate_identity`）。
+#
+# 這一整區的 identity 用**真的** `Identity`（不是 SimpleNamespace）——閘門讀的是
+# `resolved_audience()`，用假物件等於沒驗到與 identity.py 的接線。
+# ══════════════════════════════════════════════════════════════════════
+from services.agent.identity import Identity  # noqa: E402
+
+
+def _real_identity(*, target_user="tenant", mode="b2c", role_id=None, user_id=None):
+    return Identity(vendor_id=1, target_user=target_user, mode=mode,
+                    role_id=role_id, user_id=user_id, session_id="t")
+
+
+_LEAK_CASES = [
+    ("bills-無ref", jgb2.query_bills, "get_bills", {}),
+    ("bills-帶ref", jgb2.query_bills, "get_bills", {"ref": "501"}),
+    ("bills-帶keyword", jgb2.query_bills, "get_bills", {"keyword": "重慶北"}),
+    ("contracts-無ref", jgb2.query_contracts, "get_contracts", {}),
+    ("contracts-帶keyword", jgb2.query_contracts, "get_contracts", {"keyword": "重慶北"}),
+]
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+@pytest.mark.parametrize("label,fn,api_name,args_extra", _LEAK_CASES,
+                         ids=[c[0] for c in _LEAK_CASES])
+async def test_tenant_missing_user_id_no_match_and_no_outbound_call(
+        monkeypatch, fake_api, label, fn, api_name, args_extra):
+    """租客缺 user_id ⇒ NO_MATCH，且**一通出向呼叫都不得發生**。
+
+    ⚠️ 只斷言 NO_MATCH 不夠：假 API 預設就回 `success=False` ⇒ 也是 NO_MATCH，
+    那是假陰性。這裡把假 API 配成「查得到資料」，若閘門沒擋就會回 ok=True。
+    """
+    monkeypatch.setitem(jgb2.BILL_FACE_BUILDERS, "__test_face__", lambda r, q: "x")
+    monkeypatch.setitem(jgb2.CONTRACT_FACE_BUILDERS, "__test_face__", lambda r, q: "x")
+    _set_canned(fake_api, api_name, {"success": True, "data": [{"id": 501}]})
+
+    identity = _real_identity(target_user="tenant", role_id="1", user_id=None)
+    result = await fn(identity, {"face": "__test_face__", **args_extra})
+
+    assert identity.resolved_audience() == "tenant"
+    assert result == {"ok": False, "error": "NO_MATCH"}, f"{label}：閘門沒擋下"
+    assert fake_api.calls == [], f"{label}：擋下了卻仍發出向呼叫 {fake_api.calls}"
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+@pytest.mark.parametrize("label,fn,api_name,args_extra", _LEAK_CASES,
+                         ids=[c[0] for c in _LEAK_CASES])
+async def test_tenant_with_user_id_positive_control(
+        monkeypatch, fake_api, label, fn, api_name, args_extra):
+    """正對照組：同一組請求補上 user_id ⇒ 走原路（發出向呼叫、帶 viewer_user_id）。
+
+    ⛔ 沒有這一條，上一條的「全 NO_MATCH」可能只是假 API 恆空的假陰性。
+    """
+    monkeypatch.setitem(jgb2.BILL_FACE_BUILDERS, "__test_face__", lambda r, q: "FACTS")
+    monkeypatch.setitem(jgb2.CONTRACT_FACE_BUILDERS, "__test_face__", lambda r, q: "FACTS")
+    _set_canned(fake_api, api_name, {"success": True, "data": [{"id": 501}]})
+
+    identity = _real_identity(target_user="tenant", role_id="1", user_id="9")
+    result = await fn(identity, {"face": "__test_face__", **args_extra})
+
+    assert result["ok"] is True, f"{label}：補上 user_id 後仍被擋 → 閘門過嚴"
+    assert fake_api.calls, f"{label}：沒有任何出向呼叫"
+    _name, kwargs = fake_api.calls[-1]
+    assert kwargs["viewer_user_id"] == "9", f"{label}：viewer_user_id 沒轉發"
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+@pytest.mark.parametrize("target_user,mode", [
+    ("property_manager", "b2c"),
+    ("system_admin", "b2c"),
+    ("tenant", "b2b"),          # mode=b2b 也推導成 property_manager（audience_of）
+])
+@pytest.mark.parametrize("fn,api_name", [
+    (jgb2.query_bills, "get_bills"),
+    (jgb2.query_contracts, "get_contracts"),
+])
+async def test_property_manager_single_proof_still_queries(
+        monkeypatch, fake_api, target_user, mode, fn, api_name):
+    """正對照組：pm 缺 user_id、只帶 role_id ⇒ 仍可查（1.5 收案的刻意設計）。
+
+    帶了 user_id 反而會讓 jgb2 用 viewer_user_id 圈定，把 pm 自己的查詢過濾成空。
+    """
+    monkeypatch.setitem(jgb2.BILL_FACE_BUILDERS, "__test_face__", lambda r, q: "FACTS")
+    monkeypatch.setitem(jgb2.CONTRACT_FACE_BUILDERS, "__test_face__", lambda r, q: "FACTS")
+    _set_canned(fake_api, api_name, {"success": True, "data": [{"id": 501}]})
+
+    identity = _real_identity(target_user=target_user, mode=mode,
+                              role_id="1", user_id=None)
+    assert identity.resolved_audience() == "property_manager"
+
+    result = await fn(identity, {"face": "__test_face__", "ref": "501"})
+
+    assert result["ok"] is True, "pm 單證被誤擋——1.5 的 pm 查詢會整個壞掉"
+    assert fake_api.calls, "pm 單證沒有發出向呼叫"
+    _name, kwargs = fake_api.calls[-1]
+    assert kwargs["viewer_user_id"] is None, "pm 不該圈定 viewer_user_id"
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+@pytest.mark.parametrize("fn", [jgb2.query_bills, jgb2.query_contracts])
+async def test_pm_missing_role_id_still_no_match(fake_api, fn):
+    """pm 是「單證」不是「免證」：role_id 也缺 ⇒ 仍 NO_MATCH。"""
+    identity = _real_identity(target_user="property_manager", role_id=None, user_id="9")
+    face = "帳單異常" if fn is jgb2.query_bills else "合約異動"
+    result = await fn(identity, {"face": face})
+    assert result == {"ok": False, "error": "NO_MATCH"}
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+def test_audience_of_is_fail_closed_on_unknown_identity():
+    """`_audience_of` 的 fail-closed：算不出受眾一律當 tenant（要雙證）。
+
+    正對照組：真的 pm identity 必須回 property_manager——否則這條只是恆回 tenant
+    的假綠。
+    """
+    class _Boom:
+        def resolved_audience(self):
+            raise RuntimeError("boom")
+
+    assert jgb2._audience_of(types.SimpleNamespace()) == "tenant"      # 沒有這個方法
+    assert jgb2._audience_of(_Boom()) == "tenant"                       # 方法會炸
+    assert jgb2._audience_of(types.SimpleNamespace(
+        resolved_audience=lambda: "")) == "tenant"                      # 回空字串
+    assert jgb2._audience_of(_real_identity(
+        target_user="property_manager")) == "property_manager"          # 正對照

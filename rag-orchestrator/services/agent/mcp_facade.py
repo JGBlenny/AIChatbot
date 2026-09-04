@@ -985,11 +985,15 @@ async def _send_json(send, status: int, body: dict) -> None:
 def mcp_sdk_available() -> tuple:
     """MCP SDK 是否可匯入 →（可用, 說明）。
 
-    ⚠️ 2026-09-04 實查：`mcp==2.1.1` 與本專案的 `fastapi==0.104.1` **相依衝突**
-    （`pip install fastapi==0.104.1 mcp==2.1.1` ⇒ `ResolutionImpossible`：
-    fastapi 要 `anyio<4.0.0`，mcp 要 `anyio>=4.9`），故正式 image 目前**未裝**
-    SDK。本函式讓 `/mcp` 的服務層閘（401／403／400）在沒有 SDK 時仍成立——
-    只是工具面尚未掛上（請求會走到 404）。詳見 requirements.txt 的說明區塊。
+    ✅ **SDK 已是正式相依**（DSP-014 裁 A，2026-09-04）：`requirements.txt` 已把
+    web stack 升到承載 `mcp` 的版本（fastapi 0.115.14／starlette 0.46／
+    pydantic 2.13／anyio 4.15／uvicorn 0.52／mcp 2.1.1），原先的
+    `fastapi==0.104.1` × `anyio<4` 相依衝突**已解除**。
+
+    因此本函式只是**防禦性守衛**，⛔ 不是「尚未安裝」的旗標——它讓 `/mcp` 的
+    服務層閘（401／403／400）在 image 供裝出錯、SDK 匯不進來時仍然成立
+    （工具面掛不上，請求走到 404），而不是整個 app 起不來。
+    正常部署下它必為 `(True, "")`；回 False 代表**供裝壞了**，該去看 image。
     """
     try:
         import mcp.server.mcpserver  # noqa: F401

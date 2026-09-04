@@ -63,9 +63,32 @@ def test_checker_self_test_passes(ab):
 # ── 27（design 18）ToolSpec.input_schema 無身分鍵 ────────────────────────
 
 @pytest.mark.req(_SPEC)
-def test_27_current_registry_has_no_identity_keys(ab):
+def test_27_current_agent_tree_has_no_identity_keys(ab):
     ok, detail = ab.check_27_toolspec_identity_keys()
     assert ok is True, detail
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+def test_27_actually_scans_something(ab):
+    """量尺自證（1.10 P2）：這條不變量原本只掃 `registry.py`——那裡一個
+    `input_schema` 字面量都沒有，於是長期「掃到 0 個、印綠燈」。
+
+    正對照：現況必須掃到 ≥2 個檔的 spec（`kb.py` 的兩個＋`mcp_facade.py` 的
+    `HELP_READ_SPEC`／`_jgb2_spec`）。掃到 0 個時 checker 必須 FAIL。
+    """
+    specs, errors = ab.scan_27_specs()
+    assert not errors, errors
+    files = {rel for rel, _lineno, _keys in specs}
+    assert len(specs) >= 4, f"只掃到 {len(specs)} 個 input_schema：{specs}"
+    assert any(f.endswith("tools/kb.py") for f in files), files
+    assert any(f.endswith("mcp_facade.py") for f in files), files
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+def test_27_empty_scan_is_loud_failure(ab):
+    """掃到 0 個 spec ⇒ FAIL（⛔ 不得再回「空集合通過」）。"""
+    ok, detail = ab.check_27_toolspec_identity_keys(src="X = 1\n")
+    assert ok is False, f"空跑仍印綠燈：{detail}"
 
 
 @pytest.mark.req(_SPEC)

@@ -469,3 +469,107 @@ def test_openapi_only_lists_visible_tools():
     assert "/tools/kb.get" in names_in_paths
     assert "/tools/kb.search" not in names_in_paths  # prospect 永不可見
     assert "/tools/jgb2.query.bills" not in names_in_paths  # prospect 永不可見
+
+
+# ---------------------------------------------------------------------------
+# 1.10 P2：`call()` 端剝身分鍵（不變量 18 的呼叫端半邊）
+#
+# 病灶（1.9 security review）：`register()` 只擋得到 **spec 側**宣告了身分鍵；
+# 呼叫端（模型 tool_call／MCP client）仍可在 args 裡夾帶 `vendor_id` 之類，
+# 指望被工具函式讀走。修法：`call()` 一律剝除並記 `IDENTITY_KEY:<鍵>`。
+# ---------------------------------------------------------------------------
+
+_IDENTITY_KEYS_CALL = ["vendor_id", "role_id", "user_id",
+                       "target_user", "mode", "viewer_user_id"]
+
+
+def _echo_registry() -> ToolRegistry:
+    """一個把收到的 args 原樣回傳的工具（schema 允許 kb_id）。"""
+    reg = ToolRegistry()
+    reg.register(
+        {
+            "name": "kb.get",
+            "description": "",
+            "input_schema": {"type": "object",
+                             "properties": {"kb_id": {"type": "string"}}},
+            "scope": "read",
+            "stage": {"prospect": "M0", "property_manager": "M0", "tenant": "M0"},
+        },
+        _ok_fn,
+    )
+    return reg
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+@pytest.mark.parametrize("bad_key", _IDENTITY_KEYS_CALL)
+async def test_call_strips_identity_keys_from_args(bad_key):
+    """夾帶的身分鍵：fn 收不到，且 violations 記到 `IDENTITY_KEY:<鍵>`。"""
+    reg = _echo_registry()
+    identity = _identity("tenant")
+
+    result = await reg.call(
+        identity, "kb.get", {"kb_id": "1", bad_key: "攻擊值"}, 1.0, stage="M0")
+
+    assert result.ok is True, f"剝除不該讓呼叫失敗：{result}"
+    assert result.data["echo"] == {"kb_id": "1"}, (
+        f"fn 收到了身分鍵：{result.data['echo']}")
+    notes = [v["note"] for v in reg.last_violations()]
+    assert f"IDENTITY_KEY:{bad_key}" in notes, notes
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+async def test_call_without_identity_keys_records_no_violation():
+    """正對照組：不夾帶身分鍵 ⇒ violations 空（證明上一條不是恆記）。"""
+    reg = _echo_registry()
+    identity = _identity("tenant")
+
+    result = await reg.call(identity, "kb.get", {"kb_id": "1"}, 1.0, stage="M0")
+
+    assert result.ok is True
+    assert result.data["echo"] == {"kb_id": "1"}
+    assert reg.last_violations() == [], reg.last_violations()
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+async def test_call_does_not_mutate_caller_args():
+    """剝除走新字典 ⇒ ⛔ 不改到呼叫端手上的 dict。"""
+    reg = _echo_registry()
+    args = {"kb_id": "1", "vendor_id": 99}
+
+    await reg.call(_identity("tenant"), "kb.get", args, 1.0, stage="M0")
+
+    assert args == {"kb_id": "1", "vendor_id": 99}
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+def test_register_closes_schema_with_additional_properties_false():
+    """`register()` 補 `additionalProperties: False`，且⛔ 不汙染呼叫端的原字典。"""
+    original_schema = {"type": "object", "properties": {"kb_id": {"type": "string"}}}
+    spec = {
+        "name": "kb.get",
+        "description": "",
+        "input_schema": original_schema,
+        "scope": "read",
+        "stage": {"tenant": "M0"},
+    }
+    reg = ToolRegistry()
+    reg.register(spec, _ok_fn)
+
+    stored = reg.specs_for(_identity("tenant"), "M0")[0]
+    assert stored["input_schema"]["additionalProperties"] is False
+    assert "additionalProperties" not in original_schema, "改到呼叫端的模組級常數了"
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+async def test_closed_schema_rejects_undeclared_non_identity_key():
+    """封閉 schema 的效果：未宣告的**非身分**鍵仍走 `INVALID_INPUT`。
+
+    正對照：這證明 `additionalProperties: False` 真的生效——身分鍵之所以不會
+    變成 `INVALID_INPUT`，是因為它們在④之前就被⓪剝掉了，不是這條規則沒作用。
+    """
+    reg = _echo_registry()
+
+    result = await reg.call(
+        _identity("tenant"), "kb.get", {"kb_id": "1", "nonsense": 1}, 1.0, stage="M0")
+
+    assert result.ok is False and result.error == "INVALID_INPUT", result

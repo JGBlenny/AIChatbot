@@ -11,6 +11,7 @@ import types
 
 import pytest
 
+from services.agent.identity import Identity
 from services.agent.tools import jgb2
 from services.jgb.contract_fixtures import ContractFixtureTable
 from services.jgb.fixtures import BillFixtureTable
@@ -21,7 +22,14 @@ pytestmark = [pytest.mark.integration, pytest.mark.req("agentic-mcp-orchestratio
 
 
 def _identity(role_id=None, user_id=None):
+    """租客身分（`resolved_audience()` 缺 ⇒ jgb2 工具層 fail-closed 當 tenant）。"""
     return types.SimpleNamespace(role_id=role_id, user_id=user_id)
+
+
+def _pm_identity(role_id=None, user_id=None):
+    """房東／管理者身分——bills／contracts 走**單證**路徑（1.10 P1）。"""
+    return Identity(vendor_id=1, target_user="property_manager", mode="b2c",
+                    role_id=role_id, user_id=user_id, session_id="t")
 
 
 @pytest.fixture()
@@ -55,19 +63,41 @@ async def test_bills_forwards_viewer_user_id_and_mock_raises(recorded_api):
 
 
 async def test_bills_without_viewer_user_id_does_not_raise(recorded_api):
-    """正對照組：identity 缺 user_id ⇒ 不轉發 viewer_user_id ⇒ mock 不 raise
+    """正對照組：**pm 單證**（缺 user_id）⇒ 不轉發 viewer_user_id ⇒ mock 不 raise
     （證明上一條的 raise 是因為參數真的被送出，不是 mock 本身壞掉逢 bills 必炸）。
+
+    ⚠️ **1.10 P1 改過身分**：原本用 `_identity(role_id="1", user_id=None)`＝租客缺
+    user_id。那個組合現在被工具層的雙證閘擋在出向之前（正是這次修掉的洩漏），
+    拿它當「mock 不會逢 bills 必炸」的對照組等於什麼都沒驗到——一通呼叫都不會發生。
+    改用 pm 身分：pm 是**刻意保留的單證路徑**（1.5 收案裁定，帶 user_id 反而會被
+    jgb2 的 to_user_id 圈定成空），`user_id=None` 合法且會真的發出向呼叫。
     """
     api, recording = recorded_api
 
-    result = await jgb2.query_bills(_identity(role_id="1", user_id=None), {"face": "帳單異常"})
+    result = await jgb2.query_bills(_pm_identity(role_id="1", user_id=None),
+                                    {"face": "帳單異常", "ref": "678"})
 
-    # 沒有 identity.user_id：get_bills 的 _validate_identity(role_id, None) 為假、
-    # 且無 bill_ref/contract_ids ⇒ API 端降級（success False）⇒ 工具層收斂為 NO_MATCH。
+    # pm 單證：工具層不擋 ⇒ 真的出向查詢；沒有 user_id ⇒ viewer_user_id 不轉發
+    # ⇒ mock 的 UnsupportedMockParameterError 不會被觸發（本函式沒 raise 就是證據）。
+    assert recording.calls, "pm 單證應該真的發出向呼叫——沒有紀錄等於這條對照組是空的"
+    for _method, _path, params in recording.calls:
+        assert "viewer_user_id" not in params, f"pm 不該圈定 viewer_user_id：{params}"
+    assert isinstance(result, dict) and "ok" in result
+
+
+async def test_tenant_missing_user_id_blocked_before_outbound(recorded_api):
+    """1.10 P1：租客缺 user_id ⇒ NO_MATCH，且**出向呼叫一通都沒有**。
+
+    ⚠️ 這是本檔對 P1 的整合層證據：擋在工具層、不是靠 jgb2 API 端降級——
+    後者只在「無 bill_ref」時成立，帶 ref 就會真的把整個 role 的帳單查回來。
+    """
+    api, recording = recorded_api
+
+    result = await jgb2.query_bills(_identity(role_id="1", user_id=None),
+                                    {"face": "帳單異常", "ref": "678"})
+
     assert result == {"ok": False, "error": "NO_MATCH"}
-    if recording.calls:
-        _, _, params = recording.calls[-1]
-        assert "viewer_user_id" not in params
+    assert recording.calls == [], f"閘門沒擋住，仍發出向呼叫：{recording.calls}"
 
 
 # ══════════════════════════════════════════════════════════════════════

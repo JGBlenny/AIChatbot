@@ -8,6 +8,10 @@ identity.vendor_id)`。換 `session_id` 不重置計數——同一把 API key �
 業者的呼叫共用一個桶，這是刻意設計（防止用換 session 繞過額度）。
 
 **`call()` 守門四步骨架**（design 元件 2；本檔逐步照做）：
+⓪身分鍵剝除（1.10 P2，⛔ 勿刪）：不變量 18／27 只在 `register()` 擋**spec 側**，
+  擋不到**呼叫端**夾帶。`call()` 一律把 `_IDENTITY_KEYS` 從 `args` 剝掉並記
+  `IDENTITY_KEY:<鍵>` 到 `last_violations()`。⛔ 不回 `INVALID_INPUT`——那等於
+  告訴模型「你剛才踩到我們在擋的東西」，把守門規則洩出去。
 ①可見性（`specs_for` 名單，不含 ⇒ `NO_MATCH` 並在 trace 記 `FORBIDDEN`）
 ②`scope=="write"`：`readonly_view=True` 時一律 `NO_MATCH`；否則 args 缺
   `confirmation_token`（token 驗證本身是任務 2.4 的事，這裡只查存在）⇒
@@ -56,7 +60,8 @@ ToolError = Literal[
     "RATE_LIMITED",
 ]
 
-# 不變量 18：ToolSpec.input_schema 不得含這六個身分鍵（register() 內擋）。
+# 不變量 18／audit 27：ToolSpec.input_schema 不得含這六個身分鍵（register() 內擋），
+# 且 `call()` 一律從 args 剝掉同一組鍵（1.10 P2）——同一個常數，⛔ 不得各有一份。
 _IDENTITY_KEYS = frozenset(
     {"vendor_id", "role_id", "user_id", "target_user", "mode", "viewer_user_id"}
 )
@@ -206,6 +211,15 @@ class ToolRegistry:
                 f"{sorted(bad_keys)}"
             )
         spec = dict(spec)  # 淺拷貝，避免呼叫端事後改動影響已註冊 spec
+        # 封閉 schema（1.10 P2）：未宣告的鍵一律不收。⛔ 對 `input_schema` 另做一份
+        # 拷貝再 setdefault——直接改原字典會回頭汙染呼叫端的模組級常數
+        # （`KB_GET_SPEC` 之類）。
+        # ⚠️ 連帶約束：`scope="write"` 的 spec **必須**把 `confirmation_token` 寫進
+        #    `properties`，否則守門②放行後會在④被這條 additionalProperties 擋成
+        #    `INVALID_INPUT`（任務 2.4 落 write 工具時注意）。
+        input_schema = dict(input_schema)
+        input_schema.setdefault("additionalProperties", False)
+        spec["input_schema"] = input_schema
         spec.setdefault("facade_only", False)
         self._specs[name] = spec  # type: ignore[assignment]
         self._fns[name] = fn
@@ -303,7 +317,8 @@ class ToolRegistry:
         )
 
     def last_violations(self) -> list[dict[str, Any]]:
-        """回傳目前累積的違規／例外紀錄（`FORBIDDEN`／`EXC:<類名>`）。
+        """回傳目前累積的違規／例外紀錄
+        （`FORBIDDEN`／`EXC:<類名>`／`IDENTITY_KEY:<鍵>`）。
 
         ⛔ 不對外洩到 `ToolResult`——這是 registry 內部 trace，供
         `AgentRuntime`／測試查閱，不進模型可見的回應。
@@ -324,6 +339,15 @@ class ToolRegistry:
         readonly_view: bool = False,
         for_model: bool = False,
     ) -> ToolResult:
+        # ⓪ 身分鍵剝除（1.10 P2）：呼叫端（模型／MCP client）夾帶的 vendor_id 之類
+        #    一律丟掉，⛔ 不讓它有機會覆寫 `identity`。靜默剝除＋記 trace，
+        #    ⛔ 不回錯誤碼（見模組 docstring）。
+        if isinstance(args, dict):
+            stripped = sorted(_IDENTITY_KEYS & set(args.keys()))
+            args = {k: v for k, v in args.items() if k not in _IDENTITY_KEYS}
+            for key in stripped:
+                self._record_violation(identity, name, f"IDENTITY_KEY:{key}")
+
         # ① 可見性
         if name not in self._specs or not self._is_visible(
             identity, name, stage, readonly_view=readonly_view, for_model=for_model

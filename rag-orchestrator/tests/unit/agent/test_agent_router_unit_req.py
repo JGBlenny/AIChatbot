@@ -184,6 +184,16 @@ async def test_health_red_when_kb_probe_raises(monkeypatch):
     assert "RuntimeError" in result["checks"]["tools"]["detail"]
 
 
+def _scope_cols_ready(monkeypatch, ready=True):
+    """把 `api_keys` 作用域兩欄的偵測狀態釘成已知值（1.10 P2）。
+
+    `None`＝尚未偵測，health 會判成 not ready（⛔ 不知道不算 ready），
+    所以要驗其他紅燈條件的測試必須明講這個前提。
+    """
+    import services.api_key_auth as _aka
+    monkeypatch.setattr(_aka, "_agent_scope_cols_present", ready)
+
+
 @pytest.mark.req(_SPEC)
 async def test_health_pending_fields_do_not_cause_red(monkeypatch):
     """大綱／rules_sha 尚未落地 ⇒ `"pending"`，且**不**是紅燈觸發原因
@@ -223,9 +233,14 @@ async def test_health_pending_fields_do_not_cause_red(monkeypatch):
         },
         db_pool=None,
     )
+    # 1.10 P2 起多了一項 `api_keys_agent_scope_ready`——本測試要驗的是「pending
+    # 欄位不致紅」，所以明講前提：兩欄已建。⛔ 不是把新檢查關掉。
+    _scope_cols_ready(monkeypatch)
+
     result = await agent.agent_health(req)
     assert result["checks"]["outline_version"] == "pending"
     assert result["checks"]["rules_sha"] == "pending"
+    assert result["checks"]["api_keys_agent_scope_ready"] is True
     assert result["status"] == "ok"          # kb 可達＋前提乾淨 ⇒ 不因 pending 而紅
 
 
@@ -302,3 +317,93 @@ def test_routers_agent_has_no_auth_enforced_reference():
     assert "auth_enforced" not in src
     # 正對照組：require_api_key_unconditional 確實有被引用（不是整段被刪空）
     assert "require_api_key_unconditional" in src
+
+
+# ════════════════════════════════════════════════════════════════════
+# 1.10 P2：api_keys 的 agent 作用域兩欄未建 ⇒ health 紅
+#
+# 理由：兩欄缺時 `verify_api_key` 降級成 `vendor_ids=None`，而那個值的語義是
+# 「不限業者」——migration 沒套等於每把 key 都全業者通行，卻沒有任何地方會叫。
+# ════════════════════════════════════════════════════════════════════
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+@pytest.mark.parametrize("detected,expect_ready", [(False, False), (True, True)])
+async def test_health_red_when_api_key_scope_cols_missing(monkeypatch,
+                                                          detected, expect_ready):
+    """假偵測回 False ⇒ 紅；正對照：同一組條件下回 True ⇒ 不紅。
+
+    ⛔ 沒有 True 那半邊，這條可能只是「health 本來就恆紅」的假陽性。
+    """
+    import services.api_key_auth as _aka
+    from services.agent.health import compute_agent_health
+
+    async def _fake_detect(pool):
+        return detected
+
+    monkeypatch.setattr(_aka, "detect_agent_scope_cols", _fake_detect)
+    # kb 探針走得通、前提乾淨 ⇒ 紅或不紅只由本項決定
+    monkeypatch.setattr(F, "premise_stats", lambda: {})
+
+    class _FakePool:
+        def getconn(self):
+            class _Conn:
+                def cursor(self):
+                    class _Cur:
+                        def execute(self, *a, **k):
+                            pass
+
+                        def fetchone(self):
+                            return None
+
+                        def close(self):
+                            pass
+                    return _Cur()
+            return _Conn()
+
+        def putconn(self, conn):
+            pass
+
+    result = await compute_agent_health(
+        registry=F.build_registry(F.FacadeDeps(get_db_pool=lambda: None,
+                                               get_kb_pool=lambda: None,
+                                               get_retriever=None)),
+        get_kb_pool=lambda: _FakePool(),
+        stage="M0",
+        get_api_key_pool=lambda: object(),      # 非 None ⇒ 走主動探測
+    )
+
+    assert result["checks"]["api_keys_agent_scope_ready"] is expect_ready
+    assert result["checks"]["tools"]["kb_get_reachable"] is True
+    if expect_ready:
+        assert result["status"] == "ok", result["checks"]
+    else:
+        assert result["status"] == "red", result["checks"]
+        assert "vendor_ids=None" in result["checks"]["api_keys_agent_scope_detail"]
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.10")
+async def test_health_unknown_scope_detection_is_not_ready(monkeypatch):
+    """沒有 pool 可探、行程也還沒偵測過 ⇒ **不是 ready**（⛔ 不把不知道印成綠）。
+
+    正對照：同一條路徑下把行程級快取釘成 True ⇒ ready。
+    """
+    import services.api_key_auth as _aka
+    from services.agent.health import compute_agent_health
+
+    async def _run():
+        return await compute_agent_health(
+            registry=F.build_registry(F.FacadeDeps(get_db_pool=lambda: None,
+                                                   get_kb_pool=lambda: None,
+                                                   get_retriever=None)),
+            get_kb_pool=lambda: None,
+            stage="M0",
+        )
+
+    monkeypatch.setattr(_aka, "_agent_scope_cols_present", None)
+    unknown = await _run()
+    assert unknown["checks"]["api_keys_agent_scope_ready"] is False
+    assert "尚未偵測" in unknown["checks"]["api_keys_agent_scope_detail"]
+
+    monkeypatch.setattr(_aka, "_agent_scope_cols_present", True)
+    known = await _run()
+    assert known["checks"]["api_keys_agent_scope_ready"] is True

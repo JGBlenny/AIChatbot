@@ -108,5 +108,10 @@ async def agent_health(request: Request):
     await _require_key(request)
     registry, deps = _get_registry_and_deps(request)
     return await compute_agent_health(
-        registry=registry, get_kb_pool=deps.get_kb_pool, stage=deps.stage
+        registry=registry,
+        get_kb_pool=deps.get_kb_pool,
+        stage=deps.stage,
+        # `api_keys` 欄位偵測要 asyncpg pool——`deps.get_db_pool` 就是
+        # `app.state.db_pool`（1.10 P2 的 `api_keys_agent_scope_ready` 一項）。
+        get_api_key_pool=deps.get_db_pool,
     )

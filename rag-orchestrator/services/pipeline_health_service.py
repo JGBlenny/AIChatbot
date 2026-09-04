@@ -802,6 +802,13 @@ class PipelineHealthService:
             from services.agent import mcp_facade as _mcp_facade
             from services.agent.health import compute_agent_health
 
+            # ⚠️ `get_api_key_pool` 給不出來：本服務是 module-level singleton
+            # （`routers/system_health.py:_health_service`），拿不到 FastAPI 的
+            # `app.state.db_pool`（asyncpg）。於是 `api_keys_agent_scope_ready`
+            # 這一項只讀 `api_key_auth` 的行程級偵測快取——`RAG_API_AUTH_ENFORCE`
+            # 開著時第一個帶 key 的請求就會填上；若整個行程從未驗過 key，
+            # 這裡會回「尚未偵測」⇒ Agent 子項（非核心）unhealthy。
+            # ⛔ 不在這裡另寫一套 psycopg2 版偵測（單一偵測來源）。
             result = await compute_agent_health(
                 registry=self._get_agent_registry(),
                 get_kb_pool=self._get_agent_kb_pool,

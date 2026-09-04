@@ -17,8 +17,18 @@
    ⚠️ 第一項非零**不代表出事**——`/mcp` 是刻意的低量非公開通道，這是「有流量了，
    去看一眼是不是預期中的呼叫方」的告警，不是錯誤（見 mcp_facade 模組 docstring
    「兩條 P0 REJECT 的補償條件」）。
-4. **MCP SDK 是否可匯入**（`mcp_sdk_available()`）：否 ⇒ `"unavailable (DSP-014)"`，
-   ⛔ 不算紅（已知的相依衝突，`/mcp` 服務層閘仍生效，只是工具面未掛載）。
+4. **MCP SDK 是否可匯入**（`mcp_sdk_available()`）：DSP-014 A 之後 SDK 已是正式
+   相依，這裡只是防禦性守衛；否 ⇒ `"unavailable (DSP-014)"`，⛔ 不算紅
+   （`/mcp` 服務層閘仍生效，只是工具面未掛載）。
+5. **`api_keys` 的 agent 作用域兩欄是否已建**（`api_keys_agent_scope_ready`，1.10 P2）：
+   否 ⇒ **紅**。理由：`is_internal`／`vendor_ids` 缺欄時 `verify_api_key` 會降級成
+   `vendor_ids=None`，而那個值的語義是「**不限業者**」——migration 沒套等於每一把 key
+   都變成全業者通行，卻沒有任何地方會叫。
+   ⚠️ **有 pool 才驗得準**：呼叫端有給 `get_api_key_pool` 時當場探測；沒給時只讀
+   `api_key_auth.agent_scope_cols_state()` 的行程級快取，該行程若還沒驗過任何
+   API key 就是 `None`＝**尚未證明** ⇒ 一樣算紅（⛔ 不把「不知道」印成綠）。
+   `RAG_API_AUTH_ENFORCE` 開著時每個非豁免請求都會驗 key，快取通常在第一個
+   請求就被填上。
 
 HTTP 一律 200（健檢 API 慣例，見任務 brief）；紅以 `status` 欄位表達，
 ⛔ 不藉由 non-2xx 讓呼叫端誤判成「這支 API 本身壞了」。
@@ -27,6 +37,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional
 
+from services import api_key_auth
 from services.agent import mcp_facade
 from services.agent.identity import Identity, Stage
 from services.agent.tools.kb import kb_get
@@ -60,6 +71,28 @@ async def _check_kb_reachable(get_kb_pool: Optional[Callable[[], Any]]) -> tuple
     return True, "ok"
 
 
+_SCOPE_NOT_READY = (
+    "api_keys 缺 is_internal／vendor_ids（migration "
+    "20260904_api_keys_agent_scope.sql 未套）⇒ verify_api_key 降級成 "
+    "vendor_ids=None＝不限業者"
+)
+
+
+async def _check_agent_scope_ready(get_api_key_pool) -> tuple:
+    """回傳 `(ready, detail)`；`ready` 只有在**兩欄都證實存在**時才是 True。"""
+    pool = get_api_key_pool() if get_api_key_pool else None
+    if pool is not None:
+        ready = await api_key_auth.detect_agent_scope_cols(pool)
+        return ready, ("ok" if ready else _SCOPE_NOT_READY)
+    state = api_key_auth.agent_scope_cols_state()
+    if state is True:
+        return True, "ok（沿用行程級偵測快取）"
+    if state is False:
+        return False, _SCOPE_NOT_READY
+    return False, ("尚未偵測——本行程還沒驗過任何 API key，健檢也沒拿到可探測的 pool；"
+                   "⛔ 不把「不知道」當成 ready")
+
+
 def _premise_flags(stats: dict) -> list:
     """DSP-011 前提偵測四項：前三項任一非零，或第四項為真 ⇒ 列名。"""
     flags = []
@@ -79,6 +112,7 @@ async def compute_agent_health(
     registry,
     get_kb_pool: Optional[Callable[[], Any]],
     stage: Stage,
+    get_api_key_pool: Optional[Callable[[], Any]] = None,
 ) -> dict:
     """`/api/v1/agent/health` 與 `system_health` 的 `Agent` 子項共用的核心邏輯。
 
@@ -86,6 +120,8 @@ async def compute_agent_health(
         registry: `ToolRegistry`（`mcp_facade.build_registry()` 建的那份）。
         get_kb_pool: `kb.get` 用的 psycopg2 風格 pool getter（可為 `None`）。
         stage: 部署里程碑（`mcp_facade.current_stage()`）。
+        get_api_key_pool: `api_keys` 欄位偵測用的 **asyncpg** pool getter
+            （可為 `None`；沒給就只讀行程級偵測快取，見模組 docstring 第 5 點）。
 
     Returns:
         `{"status": "ok" | "red", "checks": {...}}`。
@@ -100,7 +136,9 @@ async def compute_agent_health(
     stats = mcp_facade.premise_stats()
     flags = _premise_flags(stats)
 
-    red = spec_count == 0 or not kb_reachable or bool(flags)
+    scope_ready, scope_detail = await _check_agent_scope_ready(get_api_key_pool)
+
+    red = spec_count == 0 or not kb_reachable or bool(flags) or not scope_ready
 
     return {
         "status": "red" if red else "ok",
@@ -123,5 +161,7 @@ async def compute_agent_health(
                 "red_flags": flags,
             },
             "mcp_sdk": "ok" if sdk_ok else "unavailable (DSP-014)",
+            "api_keys_agent_scope_ready": scope_ready,
+            "api_keys_agent_scope_detail": scope_detail,
         },
     }

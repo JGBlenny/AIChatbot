@@ -7,13 +7,13 @@
 ④ 一次工具呼叫 ⇒ **恰一列** `usage_events`（不變量 31）
 ⑤ `session_id="backtest_…"` 在 `/mcp` 仍計額（`is_internal=false`；決策 13）
 ⑥ key 的 `vendor_ids=[2]` 對 header vendor 1 ⇒ 403
-⑦ 以 MCP client 真的 `list_tools` ＋ `call_tool`（SDK 未裝 ⇒ skip，見下）
+⑦ 以 MCP client 真的 `list_tools` ＋ `call_tool`
 
-⚠️ **⑦ 目前必然 skip**：2026-09-04 實查 `mcp==2.1.1` 與 `fastapi==0.104.1`
-相依衝突（`pip install --dry-run 'fastapi==0.104.1' 'mcp==2.1.1'` ⇒
-ResolutionImpossible：anyio<4 vs anyio>=4.9），正式 image 未裝 SDK。
-詳見 `rag-orchestrator/requirements.txt` 的說明區塊——這是待業主裁決的相依升級，
-⛔ 不得以「skip 了就算過」帶過。①–⑥ 不依賴 SDK，全部實跑。
+✅ **⑦ 已實跑**（DSP-014 裁 A、1.7b 升版後）：`mcp==2.1.1` 已是正式相依，
+原本的 `fastapi==0.104.1` × `anyio<4` 衝突已解除（版本見 `requirements.txt`
+的 MCP 區塊）。下方仍保留 `mcp_sdk_available()` 的 skip 分支當**供裝守衛**——
+它若真的觸發，代表 image 供裝壞了，⛔ 不得以「skip 了就算過」帶過。
+①–⑥ 不依賴 SDK，全部實跑。
 
 清理：本檔寫入的 `api_keys`／`usage_events` 列一律在 finally 依名稱／session 前綴刪除；
 開跑前先驗該區間為空（⛔ 不覆蓋既有資料）。
@@ -471,17 +471,18 @@ async def test_verify_api_key_returns_agent_scope_columns(pool):
 async def test_real_mcp_client_lists_and_calls_tools(pool, monkeypatch):
     """真 MCP client 走完 initialize → tools/list → tools/call，並驗身分過濾。
 
-    ⚠️ 這段的形狀已在**裝了 SDK 的獨立 image** 實跑驗證過（見檔頭）：
+    ✅ DSP-014 裁 A 之後 SDK 已是正式相依，本測試在 production 相依上**真的跑**：
     `/mcp` 401／403、tenant 看得到 `kb.search`、prospect 看不到、
     `call_tool` 回 structured result、`usage_events` 一呼叫一列。
-    ⛔ 但那個 image 的 fastapi／starlette／pydantic 與 production 不同，
-    故**不當作 production 綠**；本測試在 production 相依裝上 SDK 後才會真的跑。
+
+    下方 skip 分支是**供裝守衛**，⛔ 不是常態路徑——會觸發就代表 image 壞了。
     """
     available, reason = F.mcp_sdk_available()
     if not available:
         pytest.skip(
-            f"[env] MCP SDK 未安裝（{reason}）——mcp==2.1.1 與 fastapi==0.104.1 相依衝突"
-            "（anyio<4 vs anyio>=4.9），待業主裁決是否升 fastapi；見 requirements.txt")
+            f"[env] MCP SDK 匯入失敗（{reason}）——DSP-014 A 之後 mcp==2.1.1 已是"
+            "正式相依，這代表**供裝壞了**，請查 image／requirements.txt，"
+            "⛔ 不是預期中的 skip")
 
     import uvicorn
     from mcp import Client

@@ -16,6 +16,7 @@
 """
 import hashlib
 import os
+import time
 from typing import Any, Optional
 
 # 豁免路徑：健康檢查 / 文件 / 首頁（CORS 預檢 OPTIONS 於 middleware 另行放行）
@@ -39,11 +40,21 @@ def auth_enforced() -> bool:
 
 
 # ── api_keys 的 agent 作用域兩欄（migration 20260904_api_keys_agent_scope.sql）──
-# 一次性偵測快取，比照 services/usage_metering.py 的 `_score_cols_present` 慣例：
-# None＝尚未偵測；True/False＝欄位是否已建。**欄位未建時降級**（is_internal=False、
-# vendor_ids=None＝不限），⛔ 不讓整筆驗證失敗——migration 未套不該把既有呼叫者鎖在門外。
+# 偵測快取：None＝尚未偵測；True/False＝欄位是否已建。**欄位未建時降級**
+# （is_internal=False、vendor_ids=None＝不限），⛔ 不讓整筆驗證失敗——
+# migration 未套不該把既有呼叫者鎖在門外。
+#
+# ⚠️ **False ⛔ 不得永久快取**（1.10 P2，1.9 security review）：`vendor_ids=None`
+# 的降級語義是「**不限業者**」——migration 套上去之前，每一把 key 都會被當成
+# 不限。原實作在「欄位不存在」時把 False 寫進行程級快取且**永不重試**，
+# 於是 migration 套好之後，舊行程仍會一路降級到重啟為止。改為帶 TTL：
+# True 永久快取（欄位不會自己消失），False／偵測失敗只快取
+# `_AGENT_SCOPE_RECHECK_S` 秒。健檢另有 `api_keys_agent_scope_ready` 一項
+# （`services/agent/health.py`）在降級期間致紅，⛔ 不讓它靜悄悄地跑。
 _AGENT_SCOPE_COLS = ("is_internal", "vendor_ids")
+_AGENT_SCOPE_RECHECK_S = 60.0
 _agent_scope_cols_present: Optional[bool] = None
+_agent_scope_checked_at: float = 0.0
 
 _BASE_SELECT = "SELECT id, name FROM api_keys WHERE key_hash = $1 AND is_active = TRUE"
 _EXTENDED_SELECT = (
@@ -54,26 +65,59 @@ _EXTENDED_SELECT = (
 
 def _reset_agent_scope_detection() -> None:
     """測試用：清掉欄位偵測快取（⛔ 產品路徑不呼叫）。"""
-    global _agent_scope_cols_present
+    global _agent_scope_cols_present, _agent_scope_checked_at
     _agent_scope_cols_present = None
+    _agent_scope_checked_at = 0.0
+
+
+def agent_scope_cols_state() -> Optional[bool]:
+    """目前已知的偵測結果：`True`＝兩欄都在；`False`＝不在／偵測失敗；
+    `None`＝這個行程還沒偵測過。健檢（`services/agent/health.py`）用。
+
+    ⛔ 唯讀，不觸發偵測——偵測要有連線，那是 `detect_agent_scope_cols(pool)`。
+    """
+    return _agent_scope_cols_present
 
 
 async def _detect_agent_scope_cols(conn) -> bool:
-    """查 information_schema 判斷兩欄是否都在；偵測失敗保持未知（下次重試）。"""
-    global _agent_scope_cols_present
-    if _agent_scope_cols_present is not None:
-        return _agent_scope_cols_present
+    """查 information_schema 判斷兩欄是否都在。
+
+    `True` 永久快取；`False`（欄位不存在或偵測失敗）只快取
+    `_AGENT_SCOPE_RECHECK_S` 秒——見上方常數區的理由，⛔ 不要改回永久快取。
+    """
+    global _agent_scope_cols_present, _agent_scope_checked_at
+    if _agent_scope_cols_present is True:
+        return True
+    if (_agent_scope_cols_present is False
+            and (time.monotonic() - _agent_scope_checked_at) < _AGENT_SCOPE_RECHECK_S):
+        return False
     try:
         n = await conn.fetchval(
             "SELECT count(*) FROM information_schema.columns "
             "WHERE table_name = 'api_keys' AND column_name = ANY($1::text[])",
             list(_AGENT_SCOPE_COLS),
         )
-    except Exception as e:  # noqa: BLE001 — 偵測失敗＝未知，維持 None 下次重試
-        print(f"⚠️ [security] api_keys agent 作用域欄位偵測失敗（本次降級）：{e}")
+    except Exception as e:  # noqa: BLE001 — 偵測失敗＝降級，但只降級 TTL 這段時間
+        print(f"⚠️ [security] api_keys agent 作用域欄位偵測失敗（本次降級，"
+              f"{_AGENT_SCOPE_RECHECK_S:.0f} 秒後重試）：{e}")
+        _agent_scope_cols_present = False
+        _agent_scope_checked_at = time.monotonic()
         return False
     _agent_scope_cols_present = (int(n or 0) == len(_AGENT_SCOPE_COLS))
+    _agent_scope_checked_at = time.monotonic()
     return _agent_scope_cols_present
+
+
+async def detect_agent_scope_cols(pool) -> bool:
+    """健檢入口：借一條連線跑同一份偵測（走同一個 TTL 快取，⛔ 不另建第二套）。"""
+    if pool is None:
+        return False
+    try:
+        async with pool.acquire() as conn:
+            return await _detect_agent_scope_cols(conn)
+    except Exception as e:  # noqa: BLE001 — 連線不到＝無法證明欄位在＝不 ready
+        print(f"⚠️ [security] api_keys agent 作用域欄位健檢查詢失敗：{e}")
+        return False
 
 
 def _normalize_key_row(row: Any) -> dict:

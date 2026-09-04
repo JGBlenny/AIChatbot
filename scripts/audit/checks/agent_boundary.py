@@ -11,7 +11,7 @@ design.md 附錄 B 稱這五條為「不變量 18–22」，但合併時發現
 
 | 本檔 print 的編號 | design.md 附錄 B 編號 | 內容 |
 |---|---|---|
-| 27 | 18 | `ToolSpec.input_schema` 無身分鍵 |
+| 27 | 18 | `ToolSpec.input_schema` 無身分鍵（掃 `services/agent/**/*.py`）|
 | 28 | 19 | `_EXEMPT_PREFIX` 不含 `/mcp`；門面內不得出現 `auth_enforced` |
 | 29 | 20 | 可見性謂詞單一來源（`build_visibility_predicate`） |
 | 30 | 21 | `decision_snapshot.agent*` 無原文鍵 |
@@ -117,27 +117,82 @@ def _find_input_schema_dicts(tree, src):
     return found
 
 
-def check_27_toolspec_identity_keys(src=None, path="services/agent/tools/registry.py"):
-    """design 18：`ToolSpec.input_schema` 不得含身分鍵。"""
-    full = os.path.join(RAG, path)
-    if src is None:
-        src = _read(full)
-    if src is None:
-        return True, f"{path} 不存在，通過（空集合）"
-    tree = _parse(src)
-    if tree is None:
-        return False, f"{path} 語法錯誤，無法 AST 掃描——大聲失敗"
-    specs = _find_input_schema_dicts(tree, src)
+def _agent_py_paths():
+    """`services/agent/**/*.py` 的相對路徑清單（走訪方式比照 `check_30`）。
+
+    ⚠️ **1.10 修**：本檢查原本只掃 `services/agent/tools/registry.py`，
+    但那裡沒有任何 `input_schema` 字面量——真正的 spec 住在
+    `services/agent/tools/kb.py`（`KB_GET_SPEC`／`KB_SEARCH_SPEC`）與
+    `services/agent/mcp_facade.py`（`HELP_READ_SPEC`／`_jgb2_spec`）。
+    於是這條不變量長期掃到 0 個 spec 卻印綠燈（空跑綠燈）。
+    """
+    out = []
+    agent_dir = os.path.join(RAG, "services", "agent")
+    if os.path.isdir(agent_dir):
+        for root, _dirs, files in os.walk(agent_dir):
+            for fn in sorted(files):
+                if fn.endswith(".py"):
+                    out.append(os.path.relpath(os.path.join(root, fn), RAG))
+    return sorted(out)
+
+
+def scan_27_specs(src=None, path=None, paths=None):
+    """回傳 `(specs, errors)`。
+
+    `specs` = `[(rel, lineno, properties_keys)]`；`errors` = 硬錯誤字串清單
+    （檔案讀不到、AST 掃不動——一律大聲失敗，⛔ 不吞成「空集合通過」）。
+
+    三種輸入模式：`src=` 單一記憶體來源（自測用）／`paths=` 明示清單／
+    兩者皆無 ⇒ 走訪 `services/agent/**/*.py`。
+    """
+    if src is not None:
+        sources = [(path or "<src>", src)]
+    else:
+        rels = list(paths) if paths is not None else _agent_py_paths()
+        sources = []
+        for rel in rels:
+            sources.append((rel, _read(os.path.join(RAG, rel))))
+
+    specs, errors = [], []
+    for rel, text in sources:
+        if text is None:
+            errors.append(f"{rel} 讀不到——大聲失敗")
+            continue
+        tree = _parse(text)
+        if tree is None:
+            errors.append(f"{rel} 語法錯誤，無法 AST 掃描——大聲失敗")
+            continue
+        for lineno, keys in _find_input_schema_dicts(tree, text):
+            specs.append((rel, lineno, keys))
+    return specs, errors
+
+
+def check_27_toolspec_identity_keys(src=None, path=None, paths=None):
+    """design 18：`ToolSpec.input_schema` 不得含身分鍵。
+
+    掃描範圍預設 `services/agent/**/*.py`（見 `_agent_py_paths`）。
+    **掃到 0 個 spec ⇒ FAIL**——這條不變量的價值全靠「真的掃到東西」，
+    掃不到只可能是路徑錯了或 spec 搬家了，⛔ 不得再印「空集合通過」。
+    """
+    specs, errors = scan_27_specs(src=src, path=path, paths=paths)
+    label = (path or "<src>") if src is not None else (
+        "、".join(paths) if paths is not None else "services/agent/**/*.py")
+    if errors:
+        return False, f"{label}：" + "；".join(errors)
     if not specs:
-        return True, f"{path} 掃到 0 個帶 input_schema 的 ToolSpec/register 呼叫，通過（空集合）"
+        return False, (f"{label}：掃到 0 個帶 input_schema 的 ToolSpec/register "
+                       "字面量——大聲失敗（這條不變量若掃不到東西就只是空跑綠燈；"
+                       "spec 可能搬家了，請更新掃描路徑）")
     bad = []
-    for lineno, keys in specs:
+    for rel, lineno, keys in specs:
         hit = keys & IDENTITY_KEYS
         if hit:
-            bad.append(f"第 {lineno} 行 input_schema.properties 含身分鍵 {sorted(hit)}")
+            bad.append(f"{rel} 第 {lineno} 行 input_schema.properties 含身分鍵 {sorted(hit)}")
     if bad:
-        return False, f"{path}：" + "；".join(bad)
-    return True, f"{path}：{len(specs)} 個 input_schema 均無身分鍵"
+        return False, "；".join(bad)
+    files = sorted({rel for rel, _l, _k in specs})
+    return True, (f"{label}：掃到 {len(specs)} 個 input_schema（分佈於 {len(files)} 個檔："
+                  f"{'、'.join(files)}），均無身分鍵")
 
 
 # ───────────────────────── 28（design 19）/mcp 無條件 401；門面不得看 auth_enforced ─────────────────────────
@@ -371,11 +426,26 @@ def _self_test_27():
         "from services.agent.tools.registry import ToolSpec\n"
         "SPEC = ToolSpec(name='kb.get', input_schema={'properties': {'kb_id': {'type': 'string'}, 'vendor_id': {'type': 'integer'}}})\n"
     )
+    kb_specs, kb_errors = scan_27_specs(paths=["services/agent/tools/kb.py"])
+    all_specs, all_errors = scan_27_specs()
+    all_files = {rel for rel, _l, _k in all_specs}
     cases = [
-        ("正對照：現況 registry.py 通過", check_27_toolspec_identity_keys()[0] is True),
+        ("正對照：現況 services/agent/**/*.py 通過",
+         check_27_toolspec_identity_keys()[0] is True),
+        ("正對照：kb.py 掃到 ≥2 個 input_schema（不是空跑）",
+         len(kb_specs) >= 2 and not kb_errors),
+        ("正對照：預設走訪至少涵蓋 2 個檔（kb.py ＋ mcp_facade.py）",
+         len(all_files) >= 2 and not all_errors),
+        ("正對照：mcp_facade.py 的 spec 有被掃到",
+         any(rel.endswith("mcp_facade.py") for rel in all_files)),
         ("假 spec 無身分鍵 → 通過", check_27_toolspec_identity_keys(src=good_src)[0] is True),
         ("假 spec 含 vendor_id → 必須紅", check_27_toolspec_identity_keys(src=bad_src)[0] is False),
-        ("不存在的檔案 → 空集合通過", check_27_toolspec_identity_keys(path="services/agent/tools/does_not_exist.py")[0] is True),
+        ("假檔只有一個乾淨 spec 也算掃到 → 通過",
+         check_27_toolspec_identity_keys(src=good_src, path="services/_fake_spec.py")[0] is True),
+        ("空來源（0 個 spec）→ 必須紅（大聲失敗，⛔ 不再印空集合通過）",
+         check_27_toolspec_identity_keys(src="X = 1\n")[0] is False),
+        ("不存在的檔案 → 必須紅（讀不到＝大聲失敗）",
+         check_27_toolspec_identity_keys(paths=["services/agent/tools/does_not_exist.py"])[0] is False),
     ]
     return cases
 

@@ -52,9 +52,10 @@
   - 需求：2.6, 11.3
   - 執行：security-reviewer／effort 高——唯讀；READY 是 M0 done 條件
   - **進度（2026-09-04）**：security-reviewer REVISE（1 P1：tenant 缺 user_id 的 bills／contracts 洩整 role；5 P2；6 P3，正本 `reviews/m0-security-review.md`）→ 1.10 處置中；fresh verifier 對 M0 邊界 CONFIRMED（1.10 前，同檔）。1.10 收回後對 P1 做一次定向 recheck 再收 M0。
-- [ ] 1.10 處置 1.9 審查（security-executor，worktree）：P1 雙證強制（非 pm）＋文件；不變量 27 掃 `services/agent/**`＋0 spec 即紅；`registry.call` 剝身分鍵＋`additionalProperties` 預設 false；`verify_api_key` 偵測 TTL＋health 紅旗 `api_keys_agent_scope_ready`；文件 SDK 狀態同步。M1 備註：不變量 29 抽取繞法、候選列投影、blocked 事件列、`facade_only` 在 `/mcp` 語義、`help.read` audience。
+- [x] 1.10 處置 1.9 審查（security-executor，worktree）：P1 雙證強制（非 pm）＋文件；不變量 27 掃 `services/agent/**`＋0 spec 即紅；`registry.call` 剝身分鍵＋`additionalProperties` 預設 false；`verify_api_key` 偵測 TTL＋health 紅旗 `api_keys_agent_scope_ready`；文件 SDK 狀態同步。M1 備註：不變量 29 抽取繞法、候選列投影、blocked 事件列、`facade_only` 在 `/mcp` 語義、`help.read` audience。
   - 需求：2.1, 2.2, 10.4, 11.3
   - 執行：security-executor／effort 中——已診斷、修法明確
+  - **收案註記（2026-09-04）**：security-executor（worktree）→ 收檔重跑 unit agent／audit／security／retrieval 373 綠、integration agent 85 綠（⑦ 實跑）、不變量 27 掃到 4 個 spec；executor 全 unit 2698 過 1 已知紅（stash 基準對照同一紅）。P1：`_identity_gate_ok`（pm 單證、其餘雙證，`_audience_of` fail-closed 當 tenant）＋5 leak case 零出向＋文件 §4.2 證件矩陣；integration `test_bills_without_viewer_user_id_does_not_raise` 改 pm 身分（職責是證明 mock 不逢 bills 必炸，需真發一通），另加 tenant 零出向案。不變量 27 走訪 `services/agent/**`＋0 spec 即紅（self-test 25）。`register()` 拷貝 schema 再 `additionalProperties=False`（⚠️ 2.4 寫入工具的 `confirmation_token` 必須進 properties）；`call()` 剝身分鍵記 `IDENTITY_KEY:*`。`_detect_agent_scope_cols` False 只快取 60 秒；health 加 `api_keys_agent_scope_ready`（未偵測算紅——`pipeline-health` 的 Agent 子項在行程未驗過任何 key 前 unhealthy，是否加第三態待裁）。文件 SDK 狀態同步。觀察：不變量 30 也是空跑綠（M1 備註）；`.claude/MAP.md` 缺 `agentic-mcp` 功能鍵（建議補，屬另一視窗範圍）。待：定向 recheck（verifier）＋容器重建。
   - **M0 收案前置（2026-09-04 容器事故）**：本機 `:8100` image 不含 `services/agent/**`，1.1 後 retriever import `services.agent.identity` ⇒ 只 docker cp 單檔重啟會 `ModuleNotFoundError` 起不來（已以 cp 整個套件暫救、health 200）。M0 收案一律 **rebuild image**（⛔ 不靠 docker cp）；`scripts/audit/check_invariants.sh` 的容器一致性清單要加 `services/agent/**`、`services/jgb/transport.py`（現只抓 `jgb_system_api.py`，retriever 先前不一致也沒紅）。
 
 ## 2. M1 Runtime、Verifier、確認契約（1.3 後；2.1／2.3／2.4 可平行）

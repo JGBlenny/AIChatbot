@@ -8,10 +8,17 @@
 包成 `ToolResult`。⛔ 本檔不 import `services.agent.tools.registry`（1.3 平行中）。
 
 身分（DSP-011，本系統只管額度、權限交 jgb2 API 裁）：
-- bills／contracts：呼叫時帶 `viewer_user_id=identity.user_id`（jgb2 圈定，
-  `get_bills`／`get_contracts` 的顯式轉發，見 `jgb_system_api.py`）；本工具層只要求
-  `role_id` 存在才嘗試查詢（API 本身對 `user_id`/`bill_ref`/`contract_ids` 三選一
-  另有 `_validate_identity` 檢查，查無識別即自然降級為空列 → `NO_MATCH`）。
+- **bills／contracts（1.10 P1 修正，⛔ 勿改回只看 role_id）**：受眾決定要幾張證。
+  `property_manager` ⇒ `role_id` 單證即可（pm 查的是自己名下整個 role 的帳單／
+  合約，1.5 收案時刻意不帶 `user_id`，否則 jgb2 的 `to_user_id` 圈定會把 pm 自己
+  的查詢過濾成空）；**其餘受眾（tenant／prospect）⇒ 一律
+  `JGBSystemAPI._validate_identity(role_id, user_id)` 雙證，缺一即 `NO_MATCH`**。
+  理由：`viewer_user_id` 空值不會被轉發（`jgb_system_api.py` 只在非空時放進
+  params），而 jgb2 的 `get_contracts` 只要 `role_id` 就受理、`get_bills` 只要
+  `role_id`＋`bill_ref` 就受理——租客缺 `user_id` 時等於拿整個 role 的個資。
+  受眾取自 `identity.resolved_audience()`（`services/agent/identity.py`）；
+  取不到一律 **fail-closed 當 tenant**（要雙證），見 `_audience_of`。
+  雙證通過後仍帶 `viewer_user_id=identity.user_id` 交 jgb2 圈定（Layer 2）。
 - accounts／meters／estates：本工具層以 `JGBSystemAPI._validate_identity(role_id,
   user_id)` 作為**雙證閘門**（沿用既有函式，純粹檢查兩者皆非空——不代表這兩個
   API 呼叫本身消費 `user_id`，多數不支援 viewer 圈定，見域映射表「不支援」欄）；
@@ -108,6 +115,36 @@ def _rows_of(resp: Optional[dict[str, Any]]) -> list[dict[str, Any]]:
     return []
 
 
+# ── 身分閘（1.10 P1）────────────────────────────────────────────────────────
+def _audience_of(identity: Any) -> str:
+    """呼叫者受眾；**fail-closed**——取不到／算不出一律回 `"tenant"`（最嚴：要雙證）。
+
+    ⛔ 不 import `services.agent.identity`：本檔對 identity 一律鴨子型別存取
+    （見模組 docstring 的 1.3 註記），假身分（`SimpleNamespace`）也要能用。
+    """
+    resolver = getattr(identity, "resolved_audience", None)
+    if callable(resolver):
+        try:
+            audience = resolver()
+        except Exception:  # noqa: BLE001 — 算不出受眾＝未知＝按最嚴的 tenant 走
+            return "tenant"
+        if isinstance(audience, str) and audience:
+            return audience
+    return "tenant"
+
+
+def _identity_gate_ok(identity: Any, role_id: Any, user_id: Any) -> bool:
+    """bills／contracts 的身分閘：pm 單證、其餘雙證。
+
+    ⚠️ **勿改回 `if not role_id`**（1.9 security review P1）：那讓 tenant 缺
+    `user_id` 時仍發查詢，而 `viewer_user_id` 空值不轉發 ⇒ jgb2 只認 `role_id`
+    ⇒ 回整個 role 的帳單／合約。契約見 `docs/api/mcp-facade.md` §4.2。
+    """
+    if _audience_of(identity) == "property_manager":
+        return bool(role_id)
+    return JGBSystemAPI._validate_identity(role_id, user_id)
+
+
 Fetch = Callable[[Optional[str]], Awaitable[list[dict[str, Any]]]]
 
 
@@ -160,9 +197,9 @@ async def query_bills(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
         return _invalid_input()
 
     role_id = getattr(identity, "role_id", None)
-    if not role_id:
-        return _no_match()
     user_id = getattr(identity, "user_id", None)
+    if not _identity_gate_ok(identity, role_id, user_id):
+        return _no_match()
     api = _get_api()
 
     async def fetch(q: Optional[str]) -> list[dict[str, Any]]:
@@ -184,9 +221,9 @@ async def query_contracts(identity: Any, args: dict[str, Any]) -> dict[str, Any]
         return _invalid_input()
 
     role_id = getattr(identity, "role_id", None)
-    if not role_id:
-        return _no_match()
     user_id = getattr(identity, "user_id", None)
+    if not _identity_gate_ok(identity, role_id, user_id):
+        return _no_match()
     api = _get_api()
 
     async def fetch_ref(r: str) -> list[dict[str, Any]]:

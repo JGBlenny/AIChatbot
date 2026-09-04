@@ -17,14 +17,17 @@
 |---|---|
 | 服務層閘（X-API-Key／Origin／X-JGB-Identity） | **已上線可用**，且已有整合測試 |
 | 額度計量（一次工具呼叫一列 `usage_events`） | **已實作並實測** |
-| MCP 工具面（`tools/list`／`tools/call`） | **尚未掛載**——Python MCP SDK 與現行 `fastapi==0.104.1` 相依衝突，待業主裁決是否升 fastapi |
+| MCP 工具面（`tools/list`／`tools/call`） | **SDK 已為正式相依**（DSP-014 裁 A）——`requirements.txt` 已升 web stack 承載 `mcp==2.1.1` |
 
-> 相依衝突實查（可重跑）：
-> `pip install --dry-run 'fastapi==0.104.1' 'mcp==2.1.1'` ⇒ `ResolutionImpossible`
-> （fastapi 要 `anyio<4.0.0`、mcp 要 `anyio>=4.9`）。細節與硬裝後的實測後果見
-> `rag-orchestrator/requirements.txt` 的 MCP 區塊。
-> **在裁決前**：`/mcp` 的三道閘照常生效（缺 key 401、非白名單 Origin 403、
-> 身分 header 不合法 400／403），過閘後因工具面未掛而回 404。
+> **DSP-014（2026-09-04 裁 A）**：原本的 `fastapi==0.104.1` × `mcp==2.1.1` 相依
+> 衝突（fastapi 要 `anyio<4.0.0`、mcp 要 `anyio>=4.9`）已藉由升級 web stack 解除：
+> fastapi 0.115.14／starlette 0.46／pydantic 2.13／anyio 4.15／uvicorn 0.52。
+> 版本與理由見 `rag-orchestrator/requirements.txt` 的 MCP 區塊。
+>
+> `mcp_facade.mcp_sdk_available()` 因此**只是防禦性守衛**，⛔ 不再代表「尚未安裝」：
+> 它讓 `/mcp` 的三道閘（缺 key 401、非白名單 Origin 403、身分 header 不合法
+> 400／403）在 image 供裝出錯時仍然成立（工具面掛不上、過閘後回 404），
+> 而不是整個 app 起不來。正常部署下它必為可用；回不可用代表**供裝壞了**。
 
 ## 2. 端點與必帶 header
 
@@ -112,19 +115,39 @@ X-JGB-Identity: {"vendor_id":1,"session_id":"jgb2-web-8f3c…","mode":"b2c",
 - 速率限制的桶是 `(api_key_id, vendor_id)`，**不含 `session_id`**——換 session
   不會重置計數，這是刻意的。
 
-### 4.2 `role_id=null` 的租客組合，以及它的可見性後果
+### 4.2 `role_id`／`user_id` 缺漏時的可見性後果
 
 `{"vendor_id":1,"session_id":"…","target_user":"tenant","role_id":null}` 是**合法**組合。
 後果分兩塊，⚠️ 兩塊的答案不一樣：
 
 | 面 | 結果 |
 |---|---|
-| **知識池**（`kb.get`／`kb.search`／`help.read`） | 照 tenant 池給——`role_id` 不參與知識可見性判定 |
-| **jgb2 個資**（`jgb2.query.*`） | 一律 `NO_MATCH`——`JGBSystemAPI` 要 `role_id`＋`user_id` **雙證**，缺一即拒 |
+| **知識池**（`kb.get`／`kb.search`／`help.read`） | 照該受眾的池給——`role_id`／`user_id` 不參與知識可見性判定 |
+| **jgb2 個資**（`jgb2.query.*`） | 依受眾要幾張證，見下表 |
+
+**jgb2 個資的證件要求（受眾決定，⛔ 不是全域同一條規則）**
+
+受眾由 `target_user`／`mode` 決定性推導（`services/agent/identity.py:audience_of`）：
+
+| 受眾 | `jgb2.query.bills`／`.contracts` | `jgb2.query.accounts`／`.meters`／`.estates` |
+|---|---|---|
+| `tenant`（含 `target_user` 缺／未知） | **雙證**：`role_id`＋`user_id`，缺一即 `NO_MATCH` | **雙證**，缺一即 `NO_MATCH` |
+| `prospect` | **雙證**（實務上工具本身對 prospect 永不可見——`stage` 缺 prospect 鍵） | 同左 |
+| `property_manager`（含 `mode="b2b"`） | **單證**：`role_id` 即可；`user_id` 可缺 | **雙證**，缺一即 `NO_MATCH` |
+
+- **為什麼 pm 是單證**：pm 查的是自己名下**整個 role**的帳單／合約。帶了 `user_id`
+  反而會讓 jgb2 用 `viewer_user_id` 圈定成「這個 user 看得到的」，把 pm 自己的查詢
+  過濾成空。
+- **`viewer_user_id` 的圈定條件**：bills／contracts 在 `user_id` **非空時**才把它當
+  `viewer_user_id` 轉發給 jgb2（Layer 2 圈定）；`user_id` 缺時**不圈定**——jgb2 只認
+  `role_id`，回的是整個 role 的資料。這正是 tenant 必須雙證的理由：少一張證不是
+  「查得少」，是「查得比該看的多」。
+- **落點**：`rag-orchestrator/services/agent/tools/jgb2.py:_identity_gate_ok`
+  （bills／contracts）與 `JGBSystemAPI._validate_identity`（其餘三域）。
+  受眾算不出時 **fail-closed 當 tenant**（要雙證）。
 
 所以「只想查知識、不查個資」的呼叫端可以不帶 `role_id`／`user_id`；
-要查帳單／合約／物件等個資，兩個都要帶，且 bills／contracts 會把 `user_id` 當
-`viewer_user_id` 交給 jgb2 圈定可見範圍（Layer 2）。
+租客要查帳單／合約／物件等個資，`role_id` 與 `user_id` **兩個都要帶**。
 
 ### 4.3 對話歷史歸服務端
 
