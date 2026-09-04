@@ -19,6 +19,15 @@
 - 推論：MCP 門面**不是公開認證面**。它只給上游／內部呼叫者（jgb2 後端、回測工具、內部操作者的 Claude Code），身分隨請求提供，信任等級與 `/api/v1/message` 相同。⛔ 不實作 bearer 簽發／claims 驗證。
 - 例外：**知識池可見性**（`vendor_ids`／`business_types`／`target_user`／保留分類）住在本系統 DB，jgb2 API 管不到，仍由本系統謂詞守（元件 3 `kb.*`）。
 
+### 心智模型（業主 2026-09-04 問答定稿；給讀 spec 的人先對齊用詞）
+1. **對話是模型完成的，MCP 是工具的插座。** 聽懂、決定查或問或答、把 facts 組成回話，都在 `AgentRuntime` 的模型迴圈；MCP 協定本身沒有模型、沒有對話。「後面的任務由 MCP 完成」＝查資料、送報修由 MCP 定義的工具做，做不做與怎麼說仍是模型，且在牆內。
+2. **形狀與 Claude Code 對話相同，差兩處。** 都是「模型 → tool call → 看結果 → 再決定」；差別是客服模型的工具少而窄（七類、參數封閉、身分由程式注入），以及出口多一道 Verifier（每個事實句指回工具回傳原文，否則重寫，兩次仍拒 ⇒ 固定句轉人）。
+3. **「找帳單」怎麼對到 API：** 模型讀工具描述選 `jgb2.query.bills`＋封閉 `face`；registry 注入身分、守白名單／scope／速率；jgb2 依 `viewer_user_id` 圈定；facts 由 face builder 決定性算；多筆候選由模型反問、程式限量。匹配不再由關鍵字或分類規則決定。
+4. **引導對話的是 OpenAI 模型（Chat Completions function calling，D1 預設），迴圈是本系統的 `AgentRuntime`。** 不用 OpenAI Agents SDK／Responses 內建 MCP（需公網 URL）；provider 抽象保留可換模型。
+5. **兩層「過 MCP」：** 決策層已是 MCP 形態（同一份 `ToolSpec` 同時是模型的 function 清單與 `/mcp` 的工具清單）；傳輸層 Runtime 直接呼叫 registry、不經 MCP 線路（決策 1，熱路徑零跳）。若要連自己都走線路，2.1 可加 env 切成 loopback MCP client，M2 影子比延遲後定預設。
+6. **入口：** 瀏覽器端（jgb2 面板）走 REST＋SSE，因為瀏覽器不能持金鑰且需要逐字串流；伺服器端（jgb2 後端、LINE bot 後端、內部 client）可走 `/mcp` 工具面或 `agent.turn`，兩者進同一個回合邏輯。本 spec 對話對象僅 prospect。
+7. **怎麼知道這句話匹配了哪個 API、回了什麼、追問了什麼：** 每回合 trace（工具序列與 face、拒因、計數、最終 kind、trace_id）落 `usage_events.decision_snapshot.agent`，SSE metadata 帶 trace_id，`tools/agent_trace.py`／`GET /api/v1/agent/trace/{id}` 印成敘事（tasks 2.7）。記的是「選了什麼」，不是「為什麼選」。
+
 ### 範圍與邊界
 - 範圍內：Agent Runtime、Tool Registry＋兩門面、Output Verifier、Outline Assembler、Shadow Runner 與離線評估、per-audience 切換、可觀測與不變量、注入面防護。
 - 範圍外：知識內容補強、jgb2 前端、線上部署、pm／tenant 實作（只定契約）、embedding／分塊檢索重設計、授權層（DSP-011）。
@@ -331,6 +340,50 @@ sequenceDiagram
     end
     A->>A: set_decision(agent=trace)
 ```
+### 詳細時序：「我要找帳單」（pm／tenant 身分，工具在 M0 即存在；對話切換在子 spec）
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as 使用者／呼叫端
+    participant E as 入口 chat.py 或 /mcp agent.turn
+    participant R as AgentRuntime
+    participant P as PromptAssembler
+    participant M as OpenAI 模型
+    participant T as ToolRegistry
+    participant J as JGBSystemAPI＋face builder
+    participant V as OutputVerifier
+    participant Q as usage_metering
+    U->>E: 「我要找帳單」
+    E->>E: api_key_guard → quota_check → audience_of() → Identity
+    E->>R: run_turn(identity, message, state)
+    R->>R: 同題重問快取（命中且已轉人 ⇒ 重播，結束）
+    R->>P: build(identity, 大綱/目錄, slots, 對話, 工具清單 for_model, nonce)
+    P-->>R: system prompt（資料段以 nonce 包住）
+    R->>M: messages＋tools（同一份 ToolSpec）；parallel_tool_calls=false
+    loop 工具迴圈 ≤4
+        M-->>R: tool_call jgb2.query.bills{face:"帳單診斷"}
+        R->>R: 參數含身分鍵 ⇒ 丟棄記 violations
+        R->>T: call(identity, name, args)
+        T->>T: 白名單×階段 → scope → 速率 → schema
+        T->>J: get_bills(role_id, user_id, viewer_user_id)
+        J-->>T: 帳單列（jgb2 圈定）→ build_bill_diagnosis_facts()
+        T-->>R: ToolResult{text_for_model, provenance, candidates?, skip_refine}
+        R->>M: role=tool（wrap_tool_data(nonce)）
+    end
+    alt 多筆候選
+        M-->>R: AgentOutput kind=ask（反問哪一張）
+    else 唯一
+        M-->>R: AgentOutput kind=answer{answer, citations, sentence_map, fact_class}
+    end
+    R->>V: verify（①敏感五類 ②白名單句型 ③逐字＋覆蓋＋極性 ④citable ⑤導流 ⑥禁詞 ⑦轉人詞）
+    alt 拒（≤2 重寫）
+        V-->>R: 結構化拒因 → 回模型重寫 → 仍拒 ⇒ 固定句＋handoff
+    end
+    R->>Q: set_decision(agent: 工具序列、args_summary{face}、拒因、計數、trace_id)
+    R-->>E: TurnResult
+    E-->>U: REST：SSE answer_chunk*＋metadata(trace_id) ／ MCP：一次回傳
+```
+
 ### 資料轉換
 知識列／大綱章節／jgb2 facts → `Provenance.text`（引用比對目標）＋ `text_for_model`（工具回傳的原始資料文字，**由 Runtime** 以 `wrap_tool_data(nonce)` 包裝後才進 prompt；工具函式不接觸 nonce）→ 模型 → `Citation.quote` → Verifier。`AgentOutput` → `VendorChatResponse{answer, handoff, quick_replies}`；`citations` 不對外。`state["agent"]={"last_trace_id","fixed_streak","handoff_cache"}`。
 
@@ -482,6 +535,7 @@ Identity／Audience／ToolSpec／ToolResult／AgentOutput／Citation／VerifierR
 | 日期 | 版本 | 變更 | 修改者 |
 |---|---|---|---|
 | 2026-09-04 | 1.0 | 初始版本（full discovery） | AI |
+| 2026-09-04T20:18:50+08:00 | 1.4.2 | 心智模型節（業主問答定稿）；「找帳單」詳細時序 | AI |
 | 2026-09-04T20:07:54+08:00 | 1.4.1 | r6 增量審查 2 P1：`facade_only`、Origin 三態；決策順序；roadmap 標記 | AI |
 | 2026-09-04T20:02:56+08:00 | 1.4 | `agent.turn` 進 M1；身分與 session 契約；範圍僅 prospect；語音／tenant 子 spec | AI |
 | 2026-09-04T18:38:25+08:00 | 1.3 | r3 兩條 P1 修正；八條 P2 進 tasks 備註；未經 fresh 審查 | AI |
