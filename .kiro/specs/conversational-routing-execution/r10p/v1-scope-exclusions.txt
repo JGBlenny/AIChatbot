@@ -42,3 +42,10 @@
 3359
 3360
 3930
+# 2026-09-04 presales-phrasing-batch-20260904（售前口語講法＋邊界句 6 筆，instance_applicability=general；DSP-008 裁決後補）——凍結後宣告，排隊等 V2
+5375
+5376
+5377
+5378
+5379
+5380
