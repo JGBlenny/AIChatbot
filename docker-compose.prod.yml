@@ -266,6 +266,12 @@ services:
       IMAGE_COMPRESS_QUALITY: ${IMAGE_COMPRESS_QUALITY:-85}
       # API Key 認證（開啟前 jgb2 前端須已帶 X-API-Key，否則現役 b2b 直接斷線）
       RAG_API_AUTH_ENFORCE: ${RAG_API_AUTH_ENFORCE:-false}
+      # ⚠️ agentic-mcp-orchestration 1.7：/mcp 的 Origin 白名單，**必須明示**——
+      #    未設定（連這行也拿掉）app 會啟動即 raise。`-` ＝ 空集合 ＝
+      #    「任何帶 Origin 的請求都拒」，這是 server-to-server 門面的正確預設；
+      #    缺 Origin 的請求（server-to-server client 不送）不受影響、照放行。
+      #    ⛔ 不可為了「讓瀏覽器連得上」而放寬——/mcp 僅 server-to-server。
+      MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:--}
       # usage-metering 使用量計量（2026-07-06；預設開，關=零行為差異）
       USAGE_METERING_ENABLED: ${USAGE_METERING_ENABLED:-true}
       LLM_PRICING_PATH: ${LLM_PRICING_PATH:-}

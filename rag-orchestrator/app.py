@@ -3,7 +3,7 @@ RAG Orchestrator 主服務
 整合意圖分類、RAG 檢索、信心度評估和未釐清問題管理
 """
 import os
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import asyncpg
@@ -133,10 +133,25 @@ async def lifespan(app: FastAPI):
     print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化 + Phase B 意圖建議 + 表單填寫功能 + SOP Next Action）")
     print(f"📝 API 文件: http://localhost:8100/docs")
 
-    yield
+    # MCP session manager（agentic-mcp-orchestration 1.7）：⚠️ **必須**進 lifespan，
+    # 否則第一個 /mcp 請求會 RuntimeError: Task group is not initialized（research 主題 1）。
+    # SDK 未安裝時 app.state.mcp_server 為 None，這段整個略過。
+    async with AsyncExitStack() as _mcp_stack:
+        _mcp_srv = getattr(app.state, "mcp_server", None)
+        if _mcp_srv is not None:
+            await _mcp_stack.enter_async_context(_mcp_srv.session_manager.run())
+            print("✅ MCP session manager 已啟動")
+        yield
 
     # 關閉時清理
     print("🔄 關閉 RAG Orchestrator...")
+    # kb.get 走同步 psycopg2，另有一個延遲建立的連線池（agentic-mcp-orchestration 1.7）
+    _kb_pool = globals().get("_mcp_kb_pool")
+    if _kb_pool is not None:
+        try:
+            _kb_pool.closeall()
+        except Exception as _e:          # 收尾失敗不擋關機
+            print(f"⚠️ [mcp] kb 連線池關閉失敗（忽略）：{_e}")
     await db_pool.close()
     print("👋 RAG Orchestrator 已關閉")
 
@@ -175,6 +190,20 @@ async def usage_metering_middleware(request: Request, call_next):
     context、出場落事件（fire-and-forget）。串流回應（SSE）由 generator finally
     落點（finalize 冪等使雙落點安全）；其餘路徑零觸碰；任何失敗不影響回應。"""
     from services import usage_metering as _um
+    # ── /mcp：**只做額度短路**（agentic-mcp-orchestration 1.7）──
+    # ⛔ 不 begin／finalize：門面 services/agent/mcp_facade.py 是唯一寫入者
+    #    （每次工具呼叫一列 usage_events，不變量 31）。這裡再落一次 ⇒ 一次呼叫兩列。
+    # 身分與 key 屬性由 McpServiceGate（最外層 middleware）放進 request.state。
+    if request.url.path.startswith("/mcp"):
+        _mcp_call = getattr(request.state, "mcp_call", None)
+        if _mcp_call is not None and _um.is_enabled():
+            _qs = await _um.quota_check(getattr(request.app.state, "db_pool", None),
+                                        _mcp_call.identity.vendor_id, _mcp_call.is_internal)
+            if _qs.state == "blocked":
+                return JSONResponse(status_code=429,
+                                    content={"detail": "QUOTA_EXCEEDED",
+                                             "code": "QUOTA_EXCEEDED"})
+        return await call_next(request)
     metered = (request.url.path == "/api/v1/message" and request.method == "POST"
                and _um.is_enabled())
     if metered:
@@ -242,6 +271,62 @@ async def api_key_guard(request: Request, call_next):
         if not await verify_api_key(pool, request.headers.get("x-api-key")):
             return JSONResponse(status_code=401, content={"detail": "Invalid or missing API key"})
     return await call_next(request)
+
+
+# ══════════════════════════════════════════════════════════════════════
+# MCP 門面（spec agentic-mcp-orchestration 任務 1.7｜design 元件 4）
+# ══════════════════════════════════════════════════════════════════════
+# 兩件事，刻意分開：
+#   ① **服務層閘**（McpServiceGate）——`/mcp` 與 `/api/v1/agent/*` 無條件要求
+#      有效 X-API-Key＋Origin 三態＋X-JGB-Identity fail-closed。**永遠掛**，
+#      與 MCP SDK 是否安裝無關（不變量 28：enforce 關時 /mcp 仍 401）。
+#      這個 middleware 最後加 ⇒ 在 middleware 堆疊最外層 ⇒ 先於
+#      api_key_guard 與 usage_metering_middleware 跑。
+#   ② **工具面**（Mount("/mcp", …)）——只有 MCP SDK 可匯入時才掛。
+#      2026-09-04 實查：mcp==2.1.1 與 fastapi==0.104.1 相依衝突
+#      （anyio<4 vs anyio>=4.9），故正式 image 目前未裝，詳見 requirements.txt。
+from starlette.routing import Mount
+from services.agent import mcp_facade as _mcp_facade
+
+# MCP_ALLOWED_ORIGINS 未設定 ⇒ **啟動即 raise**（design 元件 4：必須明示；
+# `-` 代表空集合＝任何帶 Origin 的請求都拒）。
+_mcp_facade.load_allowed_origins()
+
+app.add_middleware(_mcp_facade.McpServiceGate,
+                   get_pool=lambda: getattr(app.state, "db_pool", None))
+
+_mcp_retriever = None
+
+
+def _get_mcp_retriever():
+    """`kb.search` 用的檢索器（延遲建立，避免 import 期做初始化 I/O）。"""
+    global _mcp_retriever
+    if _mcp_retriever is None:
+        from services.vendor_knowledge_retriever_v2 import VendorKnowledgeRetrieverV2
+        _mcp_retriever = VendorKnowledgeRetrieverV2()
+    return _mcp_retriever
+
+
+_mcp_sdk_ok, _mcp_sdk_reason = _mcp_facade.mcp_sdk_available()
+if _mcp_sdk_ok:
+    _mcp_kb_pool = _mcp_facade.LazyPsycopg2Pool()
+    _mcp_deps = _mcp_facade.FacadeDeps(
+        get_db_pool=lambda: getattr(app.state, "db_pool", None),
+        get_kb_pool=lambda: _mcp_kb_pool,
+        get_retriever=_get_mcp_retriever,
+        stage=_mcp_facade.current_stage(),
+    )
+    _mcp_registry = _mcp_facade.build_registry(_mcp_deps)
+    _mcp_server = _mcp_facade.build_mcp_server(_mcp_registry, _mcp_deps)
+    # 子 app 的路徑與 DNS-rebinding 設定見 mcp_facade.build_asgi_app 的 docstring
+    #（兩個參數都 ⛔ 不可省，否則不是 /mcp/mcp 就是全部 421）。
+    app.router.routes.append(Mount("/mcp", app=_mcp_facade.build_asgi_app(_mcp_server)))
+    app.state.mcp_server = _mcp_server
+    print("✅ MCP 門面已掛載於 /mcp（工具面 + 服務層閘）")
+else:
+    app.state.mcp_server = None
+    print(f"⚠️ [mcp] MCP SDK 不可用（{_mcp_sdk_reason}）→ /mcp 工具面未掛載；"
+          f"服務層閘仍生效（缺／錯 X-API-Key 一律 401）")
 
 
 # 註冊路由

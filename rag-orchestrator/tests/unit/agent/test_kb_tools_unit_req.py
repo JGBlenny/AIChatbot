@@ -1,6 +1,12 @@
 """unit：`kb.get`／`kb.search` 工具（spec agentic-mcp-orchestration 任務 1.4）。
 
 假 pool（psycopg2 `getconn`／`putconn` 介面）與假 retriever，離線、不接觸真 DB。
+
+⚠️ **檔名帶 `_unit_` 是必要的，⛔ 不要改回 `test_kb_tools_req.py`**（1.7 實跑逼出）：
+`tests/` 底下沒有 `__init__.py`，pytest 以**檔名**當模組名，
+`tests/unit/agent/test_kb_tools_req.py` 與 `tests/integration/agent/test_kb_tools_req.py`
+同名 ⇒ 全量收集時 `import file mismatch` **收集期就中斷**，整個 unit 層一題都跑不到
+（單獨跑 `tests/unit/agent` 不會踩到，所以很容易誤以為是綠的）。
 """
 from unittest.mock import MagicMock
 

@@ -105,6 +105,10 @@ services:
       #    C4b 又會在「不是 production 的 brain」上取證（本專案已三次因此結論作廢）。
       # 與 KB_SIMILARITY_THRESHOLD 是同一類 runner 保真度 bug，只是換了參數。
       PRESALES_SYNTH_MODEL: ${PRESALES_SYNTH_MODEL:-gpt-4o-mini}
+      # ⚠️ 逐字鏡射 prod（agentic-mcp-orchestration 1.7）：未宣告時 `import app`
+      #    會啟動即 raise（MCP_ALLOWED_ORIGINS 必須明示），e2e／integration 全紅。
+      #    `-` ＝ 空集合 ＝ 任何帶 Origin 的請求都拒；缺 Origin 者照放行。
+      MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:--}
     command: ["sleep", "infinity"]        # 維持容器；測試以 run --rm 進入
 
 # 接上共用基礎設施網路（spec conversational-routing-execution 任務 1.2｜R1.2）
