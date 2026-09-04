@@ -20,3 +20,8 @@ A–F 全證實：audit PASS（含 3、27–31）；make test 只剩已知紅；
 # 1.10 定向 recheck（fresh verifier，2026-09-05）— CONFIRMED
 tenant 缺 user_id 五格（bills 無 ref／ref／keyword、contracts 無 ref／keyword）全 NO_MATCH 且零出向；正對照帶 user_id 走原路且 `viewer_user_id` 轉發；pm（mode=b2b／target_user=pm）單證放行；`resolved_audience()` 拋例外／無 audience／空字串 user_id 皆 fail-closed。突變 `return bool(role_id)` ⇒ unit 5 紅＋integration 1 紅，還原後綠、md5 一致、git status 不變。unit 241／integration 85 皆 0 skip；不變量 27 掃到 4 spec；`registry.call` 剝六鍵記 violations。
 P3（既有、非本次引入）：bills 帶 ref 時 `get_bills` 的 ref adapter 前兩通（`GET /bills` 只 role_id、`/contracts?contract_ids=` 無 viewer）以整 role 視角解析 ref，Layer 2 只落第三通 — M1 追蹤 adapter 層圈定。
+
+# M1 收案（2026-09-05）
+- M1 fresh verifier：**REFUTED**（P2：`shadow._trace_to_dict` 讀已刪 `args_hash` ⇒ 有工具呼叫即整輪靜默丟棄；unit 盲點 `tool_calls=[]`）＋P3 測試庫孤兒 token、P3 本機 admin DB 缺 `outline_approved_by`（業主 migration 未跑）。其餘 A–G 全證實；主 session 三處直改（`mutates_session`、`budget_from_env`、lifespan 裝飾器）判可接受。
+- 修正 `672baf6` → 定向 recheck **CONFIRMED**：新 unit 帶工具呼叫可序列化；原情境攔截 `logger.exception=0`、`set_decision=1`；突變回 `args_hash` ⇒ unit 紅＋情境丟棄重現；殘留 0；unit agent 498、integration agent 127 綠。advisory：guard 用 `tc\.args_hash` 而非裸字串。
+- 本機 image 重建：health 200、`/mcp` 無 key 401、agent fail-soft（migration 未跑）、`make audit` PASS。
