@@ -188,7 +188,21 @@ async def run_topics(args):
     out = {"_meta": {**spec["_meta"], "run_at": time.strftime("%Y-%m-%dT%H:%M:%S"), "threshold": args.threshold, "api": args.api,
                      "fingerprint": {"git_head": args.head, "image": args.image, "topics_sha256": sha}, "g2": args.g2 or "未跑"}, "topics": []}
     for tp in spec["topics"]:
-        rows = []
+        rows = []; brows = []
+        forbid = tp.get("forbid") or {}
+        def _forbid_hit(sub, a):
+            return [w for w in (forbid.get(sub) or []) + (forbid.get("*") or []) if w in a]
+        for ph in tp.get("boundary") or []:
+            api = None
+            if not args.no_api:
+                try:
+                    api = ask(args.api, ph["q"], f"backtest_session_topicb_{tp['id']}_{uuid.uuid4().hex[:4]}")
+                except Exception as e:
+                    api = {"answer": None, "handoff": None, "error": repr(e)}
+            entry = entry_state_of(api, PRESALES_HANDOFF_MESSAGE); a = (api or {}).get("answer") or ""
+            ok = entry == "fixed" or (any(w in a for w in ("沒有資料", "專人", "找真人")) and not _forbid_hit(ph.get("sub", "*"), a))
+            brows.append({**ph, "entry_state": entry, "boundary_ok": ok, "answer_head": a.replace("\n", " ")[:80]})
+            print(f"{tp['id']} 邊界   ok={'Y' if ok else '-'} entry={entry:16} {ph['q'][:22]}", flush=True)
         for ph in tp["phrasings"]:
             res = await r.retrieve(query=ph["q"], vendor_id=0, top_k=3, similarity_threshold=0.0, target_user="prospect", mode="b2b", return_unfiltered=True)
             top = [{"id": x.get("id"), "similarity": round(float(x.get("similarity") or 0), 3)} for x in res[:3]]
@@ -202,9 +216,10 @@ async def run_topics(args):
             entry = entry_state_of(api, PRESALES_HANDOFF_MESSAGE)
             groups = tp["subtopic_rubrics"].get(ph["sub"]) or []
             a = (api or {}).get("answer") or ""
+            fh = _forbid_hit(ph["sub"], a)
             rec = {**ph, "top3": top, "owner_hit": t1["id"] in tp["owner"], "alias_hit": t1["id"] in tp.get("transitional_alias", []),
-                   "over_threshold": t1["similarity"] >= args.threshold, "entry_state": entry,
-                   "rubric_hit": bool(groups) and entry in ("answered", "answered_handoff") and hits_groups(a, groups) == len(groups),
+                   "over_threshold": t1["similarity"] >= args.threshold, "entry_state": entry, "forbid_hit": fh,
+                   "rubric_hit": bool(groups) and entry in ("answered", "answered_handoff") and hits_groups(a, groups) == len(groups) and not fh,
                    "answer_head": a.replace("\n", " ")[:80]}
             rows.append(rec)
             print(f"{tp['id']} {ph['sub']:5} owner={'Y' if rec['owner_hit'] else ('a' if rec['alias_hit'] else '-')} top1={t1['id']}@{t1['similarity']:.2f} entry={entry:16} rubric={'Y' if rec['rubric_hit'] else '-'} {ph['q'][:22]}", flush=True)
@@ -212,12 +227,15 @@ async def run_topics(args):
         m = {"n": n, "owner_hit_rate": round(sum(x["owner_hit"] for x in rows) / n, 2), "alias_hit_rate": round(sum(x["alias_hit"] for x in rows) / n, 2),
              "answered_rate": round(sum(x["entry_state"] in ("answered", "answered_handoff") for x in rows) / n, 2),
              "rubric_hit_rate": round(sum(x["rubric_hit"] for x in rows) / n, 2)}
-        m["complete"] = m["rubric_hit_rate"] >= thr_c
+        if brows:
+            m["boundary_n"] = len(brows); m["boundary_ok_rate"] = round(sum(x["boundary_ok"] for x in brows) / len(brows), 2)
+        m["forbid_hits"] = sum(1 for x in rows if x.get("forbid_hit"))
+        m["complete"] = m["rubric_hit_rate"] >= thr_c and (not brows or m["boundary_ok_rate"] >= float(spec["_meta"].get("boundary_threshold", 0.9)))
         by_sub = {}
         for x in rows:
             d = by_sub.setdefault(x["sub"], {"n": 0, "rubric_hit": 0, "owner_hit": 0})
             d["n"] += 1; d["rubric_hit"] += x["rubric_hit"]; d["owner_hit"] += x["owner_hit"]
-        out["topics"].append({**{k: v for k, v in tp.items() if k != "phrasings"}, "metrics": m, "by_subtopic": by_sub, "phrasings": rows})
+        out["topics"].append({**{k: v for k, v in tp.items() if k not in ("phrasings", "boundary")}, "metrics": m, "by_subtopic": by_sub, "phrasings": rows, "boundary": brows})
         print(f"== {tp['topic']}: n={n} owner_hit={m['owner_hit_rate']} alias_hit={m['alias_hit_rate']} answered={m['answered_rate']} rubric_hit={m['rubric_hit_rate']} complete={m['complete']}", flush=True)
         json.dump(out, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print("saved", args.out); return 0
