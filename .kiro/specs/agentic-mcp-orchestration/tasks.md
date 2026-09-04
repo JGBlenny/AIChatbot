@@ -113,9 +113,10 @@
 
 ## 4. M1–M2 影子與評估（2.x、3.x 後）
 
-- [ ] 4.1 ShadowRunner（TDD）：`services/agent/shadow.py`——`AGENT_SHADOW_AUDIENCES`（預設空）、`asyncio.create_task` 於舊鏈回應送出後、Runtime 以 `readonly_view=True` 建構；`ShadowRecord{trace, agent_answer_sha256, len, old_answer_sha256, len, diff_flags, cost_usd}` 落 `decision_snapshot.agent_shadow`、`is_internal=True`、⛔ 無原文；全文比對走 migration 新表 `agent_shadow_texts`（僅 prospect、30 天清、讀取需 X-API-Key）；月度成本 `AGENT_SHADOW_MONTHLY_USD_CAP` 超過 ⇒ 自動關＋告警。測試：不阻塞 SSE（p95 差 ≤200ms 以假 Runtime 量）；write 工具與 `facade_only` 工具皆不可見；影子回合不寫 `form_sessions`；快照無原文；月上限關閉。
+- [x] 4.1 ShadowRunner（TDD）：`services/agent/shadow.py`——`AGENT_SHADOW_AUDIENCES`（預設空）、`asyncio.create_task` 於舊鏈回應送出後、Runtime 以 `readonly_view=True` 建構；`ShadowRecord{trace, agent_answer_sha256, len, old_answer_sha256, len, diff_flags, cost_usd}` 落 `decision_snapshot.agent_shadow`、`is_internal=True`、⛔ 無原文；全文比對走 migration 新表 `agent_shadow_texts`（僅 prospect、30 天清、讀取需 X-API-Key）；月度成本 `AGENT_SHADOW_MONTHLY_USD_CAP` 超過 ⇒ 自動關＋告警。測試：不阻塞 SSE（p95 差 ≤200ms 以假 Runtime 量）；write 工具與 `facade_only` 工具皆不可見；影子回合不寫 `form_sessions`；快照無原文；月上限關閉。
   - 需求：8.1, 8.5, 10.1, 13.2
   - 執行：executor／effort 中——背景 task、唯讀視圖、無原文；月上限關閉
+  - **收案註記（2026-09-05）**：executor（worktree）→ 收檔重跑 unit agent 綠（21 新）、integration agent 全綠（4 新，真測試庫）。`shadow.py`（`ShadowRunner.enabled／schedule`、`ShadowRecord` 白名單、`SHADOW_PROCESSING_PATH='shadow:agent'`）＋migration `agent_shadow_texts`；2.2 已在 `app.py` 以 `runtime_factory(readonly_view)` 接線、`chat.py` 兩處排影子。取捨：`is_internal` 借 `disable_answer_synthesis` 判準 ⇒ `internal_kind='backtest'`（語意應為 shadow，M2 前若要區分需在 `usage_metering.INTERNAL_RULES` 加 `processing_path` 前綴規則）；`cost_usd` 用公開 `DEFAULT_PRICING` 重算，`LLM_PRICING_PATH` 覆蓋時會分岔；舊鏈是否轉人以固定句文字比對（vendor 客製文案會誤判非轉人，4.2 驗命中率）；讀 `runtime._model` 私有屬性估成本。
 - [ ] 4.2 離線評估 `tools/agent_eval.py`（4.1 後）：三組凍結樣本（`coverage-map/topics-v2.json` 54 句、五套 e2e 劇本、真實流量抽樣——由業主從線上 `usage_events` 匯出 prospect 問句、本機去識別腳本剝除人名／電話／地址後凍結，⛔ 不在線上跑影子、匯出檔不進 commit）sha256 記錄；對兩條鏈跑（`backtest_session_` 前綴）輸出逐題對照（answered／rubric／敏感漏／邊界不硬答／延遲／成本）；收案線判定：D2 未裁前只出對照與「敏感五類 0 漏、無捏造、固定句率 ≤ 基準」三項，⛔ 看過結果不改樣本或線。測試：樣本 sha 校驗失敗 ⇒ 退出非 0；報表欄位形狀。
   - 需求：8.2, 8.3, 13.1, 13.2
   - 執行：mech-executor／effort 中——樣本與報表欄位已定，照 `scripts/backtest/run_batch.py` 慣例
