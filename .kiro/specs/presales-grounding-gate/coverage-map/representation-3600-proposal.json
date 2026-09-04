@@ -9,6 +9,7 @@
   "recorded": "2026-09-04",
   "scope": "presales prospect pool（非 LEVEL_A）"
  },
- "note": "⛔ D3：本檔是 proposal（source 已用 proposal 字串）；第二位 reviewer CONFIRMED 後，寫入 SQL 時置換 source=reviewed_product_declaration，並以宣告文字重算 3600 embedding。",
- "revision": "v2：R1 刪「藍字」改 answer 措辭「簽署參數（租金、電價、租期）簽後不可更動」；R2 刪句首「售前客戶詢問」；R3「任何面向」→「下列面向」；R4 補「同為契約審閱期」；R5 修改四情境改寫；R7 source 改 proposal 字串，放行寫入時置換為 reviewed_product_declaration；R6 批次句**保留原文**「建約逐份與續約可批次」——reviewer 實測原句下 5379 仍以 0.9916 對 0.8522 居首未翻盤，改寫版會讓續約召回從 0.73 掉到 0.32，取捨選召回；R8 寫入時同步以此宣告重算 3600 embedding（維持 D2 同一份 surface，不走 divergence 鍵）。"
+ "note": "D3 兩位 reviewer：第一位 REFUTED→修→第二位 CONFIRMED（2026-09-04）。寫入映射：generation_metadata.retrieval_representation ← 本檔 retrieval_representation；generation_metadata.retrieval_representation_provenance ← 本檔 provenance 並將 source 置換為 reviewed_product_declaration；同步以宣告文字重算 3600 embedding（D2 同一份 surface）。",
+ "revision": "v2：R1 刪「藍字」改 answer 措辭「簽署參數（租金、電價、租期）簽後不可更動」；R2 刪句首「售前客戶詢問」；R3「任何面向」→「下列面向」；R4 補「同為契約審閱期」；R5 修改四情境改寫；R7 source 改 proposal 字串，放行寫入時置換為 reviewed_product_declaration；R6 批次句**保留原文**「建約逐份與續約可批次」——reviewer 實測原句下 5379 仍以 0.9916 對 0.8967（第二位 reviewer 以 v2 文字實測）居首未翻盤，改寫版會讓續約召回從 0.73 掉到 0.32，取捨選召回；R8 寫入時同步以此宣告重算 3600 embedding（維持 D2 同一份 surface，不走 divergence 鍵）。",
+ "written_at": "2026-09-04"
 }
