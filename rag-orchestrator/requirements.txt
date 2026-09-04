@@ -1,8 +1,12 @@
-fastapi==0.104.1
-uvicorn==0.24.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
-python-multipart==0.0.6
+fastapi==0.115.14
+starlette>=0.46,<1.0
+uvicorn>=0.31.1
+pydantic>=2.13,<3
+pydantic-settings>=2.6,<3
+# 任務 1.7b 實跑逼出（主 session 的 dry-run 未含此件）：mcp==2.1.1 要求
+# python-multipart>=0.0.9，==0.0.6 會讓 pip 解析失敗（ResolutionImpossible）。
+python-multipart>=0.0.9
+anyio>=4.9
 
 # Database
 asyncpg==0.29.0
@@ -52,23 +56,13 @@ Pillow>=10.0.0
 
 # Reranker：透過 semantic-model 容器（HTTP API）呼叫，本服務不需要 sentence-transformers/torch
 
-# ── MCP SDK（spec agentic-mcp-orchestration 任務 1.7）────────────────────────
-# 🔴 **待業主裁決，⛔ 現在不得取消註解**。2026-09-04 實查（可重跑）：
-#   docker run --rm aichatbot-rag-orchestrator-test:latest \
-#     sh -c "pip install --dry-run 'fastapi==0.104.1' 'mcp==2.1.1'"
-#   → ERROR: ResolutionImpossible
-#       fastapi 0.104.1 depends on anyio<4.0.0 and >=3.7.1
-#       mcp 2.1.1     depends on anyio>=4.9; python_version < "3.14"
-#   正對照組：同一支指令**不加 mcp** 時解析成功（fastapi 已滿足）。
-#
-# 硬裝（獨立 image 實測）會把 starlette 0.27.0→1.6.0、pydantic 2.5.0→2.13.5、
-# anyio 3.7.1→4.15.0 一併升上去，`import app` 當場炸：
-#   TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'
-#   （routers/chat.py 的 APIRouter()；starlette 1.x 已移除 on_startup）
-#
-# ⇒ 掛上 /mcp 工具面必須先升 fastapi（連帶 starlette／anyio／pydantic），
-#   那是跨全 app 的相依升級，**不在任務 1.7 的核可範圍**，交業主裁決。
-#   裁決前：services/agent/mcp_facade.py 的三道請求層閘（401／403／400）與
-#   額度落點照常運作且已測；MCP 工具面只在 SDK 可匯入時掛載
-#   （mcp_facade.mcp_sdk_available()），未裝時 /mcp 過閘後為 404。
-# mcp==2.1.1
+# ── MCP SDK（spec agentic-mcp-orchestration 任務 1.7 → 1.7b）─────────────────
+# 業主 2026-09-04 裁 DSP-014 選項 A：升級 web stack 承載 mcp 2.1.1（見
+# .claude/DECISIONS.md DSP-014，以及上方 fastapi/starlette/pydantic/anyio 已升版）。
+# 主 session 已用 `pip install --dry-run` 驗證此組合可解（可重跑，於裝有本檔
+# 依賴的環境）：
+#   pip install --dry-run 'fastapi==0.115.14' 'starlette>=0.46,<1.0' \
+#     'pydantic>=2.13,<3' 'anyio>=4.9' 'uvicorn>=0.31.1' 'mcp==2.1.1'
+#   → 解得 fastapi-0.115.14 starlette-0.46.2 pydantic-2.13.5 pydantic_core-2.46.5
+#     anyio-4.15.0 uvicorn-0.52.4 mcp-2.1.1 httpx-0.27.0 openai-1.54.0
+mcp==2.1.1

@@ -313,6 +313,14 @@ class _FakeCtx:
 
 
 def _stub_registry():
+    """⚠️ 2026-09-04（任務 1.7b）加回 `kb.search`：⑦ 過去恆 skip（SDK 未裝），
+    這支替身一直只註冊了 `kb.get`——SDK 裝上後才第一次真的跑到，才發現
+    `test_real_mcp_client_lists_and_calls_tools` 的 tenant 斷言
+    （`names == {"kb.get", "kb.search"}`）與 prospect 斷言（`call_tool("kb.search")`
+    應被拒）都預期 `kb.search` 存在。這是替身遺漏，不是斷言錯——照
+    `services/agent/tools/kb.py` 的 `KB_SEARCH_SPEC` 補上（prospect 缺鍵＝
+    design 決策 3：prospect 不用向量檢索）。
+    """
     reg = ToolRegistry()
     spec = {
         "name": "kb.get",
@@ -322,11 +330,28 @@ def _stub_registry():
         "scope": "read",
         "stage": {"prospect": "M0", "property_manager": "M0", "tenant": "M0"},
     }
+    search_spec = {
+        "name": "kb.search",
+        "description": "stub",
+        "input_schema": {
+            "type": "object",
+            "properties": {"query": {"type": "string"},
+                           "k": {"type": "integer", "minimum": 1, "maximum": 5}},
+            "required": ["query", "k"], "additionalProperties": False,
+        },
+        "scope": "read",
+        # prospect 缺鍵＝永不可見（同 KB_SEARCH_SPEC，design 決策 3）。
+        "stage": {"property_manager": "M0", "tenant": "M0"},
+    }
 
     async def _fn(identity: Identity, args: dict) -> ToolResult:
         return ToolResult(ok=True, data={"id": args["kb_id"]}, text_for_model="x")
 
+    async def _search_fn(identity: Identity, args: dict) -> ToolResult:
+        return ToolResult(ok=True, data=[], text_for_model="x")
+
     reg.register(spec, _fn)
+    reg.register(search_spec, _search_fn)
     return reg
 
 
