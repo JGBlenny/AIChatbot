@@ -219,7 +219,10 @@ class PromptAssembler:
     def build(self, identity: Identity, outline: OutlineDoc, slots: dict[SlotKey, SlotValue], dialog: list[dict], tool_specs: list[ToolSpec], nonce: str) -> list[dict]: ...
 ```
 大綱章節可被 `kb.get("outline:<id>")` 取回；**citable 依來源**：prospect 大綱由售前池一般知識列組成（`source_ids` 皆非保留分類）⇒ `Provenance.citable=true`；pm／tenant 目錄由 `系統脈絡` 列組成 ⇒ `citable=false`（只導航，不引用；細節走 `kb.get` 整數 id／`help.read`／`jgb2.query`）。這維持保留分類「永不當答案回傳」（決策 10 修訂）。`build_toc` 取法加 `vendor_ids` 與 `target_user` 過濾（`system_context._fetch_domain` 現況以 `target_user` 分層，`_fetch_base` 無 vendor 過濾 ⇒ 不得照抄）。
-大綱與目錄進 system prompt 也套同一 nonce 分隔標記；使用者訊息（`dialog`）**不進資料區**、不包裝。R11.1「不得把回傳文字拼進 system prompt」與 R5.1「大綱進上下文」的字面衝突登記 **DSP-012**（未裁；design 假設：大綱是 server 端由已審核列組裝、非工具回傳，套分隔標記後允許）。[需求 5.1–5.5, 11.1]
+大綱與目錄進 system prompt 也套同一 nonce 分隔標記；使用者訊息（`dialog`）**不進資料區**、不包裝。
+
+**DSP-012 已裁（業主 2026-09-04，選項 A）**：R11.1 禁令主詞收窄為「工具回傳文字」，大綱屬 server 端程式組裝（R5.4：可重跑、版本戳＋sha256、⛔ 無 LLM）故不在禁令內；進 system prompt 的來源由 R11.5 白名單化為兩種。
+🔴 **裁決同時補上 design 原假設缺的資料面**：原文寫「由**已審核**知識列組裝」，但 `knowledge_base` 實查**查無任何審核旗標**（`grep -rniE "approved_by|is_approved|review_status" rag-orchestrator/models/ rag-orchestrator/database/` 零命中；正對照組同法搜 `target_user` 有命中）⇒ 現況等於「有 KB 寫入權＝有 system prompt 寫入權」。依 R11.6 增設審核旗標，`build_prospect_outline` SHALL 過濾未審核列；M1 上線前把現有售前池 31 筆一次標記為已審核，審核 UI 另案。⛔ 不得因 UI 未完成而放行。[需求 5.1–5.5, 11.1, 11.5, 11.6]
 
 ### 元件 6：`services/agent/verifier.py` — OutputVerifier
 ```python
@@ -277,6 +280,9 @@ class Provenance(BaseModel): source: str; text: str; citable: bool = True
 class SlotValue(BaseModel): value: str; source: Literal["user","tool"]; confirmed: bool
 # 新表 agent_confirmation_tokens(token PK, session_id, payload_sha256, summary_sha256, expires_at, redeemed bool, created_at)
 # 新表 help_center_pages(slug PK, title, text, version, source_url, content_sha256, citable bool, approved_by, imported_at)   ← citable=true 需 approved_by（D3 未裁前全 false）
+# 改表 knowledge_base 新增 outline_approved_by / outline_approved_at（DSP-012 選項 A、R11.6）
+#      ← 只有 outline_approved_by IS NOT NULL 的列得進 prospect 大綱；⚠️ 不影響 kb.get 取回當引用來源
+#      ← M1 前置：現有售前池 31 筆一次 UPDATE 標記；⛔ 不得因審核 UI 未完成而放行未審核列
 # 新表 agent_shadow_texts(id, session_id, trace_id, agent_answer, old_answer, created_at)  僅 prospect；30 天清
 # usage_events.decision_snapshot 新增 "agent": {trace_id, tool_calls[{name,args_hash,ms,status,n_items}], llm_calls, verifier[{reason,sent,term_id,quote_len}], final_kind, handoff_reason, latency_ms, rules_sha, outline_sha, violations}
 #                                   "agent_shadow": ShadowRecord
@@ -339,13 +345,13 @@ sequenceDiagram
 11. **jgb2 標籤讀回應 `mapping`**（L1 自同步，jgb2-source-index §5.1）；本 repo 硬表 `bills.STATUS_LABELS` 列除役候選（缺口 7）。
 12. **MCP 工具面掛 `external/v1`**（現況）；`agent/v1` 待 jgb2-source-index §10.1 裁。
 13. **額度與速率的 key 綁 API key 紀錄**（1.2）：`/mcp` 路徑 `is_internal`／可用 `vendor_ids` 來自 `api_keys` 欄位，⛔ 不由請求字串（`session_id` 前綴）決定；`/api/v1/message` 既有前綴規則不動（另案）。理由：DSP-011 把額度定為本系統唯一控制後，可由呼叫方關掉的額度等於沒有。
-14. **DSP-012（未裁）**：R11.1 與 R5.1 字面衝突，design 假設大綱屬 server 端組裝的已審核內容、套分隔標記後允許進 system prompt。
+14. **DSP-012 已裁（業主 2026-09-04，選項 A）**：R11.1 禁令主詞收窄為「工具回傳文字」；進 system prompt 的來源由 R11.5 白名單化為兩種（程式產生的指令文字／`OutlineAssembler` 由已審核列組裝的大綱），一律套 nonce 資料標記。⛔ 否決「大綱改走 `kb.get("outline:*")` 按需讀取」——R5.2 已訂 prospect 不呼叫 `kb.search`，大綱再改按需即把「每一句對到同一份完整大綱」降級成模型自選，打穿 R5 立案理由與決策 3 的量化依據，而同一批文字換位置並不降低風險。附帶補洞見 R11.6（`knowledge_base` 審核旗標；實查現況無此欄）。
 
 ## 里程碑與 done 條件
 | 里程碑 | 交付 | done 條件（可觀測） |
 |---|---|---|
 | M0 | `build_visibility_predicate`＋三方共用＋差分等價測試；ToolRegistry＋`kb.*`／`help.read`／`jgb2.query.*`（五域映射）；MCP 門面；`api_keys` 遷移；不變量 18–22 | `make audit` 綠；差分等價矩陣全同；integration：`kb.get` 池外 NO_MATCH、`kb.search` 與 `retrieve()` 逐筆同、bills／contracts 請求含 `viewer_user_id`；**enforce 關時 `/mcp` 仍 401**；`/mcp` 每呼叫一列 `usage_events`；`MCP_ALLOWED_ORIGINS` 空 ⇒ 啟動紅；security-reviewer 對隔離謂詞與門面 READY |
-| M1 | AgentRuntime＋Verifier＋PromptAssembler＋ShadowRunner（prospect） | 單元：Verifier 11 拒因＋自證 fixture；影子不阻塞 SSE（p95 差 ≤200ms）；`decision_snapshot.agent` 無原文（不變量 21） |
+| M1 | AgentRuntime＋Verifier＋PromptAssembler＋ShadowRunner（prospect）＋`knowledge_base` 審核旗標遷移（R11.6） | 單元：Verifier 11 拒因＋自證 fixture；影子不阻塞 SSE（p95 差 ≤200ms）；`decision_snapshot.agent` 無原文（不變量 21）；**大綱組裝過濾未審核列**——integration：塞一筆未標記的售前列，`build_prospect_outline` 產出的 `source_ids` 不含它且 `outline_sha` 不變（DSP-012 A） |
 | M2 | `agent_eval` 三組樣本 | 對照表產出；收案線（D2 數字）判定＋獨立 verifier CONFIRMED |
 | M3 | `AGENT_AUDIENCES=prospect` | 五套劇本：敏感五類 0 漏、無捏造句（獨立 verifier CONFIRMED）、固定句率 ≤ 現行同劇本基準（`perf-20260904.md` §9）；D2 其餘數字若裁定則併入；回切演練一次 |
 | M4 | 寫入工具＋token 表＋修繕（tenant） | token 重放／TOCTOU／跨 session 單元全綠；security-reviewer 對寫入面 READY |

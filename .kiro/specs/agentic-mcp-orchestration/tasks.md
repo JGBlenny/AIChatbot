@@ -88,7 +88,7 @@
 - [ ] 5.3 (P) 部署與健檢文件：`docker-compose.prod.yml` 註解新 env（`AGENT_STAGE`、`AGENT_AUDIENCES`、`AGENT_SHADOW_AUDIENCES`、`AGENT_SHADOW_MONTHLY_USD_CAP`、`AGENT_BUDGET_*`、`AGENT_OUTLINE_TOKEN_LIMIT_*`、`MCP_ALLOWED_ORIGINS`、`RATE_PER_MIN`、`KB_GET_CAP`）、`requirements.txt` 加 `mcp==2.1.1`、`tiktoken==0.14.0`；runbook 加 migration 三表＋`api_keys` 兩欄的執行順序與預期輸出（⛔ 線上由業主執行）；成本告警（每回合 > 現行 ×3）進 health。
   - 需求：13.2, 13.3
   - 執行：mech-executor／effort 低——env 清單與 runbook 逐條指令＋預期輸出（⛔ 不打包腳本）
-- [ ] 5.4 收案：`make audit` 綠（不變量 18–22）、`make test` 全綠（已知紅 `test_verdict_ruler_req.py` 除外）、M0 與 M3 各一次 security／verifier 紀錄落 `reviews/`、總結列取捨（D1–D3、DSP-012 未裁項與其影響）。
+- [ ] 5.4 收案：`make audit` 綠（不變量 18–22）、`make test` 全綠（已知紅 `test_verdict_ruler_req.py` 除外）、M0 與 M3 各一次 security／verifier 紀錄落 `reviews/`、總結列取捨（D1–D3 未裁項與其影響；⚠️ DSP-012 已於 2026-09-04 裁定選項 A，改列其代價：`knowledge_base` 多兩欄、售前池 31 筆需先標審核、審核 UI 為另案未做）。
   - 需求：11.3, 13.5
   - 執行：main／effort 高——收案判斷與取捨列示由主 session 負責
 
