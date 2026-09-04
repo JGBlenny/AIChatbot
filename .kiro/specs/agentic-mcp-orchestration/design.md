@@ -3,6 +3,7 @@
 > 建立時間：2026-09-04（1.0）　本版：2026-09-04T18:15:02+0800（1.1）
 > 需求文件：requirements.md（v1）　研究記錄：research.md　落差分析：validation_gap.md　jgb2 事實來源：jgb2-source-index.md
 > 發現流程：full。設計提案母本：`docs/design/agentic-tool-selection-design-20260904.md` v2。
+> 1.4 變更（2026-09-04T20:02:56+08:00）：r5 目標驗證（JGB 相關服務經 MCP 對話／語音）後，業主裁：`agent.turn` 進 M1（元件 4、API、決策 15）；本 spec 對話對象僅 prospect，tenant 與語音各立子 spec（roadmap）。
 > 1.3 變更（2026-09-04T18:38:25+08:00）：收尾審查（r3）2 條 P1 修正——謂詞第 4 條 `target_user` 語義（`IS NULL OR &&`）＋矩陣加維；mock 保留大聲失敗、只驗轉發；8 條 P2 進附錄 C3 tasks 備註。⚠️ 1.3 未經 fresh 審查，規約上收尾審查已用罄，是否再審由業主定。
 > 1.2 變更（2026-09-04T18:30:37+08:00）：第二輪雙審查 REVISE 全處置（pv 1 P1＋6 P2；sec 7 P1＋5 P2）；審查正本落 `reviews/`；DSP-012 登記。處置明細見附錄 C2。
 > 1.1 變更：依 plan-verifier（REVISE，17 條）與 security-reviewer（3 P0／11 P1／7 P2／3 P3）全數處置；納入業主 2026-09-04 裁決 **DSP-011「權限由 jgb2 API 全權處理，本系統只管額度」**；納入 `jgb2-source-index.md`。處置明細見附錄 C。
@@ -200,6 +201,7 @@ class ToolRegistry:
 **服務層閘（無條件）**：`/mcp` 與 `/api/v1/agent/*` **不受 `RAG_API_AUTH_ENFORCE` 左右**，缺／錯 X-API-Key 一律 401（不變量 19：`_EXEMPT_PREFIX` 不得含 `/mcp`；M0 done：enforce 關時 `/mcp` 仍 401）。
 **額度落點**：`app.py:usage_metering_middleware` 的 `metered` 條件擴為 `path == "/api/v1/message" or path.startswith("/mcp")`，門面每次工具呼叫必經 `begin()`→`quota_check()`→`finalize()`（不變量 22：`/mcp` 每次呼叫必產出一列 `usage_events`，⛔ 不接受 ctx None 靜默略過）。`is_internal` 與可用 `vendor_ids` 在 `/mcp` 路徑**由 API key 紀錄決定**（migration：`api_keys` 加 `is_internal bool default false`、`vendor_ids int[] null`＝不限），`INTERNAL_RULES` 的 `session_id` 前綴規則**不適用於 `/mcp`**；header 的 `vendor_id` ∉ key 的 `vendor_ids` ⇒ 403。
 **傳輸層**：Origin 白名單 `MCP_ALLOWED_ORIGINS`（空值 ⇒ 啟動紅；缺 Origin 的瀏覽器型請求拒；整合測試涵蓋缺／非白名單）。
+**`agent.turn` 工具（1.4）**：`agent.turn(message, dialog_ref?) -> {answer, kind, handoff, quick_replies, trace_id}`，scope=read、`stage={prospect: M1}`；門面以解析出的 Identity 呼叫同一個 `AgentRuntime.run_turn`（Verifier、固定句、預算、計量全同），⛔ 不另寫回合邏輯；一次性回傳（MCP 工具結果不逐字串流，語音走 REST SSE，見 roadmap `voice-turn-budget`）。**身分與 session 契約**：`session_id` 由呼叫端產生、跨回合穩定；對話歷史與 slots 由服務端存 `form_sessions.collected_data`（與 REST 同源）；`role_id=null`＋`target_user=tenant` 為合法租客組合（可見性＝tenant 池，jgb2.query 因缺 role_id 雙證而 `NO_MATCH`）；`/mcp` 僅 server-to-server。
 **DSP-011 前提偵測**（進 `/api/v1/agent/health` 與 `check_invariants.sh`）：`/mcp` 依 `api_key_id` 分佈、`vendor_id` 不在表計數、缺／非白名單 Origin 計數、enforce 關時 `/mcp` 有流量 ⇒ 任一非零即告警；這是兩條 P0 REJECT 的補償條件。每個 `ToolSpec` 以 `@mcp.tool()` 註冊為薄包裝 → `registry.call()`；`ToolResult.error` 以 `ToolError` 拋出（訊息只含業務代碼）。`app.py` 的 `lifespan` 進 `mcp.session_manager.run()`，`Mount("/mcp", mcp.streamable_http_app())`（`Mount` 需新增 import）。[需求 2.1, 2.5, 3.6, 11.2]
 
 ### 元件 5：`services/agent/prompt_assembler.py` — PromptAssembler／OutlineAssembler
@@ -291,7 +293,7 @@ class SlotValue(BaseModel): value: str; source: Literal["user","tool"]; confirme
 ### API 設計
 對外 `POST /api/v1/message` 契約不變。新增：
 ```
-/mcp                            MCP streamable HTTP 掛載點（方法由 SDK 定）；經 api_key_guard＋quota_check＋Origin 白名單；身分 header X-JGB-Identity
+/mcp                            MCP streamable HTTP 掛載點（工具面＋`agent.turn` 整回合，prospect）（方法由 SDK 定）；經 api_key_guard＋quota_check＋Origin 白名單；身分 header X-JGB-Identity
 GET  /api/v1/agent/openapi.json 需 X-API-Key（即使 RAG_API_AUTH_ENFORCE 關）；只列請求身分可見工具
 GET  /api/v1/agent/health       需 X-API-Key；工具可達、大綱 version/sha、rules_sha
 POST /api/v1/agent/eval         需 X-API-Key；內部
@@ -345,6 +347,7 @@ sequenceDiagram
 11. **jgb2 標籤讀回應 `mapping`**（L1 自同步，jgb2-source-index §5.1）；本 repo 硬表 `bills.STATUS_LABELS` 列除役候選（缺口 7）。
 12. **MCP 工具面掛 `external/v1`**（現況）；`agent/v1` 待 jgb2-source-index §10.1 裁。
 13. **額度與速率的 key 綁 API key 紀錄**（1.2）：`/mcp` 路徑 `is_internal`／可用 `vendor_ids` 來自 `api_keys` 欄位，⛔ 不由請求字串（`session_id` 前綴）決定；`/api/v1/message` 既有前綴規則不動（另案）。理由：DSP-011 把額度定為本系統唯一控制後，可由呼叫方關掉的額度等於沒有。
+15. **`agent.turn` 進 M1（業主 2026-09-04，r5 目標驗證）**：讓「JGB 相關服務連上 `/mcp` 就能完成一段對話」在 prospect 先成立；代價＝MCP 路徑無逐字串流、首字＝整段完成；tenant 對話與語音預算各立子 spec，⛔ 本 spec 不調現行預算。
 14. **DSP-012 已裁（業主 2026-09-04，選項 A）**：R11.1 禁令主詞收窄為「工具回傳文字」；進 system prompt 的來源由 R11.5 白名單化為兩種（程式產生的指令文字／`OutlineAssembler` 由已審核列組裝的大綱），一律套 nonce 資料標記。⛔ 否決「大綱改走 `kb.get("outline:*")` 按需讀取」——R5.2 已訂 prospect 不呼叫 `kb.search`，大綱再改按需即把「每一句對到同一份完整大綱」降級成模型自選，打穿 R5 立案理由與決策 3 的量化依據，而同一批文字換位置並不降低風險。附帶補洞見 R11.6（`knowledge_base` 審核旗標；實查現況無此欄）。
 
 ## 里程碑與 done 條件
@@ -462,10 +465,23 @@ Identity／Audience／ToolSpec／ToolResult／AgentOutput／Citation／VerifierR
 | P2 | `verify_api_key` 只回 `{id,name}` | tasks 備註：回 `is_internal`／`vendor_ids` 並傳到下游 | 決策 13 |
 | P2 | R10.2 trace_id 未串進 SSE | tasks 備註：`metadata` 事件帶 `trace_id` | 元件 1 |
 
+### C4. 1.4 處置（r5 目標驗證；正本 `reviews/r5-plan-verifier-goal-mcp-dialogue-voice.md`）
+| 級別 | 發現 | 處置 | 落點 |
+|---|---|---|---|
+| P0 | MCP 無整回合工具 | FIX：`agent.turn`（tasks 2.6） | 元件 4、決策 15 |
+| P0 | 對話僅 prospect | 明列範圍；DEFER→子 spec `agent-tenant-audience` | tasks 範圍聲明、roadmap |
+| P1 | MCP 串流契約未定 | FIX：定為一次性回傳；語音走 REST SSE | 元件 4 |
+| P1 | 串流 vs Verifier 順序 | FIX：MCP 路徑首字＝整段；REST 維持現行（逐句 gate 留語音子 spec） | 決策 15 |
+| P1 | session／歷史契約 | FIX：契約段 | 元件 4、tasks 1.7／2.6 |
+| P2 | 憑證簽發、Origin 語義 | FIX：runbook；server-to-server 明訂 | tasks 5.3 |
+| P2 | 語音預算、barge-in | DEFER→子 spec `voice-turn-budget` | roadmap |
+| P3 | 對照表無對話驗收格 | FIX | tasks 對照表大項 2 ⓪ |
+
 ### D. 變更歷史
 | 日期 | 版本 | 變更 | 修改者 |
 |---|---|---|---|
 | 2026-09-04 | 1.0 | 初始版本（full discovery） | AI |
+| 2026-09-04T20:02:56+08:00 | 1.4 | `agent.turn` 進 M1；身分與 session 契約；範圍僅 prospect；語音／tenant 子 spec | AI |
 | 2026-09-04T18:38:25+08:00 | 1.3 | r3 兩條 P1 修正；八條 P2 進 tasks 備註；未經 fresh 審查 | AI |
 | 2026-09-04T18:30:37+08:00 | 1.2 | 第二輪雙審查全處置；域映射表；謂詞條件表；額度落點與 key 綁 API key；白名單句型「純」條件；目錄不可引用；DSP-012 | AI |
 | 2026-09-04T18:15:02+0800 | 1.1 | 雙審查 REVISE 全處置；DSP-011；jgb2-source-index 納入；里程碑與不變量 18–21 | AI |
