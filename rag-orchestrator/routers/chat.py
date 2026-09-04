@@ -4865,10 +4865,18 @@ class HandoffSignal(BaseModel):
     """結構化轉人訊號（presales-grounding-gate R4.1）。出現＝本題未由知識回答、應導向真人入口。
 
     reason：no_grounding（事實題查無）／sensitive_no_grounding（同上且屬客戶名單・報價・合約 SLA・法遵・資安）／
-            llm_mentioned_handoff（LLM 文字含「專人／真人／客服」，後置掃描補訊號、⛔ 不改文字）。
+            llm_mentioned_handoff（LLM 文字含「專人／真人／客服」，後置掃描補訊號、⛔ 不改文字）／
+            partial_grounding（D6：多項目題只答得了一部分）／
+            tool_unavailable、budget_exhausted（agent 路徑降級，spec agentic-mcp-orchestration 任務 2.4）。
     fact_class：brain 的封閉七值；channel：入口識別（對齊 jgb2 切片 2）；message：固定句（⛔ 不回顯使用者輸入）。
+
+    ⚠️ 本 Literal 的值域必須與 `services/presales_gate.py:HandoffReason` **逐值相同**——
+       兩邊是同一個對外契約的兩個面（回應 schema／內部建構），漂掉的那一次會在
+       序列化時才爆（pydantic 驗證失敗＝整個回應 500），而不是在寫錯的當下。
+       `tests/unit/agent/test_session_confirm_tools_req.py` 有一條測試逐值對帳。
     """
-    reason: Literal["no_grounding", "sensitive_no_grounding", "llm_mentioned_handoff", "partial_grounding"]
+    reason: Literal["no_grounding", "sensitive_no_grounding", "llm_mentioned_handoff", "partial_grounding",
+                    "tool_unavailable", "budget_exhausted"]
     fact_class: Literal["customer_reference", "pricing", "contract_sla", "compliance", "security", "feature", "other"]
     channel: str
     message: str

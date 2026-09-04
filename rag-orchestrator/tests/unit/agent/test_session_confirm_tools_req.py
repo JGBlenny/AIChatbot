@@ -1,0 +1,523 @@
+"""unit：`handoff.request`／`session.slots.*`／`confirm.request`（agentic-mcp-orchestration 任務 2.4）。
+
+涵蓋：
+- reason 封閉值域正反（含 2.4 新增兩值）＋`HandoffSignal` Literal 逐值對帳；
+- `HandoffReason` 擴值 ⛔ 不改既有 `build_*` 的推導行為；
+- slot key 白名單與 value 清洗（含經 registry 的 schema 層擋）；
+- `confirm.request` 回三顆機器值、`pending_id`，且**任何欄位都不含 token**；
+- `canonical_json` 決定性；
+- registry 在 M3 之前 `specs_for` 取不到 write 工具（帶正對照組）。
+
+⚠️ 每個「取不到／不存在」的斷言旁都放一個**已知必然存在**的正對照組——
+   工具或條件壞掉時要看得出來是工具壞了，不是目標不存在。
+"""
+import json
+from unittest.mock import AsyncMock
+
+import pytest
+
+from services.agent.identity import Identity
+from services.agent.tools.confirm import (
+    CONFIRM_QUICK_REPLY_VALUES,
+    CONFIRM_SPEC,
+    canonical_json,
+    confirm_request,
+    payload_digest,
+    pending_id_for,
+    sha256_hex,
+)
+from services.agent.tools.handoff import (
+    HANDOFF_REASONS,
+    HANDOFF_SPEC,
+    handoff_request,
+    parse_handoff_reason,
+)
+from services.agent.tools.registry import ToolRegistry, ToolSpec
+from services.agent.tools.session import (
+    SLOT_KEYS,
+    SLOT_VALUE_MAX_CHARS,
+    SLOTS_GET_SPEC,
+    SLOTS_SET_SPEC,
+    SlotKey,
+    parse_slot_key,
+    sanitize_slot_value,
+    slots_get,
+    slots_set,
+)
+from services.conversational_config import (
+    PRESALES_HANDOFF_CHANNEL_DEFAULT,
+    PRESALES_HANDOFF_MESSAGE,
+)
+from services.presales_gate import FactClass, HandoffReason, build_handoff
+
+pytestmark = pytest.mark.unit
+
+_REQ = "agentic-mcp-orchestration:2.4"
+
+#: 2.4 新增的兩個 reason。
+_NEW_REASONS = ("tool_unavailable", "budget_exhausted")
+#: 正對照組：擴值前就存在、⛔ 不得因擴值而消失。
+_EXISTING_REASONS = (
+    "no_grounding",
+    "sensitive_no_grounding",
+    "llm_mentioned_handoff",
+    "partial_grounding",
+)
+
+
+def _identity(**over):
+    base = dict(
+        vendor_id=1,
+        target_user="prospect",
+        mode="b2c",
+        session_id="backtest_session_unit_2_4",
+        api_key_id=7,
+    )
+    base.update(over)
+    return Identity(**base)
+
+
+# ════════════════════════════════════════════════════════════════════
+# handoff.request：reason 值域正反
+# ════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.req(_REQ)
+def test_handoff_reason_enum_covers_existing_four_and_two_new():
+    """schema 的 enum ＝ `HandoffReason` 全值域；新兩值在、舊四值也還在（正對照組）。"""
+    schema_enum = HANDOFF_SPEC["input_schema"]["properties"]["reason"]["enum"]
+    assert schema_enum == list(HANDOFF_REASONS)
+    assert schema_enum == [r.value for r in HandoffReason]
+    for value in _NEW_REASONS:
+        assert value in schema_enum
+    for value in _EXISTING_REASONS:   # 正對照組：擴值沒有把既有值弄丟
+        assert value in schema_enum
+
+
+@pytest.mark.req(_REQ)
+def test_handoff_signal_literal_matches_handoff_reason_value_for_value():
+    """`routers/chat.py:HandoffSignal.reason` 的 Literal 必須與 `HandoffReason` 逐值相同。"""
+    from typing import get_args
+
+    from routers.chat import HandoffSignal
+
+    literal_values = set(get_args(HandoffSignal.model_fields["reason"].annotation))
+    assert literal_values == {r.value for r in HandoffReason}
+
+
+@pytest.mark.req(_REQ)
+def test_parse_handoff_reason_rejects_unknown_and_non_str():
+    assert parse_handoff_reason("tool_unavailable") is HandoffReason.tool_unavailable
+    assert parse_handoff_reason("no_grounding") is HandoffReason.no_grounding  # 正對照組
+    assert parse_handoff_reason("Tool_Unavailable") is None   # ⛔ 不做大小寫正規化
+    assert parse_handoff_reason("no_such_reason") is None
+    assert parse_handoff_reason(None) is None
+    assert parse_handoff_reason(123) is None
+
+
+@pytest.mark.req(_REQ)
+@pytest.mark.parametrize("reason", [r.value for r in HandoffReason])
+async def test_handoff_request_accepts_every_reason_in_domain(reason):
+    result = await handoff_request(
+        _identity(), {"reason": reason, "fact_class": "pricing"}, db_pool=None
+    )
+    assert result.ok is True
+    assert result.data["handoff"]["reason"] == reason
+    assert result.data["handoff"]["fact_class"] == "pricing"
+
+
+@pytest.mark.req(_REQ)
+async def test_handoff_request_rejects_reason_outside_domain():
+    for bad in ("no_such_reason", "", None, 42):
+        result = await handoff_request(
+            _identity(), {"reason": bad, "fact_class": "pricing"}, db_pool=None
+        )
+        assert result.ok is False
+        assert result.error == "INVALID_INPUT"
+
+
+@pytest.mark.req(_REQ)
+async def test_handoff_request_message_is_effective_handoff_message():
+    """無設定 ⇒ code 保底固定句；有設定 ⇒ 用 DB 供給的（`effective_handoff_message` 語義）。"""
+    result = await handoff_request(
+        _identity(), {"reason": "budget_exhausted", "fact_class": "other"}, db_pool=None
+    )
+    assert result.data["message"] == PRESALES_HANDOFF_MESSAGE
+    assert result.data["handoff"]["message"] == PRESALES_HANDOFF_MESSAGE
+    assert result.data["handoff"]["channel"] == PRESALES_HANDOFF_CHANNEL_DEFAULT
+    assert result.text_for_model == PRESALES_HANDOFF_MESSAGE
+
+    class _Cfg:
+        handoff_message = "這題請洽專人。"
+        handoff_channel = "line_vendor_x"
+
+    result = await handoff_request(
+        _identity(), {"reason": "budget_exhausted", "fact_class": "other"}, cfg=_Cfg()
+    )
+    assert result.data["message"] == "這題請洽專人。"
+    assert result.data["handoff"]["channel"] == "line_vendor_x"
+
+
+@pytest.mark.req(_REQ)
+async def test_handoff_request_provenance_is_empty_so_it_cannot_be_cited():
+    """固定句 ⛔ 不是知識來源——Verifier 步③④ 無 `Provenance.text` 可比對即拒。"""
+    result = await handoff_request(
+        _identity(), {"reason": "tool_unavailable", "fact_class": "feature"}, db_pool=None
+    )
+    assert result.provenance == []
+
+
+@pytest.mark.req(_REQ)
+def test_existing_build_handoff_behaviour_unchanged_by_new_reasons():
+    """擴值 ⛔ 不得改動既有推導：敏感 ⇒ sensitive_no_grounding，其餘 ⇒ no_grounding。"""
+    sensitive = build_handoff(FactClass.pricing, channel="c", message="m")
+    assert sensitive.reason is HandoffReason.sensitive_no_grounding
+    plain = build_handoff(FactClass.feature, channel="c", message="m")
+    assert plain.reason is HandoffReason.no_grounding
+
+
+# ════════════════════════════════════════════════════════════════════
+# session.slots：白名單與清洗
+# ════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.req(_REQ)
+def test_slot_key_enum_is_closed_six_values():
+    assert SLOT_KEYS == (
+        "contract_ref",
+        "bill_ref",
+        "estate_ref",
+        "repair_ref",
+        "unit_count",
+        "business_type",
+    )
+    assert SLOTS_GET_SPEC["input_schema"]["properties"]["key"]["enum"] == list(SLOT_KEYS)
+    assert SLOTS_SET_SPEC["input_schema"]["properties"]["key"]["enum"] == list(SLOT_KEYS)
+    assert SLOTS_SET_SPEC["input_schema"]["properties"]["value"]["maxLength"] == 120
+
+
+@pytest.mark.req(_REQ)
+def test_parse_slot_key_rejects_anything_outside_whitelist():
+    assert parse_slot_key("contract_ref") is SlotKey.contract_ref   # 正對照組
+    for bad in ("vendor_id", "role_id", "Contract_Ref", "", None, 1):
+        assert parse_slot_key(bad) is None
+
+
+@pytest.mark.req(_REQ)
+def test_sanitize_slot_value_strips_newlines_markup_and_truncates():
+    assert sanitize_slot_value("基隆溫馨一人宅") == "基隆溫馨一人宅"   # 正對照組：正常值原樣通過
+    # 換行／tab／控制字元 → 空白並收斂
+    assert sanitize_slot_value("A\nB\tC\r\nD") == "A B C D"
+    # 標記骨架字元剝除
+    assert sanitize_slot_value("<script>{x}[y]") == "scriptxy"
+    # 前後空白 strip
+    assert sanitize_slot_value("   x   ") == "x"
+    # 長度上限
+    long_value = "字" * (SLOT_VALUE_MAX_CHARS + 50)
+    assert len(sanitize_slot_value(long_value)) == SLOT_VALUE_MAX_CHARS
+    # 清洗後為空 ⇒ None（⛔ 不存空槽位）
+    assert sanitize_slot_value("<>{}[]") is None
+    assert sanitize_slot_value("   ") is None
+    assert sanitize_slot_value("") is None
+    assert sanitize_slot_value(None) is None
+    assert sanitize_slot_value(123) is None
+
+
+def _slots_pool(update_status="UPDATE 1", collected=None):
+    pool = AsyncMock()
+    pool.execute = AsyncMock(return_value=update_status)
+    pool.fetchrow = AsyncMock(
+        return_value=None if collected is None else {"collected_data": collected}
+    )
+    return pool
+
+
+@pytest.mark.req(_REQ)
+async def test_slots_set_rejects_key_outside_whitelist():
+    pool = _slots_pool()
+    result = await slots_set(_identity(), {"key": "vendor_id", "value": "9"}, db_pool=pool)
+    assert result.ok is False and result.error == "INVALID_INPUT"
+    pool.execute.assert_not_awaited()
+
+
+@pytest.mark.req(_REQ)
+async def test_slots_set_requires_session_id():
+    pool = _slots_pool()
+    result = await slots_set(
+        _identity(session_id=""), {"key": "contract_ref", "value": "A1"}, db_pool=pool
+    )
+    assert result.ok is False and result.error == "INVALID_INPUT"
+    pool.execute.assert_not_awaited()
+
+
+@pytest.mark.req(_REQ)
+async def test_slots_set_stores_sanitized_slot_value_shape():
+    """存進去的是 `{value, source:"tool", confirmed:false}`，且 value 已清洗。"""
+    pool = _slots_pool(collected={"slots": {"contract_ref": {"value": "A1 B", "source": "tool", "confirmed": False}}})
+    result = await slots_set(
+        _identity(), {"key": "contract_ref", "value": "A1\n<B>"}, db_pool=pool
+    )
+    assert result.ok is True
+    args = pool.execute.await_args.args
+    assert args[1] == "backtest_session_unit_2_4"   # session_id
+    assert args[2] == "contract_ref"                # 槽位鍵
+    assert json.loads(args[3]) == {"value": "A1 B", "source": "tool", "confirmed": False}
+    assert result.data["slots"]["contract_ref"]["source"] == "tool"
+
+
+@pytest.mark.req(_REQ)
+async def test_slots_set_without_conversational_session_fails_loudly():
+    """UPDATE 影響 0 列 ⇒ `NO_MATCH`，⛔ 不得靜默回 ok（見 session.py 模組 docstring）。"""
+    pool = _slots_pool(update_status="UPDATE 0")
+    result = await slots_set(
+        _identity(), {"key": "bill_ref", "value": "B-1"}, db_pool=pool
+    )
+    assert result.ok is False and result.error == "NO_MATCH"
+
+
+@pytest.mark.req(_REQ)
+async def test_slots_get_returns_slots_map_and_flags_unset_key():
+    pool = _slots_pool(collected={"slots": {"contract_ref": {"value": "A1", "source": "tool", "confirmed": False}}})
+    hit = await slots_get(_identity(), {"key": "contract_ref"}, db_pool=pool)
+    assert hit.ok is True and hit.data["slots"]["contract_ref"]["value"] == "A1"
+    assert "A1" in hit.text_for_model
+
+    miss = await slots_get(_identity(), {"key": "bill_ref"}, db_pool=pool)
+    assert miss.ok is True
+    assert "尚未設定" in miss.text_for_model
+
+
+@pytest.mark.req(_REQ)
+async def test_slots_get_tolerates_json_string_and_missing_session():
+    pool = _slots_pool(collected=json.dumps({"slots": {"unit_count": {"value": "600"}}}))
+    result = await slots_get(_identity(), {"key": "unit_count"}, db_pool=pool)
+    assert result.data["slots"]["unit_count"]["value"] == "600"
+
+    empty = _slots_pool()   # fetchrow → None（沒有對話會話）
+    result = await slots_get(_identity(), {"key": "unit_count"}, db_pool=empty)
+    assert result.ok is True and result.data["slots"] == {}
+
+
+# ════════════════════════════════════════════════════════════════════
+# confirm.request：三顆機器值、⛔ 不回 token
+# ════════════════════════════════════════════════════════════════════
+
+
+def _confirm_pool():
+    pool = AsyncMock()
+    pool.execute = AsyncMock(return_value="INSERT 0 1")
+    return pool
+
+
+@pytest.mark.req(_REQ)
+async def test_confirm_request_returns_three_machine_values_reusing_engine_constants():
+    from services.conversational_engine import _QR_CANCEL, _QR_EDIT, _QR_SUBMIT
+
+    assert CONFIRM_QUICK_REPLY_VALUES == (_QR_SUBMIT, _QR_EDIT, _QR_CANCEL)
+
+    pool = _confirm_pool()
+    result = await confirm_request(
+        _identity(), {"summary": "要送出修繕單嗎？", "payload": {"a": 1}}, db_pool=pool
+    )
+    assert result.ok is True
+    assert result.data["quick_replies"] == ["confirm_submit", "confirm_edit", "confirm_cancel"]
+
+
+@pytest.mark.req(_REQ)
+async def test_confirm_request_never_returns_the_token():
+    """token ⛔ 不進 `ToolResult` 的任何欄位；`pending_id` 是它的單向短摘要。"""
+    pool = _confirm_pool()
+    payload = {"repair_id": 12, "note": "水管漏水"}
+    result = await confirm_request(
+        _identity(), {"summary": "確認送出", "payload": payload}, db_pool=pool
+    )
+
+    insert_args = pool.execute.await_args.args
+    token = insert_args[1]
+    # 正對照組：token 真的被寫進 DB 了（否則下面的「找不到 token」只是因為根本沒 token）
+    assert isinstance(token, str) and len(token) >= 40
+    assert insert_args[2] == "backtest_session_unit_2_4"
+    assert insert_args[3] == payload_digest(payload)
+    assert insert_args[4] == sha256_hex("確認送出")
+    assert insert_args[5] == 600   # 10 分鐘
+
+    serialized = result.model_dump_json()
+    assert token not in serialized
+    assert result.data["pending_id"] == pending_id_for(token)
+    assert token not in result.data["pending_id"]
+    assert result.provenance == []
+
+
+@pytest.mark.req(_REQ)
+async def test_confirm_request_rejects_malformed_input():
+    pool = _confirm_pool()
+    for args in (
+        {"summary": "", "payload": {}},
+        {"summary": "   ", "payload": {}},
+        {"summary": "ok", "payload": "not-a-dict"},
+        {"summary": 1, "payload": {}},
+    ):
+        result = await confirm_request(_identity(), args, db_pool=pool)
+        assert result.ok is False and result.error == "INVALID_INPUT"
+    # 正對照組：形狀正確就會過
+    ok = await confirm_request(_identity(), {"summary": "ok", "payload": {}}, db_pool=pool)
+    assert ok.ok is True
+
+
+@pytest.mark.req(_REQ)
+async def test_confirm_request_requires_session_id():
+    pool = _confirm_pool()
+    result = await confirm_request(
+        _identity(session_id=""), {"summary": "ok", "payload": {}}, db_pool=pool
+    )
+    assert result.ok is False and result.error == "INVALID_INPUT"
+    pool.execute.assert_not_awaited()
+
+
+# ════════════════════════════════════════════════════════════════════
+# canonical_json 決定性
+# ════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.req(_REQ)
+def test_canonical_json_is_key_order_independent_and_compact():
+    a = {"b": 1, "a": {"z": [1, 2], "y": "中文"}}
+    b = {"a": {"y": "中文", "z": [1, 2]}, "b": 1}
+    assert canonical_json(a) == canonical_json(b)
+    assert canonical_json(a) == '{"a":{"y":"中文","z":[1,2]},"b":1}'
+    assert " " not in canonical_json(a)          # separators 去空格
+    assert "\\u" not in canonical_json(a)        # ensure_ascii=False
+    assert payload_digest(a) == payload_digest(b)
+
+
+@pytest.mark.req(_REQ)
+def test_canonical_json_digest_changes_when_any_value_changes():
+    base = {"repair_id": 12, "note": "水管漏水"}
+    assert payload_digest(base) != payload_digest({"repair_id": 13, "note": "水管漏水"})
+    assert payload_digest(base) != payload_digest({"repair_id": 12, "note": "水管漏水 "})
+    assert payload_digest(base) != payload_digest({"repair_id": "12", "note": "水管漏水"})
+    # 正對照組：同一份資料重算兩次必須相同
+    assert payload_digest(base) == payload_digest(dict(base))
+
+
+# ════════════════════════════════════════════════════════════════════
+# registry：M3 之前取不到 write 工具（帶正對照組）
+# ════════════════════════════════════════════════════════════════════
+
+
+_FAKE_WRITE_SPEC: ToolSpec = {
+    # 假的 write 工具，只為證明可見性規則；⛔ M0–M3 產線 registry 不註冊任何 `jgb2.action.*`。
+    "name": "jgb2.action.fake_for_test",
+    "description": "測試用假寫入工具",
+    "input_schema": {
+        "type": "object",
+        # ⚠️ 連帶約束（registry.register 的 additionalProperties=False）：
+        #    write 工具的 `confirmation_token` **必須**寫進 properties，否則守門②
+        #    放行後會在第④步被封閉 schema 擋成 INVALID_INPUT。
+        "properties": {
+            "payload": {"type": "object"},
+            "confirmation_token": {"type": "string"},
+        },
+        "required": ["payload", "confirmation_token"],
+    },
+    "scope": "write",
+    "stage": {"tenant": "M4", "property_manager": "M5"},
+}
+
+
+async def _noop_fn(identity, args):
+    from services.agent.tools.registry import ToolResult
+
+    return ToolResult(ok=True, data={})
+
+
+def _registry_with_2_4_tools():
+    registry = ToolRegistry()
+    registry.register(HANDOFF_SPEC, _noop_fn)
+    registry.register(SLOTS_GET_SPEC, _noop_fn)
+    registry.register(SLOTS_SET_SPEC, _noop_fn)
+    registry.register(CONFIRM_SPEC, _noop_fn)
+    return registry
+
+
+@pytest.mark.req(_REQ)
+def test_no_write_tool_visible_before_m3():
+    """M0–M3 任一 stage 下 `specs_for` 都拿不到 write 工具；同一次呼叫拿得到 read 工具（正對照組）。"""
+    registry = _registry_with_2_4_tools()
+    registry.register(_FAKE_WRITE_SPEC, _noop_fn)
+    identity = _identity(target_user="tenant", mode="b2c")
+
+    for stage in ("M0", "M1", "M2", "M3"):
+        visible = registry.specs_for(identity, stage, for_model=True)
+        names = {s["name"] for s in visible}
+        assert not [s for s in visible if s.get("scope") == "write"], (
+            f"stage={stage} 不該看得到任何 write 工具"
+        )
+        assert "jgb2.action.fake_for_test" not in names
+        if stage != "M0":
+            # 正對照組：同一次呼叫看得到 M1 的 read 工具 ⇒ 可見性規則本身沒壞
+            assert "handoff.request" in names
+
+    # 反向對照：把 stage 推到 M4，同一支假 write 工具就看得見 ⇒ 上面的「看不見」
+    # 是 stage 判斷生效，不是 registry 壞了。
+    visible_m4 = {s["name"] for s in registry.specs_for(identity, "M4", for_model=True)}
+    assert "jgb2.action.fake_for_test" in visible_m4
+
+
+@pytest.mark.req(_REQ)
+def test_2_4_tools_are_all_read_scope_and_stage_m1():
+    registry = _registry_with_2_4_tools()
+    identity = _identity()
+    assert {s["name"] for s in registry.specs_for(identity, "M0")} == set()
+    names_m1 = {s["name"] for s in registry.specs_for(identity, "M1")}
+    assert names_m1 == {
+        "handoff.request",
+        "session.slots.get",
+        "session.slots.set",
+        "confirm.request",
+    }
+    for spec in (HANDOFF_SPEC, SLOTS_GET_SPEC, SLOTS_SET_SPEC, CONFIRM_SPEC):
+        assert spec["scope"] == "read"
+        assert spec["stage"] == {
+            "prospect": "M1",
+            "property_manager": "M1",
+            "tenant": "M1",
+        }
+
+
+@pytest.mark.req(_REQ)
+async def test_registry_schema_layer_rejects_bad_enum_values():
+    """非法 reason／非法 slot key 在 registry 第④步就被擋成 `INVALID_INPUT`。"""
+    registry = _registry_with_2_4_tools()
+    identity = _identity()
+
+    bad_reason = await registry.call(
+        identity, "handoff.request",
+        {"reason": "no_such_reason", "fact_class": "pricing"}, 3.0, stage="M1",
+    )
+    assert bad_reason.error == "INVALID_INPUT"
+
+    bad_key = await registry.call(
+        identity, "session.slots.set", {"key": "vendor_id", "value": "9"}, 3.0, stage="M1",
+    )
+    assert bad_key.error == "INVALID_INPUT"
+
+    too_long = await registry.call(
+        identity, "session.slots.set",
+        {"key": "contract_ref", "value": "字" * 121}, 3.0, stage="M1",
+    )
+    assert too_long.error == "INVALID_INPUT"
+
+    # 正對照組：合法輸入走得通 ⇒ 上面三個 INVALID_INPUT 是 schema 判定，不是全都被擋
+    ok = await registry.call(
+        identity, "handoff.request",
+        {"reason": "budget_exhausted", "fact_class": "other"}, 3.0, stage="M1",
+    )
+    assert ok.ok is True
+
+
+@pytest.mark.req(_REQ)
+def test_tool_input_schemas_carry_no_identity_keys():
+    """不變量 18／27：`register()` 會擋身分鍵；四支 spec 註冊得起來即證明無身分鍵。"""
+    registry = _registry_with_2_4_tools()   # register 內含身分鍵檢查，會 raise
+    assert len(registry.specs_for(_identity(), "M1")) == 4

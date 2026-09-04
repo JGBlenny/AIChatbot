@@ -94,6 +94,7 @@ class ToolSpec(TypedDict, total=False):
     scope: Literal["read", "write"]
     stage: dict[Audience, Stage]
     facade_only: bool  # 預設 False；1.4.1：True ⇒ 只由 MCP 門面呼叫
+    mutates_session: bool  # 預設 False；DSP-016：True ⇒ 會寫 session 狀態（slots／token 表），影子 readonly_view 不可見
 
 
 ToolFn = Callable[[Identity, dict], Awaitable[ToolResult]]
@@ -221,6 +222,7 @@ class ToolRegistry:
         input_schema.setdefault("additionalProperties", False)
         spec["input_schema"] = input_schema
         spec.setdefault("facade_only", False)
+        spec.setdefault("mutates_session", False)
         self._specs[name] = spec  # type: ignore[assignment]
         self._fns[name] = fn
 
@@ -239,8 +241,12 @@ class ToolRegistry:
 
         `name` 可見 ⇔ `audience ∈ spec.stage
             and spec.stage[audience] <= stage
-            and (not readonly_view or scope == "read")
+            and (not readonly_view or (scope == "read" and not mutates_session))
             and not (facade_only and (for_model or readonly_view))`
+
+        DSP-016（2026-09-05）：`session.slots.set`／`confirm.request` 是 scope=read 但會寫
+        `form_sessions`／token 表；影子回合與正式回合共用 session_id，只看 scope 會讓影子
+        污染正式狀態 ⇒ `mutates_session=True` 的工具在 `readonly_view` 一律不可見。
         """
         audience = identity.resolved_audience()
         visible: list[ToolSpec] = []
@@ -250,7 +256,7 @@ class ToolRegistry:
                 continue
             if not _stage_le(spec_stage[audience], stage):
                 continue
-            if readonly_view and spec.get("scope") == "write":
+            if readonly_view and (spec.get("scope") == "write" or spec.get("mutates_session")):
                 continue
             if spec.get("facade_only") and (for_model or readonly_view):
                 continue

@@ -62,6 +62,13 @@ class HandoffReason(str, Enum):
     sensitive_no_grounding = "sensitive_no_grounding"    # 同上且 fact_class ∈ SENSITIVE
     llm_mentioned_handoff = "llm_mentioned_handoff"      # LLM 路徑文字含封閉詞（後置掃描補訊號）
     partial_grounding = "partial_grounding"              # D6：多項目事實題只回得了 top-1 知識，其餘沒資料（抽取式＋固定尾句）
+    # ── agent 路徑新增兩值（spec agentic-mcp-orchestration 任務 2.4）──
+    # ⚠️ **純加值**：既有四值的字面量、`build_handoff`／`build_llm_mention_handoff`／
+    #    `build_partial_handoff` 的推導規則一律不動——這兩值不由任何 `build_*` 產生，
+    #    只能由 `services/agent/tools/handoff.py:handoff_request` 依模型指定的 reason 建構，
+    #    以及由 AgentRuntime（任務 2.1）在降級時直接指定。
+    tool_unavailable = "tool_unavailable"                # 工具逾時／server 不可用，重試一次仍失敗（design 錯誤處理表）
+    budget_exhausted = "budget_exhausted"                # 工具呼叫數／重寫次數／deadline 任一耗盡（design 預算計數表）
 
 
 #: D6 多項目問句的封閉分隔詞（業主 2026-09-04）：命中任一 ⇒ 視為「一次問多個項目」。⛔ 不含逗號（幾乎每句都有）、不做語義判斷。

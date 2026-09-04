@@ -573,3 +573,24 @@ async def test_closed_schema_rejects_undeclared_non_identity_key():
         _identity("tenant"), "kb.get", {"kb_id": "1", "nonsense": 1}, 1.0, stage="M0")
 
     assert result.ok is False and result.error == "INVALID_INPUT", result
+
+
+# ── DSP-016：mutates_session 在 readonly_view 不可見 ─────────────────────────
+@pytest.mark.unit
+def test_mutates_session_tool_hidden_in_readonly_view():
+    from services.agent.tools.registry import ToolRegistry
+    from services.agent.identity import Identity
+    reg = ToolRegistry()
+    async def fn(identity, args):  # pragma: no cover - never called
+        raise AssertionError("should not run")
+    reg.register({"name": "x.set", "description": "d", "input_schema": {"type": "object", "properties": {}},
+                  "output_model": dict, "scope": "read", "mutates_session": True,
+                  "stage": {"prospect": "M0", "tenant": "M0", "property_manager": "M0"}}, fn)
+    reg.register({"name": "x.get", "description": "d", "input_schema": {"type": "object", "properties": {}},
+                  "output_model": dict, "scope": "read",
+                  "stage": {"prospect": "M0", "tenant": "M0", "property_manager": "M0"}}, fn)
+    ident = Identity(vendor_id=1, target_user="tenant", mode="b2c", session_id="s")
+    normal = {s["name"] for s in reg.specs_for(ident, "M5")}
+    shadow = {s["name"] for s in reg.specs_for(ident, "M5", readonly_view=True)}
+    assert {"x.set", "x.get"} <= normal            # 正對照：正式回合兩者可見
+    assert "x.get" in shadow and "x.set" not in shadow
