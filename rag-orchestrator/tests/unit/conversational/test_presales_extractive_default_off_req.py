@@ -76,7 +76,8 @@ async def test_inline_with_grounding_goes_to_llm_synth_not_brain_text(snapshots)
 @pytest.mark.req("presales-grounding-gate:2.11")
 async def test_ask_declarative_with_grounding_goes_to_llm_synth(snapshots):
     eng = _engine([{"answer": KB, "similarity": 0.8}])
-    stub_step(eng.optimizer, {"action": "ask", "converge_kind": "answer", "converge_topic": "匯入", "extracted_fields": {}, "fact_class": "feature",
+    # R2.13 後 fact_class≠other 會先走 ask_fact；本測試守的是 R2.11 反問句結構閘門 ⇒ 用 fact_class=other 讓它走到 R2.11
+    stub_step(eng.optimizer, {"action": "ask", "converge_kind": "answer", "converge_topic": "匯入", "extracted_fields": {}, "fact_class": "other",
                               "next_question": "我們的系統支援租客批次匯入，包括房東、租客、合約和歷史帳單。請問您還有其他想了解的功能嗎？"})
     r = await eng.handle("backtest_session_off3", "anon", 0, "那物件跟合約呢？", CFG, start_if_absent=True)
     assert r["answer"] == "合成文" and "歷史帳單" not in r["answer"]

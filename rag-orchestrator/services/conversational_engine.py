@@ -889,6 +889,22 @@ class ConversationalEngine:
 
             if step["action"] == "ask":
                 _q = step.get("next_question")
+                # ── presales-grounding-gate R2.13（主題 pilot 2026-09-04：46 句有 15 句被反問身分，其中 8 句知識已在 top-1）：
+                #    brain 自己標了 fact_class≠other（＝這句是事實題），只是句形是陳述（「舊約要輸入系統」），沒有問句標記所以
+                #    R2.11 看不到；有知識就該答，⛔ 不反問身分。知識空 ⇒ 維持 ask（陳述句可能真是在描述情境，不升格固定句）。
+                if not _inline and getattr(config, "persona_role", None) == "prospect":
+                    from services.presales_gate import parse_fact_class as _pfc2, FactClass as _FC2
+                    _fc2 = _pfc2(getattr(step.get("fact_class"), "value", step.get("fact_class")))
+                    if _fc2 is not _FC2.other:
+                        _cg2 = await self._converge_grounding(state, step.get("converge_topic"), user_message, config, "answer")
+                        if not isinstance(_cg2, ConvergeGrounding):
+                            _cg2 = ConvergeGrounding.from_legacy(_cg2)
+                        print(f"🧭 [presales-gate] kind=ask_fact fact_class={_fc2.value} hits={_cg2.hits} threshold={_cg2.threshold}")
+                        if not _cg2.empty:
+                            state["asked_count"] = asked + 1
+                            return await self._grounded_answer_decision(state, session_id, user_message, config, _fc2, _cg2, system_md,
+                                                                        converge_topic=step.get("converge_topic"), path="ask_fact",
+                                                                        meta={"grounding_hits": _cg2.hits, "grounding_threshold": _cg2.threshold})
                 # ── presales-grounding-gate R2.11（e2e 第三輪 A1）：brain 不填 inline_answer、把答案塞進 next_question
                 #    ⇒ 上面的 inline 閘門看不到它（log 也沒有），假事實「合約和歷史帳單可匯入」3/5 次從這裡漏。
                 #    結構判定（使用者在問＋反問句含 ≥8 字陳述）⇒ 整輪改走同一把閘門：有知識抽取、沒知識固定句；⛔ 不進 optimizer。
