@@ -1,12 +1,13 @@
 # 實作任務：agentic-mcp-orchestration（決策搬進模型、工具邊界＋引用契約）
 
 > 建立時間：2026-09-04
-> 需求：requirements.md v1＋DSP-012 修訂（R1–R13，63 子項；R11.5／R11.6 新增）｜設計：design.md 1.4.1（8 元件、15 決策、不變量 18–22；r4 READY、r6 增量審查處置）｜研究：research.md｜路線圖：roadmap.md（本檔只涵蓋母 spec M0–M3；M4／M5 與個人化為子 spec）
+> 需求：requirements.md v1＋DSP-012 修訂＋R3.7（R1–R13，64 子項；R3.7、R11.5、R11.6 新增）｜設計：design.md 1.4.1（8 元件、15 決策、不變量 18–22；r4 READY、r6 增量審查處置）｜研究：research.md｜路線圖：roadmap.md（本檔只涵蓋母 spec M0–M3；M4／M5 與個人化為子 spec）
 > 標記：`(P)` = 可與同層其他 `(P)` 平行；`- [ ]*` = 可延後的補充測試
 > ⚠️ 規則／模板缺席：`.kiro/settings/rules/tasks-*.md` 與 `templates/specs/tasks.md` 不存在，格式沿用 `presales-grounding-gate/tasks.md`。
 > 鐵律：**DSP-011 權限由 jgb2 API 裁、本系統只管額度，⛔ 不建授權層／bearer**；**隔離謂詞單一來源 `build_visibility_predicate`，b2b ⛔ 不加 `IS NULL`（D-002）**；**模型工具參數 ⛔ 不含身分鍵**；**`fact` 句一律需 cite、敏感五類先於引用**；**計量 ⛔ 落原文**；TDD 先紅後綠、容器內跑（`make test`）；`backtest_session_` 前綴；⛔ 不 dump env、金鑰不進 argv；DB 寫入與 migration 執行由業主授權；`*.sql` 需 `git add -f`；一次性腳本不 commit；改引擎行為以系統路徑實跑收案、派獨立 verifier、情境 e2e 為收案必要條件。
 > **執行註記（業主 2026-09-04 要求）**：每個子任務下方一行 `執行：<角色>／effort <低|中|高>——理由`。角色＝Claude Code 派工角色，**model 由各角色定義路由、⛔ 不在派工時覆寫**（`mech-executor`＝便宜層、全規格機械工；`executor`＝有限判斷；`security-executor`＝授權後的安全敏感實作；`security-reviewer`／`verifier`／`plan-verifier`＝唯讀審查；`main`＝主 session 親做，用於耦合整合與收案判斷）。effort＝該角色的推理力度：低＝規格齊全照抄、中＝需局部設計決定、高＝跨模組整合或安全邊界。風險觸發（隔離／安全／資料）的任務完成後必派 fresh `verifier`。
 > **範圍聲明（r5 目標驗證後，業主 2026-09-04「好」）**：本 spec 交付「JGB 相關服務連上 `/mcp` 就能完成一段客服對話」**僅限 prospect 身分**（2.6 `agent.turn`）；LINE 租客／語音來電者屬 tenant，對話能力在子 spec `agent-tenant-audience`（M4）；語音的串流形態、首字預算、打斷在子 spec `voice-turn-budget`，本 spec ⛔ 不調現行預算。語音先走 REST SSE。
+> **未審查增量（M1 開工前派一次 fresh plan-verifier 只審這批）**：design 1.4.1 `facade_only`／Origin 三態、tasks 2.7、2.1a、R3.7、5.2 steering 更新。1.x（M0）不受影響。
 > 待裁對應（不擋任務生成，擋對應里程碑）：D1 模型 SDK（假設 OpenAI function calling）→ 2.1；D2 收案數字 → 5.2；D3 幫助中心 → 1.6（`citable` 全 false 直到裁定）；D6 個人化 → 另案。DSP-012 已裁選項 A（2026-09-04）→ 3.2／3.3 承接（R11.5／R11.6）。
 
 ## 1. M0 底座：隔離謂詞、工具 registry、唯讀工具、MCP 門面（1.1 先做；其餘可平行）
@@ -43,6 +44,7 @@
 
 - [ ] 2.1 (P) AgentRuntime 迴圈與預算（TDD）：`services/agent/runtime.py`——Chat Completions 迴圈（`OpenAIProvider.async_client`，`parallel_tool_calls=false`、工具 strict、最終 `response_format json_schema strict`＝`AgentOutput`）；`Budget{max_tool_calls=4, max_rewrites=2, deadline_s=20}` 依 design 預算計數表逐事件計（含被丟棄的身分鍵呼叫、逾時重試一次；schema 不符與 Verifier 拒各計一次重寫）；任一耗盡 ⇒ 固定句＋`handoff(budget_exhausted)`；工具不可用 ⇒ `handoff(tool_unavailable)`；tool call 含身分鍵 ⇒ 丟棄記 `trace.violations`；`TurnTrace` 全欄；`readonly_view` 建構參數；同題重問快取（key＝NFKC 去空白 sha256，只快取 `final_kind=="handoff"` 回合，命中 ⇒ 不進模型 `llm_calls==0`，trace 記 `replayed_from`）。測試（假 provider）：tool_call→回填→最終；預算表每事件；身分鍵丟棄；不可用降級；重播；session `fixed_streak` 累計。
   - 需求：1.1, 1.2, 1.3, 1.5, 7.2, 13.4
+  - [ ]* 2.1a 可選：env `AGENT_TOOL_TRANSPORT=inprocess|mcp_loopback`，`mcp_loopback` 時 Runtime 以 MCP client 連本機 `/mcp`（帶內部 key 與身分 header）呼叫同一份工具；預設 `inprocess`；M2 影子兩種各跑一次比延遲後定預設（心智模型 §5）。測試：兩種傳輸對同一訊息 `TurnResult` 相同。
   - 執行：executor／effort 高——模型迴圈與預算表是核心邏輯，假 provider 可離線測；D1 未裁前以 OpenAI function calling 實作、provider 抽象保留
 - [ ] 2.2 串流與入口（2.1 後）：`stream_turn` 以 `answer_chunk` 逐字、`metadata` 事件帶 `handoff`／`quick_replies`／`trace_id`，工具呼叫期間每 5 秒 `event: status`（靜默 ≤10 秒）；`routers/chat.py`：`audience_of(...) ∈ AGENT_AUDIENCES` ⇒ Runtime，否則舊鏈；沿用 `_conversational_sse`／`_metered_stream`；`fixed_streak ≥ 3` ⇒ session 標 `fallback_old_chain` 走舊鏈並記錄。測試：SSE 事件序與現行 `tests/unit/chat_flow` 契約全綠；心跳；切換兩態；自動回退。
   - 需求：1.4, 9.1, 9.3, 9.4, 10.2
@@ -57,7 +59,7 @@
   - 需求：6.6, 6.8, 10.1, 11.2
   - 執行：executor／effort 中——串接與計量形狀，不變量 21 fixture 已定
 - [ ] 2.6 `agent.turn` MCP 工具（2.1、2.3、2.5 後；security-sensitive → `security-executor`）：在 registry 註冊 `agent.turn(message: str, dialog_ref?: str) -> {answer, kind, handoff, quick_replies, trace_id}`（scope=read、stage prospect:M1、**`facade_only=True`**：不進模型工具清單、不進影子 `readonly_view` 視圖；tenant／pm 缺鍵＝不可見），內部以 `X-JGB-Identity` 解析出的 Identity 呼叫同一個 `AgentRuntime.run_turn`（含 Verifier、固定句、預算、計量），⛔ 不另寫第二條回合邏輯；一次性回傳（MCP 工具結果不逐字串流；語音走 REST SSE）；`session_id` 由呼叫端產生且跨回合穩定，對話歷史由服務端存於 `form_sessions.collected_data`（與 REST 同源），呼叫端不需回傳歷史；身分契約文件由 1.7 交付（`docs/api/mcp-facade.md`）。測試：unit——`agent.turn` 與 `/api/v1/message` 對同一訊息產出同一 `TurnResult`（假 provider）；`specs_for(for_model=True)` 與 `specs_for(readonly_view=True)` 皆不含 `agent.turn`；整合——MCP client 兩回合對話，第二回合看得到第一回合 slots；prospect 以外身分 `NO_MATCH`；Verifier 拒 ⇒ 回固定句＋handoff、⛔ 無被拒文字。
-  - 需求：1.1, 1.6, 2.4, 3.6, 9.3, 10.2
+  - 需求：1.1, 1.6, 2.4, 3.6, 3.7, 9.3, 10.2
   - 執行：security-executor／effort 中——整回合經 MCP 對外，身分契約與被拒文字不外洩屬安全邊界；完成後 fresh verifier 打兩回合整合案
 - [ ] 2.7 (P) 回合軌跡檢視（業主 2026-09-04 問「怎麼知道這段話匹配哪個 API、回什麼、追問什麼」）：`GET /api/v1/agent/trace/{trace_id}`（X-API-Key）與 `tools/agent_trace.py <trace_id|session_id>`，讀 `usage_events.decision_snapshot.agent` 印出回合敘事：使用者訊息類型（kind／fact_class，不印原文）→ 工具序列（名稱、face、有無 ref／keyword、筆數、狀態、耗時）→ Verifier 每次判定與拒因 → 最終 kind／handoff reason／是否重播；session 模式列多回合時間軸。測試：以 fixture 快照渲染，斷言不含 `answer`／`quote`／原文鍵。
   - 需求：10.1, 10.2
@@ -95,7 +97,7 @@
 - [ ] 5.1 切換演練與回切：`AGENT_AUDIENCES=prospect` 本機切換（不重建 image）、五套情境 e2e 劇本（敏感五類 0 漏、無捏造句、固定句率 ≤ `perf-20260904.md` §9 基準）、回切演練一次 ≤5 分鐘且無資料修復；舊鏈程式與測試保留。**外部依賴**：jgb2 面板「找真人」按鈕讀 `handoff{channel, message}`（契約在 `docs/api/conversational-api.md`，jgb2 前端另案；未對齊前 e2e 以回應 JSON 驗 handoff 欄位，不驗按鈕）。測試：`tests/e2e/agent/` 五劇本；契約測試全綠。
   - 需求：9.1, 9.2, 9.3, 13.1, 13.5
   - 執行：main＋verifier／effort 高——情境 e2e 五劇本是收案必要條件；回切演練親做
-- [ ] 5.2 (P) 退休標記與相容文件：`tests/unit/agent/test_retired_symbols_req.py` AST 掃 `services/agent/` 不 import `_top1_relevance_gate`／`decide_arbitration`／categories 提名；`docs/architecture/` 加「agent 路徑不使用清單」與 `instance_applicability`「消費者已退休、待除役（另案）」註記；`retrieval_representation` D3 紀律保留註記；`docs/api/conversational-api.md` 加 agent 路徑不改契約與 `trace_id` 說明。
+- [ ] 5.2 (P) 退休標記與相容文件：`tests/unit/agent/test_retired_symbols_req.py` AST 掃 `services/agent/` 不 import `_top1_relevance_gate`／`decide_arbitration`／categories 提名；`docs/architecture/` 加「agent 路徑不使用清單」與 `instance_applicability`「消費者已退休、待除役（另案）」註記；`retrieval_representation` D3 紀律保留註記；`docs/api/conversational-api.md` 加 agent 路徑不改契約與 `trace_id` 說明；**`.kiro/steering/dialogue.md` 更新**：加 agent 路徑分流圖與「舊鏈流程僅適用 audience ∉ AGENT_AUDIENCES」註記（⛔ 不刪舊鏈段落，回切仍用）。
   - 需求：12.1, 12.2, 12.3, 9.3
   - 執行：mech-executor／effort 低——AST 測試與文件註記，規格齊全
 - [ ] 5.3 (P) 部署與健檢文件：`docker-compose.prod.yml` 註解新 env（`AGENT_STAGE`、`AGENT_AUDIENCES`、`AGENT_SHADOW_AUDIENCES`、`AGENT_SHADOW_MONTHLY_USD_CAP`、`AGENT_BUDGET_*`、`AGENT_OUTLINE_TOKEN_LIMIT_*`、`MCP_ALLOWED_ORIGINS`、`RATE_PER_MIN`、`KB_GET_CAP`）、`requirements.txt` 加 `mcp==2.1.1`、`tiktoken==0.14.0`；runbook 加 migration 三表＋`api_keys` 兩欄的執行順序與預期輸出（⛔ 線上由業主執行）；**內部 API key 簽發逐條指令**（含 `is_internal`／`vendor_ids` 設定）與 `MCP_ALLOWED_ORIGINS` 設定（明訂 `/mcp` 僅 server-to-server，⛔ 不供裝置／瀏覽器直連）；成本告警（每回合 > 現行 ×3）進 health。
@@ -130,7 +132,7 @@
 |---|---|
 | 1.1–1.6 | 2.1, 2.2, 2.4, 2.6 |
 | 2.1–2.6 | 1.1, 1.2, 1.3, 1.4, 1.5, 1.7, 1.9, 3.1 |
-| 3.1–3.6 | 1.3, 1.4, 1.5, 1.6, 1.8, 2.3, 2.6 |
+| 3.1–3.7 | 1.3, 1.4, 1.5, 1.6, 1.8, 2.3, 2.6 |
 | 4.1–4.4 | 2.4 |
 | 5.1–5.5 | 1.4, 3.2, 3.3 |
 | 6.1–6.8 | 2.3, 2.5 |
