@@ -3,6 +3,7 @@
 > 建立時間：2026-09-04（1.0）　本版：2026-09-04T18:15:02+0800（1.1）
 > 需求文件：requirements.md（v1）　研究記錄：research.md　落差分析：validation_gap.md　jgb2 事實來源：jgb2-source-index.md
 > 發現流程：full。設計提案母本：`docs/design/agentic-tool-selection-design-20260904.md` v2。
+> 1.2 變更（2026-09-04T18:30:37+08:00）：第二輪雙審查 REVISE 全處置（pv 1 P1＋6 P2；sec 7 P1＋5 P2）；審查正本落 `reviews/`；DSP-012 登記。處置明細見附錄 C2。
 > 1.1 變更：依 plan-verifier（REVISE，17 條）與 security-reviewer（3 P0／11 P1／7 P2／3 P3）全數處置；納入業主 2026-09-04 裁決 **DSP-011「權限由 jgb2 API 全權處理，本系統只管額度」**；納入 `jgb2-source-index.md`。處置明細見附錄 C。
 
 ## 概述
@@ -76,7 +77,7 @@ graph TD
 Audience = Literal["prospect", "property_manager", "tenant"]
 
 def audience_of(mode: Optional[str], target_user: Optional[str], role_id: Optional[str]) -> Audience:
-    """決定性推導，⛔ 不看 user 自述。prospect ⇔ target_user=='prospect'（與 CONVERSATIONAL_ENABLED_ROLES 同判準，無 role_id）；
+    """決定性推導，⛔ 不看 user 自述。prospect ⇔ target_user=='prospect'（與 routers/chat.py:CONVERSATIONAL_ENABLED_ROLES 同判準，⛔ 不看 role_id）；
     property_manager ⇔ target_user in {'property_manager','system_admin'} or mode=='b2b'（與 retriever is_b2b_mode 同式）；其餘 tenant。"""
 
 @dataclass(frozen=True)
@@ -96,7 +97,7 @@ class TurnTrace:
     violations: list[str]; rules_sha: str; outline_sha: str
 
 class AgentRuntime:
-    def __init__(self, provider: LLMProvider, registry: ToolRegistry, verifier: OutputVerifier, assembler: PromptAssembler, budget: Budget) -> None: ...
+    def __init__(self, provider: LLMProvider, registry: ToolRegistry, verifier: OutputVerifier, assembler: PromptAssembler, budget: Budget, *, readonly_view: bool = False) -> None: ...  # 影子以 readonly_view=True 建構
     async def run_turn(self, identity: Identity, user_message: str, state: dict) -> TurnResult: ...
     async def stream_turn(self, identity: Identity, user_message: str, state: dict) -> AsyncIterator[SSEEvent]: ...
 ```
@@ -112,11 +113,13 @@ class AgentRuntime:
 
 規則：tool call 參數含身分鍵 ⇒ 丟棄並記 `trace.violations`；串流期間每 5 秒送 `event: status`。[需求 1.1–1.6, 10.1]
 
+**同題重問快取（承接 R7.2）**：`state["agent"]["handoff_cache"]: dict[str, {"answer", "handoff", "trace_id"}]`，key＝NFKC＋去空白後的使用者訊息 sha256。`run_turn` 進模型迴圈**前**先查：命中且該筆 `handoff` 非空 ⇒ 直接重播（`TurnResult.kind="handoff"`，trace 記 `replayed_from`），不進模型、不計工具；只快取「已轉人」的回合（`final_kind=="handoff"`），其餘不快取。測試：同 session 逐字重問 ⇒ `llm_calls==0`。
+
 ### 元件 2：`services/agent/tools/registry.py` — ToolRegistry
 ```python
 class ToolSpec(TypedDict):
     name: str; description: str; input_schema: dict; output_model: type[BaseModel]
-    scope: Literal["read", "write"]; audiences: frozenset[Audience]; stage: Literal["M0","M1","M2","M3","M4","M5"]
+    scope: Literal["read", "write"]; stage: dict[Audience, Stage]     # Stage = Literal["M0".."M5"]；缺鍵＝該 audience 永不可見；可見 ⇔ stage[audience] <= 目前部署里程碑（env AGENT_STAGE）
 
 class ToolResult(BaseModel):
     ok: bool; data: Optional[dict]
@@ -128,32 +131,43 @@ class ToolRegistry:
     def specs_for(self, identity: Identity, stage: str, *, readonly_view: bool = False) -> list[ToolSpec]: ...
     async def call(self, identity: Identity, name: str, args: dict, timeout_s: float, *, stage: str, readonly_view: bool = False) -> ToolResult:
         """守門在這裡，門面只是薄包裝：①name ∈ specs_for(identity, stage, readonly_view) 否則 NO_MATCH＋trace FORBIDDEN；
-        ②scope=='write' 需 readonly_view=False 且 args 含有效 confirmation_token；③速率：每 session 每分鐘 ≤ RATE_PER_MIN、kb.get 每 session 累計 ≤ KB_GET_SESSION_CAP；④input_schema 驗證。"""
+        ②scope=='write' 需 readonly_view=False 且 args 含有效 confirmation_token；③速率：key＝(api_key_id, vendor_id)（⛔ 不用呼叫方字串 session_id），每分鐘 ≤ RATE_PER_MIN；kb.get 累計 ≤ KB_GET_CAP 同 key 每小時；④input_schema 驗證。"""
     def openapi(self, identity: Identity, stage: str) -> dict: ...   # 只列該身分可見工具
 ```
 **audience × stage 白名單矩陣**（`specs_for` 的唯一真相）[需求 5.2, 11.4]：
-| 工具 | prospect | property_manager | tenant | 起始 stage |
+| 工具 | prospect | property_manager | tenant | 說明 |
 |---|---|---|---|---|
-| `kb.get` | ✓（大綱章節 `outline:*`＋池內 id） | ✓ | ✓ | M0 |
-| `kb.search` | ✗（決策 3） | ✓ | ✓ | M0 |
-| `help.read` | ✓（僅 citable） | ✓ | ✓ | M0 |
-| `jgb2.query.*` | ✗ | ✓ | ✓ | M0（in-process）；MCP 門面依 DSP-011 同樣可掛 |
-| `session.slots.*` | ✓ | ✓ | ✓ | M1 |
-| `confirm.request`／`handoff.request` | ✓ | ✓ | ✓ | M1 |
-| `jgb2.action.*` | ✗ | ✓（M5） | ✓（M4） | M4 |
+| `kb.get` | M0 | M0 | M0 | prospect 只有 `outline:*`＋池內 id |
+| `kb.search` | — | M0 | M0 | prospect 永不可見（決策 3） |
+| `help.read` | M0 | M0 | M0 | 只讀；引用受 citable |
+| `jgb2.query.*` | — | M0 | M0 | 唯讀，M0 起對 MCP 內部呼叫者可用；pm／tenant **agent** 何時開由 `AGENT_AUDIENCES` 決定（M4／M5），與工具 stage 無關 |
+| `session.slots.*` | M1 | M1 | M1 | |
+| `confirm.request`／`handoff.request` | M1 | M1 | M1 | |
+| `jgb2.action.*` | — | M5 | M4 | scope=write |
+表格值即 `ToolSpec.stage` 的內容；`specs_for` 唯一規則：`name` 可見 ⇔ `audience ∈ stage and stage[audience] <= AGENT_STAGE and (not readonly_view or scope=="read")`。
 不變量 18：`ToolSpec.input_schema` 不得含 `vendor_id／role_id／user_id／target_user／mode／viewer_user_id`。[需求 2.2, 3.6]
 
 ### 元件 3：工具實作（`services/agent/tools/{kb,help,jgb2,session,handoff,confirm}.py`）
 | 工具 | 輸入（模型可傳） | 輸出 `data` | 邊界 |
 |---|---|---|---|
 | `kb.search` | `{query: str, k: int≤5}` | `[{id, question_summary, similarity, provenance}]` | `VendorKnowledgeRetrieverV2.retrieve(query, vendor_id=…, top_k=k, similarity_threshold=DecisionConfig 值, target_user=identity.target_user, mode=identity.mode)`（後兩者走 `**kwargs`，tasks 註明）；照 `retrieve()` 現況含 reranker（決策 7）；零命中 ⇒ `NO_MATCH` |
-| `kb.get` | `{kb_id: int \| str}` | `{id, question_summary, answer, provenance}` | 兩種 id：`outline:<section>` 由 OutlineAssembler 供給（server 端組裝、自有命名空間，⛔ 不查 knowledge_base）；整數 id 走 `fetch_visible_row(identity, id)`＝`SELECT … WHERE id=$1 AND <build_visibility_predicate(identity)>`，保留分類（`SYSTEM_DOC_CATEGORY`／`RULES_DOC_CATEGORY`）永遠排除；池外 ⇒ 對模型 `NO_MATCH`、trace 記 `FORBIDDEN` |
+| `kb.get` | `{kb_id: str}`（整數 id 以數字字串傳，strict schema 單一型別） | `{id, question_summary, answer, provenance}` | 兩種 id：`outline:<section>` 由 OutlineAssembler 供給（server 端組裝、自有命名空間，⛔ 不查 knowledge_base）；整數 id 走 `fetch_visible_row(identity, id)`＝`SELECT … WHERE id=$1 AND <build_visibility_predicate(identity)>`，保留分類（`SYSTEM_DOC_CATEGORY`／`RULES_DOC_CATEGORY`）永遠排除；池外 ⇒ 對模型 `NO_MATCH`、trace 記 `FORBIDDEN` |
 | `help.read` | `{slug: str}` | `{slug, title, text, version, citable}` | `help_center_pages`；`citable=false` 可讀但 Verifier 不接受為引用（元件 6 步⑤） |
-| `jgb2.query.<domain>` | `{face: <domain 的封閉 enum>, ref?: str, keyword?: str}` | `{facts: str, candidates?: [...], candidate_cap}` | domain→face→builder 映射 `FACE_BUILDER_REGISTRIES`（下表，⛔ 不另造）；`face` 由模型在封閉 enum 中選（取代 categories 提名）；`ref`／`keyword` 只能在 session 已確立的 slot（合約／案件 ref）範圍內縮小，無 slot 時 keyword 查詢回傳 ≤ `CANDIDATE_CAP`（預設 5）候選供 `confirm`；呼叫 `JGBSystemAPI.get_<domain>(role_id=identity.role_id, user_id=identity.user_id, viewer_user_id=identity.user_id, …)`，圈定交 jgb2（DSP-011）；標籤讀回應 `mapping`，⛔ 不用 `bills.STATUS_LABELS`（缺口 7） |
+| `jgb2.query.<domain>` | `{face: <domain 的封閉 enum>, ref?: str, keyword?: str}` | `{facts: str, candidates?: [...], candidate_cap, skip_refine: bool}` | domain→(API 方法, 註冊表, secondary) 見下方**域映射表**（⛔ 不用 `get_<domain>` 推導）；`face` 由模型在封閉 enum 中選（取代 categories 提名）；`ref`／`keyword` 只能在 session 已確立的 slot 範圍內縮小；無 slot 時 keyword 查詢回傳 ≤ `CANDIDATE_CAP`（預設 5）候選，候選數 ≤ cap ⇒ `skip_refine=true` 全列供 `confirm`，否則要求縮小（承接 R3.3）；圈定實際邊界逐域見映射表（DSP-011）；標籤讀回應 `mapping`，⛔ 不用 `bills.STATUS_LABELS`（缺口 7） |
 | `jgb2.action.<x>` | `{payload: dict, confirmation_token: str}` | `{receipt}` | 兌現＝`UPDATE agent_confirmation_tokens SET redeemed=true WHERE token=$1 AND session_id=$2 AND redeemed=false AND expires_at>now() RETURNING payload_sha256, summary_sha256`，再重算 `sha256(canonical_json(payload))` 比對，不符 ⇒ `CONFIRMATION_REQUIRED`；下游 idempotency key＝token；M4 前不註冊 |
 | `confirm.request` | `{summary: str, payload: dict}` | `{quick_replies: 三顆機器值, pending_id}` | 寫 `agent_confirmation_tokens`（token=secrets.token_urlsafe(32)，`payload_sha256`、`summary_sha256`、`expires_at=now()+10min`）；使用者回 `_QR_SUBMIT` 時 Runtime 才把 token 交給模型 |
 | `handoff.request` | `{reason, fact_class}` | `{message, handoff}` | `effective_handoff_message(cfg)`；reason 值域＝現行＋`tool_unavailable`／`budget_exhausted` |
 | `session.slots.get/set` | `{key: SlotKey}`／`{key: SlotKey, value: str≤120}` | `{slots}` | `SlotKey` 封閉 enum（`contract_ref`、`bill_ref`、`estate_ref`、`repair_ref`、`unit_count`、`business_type`）；value 去換行與標記字元；進 prompt 一律經 `wrap_tool_data` |
+
+**域映射表（1.2；API 方法與圈定邊界逐域列出）**：
+| domain | `JGBSystemAPI` 方法 | secondary | jgb2 `viewer_user_id` 圈定 | 實際邊界 | 任務 |
+|---|---|---|---|---|---|
+| bills | `get_bills(role_id, user_id, …)` | — | **支援**（`/bills` 列表端點） | jgb2 Layer 2 | `get_bills` 增顯式 `viewer_user_id` 轉發（現只有 `get_bill_visibility` 轉發，其餘方法被 `**kwargs` 吞掉）；`services/jgb/transport.py` mock 的 `_bills_index` 需接受該參數（現 `UnsupportedMockParameterError`） |
+| contracts | `get_contracts(role_id, keyword…)` | — | **支援**（`contracts/status-overview`） | jgb2 Layer 2 | 同上，增 `viewer_user_id` 轉發 |
+| accounts | `get_team_members`／`get_member_permissions`（帳號面向與合約同端點，`contracts.format_contract_response` 延遲匯入 `ACCOUNT_FACE_BUILDERS`） | — | 不支援 | `role_id`＋`user_id` 雙證（`_validate_identity`） | 無 |
+| meters | `get_meters` | — | 不支援 | 雙證 | 無 |
+| estates | `get_estates`＋`get_estate_status` | `get_estate_detail`（builder 第二參數 `detail`） | 不支援 | 雙證 | 工具層兩次呼叫合成 row |
+驗收（M0 整合測試）：bills／contracts 的請求 params 含 `viewer_user_id==identity.user_id`（mock transport 斷言）；其餘三域缺 `user_id` ⇒ `NO_MATCH`（`_validate_identity` 拒）。jgb2 §3.5 明列僅四端點支援圈定，本表即「圈定生效」的可測邊界。
 
 **`FACE_BUILDER_REGISTRIES`（既有五張表，鍵為中文面向名；1.1 對碼）**：
 | domain | 註冊表 | builder（皆 `(row: dict, user_question: str="") -> str`，例外註明） |
@@ -165,8 +179,27 @@ class ToolRegistry:
 | estates | `services/jgb/estates.py:ESTATE_FACE_BUILDERS` | `build_estate_status_facts(estate, detail=None, user_question="")`（三參數，工具層包一層轉接） |
 `face` enum 值＝各表的鍵；未命中 ⇒ `INVALID_INPUT`（schema 層擋）。[需求 3.1–3.5, 4.1–4.4, 7.1, 1.6]
 
+**`build_visibility_predicate(identity) -> (sql: str, params: list)` 條件表（1.2；抽取自 `vendor_knowledge_retriever_v2._vector_search`／`_keyword_search`，⛔ 逐條保留）**：
+| # | 條件 | 說明 |
+|---|---|---|
+| 1 | `kb.is_active = TRUE` | |
+| 2 | `kb.category IS DISTINCT FROM SYSTEM_DOC_CATEGORY AND IS DISTINCT FROM RULES_DOC_CATEGORY` | 保留分類永不回傳（決策 11／R19） |
+| 3 | `(array_length(kb.vendor_ids,1) IS NULL OR kb.vendor_ids && $vendor::int[])` | 跨業者 |
+| 4 | `target_user = _effective_target_user(identity.target_user)` | 未知／空 ⇒ `tenant` 最小權限（fail-safe，⛔ 不另寫第二份） |
+| 5 | `is_b2b = target_user in {'property_manager','system_admin'} or mode=='b2b'` | 兩條件 OR |
+| 6a | b2b：`kb.business_types && $bt::text[]` | **⛔ 無 `IS NULL` 放行**（D-002 勿改回，跨業者隔離） |
+| 6b | b2c：`(kb.business_types IS NULL OR kb.business_types && $bt::text[])` 且 `target_user_param = [target_user, 'all_users']` | |
+| 7 | `$bt` 來源：b2c 走 `param_resolver.get_vendor_info(vendor_id)`；查無 ⇒ `[]`（只剩 `IS NULL` 列，fail-closed） | |
+| — | `embedding IS NOT NULL`／`keywords IS NOT NULL AND array_length(kb.keywords,1) > 0` | 呼叫端相關性條件，**不進謂詞**，留在各搜尋函式 |
+驗收：不變量 20（AST 反重複）＋**差分等價測試**（`tests/integration/agent/test_visibility_predicate_equiv.py`）：固定矩陣 b2b/b2c × target_user{pm,tenant,unknown} × business_types{NULL,符,不符} × vendor_ids{NULL,符,不符} × is_active × 保留分類，重構前後三個消費點列集合逐筆相同。
+
 ### 元件 4：`services/agent/mcp_facade.py` — MCP 門面（非公開認證面）
-`MCPServer("jgb-tools")`，⛔ 不設 `token_verifier`／`auth`。身分：從請求 header `X-JGB-Identity`（JSON：mode／target_user／vendor_id／role_id／user_id／session_id）取，`audience_of` 推導；這與 `/api/v1/message` 的 request 欄位是同一信任等級（DSP-011）。服務層閘：`/mcp` **必須**經 `app.py:api_key_guard`（不變量 19：`_EXEMPT_PREFIX` 不得含 `/mcp`）與 `quota_check(vendor_id)`。傳輸層：Origin 白名單（`MCP_ALLOWED_ORIGINS`，缺 Origin 的瀏覽器型請求拒）。每個 `ToolSpec` 以 `@mcp.tool()` 註冊為薄包裝 → `registry.call()`；`ToolResult.error` 以 `ToolError` 拋出（訊息只含業務代碼）。`app.py` 的 `lifespan` 進 `mcp.session_manager.run()`，`Mount("/mcp", mcp.streamable_http_app())`（`Mount` 需新增 import）。[需求 2.1, 2.5, 3.6, 11.2]
+`MCPServer("jgb-tools")`，⛔ 不設 `token_verifier`／`auth`。身分：從請求 header `X-JGB-Identity`（JSON：mode／target_user／vendor_id／role_id／user_id／session_id）取，`audience_of` 推導；這與 `/api/v1/message` 的 request 欄位是同一信任等級（DSP-011）。
+**解析 fail-closed**：JSON 不合法／缺 `vendor_id`／缺 `session_id` ⇒ 400；`vendor_id` 不在 `vendors` 表 ⇒ 403＋告警；未知 `target_user` ⇒ `_effective_target_user` 正規化 tenant；額度與速率一律用同一次解析出的 `(api_key_id, vendor_id)`。
+**服務層閘（無條件）**：`/mcp` 與 `/api/v1/agent/*` **不受 `RAG_API_AUTH_ENFORCE` 左右**，缺／錯 X-API-Key 一律 401（不變量 19：`_EXEMPT_PREFIX` 不得含 `/mcp`；M0 done：enforce 關時 `/mcp` 仍 401）。
+**額度落點**：`app.py:usage_metering_middleware` 的 `metered` 條件擴為 `path == "/api/v1/message" or path.startswith("/mcp")`，門面每次工具呼叫必經 `begin()`→`quota_check()`→`finalize()`（不變量 22：`/mcp` 每次呼叫必產出一列 `usage_events`，⛔ 不接受 ctx None 靜默略過）。`is_internal` 與可用 `vendor_ids` 在 `/mcp` 路徑**由 API key 紀錄決定**（migration：`api_keys` 加 `is_internal bool default false`、`vendor_ids int[] null`＝不限），`INTERNAL_RULES` 的 `session_id` 前綴規則**不適用於 `/mcp`**；header 的 `vendor_id` ∉ key 的 `vendor_ids` ⇒ 403。
+**傳輸層**：Origin 白名單 `MCP_ALLOWED_ORIGINS`（空值 ⇒ 啟動紅；缺 Origin 的瀏覽器型請求拒；整合測試涵蓋缺／非白名單）。
+**DSP-011 前提偵測**（進 `/api/v1/agent/health` 與 `check_invariants.sh`）：`/mcp` 依 `api_key_id` 分佈、`vendor_id` 不在表計數、缺／非白名單 Origin 計數、enforce 關時 `/mcp` 有流量 ⇒ 任一非零即告警；這是兩條 P0 REJECT 的補償條件。每個 `ToolSpec` 以 `@mcp.tool()` 註冊為薄包裝 → `registry.call()`；`ToolResult.error` 以 `ToolError` 拋出（訊息只含業務代碼）。`app.py` 的 `lifespan` 進 `mcp.session_manager.run()`，`Mount("/mcp", mcp.streamable_http_app())`（`Mount` 需新增 import）。[需求 2.1, 2.5, 3.6, 11.2]
 
 ### 元件 5：`services/agent/prompt_assembler.py` — PromptAssembler／OutlineAssembler
 ```python
@@ -184,7 +217,8 @@ def wrap_tool_data(tool_name: str, text: str, nonce: str) -> str:
 class PromptAssembler:
     def build(self, identity: Identity, outline: OutlineDoc, slots: dict[SlotKey, SlotValue], dialog: list[dict], tool_specs: list[ToolSpec], nonce: str) -> list[dict]: ...
 ```
-大綱章節可被 `kb.get("outline:<id>")` 取回並引用（provenance source=`outline:<id>`），這解掉 R5.3 與保留分類排除的衝突（決策 10）。[需求 5.1–5.5, 11.1]
+大綱章節可被 `kb.get("outline:<id>")` 取回；**citable 依來源**：prospect 大綱由售前池一般知識列組成（`source_ids` 皆非保留分類）⇒ `Provenance.citable=true`；pm／tenant 目錄由 `系統脈絡` 列組成 ⇒ `citable=false`（只導航，不引用；細節走 `kb.get` 整數 id／`help.read`／`jgb2.query`）。這維持保留分類「永不當答案回傳」（決策 10 修訂）。`build_toc` 取法加 `vendor_ids` 與 `target_user` 過濾（`system_context._fetch_domain` 現況以 `target_user` 分層，`_fetch_base` 無 vendor 過濾 ⇒ 不得照抄）。
+大綱與目錄進 system prompt 也套同一 nonce 分隔標記；使用者訊息（`dialog`）**不進資料區**、不包裝。R11.1「不得把回傳文字拼進 system prompt」與 R5.1「大綱進上下文」的字面衝突登記 **DSP-012**（未裁；design 假設：大綱是 server 端由已審核列組裝、非工具回傳，套分隔標記後允許）。[需求 5.1–5.5, 11.1]
 
 ### 元件 6：`services/agent/verifier.py` — OutputVerifier
 ```python
@@ -201,6 +235,7 @@ class VerifierRules(BaseModel):   # 版本戳＋sha，載入時對 fixture 自�
     negation_terms: list[str]           # 極性檢查
     forbid_terms: list[str]
     allowed_routes: list[str]           # 導流白名單：URL／電話（來自 config）
+    assertion_terms: list[str]          # R6.2 封閉詞集，只用於撤銷豁免（步②）
     min_quote_len: int = 6; min_coverage_chars: int = 4
 
 class VerifierVerdict(BaseModel):
@@ -213,9 +248,9 @@ class OutputVerifier:
 ```
 順序（全部通過才放行）：
 ① **敏感五類**：`fact_class ∈ SENSITIVE` 或缺／不合法（fail-closed 視為敏感）或 `sensitive_patterns` 命中 ⇒ `SENSITIVE_TOPIC`。
-② **白名單句型**：`sentence_map` 每句必標 kind；`question`／`greeting`／`routing` 三型以程式端封閉判定複核（問號結尾／問候詞表／只含白名單 route），複核不過 ⇒ 視為 `fact`。**`fact` 一律需 ≥1 cite**（預設反轉：不靠斷言詞黑名單），缺 ⇒ `UNCITED_ASSERTION`。
+② **白名單句型**：`sentence_map` 必須覆蓋 `answer` 全文（NFKC 後各句拼接 == answer，否則 `SCHEMA`）；每句必標 kind；`question`／`greeting`／`routing` 三型以程式端封閉判定複核——**「純」條件**：以逗號／頓號／分號切子句，任一子句命中 R6.2 封閉詞集（可以／支援／不支援／需要／會／不會／無法…，版本化於 `VerifierRules.assertion_terms`）⇒ 整句降級為 `fact`；`question` 另需問號結尾、`greeting` 需全句在問候詞表、`routing` 需只含白名單 route。**`fact` 一律需 ≥1 cite**（預設反轉：白名單句型才免 cite，黑名單詞集只用來撤銷豁免），缺 ⇒ `UNCITED_ASSERTION`。例：「支援批次匯入合約，請問您有幾間？」⇒ 子句一命中「支援」⇒ fact ⇒ 需 cite（承接 R6.2／R6.7）。
 ③ **逐字＋覆蓋＋極性**：每 cite 的 `quote` NFKC 正規化後須為該 `tool_call_id` 對應 `ToolResult.provenance[].text` 的逐字子串（比對目標統一為 `Provenance.text`；`text_for_model` 只是包裝）且 ≥6 字；該句與 quote 的非停用詞字元交集 ≥ `min_coverage_chars`，否則 `QUOTE_NOT_COVERING`；句與 quote 的 `negation_terms` 極性不一致 ⇒ `POLARITY_MISMATCH`。
-④ **來源可引用**：`source` 對應的 `ToolResult` 標 `citable=false` ⇒ `SOURCE_NOT_CITABLE`。
+④ **來源可引用**：`source` 對應的 `Provenance.citable=false` ⇒ `SOURCE_NOT_CITABLE`。
 ⑤ **導流白名單**：答案中任何 URL／電話樣式不在 `allowed_routes` ⇒ `ROUTE_NOT_ALLOWED`。
 ⑥ `forbid_terms` ⇒ `FORBIDDEN_TERM`。
 ⑦ **handoff 詞後置掃描**：`scan_handoff_mentions(answer)` 為真而 `handoff` 為空 ⇒ `HANDOFF_WORD_NO_HANDOFF`（承接 R7.3）。
@@ -287,7 +322,7 @@ sequenceDiagram
     A->>A: set_decision(agent=trace)
 ```
 ### 資料轉換
-知識列／大綱章節／jgb2 facts → `Provenance.text`（引用比對目標）＋ `text_for_model`（含 nonce 包裝）→ 模型 → `Citation.quote` → Verifier。`AgentOutput` → `VendorChatResponse{answer, handoff, quick_replies}`；`citations` 不對外。`state["agent"]={"last_trace_id","fixed_streak","handoff_cache"}`。
+知識列／大綱章節／jgb2 facts → `Provenance.text`（引用比對目標）＋ `text_for_model`（工具回傳的原始資料文字，**由 Runtime** 以 `wrap_tool_data(nonce)` 包裝後才進 prompt；工具函式不接觸 nonce）→ 模型 → `Citation.quote` → Verifier。`AgentOutput` → `VendorChatResponse{answer, handoff, quick_replies}`；`citations` 不對外。`state["agent"]={"last_trace_id","fixed_streak","handoff_cache"}`。
 
 ## 技術決策
 1. **工具部署＝registry＋兩門面**（research 選型 1）。
@@ -299,19 +334,21 @@ sequenceDiagram
 7. **`kb.search` 照 `retrieve()` 現況（含 reranker 與 `retrieval_representation.scoring_surface`）**；agent 自身不讀 `instance_applicability`／`retrieval_representation` 欄位；除役另案，不變量 10／12／17 不動。
 8. **授權由 jgb2 API 全權處理、本系統只管額度**（DSP-011）：MCP 門面非公開認證面；`jgb2.query` 帶 `viewer_user_id` 交 jgb2 圈定；⛔ 不建 bearer 簽發／驗證。前提破了（出現未經上游的公網呼叫者）要重開。
 9. **D1 假設**：先用 OpenAI function calling（provider 抽象保留）；D2 收案數字、D3 幫助中心、D4 寫入首批、D5 影子月上限 **仍待業主**——D3 未裁前 `help_center_pages.citable` 全 false；D2 未裁前 `agent_eval` 只出對照不判 PASS。阻擋：D2→M2、D3→M1 的 help 引用、D4→M4、D5→M1 影子開啟。
-10. **R5.3 章節讀取走大綱自有命名空間**（`outline:*`），`kb.get` 整數 id 維持排除保留分類；⛔ 不動 `SYSTEM_DOC_CATEGORY`／`RULES_DOC_CATEGORY` 的永久排除。
+10. **R5.3 章節讀取走大綱自有命名空間**（`outline:*`）；**1.2 修訂**：由 `系統脈絡` 組成的 pm／tenant 目錄 `citable=false`（只導航），prospect 大綱由一般池列組成故可引用；`kb.get` 整數 id 維持排除保留分類；⛔ 不動 `SYSTEM_DOC_CATEGORY`／`RULES_DOC_CATEGORY` 的永久排除。
 11. **jgb2 標籤讀回應 `mapping`**（L1 自同步，jgb2-source-index §5.1）；本 repo 硬表 `bills.STATUS_LABELS` 列除役候選（缺口 7）。
 12. **MCP 工具面掛 `external/v1`**（現況）；`agent/v1` 待 jgb2-source-index §10.1 裁。
+13. **額度與速率的 key 綁 API key 紀錄**（1.2）：`/mcp` 路徑 `is_internal`／可用 `vendor_ids` 來自 `api_keys` 欄位，⛔ 不由請求字串（`session_id` 前綴）決定；`/api/v1/message` 既有前綴規則不動（另案）。理由：DSP-011 把額度定為本系統唯一控制後，可由呼叫方關掉的額度等於沒有。
+14. **DSP-012（未裁）**：R11.1 與 R5.1 字面衝突，design 假設大綱屬 server 端組裝的已審核內容、套分隔標記後允許進 system prompt。
 
 ## 里程碑與 done 條件
 | 里程碑 | 交付 | done 條件（可觀測） |
 |---|---|---|
-| M0 | `build_visibility_predicate`＋三方共用；ToolRegistry＋`kb.*`／`help.read`／`jgb2.query.*`；MCP 門面；不變量 18–21 | `make audit` 綠；integration：`kb.get` 池外 NO_MATCH、`kb.search` 與 `retrieve()` 逐筆同；MCP 門面 X-API-Key 缺 ⇒ 401；security-reviewer 對隔離謂詞與門面 READY |
+| M0 | `build_visibility_predicate`＋三方共用＋差分等價測試；ToolRegistry＋`kb.*`／`help.read`／`jgb2.query.*`（五域映射）；MCP 門面；`api_keys` 遷移；不變量 18–22 | `make audit` 綠；差分等價矩陣全同；integration：`kb.get` 池外 NO_MATCH、`kb.search` 與 `retrieve()` 逐筆同、bills／contracts 請求含 `viewer_user_id`；**enforce 關時 `/mcp` 仍 401**；`/mcp` 每呼叫一列 `usage_events`；`MCP_ALLOWED_ORIGINS` 空 ⇒ 啟動紅；security-reviewer 對隔離謂詞與門面 READY |
 | M1 | AgentRuntime＋Verifier＋PromptAssembler＋ShadowRunner（prospect） | 單元：Verifier 11 拒因＋自證 fixture；影子不阻塞 SSE（p95 差 ≤200ms）；`decision_snapshot.agent` 無原文（不變量 21） |
 | M2 | `agent_eval` 三組樣本 | 對照表產出；收案線（D2 數字）判定＋獨立 verifier CONFIRMED |
-| M3 | `AGENT_AUDIENCES=prospect` | 情境 e2e 五套劇本通過；回切演練一次 |
+| M3 | `AGENT_AUDIENCES=prospect` | 五套劇本：敏感五類 0 漏、無捏造句（獨立 verifier CONFIRMED）、固定句率 ≤ 現行同劇本基準（`perf-20260904.md` §9）；D2 其餘數字若裁定則併入；回切演練一次 |
 | M4 | 寫入工具＋token 表＋修繕（tenant） | token 重放／TOCTOU／跨 session 單元全綠；security-reviewer 對寫入面 READY |
-| M5 | pm 診斷面向（五張 builder 表全接） | 五域 face 各一 e2e |
+| M5 | `AGENT_AUDIENCES` 加 `property_manager`＋pm 影子收案（工具五域已於 M0 接妥） | pm 影子收案線（另定）；五域 face 各一 e2e |
 
 ## 非功能性設計
 ### 效能
@@ -330,7 +367,7 @@ STRIDE 見 research.md；1.1 處置見附錄 C。實作點：不變量 18–21�
 
 ## 測試策略
 - 單元（`tests/unit/agent/`）：Runtime 迴圈與預算表逐事件；身分鍵丟棄；`audience_of` 三判準；Registry 白名單矩陣／scope／速率；Verifier 11 拒因（含否定極性、覆蓋、citable、導流、handoff 詞）＋自證 fixture；OutlineAssembler 預算；token 兌現一次／過期／跨 session／payload 改動；Shadow 唯讀視圖與無原文；退休符號 AST。
-- 整合（`RUN_INTEGRATION=1`）：`kb.get` 池外、謂詞三方同源、MCP 門面閘、`build_toc` vendor 過濾。
+- 整合（`RUN_INTEGRATION=1`）：`kb.get` 池外、謂詞三方同源＋差分等價矩陣、MCP 門面閘（enforce 關仍 401、缺／非白名單 Origin、`usage_events` 逐呼叫一列、header fail-closed 三型）、`build_toc` vendor／target_user 過濾、bills／contracts `viewer_user_id` 轉發、同題重問 `llm_calls==0`、疑問句夾斷言需 cite。
 - e2e（`RUN_E2E=1`）：三組凍結樣本；契約測試 `tests/unit/chat_flow` 全綠；派獨立 verifier（收案鐵則）。
 
 ## 部署考量
@@ -354,7 +391,7 @@ requirements.md、research.md、validation_gap.md、jgb2-source-index.md、`docs
 ### A. 名詞
 Identity／Audience／ToolSpec／ToolResult／AgentOutput／Citation／VerifierRules／VerifierVerdict／OutlineDoc／ShadowRecord 見各元件；敏感五類、固定句、影子模式見 requirements.md。
 ### B. 新增不變量
-18 `ToolSpec.input_schema` 無身分鍵；19 `_EXEMPT_PREFIX` 無 `/mcp`；20 `build_visibility_predicate` 為 `_vector_search`／`_keyword_search`／`fetch_visible_row` 唯一謂詞來源（AST：三處無內嵌 `vendor_ids`／`business_types` 字面 SQL）；21 `decision_snapshot.agent*` 無 `answer`／`quote`／`text` 原文鍵。
+18 `ToolSpec.input_schema` 無身分鍵；19 `_EXEMPT_PREFIX` 無 `/mcp` 且 `/mcp`／`/api/v1/agent/*` 的 X-API-Key 檢查不引用 `auth_enforced()`（AST）；20 `build_visibility_predicate` 為 `_vector_search`／`_keyword_search`／`fetch_visible_row` 唯一謂詞來源（AST：三處無內嵌 `vendor_ids`／`business_types` 字面 SQL）＋差分等價測試；21 `decision_snapshot.agent*` 無 `answer`／`quote`／`text` 原文鍵；22 `/mcp` 每次工具呼叫對應一列 `usage_events`（整合測試計數）。
 ### C. 1.1 審查處置紀錄
 | 來源 | 級別 | 發現 | 處置 | 落點 |
 |---|---|---|---|---|
@@ -363,7 +400,9 @@ Identity／Audience／ToolSpec／ToolResult／AgentOutput／Citation／VerifierR
 | sec／pv | P0／P1 | `kb.get` 同一謂詞不存在、4 份手抄 | FIX：`build_visibility_predicate`＋不變量 20 | 元件 3、附錄 B |
 | pv | P1 | `build_<domain>_facts` 不存在 | FIX：五張既有註冊表對碼 | 元件 3 表 |
 | pv | P1 | 誰挑 face | FIX：`face` 封閉 enum 參數 | 元件 3 |
-| pv | P1 | R7.3／R3.4／R12.1 未承接 | FIX：Verifier 步⑦／④；退休符號節＋AST 測試 | 元件 6、概述 |
+| pv | P1 | R7.3 handoff 詞後置掃描未承接 | FIX：Verifier 步⑦ | 元件 6 |
+| pv | P1 | R3.4 `citable=false` 不得引用未承接 | FIX：Verifier 步④ | 元件 6 |
+| pv | P1 | R12.1 退休清單未承接 | FIX：退休符號節＋AST 測試 | 概述 |
 | sec | P1 | Registry.call 無守門、單一 scope | FIX：守門下沉、read/write scope、readonly_view | 元件 2 |
 | sec | P1 | 逐字不驗相關／黑名單詞集／導流豁免／分隔符偽造／slots 注入／敏感自報／keyword 超取／token 未綁摘要／影子落原文 | FIX：Verifier ②③⑤、nonce、SlotKey、fail-closed、slot 範圍＋cap、summary_sha256＋重算、sha-only | 元件 3／5／6／7 |
 | pv | P2 | 數字／機構名規則來源 | FIX：`sensitive_patterns` 版本化 | 元件 6 |
@@ -377,10 +416,36 @@ Identity／Audience／ToolSpec／ToolResult／AgentOutput／Citation／VerifierR
 | sec | P2 | 門面無速率、`/mcp` 豁免、新端點無認證、Origin、token 儲存、R5.3 衝突、存在性 oracle | FIX：速率＋cap、不變量 19、X-API-Key 強制、Origin 白名單、獨立表單述句、決策 10、對模型一律 NO_MATCH | 各元件 |
 | sec | P3 | detail 原文、影子雙重執行、help 匯入完整性 | FIX：結構化 verdict、readonly_view、`source_url`＋`content_sha256`＋`approved_by` | 元件 6／7、資料模型 |
 | pv | P3 | 名稱不一、常數檔案歸屬、`GET /mcp` | FIX | 全文 |
+### C2. 1.2 審查處置紀錄（第二輪；正本見 `reviews/`）
+| 來源 | 級別 | 發現 | 處置 | 落點 |
+|---|---|---|---|---|
+| pv | P1 | `viewer_user_id` 被 `**kwargs` 吞、僅四端點支援圈定 | FIX：域映射表逐域列邊界＋轉發任務＋整合驗收 | 元件 3 |
+| pv | P2 | `get_<domain>` 推導對 accounts／estates 不成立 | FIX：域映射表三欄 | 元件 3 |
+| pv | P2 | `stage` 單值表達不了矩陣；`jgb2.query` M0 與 M5 衝突 | FIX：`stage: dict[Audience, Stage]`；M5 改為 pm 切換 | 元件 2、里程碑 |
+| pv | P2 | `readonly_view` 無 Runtime 通路 | FIX：`AgentRuntime.__init__(readonly_view)` | 元件 1 |
+| pv | P2 | R7.2 重播快取無行為 | FIX：同題重問快取段 | 元件 1 |
+| pv | P2 | `audience_of` prospect「無 role_id」與程式不符 | FIX：刪除 | 元件 1 |
+| pv | P2 | 附錄 C 少 2 條 P1（合併列）、審查未落檔 | FIX：拆列；四份審查落 `reviews/` | 附錄 C、reviews/ |
+| pv | P3 | `ToolResult.citable`／nonce 產生者／`int\|str`／R3.3 `skip_refine`／M3 通過線 | FIX | 元件 3／6、資料轉換、里程碑 |
+| sec | P1 | `/mcp` 無 `quota_check` 落點 | FIX：middleware `metered` 擴 `/mcp`＋不變量 22 | 元件 4 |
+| sec | P1 | 額度／速率 key 由呼叫方字串決定、`backtest_` 前綴關額度 | FIX：`api_keys` 加 `is_internal`／`vendor_ids`，key＝(api_key_id, vendor_id)；決策 13 | 元件 2／4 |
+| sec | P1 | `/mcp` X-API-Key 受 enforce 旗標 | FIX：無條件；不變量 19 加 AST；M0 done | 元件 4、附錄 B |
+| sec | P1 | DSP-011 前提失效無偵測 | FIX：health＋audit 四項告警 | 元件 4 |
+| sec | P1 | 疑問句夾斷言繞過白名單句型 | FIX：「純」條件＋全文覆蓋 | 元件 6 ② |
+| sec | P1 | 謂詞條件未列舉（6/9 未點名，含 D-002） | FIX：條件表＋差分等價測試 | 元件 3 |
+| sec | P1 | `X-JGB-Identity` 無 fail-closed | FIX：解析規則 400／403／tenant 正規化 | 元件 4 |
+| sec | P2 | `outline:*` 讓保留分類可引用 | FIX：目錄 `citable=false`（決策 10 修訂，維持既有排除、非自行選邊） | 元件 5 |
+| sec | P2 | `confirm.request` summary 未綁 payload | DEFER→`agent-write-tools`（summary 由 formatter 決定性生成） | roadmap |
+| sec | P2 | Origin 無不變量／測試 | FIX：空值啟動紅＋整合測試 | 元件 4、M0 |
+| sec | P2 | 大綱進 system prompt vs R11.1 | FIX：DSP-012 登記；套分隔標記 | 元件 5、決策 14 |
+| sec | P2 | `dialog` 未包裝 | FIX：明寫不進資料區 | 元件 5 |
+| sec | P3 | 導流樣式開放集合 | FIX：變形寫進 `known_fabrications.json` | 測試 |
+
 ### D. 變更歷史
 | 日期 | 版本 | 變更 | 修改者 |
 |---|---|---|---|
 | 2026-09-04 | 1.0 | 初始版本（full discovery） | AI |
+| 2026-09-04T18:30:37+08:00 | 1.2 | 第二輪雙審查全處置；域映射表；謂詞條件表；額度落點與 key 綁 API key；白名單句型「純」條件；目錄不可引用；DSP-012 | AI |
 | 2026-09-04T18:15:02+0800 | 1.1 | 雙審查 REVISE 全處置；DSP-011；jgb2-source-index 納入；里程碑與不變量 18–21 | AI |
 
 ---
