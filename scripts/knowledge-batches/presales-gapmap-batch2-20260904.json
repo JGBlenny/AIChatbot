@@ -1,0 +1,398 @@
+{
+ "_meta": {
+  "spec": "售前缺口地圖 v1 → 回測補齊第二批（業主 2026-09-04 定最優先）",
+  "produced_at": "2026-09-04",
+  "note": "對應 coverage-map/map-v1.md 覆核後的表示法缺／缺口(有權威來源)／答偏／CTA 格。每筆 g0 欄記依據（幫助中心頁 slug 或 kb id）；答案不寫來源沒有的數字（額度、簡訊）。未寫：C22 簽約另外收費、C25 差額發票、C29 儲值金回充、C39 私人／共用門鎖、C46 多語系（G0 四查無權威來源）；C35 手續費（幫助中心：洽客服 ⇒ 候選刻意不補，待業主）。",
+  "rollback": "scripts/knowledge-batches/presales-gapmap-batch2-20260904.rollback.sql"
+ },
+ "updates": [],
+ "knowledge": [
+  {
+   "cell": "C02",
+   "facet": "售前顧問",
+   "question": "你們能解決什麼問題 我的痛點 幫我解決什麼 收租 合約 報修 團隊",
+   "answer": "管理租賃常見的收租對帳、合約、人多協作、報修等問題，金箍棒都有對應的模組。想知道我們怎麼解決您的狀況，先選一個您最想改善的：",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前顧問"
+   ],
+   "keywords": [
+    "痛點",
+    "解決什麼"
+   ],
+   "instance_applicability": "general",
+   "g0": "3606 別名（一種講法一筆，answer 逐字）。地圖 C02 top-1 0.426"
+  },
+  {
+   "cell": "C04",
+   "facet": "售前模組",
+   "question": "大房東是什麼 大房東模式 業主 授權查看 物件合約帳務狀態",
+   "answer": "在金箍棒裡，「大房東」指的是把物件交給您代管的業主。物管團隊可以在大房東列表用 email 邀請業主，並把特定物件授權給他，業主登入後就能瀏覽自己物件的合約、帳務與修繕狀態，不必逐一問您。搭配大房東報表，代收代付與月結會自動整理並可排程寄給業主。想看業主端的畫面可預約 demo。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "大房東",
+    "業主"
+   ],
+   "instance_applicability": "general",
+   "g0": "kb 3358（邀請 email／授權物件／列表管理）＋3604（報表）＋幫助中心 Landlordonboarding00 標題「大房東教學：瀏覽物件、合約、帳務和修繕狀態」"
+  },
+  {
+   "cell": "C07",
+   "facet": "售前價格",
+   "question": "免費方案可以建幾個物件 物件額度 上限 可上傳幾組物件 額度用滿",
+   "answer": "金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。新帳號享有免費試用一個月，可先實際體驗再選方案。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前價格"
+   ],
+   "keywords": [
+    "額度",
+    "免費方案"
+   ],
+   "instance_applicability": "general",
+   "g0": "kb 5373（額度用滿／升級／加購／下架釋放；用量在訂閱方案頁）＋幫助中心 Landlordonboarding02（選擇物件數量評估年/月費）＋3611 試用。⛔ 不寫具體額度數字（來源無）"
+  },
+  {
+   "cell": "C08",
+   "facet": "售前價格",
+   "question": "怎麼升級訂閱方案 到期會自動續約嗎 續費 扣款 取消訂閱",
+   "answer": "方案的變更在「團隊管理」的「訂閱方案」頁：點「變更」、選物件數量對應的年／月方案、完成付款即生效，支出可在「付款紀錄」查看。訂閱到期會自動續約扣款；若扣款失敗，方案會失效、物件會被系統自動下架，補完付款後再重新上架即可。要取消訂閱，在方案頁下方的服務條款連結點「取消訂閱」。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前價格"
+   ],
+   "keywords": [
+    "升級",
+    "續約",
+    "取消訂閱"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 Landlordonboarding02（團隊管理→訂閱方案→變更→前往授權；付款紀錄）＋kb 5373（續約扣款失敗⇒方案失效、物件全部自動下架）＋kb 3356（取消訂閱步驤）"
+  },
+  {
+   "cell": "C12",
+   "facet": "售前模組",
+   "question": "物件狀態 未刊登 刊登中 洽談中 租約中 合約中 是什麼意思",
+   "answer": "物件總表把物件分成四種狀態：「未刊登」是建好還沒對外刊登，可編輯、刊登或刪除；「刊登中」是已對外招租，可編輯、取消刊登、建立合約；「洽談中」代表已經建立合約但雙方還沒都簽署完成；雙方簽完就變成「合約中」（租約中）。另外要注意刊登與合約是兩條獨立的軸，租約中的物件也可以同時在刊登中。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "物件狀態",
+    "刊登中",
+    "洽談中"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 slug39（四狀態與各狀態可做的功能；洽談中＝已有合約未完成簽署）＋kb 4132（合約軸與刊登軸獨立）"
+  },
+  {
+   "cell": "C13",
+   "facet": "售前模組",
+   "question": "社區怎麼建立 社區總表 社區歸戶 一次建很多物件 建立社區流程",
+   "answer": "金箍棒用「社區」把同一棟或同一社區的物件歸戶管理。流程是先建立社區，再在「社區總表」選該社區，按右側的「批次新增」下載 Excel 模板、填入物件資料後上傳，就能一次把整批物件建進系統；單筆新增則在物件總表「新增物件」。想看實際畫面可預約 demo。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "社區",
+    "歸戶"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 onboarding4（創辦社區後新增物件三種方式；社區總表→批次新增→下載表單→excel 上傳）＋kb 3599（社區歸戶）"
+  },
+  {
+   "cell": "C14",
+   "facet": "售前模組",
+   "question": "招租店舖 對外首頁 招租頁面網址 VR看屋 空屋招租 公開頁",
+   "answer": "金箍棒每個帳號或團隊都有自己的「房東對外首頁」（招租店舖），刊登中的物件會出現在上面供房客瀏覽；團隊可以在團隊管理設定招租頁面的專屬網址與時區，強化品牌辨識。新增物件時可上傳 VR 物件連結，房客能在線上看屋。想看招租頁長什麼樣可預約 demo。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "招租",
+    "對外首頁",
+    "VR"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 slug90 標題「什麼是房東對外首頁（招租店舖）」＋Landlordonboarding02（設定團隊招租頁面網址＆時區）＋onboarding4（上傳VR物件）＋kb 3599"
+  },
+  {
+   "cell": "C15",
+   "facet": "售前模組",
+   "question": "首頁儀表板 Dashboard 顯示哪些數據 收支圖表 逾期帳單 修繕情況",
+   "answer": "登入後的首頁儀表板有三塊：收支情況（圖表化呈現，可自訂時間區間看營運趨勢）、帳務情況（近期的逾期待收款帳單與待繳費帳單，可點「更多」看明細）、修繕情況（租客目前申請中的修繕單）。想看實際畫面可預約 demo。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "儀表板",
+    "Dashboard",
+    "收支"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 Landlordonboarding00／00phone（收支情況圖表可自訂區間；帳務情況逾期待收與待繳；修繕情況）。⛔ 物件自訂標籤來源無，未寫"
+  },
+  {
+   "cell": "C17",
+   "facet": "售前模組",
+   "question": "合約範本可以選哪些 契約書版本 內政部版 公會版 英文版 客製化契約書",
+   "answer": "金箍棒的電子合約範本共 12 種：內政部中文版、內政部英文版、公會中文版各有原房東、包租業、代租代管三種身分版本，另有英泰文版（原房東、代租代管）與英越文版（單一版本）。法人團隊 12 種都能選；個人房東可選內政部中文版、內政部英文版、英泰文版與公會中文版（皆原房東版）。另有半伴客製化住宅租賃契約書、新北住都中心租賃契約書與汽車停車位契約書三種特殊用途範本，非一般房東可選。也可以上傳自己既有的紙本合約留存。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "範本",
+    "契約書"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 qa06 逐字（範本共 12 種；法人 12 種皆可；個人 4 種；三種特殊用途範本）＋qa05／onboarding6（上傳既存合約）"
+  },
+  {
+   "cell": "C21",
+   "facet": "售前模組",
+   "question": "歷史合約是什麼 結案合約 合約到期後 保留多久 會不會刪",
+   "answer": "「歷史合約」是已到期的合約，會依點退進度顯示「點退完成」「未退押金」「待退押金」「點退中」等狀態；點退可從合約結束前 30 天起隨時執行。歷史合約與已完成的帳單系統都會保留、不自動刪除、沒有期限，但仍建議把重要合約下載 PDF 自行留存。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "歷史合約",
+    "結案"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 slug15 逐字（歷史合約為已到期合約；四種狀態；結束前 30 天起可點退；不自動刪除、沒有期限）。⚠️ 與 kb 3330 舊說法「保存 5 年」衝突已由官方改正"
+  },
+  {
+   "cell": "C27",
+   "facet": "售前模組",
+   "question": "帳單內有哪些資訊 帳單內容 租金細節 臨時增收費用 其他費用 帳單欄位",
+   "answer": "系統帳單會顯示租金繳交進度（發送帳單→租客繳交→房東對帳→確認到帳，線上自動對帳時省略對帳步驟）與租金細節（費用週期、銀行名稱、帳戶名稱、帳號）。帳單內容依合約條件自動產生，包含固定費用（租金）、變動費用（水、電、瓦斯）與另計項目；當月臨時要加收的費用，可在「待發送」帳單編輯，於「其他費用」欄位新增。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "帳單內容",
+    "臨時",
+    "其他費用"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 slug78（繳交進度四步；租金細節；固定／變動／另計）＋slug79（待發送帳單→其他費用欄位）"
+  },
+  {
+   "cell": "C33",
+   "facet": "售前模組",
+   "question": "藍新跟國泰差在哪 金流廠商差別 永豐 中信 個人房東能用哪個金流 申請金流 設定費",
+   "answer": "四家金流差在「誰能申請」與「怎麼申請」：國泰世華與永豐銀行只開放法人，要自行向銀行申請，首次設定費 5,000 元；中國信託與藍新 NewebPay 法人與個人都能用，在金箍棒系統線上申請、免費。個人房東目前可選的是中國信託與藍新。要讓租客用信用卡繳租，目前只有藍新支援。款項會匯入您指定的實體帳戶。細節與提領時程可預約 demo 由專人說明。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "藍新",
+    "國泰",
+    "永豐",
+    "中信"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 paymentapply 逐字（身分／申請方式／設定費 5,000／個人可選中信與藍新）＋slug86（信用卡只有藍新）"
+  },
+  {
+   "cell": "C34",
+   "facet": "售前模組",
+   "question": "租客能用信用卡繳房租嗎 信用卡付租金 線上刷卡",
+   "answer": "可以，前提是合約約定用「線上金流」收付款。目前搭配信用卡支付的金流是藍新，房東在收款方式選「藍新金流」的「信用卡」，租客就能刷卡繳租；雙方在合約上也看得到約定的付款方式。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "信用卡"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 slug86 逐字"
+  },
+  {
+   "cell": "C37",
+   "facet": "售前模組",
+   "question": "收租組可以看不到財務數字嗎 團隊成員權限 只能看不能改 帳務權限 角色管理",
+   "answer": "可以。金箍棒的權限依八大功能分類（物件、合約、帳務、修繕、通知、團隊、人員、大房東管理），每類再細分查看、編輯、新增等項目；不給某位成員「查看帳務」，他就看不到帳務圖表、收付款與屋主帳單。系統內建擁有者、最高管理者、店長、會計、一般業務等十種範本角色，也可以自訂角色；還能把物件指派給經理人，只給他該物件與對應合約的查看／編輯權限。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "權限",
+    "財務",
+    "角色"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 qa23（八大功能分類；查看／編輯／新增；查看帳務圖表、處理收款、處理付款、查看屋主帳單需查看帳務）＋slug92（經理人）＋kb 3956（十種範本角色、可自訂）。盤查 P0-3 要求答「可以」"
+  },
+  {
+   "cell": "C41",
+   "facet": "售前模組",
+   "question": "系統通知是用 email 還是簡訊 LINE通知 哪些動作會發通知 繳費提醒 簽約邀請",
+   "answer": "金箍棒的通知以 Email 為主，租客有綁定 LINE（或 Facebook）時會同步發 LINE 通知。目前會自動發送的包括：帳單到期前五日、三日、一日的繳費提醒，逾期後每天提醒；發送簽約邀請時租客會收到邀請郵件；註冊時的驗證碼也走 Email。想看通知內容可預約 demo。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "通知",
+    "簡訊",
+    "LINE"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 Landlordonboarding06Finance／slug03（到期前 5/3/1 日 email 與 line 通知；逾期每日）＋onboarding1（簽約邀請郵件；Email 驗證碼）。⛔ 未斷言「沒有簡訊」（來源未提）"
+  },
+  {
+   "cell": "C44",
+   "facet": "售前模組",
+   "question": "怎麼註冊 JGB 帳號 註冊流程 建立帳號 用 email 註冊 LINE 登入",
+   "answer": "註冊很快：到 JGB 網站點「註冊」，輸入 Email 收驗證碼，填基本資料就完成；也可以用 Facebook、Gmail、LINE 第三方帳號註冊，系統會一併建立 Email 登入。一個帳號同時可有房東與租客身分，手機號碼作輔助登入。租客不一定要自己註冊，房東建立合約時輸入租客 Email 或手機發出簽約邀請，租客也能從電子合約完成註冊。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "註冊",
+    "帳號"
+   ],
+   "instance_applicability": "general",
+   "g0": "幫助中心 onboarding1 逐字（Email 為主、手機輔助、一個帳號房東與租客身分、驗證碼、SSO、租客可由簽約邀請註冊）"
+  },
+  {
+   "cell": "C47",
+   "facet": "售前顧問",
+   "question": "怎麼找你們的人談 我要找業務 預約 demo 聯絡方式 找真人 想直接談",
+   "answer": "好的，兩個入口都可以：想看系統實際操作請預約 demo，[立即預約 demo](https://www.jgbsmart.com/demo-form)，由專人帶您看並依您的規模盤點需求；想先聊聊或留聯絡方式，點下方的『找真人』直接聯繫我們的人。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前顧問"
+   ],
+   "keywords": [
+    "找人",
+    "業務",
+    "聯絡"
+   ],
+   "instance_applicability": "general",
+   "g0": "conversational_config CTA 常數（demo-form 連結）＋3798 CTA 出口（想看 demo→demo_form；找真人）。地圖 C47：第 4–6 輪皆固定句"
+  },
+  {
+   "cell": "C30",
+   "facet": "售前模組",
+   "question": "代收代付怎麼運作 幫業主收租再撥款 對業主交報表 月結",
+   "answer": "要定期跟業主交報表很花時間？金箍棒的大房東報表能把代收代付、月結與營運狀況整理成報表，並可排程自動寄送給業主，省去人工彙整。想看報表內容可預約 demo。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "代收代付"
+   ],
+   "instance_applicability": "general",
+   "g0": "3604 別名（answer 逐字）。地圖 C30 LLM 答偏成金流代收"
+  }
+ ],
+ "anchors": []
+}
