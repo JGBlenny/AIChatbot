@@ -1,0 +1,7037 @@
+{
+ "_meta": {
+  "version": "v2.1",
+  "date": "2026-09-04",
+  "scope": "prospect 售前池（mode=b2b, target_user=prospect）",
+  "demand_sources": {
+   "test_scenarios": "is_active AND source='user_question' AND request_target_user='prospect'（113 條，已剔除找房／噢音）",
+   "e2e": "presales-grounding-gate 四輪劇本 28 題",
+   "audit": "docs/presales-assistant-quality-audit-20260902.md",
+   "help_center": "~/jgb/幫助中心/JGB幫助中心_HTML_交付_20260818 zh-Hant 93 頁標題",
+   "index": "kb 3622 六大模組／3798 功能索引"
+  },
+  "states": {
+   "cause_state（元件層，只分成因）": {
+    "S_OK": "top-1 ≥ 門檻且該列對題（rubric 任一必含群命中列文）",
+    "FALSE_HIT": "top-1 ≥ 門檻但列不對題",
+    "S": "top-1 < 門檻；全庫關鍵詞命中對題列且 prospect 可見 ⇒ 表示法缺",
+    "V": "對題列只在 prospect 池外 ⇒ 可見性，修資料歸屬 ⛔ 非補知識",
+    "N_CAND": "池內外皆無對題列，且 g0.authority 有權威來源 ⇒ 缺口候選（待 G0 四查落檔）",
+    "UNCLASSIFIED": "池內外皆無對題列且無權威來源；或 rubric 為空 ⇒ 停止歸類，交裁決",
+    "DELIBERATE_NO": "policy=deliberate_no 且有 policy_ref",
+    "ADVICE": "一般建議題，非產品事實"
+   },
+   "entry_state（使用者層）": {
+    "fixed": "固定句或 handoff.reason∈{no_grounding,sensitive_no_grounding}",
+    "answered_handoff": "有回答且帶 handoff（llm_mentioned／partial）",
+    "answered": "有回答無 handoff",
+    "ask_back": "反問未答",
+    "error": "呼叫失敗"
+   },
+   "coverage（合成，只在兩層都成立）": {
+    "已覆蓋": "cause=S_OK ∧ entry∈{answered,answered_handoff} ∧ 回答命中 rubric 全部必含群 ∧ 無禁止詞",
+    "已覆蓋⚠️": "同上但命中禁止詞（概括／越權）",
+    "未覆蓋": "其餘",
+    "符合(刻意不補)": "DELIBERATE_NO ∧ entry=fixed",
+    "未判定(待尺)": "rubric 為空且非刻意不補"
+   }
+  },
+  "rule": "每格量全部問句；cause_state 跨問句不一致 ⇒ UNSTABLE。coverage 只對代表問句（第一句）合成。地圖是盤點不是療效。",
+  "selection_rule": {
+   "sql": "SELECT id, test_question FROM test_scenarios WHERE is_active AND source='user_question' AND request_target_user='prospect' ORDER BY id",
+   "expected_count_2026_09_04": 113,
+   "exclusions": {
+    "找房／租客居住問題": [
+     3,
+     137,
+     138,
+     147,
+     7608,
+     7618,
+     7619,
+     8149,
+     8150,
+     8154,
+     8188,
+     8160,
+     9860,
+     9867
+    ],
+    "純地名": [
+     8171,
+     8172
+    ],
+    "純數字": [
+     8164,
+     8165,
+     8190
+    ],
+    "測試字樣": [
+     8158,
+     9820
+    ],
+    "岔題": [
+     9857
+    ],
+    "缺脈絡無法歸格": [
+     9823,
+     9588
+    ]
+   },
+   "other_sources": {
+    "e2e": "presales-grounding-gate 四輪劇本 28 題（scratchpad e2e-round2/*.spec.json）",
+    "audit": "docs/presales-assistant-quality-audit-20260902.md（P0-3 權限題）",
+    "help_center": "~/jgb/幫助中心/JGB幫助中心_HTML_交付_20260818/*zh-Hant*.html 93 頁標題",
+    "index": "kb 3622 §3 六大模組／3798 功能索引"
+   },
+   "caveat": "v1／v2 的 51→55 格分群是**後驗人工建構**（分群發生在看過盤查與 e2e 結果之後），只作盤點，⛔ 不作任何比率的分母。ts: 前綴＝test_scenarios.id。"
+  },
+  "rubric_note": "v2.1（2026-09-04）：v2 首跑後收緊 7 格必含群——泛詞（首頁、續約、社區＋批次、儲值）讓不對題列被算成對題；對題判定改為多群 rubric 需命中 ≥2 群。",
+  "run_at": "2026-09-04T16:07:38",
+  "threshold": 0.5,
+  "api": "http://localhost:8100/api/v1/message",
+  "fingerprint": {
+   "git_head": "3babe2b",
+   "image": "97592b294e4f",
+   "pool_count": 32,
+   "pool_max_updated_at": "2026-09-04 07:03:25.645102",
+   "demand_sha256": "7169785059bc9ceaf313025f6efef9bf7724b815ac57a79833203b9abd0e12e8",
+   "fixed_message_sha256": "40a0e214f606f155"
+  },
+  "g2": {
+   "1_head_consistent": true,
+   "2_ann_vs_exact": true,
+   "34_threshold_env": true,
+   "5_reranker_active": true,
+   "6_positive_control": true,
+   "ran_at": "2026-09-04 host scripts/g2_selftest.py 六項全過"
+  },
+  "controls": {
+   "retrieval_3611": true,
+   "ilike_電子發票>=1": true,
+   "fixed_sentence": true
+  }
+ },
+ "cells": [
+  {
+   "id": "C01",
+   "module": "定位",
+   "topic": "系統適不適合我／想了解產品",
+   "questions": [
+    "你們系統適合我嗎",
+    "想了解你們產品",
+    "你們這個怎麼用",
+    "系統有哪些功能"
+   ],
+   "keywords": [
+    "適合",
+    "介紹",
+    "怎麼用"
+   ],
+   "sources": [
+    "ts:9835-9839",
+    "ts:8182,8184"
+   ],
+   "help_center": [],
+   "intent": "recommend",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "房東",
+      "代管",
+      "團隊",
+      "適合",
+      "身分",
+      "功能",
+      "模組",
+      "帳務",
+      "物件"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3585",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "你們系統適合我嗎",
+     "top3": [
+      {
+       "id": 3585,
+       "similarity": 0.942,
+       "q": "想了解金箍棒 你們系統介紹 適不適合我用"
+      },
+      {
+       "id": 3584,
+       "similarity": 0.505,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      },
+      {
+       "id": 5379,
+       "similarity": 0.215,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 2935,
+       "visible": false,
+       "q": "押金支付方式"
+      },
+      {
+       "id": 3004,
+       "visible": false,
+       "q": "租屋保險投保方式"
+      },
+      {
+       "id": 3205,
+       "visible": false,
+       "q": "租賃契約權利"
+      },
+      {
+       "id": 3199,
+       "visible": false,
+       "q": "設備維護法律"
+      },
+      {
+       "id": 3645,
+       "visible": null,
+       "q": "對話規則：售前顧問"
+      },
+      {
+       "id": 3413,
+       "visible": false,
+       "q": "金流商 各家特性"
+      },
+      {
+       "id": 3418,
+       "visible": false,
+       "q": "發票開立時機 觸發條件"
+      }
+     ],
+     "api": {
+      "answer": "請問您是個人房東、二房東、包租代管業還是物管呢？",
+      "handoff": null,
+      "elapsed_s": 1.8
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3585 0.942",
+     "entry_state": "ask_back"
+    },
+    {
+     "q": "想了解你們產品",
+     "top3": [
+      {
+       "id": 3585,
+       "similarity": 0.479,
+       "q": "想了解金箍棒 你們系統介紹 適不適合我用"
+      },
+      {
+       "id": 3609,
+       "similarity": 0.183,
+       "q": "你們會評論競爭對手嗎 怎麼看同業 會說對"
+      },
+      {
+       "id": 3603,
+       "similarity": 0.124,
+       "q": "智慧電錶 智慧門鎖 抄表 換鎖 IoT "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 2935,
+       "visible": false,
+       "q": "押金支付方式"
+      },
+      {
+       "id": 3004,
+       "visible": false,
+       "q": "租屋保險投保方式"
+      },
+      {
+       "id": 3205,
+       "visible": false,
+       "q": "租賃契約權利"
+      },
+      {
+       "id": 3199,
+       "visible": false,
+       "q": "設備維護法律"
+      },
+      {
+       "id": 3645,
+       "visible": null,
+       "q": "對話規則：售前顧問"
+      },
+      {
+       "id": 3413,
+       "visible": false,
+       "q": "金流商 各家特性"
+      },
+      {
+       "id": 3418,
+       "visible": false,
+       "q": "發票開立時機 觸發條件"
+      }
+     ],
+     "api": {
+      "answer": "請問您是個人房東、二房東、包租代管業還是物管呢？",
+      "handoff": null,
+      "elapsed_s": 1.2
+     },
+     "cause_state": "S",
+     "cause_why": "對題列可見 [5377, 3585]；top-1 3585 0.479",
+     "entry_state": "ask_back"
+    },
+    {
+     "q": "你們這個怎麼用",
+     "top3": [
+      {
+       "id": 3585,
+       "similarity": 0.772,
+       "q": "想了解金箍棒 你們系統介紹 適不適合我用"
+      },
+      {
+       "id": 3606,
+       "similarity": 0.208,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      },
+      {
+       "id": 3609,
+       "similarity": 0.165,
+       "q": "你們會評論競爭對手嗎 怎麼看同業 會說對"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 2935,
+       "visible": false,
+       "q": "押金支付方式"
+      },
+      {
+       "id": 3004,
+       "visible": false,
+       "q": "租屋保險投保方式"
+      },
+      {
+       "id": 3205,
+       "visible": false,
+       "q": "租賃契約權利"
+      },
+      {
+       "id": 3199,
+       "visible": false,
+       "q": "設備維護法律"
+      },
+      {
+       "id": 3645,
+       "visible": null,
+       "q": "對話規則：售前顧問"
+      },
+      {
+       "id": 3413,
+       "visible": false,
+       "q": "金流商 各家特性"
+      },
+      {
+       "id": 3418,
+       "visible": false,
+       "q": "發票開立時機 觸發條件"
+      }
+     ],
+     "api": {
+      "answer": "金箍棒智慧物管能幫助您集中管理物件、合約、收租對帳以及智慧設備。具體來說，您可以透過我們的系統來：\n\n- 管理多個物件，方便進行社區歸戶和批次上傳。\n- 使用電子簽章來處理租約，並管理社宅或委託合約。\n- 自動生成帳單，進行金流代收和發票管理。\n\n如果您能分享一下您的具體需求或狀況，我可以更好地幫您判斷這套系統是否適合您。",
+      "handoff": null,
+      "elapsed_s": 3.76
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3585 0.772",
+     "entry_state": "answered"
+    },
+    {
+     "q": "系統有哪些功能",
+     "top3": [
+      {
+       "id": 3601,
+       "similarity": 0.878,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      },
+      {
+       "id": 3603,
+       "similarity": 0.869,
+       "q": "智慧電錶 智慧門鎖 抄表 換鎖 IoT "
+      },
+      {
+       "id": 5379,
+       "similarity": 0.68,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 2935,
+       "visible": false,
+       "q": "押金支付方式"
+      },
+      {
+       "id": 3004,
+       "visible": false,
+       "q": "租屋保險投保方式"
+      },
+      {
+       "id": 3205,
+       "visible": false,
+       "q": "租賃契約權利"
+      },
+      {
+       "id": 3199,
+       "visible": false,
+       "q": "設備維護法律"
+      },
+      {
+       "id": 3645,
+       "visible": null,
+       "q": "對話規則：售前顧問"
+      },
+      {
+       "id": 3413,
+       "visible": false,
+       "q": "金流商 各家特性"
+      },
+      {
+       "id": 3418,
+       "visible": false,
+       "q": "發票開立時機 觸發條件"
+      }
+     ],
+     "api": {
+      "answer": "金箍棒智慧物管的功能主要包括：\n\n- **帳務管理**：自動產生帳單、線上金流代收（支援藍新、永豐、中信、國泰、愛金卡）、開立電子發票，還有儲值金與押金設算息，讓收租對帳變得更簡單。\n- **智慧設備整合**：支援智慧電錶（可自動抄表並帶入帳單）與智慧門鎖，具體的安裝與支援範圍由專人說明。\n- **批次匯入功能**：可以用 Excel 範本批次匯入物件、租客、社區及團隊帳號，方便快速建立資料。不過，合約目前不支援批次匯入，需要逐筆建立。\n\n如果您對某些功能有進一步的問題或想了解更多細節，隨時告訴我！",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.79
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3601 0.878",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "UNSTABLE['S', 'S_OK']",
+   "entry_state": "ask_back",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C02",
+   "module": "定位",
+   "topic": "你們能解決什麼問題／痛點",
+   "questions": [
+    "收租常常忘記，你們適合我嗎",
+    "你們能解決什麼問題"
+   ],
+   "keywords": [
+    "痛點",
+    "困擾"
+   ],
+   "sources": [
+    "e2e:s4",
+    "kb:3606"
+   ],
+   "help_center": [],
+   "intent": "recommend",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "收租",
+      "對帳",
+      "合約",
+      "報修",
+      "協作",
+      "模組"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3606",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "收租常常忘記，你們適合我嗎",
+     "top3": [
+      {
+       "id": 3585,
+       "similarity": 0.426,
+       "q": "想了解金箍棒 你們系統介紹 適不適合我用"
+      },
+      {
+       "id": 3606,
+       "similarity": 0.401,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      },
+      {
+       "id": 3584,
+       "similarity": 0.384,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3645,
+       "visible": null,
+       "q": "對話規則：售前顧問"
+      },
+      {
+       "id": 3606,
+       "visible": true,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 5.73
+     },
+     "cause_state": "S",
+     "cause_why": "對題列可見 [3606]；top-1 3585 0.426",
+     "entry_state": "fixed"
+    },
+    {
+     "q": "你們能解決什麼問題",
+     "top3": [
+      {
+       "id": 3606,
+       "similarity": 0.957,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      },
+      {
+       "id": 3609,
+       "similarity": 0.336,
+       "q": "你們會評論競爭對手嗎 怎麼看同業 會說對"
+      },
+      {
+       "id": 3585,
+       "similarity": 0.256,
+       "q": "想了解金箍棒 你們系統介紹 適不適合我用"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3645,
+       "visible": null,
+       "q": "對話規則：售前顧問"
+      },
+      {
+       "id": 3606,
+       "visible": true,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      }
+     ],
+     "api": {
+      "answer": "我們的系統能解決多個管理租賃的常見問題，以下是一些主要的模組：\n\n- **收租對帳**：我們提供自動帳單和金流代收功能，幫助您簡化收租流程。\n- **合約管理**：透過電子簽章和社宅/委託合約模組，讓合約管理變得更方便。\n- **人多協作**：我們的團隊模組支援多人權限管理，適合需要與多位合作者協作的情況。\n- **報修管理**：線上報修和進度追蹤功能，讓您能夠更有效率地處理維修請求。\n\n如果您有特定的需求或想要改善的地方，請告訴我，我們可以深入討論。",
+      "handoff": null,
+      "elapsed_s": 6.15
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3606 0.957",
+     "entry_state": "answered"
+    }
+   ],
+   "cause_state": "UNSTABLE['S', 'S_OK']",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C03",
+   "module": "定位",
+   "topic": "包租 vs 代管在系統上的差別",
+   "questions": [
+    "包租跟代管在系統上有什麼差別"
+   ],
+   "keywords": [
+    "包租",
+    "代管"
+   ],
+   "sources": [
+    "ts:9938"
+   ],
+   "help_center": [
+    "rentallaw.pt3"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "包租"
+     ],
+     [
+      "代管"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:rentallaw.pt3(標題)",
+    "authority_checked": false
+   },
+   "per_question": [
+    {
+     "q": "包租跟代管在系統上有什麼差別",
+     "top3": [
+      {
+       "id": 3584,
+       "similarity": 0.837,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      },
+      {
+       "id": 3607,
+       "similarity": 0.519,
+       "q": "金箍棒 跟 Bananas 屋我也 差異"
+      },
+      {
+       "id": 5377,
+       "similarity": 0.413,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 4215,
+       "visible": false,
+       "q": "對話規則：建約引導"
+      },
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 5380,
+       "visible": true,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3087,
+       "visible": false,
+       "q": "包租與代管差異"
+      },
+      {
+       "id": 3114,
+       "visible": false,
+       "q": "委託管理合約"
+      },
+      {
+       "id": 3084,
+       "visible": false,
+       "q": "包租業定義"
+      },
+      {
+       "id": 3086,
+       "visible": false,
+       "q": "包租代管差異"
+      },
+      {
+       "id": 3093,
+       "visible": false,
+       "q": "租約終止條件"
+      }
+     ],
+     "api": {
+      "answer": "包租和代管在系統上的差別主要在於需求的複雜性和功能的適用性。\n\n- **包租**：通常是指房東將物件租給租客，系統主要需要管理物件、合約和帳務等基本功能。\n  \n- **代管**：則涉及到更多的分工與協作，通常需要多人參與管理，並且需要對業主交報表。這樣的團隊需求會涉及到團隊權限管理、大房東報表等功能，讓成員可以有效分工，並且能夠清楚地向業主報告營運狀況。\n\n金箍棒的全模組方案正好對應這種複雜的需求，除了基本的物件、合約和帳務管理，還有針對團隊協作的功能。如果您有進一步的需求或想了解更多，建議預約 demo，專人可以幫您盤點需求並提供詳細資訊。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 7.16
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3584 0.837",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered_handoff",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C04",
+   "module": "定位",
+   "topic": "大房東模式是什麼",
+   "questions": [
+    "大房東模式是什麼意思"
+   ],
+   "keywords": [
+    "大房東"
+   ],
+   "sources": [
+    "ts:10107-10135"
+   ],
+   "help_center": [
+    "Landlordonboarding00"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "業主",
+      "大房東"
+     ],
+     [
+      "授權",
+      "邀請",
+      "報表"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3358,3604；help:Landlordonboarding00",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "大房東模式是什麼意思",
+     "top3": [
+      {
+       "id": 3602,
+       "similarity": 0.859,
+       "q": "團隊管理 多人協作 角色權限 大房東報表"
+      },
+      {
+       "id": 3604,
+       "similarity": 0.731,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      },
+      {
+       "id": 3584,
+       "similarity": 0.651,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5376,
+       "visible": true,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      },
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 5379,
+       "visible": true,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3464,
+       "visible": false,
+       "q": "大房東新增 權限設定"
+      },
+      {
+       "id": 3358,
+       "visible": true,
+       "q": "大房東 邀請 授權 物件"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3407,
+       "visible": false,
+       "q": "帳單統計報表 收支分析"
+      },
+      {
+       "id": 3604,
+       "visible": true,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      }
+     ],
+     "api": {
+      "answer": "大房東模式是指針對擁有多個租賃物件的房東或管理團隊，提供一套集中管理的解決方案。金箍棒的系統能夠支援多人帳號與角色權限，讓代管團隊能夠有效分工協作，並且提供大房東報表，幫助業主清楚了解代收代付及營運狀況。這樣的模式特別適合需要對業主交報表的公司或團隊，能夠簡化管理流程，提升效率。如果您對大房東模式有更多疑問或想了解具體的功能，隨時可以詢問！",
+      "handoff": null,
+      "elapsed_s": 3.49
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3602 0.859",
+     "entry_state": "answered"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C05",
+   "module": "方案費用",
+   "topic": "怎麼收費／多少錢",
+   "questions": [
+    "你們怎麼收費 多少錢",
+    "費用怎麼算",
+    "一年費用怎麼算？180間房大概多少錢"
+   ],
+   "keywords": [
+    "收費",
+    "費用",
+    "價格"
+   ],
+   "sources": [
+    "ts:9830,9844",
+    "e2e:s1,s2"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "價格數字刻意不報，導定價頁",
+   "rubric": {
+    "must": [
+     [
+      "訂閱",
+      "物件數",
+      "定價",
+      "專人"
+     ]
+    ],
+    "forbid": [
+     "元／月",
+     "元/月"
+    ]
+   },
+   "g0": {
+    "authority": "kb:3610,5376",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "你們怎麼收費 多少錢",
+     "top3": [
+      {
+       "id": 5376,
+       "similarity": 0.912,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      },
+      {
+       "id": 3610,
+       "similarity": 0.522,
+       "q": "金箍棒 怎麼收費 多少錢 方案 費用 價"
+      },
+      {
+       "id": 3597,
+       "similarity": 0.232,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5376,
+       "visible": true,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      },
+      {
+       "id": 3337,
+       "visible": false,
+       "q": "帳單簡訊 費用 收費"
+      },
+      {
+       "id": 5374,
+       "visible": false,
+       "q": "對話規則：訂閱診斷"
+      },
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 5380,
+       "visible": true,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3356,
+       "visible": true,
+       "q": "訂閱 取消 方案"
+      },
+      {
+       "id": 3645,
+       "visible": null,
+       "q": "對話規則：售前顧問"
+      }
+     ],
+     "api": {
+      "answer": "目前金箍棒的收費採訂閱制，方案依管理規模（物件數）以及是否需要團隊、大房東報表、IoT 等功能分級。由於方案與價格正在調整，為了避免提供過時的數字，建議您參考我們的線上定價頁 [查看方案與費用](https://www.jgbsmart.com/pricing)，或您也可以留下聯絡方式，由專人為您報價。若您想先體驗，歡迎使用免費試用一個月。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "pricing",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.88
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 5376 0.912",
+     "entry_state": "answered_handoff"
+    },
+    {
+     "q": "費用怎麼算",
+     "top3": [
+      {
+       "id": 5376,
+       "similarity": 0.956,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      },
+      {
+       "id": 3610,
+       "similarity": 0.47,
+       "q": "金箍棒 怎麼收費 多少錢 方案 費用 價"
+      },
+      {
+       "id": 3597,
+       "similarity": 0.242,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5376,
+       "visible": true,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      },
+      {
+       "id": 3337,
+       "visible": false,
+       "q": "帳單簡訊 費用 收費"
+      },
+      {
+       "id": 5374,
+       "visible": false,
+       "q": "對話規則：訂閱診斷"
+      },
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 5380,
+       "visible": true,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3356,
+       "visible": true,
+       "q": "訂閱 取消 方案"
+      },
+      {
+       "id": 3645,
+       "visible": null,
+       "q": "對話規則：售前顧問"
+      }
+     ],
+     "api": {
+      "answer": "費用的計算是根據管理規模（物件數）以及您是否需要團隊、大房東報表、IoT 等功能來分級的。目前方案與價格正在調整，為避免提供過時數字，建議您參考我們的線上定價頁 [查看方案與費用](https://www.jgbsmart.com/pricing)，或留下聯絡方式由專人為您報價。如果您有興趣，也可以先試用一個月，實際體驗我們的服務。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "pricing",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.97
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 5376 0.956",
+     "entry_state": "answered_handoff"
+    },
+    {
+     "q": "一年費用怎麼算？180間房大概多少錢",
+     "top3": [
+      {
+       "id": 5376,
+       "similarity": 0.811,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      },
+      {
+       "id": 3597,
+       "similarity": 0.19,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      },
+      {
+       "id": 3598,
+       "similarity": 0.187,
+       "q": "個人房東 約30戶 方案 規模化 銜接團"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5376,
+       "visible": true,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      },
+      {
+       "id": 3337,
+       "visible": false,
+       "q": "帳單簡訊 費用 收費"
+      },
+      {
+       "id": 5374,
+       "visible": false,
+       "q": "對話規則：訂閱診斷"
+      },
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 5380,
+       "visible": true,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3356,
+       "visible": true,
+       "q": "訂閱 取消 方案"
+      },
+      {
+       "id": 3645,
+       "visible": null,
+       "q": "對話規則：售前顧問"
+      }
+     ],
+     "api": {
+      "answer": "目前金箍棒的方案與價格正在調整，具體的費用依管理規模（物件數）以及是否需要團隊、大房東報表、IoT 等功能而有所不同。對於180間房的費用，建議您參考我們的線上定價頁 [查看方案與費用](https://www.jgbsmart.com/pricing)，或留下聯絡方式，我們的專人會為您提供報價。您也可以先試用一個月，實際體驗我們的服務。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "pricing",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.6
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 5376 0.811",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered_handoff",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C06",
+   "module": "方案費用",
+   "topic": "訂閱方案幾種／差在哪",
+   "questions": [
+    "目前有幾種訂閱方案，差別在哪裡呢？"
+   ],
+   "keywords": [
+    "訂閱",
+    "方案"
+   ],
+   "sources": [
+    "ts:10039-10121"
+   ],
+   "help_center": [
+    "Landlordonboarding02"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "方案"
+     ],
+     [
+      "物件數",
+      "定價",
+      "專人"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3610；help:Landlordonboarding02",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "目前有幾種訂閱方案，差別在哪裡呢？",
+     "top3": [
+      {
+       "id": 3596,
+       "similarity": 0.558,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      },
+      {
+       "id": 3597,
+       "similarity": 0.449,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      },
+      {
+       "id": 3584,
+       "similarity": 0.418,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5373,
+       "visible": null,
+       "q": "系統脈絡：訂閱領域-條件診斷：訂閱(子面"
+      },
+      {
+       "id": 5374,
+       "visible": false,
+       "q": "對話規則：訂閱診斷"
+      },
+      {
+       "id": 3505,
+       "visible": false,
+       "q": "為什麼不能新增物件"
+      },
+      {
+       "id": 3506,
+       "visible": false,
+       "q": "物件為什麼突然全部下架"
+      },
+      {
+       "id": 5376,
+       "visible": true,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      },
+      {
+       "id": 3454,
+       "visible": false,
+       "q": "訂閱方案 升級更換"
+      },
+      {
+       "id": 3337,
+       "visible": false,
+       "q": "帳單簡訊 費用 收費"
+      },
+      {
+       "id": 3356,
+       "visible": true,
+       "q": "訂閱 取消 方案"
+      }
+     ],
+     "api": {
+      "answer": "目前的訂閱方案差別主要在於功能的完整性與使用限制。金箍棒智慧物管的系統能夠集中管理物件、合約和帳務，並提供線上電子簽章、自動產帳單與金流代收等功能，這些都能大幅減少您在收租對帳和合約管理上的時間。\n\n至於具體的方案級距與費用，因為目前正在調整中，建議您可以前往 [查看方案與費用](https://www.jgbsmart.com/pricing) 頁面，或是由專人為您說明，這裡不便報數字。如果您有興趣，還可以先試用一個月，實際體驗系統的運作。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "pricing",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.87
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3596 0.558",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered_handoff",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C07",
+   "module": "方案費用",
+   "topic": "免費方案可建幾個物件",
+   "questions": [
+    "免費方案可以建幾個物件"
+   ],
+   "keywords": [
+    "免費方案",
+    "物件額度",
+    "額度"
+   ],
+   "sources": [
+    "ts:9882-10055"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "額度",
+      "物件數"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:5373(系統脈絡，池外)；help:Landlordonboarding02",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "免費方案可以建幾個物件",
+     "top3": [
+      {
+       "id": 3596,
+       "similarity": 0.934,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      },
+      {
+       "id": 3598,
+       "similarity": 0.835,
+       "q": "個人房東 約30戶 方案 規模化 銜接團"
+      },
+      {
+       "id": 3597,
+       "similarity": 0.822,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3453,
+       "visible": false,
+       "q": "訂閱方案 種類差異"
+      },
+      {
+       "id": 5373,
+       "visible": null,
+       "q": "系統脈絡：訂閱領域-條件診斷：訂閱(子面"
+      },
+      {
+       "id": 3505,
+       "visible": false,
+       "q": "為什麼不能新增物件"
+      },
+      {
+       "id": 3454,
+       "visible": false,
+       "q": "訂閱方案 升級更換"
+      },
+      {
+       "id": 3456,
+       "visible": false,
+       "q": "物件數量上限 額度不足"
+      },
+      {
+       "id": 5374,
+       "visible": false,
+       "q": "對話規則：訂閱診斷"
+      },
+      {
+       "id": 3502,
+       "visible": false,
+       "q": "虛擬帳號過期或轉帳失敗"
+      },
+      {
+       "id": 3412,
+       "visible": false,
+       "q": "付款狀態 流轉說明"
+      }
+     ],
+     "api": {
+      "answer": "這部分我沒有資料，建議您可以先試用看看，這樣能更清楚了解系統的功能與限制。如果有其他問題或需要進一步了解，隨時告訴我！",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 3.96
+     },
+     "cause_state": "FALSE_HIT",
+     "cause_why": "top-1 3596 0.934 不對題",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "FALSE_HIT",
+   "entry_state": "answered_handoff",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C08",
+   "module": "方案費用",
+   "topic": "升級方案／到期自動續約",
+   "questions": [
+    "怎麼升級訂閱方案",
+    "訂閱到期會自動續嗎"
+   ],
+   "keywords": [
+    "升級",
+    "續約",
+    "扣款"
+   ],
+   "sources": [
+    "ts:10064-10129"
+   ],
+   "help_center": [
+    "Landlordonboarding02"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "訂閱方案",
+      "變更",
+      "升級"
+     ],
+     [
+      "自動續約",
+      "續訂",
+      "扣款",
+      "取消訂閱"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:5373,3356；help:Landlordonboarding02",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "怎麼升級訂閱方案",
+     "top3": [
+      {
+       "id": 3356,
+       "similarity": 0.283,
+       "q": "訂閱 取消 方案"
+      },
+      {
+       "id": 3597,
+       "similarity": 0.174,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      },
+      {
+       "id": 3596,
+       "similarity": 0.157,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5373,
+       "visible": null,
+       "q": "系統脈絡：訂閱領域-條件診斷：訂閱(子面"
+      },
+      {
+       "id": 5374,
+       "visible": false,
+       "q": "對話規則：訂閱診斷"
+      },
+      {
+       "id": 3506,
+       "visible": false,
+       "q": "物件為什麼突然全部下架"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 6.48
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [5373, 5374, 3506]（可見性）",
+     "entry_state": "fixed"
+    },
+    {
+     "q": "訂閱到期會自動續嗎",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.141,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      },
+      {
+       "id": 3335,
+       "similarity": 0.124,
+       "q": "對帳流程 帳單狀態 應到帳 待對帳 已到"
+      },
+      {
+       "id": 3604,
+       "similarity": 0.121,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5373,
+       "visible": null,
+       "q": "系統脈絡：訂閱領域-條件診斷：訂閱(子面"
+      },
+      {
+       "id": 5374,
+       "visible": false,
+       "q": "對話規則：訂閱診斷"
+      },
+      {
+       "id": 3506,
+       "visible": false,
+       "q": "物件為什麼突然全部下架"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.55
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [5373, 5374, 3506]（可見性）",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "V",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C09",
+   "module": "方案費用",
+   "topic": "免費試用",
+   "questions": [
+    "可以免費試用嗎"
+   ],
+   "keywords": [
+    "試用"
+   ],
+   "sources": [
+    "e2e:s1",
+    "kb:3611"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "一個月",
+      "試用"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3611",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "可以免費試用嗎",
+     "top3": [
+      {
+       "id": 3611,
+       "similarity": 0.992,
+       "q": "可以免費試用嗎 試用多久 免費 試用"
+      },
+      {
+       "id": 3596,
+       "similarity": 0.942,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      },
+      {
+       "id": 3597,
+       "similarity": 0.94,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5376,
+       "visible": true,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3645,
+       "visible": null,
+       "q": "對話規則：售前顧問"
+      },
+      {
+       "id": 3597,
+       "visible": true,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      },
+      {
+       "id": 3598,
+       "visible": true,
+       "q": "個人房東 約30戶 方案 規模化 銜接團"
+      },
+      {
+       "id": 3596,
+       "visible": true,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      },
+      {
+       "id": 3611,
+       "visible": true,
+       "q": "可以免費試用嗎 試用多久 免費 試用"
+      },
+      {
+       "id": 3608,
+       "visible": true,
+       "q": "為什麼選金箍棒 優勢 強項 差異化 好處"
+      }
+     ],
+     "api": {
+      "answer": "可以的，新帳號享有免費試用一個月，您只需註冊即可開始使用。這樣您可以先實際體驗系統的功能，再決定是否繼續使用。如果需要協助開通，可以留個聯絡方式，或直接預約 demo 由專人帶您看。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.04
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3611 0.992",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered_handoff",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C10",
+   "module": "方案費用",
+   "topic": "客製開發／怎麼計價",
+   "questions": [
+    "可以客製開發嗎？怎麼計價"
+   ],
+   "keywords": [
+    "客製"
+   ],
+   "sources": [
+    "e2e:s3"
+   ],
+   "help_center": [
+    "Landlordonboarding02"
+   ],
+   "intent": "fact",
+   "policy": "deliberate_no",
+   "note": "報價／合約類 ⇒ 轉專人（業主裁）",
+   "rubric": {
+    "must": [],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "requirements 已拍板決策#2 敏感五類 pricing/contract_sla ⇒ 轉人；DECISIONS:DSP-009",
+    "authority_checked": true
+   },
+   "policy_ref": "DECISIONS:DSP-009",
+   "per_question": [
+    {
+     "q": "可以客製開發嗎？怎麼計價",
+     "top3": [
+      {
+       "id": 5377,
+       "similarity": 0.184,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 5380,
+       "similarity": 0.142,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 5376,
+       "similarity": 0.123,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 3.17
+     },
+     "cause_state": "DELIBERATE_NO",
+     "cause_why": "",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "DELIBERATE_NO",
+   "entry_state": "fixed",
+   "coverage": "符合(刻意不補)"
+  },
+  {
+   "id": "C11",
+   "module": "房源",
+   "topic": "新增物件／批次上傳",
+   "questions": [
+    "物件可以批次上傳嗎",
+    "如何新增物件"
+   ],
+   "keywords": [
+    "物件",
+    "批次"
+   ],
+   "sources": [
+    "kb:3357,3599"
+   ],
+   "help_center": [
+    "onboarding4",
+    "qa01",
+    "slug1"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "批次"
+     ],
+     [
+      "Excel",
+      "範本",
+      "上傳"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3357,3599；help:onboarding4,qa01",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "物件可以批次上傳嗎",
+     "top3": [
+      {
+       "id": 3357,
+       "similarity": 0.979,
+       "q": "物件 批次匯入 上傳"
+      },
+      {
+       "id": 3599,
+       "similarity": 0.954,
+       "q": "房源管理 物件集中 社區歸戶 批次上傳 "
+      },
+      {
+       "id": 5379,
+       "similarity": 0.656,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3990,
+       "visible": false,
+       "q": "對話規則：登入排障"
+      },
+      {
+       "id": 3336,
+       "visible": false,
+       "q": "帳單排定發送 自動發送 草稿帳單"
+      },
+      {
+       "id": 5379,
+       "visible": true,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3357,
+       "visible": true,
+       "q": "物件 批次匯入 上傳"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3422,
+       "visible": false,
+       "q": "差額發票 功能說明"
+      },
+      {
+       "id": 3404,
+       "visible": false,
+       "q": "大量建立帳單 Excel 批次匯入"
+      },
+      {
+       "id": 3476,
+       "visible": false,
+       "q": "租客批次匯入 Excel"
+      }
+     ],
+     "api": {
+      "answer": "是的，物件可以批次上傳。金箍棒支援使用 Excel 範本來進行批次匯入，您可以將物件（包括一般與社會住宅）、租客、社區等資料集中管理。需要注意的是，檔案格式必須為 .xls（非 .xlsx），如果上傳失敗，建議重新下載範本檔案，並用 Ctrl+Shift+V（純文字貼上）方式貼入資料，以避免格式異常。上傳成功後，按重新整理約 3 秒內會顯示結果。\n\n如果您有其他問題或需要進一步了解，隨時告訴我！",
+      "handoff": null,
+      "elapsed_s": 4.31
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3357 0.979",
+     "entry_state": "answered"
+    },
+    {
+     "q": "如何新增物件",
+     "top3": [
+      {
+       "id": 3357,
+       "similarity": 0.575,
+       "q": "物件 批次匯入 上傳"
+      },
+      {
+       "id": 5377,
+       "similarity": 0.506,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 3358,
+       "similarity": 0.465,
+       "q": "大房東 邀請 授權 物件"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3990,
+       "visible": false,
+       "q": "對話規則：登入排障"
+      },
+      {
+       "id": 3336,
+       "visible": false,
+       "q": "帳單排定發送 自動發送 草稿帳單"
+      },
+      {
+       "id": 5379,
+       "visible": true,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3357,
+       "visible": true,
+       "q": "物件 批次匯入 上傳"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3422,
+       "visible": false,
+       "q": "差額發票 功能說明"
+      },
+      {
+       "id": 3404,
+       "visible": false,
+       "q": "大量建立帳單 Excel 批次匯入"
+      },
+      {
+       "id": 3476,
+       "visible": false,
+       "q": "租客批次匯入 Excel"
+      }
+     ],
+     "api": {
+      "answer": "請問您是個人房東、二房東、包租代管還是物管呢？",
+      "handoff": null,
+      "elapsed_s": 1.17
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3357 0.575",
+     "entry_state": "ask_back"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C12",
+   "module": "房源",
+   "topic": "物件狀態四態是什麼",
+   "questions": [
+    "物件狀態「未刊登」「刊登中」「洽談中」「租約中」分別是什麼"
+   ],
+   "keywords": [
+    "刊登",
+    "洽談中",
+    "租約中"
+   ],
+   "sources": [
+    "ts:9717,9954,9978"
+   ],
+   "help_center": [
+    "slug39"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "未刊登"
+     ],
+     [
+      "刊登中"
+     ],
+     [
+      "洽談中"
+     ],
+     [
+      "租約中",
+      "合約中"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:slug39；kb:4132(池外)",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "物件狀態「未刊登」「刊登中」「洽談中」「租約中」分別是什麼",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.166,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      },
+      {
+       "id": 3358,
+       "similarity": 0.137,
+       "q": "大房東 邀請 授權 物件"
+      },
+      {
+       "id": 3602,
+       "similarity": 0.1,
+       "q": "團隊管理 多人協作 角色權限 大房東報表"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3507,
+       "visible": false,
+       "q": "物件為什麼不能建立合約"
+      },
+      {
+       "id": 4218,
+       "visible": false,
+       "q": "既存合約 是什麼 簽署完成上傳備查"
+      },
+      {
+       "id": 3431,
+       "visible": false,
+       "q": "物件批次匯入 Excel 建立"
+      },
+      {
+       "id": 3470,
+       "visible": false,
+       "q": "社區公開頁面 廣告展示"
+      },
+      {
+       "id": 4216,
+       "visible": false,
+       "q": "退房後換新租客 點退押金 物件要重開嗎"
+      },
+      {
+       "id": 3894,
+       "visible": false,
+       "q": "物件資料修改 既有合約不受影響 快照原則"
+      },
+      {
+       "id": 4655,
+       "visible": false,
+       "q": "物件總表篩選 快到期空房 本月到期 無合"
+      },
+      {
+       "id": 4132,
+       "visible": null,
+       "q": "系統脈絡：物件領域-物件管理(母共用)"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 3.51
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [3507, 4218, 3431, 3470, 4216]（可見性）",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "V",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C13",
+   "module": "房源",
+   "topic": "社區建立與公開頁面",
+   "questions": [
+    "建立社區的流程是什麼樣的？",
+    "社區的公開頁面是用來幹嘛的？"
+   ],
+   "keywords": [
+    "社區"
+   ],
+   "sources": [
+    "ts:9875,10184"
+   ],
+   "help_center": [
+    "onboarding4"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "社區"
+     ],
+     [
+      "總表",
+      "歸戶",
+      "建立社區",
+      "創辦社區"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:onboarding4；kb:3599",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "建立社區的流程是什麼樣的？",
+     "top3": [
+      {
+       "id": 3599,
+       "similarity": 0.268,
+       "q": "房源管理 物件集中 社區歸戶 批次上傳 "
+      },
+      {
+       "id": 3600,
+       "similarity": 0.126,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      },
+      {
+       "id": 3606,
+       "similarity": 0.069,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.15
+     },
+     "cause_state": "N_CAND",
+     "cause_why": "池內外皆無對題列；權威來源：help:onboarding4；kb:3599",
+     "entry_state": "fixed"
+    },
+    {
+     "q": "社區的公開頁面是用來幹嘛的？",
+     "top3": [
+      {
+       "id": 3599,
+       "similarity": 0.198,
+       "q": "房源管理 物件集中 社區歸戶 批次上傳 "
+      },
+      {
+       "id": 3602,
+       "similarity": 0.063,
+       "q": "團隊管理 多人協作 角色權限 大房東報表"
+      },
+      {
+       "id": 3598,
+       "similarity": 0.033,
+       "q": "個人房東 約30戶 方案 規模化 銜接團"
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.04
+     },
+     "cause_state": "N_CAND",
+     "cause_why": "池內外皆無對題列；權威來源：help:onboarding4；kb:3599",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "N_CAND",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C14",
+   "module": "房源",
+   "topic": "招租店舖／對外首頁／VR 看屋",
+   "questions": [
+    "什麼是房東對外首頁",
+    "如何設置 VR 虛擬導覽呢？"
+   ],
+   "keywords": [
+    "招租",
+    "公開頁",
+    "VR"
+   ],
+   "sources": [
+    "ts:9985",
+    "kb:3599"
+   ],
+   "help_center": [
+    "slug90"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "對外首頁",
+      "招租",
+      "公開頁"
+     ],
+     [
+      "VR",
+      "看屋"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:slug90(標題),Landlordonboarding02,onboarding4；kb:3599",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "什麼是房東對外首頁",
+     "top3": [
+      {
+       "id": 3602,
+       "similarity": 0.363,
+       "q": "團隊管理 多人協作 角色權限 大房東報表"
+      },
+      {
+       "id": 3584,
+       "similarity": 0.326,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      },
+      {
+       "id": 3358,
+       "similarity": 0.165,
+       "q": "大房東 邀請 授權 物件"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3470,
+       "visible": false,
+       "q": "社區公開頁面 廣告展示"
+      },
+      {
+       "id": 3862,
+       "visible": false,
+       "q": "一物件多合約 上限10份"
+      },
+      {
+       "id": 4145,
+       "visible": false,
+       "q": "對外顯示地址 沒生效 還是完整地址"
+      },
+      {
+       "id": 4133,
+       "visible": null,
+       "q": "系統脈絡：物件領域-物件操作引導(子面向"
+      },
+      {
+       "id": 3428,
+       "visible": false,
+       "q": "物件狀態 定義條件"
+      },
+      {
+       "id": 3432,
+       "visible": false,
+       "q": "物件帳務合約紀錄 Dashboard 儀"
+      },
+      {
+       "id": 3599,
+       "visible": true,
+       "q": "房源管理 物件集中 社區歸戶 批次上傳 "
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.37
+     },
+     "cause_state": "S",
+     "cause_why": "對題列可見 [3599, 3608]；top-1 3602 0.363",
+     "entry_state": "fixed"
+    },
+    {
+     "q": "如何設置 VR 虛擬導覽呢？",
+     "top3": [
+      {
+       "id": 3599,
+       "similarity": 0.665,
+       "q": "房源管理 物件集中 社區歸戶 批次上傳 "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3470,
+       "visible": false,
+       "q": "社區公開頁面 廣告展示"
+      },
+      {
+       "id": 3862,
+       "visible": false,
+       "q": "一物件多合約 上限10份"
+      },
+      {
+       "id": 4145,
+       "visible": false,
+       "q": "對外顯示地址 沒生效 還是完整地址"
+      },
+      {
+       "id": 4133,
+       "visible": null,
+       "q": "系統脈絡：物件領域-物件操作引導(子面向"
+      },
+      {
+       "id": 3428,
+       "visible": false,
+       "q": "物件狀態 定義條件"
+      },
+      {
+       "id": 3432,
+       "visible": false,
+       "q": "物件帳務合約紀錄 Dashboard 儀"
+      },
+      {
+       "id": 3599,
+       "visible": true,
+       "q": "房源管理 物件集中 社區歸戶 批次上傳 "
+      }
+     ],
+     "api": {
+      "answer": "這部分我沒有資料。關於 VR 虛擬導覽的設置，建議您可以聯繫專人進一步了解具體的操作流程與需求。如果有其他問題或需要進一步的協助，隨時告訴我！",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 2.9
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3599 0.665",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "UNSTABLE['S', 'S_OK']",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C15",
+   "module": "房源",
+   "topic": "物件自訂標籤／Dashboard",
+   "questions": [
+    "這個物件自訂標籤有什麼用途呢？",
+    "物件的 Dashboard 裡面顯示了哪些數據"
+   ],
+   "keywords": [
+    "標籤",
+    "Dashboard",
+    "儀表"
+   ],
+   "sources": [
+    "ts:9995-10001"
+   ],
+   "help_center": [
+    "Landlordonboarding00"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "儀表板",
+      "Dashboard",
+      "收支情況",
+      "收支圖表"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:Landlordonboarding00",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "這個物件自訂標籤有什麼用途呢？",
+     "top3": [
+      {
+       "id": 3585,
+       "similarity": 0.074,
+       "q": "想了解金箍棒 你們系統介紹 適不適合我用"
+      },
+      {
+       "id": 3357,
+       "similarity": 0.034,
+       "q": "物件 批次匯入 上傳"
+      },
+      {
+       "id": 3608,
+       "similarity": 0.032,
+       "q": "為什麼選金箍棒 優勢 強項 差異化 好處"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3331,
+       "visible": false,
+       "q": "合約簽約邀請 期限 過期"
+      },
+      {
+       "id": 3868,
+       "visible": false,
+       "q": "邀請過期 連結失效 資料清空"
+      },
+      {
+       "id": 3432,
+       "visible": false,
+       "q": "物件帳務合約紀錄 Dashboard 儀"
+      },
+      {
+       "id": 3485,
+       "visible": false,
+       "q": "帳單發送收款 催繳管理"
+      },
+      {
+       "id": 3489,
+       "visible": false,
+       "q": "合約帳單管理 查詢統計"
+      },
+      {
+       "id": 3441,
+       "visible": false,
+       "q": "租客可以使用哪些功能 功能總覽"
+      },
+      {
+       "id": 3483,
+       "visible": false,
+       "q": "系統功能總覽 管理模組"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.24
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [3331, 3868, 3432, 3485, 3489]（可見性）",
+     "entry_state": "fixed"
+    },
+    {
+     "q": "物件的 Dashboard 裡面顯示了哪些數據",
+     "top3": [
+      {
+       "id": 3599,
+       "similarity": 0.099,
+       "q": "房源管理 物件集中 社區歸戶 批次上傳 "
+      },
+      {
+       "id": 3353,
+       "similarity": 0.098,
+       "q": "電表 儲值 雲端電表"
+      },
+      {
+       "id": 3604,
+       "similarity": 0.089,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3331,
+       "visible": false,
+       "q": "合約簽約邀請 期限 過期"
+      },
+      {
+       "id": 3868,
+       "visible": false,
+       "q": "邀請過期 連結失效 資料清空"
+      },
+      {
+       "id": 3432,
+       "visible": false,
+       "q": "物件帳務合約紀錄 Dashboard 儀"
+      },
+      {
+       "id": 3485,
+       "visible": false,
+       "q": "帳單發送收款 催繳管理"
+      },
+      {
+       "id": 3489,
+       "visible": false,
+       "q": "合約帳單管理 查詢統計"
+      },
+      {
+       "id": 3441,
+       "visible": false,
+       "q": "租客可以使用哪些功能 功能總覽"
+      },
+      {
+       "id": 3483,
+       "visible": false,
+       "q": "系統功能總覽 管理模組"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 3.25
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [3331, 3868, 3432, 3485, 3489]（可見性）",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "V",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C16",
+   "module": "租約",
+   "topic": "線上簽約／電子簽章",
+   "questions": [
+    "可不可以線上簽約"
+   ],
+   "keywords": [
+    "簽章",
+    "簽約"
+   ],
+   "sources": [
+    "e2e:s1",
+    "kb:3600,5375"
+   ],
+   "help_center": [
+    "onboarding5",
+    "slug84"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "電子簽章",
+      "線上簽"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3600,5375；help:onboarding5",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "可不可以線上簽約",
+     "top3": [
+      {
+       "id": 5375,
+       "similarity": 0.98,
+       "q": "可不可以線上簽約 線上簽 電子簽約 合約"
+      },
+      {
+       "id": 3600,
+       "similarity": 0.326,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      },
+      {
+       "id": 5379,
+       "similarity": 0.119,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5375,
+       "visible": true,
+       "q": "可不可以線上簽約 線上簽 電子簽約 合約"
+      },
+      {
+       "id": 3382,
+       "visible": false,
+       "q": "提前解約 房東發起"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3472,
+       "visible": false,
+       "q": "委託合約 建立簽署流程"
+      },
+      {
+       "id": 3474,
+       "visible": false,
+       "q": "委託合約 PDF 文件下載"
+      },
+      {
+       "id": 3597,
+       "visible": true,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      },
+      {
+       "id": 3600,
+       "visible": true,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      },
+      {
+       "id": 3838,
+       "visible": false,
+       "q": "合約修改 能不能改 三種出口"
+      }
+     ],
+     "api": {
+      "answer": "是的，金箍棒的租約管理系統支持線上電子簽章，您可以方便地進行合約簽署。這涵蓋了一般租賃、社會住宅和委託合約，從點交、點退到續約、解約都能完整管理。如果您想了解具體的流程，隨時可以詢問！",
+      "handoff": null,
+      "elapsed_s": 4.28
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 5375 0.980",
+     "entry_state": "answered"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C17",
+   "module": "租約",
+   "topic": "合約範本可以選哪些",
+   "questions": [
+    "合約範本可以選哪些"
+   ],
+   "keywords": [
+    "範本",
+    "契約書"
+   ],
+   "sources": [
+    "ts:9877,9895,9928"
+   ],
+   "help_center": [
+    "qa06"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "內政部"
+     ],
+     [
+      "公會",
+      "12"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:qa06(逐字)",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "合約範本可以選哪些",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.78,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3596,
+       "similarity": 0.588,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      },
+      {
+       "id": 3606,
+       "similarity": 0.497,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "合約範本的選擇目前不在我的資料範圍內，建議您可以直接在系統中查看可用的合約範本或聯繫專人了解更多細節。\n\n不過，值得一提的是，合約目前不支援批次匯入，需要逐筆建立，您可以選擇線上電子簽章簽約或上傳既有的紙本合約 PDF 存檔。如果您有其他問題或需要進一步的協助，隨時告訴我！",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.35
+     },
+     "cause_state": "FALSE_HIT",
+     "cause_why": "top-1 5379 0.780 不對題",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "FALSE_HIT",
+   "entry_state": "answered_handoff",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C18",
+   "module": "租約",
+   "topic": "上傳既有／紙本合約",
+   "questions": [
+    "可以上傳自己原有的合約嗎"
+   ],
+   "keywords": [
+    "既存",
+    "紙本",
+    "上傳合約"
+   ],
+   "sources": [
+    "kb:5379"
+   ],
+   "help_center": [
+    "qa05",
+    "qa06",
+    "onboarding6"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "上傳",
+      "既有",
+      "紙本",
+      "PDF"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:5379；help:qa05,onboarding6",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "可以上傳自己原有的合約嗎",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.578,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3357,
+       "similarity": 0.294,
+       "q": "物件 批次匯入 上傳"
+      },
+      {
+       "id": 5375,
+       "similarity": 0.222,
+       "q": "可不可以線上簽約 線上簽 電子簽約 合約"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 4218,
+       "visible": false,
+       "q": "既存合約 是什麼 簽署完成上傳備查"
+      },
+      {
+       "id": 3860,
+       "visible": false,
+       "q": "上傳既存合約 適用情境 效力"
+      },
+      {
+       "id": 3862,
+       "visible": false,
+       "q": "一物件多合約 上限10份"
+      },
+      {
+       "id": 4215,
+       "visible": false,
+       "q": "對話規則：建約引導"
+      },
+      {
+       "id": 5375,
+       "visible": true,
+       "q": "可不可以線上簽約 線上簽 電子簽約 合約"
+      },
+      {
+       "id": 5379,
+       "visible": true,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 2899,
+       "visible": false,
+       "q": "電子租賃契約效力"
+      },
+      {
+       "id": 3825,
+       "visible": null,
+       "q": "系統脈絡：合約領域-建約引導(子面向)"
+      }
+     ],
+     "api": {
+      "answer": "目前金箍棒系統不支援批次匯入合約，您需要逐筆建立合約。您可以選擇線上電子簽新約，或是上傳已有的紙本合約 PDF 存檔。至於其他項目，像是物件、租客、社區和團隊帳號等，都可以使用 Excel 範本批次匯入。若您對搬遷細節有進一步的需求，歡迎隨時詢問！",
+      "handoff": null,
+      "elapsed_s": 5.69
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 5379 0.578",
+     "entry_state": "answered"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C19",
+   "module": "租約",
+   "topic": "點交點退／續約／提前解約",
+   "questions": [
+    "點交點退怎麼做",
+    "租客提前解約怎麼處理"
+   ],
+   "keywords": [
+    "點交",
+    "點退",
+    "解約"
+   ],
+   "sources": [
+    "kb:3600"
+   ],
+   "help_center": [
+    "onboarding7",
+    "onboarding10",
+    "onboarding9-1",
+    "onboarding9-2"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "點交",
+      "點退"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3600；help:onboarding7,onboarding10",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "點交點退怎麼做",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.935,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      },
+      {
+       "id": 3356,
+       "similarity": 0.173,
+       "q": "訂閱 取消 方案"
+      },
+      {
+       "id": 3606,
+       "similarity": 0.139,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3511,
+       "visible": false,
+       "q": "合約的點交/點退/提前解約/續約按鈕是否"
+      },
+      {
+       "id": 5375,
+       "visible": true,
+       "q": "可不可以線上簽約 線上簽 電子簽約 合約"
+      },
+      {
+       "id": 3161,
+       "visible": false,
+       "q": "點交項目清單"
+      },
+      {
+       "id": 3398,
+       "visible": false,
+       "q": "電費計費方式 度數計算"
+      },
+      {
+       "id": 3166,
+       "visible": false,
+       "q": "點交時間要求"
+      },
+      {
+       "id": 3379,
+       "visible": false,
+       "q": "合約點退 前置條件"
+      },
+      {
+       "id": 4218,
+       "visible": false,
+       "q": "既存合約 是什麼 簽署完成上傳備查"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      }
+     ],
+     "api": {
+      "answer": "點交點退的流程可以透過金箍棒的租約管理系統來進行。系統提供線上電子簽章功能，讓您能夠方便地管理合約，包括點交、點退、續約和解約等步驟。這樣可以避免紙本來回的繁瑣，並確保合約的正確性。\n\n如果您想了解更詳細的操作流程，隨時可以詢問！",
+      "handoff": null,
+      "elapsed_s": 8.33
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3600 0.935",
+     "entry_state": "answered"
+    },
+    {
+     "q": "租客提前解約怎麼處理",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.791,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      },
+      {
+       "id": 5379,
+       "similarity": 0.673,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3606,
+       "similarity": 0.547,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3511,
+       "visible": false,
+       "q": "合約的點交/點退/提前解約/續約按鈕是否"
+      },
+      {
+       "id": 5375,
+       "visible": true,
+       "q": "可不可以線上簽約 線上簽 電子簽約 合約"
+      },
+      {
+       "id": 3161,
+       "visible": false,
+       "q": "點交項目清單"
+      },
+      {
+       "id": 3398,
+       "visible": false,
+       "q": "電費計費方式 度數計算"
+      },
+      {
+       "id": 3166,
+       "visible": false,
+       "q": "點交時間要求"
+      },
+      {
+       "id": 3379,
+       "visible": false,
+       "q": "合約點退 前置條件"
+      },
+      {
+       "id": 4218,
+       "visible": false,
+       "q": "既存合約 是什麼 簽署完成上傳備查"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      }
+     ],
+     "api": {
+      "answer": "請問您是個人房東還是二房東/包租代管業呢？",
+      "handoff": null,
+      "elapsed_s": 2.78
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3600 0.791",
+     "entry_state": "ask_back"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C20",
+   "module": "租約",
+   "topic": "社會住宅／委託合約",
+   "questions": [
+    "有支援社會住宅的合約嗎"
+   ],
+   "keywords": [
+    "社會住宅",
+    "社宅",
+    "委託"
+   ],
+   "sources": [
+    "kb:3600"
+   ],
+   "help_center": [
+    "Landlordonboarding09Socialhousing"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "社會住宅",
+      "社宅"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3600；help:Landlordonboarding09Socialhousing",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "有支援社會住宅的合約嗎",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.751,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      },
+      {
+       "id": 3355,
+       "similarity": 0.211,
+       "q": "生活公約 修改 補充條款"
+      },
+      {
+       "id": 3584,
+       "similarity": 0.138,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5375,
+       "visible": true,
+       "q": "可不可以線上簽約 線上簽 電子簽約 合約"
+      },
+      {
+       "id": 5379,
+       "visible": true,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3129,
+       "visible": false,
+       "q": "租金補貼條件"
+      },
+      {
+       "id": 3134,
+       "visible": false,
+       "q": "社會住宅租約終止"
+      },
+      {
+       "id": 3318,
+       "visible": false,
+       "q": "租約期限"
+      },
+      {
+       "id": 3320,
+       "visible": false,
+       "q": "社會住宅維修責任"
+      },
+      {
+       "id": 3128,
+       "visible": false,
+       "q": "社會住宅申請資格"
+      },
+      {
+       "id": 3133,
+       "visible": false,
+       "q": "社會住宅管理"
+      }
+     ],
+     "api": {
+      "answer": "是的，金箍棒的租約管理系統支援社會住宅的合約管理。我們提供線上電子簽章，涵蓋一般租賃、社會住宅和委託合約，能夠完整管理從點交、點退到續約、解約的流程。如果您想了解具體的操作流程，隨時可以詢問！",
+      "handoff": null,
+      "elapsed_s": 5.52
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3600 0.751",
+     "entry_state": "answered"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C21",
+   "module": "租約",
+   "topic": "歷史合約 vs 結案合約",
+   "questions": [
+    "歷史合約和結案合約之間的差異在哪裡"
+   ],
+   "keywords": [
+    "歷史合約",
+    "結案"
+   ],
+   "sources": [
+    "ts:10172"
+   ],
+   "help_center": [
+    "slug15"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "歷史合約",
+      "到期"
+     ],
+     [
+      "保留",
+      "不會刪",
+      "沒有期限",
+      "點退"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:slug15(逐字)",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "歷史合約和結案合約之間的差異在哪裡",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.07,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3355,
+       "similarity": 0.042,
+       "q": "生活公約 修改 補充條款"
+      },
+      {
+       "id": 3600,
+       "similarity": 0.038,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3330,
+       "visible": false,
+       "q": "歷史合約 保存期限"
+      },
+      {
+       "id": 3385,
+       "visible": false,
+       "q": "歷史合約 過期與結案"
+      },
+      {
+       "id": 3386,
+       "visible": false,
+       "q": "合約取消 與歷史合約差異"
+      },
+      {
+       "id": 3447,
+       "visible": false,
+       "q": "查看合約帳單 資訊查詢"
+      },
+      {
+       "id": 3489,
+       "visible": false,
+       "q": "合約帳單管理 查詢統計"
+      },
+      {
+       "id": 3373,
+       "visible": false,
+       "q": "合約狀態 12 階段總覽"
+      },
+      {
+       "id": 3388,
+       "visible": false,
+       "q": "合約即將到期 到期提醒"
+      },
+      {
+       "id": 3846,
+       "visible": false,
+       "q": "合約刪除 作廢 條件"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 3.98
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [3330, 3385, 3386, 3447, 3489]（可見性）",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "V",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C22",
+   "module": "租約",
+   "topic": "簽約另外收費嗎",
+   "questions": [
+    "所以剛剛說的簽約要另外收費嗎"
+   ],
+   "keywords": [
+    "簽約 費用",
+    "電子簽章 收費"
+   ],
+   "sources": [
+    "e2e:s1"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "第 5、6 輪皆固定句",
+   "rubric": {
+    "must": [
+     [
+      "電子簽章",
+      "簽約"
+     ],
+     [
+      "費用",
+      "收費",
+      "方案"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "none（G0③未找到）",
+    "authority_checked": false
+   },
+   "per_question": [
+    {
+     "q": "所以剛剛說的簽約要另外收費嗎",
+     "top3": [
+      {
+       "id": 5375,
+       "similarity": 0.206,
+       "q": "可不可以線上簽約 線上簽 電子簽約 合約"
+      },
+      {
+       "id": 3600,
+       "similarity": 0.196,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      },
+      {
+       "id": 3596,
+       "similarity": 0.181,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 4.37
+     },
+     "cause_state": "UNCLASSIFIED(待G0)",
+     "cause_why": "池內外皆無對題列、無權威來源",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "UNCLASSIFIED(待G0)",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C23",
+   "module": "帳務",
+   "topic": "自動帳單／收租對帳",
+   "questions": [
+    "帳單可以自動產生嗎",
+    "收租對帳怎麼做"
+   ],
+   "keywords": [
+    "帳單",
+    "對帳"
+   ],
+   "sources": [
+    "kb:3601"
+   ],
+   "help_center": [
+    "onboarding8",
+    "slug76"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "自動"
+     ],
+     [
+      "帳單"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3601；help:onboarding8,slug76",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "帳單可以自動產生嗎",
+     "top3": [
+      {
+       "id": 5380,
+       "similarity": 0.569,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3604,
+       "similarity": 0.493,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      },
+      {
+       "id": 3601,
+       "similarity": 0.414,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5374,
+       "visible": false,
+       "q": "對話規則：訂閱診斷"
+      },
+      {
+       "id": 3497,
+       "visible": false,
+       "q": "已付款但帳單狀態沒有更新"
+      },
+      {
+       "id": 3502,
+       "visible": false,
+       "q": "虛擬帳號過期或轉帳失敗"
+      },
+      {
+       "id": 3503,
+       "visible": false,
+       "q": "發票為什麼沒有開出來"
+      },
+      {
+       "id": 3915,
+       "visible": false,
+       "q": "對話規則：繳費金流排障"
+      },
+      {
+       "id": 3916,
+       "visible": false,
+       "q": "對話規則：帳單異常"
+      },
+      {
+       "id": 3990,
+       "visible": false,
+       "q": "對話規則：登入排障"
+      },
+      {
+       "id": 4001,
+       "visible": false,
+       "q": "對話規則：團隊成員權限"
+      }
+     ],
+     "api": {
+      "answer": "是的，帳單可以自動產生。您可以在系統中設定帳單的內容，包括標題、計費起訖日、繳費期限、費用品項等，這些都能夠自動生成。至於帳單的版面，您可以選擇「一般收據」或「財政部包租業租金收據」，但版式的細節如 logo 和欄位排列則無法自訂。如果您有特殊的版面需求，可以預約 demo 由專人評估。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 5.61
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 5380 0.569",
+     "entry_state": "answered_handoff"
+    },
+    {
+     "q": "收租對帳怎麼做",
+     "top3": [
+      {
+       "id": 3596,
+       "similarity": 0.895,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      },
+      {
+       "id": 3335,
+       "similarity": 0.738,
+       "q": "對帳流程 帳單狀態 應到帳 待對帳 已到"
+      },
+      {
+       "id": 3601,
+       "similarity": 0.722,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5374,
+       "visible": false,
+       "q": "對話規則：訂閱診斷"
+      },
+      {
+       "id": 3497,
+       "visible": false,
+       "q": "已付款但帳單狀態沒有更新"
+      },
+      {
+       "id": 3502,
+       "visible": false,
+       "q": "虛擬帳號過期或轉帳失敗"
+      },
+      {
+       "id": 3503,
+       "visible": false,
+       "q": "發票為什麼沒有開出來"
+      },
+      {
+       "id": 3915,
+       "visible": false,
+       "q": "對話規則：繳費金流排障"
+      },
+      {
+       "id": 3916,
+       "visible": false,
+       "q": "對話規則：帳單異常"
+      },
+      {
+       "id": 3990,
+       "visible": false,
+       "q": "對話規則：登入排障"
+      },
+      {
+       "id": 4001,
+       "visible": false,
+       "q": "對話規則：團隊成員權限"
+      }
+     ],
+     "api": {
+      "answer": "請問您是個人房東、二房東、包租代管業還是物管呢？",
+      "handoff": null,
+      "elapsed_s": 1.71
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3596 0.895",
+     "entry_state": "ask_back"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered_handoff",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C24",
+   "module": "帳務",
+   "topic": "電子發票自動開立",
+   "questions": [
+    "電子發票可以自動開嗎？還是要一張一張手動開"
+   ],
+   "keywords": [
+    "發票"
+   ],
+   "sources": [
+    "e2e:s2",
+    "kb:3601"
+   ],
+   "help_center": [
+    "einvoice"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "電子發票"
+     ]
+    ],
+    "forbid": [
+     "一張一張",
+     "免手動"
+    ]
+   },
+   "g0": {
+    "authority": "kb:3601；help:einvoice(標題)",
+    "authority_checked": false
+   },
+   "per_question": [
+    {
+     "q": "電子發票可以自動開嗎？還是要一張一張手動開",
+     "top3": [
+      {
+       "id": 3601,
+       "similarity": 0.534,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      },
+      {
+       "id": 3604,
+       "similarity": 0.084,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      },
+      {
+       "id": 3335,
+       "similarity": 0.068,
+       "q": "對帳流程 帳單狀態 應到帳 待對帳 已到"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5380,
+       "visible": true,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      }
+     ],
+     "api": {
+      "answer": "電子發票可以自動開立，您不需要一張一張手動開。金箍棒的帳務管理系統會自動產生帳單並開具電子發票，讓收租對帳變得更簡單。不再需要使用 Excel 人工對帳，整個流程都能自動化處理。若您有其他問題或需要進一步了解，隨時可以問我！",
+      "handoff": null,
+      "elapsed_s": 4.7
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3601 0.534",
+     "entry_state": "answered"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered",
+   "coverage": "已覆蓋⚠️"
+  },
+  {
+   "id": "C25",
+   "module": "帳務",
+   "topic": "差額發票使用時機",
+   "questions": [
+    "差額發票的使用時機是什麼時候"
+   ],
+   "keywords": [
+    "差額發票"
+   ],
+   "sources": [
+    "ts:9918"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "3798 索引有、無知識列",
+   "rubric": {
+    "must": [
+     [
+      "差額發票"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "none（3798 索引有、無知識列、幫助中心無）",
+    "authority_checked": false
+   },
+   "per_question": [
+    {
+     "q": "差額發票的使用時機是什麼時候",
+     "top3": [
+      {
+       "id": 3342,
+       "similarity": 0.217,
+       "q": "帳單繳費期限 發送日 設定"
+      },
+      {
+       "id": 3335,
+       "similarity": 0.052,
+       "q": "對帳流程 帳單狀態 應到帳 待對帳 已到"
+      },
+      {
+       "id": 3585,
+       "similarity": 0.032,
+       "q": "想了解金箍棒 你們系統介紹 適不適合我用"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3360,
+       "visible": false,
+       "q": "匯出 報表 收支明細"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 4224,
+       "visible": false,
+       "q": "包租 代管 差別 系統功能"
+      },
+      {
+       "id": 3422,
+       "visible": false,
+       "q": "差額發票 功能說明"
+      },
+      {
+       "id": 3482,
+       "visible": false,
+       "q": "看不到功能 權限不足"
+      },
+      {
+       "id": 3453,
+       "visible": false,
+       "q": "訂閱方案 種類差異"
+      },
+      {
+       "id": 4257,
+       "visible": false,
+       "q": "發票自動開立時點 何時開發票 開立時間"
+      },
+      {
+       "id": 3535,
+       "visible": false,
+       "q": "差額發票金額計算 租金品項底租"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 5.0
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [3360, 3798, 4224, 3422, 3482]（可見性）",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "V",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C26",
+   "module": "帳務",
+   "topic": "帳單格式／收據樣式",
+   "questions": [
+    "房東對帳單格式能不能自己設定"
+   ],
+   "keywords": [
+    "格式",
+    "收據"
+   ],
+   "sources": [
+    "e2e:s2",
+    "kb:5380"
+   ],
+   "help_center": [
+    "onboarding14",
+    "qa21",
+    "slug99"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "收據",
+      "版面",
+      "格式"
+     ],
+     [
+      "品項",
+      "繳費期限",
+      "標題"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:5380（jgb2 receipt_type）",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "房東對帳單格式能不能自己設定",
+     "top3": [
+      {
+       "id": 5380,
+       "similarity": 0.962,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3601,
+       "similarity": 0.802,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      },
+      {
+       "id": 3596,
+       "similarity": 0.73,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3344,
+       "visible": false,
+       "q": "永豐 臨櫃匯款 虛擬帳號格式"
+      },
+      {
+       "id": 5380,
+       "visible": true,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3357,
+       "visible": true,
+       "q": "物件 批次匯入 上傳"
+      },
+      {
+       "id": 3393,
+       "visible": false,
+       "q": "合約附件 上傳管理"
+      },
+      {
+       "id": 3645,
+       "visible": null,
+       "q": "對話規則：售前顧問"
+      },
+      {
+       "id": 3404,
+       "visible": false,
+       "q": "大量建立帳單 Excel 批次匯入"
+      },
+      {
+       "id": 3476,
+       "visible": false,
+       "q": "租客批次匯入 Excel"
+      },
+      {
+       "id": 3431,
+       "visible": false,
+       "q": "物件批次匯入 Excel 建立"
+      }
+     ],
+     "api": {
+      "answer": "房東對帳單的格式不能完全自訂。您可以設定帳單的內容，包括標題、備註、計費起訖日、繳費期限、費用品項等，這些都可以在系統中進行調整。不過，帳單的版面方面只能在「一般收據」與「財政部包租業租金收據」之間選擇，欄位排列和 logo 等則無法任意自訂。如果您有特殊的版面需求，可以預約 demo 由專人為您評估。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 5.12
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 5380 0.962",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered_handoff",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C27",
+   "module": "帳務",
+   "topic": "帳單內有哪些資訊／臨時增收",
+   "questions": [
+    "帳單內有哪些資訊",
+    "如何在帳單內添加臨時增收費用"
+   ],
+   "keywords": [
+    "帳單 資訊",
+    "增收",
+    "品項"
+   ],
+   "sources": [],
+   "help_center": [
+    "slug78",
+    "slug79"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "固定費用",
+      "變動費用",
+      "租金",
+      "水",
+      "電"
+     ],
+     [
+      "其他費用",
+      "另計",
+      "臨時"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:slug78,slug79(逐字)",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "帳單內有哪些資訊",
+     "top3": [
+      {
+       "id": 3335,
+       "similarity": 0.911,
+       "q": "對帳流程 帳單狀態 應到帳 待對帳 已到"
+      },
+      {
+       "id": 3601,
+       "similarity": 0.9,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      },
+      {
+       "id": 5379,
+       "similarity": 0.812,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3447,
+       "visible": false,
+       "q": "查看合約帳單 資訊查詢"
+      },
+      {
+       "id": 5380,
+       "visible": true,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3535,
+       "visible": false,
+       "q": "差額發票金額計算 租金品項底租"
+      },
+      {
+       "id": 3912,
+       "visible": null,
+       "q": "系統脈絡：帳務領域-發票(子面向)"
+      },
+      {
+       "id": 4647,
+       "visible": false,
+       "q": "未發送帳單一次編輯 批次調整範圍"
+      },
+      {
+       "id": 4642,
+       "visible": false,
+       "q": "帳單品名修改 租金改停車位費"
+      }
+     ],
+     "api": {
+      "answer": "帳單內主要包含以下資訊：\n\n1. 帳單狀態：顯示帳單是否已發送、待對帳或已到帳。\n2. 租客的繳費通知：租客在系統中點選「通知已繳費」後，會顯示為待對帳狀態。\n3. 管理者確認的實際收到款項狀態。\n\n若您有其他關於房東、租客或合約的問題，這部分我沒有資料，請隨時告訴我！",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 6.12
+     },
+     "cause_state": "FALSE_HIT",
+     "cause_why": "top-1 3335 0.911 不對題",
+     "entry_state": "answered_handoff"
+    },
+    {
+     "q": "如何在帳單內添加臨時增收費用",
+     "top3": [
+      {
+       "id": 5380,
+       "similarity": 0.535,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3342,
+       "similarity": 0.152,
+       "q": "帳單繳費期限 發送日 設定"
+      },
+      {
+       "id": 3335,
+       "similarity": 0.148,
+       "q": "對帳流程 帳單狀態 應到帳 待對帳 已到"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3447,
+       "visible": false,
+       "q": "查看合約帳單 資訊查詢"
+      },
+      {
+       "id": 5380,
+       "visible": true,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3535,
+       "visible": false,
+       "q": "差額發票金額計算 租金品項底租"
+      },
+      {
+       "id": 3912,
+       "visible": null,
+       "q": "系統脈絡：帳務領域-發票(子面向)"
+      },
+      {
+       "id": 4647,
+       "visible": false,
+       "q": "未發送帳單一次編輯 批次調整範圍"
+      },
+      {
+       "id": 4642,
+       "visible": false,
+       "q": "帳單品名修改 租金改停車位費"
+      }
+     ],
+     "api": {
+      "answer": "您可以在帳單內添加臨時增收費用，具體操作是透過系統設定中的「費用品項」來增刪、改單價數量。這樣您就能靈活調整帳單內容，包含臨時增收的項目。\n\n如果您對帳單的版面有特殊需求，則需要預約 demo 由專人評估。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.56
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 5380 0.535",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "UNSTABLE['FALSE_HIT', 'S_OK']",
+   "entry_state": "answered_handoff",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C28",
+   "module": "帳務",
+   "topic": "逾期催繳／滯納金",
+   "questions": [
+    "那租客不繳怎麼辦"
+   ],
+   "keywords": [
+    "催繳",
+    "逾期",
+    "滯納金"
+   ],
+   "sources": [
+    "e2e:s1",
+    "kb:5378,3340"
+   ],
+   "help_center": [
+    "slug03",
+    "slug24"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "五日",
+      "三日",
+      "一日",
+      "提醒"
+     ],
+     [
+      "逾期"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:5378；help:slug03,Landlordonboarding06Finance",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "那租客不繳怎麼辦",
+     "top3": [
+      {
+       "id": 5378,
+       "similarity": 0.965,
+       "q": "租客不繳租金怎麼辦 逾期 催繳 提醒 遲"
+      },
+      {
+       "id": 3606,
+       "similarity": 0.498,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      },
+      {
+       "id": 5379,
+       "similarity": 0.405,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5378,
+       "visible": true,
+       "q": "租客不繳租金怎麼辦 逾期 催繳 提醒 遲"
+      },
+      {
+       "id": 3340,
+       "visible": true,
+       "q": "催繳 逾期 通知"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3485,
+       "visible": false,
+       "q": "帳單發送收款 催繳管理"
+      },
+      {
+       "id": 3400,
+       "visible": false,
+       "q": "逾期費計算 催繳通知"
+      },
+      {
+       "id": 3449,
+       "visible": false,
+       "q": "各類通知觸發時機 通知清單"
+      },
+      {
+       "id": 4252,
+       "visible": false,
+       "q": "對話規則：帳單診斷"
+      },
+      {
+       "id": 3531,
+       "visible": false,
+       "q": "滯納金帳單產生 付款後結算規則"
+      }
+     ],
+     "api": {
+      "answer": "如果租客不繳款，系統會在帳單到期前五日、三日和一天自動發送 Email 和 LINE 提醒給租客，逾期後則會改為每日通知。此外，逾期的帳單會在系統上以紅字和「逾期」標籤標示，房東的首頁也會即時更新逾期帳款。系統還有滯納金機制，可以依團隊設定啟用，這樣可以進一步促使租客儘快繳款。",
+      "handoff": null,
+      "elapsed_s": 4.34
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 5378 0.965",
+     "entry_state": "answered"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C29",
+   "module": "帳務",
+   "topic": "儲值金回充帳戶",
+   "questions": [
+    "儲值金回充帳戶是什麼功能"
+   ],
+   "keywords": [
+    "儲值金",
+    "回充"
+   ],
+   "sources": [
+    "ts:9994-10072"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "回充",
+      "儲值金回充"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "none（kb 3353 電表儲值非回充；幫助中心無）",
+    "authority_checked": false
+   },
+   "per_question": [
+    {
+     "q": "儲值金回充帳戶是什麼功能",
+     "top3": [
+      {
+       "id": 3601,
+       "similarity": 0.474,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      },
+      {
+       "id": 3335,
+       "similarity": 0.123,
+       "q": "對帳流程 帳單狀態 應到帳 待對帳 已到"
+      },
+      {
+       "id": 3597,
+       "similarity": 0.103,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3417,
+       "visible": false,
+       "q": "儲值金 回充帳戶功能"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.18
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [3417]（可見性）",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "V",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C30",
+   "module": "帳務",
+   "topic": "代收代付／大房東報表",
+   "questions": [
+    "帳單代收代付的運作方式是什麼",
+    "大房東報表長什麼樣"
+   ],
+   "keywords": [
+    "代收代付",
+    "大房東報表"
+   ],
+   "sources": [
+    "ts:10130",
+    "e2e:s3",
+    "kb:3604"
+   ],
+   "help_center": [
+    "Landlordonboarding00"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "代收代付"
+     ],
+     [
+      "報表",
+      "月結"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3604",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "帳單代收代付的運作方式是什麼",
+     "top3": [
+      {
+       "id": 3604,
+       "similarity": 0.87,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      },
+      {
+       "id": 3601,
+       "similarity": 0.583,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      },
+      {
+       "id": 3335,
+       "similarity": 0.457,
+       "q": "對帳流程 帳單狀態 應到帳 待對帳 已到"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 3604,
+       "visible": true,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      },
+      {
+       "id": 4224,
+       "visible": false,
+       "q": "包租 代管 差別 系統功能"
+      },
+      {
+       "id": 3466,
+       "visible": false,
+       "q": "大房東帳單 代收代付"
+      },
+      {
+       "id": 3584,
+       "visible": true,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      },
+      {
+       "id": 5376,
+       "visible": true,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3598,
+       "visible": true,
+       "q": "個人房東 約30戶 方案 規模化 銜接團"
+      }
+     ],
+     "api": {
+      "answer": "帳單代收代付的運作方式是透過金箍棒的帳務管理系統來實現的。系統會自動產生帳單，並提供線上金流代收的功能，支援多家銀行（如藍新、永豐、中信、國泰、愛金卡）。這樣一來，收租和對帳的過程就能夠簡化，不再需要依賴 Excel 進行人工對帳。\n\n如果你想了解更多具體的操作流程或報表內容，可以考慮預約 demo 來進一步了解。",
+      "handoff": null,
+      "elapsed_s": 5.48
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3604 0.870",
+     "entry_state": "answered"
+    },
+    {
+     "q": "大房東報表長什麼樣",
+     "top3": [
+      {
+       "id": 3604,
+       "similarity": 0.945,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      },
+      {
+       "id": 3602,
+       "similarity": 0.922,
+       "q": "團隊管理 多人協作 角色權限 大房東報表"
+      },
+      {
+       "id": 3584,
+       "similarity": 0.84,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 3604,
+       "visible": true,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      },
+      {
+       "id": 4224,
+       "visible": false,
+       "q": "包租 代管 差別 系統功能"
+      },
+      {
+       "id": 3466,
+       "visible": false,
+       "q": "大房東帳單 代收代付"
+      },
+      {
+       "id": 3584,
+       "visible": true,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      },
+      {
+       "id": 5376,
+       "visible": true,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3598,
+       "visible": true,
+       "q": "個人房東 約30戶 方案 規模化 銜接團"
+      }
+     ],
+     "api": {
+      "answer": "大房東報表能將代收代付、月結與營運狀況整理成報表，並且可以排程自動寄送給業主，省去人工彙整的時間。不過，具體的報表內容我這邊沒有資料，建議您可以預約 demo，專人會為您詳細介紹報表的樣式與功能。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 5.13
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3604 0.945",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C31",
+   "module": "帳務",
+   "topic": "水電費分算／費用估算",
+   "questions": [
+    "水電費要怎麼分算比較公平？一個月大概多少錢"
+   ],
+   "keywords": [
+    "水電",
+    "分算"
+   ],
+   "sources": [
+    "e2e:s1"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance"
+   ],
+   "intent": "advice",
+   "policy": "answer",
+   "note": "金額部分無資料屬正常",
+   "rubric": {
+    "must": [
+     [
+      "水電"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "n/a（一般建議題，非產品事實）",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "水電費要怎麼分算比較公平？一個月大概多少錢",
+     "top3": [
+      {
+       "id": 5376,
+       "similarity": 0.561,
+       "q": "費用怎麼算 一年多少錢 收費方式 月費 "
+      },
+      {
+       "id": 3610,
+       "similarity": 0.07,
+       "q": "金箍棒 怎麼收費 多少錢 方案 費用 價"
+      },
+      {
+       "id": 3597,
+       "similarity": 0.046,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3519,
+       "visible": false,
+       "q": "點退帳單金額計算 押金結算"
+      },
+      {
+       "id": 3402,
+       "visible": false,
+       "q": "點退帳單 自動產生 費用結算"
+      },
+      {
+       "id": 3038,
+       "visible": false,
+       "q": "居住證明"
+      },
+      {
+       "id": 5380,
+       "visible": true,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3161,
+       "visible": false,
+       "q": "點交項目清單"
+      },
+      {
+       "id": 3209,
+       "visible": false,
+       "q": "租金包含服務"
+      },
+      {
+       "id": 3143,
+       "visible": false,
+       "q": "加值服務"
+      },
+      {
+       "id": 3013,
+       "visible": false,
+       "q": "房東報稅支出"
+      }
+     ],
+     "api": {
+      "answer": "水電費的分算方式可以考慮以下幾種方法來確保公平：\n\n1. **按人頭分攤**：將總水電費用除以居住人數，適合人數相對均等的情況。\n2. **按使用量分攤**：根據每個租客的實際用量來計算，這需要安裝獨立的水電表。\n3. **按面積分攤**：根據每個租客所佔的居住面積來分配費用，適合面積差異不大的情況。\n\n至於每個月的水電費用，這部分我沒有資料，因為費用會根據地區、用量和季節等因素有所不同。建議您可以查詢當地的平均水電費用來做參考。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.73
+     },
+     "cause_state": "ADVICE",
+     "cause_why": "",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "ADVICE",
+   "entry_state": "answered_handoff",
+   "coverage": "n/a(一般建議)"
+  },
+  {
+   "id": "C32",
+   "module": "金流",
+   "topic": "支援哪些金流廠商",
+   "questions": [
+    "系統支援哪些金流廠商"
+   ],
+   "keywords": [
+    "金流",
+    "藍新",
+    "永豐",
+    "國泰",
+    "中信"
+   ],
+   "sources": [
+    "ts:9579,9732-9734",
+    "kb:3601"
+   ],
+   "help_center": [
+    "paymentapply",
+    "qa27"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "藍新"
+     ],
+     [
+      "永豐",
+      "中信",
+      "國泰",
+      "愛金卡"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3601；help:paymentapply",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "系統支援哪些金流廠商",
+     "top3": [
+      {
+       "id": 3601,
+       "similarity": 0.899,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      },
+      {
+       "id": 3597,
+       "similarity": 0.836,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      },
+      {
+       "id": 5379,
+       "similarity": 0.438,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3502,
+       "visible": false,
+       "q": "虛擬帳號過期或轉帳失敗"
+      },
+      {
+       "id": 3347,
+       "visible": false,
+       "q": "信用卡 繳費 定期扣款 刷卡"
+      },
+      {
+       "id": 4221,
+       "visible": false,
+       "q": "收款帳戶 銀行有限制嗎 台新"
+      },
+      {
+       "id": 3413,
+       "visible": false,
+       "q": "金流商 各家特性"
+      },
+      {
+       "id": 3601,
+       "visible": true,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      },
+      {
+       "id": 3551,
+       "visible": false,
+       "q": "信用卡ATM收款手續費 房東負擔"
+      },
+      {
+       "id": 4256,
+       "visible": false,
+       "q": "調整收款方式 線上付款方式設定 租客繳費"
+      },
+      {
+       "id": 3548,
+       "visible": false,
+       "q": "申請線上金流 先確認金流商"
+      }
+     ],
+     "api": {
+      "answer": "金箍棒系統支援的金流廠商包括藍新、永豐、中信、國泰和愛金卡。這些金流代收功能能幫助您自動化收租與對帳，減少人工錯誤。如果您對其他功能或細節有興趣，隨時可以詢問！",
+      "handoff": null,
+      "elapsed_s": 3.73
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3601 0.899",
+     "entry_state": "answered"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C33",
+   "module": "金流",
+   "topic": "藍新 vs 國泰差別",
+   "questions": [
+    "藍新跟國泰的差別在哪"
+   ],
+   "keywords": [
+    "藍新",
+    "國泰"
+   ],
+   "sources": [
+    "ts:9580,9735-9737"
+   ],
+   "help_center": [
+    "paymentapply",
+    "advanced12"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "國泰",
+      "藍新"
+     ],
+     [
+      "法人",
+      "個人",
+      "設定費",
+      "申請方式",
+      "差別"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:paymentapply(逐字)",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "藍新跟國泰的差別在哪",
+     "top3": [
+      {
+       "id": 3607,
+       "similarity": 0.098,
+       "q": "金箍棒 跟 Bananas 屋我也 差異"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3548,
+       "visible": false,
+       "q": "申請線上金流 先確認金流商"
+      },
+      {
+       "id": 3549,
+       "visible": false,
+       "q": "藍新金流申請 資料與審核時間"
+      },
+      {
+       "id": 3540,
+       "visible": false,
+       "q": "固定虛擬帳號設定 銀行模式權限"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 1.51
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [3548, 3549, 3540]（可見性）",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "V",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C34",
+   "module": "金流",
+   "topic": "租客能用信用卡繳租嗎",
+   "questions": [
+    "租客能用信用卡繳納房租嗎"
+   ],
+   "keywords": [
+    "信用卡"
+   ],
+   "sources": [],
+   "help_center": [
+    "slug86",
+    "slug102"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "信用卡"
+     ],
+     [
+      "藍新",
+      "線上金流"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:slug86(逐字)",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "租客能用信用卡繳納房租嗎",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.333,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3596,
+       "similarity": 0.187,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      },
+      {
+       "id": 3600,
+       "similarity": 0.181,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3501,
+       "visible": false,
+       "q": "信用卡自動扣款失敗"
+      },
+      {
+       "id": 3347,
+       "visible": false,
+       "q": "信用卡 繳費 定期扣款 刷卡"
+      },
+      {
+       "id": 3454,
+       "visible": false,
+       "q": "訂閱方案 升級更換"
+      },
+      {
+       "id": 3443,
+       "visible": false,
+       "q": "線上繳費 付款步驟"
+      },
+      {
+       "id": 3037,
+       "visible": false,
+       "q": "居住證明用途"
+      },
+      {
+       "id": 4221,
+       "visible": false,
+       "q": "收款帳戶 銀行有限制嗎 台新"
+      },
+      {
+       "id": 3101,
+       "visible": false,
+       "q": "管理費繳納方式"
+      },
+      {
+       "id": 3416,
+       "visible": false,
+       "q": "付款金額錯誤 重複轉帳"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.6
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [3501, 3347, 3454, 3443, 3037]（可見性）",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "V",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C35",
+   "module": "金流",
+   "topic": "金流手續費",
+   "questions": [
+    "線上金流要收多少費用"
+   ],
+   "keywords": [
+    "手續費"
+   ],
+   "sources": [],
+   "help_center": [
+    "qa27"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "幫助中心：手續費請洽客服 ⇒ 可能屬轉專人",
+   "rubric": {
+    "must": [
+     [
+      "手續費",
+      "費用"
+     ],
+     [
+      "客服",
+      "專人",
+      "定價"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:qa27（手續費請洽客服 ⇒ 候選刻意不補，待業主）",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "線上金流要收多少費用",
+     "top3": [
+      {
+       "id": 3597,
+       "similarity": 0.847,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      },
+      {
+       "id": 3596,
+       "similarity": 0.132,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      },
+      {
+       "id": 3598,
+       "similarity": 0.123,
+       "q": "個人房東 約30戶 方案 規模化 銜接團"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3347,
+       "visible": false,
+       "q": "信用卡 繳費 定期扣款 刷卡"
+      },
+      {
+       "id": 3413,
+       "visible": false,
+       "q": "金流商 各家特性"
+      },
+      {
+       "id": 3551,
+       "visible": false,
+       "q": "信用卡ATM收款手續費 房東負擔"
+      },
+      {
+       "id": 3346,
+       "visible": false,
+       "q": "金流 手續費 誰支付"
+      }
+     ],
+     "api": {
+      "answer": "關於線上金流的收費，我這部分沒有資料。不過，金箍棒的帳務模組提供自動帳單、多元金流代收等功能，可以幫助您有效管理收租對帳的流程。若您想了解方案級距與費用，建議您查看[查看方案與費用](https://www.jgbsmart.com/pricing)或由專人提供詳細資訊。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "pricing",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.33
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3597 0.847",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered_handoff",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C36",
+   "module": "團隊",
+   "topic": "多人權限／角色分工",
+   "questions": [
+    "團隊多人權限怎麼分"
+   ],
+   "keywords": [
+    "權限",
+    "角色"
+   ],
+   "sources": [
+    "e2e:s3",
+    "kb:3602"
+   ],
+   "help_center": [
+    "qa23",
+    "slug92"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "權限",
+      "角色"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3602；help:qa23",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "團隊多人權限怎麼分",
+     "top3": [
+      {
+       "id": 3602,
+       "similarity": 0.909,
+       "q": "團隊管理 多人協作 角色權限 大房東報表"
+      },
+      {
+       "id": 3584,
+       "similarity": 0.775,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      },
+      {
+       "id": 5377,
+       "similarity": 0.37,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5373,
+       "visible": null,
+       "q": "系統脈絡：訂閱領域-條件診斷：訂閱(子面"
+      },
+      {
+       "id": 5374,
+       "visible": false,
+       "q": "對話規則：訂閱診斷"
+      },
+      {
+       "id": 3505,
+       "visible": false,
+       "q": "為什麼不能新增物件"
+      },
+      {
+       "id": 4001,
+       "visible": false,
+       "q": "對話規則：團隊成員權限"
+      },
+      {
+       "id": 3079,
+       "visible": false,
+       "q": "分租租約條款"
+      },
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 3464,
+       "visible": false,
+       "q": "大房東新增 權限設定"
+      },
+      {
+       "id": 3359,
+       "visible": false,
+       "q": "團隊 權限 成員 管理"
+      }
+     ],
+     "api": {
+      "answer": "金箍棒的團隊管理支援多人帳號與角色權限，讓代管團隊能夠有效分工協作。您可以根據不同成員的職責設定相應的權限，這樣每位成員都能專注於自己的工作，並且能夠清楚地對業主交代營運狀況。\n\n如果您想了解更詳細的團隊方案或如何具體設定權限，建議預約專人說明，他們能根據您的需求提供更具體的建議。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.14
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3602 0.909",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered_handoff",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C37",
+   "module": "團隊",
+   "topic": "收租組看不到財務數字（權限題）",
+   "questions": [
+    "收租組可以看不到財務數字嗎？"
+   ],
+   "keywords": [
+    "權限",
+    "財務"
+   ],
+   "sources": [
+    "audit:P0-3",
+    "e2e:s3"
+   ],
+   "help_center": [
+    "qa23"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "盤查 P0-3 答反",
+   "rubric": {
+    "must": [
+     [
+      "權限",
+      "角色"
+     ],
+     [
+      "帳務權限",
+      "財務",
+      "查看帳務",
+      "看不到"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:qa23,slug92(逐字)；kb:3956(池外)",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "收租組可以看不到財務數字嗎？",
+     "top3": [
+      {
+       "id": 3601,
+       "similarity": 0.214,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      },
+      {
+       "id": 5377,
+       "similarity": 0.159,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 3596,
+       "similarity": 0.133,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 4001,
+       "visible": false,
+       "q": "對話規則：團隊成員權限"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.32
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [4001]（可見性）",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "V",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C38",
+   "module": "IoT",
+   "topic": "智慧電表／門鎖／儲值電表",
+   "questions": [
+    "有沒有智慧電表或門鎖",
+    "儲值電表怎麼運作"
+   ],
+   "keywords": [
+    "電表",
+    "門鎖",
+    "電錶"
+   ],
+   "sources": [
+    "kb:3603,3353"
+   ],
+   "help_center": [
+    "Landlordonboarding08Device"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "3798：IoT 硬體細節由專人",
+   "rubric": {
+    "must": [
+     [
+      "電表",
+      "電錶",
+      "門鎖"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3603,3353；help:Landlordonboarding08Device",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "有沒有智慧電表或門鎖",
+     "top3": [
+      {
+       "id": 3603,
+       "similarity": 0.962,
+       "q": "智慧電錶 智慧門鎖 抄表 換鎖 IoT "
+      },
+      {
+       "id": 3353,
+       "similarity": 0.566,
+       "q": "電表 儲值 雲端電表"
+      },
+      {
+       "id": 5375,
+       "similarity": 0.034,
+       "q": "可不可以線上簽約 線上簽 電子簽約 合約"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3351,
+       "visible": false,
+       "q": "電表 度數 填寫 自動帶入"
+      },
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 4089,
+       "visible": false,
+       "q": "對話規則：電表排障"
+      },
+      {
+       "id": 4091,
+       "visible": null,
+       "q": "系統脈絡：IoT領域-電表排障(子面向)"
+      },
+      {
+       "id": 3353,
+       "visible": true,
+       "q": "電表 儲值 雲端電表"
+      },
+      {
+       "id": 4222,
+       "visible": false,
+       "q": "電表度數登記錯誤 修改 重算"
+      },
+      {
+       "id": 3163,
+       "visible": false,
+       "q": "點交照片"
+      },
+      {
+       "id": 4021,
+       "visible": null,
+       "q": "系統脈絡：IoT領域-智慧設備(母共用)"
+      }
+     ],
+     "api": {
+      "answer": "是的，金箍棒智慧物管有整合智慧電錶和智慧門鎖。智慧電錶可以自動將抄表數據帶入帳單，並支援線上儲值功能。至於智慧門鎖，具體的安裝與支援範圍則由專人為您說明。如果您有興趣了解更多，歡迎留資，我們會有專人與您聯絡。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 3.1
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3603 0.962",
+     "entry_state": "answered_handoff"
+    },
+    {
+     "q": "儲值電表怎麼運作",
+     "top3": [
+      {
+       "id": 3353,
+       "similarity": 0.865,
+       "q": "電表 儲值 雲端電表"
+      },
+      {
+       "id": 3335,
+       "similarity": 0.333,
+       "q": "對帳流程 帳單狀態 應到帳 待對帳 已到"
+      },
+      {
+       "id": 3601,
+       "similarity": 0.322,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3351,
+       "visible": false,
+       "q": "電表 度數 填寫 自動帶入"
+      },
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 4089,
+       "visible": false,
+       "q": "對話規則：電表排障"
+      },
+      {
+       "id": 4091,
+       "visible": null,
+       "q": "系統脈絡：IoT領域-電表排障(子面向)"
+      },
+      {
+       "id": 3353,
+       "visible": true,
+       "q": "電表 儲值 雲端電表"
+      },
+      {
+       "id": 4222,
+       "visible": false,
+       "q": "電表度數登記錯誤 修改 重算"
+      },
+      {
+       "id": 3163,
+       "visible": false,
+       "q": "點交照片"
+      },
+      {
+       "id": 4021,
+       "visible": null,
+       "q": "系統脈絡：IoT領域-智慧設備(母共用)"
+      }
+     ],
+     "api": {
+      "answer": "儲值電表的運作方式如下：\n\n- 租客可以透過虛擬帳號進行線上儲值，儲值金額會透過該帳號收取。\n- 如果租客儲值失敗，可以嘗試使用不同的銀行進行轉帳。\n- 一旦儲值成功，系統會自動給電。\n\n另外，電表與虛擬帳號是不同的功能，租客可以同時申請這兩者，並不需要先辦理虛擬帳號才能申請電表。\n\n如果您有其他問題或需要進一步的資訊，隨時告訴我！",
+      "handoff": null,
+      "elapsed_s": 5.04
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3353 0.865",
+     "entry_state": "answered"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered_handoff",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C39",
+   "module": "IoT",
+   "topic": "私人門鎖 vs 共用門鎖",
+   "questions": [
+    "私人門鎖和共用門鎖到底有什麼差別"
+   ],
+   "keywords": [
+    "私人門鎖",
+    "共用門鎖"
+   ],
+   "sources": [
+    "ts:9755-9757,9903"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "門鎖"
+     ],
+     [
+      "私人",
+      "共用"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "none（幫助中心無；jgb2 未查）",
+    "authority_checked": false
+   },
+   "per_question": [
+    {
+     "q": "私人門鎖和共用門鎖到底有什麼差別",
+     "top3": [
+      {
+       "id": 3607,
+       "similarity": 0.354,
+       "q": "金箍棒 跟 Bananas 屋我也 差異"
+      },
+      {
+       "id": 3603,
+       "similarity": 0.078,
+       "q": "智慧電錶 智慧門鎖 抄表 換鎖 IoT "
+      },
+      {
+       "id": 3600,
+       "similarity": 0.033,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.19
+     },
+     "cause_state": "UNCLASSIFIED(待G0)",
+     "cause_why": "池內外皆無對題列、無權威來源",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "UNCLASSIFIED(待G0)",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C40",
+   "module": "修繕",
+   "topic": "線上報修／進度追蹤",
+   "questions": [
+    "租客報修怎麼處理"
+   ],
+   "keywords": [
+    "報修",
+    "修繕"
+   ],
+   "sources": [
+    "kb:3605"
+   ],
+   "help_center": [
+    "repair"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "報修",
+      "修繕"
+     ],
+     [
+      "進度",
+      "追蹤"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "kb:3605；help:repair",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "租客報修怎麼處理",
+     "top3": [
+      {
+       "id": 3606,
+       "similarity": 0.917,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      },
+      {
+       "id": 5379,
+       "similarity": 0.657,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3605,
+       "similarity": 0.623,
+       "q": "修繕系統 線上報修 進度追蹤"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3320,
+       "visible": false,
+       "q": "社會住宅維修責任"
+      },
+      {
+       "id": 2972,
+       "visible": false,
+       "q": "修繕請求"
+      },
+      {
+       "id": 2965,
+       "visible": false,
+       "q": "緊急修繕"
+      },
+      {
+       "id": 2967,
+       "visible": false,
+       "q": "漏水修繕責任"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3259,
+       "visible": false,
+       "q": "委託管理合約服務"
+      },
+      {
+       "id": 3199,
+       "visible": false,
+       "q": "設備維護法律"
+      },
+      {
+       "id": 3274,
+       "visible": false,
+       "q": "公共設備維護費用"
+      }
+     ],
+     "api": {
+      "answer": "租客報修的處理方式是透過金箍棒的修繕系統。租客可以在線上提交報修請求，然後房東與管理方可以追蹤處理進度，讓整個報修流程數位化，變得更加高效與透明。如果您想了解這個流程的實際操作，隨時可以詢問如何預約 demo。",
+      "handoff": null,
+      "elapsed_s": 5.61
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3606 0.917",
+     "entry_state": "answered"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered",
+   "coverage": "已覆蓋"
+  },
+  {
+   "id": "C41",
+   "module": "通知",
+   "topic": "系統通知用 email 還是簡訊／LINE",
+   "questions": [
+    "系統通知是用 email 還是簡訊發的"
+   ],
+   "keywords": [
+    "通知",
+    "簡訊",
+    "LINE",
+    "email"
+   ],
+   "sources": [
+    "ts:9574,9710,9783"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "Email",
+      "email",
+      "信"
+     ],
+     [
+      "LINE"
+     ]
+    ],
+    "forbid": [
+     "簡訊"
+    ]
+   },
+   "g0": {
+    "authority": "help:Landlordonboarding06Finance,slug03(逐字：email 與 line)",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "系統通知是用 email 還是簡訊發的",
+     "top3": [
+      {
+       "id": 3605,
+       "similarity": 0.141,
+       "q": "修繕系統 線上報修 進度追蹤"
+      },
+      {
+       "id": 3604,
+       "similarity": 0.079,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      },
+      {
+       "id": 3340,
+       "similarity": 0.044,
+       "q": "催繳 逾期 通知"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3501,
+       "visible": false,
+       "q": "信用卡自動扣款失敗"
+      },
+      {
+       "id": 3348,
+       "visible": false,
+       "q": "免註冊 註冊 租客 差異"
+      },
+      {
+       "id": 5378,
+       "visible": true,
+       "q": "租客不繳租金怎麼辦 逾期 催繳 提醒 遲"
+      },
+      {
+       "id": 3831,
+       "visible": false,
+       "q": "對話規則：簽署排障"
+      },
+      {
+       "id": 3350,
+       "visible": false,
+       "q": "簡訊 驗證碼 收不到"
+      },
+      {
+       "id": 3450,
+       "visible": false,
+       "q": "沒收到通知 排查步驟"
+      },
+      {
+       "id": 3478,
+       "visible": false,
+       "q": "邀請租客 訂閱通知"
+      },
+      {
+       "id": 3437,
+       "visible": false,
+       "q": "Email 變更 手機驗證"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 1.63
+     },
+     "cause_state": "S",
+     "cause_why": "對題列可見 [5378, 3596, 3358]；top-1 3605 0.141",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "S",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C42",
+   "module": "通知",
+   "topic": "哪些動作會觸發通知",
+   "questions": [
+    "哪些動作會造成系統通知的發送"
+   ],
+   "keywords": [
+    "通知"
+   ],
+   "sources": [
+    "ts:9880"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "提醒",
+      "通知"
+     ],
+     [
+      "到期",
+      "逾期",
+      "邀請"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:Landlordonboarding06Finance,onboarding1",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "哪些動作會造成系統通知的發送",
+     "top3": [
+      {
+       "id": 3604,
+       "similarity": 0.3,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      },
+      {
+       "id": 3603,
+       "similarity": 0.099,
+       "q": "智慧電錶 智慧門鎖 抄表 換鎖 IoT "
+      },
+      {
+       "id": 3605,
+       "similarity": 0.086,
+       "q": "修繕系統 線上報修 進度追蹤"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 2893,
+       "visible": false,
+       "q": "不定期租賃契約"
+      },
+      {
+       "id": 3501,
+       "visible": false,
+       "q": "信用卡自動扣款失敗"
+      },
+      {
+       "id": 2948,
+       "visible": false,
+       "q": "退租物品處理"
+      },
+      {
+       "id": 3050,
+       "visible": false,
+       "q": "公共設施義務"
+      },
+      {
+       "id": 2958,
+       "visible": false,
+       "q": "提前解約規定"
+      },
+      {
+       "id": 2955,
+       "visible": false,
+       "q": "提前解約通知"
+      },
+      {
+       "id": 3057,
+       "visible": false,
+       "q": "公共設施損壞"
+      },
+      {
+       "id": 3348,
+       "visible": false,
+       "q": "免註冊 註冊 租客 差異"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.13
+     },
+     "cause_state": "S",
+     "cause_why": "對題列可見 [5378, 3340]；top-1 3604 0.300",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "S",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C43",
+   "module": "搬遷",
+   "topic": "舊系統資料匯入／哪些能匯",
+   "questions": [
+    "現在用的舊系統資料可以匯進來嗎？包含房東、租客、合約、歷史帳單",
+    "所以合約也能匯？"
+   ],
+   "keywords": [
+    "匯入"
+   ],
+   "sources": [
+    "e2e:s2",
+    "kb:5379,3357"
+   ],
+   "help_center": [
+    "onboarding4",
+    "qa01"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "DSP-008 已裁",
+   "rubric": {
+    "must": [
+     [
+      "物件"
+     ],
+     [
+      "合約"
+     ],
+     [
+      "不支援",
+      "逐筆",
+      "無法"
+     ]
+    ],
+    "forbid": [
+     "合約可以匯",
+     "合約也可以匯",
+     "歷史帳單可以匯"
+    ]
+   },
+   "g0": {
+    "authority": "kb:5379（jgb2 路由，DSP-008）",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "現在用的舊系統資料可以匯進來嗎？包含房東、租客、合約、歷史帳單",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.98,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 5380,
+       "similarity": 0.413,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3585,
+       "similarity": 0.288,
+       "q": "想了解金箍棒 你們系統介紹 適不適合我用"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5379,
+       "visible": true,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3357,
+       "visible": true,
+       "q": "物件 批次匯入 上傳"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3404,
+       "visible": false,
+       "q": "大量建立帳單 Excel 批次匯入"
+      },
+      {
+       "id": 3431,
+       "visible": false,
+       "q": "物件批次匯入 Excel 建立"
+      },
+      {
+       "id": 3468,
+       "visible": false,
+       "q": "社區管理 建立編輯"
+      },
+      {
+       "id": 4638,
+       "visible": false,
+       "q": "帳單批次匯入 整批電費帳單 批次建立"
+      },
+      {
+       "id": 3467,
+       "visible": false,
+       "q": "大房東聯絡簿 批次匯入匯出"
+      }
+     ],
+     "api": {
+      "answer": "關於您提到的舊系統資料匯入的問題，這裡有一些具體的資訊：\n\n- **房東與租客**：可以使用 Excel 範本批次匯入。\n- **合約**：目前不支援批次匯入，需要逐筆建立，您可以選擇線上電子簽新約或上傳既有的紙本合約 PDF 存檔。\n- **歷史帳單**：舊系統已繳完的歷史帳單無法搬移。\n\n如果您需要更詳細的搬遷細節，建議預約 demo，專人可以依據您的資料量進行評估。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.57
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 5379 0.980",
+     "entry_state": "answered_handoff"
+    },
+    {
+     "q": "所以合約也能匯？",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.939,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 5375,
+       "similarity": 0.162,
+       "q": "可不可以線上簽約 線上簽 電子簽約 合約"
+      },
+      {
+       "id": 5377,
+       "similarity": 0.162,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5379,
+       "visible": true,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3357,
+       "visible": true,
+       "q": "物件 批次匯入 上傳"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3404,
+       "visible": false,
+       "q": "大量建立帳單 Excel 批次匯入"
+      },
+      {
+       "id": 3431,
+       "visible": false,
+       "q": "物件批次匯入 Excel 建立"
+      },
+      {
+       "id": 3468,
+       "visible": false,
+       "q": "社區管理 建立編輯"
+      },
+      {
+       "id": 4638,
+       "visible": false,
+       "q": "帳單批次匯入 整批電費帳單 批次建立"
+      },
+      {
+       "id": 3467,
+       "visible": false,
+       "q": "大房東聯絡簿 批次匯入匯出"
+      }
+     ],
+     "api": {
+      "answer": "合約目前不支援批次匯入，需要逐筆建立。您可以選擇線上電子簽新約，或上傳既有的紙本合約 PDF 存檔。至於其他項目，像是物件、租客、社區和團隊帳號，則可以使用 Excel 範本批次匯入。若您有更多搬遷的細節需求，歡迎隨時詢問！",
+      "handoff": null,
+      "elapsed_s": 4.23
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 5379 0.939",
+     "entry_state": "answered"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered_handoff",
+   "coverage": "未覆蓋(回答未含必含)"
+  },
+  {
+   "id": "C44",
+   "module": "帳號",
+   "topic": "怎麼註冊 JGB 帳號",
+   "questions": [
+    "怎麼註冊 JGB 帳號"
+   ],
+   "keywords": [
+    "註冊"
+   ],
+   "sources": [
+    "ts:9568,9689-9691"
+   ],
+   "help_center": [
+    "onboarding1",
+    "Landlordonboarding01"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "",
+   "rubric": {
+    "must": [
+     [
+      "Email",
+      "email",
+      "信箱"
+     ],
+     [
+      "驗證碼",
+      "註冊"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:onboarding1(逐字)",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "怎麼註冊 JGB 帳號",
+     "top3": [
+      {
+       "id": 5380,
+       "similarity": 0.307,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3335,
+       "similarity": 0.208,
+       "q": "對帳流程 帳單狀態 應到帳 待對帳 已到"
+      },
+      {
+       "id": 3601,
+       "similarity": 0.156,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3990,
+       "visible": false,
+       "q": "對話規則：登入排障"
+      },
+      {
+       "id": 4001,
+       "visible": false,
+       "q": "對話規則：團隊成員權限"
+      },
+      {
+       "id": 3348,
+       "visible": false,
+       "q": "免註冊 註冊 租客 差異"
+      },
+      {
+       "id": 3464,
+       "visible": false,
+       "q": "大房東新增 權限設定"
+      },
+      {
+       "id": 3869,
+       "visible": false,
+       "q": "租客看不到合約 登入信箱不符"
+      },
+      {
+       "id": 3529,
+       "visible": false,
+       "q": "免註冊租客續約 不需電子簽名"
+      },
+      {
+       "id": 4223,
+       "visible": false,
+       "q": "帳單在哪裡看 繳費"
+      },
+      {
+       "id": 3825,
+       "visible": null,
+       "q": "系統脈絡：合約領域-建約引導(子面向)"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.48
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [3990, 4001, 3348, 3464, 3869]（可見性）",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "V",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C45",
+   "module": "競品",
+   "topic": "跟 Bananas／屋我也差在哪",
+   "questions": [
+    "跟Bananas差在哪",
+    "你們跟屋我也差在哪"
+   ],
+   "keywords": [
+    "Bananas",
+    "屋我也",
+    "競品"
+   ],
+   "sources": [
+    "ts:9851,9853",
+    "e2e:s2",
+    "kb:3607-3609"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "3798 競品協定",
+   "rubric": {
+    "must": [
+     [
+      "Bananas"
+     ]
+    ],
+    "forbid": [
+     "可能不如",
+     "不如我們",
+     "沒有提供"
+    ]
+   },
+   "g0": {
+    "authority": "kb:3607-3609；3798 競品協定",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "跟Bananas差在哪",
+     "top3": [
+      {
+       "id": 3607,
+       "similarity": 0.954,
+       "q": "金箍棒 跟 Bananas 屋我也 差異"
+      },
+      {
+       "id": 3608,
+       "similarity": 0.058,
+       "q": "為什麼選金箍棒 優勢 強項 差異化 好處"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3607,
+       "visible": true,
+       "q": "金箍棒 跟 Bananas 屋我也 差異"
+      }
+     ],
+     "api": {
+      "answer": "金箍棒與Bananas的主要差異在於以下幾個方面：\n\n- **合約類型**：金箍棒的合約類型較完整，涵蓋一般租賃、社會住宅和委託合約，而Bananas的合約類型可能不如我們這麼廣泛。\n- **金流支援**：金箍棒支援多元金流選項，包括藍新、永豐、中信、國泰和愛金卡，這為使用者提供了更多的收款方式。\n- **IoT 整合**：金箍棒有智慧門鎖和電錶的整合，這部分的硬體細節由專人說明，而Bananas的相關功能我沒有資料。\n- **報表功能**：金箍棒提供大房東報表，適合需要對業主交報表的代管團隊。\n\n對於Bananas未明確提及的功能，我無法替他們確認，建議您直接向對方詢問。如果您想進一步比較，隨時可以考慮預約demo來了解更多。",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 4.91
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3607 0.954",
+     "entry_state": "answered_handoff"
+    },
+    {
+     "q": "你們跟屋我也差在哪",
+     "top3": [
+      {
+       "id": 3607,
+       "similarity": 0.505,
+       "q": "金箍棒 跟 Bananas 屋我也 差異"
+      },
+      {
+       "id": 3609,
+       "similarity": 0.116,
+       "q": "你們會評論競爭對手嗎 怎麼看同業 會說對"
+      },
+      {
+       "id": 3358,
+       "similarity": 0.085,
+       "q": "大房東 邀請 授權 物件"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3607,
+       "visible": true,
+       "q": "金箍棒 跟 Bananas 屋我也 差異"
+      }
+     ],
+     "api": {
+      "answer": "我們的系統與屋我也的主要差異在於以下幾個方面：\n\n- **合約類型**：金箍棒的合約類型較完整，涵蓋一般租賃、社會住宅及委託合約。\n- **金流支援**：我們提供多元的金流支援，包括藍新、永豐、中信、國泰及愛金卡。\n- **IoT 整合**：金箍棒有智慧門鎖和電錶的整合，具體的硬體細節可以由專人說明。\n- **報表功能**：我們提供大房東報表，適合需要對業主交報表的代管團隊。\n\n至於屋我也的其他功能，我這部分沒有資料，建議您可以直接向他們詢問。如果您想進一步比較，隨時可以告訴我！",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 5.11
+     },
+     "cause_state": "S_OK",
+     "cause_why": "top-1 3607 0.505",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "S_OK",
+   "entry_state": "answered_handoff",
+   "coverage": "已覆蓋⚠️"
+  },
+  {
+   "id": "C46",
+   "module": "多語系",
+   "topic": "外籍租客／多語系介面",
+   "questions": [
+    "有多語系介面嗎？外籍租客能用嗎"
+   ],
+   "keywords": [
+    "多語",
+    "英文",
+    "外籍"
+   ],
+   "sources": [
+    "kb:3798索引"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "索引有、無知識列",
+   "rubric": {
+    "must": [
+     [
+      "多語",
+      "英文",
+      "英語"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "none（3798 索引有；onboarding1 只提國外使用者）",
+    "authority_checked": false
+   },
+   "per_question": [
+    {
+     "q": "有多語系介面嗎？外籍租客能用嗎",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.099,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3584,
+       "similarity": 0.048,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      },
+      {
+       "id": 3606,
+       "similarity": 0.047,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 4652,
+       "visible": false,
+       "q": "頁面文字不正常 變英文亂碼 自動翻譯"
+      },
+      {
+       "id": 3964,
+       "visible": false,
+       "q": "驗證碼一直失敗 重發 新舊碼"
+      },
+      {
+       "id": 3435,
+       "visible": false,
+       "q": "註冊帳號 建立流程"
+      },
+      {
+       "id": 3953,
+       "visible": null,
+       "q": "系統脈絡：帳號領域-註冊驗證排障(子面向"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.58
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [3798, 4652, 3964, 3435, 3953]（可見性）",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "V",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C47",
+   "module": "CTA",
+   "topic": "怎麼找你們的人談／預約 demo",
+   "questions": [
+    "好，那我要怎麼找你們的人談"
+   ],
+   "keywords": [
+    "demo",
+    "預約",
+    "專人"
+   ],
+   "sources": [
+    "e2e:s3"
+   ],
+   "help_center": [],
+   "intent": "cta",
+   "policy": "answer",
+   "note": "第 4、5 輪走固定句",
+   "rubric": {
+    "must": [
+     [
+      "demo",
+      "找真人",
+      "專人",
+      "聯絡"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "conversational_config CTA 常數；3798 CTA 出口",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "好，那我要怎麼找你們的人談",
+     "top3": [
+      {
+       "id": 3606,
+       "similarity": 0.107,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      },
+      {
+       "id": 3585,
+       "similarity": 0.043,
+       "q": "想了解金箍棒 你們系統介紹 適不適合我用"
+      },
+      {
+       "id": 3598,
+       "similarity": 0.031,
+       "q": "個人房東 約30戶 方案 規模化 銜接團"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 5375,
+       "visible": true,
+       "q": "可不可以線上簽約 線上簽 電子簽約 合約"
+      },
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 5378,
+       "visible": true,
+       "q": "租客不繳租金怎麼辦 逾期 催繳 提醒 遲"
+      },
+      {
+       "id": 5379,
+       "visible": true,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 5380,
+       "visible": true,
+       "q": "帳單格式能不能自己設定 帳單版面 收據樣"
+      },
+      {
+       "id": 3798,
+       "visible": null,
+       "q": "售前系統脈絡 append（競品協定/C"
+      },
+      {
+       "id": 3604,
+       "visible": true,
+       "q": "大房東報表 代收代付 月結 對業主交報表"
+      },
+      {
+       "id": 3645,
+       "visible": null,
+       "q": "對話規則：售前顧問"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 1.99
+     },
+     "cause_state": "CTA",
+     "cause_why": "出口題：看入口是否給連結／找真人，不分 S／N",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "CTA",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C48",
+   "module": "刻意不補",
+   "topic": "客戶案例／規模／有幾個像我這樣的客戶",
+   "questions": [
+    "有沒有600戶以上的客戶",
+    "你們有幾個像我這樣的客戶"
+   ],
+   "keywords": [
+    "客戶",
+    "案例"
+   ],
+   "sources": [
+    "e2e:s1,s3"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "deliberate_no",
+   "note": "業主裁：一律轉人",
+   "rubric": {
+    "must": [],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "requirements 已拍板決策#3 客戶規模／案例類刻意不補；DECISIONS:DSP-009",
+    "authority_checked": true
+   },
+   "policy_ref": "DECISIONS:DSP-009",
+   "per_question": [
+    {
+     "q": "有沒有600戶以上的客戶",
+     "top3": [
+      {
+       "id": 3597,
+       "similarity": 0.439,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      },
+      {
+       "id": 3598,
+       "similarity": 0.392,
+       "q": "個人房東 約30戶 方案 規模化 銜接團"
+      },
+      {
+       "id": 3596,
+       "similarity": 0.347,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "sensitive_no_grounding",
+       "fact_class": "customer_reference",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 3.32
+     },
+     "cause_state": "DELIBERATE_NO",
+     "cause_why": "",
+     "entry_state": "fixed"
+    },
+    {
+     "q": "你們有幾個像我這樣的客戶",
+     "top3": [
+      {
+       "id": 5377,
+       "similarity": 0.162,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 3606,
+       "similarity": 0.126,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      },
+      {
+       "id": 3598,
+       "similarity": 0.107,
+       "q": "個人房東 約30戶 方案 規模化 銜接團"
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "sensitive_no_grounding",
+       "fact_class": "customer_reference",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 5.68
+     },
+     "cause_state": "DELIBERATE_NO",
+     "cause_why": "",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "DELIBERATE_NO",
+   "entry_state": "fixed",
+   "coverage": "符合(刻意不補)"
+  },
+  {
+   "id": "C49",
+   "module": "刻意不補",
+   "topic": "SLA／當機賠償",
+   "questions": [
+    "有沒有SLA？當機賠不賠"
+   ],
+   "keywords": [
+    "SLA",
+    "賠"
+   ],
+   "sources": [
+    "e2e:s2"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "deliberate_no",
+   "note": "合約 SLA 類",
+   "rubric": {
+    "must": [],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "requirements 已拍板決策#2 contract_sla；DECISIONS:DSP-009",
+    "authority_checked": true
+   },
+   "policy_ref": "DECISIONS:DSP-009",
+   "per_question": [
+    {
+     "q": "有沒有SLA？當機賠不賠",
+     "top3": [
+      {
+       "id": 3606,
+       "similarity": 0.084,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      },
+      {
+       "id": 3584,
+       "similarity": 0.081,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      },
+      {
+       "id": 3597,
+       "similarity": 0.064,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "sensitive_no_grounding",
+       "fact_class": "contract_sla",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 4.97
+     },
+     "cause_state": "DELIBERATE_NO",
+     "cause_why": "",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "DELIBERATE_NO",
+   "entry_state": "fixed",
+   "coverage": "符合(刻意不補)"
+  },
+  {
+   "id": "C50",
+   "module": "刻意不補",
+   "topic": "資安認證／資料放哪",
+   "questions": [
+    "資料放在哪裡？有沒有資安認證"
+   ],
+   "keywords": [
+    "資安",
+    "ISO",
+    "機房"
+   ],
+   "sources": [
+    "e2e:s2"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "deliberate_no",
+   "note": "資安類",
+   "rubric": {
+    "must": [],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "requirements 已拍板決策#2 security；DECISIONS:DSP-009",
+    "authority_checked": true
+   },
+   "policy_ref": "DECISIONS:DSP-009",
+   "per_question": [
+    {
+     "q": "資料放在哪裡？有沒有資安認證",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.165,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 3353,
+       "similarity": 0.09,
+       "q": "電表 儲值 雲端電表"
+      },
+      {
+       "id": 3601,
+       "similarity": 0.08,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "sensitive_no_grounding",
+       "fact_class": "security",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 4.7
+     },
+     "cause_state": "DELIBERATE_NO",
+     "cause_why": "",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "DELIBERATE_NO",
+   "entry_state": "fixed",
+   "coverage": "符合(刻意不補)"
+  },
+  {
+   "id": "C51",
+   "module": "刻意不補",
+   "topic": "個資法合規",
+   "questions": [
+    "有沒有符合個資法"
+   ],
+   "keywords": [
+    "個資"
+   ],
+   "sources": [
+    "e2e:s3"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "deliberate_no",
+   "note": "法遵類",
+   "rubric": {
+    "must": [],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "requirements 已拍板決策#2 compliance；DECISIONS:DSP-009",
+    "authority_checked": true
+   },
+   "policy_ref": "DECISIONS:DSP-009",
+   "per_question": [
+    {
+     "q": "有沒有符合個資法",
+     "top3": [
+      {
+       "id": 3584,
+       "similarity": 0.219,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      },
+      {
+       "id": 3585,
+       "similarity": 0.147,
+       "q": "想了解金箍棒 你們系統介紹 適不適合我用"
+      },
+      {
+       "id": 3358,
+       "similarity": 0.078,
+       "q": "大房東 邀請 授權 物件"
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "sensitive_no_grounding",
+       "fact_class": "compliance",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.75
+     },
+     "cause_state": "DELIBERATE_NO",
+     "cause_why": "",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "DELIBERATE_NO",
+   "entry_state": "fixed",
+   "coverage": "符合(刻意不補)"
+  },
+  {
+   "id": "C52",
+   "module": "定位",
+   "topic": "系統管理模組有哪些功能",
+   "questions": [
+    "系統管理模組裡有哪些功能？",
+    "系統管理模組有哪些功能"
+   ],
+   "keywords": [
+    "系統管理",
+    "模組"
+   ],
+   "sources": [
+    "ts:10006,10010,10181"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "3622 六大模組無「系統管理模組」⇒ 先裁該詞指什麼（verifier A）",
+   "rubric": {
+    "must": [
+     [
+      "系統管理",
+      "模組"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "none（需裁決：六大模組體系無此名）",
+    "authority_checked": false
+   },
+   "per_question": [
+    {
+     "q": "系統管理模組裡有哪些功能？",
+     "top3": [
+      {
+       "id": 3601,
+       "similarity": 0.892,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      },
+      {
+       "id": 3602,
+       "similarity": 0.744,
+       "q": "團隊管理 多人協作 角色權限 大房東報表"
+      },
+      {
+       "id": 5377,
+       "similarity": 0.569,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3585,
+       "visible": true,
+       "q": "想了解金箍棒 你們系統介紹 適不適合我用"
+      },
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 4250,
+       "visible": false,
+       "q": "團隊成員 角色權限 有哪些選擇"
+      },
+      {
+       "id": 3597,
+       "visible": true,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      },
+      {
+       "id": 3606,
+       "visible": true,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      },
+      {
+       "id": 3545,
+       "visible": false,
+       "q": "團隊成員權限 只能查看不能編輯"
+      },
+      {
+       "id": 3584,
+       "visible": true,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      },
+      {
+       "id": 3341,
+       "visible": false,
+       "q": "定金 押金 收取 管理"
+      }
+     ],
+     "api": {
+      "answer": "金箍棒的系統管理模組主要包括以下功能：\n\n- **帳務管理**：自動產生帳單、線上金流代收（支援藍新、永豐、中信、國泰、愛金卡）、開立電子發票，並提供儲值金與押金設算息的功能，讓收租對帳變得更簡單。\n- **團隊管理**：支援多人帳號與角色權限，方便代管團隊分工協作，並提供大房東報表，幫助對業主交代。\n\n如果您對其他模組或功能有興趣，請告訴我，我會盡量提供相關資訊。",
+      "handoff": null,
+      "elapsed_s": 11.36
+     },
+     "cause_state": "FALSE_HIT",
+     "cause_why": "top-1 3601 0.892 不對題",
+     "entry_state": "answered"
+    },
+    {
+     "q": "系統管理模組有哪些功能",
+     "top3": [
+      {
+       "id": 3601,
+       "similarity": 0.845,
+       "q": "帳務管理 收租對帳 自動帳單 金流代收 "
+      },
+      {
+       "id": 3602,
+       "similarity": 0.713,
+       "q": "團隊管理 多人協作 角色權限 大房東報表"
+      },
+      {
+       "id": 3584,
+       "similarity": 0.698,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3585,
+       "visible": true,
+       "q": "想了解金箍棒 你們系統介紹 適不適合我用"
+      },
+      {
+       "id": 5377,
+       "visible": true,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 4250,
+       "visible": false,
+       "q": "團隊成員 角色權限 有哪些選擇"
+      },
+      {
+       "id": 3597,
+       "visible": true,
+       "q": "個人房東 約20戶 方案 帳務自動化 多"
+      },
+      {
+       "id": 3606,
+       "visible": true,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      },
+      {
+       "id": 3545,
+       "visible": false,
+       "q": "團隊成員權限 只能查看不能編輯"
+      },
+      {
+       "id": 3584,
+       "visible": true,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      },
+      {
+       "id": 3341,
+       "visible": false,
+       "q": "定金 押金 收取 管理"
+      }
+     ],
+     "api": {
+      "answer": "金箍棒的系統管理模組主要包含以下功能：\n\n- **帳務管理**：自動產帳單、線上金流代收（支援藍新、永豐、中信、國泰、愛金卡）、開電子發票，還有儲值金與押金設算息，讓收租對帳變得更簡單。\n- **團隊管理**：支援多人帳號與角色權限，方便代管團隊分工協作，並提供大房東報表，幫助對業主交代。\n\n如果您對其他模組或功能有興趣，請告訴我，我會盡量提供相關資訊。",
+      "handoff": null,
+      "elapsed_s": 4.19
+     },
+     "cause_state": "FALSE_HIT",
+     "cause_why": "top-1 3601 0.845 不對題",
+     "entry_state": "answered"
+    }
+   ],
+   "cause_state": "FALSE_HIT",
+   "entry_state": "answered",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C53",
+   "module": "租約",
+   "topic": "單合約 vs 雙合約差別",
+   "questions": [
+    "單合約與雙合約差別？"
+   ],
+   "keywords": [
+    "單合約",
+    "雙合約"
+   ],
+   "sources": [
+    "ts:7623"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "verifier A 漏格",
+   "rubric": {
+    "must": [
+     [
+      "單合約",
+      "雙合約"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "none（幫助中心無；jgb2 未查）",
+    "authority_checked": false
+   },
+   "per_question": [
+    {
+     "q": "單合約與雙合約差別？",
+     "top3": [
+      {
+       "id": 5377,
+       "similarity": 0.58,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 3596,
+       "similarity": 0.132,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      },
+      {
+       "id": 3598,
+       "similarity": 0.095,
+       "q": "個人房東 約30戶 方案 規模化 銜接團"
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "關於單合約與雙合約的差別，這部分我沒有資料。若您有其他問題或需要進一步了解金箍棒智慧物管的功能，隨時可以告訴我！",
+      "handoff": {
+       "reason": "llm_mentioned_handoff",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "需要真人協助可點下方的『找真人』。"
+      },
+      "elapsed_s": 3.6
+     },
+     "cause_state": "FALSE_HIT",
+     "cause_why": "top-1 5377 0.580 不對題",
+     "entry_state": "answered_handoff"
+    }
+   ],
+   "cause_state": "FALSE_HIT",
+   "entry_state": "answered_handoff",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C54",
+   "module": "帳務",
+   "topic": "發票載具／手機條碼",
+   "questions": [
+    "手機條碼載具可以用來付費嗎？"
+   ],
+   "keywords": [
+    "載具",
+    "手機條碼"
+   ],
+   "sources": [
+    "ts:9658"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "verifier A 漏格",
+   "rubric": {
+    "must": [
+     [
+      "載具",
+      "手機條碼"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "none（幫助中心 einvoice 標題只提自動開立）",
+    "authority_checked": false
+   },
+   "per_question": [
+    {
+     "q": "手機條碼載具可以用來付費嗎？",
+     "top3": [
+      {
+       "id": 3611,
+       "similarity": 0.223,
+       "q": "可以免費試用嗎 試用多久 免費 試用"
+      },
+      {
+       "id": 5379,
+       "similarity": 0.06,
+       "q": "舊系統資料可以匯進來嗎 批次匯入 搬資料"
+      },
+      {
+       "id": 5375,
+       "similarity": 0.048,
+       "q": "可不可以線上簽約 線上簽 電子簽約 合約"
+      }
+     ],
+     "kw_relevant": [
+      {
+       "id": 3414,
+       "visible": false,
+       "q": "付款成功 自動開發票"
+      },
+      {
+       "id": 3423,
+       "visible": false,
+       "q": "發票補開 特殊處理"
+      },
+      {
+       "id": 3419,
+       "visible": false,
+       "q": "電子發票 類型格式"
+      }
+     ],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.77
+     },
+     "cause_state": "V",
+     "cause_why": "對題列僅池外 [3414, 3423, 3419]（可見性）",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "V",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  },
+  {
+   "id": "C55",
+   "module": "帳號",
+   "topic": "系統錯誤訊息解讀（已有合約／方案不包含）",
+   "questions": [
+    "畫面上顯示「很抱歉，這個物件已經有合約了」，這是怎麼回事？",
+    "系統說「您的訂閱方案不包含此功能」，這是什麼意思？"
+   ],
+   "keywords": [
+    "已經有合約",
+    "方案不包含"
+   ],
+   "sources": [
+    "ts:10144,9774"
+   ],
+   "help_center": [
+    "slug39"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "verifier A 漏格；使用中錯誤解讀，屬售前池嗎待裁",
+   "rubric": {
+    "must": [
+     [
+      "已經有合約",
+      "洽談中",
+      "方案",
+      "額度"
+     ]
+    ],
+    "forbid": []
+   },
+   "g0": {
+    "authority": "help:slug39（洽談中＝已有合約）；kb 5373(池外)",
+    "authority_checked": true
+   },
+   "per_question": [
+    {
+     "q": "畫面上顯示「很抱歉，這個物件已經有合約了」，這是怎麼回事？",
+     "top3": [
+      {
+       "id": 3606,
+       "similarity": 0.306,
+       "q": "管理困擾 痛點 你們能解決什麼問題 收租"
+      },
+      {
+       "id": 5377,
+       "similarity": 0.083,
+       "q": "公司管一百多間 幾百間 物件跟合約很多 "
+      },
+      {
+       "id": 3600,
+       "similarity": 0.065,
+       "q": "租約管理 電子簽章 社會住宅委託 點交點"
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "feature",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 3.33
+     },
+     "cause_state": "N_CAND",
+     "cause_why": "池內外皆無對題列；權威來源：help:slug39（洽談中＝已有合約）；kb 5373(池外)",
+     "entry_state": "fixed"
+    },
+    {
+     "q": "系統說「您的訂閱方案不包含此功能」，這是什麼意思？",
+     "top3": [
+      {
+       "id": 3356,
+       "similarity": 0.155,
+       "q": "訂閱 取消 方案"
+      },
+      {
+       "id": 3584,
+       "similarity": 0.04,
+       "q": "公司團隊方案 包租代管物管 全模組 團隊"
+      },
+      {
+       "id": 3596,
+       "similarity": 0.038,
+       "q": "個人房東 約10戶 方案 物件合約帳務 "
+      }
+     ],
+     "kw_relevant": [],
+     "api": {
+      "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "handoff": {
+       "reason": "no_grounding",
+       "fact_class": "other",
+       "channel": "line_official",
+       "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+      },
+      "elapsed_s": 2.6
+     },
+     "cause_state": "N_CAND",
+     "cause_why": "池內外皆無對題列；權威來源：help:slug39（洽談中＝已有合約）；kb 5373(池外)",
+     "entry_state": "fixed"
+    }
+   ],
+   "cause_state": "N_CAND",
+   "entry_state": "fixed",
+   "coverage": "未覆蓋"
+  }
+ ]
+}

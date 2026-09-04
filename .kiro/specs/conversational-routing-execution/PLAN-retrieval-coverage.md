@@ -341,7 +341,7 @@ P2-3  一知識一問法（變體表 knowledge_variants）                 ⚠�
   ⛔ P2-1 未證明成效前不啟動
 ```
 
-### P2.5 缺口地圖（**業主 2026-09-04 批准納入主線並定為最優先**；售前池縮小版 v1 已出：`.kiro/specs/presales-grounding-gate/coverage-map/map-v1.md`，51 格——已覆蓋 21（含答偏／概括／一般建議各 1）、表示法缺 12、缺口 13（有權威來源 5、洽客服 1、待 G0 7）、刻意不補 5。工具 `rag-orchestrator/tools/gapmap/presales_gap_map.py`。⚠️ 實測：檢索分數 ≥ 門檻 ≠ 答到題，7 格機判已覆蓋被人工覆核改判 ⇒ v2 必接 answer-acceptance rubric。全 b2b 版仍等 P0 建尺）
+### P2.5 缺口地圖（**業主 2026-09-04 批准納入主線並定為最優先**；售前池縮小版：v1 已被獨立驗證推翻——plan-verifier REVISE（P0 用被驗系統分數判已覆蓋＋作者終審；P1 缺 V／關鍵詞不對題／缺口 catch-all／未讀 handoff／一格一句／無 G2）與 verifier REFUTED（需求側漏 4 主題、假命中 2 格、掃池高估 3 格），**v1 格數不得引用**。v2 依全部處置重做：兩層狀態（cause／entry）、rubric 必含群、掃全庫標可見性、UNCLASSIFIED 取代缺口 catch-all、G2 自證與指紋、55 格。結果見 `.kiro/specs/presales-grounding-gate/coverage-map/map-v2.md`。工具 `rag-orchestrator/tools/gapmap/presales_gap_map.py`。全 b2b 版仍等 P0 建尺）
 
 ```text
 問題  retrieval-improvement-loop 是「一輪修一題型一成因」的迴圈：樣本凍結→燒毀，每輪結束沒有東西說「主題空間還剩哪幾格是空的」。
