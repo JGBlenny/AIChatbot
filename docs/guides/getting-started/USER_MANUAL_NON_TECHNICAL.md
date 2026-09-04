@@ -228,7 +228,7 @@
 | 管理師 | `property_manager` | 處理流程、系統操作 | 顯示標記為 property_manager 或通用的知識 |
 | 系統管理 | `system_admin` | B2B 系統操作 | 顯示標記為 system_admin 的知識 |
 
-**實際過濾邏輯**：(`vendor_knowledge_retriever.py:245-257`)
+**實際過濾邏輯**：(`vendor_knowledge_retriever_v2.py`，符號 `_vector_search`／`_keyword_search`；⛔ 行號會漂，以符號名 grep)
 
 ```sql
 WHERE (kb.target_user IS NULL OR kb.target_user && ['tenant']::text[])
@@ -279,7 +279,7 @@ Reranker 重排序（如啟用）：
 數字越大，優先級越高
 ```
 
-**完整排序 SQL**：(`vendor_knowledge_retriever.py:339-342`)
+**完整排序 SQL**：(`vendor_knowledge_retriever_v2.py`，符號 `_keyword_search` 內的 `ORDER BY`；⛔ 行號會漂，以符號名 grep)
 
 ```sql
 ORDER BY
@@ -883,13 +883,15 @@ knowledge_list = await _retrieve_knowledge(...)
 
 ### 程式碼位置對照表
 
-| 功能 | 檔案路徑 | 行數 |
+⛔ **本表不寫行號**——行號隨每次 commit 漂移，實測半數以上會漂掉。一律以符號名 grep。
+
+| 功能 | 檔案路徑 | 可 grep 的符號 |
 |-----|---------|-----|
-| 主對話流程 | `rag-orchestrator/routers/chat.py` | 1111-1185 |
-| 意圖分類器（僅表單流程） | `rag-orchestrator/services/intent_classifier.py` | 184-363 |
-| 知識庫檢索（含角色過濾） | `rag-orchestrator/services/vendor_knowledge_retriever.py` | 191-400 |
-| SOP 檢索 | `rag-orchestrator/services/vendor_sop_retriever.py` | 66-148, 150-400 |
-| 答案優化 | `rag-orchestrator/services/llm_answer_optimizer.py` | 149-975 |
+| 主對話流程 | `rag-orchestrator/routers/chat.py` | `handle_conversational_entry` |
+| 意圖分類器（僅表單流程） | `rag-orchestrator/services/intent_classifier.py` | `IntentClassifier` |
+| 知識庫檢索（含角色過濾） | `rag-orchestrator/services/vendor_knowledge_retriever_v2.py` | `VendorKnowledgeRetrieverV2`／`_vector_search`／`_keyword_search` |
+| SOP 檢索 | `rag-orchestrator/services/vendor_sop_retriever_v2.py` | `VendorSOPRetrieverV2`／`retrieve_sop_by_query` |
+| 答案優化 | `rag-orchestrator/services/llm_answer_optimizer.py` | `LLMAnswerOptimizer` |
 
 ### 環境變數配置
 

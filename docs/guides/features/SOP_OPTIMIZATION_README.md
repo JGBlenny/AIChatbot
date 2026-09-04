@@ -13,8 +13,8 @@
 
 | 文件 | 说明 | 关键修改 |
 |------|------|---------|
-| `rag-orchestrator/services/vendor_sop_retriever.py` | SOP检索逻辑 | 分层决策（261-324行）<br/>多策略偏向检测（404-449行） |
-| `rag-orchestrator/routers/chat.py` | 聊天路由 | SOP优先级调整（1132-1158行） |
+| `rag-orchestrator/services/vendor_sop_retriever_v2.py` | SOP检索逻辑 | 分层决策与偏向检测：符號 `_vector_search`／`_keyword_search`／`retrieve_sop_by_query` |
+| `rag-orchestrator/routers/chat.py` | 聊天路由 | SOP 优先级调整：符號 `handle_conversational_entry` |
 | `scripts/generate_group_embeddings.py` | Group Embedding生成 | 独立的Group向量生成工具 |
 
 ### 3. 数据库
