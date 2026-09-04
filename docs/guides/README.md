@@ -41,9 +41,7 @@ guides/
 |------|------|
 | [FRONTEND_DEV_MODE.md](./development/FRONTEND_DEV_MODE.md) | 前端開發模式設置 |
 | [FRONTEND_USAGE_GUIDE.md](./development/FRONTEND_USAGE_GUIDE.md) | 前端使用指南 |
-| FRONTEND_VERIFY.md | 前端驗證步驟 |
 | [KNOWLEDGE_EXTRACTION_GUIDE.md](./development/KNOWLEDGE_EXTRACTION_GUIDE.md) | 知識庫提取指南 |
-| [MARKDOWN_GUIDE.md](./development/MARKDOWN_GUIDE.md) | Markdown 使用指南 |
 | [MARKDOWN_TO_PDF_GUIDE.md](./development/MARKDOWN_TO_PDF_GUIDE.md) | Markdown 轉 PDF 指南 |
 | [SIMPLIFICATION_IMPLEMENTATION_GUIDE.md](./development/SIMPLIFICATION_IMPLEMENTATION_GUIDE.md) | 簡化實施指南 |
 
@@ -82,6 +80,7 @@ guides/
 |------|------|
 | [CACHE_SYSTEM_GUIDE.md](./features/CACHE_SYSTEM_GUIDE.md) | 快取系統使用指南 |
 | [KNOWLEDGE_IMPORT_EXPORT_GUIDE.md](./features/KNOWLEDGE_IMPORT_EXPORT_GUIDE.md) | 知識庫匯入匯出指南 |
+| [LOOKUP_IMPORT_EXPORT_GUIDE.md](./features/LOOKUP_IMPORT_EXPORT_GUIDE.md) | Lookup 表批量匯入匯出指南 |
 | [PERMISSION_SYSTEM_QUICK_GUIDE.md](./features/PERMISSION_SYSTEM_QUICK_GUIDE.md) | 權限系統快速指南 |
 | [SOP_EXCEL_IMPORT_GUIDE.md](./features/SOP_EXCEL_IMPORT_GUIDE.md) | SOP Excel 匯入指南 |
 | [SOP_GUIDE.md](./features/SOP_GUIDE.md) | SOP 系統完整指南 ⭐ |
@@ -137,7 +136,6 @@ guides/
 ### 任務 5: 我要開發前端功能
 1. 設置 [FRONTEND_DEV_MODE.md](./development/FRONTEND_DEV_MODE.md)
 2. 參考 [FRONTEND_USAGE_GUIDE.md](./development/FRONTEND_USAGE_GUIDE.md)
-3. 驗證 FRONTEND_VERIFY.md
 
 ### 任務 6: 我要匯入知識庫
 1. 閱讀 [KNOWLEDGE_IMPORT_EXPORT_GUIDE.md](./features/KNOWLEDGE_IMPORT_EXPORT_GUIDE.md)

@@ -260,3 +260,49 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 
 ⚠️ 本區塊三段(工具設定／產線輔助／根目錄)於 2026-09-04 加入,一次收編 80 份,
 覆蓋率 353→433 / 558。⛔ 目錄宣告**不等於**逐份裁決為現行 —— 同 `.kiro/specs/` 的先例。
+
+## 操作指南 {#guides}
+
+⚠️ 這 23 份於 2026-09-04 **逐份判讀**後列入(非目錄宣告),每份都確認過自稱描述現況。
+⛔ 判為現行**不等於**內容已對碼 —— 見各條的註記。
+
+### API 與規範
+
+- 規格 | `docs/guides/api/api-path-conventions.md` | 對外 API 該用哪個路徑前綴、怎麼命名(自標「狀態: ✅ 生效中」)
+- 產線 | `docs/guides/api/how-to-add-api-endpoints.md` | 前端 API 端點下拉選單怎麼加(選項硬編碼在 Vue)
+- 產線 | `docs/guides/api/how-to-add-complete-api.md` | 端到端加一支 API 的流程 ⚠️ 自標「此文檔部分過時 (2026-01-20)」:90% 簡單 API 已改成資料庫配置
+
+### 部署與環境
+
+- 產線 | `docs/guides/deployment/AUTH_DEPLOYMENT_GUIDE.md` | 管理員登入認證要怎麼部署上去
+- 產線 | `docs/guides/deployment/AWS_S3_VIDEO_SETUP.md` | 知識庫影片上傳需要的 S3 儲存桶怎麼設
+- 規格 | `docs/guides/deployment/ENVIRONMENT_VARIABLES.md` | 每個環境變數的意義與預設值(清冊)
+
+### 開發
+
+- 規格 | `docs/guides/development/FRONTEND_DEV_MODE.md` | 前端開發／生產雙模式各自怎麼跑、差在哪
+- 產線 | `docs/guides/development/FRONTEND_USAGE_GUIDE.md` | 管理頁面各功能怎麼操作
+- 產線 | `docs/guides/development/KNOWLEDGE_EXTRACTION_GUIDE.md` | 從 LINE 對話萃取知識到回測的工作流程
+- 產線 | `docs/guides/development/MARKDOWN_TO_PDF_GUIDE.md` | Markdown 轉 PDF 的可用工具與作法
+
+### 功能
+
+- 規格 | `docs/guides/features/CACHE_SYSTEM_GUIDE.md` | 三層快取各層存什麼、何時失效
+- 產線 | `docs/guides/features/KNOWLEDGE_IMPORT_EXPORT_GUIDE.md` | 知識批量匯入匯出與 UPSERT 語義
+- 產線 | `docs/guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md` | Lookup 表批量匯入匯出與複合鍵
+- 產線 | `docs/guides/features/PERMISSION_SYSTEM_QUICK_GUIDE.md` | RBAC 角色與權限怎麼設定
+- 產線 | `docs/guides/features/SOP_EXCEL_IMPORT_GUIDE.md` | SOP Excel 匯入的金流欄位怎麼處理
+- 規格 | `docs/guides/features/SOP_OPTIMIZATION_README.md` | SOP Group Embedding 優化解決什麼問題、檔案在哪
+- 規格 | `docs/guides/features/STREAMING_CHAT_GUIDE.md` | SSE 串流聊天的事件協議與適用場景
+
+### 入門與速查
+
+- 路由 | `docs/guides/README.md` | 指南目錄的任務導航:要做某件事該讀哪一份
+- 產線 | `docs/guides/getting-started/QUICKSTART.md` | Docker 起服務與驗證是否活著
+- 產線 | `docs/guides/getting-started/PERMISSION_QUICK_START.md` | 權限系統的資料庫建置與實作步驟
+- 規格 | `docs/guides/getting-started/USER_MANUAL_NON_TECHNICAL.md` | 非技術者看的對話流程與檢索決策說明
+- 規格 | `docs/guides/reference/LOOKUP_TABLE_QUICK_REFERENCE.md` | Lookup 表系統速查 ⚠️ 檔內狀態欄寫「📝 規劃中」(2026-02-04)**已過時**:`rag-orchestrator/routers/lookup.py` 實際存在
+- 規格 | `docs/guides/reference/PRIORITY_QUICK_REFERENCE.md` | 知識優先級加成怎麼算、什麼時候適用
+
+⚠️ **同批已退休、⛔ 不在此列**:`docs/guides/deployment/PGVECTOR_SETUP.md`(自標歷史快照)、
+`MARKDOWN_GUIDE.md`(其 `markdown_generator` 子系統全 repo 零命中,已歸檔至 `docs/archive/2026-09/`)。

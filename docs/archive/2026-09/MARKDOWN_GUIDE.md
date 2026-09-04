@@ -1,5 +1,13 @@
 # Markdown 知識庫使用指南
 
+> ⛔ **已退休（2026-09-04 歸檔）。本文件描述的子系統已不存在。**
+> 實查證據：`find . -name "*markdown*generator*"` 全 repo **零命中**；
+> `grep -rln "markdown" rag-orchestrator/routers/` **零命中**
+> （正對照組：同法找 `vendor_knowledge_retriever_v2.py` 有命中，搜尋機制正常）。
+> 文中引用的 `backend/.env` 與 `backend/app/services/markdown_generator.py` 指向
+> **本 repo 不存在的 `backend/` 目錄**——那是舊專案結構（現為 `rag-orchestrator/`）。
+> ⛔ 不要照本文件建置或修連結；保留原文僅供追溯當時的設計。
+
 ## 📚 概述
 
 Markdown 知識庫生成器會將已批准的 LINE 對話轉換為結構化的 Markdown 檔案，用於：
