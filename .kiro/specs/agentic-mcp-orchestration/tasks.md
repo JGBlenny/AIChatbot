@@ -43,9 +43,10 @@
 - [ ] 1.7b web stack 升級以承載 MCP SDK（DSP-014 裁 A，2026-09-04）：`requirements.txt` 改釘 `fastapi==0.115.14`、`starlette<1.0`（解析得 0.46.2）、`pydantic>=2.13,<3`、`pydantic-settings` 相容版、`uvicorn>=0.31.1`、`anyio>=4.9`、`mcp==2.1.1`（取消註解）；`requirements-test.txt` 同步；處理升級破壞（pydantic 2.13 對 strict schema／`model_dump` 行為、starlette 0.46 的 middleware／SSE 差異、anyio 4 的 `TaskGroup` 例外語義）；`app.py` 的條件掛載在 SDK 可用時自動生效。驗收：`make test` 只剩已知紅；`RUN_INTEGRATION=1` 全套 integration 與升級前基準相同（既有 8 筆 conversational 紅屬 LLM 不決定性，需用同樹連跑兩次證明）；`tests/integration/agent/test_mcp_facade_req.py` ⑦ MCP client `list_tools`／`call_tool` 實跑綠（不再 skip）；`make audit` PASS；本機重建 image 後 `/api/v1/health` 200 且 e2e 五劇本（`tests/e2e`）與升級前結果相同；派 fresh verifier。
   - 需求：2.1, 3.1, 3.6, 13.3
   - 執行：executor／effort 高——跨 app 相依升級，破壞面在舊鏈；驗證期 ⛔ 不覆寫共用測試 image（用 `docker compose run` 內 pip 安裝或另 tag）
-- [ ] 1.8 (P) `/api/v1/agent/openapi.json`／`health`（1.3 後）：`routers/agent.py`——兩端點無條件 X-API-Key；openapi 只列請求身分可見工具（`registry.openapi`）；health 回工具可達、大綱 version／sha（3.2 後接）、`rules_sha`（2.3 後接）、DSP-011 前提偵測四項計數（`/mcp` 依 `api_key_id` 分佈、`vendor_id` 不在表、缺／非白名單 Origin、enforce 關時 `/mcp` 有流量），任一非零 ⇒ 紅；納入 `system_health`。測試：無 key 401；紅燈條件各一。
+- [x] 1.8 (P) `/api/v1/agent/openapi.json`／`health`（1.3 後）：`routers/agent.py`——兩端點無條件 X-API-Key；openapi 只列請求身分可見工具（`registry.openapi`）；health 回工具可達、大綱 version／sha（3.2 後接）、`rules_sha`（2.3 後接）、DSP-011 前提偵測四項計數（`/mcp` 依 `api_key_id` 分佈、`vendor_id` 不在表、缺／非白名單 Origin、enforce 關時 `/mcp` 有流量），任一非零 ⇒ 紅；納入 `system_health`。測試：無 key 401；紅燈條件各一。
   - 需求：3.6, 10.3, 13.3
   - 執行：executor／effort 中——端點薄，前提偵測四項計數需接 1.7 的落點
+  - **收案註記（2026-09-04）**：executor（worktree）→ 收檔重跑 `tests/unit/agent`＋`security`＋`chat_flow` 223 綠、integration agent 83 綠（1 skip＝SDK ⑦，待 1.7b）；不變量 28 實掃 `routers/agent.py` 通過。`services/agent/health.py:compute_agent_health` 為單一邏輯，`pipeline_health_service` 加 `Agent` checker。⚠️ 設計註記：`routers/agent.py` 自建一份 registry（同 `build_registry()` 純函式），與 `app.py` 為 `/mcp` 建的那份是兩個實例，spec 相同無分歧；1.7b 後可收斂成 app.state 單例（1.9 議程）。健檢探針身分用 `mode=b2b` 避免走 `VendorParameterResolver` 第二條 DB 路徑。容器同步待 1.7b 後重建 image。
 - [ ] 1.9 M0 security review（1.1–1.8 後；`security-reviewer` 唯讀）：範圍＝隔離同源（謂詞四消費點）、身分 header fail-closed、注入面（工具回傳封閉欄位）、`/mcp` 兩道閘與額度落點；READY 為 M0 done 條件之一。
   - 需求：2.6, 11.3
   - 執行：security-reviewer／effort 高——唯讀；READY 是 M0 done 條件
