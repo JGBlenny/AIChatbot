@@ -690,6 +690,15 @@ async def handle_image(request, req, ctx: ChatRequestContext):
 async def handle_conversational_entry(request, req, ctx: ChatRequestContext):
     """Step 1.5 對話式回答 engine-first(目前明確限 prospect)。
     真 token 串流→最終 Response(派發器不二次 finalize,陷阱3);引擎降級或非啟用角色→回 None。"""
+    # agentic-mcp-orchestration 2.2（design 元件 8）：audience ∈ AGENT_AUDIENCES 且 runtime 在
+    #   ⇒ 走 AgentRuntime；回 None（未啟用／回退／runtime 缺）⇒ 照舊鏈。對外契約不變。
+    from routers import agent_entry as _agent_entry
+    _agent_resp = await _agent_entry.handle_agent_entry(
+        request, req, ctx, sse_event=_generate_sse_event, metered=_metered_stream,
+        to_response=_conversational_to_response)
+    if _agent_resp is not None:
+        _meter_path('agent')
+        return _agent_resp
     CONVERSATIONAL_ENABLED_ROLES = {'prospect'}
     if request.target_user not in CONVERSATIONAL_ENABLED_ROLES:
         return None
@@ -1871,9 +1880,10 @@ async def handle_retrieval(request, req, ctx: ChatRequestContext):
         )
 
 
-async def _conversational_sse(engine, decision, request):
+async def _conversational_sse(engine, decision, request, app=None):
     """把對話引擎的 stream_answer 包成前端相容 SSE（start/intent/answer_chunk/metadata/done）。
-    converge＝真 token 串流（stream_chat_completion）；ask＝整句一次。"""
+    converge＝真 token 串流（stream_chat_completion）；ask＝整句一次。
+    `app`（2.2）：串流結束後以累積文字排影子回合（design 元件 7），缺則不排。"""
     try:
         yield await _generate_sse_event("start", {"cached": False, "message": "開始輸出答案..."})
         yield await _generate_sse_event("intent", {
@@ -1904,6 +1914,9 @@ async def _conversational_sse(engine, decision, request):
             _metadata["handoff"] = _handoff
         yield await _generate_sse_event("metadata", _metadata)
         yield await _generate_sse_event("done", {"success": True, "cached": False, "message": "答案生成完成"})
+        if app is not None:
+            from routers import agent_entry as _agent_entry
+            _agent_entry.schedule_shadow(app, request, None, "".join(_buf))
     except Exception as e:
         print(f"⚠️ 對話串流失敗：{e}")
         yield await _generate_sse_event("error", {"success": False, "error": str(e)})
@@ -1925,7 +1938,7 @@ async def _conversational_respond(request, req, *, start_if_absent, config=None,
         if decision is None:
             return None
         return StreamingResponse(
-            _metered_stream(_conversational_sse(engine, decision, request), req.app.state.db_pool),
+            _metered_stream(_conversational_sse(engine, decision, request, app=req.app), req.app.state.db_pool),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"})
     result = await engine.handle(
@@ -1935,6 +1948,8 @@ async def _conversational_respond(request, req, *, start_if_absent, config=None,
         prefill=prefill)
     if not result:
         return None
+    from routers import agent_entry as _agent_entry
+    _agent_entry.schedule_shadow(req.app, request, None, result.get('answer', ''))   # 2.2：影子（缺 runner ⇒ no-op）
     return _conversational_to_response(result, request)
 
 

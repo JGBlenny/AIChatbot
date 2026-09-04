@@ -39,6 +39,53 @@ sop_orchestrator: SOPOrchestrator = None
 
 
 @asynccontextmanager
+def _agent_configured() -> bool:
+    """任一 agent 開關有值 ⇒ agent 路徯「被使用」⇒ 組裝失敗要啟動紅；否則 fail-soft 只警告。"""
+    return any(os.getenv(k, "").strip() not in ("", "0", "false", "False")
+               for k in ("AGENT_AUDIENCES", "AGENT_SHADOW_AUDIENCES", "AGENT_TURN_ENABLED"))
+
+
+async def _init_agent_runtime(app: FastAPI) -> None:
+    """建 `app.state.agent_runtime`／`agent_outline`／`outline_resolver`／`shadow_runner`。
+
+    design 元件 5：大綱超出 token 預算 ⇒ 啟動紅；Verifier 自證失敗 ⇒ 啟動紅（bootstrap）。
+    但 agent 路徑在業主未跑 migration（`knowledge_base.outline_approved_by`）前組不起來，
+    ⛔ 不能因此讓舊鏈也起不來 ⇒ 只在 `_agent_configured()` 為真時才把失敗升成啟動紅。
+    """
+    app.state.agent_runtime = None
+    app.state.agent_outline = None
+    app.state.outline_resolver = None
+    app.state.shadow_runner = None
+    try:
+        from services.agent import bootstrap as _agent_bootstrap
+        from services.agent import outline as _agent_outline_mod
+        from services.llm_provider import get_llm_provider as _get_llm_provider
+        outline_doc = await _agent_outline_mod.build_prospect_outline(_mcp_kb_pool)
+        _agent_outline_mod.check_budget(outline_doc, _agent_outline_mod.default_token_limit("prospect"))
+        provider = _get_llm_provider()
+        runtime = _agent_bootstrap.build_runtime(app.state.db_pool, provider, _mcp_registry,
+                                                 outline_doc=outline_doc)
+        app.state.agent_outline = outline_doc
+        app.state.outline_resolver = _agent_outline_mod.make_outline_resolver(
+            {"prospect": outline_doc})
+        app.state.agent_runtime = runtime
+        try:
+            from services.agent.shadow import ShadowRunner as _ShadowRunner   # 任務 4.1
+            app.state.shadow_runner = _ShadowRunner(
+                lambda readonly_view: _agent_bootstrap.build_runtime(
+                    app.state.db_pool, provider, _mcp_registry, outline_doc=outline_doc,
+                    readonly_view=readonly_view),
+                app.state.db_pool)
+        except ImportError:
+            print("ℹ️ [agent] ShadowRunner 尚未落地（4.1），影子模式停用")
+        print(f"✅ agent runtime 已初始化（rules_sha={runtime.rules_sha[:12]} outline_sha={runtime.outline_sha[:12]} "
+              f"sections={len(outline_doc.sections)} tokens={outline_doc.token_count}）")
+    except Exception as e:  # noqa: BLE001
+        if _agent_configured():
+            raise RuntimeError(f"agent 路徑已啟用但組裝失敗（啟動紅）：{type(e).__name__}: {e}") from e
+        print(f"⚠️ [agent] runtime 未初始化（agent 開關皆關，fail-soft）：{type(e).__name__}: {e}")
+
+
 async def lifespan(app: FastAPI):
     """應用生命週期管理"""
     # 啟動時初始化
@@ -130,6 +177,9 @@ async def lifespan(app: FastAPI):
     app.state.form_manager = form_manager
     app.state.sop_orchestrator = sop_orchestrator
     app.state.conversational_engine = conversational_engine
+
+    # agent 路徑（agentic-mcp-orchestration 2.2／design 元件 8）：runtime／大綱／影子。
+    await _init_agent_runtime(app)
 
     print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化 + Phase B 意圖建議 + 表單填寫功能 + SOP Next Action）")
     print(f"📝 API 文件: http://localhost:8100/docs")
@@ -309,15 +359,18 @@ def _get_mcp_retriever():
 
 
 _mcp_sdk_ok, _mcp_sdk_reason = _mcp_facade.mcp_sdk_available()
+# registry 與 deps 一律建（agent 路徑 2.2 也用同一份 registry——design 元件 2「實作一份」）；
+# 只有 MCP server／Mount 受 SDK 可用性左右。
+_mcp_kb_pool = _mcp_facade.LazyPsycopg2Pool()
+_mcp_deps = _mcp_facade.FacadeDeps(
+    get_db_pool=lambda: getattr(app.state, "db_pool", None),
+    get_kb_pool=lambda: _mcp_kb_pool,
+    get_retriever=_get_mcp_retriever,
+    stage=_mcp_facade.current_stage(),
+)
+_mcp_registry = _mcp_facade.build_registry(_mcp_deps)
+app.state.tool_registry = _mcp_registry
 if _mcp_sdk_ok:
-    _mcp_kb_pool = _mcp_facade.LazyPsycopg2Pool()
-    _mcp_deps = _mcp_facade.FacadeDeps(
-        get_db_pool=lambda: getattr(app.state, "db_pool", None),
-        get_kb_pool=lambda: _mcp_kb_pool,
-        get_retriever=_get_mcp_retriever,
-        stage=_mcp_facade.current_stage(),
-    )
-    _mcp_registry = _mcp_facade.build_registry(_mcp_deps)
     _mcp_server = _mcp_facade.build_mcp_server(_mcp_registry, _mcp_deps)
     # 子 app 的路徑與 DNS-rebinding 設定見 mcp_facade.build_asgi_app 的 docstring
     #（兩個參數都 ⛔ 不可省，否則不是 /mcp/mcp 就是全部 421）。

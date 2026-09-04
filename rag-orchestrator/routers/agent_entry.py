@@ -109,6 +109,11 @@ async def handle_agent_entry(request, req, ctx, *, runtime=None, store=None,
     agent_state = state.setdefault("agent", {})
     if agent_state.get("fallback_old_chain"):
         return None
+    # 大綱只在記憶體：runtime 從 state["agent"]["outline"] 讀（2.1 做法），
+    # ⛔ 不得序列化進 form_sessions —— `_persist` 存檔前 pop。
+    outline = getattr(app.state, "agent_outline", None) if identity.audience == "prospect" else None
+    if outline is not None:
+        agent_state["outline"] = outline
 
     if request.stream:
         gen = _agent_sse(rt, st, identity, request.message, state, session_id, sse_event)
@@ -126,6 +131,7 @@ async def handle_agent_entry(request, req, ctx, *, runtime=None, store=None,
 
 async def _persist(store, session_id: str, state: dict) -> None:
     agent_state = state.setdefault("agent", {})
+    agent_state.pop("outline", None)            # 大綱不落地（見 handle_agent_entry）
     if agent_state.get("fixed_streak", 0) >= FIXED_STREAK_FALLBACK:
         agent_state["fallback_old_chain"] = True
     await store.save(session_id, state)

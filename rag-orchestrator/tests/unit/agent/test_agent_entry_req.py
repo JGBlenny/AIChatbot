@@ -141,3 +141,21 @@ def test_schedule_shadow_noop_without_runner_and_swallows_errors():
             raise RuntimeError("x")
     app2 = SimpleNamespace(state=SimpleNamespace(shadow_runner=Boom()))
     ae.schedule_shadow(app2, _req(), None, "old")                        # 例外被吞
+
+
+@pytest.mark.unit
+def test_outline_injected_for_run_but_not_persisted(monkeypatch):
+    monkeypatch.setenv("AGENT_AUDIENCES", "prospect")
+    seen = {}
+
+    class RT(FakeRuntime):
+        async def run_turn(self, identity, message, state):
+            seen["outline"] = state["agent"].get("outline")
+            return await super().run_turn(identity, message, state)
+    store, rt = FakeStore(), RT()
+    app = _app(rt)
+    app.state.agent_outline = SimpleNamespace(sha256="abc", sections=[], token_count=1)
+    asyncio.run(ae.handle_agent_entry(_req(), SimpleNamespace(app=app), None, store=store))
+    assert seen["outline"] is app.state.agent_outline          # 回合看得到
+    assert "outline" not in store.saved[-1]["agent"]           # 存檔沒有（正對照：agent 鍵存在）
+    assert "agent" in store.saved[-1]
