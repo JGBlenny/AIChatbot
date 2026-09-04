@@ -405,3 +405,33 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 `rag-orchestrator/`(AI 客服主服務)與 `knowledge-admin/backend/`(知識後台:權限／角色／認證)。
 ⚠️ 2026-09-04 曾因只搜 `rag-orchestrator/routers/` 而誤判「RBAC 權限系統查無 API 面」——
 正對照組當時取自同一目錄,只證明 grep 會動、不證明範圍對。
+
+## docs 根目錄 {#docs-root}
+
+⚠️ 這 6 份於 2026-09-04 逐份判讀後列入。同批另有 5 份判為快照,見文末。
+
+### 索引(兩份,分工明確且互相引用)
+
+- 路由 | `docs/INDEX.md` | **主索引**:按「我要做什麼」找文件(架構／API／指南／回測／測試);第 3 行反向指向 `README.md`
+- 路由 | `docs/README.md` | `docs/` 有哪些子目錄與常用入口;第 5 行明說「找特定主題?請先看 INDEX.md」
+
+⚠️ 兩份是**分工不是重複**——`README` 答「這裡有什麼」,`INDEX` 答「我要做 X 該讀哪份」。
+
+### 架構
+
+- 規格 | `docs/architecture-overview.md` | 系統現況總覽:三類使用者與路由順位、對話面向、資料體系分工、計量與額度、品質三層、已知債總表
+- 規格 | `docs/chat-architecture-overview.md` | 對話系統架構全貌(v2):入口矩陣、完整決策管線、機制對表、應然與實然的差距;⚠️ 檔內自述性質是「對碼查實的**實然**＋定案的**應然**＋設計方向判定」三者混寫,引用時要分清是哪一種
+- 決策 | `docs/conversation-first-architecture-assessment.md` | 檢索中心骨架是否仍合適的評估與拍板:混合骨架候選 C 定案(2026-07-10)、P0–P3 四階段遷移;⚠️ **本檔是 2026-07-10 的評估快照,其拍板結論後續是否被 `agentic-mcp-orchestration` 主線取代,待裁**
+
+### 設定
+
+- 規格 | `docs/LLM_PROVIDER_MIXED_CONFIG_GUIDE.md` | 混合 LLM Provider 怎麼配置、成本怎麼優化、如何遷移
+
+⚠️ **同批已判快照、⛔ 不在此列**(其中兩份自標,逐字):
+`docs/SMART_RETRIEVAL_QUICK_REF.md`——「⚠️ **歷史文件**(2026-01-28)。當前架構細節請參考
+`docs/architecture/retriever-pipeline.md`」;
+`docs/API_ENDPOINTS_COMPLETE_INVENTORY.md`——「⚠️ **Snapshot:2026-02-17,未持續維護**……
+名稱中的 "Complete" 僅指快照當時」(它盤的是**本 repo** 兩個後端的端點,提及 jgb2 0 次);
+另 `docs/line-bot-integration-plan.md`(2026-07-10 規劃與缺口評估)、
+`docs/presales-assistant-quality-audit-20260902.md`(2026-09-02 實機測試報告)、
+`docs/presales-assistant-rootcause-20260904.md`(2026-09-04 根因對碼)。
