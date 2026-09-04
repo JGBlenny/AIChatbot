@@ -410,7 +410,7 @@ sequenceDiagram
 | 里程碑 | 交付 | done 條件（可觀測） |
 |---|---|---|
 | M0 | `build_visibility_predicate`＋三方共用＋差分等價測試；ToolRegistry＋`kb.*`／`help.read`／`jgb2.query.*`（五域映射）；MCP 門面；`api_keys` 遷移；不變量 18–22 | `make audit` 綠；差分等價矩陣全同；integration：`kb.get` 池外 NO_MATCH、`kb.search` 與 `retrieve()` 逐筆同、bills／contracts 請求含 `viewer_user_id`；**enforce 關時 `/mcp` 仍 401**；`/mcp` 每呼叫一列 `usage_events`；`MCP_ALLOWED_ORIGINS` 空 ⇒ 啟動紅；security-reviewer 對隔離謂詞與門面 READY |
-| M1 | AgentRuntime＋Verifier＋PromptAssembler＋ShadowRunner（prospect）＋`knowledge_base` 審核旗標遷移（R11.6） | 單元：Verifier 11 拒因＋自證 fixture；影子不阻塞 SSE（p95 差 ≤200ms）；`decision_snapshot.agent` 無原文（不變量 21）；**大綱組裝過濾未審核列**——integration：塞一筆未標記的售前列，`build_prospect_outline` 產出的 `source_ids` 不含它且 `outline_sha` 不變（DSP-012 A） |
+| M1 **✅ 程式面收案 2026-09-05（HEAD `672baf6`）**：fresh verifier REFUTED→修影子 args_hash→recheck CONFIRMED；資料面待業主 | AgentRuntime＋Verifier＋PromptAssembler＋ShadowRunner（prospect）＋`knowledge_base` 審核旗標遷移（R11.6） | 單元：Verifier 11 拒因＋自證 fixture；影子不阻塞 SSE（p95 差 ≤200ms）；`decision_snapshot.agent` 無原文（不變量 21）；**大綱組裝過濾未審核列**——integration：塞一筆未標記的售前列，`build_prospect_outline` 產出的 `source_ids` 不含它且 `outline_sha` 不變（DSP-012 A） |
 | M2 | `agent_eval` 三組樣本 | 對照表產出；收案線（D2 數字）判定＋獨立 verifier CONFIRMED |
 | M3 | `AGENT_AUDIENCES=prospect` | 五套劇本：敏感五類 0 漏、無捏造句（獨立 verifier CONFIRMED）、固定句率 ≤ 現行同劇本基準（`perf-20260904.md` §9）；D2 其餘數字若裁定則併入；回切演練一次 |
 | M4 | 寫入工具＋token 表＋修繕（tenant） | token 重放／TOCTOU／跨 session 單元全綠；security-reviewer 對寫入面 READY |
