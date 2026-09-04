@@ -1,0 +1,145 @@
+{
+ "_meta": {
+  "spec": "presales-grounding-gate 收案後知識補強（業主 2026-09-04 裁：先補知識、機制不動）",
+  "produced_at": "2026-09-04",
+  "note": "S 類（表示法）修法：一種講法一筆。answer 逐字沿用來源列；新列只補口語講法，⛔ 不改來源列的 question_summary（避免動既有 embedding）。租客逾期一筆為 N 類，answer 逐句對幫助中心。",
+  "g0_evidence": {
+   "3600-alias": "容器內 retrieve：「可不可以線上簽約」對 3600 final 0.326（<0.5）；「租約管理有沒有電子簽章」0.972 ⇒ 缺講法非缺知識。perf-20260904.md §9",
+   "3610-alias": "「費用怎麼算」對 3610 final 0.470；「金箍棒怎麼收費？方案價格如何」0.994。同上",
+   "3584-alias": "180 間公司追問「那物件跟合約呢」top-1 為 3596（10 間房東方案）0.5，3584 僅 0.193 ⇒ 公司規模講法缺。perf §9 品質觀察①",
+   "租客逾期": "幫助中心 Landlordonboarding06Finance_zh-Hant.html／slug03_zh-Hant.html：「帳單到期之前五日、三日、一日皆會發出提醒繳款email信以及line通知…帳單逾期後，系統便會進行每日通知」；「除了繳費期限變紅字之外，還會出現「逾期」的提示tag，房東Dashboard 下方會即時更新逾期帳款的近況」。滯納金：kb 3913（系統脈絡：滯納金，兩種機制依團隊設定）。",
+   "匯入邊界": "DSP-008 業主 2026-09-04 裁以 jgb2 現況為準；jgb2 原始碼：物件 EstateController@generalBatch*／租客 LesseeController@batchImport／帳單 BillController@batchImportExcel*（Ango＋法人房東，建立待發送新帳單）／社區 CommunityController::batchPreview／大房東記錄 BiglandlordController::importBigLandlordRecordsFromExcel 皆有；合約只有單份上傳與 batchDelete。幫助中心 onboarding4：物件批次上傳。",
+   "帳單格式": "jgb2 原始碼（scout 2026-09-04）：收據版式由 roles.receipt_type 選擇（UserController@payment：tw_zh_mof_and_general／general／tw_zh_mof／no）；內容可設定 Admin/BillController@settingsUpdate（note／date_start／date_end／date_expire）、settingsUpdateDetail／settingsAddDetail（品項、單價、數量、讀數）、UserController@payment（收款帳戶、收款章、batch_send_bill_days）；發票格式由 ezPay／eCloud 決定（Admin/RoleInvoiceController，只設認證與稅率）。幫助中心 onboarding12：排定發送不可包含需客製化的帳單項目。⇒ 第 5 輪 e2e 唯一漏「格式固定無法自訂」的邊界句。"
+  },
+  "rollback": "scripts/knowledge-batches/presales-phrasing-batch-20260904.rollback.sql"
+ },
+ "updates": [],
+ "knowledge": [
+  {
+   "facet": "售前模組",
+   "question": "可不可以線上簽約 線上簽 電子簽約 合約線上簽名 不用紙本",
+   "answer": "合約多、怕簽錯、紙本來回慢？金箍棒的租約管理用線上電子簽章（雲想 ThinkCloud），涵蓋一般租賃、社會住宅、委託三種合約，從點交、點退到續約、解約完整管理。想看流程可預約 demo。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "線上簽約",
+    "電子簽約",
+    "線上簽"
+   ],
+   "instance_applicability": "general"
+  },
+  {
+   "facet": "售前價格",
+   "question": "費用怎麼算 一年多少錢 收費方式 月費 年費 要花多少",
+   "answer": "金箍棒採訂閱制，方案依管理規模（物件數）以及是否需要團隊、大房東報表、IoT 等功能分級。目前方案與價格正在調整，為避免提供過時數字，實際級距與費用請參考線上定價頁(https://www.jgbsmart.com/pricing)，或留下聯絡方式由專人為您報價。也歡迎先用免費試用一個月實際體驗。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前價格"
+   ],
+   "keywords": [
+    "費用怎麼算",
+    "多少錢",
+    "收費"
+   ],
+   "instance_applicability": "general"
+  },
+  {
+   "facet": "售前顧問",
+   "question": "公司管一百多間 幾百間 物件跟合約很多 團隊分工 大量物件怎麼管",
+   "answer": "公司或團隊（包租代管、物管）通常要多人分工，還得對業主交報表，需求比個人房東複雜。金箍棒的全模組方案正好對應這種規模——除了物件、合約、帳務，還有團隊權限管理讓成員分工，以及大房東報表，把代收代付與營運狀況整理好、對業主交代清楚；若有現場抄電表或換門鎖的需求，智慧電錶／門鎖也能依需求整合（細節由專人說明）。實際適合的模組組合與費用會依團隊規模而不同，建議直接預約 demo，由專人陪您盤點需求並提供報價。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前顧問"
+   ],
+   "keywords": [
+    "180間",
+    "公司",
+    "團隊",
+    "大量物件"
+   ],
+   "instance_applicability": "general"
+  },
+  {
+   "facet": "售前模組",
+   "question": "租客不繳租金怎麼辦 逾期 催繳 提醒 遲繳 拖欠",
+   "answer": "怕租客忘記繳、拖著不繳？金箍棒的帳務管理會在帳單到期前五日、三日、一日自動發 Email 與 LINE 提醒給租客，逾期後改為每日通知；逾期帳單在系統上會以紅字與「逾期」標籤標示，房東首頁也會即時更新逾期帳款。另外系統有滯納金機制（延遲金或逾期金，依團隊設定啟用）。想看實際催繳畫面可預約 demo。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "租客不繳",
+    "逾期",
+    "催繳",
+    "滯納金"
+   ],
+   "instance_applicability": "general"
+  },
+  {
+   "facet": "售前模組",
+   "question": "舊系統資料可以匯進來嗎 批次匯入 搬資料 房東租客合約帳單 哪些能匯 合約能不能匯",
+   "answer": "換系統最怕重建資料。金箍棒可以用 Excel 範本批次匯入：物件（一般與社會住宅）、租客、社區、大房東聯絡簿；團隊（法人房東）帳號還能批次匯入帳單，匯入後會成為待發送的新帳單。要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）；舊系統已繳完的歷史帳單也沒有搬移功能。搬遷細節可預約 demo，由專人依您的資料量評估。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "匯入",
+    "批次匯入",
+    "搬資料",
+    "合約匯入",
+    "歷史帳單"
+   ],
+   "instance_applicability": "general"
+  },
+  {
+   "facet": "售前模組",
+   "question": "帳單格式能不能自己設定 帳單版面 收據樣式 自訂帳單 客製帳單 品項 抬頭",
+   "answer": "帳單能調的是內容，版面是選不是畫。內容方面：帳單標題與備註、計費起訖日、繳費期限、費用品項（租金、水電度數、生活費用等，可增刪、改單價數量）、收款帳戶、收款章、排定發送日都可以在系統設定。版面方面：收據版式可在「一般收據」與「財政部包租業租金收據」（可雙版或不檢附）之間選擇，但 logo、欄位排列等不開放任意自訂；電子發票的格式則由發票廠商（ezPay／eCloud）決定，系統只設定廠商與稅率。有特殊版面需求可預約 demo 由專人評估。",
+   "target_user": [
+    "prospect"
+   ],
+   "business_types": [
+    "system_provider"
+   ],
+   "categories": [
+    "售前模組"
+   ],
+   "keywords": [
+    "帳單格式",
+    "帳單版面",
+    "收據",
+    "自訂帳單"
+   ],
+   "instance_applicability": "general"
+  }
+ ],
+ "anchors": []
+}

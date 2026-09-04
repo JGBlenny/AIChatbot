@@ -341,7 +341,7 @@ P2-3  一知識一問法（變體表 knowledge_variants）                 ⚠�
   ⛔ P2-1 未證明成效前不啟動
 ```
 
-### P2.5 缺口地圖（**PROPOSED 2026-09-04**，業主尚未裁；由 presales-grounding-gate 收案後的 skill 盤查提出）
+### P2.5 缺口地圖（**業主 2026-09-04 批准納入主線**；由 presales-grounding-gate 收案後的 skill 盤查提出。⛔ 先決 P0 建尺未過前不開工，只定產物）
 
 ```text
 問題  retrieval-improvement-loop 是「一輪修一題型一成因」的迴圈：樣本凍結→燒毀，每輪結束沒有東西說「主題空間還剩哪幾格是空的」。
