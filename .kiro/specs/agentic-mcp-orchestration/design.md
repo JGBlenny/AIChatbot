@@ -211,8 +211,8 @@ class ToolRegistry:
 **服務層閘（無條件）**：`/mcp` 與 `/api/v1/agent/*` **不受 `RAG_API_AUTH_ENFORCE` 左右**，缺／錯 X-API-Key 一律 401（不變量 19：`_EXEMPT_PREFIX` 不得含 `/mcp`；M0 done：enforce 關時 `/mcp` 仍 401）。
 **額度落點**：`app.py:usage_metering_middleware` 的 `metered` 條件擴為 `path == "/api/v1/message" or path.startswith("/mcp")`，門面每次工具呼叫必經 `begin()`→`quota_check()`→`finalize()`（不變量 22：`/mcp` 每次呼叫必產出一列 `usage_events`，⛔ 不接受 ctx None 靜默略過）。`is_internal` 與可用 `vendor_ids` 在 `/mcp` 路徑**由 API key 紀錄決定**（migration：`api_keys` 加 `is_internal bool default false`、`vendor_ids int[] null`＝不限），`INTERNAL_RULES` 的 `session_id` 前綴規則**不適用於 `/mcp`**；header 的 `vendor_id` ∉ key 的 `vendor_ids` ⇒ 403。
 **傳輸層**：`/mcp` 僅 server-to-server。Origin 三態：**缺 Origin ⇒ 放行**（server-to-server client 不送 Origin）；有 Origin 且在 `MCP_ALLOWED_ORIGINS` ⇒ 放行；有 Origin 且不在 ⇒ 403（瀏覽器直連／DNS rebinding）。`MCP_ALLOWED_ORIGINS` 未設定 ⇒ 啟動紅（必須明示，空集合 `-` 代表「任何帶 Origin 的請求都拒」）。整合測試三態。
-**`agent.turn` 工具（1.4）**：`agent.turn(message, dialog_ref?) -> {answer, kind, handoff, quick_replies, trace_id}`，scope=read、`stage={prospect: M1}`、**`facade_only=True`**（不進模型工具清單 ⇒ 無自呼遞迴；不進影子視圖 ⇒ 影子不寫 session）；一次 `agent.turn` 對應一列 `usage_events`，內含的多次 LLM 呼叫以事件層 token 欄彙總；門面以解析出的 Identity 呼叫同一個 `AgentRuntime.run_turn`（Verifier、固定句、預算、計量全同），⛔ 不另寫回合邏輯；一次性回傳（MCP 工具結果不逐字串流，語音走 REST SSE，見 roadmap `voice-turn-budget`）。**身分與 session 契約**：`session_id` 由呼叫端產生、跨回合穩定；對話歷史與 slots 由服務端存 `form_sessions.collected_data`（與 REST 同源）；`role_id=null`＋`target_user=tenant` 為合法租客組合（可見性＝tenant 池，jgb2.query 因缺 role_id 雙證而 `NO_MATCH`）；`/mcp` 僅 server-to-server。
-**DSP-011 前提偵測**（進 `/api/v1/agent/health` 與 `check_invariants.sh`）：`/mcp` 依 `api_key_id` 分佈、`vendor_id` 不在表計數、**非白名單 Origin** 計數（缺 Origin 只記錄不告警）、enforce 關時 `/mcp` 有流量 ⇒ 前三項任一非零或第四項為真即告警；這是兩條 P0 REJECT 的補償條件。每個 `ToolSpec` 以 `@mcp.tool()` 註冊為薄包裝 → `registry.call()`；`ToolResult.error` 以 `ToolError` 拋出（訊息只含業務代碼）。`app.py` 的 `lifespan` 進 `mcp.session_manager.run()`，`Mount("/mcp", mcp.streamable_http_app())`（`Mount` 需新增 import）。[需求 2.1, 2.5, 3.6, 11.2]
+**`agent.turn` 工具（1.4）**：`agent.turn(message, dialog_ref?) -> {answer, kind, handoff, quick_replies, trace_id}`，scope=read、`stage={prospect: M1}`、**`facade_only=True`**（不進模型工具清單；Runtime 對 registry 的 `call()` 一律 `for_model=True` ⇒ 模型捏造此名亦 `NO_MATCH`，無自呼遞迴；不進影子視圖 ⇒ 影子不寫 session）；**註冊受 `AGENT_TURN_ENABLED` 控（回切開關）**；外部 MCP client 本身即模型，對它 `facade_only` 為單層設計意圖（每呼叫計額）；loopback（2.1a）內部呼叫帶 `X-Agent-Internal-Turn` 不計量、一回合恰一列；一次 `agent.turn` 對應一列 `usage_events`，內含的多次 LLM 呼叫以事件層 token 欄彙總；門面以解析出的 Identity 呼叫同一個 `AgentRuntime.run_turn`（Verifier、固定句、預算、計量全同），⛔ 不另寫回合邏輯；一次性回傳（MCP 工具結果不逐字串流，語音走 REST SSE，見 roadmap `voice-turn-budget`）。**身分與 session 契約**：`session_id` 由呼叫端產生、跨回合穩定；對話歷史與 slots 由服務端存 `form_sessions.collected_data`（與 REST 同源）；`role_id=null`＋`target_user=tenant` 為合法租客組合（可見性＝tenant 池，jgb2.query 因缺 role_id 雙證而 `NO_MATCH`）；`/mcp` 僅 server-to-server。
+**DSP-011 前提偵測**（進 `/api/v1/agent/health` 與 `check_invariants.sh`）：`/mcp` 出現**未登錄或非 `is_internal` 的 `api_key_id`**（分佈本身只觀測，1.4.5 修訂：M1 後 `/mcp` 是正常路徑，非零不再等於異常）、`vendor_id` 不在表計數、**非白名單 Origin** 計數（缺 Origin 只記錄不告警）、enforce 關時 `/mcp` 有流量 ⇒ 前三項任一非零或第四項為真即告警；這是兩條 P0 REJECT 的補償條件。每個 `ToolSpec` 以 `@mcp.tool()` 註冊為薄包裝 → `registry.call()`；`ToolResult.error` 以 `ToolError` 拋出（訊息只含業務代碼）。`app.py` 的 `lifespan` 進 `mcp.session_manager.run()`，`Mount("/mcp", mcp.streamable_http_app())`（`Mount` 需新增 import）。[需求 2.1, 2.5, 3.6, 11.2]
 
 ### 元件 5：`services/agent/prompt_assembler.py` — PromptAssembler／OutlineAssembler
 ```python
@@ -287,7 +287,8 @@ class ShadowRecord(BaseModel):
 
 ### 資料模型
 ```python
-class ToolCallRecord(BaseModel): id: str; name: str; args_hash: str; ms: int; status: Literal["ok","error","timeout","rejected"]; n_items: int
+class ToolCallRecord(BaseModel): id: str; name: str; args_hash: str; args_summary: dict  # {face?, has_ref, has_keyword, k?}，⛔ 不含值
+    ms: int; status: Literal["ok","error","timeout","rejected"]; n_items: int
 class Provenance(BaseModel): source: str; text: str; citable: bool = True
 class SlotValue(BaseModel): value: str; source: Literal["user","tool"]; confirmed: bool
 # 新表 agent_confirmation_tokens(token PK, session_id, payload_sha256, summary_sha256, expires_at, redeemed bool, created_at)
@@ -535,6 +536,7 @@ Identity／Audience／ToolSpec／ToolResult／AgentOutput／Citation／VerifierR
 | 日期 | 版本 | 變更 | 修改者 |
 |---|---|---|---|
 | 2026-09-04 | 1.0 | 初始版本（full discovery） | AI |
+| 2026-09-05T00:09:11+08:00 | 1.4.5 | M1 前增量審查 r7 處置：agent.turn 兩層擋＋回切開關、loopback 不計量、前提偵測旗語義、ToolCallRecord.args_summary | AI |
 | 2026-09-04T21:42:30+08:00 | 1.4.4 | 域映射表依 1.5 實作對碼：accounts `登入排障` 缺口、estates 只用 `get_estate_status` | AI |
 | 2026-09-04T21:40:36+08:00 | 1.4.3 | 不變量編號 18–22 → 27–31（DSP-013） | AI |
 | 2026-09-04T20:18:50+08:00 | 1.4.2 | 心智模型節（業主問答定稿）；「找帳單」詳細時序 | AI |
