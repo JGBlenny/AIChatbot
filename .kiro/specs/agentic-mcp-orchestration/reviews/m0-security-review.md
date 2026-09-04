@@ -16,3 +16,7 @@
 
 # M0 verifier（fresh，2026-09-04）— CONFIRMED（1.10 前）
 A–F 全證實：audit PASS（含 3、27–31）；make test 只剩已知紅；integration agent 84 過 0 skip；equiv 53＋unit 54；容器 200／401／401、fastapi 0.115.14；兩道牆探針符合；D-002 突變 21 紅→還原 54 綠。風險：P2 admin DB 未套 api_keys migration（key 作用域降級為不限，403 結論不可外推 runtime，套後重跑 `test_key_vendor_scope_mismatch_is_403_over_http`）；P3 不變量 27 空跑；P4 舊鏈三處手抄條件未搬。
+
+# 1.10 定向 recheck（fresh verifier，2026-09-05）— CONFIRMED
+tenant 缺 user_id 五格（bills 無 ref／ref／keyword、contracts 無 ref／keyword）全 NO_MATCH 且零出向；正對照帶 user_id 走原路且 `viewer_user_id` 轉發；pm（mode=b2b／target_user=pm）單證放行；`resolved_audience()` 拋例外／無 audience／空字串 user_id 皆 fail-closed。突變 `return bool(role_id)` ⇒ unit 5 紅＋integration 1 紅，還原後綠、md5 一致、git status 不變。unit 241／integration 85 皆 0 skip；不變量 27 掃到 4 spec；`registry.call` 剝六鍵記 violations。
+P3（既有、非本次引入）：bills 帶 ref 時 `get_bills` 的 ref adapter 前兩通（`GET /bills` 只 role_id、`/contracts?contract_ids=` 無 viewer）以整 role 視角解析 ref，Layer 2 只落第三通 — M1 追蹤 adapter 層圈定。

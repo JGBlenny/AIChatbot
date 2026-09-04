@@ -48,9 +48,10 @@
   - 需求：3.6, 10.3, 13.3
   - 執行：executor／effort 中——端點薄，前提偵測四項計數需接 1.7 的落點
   - **收案註記（2026-09-04）**：executor（worktree）→ 收檔重跑 `tests/unit/agent`＋`security`＋`chat_flow` 223 綠、integration agent 83 綠（1 skip＝SDK ⑦，待 1.7b）；不變量 28 實掃 `routers/agent.py` 通過。`services/agent/health.py:compute_agent_health` 為單一邏輯，`pipeline_health_service` 加 `Agent` checker。⚠️ 設計註記：`routers/agent.py` 自建一份 registry（同 `build_registry()` 純函式），與 `app.py` 為 `/mcp` 建的那份是兩個實例，spec 相同無分歧；1.7b 後可收斂成 app.state 單例（1.9 議程）。健檢探針身分用 `mode=b2b` 避免走 `VendorParameterResolver` 第二條 DB 路徑。容器同步待 1.7b 後重建 image。
-- [ ] 1.9 M0 security review（1.1–1.8 後；`security-reviewer` 唯讀）：範圍＝隔離同源（謂詞四消費點）、身分 header fail-closed、注入面（工具回傳封閉欄位）、`/mcp` 兩道閘與額度落點；READY 為 M0 done 條件之一。
+- [x] 1.9 M0 security review（1.1–1.8 後；`security-reviewer` 唯讀）：範圍＝隔離同源（謂詞四消費點）、身分 header fail-closed、注入面（工具回傳封閉欄位）、`/mcp` 兩道閘與額度落點；READY 為 M0 done 條件之一。
   - 需求：2.6, 11.3
   - 執行：security-reviewer／effort 高——唯讀；READY 是 M0 done 條件
+  - **收案（2026-09-05）**：security-reviewer REVISE 的唯一 P1 已由 1.10 修正並經 fresh verifier 定向 recheck **CONFIRMED**（`reviews/m0-security-review.md`）；P2／P3 依處置表：4 條已修（1.10）、其餘 DEFER 進 M1 備註（不變量 29 抽取繞法、候選列投影、blocked 事件列、`facade_only` 在 `/mcp` 語義、`help.read` audience、不變量 30 空跑、bills ref adapter 前兩通無 viewer 圈定）。**M0 程式面收案**（HEAD `1f27bcf`，本機 image 已重建、audit PASS）；**資料面待業主**：`m0-owner-steps.md` 三件（migration ×2、內部 MCP key、jgb2 讀權）＋之後 1.5 真 API smoke。
   - **進度（2026-09-04）**：security-reviewer REVISE（1 P1：tenant 缺 user_id 的 bills／contracts 洩整 role；5 P2；6 P3，正本 `reviews/m0-security-review.md`）→ 1.10 處置中；fresh verifier 對 M0 邊界 CONFIRMED（1.10 前，同檔）。1.10 收回後對 P1 做一次定向 recheck 再收 M0。
 - [x] 1.10 處置 1.9 審查（security-executor，worktree）：P1 雙證強制（非 pm）＋文件；不變量 27 掃 `services/agent/**`＋0 spec 即紅；`registry.call` 剝身分鍵＋`additionalProperties` 預設 false；`verify_api_key` 偵測 TTL＋health 紅旗 `api_keys_agent_scope_ready`；文件 SDK 狀態同步。M1 備註：不變量 29 抽取繞法、候選列投影、blocked 事件列、`facade_only` 在 `/mcp` 語義、`help.read` audience。
   - 需求：2.1, 2.2, 10.4, 11.3
