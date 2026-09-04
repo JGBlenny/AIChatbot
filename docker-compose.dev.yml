@@ -109,6 +109,12 @@ services:
       #    會啟動即 raise（MCP_ALLOWED_ORIGINS 必須明示），e2e／integration 全紅。
       #    `-` ＝ 空集合 ＝ 任何帶 Origin 的請求都拒；缺 Origin 者照放行。
       MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:--}
+      # agentic-mcp-orchestration 其餘新 env（AGENT_STAGE／AGENT_AUDIENCES／AGENT_TURN_ENABLED／
+      #   AGENT_TURN_TIMEOUT_S／AGENT_TURN_CAP／AGENT_SHADOW_AUDIENCES／
+      #   AGENT_SHADOW_MONTHLY_USD_CAP／AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT|PM|TENANT／
+      #   AGENT_MODEL／AGENT_TRACE_WINDOW_DAYS／RATE_PER_MIN／KB_GET_CAP／JGB2_CANDIDATE_CAP）
+      #   完整名稱／預設值／作用清單見 docker-compose.prod.yml 同段註解與 runbook §19-5；
+      #   全部維持不宣告＝吃程式內建預設（AGENT_BUDGET_TOOL_CALLS/REWRITES/DEADLINE_S 由 bootstrap.budget_from_env 讀取，預設 4／2／20.0）。
     command: ["sleep", "infinity"]        # 維持容器；測試以 run --rm 進入
 
 # 接上共用基礎設施網路（spec conversational-routing-execution 任務 1.2｜R1.2）

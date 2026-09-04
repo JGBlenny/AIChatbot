@@ -135,9 +135,10 @@
 - [ ] 5.2 (P) 退休標記與相容文件：`tests/unit/agent/test_retired_symbols_req.py` AST 掃 `services/agent/` 不 import `_top1_relevance_gate`／`decide_arbitration`／categories 提名；`docs/architecture/` 加「agent 路徑不使用清單」與 `instance_applicability`「消費者已退休、待除役（另案）」註記；`retrieval_representation` D3 紀律保留註記；`docs/api/conversational-api.md` 加 agent 路徑不改契約與 `trace_id` 說明；**`.kiro/steering/dialogue.md` 更新**：加 agent 路徑分流圖與「舊鏈流程僅適用 audience ∉ AGENT_AUDIENCES」註記（⛔ 不刪舊鏈段落，回切仍用）。
   - 需求：12.1, 12.2, 12.3, 9.3
   - 執行：mech-executor／effort 低——AST 測試與文件註記，規格齊全
-- [ ] 5.3 (P) 部署與健檢文件：`docker-compose.prod.yml` 註解新 env（`AGENT_STAGE`、`AGENT_AUDIENCES`、`AGENT_SHADOW_AUDIENCES`、`AGENT_SHADOW_MONTHLY_USD_CAP`、`AGENT_BUDGET_*`、`AGENT_OUTLINE_TOKEN_LIMIT_*`、`MCP_ALLOWED_ORIGINS`、`RATE_PER_MIN`、`KB_GET_CAP`）、`requirements.txt` 加 `mcp==2.1.1`、`tiktoken==0.14.0`；runbook 加 migration 三表＋`api_keys` 兩欄的執行順序與預期輸出（⛔ 線上由業主執行）；**內部 API key 簽發逐條指令**（含 `is_internal`／`vendor_ids` 設定）與 `MCP_ALLOWED_ORIGINS` 設定（明訂 `/mcp` 僅 server-to-server，⛔ 不供裝置／瀏覽器直連）；成本告警（每回合 > 現行 ×3）進 health。
+- [x] 5.3 (P) 部署與健檢文件：`docker-compose.prod.yml` 註解新 env（`AGENT_STAGE`、`AGENT_AUDIENCES`、`AGENT_SHADOW_AUDIENCES`、`AGENT_SHADOW_MONTHLY_USD_CAP`、`AGENT_BUDGET_*`、`AGENT_OUTLINE_TOKEN_LIMIT_*`、`MCP_ALLOWED_ORIGINS`、`RATE_PER_MIN`、`KB_GET_CAP`）、`requirements.txt` 加 `mcp==2.1.1`、`tiktoken==0.14.0`；runbook 加 migration 三表＋`api_keys` 兩欄的執行順序與預期輸出（⛔ 線上由業主執行）；**內部 API key 簽發逐條指令**（含 `is_internal`／`vendor_ids` 設定）與 `MCP_ALLOWED_ORIGINS` 設定（明訂 `/mcp` 僅 server-to-server，⛔ 不供裝置／瀏覽器直連）；成本告警（每回合 > 現行 ×3）進 health。
   - 需求：13.2, 13.3
   - 執行：mech-executor／effort 低——env 清單與 runbook 逐條指令＋預期輸出（⛔ 不打包腳本）
+  - **收案註記（2026-09-05）**：mech-executor（worktree）→ 收檔。runbook 新增 §19（相依升級、五支 migration、內部 key、Origin、售前池標記、env 表、煙囪、回切、監控）；兩份 compose 加註解 env 清單；`docs/api/mcp-facade.md` §10 env 表（14 個，逐一 grep 程式核對）。**查證落差**：design 列的 `AGENT_BUDGET_*` 三 env 程式沒讀——主 session 補 `bootstrap.budget_from_env`（壞值／≤0 退預設，unit 1）並更正四處文件。
 - [ ] 5.4 收案：`make audit` 綠（不變量 27–31（原 18–22，DSP-013））、`make test` 全綠（已知紅 `test_verdict_ruler_req.py` 除外）、M0 與 M3 各一次 security／verifier 紀錄落 `reviews/`、總結列取捨（D1–D3 未裁項與其影響；⚠️ DSP-012 已於 2026-09-04 裁定選項 A，改列其代價：`knowledge_base` 多兩欄、售前池 31 筆需先標審核、審核 UI 為另案未做）。
   - 需求：11.3, 13.5
   - 執行：main／effort 高——收案判斷與取捨列示由主 session 負責

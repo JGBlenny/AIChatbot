@@ -339,3 +339,25 @@ DSP-011 成立的前提是「`/mcp` 只有上游／內部呼叫者」。以下�
 | `rag-orchestrator/tests/integration/agent/test_agent_turn_req.py` | `agent.turn` 的整合驗收（跨業者隔離、兩回合、Verifier 拒兩次、計量） |
 | `rag-orchestrator/tests/unit/agent/test_agent_turn_req.py` | `agent.turn` 的 unit 驗收（可見性、命名空間、逾時、上限） |
 | `.kiro/specs/agentic-mcp-orchestration/design.md` | 元件 4（本文件的規格母本）、附錄 B 不變量 27–31 |
+
+## 10. env 一覽（部署參考；完整版含查證指令見 `docs/deployment-runbook.md` §19-5）
+
+本文件 §5–§7.1 已就地說明 `MCP_ALLOWED_ORIGINS`／`RATE_PER_MIN`／`KB_GET_CAP`／
+`AGENT_TURN_ENABLED`／`AGENT_TURN_TIMEOUT_S`／`AGENT_TURN_CAP` 各自的行為；
+以下補齊與 `/mcp` 相關、但分散在其他模組（大綱組裝、影子、身分/追蹤）的其餘 env，
+彙整成一張表方便部署時查閱：
+
+| env | 預設 | 作用 |
+|---|---|---|
+| `AGENT_STAGE` | `M0` | 部署里程碑；工具可見性以 `stage[audience] <= AGENT_STAGE` 判定（`services/agent/mcp_facade.py:current_stage`） |
+| `AGENT_AUDIENCES` | 空 | REST 入口（`/api/v1/message`）分流用，**不影響** `/mcp`／`agent.turn` 的可見性（見 §7.1「回切開關」段） |
+| `AGENT_SHADOW_AUDIENCES` | 空 | 影子跑動的 audience 白名單（`services/agent/shadow.py`） |
+| `AGENT_SHADOW_MONTHLY_USD_CAP` | `50.0`（USD） | 影子月成本上限，超過自動關 |
+| `AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT` | `10000` | 售前大綱 token 預算（`services/agent/outline.py`） |
+| `AGENT_OUTLINE_TOKEN_LIMIT_PM` | `8000` | pm 目錄 token 預算（子 spec 用，M1 尚未消費） |
+| `AGENT_OUTLINE_TOKEN_LIMIT_TENANT` | `8000` | tenant 目錄 token 預算（子 spec 用） |
+| `AGENT_MODEL` | 未設 ⇒ 退回 `OPENAI_MODEL` ⇒ 再無則 `gpt-4o-mini` | agent runtime 模型名（`services/agent/runtime.py`） |
+| `AGENT_TRACE_WINDOW_DAYS` | `7` | `agent_trace` 查詢時間窗（`services/agent/trace_view.py`） |
+| `JGB2_CANDIDATE_CAP` | `5` | `jgb2.query.*` 候選列筆數上限（`services/agent/tools/jgb2.py`） |
+
+`AGENT_BUDGET_TOOL_CALLS`／`AGENT_BUDGET_REWRITES`／`AGENT_BUDGET_DEADLINE_S`（預設 4／2／20.0）：由 `services/agent/bootstrap.py:budget_from_env` 讀取（2026-09-05 補上；5.3 查證時發現 design 列了但程式沒讀），壞值／≤0 退回預設。

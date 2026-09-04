@@ -272,6 +272,21 @@ services:
       #    缺 Origin 的請求（server-to-server client 不送）不受影響、照放行。
       #    ⛔ 不可為了「讓瀏覽器連得上」而放寬——/mcp 僅 server-to-server。
       MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:--}
+      # agentic-mcp-orchestration 其餘新 env（runbook §19-5 逐一 grep 核對名稱／預設值）——
+      # 全部維持不宣告＝吃程式內建預設；里程碑推進時才在 .env 加對應鍵覆寫，⛔ 不在此處預先宣告：
+      #   AGENT_STAGE（預設 M0；部署里程碑，M0-M5）
+      #   AGENT_AUDIENCES（預設空；M3 才開 AGENT_AUDIENCES=prospect，管 REST 入口）
+      #   AGENT_TURN_ENABLED（預設 false；/mcp 的 agent.turn 工具回切開關，與 AGENT_AUDIENCES 互不管轄）
+      #   AGENT_TURN_TIMEOUT_S（預設 30 秒）／AGENT_TURN_CAP（預設 120/小時/(api_key_id,vendor_id)）
+      #   AGENT_SHADOW_AUDIENCES（預設空；M2 影子評估用）
+      #   AGENT_SHADOW_MONTHLY_USD_CAP（預設 50 USD；超過自動關並告警）
+      #   AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT（預設 10000）／_PM（預設 8000）／_TENANT（預設 8000）
+      #   AGENT_MODEL（未設回退 OPENAI_MODEL，再無則 gpt-4o-mini）
+      #   AGENT_TRACE_WINDOW_DAYS（預設 7；agent_trace 查詢時間窗）
+      #   RATE_PER_MIN（預設 60/分鐘/(api_key_id,vendor_id)；一般 MCP 工具速率）
+      #   KB_GET_CAP（預設 300/小時/key；kb.get 上限）
+      #   JGB2_CANDIDATE_CAP（預設 5；jgb2.query.* 候選列筆數）
+      #   AGENT_BUDGET_TOOL_CALLS／AGENT_BUDGET_REWRITES／AGENT_BUDGET_DEADLINE_S（預設 4／2／20.0；bootstrap.budget_from_env 讀取）
       # usage-metering 使用量計量（2026-07-06；預設開，關=零行為差異）
       USAGE_METERING_ENABLED: ${USAGE_METERING_ENABLED:-true}
       LLM_PRICING_PATH: ${LLM_PRICING_PATH:-}

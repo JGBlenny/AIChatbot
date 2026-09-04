@@ -12,6 +12,7 @@ from typing import Any, Optional, Union
 
 from services.agent.agent_rules import persona_provider, policy_provider
 from services.agent.budget import Budget
+import os
 from services.agent.output_schema import VerifierRules
 from services.agent.prompt_assembler import PromptAssembler
 from services.agent.runtime import AgentRuntime
@@ -67,7 +68,7 @@ def build_runtime(
         registry,
         verifier,
         assembler,
-        budget or Budget(),
+        budget or budget_from_env(),
         **runtime_kwargs,
     )
     runtime.rules_sha = rules.sha256
@@ -76,3 +77,27 @@ def build_runtime(
 
 
 __all__ = ["build_runtime", "DEFAULT_RULES_PATH", "DEFAULT_FIXTURES_DIR"]
+
+
+def budget_from_env() -> Budget:
+    """design §部署考量的三個 env：`AGENT_BUDGET_TOOL_CALLS`（4）／`AGENT_BUDGET_REWRITES`（2）／
+    `AGENT_BUDGET_DEADLINE_S`（20.0）。壞值／越界（≤0）退回預設並 print 警告，⛔ 不讓啟動炸。
+    （5.3 查證時發現 design 列了但程式沒讀，2026-09-05 補上——文件以本函式為準。）"""
+    def _num(key: str, default, cast):
+        raw = os.getenv(key, "").strip()
+        if not raw:
+            return default
+        try:
+            v = cast(raw)
+        except ValueError:
+            print(f"⚠️ [agent] {key}={raw!r} 非數字，退回預設 {default}")
+            return default
+        if v <= 0:
+            print(f"⚠️ [agent] {key}={v} 必須 >0，退回預設 {default}")
+            return default
+        return v
+    return Budget(
+        max_tool_calls=_num("AGENT_BUDGET_TOOL_CALLS", 4, int),
+        max_rewrites=_num("AGENT_BUDGET_REWRITES", 2, int),
+        deadline_s=_num("AGENT_BUDGET_DEADLINE_S", 20.0, float),
+    )

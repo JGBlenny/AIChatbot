@@ -33,6 +33,7 @@
 | 14 | brain-kb-grounding（Brain 掛 search_kb） | 隨版更（2026-07-21 增補） |
 | 15 | 進場路由基準調校（keywords 衛生） | 隨版更（2026-07-22 增補） |
 | 17 | **migration 帳本與體系收斂（現行正統：runner `migrate.sh`＋`schema_migrations` 記帳）** | **2026-07-22 定** |
+| 19 | agentic-mcp（M0–M1）部署：相依升級、五支 migration、內部 MCP key、售前池審核、env、煙囪、回切、監控 | 隨版更（2026-09-05 增補） |
 | 附錄A | 全庫搬遷路徑（**僅新環境建置**：空庫從 dump 還原） | 建置專用 |
 
 > **⚠️ 部署路徑（現行正統，2026-07-22 §17 收斂後）——先讀這段，勿被下方歷史紀錄誤導：**
@@ -624,6 +625,257 @@ curl -s -o /dev/null -w "%{http_code}\n" \
   "https://www.jgbsmart.com/api/external/v1/contracts/status-overview?role_id=<真role>" -H "X-API-Key: $JGB_KEY"
 # 預期 200；若 500 且錯誤含 early_termination_notice_date → 同 J-2，轉 jgb2 處理
 ```
+
+## 19. agentic-mcp（M0–M1）部署（2026-09-05）
+
+> spec `agentic-mcp-orchestration` 任務 5.3｜依賴 M0–M1 全部任務已收案（1.x–4.x）。
+> ⛔ 本節只給逐條指令＋預期輸出；線上執行一律由業主親自操作
+> （[[feedback_prod_ops_self_run]]／[[feedback_no_deploy_scripts]]）。金鑰一律用
+> `$KEY`／`$MCP_KEY` 等 shell 變數表示，⛔ 不得出現在本文件任何位置。
+
+### 19-0 相依升級提醒（**image 必重建，不可 `docker cp`**）
+
+`rag-orchestrator/requirements.txt` 這批相依已隨 M0–M1 任務升版（非本節新增，是既有 M0
+任務落地的結果，此處僅列出供部署前確認）：
+
+| 套件 | 版本（實際解析） | 可能影響 |
+|---|---|---|
+| `fastapi` | `0.115.14` | 既有路由行為不變；隨 `starlette` 升版 |
+| `starlette` | `>=0.46,<1.0`（實際解出 `0.46.2`） | 0.46 起部分棄用警告轉嚴——重建後看 log 有無新 DeprecationWarning |
+| `pydantic` | `>=2.13,<3`（實際解出 `2.13.5`） | **2.13 起 strict 模式行為變嚴**：既有 model 若依賴寬鬆型別轉換（如字串轉 int）可能在 strict 路徑報錯；M0–M1 測試已綠不代表涵蓋所有既有端點，重建後跑一輪 §5 煙囪 |
+| `anyio` | `>=4.9`（實際解出 `4.15.0`） | `mcp` SDK 要求；既有 async 路徑相依 anyio 3.x 行為者需留意（本專案未偵測到） |
+| `uvicorn` | `>=0.31.1`（實際解出 `0.52.4`） | 版距較大，重建後確認啟動 log 無新警告 |
+| `mcp` | `2.1.1` | 新增依賴，`/mcp` 門面用；不可用時 `AGENT_UNAVAILABLE`（不影響既有路徑，見 §19-6） |
+| `tiktoken` | `0.14.0` | 新增依賴，售前大綱 token 預算檢查用（R5.5） |
+
+驗證（重建後）：
+```bash
+docker exec aichatbot-rag-orchestrator python3 -c \
+  "import fastapi,starlette,pydantic,anyio,mcp,tiktoken; \
+   print(fastapi.__version__, starlette.__version__, pydantic.VERSION, anyio.__version__, mcp.__version__)"
+```
+預期：`0.115.14 0.46.2 2.13.5 4.15.0 2.1.1`（版號隨解析結果可能微幅浮動，但主版號需一致）。
+
+⚠️ **這批相依只能靠重建 image 生效**（`up -d --build`，同 §4）；`docker cp` 進容器
+不會更新 `pip` 安裝的套件版本，且 pyc 快取會讓「看起來沒事」但實際跑舊碼——
+線上曾因此類操作誤判過（見 §4 標題本身的教訓）。
+
+### 19-1 五支 migration
+
+依 `schema_migrations` 帳本以 `migrate.sh` dry-run → `--apply`（同 §17 用法，⛔ 不逐支手貼）：
+
+```bash
+cd /home/ec2-user/AIChatbot
+bash rag-orchestrator/database/migrate.sh
+```
+預期（dry-run）：`═══ A. SQL migrations ═══` 區塊列出五支待跑
+（`20260904_create_help_center_pages`、`20260904_api_keys_agent_scope`、
+`20260905_knowledge_base_outline_approval`、`20260905_agent_confirmation_tokens`、
+`20260905_agent_shadow_texts`；五支互不依賴，runner 依檔名字母序執行，順序不影響結果）。
+
+```bash
+bash rag-orchestrator/database/migrate.sh --apply
+```
+預期：五支各印一行 `✅ 已套並記帳`；再跑一次不帶 `--apply` 應全部顯示已套（冪等）。
+
+各表驗證：
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tA -c \
+  "SELECT column_name FROM information_schema.columns WHERE table_name='api_keys' AND column_name IN ('is_internal','vendor_ids') ORDER BY 1;"
+# 預期：兩行 is_internal、vendor_ids
+
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tA -c \
+  "SELECT column_name FROM information_schema.columns WHERE table_name='knowledge_base' AND column_name IN ('outline_approved_by','outline_approved_at') ORDER BY 1;"
+# 預期：兩行 outline_approved_at、outline_approved_by
+
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tA -c \
+  "SELECT count(*) FROM help_center_pages;"
+# 預期：0（表已建、尚無資料——D3 裁後才匯入，本節不匯入）
+
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tA -c \
+  "SELECT count(*) FROM agent_confirmation_tokens;"
+# 預期：0
+
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tA -c \
+  "SELECT count(*) FROM agent_shadow_texts;"
+# 預期：0
+```
+
+⚠️ `agent_shadow_texts` 只收 prospect 全文、30 天清；清理指令（業主排程執行，本節不建 cron）：
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "DELETE FROM agent_shadow_texts WHERE created_at < now() - interval '30 days';"
+```
+
+### 19-2 內部 MCP API key 發行（比照 §16-1，多 `is_internal`／`vendor_ids`）
+
+```bash
+KEY=$(python3 -c "import secrets;print('rgk_'+secrets.token_urlsafe(32))")
+HASH=$(python3 -c "import hashlib;print(hashlib.sha256('$KEY'.encode()).hexdigest())")
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "INSERT INTO api_keys (name, key_hash, key_prefix, description, is_active, is_internal, vendor_ids)
+   VALUES ('mcp-internal-prod', '$HASH', '${KEY:0:8}', 'agentic-mcp 內部呼叫者（回測／MCP client）', TRUE, TRUE, NULL);"
+echo "MCP_INTERNAL_API_KEY=$KEY" >> .env
+```
+預期：`INSERT 0 1`。`is_internal=TRUE` ⇒ `/mcp` 流量計量標內部、不計入額度；
+`vendor_ids NULL` ⇒ 不限業者（⛔ 若要限定業者，改傳 `ARRAY[<vendor_id>,...]`，
+`vendor_ids='{}'`（空陣列）則是全拒——兩者語義不可混用，見 migration
+`20260904_api_keys_agent_scope.sql` 註解）。⛔ `$KEY` 不進版控、不貼進對話、不進日誌。
+
+自檢（帶 key 直打，無 key 應 401）：
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8100/api/v1/agent/health
+# 預期：401（無 key）
+
+curl -s http://localhost:8100/api/v1/agent/health -H "X-API-Key: $KEY" | head -c 800; echo
+# 預期：HTTP 200，body JSON status 欄非例外；含 checks.api_keys_agent_scope_ready=true
+```
+
+### 19-3 `MCP_ALLOWED_ORIGINS` 設定
+
+`docker-compose.prod.yml` 已宣告 `MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:--}`（1.7 落地）。
+`/mcp` 僅供 **server-to-server**（Claude Code、jgb2 後端等不帶 Origin 的呼叫者），
+⛔ 不供裝置／瀏覽器直連：
+
+- `.env` **未設定此鍵** ⇒ app 啟動即 `raise`（必須明示，見 `mcp_facade.py:load_allowed_origins`）。
+- 設為 `-`（compose 預設值）⇒ 空集合＝「任何帶 `Origin` header 的請求都拒」——這是
+  server-to-server 門面的正確預設，**多數情況維持這個值即可**。
+- 缺 `Origin` header 的請求（server-to-server client 本就不送）不受影響、照放行。
+- 若日後真有瀏覽器/裝置需求，設為逗號分隔白名單（如 `https://a.example.com,https://b.example.com`）
+  才放行對應來源——⛔ 目前無此需求，不建議設定。
+
+驗證三態（見 §19-6 煙囪 4）。
+
+### 19-4 售前池標記已審核（M1 前置，R11.6）
+
+> 背景：`build_prospect_outline` 只取 `outline_approved_by IS NOT NULL` 的列；上線前
+> 需先把現有售前池標記為已審核，否則大綱組裝取不到任何來源。腳本：
+> `.kiro/specs/agentic-mcp-orchestration/sql/mark-prospect-pool-approved-20260905.sql`
+> （`git add -f`，WHERE 條件逐條翻自 `build_visibility_predicate` 的 b2c 分支）。
+
+先預覽要標記的列數（Step 1，⛔ 不執行 UPDATE）：
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tA -f \
+  <(sed -n '/^SELECT count(\*) AS matched/,/^-- 預期：31$/p' \
+    .kiro/specs/agentic-mcp-orchestration/sql/mark-prospect-pool-approved-20260905.sql | sed '$d')
+```
+預期：`31`。⚠️ **若不是 31，⛔ 立刻停止，不得往下執行 UPDATE**——回報實際數字，
+回到 SQL 檔核對 `build_visibility_predicate` 條件是否與 prod 售前池現況仍一致
+（本機驗證時的 31 是本機庫的快照，prod 資料量可能不同，這是預期會需要人工核對的一步，
+不是腳本錯誤）。
+
+確認數字後執行標記與驗證（Step 2、3 皆在同一檔內）：
+```bash
+docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin \
+  < .kiro/specs/agentic-mcp-orchestration/sql/mark-prospect-pool-approved-20260905.sql
+```
+預期：`UPDATE <與預覽相同的數字>`；檔案最後一段驗證 SQL 印出
+`SELECT count(*) FROM knowledge_base WHERE outline_approved_by IS NOT NULL;` ＝相同數字。
+
+Rollback（僅標記錯誤時使用，只還原本次以 `owner-20260905` 寫入的列）：
+```bash
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "UPDATE knowledge_base SET outline_approved_by = NULL, outline_approved_at = NULL WHERE outline_approved_by = 'owner-20260905';"
+```
+
+### 19-5 env 一覽（名稱／預設／作用／開啟時機）
+
+⛔ 以下皆以程式實際讀取為準（`os.getenv`／`os.environ.get`，逐一 grep 核對，見各列查證指令）；
+`docker-compose.prod.yml`／`docker-compose.dev.yml` 目前只以**註解**列出（不新增會改變行為的鍵，
+`MCP_ALLOWED_ORIGINS` 已於 1.7 落地為真正的宣告鍵，見 §19-3）。
+
+| env | 預設 | 作用 | 何時才開 | 查證 |
+|---|---|---|---|---|
+| `AGENT_STAGE` | `M0`（非法值／未設回退 `M0`） | 部署里程碑；工具 `stage[audience] <= AGENT_STAGE` 才可見 | 隨 M0→M1→…推進逐步調高，⛔ 不超前實際完成的里程碑 | `services/agent/mcp_facade.py:current_stage` |
+| `AGENT_AUDIENCES` | 空（逗號分隔清單） | REST 入口（`/api/v1/message`）哪些 audience 走 agent 鏈 | **M3 才開 `AGENT_AUDIENCES=prospect`**（5.1 切換演練後） | `routers/agent_entry.py:agent_audiences` |
+| `AGENT_TURN_ENABLED` | `false` | `agent.turn` MCP 工具是否註冊；關閉時 `tools/list` 看不到它 | 只在需要 MCP client 對話（Claude Code／jgb2 後端經 `/mcp` 跑整回合）時開；⛔ 與 `AGENT_AUDIENCES` 互不管轄 | `services/agent/mcp_facade.py:_AGENT_TURN_ENABLED_ENV` |
+| `AGENT_TURN_TIMEOUT_S` | `30.0` 秒 | `agent.turn` 單次呼叫逾時（刻意大於 `Budget.deadline_s`=20） | 隨 `AGENT_TURN_ENABLED` 一併評估，預設值通常免調 | `services/agent/mcp_facade.py:agent_turn_timeout_s` |
+| `AGENT_TURN_CAP` | `120`／小時／`(api_key_id, vendor_id)` | `agent.turn` 速率上限 | 同上；⚠️ 行程內記憶體，多 worker 部署時實際上限＝此值 × worker 數 | `services/agent/mcp_facade.py:agent_turn_cap` |
+| `AGENT_SHADOW_AUDIENCES` | 空（逗號分隔清單） | 影子跑動的 audience 白名單 | M2 影子評估開始時開（如 `AGENT_SHADOW_AUDIENCES=prospect`），M2 完成或未使用時關 | `services/agent/shadow.py:_shadow_audiences` |
+| `AGENT_SHADOW_MONTHLY_USD_CAP` | `50.0`（USD） | 影子月成本上限，超過自動關並告警 | 隨 `AGENT_SHADOW_AUDIENCES` 一併開 | `services/agent/shadow.py:_monthly_cap_usd` |
+| `AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT` | `10000` | 售前大綱 token 預算上限 | 全程有效（M1 起，非里程碑開關） | `services/agent/outline.py:OUTLINE_TOKEN_LIMIT_ENV` |
+| `AGENT_OUTLINE_TOKEN_LIMIT_PM` | `8000` | pm 目錄 token 預算上限（子 spec 用） | 同上，M1 尚未消費（pm 另案） | 同上 |
+| `AGENT_OUTLINE_TOKEN_LIMIT_TENANT` | `8000` | tenant 目錄 token 預算上限（子 spec 用） | 同上 | 同上 |
+| `AGENT_MODEL` | 未設 ⇒ 退回 `OPENAI_MODEL` ⇒ 再無則 `gpt-4o-mini` | agent runtime 呼叫的模型名 | 全程有效；未設時沿用專案既有 `OPENAI_MODEL` 慣例 | `services/agent/runtime.py`（`self._model = model or os.environ.get("AGENT_MODEL") or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")`） |
+| `AGENT_TRACE_WINDOW_DAYS` | `7`（非法／非正數回退） | `agent_trace` 查詢與 CLI 的時間窗上限 | 全程有效 | `services/agent/trace_view.py:window_days` |
+| `MCP_ALLOWED_ORIGINS` | **無**（未設＝啟動即 raise） | `/mcp` 的 Origin 白名單三態判定 | 已於 1.7 落地必填，維持 `-`（見 §19-3） | `services/agent/mcp_facade.py:load_allowed_origins` |
+| `RATE_PER_MIN` | `60`／分鐘／`(api_key_id, vendor_id)` | 一般 MCP 工具（非 `agent.turn`）速率限制 | 全程有效，既有工具通用旋鈕 | `services/agent/tools/registry.py:_DEFAULT_RATE_PER_MIN` |
+| `KB_GET_CAP` | `300`／小時／key | `kb.get` 呼叫上限 | 全程有效 | `services/agent/tools/registry.py:_DEFAULT_KB_GET_CAP` |
+| `JGB2_CANDIDATE_CAP` | `5` | `jgb2.query.*` 候選列筆數上限 | 全程有效 | `services/agent/tools/jgb2.py:_candidate_cap` |
+
+ℹ️ `AGENT_BUDGET_TOOL_CALLS`／`AGENT_BUDGET_REWRITES`／`AGENT_BUDGET_DEADLINE_S`（預設 4／2／20.0）由 `services/agent/bootstrap.py:budget_from_env` 讀取（2026-09-05 補上），壞值／≤0 退回預設；一般不需宣告。
+
+`docker-compose.prod.yml`／`docker-compose.dev.yml` 對照：本節新增的鍵**只加註解**列出
+上表（`MCP_ALLOWED_ORIGINS` 除外——它已是既有宣告鍵），不新增會改變行為的鍵；若某個
+里程碑要開某個開關，屆時在 `.env` 直接加該鍵覆寫預設值即可，不需要改 compose 檔。
+
+### 19-6 煙囪驗證
+
+```bash
+# ① 既有健檢（不動）
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8100/api/v1/health
+# 預期：200
+
+# ② agent 健檢（帶 key＋身分 header）
+curl -s http://localhost:8100/api/v1/agent/health \
+  -H "X-API-Key: $MCP_INTERNAL_API_KEY" \
+  -H 'X-JGB-Identity: {"mode":"b2c","target_user":"tenant","vendor_id":1,"session_id":"backtest_session_smoke"}' \
+  | python3 -m json.tool
+# 預期：status 非例外；checks.api_keys_agent_scope_ready == true（19-1 兩支 migration 已套）；
+#   checks.mcp_sdk 非 "unavailable (DSP-014)"（mcp 套件已隨 19-0 重建進 image）
+
+# ③ /mcp 無 key ⇒ 401
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8100/mcp \
+  -H 'Content-Type: application/json' -d '{}'
+# 預期：401
+
+# ③b /mcp 帶 key 但帶不在白名單的 Origin ⇒ 403（驗證 MCP_ALLOWED_ORIGINS 三態，見 §19-3）
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8100/mcp \
+  -H "X-API-Key: $MCP_INTERNAL_API_KEY" -H 'Origin: https://not-allowed.example.com' \
+  -H 'Content-Type: application/json' -d '{}'
+# 預期：403
+
+# ④ 不變量稽核（含不變量 27–31、不變量 3 整目錄 digest）
+docker exec aichatbot-rag-orchestrator make audit
+# 預期：PASS（見 §10 既有用法；agentic-mcp 新增 5 條不變量隨此指令一併跑）
+```
+
+### 19-7 回切
+
+```bash
+# .env：AGENT_AUDIENCES 設為空、AGENT_TURN_ENABLED=false
+sed -i 's/^AGENT_AUDIENCES=.*/AGENT_AUDIENCES=/' .env
+sed -i 's/^AGENT_TURN_ENABLED=.*/AGENT_TURN_ENABLED=false/' .env
+docker compose -f docker-compose.prod.yml up -d   # ⛔ 不加 --build，回切不需要重建 image
+```
+預期：≤5 分鐘內完成，走舊鏈（無資料修復——agent 路徑的表如 `agent_confirmation_tokens`／
+`agent_shadow_texts` 保留但不再寫入，不影響舊鏈）。驗證：
+
+```bash
+curl -s http://localhost:8100/mcp -X POST -H "X-API-Key: $MCP_INTERNAL_API_KEY" \
+  -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+  | grep -o '"agent.turn"'
+# 預期：無輸出（AGENT_TURN_ENABLED=false ⇒ 工具未註冊，⛔ 不是「註冊了但拒絕」）
+```
+
+### 19-8 監控告警
+
+以下四項屬觀測/告警設計，本任務只記錄判準與查詢方式，**不在本任務內接線到既有告警系統**
+（⛔ 不改 `.py`；接線屬另案）：
+
+1. **每回合成本 > 現行（舊鏈同類回合）×3**：查 `usage_events.processing_path LIKE 'mcp:agent.turn'`
+   或 `'shadow:agent'` 的 `cost_usd`／`total_tokens`，與同期舊鏈（`decision_snapshot` 的既有
+   路徑）比較均值。
+2. **影子月上限**：`AGENT_SHADOW_MONTHLY_USD_CAP` 觸發後 `shadow.py` 會自動關（見
+   `services/agent/shadow.py:_monthly_cap_usd`）並告警——告警落點需人工看 log
+   （`shadow disabled: monthly cap exceeded` 類字串，實際訊息以程式為準）。
+3. **Verifier 拒率**：`decision_snapshot.agent`（或 `agent_trace`）裡的拒因分佈
+   （`tools/agent_trace.py`）——拒率異常升高代表知識供給或大綱組裝出問題。
+4. **`tool_unavailable` 率**與**p95**：`usage_events` 的 `channel='mcp'` 或 `agent` 相關列，
+   依 `processing_path` 分組看延遲分佈與 `AGENT_UNAVAILABLE`／`TOOL_TIMEOUT` 出現率。
+5. **DSP-011 前提偵測四旗**：`GET /api/v1/agent/health` 的 `checks.premise.red_flags`
+   （見 `docs/api/mcp-facade.md` §8）——任一非零即代表「`/mcp` 只有內部呼叫者」這個前提
+   可能已破，需重新評估是否要補真正的認證層。
 
 ## 附錄 A：全庫搬遷路徑（**僅新環境建置**：空庫從 dump 還原）
 

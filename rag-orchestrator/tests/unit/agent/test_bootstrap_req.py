@@ -135,3 +135,18 @@ def test_default_paths_point_at_real_repo_files():
     assert DEFAULT_RULES_PATH.exists(), f"{DEFAULT_RULES_PATH} 不存在——路徑算錯了"
     assert (DEFAULT_FIXTURES_DIR / "known_fabrications.json").exists()
     assert (DEFAULT_FIXTURES_DIR / "known_good.json").exists()
+
+
+@pytest.mark.unit
+def test_budget_from_env_reads_three_keys_and_falls_back(monkeypatch):
+    from services.agent.bootstrap import budget_from_env
+    monkeypatch.delenv("AGENT_BUDGET_TOOL_CALLS", raising=False)
+    monkeypatch.delenv("AGENT_BUDGET_REWRITES", raising=False)
+    monkeypatch.delenv("AGENT_BUDGET_DEADLINE_S", raising=False)
+    d = budget_from_env()
+    assert (d.max_tool_calls, d.max_rewrites, d.deadline_s) == (4, 2, 20.0)
+    monkeypatch.setenv("AGENT_BUDGET_TOOL_CALLS", "6")
+    monkeypatch.setenv("AGENT_BUDGET_REWRITES", "abc")      # 壞值 ⇒ 預設
+    monkeypatch.setenv("AGENT_BUDGET_DEADLINE_S", "-3")     # 越界 ⇒ 預設
+    e = budget_from_env()
+    assert (e.max_tool_calls, e.max_rewrites, e.deadline_s) == (6, 2, 20.0)
