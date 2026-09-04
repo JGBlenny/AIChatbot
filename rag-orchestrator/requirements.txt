@@ -56,6 +56,11 @@ Pillow>=10.0.0
 
 # Reranker：透過 semantic-model 容器（HTTP API）呼叫，本服務不需要 sentence-transformers/torch
 
+# Token 計數（spec agentic-mcp-orchestration 任務 3.2・`OutlineAssembler`）：
+#   `tiktoken.get_encoding("cl100k_base")` 供 R5.5 大綱 token 預算檢查；離線／無法取得
+#   編碼檔時 `services/agent/outline.py` 退回 `len(text)//2` 近似值（`approx=True`）。
+tiktoken==0.14.0
+
 # ── MCP SDK（spec agentic-mcp-orchestration 任務 1.7 → 1.7b）─────────────────
 # 業主 2026-09-04 裁 DSP-014 選項 A：升級 web stack 承載 mcp 2.1.1（見
 # .claude/DECISIONS.md DSP-014，以及上方 fastapi/starlette/pydantic/anyio 已升版）。

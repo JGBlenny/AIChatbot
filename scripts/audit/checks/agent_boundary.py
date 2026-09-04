@@ -287,7 +287,7 @@ def check_29_predicate_single_source(targets=None):
         ("services/vendor_knowledge_retriever_v2.py", "_vector_search"),
         ("services/vendor_knowledge_retriever_v2.py", "_keyword_search"),
         ("services/agent/tools/kb.py", "fetch_visible_row"),
-        ("services/agent/prompt_assembler.py", "build_prospect_outline"),
+        ("services/agent/outline.py", "_fetch_prospect_pool_rows"),
     ]
     bad = []
     notes = []
