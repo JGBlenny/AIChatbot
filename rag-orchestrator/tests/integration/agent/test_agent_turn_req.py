@@ -38,6 +38,11 @@ _MIGRATION = os.path.join(
     os.path.dirname(__file__), "..", "..", "..", "database", "migrations",
     "20260904_api_keys_agent_scope.sql",
 )
+#: 2.9 接線後 `confirm.request` 也走這一檔（token 綁的是**命名空間** session）。
+_MIGRATION_TOKENS = os.path.join(
+    os.path.dirname(__file__), "..", "..", "..", "database", "migrations",
+    "20260905_agent_confirmation_tokens.sql",
+)
 
 _KEY_NAME_A = "test-agent-turn-2-6-vendor1"
 _KEY_NAME_B = "test-agent-turn-2-6-vendor2"
@@ -73,8 +78,9 @@ async def pool():
         pytest.skip(f"測試 DB 不可達（{type(e).__name__}）→ agent.turn 整合測試未驗")
         return
 
-    with open(_MIGRATION, encoding="utf-8") as f:
-        await p.execute(f.read())
+    for migration in (_MIGRATION, _MIGRATION_TOKENS):
+        with open(migration, encoding="utf-8") as f:
+            await p.execute(f.read())
     _reset_agent_scope_detection()
 
     # 正對照組：vendors 必須有 1 與 2，否則「跨業者隔離」根本無從證明
@@ -105,6 +111,9 @@ async def pool():
                         _SESSION_PREFIX + "%")
         await p.execute("DELETE FROM form_sessions WHERE session_id LIKE $1",
                         _ROW_PREFIX + "%" + _SESSION_PREFIX + "%")
+        await p.execute(
+            "DELETE FROM agent_confirmation_tokens WHERE session_id LIKE $1",
+            _ROW_PREFIX + "%" + _SESSION_PREFIX + "%")
         await p.close()
         _reset_agent_scope_detection()
 
@@ -301,12 +310,13 @@ async def test_same_session_id_different_vendor_is_isolated(pool, env):
     assert await _row(pool, row_key_a) is not None
     assert await _row(pool, session_id) is None, "⛔ 不得以裸 session_id 建列"
 
-    # 模擬 A 這一輪留下的 slots（`session.slots.set` 落地後就是這個位置）
+    # 模擬 A 這一輪留下的 slots（2.9 對齊：`session.slots.set` 寫的是
+    # `collected_data` **頂層** `slots`，⛔ 不是 `agent` 子樹）
     state_a = await _state(pool, row_key_a)
-    state_a.setdefault("agent", {})["slots"] = {"unit_count": "600"}
+    state_a["slots"] = {"unit_count": "600"}
     await app_a.state.conversational_engine._save(row_key_a, state_a)
     before = await _state(pool, row_key_a)
-    assert before["agent"]["slots"] == {"unit_count": "600"}   # 正對照組
+    assert before["slots"] == {"unit_count": "600"}   # 正對照組
 
     # ── B 業者拿**同一個 session_id**、另一把 key 跑一回合 ─────────────
     seen_slots = {}
@@ -345,9 +355,10 @@ async def test_same_session_id_different_vendor_is_isolated(pool, env):
 async def test_two_turns_second_sees_first_turn_state(pool, env):
     """第二回合的 `slots` 要來自第一回合存下的那一列（同一把命名空間鍵）。
 
-    ⚠️ slots 由 `session.slots.set` 寫入，而該工具在 `build_registry` 尚未接線
-    （2.4 交付了函式、還沒進 registry）⇒ 這裡以引擎直接寫入同一個位置模擬它，
-    測的是**「回合之間狀態有沒有沿著命名空間鍵接起來」**這條路。
+    ⚠️ 這一條測的是**「回合之間狀態有沒有沿著命名空間鍵接起來」**，故以引擎
+    直接寫入 `session.slots.set` 的落點（2.9 起＝`collected_data` **頂層**
+    `slots`）模擬它；走真工具的那條路在
+    `test_slots_set_and_get_are_isolated_by_namespaced_identity`。
     """
     session_id = _session()
     key_id = await _api_key_id(pool, _KEY_NAME_A)
@@ -363,7 +374,7 @@ async def test_two_turns_second_sees_first_turn_state(pool, env):
     await invoke(F.AGENT_TURN_NAME, ctx, {"message": "第一句"})
 
     state = await _state(pool, row_key)
-    state["agent"]["slots"] = {"unit_count": "600"}
+    state["slots"] = {"unit_count": "600"}
     await app.state.conversational_engine._save(row_key, state)
 
     seen = {}
@@ -515,8 +526,9 @@ async def test_real_mcp_client_two_turn_conversation(pool, env):
                 assert first.is_error is False
 
                 # 第一回合的狀態落在命名空間鍵上；補進 slots 模擬 session.slots.set
+                # （2.9 對齊：落點是 `collected_data` **頂層** `slots`）
                 state = await _state(pool, row_key)
-                state["agent"]["slots"] = {"unit_count": "600"}
+                state["slots"] = {"unit_count": "600"}
                 await app_obj.state.conversational_engine._save(row_key, state)
 
                 seen = {}
@@ -540,3 +552,151 @@ async def test_real_mcp_client_two_turn_conversation(pool, env):
         finally:
             uv.should_exit = True
             await serve_task
+
+
+# ════════════════════════════════════════════════════════════════════
+# 任務 2.9：2.4 三工具接線後的跨業者隔離（真測試庫）
+#
+# 這一區走的是**門面 `_invoke`**（`build_registry` 的完整 registry），
+# ⛔ 不直呼工具函式——2.9 的處置就在 `_invoke`／`_agent_turn` 換身分那一步，
+# 直呼會把要驗的那段跳過去。
+# ════════════════════════════════════════════════════════════════════
+_REQ_29 = "agentic-mcp-orchestration:2.9"
+
+
+def _full_registry(deps):
+    """`build_registry` 的完整 registry（2.4 三工具已接線）。"""
+    return F.build_registry(deps)
+
+
+async def _seed_conversation_row(pool, row_key):
+    """`session.slots.set` ⛔ 不建列 ⇒ 先以引擎開一列 COLLECTING 會話。"""
+    await _engine(pool)._start(row_key, "anonymous", VENDOR_A, "agent:prospect",
+                               role_id=None)
+
+
+@pytest.mark.req(_REQ_29)
+async def test_slots_set_and_get_are_isolated_by_namespaced_identity(pool, env):
+    """A 寫的槽位只有 A 讀得到；B 帶**同一個 `session_id`**、另一把 key ⇒ 讀不到。
+
+    ⚠️ 這是 2.6 P1 的側門：`session.slots.*` 的 SQL 沒有 vendor 條件，
+    工具若拿到裸 `session_id`，B 讀到的就是 A 那一列。
+    """
+    session_id = _session()
+    key_a_id = await _api_key_id(pool, _KEY_NAME_A)
+    key_b_id = await _api_key_id(pool, _KEY_NAME_B)
+    row_key_a = f"mcp:{key_a_id}:{VENDOR_A}:{session_id}"
+    row_key_b = f"mcp:{key_b_id}:{VENDOR_B}:{session_id}"
+
+    deps = _deps(_app(pool, _make_runtime(pool, [])), pool)
+    invoke = F._make_invoke(_full_registry(deps), deps)
+    ctx_a = _FakeCtx({"x-api-key": _PLAIN_KEY_A,
+                      "x-jgb-identity": _ident(VENDOR_A, session_id)})
+    ctx_b = _FakeCtx({"x-api-key": _PLAIN_KEY_B,
+                      "x-jgb-identity": _ident(VENDOR_B, session_id)})
+
+    await _seed_conversation_row(pool, row_key_a)
+    await _seed_conversation_row(pool, row_key_b)
+
+    out = await invoke("session.slots.set", ctx_a,
+                       {"key": "unit_count", "value": "600"})
+    assert out["slots"]["unit_count"]["value"] == "600"
+
+    # ⓵ 列真的落在 A 的命名空間鍵下，⛔ 裸 session_id 底下沒有列
+    state_a = await _state(pool, row_key_a)
+    assert state_a["slots"]["unit_count"]["value"] == "600"
+    assert await _row(pool, session_id) is None, "⛔ 不得以裸 session_id 存取"
+
+    # ⓶ A 自己讀得到（正對照組：⛔ 沒有它，下面 B 的「讀不到」可能只是工具壞了）
+    mine = await invoke("session.slots.get", ctx_a, {"key": "unit_count"})
+    assert mine["slots"]["unit_count"]["value"] == "600"
+
+    # ⓷ B 讀不到
+    theirs = await invoke("session.slots.get", ctx_b, {"key": "unit_count"})
+    assert theirs["slots"] == {}, f"跨業者讀到了槽位：{theirs['slots']}"
+
+    # ⓸ B 就算自己寫一個同名槽位，也 ⛔ 不動 A 那一列
+    await invoke("session.slots.set", ctx_b, {"key": "unit_count", "value": "1"})
+    assert (await _state(pool, row_key_a))["slots"]["unit_count"]["value"] == "600"
+    assert (await _state(pool, row_key_b))["slots"]["unit_count"]["value"] == "1"
+
+
+@pytest.mark.req(_REQ_29)
+async def test_confirm_token_is_bound_to_the_namespaced_session(pool, env):
+    """`confirm.request` 發的 token 綁**命名空間鍵**；B 拿同一張 token 兌現不了。
+
+    token ⛔ 不回給模型（`confirm.py`），所以這裡直接從表裡取——測的是
+    「token 綁的 session_id 是哪一把鍵」，不是「模型拿不拿得到 token」。
+    """
+    from services.agent.tools.confirm import redeem_token
+
+    session_id = _session()
+    key_a_id = await _api_key_id(pool, _KEY_NAME_A)
+    key_b_id = await _api_key_id(pool, _KEY_NAME_B)
+    row_key_a = f"mcp:{key_a_id}:{VENDOR_A}:{session_id}"
+    row_key_b = f"mcp:{key_b_id}:{VENDOR_B}:{session_id}"
+
+    deps = _deps(_app(pool, _make_runtime(pool, [])), pool)
+    invoke = F._make_invoke(_full_registry(deps), deps)
+    payload = {"action": "create_repair", "estate_id": 7}
+
+    out = await invoke("confirm.request", _FakeCtx(
+        {"x-api-key": _PLAIN_KEY_A, "x-jgb-identity": _ident(VENDOR_A, session_id)}),
+        {"summary": "要送出報修單嗎", "payload": json.dumps(payload, ensure_ascii=False)})
+    assert out["pending_id"] and "token" not in json.dumps(out)
+
+    # ⓵ 表裡那一列綁的是**命名空間鍵**，⛔ 不是裸 session_id
+    rows = await pool.fetch(
+        "SELECT token, session_id FROM agent_confirmation_tokens "
+        "WHERE session_id LIKE $1", "%" + session_id)
+    assert len(rows) == 1, [r["session_id"] for r in rows]
+    assert rows[0]["session_id"] == row_key_a
+    token = rows[0]["token"]
+
+    # ⓶ B 以自己的命名空間鍵兌現不了（同一個裸 session_id 也沒用）
+    for wrong in (row_key_b, session_id):
+        bad = await redeem_token(pool, wrong, token, payload)
+        assert bad.ok is False and bad.error == "CONFIRMATION_REQUIRED", wrong
+
+    # ⓷ 正對照組：A 自己兌現得了 ⇒ 上面兩個拒是 session 綁定，不是 token 壞了
+    good = await redeem_token(pool, row_key_a, token, payload)
+    assert good.ok is True and good.pending_id == out["pending_id"]
+
+
+@pytest.mark.req(_REQ_29)
+async def test_handoff_tool_is_reachable_through_the_facade(pool, env):
+    """正對照組：同一條門面路徑上，`handoff.request` 走得通 ⇒ 上面各種
+    `{}`／拒絕不是因為整個 registry 沒接起來。"""
+    session_id = _session()
+    deps = _deps(_app(pool, _make_runtime(pool, [])), pool)
+    invoke = F._make_invoke(_full_registry(deps), deps)
+
+    out = await invoke("handoff.request", _FakeCtx(
+        {"x-api-key": _PLAIN_KEY_A, "x-jgb-identity": _ident(VENDOR_A, session_id)}),
+        {"reason": "tool_unavailable", "fact_class": "other"})
+    assert out["message"]
+    assert out["handoff"]["reason"] == "tool_unavailable"
+
+
+@pytest.mark.req(_REQ_29)
+def test_invariant_27_scans_at_least_eight_specs():
+    """不變量 27 掃到的 `input_schema` 數 ≥8（2.4 三檔的四支 spec 在內）。"""
+    import importlib.util
+
+    path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..",
+                        "scripts", "audit", "checks", "agent_boundary.py")
+    spec = importlib.util.spec_from_file_location("agent_boundary_for_test", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    specs, errors = module.scan_27_specs()
+    assert not errors, errors
+    files = {rel for rel, _l, _k in specs}
+    assert len(specs) >= 8, sorted(files)
+    # 正對照組：2.4 三個檔都被走訪到（否則 ≥8 可能全來自別處）
+    for expected in ("services/agent/tools/handoff.py",
+                     "services/agent/tools/session.py",
+                     "services/agent/tools/confirm.py"):
+        assert expected in files, sorted(files)
+    ok, message = module.check_27_toolspec_identity_keys()
+    assert ok, message

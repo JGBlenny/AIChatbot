@@ -18,6 +18,16 @@
 - **每小時上限** `AGENT_TURN_CAP`（預設 120，key `(api_key_id, vendor_id)`）。
 註冊本身受 `AGENT_TURN_ENABLED`（預設 false）管，⛔ 不受 `AGENT_AUDIENCES` 左右。
 
+## 命名空間身分（任務 2.9）
+2.4 的 `session.slots.*`／`confirm.request` 各自用 `identity.session_id` 去
+`form_sessions`／`agent_confirmation_tokens` 找列，而那些 SQL **沒有 vendor
+條件**。故 `/mcp` 這條路徑交給**任何**工具的身分，一律先過
+`namespaced_identity()`（`session_id` → `mcp:{api_key_id}:{vendor_id}:{session_id}`）
+——否則 2.6 才擋掉的「同 session_id 跨業者互讀」會從工具這扇側門走回來。
+`agent.turn` 是唯一例外（它自己餵 `NamespacedStateStore`，那支會加前綴；
+換過就成雙前綴），但它傳給 `AgentRuntime.run_turn` 的身分**是**命名空間身分，
+於是回合內模型呼叫的工具同樣落在命名空間鍵下。REST 路徑 ⛔ 不換（見函式 docstring）。
+
 ## 這一層在守什麼（DSP-011）
 授權（誰能看到誰的個資）由 jgb2 `external/v1` 全權處理，本系統 ⛔ 不建授權層。
 本系統對呼叫者只有兩道閘：**服務層閘**（有效 X-API-Key）與**額度**
@@ -105,7 +115,7 @@ import json
 import logging
 import os
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace as dataclass_replace
 from typing import Any, Callable, Mapping, Optional
 
 from pydantic import BaseModel
@@ -676,6 +686,35 @@ def _open_state_store(deps: FacadeDeps, identity: Identity) -> NamespacedStateSt
     return store
 
 
+def namespaced_identity(identity: Identity) -> Identity:
+    """把 `/mcp` 身分的**裸 `session_id`** 換成命名空間鍵後的身分（任務 2.9）。
+
+    ⚠️ **為什麼工具也要換身分，而不是只有 `agent.turn` 的狀態鍵要換**：
+    2.6 只把 `agent.turn` 自己讀寫的 `form_sessions` 列搬進命名空間
+    （`services/agent/state_store.py`），但 2.4 的三個工具是**各自**用
+    `identity.session_id` 去找列的——
+      - `session.slots.get/set` → `form_sessions.session_id = $1`
+      - `confirm.request`／`redeem_token` → `agent_confirmation_tokens.session_id`
+    這些 SQL **都沒有 vendor 條件**（正對照：`state_store.py` 模組 docstring 引的
+    security review 原句就是在講同一組 SQL）。所以只要工具拿到的是裸
+    `session_id`，持另一把 key／另一個 vendor 的呼叫端只要帶同一個
+    `session_id`，就能讀他人的槽位、兌現他人的確認 token——**2.6 剛從正門擋掉的
+    P1 會從這扇側門原封不動地走回來**。故：交給工具的身分一律換成命名空間身分。
+
+    ⛔ **fail-closed**：`api_key_id`／`vendor_id` 缺、或鍵超過
+    `form_sessions.session_id` 的 100 字 ⇒ `ValueError`（由呼叫端轉成
+    `INVALID_INPUT`）。⛔ 不得「退回裸 session_id」——那正是被擋掉的那條路。
+
+    ⚠️ REST 路徑（`routers/agent_entry.py`）**不呼叫本函式**：那條路的
+    `session_id` 由 jgb2 上游 scope 過，且與舊鏈共用同一列
+    （`form_sessions` 的 `config_key='agent:<audience>'`），加前綴會讓 REST 與
+    舊鏈天然分池、續對話直接斷掉。兩條路徑的分池由「MCP 加前綴、REST 不加」
+    達成，⛔ 不要為了「一致」而把 REST 也加上去。
+    """
+    store = NamespacedStateStore(None, identity.api_key_id, identity.vendor_id)
+    return dataclass_replace(identity, session_id=store.key(identity.session_id))
+
+
 def _make_agent_turn(deps: FacadeDeps) -> Callable:
     """`agent.turn` 的 `ToolFn`：載入命名空間狀態 → `run_turn` → 存回。
 
@@ -696,9 +735,16 @@ def _make_agent_turn(deps: FacadeDeps) -> Callable:
             return ToolResult(ok=False, error="NO_MATCH")
         try:
             store = _open_state_store(deps, identity)
+            # Runtime 收到的身分**就是命名空間身分**（任務 2.9）：回合內模型呼叫
+            # `session.slots.*`／`confirm.request` 時，工具拿到的 `session_id`
+            # 才會是這一列的鍵，而不是呼叫端給的裸值。⛔ 不把裸身分傳進 run_turn。
+            turn_identity = namespaced_identity(identity)
         except ValueError:
             return ToolResult(ok=False, error="INVALID_INPUT")
 
+        # ⚠️ `store` 自己會加前綴（`NamespacedStateStore.key`），所以這裡餵給它的
+        #    必須是**裸** `session_id`——⛔ 別改成 `turn_identity.session_id`，
+        #    那會變成 `mcp:k:v:mcp:k:v:sid`（雙前綴，且超長時直接 ValueError）。
         session_id = identity.session_id
         state = await store.load(session_id)
         if state is None:
@@ -722,7 +768,7 @@ def _make_agent_turn(deps: FacadeDeps) -> Callable:
             # 逾時**只包住 run_turn**（2.6 前置 security review P2／處置③）：
             # 逾時或被取消 ⇒ 直接跳出，`store.save` ⛔ 不執行，落不了半寫狀態。
             result = await asyncio.wait_for(
-                runtime.run_turn(identity, message, state),
+                runtime.run_turn(turn_identity, message, state),
                 timeout=agent_turn_timeout_s(),
             )
         except asyncio.TimeoutError:
@@ -769,7 +815,15 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
     """
     from services.agent.tools import help as help_tool
     from services.agent.tools import jgb2 as jgb2_tools
+    from services.agent.tools.confirm import CONFIRM_SPEC, confirm_request
+    from services.agent.tools.handoff import HANDOFF_SPEC, handoff_request
     from services.agent.tools.kb import KB_GET_SPEC, KB_SEARCH_SPEC, kb_get, kb_search
+    from services.agent.tools.session import (
+        SLOTS_GET_SPEC,
+        SLOTS_SET_SPEC,
+        slots_get,
+        slots_set,
+    )
     from services.jgb.accounts import ACCOUNT_FACE_BUILDERS
     from services.jgb.bills import BILL_FACE_BUILDERS
     from services.jgb.contracts import FACE_BUILDERS as CONTRACT_FACE_BUILDERS
@@ -796,9 +850,44 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
         raw = await help_tool.help_read(identity, args, db_pool=deps.get_db_pool())
         return _as_tool_result(raw)
 
+    # ── 2.4 的三個工具（任務 2.9 接線）────────────────────────────────
+    # 依賴一律經 `deps.get_db_pool` **getter**（同 `_kb_get`／`_help_read` 的理由：
+    # pool 要到 lifespan 才存在，⛔ 不在 build_registry 當下取一次）。
+    #
+    # ⚠️ **pool 缺席一律 fail-closed 到 `NO_MATCH`**，⛔ 不讓它變成一個被
+    #    registry 吞掉的 `AttributeError`（那也會回 NO_MATCH，但只在 trace 留
+    #    `EXC:` 而不是可讀的原因）；`confirm.request` 尤其不得在無 pool 時
+    #    「假裝發過 token」——沒寫進表就沒有 token，回 ok 等於憑空放行一次確認。
+    async def _handoff_request(identity: Identity, args: dict) -> ToolResult:
+        # ⚠️ handoff 自己 fail-soft（設定查不到 ⇒ code 保底固定句），
+        #    故 pool 為 None 仍照走——它是整回合的最後出口（見 handoff.py 決定 2）。
+        return await handoff_request(identity, args, db_pool=deps.get_db_pool())
+
+    async def _slots_get(identity: Identity, args: dict) -> ToolResult:
+        pool = deps.get_db_pool()
+        if pool is None:
+            return ToolResult(ok=False, error="NO_MATCH")
+        return await slots_get(identity, args, db_pool=pool)
+
+    async def _slots_set(identity: Identity, args: dict) -> ToolResult:
+        pool = deps.get_db_pool()
+        if pool is None:
+            return ToolResult(ok=False, error="NO_MATCH")
+        return await slots_set(identity, args, db_pool=pool)
+
+    async def _confirm_request(identity: Identity, args: dict) -> ToolResult:
+        pool = deps.get_db_pool()
+        if pool is None:
+            return ToolResult(ok=False, error="NO_MATCH")
+        return await confirm_request(identity, args, db_pool=pool)
+
     reg.register(KB_GET_SPEC, _kb_get)
     reg.register(KB_SEARCH_SPEC, _kb_search)
     reg.register(HELP_READ_SPEC, _help_read)
+    reg.register(HANDOFF_SPEC, _handoff_request)
+    reg.register(SLOTS_GET_SPEC, _slots_get)
+    reg.register(SLOTS_SET_SPEC, _slots_set)
+    reg.register(CONFIRM_SPEC, _confirm_request)
 
     domains = (
         ("bills", BILL_FACE_BUILDERS, jgb2_tools.query_bills),
@@ -1008,9 +1097,22 @@ def _make_invoke(registry: ToolRegistry, deps: FacadeDeps) -> Callable:
             # 「逾時不 save」的是 `_agent_turn` 內層那個 `wait_for`。
             timeout_s = agent_turn_timeout_s() + _AGENT_TURN_OUTER_MARGIN_S
 
+        # 交給工具的身分＝**命名空間身分**（任務 2.9，理由見 `namespaced_identity`）。
+        # `agent.turn` 是唯一的例外：它自己要用裸 `session_id` 餵
+        # `NamespacedStateStore`（那支會自己加前綴），換過就變雙前綴。
+        identity_for_tool = identity
+        if name != AGENT_TURN_NAME:
+            try:
+                identity_for_tool = namespaced_identity(identity)
+            except ValueError:
+                # 缺 api_key_id／vendor_id 或鍵超長 ⇒ fail-closed。⛔ 不退回裸身分。
+                um.set_path(f"mcp:{name}:INVALID_INPUT")
+                um.finalize("error", 400, db_pool=pool)
+                raise tool_error(_tool_error_message("INVALID_INPUT"))
+
         try:
             result = await registry.call(
-                identity, name, args, timeout_s, stage=deps.stage
+                identity_for_tool, name, args, timeout_s, stage=deps.stage
             )
         except Exception:
             um.finalize("error", 500, db_pool=pool)

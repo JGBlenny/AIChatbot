@@ -565,3 +565,191 @@ def test_tool_input_schemas_carry_no_identity_keys():
     """不變量 18／27：`register()` 會擋身分鍵；四支 spec 註冊得起來即證明無身分鍵。"""
     registry = _registry_with_2_4_tools()   # register 內含身分鍵檢查，會 raise
     assert len(registry.specs_for(_identity(), "M1")) == 4
+
+
+# ════════════════════════════════════════════════════════════════════
+# 任務 2.9：接進 `build_registry` ＋ 命名空間身分 ＋ slots 路徑對齊
+# ════════════════════════════════════════════════════════════════════
+_REQ_29 = "agentic-mcp-orchestration:2.9"
+
+_2_4_TOOL_NAMES = frozenset(
+    {"handoff.request", "session.slots.get", "session.slots.set", "confirm.request"}
+)
+
+
+def _facade_deps(pool=None):
+    from services.agent import mcp_facade as F
+
+    return F.FacadeDeps(get_db_pool=lambda: pool, get_kb_pool=lambda: None,
+                        get_retriever=lambda: None, stage="M1")
+
+
+@pytest.mark.req(_REQ_29)
+def test_build_registry_wires_the_four_2_4_tools():
+    """2.6 收案註記「2.9 前置」①：四支 2.4 工具要真的進 `build_registry`。"""
+    from services.agent import mcp_facade as F
+
+    names = {s["name"] for s in F.union_specs(F.build_registry(_facade_deps()), "M1")}
+    missing = _2_4_TOOL_NAMES - names
+    assert not missing, f"未接線：{sorted(missing)}"
+    # 正對照組：1.4–1.6 既有工具仍在（否則「四支都在」可能只是 registry 換了實作）
+    assert {"kb.get", "help.read"} <= names
+    # 不變量 27 的下限：門面聯集至少 8 支（kb.get／kb.search／help.read／
+    # 五支 jgb2.query／四支 2.4）——⛔ 不寫死等於，新工具進來不該讓這條紅。
+    assert len(names) >= 8, sorted(names)
+
+
+@pytest.mark.req(_REQ_29)
+def test_wired_mutating_tools_are_invisible_to_shadow_readonly_view():
+    """DSP-016 在**接線後**仍成立：影子看不到 `slots.set`／`confirm.request`。"""
+    from services.agent import mcp_facade as F
+
+    reg = F.build_registry(_facade_deps())
+    identity = _identity()
+
+    def names(**kw):
+        return {s["name"] for s in reg.specs_for(identity, "M1", **kw)}
+
+    shadow = names(readonly_view=True, for_model=True)
+    assert "session.slots.set" not in shadow
+    assert "confirm.request" not in shadow
+    # 正對照組：同一次呼叫看得到不寫狀態的兩支 ⇒ 上面兩個「看不到」是
+    # `mutates_session` 判定，不是影子視圖整個空了
+    assert "session.slots.get" in shadow and "handoff.request" in shadow
+    # 反對照：非影子視角看得到 set（否則它可能根本沒註冊）
+    assert "session.slots.set" in names(for_model=True)
+
+
+@pytest.mark.req(_REQ_29)
+async def test_wired_tools_fail_closed_without_db_pool():
+    """pool 缺席 ⇒ `NO_MATCH`；⛔ `confirm.request` 不得在沒寫進表時回 ok。"""
+    from services.agent import mcp_facade as F
+
+    reg = F.build_registry(_facade_deps(pool=None))
+    identity = _identity()
+
+    for name, args in (
+        ("session.slots.get", {"key": "contract_ref"}),
+        ("session.slots.set", {"key": "contract_ref", "value": "A-1"}),
+        ("confirm.request", {"summary": "摘要", "payload": '{"a":1}'}),
+    ):
+        result = await reg.call(identity, name, args, 3.0, stage="M1")
+        assert result.ok is False and result.error == "NO_MATCH", name
+
+    # 正對照組：handoff 是最後出口，⛔ 不因 pool 缺席而失敗（fail-soft 到保底句）
+    handoff = await reg.call(identity, "handoff.request",
+                             {"reason": "tool_unavailable", "fact_class": "other"},
+                             3.0, stage="M1")
+    assert handoff.ok is True and handoff.data["message"]
+
+
+# ── 命名空間身分 ────────────────────────────────────────────────────
+@pytest.mark.req(_REQ_29)
+def test_namespaced_identity_shape_and_fail_closed():
+    from services.agent import mcp_facade as F
+    from services.agent.state_store import NamespacedStateStore
+
+    ident = _identity(vendor_id=3, api_key_id=7, session_id="sid-1")
+    out = F.namespaced_identity(ident)
+    assert out.session_id == "mcp:7:3:sid-1"
+    assert out.session_id == NamespacedStateStore(None, 7, 3).key("sid-1")
+    # 其餘欄位一字不改（⛔ 只換 session_id）
+    assert (out.vendor_id, out.api_key_id, out.target_user, out.mode,
+            out.role_id, out.user_id) == (
+        ident.vendor_id, ident.api_key_id, ident.target_user, ident.mode,
+        ident.role_id, ident.user_id)
+    # 原身分不被就地改（frozen dataclass ⇒ replace 產新物件）
+    assert ident.session_id == "sid-1"
+
+    # fail-closed：缺 id／鍵超長 ⇒ ValueError，⛔ 不退回裸 session_id
+    for bad in (_identity(api_key_id=None), _identity(vendor_id=None)):
+        with pytest.raises(ValueError):
+            F.namespaced_identity(bad)
+    with pytest.raises(ValueError):
+        F.namespaced_identity(_identity(session_id="s" * 100))
+
+
+@pytest.mark.req(_REQ_29)
+def test_rest_path_identity_is_not_namespaced():
+    """REST（`routers/agent_entry.build_identity`）⛔ 不加前綴——兩條路徑天然分池。"""
+    from types import SimpleNamespace
+
+    from routers.agent_entry import build_identity
+
+    request = SimpleNamespace(vendor_id=3, target_user="prospect", mode="b2c",
+                              role_id=None, user_id="u1", session_id="sid-1")
+    assert build_identity(request).session_id == "sid-1"
+    assert not build_identity(request).session_id.startswith("mcp:")
+
+
+@pytest.mark.req(_REQ_29)
+async def test_slots_tools_use_the_session_id_they_are_handed():
+    """工具是拿 `identity.session_id` 去找列的——所以換身分就等於換命名空間。
+
+    這條是「為什麼非換不可」的證據：同一個裸 `session_id`、不同身分，
+    若不換身分，兩邊打到 DB 的就是同一把鍵。
+    """
+    seen = []
+
+    class _Pool:
+        async def fetchrow(self, sql, *args):
+            seen.append(args[0])
+            return None
+
+    pool = _Pool()
+    await slots_get(_identity(session_id="mcp:7:1:sid"), {"key": "contract_ref"},
+                    db_pool=pool)
+    await slots_get(_identity(session_id="mcp:9:2:sid"), {"key": "contract_ref"},
+                    db_pool=pool)
+    assert seen == ["mcp:7:1:sid", "mcp:9:2:sid"]
+
+
+# ── slots 路徑對齊 ──────────────────────────────────────────────────
+def _flatten(stored):
+    from services.agent.runtime import _slots_for_prompt
+
+    return _slots_for_prompt({"slots": stored})
+
+
+@pytest.mark.req(_REQ_29)
+def test_runtime_reads_slots_from_top_level_not_agent_subtree():
+    """2.9 前置③：runtime 讀**頂層** `slots`（`session.slots.set` 寫的位置）。"""
+    from services.agent.runtime import _slots_for_prompt
+
+    stored = {"unit_count": {"value": "600", "source": "tool", "confirmed": False}}
+    assert _slots_for_prompt({"slots": stored}) == {"unit_count": "600"}
+    # 反對照：舊路徑 `state["agent"]["slots"]` 不再被讀（⛔ 別改回去）
+    assert _slots_for_prompt({"agent": {"slots": stored}}) == {}
+    # 缺鍵／型別不對 ⇒ 空表，⛔ 不炸
+    assert _slots_for_prompt({}) == {}
+    assert _slots_for_prompt({"slots": "not-a-dict"}) == {}
+    # 已是純量就原樣（舊資料相容）；沒有 `value` 鍵的異常列跳過
+    assert _slots_for_prompt({"slots": {"a": "1", "b": {"source": "x"}}}) == {"a": "1"}
+
+
+@pytest.mark.req(_REQ_29)
+def test_slot_value_shape_is_rejected_by_prompt_assembler_without_flattening():
+    """攤平不是裝飾：`SlotValue` 直接進 PromptAssembler 會炸掉整個回合。
+
+    這條把「為什麼 `_slots_for_prompt` 要攤平」釘住——⛔ 別把它簡化成
+    `state.get("slots", {})`，那樣模型用過一次 `session.slots.set`，
+    下一回合的 `build_messages` 就 raise。
+    """
+    from services.agent.prompt_assembler import PromptAssembler
+
+    nonce = "0123456789abcdef"
+    stored = {"unit_count": {"value": "600", "source": "tool", "confirmed": False}}
+    with pytest.raises(ValueError):
+        PromptAssembler._slot_blocks(stored, nonce)
+    # 正對照組：攤平後同一支函式收得下
+    assert PromptAssembler._slot_blocks(_flatten(stored), nonce)
+
+
+@pytest.mark.req(_REQ_29)
+def test_slots_set_tool_name_constant_matches_the_spec():
+    """runtime 的第二份字面量與 `SLOTS_SET_SPEC["name"]` 釘在一起（改名即紅）。"""
+    from services.agent.runtime import SLOTS_SET_TOOL_NAME, SLOTS_STATE_KEY
+    from services.agent.tools.session import SLOTS_STATE_KEY as TOOL_SLOTS_KEY
+
+    assert SLOTS_SET_TOOL_NAME == SLOTS_SET_SPEC["name"]
+    assert SLOTS_STATE_KEY == TOOL_SLOTS_KEY == "slots"

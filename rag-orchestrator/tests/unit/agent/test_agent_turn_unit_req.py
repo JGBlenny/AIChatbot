@@ -825,3 +825,183 @@ async def test_invisible_identity_gets_no_match_not_agent_unavailable(monkeypatc
     with pytest.raises(Exception) as e2:
         await invoke(F.AGENT_TURN_NAME, SimpleNamespace(headers={}), {"message": "問題"})
     assert str(e2.value) == F.ERR_AGENT_UNAVAILABLE
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 11. 任務 2.9：門面交給工具的身分＝命名空間身分
+# ═══════════════════════════════════════════════════════════════════
+_REQ_29 = "agentic-mcp-orchestration:2.9"
+
+
+class _SpyRegistry(ToolRegistry):
+    """記下每次 `call()` 收到的 identity（⛔ 不改行為，只旁錄）。"""
+
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self.seen: list = []
+
+    async def call(self, identity, name, args, timeout_s, **kw):
+        self.seen.append((name, identity))
+        return await super().call(identity, name, args, timeout_s, **kw)
+
+
+@pytest.mark.req(_REQ_29)
+async def test_invoke_hands_tools_a_namespaced_identity(monkeypatch):
+    """非 `agent.turn` 的工具拿到的 `session_id` 必須是命名空間鍵。
+
+    這條是 2.6 P1 的側門：`session.slots.*`／`confirm.request` 的 SQL 沒有
+    vendor 條件，裸 `session_id` 進去就等於跨業者共用一把鍵。
+    """
+    _patch_metering(monkeypatch)
+    _patch_resolve_call(monkeypatch)
+
+    registry = _SpyRegistry()
+    registry.register(
+        {"name": "probe.read", "description": "測試用",
+         "input_schema": {"type": "object", "properties": {}, "required": []},
+         "scope": "read", "stage": {"prospect": "M1"}},
+        lambda identity, args: _ok_result(),
+    )
+    deps = _deps(_app())
+    invoke = F._make_invoke(registry, deps)
+
+    await invoke("probe.read", SimpleNamespace(headers={}), {})
+
+    name, seen = registry.seen[-1]
+    assert name == "probe.read"
+    assert seen.session_id == f"mcp:{API_KEY_ID}:{VENDOR_A}:{SESSION}"
+    # 反對照：⛔ 不得是呼叫端給的裸值
+    assert seen.session_id != SESSION
+    # 其餘身分欄位不動
+    assert (seen.vendor_id, seen.api_key_id) == (VENDOR_A, API_KEY_ID)
+
+
+async def _ok_result():
+    from services.agent.tools.registry import ToolResult as _TR
+
+    return _TR(ok=True, data={"ok": 1}, text_for_model="ok")
+
+
+@pytest.mark.req(_REQ_29)
+async def test_invoke_does_not_double_prefix_agent_turn(monkeypatch):
+    """`agent.turn` 例外：它自己餵 `NamespacedStateStore`（會加前綴），
+    所以門面交給 registry 的必須是**裸**身分——否則變成 `mcp:k:v:mcp:k:v:sid`。"""
+    monkeypatch.setenv("AGENT_TURN_CAP", "100")
+    monkeypatch.setenv("AGENT_TURN_TIMEOUT_S", "5")
+    F.reset_agent_turn_cap()
+    _patch_metering(monkeypatch)
+    _patch_resolve_call(monkeypatch)
+
+    engine = FakeEngine()
+    runtime = _runtime(FakeProvider([_final_response(answer="好的。")]))
+    deps = _deps(_app(runtime=runtime, engine=engine))
+    registry = _SpyRegistry()
+    registry.register(F.AGENT_TURN_SPEC, F._make_agent_turn(deps))
+    invoke = F._make_invoke(registry, deps)
+
+    await invoke(F.AGENT_TURN_NAME, SimpleNamespace(headers={}), {"message": "問題"})
+
+    _name, seen = registry.seen[-1]
+    assert seen.session_id == SESSION, "⛔ agent.turn 不得先換身分（會雙前綴）"
+    key = f"mcp:{API_KEY_ID}:{VENDOR_A}:{SESSION}"
+    assert engine.saved == [key]
+    assert not any(k.count("mcp:") > 1 for k in engine.rows), sorted(engine.rows)
+
+
+@pytest.mark.req(_REQ_29)
+async def test_runtime_inside_agent_turn_gets_the_namespaced_identity():
+    """回合內的工具呼叫同樣落在命名空間鍵下（runtime 收到的身分就是換過的）。"""
+    engine = FakeEngine()
+    seen: list = []
+
+    class _SpyRuntime:
+        rules_sha = "spy"
+
+        async def run_turn(self, identity, message, state):
+            seen.append(identity)
+            return SimpleNamespace(answer="好的。", kind="answer", handoff=None,
+                                   quick_replies=[],
+                                   trace=SimpleNamespace(trace_id="t1"))
+
+    deps = _deps(_app(runtime=_SpyRuntime(), engine=engine))
+    result = await _call_agent_turn(_registry_with_agent_turn(deps), _identity(), "問題")
+
+    assert result.ok is True, result.error
+    assert seen[0].session_id == f"mcp:{API_KEY_ID}:{VENDOR_A}:{SESSION}"
+    assert seen[0].session_id != SESSION      # 反對照
+    # 但列還是那一列（store 用裸值 + 自己的前綴），⛔ 沒有第二列
+    assert list(engine.rows) == [f"mcp:{API_KEY_ID}:{VENDOR_A}:{SESSION}"]
+
+
+@pytest.mark.req(_REQ_29)
+async def test_slots_set_result_survives_end_of_turn_save():
+    """回合內 `session.slots.set` 寫進 DB 的槽位，⛔ 不得被回合結束的整包覆寫抹掉。
+
+    `ConversationalEngine._save` 是 `SET collected_data=$2::jsonb`（整包覆蓋，
+    不是 merge）。工具改的是 DB，runtime 手上的 `state` 不同步 ⇒ 存回去時
+    連同剛寫的槽位一起被蓋掉。故 runtime 以**工具回傳的全表**同步回 state。
+    """
+    engine = FakeEngine()
+    registry = ToolRegistry()
+
+    written: dict = {}
+
+    async def _fake_slots_set(identity, args):
+        from services.agent.tools.registry import ToolResult as _TR
+
+        written[args["key"]] = {"value": args["value"], "source": "tool",
+                                "confirmed": False}
+        return _TR(ok=True, data={"slots": dict(written)},
+                   text_for_model=f"{args['key']}={args['value']}")
+
+    from services.agent.tools.session import SLOTS_SET_SPEC
+
+    registry.register(SLOTS_SET_SPEC, _fake_slots_set)
+
+    provider = FakeProvider([
+        _fake_response(_fake_message(tool_calls=[
+            _fake_tool_call("session.slots.set",
+                            {"key": "unit_count", "value": "600"})])),
+        _final_response(answer="好的。"),
+    ])
+    runtime = _runtime(provider, registry=registry)
+    deps = _deps(_app(runtime=runtime, engine=engine))
+    result = await _call_agent_turn(_registry_with_agent_turn(deps), _identity(), "600 戶")
+
+    assert result.ok is True, result.error
+    key = f"mcp:{API_KEY_ID}:{VENDOR_A}:{SESSION}"
+    saved = engine.rows[key]
+    assert saved["slots"] == {"unit_count": {"value": "600", "source": "tool",
+                                             "confirmed": False}}, \
+        "回合結束的整包覆寫把剛寫入的槽位抹掉了"
+    # 正對照組：工具真的被叫到了（否則上面那條可能只是沒跑到）
+    assert written == {"unit_count": {"value": "600", "source": "tool",
+                                      "confirmed": False}}
+
+
+@pytest.mark.req(_REQ_29)
+async def test_next_turn_reads_the_slot_written_by_the_tool():
+    """下一回合的 prompt 看得到上一回合寫的槽位（且已攤平成純量）。"""
+    engine = FakeEngine()
+    key = f"mcp:{API_KEY_ID}:{VENDOR_A}:{SESSION}"
+    engine.rows[key] = {
+        "config_key": "agent:prospect", "collected_fields": {}, "asked_count": 0,
+        "slots": {"unit_count": {"value": "600", "source": "tool", "confirmed": False}},
+    }
+
+    assembler = FakeAssembler()
+    seen: dict = {}
+
+    class _Spy(FakeAssembler):
+        def build_messages(self, identity, outline, slots, dialog, tool_specs, nonce):
+            seen["slots"] = dict(slots)
+            return assembler.build_messages(identity, outline, slots, dialog,
+                                            tool_specs, nonce)
+
+    runtime = _runtime(FakeProvider([_final_response(answer="好的。")]),
+                       assembler=_Spy())
+    deps = _deps(_app(runtime=runtime, engine=engine))
+    result = await _call_agent_turn(_registry_with_agent_turn(deps), _identity(), "第二句")
+
+    assert result.ok is True, result.error
+    assert seen["slots"] == {"unit_count": "600"}, "槽位沒被讀回來（或沒攤平）"

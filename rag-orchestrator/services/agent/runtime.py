@@ -166,6 +166,57 @@ def _trim_handoff_cache(cache: dict, limit: int = HANDOFF_CACHE_MAX) -> None:
         cache.pop(next(iter(cache)))
 
 
+#: `session.slots.set` 的工具名。⚠️ **這是第二份字面量**——唯一正本是
+#: `services/agent/tools/session.py:SLOTS_SET_SPEC["name"]`。⛔ 不在本檔 import
+#: 那個模組：它會連帶把 `services.conversational_engine` 拉進 runtime 的
+#: import 期（runtime 已被 `mcp_facade` import，鏈路越長越容易繞成環）。
+#: 兩份不得漂：`tests/unit/agent/test_session_confirm_tools_req.py` 有一條把兩者
+#: 釘在一起的回歸案，改名時它會紅。
+SLOTS_SET_TOOL_NAME = "session.slots.set"
+
+#: state 內槽位表的鍵——**頂層**（`form_sessions.collected_data.slots`）。
+#: ⚠️ 2.9 對齊：2.1 原本讀 `state["agent"]["slots"]`，而 2.4 的
+#: `session.slots.set` 寫的是頂層 `slots`（與 `conversational_engine.
+#: TransactionState.slots` 同一個位置，舊鏈的交易面向也讀它）。兩處不一致 ⇒
+#: 工具寫進去的槽位 runtime 永遠讀不到。以 design（元件 3／`form_sessions.
+#: collected_data`）為準取**頂層**。⛔ 別改回 `state["agent"]["slots"]`。
+SLOTS_STATE_KEY = "slots"
+
+
+def _slots_for_prompt(state: dict) -> dict:
+    """從 state 取槽位表，並把 `SlotValue` 攤平成純量給 PromptAssembler。
+
+    ⚠️ **兩份契約在這裡對接，⛔ 別把任何一邊改成另一邊**：
+      - 儲存側（`services/agent/tools/session.py:write_slot`、以及舊鏈的
+        `conversational_engine.SlotValue`）存的是
+        `{key: {"value": ..., "source": ..., "confirmed": ...}}`——這個形狀
+        是與舊鏈共用同一格 jsonb 的代價，改了舊鏈的交易面向就讀不到。
+      - prompt 側（`prompt_assembler._slot_blocks`）**只收純量**
+        （str／int／float／bool／None），巢狀一律 `raise ValueError`——那是
+        刻意的注入面收斂（一 slot 一段、值不得自帶結構）。
+    兩者直接對接會在**下一回合**炸掉整個回合（`build_messages` raise ⇒
+    `run_turn` 拋 ⇒ registry 吞成 `NO_MATCH`），而且只在「模型真的用過
+    `session.slots.set`」之後才出現。故在此攤平。
+
+    ⚠️ design.md 元件 5 把簽名寫成 `slots: dict[SlotKey, SlotValue]`（巢狀），
+    與 `prompt_assembler` 的實作（純量）相衝——**已記為爭議交人裁決**，本函式
+    採「儲存巢狀、進 prompt 攤平」，⛔ 不自行改任何一邊的契約。
+    """
+    raw = state.get(SLOTS_STATE_KEY)
+    if not isinstance(raw, dict):
+        return {}
+    flat: dict = {}
+    for key, value in raw.items():
+        if isinstance(value, dict):
+            # `SlotValue`：只取 `value`；沒有 `value` 鍵的異常列直接跳過
+            # （⛔ 不塞 `None` 佔位——那會讓 prompt 出現一個「已設定為空」的槽位）。
+            if "value" in value:
+                flat[key] = value["value"]
+            continue
+        flat[key] = value
+    return flat
+
+
 def _cache_key(user_message: str) -> str:
     """NFKC 正規化＋去空白後 sha256（design：同題重問快取 key）。"""
     normalized = unicodedata.normalize("NFKC", user_message or "")
@@ -388,7 +439,8 @@ class AgentRuntime:
         # ⛔ 不用 `secrets.token_urlsafe`——它會產出 `-`／`_`，被 `_require_nonce`
         # 的 `^[0-9A-Za-z]{8,64}$` 擋下（2.5 接線時發現，見任務回報）。
         nonce = new_nonce()
-        slots = agent_state.get("slots", {})
+        # 2.9 路徑對齊：槽位在 **`collected_data` 頂層**（見 `_slots_for_prompt`）。
+        slots = _slots_for_prompt(state)
         dialog = agent_state.get("dialog", [])
         outline = agent_state.get("outline")
 
@@ -553,6 +605,23 @@ class AgentRuntime:
                         )
                     )
                     tool_results_by_id[tc.id] = tool_result
+                    # ⚠️ **槽位寫回 state（2.9，⛔ 勿刪）**：`session.slots.set` 是
+                    #    以 `jsonb_set` 直接改 `form_sessions.collected_data.slots`
+                    #    的，但回合結束時呼叫端（`mcp_facade._agent_turn`／
+                    #    `routers/agent_entry._persist`）會用手上這份 `state`
+                    #    **整包覆蓋** `collected_data`（`_save` 是
+                    #    `SET collected_data=$2::jsonb`，不是 merge）。不同步回來，
+                    #    剛寫進去的槽位會在同一回合結束時被自己抹掉——工具回 ok、
+                    #    DB 卻沒東西，是最難查的那種失敗。
+                    #    來源＝**工具自己回傳的全表**（`slots_set` 寫入後重讀的那份），
+                    #    ⛔ 不在此另發一次 DB 查詢。
+                    if (
+                        name == SLOTS_SET_TOOL_NAME
+                        and tool_result.ok
+                        and isinstance(tool_result.data, dict)
+                        and isinstance(tool_result.data.get(SLOTS_STATE_KEY), dict)
+                    ):
+                        state[SLOTS_STATE_KEY] = tool_result.data[SLOTS_STATE_KEY]
                     # 2.5 接線：工具回傳一律經 wrap_tool_data 包成資料段
                     # （同回合共用一個 nonce，見上方 `nonce = new_nonce()`）。
                     raw_tool_text = tool_result.text_for_model or json.dumps(
