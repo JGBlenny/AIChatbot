@@ -77,7 +77,7 @@ JSON（`VendorChatResponse`，重點欄位）：
 }
 ```
 
-- **出現條件**：⓪ `partial_grounding`：事實題有知識、但使用者一次問多個項目（如房東／租客／合約／帳單）而知識只涵蓋一部分 ⇒ `answer`＝知識原文＋固定尾句「以上是我有資料的部分；沒提到的項目我這邊沒有資料，可點下方『找真人』。」（2026-09-04 D6：事實題改抽取式作答，不經 LLM）。① prospect 事實題（brain `converge_kind=answer`）在知識庫**查無過門檻的知識** ⇒ `answer` 為固定句、`reason=no_grounding`；屬客戶名單／報價／合約 SLA／法遵／資安五類時 `reason=sensitive_no_grounding`。② 無 `session_id` 的 prospect 零命中 ⇒ 同固定句，`fact_class=other`。③ 有知識、回覆文字含「專人／真人／客服／沒有資料」⇒ `reason=llm_mentioned_handoff`（只加訊號，文字不變；**知識原文自帶「專人」的抽取式回覆也算**，如「可預約 demo 由專人帶您看」）。
+- **出現條件**：⓪ `partial_grounding`：事實題有知識、但使用者一次問多個項目（如房東／租客／合約／帳單）而知識只涵蓋一部分 ⇒ `answer`＝知識原文＋固定尾句「以上是我有資料的部分；沒提到的項目我這邊沒有資料，可點下方『找真人』。」（D6 抽取式，env `PRESALES_EXTRACTIVE` 開時才出現；**目前預設關**，事實題由 LLM 依知識合成，此 reason 不會出現）。① prospect 事實題（brain `converge_kind=answer`）在知識庫**查無過門檻的知識** ⇒ `answer` 為固定句、`reason=no_grounding`；屬客戶名單／報價／合約 SLA／法遵／資安五類時 `reason=sensitive_no_grounding`。② 無 `session_id` 的 prospect 零命中 ⇒ 同固定句，`fact_class=other`。③ 有知識、回覆文字含「專人／真人／客服／沒有資料」⇒ `reason=llm_mentioned_handoff`（只加訊號，文字不變；**知識原文自帶「專人」的抽取式回覆也算**，如「可預約 demo 由專人帶您看」）。
 - **前端預期行為**：`handoff` 非 null ⇒ 在該則回覆下方畫「找真人」入口（依 `channel`）。`reason` 為 `no_grounding`／`sensitive_no_grounding` 時 `message` 已在 `answer` 內，⛔ 不要重複顯示；`llm_mentioned_handoff` 時 `answer` 是 LLM 自己的回答、`message` 是一句入口提示（「需要真人協助可點下方的『找真人』。」），可當按鈕旁說明。
 - **相容**：可選欄位；未升級的前端忽略即可，行為不變（只是看不到按鈕，使用者會讀到「點下方的『找真人』」卻沒有按鈕——上線時間請與 jgb2 切片 2 對齊）。
 - ⛔ 不要用 `answer` 文字是否含「專人」判斷要不要畫按鈕——那是本欄位存在的理由。

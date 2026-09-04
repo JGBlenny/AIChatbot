@@ -196,12 +196,13 @@ async def test_inline_answer_without_grounding_is_replaced_by_fixed_sentence(sna
 
 
 @pytest.mark.req("presales-grounding-gate:2.7")
-async def test_inline_answer_with_grounding_is_kept(snapshots):
+async def test_inline_answer_with_grounding_is_kept(snapshots, monkeypatch):
     eng = _engine([{"answer": "物件可用 Excel 批次匯入", "similarity": 0.9, "score_source": "rerank"}])
     stub_step(eng.optimizer, {"action": "ask", "next_question": "請問規模？", "inline_answer": "物件可以批次匯入。",
                               "extracted_fields": {}, "fact_class": "feature"})
+    monkeypatch.setenv("PRESALES_EXTRACTIVE", "1")
     r = await eng.handle("backtest_session_i2", "anon", 0, "物件呢？", CFG, start_if_absent=True)
-    # D6 後：有知識的事實 inline ⇒ 抽取 top-1 知識原文（⛔ 不是 brain 的 inline 文字）；單項目問句無尾句、無 handoff
+    # D6 開：有知識的事實 inline ⇒ 抽取 top-1 知識原文（⛔ 不是 brain 的 inline 文字）；單項目問句無尾句、無 handoff
     assert r["answer"] == "物件可用 Excel 批次匯入" and r.get("handoff") is None
 
 

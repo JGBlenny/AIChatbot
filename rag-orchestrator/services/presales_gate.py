@@ -24,6 +24,15 @@ from services.decision_layer import DecisionConfig
 
 #: 售前專用門檻覆寫鍵；未設或壞值 ⇒ 沿用決策層唯一讀值點 `DecisionConfig.kb_threshold`（需求 1.2／1.3）
 THRESHOLD_ENV: Final[str] = "PRESALES_GROUNDING_THRESHOLD"
+#: D6 抽取式作答的開關。業主 2026-09-04 二次裁決：**預設關**——先補知識（DSP-008、3600／3610／3584 講法）再考慮開。
+#: 關＝事實題有知識時交 LLM 依知識合成（temp 0.2、逐項對照）；開＝貼 top-1 知識原文。三條路（converge／inline／ask 反問句）同一開關。
+EXTRACTIVE_ENV: Final[str] = "PRESALES_EXTRACTIVE"
+_TRUTHY: Final[FrozenSet[str]] = frozenset({"1", "true", "on", "yes"})
+
+
+def extractive_enabled() -> bool:
+    """env PRESALES_EXTRACTIVE ∈ {1,true,on,yes}（不分大小寫）⇒ True；未設或其他值 ⇒ False（預設關）。唯一讀值點。"""
+    return (os.getenv(EXTRACTIVE_ENV) or "").strip().lower() in _TRUTHY
 
 
 class FactClass(str, Enum):
@@ -227,7 +236,7 @@ def scan_handoff_mentions(text: Optional[str]) -> bool:
 
 
 __all__ = [
-    "THRESHOLD_ENV", "FactClass", "SENSITIVE", "HANDOFF_WORDS", "MULTI_ITEM_SEPARATORS", "HandoffReason", "Handoff",
+    "THRESHOLD_ENV", "EXTRACTIVE_ENV", "extractive_enabled", "FactClass", "SENSITIVE", "HANDOFF_WORDS", "MULTI_ITEM_SEPARATORS", "HandoffReason", "Handoff",
     "presales_threshold", "parse_fact_class", "build_handoff", "build_llm_mention_handoff", "build_partial_handoff",
     "scan_handoff_mentions", "is_multi_item_question",
     "QUESTION_MARKERS", "ASK_DECLARATIVE_MIN_CHARS", "looks_like_question", "split_declaratives", "ask_is_answering",

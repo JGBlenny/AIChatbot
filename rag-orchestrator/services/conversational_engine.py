@@ -838,12 +838,13 @@ class ConversationalEngine:
                             "session_id": session_id, "state": state, "user_message": user_message,
                             "converge_kind": "answer", "config": config, "fact_class": _fc,
                             "grounding_empty": True, "grounding_hits": 0, "grounding_threshold": _cg.threshold}
-                # D6：岔題即答有知識 ⇒ 一律抽取式，⛔ 不看 fact_class——inline_answer 本身就是事實答，而它是 brain 自由生成
-                #   （e2e 第二輪 B1、D6 上線首輪探針 t5「是的，物件和合約的資料也可以匯入」都在 fact_class=other 時從這裡漏）
+                # 岔題即答有知識 ⇒ 一律走 grounded 決策、⛔ 不看 fact_class、⛔ 不用 brain 的 inline 文字——inline_answer 是 brain 自由生成
+                #   （e2e 第二輪 B1、D6 首輪探針「是的，物件和合約的資料也可以匯入」都在 fact_class=other 時從這裡漏）。
+                #   抽取或合成由 PRESALES_EXTRACTIVE 決定（預設關＝LLM 依知識合成）。
                 state["asked_count"] = asked + 1
-                return await self._extractive_decision(state, session_id, user_message, config, _fc, _cg,
-                                                       converge_topic=step.get("converge_topic"),
-                                                       meta={"grounding_hits": _cg.hits, "grounding_threshold": _cg.threshold})
+                return await self._grounded_answer_decision(state, session_id, user_message, config, _fc, _cg, system_md,
+                                                            converge_topic=step.get("converge_topic"), path="inline",
+                                                            meta={"grounding_hits": _cg.hits, "grounding_threshold": _cg.threshold})
 
             # 【交易 confirm — brain 回 action='confirm'（收齊→出摘要＋quick_replies，收齊≠送出，R4.1）】
             #   只在交易面向（execute_endpoint 存在）處理；組摘要（confirm_template 嵌槽位）、
@@ -921,9 +922,9 @@ class ConversationalEngine:
                                     "session_id": session_id, "state": state, "user_message": user_message,
                                     "converge_kind": "answer", "config": config, "fact_class": _fc,
                                     "grounding_empty": True, "grounding_hits": 0, "grounding_threshold": _cg.threshold}
-                        return await self._extractive_decision(state, session_id, user_message, config, _fc, _cg,
-                                                               converge_topic=step.get("converge_topic"),
-                                                               meta={"grounding_hits": _cg.hits, "grounding_threshold": _cg.threshold})
+                        return await self._grounded_answer_decision(state, session_id, user_message, config, _fc, _cg, system_md,
+                                                                    converge_topic=step.get("converge_topic"), path="ask",
+                                                                    meta={"grounding_hits": _cg.hits, "grounding_threshold": _cg.threshold})
                 state["asked_count"] = asked + 1
                 # 岔題先答再接問題（R3.1）：有 inline_answer 則「即答＋問題」同一回覆
                 _ask_text = f"{_inline}\n\n{_q}" if (_inline and _q) else (_inline or _q)
@@ -960,7 +961,7 @@ class ConversationalEngine:
                 await self._save(session_id, state)   # 落地 grounding_note（後續輪 brain 取現況）
             else:
                 # ── presales-grounding-gate 3.2：售前閘門分流（design 元件 3）──
-                from services.presales_gate import parse_fact_class, build_handoff, FactClass
+                from services.presales_gate import parse_fact_class, build_handoff, FactClass, extractive_enabled
                 from services.conversational_config import effective_handoff_message, effective_handoff_channel
                 fact_class = parse_fact_class(getattr(step.get("fact_class"), "value", step.get("fact_class")))
                 topic = step.get("converge_topic")
@@ -1003,8 +1004,9 @@ class ConversationalEngine:
                     return {"kind": "handoff", "answer": handoff.message, "handoff": handoff.to_dict(),
                             "session_id": session_id, "state": state, "user_message": user_message,
                             "converge_kind": converge_kind, "config": config, **grounding_meta}
-                if converge_kind == "answer" and fact_class is not FactClass.other and not cg.empty:
-                    # D6（業主 2026-09-04）：事實題有知識 ⇒ 抽取式作答，⛔ 不經 LLM（e2e 兩輪抓到 LLM 對部分相關知識加料）
+                if converge_kind == "answer" and fact_class is not FactClass.other and not cg.empty and extractive_enabled():
+                    # D6：事實題有知識 ⇒ 抽取式作答，⛔ 不經 LLM。受 PRESALES_EXTRACTIVE 開關，預設關（業主 2026-09-04 二次裁決：
+                    #   接受功能邊界的小機率漏，先補知識再考慮）；關時落到下面的 converge 合成（temp 0.2、逐項對照、prev_turn）。
                     return await self._extractive_decision(state, session_id, user_message, config, fact_class, cg,
                                                            converge_topic=topic, meta=grounding_meta)
                 if cg.empty:
@@ -1034,6 +1036,24 @@ class ConversationalEngine:
             _note_turn(state, decision.get("user_message") or "", answer_text)
             self._attach_llm_mention_handoff(decision, answer_text)
         await self._save(decision["session_id"], state)
+
+    async def _grounded_answer_decision(self, state, session_id, user_message, config, fact_class, cg: ConvergeGrounding,
+                                        system_md, *, converge_topic, path: str, meta: Optional[dict] = None) -> Dict[str, Any]:
+        """inline／ask 反問句閘門抓到「使用者在問事實、且知識庫有知識」時的出口：
+        PRESALES_EXTRACTIVE 開 ⇒ 抽取式（`_extractive_decision`）；關（預設）⇒ 組成 answer 型 converge 決策，交既有合成路
+        （LLM 依知識合成、cta suppress、temp 由 LLM_ANSWER_SYNTH_TEMP 守）。⛔ 兩種都不用 brain 的自由文字。"""
+        from services.presales_gate import extractive_enabled
+        if extractive_enabled():
+            return await self._extractive_decision(state, session_id, user_message, config, fact_class, cg,
+                                                   converge_topic=converge_topic, meta=meta)
+        print(f"🧭 [presales-gate] kind=grounded_synth via={path} fact_class={fact_class.value} hits={cg.hits}")
+        self._meter_presales(fact_class, cg, None, path=path)
+        await self._save(session_id, state)
+        return {"kind": "converge", "grounding": cg.text, "ctx": None, "cta_mode": "suppress", "converge_kind": "answer",
+                "system_md": _synth_context(system_md, config, "suppress"),
+                "session_id": session_id, "state": state, "user_message": user_message, "handoff": None, "config": config,
+                "fact_class": fact_class, "grounding_empty": False, "prev_turn": None, "converge_topic": converge_topic,
+                **(meta or {})}
 
     async def _extractive_decision(self, state, session_id, user_message, config, fact_class, cg: ConvergeGrounding,
                                    *, converge_topic, meta: Optional[dict] = None) -> Dict[str, Any]:

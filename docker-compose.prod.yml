@@ -175,6 +175,7 @@ services:
       # RAG 檢索配置 - ✅ 選項1：統一檢索閾值（移除獨立 RAG fallback）
       SOP_SIMILARITY_THRESHOLD: ${SOP_SIMILARITY_THRESHOLD:-0.75}  # 比對 final similarity（application 端過濾 SOP 候選）
       KB_SIMILARITY_THRESHOLD: 0.65  # 比對 final similarity（application 端過濾知識庫候選，涵蓋原 fallback 範圍）
+      # PRESALES_EXTRACTIVE: "1"  # presales-grounding-gate D6 事實題抽取式作答；業主 2026-09-04 裁預設關（先補知識再考慮），要開再取消註解
       PRESALES_GROUNDING_THRESHOLD: 0.5  # presales-grounding-gate D2（業主 2026-09-04）：售前 grounding 專用門檻；20 題掃描無知識題最高 0.337、有知識題最低 0.534，0.65 誤擋「電子發票」等有知識題
       HIGH_QUALITY_THRESHOLD: ${HIGH_QUALITY_THRESHOLD:-0.8}  # 比對 final similarity（高品質判定，用於答案合成觸發）
       FALLBACK_SIMILARITY_THRESHOLD: 0.55  # ⚠️ 已廢棄：RAG Fallback 已移除，統一使用 KB_SIMILARITY_THRESHOLD

@@ -13,6 +13,12 @@ from services.presales_gate import ask_is_answering, looks_like_question, split_
 from tests.support.brain_stub import stub_step
 
 pytestmark = pytest.mark.unit
+
+
+@pytest.fixture(autouse=True)
+def _extractive_on(monkeypatch):
+    """本檔驗 D6 抽取式行為 ⇒ 明確開旗標（預設關，見 test_presales_extractive_default_off_req）。"""
+    monkeypatch.setenv("PRESALES_EXTRACTIVE", "1")
 CFG = ConversationalConfig(key="presales", persona_role="prospect",
                            grounding_scope={"target_user": "prospect", "mode": "b2b"},
                            answer_rules=cc.PRESALES_ANSWER_RULES, handoff_message=cc.PRESALES_HANDOFF_MESSAGE)

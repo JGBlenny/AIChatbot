@@ -262,7 +262,7 @@ brain JSON → `parse_fact_class` → `FactClass`；`retrieve()` 列表 → `Con
 **理由**：三個詞是封閉集合，只加訊號不改文字；LLM 自發提「專人」無法在生成前預測。⛔ 不擴充為語義判斷。
 
 ### 決策 7：事實題抽取式作答（D6，業主 2026-09-04）
-**問題**：e2e 兩輪皆抓到 LLM 對部分相關 grounding 加料（知識只提物件／租客匯入，答成四項全可匯）。**選項**：加強 prompt（已做，降低不消滅）／抽取式（不經 LLM）／接受殘留。**決定**：抽取式——`fact_class≠other ∧ hits>0` ⇒ `_extractive_decision` 回 top-1 知識原文；多項目問句（`presales_gate.MULTI_ITEM_SEPARATORS`）接 `PRESALES_PARTIAL_TAIL`＋`handoff(partial_grounding)`。converge 與 inline 兩條路都走。**代價**：事實題失去潤飾與個人化（售前池文案本為客戶面）。
+**問題**：e2e 兩輪皆抓到 LLM 對部分相關 grounding 加料（知識只提物件／租客匯入，答成四項全可匯）。**選項**：加強 prompt（已做，降低不消滅）／抽取式（不經 LLM）／接受殘留。**決定**：抽取式——`fact_class≠other ∧ hits>0` ⇒ `_extractive_decision` 回 top-1 知識原文；多項目問句（`presales_gate.MULTI_ITEM_SEPARATORS`）接 `PRESALES_PARTIAL_TAIL`＋`handoff(partial_grounding)`。converge 與 inline 兩條路都走。**代價**：事實題失去潤飾與個人化（售前池文案本為客戶面）。**二次裁決（同日）**：第四輪 e2e 後業主判「不要 D6，補完知識再考慑」——改為 env `PRESALES_EXTRACTIVE` 開關（`presales_gate.extractive_enabled`，預設關）；關時 converge／inline／ask 三條路抓到「事實題有知識」都組成 answer 型 converge 決策交既有合成（`_grounded_answer_decision`），⛔ 仍不用 brain 的自由文字。開關留著是因為抽取式的零捏造證據（第四輪 A 過）已在手上，知識補完後只需翻旗標重測。
 
 ### 決策 8：售前門檻 env 0.5（D2，業主 2026-09-04）
 `PRESALES_GROUNDING_THRESHOLD: 0.5` 寫進 `docker-compose.prod.yml`；程式預設不動。與 D6 同時上：放寬只讓更多題進抽取式，不再進 LLM。
@@ -317,6 +317,7 @@ brain JSON → `parse_fact_class` → `FactClass`；`retrieve()` 列表 → `Con
 ### 環境需求
 | 變數 | 預設 | 說明 |
 |------|------|------|
+| `PRESALES_EXTRACTIVE` | 未設＝關（LLM 依知識合成） | 1／true／on／yes 開 D6 抽取式；業主 2026-09-04 二次裁決預設關 |
 | `PRESALES_GROUNDING_THRESHOLD` | **prod compose 設 0.5**；未設＝`KB_SIMILARITY_THRESHOLD`（prod 0.65／程式 0.55） | [0,1]；壞值回預設（D2） |
 | `PRESALES_HANDOFF_CHANNEL` | `line_official` | D1；DB metadata 可覆寫 |
 | `BRAIN_STRICT_SCHEMA` | on（既有） | off 時 `fact_class` 可能缺 → other |
