@@ -224,3 +224,39 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 **不等於**逐份都已裁決為現行——上面逐功能列出的 14 個,才是經漂移檢測確認可信的那批。
 ⚠️ 同資料夾內的 `tasks.md` 帶施工狀態、`research.md` / `gap-analysis.md` 是當時的調查快照;
 引用它們之前一律重新查證,⛔ 不得直接當現況。
+
+## 工具與流程設定(目錄宣告) {#tooling}
+
+- 產線 | `.claude/skills/` | 本專案自建的流程 skill:檢索改善產線、留出集驗證、接受度對帳、設定治理審查
+- 產線 | `.claude/MAP.md` | 本表自身
+- 產線 | `.claude/DECISIONS.md` | 裁決帳本
+- 產線 | `.kiro/settings/` | spec 產出的規則與模板(design-discovery／design-principles／templates)
+- 實測 | `.kiro/issues/` | 待解的線上問題單:reranker 回零、SOP 候選間歇空白
+
+⚠️ 這區是**怎麼幹活**的設定,⛔ 不是產品事實 —— 引用它們不能當成系統行為的證據。
+
+## 產線輔助說明(目錄宣告) {#codebase-readmes}
+
+- 產線 | `semantic_model/` | 語意模型的訓練、部署、路由規則與效能分析說明
+- 產線 | `scripts/` | 腳本目錄的使用說明、盤點與稽核報告
+- 產線 | `tests/` | 測試套件的執行說明與資料集說明
+- 產線 | `database/` | migration 體系與 seed 的使用說明
+- 產線 | `data/` | 知識單元格式與業者知識範本說明
+- 產線 | `knowledge-admin/` | 知識後台前端的說明與遷移紀錄
+- 產線 | `rag-orchestrator/README.md` | 主服務的使用說明
+- 產線 | `rag-orchestrator/services/jgb/README.md` | JGB 整合層的端點、認證與 `bit_status` 對照
+- 產線 | `rag-orchestrator/artifacts/responsibility/README.md` | responsibility 產物說明
+
+⚠️ 這區是**隨程式走的操作說明**,⛔ 不是產品功能正本 —— 它們回答「這個目錄怎麼用」,
+不回答「系統對使用者做什麼」。⚠️ 其中多份壞引用密度高(`/canon-triage` 的處置清單裡
+`tests/data/README.md`、`tests/integration/README_*.md`、`rag-orchestrator/services/jgb/README.md`
+被列為「整份可能已退休」),⛔ 引用前一律對碼。
+
+## repo 根目錄 {#repo-root}
+
+- 產線 | `README.md` | 專案入口與環境起法
+- 產線 | `CLAUDE.md` | 本專案的事實紀律與工作流規約
+- 實測 | `CHANGELOG.md` | 變更歷史 ⚠️ 內含大量指向已刪檔的歷史區段,⛔ 那是紀錄不是腐爛
+
+⚠️ 本區塊三段(工具設定／產線輔助／根目錄)於 2026-09-04 加入,一次收編 80 份,
+覆蓋率 353→433 / 558。⛔ 目錄宣告**不等於**逐份裁決為現行 —— 同 `.kiro/specs/` 的先例。

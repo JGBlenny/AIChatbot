@@ -14,9 +14,13 @@ Kiro-style Spec-Driven Development on an agentic SDLC
 3. **否定結論（沒有／找不到／不存在）必須帶正對照組**：檢查清單裡要有一個「已知必然存在」的項目；
    它若也沒中，就是工具或條件壞了，不是目標不存在。⛔ 沒有正對照組的否定結論一律不得回報。
 4. **文件與程式衝突時 ⛔ 不自行選邊**：指出反證並交回裁決。
-   ⚠️ 已知錯誤文件清單見 `.kiro/specs/conversational-routing-execution/HANDOFF-*.md` 的「已知錯誤文件」節——
-   例如 `docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md` §3 漏了 b2b 嚴格分支，
-   **照它補 `IS NULL` 會打穿刻意設計的跨業者隔離**。
+   ⚠️ 已知錯誤文件清單見 `.kiro/specs/conversational-routing-execution/HANDOFF-*.md` 的「已知錯誤文件」節
+   與同目錄 `b2b-doc-status-ledger.md` 的「不可依據」節——
+   ⚠️ 這兩份都是 **2026-09-01 當時的快照，⛔ 不是現況**：其中
+   `docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md` §3 已於 commit `96e526ae`（2026-09-01）
+   補上 b2b 嚴格分支與 🔴 警語，該條**已失效**。引用帳本前先對碼。
+   ⚠️ 但被它保護的事實仍然成立：b2b 業態過濾是 `business_types && ARRAY['system_provider']`、
+   **無 `IS NULL` 放行**，**補上 `IS NULL` 會打穿刻意設計的跨業者隔離**。
 
 ## Project Context
 
