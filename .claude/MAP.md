@@ -88,7 +88,7 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 - 路由 | `rag-orchestrator/routers/chat.py` | 混合 grounding 分支
 - 判準 | `rag-orchestrator/tests/unit/conversational/test_engine_scope_face_req.py` | scope/face 明列、衍生、失敗三態驗收
 - 決策 | `.kiro/specs/domain-conversational-facets/design.md` | per-領域脈絡、face 衍生、scope 正規化
-- 實測 | `docs/research/domain-conversational-facets-research.md` | 領域面向的現行 ground-truth(2026-08-22 triage 判為現行索引,非快照)
+- 實測 | `docs/research/domain-conversational-facets-research.md` | 面向化架構定案:三層脈絡／候選辨識／中途切換(2026-07-06 對 jgb2 真碼盤查);⚠️ 見〈jgb2 盤查結論〉區塊的家族規約
 
 ## 物件對話面向 {#estate-facets}
 
@@ -405,6 +405,32 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 `rag-orchestrator/`(AI 客服主服務)與 `knowledge-admin/backend/`(知識後台:權限／角色／認證)。
 ⚠️ 2026-09-04 曾因只搜 `rag-orchestrator/routers/` 而誤判「RBAC 權限系統查無 API 面」——
 正對照組當時取自同一目錄,只證明 grep 會動、不證明範圍對。
+
+## jgb2 盤查結論(Ground-truth Research) {#ground-truth-research}
+
+🔴 **家族規約(業主 2026-09-04 裁,選項 C)**:這批全部是「**某次**對 jgb2 真碼的盤查結論」,
+⛔ **不是現況宣告**。面向一律 `實測`,一句話一律帶盤查日期。
+兩軸分開處理:MAP 給角色(找得到、知道它是什麼);`canon.json` 的
+`docs/research/*-research.md` 排除它們的壞引用(那些引用指向 **jgb2 的路徑**,
+在本 repo 不存在是預期行為,⛔ 不是腐爛)。
+⚠️ 依據 `docs/research/README.md` 第 4 行逐字:「jgb2 持續演進;本目錄為『當時盤查』的
+證據快照,**重大版更後如行為不符,先重盤再改斷言**」。
+⛔ **不判現行的理由**:2026-09-04 實測 jgb2 一年 93 筆 commit 動 external controller、
+文件同步率僅 14%,`docs/api/jgb_external_api_spec.md` 已漏 10 支端點 ——
+宣告 2026-07 的盤查為「現行」會讓下一個人把過期事實當現況引用。
+
+- 路由 | `docs/research/README.md` | 這批盤查各自答了哪個領域的什麼真相(目錄定位與導航)
+- 實測 | `docs/research/billing-conversational-facets-research.md` | 滯納金兩機制、超商逢 5 撥付、發票開立時點、金流狀態機(2026-07-03)
+- 實測 | `docs/research/estate-conversational-facets-research.md` | 物件兩軸狀態模型(`status`×`is_open`)與刊登條件(2026-07-04)
+- 實測 | `docs/research/iot-conversational-facets-research.md` | 台科電＝DAE、電表機制、G 趨近零(2026-07-04)
+- 實測 | `docs/research/conversational-diagnosis-research.md` | 合約診斷 v1 的 12 狀態首盤(2026-06-30)
+- 實測 | `docs/research/quota-management-research.md` | 額度管制的裁決紀錄與 codebase 實查(2026-07-06)
+- 實測 | `docs/research/usage-metering-research.md` | 使用量計量的裁決紀錄與 codebase／jgb2 實查(2026-07-06)
+- 實測 | `docs/research/sop-audience-isolation-research.md` | **撤案 spec** 的 jgb2 真相三題:金流支付枚舉／電費六模式／統編(2026-07-04)
+- 實測 | `docs/research/conversation-retrieval-resilience-research.md` | 檢索韌性的 P0→P2 改造順序覆核(2026-08-03);🔴 **該 spec 已由業主定性失敗、整案還原(main 與分支回 `cca0146`)**,⛔ 其設計方向已被推翻,只留調研脈絡
+
+⚠️ 另兩份同家族的 `contract-` 與 `account-conversational-facets-research.md` 未列於此,
+但已由同一條 `docs/research/*-research.md` 樣式涵蓋排除,體例一致。
 
 ## docs 根目錄 {#docs-root}
 
