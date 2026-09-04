@@ -105,6 +105,16 @@
 | 4. M2 影子與評估 | 影子背景 task；離線評估三組凍結樣本；獨立 verifier 重跑 | ① 逐題對照表（54 句＋五劇本＋真實抽樣）：answered／rubric／敏感漏／邊界不硬答／延遲／成本 ② `perf-agent-<date>.md`：agent vs 舊鏈，含 D2 三項硬線判定 ③ 影子月成本數字 | ① 本機開影子 env（`AGENT_SHADOW_AUDIENCES=prospect`）——你授權 ② D2 收案數字（p95、邊界題 ≥90% 等）③ D5 影子月上限 | 獨立 `verifier` 重跑同一組樣本（sha 校驗）並回 CONFIRMED；情境扮演 agent 多輪打五劇本 | 看過結果後改樣本或改線；影子落原文；影子鏈看得到 write 工具；報表沒有成本欄 |
 | 5. M3 切換、回切、退休 | 本機切換演練與回切；五劇本 e2e；退休清單 AST 測試；部署 runbook；收案 | ① 切換／回切演練紀錄（時間、無資料修復）② 五劇本 e2e 報告（敏感 0 漏、無捏造、固定句率 ≤ 基準）③ runbook 逐條指令＋預期輸出（migration 三表、env、image）④ 總結列取捨與未裁項 | ① 決定切不切 prospect ② 線上部署你執行（整庫遷移後）③ 子 spec 何時開（help-center-source／write-tools／pm／個人化） | `verifier` 跑五劇本＋契約測試；`security-reviewer` 對 M0 結論複核一次（因 M1–M3 加了新面）；主 session 收案自稽核逐項對照本表 | 切換需重建 image；回切要修資料；舊鏈測試被刪；對外契約欄位變動 |
 
+## jgb2 互動、知識補強與實測時點（業主 2026-09-04 問）
+
+| 時點 | 跟 jgb2 的互動驗證 | 補 JGB 知識 | 開 API／jgb2 端動作 | 實測方式 |
+|---|---|---|---|---|
+| 大項 1（M0）1.5 | `jgb2.query.*` 五域打 `external/v1`：本機先用 recording transport 驗轉發；再以 `RUN_INTEGRATION=1` 對 www 測試團隊 role 20151 實打一次 smoke（bills／contracts 帶 `viewer_user_id`） | 不需要 | **唯一要 jgb2 端動手**：確認本機 `JGB_API_KEY` 在 Layer 1 有 bills／contracts／estates／meters／roles 五個 resource 的 read 權限（`external-api-key:run permission-list`），缺則 `permission-add`；不用開新端點 | 整合測試＋一次真 API smoke；⛔ 不動 jgb2 程式 |
+| 大項 3（M1）3.2／3.3 | 無 | **售前池要先到位**：31 筆標記已審核（3.3）；缺口地圖批次 2（18 筆）與 3600／3610 講法補強建議在 M2 評估前匯入，否則對照表會把知識缺口算成 agent 缺口；DSP-010 範本數、C52 待裁 | 無 | 大綱 dump 人審 |
+| 大項 4（M2）4.2 | 真實流量抽樣：從線上 `usage_events` 匯出 prospect 問句（去識別）到本機回放，⛔ 不在線上跑影子 | 評估結果會反饋成新缺口 → 走 `retrieval-improvement-loop` 補知識，再重跑 | 無 | 三組樣本本機對照＋獨立 verifier |
+| 大項 5（M3）5.1 | jgb2 面板「找真人」按鈕與 `handoff.channel` 對齊（既有待辦，非本 spec 新增） | 無 | jgb2 前端讀 `handoff` 欄位（契約已在 `docs/api/conversational-api.md`）；本機面板實打五劇本 | 情境 e2e；線上切換等整庫遷移後由你部署 |
+| 子 spec（M4 後） | 寫入：`POST /repairs`（external/v1 已有）；pm 五域真資料 | pm 293／tenant 566 筆知識盤整；幫助中心 93 頁匯入（D3） | `agent/v1`（ed25519＋IP 白名單）是否加掛待 jgb2-source-index §10.1 裁；訂閱方案缺文件（缺口 2）要向 jgb2 團隊要 | 另案 |
+
 ## 覆蓋對照
 | 需求 | 任務 |
 |---|---|
