@@ -45,6 +45,7 @@
 - [ ] 1.9 M0 security review（1.1–1.8 後；`security-reviewer` 唯讀）：範圍＝隔離同源（謂詞四消費點）、身分 header fail-closed、注入面（工具回傳封閉欄位）、`/mcp` 兩道閘與額度落點；READY 為 M0 done 條件之一。
   - 需求：2.6, 11.3
   - 執行：security-reviewer／effort 高——唯讀；READY 是 M0 done 條件
+  - **M0 收案前置（2026-09-04 容器事故）**：本機 `:8100` image 不含 `services/agent/**`，1.1 後 retriever import `services.agent.identity` ⇒ 只 docker cp 單檔重啟會 `ModuleNotFoundError` 起不來（已以 cp 整個套件暫救、health 200）。M0 收案一律 **rebuild image**（⛔ 不靠 docker cp）；`scripts/audit/check_invariants.sh` 的容器一致性清單要加 `services/agent/**`、`services/jgb/transport.py`（現只抓 `jgb_system_api.py`，retriever 先前不一致也沒紅）。
 
 ## 2. M1 Runtime、Verifier、確認契約（1.3 後；2.1／2.3／2.4 可平行）
 
