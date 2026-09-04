@@ -375,3 +375,33 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 
 ⚠️ **同批已判快照、⛔ 不在此列**:`docs/features/sop/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md`
 (測試日期 2026-02-03＋測試資料＋發現問題＋簽核,快照特徵齊全)。
+
+## 設計文件 {#design-docs}
+
+⚠️ 這 9 份於 2026-09-04 逐份判讀後列入,且**逐一驗證過對應實作是否存在**(見各條)。
+⛔ `docs/design/agentic-tool-selection-design-20260904.md` 不在此列——它是
+`agentic-mcp-orchestration` 的設計正本,由該 spec 管轄;`LOOKUP_TABLE_SYSTEM_DESIGN.md`
+在 `canon.json` 的 `discover_exclude`。
+
+### API 架構
+
+- 規格 | `docs/design/CORE_API_FUNCTIONS_REFERENCE.md` | API 統一處理架構有哪些核心函數、各自負責什麼
+- 規格 | `docs/design/API_DATA_FLOW.md` | 一次 API 呼叫從進場到使用者收到回應之間經過哪些轉換點
+- 規格 | `docs/design/IMPROVED_API_ARCHITECTURE.md` | 為何改用「動態配置＋通用呼叫器」取代逐支自訂函式;產線在 `rag-orchestrator/services/api_call_handler.py`(符號 `UniversalAPICallHandler`)
+- 路由 | `docs/design/API_CONFIGURATION_GUIDE.md` | 知識要觸發 API 呼叫時,設定檔怎麼寫、參數怎麼映射
+
+### 知識動作與表單
+
+- 規格 | `docs/design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md` | 知識庫動作系統的完整設計(問答／表單／API 呼叫的組合);檔內自標「狀態: 已實現」,產線見 `decision_layer.py` 符號 `action_type`
+- 產線 | `docs/design/KNOWLEDGE_ACTION_QUICK_REFERENCE.md` | 動作要選哪一種的決策表與速查;⚠️ 檔內明說「完整文檔請見 `KNOWLEDGE_ACTION_SYSTEM_DESIGN.md`」⇒ 兩份**互補非取代**
+- 規格 | `docs/design/FORM_FILLING_DIALOG_DESIGN.md` | 表單填寫式對話的狀態機與離題偵測怎麼設計;產線在 `rag-orchestrator/services/form_manager.py`(符號 `FormState`)
+
+### 權限
+
+- 規格 | `docs/design/PERMISSION_SYSTEM_DESIGN.md` | RBAC 的資料表結構、前後端分工與實作階段規劃;產線在 `knowledge-admin/backend/`(`routes_roles.py` 的 `/api/roles`、`routes_auth.py`、`auth_utils.py`)
+- 規格 | `docs/design/PERMISSION_UI_DESIGN.md` | 權限管理前端的頁面、元件與互動流程;⚠️ 它點名的 `knowledge-admin/frontend/src/config/menu.js` 與 `components/AppMenu.vue` **已不存在**(11 個引用中 2 個失效),其餘前端實作仍在(`composables/usePermission.js`、`directives/permission.js`)
+
+🔴 **本 repo 有兩個後端服務,查證實作時 ⛔ 不可只搜其中一個**:
+`rag-orchestrator/`(AI 客服主服務)與 `knowledge-admin/backend/`(知識後台:權限／角色／認證)。
+⚠️ 2026-09-04 曾因只搜 `rag-orchestrator/routers/` 而誤判「RBAC 權限系統查無 API 面」——
+正對照組當時取自同一目錄,只證明 grep 會動、不證明範圍對。
