@@ -230,7 +230,7 @@ def wrap_tool_data(tool_name: str, text: str, nonce: str) -> str:
 class PromptAssembler:
     def build(self, identity: Identity, outline: OutlineDoc, slots: dict[SlotKey, SlotValue], dialog: list[dict], tool_specs: list[ToolSpec], nonce: str) -> list[dict]: ...
 ```
-大綱章節可被 `kb.get("outline:<id>")` 取回；**citable 依來源**：prospect 大綱由售前池一般知識列組成（`source_ids` 皆非保留分類）⇒ `Provenance.citable=true`；pm／tenant 目錄由 `系統脈絡` 列組成 ⇒ `citable=false`（只導航，不引用；細節走 `kb.get` 整數 id／`help.read`／`jgb2.query`）。這維持保留分類「永不當答案回傳」（決策 10 修訂）。`build_toc` 取法加 `vendor_ids` 與 `target_user` 過濾（`system_context._fetch_domain` 現況以 `target_user` 分層，`_fetch_base` 無 vendor 過濾 ⇒ 不得照抄）。
+大綱章節可被 `kb.get("outline:<id>")` 取回；**citable 依來源**：prospect 大綱由售前池一般知識列組成（`source_ids` 皆非保留分類）⇒ `Provenance.citable=true`；pm／tenant 目錄由 `系統脈絡` 列組成 ⇒ `citable=false`（只導航，不引用；細節走 `kb.get` 整數 id／`help.read`／`jgb2.query`）。這維持保留分類「永不當答案回傳」（決策 10 修訂）。`build_toc` 取法加 `vendor_ids` 與 `target_user` 過濾（`system_context._fetch_appends` 現況以 `target_user` 分層（1.4.7 更正：原寫 `_fetch_domain` 不存在），`_fetch_base` 無 vendor 過濾 ⇒ 不得照抄）。
 大綱與目錄進 system prompt 也套同一 nonce 分隔標記；使用者訊息（`dialog`）**不進資料區**、不包裝。
 
 **DSP-012 已裁（業主 2026-09-04，選項 A）**：R11.1 禁令主詞收窄為「工具回傳文字」，大綱屬 server 端程式組裝（R5.4：可重跑、版本戳＋sha256、⛔ 無 LLM）故不在禁令內；進 system prompt 的來源由 R11.5 白名單化為兩種。
