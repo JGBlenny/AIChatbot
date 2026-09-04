@@ -146,6 +146,7 @@ class JGBSystemAPI:
         status: Optional[str] = None,
         contract_ids: Optional[str] = None,
         bill_ref: Optional[str] = None,
+        viewer_user_id: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """查詢帳單列表。
@@ -154,6 +155,11 @@ class JGBSystemAPI:
           - 租客情境（既有）：role_id + user_id（身分保護，缺一降級）；
           - b2b per-contract / per-bill：role_id + contract_ids 或 bill_ref——
             與 get_contracts 相同以 role_id 為授權主體，不需 user_id。
+
+        `viewer_user_id`（agentic-mcp-orchestration 任務 1.5）：jgb2 端 `viewer_user_id`
+        圈定顯式轉發（原被 `**kwargs` 吞掉、從未送達 API）；非空才放進 params，
+        照 `get_bill_visibility` 先例。⚠️ mock 對本參數保留 `UnsupportedMockParameterError`
+        大聲失敗（`services/jgb/transport.py:_bills_index`）——這是刻意設計，不得放寬。
 
         `bill_ref` 識別語意參數（adapter，billing-conversational-facets R2.1）：
           純數字 → 先 get_bill_detail 直查（單筆包成列）；查無 → 當合約 id 解析；
@@ -203,6 +209,8 @@ class JGBSystemAPI:
             params["month"] = month
         if status:
             params["status"] = status
+        if viewer_user_id:
+            params["viewer_user_id"] = viewer_user_id
         resp = await self._request("/api/external/v1/bills", params)
         # client 端防衛過濾（上游再無視參數也擋得住；沿 get_contracts 過濾先例）：
         # 只在列上帶 contract_id 時啟動，舊形狀列不受影響。
@@ -248,9 +256,16 @@ class JGBSystemAPI:
         contract_ids: str = None,
         keyword: str = None,
         status: Optional[str] = None,
+        viewer_user_id: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
-        """查詢合約狀態總覽"""
+        """查詢合約狀態總覽
+
+        `viewer_user_id`（agentic-mcp-orchestration 任務 1.5）：同 `get_bills`，
+        顯式轉發（原被 `**kwargs` 吞掉）；非空才放進 params。目前 mock
+        `_contracts_index` 未對此參數設防（不 raise、單純忽略）——圈定語義
+        本機不可驗，只驗轉發，真圈定效果留 M3 後線上 e2e（domain 映射表）。
+        """
         if not role_id:
             return self._degraded_response()
 
@@ -262,6 +277,8 @@ class JGBSystemAPI:
             params["contract_ids"] = contract_ids
         if keyword:
             params["keyword"] = keyword
+        if viewer_user_id:
+            params["viewer_user_id"] = viewer_user_id
         result = await self._request(
             "/api/external/v1/contracts/status-overview", params
         )

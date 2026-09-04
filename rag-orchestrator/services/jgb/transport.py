@@ -120,6 +120,29 @@ class UnexpectedRealNetworkError(TransportError):
     """
 
 
+class RecordingTransport:
+    """出向參數斷言鉤子（agentic-mcp-orchestration 任務 1.5）。
+
+    包一層 `Transport` 實作，`send()` 前先把 `(method, path, params)` 追加到
+    `self.calls`，再原樣轉呼叫 `inner`——inner 拋的例外（例如
+    `JGBMockTransport` 對 `viewer_user_id` 的 `UnsupportedMockParameterError`）
+    原樣往外傳，⛔ 不吞、不放寬：本類**只驗證「有沒有轉發」**，
+    不改變 inner 的任何行為（含大聲失敗）。
+    """
+
+    def __init__(self, inner: Transport) -> None:
+        self.inner = inner
+        self.calls: "list[tuple[HttpMethod, str, Optional[dict[str, Any]]]]" = []
+
+    async def send(
+        self, method: HttpMethod, path: str, *,
+        params: Optional[dict[str, Any]] = None,
+        data: Optional[dict[str, Any]] = None,
+    ) -> TransportResponse:
+        self.calls.append((method, path, params))
+        return await self.inner.send(method, path, params=params, data=data)
+
+
 class RealHttpTransport:
     """真 HTTP 實作：只負責送出請求與把傳輸層失敗轉成契約外殼。
 

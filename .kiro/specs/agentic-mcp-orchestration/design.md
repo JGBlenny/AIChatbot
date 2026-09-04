@@ -176,9 +176,9 @@ class ToolRegistry:
 |---|---|---|---|---|---|
 | bills | `get_bills(role_id, user_id, …)` | — | **支援**（`/bills` 列表端點） | jgb2 Layer 2 | `get_bills` 增顯式 `viewer_user_id` 轉發（現只有 `get_bill_visibility` 轉發，其餘方法被 `**kwargs` 吞掉）；**mock 保留** `services/jgb/transport.py:_bills_index` 的 `UnsupportedMockParameterError`（刻意的大聲失敗，⛔ 不放寬）；驗收改以 transport 出向參數斷言鉤子驗「有轉發」，圈定的過濾語義本機不可驗、只驗轉發（真圈定效果留 M3 後線上 e2e） |
 | contracts | `get_contracts(role_id, keyword…)` | — | **支援**（`contracts/status-overview`） | jgb2 Layer 2 | 同上，增 `viewer_user_id` 轉發 |
-| accounts | `get_team_members`／`get_member_permissions`（帳號面向與合約同端點，`contracts.format_contract_response` 延遲匯入 `ACCOUNT_FACE_BUILDERS`） | — | 不支援 | `role_id`＋`user_id` 雙證（`_validate_identity`） | 無 |
+| accounts | `get_team_members`／`get_member_permissions`（face `團隊成員權限`）；**face `登入排障` 需合約列（`is_tenant_registered`／`to_user_login_email`），1.5 實作暫回 `INVALID_INPUT`，1.7 前修訂為走 `get_contracts`** | — | 不支援 | `role_id`＋`user_id` 雙證（`_validate_identity`） | 1.7：`登入排障` 路由到 contracts 資料源 |
 | meters | `get_meters` | — | 不支援 | 雙證 | 無 |
-| estates | `get_estates`＋`get_estate_status` | `get_estate_detail`（builder 第二參數 `detail`） | 不支援 | 雙證 | 工具層兩次呼叫合成 row |
+| estates | `get_estate_status`（唯一 face `物件現況診斷` 需其 `status`／`status_zh`／sentinel 形狀；`get_estates` 形狀不符不用） | `get_estate_detail`（builder 第二參數 `detail`） | 不支援 | 雙證 | sentinel `{found:false}` 視為單筆決定性結果（非 NO_MATCH） |
 驗收（M0 整合測試）：bills／contracts 的出向請求 params 含 `viewer_user_id==identity.user_id`（transport 出向斷言鉤子，mock 本身仍 raise）；其餘三域缺 `user_id` ⇒ `NO_MATCH`（`_validate_identity` 拒）。jgb2 §3.5 明列僅四端點支援圈定，本表即「圈定生效」的可測邊界。
 
 **`FACE_BUILDER_REGISTRIES`（既有五張表，鍵為中文面向名；1.1 對碼）**：
@@ -535,6 +535,7 @@ Identity／Audience／ToolSpec／ToolResult／AgentOutput／Citation／VerifierR
 | 日期 | 版本 | 變更 | 修改者 |
 |---|---|---|---|
 | 2026-09-04 | 1.0 | 初始版本（full discovery） | AI |
+| 2026-09-04T21:42:30+08:00 | 1.4.4 | 域映射表依 1.5 實作對碼：accounts `登入排障` 缺口、estates 只用 `get_estate_status` | AI |
 | 2026-09-04T21:40:36+08:00 | 1.4.3 | 不變量編號 18–22 → 27–31（DSP-013） | AI |
 | 2026-09-04T20:18:50+08:00 | 1.4.2 | 心智模型節（業主問答定稿）；「找帳單」詳細時序 | AI |
 | 2026-09-04T20:07:54+08:00 | 1.4.1 | r6 增量審查 2 P1：`facade_only`、Origin 三態；決策順序；roadmap 標記 | AI |
