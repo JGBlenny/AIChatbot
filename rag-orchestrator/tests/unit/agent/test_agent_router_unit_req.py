@@ -268,11 +268,60 @@ async def test_health_red_on_each_premise_flag(monkeypatch, stat_key, stat_value
 
 
 @pytest.mark.req(_SPEC)
-async def test_health_red_on_mcp_calls_by_api_key_nonempty(monkeypatch):
-    """第一項：`/mcp` 有任何呼叫紀錄（含失敗記在 'unknown'）就列入 red_flags——
-    這是「有流量了，去看一眼」的告警，⛔ 不是說一定出事（見 health.py docstring）。"""
+async def test_health_green_when_only_internal_key_traffic(monkeypatch):
+    """任務 2.8：第一項改判——`/mcp` 全是已登錄且 `is_internal` 的 key 流量，
+    即使筆數多也 ⇛ 不列入 red_flags（`mcp_calls_by_api_key` 本身只是觀測值）。"""
     _bypass_key_and_vendor(monkeypatch)
-    F.note_mcp_traffic(7)
+    _scope_cols_ready(monkeypatch)
+    # 第四旗（enforce 關時仍有流量）與本測試無關——明講前提：enforce 是開的。
+    monkeypatch.setenv("RAG_API_AUTH_ENFORCE", "1")
+
+    class _FakePool:
+        def getconn(self):
+            class _Conn:
+                def cursor(self):
+                    class _Cur:
+                        def execute(self, *a, **k):
+                            pass
+
+                        def fetchone(self):
+                            return None
+
+                        def close(self):
+                            pass
+                    return _Cur()
+            return _Conn()
+
+        def putconn(self, conn):
+            pass
+
+    monkeypatch.setattr(agent, "_build_deps", lambda app: F.FacadeDeps(
+        get_db_pool=lambda: None,
+        get_kb_pool=lambda: _FakePool(),
+        get_retriever=None,
+        stage=F.current_stage(),
+    ))
+    for _ in range(5):
+        F.note_mcp_traffic(1, is_internal=True)
+
+    req = _FakeRequest(
+        headers={
+            "x-api-key": "k",
+            "X-JGB-Identity": '{"vendor_id": 1, "session_id": "s1", "target_user": "tenant"}',
+        },
+        db_pool=None,
+    )
+    result = await agent.agent_health(req)
+    assert "mcp_calls_by_api_key" not in result["checks"]["premise"]["red_flags"]
+    assert result["checks"]["premise"]["mcp_calls_by_api_key"] == {"1": 5}
+    assert result["status"] == "ok"
+
+
+@pytest.mark.req(_SPEC)
+async def test_health_red_on_non_internal_api_key(monkeypatch):
+    """任務 2.8：已登錄但非 `is_internal` 的 key 一筆即致紅，且能指出是哪把 key。"""
+    _bypass_key_and_vendor(monkeypatch)
+    F.note_mcp_traffic(2, is_internal=False)
 
     req = _FakeRequest(
         headers={
@@ -284,6 +333,27 @@ async def test_health_red_on_mcp_calls_by_api_key_nonempty(monkeypatch):
     result = await agent.agent_health(req)
     assert result["status"] == "red"
     assert "mcp_calls_by_api_key" in result["checks"]["premise"]["red_flags"]
+    assert result["checks"]["premise"]["mcp_calls_flagged_by_api_key"] == {"2": 1}
+
+
+@pytest.mark.req(_SPEC)
+async def test_health_red_on_unregistered_api_key(monkeypatch):
+    """任務 2.8：未登錄 key（`verify_api_key` 查無，門面以 `api_key_id=None`、
+    `is_internal=False` 記一筆）一樣致紅。"""
+    _bypass_key_and_vendor(monkeypatch)
+    F.note_mcp_traffic(None, is_internal=False)
+
+    req = _FakeRequest(
+        headers={
+            "x-api-key": "k",
+            "X-JGB-Identity": '{"vendor_id": 1, "session_id": "s1", "target_user": "tenant"}',
+        },
+        db_pool=None,
+    )
+    result = await agent.agent_health(req)
+    assert result["status"] == "red"
+    assert "mcp_calls_by_api_key" in result["checks"]["premise"]["red_flags"]
+    assert result["checks"]["premise"]["mcp_calls_flagged_by_api_key"] == {"unknown": 1}
 
 
 @pytest.mark.req(_SPEC)

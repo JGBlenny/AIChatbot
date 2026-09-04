@@ -157,6 +157,9 @@ ERR_METERING = "METERING_UNAVAILABLE"
 @dataclass
 class _PremiseStats:
     calls_by_api_key: dict = field(default_factory=dict)
+    #: DSP-011 第一旗（任務 2.8 修正）：未登錄或非 `is_internal` 的 api_key_id
+    #: 分佈——⛔ 只有這個欄位致紅，`calls_by_api_key` 本身只是觀測值。
+    flagged_api_keys: dict = field(default_factory=dict)
     vendor_not_in_table: int = 0
     origin_not_allowed: int = 0
     enforce_off_with_mcp_traffic: bool = False
@@ -174,12 +177,21 @@ def _enforce_flag_is_on() -> bool:
     return os.getenv(_ENFORCE_ENV_NAME, "").strip().lower() in _ENFORCE_TRUTHY
 
 
-def note_mcp_traffic(api_key_id: Optional[int]) -> None:
-    """記一次 `/mcp` 流量（依 api_key_id 分佈）＋「旗標關著卻有流量」旗標。"""
+def note_mcp_traffic(api_key_id: Optional[int], *, is_internal: Optional[bool] = None) -> None:
+    """記一次 `/mcp` 流量（依 api_key_id 分佈，觀測用）＋「旗標關著卻有流量」旗標。
+
+    任務 2.8：`is_internal=False`（含未登錄 key——呼叫端在該情境傳
+    `is_internal=False`）⇒ 額外累進 `flagged_api_keys`，這是 DSP-011 第一旗
+    唯一致紅的依據。`is_internal=None` 代表呼叫端此刻沒有 key 屬性可傳（例如
+    請求層在拿到 key 屬性前就因 `vendor_not_in_table`／`origin_not_allowed`
+    失敗——那兩種已各自有獨立旗標，⛔ 不重複算進本旗，避免用「不知道」冒充「有問題」）。
+    """
     key = str(api_key_id) if api_key_id is not None else "unknown"
     _STATS.calls_by_api_key[key] = _STATS.calls_by_api_key.get(key, 0) + 1
     if not _enforce_flag_is_on():
         _STATS.enforce_off_with_mcp_traffic = True
+    if is_internal is False:
+        _STATS.flagged_api_keys[key] = _STATS.flagged_api_keys.get(key, 0) + 1
 
 
 def premise_stats() -> dict:
@@ -187,9 +199,14 @@ def premise_stats() -> dict:
 
     design 元件 4：前三項任一非零或第四項為真 ⇒ 告警。這是兩條 P0 REJECT
     （「不建 bearer」「MCP 暴露 jgb2.query」）的補償條件——**前提破了要重開**。
+
+    ⚠️ 任務 2.8：第一項的致紅依據改為 `mcp_calls_flagged_by_api_key`
+    （未登錄或非 `is_internal` 的 key）；`mcp_calls_by_api_key` 仍原樣輸出，
+    但只是觀測值——非零不再代表出事。
     """
     return {
         "mcp_calls_by_api_key": dict(_STATS.calls_by_api_key),
+        "mcp_calls_flagged_by_api_key": dict(_STATS.flagged_api_keys),
         "vendor_not_in_table": _STATS.vendor_not_in_table,
         "origin_not_allowed": _STATS.origin_not_allowed,
         "enforce_off_with_mcp_traffic": _STATS.enforce_off_with_mcp_traffic,
@@ -639,7 +656,7 @@ def _make_invoke(registry: ToolRegistry, deps: FacadeDeps) -> Callable:
             raise tool_error(_tool_error_message(e.code)) from None
 
         identity = call.identity
-        note_mcp_traffic(identity.api_key_id)
+        note_mcp_traffic(identity.api_key_id, is_internal=call.is_internal)
 
         from services import usage_metering as um
 
@@ -952,13 +969,16 @@ class McpServiceGate:
             call = await resolve_call(headers, self._get_pool(), self._allowed_origins)
         except McpRequestError as e:
             if str(scope.get("path", "")).startswith("/mcp"):
-                note_mcp_traffic(None)
+                # `ERR_API_KEY`（401）＝key 本身缺／驗不到——這才是「未登錄」；
+                # 其他代碼（vendor_unknown／origin_not_allowed…）發生在 key 已
+                # 驗過**之後**，各自已有獨立旗標，⛔ 不冒充成 key 問題。
+                note_mcp_traffic(None, is_internal=False if e.code == ERR_API_KEY else None)
             await _send_json(send, e.status, {"detail": e.code, "code": e.code})
             return
 
         path = str(scope.get("path", ""))
         if path.startswith("/mcp"):
-            note_mcp_traffic(call.api_key_id)
+            note_mcp_traffic(call.api_key_id, is_internal=call.is_internal)
         scope.setdefault("state", {})["mcp_call"] = call
         if path == "/mcp":
             # ⚠️ 實測：`Mount("/mcp", …)` 的比對式是 `^/mcp(?P<path>/.*)$`，

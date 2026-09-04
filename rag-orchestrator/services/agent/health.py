@@ -12,11 +12,12 @@
 2. **大綱 version／sha**（3.2 未落地）與 **rules_sha**（2.3 未落地）：固定回
    `"pending"`，⛔ 不算紅——這是「尚未建置」不是「建置後壞了」。
 3. **DSP-011 前提偵測四項**（`mcp_facade.premise_stats()`；design 元件 4）：
-   `mcp_calls_by_api_key`／`vendor_not_in_table`／`origin_not_allowed` 任一非零，
-   或 `enforce_off_with_mcp_traffic` 為真 ⇒ 列入 `premise.red_flags` 並致紅。
-   ⚠️ 第一項非零**不代表出事**——`/mcp` 是刻意的低量非公開通道，這是「有流量了，
-   去看一眼是不是預期中的呼叫方」的告警，不是錯誤（見 mcp_facade 模組 docstring
-   「兩條 P0 REJECT 的補償條件」）。
+   第一項（任務 2.8 修正語義）改判 `mcp_calls_flagged_by_api_key`——`/mcp`
+   出現**未登錄**（`verify_api_key` 查無）或**已登錄但非 `is_internal`** 的
+   `api_key_id` 才致紅；`mcp_calls_by_api_key` 整體分佈仍輸出為觀測值，⛔
+   不再以「非零即紅」判。第二、三項（`vendor_not_in_table`／
+   `origin_not_allowed`）任一非零，或第四項 `enforce_off_with_mcp_traffic`
+   為真 ⇒ 同樣列入 `premise.red_flags` 並致紅。
 4. **MCP SDK 是否可匯入**（`mcp_sdk_available()`）：DSP-014 A 之後 SDK 已是正式
    相依，這裡只是防禦性守衛；否 ⇒ `"unavailable (DSP-014)"`，⛔ 不算紅
    （`/mcp` 服務層閘仍生效，只是工具面未掛載）。
@@ -94,9 +95,14 @@ async def _check_agent_scope_ready(get_api_key_pool) -> tuple:
 
 
 def _premise_flags(stats: dict) -> list:
-    """DSP-011 前提偵測四項：前三項任一非零，或第四項為真 ⇒ 列名。"""
+    """DSP-011 前提偵測四項：前三項任一非零，或第四項為真 ⇒ 列名。
+
+    任務 2.8：第一項的致紅依據改為 `mcp_calls_flagged_by_api_key`（未登錄、
+    或已登錄但非 `is_internal` 的 api_key_id）——`mcp_calls_by_api_key`
+    的整體分佈仍輸出為觀測值，⛔ 不再以「非零即紅」判。
+    """
     flags = []
-    if stats.get("mcp_calls_by_api_key"):
+    if stats.get("mcp_calls_flagged_by_api_key"):
         flags.append("mcp_calls_by_api_key")
     if stats.get("vendor_not_in_table"):
         flags.append("vendor_not_in_table")
@@ -152,6 +158,9 @@ async def compute_agent_health(
             "rules_sha": "pending",
             "premise": {
                 "mcp_calls_by_api_key": stats.get("mcp_calls_by_api_key", {}),
+                "mcp_calls_flagged_by_api_key": stats.get(
+                    "mcp_calls_flagged_by_api_key", {}
+                ),
                 "vendor_not_in_table": stats.get("vendor_not_in_table", 0),
                 "origin_not_allowed": stats.get("origin_not_allowed", 0),
                 "enforce_off_with_mcp_traffic": stats.get(

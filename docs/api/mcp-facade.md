@@ -208,7 +208,9 @@ DSP-011 成立的前提是「`/mcp` 只有上游／內部呼叫者」。以下�
 前提可能已破，應重新檢視是否需要真正的認證層（tasks 1.8 會把它接進
 `GET /api/v1/agent/health`）：
 
-1. `/mcp` 出現非預期的 `api_key_id` 分佈
+1. `/mcp` 出現**未登錄**（`verify_api_key` 查無）或**非 `is_internal`** 的
+   `api_key_id`（任務 2.8 起；`api_key_id` 整體分佈仍輸出為觀測值，不再以
+   「非零即紅」判）
 2. `vendor_id` 不在 `vendors` 表的請求
 3. 帶著**非白名單 Origin** 的請求（缺 Origin 只記錄、不告警）
 4. `RAG_API_AUTH_ENFORCE` 關著時 `/mcp` 仍有流量
