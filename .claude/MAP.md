@@ -339,3 +339,39 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ### 目錄索引
 
 - 路由 | `docs/api/README.md` | `docs/api/` 與 `docs/design/` 的 API 文件導航;⚠️ 2026-09-04 補上同目錄 14 份之前,它只導向 `../design/` 三份與 `../guides/api/` 一份,同目錄一份都沒列
+
+## 功能文件 {#feature-docs}
+
+⚠️ 這 12 份於 2026-09-04 逐份判讀後列入。同目錄的 `DUAL_EMBEDDING_RETRIEVAL.md`、
+`KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md` 在 `canon.json` 的 `discover_exclude`,
+`conversational-presales.md` 已列於〈對話邏輯與路由執行〉。
+
+### 檢索與知識
+
+- 決策 | `docs/features/KNOWLEDGE_SCOPE_SIMPLIFICATION.md` | 知識範圍為何從 `scope` 欄位改成 `vendor_id` 判定,以及回滾路徑
+- 規格 | `docs/features/DOCUMENT_CONVERTER.md` | Word/PDF 轉 Q&A 的端點、支援格式與成本估算
+
+### 表單
+
+- 規格 | `docs/features/FORM_MANAGEMENT_SYSTEM.md` | 動態表單收集系統的 Schema、API 與前端整合
+- 規格 | `docs/features/knowledge-form-auto-option.md` | 表單自動選擇的改進設計方案(2026-02-05);⚠️ **與 `knowledge-form-auto-quick-ref.md` 同主題,兩份皆未宣告取代關係,誰是正本待裁**
+- 規格 | `docs/features/knowledge-form-auto-quick-ref.md` | 表單 Auto 選項的配置與速查(2026-07-22);⚠️ 同上,待裁
+
+### 系統管理
+
+- 規格 | `docs/features/AUTH_SYSTEM_README.md` | 管理後台 JWT 認證怎麼運作、安全設定要注意什麼
+- 規格 | `docs/features/PERMISSION_SYSTEM_README.md` | RBAC 的角色、權限分類與前後端用法
+
+### SOP
+
+- 規格 | `docs/features/sop/implementation/SOP_NEXT_ACTION_IMPLEMENTATION.md` | SOP 四種觸發模式與三種後續動作的實作範圍與未竟項
+- 決策 | `docs/features/sop/implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md` | 為何限制觸發模式與後續動作的有效組合,以及前後端各擋哪一段
+- 規格 | `docs/features/sop/optimization/SOP_KEYWORDS_COMPARISON.md` | `keywords` 與 `trigger_keywords` 差在哪、各自何時生效
+- 路由 | `docs/features/sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md` | SOP 觸發模式 UI 更新(2026-02-03)涉及哪些文件
+
+### 目錄索引
+
+- 路由 | `docs/features/README.md` | `docs/features/` 與 `sop/` 子樹共 19 份的導航;⚠️ 2026-09-04 依實況重建——此前它自稱 24 份、提到的 30 個檔名有 **19 個已不存在**(存活率 36%)且漏列 8 份
+
+⚠️ **同批已判快照、⛔ 不在此列**:`docs/features/sop/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md`
+(測試日期 2026-02-03＋測試資料＋發現問題＋簽核,快照特徵齊全)。
