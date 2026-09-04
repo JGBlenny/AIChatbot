@@ -406,6 +406,32 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ⚠️ 2026-09-04 曾因只搜 `rag-orchestrator/routers/` 而誤判「RBAC 權限系統查無 API 面」——
 正對照組當時取自同一目錄,只證明 grep 會動、不證明範圍對。
 
+## 架構、回測、測試 {#arch-backtest-testing}
+
+⚠️ 這 12 份於 2026-09-04 逐份判讀後列入,其中 3 份為時點紀錄——沿用〈jgb2 盤查結論〉
+的家族規約:**面向 `實測`＋一句話帶日期＋ triage 判快照**,⛔ 不是現況宣告。
+
+### 架構
+
+- 規格 | `docs/architecture/SYSTEM_ARCHITECTURE.md` | 整體系統的高階架構:SaaS 多租戶、RAG、Reranker、SOP、表單、知識庫、快取、API 整合、部署;⚠️ 與 `COMPLETE_CONVERSATION_ARCHITECTURE.md`(對話母圖)、`facet-architecture.md`、`retriever-pipeline.md`、`DATABASE_SCHEMA.md` 是**不同層次的互補**,⛔ **無任何一份明說取代關係**
+- 規格 | `docs/architecture/developer_architecture.md` | 知識完善迴圈子系統的架構:分層、核心元件、資料流、非同步執行、成本追蹤;⚠️ 檔頭版本戳寫「backtest-knowledge-refinement v1.0」但**該 spec 目錄已不存在**,子系統本身仍活(`rag-orchestrator/services/knowledge_completion_loop/`)
+- 規格 | `docs/architecture/conversation-flow-business.md` | 業務版對話流程(八層次,給非技術讀者);其每條斷言的實碼出處在 `conversation-flow-evidence.md`
+- 實測 | `docs/architecture/conversation-flow-evidence.md` | 上一份的逐條對碼驗證:46 條斷言中 42 屬實、4 偏差(2026-07-16 四路獨立 scout)
+
+### 回測
+
+- 產線 | `docs/backtest/GETTING_STARTED.md` | 回測與知識完善迴圈怎麼起跑:50／500／3000 題三規模、八步驟、通過標準
+- 產線 | `docs/backtest/KNOWLEDGE_COMPLETION_LOOP_GUIDE.md` | 知識完善迴圈的標準執行流程、API 端點與環境變數
+- 規格 | `docs/backtest/QUICK_REFERENCE.md` | `GapClassifier` 把知識缺口分四類與過濾邏輯(產線在 `services/knowledge_completion_loop/gap_classifier.py`);⚠️ 檔內「📁 檔案位置」節的三個目標已全數不存在,⛔ 那一節別照著找
+- 實測 | `docs/backtest/IMPLEMENTATION_GAPS.md` | 回測系統當時未實作／部分實作的缺口清單與優先級(發現時間 2026-03-27)
+
+### 測試
+
+- 判準 | `docs/testing/BATCH_TEST_STANDARDS.md` | 一個批次要滿足什麼才算通過(必要條件、品質標準、失敗處理)
+- 判準 | `docs/testing/api-integration-testing-guide.md` | Knowledge Admin API 的 `action_type`／`api_config` 支援怎麼驗收
+- 判準 | `docs/testing/LOOKUP_SYSTEM_TEST_GUIDE.md` | Lookup 查詢系統(電費寄送區間、模糊匹配、地址)的三種測法與驗收準則
+- 實測 | `docs/testing/multiturn-smoke-scripts.md` | 多輪 smoke 測試劇本與當時的測試身分(2026-07-12 整理;vendor 2、`mode=b2b`、`role_id=37305`)
+
 ## jgb2 盤查結論(Ground-truth Research) {#ground-truth-research}
 
 🔴 **家族規約(業主 2026-09-04 裁,選項 C)**:這批全部是「**某次**對 jgb2 真碼的盤查結論」,
