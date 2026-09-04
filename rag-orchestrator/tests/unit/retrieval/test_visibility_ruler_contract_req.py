@@ -114,6 +114,28 @@ def _where_columns(fn_node) -> set:
     return cols - _NOT_A_VISIBILITY_AXIS
 
 
+def _predicate_columns(fn_node) -> set:
+    """抽出 `build_visibility_predicate` 產出的 `kb.<欄位>`（spec agentic-mcp-orchestration 1.1）。
+
+    ⚠️ 2026-09-04 起，隔離條件（vendor_ids／is_active／category／business_types／
+    target_user）**不再內嵌在兩條 WHERE 裡**，而是由單一來源
+    `build_visibility_predicate` 產出後拼進去。本函式讓這條不變量跟著跳過那層間接——
+    ⛔ 尺與正本的對帳沒有被放鬆：union 後仍須**完全等於** FILTER_COLUMNS_*，
+    謂詞少一條照樣紅。
+
+    ⚠️ 這裡取**全部** SQL 字串常量（含 f-string 字面片段），不像 `_where_columns`
+    那樣只挑帶 `&&`／`IS NULL` 的——保留分類那兩條
+    （`AND kb.category IS DISTINCT FROM '…'`）兩者皆無，用那個濾網會整條漏掉。
+    """
+    cols = set()
+    for lit in _sql_literals(fn_node):
+        if "kb." in lit:
+            cols |= set(_KB_COL_RE.findall(_strip_order_by(lit)))
+    assert cols, ("build_visibility_predicate 抽不到任何 kb.<欄位>——"
+                  "解析壞了或謂詞已搬家，⛔ 不得靜默通過")
+    return cols - _NOT_A_VISIBILITY_AXIS
+
+
 def _load_enrich():
     spec = importlib.util.spec_from_file_location("contract_enrich", _ENRICH_PY)
     mod = importlib.util.module_from_spec(spec)
@@ -126,14 +148,47 @@ def _ctx():
     tree = ast.parse(_read(_RETRIEVER_PY))
     vec = _find_function(tree, "_vector_search")
     kw = _find_function(tree, "_keyword_search")
+    pred = _find_function(tree, "build_visibility_predicate")
     assert vec is not None and kw is not None, (
         "找不到 _vector_search／_keyword_search——⛔ 檢索入口已改名，本測試假設失效"
     )
+    assert pred is not None, (
+        "找不到 build_visibility_predicate——隔離謂詞的單一來源已改名或搬家，"
+        "⛔ 本測試會因此少算整組可見性欄位（假綠燈），必須同步更新"
+    )
+    # 每條路的過濾欄位＝該路自己的相關性條件（embedding／keywords）∪ 共用的隔離謂詞
+    shared = _predicate_columns(pred)
     return {
-        "sql_vector": _where_columns(vec),
-        "sql_keyword": _where_columns(kw),
+        "sql_vector": _where_columns(vec) | shared,
+        "sql_keyword": _where_columns(kw) | shared,
+        "own_vector": _where_columns(vec),
+        "own_keyword": _where_columns(kw),
+        "predicate": shared,
         "enrich": _load_enrich(),
     }
+
+
+#: 只能住在單一來源謂詞裡的隔離軸（spec agentic-mcp-orchestration 不變量 20）
+_ISOLATION_COLUMNS = frozenset({
+    "vendor_ids", "business_types", "target_user", "is_active", "category",
+})
+
+
+@pytest.mark.req("agentic-mcp-orchestration:1.1")
+def test_isolation_columns_only_in_single_source_predicate(_ctx):
+    """隔離軸 ⛔ 不得在兩條搜尋函式內再抄一份（不變量 20 的欄位版）。
+
+    ⚠️ 這條防的是「複製回去」：4 份手抄各不相同正是本次抽單一來源的起因。
+    """
+    assert _ISOLATION_COLUMNS <= _ctx["predicate"], (
+        f"謂詞少了隔離軸：{sorted(_ISOLATION_COLUMNS - _ctx['predicate'])}"
+    )
+    for path in ("vector", "keyword"):
+        dup = _ctx[f"own_{path}"] & _ISOLATION_COLUMNS
+        assert not dup, (
+            f"_{path}_search 的 WHERE 又內嵌了隔離條件 {sorted(dup)}——"
+            "⛔ 一律改呼叫 build_visibility_predicate"
+        )
 
 
 @pytest.mark.req("conversational-routing-execution:P0-1")

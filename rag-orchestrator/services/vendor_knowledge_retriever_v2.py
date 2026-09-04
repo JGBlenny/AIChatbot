@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 from .base_retriever import BaseRetriever
 from .vendor_parameter_resolver import VendorParameterResolver as VendorParamResolver
 from .retrieval_types import make_default_result
+from .agent.identity import Identity
 
 
 class VendorKnowledgeRetrieverV2(BaseRetriever):
@@ -59,26 +60,13 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         mode = kwargs.get('mode', 'b2c')
         vector_limit = kwargs.get('vector_limit', 20)
 
-        # 根據用戶角色或模式決定業態類型
-        is_b2b_mode = (target_user in ['property_manager', 'system_admin']) or (mode == 'b2b')
-
-        # 角色隔離：b2b 與 b2c 皆過濾 target_user（target_user IS NULL 一律放行；retrieval-fixes #5）。
-        # b2b 業態嚴格 system_provider；b2c 用業者業態 + 通用 all_users 放行。
-        target_user_param = [self._effective_target_user(target_user)]
-        if is_b2b_mode:
-            vendor_business_types = ['system_provider']
-            business_type_filter_sql = "kb.business_types && %s::text[]"
-            target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
-        else:
-            vendor_info = self.param_resolver.get_vendor_info(vendor_id)
-            # 修正(retrieval-fixes #4):vendor_id 查無時 get_vendor_info 回 None,
-            #   None.get() 會 AttributeError 使整個請求 500;改為 null-safe 降級為空業態。
-            vendor_business_types = (vendor_info or {}).get('business_types', [])
-            business_type_filter_sql = "(kb.business_types IS NULL OR kb.business_types && %s::text[])"
-            # 修正(retrieval-fixes #5):b2c 也過濾 target_user(預設 tenant),避免租客↔房東知識互漏;
-            #   'all_users' 為通用標記須一併放行(否則原本對 b2c 可見的通用知識會被擋掉)。
-            target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
-            target_user_param = [self._effective_target_user(target_user), 'all_users']
+        # 可見性隔離：業者／業態／角色／保留分類／is_active ——
+        # ⛔ **不在此內嵌字面 SQL**，一律取自單一來源 build_visibility_predicate（不變量 20）。
+        # ⚠️ `embedding IS NOT NULL` 是本路徑自己的相關性條件，故留在下方 WHERE。
+        visibility_sql, visibility_params = build_visibility_predicate(
+            Identity(vendor_id=vendor_id, target_user=target_user, mode=mode),
+            param_resolver=self.param_resolver,
+        )
 
         conn = self._get_db_connection()
         try:
@@ -138,27 +126,18 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                     1 - (kb.embedding <=> %s::vector) as vector_similarity
                 FROM knowledge_base kb
                 WHERE
-                    (array_length(kb.vendor_ids, 1) IS NULL OR kb.vendor_ids && %s::int[])
-                    AND kb.embedding IS NOT NULL
-                    AND kb.is_active = TRUE
-                    AND kb.category IS DISTINCT FROM '{self.SYSTEM_DOC_CATEGORY}'
-                    AND kb.category IS DISTINCT FROM '{self.RULES_DOC_CATEGORY}'
-                    AND {business_type_filter_sql}
-                    {target_user_filter_sql}
+                    kb.embedding IS NOT NULL
+                    {visibility_sql}
                 ORDER BY
                     (1 - (kb.embedding <=> %s::vector)) DESC,
                     kb.priority DESC
                 LIMIT %s
             """
 
-            # 構建參數列表（target_user 過濾參數須緊接 business_types 之後、ORDER BY vector_str 之前）
-            query_params = [
-                vector_str,
-                [vendor_id],  # 用於 kb.vendor_ids && %s::int[]
-                vendor_business_types,
-            ]
-            if target_user_filter_sql:
-                query_params.append(target_user_param)
+            # 構建參數列表：SELECT 的 vector_str → 可見性謂詞參數（順序由謂詞決定）
+            # → ORDER BY 的 vector_str → LIMIT。⛔ 謂詞參數不得拆開或重排。
+            query_params = [vector_str]
+            query_params += visibility_params
             query_params += [
                 vector_str,
                 vector_limit
@@ -198,24 +177,13 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         target_user = kwargs.get('target_user', 'tenant')
         mode = kwargs.get('mode', 'b2c')
 
-        # 業態過濾（與 _vector_search 一致）
-        is_b2b_mode = (target_user in ['property_manager', 'system_admin']) or (mode == 'b2b')
-
-        # b2b 角色隔離：重啟 target_user 過濾（與 _vector_search 一致；NULL 一律放行，僅 b2b 套用）
-        target_user_param = [self._effective_target_user(target_user)]
-        if is_b2b_mode:
-            vendor_business_types = ['system_provider']
-            business_type_filter_sql = "AND kb.business_types && %s::text[]"
-            target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
-        else:
-            vendor_info = self.param_resolver.get_vendor_info(vendor_id)
-            # 修正(retrieval-fixes #4):vendor_id 查無時 get_vendor_info 回 None,
-            #   None.get() 會 AttributeError 使整個請求 500;改為 null-safe 降級為空業態。
-            vendor_business_types = (vendor_info or {}).get('business_types', [])
-            business_type_filter_sql = "AND (kb.business_types IS NULL OR kb.business_types && %s::text[])"
-            # 修正(retrieval-fixes #5):b2c 也過濾 target_user(預設 tenant)+ 通用 all_users 放行(與 vector 一致)。
-            target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
-            target_user_param = [self._effective_target_user(target_user), 'all_users']
+        # 可見性隔離：與 _vector_search **同一份**謂詞（⛔ 不再各抄一份；不變量 20）。
+        # ⚠️ `keywords IS NOT NULL AND array_length(...) > 0` 是本路徑自己的相關性條件，
+        #    兩條路的 WHERE 本來就不一樣，故留在下方 WHERE。
+        visibility_sql, visibility_params = build_visibility_predicate(
+            Identity(vendor_id=vendor_id, target_user=target_user, mode=mode),
+            param_resolver=self.param_resolver,
+        )
 
         # 安全上限
         max_rows = 1000
@@ -278,21 +246,13 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                 FROM knowledge_base kb
                 LEFT JOIN knowledge_intent_mapping kim ON kb.id = kim.knowledge_id
                 WHERE
-                    (array_length(kb.vendor_ids, 1) IS NULL OR kb.vendor_ids && %s::int[])
-                    AND kb.is_active = TRUE
-                    AND kb.category IS DISTINCT FROM '{self.SYSTEM_DOC_CATEGORY}'
-                    AND kb.category IS DISTINCT FROM '{self.RULES_DOC_CATEGORY}'
-                    AND kb.keywords IS NOT NULL
+                    kb.keywords IS NOT NULL
                     AND array_length(kb.keywords, 1) > 0
-                    {business_type_filter_sql}
-                    {target_user_filter_sql}
+                    {visibility_sql}
             """
 
-            # 構建基本參數列表（target_user 過濾參數緊接 business_types 之後）
-            base_params = [[vendor_id]]
-            base_params.append(vendor_business_types)
-            if target_user_filter_sql:
-                base_params.append(target_user_param)
+            # 構建基本參數列表：順序完全由可見性謂詞決定，⛔ 不得拆開或重排
+            base_params = list(visibility_params)
 
             all_rows = []
 
@@ -462,3 +422,97 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
                 result.pop('rerank_score', None)
 
         return results
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# 知識池可見性謂詞 —— **單一來源**（spec agentic-mcp-orchestration・任務 1.1）
+# ══════════════════════════════════════════════════════════════════════════
+#
+# 為什麼要抽出來：security-reviewer 2026-09-04 實查，這組隔離條件在 repo 內
+# **手抄了 4 份且各不相同**（`_grounding_by_ids` 只有 is_active、
+# `_grounding_by_category`／`system_context._fetch_base` 無 vendor_ids）。
+# 手抄會漏掉的 9 條：①保留分類 ②`vendor_ids IS NULL OR &&` ③`is_active`
+# ④`_effective_target_user` fail-safe ⑤`is_b2b` 兩條件 OR ⑥**b2b 無 IS NULL
+# 放行**（D-002）⑦b2c 追加 `all_users` ⑧查無業者 `[]` fail-closed
+# ⑨`embedding`／`keywords` NOT NULL 的路徑差異。
+#
+# ⛔ **新增可見性條件一律加在這裡**，不得在任何消費點內嵌第二份字面 SQL
+#    （design 不變量 20）。
+
+
+def build_visibility_predicate(identity, param_resolver=None):
+    """依身分產出知識池可見性的 SQL 片段與參數。
+
+    Args:
+        identity: `services.agent.identity.Identity`（vendor_id／target_user／mode）。
+        param_resolver: `VendorParameterResolver` 替身；省略時建一個共用實例。
+            b2c 分支才會用到（查業者業態）。
+
+    Returns:
+        `(sql, params)`：`sql` 以 `AND ` 起首、可直接拼進既有 WHERE；
+        `params` 依佔位符順序為 `[[vendor_id], business_types, target_user]`
+        （psycopg2 `%s` 風格，⛔ 不混用 `$n`）。
+
+    ⚠️ **不含** `embedding IS NOT NULL`／`keywords IS NOT NULL` ——
+       那是各檢索路徑自己的相關性條件，兩條路徑不一樣（向量要 embedding、
+       詞面要 keywords），留在各搜尋函式內。
+    """
+    target_user = identity.target_user
+    mode = identity.mode
+    vendor_id = identity.vendor_id
+
+    # 條件 5：is_b2b 兩條件 OR。⚠️ 讀 **原值** target_user，不讀正規化後的值——
+    #   正規化只作用於參數側（條件 4），拿它判 b2b 會把未知角色一律降成 b2c。
+    is_b2b_mode = (target_user in ['property_manager', 'system_admin']) or (mode == 'b2b')
+
+    # 條件 4：角色隔離（b2b 與 b2c 皆過濾；target_user IS NULL 一律放行；retrieval-fixes #5）
+    target_user_param = [VendorKnowledgeRetrieverV2._effective_target_user(target_user)]
+    if is_b2b_mode:
+        # 條件 6a／7：b2b 業態嚴格 system_provider。
+        # ⛔ **無 `IS NULL` 放行**——這是刻意的跨業者隔離（D-002，業主 2026-09-01 逐行對碼）。
+        #    `COMPLETE_CONVERSATION_ARCHITECTURE.md` §3 曾漏掉這條分支，照它補 IS NULL 會打穿隔離。
+        vendor_business_types = ['system_provider']
+        business_type_filter_sql = "kb.business_types && %s::text[]"
+    else:
+        resolver = param_resolver if param_resolver is not None else _shared_param_resolver()
+        vendor_info = resolver.get_vendor_info(vendor_id)
+        # 條件 7：vendor_id 查無業者 ⇒ 空業態（只剩 IS NULL 列，fail-closed）。
+        # 修正(retrieval-fixes #4)：get_vendor_info 回 None 時 None.get() 會 AttributeError 使請求 500。
+        vendor_business_types = (vendor_info or {}).get('business_types', [])
+        # 條件 6b：b2c 業態寬鬆（IS NULL 放行）。
+        business_type_filter_sql = "(kb.business_types IS NULL OR kb.business_types && %s::text[])"
+        # 修正(retrieval-fixes #5)：b2c 也過濾 target_user（預設 tenant），避免租客↔房東知識互漏；
+        #   'all_users' 為通用標記須一併放行（否則原本對 b2c 可見的通用知識會被擋掉）。
+        target_user_param = [
+            VendorKnowledgeRetrieverV2._effective_target_user(target_user), 'all_users'
+        ]
+
+    target_user_filter_sql = "(kb.target_user IS NULL OR kb.target_user && %s::text[])"
+
+    # 條件 1／2／3 ＋ 6 ＋ 4，順序即參數順序（⛔ 調整順序必須同步 params）
+    conditions = [
+        "AND (array_length(kb.vendor_ids, 1) IS NULL OR kb.vendor_ids && %s::int[])",
+        "AND kb.is_active = TRUE",
+        f"AND kb.category IS DISTINCT FROM '{VendorKnowledgeRetrieverV2.SYSTEM_DOC_CATEGORY}'",
+        f"AND kb.category IS DISTINCT FROM '{VendorKnowledgeRetrieverV2.RULES_DOC_CATEGORY}'",
+        f"AND {business_type_filter_sql}",
+        f"AND {target_user_filter_sql}",
+    ]
+    sql = ("\n" + " " * 20).join(conditions)
+    params = [
+        [vendor_id],              # kb.vendor_ids && %s::int[]
+        vendor_business_types,    # business_type_filter_sql
+        target_user_param,        # target_user_filter_sql
+    ]
+    return sql, params
+
+
+#: b2c 分支查業態用的共用 resolver（呼叫端通常傳自己的，見 `_vector_search`）。
+_SHARED_PARAM_RESOLVER = None
+
+
+def _shared_param_resolver():
+    global _SHARED_PARAM_RESOLVER
+    if _SHARED_PARAM_RESOLVER is None:
+        _SHARED_PARAM_RESOLVER = VendorParamResolver()
+    return _SHARED_PARAM_RESOLVER
