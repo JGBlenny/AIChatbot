@@ -51,3 +51,13 @@ top-1 分布：3600 由 5 句升到 24 句；5375 7→6、5379 8→5、3358 大�
 
 判讀：主題頁是主要槓桿；273 字宣告在 reranker 面對「邀請／審閱期」有效（2/6→3/6）、整體接近中性；當 embedding 面用宣告會傷短問句召回（邊界 75%）。決定：保留宣告、embedding 用摘要（`generation_metadata.embedding_representation` 記 reason，D2 明示分歧）。PLAN P2-1 的單筆 pilot 數據：general 型主題頁的長宣告，reranker 面小益、embedding 面有害。
 剩餘：3600 已 top-1 的 12 句未答到＝反問 5／固定句 2／答偏 5 ⇒ 進 ①（R2.13）。
+
+### 第五欄（＋R2.13，容器重建）
+| 指標 | 基準 | 主題頁 | 宣告／emb 摘要 | ＋R2.13 |
+|---|---|---|---|---|
+| owner 命中 | 11% | 52% | 48% | 48% |
+| 答到 | 30% | 46% | 41% | 35% |
+| rubric | 11% | 20% | 22% | 24% |
+| 邊界 | 88% | 88% | 88% | 62% |
+
+**R2.13 幾乎沒觸發**：本輪容器 log 只有 1 次 `kind=ask_fact`；閘門分布是 inline 36 次（feature 26／other 10）、ask_sentence 1、ask_clause 1。反問的 15 句是 brain 回純 `ask`（無 inline）且 `fact_class=other`——brain 把「舊約要輸入系統」這種陳述句判成非事實題，R2.13 的前提（fact_class≠other）不成立。⇒ 槓桿在 brain 分類（規則 3645 的【fact_class】段），不在引擎。邊界 62% 是兩題被 3600 有據作答（「合約生效後只能重簽嗎」頁面確有此內容）＋一題反問，屬尺的邊界定義與頁面內容重疊，非硬答。

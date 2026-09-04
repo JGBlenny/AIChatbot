@@ -1,0 +1,1619 @@
+{
+ "_meta": {
+  "version": "topics-v2",
+  "date": "2026-09-04",
+  "scope": "prospect 售前池 pilot：建立合約（問法正本＝JGB_口語化問法_v2）",
+  "selection_rule": {
+   "source": "sources/koyu-v2-phrasings.json 的 12 篇合約相關文章",
+   "include_types": [
+    "直接",
+    "口語",
+    "情境",
+    "俗稱"
+   ],
+   "exclude_types": [
+    "操作（找按鈕／路徑，對售前無意義）"
+   ],
+   "quota_per_subtopic": {
+    "上傳既有": 8,
+    "範本": 7,
+    "流程": 9,
+    "修改": 6,
+    "邀請": 6,
+    "簽署": 4
+   },
+   "order": "md5('presales-contract-2026-09-04:'+q) 升冪",
+   "extra": "6 句非文件來源（簽章／社宅／費用／複製／身分，文件無對應篇）",
+   "boundary": "8 句『邊界』型（md5 同序），只量有無硬答，⛔ 不計入 rubric 命中率"
+  },
+  "phrasing_rule": "≥40 句；凍結 sha256 進 map _meta；量測後 ⛔ 不得補題換題",
+  "metric": {
+   "owner_hit": "top-1 ∈ owner",
+   "answered": "entry ∈ {answered, answered_handoff}",
+   "rubric_hit": "回答命中該子題全部必含群且無禁止詞",
+   "boundary_ok": "邊界題：入口固定句、或回答含『沒有資料／專人／找真人』且無禁止詞",
+   "complete": "rubric_hit_rate ≥ 0.8 且 boundary_ok_rate ≥ 0.9"
+  },
+  "complete_threshold": 0.8,
+  "boundary_threshold": 0.9,
+  "rubric_note": "v2 每子題兩群；forbid 依附錄二三禁（張冠李戴：邀請題禁『大房東』、修改題禁『生活公約』、上傳題禁『批次匯入』；是非化：修改題禁『不行。』『可以。』開頭式絕對句由 rubric 必含條件詞替代）",
+  "run_at": "2026-09-04T17:22:59",
+  "threshold": 0.5,
+  "api": "http://localhost:8100/api/v1/message",
+  "fingerprint": {
+   "git_head": "4075034",
+   "image": "d2211fe62a8c",
+   "topics_sha256": "f78344d65ebcdc7b9901c77b7bdf5a6b23b2548e2dea3729feba36ccb8868570"
+  },
+  "g2": "2026-09-04 host g2_selftest 六項全過（R2.13 容器重建後未重跑）"
+ },
+ "topics": [
+  {
+   "id": "T-contract-create",
+   "module": "租約",
+   "topic": "建立合約（售前）",
+   "owner": [
+    3600
+   ],
+   "transitional_alias": [
+    5375,
+    5379
+   ],
+   "subtopic_rubrics": {
+    "簽章": [
+     [
+      "電子簽章",
+      "線上簽"
+     ],
+     [
+      "紙本",
+      "不用",
+      "線上"
+     ]
+    ],
+    "範本": [
+     [
+      "內政部",
+      "公會"
+     ],
+     [
+      "12",
+      "身分",
+      "個人",
+      "法人",
+      "英文",
+      "泰文",
+      "越文"
+     ]
+    ],
+    "上傳既有": [
+     [
+      "上傳",
+      "紙本",
+      "既存"
+     ],
+     [
+      "效力",
+      "帳務",
+      "修繕",
+      "追蹤",
+      "相同"
+     ]
+    ],
+    "流程": [
+     [
+      "刊登中",
+      "建立合約",
+      "新增合約"
+     ],
+     [
+      "邀請",
+      "簽署",
+      "填",
+      "物件"
+     ]
+    ],
+    "簽署": [
+     [
+      "邀請",
+      "連結",
+      "簽名"
+     ],
+     [
+      "回簽",
+      "完成",
+      "電子簽章"
+     ]
+    ],
+    "邀請": [
+     [
+      "邀請"
+     ],
+     [
+      "72",
+      "小時",
+      "簡訊",
+      "Email",
+      "email"
+     ]
+    ],
+    "修改": [
+     [
+      "未發送",
+      "已送",
+      "取消",
+      "簽回"
+     ],
+     [
+      "複製",
+      "重建",
+      "不可",
+      "無法",
+      "申請"
+     ]
+    ],
+    "身分": [
+     [
+      "個人",
+      "法人",
+      "團隊"
+     ],
+     [
+      "範本",
+      "大小章",
+      "帶入"
+     ]
+    ],
+    "社宅委託": [
+     [
+      "社會住宅",
+      "社宅"
+     ],
+     [
+      "委託",
+      "合約"
+     ]
+    ],
+    "費用": [
+     [
+      "方案",
+      "訂閱",
+      "定價",
+      "專人"
+     ],
+     [
+      "電子簽章",
+      "簽約"
+     ]
+    ],
+    "複製": [
+     [
+      "複製"
+     ],
+     [
+      "新約",
+      "重建",
+      "重簽"
+     ]
+    ]
+   },
+   "forbid": {
+    "邀請": [
+     "大房東"
+    ],
+    "修改": [
+     "生活公約",
+     "補充條款"
+    ],
+    "上傳既有": [
+     "批次匯入",
+     "Excel"
+    ],
+    "複製": [
+     "無法複製",
+     "不支援複製",
+     "不能複製"
+    ],
+    "流程": [
+     "大房東"
+    ],
+    "*": [
+     "一律可以",
+     "都可以",
+     "任何合約"
+    ]
+   },
+   "metrics": {
+    "n": 46,
+    "owner_hit_rate": 0.48,
+    "alias_hit_rate": 0.17,
+    "answered_rate": 0.35,
+    "rubric_hit_rate": 0.24,
+    "boundary_n": 8,
+    "boundary_ok_rate": 0.62,
+    "forbid_hits": 2,
+    "complete": false
+   },
+   "by_subtopic": {
+    "上傳既有": {
+     "n": 8,
+     "rubric_hit": 1,
+     "owner_hit": 3
+    },
+    "範本": {
+     "n": 7,
+     "rubric_hit": 1,
+     "owner_hit": 2
+    },
+    "流程": {
+     "n": 9,
+     "rubric_hit": 1,
+     "owner_hit": 2
+    },
+    "修改": {
+     "n": 6,
+     "rubric_hit": 0,
+     "owner_hit": 3
+    },
+    "邀請": {
+     "n": 6,
+     "rubric_hit": 3,
+     "owner_hit": 3
+    },
+    "簽署": {
+     "n": 4,
+     "rubric_hit": 2,
+     "owner_hit": 4
+    },
+    "簽章": {
+     "n": 2,
+     "rubric_hit": 1,
+     "owner_hit": 2
+    },
+    "社宅委託": {
+     "n": 1,
+     "rubric_hit": 1,
+     "owner_hit": 1
+    },
+    "費用": {
+     "n": 1,
+     "rubric_hit": 0,
+     "owner_hit": 0
+    },
+    "複製": {
+     "n": 1,
+     "rubric_hit": 1,
+     "owner_hit": 1
+    },
+    "身分": {
+     "n": 1,
+     "rubric_hit": 0,
+     "owner_hit": 1
+    }
+   },
+   "phrasings": [
+    {
+     "q": "租客按了不同意",
+     "sub": "上傳既有",
+     "type": "情境",
+     "src": "koyu:onboarding6#8",
+     "top3": [
+      {
+       "id": 5378,
+       "similarity": 0.487
+      },
+      {
+       "id": 3606,
+       "similarity": 0.278
+      },
+      {
+       "id": 5379,
+       "similarity": 0.244
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "我了解您遇到的情況，請問您是個人房東、二房東還是包租代管呢？"
+    },
+    {
+     "q": "合約是之前簽的沒有走系統",
+     "sub": "上傳既有",
+     "type": "情境",
+     "src": "koyu:qa05#9",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.695
+      },
+      {
+       "id": 3606,
+       "similarity": 0.471
+      },
+      {
+       "id": 3605,
+       "similarity": 0.375
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": true,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "請問您目前是個人房東、二房東、還是包租代管呢？"
+    },
+    {
+     "q": "舊約要輸入系統",
+     "sub": "上傳既有",
+     "type": "口語",
+     "src": "koyu:onboarding6#6",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.833
+      },
+      {
+       "id": 3605,
+       "similarity": 0.36
+      },
+      {
+       "id": 3606,
+       "similarity": 0.174
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": true,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "請問您是個人房東、二房東、還是包租代管業呢？"
+    },
+    {
+     "q": "我有現成的合約想放進系統",
+     "sub": "上傳既有",
+     "type": "口語",
+     "src": "koyu:qa05#4",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.871
+      },
+      {
+       "id": 3606,
+       "similarity": 0.162
+      },
+      {
+       "id": 3585,
+       "similarity": 0.148
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": true,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "請問您是個人房東、二房東、還是包租代管業者呢？"
+    },
+    {
+     "q": "既存合約要怎麼上傳",
+     "sub": "上傳既有",
+     "type": "直接",
+     "src": "koyu:onboarding6#1",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.833
+      },
+      {
+       "id": 3357,
+       "similarity": 0.701
+      },
+      {
+       "id": 5379,
+       "similarity": 0.658
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": true,
+     "answer_head": "您可以將既存的合約上傳到金箍棒系統中，這樣它與系統制式合約的效力相同。上傳的合約需為 PDF 格式，並在建約時選擇「紙本簽約」的選項。這樣，您就可以將既有的紙本"
+    },
+    {
+     "q": "我跟房客早就簽好紙本了怎麼登錄",
+     "sub": "上傳既有",
+     "type": "情境",
+     "src": "koyu:qa05#8",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.32
+      },
+      {
+       "id": 3600,
+       "similarity": 0.277
+      },
+      {
+       "id": 3604,
+       "similarity": 0.22
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "上傳自己的合約",
+     "sub": "上傳既有",
+     "type": "俗稱",
+     "src": "koyu:qa05#16",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.446
+      },
+      {
+       "id": 3357,
+       "similarity": 0.389
+      },
+      {
+       "id": 5379,
+       "similarity": 0.346
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "請問您是個人房東、二房東還是包租代管業呢？"
+    },
+    {
+     "q": "上傳自己的合約",
+     "sub": "上傳既有",
+     "type": "俗稱",
+     "src": "koyu:onboarding6#16",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.446
+      },
+      {
+       "id": 3357,
+       "similarity": 0.389
+      },
+      {
+       "id": 5379,
+       "similarity": 0.346
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "請問您是個人房東、二房東、包租代管業還是物管呢？"
+    },
+    {
+     "q": "上傳合約後還能追帳務嗎",
+     "sub": "範本",
+     "type": "俗稱",
+     "src": "koyu:qa06#16",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.51
+      },
+      {
+       "id": 3596,
+       "similarity": 0.494
+      },
+      {
+       "id": 3335,
+       "similarity": 0.225
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "合約上傳後，您可以繼續追蹤帳務。金箍棒系統支援帳務管理，包括自動帳單和金流代收等功能。不過，合約目前不支援批次匯入，需要逐筆建立。若您有其他問題或需要進一步了解"
+    },
+    {
+     "q": "房客是外籍的不知道要用哪版",
+     "sub": "範本",
+     "type": "情境",
+     "src": "koyu:qa06#10",
+     "top3": [
+      {
+       "id": 3358,
+       "similarity": 0.185
+      },
+      {
+       "id": 3599,
+       "similarity": 0.123
+      },
+      {
+       "id": 5379,
+       "similarity": 0.116
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "用上傳的合約會少什麼功能嗎",
+     "sub": "範本",
+     "type": "口語",
+     "src": "koyu:qa06#6",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.195
+      },
+      {
+       "id": 5379,
+       "similarity": 0.193
+      },
+      {
+       "id": 3599,
+       "similarity": 0.186
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "上傳的合約跟系統合約有什麼不同",
+     "sub": "範本",
+     "type": "口語",
+     "src": "koyu:qa06#4",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.341
+      },
+      {
+       "id": 5377,
+       "similarity": 0.16
+      },
+      {
+       "id": 3585,
+       "similarity": 0.115
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "既存合約跟JGB制式合約差在哪",
+     "sub": "範本",
+     "type": "直接",
+     "src": "koyu:qa06#1",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.291
+      },
+      {
+       "id": 5377,
+       "similarity": 0.134
+      },
+      {
+       "id": 3606,
+       "similarity": 0.084
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "合約範本有哪幾種",
+     "sub": "範本",
+     "type": "口語",
+     "src": "koyu:qa06#7",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.941
+      },
+      {
+       "id": 3596,
+       "similarity": 0.463
+      },
+      {
+       "id": 3584,
+       "similarity": 0.323
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": true,
+     "answer_head": "合約範本有以下幾種：  1. 內政部中文版 2. 內政部英文版 3. 公會中文版  此外，還有三種特殊用途範本，這些範本主要針對法人團隊，總共提供 12 種選擇"
+    },
+    {
+     "q": "JGB有哪些公版合約可以選",
+     "sub": "範本",
+     "type": "直接",
+     "src": "koyu:qa06#2",
+     "top3": [
+      {
+       "id": 3596,
+       "similarity": 0.352
+      },
+      {
+       "id": 3600,
+       "similarity": 0.347
+      },
+      {
+       "id": 3584,
+       "similarity": 0.28
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "選單裡面沒看到編輯合約",
+     "sub": "流程",
+     "type": "情境",
+     "src": "koyu:slug12#8",
+     "top3": [
+      {
+       "id": 3606,
+       "similarity": 0.426
+      },
+      {
+       "id": 5379,
+       "similarity": 0.364
+      },
+      {
+       "id": 3596,
+       "similarity": 0.179
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "合約編輯要去哪裡",
+     "sub": "流程",
+     "type": "直接",
+     "src": "koyu:onboarding5#3",
+     "top3": [
+      {
+       "id": 3358,
+       "similarity": 0.148
+      },
+      {
+       "id": 3602,
+       "similarity": 0.115
+      },
+      {
+       "id": 5377,
+       "similarity": 0.104
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "進去改合約的步驟",
+     "sub": "流程",
+     "type": "俗稱",
+     "src": "koyu:slug12#15",
+     "top3": [
+      {
+       "id": 3355,
+       "similarity": 0.636
+      },
+      {
+       "id": 3600,
+       "similarity": 0.38
+      },
+      {
+       "id": 5379,
+       "similarity": 0.327
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "請問您是個人房東、二房東還是包租代管業者呢？"
+    },
+    {
+     "q": "新增租約流程",
+     "sub": "流程",
+     "type": "口語",
+     "src": "koyu:slug71#6",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.47
+      },
+      {
+       "id": 3596,
+       "similarity": 0.451
+      },
+      {
+       "id": 5379,
+       "similarity": 0.436
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "我了解您想新增租約流程，請問您目前是個人房東、二房東、包租代管業還是物管呢？"
+    },
+    {
+     "q": "為什麼我沒有辦法新增合約",
+     "sub": "流程",
+     "type": "情境",
+     "src": "koyu:slug12#9",
+     "top3": [
+      {
+       "id": 3606,
+       "similarity": 0.248
+      },
+      {
+       "id": 3355,
+       "similarity": 0.185
+      },
+      {
+       "id": 5379,
+       "similarity": 0.145
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "建立合約的時候選不到我要的物件",
+     "sub": "流程",
+     "type": "情境",
+     "src": "koyu:slug71#8",
+     "top3": [
+      {
+       "id": 5377,
+       "similarity": 0.367
+      },
+      {
+       "id": 3358,
+       "similarity": 0.361
+      },
+      {
+       "id": 3606,
+       "similarity": 0.242
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "請問您是在管理多少個物件呢？"
+    },
+    {
+     "q": "要先刊登才能建合約嗎",
+     "sub": "流程",
+     "type": "直接",
+     "src": "koyu:slug10#2",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.884
+      },
+      {
+       "id": 3584,
+       "similarity": 0.164
+      },
+      {
+       "id": 3604,
+       "similarity": 0.122
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": true,
+     "answer_head": "是的，只有「刊登中」的物件才能進行建約。這意味著您需要先將物件刊登，然後才能透過系統進行合約的建立。如果您有其他問題或需要進一步的協助，隨時告訴我！"
+    },
+    {
+     "q": "編輯合約怎麼開",
+     "sub": "流程",
+     "type": "俗稱",
+     "src": "koyu:slug12#16",
+     "top3": [
+      {
+       "id": 3596,
+       "similarity": 0.328
+      },
+      {
+       "id": 5377,
+       "similarity": 0.313
+      },
+      {
+       "id": 5379,
+       "similarity": 0.275
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "物件狀態是未刊登不知道怎麼辦",
+     "sub": "流程",
+     "type": "情境",
+     "src": "koyu:slug10#8",
+     "top3": [
+      {
+       "id": 3604,
+       "similarity": 0.269
+      },
+      {
+       "id": 3606,
+       "similarity": 0.26
+      },
+      {
+       "id": 5377,
+       "similarity": 0.219
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "還是包租代管呢？"
+    },
+    {
+     "q": "簽約後要修改怎麼辦",
+     "sub": "修改",
+     "type": "直接",
+     "src": "koyu:slug17#2",
+     "top3": [
+      {
+       "id": 3355,
+       "similarity": 0.602
+      },
+      {
+       "id": 3600,
+       "similarity": 0.491
+      },
+      {
+       "id": 3606,
+       "similarity": 0.471
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [
+      "生活公約",
+      "補充條款"
+     ],
+     "rubric_hit": false,
+     "answer_head": "如果簽約後需要修改生活公約，您可以按照以下步驟進行：  1. 進入「團隊管理」>「進階設定」。 2. 找到「合約管理」>「預設補充條款」。 3. 在此新增或修改"
+    },
+    {
+     "q": "合約簽了發現金額打錯",
+     "sub": "修改",
+     "type": "口語",
+     "src": "koyu:slug17#4",
+     "top3": [
+      {
+       "id": 3606,
+       "similarity": 0.417
+      },
+      {
+       "id": 3600,
+       "similarity": 0.16
+      },
+      {
+       "id": 3596,
+       "similarity": 0.112
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "請問您是個人房東、二房東、包租代管業還是物管呢？"
+    },
+    {
+     "q": "我還沒簽可以改嗎",
+     "sub": "修改",
+     "type": "情境",
+     "src": "koyu:slug17#8",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.63
+      },
+      {
+       "id": 3355,
+       "similarity": 0.421
+      },
+      {
+       "id": 3606,
+       "similarity": 0.228
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "請問您是個人房東、二房東還是包租代管業者呢？"
+    },
+    {
+     "q": "雙方都簽完還能改嗎",
+     "sub": "修改",
+     "type": "直接",
+     "src": "koyu:slug17#3",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.939
+      },
+      {
+       "id": 3355,
+       "similarity": 0.481
+      },
+      {
+       "id": 5379,
+       "similarity": 0.151
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "雙方都簽完後，合約內容是不能直接修改的。如果需要更改，必須複製該合約並重新建立新約重簽，或者走資料異動申請。這樣的流程確保了合約的有效性與一致性。若有其他問題或"
+    },
+    {
+     "q": "簽約後修改流程",
+     "sub": "修改",
+     "type": "俗稱",
+     "src": "koyu:slug17#15",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.683
+      },
+      {
+       "id": 3355,
+       "similarity": 0.64
+      },
+      {
+       "id": 5377,
+       "similarity": 0.271
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "可以請問您是個人房東、二房東、包租代管業還是物管呢？"
+    },
+    {
+     "q": "合約內容寫錯怎麼補救",
+     "sub": "修改",
+     "type": "口語",
+     "src": "koyu:slug17#6",
+     "top3": [
+      {
+       "id": 3606,
+       "similarity": 0.586
+      },
+      {
+       "id": 5379,
+       "similarity": 0.439
+      },
+      {
+       "id": 3355,
+       "similarity": 0.272
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "如果合約內容寫錯，您可以使用我們的電子簽章功能來進行修正。這樣可以方便地更新合約內容並讓相關方重新簽署。至於其他問題，例如收租對帳或報修，金箍棒也有相應的模組來"
+    },
+    {
+     "q": "合約邀請怎麼送",
+     "sub": "邀請",
+     "type": "俗稱",
+     "src": "koyu:slug13#15",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.934
+      },
+      {
+       "id": 3358,
+       "similarity": 0.744
+      },
+      {
+       "id": 3604,
+       "similarity": 0.564
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": true,
+     "answer_head": "合約邀請的送出流程如下：  1. **刊登物件**：只有「刊登中」的物件才能進行建約。 2. **填寫表單**：系統會引導你逐項填寫合約內容，包括租金、收款方式"
+    },
+    {
+     "q": "72小時是怎麼算的",
+     "sub": "邀請",
+     "type": "直接",
+     "src": "koyu:slug73#2",
+     "top3": [
+      {
+       "id": 5376,
+       "similarity": 0.065
+      },
+      {
+       "id": 3353,
+       "similarity": 0.034
+      },
+      {
+       "id": 3585,
+       "similarity": 0.0
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "簽約通知的形式",
+     "sub": "邀請",
+     "type": "俗稱",
+     "src": "koyu:slug48#13",
+     "top3": [
+      {
+       "id": 3604,
+       "similarity": 0.709
+      },
+      {
+       "id": 3600,
+       "similarity": 0.554
+      },
+      {
+       "id": 3584,
+       "similarity": 0.362
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "請問您是個人房東、二房東、包租代管業還是物管呢？"
+    },
+    {
+     "q": "簽約邀請有時效嗎",
+     "sub": "邀請",
+     "type": "直接",
+     "src": "koyu:slug48#2",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.804
+      },
+      {
+       "id": 3358,
+       "similarity": 0.081
+      },
+      {
+       "id": 3606,
+       "similarity": 0.069
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": true,
+     "answer_head": "簽約邀請確實有時效，會在發送後的 72 小時內有效。若逾期未完成簽署，連結將失效，合約會退回待發送，並需要重新填寫租客資料。這樣的設計是為了確保合約的及時處理與"
+    },
+    {
+     "q": "簽約邀請有時效嗎",
+     "sub": "邀請",
+     "type": "直接",
+     "src": "koyu:slug73#1",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.804
+      },
+      {
+       "id": 3358,
+       "similarity": 0.081
+      },
+      {
+       "id": 3606,
+       "similarity": 0.069
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": true,
+     "answer_head": "簽約邀請是有時效的，有效期為 72 小時。在這段時間內，租客可以審閱合約並進行簽署。如果逾期，連結將失效，合約會退回待發送，並需要重新填寫租客資料。若有其他問題"
+    },
+    {
+     "q": "租客沒有JGB帳號可以簽嗎",
+     "sub": "邀請",
+     "type": "直接",
+     "src": "koyu:slug13#3",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.405
+      },
+      {
+       "id": 3601,
+       "similarity": 0.152
+      },
+      {
+       "id": 3358,
+       "similarity": 0.128
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "電子簽名要怎麼簽",
+     "sub": "簽署",
+     "type": "直接",
+     "src": "koyu:slug84#3",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.588
+      },
+      {
+       "id": 3358,
+       "similarity": 0.1
+      },
+      {
+       "id": 3601,
+       "similarity": 0.098
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": true,
+     "answer_head": "電子簽名的流程如下：  1. 當您完成合約的填寫後，系統會引導您寄送簽約邀請給租客。 2. 租客收到邀請後，可以透過簡訊或Email中的連結進入簽署頁面。 3."
+    },
+    {
+     "q": "房客簽約步驟",
+     "sub": "簽署",
+     "type": "口語",
+     "src": "koyu:slug84#6",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.685
+      },
+      {
+       "id": 3604,
+       "similarity": 0.672
+      },
+      {
+       "id": 5379,
+       "similarity": 0.568
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "ask_back",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "請問您是個人房東、二房東、包租代管業還是物管呢？"
+    },
+    {
+     "q": "我簽好了為什麼還沒生效",
+     "sub": "簽署",
+     "type": "情境",
+     "src": "koyu:slug84#7",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.166
+      },
+      {
+       "id": 3335,
+       "similarity": 0.071
+      },
+      {
+       "id": 3340,
+       "similarity": 0.057
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "我是租客收到邀請要怎麼簽",
+     "sub": "簽署",
+     "type": "口語",
+     "src": "koyu:slug84#4",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.804
+      },
+      {
+       "id": 3358,
+       "similarity": 0.752
+      },
+      {
+       "id": 5379,
+       "similarity": 0.43
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": true,
+     "answer_head": "作為租客，收到簽約邀請後，您可以按照以下步驟進行簽署：  1. **查看邀請通知**：您會收到簡訊或Email的邀請通知，裡面有簽約的連結。 2. **點擊連結"
+    },
+    {
+     "q": "可不可以線上簽約",
+     "sub": "簽章",
+     "type": "直接",
+     "src": "e2e:s1",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.732
+      },
+      {
+       "id": 5379,
+       "similarity": 0.119
+      },
+      {
+       "id": 3358,
+       "similarity": 0.109
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": true,
+     "answer_head": "是的，金箍棒的租約管理系統支援線上簽約。您可以透過電子合約的方式，將租賃合約從建約到簽署都搬到線上。系統會引導您逐項填寫合約內容，填完後可以預覽合約，然後寄送給"
+    },
+    {
+     "q": "你們簽約是線上的嗎",
+     "sub": "簽章",
+     "type": "口語",
+     "src": "manual",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.623
+      },
+      {
+       "id": 5379,
+       "similarity": 0.117
+      },
+      {
+       "id": 3596,
+       "similarity": 0.097
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [
+      "都可以"
+     ],
+     "rubric_hit": false,
+     "answer_head": "是的，我們的簽約是線上的。金箍棒的租約管理系統提供電子合約的功能，您可以選擇使用公版範本或客製化契約書，甚至可以將既有的紙本合約上傳並在線上管理。整個流程都可以"
+    },
+    {
+     "q": "有支援社會住宅的合約嗎",
+     "sub": "社宅委託",
+     "type": "直接",
+     "src": "gapmap:C20",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.648
+      },
+      {
+       "id": 3355,
+       "similarity": 0.211
+      },
+      {
+       "id": 3584,
+       "similarity": 0.138
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": true,
+     "answer_head": "是的，金箍棒智慧物管支援社會住宅的合約管理。不過，社會住宅的合約流程與一般租賃合約不同，因為公證是必要程序，需列印紙本完成公證後再上傳歸檔，無法線上完成簽署。如"
+    },
+    {
+     "q": "電子簽約要額外付錢嗎",
+     "sub": "費用",
+     "type": "口語",
+     "src": "manual",
+     "top3": [
+      {
+       "id": 3604,
+       "similarity": 0.108
+      },
+      {
+       "id": 5379,
+       "similarity": 0.103
+      },
+      {
+       "id": 3596,
+       "similarity": 0.097
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "可以複製舊合約來建新的嗎",
+     "sub": "複製",
+     "type": "直接",
+     "src": "ts:10065",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.899
+      },
+      {
+       "id": 5379,
+       "similarity": 0.749
+      },
+      {
+       "id": 5377,
+       "similarity": 0.131
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "forbid_hit": [],
+     "rubric_hit": true,
+     "answer_head": "是的，您可以複製舊合約來建立新的合約。不過，請注意，雙方都簽完的合約在系統中不可直接修改，您需要複製該合約來重建新約並重新簽署。如果您有其他問題或需要進一步的協"
+    },
+    {
+     "q": "簽約的時候個人跟法人身份怎麼設定",
+     "sub": "身分",
+     "type": "直接",
+     "src": "ts:10116",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.363
+      },
+      {
+       "id": 3596,
+       "similarity": 0.144
+      },
+      {
+       "id": 5377,
+       "similarity": 0.121
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "forbid_hit": [],
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    }
+   ],
+   "boundary": [
+    {
+     "q": "公會版跟內政部版差在哪",
+     "sub": "範本",
+     "type": "邊界",
+     "src": "koyu:qa06#17",
+     "entry_state": "fixed",
+     "boundary_ok": true,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "邀請寄出去之後可以重寄嗎",
+     "sub": "邀請",
+     "type": "邊界",
+     "src": "koyu:slug13#17",
+     "entry_state": "fixed",
+     "boundary_ok": true,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "可以延長時效嗎",
+     "sub": "邀請",
+     "type": "邊界",
+     "src": "koyu:slug73#19",
+     "entry_state": "ask_back",
+     "boundary_ok": false,
+     "answer_head": "請問您是個人房東、二房東、包租代管業還是物管呢？"
+    },
+    {
+     "q": "刊登會被哪些人看到",
+     "sub": "流程",
+     "type": "邊界",
+     "src": "koyu:slug10#18",
+     "entry_state": "fixed",
+     "boundary_ok": true,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "有二房東版的合約嗎",
+     "sub": "範本",
+     "type": "邊界",
+     "src": "koyu:qa06#18",
+     "entry_state": "answered",
+     "boundary_ok": false,
+     "answer_head": "目前金箍棒智慧物管系統支援電子簽章的合約功能，但對於二房東版的合約具體內容，我這邊沒有相關資料。建議您可以先試用我們的系統，實際操作後再了解合約的使用情況。如果"
+    },
+    {
+     "q": "公證是必填的嗎",
+     "sub": "流程",
+     "type": "邊界",
+     "src": "koyu:onboarding5#18",
+     "entry_state": "fixed",
+     "boundary_ok": true,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "合約生效後要改只能重簽嗎",
+     "sub": "修改",
+     "type": "邊界",
+     "src": "koyu:slug17#16",
+     "entry_state": "answered",
+     "boundary_ok": false,
+     "answer_head": "合約一旦生效後，若需要修改，確實只能透過重簽的方式來進行。您可以複製該合約，然後重新建立新約進行簽署。這樣可以確保合約的內容與實際收款一致。若您有其他問題或需要"
+    },
+    {
+     "q": "編輯合約需要什麼權限",
+     "sub": "流程",
+     "type": "邊界",
+     "src": "koyu:slug12#17",
+     "entry_state": "answered_handoff",
+     "boundary_ok": true,
+     "answer_head": "編輯合約需要的權限會依據您在金箍棒系統中的角色設定而有所不同。一般來說，具備編輯合約權限的帳號通常是管理者或擁有特定角色的成員。這樣的設計可以確保只有授權的人員"
+    }
+   ]
+  }
+ ]
+}
