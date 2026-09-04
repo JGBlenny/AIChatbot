@@ -3,6 +3,7 @@
 > 建立時間：2026-09-04（1.0）　本版：2026-09-04T18:15:02+0800（1.1）
 > 需求文件：requirements.md（v1）　研究記錄：research.md　落差分析：validation_gap.md　jgb2 事實來源：jgb2-source-index.md
 > 發現流程：full。設計提案母本：`docs/design/agentic-tool-selection-design-20260904.md` v2。
+> 1.3 變更（2026-09-04T18:38:25+08:00）：收尾審查（r3）2 條 P1 修正——謂詞第 4 條 `target_user` 語義（`IS NULL OR &&`）＋矩陣加維；mock 保留大聲失敗、只驗轉發；8 條 P2 進附錄 C3 tasks 備註。⚠️ 1.3 未經 fresh 審查，規約上收尾審查已用罄，是否再審由業主定。
 > 1.2 變更（2026-09-04T18:30:37+08:00）：第二輪雙審查 REVISE 全處置（pv 1 P1＋6 P2；sec 7 P1＋5 P2）；審查正本落 `reviews/`；DSP-012 登記。處置明細見附錄 C2。
 > 1.1 變更：依 plan-verifier（REVISE，17 條）與 security-reviewer（3 P0／11 P1／7 P2／3 P3）全數處置；納入業主 2026-09-04 裁決 **DSP-011「權限由 jgb2 API 全權處理，本系統只管額度」**；納入 `jgb2-source-index.md`。處置明細見附錄 C。
 
@@ -162,12 +163,12 @@ class ToolRegistry:
 **域映射表（1.2；API 方法與圈定邊界逐域列出）**：
 | domain | `JGBSystemAPI` 方法 | secondary | jgb2 `viewer_user_id` 圈定 | 實際邊界 | 任務 |
 |---|---|---|---|---|---|
-| bills | `get_bills(role_id, user_id, …)` | — | **支援**（`/bills` 列表端點） | jgb2 Layer 2 | `get_bills` 增顯式 `viewer_user_id` 轉發（現只有 `get_bill_visibility` 轉發，其餘方法被 `**kwargs` 吞掉）；`services/jgb/transport.py` mock 的 `_bills_index` 需接受該參數（現 `UnsupportedMockParameterError`） |
+| bills | `get_bills(role_id, user_id, …)` | — | **支援**（`/bills` 列表端點） | jgb2 Layer 2 | `get_bills` 增顯式 `viewer_user_id` 轉發（現只有 `get_bill_visibility` 轉發，其餘方法被 `**kwargs` 吞掉）；**mock 保留** `services/jgb/transport.py:_bills_index` 的 `UnsupportedMockParameterError`（刻意的大聲失敗，⛔ 不放寬）；驗收改以 transport 出向參數斷言鉤子驗「有轉發」，圈定的過濾語義本機不可驗、只驗轉發（真圈定效果留 M3 後線上 e2e） |
 | contracts | `get_contracts(role_id, keyword…)` | — | **支援**（`contracts/status-overview`） | jgb2 Layer 2 | 同上，增 `viewer_user_id` 轉發 |
 | accounts | `get_team_members`／`get_member_permissions`（帳號面向與合約同端點，`contracts.format_contract_response` 延遲匯入 `ACCOUNT_FACE_BUILDERS`） | — | 不支援 | `role_id`＋`user_id` 雙證（`_validate_identity`） | 無 |
 | meters | `get_meters` | — | 不支援 | 雙證 | 無 |
 | estates | `get_estates`＋`get_estate_status` | `get_estate_detail`（builder 第二參數 `detail`） | 不支援 | 雙證 | 工具層兩次呼叫合成 row |
-驗收（M0 整合測試）：bills／contracts 的請求 params 含 `viewer_user_id==identity.user_id`（mock transport 斷言）；其餘三域缺 `user_id` ⇒ `NO_MATCH`（`_validate_identity` 拒）。jgb2 §3.5 明列僅四端點支援圈定，本表即「圈定生效」的可測邊界。
+驗收（M0 整合測試）：bills／contracts 的出向請求 params 含 `viewer_user_id==identity.user_id`（transport 出向斷言鉤子，mock 本身仍 raise）；其餘三域缺 `user_id` ⇒ `NO_MATCH`（`_validate_identity` 拒）。jgb2 §3.5 明列僅四端點支援圈定，本表即「圈定生效」的可測邊界。
 
 **`FACE_BUILDER_REGISTRIES`（既有五張表，鍵為中文面向名；1.1 對碼）**：
 | domain | 註冊表 | builder（皆 `(row: dict, user_question: str="") -> str`，例外註明） |
@@ -185,13 +186,13 @@ class ToolRegistry:
 | 1 | `kb.is_active = TRUE` | |
 | 2 | `kb.category IS DISTINCT FROM SYSTEM_DOC_CATEGORY AND IS DISTINCT FROM RULES_DOC_CATEGORY` | 保留分類永不回傳（決策 11／R19） |
 | 3 | `(array_length(kb.vendor_ids,1) IS NULL OR kb.vendor_ids && $vendor::int[])` | 跨業者 |
-| 4 | `target_user = _effective_target_user(identity.target_user)` | 未知／空 ⇒ `tenant` 最小權限（fail-safe，⛔ 不另寫第二份） |
+| 4 | `(kb.target_user IS NULL OR kb.target_user && $tu::text[])`，`$tu = [_effective_target_user(identity.target_user)]` | 與 `target_user_filter_sql` 現況同式；`IS NULL`＝通用知識放行；未知／空 ⇒ 參數側正規化 `tenant`（fail-safe，⛔ 不另寫第二份） |
 | 5 | `is_b2b = target_user in {'property_manager','system_admin'} or mode=='b2b'` | 兩條件 OR |
 | 6a | b2b：`kb.business_types && $bt::text[]` | **⛔ 無 `IS NULL` 放行**（D-002 勿改回，跨業者隔離） |
-| 6b | b2c：`(kb.business_types IS NULL OR kb.business_types && $bt::text[])` 且 `target_user_param = [target_user, 'all_users']` | |
+| 6b | b2c：`(kb.business_types IS NULL OR kb.business_types && $bt::text[])` 且 `$tu` 追加 `'all_users'` | |
 | 7 | `$bt` 來源：b2c 走 `param_resolver.get_vendor_info(vendor_id)`；查無 ⇒ `[]`（只剩 `IS NULL` 列，fail-closed） | |
 | — | `embedding IS NOT NULL`／`keywords IS NOT NULL AND array_length(kb.keywords,1) > 0` | 呼叫端相關性條件，**不進謂詞**，留在各搜尋函式 |
-驗收：不變量 20（AST 反重複）＋**差分等價測試**（`tests/integration/agent/test_visibility_predicate_equiv.py`）：固定矩陣 b2b/b2c × target_user{pm,tenant,unknown} × business_types{NULL,符,不符} × vendor_ids{NULL,符,不符} × is_active × 保留分類，重構前後三個消費點列集合逐筆相同。
+驗收：不變量 20（AST 反重複）＋**差分等價測試**（`tests/integration/agent/test_visibility_predicate_equiv.py`）：固定矩陣 b2b/b2c × identity.target_user{pm,tenant,unknown} × kb.target_user{NULL,符,不符} × business_types{NULL,符,不符} × vendor_ids{NULL,符,不符} × is_active × 保留分類，重構前後三個消費點列集合逐筆相同。
 
 ### 元件 4：`services/agent/mcp_facade.py` — MCP 門面（非公開認證面）
 `MCPServer("jgb-tools")`，⛔ 不設 `token_verifier`／`auth`。身分：從請求 header `X-JGB-Identity`（JSON：mode／target_user／vendor_id／role_id／user_id／session_id）取，`audience_of` 推導；這與 `/api/v1/message` 的 request 欄位是同一信任等級（DSP-011）。
@@ -441,10 +442,25 @@ Identity／Audience／ToolSpec／ToolResult／AgentOutput／Citation／VerifierR
 | sec | P2 | `dialog` 未包裝 | FIX：明寫不進資料區 | 元件 5 |
 | sec | P3 | 導流樣式開放集合 | FIX：變形寫進 `known_fabrications.json` | 測試 |
 
+### C3. 1.3 處置（r3 收尾審查；正本 `reviews/r3-plan-verifier-design-1.2.md`）
+| 級別 | 發現 | 處置 | 落點 |
+|---|---|---|---|
+| P1 | 謂詞第 4 條 `target_user` 寫成等值、漏 `IS NULL`；矩陣無 `kb.target_user` 維 | FIX：改 `IS NULL OR &&`＋參數側正規化；矩陣加維 | 條件表 4／6b、驗收句 |
+| P1 | mock 放寬拆掉大聲失敗防護 | FIX：保留 raise，出向斷言鉤子只驗轉發；語義本機不可驗明寫 | 域映射表 bills 列、驗收句 |
+| P2 | 不變量 20 AST 會被 SELECT 投影誤判 | tasks 備註：限縮到 WHERE 子句或呼叫圖 | 附錄 B |
+| P2 | `/mcp` 計量雙落點可能一呼叫兩列 | tasks 備註：**唯一寫入者＝門面**，middleware 只短路（額度拒）不 begin/finalize | 元件 4 |
+| P2 | `KB_GET_CAP` vs `KB_GET_SESSION_CAP` | tasks 備註：統一 `KB_GET_CAP`（每 key 每小時） | 非功能／部署 |
+| P2 | `AGENT_STAGE` 未列 env | tasks 備註：加入部署清單 | 部署 |
+| P2 | R5.5 pm／tenant 目錄 8K 無落點 | tasks 備註：`AGENT_OUTLINE_TOKEN_LIMIT_PM`／`_TENANT`（預設 8000） | 部署、元件 5 |
+| P2 | `X-JGB-Identity` `mode` 缺／非法未定 | tasks 備註：正規化 `b2c`（與 kwargs 預設同），`is_b2b` 仍由 target_user 決定 | 元件 4 |
+| P2 | `verify_api_key` 只回 `{id,name}` | tasks 備註：回 `is_internal`／`vendor_ids` 並傳到下游 | 決策 13 |
+| P2 | R10.2 trace_id 未串進 SSE | tasks 備註：`metadata` 事件帶 `trace_id` | 元件 1 |
+
 ### D. 變更歷史
 | 日期 | 版本 | 變更 | 修改者 |
 |---|---|---|---|
 | 2026-09-04 | 1.0 | 初始版本（full discovery） | AI |
+| 2026-09-04T18:38:25+08:00 | 1.3 | r3 兩條 P1 修正；八條 P2 進 tasks 備註；未經 fresh 審查 | AI |
 | 2026-09-04T18:30:37+08:00 | 1.2 | 第二輪雙審查全處置；域映射表；謂詞條件表；額度落點與 key 綁 API key；白名單句型「純」條件；目錄不可引用；DSP-012 | AI |
 | 2026-09-04T18:15:02+0800 | 1.1 | 雙審查 REVISE 全處置；DSP-011；jgb2-source-index 納入；里程碑與不變量 18–21 | AI |
 
