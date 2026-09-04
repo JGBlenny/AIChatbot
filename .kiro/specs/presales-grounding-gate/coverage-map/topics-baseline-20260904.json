@@ -1,0 +1,788 @@
+{
+ "_meta": {
+  "version": "topics-v1",
+  "date": "2026-09-04",
+  "scope": "prospect 售前池 pilot：建立合約",
+  "phrasing_rule": {
+   "min_per_topic": 12,
+   "priority": [
+    "test_scenarios 真實問句（全角色，講法家族跨角色）",
+    "幫助中心問句式標題",
+    "盤查／e2e 問句",
+    "人工補（涵蓋：口語／正式、動詞換法、追問式、否定式、多項目式、比較式）"
+   ],
+   "freeze": "本檔 sha256 進 map _meta；量測後 ⛔ 不得補題換題（answer-acceptance 鐵則③）",
+   "metric": {
+    "owner_hit": "檢索 top-1 ∈ owner（嚴格）",
+    "alias_hit": "top-1 ∈ 過渡別名列（列出但不算 owner）",
+    "answered": "entry_state ∈ {answered, answered_handoff}",
+    "rubric_hit": "回答命中該子題 rubric 全部必含群",
+    "complete": "rubric_hit_rate ≥ complete_threshold（預設 0.8，業主可調）"
+   },
+   "note": "覆蓋是主題×問法分布的性質；沒過線 ⇒ 修 owner 的表示法（question_summary／retrieval_representation）或主題頁內容，⛔ 不新增問句別名列"
+  },
+  "complete_threshold": 0.8,
+  "run_at": "2026-09-04T16:16:02",
+  "threshold": 0.5,
+  "api": "http://localhost:8100/api/v1/message",
+  "fingerprint": {
+   "git_head": "c996974",
+   "image": "97592b294e4f",
+   "topics_sha256": "703fd02f73b20df1f56b9ca03752e8b490ccb7a4eab2f09299369fdcd43c1c0b"
+  },
+  "g2": "2026-09-04 host g2_selftest 六項全過"
+ },
+ "topics": [
+  {
+   "id": "T-contract-create",
+   "module": "租約",
+   "topic": "建立合約（售前）",
+   "owner": [
+    3600
+   ],
+   "transitional_alias": [
+    5375,
+    5379
+   ],
+   "subtopic_rubrics": {
+    "簽章": [
+     [
+      "電子簽章",
+      "線上簽",
+      "線上簽約"
+     ]
+    ],
+    "範本": [
+     [
+      "內政部",
+      "公會",
+      "範本"
+     ]
+    ],
+    "上傳既有": [
+     [
+      "上傳",
+      "既有",
+      "紙本",
+      "PDF"
+     ]
+    ],
+    "流程": [
+     [
+      "物件",
+      "建立合約",
+      "新增合約",
+      "邀請",
+      "簽署"
+     ]
+    ],
+    "邀請": [
+     [
+      "邀請",
+      "Email",
+      "email",
+      "簽約"
+     ]
+    ],
+    "修改": [
+     [
+      "未發送",
+      "取消",
+      "簽署完成",
+      "不可",
+      "無法"
+     ]
+    ],
+    "身分": [
+     [
+      "個人",
+      "法人",
+      "團隊",
+      "身分"
+     ]
+    ],
+    "社宅委託": [
+     [
+      "社會住宅",
+      "社宅",
+      "委託"
+     ]
+    ],
+    "費用": [
+     [
+      "方案",
+      "訂閱",
+      "定價",
+      "專人",
+      "費用"
+     ]
+    ],
+    "複製": [
+     [
+      "複製",
+      "舊合約",
+      "現有"
+     ]
+    ]
+   },
+   "metrics": {
+    "n": 24,
+    "owner_hit_rate": 0.08,
+    "alias_hit_rate": 0.5,
+    "answered_rate": 0.62,
+    "rubric_hit_rate": 0.54,
+    "complete": false
+   },
+   "by_subtopic": {
+    "簽章": {
+     "n": 4,
+     "rubric_hit": 4,
+     "owner_hit": 0
+    },
+    "範本": {
+     "n": 2,
+     "rubric_hit": 0,
+     "owner_hit": 0
+    },
+    "上傳既有": {
+     "n": 3,
+     "rubric_hit": 1,
+     "owner_hit": 0
+    },
+    "流程": {
+     "n": 5,
+     "rubric_hit": 3,
+     "owner_hit": 0
+    },
+    "邀請": {
+     "n": 3,
+     "rubric_hit": 2,
+     "owner_hit": 0
+    },
+    "修改": {
+     "n": 2,
+     "rubric_hit": 1,
+     "owner_hit": 0
+    },
+    "身分": {
+     "n": 1,
+     "rubric_hit": 0,
+     "owner_hit": 1
+    },
+    "社宅委託": {
+     "n": 1,
+     "rubric_hit": 1,
+     "owner_hit": 1
+    },
+    "費用": {
+     "n": 2,
+     "rubric_hit": 0,
+     "owner_hit": 0
+    },
+    "複製": {
+     "n": 1,
+     "rubric_hit": 1,
+     "owner_hit": 0
+    }
+   },
+   "phrasings": [
+    {
+     "q": "可不可以線上簽約",
+     "sub": "簽章",
+     "src": "e2e:s1",
+     "top3": [
+      {
+       "id": 5375,
+       "similarity": 0.98
+      },
+      {
+       "id": 3600,
+       "similarity": 0.326
+      },
+      {
+       "id": 5379,
+       "similarity": 0.119
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": true,
+     "answer_head": "是的，金箍棒的租約管理系統支援線上電子簽章，涵蓋一般租賃、社會住宅和委託合約。這樣可以有效避免紙本來回的麻煩，讓簽約過程更加便捷。如果您想了解具體的流程，隨時可"
+    },
+    {
+     "q": "你們簽約是線上的嗎",
+     "sub": "簽章",
+     "src": "manual",
+     "top3": [
+      {
+       "id": 5375,
+       "similarity": 0.939
+      },
+      {
+       "id": 3600,
+       "similarity": 0.23
+      },
+      {
+       "id": 5379,
+       "similarity": 0.117
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": true,
+     "answer_head": "是的，我們的簽約是線上的。金箍棒的租約管理使用電子簽章（雲想 ThinkCloud），可以涵蓋一般租賃、社會住宅和委託合約，從點交、點退到續約、解約都能完整管理"
+    },
+    {
+     "q": "合約要自己印出來簽嗎？可以不用紙本嗎",
+     "sub": "簽章",
+     "src": "manual",
+     "top3": [
+      {
+       "id": 5375,
+       "similarity": 0.956
+      },
+      {
+       "id": 3600,
+       "similarity": 0.192
+      },
+      {
+       "id": 3596,
+       "similarity": 0.147
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": true,
+     "answer_head": "您不需要自己印出來簽合約，金箍棒的租約管理系統提供線上電子簽章功能，可以完全不使用紙本。這樣可以更方便地管理合約，避免簽錯或紙本來回的麻煩。如果您想了解具體的流"
+    },
+    {
+     "q": "簽約的時候需要我手寫簽名嗎？",
+     "sub": "簽章",
+     "src": "ts:9589",
+     "top3": [
+      {
+       "id": 5375,
+       "similarity": 0.856
+      },
+      {
+       "id": 3600,
+       "similarity": 0.21
+      },
+      {
+       "id": 3358,
+       "similarity": 0.06
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": true,
+     "answer_head": "在簽約的時候，您不需要手寫簽名。金箍棒的租約管理使用線上電子簽章，這樣可以更方便地管理合約，避免紙本來回的麻煩。如果您對流程有興趣，隨時可以詢問如何預約 dem"
+    },
+    {
+     "q": "合約範本可以選哪些啊？",
+     "sub": "範本",
+     "src": "ts:9877",
+     "top3": [
+      {
+       "id": 3584,
+       "similarity": 0.437
+      },
+      {
+       "id": 3596,
+       "similarity": 0.424
+      },
+      {
+       "id": 3606,
+       "similarity": 0.379
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "合約範本有英文版的嗎",
+     "sub": "範本",
+     "src": "manual",
+     "top3": [
+      {
+       "id": 3584,
+       "similarity": 0.119
+      },
+      {
+       "id": 3355,
+       "similarity": 0.095
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "既存合約（上傳合約）與JGB制式合約哪裡不同？",
+     "sub": "上傳既有",
+     "src": "help:qa06",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.229
+      },
+      {
+       "id": 5377,
+       "similarity": 0.118
+      },
+      {
+       "id": 3355,
+       "similarity": 0.054
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "可以上傳自己原有的合約嗎？在哪裡上傳？",
+     "sub": "上傳既有",
+     "src": "help:qa05",
+     "top3": [
+      {
+       "id": 3357,
+       "similarity": 0.509
+      },
+      {
+       "id": 5379,
+       "similarity": 0.42
+      },
+      {
+       "id": 5375,
+       "similarity": 0.15
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered_handoff",
+     "rubric_hit": true,
+     "answer_head": "目前系統支援物件的批次匯入，但合約的上傳功能我這邊沒有資料。如果您需要批次匯入物件，可以由 JGB 協助提供批次匯入表格，檔案格式須為 .xls（非 .xlsx"
+    },
+    {
+     "q": "我有自己的合約版本，能用嗎",
+     "sub": "上傳既有",
+     "src": "manual",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.421
+      },
+      {
+       "id": 3596,
+       "similarity": 0.336
+      },
+      {
+       "id": 5375,
+       "similarity": 0.204
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "如何建立租客合約？",
+     "sub": "流程",
+     "src": "ts:7620",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.738
+      },
+      {
+       "id": 5375,
+       "similarity": 0.365
+      },
+      {
+       "id": 3600,
+       "similarity": 0.304
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": true,
+     "entry_state": "ask_back",
+     "rubric_hit": false,
+     "answer_head": "在了解如何建立租客合約之前，請問您是個人房東、二房東還是包租代管呢？"
+    },
+    {
+     "q": "建立合約的流程是怎樣的呢？",
+     "sub": "流程",
+     "src": "ts:10057",
+     "top3": [
+      {
+       "id": 5377,
+       "similarity": 0.602
+      },
+      {
+       "id": 3600,
+       "similarity": 0.411
+      },
+      {
+       "id": 3335,
+       "similarity": 0.28
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": true,
+     "answer_head": "建立合約的流程主要是透過我們的電子簽章功能來進行。您可以在系統中選擇合約模板，填寫相關的租約資訊，然後發送給租客進行簽署。整個過程都可以在線上完成，方便快捷。 "
+    },
+    {
+     "q": "建約要先建物件嗎",
+     "sub": "流程",
+     "src": "manual",
+     "top3": [
+      {
+       "id": 5377,
+       "similarity": 0.572
+      },
+      {
+       "id": 3358,
+       "similarity": 0.413
+      },
+      {
+       "id": 3596,
+       "similarity": 0.312
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": true,
+     "answer_head": "是的，建約之前需要先建立物件。這樣可以確保合約與物件之間的關聯正確，方便後續的管理與操作。如果您有其他問題或需要進一步了解的地方，請隨時告訴我！"
+    },
+    {
+     "q": "未刊登的物件也可以新增合約嗎？",
+     "sub": "流程",
+     "src": "help:slug10",
+     "top3": [
+      {
+       "id": 3355,
+       "similarity": 0.312
+      },
+      {
+       "id": 5377,
+       "similarity": 0.235
+      },
+      {
+       "id": 3358,
+       "similarity": 0.181
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "我該怎麼把簽約邀請發給租客呢？",
+     "sub": "邀請",
+     "src": "ts:10100",
+     "top3": [
+      {
+       "id": 3358,
+       "similarity": 0.596
+      },
+      {
+       "id": 3600,
+       "similarity": 0.563
+      },
+      {
+       "id": 5375,
+       "similarity": 0.451
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": true,
+     "answer_head": "要將簽約邀請發給租客，您可以使用金箍棒的電子簽章功能。這個功能支持一般租賃、社會住宅和委託合約的管理。您只需在系統中選擇合適的合約，然後輸入租客的 email "
+    },
+    {
+     "q": "租客會收到什麼形式的簽約邀請？是否有時效？",
+     "sub": "邀請",
+     "src": "help:slug48",
+     "top3": [
+      {
+       "id": 3358,
+       "similarity": 0.633
+      },
+      {
+       "id": 3600,
+       "similarity": 0.454
+      },
+      {
+       "id": 5375,
+       "similarity": 0.194
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered_handoff",
+     "rubric_hit": true,
+     "answer_head": "租客會收到電子簽章的形式簽約邀請。至於時效方面，這部分我沒有資料。如果您有其他問題或需要進一步的協助，隨時告訴我！"
+    },
+    {
+     "q": "租客不在台灣也能簽嗎",
+     "sub": "邀請",
+     "src": "manual",
+     "top3": [
+      {
+       "id": 5375,
+       "similarity": 0.595
+      },
+      {
+       "id": 5379,
+       "similarity": 0.332
+      },
+      {
+       "id": 3600,
+       "similarity": 0.216
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": false,
+     "answer_head": "租客不在台灣也能簽署合約。金箍棒的租約管理系統支援線上電子簽章，讓租客無論身在何處都能方便地完成簽署。這樣可以有效避免紙本來回的時間延遲。若您想了解具體的流程，"
+    },
+    {
+     "q": "租客簽約後如何更改？",
+     "sub": "修改",
+     "src": "help:slug17",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.683
+      },
+      {
+       "id": 3355,
+       "similarity": 0.545
+      },
+      {
+       "id": 3600,
+       "similarity": 0.409
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": false,
+     "answer_head": "租客簽約後，如果需要更改合約內容，您需要逐筆建立新的合約。您可以使用線上電子簽章功能來簽署新合約，或是上傳既有的紙本合約 PDF 存檔。需要注意的是，合約目前不"
+    },
+    {
+     "q": "簽完合約還能改內容嗎",
+     "sub": "修改",
+     "src": "manual",
+     "top3": [
+      {
+       "id": 3355,
+       "similarity": 0.583
+      },
+      {
+       "id": 5379,
+       "similarity": 0.228
+      },
+      {
+       "id": 3606,
+       "similarity": 0.174
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": true,
+     "answer_head": "簽完合約後，內容是無法直接修改的。不過，您可以透過進入「團隊管理」>「進階設定」，找到「合約管理」>「預設補充條款」來新增或修改生活公約的內容。這樣的修改會套用"
+    },
+    {
+     "q": "簽約的時候個人跟法人身份怎麼設定",
+     "sub": "身分",
+     "src": "ts:10116",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.161
+      },
+      {
+       "id": 3596,
+       "similarity": 0.144
+      },
+      {
+       "id": 5377,
+       "similarity": 0.121
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "有支援社會住宅的合約嗎",
+     "sub": "社宅委託",
+     "src": "gapmap:C20",
+     "top3": [
+      {
+       "id": 3600,
+       "similarity": 0.751
+      },
+      {
+       "id": 3355,
+       "similarity": 0.211
+      },
+      {
+       "id": 3584,
+       "similarity": 0.138
+      }
+     ],
+     "owner_hit": true,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": true,
+     "answer_head": "是的，金箍棒的租約管理系統支援社會住宅的合約管理。您可以使用線上電子簽章來處理這類合約，從點交、點退到續約、解約都能完整管理。如果您想了解具體的流程，隨時可以詢"
+    },
+    {
+     "q": "所以剛剛說的簽約要另外收費嗎",
+     "sub": "費用",
+     "src": "e2e:s1",
+     "top3": [
+      {
+       "id": 5375,
+       "similarity": 0.206
+      },
+      {
+       "id": 3600,
+       "similarity": 0.196
+      },
+      {
+       "id": 3596,
+       "similarity": 0.181
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "電子簽約要額外付錢嗎",
+     "sub": "費用",
+     "src": "manual",
+     "top3": [
+      {
+       "id": 5375,
+       "similarity": 0.294
+      },
+      {
+       "id": 3600,
+       "similarity": 0.205
+      },
+      {
+       "id": 5379,
+       "similarity": 0.103
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": false,
+     "entry_state": "fixed",
+     "rubric_hit": false,
+     "answer_head": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+    },
+    {
+     "q": "可以複製舊合約來建新的嗎",
+     "sub": "複製",
+     "src": "ts:10065",
+     "top3": [
+      {
+       "id": 5379,
+       "similarity": 0.749
+      },
+      {
+       "id": 5375,
+       "similarity": 0.172
+      },
+      {
+       "id": 5377,
+       "similarity": 0.131
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": true,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": true,
+     "answer_head": "目前合約不支援批次匯入，因此無法直接複製舊合約來建立新的合約。您需要逐筆建立新合約，可以選擇線上電子簽署新約，或是上傳既有的紙本合約 PDF 存檔。  如果您對"
+    },
+    {
+     "q": "一次可以建很多份合約嗎",
+     "sub": "流程",
+     "src": "manual",
+     "top3": [
+      {
+       "id": 5377,
+       "similarity": 0.621
+      },
+      {
+       "id": 3596,
+       "similarity": 0.383
+      },
+      {
+       "id": 3602,
+       "similarity": 0.217
+      }
+     ],
+     "owner_hit": false,
+     "alias_hit": false,
+     "over_threshold": true,
+     "entry_state": "answered",
+     "rubric_hit": true,
+     "answer_head": "是的，金箍棒智慧物管可以一次建立多份合約，這對於需要管理多個物件的團隊來說非常方便。您可以透過電子簽章功能來簡化合約的處理流程。如果您有其他相關問題或需求，隨時"
+    }
+   ]
+  }
+ ]
+}

@@ -177,6 +177,52 @@ async def run(args):
     await conn.close(); print("saved", args.out, f"cells={len(out['cells'])}"); return 0
 
 
+async def run_topics(args):
+    """主題模式：覆蓋單位＝主題＋owner＋問法樣本（業主 2026-09-04：1～3 句太少）。每句量 owner_hit／answered／rubric_hit，主題算命中率。"""
+    sys.path.insert(0, "/app")
+    from services.vendor_knowledge_retriever_v2 import VendorKnowledgeRetrieverV2
+    from services.conversational_config import PRESALES_HANDOFF_MESSAGE
+    spec = json.load(open(args.topics, encoding="utf-8")); sha = hashlib.sha256(open(args.topics, "rb").read()).hexdigest()
+    thr_c = float(spec["_meta"].get("complete_threshold", 0.8))
+    r = VendorKnowledgeRetrieverV2()
+    out = {"_meta": {**spec["_meta"], "run_at": time.strftime("%Y-%m-%dT%H:%M:%S"), "threshold": args.threshold, "api": args.api,
+                     "fingerprint": {"git_head": args.head, "image": args.image, "topics_sha256": sha}, "g2": args.g2 or "未跑"}, "topics": []}
+    for tp in spec["topics"]:
+        rows = []
+        for ph in tp["phrasings"]:
+            res = await r.retrieve(query=ph["q"], vendor_id=0, top_k=3, similarity_threshold=0.0, target_user="prospect", mode="b2b", return_unfiltered=True)
+            top = [{"id": x.get("id"), "similarity": round(float(x.get("similarity") or 0), 3)} for x in res[:3]]
+            t1 = top[0] if top else {"id": None, "similarity": 0}
+            api = None
+            if not args.no_api:
+                try:
+                    api = ask(args.api, ph["q"], f"backtest_session_topic_{tp['id']}_{uuid.uuid4().hex[:4]}")
+                except Exception as e:
+                    api = {"answer": None, "handoff": None, "error": repr(e)}
+            entry = entry_state_of(api, PRESALES_HANDOFF_MESSAGE)
+            groups = tp["subtopic_rubrics"].get(ph["sub"]) or []
+            a = (api or {}).get("answer") or ""
+            rec = {**ph, "top3": top, "owner_hit": t1["id"] in tp["owner"], "alias_hit": t1["id"] in tp.get("transitional_alias", []),
+                   "over_threshold": t1["similarity"] >= args.threshold, "entry_state": entry,
+                   "rubric_hit": bool(groups) and entry in ("answered", "answered_handoff") and hits_groups(a, groups) == len(groups),
+                   "answer_head": a.replace("\n", " ")[:80]}
+            rows.append(rec)
+            print(f"{tp['id']} {ph['sub']:5} owner={'Y' if rec['owner_hit'] else ('a' if rec['alias_hit'] else '-')} top1={t1['id']}@{t1['similarity']:.2f} entry={entry:16} rubric={'Y' if rec['rubric_hit'] else '-'} {ph['q'][:22]}", flush=True)
+        n = len(rows)
+        m = {"n": n, "owner_hit_rate": round(sum(x["owner_hit"] for x in rows) / n, 2), "alias_hit_rate": round(sum(x["alias_hit"] for x in rows) / n, 2),
+             "answered_rate": round(sum(x["entry_state"] in ("answered", "answered_handoff") for x in rows) / n, 2),
+             "rubric_hit_rate": round(sum(x["rubric_hit"] for x in rows) / n, 2)}
+        m["complete"] = m["rubric_hit_rate"] >= thr_c
+        by_sub = {}
+        for x in rows:
+            d = by_sub.setdefault(x["sub"], {"n": 0, "rubric_hit": 0, "owner_hit": 0})
+            d["n"] += 1; d["rubric_hit"] += x["rubric_hit"]; d["owner_hit"] += x["owner_hit"]
+        out["topics"].append({**{k: v for k, v in tp.items() if k != "phrasings"}, "metrics": m, "by_subtopic": by_sub, "phrasings": rows})
+        print(f"== {tp['topic']}: n={n} owner_hit={m['owner_hit_rate']} alias_hit={m['alias_hit_rate']} answered={m['answered_rate']} rubric_hit={m['rubric_hit_rate']} complete={m['complete']}", flush=True)
+        json.dump(out, open(args.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print("saved", args.out); return 0
+
+
 def render(path):
     m = json.load(open(path, encoding="utf-8")); cells = m["cells"]; fp = m["_meta"].get("fingerprint", {})
     def cnt(key):
@@ -213,10 +259,13 @@ if __name__ == "__main__":
     ap.add_argument("--threshold", type=float, default=float(os.getenv("PRESALES_GROUNDING_THRESHOLD", "0.5")))
     ap.add_argument("--head", default="unknown"); ap.add_argument("--image", default="unknown"); ap.add_argument("--g2", default="")
     ap.add_argument("--no-api", action="store_true")
+    ap.add_argument("--topics", default="", help="主題模式：topics JSON（主題＋owner＋問法樣本）")
     ap.add_argument("--only", default="", help="只重跑這些格（逗號分隔），其餘從 --merge-into 沿用")
     ap.add_argument("--merge-into", default="", help="既有 map JSON；與 --only 併用")
     a = ap.parse_args()
     if a.render:
         sys.stdout.write(render(a.render))
+    elif a.topics:
+        sys.exit(asyncio.run(run_topics(a)))
     else:
         sys.exit(asyncio.run(run(a)))
