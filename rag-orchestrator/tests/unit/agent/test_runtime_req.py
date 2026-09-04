@@ -1,0 +1,561 @@
+"""unit：`AgentRuntime` 迴圈與預算表（spec agentic-mcp-orchestration 任務 2.1｜
+R1.1, R1.2, R1.3, R1.5, R7.2, R13.4）。
+
+全部離線：假 `provider`（腳本化「第 n 次回 tool_call、第 m 次回
+`AgentOutput`」）、假 `registry`、假 `verifier`、假 `assembler`、可注入
+`clock`——⛔ 不呼叫真 OpenAI、不接觸真 DB。
+
+覆蓋（見任務 brief「測試」節）：
+- tool_call → 回填 → 最終 answer 的基本迴圈
+- 預算計數表逐事件：tool 4 次上限、重寫 2 次上限、deadline（假時鐘）、
+  逾時重試也計入 tool_calls
+- tool_call 參數含身分鍵 ⇒ 丟棄記 violations（`registry.call` 也會剝，這裡
+  只驗 Runtime 自己有沒有記）
+- 模型送不可見工具名 ⇒ `registry.call(for_model=True)` 回 NO_MATCH 且
+  trace 記 `FORBIDDEN:<name>`
+- `registry.call` 拋例外 ⇒ `handoff(tool_unavailable)`
+- 同題重問快取：命中 ⇒ 不進模型（`llm_calls==0`）、不再呼叫 provider
+- `state["agent"]["fixed_streak"]`：固定句收場累計、正常回答歸零
+- Verifier 拒 → 重寫 → 再拒 → 固定句，且固定句內容不含被拒的原始 answer
+- `to_openai_tools` 是 Runtime 取得模型可見工具清單的唯一管道（即 design
+  「for_model=True」視角；真實 `ToolRegistry.to_openai_tools` 內部固定
+  `for_model=True`，這裡用假 registry 記錄呼叫次數與參數來斷言用的是這個管道）
+"""
+from __future__ import annotations
+
+import json
+from types import SimpleNamespace
+
+import pytest
+
+from services.agent.budget import Budget
+from services.agent.identity import Identity
+from services.agent.runtime import AgentRuntime, VerifierVerdict
+from services.agent.tools.registry import ToolResult
+
+pytestmark = pytest.mark.unit
+
+
+# ---------------------------------------------------------------------------
+# 假 provider：`provider.async_client.chat.completions.create(**kwargs)`
+# ---------------------------------------------------------------------------
+
+
+def _fake_message(*, content=None, tool_calls=None):
+    return SimpleNamespace(content=content, tool_calls=tool_calls)
+
+
+def _fake_tool_call(name: str, args: dict, call_id: str = "call_1"):
+    return SimpleNamespace(
+        id=call_id,
+        function=SimpleNamespace(name=name, arguments=json.dumps(args, ensure_ascii=False)),
+    )
+
+
+def _fake_response(message, *, prompt_tokens=10, completion_tokens=5):
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=message)],
+        usage=SimpleNamespace(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens),
+    )
+
+
+def _tool_call_response(name: str, args: dict, call_id: str = "call_1"):
+    return _fake_response(_fake_message(tool_calls=[_fake_tool_call(name, args, call_id)]))
+
+
+def _final_response(
+    *, kind="answer", answer="答案內容", fact_class="feature", handoff_reason=None
+):
+    payload = {
+        "kind": kind,
+        "answer": answer,
+        "citations": [],
+        "sentence_map": [],
+        "fact_class": fact_class,
+        "handoff_reason": handoff_reason,
+    }
+    return _fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))
+
+
+class FakeCompletions:
+    """腳本化：`script` 內每一項依序消耗；項目可以是回應物件，或
+    `callable(kwargs) -> response`（後者用來在「模型回應」的同時做副作用，
+    例如推進假時鐘，模擬這一輪呼叫花了很久）。"""
+
+    def __init__(self, script):
+        self.script = list(script)
+        self.calls: list[dict] = []
+
+    async def create(self, **kwargs):
+        self.calls.append(kwargs)
+        assert self.script, "假 provider 腳本已耗盡——測試少寫了一步"
+        step = self.script.pop(0)
+        return step(kwargs) if callable(step) else step
+
+
+class FakeProvider:
+    def __init__(self, script):
+        completions = FakeCompletions(script)
+        self.async_client = SimpleNamespace(
+            chat=SimpleNamespace(completions=completions)
+        )
+        self._completions = completions
+
+    @property
+    def calls(self):
+        return self._completions.calls
+
+
+def _empty_provider() -> FakeProvider:
+    """腳本空——若被呼叫立刻斷言失敗，當「不該呼叫 provider」的哨兵。"""
+    return FakeProvider([])
+
+
+# ---------------------------------------------------------------------------
+# 假 registry
+# ---------------------------------------------------------------------------
+
+_KB_GET_TOOL_SPEC = {
+    "type": "function",
+    "function": {
+        "name": "kb.get",
+        "description": "",
+        "strict": True,
+        "parameters": {
+            "type": "object",
+            "properties": {"kb_id": {"type": "string"}},
+            "required": ["kb_id"],
+            "additionalProperties": False,
+        },
+    },
+}
+
+
+class FakeRegistry:
+    def __init__(self, *, tool_specs=None, call_results=None, raise_on_call=None):
+        self._tool_specs = list(tool_specs) if tool_specs is not None else [_KB_GET_TOOL_SPEC]
+        self._call_results = list(call_results or [])
+        self.raise_on_call = raise_on_call
+        self.call_args: list[dict] = []
+        self.to_openai_tools_calls: list[dict] = []
+
+    def to_openai_tools(self, identity, stage, *, readonly_view=False):
+        self.to_openai_tools_calls.append(
+            {"identity": identity, "stage": stage, "readonly_view": readonly_view}
+        )
+        return list(self._tool_specs)
+
+    async def call(self, identity, name, args, timeout_s, *, stage, readonly_view=False, for_model=False):
+        self.call_args.append(
+            {
+                "identity": identity,
+                "name": name,
+                "args": dict(args),
+                "stage": stage,
+                "readonly_view": readonly_view,
+                "for_model": for_model,
+            }
+        )
+        if self.raise_on_call is not None:
+            raise self.raise_on_call
+        if not self._call_results:
+            return ToolResult(ok=False, error="NO_MATCH")
+        item = self._call_results.pop(0)
+        return item(args) if callable(item) else item
+
+
+# ---------------------------------------------------------------------------
+# 假 verifier／assembler
+# ---------------------------------------------------------------------------
+
+
+class FakeVerifier:
+    def __init__(self, results=None, *, rules_sha="fake-rules-sha"):
+        self._results = list(results) if results is not None else [VerifierVerdict(ok=True)]
+        self.calls: list[dict] = []
+        self.rules_sha = rules_sha
+
+    def verify(self, out, tool_results, user_message, handoff):
+        self.calls.append(
+            {
+                "out": out,
+                "tool_results": dict(tool_results),
+                "user_message": user_message,
+                "handoff": handoff,
+            }
+        )
+        if not self._results:
+            return VerifierVerdict(ok=True)
+        return self._results.pop(0)
+
+
+class FakeAssembler:
+    def __init__(self):
+        self.calls: list[dict] = []
+
+    def build(self, identity, outline, slots, dialog, tool_specs, nonce):
+        self.calls.append(
+            {
+                "identity": identity,
+                "outline": outline,
+                "slots": dict(slots),
+                "dialog": list(dialog),
+                "tool_specs": list(tool_specs),
+                "nonce": nonce,
+            }
+        )
+        return [{"role": "system", "content": "persona"}]
+
+
+class FakeClock:
+    def __init__(self, start: float = 0.0):
+        self.now = start
+
+    def __call__(self) -> float:
+        return self.now
+
+    def advance(self, dt: float) -> None:
+        self.now += dt
+
+
+def _identity(**overrides) -> Identity:
+    base = dict(vendor_id=1, target_user="property_manager", mode="b2b", api_key_id=1, session_id="s1")
+    base.update(overrides)
+    return Identity(**base)
+
+
+def _runtime(*, provider, registry, verifier, assembler=None, budget=None, clock=None, stage="M1"):
+    return AgentRuntime(
+        provider,
+        registry,
+        verifier,
+        assembler or FakeAssembler(),
+        budget or Budget(),
+        stage=stage,
+        clock=clock or FakeClock(),
+    )
+
+
+# ---------------------------------------------------------------------------
+# 1. tool_call → 回填 → 最終
+# ---------------------------------------------------------------------------
+
+
+async def test_tool_call_then_final_answer():
+    provider = FakeProvider(
+        [
+            _tool_call_response("kb.get", {"kb_id": "3600"}),
+            _final_response(answer="帳單在這裡"),
+        ]
+    )
+    registry = FakeRegistry(
+        call_results=[ToolResult(ok=True, data={"id": 3600}, text_for_model="帳單原文")]
+    )
+    verifier = FakeVerifier([VerifierVerdict(ok=True)])
+    runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
+
+    result = await runtime.run_turn(_identity(), "我要找帳單", {})
+
+    assert result.kind == "answer"
+    assert result.answer == "帳單在這裡"
+    assert result.trace.llm_calls == 2
+    assert len(result.trace.tool_calls) == 1
+    assert result.trace.tool_calls[0].name == "kb.get"
+    assert result.trace.tool_calls[0].status == "ok"
+    # Runtime 對 registry 的每次 call() 一律 for_model=True
+    assert registry.call_args[0]["for_model"] is True
+    # 拿到的是「模型可見」工具清單（真實 registry.to_openai_tools 內部固定 for_model=True）
+    assert len(registry.to_openai_tools_calls) == 1
+    assert registry.to_openai_tools_calls[0]["stage"] == "M1"
+
+
+# ---------------------------------------------------------------------------
+# 2. 預算：tool 4 次上限
+# ---------------------------------------------------------------------------
+
+
+async def test_budget_tool_call_cap_triggers_handoff():
+    # 5 次都嘗試叫同一個工具；Budget 上限 4，第 5 次應被擋下、不再真的打 registry。
+    provider = FakeProvider(
+        [_tool_call_response("kb.get", {"kb_id": "1"}, call_id=f"call_{i}") for i in range(5)]
+    )
+    registry = FakeRegistry(
+        call_results=[
+            ToolResult(ok=True, data={"id": 1}, text_for_model=f"文字{i}") for i in range(4)
+        ]
+    )
+    verifier = FakeVerifier()
+    budget = Budget(max_tool_calls=4)
+    runtime = _runtime(provider=provider, registry=registry, verifier=verifier, budget=budget)
+
+    result = await runtime.run_turn(_identity(), "查詢", {})
+
+    assert result.kind == "handoff"
+    assert result.handoff["reason"] == "budget_exhausted"
+    assert len(registry.call_args) == 4  # 第 5 次沒有真的呼叫 registry
+    assert len(result.trace.tool_calls) == 4
+
+
+# ---------------------------------------------------------------------------
+# 3. 預算：重寫 2 次上限（Verifier 拒 → 重寫 → 再拒 → 固定句）
+# ---------------------------------------------------------------------------
+
+
+async def test_budget_rewrite_cap_and_fixed_sentence_hides_rejected_text():
+    rejected_answer = "這是一個包含捏造事實的答案"
+    provider = FakeProvider(
+        [
+            _final_response(answer=rejected_answer),
+            _final_response(answer=rejected_answer + "2"),
+        ]
+    )
+    registry = FakeRegistry()
+    verifier = FakeVerifier(
+        [
+            VerifierVerdict(ok=False, reason="UNCITED_ASSERTION"),
+            VerifierVerdict(ok=False, reason="UNCITED_ASSERTION"),
+        ]
+    )
+    budget = Budget(max_rewrites=2)
+    runtime = _runtime(provider=provider, registry=registry, verifier=verifier, budget=budget)
+
+    result = await runtime.run_turn(_identity(), "有什麼保證", {})
+
+    assert result.kind == "handoff"
+    assert result.handoff["reason"] == "budget_exhausted"
+    assert result.trace.llm_calls == 2
+    assert len(result.trace.verifier) == 2
+    # 固定句 ⛔ 不得含被拒的原始 answer 文字
+    assert rejected_answer not in result.answer
+    assert "捏造" not in result.answer
+
+
+# ---------------------------------------------------------------------------
+# 4. 預算：deadline（假時鐘）
+# ---------------------------------------------------------------------------
+
+
+async def test_budget_deadline_triggers_handoff_with_fake_clock():
+    clock = FakeClock(start=0.0)
+
+    def _slow_tool_call(_kwargs):
+        clock.advance(100.0)  # 模擬這一輪模型呼叫花了很久
+        return _tool_call_response("kb.get", {"kb_id": "1"})
+
+    provider = FakeProvider([_slow_tool_call, _final_response()])
+    registry = FakeRegistry(call_results=[ToolResult(ok=True, data={"id": 1}, text_for_model="x")])
+    verifier = FakeVerifier()
+    budget = Budget(deadline_s=5.0)
+    runtime = _runtime(
+        provider=provider, registry=registry, verifier=verifier, budget=budget, clock=clock
+    )
+
+    result = await runtime.run_turn(_identity(), "查詢", {})
+
+    assert result.kind == "handoff"
+    assert result.handoff["reason"] == "budget_exhausted"
+    # deadline 是在「叫模型之前」查的：第一輪工具呼叫已經記進 trace
+    assert len(result.trace.tool_calls) == 1
+    # 第二輪模型呼叫（_final_response）沒被打到
+    assert len(provider.calls) == 1
+
+
+# ---------------------------------------------------------------------------
+# 5. 逾時重試也計入 tool_calls（用第三次嘗試被擋來反證）
+# ---------------------------------------------------------------------------
+
+
+async def test_tool_timeout_retry_counts_toward_budget():
+    provider = FakeProvider(
+        [
+            _tool_call_response("kb.get", {"kb_id": "1"}, call_id="call_1"),
+            _tool_call_response("kb.get", {"kb_id": "2"}, call_id="call_2"),
+        ]
+    )
+    # 第一次逾時、立刻重試一次成功——兩次呼叫吃掉 Budget(max_tool_calls=2) 的全部額度。
+    registry = FakeRegistry(
+        call_results=[
+            ToolResult(ok=False, error="TOOL_TIMEOUT"),
+            ToolResult(ok=True, data={"id": 1}, text_for_model="ok"),
+        ]
+    )
+    verifier = FakeVerifier()
+    budget = Budget(max_tool_calls=2)
+    runtime = _runtime(provider=provider, registry=registry, verifier=verifier, budget=budget)
+
+    result = await runtime.run_turn(_identity(), "查詢", {})
+
+    # 兩次 registry.call（逾時＋重試）已經把額度用完，第二個 model tool_call 被直接擋下。
+    assert len(registry.call_args) == 2
+    assert result.kind == "handoff"
+    assert result.handoff["reason"] == "budget_exhausted"
+    assert len(result.trace.tool_calls) == 1  # 只有一筆紀錄（逾時後的重試結果）
+    assert result.trace.tool_calls[0].status == "ok"
+
+
+async def test_tool_timeout_retry_fails_again_yields_tool_unavailable():
+    provider = FakeProvider([_tool_call_response("kb.get", {"kb_id": "1"})])
+    registry = FakeRegistry(
+        call_results=[
+            ToolResult(ok=False, error="TOOL_TIMEOUT"),
+            ToolResult(ok=False, error="TOOL_TIMEOUT"),
+        ]
+    )
+    verifier = FakeVerifier()
+    runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
+
+    result = await runtime.run_turn(_identity(), "查詢", {})
+
+    assert len(registry.call_args) == 2  # 逾時＋重試皆已嘗試
+    assert result.kind == "handoff"
+    assert result.handoff["reason"] == "tool_unavailable"
+
+
+# ---------------------------------------------------------------------------
+# 6. 身分鍵丟棄＋violations
+# ---------------------------------------------------------------------------
+
+
+async def test_identity_key_in_tool_args_is_recorded_as_violation():
+    provider = FakeProvider(
+        [
+            _tool_call_response("kb.get", {"kb_id": "1", "vendor_id": 999, "role_id": "R1"}),
+            _final_response(),
+        ]
+    )
+    registry = FakeRegistry(call_results=[ToolResult(ok=True, data={}, text_for_model="x")])
+    verifier = FakeVerifier()
+    runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
+
+    result = await runtime.run_turn(_identity(), "查詢", {})
+
+    assert "IDENTITY_KEY:vendor_id" in result.trace.violations
+    assert "IDENTITY_KEY:role_id" in result.trace.violations
+    assert result.kind == "answer"  # 丟棄不等於整輪失敗，模型仍能拿到工具結果
+
+
+# ---------------------------------------------------------------------------
+# 7. 不可見工具名 ⇒ NO_MATCH ＋ FORBIDDEN
+# ---------------------------------------------------------------------------
+
+
+async def test_invisible_tool_name_recorded_as_forbidden():
+    provider = FakeProvider(
+        [
+            _tool_call_response("agent.turn", {"message": "hi"}),
+            _final_response(),
+        ]
+    )
+    # 假 registry 的 to_openai_tools 只回 kb.get；agent.turn 不在其中（facade_only 排除）。
+    registry = FakeRegistry(call_results=[ToolResult(ok=False, error="NO_MATCH")])
+    verifier = FakeVerifier()
+    runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
+
+    result = await runtime.run_turn(_identity(), "查詢", {})
+
+    assert "FORBIDDEN:agent.turn" in result.trace.violations
+    assert registry.call_args[0]["name"] == "agent.turn"
+    assert registry.call_args[0]["for_model"] is True
+    assert result.trace.tool_calls[0].status == "error"
+
+
+# ---------------------------------------------------------------------------
+# 8. registry 例外 ⇒ handoff(tool_unavailable)
+# ---------------------------------------------------------------------------
+
+
+async def test_registry_exception_yields_tool_unavailable_handoff():
+    provider = FakeProvider([_tool_call_response("kb.get", {"kb_id": "1"})])
+    registry = FakeRegistry(raise_on_call=RuntimeError("registry down"))
+    verifier = FakeVerifier()
+    runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
+
+    result = await runtime.run_turn(_identity(), "查詢", {})
+
+    assert result.kind == "handoff"
+    assert result.handoff["reason"] == "tool_unavailable"
+    assert any(v.startswith("REGISTRY_EXC:") for v in result.trace.violations)
+
+
+# ---------------------------------------------------------------------------
+# 9. 同題重問快取：命中 ⇒ llm_calls==0、不再呼叫 provider
+# ---------------------------------------------------------------------------
+
+
+async def test_repeated_question_replays_from_cache_without_calling_model():
+    # 第一輪：Verifier 一律拒、max_rewrites=0 ⇒ 一次就落固定句，方便湊出一筆 handoff 快取。
+    provider1 = FakeProvider([_final_response(answer="不重要")])
+    registry1 = FakeRegistry()
+    verifier1 = FakeVerifier([VerifierVerdict(ok=False, reason="UNCITED_ASSERTION")])
+    budget = Budget(max_rewrites=0)
+    runtime1 = _runtime(provider=provider1, registry=registry1, verifier=verifier1, budget=budget)
+
+    state: dict = {}
+    result1 = await runtime1.run_turn(_identity(), "這題會轉人嗎？", state)
+    assert result1.kind == "handoff"
+
+    # 第二輪：同一句話、同一個 state；provider 腳本是空的——真的被呼叫就會斷言失敗。
+    provider2 = _empty_provider()
+    registry2 = FakeRegistry()
+    verifier2 = FakeVerifier()
+    runtime2 = _runtime(provider=provider2, registry=registry2, verifier=verifier2, budget=budget)
+
+    result2 = await runtime2.run_turn(_identity(), "這題會轉人嗎？", state)
+
+    assert result2.trace.llm_calls == 0
+    assert result2.kind == "handoff"
+    assert result2.answer == result1.answer
+    assert result2.trace.violations[0].startswith("replayed_from:")
+    assert provider2.calls == []
+    assert registry2.call_args == []
+
+
+async def test_non_handoff_turn_is_not_cached():
+    provider = FakeProvider([_final_response(answer="正常回答")])
+    registry = FakeRegistry()
+    verifier = FakeVerifier([VerifierVerdict(ok=True)])
+    runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
+
+    state: dict = {}
+    result = await runtime.run_turn(_identity(), "一般問題", state)
+
+    assert result.kind == "answer"
+    assert state["agent"]["handoff_cache"] == {}
+
+
+# ---------------------------------------------------------------------------
+# 10. fixed_streak：固定句累計、正常回答歸零
+# ---------------------------------------------------------------------------
+
+
+async def test_fixed_streak_accumulates_then_resets_on_normal_answer():
+    provider = FakeProvider(
+        [
+            _final_response(answer="第一次嘗試"),
+            _final_response(answer="第二次嘗試"),
+            _final_response(answer="第三次成功"),
+        ]
+    )
+    registry = FakeRegistry()
+    verifier = FakeVerifier(
+        [
+            VerifierVerdict(ok=False, reason="UNCITED_ASSERTION"),
+            VerifierVerdict(ok=False, reason="UNCITED_ASSERTION"),
+            VerifierVerdict(ok=True),
+        ]
+    )
+    budget = Budget(max_rewrites=0)  # 每次拒絕都直接落固定句，方便湊出連續兩輪固定句
+    runtime = _runtime(provider=provider, registry=registry, verifier=verifier, budget=budget)
+
+    state: dict = {}
+    r1 = await runtime.run_turn(_identity(), "問題一", state)
+    assert r1.kind == "handoff"
+    assert state["agent"]["fixed_streak"] == 1
+
+    r2 = await runtime.run_turn(_identity(), "問題二", state)
+    assert r2.kind == "handoff"
+    assert state["agent"]["fixed_streak"] == 2
+
+    r3 = await runtime.run_turn(_identity(), "問題三", state)
+    assert r3.kind == "answer"
+    assert state["agent"]["fixed_streak"] == 0
