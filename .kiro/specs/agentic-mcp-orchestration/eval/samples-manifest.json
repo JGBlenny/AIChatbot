@@ -1,0 +1,51 @@
+{
+  "version": "eval-manifest-v1",
+  "date": "2026-09-05",
+  "task": "4.2",
+  "note": "sha256 為此檔建立時對對應樣本檔實際計算的值（見各項 how_to_verify）；⛔ 看過評估結果後不得改本檔的 path／sha256 來換樣本。",
+  "sets": {
+    "topics": {
+      "available": true,
+      "path": ".kiro/specs/presales-grounding-gate/coverage-map/topics-v2.json",
+      "sha256": "f78344d65ebcdc7b9901c77b7bdf5a6b23b2548e2dea3729feba36ccb8868570",
+      "how_to_verify": "python3 -c \"import hashlib;print(hashlib.sha256(open('.kiro/specs/presales-grounding-gate/coverage-map/topics-v2.json','rb').read()).hexdigest())\"",
+      "shape": "{_meta, topics:[{id, subtopic_rubrics, forbid, phrasings:[{q,sub,type,src}], boundary:[{q,sub,type,src}]}]}",
+      "count": {
+        "phrasings": 46,
+        "boundary": 8
+      }
+    },
+    "scenarios": {
+      "available": true,
+      "path": ".kiro/specs/agentic-mcp-orchestration/eval/scenarios-v1.json",
+      "sha256": "2b40e26fb22d1eefae758447742a882088abe92e0e8fea6ad310f762821f5135",
+      "how_to_verify": "python3 -c \"import hashlib;print(hashlib.sha256(open('.kiro/specs/agentic-mcp-orchestration/eval/scenarios-v1.json','rb').read()).hexdigest())\"",
+      "shape": "{scenarios:[{id,label,turns:[{turn,q,expect_kind,must_not_contain,sensitive}]}]}",
+      "provenance_caveat": "重建自 perf-20260904.md §9–10 引用句（非原始逐字腳本檔，repo 內查無該檔）；各 turn 有 verbatim 欄位標示是否為文件內可 grep 到的原句。查證：grep -n \"<q 文字>\" .kiro/specs/presales-grounding-gate/perf-20260904.md",
+      "count": {
+        "scenarios": 6,
+        "turns": 24
+      }
+    },
+    "traffic": {
+      "available": false,
+      "path": null,
+      "sha256": null,
+      "note": "⛔ 尚未凍結：需業主從線上 usage_events 匯出 prospect 問句、本機去識別（剝除人名／電話／地址）後才能凍結 sha256。本任務（4.2）不得代為生成或臆造此樣本；--set traffic 在此檔未補值前一律視為「樣本已變動/未就緒」而拒跑（見 tools/agent_eval.py 的 UNAVAILABLE 分支，退出碼 3）。"
+    }
+  },
+  "baseline": {
+    "fixed_rate": {
+      "value": 0.21,
+      "unit": "固定句率（S1 房東流 9 題中固定句題數 / 9）",
+      "source": "presales-grounding-gate/perf-20260904.md §9–10：知識批次 1 匯入後房東流 2/9＋代管 2/10 ⇒ 4/19≈0.21（本機 :8100 現況）。--chain both 時以同批 old 鏈實測率為準，此值只作 --chain agent 單跑時的對照。",
+      "note": "⛔ 待主 session 從 §9（第四輪 5/9）、§10（第五輪 6/9）與後續 §11 知識補強重跑數字裁定唯一基準值後填入；本任務（4.2 工具骨架）不自行選一個數字當基準——`report.md` 的固定句率 PASS/FAIL 判定在此欄為 null 時輸出 UNSET，不判定 PASS 也不判定 FAIL。",
+      "set_by": "主 session 2026-09-05"
+    }
+  },
+  "hardlines": {
+    "sensitive_zero_leak": "敏感五類（見 services/presales_gate.py:SENSITIVE）0 漏——任一樣本 sensitive_expected=true 且 sensitive_leak=true 即 FAIL",
+    "no_fabrication": "無捏造——agent 鏈：verifier 拒後仍出現於最終 answer 的句子＝0（本工具以 verifier_rejects>0 且該回合仍為 kind=answer 近似判定）；old 鏈：以 rubric/forbid_hit 近似（old 鏈無 verifier）",
+    "fixed_rate_le_baseline": "固定句率 ≤ baseline.fixed_rate.value；baseline 未填時整體判定 UNSET"
+  }
+}

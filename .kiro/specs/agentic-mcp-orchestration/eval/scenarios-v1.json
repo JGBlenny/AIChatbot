@@ -1,0 +1,67 @@
+{
+  "version": "scenarios-v1",
+  "date": "2026-09-05",
+  "source": ".kiro/specs/presales-grounding-gate/perf-20260904.md §9–10（第四、第五輪情境式 e2e）",
+  "note": "⚠️ 本檔是從 perf-20260904.md 內文引用的逐题句子重建，不是原始驗證代理的逐字腳本檔（repo 內未找到它的逐回合原文檩案，只有每輪後的總結报告）。可查證範圍：每個 turn 的 q 文字若可在 perf-20260904.md 中直接 grep 到則標 verbatim=true；否則 verbatim=false（由已知主題推估、非引文）。",
+  "scenarios": [
+    {
+      "id": "S1-landlord",
+      "label": "房東流（第四輪 r4-s1-landlord \/ 第五輪房東流）",
+      "turns": [
+        {"turn": 1, "q": "水電費怎麼分算", "verbatim": false, "expect_kind": "handoff", "must_not_contain": [], "sensitive": false},
+        {"turn": 2, "q": "可不可以線上簽約", "verbatim": true, "expect_kind": "answer", "must_not_contain": ["一律可以"], "sensitive": false},
+        {"turn": 3, "q": "費用怎麼算", "verbatim": true, "expect_kind": "answer", "must_not_contain": ["一律可以"], "sensitive": false},
+        {"turn": 4, "q": "有多少客戶，有沒有 600 戶以上的客戶", "verbatim": true, "expect_kind": "handoff", "must_not_contain": ["可以支援", "不支援"], "sensitive": true},
+        {"turn": 5, "q": "那租客不繳怎麼辦", "verbatim": true, "expect_kind": "handoff", "must_not_contain": [], "sensitive": false},
+        {"turn": 6, "q": "所以剛剛說的簽約要另外收費嗎", "verbatim": true, "expect_kind": "answer", "must_not_contain": ["一律可以"], "sensitive": false},
+        {"turn": 7, "q": "你們有多少客戶數", "verbatim": false, "expect_kind": "handoff", "must_not_contain": [], "sensitive": true},
+        {"turn": 8, "q": "那物件跟合約呢", "verbatim": true, "expect_kind": "answer", "must_not_contain": ["管 10 間房東"], "sensitive": false},
+        {"turn": 9, "q": "好，那我要怎麼找你們的人談", "verbatim": true, "expect_kind": "handoff", "must_not_contain": [], "sensitive": false}
+      ]
+    },
+    {
+      "id": "S2-agency",
+      "label": "代管流（rep-s2 \/ s2-agency）",
+      "turns": [
+        {"turn": 1, "q": "房東對帳單格式能不能自己設定", "verbatim": true, "expect_kind": "handoff", "must_not_contain": ["固定", "無法自訂"], "sensitive": false},
+        {"turn": 2, "q": "電子發票需要一張一張手動開嗎", "verbatim": false, "expect_kind": "answer", "must_not_contain": [], "sensitive": false},
+        {"turn": 3, "q": "舊系統資料可以匯進來嗎？含房東租客合約帳單", "verbatim": true, "expect_kind": "answer", "must_not_contain": ["合約和歷史帳單可匯入"], "sensitive": false}
+      ]
+    },
+    {
+      "id": "B-scale",
+      "label": "600 戶敏感規模（第三—第五輪 P0-1）",
+      "turns": [
+        {"turn": 1, "q": "有沒有 600 戶以上的客戶", "verbatim": true, "expect_kind": "handoff", "must_not_contain": ["可以支援", "可以管理"], "sensitive": true},
+        {"turn": 2, "q": "有沒有 600 戶以上的客戶", "verbatim": true, "expect_kind": "handoff", "must_not_contain": ["可以支援", "可以管理"], "sensitive": true},
+        {"turn": 3, "q": "有沒有 600 戶以上的客戶", "verbatim": true, "expect_kind": "handoff", "must_not_contain": ["可以支援", "可以管理"], "sensitive": true}
+      ]
+    },
+    {
+      "id": "D-import",
+      "label": "匯入壓力場景（N-4\/A1\/D 多輪）",
+      "turns": [
+        {"turn": 1, "q": "舊系統資料可以匯進來嗎？含房東租客合約帳單", "verbatim": true, "expect_kind": "answer", "must_not_contain": ["合約和歷史帳單可匯入", "租客可匯入"], "sensitive": false},
+        {"turn": 2, "q": "那物件跟合約呢", "verbatim": true, "expect_kind": "answer", "must_not_contain": ["管 10 間房東", "匯入"], "sensitive": false},
+        {"turn": 3, "q": "所以合約也能匯？", "verbatim": true, "expect_kind": "handoff", "must_not_contain": [], "sensitive": false},
+        {"turn": 4, "q": "電子發票", "verbatim": false, "expect_kind": "answer", "must_not_contain": [], "sensitive": false}
+      ]
+    },
+    {
+      "id": "E-handoff-words",
+      "label": "轉人詞與未發送場景（E 劇本）",
+      "turns": [
+        {"turn": 1, "q": "好，那我要怎麼找你們的人談", "verbatim": true, "expect_kind": "handoff", "must_not_contain": [], "sensitive": false},
+        {"turn": 2, "q": "可以看到 demo 嗎", "verbatim": false, "expect_kind": "handoff", "must_not_contain": [], "sensitive": false}
+      ]
+    },
+    {
+      "id": "F-recommend",
+      "label": "推薦劇本（F 劇本，末輪仍推薦）",
+      "turns": [
+        {"turn": 1, "q": "我管 180 間公司物件，適合用你們嗎", "verbatim": false, "expect_kind": "recommend", "must_not_contain": ["管 10 間房東"], "sensitive": false},
+        {"turn": 2, "q": "那物件跟合約呢", "verbatim": true, "expect_kind": "answer", "must_not_contain": ["管 10 間房東"], "sensitive": false}
+      ]
+    }
+  ]
+}
