@@ -80,41 +80,46 @@ fi
 
 echo ""
 echo "═══ 不變量 3：服務容器內關鍵檔案與本地一致 ═══"
+# 2026-09-04 改為整目錄 digest 比對（原為白名單 SYNC_FILES）：
+# 白名單漏掉 vendor_knowledge_retriever_v2.py 造成假綠，且同步單檔後容器缺
+# services/agent/ 套件 ⇒ app 起不來。現在比對 app.py＋services/**＋routers/**＋
+# scripts/backtest/** 的所有 *.py：內容不同 ⇒ FAIL；本地有容器沒有 ⇒ FAIL（缺相依）；
+# 容器有本地沒有 ⇒ WARN（已刪檔，重建 image 才會消失）。⛔ 不再靠人記得列檔。
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
-SYNC_FILES=(
-  scripts/backtest/backtest_framework_async.py
-  scripts/backtest/run_backtest_with_db_progress.py
-  services/knowledge_completion_loop/backtest_client.py
-  services/conversational_engine.py
-  services/jgb_system_api.py
-  services/jgb/bills.py
-  services/jgb/repair_prefill.py
-  services/instance_reference_gate.py
-  services/instance_applicability.py
-  routers/chat.py
-  routers/loops.py
-  services/usage_metering.py
-  services/decision_layer.py
-  services/responsibility_artifacts.py
-  services/responsibility_telemetry.py
-  services/responsibility_completion.py
-  services/fulfillment_registry.py
-  services/base_retriever.py
-  services/llm_provider.py
-  services/llm_answer_optimizer.py
-  services/api_call_handler.py
-  services/vendor_parameter_resolver.py
-  routers/lookup.py
-  app.py
+SYNC_ROOTS=(app.py services routers scripts/backtest)
+C_SUMS=$(docker exec aichatbot-rag-orchestrator sh -c 'cd /app && find app.py services routers scripts/backtest -name "*.py" -not -path "*/__pycache__/*" -not -path "*/tests/*" -exec md5sum {} + 2>/dev/null' 2>/dev/null)
+if [ -z "$C_SUMS" ]; then
+  echo "❌ FAIL：無法從容器取得檔案 digest（容器未起或 find 失敗）"
+  FAIL=1
+else
+  L_SUMS=$(cd "$REPO/rag-orchestrator" && find "${SYNC_ROOTS[@]}" -name "*.py" -not -path "*/__pycache__/*" -not -path "*/tests/*" -exec md5 -r {} + 2>/dev/null | awk '{print $1"  "$2}')
+  DIFF_OUT=$(python3 - "$C_SUMS" "$L_SUMS" <<'PY'
+import sys
+def parse(t):
+    d={}
+    for line in t.splitlines():
+        parts=line.split()
+        if len(parts)>=2: d[parts[1].lstrip("./")]=parts[0]
+    return d
+c=parse(sys.argv[1]); l=parse(sys.argv[2])
+bad=[f for f in sorted(l) if f in c and c[f]!=l[f]]
+missing=[f for f in sorted(l) if f not in c]
+extra=[f for f in sorted(c) if f not in l]
+for f in bad: print(f"FAIL\t{f}\t容器與本地不一致")
+for f in missing: print(f"FAIL\t{f}\t本地有、容器沒有（同步單檔會缺相依，需重建 image 或 cp 整個套件）")
+for f in extra: print(f"WARN\t{f}\t容器有、本地已刪（重建 image 才會消失）")
+print(f"INFO\t比對 {len(l)} 個本地檔、{len(c)} 個容器檔")
+PY
 )
-for f in "${SYNC_FILES[@]}"; do
-  C=$(docker exec aichatbot-rag-orchestrator md5sum "/app/$f" 2>/dev/null | awk '{print $1}')
-  L=$(md5 -q "$REPO/rag-orchestrator/$f" 2>/dev/null || md5sum "$REPO/rag-orchestrator/$f" 2>/dev/null | awk '{print $1}')
-  if [ "$C" != "$L" ]; then
-    echo "❌ FAIL：$f 容器與本地不一致（docker cp + restart，或重建 image）"
-    FAIL=1
-  fi
-done
+  echo "$DIFF_OUT" | while IFS=$'\t' read -r lvl f msg; do
+    case "$lvl" in
+      FAIL) echo "❌ FAIL：$f $msg";;
+      WARN) echo "⚠️  WARN：$f $msg";;
+      INFO) echo "ℹ️  $f $msg";;
+    esac
+  done
+  echo "$DIFF_OUT" | grep -q "^FAIL" && FAIL=1
+fi
 [ $FAIL -eq 0 ] && echo "✅ PASS"
 
 echo ""
