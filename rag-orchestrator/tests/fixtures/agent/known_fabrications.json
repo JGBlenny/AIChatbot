@@ -1,0 +1,564 @@
+[
+  {
+    "id": "sensitive_customer_reference",
+    "note": "fact_class=customer_reference ∈ SENSITIVE，即使有引用仍先擋（步①先於③④）",
+    "expected_reason": "SENSITIVE_TOPIC",
+    "user_message": "你們有沒有服務超過600戶的大型代管業者？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "我們目前服務超過600戶的大型代管業者。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:9001",
+          "quote": "我們有服務多家大型代管業者"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "customer_reference",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9001",
+            "text": "我們有服務多家大型代管業者，實際規模不對外揭露。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "sensitive_pricing_pattern",
+    "note": "fact_class 未落在 SENSITIVE，但金額樣式命中 sensitive_patterns",
+    "expected_reason": "SENSITIVE_TOPIC",
+    "user_message": "月費怎麼算？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "月租費是3000元，長期使用另有折扣。",
+      "citations": [],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": []
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "fact_class_missing",
+    "note": "fact_class 缺（None）⇒ fail-closed 視為敏感",
+    "expected_reason": "SENSITIVE_TOPIC",
+    "user_message": "你們支援哪些功能？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "我們支援物件管理與帳單提醒。",
+      "citations": [],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": []
+        }
+      ],
+      "fact_class": null,
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "fact_class_illegal",
+    "note": "fact_class 不在 FactClass enum ⇒ fail-closed 視為敏感（parse_fact_class 回 other 之前先判非法）",
+    "expected_reason": "SENSITIVE_TOPIC",
+    "user_message": "你們支援哪些功能？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "我們支援物件管理與帳單提醒。",
+      "citations": [],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": []
+        }
+      ],
+      "fact_class": "not_a_real_category",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "schema_mismatch",
+    "note": "sentence_map 未覆蓋 answer 全文（2 句只標 1 句）",
+    "expected_reason": "SCHEMA",
+    "user_message": "可以匯入合約嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "我們支援租客批次匯入。可以匯入合約嗎？",
+      "citations": [],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": []
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "uncited_assertion",
+    "note": "fact 句缺引用",
+    "expected_reason": "UNCITED_ASSERTION",
+    "user_message": "合約可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "我們的系統支援租客批次匯入，合約和歷史帳單也可以一起匯入。",
+      "citations": [],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": []
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "impure_question_uncited",
+    "note": "design 元件 6 例句：反問句夾帶斷言子句，「純」條件命中 assertion_terms（支援）⇒ 降級 fact ⇒ 需 cite",
+    "expected_reason": "UNCITED_ASSERTION",
+    "user_message": "合約可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "ask",
+      "answer": "我們的系統支援批次匯入合約，請問您有幾間？",
+      "citations": [],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "question",
+          "cite": []
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "quote_not_verbatim",
+    "note": "quote 不是對應 Provenance.text 的逐字子串",
+    "expected_reason": "QUOTE_NOT_VERBATIM",
+    "user_message": "合約可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "我們的系統支援合約批次匯入。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:3357",
+          "quote": "合約可以批次匯入"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:3357",
+            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "quote_too_short",
+    "note": "quote 少於 min_quote_len(6) 字",
+    "expected_reason": "QUOTE_TOO_SHORT",
+    "user_message": "物件可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "物件資料可匯入。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:3357",
+          "quote": "可匯入"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:3357",
+            "text": "物件資料可匯入，JGB 協助提供表格。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "quote_not_covering",
+    "note": "quote 逐字存在於 provenance 但與句子共用有意義字元 < min_coverage_chars(4)（通用引用湊字數）",
+    "expected_reason": "QUOTE_NOT_COVERING",
+    "user_message": "假日有客服嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "我們也提供假日客服支援喔。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:5000",
+          "quote": "系統目前支援租客資料匯入功能"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:5000",
+            "text": "系統目前支援租客資料匯入功能，格式為 Excel。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "polarity_mismatch",
+    "note": "否定翻轉：句子說「無法自訂」，quote 其實是「可以彈性調整」（正向）",
+    "expected_reason": "POLARITY_MISMATCH",
+    "user_message": "帳單格式可以自訂嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "系統目前的帳單格式是固定的，無法自訂設定。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:6000",
+          "quote": "帳單格式可以彈性調整，依需求自訂欄位"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:6000",
+            "text": "帳單格式可以彈性調整，依需求自訂欄位，聯繫客服協助設定。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "source_not_citable",
+    "note": "Provenance.citable=false（例如 pm/tenant 系統脈絡目錄，只供導航不可引用）",
+    "expected_reason": "SOURCE_NOT_CITABLE",
+    "user_message": "收租組能看到財務數字嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "系統會依角色權限決定可查看的財務數字範圍。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "outline:contract",
+          "quote": "系統會依角色權限決定可查看的財務數字範圍"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "outline:contract",
+            "text": "系統會依角色權限決定可查看的財務數字範圍，細節請洽系統管理員。",
+            "citable": false
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "forbidden_term",
+    "note": "禁詞（closed forbid_terms，與 sensitive_patterns 的「保證」不重疊）",
+    "expected_reason": "FORBIDDEN_TERM",
+    "user_message": "維護服務有保固嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "我們提供終身保固的服務。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:9002",
+          "quote": "我們提供終身保固的服務"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9002",
+            "text": "我們提供終身保固的服務，涵蓋系統維護與更新。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "route_url_fullwidth",
+    "note": "URL 全形變形（協定用全形字母＋全形冒號斜線，NFKC 後才看得出來），且非白名單網域",
+    "expected_reason": "ROUTE_NOT_ALLOWED",
+    "user_message": "有教學資源嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "我們有提供教學影片。詳情請見ｈｔｔｐｓ：／／www.otherdomain.com/pricing。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:1234",
+          "quote": "我們有提供教學影片"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        },
+        {
+          "sent": 1,
+          "kind": "routing",
+          "cite": []
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:1234",
+            "text": "我們有提供教學影片，內容涵蓋系統操作。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "route_url_spaced",
+    "note": "URL 被空格拆開躲避字面比對，且非白名單網域",
+    "expected_reason": "ROUTE_NOT_ALLOWED",
+    "user_message": "可以預約 demo 嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "我們有提供教學影片。詳情請見 https://www. otherdomain .com/demo 。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:1234",
+          "quote": "我們有提供教學影片"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        },
+        {
+          "sent": 1,
+          "kind": "routing",
+          "cite": []
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:1234",
+            "text": "我們有提供教學影片，內容涵蓋系統操作。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "handoff_word_no_handoff",
+    "note": "封閉詞「沒有資料」出現但 handoff 為空",
+    "expected_reason": "HANDOFF_WORD_NO_HANDOFF",
+    "user_message": "水電費怎麼分算？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "這部分我沒有資料。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:7000",
+          "quote": "這部分我沒有相關資料可以提供"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:7000",
+            "text": "這部分我沒有相關資料可以提供，建議您聯繫客服人員協助確認。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  }
+]

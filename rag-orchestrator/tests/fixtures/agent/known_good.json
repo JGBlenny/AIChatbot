@@ -1,0 +1,284 @@
+[
+  {
+    "id": "good_fact_with_valid_citation",
+    "note": "fact 句有效引用：逐字、覆蓋、極性、可引用皆過",
+    "user_message": "物件可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "物件資料可以透過範本檔案批次匯入。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:3357",
+          "quote": "物件資料可以透過範本檔案批次匯入"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:3357",
+            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "good_pure_question_no_citation",
+    "note": "純反問句（子句未命中 assertion_terms）⇒ 免 cite",
+    "user_message": "我想了解可以怎麼開始",
+    "agent_output": {
+      "kind": "ask",
+      "answer": "請問您目前管理的物件大約有幾間呢？",
+      "citations": [],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "question",
+          "cite": []
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "good_greeting",
+    "note": "問候詞封閉表全句命中 ⇒ 免 cite",
+    "user_message": "哈囉",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "您好！",
+      "citations": [],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "greeting",
+          "cite": []
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "good_routing_allowed_url",
+    "note": "routing 句只含白名單導流連結 ⇒ 免 cite 且不觸發 ROUTE_NOT_ALLOWED",
+    "user_message": "費用怎麼算？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "如需查看方案與費用，請參考 https://www.jgbsmart.com/pricing。",
+      "citations": [],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "routing",
+          "cite": []
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "good_negation_matched",
+    "note": "句子與 quote 的否定極性一致（皆為「不支援」）",
+    "user_message": "可以批次改租金嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "系統目前不支援批次修改租金，需要逐筆手動調整。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:4001",
+          "quote": "系統目前不支援批次修改租金"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:4001",
+            "text": "系統目前不支援批次修改租金，需要逐筆手動調整，未來會評估開放。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "good_impure_question_with_citation",
+    "note": "design 元件 6 例句的正例：反問句夾帶斷言子句、降級 fact，但有效引用 ⇒ 放行",
+    "user_message": "合約可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "ask",
+      "answer": "我們的系統支援批次匯入合約，請問您有幾間？",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:9500",
+          "quote": "我們的系統支援批次匯入合約"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "question",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9500",
+            "text": "我們的系統支援批次匯入合約，透過範本檔案上傳即可。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "good_handoff_word_with_handoff",
+    "note": "答案含封閉詞「專人」但 handoff 非空 ⇒ 不觸發 HANDOFF_WORD_NO_HANDOFF（句子本身仍走一般 fact 引用檢查）",
+    "user_message": "我要找人談",
+    "agent_output": {
+      "kind": "handoff",
+      "answer": "這部分建議由專人為您服務。",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:8000",
+          "quote": "這部分建議由專人為您服務"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": "no_grounding"
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:8000",
+            "text": "這部分建議由專人為您服務，可點選下方找真人。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": {
+      "reason": "no_grounding",
+      "channel": "line",
+      "message": "已為您轉接專人"
+    }
+  },
+  {
+    "id": "good_multi_sentence",
+    "note": "多句混合型別：問候＋fact（有 cite）＋純反問，schema 覆蓋全文",
+    "user_message": "哈囉，可以介紹一下匯入功能嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "您好！物件資料可以透過範本檔案批次匯入。還有想了解的其他問題嗎？",
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:3357",
+          "quote": "物件資料可以透過範本檔案批次匯入"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "greeting",
+          "cite": []
+        },
+        {
+          "sent": 1,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        },
+        {
+          "sent": 2,
+          "kind": "question",
+          "cite": []
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:3357",
+            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  }
+]
