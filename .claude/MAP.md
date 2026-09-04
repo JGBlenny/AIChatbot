@@ -306,3 +306,36 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 
 ⚠️ **同批已退休、⛔ 不在此列**:`docs/guides/deployment/PGVECTOR_SETUP.md`(自標歷史快照)、
 `MARKDOWN_GUIDE.md`(其 `markdown_generator` 子系統全 repo 零命中,已歸檔至 `docs/archive/2026-09/`)。
+
+## API 文件 {#api-docs}
+
+⚠️ 這 13 份於 2026-09-04 逐份判讀後列入。⛔ 判為現行**不等於**內容已對碼 —— 見各條警語。
+
+### 交付 jgb2 的對外契約
+
+- 規格 | `docs/api/billing-api-contract.md` | 帳務 G/J 對外契約(交付 jgb2);⚠️ 檔內「✓ 已驗證」是 2026-07 當時狀態,用前對 jgb2 現碼重驗
+- 規格 | `docs/api/estate-api-contract.md` | 物件領域對外契約(交付 jgb2);⚠️ 同上,驗證狀態為 2026-07 快照
+- 規格 | `docs/api/g1-g4-api-contract.md` | G1–G4 合約欄位擴充契約(四個時間戳／`to_user_login_email`／`is_newest`);⚠️ 逐 gate 的「✓ 已修復並驗證」是 2026-07-02 當時狀態
+- 規格 | `docs/api/iot-api-contract.md` | IoT J/G 契約(台科電＝DAE);⚠️ 檔內「jgb2 已修復並部署(2026-07-04)」是當時狀態
+- 規格 | `docs/api/repair-api-contract.md` | 修繕租約清單契約,含 E1 真 API 上線 gate 的分支落差提醒;⚠️ 驗證狀態為 2026-07-12 快照
+- 規格 | `docs/api/jgb-contracts-api-spec.md` | 合約查詢 API 的完整規格提案(2026-04-20,早於上述分領域契約);⚠️ **疑似已被 `g1-g4-api-contract.md` 等欄位增量契約取代,但無任何一份明說取代關係——待裁**
+
+⚠️ 這批是**混合體**:欄位與介面定義是雙方仍在遵守的約定(現行),而逐條「✓ 已驗證」是時點狀態。
+⛔ 不得整檔當快照排除——那會把還在生效的欄位約定一起靜音。
+⚠️ 同群的 `docs/api/account-api-contract.md` 已列於〈帳號對話面向〉,體例相同。
+
+### jgb2 規格副本
+
+- 規格 | `docs/api/jgb_external_api_spec.md` | jgb2 `external/v1` 端點規格副本(v1.1);⚠️ **只列 14 支,jgb2 實有 24 支**——缺 `recharge-accounts` 兩支／`repairs` 三支／`tenants/registration-status`／`meters` 兩支／`roles` members 兩支;完整清單見 `.kiro/specs/agentic-mcp-orchestration/jgb2-source-index.md` §3.4
+
+### 本 repo 自己的 API
+
+- 規格 | `docs/api/API_REFERENCE_PHASE1.md` | 聊天／快取管理／業者管理等核心 API 的端點與參數;⚠️ 檔名的「Phase 1」是功能集合命名,文件版本已到 3.1 且含 Phase 3 優化
+- 規格 | `docs/api/API_REFERENCE_KNOWLEDGE_ADMIN.md` | 知識後台九模塊 API(39 支端點:知識／測試情境／回測／認證／管理員／角色／配置／API 金鑰);⚠️ 與 `KNOWLEDGE_ADMIN_API.md` 只重疊 2 支,⛔ 不是它的超集
+- 規格 | `docs/api/KNOWLEDGE_ADMIN_API.md` | 知識管理的 6 支端點規格;⚠️ 其中 `DELETE`／`PUT /api/knowledge/{id}`、`GET /api/vendors`、`POST /api/login` 四支**不在** `API_REFERENCE_KNOWLEDGE_ADMIN.md` 內,⛔ 兩份不可互相取代
+- 規格 | `docs/api/loops_api.md` | 知識完善迴圈的生命週期端點(啟動／迭代／驗證回測／暫停恢復);產線在 `rag-orchestrator/routers/loops.py`
+- 規格 | `docs/api/loop_knowledge_api.md` | 迴圈生成知識的審核端點(待審查詢／單筆與批量審核／重複偵測);產線在 `rag-orchestrator/routers/loop_knowledge.py`
+
+### 目錄索引
+
+- 路由 | `docs/api/README.md` | `docs/api/` 與 `docs/design/` 的 API 文件導航;⚠️ 2026-09-04 補上同目錄 14 份之前,它只導向 `../design/` 三份與 `../guides/api/` 一份,同目錄一份都沒列

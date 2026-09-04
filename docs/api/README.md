@@ -35,6 +35,45 @@
 
 ## 📋 所有文檔列表
 
+### 📁 本目錄（`docs/api/`）的文件
+
+> ⚠️ 2026-09-04 補上。此前本索引只導向 `../design/` 與 `../guides/api/`，**同目錄一份都沒列**，
+> 導致這 14 份 API 契約與參考沒有任何入口。⛔ 新增同目錄檔案時務必回來補這張表。
+
+**交付 jgb2 的對外契約**（本 repo → jgb2 的需求契約）
+
+| 文檔 | 用途 | ⚠️ 注意 |
+|------|------|--------|
+| [account-api-contract.md](./account-api-contract.md) | 帳號 G/J 對外契約 | 驗證狀態為 2026-07 快照 |
+| [billing-api-contract.md](./billing-api-contract.md) | 帳務 G/J 對外契約 | 同上 |
+| [estate-api-contract.md](./estate-api-contract.md) | 物件領域契約 | 同上 |
+| [g1-g4-api-contract.md](./g1-g4-api-contract.md) | G1–G4 合約欄位擴充 | 逐 gate「✓ 已驗證」是 2026-07-02 當時狀態 |
+| [iot-api-contract.md](./iot-api-contract.md) | IoT J/G 契約（台科電＝DAE） | 「jgb2 已修復並部署」為 2026-07-04 當時狀態 |
+| [repair-api-contract.md](./repair-api-contract.md) | 修繕租約清單契約 | 含 E1 真 API 上線 gate 的分支落差提醒 |
+| [jgb-contracts-api-spec.md](./jgb-contracts-api-spec.md) | 合約查詢 API 完整規格提案（2026-04-20） | ⚠️ 疑似已被上列欄位增量契約取代，**待裁** |
+
+> ⛔ 這批是混合體：**欄位與介面定義是雙方仍在遵守的約定**，而逐條「✓ 已驗證」是時點狀態。
+> 用前一律對 jgb2 現碼重驗。
+
+**jgb2 規格副本**
+
+| 文檔 | 用途 | ⚠️ 注意 |
+|------|------|--------|
+| [jgb_external_api_spec.md](./jgb_external_api_spec.md) | jgb2 `external/v1` 端點規格（v1.1） | 🔴 **只列 14 支，jgb2 實有 24 支**——缺 `recharge-accounts` 兩支／`repairs` 三支／`tenants/registration-status`／`meters` 兩支／`roles` members 兩支。完整清單見 `.kiro/specs/agentic-mcp-orchestration/jgb2-source-index.md` §3.4 |
+
+**本 repo 自己的 API**
+
+| 文檔 | 用途 | ⚠️ 注意 |
+|------|------|--------|
+| [API_REFERENCE_PHASE1.md](./API_REFERENCE_PHASE1.md) | 聊天／快取管理／業者管理核心 API | 「Phase 1」是功能集合命名，文件版本已到 3.1 |
+| [API_REFERENCE_KNOWLEDGE_ADMIN.md](./API_REFERENCE_KNOWLEDGE_ADMIN.md) | 知識後台九模塊、39 支端點 | ⛔ **不是** `KNOWLEDGE_ADMIN_API.md` 的超集，兩份只重疊 2 支 |
+| [KNOWLEDGE_ADMIN_API.md](./KNOWLEDGE_ADMIN_API.md) | 知識管理 6 支端點 | 其中 `DELETE`／`PUT /api/knowledge/{id}`、`GET /api/vendors`、`POST /api/login` **不在**上一份內 |
+| [loops_api.md](./loops_api.md) | 知識完善迴圈生命週期 | 產線：`rag-orchestrator/routers/loops.py` |
+| [loop_knowledge_api.md](./loop_knowledge_api.md) | 迴圈生成知識的審核端點 | 產線：`rag-orchestrator/routers/loop_knowledge.py` |
+| [conversational-api.md](./conversational-api.md) | 對話式回答的對外串接指南 | 已列於 `.claude/MAP.md`〈對話邏輯與路由執行〉 |
+
+---
+
 ### ✅ 當前有效文檔（推薦）
 
 | 文檔名稱 | 路徑 | 日期 | 狀態 | 用途 |
