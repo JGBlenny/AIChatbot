@@ -1,0 +1,1118 @@
+{
+ "_meta": {
+  "version": "v1",
+  "date": "2026-09-04",
+  "scope": "prospect 售前池（mode=b2b, target_user=prospect）",
+  "demand_sources": {
+   "test_scenarios": "is_active AND source='user_question' AND request_target_user='prospect'（113 條，已剔除找房／噢音）",
+   "e2e": "presales-grounding-gate 四輪劇本 28 題",
+   "audit": "docs/presales-assistant-quality-audit-20260902.md",
+   "help_center": "~/jgb/幫助中心/JGB幫助中心_HTML_交付_20260818 zh-Hant 93 頁標題",
+   "index": "kb 3622 六大模組／3798 功能索引"
+  },
+  "states": {
+   "已覆蓋": "檢索 top-1 ≥ 門檻命中 prospect 可見知識，且正式入口非固定句",
+   "表示法缺": "關鍵詞在 prospect 池撈得到但 top-1 < 門檻（成因 S）",
+   "缺口(待G0)": "檢索與關鍵詞皆無；仍須 G0 ③ 權威來源核對才可判 N",
+   "刻意不補": "業主裁走轉人；正式入口應為固定句",
+   "有知識被擋": "供給有、入口卻固定句 ⇒ 閘門／路徑問題，不是知識問題"
+  },
+  "rule": "每格只量第一句代表問句；其餘問句列供下一輪選題。⛔ 地圖是盤點不是療效：療效仍以劇本 e2e 為準。"
+ },
+ "cells": [
+  {
+   "id": "C01",
+   "module": "定位",
+   "topic": "系統適不適合我／想了解產品",
+   "questions": [
+    "你們系統適合我嗎",
+    "想了解你們產品",
+    "你們這個怎麼用"
+   ],
+   "keywords": [
+    "適合",
+    "介紹",
+    "怎麼用"
+   ],
+   "sources": [
+    "ts:9835-9839"
+   ],
+   "help_center": [],
+   "intent": "recommend",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C02",
+   "module": "定位",
+   "topic": "你們能解決什麼問題／痛點",
+   "questions": [
+    "收租常常忘記，你們適合我嗎",
+    "你們能解決什麼問題"
+   ],
+   "keywords": [
+    "痛點",
+    "困擾"
+   ],
+   "sources": [
+    "e2e:s4",
+    "kb:3606"
+   ],
+   "help_center": [],
+   "intent": "recommend",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C03",
+   "module": "定位",
+   "topic": "包租 vs 代管在系統上的差別",
+   "questions": [
+    "包租跟代管在系統上有什麼差別"
+   ],
+   "keywords": [
+    "包租",
+    "代管"
+   ],
+   "sources": [
+    "ts:9938"
+   ],
+   "help_center": [
+    "rentallaw.pt3"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C04",
+   "module": "定位",
+   "topic": "大房東模式是什麼",
+   "questions": [
+    "大房東模式是什麼意思"
+   ],
+   "keywords": [
+    "大房東"
+   ],
+   "sources": [
+    "ts:10107-10135"
+   ],
+   "help_center": [
+    "Landlordonboarding00"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C05",
+   "module": "方案費用",
+   "topic": "怎麼收費／多少錢",
+   "questions": [
+    "你們怎麼收費 多少錢",
+    "費用怎麼算",
+    "一年費用怎麼算？180間房大概多少錢"
+   ],
+   "keywords": [
+    "收費",
+    "費用",
+    "價格"
+   ],
+   "sources": [
+    "ts:9830,9844",
+    "e2e:s1,s2"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "價格數字刻意不報，導定價頁"
+  },
+  {
+   "id": "C06",
+   "module": "方案費用",
+   "topic": "訂閱方案幾種／差在哪",
+   "questions": [
+    "目前有幾種訂閱方案，差別在哪裡呢？"
+   ],
+   "keywords": [
+    "訂閱",
+    "方案"
+   ],
+   "sources": [
+    "ts:10039-10121"
+   ],
+   "help_center": [
+    "Landlordonboarding02"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C07",
+   "module": "方案費用",
+   "topic": "免費方案可建幾個物件",
+   "questions": [
+    "免費方案可以建幾個物件"
+   ],
+   "keywords": [
+    "免費方案",
+    "物件額度",
+    "額度"
+   ],
+   "sources": [
+    "ts:9882-10055"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C08",
+   "module": "方案費用",
+   "topic": "升級方案／到期自動續約",
+   "questions": [
+    "怎麼升級訂閱方案",
+    "訂閱到期會自動續嗎"
+   ],
+   "keywords": [
+    "升級",
+    "續約",
+    "扣款"
+   ],
+   "sources": [
+    "ts:10064-10129"
+   ],
+   "help_center": [
+    "Landlordonboarding02"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C09",
+   "module": "方案費用",
+   "topic": "免費試用",
+   "questions": [
+    "可以免費試用嗎"
+   ],
+   "keywords": [
+    "試用"
+   ],
+   "sources": [
+    "e2e:s1",
+    "kb:3611"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C10",
+   "module": "方案費用",
+   "topic": "客製開發／怎麼計價",
+   "questions": [
+    "可以客製開發嗎？怎麼計價"
+   ],
+   "keywords": [
+    "客製"
+   ],
+   "sources": [
+    "e2e:s3"
+   ],
+   "help_center": [
+    "Landlordonboarding02"
+   ],
+   "intent": "fact",
+   "policy": "deliberate_no",
+   "note": "報價／合約類 ⇒ 轉專人（業主裁）"
+  },
+  {
+   "id": "C11",
+   "module": "房源",
+   "topic": "新增物件／批次上傳",
+   "questions": [
+    "物件可以批次上傳嗎",
+    "如何新增物件"
+   ],
+   "keywords": [
+    "物件",
+    "批次"
+   ],
+   "sources": [
+    "kb:3357,3599"
+   ],
+   "help_center": [
+    "onboarding4",
+    "qa01",
+    "slug1"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C12",
+   "module": "房源",
+   "topic": "物件狀態四態是什麼",
+   "questions": [
+    "物件狀態「未刊登」「刊登中」「洽談中」「租約中」分別是什麼"
+   ],
+   "keywords": [
+    "刊登",
+    "洽談中",
+    "租約中"
+   ],
+   "sources": [
+    "ts:9717,9954,9978"
+   ],
+   "help_center": [
+    "slug39"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C13",
+   "module": "房源",
+   "topic": "社區建立與公開頁面",
+   "questions": [
+    "建立社區的流程是什麼樣的？",
+    "社區的公開頁面是用來幹嘛的？"
+   ],
+   "keywords": [
+    "社區"
+   ],
+   "sources": [
+    "ts:9875,10184"
+   ],
+   "help_center": [
+    "onboarding4"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C14",
+   "module": "房源",
+   "topic": "招租店舖／對外首頁／VR 看屋",
+   "questions": [
+    "什麼是房東對外首頁",
+    "如何設置 VR 虛擬導覽呢？"
+   ],
+   "keywords": [
+    "招租",
+    "公開頁",
+    "VR"
+   ],
+   "sources": [
+    "ts:9985",
+    "kb:3599"
+   ],
+   "help_center": [
+    "slug90"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C15",
+   "module": "房源",
+   "topic": "物件自訂標籤／Dashboard",
+   "questions": [
+    "這個物件自訂標籤有什麼用途呢？",
+    "物件的 Dashboard 裡面顯示了哪些數據"
+   ],
+   "keywords": [
+    "標籤",
+    "Dashboard",
+    "儀表"
+   ],
+   "sources": [
+    "ts:9995-10001"
+   ],
+   "help_center": [
+    "Landlordonboarding00"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C16",
+   "module": "租約",
+   "topic": "線上簽約／電子簽章",
+   "questions": [
+    "可不可以線上簽約"
+   ],
+   "keywords": [
+    "簽章",
+    "簽約"
+   ],
+   "sources": [
+    "e2e:s1",
+    "kb:3600,5375"
+   ],
+   "help_center": [
+    "onboarding5",
+    "slug84"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C17",
+   "module": "租約",
+   "topic": "合約範本可以選哪些",
+   "questions": [
+    "合約範本可以選哪些"
+   ],
+   "keywords": [
+    "範本",
+    "契約書"
+   ],
+   "sources": [
+    "ts:9877,9895,9928"
+   ],
+   "help_center": [
+    "qa06"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C18",
+   "module": "租約",
+   "topic": "上傳既有／紙本合約",
+   "questions": [
+    "可以上傳自己原有的合約嗎"
+   ],
+   "keywords": [
+    "既存",
+    "紙本",
+    "上傳合約"
+   ],
+   "sources": [
+    "kb:5379"
+   ],
+   "help_center": [
+    "qa05",
+    "qa06",
+    "onboarding6"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C19",
+   "module": "租約",
+   "topic": "點交點退／續約／提前解約",
+   "questions": [
+    "點交點退怎麼做",
+    "租客提前解約怎麼處理"
+   ],
+   "keywords": [
+    "點交",
+    "點退",
+    "解約"
+   ],
+   "sources": [
+    "kb:3600"
+   ],
+   "help_center": [
+    "onboarding7",
+    "onboarding10",
+    "onboarding9-1",
+    "onboarding9-2"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C20",
+   "module": "租約",
+   "topic": "社會住宅／委託合約",
+   "questions": [
+    "有支援社會住宅的合約嗎"
+   ],
+   "keywords": [
+    "社會住宅",
+    "社宅",
+    "委託"
+   ],
+   "sources": [
+    "kb:3600"
+   ],
+   "help_center": [
+    "Landlordonboarding09Socialhousing"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C21",
+   "module": "租約",
+   "topic": "歷史合約 vs 結案合約",
+   "questions": [
+    "歷史合約和結案合約之間的差異在哪裡"
+   ],
+   "keywords": [
+    "歷史合約",
+    "結案"
+   ],
+   "sources": [
+    "ts:10172"
+   ],
+   "help_center": [
+    "slug15"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C22",
+   "module": "租約",
+   "topic": "簽約另外收費嗎",
+   "questions": [
+    "所以剛剛說的簽約要另外收費嗎"
+   ],
+   "keywords": [
+    "簽約 費用",
+    "電子簽章 收費"
+   ],
+   "sources": [
+    "e2e:s1"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "第 5、6 輪皆固定句"
+  },
+  {
+   "id": "C23",
+   "module": "帳務",
+   "topic": "自動帳單／收租對帳",
+   "questions": [
+    "帳單可以自動產生嗎",
+    "收租對帳怎麼做"
+   ],
+   "keywords": [
+    "帳單",
+    "對帳"
+   ],
+   "sources": [
+    "kb:3601"
+   ],
+   "help_center": [
+    "onboarding8",
+    "slug76"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C24",
+   "module": "帳務",
+   "topic": "電子發票自動開立",
+   "questions": [
+    "電子發票可以自動開嗎？還是要一張一張手動開"
+   ],
+   "keywords": [
+    "發票"
+   ],
+   "sources": [
+    "e2e:s2",
+    "kb:3601"
+   ],
+   "help_center": [
+    "einvoice"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C25",
+   "module": "帳務",
+   "topic": "差額發票使用時機",
+   "questions": [
+    "差額發票的使用時機是什麼時候"
+   ],
+   "keywords": [
+    "差額發票"
+   ],
+   "sources": [
+    "ts:9918"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "3798 索引有、無知識列"
+  },
+  {
+   "id": "C26",
+   "module": "帳務",
+   "topic": "帳單格式／收據樣式",
+   "questions": [
+    "房東對帳單格式能不能自己設定"
+   ],
+   "keywords": [
+    "格式",
+    "收據"
+   ],
+   "sources": [
+    "e2e:s2",
+    "kb:5380"
+   ],
+   "help_center": [
+    "onboarding14",
+    "qa21",
+    "slug99"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C27",
+   "module": "帳務",
+   "topic": "帳單內有哪些資訊／臨時增收",
+   "questions": [
+    "帳單內有哪些資訊",
+    "如何在帳單內添加臨時增收費用"
+   ],
+   "keywords": [
+    "帳單 資訊",
+    "增收",
+    "品項"
+   ],
+   "sources": [],
+   "help_center": [
+    "slug78",
+    "slug79"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C28",
+   "module": "帳務",
+   "topic": "逾期催繳／滯納金",
+   "questions": [
+    "那租客不繳怎麼辦"
+   ],
+   "keywords": [
+    "催繳",
+    "逾期",
+    "滯納金"
+   ],
+   "sources": [
+    "e2e:s1",
+    "kb:5378,3340"
+   ],
+   "help_center": [
+    "slug03",
+    "slug24"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C29",
+   "module": "帳務",
+   "topic": "儲值金回充帳戶",
+   "questions": [
+    "儲值金回充帳戶是什麼功能"
+   ],
+   "keywords": [
+    "儲值金",
+    "回充"
+   ],
+   "sources": [
+    "ts:9994-10072"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C30",
+   "module": "帳務",
+   "topic": "代收代付／大房東報表",
+   "questions": [
+    "帳單代收代付的運作方式是什麼",
+    "大房東報表長什麼樣"
+   ],
+   "keywords": [
+    "代收代付",
+    "大房東報表"
+   ],
+   "sources": [
+    "ts:10130",
+    "e2e:s3",
+    "kb:3604"
+   ],
+   "help_center": [
+    "Landlordonboarding00"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C31",
+   "module": "帳務",
+   "topic": "水電費分算／費用估算",
+   "questions": [
+    "水電費要怎麼分算比較公平？一個月大概多少錢"
+   ],
+   "keywords": [
+    "水電",
+    "分算"
+   ],
+   "sources": [
+    "e2e:s1"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance"
+   ],
+   "intent": "recommend",
+   "policy": "answer",
+   "note": "金額部分無資料屬正常"
+  },
+  {
+   "id": "C32",
+   "module": "金流",
+   "topic": "支援哪些金流廠商",
+   "questions": [
+    "系統支援哪些金流廠商"
+   ],
+   "keywords": [
+    "金流",
+    "藍新",
+    "永豐",
+    "國泰",
+    "中信"
+   ],
+   "sources": [
+    "ts:9579,9732-9734",
+    "kb:3601"
+   ],
+   "help_center": [
+    "paymentapply",
+    "qa27"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C33",
+   "module": "金流",
+   "topic": "藍新 vs 國泰差別",
+   "questions": [
+    "藍新跟國泰的差別在哪"
+   ],
+   "keywords": [
+    "藍新",
+    "國泰"
+   ],
+   "sources": [
+    "ts:9580,9735-9737"
+   ],
+   "help_center": [
+    "paymentapply",
+    "advanced12"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C34",
+   "module": "金流",
+   "topic": "租客能用信用卡繳租嗎",
+   "questions": [
+    "租客能用信用卡繳納房租嗎"
+   ],
+   "keywords": [
+    "信用卡"
+   ],
+   "sources": [],
+   "help_center": [
+    "slug86",
+    "slug102"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C35",
+   "module": "金流",
+   "topic": "金流手續費",
+   "questions": [
+    "線上金流要收多少費用"
+   ],
+   "keywords": [
+    "手續費"
+   ],
+   "sources": [],
+   "help_center": [
+    "qa27"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "幫助中心：手續費請洽客服 ⇒ 可能屬轉專人"
+  },
+  {
+   "id": "C36",
+   "module": "團隊",
+   "topic": "多人權限／角色分工",
+   "questions": [
+    "團隊多人權限怎麼分"
+   ],
+   "keywords": [
+    "權限",
+    "角色"
+   ],
+   "sources": [
+    "e2e:s3",
+    "kb:3602"
+   ],
+   "help_center": [
+    "qa23",
+    "slug92"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C37",
+   "module": "團隊",
+   "topic": "收租組看不到財務數字（權限題）",
+   "questions": [
+    "收租組可以看不到財務數字嗎？"
+   ],
+   "keywords": [
+    "權限",
+    "財務"
+   ],
+   "sources": [
+    "audit:P0-3",
+    "e2e:s3"
+   ],
+   "help_center": [
+    "qa23"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "盤查 P0-3 答反"
+  },
+  {
+   "id": "C38",
+   "module": "IoT",
+   "topic": "智慧電表／門鎖／儲值電表",
+   "questions": [
+    "有沒有智慧電表或門鎖",
+    "儲值電表怎麼運作"
+   ],
+   "keywords": [
+    "電表",
+    "門鎖",
+    "電錶"
+   ],
+   "sources": [
+    "kb:3603,3353"
+   ],
+   "help_center": [
+    "Landlordonboarding08Device"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "3798：IoT 硬體細節由專人"
+  },
+  {
+   "id": "C39",
+   "module": "IoT",
+   "topic": "私人門鎖 vs 共用門鎖",
+   "questions": [
+    "私人門鎖和共用門鎖到底有什麼差別"
+   ],
+   "keywords": [
+    "私人門鎖",
+    "共用門鎖"
+   ],
+   "sources": [
+    "ts:9755-9757,9903"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C40",
+   "module": "修繕",
+   "topic": "線上報修／進度追蹤",
+   "questions": [
+    "租客報修怎麼處理"
+   ],
+   "keywords": [
+    "報修",
+    "修繕"
+   ],
+   "sources": [
+    "kb:3605"
+   ],
+   "help_center": [
+    "repair"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C41",
+   "module": "通知",
+   "topic": "系統通知用 email 還是簡訊／LINE",
+   "questions": [
+    "系統通知是用 email 還是簡訊發的"
+   ],
+   "keywords": [
+    "通知",
+    "簡訊",
+    "LINE",
+    "email"
+   ],
+   "sources": [
+    "ts:9574,9710,9783"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C42",
+   "module": "通知",
+   "topic": "哪些動作會觸發通知",
+   "questions": [
+    "哪些動作會造成系統通知的發送"
+   ],
+   "keywords": [
+    "通知"
+   ],
+   "sources": [
+    "ts:9880"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C43",
+   "module": "搬遷",
+   "topic": "舊系統資料匯入／哪些能匯",
+   "questions": [
+    "現在用的舊系統資料可以匯進來嗎？包含房東、租客、合約、歷史帳單",
+    "所以合約也能匯？"
+   ],
+   "keywords": [
+    "匯入"
+   ],
+   "sources": [
+    "e2e:s2",
+    "kb:5379,3357"
+   ],
+   "help_center": [
+    "onboarding4",
+    "qa01"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "DSP-008 已裁"
+  },
+  {
+   "id": "C44",
+   "module": "帳號",
+   "topic": "怎麼註冊 JGB 帳號",
+   "questions": [
+    "怎麼註冊 JGB 帳號"
+   ],
+   "keywords": [
+    "註冊"
+   ],
+   "sources": [
+    "ts:9568,9689-9691"
+   ],
+   "help_center": [
+    "onboarding1",
+    "Landlordonboarding01"
+   ],
+   "intent": "fact",
+   "policy": "answer",
+   "note": ""
+  },
+  {
+   "id": "C45",
+   "module": "競品",
+   "topic": "跟 Bananas／屋我也差在哪",
+   "questions": [
+    "跟Bananas差在哪",
+    "你們跟屋我也差在哪"
+   ],
+   "keywords": [
+    "Bananas",
+    "屋我也",
+    "競品"
+   ],
+   "sources": [
+    "ts:9851,9853",
+    "e2e:s2",
+    "kb:3607-3609"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "3798 競品協定"
+  },
+  {
+   "id": "C46",
+   "module": "多語系",
+   "topic": "外籍租客／多語系介面",
+   "questions": [
+    "有多語系介面嗎？外籍租客能用嗎"
+   ],
+   "keywords": [
+    "多語",
+    "英文",
+    "外籍"
+   ],
+   "sources": [
+    "kb:3798索引"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "answer",
+   "note": "索引有、無知識列"
+  },
+  {
+   "id": "C47",
+   "module": "CTA",
+   "topic": "怎麼找你們的人談／預約 demo",
+   "questions": [
+    "好，那我要怎麼找你們的人談"
+   ],
+   "keywords": [
+    "demo",
+    "預約",
+    "專人"
+   ],
+   "sources": [
+    "e2e:s3"
+   ],
+   "help_center": [],
+   "intent": "cta",
+   "policy": "answer",
+   "note": "第 4、5 輪走固定句"
+  },
+  {
+   "id": "C48",
+   "module": "刻意不補",
+   "topic": "客戶案例／規模／有幾個像我這樣的客戶",
+   "questions": [
+    "有沒有600戶以上的客戶",
+    "你們有幾個像我這樣的客戶"
+   ],
+   "keywords": [
+    "客戶",
+    "案例"
+   ],
+   "sources": [
+    "e2e:s1,s3"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "deliberate_no",
+   "note": "業主裁：一律轉人"
+  },
+  {
+   "id": "C49",
+   "module": "刻意不補",
+   "topic": "SLA／當機賠償",
+   "questions": [
+    "有沒有SLA？當機賠不賠"
+   ],
+   "keywords": [
+    "SLA",
+    "賠"
+   ],
+   "sources": [
+    "e2e:s2"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "deliberate_no",
+   "note": "合約 SLA 類"
+  },
+  {
+   "id": "C50",
+   "module": "刻意不補",
+   "topic": "資安認證／資料放哪",
+   "questions": [
+    "資料放在哪裡？有沒有資安認證"
+   ],
+   "keywords": [
+    "資安",
+    "ISO",
+    "機房"
+   ],
+   "sources": [
+    "e2e:s2"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "deliberate_no",
+   "note": "資安類"
+  },
+  {
+   "id": "C51",
+   "module": "刻意不補",
+   "topic": "個資法合規",
+   "questions": [
+    "有沒有符合個資法"
+   ],
+   "keywords": [
+    "個資"
+   ],
+   "sources": [
+    "e2e:s3"
+   ],
+   "help_center": [],
+   "intent": "fact",
+   "policy": "deliberate_no",
+   "note": "法遵類"
+  }
+ ]
+}
