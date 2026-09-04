@@ -20,6 +20,7 @@ import asyncio
 import json
 import os
 import re
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 try:
@@ -210,6 +211,41 @@ async def _domain_faces(db_pool, config) -> List[str]:
         print(f"⚠️ 面向集合衍生失敗（不啟用換面向）：{e}")
         return []
 
+
+@dataclass(frozen=True)
+class ConvergeGrounding:
+    """售前收斂作答的 grounding 結果（presales-grounding-gate 元件 2）。
+
+    `text==""` 就是**空 grounding**（過門檻零筆）——⛔ 不再塞占位字串（2026-09-04 之前的病灶：占位字串讓
+    LLM 在無知識時照樣生成事實）。`empty／hits／threshold／score_source` 供分流與計量；`error` 記 retrieve 例外類名。
+    ⚠️ 可迭代成 (text, ctx, cta_mode) 三元組：既有呼叫端與測試以 tuple 解包，保留相容。
+    """
+    text: str
+    ctx: Optional[List[Dict[str, Any]]]
+    cta_mode: str
+    empty: bool
+    hits: int
+    threshold: Optional[float] = None
+    score_source: Optional[str] = None
+    error: Optional[str] = None
+    top_answer: Optional[str] = None      # D6 抽取式作答用：top-1 知識 answer 原文（vector 路）；ids／category 路＝整段
+
+    def __iter__(self):
+        return iter((self.text, self.ctx, self.cta_mode))
+
+    @classmethod
+    def from_legacy(cls, tup) -> "ConvergeGrounding":
+        """舊三元組（測試 mock 仍會回）→ 結構化；非空文字視為 1 筆命中。"""
+        text, ctx, cta = (list(tup) + [None, None, None])[:3]
+        text = text or ""
+        return cls(text=text, ctx=ctx, cta_mode=cta or "suppress", empty=not text, hits=1 if text else 0)
+
+
+#: handoff 輪寫入對話史的標記（⛔ 不寫固定句本文；見 prepare 的 handoff 分支）
+HANDOFF_DIALOG_MARK = "（此題無可靠資料，已請使用者點『找真人』；⛔ 不要重述這句）"
+#: recommend ∧ 空 grounding 時放進「可用知識」槽的中性標記（verifier A3）：⛔ 不放指令文字——
+#:   禁事實斷言的指令由 config.answer_rules（PRESALES_ANSWER_RULES 新段）供給、經 _synth_context 進 system_md。
+EMPTY_GROUNDING_MARK = "（本次未檢索到對應知識）"
 
 _DIALOG_CAP = 6
 
@@ -546,6 +582,25 @@ class ConversationalEngine:
                       config: Optional[ConversationalConfig] = None,
                       start_if_absent=True, seed_topic=None, role_id=None,
                       prefill: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+        """外層：呼叫 `_prepare_inner` 並把**還原後**的 config 掛進每個決策（`decision['config']`）。
+
+        presales-grounding-gate（verifier F-1 第二次實打）：續會話時呼叫端傳 `config=None`、由 state 的 config_key 還原；
+        `handle()` 的 ask 分支要判 prospect 才掃三詞，若只看呼叫端參數會在第 2 輪起全部漏掃。ask 分支的 return 有十餘處，
+        在此統一補鍵，⛔ 不逐點改。"""
+        _cfg_out: Dict[str, Any] = {}
+        decision = await self._prepare_inner(session_id, user_id, vendor_id, user_message, config,
+                                             start_if_absent, seed_topic, role_id, prefill, _cfg_out)
+        if isinstance(decision, dict) and decision.get("config") is None and _cfg_out.get("config") is not None:
+            decision["config"] = _cfg_out["config"]
+        if isinstance(decision, dict) and decision.get("kind") == "ask" and not decision.get("handoff") and _cfg_out.get("handoff"):
+            decision["handoff"] = _cfg_out["handoff"]     # R2.7：inline 被閘門換成固定句 ⇒ 訊號隨 ask 決策帶出
+        return decision
+
+    async def _prepare_inner(self, session_id, user_id, vendor_id, user_message,
+                             config: Optional[ConversationalConfig] = None,
+                             start_if_absent=True, seed_topic=None, role_id=None,
+                             prefill: Optional[Dict[str, Any]] = None,
+                             _cfg_out: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
         """
         跑 brain + gate，回「決策」（converge 僅先取 grounding、尚未合成/未 save）：
           {'kind':'ask','answer':<問句>}（已 +1 並 save asked_count）
@@ -572,6 +627,8 @@ class ConversationalEngine:
                 config = await get_config(self.db_pool, state.get("config_key"))
             if config is None:
                 return None
+            if _cfg_out is not None:
+                _cfg_out["config"] = config        # 還原後的設定回傳給 prepare() 外層掛進決策
 
             # 【交易面向埋點 — 每輪使用者訊息 user_turns+=1 後透傳 set_facet（R7.1，fire-and-forget）】
             #   非交易面向（無 execute_endpoint）不計 facet；set_facet 失敗絕不影響對話。
@@ -698,6 +755,24 @@ class ConversationalEngine:
             # SEARCH_KB_ENABLED=false → 不注入（快速回退＝現行行為，免重推程式）。
             _kb_enabled = os.getenv("SEARCH_KB_ENABLED", "true").lower() != "false"
             _kb_search = self._make_kb_search(config, state) if (_tx and _kb_enabled) else None
+
+            # ── presales-grounding-gate R2.8（e2e 第二輪 F2）：同 session **重問同一句**已 handoff 的事實題 ⇒ 決定性重播，
+            #    ⛔ 不再問 brain（brain 看到對話史的「已轉真人」標記會改問痛點、或把同題改判 other，固定句就不逐字了）。
+            if getattr(config, "persona_role", None) == "prospect":
+                _hlog = state.get("handoff_log") or {}
+                _prev_fc = _hlog.get((user_message or "").strip())
+                if _prev_fc:
+                    from services.presales_gate import parse_fact_class as _pfc2, build_handoff as _bh2
+                    from services.conversational_config import effective_handoff_message as _ehm2, effective_handoff_channel as _ehc2
+                    _fc2 = _pfc2(_prev_fc)
+                    _h2 = _bh2(_fc2, channel=_ehc2(config), message=_ehm2(config))
+                    print(f"🧭 [presales-gate] 同題重問（fact_class={_fc2.value}）⇒ 重播 handoff，不呼叫 brain")
+                    _note_turn(state, user_message, HANDOFF_DIALOG_MARK)
+                    await self._save(session_id, state)
+                    return {"kind": "handoff", "answer": _h2.message, "handoff": _h2.to_dict(),
+                            "session_id": session_id, "state": state, "user_message": user_message,
+                            "converge_kind": "answer", "config": config, "fact_class": _fc2,
+                            "grounding_empty": True, "grounding_hits": 0, "grounding_threshold": None, "replayed": True}
             _result = await self.optimizer.conversational_step_result(
                 rules_text, system_md, state, user_message, faces=faces, kb_search=_kb_search)
             step = _result.payload if _result else None
@@ -738,6 +813,37 @@ class ConversationalEngine:
             collected = state.get("collected_fields", {})
             converge_kind = (step.get("converge_kind") or "recommend").lower()
             _inline = step.get("inline_answer") if isinstance(step.get("inline_answer"), str) else None
+
+            # ── presales-grounding-gate R2.7（verifier F-1 二次實打抓到）：prospect 的「岔題即答」inline_answer 是 brain
+            #    自由生成、不經 grounding——P1-3「物件和合約也可以匯入」就從這裡漏出來。同一把閘門：有 inline 就查知識，
+            #    空 grounding ⇒ inline 換成固定句＋handoff（next_question 照接）。⛔ 只對 prospect；交易面向的 inline 由 kb_search 工具背書。
+            if _inline and _inline.strip() and getattr(config, "persona_role", None) == "prospect":
+                from services.presales_gate import parse_fact_class as _pfc, build_handoff as _bh, FactClass
+                from services.conversational_config import effective_handoff_message as _ehm, effective_handoff_channel as _ehc
+                _fc = _pfc(getattr(step.get("fact_class"), "value", step.get("fact_class")))
+                _cg = await self._converge_grounding(state, step.get("converge_topic"), user_message, config, "answer")
+                if not isinstance(_cg, ConvergeGrounding):
+                    _cg = ConvergeGrounding.from_legacy(_cg)
+                print(f"🧭 [presales-gate] kind=inline fact_class={_fc.value} hits={_cg.hits} threshold={_cg.threshold}")
+                if _cg.empty:
+                    # e2e 回測（2026-09-04）：原本只換掉 inline 再接 next_question ⇒ 固定句不再逐字（R2.6 破），
+                    #   且假事實從 next_question 溜出。改為**直接回 handoff 決策**：只有固定句、不接問句、不進 optimizer。
+                    _h = _bh(_fc, channel=_ehc(config), message=_ehm(config))
+                    self._meter_presales(_fc, _cg, _h.reason.value, path="inline")
+                    state["asked_count"] = asked + 1
+                    state.setdefault("handoff_log", {})[(user_message or "").strip()] = _fc.value   # R2.8 重問重播
+                    _note_turn(state, user_message, HANDOFF_DIALOG_MARK)
+                    await self._save(session_id, state)
+                    return {"kind": "handoff", "answer": _h.message, "handoff": _h.to_dict(),
+                            "session_id": session_id, "state": state, "user_message": user_message,
+                            "converge_kind": "answer", "config": config, "fact_class": _fc,
+                            "grounding_empty": True, "grounding_hits": 0, "grounding_threshold": _cg.threshold}
+                # D6：岔題即答有知識 ⇒ 一律抽取式，⛔ 不看 fact_class——inline_answer 本身就是事實答，而它是 brain 自由生成
+                #   （e2e 第二輪 B1、D6 上線首輪探針 t5「是的，物件和合約的資料也可以匯入」都在 fact_class=other 時從這裡漏）
+                state["asked_count"] = asked + 1
+                return await self._extractive_decision(state, session_id, user_message, config, _fc, _cg,
+                                                       converge_topic=step.get("converge_topic"),
+                                                       meta={"grounding_hits": _cg.hits, "grounding_threshold": _cg.threshold})
 
             # 【交易 confirm — brain 回 action='confirm'（收齊→出摘要＋quick_replies，收齊≠送出，R4.1）】
             #   只在交易面向（execute_endpoint 存在）處理；組摘要（confirm_template 嵌槽位）、
@@ -781,8 +887,44 @@ class ConversationalEngine:
                 step = {**step, "action": "converge"}
 
             if step["action"] == "ask":
-                state["asked_count"] = asked + 1
                 _q = step.get("next_question")
+                # ── presales-grounding-gate R2.11（e2e 第三輪 A1）：brain 不填 inline_answer、把答案塞進 next_question
+                #    ⇒ 上面的 inline 閘門看不到它（log 也沒有），假事實「合約和歷史帳單可匯入」3/5 次從這裡漏。
+                #    結構判定（使用者在問＋反問句含 ≥8 字陳述）⇒ 整輪改走同一把閘門：有知識抽取、沒知識固定句；⛔ 不進 optimizer。
+                if not _inline and getattr(config, "persona_role", None) == "prospect" and isinstance(_q, str):
+                    from services.presales_gate import analyze_ask as _aa, parse_fact_class as _pfc, build_handoff as _bh, scan_handoff_mentions as _shm
+                    from services.conversational_config import effective_handoff_message as _ehm, effective_handoff_channel as _ehc
+                    _ask_kind = _aa(user_message, _q)
+                    if _ask_kind is not None:
+                        _how, _q_only, _decl = _ask_kind
+                        if _how == "clause" and _shm(_decl):
+                            _how = "sentence"      # 「這部分要由專人為您說明，請問…」：剝掉的是轉人線索不是事實 ⇒ 沒知識時走固定句＋handoff，不能丟
+                        _fc = _pfc(getattr(step.get("fact_class"), "value", step.get("fact_class")))
+                        _cg = await self._converge_grounding(state, step.get("converge_topic"), user_message, config, "answer")
+                        if not isinstance(_cg, ConvergeGrounding):
+                            _cg = ConvergeGrounding.from_legacy(_cg)
+                        print(f"🧭 [presales-gate] kind=ask_{_how} fact_class={_fc.value} hits={_cg.hits} threshold={_cg.threshold}")
+                        state["asked_count"] = asked + 1
+                        if _cg.empty and _how == "clause" and _q_only:
+                            # 子句層作答、沒知識 ⇒ 剝掉作答子句只留問句（斷言消失、流程不斷）；不升格固定句，理由見 presales_gate.analyze_ask
+                            self._meter_presales(_fc, _cg, None, path="ask")
+                            _note_turn(state, user_message, _q_only)
+                            await self._save(session_id, state)
+                            return {"kind": "ask", "answer": _q_only}
+                        if _cg.empty:
+                            _h = _bh(_fc, channel=_ehc(config), message=_ehm(config))
+                            self._meter_presales(_fc, _cg, _h.reason.value, path="ask")
+                            state.setdefault("handoff_log", {})[(user_message or "").strip()] = _fc.value
+                            _note_turn(state, user_message, HANDOFF_DIALOG_MARK)
+                            await self._save(session_id, state)
+                            return {"kind": "handoff", "answer": _h.message, "handoff": _h.to_dict(),
+                                    "session_id": session_id, "state": state, "user_message": user_message,
+                                    "converge_kind": "answer", "config": config, "fact_class": _fc,
+                                    "grounding_empty": True, "grounding_hits": 0, "grounding_threshold": _cg.threshold}
+                        return await self._extractive_decision(state, session_id, user_message, config, _fc, _cg,
+                                                               converge_topic=step.get("converge_topic"),
+                                                               meta={"grounding_hits": _cg.hits, "grounding_threshold": _cg.threshold})
+                state["asked_count"] = asked + 1
                 # 岔題先答再接問題（R3.1）：有 inline_answer 則「即答＋問題」同一回覆
                 _ask_text = f"{_inline}\n\n{_q}" if (_inline and _q) else (_inline or _q)
                 _note_turn(state, user_message, _q)
@@ -814,27 +956,139 @@ class ConversationalEngine:
                     await self._save(session_id, state)
                     return {"kind": "ask", "answer": r["answer"]}
                 grounding, ctx, cta_mode = r["grounding"], None, "factual"  # 1 筆 → 事實型合成（不複述情境/不推 CTA）
+                grounding_meta = {"grounding_empty": not grounding, "grounding_hits": 1 if grounding else 0}
                 await self._save(session_id, state)   # 落地 grounding_note（後續輪 brain 取現況）
             else:
-                grounding, ctx, cta_mode = await self._converge_grounding(
-                    state, step.get("converge_topic"), user_message, config, converge_kind)
+                # ── presales-grounding-gate 3.2：售前閘門分流（design 元件 3）──
+                from services.presales_gate import parse_fact_class, build_handoff, FactClass
+                from services.conversational_config import effective_handoff_message, effective_handoff_channel
+                fact_class = parse_fact_class(getattr(step.get("fact_class"), "value", step.get("fact_class")))
+                topic = step.get("converge_topic")
+                # e2e 回測（2026-09-04）：「舊系統資料可以匯進來嗎？含房東租客合約帳單」被 brain 判 recommend ⇒ 走推薦路徑、
+                #   不受事實題閘門管，LLM 順著功能索引把四項全說成可匯。fact_class 就是為此存在：事實題（≠other）一律以 answer 處理，
+                #   ⛔ 不管 brain 想不想推薦。決定性覆寫、用封閉 enum，不做語義判斷。
+                if converge_kind != "answer" and fact_class is not FactClass.other:
+                    print(f"🧭 [presales-gate] brain 判 {converge_kind} 但 fact_class={fact_class.value} ⇒ 以 answer 處理")
+                    converge_kind = "answer"
+                # prev_turn 守門（R5.4）：只有 answer 型、且本輪 converge_topic 與上一輪相同才帶上一輪 Q/A——
+                #   以決定性比對守「岔題不被拖走」，⛔ 不另做語義判斷。
+                _dialog = state.get("dialog") or []
+                _last = _dialog[-1] if _dialog else None
+                prev_turn = (_last if (converge_kind == "answer" and _last and topic
+                                       and topic == state.get("last_converge_topic")) else None)
+                cg = await self._converge_grounding(
+                    state, topic, user_message, config, converge_kind,
+                    prev_user_message=(prev_turn or {}).get("u") or None)
+                if not isinstance(cg, ConvergeGrounding):
+                    cg = ConvergeGrounding.from_legacy(cg)      # 舊三元組（測試 mock）相容
+                grounding, ctx, cta_mode = cg.text, cg.ctx, cg.cta_mode
+                grounding_meta = {"grounding_empty": cg.empty, "grounding_hits": cg.hits,
+                                  "grounding_threshold": cg.threshold, "grounding_score_source": cg.score_source,
+                                  "grounding_error": cg.error, "fact_class": fact_class,
+                                  "prev_turn": prev_turn, "converge_topic": topic}
+                # 日誌只記分類／筆數／門檻，⛔ 不印 grounding 內容或使用者原句（R7.3）
+                print(f"🧭 [presales-gate] kind={converge_kind} fact_class={fact_class.value} hits={cg.hits} "
+                      f"threshold={cg.threshold} score_source={cg.score_source} error={cg.error}")
+                if converge_kind == "answer" and cg.empty:
+                    # 事實題無佐證 ⇒ 固定句＋handoff，⛔ 不呼叫 LLM（R2.1／2.2／2.6）
+                    handoff = build_handoff(fact_class, channel=effective_handoff_channel(config),
+                                            message=effective_handoff_message(config))
+                    self._meter_presales(fact_class, cg, handoff.reason.value, path="brain")
+                    state["last_converge_topic"] = topic
+                    state.setdefault("handoff_log", {})[(user_message or "").strip()] = fact_class.value   # R2.8 重問重播
+                    # 對話史記「已轉真人」標記而非固定句本文（verifier A4）：固定句入史會被 brain 下一輪複述，
+                    #   複述句又含「專人」⇒ 訊號語義混亂。標記讓 brain 知道這題沒答、且不會抄回文字。
+                    _note_turn(state, user_message, HANDOFF_DIALOG_MARK)
+                    await self._save(session_id, state)
+                    return {"kind": "handoff", "answer": handoff.message, "handoff": handoff.to_dict(),
+                            "session_id": session_id, "state": state, "user_message": user_message,
+                            "converge_kind": converge_kind, "config": config, **grounding_meta}
+                if converge_kind == "answer" and fact_class is not FactClass.other and not cg.empty:
+                    # D6（業主 2026-09-04）：事實題有知識 ⇒ 抽取式作答，⛔ 不經 LLM（e2e 兩輪抓到 LLM 對部分相關知識加料）
+                    return await self._extractive_decision(state, session_id, user_message, config, fact_class, cg,
+                                                           converge_topic=topic, meta=grounding_meta)
+                if cg.empty:
+                    # 推薦題無佐證（D3 預設維持推薦）：「可用知識」槽只放中性標記；禁事實斷言的指令
+                    #   在 config.answer_rules（已隨 system_md 附加，R2.4），⛔ 不把指令塞進知識槽（design 元件 3／verifier A3）
+                    grounding = EMPTY_GROUNDING_MARK
+                self._meter_presales(fact_class, cg, None, path="brain")
             return {"kind": "converge", "grounding": grounding, "ctx": ctx, "cta_mode": cta_mode,
                     "converge_kind": converge_kind,
                     "system_md": _synth_context(system_md, config, cta_mode),
-                    "session_id": session_id, "state": state, "user_message": user_message}
+                    "session_id": session_id, "state": state, "user_message": user_message,
+                    "handoff": None, "config": config, **grounding_meta}
         except Exception as e:
             print(f"❌ 對話引擎 prepare 失敗（降級）：{e}")
             return None
 
     async def _finalize_converge(self, decision, answer_text: Optional[str] = None) -> None:
         """converge 合成完成後：推薦型標記 recommended；答案記入對話史（brain 才知道
-        自己剛答過什麼，使用者複述/追問出口時不重述整段——2026-07-07 實測）；保存狀態。"""
+        自己剛答過什麼，使用者複述/追問出口時不重述整段——2026-07-07 實測）；保存狀態。
+        presales-grounding-gate 3.2：記 `last_converge_topic`（prev_turn 守門用）；LLM 文字含封閉三詞 ⇒ 補 handoff 訊號。"""
         state = decision["state"]
         if decision["converge_kind"] != "answer":
             state["recommended"] = True
+        if decision.get("converge_topic") is not None:
+            state["last_converge_topic"] = decision.get("converge_topic")
         if answer_text:
             _note_turn(state, decision.get("user_message") or "", answer_text)
+            self._attach_llm_mention_handoff(decision, answer_text)
         await self._save(decision["session_id"], state)
+
+    async def _extractive_decision(self, state, session_id, user_message, config, fact_class, cg: ConvergeGrounding,
+                                   *, converge_topic, meta: Optional[dict] = None) -> Dict[str, Any]:
+        """D6（業主 2026-09-04）：事實題有知識 ⇒ 回 top-1 知識**原文**，⛔ 不經 LLM。
+
+        多項目問句（封閉分隔詞）且 top-1 只是一條 ⇒ 接固定尾句＋handoff(partial_grounding)，因為知識通常只涵蓋部分項目；
+        單項目問句直接貼原文、無 handoff。對話史記實際答文（brain 下一輪要知道答了什麼）。
+        """
+        from services.presales_gate import is_multi_item_question, build_partial_handoff
+        from services.conversational_config import effective_handoff_channel, PRESALES_PARTIAL_TAIL
+        answer = (cg.top_answer or cg.text or "").strip()
+        handoff = None
+        if is_multi_item_question(user_message):
+            handoff = build_partial_handoff(fact_class, channel=effective_handoff_channel(config), message=PRESALES_PARTIAL_TAIL)
+            answer = f"{answer}\n\n{PRESALES_PARTIAL_TAIL}"
+        if handoff is None:
+            # e2e 第三輪 E1：知識原文本身帶「專人」（3611／3602「由專人帶您看」）⇒ 契約 R4.2 仍要求 handoff 非 null（入口提示句）
+            from services.presales_gate import scan_handoff_mentions, build_llm_mention_handoff
+            from services.conversational_config import PRESALES_HANDOFF_ENTRY_HINT
+            if scan_handoff_mentions(answer):
+                handoff = build_llm_mention_handoff(fact_class, channel=effective_handoff_channel(config), message=PRESALES_HANDOFF_ENTRY_HINT)
+        print(f"🧭 [presales-gate] kind=extract fact_class={fact_class.value} hits={cg.hits} multi_item={handoff is not None and handoff.reason.value == 'partial_grounding'}")
+        self._meter_presales(fact_class, cg, handoff.reason.value if handoff else None, path="extract")
+        if converge_topic is not None:
+            state["last_converge_topic"] = converge_topic
+        _note_turn(state, user_message, answer)
+        await self._save(session_id, state)
+        return {"kind": "extract", "answer": answer, "handoff": handoff.to_dict() if handoff else None,
+                "session_id": session_id, "state": state, "user_message": user_message,
+                "converge_kind": "answer", "config": config, "fact_class": fact_class,
+                "grounding_empty": False, **(meta or {})}
+
+    def _attach_llm_mention_handoff(self, decision: dict, answer_text: str) -> None:
+        """LLM 路徑後置掃描（R4.2）：文字含「專人／真人／客服」⇒ decision['handoff'] 補 llm_mentioned_handoff；
+        ⛔ 只加訊號、不改文字。fact_class 缺（如 api grounding 路）視為 other。"""
+        from services.presales_gate import scan_handoff_mentions, build_llm_mention_handoff, FactClass
+        from services.conversational_config import effective_handoff_channel, PRESALES_HANDOFF_ENTRY_HINT
+        if decision.get("handoff") or not scan_handoff_mentions(answer_text):
+            return
+        fc = decision.get("fact_class") or FactClass.other
+        cfg = decision.get("config")
+        # message＝入口提示句，⛔ 不是「沒有可靠資料」固定句——這條路 answer 是 LLM 自己答的（2026-09-04 實打抓到的矛盾）
+        h = build_llm_mention_handoff(fc, channel=effective_handoff_channel(cfg), message=PRESALES_HANDOFF_ENTRY_HINT)
+        decision["handoff"] = h.to_dict()
+
+    def _meter_presales(self, fact_class, cg: ConvergeGrounding, handoff_reason: Optional[str], *, path: str) -> None:
+        """計量落 `usage_events.decision_snapshot['presales']`（R7.1／7.2；design 決策 3）——零 migration、獨立命名空間。"""
+        try:
+            from services import usage_metering as _um
+            _um.set_decision(snapshot={"presales": {
+                "fact_class": getattr(fact_class, "value", str(fact_class)), "grounding_hits": cg.hits,
+                "threshold": cg.threshold, "score_source": cg.score_source, "error": cg.error,
+                "handoff": handoff_reason, "path": path}})
+        except Exception as e:  # 計量失敗 ⛔ 不得影響回答
+            print(f"⚠️ [presales-gate] 計量快照失敗：{type(e).__name__}")
 
     async def handle(self, session_id, user_id, vendor_id, user_message,
                      config: Optional[ConversationalConfig] = None,
@@ -850,29 +1104,44 @@ class ConversationalEngine:
             resp = {"answer": decision["answer"], "conversational": True, "converged": False}
             if decision.get("quick_replies"):
                 resp["quick_replies"] = decision["quick_replies"]   # 交易確認/重試按鈕透傳（3.x 消費）
+            # presales-grounding-gate R4.2（verifier F-1）：ask 分支的 brain 追問句也可能含「專人／真人／客服」，
+            #   非串流與串流（_conversational_sse 對全文掃描）必須同語義 ⇒ 這裡同樣後置掃描補訊號。
+            _cfg = decision.get("config") or config     # 續會話呼叫端傳 None ⇒ 用 prepare() 還原後掛進來的
+            if getattr(_cfg, "persona_role", None) == "prospect":
+                decision.setdefault("config", _cfg)
+                self._attach_llm_mention_handoff(decision, decision.get("answer") or "")   # 已有 handoff（R2.7 inline 閘門）則不覆蓋
+                if decision.get("handoff"):
+                    resp["handoff"] = decision["handoff"]
             return resp
+        if decision["kind"] in ("handoff", "extract"):
+            # handoff：事實題無佐證，固定句＋訊號；extract（D6）：事實題有知識，top-1 原文（多項目加尾句＋partial_grounding）。
+            #   兩者皆已於 prepare 落地狀態；⛔ 不進 optimizer（R2.1／R2.10）
+            return {"answer": decision["answer"], "conversational": True, "converged": False,
+                    "handoff": decision.get("handoff")}
+        decision.setdefault("config", config)
         reco = await asyncio.to_thread(
             self.optimizer.synthesize_presales_answer,
             decision["grounding"], decision["ctx"], decision["system_md"],
-            decision["user_message"], decision["cta_mode"])
+            decision["user_message"], decision["cta_mode"], prev_turn=decision.get("prev_turn"))
         if not reco:
             return None
         await self._finalize_converge(decision, answer_text=reco)
-        return {"answer": reco, "conversational": True, "converged": decision["converge_kind"] != "answer"}
+        return {"answer": reco, "conversational": True, "converged": decision["converge_kind"] != "answer",
+                "handoff": decision.get("handoff")}
 
     async def stream_answer(self, decision):
         """串流：依決策 yield 文字 chunk。ask→整句一次；converge→真 token 串流，結束後 finalize。"""
         if not decision:
             return
-        if decision["kind"] == "ask":
-            q = decision.get("answer") or ""
+        if decision["kind"] in ("ask", "handoff", "extract"):
+            q = decision.get("answer") or ""       # handoff／extract：整句一次，⛔ 不進 optimizer（R2.1／R2.10）
             if q:
                 yield q
             return
         buf: List[str] = []
         async for chunk in self.optimizer.synthesize_presales_answer_stream(
                 decision["grounding"], decision["ctx"], decision["system_md"],
-                decision["user_message"], decision["cta_mode"]):
+                decision["user_message"], decision["cta_mode"], prev_turn=decision.get("prev_turn")):
             if chunk:
                 buf.append(chunk)
                 yield chunk
@@ -1148,14 +1417,24 @@ class ConversationalEngine:
         await self._save(session_id, state)
         return None
 
-    async def _converge_grounding(self, state, converge_topic, user_message, config, converge_kind):
-        """取 grounding（選材三態）+ 累積情境 ctx + cta_mode；不合成。回 (grounding, ctx, cta_mode)。"""
+    async def _converge_grounding(self, state, converge_topic, user_message, config, converge_kind,
+                                  prev_user_message: Optional[str] = None) -> ConvergeGrounding:
+        """取 grounding（選材三態）+ 累積情境 ctx + cta_mode；不合成。回 `ConvergeGrounding`（可解包成三元組）。
+
+        presales-grounding-gate 3.1（2026-09-04）：
+        - vector 路改走 `retriever.retrieve()`——門檻比 **final similarity**（application 端過濾）。
+          ⛔ 不得再用 `_vector_search(similarity_threshold=…)`：該參數在 v2 只 LIMIT、不過濾，0.0 改成 0.6 行為一樣。
+        - 過門檻零筆 ⇒ `text=""`、`empty=True`，⛔ 不塞占位字串；出口由呼叫端依 converge_kind 分流。
+        - `answer` 型且有 `prev_user_message` ⇒ 檢索 query 先併上一輪問句（R5.1，追問繼承動作意圖）。
+        - retrieve 例外 ⇒ 視為空（fail-closed），`error` 記類名。
+        """
+        from services.presales_gate import presales_threshold
         fields = state.get("collected_fields", {})
         scope = config.grounding_scope or {}
         parts = [str(fields.get(k, "")) for k in ("identity", "scale", "pain", "interested")]
         extra = [converge_topic] if converge_topic else []
         if converge_kind == "answer":
-            kw = [user_message] + extra
+            kw = ([prev_user_message] if prev_user_message else []) + [user_message] + extra
         else:
             kw = [p for p in parts if p] + extra + (scope.get("keywords") or ["方案推薦"])
             if user_message:
@@ -1164,37 +1443,56 @@ class ConversationalEngine:
         # 選材三態（決定性優先；非功能需求 #1）：ids 明列 / category 整批 / vector 語意（預設）
         select = (scope.get("select") or "vector").lower()
         grounding = ""
+        hits = 0
+        threshold: Optional[float] = None
+        score_source: Optional[str] = None
+        error: Optional[str] = None
         try:
             # 修正(retrieval-fixes #8):grounding_scope 漏填 target_user 時,預設用 persona_role
             #   (如 prospect),避免 retriever 把 None 正規化成 tenant → prospect 收斂時誤抓租客知識。
             scope_target_user = scope.get("target_user") or getattr(config, "persona_role", None)
             if select == "ids" and scope.get("kb_ids"):
                 grounding = await self._grounding_by_ids(scope["kb_ids"])
+                hits = 1 if grounding else 0
             elif select == "category" and scope.get("category"):
                 # limit 可由 grounding_scope 宣告（通用擴充；預設 8）——面向知識超過 8 筆時
                 # priority 同分靠 id 排序會把新知識擠出底稿（estate 抽驗逼出）。
                 grounding = await self._grounding_by_category(
                     scope["category"], scope_target_user,
                     limit=int(scope.get("limit") or 8))
-            else:  # vector
-                emb = await self.retriever.embedding_client.get_embedding(query, verbose=False)
-                if emb:
-                    res = await self.retriever._vector_search(
-                        emb, vendor_id=scope.get("vendor_id") or 0, top_k=5,
-                        similarity_threshold=0.0, target_user=scope_target_user,
-                        mode=scope.get("mode", "b2b"), vector_limit=20)
-                    grounding = "\n\n".join(r.get("answer", "") for r in res[:3] if r.get("answer"))
+                hits = 1 if grounding else 0
+            else:  # vector：與 brain 的 kb_search 工具同款（_make_kb_search），門檻＝售前唯一讀值點
+                threshold = presales_threshold()
+                _kw = dict(vendor_id=scope.get("vendor_id") or 0, top_k=3, similarity_threshold=threshold,
+                           target_user=scope_target_user, mode=scope.get("mode", "b2b"))
+                res = await self.retriever.retrieve(query=query, **_kw)
+                # e2e 回測（2026-09-04）抓到的機制漏洞：上一輪問句併入 query 會撈到「相鄰但不對題」的知識，
+                #   grounding 非空 ⇒ 閘門放行 ⇒ LLM 對本輪問句自由生成。修法：本輪問句**自身**也要過門檻，
+                #   自身零命中 ⇒ 視為空（併入上一輪只為召回同題脈絡，⛔ 不得成為放行依據）。
+                if res and prev_user_message and converge_kind == "answer" and user_message:
+                    own = await self.retriever.retrieve(query=user_message, **_kw)
+                    if not [r for r in (own or []) if r.get("answer")]:
+                        print("🧭 [presales-gate] 併入上一輪有命中但本輪問句自身零命中 ⇒ 視為空 grounding")
+                        res = []
+                answers = [r.get("answer", "") for r in (res or []) if r.get("answer")]
+                hits = len(answers)
+                grounding = "\n\n".join(answers)
+                if res:
+                    score_source = (res[0] or {}).get("score_source")
         except Exception as e:
-            print(f"⚠️ 對話引擎收斂檢索失敗（select={select}）：{e}")
+            error = type(e).__name__
+            grounding, hits = "", 0
+            print(f"⚠️ 對話引擎收斂檢索失敗（select={select}，fail-closed 視為空 grounding）：{error}")
         # 事實型答問不帶情境（避免回答前複述舊 profile）；推薦型帶情境做個人化
         if converge_kind == "answer":
             ctx = None
         else:
             ctx = [{"field_label": k, "selected_label": str(v)} for k, v in fields.items() if k != "_seed" and v]
-        if not grounding:
-            grounding = "（依系統脈絡的功能索引與已知情境給適合建議；無確切知識的細節導向 demo/專人，不杜撰、不報價）"
         cta_mode = "force" if converge_kind != "answer" else "suppress"
-        return grounding, ctx, cta_mode
+        top_answer = (grounding.split("\n\n", 1)[0] if grounding else None)
+        return ConvergeGrounding(text=grounding or "", ctx=ctx, cta_mode=cta_mode, empty=not grounding,
+                                 hits=hits, threshold=threshold, score_source=score_source, error=error,
+                                 top_answer=top_answer)
 
     # ---------- grounding 決定性選材（不靠向量） ----------
     async def _grounding_by_ids(self, kb_ids, limit: int = 8) -> str:

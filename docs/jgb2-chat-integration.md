@@ -75,6 +75,8 @@ X-API-Key: <發放之金鑰>          # 認證啟用（RAG_API_AUTH_ENFORCE）�
 
 不帶 `role_id`／`user_id`（沒有身分可帶），也不帶 `vendor_id`（售前無所屬業者）。
 
+**回應新增 `handoff`（2026-09-04，presales-grounding-gate）**：售前在知識庫查無佐證時，`answer` 為固定句「這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。」並帶 `handoff:{reason, fact_class, channel:"line_official", message}`；jgb2 面板據此畫「找真人」入口（切片 2 的 LINE 官方帳號）。欄位可選、未升級不受影響；串流時在 `metadata` 事件。完整契約見 `docs/api/conversational-api.md`「`handoff`」節。⚠️ 上線時間請對齊：chatai 先上不會壞，但固定句會指向尚不存在的按鈕。
+
 ## 4. 欄位語義（三形狀合併）
 
 | 欄位 | 必要性 | 語義與後果 |
@@ -98,10 +100,12 @@ X-API-Key: <發放之金鑰>          # 認證啟用（RAG_API_AUTH_ENFORCE）�
   "form_completed": false,
   "progress": { "...": "..." },
   "session_id": "...",
-  "source_count": 3
+  "source_count": 3,
+  "handoff": null
 }
 ```
 
+- **`handoff`（售前）**：非 null ⇒ 該則下方畫「找真人」入口（`channel` 指向哪個入口）；`message` 已在 `answer` 內，不重複顯示。⛔ 不要用 `answer` 含不含「專人」判斷。
 - **最小整合只需渲染 `answer`**（＋選配 `quick_replies`，建議渲染為可點按鈕——多輪識別的候選清單靠它體驗最好）。
 - `form_triggered`／`form_completed`／`progress`：表單流程狀態，b2b 現役端已用於 UI 態（`isFormFilling`），可沿用。
 - **多輪**：系統可能反問（「請問是哪一個物件？」「1. …2. …請回覆序號」）——widget 不需特殊處理，使用者直接回下一句（同 `session_id`）即可。

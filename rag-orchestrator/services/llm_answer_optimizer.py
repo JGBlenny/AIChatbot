@@ -90,7 +90,7 @@ CONVERSATIONAL_STEP_SCHEMA: "dict[str, Any]" = {
             "additionalProperties": False,
             "required": ["action", "scope", "face", "delegate_facet_key",
                          "extracted_fields", "next_question", "converge_kind",
-                         "inline_answer"],
+                         "inline_answer", "fact_class"],
             "properties": {
                 "action": {"type": "string", "enum": ["ask", "converge", "confirm"]},
                 "scope": {"type": "string", "enum": ["stay", "switch"]},
@@ -114,6 +114,12 @@ CONVERSATIONAL_STEP_SCHEMA: "dict[str, Any]" = {
                                   "description": "action=converge 時的收斂類型；其餘回空字串"},
                 "inline_answer": {"type": "string",
                                   "description": "岔題即答內容；沒有時回空字串"},
+                # presales-grounding-gate R3.1：本輪問題的事實類別（封閉七值）；非事實題回 other。
+                #   程式據此決定無佐證出口與計量（services/presales_gate.py），⛔ 不在程式內以關鍵字判類。
+                "fact_class": {"type": "string",
+                               "enum": ["customer_reference", "pricing", "contract_sla", "compliance",
+                                        "security", "feature", "other"],
+                               "description": "本輪問題的事實類別；非事實題（推薦型對話、寒暄）回 other"},
             },
         },
     },
@@ -1035,6 +1041,11 @@ class LLMAnswerOptimizer:
         if "inline_answer" in data and not isinstance(data.get("inline_answer"), str):
             data.pop("inline_answer", None)
 
+        # fact_class（presales-grounding-gate R3.2）：唯一正規化點——缺／非法一律 other，⛔ 不猜變體。
+        #   BRAIN_STRICT_SCHEMA 關閉（json_object）時模型可能不給此鍵，這裡補成 other 不讓下游 KeyError。
+        from services.presales_gate import parse_fact_class
+        data["fact_class"] = parse_fact_class(data.get("fact_class"))
+
         return StepResult(payload=data, scope=scope, face=face,
                           delegate_facet_key=delegate, reject_reason=None,
                           delegate_drop_reason=drop_reason)
@@ -1234,8 +1245,13 @@ class LLMAnswerOptimizer:
             return (result or {}).get("content") or "{}"
 
     def _build_presales_synth(self, grounding_knowledge, accumulated_context, system_context_md,
-                              user_question, cta_mode):
-        """組售前合成的 messages/model/temperature（非串流與串流共用）。無 grounding → None。"""
+                              user_question, cta_mode, *, prev_turn: Optional[Dict[str, str]] = None):
+        """組售前合成的 messages/model/temperature（非串流與串流共用）。無 grounding → None。
+
+        `prev_turn`（presales-grounding-gate R5.2／5.3）：`{"u": 上一輪問句, "a": 上一輪回答}`；有值才加
+        【上一輪】區塊，讓追問繼承**動作意圖**（「能不能匯入」不得滑成「有什麼功能」）。`None`／兩值皆空 ⇒
+        prompt 與改前逐字相同（chat.py 三處既有直呼不受影響）。
+        """
         if not grounding_knowledge:
             return None
         ctx_lines = []
@@ -1251,6 +1267,15 @@ class LLMAnswerOptimizer:
             f"【使用者情境】\n{ctx_txt}\n\n"
             f"【可用知識（唯一事實來源，不得超出）】\n{grounding_knowledge}\n"
         )
+        _pu = (prev_turn or {}).get("u") or ""
+        _pa = (prev_turn or {}).get("a") or ""
+        if _pu.strip() or _pa.strip():
+            user_prompt += (
+                f"\n【上一輪】\n使用者：{_pu}\n你：{_pa}\n"
+                "【本輪追問延續上一輪的動作意圖】使用者這句是接著上一輪在問（例如上一輪問「能不能匯入」，"
+                "這輪問「那物件跟合約呢」＝問物件與合約**能不能匯入**）。追問的主題若在可用知識中無對應，"
+                "明說「這部分我沒有資料」；⛔ 不得換一組功能回答、⛔ 不得把其他主題的能力套到該主題。\n"
+            )
         if user_question:
             user_prompt += f"\n【使用者問題】\n{user_question}\n"
         user_prompt += (
@@ -1260,6 +1285,13 @@ class LLMAnswerOptimizer:
         # cta_mode=='force' 的 CTA/排版塊已外移設定（config.cta_rules，引擎於 system_md 附加）。
         # suppress＝售前延續對話（壓 demo 推銷）；factual＝面向事實收斂（售前措辭不得漏入——
         #   2026-07-07 實測：demo 限制被 LLM 泛化成「不放任何連結」，吃掉申請書下載連結）。
+        # presales-grounding-gate e2e 回測（2026-09-04）：知識只提物件批次匯入，LLM 卻答「房東、租客、合約和帳單都能匯入」；
+        #   推薦型（force）也會順著功能索引補齊清單 ⇒ 逐項對照指令對所有售前合成模式都帶。
+        user_prompt += (
+            "\n【逐項對照】使用者若一次問多個項目（如房東／租客／合約／帳單），逐一對照上面的可用知識："
+            "知識**沒有明確提到**的項目要說「這部分我沒有資料」，⛔ 不得把某一項目的能力推廣到其他項目、"
+            "⛔ 不得用「等」「都」把清單補齊。"
+        )
         if cta_mode == "suppress":
             user_prompt += (
                 "\n【限制】這是延續對話中的回答，請**直接把問題答清楚就好，不要附上 demo 預約連結、"
@@ -1291,14 +1323,17 @@ class LLMAnswerOptimizer:
         system_context_md: str = "",
         user_question: Optional[str] = None,
         cta_mode: str = "auto",   # force=結尾必附 demo 連結；suppress=不附連結；auto=不特別處理
+        *, prev_turn: Optional[Dict[str, str]] = None,
     ) -> Optional[str]:
         """
         售前個人化合成（非串流）：以「系統脈絡 md + 選定/檢索知識 + 累積情境」grounded 合成。
         失敗/逾時/超 token → 回 None（呼叫端降級原文）。[需求 11.1–11.3, 13.5；決策 8]
+        `prev_turn`：上一輪 Q/A（presales-grounding-gate R5.2），預設 None＝行為不變。
         """
         try:
             built = self._build_presales_synth(
-                grounding_knowledge, accumulated_context, system_context_md, user_question, cta_mode)
+                grounding_knowledge, accumulated_context, system_context_md, user_question, cta_mode,
+                prev_turn=prev_turn)
             if not built:
                 return None
             messages, synth_model, synthesis_temp = built
@@ -1319,13 +1354,16 @@ class LLMAnswerOptimizer:
         system_context_md: str = "",
         user_question: Optional[str] = None,
         cta_mode: str = "auto",
+        *, prev_turn: Optional[Dict[str, str]] = None,
     ):
         """
         售前合成（**真 token 串流**）：重用 _build_presales_synth 組同款 prompt，改用
         llm_provider.stream_chat_completion 逐 token yield。無 grounding / 失敗 → 不 yield（呼叫端降級）。
+        `prev_turn`：上一輪 Q/A（presales-grounding-gate R5.2），預設 None＝行為不變。
         """
         built = self._build_presales_synth(
-            grounding_knowledge, accumulated_context, system_context_md, user_question, cta_mode)
+            grounding_knowledge, accumulated_context, system_context_md, user_question, cta_mode,
+            prev_turn=prev_turn)
         if not built:
             return
         messages, synth_model, synthesis_temp = built

@@ -61,6 +61,8 @@ async def test_presales_ask_does_not_trigger_either_insertion_point():
     eng = _engine({"action": "ask", "next_question": "請問您的物件規模？", "extracted_fields": {}})
     eng.get_state = AsyncMock(return_value=_presales_state())
     decision = await eng.prepare("s1", "u1", 7, "想找系統", config=_presales_cfg())
-    assert decision == {"kind": "ask", "answer": "請問您的物件規模？"}
+    # presales-grounding-gate（2026-09-04）：決策多一個 `config` 鍵（prepare() 外層掛進還原後設定）；契約鍵不變。
+    assert {k: decision[k] for k in ("kind", "answer")} == {"kind": "ask", "answer": "請問您的物件規模？"}
+    assert set(decision) - {"config"} == {"kind", "answer"}
     eng._ground_by_api.assert_not_awaited()          # 插點 B 不觸發
     eng._converge_grounding.assert_not_awaited()      # ask 分支提前返回

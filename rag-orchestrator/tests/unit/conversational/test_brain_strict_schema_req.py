@@ -43,9 +43,10 @@ def test_schema_is_strict_and_requires_every_field():
     body = js["schema"]
     assert body["additionalProperties"] is False
     # 業主列的 7 個 ＋ inline_answer（交易面向的岔題即答；漏掉等於靜默停用該能力）
+    # ＋ fact_class（presales-grounding-gate R3.1，2026-09-04：無佐證出口的分類依據）
     assert set(body["required"]) == {
         "action", "scope", "face", "delegate_facet_key",
-        "extracted_fields", "next_question", "converge_kind", "inline_answer"}
+        "extracted_fields", "next_question", "converge_kind", "inline_answer", "fact_class"}
     assert set(body["properties"]) == set(body["required"]), \
         "strict 模式下 properties 與 required 必須逐一對應"
 

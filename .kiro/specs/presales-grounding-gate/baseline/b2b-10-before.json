@@ -1,0 +1,165 @@
+{
+  "meta": {
+    "batch": ".kiro/specs/presales-grounding-gate/baseline/b2b-10-batch.json",
+    "prefix": "backtest_session_pgg_before",
+    "mode": "b2b",
+    "target_user": "property_manager",
+    "vendor_id": 1,
+    "role_id": "20151",
+    "rounds": 1,
+    "started": "2026-09-04T01:43:46+0800",
+    "total_sec": 90.5
+  },
+  "results": [
+    {
+      "http": 200,
+      "elapsed": 5.5,
+      "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+      "action_type": "direct_answer",
+      "intent_type": null,
+      "form_id": null,
+      "sources": [],
+      "confidence": 0.0,
+      "ts": 9000,
+      "q": "系統顯示「您尚未上傳合約檔案」，這是什麼意思？",
+      "session_id": "backtest_session_pgg_before9000"
+    },
+    {
+      "http": 200,
+      "elapsed": 3.0,
+      "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+      "action_type": "direct_answer",
+      "intent_type": null,
+      "form_id": null,
+      "sources": [],
+      "confidence": 0.0,
+      "ts": 9001,
+      "q": "這條系統訊息「以下帳單將統一於本日12:00發送」在說什麼？",
+      "session_id": "backtest_session_pgg_before9001"
+    },
+    {
+      "http": 200,
+      "elapsed": 3.5,
+      "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+      "action_type": "direct_answer",
+      "intent_type": null,
+      "form_id": null,
+      "sources": [],
+      "confidence": 0.0,
+      "ts": 9002,
+      "q": "如何提供營業網址和合約文件給永豐審查？",
+      "session_id": "backtest_session_pgg_before9002"
+    },
+    {
+      "http": 200,
+      "elapsed": 3.2,
+      "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+      "action_type": "direct_answer",
+      "intent_type": null,
+      "form_id": null,
+      "sources": [],
+      "confidence": 0.0,
+      "ts": 9003,
+      "q": "怎麼幫房客辦點交",
+      "session_id": "backtest_session_pgg_before9003"
+    },
+    {
+      "http": 200,
+      "elapsed": 3.3,
+      "answer": "我目前沒有找到符合您問題的資訊，但我可以協助您轉給客服處理。如需立即協助，請撥打客服專線 02-2345-6789。請問您方便提供更詳細的內容嗎？",
+      "action_type": "direct_answer",
+      "intent_type": null,
+      "form_id": null,
+      "sources": [],
+      "confidence": 0.0,
+      "ts": 9004,
+      "q": "好啦，主要是合約到期跟收租常常忘記",
+      "session_id": "backtest_session_pgg_before9004"
+    },
+    {
+      "http": 200,
+      "elapsed": 13.5,
+      "answer": "大量建立帳單 Excel 批次匯入\n\n大量建立帳單可使用 Excel 批次匯入功能：\n\n1. 在帳單管理頁面選擇「批次匯入」；\n2. 下載系統提供的 Excel 匯入範本；\n3. 依範本格式填入帳單資料（物件、租客、金額、費用項目、到期日等）；\n4. 上傳填寫完成的 Excel 檔案；\n5. 系統驗證資料後批次建立帳單。匯入完成後可檢查每筆帳單的建立狀態，若有格式錯誤會顯示錯誤原因。此功能適合一次產生大量非週期性帳單。",
+      "action_type": "direct_answer",
+      "intent_type": null,
+      "form_id": null,
+      "sources": [
+        3404,
+        3431,
+        4638,
+        3476,
+        4150
+      ],
+      "confidence": 0.0,
+      "ts": 9005,
+      "q": "大量建立帳單可以用 Excel 批次匯入嗎？",
+      "session_id": "backtest_session_pgg_before9005"
+    },
+    {
+      "http": 200,
+      "elapsed": 23.1,
+      "answer": "請問您想查詢哪位成員的權限？可以提供成員的 Email 或名字。",
+      "action_type": "conversational",
+      "intent_type": "conversational",
+      "form_id": null,
+      "sources": [],
+      "confidence": 1.0,
+      "ts": 9006,
+      "q": "團隊成員可以設成只能查看不能編輯嗎？",
+      "session_id": "backtest_session_pgg_before9006"
+    },
+    {
+      "http": 200,
+      "elapsed": 17.3,
+      "answer": "固定虛擬帳號查詢 餘額變動歷程\n\n固定虛擬帳號的餘額和異動都在管理頁面查詢：列表支援用帳號、銀行、租客姓名或物件名稱搜尋；點進單一帳號可以看完整的餘額變動歷程，每筆都記錄類型（租客匯入、系統自動扣款、人工調整）、金額、操作前後餘額和關聯的帳單。也可以匯出指定期間的租客匯入明細 Excel 做對帳。另外帳號號碼是全系統唯一的，已存在的帳號無法重複新增。",
+      "action_type": "direct_answer",
+      "intent_type": null,
+      "form_id": null,
+      "sources": [
+        3542,
+        4637
+      ],
+      "confidence": 0.0,
+      "ts": 9007,
+      "q": "固定虛擬帳號的餘額變動要去哪裡查？",
+      "session_id": "backtest_session_pgg_before9007"
+    },
+    {
+      "http": 200,
+      "elapsed": 8.8,
+      "answer": "臨櫃匯款 虛擬帳號 可行方式\n\n虛擬帳號不限網銀或 ATM，臨櫃也可以繳：國泰世華分行臨櫃可直接用虛擬帳號存入（國泰有免填單服務，提供帳號資訊即可）；其他銀行則以一般轉帳/匯款方式匯入該虛擬帳號。入帳後系統照常自動對帳。",
+      "action_type": "direct_answer",
+      "intent_type": null,
+      "form_id": null,
+      "sources": [
+        3925,
+        3410,
+        4649,
+        4256,
+        3541
+      ],
+      "confidence": 0.0,
+      "ts": 9008,
+      "q": "租客用臨櫃匯款可以嗎？虛擬帳號怎麼匯？",
+      "session_id": "backtest_session_pgg_before9008"
+    },
+    {
+      "http": 200,
+      "elapsed": 9.3,
+      "answer": "角色切換 房東租客\n\n同一帳號可以同時擁有多個身分（例如既是房東也是租客，或加入多個團隊）。切換方式：點畫面左上角的身分選單，選擇要切換的身分即可。系統會記住你上次使用的身分，下次登入直接落在該身分。提醒：每個身分看到的資料範圍不同——租客的合約、帳單、電表要在租客身分下才看得到，登入後覺得「資料不見了」多半是身分沒切對。",
+      "action_type": "direct_answer",
+      "intent_type": null,
+      "form_id": null,
+      "sources": [
+        3438,
+        3480,
+        4254,
+        3898
+      ],
+      "confidence": 0.0,
+      "ts": 9009,
+      "q": "房東和租客的角色要怎麼切換？",
+      "session_id": "backtest_session_pgg_before9009"
+    }
+  ]
+}

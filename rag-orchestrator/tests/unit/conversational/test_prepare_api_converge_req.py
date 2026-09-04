@@ -78,7 +78,10 @@ async def test_api_zero_degrades_to_ask_decision():
     state = _state()
     eng.get_state = AsyncMock(return_value=state)
     decision = await eng.prepare("s1", "u1", 7, "查我合約", config=_api_cfg())
-    assert decision == {"kind": "ask", "answer": "查無，請確認識別資訊"}
+    # presales-grounding-gate（2026-09-04）：prepare() 外層會把還原後的 config 掛進決策（`config` 鍵），
+    #   ask 決策的**契約鍵**仍只有 kind／answer——只比這兩鍵，不比整包。
+    assert {k: decision[k] for k in ("kind", "answer")} == {"kind": "ask", "answer": "查無，請確認識別資訊"}
+    assert set(decision) - {"config"} == {"kind", "answer"}
     assert "pending_candidates" not in state
     assert state["asked_count"] == 3          # 提問上限保護維持（R2.4）
     eng._save.assert_awaited()

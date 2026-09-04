@@ -1,0 +1,125 @@
+{
+ "captured_at": "2026-09-04T07:08:29+0800",
+ "image": "2026-09-04 5.x + hint fix; DB 3645/3798 rules applied",
+ "items": [
+  {
+   "case": "P0-1",
+   "run": 1,
+   "q": "你們現在服務的案場裡，有沒有600戶以上、商辦加店面混合的客戶",
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+   "handoff": {
+    "reason": "sensitive_no_grounding",
+    "fact_class": "customer_reference",
+    "channel": "line_official",
+    "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+   },
+   "intent_type": "conversational",
+   "elapsed": 13.23
+  },
+  {
+   "case": "P0-1",
+   "run": 2,
+   "q": "你們現在服務的案場裡，有沒有600戶以上、商辦加店面混合的客戶",
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+   "handoff": {
+    "reason": "sensitive_no_grounding",
+    "fact_class": "customer_reference",
+    "channel": "line_official",
+    "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+   },
+   "intent_type": "conversational",
+   "elapsed": 22.34
+  },
+  {
+   "case": "P0-1",
+   "run": 3,
+   "q": "你們現在服務的案場裡，有沒有600戶以上、商辦加店面混合的客戶",
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+   "handoff": {
+    "reason": "sensitive_no_grounding",
+    "fact_class": "customer_reference",
+    "channel": "line_official",
+    "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+   },
+   "intent_type": "conversational",
+   "elapsed": 26.26
+  },
+  {
+   "case": "P0-1",
+   "run": 4,
+   "q": "你們現在服務的案場裡，有沒有600戶以上、商辦加店面混合的客戶",
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+   "handoff": {
+    "reason": "sensitive_no_grounding",
+    "fact_class": "customer_reference",
+    "channel": "line_official",
+    "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+   },
+   "intent_type": "conversational",
+   "elapsed": 20.9
+  },
+  {
+   "case": "P0-1",
+   "run": 5,
+   "q": "你們現在服務的案場裡，有沒有600戶以上、商辦加店面混合的客戶",
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+   "handoff": {
+    "reason": "sensitive_no_grounding",
+    "fact_class": "customer_reference",
+    "channel": "line_official",
+    "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+   },
+   "intent_type": "conversational",
+   "elapsed": 11.56
+  },
+  {
+   "case": "P0-3",
+   "q": "收租組可以看不到財務數字嗎？",
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+   "handoff": {
+    "reason": "no_grounding",
+    "fact_class": "feature",
+    "channel": "line_official",
+    "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+   },
+   "intent_type": "conversational",
+   "elapsed": 13.11
+  },
+  {
+   "case": "P1-3",
+   "session": "backtest_session_pgg_after_p13_b147",
+   "q": "舊系統的資料能匯進來嗎？",
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+   "handoff": {
+    "reason": "no_grounding",
+    "fact_class": "feature",
+    "channel": "line_official",
+    "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+   },
+   "intent_type": "conversational",
+   "elapsed": 4.64
+  },
+  {
+   "case": "P1-3",
+   "session": "backtest_session_pgg_after_p13_b147",
+   "q": "那物件跟合約呢？",
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+   "handoff": {
+    "reason": "no_grounding",
+    "fact_class": "feature",
+    "channel": "line_official",
+    "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+   },
+   "intent_type": "conversational",
+   "elapsed": 9.86
+  },
+  {
+   "case": "P2-1",
+   "q": "我是個人房東",
+   "answer": "請問您管理的房源數量大約有多少呢？",
+   "handoff": null,
+   "intent_type": "conversational",
+   "elapsed": 2.19
+  }
+ ]
+}

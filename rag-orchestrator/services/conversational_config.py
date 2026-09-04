@@ -17,6 +17,7 @@ DB 未提供時以 code 內建預設（presales）fallback。
 """
 
 import json
+import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -49,6 +50,38 @@ class ConversationalConfig:
     # cta_rules：推薦型收斂（cta_mode=force）才附加的 CTA/排版塊（時機仍由程式決定，保持確定性；
     #   內容資料化——業務連結/收束格式不再硬編在共用合成程式）。
     cta_rules: Optional[str] = None
+    # handoff_message／handoff_channel（presales-grounding-gate 元件 6，D1）：事實題無知識佐證時的固定句與轉人入口。
+    #   DB metadata 供給、缺則 code 保底（PRESALES_HANDOFF_MESSAGE／env PRESALES_HANDOFF_CHANNEL）；
+    #   取值一律經 effective_handoff_message()／effective_handoff_channel()，⛔ 不直接讀欄位。
+    handoff_message: Optional[str] = None
+    handoff_channel: Optional[str] = None
+
+
+# 售前 handoff 固定句（presales-grounding-gate D1；業主 2026-09-04 採預設）。
+#   ⛔ 常數、無格式化佔位——不得回顯使用者輸入；「轉專人」字樣為既有測試釘字，⛔ 不得移除。
+PRESALES_HANDOFF_MESSAGE = "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+#: 轉人入口識別（對齊 jgb2 切片 2 LINE 官方帳號）；env PRESALES_HANDOFF_CHANNEL 可覆寫，DB metadata 優先於 env
+PRESALES_HANDOFF_CHANNEL_DEFAULT = "line_official"
+#: LLM 路徑後置掃描補訊號時的 `handoff.message`（R4.2）：answer 已是 LLM 自己的話，⛔ 不得再塞「沒有可靠資料」固定句
+#:   （2026-09-04 實打：「可以免費試用…如需協助洽客服」被配上「沒有可靠資料」訊息，語義自相矛盾）
+PRESALES_HANDOFF_ENTRY_HINT = "需要真人協助可點下方的『找真人』。"
+#: D6（業主 2026-09-04）：事實題抽取式作答時，問句列了多個項目而 top-1 知識只涵蓋部分 ⇒ 固定尾句（⛔ 常數、無佔位）
+PRESALES_PARTIAL_TAIL = "以上是我有資料的部分；沒提到的項目我這邊沒有資料，可點下方『找真人』。"
+
+
+def effective_handoff_message(cfg: Optional["ConversationalConfig"]) -> str:
+    """DB 供給的 handoff_message 優先，缺則 code 保底（需求 2.1／4.3）。"""
+    msg = getattr(cfg, "handoff_message", None) if cfg is not None else None
+    return msg if isinstance(msg, str) and msg.strip() else PRESALES_HANDOFF_MESSAGE
+
+
+def effective_handoff_channel(cfg: Optional["ConversationalConfig"]) -> str:
+    """DB 供給 > env PRESALES_HANDOFF_CHANNEL > 預設 line_official（需求 4.1）。"""
+    ch = getattr(cfg, "handoff_channel", None) if cfg is not None else None
+    if isinstance(ch, str) and ch.strip():
+        return ch
+    env = os.getenv("PRESALES_HANDOFF_CHANNEL", "").strip()
+    return env or PRESALES_HANDOFF_CHANNEL_DEFAULT
 
 
 # 售前收斂作答規則（原 optimizer 硬編之 PRESALES_SYNTH_RULES 原文外移）：
@@ -58,8 +91,11 @@ PRESALES_ANSWER_RULES = (
     "- 只用「系統脈絡 + 可用知識」內的事實，嚴禁新增、誇大或杜撰（尤其價格、競品、IoT 規格）。\n"
     "- 不報價：價格/級距一律導 [查看方案與費用](https://www.jgbsmart.com/pricing) 或留資，不講數字。\n"
     "- 競品：不主動點名；被問且本次有 E1 事實才中立比較，未列明說「不確定，建議向對方確認」，不斷言對方沒有。\n"
-    "- 系統脈絡與知識都沒有的『細節』才導 demo/專人；功能「有沒有/能不能」這類，知識或系統"
+    "- 系統脈絡與知識都沒有的『細節』才說「這題我幫您轉專人，點下方的『找真人』」——⛔ 不要只留"
+    "『請洽專人』而不指路；功能「有沒有/能不能」這類，知識或系統"
     "脈絡有提到就**直接回答（有就說有、簡述怎麼運作）**，別動不動推 demo。\n"
+    "- 推薦時 ⛔ 不得含客戶名單、案場數量、價格數字、合約條款、法遵、資安的事實斷言——"
+    "這些沒有知識就不講，交給「找真人」。\n"
     "- **不必每則回覆都推 demo**：一般追問把問題答清楚即可。只有在『推薦結論』或『使用者表示"
     "要行動/想看實際操作』時，才附上預約連結 [立即預約 demo](https://www.jgbsmart.com/demo-form) 。\n"
     "- 口吻：顧問式、親切專業、簡潔不誇大；可依使用者情境個人化。\n"
@@ -80,7 +116,7 @@ PRESALES_CTA_RULES = (
     "把行動呼籲集中放這裡，分行條列。範例：\n"
     "下一步：\n"
     "• 免費試用一個月，親自體驗\n"
-    "• 預約 demo 或留聯絡方式，由專人帶您看 👉 [立即預約 demo](https://www.jgbsmart.com/demo-form) 🙂\n"
+    "• 預約 demo 或留聯絡方式，由專人帶您看 👉 [立即預約 demo](https://www.jgbsmart.com/demo-form) 🙂（也可點下方『找真人』直接聯繫）\n"
     "（想先看方案與費用可參考 [查看方案與費用](https://www.jgbsmart.com/pricing)）\n"
     "※ 重點規則：①連結一律用 **markdown 格式 [標籤](網址)、禁止裸網址**；"
     "「[立即預約 demo](https://www.jgbsmart.com/demo-form)」務必出現、不可省略。"
@@ -97,6 +133,7 @@ PRESALES_CONFIG = ConversationalConfig(
     # 進入方式＝freetext（engine-first）：prospect 打字直接進，不靠選單入口（entry 已移除）。
     answer_rules=PRESALES_ANSWER_RULES,
     cta_rules=PRESALES_CTA_RULES,
+    handoff_message=PRESALES_HANDOFF_MESSAGE,
 )
 _CODE_DEFAULTS: Dict[str, ConversationalConfig] = {PRESALES_CONFIG.key: PRESALES_CONFIG}
 
@@ -155,6 +192,8 @@ def _config_from_row(target_user: Optional[List[str]], metadata: Any) -> Optiona
         answer_rules=md.get("answer_rules"),
         cta_rules=md.get("cta_rules"),
         responsibility=md.get("responsibility") or {},
+        handoff_message=md.get("handoff_message"),
+        handoff_channel=md.get("handoff_channel"),
     )
 
 

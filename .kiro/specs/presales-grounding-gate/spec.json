@@ -1,0 +1,43 @@
+{
+  "feature_name": "presales-grounding-gate",
+  "created_at": "2026-09-04T01:13:44+08:00",
+  "updated_at": "2026-09-04T13:56:23+08:00",
+  "phase": "implementation-complete",
+  "language": "zh-TW",
+  "project_description": "presales-grounding-gate — 售前小幫手（prospect 身分，jgb2 官網匿名訪客）「無知識佐證不得生成」的機制修正。根因見 docs/presales-assistant-rootcause-20260904.md：售前對話走 brain 路徑（routers/chat.py::handle_conversational_entry）不經 b2b 檢索閘門，conversational_engine._converge_grounding 以 similarity_threshold=0.0 撈知識、查無仍以占位字串讓 LLM 生成，導致盤查 P0-1（事實題現場生成、兩裝置答案相反）、P0-3（權限題答反）、P1-2／P1-3（匯入題編造「合約可匯入」、追問丟動詞）。範圍：①售前 grounding 加相關性門檻（沿用既有 KB_SIMILARITY_THRESHOLD 或售前專用 env，預設不放水）；②grounding 為空時依 brain 的 converge_kind 分流——事實題（answer）回固定「沒有可靠資料、轉專人」句並附結構化 handoff 訊號、⛔ 不呼叫 LLM；推薦題（recommend）維持以系統脈絡功能索引推薦；③brain JSON 多回 fact_class（封閉 enum：customer_reference／pricing／contract_sla／compliance／security／feature／other），由程式決定出口，⛔ 不用關鍵字規則判開放語義；④回應契約新增 handoff 欄位（reason／channel），供 jgb2 面板畫「找真人」入口，話術（DB 3645／PRESALES_ANSWER_RULES）改為指向入口；⑤多輪：合成 prompt 帶上一輪 Q/A、answer 型檢索 query 併入上一輪問句；⑥同題連問 5 次立場一致、每次出現「專人」必帶 handoff 的回歸測試，並以本機 :8100 prospect 身分實打。範圍外：知識條目補充（權限模型、匯入——匯入待 DSP-008 裁決）、P2-1 起手式體驗（產品決策）、jgb2 前端改動（只定契約）。約束：⛔ 不動一般 b2b 檢索路徑（_top1_relevance_gate、vendor_knowledge_retriever_v2）且需回歸；⛔ 不 dump env；回測 session_id 一律 backtest_session_ 前綴；改完必 rebuild :8100 實打；派獨立 verifier。",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "implementation": {
+    "started": true,
+    "completed": true,
+    "tasks_completed": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "2.1",
+      "2.2",
+      "3.1",
+      "4.1",
+      "3.2",
+      "5.1",
+      "5.2",
+      "6.1",
+      "7.1",
+      "7.2",
+      "7.3"
+    ],
+    "closed_by_owner": "2026-09-04 業主裁 A：主張收窄為「不捏造」成立（e2e 第 4 輪 A/B/D/E/F 過）；C 過度封鎖（3600／3610 口語講法缺口）列 BACKLOG ❓ P2，範圍外知識補充"
+  }
+}

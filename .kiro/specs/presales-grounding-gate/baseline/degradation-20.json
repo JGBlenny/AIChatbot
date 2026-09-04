@@ -1,0 +1,186 @@
+{
+ "rows": [
+  {
+   "q": "你們現在服務的案場裡，有沒有600戶以上、商辦加店面混合的客戶",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "sensitive_no_grounding",
+   "fact_class": "customer_reference",
+   "elapsed": 24.17,
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+  },
+  {
+   "q": "收租組可以看不到財務數字嗎？",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "no_grounding",
+   "fact_class": "feature",
+   "elapsed": 14.8,
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+  },
+  {
+   "q": "舊系統的資料能匯進來嗎？",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "no_grounding",
+   "fact_class": "feature",
+   "elapsed": 8.57,
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+  },
+  {
+   "q": "一年費用怎麼算？180 間房大概多少錢",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "sensitive_no_grounding",
+   "fact_class": "pricing",
+   "elapsed": 13.92,
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+  },
+  {
+   "q": "房東對帳單格式可以自己設定嗎？",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "llm_mentioned_handoff",
+   "fact_class": "feature",
+   "elapsed": 14.86,
+   "answer": "房東對帳單的格式目前是系統預設的，無法自行設定。不過，金箍棒的帳務管理功能可以自動產生帳單，並提供清晰的收租對帳流程，讓您不再需要手動處理。如果您有進一步的需求"
+  },
+  {
+   "q": "水電費要怎麼分算比較公平？一個月大概多少錢",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": null,
+   "fact_class": null,
+   "elapsed": 2.52,
+   "answer": "關於水電費的分算，通常可以根據每個租客的使用量來進行分配。若您有多個租客，建議使用智慧電錶來準確追蹤每位租客的用電量，這樣可以更公平地計算費用。至於每個月的水電"
+  },
+  {
+   "q": "電子發票可以自動開嗎？還是要一張一張手動開",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "no_grounding",
+   "fact_class": "feature",
+   "elapsed": 5.8,
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+  },
+  {
+   "q": "系統可以把所有帳單跟合約資料匯出成 Excel 嗎",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "no_grounding",
+   "fact_class": "feature",
+   "elapsed": 8.53,
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+  },
+  {
+   "q": "你們跟 Bananas 差在哪",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "llm_mentioned_handoff",
+   "fact_class": "other",
+   "elapsed": 9.79,
+   "answer": "金箍棒智慧物管與 Bananas 的主要差異在於以下幾點：\n\n• 合約類型：金箍棒的合約類型較完整，涵蓋一般租賃、社會住宅及委託合約。\n\n• 金流支援：我們提供"
+  },
+  {
+   "q": "可以免費試用嗎",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": null,
+   "fact_class": null,
+   "elapsed": 2.08,
+   "answer": "是的，我們提供免費試用，您可以直接註冊使用。\n\n是的，我們提供免費試用，您可以直接註冊使用。請問您是個人房東、二房東、包租代管業還是物管呢？"
+  },
+  {
+   "q": "資料放在哪裡？有沒有資安認證？",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "sensitive_no_grounding",
+   "fact_class": "security",
+   "elapsed": 9.12,
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+  },
+  {
+   "q": "系統當機你們會賠償嗎？有 SLA 嗎",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "sensitive_no_grounding",
+   "fact_class": "contract_sla",
+   "elapsed": 9.74,
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+  },
+  {
+   "q": "有沒有符合個資法？",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "sensitive_no_grounding",
+   "fact_class": "compliance",
+   "elapsed": 9.83,
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+  },
+  {
+   "q": "智慧電錶要另外買嗎",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "no_grounding",
+   "fact_class": "feature",
+   "elapsed": 4.48,
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+  },
+  {
+   "q": "我有 5 間套房適合用嗎",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": null,
+   "fact_class": null,
+   "elapsed": 1.37,
+   "answer": "請問您是個人房東、二房東、還是包租代管業者呢？"
+  },
+  {
+   "q": "團隊多人可以一起用嗎",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": null,
+   "fact_class": null,
+   "elapsed": 1.69,
+   "answer": "是的，我們的系統支援多人協作，您可以為團隊設定不同權限，方便大家一起管理物件。\n\n您是個人房東、二房東、包租代管業還是物管呢？"
+  },
+  {
+   "q": "可以跟 LINE 串接嗎",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "no_grounding",
+   "fact_class": "feature",
+   "elapsed": 3.95,
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+  },
+  {
+   "q": "合約可以線上簽嗎",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "no_grounding",
+   "fact_class": "feature",
+   "elapsed": 8.35,
+   "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
+  },
+  {
+   "q": "租客逾期沒繳會自動提醒嗎",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": null,
+   "fact_class": null,
+   "elapsed": 6.78,
+   "answer": "是的，系統會自動發送催繳通知給租客，當帳單逾期後。不過，處於「待對帳」狀態的帳單（即租客已通知繳費但管理者尚未確認）不會發送催繳通知。如果你有其他問題或需要進一"
+  },
+  {
+   "q": "大房東報表長什麼樣",
+   "intent_type": "conversational",
+   "action_type": "conversational",
+   "handoff": "llm_mentioned_handoff",
+   "fact_class": "feature",
+   "elapsed": 6.72,
+   "answer": "大房東報表能將代收代付、月結與營運狀況整理成清晰的報表，並且可以排程自動寄送給業主，省去人工彙整的時間。如果您想了解報表的具體內容或功能，隨時可以詢問，我們也可"
+  }
+ ],
+ "degraded": 0,
+ "n": 20
+}

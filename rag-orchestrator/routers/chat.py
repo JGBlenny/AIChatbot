@@ -376,6 +376,7 @@ def _conversational_to_response(result: dict, request) -> 'VendorChatResponse':
         session_id=request.session_id,
         timestamp=datetime.utcnow().isoformat(),
         quick_replies=quick_replies,
+        handoff=result.get('handoff') or None,     # presales-grounding-gate R4.1：引擎產生的轉人訊號透傳（與 quick_replies 同款）
     )
 
 
@@ -1877,8 +1878,10 @@ async def _conversational_sse(engine, decision, request):
         yield await _generate_sse_event("start", {"cached": False, "message": "開始輸出答案..."})
         yield await _generate_sse_event("intent", {
             "intent_type": "conversational", "intent_name": "售前對話", "confidence": 1.0})
+        _buf = []
         async for chunk in engine.stream_answer(decision):
             if chunk:
+                _buf.append(chunk)
                 yield await _generate_sse_event("answer_chunk", {"chunk": chunk})
         # Gap C：串流路徑也把交易 confirm 的 quick_replies 帶進 metadata 事件（前端相容）。
         _metadata = {"intent_type": "conversational", "action_type": "conversational",
@@ -1886,6 +1889,19 @@ async def _conversational_sse(engine, decision, request):
         _qr = decision.get("quick_replies") if isinstance(decision, dict) else None
         if _qr:
             _metadata["quick_replies"] = _qr
+        # presales-grounding-gate R4.2／4.4：handoff 與非串流同語義——引擎已建者透傳；
+        #   LLM 串流文字含封閉三詞而引擎未補（stub／降級）時，SSE 層以同一掃描補 llm_mentioned_handoff，⛔ 只加訊號不改文字。
+        _handoff = decision.get("handoff") if isinstance(decision, dict) else None
+        if not _handoff and _buf:
+            from services.presales_gate import scan_handoff_mentions, build_llm_mention_handoff, parse_fact_class
+            from services.conversational_config import effective_handoff_channel, PRESALES_HANDOFF_ENTRY_HINT
+            if scan_handoff_mentions("".join(_buf)):
+                _fc = parse_fact_class(getattr(decision.get("fact_class"), "value", decision.get("fact_class")))
+                _cfg = decision.get("config")
+                _handoff = build_llm_mention_handoff(_fc, channel=effective_handoff_channel(_cfg),
+                                                     message=PRESALES_HANDOFF_ENTRY_HINT).to_dict()   # 入口提示，非「沒有可靠資料」句
+        if _handoff:
+            _metadata["handoff"] = _handoff
         yield await _generate_sse_event("metadata", _metadata)
         yield await _generate_sse_event("done", {"success": True, "cached": False, "message": "答案生成完成"})
     except Exception as e:
@@ -3789,27 +3805,29 @@ async def _handle_no_knowledge_found(
         + "請問您方便提供更詳細的內容嗎？"
     )
 
-    # prospect 無檢索知識：以系統脈絡「功能索引」md-only 合成（功能推薦走此，R13.3）
-    # 有對應功能 → 點名推薦並導出口；無 → 禮貌導專人；不杜撰功能。失敗保留原 fallback。
+    # prospect 無 session 路徑零命中（presales-grounding-gate R2.5）：固定句＋handoff，⛔ 不再以占位字串呼叫 LLM。
+    #   2026-09-04 之前這裡用「md-only 合成」讓 LLM 依功能索引生成——正是盤查 P0-1 的病灶之一（無知識也生成事實）。
+    #   此路徑沒有 brain ⇒ fact_class=other；文案與 channel 由 ConversationalConfig（DB > env > code 保底）供給。
+    _handoff = None
     if request.target_user == 'prospect':
         try:
-            from services.system_context import get_system_context
-            optimizer = req.app.state.llm_answer_optimizer
-            system_md = await get_system_context(req.app.state.db_pool, request.target_user)  # 領域鍵＝target_user（此路徑必為 prospect）
-            system_md = await _presales_synth_md(req.app.state.db_pool, request.target_user, system_md)
-            md_only_grounding = (
-                "（本次未檢索到對應的特定知識。請依系統脈絡的「功能對照索引」判斷是否有對應功能："
-                "有 → 點名推薦該功能並導向 demo / 試用；無 → 禮貌說明可由專人協助了解，不杜撰功能。）"
-            )
-            synth = await asyncio.to_thread(
-                optimizer.synthesize_presales_answer,
-                md_only_grounding, None, system_md, request.message,
-            )
-            if synth:
-                fallback_answer = synth
-                print("✨ [presales] 無知識 → 依功能索引 md-only 合成推薦")
+            from services import conversational_config as _cc
+            from services.presales_gate import FactClass, build_handoff
+            _cfg = await _cc.config_for_target_user(req.app.state.db_pool, request.target_user)
+            _h = build_handoff(FactClass.other, channel=_cc.effective_handoff_channel(_cfg),
+                               message=_cc.effective_handoff_message(_cfg))
+            fallback_answer = _h.message
+            _handoff = _h.to_dict()
+            try:
+                from services import usage_metering as _um
+                _um.set_decision(snapshot={"presales": {"fact_class": "other", "grounding_hits": 0, "threshold": None,
+                                                        "score_source": None, "error": None,
+                                                        "handoff": _h.reason.value, "path": "no_session"}})
+            except Exception as _me:  # 計量失敗 ⛔ 不影響回答
+                print(f"⚠️ [presales-gate] 計量快照失敗：{type(_me).__name__}")
+            print("🧭 [presales-gate] path=no_session fact_class=other hits=0 handoff=no_grounding")
         except Exception as e:
-            print(f"❌ presales 無知識合成失敗（保留 fallback）：{e}")
+            print(f"❌ presales 無 session handoff 失敗（保留既有 fallback）：{type(e).__name__}")
 
     # 清理答案並追蹤使用的參數
     final_answer, used_param_keys = _clean_answer_with_tracking(fallback_answer, request.vendor_id, resolver)
@@ -3884,7 +3902,8 @@ async def _handle_no_knowledge_found(
         mode=request.mode,
         session_id=request.session_id,
         timestamp=datetime.utcnow().isoformat(),
-        debug_info=debug_info
+        debug_info=debug_info,
+        handoff=_handoff,   # presales-grounding-gate R2.5：prospect 零命中的轉人訊號；非 prospect 恆 None
     )
 
 
@@ -4842,6 +4861,19 @@ class QuickReply(BaseModel):
     style: Optional[str] = Field(None, description="按钮样式：primary, secondary, success, danger")
 
 
+class HandoffSignal(BaseModel):
+    """結構化轉人訊號（presales-grounding-gate R4.1）。出現＝本題未由知識回答、應導向真人入口。
+
+    reason：no_grounding（事實題查無）／sensitive_no_grounding（同上且屬客戶名單・報價・合約 SLA・法遵・資安）／
+            llm_mentioned_handoff（LLM 文字含「專人／真人／客服」，後置掃描補訊號、⛔ 不改文字）。
+    fact_class：brain 的封閉七值；channel：入口識別（對齊 jgb2 切片 2）；message：固定句（⛔ 不回顯使用者輸入）。
+    """
+    reason: Literal["no_grounding", "sensitive_no_grounding", "llm_mentioned_handoff", "partial_grounding"]
+    fact_class: Literal["customer_reference", "pricing", "contract_sla", "compliance", "security", "feature", "other"]
+    channel: str
+    message: str
+
+
 class VendorChatResponse(BaseModel):
     """多業者聊天回應"""
     answer: str = Field(..., description="回答內容")
@@ -4879,6 +4911,8 @@ class VendorChatResponse(BaseModel):
     uploaded_images: Optional[List[str]] = Field(None, description="已上傳圖片 URL 列表")
     # 調試資訊
     debug_info: Optional[DebugInfo] = Field(None, description="調試資訊（處理流程詳情）")
+    # presales-grounding-gate R4.1：無知識佐證／需轉真人時的結構化訊號；None＝不需轉人。可選欄位，未升級呼叫端不受影響。
+    handoff: Optional[HandoffSignal] = Field(None, description="轉人訊號（售前）：reason／fact_class／channel／message；None＝不需轉人")
 
 
 @router.post("/message", response_model=VendorChatResponse)

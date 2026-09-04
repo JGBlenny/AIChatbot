@@ -55,6 +55,7 @@ JSON（`VendorChatResponse`，重點欄位）：
   "form_id": null,                   // 表單 id（如 trial_form / demo_form）
   "current_field": null,             // 表單下一欄提示
   "quick_replies": null,             // 選項（若有）；交易面向確認 gate 為三顆固定鈕（見下）
+  "handoff": null,                   // 轉人訊號（售前，2026-09-04 起）；null＝不需轉人（見下）
   "confidence": 1.0,
   "mode": "b2b",
   "timestamp": "..."
@@ -62,6 +63,24 @@ JSON（`VendorChatResponse`，重點欄位）：
 ```
 
 > `answer` 內含 **markdown**（換行/`•` 條列/`[標籤](網址)` 連結），顯示端請用 **markdown 渲染**（連結才會變可點按；純 `pre-wrap` 會顯示原始 `[]()` 文字）。
+
+### `handoff`——售前無知識佐證時的轉人訊號（presales-grounding-gate）
+
+<!-- tested-by: presales-grounding-gate:4.1 -->
+
+```json
+"handoff": {
+  "reason": "sensitive_no_grounding",   // no_grounding | sensitive_no_grounding | llm_mentioned_handoff | partial_grounding
+  "fact_class": "customer_reference",   // customer_reference | pricing | contract_sla | compliance | security | feature | other
+  "channel": "line_official",           // 真人入口識別（對齊 jgb2 切片 2 LINE 官方帳號；可由設定覆寫）
+  "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"   // 與 answer 同句（固定文案）
+}
+```
+
+- **出現條件**：⓪ `partial_grounding`：事實題有知識、但使用者一次問多個項目（如房東／租客／合約／帳單）而知識只涵蓋一部分 ⇒ `answer`＝知識原文＋固定尾句「以上是我有資料的部分；沒提到的項目我這邊沒有資料，可點下方『找真人』。」（2026-09-04 D6：事實題改抽取式作答，不經 LLM）。① prospect 事實題（brain `converge_kind=answer`）在知識庫**查無過門檻的知識** ⇒ `answer` 為固定句、`reason=no_grounding`；屬客戶名單／報價／合約 SLA／法遵／資安五類時 `reason=sensitive_no_grounding`。② 無 `session_id` 的 prospect 零命中 ⇒ 同固定句，`fact_class=other`。③ 有知識、回覆文字含「專人／真人／客服／沒有資料」⇒ `reason=llm_mentioned_handoff`（只加訊號，文字不變；**知識原文自帶「專人」的抽取式回覆也算**，如「可預約 demo 由專人帶您看」）。
+- **前端預期行為**：`handoff` 非 null ⇒ 在該則回覆下方畫「找真人」入口（依 `channel`）。`reason` 為 `no_grounding`／`sensitive_no_grounding` 時 `message` 已在 `answer` 內，⛔ 不要重複顯示；`llm_mentioned_handoff` 時 `answer` 是 LLM 自己的回答、`message` 是一句入口提示（「需要真人協助可點下方的『找真人』。」），可當按鈕旁說明。
+- **相容**：可選欄位；未升級的前端忽略即可，行為不變（只是看不到按鈕，使用者會讀到「點下方的『找真人』」卻沒有按鈕——上線時間請與 jgb2 切片 2 對齊）。
+- ⛔ 不要用 `answer` 文字是否含「專人」判斷要不要畫按鈕——那是本欄位存在的理由。
 
 ### `quick_replies`——交易面向確認 gate（conversational-repair）
 
@@ -98,12 +117,13 @@ data: {"chunk": "字"}
 
 event: metadata
 data: {"intent_type": "conversational", "action_type": "conversational", "cache_hit": false}
+       // 有轉人訊號時多一鍵："handoff": {...}（形狀同 Response A；無則鍵不出現）；交易確認時多 "quick_replies"
 
 event: done
 data: {"success": true, "message": "答案生成完成"}
 ```
 
-**解析**：把所有 `answer_chunk` 的 `chunk` 依序串接 = 完整答案。
+**解析**：把所有 `answer_chunk` 的 `chunk` 依序串接 = 完整答案。`handoff`／`quick_replies` 在 **metadata** 事件裡，⛔ 不在 chunk 裡；轉人固定句本身仍以 `answer_chunk` 送出（整句一次）。
 
 ## 多輪對話規則
 

@@ -24,7 +24,9 @@ def _engine():
     )
     eng._grounding_by_ids = AsyncMock(return_value="IDS_GROUNDING")
     eng._grounding_by_category = AsyncMock(return_value="CAT_GROUNDING")
-    eng.retriever.embedding_client.get_embedding = AsyncMock(return_value=[0.1, 0.2])
+    # presales-grounding-gate 3.1（2026-09-04）：vector 路改走 retrieve()（application 端過門檻）；
+    #   _vector_search 的 similarity_threshold 參數不過濾（validation_gap 缺口 1），⛔ 不得再被呼叫。
+    eng.retriever.retrieve = AsyncMock(return_value=[{"answer": "VEC_GROUNDING", "similarity": 0.9}])
     eng.retriever._vector_search = AsyncMock(return_value=[{"answer": "VEC_GROUNDING"}])
     return eng
 
@@ -59,7 +61,8 @@ async def test_grounding_default_vector_path():
     cfg = SimpleNamespace(grounding_scope={"select": "vector"})
     grounding, _ctx, _cta = await eng._converge_grounding(_STATE, None, "訊息", cfg, "recommend")
     assert "VEC_GROUNDING" in grounding
-    eng.retriever._vector_search.assert_awaited()
+    eng.retriever.retrieve.assert_awaited()            # 3.1：走 retrieve()（application 端門檻）
+    eng.retriever._vector_search.assert_not_awaited()  # ⛔ 死門檻參數那條路不得再走
 
 
 @pytest.mark.req("testing-traceability:5.2")
