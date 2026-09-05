@@ -84,7 +84,13 @@ class AgentOutput(BaseModel):
         return "".join(s.text for s in self.sentences)
 
 
-#: 11 個結構化拒因（design 元件 6 全文）。
+#: 11＋1 個結構化拒因（design 元件 6 全文；DSP-033 補 `NOT_ENTAILED`）。
+#: ⚠️ `QUOTE_NOT_COVERING`／`POLARITY_MISMATCH` 兩碼**沿用但語義收窄**（DSP-033）：
+#: NLI 模式下前者只在「有意義字元交集 <4」這條絕對下限觸發（ratio 分支退場）、
+#: 後者只在「同一 `assertion_terms` 詞根兩側皆出現且恰一側被否定」時觸發。
+#: 降級模式（`/nli` 不可用）下兩碼回復現行 ratio∧全極性語義——同一個代碼在兩種
+#: 模式下量的不是同一件事，故 trace 另有 `nli_degraded` 這個 violation 可以分流，
+#: ⛔ 不得只看拒因分佈就對兩批數字做比較。
 VerdictReason = Literal[
     "SENSITIVE_TOPIC",
     "UNCITED_ASSERTION",
@@ -92,6 +98,7 @@ VerdictReason = Literal[
     "QUOTE_TOO_SHORT",
     "QUOTE_NOT_COVERING",
     "POLARITY_MISMATCH",
+    "NOT_ENTAILED",
     "SOURCE_NOT_CITABLE",
     "ROUTE_NOT_ALLOWED",
     "FORBIDDEN_TERM",
@@ -116,6 +123,10 @@ class VerifierVerdict(BaseModel):
     （`SENSITIVE_TOPIC`→`sensitive_patterns`、`FORBIDDEN_TERM`→`forbid_terms`、
     `POLARITY_MISMATCH`→`negation_terms`），`n` 是該表內 0-based 索引，
     再配 trace 的 `rules_sha` 才對得回具體規則集版本。
+
+    **`NOT_ENTAILED` 的 `term_id` 固定為 `None`**（DSP-033 r18 F-15）：它不是
+    規則集裡任何一條規則命中的結果，硬塞一個索引會讓稽核順著它去查一張根本
+    無關的表。定位這種拒絕要靠 `entail_score`＋`nli_model_sha`＋`nli_tau`。
     """
     ok: bool
     reason: Optional[VerdictReason] = None
@@ -124,6 +135,13 @@ class VerifierVerdict(BaseModel):
     sent: Optional[int] = None
     term_id: Optional[str] = Field(default=None, pattern=TERM_ID_PATTERN)
     quote_len: Optional[int] = None
+    #: DSP-033：`NOT_ENTAILED` 時該片段在**它那一筆全部解析後來源句**上取得的
+    #: 最大 p_entail（0–1，四捨五入 4 位）。⛔ 不是原文——它是一個分數，
+    #: 與 `nli_model_sha`（trace）＋`nli_tau`（rules）三者同存才重算得出 verdict。
+    #: ⚠️ `|score − τ| < 0.005` 視為 borderline：跨機一致性不保證到那個精度。
+    #: ⚠️ 只進 trace／snapshot，**⛔ 不進回饋給模型的 messages**（r18 F-3）——
+    #: 告訴模型「你差 0.02 分」等於教它往門檻上調而不是往有據上改。
+    entail_score: Optional[float] = None
     #: DSP-029 r13 #7：`SCHEMA` 的**子成因**（封閉列舉）。原本只回 `SCHEMA` 三個字，
     #: 模型與稽核都看不出是哪一種；引用改成標記字串後，「標記本身不合格式／不是
     #: 本回合的」與「標記合格式但指不到東西」是不同的病，不分流等於把它們混進同一格。
@@ -157,11 +175,21 @@ class VerifierRules(BaseModel):
     allowed_routes: list[str]
     assertion_terms: list[str]
     min_quote_len: int = 6
+    #: DSP-033：NLI 模式下這是覆蓋尺的**全部**——「片段與來源句的有意義字元
+    #: 交集 < 4」是 NLI 之前的決定性硬拒（r18 F-2 保留的絕對下限）。
+    #: ⚠️ DSP-029 的**相對覆蓋率欄位已移除**（名字見 DSP-033）：它只在降級
+    #: 模式下還活著，而降級模式的比例固定為程式常數
+    #: `services.agent.verifier._DEGRADED_COVERAGE_RATIO`（0.5＝rules 1.3.0 現值），
+    #: ⛔ 不再從規則集讀——留在這裡會讓人以為調它可以影響線上那把尺。
     min_coverage_chars: int = 4
-    #: DSP-029：覆蓋率改**片段側相對值**——被驗的那個片段（模型自己寫的句子）
-    #: 有意義字元中，至少這個比例要出現在解析出來的來源片段裡。絕對下限
-    #: `min_coverage_chars` 仍在（`max(...)`），兩者是「取嚴的那個」而非二選一。
-    min_coverage_ratio: float = 0.5
+    #: DSP-033：NLI 蘊涵門檻。片段在其所在筆的解析後來源句上，至少一句
+    #: `p_entail ≥ nli_tau` 才算有據（F-1 量詞）。τ=0.40 是在第八輪 181 句盲標
+    #: **新樣本**上、凍結約束「誤殺 ≤10% 取最大抓到率」下選出來的
+    #: （抓到 69%／誤殺 9%，現行規則同批 62%／9%）。
+    #: ⛔ 不得為了讓 `known_open` 自證好看而調它（DSP-033 F-1：⛔ 不調 τ 救自證）。
+    #: ⚠️ 它進規則集是為了跟著 `rules_sha` 一起版本化——改它就是換一把尺，
+    #: 而 trace 必須看得出換過。`max_length` 若變更也要重校 τ（r18 F-8）。
+    nli_tau: float = 0.40
 
     @classmethod
     def load(cls, path: str | Path) -> "VerifierRules":

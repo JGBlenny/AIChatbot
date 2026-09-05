@@ -129,7 +129,7 @@ def _seed_outline_provenance(outline: Any) -> Optional[ToolResult]:
 
 
 class VerifierProtocol(Protocol):
-    def verify(
+    async def verify_async(
         self,
         out: AgentOutput,
         tool_results: dict[str, ToolResult],
@@ -138,7 +138,7 @@ class VerifierProtocol(Protocol):
         *,
         resolved: dict[int, str],
         resolve_errors: dict[int, str],
-    ) -> VerifierVerdict: ...
+    ) -> Any: ...
 
 
 class AssemblerProtocol(Protocol):
@@ -187,6 +187,10 @@ class TurnTrace:
     violations: list[str] = field(default_factory=list)
     rules_sha: str = ""
     outline_sha: str = ""
+    #: DSP-033：本回合實際用到的 NLI 權重指紋（降級回合為空字串）。
+    #: 與 `entail_score`（verdict）＋`nli_tau`（rules，隨 `rules_sha`）三者同存，
+    #: 才重算得出 verdict——⛔ 少任何一個都只是「有個分數」而不是可稽核。
+    nli_model_sha: str = ""
 
 
 _REASON_HINTS: dict[str, str] = {
@@ -202,6 +206,9 @@ _REASON_HINTS: dict[str, str] = {
     "POLARITY_MISMATCH": "第 {sent} 筆的肯定／否定與引文不一致（例如引文說「不支援」你寫成「支援」）：照原文的意思改。",
     "SOURCE_NOT_CITABLE": "第 {sent} 筆引到不可引用的來源（目錄類）：改引可引用的章節或工具回傳的標記。",
     "SENSITIVE_TOPIC": "這一題落在敏感五類或含價格／百分比等敏感樣式：改為 `kind=handoff`、填對應的 `fact_class` 與 `handoff_reason=sensitive_no_grounding`。",
+    # DSP-033：⛔ 措辭裡不得出現分數、門檻或原文——告訴模型「你差 0.02 分」
+    # 會教它往門檻上調（換個說法湊過去），而不是往「真的有依據」改。
+    "NOT_ENTAILED": "第 {sent} 筆的句子講的內容，它指到的那一行並沒有支撐：把該筆 `refs` 換成真正講到這句內容的那一行行首標記，或把這句話刪掉。",
 }
 
 
@@ -505,6 +512,7 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
                     "sent": v.sent,
                     "term_id": v.term_id,
                     "quote_len": v.quote_len,
+                    "entail_score": v.entail_score,
                     "schema_cause": v.schema_cause,
                 }
                 for v in trace.verifier
@@ -514,6 +522,7 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
             "latency_ms": trace.latency_ms,
             "rules_sha": trace.rules_sha,
             "outline_sha": trace.outline_sha,
+            "nli_model_sha": trace.nli_model_sha,
             "violations": trace.violations,
             "replayed_from": _replayed_from(trace.violations),
         }
@@ -620,6 +629,8 @@ class AgentRuntime:
 
         counters = BudgetCounters()
         violations: list[str] = []
+        #: DSP-033：本回合最後一次成功取得分數時的 NLI 權重指紋（降級 ⇒ 維持空）。
+        nli_model_sha: str = ""
         tool_call_records: list[ToolCallRecord] = []
         verifier_verdicts: list[VerifierVerdict] = []
         tool_results_by_id: dict[str, ToolResult] = {}
@@ -678,6 +689,7 @@ class AgentRuntime:
                 violations=list(violations),
                 rules_sha=_rules_sha(),
                 outline_sha=_outline_sha(),
+                nli_model_sha=nli_model_sha,
             )
             return TurnResult(
                 kind="handoff",
@@ -701,6 +713,17 @@ class AgentRuntime:
             )
             _append_dialog(agent_state, user_message, result.answer)
             _emit_agent_decision(result.trace)
+            # DSP-033 F-10：**一回合記一筆**給 health 的 5 分鐘降級比率窗
+            # （⛔ 不是一次 verifier 嘗試一筆——比率的分母是回合數）。
+            # ⚠️ 這是行程級的觀測，⛔ 不得影響回合本身：任何例外一律吞掉。
+            # ⚠️ 函式內 import：`health` 會拉進 `tools.kb`／`api_key_auth`，
+            # 模組層 import 會讓 runtime 的相依圖多出一整條只為了記一個計數的路。
+            try:
+                from services.agent.health import record_nli_turn
+
+                record_nli_turn("nli_degraded" in (result.trace.violations or []))
+            except Exception:  # noqa: BLE001 — 觀測 ⛔ 不得影響回合
+                logger.warning("agent_nli_turn_record_failed", exc_info=True)
             return result
 
         while True:
@@ -924,9 +947,22 @@ class AgentRuntime:
             # 否則 `ref_invalid`。這是「這串標記真的出自本回合資料段」的唯一憑據，
             # ⛔ 不得改成不檢查或用固定值。
             resolved, resolve_errors = resolve_refs(out, tool_results_by_id, nonce)
-            verdict = self.verifier.verify(
+            # DSP-033 P1-1：步③要打一次 `nli-model`，⛔ 不得阻塞事件迴圈 ⇒ 走
+            # `verify_async`。回的是 `VerifyOutcome`（verdict＋這回合用了哪把尺）。
+            outcome = await self.verifier.verify_async(
                 out, tool_results_by_id, user_message, handoff_dict,
                 resolved=resolved, resolve_errors=resolve_errors)
+            verdict = outcome.verdict
+            nli_model_sha = getattr(outcome, "nli_model_sha", "") or nli_model_sha
+            # ⚠️ 每個 violation 只記一次：一回合最多重寫 `max_rewrites` 次，
+            # 每次都會問一次 NLI，重複 append 會讓 health 的降級比率被同一回合
+            # 灌成好幾筆（比率的分母是回合數，⛔ 不是嘗試數）。
+            if getattr(outcome, "degraded", False) and "nli_degraded" not in violations:
+                violations.append("nli_degraded")
+            if getattr(outcome, "pairs_capped", False) and "nli_pairs_capped" not in violations:
+                # F-4：與逾時**分開計**——超限是模型一次寫太多要查證的句子，
+                # 不該被服務端容量問題的告警比率吃掉。
+                violations.append("nli_pairs_capped")
             verifier_verdicts.append(verdict)
             if self._attempt_sink is not None:
                 self._emit_attempt(
@@ -966,16 +1002,28 @@ class AgentRuntime:
                 # 依 PromptAssembler 契約整回合只有一則（見 prompt_assembler.py
                 # 「system 訊息只有一則」），迴圈裡補第二則 system 會破壞這個
                 # 不變量；role="user" 與既有 SCHEMA 不符重寫走同一慣例（上面
-                # `json.JSONDecodeError` 分支）。內容是 `VerifierVerdict.model_dump()`
-                # 的結構化拒因（ok/reason/sent/term_id/quote_len），⛔ 無原文
-                # ——被拒的 `answer` 只留在 `messages`（模型自己的重寫上下文），
+                # `json.JSONDecodeError` 分支）。
+                # ⚠️ **DSP-033 r18 F-3：改為白名單投影，⛔ 不再 `model_dump()` 整包。**
+                # `model_dump()` 是「預設全給、之後才想到要拿掉哪些」——新欄位一加
+                # 就自動流進 messages，而 DSP-033 新增的**蘊涵分數**正是第一個不該
+                # 流過去的（告訴模型離門檻多遠，等於教它往門檻上調而不是往有據上改）。
+                # 白名單則是「預設不給、要加才加」，新欄位的預設方向是安全的。
+                # `term_id`／`quote_len` 一併退出投影：前者是規則集索引（模型看了
+                # 也無從對應）、後者是來源片段長度（不是模型能改的東西）。
+                # 被拒的 `answer` 只留在 `messages`（模型自己的重寫上下文），
                 # ⛔ 不進 `TurnTrace`／`TurnResult`。
+                reject_projection = {
+                    "ok": verdict.ok,
+                    "reason": verdict.reason,
+                    "sent": verdict.sent,
+                    "schema_cause": verdict.schema_cause,
+                }
                 messages.append(
                     {
                         "role": "user",
                         "content": (
                             "VERIFIER_REJECT: "
-                            + json.dumps(verdict.model_dump(), ensure_ascii=False)
+                            + json.dumps(reject_projection, ensure_ascii=False)
                             + "　請依上述結構化拒因修正後重新輸出符合 AgentOutput schema 的 JSON。"
                             + schema_hint
                         ),
@@ -996,6 +1044,7 @@ class AgentRuntime:
                 violations=violations,
                 rules_sha=_rules_sha(),
                 outline_sha=_outline_sha(),
+                nli_model_sha=nli_model_sha,
             )
             result = TurnResult(
                 kind=out.kind,

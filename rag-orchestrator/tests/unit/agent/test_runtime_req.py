@@ -186,10 +186,16 @@ class FakeRegistry:
 
 
 class FakeVerifier:
-    def __init__(self, results=None, *, rules_sha="fake-rules-sha"):
+    def __init__(self, results=None, *, rules_sha="fake-rules-sha",
+                 nli_degraded=False, nli_pairs_capped=False, nli_model_sha=""):
         self._results = list(results) if results is not None else [VerifierVerdict(ok=True)]
         self.calls: list[dict] = []
         self.rules_sha = rules_sha
+        # DSP-033：Runtime 會把這兩個旗標翻成 `TurnTrace.violations` 的
+        # `nli_degraded`／`nli_pairs_capped`，替身照樣要能製造它們。
+        self.nli_degraded = nli_degraded
+        self.nli_pairs_capped = nli_pairs_capped
+        self.nli_model_sha = nli_model_sha
 
     def verify(self, out, tool_results, user_message, handoff, *, resolved, resolve_errors):
         # DSP-029 F-A：`resolved`／`resolve_errors` 是**必填關鍵字**，替身照收——
@@ -207,6 +213,23 @@ class FakeVerifier:
         if not self._results:
             return VerifierVerdict(ok=True)
         return self._results.pop(0)
+
+    async def verify_async(self, out, tool_results, user_message, handoff, *,
+                           resolved, resolve_errors):
+        """DSP-033 P1-1：Runtime 走的是可 await 的入口 ⇒ 替身也要有。
+
+        ⚠️ 替身若只留同步 `verify`，Runtime 換成 `verify_async` 時這裡會炸，
+        而不是靜靜地少驗一層——與 DSP-029 F-A 同一個理由。
+        """
+        from services.agent.verifier import VerifyOutcome
+
+        return VerifyOutcome(
+            self.verify(out, tool_results, user_message, handoff,
+                        resolved=resolved, resolve_errors=resolve_errors),
+            degraded=self.nli_degraded,
+            pairs_capped=self.nli_pairs_capped,
+            nli_model_sha=self.nli_model_sha,
+        )
 
 
 class FakeAssembler:
@@ -608,6 +631,9 @@ _ALLOWED_AGENT_DECISION_KEYS = frozenset(
         "latency_ms",
         "rules_sha",
         "outline_sha",
+        # DSP-033：本回合實際用到的 NLI 權重指紋（0–64 hex 或空字串，⛔ 非原文）。
+        # 與 verdict 的 `entail_score`＋rules 的 `nli_tau` 三者同存才重算得出 verdict。
+        "nli_model_sha",
         "violations",
         "replayed_from",
     }
@@ -1070,3 +1096,182 @@ async def test_attempt_sink_schema_parse_failure_has_no_raw_content():
         "verdict": {"reason": "SCHEMA_PARSE"},
     }
     assert bad_content not in json.dumps(first, ensure_ascii=False)
+
+
+# ---------------------------------------------------------------------------
+# DSP-033：拒因白名單投影、降級訊號、`_REASON_HINTS` 值域
+# ---------------------------------------------------------------------------
+
+
+def _reject_messages(provider_calls: list) -> list:
+    """從 provider 收到的 messages 裡撈出 `VERIFIER_REJECT:` 那幾則（去重、保序）。
+
+    ⚠️ 去重是必要的：重寫迴圈每次都把**整串** messages 送給模型，所以第 N 次
+    呼叫會再看到前 N-1 則拒因。不去重的話「拒了幾次」會被算成三角形數。
+    """
+    seen = []
+    for call in provider_calls:
+        for m in call["messages"]:
+            content = m.get("content")
+            if isinstance(content, str) and content.startswith("VERIFIER_REJECT:") \
+                    and content not in seen:
+                seen.append(content)
+    return seen
+
+
+def _reject_payload(content: str) -> dict:
+    body = content[len("VERIFIER_REJECT: "):]
+    return json.loads(body[: body.index("}") + 1])
+
+
+@pytest.mark.unit
+def test_reason_hints_keys_are_a_subset_of_the_verdict_reason_literal():
+    """`_REASON_HINTS` 的鍵 ⊆ `VerdictReason` 值域，且 DSP-033 的 `NOT_ENTAILED` 有一句修法。
+
+    ⚠️ 少了它，被 NLI 拒的回合只會收到「請依上述結構化拒因修正」這句廢話，
+    模型不知道要換 ref 還是刪句，而拒絕率會在報表上被記成「模型不聽話」。
+    多一個鍵則代表表上留著已退役的拒因，下一個人會照著它去找不存在的分支。
+
+    正對照：先確認取到的值域**非空**——`get_args` 對非 Literal 會回空 tuple。
+    """
+    import typing
+
+    from services.agent.output_schema import VerdictReason
+    from services.agent.runtime import _REASON_HINTS
+
+    values = set(typing.get_args(VerdictReason))
+    assert values, "取不到 VerdictReason 的值域——正對照失敗"
+    assert set(_REASON_HINTS) <= values
+    assert "NOT_ENTAILED" in _REASON_HINTS
+
+
+@pytest.mark.unit
+def test_not_entailed_hint_carries_no_score_threshold_or_source_text():
+    """r18 F-3 的同一條紀律延伸到措辭本身：⛔ 不提分數、不提門檻、不引原文。
+
+    ⚠️ 告訴模型「你差 0.02 分」會教它**往門檻上調**（換個說法湊過去），
+    而不是往「真的有依據」改——那是把閘門變成一個可以被最佳化的目標。
+    """
+    from services.agent.runtime import _REASON_HINTS
+
+    hint = _REASON_HINTS["NOT_ENTAILED"]
+    for banned in ("τ", "tau", "0.4", "分數", "entail", "門檻"):
+        assert banned not in hint, banned
+    assert "refs" in hint      # 正對照：它確實在講「怎麼修那一筆」
+
+
+async def test_verifier_reject_message_is_a_closed_projection(monkeypatch):
+    """r18 F-3：回饋模型的拒因是**白名單投影** `{ok, reason, sent, schema_cause}`。
+
+    ⚠️ 舊寫法是 `verdict.model_dump()`＝「預設全給、之後才想到要拿掉哪些」，
+    新欄位一加就自動流進 messages。白名單是「預設不給、要加才加」，
+    新欄位的預設方向因此是安全的。這條測的就是那個預設方向。
+    """
+    provider = FakeProvider([
+        _final_response(kind="answer", answer="第一版。"),
+        _final_response(kind="answer", answer="第二版。"),
+    ])
+    verifier = FakeVerifier([
+        VerifierVerdict(ok=False, reason="NOT_ENTAILED", sent=0,
+                        term_id=None, quote_len=42, entail_score=0.1234),
+        VerifierVerdict(ok=True),
+    ])
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
+                       verifier=verifier)
+    result = await runtime.run_turn(_identity(), "嗨", {})
+    assert result.kind == "answer"
+
+    rejects = _reject_messages(provider.calls)
+    assert len(rejects) == 1
+    assert _reject_payload(rejects[0]) == {
+        "ok": False, "reason": "NOT_ENTAILED", "sent": 0, "schema_cause": None}
+    # ⛔ 分數／規則索引／引文長度都不得出現在給模型的整段文字裡
+    for banned in ("entail_score", "0.1234", "quote_len", "42", "term_id"):
+        assert banned not in rejects[0], banned
+
+
+async def test_entail_score_reaches_the_trace_but_not_the_model(monkeypatch):
+    """同一個分數：**進** trace／snapshot、**不進** messages。
+
+    正對照組是後半段——只驗「messages 裡沒有」的話，把 `entail_score` 整個
+    拿掉也會過，而那就不是「不外流」而是「量都沒量」。
+    """
+    captured: list[dict] = []
+    monkeypatch.setattr(
+        "services.agent.runtime.usage_metering.set_agent_decision",
+        lambda d: captured.append(d))
+    provider = FakeProvider([
+        _final_response(kind="answer", answer="第一版。"),
+        _final_response(kind="answer", answer="第二版。"),
+    ])
+    verifier = FakeVerifier([
+        VerifierVerdict(ok=False, reason="NOT_ENTAILED", sent=0, entail_score=0.1234),
+        VerifierVerdict(ok=True),
+    ])
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
+                       verifier=verifier)
+    result = await runtime.run_turn(_identity(), "嗨", {})
+
+    assert [v.entail_score for v in result.trace.verifier] == [0.1234, None]
+    assert captured[0]["verifier"][0]["entail_score"] == 0.1234
+    assert "0.1234" not in json.dumps(_reject_messages(provider.calls), ensure_ascii=False)
+
+
+@pytest.mark.parametrize(
+    "degraded,capped,expected",
+    [
+        (False, False, []),
+        (True, False, ["nli_degraded"]),
+        (True, True, ["nli_degraded", "nli_pairs_capped"]),
+        # F-4：超限與逾時分開計——兩個旗標在契約上互相獨立，替身照樣測得到。
+        (False, True, ["nli_pairs_capped"]),
+    ],
+)
+async def test_degraded_and_capped_land_in_trace_violations(degraded, capped, expected):
+    """DSP-033：`verify_async` 的旗標 ⇒ `TurnTrace.violations`。
+
+    ⚠️ 沒有這條，降級在產線上是**完全無聲**的：verdict 照常產生、回合照常回答，
+    只有放行率會悄悄往鬆的那一邊漂。
+    """
+    provider = FakeProvider([_final_response(kind="answer", answer="好的。")])
+    verifier = FakeVerifier(nli_degraded=degraded, nli_pairs_capped=capped)
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
+                       verifier=verifier)
+    result = await runtime.run_turn(_identity(), "嗨", {})
+    assert [v for v in result.trace.violations if v.startswith("nli_")] == expected
+
+
+async def test_degraded_is_recorded_once_per_turn_not_once_per_attempt():
+    """比率的分母是**回合數**（health 的 5 分鐘窗）。
+
+    ⚠️ 一回合最多重寫 `max_rewrites` 次、每次都問一次 NLI；重複 append 會讓
+    同一個回合在降級比率裡算成好幾筆，2% 的門檻就會被自己灌爆。
+    """
+    provider = FakeProvider([
+        _final_response(kind="answer", answer="第一版。"),
+        _final_response(kind="answer", answer="第二版。"),
+    ])
+    verifier = FakeVerifier(
+        [VerifierVerdict(ok=False, reason="QUOTE_NOT_COVERING", sent=0),
+         VerifierVerdict(ok=True)],
+        nli_degraded=True)
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
+                       verifier=verifier)
+    result = await runtime.run_turn(_identity(), "嗨", {})
+    assert len(verifier.calls) == 2, "正對照失敗：這一回合沒有重寫過"
+    assert result.trace.violations.count("nli_degraded") == 1
+
+
+async def test_nli_model_sha_reaches_trace_and_snapshot(monkeypatch):
+    """可稽核定義：`entail_score`＋`nli_model_sha`＋`nli_tau` 三者同存才重算得出 verdict。"""
+    captured: list[dict] = []
+    monkeypatch.setattr(
+        "services.agent.runtime.usage_metering.set_agent_decision",
+        lambda d: captured.append(d))
+    provider = FakeProvider([_final_response(kind="answer", answer="好的。")])
+    verifier = FakeVerifier(nli_model_sha="c" * 64)
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
+                       verifier=verifier)
+    result = await runtime.run_turn(_identity(), "嗨", {})
+    assert result.trace.nli_model_sha == "c" * 64
+    assert captured[0]["nli_model_sha"] == "c" * 64

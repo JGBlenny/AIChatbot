@@ -1,0 +1,8 @@
+# nli-model 服務依賴（DSP-033）
+# ⚠️ torch 由 Dockerfile 以 CPU-only index 安裝（PyPI 的 linux wheel 會拖進 CUDA，
+#    在 1 GB mem_limit 的容器裡是純粹的浪費）——⛔ 不在這裡列 torch。
+transformers==4.38.2
+huggingface_hub==0.20.3
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.4.2

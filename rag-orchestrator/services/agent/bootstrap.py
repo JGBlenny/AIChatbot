@@ -13,6 +13,7 @@ from typing import Any, Optional, Union
 from services.agent.agent_rules import persona_provider, policy_provider
 from services.agent.budget import Budget
 import os
+from services.agent.nli_client import NliClient, client_from_env
 from services.agent.output_schema import VerifierRules
 from services.agent.prompt_assembler import PromptAssembler
 from services.agent.runtime import AgentRuntime
@@ -34,13 +35,20 @@ def build_runtime(
     budget: Optional[Budget] = None,
     rules_path: Union[Path, str] = DEFAULT_RULES_PATH,
     fixtures_dir: Union[Path, str] = DEFAULT_FIXTURES_DIR,
+    nli_client: Optional[NliClient] = None,
     **runtime_kwargs: Any,
 ) -> AgentRuntime:
     """組裝順序固定，⛔ 不得跳步（design 元件 6、任務 2.5 brief）：
 
     1. `VerifierRules.load(rules_path)`——`sha256` 由檔案位元組算；檔案不存在
        或格式不符 ⇒ 直接 raise。
-    2. `OutputVerifier(rules)`。
+    1b. NLI client（DSP-033）：未給 `nli_client` 就從 env 建 `HttpNliClient`
+       （`NLI_URL`／`NLI_PAIR_TIMEOUT_MS`／`NLI_MAX_PAIRS`，見
+       `services/agent/nli_client.py:client_from_env`）。
+       ⚠️ 測試與離線工具**必須顯式傳假 client**——不傳就是真的 HTTP client，
+       單元測試會去解析 `nli-model` 這個主機名（觸網）。
+    2. `OutputVerifier(rules, nli_client=...)`——`nli_client` 是必填關鍵字參數
+       （P1-2），⛔ 無隱式預設：忘了注入的失敗方向是「步③靜靜退回舊尺」＝放行。
     3. `verifier.self_test(fixtures_dir)`——對 `known_fabrications.json` 全拒、
        `known_good.json` 全放，任一案例不符即 `RuntimeError`（⛔ 不吞例外續跑，
        這裡刻意不 try/except，讓呼叫端的啟動流程直接失敗）。
@@ -58,7 +66,10 @@ def build_runtime(
     未來要接的依賴準備好，⛔ 不是這裡偷偷用了卻沒說。
     """
     rules = VerifierRules.load(rules_path)
-    verifier = OutputVerifier(rules)
+    client = nli_client if nli_client is not None else client_from_env()
+    verifier = OutputVerifier(rules, nli_client=client)
+    # ⚠️ 自證用的是**假** client（`OutputVerifier.self_test` 內建兩組），
+    # ⛔ 不打 `client`——啟動不得依賴 `/nli` 可用（P1-2）。
     verifier.self_test(fixtures_dir)
 
     assembler = PromptAssembler(persona_provider, policy_provider)
@@ -72,6 +83,13 @@ def build_runtime(
         **runtime_kwargs,
     )
     runtime.rules_sha = rules.sha256
+    # DSP-033：health 要回 `nli_ready`／`nli_model_sha`／`nli_tau`，而它拿得到的
+    # 只有 `app.state.agent_runtime`。與 `rules_sha`／`outline_sha` 同一個慣例：
+    # 組裝完成後外掛的唯讀快照，`AgentRuntime` 本體邏輯不依賴它們。
+    # ⛔ 不讓 health 去 `runtime.verifier._nli` 挖——那會把 Verifier 的私有欄位
+    # 變成 health 的公開契約。
+    runtime.nli_client = client
+    runtime.nli_tau = rules.nli_tau
     runtime.outline_sha = str(getattr(outline_doc, "sha256", "") or "") if outline_doc is not None else ""
     return runtime
 

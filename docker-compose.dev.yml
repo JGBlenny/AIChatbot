@@ -38,6 +38,11 @@ services:
       # 同理：runner 層契約（第三層）要純文字解析 run-tests.sh 與 CI workflow。
       - ./scripts:/scripts:ro
       - ./.github:/.github:ro
+      # DSP-033：`nli_model/tests/test_api_server.py` 用**假模型物件**驗 canary 與
+      # handler 邏輯（⛔ 不載 torch、⛔ 不觸網），跑在這個容器裡即可。
+      # ⚠️ 它不在 `tests/unit/agent/` 之下 ⇒ `run-tests.sh unit tests/unit/agent/`
+      #    **不會**帶到它，要另外指定路徑（見該檔 docstring）。
+      - ./nli_model:/nli_model:ro
     # ⚠️ **行為設定必須與 production 同源**（任務 3.1 實跑逼出｜R9.4）：
     #    測試容器原本完全不帶 .env，於是 KB_SIMILARITY_THRESHOLD 未設 →
     #    DecisionConfig 落回程式預設 **0.55**，而 production 容器實際跑 **0.65**。
@@ -115,6 +120,15 @@ services:
       #   AGENT_MODEL／AGENT_TRACE_WINDOW_DAYS／RATE_PER_MIN／KB_GET_CAP／JGB2_CANDIDATE_CAP）
       #   完整名稱／預設值／作用清單見 docker-compose.prod.yml 同段註解與 runbook §19-5；
       #   全部維持不宣告＝吃程式內建預設（AGENT_BUDGET_TOOL_CALLS/REWRITES/DEADLINE_S 由 bootstrap.budget_from_env 讀取，預設 4／2／20.0）。
+      # ── DSP-033 NLI：**逐字鏡射 prod**（由 tests/unit/_meta/test_env_parity_req.py 鎖住）──
+      # ⚠️ `NLI_URL` 是**容器視角**；不鏡射的話 `.env` 的宿主視角值會生效，
+      #    與 EMBEDDING_API_URL／SEMANTIC_MODEL_API_URL 是同一類 runner 保真度 bug。
+      # ⚠️ unit 層 ⛔ 不觸網：測試一律注入 `FakeNliClient`
+      #    （見 services/agent/nli_client.py 與 tests/unit/agent/test_bootstrap_req.py）；
+      #    本宣告只保證「真的跑起來時指向哪裡」與 prod 一致。
+      NLI_URL: http://nli-model:8000
+      NLI_MAX_PAIRS: ${NLI_MAX_PAIRS:-12}
+      NLI_PAIR_TIMEOUT_MS: ${NLI_PAIR_TIMEOUT_MS:-400}
     command: ["sleep", "infinity"]        # 維持容器；測試以 run --rm 進入
 
 # 接上共用基礎設施網路（spec conversational-routing-execution 任務 1.2｜R1.2）

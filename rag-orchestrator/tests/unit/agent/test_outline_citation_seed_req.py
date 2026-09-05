@@ -20,8 +20,16 @@ from services.agent.provenance_units import provenance_units, resolve_refs
 from services.agent.output_schema import AgentOutput, VerifierVerdict
 from services.agent.runtime import OUTLINE_TOOL_CALL_ID, _seed_outline_provenance
 from services.agent.tools.registry import ToolResult
+from services.agent.nli_client import FakeNliClient, NliUnavailable
 from services.agent.verifier import _FIXTURE_NONCE, OutputVerifier
 from services.agent.verifier import VerifierRules
+
+
+def _fake_nli():
+    """DSP-033 P1-2：`nli_client` 是必填注入。本檔用**同步** `verify()`（＝降級尺）
+    驗大綱引用那條路徑，NLI 不參與；給永遠 raise 的假 client，
+    ⛔ 一旦有人把 NLI 接進同步路徑，這裡會立刻變成降級而不是靜靜通過。"""
+    return FakeNliClient(error=NliUnavailable("sync_path_must_not_call_nli"))
 from services.conversational_config import effective_handoff_message
 from tests.unit.agent.test_verifier_req import _RULES_PATH
 
@@ -168,7 +176,7 @@ def _verify(verifier, out, tool_results, msg="q", handoff=None, nonce=_FIXTURE_N
 
 
 def test_real_verifier_accepts_outline_unit_citation_and_rejects_non_citable():
-    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
+    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH), nli_client=_fake_nli())
     seeded = _seed_outline_provenance(_outline())
     tool_results = {OUTLINE_TOOL_CALL_ID: seeded}
 
@@ -284,7 +292,7 @@ def _handoff_response(fact_class="pricing", reason="sensitive_no_grounding", sen
 
 
 def test_real_verifier_passes_model_handoff_with_sensitive_fact_class_and_empty_sentences():
-    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
+    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH), nli_client=_fake_nli())
     out = AgentOutput(kind="handoff", sentences=[],
                       fact_class="pricing", handoff_reason="sensitive_no_grounding")
     assert _verify(verifier, out, {}, "一個月多少錢", {"reason": "sensitive_no_grounding"}).ok
@@ -302,7 +310,7 @@ def test_real_verifier_passes_model_handoff_with_sensitive_fact_class_and_empty_
 @pytest.mark.asyncio
 async def test_runtime_replaces_model_handoff_text_with_fixed_sentence_in_one_llm_call():
     provider = FakeProvider([_handoff_response()])
-    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
+    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH), nli_client=_fake_nli())
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
     result = await runtime.run_turn(_identity(), "一個月多少錢", {"agent": {"outline": _outline()}})
@@ -321,7 +329,7 @@ async def test_runtime_uses_fixed_sentence_even_when_handoff_carries_fabricated_
     這條測的是「**使用者實際看到的字**」，⛔ 不是 Verifier 的 verdict。"""
     fabricated = [{"text": "我們的月費是 3000 元，保證業界最低。", "kind": "fact", "refs": []}]
     provider = FakeProvider([_handoff_response(sentences=fabricated)])
-    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
+    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH), nli_client=_fake_nli())
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
     result = await runtime.run_turn(_identity(), "一個月多少錢", {"agent": {"outline": _outline()}})
@@ -364,7 +372,7 @@ async def test_runtime_rejects_prefixless_outline_source_now_that_ref_is_copied_
     資料段裡實際出現過的那一行。⛔ 不再有機械正規化把它救回來。"""
     provider = FakeProvider([_final_with_citation(source="listing"),
                              _final_with_citation()])
-    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
+    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH), nli_client=_fake_nli())
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
     result = await runtime.run_turn(_identity(), "可以線上簽約嗎", {"agent": {"outline": _outline()}})
@@ -485,7 +493,7 @@ def _final_with_blank_text():
 async def test_schema_reject_feedback_names_the_actual_cause(first_response, expected_snippet):
     """DSP-028：SCHEMA 回饋改成指出三種成因；⛔ 不再回報「系統把你的 answer 切成 N 句」。"""
     provider = FakeProvider([first_response(), _final_with_citation()])
-    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
+    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH), nli_client=_fake_nli())
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
     result = await runtime.run_turn(_identity(), "可以線上簽約嗎", {"agent": {"outline": _outline()}})
@@ -521,7 +529,7 @@ async def test_coverage_reject_feedback_tells_model_to_fix_unit_not_to_handoff()
     good = _final_sentences(lambda n: [
         {"text": "可以線上電子簽約。", "kind": "fact", "refs": [_ref(n, 0)]}])
     provider = FakeProvider([bad, good])
-    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
+    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH), nli_client=_fake_nli())
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
     result = await runtime.run_turn(_identity(), "可以線上簽約嗎", {"agent": {"outline": _outline()}})

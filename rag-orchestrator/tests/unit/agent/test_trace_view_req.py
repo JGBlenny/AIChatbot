@@ -152,13 +152,18 @@ def test_top_level_key_set_is_closed():
     assert set(view) == {
         "trace_id", "at", "kind", "handoff_reason", "replayed_from",
         "steps", "verifier", "counts", "session", "rules_sha", "outline_sha",
+        # DSP-033：本回合的 NLI 權重指紋（⛔ 非原文）。
+        "nli_model_sha",
     }
     assert set(view["counts"]) == {
         "llm_calls", "prompt_tokens", "completion_tokens", "latency_ms"
     }
     # DSP-029 r13 #7：多一個 `schema_cause`（封閉列舉值，⛔ 無原文）——
-    # 只回 `SCHEMA` 時七種結構性失敗全擠成同一格，稽核看不出差別。
-    assert set(view["verifier"][0]) == {"reason", "schema_cause", "sent", "rule"}
+    # 只回 `SCHEMA` 時八種結構性失敗全擠成同一格，稽核看不出差別。
+    # DSP-033：再多一個 `entail_score`（0–1 的分數，⛔ 非原文）——`NOT_ENTAILED`
+    # 的 `term_id` 固定為 None，沒有 `rule` 可印，定位只能靠它。
+    assert set(view["verifier"][0]) == {
+        "reason", "schema_cause", "sent", "rule", "entail_score"}
 
 
 @pytest.mark.req(_SPEC)

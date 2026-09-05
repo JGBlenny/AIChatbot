@@ -307,6 +307,12 @@ services:
       QUOTA_WARN_IN_CHAT: ${QUOTA_WARN_IN_CHAT:-false}
       # 參數雙源切換（預設 configs；true 才改讀 lookup——2026-07-06 分工定案後保留開關）
       VENDOR_PARAMS_FROM_LOOKUP: ${VENDOR_PARAMS_FROM_LOOKUP:-false}
+      # DSP-033：Verifier 步③的 NLI 接地檢查（⛔ 服務不可用只降級、不轉人）。
+      # ⚠️ 三個值都**顯式宣告**：`NLI_URL` 是容器視角的位置，落回程式預設也一樣，
+      #    但宣告出來才看得見它指向哪裡；逾時＝對數 × NLI_PAIR_TIMEOUT_MS（唯一公式）。
+      NLI_URL: http://nli-model:8000
+      NLI_MAX_PAIRS: ${NLI_MAX_PAIRS:-12}
+      NLI_PAIR_TIMEOUT_MS: ${NLI_PAIR_TIMEOUT_MS:-400}
     ports:
       - "8100:8100"
     depends_on:
@@ -314,6 +320,7 @@ services:
       - embedding-api
       - redis
       - semantic-model
+      - nli-model
     restart: unless-stopped
 
   # 語義重排序模型服務（2026-02-06）
@@ -321,12 +328,21 @@ services:
     build: ./semantic_model
     container_name: aichatbot-semantic-model
     ports:
-      - "8002:8000"
+      # DSP-033 P2-4／F-13：綁 127.0.0.1，⛔ 不再對外網卡發佈。
+      # ⚠️ 主機端仍連得到 `http://localhost:8002/`（`.kiro/specs/routing-disambiguation/tasks.md`
+      #    的 runbook curl、`semantic_model/README.md` 的範例都是 localhost），
+      #    改的只有「從別台機器連得到」這件事——那從來不是預期用途。
+      #    ⚠️ 容器之間走的是 compose 網路（`SEMANTIC_MODEL_API_URL: http://semantic-model:8000`），
+      #    與本行無關；rag-orchestrator／backtest／pipeline_health 三個消費端讀的都是那個 env。
+      - "127.0.0.1:8002:8000"
     environment:
       TZ: Asia/Taipei
       MODEL_NAME: BAAI/bge-reranker-base
       MAX_LENGTH: 512
       BATCH_SIZE: 32
+    # DSP-033 r18 F-9：兩個模型容器都要有上限，否則 nli-model 的 1 GB 只是把
+    # OOM 的風險整包推給沒有上限的那一個。部署前量兩者常駐 RSS 進 runbook。
+    mem_limit: 2g
     restart: unless-stopped
     healthcheck:
       # image 無 curl（2026-07-07 部署實測 unhealthy 誤報）→ 改用 python 內建 urllib
@@ -335,6 +351,35 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+  # NLI 接地檢查服務（DSP-033）——Verifier 步③的蘊涵分數來源。
+  # ⛔ **不掛在 semantic-model**（P1-3）：其 `/rerank` 是 async def 內同步 predict、
+  #    單 worker，掛進去會 head-of-line blocking，把 reranker 的 p95 一起拖垮。
+  nli-model:
+    build:
+      context: ./nli_model
+      args:
+        # ⚠️ 首次建置時把 model_fingerprint.py 印出的值填進來（它會先失敗並告訴你），
+        #    然後 commit 這一行。⛔ 留空會讓建置失敗，那是刻意的 fail-closed。
+        NLI_MODEL_SHA256: ${NLI_MODEL_SHA256:-}
+    container_name: aichatbot-nli-model
+    environment:
+      TZ: Asia/Taipei
+    # DSP-033 P2-4：⛔ **不對主機發佈埠**——只走 compose 網路。
+    # 這個服務吃的是知識庫原文與模型輸出，沒有任何理由讓它從主機可達。
+    # r18 F-9：1 GB 上限（110M 參數 CPU 推論；部署前量常駐 RSS 進 runbook）。
+    mem_limit: 1g
+    restart: unless-stopped
+    healthcheck:
+      # 映像無 curl（同 semantic-model 2026-07-07 的坑）→ python urllib。
+      # ⚠️ 探的是 `/health` 回得出東西，**不是** `nli_ready`——canary 或指紋沒過時
+      #    我們要的是「容器活著、health 說得出為什麼」，而不是 compose 反覆重啟它。
+      #    `nli_ready=false` 由 agent health 判紅（F-10）。
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
 
 volumes:
   postgres_data:

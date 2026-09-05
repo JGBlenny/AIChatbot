@@ -162,6 +162,9 @@ def _render_verdict(verdict: Any) -> dict:
         "schema_cause": verdict.get("schema_cause"),
         "sent": verdict.get("sent"),
         "rule": rule_index(verdict.get("term_id")),
+        # DSP-033：`NOT_ENTAILED` 的定位靠它——`term_id` 對這個拒因固定為 None
+        # （r18 F-15），沒有 rule 可以印。0–1 的分數，⛔ 非原文。
+        "entail_score": verdict.get("entail_score"),
     }
 
 
@@ -208,6 +211,7 @@ def render_trace(row: Any) -> dict:
         "session": mask_session(_field(row, "session_id")),
         "rules_sha": agent.get("rules_sha"),
         "outline_sha": agent.get("outline_sha"),
+        "nli_model_sha": agent.get("nli_model_sha"),
     }
     _assert_no_verbatim(view)
     return view
@@ -252,6 +256,10 @@ def render_text(view: Mapping) -> str:
             lines.append(f"  {i}. 通過")
         else:
             tail = f"  規則={v['rule']}" if v.get("rule") else ""
+            # DSP-033：NOT_ENTAILED 印分數（⛔ 無原文）——不印的話稽核只看得到
+            # 「被 NLI 拒了」，卻看不出是差一點還是差很遠。
+            if v.get("entail_score") is not None:
+                tail += f"  蘊涵={v['entail_score']}"
             # DSP-029／DSP-029a：`SCHEMA` 不印子成因等於什麼都沒說（八種結構性失敗同一格）。
             cause = f"／{v['schema_cause']}" if v.get("schema_cause") else ""
             lines.append(
@@ -267,7 +275,8 @@ def render_text(view: Mapping) -> str:
     )
     lines.append(
         f"指紋     : rules_sha={_fmt(view.get('rules_sha'))}  "
-        f"outline_sha={_fmt(view.get('outline_sha'))}"
+        f"outline_sha={_fmt(view.get('outline_sha'))}  "
+        f"nli_model_sha={_fmt(view.get('nli_model_sha'))}"
     )
     return "\n".join(lines)
 

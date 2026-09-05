@@ -326,12 +326,20 @@ class EvalRecord:
     rewrote_ok: bool = False
     handoff_heuristic: bool = False
     forbid_terms_n: int = 0
-    #: DSP-028：本回合 Verifier 的結構化拒因（逗號串，如 `SCHEMA,QUOTE_NOT_COVERING`）。
+    #: DSP-028：本回合 Verifier 的結構化拒因（逗號串，如
+    #: `SCHEMA,QUOTE_NOT_COVERING,NOT_ENTAILED`）。
     #: ⛔ 只有 reason 常數，無原文、無 term_id 字面值。
     verifier_reasons: str = ""
     #: DSP-028：本回合是否耗盡重寫預算走固定句（`handoff_reason == "budget_exhausted"`）。
     #: DSP-028 驗收尺①就量它——⛔ 不要再從報表反推。
     budget_exhausted: bool = False
+    #: DSP-033 F-10：本回合是否走了降級尺（`/nli` 不可用）。
+    #: ⚠️ 驗收①②④**一律把降級回合分開計**——降級尺比較鬆（62%／9% vs 69%／9%），
+    #: 混在一起算等於用兩把不同的尺量同一批數字。
+    nli_degraded: bool = False
+    #: DSP-033：本回合各次 verdict 中最大的蘊涵分數（0–1，⛔ 非原文；無則 None）。
+    #: 抽審要對得回「這句被拒時離門檻多遠」時用它。
+    entail_score_max: Optional[float] = None
 
     def to_jsonl_dict(self) -> dict:
         d = {
@@ -351,6 +359,8 @@ class EvalRecord:
             "verifier_rejects": self.verifier_rejects,
             "verifier_reasons": self.verifier_reasons,
             "budget_exhausted": self.budget_exhausted,
+            "nli_degraded": self.nli_degraded,
+            "entail_score_max": self.entail_score_max,
             "rewrote_ok": self.rewrote_ok,
             "handoff_heuristic": self.handoff_heuristic,
             "latency_ms": self.latency_ms,
@@ -770,6 +780,10 @@ def _build_agent_record(
     # 形如 `SCHEMA:ref_source_not_found`；⛔ 只放封閉列舉值，無任何原文。
     verifier_reasons = ",".join(_verdict_reason_label(v) for v in result.trace.verifier if not v.ok)
     budget_exhausted = handoff_reason == "budget_exhausted"
+    # DSP-033：降級回合分計（F-10）＋蘊涵分數（0–1，⛔ 非原文）。
+    nli_degraded = "nli_degraded" in (result.trace.violations or [])
+    _scores = [v.entail_score for v in result.trace.verifier if v.entail_score is not None]
+    entail_score_max = max(_scores) if _scores else None
     forbid_hit = _forbid_hit(answer, t.must_not_contain)
     cost = _estimate_cost_usd(model, result.trace.prompt_tokens, result.trace.completion_tokens)
     attempts = attempts or []
@@ -811,6 +825,8 @@ def _build_agent_record(
         forbid_terms_n=len(t.must_not_contain),
         verifier_reasons=verifier_reasons,
         budget_exhausted=budget_exhausted,
+        nli_degraded=nli_degraded,
+        entail_score_max=entail_score_max,
     )
 
 
@@ -823,12 +839,19 @@ async def _run_agent_chain_fake(
             provider = ScriptedFakeProvider(sc.turns)
             registry = build_fake_registry()
             from services.agent.bootstrap import build_runtime
+            from services.agent.nli_client import FakeNliClient
 
             # tasks 4.3c：`--dump-texts` 開啟才注入 attempt_sink——`build_runtime`
             # 正式路徑不設它（見 tests/unit/agent/test_bootstrap_req.py），這裡
             # 是本工具自己額外傳的 `runtime_kwargs`。
             attempts_buffer: Optional[list] = [] if dump_sink is not None else None
             runtime_kwargs = {"attempt_sink": attempts_buffer.append} if attempts_buffer is not None else {}
+            # DSP-033：`--provider fake` 是**全假**路徑（自我測試用），⛔ 不得
+            # 打真 `nli-model`——不注入的話 `build_runtime` 會建 `HttpNliClient`，
+            # 於是連 unit 測試都會去解析 `nli-model` 這個主機名（觸網）。
+            # ⚠️ 固定回 1.0 ＝「一律蘊涵」：這條路徑量的是**流程**不是接地品質，
+            # ⛔ 不得拿它的拒因分佈當 DSP-033 驗收②的證據。
+            runtime_kwargs["nli_client"] = FakeNliClient(fn=lambda _pair: 1.0)
             runtime = build_runtime(db_pool=None, provider=provider, registry=registry, **runtime_kwargs)
             identity = make_agent_identity(session_id=old_chain_session_id(set_name, sc.idx, rep))
             for t, result, latency_ms, attempts in await _run_scenario_agent(
@@ -1091,13 +1114,22 @@ def _known_open_pass_line() -> str:
     try:
         from pathlib import Path as _Path
 
+        from services.agent.nli_client import FakeNliClient, NliUnavailable
         from services.agent.output_schema import VerifierRules
         from services.agent.verifier import OutputVerifier
 
         root = _Path(__file__).resolve().parents[1]
-        verifier = OutputVerifier(VerifierRules.load(root / "config" / "agent_verifier_rules.json"))
+        # DSP-033：`self_test` 自己會用兩組假 client 各跑一遍，這裡注入的
+        # 只是為了滿足**必填**建構參數（P1-2），⛔ 不會被 self_test 用到，
+        # 更 ⛔ 不會打真服務。
+        verifier = OutputVerifier(
+            VerifierRules.load(root / "config" / "agent_verifier_rules.json"),
+            nli_client=FakeNliClient(error=NliUnavailable("report_only")),
+        )
         n = verifier.self_test(root / "tests" / "fixtures" / "agent")
-        return f"{n}/{n}（known_open.json；⛔ 全部仍被放行＝尚未擋住，DSP-030 處理）"
+        return (f"{n}/{n}（known_open.json；⛔ 全部仍被放行＝尚未擋住。"
+                "DSP-033 已把「需要管理者權限」一句搬進 known_fabrications，"
+                "餘兩句標 nli_blind_spot＝NLI 也擋不住，⛔ 不得宣稱已擋）")
     except Exception as exc:  # noqa: BLE001 — 報表不得因為這一格而整份掛掉
         return f"n/a（self_test 取不到：{type(exc).__name__}）"
 
@@ -1214,6 +1246,39 @@ def render_report_md(
             f"- POLARITY_MISMATCH：{pol}/{len(agent_records)}"
             "（DSP-029 驗收① F-C 單列；R4 基準 9/162）"
         )
+        # ── DSP-033 驗收①：步③三個拒因逐項單列＋降級回合分計 ──────────────
+        # ⚠️ 三格**一律列出**，命中 0 也印 `0/N`：只印有命中的那幾格，
+        # 看的人會把「沒印出來」讀成「沒量」。
+        # ⚠️ `QUOTE_NOT_COVERING`／`POLARITY_MISMATCH` 這兩個代碼**在降級回合裡
+        # 量的不是同一件事**（降級＝ratio∧全極性；NLI 模式＝floor∧窄化極性）。
+        # 所以降級回合數必須印在旁邊，⛔ 不得把兩批直接加總比較。
+        deg_n = sum(1 for r in agent_records if r.nli_degraded)
+        floor_n = reason_counts.get("QUOTE_NOT_COVERING", 0)
+        not_entailed_n = reason_counts.get("NOT_ENTAILED", 0)
+        lines.append(
+            f"- floor（QUOTE_NOT_COVERING）：{floor_n}/{len(agent_records)}"
+            "（DSP-033 驗收①；NLI 模式＝有意義字元交集 <4 的絕對下限，"
+            "降級模式＝DSP-029 ratio∧絕對下限）"
+        )
+        lines.append(
+            f"- 窄化極性（POLARITY_MISMATCH）：{pol}/{len(agent_records)}"
+            "（DSP-033 驗收①；NLI 模式＝同詞根兩側恰一側否定，降級模式＝全極性）"
+        )
+        lines.append(
+            f"- NOT_ENTAILED：{not_entailed_n}/{len(agent_records)}"
+            "（DSP-033 驗收①；p_entail < nli_tau）"
+        )
+        lines.append(
+            f"- nli_degraded 回合：{deg_n}/{len(agent_records)}"
+            "（DSP-033 F-10；⚠️ 驗收①②④須把這些回合**分開計**——"
+            "降級尺比較鬆，混算等於用兩把尺量同一批數字）"
+        )
+        if deg_n:
+            non_deg = [r for r in agent_records if not r.nli_degraded]
+            lines.append(
+                f"  - 非降級回合小計：{len(non_deg)}/{len(agent_records)}；"
+                f"其中 NOT_ENTAILED={sum(1 for r in non_deg if 'NOT_ENTAILED' in (r.verifier_reasons or ''))}"
+            )
     else:
         lines.append("- budget_exhausted：n/a（本批無 agent 鏈紀錄）")
     lines.append(f"- known_open 通過數：{_known_open_pass_line()}")

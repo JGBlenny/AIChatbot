@@ -218,6 +218,8 @@ _EXPECTED_JSONL_KEYS = {
     "answer_sha256", "answer_len",
     # DSP-028 新增
     "verifier_reasons", "budget_exhausted",
+    # DSP-033 新增：降級回合分計（F-10）＋蘊涵分數（0–1，⛔ 非原文）
+    "nli_degraded", "entail_score_max",
 }
 
 
@@ -262,6 +264,14 @@ def test_agent_chain_fake_provider_topics_shape(sample_root, tmp_path):
     assert "verifier_reasons 分佈" in report
     # F-2 的 OPEN 監控欄目前算不出來 ⇒ 必須誠實標「待接」，⛔ 不得靜默省略
     assert "整筆免引用的 question／greeting 比例：**待接**" in report
+    # DSP-033 驗收①：步③三個拒因**逐項單列**＋降級回合分計。
+    # ⚠️ 三格一律列出（命中 0 也印 `0/N`）：只印有命中的那幾格，看的人會把
+    # 「沒印出來」讀成「沒量」——而那正是這張表要防的事。
+    assert "- floor（QUOTE_NOT_COVERING）：" in report
+    assert "- 窄化極性（POLARITY_MISMATCH）：" in report
+    assert "- NOT_ENTAILED：" in report
+    assert "- nli_degraded 回合：" in report
+    assert f"/{len(lines)}（DSP-033 F-10" in report
 
 
 def test_agent_chain_is_deterministic(sample_root, tmp_path):

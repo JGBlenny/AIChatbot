@@ -575,5 +575,79 @@
       }
     },
     "handoff": null
+  },
+  {
+    "id": "good_narrow_polarity_ignores_unrelated_negation_in_source",
+    "nonce": "FIXTURE0000000000",
+    "note": "DSP-033 r18 F-2 的**放行正對照**：來源句尾多了一句與本句無關的否定（「目前不支援自動排程功能」），而句子本身是對來源前半的忠實複述。⚠️ 降級模式的**全極性**會誤殺它（只問『兩邊有沒有否定詞』）⇒ `expect_ok_degraded: false` ＋ `POLARITY_MISMATCH`；NLI 模式的**窄化極性**放行（共同詞根「可以」兩側都沒被否定）。⚠️ 這一案就是『窄化』兩個字的全部內容——⛔ 沒有它，兩把極性尺的差別在測試上不可見，而『誤殺 13%→9%』這個改善也就沒有任何可執行的證據。",
+    "user_message": "物件資料可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "物件資料可以透過範本檔案批次匯入。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:9001§0]"
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9001",
+            "text": "物件資料可以透過範本檔案批次匯入，目前不支援自動排程功能。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null,
+    "expected_reason": null,
+    "expect_ok_degraded": false,
+    "expected_reason_degraded": "POLARITY_MISMATCH"
+  },
+  {
+    "id": "good_faithful_paraphrase_rejected_only_by_degraded_ratio",
+    "nonce": "FIXTURE0000000000",
+    "note": "DSP-033：**忠實的換句話說**——句子把來源講的同一件事用別的詞寫出來。NLI 模式放行（floor 只要交集 ≥4，蘊涵成立）；降級模式的 DSP-029 ratio 尺誤殺它（有意義字元交集 5 < 需要的 6）⇒ QUOTE_NOT_COVERING。⚠️ 這一案是 DSP-033 要修的病灶本身：ratio 尺量的是**用詞重疊**，而我們真正想問的是**語義是否被支撐**。⛔ 不得把它從 known_good 移走來讓降級模式好看——降級尺比較鬆**也**比較容易誤殺，兩件事同時為真。",
+    "user_message": "物件資料可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "物件的資料能夠用範本一次帶進系統。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:9001§0]"
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9001",
+            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null,
+    "expected_reason": null,
+    "expect_ok_degraded": false,
+    "expected_reason_degraded": "QUOTE_NOT_COVERING"
   }
 ]
