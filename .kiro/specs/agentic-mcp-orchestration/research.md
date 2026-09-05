@@ -119,3 +119,42 @@ MCP Python SDK（server／client／ASGI 掛載／授權／結構化輸出／錯�
 - **L1 自同步**：9 支 External controller 回應自帶 `mapping`；`services/jgb_response_formatter.py` 已讀 `mapping`，而 `services/jgb/bills.py:STATUS_LABELS` 是重複硬表（缺口 7）⇒ agent 路徑只讀 `mapping`。
 - **security-reviewer 查證**（2026-09-04）：全 repo 無入站 bearer 驗證（正對照 `verify_api_key` 存在）；`_grounding_by_ids` SQL 無業者過濾；隔離謂詞 4 份手抄各不相同 ⇒ `build_visibility_predicate` 列 M0 首項。
 - **待裁**：jgb2-source-index §10.1 MCP 工具面掛 `external/v1`（現況）或加掛 `agent/v1`（ed25519＋IP 白名單）。
+
+## 主題 7（5.8 追加，2026-09-05）：NLI 接地檢查——模型現況與業界對照
+
+來源存取日期皆 2026-09-05；由具 WebSearch 的唯讀代理調研，數字可回指網址；⛔ 皆未實跑。
+
+### 候選模型（CPU 可跑、有中文分數）
+
+| 模型 | 參數 | 授權 | 中文分數 | 大小 | 備註 |
+|---|---|---|---|---|---|
+| `MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7` | 0.3B | MIT | XNLI zh acc 0.803（[模型卡](https://huggingface.co/MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7)） | 558 MB，含 ONNX | 訓練含 ANLI／WANLI 對抗樣本；機翻資料自述會降品質；不支援 FP16 |
+| `MoritzLaurer/mDeBERTa-v3-base-mnli-xnli` | 0.3B | MIT | XNLI zh 0.8116（[模型卡](https://huggingface.co/MoritzLaurer/mDeBERTa-v3-base-mnli-xnli)） | 558 MB | 資料多樣性較低 |
+| `MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli` | 0.1B | MIT | XNLI zh 0.721（[模型卡](https://huggingface.co/MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli)） | 查無 | 約 3 倍快、掉 8 點 |
+| `IDEA-CCNL/Erlangshen-Roberta-110M-NLI` | 110M | Apache-2.0 | CMNLI 80.83／OCNLI 78.56（[模型卡](https://huggingface.co/IDEA-CCNL/Erlangshen-Roberta-110M-NLI)） | 409 MB（無 safetensors） | 簡中原生 NLI；label `0=CONTRADICTION,1=NEUTRAL,2=ENTAILMENT` |
+| `IDEA-CCNL/Erlangshen-Roberta-330M-NLI` | 330M | Apache-2.0 | CMNLI 82.25／OCNLI 79.82 | 1.3 GB | 同上 |
+| `joeddav/xlm-roberta-large-xnli` | 0.6B | MIT | 模型卡查無；XNLI test 已進訓練 ⇒ ⛔ 不可用 XNLI test 評它 | 2.24 GB | CPU 延遲預期最高 |
+| `vectara/hallucination_evaluation_model`（HHEM-2.1-Open） | 0.1B | Apache-2.0 | **繁中不適用**（模型卡 `language: en`；商用 2.3 才有簡中） | 439 MB | 需 `trust_remote_code` |
+
+### 業界做法（皆不支援繁中）
+
+| 產品 | 模型型態 | 粒度 | 輸出 | 來源 |
+|---|---|---|---|---|
+| Google Vertex Check grounding | 未揭露 | 一句＝一 claim | support score 0–1、claim 級分數、引用 chunk；延遲 <500 ms；語言查無 | [docs](https://docs.cloud.google.com/generative-ai-app-builder/docs/check-grounding) |
+| Azure Groundedness detection | 未揭露＋（reasoning 用 GPT-4o） | 整段 vs sources，標 ungrounded 片段 offset | 布林＋比例；**僅英文** | [docs](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/groundedness) |
+| Bedrock Contextual grounding | 未揭露 | 整份 response；明言不支援 chatbot QA | grounding／relevance 0–1，門檻 BLOCK；en/fr/es | [docs](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-contextual-grounding-check.html) |
+| Vectara HHEM | NLI 式分類器 | 句對／段落對 | 0–1 | [模型卡](https://huggingface.co/vectara/hallucination_evaluation_model) |
+| RAGAS faithfulness | LLM 判官（拆 claim→逐 claim）；HHEM 變體 | 原子 claim vs context | 支持 claim 比例 | [docs](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/faithfulness/) |
+
+### 陷阱（對 5.8 設計的直接影響）
+
+1. XNLI zh 是翻譯句、未標簡繁（[XNLI](https://ar5iv.labs.arxiv.org/html/1809.05053)）；OCNLI 指翻譯資料有 translationese（[OCNLI](https://ar5iv.labs.arxiv.org/html/2010.05444)）⇒ 0.80 不能當繁中口語期望值。
+2. 繁中 NLI 公開基準查無（正對照 OCNLI 有中）⇒ 必須自建 zh-TW holdout，先凍結判準。
+3. 預訓練含 zh-Hant（CC-100 5.3G）但微調全簡中 ⇒ 繁中原文與 OpenCC 轉簡兩種輸入都要量。
+4. 長前提退化：NLI 是句層級，SummaC／AlignScore 都切段取 max 聚合（[SummaC](https://aclanthology.org/2022.tacl-1.10/)、[AlignScore](https://github.com/yuh-zha/AlignScore)）⇒ 前提用 DSP-029 解析出的**單句**正好對齊。
+5. 中文分句弱點（逗號句界 F1 約 70%）⇒ 假設句用 Verifier 同一把 `split_sentences`，與線上一致。
+6. label 順序各模型不同 ⇒ 讀 `id2label`，⛔ 不硬編。
+7. CPU 每句對延遲公開數字幾乎查無（HHEM：2k token <1.5 s）⇒ 目標機器實測。
+8. 授權：候選皆 MIT／Apache-2.0 可商用；`symanto/*` 未標授權不列。
+
+### 建議：先試 `mDeBERTa-v3-base-xnli-multilingual-nli-2mil7`，配 `Erlangshen-Roberta-110M-NLI` 當第二把尺；兩把尺都要先在自建 holdout 上證明「看得見已知的接地錯誤」（R4 三捏造句），才能拿來量系統輸出。
