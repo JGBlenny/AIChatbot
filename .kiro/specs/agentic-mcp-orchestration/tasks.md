@@ -158,6 +158,9 @@
 - [ ] 5.6 (P) Verifier 字面型掃描壓空白（r11 安全審 F-7，既有非本案；DEFER 進 BACKLOG）：步⑥禁詞與字面型 `sensitive_patterns` 另對 `re.sub(r"\s+","",answer_nfkc)` 再掃一次（regex 型維持原文，`\d+\s*元` 語義不可壓）；fixture「終 身 保 固」「保 證」拆空格須拒。
   - 需求：6.5
   - 執行：mech-executor／effort 低
+- [ ] 5.7 Verifier「新資訊規則」（DSP-030；DSP-029 收案後的獨立一輪）：先離線用回歸旁路量誤殺（數字／日期／專有名詞／能力動詞四類；正規化表：全形半形、中文數字、單位）並定門檻 → 再實作 ③ 子成因 `novel_token` → 同 54 句對照（答到率、拒因分佈、20 筆抽審無據率）。⛔ 不與 DSP-029 同輪量。
+  - 需求：6.3, 6.5
+  - 執行：main 量測＋security-executor 實作／effort 中
 - [ ] 5.4 收案：`make audit` 綠（不變量 27–31（原 18–22，DSP-013））、`make test` 全綠（已知紅 `test_verdict_ruler_req.py` 除外）、M0 與 M3 各一次 security／verifier 紀錄落 `reviews/`、總結列取捨（D1–D3 未裁項與其影響；⚠️ DSP-012 已於 2026-09-04 裁定選項 A，改列其代價：`knowledge_base` 多兩欄、售前池 31 筆需先標審核、審核 UI 為另案未做）。
   - 需求：11.3, 13.5
   - 執行：main／effort 高——收案判斷與取捨列示由主 session 負責
