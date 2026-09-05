@@ -183,6 +183,19 @@ def _validate_value(schema: dict, value: Any, *, path: str) -> Optional[str]:
     return None
 
 
+_OPENAI_NAME_SEP = "__"   # OpenAI function name 只准 ^[a-zA-Z0-9_-]+$（真線路 2026-09-05 400 抓到）；MCP 工具名有 "."
+
+
+def openai_tool_name(name: str) -> str:
+    """`kb.get` → `kb__get`：給 Chat Completions 的 function name。⛔ 工具名不得含 `__`（register 擋），保證可逆。"""
+    return name.replace(".", _OPENAI_NAME_SEP)
+
+
+def tool_name_from_openai(name: str) -> str:
+    """`kb__get` → `kb.get`；沒有 `__` 的名字原樣回（相容假 provider 直接用點名）。"""
+    return name.replace(_OPENAI_NAME_SEP, ".")
+
+
 class ToolRegistry:
     """工具白名單＋守門四步＋兩種面（`openapi`／`to_openai_tools`）。"""
 
@@ -218,6 +231,8 @@ class ToolRegistry:
         # ⚠️ 連帶約束：`scope="write"` 的 spec **必須**把 `confirmation_token` 寫進
         #    `properties`，否則守門②放行後會在④被這條 additionalProperties 擋成
         #    `INVALID_INPUT`（任務 2.4 落 write 工具時注意）。
+        if _OPENAI_NAME_SEP in name:
+            raise ValueError(f"工具名 {name!r} 不得含 {_OPENAI_NAME_SEP!r}（OpenAI 名稱編碼保留字，見 openai_tool_name）")
         input_schema = dict(input_schema)
         input_schema.setdefault("additionalProperties", False)
         spec["input_schema"] = input_schema
@@ -444,7 +459,7 @@ class ToolRegistry:
                 {
                     "type": "function",
                     "function": {
-                        "name": spec["name"],
+                        "name": openai_tool_name(spec["name"]),   # 點 → __（OpenAI 名稱規則）
                         "description": spec.get("description", ""),
                         "strict": True,
                         "parameters": parameters,

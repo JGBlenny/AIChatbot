@@ -594,3 +594,26 @@ def test_mutates_session_tool_hidden_in_readonly_view():
     shadow = {s["name"] for s in reg.specs_for(ident, "M5", readonly_view=True)}
     assert {"x.set", "x.get"} <= normal            # 正對照：正式回合兩者可見
     assert "x.get" in shadow and "x.set" not in shadow
+
+
+# ── OpenAI function name 規則（真線路 2026-09-05：'kb.get' 400 invalid_value）────
+@pytest.mark.unit
+def test_openai_tool_names_match_openai_pattern_and_roundtrip():
+    import re
+    from services.agent.tools.registry import ToolRegistry, openai_tool_name, tool_name_from_openai
+    from services.agent.identity import Identity
+    reg = ToolRegistry()
+    async def fn(identity, args):  # pragma: no cover
+        return None
+    reg.register({"name": "kb.get", "description": "d", "input_schema": {"type": "object", "properties": {}},
+                  "output_model": dict, "scope": "read",
+                  "stage": {"prospect": "M0", "tenant": "M0", "property_manager": "M0"}}, fn)
+    ident = Identity(vendor_id=1, target_user="tenant", mode="b2c", session_id="s")
+    names = [t["function"]["name"] for t in reg.to_openai_tools(ident, "M5")]
+    assert names == ["kb__get"]
+    assert all(re.fullmatch(r"[a-zA-Z0-9_-]+", n) for n in names)
+    assert tool_name_from_openai(openai_tool_name("jgb2.query.bills")) == "jgb2.query.bills"
+    assert tool_name_from_openai("kb.get") == "kb.get"                      # 沒編碼的名字原樣回
+    with pytest.raises(ValueError):                                          # 保留字擋在註冊
+        reg.register({"name": "bad__name", "description": "d", "input_schema": {"type": "object", "properties": {}},
+                      "output_model": dict, "scope": "read", "stage": {"tenant": "M0"}}, fn)

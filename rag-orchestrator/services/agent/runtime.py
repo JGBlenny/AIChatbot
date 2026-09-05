@@ -59,7 +59,7 @@ from services.agent.identity import Identity, Stage
 from services.agent.mcp_facade import current_stage
 from services.agent.output_schema import AgentOutput, VerifierVerdict
 from services.agent.prompt_assembler import new_nonce, wrap_tool_data
-from services.agent.tools.registry import ToolRegistry, ToolResult
+from services.agent.tools.registry import ToolRegistry, ToolResult, tool_name_from_openai
 from services.conversational_config import (
     effective_handoff_channel,
     effective_handoff_message,
@@ -447,7 +447,7 @@ class AgentRuntime:
         tool_specs = self.registry.to_openai_tools(
             identity, self._stage, readonly_view=self.readonly_view
         )
-        visible_names = {t["function"]["name"] for t in tool_specs}
+        visible_names = {tool_name_from_openai(t["function"]["name"]) for t in tool_specs}   # 解回 registry 名
 
         messages = self.assembler.build_messages(identity, outline, slots, dialog, tool_specs, nonce)
 
@@ -541,7 +541,7 @@ class AgentRuntime:
                     if counters.tool_call_exhausted(self.budget):
                         budget_hit = True
                         break
-                    name = tc.function.name
+                    name = tool_name_from_openai(tc.function.name)   # kb__get → kb.get（OpenAI 名稱規則，registry.openai_tool_name）
                     try:
                         raw_args = json.loads(tc.function.arguments or "{}")
                         if not isinstance(raw_args, dict):
