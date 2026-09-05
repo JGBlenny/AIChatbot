@@ -381,3 +381,21 @@ answer-acceptance-verify  自由文字回答的接受範圍判定
 本支                      **一輪的順序與閘門**；量尺紀律沿用前兩支
 ⛔ 本支不取代任何一支，也 ⛔ 不被它們取代
 ```
+
+## 知識設定檢查清單（agent 可讀知識，補充 3 條）
+
+> 本節找不到既有「知識設定檢查清單」段落，故追加於檔尾（任務
+> agentic-mcp-orchestration 3.6）。完整規則與範例見
+> `docs/knowledge/agent-readable-knowledge.md`（第一～三節）。
+
+寫一筆會進 agent 大綱或被 `kb.get` 引用的知識時，額外檢查：
+
+- **主題頁 vs 講法列分清楚**：要進大綱（`outline_approved_by`）的是承載
+  獨立事實的主題頁列；同一事實換句話說的講法列只供檢索，⛔ 不要都標成
+  進大綱，否則大綱會出現重複章節（見 DSP-026）。
+- **每筆自成一段可逐字引用**：`answer` 不寫「見上一筆」「同上」這類跨列
+  指涉——Verifier 的逐字比對只在同一次工具回傳範圍內找引文，找不到就判
+  `QUOTE_NOT_VERBATIM`。
+- **邊界句用表內否定詞**：「不支援」「無法」等限制句要用 Verifier
+  `negation_terms` 表內的詞（見 `rag-orchestrator/config/agent_verifier_rules.json`），
+  ⛔ 不用「沒辦法」這類表外近義詞，否則極性檢查對不上會被拒答。
