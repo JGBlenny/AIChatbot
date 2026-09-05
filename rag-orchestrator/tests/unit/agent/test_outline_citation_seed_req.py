@@ -419,5 +419,6 @@ async def test_quote_not_verbatim_feedback_tells_model_to_fix_quote_not_to_hando
 def test_agent_rules_make_handoff_non_default_and_name_outline_evidence():
     from services.agent import agent_rules
     text = agent_rules._POLICY_TEXT
-    assert "轉人不是預設出口" in text and "大綱有寫的就必須回答" in text
-    assert "不必費力措辭" not in text
+    # 2026-09-05 diag_variants 實測：政策文越長 mini 越傾向先轉人 ⇒ 回 R1 版＋一行 sentences 說明
+    assert "回覆放在 `sentences`" in text and "sentence_map" not in text
+    assert "不必費力措辭" not in text and "轉人不是預設出口" not in text
