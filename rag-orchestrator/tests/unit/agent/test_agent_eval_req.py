@@ -894,21 +894,34 @@ def test_dump_texts_on_writes_warning_header_and_raw_text(sample_root, tmp_path)
     assert len(body_rows) == 2
     for row in body_rows:
         assert set(row.keys()) == {"set", "idx", "turn", "rep", "chain", "q", "answer",
-                                   "handoff_reason", "kind", "refs"}
-        assert isinstance(row["refs"], list)   # DSP-028：形狀在，內容待接（見 _refs_for_dump）
+                                   "handoff_reason", "kind", "refs", "attempts"}
+        assert isinstance(row["refs"], list)
+        assert isinstance(row["attempts"], list)
+        # tasks 4.3c：假 provider 輸出的每句都帶 `refs=[]`（見
+        # `_fixed_agent_output_for`），但 `attempts` 一定至少有一筆（本回合的
+        # 最終嘗試），且該筆的 sentences 形狀齊全。
+        assert len(row["attempts"]) >= 1
+        last_attempt = row["attempts"][-1]
+        assert set(last_attempt.keys()) >= {"attempt", "kind", "sentences", "verdict"}
     # DSP-029a：refs 旁路只放標記字串，⛔ 無 quote 原文
-    from types import SimpleNamespace
-
     from tools.agent_eval import _refs_for_dump
 
     sample = _refs_for_dump(
-        SimpleNamespace(sentences=[
-            {"text": "⛔ 這句原文不該被帶出來", "kind": "fact",
-             "refs": ["[aaaa1111bbbb2222:t1:kb:1§2]"]},
-            {"text": "問句沒有引用。", "kind": "question", "refs": []},
-        ])
+        [
+            {
+                "attempt": 1,
+                "kind": "answer",
+                "sentences": [
+                    {"text": "⛔ 這句原文不該被帶出來", "kind": "fact",
+                     "refs": ["[aaaa1111bbbb2222:t1:kb:1§2]"]},
+                    {"text": "問句沒有引用。", "kind": "question", "refs": []},
+                ],
+                "verdict": {"ok": True},
+            }
+        ]
     )
     assert sample == ["[aaaa1111bbbb2222:t1:kb:1§2]"]
+    assert _refs_for_dump([]) == []
 
     # 主 JSONL 的無原文紀律不變（--dump-texts 不影響它）
     main_rows = [

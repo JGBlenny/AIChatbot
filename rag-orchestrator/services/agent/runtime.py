@@ -553,6 +553,7 @@ class AgentRuntime:
         model: Optional[str] = None,
         tool_timeout_s: float = 3.0,
         status_interval_s: float = 5.0,
+        attempt_sink: Optional[Callable[[dict], None]] = None,
     ) -> None:
         self.provider = provider
         self.registry = registry
@@ -560,6 +561,12 @@ class AgentRuntime:
         self.assembler = assembler
         self.budget = budget
         self.readonly_view = readonly_view
+        # tasks 4.3c（儀表化，非契約）：離線評估用的「被拒中間嘗試」旁路。
+        # ⛔ 預設 None＝零行為改變；正式路徑 `bootstrap.build_runtime` 不設它
+        # （見 `tests/unit/agent/test_bootstrap_req.py`）。`TurnTrace`／
+        # `TurnResult`／decision snapshot 完全不動——這條 sink 只是額外通知，
+        # 不影響回合本身的任何判斷或回傳值。
+        self._attempt_sink = attempt_sink
         # 未顯式帶 stage ⇒ 建構當下讀一次 AGENT_STAGE（⛔ 不在函式簽名的預設值
         # 位置呼叫，那樣只會在模組 import 當下讀一次、之後 env 改了也不生效）。
         self._stage: Stage = stage if stage is not None else current_stage()
@@ -572,6 +579,16 @@ class AgentRuntime:
         )
         self._tool_timeout_s = tool_timeout_s
         self._status_interval_s = status_interval_s
+
+    def _emit_attempt(self, record: dict) -> None:
+        """呼叫 `attempt_sink`（若有），任何例外一律吞掉＋`logger.warning`——
+        儀表化 ⛔ 不得影響回合本身（tasks 4.3c brief）。"""
+        if self._attempt_sink is None:
+            return
+        try:
+            self._attempt_sink(record)
+        except Exception:  # noqa: BLE001 — 儀表化，任何 sink 例外都不可外溢
+            logger.warning("agent_attempt_sink_failed", exc_info=True)
 
     # ------------------------------------------------------------------
     async def run_turn(self, identity: Identity, user_message: str, state: dict) -> TurnResult:
@@ -609,6 +626,7 @@ class AgentRuntime:
         llm_calls = 0
         prompt_tokens = 0
         completion_tokens = 0
+        attempt_no = 0  # tasks 4.3c：模型「最終輸出」嘗試計數，從 1 起（工具呼叫不計）
 
         # `new_nonce()`（`services.agent.prompt_assembler`）＝ 16 位十六進位，
         # 符合 `wrap_tool_data`／`PromptAssembler` 的 nonce 形狀守門；
@@ -858,11 +876,21 @@ class AgentRuntime:
                 continue  # 工具結果已回填，回到迴圈頂端再叫一次模型
 
             # 無 tool_calls ⇒ 這一回合模型嘗試給最終答案
+            attempt_no += 1
             content = getattr(message, "content", None) or ""
             try:
                 payload = json.loads(content)
                 out = AgentOutput.model_validate(payload)
             except (json.JSONDecodeError, ValidationError, TypeError):
+                if self._attempt_sink is not None:
+                    self._emit_attempt(
+                        {
+                            "attempt": attempt_no,
+                            "kind": None,
+                            "raw_len": len(content),
+                            "verdict": {"reason": "SCHEMA_PARSE"},
+                        }
+                    )
                 counters.rewrites += 1
                 if counters.rewrite_exhausted(self.budget):
                     return _finalize(_build_fixed("budget_exhausted"), is_fixed=True)
@@ -900,6 +928,23 @@ class AgentRuntime:
                 out, tool_results_by_id, user_message, handoff_dict,
                 resolved=resolved, resolve_errors=resolve_errors)
             verifier_verdicts.append(verdict)
+            if self._attempt_sink is not None:
+                self._emit_attempt(
+                    {
+                        "attempt": attempt_no,
+                        "kind": out.kind,
+                        "fact_class": out.fact_class,
+                        "handoff_reason": out.handoff_reason,
+                        "sentences": [
+                            {"text": s.text, "kind": s.kind, "refs": list(s.refs)}
+                            for s in out.sentences
+                        ],
+                        "verdict": verdict.model_dump(),
+                        "resolve_errors": {
+                            f"{i}:{j}": cause for (i, j), cause in resolve_errors.items()
+                        },
+                    }
+                )
             if not verdict.ok:
                 counters.rewrites += 1
                 logger.info(

@@ -518,9 +518,10 @@ def run_old_chain(
                             "set": set_name, "idx": sc.idx, "turn": t.turn, "rep": rep,
                             "chain": "old", "q": t.q, "answer": answer,
                             "handoff_reason": handoff_reason, "kind": kind,
-                            # 舊鏈沒有結構化引用（它不是 agent 契約）⇒ 恆空，
+                            # 舊鏈沒有結構化引用／嘗試記錄（它不是 agent 契約）⇒ 恆空，
                             # 但鍵要在：同一份 texts JSONL 的鍵集合⛔ 不得因鏈而異。
                             "refs": [],
+                            "attempts": [],
                         }
                     )
     if db_pool is not None:
@@ -701,18 +702,26 @@ async def _run_scenario_agent(
     turns: list["Turn"],
     *,
     outline_doc: Any = None,
-) -> list[tuple["Turn", Any, int]]:
+    attempts_buffer: Optional[list] = None,
+) -> list[tuple["Turn", Any, int, list]]:
     """單一 scenario 逐輪呼叫 `run_turn`，**同一個 `state` dict**貫穿全程
-    （P0 必修 2：多輪帶歷史）。回傳 `[(turn, TurnResult, latency_ms), ...]`。"""
+    （P0 必修 2：多輪帶歷史）。回傳 `[(turn, TurnResult, latency_ms, attempts), ...]`。
+
+    tasks 4.3c：`attempts_buffer`（若有）是呼叫端傳給 `AgentRuntime(attempt_sink=...)`
+    的同一個 list——`run_turn` 是逐輪 `await` 序列呼叫（非併發），故在每輪呼叫前
+    清空、呼叫後取快照，即可把散落的 attempt 記錄正確歸屬回這一輪。"""
     state: dict = {}
-    out: list[tuple["Turn", Any, int]] = []
+    out: list[tuple["Turn", Any, int, list]] = []
     for t in turns:
         _set_outline_on_state(state, outline_doc)
+        if attempts_buffer is not None:
+            attempts_buffer.clear()
         t0 = time.monotonic()
         result = await runtime.run_turn(identity, t.q, state)
         latency_ms = int((time.monotonic() - t0) * 1000)
         state.setdefault("agent", {}).pop("outline", None)
-        out.append((t, result, latency_ms))
+        attempts = list(attempts_buffer) if attempts_buffer is not None else []
+        out.append((t, result, latency_ms, attempts))
     return out
 
 
@@ -726,31 +735,30 @@ def _verdict_reason_label(verdict: Any) -> str:
     return f"{reason}:{cause}" if reason == "SCHEMA" and cause else reason
 
 
-def _refs_for_dump(result: Any) -> list[str]:
+def _refs_for_dump(attempts: list[dict]) -> list[str]:
     """`--dump-texts` 旁路的引用欄：**只放 `refs` 標記字串**（r13 #6／DSP-029a）。
 
-    ⚠️ 標記字串裡沒有原文——它是 `[{nonce}:{tool_call_id}:{source}§{編號}]`，
+    tasks 4.3c 接上：`attempts` 是 `AgentRuntime(attempt_sink=...)` 收集的本輪
+    嘗試記錄（見 `services/agent/runtime.py::run_turn`），本函式取**最後一次
+    嘗試**（＝最終被採用、或耗盡預算前的最後一次）所有 `sentences[*].refs`
+    攤平回傳。⚠️ 標記字串裡沒有原文——它是 `[{nonce}:{tool_call_id}:{source}§{編號}]`，
     引文由系統依它解析，⛔ 解析結果不寫回 `AgentOutput`，所以這條旁路也拿不到、
     也**不應該**拿到原文：人工抽審要對照原文時，拿標記回大綱／工具回傳自己查，
-    ⛔ 不在這裡多開一個原文出口。
-
-    ⚠️ **待接**：`TurnResult` 目前不帶 `sentences`（見上方呼叫點註解），
-    因此實務上恆回空陣列。這裡用 `getattr` 取而不是硬存取，是為了讓將來
-    Runtime 真的開這條回傳時，本函式不必再改。
-    """
-    sentences = getattr(result, "sentences", None) or []
+    ⛔ 不在這裡多開一個原文出口。無嘗試記錄（未開 `--dump-texts`，或 SCHEMA_PARSE
+    整回合只有失敗嘗試）時回空陣列。"""
+    if not attempts:
+        return []
+    last = attempts[-1]
     out: list[str] = []
-    for sentence in sentences:
-        get = sentence.get if isinstance(sentence, dict) else (
-            lambda k: getattr(sentence, k, None))
-        for ref in (get("refs") or []):
+    for sentence in last.get("sentences") or []:
+        for ref in sentence.get("refs") or []:
             out.append(str(ref))
     return out
 
 
 def _build_agent_record(
     *, set_name: str, sc_idx: str, t: "Turn", result: Any, latency_ms: int, rep: int, model: str,
-    dump_sink: Optional[list[dict]] = None,
+    dump_sink: Optional[list[dict]] = None, attempts: Optional[list[dict]] = None,
 ) -> EvalRecord:
     answer = result.answer or ""
     handoff = result.handoff
@@ -764,19 +772,18 @@ def _build_agent_record(
     budget_exhausted = handoff_reason == "budget_exhausted"
     forbid_hit = _forbid_hit(answer, t.must_not_contain)
     cost = _estimate_cost_usd(model, result.trace.prompt_tokens, result.trace.completion_tokens)
+    attempts = attempts or []
     if dump_sink is not None:
         dump_sink.append(
             {
                 "set": set_name, "idx": sc_idx, "turn": t.turn, "rep": rep,
                 "chain": "agent", "q": t.q, "answer": answer,
                 "handoff_reason": handoff_reason, "kind": kind,
-                # DSP-028：人工抽審要能對照「這句話宣稱出自哪一段原文」。
-                # ⚠️ **目前恆為空**：`TurnResult` 只回 kind／answer／handoff／
-                # quick_replies／trace，`TurnTrace` 依 2.5 的紀律⛔ 不放 quote 原文
-                # （它會落 `usage_events.decision_snapshot.agent`）。要真的填滿這欄
-                # 得讓 Runtime 另開一條「只給 texts 旁路」的回傳，那是新的原文出口、
-                # 不在 DSP-028 核准範圍內 ⇒ 標為**待接**，見任務回報。
-                "refs": _refs_for_dump(result),
+                # tasks 4.3c：`refs`＝最後一次嘗試（被採用者）所有句子的 refs 攤平。
+                "refs": _refs_for_dump(attempts),
+                # tasks 4.3c：被 Verifier 拒掉的中間嘗試——只存在這條 texts 旁路
+                # （不進版控），主 JSONL／report.md 不落任何一筆。舊鏈 `attempts: []`。
+                "attempts": attempts,
             }
         )
     return EvalRecord(
@@ -817,14 +824,21 @@ async def _run_agent_chain_fake(
             registry = build_fake_registry()
             from services.agent.bootstrap import build_runtime
 
-            runtime = build_runtime(db_pool=None, provider=provider, registry=registry)
+            # tasks 4.3c：`--dump-texts` 開啟才注入 attempt_sink——`build_runtime`
+            # 正式路徑不設它（見 tests/unit/agent/test_bootstrap_req.py），這裡
+            # 是本工具自己額外傳的 `runtime_kwargs`。
+            attempts_buffer: Optional[list] = [] if dump_sink is not None else None
+            runtime_kwargs = {"attempt_sink": attempts_buffer.append} if attempts_buffer is not None else {}
+            runtime = build_runtime(db_pool=None, provider=provider, registry=registry, **runtime_kwargs)
             identity = make_agent_identity(session_id=old_chain_session_id(set_name, sc.idx, rep))
-            for t, result, latency_ms in await _run_scenario_agent(runtime, identity, sc.turns):
+            for t, result, latency_ms, attempts in await _run_scenario_agent(
+                runtime, identity, sc.turns, attempts_buffer=attempts_buffer,
+            ):
                 records.append(
                     _build_agent_record(
                         set_name=set_name, sc_idx=sc.idx, t=t, result=result,
                         latency_ms=latency_ms, rep=rep, model=runtime._model,
-                        dump_sink=dump_sink,
+                        dump_sink=dump_sink, attempts=attempts,
                     )
                 )
     return records, {"outline_sha": ""}
@@ -842,7 +856,7 @@ class _RealRuntimeHandle:
             await self.db_pool.close()
 
 
-async def build_real_runtime() -> _RealRuntimeHandle:
+async def build_real_runtime(*, attempt_sink: Optional[Any] = None) -> _RealRuntimeHandle:
     """真 provider 路徑（P0 必修 1）。
 
     順序（⛔ 不得調換——缺 key 必須在任何 I/O 之前就拒絕）：
@@ -895,8 +909,12 @@ async def build_real_runtime() -> _RealRuntimeHandle:
 
     provider = llm_provider_mod.get_llm_provider()
     outline_doc = await outline_mod.build_prospect_outline(appmod._mcp_kb_pool)
+    # tasks 4.3c：`attempt_sink` 只在 `--dump-texts` 開啟時由呼叫端傳入；
+    # 預設 None ⇒ 不傳進 `build_runtime`（與正式路徑同一份 kwargs 慣例）。
+    extra_kwargs = {"attempt_sink": attempt_sink} if attempt_sink is not None else {}
     runtime = bootstrap_mod.build_runtime(
         db_pool, provider, appmod._mcp_registry, outline_doc=outline_doc, readonly_view=True,
+        **extra_kwargs,
     )
     return _RealRuntimeHandle(runtime=runtime, outline_doc=outline_doc, db_pool=db_pool, owns_pool=owns_pool)
 
@@ -904,20 +922,27 @@ async def build_real_runtime() -> _RealRuntimeHandle:
 async def _run_agent_chain_openai(
     scenarios: list[Scenario], *, set_name: str, repeat: int, dump_sink: Optional[list[dict]] = None,
 ) -> tuple[list[EvalRecord], dict]:
-    handle = await build_real_runtime()
+    # tasks 4.3c：`--dump-texts` 開啟才建 attempts_buffer／注入 attempt_sink。
+    # ⚠️ 沒開時**不傳這個 kwarg**（而非傳 `attempt_sink=None`）——
+    # `test_build_real_runtime_is_monkeypatchable` 的替身函式簽名是無參數，
+    # 傳多餘 kwarg 會讓既有測試炸掉。
+    attempts_buffer: Optional[list] = [] if dump_sink is not None else None
+    build_kwargs = {"attempt_sink": attempts_buffer.append} if attempts_buffer is not None else {}
+    handle = await build_real_runtime(**build_kwargs)
     try:
         records: list[EvalRecord] = []
         for rep in range(repeat):
             for sc in scenarios:
                 identity = make_agent_identity(session_id=old_chain_session_id(set_name, sc.idx, rep))
-                for t, result, latency_ms in await _run_scenario_agent(
+                for t, result, latency_ms, attempts in await _run_scenario_agent(
                     handle.runtime, identity, sc.turns, outline_doc=handle.outline_doc,
+                    attempts_buffer=attempts_buffer,
                 ):
                     records.append(
                         _build_agent_record(
                             set_name=set_name, sc_idx=sc.idx, t=t, result=result,
                             latency_ms=latency_ms, rep=rep, model=handle.runtime._model,
-                            dump_sink=dump_sink,
+                            dump_sink=dump_sink, attempts=attempts,
                         )
                     )
         outline_sha = str(getattr(handle.outline_doc, "sha256", "") or "")
@@ -1099,6 +1124,10 @@ def render_report_md(
             "- ⚠️ `--dump-texts` 已開啟：`texts/` 目錄含使用者問句與模型原文（人工抽審用），"
             "⛔ 不得 commit、不得外傳，看完即刪。"
         )
+        # tasks 4.3c：被拒的中間嘗試（Verifier REJECT／SCHEMA_PARSE）只存在
+        # texts 旁路的 `attempts` 欄，主 JSONL／本報表 ⛔ 不落任何一筆——
+        # 分析請用 `rag-orchestrator/tools/agent_attempts_report.py` 讀 texts 旁路。
+        lines.append("- 被拒嘗試僅存於 texts 旁路（不進版控）。")
         lines.append("")
     lines.append(
         "- 延遲量法：agent 鏈以 `run_turn` 邊界計時（非使用者實際看到回覆的 SSE 層，屬下限，"

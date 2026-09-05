@@ -59,6 +59,14 @@ def test_build_runtime_passes_through_runtime_kwargs():
     assert runtime.readonly_view is True
 
 
+def test_build_runtime_default_does_not_set_attempt_sink():
+    """tasks 4.3c：正式路徑 ⛔ 不設 `attempt_sink`——它是
+    `tools/agent_eval.py --dump-texts` 專用的離線儀表化旁路，`build_runtime`
+    不傳這個 kwarg 時 `AgentRuntime` 必須落在自己的預設值 `None`。"""
+    runtime = build_runtime(None, _fake_provider(), _fake_registry())
+    assert runtime._attempt_sink is None
+
+
 # ---------------------------------------------------------------------------
 # 2. 自證失敗 ⇒ raise（壞 fixture）
 # ---------------------------------------------------------------------------

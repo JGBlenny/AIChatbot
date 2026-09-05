@@ -247,7 +247,8 @@ def _identity(**overrides) -> Identity:
     return Identity(**base)
 
 
-def _runtime(*, provider, registry, verifier, assembler=None, budget=None, clock=None, stage="M1"):
+def _runtime(*, provider, registry, verifier, assembler=None, budget=None, clock=None, stage="M1",
+             attempt_sink=None):
     return AgentRuntime(
         provider,
         registry,
@@ -256,6 +257,7 @@ def _runtime(*, provider, registry, verifier, assembler=None, budget=None, clock
         budget or Budget(),
         stage=stage,
         clock=clock or FakeClock(),
+        attempt_sink=attempt_sink,
     )
 
 
@@ -947,3 +949,124 @@ def test_schema_cause_hints_cover_exactly_the_schema_cause_literal():
     assert values, "取不到 schema_cause 的值域——正對照失敗，不是兩邊剛好相等"
     assert set(_SCHEMA_CAUSE_HINTS) == values
     assert "cite_out_of_range" not in values          # DSP-029a 已退役，⛔ 不得復活
+
+
+# ---------------------------------------------------------------------------
+# tasks 4.3c：`attempt_sink`（離線評估用的「被拒中間嘗試」旁路，⛔ 非契約）
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_attempt_sink_default_none_means_zero_calls():
+    """預設 `attempt_sink=None` ⇒ 行為零改變：不呼叫任何東西，回合正常結束。"""
+    provider = FakeProvider([_final_response(kind="answer", answer="哈囉！")])
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
+                       verifier=FakeVerifier())
+    assert runtime._attempt_sink is None
+    result = await runtime.run_turn(_identity(), "嗨", {})
+    assert result.kind == "answer"
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_attempt_sink_called_once_per_model_final_attempt():
+    """拒一次、再過一次 ⇒ sink 恰被呼叫 2 次（不含工具呼叫那一輪）。"""
+    payload_bad_ref = {
+        "kind": "answer",
+        "sentences": [{"text": "第一句話。", "kind": "fact", "refs": ["not-a-real-marker"]}],
+        "fact_class": "feature", "handoff_reason": None,
+    }
+    provider = FakeProvider([
+        _fake_response(_fake_message(content=json.dumps(payload_bad_ref, ensure_ascii=False))),
+        _final_response(kind="answer", answer="修正後的答案。"),
+    ])
+    verifier = FakeVerifier(results=[
+        VerifierVerdict(ok=False, reason="QUOTE_NOT_COVERING", sent=0),
+        VerifierVerdict(ok=True),
+    ])
+    sink_calls: list[dict] = []
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
+                       verifier=verifier, attempt_sink=sink_calls.append)
+    result = await runtime.run_turn(_identity(), "問題", {})
+    assert result.kind == "answer"
+    assert len(sink_calls) == 2
+    assert [r["attempt"] for r in sink_calls] == [1, 2]
+
+    first = sink_calls[0]
+    assert first["kind"] == "answer"
+    assert first["fact_class"] == "feature"
+    assert first["handoff_reason"] is None
+    assert first["sentences"] == [{"text": "第一句話。", "kind": "fact", "refs": ["not-a-real-marker"]}]
+    assert first["verdict"] == VerifierVerdict(ok=False, reason="QUOTE_NOT_COVERING", sent=0).model_dump()
+    # `resolve_refs` 對格式不合的標記判 `ref_invalid`——鍵格式必須是 "<句索引>:<ref索引>"。
+    assert first["resolve_errors"] == {"0:0": "ref_invalid"}
+
+    second = sink_calls[1]
+    assert second["attempt"] == 2
+    assert second["verdict"]["ok"] is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_attempt_sink_record_keys_are_closed_and_carry_no_verbatim_source():
+    """record 鍵集合封閉，且不含任何來源原文／`resolved` quote／`text_for_model`
+    —— `sentences[*].text` 是**模型自己生成的文字**（本來就會進 `TurnResult.answer`
+    送給使用者），⛔ 不是來源原文，兩者不是同一件事。"""
+    provider = FakeProvider([_final_response(kind="answer", answer="您好，這是回覆。")])
+    sink_calls: list[dict] = []
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
+                       verifier=FakeVerifier(), attempt_sink=sink_calls.append)
+    await runtime.run_turn(_identity(), "嗨", {})
+    assert len(sink_calls) == 1
+    record = sink_calls[0]
+    assert set(record.keys()) == {
+        "attempt", "kind", "fact_class", "handoff_reason", "sentences", "verdict", "resolve_errors",
+    }
+    assert "quote" not in record
+    assert "resolved" not in record
+    assert "text_for_model" not in record
+    for sentence in record["sentences"]:
+        assert set(sentence.keys()) == {"text", "kind", "refs"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_attempt_sink_exception_is_swallowed_and_does_not_affect_turn_result():
+    """sink 拋例外 ⇒ 只 `logger.warning`，⛔ 不得讓回合本身失敗或改變回傳值。"""
+    provider = FakeProvider([_final_response(kind="answer", answer="正常答案。")])
+
+    def _boom(_record):
+        raise RuntimeError("儀表化壞了，回合不能跟著壞")
+
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
+                       verifier=FakeVerifier(), attempt_sink=_boom)
+    result = await runtime.run_turn(_identity(), "嗨", {})
+    assert result.kind == "answer"
+    assert result.answer == "正常答案。"
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_attempt_sink_schema_parse_failure_has_no_raw_content():
+    """JSON 解析／schema 驗證失敗的嘗試也要記一筆，且**不含 raw 內容**——
+    只有 `raw_len`（長度），⛔ 不放 `content` 本身。"""
+    bad_content = "這不是合法的 JSON，這裡面藏了一句不該外流的假想原文"
+    provider = FakeProvider([
+        _fake_response(_fake_message(content=bad_content)),
+        _final_response(kind="answer", answer="修好了。"),
+    ])
+    sink_calls: list[dict] = []
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
+                       verifier=FakeVerifier(), attempt_sink=sink_calls.append)
+    result = await runtime.run_turn(_identity(), "嗨", {})
+    assert result.kind == "answer"
+    assert len(sink_calls) == 2
+    first = sink_calls[0]
+    assert first == {
+        "attempt": 1,
+        "kind": None,
+        "raw_len": len(bad_content),
+        "verdict": {"reason": "SCHEMA_PARSE"},
+    }
+    assert bad_content not in json.dumps(first, ensure_ascii=False)
