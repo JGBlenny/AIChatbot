@@ -2,7 +2,7 @@
 
 > 2026-09-04。全部在 `~/jgb/AIChatbot` 執行。金鑰只在你的 shell 變數裡，⛔ 不貼進對話。
 
-## 1. 套 migration（help_center_pages、api_keys 兩欄）
+## 1. 套 migration（help_center_pages、api_keys 兩欄）— ✅ 2026-09-05 主 session 代跑（業主「幫我加」）：只套 agent 五支並記帳 `created_by='main-session-selective'`；⛔ 未跑其餘 9 支他線 migration 與 2 個 seed
 
 ```bash
 bash rag-orchestrator/database/migrate.sh
@@ -59,7 +59,7 @@ php artisan external-api-key:run permission-add --key-id=<id> --resource=<缺的
 
 ## 4. 1.7b 回來後（我做）：重建本機 image、跑 M0 整合六案＋MCP client 端到端、派 1.9 security review。
 
-## 5. 售前池審核旗標（M1 前置，任務 3.3，R11.6）
+## 5. 售前池審核旗標（M1 前置，任務 3.3，R11.6） — ✅ 2026-09-05 主 session 代跑：v2 b2b 謂詞預覽 31 → UPDATE 31 → 驗證 31（v1 b2c 謂詞預覽 81 已停並修正）
 
 > 背景：DSP-012 裁決發現 `knowledge_base` 查無任何審核旗標，售前大綱組裝現況等於
 > 「有 KB 寫入權＝有 system prompt 寫入權」。`build_prospect_outline`（3.2）SHALL

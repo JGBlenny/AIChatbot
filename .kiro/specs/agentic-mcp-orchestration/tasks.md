@@ -109,6 +109,7 @@
 - [x] 3.3 (P) `knowledge_base` 審核旗標（R11.6；3.2 前置）：migration 加 `outline_approved_by text null`、`outline_approved_at timestamptz null`（比照 `help_center_pages.approved_by`；SQL 檔 `git add -f`，執行由業主）；一次性 UPDATE 把現有售前池 31 筆（以 `build_visibility_predicate(prospect)` 選出）標記為已審核——**DB 寫入需業主授權**，⛔ 不得因審核 UI 未完成而放行未審核列；審核 UI 另案。測試：migration 冪等；標記後 `build_prospect_outline` 的 `source_ids` 數＝31。
   - 需求：11.6, 5.1
   - 執行：mech-executor／effort 低——兩欄一 UPDATE，規格已在 DSP-012；UPDATE 由業主執行
+  - **執行（2026-09-05，業主「幫我加」授權）**：五支 migration 已套進本機 admin DB 並記帳；標記 SQL v1（b2c 謂詞）預覽 81≠31 ⇒ 停；查明售前池是 **b2b 池**（jgb2 送 prospect 時 mode=b2b；gapmap `POOL_PRED` 同）⇒ 改 v2 b2b 謂詞預覽 31 → UPDATE 31 → 驗證 31；同步修 `outline.py` 身分 `mode=b2b`、`agent_entry` prospect 缺 mode 預設 b2b、outline 整合 fixture 帶 `system_provider`。
   - **收案註記（2026-09-05）**：mech-executor（worktree）→ 收檔；integration 3 綠（測試庫）。migration `20260905_knowledge_base_outline_approval.sql`；一次性 UPDATE `.kiro/specs/agentic-mcp-orchestration/sql/mark-prospect-pool-approved-20260905.sql`（`git add -f`；WHERE 逐條翻自 `build_visibility_predicate` 的 b2c 分支，business_types 用 `vendors.id=1` 子查詢；含預覽 count、rollback）。`m0-owner-steps.md` 加第 5 節。⛔ 31 這個數字未在 admin DB 驗，預覽不是 31 就停。
 - [ ] 3.4 (P) M2 前知識前置（知識線，非程式）：售前缺口地圖批次 2（`scripts/knowledge-batches/presales-gapmap-batch2-20260904.json` 18 筆）dry-run 後由業主放行匯入；3600／3610 口語講法補強（「線上簽約」「費用怎麼算」）依 `retrieval-improvement-loop` 流程補列；DSP-010 範本數、C52 系統管理模組歸屬列待裁不擋；匯入後重跑 `tools/gapmap/presales_gap_map.py` topics 模式留基準。⛔ 未做則 4.2 對照表要標「知識缺口未補」欄，不得把知識缺口算成 agent 缺口。
   - 需求：5.1, 8.3

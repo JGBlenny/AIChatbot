@@ -90,7 +90,7 @@ def db_pool():
             INSERT INTO knowledge_base
                 (id, question_summary, answer, categories, vendor_ids, business_types,
                  target_user, is_active, category, outline_approved_by, outline_approved_at)
-            VALUES (%s, %s, %s, %s::text[], NULL, NULL, NULL, TRUE, NULL, %s, now())
+            VALUES (%s, %s, %s, %s::text[], NULL, ARRAY['system_provider']::text[], NULL, TRUE, NULL, %s, now())  -- 售前池是 b2b 池（business_types && ['system_provider']）
             """,
             (
                 APPROVED_ID, "修繕系統 線上報修", "可線上報修並追蹤進度。",
@@ -102,7 +102,7 @@ def db_pool():
             INSERT INTO knowledge_base
                 (id, question_summary, answer, categories, vendor_ids, business_types,
                  target_user, is_active, category, outline_approved_by, outline_approved_at)
-            VALUES (%s, %s, %s, %s::text[], NULL, NULL, NULL, TRUE, NULL, NULL, NULL)
+            VALUES (%s, %s, %s, %s::text[], NULL, ARRAY['system_provider']::text[], NULL, TRUE, NULL, NULL, NULL)
             """,
             (
                 UNAPPROVED_ID, "未審核的售前知識", "這句不該進大綱。",
