@@ -244,7 +244,8 @@ class SentenceCite(BaseModel): sent: int; kind: Literal["fact","question","greet
 
 class AgentOutput(BaseModel):   # response_format json_schema strict
     kind: Literal["answer","ask","recommend","handoff"]; answer: str; citations: list[Citation]
-    sentence_map: list[SentenceCite]; fact_class: FactClass; handoff_reason: Optional[str]
+    sentences: list[Sentence]  # 1.4.10：{text, kind, cite[]}；answer 由程式拼接（原 answer＋sentence_map）
+    fact_class: FactClass; handoff_reason: Optional[str]
 
 class VerifierRules(BaseModel):   # 版本戳＋sha，載入時對 fixture 自證
     version: str; sha256: str
@@ -265,7 +266,7 @@ class OutputVerifier:
 ```
 順序（全部通過才放行）：
 ① **敏感五類**：`fact_class ∈ SENSITIVE` 或缺／不合法（fail-closed 視為敏感）或 `sensitive_patterns` 命中 ⇒ `SENSITIVE_TOPIC`。
-② **白名單句型**：`sentence_map` 必須覆蓋 `answer` 全文（NFKC 後各句拼接 == answer，否則 `SCHEMA`）；每句必標 kind；`question`／`greeting`／`routing` 三型以程式端封閉判定複核——**「純」條件**：以逗號／頓號／分號切子句，任一子句命中 R6.2 封閉詞集（可以／支援／不支援／需要／會／不會／無法…，版本化於 `VerifierRules.assertion_terms`）⇒ 整句降級為 `fact`；`question` 另需問號結尾、`greeting` 需全句在問候詞表、`routing` 需只含白名單 route。**`fact` 一律需 ≥1 cite**（預設反轉：白名單句型才免 cite，黑名單詞集只用來撤銷豁免），缺 ⇒ `UNCITED_ASSERTION`。例：「支援批次匯入合約，請問您有幾間？」⇒ 子句一命中「支援」⇒ fact ⇒ 需 cite（承接 R6.2／R6.7）。
+② **白名單句型**：**1.4.10（DSP-028，提案）**：模型輸出 `sentences[{text, kind, cite[]}]`、`answer` 由程式拼接（⛔ 不再要模型數句子——4.3c 實測 47% 回合因句數對不上被拒到固定句）；逐筆檢查 `text` 非空、`cite` 索引在範圍，一筆內多句尾則各片段繼承同 kind／cite；~~`sentence_map` 必須覆蓋 `answer` 全文（NFKC 後各句拼接 == answer，否則 `SCHEMA`）~~；每句必標 kind；`question`／`greeting`／`routing` 三型以程式端封閉判定複核——**「純」條件**：以逗號／頓號／分號切子句，任一子句命中 R6.2 封閉詞集（可以／支援／不支援／需要／會／不會／無法…，版本化於 `VerifierRules.assertion_terms`）⇒ 整句降級為 `fact`；`question` 另需問號結尾、`greeting` 需全句在問候詞表、`routing` 需只含白名單 route。**`fact` 一律需 ≥1 cite**（預設反轉：白名單句型才免 cite，黑名單詞集只用來撤銷豁免），缺 ⇒ `UNCITED_ASSERTION`。例：「支援批次匯入合約，請問您有幾間？」⇒ 子句一命中「支援」⇒ fact ⇒ 需 cite（承接 R6.2／R6.7）。
 ③ **逐字＋覆蓋＋極性**：每 cite 的 `quote` NFKC 正規化後須為該 `tool_call_id` 對應 `ToolResult.provenance[].text` 的逐字子串（比對目標統一為 `Provenance.text`；`text_for_model` 只是包裝）且 ≥6 字；該句與 quote 的非停用詞字元交集 ≥ `min_coverage_chars`，否則 `QUOTE_NOT_COVERING`；句與 quote 的 `negation_terms` 極性不一致 ⇒ `POLARITY_MISMATCH`。
 ④ **來源可引用**：`source` 對應的 `Provenance.citable=false` ⇒ `SOURCE_NOT_CITABLE`。
 ⑤ **導流白名單**：答案中任何 URL／電話樣式不在 `allowed_routes` ⇒ `ROUTE_NOT_ALLOWED`。

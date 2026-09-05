@@ -136,7 +136,7 @@
 **使用者故事**：作為業主，我要「模型說的每個產品事實都指得回一段逐字來源」是程式驗的，不是 prompt 求的。
 
 #### 驗收標準（EARS）
-1. THE SYSTEM SHALL 要求模型的最終輸出符合 `{answer, citations[{tool_call_id, source, quote}], sentence_map, kind∈{answer, ask, recommend, handoff}}`；不符 schema SHALL 視為一次重寫。
+1. THE SYSTEM SHALL 要求模型的最終輸出符合 `{sentences[{text, kind, cite[]}], citations[{tool_call_id, source, quote}], kind∈{answer, ask, recommend, handoff}, fact_class, handoff_reason}`（DSP-028：`answer` 由系統拼接 `sentences[].text`，⛔ 不再由模型輸出 `answer`＋`sentence_map`）；不符 schema SHALL 視為一次重寫。
 2. THE SYSTEM SHALL 逐句檢查：任何含產品事實斷言的句子（含「可以／支援／不支援／需要／會／不會／無法」等封閉詞集）**不分 kind** 必須至少一個 cite；無 cite 的句子只允許純提問、問候、導流三型（封閉判定，⛔ 不用 LLM 判）。
 3. THE SYSTEM SHALL 驗 `quote` 為所引工具回傳文字的逐字子串（正規化空白與全半形後比對）；不是 ⇒ 拒。
 4. THE SYSTEM SHALL 在引用檢查之前套用敏感五類主題拒答：WHEN 使用者問句或模型回答落入客戶案例／價格數字／SLA／法遵／資安五類，THE SYSTEM SHALL 以固定句＋`handoff` 回覆，⛔ 即使知識池內有可引用文字也不答（承接 DSP-009）；五類判定 SHALL 為模型輸出的封閉 enum 欄位（沿用 `fact_class`）加程式端數字／機構名檢查雙保險。
