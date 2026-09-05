@@ -75,8 +75,8 @@ def _final_response(*, kind="answer", answer="答案內容", fact_class="feature
     # DSP-028：逐句一筆；整段當一筆 greeting（假 Verifier 路徑只需形狀正確）
     payload = {
         "kind": kind,
-        "sentences": [] if not answer else [{"text": answer, "kind": "greeting", "cite": []}],
-        "citations": [], "fact_class": fact_class, "handoff_reason": handoff_reason,
+        "sentences": [] if not answer else [{"text": answer, "kind": "greeting", "refs": []}],
+        "fact_class": fact_class, "handoff_reason": handoff_reason,
     }
     return _fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))
 
@@ -233,7 +233,7 @@ async def test_agent_turn_matches_direct_run_turn():
     assert result.data["quick_replies"] == list(direct.quick_replies)
     assert isinstance(result.data["trace_id"], str) and result.data["trace_id"]
 
-    # ⛔ 回傳形狀就是 R3.7 的五個鍵——不多不少（無 citations、無被拒文字）
+    # ⛔ 回傳形狀就是 R3.7 的五個鍵——不多不少（無引用、無被拒文字）
     assert set(result.data) == {"answer", "kind", "handoff", "quick_replies", "trace_id"}
 
 
@@ -707,8 +707,8 @@ def _output(answer: str, *, fact_class="feature") -> AgentOutput:
 
     sents = [s for s in re.split(r"(?<=。)", answer) if s]
     out = AgentOutput(
-        kind="answer", citations=[],
-        sentences=[Sentence(text=s, kind="greeting", cite=[]) for s in sents],
+        kind="answer",
+        sentences=[Sentence(text=s, kind="greeting", refs=[]) for s in sents],
         fact_class=fact_class,
     )
     assert out.answer == answer, "拼接後必須等於原文——這是 DSP-028 的定義"
@@ -752,7 +752,8 @@ def test_all_real_ruleset_term_ids_are_rule_indices():
     """對**正式規則集**跑一遍 fixture，任何非 `rule#n` 的 term_id 都算紅。"""
     from pathlib import Path
 
-    from services.agent.provenance_units import resolve_citations
+    from services.agent.provenance_units import resolve_refs
+    from services.agent.verifier import _FIXTURE_NONCE
 
     root = Path(__file__).resolve().parents[3]
     rules = VerifierRules.load(root / "config" / "agent_verifier_rules.json")
@@ -768,8 +769,9 @@ def test_all_real_ruleset_term_ids_are_rule_indices():
             tid: ToolResult.model_validate(tr)
             for tid, tr in case.get("tool_results", {}).items()
         }
-        # DSP-029：引用解析由系統產生後另傳（⛔ 不從 out 取、⛔ 不在測試裡另寫一份）
-        resolved, resolve_errors = resolve_citations(out, tool_results)
+        # DSP-029a：引用解析由系統產生後另傳（⛔ 不從 out 取、⛔ 不在測試裡另寫一份）
+        resolved, resolve_errors = resolve_refs(
+            out, tool_results, case.get("nonce") or _FIXTURE_NONCE)
         verdict = verifier.verify(out, tool_results, case.get("user_message", ""),
                                   case.get("handoff"),
                                   resolved=resolved, resolve_errors=resolve_errors)

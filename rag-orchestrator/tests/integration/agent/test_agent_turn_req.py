@@ -2,7 +2,8 @@
 
 真測試庫（`form_sessions`／`api_keys`／`usage_events`）＋真 MCP SDK；
 **DSP-029 註記**：本檔的腳本化輸出全部是**問候句／無引用斷言**，⛔ 沒有任何一處
-建構 `Citation`，故引用契約從 `quote` 改成 `unit` 對本檔無影響（`citations: []` 不變）。
+建構引用，故引用契約從 `quote` → `unit` → DSP-029a 的標記字串對本檔皆無影響
+（每一筆 `sentences` 的 `refs` 恆為空陣列）。
 真 Verifier 的自證此後多讀一份 `known_open.json`（已知未擋的捏造句，`expect_ok=True`），
 `_make_runtime` 走的 `bootstrap.build_runtime` 會連它一起載入。
 
@@ -156,8 +157,7 @@ def _agent_output(*, kind="answer", answer="您好。", fact_class="feature",
     assert "".join(sents) == answer, "本 helper 只支援以「。」結尾的句子"
     return json.dumps({
         "kind": kind,
-        "sentences": [{"text": s, "kind": "greeting", "cite": []} for s in sents],
-        "citations": [],
+        "sentences": [{"text": s, "kind": "greeting", "refs": []} for s in sents],
         "fact_class": fact_class, "handoff_reason": handoff_reason,
     }, ensure_ascii=False)
 
@@ -456,8 +456,7 @@ async def test_verifier_double_reject_returns_fixed_sentence_without_rejected_te
     session_id = _session()
     draft = json.dumps({
         "kind": "answer",
-        "sentences": [{"text": _REJECTED_DRAFT, "kind": "fact", "cite": []}],
-        "citations": [],
+        "sentences": [{"text": _REJECTED_DRAFT, "kind": "fact", "refs": []}],
         "fact_class": "feature", "handoff_reason": None,
     }, ensure_ascii=False)
     runtime = _make_runtime(pool, [_fake_response(draft), _fake_response(draft)])

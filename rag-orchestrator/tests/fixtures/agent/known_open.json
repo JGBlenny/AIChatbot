@@ -1,6 +1,7 @@
 [
   {
     "id": "r4_upload_existing_contract_as_reference_1",
+    "nonce": "FIXTURE0000000000",
     "note": "R4 抽審發現 2（真捏造）：大綱只說「上傳的既存合約與系統制式合約效力相同」，模型卻講成「作為參考」。⚠️ **本案現在仍被放行**——r13 #1 實算 0.5 相對覆蓋率擋不住它（字元集合無序，捏造的「參考」兩字擋不下整句）。⛔ 不得因為它在本檔就宣稱已擋。",
     "known_open": true,
     "open_since": "DSP-029",
@@ -12,16 +13,9 @@
         {
           "text": "您可以將既有的紙本合約上傳存檔作為參考。",
           "kind": "fact",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:outline:outline:contract§2]"
           ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "outline",
-          "source": "outline:contract",
-          "unit": 2
         }
       ],
       "fact_class": "feature",
@@ -44,6 +38,7 @@
   },
   {
     "id": "r4_upload_existing_contract_as_reference_2",
+    "nonce": "FIXTURE0000000000",
     "note": "R4 抽審發現 2 的第二種講法（「存檔作為參考」）。同上仍被放行。",
     "known_open": true,
     "open_since": "DSP-029",
@@ -55,16 +50,9 @@
         {
           "text": "既有的紙本合約上傳後會留存作為參考。",
           "kind": "fact",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:outline:outline:contract§2]"
           ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "outline",
-          "source": "outline:contract",
-          "unit": 2
         }
       ],
       "fact_class": "feature",
@@ -87,6 +75,7 @@
   },
   {
     "id": "r4_edit_contract_requires_admin_role",
+    "nonce": "FIXTURE0000000000",
     "note": "R4 抽審發現 3（邊界題硬答）：大綱的【修改】節完全沒提權限，模型卻答「編輯合約需要管理者權限」。同樣仍被放行。",
     "known_open": true,
     "open_since": "DSP-029",
@@ -98,16 +87,9 @@
         {
           "text": "編輯合約需要管理者權限。",
           "kind": "fact",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:outline:outline:contract§4]"
           ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "outline",
-          "source": "outline:contract",
-          "unit": 4
         }
       ],
       "fact_class": "feature",

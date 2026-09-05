@@ -321,7 +321,8 @@ def _max_updated_at_iso(rows: list[tuple], updated_at_index: int) -> str:
 def _build_doc(
     *, audience: Audience, sections: list[OutlineSection], version: str
 ) -> OutlineDoc:
-    # DSP-020：章節標題帶 section id——模型引用大綱時 `Citation.source` 要填它
+    # DSP-020：章節標題帶 section id——它是資料段行首標記裡的 `source` 那一段
+    # （DSP-029a：模型照抄整串標記，⛔ 不再自己填 source 欄位）
     # （`outline:contract`），只給標題模型無從得知 id（影子 2026-09-05 實測）。
     text = _SECTION_SEP.join(f"【{s.id}】{s.title}\n{s.text}" for s in sections)
     # sha 涵蓋 version（＝池列 max(updated_at)），⛔ 不只涵蓋 text——

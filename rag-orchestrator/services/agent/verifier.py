@@ -1,7 +1,7 @@
 """`OutputVerifier`（spec agentic-mcp-orchestration・任務 2.3，design.md 元件 6）。
 
 七步順序（全部通過才放行；第一個踩到的違規決定 `VerifierVerdict.reason`）：
-①敏感五類 ②白名單句型（逐筆 schema 檢查＋逐片段「純」條件降級） ③逐字＋覆蓋＋極性
+①敏感五類 ②白名單句型（逐筆結構檢查＋逐片段「純」條件降級） ③覆蓋＋極性
 ④來源可引用 ⑤導流白名單 ⑥禁詞 ⑦handoff 詞後置掃描。
 
 **DSP-028：②③④的量測單位是「筆」與「片段」，①⑤⑥⑦的量測單位是拼接後的 `answer`**
@@ -21,13 +21,13 @@ from pathlib import Path
 from typing import Optional
 
 from services.agent.output_schema import AgentOutput, Sentence, VerifierRules, VerifierVerdict
-from services.agent.provenance_units import (  # 葉模組：切句與大綱 source 正規化（DSP-029 落地取捨④）
+from services.agent.provenance_units import (  # 葉模組：切句與 refs 解析（DSP-029 落地取捨④）
     _SENTENCE_ENDS,
-    _canonicalize_outline_sources,
+    ResolvedRef,
     _split_sentences,
     split_sentences,
 )
-from services.agent.tools.registry import Provenance, ToolResult
+from services.agent.tools.registry import ToolResult
 from services.presales_gate import FactClass, HANDOFF_WORDS, HandoffReason, SENSITIVE, scan_handoff_mentions
 
 #: 「純」條件切子句用的封閉分隔詞（design：逗號／頓號／分號）。
@@ -41,11 +41,13 @@ _GREETING_PHRASES: frozenset[str] = frozenset({
     "您好", "你好", "嗨", "哈囉", "早安", "午安", "晚安",
     "謝謝", "謝謝您", "不客氣", "感謝您的詢問", "很高興為您服務", "您好，很高興為您服務",
 })
-#: DSP-029 r13 #2：資料段片段標記 `[{nonce}:{source}§{i}]` 的樣式。模型把它抄進
-#: 回覆就是 `SCHEMA(marker_in_answer)`——那既是把系統的內部標記漏給使用者，也是
+#: DSP-029a：資料段片段標記 `[{nonce}:{tool_call_id}:{source}§{i}]` 的樣式。模型把它
+#: 抄進回覆就是 `SCHEMA(marker_in_answer)`——那既是把系統的內部標記漏給使用者，也是
 #: 「引文由系統解析」這條契約被繞過的訊號（模型在自己造引用外觀）。
 #: ⚠️ 掃的是 **NFKC 後**的 `answer`：全形括號在 NFKC 會折回半形，靠字形躲不掉。
-_UNIT_MARKER_RE = re.compile(r"\[[0-9A-Za-z]{8,64}:[^\]\s]+§\d+\]")
+#: ⚠️ 三段式與 `provenance_units._REF_RE` 是同一個格式的兩個用途（掃描 vs 解析），
+#: ⛔ 改一邊就要改另一邊；`tests/unit/agent/test_prompt_assembler_req.py` 有兩側對齊測試。
+_UNIT_MARKER_RE = re.compile(r"\[[0-9A-Za-z]{8,64}:[^\]\s:]+:[^\]\s]+§\d+\]")
 #: URL／電話樣式（結構偵測用；是否在白名單由 `VerifierRules.allowed_routes` 決定）。
 _URL_RE = re.compile(r"https?://[\w\-./%?=&#]+", re.IGNORECASE)
 _PHONE_RE = re.compile(r"(?:\+?886[-\s]?)?0?9\d{2}[-\s]?\d{3}[-\s]?\d{3}|0\d{1,2}[-\s]?\d{3,4}[-\s]?\d{4}")
@@ -91,6 +93,11 @@ def _rule_id(index: int) -> str:
     return f"rule#{index}"
 
 
+#: fixture 案內未指定 `nonce` 時的缺省值（`_assert_all` 用）。⛔ 只給 fixture／自證用，
+#: 產線 nonce 一律來自 `prompt_assembler.new_nonce()`——固定值在真線路上等於沒有 nonce。
+_FIXTURE_NONCE = "FIXTURE0000000000"
+
+
 def _is_legal_fact_class(value: Optional[str]) -> bool:
     return isinstance(value, str) and value in {fc.value for fc in FactClass}
 
@@ -108,15 +115,21 @@ class OutputVerifier:
         user_message: str,
         handoff: Optional[dict],
         *,
-        resolved: dict[int, str],
-        resolve_errors: dict[int, str],
+        resolved: dict[tuple[int, int], ResolvedRef],
+        resolve_errors: dict[tuple[int, int], str],
     ) -> VerifierVerdict:
         """`resolved`／`resolve_errors` 由**呼叫端**（Runtime／`self_test`）以
-        `services.agent.provenance_units.resolve_citations` 算好傳進來。
+        `services.agent.provenance_units.resolve_refs` 算好傳進來，鍵是
+        `(筆索引, ref 索引)`（DSP-029a）。
 
         ⚠️ 兩者刻意是**必填關鍵字參數、⛔ 無預設值**（r13 F-A）：解析後的引文
-        ⛔ 不掛在 `AgentOutput`／`Citation` 上，所以 Verifier 沒有別的地方拿得到它；
+        ⛔ 不掛在 `AgentOutput`／`Sentence` 上，所以 Verifier 沒有別的地方拿得到它；
         給預設值等於允許「忘了傳 ⇒ 引用檢查靜靜失去比對對象」，而那個失敗方向是放行。
+
+        ⚠️ `tool_results` 在 DSP-029a 之後**本方法已不再讀它**——來源的 `citable`
+        旗標隨 `ResolvedRef` 一起傳進來，⛔ 不再於此二次查表（兩處各查一次就會出現
+        「解析用 A 筆 provenance、可引用旗標讀到 B 筆」的分歧）。參數保留是刻意的：
+        它是 design 元件 6 的介面契約，Runtime／測試都以這個形狀對接。
         """
         # ① 敏感五類（fail-closed：缺／非法一律視為敏感）
         if not _is_legal_fact_class(out.fact_class):
@@ -166,40 +179,9 @@ class OutputVerifier:
             if sentence.text.strip() == "":
                 return VerifierVerdict(
                     ok=False, reason="SCHEMA", schema_cause="empty_text", sent=i)
-        # (c) 任一 cite 索引越界 ⇒ SCHEMA。⚠️ **負索引也是越界**（r11 安全審 F-5）：
-        #     python 的 `citations[-1]` 會靜靜取到最後一筆合法引用，等於讓模型用 -1
-        #     借別句的引用來替自己的斷言背書。重複索引可接受（同一筆引用支撐多個片段）。
-        for i, sentence in enumerate(out.sentences):
-            for idx in sentence.cite:
-                if idx < 0 or idx >= len(out.citations):
-                    return VerifierVerdict(
-                        ok=False, reason="SCHEMA",
-                        schema_cause="cite_out_of_range", sent=i)
-        # (d) DSP-029：**被引用**的 citation 解析不出來源片段 ⇒ SCHEMA ＋ 子成因。
-        #     ⚠️ 只看被 `cite` 指到的那些——沒有任何句子引用的 citation 是模型多寫的
-        #     裝飾，讓它決定整回合生死只會憑空推高拒絕率；真正的風險是「某句話拿一筆
-        #     解析不出來的引用當依據」，那一定會出現在某個 `cite` 裡。
-        cited_indices = sorted({idx for sentence in out.sentences for idx in sentence.cite})
-        for i, sentence in enumerate(out.sentences):
-            for idx in sentence.cite:
-                cause = resolve_errors.get(idx)
-                if cause is not None:
-                    return VerifierVerdict(
-                        ok=False, reason="SCHEMA", schema_cause=cause, sent=i)
-        # 正對照：被引用的每一筆都必須真的解析出片段——`resolved` 缺鍵而
-        # `resolve_errors` 也沒有成因，代表呼叫端傳進來的兩個 dict 本身不完整
-        # （例如自己算了一半），⛔ 不得靜默放行。
-        missing = [idx for idx in cited_indices if idx not in resolved]
-        if missing:
-            raise ValueError(
-                f"verify() 收到不完整的引用解析結果：citations 索引 {missing} "
-                "既不在 resolved 也不在 resolve_errors——請用 "
-                "services.agent.provenance_units.resolve_citations 產生這兩個 dict"
-            )
-
-        # ②～④ 逐筆 → 逐片段：型別複核（「純」條件降級）→ fact 需 cite → 逐字／覆蓋／極性／可引用
+        # ②～④ 逐筆 → 逐片段：型別複核（「純」條件降級）→ fact 需 refs → 覆蓋／極性／可引用
         # ⚠️ 一筆可能被模型塞進多個句子（「您好！我們支援批次匯入。」標成 greeting）。
-        # 片段**只繼承 `kind`／`cite` 這兩個標籤，⛔ 不繼承驗證結果**——每個非空片段
+        # 片段**只繼承 `kind`／`refs` 這兩個標籤，⛔ 不繼承驗證結果**——每個非空片段
         # 各自跑 `_effective_kind`（以片段本文判）與③④（比對文字一律用片段本文，
         # ⛔ 不用整筆、⛔ 不用拼接後的 answer）。
         for i, sentence in enumerate(out.sentences):
@@ -211,15 +193,31 @@ class OutputVerifier:
                     continue
                 if self._effective_kind(fragment, sentence) != "fact":
                     continue
-                if not sentence.cite:
+                if not sentence.refs:
                     return VerifierVerdict(ok=False, reason="UNCITED_ASSERTION", sent=i)
-                # r11 安全審 F-1（量詞寫死）：這個片段必須在**該筆 `cite` 之中**
-                # 至少有一筆 citation 完整通過③④（逐字＋覆蓋＋極性＋citable）。
+                # DSP-029a（r15 #4）：標記解析失敗**只在這裡**致命——被降級為 fact 的
+                # 片段所在那一筆。非 fact 筆的 refs 解析失敗 ⛔ 不影響 verdict，維持
+                # v4「只看被引用到的」決策：讓模型多寫的裝飾性引用決定整回合生死，
+                # 只會憑空推高拒絕率，而真正的風險一定出現在某個事實句的 refs 裡。
+                for j in range(len(sentence.refs)):
+                    cause = resolve_errors.get((i, j))
+                    if cause is not None:
+                        return VerifierVerdict(
+                            ok=False, reason="SCHEMA", schema_cause=cause, sent=i)
+                    # 正對照：既不在 `resolve_errors` 也不在 `resolved`，代表呼叫端傳
+                    # 進來的兩個 dict 本身不完整（例如自己算了一半）⇒ ⛔ 不得靜默放行。
+                    if (i, j) not in resolved:
+                        raise ValueError(
+                            f"verify() 收到不完整的 refs 解析結果：第 {i} 筆第 {j} 個標記"
+                            "既不在 resolved 也不在 resolve_errors——請用 "
+                            "services.agent.provenance_units.resolve_refs 產生這兩個 dict"
+                        )
+                # r11 安全審 F-1（量詞寫死）：這個片段必須在**該筆 `refs` 之中**
+                # 至少有一個解析結果完整通過③④（長度＋覆蓋＋極性＋citable）。
                 # ⛔ 不得以「同筆的別的片段已經通過」代替——那正是跨片段夾帶捏造的出口。
                 last_failure: Optional[VerifierVerdict] = None
-                for idx in sentence.cite:
-                    failure = self._verify_citation(
-                        i, fragment, out.citations[idx], tool_results, resolved[idx])
+                for j in range(len(sentence.refs)):
+                    failure = self._verify_ref(i, fragment, resolved[(i, j)])
                     if failure is None:
                         last_failure = None
                         break
@@ -277,14 +275,13 @@ class OutputVerifier:
             return "fact"
         return "fact"
 
-    def _verify_citation(
+    def _verify_ref(
         self,
-        sent: int,          # DSP-028：**筆索引**（片段不另編號）
+        sent: int,           # DSP-028：**筆索引**（片段不另編號）
         sentence_text: str,  # DSP-028：**片段本文**（⛔ 不是整筆、⛔ 不是拼接後的 answer）
-        citation,
-        tool_results: dict[str, ToolResult],
-        source_unit: str,    # DSP-029：**解析後**的來源片段（⛔ 不取自 citation）
+        ref: ResolvedRef,    # DSP-029a：**解析後**的來源片段（⛔ 不取自模型輸出）
     ) -> Optional[VerifierVerdict]:
+        source_unit = ref.quote
         unit_nfkc = _nfkc(source_unit)
         if len(unit_nfkc) < self.rules.min_quote_len:
             # DSP-029：模型不再抄字，這條量的是**來源片段本身太短**（例如只有
@@ -292,19 +289,6 @@ class OutputVerifier:
             # 「不是模型的錯」就取消它：短片段仍然是不足的依據。
             return VerifierVerdict(ok=False, reason="QUOTE_TOO_SHORT", sent=sent, quote_len=len(unit_nfkc))
 
-        # DSP-029：來源以 `(tool_call_id, source)` 精確定位——`unit` 的越界／
-        # source 不存在已在步②以 SCHEMA 擋掉，走到這裡一定找得到。
-        # ⚠️ **函式內 import ⛔ 勿改成模組層**：`services.agent.provenance_units`
-        # 反過來要 import 本檔的 `split_sentences`（切法只准有一份，r13 F-B）。
-        # 模組層雙向 import 會在「先載入 verifier」的順序下炸——`split_sentences`
-        # 定義在本檔末尾，那時還不存在。放在函式內，兩個載入順序都成立。
-        from services.agent.provenance_units import find_provenance
-
-        matched: Optional[Provenance] = find_provenance(
-            tool_results, citation.tool_call_id, citation.source)
-        if matched is None:
-            # 不可達（步② 的 resolve_errors 會先擋）；留著是為了 ⛔ 不靜默放行。
-            return VerifierVerdict(ok=False, reason="SCHEMA", schema_cause="source_not_found", sent=sent)
         # `QUOTE_NOT_VERBATIM` 在模型端已不可達（引文是系統從原文切出來的）。
         # 這裡不再有對應分支——拒因列舉仍保留該值（trace 相容），由
         # `tests/unit/agent/test_verifier_req.py` 的**程式層**測試守住
@@ -334,7 +318,8 @@ class OutputVerifier:
                 ok=False, reason="POLARITY_MISMATCH", sent=sent,
                 term_id=_rule_id((sent_hits or unit_hits)[0]))
 
-        if not matched.citable:
+        # DSP-029a：`citable` 隨解析結果一起傳進來，⛔ 不在此二次查 `tool_results`。
+        if not ref.citable:
             return VerifierVerdict(ok=False, reason="SOURCE_NOT_CITABLE", sent=sent)
 
         return None
@@ -382,15 +367,14 @@ class OutputVerifier:
             tool_results = {
                 tid: ToolResult.model_validate(tr) for tid, tr in case.get("tool_results", {}).items()
             }
-            # DSP-029：引文由程式解析，fixture 只給 `(tool_call_id, source, unit)`。
-            # ⛔ 這裡不得自己另寫一套解析——跟 Runtime 用**同一組函式、同一個順序**
-            # （先 `_canonicalize_outline_sources` 再 `resolve_citations`），才叫自證：
-            # 少跑正規化這一步，自證量到的就不是產線上跑的那條路（DSP-021 的兩種
-            # 大綱 source 抄錯會被誤判成 source_not_found）。
-            from services.agent.provenance_units import resolve_citations  # 見 _verify_citation 的說明
+            # DSP-029a：引用是標記字串，解析由 `resolve_refs` 做。
+            # ⛔ 這裡不得自己另寫一套解析——跟 Runtime 用**同一個函式**才叫自證。
+            # 案內 `nonce` 是該案標記裡用的代碼；缺省 `_FIXTURE_NONCE` 供
+            # 「不刻意測 nonce」的案例共用（測 nonce 不符的案例自己填別的值）。
+            from services.agent.provenance_units import resolve_refs
 
-            out = _canonicalize_outline_sources(out)
-            resolved, resolve_errors = resolve_citations(out, tool_results)
+            nonce = case.get("nonce") or _FIXTURE_NONCE
+            resolved, resolve_errors = resolve_refs(out, tool_results, nonce)
             verdict = self.verify(
                 out, tool_results, case.get("user_message", ""), case.get("handoff"),
                 resolved=resolved, resolve_errors=resolve_errors)
@@ -408,7 +392,7 @@ class OutputVerifier:
                     f"OutputVerifier self_test 失敗：{path.name} 案例 {case.get('id')} "
                     f"預期 reason={case['expected_reason']}，實得 reason={verdict.reason}"
                 )
-            # 同理（DSP-029 r13 #7）：`SCHEMA` 有七種子成因，只比 `reason` 一樣會假綠——
+            # 同理（DSP-029 r13 #7）：`SCHEMA` 有八種子成因，只比 `reason` 一樣會假綠——
             # fixture 標了 `expected_schema_cause` 就必須對得上。
             if ("expected_schema_cause" in case
                     and verdict.schema_cause != case["expected_schema_cause"]):

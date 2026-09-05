@@ -520,7 +520,7 @@ def run_old_chain(
                             "handoff_reason": handoff_reason, "kind": kind,
                             # 舊鏈沒有結構化引用（它不是 agent 契約）⇒ 恆空，
                             # 但鍵要在：同一份 texts JSONL 的鍵集合⛔ 不得因鏈而異。
-                            "citations": [],
+                            "refs": [],
                         }
                     )
     if db_pool is not None:
@@ -598,19 +598,18 @@ def _fixed_agent_output_for(turn: "Turn") -> dict:
     else:
         kind = turn.expect_kind or "answer"
     answer = "" if kind == "handoff" else f"[fake-agent-answer:{kind}]"
-    # DSP-028：逐句一筆 `{text, kind, cite}`，⛔ 不再有 `answer`／逐句對照表。
+    # DSP-028／DSP-029a：逐句一筆 `{text, kind, refs}`，⛔ 不再有 `answer`／`citations`。
     # ⚠️ 這裡刻意補一個問號、標 `question`：本路徑用的是 `build_runtime` 組出的
     # **真 Verifier**，只有走得過白名單句型的假輸出才不會固定被拒。
     # （舊形的 `answer` 有一句、逐句對照表卻是空的 ⇒ 每個非 handoff 回合都被
     # 判 SCHEMA、兩拒耗盡，`budget_exhausted` 因此恆為真——那不是量到系統，
     # 是量到假輸出自己的形狀錯。⛔ 不要把那個行為當基準沿用。）
     sentences = [] if kind == "handoff" else [
-        {"text": f"{answer}？", "kind": "question", "cite": []}
+        {"text": f"{answer}？", "kind": "question", "refs": []}
     ]
     return {
         "kind": kind,
         "sentences": sentences,
-        "citations": [],
         "fact_class": "other",
         "handoff_reason": "no_grounding" if kind == "handoff" else None,
     }
@@ -718,7 +717,7 @@ async def _run_scenario_agent(
 
 
 def _verdict_reason_label(verdict: Any) -> str:
-    """拒因標籤：`SCHEMA` 附上子成因（`SCHEMA:source_not_found`），其餘原樣。
+    """拒因標籤：`SCHEMA` 附上子成因（形如 `SCHEMA:ref_source_not_found`），其餘原樣。
 
     ⛔ 只有封閉列舉值進來——`reason` 與 `schema_cause` 都是 Literal，⛔ 無原文。
     """
@@ -727,29 +726,25 @@ def _verdict_reason_label(verdict: Any) -> str:
     return f"{reason}:{cause}" if reason == "SCHEMA" and cause else reason
 
 
-def _citations_for_dump(result: Any) -> list[dict]:
-    """`--dump-texts` 旁路的引用欄：**只放 `(tool_call_id, source, unit)`**（r13 #6）。
+def _refs_for_dump(result: Any) -> list[str]:
+    """`--dump-texts` 旁路的引用欄：**只放 `refs` 標記字串**（r13 #6／DSP-029a）。
 
-    ⚠️ DSP-029 之後 `Citation` 已經沒有 `quote` 欄——引文由系統依 `unit` 解析，
-    ⛔ 解析結果不寫回 `AgentOutput`，所以這條旁路也拿不到、也**不應該**拿到原文：
-    人工抽審要對照原文時，用 `(source, unit)` 回大綱／工具回傳自己查，
+    ⚠️ 標記字串裡沒有原文——它是 `[{nonce}:{tool_call_id}:{source}§{編號}]`，
+    引文由系統依它解析，⛔ 解析結果不寫回 `AgentOutput`，所以這條旁路也拿不到、
+    也**不應該**拿到原文：人工抽審要對照原文時，拿標記回大綱／工具回傳自己查，
     ⛔ 不在這裡多開一個原文出口。
 
-    ⚠️ **待接**：`TurnResult` 目前不帶 `citations`（見上方呼叫點註解），
+    ⚠️ **待接**：`TurnResult` 目前不帶 `sentences`（見上方呼叫點註解），
     因此實務上恆回空陣列。這裡用 `getattr` 取而不是硬存取，是為了讓將來
     Runtime 真的開這條回傳時，本函式不必再改。
     """
-    citations = getattr(result, "citations", None) or []
-    out: list[dict] = []
-    for c in citations:
-        get = c.get if isinstance(c, dict) else (lambda k: getattr(c, k, None))
-        out.append(
-            {
-                "tool_call_id": get("tool_call_id"),
-                "source": get("source"),
-                "unit": get("unit"),
-            }
-        )
+    sentences = getattr(result, "sentences", None) or []
+    out: list[str] = []
+    for sentence in sentences:
+        get = sentence.get if isinstance(sentence, dict) else (
+            lambda k: getattr(sentence, k, None))
+        for ref in (get("refs") or []):
+            out.append(str(ref))
     return out
 
 
@@ -762,9 +757,9 @@ def _build_agent_record(
     handoff_reason = (handoff or {}).get("reason") if isinstance(handoff, dict) else None
     kind = result.kind
     verifier_rejects = sum(1 for v in result.trace.verifier if not v.ok)
-    # DSP-029 r13 #7：`SCHEMA` 有七種子成因，只記 `SCHEMA` 等於把它們擠成同一格
-    # （驗收①要求 SCHEMA 子成因逐項落表、`source_not_found` 單獨計數）。
-    # 形如 `SCHEMA:source_not_found`；⛔ 只放封閉列舉值，無任何原文。
+    # DSP-029 r13 #7／DSP-029a：`SCHEMA` 有八種子成因，只記 `SCHEMA` 等於把它們擠成
+    # 同一格（驗收①要求 refs 四子成因逐項落表並給合計）。
+    # 形如 `SCHEMA:ref_source_not_found`；⛔ 只放封閉列舉值，無任何原文。
     verifier_reasons = ",".join(_verdict_reason_label(v) for v in result.trace.verifier if not v.ok)
     budget_exhausted = handoff_reason == "budget_exhausted"
     forbid_hit = _forbid_hit(answer, t.must_not_contain)
@@ -781,7 +776,7 @@ def _build_agent_record(
                 # （它會落 `usage_events.decision_snapshot.agent`）。要真的填滿這欄
                 # 得讓 Runtime 另開一條「只給 texts 旁路」的回傳，那是新的原文出口、
                 # 不在 DSP-028 核准範圍內 ⇒ 標為**待接**，見任務回報。
-                "citations": _citations_for_dump(result),
+                "refs": _refs_for_dump(result),
             }
         )
     return EvalRecord(
@@ -1169,13 +1164,21 @@ def render_report_md(
             lines.append(f"- verifier_reasons 分佈：{detail}")
         else:
             lines.append("- verifier_reasons 分佈：（本批無拒因）")
-        # DSP-029 驗收①：以下三格**單列**，⛔ 不併進上面的分佈裡看——
-        # `source_not_found` 有獨立上限（5/162）、POLARITY 以 R4 的 9/162 為基準
+        # DSP-029a 驗收①：refs 四子成因**逐項單列＋合計**，⛔ 不併進上面的分佈裡看——
+        # 合計有獨立上限（5/162）、POLARITY 以 R4 的 9/162 為基準
         # （相對 R4 暴增視為本案副作用如實報，⛔ 不得靠放寬極性來救）。
-        snf = reason_counts.get("SCHEMA:source_not_found", 0)
+        # ⚠️ 四格**一律列出**，命中 0 也印 `0/N`：只印有命中的那幾格，看的人會把
+        # 「沒印出來」讀成「沒量」，而那正是這張表要防的事。
+        ref_causes = ("ref_invalid", "ref_source_not_found",
+                      "ref_ambiguous", "unit_out_of_range")
+        ref_total = 0
+        for cause in ref_causes:
+            n = reason_counts.get(f"SCHEMA:{cause}", 0)
+            ref_total += n
+            lines.append(f"- {cause}：{n}/{len(agent_records)}（DSP-029a 驗收①子成因）")
         lines.append(
-            f"- source_not_found：{snf}/{len(agent_records)}"
-            "（DSP-029 驗收①子成因，上限 5/162）"
+            f"- refs 四子成因合計：{ref_total}/{len(agent_records)}"
+            "（DSP-029a 驗收①，上限 5/162）"
         )
         pol = reason_counts.get("POLARITY_MISMATCH", 0)
         lines.append(
@@ -1186,7 +1189,7 @@ def render_report_md(
         lines.append("- budget_exhausted：n/a（本批無 agent 鏈紀錄）")
     lines.append(f"- known_open 通過數：{_known_open_pass_line()}")
     lines.append(
-        "- 整筆免 cite 的 question／greeting 比例：**待接**（r11 安全審 F-2 的 OPEN 項監控欄）。"
+        "- 整筆免引用的 question／greeting 比例：**待接**（r11 安全審 F-2 的 OPEN 項監控欄）。"
         "　⚠️ `TurnResult`／`TurnTrace` 目前都不回 `sentences`，這個比例算不出來；"
         "在它接上之前，單句修辭問句整筆免引用的風險只能從上面的 `verifier_reasons` 分佈"
         "間接觀察（`UNCITED_ASSERTION` 少不代表沒有漏，⛔ 不得當成該風險已關閉）。"

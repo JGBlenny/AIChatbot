@@ -249,8 +249,11 @@ def test_agent_chain_fake_provider_topics_shape(sample_root, tmp_path):
     report = (out_dir / "report.md").read_text(encoding="utf-8")
     assert "agent_eval report" in report
     assert "三項硬線" in report
-    # DSP-029 驗收①⓪：source_not_found／POLARITY 單列、known_open 通過數
-    assert "source_not_found：" in report
+    # DSP-029a 驗收①⓪：refs 四子成因逐項＋合計單列、POLARITY 單列、known_open 通過數
+    for cause in ("ref_invalid", "ref_source_not_found",
+                  "ref_ambiguous", "unit_out_of_range"):
+        assert f"- {cause}：" in report, cause
+    assert "refs 四子成因合計：" in report
     assert "POLARITY_MISMATCH：" in report
     assert "known_open 通過數：" in report
     # DSP-028 監控欄：budget_exhausted 逐批分子/分母 ＋ verifier_reasons 分佈
@@ -258,7 +261,7 @@ def test_agent_chain_fake_provider_topics_shape(sample_root, tmp_path):
     assert f"budget_exhausted：" in report and f"/{len(lines)}（agent 鏈" in report
     assert "verifier_reasons 分佈" in report
     # F-2 的 OPEN 監控欄目前算不出來 ⇒ 必須誠實標「待接」，⛔ 不得靜默省略
-    assert "整筆免 cite 的 question／greeting 比例：**待接**" in report
+    assert "整筆免引用的 question／greeting 比例：**待接**" in report
 
 
 def test_agent_chain_is_deterministic(sample_root, tmp_path):
@@ -891,18 +894,21 @@ def test_dump_texts_on_writes_warning_header_and_raw_text(sample_root, tmp_path)
     assert len(body_rows) == 2
     for row in body_rows:
         assert set(row.keys()) == {"set", "idx", "turn", "rep", "chain", "q", "answer",
-                                   "handoff_reason", "kind", "citations"}
-        assert isinstance(row["citations"], list)   # DSP-028：形狀在，內容待接（見 _citations_for_dump）
-    # DSP-029 r13 #6：citations 旁路只放 (tool_call_id, source, unit)，⛔ 無 quote 原文
+                                   "handoff_reason", "kind", "refs"}
+        assert isinstance(row["refs"], list)   # DSP-028：形狀在，內容待接（見 _refs_for_dump）
+    # DSP-029a：refs 旁路只放標記字串，⛔ 無 quote 原文
     from types import SimpleNamespace
 
-    from tools.agent_eval import _citations_for_dump
+    from tools.agent_eval import _refs_for_dump
 
-    sample = _citations_for_dump(
-        SimpleNamespace(citations=[{"tool_call_id": "t1", "source": "kb:1", "unit": 2,
-                                    "quote": "⛔ 這個鍵不該被帶出來"}])
+    sample = _refs_for_dump(
+        SimpleNamespace(sentences=[
+            {"text": "⛔ 這句原文不該被帶出來", "kind": "fact",
+             "refs": ["[aaaa1111bbbb2222:t1:kb:1§2]"]},
+            {"text": "問句沒有引用。", "kind": "question", "refs": []},
+        ])
     )
-    assert sample == [{"tool_call_id": "t1", "source": "kb:1", "unit": 2}]
+    assert sample == ["[aaaa1111bbbb2222:t1:kb:1§2]"]
 
     # 主 JSONL 的無原文紀律不變（--dump-texts 不影響它）
     main_rows = [

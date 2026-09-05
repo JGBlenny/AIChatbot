@@ -19,36 +19,28 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 
-class Citation(BaseModel):
-    """一筆引用：**指向來源的第幾句**，⛔ 不再由模型抄引文（DSP-029）。
-
-    `source` 格式如 `kb:3600`／`outline:contract`／`help:qa06`／`jgb2:bills#ref`。
-    引文由 Runtime 依 `(tool_call_id, source, unit)` 從 `Provenance.text` 以
-    `services.agent.provenance_units.provenance_units` 切出第 `unit` 個片段解析，
-    另以 `resolved` 傳進 Verifier——**⛔ 解析結果不得寫回本模型任何欄位**
-    （r13 F-A：解析後的原文一旦掛在 `AgentOutput` 上，就會跟著
-    `decision_snapshot`／trace 外流，那正是 2.6 security review P2 擋掉的事）。
-    """
-    tool_call_id: str
-    source: str
-    unit: int = Field(
-        description=(
-            "來源片段編號：資料段裡每個片段行首標記 [代碼:來源§編號] 的那個編號（從 0 起算）。"
-            "填你要引用的那一句的編號，⛔ 不要把片段文字抄進來、⛔ 不要填負數。"
-        )
-    )
-
-
 class Sentence(BaseModel):
-    """模型逐句輸出的**一筆**：文字與它的分類、引用索引同筆攜帶（DSP-028）。
+    """模型逐句輸出的**一筆**：文字、分類與依據標記同筆攜帶（DSP-028／DSP-029a）。
 
     `text` 要含句尾標點；⛔ 一筆不放兩句（放兩句時 Verifier 會把它切成片段逐一複核，
-    片段只**繼承** `kind`／`cite` 標籤、⛔ 不繼承驗證結果）。
-    `cite` 是 `AgentOutput.citations` 的索引清單。
+    片段只**繼承** `kind`／`refs` 標籤、⛔ 不繼承驗證結果）。
+
+    **DSP-029a：`refs` 是標記字串本身，⛔ 不再是任何陣列的索引。**
+    起因見 `.claude/DECISIONS.md` DSP-029a：舊契約要模型自己對齊
+    `tool_call_id`／`source`／`unit` 三個定址欄位，R5 實測 162 回合裡 119 次錯在
+    三欄互混。標記已經整串印在資料段那一行的行首，照抄一個字串是模型做得到的動作，
+    對齊三個欄位不是。解析在 `services.agent.provenance_units.resolve_refs`，
+    ⛔ 解析結果不寫回本模型任何欄位（r13 F-A：掛上去就會跟著
+    `decision_snapshot`／trace 外流）。
     """
     text: str
     kind: Literal["fact", "question", "greeting", "routing"]
-    cite: list[int] = Field(default_factory=list)
+    refs: list[str] = Field(
+        default_factory=list,
+        description=(
+            "事實句填其依據所在那一行開頭的標記，原樣照抄。"
+        ),
+    )
 
 
 class AgentOutput(BaseModel):
@@ -58,25 +50,21 @@ class AgentOutput(BaseModel):
     「句數等於標籤數、順序對得上」，句數不等時程式只能猜哪筆標籤配哪一句，猜錯的
     方向是放行。改成文字與標籤同筆攜帶後，「拼接後等於送出的字串」變成定義而不是
     要靠檢查維持的巧合。
+
+    **DSP-029a：⛔ 不再有 `citations` 陣列**——引用就是 `Sentence.refs` 裡的標記字串，
+    句子與依據之間不再隔一層索引（索引本身是另一個會對錯的東西）。
     """
     kind: Literal["answer", "ask", "recommend", "handoff"] = Field(
         description=(
             "本輪回覆的型別：answer 直接回答、ask 反問澄清、recommend 建議下一步、"
-            "handoff 轉真人（轉人時 sentences 與 citations 可留空）。"
+            "handoff 轉真人（轉人時 sentences 可留空）。"
         )
     )
     sentences: list[Sentence] = Field(
         default_factory=list,
         description=(
-            "回覆逐句一筆 {text, kind, cite}；text 含句尾標點、⛔ 一筆不放兩句。"
+            "回覆逐句一筆 {text, kind, refs}；text 含句尾標點、⛔ 一筆不放兩句。"
             "系統把各筆 text 原樣接起來就是使用者看到的整段話，⛔ 不另外給 answer 欄位。"
-        ),
-    )
-    citations: list[Citation] = Field(
-        default_factory=list,
-        description=(
-            "引用清單：每筆指出某個事實句出自哪一次工具回傳或哪一個大綱章節的第幾句"
-            "（tool_call_id＋source＋unit）；句子那一側在自己的 cite 填本清單的索引（從 0 起算）。"
         ),
     )
     fact_class: Optional[str] = None  # 見檔案頂端說明：刻意不是 FactClass 型別
@@ -137,16 +125,19 @@ class VerifierVerdict(BaseModel):
     term_id: Optional[str] = Field(default=None, pattern=TERM_ID_PATTERN)
     quote_len: Optional[int] = None
     #: DSP-029 r13 #7：`SCHEMA` 的**子成因**（封閉列舉）。原本只回 `SCHEMA` 三個字，
-    #: 模型與稽核都看不出是哪一種；引用改指向來源句編號後又多了三種結構性失敗
-    #: （來源不存在／編號越界／把標記抄進 text），不分流等於把它們混進同一格。
-    #: ⛔ 只放列舉值，**不攜帶 source／unit 以外的模型文字**——它會落
+    #: 模型與稽核都看不出是哪一種；引用改成標記字串後，「標記本身不合格式／不是
+    #: 本回合的」與「標記合格式但指不到東西」是不同的病，不分流等於把它們混進同一格。
+    #: DSP-029a：`cite_out_of_range` 退場（`cite` 索引已不存在），改為
+    #: `ref_invalid`（格式不合或 nonce 非本回合）／`ref_source_not_found`／`ref_ambiguous`。
+    #: ⛔ 只放列舉值，**不攜帶任何模型文字或來源原文**——它會落
     #: `usage_events.decision_snapshot.agent`，也會被 trace 端點印出來。
     schema_cause: Optional[
         Literal[
             "empty_sentences",
             "empty_text",
-            "cite_out_of_range",
-            "source_not_found",
+            "ref_invalid",
+            "ref_source_not_found",
+            "ref_ambiguous",
             "unit_out_of_range",
             "marker_in_answer",
             "handoff_reason_invalid",
@@ -181,5 +172,5 @@ class VerifierRules(BaseModel):
         return cls.model_validate(data)
 
 
-__all__ = ["Citation", "Sentence", "AgentOutput", "VerdictReason", "VerifierVerdict",
+__all__ = ["Sentence", "AgentOutput", "VerdictReason", "VerifierVerdict",
            "VerifierRules", "TERM_ID_PATTERN"]

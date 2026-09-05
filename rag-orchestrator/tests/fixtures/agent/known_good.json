@@ -1,6 +1,7 @@
 [
   {
     "id": "good_fact_with_valid_citation",
+    "nonce": "FIXTURE0000000000",
     "note": "fact 句有效引用：逐字、覆蓋、極性、可引用皆過",
     "user_message": "物件可以批次匯入嗎？",
     "agent_output": {
@@ -9,16 +10,9 @@
         {
           "text": "物件資料可以透過範本檔案批次匯入。",
           "kind": "fact",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:3357§0]"
           ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "t1",
-          "source": "kb:3357",
-          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -41,7 +35,8 @@
   },
   {
     "id": "good_pure_question_no_citation",
-    "note": "純反問句（子句未命中 assertion_terms）⇒ 免 cite",
+    "nonce": "FIXTURE0000000000",
+    "note": "純反問句（子句未命中 assertion_terms）⇒ 免 refs",
     "user_message": "我想了解可以怎麼開始",
     "agent_output": {
       "kind": "ask",
@@ -49,10 +44,9 @@
         {
           "text": "請問您目前管理的物件大約有幾間呢？",
           "kind": "question",
-          "cite": []
+          "refs": []
         }
       ],
-      "citations": [],
       "fact_class": "other",
       "handoff_reason": null
     },
@@ -61,7 +55,8 @@
   },
   {
     "id": "good_greeting",
-    "note": "問候詞封閉表全句命中 ⇒ 免 cite",
+    "nonce": "FIXTURE0000000000",
+    "note": "問候詞封閉表全句命中 ⇒ 免 refs",
     "user_message": "哈囉",
     "agent_output": {
       "kind": "answer",
@@ -69,10 +64,9 @@
         {
           "text": "您好！",
           "kind": "greeting",
-          "cite": []
+          "refs": []
         }
       ],
-      "citations": [],
       "fact_class": "other",
       "handoff_reason": null
     },
@@ -81,7 +75,8 @@
   },
   {
     "id": "good_routing_allowed_url",
-    "note": "routing 句只含白名單導流連結 ⇒ 免 cite 且不觸發 ROUTE_NOT_ALLOWED",
+    "nonce": "FIXTURE0000000000",
+    "note": "routing 句只含白名單導流連結 ⇒ 免 refs 且不觸發 ROUTE_NOT_ALLOWED",
     "user_message": "費用怎麼算？",
     "agent_output": {
       "kind": "answer",
@@ -89,10 +84,9 @@
         {
           "text": "如需查看方案與費用，請參考 https://www.jgbsmart.com/pricing。",
           "kind": "routing",
-          "cite": []
+          "refs": []
         }
       ],
-      "citations": [],
       "fact_class": "other",
       "handoff_reason": null
     },
@@ -101,6 +95,7 @@
   },
   {
     "id": "good_negation_matched",
+    "nonce": "FIXTURE0000000000",
     "note": "句子與 quote 的否定極性一致（皆為「不支援」）",
     "user_message": "可以批次改租金嗎？",
     "agent_output": {
@@ -109,16 +104,9 @@
         {
           "text": "系統目前不支援批次修改租金，需要逐筆手動調整。",
           "kind": "fact",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:4001§0]"
           ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "t1",
-          "source": "kb:4001",
-          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -141,6 +129,7 @@
   },
   {
     "id": "good_impure_question_with_citation",
+    "nonce": "FIXTURE0000000000",
     "note": "design 元件 6 例句的正例：反問句夾帶斷言子句、降級 fact，但有效引用 ⇒ 放行",
     "user_message": "合約可以批次匯入嗎？",
     "agent_output": {
@@ -149,16 +138,9 @@
         {
           "text": "我們的系統支援批次匯入合約，請問您有幾間？",
           "kind": "question",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:9500§0]"
           ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "t1",
-          "source": "kb:9500",
-          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -181,6 +163,7 @@
   },
   {
     "id": "good_handoff_word_with_handoff",
+    "nonce": "FIXTURE0000000000",
     "note": "答案含封閉詞「專人」但 handoff 非空 ⇒ 不觸發 HANDOFF_WORD_NO_HANDOFF（句子本身仍走一般 fact 引用檢查）",
     "user_message": "我要找人談",
     "agent_output": {
@@ -189,16 +172,9 @@
         {
           "text": "這部分建議由專人為您服務。",
           "kind": "fact",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:8000§0]"
           ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "t1",
-          "source": "kb:8000",
-          "unit": 0
         }
       ],
       "fact_class": "other",
@@ -225,7 +201,8 @@
   },
   {
     "id": "good_multi_sentence",
-    "note": "多句混合型別：問候＋fact（有 cite）＋純反問，schema 覆蓋全文",
+    "nonce": "FIXTURE0000000000",
+    "note": "多句混合型別：問候＋fact（有 refs）＋純反問，schema 覆蓋全文",
     "user_message": "哈囉，可以介紹一下匯入功能嗎？",
     "agent_output": {
       "kind": "answer",
@@ -233,26 +210,19 @@
         {
           "text": "您好！",
           "kind": "greeting",
-          "cite": []
+          "refs": []
         },
         {
           "text": "物件資料可以透過範本檔案批次匯入。",
           "kind": "fact",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:3357§0]"
           ]
         },
         {
           "text": "還有想了解的其他問題嗎？",
           "kind": "question",
-          "cite": []
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "t1",
-          "source": "kb:3357",
-          "unit": 0
+          "refs": []
         }
       ],
       "fact_class": "feature",
@@ -275,12 +245,12 @@
   },
   {
     "id": "good_handoff_sensitive_pricing",
+    "nonce": "FIXTURE0000000000",
     "note": "DSP-021：模型自判敏感（pricing）走 kind=handoff、reason 在值域內 ⇒ 放行（文字由 Runtime 換固定句）",
     "user_message": "一個月多少錢？",
     "agent_output": {
       "kind": "handoff",
       "sentences": [],
-      "citations": [],
       "fact_class": "pricing",
       "handoff_reason": "sensitive_no_grounding"
     },
@@ -292,6 +262,7 @@
   },
   {
     "id": "good_polarity_synonym_negation",
+    "nonce": "FIXTURE0000000000",
     "note": "DSP-021：句子「不支持」、引文「不支援」同為否定 ⇒ 極性一致（詞組層級），不得誤殺",
     "user_message": "合約可以批次匯入嗎？",
     "agent_output": {
@@ -300,16 +271,9 @@
         {
           "text": "合約目前不支持批次匯入，需要逐筆建立。",
           "kind": "fact",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:outline:outline:listing§0]"
           ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "outline",
-          "source": "outline:listing",
-          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -332,6 +296,7 @@
   },
   {
     "id": "good_question_only_multi_entry_fragments",
+    "nonce": "FIXTURE0000000000",
     "note": "正對照：同一筆放兩個片段但兩個都是純問句（無 assertion_terms、都以問號結尾）⇒ 放行——證明逐片段複核只擋「夾斷言」，⛔ 不是「一筆多句一律拒」",
     "user_message": "你們怎麼收費？",
     "agent_output": {
@@ -340,10 +305,9 @@
         {
           "text": "請問您目前管理幾間物件呢？方便告訴我嗎？",
           "kind": "question",
-          "cite": []
+          "refs": []
         }
       ],
-      "citations": [],
       "fact_class": "feature",
       "handoff_reason": null
     },
@@ -352,6 +316,7 @@
   },
   {
     "id": "good_fragments_split_into_two_entries_each_cited",
+    "nonce": "FIXTURE0000000000",
     "note": "F-c 正對照(1/2)：把兩句拆成兩筆、各自帶自己的引用 ⇒ 放行",
     "user_message": "物件可以批次匯入嗎？",
     "agent_output": {
@@ -360,28 +325,16 @@
         {
           "text": "物件資料可以透過範本檔案批次匯入。",
           "kind": "fact",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:3357§0]"
           ]
         },
         {
           "text": "匯入前請先下載範本檔案。",
           "kind": "fact",
-          "cite": [
-            1
+          "refs": [
+            "[FIXTURE0000000000:t2:kb:3358§0]"
           ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "t1",
-          "source": "kb:3357",
-          "unit": 0
-        },
-        {
-          "tool_call_id": "t2",
-          "source": "kb:3358",
-          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -415,6 +368,7 @@
   },
   {
     "id": "good_two_fragments_one_entry_same_citation_covers_both",
+    "nonce": "FIXTURE0000000000",
     "note": "F-c 正對照(2/2)：同一筆兩個片段共用同一筆引用，但**兩個片段各自**都通過逐字＋覆蓋＋極性＋citable ⇒ 放行",
     "user_message": "物件跟帳單都能匯入嗎？",
     "agent_output": {
@@ -423,16 +377,9 @@
         {
           "text": "物件資料可以批次匯入。歷史帳單也可以一起匯入。",
           "kind": "fact",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:3357§0]"
           ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "t1",
-          "source": "kb:3357",
-          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -455,6 +402,7 @@
   },
   {
     "id": "good_handoff_with_fabricated_sentences",
+    "nonce": "FIXTURE0000000000",
     "note": "F-f handoff 帶捏造 sentences ⇒ 放行：那段文字不會到使用者手上（Runtime 換 effective_handoff_message 固定句），對它跑②～⑦沒有意義、只會白白多兩次模型呼叫。行為由 test_outline_citation_seed_req.py 的固定句測試釘住",
     "user_message": "一個月多少錢？",
     "agent_output": {
@@ -463,10 +411,9 @@
         {
           "text": "我們的月費是 3000 元，保證業界最低。",
           "kind": "fact",
-          "cite": []
+          "refs": []
         }
       ],
-      "citations": [],
       "fact_class": "pricing",
       "handoff_reason": "sensitive_no_grounding"
     },
@@ -476,97 +423,8 @@
     }
   },
   {
-    "id": "good_outline_source_with_title_suffix",
-    "note": "DSP-021（一／二）：source 把中文標題一起抄進來 ⇒ _canonicalize_outline_sources 去掉標題後仍解析得到 outline:listing 的第 0 句 ⇒ 放行。⚠️ 正規化在 Runtime，self_test 依同一順序（正規化→解析→驗證）重現。",
-    "user_message": "合約可以批次匯入嗎？",
-    "agent_output": {
-      "kind": "answer",
-      "sentences": [
-        {
-          "text": "合約目前不支援批次匯入，需要逐筆建立。",
-          "kind": "fact",
-          "cite": [
-            0
-          ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "outline",
-          "source": "outline:listing 房源",
-          "unit": 0
-        }
-      ],
-      "fact_class": "feature",
-      "handoff_reason": null
-    },
-    "tool_results": {
-      "outline": {
-        "ok": true,
-        "provenance": [
-          {
-            "source": "outline:listing",
-            "text": "要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）。",
-            "citable": true
-          },
-          {
-            "source": "outline:lease",
-            "text": "金箍棒的租約管理把一般租賃合約從建約到簽署搬到線上。",
-            "citable": true
-          }
-        ],
-        "text_for_model": ""
-      }
-    },
-    "handoff": null
-  },
-  {
-    "id": "good_outline_source_missing_prefix",
-    "note": "DSP-021（二／二）：source 掉了 `outline:` 前綴 ⇒ 正規化補回後解析得到 outline:listing 的第 0 句 ⇒ 放行。",
-    "user_message": "合約可以批次匯入嗎？",
-    "agent_output": {
-      "kind": "answer",
-      "sentences": [
-        {
-          "text": "合約目前不支援批次匯入，需要逐筆建立。",
-          "kind": "fact",
-          "cite": [
-            0
-          ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "outline",
-          "source": "listing",
-          "unit": 0
-        }
-      ],
-      "fact_class": "feature",
-      "handoff_reason": null
-    },
-    "tool_results": {
-      "outline": {
-        "ok": true,
-        "provenance": [
-          {
-            "source": "outline:listing",
-            "text": "要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）。",
-            "citable": true
-          },
-          {
-            "source": "outline:lease",
-            "text": "金箍棒的租約管理把一般租賃合約從建約到簽署搬到線上。",
-            "citable": true
-          }
-        ],
-        "text_for_model": ""
-      }
-    },
-    "handoff": null
-  },
-  {
     "id": "good_jgb2_source_with_hash_parses",
+    "nonce": "FIXTURE0000000000",
     "note": "r13 #2 分隔符選 `§` 而非 `#` 的正對照：jgb2 的 source 本身含 `#`（`jgb2:bills#ref`），用 `#` 當分隔符會讓來源與編號的邊界不唯一。這裡指第 1 句（非第 0 句）⇒ 證明含 `#` 的 source 一樣定址得到正確片段。",
     "user_message": "下期帳單什麼時候出來？",
     "agent_output": {
@@ -575,16 +433,9 @@
         {
           "text": "下期帳單將於月初自動產生並寄送通知。",
           "kind": "fact",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:t9:jgb2:bills#ref§1]"
           ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "t9",
-          "source": "jgb2:bills#ref",
-          "unit": 1
         }
       ],
       "fact_class": "feature",
@@ -607,6 +458,7 @@
   },
   {
     "id": "good_source_text_with_brackets_still_resolves",
+    "nonce": "FIXTURE0000000000",
     "note": "正對照（r13 #2）：來源文字本身含 `[`／`]` ⛔ 不轉義——引用比對的目標是`Provenance.text` 原文，為了讓標記好認去改原文會讓解析出來的引文與原文不再相等。含中括號的來源照樣解析得到、照樣通過覆蓋。",
     "user_message": "匯入失敗怎麼辦？",
     "agent_output": {
@@ -615,16 +467,9 @@
         {
           "text": "匯入失敗時可以重新下載範本檔案再貼上資料。",
           "kind": "fact",
-          "cite": [
-            0
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:3357§0]"
           ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "t1",
-          "source": "kb:3357",
-          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -637,6 +482,92 @@
           {
             "source": "kb:3357",
             "text": "[注意] 匯入失敗時可以重新下載範本檔案再貼上資料，避免格式異常。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "good_greeting_entry_with_broken_ref_and_cited_fact",
+    "nonce": "FIXTURE0000000000",
+    "note": "DSP-029a（r15 #4）**正對照**：解析失敗只在「被降級為 fact 的片段所在那一筆」上致命。第 0 筆是純問候（`_effective_kind` 判 greeting），它的 `refs` 指到一個不存在的來源也 ⛔ 不影響 verdict；第 1 筆是事實句、標記正確 ⇒ 放行。⚠️ 沒有這條，「非 fact 筆的解析失敗不致命」這個決策就沒有可執行的證據。",
+    "user_message": "你好，物件可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "您好。",
+          "kind": "greeting",
+          "refs": [
+            "[FIXTURE0000000000:t9:kb:0000§0]"
+          ]
+        },
+        {
+          "text": "物件資料可以透過範本檔案批次匯入。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:3357§0]"
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:3357",
+            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "good_search_then_get_same_source_two_tool_calls",
+    "nonce": "FIXTURE0000000000",
+    "note": "DSP-029a 主流程正對照：`kb.search` → `kb.get` 是**兩個 tool_call**，兩邊的 `source` 都是同一個 `kb:3357`。標記第二段是 `tool_call_id`，所以引到 `kb.get` 那次的片段解析得到答案本文（citable=true）⇒ 放行，且 ⛔ 不會誤判成 `ref_ambiguous`（歧義只在同一次回傳內成立）。",
+    "user_message": "物件可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "物件資料可以透過範本檔案批次匯入。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t_get:kb:3357§0]"
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t_search": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:3357",
+            "text": "物件批次匯入的相關問答彙整。",
+            "citable": false
+          }
+        ],
+        "text_for_model": ""
+      },
+      "t_get": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:3357",
+            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
             "citable": true
           }
         ],

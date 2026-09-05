@@ -6,8 +6,8 @@
 - design 元件 6 例句「支援批次匯入合約，請問您有幾間？」的降級判定（無引用拒、有引用放）
 - `self_test()`：對兩份 fixture 全過；植入一筆漏網的捏造句（無引用的斷言）即 raise，
   證明自證機制真的會咬——而不是「兩份檔案存在」就算過。
-- DSP-028 逐筆／逐片段：空陣列／空 text／cite 越界（含負索引）三種 SCHEMA、
-  跨筆拆字與拆數字的規避、片段繼承 cite 但自己覆蓋不足、問候／導流筆尾巴夾斷言，
+- DSP-028 逐筆／逐片段：空陣列／空 text 兩種結構 SCHEMA、
+  跨筆拆字與拆數字的規避、片段繼承 refs 但自己覆蓋不足、問候／導流筆尾巴夾斷言，
   以及四個正對照（同筆多問句、拆兩筆各自引用、同筆兩片段共用一筆引用、handoff 捏造文字）。
 
 離線、不接觸真 DB／真 LLM。`SENSITIVE`／`HANDOFF_WORDS` 只 import `services.presales_gate`，
@@ -19,10 +19,9 @@ from pathlib import Path
 import pytest
 
 from services.agent.output_schema import AgentOutput, VerifierRules
-from services.agent.provenance_units import provenance_units, resolve_citations
-from services.agent.runtime import _canonicalize_outline_sources
+from services.agent.provenance_units import provenance_units, resolve_refs
 from services.agent.tools.registry import ToolResult
-from services.agent.verifier import OutputVerifier, split_sentences
+from services.agent.verifier import _FIXTURE_NONCE, OutputVerifier, split_sentences
 
 pytestmark = pytest.mark.unit
 
@@ -35,15 +34,18 @@ def _load_cases(name: str) -> list[dict]:
 
 
 def _run(verifier: OutputVerifier, case: dict):
-    """與產線同一個順序：正規化 → 解析 →驗證（DSP-029）。
+    """與產線同一個順序：解析 → 驗證（DSP-029a；正規化那一步已隨
+    `_canonicalize_outline_sources` 一併退役）。
 
     ⚠️ `resolved`／`resolve_errors` ⛔ 不在這裡另寫一套算法——那樣測到的就是本檔
-    自己的解析，不是系統的解析。"""
-    out = _canonicalize_outline_sources(AgentOutput.model_validate(case["agent_output"]))
+    自己的解析，不是系統的解析。nonce 取案內的值（缺省與 `self_test` 同一個），
+    測「nonce 不符」的案例靠案內 nonce 與標記裡的 nonce 不同來造。"""
+    out = AgentOutput.model_validate(case["agent_output"])
     tool_results = {
         tid: ToolResult.model_validate(tr) for tid, tr in case.get("tool_results", {}).items()
     }
-    resolved, resolve_errors = resolve_citations(out, tool_results)
+    resolved, resolve_errors = resolve_refs(
+        out, tool_results, case.get("nonce") or _FIXTURE_NONCE)
     return verifier.verify(
         out, tool_results, case.get("user_message", ""), case.get("handoff"),
         resolved=resolved, resolve_errors=resolve_errors)
@@ -102,10 +104,14 @@ def test_known_fabrication_rejected_with_expected_reason(verifier, case):
     if "expected_schema_cause" in case:
         assert verdict.schema_cause == case["expected_schema_cause"]
     # ⛔ 無原文：結構化欄位不得裝回答句子（DSP-028：逐筆 text 一一比對）。
-    # DSP-029 後 `Citation` 已無 `quote` 欄，模型端不再有引文原文可外洩。
+    # DSP-029a 後模型端連引文欄位都不存在——`refs` 只放標記字串，
+    # 正對照：先確認 fixture 真的沒有 `citations`／`cite` 這兩個已退役的鍵。
     texts = [sentence["text"] for sentence in case["agent_output"]["sentences"]]
     assert verdict.term_id not in texts
-    assert all("quote" not in c for c in case["agent_output"]["citations"])
+    assert "citations" not in case["agent_output"]
+    for sentence in case["agent_output"]["sentences"]:
+        assert "cite" not in sentence
+        assert all(isinstance(r, str) for r in sentence.get("refs", []))
 
 
 @pytest.mark.parametrize("case", _GOOD, ids=[c["id"] for c in _GOOD])
@@ -117,7 +123,7 @@ def test_known_good_passes(verifier, case):
 # ---------------------------------------------------------------- design 元件 6 例句
 
 def test_impure_question_without_citation_is_rejected(verifier):
-    """「支援批次匯入合約，請問您有幾間？」子句命中 assertion_terms（支援）⇒ 降級 fact ⇒ 需 cite。"""
+    """「支援批次匯入合約，請問您有幾間？」子句命中 assertion_terms（支援）⇒ 降級 fact ⇒ 需 refs。"""
     case = next(c for c in _FABRICATIONS if c["id"] == "impure_question_uncited")
     verdict = _run(verifier, case)
     assert verdict.ok is False
@@ -125,7 +131,7 @@ def test_impure_question_without_citation_is_rejected(verifier):
 
 
 def test_impure_question_with_valid_citation_passes(verifier):
-    """同一句型，補上有效引用後應放行——證明降級只影響「要不要 cite」，不是整句一律拒。"""
+    """同一句型，補上有效引用後應放行——證明降級只影響「要不要引用」，不是整句一律拒。"""
     case = next(c for c in _GOOD if c["id"] == "good_impure_question_with_citation")
     verdict = _run(verifier, case)
     assert verdict.ok is True
@@ -143,16 +149,24 @@ def test_impure_question_with_valid_citation_passes(verifier):
         ("route_url_spaced", "ROUTE_NOT_ALLOWED"),            # URL 被空格拆開
         ("sensitive_customer_reference", "SENSITIVE_TOPIC"),  # 敏感題「有料」（有引用）仍拒
         ("fact_class_missing", "SENSITIVE_TOPIC"),            # fact_class 缺
-        ("schema_mismatch", "SCHEMA"),                        # DSP-028：cite 索引越界
+        ("empty_text_sentence", "SCHEMA"),                    # DSP-028：某筆 text 全空白
         ("handoff_fact_class_missing", "SENSITIVE_TOPIC"),    # DSP-021：handoff 仍要合法 fact_class
         ("handoff_reason_free_text", "SCHEMA"),               # DSP-021：handoff_reason 值域外
         # DSP-029：`source` 就是定址 ⇒ 洗白手法在結構上消失，拒因改為覆蓋不過
         ("wrong_label_cannot_launder_non_citable", "QUOTE_NOT_COVERING"),
         ("unit_out_of_range", "SCHEMA"),                     # DSP-029：編號越界
-        ("unit_negative_index", "SCHEMA"),                   # DSP-029：負數編號＝越界
+        ("ref_negative_unit_is_malformed", "SCHEMA"),        # DSP-029a：負數編號連格式都不合
         ("source_not_found", "SCHEMA"),                      # DSP-029：來源不存在
         ("marker_copied_into_text", "SCHEMA"),               # r13 #2：標記抄進 text
         ("unit_points_to_unrelated_sentence", "QUOTE_NOT_COVERING"),  # 指到同來源無關句
+        # DSP-029a 新增的四種 refs 病灶
+        ("ref_nonce_from_another_turn", "SCHEMA"),
+        ("ref_ambiguous_same_source_two_texts_in_one_tool_result", "SCHEMA"),
+        ("fact_entry_with_empty_refs_while_another_entry_is_cited", "UNCITED_ASSERTION"),
+        ("ref_points_to_kb_search_snippet_not_citable", "SOURCE_NOT_CITABLE"),
+        # DSP-029a：`_canonicalize_outline_sources` 退役後改判的 DSP-021 兩案
+        ("outline_source_with_title_suffix_no_longer_canonicalized", "SCHEMA"),
+        ("outline_source_missing_prefix_no_longer_canonicalized", "SCHEMA"),
     ],
 )
 def test_specific_named_scenarios(verifier, case_id, expected_reason):
@@ -173,13 +187,11 @@ def test_specific_named_scenarios(verifier, case_id, expected_reason):
         ("empty_sentences_non_handoff", "SCHEMA", None),
         # (b) 空白 text
         ("empty_text_sentence", "SCHEMA", 0),
-        # (c)/F-5 負索引（python 的 citations[-1] 會靜靜取到合法引用）
-        ("cite_negative_index", "SCHEMA", 0),
         # F-a 跨筆拆字規避 assertion_terms ⇒ 結構複核仍降級 fact
         ("split_assertion_across_entries", "UNCITED_ASSERTION", 0),
         # F-b 跨筆拆數字 ⇒ 靠①掃拼接全文的反向護欄
         ("split_number_across_entries", "SENSITIVE_TOPIC", None),
-        # F-1／F-c 片段只繼承 cite 標籤、不繼承驗證結果；sent = 筆索引
+        # F-1／F-c 片段只繼承 refs 標籤、不繼承驗證結果；sent = 筆索引
         ("fragment_inherits_cite_but_not_covering", "QUOTE_NOT_COVERING", 0),
         # F-d 問候／導流筆尾巴夾斷言
         ("greeting_tail_assertion", "UNCITED_ASSERTION", 0),
@@ -205,6 +217,10 @@ def test_dsp028_per_entry_and_per_fragment_scenarios(verifier, case_id, expected
         "good_two_fragments_one_entry_same_citation_covers_both",
         # F-f：handoff 帶捏造 sentences ⇒ Verifier 放行（文字由 Runtime 換固定句）
         "good_handoff_with_fabricated_sentences",
+        # DSP-029a r15 #4：非 fact 筆的 refs 解析失敗 ⛔ 不影響 verdict
+        "good_greeting_entry_with_broken_ref_and_cited_fact",
+        # DSP-029a 主流程：search→get 同一個 `kb:id` 兩個 tool_call，引 get 的片段
+        "good_search_then_get_same_source_two_tool_calls",
     ],
 )
 def test_dsp028_positive_controls_pass(verifier, case_id):
@@ -223,8 +239,8 @@ def test_answer_is_the_join_of_sentence_texts_and_is_what_gets_scanned():
 
 
 def test_uncited_fragment_needs_a_citation_that_passes_on_its_own(verifier):
-    """r11 安全審 F-1（量詞）：降級為 fact 的片段，必須在**該筆 cite** 中至少一筆
-    citation 完整通過③④；⛔ 不得以「同筆的別的片段已經通過」代替。
+    """r11 安全審 F-1（量詞）：降級為 fact 的片段，必須在**該筆 refs** 中至少一個
+    解析結果完整通過③④；⛔ 不得以「同筆的別的片段已經通過」代替。
 
     反證：把 F-c 那筆的第二個片段刪掉（只留通得過的片段）就會放行——
     證明拒因確實來自第二個片段自己，不是整筆一律拒。"""
@@ -314,21 +330,25 @@ def test_resolved_unit_is_always_a_substring_of_provenance():
     否則這個 for 迴圈跑 0 圈也會「通過」，什麼都沒證明。"""
     checked = 0
     for case in _GOOD + _FABRICATIONS + _KNOWN_OPEN:
-        out = _canonicalize_outline_sources(AgentOutput.model_validate(case["agent_output"]))
+        out = AgentOutput.model_validate(case["agent_output"])
         tool_results = {
             tid: ToolResult.model_validate(tr)
             for tid, tr in case.get("tool_results", {}).items()
         }
-        resolved, _errors = resolve_citations(out, tool_results)
-        for idx, fragment in resolved.items():
-            citation = out.citations[idx]
-            prov = next(
-                p for p in tool_results[citation.tool_call_id].provenance
-                if p.source == citation.source
-            )
-            assert fragment in prov.text, (case["id"], idx)
+        resolved, _errors = resolve_refs(
+            out, tool_results, case.get("nonce") or _FIXTURE_NONCE)
+        for (sent_idx, ref_idx), ref in resolved.items():
+            # 解析結果一定出自某一筆 provenance 的原文；`ResolvedRef.source` 記的是
+            # 標記裡那一段，拿它回頭找那筆 provenance 就能驗子字串關係。
+            prov_texts = [
+                p.text
+                for tr in tool_results.values()
+                for p in (tr.provenance or [])
+                if p.source == ref.source
+            ]
+            assert any(ref.quote in t for t in prov_texts), (case["id"], sent_idx, ref_idx)
             checked += 1
-    assert checked > 0, "沒有任何 citation 解析成功——這條斷言什麼都沒證明"
+    assert checked > 0, "沒有任何 ref 解析成功——這條斷言什麼都沒證明"
 
 
 def test_provenance_units_drops_blank_pieces_and_keeps_order():
@@ -352,8 +372,8 @@ def test_relative_coverage_threshold_is_stricter_than_the_absolute_floor(verifie
             "user_message": "q",
             "agent_output": {
                 "kind": "answer",
-                "sentences": [{"text": sentence_text, "kind": "fact", "cite": [0]}],
-                "citations": [{"tool_call_id": "t1", "source": "kb:1", "unit": 0}],
+                "sentences": [{"text": sentence_text, "kind": "fact",
+                               "refs": [f"[{_FIXTURE_NONCE}:t1:kb:1§0]"]}],
                 "fact_class": "feature",
                 "handoff_reason": None,
             },
@@ -386,8 +406,7 @@ def test_self_test_raises_when_a_fabrication_slips_through(verifier, tmp_path):
         "user_message": "test",
         "agent_output": {
             "kind": "answer",
-            "sentences": [{"text": "這是一句沒有引用的斷言。", "kind": "fact", "cite": []}],
-            "citations": [],
+            "sentences": [{"text": "這是一句沒有引用的斷言。", "kind": "fact", "refs": []}],
             "fact_class": "feature",
             "handoff_reason": None,
         },

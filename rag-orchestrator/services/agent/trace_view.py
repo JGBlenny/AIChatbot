@@ -154,8 +154,11 @@ def _render_verdict(verdict: Any) -> dict:
     verdict = verdict if isinstance(verdict, Mapping) else {}
     return {
         "reason": verdict.get("reason"),
-        # DSP-029 r13 #7：`SCHEMA` 的子成因（封閉列舉值，⛔ 無原文）——只回 reason
-        # 時七種結構性失敗全擠成同一格，稽核看不出「來源不存在」與「句子空白」的差別。
+        # DSP-029 r13 #7／DSP-029a：`SCHEMA` 的子成因（封閉列舉值，⛔ 無原文）——只回
+        # reason 時八種結構性失敗全擠成同一格，稽核看不出「標記不是本回合的」
+        # （`ref_invalid`）與「句子空白」的差別。值域見
+        # `services/agent/output_schema.py:VerifierVerdict.schema_cause`，本檔**原樣透傳**，
+        # ⛔ 不自己維護第二份名單（維護第二份就會有新值印不出來的那一天）。
         "schema_cause": verdict.get("schema_cause"),
         "sent": verdict.get("sent"),
         "rule": rule_index(verdict.get("term_id")),
@@ -249,7 +252,7 @@ def render_text(view: Mapping) -> str:
             lines.append(f"  {i}. 通過")
         else:
             tail = f"  規則={v['rule']}" if v.get("rule") else ""
-            # DSP-029：`SCHEMA` 不印子成因等於什麼都沒說（七種結構性失敗同一格）。
+            # DSP-029／DSP-029a：`SCHEMA` 不印子成因等於什麼都沒說（八種結構性失敗同一格）。
             cause = f"／{v['schema_cause']}" if v.get("schema_cause") else ""
             lines.append(
                 f"  {i}. 拒 {v['reason']}{cause}  筆次={_fmt(v.get('sent'))}{tail}")

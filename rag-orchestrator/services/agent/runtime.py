@@ -7,12 +7,13 @@
 快取段）。
 
 **2.5 收尾註記（本檔已接妥的三條，取代下方舊的「刻意留白」敘述）**：
-- `AgentOutput`／`VerifierVerdict`／`Citation`／`Sentence` 的權威定義已
+- `AgentOutput`／`VerifierVerdict`／`Sentence` 的權威定義已
   搬到 `services/agent/output_schema.py`（任務 2.3），本檔全部改
   `from services.agent.output_schema import ...`，⛔ 不再本地重複定義。
 - 工具回傳已包裝成資料段才進 `role="tool"` 訊息：**有 provenance** 的工具走
-  `wrap_provenance_data(name, [(source, provenance_units(text))…], nonce)`
-  （DSP-029：每個片段行首帶 `[{nonce}:{source}§{i}]`，模型引用時只填 `unit` 編號）；
+  `wrap_provenance_data(name, tool_call_id, [(source, provenance_units(text))…], nonce)`
+  （DSP-029a：每個片段行首帶 `[{nonce}:{tool_call_id}:{source}§{i}]`，模型引用時
+  把整串標記原樣照抄進 `Sentence.refs`）；
   **無 provenance** 的工具（handoff／session.slots／confirm）維持
   `wrap_tool_data(name, text_for_model, nonce)`，其 source 視為不存在、不可引用。
 - `assembler.build(...)` 與 `assembler.build_messages(...)` 二選一：本檔選
@@ -25,7 +26,7 @@
 **本任務刻意留白（由後續任務補上，⛔ 不是這裡漏做）**：
 - `AgentOutput.model_json_schema()` 轉成 OpenAI strict `json_schema` 目前只
   在頂層補 `additionalProperties: false`／`required`，未遞迴處理巢狀
-  `Citation`／`Sentence`／`$defs`——這支任務全程用假 provider（⛔ 不呼叫
+  `Sentence`／`$defs`——這支任務全程用假 provider（⛔ 不呼叫
   真 OpenAI），沒有機會踩到 strict 校驗的實際邊界；2.2 接真線路時要驗一次。
 - HandoffReason（`services.presales_gate.HandoffReason`）是封閉 `str, Enum`
   （`no_grounding`／`sensitive_no_grounding`／`llm_mentioned_handoff`／
@@ -62,11 +63,10 @@ from services.agent.identity import Identity, Stage
 from services.agent.mcp_facade import current_stage
 from services.agent.output_schema import AgentOutput, VerifierVerdict
 from services.agent.prompt_assembler import new_nonce, wrap_provenance_data, wrap_tool_data
-from services.agent.provenance_units import (  # OUTLINE_TOOL_CALL_ID／_canonicalize_outline_sources 下沉至葉模組（DSP-029 落地取捨④）
+from services.agent.provenance_units import (  # OUTLINE_TOOL_CALL_ID 下沉至葉模組（DSP-029 落地取捨④）
     OUTLINE_TOOL_CALL_ID,
-    _canonicalize_outline_sources,
     provenance_units,
-    resolve_citations,
+    resolve_refs,
 )
 from services.agent.tools.registry import Provenance, ToolRegistry, ToolResult, tool_name_from_openai
 from services.conversational_config import (
@@ -80,13 +80,13 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # `AgentOutput`／`VerifierVerdict` 權威定義在 `services/agent/output_schema.py`
 # （任務 2.3）；本檔只 import，⛔ 不再本地重複定義（2.5 收尾註記，見模組
-# docstring）。`Citation`／`Sentence` 本檔不直接使用，不重複 import。
+# docstring）。`Sentence` 本檔不直接使用，不重複 import。
 # ---------------------------------------------------------------------------
 
 
 
 #: DSP-020：大綱章節在回合開始即以這個保留 `tool_call_id` 預載成一筆 provenance，
-#: 模型引用大綱時 `Citation.tool_call_id` 填它、`source` 填章節 id（`outline:*`），
+#: 模型引用大綱時照抄的標記裡第二段就是它、第三段是章節 id（`outline:*`），
 #: 不必先呼叫 `kb.get("outline:*")` 多花一輪。⚠️ 影子 2026-09-05 第一筆真流量
 #: 就是因為缺這條——模型照鐵則引用大綱、Verifier 卻只認工具回傳 ⇒ 兩次
 #: QUOTE_NOT_VERBATIM → budget_exhausted。OpenAI 的 tool_call id 一律 `call_…`，
@@ -193,14 +193,14 @@ _REASON_HINTS: dict[str, str] = {
     # DSP-028 後續（2026-09-05 回歸集重跑）：拒一次就改轉人的回合佔 no_grounding 的 11/127，
     # 且 116/127 是第一次就轉人——拒因回饋要明說「修那一筆」而不是「放棄」。
     # 內容只有方法，⛔ 無任何原文。
-    # DSP-029：引文由系統依 `unit` 解析，模型端不再有「抄字」這個動作——回饋一律
-    # 講「改 `unit` 指到對的片段」，⛔ 不再教它去複製原文（那條路已經不存在）。
-    "QUOTE_NOT_VERBATIM": "第 {sent} 筆的引用對不上來源：把該筆 `citations` 的 `unit` 改成資料段裡真正講到這句內容的那個片段編號。",
-    "QUOTE_NOT_COVERING": "第 {sent} 筆的句子內容與它指到的那個片段對不上：把該筆 `citations` 的 `unit` 改成真正講到這句內容的片段編號，或把句子改成那個片段有講的內容（⛔ 不要多加片段沒寫的資訊）。",
-    "QUOTE_TOO_SHORT": "第 {sent} 筆指到的片段太短、撐不起一個事實斷言（例如只是個標題行）：改指有實際內容的那個片段編號。",
-    "UNCITED_ASSERTION": "第 {sent} 筆是陳述事實的句子卻沒有 `cite`：補上引用；大綱真的沒寫的話就刪掉那句，⛔ 不要留下沒有來源的斷言。",
+    # DSP-029a：引文由系統依標記解析，模型端不再有「抄字」也不再有「填索引」這兩個
+    # 動作——回饋一律講「把該筆 `refs` 換成真正講到這句內容的那一行行首標記」。
+    "QUOTE_NOT_VERBATIM": "第 {sent} 筆的引用對不上來源：把該筆 `refs` 換成資料段裡真正講到這句內容的那一行行首標記（原樣照抄）。",
+    "QUOTE_NOT_COVERING": "第 {sent} 筆的句子內容與它指到的那一行對不上：把該筆 `refs` 換成真正講到這句內容的那一行行首標記，或把句子改成那一行有講的內容（⛔ 不要多加那一行沒寫的資訊）。",
+    "QUOTE_TOO_SHORT": "第 {sent} 筆指到的那一行太短、撐不起一個事實斷言（例如只是個標題行）：改指有實際內容的那一行的標記。",
+    "UNCITED_ASSERTION": "第 {sent} 筆是陳述事實的句子卻沒有 `refs`：補上該句依據所在那一行行首的標記；大綱真的沒寫的話就刪掉那句，⛔ 不要留下沒有來源的斷言。",
     "POLARITY_MISMATCH": "第 {sent} 筆的肯定／否定與引文不一致（例如引文說「不支援」你寫成「支援」）：照原文的意思改。",
-    "SOURCE_NOT_CITABLE": "第 {sent} 筆引到不可引用的來源（目錄類）：改引可引用的章節或工具回傳。",
+    "SOURCE_NOT_CITABLE": "第 {sent} 筆引到不可引用的來源（目錄類）：改引可引用的章節或工具回傳的標記。",
     "SENSITIVE_TOPIC": "這一題落在敏感五類或含價格／百分比等敏感樣式：改為 `kind=handoff`、填對應的 `fact_class` 與 `handoff_reason=sensitive_no_grounding`。",
 }
 
@@ -215,41 +215,44 @@ def _reason_hint(verdict: VerifierVerdict) -> str:
     return text
 
 
-#: DSP-029 r13 #7：`SCHEMA` 的七種子成因 → 給模型的修法一句話。
+#: DSP-029a：`SCHEMA` 的八種子成因 → 給模型的修法一句話。
 #: ⛔ 全部只有結構詞與索引，**無任何原文**（來源原文與模型原文都不放）——
 #: 這段會被 append 進 `messages` 給模型看，也是 2.6 security review P2 的同一條紀律。
+#: ⚠️ 鍵集合必須等於 `VerifierVerdict.schema_cause` 的 Literal 值域，由
+#: `tests/unit/agent/test_runtime_req.py` 守住：少一個鍵，那個成因就會落到
+#: `_schema_reject_hint` 的保底句，模型永遠得不到具體修法。
 _SCHEMA_CAUSE_HINTS: dict[str, str] = {
     "empty_sentences": ("`sentences` 是空陣列：只有 `kind=handoff` 才允許留空，"
-                        "其餘一律逐句給一筆 {text, kind, cite}。"),
+                        "其餘一律逐句給一筆 {text, kind, refs}。"),
     "empty_text": "`sentences` 的 `text` 是空白；每一筆都要有實際文字（含句尾標點）。",
-    "cite_out_of_range": ("`sentences` 的 `cite` 索引超出 `citations` 範圍"
-                          "（合法範圍從 0 起算，⛔ 不得用負數）。"),
-    "source_not_found": ("這一筆引用的 `source` 在該次工具回傳裡找不到："
-                         "`source` 要逐字照抄資料段片段標記裡的來源（⛔ 不要加中文標題、⛔ 不要少前綴），"
-                         "`tool_call_id` 要對應真的那一次工具回傳。"),
-    "unit_out_of_range": ("這一筆引用的 `unit` 超出該來源的片段編號範圍："
-                          "只能填資料段裡實際出現過的編號（從 0 起算，⛔ 不得用負數）。"),
-    "marker_in_answer": ("回覆文字裡出現了資料段的片段標記：標記只是給你定位用的，"
-                         "⛔ 不得抄進 `sentences` 的 `text`；要引用就填 `citations` 的 `unit`。"),
+    "ref_invalid": ("這一筆的 `refs` 不是本回合資料段裡的標記："
+                    "標記要從該句依據所在那一行的行首**原樣照抄**整串，"
+                    "⛔ 不要自己拼、⛔ 不要改動裡面任何一段。"),
+    "ref_source_not_found": ("這一筆 `refs` 的標記形狀對，但它指的來源不在本回合的資料段裡："
+                             "改抄資料段裡實際出現過的那一行的行首標記。"),
+    "ref_ambiguous": ("這一筆 `refs` 的標記指到同一次工具回傳裡重複而內容不同的來源："
+                      "改抄另一行的行首標記。"),
+    "unit_out_of_range": ("這一筆 `refs` 的標記編號超出該來源的範圍："
+                          "只能抄資料段裡實際出現過的那一行的行首標記。"),
+    "marker_in_answer": ("回覆文字裡出現了資料段的行首標記：標記只放進 `refs`，"
+                         "⛔ 不得抄進 `sentences` 的 `text`。"),
     "handoff_reason_invalid": "`handoff_reason` 不在允許值域內，請改填允許的值。",
 }
 
 
-def _schema_reject_hint(verdict: VerifierVerdict, out: AgentOutput) -> str:
+def _schema_reject_hint(verdict: VerifierVerdict) -> str:
     """把 `SCHEMA` 拒因翻成模型看得懂的**具體成因**。
 
     ⚠️ 成因**由 Verifier 的 `schema_cause` 決定，⛔ 不在這裡重算**（DSP-029 r13 #7）：
     DSP-028 時只有三種成因、且都能從 `out` 自己看出來，所以這裡曾經自己再判一次；
-    DSP-029 之後多了三種要靠 `tool_results` 才判得出來的成因（來源不存在／編號越界／
-    標記抄進 text），重算就會出現「Verifier 說 A、回饋教他修 B」的分歧。
-    `out` 仍收下來，只用在 `cite_out_of_range` 補一句合法範圍（索引與長度，⛔ 無原文）。
+    之後多了要靠 `tool_results` 才判得出來的成因（來源不存在／編號越界／標記抄進
+    text），重算就會出現「Verifier 說 A、回饋教他修 B」的分歧。
+    ⚠️ DSP-029a 起本函式 ⛔ 不再收 `out`：唯一用到它的是 `cite_out_of_range` 那句
+    「本次 `citations` 共 N 筆」，而 `citations` 已經不存在。
     """
     cause = verdict.schema_cause
     # 「第 N 筆」是**索引**（⛔ 無原文），DSP-028 起模型就靠它知道要修哪一筆。
     where = f"第 {verdict.sent} 筆 " if verdict.sent is not None else ""
-    if cause == "cite_out_of_range":
-        return (f"{where}{_SCHEMA_CAUSE_HINTS[cause]}"
-                f"（本次 `citations` 共 {len(out.citations)} 筆。）")
     if cause in _SCHEMA_CAUSE_HINTS:
         return f"{where}{_SCHEMA_CAUSE_HINTS[cause]}"
     # 沒有子成因＝新的成因沒有同步到這張表：⛔ 不編一句假的修法給模型。
@@ -822,10 +825,13 @@ class AgentRuntime:
                         ensure_ascii=False,
                     )
 
-                    def _wrap(tool_label: str) -> str:
+                    def _wrap(tool_label: str, tool_call_id: str = tc.id) -> str:
+                        # DSP-029a：`tool_call_id` 進標記——模型照抄一次就把三段定址
+                        # 一起帶回來，⛔ 不再要它自己另填一欄 `tool_call_id`。
                         if provenance:
                             return wrap_provenance_data(
                                 tool_label,
+                                tool_call_id,
                                 [(p.source, provenance_units(p.text)) for p in provenance],
                                 nonce,
                             )
@@ -855,7 +861,7 @@ class AgentRuntime:
             content = getattr(message, "content", None) or ""
             try:
                 payload = json.loads(content)
-                out = _canonicalize_outline_sources(AgentOutput.model_validate(payload))
+                out = AgentOutput.model_validate(payload)
             except (json.JSONDecodeError, ValidationError, TypeError):
                 counters.rewrites += 1
                 if counters.rewrite_exhausted(self.budget):
@@ -884,9 +890,12 @@ class AgentRuntime:
                 }
 
             # DSP-029 F-A：引用解析在 Runtime 做，結果**另傳**給 Verifier——
-            # ⛔ 不寫回 `out`／`Citation` 任何欄位（解析後的原文一旦掛在 AgentOutput
+            # ⛔ 不寫回 `out`／`Sentence` 任何欄位（解析後的原文一旦掛在 AgentOutput
             # 上，就會跟著 `decision_snapshot`／trace 外流）。
-            resolved, resolve_errors = resolve_citations(out, tool_results_by_id)
+            # DSP-029a：**本回合的 `nonce` 一起傳進去**——標記裡的 nonce 必須等於它，
+            # 否則 `ref_invalid`。這是「這串標記真的出自本回合資料段」的唯一憑據，
+            # ⛔ 不得改成不檢查或用固定值。
+            resolved, resolve_errors = resolve_refs(out, tool_results_by_id, nonce)
             verdict = self.verifier.verify(
                 out, tool_results_by_id, user_message, handoff_dict,
                 resolved=resolved, resolve_errors=resolve_errors)
@@ -902,12 +911,12 @@ class AgentRuntime:
                 messages.append({"role": "assistant", "content": content})
                 schema_hint = _reason_hint(verdict)
                 if verdict.reason == "SCHEMA":
-                    # DSP-028：只回 SCHEMA 模型不知道哪裡錯。新契約下 SCHEMA 只剩三種
-                    # 成因（空陣列／某筆 text 全空白／某筆 cite 索引越界），直接指名成因與
+                    # DSP-028：只回 SCHEMA 模型不知道哪裡錯。DSP-029a 下 SCHEMA 有八種
+                    # 成因（見 `_SCHEMA_CAUSE_HINTS`），直接指名成因與
                     # 筆索引即可——⛔ 不再回報「系統把你的 answer 切成幾句」那種提示：
                     # 逐句一筆之後句數不必再對齊，那句話只會誤導模型回頭去湊句數。
                     # 內容只有索引與長度，⛔ 無任何原文（來源原文與模型原文都不放）。
-                    schema_hint += "　" + _schema_reject_hint(verdict, out)
+                    schema_hint += "　" + _schema_reject_hint(verdict)
                 # 拒因回模型用 role="user"（⛔ 不用 role="system"）：system 訊息
                 # 依 PromptAssembler 契約整回合只有一則（見 prompt_assembler.py
                 # 「system 訊息只有一則」），迴圈裡補第二則 system 會破壞這個

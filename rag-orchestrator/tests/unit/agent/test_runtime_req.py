@@ -79,15 +79,14 @@ def _tool_call_response(name: str, args: dict, call_id: str = "call_1"):
 def _final_response(
     *, kind="answer", answer="答案內容", fact_class="feature", handoff_reason=None
 ):
-    """DSP-028：模型輸出逐句一筆 `{text, kind, cite}`，⛔ 不再有 `answer`／逐句對照表。
+    """DSP-028／DSP-029a：模型輸出逐句一筆 `{text, kind, refs}`，⛔ 不再有 `answer`／`citations`。
 
     這裡把 `answer` 參數整段當成**一筆**（`kind=greeting` 讓假 Verifier 之外的
     真 Verifier 路徑也不必給引用）——本檔多數測試用假 Verifier，形狀正確即可。
     """
     payload = {
         "kind": kind,
-        "sentences": [] if not answer else [{"text": answer, "kind": "greeting", "cite": []}],
-        "citations": [],
+        "sentences": [] if not answer else [{"text": answer, "kind": "greeting", "refs": []}],
         "fact_class": fact_class,
         "handoff_reason": handoff_reason,
     }
@@ -836,7 +835,7 @@ def test_runtime_no_longer_defines_agent_output_or_verifier_verdict_locally():
     class_names = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
     assert "AgentOutput" not in class_names
     assert "VerifierVerdict" not in class_names
-    assert "Citation" not in class_names
+    assert "Citation" not in class_names        # DSP-029a：這個類別本身已刪，⛔ 不得復活
     assert "Sentence" not in class_names
 
     # 反過來：確實是從 output_schema import 同一個物件（不是另建一個同名的）。
@@ -865,7 +864,10 @@ def test_response_format_schema_is_strict_at_every_level():
             for v in n:
                 walk(v)
     walk(schema)
-    assert len(objects) >= 3            # root ＋ Citation ＋ Sentence（正對照：真的走到巢狀）
+    # DSP-029a：`$defs` 只剩 `Sentence`（`Citation` 已刪）⇒ 物件節點是 root ＋ Sentence。
+    # 正對照：先確認真的走到巢狀（>=2），再釘死 `$defs` 的成員集合。
+    assert len(objects) >= 2
+    assert set(schema.get("$defs", {})) == {"Sentence"}
     assert {"fact_class", "handoff_reason"} <= set(schema["required"])   # Optional 欄位也必填（可為 null）
 
 
@@ -876,12 +878,12 @@ def test_response_format_properties_are_exactly_the_dsp028_contract():
     若它被寫成 pydantic `computed_field`，`model_json_schema()` 會把 `answer` 列進
     properties，而 `strict_json_schema` 把每一層 `required` 設成全部 properties
     ⇒ OpenAI strict schema 會**回頭要求模型輸出 `answer`**，剛拆掉的雙軌契約原封裝回。
-    這條就是那個回歸的守門：欄位集合必須恰好是這五個。"""
+    這條就是那個回歸的守門：欄位集合必須恰好是這四個（DSP-029a 刪掉 `citations`）。"""
     from services.agent.runtime import _agent_output_response_format
 
     schema = _agent_output_response_format()["json_schema"]["schema"]
     assert set(schema["properties"]) == {
-        "kind", "sentences", "citations", "fact_class", "handoff_reason"}
+        "kind", "sentences", "fact_class", "handoff_reason"}
 
 
 @pytest.mark.unit
@@ -891,9 +893,9 @@ def test_agent_output_answer_is_plain_property_not_a_model_field():
 
     out = AgentOutput.model_validate({
         "kind": "answer",
-        "sentences": [{"text": "第一句。", "kind": "greeting", "cite": []},
-                      {"text": "第二句。", "kind": "greeting", "cite": []}],
-        "citations": [], "fact_class": "feature", "handoff_reason": None,
+        "sentences": [{"text": "第一句。", "kind": "greeting", "refs": []},
+                      {"text": "第二句。", "kind": "greeting", "refs": []}],
+        "fact_class": "feature", "handoff_reason": None,
     })
     assert out.answer == "第一句。第二句。"
     assert "answer" not in AgentOutput.model_fields
@@ -906,9 +908,9 @@ async def test_turn_result_answer_is_the_join_of_sentence_texts():
     """DSP-028：`TurnResult.answer` == `"".join(s.text ...)`——⛔ 不是模型另給的欄位。"""
     payload = {
         "kind": "answer",
-        "sentences": [{"text": "您好！", "kind": "greeting", "cite": []},
-                      {"text": "很高興為您服務。", "kind": "greeting", "cite": []}],
-        "citations": [], "fact_class": "feature", "handoff_reason": None,
+        "sentences": [{"text": "您好！", "kind": "greeting", "refs": []},
+                      {"text": "很高興為您服務。", "kind": "greeting", "refs": []}],
+        "fact_class": "feature", "handoff_reason": None,
     }
     provider = FakeProvider([_fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))])
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
@@ -916,3 +918,32 @@ async def test_turn_result_answer_is_the_join_of_sentence_texts():
     result = await runtime.run_turn(_identity(), "你好", {})
     assert result.answer == "".join(s["text"] for s in payload["sentences"])
     assert result.answer == "您好！很高興為您服務。"
+
+
+# ---------------------------------------------------------------------------
+# DSP-029a：SCHEMA 子成因的「值域」與「修法表」必須同集合
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_schema_cause_hints_cover_exactly_the_schema_cause_literal():
+    """`_SCHEMA_CAUSE_HINTS` 的鍵集合 ＝ `VerifierVerdict.schema_cause` 的值域。
+
+    ⚠️ 少一個鍵的失敗方式很安靜：那個成因會落到 `_schema_reject_hint` 的保底句
+    （「請依 schema 重新輸出」），模型永遠得不到具體修法，而拒絕率會在報表上被
+    記成「模型不聽話」。多一個鍵則代表表上留著一個已退役的成因（例如 DSP-029a
+    刪掉的 `cite_out_of_range`），下一個人會照著它去找不存在的欄位。
+
+    正對照：先確認取到的值域**非空**——`get_args` 對非 Literal 會回空 tuple，
+    那時兩邊都是空集合也會「相等」。"""
+    import typing
+
+    from services.agent.output_schema import VerifierVerdict
+    from services.agent.runtime import _SCHEMA_CAUSE_HINTS
+
+    annotation = VerifierVerdict.model_fields["schema_cause"].annotation
+    literal = next(a for a in typing.get_args(annotation) if typing.get_args(a))
+    values = set(typing.get_args(literal))
+    assert values, "取不到 schema_cause 的值域——正對照失敗，不是兩邊剛好相等"
+    assert set(_SCHEMA_CAUSE_HINTS) == values
+    assert "cite_out_of_range" not in values          # DSP-029a 已退役，⛔ 不得復活
