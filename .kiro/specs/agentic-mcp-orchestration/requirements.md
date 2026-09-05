@@ -52,7 +52,7 @@
 
 - **Agent Runtime**：模型迴圈框架（程式）：送 prompt、收工具呼叫、執行、回填、預算控制、串流、計量。決策（叫哪個工具、何時作答）由模型做。
 - **工具邊界**：MCP server 對每個工具強制的範圍——身分、可見池、可回欄位、寫入前置條件；模型不可覆寫。
-- **引用契約**：模型最終輸出的結構 `{answer, citations[{tool_call_id, source, quote}], sentence_map, kind}`；`quote` 必須是所引工具回傳文字的逐字子串。
+- **引用契約**：模型最終輸出的結構 `{sentences[{text, kind, cite[]}], citations[{tool_call_id, source, quote}], kind, fact_class, handoff_reason}`（DSP-028；`answer` 由系統拼接）；`quote` 必須是所引工具回傳文字的逐字子串。
 - **Output Verifier**：程式層對引用契約的決定性檢查器；只做子串比對與封閉集合規則，⛔ 不用 LLM 當判官。
 - **敏感五類**：customer_reference／pricing／contract_sla／compliance／security（沿用 presales-grounding-gate）；主題層拒答政策，先於引用檢查。
 - **大綱**：放進 system prompt 的知識文件；售前＝整池整理稿；業者／租客＝27 列系統脈絡目錄。
