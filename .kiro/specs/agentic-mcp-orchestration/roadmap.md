@@ -15,7 +15,7 @@
 | 2 | `agent-tenant-audience`（M4） | tenant 身分的 agent 對話（LINE 租客、語音來電者）：`AGENT_AUDIENCES` 加 tenant、tenant 目錄、`role_id=null` 組合的 e2e；含 LINE bot 承接 `handoff{channel,message}` | 母 M3 收案；D4 部分 | tenant 影子收案線另定 | r5 目標驗證後立案 2026-09-04 |
 | 3 | `voice-turn-budget` | 語音回合：逐句驗證後放行（sentence-level gate）、首字 ≤1.5 s、工具 ≤2、可取消／打斷、handoff 語音話術；STT／TTS 在 JGB 端；走 REST SSE | 母 M3 收案；`agent-tenant-audience` | 首字延遲、打斷成功率 | r5 目標驗證後立案 2026-09-04 |
 | 後 | `jgb2-contract-drift` | L2 契約漂移偵測進 CI、`bills.STATUS_LABELS` 除役改讀 `mapping`（source-index §10.2、缺口 7） | M3 有流量 | 漂移偵測誤報率 | 不開 |
-| 後 | `retrieval-metadata-retire` | `instance_applicability`／`retrieval_representation` 除役 | agent 路徑證明不依賴 | 不變量 10／12／17 重定 | 不開 |
+| 後 | `retrieval-metadata-retire` | `instance_applicability`／`retrieval_representation` 除役；**reranker／`semantic-model` 容器除役**（業主 2026-09-05 問：prospect agent 路徑不用檢索；`kb.search` 於 M5 改目錄＋`kb.get` 後無消費者；若上 NLI 接地檢查則以同級容器換位） | agent 路徑證明不依賴；三身分皆切 agent 且回切窗口過 | 不變量 10／12／17 重定；部署少一服務 | 不開 |
 
 
 ## 外部驗收情境來源（業主 2026-09-05 提供，line-bot-platform）
