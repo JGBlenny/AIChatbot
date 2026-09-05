@@ -154,8 +154,8 @@
   - **收案註記（2026-09-05）**：mech-executor（worktree）→ 收檔。runbook 新增 §19（相依升級、五支 migration、內部 key、Origin、售前池標記、env 表、煙囪、回切、監控）；兩份 compose 加註解 env 清單；`docs/api/mcp-facade.md` §10 env 表（14 個，逐一 grep 程式核對）。**查證落差**：design 列的 `AGENT_BUDGET_*` 三 env 程式沒讀——主 session 補 `bootstrap.budget_from_env`（壞值／≤0 退預設，unit 1）並更正四處文件。
 - [ ] 4.4 M2 語義層收斂（業主 2026-09-05「依序處理」；三步嚴格順序、每步有數字才進下一步）：
   - [x] 4.4a 量測儀表化（executor，2026-09-05 落地 `5b7dda0`，unit 696 綠）：runtime 可選 `attempt_sink`（預設 None、正式路徑不設、⛔ 不進 trace）；`--dump-texts` 旁路存每次被拒嘗試的 sentences／refs／verdict；修 `refs` 全空；新工具 `tools/agent_attempts_report.py` 統計拒因與 ref 樣態（不印原文）。不動任何尺。
-  - [ ] 4.4b DSP-030 規則版離線量測：用六輪旁路原文＋抽審標籤（R4／R6 各 20 筆＋known_open 3 句），離線算「新資訊字元 k∈{2,3,4}／bigram 覆蓋率／數字日期能力動詞類」變體的抓到率與誤殺率；先定門檻、再實作 ③ 子成因 `novel_token`、再跑同 54 句對照（含抽審④）。
-  - [ ] 4.4c NLI 離線量測（=5.8，只在 4.4b 後無據率仍高於門檻或誤殺失控時啟動）：同一批成對資料、`eval/nli-offline-plan.md` 凍結判準。
+  - [x] 4.4b DSP-030 規則版離線量測（2026-09-05：所有字元級變體誤殺 32–76% ⇒ 純規則 REJECT；否定詞表補齊撤回；見 `eval/perf-agent-regression-20260905/dsp030-offline-20260905.md`）：用六輪旁路原文＋抽審標籤（R4／R6 各 20 筆＋known_open 3 句），離線算「新資訊字元 k∈{2,3,4}／bigram 覆蓋率／數字日期能力動詞類」變體的抓到率與誤殺率；先定門檻、再實作 ③ 子成因 `novel_token`、再跑同 54 句對照（含抽審④）。
+  - [x] 4.4c NLI 離線量測（2026-09-05 已量：Erlangshen-110M 69%／11% 優於現行但 p95 242 ms、自證 2/3 不達凍結門檻 ⇒ 不接線、留作抽審輔助；MiniLM 不採用；mDeBERTa／t2s／ONNX 待記憶體；業主可裁兩放寬項，見 `eval/nli-offline-20260905.md`）：同一批成對資料、`eval/nli-offline-plan.md` 凍結判準。
   - 判定：M2 回歸集階段的收案以 4.4b 後的六尺為準；放行證據仍待樣本 C（部署後）。
 - [ ] 5.5 (P) `retrieval-improvement-loop` skill 升版為「檢索＋agent 路徑」共用迴圈（業主 2026-09-05 排入；只追加、⛔ 不刪既有段落）：①G1 必讀加 agent 分支（design 元件 5／6／7、DSP-020～028、`docs/knowledge/agent-readable-knowledge.md`）；②量尺段加 `tools/agent_eval.py --chain both --repeat 3` 與「A／B／sensitive 為回歸集、放行看樣本 C」；③成因八類加三類（尺誤殺／契約與模型能力不合／尺太鬆放過捏造）並附判準（拒因分佈 `budget_exhausted` vs `no_grounding`）；④單一變因閘門加 agent 例（知識／提示詞／尺／契約一輪只動一類）；⑤假綠清單加兩條（fake provider 全綠但真線路未跑、無禁詞集的無捏造 PASS 是空真值）。驗收：`git diff --stat` 只有新增行；五道閘門原文不動；新段每條附「依據：」可 grep。
   - 需求：6.3, 13.5
