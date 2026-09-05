@@ -1,15 +1,33 @@
 #!/usr/bin/env python3
-"""離線評估 `tools/agent_eval.py`（spec agentic-mcp-orchestration・任務 4.2）。
+"""離線評估 `tools/agent_eval.py`（spec agentic-mcp-orchestration・任務 4.2→5.x 修訂）。
 
-三組凍結樣本（topics／scenarios／traffic，見同目錄
+四組凍結樣本（topics／scenarios／sensitive／traffic，見同目錄
 `.kiro/specs/agentic-mcp-orchestration/eval/samples-manifest.json`）對舊鏈
 （`POST /api/v1/message`）與 agent 鏈（`services.agent.bootstrap.build_runtime`
 直呼 `run_turn`）跑，逐題輸出 JSONL 對照＋彙總 `report.md`。
 
-⛔ 本任務只做工具骨架＋假 provider 測試：不呼叫真 OpenAI（`--provider openai`
-直接拒絕）、不打真正 `:8100`（old 鏈用可注入的 httpx transport，unit 測試
-一律假 transport）。收案數字（D2）由這支工具產出對照，⛔ 由業主裁；本工具
-本身不判定 D2 是否過關，只算三項硬線（見 manifest `hardlines`）。
+5.x 修訂重點（獨立審查 REVISE 後的修法，⛔ 別再退回 4.2 骨架的做法）：
+- `--provider openai` 不再無條件拒絕：`build_real_runtime()` 接上真
+  `services.llm_provider.get_llm_provider()`／`services.agent.outline
+  .build_prospect_outline`／`services.agent.bootstrap.build_runtime`
+  （import `app` 取已建好的 `_mcp_registry`／`_mcp_kb_pool`，⛔ 不跑
+  lifespan）。缺 `OPENAI_API_KEY` 時在**任何網路呼叫之前**明確拒絕。
+- 每個 scenario 的多輪對話共用同一個 `state` dict（agent 鏈）；old 鏈的歷史
+  由服務端依 `session_id` 保存，本工具只需確保同一 scenario 用同一個
+  session_id（既有行為）。
+- 身分改 `mode="b2b"`、`vendor_id=1`（售前池是 b2b 池，見
+  `services/agent/outline.py:build_prospect_outline` 與
+  `routers/agent_entry.py` 的 `"b2b" if target_user == "prospect"`）。
+- 無捏造（`no_fabrication`）兩鏈同一把尺：`forbid_hit`。agent 鏈的
+  `verifier_rejects`／`rewrote_ok` 只是觀測值，不再判定這條硬線。
+- 固定句率的分母只算「非敏感、非邊界」子集；`--chain both` 時基準＝同批
+  old 鏈的該子集實測值，單跑 agent 才退回 manifest 的跨樣本基準。
+- 新增 `boundary_ok_rate`／`latency_p95_ms`／`answered_rate`／`cost_usd`
+  總和平均，`--repeat N` 支援多次重跑聚合，`--set sensitive` 五類敏感樣本。
+
+⛔ 不呼叫真 OpenAI 的預設路徑：`--provider` 預設 `fake`；`--provider openai`
+必須明確傳入且需要環境已有 `OPENAI_API_KEY`，本工具本身的單元測試一律不
+觸網（見 tests/unit/agent/test_agent_eval_req.py）。
 
 樣本紀律（design 元件 7・R8.2/8.3、任務 4.2 brief）：跑之前先對 manifest 記錄
 的 sha256 重新計算比對，不符 ⇒ 退出碼 3，⛔ 不得在看過結果後回頭改樣本或改
@@ -21,6 +39,7 @@ import argparse
 import hashlib
 import json
 import os
+import statistics
 import sys
 import time
 import unicodedata
@@ -46,6 +65,14 @@ _SAMPLES_CHANGED_MSG = (
 EXIT_OK = 0
 EXIT_SAMPLES_CHANGED = 3
 EXIT_SAMPLE_UNAVAILABLE = 4
+
+#: 售前池是 b2b 池（見 services/agent/outline.py:build_prospect_outline 的
+#: `Identity(vendor_id=1, target_user="prospect", mode="b2b")` 與其
+#: 「⛔ 勿改回 b2c」註解；routers/agent_entry.py 的
+#: `"b2b" if target_user == "prospect" else ...`）——⛔ 別改回 b2c/vendor_id=0，
+#: 那樣測到的是錯的知識池。
+EVAL_VENDOR_ID = 1
+EVAL_MODE = "b2b"
 
 
 # ---------------------------------------------------------------------------
@@ -112,6 +139,17 @@ class Turn:
     must_not_contain: list[str] = field(default_factory=list)
     sensitive: bool = False
     knowledge_gap_unfilled: bool = False
+
+    @property
+    def boundary_expected(self) -> bool:
+        """「邊界題」＝期望轉人但**不是**敏感題（固定句率分母排除的第二類）。
+
+        敏感題已經被 `sensitive` 標記單獨計入 `sensitive_zero_leak`；邊界題
+        （查無資料的一般事實題）也不該算進「固定句率」的分母——那個指標量的
+        是「本來答得出來卻給了固定句」，敏感／邊界兩類本來就**該**轉人，
+        算進分母只會讓固定句率的訊號被稀釋。
+        """
+        return self.expect_kind == "handoff" and not self.sensitive
 
 
 @dataclass
@@ -198,6 +236,32 @@ def load_scenarios_v1(path: Path, manifest: dict, *, limit: Optional[int] = None
     return scenarios
 
 
+def load_sensitive_v1(path: Path, manifest: dict, *, limit: Optional[int] = None) -> list[Scenario]:
+    """`sensitive-v1.json`：每題各自獨立成一個單輪 scenario（敏感題不帶歷史，
+    每題各測一次「單獨問這句會不會漏」）。"""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    scenarios: list[Scenario] = []
+    for item in data.get("items", []):
+        scenarios.append(
+            Scenario(
+                idx=item["id"],
+                turns=[
+                    Turn(
+                        turn=0,
+                        q=item["q"],
+                        expect_kind=item.get("expect_kind", "handoff"),
+                        must_not_contain=list(item.get("must_not_contain") or []),
+                        sensitive=bool(item.get("sensitive", True)),
+                        knowledge_gap_unfilled=False,
+                    )
+                ],
+            )
+        )
+    if limit is not None:
+        scenarios = scenarios[:limit]
+    return scenarios
+
+
 def load_samples(set_name: str, manifest: dict, *, root: Path, limit: Optional[int] = None) -> list[Scenario]:
     entry = manifest["sets"][set_name]
     path = root / entry["path"]
@@ -205,6 +269,8 @@ def load_samples(set_name: str, manifest: dict, *, root: Path, limit: Optional[i
         return load_topics_scenarios(path, manifest, limit=limit)
     if set_name == "scenarios":
         return load_scenarios_v1(path, manifest, limit=limit)
+    if set_name == "sensitive":
+        return load_sensitive_v1(path, manifest, limit=limit)
     raise ValueError(f"未知 set：{set_name}")
 
 
@@ -238,6 +304,10 @@ class EvalRecord:
     cost_usd: float
     knowledge_gap_unfilled: bool
     answer_digest: dict
+    boundary_expected: bool = False
+    rep: int = 0
+    rewrote_ok: bool = False
+    handoff_heuristic: bool = False
 
     def to_jsonl_dict(self) -> dict:
         d = {
@@ -250,12 +320,16 @@ class EvalRecord:
             "handoff_reason": self.handoff_reason,
             "sensitive_expected": self.sensitive_expected,
             "sensitive_leak": self.sensitive_leak,
+            "boundary_expected": self.boundary_expected,
             "boundary_ok": self.boundary_ok,
             "forbid_hit": self.forbid_hit,
             "verifier_rejects": self.verifier_rejects,
+            "rewrote_ok": self.rewrote_ok,
+            "handoff_heuristic": self.handoff_heuristic,
             "latency_ms": self.latency_ms,
             "cost_usd": self.cost_usd,
             "knowledge_gap_unfilled": self.knowledge_gap_unfilled,
+            "rep": self.rep,
             "answer_sha256": self.answer_digest["sha256"],
             "answer_len": self.answer_digest["len"],
         }
@@ -285,16 +359,57 @@ def _sensitive_leak(kind: str, handoff_reason: Optional[str], answer: str, forbi
     return bool((answer or "").strip()) or forbid_hit
 
 
+def _rewrote_ok(kind: str, verifier_rejects: int) -> bool:
+    """agent 鏈觀測值：Verifier 拒過至少一次，但最終仍以 `answer` 收場
+    （重寫成功）。⛔ 不當捏造判準——見模組 docstring「5.x 修訂重點」。"""
+    return verifier_rejects > 0 and kind == "answer"
+
+
 # ---------------------------------------------------------------------------
 # 舊鏈（httpx，可注入 transport 供測試）
 # ---------------------------------------------------------------------------
 
 
-def old_chain_session_id(set_name: str, scenario_idx: str) -> str:
+def old_chain_session_id(set_name: str, scenario_idx: str, rep: int = 0) -> str:
     """⛔ 前綴必須是 `backtest_session_`（見 scripts/backtest/run_batch.py 的
-    `_REQUIRED_PREFIX` 紀律，兩個豁免前綴都要吃到）。"""
+    `_REQUIRED_PREFIX` 紀律，兩個豁免前綴都要吃到）。`rep>0` 時加後綴避免
+    `--repeat` 多次重跑共用同一個 session、把上一輪的對話歷史帶進下一輪。"""
     safe_idx = scenario_idx.replace(":", "_").replace(" ", "_")
-    return f"backtest_session_eval_{set_name}_{safe_idx}"
+    base = f"backtest_session_eval_{set_name}_{safe_idx}"
+    return base if rep == 0 else f"{base}_rep{rep}"
+
+
+def _old_chain_classify(answer: str, handoff: Any) -> tuple[str, Optional[str], bool]:
+    """判定舊鏈這一題的 `(kind, handoff_reason, handoff_heuristic)`。
+
+    順序（P1.9）：① 結構化 `handoff` 欄；② 比對
+    `services.conversational_config.effective_handoff_message(None)` 的固定句
+    是否為 `answer` 子字串；③ 關鍵字啟發式（`services.presales_gate
+    .HANDOFF_WORDS`，⛔ 不另立第二份詞表）當最後手段，命中則
+    `handoff_heuristic=True`——供報表區分「真的比對到固定句」與「用詞猜的」。
+    """
+    if isinstance(handoff, dict):
+        return "handoff", handoff.get("reason"), False
+
+    try:
+        from services.conversational_config import effective_handoff_message
+
+        fixed_msg = (effective_handoff_message(None) or "").strip()
+    except Exception:  # noqa: BLE001 — 比對是加值，缺此模組不擋整支工具
+        fixed_msg = ""
+    if fixed_msg and fixed_msg in (answer or ""):
+        return "handoff", None, False
+
+    try:
+        from services.presales_gate import HANDOFF_WORDS
+
+        words = HANDOFF_WORDS
+    except Exception:  # noqa: BLE001
+        words = ("專人", "真人", "客服", "沒有資料")
+    if any(w in (answer or "") for w in words):
+        return "handoff", None, True
+
+    return ("answer" if answer else "ask"), None, False
 
 
 def run_old_chain(
@@ -304,67 +419,105 @@ def run_old_chain(
     base_url: str,
     api_key: Optional[str],
     client: Any,
-    vendor_id: int = 0,
+    vendor_id: int = EVAL_VENDOR_ID,
     role_id: Optional[str] = None,
+    repeat: int = 1,
+    db_pool: Any = None,
 ) -> list[EvalRecord]:
     """`client` 是一個具 `.post(url, json=..., headers=...) -> response` 的物件
     （生產用 `httpx.Client(base_url=...)`；測試注入假 transport）。
     ⛔ `api_key` 只放進 header，永遠不放進 URL／log／args。
+
+    對話歷史由服務端依 `session_id` 保存（`form_sessions`），本工具端不持有
+    client 狀態——同一 scenario 內逐輪沿用同一個 `session_id` 即天然帶史。
     """
     records: list[EvalRecord] = []
-    for sc in scenarios:
-        session_id = old_chain_session_id(set_name, sc.idx)
-        for t in sc.turns:
-            headers = {"Content-Type": "application/json"}
-            if api_key:
-                headers["X-API-Key"] = api_key
-            body = {
-                "vendor_id": vendor_id,
-                "mode": "b2c",
-                "target_user": "prospect",
-                "role_id": role_id,
-                "session_id": session_id,
-                "user_id": session_id,
-                "message": t.q,
-            }
-            t0 = time.monotonic()
-            resp = client.post(f"{base_url}/api/v1/message", json=body, headers=headers)
-            latency_ms = int((time.monotonic() - t0) * 1000)
-            data = resp.json() if hasattr(resp, "json") else {}
-            answer = data.get("answer") or ""
-            handoff = data.get("handoff")
-            handoff_reason = None
-            if isinstance(handoff, dict):
-                handoff_reason = handoff.get("reason")
-            kind = "handoff" if handoff else ("answer" if answer else "ask")
-            forbid_hit = _forbid_hit(answer, t.must_not_contain)
-            records.append(
-                EvalRecord(
-                    set=set_name,
-                    idx=sc.idx,
-                    turn=t.turn,
-                    chain="old",
-                    kind=kind,
-                    answered=bool(answer) and not handoff,
-                    handoff_reason=handoff_reason,
-                    sensitive_expected=t.sensitive,
-                    sensitive_leak=_sensitive_leak(kind, handoff_reason, answer, forbid_hit) if t.sensitive else False,
-                    boundary_ok=_boundary_ok(kind, answer, handoff_reason, forbid_hit)
-                    if t.expect_kind == "handoff"
-                    else None,
-                    forbid_hit=forbid_hit,
-                    verifier_rejects=0,  # 舊鏈無 verifier
-                    latency_ms=latency_ms,
-                    cost_usd=0.0,  # 舊鏈成本另由 usage_events 併回（3.4／contract_enrich 路徑），本工具不重算
-                    knowledge_gap_unfilled=t.knowledge_gap_unfilled,
-                    answer_digest=_text_digest(answer),
+    record_session_ids: list[str] = []
+    for rep in range(repeat):
+        for sc in scenarios:
+            session_id = old_chain_session_id(set_name, sc.idx, rep)
+            for t in sc.turns:
+                headers = {"Content-Type": "application/json"}
+                if api_key:
+                    headers["X-API-Key"] = api_key
+                body = {
+                    "vendor_id": vendor_id,
+                    "mode": EVAL_MODE,
+                    "target_user": "prospect",
+                    "role_id": role_id,
+                    "session_id": session_id,
+                    "user_id": session_id,
+                    "message": t.q,
+                }
+                t0 = time.monotonic()
+                resp = client.post(f"{base_url}/api/v1/message", json=body, headers=headers)
+                latency_ms = int((time.monotonic() - t0) * 1000)
+                data = resp.json() if hasattr(resp, "json") else {}
+                answer = data.get("answer") or ""
+                handoff = data.get("handoff")
+                kind, handoff_reason, handoff_heuristic = _old_chain_classify(answer, handoff)
+                forbid_hit = _forbid_hit(answer, t.must_not_contain)
+                records.append(
+                    EvalRecord(
+                        set=set_name,
+                        idx=sc.idx,
+                        turn=t.turn,
+                        chain="old",
+                        kind=kind,
+                        answered=bool(answer) and kind not in HANDOFF_KINDS,
+                        handoff_reason=handoff_reason,
+                        sensitive_expected=t.sensitive,
+                        sensitive_leak=_sensitive_leak(kind, handoff_reason, answer, forbid_hit) if t.sensitive else False,
+                        boundary_ok=_boundary_ok(kind, answer, handoff_reason, forbid_hit)
+                        if t.expect_kind == "handoff"
+                        else None,
+                        boundary_expected=t.boundary_expected,
+                        forbid_hit=forbid_hit,
+                        verifier_rejects=0,  # 舊鏈無 verifier
+                        latency_ms=latency_ms,
+                        cost_usd=0.0,  # 缺 db_pool 時保底 0（見下方 _apply_old_chain_cost）
+                        knowledge_gap_unfilled=t.knowledge_gap_unfilled,
+                        answer_digest=_text_digest(answer),
+                        rep=rep,
+                        handoff_heuristic=handoff_heuristic,
+                    )
                 )
-            )
+                record_session_ids.append(session_id)
+    if db_pool is not None:
+        _apply_old_chain_cost(records, record_session_ids, db_pool)
     return records
 
 
+def _apply_old_chain_cost(records: list[EvalRecord], session_ids: list[str], db_pool: Any) -> None:
+    """把 `usage_events.est_cost_usd` 依 `session_id` 併回舊鏈的 `cost_usd`
+    （P1 必修 7）。`db_pool` 查詢失敗（連不上／表不存在）⇒ 靜默保留 0.0，
+    ⛔ 不讓報表輸出因為這顆加值欄位而整支炸掉。"""
+    import asyncio
+
+    async def _query() -> dict:
+        uniq = sorted(set(session_ids))
+        if not uniq:
+            return {}
+        async with db_pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT session_id, COALESCE(SUM(est_cost_usd), 0) AS total "
+                "FROM usage_events WHERE session_id = ANY($1) GROUP BY session_id",
+                uniq,
+            )
+        return {row["session_id"]: float(row["total"]) for row in rows}
+
+    try:
+        totals = asyncio.run(_query())
+    except Exception as e:  # noqa: BLE001 — 加值欄位，查不到就是 0，不擋主流程
+        print(f"⚠️ [agent_eval] 舊鏈成本併回失敗（保留 0.0）：{type(e).__name__}: {e}", file=sys.stderr)
+        return
+    for r, sid in zip(records, session_ids):
+        r.cost_usd = totals.get(sid, 0.0)
+
+
 # ---------------------------------------------------------------------------
-# agent 鏈（build_runtime 直呼 run_turn；`--provider fake` 用可腳本化假 provider）
+# agent 鏈（build_runtime 直呼 run_turn；`--provider fake` 用可腳本化假 provider；
+# `--provider openai` 接真 provider，見 build_real_runtime）
 # ---------------------------------------------------------------------------
 
 
@@ -419,8 +572,21 @@ class ScriptedFakeCompletions:
     def __init__(self, turns: list["Turn"]):
         self._turns = list(turns)
         self._i = 0
+        #: 測試用：記錄每次呼叫收到的 `kwargs`（含 `messages`），驗多輪帶歷史。
+        self.calls: list[dict] = []
 
     async def create(self, **kwargs):  # noqa: D401 — 簽名比照真 openai client
+        # ⚠️ **必須快照 `messages`**：Runtime 的重寫迴圈對同一個 list 物件
+        # 就地 `append`（拒因／下一輪問句都疊加上去），若這裡只存參照，
+        # 之後讀 `self.calls[i]["messages"]` 看到的會是**呼叫當下之後**才發生
+        # 的追加內容，而不是這次呼叫真正送出的那份——多輪帶歷史的測試會因此
+        # 誤判「這一輪就已經看到下一輪的問句」。逐則訊息淺拷貝即可（訊息
+        # 內容在本檔的假輸出範圍內不含會被原地改寫的巢狀可變物件）。
+        snapshot = dict(kwargs)
+        messages = kwargs.get("messages")
+        if isinstance(messages, list):
+            snapshot["messages"] = [dict(m) if isinstance(m, dict) else m for m in messages]
+        self.calls.append(snapshot)
         if self._i >= len(self._turns):
             # 重寫迴圈（拒後再問模型）可能多打一次；重播上一題的固定輸出，
             # 保持決定性（⛔ 不 raise，raise 會讓 Runtime 的重寫路徑無法測）。
@@ -455,17 +621,204 @@ def make_agent_identity(*, session_id: str):
     from services.agent.identity import Identity
 
     return Identity(
-        vendor_id=0,
+        vendor_id=EVAL_VENDOR_ID,
         target_user="prospect",
-        mode="b2c",
+        mode=EVAL_MODE,
         session_id=session_id,
         audience="prospect",
     )
 
 
-async def _run_turn_for(runtime, identity, q: str) -> Any:
+def _set_outline_on_state(state: dict, outline_doc: Any) -> dict:
+    """回傳 `state["agent"]`；若有大綱則塞入 `outline`（Runtime 從
+    `state["agent"]["outline"]` 讀，見 `routers/agent_entry.py
+    :handle_agent_entry`／`services/agent/mcp_facade.py:_agent_turn` 同一做法）。"""
+    agent_state = state.setdefault("agent", {})
+    if outline_doc is not None:
+        agent_state["outline"] = outline_doc
+    return agent_state
+
+
+def _estimate_cost_usd(model: str, prompt_tokens: int, completion_tokens: int) -> float:
+    """agent 鏈成本估算——⛔ 不另抄一份價目表，直接借
+    `services.agent.shadow._estimate_cost_usd`（同一張 `usage_metering
+    .DEFAULT_PRICING`）。缺價 ⇒ 0.0。"""
+    from services.agent.shadow import _estimate_cost_usd as _shadow_estimate
+
+    return _shadow_estimate(model, prompt_tokens, completion_tokens)
+
+
+async def _run_scenario_agent(
+    runtime: Any,
+    identity: Any,
+    turns: list["Turn"],
+    *,
+    outline_doc: Any = None,
+) -> list[tuple["Turn", Any, int]]:
+    """單一 scenario 逐輪呼叫 `run_turn`，**同一個 `state` dict**貫穿全程
+    （P0 必修 2：多輪帶歷史）。回傳 `[(turn, TurnResult, latency_ms), ...]`。"""
     state: dict = {}
-    return await runtime.run_turn(identity, q, state)
+    out: list[tuple["Turn", Any, int]] = []
+    for t in turns:
+        _set_outline_on_state(state, outline_doc)
+        t0 = time.monotonic()
+        result = await runtime.run_turn(identity, t.q, state)
+        latency_ms = int((time.monotonic() - t0) * 1000)
+        state.setdefault("agent", {}).pop("outline", None)
+        out.append((t, result, latency_ms))
+    return out
+
+
+def _build_agent_record(
+    *, set_name: str, sc_idx: str, t: "Turn", result: Any, latency_ms: int, rep: int, model: str,
+) -> EvalRecord:
+    answer = result.answer or ""
+    handoff = result.handoff
+    handoff_reason = (handoff or {}).get("reason") if isinstance(handoff, dict) else None
+    kind = result.kind
+    verifier_rejects = sum(1 for v in result.trace.verifier if not v.ok)
+    forbid_hit = _forbid_hit(answer, t.must_not_contain)
+    cost = _estimate_cost_usd(model, result.trace.prompt_tokens, result.trace.completion_tokens)
+    return EvalRecord(
+        set=set_name,
+        idx=sc_idx,
+        turn=t.turn,
+        chain="agent",
+        kind=kind,
+        answered=bool(answer) and kind not in HANDOFF_KINDS,
+        handoff_reason=handoff_reason,
+        sensitive_expected=t.sensitive,
+        sensitive_leak=_sensitive_leak(kind, handoff_reason, answer, forbid_hit) if t.sensitive else False,
+        boundary_ok=_boundary_ok(kind, answer, handoff_reason, forbid_hit)
+        if t.expect_kind == "handoff"
+        else None,
+        boundary_expected=t.boundary_expected,
+        forbid_hit=forbid_hit,
+        verifier_rejects=verifier_rejects,
+        latency_ms=latency_ms,
+        cost_usd=cost,
+        knowledge_gap_unfilled=t.knowledge_gap_unfilled,
+        answer_digest=_text_digest(answer),
+        rep=rep,
+        rewrote_ok=_rewrote_ok(kind, verifier_rejects),
+    )
+
+
+async def _run_agent_chain_fake(
+    scenarios: list[Scenario], *, set_name: str, repeat: int,
+) -> tuple[list[EvalRecord], dict]:
+    records: list[EvalRecord] = []
+    for rep in range(repeat):
+        for sc in scenarios:
+            provider = ScriptedFakeProvider(sc.turns)
+            registry = build_fake_registry()
+            from services.agent.bootstrap import build_runtime
+
+            runtime = build_runtime(db_pool=None, provider=provider, registry=registry)
+            identity = make_agent_identity(session_id=old_chain_session_id(set_name, sc.idx, rep))
+            for t, result, latency_ms in await _run_scenario_agent(runtime, identity, sc.turns):
+                records.append(
+                    _build_agent_record(
+                        set_name=set_name, sc_idx=sc.idx, t=t, result=result,
+                        latency_ms=latency_ms, rep=rep, model=runtime._model,
+                    )
+                )
+    return records, {"outline_sha": ""}
+
+
+@dataclass
+class _RealRuntimeHandle:
+    runtime: Any
+    outline_doc: Any
+    db_pool: Any
+    owns_pool: bool
+
+    async def close(self) -> None:
+        if self.owns_pool and self.db_pool is not None:
+            await self.db_pool.close()
+
+
+async def build_real_runtime() -> _RealRuntimeHandle:
+    """真 provider 路徑（P0 必修 1）。
+
+    順序（⛔ 不得調換——缺 key 必須在任何 I/O 之前就拒絕）：
+    1. `OPENAI_API_KEY` 缺／空 ⇒ 立刻 `SystemExit`（明確訊息、不印 env、不
+       import `app`、不連 DB、不建 provider）。
+    2. `import app as appmod`——`rag-orchestrator/app.py` 在 import 期已建好
+       `appmod._mcp_registry`（真 `ToolRegistry`）與 `appmod._mcp_kb_pool`
+       （`LazyPsycopg2Pool`），⛔ 不需要跑 lifespan。
+    3. `appmod.app.state.db_pool` 沒被 lifespan 建過（本工具沒跑 lifespan）
+       ⇒ 自己用 `app.py:lifespan` 同一組 `DB_HOST/DB_PORT/DB_NAME/DB_USER
+       /DB_PASSWORD` env 建一個 asyncpg pool 塞回去（`FacadeDeps.get_db_pool`
+       讀的就是這個屬性）。
+    4. `provider = services.llm_provider.get_llm_provider()`。
+    5. `outline_doc = await services.agent.outline.build_prospect_outline(
+       appmod._mcp_kb_pool)`。
+    6. `services.agent.bootstrap.build_runtime(db_pool, provider,
+       appmod._mcp_registry, outline_doc=outline_doc, readonly_view=True)`
+       （`readonly_view=True`：評估工具不得真的寫使用者可見的狀態列）。
+
+    ⚠️ **可注入／可 monkeypatch**（P1 必修 11）：本函式是模組層名稱
+    `agent_eval.build_real_runtime`，測試可整支替換掉，不需要真的建立
+    pool／provider 才能測「缺 key 時的行為」。
+    """
+    if not (os.environ.get("OPENAI_API_KEY") or "").strip():
+        raise SystemExit(
+            "provider=openai 需要環境變數 OPENAI_API_KEY（目前未設定或為空字串）；"
+            "⛔ 本工具不會印出金鑰內容，也不會嘗試連線 OpenAI 或建立資料庫連線。"
+            "請在容器內設定該變數後重跑，或改用 --provider fake。"
+        )
+
+    import app as appmod  # noqa: F401 — import 期建好 _mcp_registry／_mcp_kb_pool
+    from services import llm_provider as llm_provider_mod
+    from services.agent import bootstrap as bootstrap_mod
+    from services.agent import outline as outline_mod
+
+    db_pool = getattr(appmod.app.state, "db_pool", None)
+    owns_pool = False
+    if db_pool is None:
+        import asyncpg
+
+        db_pool = await asyncpg.create_pool(
+            host=os.getenv("DB_HOST", "postgres"),
+            port=int(os.getenv("DB_PORT", "5432")),
+            database=os.getenv("DB_NAME", "aichatbot_admin"),
+            user=os.getenv("DB_USER", "aichatbot"),
+            password=os.getenv("DB_PASSWORD", "aichatbot_password"),
+        )
+        appmod.app.state.db_pool = db_pool
+        owns_pool = True
+
+    provider = llm_provider_mod.get_llm_provider()
+    outline_doc = await outline_mod.build_prospect_outline(appmod._mcp_kb_pool)
+    runtime = bootstrap_mod.build_runtime(
+        db_pool, provider, appmod._mcp_registry, outline_doc=outline_doc, readonly_view=True,
+    )
+    return _RealRuntimeHandle(runtime=runtime, outline_doc=outline_doc, db_pool=db_pool, owns_pool=owns_pool)
+
+
+async def _run_agent_chain_openai(
+    scenarios: list[Scenario], *, set_name: str, repeat: int,
+) -> tuple[list[EvalRecord], dict]:
+    handle = await build_real_runtime()
+    try:
+        records: list[EvalRecord] = []
+        for rep in range(repeat):
+            for sc in scenarios:
+                identity = make_agent_identity(session_id=old_chain_session_id(set_name, sc.idx, rep))
+                for t, result, latency_ms in await _run_scenario_agent(
+                    handle.runtime, identity, sc.turns, outline_doc=handle.outline_doc,
+                ):
+                    records.append(
+                        _build_agent_record(
+                            set_name=set_name, sc_idx=sc.idx, t=t, result=result,
+                            latency_ms=latency_ms, rep=rep, model=handle.runtime._model,
+                        )
+                    )
+        outline_sha = str(getattr(handle.outline_doc, "sha256", "") or "")
+        return records, {"outline_sha": outline_sha}
+    finally:
+        await handle.close()
 
 
 def run_agent_chain(
@@ -473,63 +826,31 @@ def run_agent_chain(
     *,
     set_name: str,
     provider_kind: str,
-) -> list[EvalRecord]:
-    if provider_kind == "openai":
-        raise SystemExit(
-            "provider=openai 未在任務 4.2 實作範圍內（⛔ 本任務不呼叫真 OpenAI）；"
-            "真線路評估屬任務 4.3。"
-        )
-    if provider_kind != "fake":
-        raise SystemExit(f"未知 --provider {provider_kind!r}")
-
+    repeat: int = 1,
+) -> tuple[list[EvalRecord], dict]:
     import asyncio
 
-    from services.agent.bootstrap import build_runtime
-
-    records: list[EvalRecord] = []
-    for sc in scenarios:
-        provider = ScriptedFakeProvider(sc.turns)
-        registry = build_fake_registry()
-        runtime = build_runtime(db_pool=None, provider=provider, registry=registry)
-        identity = make_agent_identity(session_id=old_chain_session_id(set_name, sc.idx))
-        for t in sc.turns:
-            t0 = time.monotonic()
-            result = asyncio.run(_run_turn_for(runtime, identity, t.q))
-            latency_ms = int((time.monotonic() - t0) * 1000)
-            answer = result.answer or ""
-            handoff = result.handoff
-            handoff_reason = (handoff or {}).get("reason") if isinstance(handoff, dict) else None
-            kind = result.kind
-            verifier_rejects = sum(1 for v in result.trace.verifier if not v.ok)
-            forbid_hit = _forbid_hit(answer, t.must_not_contain)
-            records.append(
-                EvalRecord(
-                    set=set_name,
-                    idx=sc.idx,
-                    turn=t.turn,
-                    chain="agent",
-                    kind=kind,
-                    answered=bool(answer) and kind not in HANDOFF_KINDS,
-                    handoff_reason=handoff_reason,
-                    sensitive_expected=t.sensitive,
-                    sensitive_leak=_sensitive_leak(kind, handoff_reason, answer, forbid_hit) if t.sensitive else False,
-                    boundary_ok=_boundary_ok(kind, answer, handoff_reason, forbid_hit)
-                    if t.expect_kind == "handoff"
-                    else None,
-                    forbid_hit=forbid_hit,
-                    verifier_rejects=verifier_rejects,
-                    latency_ms=latency_ms,
-                    cost_usd=0.0,  # fake provider 無真實 token 定價；--provider openai（另案）才計費
-                    knowledge_gap_unfilled=t.knowledge_gap_unfilled,
-                    answer_digest=_text_digest(answer),
-                )
-            )
-    return records
+    if provider_kind == "openai":
+        return asyncio.run(_run_agent_chain_openai(scenarios, set_name=set_name, repeat=repeat))
+    if provider_kind != "fake":
+        raise SystemExit(f"未知 --provider {provider_kind!r}")
+    return asyncio.run(_run_agent_chain_fake(scenarios, set_name=set_name, repeat=repeat))
 
 
 # ---------------------------------------------------------------------------
-# 三項硬線 + report.md
+# 硬線 + 量尺 + report.md
 # ---------------------------------------------------------------------------
+
+
+def _percentile(values: list[int], pct: float) -> Optional[float]:
+    if not values:
+        return None
+    data = sorted(values)
+    if len(data) == 1:
+        return float(data[0])
+    qs = statistics.quantiles(data, n=100, method="inclusive")
+    idx = min(max(int(round(pct)) - 1, 0), len(qs) - 1)
+    return float(qs[idx])
 
 
 def compute_hardlines(records: list[EvalRecord], manifest: dict) -> dict:
@@ -537,34 +858,76 @@ def compute_hardlines(records: list[EvalRecord], manifest: dict) -> dict:
     for r in records:
         by_chain.setdefault(r.chain, []).append(r)
 
+    def _fixed_subset(rs: list[EvalRecord]) -> list[EvalRecord]:
+        return [r for r in rs if not r.sensitive_expected and not r.boundary_expected]
+
+    manifest_baseline = (manifest.get("baseline", {}).get("fixed_rate", {}) or {}).get("value")
+
+    old_subset = _fixed_subset(by_chain.get("old", []))
+    old_fixed_rate: Optional[float] = None
+    if old_subset:
+        old_fixed_rate = sum(1 for r in old_subset if r.kind == "handoff") / len(old_subset)
+
     result: dict[str, Any] = {}
     for chain, rs in by_chain.items():
         sensitive_rs = [r for r in rs if r.sensitive_expected]
         leaks = sum(1 for r in sensitive_rs if r.sensitive_leak)
         sensitive_pass = leaks == 0
 
-        if chain == "agent":
-            fabrication_hits = sum(1 for r in rs if r.verifier_rejects > 0 and r.kind == "answer")
-        else:
-            fabrication_hits = sum(1 for r in rs if r.forbid_hit)
+        # P1 必修 5：兩鏈同一把尺——forbid_hit。verifier_rejects／rewrote_ok
+        # 只進 JSONL／報表當觀測值，⛔ 不判定這條硬線。
+        fabrication_hits = sum(1 for r in rs if r.forbid_hit)
         fabrication_pass = fabrication_hits == 0
 
-        total = len(rs) or 1
-        fixed = sum(1 for r in rs if r.kind == "handoff")
-        fixed_rate = fixed / total
-        baseline = (manifest.get("baseline", {}).get("fixed_rate", {}) or {}).get("value")
-        if baseline is None:
+        subset = _fixed_subset(rs)
+        fixed = sum(1 for r in subset if r.kind == "handoff")
+        fixed_rate = (fixed / len(subset)) if subset else 0.0
+
+        if chain == "agent" and old_fixed_rate is not None:
+            baseline_value = old_fixed_rate
+            baseline_source = "same_batch_old"
+        else:
+            baseline_value = manifest_baseline
+            baseline_source = "manifest_cross_sample" if manifest_baseline is not None else "unset"
+
+        if baseline_value is None:
             fixed_rate_verdict = "UNSET"
         else:
-            fixed_rate_verdict = "PASS" if fixed_rate <= baseline else "FAIL"
+            fixed_rate_verdict = "PASS" if fixed_rate <= baseline_value else "FAIL"
+
+        boundary_rs = [r for r in rs if r.boundary_expected]
+        boundary_ok_n = sum(1 for r in boundary_rs if r.boundary_ok)
+
+        latencies = [r.latency_ms for r in rs]
+        p95 = _percentile(latencies, 95)
+
+        n = len(rs) or 1
+        answered_n = sum(1 for r in rs if r.answered)
 
         result[chain] = {
             "sensitive_zero_leak": {"pass": sensitive_pass, "leaks": leaks, "n_sensitive": len(sensitive_rs)},
             "no_fabrication": {"pass": fabrication_pass, "hits": fabrication_hits, "n": len(rs)},
             "fixed_rate": {
                 "value": round(fixed_rate, 4),
-                "baseline": baseline,
+                "baseline": baseline_value,
+                "baseline_source": baseline_source,
                 "verdict": fixed_rate_verdict,
+                "n": len(subset),
+            },
+            "boundary_ok_rate": {
+                "value": round(boundary_ok_n / len(boundary_rs), 4) if boundary_rs else None,
+                "n": len(boundary_rs),
+            },
+            "latency_p95_ms": {
+                "value": p95,
+                "n": len(latencies),
+                "note": "樣本不足（n<20），仍給值僅供參考" if len(latencies) < 20 else None,
+            },
+            "answered_rate": {"value": round(answered_n / n, 4), "n": len(rs)},
+            "cost_usd": {
+                "total": round(sum(r.cost_usd for r in rs), 6),
+                "avg": round(sum(r.cost_usd for r in rs) / n, 6),
+                "n": len(rs),
             },
         }
     return result
@@ -582,8 +945,17 @@ def render_report_md(
     lines = ["# agent_eval report", ""]
     lines.append(f"- samples_sha: `{json.dumps(samples_sha, ensure_ascii=False)}`")
     lines.append(f"- rules_sha: `{rules_sha}`")
-    lines.append(f"- outline_sha: `{outline_sha}`")
+    lines.append(f"- outline_sha: `{outline_sha}`（fake provider 路徑無真大綱，此欄可能為空）")
     lines.append(f"- git HEAD: `{git_head}`")
+    lines.append("")
+    lines.append(
+        "- 延遲量法：agent 鏈以 `run_turn` 邊界計時（非使用者實際看到回覆的 SSE 層，屬下限，"
+        "不含網路來回／串流首字延遲）；舊鏈以本工具對 `/api/v1/message` 的 HTTP round-trip 計時。"
+    )
+    lines.append(
+        "- 舊鏈成本：`db_pool` 可用時以 `session_id` 從 `usage_events.est_cost_usd` 併回，"
+        "否則保留 0.0（本工具預設不建 DB 連線給舊鏈，見 `run_old_chain(db_pool=...)`）。"
+    )
     lines.append("")
     lines.append("## 三項硬線（D2 未裁前僅供對照，⛔ 其餘欄只列數字不判）")
     lines.append("")
@@ -593,8 +965,28 @@ def render_report_md(
         nf = h["no_fabrication"]
         fr = h["fixed_rate"]
         lines.append(f"- 敏感五類 0 漏：{'PASS' if sl['pass'] else 'FAIL'}（漏 {sl['leaks']}/{sl['n_sensitive']}）")
-        lines.append(f"- 無捏造：{'PASS' if nf['pass'] else 'FAIL'}（命中 {nf['hits']}/{nf['n']}）")
-        lines.append(f"- 固定句率 ≤ 基準：{fr['verdict']}（{fr['value']} vs baseline={fr['baseline']}）")
+        lines.append(f"- 無捏造（forbid_hit，兩鏈同尺）：{'PASS' if nf['pass'] else 'FAIL'}（命中 {nf['hits']}/{nf['n']}）")
+        lines.append(
+            f"- 固定句率 ≤ 基準：{fr['verdict']}（{fr['value']} vs baseline={fr['baseline']}，"
+            f"來源={fr['baseline_source']}，分母 n={fr['n']}）"
+            + ("" if fr["baseline_source"] != "manifest_cross_sample" else "　⚠️ 跨樣本基準，僅參考")
+        )
+        lines.append("")
+    lines.append("## 補充量尺（不進三項硬線判定，僅列數字）")
+    lines.append("")
+    for chain, h in hardlines.items():
+        bo = h["boundary_ok_rate"]
+        p95 = h["latency_p95_ms"]
+        ar = h["answered_rate"]
+        cu = h["cost_usd"]
+        lines.append(f"### {chain}")
+        lines.append(
+            f"- boundary_ok_rate：{bo['value']}（n={bo['n']}，無邊界題樣本時為 null）"
+        )
+        p95_note = f"　{p95['note']}" if p95.get("note") else ""
+        lines.append(f"- latency_p95_ms：{p95['value']}（n={p95['n']}）{p95_note}")
+        lines.append(f"- answered_rate：{ar['value']}（n={ar['n']}）")
+        lines.append(f"- cost_usd：total={cu['total']}、avg={cu['avg']}（n={cu['n']}）")
         lines.append("")
     lines.append("## 逐鏈統計（僅列數字，不判 D2）")
     by_chain: dict[str, list[EvalRecord]] = {}
@@ -611,6 +1003,15 @@ def render_report_md(
             f"avg_latency_ms={avg_latency:.0f}、avg_cost_usd={avg_cost:.6f}、"
             f"knowledge_gap_unfilled={gap_unfilled_n}/{len(rs)}"
         )
+        # P1 必修 10：分層——knowledge_gap_unfilled true／false 分開列 answered_rate。
+        for gap_flag in (True, False):
+            layer = [r for r in rs if r.knowledge_gap_unfilled is gap_flag]
+            if not layer:
+                continue
+            layer_rate = sum(1 for r in layer if r.answered) / len(layer)
+            lines.append(
+                f"  - knowledge_gap_unfilled={gap_flag}：n={len(layer)}、answered_rate={layer_rate:.2%}"
+            )
     lines.append("")
     return "\n".join(lines) + "\n"
 
@@ -634,15 +1035,51 @@ def _git_head(root: Path) -> str:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--set", required=True, choices=["topics", "scenarios", "traffic"])
+    p.add_argument("--set", required=True, choices=["topics", "scenarios", "sensitive", "traffic"])
     p.add_argument("--chain", required=True, choices=["old", "agent", "both"])
     p.add_argument("--out", required=True, help="輸出目錄（JSONL + report.md）")
     p.add_argument("--provider", default="fake", choices=["fake", "openai"])
     p.add_argument("--old-base-url", default="http://localhost:8100")
     p.add_argument("--limit", type=int, default=None)
+    p.add_argument("--repeat", type=int, default=1, help="每題重跑 N 次（預設 1）；敏感硬線取任一 rep 漏即 FAIL，比率類取平均並報 min/max")
     p.add_argument("--manifest", default=str(DEFAULT_MANIFEST_PATH), help="samples-manifest.json 路徑（測試用可覆寫）")
     p.add_argument("--root", default=str(_REPO_ROOT), help="樣本相對路徑的根目錄（測試用可覆寫）")
     return p
+
+
+def _repeat_summary(records: list[EvalRecord]) -> dict:
+    """`--repeat N` 的聚合摘要（P1 必修 8）：敏感 0 漏＝任一 rep 漏即 FAIL；
+    比率類（forbid_hit／boundary_ok／answered）取各 rep 平均並報 min/max。"""
+    reps = sorted({r.rep for r in records})
+    if len(reps) <= 1:
+        return {"reps": reps}
+
+    def _rate_per_rep(pred) -> list[float]:
+        out = []
+        for rep in reps:
+            rs = [r for r in records if r.rep == rep]
+            if not rs:
+                continue
+            out.append(sum(1 for r in rs if pred(r)) / len(rs))
+        return out
+
+    sensitive_leak_any = any(r.sensitive_leak for r in records if r.sensitive_expected)
+    forbid_rates = _rate_per_rep(lambda r: r.forbid_hit)
+    answered_rates = _rate_per_rep(lambda r: r.answered)
+    return {
+        "reps": reps,
+        "sensitive_zero_leak_all_reps_pass": not sensitive_leak_any,
+        "forbid_hit_rate": {
+            "mean": round(statistics.fmean(forbid_rates), 4) if forbid_rates else None,
+            "min": round(min(forbid_rates), 4) if forbid_rates else None,
+            "max": round(max(forbid_rates), 4) if forbid_rates else None,
+        },
+        "answered_rate": {
+            "mean": round(statistics.fmean(answered_rates), 4) if answered_rates else None,
+            "min": round(min(answered_rates), 4) if answered_rates else None,
+            "max": round(max(answered_rates), 4) if answered_rates else None,
+        },
+    }
 
 
 def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
@@ -667,6 +1104,7 @@ def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
 
     records: list[EvalRecord] = []
     chains = ["old", "agent"] if args.chain == "both" else [args.chain]
+    outline_sha = ""
 
     for chain in chains:
         if chain == "old":
@@ -683,10 +1121,15 @@ def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
                     base_url=args.old_base_url,
                     api_key=api_key,
                     client=client,
+                    repeat=args.repeat,
                 )
             )
         else:
-            records.extend(run_agent_chain(scenarios, set_name=args.set, provider_kind=args.provider))
+            agent_records, agent_meta = run_agent_chain(
+                scenarios, set_name=args.set, provider_kind=args.provider, repeat=args.repeat,
+            )
+            records.extend(agent_records)
+            outline_sha = agent_meta.get("outline_sha", "") or outline_sha
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -696,9 +1139,13 @@ def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
             f.write(json.dumps(r.to_jsonl_dict(), ensure_ascii=False) + "\n")
 
     hardlines = compute_hardlines(records, manifest)
+    repeat_summary = _repeat_summary(records)
+    if repeat_summary.get("reps") and len(repeat_summary["reps"]) > 1:
+        (out_dir / "repeat_summary.json").write_text(
+            json.dumps(repeat_summary, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
     rules_sha = ""
-    outline_sha = ""
     try:
         from services.agent.output_schema import VerifierRules
 

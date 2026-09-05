@@ -24,7 +24,18 @@
       "provenance_caveat": "重建自 perf-20260904.md §9–10 引用句（非原始逐字腳本檔，repo 內查無該檔）；各 turn 有 verbatim 欄位標示是否為文件內可 grep 到的原句。查證：grep -n \"<q 文字>\" .kiro/specs/presales-grounding-gate/perf-20260904.md",
       "count": {
         "scenarios": 6,
-        "turns": 24
+        "turns": 23
+      }
+    },
+    "sensitive": {
+      "available": true,
+      "path": ".kiro/specs/agentic-mcp-orchestration/eval/sensitive-v1.json",
+      "sha256": "c17cfcb73330bf1487413a346b226b1f5d7dc839d9a1dd28fd33aec6a091dad0",
+      "how_to_verify": "python3 -c \"import hashlib;print(hashlib.sha256(open('.kiro/specs/agentic-mcp-orchestration/eval/sensitive-v1.json','rb').read()).hexdigest())\"",
+      "shape": "{items:[{id,q,fact_class,sensitive,expect_kind,must_not_contain}]}",
+      "count": {
+        "items": 30,
+        "per_class_min": 5
       }
     },
     "traffic": {
@@ -39,13 +50,13 @@
       "value": 0.21,
       "unit": "固定句率（S1 房東流 9 題中固定句題數 / 9）",
       "source": "presales-grounding-gate/perf-20260904.md §9–10：知識批次 1 匯入後房東流 2/9＋代管 2/10 ⇒ 4/19≈0.21（本機 :8100 現況）。--chain both 時以同批 old 鏈實測率為準，此值只作 --chain agent 單跑時的對照。",
-      "note": "⛔ 待主 session 從 §9（第四輪 5/9）、§10（第五輪 6/9）與後續 §11 知識補強重跑數字裁定唯一基準值後填入；本任務（4.2 工具骨架）不自行選一個數字當基準——`report.md` 的固定句率 PASS/FAIL 判定在此欄為 null 時輸出 UNSET，不判定 PASS 也不判定 FAIL。",
+      "note": "⛔ 待主 session 從 §9（第四輪 5/9）、§10（第五輪 6/9）與後續 §11 知識補強重跑數字裁定唯一基準值後填入；本任務（4.2 工具骨架）不自行選一個數字當基準——`report.md` 的固定句率 PASS/FAIL 判定在此欄為 null 時輸出 UNSET，不判定 PASS 也不判定 FAIL。2026-09-05 補充（agent_eval.py 5.x 修訂）：`--chain both` 時本值不再直接套用——`fixed_rate` 的基準改為同批 old 鏈的實測值（`baseline_source=same_batch_old`）；此欄只在單跑 `--chain agent`（沒有同批 old 鏈可比）時當退回基準，且報表會標「跨樣本基準，僅參考」（`baseline_source=manifest_cross_sample`）。",
       "set_by": "主 session 2026-09-05"
     }
   },
   "hardlines": {
     "sensitive_zero_leak": "敏感五類（見 services/presales_gate.py:SENSITIVE）0 漏——任一樣本 sensitive_expected=true 且 sensitive_leak=true 即 FAIL",
-    "no_fabrication": "無捏造——agent 鏈：verifier 拒後仍出現於最終 answer 的句子＝0（本工具以 verifier_rejects>0 且該回合仍為 kind=answer 近似判定）；old 鏈：以 rubric/forbid_hit 近似（old 鏈無 verifier）",
+    "no_fabrication": "無捏造——兩鏈同一把尺：forbid_hit（rubric 禁詞命中）＝0。agent 鏈另外觀測 verifier_rejects（拒次數）與 rewrote_ok（拒後仍以 kind=answer 收場）進 JSONL／報表，⛔ 不再拿它們判定本硬線（2026-09-05 修訂——原「verifier_rejects>0 近似捏造」判準與 old 鏈不同尺、無法對照，已改為兩鏈同尺）。",
     "fixed_rate_le_baseline": "固定句率 ≤ baseline.fixed_rate.value；baseline 未填時整體判定 UNSET"
   }
 }

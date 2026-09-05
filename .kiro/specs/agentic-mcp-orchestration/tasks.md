@@ -132,6 +132,10 @@
   - 執行：mech-executor／effort 中——樣本與報表欄位已定，照 `scripts/backtest/run_batch.py` 慣例
   - **收案註記（2026-09-05）**：mech-executor（worktree）→ 收檔，unit 14 綠；對真 `topics-v2.json` 以 fake provider 實跑 5 題產出 JSONL＋report（形狀、決定性、sha 校驗、無原文）。manifest：topics sha `f78344d6…`、scenarios `eval/scenarios-v1.json`（**非逐字原始腳本**——repo 查無第四／五輪 verifier 的原始多回合腳本，以 perf §9–10 可 grep 原句重建 6 劇本 24 輪，每輪標 `verbatim`；4.3 只能當新一組獨立凍結樣本，⛔ 不能當「重跑同一組」）、traffic `available:false`（業主未匯出）；`baseline.fixed_rate=0.21`（主 session 從 perf §9–10 批次 1 後 4/19 填；`--chain both` 以同批 old 鏈實測為準）。已知：fake provider 不給 citations ⇒ 真 Verifier 拒到預算盡（證明工具沒繞過 Verifier，也代表答對率要 4.3 真 provider 才有意義）；`cost_usd` 待真線路；old 鏈帶 `RAG_ADMIN_API_KEY` header（既有 `run_batch.py` 不帶，屬其債）。
 - [ ] 4.3 影子跑動與收案（4.2 後；需業主開影子 env）：本機 `:8100` 對 prospect 開影子、跑三組樣本，派獨立 `verifier` 重跑同一組樣本（CONFIRMED 為 M2 done）；產出 `perf-agent-<date>.md`。
+  - r9（2026-09-05，`reviews/r9-m2-eval-validity.md`）判 REVISE：樣本 A／B **降級為已知病灶回歸集，⛔ 不作 M3 放行證據**；4.3 依處置拆為三個子任務：
+  - [ ] 4.3a 修評估工具（executor，worktree）：真 provider 路徑（真 registry＋大綱＋asyncpg pool）、多輪同一 state、身分 b2b／vendor 1、`--repeat N`、敏感樣本集 `eval/sensitive-v1.json`（五類各 ≥5）、無捏造兩鏈同尺（forbid_hit）、固定句率只算非敏感非邊界子集且以同批 old 為基準、報表補 boundary_ok_rate／p95／answered_rate／cost、舊鏈轉人讀結構化欄＋固定句比對、manifest 修 turns／outline_sha。完成後派 fresh `verifier`。
+  - [ ] 4.3b 真實流量樣本 C（業主動作＋主 session）：業主在線上匯出 `chat_history.question`（`target_user='prospect'`，近 90 天，建議 ≥60 句、分層主題×敏感×單/多輪）；主 session 本機去識別（人名／電話／地址）後凍結 sha256 進 manifest；匯出檔 ⛔ 不進 commit；D2 五個數字在看結果前由業主裁定寫進 manifest。
+  - [ ] 4.3c 真跑與收案（4.3a、4.3b 後，容器內、gpt-4o-mini、`--repeat 3`）：三組樣本兩條鏈對跑，派獨立 `verifier` 重跑同一組（CONFIRMED 為 M2 done）；產出 `perf-agent-<date>.md`；p95 先以 `run_turn` 邊界量並標為下限（使用者層量法待 M3 演練）。
   - 2026-09-05 影子首日註記：影子已開（`AGENT_SHADOW_AUDIENCES=prospect`），首批真流量暴露 P0（DSP-022：當前 user 訊息從未進 messages、dialog 從未寫回）與四項尺／契約校正（DSP-020／021）。**此前所有影子紀錄作廢**，4.3 的三組樣本自 HEAD 含 DSP-022 起算；D1 參考數據（n=5，非收案證據）：修正後 gpt-4o-mini 4/5、gpt-4o 4/5 → 業主裁統一 gpt-4o-mini（DSP-023）。
   - 需求：8.4, 13.5
   - 執行：main＋verifier／effort 高——需業主開影子 env；療效宣稱必派獨立 verifier（CONFIRMED 為 M2 done）
