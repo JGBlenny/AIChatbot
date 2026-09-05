@@ -115,6 +115,18 @@ def _rules_sha(get_runtime: Optional[Callable[[], Any]]) -> str:
     return str(getattr(runtime, "rules_sha", "") or "") or "pending"
 
 
+def _outline_sha(get_runtime: Optional[Callable[[], Any]]) -> str:
+    """同 `_rules_sha`：回這個行程實際載入的大綱 sha（`bootstrap.build_runtime` 外掛的
+    `runtime.outline_sha`），取不到 ⇒ `"pending"`。⛔ 不重組大綱來算。"""
+    if get_runtime is None:
+        return "pending"
+    try:
+        runtime = get_runtime()
+    except Exception:  # noqa: BLE001
+        return "pending"
+    return str(getattr(runtime, "outline_sha", "") or "") or "pending"
+
+
 def _premise_flags(stats: dict) -> list:
     """DSP-011 前提偵測四項：前三項任一非零，或第四項為真 ⇒ 列名。
 
@@ -182,7 +194,7 @@ async def compute_agent_health(
                 "kb_get_reachable": kb_reachable,
                 "detail": kb_detail,
             },
-            "outline_version": "pending",
+            "outline_version": _outline_sha(get_runtime),
             "rules_sha": rules_sha,
             "premise": {
                 "mcp_calls_by_api_key": stats.get("mcp_calls_by_api_key", {}),
