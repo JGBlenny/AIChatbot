@@ -560,5 +560,90 @@
       }
     },
     "handoff": null
+  },
+  {
+    "id": "handoff_fact_class_missing",
+    "note": "DSP-021：kind=handoff 但 fact_class 缺 ⇒ 仍 fail-closed",
+    "expected_reason": "SENSITIVE_TOPIC",
+    "user_message": "一個月多少錢？",
+    "agent_output": {
+      "kind": "handoff",
+      "answer": "轉專人。",
+      "citations": [],
+      "sentence_map": [],
+      "fact_class": null,
+      "handoff_reason": "sensitive_no_grounding"
+    },
+    "tool_results": {},
+    "handoff": {
+      "reason": "sensitive_no_grounding",
+      "fact_class": "other"
+    }
+  },
+  {
+    "id": "handoff_reason_free_text",
+    "note": "DSP-021：handoff_reason 不在 HandoffReason 值域（模型曾回「敏感主題」）⇒ SCHEMA",
+    "expected_reason": "SCHEMA",
+    "user_message": "一個月多少錢？",
+    "agent_output": {
+      "kind": "handoff",
+      "answer": "轉專人。",
+      "citations": [],
+      "sentence_map": [],
+      "fact_class": "pricing",
+      "handoff_reason": "敏感主題"
+    },
+    "tool_results": {},
+    "handoff": {
+      "reason": "敏感主題",
+      "fact_class": "pricing"
+    }
+  },
+  {
+    "id": "wrong_label_cannot_launder_non_citable",
+    "note": "DSP-021：引文只存在於 citable=false 的目錄節，標成可引用的節 ⇒ 仍 SOURCE_NOT_CITABLE（以實際命中為準）",
+    "expected_reason": "SOURCE_NOT_CITABLE",
+    "user_message": "有哪些章節？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "目錄只列標題不含內容。",
+      "citations": [
+        {
+          "tool_call_id": "outline",
+          "source": "outline:lease",
+          "quote": "目錄只列標題不含內容"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "outline": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "outline:toc",
+            "text": "這份目錄只列標題不含內容，請按章節讀取。",
+            "citable": false
+          },
+          {
+            "source": "outline:lease",
+            "text": "金箍棒的租約管理把一般租賃合約從建約到簽署搬到線上。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
   }
 ]

@@ -18,7 +18,7 @@ from typing import Optional
 
 from services.agent.output_schema import AgentOutput, SentenceCite, VerifierRules, VerifierVerdict
 from services.agent.tools.registry import Provenance, ToolResult
-from services.presales_gate import FactClass, HANDOFF_WORDS, SENSITIVE, scan_handoff_mentions
+from services.presales_gate import FactClass, HANDOFF_WORDS, HandoffReason, SENSITIVE, scan_handoff_mentions
 
 #: 「純」條件切子句用的封閉分隔詞（design：逗號／頓號／分號）。
 _CLAUSE_SEPS: tuple[str, ...] = ("，", ",", "、", "；", ";")
@@ -110,6 +110,16 @@ class OutputVerifier:
         if not _is_legal_fact_class(out.fact_class):
             return VerifierVerdict(ok=False, reason="SENSITIVE_TOPIC")
         fact_class = FactClass(out.fact_class)
+        # DSP-021：`kind=handoff` 是敏感五類**應走**的出口——fact_class ∈ SENSITIVE 在
+        # 這裡是正確標記，⛔ 不拒；`handoff_reason` 必須在 `HandoffReason` 值域內
+        # （模型曾回自由文字「敏感主題」）。模型的 `answer` 文字不會到使用者手上
+        # （Runtime 換成 `effective_handoff_message` 固定句），故 ②～⑦ 不對它跑。
+        # 影子 2026-09-05：模型正確改轉人卻因 `sentence_map=[]` 被 ② 判 SCHEMA、
+        # 兩拒耗盡 ⇒ 每個敏感題都多花兩次模型呼叫、reason 誤記 budget_exhausted。
+        if out.kind == "handoff":
+            if out.handoff_reason not in {r.value for r in HandoffReason}:
+                return VerifierVerdict(ok=False, reason="SCHEMA")
+            return VerifierVerdict(ok=True)
         if fact_class in SENSITIVE:
             return VerifierVerdict(ok=False, reason="SENSITIVE_TOPIC")
         answer_nfkc = _nfkc(out.answer)
@@ -215,6 +225,16 @@ class OutputVerifier:
                 matched = prov
                 break
         if matched is None:
+            # DSP-021：source 標籤錯、引文卻逐字存在於**同一次工具回傳**的別筆 provenance
+            # （真線路 2026-09-05：引文出自大綱「房源」節、模型標成 outline:lease）——
+            # 尺量的是「這段字是不是真的在回傳原文裡」，標籤是元資料；仍限同一個
+            # tool_call_id、仍要逐字、citable 以**實際命中**的那筆為準（⛔ 不能靠改標籤
+            # 把不可引用的字洗成可引用）。citable 的先找，都沒有才落到不可引用的那筆。
+            for prov in sorted(provenances, key=lambda pv: not pv.citable):
+                if quote_nfkc in _nfkc(prov.text):
+                    matched = prov
+                    break
+        if matched is None:
             return VerifierVerdict(ok=False, reason="QUOTE_NOT_VERBATIM", sent=sent, quote_len=len(quote_nfkc))
 
         overlap = _meaningful_chars(sentence_text) & _meaningful_chars(citation.quote)
@@ -222,12 +242,15 @@ class OutputVerifier:
             return VerifierVerdict(ok=False, reason="QUOTE_NOT_COVERING", sent=sent, quote_len=len(quote_nfkc))
 
         sentence_nfkc = _nfkc(sentence_text)
-        for i, term in enumerate(self.rules.negation_terms):
-            in_sentence = term in sentence_nfkc
-            in_quote = term in quote_nfkc
-            if in_sentence != in_quote:
-                return VerifierVerdict(
-                    ok=False, reason="POLARITY_MISMATCH", sent=sent, term_id=_rule_id(i))
+        # DSP-021：極性在**詞組層級**比對——句子與引文「有沒有否定詞」須一致，⛔ 不逐詞
+        # 要求同一個字面（真線路 2026-09-05：句子「不支持」、引文「不支援」被判不一致，
+        # 兩邊其實同為否定）。term_id 記的是句子側（或引文側）第一個命中的否定詞索引。
+        sent_hits = [i for i, t in enumerate(self.rules.negation_terms) if t in sentence_nfkc]
+        quote_hits = [i for i, t in enumerate(self.rules.negation_terms) if t in quote_nfkc]
+        if bool(sent_hits) != bool(quote_hits):
+            return VerifierVerdict(
+                ok=False, reason="POLARITY_MISMATCH", sent=sent,
+                term_id=_rule_id((sent_hits or quote_hits)[0]))
 
         if not matched.citable:
             return VerifierVerdict(ok=False, reason="SOURCE_NOT_CITABLE", sent=sent)
@@ -269,4 +292,10 @@ class OutputVerifier:
                 )
 
 
-__all__ = ["OutputVerifier"]
+def split_sentences(text: str) -> list[str]:
+    """公開版切句（DSP-021）：Runtime 在 SCHEMA 拒因回饋裡告訴模型「系統切成幾句」，
+    與 verify() 用的是同一個函式，⛔ 不得另寫一份規則。"""
+    return _split_sentences(text)
+
+
+__all__ = ["OutputVerifier", "split_sentences"]

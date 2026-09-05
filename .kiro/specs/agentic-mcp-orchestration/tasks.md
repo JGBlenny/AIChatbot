@@ -132,6 +132,7 @@
   - 執行：mech-executor／effort 中——樣本與報表欄位已定，照 `scripts/backtest/run_batch.py` 慣例
   - **收案註記（2026-09-05）**：mech-executor（worktree）→ 收檔，unit 14 綠；對真 `topics-v2.json` 以 fake provider 實跑 5 題產出 JSONL＋report（形狀、決定性、sha 校驗、無原文）。manifest：topics sha `f78344d6…`、scenarios `eval/scenarios-v1.json`（**非逐字原始腳本**——repo 查無第四／五輪 verifier 的原始多回合腳本，以 perf §9–10 可 grep 原句重建 6 劇本 24 輪，每輪標 `verbatim`；4.3 只能當新一組獨立凍結樣本，⛔ 不能當「重跑同一組」）、traffic `available:false`（業主未匯出）；`baseline.fixed_rate=0.21`（主 session 從 perf §9–10 批次 1 後 4/19 填；`--chain both` 以同批 old 鏈實測為準）。已知：fake provider 不給 citations ⇒ 真 Verifier 拒到預算盡（證明工具沒繞過 Verifier，也代表答對率要 4.3 真 provider 才有意義）；`cost_usd` 待真線路；old 鏈帶 `RAG_ADMIN_API_KEY` header（既有 `run_batch.py` 不帶，屬其債）。
 - [ ] 4.3 影子跑動與收案（4.2 後；需業主開影子 env）：本機 `:8100` 對 prospect 開影子、跑三組樣本，派獨立 `verifier` 重跑同一組樣本（CONFIRMED 為 M2 done）；產出 `perf-agent-<date>.md`。
+  - 2026-09-05 影子首日註記：影子已開（`AGENT_SHADOW_AUDIENCES=prospect`），首批真流量暴露 P0（DSP-022：當前 user 訊息從未進 messages、dialog 從未寫回）與四項尺／契約校正（DSP-020／021）。**此前所有影子紀錄作廢**，4.3 的三組樣本自 HEAD 含 DSP-022 起算；D1 參考數據（n=5，非收案證據）：gpt-4o-mini 2/5、gpt-4o 4/5 正確處置。
   - 需求：8.4, 13.5
   - 執行：main＋verifier／effort 高——需業主開影子 env；療效宣稱必派獨立 verifier（CONFIRMED 為 M2 done）
 

@@ -280,5 +280,110 @@
       }
     },
     "handoff": null
+  },
+  {
+    "id": "good_handoff_sensitive_pricing",
+    "note": "DSP-021：模型自判敏感（pricing）走 kind=handoff、reason 在值域內 ⇒ 放行（文字由 Runtime 換固定句）",
+    "user_message": "一個月多少錢？",
+    "agent_output": {
+      "kind": "handoff",
+      "answer": "報價需由專人說明。",
+      "citations": [],
+      "sentence_map": [],
+      "fact_class": "pricing",
+      "handoff_reason": "sensitive_no_grounding"
+    },
+    "tool_results": {},
+    "handoff": {
+      "reason": "sensitive_no_grounding",
+      "fact_class": "pricing"
+    }
+  },
+  {
+    "id": "good_polarity_synonym_negation",
+    "note": "DSP-021：句子「不支持」、引文「不支援」同為否定 ⇒ 極性一致（詞組層級），不得誤殺",
+    "user_message": "合約可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "合約目前不支持批次匯入，需要逐筆建立。",
+      "citations": [
+        {
+          "tool_call_id": "outline",
+          "source": "outline:listing",
+          "quote": "合約目前不支援批次匯入，需要逐筆建立"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "outline": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "outline:listing",
+            "text": "要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "good_outline_quote_under_wrong_section_label",
+    "note": "DSP-021：引文逐字出自 outline:listing、模型標成 outline:lease（同一 tool_call_id）⇒ 放行；標籤錯不等於引文假",
+    "user_message": "合約可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "answer": "合約目前不支援批次匯入，需要逐筆建立。",
+      "citations": [
+        {
+          "tool_call_id": "outline",
+          "source": "outline:lease",
+          "quote": "合約目前不支援批次匯入，需要逐筆建立"
+        }
+      ],
+      "sentence_map": [
+        {
+          "sent": 0,
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "outline": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "outline:listing",
+            "text": "要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）。",
+            "citable": true
+          },
+          {
+            "source": "outline:lease",
+            "text": "金箍棒的租約管理把一般租賃合約從建約到簽署搬到線上。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
   }
 ]

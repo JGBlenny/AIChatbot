@@ -110,6 +110,9 @@ def test_impure_question_with_valid_citation_passes(verifier):
         ("sensitive_customer_reference", "SENSITIVE_TOPIC"),  # 敏感題「有料」（有引用）仍拒
         ("fact_class_missing", "SENSITIVE_TOPIC"),            # fact_class 缺
         ("schema_mismatch", "SCHEMA"),                        # sentence_map 未覆蓋全文
+        ("handoff_fact_class_missing", "SENSITIVE_TOPIC"),    # DSP-021：handoff 仍要合法 fact_class
+        ("handoff_reason_free_text", "SCHEMA"),               # DSP-021：handoff_reason 值域外
+        ("wrong_label_cannot_launder_non_citable", "SOURCE_NOT_CITABLE"),  # DSP-021：標籤錯洗不掉 citable=false
     ],
 )
 def test_specific_named_scenarios(verifier, case_id, expected_reason):

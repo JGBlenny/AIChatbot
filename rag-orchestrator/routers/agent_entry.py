@@ -175,6 +175,15 @@ def schedule_shadow(app, request, state_snapshot: Optional[dict], old_answer: st
     identity = build_identity(request)
     try:
         if shadow.enabled(identity):
-            shadow.schedule(identity, request.message, state_snapshot or {}, old_answer)
+            state = dict(state_snapshot or {})
+            # DSP-022 附帶：影子回合也要看得到大綱（與 handle_agent_entry 同一份
+            # `app.state.agent_outline`、同樣只在記憶體）。真線路 2026-09-05：影子
+            # prompt_tokens 只有 2.4k、每題 no_grounding，就是這裡沒塞。
+            outline = getattr(app.state, "agent_outline", None) if identity.audience == "prospect" else None
+            if outline is not None:
+                agent_state = dict(state.get("agent") or {})
+                agent_state["outline"] = outline
+                state["agent"] = agent_state
+            shadow.schedule(identity, request.message, state, old_answer)
     except Exception:  # noqa: BLE001 — 影子絕不影響主回應
         return

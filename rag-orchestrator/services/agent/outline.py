@@ -321,7 +321,9 @@ def _max_updated_at_iso(rows: list[tuple], updated_at_index: int) -> str:
 def _build_doc(
     *, audience: Audience, sections: list[OutlineSection], version: str
 ) -> OutlineDoc:
-    text = _SECTION_SEP.join(f"【{s.title}】\n{s.text}" for s in sections)
+    # DSP-020：章節標題帶 section id——模型引用大綱時 `Citation.source` 要填它
+    # （`outline:contract`），只給標題模型無從得知 id（影子 2026-09-05 實測）。
+    text = _SECTION_SEP.join(f"【{s.id}】{s.title}\n{s.text}" for s in sections)
     # sha 涵蓋 version（＝池列 max(updated_at)），⛔ 不只涵蓋 text——
     # 這樣「內容沒變、只有某列 updated_at 被 touch 過」也會讓快取判斷為「已變」，
     # 對應 R5.1「售前池任一列更新 ⇒ 重新組裝大綱（快取失效）」；只掛 text 會讓

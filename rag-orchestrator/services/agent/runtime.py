@@ -58,13 +58,14 @@ from services.agent.budget import Budget, BudgetCounters
 from services.agent.identity import Identity, Stage
 from services.agent.mcp_facade import current_stage
 from services.agent.output_schema import AgentOutput, VerifierVerdict
+from services.agent.verifier import split_sentences
 from services.agent.prompt_assembler import new_nonce, wrap_tool_data
-from services.agent.tools.registry import ToolRegistry, ToolResult, tool_name_from_openai
+from services.agent.tools.registry import Provenance, ToolRegistry, ToolResult, tool_name_from_openai
 from services.conversational_config import (
     effective_handoff_channel,
     effective_handoff_message,
 )
-from services.presales_gate import FactClass
+from services.presales_gate import FactClass, HandoffReason
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +74,73 @@ logger = logging.getLogger(__name__)
 # （任務 2.3）；本檔只 import，⛔ 不再本地重複定義（2.5 收尾註記，見模組
 # docstring）。`Citation`／`SentenceCite` 本檔不直接使用，不重複 import。
 # ---------------------------------------------------------------------------
+
+
+
+#: DSP-020：大綱章節在回合開始即以這個保留 `tool_call_id` 預載成一筆 provenance，
+#: 模型引用大綱時 `Citation.tool_call_id` 填它、`source` 填章節 id（`outline:*`），
+#: 不必先呼叫 `kb.get("outline:*")` 多花一輪。⚠️ 影子 2026-09-05 第一筆真流量
+#: 就是因為缺這條——模型照鐵則引用大綱、Verifier 卻只認工具回傳 ⇒ 兩次
+#: QUOTE_NOT_VERBATIM → budget_exhausted。OpenAI 的 tool_call id 一律 `call_…`，
+#: 若模型偽造同名 id，下方以 `_seed_outline_provenance` 的結果為準、⛔ 不覆寫。
+OUTLINE_TOOL_CALL_ID = "outline"
+
+#: DSP-022：`state["agent"]["dialog"]` 保留的訊息數上限（user＋assistant 各一則算 2）。
+#: 10 輪對話；超過丟最舊——歷史全靠這裡，⛔ 不另存工具訊息（design 元件 5：dialog 只有 user／assistant）。
+DIALOG_MAX_MESSAGES = 20
+
+
+def _append_dialog(agent_state: dict, user_message: str, answer: str) -> None:
+    """DSP-022：回合收尾把「使用者這句＋助理回覆（使用者實際看到的字，固定句亦然）」
+    寫回 `dialog`，下一回合 `PromptAssembler._normalized_dialog` 才有歷史可放。
+    ⚠️ 真線路 2026-09-05 才發現：run_turn 先前**從未**把當前 `user_message` 放進 messages、
+    也從未寫回歷史——模型只看到 system prompt，五題全在對著大綱自由發揮。"""
+    dialog = agent_state.setdefault("dialog", [])
+    dialog.append({"role": "user", "content": user_message})
+    dialog.append({"role": "assistant", "content": answer})
+    if len(dialog) > DIALOG_MAX_MESSAGES:
+        del dialog[: len(dialog) - DIALOG_MAX_MESSAGES]
+
+
+def _canonicalize_outline_sources(out: AgentOutput) -> AgentOutput:
+    """DSP-021：只對 `tool_call_id == OUTLINE_TOOL_CALL_ID` 的引用做**機械**正規化——
+    去掉 id 後面誤抄的標題（`outline:listing 房源` → `outline:listing`）、補回被吃掉的
+    `outline:` 前綴（`positioning` → `outline:positioning`）。真線路 2026-09-05 兩種都出現過，
+    而 Verifier 找不到來源時回的是 QUOTE_NOT_VERBATIM（引文其實逐字）。
+    ⛔ 不碰 quote、不碰其他 tool_call_id：這不是放寬尺，是把「同一個 id 的兩種寫法」
+    收斂成一種，section id 仍要與 provenance 完全相等才會被放行。"""
+    if not out.citations:
+        return out
+    changed = False
+    fixed = []
+    for c in out.citations:
+        if c.tool_call_id == OUTLINE_TOOL_CALL_ID:
+            token = (c.source or "").strip().split()[0] if (c.source or "").strip() else ""
+            if token and not token.startswith("outline:"):
+                token = f"outline:{token}"
+            if token != c.source:
+                c = c.model_copy(update={"source": token})
+                changed = True
+        fixed.append(c)
+    return out.model_copy(update={"citations": fixed}) if changed else out
+
+
+def _seed_outline_provenance(outline: Any) -> Optional[ToolResult]:
+    """把 `OutlineDoc.sections` 轉成一筆 `ToolResult`（只有 provenance）。
+    無大綱或無章節 ⇒ None（pm／tenant 目錄 `citable=False` 照樣預載——
+    Verifier 會以 SOURCE_NOT_CITABLE 拒，語義與 `kb.get("outline:*")` 一致）。"""
+    sections = getattr(outline, "sections", None) if outline is not None else None
+    if not sections:
+        return None
+    provs = [
+        Provenance(
+            source=str(sec.id),
+            text=str(sec.text),
+            citable=bool(getattr(sec, "citable", True)),
+        )
+        for sec in sections
+    ]
+    return ToolResult(ok=True, data={"sections": len(provs)}, provenance=provs, text_for_model="")
 
 
 class VerifierProtocol(Protocol):
@@ -263,6 +331,23 @@ def _agent_output_response_format() -> dict:
     刻意留白」段——巢狀 `$defs` 的 strict 轉換留給 2.2 對真 API 驗證時處理）。
     """
     schema = strict_json_schema(AgentOutput.model_json_schema())
+    # DSP-021：值域交給 strict schema 管形狀（mini 委派分工定案：模型判語義、schema 管形狀）。
+    # `AgentOutput.fact_class` 在 pydantic 端刻意是 Optional[str]（Verifier fail-closed 的
+    # 第二道牆，見 output_schema.py 頂端），但給模型的 schema 收成封閉列舉——影子
+    # 2026-09-05 首筆真流量模型回 `fact_class=null` 即被 ① 當敏感拒掉。
+    props = schema["properties"]
+    props["fact_class"] = {
+        "type": "string",
+        "enum": [fc.value for fc in FactClass],
+        "description": "本輪問題的事實類別；產品功能／操作方式一律 feature，五類敏感值只配 kind=handoff。",
+    }
+    props["handoff_reason"] = {
+        "anyOf": [
+            {"type": "string", "enum": [r.value for r in HandoffReason]},
+            {"type": "null"},
+        ],
+        "description": "kind=handoff 時必填：敏感五類 sensitive_no_grounding、查無資料 no_grounding；其他 kind 填 null。",
+    }
     return {
         "type": "json_schema",
         "json_schema": {"name": "AgentOutput", "strict": True, "schema": schema},
@@ -447,6 +532,7 @@ class AgentRuntime:
                 violations=[f"replayed_from:{cached.get('trace_id', '')}"],
             )
             _emit_agent_decision(trace)
+            _append_dialog(agent_state, user_message, cached.get("answer", ""))
             return TurnResult(
                 kind="handoff",
                 answer=cached.get("answer", ""),
@@ -473,6 +559,9 @@ class AgentRuntime:
         slots = _slots_for_prompt(state)
         dialog = agent_state.get("dialog", [])
         outline = agent_state.get("outline")
+        seeded_outline = _seed_outline_provenance(outline)
+        if seeded_outline is not None:
+            tool_results_by_id[OUTLINE_TOOL_CALL_ID] = seeded_outline
 
         tool_specs = self.registry.to_openai_tools(
             identity, self._stage, readonly_view=self.readonly_view
@@ -480,6 +569,8 @@ class AgentRuntime:
         visible_names = {tool_name_from_openai(t["function"]["name"]) for t in tool_specs}   # 解回 registry 名
 
         messages = self.assembler.build_messages(identity, outline, slots, dialog, tool_specs, nonce)
+        # DSP-022：當前這句一定是最後一則 user 訊息（歷史由 assembler 從 `dialog` 放前面）。
+        messages.append({"role": "user", "content": user_message})
 
         def _outline_sha() -> str:
             return getattr(outline, "sha256", "") if outline is not None else ""
@@ -530,6 +621,7 @@ class AgentRuntime:
             agent_state["fixed_streak"] = (
                 agent_state.get("fixed_streak", 0) + 1 if is_fixed else 0
             )
+            _append_dialog(agent_state, user_message, result.answer)
             _emit_agent_decision(result.trace)
             return result
 
@@ -634,7 +726,10 @@ class AgentRuntime:
                             n_items=_tool_result_n_items(tool_result),
                         )
                     )
-                    tool_results_by_id[tc.id] = tool_result
+                    if tc.id == OUTLINE_TOOL_CALL_ID and seeded_outline is not None:
+                        violations.append("tool_call_id_collides_with_outline")
+                    else:
+                        tool_results_by_id[tc.id] = tool_result
                     # ⚠️ **槽位寫回 state（2.9，⛔ 勿刪）**：`session.slots.set` 是
                     #    以 `jsonb_set` 直接改 `form_sessions.collected_data.slots`
                     #    的，但回合結束時呼叫端（`mcp_facade._agent_turn`／
@@ -682,7 +777,7 @@ class AgentRuntime:
             content = getattr(message, "content", None) or ""
             try:
                 payload = json.loads(content)
-                out = AgentOutput.model_validate(payload)
+                out = _canonicalize_outline_sources(AgentOutput.model_validate(payload))
             except (json.JSONDecodeError, ValidationError, TypeError):
                 counters.rewrites += 1
                 if counters.rewrite_exhausted(self.budget):
@@ -721,6 +816,18 @@ class AgentRuntime:
                 if counters.rewrite_exhausted(self.budget):
                     return _finalize(_build_fixed("budget_exhausted"), is_fixed=True)
                 messages.append({"role": "assistant", "content": content})
+                schema_hint = ""
+                if verdict.reason == "SCHEMA":
+                    # DSP-021：gpt-4o-mini 常數錯句數（1 句標 2 筆／2 句標 1 筆），只回
+                    # SCHEMA 它不知道哪裡錯；把**系統對它自己 answer 的切法**附回去——
+                    # 內容全來自模型剛輸出的文字，不含任何來源原文，⛔ 不進 trace。
+                    sents = split_sentences(out.answer)
+                    heads = "；".join(f"[{i}]{s[:12]}…" for i, s in enumerate(sents))
+                    schema_hint = (
+                        f"　系統依規則把你的 answer 切成 {len(sents)} 句（{heads}），"
+                        f"但 sentence_map 有 {len(out.sentence_map)} 筆／索引不連續。"
+                        "請照系統的切法、sent 從 0 起逐句對應（逗號不切句）。"
+                    )
                 # 拒因回模型用 role="user"（⛔ 不用 role="system"）：system 訊息
                 # 依 PromptAssembler 契約整回合只有一則（見 prompt_assembler.py
                 # 「system 訊息只有一則」），迴圈裡補第二則 system 會破壞這個
@@ -736,6 +843,7 @@ class AgentRuntime:
                             "VERIFIER_REJECT: "
                             + json.dumps(verdict.model_dump(), ensure_ascii=False)
                             + "　請依上述結構化拒因修正後重新輸出符合 AgentOutput schema 的 JSON。"
+                            + schema_hint
                         ),
                     }
                 )
@@ -757,7 +865,10 @@ class AgentRuntime:
             )
             result = TurnResult(
                 kind=out.kind,
-                answer=out.answer,
+                # DSP-021：模型自判轉人 ⇒ 使用者看到的是固定句（design 元件 7
+                # `effective_handoff_message`），⛔ 不是模型自己寫的轉人文字
+                # （Verifier 對 handoff 不跑逐句檢查，模型文字沒過尺就不能出去）。
+                answer=handoff_dict["message"] if handoff_dict is not None else out.answer,
                 handoff=handoff_dict,
                 quick_replies=[],
                 trace=trace,

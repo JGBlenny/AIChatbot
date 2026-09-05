@@ -231,8 +231,8 @@ def wrap_tool_data(tool_name: str, text: str, nonce: str) -> str:
 class PromptAssembler:
     def build(self, identity: Identity, outline: OutlineDoc, slots: dict[SlotKey, SlotValue], dialog: list[dict], tool_specs: list[ToolSpec], nonce: str) -> list[dict]: ...
 ```
-大綱章節可被 `kb.get("outline:<id>")` 取回；**citable 依來源**：prospect 大綱由售前池一般知識列組成（`source_ids` 皆非保留分類）⇒ `Provenance.citable=true`；pm／tenant 目錄由 `系統脈絡` 列組成 ⇒ `citable=false`（只導航，不引用；細節走 `kb.get` 整數 id／`help.read`／`jgb2.query`）。這維持保留分類「永不當答案回傳」（決策 10 修訂）。`build_toc` 取法加 `vendor_ids` 與 `target_user` 過濾（`system_context._fetch_appends` 現況以 `target_user` 分層（1.4.7 更正：原寫 `_fetch_domain` 不存在），`_fetch_base` 無 vendor 過濾 ⇒ 不得照抄）。
-大綱與目錄進 system prompt 也套同一 nonce 分隔標記；使用者訊息（`dialog`）**不進資料區**、不包裝。
+大綱章節可被 `kb.get("outline:<id>")` 取回；**1.4.9（DSP-020）**：章節同時在回合開始由 Runtime 預載為一筆 provenance（保留 `tool_call_id="outline"`、`source=` 章節 id、章節標題印出 id），模型引用大綱**不必先 `kb.get`**——影子 2026-09-05 首筆真流量證實缺這條會讓每次大綱引用都 QUOTE_NOT_VERBATIM；**citable 依來源**：prospect 大綱由售前池一般知識列組成（`source_ids` 皆非保留分類）⇒ `Provenance.citable=true`；pm／tenant 目錄由 `系統脈絡` 列組成 ⇒ `citable=false`（只導航，不引用；細節走 `kb.get` 整數 id／`help.read`／`jgb2.query`）。這維持保留分類「永不當答案回傳」（決策 10 修訂）。`build_toc` 取法加 `vendor_ids` 與 `target_user` 過濾（`system_context._fetch_appends` 現況以 `target_user` 分層（1.4.7 更正：原寫 `_fetch_domain` 不存在），`_fetch_base` 無 vendor 過濾 ⇒ 不得照抄）。
+大綱與目錄進 system prompt 也套同一 nonce 分隔標記；使用者訊息（`dialog`）**不進資料區**、不包裝。 **1.4.9（DSP-022）**：`dialog` 由 Runtime 維護——回合收尾把當前 user 訊息與使用者實際看到的回覆（固定句亦然）寫回 `state["agent"]["dialog"]`，上限 20 則丟最舊；當前 user 訊息由 Runtime 追加在 messages 最後（⛔ 不靠呼叫端先寫 dialog——真線路 2026-09-05 才發現三條入口都沒放）。
 
 **DSP-012 已裁（業主 2026-09-04，選項 A）**：R11.1 禁令主詞收窄為「工具回傳文字」，大綱屬 server 端程式組裝（R5.4：可重跑、版本戳＋sha256、⛔ 無 LLM）故不在禁令內；進 system prompt 的來源由 R11.5 白名單化為兩種。
 🔴 **裁決同時補上 design 原假設缺的資料面**：原文寫「由**已審核**知識列組裝」，但 `knowledge_base` 實查**查無任何審核旗標**（`grep -rniE "approved_by|is_approved|review_status" rag-orchestrator/models/ rag-orchestrator/database/` 零命中；正對照組同法搜 `target_user` 有命中）⇒ 現況等於「有 KB 寫入權＝有 system prompt 寫入權」。依 R11.6 增設審核旗標，`build_prospect_outline` SHALL 過濾未審核列；M1 上線前把現有售前池 31 筆一次標記為已審核，審核 UI 另案。⛔ 不得因 UI 未完成而放行。[需求 5.1–5.5, 11.1, 11.5, 11.6]
@@ -271,7 +271,7 @@ class OutputVerifier:
 ⑤ **導流白名單**：答案中任何 URL／電話樣式不在 `allowed_routes` ⇒ `ROUTE_NOT_ALLOWED`。
 ⑥ `forbid_terms` ⇒ `FORBIDDEN_TERM`。
 ⑦ **handoff 詞後置掃描**：`scan_handoff_mentions(answer)` 為真而 `handoff` 為空 ⇒ `HANDOFF_WORD_NO_HANDOFF`（承接 R7.3）。
-拒 ⇒ Runtime 回結構化拒因給模型重寫（≤ `Budget.max_rewrites`）；再拒 ⇒ 固定句。尺自證：規則集載入時對 `tests/fixtures/agent/known_fabrications.json` 全拒、對 `known_good.json` 全放，否則啟動紅。[需求 6.1–6.8, 7.3, 3.4, 10.4]
+拒 ⇒ Runtime 回結構化拒因給模型重寫（≤ `Budget.max_rewrites`）；再拒 ⇒ 固定句。 **1.4.9（DSP-021）**：`kind=handoff` 只驗 fact_class 合法＋`handoff_reason` 在值域（敏感值在此**不拒**，模型文字由 Runtime 換固定句）；步③ source 找不到時在同一 `tool_call_id` 全組 provenance 掃逐字、citable 以命中筆為準；極性為詞組層級；Runtime 先對 `outline` 引用的 source 做去標題／補前綴的機械正規化。尺自證：規則集載入時對 `tests/fixtures/agent/known_fabrications.json` 全拒、對 `known_good.json` 全放，否則啟動紅。[需求 6.1–6.8, 7.3, 3.4, 10.4]
 
 ### 元件 7：`services/agent/shadow.py` — ShadowRunner ＋ `tools/agent_eval.py`
 ```python

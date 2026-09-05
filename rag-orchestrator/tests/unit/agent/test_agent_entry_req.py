@@ -144,6 +144,29 @@ def test_schedule_shadow_noop_without_runner_and_swallows_errors():
 
 
 @pytest.mark.unit
+def test_schedule_shadow_injects_outline_for_prospect_only():
+    """DSP-022 附帶：影子 state 要帶 `app.state.agent_outline`（prospect），tenant 不帶。"""
+    seen = []
+
+    class Runner:
+        def enabled(self, identity):
+            return True
+
+        def schedule(self, identity, message, state, old_answer):
+            seen.append(state)
+
+    outline = SimpleNamespace(sha256="abc", sections=[], token_count=1)
+    app = SimpleNamespace(state=SimpleNamespace(shadow_runner=Runner(), agent_outline=outline))
+    ae.schedule_shadow(app, _req(), {"collected_data": {"x": 1}}, "old")
+    assert seen[-1]["agent"]["outline"] is outline
+    assert seen[-1]["collected_data"] == {"x": 1}                      # 其餘快照原樣帶過去
+
+    tenant_req = _req(target_user="tenant")
+    ae.schedule_shadow(app, tenant_req, None, "old")
+    assert "outline" not in seen[-1].get("agent", {})                # 正對照：prospect 有、tenant 沒有
+
+
+@pytest.mark.unit
 def test_outline_injected_for_run_but_not_persisted(monkeypatch):
     monkeypatch.setenv("AGENT_AUDIENCES", "prospect")
     seen = {}
