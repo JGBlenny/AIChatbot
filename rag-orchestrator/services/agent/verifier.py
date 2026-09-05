@@ -1,8 +1,11 @@
 """`OutputVerifier`（spec agentic-mcp-orchestration・任務 2.3，design.md 元件 6）。
 
 七步順序（全部通過才放行；第一個踩到的違規決定 `VerifierVerdict.reason`）：
-①敏感五類 ②白名單句型（含 schema 覆蓋檢查與「純」條件降級） ③逐字＋覆蓋＋極性
+①敏感五類 ②白名單句型（逐筆 schema 檢查＋逐片段「純」條件降級） ③逐字＋覆蓋＋極性
 ④來源可引用 ⑤導流白名單 ⑥禁詞 ⑦handoff 詞後置掃描。
+
+**DSP-028：②③④的量測單位是「筆」與「片段」，①⑤⑥⑦的量測單位是拼接後的 `answer`**
+——後者是安全側（掃的字串就是送出去的字串），跨筆拆數字／拆禁詞的規避靠它擋。
 
 **只 import `presales_gate`／`conversational_config`**（design 元件 6 收尾一句）：
 `SENSITIVE`、`FactClass`、`HANDOFF_WORDS`、`scan_handoff_mentions` 來自 `services.presales_gate`，
@@ -16,13 +19,13 @@ import unicodedata
 from pathlib import Path
 from typing import Optional
 
-from services.agent.output_schema import AgentOutput, SentenceCite, VerifierRules, VerifierVerdict
+from services.agent.output_schema import AgentOutput, Sentence, VerifierRules, VerifierVerdict
 from services.agent.tools.registry import Provenance, ToolResult
 from services.presales_gate import FactClass, HANDOFF_WORDS, HandoffReason, SENSITIVE, scan_handoff_mentions
 
 #: 「純」條件切子句用的封閉分隔詞（design：逗號／頓號／分號）。
 _CLAUSE_SEPS: tuple[str, ...] = ("，", ",", "、", "；", ";")
-#: 句末標點（拆句用，⛔ 與 `presales_gate._sentences` 各自維護——那邊是決策層私有符號，
+#: 句末標點（拆片段用，⛔ 與 `presales_gate._sentences` 各自維護——那邊是決策層私有符號，
 #: 這裡是 verifier 自己拆句做 schema 覆蓋檢查，兩處標點集合恰好同源純屬巧合，不是耦合）。
 _SENTENCE_ENDS: tuple[str, ...] = ("。", "！", "!", "？", "?", "\n")
 #: 問句結尾標記（NFKC 後判定）。
@@ -114,8 +117,10 @@ class OutputVerifier:
         # 這裡是正確標記，⛔ 不拒；`handoff_reason` 必須在 `HandoffReason` 值域內
         # （模型曾回自由文字「敏感主題」）。模型的 `answer` 文字不會到使用者手上
         # （Runtime 換成 `effective_handoff_message` 固定句），故 ②～⑦ 不對它跑。
-        # 影子 2026-09-05：模型正確改轉人卻因 `sentence_map=[]` 被 ② 判 SCHEMA、
+        # 影子 2026-09-05：模型正確改轉人卻因逐句標籤留空被 ② 判 SCHEMA、
         # 兩拒耗盡 ⇒ 每個敏感題都多花兩次模型呼叫、reason 誤記 budget_exhausted。
+        # DSP-028：handoff 時 `sentences` **允許留空**（也允許是模型自己寫的捏造文字）
+        # ——那段文字不會到使用者手上，②(a) 的空陣列 SCHEMA 因此只對非 handoff 生效。
         if out.kind == "handoff":
             if out.handoff_reason not in {r.value for r in HandoffReason}:
                 return VerifierVerdict(ok=False, reason="SCHEMA")
@@ -128,31 +133,52 @@ class OutputVerifier:
                 return VerifierVerdict(
                     ok=False, reason="SENSITIVE_TOPIC", term_id=_rule_id(i))
 
-        # ② 白名單句型：schema 覆蓋檢查
-        sents = _split_sentences(out.answer)
-        if len(sents) != len(out.sentence_map):
+        # ② 逐筆 schema 檢查（DSP-028 (a)(b)(c)）——⛔ 不再比對「句數＝標籤數」：
+        # 文字與標籤同筆攜帶後，拼接相等是定義，不是要靠檢查維持的巧合。
+        # (a) 非 handoff 卻沒有任何一筆 ⇒ 沒有東西可以驗，一律 SCHEMA
+        #     （handoff 在上面已 return，走不到這裡）。
+        if not out.sentences:
             return VerifierVerdict(ok=False, reason="SCHEMA")
-        if _nfkc("".join(sents)) != answer_nfkc:
-            return VerifierVerdict(ok=False, reason="SCHEMA")
-        by_index = sorted(out.sentence_map, key=lambda s: s.sent)
-        if [s.sent for s in by_index] != list(range(len(sents))):
-            return VerifierVerdict(ok=False, reason="SCHEMA")
-
-        # ②～④ 逐句：型別複核（「純」條件降級）→ fact 需 cite → 逐字／覆蓋／極性／可引用
-        for cite in by_index:
-            sentence_text = sents[cite.sent]
-            effective_kind = self._effective_kind(sentence_text, cite)
-            if effective_kind != "fact":
-                continue
-            if not cite.cite:
-                return VerifierVerdict(ok=False, reason="UNCITED_ASSERTION", sent=cite.sent)
-            for idx in cite.cite:
+        # (b) 任一筆 text 全空白 ⇒ SCHEMA（空筆會讓「每個字都屬於某一筆」失去意義）。
+        for i, sentence in enumerate(out.sentences):
+            if sentence.text.strip() == "":
+                return VerifierVerdict(ok=False, reason="SCHEMA", sent=i)
+        # (c) 任一 cite 索引越界 ⇒ SCHEMA。⚠️ **負索引也是越界**（r11 安全審 F-5）：
+        #     python 的 `citations[-1]` 會靜靜取到最後一筆合法引用，等於讓模型用 -1
+        #     借別句的引用來替自己的斷言背書。重複索引可接受（同一筆引用支撐多個片段）。
+        for i, sentence in enumerate(out.sentences):
+            for idx in sentence.cite:
                 if idx < 0 or idx >= len(out.citations):
-                    return VerifierVerdict(ok=False, reason="SCHEMA", sent=cite.sent)
-                citation = out.citations[idx]
-                verdict = self._verify_citation(cite.sent, sentence_text, citation, tool_results)
-                if verdict is not None:
-                    return verdict
+                    return VerifierVerdict(ok=False, reason="SCHEMA", sent=i)
+
+        # ②～④ 逐筆 → 逐片段：型別複核（「純」條件降級）→ fact 需 cite → 逐字／覆蓋／極性／可引用
+        # ⚠️ 一筆可能被模型塞進多個句子（「您好！我們支援批次匯入。」標成 greeting）。
+        # 片段**只繼承 `kind`／`cite` 這兩個標籤，⛔ 不繼承驗證結果**——每個非空片段
+        # 各自跑 `_effective_kind`（以片段本文判）與③④（比對文字一律用片段本文，
+        # ⛔ 不用整筆、⛔ 不用拼接後的 answer）。
+        for i, sentence in enumerate(out.sentences):
+            for fragment in _split_sentences(sentence.text):
+                # r11 安全審 F-6：尾隨換行切出的空白片段跳過複核——它沒有內容可以是
+                # 斷言，卻會因為結構複核不過被降級成 fact ⇒ 憑空推高 UNCITED_ASSERTION。
+                # ①⑤⑥⑦仍對拼接全文掃描，⛔ 這裡跳過不等於那些字沒被看過。
+                if fragment.strip() == "":
+                    continue
+                if self._effective_kind(fragment, sentence) != "fact":
+                    continue
+                if not sentence.cite:
+                    return VerifierVerdict(ok=False, reason="UNCITED_ASSERTION", sent=i)
+                # r11 安全審 F-1（量詞寫死）：這個片段必須在**該筆 `cite` 之中**
+                # 至少有一筆 citation 完整通過③④（逐字＋覆蓋＋極性＋citable）。
+                # ⛔ 不得以「同筆的別的片段已經通過」代替——那正是跨片段夾帶捏造的出口。
+                last_failure: Optional[VerifierVerdict] = None
+                for idx in sentence.cite:
+                    failure = self._verify_citation(i, fragment, out.citations[idx], tool_results)
+                    if failure is None:
+                        last_failure = None
+                        break
+                    last_failure = failure
+                if last_failure is not None:
+                    return last_failure
 
         # ⑤ 導流白名單
         route_verdict = self._verify_routes(answer_nfkc)
@@ -172,7 +198,7 @@ class OutputVerifier:
         return VerifierVerdict(ok=True)
 
     # ------------------------------------------------------------------
-    def _effective_kind(self, sentence_text: str, cite: SentenceCite) -> str:
+    def _effective_kind(self, sentence_text: str, sentence: Sentence) -> str:
         """「純」條件（design 元件 6 步②）：子句命中 `assertion_terms` ⇒ 降級 fact；
         否則白名單三型各自的程式端結構複核，複核不過同樣降級 fact。
 
@@ -181,7 +207,7 @@ class OutputVerifier:
         步⑤ 的導流白名單掃描本來就用同一份正規化文字，兩處標準不一致只會讓合法
         變形寫法被錯判成 fact 而卡在免不了的 UNCITED_ASSERTION，繞過了真正該擋
         它的步⑤。"""
-        if cite.kind == "fact":
+        if sentence.kind == "fact":
             return "fact"
         norm = _nfkc(sentence_text)
         clauses = _split_clauses(norm)
@@ -189,16 +215,16 @@ class OutputVerifier:
             if any(term in clause for term in self.rules.assertion_terms):
                 return "fact"
         stripped = norm.strip()
-        if cite.kind == "question":
+        if sentence.kind == "question":
             if stripped and stripped[-1] in _QUESTION_ENDS:
                 return "question"
             return "fact"
-        if cite.kind == "greeting":
+        if sentence.kind == "greeting":
             bare = stripped.rstrip("".join(_SENTENCE_ENDS)).strip()
             if bare in _GREETING_PHRASES:
                 return "greeting"
             return "fact"
-        if cite.kind == "routing":
+        if sentence.kind == "routing":
             if _URL_RE.search(norm) or _PHONE_RE.search(norm):
                 return "routing"
             return "fact"
@@ -206,8 +232,8 @@ class OutputVerifier:
 
     def _verify_citation(
         self,
-        sent: int,
-        sentence_text: str,
+        sent: int,          # DSP-028：**筆索引**（片段不另編號）
+        sentence_text: str,  # DSP-028：**片段本文**（⛔ 不是整筆、⛔ 不是拼接後的 answer）
         citation,
         tool_results: dict[str, ToolResult],
     ) -> Optional[VerifierVerdict]:
@@ -290,11 +316,24 @@ class OutputVerifier:
                     f"OutputVerifier self_test 失敗：{path.name} 案例 {case.get('id')} "
                     f"預期 ok={expect_ok}，實得 {verdict.model_dump()}"
                 )
+            # r11 安全審 F-3：只比 `ok` 會假綠——fixture 機械轉換若把某案例的違規
+            # 性質改掉（例如本來測 QUOTE_NOT_COVERING、轉完變成 SCHEMA），`ok=False`
+            # 照樣成立，尺已經不量原本那件事卻沒有人知道。fixture 有 `expected_reason`
+            # 這個鍵時，reason 必須相等（known_good 的值是 None，同樣要相等）。
+            if "expected_reason" in case and verdict.reason != case["expected_reason"]:
+                raise RuntimeError(
+                    f"OutputVerifier self_test 失敗：{path.name} 案例 {case.get('id')} "
+                    f"預期 reason={case['expected_reason']}，實得 reason={verdict.reason}"
+                )
 
 
 def split_sentences(text: str) -> list[str]:
-    """公開版切句（DSP-021）：Runtime 在 SCHEMA 拒因回饋裡告訴模型「系統切成幾句」，
-    與 verify() 用的是同一個函式，⛔ 不得另寫一份規則。"""
+    """公開版切句（DSP-021）：呼叫端要重現「系統怎麼切片段」時用它，
+    與 `verify()` 步②(d) 用的是同一個函式，⛔ 不得另寫一份規則。
+
+    DSP-028 後 Runtime 的 SCHEMA 回饋改為直接指出「空陣列／第 N 筆空 text／
+    第 N 筆 cite 越界」三種原因，不再回報切句結果；此函式仍公開，
+    供測試與工具重現片段邊界。"""
     return _split_sentences(text)
 
 

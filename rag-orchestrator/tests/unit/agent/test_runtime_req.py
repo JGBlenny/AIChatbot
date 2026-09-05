@@ -79,11 +79,15 @@ def _tool_call_response(name: str, args: dict, call_id: str = "call_1"):
 def _final_response(
     *, kind="answer", answer="答案內容", fact_class="feature", handoff_reason=None
 ):
+    """DSP-028：模型輸出逐句一筆 `{text, kind, cite}`，⛔ 不再有 `answer`／逐句對照表。
+
+    這裡把 `answer` 參數整段當成**一筆**（`kind=greeting` 讓假 Verifier 之外的
+    真 Verifier 路徑也不必給引用）——本檔多數測試用假 Verifier，形狀正確即可。
+    """
     payload = {
         "kind": kind,
-        "answer": answer,
+        "sentences": [] if not answer else [{"text": answer, "kind": "greeting", "cite": []}],
         "citations": [],
-        "sentence_map": [],
         "fact_class": fact_class,
         "handoff_reason": handoff_reason,
     }
@@ -763,7 +767,7 @@ def test_runtime_no_longer_defines_agent_output_or_verifier_verdict_locally():
     assert "AgentOutput" not in class_names
     assert "VerifierVerdict" not in class_names
     assert "Citation" not in class_names
-    assert "SentenceCite" not in class_names
+    assert "Sentence" not in class_names
 
     # 反過來：確實是從 output_schema import 同一個物件（不是另建一個同名的）。
     assert runtime_mod.AgentOutput is output_schema_mod.AgentOutput
@@ -791,5 +795,54 @@ def test_response_format_schema_is_strict_at_every_level():
             for v in n:
                 walk(v)
     walk(schema)
-    assert len(objects) >= 3            # root ＋ Citation ＋ SentenceCite（正對照：真的走到巢狀）
+    assert len(objects) >= 3            # root ＋ Citation ＋ Sentence（正對照：真的走到巢狀）
     assert {"fact_class", "handoff_reason"} <= set(schema["required"])   # Optional 欄位也必填（可為 null）
+
+
+@pytest.mark.unit
+def test_response_format_properties_are_exactly_the_dsp028_contract():
+    """DSP-028／r11 安全審 F-4：`answer` 必須是純 `@property`。
+
+    若它被寫成 pydantic `computed_field`，`model_json_schema()` 會把 `answer` 列進
+    properties，而 `strict_json_schema` 把每一層 `required` 設成全部 properties
+    ⇒ OpenAI strict schema 會**回頭要求模型輸出 `answer`**，剛拆掉的雙軌契約原封裝回。
+    這條就是那個回歸的守門：欄位集合必須恰好是這五個。"""
+    from services.agent.runtime import _agent_output_response_format
+
+    schema = _agent_output_response_format()["json_schema"]["schema"]
+    assert set(schema["properties"]) == {
+        "kind", "sentences", "citations", "fact_class", "handoff_reason"}
+
+
+@pytest.mark.unit
+def test_agent_output_answer_is_plain_property_not_a_model_field():
+    """正對照：`answer` 讀得到（拼接），但既不是欄位、也不進 `model_dump()`。"""
+    from services.agent.output_schema import AgentOutput
+
+    out = AgentOutput.model_validate({
+        "kind": "answer",
+        "sentences": [{"text": "第一句。", "kind": "greeting", "cite": []},
+                      {"text": "第二句。", "kind": "greeting", "cite": []}],
+        "citations": [], "fact_class": "feature", "handoff_reason": None,
+    })
+    assert out.answer == "第一句。第二句。"
+    assert "answer" not in AgentOutput.model_fields
+    assert "answer" not in out.model_dump()
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_turn_result_answer_is_the_join_of_sentence_texts():
+    """DSP-028：`TurnResult.answer` == `"".join(s.text ...)`——⛔ 不是模型另給的欄位。"""
+    payload = {
+        "kind": "answer",
+        "sentences": [{"text": "您好！", "kind": "greeting", "cite": []},
+                      {"text": "很高興為您服務。", "kind": "greeting", "cite": []}],
+        "citations": [], "fact_class": "feature", "handoff_reason": None,
+    }
+    provider = FakeProvider([_fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))])
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
+                       verifier=FakeVerifier())
+    result = await runtime.run_turn(_identity(), "你好", {})
+    assert result.answer == "".join(s["text"] for s in payload["sentences"])
+    assert result.answer == "您好！很高興為您服務。"

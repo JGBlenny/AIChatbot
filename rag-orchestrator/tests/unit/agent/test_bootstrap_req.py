@@ -73,9 +73,8 @@ _WRONGLY_PASSING_CASE = {
     "user_message": "你好",
     "agent_output": {
         "kind": "answer",
-        "answer": "您好",
+        "sentences": [{"text": "您好", "kind": "greeting", "cite": []}],
         "citations": [],
-        "sentence_map": [{"sent": 0, "kind": "greeting", "cite": []}],
         "fact_class": "feature",
         "handoff_reason": None,
     },
@@ -90,9 +89,8 @@ _TRIVIAL_GOOD_CASE = {
     "user_message": "你好",
     "agent_output": {
         "kind": "answer",
-        "answer": "您好",
+        "sentences": [{"text": "您好", "kind": "greeting", "cite": []}],
         "citations": [],
-        "sentence_map": [{"sent": 0, "kind": "greeting", "cite": []}],
         "fact_class": "feature",
         "handoff_reason": None,
     },

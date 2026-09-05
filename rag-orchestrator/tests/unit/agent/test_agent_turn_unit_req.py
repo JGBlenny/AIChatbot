@@ -72,9 +72,11 @@ def _fake_response(message, *, prompt_tokens=11, completion_tokens=5):
 
 def _final_response(*, kind="answer", answer="答案內容", fact_class="feature",
                     handoff_reason=None):
+    # DSP-028：逐句一筆；整段當一筆 greeting（假 Verifier 路徑只需形狀正確）
     payload = {
-        "kind": kind, "answer": answer, "citations": [], "sentence_map": [],
-        "fact_class": fact_class, "handoff_reason": handoff_reason,
+        "kind": kind,
+        "sentences": [] if not answer else [{"text": answer, "kind": "greeting", "cite": []}],
+        "citations": [], "fact_class": fact_class, "handoff_reason": handoff_reason,
     }
     return _fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))
 
@@ -698,15 +700,17 @@ def _rules(**overrides) -> VerifierRules:
 
 
 def _output(answer: str, *, fact_class="feature") -> AgentOutput:
-    from services.agent.output_schema import SentenceCite
+    """DSP-028：逐句切成一筆 `Sentence`（全標 greeting，讓②～④不攔，測⑤⑥⑦）。"""
+    from services.agent.output_schema import Sentence
 
     sents = [s for s in re.split(r"(?<=。)", answer) if s]
-    return AgentOutput(
-        kind="answer", answer=answer, citations=[],
-        sentence_map=[SentenceCite(sent=i, kind="greeting", cite=[])
-                      for i in range(len(sents))],
+    out = AgentOutput(
+        kind="answer", citations=[],
+        sentences=[Sentence(text=s, kind="greeting", cite=[]) for s in sents],
         fact_class=fact_class,
     )
+    assert out.answer == answer, "拼接後必須等於原文——這是 DSP-028 的定義"
+    return out
 
 
 @pytest.mark.req(_SPEC)

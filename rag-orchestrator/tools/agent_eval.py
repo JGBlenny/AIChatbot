@@ -326,6 +326,12 @@ class EvalRecord:
     rewrote_ok: bool = False
     handoff_heuristic: bool = False
     forbid_terms_n: int = 0
+    #: DSP-028：本回合 Verifier 的結構化拒因（逗號串，如 `SCHEMA,QUOTE_NOT_COVERING`）。
+    #: ⛔ 只有 reason 常數，無原文、無 term_id 字面值。
+    verifier_reasons: str = ""
+    #: DSP-028：本回合是否耗盡重寫預算走固定句（`handoff_reason == "budget_exhausted"`）。
+    #: DSP-028 驗收尺①就量它——⛔ 不要再從報表反推。
+    budget_exhausted: bool = False
 
     def to_jsonl_dict(self) -> dict:
         d = {
@@ -343,6 +349,8 @@ class EvalRecord:
             "forbid_hit": self.forbid_hit,
             "forbid_terms_n": self.forbid_terms_n,
             "verifier_rejects": self.verifier_rejects,
+            "verifier_reasons": self.verifier_reasons,
+            "budget_exhausted": self.budget_exhausted,
             "rewrote_ok": self.rewrote_ok,
             "handoff_heuristic": self.handoff_heuristic,
             "latency_ms": self.latency_ms,
@@ -510,6 +518,9 @@ def run_old_chain(
                             "set": set_name, "idx": sc.idx, "turn": t.turn, "rep": rep,
                             "chain": "old", "q": t.q, "answer": answer,
                             "handoff_reason": handoff_reason, "kind": kind,
+                            # 舊鏈沒有結構化引用（它不是 agent 契約）⇒ 恆空，
+                            # 但鍵要在：同一份 texts JSONL 的鍵集合⛔ 不得因鏈而異。
+                            "citations": [],
                         }
                     )
     if db_pool is not None:
@@ -587,11 +598,19 @@ def _fixed_agent_output_for(turn: "Turn") -> dict:
     else:
         kind = turn.expect_kind or "answer"
     answer = "" if kind == "handoff" else f"[fake-agent-answer:{kind}]"
+    # DSP-028：逐句一筆 `{text, kind, cite}`，⛔ 不再有 `answer`／逐句對照表。
+    # ⚠️ 這裡刻意補一個問號、標 `question`：本路徑用的是 `build_runtime` 組出的
+    # **真 Verifier**，只有走得過白名單句型的假輸出才不會固定被拒。
+    # （舊形的 `answer` 有一句、逐句對照表卻是空的 ⇒ 每個非 handoff 回合都被
+    # 判 SCHEMA、兩拒耗盡，`budget_exhausted` 因此恆為真——那不是量到系統，
+    # 是量到假輸出自己的形狀錯。⛔ 不要把那個行為當基準沿用。）
+    sentences = [] if kind == "handoff" else [
+        {"text": f"{answer}？", "kind": "question", "cite": []}
+    ]
     return {
         "kind": kind,
-        "answer": answer,
+        "sentences": sentences,
         "citations": [],
-        "sentence_map": [],
         "fact_class": "other",
         "handoff_reason": "no_grounding" if kind == "handoff" else None,
     }
@@ -698,6 +717,23 @@ async def _run_scenario_agent(
     return out
 
 
+def _citations_for_dump(result: Any) -> list[dict]:
+    """`--dump-texts` 旁路的引用欄（`source` ＋ `quote`）。
+
+    ⚠️ **待接**：`TurnResult` 目前不帶 `citations`（見上方呼叫點註解），
+    因此實務上恆回空陣列。這裡用 `getattr` 取而不是硬存取，是為了讓將來
+    Runtime 真的開這條回傳時，本函式不必再改；⛔ 不在這裡自行重跑模型或
+    重建引用（那會變成另一把量尺）。
+    """
+    citations = getattr(result, "citations", None) or []
+    out: list[dict] = []
+    for c in citations:
+        source = getattr(c, "source", None) if not isinstance(c, dict) else c.get("source")
+        quote = getattr(c, "quote", None) if not isinstance(c, dict) else c.get("quote")
+        out.append({"source": source, "quote": quote})
+    return out
+
+
 def _build_agent_record(
     *, set_name: str, sc_idx: str, t: "Turn", result: Any, latency_ms: int, rep: int, model: str,
     dump_sink: Optional[list[dict]] = None,
@@ -707,6 +743,8 @@ def _build_agent_record(
     handoff_reason = (handoff or {}).get("reason") if isinstance(handoff, dict) else None
     kind = result.kind
     verifier_rejects = sum(1 for v in result.trace.verifier if not v.ok)
+    verifier_reasons = ",".join(v.reason or "" for v in result.trace.verifier if not v.ok)
+    budget_exhausted = handoff_reason == "budget_exhausted"
     forbid_hit = _forbid_hit(answer, t.must_not_contain)
     cost = _estimate_cost_usd(model, result.trace.prompt_tokens, result.trace.completion_tokens)
     if dump_sink is not None:
@@ -715,6 +753,13 @@ def _build_agent_record(
                 "set": set_name, "idx": sc_idx, "turn": t.turn, "rep": rep,
                 "chain": "agent", "q": t.q, "answer": answer,
                 "handoff_reason": handoff_reason, "kind": kind,
+                # DSP-028：人工抽審要能對照「這句話宣稱出自哪一段原文」。
+                # ⚠️ **目前恆為空**：`TurnResult` 只回 kind／answer／handoff／
+                # quick_replies／trace，`TurnTrace` 依 2.5 的紀律⛔ 不放 quote 原文
+                # （它會落 `usage_events.decision_snapshot.agent`）。要真的填滿這欄
+                # 得讓 Runtime 另開一條「只給 texts 旁路」的回傳，那是新的原文出口、
+                # 不在 DSP-028 核准範圍內 ⇒ 標為**待接**，見任務回報。
+                "citations": _citations_for_dump(result),
             }
         )
     return EvalRecord(
@@ -740,6 +785,8 @@ def _build_agent_record(
         rep=rep,
         rewrote_ok=_rewrote_ok(kind, verifier_rejects),
         forbid_terms_n=len(t.must_not_contain),
+        verifier_reasons=verifier_reasons,
+        budget_exhausted=budget_exhausted,
     )
 
 
@@ -1056,6 +1103,35 @@ def render_report_md(
         lines.append(f"- answered_rate：{ar['value']}（n={ar['n']}）")
         lines.append(f"- cost_usd：total={cu['total']}、avg={cu['avg']}（n={cu['n']}）")
         lines.append("")
+    lines.append("## DSP-028 監控欄（逐句契約改版後新增）")
+    lines.append("")
+    agent_records = [r for r in records if r.chain == "agent"]
+    if agent_records:
+        be_n = sum(1 for r in agent_records if r.budget_exhausted)
+        lines.append(
+            f"- budget_exhausted：{be_n}/{len(agent_records)}（agent 鏈；"
+            "DSP-028 驗收尺①＝重寫預算耗盡走固定句的回合數）"
+        )
+        reason_counts: dict[str, int] = {}
+        for r in agent_records:
+            for reason in (r.verifier_reasons or "").split(","):
+                if reason:
+                    reason_counts[reason] = reason_counts.get(reason, 0) + 1
+        if reason_counts:
+            detail = "、".join(
+                f"{k}={v}" for k, v in sorted(reason_counts.items(), key=lambda kv: -kv[1]))
+            lines.append(f"- verifier_reasons 分佈：{detail}")
+        else:
+            lines.append("- verifier_reasons 分佈：（本批無拒因）")
+    else:
+        lines.append("- budget_exhausted：n/a（本批無 agent 鏈紀錄）")
+    lines.append(
+        "- 整筆免 cite 的 question／greeting 比例：**待接**（r11 安全審 F-2 的 OPEN 項監控欄）。"
+        "　⚠️ `TurnResult`／`TurnTrace` 目前都不回 `sentences`，這個比例算不出來；"
+        "在它接上之前，單句修辭問句整筆免引用的風險只能從上面的 `verifier_reasons` 分佈"
+        "間接觀察（`UNCITED_ASSERTION` 少不代表沒有漏，⛔ 不得當成該風險已關閉）。"
+    )
+    lines.append("")
     if repeat_summary and len(repeat_summary.get("reps") or []) > 1:
         lines.append("## 重複跑抖動（--repeat N>1，A4）")
         lines.append("")

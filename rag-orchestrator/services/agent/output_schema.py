@@ -26,21 +26,44 @@ class Citation(BaseModel):
     quote: str
 
 
-class SentenceCite(BaseModel):
-    """`answer` 裡一句的分類與引用索引。`cite` 是 `AgentOutput.citations` 的索引清單。"""
-    sent: int
+class Sentence(BaseModel):
+    """模型逐句輸出的**一筆**：文字與它的分類、引用索引同筆攜帶（DSP-028）。
+
+    `text` 要含句尾標點；⛔ 一筆不放兩句（放兩句時 Verifier 會把它切成片段逐一複核，
+    片段只**繼承** `kind`／`cite` 標籤、⛔ 不繼承驗證結果）。
+    `cite` 是 `AgentOutput.citations` 的索引清單。
+    """
+    text: str
     kind: Literal["fact", "question", "greeting", "routing"]
     cite: list[int] = Field(default_factory=list)
 
 
 class AgentOutput(BaseModel):
-    """模型一輪回覆的結構化輸出（`response_format` json_schema strict）。"""
+    """模型一輪回覆的結構化輸出（`response_format` json_schema strict）。
+
+    **DSP-028：⛔ 模型不再輸出 `answer` 欄，也不再輸出另一張逐句對照表**——舊契約要模型自己保證
+    「句數等於標籤數、順序對得上」，句數不等時程式只能猜哪筆標籤配哪一句，猜錯的
+    方向是放行。改成文字與標籤同筆攜帶後，「拼接後等於送出的字串」變成定義而不是
+    要靠檢查維持的巧合。
+    """
     kind: Literal["answer", "ask", "recommend", "handoff"]
-    answer: str
+    sentences: list[Sentence] = Field(default_factory=list)
     citations: list[Citation] = Field(default_factory=list)
-    sentence_map: list[SentenceCite] = Field(default_factory=list)
     fact_class: Optional[str] = None  # 見檔案頂端說明：刻意不是 FactClass 型別
     handoff_reason: Optional[str] = None
+
+    @property
+    def answer(self) -> str:
+        """使用者實際會看到的整段文字＝逐筆 `text` 直接拼接（⛔ 不補空白、不補標點）。
+
+        **刻意用純 `@property`、⛔ 不用 pydantic `computed_field`**（r11 安全審 F-4）：
+        `computed_field` 會讓 `model_json_schema()` 把 `answer` 列進 properties，而
+        `services/agent/runtime.py:strict_json_schema` 把每一層的 `required` 設成
+        「全部 properties」⇒ OpenAI strict schema 會**回頭要求模型輸出 `answer`**，
+        等於把剛拆掉的雙軌契約原封不動裝回去。純 property 不進 schema，也不進
+        `model_dump()`，`answer` 因此只有一個導出點——步①⑤⑥⑦掃的字串就是送出的字串。
+        """
+        return "".join(s.text for s in self.sentences)
 
 
 #: 11 個結構化拒因（design 元件 6 全文）。
@@ -78,6 +101,8 @@ class VerifierVerdict(BaseModel):
     """
     ok: bool
     reason: Optional[VerdictReason] = None
+    #: DSP-028：**筆索引**（`AgentOutput.sentences` 的 index），⛔ 不是切片段後的片段序號——
+    #: 一筆裡若含多個片段，任一片段違規都記在該筆的索引上（`trace_view` 顯示為「筆次」）。
     sent: Optional[int] = None
     term_id: Optional[str] = Field(default=None, pattern=TERM_ID_PATTERN)
     quote_len: Optional[int] = None
@@ -106,5 +131,5 @@ class VerifierRules(BaseModel):
         return cls.model_validate(data)
 
 
-__all__ = ["Citation", "SentenceCite", "AgentOutput", "VerdictReason", "VerifierVerdict",
+__all__ = ["Citation", "Sentence", "AgentOutput", "VerdictReason", "VerifierVerdict",
            "VerifierRules", "TERM_ID_PATTERN"]

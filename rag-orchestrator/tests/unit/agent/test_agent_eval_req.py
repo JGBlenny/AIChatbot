@@ -216,6 +216,8 @@ _EXPECTED_JSONL_KEYS = {
     "forbid_hit", "forbid_terms_n", "verifier_rejects", "rewrote_ok", "handoff_heuristic",
     "latency_ms", "cost_usd", "knowledge_gap_unfilled", "rep",
     "answer_sha256", "answer_len",
+    # DSP-028 新增
+    "verifier_reasons", "budget_exhausted",
 }
 
 
@@ -247,6 +249,12 @@ def test_agent_chain_fake_provider_topics_shape(sample_root, tmp_path):
     report = (out_dir / "report.md").read_text(encoding="utf-8")
     assert "agent_eval report" in report
     assert "三項硬線" in report
+    # DSP-028 監控欄：budget_exhausted 逐批分子/分母 ＋ verifier_reasons 分佈
+    assert "DSP-028 監控欄" in report
+    assert f"budget_exhausted：" in report and f"/{len(lines)}（agent 鏈" in report
+    assert "verifier_reasons 分佈" in report
+    # F-2 的 OPEN 監控欄目前算不出來 ⇒ 必須誠實標「待接」，⛔ 不得靜默省略
+    assert "整筆免 cite 的 question／greeting 比例：**待接**" in report
 
 
 def test_agent_chain_is_deterministic(sample_root, tmp_path):
@@ -878,7 +886,9 @@ def test_dump_texts_on_writes_warning_header_and_raw_text(sample_root, tmp_path)
     body_rows = [json.loads(l) for l in lines[1:]]
     assert len(body_rows) == 2
     for row in body_rows:
-        assert set(row.keys()) == {"set", "idx", "turn", "rep", "chain", "q", "answer", "handoff_reason", "kind"}
+        assert set(row.keys()) == {"set", "idx", "turn", "rep", "chain", "q", "answer",
+                                   "handoff_reason", "kind", "citations"}
+        assert isinstance(row["citations"], list)   # DSP-028：形狀在，內容待接（見 _citations_for_dump）
 
     # 主 JSONL 的無原文紀律不變（--dump-texts 不影響它）
     main_rows = [

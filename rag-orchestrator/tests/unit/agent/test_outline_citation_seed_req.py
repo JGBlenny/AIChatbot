@@ -21,6 +21,7 @@ from services.agent.runtime import OUTLINE_TOOL_CALL_ID, _seed_outline_provenanc
 from services.agent.tools.registry import ToolResult
 from services.agent.verifier import OutputVerifier
 from services.agent.verifier import VerifierRules
+from services.conversational_config import effective_handoff_message
 from tests.unit.agent.test_verifier_req import _RULES_PATH
 
 from tests.unit.agent.test_runtime_req import (  # noqa: E402
@@ -55,9 +56,8 @@ def _outline() -> OutlineDoc:
 def _final_with_citation(quote: str, tool_call_id: str = OUTLINE_TOOL_CALL_ID, source: str = "outline:lease"):
     payload = {
         "kind": "answer",
-        "answer": "可以線上電子簽約。",
+        "sentences": [{"text": "可以線上電子簽約。", "kind": "fact", "cite": [0]}],
         "citations": [{"tool_call_id": tool_call_id, "source": source, "quote": quote}],
-        "sentence_map": [{"sent": 0, "kind": "fact", "cite": [0]}],
         "fact_class": "feature",
         "handoff_reason": None,
     }
@@ -116,9 +116,8 @@ def test_real_verifier_accepts_verbatim_outline_quote_and_rejects_non_citable():
 
     ok_out = AgentOutput(
         kind="answer",
-        answer="可以線上電子簽約。",
+        sentences=[{"text": "可以線上電子簽約。", "kind": "fact", "cite": [0]}],
         citations=[{"tool_call_id": OUTLINE_TOOL_CALL_ID, "source": "outline:lease", "quote": "支援線上電子簽約"}],
-        sentence_map=[{"sent": 0, "kind": "fact", "cite": [0]}],
         fact_class="feature",
         handoff_reason=None,
     )
@@ -131,7 +130,8 @@ def test_real_verifier_accepts_verbatim_outline_quote_and_rejects_non_citable():
         {"tool_call_id": OUTLINE_TOOL_CALL_ID, "source": "outline:lease", "quote": "支援線上簽約"}])
     assert verifier.verify(bad_quote, tool_results, "q", None).reason == "QUOTE_NOT_VERBATIM"
 
-    toc = _variant(answer="這一節只做導航用途，列出各章節標題。", citations=[
+    toc = _variant(sentences=[{"text": "這一節只做導航用途，列出各章節標題。",
+                               "kind": "fact", "cite": [0]}], citations=[
         {"tool_call_id": OUTLINE_TOOL_CALL_ID, "source": "outline:toc", "quote": "這一節只做導航用途，列出各章節標題"}])
     assert verifier.verify(toc, tool_results, "q", None).reason == "SOURCE_NOT_CITABLE"
 
@@ -163,26 +163,30 @@ def test_response_format_constrains_fact_class_and_handoff_reason_to_closed_sets
     assert set(schema["required"]) >= {"fact_class", "handoff_reason"}
 
 
-def _handoff_response(fact_class="pricing", reason="sensitive_no_grounding", sentence_map=None):
+def _handoff_response(fact_class="pricing", reason="sensitive_no_grounding", sentences=None):
     payload = {
         "kind": "handoff",
-        "answer": "報價要由專人說明，我幫您轉接。",
+        "sentences": sentences if sentences is not None else [],
         "citations": [],
-        "sentence_map": sentence_map if sentence_map is not None else [],
         "fact_class": fact_class,
         "handoff_reason": reason,
     }
     return _fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))
 
 
-def test_real_verifier_passes_model_handoff_with_sensitive_fact_class_and_empty_sentence_map():
+def test_real_verifier_passes_model_handoff_with_sensitive_fact_class_and_empty_sentences():
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
-    out = AgentOutput(kind="handoff", answer="報價要由專人說明。", citations=[], sentence_map=[],
+    out = AgentOutput(kind="handoff", sentences=[], citations=[],
                       fact_class="pricing", handoff_reason="sensitive_no_grounding")
     assert verifier.verify(out, {}, "一個月多少錢", {"reason": "sensitive_no_grounding"}).ok
+    # DSP-028：handoff 帶**捏造** sentences 也放行（文字不外流，Runtime 換固定句）
+    fabricated = AgentOutput.model_validate({**out.model_dump(), "sentences": [
+        {"text": "我們的月費是 3000 元，保證業界最低。", "kind": "fact", "cite": []}]})
+    assert verifier.verify(fabricated, {}, "一個月多少錢", {"reason": "sensitive_no_grounding"}).ok
     # 非 handoff 的敏感 fact_class 仍拒（牆不變）
     ans = AgentOutput.model_validate({**out.model_dump(), "kind": "answer", "handoff_reason": None,
-                                      "sentence_map": [{"sent": 0, "kind": "fact", "cite": []}]})
+                                      "sentences": [{"text": "報價要由專人說明。",
+                                                     "kind": "fact", "cite": []}]})
     assert verifier.verify(ans, {}, "q", None).reason == "SENSITIVE_TOPIC"
 
 
@@ -198,7 +202,24 @@ async def test_runtime_replaces_model_handoff_text_with_fixed_sentence_in_one_ll
     assert result.trace.llm_calls == 1                       # 不再兩拒耗盡
     assert result.handoff["reason"] == "sensitive_no_grounding"
     assert result.answer == result.handoff["message"]        # 固定句，不是模型文字
-    assert "報價要由專人說明" not in result.answer
+    assert result.answer == effective_handoff_message(None)
+
+
+@pytest.mark.asyncio
+async def test_runtime_uses_fixed_sentence_even_when_handoff_carries_fabricated_sentences():
+    """DSP-028／F-f：handoff 的 `sentences` 是捏造的價格句也不外流——
+    Verifier 對 handoff 不跑②～⑦（那段字不會送出），把關的是 Runtime 換固定句這一步。
+    這條測的是「**使用者實際看到的字**」，⛔ 不是 Verifier 的 verdict。"""
+    fabricated = [{"text": "我們的月費是 3000 元，保證業界最低。", "kind": "fact", "cite": []}]
+    provider = FakeProvider([_handoff_response(sentences=fabricated)])
+    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
+
+    result = await runtime.run_turn(_identity(), "一個月多少錢", {"agent": {"outline": _outline()}})
+
+    assert result.kind == "handoff"
+    assert result.answer == effective_handoff_message(None)
+    assert "3000" not in result.answer and "保證" not in result.answer
 
 
 # ---------------------------------------------------------------------------
@@ -210,9 +231,9 @@ from services.agent.runtime import _canonicalize_outline_sources
 
 def _out_with_sources(*pairs):
     return AgentOutput.model_validate({
-        "kind": "answer", "answer": "x。", "fact_class": "feature", "handoff_reason": None,
+        "kind": "answer", "fact_class": "feature", "handoff_reason": None,
         "citations": [{"tool_call_id": tid, "source": src, "quote": "q" * 8} for tid, src in pairs],
-        "sentence_map": [{"sent": 0, "kind": "fact", "cite": list(range(len(pairs)))}],
+        "sentences": [{"text": "x。", "kind": "fact", "cite": list(range(len(pairs)))}],
     })
 
 
@@ -309,19 +330,48 @@ async def test_dialog_is_trimmed_to_max_messages_and_fixed_sentence_is_recorded(
 # DSP-021：SCHEMA 拒因回饋附系統切句（模型才知道句數怎麼對）
 # ---------------------------------------------------------------------------
 
-def _final_two_sentences_one_map():
+def _final_with_out_of_range_cite():
+    """DSP-028：句數不等已不再是 SCHEMA；新契約下的 SCHEMA 之一 = cite 索引越界。"""
     payload = {
-        "kind": "answer", "answer": "可以線上簽約。這樣很方便。",
+        "kind": "answer",
+        "sentences": [{"text": "可以線上簽約。", "kind": "fact", "cite": [0]},
+                      {"text": "這樣很方便。", "kind": "fact", "cite": [3]}],   # 只有 1 筆 citation
         "citations": [{"tool_call_id": "outline", "source": "outline:lease", "quote": "支援線上電子簽約"}],
-        "sentence_map": [{"sent": 0, "kind": "fact", "cite": [0]}],      # 2 句只標 1 筆
         "fact_class": "feature", "handoff_reason": None,
     }
     return _fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))
 
 
+def _final_with_empty_sentences():
+    payload = {
+        "kind": "answer", "sentences": [], "citations": [],
+        "fact_class": "feature", "handoff_reason": None,
+    }
+    return _fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))
+
+
+def _final_with_blank_text():
+    payload = {
+        "kind": "answer",
+        "sentences": [{"text": "   ", "kind": "greeting", "cite": []}],
+        "citations": [], "fact_class": "feature", "handoff_reason": None,
+    }
+    return _fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))
+
+
 @pytest.mark.asyncio
-async def test_schema_reject_feedback_tells_model_the_server_side_sentence_split():
-    provider = FakeProvider([_final_two_sentences_one_map(), _final_with_citation(quote="支援線上電子簽約")])
+@pytest.mark.parametrize(
+    "first_response,expected_snippet",
+    [
+        (_final_with_empty_sentences, "`sentences` 是空陣列"),
+        (_final_with_blank_text, "第 0 筆"),
+        (_final_with_out_of_range_cite, "超出 `citations` 範圍"),
+    ],
+    ids=["empty_array", "blank_text", "cite_out_of_range"],
+)
+async def test_schema_reject_feedback_names_the_actual_cause(first_response, expected_snippet):
+    """DSP-028：SCHEMA 回饋改成指出三種成因；⛔ 不再回報「系統把你的 answer 切成 N 句」。"""
+    provider = FakeProvider([first_response(), _final_with_citation(quote="支援線上電子簽約")])
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
@@ -330,6 +380,6 @@ async def test_schema_reject_feedback_tells_model_the_server_side_sentence_split
     assert result.trace.verifier[0].reason == "SCHEMA"
     feedback = provider.calls[1]["messages"][-1]
     assert feedback["role"] == "user"
-    assert "切成 2 句" in feedback["content"] and "sentence_map 有 1 筆" in feedback["content"]
-    assert "[0]可以線上簽約。" in feedback["content"] and "[1]這樣很方便。" in feedback["content"]
+    assert expected_snippet in feedback["content"]
+    assert "切成" not in feedback["content"]                      # 舊提示已刪，⛔ 不得復活
     assert "支援線上電子簽約" not in feedback["content"]          # 不含任何來源原文

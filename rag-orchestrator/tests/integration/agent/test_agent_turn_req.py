@@ -147,11 +147,12 @@ def _agent_output(*, kind="answer", answer="您好。", fact_class="feature",
                   handoff_reason=None) -> str:
     """`AgentOutput` 的 JSON 字串。預設是一句**問候句**——真 Verifier 的白名單
     句型裡問候句不需要引用，故這是最小的「會被放行」的輸出。"""
-    sents = [s for s in answer.split("。") if s]
+    sents = [s + "。" for s in answer.split("。") if s]
+    assert "".join(sents) == answer, "本 helper 只支援以「。」結尾的句子"
     return json.dumps({
-        "kind": kind, "answer": answer, "citations": [],
-        "sentence_map": [{"sent": i, "kind": "greeting", "cite": []}
-                         for i in range(len(sents))],
+        "kind": kind,
+        "sentences": [{"text": s, "kind": "greeting", "cite": []} for s in sents],
+        "citations": [],
         "fact_class": fact_class, "handoff_reason": handoff_reason,
     }, ensure_ascii=False)
 
@@ -449,8 +450,9 @@ async def test_verifier_double_reject_returns_fixed_sentence_without_rejected_te
     """真 Verifier：一句沒有引用的斷言 ⇒ `UNCITED_ASSERTION`；連兩次 ⇒ 固定句。"""
     session_id = _session()
     draft = json.dumps({
-        "kind": "answer", "answer": _REJECTED_DRAFT, "citations": [],
-        "sentence_map": [{"sent": 0, "kind": "fact", "cite": []}],
+        "kind": "answer",
+        "sentences": [{"text": _REJECTED_DRAFT, "kind": "fact", "cite": []}],
+        "citations": [],
         "fact_class": "feature", "handoff_reason": None,
     }, ensure_ascii=False)
     runtime = _make_runtime(pool, [_fake_response(draft), _fake_response(draft)])

@@ -246,7 +246,7 @@ def render_text(view: Mapping) -> str:
             lines.append(f"  {i}. 通過")
         else:
             tail = f"  規則={v['rule']}" if v.get("rule") else ""
-            lines.append(f"  {i}. 拒 {v['reason']}  句次={_fmt(v.get('sent'))}{tail}")
+            lines.append(f"  {i}. 拒 {v['reason']}  筆次={_fmt(v.get('sent'))}{tail}")
 
     counts = view.get("counts") or {}
     lines.append(

@@ -7,7 +7,7 @@
 快取段）。
 
 **2.5 收尾註記（本檔已接妥的三條，取代下方舊的「刻意留白」敘述）**：
-- `AgentOutput`／`VerifierVerdict`／`Citation`／`SentenceCite` 的權威定義已
+- `AgentOutput`／`VerifierVerdict`／`Citation`／`Sentence` 的權威定義已
   搬到 `services/agent/output_schema.py`（任務 2.3），本檔全部改
   `from services.agent.output_schema import ...`，⛔ 不再本地重複定義。
 - 工具回傳的 `text_for_model` 已改經 `services.agent.prompt_assembler.wrap_tool_data
@@ -22,7 +22,7 @@
 **本任務刻意留白（由後續任務補上，⛔ 不是這裡漏做）**：
 - `AgentOutput.model_json_schema()` 轉成 OpenAI strict `json_schema` 目前只
   在頂層補 `additionalProperties: false`／`required`，未遞迴處理巢狀
-  `Citation`／`SentenceCite`／`$defs`——這支任務全程用假 provider（⛔ 不呼叫
+  `Citation`／`Sentence`／`$defs`——這支任務全程用假 provider（⛔ 不呼叫
   真 OpenAI），沒有機會踩到 strict 校驗的實際邊界；2.2 接真線路時要驗一次。
 - HandoffReason（`services.presales_gate.HandoffReason`）是封閉 `str, Enum`
   （`no_grounding`／`sensitive_no_grounding`／`llm_mentioned_handoff`／
@@ -58,7 +58,6 @@ from services.agent.budget import Budget, BudgetCounters
 from services.agent.identity import Identity, Stage
 from services.agent.mcp_facade import current_stage
 from services.agent.output_schema import AgentOutput, VerifierVerdict
-from services.agent.verifier import split_sentences
 from services.agent.prompt_assembler import new_nonce, wrap_tool_data
 from services.agent.tools.registry import Provenance, ToolRegistry, ToolResult, tool_name_from_openai
 from services.conversational_config import (
@@ -72,7 +71,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # `AgentOutput`／`VerifierVerdict` 權威定義在 `services/agent/output_schema.py`
 # （任務 2.3）；本檔只 import，⛔ 不再本地重複定義（2.5 收尾註記，見模組
-# docstring）。`Citation`／`SentenceCite` 本檔不直接使用，不重複 import。
+# docstring）。`Citation`／`Sentence` 本檔不直接使用，不重複 import。
 # ---------------------------------------------------------------------------
 
 
@@ -199,6 +198,27 @@ class TurnTrace:
     violations: list[str] = field(default_factory=list)
     rules_sha: str = ""
     outline_sha: str = ""
+
+
+def _schema_reject_hint(out: AgentOutput) -> str:
+    """DSP-028：把 `SCHEMA` 拒因翻成模型看得懂的**具體成因**（三種其中一種）。
+
+    ⛔ 不含任何原文——只有筆索引、`citations` 的長度與模型自己填的越界索引值。
+    與 `services/agent/verifier.py` 步②(a)(b)(c) **同一組判斷、同一個順序**；
+    那邊改了這裡要跟著改（兩處都只認這三種成因，⛔ 不得各自演化）。
+    """
+    if not out.sentences:
+        return ("`sentences` 是空陣列：只有 `kind=handoff` 才允許留空，"
+                "其餘一律逐句給一筆 {text, kind, cite}。")
+    for i, sentence in enumerate(out.sentences):
+        if sentence.text.strip() == "":
+            return f"第 {i} 筆 `sentences` 的 `text` 是空白；每一筆都要有實際文字（含句尾標點）。"
+    for i, sentence in enumerate(out.sentences):
+        for idx in sentence.cite:
+            if idx < 0 or idx >= len(out.citations):
+                return (f"第 {i} 筆 `sentences` 的 `cite` 含索引 {idx}，超出 `citations` 範圍"
+                        f"（合法範圍 0..{len(out.citations) - 1}；⛔ 不得用負數）。")
+    return "`handoff_reason` 不在允許值域內，請改填允許的值。"
 
 
 @dataclass
@@ -818,16 +838,12 @@ class AgentRuntime:
                 messages.append({"role": "assistant", "content": content})
                 schema_hint = ""
                 if verdict.reason == "SCHEMA":
-                    # DSP-021：gpt-4o-mini 常數錯句數（1 句標 2 筆／2 句標 1 筆），只回
-                    # SCHEMA 它不知道哪裡錯；把**系統對它自己 answer 的切法**附回去——
-                    # 內容全來自模型剛輸出的文字，不含任何來源原文，⛔ 不進 trace。
-                    sents = split_sentences(out.answer)
-                    heads = "；".join(f"[{i}]{s[:12]}…" for i, s in enumerate(sents))
-                    schema_hint = (
-                        f"　系統依規則把你的 answer 切成 {len(sents)} 句（{heads}），"
-                        f"但 sentence_map 有 {len(out.sentence_map)} 筆／索引不連續。"
-                        "請照系統的切法、sent 從 0 起逐句對應（逗號不切句）。"
-                    )
+                    # DSP-028：只回 SCHEMA 模型不知道哪裡錯。新契約下 SCHEMA 只剩三種
+                    # 成因（空陣列／某筆 text 全空白／某筆 cite 索引越界），直接指名成因與
+                    # 筆索引即可——⛔ 不再回報「系統把你的 answer 切成幾句」那種提示：
+                    # 逐句一筆之後句數不必再對齊，那句話只會誤導模型回頭去湊句數。
+                    # 內容只有索引與長度，⛔ 無任何原文（來源原文與模型原文都不放）。
+                    schema_hint = "　" + _schema_reject_hint(out)
                 # 拒因回模型用 role="user"（⛔ 不用 role="system"）：system 訊息
                 # 依 PromptAssembler 契約整回合只有一則（見 prompt_assembler.py
                 # 「system 訊息只有一則」），迴圈裡補第二則 system 會破壞這個
@@ -868,6 +884,9 @@ class AgentRuntime:
                 # DSP-021：模型自判轉人 ⇒ 使用者看到的是固定句（design 元件 7
                 # `effective_handoff_message`），⛔ 不是模型自己寫的轉人文字
                 # （Verifier 對 handoff 不跑逐句檢查，模型文字沒過尺就不能出去）。
+                # DSP-028：`out.answer` 是 `"".join(s.text for s in out.sentences)` 這個
+                # 純 property 導出的字串（⛔ 模型不再輸出 `answer` 欄）——Verifier 步①⑤⑥⑦
+                # 掃的就是同一個導出點，「掃的字串＝送出的字串」因此是定義而非巧合。
                 answer=handoff_dict["message"] if handoff_dict is not None else out.answer,
                 handoff=handoff_dict,
                 quick_replies=[],
