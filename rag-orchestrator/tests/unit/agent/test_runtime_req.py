@@ -768,3 +768,28 @@ def test_runtime_no_longer_defines_agent_output_or_verifier_verdict_locally():
     # 反過來：確實是從 output_schema import 同一個物件（不是另建一個同名的）。
     assert runtime_mod.AgentOutput is output_schema_mod.AgentOutput
     assert runtime_mod.VerifierVerdict is output_schema_mod.VerifierVerdict
+
+
+@pytest.mark.unit
+def test_response_format_schema_is_strict_at_every_level():
+    """真線路 2026-09-05：OpenAI 400 'additionalProperties is required'（2.1 只補頂層）。"""
+    from services.agent.runtime import _agent_output_response_format
+    rf = _agent_output_response_format()
+    assert rf["json_schema"]["strict"] is True
+    schema = rf["json_schema"]["schema"]
+    objects = []
+    def walk(n):
+        if isinstance(n, dict):
+            assert "default" not in n
+            if n.get("type") == "object" or "properties" in n:
+                objects.append(n)
+                assert n.get("additionalProperties") is False
+                assert set(n.get("required", [])) == set(n.get("properties", {}).keys())
+            for v in n.values():
+                walk(v)
+        elif isinstance(n, list):
+            for v in n:
+                walk(v)
+    walk(schema)
+    assert len(objects) >= 3            # root ＋ Citation ＋ SentenceCite（正對照：真的走到巢狀）
+    assert {"fact_class", "handoff_reason"} <= set(schema["required"])   # Optional 欄位也必填（可為 null）

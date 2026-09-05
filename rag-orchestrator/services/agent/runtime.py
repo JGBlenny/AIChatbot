@@ -224,15 +224,45 @@ def _cache_key(user_message: str) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+def strict_json_schema(schema: dict) -> dict:
+    """把 pydantic 的 JSON Schema 轉成 OpenAI structured outputs 的 strict 形：**每一層**
+    object（root、`$defs`、巢狀 properties、array items、anyOf 分支）都 `additionalProperties:false`
+    且 `required`＝全部 properties；移除 strict 不接受的 `default`。
+    真線路 2026-09-05 影子 smoke：`response_format 'AgentOutput': 'additionalProperties' is required` 400 抓到
+    （2.1 只補頂層）。回傳新 dict，不改入參。"""
+    import copy
+
+    def walk(node):
+        if isinstance(node, dict):
+            node.pop("default", None)
+            if node.get("type") == "object" or "properties" in node:
+                props = node.get("properties") or {}
+                node["properties"] = props
+                node["additionalProperties"] = False
+                node["required"] = list(props.keys())
+            for key in ("properties", "$defs"):
+                if isinstance(node.get(key), dict):
+                    for v in node[key].values():
+                        walk(v)
+            for key in ("items",):
+                if key in node:
+                    walk(node[key])
+            for key in ("anyOf", "oneOf", "allOf"):
+                if isinstance(node.get(key), list):
+                    for v in node[key]:
+                        walk(v)
+        return node
+
+    return walk(copy.deepcopy(schema))
+
+
 def _agent_output_response_format() -> dict:
     """`response_format={"type":"json_schema","json_schema":{"strict":True,...}}`
 
     只在頂層補 `additionalProperties`／`required`（見模組 docstring「本任務
     刻意留白」段——巢狀 `$defs` 的 strict 轉換留給 2.2 對真 API 驗證時處理）。
     """
-    schema = AgentOutput.model_json_schema()
-    schema["additionalProperties"] = False
-    schema["required"] = list(schema.get("properties", {}).keys())
+    schema = strict_json_schema(AgentOutput.model_json_schema())
     return {
         "type": "json_schema",
         "json_schema": {"name": "AgentOutput", "strict": True, "schema": schema},
