@@ -92,3 +92,16 @@ DSP-028 實作 → 同組重跑對照（判準：`budget_exhausted` 77/162 → �
 **判定：DSP-029a 顯著改善但①②④未達，⛔ 不收案、不放寬尺。** ④的三句無據通過了 0.5 相對覆蓋率（同 known_open 三句的病灶）⇒ 覆蓋語義層（DSP-030）是下一個必要的結構刀，不是再調定址。另：texts 旁路 `refs` 全空（`_refs_for_dump` 從 `TurnResult` 拿不到 sentences）＝量測儀表化缺口之二。 三刀累計：budget_exhausted 77→27、答到率（真實）→35.2%、抄字錯誤消失、定址錯誤 119→11。
 **發現**：(a) 11 筆 ref 錯誤在 diag 重現時皆正確 ⇒ 隨機性格式錯，但旁路只存最終輸出、被拒的中間嘗試無痕 ⇒ **量測缺口**：需讓 eval 在 `--dump-texts` 下另存每次被拒嘗試的 refs／sentences（僅旁路、不進 trace）；(b) QUOTE_NOT_COVERING 31 是目前最大拒因，是牆有效還是 0.5 誤殺，同樣需要被拒嘗試的原文才能抽審；(c) 禁詞尺對否定句誤判 ⇒ manifest 下一版加「禁詞落在含否定詞的子句內不算命中」（封閉規則、對所有禁詞一致），⛔ 本輪不改。
 **下一刀候選**（待抽審④）：DSP-029b＝標記改每回合不透明 provenance id（`[nonce:p07§4]`），把 tool_call_id／source 兩段文字從模型要抄的字串裡拿掉；被拒嘗試旁路＝eval 工具的儀表化，不動牆。
+
+## 第七輪：4.4a 儀表化後重跑（HEAD `5b7dda0`，54 句 agent 鏈 3 rep；`round7-instrumented/`；同程式碼＝R6，只多旁路）
+
+| 尺 | R7 | R6（同碼） | 備註 |
+|---|---|---|---|
+| budget_exhausted | 36 | 27 | **同碼兩輪差 9** ⇒ 單輪抖動約 ±10，門檻 20 在雜訊範圓內要多輪判 |
+| ref 子成因合計 | 16（invalid 10／not_found 6） | 11 | |
+| 答到率 | 30.9%（min 22.2／max 40.7） | 35.2% | |
+| 禁詞 | 4 | 3 | 皆否定句誤判類 |
+| 邊界不硬答 | 91.7% | 83.3% | |
+| POLARITY | 12 | 10 | |
+
+**被拒嘗試分析（`tools/agent_attempts_report.py`，首次可見）**：拒因嘗試數 QUOTE_NOT_COVERING 41／POLARITY 12／ref_invalid 10／UNCITED 7／ref_source_not_found 6／empty_sentences 1；被拒過的回合最終 36 轉人、4 答、1 問。**ref_invalid 18 筆中 16 筆是「缺段」**（三段式標記漏抄一段）⇒ 支持 029b「標記縮成不透明 id」方向。QUOTE_NOT_COVERING 多為 2 句 2 refs 的正常回答 ⇒ 是否誤殺待 4.4b 標籤。
