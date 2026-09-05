@@ -43,3 +43,11 @@ sha256 凍結與拒跑（`verify_manifest`、退出碼 3／4）；`_NO_VERBATIM_
 ## 補充（2026-09-05，業主提供外部情境）
 
 line-bot-platform 的四份接入文件（`chatai-requests.md` 等）含 21 個消費方定義的驗收案例，但身分是代管業務、路徑是現有面向鏈（`trigger_facet_key`），與 M2 的 prospect 影子評估不同母體 ⇒ 不能補 r9 #5 的樣本 C；其價值在 M4／M5 子 spec（已掛進 roadmap）。樣本 C 仍需線上 prospect 問句匯出。
+
+## 修正後獨立驗證（fresh verifier，2026-09-05，HEAD `4ae6c14`）：**CONFIRMED**
+
+12 項（#1–#3、#6–#9、#11、#13–#16）逐項 CONFIRMED，含證據字串與測試名；反向檢查未發現重述型假綠；`--provider openai` 缺 key 於任何 import／建 pool 之前即 `SystemExit`（不觸網、不 traceback）。測試：工具 34 綠、agent 目錄 557 綠。真路徑 smoke（`--set scenarios --limit 1 --repeat 2`）：18 筆、`rep` 0/1 皆在、JSONL 無原文鍵、report 有 p95／boundary_ok_rate／cost／`outline_sha`。
+
+**驗證者的核心判斷（採納）**：在「A／B 只當回歸集、C 未到」前提下，本工具**能可信量「敏感 0 漏」**（30 句五類各 6、跨 rep 取最嚴，但只證已知病灶不復發）；**量不到「無捏造」**——唯一的尺 `forbid_hit` 只認樣本預列的禁詞（sensitive-v1 0/30 有禁詞），「無捏造 PASS」是低召回空真值，需樣本 C＋原文抽審旁路才成立。
+
+非阻斷建議（P3，全數列入 4.3c 前置）：A1 多輪測試補 assistant 斷言並以「最後一則 user」定位第 2 輪；A2 抽審需「不進版控的原文旁路」或改由 trace 端做；A3 `answered_rate` 不量對錯（rubric 仍無）；A4 repeat 全距未進 report.md；A5 sensitive 集無禁詞 ⇒ 無捏造欄在該集無鑑別力，報表應標示；A6 容器內 `git HEAD` 空（root 非 repo）；A7 temperature 未釘（P4）。
