@@ -134,7 +134,7 @@
 - [ ] 4.3 影子跑動與收案（4.2 後；需業主開影子 env）：本機 `:8100` 對 prospect 開影子、跑三組樣本，派獨立 `verifier` 重跑同一組樣本（CONFIRMED 為 M2 done）；產出 `perf-agent-<date>.md`。
   - r9（2026-09-05，`reviews/r9-m2-eval-validity.md`）判 REVISE：樣本 A／B **降級為已知病灶回歸集，⛔ 不作 M3 放行證據**；4.3 依處置拆為三個子任務：
   - [ ] 4.3a 修評估工具（executor，worktree）：真 provider 路徑（真 registry＋大綱＋asyncpg pool）、多輪同一 state、身分 b2b／vendor 1、`--repeat N`、敏感樣本集 `eval/sensitive-v1.json`（五類各 ≥5）、無捏造兩鏈同尺（forbid_hit）、固定句率只算非敏感非邊界子集且以同批 old 為基準、報表補 boundary_ok_rate／p95／answered_rate／cost、舊鏈轉人讀結構化欄＋固定句比對、manifest 修 turns／outline_sha。完成後派 fresh `verifier`。
-  - [ ] 4.3b 真實流量樣本 C（業主動作＋主 session）：業主在線上匯出 `chat_history.question`（`target_user='prospect'`，近 90 天，建議 ≥60 句、分層主題×敏感×單/多輪）；主 session 本機去識別（人名／電話／地址）後凍結 sha256 進 manifest；匯出檔 ⛔ 不進 commit；D2 五個數字在看結果前由業主裁定寫進 manifest。
+  - [ ] 4.3b 真實流量樣本 C（業主動作＋主 session）：業主在線上匯出 `chat_history.question`（`target_user='prospect'`，近 90 天，建議 ≥60 句、分層主題×敏感×單/多輪）；主 session 本機去識別（人名／電話／地址）後凍結 sha256 進 manifest；匯出檔 ⛔ 不進 commit；D2 五個數字在看結果前由業主裁定寫進 manifest。 業主 2026-09-05 另提供 line-bot-platform 四份接入文件（21 個消費方驗收案例，見 roadmap「外部驗收情境來源」）：身分是代管業務、走現有面向鏈，⛔ 不作 prospect 樣本；留給 M4／M5 子 spec 當驗收正本。
   - [ ] 4.3c 真跑與收案（4.3a、4.3b 後，容器內、gpt-4o-mini、`--repeat 3`）：三組樣本兩條鏈對跑，派獨立 `verifier` 重跑同一組（CONFIRMED 為 M2 done）；產出 `perf-agent-<date>.md`；p95 先以 `run_turn` 邊界量並標為下限（使用者層量法待 M3 演練）。
   - 2026-09-05 影子首日註記：影子已開（`AGENT_SHADOW_AUDIENCES=prospect`），首批真流量暴露 P0（DSP-022：當前 user 訊息從未進 messages、dialog 從未寫回）與四項尺／契約校正（DSP-020／021）。**此前所有影子紀錄作廢**，4.3 的三組樣本自 HEAD 含 DSP-022 起算；D1 參考數據（n=5，非收案證據）：修正後 gpt-4o-mini 4/5、gpt-4o 4/5 → 業主裁統一 gpt-4o-mini（DSP-023）。
   - 需求：8.4, 13.5

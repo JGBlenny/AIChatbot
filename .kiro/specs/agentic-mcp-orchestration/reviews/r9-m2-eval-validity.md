@@ -39,3 +39,7 @@ sha256 凍結與拒跑（`verify_manifest`、退出碼 3／4）；`_NO_VERBATIM_
 - #5：**業主動作**——線上 `chat_history.question`（`target_user='prospect'`）匯出，本機去識別後凍結；建議 ≥60 句、分層（主題×敏感×單/多輪）。
 - #10：**部分 DEFER**——p95 先以 `run_turn` 邊界量並標為下限；使用者層（SSE）量法待 M3 切換演練時做。
 - #12：**業主動作**——D2 五個數字跑前裁定。
+
+## 補充（2026-09-05，業主提供外部情境）
+
+line-bot-platform 的四份接入文件（`chatai-requests.md` 等）含 21 個消費方定義的驗收案例，但身分是代管業務、路徑是現有面向鏈（`trigger_facet_key`），與 M2 的 prospect 影子評估不同母體 ⇒ 不能補 r9 #5 的樣本 C；其價值在 M4／M5 子 spec（已掛進 roadmap）。樣本 C 仍需線上 prospect 問句匯出。
