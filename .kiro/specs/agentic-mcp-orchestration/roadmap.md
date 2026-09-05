@@ -35,3 +35,4 @@
 - 子 spec 的 requirements 必須引用母 design 的元件契約（`ToolRegistry`／`OutputVerifier`／`Identity`），⛔ 不得重定義。
 - 任一子 spec 改到母 spec 契約 ⇒ 母 design 升版並重審。
 - 每波開工前重看 `.claude/DECISIONS.md` 與 `jgb2-source-index.md` §9 同步狀態。
+- jgb2 API 不足一律走 `jgb2-api-requests.md` 總帳：先登列、只在 `JGBSystemAPI` 邊界 mock、資料錄不編、報表標 `jgb_mock`、解除條件成立即拆（業主 2026-09-05）。
