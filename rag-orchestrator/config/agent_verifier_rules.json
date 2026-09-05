@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.3.0",
   "sensitive_patterns": [
     "\\d+(?:\\.\\d+)?\\s*(?:元|塊|萬|億|折)",
     "\\d+(?:\\.\\d+)?\\s*%",
@@ -53,5 +53,5 @@
   ],
   "min_quote_len": 6,
   "min_coverage_chars": 4,
-  "nli_tau": 0.4
+  "min_coverage_ratio": 0.5
 }

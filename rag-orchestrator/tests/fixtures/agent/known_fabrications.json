@@ -212,8 +212,8 @@
   {
     "id": "polarity_mismatch",
     "nonce": "FIXTURE0000000000",
-    "note": "否定翻轉：句子說「無法自訂」，來源句其實是「可以彈性調整」（正向）。**DSP-033 分模式**：降級模式的**全極性**抓得到（句子側有否定詞、來源側沒有）⇒ POLARITY_MISMATCH；NLI 模式的**窄化極性**抓不到——兩側沒有共同的 `assertion_terms` 詞根（句子有「無法」但那是否定詞不是詞根；來源的「可以」不在句子裡），改由 NLI 擋（來源說可以、句子說無法＝矛盾，p_ent 極低）⇒ NOT_ENTAILED。⚠️ 這正是窄化的代價與補償：規則層放掉的，交給 NLI；⛔ 不得為了讓拒因好看而把全極性加回 NLI 模式。",
-    "expected_reason": "NOT_ENTAILED",
+    "note": "否定翻轉：句子說「無法自訂」，quote 其實是「可以彈性調整」（正向）",
+    "expected_reason": "POLARITY_MISMATCH",
     "user_message": "帳單格式可以自訂嗎？",
     "agent_output": {
       "kind": "answer",
@@ -242,12 +242,7 @@
         "text_for_model": ""
       }
     },
-    "handoff": null,
-    "nli_scores": {
-      "*": 0.03
-    },
-    "expected_reason_degraded": "POLARITY_MISMATCH",
-    "expected_term_id_nli": null
+    "handoff": null
   },
   {
     "id": "source_not_citable",
@@ -846,8 +841,8 @@
   {
     "id": "unit_points_to_unrelated_sentence",
     "nonce": "FIXTURE0000000000",
-    "note": "DSP-029：`unit` 指到同一來源裡**無關的那一句**。來源第 2 句講建約方式、第 4 句講合約修改；句子講的是修改，卻指到建約那一句。**DSP-033 分模式**：降級模式的 ratio 覆蓋尺抓得到 ⇒ QUOTE_NOT_COVERING；NLI 模式只剩絕對下限（交集 ≥4 就過）⇒ 由 NLI 擋（建約那一句不蘊涵「簽完後不可修改」）⇒ NOT_ENTAILED。⚠️ 這是取代覆蓋尺的直接後果：擋它的東西從『字元重疊不夠』換成『語義上不被支撐』，⛔ 後者才是我們真正想量的命題。",
-    "expected_reason": "NOT_ENTAILED",
+    "note": "DSP-029：`unit` 指到同一來源裡**無關的那一句** ⇒ QUOTE_NOT_COVERING。來源第 0 句講建約方式、第 1 句講合約修改；句子講的是修改，卻指到第 0 句。",
+    "expected_reason": "QUOTE_NOT_COVERING",
     "user_message": "簽完的合約還能改嗎？",
     "agent_output": {
       "kind": "answer",
@@ -876,12 +871,7 @@
         "text_for_model": ""
       }
     },
-    "handoff": null,
-    "nli_scores": {
-      "*": 0.11
-    },
-    "expected_reason_degraded": "QUOTE_NOT_COVERING",
-    "expected_term_id_nli": null
+    "handoff": null
   },
   {
     "id": "outline_source_with_title_suffix_no_longer_canonicalized",
@@ -1118,50 +1108,10 @@
     "handoff": null
   },
   {
-    "id": "nli_not_entailed_extra_condition",
-    "nonce": "FIXTURE0000000000",
-    "note": "DSP-033：句子把來源沒寫的**數量上限**加了進去。floor 過（字元幾乎全重疊）、窄化極性過（沒有極性翻轉）⇒ 這種『在真話後面接一句假話』的捏造，只有 NLI 擋得住（p_ent < τ=0.40）⇒ NOT_ENTAILED。⚠️ 降級模式**擋不住**它（ratio 與全極性都過）——`expect_ok_degraded: true` 是這件事的可執行紀錄，⛔ 不得為了讓兩模式一致而刪掉它。",
-    "user_message": "物件資料可以批次匯入嗎？",
-    "agent_output": {
-      "kind": "answer",
-      "sentences": [
-        {
-          "text": "物件資料可以透過範本檔案批次匯入，每次上限五百筆。",
-          "kind": "fact",
-          "refs": [
-            "[FIXTURE0000000000:t1:kb:9001§0]"
-          ]
-        }
-      ],
-      "fact_class": "feature",
-      "handoff_reason": null
-    },
-    "tool_results": {
-      "t1": {
-        "ok": true,
-        "provenance": [
-          {
-            "source": "kb:9001",
-            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
-            "citable": true
-          }
-        ],
-        "text_for_model": ""
-      }
-    },
-    "handoff": null,
-    "expected_reason": "NOT_ENTAILED",
-    "nli_scores": {
-      "*": 0.18
-    },
-    "expect_ok_degraded": true,
-    "expected_reason_degraded": null,
-    "expected_term_id_nli": null
-  },
-  {
     "id": "floor_reject_no_meaningful_overlap",
     "nonce": "FIXTURE0000000000",
-    "note": "DSP-033 r18 F-2：**絕對下限**——片段與來源句的有意義字元交集 <4 ⇒ QUOTE_NOT_COVERING，在 NLI **之前**就決定性硬拒（⛔ 不送進 NLI）。⚠️ 這條之所以保留，是因為『連四個字都對不上』時談蘊涵沒有意義，而規則層擋掉的每一對都省下一次推論、也讓拒因更精確。兩種模式下語義相同。",
+    "note": "DSP-029a 步③**絕對下限**：片段與來源句的有意義字元交集 <4 ⇒ QUOTE_NOT_COVERING。⚠️ 這條之所以存在，是因為「連四個字都對不上」時再談語義支撐已無意義，規則層當場硬拒，拒因也最精確（模型看得懂要改什麼）。　**DSP-034 保留**：本案在 DSP-029a 尺下同樣被拒，是有效回歸案。",
+    "expected_reason": "QUOTE_NOT_COVERING",
     "user_message": "假日有客服嗎？",
     "agent_output": {
       "kind": "answer",
@@ -1190,13 +1140,13 @@
         "text_for_model": ""
       }
     },
-    "handoff": null,
-    "expected_reason": "QUOTE_NOT_COVERING"
+    "handoff": null
   },
   {
     "id": "narrow_polarity_same_root_one_side_negated",
     "nonce": "FIXTURE0000000000",
-    "note": "DSP-033 r18 F-2：**窄化極性**——同一 `assertion_terms` 詞根（「支援」）兩側皆出現、且恰一側被否定（來源「不支援」vs 句子「支援」）⇒ POLARITY_MISMATCH。⚠️ 這是 NLI 之前的決定性硬拒：181 句實測它與 NLI 單獨同為 69%／9%＝零代價，而它給出的拒因比 `NOT_ENTAILED` 精確得多（模型看得懂要改什麼）。降級模式的全極性也抓得到同一案，故兩模式同拒因。",
+    "note": "DSP-029a 步③**極性檢查**：同一 `assertion_terms` 詞根（「支援」）兩側皆出現、且恰一側被否定（來源「不支援」vs 句子「支援」）⇒ POLARITY_MISMATCH。　**DSP-034 保留**：本案在 DSP-029a 的**全極性**尺下同樣被拒，是有效回歸案。⚠️ ⛔ 不得因為 id 帶 `narrow_` 就以為線上跑的是窄化極性——現行尺是全極性，兩把尺只是在本案結論相同。",
+    "expected_reason": "POLARITY_MISMATCH",
     "user_message": "可以批次改租金嗎？",
     "agent_output": {
       "kind": "answer",
@@ -1225,48 +1175,6 @@
         "text_for_model": ""
       }
     },
-    "handoff": null,
-    "expected_reason": "POLARITY_MISMATCH"
-  },
-  {
-    "id": "hypothesis_too_long_pair_error_is_rejected",
-    "nonce": "FIXTURE0000000000",
-    "note": "DSP-033 r18 F-8：hypothesis 超過 `max_length` 時 `nli-model` 對**該對**回 `{\"error\": \"hypothesis_too_long\"}`，client 轉成 `None`。`None` ＝『算不出分數』，⛔ 不得與『分數夠高』同一個結論 ⇒ NOT_ENTAILED、`entail_score` 為 None。⚠️ 本案的句子與來源在字元上幾乎完全重疊（floor 與 ratio 都過、極性也一致），所以它**唯一**會被擋下的理由就是那個 None——這正是要驗的事。⚠️ 降級模式沒有 NLI 這一關，⇒ 放行（`expect_ok_degraded: true`）。⚠️ fixture 用 `nli_scores: {\"*\": null}` 模擬，⛔ 不真的塞一個 256 token 的句子進來（那會讓這個案例的意圖被長度細節淹沒，而長度邊界已由 `nli_model/tests/test_api_server.py::test_hypothesis_too_long_boundary` 驗）。",
-    "user_message": "可以批次改租金嗎？",
-    "agent_output": {
-      "kind": "answer",
-      "sentences": [
-        {
-          "text": "系統目前不支援批次修改租金，需要逐筆手動調整。",
-          "kind": "fact",
-          "refs": [
-            "[FIXTURE0000000000:t1:kb:9001§0]"
-          ]
-        }
-      ],
-      "fact_class": "feature",
-      "handoff_reason": null
-    },
-    "tool_results": {
-      "t1": {
-        "ok": true,
-        "provenance": [
-          {
-            "source": "kb:9001",
-            "text": "系統目前不支援批次修改租金，需要逐筆手動調整，未來會評估開放。",
-            "citable": true
-          }
-        ],
-        "text_for_model": ""
-      }
-    },
-    "handoff": null,
-    "expected_reason": "NOT_ENTAILED",
-    "nli_scores": {
-      "*": null
-    },
-    "expect_ok_degraded": true,
-    "expected_reason_degraded": null,
-    "expected_term_id_nli": null
+    "handoff": null
   }
 ]

@@ -19,7 +19,6 @@ from types import SimpleNamespace
 import pytest
 
 from services.agent.bootstrap import DEFAULT_FIXTURES_DIR, DEFAULT_RULES_PATH, build_runtime
-from services.agent.nli_client import FakeNliClient, HttpNliClient
 from services.agent.runtime import AgentRuntime
 
 pytestmark = pytest.mark.unit
@@ -155,86 +154,3 @@ def test_budget_from_env_reads_three_keys_and_falls_back(monkeypatch):
     monkeypatch.setenv("AGENT_BUDGET_DEADLINE_S", "-3")     # 越界 ⇒ 預設
     e = budget_from_env()
     assert (e.max_tool_calls, e.max_rewrites, e.deadline_s) == (6, 2, 20.0)
-
-
-# ---------------------------------------------------------------------------
-# DSP-033：NLI client 的必填注入與啟動不依賴 `/nli`
-# ---------------------------------------------------------------------------
-
-
-def test_output_verifier_requires_an_explicit_nli_client():
-    """P1-2：`OutputVerifier` 的 `nli_client` 是**必填關鍵字參數、⛔ 無隱式預設**。
-
-    ⚠️ 給預設值就會出現「忘了注入 ⇒ 步③靜靜退回舊尺」這條路徑，而那個失敗方向
-    是**放行**（舊尺抓到 62% vs 新尺 69%），且沒有任何徵兆。降級是要被記進 trace、
-    被 health 告警的事件，⛔ 不可以是建構子少寫一個參數就達成的預設狀態。
-    """
-    from services.agent.output_schema import VerifierRules
-    from services.agent.verifier import OutputVerifier
-
-    rules = VerifierRules.load(DEFAULT_RULES_PATH)
-    with pytest.raises(TypeError):
-        OutputVerifier(rules)
-    # 正對照：帶了就建得起來（否則上面只是在說「這個建構子永遠會炸」）
-    OutputVerifier(rules, nli_client=FakeNliClient(scores=[]))
-
-
-def test_build_runtime_builds_an_http_client_from_env_by_default(monkeypatch):
-    """未給 `nli_client` ⇒ 由 env 建 `HttpNliClient`，並外掛到 runtime 供 health 讀。
-
-    ⚠️ health 拿得到的只有 `app.state.agent_runtime`；⛔ 不讓它去
-    `runtime.verifier._nli` 挖——那會把 Verifier 的私有欄位變成 health 的公開契約。
-    """
-    monkeypatch.setenv("NLI_URL", "http://nli-model:8000")
-    monkeypatch.setenv("NLI_MAX_PAIRS", "12")
-    runtime = build_runtime(None, _fake_provider(), _fake_registry())
-    assert isinstance(runtime.nli_client, HttpNliClient)
-    assert runtime.nli_client.url == "http://nli-model:8000"
-    assert runtime.nli_client.max_pairs == 12
-    # τ 也外掛（health 回報用）；值來自規則集，⛔ 不是另一個 env
-    assert runtime.nli_tau == 0.40
-
-
-def test_build_runtime_accepts_an_injected_client():
-    """測試與離線工具**必須**顯式傳假 client——不傳就是真的 HTTP client，
-    單元測試會去解析 `nli-model` 這個主機名（觸網）。"""
-    fake = FakeNliClient(fn=lambda pair: 1.0)
-    runtime = build_runtime(None, _fake_provider(), _fake_registry(), nli_client=fake)
-    assert runtime.nli_client is fake
-    assert runtime.verifier._nli is fake
-
-
-def test_startup_self_test_never_touches_the_injected_client():
-    """P1-2：啟動 ⛔ 不依賴 `/nli` 可用——`self_test` 用的是它自己內建的兩組假 client。
-
-    反證：注入一個「一被呼叫就炸」的 client，`build_runtime` 仍須成功。
-    正對照：同一個 client 被 Verifier 拿去用時確實會炸（否則這條只是在說
-    「這個 client 根本不會炸」）。
-    """
-    class _Exploding:
-        last_model_sha = ""
-
-        def score_sync(self, pairs):
-            raise AssertionError("啟動自證打了真服務——P1-2 被違反")
-
-        async def score(self, pairs):
-            raise AssertionError("啟動自證打了真服務——P1-2 被違反")
-
-    runtime = build_runtime(None, _fake_provider(), _fake_registry(), nli_client=_Exploding())
-    assert runtime.nli_client.__class__.__name__ == "_Exploding"
-    with pytest.raises(AssertionError):
-        _Exploding().score_sync([])
-
-
-def test_self_test_runs_both_rulers_at_startup():
-    """DSP-033：啟動自證跑 NLI 與降級兩種模式（`SELF_TEST_MODES`）。
-
-    ⚠️ 只驗一種等於只證明了一半：降級尺是服務掛掉時**真的會生效**的那把尺，
-    它若在某次重構裡壞掉，症狀只會在下一次 NLI 中斷時出現。
-    """
-    from services.agent.verifier import OutputVerifier
-
-    assert OutputVerifier.SELF_TEST_MODES == ("nli", "degraded")
-    runtime = build_runtime(None, _fake_provider(), _fake_registry(),
-                            nli_client=FakeNliClient(scores=[]))
-    assert runtime.verifier.SELF_TEST_MODES == ("nli", "degraded")

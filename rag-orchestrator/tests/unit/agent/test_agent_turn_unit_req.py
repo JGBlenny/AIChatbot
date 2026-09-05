@@ -37,18 +37,7 @@ from services.agent.output_schema import (
 from services.agent.runtime import HANDOFF_CACHE_MAX, AgentRuntime, ToolCallRecord
 from services.agent.state_store import NamespacedStateStore
 from services.agent.tools.registry import ToolRegistry, ToolResult
-from services.agent.nli_client import FakeNliClient, NliUnavailable
 from services.agent.verifier import OutputVerifier
-
-
-def _fake_nli():
-    """DSP-033：`OutputVerifier` 的 `nli_client` 是必填注入（P1-2）。
-
-    本檔這幾條測的是 `verify()`＝**降級尺**（term_id 形狀、敏感／禁詞），
-    那條路徑根本不呼叫 NLI；給一個永遠 raise 的假 client 是刻意的——
-    ⛔ 一旦有人把 NLI 接進同步路徑，這裡會立刻變成降級而不是靜靜通過。
-    """
-    return FakeNliClient(error=NliUnavailable("sync_path_must_not_call_nli"))
 
 pytestmark = pytest.mark.unit
 
@@ -113,13 +102,9 @@ class FakeProvider:
 
 
 class FakeVerifier:
-    def __init__(self, results=None, *, rules_sha="fake-rules-sha",
-                 nli_degraded=False, nli_pairs_capped=False, nli_model_sha=""):
+    def __init__(self, results=None, *, rules_sha="fake-rules-sha"):
         self._results = list(results) if results is not None else []
         self.rules_sha = rules_sha
-        self.nli_degraded = nli_degraded
-        self.nli_pairs_capped = nli_pairs_capped
-        self.nli_model_sha = nli_model_sha
 
     def verify(self, out, tool_results, user_message, handoff, *, resolved, resolve_errors):
         # DSP-029 F-A：替身也要收 `resolved`／`resolve_errors`（必填關鍵字）——
@@ -127,23 +112,6 @@ class FakeVerifier:
         if not self._results:
             return VerifierVerdict(ok=True)
         return self._results.pop(0)
-
-    async def verify_async(self, out, tool_results, user_message, handoff, *,
-                           resolved, resolve_errors):
-        """DSP-033：Runtime 走的是 `verify_async` ⇒ 替身也要有。
-
-        `degraded`／`pairs_capped` 預設為 False（本替身不模擬 NLI）；要測降級
-        訊號的案例用 `nli_degraded`／`nli_pairs_capped` 兩個建構參數開。
-        """
-        from services.agent.verifier import VerifyOutcome
-
-        return VerifyOutcome(
-            self.verify(out, tool_results, user_message, handoff,
-                        resolved=resolved, resolve_errors=resolve_errors),
-            degraded=self.nli_degraded,
-            pairs_capped=self.nli_pairs_capped,
-            nli_model_sha=self.nli_model_sha,
-        )
 
 
 class FakeAssembler:
@@ -749,7 +717,7 @@ def _output(answer: str, *, fact_class="feature") -> AgentOutput:
 
 @pytest.mark.req(_SPEC)
 def test_forbidden_term_verdict_uses_rule_index_not_the_literal_term():
-    verifier = OutputVerifier(_rules(), nli_client=_fake_nli())
+    verifier = OutputVerifier(_rules())
     verdict = verifier.verify(_output("您好。"), {}, "問句", None,
                               resolved={}, resolve_errors={})
     assert verdict.ok is False and verdict.reason == "FORBIDDEN_TERM"
@@ -761,7 +729,7 @@ def test_forbidden_term_verdict_uses_rule_index_not_the_literal_term():
 
 @pytest.mark.req(_SPEC)
 def test_sensitive_pattern_verdict_uses_rule_index():
-    verifier = OutputVerifier(_rules(), nli_client=_fake_nli())
+    verifier = OutputVerifier(_rules())
     verdict = verifier.verify(_output("我們保證獲利。"), {}, "問句", None,
                               resolved={}, resolve_errors={})
     assert verdict.reason == "SENSITIVE_TOPIC"
@@ -789,7 +757,7 @@ def test_all_real_ruleset_term_ids_are_rule_indices():
 
     root = Path(__file__).resolve().parents[3]
     rules = VerifierRules.load(root / "config" / "agent_verifier_rules.json")
-    verifier = OutputVerifier(rules, nli_client=_fake_nli())
+    verifier = OutputVerifier(rules)
     cases = json.loads(
         (root / "tests" / "fixtures" / "agent" / "known_fabrications.json")
         .read_text(encoding="utf-8")

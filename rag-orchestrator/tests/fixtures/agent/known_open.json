@@ -2,10 +2,10 @@
   {
     "id": "r4_upload_existing_contract_as_reference_1",
     "nonce": "FIXTURE0000000000",
-    "note": "R4 抽審發現 2（真捏造）：大綱只說「上傳的既存合約與系統制式合約效力相同」，模型卻講成「作為參考」。⚠️ **本案現在仍被放行**——r13 #1 實算 0.5 相對覆蓋率擋不住它（字元集合無序，捏造的「參考」兩字擋不下整句）。⛔ 不得因為它在本檔就宣稱已擋。　**DSP-033 追記**：NLI 也擋不住它——τ=0.40 下 p_ent 0.9615（單句前提實測；第八輪離線的 0.92 是整段前提所得）⇒ 仍在 τ 之上。故標 `nli_blind_spot: true` 留在本檔，⛔ 不得宣稱已擋；線上真尺是驗收②的盲標（誤殺 ≤10%、抓到 > 現行同批）。",
+    "note": "R4 抽審發現 2（真捏造）：大綱只說「上傳的既存合約與系統制式合約效力相同」，模型卻講成「作為參考」。⚠️ **本案現在仍被放行**——r13 #1 實算 0.5 相對覆蓋率擋不住它（字元集合無序，捏造的「參考」兩字擋不下整句）。⛔ 不得因為它在本檔就宣稱已擋。",
     "known_open": true,
     "open_since": "DSP-029",
-    "closed_by": "OPEN（DSP-033 NLI 盲點）",
+    "closed_by": "DSP-030",
     "user_message": "既有的紙本合約可以上傳嗎？",
     "agent_output": {
       "kind": "answer",
@@ -34,19 +34,15 @@
         "text_for_model": ""
       }
     },
-    "handoff": null,
-    "nli_blind_spot": true,
-    "nli_scores": {
-      "*": 0.9615
-    }
+    "handoff": null
   },
   {
     "id": "r4_upload_existing_contract_as_reference_2",
     "nonce": "FIXTURE0000000000",
-    "note": "R4 抽審發現 2 的第二種講法（「存檔作為參考」）。同上仍被放行。　**DSP-033 追記**：NLI 也擋不住它——τ=0.40 下 p_ent 0.5899（單句前提實測；第八輪離線的 0.44 是整段前提所得）⇒ 仍在 τ 之上。故標 `nli_blind_spot: true` 留在本檔，⛔ 不得宣稱已擋；線上真尺是驗收②的盲標（誤殺 ≤10%、抓到 > 現行同批）。",
+    "note": "R4 抽審發現 2 的第二種講法（「存檔作為參考」）。同上仍被放行。",
     "known_open": true,
     "open_since": "DSP-029",
-    "closed_by": "OPEN（DSP-033 NLI 盲點）",
+    "closed_by": "DSP-030",
     "user_message": "上傳的舊合約會怎麼處理？",
     "agent_output": {
       "kind": "answer",
@@ -75,19 +71,15 @@
         "text_for_model": ""
       }
     },
-    "handoff": null,
-    "nli_blind_spot": true,
-    "nli_scores": {
-      "*": 0.5899
-    }
+    "handoff": null
   },
   {
     "id": "r4_edit_contract_requires_admin_role",
     "nonce": "FIXTURE0000000000",
-    "note": "R4 抽審發現 3（邊界題硬答）：大綱的【修改】節完全沒提權限，模型卻答「編輯合約需要管理者權限」。DSP-033 曾以 p_ent 0.36 < τ 為據把它搬進 known_fabrications.json；**2026-09-06 查明 0.36 是整段大綱當前提算的**，線上 Verifier 與 τ 校準的前提都是單句 unit（本案 §4＝【修改】句），單句前提下實測 p_ent 0.5923 ⇒ 在 τ 之上、NLI **擋不住**，故搬回本檔並標 `nli_blind_spot: true`。⛔ 不得宣稱已擋、⛔ 不得調 τ 救自證；線上真尺是驗收②的盲標。降級尺（ratio∧全極性）同樣擋不住它（r13 #1）。",
+    "note": "R4 抽審發現 3（邊界題硬答）：大綱的【修改】節完全沒提權限，模型卻答「編輯合約需要管理者權限」。同樣仍被放行。",
     "known_open": true,
     "open_since": "DSP-029",
-    "closed_by": "OPEN（DSP-033 NLI 盲點；曾誤判為已擋，2026-09-06 更正）",
+    "closed_by": "DSP-030",
     "user_message": "誰可以編輯合約？",
     "agent_output": {
       "kind": "answer",
@@ -116,10 +108,43 @@
         "text_for_model": ""
       }
     },
-    "handoff": null,
-    "nli_blind_spot": true,
-    "nli_scores": {
-      "*": 0.5923
-    }
+    "handoff": null
+  },
+  {
+    "id": "nli_not_entailed_extra_condition",
+    "nonce": "FIXTURE0000000000",
+    "note": "**DSP-034 移入**（原為 DSP-029 之後新增的回歸案，改以 DSP-029 語彙重寫）：句子先忠實複述來源，再多接一句來源沒寫的**數量上限**（「每次上限五百筆」）。⚠️ **本案現在仍被放行**——DSP-029a 步③三關都過：有意義字元交集遠超絕對下限、相對覆蓋率過（多出來的條件只佔少數字元）、極性一致（兩邊都沒有否定詞）⇒ 規則尺看不出「真話後面接一句假話」。⛔ 不得因為它在本檔就宣稱已擋。關閉條件見 `.claude/DECISIONS.md` DSP-034 的重提條件（新尺須在凍結 holdout 上誤殺 ≤10% 且抓到 > 現行）。",
+    "known_open": true,
+    "open_since": "DSP-033 回歸",
+    "closed_by": "OPEN",
+    "user_message": "物件資料可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "物件資料可以透過範本檔案批次匯入，每次上限五百筆。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:9001§0]"
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9001",
+            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
   }
 ]

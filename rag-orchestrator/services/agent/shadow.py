@@ -152,8 +152,6 @@ def _trace_to_dict(trace: TurnTrace) -> dict:
                 "sent": v.sent,
                 "term_id": v.term_id,
                 "quote_len": v.quote_len,
-                # DSP-033：0–1 的分數，⛔ 非原文（影子比對要看得出是被 NLI 拒的）。
-                "entail_score": v.entail_score,
             }
             for v in trace.verifier
         ],
@@ -163,7 +161,6 @@ def _trace_to_dict(trace: TurnTrace) -> dict:
         "violations": list(trace.violations),
         "rules_sha": trace.rules_sha,
         "outline_sha": trace.outline_sha,
-        "nli_model_sha": trace.nli_model_sha,
     }
 
 

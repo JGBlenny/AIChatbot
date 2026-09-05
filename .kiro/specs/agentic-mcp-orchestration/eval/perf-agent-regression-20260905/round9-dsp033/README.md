@@ -1,5 +1,7 @@
 # 第九輪：DSP-033 NLI 取代覆蓋＋極性——落地後兩輪回歸（2026-09-06 凌晨）
 
+> **結局：DSP-034 撤出**——業主 2026-09-06 裁「還是要清掉」，NLI 已全面撤出線上路徑（`rag-orchestrator` agent 路徑還原至 `b055e48`、compose 移除 `nli-model` 與 `NLI_*`）；`nli_model/` 續存為離線抽審工具。本輪數字仍為 DSP-034 的依據（驗收②誤殺 19.0%／抓到 80.5%），⛔ 內文未回填、讀時以本行為準。
+
 > HEAD `4f9683c`＋未 commit 工作樹（canary 期望值更正、fixtures 搬回、compose nli-model mem_limit 1.5 GiB、Dockerfile 指紋）。gpt-4o-mini、`--repeat 3`、兩鏈、三組×2 輪（r9a／r9b）。
 > 環境：8 GB Mac、Docker VM 6 GB（r9a sensitive 時仍為 4 GB；VM 從 4→6 GB 的重啟打斷了一次，r9a scenarios 起重跑）。非本專案容器已停。
 > 原文旁路（`texts/`）只在容器與主 session scratchpad，⛔ 不進版控。agent 鏈成本兩輪合計 **$1.39**。
