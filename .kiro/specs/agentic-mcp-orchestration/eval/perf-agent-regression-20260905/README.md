@@ -59,3 +59,20 @@ DSP-028 實作 → 同組重跑對照（判準：`budget_exhausted` 77/162 → �
 - 結果：38 句、有據 37、無據 1（uncertain）⇒ **無據率 2.6%**；三個邊界判定若改嚴，上限 10.5%。
 - 限制（原文見 scratchpad `r4-spotreview-baseline.md`，不進版控）：單主題、樣本同質（獨立問句約 14）、單一判者、切句粗、survivor 樣本（經 verifier 篩過）、人審 dump 為 31 列版而實跑為 29 列版（差異僅兩重複列）。
 - **驗收④判準**：DSP-029 同法抽 20 筆，無據率 ≤ 2.6%（放寬讀法）且 ≤ 10.5%（嚴格讀法）兩者同時成立才算不退步。
+
+## 第五輪：DSP-029 v4 落地（HEAD `b010bfe`，54 句、兩鏈、3 rep；`round5-dsp029/`；敏感集因主機記憶體不足未跑完，待補）
+
+| 尺 | 值 | 判定 |
+|---|---|---|
+| 拒因分佈（agent） | SCHEMA:source_not_found 72、SCHEMA:cite_out_of_range 47、QUOTE_NOT_COVERING 15、POLARITY 6、UNCITED 1；**QUOTE_NOT_VERBATIM 0（定義上）** | ① 如實列 |
+| budget_exhausted | 59/162（R4 53） | ② ✗（≤20） |
+| 答到率 | 19.1%（R4 18.5%） | ③ ✓（勉強） |
+| 禁詞 | 1/162 | ⑤ ✓ |
+| 邊界不硬答 | 91.7% | — |
+| source_not_found | 72/162 | 上限 5 ✗ |
+| POLARITY | 6/162（基準 9） | ✓ |
+| known_open | 3/3 仍放行 | ⓪ 如實列 |
+| 抽審④ | 未做（先解 ①②） | — |
+
+**診斷（diag 兩題）**：unit 編號模型填得正確（範本＝unit 4、刊登＝unit 6），錯在**定址標籤**——`tool_call_id`／`source`／中文標題三者混填（`source:'outline:租約'`、`tool_call_id:'outline:lease'`＋`source:'租約'`）。要模型自己對齊三個欄位是多餘任務。
+**第六刀（DSP-029 修正案 v5，結構性）**：引用＝照抄資料段裡的標記字串放進該句 `refs[]`；刪 `citations` 陣列與 `cite` 索引 ⇒ `source_not_found`／`cite_out_of_range` 兩類錯誤結構上消失；nonce 內含即證明出自本回合資料段。
