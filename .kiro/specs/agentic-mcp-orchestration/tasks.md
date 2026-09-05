@@ -161,6 +161,9 @@
 - [ ] 5.7 Verifier「新資訊規則」（DSP-030；DSP-029 收案後的獨立一輪）：先離線用回歸旁路量誤殺（數字／日期／專有名詞／能力動詞四類；正規化表：全形半形、中文數字、單位）並定門檻 → 再實作 ③ 子成因 `novel_token` → 同 54 句對照（答到率、拒因分佈、20 筆抽審無據率）。⛔ 不與 DSP-029 同輪量。
   - 需求：6.3, 6.5
   - 執行：main 量測＋security-executor 實作／effort 中
+- [ ] 5.8 (P) NLI 接地檢查離線量測（業主 2026-09-05「好同意」；與 DSP-029 並行、⛔ 不接線上、不動 Verifier）：①唯讀代理 WebSearch 核現況——繁中／多語 NLI cross-encoder 候選（模型名、參數量、授權、中文 XNLI 分數、CPU 推論延遲），寫 `research.md` §NLI 附出處；②實驗設計落 `eval/nli-offline-plan.md`：前提＝DSP-029 解析出的來源句、假設＝回答句片段；標籤來源＝029 驗收④的 20 筆獨立抽審（有據／無據）＋R4 三個已知捏造句；量尺＝捏造抓到率、有據句誤殺率、每句延遲；門檻先定（抓到率 > DSP-030 純規則版、誤殺率 ≤ 之、延遲 ≤100 ms/句）；③scratch 容器 CPU 跑一輪，數字落 `eval/nli-offline-<date>.md`。判準達標才立 DSP 提案接進 Verifier（作為逐字／覆蓋牆之後的追加閘，⛔ 不取代）；不達標留作抽審輔助。
+  - 需求：6.3, 6.5
+  - 執行：scout（WebSearch）＋main／effort 中；⛔ 不含線上部署
 - [ ] 5.4 收案：`make audit` 綠（不變量 27–31（原 18–22，DSP-013））、`make test` 全綠（已知紅 `test_verdict_ruler_req.py` 除外）、M0 與 M3 各一次 security／verifier 紀錄落 `reviews/`、總結列取捨（D1–D3 未裁項與其影響；⚠️ DSP-012 已於 2026-09-04 裁定選項 A，改列其代價：`knowledge_base` 多兩欄、售前池 31 筆需先標審核、審核 UI 為另案未做）。
   - 需求：11.3, 13.5
   - 執行：main／effort 高——收案判斷與取捨列示由主 session 負責
