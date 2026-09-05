@@ -76,3 +76,19 @@ DSP-028 實作 → 同組重跑對照（判準：`budget_exhausted` 77/162 → �
 
 **診斷（diag 兩題）**：unit 編號模型填得正確（範本＝unit 4、刊登＝unit 6），錯在**定址標籤**——`tool_call_id`／`source`／中文標題三者混填（`source:'outline:租約'`、`tool_call_id:'outline:lease'`＋`source:'租約'`）。要模型自己對齊三個欄位是多餘任務。
 **第六刀（DSP-029 修正案 v5，結構性）**：引用＝照抄資料段裡的標記字串放進該句 `refs[]`；刪 `citations` 陣列與 `cite` 索引 ⇒ `source_not_found`／`cite_out_of_range` 兩類錯誤結構上消失；nonce 內含即證明出自本回合資料段。
+
+## 第六輪：DSP-029a 落地（HEAD `8c189c2`，54 句＋敏感集、兩鏈、3 rep；`round6-dsp029a/`）
+
+| 尺 | topics agent | 門檻 | 判定 |
+|---|---|---|---|
+| ① refs 四子成因 | ref_invalid 6、ref_source_not_found 5、ref_ambiguous 0、unit_out_of_range 0 ⇒ **合計 11/162** | ≤5 | ✗ |
+| ② budget_exhausted | **27/162**（R5 59、R1 77） | ≤20 | ✗ |
+| ③ 答到率 | **35.2%**（R5 19.1%、R4 18.5%） | ≥18.5% | ✓ |
+| ④ 抽審無據率 | 進行中（獨立代理，同 R4 判準） | ≤2.6%／嚴 ≤10.5% | — |
+| ⑤ 禁詞／敏感 | 禁詞 3/162（人眼核對三筆皆為正確的否定句「不支援批次匯入」撞禁詞「批次匯入」＝尺誤判，⛔ 本輪不改尺）；敏感 **0/90** | ≤3／0 | ✓（邊緣） |
+| ⑥ verifier 測試 | 677 綠 | 全綠 | ✓ |
+| 其他 | POLARITY 10（基準 9）；known_open 3/3 仍放行；QUOTE_NOT_COVERING 31（14 回合因此耗盡）；SCHEMA:empty_sentences 4；p95 4.5 s；成本 agent 0.36＋0.18 美元 | | |
+
+**判定：DSP-029a 顯著改善但①②未達，⛔ 不收案、不放寬尺。** 三刀累計：budget_exhausted 77→27、答到率（真實）→35.2%、抄字錯誤消失、定址錯誤 119→11。
+**發現**：(a) 11 筆 ref 錯誤在 diag 重現時皆正確 ⇒ 隨機性格式錯，但旁路只存最終輸出、被拒的中間嘗試無痕 ⇒ **量測缺口**：需讓 eval 在 `--dump-texts` 下另存每次被拒嘗試的 refs／sentences（僅旁路、不進 trace）；(b) QUOTE_NOT_COVERING 31 是目前最大拒因，是牆有效還是 0.5 誤殺，同樣需要被拒嘗試的原文才能抽審；(c) 禁詞尺對否定句誤判 ⇒ manifest 下一版加「禁詞落在含否定詞的子句內不算命中」（封閉規則、對所有禁詞一致），⛔ 本輪不改。
+**下一刀候選**（待抽審④）：DSP-029b＝標記改每回合不透明 provenance id（`[nonce:p07§4]`），把 tool_call_id／source 兩段文字從模型要抄的字串裡拿掉；被拒嘗試旁路＝eval 工具的儀表化，不動牆。
