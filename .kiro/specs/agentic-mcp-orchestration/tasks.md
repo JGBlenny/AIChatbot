@@ -8,7 +8,7 @@
 > **執行註記（業主 2026-09-04 要求）**：每個子任務下方一行 `執行：<角色>／effort <低|中|高>——理由`。角色＝Claude Code 派工角色，**model 由各角色定義路由、⛔ 不在派工時覆寫**（`mech-executor`＝便宜層、全規格機械工；`executor`＝有限判斷；`security-executor`＝授權後的安全敏感實作；`security-reviewer`／`verifier`／`plan-verifier`＝唯讀審查；`main`＝主 session 親做，用於耦合整合與收案判斷）。effort＝該角色的推理力度：低＝規格齊全照抄、中＝需局部設計決定、高＝跨模組整合或安全邊界。風險觸發（隔離／安全／資料）的任務完成後必派 fresh `verifier`。
 > **範圍聲明（r5 目標驗證後，業主 2026-09-04「好」）**：本 spec 交付「JGB 相關服務連上 `/mcp` 就能完成一段客服對話」**僅限 prospect 身分**（2.6 `agent.turn`）；LINE 租客／語音來電者屬 tenant，對話能力在子 spec `agent-tenant-audience`（M4）；語音的串流形態、首字預算、打斷在子 spec `voice-turn-budget`，本 spec ⛔ 不調現行預算。語音先走 REST SSE。
 > **M1 前增量審查（2026-09-05，plan-verifier r7）**：REVISE 6 P1 已處置（2.1 `for_model=True` 兩層擋；2.1a loopback 內部呼叫不計量；2.8 前提偵測旗語義；2.7 業者範圍 404＋security-executor＋前置 2.5＋真跑驗收；2.6 `AGENT_TURN_ENABLED` 回切開關）；P2 進備註（1.8 措辭、`docs/api/mcp-facade.md` 明寫外部 MCP client 即模型故 `facade_only` 對其為單層設計意圖、design `ToolCallRecord` 加 `args_summary`、不變量 30 白名單＋0 呼叫即紅、3.2 help 不可引用）。r8 收尾審查再 REVISE 2 P1（皆源於 2.1a 免計量標頭）⇒ **2.1a 整條 DEFER**，觸發自然消除；P2：env 清單補 `AGENT_TURN_ENABLED`／`AGENT_STAGE`、`agent.turn` 不受 `AGENT_AUDIENCES` 管。⚠️ 2.6／2.7 執行前仍須實跑 security-reviewer。
-> 待裁對應（不擋任務生成，擋對應里程碑）：D1 模型 SDK（假設 OpenAI function calling）→ 2.1；D2 收案數字 → 5.2；D3 幫助中心 → 1.6（`citable` 全 false 直到裁定）；D6 個人化 → 另案。DSP-012 已裁選項 A（2026-09-04）→ 3.2／3.3 承接（R11.5／R11.6）。
+> 待裁對應（不擋任務生成，擋對應里程碑）：D1 模型 ✅ 已裁 2026-09-05 統一 gpt-4o-mini（DSP-023）；D2 收案數字 → 5.2；D3 幫助中心 → 1.6（`citable` 全 false 直到裁定）；D6 個人化 → 另案。DSP-012 已裁選項 A（2026-09-04）→ 3.2／3.3 承接（R11.5／R11.6）。
 
 ## 1. M0 底座：隔離謂詞、工具 registry、唯讀工具、MCP 門面（1.1 先做；其餘可平行）
 
@@ -132,7 +132,7 @@
   - 執行：mech-executor／effort 中——樣本與報表欄位已定，照 `scripts/backtest/run_batch.py` 慣例
   - **收案註記（2026-09-05）**：mech-executor（worktree）→ 收檔，unit 14 綠；對真 `topics-v2.json` 以 fake provider 實跑 5 題產出 JSONL＋report（形狀、決定性、sha 校驗、無原文）。manifest：topics sha `f78344d6…`、scenarios `eval/scenarios-v1.json`（**非逐字原始腳本**——repo 查無第四／五輪 verifier 的原始多回合腳本，以 perf §9–10 可 grep 原句重建 6 劇本 24 輪，每輪標 `verbatim`；4.3 只能當新一組獨立凍結樣本，⛔ 不能當「重跑同一組」）、traffic `available:false`（業主未匯出）；`baseline.fixed_rate=0.21`（主 session 從 perf §9–10 批次 1 後 4/19 填；`--chain both` 以同批 old 鏈實測為準）。已知：fake provider 不給 citations ⇒ 真 Verifier 拒到預算盡（證明工具沒繞過 Verifier，也代表答對率要 4.3 真 provider 才有意義）；`cost_usd` 待真線路；old 鏈帶 `RAG_ADMIN_API_KEY` header（既有 `run_batch.py` 不帶，屬其債）。
 - [ ] 4.3 影子跑動與收案（4.2 後；需業主開影子 env）：本機 `:8100` 對 prospect 開影子、跑三組樣本，派獨立 `verifier` 重跑同一組樣本（CONFIRMED 為 M2 done）；產出 `perf-agent-<date>.md`。
-  - 2026-09-05 影子首日註記：影子已開（`AGENT_SHADOW_AUDIENCES=prospect`），首批真流量暴露 P0（DSP-022：當前 user 訊息從未進 messages、dialog 從未寫回）與四項尺／契約校正（DSP-020／021）。**此前所有影子紀錄作廢**，4.3 的三組樣本自 HEAD 含 DSP-022 起算；D1 參考數據（n=5，非收案證據）：gpt-4o-mini 2/5、gpt-4o 4/5 正確處置。
+  - 2026-09-05 影子首日註記：影子已開（`AGENT_SHADOW_AUDIENCES=prospect`），首批真流量暴露 P0（DSP-022：當前 user 訊息從未進 messages、dialog 從未寫回）與四項尺／契約校正（DSP-020／021）。**此前所有影子紀錄作廢**，4.3 的三組樣本自 HEAD 含 DSP-022 起算；D1 參考數據（n=5，非收案證據）：修正後 gpt-4o-mini 4/5、gpt-4o 4/5 → 業主裁統一 gpt-4o-mini（DSP-023）。
   - 需求：8.4, 13.5
   - 執行：main＋verifier／effort 高——需業主開影子 env；療效宣稱必派獨立 verifier（CONFIRMED 為 M2 done）
 

@@ -398,7 +398,7 @@ sequenceDiagram
 6. **影子以背景 task 跑、唯讀 registry 視圖、不落原文**。
 7. **`kb.search` 照 `retrieve()` 現況（含 reranker 與 `retrieval_representation.scoring_surface`）**；agent 自身不讀 `instance_applicability`／`retrieval_representation` 欄位；除役另案，不變量 10／12／17 不動。
 8. **授權由 jgb2 API 全權處理、本系統只管額度**（DSP-011）：MCP 門面非公開認證面；`jgb2.query` 帶 `viewer_user_id` 交 jgb2 圈定；⛔ 不建 bearer 簽發／驗證。前提破了（出現未經上游的公網呼叫者）要重開。
-9. **D1 假設**：先用 OpenAI function calling（provider 抽象保留）；D2 收案數字、D3 幫助中心、D4 寫入首批、D5 影子月上限 **仍待業主**——D3 未裁前 `help_center_pages.citable` 全 false；D2 未裁前 `agent_eval` 只出對照不判 PASS。阻擋：D2→M2、D3→M1 的 help 引用、D4→M4、D5→M1 影子開啟。
+9. **D1 已裁（業主 2026-09-05，DSP-023）：統一 gpt-4o-mini**，與舊鏈同模型、⛔ 不為 agent 另開 gpt-4o；`AGENT_MODEL` 僅供本機對照實驗。原假設：先用 OpenAI function calling（provider 抽象保留）；D2 收案數字、D3 幫助中心、D4 寫入首批、D5 影子月上限 **仍待業主**——D3 未裁前 `help_center_pages.citable` 全 false；D2 未裁前 `agent_eval` 只出對照不判 PASS。阻擋：D2→M2、D3→M1 的 help 引用、D4→M4、D5→M1 影子開啟。
 10. **R5.3 章節讀取走大綱自有命名空間**（`outline:*`）；**1.2 修訂**：由 `系統脈絡` 組成的 pm／tenant 目錄 `citable=false`（只導航），prospect 大綱由一般池列組成故可引用；`kb.get` 整數 id 維持排除保留分類；⛔ 不動 `SYSTEM_DOC_CATEGORY`／`RULES_DOC_CATEGORY` 的永久排除。
 11. **jgb2 標籤讀回應 `mapping`**（L1 自同步，jgb2-source-index §5.1）；本 repo 硬表 `bills.STATUS_LABELS` 列除役候選（缺口 7）。
 12. **MCP 工具面掛 `external/v1`**（現況）；`agent/v1` 待 jgb2-source-index §10.1 裁。
