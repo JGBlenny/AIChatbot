@@ -18,7 +18,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:3357",
-          "quote": "物件資料可以透過範本檔案批次匯入"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -118,7 +118,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:4001",
-          "quote": "系統目前不支援批次修改租金"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -158,7 +158,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:9500",
-          "quote": "我們的系統支援批次匯入合約"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -198,7 +198,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:8000",
-          "quote": "這部分建議由專人為您服務"
+          "unit": 0
         }
       ],
       "fact_class": "other",
@@ -252,7 +252,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:3357",
-          "quote": "物件資料可以透過範本檔案批次匯入"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -309,7 +309,7 @@
         {
           "tool_call_id": "outline",
           "source": "outline:listing",
-          "quote": "合約目前不支援批次匯入，需要逐筆建立"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -322,51 +322,6 @@
           {
             "source": "outline:listing",
             "text": "要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）。",
-            "citable": true
-          }
-        ],
-        "text_for_model": ""
-      }
-    },
-    "handoff": null
-  },
-  {
-    "id": "good_outline_quote_under_wrong_section_label",
-    "note": "DSP-021：引文逐字出自 outline:listing、模型標成 outline:lease（同一 tool_call_id）⇒ 放行；標籤錯不等於引文假",
-    "user_message": "合約可以批次匯入嗎？",
-    "agent_output": {
-      "kind": "answer",
-      "sentences": [
-        {
-          "text": "合約目前不支援批次匯入，需要逐筆建立。",
-          "kind": "fact",
-          "cite": [
-            0
-          ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "outline",
-          "source": "outline:lease",
-          "quote": "合約目前不支援批次匯入，需要逐筆建立"
-        }
-      ],
-      "fact_class": "feature",
-      "handoff_reason": null
-    },
-    "tool_results": {
-      "outline": {
-        "ok": true,
-        "provenance": [
-          {
-            "source": "outline:listing",
-            "text": "要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）。",
-            "citable": true
-          },
-          {
-            "source": "outline:lease",
-            "text": "金箍棒的租約管理把一般租賃合約從建約到簽署搬到線上。",
             "citable": true
           }
         ],
@@ -421,12 +376,12 @@
         {
           "tool_call_id": "t1",
           "source": "kb:3357",
-          "quote": "物件資料可以透過範本檔案批次匯入"
+          "unit": 0
         },
         {
           "tool_call_id": "t2",
           "source": "kb:3358",
-          "quote": "匯入前請先下載範本檔案"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -477,7 +432,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:3357",
-          "quote": "物件資料與歷史帳單都可以透過範本檔案批次匯入"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -519,5 +474,175 @@
     "handoff": {
       "reason": "sensitive_no_grounding"
     }
+  },
+  {
+    "id": "good_outline_source_with_title_suffix",
+    "note": "DSP-021（一／二）：source 把中文標題一起抄進來 ⇒ _canonicalize_outline_sources 去掉標題後仍解析得到 outline:listing 的第 0 句 ⇒ 放行。⚠️ 正規化在 Runtime，self_test 依同一順序（正規化→解析→驗證）重現。",
+    "user_message": "合約可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "合約目前不支援批次匯入，需要逐筆建立。",
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "citations": [
+        {
+          "tool_call_id": "outline",
+          "source": "outline:listing 房源",
+          "unit": 0
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "outline": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "outline:listing",
+            "text": "要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）。",
+            "citable": true
+          },
+          {
+            "source": "outline:lease",
+            "text": "金箍棒的租約管理把一般租賃合約從建約到簽署搬到線上。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "good_outline_source_missing_prefix",
+    "note": "DSP-021（二／二）：source 掉了 `outline:` 前綴 ⇒ 正規化補回後解析得到 outline:listing 的第 0 句 ⇒ 放行。",
+    "user_message": "合約可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "合約目前不支援批次匯入，需要逐筆建立。",
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "citations": [
+        {
+          "tool_call_id": "outline",
+          "source": "listing",
+          "unit": 0
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "outline": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "outline:listing",
+            "text": "要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）。",
+            "citable": true
+          },
+          {
+            "source": "outline:lease",
+            "text": "金箍棒的租約管理把一般租賃合約從建約到簽署搬到線上。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "good_jgb2_source_with_hash_parses",
+    "note": "r13 #2 分隔符選 `§` 而非 `#` 的正對照：jgb2 的 source 本身含 `#`（`jgb2:bills#ref`），用 `#` 當分隔符會讓來源與編號的邊界不唯一。這裡指第 1 句（非第 0 句）⇒ 證明含 `#` 的 source 一樣定址得到正確片段。",
+    "user_message": "下期帳單什麼時候出來？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "下期帳單將於月初自動產生並寄送通知。",
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "citations": [
+        {
+          "tool_call_id": "t9",
+          "source": "jgb2:bills#ref",
+          "unit": 1
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t9": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "jgb2:bills#ref",
+            "text": "本期帳單金額尚未產生。下期帳單將於月初自動產生並寄送通知。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "good_source_text_with_brackets_still_resolves",
+    "note": "正對照（r13 #2）：來源文字本身含 `[`／`]` ⛔ 不轉義——引用比對的目標是`Provenance.text` 原文，為了讓標記好認去改原文會讓解析出來的引文與原文不再相等。含中括號的來源照樣解析得到、照樣通過覆蓋。",
+    "user_message": "匯入失敗怎麼辦？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "匯入失敗時可以重新下載範本檔案再貼上資料。",
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:3357",
+          "unit": 0
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:3357",
+            "text": "[注意] 匯入失敗時可以重新下載範本檔案再貼上資料，避免格式異常。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
   }
 ]

@@ -20,10 +20,23 @@ from pydantic import BaseModel, Field
 
 
 class Citation(BaseModel):
-    """一筆引用。`source` 格式如 `kb:3600`／`outline:contract`／`help:qa06`／`jgb2:bills#ref`。"""
+    """一筆引用：**指向來源的第幾句**，⛔ 不再由模型抄引文（DSP-029）。
+
+    `source` 格式如 `kb:3600`／`outline:contract`／`help:qa06`／`jgb2:bills#ref`。
+    引文由 Runtime 依 `(tool_call_id, source, unit)` 從 `Provenance.text` 以
+    `services.agent.provenance_units.provenance_units` 切出第 `unit` 個片段解析，
+    另以 `resolved` 傳進 Verifier——**⛔ 解析結果不得寫回本模型任何欄位**
+    （r13 F-A：解析後的原文一旦掛在 `AgentOutput` 上，就會跟著
+    `decision_snapshot`／trace 外流，那正是 2.6 security review P2 擋掉的事）。
+    """
     tool_call_id: str
     source: str
-    quote: str
+    unit: int = Field(
+        description=(
+            "來源片段編號：資料段裡每個片段行首標記 [代碼:來源§編號] 的那個編號（從 0 起算）。"
+            "填你要引用的那一句的編號，⛔ 不要把片段文字抄進來、⛔ 不要填負數。"
+        )
+    )
 
 
 class Sentence(BaseModel):
@@ -46,9 +59,26 @@ class AgentOutput(BaseModel):
     方向是放行。改成文字與標籤同筆攜帶後，「拼接後等於送出的字串」變成定義而不是
     要靠檢查維持的巧合。
     """
-    kind: Literal["answer", "ask", "recommend", "handoff"]
-    sentences: list[Sentence] = Field(default_factory=list)
-    citations: list[Citation] = Field(default_factory=list)
+    kind: Literal["answer", "ask", "recommend", "handoff"] = Field(
+        description=(
+            "本輪回覆的型別：answer 直接回答、ask 反問澄清、recommend 建議下一步、"
+            "handoff 轉真人（轉人時 sentences 與 citations 可留空）。"
+        )
+    )
+    sentences: list[Sentence] = Field(
+        default_factory=list,
+        description=(
+            "回覆逐句一筆 {text, kind, cite}；text 含句尾標點、⛔ 一筆不放兩句。"
+            "系統把各筆 text 原樣接起來就是使用者看到的整段話，⛔ 不另外給 answer 欄位。"
+        ),
+    )
+    citations: list[Citation] = Field(
+        default_factory=list,
+        description=(
+            "引用清單：每筆指出某個事實句出自哪一次工具回傳或哪一個大綱章節的第幾句"
+            "（tool_call_id＋source＋unit）；句子那一側在自己的 cite 填本清單的索引（從 0 起算）。"
+        ),
+    )
     fact_class: Optional[str] = None  # 見檔案頂端說明：刻意不是 FactClass 型別
     handoff_reason: Optional[str] = None
 
@@ -106,6 +136,22 @@ class VerifierVerdict(BaseModel):
     sent: Optional[int] = None
     term_id: Optional[str] = Field(default=None, pattern=TERM_ID_PATTERN)
     quote_len: Optional[int] = None
+    #: DSP-029 r13 #7：`SCHEMA` 的**子成因**（封閉列舉）。原本只回 `SCHEMA` 三個字，
+    #: 模型與稽核都看不出是哪一種；引用改指向來源句編號後又多了三種結構性失敗
+    #: （來源不存在／編號越界／把標記抄進 text），不分流等於把它們混進同一格。
+    #: ⛔ 只放列舉值，**不攜帶 source／unit 以外的模型文字**——它會落
+    #: `usage_events.decision_snapshot.agent`，也會被 trace 端點印出來。
+    schema_cause: Optional[
+        Literal[
+            "empty_sentences",
+            "empty_text",
+            "cite_out_of_range",
+            "source_not_found",
+            "unit_out_of_range",
+            "marker_in_answer",
+            "handoff_reason_invalid",
+        ]
+    ] = None
 
 
 class VerifierRules(BaseModel):
@@ -121,6 +167,10 @@ class VerifierRules(BaseModel):
     assertion_terms: list[str]
     min_quote_len: int = 6
     min_coverage_chars: int = 4
+    #: DSP-029：覆蓋率改**片段側相對值**——被驗的那個片段（模型自己寫的句子）
+    #: 有意義字元中，至少這個比例要出現在解析出來的來源片段裡。絕對下限
+    #: `min_coverage_chars` 仍在（`max(...)`），兩者是「取嚴的那個」而非二選一。
+    min_coverage_ratio: float = 0.5
 
     @classmethod
     def load(cls, path: str | Path) -> "VerifierRules":

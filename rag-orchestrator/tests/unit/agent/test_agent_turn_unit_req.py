@@ -106,7 +106,9 @@ class FakeVerifier:
         self._results = list(results) if results is not None else []
         self.rules_sha = rules_sha
 
-    def verify(self, out, tool_results, user_message, handoff):
+    def verify(self, out, tool_results, user_message, handoff, *, resolved, resolve_errors):
+        # DSP-029 F-A：替身也要收 `resolved`／`resolve_errors`（必填關鍵字）——
+        # 停在舊簽名的話 Runtime 換簽名時會靜靜地少驗一層。
         if not self._results:
             return VerifierVerdict(ok=True)
         return self._results.pop(0)
@@ -716,7 +718,8 @@ def _output(answer: str, *, fact_class="feature") -> AgentOutput:
 @pytest.mark.req(_SPEC)
 def test_forbidden_term_verdict_uses_rule_index_not_the_literal_term():
     verifier = OutputVerifier(_rules())
-    verdict = verifier.verify(_output("您好。"), {}, "問句", None)
+    verdict = verifier.verify(_output("您好。"), {}, "問句", None,
+                              resolved={}, resolve_errors={})
     assert verdict.ok is False and verdict.reason == "FORBIDDEN_TERM"
     assert re.match(TERM_ID_PATTERN, verdict.term_id), verdict.term_id
     assert verdict.term_id == "rule#1", "forbid_terms 內索引（第 2 個）"
@@ -727,7 +730,8 @@ def test_forbidden_term_verdict_uses_rule_index_not_the_literal_term():
 @pytest.mark.req(_SPEC)
 def test_sensitive_pattern_verdict_uses_rule_index():
     verifier = OutputVerifier(_rules())
-    verdict = verifier.verify(_output("我們保證獲利。"), {}, "問句", None)
+    verdict = verifier.verify(_output("我們保證獲利。"), {}, "問句", None,
+                              resolved={}, resolve_errors={})
     assert verdict.reason == "SENSITIVE_TOPIC"
     assert verdict.term_id == "rule#0"
     assert "保證獲利" not in json.dumps(verdict.model_dump(), ensure_ascii=False)
@@ -748,6 +752,8 @@ def test_all_real_ruleset_term_ids_are_rule_indices():
     """對**正式規則集**跑一遍 fixture，任何非 `rule#n` 的 term_id 都算紅。"""
     from pathlib import Path
 
+    from services.agent.provenance_units import resolve_citations
+
     root = Path(__file__).resolve().parents[3]
     rules = VerifierRules.load(root / "config" / "agent_verifier_rules.json")
     verifier = OutputVerifier(rules)
@@ -762,8 +768,11 @@ def test_all_real_ruleset_term_ids_are_rule_indices():
             tid: ToolResult.model_validate(tr)
             for tid, tr in case.get("tool_results", {}).items()
         }
+        # DSP-029：引用解析由系統產生後另傳（⛔ 不從 out 取、⛔ 不在測試裡另寫一份）
+        resolved, resolve_errors = resolve_citations(out, tool_results)
         verdict = verifier.verify(out, tool_results, case.get("user_message", ""),
-                                  case.get("handoff"))
+                                  case.get("handoff"),
+                                  resolved=resolved, resolve_errors=resolve_errors)
         if verdict.term_id is not None:
             seen_term_ids += 1
             assert re.match(TERM_ID_PATTERN, verdict.term_id), (case["id"], verdict.term_id)

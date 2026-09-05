@@ -249,6 +249,10 @@ def test_agent_chain_fake_provider_topics_shape(sample_root, tmp_path):
     report = (out_dir / "report.md").read_text(encoding="utf-8")
     assert "agent_eval report" in report
     assert "三項硬線" in report
+    # DSP-029 驗收①⓪：source_not_found／POLARITY 單列、known_open 通過數
+    assert "source_not_found：" in report
+    assert "POLARITY_MISMATCH：" in report
+    assert "known_open 通過數：" in report
     # DSP-028 監控欄：budget_exhausted 逐批分子/分母 ＋ verifier_reasons 分佈
     assert "DSP-028 監控欄" in report
     assert f"budget_exhausted：" in report and f"/{len(lines)}（agent 鏈" in report
@@ -889,6 +893,16 @@ def test_dump_texts_on_writes_warning_header_and_raw_text(sample_root, tmp_path)
         assert set(row.keys()) == {"set", "idx", "turn", "rep", "chain", "q", "answer",
                                    "handoff_reason", "kind", "citations"}
         assert isinstance(row["citations"], list)   # DSP-028：形狀在，內容待接（見 _citations_for_dump）
+    # DSP-029 r13 #6：citations 旁路只放 (tool_call_id, source, unit)，⛔ 無 quote 原文
+    from types import SimpleNamespace
+
+    from tools.agent_eval import _citations_for_dump
+
+    sample = _citations_for_dump(
+        SimpleNamespace(citations=[{"tool_call_id": "t1", "source": "kb:1", "unit": 2,
+                                    "quote": "⛔ 這個鍵不該被帶出來"}])
+    )
+    assert sample == [{"tool_call_id": "t1", "source": "kb:1", "unit": 2}]
 
     # 主 JSONL 的無原文紀律不變（--dump-texts 不影響它）
     main_rows = [

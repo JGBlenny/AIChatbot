@@ -8,7 +8,8 @@
   (i)  本系統**程式產生**的指令文字——persona／政策（由呼叫端注入的
        provider 供給）、本檔的鐵則常數、工具用途一句話清單；
   (ii) `OutlineAssembler`（任務 3.2）組裝、附版本戳＋sha256 的大綱／目錄，
-       一律經 `wrap_tool_data("outline", ...)` 包進資料段。
+       一律經 `wrap_provenance_data("outline", ...)` 包進資料段（DSP-029：
+       逐章節片段編號，外框與 `wrap_tool_data` 相同）。
 其餘一切（工具回傳文字、幫助中心正文、知識列全文）**走工具回傳位置**，
 由 Runtime（任務 2.1）以 `wrap_tool_data(nonce)` 包成 `role=tool` 訊息，
 ⛔ 不經本函式、⛔ 不進 system。`build()` 的參數表刻意**沒有**任何可以接
@@ -62,6 +63,7 @@ from typing import (
 )
 
 from services.agent.identity import Audience, Identity
+from services.agent.provenance_units import provenance_units
 from services.agent.tools.registry import ToolSpec
 
 # ---------------------------------------------------------------------------
@@ -151,9 +153,12 @@ def _agent_rules_text(nonce: str) -> str:
         "- 回覆**一句一筆**放進 `sentences`，每筆是 `{text, kind, cite}`（`text` 含句尾標點、"
         "⛔ 一筆不放兩句）；系統把各筆 `text` 原樣接起來就是使用者看到的整段話，"
         "⛔ 不需要另外給 `answer` 欄位。\n"
+        "- 資料段裡每個片段行首都有一個標記 `[代碼:來源§編號]`，編號從 0 起算。\n"
         "- 每個事實句必須引用：每一筆陳述事實的話都要在 `citations` 指出它出自哪一次"
-        "工具回傳或哪一個大綱章節，並在**該筆的 `cite`** 填上對應的 citations 索引"
-        "（從 0 起算，⛔ 不得填負數）。\n"
+        "工具回傳或哪一個大綱章節的哪一個片段——`tool_call_id` 填該次工具回傳的 id、"
+        "`source` 填標記裡的來源、`unit` 填標記裡的**編號**，並在**該筆的 `cite`** 填上"
+        "對應的 citations 索引（從 0 起算，⛔ 不得填負數）。\n"
+        "- 引文由系統自己依 `unit` 取出，⛔ 不要抄原文、⛔ 不要把行首標記抄進 `text`。\n"
         "- 找不到來源就 ⛔ 不要寫成事實句——改成提問、或走轉真人的出口。"
         "把斷言塞進問句筆或問候筆的尾巴 ⛔ 沒有用：分類看的是那段文字本身。\n"
         "- ⛔ 不得引用標為不可引用（citable=false）的來源當事實依據。"
@@ -220,6 +225,68 @@ def wrap_tool_data(tool_name: str, text: str, nonce: str) -> str:
         f"<<data:{nonce}:{tool_name}>>\n"
         f"{DATA_PREFIX_LINE}\n"
         f"{sanitized}\n"
+        f"<<end:{nonce}>>"
+    )
+
+
+#: 片段標記的分隔符（DSP-029 r13 #2）。⛔ 不用 `#`——jgb2 的 `source` 本身含
+#: `#`（形如 `jgb2:bills#ref`），用它當分隔符會讓「來源」與「編號」的邊界不唯一。
+UNIT_MARKER_SEP = "§"
+
+
+def unit_marker(nonce: str, source: str, index: int) -> str:
+    """片段行首標記：`[{nonce}:{source}§{i}]`（**唯一格式**，⛔ 不得有第二種寫法）。
+
+    ⚠️ 防偽只靠**不可猜的 nonce**，⛔ 不靠字形（r13 #2 取代了 v2 的全形轉義方案：
+    `answer` 在 Verifier 那側會先過 NFKC，全形括號會被折回半形，靠字形區分等於沒區分）。
+    模型若把標記抄進答案，Verifier 步⑥前的標記掃描會判 `SCHEMA(marker_in_answer)`。
+    """
+    return f"[{nonce}:{source}{UNIT_MARKER_SEP}{index}]"
+
+
+def wrap_provenance_data(
+    tool_name: str,
+    units_by_source: Sequence[tuple[str, Sequence[str]]],
+    nonce: str,
+    *,
+    headers: Optional[Mapping[str, str]] = None,
+) -> str:
+    """把「逐來源的片段串」包成當回合的資料段，每個片段行首帶可引用的編號標記。
+
+    外框與 `wrap_tool_data` **完全同一個**（`<<data:…>>` ／前綴句／`<<end:…>>`）
+    ——資料段的語義只有一種，⛔ 不因為多了標記就另開一種框。
+
+    每個 source 依序輸出：
+      1. （可選）`headers[source]` 一行**不編號**的標題行——大綱用 `【id】標題`。
+         標題不是可引用的內容（它是導航用的標籤），編進編號只會讓模型可以「引用
+         一個標題」當事實依據；r13 #5 同理要求大綱單元只從答案本文起算。
+      2. 每個片段一行：`{標記} {淨化後的片段}`。
+
+    ⚠️ **標記貼在 `sanitize_for_data_block` 之後**（r13 #2）：淨化只有一個落點，
+    而且淨化不得動到標記本身（否則「來源文字裡的假標記」與「系統貼的真標記」就
+    分不出來）。反過來，來源文字裡的 `[`／`]` ⛔ **不轉義**——引用比對的目標是
+    `Provenance.text` 原文，為了「讓標記好認」去改原文，會讓解析出來的引文與原文
+    不再逐字相等。真標記的不可偽造性由 nonce 提供，不靠括號。
+    """
+    _require_nonce(nonce)
+    if not isinstance(tool_name, str) or not _TOOL_NAME_RE.match(tool_name):
+        raise ValueError(
+            f"tool_name 只允許 [A-Za-z0-9._-]{{1,64}}，得到 {tool_name!r}"
+        )
+    lines: list[str] = []
+    for source, pieces in units_by_source or []:
+        header = (headers or {}).get(source)
+        if header:
+            lines.append(sanitize_for_data_block(str(header), nonce))
+        for i, piece in enumerate(pieces or []):
+            lines.append(
+                unit_marker(nonce, source, i) + " " + sanitize_for_data_block(piece, nonce)
+            )
+    body = "\n".join(lines)
+    return (
+        f"<<data:{nonce}:{tool_name}>>\n"
+        f"{DATA_PREFIX_LINE}\n"
+        f"{body}\n"
         f"<<end:{nonce}>>"
     )
 
@@ -375,7 +442,8 @@ class PromptAssembler:
         system 訊息**只有一則**，內容依序為：
           ① 程式產生的指令文字：persona → 政策 → 鐵則（資料非指令／每個事實句
              必須引用）→ 工具用途一句話清單
-          ② 大綱／目錄：`wrap_tool_data("outline", outline.text, nonce)`
+          ② 大綱／目錄：`wrap_provenance_data("outline", 逐章節片段, nonce)`
+             （DSP-029：每個片段行首帶 `[{nonce}:{章節 id}§{編號}]`，章節標題行不編號）
           ③ slots：每個 `wrap_tool_data("session.slots", json, nonce)`
         ⛔ 其餘一切不進 system。其後是原樣的 `user`／`assistant` 對話訊息。
 
@@ -411,7 +479,20 @@ class PromptAssembler:
                     f"outline.audience={getattr(outline, 'audience', None)!r} "
                     f"與 identity 的 audience={expected!r} 不符"
                 )
-            parts.append(wrap_tool_data("outline", outline.text, nonce))
+            # DSP-029 P0-2：大綱標記在**這裡**生成，⛔ 不在 `outline._build_doc`——
+            # `OutlineDoc.text` 會進 sha 與快取，含每回合 nonce 的話快取就永遠失效。
+            # 編號輸入是 `outline.sections`（與 `runtime._seed_outline_provenance` 的
+            # provenance 同一份 `section.text`）⇒ 編號側與解析側同源、同一把
+            # `provenance_units`。`build()` 簽名與 R11.5 白名單 ⛔ 不動。
+            sections = list(getattr(outline, "sections", None) or [])
+            parts.append(
+                wrap_provenance_data(
+                    "outline",
+                    [(str(sec.id), provenance_units(sec.text)) for sec in sections],
+                    nonce,
+                    headers={str(sec.id): f"【{sec.id}】{sec.title}" for sec in sections},
+                )
+            )
             outline_sha = str(getattr(outline, "sha256", "") or "")
             outline_version = str(getattr(outline, "version", "") or "")
             outline_tokens = int(getattr(outline, "token_count", 0) or 0)

@@ -19,8 +19,10 @@ from pathlib import Path
 import pytest
 
 from services.agent.output_schema import AgentOutput, VerifierRules
+from services.agent.provenance_units import provenance_units, resolve_citations
+from services.agent.runtime import _canonicalize_outline_sources
 from services.agent.tools.registry import ToolResult
-from services.agent.verifier import OutputVerifier
+from services.agent.verifier import OutputVerifier, split_sentences
 
 pytestmark = pytest.mark.unit
 
@@ -33,11 +35,18 @@ def _load_cases(name: str) -> list[dict]:
 
 
 def _run(verifier: OutputVerifier, case: dict):
-    out = AgentOutput.model_validate(case["agent_output"])
+    """與產線同一個順序：正規化 → 解析 →驗證（DSP-029）。
+
+    ⚠️ `resolved`／`resolve_errors` ⛔ 不在這裡另寫一套算法——那樣測到的就是本檔
+    自己的解析，不是系統的解析。"""
+    out = _canonicalize_outline_sources(AgentOutput.model_validate(case["agent_output"]))
     tool_results = {
         tid: ToolResult.model_validate(tr) for tid, tr in case.get("tool_results", {}).items()
     }
-    return verifier.verify(out, tool_results, case.get("user_message", ""), case.get("handoff"))
+    resolved, resolve_errors = resolve_citations(out, tool_results)
+    return verifier.verify(
+        out, tool_results, case.get("user_message", ""), case.get("handoff"),
+        resolved=resolved, resolve_errors=resolve_errors)
 
 
 @pytest.fixture(scope="module")
@@ -54,18 +63,33 @@ def verifier(rules: VerifierRules) -> OutputVerifier:
 
 _FABRICATIONS = _load_cases("known_fabrications.json")
 _GOOD = _load_cases("known_good.json")
+#: DSP-029 r13 #1：**已知擋不住**的捏造句（`expect_ok=True`）。⛔ 它們不是通過的
+#: 證據，是「還沒擋住」這件事的可執行紀錄；DSP-030 擋住之後整案搬去 known_fabrications。
+_KNOWN_OPEN = _load_cases("known_open.json")
 
 
 def test_fabrications_cover_all_eleven_reasons():
     """正對照組：先確認 fixture 真的覆蓋 design 元件 6 列的全部 11 個拒因，
-    否則下面的逐筆核對就算全過也不構成「11 拒因都測到了」的證據。"""
+    否則下面的逐筆核對就算全過也不構成「11 拒因都測到了」的證據。
+
+    ⚠️ **DSP-029 調整**：`QUOTE_NOT_VERBATIM` 在模型端已**不可達**——引文不再由模型
+    抄寫，而是系統依 `(tool_call_id, source, unit)` 從 `Provenance.text` 切出來的，
+    「不逐字」這件事在資料上不成立，⛔ 造不出誠實的 fixture。該拒因改由本檔的
+    **程式層**測試 `test_resolved_unit_is_always_a_substring_of_provenance` 覆蓋
+    （直接驗那個不變量本身），故從 fixture 應覆蓋集合中扣除；11 拒因的覆蓋沒有變少，
+    只是其中一個換了證據形式。"""
     expected_reasons = {
-        "SENSITIVE_TOPIC", "UNCITED_ASSERTION", "QUOTE_NOT_VERBATIM", "QUOTE_TOO_SHORT",
+        "SENSITIVE_TOPIC", "UNCITED_ASSERTION", "QUOTE_TOO_SHORT",
         "QUOTE_NOT_COVERING", "POLARITY_MISMATCH", "SOURCE_NOT_CITABLE", "ROUTE_NOT_ALLOWED",
         "FORBIDDEN_TERM", "HANDOFF_WORD_NO_HANDOFF", "SCHEMA",
     }
     got = {c["expected_reason"] for c in _FABRICATIONS}
     assert got == expected_reasons
+    # 正對照：被扣掉的那個拒因**仍在拒因列舉裡**（trace 相容），⛔ 不是被刪掉了。
+    from services.agent.output_schema import VerdictReason
+    import typing
+
+    assert "QUOTE_NOT_VERBATIM" in typing.get_args(VerdictReason)
 
 
 @pytest.mark.parametrize("case", _FABRICATIONS, ids=[c["id"] for c in _FABRICATIONS])
@@ -73,10 +97,15 @@ def test_known_fabrication_rejected_with_expected_reason(verifier, case):
     verdict = _run(verifier, case)
     assert verdict.ok is False
     assert verdict.reason == case["expected_reason"]
-    # ⛔ 無原文：結構化欄位不得裝回答句子或 quote 內容（DSP-028：逐筆 text 一一比對）
+    # 標了 `expected_schema_cause` 的案（DSP-029 的七種 SCHEMA 子成因）必須對得上——
+    # 只比 reason 會假綠：七種結構性失敗全是 `SCHEMA`。
+    if "expected_schema_cause" in case:
+        assert verdict.schema_cause == case["expected_schema_cause"]
+    # ⛔ 無原文：結構化欄位不得裝回答句子（DSP-028：逐筆 text 一一比對）。
+    # DSP-029 後 `Citation` 已無 `quote` 欄，模型端不再有引文原文可外洩。
     texts = [sentence["text"] for sentence in case["agent_output"]["sentences"]]
     assert verdict.term_id not in texts
-    assert verdict.term_id not in {c["quote"] for c in case["agent_output"]["citations"]}
+    assert all("quote" not in c for c in case["agent_output"]["citations"])
 
 
 @pytest.mark.parametrize("case", _GOOD, ids=[c["id"] for c in _GOOD])
@@ -107,7 +136,7 @@ def test_impure_question_with_valid_citation_passes(verifier):
 @pytest.mark.parametrize(
     "case_id,expected_reason",
     [
-        ("polarity_mismatch", "POLARITY_MISMATCH"),          # 否定翻轉（quote 引「支援」，句子講「無法／不支援」）
+        ("polarity_mismatch", "POLARITY_MISMATCH"),          # 否定翻轉（來源片段講「可以」，句子講「無法」）
         ("quote_not_covering", "QUOTE_NOT_COVERING"),         # 通用引用不覆蓋句子內容
         ("source_not_citable", "SOURCE_NOT_CITABLE"),         # citable=false
         ("route_url_fullwidth", "ROUTE_NOT_ALLOWED"),         # URL 全形變形
@@ -117,7 +146,13 @@ def test_impure_question_with_valid_citation_passes(verifier):
         ("schema_mismatch", "SCHEMA"),                        # DSP-028：cite 索引越界
         ("handoff_fact_class_missing", "SENSITIVE_TOPIC"),    # DSP-021：handoff 仍要合法 fact_class
         ("handoff_reason_free_text", "SCHEMA"),               # DSP-021：handoff_reason 值域外
-        ("wrong_label_cannot_launder_non_citable", "SOURCE_NOT_CITABLE"),  # DSP-021：標籤錯洗不掉 citable=false
+        # DSP-029：`source` 就是定址 ⇒ 洗白手法在結構上消失，拒因改為覆蓋不過
+        ("wrong_label_cannot_launder_non_citable", "QUOTE_NOT_COVERING"),
+        ("unit_out_of_range", "SCHEMA"),                     # DSP-029：編號越界
+        ("unit_negative_index", "SCHEMA"),                   # DSP-029：負數編號＝越界
+        ("source_not_found", "SCHEMA"),                      # DSP-029：來源不存在
+        ("marker_copied_into_text", "SCHEMA"),               # r13 #2：標記抄進 text
+        ("unit_points_to_unrelated_sentence", "QUOTE_NOT_COVERING"),  # 指到同來源無關句
     ],
 )
 def test_specific_named_scenarios(verifier, case_id, expected_reason):
@@ -212,6 +247,8 @@ def test_self_test_raises_when_expected_reason_drifts(verifier, tmp_path):
         json.dumps(_FABRICATIONS, ensure_ascii=False), encoding="utf-8")
     (tmp_path / "known_good.json").write_text(
         json.dumps(_GOOD, ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "known_open.json").write_text(
+        json.dumps(_KNOWN_OPEN, ensure_ascii=False), encoding="utf-8")
     verifier.self_test(tmp_path)                     # 正對照：不 raise
 
     drifted = json.loads(json.dumps(_FABRICATIONS))
@@ -229,13 +266,115 @@ def test_assertion_terms_cover_the_product_capability_verbs_and_not_the_over_bro
     rules = VerifierRules.load(_RULES_PATH)
     assert {"支持", "包含", "內建", "整合", "自動"} <= set(rules.assertion_terms)
     assert {"有", "是", "已", "將"}.isdisjoint(set(rules.assertion_terms))
-    assert rules.version == "1.2.0"
+    assert rules.version == "1.3.0"
+    # DSP-029：相對覆蓋率進規則集（版本化，才跟得上 `rules_sha`）。
+    assert rules.min_coverage_ratio == 0.5
 
 
 # ---------------------------------------------------------------- self_test 自證
 
 def test_self_test_passes_on_shipped_fixtures(verifier):
     verifier.self_test(_FIXTURES_DIR)  # 不 raise 即通過
+
+
+def test_shipped_fixtures_include_known_open(verifier):
+    """正對照：出貨那份 fixture 目錄**必須**有 `known_open.json`。
+
+    `self_test` 對「檔案不存在」是回 0（讓 `test_bootstrap_req.py` 的臨時目錄能跑），
+    沒有這條就會出現最糟的那種假綠——檔案被刪掉、自證照樣全綠、而「已知未擋的捏造句」
+    這件事就這樣從紀錄裡消失。"""
+    assert (_FIXTURES_DIR / "known_open.json").exists()
+    n = verifier.self_test(_FIXTURES_DIR)
+    assert n == len(_KNOWN_OPEN) == 3, "R4 三個真捏造句"
+
+
+@pytest.mark.parametrize("case", _KNOWN_OPEN, ids=[c["id"] for c in _KNOWN_OPEN])
+def test_known_open_cases_are_still_passing(verifier, case):
+    """r13 #1：這三句**現在確實會被放行**，本測試把「還沒擋住」寫成事實。
+
+    ⚠️ 它 ⛔ 不是「系統正確」的證據。哪天 DSP-030 的新資訊規則上線讓它們被拒，
+    這條會紅——那時的正確處置是把案例搬去 `known_fabrications.json` 並改斷言，
+    ⛔ 不是放寬新規則來讓這條繼續綠。"""
+    assert case["known_open"] is True
+    assert case["open_since"] and case["closed_by"]
+    verdict = _run(verifier, case)
+    assert verdict.ok is True, (
+        f"{case['id']} 由未擋轉為已擋——請把它搬去 known_fabrications.json，"
+        f"⛔ 不要放寬規則。實得 {verdict.model_dump()}"
+    )
+
+
+# ---------------------------------------------------------------- DSP-029 程式層不變量
+
+def test_resolved_unit_is_always_a_substring_of_provenance():
+    """取代 `quote_not_verbatim` fixture 的**程式層**測試：解析出來的引文，
+    必然是對應 `Provenance.text` 的子字串——「引文不逐字」在模型端不可達。
+
+    正對照：先確認同一組資料裡真的解析出東西（`resolved` 非空），
+    否則這個 for 迴圈跑 0 圈也會「通過」，什麼都沒證明。"""
+    checked = 0
+    for case in _GOOD + _FABRICATIONS + _KNOWN_OPEN:
+        out = _canonicalize_outline_sources(AgentOutput.model_validate(case["agent_output"]))
+        tool_results = {
+            tid: ToolResult.model_validate(tr)
+            for tid, tr in case.get("tool_results", {}).items()
+        }
+        resolved, _errors = resolve_citations(out, tool_results)
+        for idx, fragment in resolved.items():
+            citation = out.citations[idx]
+            prov = next(
+                p for p in tool_results[citation.tool_call_id].provenance
+                if p.source == citation.source
+            )
+            assert fragment in prov.text, (case["id"], idx)
+            checked += 1
+    assert checked > 0, "沒有任何 citation 解析成功——這條斷言什麼都沒證明"
+
+
+def test_provenance_units_drops_blank_pieces_and_keeps_order():
+    """`provenance_units` ＝ `split_sentences` 去掉空片段；順序即編號。
+
+    正對照：先確認 `split_sentences` 真的切出了那個空片段（換行），
+    否則「去掉空片段」這件事根本沒被驗到。"""
+    text = "第一句。\n第二句。\n"
+    raw = split_sentences(text)
+    assert any(p.strip() == "" for p in raw), "切句沒有產生空片段——正對照失敗"
+    assert provenance_units(text) == ["第一句。", "第二句。"]
+
+
+def test_relative_coverage_threshold_is_stricter_than_the_absolute_floor(verifier):
+    """DSP-029 ③：覆蓋改片段側相對值。長句只共用四個字不再夠。
+
+    正對照：同一筆引用配一個**忠實**的短句要放行——否則就只是「全部拒掉」。"""
+    def _case(sentence_text):
+        return {
+            "id": "inline",
+            "user_message": "q",
+            "agent_output": {
+                "kind": "answer",
+                "sentences": [{"text": sentence_text, "kind": "fact", "cite": [0]}],
+                "citations": [{"tool_call_id": "t1", "source": "kb:1", "unit": 0}],
+                "fact_class": "feature",
+                "handoff_reason": None,
+            },
+            "tool_results": {
+                "t1": {
+                    "ok": True,
+                    "provenance": [
+                        {"source": "kb:1", "text": "物件資料可以透過範本檔案批次匯入。",
+                         "citable": True}
+                    ],
+                    "text_for_model": "",
+                }
+            },
+            "handoff": None,
+        }
+
+    faithful = _run(verifier, _case("物件資料可以透過範本檔案批次匯入。"))
+    assert faithful.ok is True, faithful.model_dump()
+    # 只共用「物件／資料／匯入」等少數字，其餘全是原文沒有的內容
+    padded = _run(verifier, _case("物件資料的匯入流程需要先申請開通白名單並由專人排程。"))
+    assert padded.ok is False and padded.reason == "QUOTE_NOT_COVERING", padded.model_dump()
 
 
 def test_self_test_raises_when_a_fabrication_slips_through(verifier, tmp_path):

@@ -13,7 +13,8 @@
 **`kb.search`**：薄包一層 `retriever.retrieve()`（含 reranker，照現況，
 design 決策 7），只回摘要（`id`／`question_summary`／`similarity`），
 ⛔ 不回 `answer` 全文——避免模型繞過 `kb.get` 直接拿到完整答案內容，
-`kb.search` 的用途是「找到後再用 kb.get 取用」。retriever 例外一律
+`kb.search` 的用途是「找到後再用 kb.get 取用」，故其 provenance 一律
+`citable=False`（DSP-029 r13 #5）。retriever 例外一律
 `NO_MATCH`（design：fail-closed，⛔ 不降級到別的池／別的檢索路徑）。
 
 **佔位符風格（⛔ 硬約束）**：`build_visibility_predicate` 回傳 psycopg2
@@ -163,8 +164,13 @@ async def kb_search(
         }
         for r in results
     ]
+    # DSP-029 r13 #5：`kb.search` 的 provenance 一律 `citable=False`——它回的是
+    # **摘要**（`question_summary`），只用來導航「找到後再 kb.get 取用」。
+    # ⚠️ 摘要是可引用的話，模型就能拿一行關鍵字串當事實依據，繞過 `kb.get` 的
+    # 完整答案；DSP-029 把引文改成由系統從 provenance 解析之後這個出口更順手
+    # （摘要短、覆蓋門檻容易過），故在來源端關掉。
     provenance = [
-        Provenance(source=f"kb:{it['id']}", text=it["question_summary"] or "", citable=True)
+        Provenance(source=f"kb:{it['id']}", text=it["question_summary"] or "", citable=False)
         for it in items
     ]
     text_for_model = "\n".join(

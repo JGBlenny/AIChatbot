@@ -154,6 +154,9 @@ def _render_verdict(verdict: Any) -> dict:
     verdict = verdict if isinstance(verdict, Mapping) else {}
     return {
         "reason": verdict.get("reason"),
+        # DSP-029 r13 #7：`SCHEMA` 的子成因（封閉列舉值，⛔ 無原文）——只回 reason
+        # 時七種結構性失敗全擠成同一格，稽核看不出「來源不存在」與「句子空白」的差別。
+        "schema_cause": verdict.get("schema_cause"),
         "sent": verdict.get("sent"),
         "rule": rule_index(verdict.get("term_id")),
     }
@@ -246,7 +249,10 @@ def render_text(view: Mapping) -> str:
             lines.append(f"  {i}. 通過")
         else:
             tail = f"  規則={v['rule']}" if v.get("rule") else ""
-            lines.append(f"  {i}. 拒 {v['reason']}  筆次={_fmt(v.get('sent'))}{tail}")
+            # DSP-029：`SCHEMA` 不印子成因等於什麼都沒說（七種結構性失敗同一格）。
+            cause = f"／{v['schema_cause']}" if v.get("schema_cause") else ""
+            lines.append(
+                f"  {i}. 拒 {v['reason']}{cause}  筆次={_fmt(v.get('sent'))}{tail}")
 
     counts = view.get("counts") or {}
     lines.append(

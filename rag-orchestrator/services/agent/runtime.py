@@ -10,8 +10,11 @@
 - `AgentOutput`／`VerifierVerdict`／`Citation`／`Sentence` 的權威定義已
   搬到 `services/agent/output_schema.py`（任務 2.3），本檔全部改
   `from services.agent.output_schema import ...`，⛔ 不再本地重複定義。
-- 工具回傳的 `text_for_model` 已改經 `services.agent.prompt_assembler.wrap_tool_data
-  (name, text_for_model, nonce)` 包裝成資料段才進 `role="tool"` 訊息。
+- 工具回傳已包裝成資料段才進 `role="tool"` 訊息：**有 provenance** 的工具走
+  `wrap_provenance_data(name, [(source, provenance_units(text))…], nonce)`
+  （DSP-029：每個片段行首帶 `[{nonce}:{source}§{i}]`，模型引用時只填 `unit` 編號）；
+  **無 provenance** 的工具（handoff／session.slots／confirm）維持
+  `wrap_tool_data(name, text_for_model, nonce)`，其 source 視為不存在、不可引用。
 - `assembler.build(...)` 與 `assembler.build_messages(...)` 二選一：本檔選
   `build_messages()`——它直接回傳 `list[dict]`，與 `AssemblerProtocol` 的
   既有形狀（本檔、`services/agent/mcp_facade.py` 等呼叫端）一致，不必額外
@@ -58,7 +61,8 @@ from services.agent.budget import Budget, BudgetCounters
 from services.agent.identity import Identity, Stage
 from services.agent.mcp_facade import current_stage
 from services.agent.output_schema import AgentOutput, VerifierVerdict
-from services.agent.prompt_assembler import new_nonce, wrap_tool_data
+from services.agent.prompt_assembler import new_nonce, wrap_provenance_data, wrap_tool_data
+from services.agent.provenance_units import provenance_units, resolve_citations
 from services.agent.tools.registry import Provenance, ToolRegistry, ToolResult, tool_name_from_openai
 from services.conversational_config import (
     effective_handoff_channel,
@@ -106,8 +110,12 @@ def _canonicalize_outline_sources(out: AgentOutput) -> AgentOutput:
     去掉 id 後面誤抄的標題（`outline:listing 房源` → `outline:listing`）、補回被吃掉的
     `outline:` 前綴（`positioning` → `outline:positioning`）。真線路 2026-09-05 兩種都出現過，
     而 Verifier 找不到來源時回的是 QUOTE_NOT_VERBATIM（引文其實逐字）。
-    ⛔ 不碰 quote、不碰其他 tool_call_id：這不是放寬尺，是把「同一個 id 的兩種寫法」
-    收斂成一種，section id 仍要與 provenance 完全相等才會被放行。"""
+    ⛔ 不碰 `unit`、不碰其他 tool_call_id：這不是放寬尺，是把「同一個 id 的兩種寫法」
+    收斂成一種，section id 仍要與 provenance 完全相等才解析得到片段。
+
+    ⚠️ DSP-029 之後這條**更要緊**：`source` 從元資料變成定址的一部分
+    （`(tool_call_id, source, unit)`），標籤錯不再有「引文逐字仍放行」的補救，
+    直接就是 `SCHEMA(source_not_found)`。"""
     if not out.citations:
         return out
     changed = False
@@ -149,6 +157,9 @@ class VerifierProtocol(Protocol):
         tool_results: dict[str, ToolResult],
         user_message: str,
         handoff: Optional[dict],
+        *,
+        resolved: dict[int, str],
+        resolve_errors: dict[int, str],
     ) -> VerifierVerdict: ...
 
 
@@ -204,8 +215,11 @@ _REASON_HINTS: dict[str, str] = {
     # DSP-028 後續（2026-09-05 回歸集重跑）：拒一次就改轉人的回合佔 no_grounding 的 11/127，
     # 且 116/127 是第一次就轉人——拒因回饋要明說「修那一筆」而不是「放棄」。
     # 內容只有方法，⛔ 無任何原文。
-    "QUOTE_NOT_VERBATIM": "第 {sent} 筆的引文不是來源原文的逐字子字串：把 `quote` 改成從大綱／工具回傳**逐字複製**的一段（可以截短，⛔ 不可改字、不可把兩段拼在一起）。",
-    "QUOTE_NOT_COVERING": "第 {sent} 筆的句子內容與它引的那段原文對不上：換一段真正講到這句內容的原文當 `quote`，或把句子改成原文有講的內容。",
+    # DSP-029：引文由系統依 `unit` 解析，模型端不再有「抄字」這個動作——回饋一律
+    # 講「改 `unit` 指到對的片段」，⛔ 不再教它去複製原文（那條路已經不存在）。
+    "QUOTE_NOT_VERBATIM": "第 {sent} 筆的引用對不上來源：把該筆 `citations` 的 `unit` 改成資料段裡真正講到這句內容的那個片段編號。",
+    "QUOTE_NOT_COVERING": "第 {sent} 筆的句子內容與它指到的那個片段對不上：把該筆 `citations` 的 `unit` 改成真正講到這句內容的片段編號，或把句子改成那個片段有講的內容（⛔ 不要多加片段沒寫的資訊）。",
+    "QUOTE_TOO_SHORT": "第 {sent} 筆指到的片段太短、撐不起一個事實斷言（例如只是個標題行）：改指有實際內容的那個片段編號。",
     "UNCITED_ASSERTION": "第 {sent} 筆是陳述事實的句子卻沒有 `cite`：補上引用；大綱真的沒寫的話就刪掉那句，⛔ 不要留下沒有來源的斷言。",
     "POLARITY_MISMATCH": "第 {sent} 筆的肯定／否定與引文不一致（例如引文說「不支援」你寫成「支援」）：照原文的意思改。",
     "SOURCE_NOT_CITABLE": "第 {sent} 筆引到不可引用的來源（目錄類）：改引可引用的章節或工具回傳。",
@@ -223,25 +237,45 @@ def _reason_hint(verdict: VerifierVerdict) -> str:
     return text
 
 
-def _schema_reject_hint(out: AgentOutput) -> str:
-    """DSP-028：把 `SCHEMA` 拒因翻成模型看得懂的**具體成因**（三種其中一種）。
+#: DSP-029 r13 #7：`SCHEMA` 的七種子成因 → 給模型的修法一句話。
+#: ⛔ 全部只有結構詞與索引，**無任何原文**（來源原文與模型原文都不放）——
+#: 這段會被 append 進 `messages` 給模型看，也是 2.6 security review P2 的同一條紀律。
+_SCHEMA_CAUSE_HINTS: dict[str, str] = {
+    "empty_sentences": ("`sentences` 是空陣列：只有 `kind=handoff` 才允許留空，"
+                        "其餘一律逐句給一筆 {text, kind, cite}。"),
+    "empty_text": "`sentences` 的 `text` 是空白；每一筆都要有實際文字（含句尾標點）。",
+    "cite_out_of_range": ("`sentences` 的 `cite` 索引超出 `citations` 範圍"
+                          "（合法範圍從 0 起算，⛔ 不得用負數）。"),
+    "source_not_found": ("這一筆引用的 `source` 在該次工具回傳裡找不到："
+                         "`source` 要逐字照抄資料段片段標記裡的來源（⛔ 不要加中文標題、⛔ 不要少前綴），"
+                         "`tool_call_id` 要對應真的那一次工具回傳。"),
+    "unit_out_of_range": ("這一筆引用的 `unit` 超出該來源的片段編號範圍："
+                          "只能填資料段裡實際出現過的編號（從 0 起算，⛔ 不得用負數）。"),
+    "marker_in_answer": ("回覆文字裡出現了資料段的片段標記：標記只是給你定位用的，"
+                         "⛔ 不得抄進 `sentences` 的 `text`；要引用就填 `citations` 的 `unit`。"),
+    "handoff_reason_invalid": "`handoff_reason` 不在允許值域內，請改填允許的值。",
+}
 
-    ⛔ 不含任何原文——只有筆索引、`citations` 的長度與模型自己填的越界索引值。
-    與 `services/agent/verifier.py` 步②(a)(b)(c) **同一組判斷、同一個順序**；
-    那邊改了這裡要跟著改（兩處都只認這三種成因，⛔ 不得各自演化）。
+
+def _schema_reject_hint(verdict: VerifierVerdict, out: AgentOutput) -> str:
+    """把 `SCHEMA` 拒因翻成模型看得懂的**具體成因**。
+
+    ⚠️ 成因**由 Verifier 的 `schema_cause` 決定，⛔ 不在這裡重算**（DSP-029 r13 #7）：
+    DSP-028 時只有三種成因、且都能從 `out` 自己看出來，所以這裡曾經自己再判一次；
+    DSP-029 之後多了三種要靠 `tool_results` 才判得出來的成因（來源不存在／編號越界／
+    標記抄進 text），重算就會出現「Verifier 說 A、回饋教他修 B」的分歧。
+    `out` 仍收下來，只用在 `cite_out_of_range` 補一句合法範圍（索引與長度，⛔ 無原文）。
     """
-    if not out.sentences:
-        return ("`sentences` 是空陣列：只有 `kind=handoff` 才允許留空，"
-                "其餘一律逐句給一筆 {text, kind, cite}。")
-    for i, sentence in enumerate(out.sentences):
-        if sentence.text.strip() == "":
-            return f"第 {i} 筆 `sentences` 的 `text` 是空白；每一筆都要有實際文字（含句尾標點）。"
-    for i, sentence in enumerate(out.sentences):
-        for idx in sentence.cite:
-            if idx < 0 or idx >= len(out.citations):
-                return (f"第 {i} 筆 `sentences` 的 `cite` 含索引 {idx}，超出 `citations` 範圍"
-                        f"（合法範圍 0..{len(out.citations) - 1}；⛔ 不得用負數）。")
-    return "`handoff_reason` 不在允許值域內，請改填允許的值。"
+    cause = verdict.schema_cause
+    # 「第 N 筆」是**索引**（⛔ 無原文），DSP-028 起模型就靠它知道要修哪一筆。
+    where = f"第 {verdict.sent} 筆 " if verdict.sent is not None else ""
+    if cause == "cite_out_of_range":
+        return (f"{where}{_SCHEMA_CAUSE_HINTS[cause]}"
+                f"（本次 `citations` 共 {len(out.citations)} 筆。）")
+    if cause in _SCHEMA_CAUSE_HINTS:
+        return f"{where}{_SCHEMA_CAUSE_HINTS[cause]}"
+    # 沒有子成因＝新的成因沒有同步到這張表：⛔ 不編一句假的修法給模型。
+    return "輸出不符 `AgentOutput` 契約，請依 schema 重新輸出。"
 
 
 @dataclass
@@ -466,6 +500,7 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
     是靜態掃描這個呼叫的 dict 字面量鍵名，傳變數等於讓這條不變量看不見
     自己在保護什麼。⛔ 鍵集合是封閉白名單（任務 brief），多一鍵就是這條
     不變量要抓的事：無 `answer`／`quote`／`text`／`user_message`。
+    `schema_cause`（DSP-029 r13 #7）是封閉列舉值，⛔ 不攜帶任何模型或來源文字。
     """
     usage_metering.set_agent_decision(
         {
@@ -489,6 +524,7 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
                     "sent": v.sent,
                     "term_id": v.term_id,
                     "quote_len": v.quote_len,
+                    "schema_cause": v.schema_cause,
                 }
                 for v in trace.verifier
             ],
@@ -769,7 +805,12 @@ class AgentRuntime:
                             n_items=_tool_result_n_items(tool_result),
                         )
                     )
-                    if tc.id == OUTLINE_TOOL_CALL_ID and seeded_outline is not None:
+                    # DSP-029 r13 #3：`OUTLINE_TOOL_CALL_ID` 是**保留字**，模型送來同名
+                    # tool_call id 一律拒收 ＋ 記 violation——⛔ 不再加
+                    # `and seeded_outline is not None` 這個條件：沒有大綱時放行等於
+                    # 讓模型自己造一個叫 `outline` 的來源，之後所有 `outline:*` 引用
+                    # 都會解析到它自己塞進來的文字（自證變成自說自話）。
+                    if tc.id == OUTLINE_TOOL_CALL_ID:
                         violations.append("tool_call_id_collides_with_outline")
                     else:
                         tool_results_by_id[tc.id] = tool_result
@@ -790,20 +831,36 @@ class AgentRuntime:
                         and isinstance(tool_result.data.get(SLOTS_STATE_KEY), dict)
                     ):
                         state[SLOTS_STATE_KEY] = tool_result.data[SLOTS_STATE_KEY]
-                    # 2.5 接線：工具回傳一律經 wrap_tool_data 包成資料段
-                    # （同回合共用一個 nonce，見上方 `nonce = new_nonce()`）。
+                    # 2.5 接線：工具回傳一律包成資料段（同回合共用一個 nonce，
+                    # 見上方 `nonce = new_nonce()`）。
+                    # DSP-029 P0-1：**有 provenance 的工具改送編號後的片段**——
+                    # `text_for_model` ⛔ 不再是編號或送模型的輸入。理由：unit 的唯一
+                    # 來源必須是 `Provenance.text`，否則模型看到的第 i 句與系統解析的
+                    # 第 i 句可能不是同一句，而失敗方向是放行。無 provenance 的工具
+                    # （handoff／session.slots／confirm）沒有可引用的原文，維持原樣。
+                    provenance = list(tool_result.provenance or [])
                     raw_tool_text = tool_result.text_for_model or json.dumps(
                         {"ok": tool_result.ok, "error": tool_result.error},
                         ensure_ascii=False,
                     )
+
+                    def _wrap(tool_label: str) -> str:
+                        if provenance:
+                            return wrap_provenance_data(
+                                tool_label,
+                                [(p.source, provenance_units(p.text)) for p in provenance],
+                                nonce,
+                            )
+                        return wrap_tool_data(tool_label, raw_tool_text, nonce)
+
                     try:
-                        tool_content = wrap_tool_data(name, raw_tool_text, nonce)
+                        tool_content = _wrap(name)
                     except ValueError:
-                        # 模型送的 tool 名不合 wrap_tool_data 的形狀守門（例如空白／
-                        # 標記字元）——registry.call 已經用它判過 NO_MATCH／
-                        # FORBIDDEN，這裡只是包裝層，⛔ 不因此讓整回合崩潰。
+                        # 模型送的 tool 名不合形狀守門（例如空白／標記字元）——
+                        # registry.call 已經用它判過 NO_MATCH／FORBIDDEN，這裡只是
+                        # 包裝層，⛔ 不因此讓整回合崩潰。
                         violations.append(f"BAD_TOOL_NAME:{name!r}")
-                        tool_content = wrap_tool_data("tool", raw_tool_text, nonce)
+                        tool_content = _wrap("tool")
                     messages.append(
                         {
                             "role": "tool",
@@ -848,7 +905,13 @@ class AgentRuntime:
                     "message": effective_handoff_message(None),
                 }
 
-            verdict = self.verifier.verify(out, tool_results_by_id, user_message, handoff_dict)
+            # DSP-029 F-A：引用解析在 Runtime 做，結果**另傳**給 Verifier——
+            # ⛔ 不寫回 `out`／`Citation` 任何欄位（解析後的原文一旦掛在 AgentOutput
+            # 上，就會跟著 `decision_snapshot`／trace 外流）。
+            resolved, resolve_errors = resolve_citations(out, tool_results_by_id)
+            verdict = self.verifier.verify(
+                out, tool_results_by_id, user_message, handoff_dict,
+                resolved=resolved, resolve_errors=resolve_errors)
             verifier_verdicts.append(verdict)
             if not verdict.ok:
                 counters.rewrites += 1
@@ -866,7 +929,7 @@ class AgentRuntime:
                     # 筆索引即可——⛔ 不再回報「系統把你的 answer 切成幾句」那種提示：
                     # 逐句一筆之後句數不必再對齊，那句話只會誤導模型回頭去湊句數。
                     # 內容只有索引與長度，⛔ 無任何原文（來源原文與模型原文都不放）。
-                    schema_hint += "　" + _schema_reject_hint(out)
+                    schema_hint += "　" + _schema_reject_hint(verdict, out)
                 # 拒因回模型用 role="user"（⛔ 不用 role="system"）：system 訊息
                 # 依 PromptAssembler 契約整回合只有一則（見 prompt_assembler.py
                 # 「system 訊息只有一則」），迴圈裡補第二則 system 會破壞這個

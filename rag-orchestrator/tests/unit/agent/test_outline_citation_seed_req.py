@@ -16,6 +16,7 @@ import pytest
 pytestmark = pytest.mark.unit
 
 from services.agent.outline import OutlineDoc, OutlineSection, _build_doc
+from services.agent.provenance_units import provenance_units, resolve_citations
 from services.agent.output_schema import AgentOutput, VerifierVerdict
 from services.agent.runtime import OUTLINE_TOOL_CALL_ID, _seed_outline_provenance
 from services.agent.tools.registry import ToolResult
@@ -53,11 +54,16 @@ def _outline() -> OutlineDoc:
     )
 
 
-def _final_with_citation(quote: str, tool_call_id: str = OUTLINE_TOOL_CALL_ID, source: str = "outline:lease"):
+def _final_with_citation(unit: int = 0, tool_call_id: str = OUTLINE_TOOL_CALL_ID,
+                         source: str = "outline:lease"):
+    """DSP-029：模型只填 `(tool_call_id, source, unit)`，⛔ 不再抄引文。
+
+    `_SECTION_TEXT` 的片段：0＝「金箍棒支援線上電子簽約，…完成簽署。」、
+    1＝「合約目前不支援批次匯入。」"""
     payload = {
         "kind": "answer",
         "sentences": [{"text": "可以線上電子簽約。", "kind": "fact", "cite": [0]}],
-        "citations": [{"tool_call_id": tool_call_id, "source": source, "quote": quote}],
+        "citations": [{"tool_call_id": tool_call_id, "source": source, "unit": unit}],
         "fact_class": "feature",
         "handoff_reason": None,
     }
@@ -76,7 +82,7 @@ def test_seed_builds_one_provenance_per_section_and_keeps_citable_flag():
 
 @pytest.mark.asyncio
 async def test_runtime_seeds_outline_into_tool_results_before_first_model_call():
-    provider = FakeProvider([_final_with_citation(quote="支援線上電子簽約")])
+    provider = FakeProvider([_final_with_citation()])
     registry = FakeRegistry(call_results=[])
     verifier = FakeVerifier()
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
@@ -95,7 +101,7 @@ async def test_model_forged_tool_call_id_outline_does_not_overwrite_seed():
     provider = FakeProvider(
         [
             _tool_call_response("kb.get", {"kb_id": "3600"}, call_id=OUTLINE_TOOL_CALL_ID),
-            _final_with_citation(quote="支援線上電子簽約"),
+            _final_with_citation(),
         ]
     )
     registry = FakeRegistry(call_results=[ToolResult(ok=True, data={"id": 3600}, text_for_model="別的東西")])
@@ -109,7 +115,15 @@ async def test_model_forged_tool_call_id_outline_does_not_overwrite_seed():
     assert "tool_call_id_collides_with_outline" in result.trace.violations
 
 
-def test_real_verifier_accepts_verbatim_outline_quote_and_rejects_non_citable():
+def _verify(verifier, out, tool_results, msg="q", handoff=None):
+    """DSP-029：引用解析由 `resolve_citations` 產生後另傳 Verifier
+    （⛔ 不從 `out` 取、⛔ 不在測試裡另寫一套解析）。"""
+    resolved, resolve_errors = resolve_citations(out, tool_results)
+    return verifier.verify(out, tool_results, msg, handoff,
+                           resolved=resolved, resolve_errors=resolve_errors)
+
+
+def test_real_verifier_accepts_outline_unit_citation_and_rejects_non_citable():
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     seeded = _seed_outline_provenance(_outline())
     tool_results = {OUTLINE_TOOL_CALL_ID: seeded}
@@ -117,23 +131,41 @@ def test_real_verifier_accepts_verbatim_outline_quote_and_rejects_non_citable():
     ok_out = AgentOutput(
         kind="answer",
         sentences=[{"text": "可以線上電子簽約。", "kind": "fact", "cite": [0]}],
-        citations=[{"tool_call_id": OUTLINE_TOOL_CALL_ID, "source": "outline:lease", "quote": "支援線上電子簽約"}],
+        citations=[{"tool_call_id": OUTLINE_TOOL_CALL_ID, "source": "outline:lease", "unit": 0}],
         fact_class="feature",
         handoff_reason=None,
     )
-    assert verifier.verify(ok_out, tool_results, "可以線上簽約嗎", None).ok
+    assert _verify(verifier, ok_out, tool_results, "可以線上簽約嗎").ok
 
     def _variant(**upd):   # model_copy 不驗證 dict ⇒ 走 model_validate
         return AgentOutput.model_validate({**ok_out.model_dump(), **upd})
 
-    bad_quote = _variant(citations=[
-        {"tool_call_id": OUTLINE_TOOL_CALL_ID, "source": "outline:lease", "quote": "支援線上簽約"}])
-    assert verifier.verify(bad_quote, tool_results, "q", None).reason == "QUOTE_NOT_VERBATIM"
+    # DSP-029：指到同一章節**別的片段**（1＝批次匯入）⇒ 覆蓋不過。
+    wrong_unit = _variant(citations=[
+        {"tool_call_id": OUTLINE_TOOL_CALL_ID, "source": "outline:lease", "unit": 1}])
+    assert _verify(verifier, wrong_unit, tool_results).reason == "QUOTE_NOT_COVERING"
 
-    toc = _variant(sentences=[{"text": "這一節只做導航用途，列出各章節標題。",
+    # 編號越界 ⇒ SCHEMA(unit_out_of_range)（該章節只有 2 個片段）。
+    oob = _variant(citations=[
+        {"tool_call_id": OUTLINE_TOOL_CALL_ID, "source": "outline:lease", "unit": 9}])
+    oob_verdict = _verify(verifier, oob, tool_results)
+    assert oob_verdict.reason == "SCHEMA" and oob_verdict.schema_cause == "unit_out_of_range"
+
+    toc = _variant(sentences=[{"text": "這一節只做導航用途，不能當成答案引用。",
                                "kind": "fact", "cite": [0]}], citations=[
-        {"tool_call_id": OUTLINE_TOOL_CALL_ID, "source": "outline:toc", "quote": "這一節只做導航用途，列出各章節標題"}])
-    assert verifier.verify(toc, tool_results, "q", None).reason == "SOURCE_NOT_CITABLE"
+        {"tool_call_id": OUTLINE_TOOL_CALL_ID, "source": "outline:toc", "unit": 0}])
+    assert _verify(verifier, toc, tool_results).reason == "SOURCE_NOT_CITABLE"
+
+
+def test_outline_units_are_the_same_on_both_sides():
+    """r13 F-B 兩側對齊：`_seed_outline_provenance`（解析側）與 `PromptAssembler.build`
+    （編號側）吃的是**同一份 `section.text`**，切法也只有一個函式。
+
+    正對照：先確認這份章節真的切出 >1 個片段，否則「對齊」是巧合不是證據。"""
+    seeded = _seed_outline_provenance(_outline())
+    units = provenance_units(seeded.provenance[0].text)
+    assert len(units) == 2, units
+    assert units == provenance_units(_SECTION_TEXT)
 
 
 def test_outline_text_shows_section_id_in_heading():
@@ -163,6 +195,33 @@ def test_response_format_constrains_fact_class_and_handoff_reason_to_closed_sets
     assert set(schema["required"]) >= {"fact_class", "handoff_reason"}
 
 
+def test_citation_schema_is_tool_call_id_source_unit_only():
+    """DSP-029 F-A：模型端的 `Citation` **只有** `(tool_call_id, source, unit)`。
+
+    `quote` 一旦還在 schema 裡，解析後的原文就有地方可以被寫回去，也就會跟著
+    `decision_snapshot`／trace 外流——這條是結構上的保證，不是靠自律。"""
+    schema = _agent_output_response_format()["json_schema"]["schema"]
+    citation = schema["$defs"]["Citation"]
+    assert set(citation["properties"]) == {"tool_call_id", "source", "unit"}
+    assert set(citation["required"]) == {"tool_call_id", "source", "unit"}
+    assert citation["additionalProperties"] is False
+    assert "quote" not in json.dumps(schema)
+
+
+def test_contract_wording_lives_in_schema_descriptions_not_only_in_prose():
+    """DSP-029 P1-2：契約說明放 `Field(description=…)`（結構化、非特例）。
+
+    六處都要有實際文字——正對照：先確認這六個鍵真的都在 schema 裡，
+    少一個就是路徑寫錯，⛔ 不是「描述剛好是空的」。"""
+    schema = _agent_output_response_format()["json_schema"]["schema"]
+    props = schema["properties"]
+    for key in ("kind", "sentences", "citations", "fact_class", "handoff_reason"):
+        assert key in props, key
+        assert (props[key].get("description") or "").strip(), key
+    unit = schema["$defs"]["Citation"]["properties"]["unit"]
+    assert (unit.get("description") or "").strip()
+
+
 def _handoff_response(fact_class="pricing", reason="sensitive_no_grounding", sentences=None):
     payload = {
         "kind": "handoff",
@@ -178,16 +237,16 @@ def test_real_verifier_passes_model_handoff_with_sensitive_fact_class_and_empty_
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     out = AgentOutput(kind="handoff", sentences=[], citations=[],
                       fact_class="pricing", handoff_reason="sensitive_no_grounding")
-    assert verifier.verify(out, {}, "一個月多少錢", {"reason": "sensitive_no_grounding"}).ok
+    assert _verify(verifier, out, {}, "一個月多少錢", {"reason": "sensitive_no_grounding"}).ok
     # DSP-028：handoff 帶**捏造** sentences 也放行（文字不外流，Runtime 換固定句）
     fabricated = AgentOutput.model_validate({**out.model_dump(), "sentences": [
         {"text": "我們的月費是 3000 元，保證業界最低。", "kind": "fact", "cite": []}]})
-    assert verifier.verify(fabricated, {}, "一個月多少錢", {"reason": "sensitive_no_grounding"}).ok
+    assert _verify(verifier, fabricated, {}, "一個月多少錢", {"reason": "sensitive_no_grounding"}).ok
     # 非 handoff 的敏感 fact_class 仍拒（牆不變）
     ans = AgentOutput.model_validate({**out.model_dump(), "kind": "answer", "handoff_reason": None,
                                       "sentences": [{"text": "報價要由專人說明。",
                                                      "kind": "fact", "cite": []}]})
-    assert verifier.verify(ans, {}, "q", None).reason == "SENSITIVE_TOPIC"
+    assert _verify(verifier, ans, {}, "q").reason == "SENSITIVE_TOPIC"
 
 
 @pytest.mark.asyncio
@@ -232,7 +291,7 @@ from services.agent.runtime import _canonicalize_outline_sources
 def _out_with_sources(*pairs):
     return AgentOutput.model_validate({
         "kind": "answer", "fact_class": "feature", "handoff_reason": None,
-        "citations": [{"tool_call_id": tid, "source": src, "quote": "q" * 8} for tid, src in pairs],
+        "citations": [{"tool_call_id": tid, "source": src, "unit": 0} for tid, src in pairs],
         "sentences": [{"text": "x。", "kind": "fact", "cite": list(range(len(pairs)))}],
     })
 
@@ -243,7 +302,7 @@ def test_canonicalize_adds_prefix_and_strips_title_only_for_outline_citations():
     fixed = _canonicalize_outline_sources(out)
     assert [c.source for c in fixed.citations] == [
         "outline:positioning", "outline:listing", "outline:lease", "positioning"]   # 最後一筆非大綱，不動
-    assert [c.quote for c in fixed.citations] == [c.quote for c in out.citations]   # quote 不碰
+    assert [c.unit for c in fixed.citations] == [c.unit for c in out.citations]   # unit 不碰
 
 
 def test_canonicalize_is_identity_when_nothing_to_fix():
@@ -253,8 +312,11 @@ def test_canonicalize_is_identity_when_nothing_to_fix():
 
 @pytest.mark.asyncio
 async def test_runtime_verifies_prefixless_outline_source_against_seeded_provenance():
-    """真線路 2026-09-05：quote 逐字、source 寫 `lease` ⇒ 之前被報 QUOTE_NOT_VERBATIM；現在應放行。"""
-    provider = FakeProvider([_final_with_citation(quote="支援線上電子簽約", source="lease")])
+    """真線路 2026-09-05：source 寫 `lease`（缺前綴）⇒ 正規化補回後解析得到片段，應放行。
+
+    ⚠️ DSP-029 之後這條更要緊：`source` 是定址的一部分，沒有正規化就是
+    SCHEMA(source_not_found)，⛔ 不再有「引文逐字仍放行」的補救。"""
+    provider = FakeProvider([_final_with_citation(source="lease")])
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
@@ -273,7 +335,7 @@ from services.agent.runtime import DIALOG_MAX_MESSAGES
 
 @pytest.mark.asyncio
 async def test_current_user_message_is_last_message_sent_to_model():
-    provider = FakeProvider([_final_with_citation(quote="支援線上電子簽約")])
+    provider = FakeProvider([_final_with_citation()])
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=FakeVerifier())
 
     await runtime.run_turn(_identity(), "可以線上簽約嗎", {"agent": {"outline": _outline()}})
@@ -285,8 +347,8 @@ async def test_current_user_message_is_last_message_sent_to_model():
 
 @pytest.mark.asyncio
 async def test_turn_writes_user_and_assistant_into_dialog_and_next_turn_replays_it():
-    provider = FakeProvider([_final_with_citation(quote="支援線上電子簽約"),
-                             _final_with_citation(quote="支援線上電子簽約")])
+    provider = FakeProvider([_final_with_citation(),
+                             _final_with_citation()])
     assembler = FakeAssembler()
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
                        verifier=FakeVerifier(), assembler=assembler)
@@ -307,7 +369,7 @@ async def test_turn_writes_user_and_assistant_into_dialog_and_next_turn_replays_
 @pytest.mark.asyncio
 async def test_dialog_is_trimmed_to_max_messages_and_fixed_sentence_is_recorded():
     """固定句收場也要寫回（使用者確實看到了那句）；超過上限丟最舊。"""
-    provider = FakeProvider([_final_with_citation(quote="支援線上電子簽約")])
+    provider = FakeProvider([_final_with_citation()])
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
                        verifier=FakeVerifier([VerifierVerdict(ok=False, reason="SCHEMA")] * 3))
     old = [{"role": "user", "content": f"u{i}"} if i % 2 == 0 else {"role": "assistant", "content": f"a{i}"}
@@ -336,7 +398,7 @@ def _final_with_out_of_range_cite():
         "kind": "answer",
         "sentences": [{"text": "可以線上簽約。", "kind": "fact", "cite": [0]},
                       {"text": "這樣很方便。", "kind": "fact", "cite": [3]}],   # 只有 1 筆 citation
-        "citations": [{"tool_call_id": "outline", "source": "outline:lease", "quote": "支援線上電子簽約"}],
+        "citations": [{"tool_call_id": "outline", "source": "outline:lease", "unit": 0}],
         "fact_class": "feature", "handoff_reason": None,
     }
     return _fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))
@@ -371,7 +433,7 @@ def _final_with_blank_text():
 )
 async def test_schema_reject_feedback_names_the_actual_cause(first_response, expected_snippet):
     """DSP-028：SCHEMA 回饋改成指出三種成因；⛔ 不再回報「系統把你的 answer 切成 N 句」。"""
-    provider = FakeProvider([first_response(), _final_with_citation(quote="支援線上電子簽約")])
+    provider = FakeProvider([first_response(), _final_with_citation()])
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
@@ -396,13 +458,16 @@ def _final_sentences(sentences, citations):
 
 
 @pytest.mark.asyncio
-async def test_quote_not_verbatim_feedback_tells_model_to_fix_quote_not_to_handoff():
+async def test_coverage_reject_feedback_tells_model_to_fix_unit_not_to_handoff():
+    """DSP-029：`QUOTE_NOT_VERBATIM` 在模型端已不可達（引文由系統解析），
+    這條改由「指錯片段」的 `QUOTE_NOT_COVERING` 承接同一個回歸：
+    回饋要教「改 `unit`」，並明說 ⛔ 不要因為被拒就改轉人。"""
     bad = _final_sentences(
         [{"text": "可以線上電子簽約。", "kind": "fact", "cite": [0]}],
-        [{"tool_call_id": "outline", "source": "outline:lease", "quote": "支援線上簽約"}])   # 非逐字
+        [{"tool_call_id": "outline", "source": "outline:lease", "unit": 1}])   # 指到批次匯入那句
     good = _final_sentences(
         [{"text": "可以線上電子簽約。", "kind": "fact", "cite": [0]}],
-        [{"tool_call_id": "outline", "source": "outline:lease", "quote": "支援線上電子簽約"}])
+        [{"tool_call_id": "outline", "source": "outline:lease", "unit": 0}])
     provider = FakeProvider([bad, good])
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
@@ -411,9 +476,10 @@ async def test_quote_not_verbatim_feedback_tells_model_to_fix_quote_not_to_hando
 
     assert result.kind == "answer"
     fb = provider.calls[1]["messages"][-1]["content"]
-    assert "QUOTE_NOT_VERBATIM" in fb and "逐字複製" in fb and "第 0 筆" in fb
+    assert "QUOTE_NOT_COVERING" in fb and "`unit`" in fb and "第 0 筆" in fb
     assert "不要因為被拒就改成 `kind=handoff`" in fb
-    assert "支援線上電子簽約" not in fb and "線上簽約" not in fb.split("VERIFIER_REJECT")[1].split("逐字")[0]   # 無原文
+    # ⛔ 無原文：來源片段與被拒的回答都不得出現在回饋裡
+    assert "支援線上電子簽約" not in fb and "合約目前不支援批次匯入" not in fb
 
 
 def test_agent_rules_make_handoff_non_default_and_name_outline_evidence():

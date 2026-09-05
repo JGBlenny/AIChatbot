@@ -156,7 +156,9 @@ def test_top_level_key_set_is_closed():
     assert set(view["counts"]) == {
         "llm_calls", "prompt_tokens", "completion_tokens", "latency_ms"
     }
-    assert set(view["verifier"][0]) == {"reason", "sent", "rule"}
+    # DSP-029 r13 #7：多一個 `schema_cause`（封閉列舉值，⛔ 無原文）——
+    # 只回 `SCHEMA` 時七種結構性失敗全擠成同一格，稽核看不出差別。
+    assert set(view["verifier"][0]) == {"reason", "schema_cause", "sent", "rule"}
 
 
 @pytest.mark.req(_SPEC)

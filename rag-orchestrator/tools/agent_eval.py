@@ -717,20 +717,39 @@ async def _run_scenario_agent(
     return out
 
 
+def _verdict_reason_label(verdict: Any) -> str:
+    """拒因標籤：`SCHEMA` 附上子成因（`SCHEMA:source_not_found`），其餘原樣。
+
+    ⛔ 只有封閉列舉值進來——`reason` 與 `schema_cause` 都是 Literal，⛔ 無原文。
+    """
+    reason = getattr(verdict, "reason", None) or ""
+    cause = getattr(verdict, "schema_cause", None)
+    return f"{reason}:{cause}" if reason == "SCHEMA" and cause else reason
+
+
 def _citations_for_dump(result: Any) -> list[dict]:
-    """`--dump-texts` 旁路的引用欄（`source` ＋ `quote`）。
+    """`--dump-texts` 旁路的引用欄：**只放 `(tool_call_id, source, unit)`**（r13 #6）。
+
+    ⚠️ DSP-029 之後 `Citation` 已經沒有 `quote` 欄——引文由系統依 `unit` 解析，
+    ⛔ 解析結果不寫回 `AgentOutput`，所以這條旁路也拿不到、也**不應該**拿到原文：
+    人工抽審要對照原文時，用 `(source, unit)` 回大綱／工具回傳自己查，
+    ⛔ 不在這裡多開一個原文出口。
 
     ⚠️ **待接**：`TurnResult` 目前不帶 `citations`（見上方呼叫點註解），
     因此實務上恆回空陣列。這裡用 `getattr` 取而不是硬存取，是為了讓將來
-    Runtime 真的開這條回傳時，本函式不必再改；⛔ 不在這裡自行重跑模型或
-    重建引用（那會變成另一把量尺）。
+    Runtime 真的開這條回傳時，本函式不必再改。
     """
     citations = getattr(result, "citations", None) or []
     out: list[dict] = []
     for c in citations:
-        source = getattr(c, "source", None) if not isinstance(c, dict) else c.get("source")
-        quote = getattr(c, "quote", None) if not isinstance(c, dict) else c.get("quote")
-        out.append({"source": source, "quote": quote})
+        get = c.get if isinstance(c, dict) else (lambda k: getattr(c, k, None))
+        out.append(
+            {
+                "tool_call_id": get("tool_call_id"),
+                "source": get("source"),
+                "unit": get("unit"),
+            }
+        )
     return out
 
 
@@ -743,7 +762,10 @@ def _build_agent_record(
     handoff_reason = (handoff or {}).get("reason") if isinstance(handoff, dict) else None
     kind = result.kind
     verifier_rejects = sum(1 for v in result.trace.verifier if not v.ok)
-    verifier_reasons = ",".join(v.reason or "" for v in result.trace.verifier if not v.ok)
+    # DSP-029 r13 #7：`SCHEMA` 有七種子成因，只記 `SCHEMA` 等於把它們擠成同一格
+    # （驗收①要求 SCHEMA 子成因逐項落表、`source_not_found` 單獨計數）。
+    # 形如 `SCHEMA:source_not_found`；⛔ 只放封閉列舉值，無任何原文。
+    verifier_reasons = ",".join(_verdict_reason_label(v) for v in result.trace.verifier if not v.ok)
     budget_exhausted = handoff_reason == "budget_exhausted"
     forbid_hit = _forbid_hit(answer, t.must_not_contain)
     cost = _estimate_cost_usd(model, result.trace.prompt_tokens, result.trace.completion_tokens)
@@ -1036,6 +1058,30 @@ def compute_hardlines(records: list[EvalRecord], manifest: dict) -> dict:
     return result
 
 
+def _known_open_pass_line() -> str:
+    """DSP-029 驗收⓪：**已知未擋的捏造句通過數**如實列（預期 3/3 通過＝仍未擋）。
+
+    ⚠️ 這一格 ⛔ 不是「通過率」這種好看的指標——它是「這三句現在還是會被放行」
+    這件事的公開紀錄。數字變小代表 DSP-030 的新規則開始咬，那時要回頭把案例搬去
+    `known_fabrications.json`，⛔ 不是慶祝。
+
+    來源是 `OutputVerifier.self_test` 回傳的案例數（它已對每案斷言 `ok=True`），
+    ⛔ 不在這裡自己再跑一次 verifier（那會變成第二把尺）。取不到就如實說取不到。
+    """
+    try:
+        from pathlib import Path as _Path
+
+        from services.agent.output_schema import VerifierRules
+        from services.agent.verifier import OutputVerifier
+
+        root = _Path(__file__).resolve().parents[1]
+        verifier = OutputVerifier(VerifierRules.load(root / "config" / "agent_verifier_rules.json"))
+        n = verifier.self_test(root / "tests" / "fixtures" / "agent")
+        return f"{n}/{n}（known_open.json；⛔ 全部仍被放行＝尚未擋住，DSP-030 處理）"
+    except Exception as exc:  # noqa: BLE001 — 報表不得因為這一格而整份掛掉
+        return f"n/a（self_test 取不到：{type(exc).__name__}）"
+
+
 def render_report_md(
     *,
     records: list[EvalRecord],
@@ -1123,8 +1169,22 @@ def render_report_md(
             lines.append(f"- verifier_reasons 分佈：{detail}")
         else:
             lines.append("- verifier_reasons 分佈：（本批無拒因）")
+        # DSP-029 驗收①：以下三格**單列**，⛔ 不併進上面的分佈裡看——
+        # `source_not_found` 有獨立上限（5/162）、POLARITY 以 R4 的 9/162 為基準
+        # （相對 R4 暴增視為本案副作用如實報，⛔ 不得靠放寬極性來救）。
+        snf = reason_counts.get("SCHEMA:source_not_found", 0)
+        lines.append(
+            f"- source_not_found：{snf}/{len(agent_records)}"
+            "（DSP-029 驗收①子成因，上限 5/162）"
+        )
+        pol = reason_counts.get("POLARITY_MISMATCH", 0)
+        lines.append(
+            f"- POLARITY_MISMATCH：{pol}/{len(agent_records)}"
+            "（DSP-029 驗收① F-C 單列；R4 基準 9/162）"
+        )
     else:
         lines.append("- budget_exhausted：n/a（本批無 agent 鏈紀錄）")
+    lines.append(f"- known_open 通過數：{_known_open_pass_line()}")
     lines.append(
         "- 整筆免 cite 的 question／greeting 比例：**待接**（r11 安全審 F-2 的 OPEN 項監控欄）。"
         "　⚠️ `TurnResult`／`TurnTrace` 目前都不回 `sentences`，這個比例算不出來；"

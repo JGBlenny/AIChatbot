@@ -1,6 +1,11 @@
 """integration：`agent.turn` 走真 MCP client ＋ 真測試庫（任務 2.6）。
 
 真測試庫（`form_sessions`／`api_keys`／`usage_events`）＋真 MCP SDK；
+**DSP-029 註記**：本檔的腳本化輸出全部是**問候句／無引用斷言**，⛔ 沒有任何一處
+建構 `Citation`，故引用契約從 `quote` 改成 `unit` 對本檔無影響（`citations: []` 不變）。
+真 Verifier 的自證此後多讀一份 `known_open.json`（已知未擋的捏造句，`expect_ok=True`），
+`_make_runtime` 走的 `bootstrap.build_runtime` 會連它一起載入。
+
 **只有 LLM 是假的**（腳本化 provider，⛔ 不呼叫真 OpenAI）。Verifier 是**真的**
 （`bootstrap.build_runtime` 載入 `config/agent_verifier_rules.json` 並跑過自證）。
 

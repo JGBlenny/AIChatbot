@@ -19,7 +19,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:9001",
-          "quote": "我們有服務多家大型代管業者"
+          "unit": 0
         }
       ],
       "fact_class": "customer_reference",
@@ -123,7 +123,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:3357",
-          "quote": "系統支援租客資料批次匯入"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -142,7 +142,8 @@
         "text_for_model": ""
       }
     },
-    "handoff": null
+    "handoff": null,
+    "expected_schema_cause": "cite_out_of_range"
   },
   {
     "id": "uncited_assertion",
@@ -187,49 +188,8 @@
     "handoff": null
   },
   {
-    "id": "quote_not_verbatim",
-    "note": "quote 不是對應 Provenance.text 的逐字子串",
-    "expected_reason": "QUOTE_NOT_VERBATIM",
-    "user_message": "合約可以批次匯入嗎？",
-    "agent_output": {
-      "kind": "answer",
-      "sentences": [
-        {
-          "text": "我們的系統支援合約批次匯入。",
-          "kind": "fact",
-          "cite": [
-            0
-          ]
-        }
-      ],
-      "citations": [
-        {
-          "tool_call_id": "t1",
-          "source": "kb:3357",
-          "quote": "合約可以批次匯入"
-        }
-      ],
-      "fact_class": "feature",
-      "handoff_reason": null
-    },
-    "tool_results": {
-      "t1": {
-        "ok": true,
-        "provenance": [
-          {
-            "source": "kb:3357",
-            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
-            "citable": true
-          }
-        ],
-        "text_for_model": ""
-      }
-    },
-    "handoff": null
-  },
-  {
     "id": "quote_too_short",
-    "note": "quote 少於 min_quote_len(6) 字",
+    "note": "DSP-029：模型不再抄字，這條改量「來源片段本身太短」——unit 0 是一行只有四個字的標籤句，撐不起一個事實斷言。",
     "expected_reason": "QUOTE_TOO_SHORT",
     "user_message": "物件可以批次匯入嗎？",
     "agent_output": {
@@ -247,7 +207,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:3357",
-          "quote": "可匯入"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -259,7 +219,7 @@
         "provenance": [
           {
             "source": "kb:3357",
-            "text": "物件資料可匯入，JGB 協助提供表格。",
+            "text": "可匯入。\n物件資料可匯入，JGB 協助提供表格。",
             "citable": true
           }
         ],
@@ -288,7 +248,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:5000",
-          "quote": "系統目前支援租客資料匯入功能"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -329,7 +289,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:6000",
-          "quote": "帳單格式可以彈性調整，依需求自訂欄位"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -370,7 +330,7 @@
         {
           "tool_call_id": "t1",
           "source": "outline:contract",
-          "quote": "系統會依角色權限決定可查看的財務數字範圍"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -411,7 +371,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:9002",
-          "quote": "我們提供終身保固的服務"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -457,7 +417,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:1234",
-          "quote": "我們有提供教學影片"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -503,7 +463,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:1234",
-          "quote": "我們有提供教學影片"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -544,7 +504,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:7000",
-          "quote": "這部分我沒有相關資料可以提供"
+          "unit": 0
         }
       ],
       "fact_class": "other",
@@ -599,12 +559,13 @@
     "handoff": {
       "reason": "敏感主題",
       "fact_class": "pricing"
-    }
+    },
+    "expected_schema_cause": "handoff_reason_invalid"
   },
   {
     "id": "wrong_label_cannot_launder_non_citable",
-    "note": "DSP-021：引文只存在於 citable=false 的目錄節，標成可引用的節 ⇒ 仍 SOURCE_NOT_CITABLE（以實際命中為準）",
-    "expected_reason": "SOURCE_NOT_CITABLE",
+    "note": "DSP-021 原案：把 citable=false 的內容標成 citable=true 的 source。DSP-029 之後 `source` 就是定址——標成 outline:lease 就會解析到 lease 的第 0 句，洗白手法在結構上消失，拒因改為覆蓋不過（QUOTE_NOT_COVERING）。⚠️ 這不是放寬：原本要靠「引文逐字比對＋citable 取實際命中那筆」才擋得住的事，現在由定址本身擋掉；純粹引用不可引用來源仍由 source_not_citable 一案覆蓋。",
+    "expected_reason": "QUOTE_NOT_COVERING",
     "user_message": "有哪些章節？",
     "agent_output": {
       "kind": "answer",
@@ -621,7 +582,7 @@
         {
           "tool_call_id": "outline",
           "source": "outline:lease",
-          "quote": "目錄只列標題不含內容"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -681,7 +642,8 @@
       "handoff_reason": null
     },
     "tool_results": {},
-    "handoff": null
+    "handoff": null,
+    "expected_schema_cause": "empty_sentences"
   },
   {
     "id": "empty_text_sentence",
@@ -702,7 +664,8 @@
       "handoff_reason": null
     },
     "tool_results": {},
-    "handoff": null
+    "handoff": null,
+    "expected_schema_cause": "empty_text"
   },
   {
     "id": "split_assertion_across_entries",
@@ -776,7 +739,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:3357",
-          "quote": "物件資料可以透過範本檔案批次匯入"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -859,7 +822,7 @@
         {
           "tool_call_id": "t1",
           "source": "kb:3357",
-          "quote": "物件資料可以透過範本檔案批次匯入"
+          "unit": 0
         }
       ],
       "fact_class": "feature",
@@ -872,6 +835,216 @@
           {
             "source": "kb:3357",
             "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null,
+    "expected_schema_cause": "cite_out_of_range"
+  },
+  {
+    "id": "unit_out_of_range",
+    "note": "DSP-029：`unit` 指到不存在的片段編號 ⇒ SCHEMA(unit_out_of_range)。來源只有 1 個片段（編號 0），模型填 7。",
+    "expected_reason": "SCHEMA",
+    "expected_schema_cause": "unit_out_of_range",
+    "user_message": "物件可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "物件資料可以透過範本檔案批次匯入。",
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:3357",
+          "unit": 7
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:3357",
+            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "unit_negative_index",
+    "note": "r11 F-5 的同型繞道搬到 unit 上：python 的 units[-1] 會靜靜取到最後一個片段，等於讓模型用 -1 借最後一句來替自己的斷言背書 ⇒ 負數一律算越界。",
+    "expected_reason": "SCHEMA",
+    "expected_schema_cause": "unit_out_of_range",
+    "user_message": "物件可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "物件資料可以透過範本檔案批次匯入。",
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:3357",
+          "unit": -1
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:3357",
+            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "source_not_found",
+    "note": "DSP-029：`source` 在該次工具回傳裡不存在 ⇒ SCHEMA(source_not_found)。⚠️ 這一案在 DSP-021 舊尺下會因為「引文逐字出現在同一次回傳的別筆 provenance」而被放行；定址化之後不再有那條補救。",
+    "expected_reason": "SCHEMA",
+    "expected_schema_cause": "source_not_found",
+    "user_message": "物件可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "物件資料可以透過範本檔案批次匯入。",
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:9999",
+          "unit": 0
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:3357",
+            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "marker_copied_into_text",
+    "note": "r13 #2：模型把資料段的片段標記 `[{nonce}:{source}§{i}]` 抄進 `text` ⇒ SCHEMA(marker_in_answer)。那既是把內部標記漏給使用者，也是「引文由系統解析」被繞過的訊號（模型在自造引用外觀）。",
+    "expected_reason": "SCHEMA",
+    "expected_schema_cause": "marker_in_answer",
+    "user_message": "物件可以批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "物件資料可以透過範本檔案批次匯入 [a1b2c3d4e5f60718:kb:3357§0]。",
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "citations": [
+        {
+          "tool_call_id": "t1",
+          "source": "kb:3357",
+          "unit": 0
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:3357",
+            "text": "物件資料可以透過範本檔案批次匯入，JGB 協助提供表格。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "unit_points_to_unrelated_sentence",
+    "note": "DSP-029：`unit` 指到同一來源裡**無關的那一句** ⇒ QUOTE_NOT_COVERING。來源第 0 句講建約方式、第 1 句講合約修改；句子講的是修改，卻指到第 0 句。",
+    "expected_reason": "QUOTE_NOT_COVERING",
+    "user_message": "簽完的合約還能改嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "雙方都簽完後不可直接修改，只能複製重建新約重簽。",
+          "kind": "fact",
+          "cite": [
+            0
+          ]
+        }
+      ],
+      "citations": [
+        {
+          "tool_call_id": "outline",
+          "source": "outline:contract",
+          "unit": 2
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "outline": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "outline:contract",
+            "text": "合約多、怕簽錯、紙本來回慢？金箍棒的租約管理把一般租賃合約從建約到簽署搬到線上，一頁看完重點：\n【建約方式】三種：電子合約（公版範本）、電子合約（客製化契約書）、紙本簽約（把既有的紙本合約上傳留存）。上傳的既存合約與系統制式合約效力相同，後續合約、帳務、修繕一樣可追蹤。\n【修改】未發送的合約可直接編輯；已送出邀請要先取消再改（管理者主動取消會保留已填的租客資料；逾期或租客不同意退回則會清空）；租客已簽回但管理方尚未回簽時，可取消簽名後修改重發；雙方都簽完後不可直接修改，只能複製該合約重建新約重簽，或走資料異動申請。\n",
             "citable": true
           }
         ],
