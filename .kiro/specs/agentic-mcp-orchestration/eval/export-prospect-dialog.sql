@@ -1,0 +1,8 @@
+-- 樣本 C：線上匯出 prospect 問句（業主在正式機執行；⛔ 主 session 不碰線上）
+-- 前提：正式機的 rag-orchestrator 版本 ≥ commit 0464ff02（2026-09-04，presales 面向 dialog 持久化），否則 dialog 鍵不存在、結果為 0。
+-- 先查有多少（預期輸出一列：句數|會話數；若為 0|0 ⇒ 尚無資料，等累積）：
+--   docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tA -c "SELECT count(*), count(DISTINCT fs.session_id) FROM form_sessions fs, jsonb_array_elements(fs.collected_data->'dialog') d WHERE fs.collected_data->>'config_key'='presales' AND fs.session_id NOT LIKE 'backtest_session_%' AND d ? 'u';"
+-- 匯出（在正式機當前目錄產生 prospect_dialog.csv，⛔ 不進 commit；檔案交主 session 去識別後凍結）：
+--   docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c "\copy (SELECT fs.session_id, fs.last_activity_at, d->>'u' AS q FROM form_sessions fs, jsonb_array_elements(fs.collected_data->'dialog') d WHERE fs.collected_data->>'config_key'='presales' AND fs.session_id NOT LIKE 'backtest_session_%' AND d ? 'u' AND fs.last_activity_at > now() - interval '90 days' ORDER BY fs.last_activity_at DESC) TO STDOUT CSV HEADER" > prospect_dialog.csv
+-- 預期：第一行 session_id,last_activity_at,q；行數＝上面查到的句數＋1。
+-- 註：`u` 在寫入時已截 200 字（conversational_engine.py 的 d.append({"u": ...[:200]})），足夠當問句樣本。

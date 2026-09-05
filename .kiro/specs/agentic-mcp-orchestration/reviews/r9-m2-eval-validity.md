@@ -36,7 +36,7 @@ sha256 凍結與拒跑（`verify_manifest`、退出碼 3／4）；`_NO_VERBATIM_
 
 - #1–#3、#6–#11、#13–#16：**FIX**，派 executor（worktree）一次修，完成後派 fresh verifier。
 - #4：**接受**——A／B 降級為「已知病灶回歸集」，tasks 4.3 與 manifest 註明 ⛔ 不作 M3 放行證據。
-- #5：**業主動作**——線上 `chat_history.question`（`target_user='prospect'`）匯出，本機去識別後凍結；建議 ≥60 句、分層（主題×敏感×單/多輪）。
+- #5：**業主動作**——線上匯出 prospect 問句。**2026-09-05 更正**：`chat_history` 全 repo 無寫入端（線上 7/7 備份 0 列），原文只在 `form_sessions.collected_data.dialog[].u`（`config_key='presales'`，commit `0464ff02` 起才持久化）；匯出指令見 `eval/export-prospect-dialog.sql`。本機去識別後凍結；建議 ≥60 句、分層（主題×敏感×單/多輪）。
 - #10：**部分 DEFER**——p95 先以 `run_turn` 邊界量並標為下限；使用者層（SSE）量法待 M3 切換演練時做。
 - #12：**業主動作**——D2 五個數字跑前裁定。
 
