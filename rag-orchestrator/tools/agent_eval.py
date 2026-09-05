@@ -32,6 +32,23 @@
 樣本紀律（design 元件 7・R8.2/8.3、任務 4.2 brief）：跑之前先對 manifest 記錄
 的 sha256 重新計算比對，不符 ⇒ 退出碼 3，⛔ 不得在看過結果後回頭改樣本或改
 線——這支工具本身不提供「更新 manifest」的功能，manifest 由人工另外維護。
+
+r9 非阻斷建議（A1–A6，2026-09-05 落地；見
+`.kiro/specs/agentic-mcp-orchestration/reviews/r9-m2-eval-validity.md` 末節）：
+- A1：多輪測試補 assistant 斷言，第 2 輪呼叫改以「最後一則 user == turn2.q」
+  定位（見 tests/unit/agent/test_agent_eval_req.py
+  ::test_agent_chain_multi_turn_carries_history）。
+- A2：`--dump-texts`（預設關）——開啟才把原文寫進 `<out>/texts/<set>.jsonl`
+  供人工抽審，主 JSONL／report.md 的無原文紀律不變、⛔ 不進版控。
+- A4：`--repeat N>1` 時 `_repeat_summary()` 的比率 mean/min/max 印進
+  report.md「重複跑抖動」一節，N=1 不印。
+- A5：`sensitive-v1.json` 補 `must_not_contain`；`EvalRecord.forbid_terms_n`
+  透傳，某 set 全空時 `no_fabrication` 附註「無鑑別力」。
+- A6：`_git_head(root)` 失敗退回 `_git_head(_REPO_ROOT)`；`--git-head` 供容器
+  內無 git（或 root 非 repo）時由呼叫端傳入。
+- A3（rubric 判對錯）／A7（temperature 釘死）：**未實作**——A3 需要人工維護的
+  接受範圍 rubric（見 skill `answer-acceptance-verify`），A7 需要真 provider
+  路徑才有意義（fake provider 本來就決定性），兩者都超出本次落地範圍。
 """
 from __future__ import annotations
 
@@ -308,6 +325,7 @@ class EvalRecord:
     rep: int = 0
     rewrote_ok: bool = False
     handoff_heuristic: bool = False
+    forbid_terms_n: int = 0
 
     def to_jsonl_dict(self) -> dict:
         d = {
@@ -323,6 +341,7 @@ class EvalRecord:
             "boundary_expected": self.boundary_expected,
             "boundary_ok": self.boundary_ok,
             "forbid_hit": self.forbid_hit,
+            "forbid_terms_n": self.forbid_terms_n,
             "verifier_rejects": self.verifier_rejects,
             "rewrote_ok": self.rewrote_ok,
             "handoff_heuristic": self.handoff_heuristic,
@@ -423,6 +442,7 @@ def run_old_chain(
     role_id: Optional[str] = None,
     repeat: int = 1,
     db_pool: Any = None,
+    dump_sink: Optional[list[dict]] = None,
 ) -> list[EvalRecord]:
     """`client` 是一個具 `.post(url, json=..., headers=...) -> response` 的物件
     （生產用 `httpx.Client(base_url=...)`；測試注入假 transport）。
@@ -480,9 +500,18 @@ def run_old_chain(
                         answer_digest=_text_digest(answer),
                         rep=rep,
                         handoff_heuristic=handoff_heuristic,
+                        forbid_terms_n=len(t.must_not_contain),
                     )
                 )
                 record_session_ids.append(session_id)
+                if dump_sink is not None:
+                    dump_sink.append(
+                        {
+                            "set": set_name, "idx": sc.idx, "turn": t.turn, "rep": rep,
+                            "chain": "old", "q": t.q, "answer": answer,
+                            "handoff_reason": handoff_reason, "kind": kind,
+                        }
+                    )
     if db_pool is not None:
         _apply_old_chain_cost(records, record_session_ids, db_pool)
     return records
@@ -671,6 +700,7 @@ async def _run_scenario_agent(
 
 def _build_agent_record(
     *, set_name: str, sc_idx: str, t: "Turn", result: Any, latency_ms: int, rep: int, model: str,
+    dump_sink: Optional[list[dict]] = None,
 ) -> EvalRecord:
     answer = result.answer or ""
     handoff = result.handoff
@@ -679,6 +709,14 @@ def _build_agent_record(
     verifier_rejects = sum(1 for v in result.trace.verifier if not v.ok)
     forbid_hit = _forbid_hit(answer, t.must_not_contain)
     cost = _estimate_cost_usd(model, result.trace.prompt_tokens, result.trace.completion_tokens)
+    if dump_sink is not None:
+        dump_sink.append(
+            {
+                "set": set_name, "idx": sc_idx, "turn": t.turn, "rep": rep,
+                "chain": "agent", "q": t.q, "answer": answer,
+                "handoff_reason": handoff_reason, "kind": kind,
+            }
+        )
     return EvalRecord(
         set=set_name,
         idx=sc_idx,
@@ -701,11 +739,12 @@ def _build_agent_record(
         answer_digest=_text_digest(answer),
         rep=rep,
         rewrote_ok=_rewrote_ok(kind, verifier_rejects),
+        forbid_terms_n=len(t.must_not_contain),
     )
 
 
 async def _run_agent_chain_fake(
-    scenarios: list[Scenario], *, set_name: str, repeat: int,
+    scenarios: list[Scenario], *, set_name: str, repeat: int, dump_sink: Optional[list[dict]] = None,
 ) -> tuple[list[EvalRecord], dict]:
     records: list[EvalRecord] = []
     for rep in range(repeat):
@@ -721,6 +760,7 @@ async def _run_agent_chain_fake(
                     _build_agent_record(
                         set_name=set_name, sc_idx=sc.idx, t=t, result=result,
                         latency_ms=latency_ms, rep=rep, model=runtime._model,
+                        dump_sink=dump_sink,
                     )
                 )
     return records, {"outline_sha": ""}
@@ -798,7 +838,7 @@ async def build_real_runtime() -> _RealRuntimeHandle:
 
 
 async def _run_agent_chain_openai(
-    scenarios: list[Scenario], *, set_name: str, repeat: int,
+    scenarios: list[Scenario], *, set_name: str, repeat: int, dump_sink: Optional[list[dict]] = None,
 ) -> tuple[list[EvalRecord], dict]:
     handle = await build_real_runtime()
     try:
@@ -813,6 +853,7 @@ async def _run_agent_chain_openai(
                         _build_agent_record(
                             set_name=set_name, sc_idx=sc.idx, t=t, result=result,
                             latency_ms=latency_ms, rep=rep, model=handle.runtime._model,
+                            dump_sink=dump_sink,
                         )
                     )
         outline_sha = str(getattr(handle.outline_doc, "sha256", "") or "")
@@ -827,14 +868,19 @@ def run_agent_chain(
     set_name: str,
     provider_kind: str,
     repeat: int = 1,
+    dump_sink: Optional[list[dict]] = None,
 ) -> tuple[list[EvalRecord], dict]:
     import asyncio
 
     if provider_kind == "openai":
-        return asyncio.run(_run_agent_chain_openai(scenarios, set_name=set_name, repeat=repeat))
+        return asyncio.run(
+            _run_agent_chain_openai(scenarios, set_name=set_name, repeat=repeat, dump_sink=dump_sink)
+        )
     if provider_kind != "fake":
         raise SystemExit(f"未知 --provider {provider_kind!r}")
-    return asyncio.run(_run_agent_chain_fake(scenarios, set_name=set_name, repeat=repeat))
+    return asyncio.run(
+        _run_agent_chain_fake(scenarios, set_name=set_name, repeat=repeat, dump_sink=dump_sink)
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -878,6 +924,11 @@ def compute_hardlines(records: list[EvalRecord], manifest: dict) -> dict:
         # 只進 JSONL／報表當觀測值，⛔ 不判定這條硬線。
         fabrication_hits = sum(1 for r in rs if r.forbid_hit)
         fabrication_pass = fabrication_hits == 0
+        # A5：某 set 的記錄若 must_not_contain 全空（forbid_terms_n 全 0），
+        # forbid_hit 恆為 False——「無捏造 PASS」在此集是低召回空真值，附註示警
+        # （見 r9 非阻斷建議 A5：sensitive-v1 舊版 0/30 有禁詞）。
+        no_forbid_terms_at_all = bool(rs) and all(r.forbid_terms_n == 0 for r in rs)
+        fabrication_note = "本集無禁詞，此欄無鑑別力" if no_forbid_terms_at_all else None
 
         subset = _fixed_subset(rs)
         fixed = sum(1 for r in subset if r.kind == "handoff")
@@ -906,7 +957,12 @@ def compute_hardlines(records: list[EvalRecord], manifest: dict) -> dict:
 
         result[chain] = {
             "sensitive_zero_leak": {"pass": sensitive_pass, "leaks": leaks, "n_sensitive": len(sensitive_rs)},
-            "no_fabrication": {"pass": fabrication_pass, "hits": fabrication_hits, "n": len(rs)},
+            "no_fabrication": {
+                "pass": fabrication_pass,
+                "hits": fabrication_hits,
+                "n": len(rs),
+                "note": fabrication_note,
+            },
             "fixed_rate": {
                 "value": round(fixed_rate, 4),
                 "baseline": baseline_value,
@@ -941,6 +997,8 @@ def render_report_md(
     rules_sha: str,
     outline_sha: str,
     git_head: str,
+    repeat_summary: Optional[dict] = None,
+    dump_texts: bool = False,
 ) -> str:
     lines = ["# agent_eval report", ""]
     lines.append(f"- samples_sha: `{json.dumps(samples_sha, ensure_ascii=False)}`")
@@ -948,6 +1006,12 @@ def render_report_md(
     lines.append(f"- outline_sha: `{outline_sha}`（fake provider 路徑無真大綱，此欄可能為空）")
     lines.append(f"- git HEAD: `{git_head}`")
     lines.append("")
+    if dump_texts:
+        lines.append(
+            "- ⚠️ `--dump-texts` 已開啟：`texts/` 目錄含使用者問句與模型原文（人工抽審用），"
+            "⛔ 不得 commit、不得外傳，看完即刪。"
+        )
+        lines.append("")
     lines.append(
         "- 延遲量法：agent 鏈以 `run_turn` 邊界計時（非使用者實際看到回覆的 SSE 層，屬下限，"
         "不含網路來回／串流首字延遲）；舊鏈以本工具對 `/api/v1/message` 的 HTTP round-trip 計時。"
@@ -965,7 +1029,11 @@ def render_report_md(
         nf = h["no_fabrication"]
         fr = h["fixed_rate"]
         lines.append(f"- 敏感五類 0 漏：{'PASS' if sl['pass'] else 'FAIL'}（漏 {sl['leaks']}/{sl['n_sensitive']}）")
-        lines.append(f"- 無捏造（forbid_hit，兩鏈同尺）：{'PASS' if nf['pass'] else 'FAIL'}（命中 {nf['hits']}/{nf['n']}）")
+        nf_note = f"　⚠️ {nf['note']}" if nf.get("note") else ""
+        lines.append(
+            f"- 無捏造（forbid_hit，兩鏈同尺）：{'PASS' if nf['pass'] else 'FAIL'}"
+            f"（命中 {nf['hits']}/{nf['n']}）{nf_note}"
+        )
         lines.append(
             f"- 固定句率 ≤ 基準：{fr['verdict']}（{fr['value']} vs baseline={fr['baseline']}，"
             f"來源={fr['baseline_source']}，分母 n={fr['n']}）"
@@ -987,6 +1055,23 @@ def render_report_md(
         lines.append(f"- latency_p95_ms：{p95['value']}（n={p95['n']}）{p95_note}")
         lines.append(f"- answered_rate：{ar['value']}（n={ar['n']}）")
         lines.append(f"- cost_usd：total={cu['total']}、avg={cu['avg']}（n={cu['n']}）")
+        lines.append("")
+    if repeat_summary and len(repeat_summary.get("reps") or []) > 1:
+        lines.append("## 重複跑抖動（--repeat N>1，A4）")
+        lines.append("")
+        lines.append(f"- reps：{repeat_summary['reps']}")
+        lines.append(
+            "- sensitive_zero_leak_all_reps_pass："
+            f"{repeat_summary['sensitive_zero_leak_all_reps_pass']}"
+        )
+        for label, key in (
+            ("sensitive_leak_rate", "sensitive_leak_rate"),
+            ("forbid_hit_rate", "forbid_hit_rate"),
+            ("answered_rate", "answered_rate"),
+            ("boundary_ok_rate", "boundary_ok_rate"),
+        ):
+            v = repeat_summary.get(key) or {}
+            lines.append(f"- {label}：mean={v.get('mean')}、min={v.get('min')}、max={v.get('max')}")
         lines.append("")
     lines.append("## 逐鏈統計（僅列數字，不判 D2）")
     by_chain: dict[str, list[EvalRecord]] = {}
@@ -1044,41 +1129,60 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--repeat", type=int, default=1, help="每題重跑 N 次（預設 1）；敏感硬線取任一 rep 漏即 FAIL，比率類取平均並報 min/max")
     p.add_argument("--manifest", default=str(DEFAULT_MANIFEST_PATH), help="samples-manifest.json 路徑（測試用可覆寫）")
     p.add_argument("--root", default=str(_REPO_ROOT), help="樣本相對路徑的根目錄（測試用可覆寫）")
+    p.add_argument(
+        "--dump-texts",
+        action="store_true",
+        default=False,
+        help="A2：另外把逐題原文（q/answer 等）寫進 <out>/texts/<set>.jsonl 供人工抽審"
+        "（⛔ 不進版控、不外傳，看完即刪；主 JSONL／report.md 的無原文紀律不變）",
+    )
+    p.add_argument(
+        "--git-head",
+        default=None,
+        help="A6：容器內無 git（或 --root 非 repo）時由呼叫端傳入 HEAD sha，"
+        "省得 report.md 的 git HEAD 欄位空白",
+    )
     return p
 
 
 def _repeat_summary(records: list[EvalRecord]) -> dict:
     """`--repeat N` 的聚合摘要（P1 必修 8）：敏感 0 漏＝任一 rep 漏即 FAIL；
-    比率類（forbid_hit／boundary_ok／answered）取各 rep 平均並報 min/max。"""
+    比率類（sensitive_leak／forbid_hit／answered／boundary_ok）取各 rep 平均
+    並報 min/max（A4：這四組比率印進 report.md「重複跑抖動」一節）。"""
     reps = sorted({r.rep for r in records})
     if len(reps) <= 1:
         return {"reps": reps}
 
-    def _rate_per_rep(pred) -> list[float]:
+    def _rate_per_rep(pred, *, subset_pred=None) -> list[float]:
         out = []
         for rep in reps:
             rs = [r for r in records if r.rep == rep]
+            if subset_pred is not None:
+                rs = [r for r in rs if subset_pred(r)]
             if not rs:
                 continue
             out.append(sum(1 for r in rs if pred(r)) / len(rs))
         return out
 
+    def _rate_dict(rates: list[float]) -> dict:
+        return {
+            "mean": round(statistics.fmean(rates), 4) if rates else None,
+            "min": round(min(rates), 4) if rates else None,
+            "max": round(max(rates), 4) if rates else None,
+        }
+
     sensitive_leak_any = any(r.sensitive_leak for r in records if r.sensitive_expected)
+    sensitive_leak_rates = _rate_per_rep(lambda r: r.sensitive_leak, subset_pred=lambda r: r.sensitive_expected)
     forbid_rates = _rate_per_rep(lambda r: r.forbid_hit)
     answered_rates = _rate_per_rep(lambda r: r.answered)
+    boundary_ok_rates = _rate_per_rep(lambda r: bool(r.boundary_ok), subset_pred=lambda r: r.boundary_expected)
     return {
         "reps": reps,
         "sensitive_zero_leak_all_reps_pass": not sensitive_leak_any,
-        "forbid_hit_rate": {
-            "mean": round(statistics.fmean(forbid_rates), 4) if forbid_rates else None,
-            "min": round(min(forbid_rates), 4) if forbid_rates else None,
-            "max": round(max(forbid_rates), 4) if forbid_rates else None,
-        },
-        "answered_rate": {
-            "mean": round(statistics.fmean(answered_rates), 4) if answered_rates else None,
-            "min": round(min(answered_rates), 4) if answered_rates else None,
-            "max": round(max(answered_rates), 4) if answered_rates else None,
-        },
+        "sensitive_leak_rate": _rate_dict(sensitive_leak_rates),
+        "forbid_hit_rate": _rate_dict(forbid_rates),
+        "answered_rate": _rate_dict(answered_rates),
+        "boundary_ok_rate": _rate_dict(boundary_ok_rates),
     }
 
 
@@ -1105,6 +1209,7 @@ def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
     records: list[EvalRecord] = []
     chains = ["old", "agent"] if args.chain == "both" else [args.chain]
     outline_sha = ""
+    dump_sink: Optional[list[dict]] = [] if args.dump_texts else None
 
     for chain in chains:
         if chain == "old":
@@ -1122,11 +1227,13 @@ def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
                     api_key=api_key,
                     client=client,
                     repeat=args.repeat,
+                    dump_sink=dump_sink,
                 )
             )
         else:
             agent_records, agent_meta = run_agent_chain(
                 scenarios, set_name=args.set, provider_kind=args.provider, repeat=args.repeat,
+                dump_sink=dump_sink,
             )
             records.extend(agent_records)
             outline_sha = agent_meta.get("outline_sha", "") or outline_sha
@@ -1137,6 +1244,21 @@ def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
     with jsonl_path.open("w", encoding="utf-8") as f:
         for r in records:
             f.write(json.dumps(r.to_jsonl_dict(), ensure_ascii=False) + "\n")
+
+    if args.dump_texts and dump_sink is not None:
+        texts_dir = out_dir / "texts"
+        texts_dir.mkdir(parents=True, exist_ok=True)
+        texts_path = texts_dir / f"{args.set}.jsonl"
+        with texts_path.open("w", encoding="utf-8") as f:
+            f.write(
+                json.dumps(
+                    {"_warning": "人工抽審用，含使用者問句與模型原文，⛔ 不進版控、不外傳、看完即刪"},
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+            for d in dump_sink:
+                f.write(json.dumps(d, ensure_ascii=False) + "\n")
 
     hardlines = compute_hardlines(records, manifest)
     repeat_summary = _repeat_summary(records)
@@ -1159,13 +1281,17 @@ def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
         if manifest["sets"][name].get("available")
     }
 
+    git_head = args.git_head or _git_head(root) or _git_head(_REPO_ROOT)
+
     report = render_report_md(
         records=records,
         hardlines=hardlines,
         samples_sha=samples_sha,
         rules_sha=rules_sha,
         outline_sha=outline_sha,
-        git_head=_git_head(root),
+        git_head=git_head,
+        repeat_summary=repeat_summary,
+        dump_texts=args.dump_texts,
     )
     (out_dir / "report.md").write_text(report, encoding="utf-8")
 

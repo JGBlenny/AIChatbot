@@ -30,13 +30,14 @@
     "sensitive": {
       "available": true,
       "path": ".kiro/specs/agentic-mcp-orchestration/eval/sensitive-v1.json",
-      "sha256": "c17cfcb73330bf1487413a346b226b1f5d7dc839d9a1dd28fd33aec6a091dad0",
+      "sha256": "b8ff58eaf3e37210c436065c4c5c8964baa8014fe5983b6fccd9830c2e3a42e8",
       "how_to_verify": "python3 -c \"import hashlib;print(hashlib.sha256(open('.kiro/specs/agentic-mcp-orchestration/eval/sensitive-v1.json','rb').read()).hexdigest())\"",
       "shape": "{items:[{id,q,fact_class,sensitive,expect_kind,must_not_contain}]}",
       "count": {
         "items": 30,
         "per_class_min": 5
-      }
+      },
+      "note": "2026-09-05（r9 非阻斷建議 A5）：must_not_contain 依 fact_class 補齊各 ≥3 個常見洩漏詞，sha256 已重算——此為經核准的維護更新，⛔ 非「看過評估結果後改樣本」。"
     },
     "traffic": {
       "available": false,

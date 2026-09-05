@@ -213,7 +213,7 @@ def test_traffic_unavailable_exits_4(sample_root, tmp_path):
 _EXPECTED_JSONL_KEYS = {
     "set", "idx", "turn", "chain", "kind", "answered", "handoff_reason",
     "sensitive_expected", "sensitive_leak", "boundary_expected", "boundary_ok",
-    "forbid_hit", "verifier_rejects", "rewrote_ok", "handoff_heuristic",
+    "forbid_hit", "forbid_terms_n", "verifier_rejects", "rewrote_ok", "handoff_heuristic",
     "latency_ms", "cost_usd", "knowledge_gap_unfilled", "rep",
     "answer_sha256", "answer_len",
 }
@@ -349,22 +349,36 @@ def test_agent_chain_multi_turn_carries_history(sample_root, tmp_path):
 
     import asyncio
 
-    asyncio.run(agent_eval._run_scenario_agent(runtime, identity, sc.turns))
+    results = asyncio.run(agent_eval._run_scenario_agent(runtime, identity, sc.turns))
+    turn1_answer = results[0][1].answer
 
     calls = provider.async_client.chat.completions.create.__self__.calls
     assert len(calls) >= 2
-    first_messages = calls[0]["messages"]
-    second_messages = calls[1]["messages"]
 
     def _all_text(messages):
         return "\n".join(str(m.get("content") or "") for m in messages)
 
+    def _last_user_content(messages):
+        user_msgs = [m for m in messages if m.get("role") == "user"]
+        return str(user_msgs[-1].get("content") or "") if user_msgs else ""
+
+    # A1：第 2 輪呼叫不假設是 calls[1]（重寫迴圈可能多打一次）——改以
+    # 「最後一則 user 訊息 == turn2.q」定位，找不到就是機制本身壞了。
+    turn2_calls = [c for c in calls if sc.turns[1].q in _last_user_content(c["messages"])]
+    assert turn2_calls, "找不到任何一次呼叫的最後一則 user 訊息是第 2 輪問句"
+    second_messages = turn2_calls[0]["messages"]
+    first_messages = calls[0]["messages"]
+
     # 第 2 輪的 messages 含第 1 輪的 user 問句
     assert sc.turns[0].q in _all_text(second_messages)
     # 且第 2 輪的最後一則使用者訊息是第 2 輪的 user 句
-    user_msgs = [m for m in second_messages if m.get("role") == "user"]
-    assert user_msgs, "第 2 輪 messages 應至少有一則 user 訊息"
-    assert sc.turns[1].q in str(user_msgs[-1].get("content") or "")
+    assert sc.turns[1].q in _last_user_content(second_messages)
+    # 第 2 輪的 messages 含第 1 輪的 assistant 回覆（DSP-022 dialog 歷史）
+    assistant_msgs = [m for m in second_messages if m.get("role") == "assistant"]
+    assert assistant_msgs, "第 2 輪 messages 應至少有一則 assistant 訊息"
+    assert any(str(m.get("content") or "") == turn1_answer for m in assistant_msgs), (
+        "第 2 輪應看到第 1 輪的 assistant 回覆內容"
+    )
     # 對照組：第 1 輪不該已經含第 2 輪的問句（機制沒把未來的話塞進歷史）
     assert sc.turns[1].q not in _all_text(first_messages)
 
@@ -820,3 +834,210 @@ def test_old_chain_structured_handoff_takes_precedence_over_heuristic():
     assert records[0].kind == "handoff"
     assert records[0].handoff_reason == "no_grounding"
     assert records[0].handoff_heuristic is False
+
+
+# ---------------------------------------------------------------------------
+# 11) A2：--dump-texts 原文抽審旁路（預設關）
+# ---------------------------------------------------------------------------
+
+
+def test_dump_texts_default_off_no_texts_dir(sample_root, tmp_path):
+    root, manifest_path = sample_root
+    out_dir = tmp_path / "out_no_dump"
+    code = agent_eval.main(
+        [
+            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake", "--limit", "1",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    assert not (out_dir / "texts").exists()
+
+
+def test_dump_texts_on_writes_warning_header_and_raw_text(sample_root, tmp_path):
+    root, manifest_path = sample_root
+    out_dir = tmp_path / "out_dump"
+    code = agent_eval.main(
+        [
+            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake", "--limit", "2", "--dump-texts",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+
+    texts_path = out_dir / "texts" / "topics.jsonl"
+    assert texts_path.is_file()
+    lines = texts_path.read_text(encoding="utf-8").strip().splitlines()
+    header = json.loads(lines[0])
+    assert "_warning" in header
+    assert "不進版控" in header["_warning"]
+    assert "看完即刪" in header["_warning"]
+
+    body_rows = [json.loads(l) for l in lines[1:]]
+    assert len(body_rows) == 2
+    for row in body_rows:
+        assert set(row.keys()) == {"set", "idx", "turn", "rep", "chain", "q", "answer", "handoff_reason", "kind"}
+
+    # 主 JSONL 的無原文紀律不變（--dump-texts 不影響它）
+    main_rows = [
+        json.loads(l)
+        for l in (out_dir / "topics.jsonl").read_text(encoding="utf-8").strip().splitlines()
+    ]
+    for row in main_rows:
+        assert not (agent_eval._NO_VERBATIM_KEYS & set(row.keys()))
+
+
+# ---------------------------------------------------------------------------
+# 12) A4：--repeat N>1 時 report.md 印「重複跑抖動」比率 mean/min/max
+# ---------------------------------------------------------------------------
+
+
+def test_report_has_repeat_jitter_section_when_repeat_gt_1(sample_root, tmp_path):
+    root, manifest_path = sample_root
+    out_dir = tmp_path / "out_report_repeat"
+    code = agent_eval.main(
+        [
+            "--set", "scenarios", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake", "--repeat", "2",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    report = (out_dir / "report.md").read_text(encoding="utf-8")
+    assert "重複跑抖動" in report
+    assert "sensitive_zero_leak_all_reps_pass" in report
+    for label in ("sensitive_leak_rate", "forbid_hit_rate", "answered_rate", "boundary_ok_rate"):
+        assert label in report
+
+
+def test_report_omits_repeat_jitter_section_when_repeat_1(sample_root, tmp_path):
+    root, manifest_path = sample_root
+    out_dir = tmp_path / "out_report_norepeat"
+    code = agent_eval.main(
+        [
+            "--set", "scenarios", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    report = (out_dir / "report.md").read_text(encoding="utf-8")
+    assert "重複跑抖動" not in report
+
+
+# ---------------------------------------------------------------------------
+# 13) A5：sensitive-v1.json 每題 must_not_contain ≥3；forbid_terms_n 透傳；
+#     空禁詞集 no_fabrication 附註「無鑑別力」
+# ---------------------------------------------------------------------------
+
+
+def test_real_sensitive_v1_each_item_has_at_least_3_forbid_terms():
+    manifest_path = agent_eval.DEFAULT_MANIFEST_PATH
+    manifest = agent_eval.load_manifest(manifest_path)
+    root = agent_eval._REPO_ROOT
+    check = agent_eval.verify_manifest(manifest, "sensitive", root=root)
+    assert check.ok is True, check.mismatches
+    scenarios = agent_eval.load_samples("sensitive", manifest, root=root)
+    for sc in scenarios:
+        for t in sc.turns:
+            assert len(t.must_not_contain) >= 3, f"{sc.idx} 禁詞數不足 3：{t.must_not_contain}"
+
+
+def test_no_fabrication_note_when_set_has_no_forbid_terms_at_all():
+    records = [
+        _rec(kind="answer", forbid_terms_n=0),
+        _rec(kind="handoff", forbid_terms_n=0),
+    ]
+    manifest = {"baseline": {"fixed_rate": {"value": 1.0}}}
+    h = agent_eval.compute_hardlines(records, manifest)
+    assert h["agent"]["no_fabrication"]["note"] == "本集無禁詞，此欄無鑑別力"
+
+
+def test_no_fabrication_no_note_when_some_forbid_terms_present():
+    records = [
+        _rec(kind="answer", forbid_terms_n=0),
+        _rec(kind="handoff", forbid_terms_n=3),
+    ]
+    manifest = {"baseline": {"fixed_rate": {"value": 1.0}}}
+    h = agent_eval.compute_hardlines(records, manifest)
+    assert h["agent"]["no_fabrication"]["note"] is None
+
+
+# ---------------------------------------------------------------------------
+# 14) A6：--git-head 由呼叫端傳入；main() 的 _git_head(root) 失敗退回
+#     _git_head(_REPO_ROOT)
+# ---------------------------------------------------------------------------
+
+
+def test_git_head_override_appears_in_report(sample_root, tmp_path):
+    root, manifest_path = sample_root
+    out_dir = tmp_path / "out_githead"
+    code = agent_eval.main(
+        [
+            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake", "--limit", "1", "--git-head", "deadbeef-fake-sha",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    report = (out_dir / "report.md").read_text(encoding="utf-8")
+    assert "deadbeef-fake-sha" in report
+
+
+def _fake_subprocess_run_keyed_by_cwd(success_cwds: dict) -> "callable":
+    """回傳一個可取代 `subprocess.run` 的替身：`cwd` 命中 `success_cwds` 的
+    key 就回傳該值當 `stdout`（returncode=0），否則模擬「非 git repo」
+    （returncode!=0）。⛔ 不依賴容器內是否真的裝了 `git` 執行檔——本容器
+    實測 `git` 不存在（`FileNotFoundError: 'git'`），拿真 git 當正對照組
+    在這個環境本身就不成立，量的是環境缺工具、不是 fallback 邏輯本身。"""
+    import subprocess as _subprocess
+
+    def _fake_run(args, cwd=None, capture_output=None, text=None, timeout=None):
+        key = str(cwd)
+        if key in success_cwds:
+            return _subprocess.CompletedProcess(args, 0, stdout=success_cwds[key] + "\n", stderr="")
+        return _subprocess.CompletedProcess(args, 128, stdout="", stderr="fatal: not a git repository")
+
+    return _fake_run
+
+
+def test_git_head_returns_empty_when_git_reports_non_repo(monkeypatch, tmp_path):
+    monkeypatch.setattr("subprocess.run", _fake_subprocess_run_keyed_by_cwd({}))
+    assert agent_eval._git_head(tmp_path) == ""
+
+
+def test_git_head_returns_sha_when_git_succeeds(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "subprocess.run", _fake_subprocess_run_keyed_by_cwd({str(tmp_path): "cafef00d"})
+    )
+    assert agent_eval._git_head(tmp_path) == "cafef00d"
+
+
+def test_main_falls_back_to_repo_root_git_head_when_root_not_a_repo(monkeypatch, sample_root, tmp_path):
+    """A6：`main()` 用 `_git_head(root)` 失敗（root 非 repo）時退回
+    `_git_head(_REPO_ROOT)`。`root`（`sample_root` 夾具的 tmp_path）模擬非
+    repo；`_REPO_ROOT` 換成一個「git 會成功」的假 cwd，驗證 report 印出的是
+    後者的 HEAD，證明真的走了 fallback 分支而非巧合印出兩者皆空。"""
+    root, manifest_path = sample_root
+    fake_repo_root = tmp_path / "fake_repo_root_cwd"
+    expected_head = "deadfeed0001"
+    monkeypatch.setattr(
+        "subprocess.run",
+        _fake_subprocess_run_keyed_by_cwd({str(fake_repo_root): expected_head}),
+    )
+    monkeypatch.setattr(agent_eval, "_REPO_ROOT", fake_repo_root)
+
+    out_dir = tmp_path / "out_fallback"
+    code = agent_eval.main(
+        [
+            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake", "--limit", "1",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    report = (out_dir / "report.md").read_text(encoding="utf-8")
+    assert agent_eval._git_head(root) == "", "前提不成立：root 這次應該模擬成非 repo"
+    assert expected_head in report
