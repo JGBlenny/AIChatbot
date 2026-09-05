@@ -153,7 +153,7 @@
   - 執行：mech-executor／effort 低——env 清單與 runbook 逐條指令＋預期輸出（⛔ 不打包腳本）
   - **收案註記（2026-09-05）**：mech-executor（worktree）→ 收檔。runbook 新增 §19（相依升級、五支 migration、內部 key、Origin、售前池標記、env 表、煙囪、回切、監控）；兩份 compose 加註解 env 清單；`docs/api/mcp-facade.md` §10 env 表（14 個，逐一 grep 程式核對）。**查證落差**：design 列的 `AGENT_BUDGET_*` 三 env 程式沒讀——主 session 補 `bootstrap.budget_from_env`（壞值／≤0 退預設，unit 1）並更正四處文件。
 - [ ] 4.4 M2 語義層收斂（業主 2026-09-05「依序處理」；三步嚴格順序、每步有數字才進下一步）：
-  - [ ] 4.4a 量測儀表化（executor，進行中）：runtime 可選 `attempt_sink`（預設 None、正式路徑不設、⛔ 不進 trace）；`--dump-texts` 旁路存每次被拒嘗試的 sentences／refs／verdict；修 `refs` 全空；新工具 `tools/agent_attempts_report.py` 統計拒因與 ref 樣態（不印原文）。不動任何尺。
+  - [x] 4.4a 量測儀表化（executor，2026-09-05 落地 `5b7dda0`，unit 696 綠）：runtime 可選 `attempt_sink`（預設 None、正式路徑不設、⛔ 不進 trace）；`--dump-texts` 旁路存每次被拒嘗試的 sentences／refs／verdict；修 `refs` 全空；新工具 `tools/agent_attempts_report.py` 統計拒因與 ref 樣態（不印原文）。不動任何尺。
   - [ ] 4.4b DSP-030 規則版離線量測：用六輪旁路原文＋抽審標籤（R4／R6 各 20 筆＋known_open 3 句），離線算「新資訊字元 k∈{2,3,4}／bigram 覆蓋率／數字日期能力動詞類」變體的抓到率與誤殺率；先定門檻、再實作 ③ 子成因 `novel_token`、再跑同 54 句對照（含抽審④）。
   - [ ] 4.4c NLI 離線量測（=5.8，只在 4.4b 後無據率仍高於門檻或誤殺失控時啟動）：同一批成對資料、`eval/nli-offline-plan.md` 凍結判準。
   - 判定：M2 回歸集階段的收案以 4.4b 後的六尺為準；放行證據仍待樣本 C（部署後）。
