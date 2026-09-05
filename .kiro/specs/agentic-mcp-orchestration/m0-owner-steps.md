@@ -44,7 +44,7 @@ curl -s http://localhost:8100/api/v1/agent/health -H "X-API-Key: $KEY" \
 ```
 預期：JSON `{"status": "ok" ...}`；`mcp_sdk` 欄在 1.7b 前為 `unavailable (DSP-014)`。缺 key 時應 `401`。
 
-## 3. jgb2 端：確認本機 `JGB_API_KEY` 的 resource 讀權（在 jgb2 主機／checkout 執行）— ⚠️ 2026-09-05 主 session 以真 API 探針（www.jgbsmart.com、role 20151）反推：**bills／contracts／estates／meters 四支 `success=True` 且回 `mapping`**；**`roles`（`GET /roles/20151/members`）不論帶不帶 `user_id` 皆 401「請先登入以查詢您的個人資料。」**——這是 jgb2 端回的，不是本地雙證降級。**需要你**：在 jgb2 查這把 key 對 `roles` 的 `permission-list`／`whitelist-list`（可能缺 `roles:read` 或該端點需 viewer 白名單），補後告訴我重探。accounts 域在此之前只會回 NO_MATCH，不擋 M2 prospect 影子（prospect 看不到 jgb2 工具）。
+## 3. jgb2 端：確認本機 `JGB_API_KEY` 的 resource 讀權（在 jgb2 主機／checkout 執行）— ✅ 2026-09-05 主 session 真 API 探針（www.jgbsmart.com、role 20151）：bills／contracts／estates／meters／roles **五支全 `success=True`**（roles 帶 keyword 回 102 筆成員候選）。⚠️ 第一次探針對 roles 誤報 401：那句「請先登入以查詢您的個人資料」是本 repo `jgb_system_api.DEGRADED_MESSAGE`（`get_team_members` 缺 `keyword` 直接本地降級，根本沒打到 jgb2），不是 jgb2 拒——主 session 一度誤判為 jgb2 端問題，已更正。**不需要業主在 jgb2 端動作。**
 
 ```bash
 cd ~/jgb/project/jgb/jgb2
