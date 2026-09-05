@@ -350,7 +350,8 @@ async def build_prospect_outline(db_pool) -> OutlineDoc:
     """
     # prospect ＝ b2b ＋ 無 role_id（memory project_presales_target_user_routing；jgb2 面板送 prospect 時
     # mode=b2b；缺口地圖 POOL_PRED 亦為 business_types && ['system_provider']）。⛔ 勿改回 b2c：
-    # b2c 分支會放行 business_types IS NULL 與 all_users，把 50 筆通用列掃進售前大綱（2026-09-05 標記預覽 81≠31 抓到）。
+    # b2c 分支對**本函式**（母體已鎖 outline_approved_by IS NOT NULL）會用 vendor 1 業態濾掉 23/31 筆純 system_provider 列
+    # ⇒ 大綱只剩 8 筆（recheck 突變實測）；對**標記 SQL** 則反向多掃 50 筆通用列（預覽 81≠31）。兩邊都錯，方向不同。
     identity = Identity(vendor_id=1, target_user="prospect", mode="b2b")
     rows = _fetch_prospect_pool_rows(db_pool, identity)
 
