@@ -778,6 +778,8 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
   "UPDATE knowledge_base SET outline_approved_by = NULL, outline_approved_at = NULL WHERE outline_approved_by = 'owner-20260905';"
 ```
 
+
+> ⚠️ **連鎖（2026-09-05 本機實跑抓到）**：上述 UPDATE 會觸發 `update_kb_updated_at`，讓標記列的 `updated_at` 變成當日；未宣告 `instance_applicability` 的列會讓 `make audit` 不變量 10 紅。線上執行後請照 DSP-019 同法補宣告（`UPDATE knowledge_base SET generation_metadata = coalesce(generation_metadata,'{}'::jsonb) || '{"instance_applicability":"general"}' WHERE outline_approved_by='owner-<日期>' AND NOT coalesce(generation_metadata ? 'instance_applicability', false);`），並把補宣告的 id 登記進 `.kiro/specs/conversational-routing-execution/r10p/v1-scope-exclusions.txt`（不變量 17）。
 ### 19-5 env 一覽（名稱／預設／作用／開啟時機）
 
 ⛔ 以下皆以程式實際讀取為準（`os.getenv`／`os.environ.get`，逐一 grep 核對，見各列查證指令）；

@@ -98,3 +98,6 @@ Rollback（僅在標記錯誤時使用，還原本次以 `owner-20260905` 寫入
 docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
   "UPDATE knowledge_base SET outline_approved_by = NULL, outline_approved_at = NULL WHERE outline_approved_by = 'owner-20260905';"
 ```
+
+
+## 6.（事後補）不變量 10 連鎖 — ✅ 2026-09-05 業主「授權」：第 5 節的 UPDATE 觸發 `updated_at` trigger，17 列售前知識需補宣告 `instance_applicability=general`（DSP-019），已執行並登記 exclusions；`make audit` PASS。線上部署照做（runbook §19-4 需補此步）。
