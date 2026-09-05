@@ -21,6 +21,12 @@ from pathlib import Path
 from typing import Optional
 
 from services.agent.output_schema import AgentOutput, Sentence, VerifierRules, VerifierVerdict
+from services.agent.provenance_units import (  # 葉模組：切句與大綱 source 正規化（DSP-029 落地取捨④）
+    _SENTENCE_ENDS,
+    _canonicalize_outline_sources,
+    _split_sentences,
+    split_sentences,
+)
 from services.agent.tools.registry import Provenance, ToolResult
 from services.presales_gate import FactClass, HANDOFF_WORDS, HandoffReason, SENSITIVE, scan_handoff_mentions
 
@@ -28,7 +34,6 @@ from services.presales_gate import FactClass, HANDOFF_WORDS, HandoffReason, SENS
 _CLAUSE_SEPS: tuple[str, ...] = ("，", ",", "、", "；", ";")
 #: 句末標點（拆片段用，⛔ 與 `presales_gate._sentences` 各自維護——那邊是決策層私有符號，
 #: 這裡是 verifier 自己拆句做 schema 覆蓋檢查，兩處標點集合恰好同源純屬巧合，不是耦合）。
-_SENTENCE_ENDS: tuple[str, ...] = ("。", "！", "!", "？", "?", "\n")
 #: 問句結尾標記（NFKC 後判定）。
 _QUESTION_ENDS: tuple[str, ...] = ("？", "?")
 #: 問候詞封閉表（結構判定用，非業務可調規則，故不放進 `VerifierRules`）。
@@ -56,18 +61,6 @@ _STOPWORD_CHARS: frozenset[str] = frozenset(
 def _nfkc(text: Optional[str]) -> str:
     return unicodedata.normalize("NFKC", text or "")
 
-
-def _split_sentences(text: str) -> list[str]:
-    sents: list[str] = []
-    buf = ""
-    for ch in text:
-        buf += ch
-        if ch in _SENTENCE_ENDS:
-            sents.append(buf)
-            buf = ""
-    if buf:
-        sents.append(buf)
-    return sents
 
 
 def _split_clauses(sentence: str) -> list[str]:
@@ -395,7 +388,6 @@ class OutputVerifier:
             # 少跑正規化這一步，自證量到的就不是產線上跑的那條路（DSP-021 的兩種
             # 大綱 source 抄錯會被誤判成 source_not_found）。
             from services.agent.provenance_units import resolve_citations  # 見 _verify_citation 的說明
-            from services.agent.runtime import _canonicalize_outline_sources
 
             out = _canonicalize_outline_sources(out)
             resolved, resolve_errors = resolve_citations(out, tool_results)
@@ -427,15 +419,6 @@ class OutputVerifier:
                 )
         return len(cases)
 
-
-def split_sentences(text: str) -> list[str]:
-    """公開版切句（DSP-021）：呼叫端要重現「系統怎麼切片段」時用它，
-    與 `verify()` 步②(d) 用的是同一個函式，⛔ 不得另寫一份規則。
-
-    DSP-028 後 Runtime 的 SCHEMA 回饋改為直接指出「空陣列／第 N 筆空 text／
-    第 N 筆 cite 越界」三種原因，不再回報切句結果；此函式仍公開，
-    供測試與工具重現片段邊界。"""
-    return _split_sentences(text)
 
 
 __all__ = ["OutputVerifier", "split_sentences"]

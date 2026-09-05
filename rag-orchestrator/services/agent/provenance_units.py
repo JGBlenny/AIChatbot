@@ -21,7 +21,73 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from services.agent.verifier import split_sentences
+from services.agent.output_schema import AgentOutput
+
+
+
+# ---------------------------------------------------------------------------
+# 切句（Verifier 步②與 unit 編號共用的唯一實作；原在 verifier.py，DSP-029 落地取捨④下沉）
+# ---------------------------------------------------------------------------
+
+_SENTENCE_ENDS: tuple[str, ...] = ("。", "！", "!", "？", "?", "\n")
+
+
+def _split_sentences(text: str) -> list[str]:
+    sents: list[str] = []
+    buf = ""
+    for ch in text:
+        buf += ch
+        if ch in _SENTENCE_ENDS:
+            sents.append(buf)
+            buf = ""
+    if buf:
+        sents.append(buf)
+    return sents
+
+
+
+def split_sentences(text: str) -> list[str]:
+    """公開版切句（DSP-021）：呼叫端要重現「系統怎麼切片段」時用它，
+    與 `verify()` 步②(d) 用的是同一個函式，⛔ 不得另寫一份規則。
+
+    DSP-028 後 Runtime 的 SCHEMA 回饋改為直接指出「空陣列／第 N 筆空 text／
+    第 N 筆 cite 越界」三種原因，不再回報切句結果；此函式仍公開，
+    供測試與工具重現片段邊界。"""
+    return _split_sentences(text)
+
+
+# ---------------------------------------------------------------------------
+# 大綱保留 tool_call_id 與 source 機械正規化（原在 runtime.py，下沉以解 verifier↔runtime 循環）
+# ---------------------------------------------------------------------------
+
+OUTLINE_TOOL_CALL_ID = "outline"
+
+
+def _canonicalize_outline_sources(out: AgentOutput) -> AgentOutput:
+    """DSP-021：只對 `tool_call_id == OUTLINE_TOOL_CALL_ID` 的引用做**機械**正規化——
+    去掉 id 後面誤抄的標題（`outline:listing 房源` → `outline:listing`）、補回被吃掉的
+    `outline:` 前綴（`positioning` → `outline:positioning`）。真線路 2026-09-05 兩種都出現過，
+    而 Verifier 找不到來源時回的是 QUOTE_NOT_VERBATIM（引文其實逐字）。
+    ⛔ 不碰 `unit`、不碰其他 tool_call_id：這不是放寬尺，是把「同一個 id 的兩種寫法」
+    收斂成一種，section id 仍要與 provenance 完全相等才解析得到片段。
+
+    ⚠️ DSP-029 之後這條**更要緊**：`source` 從元資料變成定址的一部分
+    （`(tool_call_id, source, unit)`），標籤錯不再有「引文逐字仍放行」的補救，
+    直接就是 `SCHEMA(source_not_found)`。"""
+    if not out.citations:
+        return out
+    changed = False
+    fixed = []
+    for c in out.citations:
+        if c.tool_call_id == OUTLINE_TOOL_CALL_ID:
+            token = (c.source or "").strip().split()[0] if (c.source or "").strip() else ""
+            if token and not token.startswith("outline:"):
+                token = f"outline:{token}"
+            if token != c.source:
+                c = c.model_copy(update={"source": token})
+                changed = True
+        fixed.append(c)
+    return out.model_copy(update={"citations": fixed}) if changed else out
 
 
 def provenance_units(text: str) -> list[str]:

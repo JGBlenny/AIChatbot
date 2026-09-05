@@ -62,7 +62,12 @@ from services.agent.identity import Identity, Stage
 from services.agent.mcp_facade import current_stage
 from services.agent.output_schema import AgentOutput, VerifierVerdict
 from services.agent.prompt_assembler import new_nonce, wrap_provenance_data, wrap_tool_data
-from services.agent.provenance_units import provenance_units, resolve_citations
+from services.agent.provenance_units import (  # OUTLINE_TOOL_CALL_ID／_canonicalize_outline_sources 下沉至葉模組（DSP-029 落地取捨④）
+    OUTLINE_TOOL_CALL_ID,
+    _canonicalize_outline_sources,
+    provenance_units,
+    resolve_citations,
+)
 from services.agent.tools.registry import Provenance, ToolRegistry, ToolResult, tool_name_from_openai
 from services.conversational_config import (
     effective_handoff_channel,
@@ -86,7 +91,6 @@ logger = logging.getLogger(__name__)
 #: 就是因為缺這條——模型照鐵則引用大綱、Verifier 卻只認工具回傳 ⇒ 兩次
 #: QUOTE_NOT_VERBATIM → budget_exhausted。OpenAI 的 tool_call id 一律 `call_…`，
 #: 若模型偽造同名 id，下方以 `_seed_outline_provenance` 的結果為準、⛔ 不覆寫。
-OUTLINE_TOOL_CALL_ID = "outline"
 
 #: DSP-022：`state["agent"]["dialog"]` 保留的訊息數上限（user＋assistant 各一則算 2）。
 #: 10 輪對話；超過丟最舊——歷史全靠這裡，⛔ 不另存工具訊息（design 元件 5：dialog 只有 user／assistant）。
@@ -104,32 +108,6 @@ def _append_dialog(agent_state: dict, user_message: str, answer: str) -> None:
     if len(dialog) > DIALOG_MAX_MESSAGES:
         del dialog[: len(dialog) - DIALOG_MAX_MESSAGES]
 
-
-def _canonicalize_outline_sources(out: AgentOutput) -> AgentOutput:
-    """DSP-021：只對 `tool_call_id == OUTLINE_TOOL_CALL_ID` 的引用做**機械**正規化——
-    去掉 id 後面誤抄的標題（`outline:listing 房源` → `outline:listing`）、補回被吃掉的
-    `outline:` 前綴（`positioning` → `outline:positioning`）。真線路 2026-09-05 兩種都出現過，
-    而 Verifier 找不到來源時回的是 QUOTE_NOT_VERBATIM（引文其實逐字）。
-    ⛔ 不碰 `unit`、不碰其他 tool_call_id：這不是放寬尺，是把「同一個 id 的兩種寫法」
-    收斂成一種，section id 仍要與 provenance 完全相等才解析得到片段。
-
-    ⚠️ DSP-029 之後這條**更要緊**：`source` 從元資料變成定址的一部分
-    （`(tool_call_id, source, unit)`），標籤錯不再有「引文逐字仍放行」的補救，
-    直接就是 `SCHEMA(source_not_found)`。"""
-    if not out.citations:
-        return out
-    changed = False
-    fixed = []
-    for c in out.citations:
-        if c.tool_call_id == OUTLINE_TOOL_CALL_ID:
-            token = (c.source or "").strip().split()[0] if (c.source or "").strip() else ""
-            if token and not token.startswith("outline:"):
-                token = f"outline:{token}"
-            if token != c.source:
-                c = c.model_copy(update={"source": token})
-                changed = True
-        fixed.append(c)
-    return out.model_copy(update={"citations": fixed}) if changed else out
 
 
 def _seed_outline_provenance(outline: Any) -> Optional[ToolResult]:
