@@ -348,7 +348,10 @@ async def build_prospect_outline(db_pool) -> OutlineDoc:
     `kb.get` 整數 id 取回（那條路徑走 `tools/kb.py:fetch_visible_row`，
     與本旗標無關，見 migration 檔頭註解）。
     """
-    identity = Identity(vendor_id=1, target_user="prospect", mode="b2c")
+    # prospect ＝ b2b ＋ 無 role_id（memory project_presales_target_user_routing；jgb2 面板送 prospect 時
+    # mode=b2b；缺口地圖 POOL_PRED 亦為 business_types && ['system_provider']）。⛔ 勿改回 b2c：
+    # b2c 分支會放行 business_types IS NULL 與 all_users，把 50 筆通用列掃進售前大綱（2026-09-05 標記預覽 81≠31 抓到）。
+    identity = Identity(vendor_id=1, target_user="prospect", mode="b2b")
     rows = _fetch_prospect_pool_rows(db_pool, identity)
 
     buckets: dict[str, dict] = {}  # slug -> {"title": str, "source_ids": [int]}

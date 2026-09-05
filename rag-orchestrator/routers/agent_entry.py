@@ -39,8 +39,9 @@ def agent_audiences() -> frozenset[str]:
 
 def build_identity(request) -> Identity:
     """從 `/api/v1/message` 的請求欄位組 Identity——上游信任輸入（DSP-011），⛔ 不驗真偽。"""
-    mode = getattr(request, "mode", None) or "b2c"
     target_user = getattr(request, "target_user", None) or "tenant"
+    # prospect 缺 mode 時預設 b2b（售前池是 b2b 池：business_types && ['system_provider']，見 outline.py 註解）
+    mode = getattr(request, "mode", None) or ("b2b" if target_user == "prospect" else "b2c")
     role_id = getattr(request, "role_id", None)
     return Identity(
         vendor_id=getattr(request, "vendor_id", None) or 0,

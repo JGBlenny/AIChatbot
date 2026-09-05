@@ -175,3 +175,10 @@ def test_app_agent_configured_is_plain_bool_and_lifespan_is_context_manager(monk
     assert hasattr(app_module.lifespan, "__wrapped__") or app_module.lifespan.__name__ == "lifespan"
     import inspect
     assert not inspect.isasyncgenfunction(app_module.lifespan)   # 已被 asynccontextmanager 包裝
+
+
+@pytest.mark.unit
+def test_prospect_without_mode_defaults_to_b2b_pool():
+    """售前池是 b2b 池（business_types && ['system_provider']）；prospect 缺 mode 不得落到 b2c（會掃進通用列）。"""
+    assert ae.build_identity(_req(mode=None, target_user="prospect")).mode == "b2b"
+    assert ae.build_identity(_req(mode=None, target_user="tenant")).mode == "b2c"     # 正對照
