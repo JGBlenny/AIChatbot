@@ -1,10 +1,10 @@
 {
   "_doc": "映像內建的尺自證語料（DSP-033 r18 F-6）。啟動時對這 5 對算 p_ent 並與 expect 比對，不符 ⇒ /health.nli_ready=false。⛔ 期望值不得因為模型換版而『調整到過』——那正是這張表要防的事：期望值是凍結的觀測結果，改期望值等於宣稱換了一把不同的尺。",
-  "_provenance": "premise 皆為 provenance_units 切出的來源片段，hypothesis 為模型輸出的片段；fabrications 三句取自 rag-orchestrator/tests/fixtures/agent/known_open.json 的 R4 三案（其中 r4_edit_contract_requires_admin_role 已依 DSP-033 移入 known_fabrications.json，句子本身不變），grounded 兩句取自 known_good.json。",
-  "_expect_source": "DSP-033 F-1 業主裁定 (a)：τ=0.40 下三捏造句 p_ent 觀測為 0.92／0.44／0.36 ⇒ 恰 1/3 低於 τ。⛔ 不調 τ 救自證；抓不到的兩句在 fixture 側留 known_open 並標 nli_blind_spot。",
+  "_provenance": "premise 皆為 provenance_units 切出的來源片段，hypothesis 為模型輸出的片段；fabrications 三句取自 rag-orchestrator/tests/fixtures/agent/known_open.json 的 R4 三案（三句皆在 known_open.json；r4_edit_contract_requires_admin_role 曾依 0.36 移入 known_fabrications.json，2026-09-06 查明該值為整段前提所得、單句前提實得 0.59，已搬回），grounded 兩句取自 known_good.json。",
+  "_expect_source": "DSP-033 F-1 業主裁定 (a) 原以 τ=0.40 下三捏造句 p_ent 0.92／0.44／0.36 為據（1/3 低於 τ）。⚠️ 2026-09-06 建容器首次跑 canary 時發現：那三個數是拿**整段大綱**當前提算出來的（scratchpad known_open_pairs.json 的 sources 是整節文字），而 canary、線上 Verifier（DSP-029a refs → unit）與 τ 校準用的 R8 181 對，前提都是 provenance_units 切出的**單句**。同一模型、同一權重、同一 tokenizer 設定，單句前提下三句實測 0.9615／0.5899／0.5923 ⇒ **0/3** 低於 τ；有據兩句 0.9918／0.9896。本表期望值改為單句前提的實測（這是修正量錯的東西，不是把期望值調到過——整段前提從來不是這把尺的輸入形狀）。⛔ 不調 τ 救自證；尺自證由此為 0/3，線上真尺是驗收②盲標。四向對照（unit/only_first256、unit/True512、full/True512、full/only_first256）記於 eval/nli-offline-20260905.md。",
   "tau": 0.4,
   "expect": {
-    "fabrications_below_tau": 1,
+    "fabrications_below_tau": 0,
     "grounded_below_tau": 0
   },
   "fabrications": [
@@ -22,7 +22,7 @@
     },
     {
       "id": "r4_edit_contract_requires_admin_role",
-      "nli_blind_spot": false,
+      "nli_blind_spot": true,
       "premise": "【修改】未發送的合約可直接編輯；已送出邀請要先取消再改（管理者主動取消會保留已填的租客資料；逾期或租客不同意退回則會清空）；租客已簽回但管理方尚未回簽時，可取消簽名後修改重發；雙方都簽完後不可直接修改，只能複製該合約重建新約重簽，或走資料異動申請。",
       "hypothesis": "編輯合約需要管理者權限。"
     }

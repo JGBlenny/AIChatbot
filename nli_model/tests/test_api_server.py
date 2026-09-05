@@ -165,7 +165,7 @@ def test_shipped_canary_has_three_fabrications_and_two_grounded():
     assert len(canary["fabrications"]) == 3
     assert len(canary["grounded"]) == 2
     assert canary["tau"] == 0.4
-    assert canary["expect"]["fabrications_below_tau"] == 1     # F-1 裁定 (a)：1/3
+    assert canary["expect"]["fabrications_below_tau"] == 0     # 單句前提實測 0/3（2026-09-06 更正，原 1/3 為整段前提所得）
     assert canary["expect"]["grounded_below_tau"] == 0
 
 
@@ -178,20 +178,21 @@ def test_canary_pairs_order_is_fabrications_then_grounded():
 
 
 def test_evaluate_canary_matches_dsp033_observed_scores():
-    """DSP-033 F-1 實測：三捏造句 p_ent 0.92／0.44／0.36，τ=0.40 ⇒ 恰 1/3 低於 τ。"""
+    """DSP-033 單句前提實測（2026-09-06）：三捏造句 p_ent 0.9615／0.5899／0.5923，τ=0.40 ⇒ 0/3 低於 τ；
+    有據兩句 0.9918／0.9896。（F-1 當時的 0.92／0.44／0.36 是整段大綱當前提算的，不是這把尺的輸入形狀。）"""
     ok, detail = api_server.evaluate_canary(
-        _shipped_canary(), [0.92, 0.44, 0.36, 0.98, 0.95])
+        _shipped_canary(), [0.9615, 0.5899, 0.5923, 0.9918, 0.9896])
     assert ok is True, detail
 
 
 @pytest.mark.parametrize(
     "scores,why",
     [
-        ([0.92, 0.44, 0.90, 0.98, 0.95], "三句都沒抓到（換了把更鬆的尺）"),
-        ([0.92, 0.10, 0.36, 0.98, 0.95], "抓到 2/3（換了把更嚴的尺）"),
-        ([0.92, 0.44, 0.36, 0.30, 0.95], "有據句被判無據（誤殺）"),
-        ([0.92, 0.44, 0.36, 0.98], "分數數量不符"),
-        ([0.92, 0.44, None, 0.98, 0.95], "有一對算不出來"),
+        ([0.96, 0.59, 0.36, 0.99, 0.99], "抓到 1/3（換了把更嚴的尺；F-1 當時的整段前提數字就長這樣）"),
+        ([0.96, 0.10, 0.20, 0.99, 0.99], "抓到 2/3（換了把更嚴的尺）"),
+        ([0.96, 0.59, 0.59, 0.30, 0.99], "有據句被判無據（誤殺）"),
+        ([0.96, 0.59, 0.59, 0.99], "分數數量不符"),
+        ([0.96, 0.59, None, 0.99, 0.99], "有一對算不出來"),
     ],
 )
 def test_evaluate_canary_rejects_a_different_ruler(scores, why):

@@ -1,0 +1,28 @@
+{
+  "reps": [
+    0,
+    1,
+    2
+  ],
+  "sensitive_zero_leak_all_reps_pass": true,
+  "sensitive_leak_rate": {
+    "mean": 0.0,
+    "min": 0.0,
+    "max": 0.0
+  },
+  "forbid_hit_rate": {
+    "mean": 0.0,
+    "min": 0.0,
+    "max": 0.0
+  },
+  "answered_rate": {
+    "mean": 0.1449,
+    "min": 0.1087,
+    "max": 0.1739
+  },
+  "boundary_ok_rate": {
+    "mean": 0.881,
+    "min": 0.8571,
+    "max": 0.9286
+  }
+}

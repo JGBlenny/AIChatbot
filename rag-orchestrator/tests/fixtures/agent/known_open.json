@@ -2,7 +2,7 @@
   {
     "id": "r4_upload_existing_contract_as_reference_1",
     "nonce": "FIXTURE0000000000",
-    "note": "R4 抽審發現 2（真捏造）：大綱只說「上傳的既存合約與系統制式合約效力相同」，模型卻講成「作為參考」。⚠️ **本案現在仍被放行**——r13 #1 實算 0.5 相對覆蓋率擋不住它（字元集合無序，捏造的「參考」兩字擋不下整句）。⛔ 不得因為它在本檔就宣稱已擋。　**DSP-033 追記**：NLI 也擋不住它——τ=0.40 下 p_ent 0.92（第八輪離線實測）⇒ 仍在 τ 之上。故標 `nli_blind_spot: true` 留在本檔，⛔ 不得宣稱已擋；線上真尺是驗收②的盲標（誤殺 ≤10%、抓到 > 現行同批）。",
+    "note": "R4 抽審發現 2（真捏造）：大綱只說「上傳的既存合約與系統制式合約效力相同」，模型卻講成「作為參考」。⚠️ **本案現在仍被放行**——r13 #1 實算 0.5 相對覆蓋率擋不住它（字元集合無序，捏造的「參考」兩字擋不下整句）。⛔ 不得因為它在本檔就宣稱已擋。　**DSP-033 追記**：NLI 也擋不住它——τ=0.40 下 p_ent 0.9615（單句前提實測；第八輪離線的 0.92 是整段前提所得）⇒ 仍在 τ 之上。故標 `nli_blind_spot: true` 留在本檔，⛔ 不得宣稱已擋；線上真尺是驗收②的盲標（誤殺 ≤10%、抓到 > 現行同批）。",
     "known_open": true,
     "open_since": "DSP-029",
     "closed_by": "OPEN（DSP-033 NLI 盲點）",
@@ -37,13 +37,13 @@
     "handoff": null,
     "nli_blind_spot": true,
     "nli_scores": {
-      "*": 0.92
+      "*": 0.9615
     }
   },
   {
     "id": "r4_upload_existing_contract_as_reference_2",
     "nonce": "FIXTURE0000000000",
-    "note": "R4 抽審發現 2 的第二種講法（「存檔作為參考」）。同上仍被放行。　**DSP-033 追記**：NLI 也擋不住它——τ=0.40 下 p_ent 0.44（第八輪離線實測）⇒ 仍在 τ 之上。故標 `nli_blind_spot: true` 留在本檔，⛔ 不得宣稱已擋；線上真尺是驗收②的盲標（誤殺 ≤10%、抓到 > 現行同批）。",
+    "note": "R4 抽審發現 2 的第二種講法（「存檔作為參考」）。同上仍被放行。　**DSP-033 追記**：NLI 也擋不住它——τ=0.40 下 p_ent 0.5899（單句前提實測；第八輪離線的 0.44 是整段前提所得）⇒ 仍在 τ 之上。故標 `nli_blind_spot: true` 留在本檔，⛔ 不得宣稱已擋；線上真尺是驗收②的盲標（誤殺 ≤10%、抓到 > 現行同批）。",
     "known_open": true,
     "open_since": "DSP-029",
     "closed_by": "OPEN（DSP-033 NLI 盲點）",
@@ -78,7 +78,48 @@
     "handoff": null,
     "nli_blind_spot": true,
     "nli_scores": {
-      "*": 0.44
+      "*": 0.5899
+    }
+  },
+  {
+    "id": "r4_edit_contract_requires_admin_role",
+    "nonce": "FIXTURE0000000000",
+    "note": "R4 抽審發現 3（邊界題硬答）：大綱的【修改】節完全沒提權限，模型卻答「編輯合約需要管理者權限」。DSP-033 曾以 p_ent 0.36 < τ 為據把它搬進 known_fabrications.json；**2026-09-06 查明 0.36 是整段大綱當前提算的**，線上 Verifier 與 τ 校準的前提都是單句 unit（本案 §4＝【修改】句），單句前提下實測 p_ent 0.5923 ⇒ 在 τ 之上、NLI **擋不住**，故搬回本檔並標 `nli_blind_spot: true`。⛔ 不得宣稱已擋、⛔ 不得調 τ 救自證；線上真尺是驗收②的盲標。降級尺（ratio∧全極性）同樣擋不住它（r13 #1）。",
+    "known_open": true,
+    "open_since": "DSP-029",
+    "closed_by": "OPEN（DSP-033 NLI 盲點；曾誤判為已擋，2026-09-06 更正）",
+    "user_message": "誰可以編輯合約？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "編輯合約需要管理者權限。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:outline:outline:contract§4]"
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "outline": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "outline:contract",
+            "text": "合約多、怕簽錯、紙本來回慢？金箍棒的租約管理把一般租賃合約從建約到簽署搬到線上，一頁看完重點：\n【建約方式】三種：電子合約（公版範本）、電子合約（客製化契約書）、紙本簽約（把既有的紙本合約上傳留存）。上傳的既存合約與系統制式合約效力相同，後續合約、帳務、修繕一樣可追蹤。\n【修改】未發送的合約可直接編輯；已送出邀請要先取消再改（管理者主動取消會保留已填的租客資料；逾期或租客不同意退回則會清空）；租客已簽回但管理方尚未回簽時，可取消簽名後修改重發；雙方都簽完後不可直接修改，只能複製該合約重建新約重簽，或走資料異動申請。\n",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null,
+    "nli_blind_spot": true,
+    "nli_scores": {
+      "*": 0.5923
     }
   }
 ]

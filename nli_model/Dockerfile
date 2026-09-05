@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 #       ⛔ 不預設放行——沒有期望值也建得起來的檢查是裝飾品。
 # ---------------------------------------------------------------------------
 ARG NLI_MODEL_REVISION=864d25be3ce5e90d9193cb49d9fbd52722cdc6b0
-ARG NLI_MODEL_SHA256=""
+ARG NLI_MODEL_SHA256="405d2ae08e70cd36bb2f42b4c9b39ca5cf65a50b982694199cd3009b5eb72f79"
 ENV NLI_MODEL_DIR=/models/erlangshen-110m-nli
 ENV NLI_MODEL_REVISION=${NLI_MODEL_REVISION}
 ENV NLI_MODEL_SHA256=${NLI_MODEL_SHA256}

@@ -361,14 +361,17 @@ services:
       args:
         # ⚠️ 首次建置時把 model_fingerprint.py 印出的值填進來（它會先失敗並告訴你），
         #    然後 commit 這一行。⛔ 留空會讓建置失敗，那是刻意的 fail-closed。
-        NLI_MODEL_SHA256: ${NLI_MODEL_SHA256:-}
+        NLI_MODEL_SHA256: ${NLI_MODEL_SHA256:-405d2ae08e70cd36bb2f42b4c9b39ca5cf65a50b982694199cd3009b5eb72f79}
     container_name: aichatbot-nli-model
     environment:
       TZ: Asia/Taipei
     # DSP-033 P2-4：⛔ **不對主機發佈埠**——只走 compose 網路。
     # 這個服務吃的是知識庫原文與模型輸出，沒有任何理由讓它從主機可達。
-    # r18 F-9：1 GB 上限（110M 參數 CPU 推論；部署前量常駐 RSS 進 runbook）。
-    mem_limit: 1g
+    # r18 F-9 原 1 GB 上限；2026-09-06 本機實測：權重 fp32 ≈440 MiB＋torch/transformers 映射＋
+    # 模型檔頁快取 ⇒ cgroup memory.peak 撞滿 1 GiB、memory.events max 1990 次、RSS 被換出到 70 MiB，
+    # 每句對推論 p50 589 ms（權重在 swap）。改 1.5 GiB：啟動峰值 791 MiB、負載後 648–746 MiB 都有餘裕。
+    # 部署前仍要在部署機量常駐 RSS 進 runbook。
+    mem_limit: 1536m
     restart: unless-stopped
     healthcheck:
       # 映像無 curl（同 semantic-model 2026-07-07 的坑）→ python urllib。

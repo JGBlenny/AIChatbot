@@ -101,8 +101,9 @@ def verifier(rules: VerifierRules) -> OutputVerifier:
 _FABRICATIONS = _load_cases("known_fabrications.json")
 _GOOD = _load_cases("known_good.json")
 #: DSP-029 r13 #1：**已知擋不住**的捏造句（`expect_ok=True`）。⛔ 它們不是通過的
-#: 證據，是「還沒擋住」這件事的可執行紀錄。DSP-033 把其中「需要管理者權限」一句
-#: 搬進 known_fabrications（NLI 擋住了）；剩下兩句標 `nli_blind_spot`。
+#: 證據，是「還沒擋住」這件事的可執行紀錄。DSP-033 曾把「需要管理者權限」一句搬進
+#: known_fabrications（p_ent 0.36），2026-09-06 查明該值是整段前提所得、單句前提實測 0.59 ⇒
+#: 搬回；三句皆標 `nli_blind_spot`。
 _KNOWN_OPEN = _load_cases("known_open.json")
 
 
@@ -137,7 +138,7 @@ def test_fabrications_cover_all_reasons():
 def test_known_fabrication_rejected_with_expected_reason(verifier, case, mode):
     """⚠️ 少數案例在**降級模式下會被放行**（`expect_ok_degraded: true`）——那不是
     測試放水，是「降級尺比較鬆」這件事的可執行紀錄（例如 NLI 才擋得住的
-    `r4_edit_contract_requires_admin_role`）。⛔ 不得為了讓兩模式一致而刪掉它們。"""
+    `nli_not_entailed_extra_condition`）。⛔ 不得為了讓兩模式一致而刪掉它們。"""
     outcome = _run(verifier, case, mode)
     verdict = outcome.verdict
     # ⚠️ 在步③之前就被拒的案（handoff／敏感／結構）根本沒問過 NLI ⇒ 不算降級。
@@ -183,7 +184,7 @@ def test_nli_mode_and_degraded_mode_are_actually_different_rulers(verifier):
     （例如 `_verify_core` 的 `nli_mode` 旗標被誰接錯線），而全部照樣綠。
     這裡指名兩個案例：一個只有 NLI 擋得住、一個只有降級尺會擋（誤殺）。
     """
-    only_nli = next(c for c in _FABRICATIONS if c["id"] == "r4_edit_contract_requires_admin_role")
+    only_nli = next(c for c in _FABRICATIONS if c["id"] == "nli_not_entailed_extra_condition")
     assert _verdict(verifier, only_nli, "nli").reason == "NOT_ENTAILED"
     assert _verdict(verifier, only_nli, "degraded").ok is True
 
@@ -414,7 +415,6 @@ def test_impure_question_with_valid_citation_passes(verifier):
         ("narrow_polarity_same_root_one_side_negated", "POLARITY_MISMATCH"),
         ("nli_not_entailed_extra_condition", "NOT_ENTAILED"),
         ("hypothesis_too_long_pair_error_is_rejected", "NOT_ENTAILED"),
-        ("r4_edit_contract_requires_admin_role", "NOT_ENTAILED"),
     ],
 )
 def test_specific_named_scenarios(verifier, case_id, expected_reason):
@@ -574,15 +574,15 @@ def test_shipped_fixtures_include_known_open(verifier):
     這件事就這樣從紀錄裡消失。"""
     assert (_FIXTURES_DIR / "known_open.json").exists()
     n = verifier.self_test(_FIXTURES_DIR)
-    assert n == len(_KNOWN_OPEN) == 2, "DSP-033 把 R4 第三句搬進 known_fabrications 後剩兩句"
+    assert n == len(_KNOWN_OPEN) == 3, "R4 三句皆在 known_open（2026-09-06 更正：單句前提下 NLI 三句都擋不住）"
 
 
 @pytest.mark.parametrize("mode", _MODES)
 @pytest.mark.parametrize("case", _KNOWN_OPEN, ids=[c["id"] for c in _KNOWN_OPEN])
 def test_known_open_cases_are_still_passing(verifier, case, mode):
-    """r13 #1：這兩句**現在確實會被放行**，本測試把「還沒擋住」寫成事實。
+    """r13 #1：這三句**現在確實會被放行**，本測試把「還沒擋住」寫成事實。
 
-    ⚠️ DSP-033 F-1 業主裁定 (a)：τ=0.40 下它們的 p_ent 是 0.92／0.44 ⇒ NLI 也擋不住，
+    ⚠️ DSP-033：τ=0.40 下單句前提實測 p_ent 0.9615／0.5899／0.5923 ⇒ NLI 三句都擋不住，
     故標 `nli_blind_spot: true` 留在本檔。⛔ 不得宣稱已擋、⛔ 不得調 τ 救自證。
     哪天真的被擋住，這條會紅——那時的正確處置是把案例搬去 `known_fabrications.json`
     並改斷言，⛔ 不是放寬新規則來讓這條繼續綠。"""
@@ -597,7 +597,7 @@ def test_known_open_cases_are_still_passing(verifier, case, mode):
 
 
 def test_known_open_blind_spot_scores_are_above_tau(verifier, rules):
-    """正對照：兩句的實測 p_ent 真的在 τ 之上——否則「NLI 盲點」這個標籤
+    """正對照：三句的實測 p_ent 真的在 τ 之上——否則「NLI 盲點」這個標籤
     只是一句沒有根據的宣稱。"""
     for case in _KNOWN_OPEN:
         score = case["nli_scores"]["*"]

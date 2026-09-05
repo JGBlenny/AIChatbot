@@ -158,6 +158,8 @@
   - [x] 4.4c NLI 離線量測（2026-09-05 已量：Erlangshen-110M 69%／11% 優於現行但 p95 242 ms、自證 2/3 不達凍結門檻 ⇒ 不接線、留作抽審輔助；MiniLM 不採用；mDeBERTa／t2s／ONNX 待記憶體；業主可裁兩放寬項，見 `eval/nli-offline-20260905.md`）：同一批成對資料、`eval/nli-offline-plan.md` 凍結判準。
   - 判定：M2 回歸集階段的收案以 4.4b 後的六尺為準；放行證據仍待樣本 C（部署後）。
 - [ ] 4.5 DSP-033 NLI 取代覆蓋＋極性（業主 2026-09-05「同意」兩放寬項；**程式已落地 `4b4dfdb`，unit agent 864 綠；映像未建**）：
+  - **結果（2026-09-06 03:00）**：兩輪回歸＋盲標 ×2 完成（`eval/perf-agent-regression-20260905/round9-dsp033/`）：①⑤⑥⑦ 過；② 抓到達、誤殺 19.0% 未達；③④ 未達；⑧ 0/3。換模型／串前提／組合尺離線皆無法同時滿足雙約束。**待業主裁 (a)/(b)/(c)**（見 DECISIONS DSP-033 追記）；裁前 ⛔ 不動 τ、不加例、不 commit。
+  - 進度（2026-09-06 深夜）：Docker 後端 VM 曾整個掛掉（backend 對 VM「no route to host」、UI 重開無效，需殺 backend 進程重啟）。映像已建（fail-closed 兩段式，指紋 `405d2ae0…2f79` 已回填 Dockerfile ARG／compose 預設）、`nli_ready=true`、orchestrator 已重建。**發現並更正**：canary 1/3 的依據是整段前提算的，單句前提下尺自證 0/3（詳 `eval/nli-offline-20260905.md` 更正節）；驗收⑧待業主重裁。⑥ 在本機因記憶體壓縮量不準（每對 p50 589 ms vs 前日 242 ms），須部署機實測。unit agent 863 綠、nli_model 32 綠。
   - 備註（2026-09-06）：`nli-model` 映像建置需 pip 裝 torch＋下載 409 MB 模型，主機當時 free ≈35 MB、swap 9.35/10 GB ⇒ ⛔ 未建（會擠掉運行中容器）。首次建置**依設計會失敗**並印 `NLI_MODEL_DIR_SHA256=<值>`，需回填 `--build-arg NLI_MODEL_SHA256` 與 compose 預設後再建一次（fail-closed 引導）。部署順序：先起 `nli-model`（health `nli_ready`）再重建 rag-orchestrator，否則 agent health 立即紅（fail-loud，刻意）。執行代理另記：窄化極性「同一詞根恰一側被否定」的具體實作是其對契約一句話的解讀，驗收②前應以 181 句離線量測核對。
 plan-verifier → security-reviewer → closing → security-executor（`semantic-model` 加 `/nli`、Verifier ③ 改 `NOT_ENTAILED`、降級回現行規則、health／trace 前提偵測）→ 54 句兩鏈 3 rep ＋ 抽審 ＋ 降級演練 → fresh verifier。⛔ 不可用時不得全轉人（降級可回復）。
 - [ ] 5.9 BACKLOG：`semantic-model` 權重改隨映像＋目錄指紋（r18 F-16，既有問題非 DSP-033 引入；比照 `nli-model` 做法）。
