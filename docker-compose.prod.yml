@@ -272,6 +272,12 @@ services:
       #    缺 Origin 的請求（server-to-server client 不送）不受影響、照放行。
       #    ⛔ 不可為了「讓瀏覽器連得上」而放寬——/mcp 僅 server-to-server。
       MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:--}
+      # agentic-mcp 開關（M1 影子／M3 切換；全部預設關，見 runbook §19-5）
+      AGENT_STAGE: ${AGENT_STAGE:-M0}
+      AGENT_AUDIENCES: ${AGENT_AUDIENCES:-}
+      AGENT_SHADOW_AUDIENCES: ${AGENT_SHADOW_AUDIENCES:-}
+      AGENT_SHADOW_MONTHLY_USD_CAP: ${AGENT_SHADOW_MONTHLY_USD_CAP:-50}
+      AGENT_TURN_ENABLED: ${AGENT_TURN_ENABLED:-false}
       # agentic-mcp-orchestration 其餘新 env（runbook §19-5 逐一 grep 核對名稱／預設值）——
       # 全部維持不宣告＝吃程式內建預設；里程碑推進時才在 .env 加對應鍵覆寫，⛔ 不在此處預先宣告：
       #   AGENT_STAGE（預設 M0；部署里程碑，M0-M5）
