@@ -134,3 +134,5 @@ docs/backtest/corpus-20260810/out_*/
 # 外部錨點驗證時自 S3 取回的 tarball（正本在 S3，本機只是暫存）
 docs/backtest/corpus-20260810/*.tar.gz
 .env.bak-20260822
+# agent_eval --dump-texts 原文旁路（人工抽審用，⛔ 不進版控；r13 #6）
+**/eval/**/texts/
