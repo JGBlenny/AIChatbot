@@ -195,3 +195,26 @@ curl -N -X POST {BASE}/v1/message -H 'Content-Type: application/json' -d '{
 ```
 
 > 確認前修改（`confirm_edit` 或「不是客廳是臥室的」）→ 更新後重出確認、不重跑流程；取消（`confirm_cancel`/「不報了」）→ 不留殘單。建單失敗會誠實告知並附「再試一次」，**不會假裝成功**；重複同意**冪等**、不重複建單。
+
+## agent 路徑（`AGENT_AUDIENCES`）不改本契約
+
+> 依據：`rag-orchestrator/routers/agent_entry.py`（spec `agentic-mcp-orchestration` 任務 2.2）。
+> `audience_of(request) ∈ AGENT_AUDIENCES`（環境變數，逗號分隔）且 app 已建
+> `agent_runtime` 時，`/api/v1/message` 改由 `AgentRuntime` 處理；否則回 `None`
+> 讓舊鏈（本文件其餘章節）照舊處理。**非串流回應欄位同形**（沿用
+> `_conversational_to_response` 轉換為 `VendorChatResponse`），**串流沿用**
+> start／intent／answer_chunk／metadata／done 事件序，工具呼叫期間以 SSE 註解行
+> （`: keepalive`）當心跳、⛔ 不新增事件型別。
+
+差異只有一點：agent 路徑**多回一個 `trace_id`**。
+
+- 非串流：回應物件多帶 `handoff`、`quick_replies`（與舊鏈同名同形，`None`/缺值時省略）；
+  查證見 `routers/agent_entry.py:128`（`payload = {"answer": ..., "handoff": ...,
+  "quick_replies": ..., "converged": False}`）。
+- 串流：`metadata` 事件多帶一個欄位 `trace_id`（值為 `result.trace.trace_id`），
+  以及既有的 `quick_replies`／`handoff`（有值才附）；查證見
+  `routers/agent_entry.py:159-163`（`metadata = {..., "trace_id": result.trace.trace_id}`，
+  隨後視 `result.quick_replies`／`result.handoff` 是否有值附加）。
+
+`trace_id` 只在 agent 路徑出現，供事後以 `trace_view`／稽核工具回查該回合的
+工具呼叫與證據鏈（見 `services/agent/trace_view.py`），前端可忽略、不影響既有渲染。

@@ -114,3 +114,28 @@ PAUSED → COLLECTING / CANCELLED（超時 30 分鐘）
 | 統一檢索 | `services/base_retriever.py` |
 | 信心度評估 | `services/confidence_evaluator.py` |
 | 緩存 | `services/cache_service.py` |
+
+## agent 路徑分流
+
+> 依據：`routers/chat.py:handle_conversational_entry`（呼叫 `routers/agent_entry.py:handle_agent_entry`）；
+> spec `agentic-mcp-orchestration` 任務 2.2（design 元件 8）。⛔ 本節為**新增分流層**，
+> 不改本文件其餘既有段落——舊鏈流程（上述「對話處理核心流程」起）維持原樣，僅適用
+> `audience ∉ AGENT_AUDIENCES` 的情況；回切（AGENT_AUDIENCES 清空或 runtime 未建）
+> 仍走舊鏈，行為不變。
+
+```mermaid
+flowchart TD
+    A[用戶問題進 handle_conversational_entry] --> B{audience_of 屬於<br/>AGENT_AUDIENCES 且<br/>app.state.agent_runtime 已建？}
+    B -- 是 --> C[AgentRuntime<br/>routers/agent_entry.py]
+    C --> D{回應非 None？}
+    D -- 是 --> E[回傳 agent 回應<br/>含 trace_id]
+    D -- 否（回退 fallback_old_chain） --> F[照舊鏈往下]
+    B -- 否 --> F[舊鏈：<br/>意圖分類／檢索／六 case 仲裁]
+    C -.影子（no-op 若無 runner）.-> G[ShadowRunner<br/>唯讀對照，不影響回應]
+```
+
+- **舊鏈流程僅適用 `audience ∉ AGENT_AUDIENCES`；⛔ 不刪舊鏈段落，回切仍用**。
+- 影子路徑（`schedule_shadow`）另標於圖中虛線：舊鏈產出答案後才排程，唯讀對照，
+  不影響實際回應內容。
+- 回退條件（連續 3 回合固定句 `fixed_streak >= 3`）標為 `fallback_old_chain`，
+  回 `None` 後由舊鏈接手，屬正常降級（非資料損壞）。
