@@ -155,6 +155,9 @@
 - [ ] 5.5 (P) `retrieval-improvement-loop` skill 升版為「檢索＋agent 路徑」共用迴圈（業主 2026-09-05 排入；只追加、⛔ 不刪既有段落）：①G1 必讀加 agent 分支（design 元件 5／6／7、DSP-020～028、`docs/knowledge/agent-readable-knowledge.md`）；②量尺段加 `tools/agent_eval.py --chain both --repeat 3` 與「A／B／sensitive 為回歸集、放行看樣本 C」；③成因八類加三類（尺誤殺／契約與模型能力不合／尺太鬆放過捏造）並附判準（拒因分佈 `budget_exhausted` vs `no_grounding`）；④單一變因閘門加 agent 例（知識／提示詞／尺／契約一輪只動一類）；⑤假綠清單加兩條（fake provider 全綠但真線路未跑、無禁詞集的無捏造 PASS 是空真值）。驗收：`git diff --stat` 只有新增行；五道閘門原文不動；新段每條附「依據：」可 grep。
   - 需求：6.3, 13.5
   - 執行：mech-executor／effort 低——內容已在本日 r9／perf-agent-regression README 定案；DSP-028 落地後再做（③的判準要引用最終契約）
+- [ ] 5.6 (P) Verifier 字面型掃描壓空白（r11 安全審 F-7，既有非本案；DEFER 進 BACKLOG）：步⑥禁詞與字面型 `sensitive_patterns` 另對 `re.sub(r"\s+","",answer_nfkc)` 再掃一次（regex 型維持原文，`\d+\s*元` 語義不可壓）；fixture「終 身 保 固」「保 證」拆空格須拒。
+  - 需求：6.5
+  - 執行：mech-executor／effort 低
 - [ ] 5.4 收案：`make audit` 綠（不變量 27–31（原 18–22，DSP-013））、`make test` 全綠（已知紅 `test_verdict_ruler_req.py` 除外）、M0 與 M3 各一次 security／verifier 紀錄落 `reviews/`、總結列取捨（D1–D3 未裁項與其影響；⚠️ DSP-012 已於 2026-09-04 裁定選項 A，改列其代價：`knowledge_base` 多兩欄、售前池 31 筆需先標審核、審核 UI 為另案未做）。
   - 需求：11.3, 13.5
   - 執行：main／effort 高——收案判斷與取捨列示由主 session 負責
