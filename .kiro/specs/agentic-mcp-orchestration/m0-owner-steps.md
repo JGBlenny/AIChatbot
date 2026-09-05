@@ -25,7 +25,7 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tA -c "SELE
 ```
 預期：`0`（表存在、尚無資料，D3 裁後才匯入）。
 
-## 2. 發一把內部 MCP key（給 Claude Code／回測工具用）
+## 2. 發一把內部 MCP key（給 Claude Code／回測工具用）— ✅ 2026-09-05 主 session 代發（`mcp-internal-local`，`is_internal=TRUE`、`vendor_ids=NULL`，金鑰只在 `.env` 的 `MCP_INTERNAL_API_KEY`；`/api/v1/agent/health` 帶 key `status ok`、`api_keys_agent_scope_ready true`；無 key 401）
 
 ```bash
 KEY=$(python3 -c "import secrets;print('rgk_'+secrets.token_urlsafe(32))")
@@ -44,7 +44,7 @@ curl -s http://localhost:8100/api/v1/agent/health -H "X-API-Key: $KEY" \
 ```
 預期：JSON `{"status": "ok" ...}`；`mcp_sdk` 欄在 1.7b 前為 `unavailable (DSP-014)`。缺 key 時應 `401`。
 
-## 3. jgb2 端：確認本機 `JGB_API_KEY` 的 resource 讀權（在 jgb2 主機／checkout 執行）
+## 3. jgb2 端：確認本機 `JGB_API_KEY` 的 resource 讀權（在 jgb2 主機／checkout 執行）— ⚠️ 2026-09-05 主 session 以真 API 探針（www.jgbsmart.com、role 20151）反推：**bills／contracts／estates／meters 四支 `success=True` 且回 `mapping`**；**`roles`（`GET /roles/20151/members`）不論帶不帶 `user_id` 皆 401「請先登入以查詢您的個人資料。」**——這是 jgb2 端回的，不是本地雙證降級。**需要你**：在 jgb2 查這把 key 對 `roles` 的 `permission-list`／`whitelist-list`（可能缺 `roles:read` 或該端點需 viewer 白名單），補後告訴我重探。accounts 域在此之前只會回 NO_MATCH，不擋 M2 prospect 影子（prospect 看不到 jgb2 工具）。
 
 ```bash
 cd ~/jgb/project/jgb/jgb2
