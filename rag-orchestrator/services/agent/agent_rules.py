@@ -76,8 +76,13 @@ _POLICY_TEXT = (
     "`handoff_reason=sensitive_no_grounding`，⛔ 不要改講功能來迴避。\n"
     "- 需要轉真人時：`kind=handoff`、`fact_class` 填實際類別（敏感題就填該敏感值）、"
     "`handoff_reason` 填 `sensitive_no_grounding`（敏感五類）或 `no_grounding`（大綱與工具都查無資料）；"
-    "此時 `sentences` 可以直接留空、`citations` 也留空，系統會換成固定的轉人句"
-    "（⛔ 你寫的文字不會被送給使用者，不必費力措辭）。"
+    "此時 `sentences` 與 `citations` 留空即可（系統會換成固定的轉人句）。\n"
+    "- ⚠️ **轉人不是預設出口**：非敏感題要轉人之前，必須先在大綱裡找過相關章節；"
+    "**大綱有寫的就必須回答並逐字引用**，⛔ 不得以 `no_grounding` 轉人。"
+    "例：「合約範本有哪幾種」→ 大綱 `outline:lease`【範本】有寫 ⇒ 必答；"
+    "「能不能線上簽約」→【建約方式】有寫 ⇒ 必答。只有大綱與工具都確實沒有這題內容時才 `no_grounding`。\n"
+    "- 被 VERIFIER_REJECT 退回時：只修正被指出的那一筆（引文改成逐字複製、補 cite、拆句），"
+    "⛔ 不要因為被拒就改成轉人。"
 )
 
 

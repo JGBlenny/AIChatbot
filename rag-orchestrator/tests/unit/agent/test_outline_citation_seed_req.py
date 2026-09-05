@@ -383,3 +383,41 @@ async def test_schema_reject_feedback_names_the_actual_cause(first_response, exp
     assert expected_snippet in feedback["content"]
     assert "切成" not in feedback["content"]                      # 舊提示已刪，⛔ 不得復活
     assert "支援線上電子簽約" not in feedback["content"]          # 不含任何來源原文
+
+
+# ---------------------------------------------------------------------------
+# 拒因回饋要教「怎麼修那一筆」並禁止以轉人逃逸（2026-09-05 DSP-028 重跑：116/127 no_grounding 是第一次就轉人）
+# ---------------------------------------------------------------------------
+
+def _final_sentences(sentences, citations):
+    payload = {"kind": "answer", "sentences": sentences, "citations": citations,
+               "fact_class": "feature", "handoff_reason": None}
+    return _fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))
+
+
+@pytest.mark.asyncio
+async def test_quote_not_verbatim_feedback_tells_model_to_fix_quote_not_to_handoff():
+    bad = _final_sentences(
+        [{"text": "可以線上電子簽約。", "kind": "fact", "cite": [0]}],
+        [{"tool_call_id": "outline", "source": "outline:lease", "quote": "支援線上簽約"}])   # 非逐字
+    good = _final_sentences(
+        [{"text": "可以線上電子簽約。", "kind": "fact", "cite": [0]}],
+        [{"tool_call_id": "outline", "source": "outline:lease", "quote": "支援線上電子簽約"}])
+    provider = FakeProvider([bad, good])
+    verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
+    runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
+
+    result = await runtime.run_turn(_identity(), "可以線上簽約嗎", {"agent": {"outline": _outline()}})
+
+    assert result.kind == "answer"
+    fb = provider.calls[1]["messages"][-1]["content"]
+    assert "QUOTE_NOT_VERBATIM" in fb and "逐字複製" in fb and "第 0 筆" in fb
+    assert "不要因為被拒就改成 `kind=handoff`" in fb
+    assert "支援線上電子簽約" not in fb and "線上簽約" not in fb.split("VERIFIER_REJECT")[1].split("逐字")[0]   # 無原文
+
+
+def test_agent_rules_make_handoff_non_default_and_name_outline_evidence():
+    from services.agent import agent_rules
+    text = agent_rules._POLICY_TEXT
+    assert "轉人不是預設出口" in text and "大綱有寫的就必須回答" in text
+    assert "不必費力措辭" not in text

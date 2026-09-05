@@ -200,6 +200,29 @@ class TurnTrace:
     outline_sha: str = ""
 
 
+_REASON_HINTS: dict[str, str] = {
+    # DSP-028 後續（2026-09-05 回歸集重跑）：拒一次就改轉人的回合佔 no_grounding 的 11/127，
+    # 且 116/127 是第一次就轉人——拒因回饋要明說「修那一筆」而不是「放棄」。
+    # 內容只有方法，⛔ 無任何原文。
+    "QUOTE_NOT_VERBATIM": "第 {sent} 筆的引文不是來源原文的逐字子字串：把 `quote` 改成從大綱／工具回傳**逐字複製**的一段（可以截短，⛔ 不可改字、不可把兩段拼在一起）。",
+    "QUOTE_NOT_COVERING": "第 {sent} 筆的句子內容與它引的那段原文對不上：換一段真正講到這句內容的原文當 `quote`，或把句子改成原文有講的內容。",
+    "UNCITED_ASSERTION": "第 {sent} 筆是陳述事實的句子卻沒有 `cite`：補上引用；大綱真的沒寫的話就刪掉那句，⛔ 不要留下沒有來源的斷言。",
+    "POLARITY_MISMATCH": "第 {sent} 筆的肯定／否定與引文不一致（例如引文說「不支援」你寫成「支援」）：照原文的意思改。",
+    "SOURCE_NOT_CITABLE": "第 {sent} 筆引到不可引用的來源（目錄類）：改引可引用的章節或工具回傳。",
+    "SENSITIVE_TOPIC": "這一題落在敏感五類或含價格／百分比等敏感樣式：改為 `kind=handoff`、填對應的 `fact_class` 與 `handoff_reason=sensitive_no_grounding`。",
+}
+
+
+def _reason_hint(verdict: VerifierVerdict) -> str:
+    """把拒因翻成「怎麼修那一筆」；並明說 ⛔ 不得因被拒就改轉人（大綱有寫就要答）。"""
+    text = _REASON_HINTS.get(verdict.reason or "", "")
+    if text:
+        text = "　" + text.format(sent=verdict.sent if verdict.sent is not None else "?")
+    if verdict.reason != "SENSITIVE_TOPIC":
+        text += "　⛔ 不要因為被拒就改成 `kind=handoff`——只修被指出的那一筆；只有大綱與工具都確實沒有這題的內容時才轉人。"
+    return text
+
+
 def _schema_reject_hint(out: AgentOutput) -> str:
     """DSP-028：把 `SCHEMA` 拒因翻成模型看得懂的**具體成因**（三種其中一種）。
 
@@ -836,14 +859,14 @@ class AgentRuntime:
                 if counters.rewrite_exhausted(self.budget):
                     return _finalize(_build_fixed("budget_exhausted"), is_fixed=True)
                 messages.append({"role": "assistant", "content": content})
-                schema_hint = ""
+                schema_hint = _reason_hint(verdict)
                 if verdict.reason == "SCHEMA":
                     # DSP-028：只回 SCHEMA 模型不知道哪裡錯。新契約下 SCHEMA 只剩三種
                     # 成因（空陣列／某筆 text 全空白／某筆 cite 索引越界），直接指名成因與
                     # 筆索引即可——⛔ 不再回報「系統把你的 answer 切成幾句」那種提示：
                     # 逐句一筆之後句數不必再對齊，那句話只會誤導模型回頭去湊句數。
                     # 內容只有索引與長度，⛔ 無任何原文（來源原文與模型原文都不放）。
-                    schema_hint = "　" + _schema_reject_hint(out)
+                    schema_hint += "　" + _schema_reject_hint(out)
                 # 拒因回模型用 role="user"（⛔ 不用 role="system"）：system 訊息
                 # 依 PromptAssembler 契約整回合只有一則（見 prompt_assembler.py
                 # 「system 訊息只有一則」），迴圈裡補第二則 system 會破壞這個
