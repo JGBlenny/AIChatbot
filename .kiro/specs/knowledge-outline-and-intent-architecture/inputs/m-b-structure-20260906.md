@@ -49,3 +49,4 @@
 - 過程中兩個工具判斷（記入程式與測試）：①`phrasing_leaks` 守門改「整句相等，或 ≥10 字才做包含比對」——主題詞組（「大房東報表」「Bananas」）本來就在內容句裡，子字串比對恆誤判；②question_summary 的 2 字詞（「合約」「收租」）不成講法。
 - 業主審的東西（一次看完）：①37 細目結構與標題 ②split 重複句（kb:3600 三處、kb:5379 兩處）要刪 ③G 現有不足補內容 ④202 條講法留／改／刪（`source` 可追：question_summary／koyu／helpcenter） ⑤4 對相似細目要不要併 ⑥979 條 unassigned 要不要撈。
 - 審完的檔案放回 `rag-orchestrator/canon/prospect.md`（hook 會在 Edit／Write 時做結構與識別碼粗篩），並跑 `export_json` 產 `prospect.json`（同源測試守），才進 2.4b。
+- **建議版（業主 2026-09-06 同意先做 ⑤①）**：`raw/structure-20260906/prospect.draft.review.md`＝with-phrasings 版再加 5 條 `see_also`（3600 拆出的三目互指、data-migration↔migration-limits 互指）與 23 個複合標題縮短（去掉「／」另一半，保留與 slug 對應的那句）；parser／hook 零錯。與 with-phrasings 版的 diff 只在 `###` 標題行與 `- see_also:` 行。②③④ 仍由業主親手。
