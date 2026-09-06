@@ -98,7 +98,7 @@
   - 需求：2.6, 5.4, 5.9
   - 執行：security-executor／effort 高——resolver／toc 套可見性＝附錄 E F7 可見性繞過的修補，屬 validation／hardening；完成後派 fresh verifier
   - 驗收：目標＝啟動由 .md 重算 sha、目錄與 resolver 套可見性｜成果＝assembler＋`load_canon_or_die`＋退役舊分類表＋兩條啟動紅測試｜做法＝改 `build_prospect_outline` 首行｜驗證＝[代理驗證]（claim：刪 .md／竄改 .json 各啟動紅、未竄改綠）
-- [ ] 3.3 (P) `fine_index.py`＋`candidate_selector.py`（TDD）：`FineIndex.prepare(doc)`（標題向量＋approved 講法向量，每批 ≤8；任一 None ⇒ `not_ready`；快取鍵＝`canon_sha256`＋`phrasing_set_sha256`）、`state ∈ {absent, not_ready, ready}`、`visible_subset(identity, doc, *, vendor_business_types)`（b2b：`∩{system_provider}` 非空且 target_user 命中或空；b2c：空或 ∩ 非空且含 `all_users`；target_user 先過 `_effective_target_user`；⛔ 內部不查 DB）；`CandidateSelector.select(doc, identity, query)`（首行 sha 比對；查詢＝當前＋上一則 user；分數＝max(標題, 講法)；只在 visible 內排序；K=5、同分 id 序；`miss_kind`；三態回 None；⛔ 不 log 查詢）；`Selection.winning_key_kind`（⛔ 不記講法 id）；health `canon` 節。測試：決定性、同分序、`doc.sha` 不符 None、caplog 無查詢字串、`visible_subset` 對 b2b pm／b2b prospect 與 `build_visibility_predicate` 集合相等（衍生列以 `canon_ref` 查）。
+- [x] 3.3 (P) `fine_index.py`＋`candidate_selector.py`（TDD；**2026-09-07 收案**：Plan `inputs/plan-3.3-fine-index-selector-20260907.md` 第 2 輪 READY→業主核 (a)＋§8 照准；3.3a／3.3b 皆 security-executor＋fresh verifier CONFIRMED；15 格×3 身分＋4 額外身分記憶體＝SQL 零分歧、突變控制紅；unit 985／integration 210；design 1.13；已知：匯入端空清單預設 system_provider 待 7.1／3.5 對齊）：`FineIndex.prepare(doc)`（標題向量＋approved 講法向量，每批 ≤8；任一 None ⇒ `not_ready`；快取鍵＝`canon_sha256`＋`phrasing_set_sha256`）、`state ∈ {absent, not_ready, ready}`、`visible_subset(identity, doc, *, vendor_business_types)`（b2b：`∩{system_provider}` 非空且 target_user 命中或空；b2c：空或 ∩ 非空且含 `all_users`；target_user 先過 `_effective_target_user`；⛔ 內部不查 DB）；`CandidateSelector.select(doc, identity, query)`（首行 sha 比對；查詢＝當前＋上一則 user；分數＝max(標題, 講法)；只在 visible 內排序；K=5、同分 id 序；`miss_kind`；三態回 None；⛔ 不 log 查詢）；`Selection.winning_key_kind`（⛔ 不記講法 id）；health `canon` 節。測試：決定性、同分序、`doc.sha` 不符 None、caplog 無查詢字串、`visible_subset` 對 b2b pm／b2b prospect 與 `build_visibility_predicate` 集合相等（衍生列以 `canon_ref` 查）。
   - 需求：5.1, 5.2, 5.3, 5.6, 5.10
   - 執行：security-executor／effort 高——`visible_subset` 是記憶體側授權謂詞（與 SQL 集合相等為 acceptance）；**分兩段派工**：3.3a `FineIndex`（prepare／快取鍵／三態／health）、3.3b `visible_subset`＋`CandidateSelector`＋等價測試；完成後派 fresh verifier
   - 驗收：目標＝細目索引決定性、記憶體可見性＝SQL 可見性｜成果＝FineIndex＋selector＋health｜做法＝標題＋講法取最大、三態｜驗證＝[代理驗證]（claim：兩組身分集合相等、caplog 無查詢字串）
@@ -106,7 +106,7 @@
   - 需求：5.2, 5.11, 6.2, 6.4, 6.7
   - 執行：executor／effort 中——量測工具；材料 sha 跑前凍結；gold 映射表只審「對不到檔案」的待審列 [業主審核]（一次）；結果只證檢索層承載力（R6.7）；費用 $0（無 LLM）
   - 驗收：目標＝量出三臂 recall 上限｜成果＝`index_eval.py`＋報表（依粗目×問法型）｜做法＝留一輪替、材料 sha 凍結｜驗證＝[代理驗證]（數字宣稱必派）
-- [ ] 3.5 (P) 不變量 33／34 checkers：33（必查組 b2b pm vendor 0、b2b prospect；tenant 標 M4 納入列 notes；每組命中 <1 ⇒ FAIL——**衍生列（`generation_metadata.canon_ref`）在 D1 入庫前恆為 0，此檢查 D1 前印 `SKIP(pending-D1)`、⛔ 不計 FAIL，7.3 ⑤ 後轉硬失敗；SKIP 同 3.1 為程式自動（衍生列數＝0 才 SKIP），自測：塞一列衍生列必實跑且必紅**；突變控制改錯一列 `business_types` 必紅）；34（`rag-orchestrator/canon/*.json` 講法 ∩ 跨 spec manifest 題句＝∅；塞一句必紅）；接 `check_invariants.sh`（編號接續 27–31）。
+- [ ] 3.5 (P) 不變量 33／34 checkers（**加對帳（業主 2026-09-07）：衍生列 `business_types`／`target_user` 為 NULL ⇔ 正本細目該欄為空清單；出現 `'{}'` 或被預設成 `system_provider` 而正本為空 ⇒ FAIL**）：33（必查組 b2b pm vendor 0、b2b prospect；tenant 標 M4 納入列 notes；每組命中 <1 ⇒ FAIL——**衍生列（`generation_metadata.canon_ref`）在 D1 入庫前恆為 0，此檢查 D1 前印 `SKIP(pending-D1)`、⛔ 不計 FAIL，7.3 ⑤ 後轉硬失敗；SKIP 同 3.1 為程式自動（衍生列數＝0 才 SKIP），自測：塞一列衍生列必實跑且必紅**；突變控制改錯一列 `business_types` 必紅）；34（`rag-orchestrator/canon/*.json` 講法 ∩ 跨 spec manifest 題句＝∅；塞一句必紅）；接 `check_invariants.sh`（編號接續 27–31）。
   - 需求：2.7
   - 執行：mech-executor／effort 中——照 `agent_boundary.py` 既有 checker 慣例＋正對照
   - 驗收：目標＝33／34 進 audit 且空跑不綠｜成果＝兩支 checker＋正對照｜做法＝照 agent_boundary 慣例｜驗證＝[自驗]
@@ -186,7 +186,7 @@
 
 > **階段目標**：正本入庫（D1）、放量門檻凍結、平台票與收尾。**成果**：匯入 fail-closed、D1 執行包、步 4 報告、agentic-mcp 收尾。**驗證**：7.2 [代理驗證]；7.3／7.4 [業主親跑]＋[業主審核]。
 
-- [ ] 7.1 `tools/canon/export_batch.py`（TDD）：`CanonDoc`＋`replacements` → 匯入批次 JSON（`knowledge[]`：`question=title`、`answer=content_units 逐行`、三軸自細目、`instance_applicability`、`approved_by="reviewed:<reviewer>"`、`canon_ref`、`replaces[]`；**首批 ⛔ 不寫 `keywords`**；`updates[]`：舊列 `replaced_by`＋`outline_approved_by="pool-marked-<date>"`＋`expect_current`（export 當下 DB 快照）；頂層 `canon_sha256`；rollback SQL 由逐列 pre-image SELECT 快照生成）。測試：同正本兩次逐位元相等；rollback 逆轉每欄原值。
+- [ ] 7.1 `tools/canon/export_batch.py`（TDD；**業主 2026-09-07 裁（3.3 §8.2）：正本 `business_types`／`target_user` 空清單 ⇒ 批次寫 `null`、7.2 匯入 ⛔ 不預設 `system_provider`，與記憶體 `canon_visible` 的「空＝不設限／b2b 空⇒不可見」對齊 SQL `IS NULL`**）：`CanonDoc`＋`replacements` → 匯入批次 JSON（`knowledge[]`：`question=title`、`answer=content_units 逐行`、三軸自細目、`instance_applicability`、`approved_by="reviewed:<reviewer>"`、`canon_ref`、`replaces[]`；**首批 ⛔ 不寫 `keywords`**；`updates[]`：舊列 `replaced_by`＋`outline_approved_by="pool-marked-<date>"`＋`expect_current`（export 當下 DB 快照）；頂層 `canon_sha256`；rollback SQL 由逐列 pre-image SELECT 快照生成）。測試：同正本兩次逐位元相等；rollback 逆轉每欄原值。
   - 需求：1.9, 2.7, 2.9
   - 執行：executor／effort 中——批次格式沿既有工具契約
   - 驗收：目標＝正本→批次決定性、rollback 有 pre-image｜成果＝`export_batch.py`＋測試｜做法＝沿匯入契約｜驗證＝[自驗]

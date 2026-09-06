@@ -317,8 +317,11 @@ class IndexEntry(TypedDict):
     fine_id: str; key_id: str            # key_id: "title" | "ph:<sha8>"
     vector: list[float]
 
+class EmbeddingBackend(Protocol):   # 3.3：既有 services/embedding_utils.EmbeddingClient 無 ≤8 批次／無 timeout／失敗 print，故以 Protocol 包裝：自行分批、asyncio.wait_for、失敗回 None、⛔ 不印文字
+    async def embed(self, texts: list[str]) -> list[list[float] | None]: ...
+
 class FineIndex:
-    def __init__(self, embedding_client: EmbeddingClient, *, batch: int = 8) -> None: ...
+    def __init__(self, backend: EmbeddingBackend, *, batch: int = 8) -> None: ...   # 模組層 register_index／get_index 註冊點供 health 與 4.1 取用
     async def prepare(self, doc: CanonDoc) -> None:
         """快取鍵=(canon_sha256, phrasing_set_sha256)；任一向量 None ⇒ ready=False（⛔ 不以殘缺集合服務）。"""
     @property
@@ -333,9 +336,9 @@ class FineIndex:
 
 class Selection(TypedDict):
     candidate_ids: list[str]             # ≤K，依分數降冪、同分 id 字典序
-    winning_key: dict[str, str]          # fine_id → key_id（供講法命中數）
+    winning_key_kind: dict[str, Literal["title", "phrasing"]]   # 3.3（業主 2026-09-07 裁 F18）：⛔ 不記 ph:<sha8>——對照表在 repo，記 id＝可還原問句；同分取 title
     scores: dict[str, float]
-    miss_kind: Literal["hit", "none_visible", "no_candidate", "index_unavailable"]
+    miss_kind: Literal["hit", "none_visible", "no_candidate", "index_unavailable"]   # no_candidate＝visible 非空但無索引項（ready 下不可達）；不設分數門檻、不定義 MIN_SCORE
 
 class CandidateSelector:
     K: Final[int] = 5
@@ -753,6 +756,7 @@ flowchart LR
 ### D. 變更歷史
 | 日期 | 版本 | 變更內容 | 修改者 |
 |---|---|---|---|
+| 2026-09-07 | 1.13 | 3.3 元件 6 回寫：`Selection.winning_key`→`winning_key_kind`（不記講法 id，F18）、`EmbeddingBackend` Protocol、不設 `MIN_SCORE`、`register_index`；匯入契約：正本空清單⇒NULL 不預設（tasks 7.1／3.5；業主 2026-09-07 照准） | 業主／AI |
 | 2026-09-07 | 1.12 | 大綱預算 10,000→**12,000**（正本 `budget_tokens` 與程式預設同步；實測整份售前正本 cl100k 10,336 tokens，中文≈1.1 字元/token，research 1.6 假設錯；本機影子模式因此啟動紅；業主裁 a）| 業主／AI |
 | 2026-09-07 | 1.11 | 3.2 落地偏離回寫（元件 5）：`build_canon_toc` 另名、`canon_visible` 規則＝元件 6 前身（分支判準同 SQL、刻意不套清單）、resolver per-call 接線、註冊表載體、`.json` 位元組同源、29b（業主 2026-09-07 照准） | 業主／AI |
 | 2026-09-07 | 1.10 | 3.1 值域收嚴（`reviewed:<reviewer>` 非空不含空白、`pool-marked-<YYYYMMDD>`；謂詞改 regex 非 LIKE）三處同步；元件 9 回寫 2.6 四點（`map_path`、`fix_type|None`、`gap_classes`、V 判準）＋步 5b 權威來源核對（業主 2026-09-07 裁） | 業主／AI |

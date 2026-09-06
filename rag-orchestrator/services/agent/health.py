@@ -11,7 +11,9 @@
    即代表 DB／可見性謂詞這條路線可達；探針本身丟例外（連線失敗等）才算紅。
 2. **大綱 version／sha**：`app.state.agent_runtime.outline_sha`（取不到 ⇒ `"pending"`）；
    **`canon`**（3.2）另印 `resolve_canon_dir()` 的 resolved path 與本行程**已註冊**正本的
-   `canon_sha256`——「這台機器讀的是哪一份正本」要看得見（⛔ 不重讀檔重算）。**`rules_sha`**（任務 2.6）
+   `canon_sha256`——「這台機器讀的是哪一份正本」要看得見（⛔ 不重讀檔重算）；
+   **`canon.index`**（3.3a）再印每個受眾 `FineIndex` 的三態（`absent`／`not_ready`／`ready`）
+   與 `prepared_sha`／索引項數／維度，⛔ 同樣不致紅（`not_ready` 的正確行為是退回整份正本）。**`rules_sha`**（任務 2.6）
    改讀 `app.state.agent_runtime.rules_sha`（由 `bootstrap.build_runtime` 在啟動
    時掛上，值＝`VerifierRules.load()` 對規則檔位元組算的 sha256）——**呼叫端要用
    `get_runtime` 把那個物件的 getter 交進來**；沒交、或 runtime 還沒建起來 ⇒ 回
@@ -129,8 +131,23 @@ def _outline_sha(get_runtime: Optional[Callable[[], Any]]) -> str:
     return str(getattr(runtime, "outline_sha", "") or "") or "pending"
 
 
+def _index_state() -> dict:
+    """`{audience: {state, prepared_sha, entries, dim}}`（3.3a｜元件 6 `FineIndex`）。
+
+    只讀**本行程已註冊**的索引（`fine_index.get_index`），⛔ 不重建、⛔ 不觸發任何 embedding。
+    未註冊 ⇒ `absent`；取值失敗 ⇒ 同樣降級成觀測值。
+    ⚠️ **⛔ 不致紅**：與 `canon`／`rules_sha` 同語義（「尚未建置」不是「建置後壞了」），
+    且索引 `not_ready` 的正確行為是 selector 回 `None`＝退回整份正本，服務並未壞掉。
+    """
+    try:
+        from services.agent.canon.fine_index import index_registry_states
+        return index_registry_states()
+    except Exception as e:  # noqa: BLE001 — 健檢不因取值失敗而崩
+        return {"detail": f"{type(e).__name__}: {e}"}
+
+
 def _canon_state() -> dict:
-    """`{"dir": <resolved 正本目錄>, "sha256": {audience: canon_sha256}}`（3.2）。
+    """`{"dir": …, "sha256": {audience: canon_sha256}, "index": {audience: {…}}}`（3.2＋3.3a）。
 
     `dir` 是 `resolve_canon_dir()` 的 **resolved path**——`AGENT_CANON_DIR` 只在
     `DB_ENV=test` 生效，健檢印出實際採用的那一個，讓「這台機器讀的是哪份正本」
@@ -142,9 +159,12 @@ def _canon_state() -> dict:
         from services.agent.canon.canon_assembler import (
             canon_registry_shas, resolve_canon_dir,
         )
-        return {"dir": str(resolve_canon_dir()), "sha256": canon_registry_shas()}
+        state = {"dir": str(resolve_canon_dir()), "sha256": canon_registry_shas()}
     except Exception as e:  # noqa: BLE001 — 健檢不因取值失敗而崩
-        return {"dir": "pending", "sha256": {}, "detail": f"{type(e).__name__}: {e}"}
+        state = {"dir": "pending", "sha256": {}, "detail": f"{type(e).__name__}: {e}"}
+    # 索引另包一層 try（`_index_state`）——正本目錄取不到 ⛔ 不該連帶把索引狀態一起抹掉，反之亦然。
+    state["index"] = _index_state()
+    return state
 
 
 def _premise_flags(stats: dict) -> list:
