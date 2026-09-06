@@ -4,7 +4,7 @@
   "business_types": [
     "system_provider"
   ],
-  "canon_sha256": "c1fdf8a71e73c6451ee9f4eca31d43fb90f3d1feb64a67ad5e116d12983b1348",
+  "canon_sha256": "40862c07674faadea304510941b07ba81e2530ad34f6c1399486926d8cce6c29",
   "coarses": [
     {
       "fines": [
@@ -1073,7 +1073,8 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "kb:5378"
+            "kb:5378",
+            "helpcenter:slug03"
           ],
           "target_user": [
             "prospect"
@@ -2200,5 +2201,5 @@
   "target_user": [
     "prospect"
   ],
-  "version": "2026-09-07.4"
+  "version": "2026-09-07.5"
 }

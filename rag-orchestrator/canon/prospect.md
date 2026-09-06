@@ -1,6 +1,6 @@
 ---
 audience: prospect
-version: 2026-09-07.4
+version: 2026-09-07.5
 reviewers: [owner]
 language: zh-TW
 budget_tokens: 12000
@@ -275,7 +275,7 @@ business_types: [system_provider]
   - {text: "不足月的租金怎麼算", source: "koyu:Landlordonboarding06Finance#5", status: approved}
   - {text: "房客一直不繳錢怎麼辦", source: "koyu:rentallaw.pt2#6", status: approved}
   - {text: "租客教學:租金逾期篇", source: "helpcenter:slug03", status: approved}
-- sources: [kb:5378]
+- sources: [kb:5378, helpcenter:slug03]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 怕租客忘記繳、拖著不繳？
