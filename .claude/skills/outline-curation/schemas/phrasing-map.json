@@ -2,22 +2,154 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "outline-curation/schemas/phrasing-map.json",
   "type": "object",
-  "required": ["step", "skill_version", "inputs_sha", "deterministic", "raw_outputs_path", "cost", "payload"],
+  "required": [
+    "step",
+    "skill_version",
+    "inputs_sha",
+    "deterministic",
+    "raw_outputs_path",
+    "cost",
+    "payload"
+  ],
   "additionalProperties": false,
   "properties": {
-    "step": {"type": "string", "enum": ["phrasing"]},
-    "skill_version": {"type": "string"},
-    "inputs_sha": {"type": "object"},
-    "deterministic": {"type": "boolean"},
-    "raw_outputs_path": {"type": ["string", "null"]},
-    "cost": {"type": "object"},
+    "step": {
+      "type": "string",
+      "enum": [
+        "phrasing"
+      ]
+    },
+    "skill_version": {
+      "type": "string"
+    },
+    "inputs_sha": {
+      "type": "object"
+    },
+    "deterministic": {
+      "type": "boolean"
+    },
+    "raw_outputs_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cost": {
+      "type": "object"
+    },
     "payload": {
       "type": "object",
-      "required": ["phrasings", "similar_pairs"],
+      "required": [
+        "phrasings",
+        "similar_pairs"
+      ],
       "additionalProperties": false,
       "properties": {
-        "phrasings": {"type": "array", "items": {"type": "object"}},
-        "similar_pairs": {"type": "array", "items": {"type": "object"}}
+        "phrasings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "fine_id",
+              "text",
+              "source",
+              "status",
+              "score"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "fine_id": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "proposed",
+                  "approved",
+                  "retired"
+                ]
+              },
+              "score": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "similar_pairs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "a",
+              "b",
+              "score",
+              "method"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "a": {
+                "type": "string"
+              },
+              "b": {
+                "type": "string"
+              },
+              "score": {
+                "type": "number"
+              },
+              "method": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "unassigned": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "text",
+              "source",
+              "best_fine_id",
+              "score"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "best_fine_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "score": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "helpcenter_files": {
+          "type": "integer"
+        },
+        "redaction_counts": {
+          "type": "object"
+        },
+        "counts": {
+          "type": "object"
+        },
+        "params": {
+          "type": "object"
+        }
       }
     }
   }

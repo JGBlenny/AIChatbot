@@ -1,0 +1,1663 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "phrasing_map": "8d1aa7910df018da7a7a8d1fd20f2d31c91dce4bd51cc1ebb12d462fdaefec99",
+    "structure": "fd967be5578d703456e509617a3fc1111224757d2d0355062ae63492b0bcfeb3"
+  },
+  "payload": {
+    "params": {
+      "fines": 37,
+      "merged_phrasing_map": true,
+      "method": "char_bigram_jaccard",
+      "threshold": 0.3
+    },
+    "phrasings": [
+      {
+        "fine_id": "prospect/A/dashboard-overview",
+        "score": 0.25,
+        "source": "koyu:slug90#3",
+        "status": "proposed",
+        "text": "對外首頁會顯示哪些物件"
+      },
+      {
+        "fine_id": "prospect/A/pain-points",
+        "score": 1.0,
+        "source": "question_summary:3606",
+        "status": "proposed",
+        "text": "你們能解決什麼問題"
+      },
+      {
+        "fine_id": "prospect/A/pain-points",
+        "score": 1.0,
+        "source": "question_summary:3606",
+        "status": "proposed",
+        "text": "合約"
+      },
+      {
+        "fine_id": "prospect/A/pain-points",
+        "score": 1.0,
+        "source": "question_summary:3606",
+        "status": "proposed",
+        "text": "團隊"
+      },
+      {
+        "fine_id": "prospect/A/pain-points",
+        "score": 1.0,
+        "source": "question_summary:3606",
+        "status": "proposed",
+        "text": "報修"
+      },
+      {
+        "fine_id": "prospect/A/pain-points",
+        "score": 1.0,
+        "source": "question_summary:3606",
+        "status": "proposed",
+        "text": "收租"
+      },
+      {
+        "fine_id": "prospect/A/pain-points",
+        "score": 1.0,
+        "source": "question_summary:3606",
+        "status": "proposed",
+        "text": "痛點"
+      },
+      {
+        "fine_id": "prospect/A/pain-points",
+        "score": 1.0,
+        "source": "question_summary:3606",
+        "status": "proposed",
+        "text": "管理困擾"
+      },
+      {
+        "fine_id": "prospect/A/product-overview",
+        "score": 1.0,
+        "source": "question_summary:3585",
+        "status": "proposed",
+        "text": "你們系統介紹"
+      },
+      {
+        "fine_id": "prospect/A/product-overview",
+        "score": 1.0,
+        "source": "question_summary:3585",
+        "status": "proposed",
+        "text": "合不合用"
+      },
+      {
+        "fine_id": "prospect/A/product-overview",
+        "score": 1.0,
+        "source": "question_summary:3585",
+        "status": "proposed",
+        "text": "售前"
+      },
+      {
+        "fine_id": "prospect/A/product-overview",
+        "score": 1.0,
+        "source": "question_summary:3585",
+        "status": "proposed",
+        "text": "怎麼用"
+      },
+      {
+        "fine_id": "prospect/A/product-overview",
+        "score": 1.0,
+        "source": "question_summary:3585",
+        "status": "proposed",
+        "text": "想了解金箍棒"
+      },
+      {
+        "fine_id": "prospect/A/product-overview",
+        "score": 1.0,
+        "source": "question_summary:3585",
+        "status": "proposed",
+        "text": "想看看你們"
+      },
+      {
+        "fine_id": "prospect/A/product-overview",
+        "score": 1.0,
+        "source": "question_summary:3585",
+        "status": "proposed",
+        "text": "物業管理"
+      },
+      {
+        "fine_id": "prospect/A/product-overview",
+        "score": 1.0,
+        "source": "question_summary:3585",
+        "status": "proposed",
+        "text": "適不適合我用"
+      },
+      {
+        "fine_id": "prospect/A/why-choose-jgb",
+        "score": 1.0,
+        "source": "question_summary:3608",
+        "status": "proposed",
+        "text": "優勢"
+      },
+      {
+        "fine_id": "prospect/A/why-choose-jgb",
+        "score": 1.0,
+        "source": "question_summary:3608",
+        "status": "proposed",
+        "text": "好處"
+      },
+      {
+        "fine_id": "prospect/A/why-choose-jgb",
+        "score": 1.0,
+        "source": "question_summary:3608",
+        "status": "proposed",
+        "text": "差異化"
+      },
+      {
+        "fine_id": "prospect/A/why-choose-jgb",
+        "score": 1.0,
+        "source": "question_summary:3608",
+        "status": "proposed",
+        "text": "強項"
+      },
+      {
+        "fine_id": "prospect/A/why-choose-jgb",
+        "score": 1.0,
+        "source": "question_summary:3608",
+        "status": "proposed",
+        "text": "為什麼選金箍棒"
+      },
+      {
+        "fine_id": "prospect/B/data-migration",
+        "score": 1.0,
+        "source": "question_summary:5379",
+        "status": "proposed",
+        "text": "合約能不能匯"
+      },
+      {
+        "fine_id": "prospect/B/data-migration",
+        "score": 1.0,
+        "source": "question_summary:5379",
+        "status": "proposed",
+        "text": "哪些能匯"
+      },
+      {
+        "fine_id": "prospect/B/data-migration",
+        "score": 1.0,
+        "source": "question_summary:5379",
+        "status": "proposed",
+        "text": "房東租客合約帳單"
+      },
+      {
+        "fine_id": "prospect/B/data-migration",
+        "score": 1.0,
+        "source": "question_summary:5379",
+        "status": "proposed",
+        "text": "批次匯入"
+      },
+      {
+        "fine_id": "prospect/B/data-migration",
+        "score": 1.0,
+        "source": "question_summary:5379",
+        "status": "proposed",
+        "text": "搬資料"
+      },
+      {
+        "fine_id": "prospect/B/data-migration",
+        "score": 1.0,
+        "source": "question_summary:5379",
+        "status": "proposed",
+        "text": "舊系統資料可以匯進來嗎"
+      },
+      {
+        "fine_id": "prospect/B/individual-landlord-scale-fit",
+        "score": 1.0,
+        "source": "question_summary:3596",
+        "status": "proposed",
+        "text": "個人房東"
+      },
+      {
+        "fine_id": "prospect/B/individual-landlord-scale-fit",
+        "score": 1.0,
+        "source": "question_summary:3596",
+        "status": "proposed",
+        "text": "免費試用"
+      },
+      {
+        "fine_id": "prospect/B/individual-landlord-scale-fit",
+        "score": 1.0,
+        "source": "question_summary:3596",
+        "status": "proposed",
+        "text": "收租對帳"
+      },
+      {
+        "fine_id": "prospect/B/individual-landlord-scale-fit",
+        "score": 1.0,
+        "source": "question_summary:3596",
+        "status": "proposed",
+        "text": "方案"
+      },
+      {
+        "fine_id": "prospect/B/individual-landlord-scale-fit",
+        "score": 1.0,
+        "source": "question_summary:3596",
+        "status": "proposed",
+        "text": "物件合約帳務"
+      },
+      {
+        "fine_id": "prospect/B/individual-landlord-scale-fit",
+        "score": 1.0,
+        "source": "question_summary:3596",
+        "status": "proposed",
+        "text": "約10戶"
+      },
+      {
+        "fine_id": "prospect/B/individual-landlord-scale-fit",
+        "score": 1.0,
+        "source": "question_summary:3597",
+        "status": "proposed",
+        "text": "多元金流"
+      },
+      {
+        "fine_id": "prospect/B/individual-landlord-scale-fit",
+        "score": 1.0,
+        "source": "question_summary:3597",
+        "status": "proposed",
+        "text": "帳務自動化"
+      },
+      {
+        "fine_id": "prospect/B/individual-landlord-scale-fit",
+        "score": 1.0,
+        "source": "question_summary:3597",
+        "status": "proposed",
+        "text": "約20戶"
+      },
+      {
+        "fine_id": "prospect/B/individual-landlord-scale-fit",
+        "score": 1.0,
+        "source": "question_summary:3598",
+        "status": "proposed",
+        "text": "約30戶"
+      },
+      {
+        "fine_id": "prospect/B/individual-landlord-scale-fit",
+        "score": 1.0,
+        "source": "question_summary:3598",
+        "status": "proposed",
+        "text": "規模化"
+      },
+      {
+        "fine_id": "prospect/B/individual-landlord-scale-fit",
+        "score": 1.0,
+        "source": "question_summary:3598",
+        "status": "proposed",
+        "text": "銜接團隊大房東報表"
+      },
+      {
+        "fine_id": "prospect/B/team-company-fit",
+        "score": 1.0,
+        "source": "question_summary:3584",
+        "status": "proposed",
+        "text": "全模組"
+      },
+      {
+        "fine_id": "prospect/B/team-company-fit",
+        "score": 1.0,
+        "source": "question_summary:3584",
+        "status": "proposed",
+        "text": "公司團隊方案"
+      },
+      {
+        "fine_id": "prospect/B/team-company-fit",
+        "score": 1.0,
+        "source": "question_summary:3584",
+        "status": "proposed",
+        "text": "包租代管物管"
+      },
+      {
+        "fine_id": "prospect/B/team-company-fit",
+        "score": 1.0,
+        "source": "question_summary:3584",
+        "status": "proposed",
+        "text": "團隊權限"
+      },
+      {
+        "fine_id": "prospect/B/team-company-fit",
+        "score": 1.0,
+        "source": "question_summary:3584",
+        "status": "proposed",
+        "text": "大房東報表"
+      },
+      {
+        "fine_id": "prospect/B/team-company-fit",
+        "score": 1.0,
+        "source": "question_summary:3584",
+        "status": "proposed",
+        "text": "適合"
+      },
+      {
+        "fine_id": "prospect/C/bill-contents-extra-fees",
+        "score": 0.375,
+        "source": "koyu:slug78#1",
+        "status": "proposed",
+        "text": "帳單裡面有哪些資訊"
+      },
+      {
+        "fine_id": "prospect/C/bill-contents-extra-fees",
+        "score": 0.2941,
+        "source": "helpcenter:slug78",
+        "status": "proposed",
+        "text": "帳單內有哪些資訊？"
+      },
+      {
+        "fine_id": "prospect/C/bill-contents-extra-fees",
+        "score": 0.2353,
+        "source": "koyu:slug78#14",
+        "status": "proposed",
+        "text": "帳單包含哪些資訊"
+      },
+      {
+        "fine_id": "prospect/C/bill-contents-extra-fees",
+        "score": 0.1765,
+        "source": "koyu:slug79#15",
+        "status": "proposed",
+        "text": "加收費用怎麼弄"
+      },
+      {
+        "fine_id": "prospect/C/bill-contents-extra-fees",
+        "score": 0.1667,
+        "source": "helpcenter:slug79",
+        "status": "proposed",
+        "text": "如何在帳單內添加臨時增收費用？"
+      },
+      {
+        "fine_id": "prospect/C/bill-contents-extra-fees",
+        "score": 0.15,
+        "source": "koyu:slug79#1",
+        "status": "proposed",
+        "text": "帳單要怎麼加臨時費用"
+      },
+      {
+        "fine_id": "prospect/C/bill-format-customize",
+        "score": 1.0,
+        "source": "question_summary:5380",
+        "status": "proposed",
+        "text": "品項"
+      },
+      {
+        "fine_id": "prospect/C/bill-format-customize",
+        "score": 1.0,
+        "source": "question_summary:5380",
+        "status": "proposed",
+        "text": "客製帳單"
+      },
+      {
+        "fine_id": "prospect/C/bill-format-customize",
+        "score": 1.0,
+        "source": "question_summary:5380",
+        "status": "proposed",
+        "text": "帳單格式能不能自己設定"
+      },
+      {
+        "fine_id": "prospect/C/bill-format-customize",
+        "score": 1.0,
+        "source": "question_summary:5380",
+        "status": "proposed",
+        "text": "帳單版面"
+      },
+      {
+        "fine_id": "prospect/C/bill-format-customize",
+        "score": 1.0,
+        "source": "question_summary:5380",
+        "status": "proposed",
+        "text": "抬頭"
+      },
+      {
+        "fine_id": "prospect/C/bill-format-customize",
+        "score": 1.0,
+        "source": "question_summary:5380",
+        "status": "proposed",
+        "text": "收據樣式"
+      },
+      {
+        "fine_id": "prospect/C/bill-format-customize",
+        "score": 1.0,
+        "source": "question_summary:5380",
+        "status": "proposed",
+        "text": "自訂帳單"
+      },
+      {
+        "fine_id": "prospect/C/billing-overview",
+        "score": 1.0,
+        "source": "question_summary:3601",
+        "status": "proposed",
+        "text": "儲值金"
+      },
+      {
+        "fine_id": "prospect/C/billing-overview",
+        "score": 1.0,
+        "source": "question_summary:3601",
+        "status": "proposed",
+        "text": "帳務管理"
+      },
+      {
+        "fine_id": "prospect/C/billing-overview",
+        "score": 1.0,
+        "source": "question_summary:3601",
+        "status": "proposed",
+        "text": "收租對帳"
+      },
+      {
+        "fine_id": "prospect/C/billing-overview",
+        "score": 1.0,
+        "source": "question_summary:3601",
+        "status": "proposed",
+        "text": "自動帳單"
+      },
+      {
+        "fine_id": "prospect/C/billing-overview",
+        "score": 1.0,
+        "source": "question_summary:3601",
+        "status": "proposed",
+        "text": "金流代收"
+      },
+      {
+        "fine_id": "prospect/C/billing-overview",
+        "score": 0.1389,
+        "source": "helpcenter:einvoice",
+        "status": "proposed",
+        "text": "帳單可以自動開立電子發票嗎？"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2857,
+        "source": "koyu:onboarding4#1",
+        "status": "proposed",
+        "text": "要怎麼新增物件"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2353,
+        "source": "koyu:property（原#10",
+        "status": "proposed",
+        "text": "新增物件時選不到社區"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2308,
+        "source": "koyu:onboarding4#15",
+        "status": "proposed",
+        "text": "物件怎麼建"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2222,
+        "source": "koyu:qa01#1",
+        "status": "proposed",
+        "text": "批次新增的表格要怎麼填"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2143,
+        "source": "koyu:slug1#6",
+        "status": "proposed",
+        "text": "物件怎麼新增"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2,
+        "source": "helpcenter:qa01",
+        "status": "proposed",
+        "text": "物件批次新增表格如何填寫？"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2,
+        "source": "helpcenter:slug1",
+        "status": "proposed",
+        "text": "如何新增物件？"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2,
+        "source": "koyu:onboarding4#7",
+        "status": "proposed",
+        "text": "新增物件時找不到社區可以選"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2,
+        "source": "koyu:onboarding5#1",
+        "status": "proposed",
+        "text": "合約要怎麼建立"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2,
+        "source": "koyu:slug1#2",
+        "status": "proposed",
+        "text": "批次新增在哪裡"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2,
+        "source": "koyu:slug1#7",
+        "status": "proposed",
+        "text": "我在物件總表找不到批次新增"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.1765,
+        "source": "koyu:property（原#7",
+        "status": "proposed",
+        "text": "社區可以批次建立嗎"
+      },
+      {
+        "fine_id": "prospect/C/contract-esign-flow",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "上傳既有合約"
+      },
+      {
+        "fine_id": "prospect/C/contract-esign-flow",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "修改合約"
+      },
+      {
+        "fine_id": "prospect/C/contract-esign-flow",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "合約範本"
+      },
+      {
+        "fine_id": "prospect/C/contract-esign-flow",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "建立合約"
+      },
+      {
+        "fine_id": "prospect/C/contract-esign-flow",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "簽約邀請"
+      },
+      {
+        "fine_id": "prospect/C/contract-esign-flow",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "線上電子簽約"
+      },
+      {
+        "fine_id": "prospect/C/contract-history-retention",
+        "score": 0.4286,
+        "source": "koyu:slug15#1",
+        "status": "proposed",
+        "text": "歷史合約是什麼"
+      },
+      {
+        "fine_id": "prospect/C/contract-history-retention",
+        "score": 0.4,
+        "source": "helpcenter:slug15",
+        "status": "proposed",
+        "text": "歷史合約是什麼？"
+      },
+      {
+        "fine_id": "prospect/C/contract-history-retention",
+        "score": 0.25,
+        "source": "koyu:qa06#3",
+        "status": "proposed",
+        "text": "既存合約是什麼"
+      },
+      {
+        "fine_id": "prospect/C/contract-history-retention",
+        "score": 0.2222,
+        "source": "koyu:qa06#14",
+        "status": "proposed",
+        "text": "制式合約是什麼意思"
+      },
+      {
+        "fine_id": "prospect/C/contract-history-retention",
+        "score": 0.2222,
+        "source": "koyu:slug15#16",
+        "status": "proposed",
+        "text": "歷史合約裡面放什麼"
+      },
+      {
+        "fine_id": "prospect/C/contract-history-retention",
+        "score": 0.1579,
+        "source": "koyu:slug15#14",
+        "status": "proposed",
+        "text": "歷史合約可以點退嗎"
+      },
+      {
+        "fine_id": "prospect/C/contract-history-retention",
+        "score": 0.1579,
+        "source": "koyu:slug15#8",
+        "status": "proposed",
+        "text": "合約到期後就消失了"
+      },
+      {
+        "fine_id": "prospect/C/contract-history-retention",
+        "score": 0.15,
+        "source": "koyu:slug15#2",
+        "status": "proposed",
+        "text": "歷史合約的狀態有哪些"
+      },
+      {
+        "fine_id": "prospect/C/contract-history-retention",
+        "score": 0.1429,
+        "source": "koyu:onboarding10#9",
+        "status": "proposed",
+        "text": "歷史合約裡面也能點退嗎"
+      },
+      {
+        "fine_id": "prospect/C/contract-history-retention",
+        "score": 0.1364,
+        "source": "koyu:slug15#3",
+        "status": "proposed",
+        "text": "歷史合約跟執行中合約差在哪"
+      },
+      {
+        "fine_id": "prospect/C/contract-history-retention",
+        "score": 0.12,
+        "source": "koyu:slug86#9",
+        "status": "proposed",
+        "text": "合約上寫線上智能整合收款是什麼"
+      },
+      {
+        "fine_id": "prospect/C/contract-modify-after-sign",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "上傳既有合約"
+      },
+      {
+        "fine_id": "prospect/C/contract-modify-after-sign",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "修改合約"
+      },
+      {
+        "fine_id": "prospect/C/contract-modify-after-sign",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "合約範本"
+      },
+      {
+        "fine_id": "prospect/C/contract-modify-after-sign",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "建立合約"
+      },
+      {
+        "fine_id": "prospect/C/contract-modify-after-sign",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "簽約邀請"
+      },
+      {
+        "fine_id": "prospect/C/contract-modify-after-sign",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "線上電子簽約"
+      },
+      {
+        "fine_id": "prospect/C/contract-templates",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "上傳既有合約"
+      },
+      {
+        "fine_id": "prospect/C/contract-templates",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "修改合約"
+      },
+      {
+        "fine_id": "prospect/C/contract-templates",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "合約範本"
+      },
+      {
+        "fine_id": "prospect/C/contract-templates",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "建立合約"
+      },
+      {
+        "fine_id": "prospect/C/contract-templates",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "簽約邀請"
+      },
+      {
+        "fine_id": "prospect/C/contract-templates",
+        "score": 1.0,
+        "source": "question_summary:3600",
+        "status": "proposed",
+        "text": "線上電子簽約"
+      },
+      {
+        "fine_id": "prospect/C/contract-templates",
+        "score": 0.1282,
+        "source": "helpcenter:slug73",
+        "status": "proposed",
+        "text": "電子合約的簽約邀請，有時效嗎？"
+      },
+      {
+        "fine_id": "prospect/C/credit-card-rent-payment",
+        "score": 0.5333,
+        "source": "helpcenter:slug86",
+        "status": "proposed",
+        "text": "租客能用信用卡繳納房租嗎？"
+      },
+      {
+        "fine_id": "prospect/C/credit-card-rent-payment",
+        "score": 0.4667,
+        "source": "koyu:slug86#1",
+        "status": "proposed",
+        "text": "租客可以用信用卡繳房租嗎"
+      },
+      {
+        "fine_id": "prospect/C/credit-card-rent-payment",
+        "score": 0.2667,
+        "source": "koyu:slug102#1",
+        "status": "proposed",
+        "text": "信用卡要怎麼繳房租"
+      },
+      {
+        "fine_id": "prospect/C/credit-card-rent-payment",
+        "score": 0.1579,
+        "source": "koyu:slug103#8",
+        "status": "proposed",
+        "text": "我想改用信用卡但沒有選項"
+      },
+      {
+        "fine_id": "prospect/C/credit-card-rent-payment",
+        "score": 0.1538,
+        "source": "koyu:onboarding3#4",
+        "status": "proposed",
+        "text": "我要繳房租"
+      },
+      {
+        "fine_id": "prospect/C/credit-card-rent-payment",
+        "score": 0.15,
+        "source": "helpcenter:slug102",
+        "status": "proposed",
+        "text": "租客繳費方式（藍新信用卡）"
+      },
+      {
+        "fine_id": "prospect/C/credit-card-rent-payment",
+        "score": 0.1429,
+        "source": "koyu:onboarding3#14",
+        "status": "proposed",
+        "text": "繳房租的方法"
+      },
+      {
+        "fine_id": "prospect/C/credit-card-rent-payment",
+        "score": 0.1429,
+        "source": "koyu:slug103#14",
+        "status": "proposed",
+        "text": "ATM繳房租"
+      },
+      {
+        "fine_id": "prospect/C/credit-card-rent-payment",
+        "score": 0.1333,
+        "source": "koyu:slug102#14",
+        "status": "proposed",
+        "text": "信用卡付款流程"
+      },
+      {
+        "fine_id": "prospect/C/credit-card-rent-payment",
+        "score": 0.1333,
+        "source": "koyu:slug104#14",
+        "status": "proposed",
+        "text": "轉帳繳房租流程"
+      },
+      {
+        "fine_id": "prospect/C/notification-channels",
+        "score": 0.25,
+        "source": "koyu:onboarding1#5",
+        "status": "proposed",
+        "text": "註冊要用email還是手機"
+      },
+      {
+        "fine_id": "prospect/C/notification-channels",
+        "score": 0.1667,
+        "source": "koyu:slug100#9",
+        "status": "proposed",
+        "text": "email通知點進去沒反應"
+      },
+      {
+        "fine_id": "prospect/C/notification-channels",
+        "score": 0.1613,
+        "source": "koyu:onboarding2#2",
+        "status": "proposed",
+        "text": "email通知的語言在哪裡改"
+      },
+      {
+        "fine_id": "prospect/C/notification-channels",
+        "score": 0.1562,
+        "source": "koyu:slug48#4",
+        "status": "proposed",
+        "text": "簽約邀請是用簡訊還是email"
+      },
+      {
+        "fine_id": "prospect/C/notification-channels",
+        "score": 0.1429,
+        "source": "koyu:slug95#4",
+        "status": "proposed",
+        "text": "我要改我的email"
+      },
+      {
+        "fine_id": "prospect/C/notification-channels",
+        "score": 0.1379,
+        "source": "koyu:slug00#10",
+        "status": "proposed",
+        "text": "email打錯了怎麼辦"
+      },
+      {
+        "fine_id": "prospect/C/notification-channels",
+        "score": 0.1333,
+        "source": "koyu:slug100#3",
+        "status": "proposed",
+        "text": "可以從email直接繳嗎"
+      },
+      {
+        "fine_id": "prospect/C/notification-channels",
+        "score": 0.125,
+        "source": "koyu:slug103#9",
+        "status": "proposed",
+        "text": "email的連結點進去要幹嘛"
+      },
+      {
+        "fine_id": "prospect/C/notification-channels",
+        "score": 0.1212,
+        "source": "koyu:slug13#9",
+        "status": "proposed",
+        "text": "我只有租客的電話沒有email"
+      },
+      {
+        "fine_id": "prospect/C/overdue-reminder-late-fee",
+        "score": 1.0,
+        "source": "question_summary:5378",
+        "status": "proposed",
+        "text": "催繳"
+      },
+      {
+        "fine_id": "prospect/C/overdue-reminder-late-fee",
+        "score": 1.0,
+        "source": "question_summary:5378",
+        "status": "proposed",
+        "text": "拖欠"
+      },
+      {
+        "fine_id": "prospect/C/overdue-reminder-late-fee",
+        "score": 1.0,
+        "source": "question_summary:5378",
+        "status": "proposed",
+        "text": "提醒"
+      },
+      {
+        "fine_id": "prospect/C/overdue-reminder-late-fee",
+        "score": 1.0,
+        "source": "question_summary:5378",
+        "status": "proposed",
+        "text": "租客不繳租金怎麼辦"
+      },
+      {
+        "fine_id": "prospect/C/overdue-reminder-late-fee",
+        "score": 1.0,
+        "source": "question_summary:5378",
+        "status": "proposed",
+        "text": "逾期"
+      },
+      {
+        "fine_id": "prospect/C/overdue-reminder-late-fee",
+        "score": 1.0,
+        "source": "question_summary:5378",
+        "status": "proposed",
+        "text": "遲繳"
+      },
+      {
+        "fine_id": "prospect/C/overdue-reminder-late-fee",
+        "score": 0.1333,
+        "source": "koyu:slug03#16",
+        "status": "proposed",
+        "text": "逾期提醒怎麼設定"
+      },
+      {
+        "fine_id": "prospect/C/owner-report-collection-remit",
+        "score": 1.0,
+        "source": "question_summary:3604",
+        "status": "proposed",
+        "text": "代收代付"
+      },
+      {
+        "fine_id": "prospect/C/owner-report-collection-remit",
+        "score": 1.0,
+        "source": "question_summary:3604",
+        "status": "proposed",
+        "text": "大房東報表"
+      },
+      {
+        "fine_id": "prospect/C/owner-report-collection-remit",
+        "score": 1.0,
+        "source": "question_summary:3604",
+        "status": "proposed",
+        "text": "對業主交報表"
+      },
+      {
+        "fine_id": "prospect/C/owner-report-collection-remit",
+        "score": 1.0,
+        "source": "question_summary:3604",
+        "status": "proposed",
+        "text": "月結"
+      },
+      {
+        "fine_id": "prospect/C/owner-report-collection-remit",
+        "score": 1.0,
+        "source": "question_summary:3604",
+        "status": "proposed",
+        "text": "自動寄送"
+      },
+      {
+        "fine_id": "prospect/C/payment-gateway-options",
+        "score": 0.1351,
+        "source": "helpcenter:paymentapply",
+        "status": "proposed",
+        "text": "國泰、永豐、中信的金流要怎麼申請與提領？"
+      },
+      {
+        "fine_id": "prospect/C/property-management-overview",
+        "score": 1.0,
+        "source": "question_summary:3599",
+        "status": "proposed",
+        "text": "VR看屋"
+      },
+      {
+        "fine_id": "prospect/C/property-management-overview",
+        "score": 1.0,
+        "source": "question_summary:3599",
+        "status": "proposed",
+        "text": "房源管理"
+      },
+      {
+        "fine_id": "prospect/C/property-management-overview",
+        "score": 1.0,
+        "source": "question_summary:3599",
+        "status": "proposed",
+        "text": "批次上傳"
+      },
+      {
+        "fine_id": "prospect/C/property-management-overview",
+        "score": 1.0,
+        "source": "question_summary:3599",
+        "status": "proposed",
+        "text": "物件集中"
+      },
+      {
+        "fine_id": "prospect/C/property-management-overview",
+        "score": 1.0,
+        "source": "question_summary:3599",
+        "status": "proposed",
+        "text": "社區歸戶"
+      },
+      {
+        "fine_id": "prospect/C/property-management-overview",
+        "score": 0.1538,
+        "source": "koyu:onboarding4#17",
+        "status": "proposed",
+        "text": "批次上傳物件"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.25,
+        "source": "koyu:slug10#15",
+        "status": "proposed",
+        "text": "未刊登是什麼意思"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1538,
+        "source": "koyu:slug20#3",
+        "status": "proposed",
+        "text": "已失效是什麼意思"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1538,
+        "source": "koyu:slug88#15",
+        "status": "proposed",
+        "text": "已支出是什麼意思"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1481,
+        "source": "koyu:slug24#9",
+        "status": "proposed",
+        "text": "紅色的字是什麼意思"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1481,
+        "source": "koyu:slug28#14",
+        "status": "proposed",
+        "text": "未退押金是什麼意思"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1481,
+        "source": "koyu:slug39#6",
+        "status": "proposed",
+        "text": "物件狀態有什麼差別"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1481,
+        "source": "koyu:slug66#15",
+        "status": "proposed",
+        "text": "點退押金是什麼意思"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1481,
+        "source": "koyu:slug66#6",
+        "status": "proposed",
+        "text": "找補費用是什麼意思"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1481,
+        "source": "koyu:slug75#15",
+        "status": "proposed",
+        "text": "自動對帳是什麼意思"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1471,
+        "source": "helpcenter:billexpired",
+        "status": "proposed",
+        "text": "帳單狀態顯示「已失效」是什麼意思？"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1379,
+        "source": "koyu:property（原#5",
+        "status": "proposed",
+        "text": "洽談中的物件可以做什麼"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1379,
+        "source": "koyu:slug29#14",
+        "status": "proposed",
+        "text": "解約後30天是什麼意思"
+      },
+      {
+        "fine_id": "prospect/C/rental-storefront-vr",
+        "score": 0.25,
+        "source": "helpcenter:slug90",
+        "status": "proposed",
+        "text": "什麼是「房東對外首頁」（招租店舖）？"
+      },
+      {
+        "fine_id": "prospect/C/rental-storefront-vr",
+        "score": 0.1875,
+        "source": "koyu:slug90#2",
+        "status": "proposed",
+        "text": "招租店舖是什麼"
+      },
+      {
+        "fine_id": "prospect/C/rental-storefront-vr",
+        "score": 0.1667,
+        "source": "koyu:property（原#8",
+        "status": "proposed",
+        "text": "招租店舖要怎麼進去"
+      },
+      {
+        "fine_id": "prospect/C/rental-storefront-vr",
+        "score": 0.1429,
+        "source": "koyu:slug90#8",
+        "status": "proposed",
+        "text": "我改了大頭照對外首頁沒變"
+      },
+      {
+        "fine_id": "prospect/C/repair-system",
+        "score": 1.0,
+        "source": "question_summary:3605",
+        "status": "proposed",
+        "text": "修繕系統"
+      },
+      {
+        "fine_id": "prospect/C/repair-system",
+        "score": 1.0,
+        "source": "question_summary:3605",
+        "status": "proposed",
+        "text": "線上報修"
+      },
+      {
+        "fine_id": "prospect/C/repair-system",
+        "score": 1.0,
+        "source": "question_summary:3605",
+        "status": "proposed",
+        "text": "進度追蹤"
+      },
+      {
+        "fine_id": "prospect/C/smart-meter-lock-iot",
+        "score": 1.0,
+        "source": "question_summary:3603",
+        "status": "proposed",
+        "text": "IoT"
+      },
+      {
+        "fine_id": "prospect/C/smart-meter-lock-iot",
+        "score": 1.0,
+        "source": "question_summary:3603",
+        "status": "proposed",
+        "text": "抄表"
+      },
+      {
+        "fine_id": "prospect/C/smart-meter-lock-iot",
+        "score": 1.0,
+        "source": "question_summary:3603",
+        "status": "proposed",
+        "text": "換鎖"
+      },
+      {
+        "fine_id": "prospect/C/smart-meter-lock-iot",
+        "score": 1.0,
+        "source": "question_summary:3603",
+        "status": "proposed",
+        "text": "智慧門鎖"
+      },
+      {
+        "fine_id": "prospect/C/smart-meter-lock-iot",
+        "score": 1.0,
+        "source": "question_summary:3603",
+        "status": "proposed",
+        "text": "智慧電錶"
+      },
+      {
+        "fine_id": "prospect/C/smart-meter-lock-iot",
+        "score": 1.0,
+        "source": "question_summary:3603",
+        "status": "proposed",
+        "text": "硬體"
+      },
+      {
+        "fine_id": "prospect/C/smart-meter-lock-iot",
+        "score": 0.12,
+        "source": "koyu:Landlordonboarding08Device#1",
+        "status": "proposed",
+        "text": "智慧電錶要怎麼綁定"
+      },
+      {
+        "fine_id": "prospect/C/team-management-overview",
+        "score": 1.0,
+        "source": "question_summary:3602",
+        "status": "proposed",
+        "text": "團隊管理"
+      },
+      {
+        "fine_id": "prospect/C/team-management-overview",
+        "score": 1.0,
+        "source": "question_summary:3602",
+        "status": "proposed",
+        "text": "多人協作"
+      },
+      {
+        "fine_id": "prospect/C/team-management-overview",
+        "score": 1.0,
+        "source": "question_summary:3602",
+        "status": "proposed",
+        "text": "大房東報表"
+      },
+      {
+        "fine_id": "prospect/C/team-management-overview",
+        "score": 1.0,
+        "source": "question_summary:3602",
+        "status": "proposed",
+        "text": "角色權限"
+      },
+      {
+        "fine_id": "prospect/C/what-is-owner-landlord",
+        "score": 0.1765,
+        "source": "koyu:slug90#1",
+        "status": "proposed",
+        "text": "房東對外首頁是什麼"
+      },
+      {
+        "fine_id": "prospect/C/what-is-owner-landlord",
+        "score": 0.1333,
+        "source": "koyu:slug92#15",
+        "status": "proposed",
+        "text": "經理人是什麼"
+      },
+      {
+        "fine_id": "prospect/C/what-is-owner-landlord",
+        "score": 0.125,
+        "source": "koyu:TOFILL-beike#3",
+        "status": "proposed",
+        "text": "樓盤字典是什麼"
+      },
+      {
+        "fine_id": "prospect/C/what-is-owner-landlord",
+        "score": 0.125,
+        "source": "koyu:landlordonboarding05Paymentsettings#19",
+        "status": "proposed",
+        "text": "虛擬帳號是什麼"
+      },
+      {
+        "fine_id": "prospect/C/what-is-owner-landlord",
+        "score": 0.125,
+        "source": "koyu:onboarding10#1",
+        "status": "proposed",
+        "text": "點退流程是什麼"
+      },
+      {
+        "fine_id": "prospect/C/what-is-owner-landlord",
+        "score": 0.125,
+        "source": "koyu:rent3#1",
+        "status": "proposed",
+        "text": "租約公證是什麼"
+      },
+      {
+        "fine_id": "prospect/C/what-is-owner-landlord",
+        "score": 0.125,
+        "source": "koyu:rentallaw.pt1#1",
+        "status": "proposed",
+        "text": "租賃專法是什麼"
+      },
+      {
+        "fine_id": "prospect/C/what-is-owner-landlord",
+        "score": 0.125,
+        "source": "koyu:slug01#15",
+        "status": "proposed",
+        "text": "我的帳號是什麼"
+      },
+      {
+        "fine_id": "prospect/C/what-is-owner-landlord",
+        "score": 0.125,
+        "source": "koyu:slug39#14",
+        "status": "proposed",
+        "text": "物件分類是什麼"
+      },
+      {
+        "fine_id": "prospect/C/what-is-owner-landlord",
+        "score": 0.125,
+        "source": "koyu:slug86#15",
+        "status": "proposed",
+        "text": "線上金流是什麼"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.4,
+        "source": "koyu:onboarding1#1",
+        "status": "proposed",
+        "text": "要怎麼註冊JGB帳號"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.375,
+        "source": "koyu:tenantintro.register#1",
+        "status": "proposed",
+        "text": "租客要怎麼註冊"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.3,
+        "source": "koyu:Landlordonboarding01#1",
+        "status": "proposed",
+        "text": "個人房東要怎麼註冊"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.2857,
+        "source": "koyu:onboarding1#14",
+        "status": "proposed",
+        "text": "怎麼開帳號"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.2222,
+        "source": "koyu:Landlordonboarding00#15",
+        "status": "proposed",
+        "text": "屋主帳號怎麼用"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.2222,
+        "source": "koyu:tenantintro.register#13",
+        "status": "proposed",
+        "text": "租客怎麼開帳號"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.2,
+        "source": "koyu:slug01#13",
+        "status": "proposed",
+        "text": "登入帳號怎麼找回"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.2,
+        "source": "koyu:slug01#2",
+        "status": "proposed",
+        "text": "忘記帳號要怎麼查"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.2,
+        "source": "koyu:slug01#6",
+        "status": "proposed",
+        "text": "帳號忘記了怎麼救"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.2,
+        "source": "koyu:slug95#1",
+        "status": "proposed",
+        "text": "帳號資訊要怎麼改"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.2,
+        "source": "koyu:slug95#13",
+        "status": "proposed",
+        "text": "帳號資訊怎麼變更"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.1818,
+        "source": "helpcenter:slug01",
+        "status": "proposed",
+        "text": "我忘記帳號怎麼辦？"
+      },
+      {
+        "fine_id": "prospect/D/free-trial",
+        "score": 1.0,
+        "source": "question_summary:3611",
+        "status": "proposed",
+        "text": "免費"
+      },
+      {
+        "fine_id": "prospect/D/free-trial",
+        "score": 1.0,
+        "source": "question_summary:3611",
+        "status": "proposed",
+        "text": "可以免費試用嗎"
+      },
+      {
+        "fine_id": "prospect/D/free-trial",
+        "score": 1.0,
+        "source": "question_summary:3611",
+        "status": "proposed",
+        "text": "試用"
+      },
+      {
+        "fine_id": "prospect/D/free-trial",
+        "score": 1.0,
+        "source": "question_summary:3611",
+        "status": "proposed",
+        "text": "試用多久"
+      },
+      {
+        "fine_id": "prospect/D/free-trial",
+        "score": 0.2,
+        "source": "koyu:advanced12#3",
+        "status": "proposed",
+        "text": "多久可以提款"
+      },
+      {
+        "fine_id": "prospect/D/free-trial",
+        "score": 0.1667,
+        "source": "koyu:tenantintro.register#3",
+        "status": "proposed",
+        "text": "驗證碼多久可以重發"
+      },
+      {
+        "fine_id": "prospect/D/free-trial",
+        "score": 0.15,
+        "source": "koyu:slug29#1",
+        "status": "proposed",
+        "text": "提前解約後多久可以點退"
+      },
+      {
+        "fine_id": "prospect/D/pricing-plans",
+        "score": 1.0,
+        "source": "question_summary:3610",
+        "status": "proposed",
+        "text": "價格"
+      },
+      {
+        "fine_id": "prospect/D/pricing-plans",
+        "score": 1.0,
+        "source": "question_summary:3610",
+        "status": "proposed",
+        "text": "報價"
+      },
+      {
+        "fine_id": "prospect/D/pricing-plans",
+        "score": 1.0,
+        "source": "question_summary:3610",
+        "status": "proposed",
+        "text": "多少錢"
+      },
+      {
+        "fine_id": "prospect/D/pricing-plans",
+        "score": 1.0,
+        "source": "question_summary:3610",
+        "status": "proposed",
+        "text": "怎麼收費"
+      },
+      {
+        "fine_id": "prospect/D/pricing-plans",
+        "score": 1.0,
+        "source": "question_summary:3610",
+        "status": "proposed",
+        "text": "方案"
+      },
+      {
+        "fine_id": "prospect/D/pricing-plans",
+        "score": 1.0,
+        "source": "question_summary:3610",
+        "status": "proposed",
+        "text": "費用"
+      },
+      {
+        "fine_id": "prospect/D/pricing-plans",
+        "score": 1.0,
+        "source": "question_summary:3610",
+        "status": "proposed",
+        "text": "金箍棒"
+      },
+      {
+        "fine_id": "prospect/D/pricing-plans",
+        "score": 0.125,
+        "source": "koyu:Landlordonboarding02#20",
+        "status": "proposed",
+        "text": "公司方案多少錢"
+      },
+      {
+        "fine_id": "prospect/D/property-quota-limit",
+        "score": 0.1333,
+        "source": "koyu:rentallaw.pt2#18",
+        "status": "proposed",
+        "text": "凶宅怎麼辦"
+      },
+      {
+        "fine_id": "prospect/E/competitor-comparison",
+        "score": 1.0,
+        "source": "question_summary:3607",
+        "status": "proposed",
+        "text": "Bananas"
+      },
+      {
+        "fine_id": "prospect/E/competitor-comparison",
+        "score": 1.0,
+        "source": "question_summary:3607",
+        "status": "proposed",
+        "text": "屋我也"
+      },
+      {
+        "fine_id": "prospect/E/competitor-comparison",
+        "score": 1.0,
+        "source": "question_summary:3607",
+        "status": "proposed",
+        "text": "差異"
+      },
+      {
+        "fine_id": "prospect/E/competitor-comparison",
+        "score": 1.0,
+        "source": "question_summary:3607",
+        "status": "proposed",
+        "text": "比較"
+      },
+      {
+        "fine_id": "prospect/E/competitor-comparison",
+        "score": 1.0,
+        "source": "question_summary:3607",
+        "status": "proposed",
+        "text": "租賃管理系統"
+      },
+      {
+        "fine_id": "prospect/E/competitor-comparison",
+        "score": 1.0,
+        "source": "question_summary:3607",
+        "status": "proposed",
+        "text": "競品"
+      },
+      {
+        "fine_id": "prospect/E/competitor-comparison",
+        "score": 1.0,
+        "source": "question_summary:3607",
+        "status": "proposed",
+        "text": "金箍棒"
+      },
+      {
+        "fine_id": "prospect/E/competitor-neutrality",
+        "score": 1.0,
+        "source": "question_summary:3609",
+        "status": "proposed",
+        "text": "中立"
+      },
+      {
+        "fine_id": "prospect/E/competitor-neutrality",
+        "score": 1.0,
+        "source": "question_summary:3609",
+        "status": "proposed",
+        "text": "你們會評論競爭對手嗎"
+      },
+      {
+        "fine_id": "prospect/E/competitor-neutrality",
+        "score": 1.0,
+        "source": "question_summary:3609",
+        "status": "proposed",
+        "text": "怎麼看同業"
+      },
+      {
+        "fine_id": "prospect/E/competitor-neutrality",
+        "score": 1.0,
+        "source": "question_summary:3609",
+        "status": "proposed",
+        "text": "會說對手壞話嗎"
+      },
+      {
+        "fine_id": "prospect/F/contact-sales-demo",
+        "score": 0.125,
+        "source": "koyu:slug24#14",
+        "status": "proposed",
+        "text": "欠租的房客怎麼找"
+      },
+      {
+        "fine_id": "prospect/G/migration-limits",
+        "score": 1.0,
+        "source": "question_summary:5379",
+        "status": "proposed",
+        "text": "合約能不能匯"
+      },
+      {
+        "fine_id": "prospect/G/migration-limits",
+        "score": 1.0,
+        "source": "question_summary:5379",
+        "status": "proposed",
+        "text": "哪些能匯"
+      },
+      {
+        "fine_id": "prospect/G/migration-limits",
+        "score": 1.0,
+        "source": "question_summary:5379",
+        "status": "proposed",
+        "text": "房東租客合約帳單"
+      },
+      {
+        "fine_id": "prospect/G/migration-limits",
+        "score": 1.0,
+        "source": "question_summary:5379",
+        "status": "proposed",
+        "text": "批次匯入"
+      },
+      {
+        "fine_id": "prospect/G/migration-limits",
+        "score": 1.0,
+        "source": "question_summary:5379",
+        "status": "proposed",
+        "text": "搬資料"
+      },
+      {
+        "fine_id": "prospect/G/migration-limits",
+        "score": 1.0,
+        "source": "question_summary:5379",
+        "status": "proposed",
+        "text": "舊系統資料可以匯進來嗎"
+      }
+    ],
+    "similar_pairs": [
+      {
+        "a": "prospect/B/data-migration",
+        "b": "prospect/G/migration-limits",
+        "method": "char_bigram_jaccard",
+        "score": 0.5593
+      },
+      {
+        "a": "prospect/C/contract-modify-after-sign",
+        "b": "prospect/C/contract-templates",
+        "method": "char_bigram_jaccard",
+        "score": 0.451
+      },
+      {
+        "a": "prospect/C/contract-esign-flow",
+        "b": "prospect/C/contract-modify-after-sign",
+        "method": "char_bigram_jaccard",
+        "score": 0.3966
+      },
+      {
+        "a": "prospect/C/contract-esign-flow",
+        "b": "prospect/C/contract-templates",
+        "method": "char_bigram_jaccard",
+        "score": 0.381
+      }
+    ]
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "phrasing"
+}
