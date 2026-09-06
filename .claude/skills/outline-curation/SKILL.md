@@ -24,12 +24,12 @@ budgets:
 ```text
 1 intake        腳本      讀輸入、凍結 sha、產「受測物定義清單」骨架
    ↓
-2 structure     腳本→API  3 角度提議（提問路徑／內容邊界／受眾層級）各一獨立請求 → 第 4 請求合成
+2 structure     腳本→子代理 3 角度提議（提問路徑／內容邊界／受眾層級）各一子代理 → 第 4 個子代理合成
    ↓                      → steps/02-structure.md（2.3 實作；Workflow 版留參考）
 3 phrasing      腳本+人審 講法／缺口格掛回細目；相似細目待審清單
    ↓
-4 answerability 腳本→API  每格 2 判者（獨立請求）、不一致加第 3；schema 強制、journal 續跑
-   ↓                      → steps/04-answerability.md（1.6 answerability_judge.py；Workflow 版留參考）
+4 answerability 腳本→子代理 每組 5 格 × 2 判者（互不可見）、不一致加第 3；事後驗證、raw 留檔
+   ↓                      → steps/04-answerability.md（answerability_agents.py：分組子代理；Workflow 版留參考）
 5 reweigh       腳本      呼叫 tools/gapmap/coverage_map.py 重量
    ↓
 6 diff          腳本      結構差異＋id 對應表＋取代對應表＋成本（G4 獨立驗證）
@@ -43,9 +43,9 @@ budgets:
 | 步 | 檔案 | 輸入 | 輸出 schema | 形態 |
 |---|---|---|---|---|
 | 1 | [`steps/01-intake.md`](steps/01-intake.md) | kb 列／草稿／缺口地圖／既有正本 | `schemas/intake.json` | 腳本 |
-| 2 | [`steps/02-structure.md`](steps/02-structure.md) | intake.json | `schemas/structure-proposal.json` | 腳本直打 API（2.3；決策 7 修訂） |
+| 2 | [`steps/02-structure.md`](steps/02-structure.md) | intake.json | `schemas/structure-proposal.json` | 腳本＋Claude Code 子代理（2.3；決策 7 修訂） |
 | 3 | [`steps/03-phrasing.md`](steps/03-phrasing.md) | structure-proposal.json | `schemas/phrasing-map.json` | 腳本＋人審 |
-| 4 | [`steps/04-answerability.md`](steps/04-answerability.md) | phrasing-map.json | `schemas/answerability.json` | 腳本直打 API（1.6 `answerability_judge.py`） |
+| 4 | [`steps/04-answerability.md`](steps/04-answerability.md) | phrasing-map.json | `schemas/answerability.json` | 腳本＋Claude Code 子代理（`answerability_agents.py`；業主 2026-09-06：API 只在真實對話） |
 | 5 | [`steps/05-reweigh.md`](steps/05-reweigh.md) | answerability.json | `schemas/coverage-reweigh.json` | 腳本 |
 | 6 | [`steps/06-diff.md`](steps/06-diff.md) | 新舊正本＋id_map | `schemas/diff-report.json`＋`schemas/cost.json` | 腳本 |
 | 7 | [`steps/07-import.md`](steps/07-import.md) | 已核可正本 | rollback SQL | 腳本；⛔ 需業主授權（D1） |

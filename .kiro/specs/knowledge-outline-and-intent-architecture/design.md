@@ -103,7 +103,7 @@ graph TD
     reweigh.py                 呼叫 tools/gapmap/coverage_map.py 重量
     diff_report.py             結構差異＋影響清單＋取代對應表
     cost_ledger.py             彙總各步 journal 與 provider usage → cost.json
-    answerability_judge.py     步 4 判者：直打 API（1.6）
+    answerability_agents.py    步 4 判者外殼：分組 prompt／collect／Reconcile（子代理執行；1.6 改）
     structure_propose.py／apply_proposal.py  步 2 提議外殼（子代理執行）＋決定性套用（2.3）
     similar_items.py           細目標題（含講法）向量兩兩相似 → 待審清單（⛔ 不合併）
 ```
@@ -142,7 +142,7 @@ class StepCost(TypedDict):
 
 ### 元件 2：判者 fan-out 與結構提議的執行形態（原 `.claude/workflows/outline-curation.js`）
 
-> **現行（2026-09-06 業主裁，見決策 7 修訂）**：可答性判者＝`scripts/answerability_judge.py` 直打模型 API（每判者獨立請求、strict json_schema、journal 續跑、`--layout workflow` 與 Workflow 判者 prompt 逐位元相同）；結構提議＝`scripts/structure_propose.py` 產 prompt → 主 session 派 3 個 Claude Code 子代理＋1 個合成子代理 → `validate`／`package`。以下 Workflow 腳本形狀**留檔作參考**（1.4 已實作並乾跑；本機 8 GB 撐不住多子代理、判者間不共享快取）。
+> **現行（2026-09-06 業主裁，見決策 7 修訂 3）**：可答性判者＝`scripts/answerability_agents.py`（分組 prompt，每組 2 個互不可見的 Claude Code 子代理、不一致格第 3 個；事後驗證、Reconcile 等價）；結構提議＝`scripts/structure_propose.py` 產 prompt → 主 session 派 3 個 Claude Code 子代理＋1 個合成子代理 → `validate`／`package`。以下 Workflow 腳本形狀**留檔作參考**（1.4 已實作並乾跑；本機 8 GB 撐不住多子代理、判者間不共享快取）。
 
 **責任（原文）**：把兩個需要獨立判斷的步驟（結構提議、可答性）做成固定順序、schema 強制輸出、判者互不可見的管線；可續跑。[需求 1.5, 3.4, 6.5]
 
@@ -543,6 +543,8 @@ flowchart LR
 
 **修訂（2026-09-06，1.5 試作後業主裁）**：判者隔離與 schema 強制**不依賴 Workflow**——skill 改為腳本直打 Messages API（`answerability_judge.py`：每判者獨立請求＝互不可見；`output_config.format=json_schema`＝schema 強制；rubric＋候選當共用快取前綴 `cache_control`；journal jsonl 續跑）。理由：8 GB 機器跑 Workflow 多子代理三次整機重開；且 Workflow 子代理之間不共享快取前綴，每判者 ≈60k cache write，44 格 $15.84（步預算 $3 的 5 倍），直打 API 估 <$2。**1.5 的 44 格 Workflow 結果不作廢**（業主裁：只用腳本補批 5 C45–C55，`--layout workflow` 讓 prompt 逐位元相同才能合併）；`outline-curation.js` 留檔作參考、不再是 skill 的執行路徑（是否刪除待裁）；2.3 結構提議業主再裁（同日）：**⛔ 不打 API、用 Claude Code 子代理**（3 角度各一子代理互不可見、第 4 個合成；`structure_propose.py` 只做 prompt／驗證／打包的決定性外殼）——只有 4 次呼叫，記憶體撐得住，且合成需要較強推理。證據：`inputs/m-a-trial-20260906.md` §4–§5。
 
+**修訂 3（2026-09-06，同日業主再裁）**：**模型 API 只在真實對話（產品回合）使用，等同正式確認的最後一步；skill 流程絕大部分用 Claude Code 子代理。** 步 4 改 `answerability_agents.py`：格分組（預設 5 格一組、共用 rubric＋候選 prompt）、每組 2 個互不可見的子代理、不一致格第 3 個、主 session 控制 ≤4 並行（8 GB 實測 ≥10 並行整機重開）；事後驗證取代 schema 強制；API 判者 `answerability_judge.py` ⛔ 不留備援、已刪（1.6 的 gpt-4o-mini 55 格結果留 `inputs/m-a-trial-20260906.md` §8 作紀錄）。
+
 ### 決策 8：審核狀態以既有欄位值域區分，不加欄位
 **決定**：`outline_approved_by ∈ {<reviewer>, "pool-marked-<date>"}`；`content_reviewed_predicate` 為第二單一來源。**理由**：零 migration；`help_center_pages` 已有「可引用必有人核可」先例；D1 執行時只是一筆 UPDATE 的值改變。
 
@@ -720,7 +722,8 @@ flowchart LR
 | # | 裁決 | 落點 |
 |---|---|---|
 | H1 | 一致率門檻 0.90 → 0.80（1.5 實測 0.841 可接受） | 附錄 C ③、`outline-curation.js`／`merge_answerability_batches.py`／`answerability_judge.py` 同值、unit 鎖 |
-| H2 | 可答性判者改腳本直打 API；用產品既有 OpenAI 金鑰、`gpt-4o-mini`、容器內跑；金鑰四道防線 | 決策 7 修訂、元件 2 現行、1.6 |
+| H2 | ~~可答性判者改腳本直打 API（gpt-4o-mini）~~ **同日再裁（H7）撤回**：模型 API 只在真實對話（產品）使用，skill 流程用 Claude Code 子代理；API 判者不留備援、已刪 | 決策 7 修訂 3、元件 2 現行、1.6 |
+| H7 | **原則**：API 只在真實對話上才使用（避免浪費；等同正式確認的最後一步）；skill 流程絕大部分＝Claude Code 子代理。步 4 改 `answerability_agents.py`（分組 5 格、每組 2 判者、≤4 並行） | 決策 7 修訂 3、steps/04、SKILL.md |
 | H3 | 1.5 的 44 格 Workflow 結果不作廢（`--layout workflow` 逐位元同 prompt 才可合併） | 決策 7 修訂、`inputs/m-a-trial-20260906.md` §7 |
 | H4 | 結構提議（步 2）⛔ 不打 API、用 Claude Code 子代理（3 角度＋合成） | 決策 7 修訂、2.3、`steps/02-structure.md` |
 | H5 | 決策 5 匹配鍵只在 agent 路徑；舊鏈不改檢索、只經入庫得一細目一列 | 決策 5 適用範圍 |
@@ -734,7 +737,7 @@ flowchart LR
 | # | 問題 | 影響 |
 |---|---|---|
 | P3 | design 元件 4 範例含 `- exit: handoff`，`ATTR_KEYS` 無 `exit`（verifier advisory）：範例過期或補鍵 | canon 格式 |
-| P4 | `.claude/workflows/outline-curation.js` 留參考或刪除（同一把尺兩個實作的維護風險） | repo 整潔 |
+| P4 | `.claude/workflows/outline-curation.js` 留參考或刪除（API 判者已刪；JS 是 Claude Code 機制但實測撐不住） | repo 整潔 |
 | P5 | rubric 0.3.0（`partial` 子問題定義）是否補：門檻已降為可選 | 判者一致性 |
 
 ### D. 變更歷史
@@ -743,6 +746,7 @@ flowchart LR
 | 2026-09-06T10:13:36+0800 | 1.0 | 初始版本（需求 v2 核可、R1.5 定向後） | AI |
 | 2026-09-06 | 1.1 | security-reviewer 20 條處置（附錄 E）：sha 重算、匯入 fail-closed、白名單謂詞、可見性補洞、身分強制覆寫、hook 變數與接線測試、D3 落地、三軸欄位 | AI |
 | 2026-09-06 | 1.3 | plan-verifier r2 REVISE 6 條處置（附錄 G）：正本目錄全文統一為 `rag-orchestrator/canon/`、hook matcher 改完整相對路徑＋負對照、自證五種、done ⑤ 單次上限 | AI |
+| 2026-09-06 | 1.9 | 決策 7 修訂 3：API 只在真實對話；步 4 改分組子代理（`answerability_agents.py`）、刪 API 判者；附錄 H H2 撤回、H7 | 業主／AI |
 | 2026-09-06 | 1.8 | 文件整併：Workflow 用語全面改「API 判者／子代理提議」、元件 2 標現行與參考、附錄 H 裁決彙整與待裁（業主 2026-09-06 要求） | AI |
 | 2026-09-06 | 1.7 | 決策 10 補時序：售前大綱先驗證（4.4 探針＋7.4 放量）有效，業主點頭後才補其他受眾大綱、開始切；tasks 6.2 加前置、不再與 M-b～M-e 並行 | 業主／AI |
 | 2026-09-06 | 1.6 | 決策 5 補「適用範圍」：講法向量匹配只在 agent 路徑；舊鏈只經入庫得一細目一列、不改檢索（業主問後補明） | AI |
