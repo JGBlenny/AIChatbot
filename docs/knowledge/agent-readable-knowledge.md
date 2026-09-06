@@ -14,13 +14,16 @@
 
 售前池的知識列分兩種角色，⛔ 不是同一件事的兩種寫法：
 
-- **主題頁列**：`outline_approved_by IS NOT NULL` 的列。這些列會被
-  `OutlineAssembler.build_prospect_outline` 撈出、依 `categories` 分類、拼進
-  售前大綱（`OutlineDoc.text`），整份大綱在回合開始就進 system prompt，模型
-  不必先呼叫工具就能看到、也能引用（`Citation.source="outline:<slug>"`）。
-  一筆知識能不能「不查工具就被模型看到」，關鍵欄位就是這個審核旗標。
-  依據：`rag-orchestrator/services/agent/outline.py:_fetch_prospect_pool_rows`
-  （`WHERE kb.outline_approved_by IS NOT NULL`）；DSP-012（審核旗標定案）。
+- **主題頁列**：`outline_approved_by` 是 `reviewed:<who>` 的列。
+  ⚠️ **2026-09-07（任務 3.2）起這個旗標不再決定大綱**：售前大綱改由 git 正本
+  （`rag-orchestrator/canon/prospect.md`）逐細目組裝，DB 售前池是正本匯入後的
+  衍生物，⛔ 大綱不以衍生物為來源。這個旗標現在決定的是**另一件事**：模型用
+  `kb.get(<整數 id>)` 取單列時取不取得到（未審一律 `NO_MATCH`）。
+  「一筆知識要不要進大綱」現在的答案是「去正本裡開一個細目」，⛔ 不是在 DB 標旗標。
+  依據：`rag-orchestrator/services/agent/canon/canon_assembler.py:load_canon_or_die`／
+  `build_outline`（大綱來源）；`rag-orchestrator/services/agent/canon/review_state.py:content_reviewed_predicate`
+  ＋`rag-orchestrator/services/agent/tools/kb.py:fetch_visible_row`（旗標現在管什麼）；
+  DSP-012（審核旗標定案）。
 
 - **講法列**：同一件事只是換一種問法／措辭的知識列，**不進大綱**、只留在池裡
   供 `kb.search`／`kb.get` 按需檢索命中。「一種講法一筆」是既有知識工程慣例
@@ -45,11 +48,13 @@ Verifier 的引用比對是「一句答案 + 一段引文（quote）」對「某
 的 `Provenance.text`」做逐字子字串比對（NFKC 正規化後）。這意味着**知識列本身
 的文字就是模型唯一能合法引用的原文**——寫法直接決定模型能不能答對。
 
-- `question_summary`：用短主題關鍵字（既有知識工程慣例，非本任務新規），
-  它同時是大綱的段落標籤來源（`_classify_row` 用它比對 `SIX_MODULES` 關鍵字），
-  寫成完整問句反而讓分類關鍵字比對命中率下降。
-  依據：`rag-orchestrator/services/agent/outline.py:SIX_MODULES`
-  （`haystack = question_summary + categories`，字串包含比對）。
+- `question_summary`：用短主題關鍵字（既有知識工程慣例，非本任務新規）——
+  它是**檢索命中**用的鍵（`kb.search`／舊鏈向量檢索），寫成完整問句會稀釋主題詞。
+  ⚠️ 它**不再**是大綱的分段依據（3.2 退役了關鍵字分類表）：大綱的分段由正本的
+  粗目／細目決定，命中則靠細目標題與 `phrasings`（講法）。
+  依據：`rag-orchestrator/services/agent/canon/canon_assembler.py:build_outline`
+  （一細目一節，`id=fine.id`、`title=fine.title`）；正本格式見
+  `rag-orchestrator/services/agent/canon/canon_parser.py:FINE_HEADING_RE`。
 
 - `answer`：先述情境再帶條件，不模板化（既有知識工程慣例）；在 agent 場景下
   多一層理由——Verifier 的覆蓋檢查（下節）要求「答案句」與「引文」有足夠的
@@ -85,20 +90,19 @@ Verifier 的引用比對是「一句答案 + 一段引文（quote）」對「某
 用「沒辦法」，兩邊的否定詞命中會不一致（一邊有命中、一邊沒有），Verifier
 判定極性不一致而拒答。
 
-同時，`OutlineAssembler` 也用另一組**獨立**的邊界詞表把含這些詞的句子額外
-抽進大綱的「邊界句」章節（`outline:boundary`）——這組詞是「不支援」「無法」
-「不提供」三個，比 Verifier 的否定詞表窄，⛔ 兩表不是同一份、不要假設寫對
-一邊另一邊就自動涵蓋。
+⚠️ **2026-09-07（3.2）起大綱不再另抽一段「邊界句」**：舊版 `OutlineAssembler`
+用一組獨立的窄詞表（「不支援」「無法」「不提供」）把句子抽進 `outline:boundary`
+章節，那個機制與那張詞表都已退役。邊界事實現在寫在正本的細目裡（粗目 G
+「限制與邊界」承接這個角色），⛔ 不再由程式從答案裡撈句子。
+⇒ 現在只剩**一張**表要對齊：Verifier 的 `negation_terms`。
 
 依據：`rag-orchestrator/config/agent_verifier_rules.json`
 （`"negation_terms"` 陣列，10 詞）；
 `rag-orchestrator/services/agent/verifier.py:_verify_citation`
 （`sent_hits`/`quote_hits` 用 `self.rules.negation_terms` 命中判斷，
-`bool(sent_hits) != bool(quote_hits)` ⇒ `POLARITY_MISMATCH`）；
-`rag-orchestrator/services/agent/outline.py:_BOUNDARY_TERMS`
-（`("不支援", "無法", "不提供")`；DSP-021 補的「不支持」「不行」是
-Verifier 否定詞表的更新，未回頭同步進 `_BOUNDARY_TERMS`——寫知識時仍以
-Verifier 表為準，因為那是決定「答不答得出來」的那一關）。
+`bool(sent_hits) != bool(quote_hits)` ⇒ `POLARITY_MISMATCH`）。
+（DSP-021 補的「不支持」「不行」屬 Verifier 否定詞表；舊的
+`outline.py:_BOUNDARY_TERMS` 已於 3.2 退役，⛔ 不要再去對照它。）
 
 ---
 
@@ -121,49 +125,27 @@ Verifier 表為準，因為那是決定「答不答得出來」的那一關）�
 
 ---
 
-## 五、`categories` 對齊六模組＋顧問／方案／價格／競品
+## 五、`categories` 是檢索用的主題分類（⛔ 不再決定大綱分段）
 
-售前池 `categories` 欄位現況五值：`售前模組`／`售前顧問`／`售前方案`／
-`售前價格`／`售前競品`。只有 `售前模組` 底下的列會再依 `question_summary`
-＋`categories` 的關鍵字比對，細分進六大模組其中之一：
+⚠️ **2026-09-07（任務 3.2）改判**：舊版大綱把 `售前模組` 底下的列再依
+`question_summary`＋`categories` 的關鍵字比對細分成六大模組（房源／租約／帳務／
+團隊／IoT／修繕），另四個 `categories` 值（`售前顧問`／`售前方案`／`售前價格`／
+`售前競品`）各自成一節，命不中則落兜底桶。**那張分類表、那個兜底桶、以及
+「`categories` 沒填會影響大綱」這件事，全部退役。**
 
-| slug | 標題 | 關鍵字（節錄，完整見程式） |
-|---|---|---|
-| listing | 房源 | 房源、物件集中、社區歸戶、批次上傳、批次匯入、VR看屋 |
-| lease | 租約 | 合約、簽約、電子簽章、委託合約、社宅、範本 |
-| team | 團隊 | 團隊、協作、角色權限、大房東報表、代收代付、月結 |
-| billing | 帳務 | 帳務、帳單、收租、對帳、金流、發票、儲值、催繳、逾期、繳租、遲繳、拖欠 |
-| iot | IoT設備 | 智慧電錶、智慧門鎖、電表、IoT、硬體、抄表、換鎖 |
-| repair | 修繕 | 修繕、報修、維修、進度追蹤 |
+現在的分段來源是**正本自己的層級**：粗目（`## 標題 {#A}`）與細目
+（`### 標題 {#prospect/A/slug}`），一細目一節、節 id 就是細目 id。要調整大綱
+怎麼分段，改的是正本的粗目／細目，⛔ 不是改 DB 的 `categories`。
 
-比對**有順序**（先中先得）：例如「大房東報表」同時含團隊與帳務相關字，
-`team` 排在 `billing` 之前，才能正確分進團隊而不是被「代收代付」誤分去帳務；
-「批次匯入」在 `listing` 先比對，避免被誤分去帳務／租約。寫
-`question_summary` 時，若知識橫跨兩個模組的關鍵字，要意識到程式只認第一個
-命中的模組，必要時把最想歸類的關鍵字放進 `question_summary` 而不是只依賴
-`answer` 裡的用字（分類比對的 haystack 只有 `question_summary` + `categories`，
-不含 `answer`）。
+`categories` 仍然有用，但只在**檢索**那一側（`kb.search`／舊鏈的主題分類），
+以及匯入時對回正本細目。寫知識時照既有慣例填即可：
+`categories` 是主題分類，`business_types`／`target_user` 是業態與角色，
+⛔ 三者不可互相取代。
 
-`售前模組` 之外的四個 `categories` 值各自獨立成大綱小節，不強行併入六模組：
-`售前顧問`→「定位與顧問」、`售前方案`→「個人房東方案」、`售前價格`→
-「價格與試用」、`售前競品`→「競品比較」。`categories` 缺值或不在上述五值內
-的列，不會被丟棄，會落進兜底桶「其他產品功能」（`module-misc`）——但兜底桶
-等於「分類沒做對」，新增知識時應避免讓列落進這裡。
-
-**目前 8 列 `categories IS NULL`，待補分類**（id）：
-`3335`、`3340`、`3342`、`3353`、`3355`、`3356`、`3357`、`3358`。
-可重跑查證：
-`docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tAc "SELECT id FROM knowledge_base WHERE outline_approved_by IS NOT NULL AND categories IS NULL ORDER BY id"`
-
-依據：`rag-orchestrator/services/agent/outline.py:SIX_MODULES`／
-`_classify_row`／`NON_MODULE_CATEGORY_SECTIONS`／`_MODULE_FALLBACK_SLUG`；
-`.kiro/specs/agentic-mcp-orchestration/eval/outline-review-20260905.md`
-（同一份 8 列清單的人審紀錄）。
-
-> 風格參考（非本任務新規，只是提醒兩者是獨立維度）：`categories` 是主題分類，
-> `business_types`／`target_user` 是業態與角色，⛔ 三者不可互相取代。
-
----
+依據：`rag-orchestrator/services/agent/canon/canon_assembler.py:build_outline`
+（一細目一節）；`rag-orchestrator/services/agent/canon/canon_parser.py:COARSE_HEADING_RE`／
+`FINE_HEADING_RE`（粗目／細目的層級定義）；正本本體
+`rag-orchestrator/canon/prospect.md`。
 
 ## 六、Verifier 逐字引用對句子完整度的要求
 
@@ -225,10 +207,11 @@ Verifier 表為準，因為那是決定「答不答得出來」的那一關）�
 
 ## 七、寫完一筆知識的自檢清單
 
-- [ ] 這筆是「主題頁列」（要申請 `outline_approved_by`）還是「講法列」
-      （只供檢索、不申請審核）？兩者角色不同，不要都標。
-- [ ] `question_summary` 是短主題關鍵字，不是完整問句；且關鍵字有覆蓋到
-      你想讓它落進的那個 `categories`／六模組分類。
+- [ ] 這筆要不要讓模型用 `kb.get(<id>)` 取得到？要的話 `outline_approved_by`
+      得是 `reviewed:<who>`。⚠️ 這個旗標**不再**決定進不進大綱——進大綱是
+      「正本裡有沒有這個細目」的事。
+- [ ] `question_summary` 是短主題關鍵字，不是完整問句（它是檢索命中的鍵，
+      ⛔ 已不再決定大綱分段）。
 - [ ] `answer` 先述情境再帶條件，不是模板化條列；沒有「詳見上一筆」
       「同上」這類跨列指涉。
 - [ ] 邊界／限制句用了 `negation_terms` 表內的詞（見第三節詞表），不是
@@ -236,11 +219,11 @@ Verifier 表為準，因為那是決定「答不答得出來」的那一關）�
 - [ ] 承載關鍵事實的子句長度 ≥ 6 字且語意完整，不是被拆得過碎的短語。
 - [ ] 與其他既有知識內容矛盾時，已依第四節流程留痕＋標爭議，⛔ 沒有自行
       選邊改寫。
-- [ ] `categories` 已填值（不留 NULL），且填的值能讓 `_classify_row` 分進
-      你想要的章節（模組列尤其注意關鍵字命中順序）。
-- [ ] 若這筆要進大綱，讀過一次 `eval/outline-20260905.md` 同類章節的既有
-      寫法，確認風格與詳細度一致（例如租約章節是長篇條列式規則，房源章節
-      是短敘事段落）。
+- [ ] `categories` 已填值（不留 NULL）——它現在服務檢索與匯入對帳，
+      ⛔ 不再決定這筆會落到大綱的哪一節（那由正本的粗目／細目決定）。
+- [ ] 若這件事要進大綱，去 `rag-orchestrator/canon/prospect.md` 開／改細目，
+      並照 `rag-orchestrator/canon/README.md` 重導出同源的 `.json`
+      （⚠️ 只改 `.md` 沒重導出 ⇒ 啟動時 `load_canon_or_die` 直接紅）。
 
 ---
 

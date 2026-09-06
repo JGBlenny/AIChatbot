@@ -1,27 +1,45 @@
-"""integration：`OutlineAssembler`（spec agentic-mcp-orchestration 任務 3.2）。
+"""integration：`OutlineAssembler`（spec knowledge-outline-and-intent-architecture 3.2）。
 
-真測試庫。灌三列：
-- 已審列（`outline_approved_by='reviewed:test'`、`category IS NULL`）——prospect 大綱
-  應含它（`source_ids` 含它、`outline_sha` 隨它變）。
-- 未標記一般列（同形狀、`outline_approved_by IS NULL`）——正對照組的反面：
-  它會被 `build_visibility_predicate(prospect)` 放行（形狀與已標記列相同），
-  差別只在審核旗標；若它也進了大綱，代表 R11.6 的過濾沒接上。
-- `系統脈絡` 列（`vendor_ids=[OWN_VENDOR_ID]`）——只給 `build_toc` 用；
-  vendor 相符時應出現，vendor 不符時不應出現。
+真測試庫。灌三列（形狀沿用 3.1）：
+- 已審列（`outline_approved_by='reviewed:test'`）——⚠️ **3.2 起它不該再出現在售前大綱裡**：
+  大綱來源改成 git 正本，DB 售前池是正本的衍生物。
+- 未標記一般列——同上，形狀對照組。
+- `系統脈絡` 列（`vendor_ids=[OWN_VENDOR_ID]`）——只給 `build_toc`（pm／tenant 現役）用；
+  vendor 相符時應出現，vendor 不符時不應出現（**這道 vendor 過濾 ⛔ 不得拿掉**）。
+
+## 突變控制（Plan §4.8）
+`test_prospect_outline_is_assembled_from_canon` 走**版控正本目錄**（不設 `AGENT_CANON_DIR`）：
+`rag-orchestrator/canon/prospect.md` 改一位元而未重導出 `.json` ⇒ `load_canon_or_die` raise
+⇒ 這條測試變紅。⛔ 這不是「測試很脆弱」，這正是啟動契約要的：正本被動過就不准起來。
+
+⚠️ 竄改情境一律用 `tmp_path` 複本＋`AGENT_CANON_DIR`（只在 `DB_ENV=test` 生效），
+⛔ 本檔不寫入 `rag-orchestrator/canon/`。
 
 無法連 DB → skip（非 fail）；連到非測試庫 → 大聲失敗（⛔ 不得寫入非測試資料）。
 用完在 finally 依 id 區間刪除，且開跑前先驗該區間為空（⛔ 不覆蓋既有資料）。
 """
 import os
+import shutil
+from pathlib import Path
 
 import psycopg2
 import pytest
 
+from services.agent.canon.canon_assembler import (
+    CANON_DIR_ENV, DB_ENV_KEY, TOC_SECTION_ID, CanonLoadError, load_canon_or_die,
+    reset_canon_registry, resolve_canon_dir,
+)
+from services.agent.canon.canon_parser import export_json, parse_canon
 from services.agent.outline import build_prospect_outline, build_toc
 
 pytestmark = pytest.mark.integration
 
-_SPEC = "agentic-mcp-orchestration:3.2"
+_SPEC = "knowledge-outline-and-intent-architecture:3.2"
+
+CANON_DIR = Path(__file__).resolve().parents[3] / "canon"
+#: 版控正本現況細目數（Plan §4.8 釘死；正本增刪細目時**要一起改這個數字**，
+#: ⛔ 不改成 `len(fines)` 自證——那會讓「正本被砍到只剩 1 個細目」也綠。
+CANON_FINE_COUNT = 38
 
 #: 明示 id 起點，⛔ 不靠 serial 預設值（與 test_kb_tools_req.py／
 #: test_outline_approval_columns_req.py 同理由）。
@@ -136,41 +154,110 @@ def db_pool():
         conn.close()
 
 
+@pytest.fixture(autouse=True)
+def _clean_registry():
+    reset_canon_registry()
+    yield
+    reset_canon_registry()
+
+
+@pytest.fixture
+def tmp_canon(tmp_path, monkeypatch):
+    """版控正本的 tmp 複本，並把 `AGENT_CANON_DIR` 指過去（⛔ 不動版控檔）。"""
+    assert os.environ.get(DB_ENV_KEY, "").strip() == "test", (
+        "AGENT_CANON_DIR 覆寫只在 DB_ENV=test 生效——測試容器沒設 DB_ENV=test，"
+        "這條測試會靜默量到版控正本"
+    )
+    dst = tmp_path / "canon"
+    dst.mkdir()
+    shutil.copy2(CANON_DIR / "prospect.md", dst / "prospect.md")
+    shutil.copy2(CANON_DIR / "prospect.json", dst / "prospect.json")
+    monkeypatch.setenv(CANON_DIR_ENV, str(dst))
+    assert resolve_canon_dir() == dst.resolve(), "覆寫沒生效——下面的竄改會打到版控正本"
+    return dst
+
+
+def _reexport(canon_dir: Path) -> None:
+    export_json(parse_canon(str(canon_dir / "prospect.md")), str(canon_dir / "prospect.json"))
+
+
 @pytest.mark.req(_SPEC)
-async def test_prospect_outline_includes_only_approved_row(db_pool):
+async def test_prospect_outline_is_assembled_from_canon(db_pool):
+    """大綱＝正本逐細目＋`outline:toc`，**與 DB 售前池列無關**。
+
+    ⚠️ 本條走版控正本目錄（不設 `AGENT_CANON_DIR`）——正本 `.md` 改一位元而未
+    重導出 `.json` 時它會紅（Plan §4.8 突變控制）。
+    """
+    canon = load_canon_or_die(CANON_DIR, "prospect")          # 正對照：正本本身載得起來
+    assert len(canon.fines()) == CANON_FINE_COUNT, [f.id for f in canon.fines()]
+
     doc = await build_prospect_outline(db_pool)
-    all_source_ids = {sid for section in doc.sections for sid in section.source_ids}
-    assert APPROVED_ID in all_source_ids
-    assert UNAPPROVED_ID not in all_source_ids, (
-        "未審核列（outline_approved_by IS NULL）出現在大綱 source_ids 裡——"
-        "R11.6 的過濾沒接上"
-    )
-    assert SYSTEM_CONTEXT_ID not in all_source_ids, (
-        "系統脈絡列出現在 prospect 大綱裡——build_visibility_predicate 應排除保留分類"
-    )
-    # 正對照組：至少要有一個非空 section 命中已標記列，否則上面兩個「不含」
-    # 斷言可能只是查詢本身壞掉而非過濾機制在作用。
-    repair_section = next(s for s in doc.sections if s.id == "outline:repair")
-    assert repair_section.source_ids == [APPROVED_ID]
+    assert len(doc.sections) == CANON_FINE_COUNT + 1, [s.id for s in doc.sections]
+
+    by_id = {s.id: s for s in doc.sections}
+    assert TOC_SECTION_ID in by_id
+    assert by_id[TOC_SECTION_ID].citable is False
+    fine_ids = [f.id for f in canon.fines()]
+    assert [s.id for s in doc.sections[:-1]] == fine_ids
+    assert all(s.citable for s in doc.sections[:-1]), "版控正本 38 細目全已審 ⇒ 全可引用"
+
+    # DB 列（不論審核與否）⛔ 不得進大綱：source_ids 全空、內容不含 DB 列的答案
+    assert all(not s.source_ids for s in doc.sections)
+    assert "可線上報修並追蹤進度" not in doc.text
+    assert "這句不該進大綱" not in doc.text
 
 
 @pytest.mark.req(_SPEC)
-async def test_prospect_outline_sha_reflects_pool_membership(db_pool):
-    """把已標記列的內容改掉再重跑，sha 應變（快取失效判準）。"""
-    doc_before = await build_prospect_outline(db_pool)
+async def test_prospect_outline_sha_follows_canon_bytes_not_db_rows(db_pool, tmp_canon):
+    """sha 隨正本 `.md` 位元組變、**不隨 DB 列變**（快取失效判準搬家了）。"""
+    before = await build_prospect_outline(db_pool)
 
+    # ① UPDATE 售前池列 ⇒ sha 不變（正對照：確認 UPDATE 真的改到 1 列）
     conn = db_pool.getconn()
     cur = conn.cursor()
     cur.execute(
         "UPDATE knowledge_base SET answer = %s, updated_at = now() WHERE id = %s",
         ("可線上報修並追蹤進度（已更新）。", APPROVED_ID),
     )
+    assert cur.rowcount == 1, "前置條件沒達成：UPDATE 沒改到那一列，下面的「sha 不變」不可信"
     cur.close()
     db_pool.putconn(conn)
 
-    doc_after = await build_prospect_outline(db_pool)
-    assert doc_after.sha256 != doc_before.sha256
-    assert doc_after.version != doc_before.version
+    after_db = await build_prospect_outline(db_pool)
+    assert after_db.sha256 == before.sha256, "大綱 sha 竟隨 DB 列改變——它應該只看正本"
+
+    # ② 正本 `.md` 改一位元（version 尾碼）、**沒有**重導出 `.json` ⇒ 不同源 ⇒ 啟動紅
+    md = tmp_canon / "prospect.md"
+    raw = md.read_bytes()
+    needle, mutated = b"version: 2026-09-07.1", b"version: 2026-09-07.2"
+    assert needle in raw, "正對照失敗：找不到要改的位元組"
+    md.write_bytes(raw.replace(needle, mutated, 1))
+    assert len(md.read_bytes()) == len(raw), "這不是一位元改動"
+    with pytest.raises(CanonLoadError):
+        await build_prospect_outline(db_pool)
+
+    # ③ 同一個改動**有**重導出 ⇒ 載得起來、sha 變、節數不變
+    _reexport(tmp_canon)
+    after_md = await build_prospect_outline(db_pool)
+    assert after_md.sha256 != before.sha256
+    assert len(after_md.sections) == len(before.sections)
+
+    # ④ 內容句改動同樣進 sha（sha 涵蓋 version＋text，⛔ 不是只看 version）
+    md.write_text(md.read_text(encoding="utf-8") + "這是一句只在測試複本裡的內容。\n",
+                  encoding="utf-8")
+    _reexport(tmp_canon)
+    after_content = await build_prospect_outline(db_pool)
+    assert after_content.version == after_md.version
+    assert after_content.sha256 != after_md.sha256
+    assert len(after_content.sections) == len(before.sections)
+
+
+@pytest.mark.req(_SPEC)
+async def test_prospect_outline_dies_when_canon_markdown_missing(db_pool, tmp_canon):
+    """正本缺檔 ⇒ raise（`app.py` 在 agent 開關為真時把它升成啟動紅）。"""
+    (tmp_canon / "prospect.md").unlink()
+    with pytest.raises(CanonLoadError):
+        await build_prospect_outline(db_pool)
 
 
 @pytest.mark.req(_SPEC)

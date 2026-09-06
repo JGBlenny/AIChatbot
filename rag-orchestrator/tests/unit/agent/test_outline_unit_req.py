@@ -1,7 +1,4 @@
-"""unit：`OutlineAssembler`（spec agentic-mcp-orchestration 任務 3.2）。
-
-假 pool（psycopg2 `getconn`／`putconn` 介面，見 `tools/kb.py` 與
-`test_kb_tools_unit_req.py` 同款替身），離線、不接觸真 DB。
+"""unit：`OutlineAssembler`＋正本組裝（spec knowledge-outline-and-intent-architecture 3.2）。
 
 ⚠️ **檔名帶 `_unit_`，⛔ 不要改回 `test_outline_req.py`**——理由與
 `test_kb_tools_unit_req.py` 檔頭完全相同：`tests/` 底下沒有 `__init__.py`，
@@ -9,22 +6,33 @@
 `tests/integration/agent/test_outline_req.py` 同名會在全量收集時
 `import file mismatch`，整個 unit 層一題都跑不到（單獨跑
 `tests/unit/agent` 不會踩到，容易誤判為綠）。
+
+## 2026-09-07（任務 3.2）改寫範圍
+售前大綱的來源從「DB 售前池列＋六模組分類表」改成「git 正本逐細目」：
+`SIX_MODULES`／`_classify_row`／`_extract_boundary_sentences`／`DSP009_DELIBERATE_GAPS`／
+`_CTA_TEXT` 已退役，對應的測試一併退役（⛔ 不是刪測達成綠——換成
+`build_outline`／`canon_visible`／`build_canon_toc`／`resolve_canon_section` 的正反例）。
+**`build_toc`（pm／tenant 的 DB 目錄）與 `make_outline_resolver` 的 cache 路徑照舊測。**
 """
 from datetime import datetime, timezone
 
 import pytest
 
-from services.agent.canon.review_state import content_reviewed_predicate
+from services.agent.canon.canon_assembler import (
+    TOC_SECTION_ID,
+    build_canon_toc,
+    build_outline,
+    canon_visible,
+    register_canon,
+    reset_canon_registry,
+    resolve_canon_section,
+)
+from services.agent.canon.canon_parser import CanonDoc, CoarseItem, FineItem
 from services.agent.identity import Identity
 from services.agent.outline import (
-    DSP009_DELIBERATE_GAPS,
     OutlineBudgetExceeded,
     OutlineDoc,
     OutlineSection,
-    _classify_module_row,
-    _classify_row,
-    _extract_boundary_sentences,
-    build_prospect_outline,
     build_toc,
     check_budget,
     make_outline_resolver,
@@ -33,11 +41,18 @@ from services.agent.tools.registry import ToolResult
 
 pytestmark = pytest.mark.unit
 
-_SPEC = "agentic-mcp-orchestration:3.2"
+_SPEC = "knowledge-outline-and-intent-architecture:3.2"
+
+
+@pytest.fixture(autouse=True)
+def _clean_registry():
+    reset_canon_registry()
+    yield
+    reset_canon_registry()
 
 
 # ---------------------------------------------------------------------------
-# 假 pool（psycopg2 getconn/putconn 介面）
+# 假 pool（psycopg2 getconn/putconn 介面）——只剩 build_toc 用得到
 # ---------------------------------------------------------------------------
 
 
@@ -81,196 +96,326 @@ def _dt(day: int):
     return datetime(2026, 9, day, tzinfo=timezone.utc)
 
 
-#: (id, question_summary, answer, categories, updated_at)
-_PROSPECT_ROWS = [
-    (3599, "房源管理 物件集中 社區歸戶", "可批次上傳物件、社區歸戶管理。", ["售前模組"], _dt(1)),
-    (3600, "建立合約 線上電子簽約", "支援電子簽章；委託合約目前不支援線上簽署。", ["售前模組"], _dt(2)),
-    (3602, "團隊管理 多人協作", "可設定角色權限、大房東報表。", ["售前模組"], _dt(3)),
-    (3610, "金箍棒怎麼收費", "請參考官網方案頁，恕不提供客製報價。", ["售前價格"], _dt(4)),
-    (3606, "管理困擾 痛點", "可解決收租、合約、報修、團隊協作等痛點。", ["售前顧問"], _dt(5)),
-]
-
-
 def _pool(rows):
     return _FakePool(rows)
 
 
 # ---------------------------------------------------------------------------
-# 組裝決定性
+# 正本替身（`CanonDoc`／`FineItem` 都是 frozen dataclass，直接建）
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.req(_SPEC)
-async def test_build_prospect_outline_deterministic_same_sha():
-    doc1 = await build_prospect_outline(_pool(list(_PROSPECT_ROWS)))
-    doc2 = await build_prospect_outline(_pool(list(_PROSPECT_ROWS)))
-    assert doc1.sha256 == doc2.sha256
-    assert doc1.text == doc2.text
-    assert doc1.version == doc2.version
-
-
-@pytest.mark.req(_SPEC)
-async def test_build_prospect_outline_sql_filters_unreviewed():
-    """SQL 本身即帶內容已審謂詞——未審列在 DB 層就出不來，⛔ 不是本檔事後篩掉。
-
-    ⚠️ 2026-09-07（spec knowledge-outline-and-intent-architecture 任務 3.1）起
-    條件**不再是 `IS NOT NULL`**：`IS NOT NULL` 會把值域外的舊標記
-    （現況 29 列 `owner-20260905`）當成已審。謂詞的唯一來源是
-    `services/agent/canon/review_state.py:content_reviewed_predicate`。
-    """
-    pool = _pool(list(_PROSPECT_ROWS))
-    await build_prospect_outline(pool)
-    sql, params = pool.conn.cursor_obj.executed
-    predicate_sql, predicate_params = content_reviewed_predicate()
-    assert predicate_sql in sql, f"SQL 沒拼上內容已審謂詞：{sql!r}"
-    assert "IS NOT NULL" not in sql.upper(), (
-        "SQL 仍帶 `IS NOT NULL`——那會把值域外的舊標記當成已審"
+def _fine(
+    fid="prospect/A/alpha",
+    *,
+    title="細目標題",
+    units=("這是一句可引用的內容。",),
+    reviewed_by="owner",
+    target_user=("prospect",),
+    business_types=("system_provider",),
+):
+    return FineItem(
+        id=fid,
+        coarse_id=fid.split("/")[1],
+        title=title,
+        phrasings=(),
+        content_units=tuple(units),
+        content_sha256="0" * 64,
+        sources=("kb:1",),
+        reviewed_by=reviewed_by,
+        reviewed_at="2026-09-07" if reviewed_by else None,
+        see_also=(),
+        policy="answerable",
+        policy_ref=None,
+        target_user=tuple(target_user),
+        business_types=tuple(business_types),
+        categories=(),
+        instance_applicability="general",
     )
-    assert predicate_params[0] in params, "謂詞參數沒同序帶進 execute"
 
 
-@pytest.mark.req(_SPEC)
-async def test_updated_at_change_changes_version_and_sha():
-    rows_a = list(_PROSPECT_ROWS)
-    rows_b = [
-        (rid, qs, ans, cats, (_dt(30) if rid == 3599 else upd))
-        for rid, qs, ans, cats, upd in _PROSPECT_ROWS
-    ]
-    doc_a = await build_prospect_outline(_pool(rows_a))
-    doc_b = await build_prospect_outline(_pool(rows_b))
-    assert doc_a.version != doc_b.version
-    # text（可見內容）不變，但 sha 涵蓋 version ⇒ 也跟著變——
-    # 快取失效判準是「sha 變」，不能漏掉「只有 updated_at 被 touch」這種變化。
-    assert doc_a.text == doc_b.text
-    assert doc_a.sha256 != doc_b.sha256
+def _canon(fines, *, audience="prospect", version="2026-09-07.1", budget_tokens=10_000):
+    return CanonDoc(
+        audience=audience,
+        version=version,
+        reviewers=("owner",),
+        language="zh-TW",
+        budget_tokens=budget_tokens,
+        target_user=("prospect",),
+        business_types=("system_provider",),
+        coarses=(CoarseItem(id="A", title="粗目 A", fines=tuple(fines)),),
+        canon_sha256="a" * 64,
+        phrasing_set_sha256="b" * 64,
+    )
 
 
-@pytest.mark.req(_SPEC)
-async def test_content_change_changes_sha():
-    rows_changed = [
-        (rid, qs, (ans + "（新增一句）") if rid == 3600 else ans, cats, upd)
-        for rid, qs, ans, cats, upd in _PROSPECT_ROWS
-    ]
-    doc_a = await build_prospect_outline(_pool(list(_PROSPECT_ROWS)))
-    doc_b = await build_prospect_outline(_pool(rows_changed))
-    assert doc_a.sha256 != doc_b.sha256
+def _prospect_identity():
+    return Identity(vendor_id=0, target_user="prospect", mode="b2b")
 
 
 # ---------------------------------------------------------------------------
-# 六模組歸屬規則（正反例）
+# §4.1 build_outline：每細目一節
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.req(_SPEC)
+def test_build_outline_one_section_per_fine_with_fine_id():
+    doc = _canon([_fine("prospect/A/alpha"), _fine("prospect/A/beta", title="第二個")])
+    outline = build_outline(doc)
+    assert [s.id for s in outline.sections] == ["prospect/A/alpha", "prospect/A/beta"]
+    assert outline.audience == "prospect"
+    assert outline.version == doc.version
+
+
+@pytest.mark.req(_SPEC)
+def test_build_outline_title_line_carries_fine_id_marker_once():
+    """`_build_doc` 已自動加 `【<id>】`（DSP-020）——⛔ 標題本身不得重複帶 id。"""
+    doc = _canon([_fine("prospect/A/alpha", title="系統總覽")])
+    outline = build_outline(doc)
+    assert "【prospect/A/alpha】系統總覽" in outline.text
+    assert outline.text.count("prospect/A/alpha") == 1
+    assert outline.sections[0].title == "系統總覽"
+
+
+@pytest.mark.req(_SPEC)
+def test_build_outline_reviewed_fine_is_citable_with_content():
+    doc = _canon([_fine(units=("第一句。", "第二句。"))])
+    section = build_outline(doc).sections[0]
+    assert section.citable is True
+    assert section.text == "第一句。\n第二句。"
+
+
+@pytest.mark.req(_SPEC)
+def test_build_outline_unreviewed_fine_is_title_only_and_not_citable():
+    doc = _canon([_fine(reviewed_by=None, units=("這句不該出現在大綱裡。",))])
+    section = build_outline(doc).sections[0]
+    assert section.citable is False
+    assert section.text == ""
+    assert "這句不該出現在大綱裡" not in build_outline(doc).text
+
+
+@pytest.mark.req(_SPEC)
+def test_build_outline_is_deterministic():
+    doc = _canon([_fine(), _fine("prospect/A/beta")])
+    assert build_outline(doc).sha256 == build_outline(doc).sha256
+
+
+# ---------------------------------------------------------------------------
+# §4.4 canon_visible 正反例（真值表）
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_unreviewed_is_invisible():
+    fine = _fine(reviewed_by=None)
+    assert canon_visible(_prospect_identity(), fine, vendor_business_types=frozenset()) is False
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_b2b_reviewed_prospect_is_visible():
+    fine = _fine()
+    assert canon_visible(_prospect_identity(), fine, vendor_business_types=frozenset()) is True
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_b2b_requires_system_provider_business_type():
+    fine = _fine(business_types=())
+    assert canon_visible(_prospect_identity(), fine, vendor_business_types=frozenset()) is False
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_b2b_target_user_mismatch_is_invisible():
+    fine = _fine(target_user=("tenant",))
+    assert canon_visible(_prospect_identity(), fine, vendor_business_types=frozenset()) is False
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_b2b_empty_target_user_is_visible():
+    fine = _fine(target_user=())
+    assert canon_visible(_prospect_identity(), fine, vendor_business_types=frozenset()) is True
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_property_manager_in_b2c_mode_takes_strict_branch():
+    """⚠️ 分支判準與 SQL `is_b2b_mode` 同式：`target_user=property_manager` 即使
+    `mode=b2c` 也走 b2b 嚴格分支 ⇒ `business_types=[]` 的細目**不可見**。
+
+    ⛔ 只看 `mode` 的實作在這條會回 True（b2c 分支對空業態放行）——那正是
+    `build_visibility_predicate` 檔頭「手抄會漏的」那一條。
+    """
+    fine = _fine(business_types=(), target_user=())
+    identity = Identity(vendor_id=1, target_user="property_manager", mode="b2c")
+    assert canon_visible(identity, fine, vendor_business_types=frozenset({"rental"})) is False
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_b2c_empty_business_types_is_visible():
+    fine = _fine(business_types=(), target_user=("tenant",))
+    identity = Identity(vendor_id=1, target_user="tenant", mode="b2c")
+    assert canon_visible(identity, fine, vendor_business_types=frozenset({"rental"})) is True
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_b2c_business_types_intersecting_vendor_is_visible():
+    fine = _fine(business_types=("rental",), target_user=("tenant",))
+    identity = Identity(vendor_id=1, target_user="tenant", mode="b2c")
+    assert canon_visible(identity, fine, vendor_business_types=frozenset({"rental"})) is True
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_b2c_business_types_not_intersecting_vendor_is_invisible():
+    fine = _fine(business_types=("rental",), target_user=("tenant",))
+    identity = Identity(vendor_id=1, target_user="tenant", mode="b2c")
+    assert canon_visible(identity, fine, vendor_business_types=frozenset({"parking"})) is False
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_b2c_all_users_token_is_visible():
+    fine = _fine(business_types=(), target_user=("all_users",))
+    identity = Identity(vendor_id=1, target_user="tenant", mode="b2c")
+    assert canon_visible(identity, fine, vendor_business_types=frozenset()) is True
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_none_target_user_normalizes_to_tenant():
+    """`target_user=None` 走 `_effective_target_user` ⇒ tenant（fail-safe，與 SQL 同一支）。"""
+    identity = Identity(vendor_id=1, target_user=None, mode="b2c")
+    visible = _fine(business_types=(), target_user=("tenant",))
+    invisible = _fine(business_types=(), target_user=("landlord",))
+    assert canon_visible(identity, visible, vendor_business_types=frozenset()) is True
+    assert canon_visible(identity, invisible, vendor_business_types=frozenset()) is False
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_all_users_is_not_a_b2b_bypass():
+    """b2b 分支⛔不吃 `all_users`——那是 b2c 條件 4 的通用標記（SQL 同款）。"""
+    fine = _fine(target_user=("all_users",))
+    assert canon_visible(_prospect_identity(), fine, vendor_business_types=frozenset()) is False
+
+
+# ---------------------------------------------------------------------------
+# §4.4 build_canon_toc：只列可見已審
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req(_SPEC)
+def test_build_canon_toc_lists_only_visible_reviewed_fines():
+    doc = _canon([
+        _fine("prospect/A/alpha", title="可見"),
+        _fine("prospect/A/beta", title="未審", reviewed_by=None),
+        _fine("prospect/A/gamma", title="別的角色", target_user=("tenant",)),
+    ])
+    toc = build_canon_toc(doc, _prospect_identity(), vendor_business_types=frozenset())
+    assert toc.id == TOC_SECTION_ID
+    assert toc.citable is False
+    assert toc.text == "prospect/A/alpha｜可見"
+
+
+@pytest.mark.req(_SPEC)
+def test_build_canon_toc_line_format_is_id_then_title():
+    doc = _canon([_fine("prospect/A/alpha", title="系統總覽")])
+    toc = build_canon_toc(doc, _prospect_identity(), vendor_business_types=frozenset())
+    assert toc.text.splitlines() == ["prospect/A/alpha｜系統總覽"]
+
+
+# ---------------------------------------------------------------------------
+# §4.4 resolve_canon_section
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req(_SPEC)
+def test_resolve_canon_section_returns_content_for_visible_reviewed_fine():
+    doc = _canon([_fine(units=("金箍棒把物件與合約集中管理。",))])
+    result = resolve_canon_section(
+        doc, _prospect_identity(), "outline:prospect/A/alpha", vendor_business_types=frozenset()
+    )
+    assert isinstance(result, ToolResult)
+    assert result.ok is True
+    assert result.data["answer"] == "金箍棒把物件與合約集中管理。"
+    assert result.provenance[0].citable is True
+    assert result.text_for_model == "金箍棒把物件與合約集中管理。"
 
 
 @pytest.mark.req(_SPEC)
 @pytest.mark.parametrize(
-    "question_summary,expected_slug",
+    "fine,section_id",
     [
-        ("房源管理 物件集中 社區歸戶 批次上傳", "listing"),
-        ("建立合約 線上電子簽約 合約範本", "lease"),
-        ("團隊管理 多人協作 角色權限 大房東報表", "team"),
-        ("大房東報表 代收代付 月結", "team"),  # 團隊關鍵字排在帳務之前，優先命中
-        ("帳務管理 收租對帳 自動帳單", "billing"),
-        ("租客不繳租金怎麼辦 逾期 催繳", "billing"),
-        ("智慧電錶 智慧門鎖 抄表 換鎖", "iot"),
-        ("修繕系統 線上報修 進度追蹤", "repair"),
-        ("舊系統資料可以匯進來嗎 批次匯入 搬資料", "listing"),  # 房源關鍵字優先於帳務/租約
+        (_fine(reviewed_by=None), "outline:prospect/A/alpha"),          # 未審
+        (_fine(target_user=("tenant",)), "outline:prospect/A/alpha"),   # 不可見
+        (_fine(), "outline:prospect/A/does-not-exist"),                 # 不存在
+        (_fine(), "prospect/A/alpha"),                                  # 裸 id（非 outline: 前綴）
     ],
 )
-def test_classify_module_row_positive(question_summary, expected_slug):
-    slug, _title = _classify_module_row(question_summary, ["售前模組"])
-    assert slug == expected_slug
+def test_resolve_canon_section_no_match_cases(fine, section_id):
+    doc = _canon([fine])
+    result = resolve_canon_section(
+        doc, _prospect_identity(), section_id, vendor_business_types=frozenset()
+    )
+    assert result.ok is False
+    assert result.error == "NO_MATCH"
 
 
 @pytest.mark.req(_SPEC)
-def test_classify_module_row_fallback_when_no_keyword_hits():
-    slug, title = _classify_module_row("完全沒有關鍵字的一列", ["售前模組"])
-    assert slug == "module-misc"
-    assert title
-
-
-@pytest.mark.req(_SPEC)
-@pytest.mark.parametrize(
-    "categories,expected_slug",
-    [
-        (["售前顧問"], "positioning"),
-        (["售前方案"], "plans"),
-        (["售前價格"], "pricing"),
-        (["售前競品"], "competitors"),
-        (None, "module-misc"),  # categories 缺值 ⇒ 兜底桶，⛔ 不丟資料
-        ([], "module-misc"),
-        (["未知分類"], "module-misc"),
-    ],
-)
-def test_classify_row_non_module_categories(categories, expected_slug):
-    slug, _title = _classify_row(categories, "任意問句")
-    assert slug == expected_slug
-
-
-@pytest.mark.req(_SPEC)
-async def test_source_ids_grouped_by_module_section():
-    doc = await build_prospect_outline(_pool(list(_PROSPECT_ROWS)))
-    by_id = {s.id: s for s in doc.sections}
-    assert by_id["outline:listing"].source_ids == [3599]
-    assert by_id["outline:lease"].source_ids == [3600]
-    assert by_id["outline:team"].source_ids == [3602]
-    assert by_id["outline:pricing"].source_ids == [3610]
-    assert by_id["outline:positioning"].source_ids == [3606]
-    for section in doc.sections:
-        assert section.citable is True
+def test_resolve_canon_section_toc_is_not_citable():
+    doc = _canon([_fine()])
+    result = resolve_canon_section(
+        doc, _prospect_identity(), TOC_SECTION_ID, vendor_business_types=frozenset()
+    )
+    assert result.ok is True
+    assert result.provenance[0].citable is False
 
 
 # ---------------------------------------------------------------------------
-# 邊界句抽取
+# §4.4 接線證明：make_outline_resolver 建出的 resolver 行為一致
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.req(_SPEC)
-@pytest.mark.parametrize(
-    "answer,expected",
-    [
-        ("支援電子簽章；委託合約目前不支援線上簽署。", ["委託合約目前不支援線上簽署"]),
-        ("恕不提供客製報價。", ["恕不提供客製報價"]),
-        ("這功能我們暫時無法處理。\n但有替代方案。", ["這功能我們暫時無法處理"]),
-        ("完全沒有邊界詞的一句話。", []),
-    ],
-)
-def test_extract_boundary_sentences(answer, expected):
-    assert _extract_boundary_sentences(answer) == expected
+def test_resolver_uses_registered_canon_and_applies_visibility():
+    doc = _canon([
+        _fine("prospect/A/alpha", units=("可引用的一句。",)),
+        _fine("prospect/A/beta", reviewed_by=None, units=("未審的一句。",)),
+    ])
+    register_canon("prospect", doc)
+    resolver = make_outline_resolver({})       # ⚠️ cache 空：正本路徑不吃 cache
+    identity = _prospect_identity()
+
+    hit = resolver(identity, "outline:prospect/A/alpha")
+    assert hit.ok is True and hit.provenance[0].citable is True
+
+    for miss_id in ("outline:prospect/A/beta", "outline:prospect/A/nope"):
+        miss = resolver(identity, miss_id)
+        assert miss.ok is False and miss.error == "NO_MATCH", miss_id
+
+    toc = resolver(identity, TOC_SECTION_ID)
+    assert toc.ok is True and toc.provenance[0].citable is False
 
 
 @pytest.mark.req(_SPEC)
-async def test_boundary_section_collects_rows_across_modules():
-    doc = await build_prospect_outline(_pool(list(_PROSPECT_ROWS)))
-    by_id = {s.id: s for s in doc.sections}
-    boundary = by_id["outline:boundary"]
-    # 3600（lease）與 3610（pricing）的 answer 都含邊界詞。
-    assert set(boundary.source_ids) == {3600, 3610}
-    assert "委託合約目前不支援線上簽署" in boundary.text
-    # 該列仍留在自己的模組小節，⛔ 邊界句抽取不是整列搬移。
-    assert 3600 in by_id["outline:lease"].source_ids
-
-
-# ---------------------------------------------------------------------------
-# DSP-009 刻意不補
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.req(_SPEC)
-async def test_dsp009_section_contains_all_five_fixed_items():
-    doc = await build_prospect_outline(_pool(list(_PROSPECT_ROWS)))
-    by_id = {s.id: s for s in doc.sections}
-    gaps_text = by_id["outline:deliberate-gaps"].text
-    assert len(DSP009_DELIBERATE_GAPS) == 5
-    for item in DSP009_DELIBERATE_GAPS:
-        assert item in gaps_text
-    assert by_id["outline:deliberate-gaps"].source_ids == []
+def test_resolver_matches_resolve_canon_section_for_same_inputs():
+    """接線證明：經工廠建出的 resolver 與直呼 `resolve_canon_section` 同結果。"""
+    doc = _canon([_fine("prospect/A/alpha"), _fine("prospect/A/beta", target_user=("tenant",))])
+    register_canon("prospect", doc)
+    resolver = make_outline_resolver({})
+    identity = _prospect_identity()
+    for section_id in (
+        "outline:prospect/A/alpha", "outline:prospect/A/beta", TOC_SECTION_ID, "outline:nope",
+    ):
+        direct = resolve_canon_section(
+            doc, identity, section_id, vendor_business_types=frozenset()
+        )
+        assert resolver(identity, section_id).model_dump() == direct.model_dump(), section_id
 
 
 @pytest.mark.req(_SPEC)
-async def test_cta_section_present():
-    doc = await build_prospect_outline(_pool(list(_PROSPECT_ROWS)))
-    ids = {s.id for s in doc.sections}
-    assert "outline:cta" in ids
+def test_resolver_identity_is_per_call_not_bound_to_factory():
+    """同一個 resolver、兩種身分 ⇒ 兩種結果（⛔ 身分不得綁在工廠上）。"""
+    doc = _canon([_fine("prospect/A/alpha", target_user=("prospect",))])
+    register_canon("prospect", doc)
+    resolver = make_outline_resolver({})
+    assert resolver(_prospect_identity(), "outline:prospect/A/alpha").ok is True
+    other = Identity(vendor_id=1, target_user="system_admin", mode="b2b", audience="prospect")
+    assert resolver(other, "outline:prospect/A/alpha").ok is False
 
 
 # ---------------------------------------------------------------------------
@@ -298,7 +443,7 @@ def test_check_budget_passes_when_within_limit():
 
 
 # ---------------------------------------------------------------------------
-# build_toc：citable=False、vendor／target_user 過濾條件在 SQL 中
+# build_toc（pm／tenant 現役）：citable=False、vendor／target_user 過濾條件在 SQL 中
 # ---------------------------------------------------------------------------
 
 
@@ -342,7 +487,7 @@ async def test_build_toc_rejects_prospect_audience():
 
 
 # ---------------------------------------------------------------------------
-# make_outline_resolver
+# make_outline_resolver：未註冊正本的受眾（pm／tenant）維持 cache 查找
 # ---------------------------------------------------------------------------
 
 
@@ -351,45 +496,7 @@ def _identity(target_user="prospect"):
 
 
 @pytest.mark.req(_SPEC)
-async def test_resolver_returns_tool_result_hit():
-    section = OutlineSection(
-        id="outline:listing", title="房源", text="房源功能說明。", source_ids=[3599], citable=True,
-    )
-    doc = OutlineDoc(
-        audience="prospect", version="v1", sha256="x" * 64,
-        token_count=10, sections=[section], text="房源功能說明。",
-    )
-    resolver = make_outline_resolver({"prospect": doc})
-    result = resolver(_identity("prospect"), "outline:listing")
-    assert isinstance(result, ToolResult)
-    assert result.ok is True
-    assert result.data == {"id": "outline:listing", "question_summary": "房源", "answer": "房源功能說明。"}
-    assert result.provenance[0].source == "outline:listing"
-    assert result.provenance[0].citable is True
-    assert result.text_for_model == "房源功能說明。"
-
-
-@pytest.mark.req(_SPEC)
-async def test_resolver_no_match_when_section_missing():
-    doc = OutlineDoc(
-        audience="prospect", version="v1", sha256="x" * 64, token_count=1, sections=[], text="",
-    )
-    resolver = make_outline_resolver({"prospect": doc})
-    result = resolver(_identity("prospect"), "outline:not-exist")
-    assert result.ok is False
-    assert result.error == "NO_MATCH"
-
-
-@pytest.mark.req(_SPEC)
-async def test_resolver_no_match_when_cache_empty_for_audience():
-    resolver = make_outline_resolver({})
-    result = resolver(_identity("tenant"), "outline:toc:9001")
-    assert result.ok is False
-    assert result.error == "NO_MATCH"
-
-
-@pytest.mark.req(_SPEC)
-async def test_resolver_toc_section_not_citable():
+def test_resolver_returns_tool_result_hit_from_cache_when_no_canon():
     section = OutlineSection(
         id="outline:toc:9001", title="系統整體介紹", text="系統簡介。", source_ids=[9001], citable=False,
     )
@@ -399,5 +506,30 @@ async def test_resolver_toc_section_not_citable():
     )
     resolver = make_outline_resolver({"tenant": doc})
     result = resolver(_identity("tenant"), "outline:toc:9001")
+    assert isinstance(result, ToolResult)
     assert result.ok is True
+    assert result.data == {
+        "id": "outline:toc:9001", "question_summary": "系統整體介紹", "answer": "系統簡介。",
+    }
+    assert result.provenance[0].source == "outline:toc:9001"
     assert result.provenance[0].citable is False
+    assert result.text_for_model == "系統簡介。"
+
+
+@pytest.mark.req(_SPEC)
+def test_resolver_no_match_when_section_missing():
+    doc = OutlineDoc(
+        audience="tenant", version="v1", sha256="x" * 64, token_count=1, sections=[], text="",
+    )
+    resolver = make_outline_resolver({"tenant": doc})
+    result = resolver(_identity("tenant"), "outline:not-exist")
+    assert result.ok is False
+    assert result.error == "NO_MATCH"
+
+
+@pytest.mark.req(_SPEC)
+def test_resolver_no_match_when_cache_empty_for_audience():
+    resolver = make_outline_resolver({})
+    result = resolver(_identity("tenant"), "outline:toc:9001")
+    assert result.ok is False
+    assert result.error == "NO_MATCH"

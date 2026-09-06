@@ -9,7 +9,9 @@
    必然不存在的數字 `kb_id` 直呼（**不經 `registry.call()`**，避免混進速率限制／
    計量——這是健康探針，不是一次真實工具呼叫）。`ToolResult(error="NO_MATCH")`
    即代表 DB／可見性謂詞這條路線可達；探針本身丟例外（連線失敗等）才算紅。
-2. **大綱 version／sha**（3.2 未接線）固定回 `"pending"`；**`rules_sha`**（任務 2.6）
+2. **大綱 version／sha**：`app.state.agent_runtime.outline_sha`（取不到 ⇒ `"pending"`）；
+   **`canon`**（3.2）另印 `resolve_canon_dir()` 的 resolved path 與本行程**已註冊**正本的
+   `canon_sha256`——「這台機器讀的是哪一份正本」要看得見（⛔ 不重讀檔重算）。**`rules_sha`**（任務 2.6）
    改讀 `app.state.agent_runtime.rules_sha`（由 `bootstrap.build_runtime` 在啟動
    時掛上，值＝`VerifierRules.load()` 對規則檔位元組算的 sha256）——**呼叫端要用
    `get_runtime` 把那個物件的 getter 交進來**；沒交、或 runtime 還沒建起來 ⇒ 回
@@ -127,6 +129,24 @@ def _outline_sha(get_runtime: Optional[Callable[[], Any]]) -> str:
     return str(getattr(runtime, "outline_sha", "") or "") or "pending"
 
 
+def _canon_state() -> dict:
+    """`{"dir": <resolved 正本目錄>, "sha256": {audience: canon_sha256}}`（3.2）。
+
+    `dir` 是 `resolve_canon_dir()` 的 **resolved path**——`AGENT_CANON_DIR` 只在
+    `DB_ENV=test` 生效，健檢印出實際採用的那一個，讓「這台機器讀的是哪份正本」
+    可觀測（security-reviewer P3-1）。`sha256` 只讀**本行程已註冊**的正本，
+    ⛔ 不重讀檔案重算（重算量到的是磁碟現況，不是行程實際帶的那份）。
+    取不到 ⇒ 空值，⛔ 不致紅（「尚未建置」不是「建置後壞了」，與 `rules_sha` 同語義）。
+    """
+    try:
+        from services.agent.canon.canon_assembler import (
+            canon_registry_shas, resolve_canon_dir,
+        )
+        return {"dir": str(resolve_canon_dir()), "sha256": canon_registry_shas()}
+    except Exception as e:  # noqa: BLE001 — 健檢不因取值失敗而崩
+        return {"dir": "pending", "sha256": {}, "detail": f"{type(e).__name__}: {e}"}
+
+
 def _premise_flags(stats: dict) -> list:
     """DSP-011 前提偵測四項：前三項任一非零，或第四項為真 ⇒ 列名。
 
@@ -195,6 +215,7 @@ async def compute_agent_health(
                 "detail": kb_detail,
             },
             "outline_version": _outline_sha(get_runtime),
+            "canon": _canon_state(),
             "rules_sha": rules_sha,
             "premise": {
                 "mcp_calls_by_api_key": stats.get("mcp_calls_by_api_key", {}),

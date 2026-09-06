@@ -19,20 +19,13 @@ Union[ToolResult, Awaitable[ToolResult]]]`——`kb_get()` 對 `outline:*` 直�
 裸 dict——這是已合併程式碼定的實際契約（CANON：程式如何跑，程式說了算），
 本檔對齊它。
 
-## 六模組主題頁分段規則（局部決定，tasks.md 3.2 收案註記標「需局部決定」）
-`categories` 欄位現況五值：`售前模組`／`售前顧問`／`售前方案`／`售前價格`／
-`售前競品`（`docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin
--tAc "SELECT DISTINCT unnest(categories) FROM knowledge_base WHERE categories
-IS NOT NULL"` 可重跑查證）。只有 `售前模組` 底下的列需要再依關鍵字細分成
-kb 3622 §3「六大模組」（房源／租約／帳務／團隊／IoT／修繕，見
-`docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tAc
-"SELECT answer FROM knowledge_base WHERE id=3622"`）；其餘四類 categories
-本身已是自然分段單位，各自成一個非模組頁面小節（顧問定位／方案與試用／
-價格與試用／競品比較）——**這不在 R5.1「六模組主題頁」字面之內，但若略去
-會讓 23 筆售前池裡約 14 筆（顧問/方案/價格/競品類）完全進不了大綱**，
-與 R5.1 使用者故事「我問的每一句都應對到同一份完整的產品大綱」相牴觸，
-故本檔把它們當成大綱的第五類必要小節，一併列在 `text` 內、以獨立 section id
-呈現，供 `check_impl` 或後續 review 追認或調整此局部決定。
+## 售前大綱＝正本組裝（任務 3.2，2026-09-07 業主核）
+`build_prospect_outline` **不再讀 DB**：它讀 git 正本（`rag-orchestrator/canon/prospect.md`
+＋同源 `.json`），逐細目組成章節，並附一節 `outline:toc`。組裝規則、可見性與啟動失敗語義
+都在 `services/agent/canon/canon_assembler.py`（design 元件 5）。
+⚠️ 舊的「六模組分類表＋邊界句抽取＋DSP-009／CTA 固定節」已**退役**：粗目 G／F 在正本內
+承接那兩節的角色。`build_toc(db_pool, audience, vendor_id)`（pm／tenant 的『系統脈絡』目錄）
+**保留現役**，它有 vendor 過濾，⛔ 不得拿掉。
 """
 from __future__ import annotations
 
@@ -44,13 +37,9 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from services.agent.canon.review_state import content_reviewed_predicate
 from services.agent.identity import Audience, Identity
 from services.agent.tools.registry import Provenance, ToolResult
-from services.vendor_knowledge_retriever_v2 import (
-    VendorKnowledgeRetrieverV2,
-    build_visibility_predicate,
-)
+from services.vendor_knowledge_retriever_v2 import VendorKnowledgeRetrieverV2
 
 # ---------------------------------------------------------------------------
 # 資料模型（對齊 prompt_assembler.py 的 OutlineDocLike／OutlineSectionLike）
@@ -58,7 +47,10 @@ from services.vendor_knowledge_retriever_v2 import (
 
 
 class OutlineSection(BaseModel):
-    id: str  # 形如 "outline:contract"；kb.get("outline:*") 取回它
+    # id 兩種形狀：正本細目節＝細目 id（`prospect/A/product-overview`，3.2 起），
+    # 目錄節＝`outline:toc`／`outline:toc:<row id>`（pm／tenant）。
+    # `kb.get` 一律以 `outline:<id>` 取用（`tools/kb.py:kb_get` 以此前綴路由）。
+    id: str
     title: str
     text: str
     source_ids: list[int] = []
@@ -82,74 +74,6 @@ class OutlineBudgetExceeded(Exception):
 
 
 # ---------------------------------------------------------------------------
-# 六大模組分類表（kb 3622 §3，⛔ 無 LLM——純字串包含比對，固定順序、先中先得）
-# ---------------------------------------------------------------------------
-
-#: (slug, 標題, 關鍵字集合)。比對對象＝該列 `question_summary`（+ `categories`
-#: 陣列以空白接起）。⚠️ **有序**——3604「大房東報表」同時含團隊與帳務相關字，
-#: 團隊排在帳務之前才能命中「團隊」而非被「代收代付」誤分去帳務；反過來看，
-#: 「批次匯入」在房源模組先比對，避免被誤分去帳務／租約。
-SIX_MODULES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
-    ("listing", "房源", ("房源", "物件集中", "社區歸戶", "批次上傳", "批次匯入", "VR看屋")),
-    ("lease", "租約", ("合約", "簽約", "電子簽章", "委託合約", "社宅", "範本")),
-    ("team", "團隊", ("團隊", "協作", "角色權限", "大房東報表", "代收代付", "月結")),
-    ("billing", "帳務", ("帳務", "帳單", "收租", "對帳", "金流", "發票", "儲值", "催繳", "逾期", "繳租", "遲繳", "拖欠")),
-    ("iot", "IoT設備", ("智慧電錶", "智慧門鎖", "電表", "IoT", "硬體", "抄表", "換鎖")),
-    ("repair", "修繕", ("修繕", "報修", "維修", "進度追蹤")),
-)
-#: `售前模組` 底下沒命中任何六大模組關鍵字時的兜底桶——⛔ 不丟資料，寧可粗分。
-_MODULE_FALLBACK_SLUG = "module-misc"
-_MODULE_FALLBACK_TITLE = "其他產品功能"
-
-#: 非模組 categories → (slug, 標題)。這四類與 `售前模組` 並列、⛔ 不強行塞進
-#: 六大模組（見本檔 docstring「六模組主題頁分段規則」）。
-NON_MODULE_CATEGORY_SECTIONS: dict[str, tuple[str, str]] = {
-    "售前顧問": ("positioning", "定位與顧問"),
-    "售前方案": ("plans", "個人房東方案"),
-    "售前價格": ("pricing", "價格與試用"),
-    "售前競品": ("competitors", "競品比較"),
-}
-_MODULE_CATEGORY = "售前模組"
-
-#: R6.2 同款封閉詞集的「邊界句」抽取——answer 內含這些詞的**句子**進邊界句段
-#: （非整列排除；該列仍留在自己的模組／類別小節）。
-_BOUNDARY_TERMS: tuple[str, ...] = ("不支援", "無法", "不提供")
-#: 中文常見句界符號（含分號、換行），用來把 answer 切成句子做邊界句抽取——
-#: 含分號是刻意的：「支援 A；不支援 B」這種同句用分號並列兩個子句時，若不切開，
-#: 抽出的「邊界句」會夾帶前半句「支援 A」，讓一句混合正負面資訊的話整句被
-#: 誤標成邊界句引用來源。
-_SENTENCE_SPLIT_RE = re.compile(r"[。！？；\n]+")
-
-#: DSP-009（`.claude/DECISIONS.md`）五類「刻意不補」——逐字沿用該條目原文的
-#: 列舉，⛔ 不改寫措辭（改寫等於自行重新裁決範圍）。
-DSP009_DELIBERATE_GAPS: tuple[str, ...] = (
-    "客戶案例／規模",
-    "SLA／賠償",
-    "資安認證／資料存放",
-    "個資法",
-    "客製報價",
-)
-
-#: 售前 handoff 固定句（`services/conversational_config.py:PRESALES_HANDOFF_MESSAGE`）
-#: 為本系統既有的單一事實常數，直接沿用；⛔ 不在本檔另造一份轉人措辭。
-from services.conversational_config import PRESALES_HANDOFF_MESSAGE  # noqa: E402
-
-#: CTA 段：`services/conversational_config.py:PRESALES_CTA_RULES`／
-#: `PRESALES_ANSWER_RULES` 是**寫給模型的排版／合成指令**（第二人稱祈使句、
-#: 大量「務必」「⛔」「範例」），語意上是「LLM 系統提示的一段」而非「大綱事實
-#: 內容」；直接塞進 `OutlineDoc.text` 會讓一段指令文字偽裝成 `kb.get` 可引用
-#: 的「知識」，與 R11.5 白名單「大綱＝已審核知識列組裝」的定位不符（見本檔
-#: docstring）。故本檔 ⛔ 不 import 它，改用下列固定句——純陳述「有哪些出口」
-#: 的事實句，可安全被引用。
-_CTA_TEXT = (
-    "下一步：可免費試用一個月親自體驗；"
-    "如需方案與費用可參考 https://www.jgbsmart.com/pricing；"
-    "想預約 demo 或請專人協助可至 https://www.jgbsmart.com/demo-form；"
-    "或點對話下方『找真人』直接聯繫。"
-)
-
-
-# ---------------------------------------------------------------------------
 # token 計數（R5.5：tiktoken；取不到編碼 ⇒ 近似值＋approx=True）
 # ---------------------------------------------------------------------------
 
@@ -166,45 +90,10 @@ def _count_tokens(text: str) -> tuple[int, bool]:
 
 
 # ---------------------------------------------------------------------------
-# psycopg2 讀取（與 `tools/kb.py:fetch_visible_row` 同款 pool 取法——
-# `build_visibility_predicate` 回傳 `%s` 佔位符，⛔ 不混用 asyncpg `$n`）
+# psycopg2 讀取（pm／tenant 的『系統脈絡』目錄；⛔ 不混用 asyncpg `$n`）
+# ⚠️ 售前大綱的 DB 讀取（`_fetch_prospect_pool_rows`）已於 3.2 退役——正本是 git，
+#    DB 售前池是它的衍生物，大綱⛔不以衍生物為來源。
 # ---------------------------------------------------------------------------
-
-
-def _fetch_prospect_pool_rows(db_pool, identity: Identity) -> list[tuple]:
-    """`(id, question_summary, answer, categories, updated_at)` **內容已審**售前池列。
-
-    兩道謂詞，各有各的單一來源，⛔ 不合併：
-
-    - **可見性**＝`build_visibility_predicate()`（不變量 29；本函式已列入
-      `check_29_predicate_single_source` 的掃描目標）——不自行寫死
-      `vendor_ids`／`business_types` 字面 WHERE 條件。
-    - **內容已審**＝`content_reviewed_predicate()`（不變量 32，spec
-      knowledge-outline-and-intent-architecture 任務 3.1）。
-
-    ⚠️ 2026-09-07 起條件是 `outline_approved_by ~ '^reviewed:<非空白>+$'`，
-    ⛔ **不再是 `IS NOT NULL`**（業主裁 (a)）：`IS NOT NULL` 會把現況 29 列
-    `owner-20260905`（值域外的舊標記）當成已審餵進售前大綱。正本細目匯入
-    寫進 `reviewed:<who>` 之前，本查詢回 0 列是**預期**行為——D1 把 29 列
-    改寫成 `pool-marked-<date>` 之後它們仍然不可見（池標記≠內容已審）。
-    """
-    predicate_sql, predicate_params = build_visibility_predicate(identity)
-    reviewed_sql, reviewed_params = content_reviewed_predicate()
-    sql = (
-        "SELECT kb.id, kb.question_summary, kb.answer, kb.categories, kb.updated_at "
-        "FROM knowledge_base kb "
-        f"WHERE TRUE {predicate_sql}{reviewed_sql} "
-        "ORDER BY kb.id"
-    )
-    conn = db_pool.getconn()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql, list(predicate_params) + list(reviewed_params))
-        rows = cursor.fetchall()
-        cursor.close()
-        return rows
-    finally:
-        db_pool.putconn(conn)
 
 
 #: build_toc 用的角色→target_user 對應（design 元件 5：「$tu = <audience 對應
@@ -265,48 +154,6 @@ def _fetch_toc_rows(db_pool, audience: str, vendor_id: Optional[int]) -> list[tu
 
 
 # ---------------------------------------------------------------------------
-# 六模組／類別分類（純函式，⛔ 無 LLM）
-# ---------------------------------------------------------------------------
-
-
-def _classify_module_row(question_summary: str, categories: Optional[list]) -> tuple[str, str]:
-    """`售前模組` 列 → `(slug, title)`；六個關鍵字集合皆未命中 ⇒ 兜底桶。"""
-    haystack = " ".join([question_summary or "", " ".join(categories or [])])
-    for slug, title, keywords in SIX_MODULES:
-        if any(kw in haystack for kw in keywords):
-            return slug, title
-    return _MODULE_FALLBACK_SLUG, _MODULE_FALLBACK_TITLE
-
-
-def _classify_row(categories: Optional[list], question_summary: str) -> tuple[str, str]:
-    """任一已審核售前池列 → `(section_slug, section_title)`。
-
-    優先序（固定、⛔ 依資料猜測調整）：`售前模組`（再細分六大模組）→ 四個
-    非模組 categories（見 `NON_MODULE_CATEGORY_SECTIONS`）→ 兜底桶（categories
-    缺值或不在已知五值內時，一律不遺漏地收進兜底桶，⛔ 不靜默丟列）。
-    """
-    cats = categories or []
-    if _MODULE_CATEGORY in cats:
-        return _classify_module_row(question_summary, cats)
-    for cat in cats:
-        if cat in NON_MODULE_CATEGORY_SECTIONS:
-            return NON_MODULE_CATEGORY_SECTIONS[cat]
-    return _MODULE_FALLBACK_SLUG, _MODULE_FALLBACK_TITLE
-
-
-def _extract_boundary_sentences(answer: str) -> list[str]:
-    """把 `answer` 內含 `_BOUNDARY_TERMS` 任一詞的句子抽出（原句、去頭尾空白）。"""
-    if not answer:
-        return []
-    sentences = _SENTENCE_SPLIT_RE.split(answer)
-    return [
-        s.strip()
-        for s in sentences
-        if s.strip() and any(term in s for term in _BOUNDARY_TERMS)
-    ]
-
-
-# ---------------------------------------------------------------------------
 # 決定性組裝
 # ---------------------------------------------------------------------------
 
@@ -349,120 +196,45 @@ def _build_doc(
 
 
 async def build_prospect_outline(db_pool) -> OutlineDoc:
-    """R5.1／R5.4：售前池（內容已審）→ 六模組主題頁＋邊界句＋DSP-009＋CTA。
+    """R2.6／R5.4：git 正本（`canon/prospect.md`）→ 逐細目章節 ＋ `outline:toc`。
 
-    ⛔ 無 LLM——純字串比對＋固定常數。同一批已審列 ⇒ 同一份 `text`／`sha256`
-    （決定性，供 unit 測試「組裝決定性」與快取失效判斷用）。只有
-    `content_reviewed_predicate()` 放行的列進來（R11.6；判準見
-    `services/agent/canon/review_state.py`）。
+    ⚠️ **`db_pool` 保留於簽名但不再使用**（`app.py` 不改；3.2 起大綱不讀 DB）。
+    步驟（design 元件 5「呼叫鏈與失敗語義」）：
 
-    ⚠️ 已審列 0 筆時**不 raise、也不是「空大綱」**：`outline:deliberate-gaps`
-    （DSP-009）與 `outline:cta` 兩個固定節是常數文字、無資料來源，無論池內
-    幾列都會附上——⛔ 本任務不得移除或改動這兩節（退役屬 3.2）。
-
-    未審列仍可能透過 `kb.get` 整數 id 被取回嗎？⛔ 不會：那條路徑
-    （`tools/kb.py:fetch_visible_row`）自 2026-09-07 起同樣拼上本謂詞。
+    1. `load_canon_or_die(resolve_canon_dir(), "prospect")`——`.md` 解析＋`.json`
+       逐位元組同源比對；缺檔／不同源／格式錯 ⇒ raise（`_agent_configured()` 為真
+       時由 `app.py` 升成啟動紅，否則 agent 停用；⛔ 不新增降級路徑）。
+    2. `register_canon("prospect", doc)`——`make_outline_resolver` 每回合要用同一份
+       `CanonDoc` 套可見性（`OutlineDoc` 是 pydantic，⛔ 不掛在它身上）。
+    3. `build_outline(doc)` ＋ 附 `outline:toc` 節（**啟動時**以售前**靜態身分**算一次：
+       prospect 正本單一受眾、走 b2b 分支、不依 vendor ⇒ 啟動時算得出來。
+       ⚠️ 每回合的候選子集與動態 toc 是 4.1 `CandidateOutlineDoc`，⛔ 不在本片）。
+    4. `check_budget(min(env 上限, 正本 budget_tokens))`——正本自帶的預算是上限之一，
+       ⛔ 不讓 env 單方面把上限開大（security-reviewer P2-3）。
     """
-    # prospect ＝ b2b ＋ 無 role_id（memory project_presales_target_user_routing；jgb2 面板送 prospect 時
-    # mode=b2b；缺口地圖 POOL_PRED 亦為 business_types && ['system_provider']）。⛔ 勿改回 b2c：
-    # b2c 分支對**本函式**（母體已鎖內容已審謂詞，見 review_state.py）會用 vendor 1 業態濾掉 23/31 筆純 system_provider 列
-    # ⇒ 大綱只剩 8 筆（recheck 突變實測）；對**標記 SQL** 則反向多掃 50 筆通用列（預覽 81≠31）。兩邊都錯，方向不同。
-    identity = Identity(vendor_id=1, target_user="prospect", mode="b2b")
-    rows = _fetch_prospect_pool_rows(db_pool, identity)
-
-    buckets: dict[str, dict] = {}  # slug -> {"title": str, "source_ids": [int]}
-    boundary_sentences: list[tuple[int, str]] = []  # (row_id, sentence)
-
-    for row_id, question_summary, answer, categories, _updated_at in rows:
-        slug, title = _classify_row(categories, question_summary)
-        bucket = buckets.setdefault(slug, {"title": title, "rows": []})
-        bucket["rows"].append((row_id, question_summary, answer))
-        for sentence in _extract_boundary_sentences(answer or ""):
-            boundary_sentences.append((row_id, sentence))
-
-    sections: list[OutlineSection] = []
-
-    # 六模組（固定順序，即使某模組本輪 0 列也不產出空 section——⛔ 不放空章節
-    # 誤導模型以為有內容可引用）。
-    for slug, title, _kw in SIX_MODULES:
-        bucket = buckets.pop(slug, None)
-        if not bucket:
-            continue
-        body = "\n".join(
-            f"- {qs}：{ans}" for _rid, qs, ans in bucket["rows"]
-        )
-        sections.append(
-            OutlineSection(
-                id=f"outline:{slug}",
-                title=title,
-                text=body,
-                source_ids=[rid for rid, _qs, _ans in bucket["rows"]],
-                citable=True,
-            )
-        )
-
-    # 非模組類別（固定順序，理由同上）。
-    for _cat, (slug, title) in NON_MODULE_CATEGORY_SECTIONS.items():
-        bucket = buckets.pop(slug, None)
-        if not bucket:
-            continue
-        body = "\n".join(
-            f"- {qs}：{ans}" for _rid, qs, ans in bucket["rows"]
-        )
-        sections.append(
-            OutlineSection(
-                id=f"outline:{slug}",
-                title=title,
-                text=body,
-                source_ids=[rid for rid, _qs, _ans in bucket["rows"]],
-                citable=True,
-            )
-        )
-
-    # 兜底桶（若有）。
-    misc = buckets.pop(_MODULE_FALLBACK_SLUG, None)
-    if misc:
-        body = "\n".join(f"- {qs}：{ans}" for _rid, qs, ans in misc["rows"])
-        sections.append(
-            OutlineSection(
-                id=f"outline:{_MODULE_FALLBACK_SLUG}",
-                title=_MODULE_FALLBACK_TITLE,
-                text=body,
-                source_ids=[rid for rid, _qs, _ans in misc["rows"]],
-                citable=True,
-            )
-        )
-
-    # 邊界句段。
-    if boundary_sentences:
-        sections.append(
-            OutlineSection(
-                id="outline:boundary",
-                title="邊界句",
-                text="\n".join(f"- {s}" for _rid, s in boundary_sentences),
-                source_ids=sorted({rid for rid, _s in boundary_sentences}),
-                citable=True,
-            )
-        )
-
-    # DSP-009 刻意不補（固定文字，非資料庫來源 ⇒ source_ids=[]）。
-    sections.append(
-        OutlineSection(
-            id="outline:deliberate-gaps",
-            title="刻意不補（遇到即轉人）",
-            text="\n".join(f"- {item}：一律回覆「{PRESALES_HANDOFF_MESSAGE}」" for item in DSP009_DELIBERATE_GAPS),
-            source_ids=[],
-            citable=True,
-        )
+    from services.agent.canon.canon_assembler import (  # 循環相依 ⇒ 函式內 import
+        build_canon_toc, build_outline, load_canon_or_die, register_canon, resolve_canon_dir,
     )
 
-    # CTA 出口。
-    sections.append(
-        OutlineSection(id="outline:cta", title="下一步出口", text=_CTA_TEXT, source_ids=[], citable=True)
-    )
+    canon = load_canon_or_die(resolve_canon_dir(), "prospect")
+    register_canon("prospect", canon)
 
-    version = _max_updated_at_iso(rows, updated_at_index=4)
-    return _build_doc(audience="prospect", sections=sections, version=version)
+    doc = build_outline(canon)
+    # 售前靜態身分：prospect ＝ b2b ＋ 無 role_id（memory project_presales_target_user_routing；
+    # jgb2 面板送 prospect 時 mode=b2b）。⛔ 勿改回 b2c——那會走 vendor 業態分支，
+    # 而啟動時沒有真實 vendor 可解析（vendor_id=0 只是佔位）。
+    toc = build_canon_toc(
+        canon,
+        Identity(vendor_id=0, target_user="prospect", mode="b2b"),
+        vendor_business_types=frozenset(),
+    )
+    doc = _build_doc(
+        audience=canon.audience,
+        sections=list(doc.sections) + [toc],
+        version=canon.version,
+    )
+    check_budget(doc, min(default_token_limit("prospect"), canon.budget_tokens))
+    return doc
 
 
 def _clip_first_paragraph(answer: str, limit: int = 120) -> str:
@@ -545,6 +317,10 @@ def make_outline_resolver(cache: dict):
     `build_toc` 後覆寫對應鍵即可失效重建，本函式只做**查找**，⛔ 自己不重建、
     不持有 db_pool（重建時機屬 Runtime／排程，不是 resolver 的職責）。
 
+    ⚠️ **已註冊正本的受眾走正本**（3.2）：`canon_assembler.get_canon(audience)` 有值時
+    改呼叫 `resolve_canon_section`，每回合套 `canon_visible`（未審／不可見／不存在
+    一律 `NO_MATCH`）；未註冊（pm／tenant 的 DB TOC）維持下列 cache 查找邏輯。
+
     找不到大綱（cache 未就緒）或找不到該 section id ⇒ `ToolResult(ok=False,
     error="NO_MATCH")`——與 `kb.py` 池外查詢同一錯誤語意，⛔ 對模型區分兩種
     「找不到」（design：不對模型洩漏「不存在」與「無權限」的差異，這裡延伸為
@@ -552,7 +328,20 @@ def make_outline_resolver(cache: dict):
     """
 
     def resolver(identity: Identity, kb_id: str) -> ToolResult:
+        from services.agent.canon.canon_assembler import (  # 循環相依 ⇒ 函式內 import
+            get_canon, resolve_canon_section,
+        )
+
         audience = identity.resolved_audience()
+        canon = get_canon(audience)
+        if canon is not None:
+            # F7 修補的產線接線點：目錄與 `outline:<fine id>` 都**每回合**套可見性，
+            # identity 逐次傳入（⛔ 不綁在工廠——工廠只建一次，身分每回合不同）。
+            # `vendor_business_types` 在 3.2 固定空集合（prospect＝b2b 分支不看它）；
+            # b2c 受眾接上正本時由呼叫端解析後傳入（元件 6）。
+            return resolve_canon_section(
+                canon, identity, kb_id, vendor_business_types=frozenset()
+            )
         doc = cache.get(audience)
         if doc is None:
             return ToolResult(ok=False, error="NO_MATCH")

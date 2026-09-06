@@ -289,6 +289,12 @@ def load_canon_or_die(canon_dir: str, audience: Audience) -> CanonDoc:
     不符 ⇒ raise（啟動即紅，與 check_budget 同款；F1）。映像 COPY 兩者。canon_dir 只接受映像內固定目錄；
     `AGENT_CANON_DIR` 覆寫僅在 `DB_ENV=test` 生效、其餘環境拒絕並印 resolved path 進 health（F2）。"""
 
+# 3.2 落地（業主 2026-09-07 核）：`build_toc(doc, visible)` 改為 `build_canon_toc(doc, identity, *, vendor_business_types)`（另名，⛔ 不與 pm／tenant 現役的
+# `outline.build_toc(db_pool, audience, vendor_id)` 同名，後者保留）；可見性以逐細目 `canon_visible(identity, fine, *, vendor_business_types)`
+# 實作（元件 6 `visible_subset` 的前身，同規則：分支判準與 SQL `is_b2b_mode` 同式、重用 `_effective_target_user`；刻意不套 `vendor_ids`／`is_active`／保留分類，
+# 不新增受眾比對——隔離靠載入哪份正本）；`outline:*` 解析在 `outline.make_outline_resolver` 內每回合套 `resolve_canon_section`（identity per-call）；
+# `CanonDoc` 載體＝assembler 模組層 `register_canon／get_canon`（`OutlineDoc` 為 pydantic，⛔ 不掛屬性）；`.json` 同源以 `export_json` 重導出位元組比對（sha 只算 `.md`）；
+# `check_budget(min(env, doc.budget_tokens))`；啟動 toc 用售前靜態身分算一次，每回合候選子集與 toc 是 4.1；不變量 29 另立 29b（`canon_visible` 存在、引用 helper、toc 與 resolver 皆呼叫、無 `vendor_ids`／`is_active` 字面）。
 # review_state.py（F4：白名單、fail-closed）
 REVIEWED_PREFIX = "reviewed:"        # 內容已審＝ "reviewed:<reviewer>"
 POOL_MARK_PREFIX = "pool-marked-"    # 池標記＝ "pool-marked-<date>"（D1 時由 owner-20260905 改寫）
@@ -747,6 +753,7 @@ flowchart LR
 ### D. 變更歷史
 | 日期 | 版本 | 變更內容 | 修改者 |
 |---|---|---|---|
+| 2026-09-07 | 1.11 | 3.2 落地偏離回寫（元件 5）：`build_canon_toc` 另名、`canon_visible` 規則＝元件 6 前身（分支判準同 SQL、刻意不套清單）、resolver per-call 接線、註冊表載體、`.json` 位元組同源、29b（業主 2026-09-07 照准） | 業主／AI |
 | 2026-09-07 | 1.10 | 3.1 值域收嚴（`reviewed:<reviewer>` 非空不含空白、`pool-marked-<YYYYMMDD>`；謂詞改 regex 非 LIKE）三處同步；元件 9 回寫 2.6 四點（`map_path`、`fix_type|None`、`gap_classes`、V 判準）＋步 5b 權威來源核對（業主 2026-09-07 裁） | 業主／AI |
 | 2026-09-06T10:13:36+0800 | 1.0 | 初始版本（需求 v2 核可、R1.5 定向後） | AI |
 | 2026-09-06 | 1.1 | security-reviewer 20 條處置（附錄 E）：sha 重算、匯入 fail-closed、白名單謂詞、可見性補洞、身分強制覆寫、hook 變數與接線測試、D3 落地、三軸欄位 | AI |

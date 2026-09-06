@@ -5,7 +5,7 @@ design 元件 5／決策 8／不變量 32；Plan `inputs/plan-3.1-review-state-2
 ## 這個檔回答什麼命題
 `knowledge_base.outline_approved_by` 這一欄的**值域**（哪些值合法）與
 **謂詞**（哪些值算「內容已審、可被 agent 路徑取用」）——兩者都只在這裡定義，
-其他任何檔案（`tools/kb.py`、`outline.py`、`tools/agent_outline_dump.py`、
+其他任何檔案（`tools/kb.py`、`tools/agent_outline_dump.py`、
 migration SQL）一律引用本檔常數，⛔ 不得自行寫出 `outline_approved_by` 字面
 （不變量 32：`scripts/audit/checks/agent_boundary.py:check_32_review_state_single_source`）。
 
@@ -80,8 +80,10 @@ def content_reviewed_predicate() -> Tuple[str, List[str]]:
     asyncpg `$n`）；**恰一個 `%s`、恰一個參數**，呼叫端把片段接在 SQL 尾、
     參數同序延長即可。
 
-    ⛔ 只在 agent 路徑拼接（`tools/kb.py:fetch_visible_row`、
-    `outline.py:_fetch_prospect_pool_rows`）；⛔ 不併入
+    ⛔ 只在 agent 路徑拼接（現況唯一呼叫端＝`tools/kb.py:fetch_visible_row`；
+    ⚠️ `outline.py` 的售前池查詢已於 3.2 退役——大綱改由 git 正本組裝，
+    「未審不可引用」在正本側由 `FineItem.reviewed_by` 承擔，見
+    `services/agent/canon/canon_assembler.py:canon_visible`）；⛔ 不併入
     `build_visibility_predicate`（那是**可見性**單一來源，不變量 29 紅線；
     本謂詞是**審核狀態**，兩者是兩條各自獨立的閘門，合併會讓其中一邊
     改動時誤傷另一邊）。

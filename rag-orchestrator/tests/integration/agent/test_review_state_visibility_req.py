@@ -13,6 +13,10 @@ migration 那條（`ADD CONSTRAINT` 也在交易內，rollback 後測試庫沒�
 4. migration 的 `NOT VALID` 是必要的：對含 `owner-20260905` 的表
    `ADD … NOT VALID` 成功、`VALIDATE` 失敗；重跑冪等。
 
+⚠️ 2026-09-07（任務 3.2）：售前大綱的來源改成 git 正本 ⇒ 原本三條「DB 幾列已審
+⇒ 大綱幾節」的斷言已換成「大綱形狀不隨 DB 列變」（§④）。①②③ 的 `kb.get`
+DB 謂詞測試**原樣保留**——那條路徑仍然吃 `content_reviewed_predicate`。
+
 無法連 DB → skip（非 fail）；連到非測試庫 → 大聲失敗（⛔ 不得寫入非測試資料）。
 """
 import os
@@ -26,6 +30,7 @@ from services.agent.canon.review_state import (
     is_domain_value,
     is_reviewed_value,
 )
+from services.agent.canon.canon_assembler import TOC_SECTION_ID, reset_canon_registry
 from services.agent.identity import Identity
 from services.agent.outline import build_prospect_outline
 from services.agent.tools.kb import fetch_visible_row, kb_get
@@ -270,7 +275,7 @@ def test_visible_set_is_subset_of_domain_in_postgres(txn):
     cur.close()
 
 
-# ── ④ 0 列已審時的售前大綱（兩個固定節仍在，⛔ 不 raise）─────────────────
+# ── ④ 售前大綱不受 DB 審核狀態影響（3.2：來源改成 git 正本）──────────────
 
 def _prospect_row_kwargs():
     return dict(
@@ -282,15 +287,24 @@ def _prospect_row_kwargs():
     )
 
 
-@pytest.mark.req(_SPEC)
-async def test_prospect_outline_with_zero_reviewed_rows_keeps_fixed_sections(txn):
-    """已審 0 列 ⇒ 不 raise、只剩兩個固定節、所有 `source_ids` 皆空。
+#: 版控正本現況細目數＋1 個 `outline:toc`（與 `test_outline_req.py` 同一個釘死值）。
+CANON_SECTION_COUNT = 38 + 1
 
-    ⛔ 這不是「空大綱」：`outline:deliberate-gaps`（DSP-009）與 `outline:cta`
-    是常數文字、無資料來源，無論池內幾列都會附上。
+
+@pytest.mark.req("knowledge-outline-and-intent-architecture:3.2")
+async def test_prospect_outline_shape_is_canon_not_db_rows(txn):
+    """⚠️ **3.1 的三條「幾列 ⇒ 幾節」已於 3.2 換掉**：大綱來源是 git 正本，
+    不是 DB 售前池 ⇒ 節數固定＝正本細目數＋toc，與交易內有幾列已審**無關**。
+
+    三種 DB 狀態（0 列已審／1 列已審／舊標記 `owner-20260905`）在同一個交易內
+    輪流造出來，大綱形狀必須完全相同。⛔ 這不是把測試放寬——「不隨 DB 變」正是
+    3.2 要證明的那件事，而 `kb.get` 的 DB 謂詞測試（本檔①②③）原樣保留。
     """
+    reset_canon_registry()
     cur = txn.cursor()
-    # 交易內把所有已審列清成 NULL——⛔ rollback 後不留痕。
+    pool = _SingleConnPool(txn)
+
+    # ① 交易內清掉所有已審列（3.1 時這會讓大綱只剩兩個固定節）
     cur.execute(
         "UPDATE knowledge_base SET outline_approved_by = NULL WHERE outline_approved_by ~ %s",
         (REVIEWED_REGEX,),
@@ -298,49 +312,31 @@ async def test_prospect_outline_with_zero_reviewed_rows_keeps_fixed_sections(txn
     cur.execute("SELECT count(*) FROM knowledge_base WHERE outline_approved_by ~ %s",
                 (REVIEWED_REGEX,))
     assert cur.fetchone()[0] == 0, "前置條件沒達成：交易內仍有已審列"
+    zero_rows = await build_prospect_outline(pool)
+    assert len(zero_rows.sections) == CANON_SECTION_COUNT, [s.id for s in zero_rows.sections]
+    assert zero_rows.sections[-1].id == TOC_SECTION_ID
+    assert all(not s.source_ids for s in zero_rows.sections)
 
-    doc = await build_prospect_outline(_SingleConnPool(txn))
-    assert len(doc.sections) == 2, [s.id for s in doc.sections]
-    assert {s.id for s in doc.sections} == {"outline:deliberate-gaps", "outline:cta"}
-    assert all(not s.source_ids for s in doc.sections)
-    cur.close()
-
-
-@pytest.mark.req(_SPEC)
-async def test_prospect_outline_with_one_reviewed_row_gains_a_section(txn):
-    """正對照：交易內塞一列 `reviewed:test` ⇒ 3 節，新增節帶 1 個 source id。"""
-    cur = txn.cursor()
-    cur.execute(
-        "UPDATE knowledge_base SET outline_approved_by = NULL WHERE outline_approved_by ~ %s",
-        (REVIEWED_REGEX,),
-    )
+    # ② 塞一列 reviewed:test（3.1 時會多一節）⇒ 3.2 節數與 sha 都不變
     _insert(cur, PROSPECT_ROW_ID, **_prospect_row_kwargs())
+    cur.execute("SELECT count(*) FROM knowledge_base WHERE outline_approved_by ~ %s",
+                (REVIEWED_REGEX,))
+    assert cur.fetchone()[0] == 1, "正對照失敗：那一列沒寫進交易，下面的『不變』不可信"
+    one_row = await build_prospect_outline(pool)
+    assert len(one_row.sections) == CANON_SECTION_COUNT
+    assert one_row.sha256 == zero_rows.sha256
+    assert all(PROSPECT_ROW_ID not in s.source_ids for s in one_row.sections)
+    assert "可線上報修並追蹤進度" not in one_row.text
 
-    doc = await build_prospect_outline(_SingleConnPool(txn))
-    assert len(doc.sections) == 3, [s.id for s in doc.sections]
-    new_sections = [s for s in doc.sections
-                    if s.id not in ("outline:deliberate-gaps", "outline:cta")]
-    assert len(new_sections) == 1
-    assert new_sections[0].source_ids == [PROSPECT_ROW_ID]
-    cur.close()
-
-
-@pytest.mark.req(_SPEC)
-async def test_prospect_outline_ignores_legacy_owner_mark(txn):
-    """`owner-20260905` 的列 ⛔ 不得進大綱（F1：`IS NOT NULL` 會把 29 列當已審）。"""
-    cur = txn.cursor()
+    # ③ 值域外舊標記 owner-20260905 同樣不影響
     cur.execute(
-        "UPDATE knowledge_base SET outline_approved_by = NULL WHERE outline_approved_by ~ %s",
-        (REVIEWED_REGEX,),
+        "UPDATE knowledge_base SET outline_approved_by = %s WHERE id = %s",
+        ("owner-20260905", PROSPECT_ROW_ID),
     )
-    kwargs = _prospect_row_kwargs()
-    kwargs["approved_by"] = "owner-20260905"
-    _insert(cur, PROSPECT_ROW_ID, **kwargs)
-
-    doc = await build_prospect_outline(_SingleConnPool(txn))
-    assert len(doc.sections) == 2, [s.id for s in doc.sections]
-    assert all(PROSPECT_ROW_ID not in s.source_ids for s in doc.sections)
+    legacy = await build_prospect_outline(pool)
+    assert legacy.sha256 == zero_rows.sha256
     cur.close()
+    reset_canon_registry()
 
 
 # ── ⑤ migration：NOT VALID 成功、VALIDATE 失敗、重跑冪等 ────────────────

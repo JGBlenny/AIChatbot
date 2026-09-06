@@ -12,6 +12,7 @@ checker，不必額外記得跑 `make audit`。⛔ 不重寫 checker 邏輯，�
 | check_28_mcp_auth_unconditional | 28 | 19 |
 | check_29_predicate_single_source | 29 | 20 |
 | check_30_decision_snapshot_no_verbatim | 30 | 21 |
+| check_29b_canon_visibility_single_source | 29b | —（spec knowledge-outline-and-intent-architecture 3.2）|
 | check_31_mcp_usage_events_coverage | 31 | 22（WARN-only 登記，1.7 落地） |
 | check_32_review_state_single_source | 32 | —（spec knowledge-outline-and-intent-architecture 3.1）|
 
@@ -182,6 +183,103 @@ def test_29_select_projection_columns_do_not_false_positive(ab):
     finally:
         ab._read = orig_read
     assert ok is True, f"SELECT 投影欄位名被誤判成 WHERE 違規：{detail}"
+
+
+# ── 29b（3.2）canon 可見性單一來源（記憶體側） ─────────────────────────────
+
+_SPEC_32 = "knowledge-outline-and-intent-architecture:3.2"
+
+_CANON_CLEAN_SRC = (
+    "def canon_visible(identity, fine, *, vendor_business_types):\n"
+    "    tu = VendorKnowledgeRetrieverV2._effective_target_user(identity.target_user)\n"
+    "    return tu in fine.target_user\n"
+    "def build_canon_toc(doc, identity, *, vendor_business_types):\n"
+    "    return [f for f in doc.fines() "
+    "if canon_visible(identity, f, vendor_business_types=vendor_business_types)]\n"
+    "def resolve_canon_section(doc, identity, sid, *, vendor_business_types):\n"
+    "    return canon_visible(identity, sid, vendor_business_types=vendor_business_types)\n"
+)
+
+
+def _check_29b_on(ab, src):
+    """把假原始碼餵給 29b（`_read` monkeypatch，比照 checker 自己的自測）。"""
+    rel = "services/_fake_pytest_canon.py"
+    orig_read = ab._read
+    ab._read = lambda path: src if path.endswith("_fake_pytest_canon.py") else orig_read(path)
+    try:
+        return ab.check_29b_canon_visibility_single_source(rel)
+    finally:
+        ab._read = orig_read
+
+
+@pytest.mark.req(_SPEC_32)
+def test_29b_real_tree_passes(ab):
+    """正對照：現樹的 `canon_assembler.canon_visible` 通過（⛔ 不是空跑）。"""
+    ok, detail = ab.check_29b_canon_visibility_single_source()
+    assert ok is True, detail
+    assert ab.CANON_VISIBLE_FUNC in detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_29b_clean_fake_tree_passes(ab):
+    """量尺自證：規則齊備的假樹要綠——否則下面三條紅可能只是恆紅。"""
+    ok, detail = _check_29b_on(ab, _CANON_CLEAN_SRC)
+    assert ok is True, detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_29b_missing_canon_visible_is_caught(ab):
+    src = _CANON_CLEAN_SRC.replace("def canon_visible", "def _renamed_visible")
+    ok, detail = _check_29b_on(ab, src)
+    assert ok is False, detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_29b_consumer_not_calling_canon_visible_is_caught(ab):
+    """只有一個消費端套可見性 ⇒ 紅（目錄與 `outline:*` 解析都必須過同一道閘門）。"""
+    src = _CANON_CLEAN_SRC.replace(
+        "    return canon_visible(identity, sid, vendor_business_types=vendor_business_types)\n",
+        "    return True\n")
+    ok, detail = _check_29b_on(ab, src)
+    assert ok is False, detail
+    assert "resolve_canon_section" in detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_29b_hardcoded_sql_column_literal_is_caught(ab):
+    """`vendor_ids` 字面出現在 `canon_visible` 內 ⇒ 紅（刻意不套的 SQL 條件被手抄）。"""
+    src = _CANON_CLEAN_SRC.replace(
+        "    return tu in fine.target_user\n",
+        "    if 'vendor_ids' in fine.raw:\n        return False\n    return tu in fine.target_user\n")
+    ok, detail = _check_29b_on(ab, src)
+    assert ok is False, detail
+    assert "vendor_ids" in detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_29b_missing_target_user_normalizer_is_caught(ab):
+    src = _CANON_CLEAN_SRC.replace(
+        "    tu = VendorKnowledgeRetrieverV2._effective_target_user(identity.target_user)\n",
+        "    tu = identity.target_user or 'tenant'\n")
+    ok, detail = _check_29b_on(ab, src)
+    assert ok is False, detail
+    assert ab.TARGET_USER_NORMALIZER in detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_29b_unreadable_file_fails_loudly(ab):
+    """檔案讀不到 ⇒ 紅，⛔ 不是「尚未建立、略過通過」（否則搬檔會靜默失去這條）。"""
+    ok, detail = ab.check_29b_canon_visibility_single_source("services/_does_not_exist.py")
+    assert ok is False, detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_29b_is_registered_in_checks(ab):
+    """29b 必須進 `CHECKS`（否則 `make audit` 印不到它）且零參數可呼叫。"""
+    names = [fn.__name__ for _num, _label, fn in ab.CHECKS]
+    assert "check_29b_canon_visibility_single_source" in names
+    for _num, _label, fn in ab.CHECKS:
+        assert fn()[0] in (True, False)
 
 
 # ── 30（design 21）decision_snapshot.agent* 無原文鍵 ─────────────────────

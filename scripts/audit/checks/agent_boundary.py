@@ -16,6 +16,7 @@ design.md 附錄 B 稱這五條為「不變量 18–22」，但合併時發現
 | 29 | 20 | 可見性謂詞單一來源（`build_visibility_predicate`） |
 | 30 | 21 | `decision_snapshot.agent*` 無原文鍵 |
 | 31 | 22 | `/mcp` 每呼叫一列 `usage_events`（登記，見 1.7） |
+| 29b | — | canon 可見性單一來源（`canon_assembler.canon_visible`；同 spec 3.2）|
 | 32 | —  | 內容已審謂詞單一來源（spec knowledge-outline-and-intent-architecture 3.1）|
 
 32 不屬於上表那條編號衝突：它來自另一個 spec，附錄 B 直接就叫「不變量 32」。
@@ -294,7 +295,10 @@ def check_29_predicate_single_source(targets=None):
         ("services/vendor_knowledge_retriever_v2.py", "_vector_search"),
         ("services/vendor_knowledge_retriever_v2.py", "_keyword_search"),
         ("services/agent/tools/kb.py", "fetch_visible_row"),
-        ("services/agent/outline.py", "_fetch_prospect_pool_rows"),
+        # ⚠️ `services/agent/outline.py:_fetch_prospect_pool_rows` 已於 3.2 退役
+        #    （大綱改由 git 正本組裝、不讀 DB）——記憶體側的可見性由**不變量 29b**
+        #    盯 `canon_assembler.canon_visible`，⛔ 不要把它加回本清單：29 對每個
+        #    target 強制 `_calls_predicate`，記憶體鏡像不可能呼叫 SQL 謂詞。
     ]
     bad = []
     notes = []
@@ -334,6 +338,92 @@ def check_29_predicate_single_source(targets=None):
     if notes:
         detail += "；" + "；".join(notes)
     return True, detail + "。" + info
+
+
+# ─────────────── 29b（3.2）canon 可見性單一來源（記憶體側） ───────────────
+
+#: 記憶體側可見性的唯一實作位置（spec knowledge-outline-and-intent-architecture 3.2）。
+CANON_ASSEMBLER_REL = "services/agent/canon/canon_assembler.py"
+CANON_VISIBLE_FUNC = "canon_visible"
+#: `canon_visible` 必須引用的角色正規化 helper（design 元件 6 明訂重用、⛔ 不另寫一套）。
+TARGET_USER_NORMALIZER = "_effective_target_user"
+#: 兩個消費端：目錄與 `outline:*` 解析都必須經過同一個判準（F7 修補點）。
+CANON_VISIBLE_CALLERS = ("build_canon_toc", "resolve_canon_section")
+#: **刻意不套**的 SQL 條件（正本無 vendor 欄／無上架旗標）——出現在
+#: `canon_visible` 內＝有人手抄 SQL 條件進記憶體版，一律 FAIL。
+_CANON_BANNED_LITERALS = ("vendor_ids", "is_active")
+
+
+def _calls_named(node, name):
+    """函式本體是否呼叫 `name(...)`／`x.name(...)`。"""
+    for n in ast.walk(node):
+        if isinstance(n, ast.Call):
+            f = n.func
+            if isinstance(f, ast.Name) and f.id == name:
+                return True
+            if isinstance(f, ast.Attribute) and f.attr == name:
+                return True
+    return False
+
+
+def _references_name(node, name):
+    """函式本體是否出現識別字 `name`（裸名或屬性名，含呼叫）。"""
+    for n in ast.walk(node):
+        if isinstance(n, ast.Name) and n.id == name:
+            return True
+        if isinstance(n, ast.Attribute) and n.attr == name:
+            return True
+    return False
+
+
+def check_29b_canon_visibility_single_source(rel=None):
+    """3.2：記憶體側可見性只有一份，且沒有手抄 SQL 條件。
+
+    四條規則（缺一即 FAIL，⛔ 不 SKIP——這條的目標是**必須存在**的產線函式）：
+    ① `canon_assembler.py:canon_visible` 存在；
+    ② 它引用 `_effective_target_user`（角色正規化與 SQL 側同一支）；
+    ③ `build_canon_toc` 與 `resolve_canon_section` 都直接呼叫 `canon_visible`
+       （目錄與 `outline:*` 解析都要過同一道閘門）；
+    ④ `canon_visible` 內不得出現 `vendor_ids`／`is_active` 字面（含字串常數與識別字）
+       ——那是刻意不套的 SQL 條件，出現＝手抄。
+
+    ⚠️ 與 29 的分工：29 盯 **SQL 側**（必須呼叫 `build_visibility_predicate`），
+    29b 盯 **記憶體側**；「兩者等價」的契約測試屬 3.3（design 元件 11），⛔ 不在此。
+    """
+    rel = rel or CANON_ASSEMBLER_REL
+    src = _read(os.path.join(RAG, rel))
+    if src is None:
+        return False, (f"{rel} 讀不到——記憶體側可見性的單一來源不存在（大聲失敗："
+                       "⛔ 不當成「還沒建立、略過」）")
+    tree = _parse(src)
+    if tree is None:
+        return False, f"{rel} 語法錯誤，無法 AST 掃描——大聲失敗"
+
+    fn = _func_node(tree, CANON_VISIBLE_FUNC)
+    if fn is None:
+        return False, f"{rel}:{CANON_VISIBLE_FUNC} 不存在——可見性單一來源不見了"
+
+    bad = []
+    if not _references_name(fn, TARGET_USER_NORMALIZER):
+        bad.append(f"{rel}:{CANON_VISIBLE_FUNC} 未引用 {TARGET_USER_NORMALIZER}()"
+                   "——角色正規化必須與 SQL 側同一支，⛔ 不得另寫")
+    for caller in CANON_VISIBLE_CALLERS:
+        node = _func_node(tree, caller)
+        if node is None:
+            bad.append(f"{rel}:{caller} 不存在——可見性的消費端少一個")
+        elif not _calls_named(node, CANON_VISIBLE_FUNC):
+            bad.append(f"{rel}:{caller} 未呼叫 {CANON_VISIBLE_FUNC}()"
+                       "——這條路徑沒有套可見性")
+    for banned in _CANON_BANNED_LITERALS:
+        hit = any(banned in v for v in _string_constants(fn)) or _references_name(fn, banned)
+        if hit:
+            bad.append(f"{rel}:{CANON_VISIBLE_FUNC} 出現 `{banned}` 字面"
+                       "——那是刻意不套的 SQL 條件，出現＝手抄")
+    if bad:
+        return False, "；".join(bad)
+    return True, (f"{rel}:{CANON_VISIBLE_FUNC} 存在、引用 {TARGET_USER_NORMALIZER}、"
+                  f"被 {'／'.join(CANON_VISIBLE_CALLERS)} 呼叫，且無 "
+                  f"{'／'.join(_CANON_BANNED_LITERALS)} 字面")
 
 
 # ───────────────────────── 30（design 21）decision_snapshot.agent* 無原文鍵 ─────────────────────────
@@ -678,6 +768,7 @@ CHECKS = [
     (28, "/mcp 無條件 401（design 19）", check_28_mcp_auth_unconditional),
     (29, "可見性謂詞單一來源（design 20）", check_29_predicate_single_source),
     (30, "decision_snapshot.agent* 無原文鍵（design 21）", check_30_decision_snapshot_no_verbatim),
+    ("29b", "canon 可見性單一來源（3.2）", check_29b_canon_visibility_single_source),
 ]
 
 
@@ -787,6 +878,64 @@ def _self_test_29():
              check_29_predicate_single_source(targets=tgt_dirty2)[0] is False),
             ("不存在的目標函式 → 略過通過",
              check_29_predicate_single_source(targets=[("services/nope.py", "x")])[0] is True),
+        ]
+    finally:
+        _read = orig_read
+    return cases
+
+
+def _self_test_29b():
+    global _read
+    real_ok = check_29b_canon_visibility_single_source()[0]
+
+    clean_src = (
+        "def canon_visible(identity, fine, *, vendor_business_types):\n"
+        "    tu = VendorKnowledgeRetrieverV2._effective_target_user(identity.target_user)\n"
+        "    return tu in fine.target_user\n"
+        "def build_canon_toc(doc, identity, *, vendor_business_types):\n"
+        "    return [f for f in doc.fines() if canon_visible(identity, f, vendor_business_types=vendor_business_types)]\n"
+        "def resolve_canon_section(doc, identity, sid, *, vendor_business_types):\n"
+        "    return canon_visible(identity, sid, vendor_business_types=vendor_business_types)\n"
+    )
+    missing_func = clean_src.replace("def canon_visible", "def _renamed_visible")
+    one_caller = clean_src.replace(
+        "    return canon_visible(identity, sid, vendor_business_types=vendor_business_types)\n",
+        "    return True\n")
+    banned_literal = clean_src.replace(
+        "    return tu in fine.target_user\n",
+        "    if 'vendor_ids' in fine.raw:\n        return False\n    return tu in fine.target_user\n")
+    no_normalizer = clean_src.replace(
+        "    tu = VendorKnowledgeRetrieverV2._effective_target_user(identity.target_user)\n",
+        "    tu = identity.target_user or 'tenant'\n")
+
+    orig_read = _read
+    fakes = {
+        os.path.join(RAG, "services/_fake_canon_clean.py"): clean_src,
+        os.path.join(RAG, "services/_fake_canon_missing.py"): missing_func,
+        os.path.join(RAG, "services/_fake_canon_one_caller.py"): one_caller,
+        os.path.join(RAG, "services/_fake_canon_banned.py"): banned_literal,
+        os.path.join(RAG, "services/_fake_canon_no_norm.py"): no_normalizer,
+    }
+
+    def fake_read(path):
+        return fakes.get(path, orig_read(path))
+
+    _read = fake_read
+    try:
+        cases = [
+            ("29b 正對照：現樹的 canon_visible 通過", real_ok is True),
+            ("29b 假樹：規則齊備 → 通過（⛔ 不是恆紅）",
+             check_29b_canon_visibility_single_source("services/_fake_canon_clean.py")[0] is True),
+            ("29b 假樹：canon_visible 不存在 → 必須紅",
+             check_29b_canon_visibility_single_source("services/_fake_canon_missing.py")[0] is False),
+            ("29b 假樹：只有一個消費端呼叫 → 必須紅",
+             check_29b_canon_visibility_single_source("services/_fake_canon_one_caller.py")[0] is False),
+            ("29b 假樹：出現 vendor_ids 字面 → 必須紅",
+             check_29b_canon_visibility_single_source("services/_fake_canon_banned.py")[0] is False),
+            ("29b 假樹：未引用 _effective_target_user → 必須紅",
+             check_29b_canon_visibility_single_source("services/_fake_canon_no_norm.py")[0] is False),
+            ("29b 檔案讀不到 → 必須紅（⛔ 不是略過通過）",
+             check_29b_canon_visibility_single_source("services/_fake_canon_absent.py")[0] is False),
         ]
     finally:
         _read = orig_read
@@ -942,6 +1091,7 @@ def self_test() -> int:
     all_cases += _self_test_27()
     all_cases += _self_test_28()
     all_cases += _self_test_29()
+    all_cases += _self_test_29b()
     all_cases += _self_test_30()
     all_cases += _self_test_32()
     for name, ok in all_cases:
