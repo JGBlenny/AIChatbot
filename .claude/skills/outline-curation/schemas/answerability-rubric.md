@@ -1,6 +1,8 @@
 ---
-version: "0.1.0"
-status: draft_pending_owner_approval
+version: "0.2.0"
+status: approved
+approved_by: owner-20260906
+approved_at: "2026-09-06"
 ---
 
 # 可答性判準（answerability rubric）
@@ -13,6 +15,10 @@ status: draft_pending_owner_approval
 - **partial**：候選內容只答得了代表問句的一部分子問題。子問題定義為代表問句可拆解出的獨立問點；判者於 `evidence_unit` 註記候選內容中答到的是哪一句。
 - **no_source**：所有候選內容中沒有任何一句可以回答該格代表問句。
 - **deliberate_no**：本格的 `policy` 為 `deliberate_no`，且帶有 `policy_ref`。
+
+## 什麼不算「回答」
+
+候選內容中的一句若只是**反問使用者、要求使用者先提供資訊、或把使用者導向其他管道**（預約、留資、找專人），該句不構成對代表問句的回答；判定 `answerable`／`partial` 時不得以此類句子作為 `evidence_unit`。候選內容若**只有**此類句子，對該格視同無可答句。
 
 ## 輸出
 

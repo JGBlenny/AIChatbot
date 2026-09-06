@@ -15,6 +15,10 @@ if (args.step !== 'answerability') {
   throw new Error(`未知 step：${args.step}（須為 'structure' 或 'answerability'）`)
 }
 
+// 判者模型：由 args.judgeModel 指定（如 'sonnet'）；未指定＝繼承 session 模型。
+// 1.4 乾跑實測：Fable 每判者 ≈56k context，55 格成本無法判 ≤$3 ⇒ 1.5 先以 sonnet 對照 label 一致性再放量。
+const JUDGE_OPTS = args.judgeModel ? { model: args.judgeModel } : {}
+
 const VERDICT_SCHEMA = {
   type: 'object',
   required: ['cell_id', 'label', 'fine_id', 'evidence_unit', 'confidence', 'provisional'],
@@ -33,12 +37,12 @@ phase('Answerability')
 // 判者互不可見：每個 agent() 只拿 c.judgePrompt，⛔ 不把 v1 傳給 judge2、不把 v1/v2 傳給 judge3。
 const results = await pipeline(
   args.cells,
-  c => agent(c.judgePrompt, { phase: 'Answerability', label: `judge1:${c.cellId}`, effort: 'low', schema: VERDICT_SCHEMA }),
-  (v1, c) => agent(c.judgePrompt, { phase: 'Answerability', label: `judge2:${c.cellId}`, effort: 'low', schema: VERDICT_SCHEMA })
+  c => agent(c.judgePrompt, { phase: 'Answerability', label: `judge1:${c.cellId}`, effort: 'low', schema: VERDICT_SCHEMA, ...JUDGE_OPTS }),
+  (v1, c) => agent(c.judgePrompt, { phase: 'Answerability', label: `judge2:${c.cellId}`, effort: 'low', schema: VERDICT_SCHEMA, ...JUDGE_OPTS })
     .then(v2 => ({ c, v1, v2 })),
   r => (r.v1 && r.v2 && r.v1.label === r.v2.label)
     ? r
-    : agent(r.c.judgePrompt, { phase: 'Answerability', label: `judge3:${r.c.cellId}`, effort: 'low', schema: VERDICT_SCHEMA })
+    : agent(r.c.judgePrompt, { phase: 'Answerability', label: `judge3:${r.c.cellId}`, effort: 'low', schema: VERDICT_SCHEMA, ...JUDGE_OPTS })
       .then(v3 => ({ ...r, v3 })),
 )
 
