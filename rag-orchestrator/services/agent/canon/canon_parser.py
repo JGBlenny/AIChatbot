@@ -24,6 +24,9 @@ from dataclasses import asdict, dataclass, field
 from typing import Optional
 
 from services.agent.provenance_units import split_sentences
+from services.instance_applicability import (  # 不變量 10：宣告鍵與值域只從契約模組取，⛔ 不在此重寫字面
+    APPLICABILITY_GENERAL, APPLICABILITY_INSTANCE, KNOWLEDGE_APPLICABILITY_KEY,
+)
 
 FRONT_MATTER_KEYS: tuple[str, ...] = (
     "audience", "version", "reviewers", "language", "budget_tokens", "target_user", "business_types",
@@ -31,11 +34,11 @@ FRONT_MATTER_KEYS: tuple[str, ...] = (
 AUDIENCES: tuple[str, ...] = ("prospect", "property_manager", "tenant")
 ATTR_KEYS: tuple[str, ...] = (
     "phrasings", "sources", "reviewed", "see_also", "policy", "policy_ref",
-    "target_user", "business_types", "categories", "instance_applicability",
+    "target_user", "business_types", "categories", KNOWLEDGE_APPLICABILITY_KEY,
 )
 POLICIES: tuple[str, ...] = ("answerable", "deliberate_no", "not_available")
 PHRASING_STATUSES: tuple[str, ...] = ("proposed", "approved", "retired")
-INSTANCE_APPLICABILITY: tuple[str, ...] = ("instance", "general")
+INSTANCE_APPLICABILITY: tuple[str, ...] = (APPLICABILITY_INSTANCE, APPLICABILITY_GENERAL)
 
 FINE_ID_RE = re.compile(r"^[a-z_]+/[A-Z]/[a-z0-9-]+$")
 COARSE_HEADING_RE = re.compile(r"^##\s+(.+?)\s*\{#([A-Z])\}\s*$")
@@ -220,8 +223,8 @@ def _build_fine(head_lineno: int, fid: str, coarse_id: str, title: str, attrs: d
                 doc_defaults: dict) -> FineItem:
     phr = tuple(attrs.get("phrasings", ()))
     policy = attrs.get("policy", "answerable")
-    if "instance_applicability" not in attrs:
-        raise CanonFormatError(head_lineno, f"細目 {fid} 缺必填屬性 instance_applicability（instance｜general）")
+    if KNOWLEDGE_APPLICABILITY_KEY not in attrs:
+        raise CanonFormatError(head_lineno, f"細目 {fid} 缺必填屬性 {KNOWLEDGE_APPLICABILITY_KEY}（{'｜'.join(INSTANCE_APPLICABILITY)}）")
     reviewed = attrs.get("reviewed")
     units = tuple(content)
     return FineItem(
@@ -234,7 +237,7 @@ def _build_fine(head_lineno: int, fid: str, coarse_id: str, title: str, attrs: d
         target_user=tuple(attrs.get("target_user", doc_defaults["target_user"])),
         business_types=tuple(attrs.get("business_types", doc_defaults["business_types"])),
         categories=tuple(attrs.get("categories", ())),
-        instance_applicability=attrs["instance_applicability"],
+        instance_applicability=attrs[KNOWLEDGE_APPLICABILITY_KEY],
     )
 
 
@@ -253,10 +256,10 @@ def _parse_attr_value(key: str, raw: str, lineno: int):
         return v
     if key == "policy_ref":
         return _parse_scalar(raw, lineno, "policy_ref")
-    if key == "instance_applicability":
-        v = _parse_scalar(raw, lineno, "instance_applicability")
+    if key == KNOWLEDGE_APPLICABILITY_KEY:
+        v = _parse_scalar(raw, lineno, KNOWLEDGE_APPLICABILITY_KEY)
         if v not in INSTANCE_APPLICABILITY:
-            raise CanonFormatError(lineno, f"instance_applicability 須為 {INSTANCE_APPLICABILITY} 之一，得到 {v!r}")
+            raise CanonFormatError(lineno, f"{KNOWLEDGE_APPLICABILITY_KEY} 須為 {INSTANCE_APPLICABILITY} 之一，得到 {v!r}")
         return v
     raise CanonFormatError(lineno, f"屬性 {key!r} 不支援")  # pragma: no cover — 上游已擋
 

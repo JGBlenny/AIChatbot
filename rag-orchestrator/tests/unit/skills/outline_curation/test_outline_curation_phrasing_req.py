@@ -334,3 +334,27 @@ def test_raw_purge_parse_date_in_name():
     assert rp.parse_date_in_name("phrasing-2026-09-06") == datetime.date(2026, 9, 6)
     assert rp.parse_date_in_name("structure-proposal.json") is None
     assert rp.parse_date_in_name("run-20261332") is None, "非法月日 ⇒ 不當日期（⛔ 不猜）"
+
+
+
+# ---------------------------------------------------------------------------
+# verifier 2026-09-06 回歸鎖（REFUTED (a) P2：全形數字／全形 ＠／號碼中間空白曾原樣進 --out）
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("dirty, category", [
+    ("聯絡０９１２３４５６７８", "phone"),          # 全形數字
+    ("寫信到 abc＠example.com", "email"),          # 全形 ＠
+    ("請撥 0912 345 678 找我", "phone"),           # 號碼中間空白
+    ("請撥 0912-345-678 找我", "phone"),           # 號碼中間連字號
+])
+def test_deidentify_sees_through_fullwidth_and_spaced_numbers(dirty, category):
+    m = _load("phrasing_map")
+    out, counts = m.deidentify(dirty)
+    assert counts.get(category, 0) >= 1, (out, counts)
+    assert "0912" not in out and "０９１２" not in out and "example.com" not in out and "＠" not in out
+
+
+def test_norm_folds_trailing_punctuation_for_frozen_match():
+    m = _load("phrasing_map")
+    assert m.norm("簽約邀請有時效嗎？") == m.norm("簽約邀請有時效嗎") == m.norm("簽約邀請有時效嗎 ?")
+    assert m.norm("A。B。") != m.norm("AB")  # 只折句尾，不折句中

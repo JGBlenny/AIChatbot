@@ -58,9 +58,37 @@ ATTR_CONTINUATION_RE = re.compile(r'^\s+-\s')
 EMAIL_RE = re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}')
 PHONE_RE = re.compile(r'(?<!\d)(0\d{1,2}-?\d{6,8}|09\d{8})(?!\d)')
 LINE_ID_RE = re.compile(r'@[A-Za-z0-9_.-]{3,}')
-TAX_ID_RE = re.compile(r'(?<!\d)\d{8}(?!\d)')
-PLATE_RE = re.compile(r'(?<![A-Za-z0-9])[A-Z]{2,3}-?\d{3,4}(?![A-Za-z0-9])')
-NUMBER_LABEL_RE = re.compile(r'\d{4,}\s*(?:合約|帳單|編號|號)')
+# 統編＝**獨立**的 8 位數：前後都不得是英數（⛔ 舊版 `(?<!\d)\d{8}(?!\d)` 只擋數字相鄰，
+# sha256 十六進位字串裡夾著的 8 位數 `…133c28659231b098…` 會整批誤判）。
+# 另外兩道排除**不寫進 regex**，放在 `check_identifiers`：
+#   a. 看起來是日期的 8 位數（`_looks_like_date8`：19xx／20xx＋合法月日）
+#   b. JSON／YAML 計數欄位的裸數值（`NUMERIC_FIELD_KEY_RE`，如 `"prompt_tokens": 10848979`）
+# 理由：skill（`.claude/skills/outline-curation/scripts/phrasing_map.py`）直接 import 這支 regex 做
+# 去識別，那一側要維持「寧可多遮」——排除留在 hook 這一側，skill 因此永遠 ⊇ hook（同一把尺、方向只更嚴）。
+TAX_ID_RE = re.compile(r'(?<![0-9A-Za-z])\d{8}(?![0-9A-Za-z])')
+
+# 計數／金額／耗時欄位的鍵名白名單：**只有這些鍵**的裸數值不算統編。
+# ⛔ 不用「凡是 `key: 數字` 一律放行」——`"tax_id": 12345678` 這種真外洩正好就是裸數值，
+# 放行等於把統編這一面關掉。鍵名必須整段命中（`prompt_tokens` ✓、`discount` ✗）。
+NUMERIC_FIELD_KEY_RE = re.compile(
+    r'(?:^|[\s{,])"?(?:[A-Za-z0-9.\-]+_)*'
+    r'(?:tokens?|count|usd|cost|bytes?|size|length|budget|total|elapsed|duration|ms|chars)'
+    r'"?\s*:\s*$'
+)
+
+# 車牌（台灣現行式樣）：2–3 英文字母＋4 數字（`AB-1234`／`ABC-1234`），或 4 數字＋2 字母（`1234-AB`）。
+# ⛔ 不含 3 字母＋3 數字——那不是任何一種車牌式樣，卻正是文件編號（`DSP-012`／`R2-123`）的形狀。
+PLATE_RE = re.compile(r'(?<![A-Za-z0-9])(?:[A-Z]{2,3}-?\d{4}|\d{4}-?[A-Z]{2})(?![A-Za-z0-9])')
+
+# 合約號／帳單號，兩種形狀（聯集）：
+#   a. 標籤在前：`合約號 12345`／`帳單編號12345`（標籤與數字之間只准空白與 `:：#＃`）
+#   b. 數字在前：**≥6 位**且**緊貼**標籤：`123456帳單`
+# ⛔ 舊版 `\d{4,}\s*(?:合約|帳單|編號|號)` 允許「4 位數＋空白＋標籤」，會把
+# 「<kb id> 帳單版面自訂」這種引用當成帳單號；kb id 是 4 位數、後面接的是主題詞不是編號。
+NUMBER_LABEL_RE = re.compile(
+    r'(?:合約|帳單)(?:編號|號碼|序號|號)?\s*[:：#＃]?\s*\d{4,}'
+    r'|\d{6,}(?:合約|帳單|編號|號)'
+)
 AMOUNT_DATE_RE = re.compile(
     r'(?:NT\$|\$|新台幣)?\s*\d{2,}(?:,\d{3})*\s*元.{0,20}?\d{2,4}[-/年]\d{1,2}[-/月]\d{1,2}'
 )
@@ -371,8 +399,7 @@ def check_identifiers(abs_path: str, skip_front_matter: bool = False) -> list:
             continue
         for category, pattern in IDENTIFIER_CATEGORIES:
             if category == "tax_id":
-                # verifier F1：8 位數若是合理日期（19xx／20xx＋合法月日，如 20260906）不算統編
-                if any(not _looks_like_date8(m.group(0)) for m in pattern.finditer(line)):
+                if any(_is_tax_id_hit(line, m) for m in pattern.finditer(line)):
                     hits.append((category, i))
                 continue
             if pattern.search(line):
@@ -385,6 +412,23 @@ def _looks_like_date8(s: str) -> bool:
         return False
     mm, dd = int(s[4:6]), int(s[6:8])
     return 1 <= mm <= 12 and 1 <= dd <= 31
+
+
+def _is_numeric_field_value(line: str, start: int) -> bool:
+    """該 8 位數是否為 JSON／YAML 計數欄位的裸數值（`"prompt_tokens": 10848979`）。
+
+    只看**緊接在數字之前**的那段前綴：鍵名要整段落在白名單，且中間只准空白與冒號。"""
+    return bool(NUMERIC_FIELD_KEY_RE.search(line[:start]))
+
+
+def _is_tax_id_hit(line: str, m) -> bool:
+    """TAX_ID_RE 的命中是否真的算統編（兩道排除見 TAX_ID_RE 註解）。"""
+    token = m.group(0)
+    if _looks_like_date8(token):
+        return False
+    if _is_numeric_field_value(line, m.start()):
+        return False
+    return True
 
 
 # ---------------------------------------------------------------------------

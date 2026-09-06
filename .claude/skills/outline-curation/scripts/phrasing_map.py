@@ -185,9 +185,25 @@ def _sub_tax_id(text: str):
 
 
 # 套用順序固定（決定性，且避免互相咬字）：email→LINE id→金額+日期→電話→車牌→編號→統編→地址→社區→人名→房號。
+_DIGIT_WS_RE = re.compile(r"(?<=\d)\s+(?=\d)")
+_MOBILE_SEP_RE = re.compile(r"(?<!\d)09(\d{2})[\s\-‐‑–—]?(\d{3})[\s\-‐‑–—]?(\d{3})(?!\d)")
+
+
+def _pre_normalize(text: str) -> str:
+    """去識別前的正規化（verifier 2026-09-06 P2）：NFKC（全形數字／全形 ＠／全形字母 → 半形）＋ 數字串內的空白收攏
+    ＋ 手機號碼的分隔（空白／連字號）收攏。⛔ 不收攏一般連字號：日期「2026-09-06」要留給 AMOUNT_DATE_RE 看。
+    輸出講法就是這個正規化後的字；講法本來就是短主題詞，NFKC 不損語義（canon parser 的守門比對也用 NFKC）。
+    代價：兩個相鄰數字群之間的空白會被併掉（例：「10 20」→「1020」）；講法極少含相鄰數字群，接受。"""
+    t = unicodedata.normalize("NFKC", text)
+    t = _MOBILE_SEP_RE.sub(r"09\1\2\3", t)
+    return _DIGIT_WS_RE.sub("", t)
+
+
 def deidentify(text: str):
-    """回 (去識別後字串, {類別: 命中數})。⛔ 這是任何字元進 `--out`／`runs/` 前的唯一入口。"""
+    """回 (去識別後字串, {類別: 命中數})。⛔ 這是任何字元進 `--out`／`runs/` 前的唯一入口。
+    先 `_pre_normalize`（全形數字／全形 ＠／號碼中間空白都會被正則看見），再依序套各類正則。"""
     counts = {}
+    text = _pre_normalize(text)
 
     def rec(cat, n):
         if n:
@@ -225,9 +241,13 @@ def is_only_placeholders(text: str) -> bool:
 _WS_RE = re.compile(r'\s+')
 
 
+_TRAILING_PUNCT_RE = re.compile(r"[?？!！。.．,，;；:：~～…]+$")
+
+
 def norm(text: str) -> str:
-    """NFKC ＋ 去掉所有空白（去重與凍結題比對的唯一正規化）。"""
-    return _WS_RE.sub("", unicodedata.normalize("NFKC", text))
+    """NFKC ＋ 去掉所有空白 ＋ 去掉句尾標點（去重與凍結題比對的唯一正規化；句尾標點：verifier 2026-09-06 advisory——
+    凍結題加個問號就能混進索引，比對目的在防洩漏不在字串相等）。"""
+    return _TRAILING_PUNCT_RE.sub("", _WS_RE.sub("", unicodedata.normalize("NFKC", text)))
 
 
 def bigrams(text: str) -> frozenset:

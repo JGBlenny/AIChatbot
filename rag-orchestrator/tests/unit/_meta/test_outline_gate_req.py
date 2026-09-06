@@ -586,3 +586,133 @@ def test_a1_runs_file_with_unclosed_front_matter_still_scanned(tmp_path):
 
     assert proc.returncode == 2
     assert "email" in proc.stderr
+
+
+# ---------------------------------------------------------------------------
+# 判定 4 誤判收斂（2026-09-06）——三筆 regex 邊界修正的回歸鎖
+#
+# 材料＝`test_pii_scan_req.py::KNOWN_FALSE_POSITIVES` 那六筆基線的**原字串**（逐字抄，⛔ 不重寫）。
+# 每一條「不該擋」都配一條同檔形狀的「必須擋」正對照，證明綠不是把該類掃描關掉。
+# ---------------------------------------------------------------------------
+
+def _runs_file(repo, name: str, text: str):
+    runs = repo / ".claude" / "skills" / "outline-curation" / "runs"
+    runs.mkdir(parents=True, exist_ok=True)
+    target = runs / name
+    target.write_text(text, encoding="utf-8")
+    return target
+
+
+# --- (1) tax_id：十六進位夾帶與 JSON 計數欄位 -------------------------------
+
+def test_b1_hex_embedded_eight_digits_are_not_tax_id(tmp_path):
+    """綠：sha256 十六進位字串裡夾著的 8 位數（…133c28659231b098…）⛔ 不是統編——前後是英數字母。"""
+    repo = _mk_repo(tmp_path)
+    target = _runs_file(repo, "trial.json", json.dumps({
+        "inputs_sha": {
+            "rubric": "3d1137476b7ff6898733133c28659231b098ece89b4c8f12e55b0a1c2d3e4f506",
+            "helpcenter_dir": "edf43fe1eb805d0f6e77b9b2396a5d9499fc8a4a43735661c",
+        }
+    }, indent=2, ensure_ascii=False) + "\n")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stderr == ""
+
+
+def test_b1_json_token_count_is_not_tax_id(tmp_path):
+    """綠：`"prompt_tokens": 10848979` 這類 8 位數計數 ⛔ 不是統編（鍵名在計數白名單內）。"""
+    repo = _mk_repo(tmp_path)
+    target = _runs_file(repo, "cost.json", json.dumps({
+        "usage": {"prompt_tokens": 10848979, "completion_tokens": 11525555},
+        "cost": {"usd": 1.23},
+    }, indent=2) + "\n")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stderr == ""
+
+
+def test_b1_positive_control_standalone_tax_id_in_runs_still_blocks(tmp_path):
+    """正對照：獨立的 8 位數（`統編：12345678`）在同一種 runs/ 檔裡仍以 tax_id 擋。"""
+    repo = _mk_repo(tmp_path)
+    target = _runs_file(repo, "note.md", "客戶統編：12345678，請開立發票。\n")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 2
+    assert "tax_id" in proc.stderr
+    assert "12345678" not in proc.stderr
+
+
+def test_b1_positive_control_bare_numeric_tax_id_field_still_blocks(tmp_path):
+    """正對照（守住排除規則的邊界）：`"tax_id": 12345678` 同樣是 JSON 裸數值，但鍵名不在計數白名單
+    ⇒ 仍必須擋。這條證明上面兩條的綠 ⛔ 不是「凡是 `key: 數字` 一律放行」。"""
+    repo = _mk_repo(tmp_path)
+    target = _runs_file(repo, "leak.json", json.dumps({"tax_id": 12345678}, indent=2) + "\n")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 2
+    assert "tax_id" in proc.stderr
+
+
+# --- (2) plate：文件編號不是車牌 -------------------------------------------
+
+def test_b2_document_id_is_not_plate(tmp_path):
+    """綠：`DSP-012`（3 字母＋3 數字）⛔ 不是任何一種台灣車牌式樣，是 DECISIONS 編號。"""
+    repo = _mk_repo(tmp_path)
+    target = _runs_file(
+        repo, "readme-excerpt.md",
+        "正本只在 git、走 code review；DB 為衍生物（R2.9／DSP-012）。\n",
+    )
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stderr == ""
+
+
+@pytest.mark.parametrize("plate", ["ABC-1234", "AB-1234", "1234-AB", "ABC1234"])
+def test_b2_positive_control_real_plates_still_block(tmp_path, plate):
+    """正對照：真車牌式樣（2–3 字母＋4 數字、4 數字＋2 字母）仍以 plate 擋。"""
+    repo = _mk_repo(tmp_path)
+    target = _runs_file(repo, "plate.md", f"住戶車牌 {plate} 已登記車位。\n")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 2
+    assert "plate" in proc.stderr
+    assert plate not in proc.stderr
+
+
+# --- (3) number_label：kb id ＋ 空白 ＋ 主題詞不是帳單號 ---------------------
+
+def test_b3_kb_id_before_topic_word_is_not_number_label(tmp_path):
+    """綠：`5380 帳單版面自訂` ⛔ 不是帳單號——5380 是 kb id、只有 4 位且與「帳單」之間有空白，
+    後面接的是主題詞。"""
+    repo = _mk_repo(tmp_path)
+    target = _runs_file(
+        repo, "structure-proposal.json",
+        '{\n  "alternative": "draft:11 帳單內容與 5380 帳單版面自訂合併"\n}\n',
+    )
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stderr == ""
+
+
+@pytest.mark.parametrize("text", ["合約號 12345", "帳單編號12345", "合約編號123456", "123456帳單"])
+def test_b3_positive_control_real_number_labels_still_block(tmp_path, text):
+    """正對照：標籤在前（`合約號 12345`／`帳單編號12345`／`合約編號123456`）與
+    ≥6 位數字緊貼標籤（`123456帳單`）都仍以 number_label 擋。"""
+    repo = _mk_repo(tmp_path)
+    target = _runs_file(repo, "label.md", f"請提供 {text} 以便查詢。\n")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 2
+    assert "number_label" in proc.stderr

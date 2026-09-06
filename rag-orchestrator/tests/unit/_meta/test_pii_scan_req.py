@@ -27,20 +27,15 @@ SKIP_DIRS = {"__pycache__", ".git"}
 SKIP_SUFFIXES = (".pyc", ".png", ".jpg", ".pdf", ".zip")
 
 # (掃描根標籤, 根目錄下相對路徑, 類別) → 誤判理由（逐行查證過）
-KNOWN_FALSE_POSITIVES = {
-    ("canon", "README.md", "plate"):
-        "「DSP-012」被 PLATE_RE `[A-Z]{2,3}-?\\d{3,4}` 當成車牌——是 DECISIONS 編號",
-    ("runs", "2026-09-06T00-00-00Z/answerability-trial-b1-4.json", "tax_id"):
-        "prompt_tokens 之類的 8 位數計數，以及 sha256 十六進位字串中夾著的 8 位數字串",
-    ("runs", "2026-09-06T00-00-00Z/answerability-trial-openai-55.json", "tax_id"):
-        "rubric sha256 十六進位字串中夾著的 8 位數字串",
-    ("runs", "2026-09-06T00-00-00Z/cost.json", "tax_id"):
-        "prompt_tokens=11525555（8 位數的 token 計數，不是統一編號）",
-    ("runs", "2026-09-06T00-00-00Z/phrasing-map.json", "tax_id"):
-        "inputs_sha.helpcenter_dir 的 sha256 十六進位字串中夾著的 8 位數字串",
-    ("runs", "2026-09-06T00-00-00Z/structure-proposal.json", "number_label"):
-        "「5380 帳單版面自訂」——5380 是 kb id，被 NUMBER_LABEL_RE `\\d{4,}\\s*帳單` 當成帳單號",
-}
+#
+# 2026-09-06：原本六筆（canon/README.md plate、runs/ 五筆 tax_id/number_label）**已全部消滅**——
+# 不是加豁免，是把 hook 判定 4 的三支 regex 邊界收斂掉（見 `.claude/hooks/outline_gate.py`
+# 的 `TAX_ID_RE`／`PLATE_RE`／`NUMBER_LABEL_RE` 註解，回歸鎖在 `test_outline_gate_req.py`
+# 的「判定 4 誤判收斂」節）。基線因此清空。
+# ⚠️ 空 dict ⛔ 不代表這關會自動綠：`test_real_dirs_have_no_new_identifier_hits` 現在對
+# 任何一筆命中都紅，`test_baseline_entries_still_reproduce` 的正對照在
+# `test_positive_control_email_and_phone_are_flagged`（塞 email／電話必被抓）。
+KNOWN_FALSE_POSITIVES = {}
 
 
 def _hook_module():
@@ -121,11 +116,12 @@ def test_baseline_entries_still_reproduce():
 
 
 # ---------------------------------------------------------------------------
-# 待裁（任務 2.2 交回主 session）
+# 已結案（任務 2.2 留下的三筆待裁，2026-09-06 收斂）
 # ---------------------------------------------------------------------------
-# 上面六筆基線全部是同三個 regex 的邊界問題，⛔ 本任務不得改 hook：
-#   TAX_ID_RE `(?<!\d)\d{8}(?!\d)`      → 前後只擋數字，字母相鄰的十六進位 sha 與 token 計數都會命中
-#   PLATE_RE  `[A-Z]{2,3}-?\d{3,4}`     → 「DSP-012」「R2-1234」這類文件編號會命中
-#   NUMBER_LABEL_RE `\d{4,}\s*帳單`     → 「<kb id> 帳單…」這類引用會命中
-# 影響不只 CI：hook 判定 4 會在 PostToolUse 擋掉這些檔的 Edit/Write。要收斂就得改 hook 的邊界
-# （例如統編改成前後不接英數），那是另一個 slice 的事——這裡只把證據留住。
+# 原六筆基線全部是同三支 regex 的邊界問題，已在 hook 側修掉（⛔ 不是在 CI 側加豁免）：
+#   TAX_ID_RE       前後只擋數字 → 改成前後不接**英數**，另在 check_identifiers 排除
+#                   `_looks_like_date8` 與計數欄位裸數值（NUMERIC_FIELD_KEY_RE）
+#   PLATE_RE        `[A-Z]{2,3}-?\d{3,4}` → 只收真車牌式樣（2–3 字母＋4 數字／4 數字＋2 字母），
+#                   3 字母＋3 數字（`DSP-012`）不再命中
+#   NUMBER_LABEL_RE `\d{4,}\s*(合約|帳單|編號|號)` → 標籤在前，或 ≥6 位數字**緊貼**標籤
+# 影響面同時涵蓋 hook 判定 4 的 PostToolUse 擋寫與本檔 CI 全掃（同一把尺）。

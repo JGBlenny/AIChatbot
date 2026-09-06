@@ -8,7 +8,7 @@
   },
   "deterministic": true,
   "inputs_sha": {
-    "phrasing_map": "8d1aa7910df018da7a7a8d1fd20f2d31c91dce4bd51cc1ebb12d462fdaefec99",
+    "phrasing_map": "910410a30c59cf16de82612e5a124e7917429a7bfd7cf01c16de15bc54b9df70",
     "structure": "fd967be5578d703456e509617a3fc1111224757d2d0355062ae63492b0bcfeb3"
   },
   "payload": {
@@ -343,10 +343,10 @@
       },
       {
         "fine_id": "prospect/C/bill-contents-extra-fees",
-        "score": 0.2941,
+        "score": 0.3125,
         "source": "helpcenter:slug78",
         "status": "proposed",
-        "text": "帳單內有哪些資訊？"
+        "text": "帳單內有哪些資訊?"
       },
       {
         "fine_id": "prospect/C/bill-contents-extra-fees",
@@ -364,10 +364,10 @@
       },
       {
         "fine_id": "prospect/C/bill-contents-extra-fees",
-        "score": 0.1667,
+        "score": 0.1739,
         "source": "helpcenter:slug79",
         "status": "proposed",
-        "text": "如何在帳單內添加臨時增收費用？"
+        "text": "如何在帳單內添加臨時增收費用?"
       },
       {
         "fine_id": "prospect/C/bill-contents-extra-fees",
@@ -462,10 +462,10 @@
       },
       {
         "fine_id": "prospect/C/billing-overview",
-        "score": 0.1389,
+        "score": 0.1429,
         "source": "helpcenter:einvoice",
         "status": "proposed",
-        "text": "帳單可以自動開立電子發票嗎？"
+        "text": "帳單可以自動開立電子發票嗎?"
       },
       {
         "fine_id": "prospect/C/community-batch-create",
@@ -498,23 +498,23 @@
       {
         "fine_id": "prospect/C/community-batch-create",
         "score": 0.2143,
+        "source": "helpcenter:slug1",
+        "status": "proposed",
+        "text": "如何新增物件?"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2143,
         "source": "koyu:slug1#6",
         "status": "proposed",
         "text": "物件怎麼新增"
       },
       {
         "fine_id": "prospect/C/community-batch-create",
-        "score": 0.2,
+        "score": 0.2105,
         "source": "helpcenter:qa01",
         "status": "proposed",
-        "text": "物件批次新增表格如何填寫？"
-      },
-      {
-        "fine_id": "prospect/C/community-batch-create",
-        "score": 0.2,
-        "source": "helpcenter:slug1",
-        "status": "proposed",
-        "text": "如何新增物件？"
+        "text": "物件批次新增表格如何填寫?"
       },
       {
         "fine_id": "prospect/C/community-batch-create",
@@ -596,16 +596,9 @@
       {
         "fine_id": "prospect/C/contract-history-retention",
         "score": 0.4286,
-        "source": "koyu:slug15#1",
-        "status": "proposed",
-        "text": "歷史合約是什麼"
-      },
-      {
-        "fine_id": "prospect/C/contract-history-retention",
-        "score": 0.4,
         "source": "helpcenter:slug15",
         "status": "proposed",
-        "text": "歷史合約是什麼？"
+        "text": "歷史合約是什麼?"
       },
       {
         "fine_id": "prospect/C/contract-history-retention",
@@ -756,17 +749,17 @@
       },
       {
         "fine_id": "prospect/C/contract-templates",
-        "score": 0.1282,
+        "score": 0.1316,
         "source": "helpcenter:slug73",
         "status": "proposed",
-        "text": "電子合約的簽約邀請，有時效嗎？"
+        "text": "電子合約的簽約邀請,有時效嗎?"
       },
       {
         "fine_id": "prospect/C/credit-card-rent-payment",
-        "score": 0.5333,
+        "score": 0.5714,
         "source": "helpcenter:slug86",
         "status": "proposed",
-        "text": "租客能用信用卡繳納房租嗎？"
+        "text": "租客能用信用卡繳納房租嗎?"
       },
       {
         "fine_id": "prospect/C/credit-card-rent-payment",
@@ -801,7 +794,7 @@
         "score": 0.15,
         "source": "helpcenter:slug102",
         "status": "proposed",
-        "text": "租客繳費方式（藍新信用卡）"
+        "text": "租客繳費方式(藍新信用卡)"
       },
       {
         "fine_id": "prospect/C/credit-card-rent-payment",
@@ -980,10 +973,10 @@
       },
       {
         "fine_id": "prospect/C/payment-gateway-options",
-        "score": 0.1351,
+        "score": 0.1389,
         "source": "helpcenter:paymentapply",
         "status": "proposed",
-        "text": "國泰、永豐、中信的金流要怎麼申請與提領？"
+        "text": "國泰、永豐、中信的金流要怎麼申請與提領?"
       },
       {
         "fine_id": "prospect/C/property-management-overview",
@@ -1050,6 +1043,13 @@
       },
       {
         "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1515,
+        "source": "helpcenter:billexpired",
+        "status": "proposed",
+        "text": "帳單狀態顯示「已失效」是什麼意思?"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
         "score": 0.1481,
         "source": "koyu:slug24#9",
         "status": "proposed",
@@ -1092,13 +1092,6 @@
       },
       {
         "fine_id": "prospect/C/property-status-meaning",
-        "score": 0.1471,
-        "source": "helpcenter:billexpired",
-        "status": "proposed",
-        "text": "帳單狀態顯示「已失效」是什麼意思？"
-      },
-      {
-        "fine_id": "prospect/C/property-status-meaning",
         "score": 0.1379,
         "source": "koyu:property（原#5",
         "status": "proposed",
@@ -1113,10 +1106,10 @@
       },
       {
         "fine_id": "prospect/C/rental-storefront-vr",
-        "score": 0.25,
+        "score": 0.2609,
         "source": "helpcenter:slug90",
         "status": "proposed",
-        "text": "什麼是「房東對外首頁」（招租店舖）？"
+        "text": "什麼是「房東對外首頁」(招租店舖)?"
       },
       {
         "fine_id": "prospect/C/rental-storefront-vr",
@@ -1352,6 +1345,13 @@
       {
         "fine_id": "prospect/D/account-registration",
         "score": 0.2,
+        "source": "helpcenter:slug01",
+        "status": "proposed",
+        "text": "我忘記帳號怎麼辦?"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.2,
         "source": "koyu:slug01#13",
         "status": "proposed",
         "text": "登入帳號怎麼找回"
@@ -1383,13 +1383,6 @@
         "source": "koyu:slug95#13",
         "status": "proposed",
         "text": "帳號資訊怎麼變更"
-      },
-      {
-        "fine_id": "prospect/D/account-registration",
-        "score": 0.1818,
-        "source": "helpcenter:slug01",
-        "status": "proposed",
-        "text": "我忘記帳號怎麼辦？"
       },
       {
         "fine_id": "prospect/D/free-trial",
@@ -1641,7 +1634,7 @@
         "a": "prospect/C/contract-modify-after-sign",
         "b": "prospect/C/contract-templates",
         "method": "char_bigram_jaccard",
-        "score": 0.451
+        "score": 0.46
       },
       {
         "a": "prospect/C/contract-esign-flow",
@@ -1653,7 +1646,7 @@
         "a": "prospect/C/contract-esign-flow",
         "b": "prospect/C/contract-templates",
         "method": "char_bigram_jaccard",
-        "score": 0.381
+        "score": 0.3871
       }
     ]
   },

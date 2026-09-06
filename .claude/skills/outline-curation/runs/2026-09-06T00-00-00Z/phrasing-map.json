@@ -16,13 +16,13 @@
   },
   "payload": {
     "counts": {
-      "assigned": 230,
+      "assigned": 229,
       "candidates_helpcenter": 92,
       "candidates_koyu": 1058,
       "candidates_question_summary": 120,
       "candidates_total": 1270,
       "dropped_deidentified_empty": 0,
-      "dropped_duplicate": 8,
+      "dropped_duplicate": 9,
       "dropped_frozen": 41,
       "dropped_over_cap": 25,
       "dropped_term_too_long": 0,
@@ -366,10 +366,10 @@
       },
       {
         "fine_id": "prospect/C/bill-contents-extra-fees",
-        "score": 0.2941,
+        "score": 0.3125,
         "source": "helpcenter:slug78",
         "status": "proposed",
-        "text": "帳單內有哪些資訊？"
+        "text": "帳單內有哪些資訊?"
       },
       {
         "fine_id": "prospect/C/bill-contents-extra-fees",
@@ -387,10 +387,10 @@
       },
       {
         "fine_id": "prospect/C/bill-contents-extra-fees",
-        "score": 0.1667,
+        "score": 0.1739,
         "source": "helpcenter:slug79",
         "status": "proposed",
-        "text": "如何在帳單內添加臨時增收費用？"
+        "text": "如何在帳單內添加臨時增收費用?"
       },
       {
         "fine_id": "prospect/C/bill-contents-extra-fees",
@@ -485,10 +485,10 @@
       },
       {
         "fine_id": "prospect/C/billing-overview",
-        "score": 0.1389,
+        "score": 0.1429,
         "source": "helpcenter:einvoice",
         "status": "proposed",
-        "text": "帳單可以自動開立電子發票嗎？"
+        "text": "帳單可以自動開立電子發票嗎?"
       },
       {
         "fine_id": "prospect/C/community-batch-create",
@@ -521,23 +521,23 @@
       {
         "fine_id": "prospect/C/community-batch-create",
         "score": 0.2143,
+        "source": "helpcenter:slug1",
+        "status": "proposed",
+        "text": "如何新增物件?"
+      },
+      {
+        "fine_id": "prospect/C/community-batch-create",
+        "score": 0.2143,
         "source": "koyu:slug1#6",
         "status": "proposed",
         "text": "物件怎麼新增"
       },
       {
         "fine_id": "prospect/C/community-batch-create",
-        "score": 0.2,
+        "score": 0.2105,
         "source": "helpcenter:qa01",
         "status": "proposed",
-        "text": "物件批次新增表格如何填寫？"
-      },
-      {
-        "fine_id": "prospect/C/community-batch-create",
-        "score": 0.2,
-        "source": "helpcenter:slug1",
-        "status": "proposed",
-        "text": "如何新增物件？"
+        "text": "物件批次新增表格如何填寫?"
       },
       {
         "fine_id": "prospect/C/community-batch-create",
@@ -619,16 +619,9 @@
       {
         "fine_id": "prospect/C/contract-history-retention",
         "score": 0.4286,
-        "source": "koyu:slug15#1",
-        "status": "proposed",
-        "text": "歷史合約是什麼"
-      },
-      {
-        "fine_id": "prospect/C/contract-history-retention",
-        "score": 0.4,
         "source": "helpcenter:slug15",
         "status": "proposed",
-        "text": "歷史合約是什麼？"
+        "text": "歷史合約是什麼?"
       },
       {
         "fine_id": "prospect/C/contract-history-retention",
@@ -779,17 +772,17 @@
       },
       {
         "fine_id": "prospect/C/contract-templates",
-        "score": 0.1282,
+        "score": 0.1316,
         "source": "helpcenter:slug73",
         "status": "proposed",
-        "text": "電子合約的簽約邀請，有時效嗎？"
+        "text": "電子合約的簽約邀請,有時效嗎?"
       },
       {
         "fine_id": "prospect/C/credit-card-rent-payment",
-        "score": 0.5333,
+        "score": 0.5714,
         "source": "helpcenter:slug86",
         "status": "proposed",
-        "text": "租客能用信用卡繳納房租嗎？"
+        "text": "租客能用信用卡繳納房租嗎?"
       },
       {
         "fine_id": "prospect/C/credit-card-rent-payment",
@@ -824,7 +817,7 @@
         "score": 0.15,
         "source": "helpcenter:slug102",
         "status": "proposed",
-        "text": "租客繳費方式（藍新信用卡）"
+        "text": "租客繳費方式(藍新信用卡)"
       },
       {
         "fine_id": "prospect/C/credit-card-rent-payment",
@@ -1003,10 +996,10 @@
       },
       {
         "fine_id": "prospect/C/payment-gateway-options",
-        "score": 0.1351,
+        "score": 0.1389,
         "source": "helpcenter:paymentapply",
         "status": "proposed",
-        "text": "國泰、永豐、中信的金流要怎麼申請與提領？"
+        "text": "國泰、永豐、中信的金流要怎麼申請與提領?"
       },
       {
         "fine_id": "prospect/C/property-management-overview",
@@ -1073,6 +1066,13 @@
       },
       {
         "fine_id": "prospect/C/property-status-meaning",
+        "score": 0.1515,
+        "source": "helpcenter:billexpired",
+        "status": "proposed",
+        "text": "帳單狀態顯示「已失效」是什麼意思?"
+      },
+      {
+        "fine_id": "prospect/C/property-status-meaning",
         "score": 0.1481,
         "source": "koyu:slug24#9",
         "status": "proposed",
@@ -1115,13 +1115,6 @@
       },
       {
         "fine_id": "prospect/C/property-status-meaning",
-        "score": 0.1471,
-        "source": "helpcenter:billexpired",
-        "status": "proposed",
-        "text": "帳單狀態顯示「已失效」是什麼意思？"
-      },
-      {
-        "fine_id": "prospect/C/property-status-meaning",
         "score": 0.1379,
         "source": "koyu:property（原#5",
         "status": "proposed",
@@ -1136,10 +1129,10 @@
       },
       {
         "fine_id": "prospect/C/rental-storefront-vr",
-        "score": 0.25,
+        "score": 0.2609,
         "source": "helpcenter:slug90",
         "status": "proposed",
-        "text": "什麼是「房東對外首頁」（招租店舖）？"
+        "text": "什麼是「房東對外首頁」(招租店舖)?"
       },
       {
         "fine_id": "prospect/C/rental-storefront-vr",
@@ -1375,6 +1368,13 @@
       {
         "fine_id": "prospect/D/account-registration",
         "score": 0.2,
+        "source": "helpcenter:slug01",
+        "status": "proposed",
+        "text": "我忘記帳號怎麼辦?"
+      },
+      {
+        "fine_id": "prospect/D/account-registration",
+        "score": 0.2,
         "source": "koyu:slug01#13",
         "status": "proposed",
         "text": "登入帳號怎麼找回"
@@ -1406,13 +1406,6 @@
         "source": "koyu:slug95#13",
         "status": "proposed",
         "text": "帳號資訊怎麼變更"
-      },
-      {
-        "fine_id": "prospect/D/account-registration",
-        "score": 0.1818,
-        "source": "helpcenter:slug01",
-        "status": "proposed",
-        "text": "我忘記帳號怎麼辦？"
       },
       {
         "fine_id": "prospect/D/free-trial",
@@ -1660,67 +1653,67 @@
         "best_fine_id": "prospect/C/what-is-owner-landlord",
         "score": 0.0556,
         "source": "helpcenter:Landlordonboarding",
-        "text": "房東教學：總論篇"
+        "text": "房東教學:總論篇"
       },
       {
         "best_fine_id": "prospect/C/property-status-meaning",
         "score": 0.075,
         "source": "helpcenter:Landlordonboarding00",
-        "text": "大房東教學：瀏覽物件、合約、帳務和修繕狀態"
+        "text": "大房東教學:瀏覽物件、合約、帳務和修繕狀態"
       },
       {
         "best_fine_id": "prospect/C/property-status-meaning",
         "score": 0.0909,
         "source": "helpcenter:Landlordonboarding00phone",
-        "text": "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）"
+        "text": "大房東教學:瀏覽物件、合約、帳務和修繕狀態(手機篇)"
       },
       {
         "best_fine_id": "prospect/D/account-registration",
         "score": 0.0526,
         "source": "helpcenter:Landlordonboarding01",
-        "text": "房東教學01：註冊篇(一) 個人房東"
+        "text": "房東教學01:註冊篇(一) 個人房東"
       },
       {
         "best_fine_id": "prospect/B/team-company-fit",
         "score": 0.1087,
         "source": "helpcenter:Landlordonboarding02",
-        "text": "房東教學02：註冊篇(二) 公司團隊篇"
+        "text": "房東教學02:註冊篇(二) 公司團隊篇"
       },
       {
         "best_fine_id": "prospect/C/what-is-owner-landlord",
         "score": 0.05,
         "source": "helpcenter:Landlordonboarding06Finance",
-        "text": "房東教學06：帳務篇"
+        "text": "房東教學06:帳務篇"
       },
       {
         "best_fine_id": "prospect/C/smart-meter-lock-iot",
         "score": 0.0667,
         "source": "helpcenter:Landlordonboarding08Device",
-        "text": "房東教學08：IOT設備篇"
+        "text": "房東教學08:IOT設備篇"
       },
       {
         "best_fine_id": "prospect/C/what-is-owner-landlord",
         "score": 0.0455,
         "source": "helpcenter:Landlordonboarding09Socialhousing",
-        "text": "房東教學09：社會住宅篇"
+        "text": "房東教學09:社會住宅篇"
       },
       {
         "best_fine_id": "prospect/C/payment-gateway-options",
         "score": 0.0488,
         "source": "helpcenter:advanced12",
-        "text": "線上金流：藍新Newebpay 登入後台提款"
+        "text": "線上金流:藍新Newebpay 登入後台提款"
       },
       {
         "best_fine_id": null,
         "score": 0.0,
         "source": "helpcenter:beike",
-        "text": "貝殼抄襲鏈家？那是你不懂！"
+        "text": "貝殼抄襲鏈家?那是你不懂!"
       },
       {
         "best_fine_id": null,
         "score": 0.0,
         "source": "helpcenter:contract_review_period",
-        "text": "何謂「契約審閱權」？"
+        "text": "何謂「契約審閱權」?"
       },
       {
         "best_fine_id": "prospect/C/what-is-owner-landlord",
@@ -1732,13 +1725,13 @@
         "best_fine_id": "prospect/C/what-is-owner-landlord",
         "score": 0.05,
         "source": "helpcenter:landlordonboarding04lease",
-        "text": "房東教學04：合約篇"
+        "text": "房東教學04:合約篇"
       },
       {
         "best_fine_id": "prospect/C/what-is-owner-landlord",
         "score": 0.0455,
         "source": "helpcenter:landlordonboarding05Paymentsettings",
-        "text": "房東教學05：收款設置篇"
+        "text": "房東教學05:收款設置篇"
       },
       {
         "best_fine_id": "prospect/E/competitor-comparison",
@@ -1756,19 +1749,19 @@
         "best_fine_id": "prospect/C/contract-history-retention",
         "score": 0.05,
         "source": "helpcenter:onboarding10",
-        "text": "合約篇：點退流程"
+        "text": "合約篇:點退流程"
       },
       {
         "best_fine_id": "prospect/C/billing-overview",
         "score": 0.0571,
         "source": "helpcenter:onboarding11",
-        "text": "帳務篇：新增單一帳單"
+        "text": "帳務篇:新增單一帳單"
       },
       {
         "best_fine_id": "prospect/C/billing-overview",
         "score": 0.0571,
         "source": "helpcenter:onboarding12",
-        "text": "帳務篇：批次發送帳單"
+        "text": "帳務篇:批次發送帳單"
       },
       {
         "best_fine_id": "prospect/C/contract-history-retention",
@@ -1780,13 +1773,13 @@
         "best_fine_id": "prospect/C/billing-overview",
         "score": 0.027,
         "source": "helpcenter:onboarding14",
-        "text": "帳務篇：收據PDF下載"
+        "text": "帳務篇:收據PDF下載"
       },
       {
         "best_fine_id": "prospect/D/account-registration",
-        "score": 0.0526,
+        "score": 0.0556,
         "source": "helpcenter:onboarding2",
-        "text": "帳號資訊設定 完成您的個人資料吧！"
+        "text": "帳號資訊設定 完成您的個人資料吧!"
       },
       {
         "best_fine_id": "prospect/C/credit-card-rent-payment",
@@ -1804,7 +1797,7 @@
         "best_fine_id": "prospect/C/contract-templates",
         "score": 0.0488,
         "source": "helpcenter:onboarding5",
-        "text": "一分鐘上手 如何建立＆編輯合約"
+        "text": "一分鐘上手 如何建立&編輯合約"
       },
       {
         "best_fine_id": "prospect/C/contract-templates",
@@ -1828,25 +1821,25 @@
         "best_fine_id": "prospect/C/what-is-owner-landlord",
         "score": 0.0417,
         "source": "helpcenter:onboarding9-1",
-        "text": "9-1. 合約篇：房東提前解約"
+        "text": "9-1. 合約篇:房東提前解約"
       },
       {
         "best_fine_id": "prospect/C/credit-card-rent-payment",
         "score": 0.0435,
         "source": "helpcenter:onboarding9-2",
-        "text": "9-2. 合約篇：租客提前解約"
+        "text": "9-2. 合約篇:租客提前解約"
       },
       {
         "best_fine_id": "prospect/C/community-batch-create",
         "score": 0.05,
         "source": "helpcenter:property",
-        "text": "房東教學03：物件篇"
+        "text": "房東教學03:物件篇"
       },
       {
         "best_fine_id": null,
         "score": 0.0,
         "source": "helpcenter:propmarket2",
-        "text": "想在房地產界贏過別人？你需要這麼做！"
+        "text": "想在房地產界贏過別人?你需要這麼做!"
       },
       {
         "best_fine_id": "prospect/C/contract-history-retention",
@@ -1856,51 +1849,51 @@
       },
       {
         "best_fine_id": "prospect/C/contract-templates",
-        "score": 0.0682,
+        "score": 0.0698,
         "source": "helpcenter:qa05",
-        "text": "可以上傳自己原有的合約嗎？在哪裡上傳？"
+        "text": "可以上傳自己原有的合約嗎?在哪裡上傳?"
       },
       {
         "best_fine_id": "prospect/C/contract-esign-flow",
-        "score": 0.0469,
+        "score": 0.0476,
         "source": "helpcenter:qa06",
-        "text": "既存合約（上傳合約）與JGB制式合約哪裡不同？"
+        "text": "既存合約(上傳合約)與JGB制式合約哪裡不同?"
       },
       {
         "best_fine_id": "prospect/C/overdue-reminder-late-fee",
-        "score": 0.075,
+        "score": 0.0769,
         "source": "helpcenter:qa07",
-        "text": "租客沒有上傳身分證，請問該怎麼辦？"
+        "text": "租客沒有上傳身分證,請問該怎麼辦?"
       },
       {
         "best_fine_id": "prospect/C/contract-history-retention",
-        "score": 0.0417,
+        "score": 0.0435,
         "source": "helpcenter:qa15",
-        "text": "已點退的合約還在執行中？"
+        "text": "已點退的合約還在執行中?"
       },
       {
         "best_fine_id": "prospect/D/free-trial",
-        "score": 0.05,
+        "score": 0.0526,
         "source": "helpcenter:qa21",
-        "text": "可以不檢附收據嗎？"
+        "text": "可以不檢附收據嗎?"
       },
       {
         "best_fine_id": "prospect/C/role-permission-granularity",
-        "score": 0.0526,
+        "score": 0.0541,
         "source": "helpcenter:qa23",
-        "text": "沒有權限的團隊成員，可否進行簽約、點交、點退？"
+        "text": "沒有權限的團隊成員,可否進行簽約、點交、點退?"
       },
       {
         "best_fine_id": "prospect/C/payment-gateway-options",
-        "score": 0.069,
+        "score": 0.0714,
         "source": "helpcenter:qa27",
-        "text": "藍新金流如何設置？"
+        "text": "藍新金流如何設置?"
       },
       {
         "best_fine_id": "prospect/C/what-is-owner-landlord",
         "score": 0.037,
         "source": "helpcenter:rent3",
-        "text": "租約公證？房東房客都應該關注的保障"
+        "text": "租約公證?房東房客都應該關注的保障"
       },
       {
         "best_fine_id": "prospect/E/competitor-comparison",
@@ -1930,13 +1923,13 @@
         "best_fine_id": "prospect/C/what-is-owner-landlord",
         "score": 0.05,
         "source": "helpcenter:repair",
-        "text": "房東教學07：修繕篇"
+        "text": "房東教學07:修繕篇"
       },
       {
         "best_fine_id": "prospect/B/individual-landlord-scale-fit",
         "score": 0.0103,
         "source": "helpcenter:sea-internet",
-        "text": "東南亞飆升的網際網路市場：Google 數位化時代 SEA 2021關鍵報告心得"
+        "text": "東南亞飆升的網際網路市場:Google 數位化時代 SEA 2021關鍵報告心得"
       },
       {
         "best_fine_id": "prospect/D/account-registration",
@@ -1946,9 +1939,9 @@
       },
       {
         "best_fine_id": "prospect/D/property-quota-limit",
-        "score": 0.1053,
+        "score": 0.1111,
         "source": "helpcenter:slug02",
-        "text": "我忘記密碼怎麼辦？"
+        "text": "我忘記密碼怎麼辦?"
       },
       {
         "best_fine_id": "prospect/C/overdue-reminder-late-fee",
@@ -1960,145 +1953,145 @@
         "best_fine_id": "prospect/C/payment-gateway-options",
         "score": 0.0606,
         "source": "helpcenter:slug100",
-        "text": "租客繳費方式（藍新ATM）"
+        "text": "租客繳費方式(藍新ATM)"
       },
       {
         "best_fine_id": "prospect/C/credit-card-rent-payment",
         "score": 0.0385,
         "source": "helpcenter:slug101",
-        "text": "租客資料卡：查看聯絡方式與一鍵聯繫"
+        "text": "租客資料卡:查看聯絡方式與一鍵聯繫"
       },
       {
         "best_fine_id": "prospect/C/credit-card-rent-payment",
         "score": 0.0455,
         "source": "helpcenter:slug103",
-        "text": "租客繳費方式（國泰ATM）"
+        "text": "租客繳費方式(國泰ATM)"
       },
       {
         "best_fine_id": "prospect/C/credit-card-rent-payment",
         "score": 0.0476,
         "source": "helpcenter:slug104",
-        "text": "租客繳費方式（線下付款）"
+        "text": "租客繳費方式(線下付款)"
       },
       {
         "best_fine_id": "prospect/C/contract-history-retention",
-        "score": 0.0435,
+        "score": 0.0455,
         "source": "helpcenter:slug12",
-        "text": "編輯合約要從哪邊進入？"
+        "text": "編輯合約要從哪邊進入?"
       },
       {
         "best_fine_id": "prospect/C/contract-templates",
-        "score": 0.0857,
+        "score": 0.0882,
         "source": "helpcenter:slug13",
-        "text": "如何寄送合約邀請？"
+        "text": "如何寄送合約邀請?"
       },
       {
         "best_fine_id": "prospect/C/credit-card-rent-payment",
-        "score": 0.0526,
+        "score": 0.0556,
         "source": "helpcenter:slug17",
-        "text": "租客簽約後如何更改？"
+        "text": "租客簽約後如何更改?"
       },
       {
         "best_fine_id": "prospect/C/credit-card-rent-payment",
-        "score": 0.0417,
+        "score": 0.0435,
         "source": "helpcenter:slug20",
-        "text": "租客如何即時確認繳費帳單狀況？"
+        "text": "租客如何即時確認繳費帳單狀況?"
       },
       {
         "best_fine_id": "prospect/C/property-status-meaning",
-        "score": 0.0465,
+        "score": 0.0476,
         "source": "helpcenter:slug20250612",
-        "text": "管理者如何快速找到點交、點退與押金狀態的物件？"
+        "text": "管理者如何快速找到點交、點退與押金狀態的物件?"
       },
       {
         "best_fine_id": "prospect/B/data-migration",
-        "score": 0.0323,
+        "score": 0.0328,
         "source": "helpcenter:slug21",
-        "text": "當租客完成匯款時，要如何通知並請房東確認到帳？"
+        "text": "當租客完成匯款時,要如何通知並請房東確認到帳?"
       },
       {
         "best_fine_id": "prospect/B/data-migration",
-        "score": 0.0517,
+        "score": 0.0526,
         "source": "helpcenter:slug22",
-        "text": "房東如何確認向租客收租的帳單及款項細節？"
+        "text": "房東如何確認向租客收租的帳單及款項細節?"
       },
       {
         "best_fine_id": "prospect/B/data-migration",
-        "score": 0.0545,
+        "score": 0.0556,
         "source": "helpcenter:slug24",
         "text": "房東及租客要如何辨認「逾期帳單」?"
       },
       {
         "best_fine_id": "prospect/C/bill-contents-extra-fees",
-        "score": 0.0357,
+        "score": 0.037,
         "source": "helpcenter:slug27",
-        "text": "點退押金的找補費用在哪裡操作呢？"
+        "text": "點退押金的找補費用在哪裡操作呢?"
       },
       {
         "best_fine_id": "prospect/C/contract-history-retention",
         "score": 0.0323,
         "source": "helpcenter:slug28",
-        "text": "點退需要在租約30天內到期時，才能操作"
+        "text": "點退需要在租約30天內到期時,才能操作"
       },
       {
         "best_fine_id": "prospect/D/free-trial",
-        "score": 0.04,
+        "score": 0.0417,
         "source": "helpcenter:slug29",
-        "text": "提前解約後何時可以進行點退？"
+        "text": "提前解約後何時可以進行點退?"
       },
       {
         "best_fine_id": "prospect/C/property-status-meaning",
-        "score": 0.0968,
+        "score": 0.1,
         "source": "helpcenter:slug39",
-        "text": "物件的狀態影響什麼功能？"
+        "text": "物件的狀態影響什麼功能?"
       },
       {
         "best_fine_id": "prospect/C/contract-templates",
-        "score": 0.0638,
+        "score": 0.0652,
         "source": "helpcenter:slug48",
-        "text": "租客會收到什麼形式的簽約邀請？是否有時效？"
+        "text": "租客會收到什麼形式的簽約邀請?是否有時效?"
       },
       {
         "best_fine_id": "prospect/C/team-management-overview",
-        "score": 0.0714,
+        "score": 0.0741,
         "source": "helpcenter:slug66",
-        "text": "點退押金在做什麼？"
+        "text": "點退押金在做什麼?"
       },
       {
         "best_fine_id": "prospect/C/community-batch-create",
-        "score": 0.0588,
+        "score": 0.0625,
         "source": "helpcenter:slug71",
-        "text": "如何新增合約？"
+        "text": "如何新增合約?"
       },
       {
         "best_fine_id": "prospect/C/what-is-owner-landlord",
-        "score": 0.0556,
+        "score": 0.0571,
         "source": "helpcenter:slug75",
-        "text": "「線上金流」&「現金/轉帳匯款」收款的最大差異是什麼？"
+        "text": "「線上金流」&「現金/轉帳匯款」收款的最大差異是什麼?"
       },
       {
         "best_fine_id": "prospect/C/community-batch-create",
-        "score": 0.05,
+        "score": 0.0526,
         "source": "helpcenter:slug76",
-        "text": "如何新增及發送帳單？"
+        "text": "如何新增及發送帳單?"
       },
       {
         "best_fine_id": "prospect/C/credit-card-rent-payment",
-        "score": 0.0588,
+        "score": 0.0625,
         "source": "helpcenter:slug84",
-        "text": "租客該如何簽約？"
+        "text": "租客該如何簽約?"
       },
       {
         "best_fine_id": "prospect/B/data-migration",
-        "score": 0.0328,
+        "score": 0.0333,
         "source": "helpcenter:slug88",
-        "text": "租客該如何追蹤現金/轉帳匯款完成的帳單後續？"
+        "text": "租客該如何追蹤現金/轉帳匯款完成的帳單後續?"
       },
       {
         "best_fine_id": "prospect/C/bill-format-customize",
-        "score": 0.025,
+        "score": 0.0256,
         "source": "helpcenter:slug92",
-        "text": "設定經理人之後會怎樣？"
+        "text": "設定經理人之後會怎樣?"
       },
       {
         "best_fine_id": null,
@@ -2108,9 +2101,9 @@
       },
       {
         "best_fine_id": "prospect/D/account-registration",
-        "score": 0.0833,
+        "score": 0.0909,
         "source": "helpcenter:slug95",
-        "text": "如何更改帳號資訊？"
+        "text": "如何更改帳號資訊?"
       },
       {
         "best_fine_id": "prospect/C/contract-history-retention",
