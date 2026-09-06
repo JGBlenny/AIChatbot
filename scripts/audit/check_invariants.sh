@@ -706,6 +706,41 @@ else
 fi
 
 echo ""
+echo "═══ 不變量 33／34：正本可見性對帳與凍結題不入講法（任務 3.5）═══"
+# 33＝正本可見性與 kb 衍生列三軸對帳（D1 前衍生列恆為 0，印 SKIP(pending-D1)、⛔ 不計 FAIL）；
+# 34＝rag-orchestrator/canon/*.json 講法 ∩ agentic-mcp-orchestration 凍結樣本題句 ＝∅。
+V33_CHECK="$REPO/scripts/audit/checks/canon_visibility_reconcile.py"
+V34_CHECK="$REPO/scripts/audit/checks/canon_phrasing_frozen_disjoint.py"
+
+if ! python3 "$V33_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 33 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$V33_CHECK" --self-test
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 33：canon_visibility_reconcile.py 自我測試未過")
+else
+  V33_OUT=$(python3 "$V33_CHECK" 2>&1)
+  V33_RC=$?
+  echo "$V33_OUT"
+  if [ "$V33_RC" -ne 0 ]; then
+    FAIL=1
+    CODE_REGRESSIONS+=("不變量 33：正本可見性對帳失敗（見上方 ❌ 行）")
+  fi
+fi
+
+if ! python3 "$V34_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 34 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$V34_CHECK" --self-test
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 34：canon_phrasing_frozen_disjoint.py 自我測試未過")
+elif ! V34_OUT=$(python3 "$V34_CHECK" 2>&1); then
+  echo "$V34_OUT"
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 34：凍結題與講法有交集（見上方 ❌ 行）")
+else
+  echo "$V34_OUT"
+fi
+
+echo ""
 echo "═══ 不變量 26：向量索引 ⛔ 不得用參數會崩塌的 IVFFlat ═══"
 # 為何需要（2026-09-01 b2b 35 題實測逼出）：
 #   idx_kb_embedding 為 ivfflat lists=100，而全表僅 992 筆向量 ⇒ 每 list 約 10 筆；

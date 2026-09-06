@@ -106,7 +106,7 @@
   - 需求：5.2, 5.11, 6.2, 6.4, 6.7
   - 執行：executor／effort 中——量測工具；材料 sha 跑前凍結；gold 映射表只審「對不到檔案」的待審列 [業主審核]（一次）；結果只證檢索層承載力（R6.7）；費用 $0（無 LLM）
   - 驗收：目標＝量出三臂 recall 上限｜成果＝`index_eval.py`＋報表（依粗目×問法型）｜做法＝留一輪替、材料 sha 凍結｜驗證＝[代理驗證]（數字宣稱必派）
-- [ ] 3.5 (P) 不變量 33／34 checkers（**加對帳（業主 2026-09-07）：衍生列 `business_types`／`target_user` 為 NULL ⇔ 正本細目該欄為空清單；出現 `'{}'` 或被預設成 `system_provider` 而正本為空 ⇒ FAIL**）：33（必查組 b2b pm vendor 0、b2b prospect；tenant 標 M4 納入列 notes；每組命中 <1 ⇒ FAIL——**衍生列（`generation_metadata.canon_ref`）在 D1 入庫前恆為 0，此檢查 D1 前印 `SKIP(pending-D1)`、⛔ 不計 FAIL，7.3 ⑤ 後轉硬失敗；SKIP 同 3.1 為程式自動（衍生列數＝0 才 SKIP），自測：塞一列衍生列必實跑且必紅**；突變控制改錯一列 `business_types` 必紅）；34（`rag-orchestrator/canon/*.json` 講法 ∩ 跨 spec manifest 題句＝∅；塞一句必紅）；接 `check_invariants.sh`（編號接續 27–31）。
+- [x] 3.5 (P) 不變量 33／34 checkers（**2026-09-07 收案**：mech-executor；33 走 docker exec 進 rag 容器呼叫真 `visible_subset`／`build_visibility_predicate`（host 無 pydantic），衍生列 0 ⇒ SKIP(pending-D1)、psql 不可達 FAIL、self-test 6 案注入假查詢；34 首跑抓到真違規「水電費怎麼分算」＝agentic-mcp 劇本 S1 題句，講法改「水電費分算方式」（正本 .6）；unit audit 42 綠、`make audit` PASS）（**加對帳（業主 2026-09-07）：衍生列 `business_types`／`target_user` 為 NULL ⇔ 正本細目該欄為空清單；出現 `'{}'` 或被預設成 `system_provider` 而正本為空 ⇒ FAIL**）：33（必查組 b2b pm vendor 0、b2b prospect；tenant 標 M4 納入列 notes；每組命中 <1 ⇒ FAIL——**衍生列（`generation_metadata.canon_ref`）在 D1 入庫前恆為 0，此檢查 D1 前印 `SKIP(pending-D1)`、⛔ 不計 FAIL，7.3 ⑤ 後轉硬失敗；SKIP 同 3.1 為程式自動（衍生列數＝0 才 SKIP），自測：塞一列衍生列必實跑且必紅**；突變控制改錯一列 `business_types` 必紅）；34（`rag-orchestrator/canon/*.json` 講法 ∩ 跨 spec manifest 題句＝∅；塞一句必紅）；接 `check_invariants.sh`（編號接續 27–31）。
   - 需求：2.7
   - 執行：mech-executor／effort 中——照 `agent_boundary.py` 既有 checker 慣例＋正對照
   - 驗收：目標＝33／34 進 audit 且空跑不綠｜成果＝兩支 checker＋正對照｜做法＝照 agent_boundary 慣例｜驗證＝[自驗]

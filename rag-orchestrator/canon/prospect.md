@@ -1,6 +1,6 @@
 ---
 audience: prospect
-version: 2026-09-07.5
+version: 2026-09-07.6
 reviewers: [owner]
 language: zh-TW
 budget_tokens: 12000
@@ -543,7 +543,7 @@ business_types: [system_provider]
 ## G 現有不足 {#G}
 ### 水電費怎麼分算與大概多少錢 {#prospect/G/utility-split-advice}
 - phrasings:
-  - {text: "水電費怎麼分算", source: "gapmap:C31", status: approved}
+  - {text: "水電費分算方式", source: "gapmap:C31", status: approved}
   - {text: "水電費一個月大概多少", source: "gapmap:C31", status: approved}
 - sources: [docs:knowledge/jgb-product-facts.md#utility-split-advice]
 - reviewed: {by: owner, at: 2026-09-07}

@@ -4,7 +4,7 @@
   "business_types": [
     "system_provider"
   ],
-  "canon_sha256": "40862c07674faadea304510941b07ba81e2530ad34f6c1399486926d8cce6c29",
+  "canon_sha256": "240e1a502a85621799bdd5f850c41ce6cb90784a2911ccc3f12a76decba2763c",
   "coarses": [
     {
       "fines": [
@@ -2104,7 +2104,7 @@
             {
               "source": "gapmap:C31",
               "status": "approved",
-              "text": "水電費怎麼分算"
+              "text": "水電費分算方式"
             },
             {
               "source": "gapmap:C31",
@@ -2194,12 +2194,12 @@
     }
   ],
   "language": "zh-TW",
-  "phrasing_set_sha256": "f6df29cf8b7f8b68b48d55d19907121c90c375fe4f05d3b6212dcba8a7d3ca5d",
+  "phrasing_set_sha256": "914322bc2b6fadf5043d84f6a34804f0e2be2395bce3f278c8dbe801a971bea4",
   "reviewers": [
     "owner"
   ],
   "target_user": [
     "prospect"
   ],
-  "version": "2026-09-07.5"
+  "version": "2026-09-07.6"
 }
