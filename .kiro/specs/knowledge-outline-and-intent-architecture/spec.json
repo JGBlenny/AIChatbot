@@ -16,12 +16,12 @@
     },
     "tasks": {
       "generated": true,
-      "approved": false
+      "approved": true
     }
   },
   "implementation": {
-    "started": false,
+    "started": true,
     "completed": false,
-    "tasks_completed": []
+    "tasks_completed": ["1.1"]
   }
 }

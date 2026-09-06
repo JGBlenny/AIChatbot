@@ -136,3 +136,9 @@ docs/backtest/corpus-20260810/*.tar.gz
 .env.bak-20260822
 # agent_eval --dump-texts 原文旁路（人工抽審用，⛔ 不進版控；r13 #6）
 **/eval/**/texts/
+
+# knowledge-outline-and-intent-architecture（design 元件 3／D3）：hook 狀態、講法原始候選（去識別前）、Workflow journal 複本
+# ——三者皆為 session 暫態或含真流量原句，⛔ 不進版控；`runs/`（已去識別的 StepEnvelope）才版控
+.claude/hooks/state/
+.claude/skills/outline-curation/raw/
+.claude/skills/outline-curation/journal/

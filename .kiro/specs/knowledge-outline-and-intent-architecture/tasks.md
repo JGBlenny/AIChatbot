@@ -32,7 +32,7 @@
 
 > **階段目標**：證明「流程紀律靠機制」在本 repo 跑得起來——hook 接得上線、Workflow 判者可回放、成本可量。**成果**：可用的閘門＋一次試作報告＋預算初值。**⛔ 不產正本、不動產品程式。**
 
-- [ ] 1.1 hook 接線實跑（⛔ 首件，不憑文件）：建 repo 層 `.claude/settings.json`（`PreToolUse`／`PostToolUse` matcher `Edit|Write`、`Stop`；command 形狀 `sh -c '[ -f "$CLAUDE_PROJECT_DIR/.claude/hooks/outline_gate.py" ] && exec python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/outline_gate.py" || exit 0'`）與 `outline_gate.py` 探測骨架（只印 `CLAUDE_PROJECT_DIR`、事件名、事件原始 `file_path` 的形狀（絕對／相對）到 `.claude/hooks/state/outline-gate/probe.log`，⛔ 不擋任何事）；先 Write 建 `rag-orchestrator/canon/README.md`（占位檔，內容＝路徑約定一句）再對它做一次 Edit 觸發並讀 log；結果落 `inputs/hook-probe-20260906.md`。`.gitignore` 補 `.claude/hooks/state/`、`.claude/skills/outline-curation/raw/`、Workflow journal 路徑。
+- [x] 1.1 hook 接線實跑（⛔ 首件，不憑文件）：建 repo 層 `.claude/settings.json`（`PreToolUse`／`PostToolUse` matcher `Edit|Write`、`Stop`；command 形狀 `sh -c '[ -f "$CLAUDE_PROJECT_DIR/.claude/hooks/outline_gate.py" ] && exec python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/outline_gate.py" || exit 0'`）與 `outline_gate.py` 探測骨架（只印 `CLAUDE_PROJECT_DIR`、事件名、事件原始 `file_path` 的形狀（絕對／相對）到 `.claude/hooks/state/outline-gate/probe.log`，⛔ 不擋任何事）；先 Write 建 `rag-orchestrator/canon/README.md`（占位檔，內容＝路徑約定一句）再對它做一次 Edit 觸發並讀 log；結果落 `inputs/hook-probe-20260906.md`。`.gitignore` 補 `.claude/hooks/state/`、`.claude/skills/outline-curation/raw/`、Workflow journal 路徑。
   - 需求：1.4
   - 執行：main／effort 低——這是「前提形狀是否對齊線上」的實測，⛔ 不派工；結果決定 1.2 的相對化寫法
   - 驗收：目標＝證明 hook 拿得到 `CLAUDE_PROJECT_DIR` 與事件 `file_path` 形狀｜成果＝`inputs/hook-probe-20260906.md`（含 log 原文）＋`.gitignore` 三條｜做法＝探測骨架只印不擋，Edit 占位檔一次｜驗證＝[自驗]（log 有三個值即過）
