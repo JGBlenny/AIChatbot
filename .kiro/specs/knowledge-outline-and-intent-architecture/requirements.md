@@ -1,6 +1,6 @@
 # 需求規格：knowledge-outline-and-intent-architecture（知識大綱的建立與完善、口語多意圖下的對話架構、小量先於放量的驗證邏輯）
 
-> 建立時間：2026-09-06　階段：requirements-generated（**v2**，依 fresh 審查 A1–A14／B1–B10／C1–C8 修訂）　語言：zh-TW
+> 建立時間：2026-09-06　階段：requirements-approved（**v2**，依 fresh 審查 A1–A14／B1–B10／C1–C8 修訂；業主 2026-09-06 核可，R1.5 依核可時定向改寫）　語言：zh-TW
 > 業主 2026-09-06 定義三支柱；平台層（MCP 工具邊界、Agent Runtime、Output Verifier、trace／計量本體、影子與 eval 工具）留在 `agentic-mcp-orchestration`，本 spec 只承接大綱、對話架構、驗證邏輯，並向平台層開需求票。
 > ⚠️ 模板缺席：`.kiro/settings/rules/ears-format.md` 與 `templates/specs/requirements.md` 不存在，沿用 `agentic-mcp-orchestration/requirements.md` 格式。
 > 編號規約：`R<n>.<m>` 兩段式，供 design／tasks 引用；⛔ 不用 a／b 子編號。待裁項以「（待裁 Dx）」標註，該條需求寫成**不預設答案的條件式**。
@@ -109,7 +109,7 @@ skill（先有）：分析內容 → 提議粗目／細目 → 掛講法與缺�
 - R1.2 每步 SHALL 有結構化輸出 schema（結構差異含 id 對應表；缺口格去向與補法類型；可答性標籤；講法提案含出處與狀態；覆蓋重量結果；成本），⛔ 不得以散文交付需人工再解讀的結果。
 - R1.3 細目 id SHALL 在主題不變時保持穩定；拆併 SHALL 留下前後對應表；未附對應表的重切 ⛔ 不得入庫。
 - R1.4 流程紀律 SHALL 由閘門強制：未產出「受測物定義清單」不得開跑；材料 sha 未凍結不得跑回歸；凍結測試題進入講法或索引即擋；重切未附 id 對應表不得入庫（比照 canon-audit Stop 閘門先例）。
-- R1.5 設計階段 SHALL 以證據評估 skill 執行形態 ∈ {單一 SKILL.md 指引, Workflow 多代理管線（固定順序、schema、獨立判者 fan-out）, 混合}，評估面向：可重跑、每步可稽核、判者隔離（判者不得見系統判定）、成本與時間、失敗可從哪一步續跑；⛔ 不預設。
+- R1.5 skill 執行形態 SHALL 以 hook 承接流程紀律（R1.4 四道閘門）、以 Workflow 承接固定順序步驟與獨立判者 fan-out（業主 2026-09-06 核可時定向：本 repo 現無 hooks／workflows 先例係刻意保留，由本 spec 建立）；設計階段 SHALL 以最小試作（先做「判者 fan-out」一步）量可重跑、每步可稽核、判者隔離（判者不得見系統判定）、成本與時間、失敗可從哪一步續跑；⛔ 試作結果只調參數與切分，不回頭改形態。
 - R1.6 skill 產出 SHALL 可回放：輸入 sha（正本、材料、缺口地圖）＋步驟版本 ⇒ 同輸出；LLM 參與的步驟（分析、提議、判者）SHALL 標為非決定性並保留原始輸出供覆核。
 - R1.7 skill SHALL 記錄每次執行成本（模型 token／費用、代理數、時間）並列入報告；整案 SHALL 有預算上限與「超支即停」（值由 design 定、業主核）。
 - R1.8 相似細目檢查（R2.5）的工具 SHALL 只產待審清單，⛔ 不得自動合併（DSP-026 教訓：工具建議 7 列、人審後只 2 列成立）；合併與講法掛載 SHALL 可回滾。
