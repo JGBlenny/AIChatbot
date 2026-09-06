@@ -1,9 +1,9 @@
 ---
 audience: prospect
-version: 2026-09-07.2
+version: 2026-09-07.3
 reviewers: [owner]
 language: zh-TW
-budget_tokens: 10000
+budget_tokens: 12000
 target_user: [prospect]
 business_types: [system_provider]
 ---

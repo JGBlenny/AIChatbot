@@ -1,10 +1,10 @@
 {
   "audience": "prospect",
-  "budget_tokens": 10000,
+  "budget_tokens": 12000,
   "business_types": [
     "system_provider"
   ],
-  "canon_sha256": "b08ef3fc832808fc41cd27634c1a3ccb8f0d384b7a4a7643b63b347e9593bfb0",
+  "canon_sha256": "972435df81956835e5cc42c15b3cb27c546303b2dcf9a661bc3ffa70446f1c11",
   "coarses": [
     {
       "fines": [
@@ -2148,5 +2148,5 @@
   "target_user": [
     "prospect"
   ],
-  "version": "2026-09-07.2"
+  "version": "2026-09-07.3"
 }

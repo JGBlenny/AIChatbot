@@ -278,10 +278,12 @@ def check_budget(doc: OutlineDoc, limit_tokens: int) -> None:
 #: R5.5 env 對應表（呼叫端在啟動時讀，傳給 `check_budget`；本檔只提供預設值
 #: 常數表，⛔ 自己讀 env——讀 env 的時機與位置屬 2.5 接線範圍）。
 OUTLINE_TOKEN_LIMIT_DEFAULTS: dict[str, int] = {
-    "prospect": 10_000,
+    "prospect": 12_000,
     "property_manager": 8_000,
     "tenant": 8_000,
 }
+# 🔴 2026-09-07 實測：整份售前正本大綱（38 細目＋toc）cl100k 為 10,336 tokens，中文約 1.1 字元/token（research 假設 1.6 是錯的）；
+# 10,000 是估錯的數字 ⇒ 業主裁 12,000（正本 budget_tokens 同步），4.1 後每回合只注入 K 候選、整份正本是退路。
 OUTLINE_TOKEN_LIMIT_ENV: dict[str, str] = {
     "prospect": "AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT",
     "property_manager": "AGENT_OUTLINE_TOKEN_LIMIT_PM",

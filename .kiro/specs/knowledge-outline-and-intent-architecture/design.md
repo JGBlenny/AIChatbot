@@ -196,7 +196,7 @@ audience: prospect
 version: 2026-09-06.1
 reviewers: [owner]
 language: zh-TW
-budget_tokens: 10000
+budget_tokens: 12000
 ---
 ## A 產品基本盤 {#A}
 ### 系統定位與適用對象 {#prospect/A/positioning}
@@ -753,6 +753,7 @@ flowchart LR
 ### D. 變更歷史
 | 日期 | 版本 | 變更內容 | 修改者 |
 |---|---|---|---|
+| 2026-09-07 | 1.12 | 大綱預算 10,000→**12,000**（正本 `budget_tokens` 與程式預設同步；實測整份售前正本 cl100k 10,336 tokens，中文≈1.1 字元/token，research 1.6 假設錯；本機影子模式因此啟動紅；業主裁 a）| 業主／AI |
 | 2026-09-07 | 1.11 | 3.2 落地偏離回寫（元件 5）：`build_canon_toc` 另名、`canon_visible` 規則＝元件 6 前身（分支判準同 SQL、刻意不套清單）、resolver per-call 接線、註冊表載體、`.json` 位元組同源、29b（業主 2026-09-07 照准） | 業主／AI |
 | 2026-09-07 | 1.10 | 3.1 值域收嚴（`reviewed:<reviewer>` 非空不含空白、`pool-marked-<YYYYMMDD>`；謂詞改 regex 非 LIKE）三處同步；元件 9 回寫 2.6 四點（`map_path`、`fix_type|None`、`gap_classes`、V 判準）＋步 5b 權威來源核對（業主 2026-09-07 裁） | 業主／AI |
 | 2026-09-06T10:13:36+0800 | 1.0 | 初始版本（需求 v2 核可、R1.5 定向後） | AI |

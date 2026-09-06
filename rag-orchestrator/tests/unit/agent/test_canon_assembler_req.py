@@ -8,6 +8,7 @@ Plan `inputs/plan-3.2-canon-assembler-20260907.md` §4.2／§4.3／§4.5／§4.7
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -232,8 +233,8 @@ async def test_build_prospect_outline_registers_same_doc_and_leaves_sha_unchange
 def _canon_with_budget(tmp_canon: Path, budget: int) -> Path:
     md = tmp_canon / "prospect.md"
     text = md.read_text(encoding="utf-8")
-    assert "budget_tokens: 10000" in text
-    md.write_text(text.replace("budget_tokens: 10000", f"budget_tokens: {budget}", 1), encoding="utf-8")
+    assert re.search(r"^budget_tokens: \d+$", text, re.M), "正本 front matter 缺 budget_tokens"
+    md.write_text(re.sub(r"^budget_tokens: \d+$", f"budget_tokens: {budget}", text, count=1, flags=re.M), encoding="utf-8")
     _reexport(tmp_canon)
     return tmp_canon
 

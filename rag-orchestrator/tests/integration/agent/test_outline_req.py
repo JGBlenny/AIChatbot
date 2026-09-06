@@ -19,6 +19,7 @@
 用完在 finally 依 id 區間刪除，且開跑前先驗該區間為空（⛔ 不覆蓋既有資料）。
 """
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -229,8 +230,12 @@ async def test_prospect_outline_sha_follows_canon_bytes_not_db_rows(db_pool, tmp
     # ② 正本 `.md` 改一位元（version 尾碼）、**沒有**重導出 `.json` ⇒ 不同源 ⇒ 啟動紅
     md = tmp_canon / "prospect.md"
     raw = md.read_bytes()
-    needle, mutated = b"version: 2026-09-07.1", b"version: 2026-09-07.2"
-    assert needle in raw, "正對照失敗：找不到要改的位元組"
+    # ⛔ 不寫死版本字串——正本每改一版就誤紅；從檔案抓 `version:` 行，把最後一個字元換掉（等長）
+    m = re.search(rb"^version: [^\n]+$", raw, re.M)
+    assert m, "正對照失敗：正本 front matter 沒有 version 行"
+    needle = m.group(0)
+    mutated = needle[:-1] + (b"0" if needle[-1:] != b"0" else b"1")
+    assert needle in raw and mutated != needle, "正對照失敗：找不到要改的位元組"
     md.write_bytes(raw.replace(needle, mutated, 1))
     assert len(md.read_bytes()) == len(raw), "這不是一位元改動"
     with pytest.raises(CanonLoadError):
