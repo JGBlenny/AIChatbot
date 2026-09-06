@@ -246,3 +246,35 @@ def test_prompt_parts_concatenate_to_full_prompt(tmp_path):
     full = mod.build_judge_prompt(cell, cands, "---\nversion: x\n---\nrubric body")
     assert parts["promptHead"] + parts["cellBlock"] + parts["candidatesBlock"] + parts["cellTail"] == full
     assert "policy_ref：ref-1" in parts["cellBlock"] and "C09" in parts["cellTail"]
+
+
+
+def test_build_args_from_canon_uses_fine_ids_and_content_units(tmp_path):
+    """2.4b：候選＝正本細目（id＝細目 id、content＝內容句相接），inputsSha 帶 canon sha；講法不進候選。"""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("aa2", str(_SCRIPT)); mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+    canon = tmp_path / "prospect.md"
+    canon.write_text("""---
+audience: prospect
+version: v
+reviewers: [owner]
+language: zh-TW
+budget_tokens: 100
+target_user: [prospect]
+business_types: [system_provider]
+---
+## A 產品基本盤 {#A}
+### 系統定位 {#prospect/A/positioning}
+- phrasings:
+  - {text: "祕密講法不得進候選", source: "koyu:1#1", status: proposed}
+- sources: [kb:1]
+- instance_applicability: general
+第一句。
+第二句。
+""", encoding="utf-8")
+    cells = tmp_path / "cells.json"; cells.write_text(json.dumps({"cells": [{"id": "C01", "questions": ["問"], "policy": "answer"}]}, ensure_ascii=False), encoding="utf-8")
+    rubric = tmp_path / "r.md"; rubric.write_text("---\nversion: x\n---\nrubric", encoding="utf-8")
+    args = mod.build_args(str(cells), None, None, str(rubric), "2026-09-06T00:00:00Z", slim=True, canon_path=str(canon))
+    assert args["fineIdEnum"] == ["prospect/A/positioning"]
+    assert "第一句。\n第二句。" in args["candidatesBlock"] and "祕密講法" not in args["candidatesBlock"]
+    assert len(args["inputsSha"]["canon"]) == 64 and "kbRows" not in args["inputsSha"]

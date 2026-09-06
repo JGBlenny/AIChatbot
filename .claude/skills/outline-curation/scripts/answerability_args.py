@@ -141,25 +141,42 @@ def _load_json(path: str):
         return json.load(f)
 
 
-def build_args(cells_path: str, kb_rows_path: str, drafts_path: str, rubric_path: str,
-                frozen_at: str, cell_ids_filter: set | None = None, slim: bool = False) -> dict:
+def candidates_from_canon(canon_path: str) -> tuple[list, str]:
+    """正本（或草稿）Markdown → 候選 {id,title,content}（2.4b：候選＝正本細目，id＝細目 id、content＝內容句換行相接）；回 (候選, canon_sha256)。
+    白名單投影：只取 id／title／content_units，⛔ 講法／sources／reviewed 不進判者 prompt（判者只看內容能不能答）。"""
+    import sys as _sys
+    _rag = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "rag-orchestrator"))
+    for cand in (_rag, "/app"):
+        if os.path.isdir(os.path.join(cand, "services")) and cand not in _sys.path:
+            _sys.path.insert(0, cand)
+    from services.agent.canon.canon_parser import parse_canon  # noqa: WPS433
+    doc = parse_canon(canon_path)
+    cands = [{"id": f.id, "title": f.title, "content": "\n".join(f.content_units)} for f in doc.fines()]
+    return cands, doc.canon_sha256
+
+
+def build_args(cells_path: str, kb_rows_path: str | None, drafts_path: str | None, rubric_path: str,
+                frozen_at: str, cell_ids_filter: set | None = None, slim: bool = False,
+                canon_path: str | None = None) -> dict:
     cells_doc = _load_json(cells_path)
     all_cells = cells_doc["cells"] if isinstance(cells_doc, dict) else cells_doc
-
-    kb_doc = _load_json(kb_rows_path)
-    kb_rows = kb_doc["rows"] if isinstance(kb_doc, dict) else kb_doc
-
-    drafts_doc = _load_json(drafts_path)
-    drafts = drafts_doc["knowledge"] if isinstance(drafts_doc, dict) else drafts_doc
 
     with open(rubric_path, encoding="utf-8") as f:
         rubric_text = f.read()
 
-    # 決定性順序：kb 依 kb_id 升冪、draft 依原序（原檔陣列順序）
-    kb_sorted = sorted(kb_rows, key=lambda r: r["kb_id"])
-    kb_candidates = [candidate_from_kb_row(r) for r in kb_sorted]
-    draft_candidates = [candidate_from_draft(d, i + 1) for i, d in enumerate(drafts)]
-    candidates = kb_candidates + draft_candidates
+    canon_sha = None
+    if canon_path:
+        candidates, canon_sha = candidates_from_canon(canon_path)
+    else:
+        kb_doc = _load_json(kb_rows_path)
+        kb_rows = kb_doc["rows"] if isinstance(kb_doc, dict) else kb_doc
+        drafts_doc = _load_json(drafts_path)
+        drafts = drafts_doc["knowledge"] if isinstance(drafts_doc, dict) else drafts_doc
+        # 決定性順序：kb 依 kb_id 升冪、draft 依原序（原檔陣列順序）
+        kb_sorted = sorted(kb_rows, key=lambda r: r["kb_id"])
+        kb_candidates = [candidate_from_kb_row(r) for r in kb_sorted]
+        draft_candidates = [candidate_from_draft(d, i + 1) for i, d in enumerate(drafts)]
+        candidates = kb_candidates + draft_candidates
     fine_id_enum = [c["id"] for c in candidates]
 
     if cell_ids_filter:
@@ -189,10 +206,13 @@ def build_args(cells_path: str, kb_rows_path: str, drafts_path: str, rubric_path
 
     inputs_sha = {
         "cells": sha256_file(cells_path),
-        "kbRows": sha256_file(kb_rows_path),
-        "drafts": sha256_file(drafts_path),
         "rubric": sha256_file(rubric_path),
     }
+    if canon_path:
+        inputs_sha["canon"] = canon_sha
+    else:
+        inputs_sha["kbRows"] = sha256_file(kb_rows_path)
+        inputs_sha["drafts"] = sha256_file(drafts_path)
 
     return {
         "step": "answerability",
@@ -210,8 +230,9 @@ def build_args(cells_path: str, kb_rows_path: str, drafts_path: str, rubric_path
 def main() -> int:
     p = argparse.ArgumentParser(description="步 4 answerability 判者 args 組裝 → Workflow args JSON")
     p.add_argument("--cells", required=True, help="缺口地圖 map-v2.json")
-    p.add_argument("--kb-rows", required=True, help="prospect-kb-rows-*.json")
-    p.add_argument("--drafts", required=True, help="presales-gapmap-batch2-*.json")
+    p.add_argument("--kb-rows", default=None, help="prospect-kb-rows-*.json（M-a 臨時候選；與 --canon 二擇一）")
+    p.add_argument("--drafts", default=None, help="presales-gapmap-batch2-*.json（同上）")
+    p.add_argument("--canon", default=None, help="正本（或草稿）Markdown：候選＝細目（2.4b）")
     p.add_argument("--rubric", required=True, help="schemas/answerability-rubric.md")
     p.add_argument("--frozen-at", required=True, help="ISO 時間戳，⛔ 不用 datetime.now()")
     p.add_argument("--out", required=True)
@@ -220,7 +241,10 @@ def main() -> int:
     args = p.parse_args()
 
     cell_ids_filter = set(x.strip() for x in args.cell_ids.split(",")) if args.cell_ids else None
-    payload = build_args(args.cells, args.kb_rows, args.drafts, args.rubric, args.frozen_at, cell_ids_filter, slim=args.slim)
+    if not args.canon and not (args.kb_rows and args.drafts):
+        print("[answerability_args] 需 --canon，或 --kb-rows＋--drafts", file=sys.stderr)
+        return 2
+    payload = build_args(args.cells, args.kb_rows, args.drafts, args.rubric, args.frozen_at, cell_ids_filter, slim=args.slim, canon_path=args.canon)
     write_json(args.out, payload)
     return 0
 
