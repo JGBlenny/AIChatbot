@@ -90,11 +90,21 @@ def _coerce_scalar(value: str):
         return value
 
 
-def load_journal(journal_dir: str) -> list:
+def load_journal(journal_dir: str, run_ids: list | None = None, run_prefixes: list | None = None) -> list:
+    """讀 journal 頂層 *.json（子目錄如 m-a-archive/ 不讀）。
+
+    2026-09-07 業主裁 (a)：**預算是「每次 run」**，不是整案累進——第二次跑同一受眾或換受眾不得因前次帳而超支。
+    `run_ids`（精確）／`run_prefixes`（前綴）任一命中即納入；都不給 ⇒ 全部（向後相容，等於整案）。
+    """
     entries = []
     for path in sorted(glob.glob(os.path.join(journal_dir, "*.json"))):
         with open(path, encoding="utf-8") as f:
-            entries.append(json.load(f))
+            entry = json.load(f)
+        rid = str(entry.get("run_id") or "")
+        if run_ids or run_prefixes:
+            if rid not in set(run_ids or []) and not any(rid.startswith(pfx) for pfx in (run_prefixes or [])):
+                continue
+        entries.append(entry)
     return entries
 
 
@@ -144,6 +154,8 @@ def main() -> int:
     p.add_argument("--journal", required=True, help="journal 目錄（.claude/skills/outline-curation/journal/）")
     p.add_argument("--skill", required=True, help="SKILL.md 路徑（讀 budgets）")
     p.add_argument("--out", required=True)
+    p.add_argument("--run-id", action="append", default=None, help="只計這些 run_id（可重複；業主 2026-09-07：預算按每次 run）")
+    p.add_argument("--run-prefix", action="append", default=None, help="只計 run_id 以此前綴開頭者（可重複）")
     args = p.parse_args()
 
     front_matter = _parse_front_matter(args.skill)
@@ -152,7 +164,7 @@ def main() -> int:
         print(f"[cost_ledger] {args.skill} front matter 缺 budgets", file=sys.stderr)
         return 2
 
-    entries = load_journal(args.journal)
+    entries = load_journal(args.journal, args.run_id, args.run_prefix)
     summary = summarize(entries)
     over_budget, violations = check_budget(summary, budgets)
 

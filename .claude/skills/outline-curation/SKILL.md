@@ -63,7 +63,7 @@ budgets:
   [`rules/該不該問業主.md`](../retrieval-improvement-loop/rules/該不該問業主.md)（步 1 intake 對齊）
 - **G2 量測管線自證**：見 [`rules/量測管線自證.md`](../retrieval-improvement-loop/rules/量測管線自證.md)（步 5 reweigh 對齊）
 - **G4 獨立驗證**：宣稱療效／數字／尺一律派 fresh verifier（步 6 diff／cost_ledger 對齊）
-- **成本帳範圍**（2026-09-07 業主裁 (a)）：`cost_ledger.py` 只讀 `journal/` 頂層 `*.json`；M-a 試作帳（usd 15.84，業主 2026-09-06 已接受超支）封存在 `journal/m-a-archive/`（gitignored），⛔ 不要移回頂層——會讓每次收案的 Stop 以 over_budget 擋。`agentsUsed`＝代理數（組數×2＋第 3 判者），⛔ 不是 verdict 條數。
+- **成本帳範圍**（2026-09-07 業主裁 (a)：**預算按每次 run**——`cost_ledger.py --run-id <id>`／`--run-prefix <pfx>` 只計該次 run 的 journal；不帶參數＝整案累進，只作歷史總覽）：`cost_ledger.py` 只讀 `journal/` 頂層 `*.json`；M-a 試作帳（usd 15.84，業主 2026-09-06 已接受超支）封存在 `journal/m-a-archive/`（gitignored），⛔ 不要移回頂層——會讓每次收案的 Stop 以 over_budget 擋。`agentsUsed`＝代理數（組數×2＋第 3 判者），⛔ 不是 verdict 條數。
 - **Stop 閘**：`.claude/hooks/outline_gate.py`——`object_under_test` 未核可、材料 sha 未凍結、或 `cost.json` 任一層超支 ⇒ 擋；步 5 有 not_available／owner_decision 格、已產 diff_report 而 `source_audit` 未核對 ⇒ 擋（步 5b）
   ⚠️ **`object_under_test`／`materials_frozen` 檢查目前為休眠閘門**：只在狀態檔 `evals_ran` 非空時才啟動；
   七步腳本目前沒有任何一支寫入 `evals_ran`，要到 `agent_eval` 整合（任務 6.4／4.3）才會有腳本寫這個鍵。

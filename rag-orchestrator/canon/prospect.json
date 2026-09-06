@@ -4,7 +4,7 @@
   "business_types": [
     "system_provider"
   ],
-  "canon_sha256": "972435df81956835e5cc42c15b3cb27c546303b2dcf9a661bc3ffa70446f1c11",
+  "canon_sha256": "c1fdf8a71e73c6451ee9f4eca31d43fb90f3d1feb64a67ad5e116d12983b1348",
   "coarses": [
     {
       "fines": [
@@ -184,7 +184,8 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "draft:batch#8"
+            "draft:batch#8",
+            "helpcenter:Landlordonboarding00"
           ],
           "target_user": [
             "prospect"
@@ -398,7 +399,10 @@
           ],
           "sources": [
             "kb:5379",
-            "docs:knowledge/jgb-product-facts.md#batch-import-scope"
+            "docs:knowledge/jgb-product-facts.md#batch-import-scope",
+            "helpcenter:onboarding6",
+            "helpcenter:qa05",
+            "helpcenter:qa06"
           ],
           "target_user": [
             "prospect"
@@ -465,7 +469,8 @@
           "see_also": [],
           "sources": [
             "kb:3599",
-            "docs:knowledge/jgb-product-facts.md#estate-labels"
+            "docs:knowledge/jgb-product-facts.md#estate-labels",
+            "helpcenter:slug90"
           ],
           "target_user": [
             "prospect"
@@ -509,7 +514,8 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "draft:batch#6"
+            "draft:batch#6",
+            "helpcenter:onboarding4"
           ],
           "target_user": [
             "prospect"
@@ -553,7 +559,8 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "draft:batch#7"
+            "draft:batch#7",
+            "helpcenter:slug90"
           ],
           "target_user": [
             "prospect"
@@ -636,7 +643,8 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "draft:batch#5"
+            "draft:batch#5",
+            "helpcenter:slug39"
           ],
           "target_user": [
             "prospect"
@@ -720,7 +728,12 @@
           ],
           "sources": [
             "kb:3600",
-            "docs:knowledge/jgb-product-facts.md#esign-no-fee"
+            "docs:knowledge/jgb-product-facts.md#esign-no-fee",
+            "helpcenter:Landlordonboarding09Socialhousing",
+            "helpcenter:onboarding10",
+            "helpcenter:onboarding7",
+            "helpcenter:onboarding9-1",
+            "helpcenter:onboarding9-2"
           ],
           "target_user": [
             "prospect"
@@ -796,7 +809,13 @@
           "sources": [
             "kb:3600",
             "draft:batch#9",
-            "docs:knowledge/jgb-product-facts.md#charter-vs-management"
+            "docs:knowledge/jgb-product-facts.md#charter-vs-management",
+            "helpcenter:Landlordonboarding09Socialhousing",
+            "helpcenter:onboarding10",
+            "helpcenter:onboarding7",
+            "helpcenter:onboarding9-1",
+            "helpcenter:onboarding9-2",
+            "helpcenter:qa06"
           ],
           "target_user": [
             "prospect"
@@ -857,7 +876,12 @@
             "prospect/C/contract-templates"
           ],
           "sources": [
-            "kb:3600"
+            "kb:3600",
+            "helpcenter:Landlordonboarding09Socialhousing",
+            "helpcenter:onboarding10",
+            "helpcenter:onboarding7",
+            "helpcenter:onboarding9-1",
+            "helpcenter:onboarding9-2"
           ],
           "target_user": [
             "prospect"
@@ -920,7 +944,8 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "draft:batch#10"
+            "draft:batch#10",
+            "helpcenter:slug15"
           ],
           "target_user": [
             "prospect"
@@ -993,7 +1018,12 @@
           "sources": [
             "kb:3601",
             "docs:knowledge/jgb-product-facts.md#einvoice-auto",
-            "docs:knowledge/jgb-product-facts.md#carrier-types"
+            "docs:knowledge/jgb-product-facts.md#carrier-types",
+            "helpcenter:einvoice",
+            "helpcenter:onboarding8",
+            "helpcenter:paymentapply",
+            "helpcenter:qa27",
+            "helpcenter:slug76"
           ],
           "target_user": [
             "prospect"
@@ -1091,7 +1121,9 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "draft:batch#11"
+            "draft:batch#11",
+            "helpcenter:slug78",
+            "helpcenter:slug79"
           ],
           "target_user": [
             "prospect"
@@ -1146,7 +1178,10 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "kb:5380"
+            "kb:5380",
+            "helpcenter:onboarding14",
+            "helpcenter:qa21",
+            "helpcenter:slug99"
           ],
           "target_user": [
             "prospect"
@@ -1194,7 +1229,9 @@
           "see_also": [],
           "sources": [
             "draft:batch#12",
-            "docs:knowledge/jgb-product-facts.md#stored-value"
+            "docs:knowledge/jgb-product-facts.md#stored-value",
+            "helpcenter:advanced12",
+            "helpcenter:paymentapply"
           ],
           "target_user": [
             "prospect"
@@ -1267,7 +1304,9 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "draft:batch#13"
+            "draft:batch#13",
+            "helpcenter:slug102",
+            "helpcenter:slug86"
           ],
           "target_user": [
             "prospect"
@@ -1328,7 +1367,9 @@
           "see_also": [],
           "sources": [
             "kb:3602",
-            "docs:knowledge/jgb-product-facts.md#no-system-management-module"
+            "docs:knowledge/jgb-product-facts.md#no-system-management-module",
+            "helpcenter:qa23",
+            "helpcenter:slug92"
           ],
           "target_user": [
             "prospect"
@@ -1356,7 +1397,8 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "draft:batch#14"
+            "draft:batch#14",
+            "helpcenter:qa23"
           ],
           "target_user": [
             "prospect"
@@ -1474,7 +1516,8 @@
           "sources": [
             "kb:3604",
             "draft:batch#18",
-            "docs:knowledge/jgb-product-facts.md#balance-invoice"
+            "docs:knowledge/jgb-product-facts.md#balance-invoice",
+            "helpcenter:Landlordonboarding00"
           ],
           "target_user": [
             "prospect"
@@ -1549,7 +1592,8 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "draft:batch#2"
+            "draft:batch#2",
+            "helpcenter:Landlordonboarding00"
           ],
           "target_user": [
             "prospect"
@@ -1593,7 +1637,8 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "kb:3605"
+            "kb:3605",
+            "helpcenter:repair"
           ],
           "target_user": [
             "prospect"
@@ -1652,7 +1697,8 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "draft:batch#15"
+            "draft:batch#15",
+            "helpcenter:Landlordonboarding06Finance"
           ],
           "target_user": [
             "prospect"
@@ -1824,7 +1870,8 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "draft:batch#4"
+            "draft:batch#4",
+            "helpcenter:Landlordonboarding02"
           ],
           "target_user": [
             "prospect"
@@ -1888,7 +1935,9 @@
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "draft:batch#16"
+            "draft:batch#16",
+            "helpcenter:Landlordonboarding01",
+            "helpcenter:onboarding1"
           ],
           "target_user": [
             "prospect"
@@ -2128,7 +2177,10 @@
             "prospect/B/data-migration"
           ],
           "sources": [
-            "kb:5379"
+            "kb:5379",
+            "helpcenter:onboarding6",
+            "helpcenter:qa05",
+            "helpcenter:qa06"
           ],
           "target_user": [
             "prospect"
@@ -2148,5 +2200,5 @@
   "target_user": [
     "prospect"
   ],
-  "version": "2026-09-07.3"
+  "version": "2026-09-07.4"
 }

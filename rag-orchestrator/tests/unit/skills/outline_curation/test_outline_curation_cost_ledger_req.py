@@ -138,3 +138,18 @@ def test_empty_journal_is_zero_and_not_blocked(tmp_path):
     data = json.loads(out.read_text(encoding="utf-8"))
     assert data["payload"]["total"]["agents"] == 0
     assert data["payload"]["over_budget"] is False
+
+
+def test_load_journal_filters_by_run_id_and_prefix_and_ignores_subdirs(tmp_path):
+    """業主 2026-09-07 裁 (a)：預算按每次 run。`--run-id`／`--run-prefix` 只納入命中者；不給 ⇒ 全部（正對照）；
+    子目錄（m-a-archive/）永遠不讀。"""
+    import importlib.util, json, os
+    spec = importlib.util.spec_from_file_location("cost_ledger", _SCRIPT); cl = importlib.util.module_from_spec(spec); spec.loader.exec_module(cl)
+    j = tmp_path / "journal"; (j / "m-a-archive").mkdir(parents=True)
+    for name, rid in (("a.json", "answerability-x-1"), ("b.json", "answerability-y-2"), ("c.json", "structure-x-1")):
+        (j / name).write_text(json.dumps({"step": "answerability", "run_id": rid, "agents": [{"usd": 1.0}], "wall_s": 0}), encoding="utf-8")
+    (j / "m-a-archive" / "old.json").write_text(json.dumps({"step": "answerability", "run_id": "answerability-x-0", "agents": [{"usd": 99.0}], "wall_s": 0}), encoding="utf-8")
+    assert len(cl.load_journal(str(j))) == 3                                    # 正對照：不過濾＝頂層全部、子目錄不讀
+    assert [e["run_id"] for e in cl.load_journal(str(j), run_ids=["answerability-y-2"])] == ["answerability-y-2"]
+    assert sorted(e["run_id"] for e in cl.load_journal(str(j), run_prefixes=["answerability-x", "structure-x"])) == ["answerability-x-1", "structure-x-1"]
+    assert cl.load_journal(str(j), run_ids=["nope"]) == []

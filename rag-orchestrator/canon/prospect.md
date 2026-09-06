@@ -1,6 +1,6 @@
 ---
 audience: prospect
-version: 2026-09-07.3
+version: 2026-09-07.4
 reviewers: [owner]
 language: zh-TW
 budget_tokens: 12000
@@ -48,7 +48,7 @@ business_types: [system_provider]
 ### 首頁儀表板顯示哪些數據 {#prospect/A/dashboard-overview}
 - phrasings:
   - {text: "對外首頁會顯示哪些物件", source: "koyu:slug90#3", status: approved}
-- sources: [draft:batch#8]
+- sources: [draft:batch#8, helpcenter:Landlordonboarding00]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 登入後的首頁儀表板有三塊：收支情況（圖表化呈現，可自訂時間區間看營運趨勢）、帳務情況（近期的逾期待收款帳單與待繳費帳單，可點「更多」看明細）、修繕情況（租客目前申請中的修繕單）。
@@ -104,7 +104,7 @@ business_types: [system_provider]
   - {text: "批次匯入", source: "question_summary:5379", status: approved}
   - {text: "搬資料", source: "question_summary:5379", status: approved}
   - {text: "舊系統資料可以匯進來嗎", source: "question_summary:5379", status: approved}
-- sources: [kb:5379, docs:knowledge/jgb-product-facts.md#batch-import-scope]
+- sources: [kb:5379, docs:knowledge/jgb-product-facts.md#batch-import-scope, helpcenter:onboarding6, helpcenter:qa05, helpcenter:qa06]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 換系統最怕重建資料。
@@ -120,7 +120,7 @@ business_types: [system_provider]
   - {text: "物件集中", source: "question_summary:3599", status: approved}
   - {text: "社區歸戶", source: "question_summary:3599", status: approved}
   - {text: "物件自訂標籤有什麼用", source: "gapmap:C15", status: approved}
-- sources: [kb:3599, docs:knowledge/jgb-product-facts.md#estate-labels]
+- sources: [kb:3599, docs:knowledge/jgb-product-facts.md#estate-labels, helpcenter:slug90]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 物件多、資料分散難管？
@@ -133,7 +133,7 @@ business_types: [system_provider]
   - {text: "如何新增物件?", source: "helpcenter:slug1", status: approved}
   - {text: "物件批次新增表格如何填寫?", source: "helpcenter:qa01", status: approved}
   - {text: "社區可以批次建立嗎", source: "koyu:property（原#7", status: approved}
-- sources: [draft:batch#6]
+- sources: [draft:batch#6, helpcenter:onboarding4]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 金箍棒用「社區」把同一棟或同一社區的物件歸戶管理。
@@ -145,7 +145,7 @@ business_types: [system_provider]
   - {text: "什麼是「房東對外首頁」(招租店舖)?", source: "helpcenter:slug90", status: approved}
   - {text: "招租店舖是什麼", source: "koyu:slug90#2", status: approved}
   - {text: "我改了大頭照對外首頁沒變", source: "koyu:slug90#8", status: approved}
-- sources: [draft:batch#7]
+- sources: [draft:batch#7, helpcenter:slug90]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 金箍棒每個帳號或團隊都有自己的「房東對外首頁」（招租店舖），刊登中的物件會出現在上面供房客瀏覽；團隊可以在團隊管理設定招租頁面的專屬網址與時區，強化品牌辨識。
@@ -165,7 +165,7 @@ business_types: [system_provider]
   - {text: "自動對帳是什麼意思", source: "koyu:slug75#15", status: approved}
   - {text: "洽談中的物件可以做什麼", source: "koyu:property（原#5", status: approved}
   - {text: "解約後30天是什麼意思", source: "koyu:slug29#14", status: approved}
-- sources: [draft:batch#5]
+- sources: [draft:batch#5, helpcenter:slug39]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 物件總表把物件分成四種狀態：「未刊登」是建好還沒對外刊登，可編輯、刊登或刪除；「刊登中」是已對外招租，可編輯、取消刊登、建立合約；「洽談中」代表已經建立合約但雙方還沒都簽署完成；雙方簽完就變成「合約中」（租約中）。
@@ -182,7 +182,7 @@ business_types: [system_provider]
   - {text: "線上電子簽約", source: "question_summary:3600", status: approved}
   - {text: "簽約要另外收費嗎", source: "gapmap:C22", status: approved}
   - {text: "電子簽章收費", source: "gapmap:C22", status: approved}
-- sources: [kb:3600, docs:knowledge/jgb-product-facts.md#esign-no-fee]
+- sources: [kb:3600, docs:knowledge/jgb-product-facts.md#esign-no-fee, helpcenter:Landlordonboarding09Socialhousing, helpcenter:onboarding10, helpcenter:onboarding7, helpcenter:onboarding9-1, helpcenter:onboarding9-2]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 合約多、怕簽錯、紙本來回慢？
@@ -211,7 +211,7 @@ business_types: [system_provider]
   - {text: "線上電子簽約", source: "question_summary:3600", status: approved}
   - {text: "電子合約的簽約邀請,有時效嗎?", source: "helpcenter:slug73", status: approved}
   - {text: "包租跟代管差在哪", source: "gapmap:C03", status: approved}
-- sources: [kb:3600, draft:batch#9, docs:knowledge/jgb-product-facts.md#charter-vs-management]
+- sources: [kb:3600, draft:batch#9, docs:knowledge/jgb-product-facts.md#charter-vs-management, helpcenter:Landlordonboarding09Socialhousing, helpcenter:onboarding10, helpcenter:onboarding7, helpcenter:onboarding9-1, helpcenter:onboarding9-2, helpcenter:qa06]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 金箍棒的電子合約範本共 12 種：內政部中文版、內政部英文版、公會中文版各有原房東、包租業、代租代管三種身分版本，另有英泰文版（原房東、代租代管）與英越文版（單一版本）。
@@ -229,7 +229,7 @@ business_types: [system_provider]
   - {text: "建立合約", source: "question_summary:3600", status: approved}
   - {text: "簽約邀請", source: "question_summary:3600", status: approved}
   - {text: "線上電子簽約", source: "question_summary:3600", status: approved}
-- sources: [kb:3600]
+- sources: [kb:3600, helpcenter:Landlordonboarding09Socialhousing, helpcenter:onboarding10, helpcenter:onboarding7, helpcenter:onboarding9-1, helpcenter:onboarding9-2]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 【修改】未發送的合約可直接編輯；已送出邀請要先取消再改（管理者主動取消會保留已填的租客資料；逾期或租客不同意退回則會清空）；租客已簽回但管理方尚未回簽時，可取消簽名後修改重發；雙方都簽完後不可直接修改，只能複製該合約重建新約重簽，或走資料異動申請。
@@ -244,7 +244,7 @@ business_types: [system_provider]
   - {text: "合約到期後就消失了", source: "koyu:slug15#8", status: approved}
   - {text: "歷史合約的狀態有哪些", source: "koyu:slug15#2", status: approved}
   - {text: "合約上寫線上智能整合收款是什麼", source: "koyu:slug86#9", status: approved}
-- sources: [draft:batch#10]
+- sources: [draft:batch#10, helpcenter:slug15]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 「歷史合約」是已到期的合約，會依點退進度顯示「點退完成」「未退押金」「待退押金」「點退中」等狀態；點退可從合約結束前 30 天起隨時執行。
@@ -260,7 +260,7 @@ business_types: [system_provider]
   - {text: "帳單可以自動開立電子發票嗎?", source: "helpcenter:einvoice", status: approved}
   - {text: "電子發票可以自動開嗎", source: "gapmap:C24", status: approved}
   - {text: "手機條碼載具", source: "gapmap:C54", status: approved}
-- sources: [kb:3601, docs:knowledge/jgb-product-facts.md#einvoice-auto, docs:knowledge/jgb-product-facts.md#carrier-types]
+- sources: [kb:3601, docs:knowledge/jgb-product-facts.md#einvoice-auto, docs:knowledge/jgb-product-facts.md#carrier-types, helpcenter:einvoice, helpcenter:onboarding8, helpcenter:paymentapply, helpcenter:qa27, helpcenter:slug76]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 收租、對帳很亂、催繳費時？
@@ -289,7 +289,7 @@ business_types: [system_provider]
   - {text: "帳單內有哪些資訊?", source: "helpcenter:slug78", status: approved}
   - {text: "帳單包含哪些資訊", source: "koyu:slug78#14", status: approved}
   - {text: "如何在帳單內添加臨時增收費用?", source: "helpcenter:slug79", status: approved}
-- sources: [draft:batch#11]
+- sources: [draft:batch#11, helpcenter:slug78, helpcenter:slug79]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 系統帳單會顯示租金繳交進度（發送帳單→租客繳交→房東對帳→確認到帳，線上自動對帳時省略對帳步驟）與租金細節（費用週期、銀行名稱、帳戶名稱、帳號）。
@@ -302,7 +302,7 @@ business_types: [system_provider]
   - {text: "帳單版面", source: "question_summary:5380", status: approved}
   - {text: "收據樣式", source: "question_summary:5380", status: approved}
   - {text: "自訂帳單", source: "question_summary:5380", status: approved}
-- sources: [kb:5380]
+- sources: [kb:5380, helpcenter:onboarding14, helpcenter:qa21, helpcenter:slug99]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 帳單能調的是內容，版面是選不是畫。
@@ -315,7 +315,7 @@ business_types: [system_provider]
   - {text: "國泰、永豐、中信的金流要怎麼申請與提領?", source: "helpcenter:paymentapply", status: approved}
   - {text: "儲值金回充帳戶", source: "gapmap:C29", status: approved}
   - {text: "固定虛擬帳號", source: "gapmap:C29", status: approved}
-- sources: [draft:batch#12, docs:knowledge/jgb-product-facts.md#stored-value]
+- sources: [draft:batch#12, docs:knowledge/jgb-product-facts.md#stored-value, helpcenter:advanced12, helpcenter:paymentapply]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 四家金流差在「誰能申請」與「怎麼申請」：國泰世華與永豐銀行只開放法人，要自行向銀行申請，首次設定費 5,000 元；中國信託與藍新 NewebPay 法人與個人都能用，在金箍棒系統線上申請、免費。
@@ -336,7 +336,7 @@ business_types: [system_provider]
   - {text: "繳房租的方法", source: "koyu:onboarding3#14", status: approved}
   - {text: "信用卡付款流程", source: "koyu:slug102#14", status: approved}
   - {text: "轉帳繳房租流程", source: "koyu:slug104#14", status: approved}
-- sources: [draft:batch#13]
+- sources: [draft:batch#13, helpcenter:slug102, helpcenter:slug86]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 可以，前提是合約約定用「線上金流」收付款。
@@ -350,7 +350,7 @@ business_types: [system_provider]
   - {text: "角色權限", source: "question_summary:3602", status: approved}
   - {text: "系統管理模組有哪些功能", source: "gapmap:C52", status: approved}
   - {text: "系統管理", source: "gapmap:C52", status: approved}
-- sources: [kb:3602, docs:knowledge/jgb-product-facts.md#no-system-management-module]
+- sources: [kb:3602, docs:knowledge/jgb-product-facts.md#no-system-management-module, helpcenter:qa23, helpcenter:slug92]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 人多、管不動？
@@ -359,7 +359,7 @@ business_types: [system_provider]
 想了解團隊方案可預約 demo 由專人說明。
 
 ### 成員權限能不能細分（只看不改、看不到財務） {#prospect/C/role-permission-granularity}
-- sources: [draft:batch#14]
+- sources: [draft:batch#14, helpcenter:qa23]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 可以。
@@ -389,7 +389,7 @@ business_types: [system_provider]
   - {text: "對業主交報表", source: "question_summary:3604", status: approved}
   - {text: "自動寄送", source: "question_summary:3604", status: approved}
   - {text: "差額發票什麼時候用", source: "gapmap:C25", status: approved}
-- sources: [kb:3604, draft:batch#18, docs:knowledge/jgb-product-facts.md#balance-invoice]
+- sources: [kb:3604, draft:batch#18, docs:knowledge/jgb-product-facts.md#balance-invoice, helpcenter:Landlordonboarding00]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 要定期跟業主交報表很花時間？
@@ -408,7 +408,7 @@ business_types: [system_provider]
   - {text: "租賃專法是什麼", source: "koyu:rentallaw.pt1#1", status: approved}
   - {text: "線上金流是什麼", source: "koyu:slug86#15", status: approved}
   - {text: "虛擬帳號是什麼", source: "koyu:landlordonboarding05Paymentsettings#19", status: approved}
-- sources: [draft:batch#2]
+- sources: [draft:batch#2, helpcenter:Landlordonboarding00]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 在金箍棒裡，「大房東」指的是把物件交給您代管的業主。
@@ -421,7 +421,7 @@ business_types: [system_provider]
   - {text: "修繕系統", source: "question_summary:3605", status: approved}
   - {text: "線上報修", source: "question_summary:3605", status: approved}
   - {text: "進度追蹤", source: "question_summary:3605", status: approved}
-- sources: [kb:3605]
+- sources: [kb:3605, helpcenter:repair]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 報修處理慢、追蹤不易？
@@ -436,7 +436,7 @@ business_types: [system_provider]
   - {text: "email打錯了怎麼辦", source: "koyu:slug00#10", status: approved}
   - {text: "可以從email直接繳嗎", source: "koyu:slug100#3", status: approved}
   - {text: "我只有租客的電話沒有email", source: "koyu:slug13#9", status: approved}
-- sources: [draft:batch#15]
+- sources: [draft:batch#15, helpcenter:Landlordonboarding06Finance]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 金箍棒的通知以 Email 為主，租客有綁定 LINE（或 Facebook）時會同步發 LINE 通知。
@@ -482,7 +482,7 @@ business_types: [system_provider]
 新帳號享有免費試用一個月，可先實際體驗再選方案。
 
 ### 升級、續約與取消訂閱 {#prospect/D/subscription-change-renewal}
-- sources: [draft:batch#4]
+- sources: [draft:batch#4, helpcenter:Landlordonboarding02]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 方案的變更在「團隊管理」的「訂閱方案」頁：點「變更」、選物件數量對應的年／月方案、完成付款即生效，支出可在「付款紀錄」查看。
@@ -498,7 +498,7 @@ business_types: [system_provider]
   - {text: "帳號資訊怎麼變更", source: "koyu:slug95#13", status: approved}
   - {text: "我忘記帳號怎麼辦?", source: "helpcenter:slug01", status: approved}
   - {text: "登入帳號怎麼找回", source: "koyu:slug01#13", status: approved}
-- sources: [draft:batch#16]
+- sources: [draft:batch#16, helpcenter:Landlordonboarding01, helpcenter:onboarding1]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 註冊很快：到 JGB 網站點「註冊」，輸入 Email 收驗證碼，填基本資料就完成；也可以用 Facebook、Gmail、LINE 第三方帳號註冊，系統會一併建立 Email 登入。
@@ -559,7 +559,7 @@ business_types: [system_provider]
   - {text: "批次匯入", source: "question_summary:5379", status: approved}
   - {text: "搬資料", source: "question_summary:5379", status: approved}
   - {text: "舊系統資料可以匯進來嗎", source: "question_summary:5379", status: approved}
-- sources: [kb:5379]
+- sources: [kb:5379, helpcenter:onboarding6, helpcenter:qa05, helpcenter:qa06]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
 要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）；舊系統已繳完的歷史帳單也沒有搬移功能。
