@@ -1,0 +1,428 @@
+{
+ "_meta": {
+  "outline_sha256": "90e9a9871503e0f4ce92e3d3b202f3d140af91677a7d272cd5e0502903d0bd99",
+  "outline_version": "2026-09-05T02:32:41.542904+00:00",
+  "split_rule": "re.split(r'\\n(?=【)|\\n(?=- )|\\n\\s*\\n', section.text); strip; drop <15 chars",
+  "n": 59,
+  "median_chars": 81,
+  "max_chars": 271,
+  "frozen_at": "2026-09-06",
+  "recall_at_5_on_49_gold": "86% (round9-dsp033/README 附錄)",
+  "note": "代替品：自動切段落＋內文匹配的量測基準（recall@5 86%）；正式檢索單位為正本細目（R5.1），本檔只供對照，⛔ 不作索引"
+ },
+ "paragraphs": [
+  {
+   "id": "outline:listing#p0",
+   "section": "outline:listing",
+   "chars": 113,
+   "sha256": "7aef2e96ede4613f2b8c3b077e0cb2fbccb8dc5a41a384940527ae9e4deaa184",
+   "text": "- 房源管理 物件集中 社區歸戶 批次上傳 VR看屋：物件多、資料分散難管？金箍棒的房源管理把所有物件集中：物件建檔、社區歸戶、批次上傳，還有招租公開頁與 VR 看屋連結，取代散落的 Excel。想看實際畫面可預約 demo。"
+  },
+  {
+   "id": "outline:listing#p1",
+   "section": "outline:listing",
+   "chars": 229,
+   "sha256": "6884412a6f160a2f16de91865abad935ccabd1649a0dcdd536b93aa1bc57393b",
+   "text": "- 舊系統資料可以匯進來嗎 批次匯入 搬資料 房東租客合約帳單 哪些能匯 合約能不能匯：換系統最怕重建資料。金箍棒可以用 Excel 範本批次匯入：物件（一般與社會住宅）、租客、社區、大房東聯絡簿；團隊（法人房東）帳號還能批次匯入帳單，匯入後會成為待發送的新帳單。要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）；舊系統已繳完的歷史帳單也沒有搬移功能。搬遷細節可預約 demo，由專人依您的資料量評估。"
+  },
+  {
+   "id": "outline:lease#p0",
+   "section": "outline:lease",
+   "chars": 83,
+   "sha256": "c6e6f829fe345db473413992d34dd9d7f092ecbbb4327d3dd60beaa199140a24",
+   "text": "- 建立合約 線上電子簽約 合約範本 簽約邀請 修改合約 上傳既有合約：合約多、怕簽錯、紙本來回慢？金箍棒的租約管理把一般租賃合約從建約到簽署搬到線上，一頁看完重點："
+  },
+  {
+   "id": "outline:lease#p1",
+   "section": "outline:lease",
+   "chars": 87,
+   "sha256": "7201a94935c5adc6fc12dd9fb06bc502324fa6edc8b4bb07fac5250b7d46db16",
+   "text": "【建約方式】三種：電子合約（公版範本）、電子合約（客製化契約書）、紙本簽約（把既有的紙本合約上傳留存）。上傳的既存合約與系統制式合約效力相同，後續合約、帳務、修繕一樣可追蹤。"
+  },
+  {
+   "id": "outline:lease#p2",
+   "section": "outline:lease",
+   "chars": 144,
+   "sha256": "c65b8d54cd9ef99253fc7088e026a00530f59a23d5d1f602a98e7b0b39b1f7c2",
+   "text": "【範本】電子合約通用範本共 12 種（另有三種特殊用途範本，非一般房東可選）：內政部中文版、內政部英文版、公會中文版各有原房東／包租業／代租代管三種身分版本，另有英泰文版與英越文版。法人團隊 12 種都能選；個人房東可選內政部中文版、內政部英文版、英泰文版、公會中文版（皆為原房東版本）。"
+  },
+  {
+   "id": "outline:lease#p3",
+   "section": "outline:lease",
+   "chars": 173,
+   "sha256": "f7ce843a0484492ea1392d796c55b5d1358bf8a88d5a64dbbe903df391701c2a",
+   "text": "【流程】只有「刊登中」的物件能建約。系統以表單引導逐項填寫（租金、收款方式、傢俱與修繕責任、公證、附件、補充條款等），全部填完可先「預覽合約」確認合約文本，再寄送給租客；送出簽約邀請後，租客會收到簡訊／Email 等邀請通知，點連結線上電子簽名（不用手寫紙本），管理者回簽即完成。租客可選擇免註冊（由管理方代填資料），或直接在邀請流程中完成註冊。"
+  },
+  {
+   "id": "outline:lease#p4",
+   "section": "outline:lease",
+   "chars": 56,
+   "sha256": "375dcc6700b99c23a903069b67ce3bb185822002ed77997dee6b17d725291df7",
+   "text": "【時效】簽約邀請有效 72 小時（同時也是租客的契約審閱期），逾期連結失效、合約退回待發送，需重填租客資料再發。"
+  },
+  {
+   "id": "outline:lease#p5",
+   "section": "outline:lease",
+   "chars": 189,
+   "sha256": "83d24e1311a2f04236c011e82fc69466b48393330b98260706ba0ff33aa0d62f",
+   "text": "【修改】未發送的合約可直接編輯；已送出邀請要先取消再改（管理者主動取消會保留已填的租客資料；逾期或租客不同意退回則會清空）；租客已簽回但管理方尚未回簽時，可取消簽名後修改重發；雙方都簽完後不可直接修改，只能複製該合約重建新約重簽，或走資料異動申請。合約 PDF 上的簽署參數（租金、電價、租期等）簽後不可更動；資料異動申請調整的是系統資料，不重簽則 PDF 與實際收款會不一致。"
+  },
+  {
+   "id": "outline:lease#p6",
+   "section": "outline:lease",
+   "chars": 51,
+   "sha256": "4e208055159a5a6627ca769a3425622d0d320b0386108277ce69c67fbef2cd55",
+   "text": "【身分】建約時可用個人或法人（團隊）身分；團隊建約會把大小章、租賃管理人員、公司聯繫資訊一併帶進合約。"
+  },
+  {
+   "id": "outline:lease#p7",
+   "section": "outline:lease",
+   "chars": 50,
+   "sha256": "bae1cc4be1ff2ff4a87f4dcbca1a52ca85be6ca78169e47be3a0430c55ec4856",
+   "text": "【社會住宅】社會住宅另有專屬流程：因公證為必要程序，須列印紙本完成公證後上傳歸檔，並非線上完成簽署。"
+  },
+  {
+   "id": "outline:lease#p8",
+   "section": "outline:lease",
+   "chars": 150,
+   "sha256": "3de7d6346a794822f61bc0d7b62c8f3bec6b89c08a849830731196357b34efd0",
+   "text": "【其他】建立新約需逐份進行（不支援批次匯入既有合約）；續約則可在執行中合約一次勾選多筆批次處理（正在提前解約申請中、點交中、點退中的合約無法納入）。方案與費用請見 [查看方案與費用](https://www.jgbsmart.com/pricing) 或由專人說明。想看實際建約畫面可預約 demo。"
+  },
+  {
+   "id": "outline:team#p0",
+   "section": "outline:team",
+   "chars": 96,
+   "sha256": "9bc3067923ec4c254a0900bc392db81d7382eff1bdd6188ea0e79191217185c0",
+   "text": "- 團隊管理 多人協作 角色權限 大房東報表：人多、管不動？金箍棒的團隊管理支援多人帳號與角色權限，讓代管團隊分工協作，並提供大房東報表對業主交代。想了解團隊方案可預約 demo 由專人說明。"
+  },
+  {
+   "id": "outline:team#p1",
+   "section": "outline:team",
+   "chars": 105,
+   "sha256": "e873c3e490f6026a3ecb120cbe448534c4e2aa85380d04ac07dfd0ace736def1",
+   "text": "- 大房東報表 代收代付 月結 對業主交報表 自動寄送：要定期跟業主交報表很花時間？金箍棒的大房東報表能把代收代付、月結與營運狀況整理成報表，並可排程自動寄送給業主，省去人工彙整。想看報表內容可預約 demo。"
+  },
+  {
+   "id": "outline:billing#p0",
+   "section": "outline:billing",
+   "chars": 137,
+   "sha256": "6febb04d1434bce00f1229b0b44b27f6d27c6849bdce9641f47b408f0d8a6449",
+   "text": "- 帳務管理 收租對帳 自動帳單 金流代收 電子發票 儲值金：收租、對帳很亂、催繳費時？金箍棒的帳務管理自動產帳單、線上金流代收（藍新/永豐/中信/國泰/愛金卡）、開電子發票，還有儲值金與押金設算息，收租對帳一條龍，不再用 Excel 人工對。想看實際操作可預約 demo。"
+  },
+  {
+   "id": "outline:billing#p1",
+   "section": "outline:billing",
+   "chars": 177,
+   "sha256": "f9226d33a9cdaa6475e620ca63f362a700d9fd94b314b890ed52d5bc11dcf1dc",
+   "text": "- 租客不繳租金怎麼辦 逾期 催繳 提醒 遲繳 拖欠：怕租客忘記繳、拖著不繳？金箍棒的帳務管理會在帳單到期前五日、三日、一日自動發 Email 與 LINE 提醒給租客，逾期後改為每日通知；逾期帳單在系統上會以紅字與「逾期」標籤標示，房東首頁也會即時更新逾期帳款。另外系統有滯納金機制（延遲金或逾期金，依團隊設定啟用）。想看實際催繳畫面可預約 demo。"
+  },
+  {
+   "id": "outline:billing#p2",
+   "section": "outline:billing",
+   "chars": 261,
+   "sha256": "9c830e0db569e7369b285b781c189538e118650c794e2a0f264dc67018429d01",
+   "text": "- 帳單格式能不能自己設定 帳單版面 收據樣式 自訂帳單 客製帳單 品項 抬頭：帳單能調的是內容，版面是選不是畫。內容方面：帳單標題與備註、計費起訖日、繳費期限、費用品項（租金、水電度數、生活費用等，可增刪、改單價數量）、收款帳戶、收款章、排定發送日都可以在系統設定。版面方面：收據版式可在「一般收據」與「財政部包租業租金收據」（可雙版或不檢附）之間選擇，但 logo、欄位排列等不開放任意自訂；電子發票的格式則由發票廠商（ezPay／eCloud）決定，系統只設定廠商與稅率。有特殊版面需求可預約 demo 由專人評估。"
+  },
+  {
+   "id": "outline:iot#p0",
+   "section": "outline:iot",
+   "chars": 101,
+   "sha256": "58d31c1513a1cb12efb196e2540d8247afea4130d9bcee384f15299711e47d15",
+   "text": "- 智慧電錶 智慧門鎖 抄表 換鎖 IoT 硬體：現場抄電表、換門鎖很煩？金箍棒有整合智慧電錶（抄表可自動帶入帳單）與智慧門鎖，屬硬體設備，實際支援範圍、安裝與費用由專人為您說明。可留資由專人與您聯絡。"
+  },
+  {
+   "id": "outline:repair#p0",
+   "section": "outline:repair",
+   "chars": 81,
+   "sha256": "b73af524c2c5bd12a97fc9d5f2759c9880cbe8f2fe6e949230a462b2488a41d5",
+   "text": "- 修繕系統 線上報修 進度追蹤：報修處理慢、追蹤不易？金箍棒的修繕系統讓租客線上報修、房東與管理方追蹤處理進度，把報修流程數位化。想看實際流程可預約 demo。"
+  },
+  {
+   "id": "outline:positioning#p0",
+   "section": "outline:positioning",
+   "chars": 237,
+   "sha256": "0d3dbe9fedec7d9e234253da05ce2f052f40b01628372e3eb634571f18d45a97",
+   "text": "- 公司團隊方案 包租代管物管 全模組 團隊權限 大房東報表 適合：公司或團隊（包租代管、物管）通常要多人分工，還得對業主交報表，需求比個人房東複雜。金箍棒的全模組方案正好對應這種規模——除了物件、合約、帳務，還有團隊權限管理讓成員分工，以及大房東報表，把代收代付與營運狀況整理好、對業主交代清楚；若有現場抄電表或換門鎖的需求，智慧電錶／門鎖也能依需求整合（細節由專人說明）。實際適合的模組組合與費用會依團隊規模而不同，建議直接預約 demo，由專人陪您盤點需求並提供報價。"
+  },
+  {
+   "id": "outline:positioning#p1",
+   "section": "outline:positioning",
+   "chars": 101,
+   "sha256": "877fb8b4538a11891af6240fbd0985abb65fb5e4c0d2914a2c9a6570a9a6245b",
+   "text": "- 想了解金箍棒 你們系統介紹 適不適合我用 合不合用 想看看你們 怎麼用 物業管理 售前：金箍棒智慧物管能把物件、合約、收租對帳到智慧設備集中在一個系統管理。想知道適不適合您，先讓我了解一下您的狀況。"
+  },
+  {
+   "id": "outline:positioning#p2",
+   "section": "outline:positioning",
+   "chars": 94,
+   "sha256": "9dd1787886dc67c494d3cf1d64fc36334a8d34e684d3f794993014969c70df4c",
+   "text": "- 管理困擾 痛點 你們能解決什麼問題 收租 合約 報修 團隊：管理租賃常見的收租對帳、合約、人多協作、報修等問題，金箍棒都有對應的模組。想知道我們怎麼解決您的狀況，先選一個您最想改善的："
+  },
+  {
+   "id": "outline:plans#p0",
+   "section": "outline:plans",
+   "chars": 234,
+   "sha256": "f457b617196e8e850e1c7db981e8ab2d375df450b42c4c75f2c2dc3bfadc77ab",
+   "text": "- 個人房東 約10戶 方案 物件合約帳務 收租對帳 免費試用：管 10 間左右的個人房東，最花時間的通常是收租對帳和合約來回。金箍棒把物件、合約、帳務集中在一個系統：線上電子簽章簽約、自動產帳單與金流代收、收租對帳一條龍，取代 Excel 與 LINE 的零散作業，也能發租客通知、處理報修。建議先用免費試用一個月實際跑跑看；正式方案級距與費用調整中，可於定價頁(https://www.jgbsmart.com/pricing)查看或由專人為您說明，這裡不報數字。"
+  },
+  {
+   "id": "outline:plans#p1",
+   "section": "outline:plans",
+   "chars": 213,
+   "sha256": "ae2bf22984a57c3afe3fdb470e239fb4a603e4070feb9eb36588c4af8aa83cca",
+   "text": "- 個人房東 約20戶 方案 帳務自動化 多元金流 免費試用：管到 20 間左右，帳單與對帳的量明顯變大、人工容易出錯。金箍棒的帳務模組（自動帳單、多元金流代收、電子發票、儲值金）能把收租對帳自動化，搭配物件管理、電子簽章合約、租客通知與修繕，讓一個人也管得動這個規模。可先免費試用一個月感受效率差異；方案級距與費用請見定價頁(https://www.jgbsmart.com/pricing)或由專人提供，這裡不報過時數字。"
+  },
+  {
+   "id": "outline:plans#p2",
+   "section": "outline:plans",
+   "chars": 222,
+   "sha256": "70edf13945764d9b41d2f200c62f7a84f638a8280074a0c0a5a7b0372b4db25e",
+   "text": "- 個人房東 約30戶 方案 規模化 銜接團隊大房東報表 免費試用：管到 30 間左右，已接近個人經營的規模上限，物件與帳務都相當可觀；未來若開始多人協作或要對業主交報表，會很快需要團隊管理與大房東報表。金箍棒在這階段能用物件、合約、帳務的完整自動化撐住現有規模，並可平順銜接到團隊方案。建議先免費試用一個月；正式級距與費用調整中，請見定價頁(https://www.jgbsmart.com/pricing)或由專人為您盤點，這裡不直接報價。"
+  },
+  {
+   "id": "outline:pricing#p0",
+   "section": "outline:pricing",
+   "chars": 176,
+   "sha256": "17b73c8be968e4c75cd7f0683c670201684b971f0b2275197b8ab99dd66eb8a4",
+   "text": "- 金箍棒 怎麼收費 多少錢 方案 費用 價格 報價：金箍棒採訂閱制，方案依管理規模（物件數）以及是否需要團隊、大房東報表、IoT 等功能分級。目前方案與價格正在調整，為避免提供過時數字，實際級距與費用請參考線上定價頁(https://www.jgbsmart.com/pricing)，或留下聯絡方式由專人為您報價。也歡迎先用免費試用一個月實際體驗。"
+  },
+  {
+   "id": "outline:pricing#p1",
+   "section": "outline:pricing",
+   "chars": 86,
+   "sha256": "0695c84f9d0b0cf60565039a4b00e45a0678253d4484bba75c7230f2e60903c7",
+   "text": "- 可以免費試用嗎 試用多久 免費 試用：可以，新帳號享有免費試用一個月，註冊即可開始，先實際用過再決定。需要協助開通可以留個聯絡方式，或直接預約 demo 由專人帶您看。"
+  },
+  {
+   "id": "outline:competitors#p0",
+   "section": "outline:competitors",
+   "chars": 271,
+   "sha256": "b6b0d61018088e5c334d19b5ccaf7663ea5aa78505db6896b7b90ecaa519d77a",
+   "text": "- 金箍棒 跟 Bananas 屋我也 差異 比較 租賃管理系統 競品：同類的租賃管理系統還有 Bananas、屋我也，三者都做物件、合約、帳務，差異主要在合約類型廣度、金流、IoT 整合與適用場景。以公開官網可查的事實來說：金箍棒的合約類型較完整（涵蓋一般租賃、社會住宅、委託），金流支援多元（藍新／永豐／中信／國泰／愛金卡），並有智慧門鎖／電錶整合（硬體細節由專人說明）與大房東報表，適合社宅委託、需多元收款、要對業主交報表的代管團隊。對方官網未明確提及的功能，我們無法替他們確認，建議您直接向對方詢問。若想實際比較，歡迎預約 demo。"
+  },
+  {
+   "id": "outline:competitors#p1",
+   "section": "outline:competitors",
+   "chars": 210,
+   "sha256": "14fc9840a64b4424752be6fa309aa2a8f52d782068a66df9c6920a2d3e9d42a7",
+   "text": "- 為什麼選金箍棒 優勢 強項 差異化 好處：選金箍棒的主要理由在「合約類型廣 + 多元金流 + IoT 整合 + 規模化團隊管理」：合約涵蓋一般／社會住宅／委託（社宅與委託代管尤其完整）、金流支援藍新／永豐／中信／國泰／愛金卡、可串接智慧門鎖／電錶（細節由專人說明）、多人權限搭配大房東報表方便對業主交代，另有押金設算息、VR 看屋、6 國語系等加值，且新帳號享免費試用一個月。想實際體驗可直接開試用或預約 demo。"
+  },
+  {
+   "id": "outline:competitors#p2",
+   "section": "outline:competitors",
+   "chars": 144,
+   "sha256": "f929931abb6b68a96d79fd86d63c45a1112ff4ae428be0050cd914381347affb",
+   "text": "- 你們會評論競爭對手嗎 怎麼看同業 會說對手壞話嗎 中立：我們不會評論同業的好壞或內部狀況，只就公開可查的事實、以及金箍棒實際適合的情境提供中立資訊；對方未明確提供的功能，建議您直接向對方確認，我們不會替他們斷言有或沒有。若想實際比較，最準的方式是預約 demo 或直接開免費試用體驗。"
+  },
+  {
+   "id": "outline:module-misc#p0",
+   "section": "outline:module-misc",
+   "chars": 100,
+   "sha256": "ae9e266ff6c8c73ddbd29d886c9c495277d186e5250fbe800570cd8348bc2865",
+   "text": "- 對帳流程 帳單狀態 應到帳 待對帳 已到帳：帳單狀態流程：\n1. 系統發送帳單 →【應到帳】\n2. 租客線下匯款後，在系統點選「通知已繳費」→【待對帳】\n3. 管理者確認實際收到款項 →【已到帳】"
+  },
+  {
+   "id": "outline:module-misc#p1",
+   "section": "outline:module-misc",
+   "chars": 38,
+   "sha256": "a1db9e8bdadfd3dfc0828aadf39abbf4d020bd7475a17063305422618a047a16",
+   "text": "若未使用線上金流服務（使用銀行匯款或現金收取），需由管理者手動進行對帳操作。"
+  },
+  {
+   "id": "outline:module-misc#p2",
+   "section": "outline:module-misc",
+   "chars": 70,
+   "sha256": "aa7ffe9d27989a53c5259ca74de7af97a1ee1309e6753541231c4cbf282a4d0e",
+   "text": "- 催繳 逾期 通知：帳單逾期後，系統會自動發送催繳通知給租客。處於「待對帳」狀態的帳單（租客已通知繳費、管理者尚未確認）不會發送催繳通知。"
+  },
+  {
+   "id": "outline:module-misc#p3",
+   "section": "outline:module-misc",
+   "chars": 40,
+   "sha256": "dd8aa77ed53db73dbe05155372529b5ad5a18813761fa1e791529d0d2817625f",
+   "text": "- 帳單繳費期限 發送日 設定：帳單的發送日期由「繳費期限」設定決定。常見做法："
+  },
+  {
+   "id": "outline:module-misc#p4",
+   "section": "outline:module-misc",
+   "chars": 78,
+   "sha256": "35ac2f180feed89bd053d8e6e6c6a9ffc5b7a613a4a15ad4e022f1c00aa25d9b",
+   "text": "統一所有租客的繳費截止日（例如每月 5 號），在排定發送設定中填寫「提前天數」（例如 4 天前），系統就會在每月 1 號自動發送所有截止日為 5 號的帳單。"
+  },
+  {
+   "id": "outline:module-misc#p5",
+   "section": "outline:module-misc",
+   "chars": 39,
+   "sha256": "92d439f19f3cd929169f7de745a45fa1ad91e194b7266c34636554cdbe0f57ea",
+   "text": "- 電表 儲值 雲端電表：雲端電表支援線上儲值功能，儲值金額透過虛擬帳號收取。"
+  },
+  {
+   "id": "outline:module-misc#p6",
+   "section": "outline:module-misc",
+   "chars": 35,
+   "sha256": "4e5c25163d83fd373d707a3f6b51a4704ff0e2d222d9eaeea9ae21d659278020",
+   "text": "若租客儲值失敗，可嘗試使用不同銀行進行轉帳。儲值成功後系統會自動給電。"
+  },
+  {
+   "id": "outline:module-misc#p7",
+   "section": "outline:module-misc",
+   "chars": 37,
+   "sha256": "8b058d9a7f2045493b4dcce6b06a8ee3465ab400194e28499933cd39b14874fb",
+   "text": "電表與虛擬帳號是不同的功能，可以同時申請，不需要先辦虛擬帳號才能申請電表。"
+  },
+  {
+   "id": "outline:module-misc#p8",
+   "section": "outline:module-misc",
+   "chars": 82,
+   "sha256": "c3713d4c44827304b8231b95fee96c0849faebd2c5f59bd9963d954d5f3dcb61",
+   "text": "- 生活公約 修改 補充條款：修改生活公約的操作步驟：\n1. 進入「團隊管理」>「進階設定」\n2. 找到「合約管理」>「預設補充條款」\n3. 在此新增或修改公約內容"
+  },
+  {
+   "id": "outline:module-misc#p9",
+   "section": "outline:module-misc",
+   "chars": 19,
+   "sha256": "fd81192e942bb3e9657fc5ae036ff52caf27fc1edb03deb44c6efbd9e0d03922",
+   "text": "修改後的公約會套用到之後建立的新合約。"
+  },
+  {
+   "id": "outline:module-misc#p10",
+   "section": "outline:module-misc",
+   "chars": 88,
+   "sha256": "de517caf1d4d9a087c608bb2484aa24623c15a7649eff8e555764f61cf7a3fba",
+   "text": "- 訂閱 取消 方案：取消訂閱的操作步驟：\n1. 點選左側選單「其他設定」>「訂閱方案」\n2. 點選「變更」\n3. 在價格方案下方找到服務條款連結，點選藍字「取消訂閱」即可完成"
+  },
+  {
+   "id": "outline:module-misc#p11",
+   "section": "outline:module-misc",
+   "chars": 41,
+   "sha256": "879f71d85a9a904acbd0a6feaf76271254af540eb046a21228f1b90681197386",
+   "text": "- 物件 批次匯入 上傳：系統支援物件批次匯入，由 JGB 協助提供批次匯入表格。"
+  },
+  {
+   "id": "outline:module-misc#p12",
+   "section": "outline:module-misc",
+   "chars": 22,
+   "sha256": "1dd728608e6184dab82c5aba1816c2642897bbe99fccdeb7fea992f5a039ffa2",
+   "text": "- 檔案格式須為 .xls（非 .xlsx）"
+  },
+  {
+   "id": "outline:module-misc#p13",
+   "section": "outline:module-misc",
+   "chars": 57,
+   "sha256": "dce718dc00a512ec135eba3b025712f8b50b608c35b343007f9337c799d30c65",
+   "text": "- 若上傳失敗，建議重新下載範本檔案，將資料複製後用 Ctrl+Shift+V（純文字貼上）方式貼入，避免格式異常"
+  },
+  {
+   "id": "outline:module-misc#p14",
+   "section": "outline:module-misc",
+   "chars": 22,
+   "sha256": "8050ba8af49311053106af452c94e8fbb028135f3075cd63b621fb371a9aaad6",
+   "text": "- 上傳成功後按重新整理，約 3 秒內會顯示"
+  },
+  {
+   "id": "outline:module-misc#p15",
+   "section": "outline:module-misc",
+   "chars": 25,
+   "sha256": "ddd55bafdb35bbd4cfbbb6ecd03135639e9d352dafd3f00c500ee858c87433d5",
+   "text": "- 大房東 邀請 授權 物件：大房東功能操作說明："
+  },
+  {
+   "id": "outline:module-misc#p16",
+   "section": "outline:module-misc",
+   "chars": 42,
+   "sha256": "7ed6270d850203013435b0da8a8457e959c680e58ac269d48b124c4d5fac651d",
+   "text": "- 邀請大房東：在大房東列表中新增，輸入大房東的 email（注意大小寫需完全正確）"
+  },
+  {
+   "id": "outline:module-misc#p17",
+   "section": "outline:module-misc",
+   "chars": 21,
+   "sha256": "2e32df03cc2e9f5ba401621b2125970eb4b41b486dbd9966e4fef0a883dec73e",
+   "text": "- 授權物件：可將特定物件授權給大房東查看"
+  },
+  {
+   "id": "outline:module-misc#p18",
+   "section": "outline:module-misc",
+   "chars": 20,
+   "sha256": "9c395b695dec380bb17372e52a335ca6e50105b123b577f48f8f7a0facd8c616",
+   "text": "- 列表管理：在團隊設定中管理大房東列表"
+  },
+  {
+   "id": "outline:module-misc#p19",
+   "section": "outline:module-misc",
+   "chars": 29,
+   "sha256": "96c9e89bf8f59722650e796a98f0c00afcc95cc9b3a253af677b6624d9841c8c",
+   "text": "常見問題：邀請失敗通常是 email 大小寫不正確造成的。"
+  },
+  {
+   "id": "outline:boundary#p0",
+   "section": "outline:boundary",
+   "chars": 28,
+   "sha256": "6683c59774c7d27cd61d5e178e27233ff34a5385acd7d35830ccbd160f5e04b2",
+   "text": "- 【其他】建立新約需逐份進行（不支援批次匯入既有合約）"
+  },
+  {
+   "id": "outline:boundary#p1",
+   "section": "outline:boundary",
+   "chars": 48,
+   "sha256": "2c62437c329334969e91cce5c0038f936c160e8855cb23d96ab3375eb3cfb144",
+   "text": "- 續約則可在執行中合約一次勾選多筆批次處理（正在提前解約申請中、點交中、點退中的合約無法納入）"
+  },
+  {
+   "id": "outline:boundary#p2",
+   "section": "outline:boundary",
+   "chars": 35,
+   "sha256": "8d610276edc0406b37061b848644cede9150f786e8dc9e751dffe60246ca9982",
+   "text": "- 對方官網未明確提及的功能，我們無法替他們確認，建議您直接向對方詢問"
+  },
+  {
+   "id": "outline:boundary#p3",
+   "section": "outline:boundary",
+   "chars": 54,
+   "sha256": "a7b4d105dc23adccf5d7b6174f6363f8b58c7db52e17bb6ac6344dd3bf98d332",
+   "text": "- 要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）"
+  },
+  {
+   "id": "outline:deliberate-gaps#p0",
+   "section": "outline:deliberate-gaps",
+   "chars": 45,
+   "sha256": "96ea53fb384ceb8d11d06b3e0653d5098b798ecff9e9f08f026807fe086a34fc",
+   "text": "- 客戶案例／規模：一律回覆「這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。」"
+  },
+  {
+   "id": "outline:deliberate-gaps#p1",
+   "section": "outline:deliberate-gaps",
+   "chars": 44,
+   "sha256": "c853571ea186c9cb6ef528e7e6d350f442c3cec06a6d4081c6263a61c37cdb32",
+   "text": "- SLA／賠償：一律回覆「這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。」"
+  },
+  {
+   "id": "outline:deliberate-gaps#p2",
+   "section": "outline:deliberate-gaps",
+   "chars": 47,
+   "sha256": "75afd0def9a4a12df7de902c841897e7457af379288c8438c0f78919d47796f5",
+   "text": "- 資安認證／資料存放：一律回覆「這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。」"
+  },
+  {
+   "id": "outline:deliberate-gaps#p3",
+   "section": "outline:deliberate-gaps",
+   "chars": 41,
+   "sha256": "4b2bc366945c430c0e86836bdf60ddcfc46d6357546f00b36c0e5eafac8567e0",
+   "text": "- 個資法：一律回覆「這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。」"
+  },
+  {
+   "id": "outline:deliberate-gaps#p4",
+   "section": "outline:deliberate-gaps",
+   "chars": 42,
+   "sha256": "4c92463ae5d099bf109ddf218f889771dcc07a8eaf4ed97b839d6a058051373a",
+   "text": "- 客製報價：一律回覆「這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。」"
+  },
+  {
+   "id": "outline:cta#p0",
+   "section": "outline:cta",
+   "chars": 130,
+   "sha256": "eb93defd2d3fa702ba3be523ed4077380ad1d9090cc8defe37c6a2ef62358926",
+   "text": "下一步：可免費試用一個月親自體驗；如需方案與費用可參考 https://www.jgbsmart.com/pricing；想預約 demo 或請專人協助可至 https://www.jgbsmart.com/demo-form；或點對話下方『找真人』直接聯繫。"
+  }
+ ]
+}

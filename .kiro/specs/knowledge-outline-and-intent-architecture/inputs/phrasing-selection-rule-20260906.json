@@ -1,0 +1,15 @@
+{
+ "selection_rule": "每篇每型（直接/口語/情境/俗稱/邊界）取 1 句：排除『操作』型與 topics-v2 凍結 54 句後，以 md5('presales-s1-2026-09-06:'+q) 升冪取第一",
+ "n": 422,
+ "by_type": {
+  "直接": 85,
+  "口語": 85,
+  "情境": 84,
+  "俗稱": 85,
+  "邊界": 83
+ },
+ "excluded_frozen": 48,
+ "sha256": "b771a6e5c6c139d434e21c54f5a5c4fcade934aca6c50c104f2aaf7f4379a747",
+ "source": "koyu-v2-phrasings.json（業主正本，85 篇 1546 句）",
+ "frozen_at": "2026-09-06"
+}
