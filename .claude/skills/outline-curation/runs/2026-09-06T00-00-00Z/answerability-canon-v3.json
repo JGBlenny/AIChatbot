@@ -1,0 +1,1453 @@
+{
+  "cost": {
+    "agents": 22,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": false,
+  "inputs_sha": {
+    "canon": "e3ed75fabb08a47d4ec09caf927954c210f9755223c20efa27b747ef69b15fb7",
+    "cells": "32607587028474caf015e63024f6f31d8a07a166354d31dac4408b725756e669",
+    "rubric": "3d1137476b7ff6898733133c28659231b098ece89b4c8f12e55b24db999c6bfd"
+  },
+  "payload": {
+    "labels": [
+      {
+        "cell_id": "C01",
+        "confidence": "medium",
+        "evidence_unit": 1,
+        "fine_id": "prospect/A/product-overview",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C01",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/A/product-overview",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C01",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/A/product-overview",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C02",
+        "confidence": "medium",
+        "evidence_unit": 2,
+        "fine_id": "prospect/C/overdue-reminder-late-fee",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C02",
+            "confidence": "medium",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/overdue-reminder-late-fee",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C02",
+            "confidence": "medium",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/billing-overview",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C03",
+        "confidence": "high",
+        "evidence_unit": 5,
+        "fine_id": "prospect/C/contract-templates",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C03",
+            "confidence": "high",
+            "evidence_unit": 5,
+            "fine_id": "prospect/C/contract-templates",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C03",
+            "confidence": "high",
+            "evidence_unit": 5,
+            "fine_id": "prospect/C/contract-templates",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C04",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/what-is-owner-landlord",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C04",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/what-is-owner-landlord",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C04",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/what-is-owner-landlord",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C05",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/D/pricing-plans",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C05",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/D/pricing-plans",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C05",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/D/pricing-plans",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C06",
+        "confidence": "medium",
+        "evidence_unit": 1,
+        "fine_id": "prospect/D/pricing-plans",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C06",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/D/pricing-plans",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C06",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/D/pricing-plans",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C07",
+        "confidence": "high",
+        "evidence_unit": 3,
+        "fine_id": "prospect/D/property-quota-limit",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C07",
+            "confidence": "high",
+            "evidence_unit": 3,
+            "fine_id": "prospect/D/property-quota-limit",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C07",
+            "confidence": "high",
+            "evidence_unit": 3,
+            "fine_id": "prospect/D/property-quota-limit",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C08",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/D/subscription-change-renewal",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C08",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/D/subscription-change-renewal",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C08",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/D/subscription-change-renewal",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C09",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/D/free-trial",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C09",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/D/free-trial",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C09",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/D/free-trial",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C10",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "deliberate_no",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C10",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          },
+          {
+            "cell_id": "C10",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C11",
+        "confidence": "high",
+        "evidence_unit": 2,
+        "fine_id": "prospect/C/community-batch-create",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C11",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/community-batch-create",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C11",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/community-batch-create",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C12",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/property-status-meaning",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C12",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/property-status-meaning",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C12",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/property-status-meaning",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C13",
+        "confidence": "medium",
+        "evidence_unit": 2,
+        "fine_id": "prospect/C/community-batch-create",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C13",
+            "confidence": "medium",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/community-batch-create",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C13",
+            "confidence": "medium",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/community-batch-create",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C14",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/rental-storefront-vr",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C14",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/rental-storefront-vr",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C14",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/rental-storefront-vr",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C15",
+        "confidence": "high",
+        "evidence_unit": 3,
+        "fine_id": "prospect/C/property-management-overview",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C15",
+            "confidence": "high",
+            "evidence_unit": 3,
+            "fine_id": "prospect/C/property-management-overview",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C15",
+            "confidence": "high",
+            "evidence_unit": 3,
+            "fine_id": "prospect/C/property-management-overview",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C16",
+        "confidence": "high",
+        "evidence_unit": 2,
+        "fine_id": "prospect/C/contract-esign-flow",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C16",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/contract-esign-flow",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C16",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/contract-esign-flow",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C17",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/contract-templates",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C17",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/contract-templates",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C17",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/contract-templates",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C18",
+        "confidence": "high",
+        "evidence_unit": 3,
+        "fine_id": "prospect/C/contract-esign-flow",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C18",
+            "confidence": "high",
+            "evidence_unit": 3,
+            "fine_id": "prospect/C/contract-esign-flow",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C18",
+            "confidence": "high",
+            "evidence_unit": 3,
+            "fine_id": "prospect/C/contract-esign-flow",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C19",
+        "confidence": "medium",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/contract-history-retention",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C19",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/contract-history-retention",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C19",
+            "confidence": "low",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/contract-history-retention",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C20",
+        "confidence": "high",
+        "evidence_unit": 10,
+        "fine_id": "prospect/C/contract-esign-flow",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C20",
+            "confidence": "high",
+            "evidence_unit": 10,
+            "fine_id": "prospect/C/contract-esign-flow",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C20",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/A/why-choose-jgb",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C21",
+        "confidence": "medium",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/contract-history-retention",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C21",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/contract-history-retention",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C21",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/contract-history-retention",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C22",
+        "confidence": "high",
+        "evidence_unit": 12,
+        "fine_id": "prospect/C/contract-esign-flow",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C22",
+            "confidence": "high",
+            "evidence_unit": 12,
+            "fine_id": "prospect/C/contract-esign-flow",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C22",
+            "confidence": "high",
+            "evidence_unit": 12,
+            "fine_id": "prospect/C/contract-esign-flow",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C23",
+        "confidence": "high",
+        "evidence_unit": 2,
+        "fine_id": "prospect/C/billing-overview",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C23",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/billing-overview",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C23",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/billing-overview",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C24",
+        "confidence": "high",
+        "evidence_unit": 4,
+        "fine_id": "prospect/C/billing-overview",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C24",
+            "confidence": "high",
+            "evidence_unit": 4,
+            "fine_id": "prospect/C/billing-overview",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C24",
+            "confidence": "high",
+            "evidence_unit": 4,
+            "fine_id": "prospect/C/billing-overview",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C25",
+        "confidence": "medium",
+        "evidence_unit": 4,
+        "fine_id": "prospect/C/owner-report-collection-remit",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C25",
+            "confidence": "medium",
+            "evidence_unit": 4,
+            "fine_id": "prospect/C/owner-report-collection-remit",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C25",
+            "confidence": "medium",
+            "evidence_unit": 4,
+            "fine_id": "prospect/C/owner-report-collection-remit",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C26",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/bill-format-customize",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C26",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/bill-format-customize",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C26",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/bill-format-customize",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C27",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/bill-contents-extra-fees",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C27",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/bill-contents-extra-fees",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C27",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/bill-contents-extra-fees",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C28",
+        "confidence": "high",
+        "evidence_unit": 2,
+        "fine_id": "prospect/C/overdue-reminder-late-fee",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C28",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/overdue-reminder-late-fee",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C28",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/overdue-reminder-late-fee",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C29",
+        "confidence": "medium",
+        "evidence_unit": 6,
+        "fine_id": "prospect/C/payment-gateway-options",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C29",
+            "confidence": "medium",
+            "evidence_unit": 6,
+            "fine_id": "prospect/C/payment-gateway-options",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C29",
+            "confidence": "medium",
+            "evidence_unit": 6,
+            "fine_id": "prospect/C/payment-gateway-options",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C30",
+        "confidence": "medium",
+        "evidence_unit": 4,
+        "fine_id": "prospect/C/owner-report-collection-remit",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C30",
+            "confidence": "medium",
+            "evidence_unit": 4,
+            "fine_id": "prospect/C/owner-report-collection-remit",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C30",
+            "confidence": "low",
+            "evidence_unit": 4,
+            "fine_id": "prospect/C/owner-report-collection-remit",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C31",
+        "confidence": "low",
+        "evidence_unit": 1,
+        "fine_id": "prospect/G/utility-split-advice",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C31",
+            "confidence": "low",
+            "evidence_unit": 1,
+            "fine_id": "prospect/G/utility-split-advice",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C31",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/G/utility-split-advice",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C32",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/payment-gateway-options",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C32",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/payment-gateway-options",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C32",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/payment-gateway-options",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C33",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/payment-gateway-options",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C33",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/payment-gateway-options",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C33",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/payment-gateway-options",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C34",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/credit-card-rent-payment",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C34",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/credit-card-rent-payment",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C34",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/credit-card-rent-payment",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C35",
+        "confidence": "medium",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/payment-gateway-options",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C35",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/payment-gateway-options",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C35",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/payment-gateway-options",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C36",
+        "confidence": "high",
+        "evidence_unit": 2,
+        "fine_id": "prospect/C/role-permission-granularity",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C36",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/role-permission-granularity",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C36",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/role-permission-granularity",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C37",
+        "confidence": "high",
+        "evidence_unit": 2,
+        "fine_id": "prospect/C/role-permission-granularity",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C37",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/role-permission-granularity",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C37",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/role-permission-granularity",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C38",
+        "confidence": "high",
+        "evidence_unit": 2,
+        "fine_id": "prospect/C/smart-meter-lock-iot",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C38",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/smart-meter-lock-iot",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C38",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/smart-meter-lock-iot",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C39",
+        "confidence": "high",
+        "evidence_unit": 3,
+        "fine_id": "prospect/C/smart-meter-lock-iot",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C39",
+            "confidence": "high",
+            "evidence_unit": 3,
+            "fine_id": "prospect/C/smart-meter-lock-iot",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C39",
+            "confidence": "high",
+            "evidence_unit": 3,
+            "fine_id": "prospect/C/smart-meter-lock-iot",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C40",
+        "confidence": "medium",
+        "evidence_unit": 2,
+        "fine_id": "prospect/C/repair-system",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C40",
+            "confidence": "medium",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/repair-system",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C40",
+            "confidence": "medium",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/repair-system",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C41",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/notification-channels",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C41",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/notification-channels",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C41",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/notification-channels",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C42",
+        "confidence": "high",
+        "evidence_unit": 2,
+        "fine_id": "prospect/C/notification-channels",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C42",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/notification-channels",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C42",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/C/notification-channels",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C43",
+        "confidence": "high",
+        "evidence_unit": 2,
+        "fine_id": "prospect/B/data-migration",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C43",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/B/data-migration",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C43",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/B/data-migration",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C44",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "prospect/D/account-registration",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C44",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/D/account-registration",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C44",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "prospect/D/account-registration",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C45",
+        "confidence": "medium",
+        "evidence_unit": 2,
+        "fine_id": "prospect/E/competitor-comparison",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C45",
+            "confidence": "medium",
+            "evidence_unit": 2,
+            "fine_id": "prospect/E/competitor-comparison",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C45",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "prospect/E/competitor-comparison",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C46",
+        "confidence": "medium",
+        "evidence_unit": 1,
+        "fine_id": "prospect/A/why-choose-jgb",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C46",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/A/why-choose-jgb",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C46",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/A/why-choose-jgb",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C47",
+        "confidence": "medium",
+        "evidence_unit": 1,
+        "fine_id": "prospect/F/contact-sales-demo",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C47",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/F/contact-sales-demo",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C47",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "prospect/F/contact-sales-demo",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C48",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "deliberate_no",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C48",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          },
+          {
+            "cell_id": "C48",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C49",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "deliberate_no",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C49",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          },
+          {
+            "cell_id": "C49",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C50",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "deliberate_no",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C50",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          },
+          {
+            "cell_id": "C50",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C51",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "deliberate_no",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C51",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          },
+          {
+            "cell_id": "C51",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C52",
+        "confidence": "high",
+        "evidence_unit": 3,
+        "fine_id": "prospect/C/team-management-overview",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C52",
+            "confidence": "high",
+            "evidence_unit": 3,
+            "fine_id": "prospect/C/team-management-overview",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C52",
+            "confidence": "medium",
+            "evidence_unit": 3,
+            "fine_id": "prospect/C/team-management-overview",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C53",
+        "confidence": "medium",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "no_source",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C53",
+            "confidence": "medium",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          },
+          {
+            "cell_id": "C53",
+            "confidence": "medium",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C54",
+        "confidence": "high",
+        "evidence_unit": 5,
+        "fine_id": "prospect/C/billing-overview",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C54",
+            "confidence": "high",
+            "evidence_unit": 5,
+            "fine_id": "prospect/C/billing-overview",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C54",
+            "confidence": "high",
+            "evidence_unit": 5,
+            "fine_id": "prospect/C/billing-overview",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C55",
+        "confidence": "low",
+        "evidence_unit": 1,
+        "fine_id": "prospect/C/property-status-meaning",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C55",
+            "confidence": "low",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/property-status-meaning",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C55",
+            "confidence": "low",
+            "evidence_unit": 1,
+            "fine_id": "prospect/C/property-status-meaning",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      }
+    ],
+    "needs_rubric_revision": false
+  },
+  "raw_outputs_path": ".claude/skills/outline-curation/journal/answerability-canon-v3-20260907.json",
+  "skill_version": "0.1.0",
+  "step": "answerability"
+}

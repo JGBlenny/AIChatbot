@@ -65,9 +65,22 @@
 - **業主裁（2026-09-07）**：成本帳選 (a)——M-a 三份 journal 封存 `journal/m-a-archive/`，P3 計數已修（journal agents 113→23、cost agents 27／usd 0、over_budget=false）；**C46 算可答**（「6 國語系」句），已在 v3 掛講法「有多語系介面嗎」「外籍租客能用嗎」。
 - hook 補防死結：Stop 同一組條件連擋 3 次未變 ⇒ 第 4 次交還給人（`_stop_block`），回歸鎖 `test_gate5_stop_unchanged_blocks_pause_after_three`。
 
+## 4e. v3 重跑步 4＋reweigh（2026-09-07，業主：直接重跑）
+
+| | v2（審查版） | v3（回填後） |
+|---|---|---|
+| 一致率 | 52／55＝0.945（3 格第 3 判者） | **55／55＝1.000**（無第 3 判者；22 判者，$0） |
+| 去向 | fine 39／deliberate_no 5／not_available 5／owner_decision 6 | **fine 49／deliberate_no 5／not_available 1**（C53，業主裁不管） |
+| 補法 | add_knowledge 14／add_phrasing 13／cross_audience 4／list_not_available 5／null 19 | add_knowledge 15／add_phrasing 17／list_not_available 1／null 22 |
+| 缺口類 | retrieval_gap 15／content_gap 2 | retrieval_gap 21／content_gap 3（map-v2 對 kb 的舊量測，待正本索引後重跑） |
+| 對碼標記 | 0／37 | **11／38** |
+
+13 格翻正：C03、C43（partial→answerable）；C07、C15、C22、C24、C25、C39、C52、C54（no_source→answerable）；C29、C31（no_source→partial）；**C46 answerable→partial**（兩判者一致；業主裁「算」——去向仍 fine，補法標 add_knowledge，留給業主審正本時決定是否把多語系獨立成句）。
+產物：`runs/2026-09-06T00-00-00Z/answerability-canon-v3.json`、`coverage-reweigh-v3.json`；`inputs/coverage-map-v3-20260907.json`、`source-audit-worklist-v3-20260907.json`、`source-audit-v3-20260907.json`（C53 owner_decided）；raw `raw/answerability-v3-20260907/`（gitignored）。cost：agents 49／usd 0、over_budget=false。
+
 ## 5. 下一步
 
-步 6 `diff_report.py`（`replacements[]` old kb id → fine id；用本檔 `fines_referenced` 與 kb 來源對照）→ `rag-orchestrator/canon/prospect.md` 草稿＋`export_json` → 交業主（⛔ 不 commit 正本、⛔ 不入庫）。業主已裁（2026-09-07）：C53 不管、C31 一句說法、C15 寫；其餘 8 格依帳本改寫成售前層級。仍待：C46 核句（帳本無此條，why-choose-jgb 第 1 句含「6 國語系」）。
+步 6 `diff_report.py`（`replacements[]` old kb id → fine id；用本檔 `fines_referenced` 與 kb 來源對照）→ `rag-orchestrator/canon/prospect.md` 草稿＋`export_json` → 交業主（⛔ 不 commit 正本、⛔ 不入庫）。業主已裁（2026-09-07）：C53 不管、C31 一句說法、C15 寫、C46 算可答；v3 已回填並重判（§4e）。下一步＝業主審 v3 全文 → 步 7（放 canon/prospect.md＋export_json，⛔ 需業主授權 D1）。
 
 ## 6. 查證指令
 

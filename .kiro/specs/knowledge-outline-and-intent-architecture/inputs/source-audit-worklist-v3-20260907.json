@@ -1,0 +1,24 @@
+{
+  "authority_sources": [
+    "code:/Users/lenny/jgb/project/jgb/jgb2 (master; git status 乾淨才算)",
+    "docs:/Users/lenny/jgb/project/jgb/jgb2/docs",
+    "help:/Users/lenny/jgb/幫助中心/JGB幫助中心_HTML_交付_20260818/*_zh-Hant.html",
+    "ledger:docs/knowledge/jgb-product-facts.md"
+  ],
+  "brief": "每格對權威來源盤查；否定結論必帶正對照（同一掃描必須命中一個已知存在的符號）；事實寫進帳本並回填 ledger_anchor；只有 owner_needed 才交業主。",
+  "count": 1,
+  "coverage_map_sha": "c12c1d7622b0b6ffefd175a49c87b6037896e6effc2b642f85a7392ea6dc90a0",
+  "items": [
+    {
+      "cause_state": "FALSE_HIT",
+      "cell_id": "C53",
+      "disposition": "not_available",
+      "fix_type": "list_not_available",
+      "judge_label": "no_source",
+      "question": "單合約與雙合約差別？",
+      "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
+      "topic": "單合約 vs 雙合約差別"
+    }
+  ],
+  "step": "source_audit_worklist"
+}

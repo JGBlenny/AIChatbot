@@ -1,0 +1,22 @@
+{
+  "step": "source_audit",
+  "coverage_map_sha": "c12c1d7622b0b6ffefd175a49c87b6037896e6effc2b642f85a7392ea6dc90a0",
+  "audited_at": "2026-09-07",
+  "authority_sources": [
+    "code:/Users/lenny/jgb/project/jgb/jgb2 (master 2026-09-04, clean)",
+    "docs:/Users/lenny/jgb/project/jgb/jgb2/docs",
+    "help:/Users/lenny/jgb/幫助中心/JGB幫助中心_HTML_交付_20260818",
+    "ledger:docs/knowledge/jgb-product-facts.md"
+  ],
+  "records": [
+    {
+      "cell_id": "C53",
+      "status": "owner_decided",
+      "owner_decision": "先不管（2026-09-07）",
+      "evidence": [
+        "app/EntrustedContract.php:STATUS_INVITING_FIRST/STATUS_INVITING_NEXT"
+      ],
+      "note": "程式／docs／幫助中心皆無「單合約／雙合約」；見帳本 #single-vs-dual-contract；v2 核對紀錄 inputs/source-audit-20260907.json"
+    }
+  ]
+}
