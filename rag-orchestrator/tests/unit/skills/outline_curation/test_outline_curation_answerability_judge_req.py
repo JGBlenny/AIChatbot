@@ -161,3 +161,62 @@ def test_threshold_matches_workflow_and_merge():
     assert m.AGREEMENT_THRESHOLD == 0.80
     js = open(os.path.join(_REPO, ".claude", "workflows", "outline-curation.js"), encoding="utf-8").read()
     assert "const AGREEMENT_THRESHOLD = 0.80" in js
+
+
+class FakeOpenAI:
+    """openai SDK 形狀：client.chat.completions.create(**kw) → choices[0].message.{content,refusal}、usage.prompt_tokens_details.cached_tokens。"""
+
+    def __init__(self, script):
+        self.script = list(script)
+        self.requests = []
+        self.chat = types.SimpleNamespace(completions=types.SimpleNamespace(create=self._create))
+
+    def _create(self, **kw):
+        self.requests.append(kw)
+        item = self.script.pop(0)
+        usage = types.SimpleNamespace(prompt_tokens=1200, completion_tokens=30, prompt_tokens_details=types.SimpleNamespace(cached_tokens=1024))
+        if item == "refusal":
+            msg = types.SimpleNamespace(content=None, refusal="no")
+        else:
+            msg = types.SimpleNamespace(content=json.dumps(item), refusal=None)
+        return types.SimpleNamespace(choices=[types.SimpleNamespace(message=msg)], usage=usage)
+
+
+def test_openai_provider_request_shape_usage_and_no_price():
+    m = _load("answerability_judge")
+    a = _args(1)
+    fc = FakeOpenAI([_v("answerable"), _v("answerable")])
+    out = m.run(a, fc, model="gpt-4o-mini", journal=m.Journal(None), concurrency=1, price=None, provider="openai", log=lambda s: None)
+    req = fc.requests[0]
+    assert req["model"] == "gpt-4o-mini"
+    assert [x["role"] for x in req["messages"]] == ["system", "user"]
+    assert req["messages"][0]["content"] == a["promptHead"] + a["candidatesBlock"]
+    assert req["messages"][1]["content"] == a["cells"][0]["cellBlock"] + a["cells"][0]["cellTail"]
+    rf = req["response_format"]
+    assert rf["type"] == "json_schema" and rf["json_schema"]["strict"] is True
+    sch = rf["json_schema"]["schema"]
+    assert sch["additionalProperties"] is False and set(sch["required"]) == set(sch["properties"])
+    assert {"type": "null"} in sch["properties"]["fine_id"]["anyOf"]
+    assert "cache_control" not in json.dumps(req)
+    u = out["usage"]
+    assert (u["input"], u["cache_read"], u["output"], u["cache_write_5m"]) == (2 * (1200 - 1024), 2 * 1024, 60, 0)
+    assert out["usd"] is None and out["usage"]["provider"] == "openai"
+    assert out["labels"][0]["provisional"] is True
+
+
+def test_openai_refusal_and_invalid_verdict_are_dropped_not_crashed():
+    m = _load("answerability_judge")
+    a = _args(1)
+    bad = dict(_v("answerable"), fine_id="tmp:kb:999")  # 不在 enum ⇒ 事後驗證擋下
+    fc = FakeOpenAI(["refusal", bad, _v("answerable")])
+    out = m.run(a, fc, model="gpt-4o-mini", journal=m.Journal(None), concurrency=1, price=None, provider="openai", log=lambda s: None)
+    assert out["total"] == 0 and out["droppedCells"] == 1 and len(fc.requests) == 3
+
+
+def test_argv_guard_rejects_keys_in_argv():
+    m = _load("answerability_judge")
+    with pytest.raises(SystemExit):
+        m._guard_argv(["--model", "gpt-4o-mini", "sk-proj-abcdefghijklmnop"])
+    with pytest.raises(SystemExit):
+        m._guard_argv(["OPENAI_API_KEY=abcdefghijklmnopqrstuvwxyz"])
+    m._guard_argv(["--provider", "openai", "--model", "gpt-4o-mini", "--args", "/x/args-b5.json"])  # 正常 argv 放行

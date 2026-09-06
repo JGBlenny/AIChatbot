@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""可答性判者——直打 Messages API（取代 Workflow 判者；業主 2026-09-06 裁：Workflow 留參考、skill 用 API）。
+"""可答性判者——直打模型 API（取代 Workflow 判者；業主 2026-09-06 裁：44 格 Workflow 結果不作廢、skill 改用 API）。
+
+兩個後端（--provider）：anthropic（Messages API，`output_config.format`）／openai（Chat Completions，`response_format` strict json_schema；
+業主 2026-09-06 裁：用產品既有 OpenAI 金鑰、在容器內跑、compose 注入環境變數）。⚠️ 換 provider＝換判者模型＝換尺，⛔ 不同模型的結果不混算一致率。
+
+金鑰外洩防線（業主要求）：①本腳本不讀 .env、不印任何環境變數；②argv 若含疑似金鑰立即拒跑（_guard_argv）；③SDK 例外只印類別名不印訊息；
+④journal／輸出只存 verdict、usage、prompt sha；⑤請求本體不落檔。金鑰只存在於 SDK 程序記憶體與 TLS 連線。
 
 設計（與 outline-curation.js 等價，差別只在執行形態）：
 - 判者互不可見：每個判者＝一個獨立請求，⛔ 不把 v1 傳給 judge2、不把 v1/v2 傳給 judge3。
@@ -65,6 +71,46 @@ def judge_key(system_text: str, user_text: str, slot: int) -> str:
     return hashlib.sha256((system_text + user_text).encode("utf-8")).hexdigest()[:16] + f":{slot}"
 
 
+def verdict_schema_openai(fine_id_enum: list) -> dict:
+    """OpenAI strict 模式：所有鍵 required、additionalProperties false；可 null 用 anyOf；provisional 事後驗。"""
+    return {
+        "type": "object",
+        "properties": {
+            "cell_id": {"type": "string"},
+            "label": {"type": "string", "enum": LABELS},
+            "fine_id": {"anyOf": [{"type": "string", "enum": list(fine_id_enum)}, {"type": "null"}]},
+            "evidence_unit": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+            "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+            "provisional": {"type": "boolean"},
+        },
+        "required": ["cell_id", "label", "fine_id", "evidence_unit", "confidence", "provisional"],
+        "additionalProperties": False,
+    }
+
+
+def validate_verdict(v, fine_id_enum: list):
+    """兩後端共用的事後驗證（schema 之外的第二道）：不合 ⇒ None（no silent caps：呼叫端記 dropped）。"""
+    if not isinstance(v, dict) or v.get("label") not in LABELS or not isinstance(v.get("cell_id"), str):
+        return None
+    if v.get("fine_id") is not None and v["fine_id"] not in fine_id_enum:
+        return None
+    if v.get("evidence_unit") is not None and not isinstance(v["evidence_unit"], int):
+        return None
+    if v.get("confidence") not in ("high", "medium", "low"):
+        return None
+    return {"cell_id": v["cell_id"], "label": v["label"], "fine_id": v.get("fine_id"), "evidence_unit": v.get("evidence_unit"),
+            "confidence": v["confidence"], "provisional": True}
+
+
+def build_request_openai(model: str, system_text: str, user_text: str, schema: dict) -> dict:
+    """OpenAI 前綴快取是自動的（≥1024 token 前綴）：system 放共用段即可，無 cache_control。"""
+    return {
+        "model": model,
+        "messages": [{"role": "system", "content": system_text}, {"role": "user", "content": user_text}],
+        "response_format": {"type": "json_schema", "json_schema": {"name": "answerability_verdict", "strict": True, "schema": schema}},
+    }
+
+
 def build_request(model: str, system_text: str, user_text: str, schema: dict, layout: str = "cached") -> dict:
     system_block = {"type": "text", "text": system_text}
     if layout == "cached":
@@ -118,6 +164,30 @@ class Journal:
                 self.done[rec["key"]] = rec
 
 
+def _usage_dict_openai(usage) -> dict:
+    prompt = int(getattr(usage, "prompt_tokens", 0) or 0)
+    det = getattr(usage, "prompt_tokens_details", None)
+    cached = int(getattr(det, "cached_tokens", 0) or 0) if det is not None else 0
+    return {"input": prompt - cached, "output": int(getattr(usage, "completion_tokens", 0) or 0), "cache_read": cached,
+            "cache_write_5m": 0, "cache_write_1h": 0}
+
+
+def call_judge_openai(client, request: dict) -> tuple[dict | None, dict]:
+    resp = client.chat.completions.create(**request)
+    usage = _usage_dict_openai(getattr(resp, "usage", None))
+    choice = (getattr(resp, "choices", None) or [None])[0]
+    msg = getattr(choice, "message", None)
+    if msg is None or getattr(msg, "refusal", None):
+        return None, usage
+    text = getattr(msg, "content", None)
+    if not text:
+        return None, usage
+    try:
+        return json.loads(text), usage
+    except json.JSONDecodeError:
+        return None, usage
+
+
 def call_judge(client, request: dict) -> tuple[dict | None, dict]:
     """打一次 API；回 (verdict|None, usage)。refusal／非 JSON ⇒ None（no silent caps：由呼叫端記 dropped）。"""
     resp = client.messages.create(**request)
@@ -135,10 +205,16 @@ def call_judge(client, request: dict) -> tuple[dict | None, dict]:
     return verdict, usage
 
 
-def judge_cell(client, args: dict, cell: dict, model: str, schema: dict, journal: Journal, log, layout: str = "cached") -> dict:
+def judge_cell(client, args: dict, cell: dict, model: str, schema: dict, journal: Journal, log, layout: str = "cached",
+               provider: str = "anthropic") -> dict:
     """judge1、judge2，不一致才 judge3；每個判者獨立請求、prompt 逐位元相同（slot 只進 journal key，不進 prompt）。"""
     system_text, user_text = split_prompt(args, cell, layout)
-    request = build_request(model, system_text, user_text, schema, layout)
+    if provider == "openai":
+        request = build_request_openai(model, system_text, user_text, schema)
+        caller = call_judge_openai
+    else:
+        request = build_request(model, system_text, user_text, schema, layout)
+        caller = call_judge
     verdicts: list = []
     usage_total = {"input": 0, "output": 0, "cache_read": 0, "cache_write_5m": 0, "cache_write_1h": 0}
     calls = 0
@@ -148,11 +224,13 @@ def judge_cell(client, args: dict, cell: dict, model: str, schema: dict, journal
         key = judge_key(system_text, user_text, slot)
         if key in journal.done:
             return journal.done[key]["verdict"]
-        v, u = call_judge(client, request)
+        v, u = caller(client, request)
+        v = validate_verdict(v, args["fineIdEnum"])
         calls += 1
         for k in usage_total:
             usage_total[k] += u.get(k, 0)
-        journal.append({"key": key, "cell_id": cell["cellId"], "slot": slot, "model": model, "layout": layout, "verdict": v, "usage": u})
+        journal.append({"key": key, "cell_id": cell["cellId"], "slot": slot, "model": model, "provider": provider, "layout": layout,
+                        "verdict": v, "usage": u})
         return v
 
     v1 = one(1)
@@ -210,12 +288,14 @@ def reconcile(results: list, args: dict, log) -> dict:
             "agentsUsed": agents_used, "labels": labels, "droppedCells": dropped}
 
 
-def run(args: dict, client, *, model: str, journal: Journal, concurrency: int = 4, price: dict = DEFAULT_PRICE,
-        cell_ids: set | None = None, layout: str = "cached", log=print) -> dict:
-    schema = verdict_schema(args["fineIdEnum"])
+def run(args: dict, client, *, model: str, journal: Journal, concurrency: int = 4, price: dict | None = DEFAULT_PRICE,
+        cell_ids: set | None = None, layout: str = "cached", provider: str = "anthropic", log=print) -> dict:
+    if provider not in ("anthropic", "openai"):
+        raise ValueError(f"未知 provider：{provider}")
+    schema = verdict_schema_openai(args["fineIdEnum"]) if provider == "openai" else verdict_schema(args["fineIdEnum"])
     cells = [c for c in args["cells"] if not cell_ids or c["cellId"] in cell_ids]
     with ThreadPoolExecutor(max_workers=max(1, concurrency)) as pool:
-        results = list(pool.map(lambda c: judge_cell(client, args, c, model, schema, journal, log, layout), cells))
+        results = list(pool.map(lambda c: judge_cell(client, args, c, model, schema, journal, log, layout, provider), cells))
     out = reconcile(results, args, log)
     usage = {"input": 0, "output": 0, "cache_read": 0, "cache_write_5m": 0, "cache_write_1h": 0}
     calls = 0
@@ -224,10 +304,32 @@ def run(args: dict, client, *, model: str, journal: Journal, concurrency: int = 
             calls += r["calls"]
             for k in usage:
                 usage[k] += r["usage"][k]
-    out["usage"] = {**usage, "calls": calls, "model": model, "layout": layout}
-    out["usd"] = usd_of(usage, price)
+    out["usage"] = {**usage, "calls": calls, "model": model, "provider": provider, "layout": layout}
+    out["usd"] = usd_of(usage, price) if price else None  # 無牌價 ⇒ None（不猜；token 數在 usage）
     out["price"] = price
     return out
+
+
+def _guard_argv(argv: list) -> None:
+    """argv 含疑似金鑰（sk- 開頭、或 ≥32 字英數且含 key 字樣）⇒ 拒跑。金鑰只能走環境變數（由 compose／shell 注入）。"""
+    import re
+    for a in argv:
+        if re.search(r"(^|[=\s])sk-[A-Za-z0-9_-]{8,}", a) or re.search(r"(?i)api[_-]?key\s*=\s*\S{16,}", a):
+            print("[answerability_judge] argv 含疑似金鑰，拒跑：金鑰只能走環境變數", file=sys.stderr)
+            raise SystemExit(2)
+
+
+def _make_client_openai():
+    try:
+        import openai  # noqa: WPS433
+    except ImportError:
+        print("[answerability_judge] 缺 openai SDK（容器內有 openai==1.54.0：用 docker compose run 跑）", file=sys.stderr)
+        raise SystemExit(2)
+    try:
+        return openai.OpenAI()  # 零參數：讀 OPENAI_API_KEY 環境變數（容器由 compose env_file 注入）；⛔ 本腳本不碰金鑰
+    except Exception as exc:  # noqa: BLE001
+        print(f"[answerability_judge] 建立 OpenAI client 失敗（{type(exc).__name__}）：環境變數未注入？本腳本不讀 .env", file=sys.stderr)
+        raise SystemExit(2)
 
 
 def _make_client():
@@ -248,29 +350,42 @@ def main() -> int:
     p.add_argument("--args", required=True, help="answerability_args.py --slim 產出（含 promptHead/candidatesBlock/cells）")
     p.add_argument("--out", required=True, help="結果 JSON（與 Workflow Reconcile 同形）")
     p.add_argument("--journal", required=True, help="判者 jsonl（續跑用；已有 verdict 的 key 不再打）")
-    p.add_argument("--model", default=DEFAULT_PRICE["model"])
+    p.add_argument("--provider", choices=("anthropic", "openai"), default="anthropic")
+    p.add_argument("--model", default=None, help="預設：anthropic=claude-sonnet-5；openai 必填")
     p.add_argument("--concurrency", type=int, default=4)
     p.add_argument("--cell-ids", default=None, help="逗號分隔子集")
     p.add_argument("--layout", choices=LAYOUTS, default="cached", help="workflow＝與 1.5 Workflow 判者 prompt 逐位元相同（無共用快取，可與 44 格合併）；cached＝共用快取前綴（另一版 prompt）")
     p.add_argument("--price-json", default=None, help="覆寫牌價 {input,output,cache_read,cache_write_5m,cache_write_1h}（USD/MTok）")
+    _guard_argv(sys.argv[1:])
     a = p.parse_args()
+    if a.model is None:
+        if a.provider == "openai":
+            print("[answerability_judge] --provider openai 需指定 --model", file=sys.stderr)
+            return 2
+        a.model = DEFAULT_PRICE["model"]
     args = json.load(open(a.args, encoding="utf-8"))
     for k in ("promptHead", "candidatesBlock", "cells", "fineIdEnum"):
         if k not in args:
             print(f"[answerability_judge] args 缺 {k}：請用 answerability_args.py --slim 產出", file=sys.stderr)
             return 2
-    price = dict(DEFAULT_PRICE)
+    price = None
     if a.price_json:
-        price.update(json.load(open(a.price_json, encoding="utf-8")))
-    if a.model != price.get("model") and not a.price_json:
-        print(f"[answerability_judge] 模型 {a.model} 沒有牌價：請給 --price-json（usd 否則不可信）", file=sys.stderr)
-        return 2
+        price = json.load(open(a.price_json, encoding="utf-8"))
+    elif a.provider == "anthropic" and a.model == DEFAULT_PRICE["model"]:
+        price = dict(DEFAULT_PRICE)
+    else:
+        print(f"[answerability_judge] 模型 {a.model} 無內建牌價：usd 記 None、只報 token（要 usd 請給 --price-json）", file=sys.stderr)
     journal = Journal(a.journal)
     if journal.done:
         print(f"[answerability_judge] 續跑：journal 已有 {len(journal.done)} 個判者")
     cell_ids = set(a.cell_ids.split(",")) if a.cell_ids else None
-    client = _make_client()
-    out = run(args, client, model=a.model, journal=journal, concurrency=a.concurrency, price=price, cell_ids=cell_ids, layout=a.layout)
+    client = _make_client_openai() if a.provider == "openai" else _make_client()
+    try:
+        out = run(args, client, model=a.model, journal=journal, concurrency=a.concurrency, price=price, cell_ids=cell_ids,
+                  layout=a.layout, provider=a.provider)
+    except Exception as exc:  # noqa: BLE001 — 只印類別名：SDK 例外訊息可能帶請求細節
+        print(f"[answerability_judge] 失敗：{type(exc).__name__}（訊息不印，避免帶出請求／憑證細節）", file=sys.stderr)
+        return 2
     with open(a.out, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=1)
     print(f"[answerability_judge] total={out['total']} agree={out['agree']} rate={out['agreementRate']:.3f} "
