@@ -224,3 +224,29 @@ def test_hook_structure_check_passes_on_sample(tmp_path):
     p = tmp_path / "prospect.md"
     p.write_text(SAMPLE, encoding="utf-8")
     assert hook.check_structure(str(p)) == []
+
+
+# ---------------------------------------------------------------------------
+# verifier 2026-09-06 回歸鎖（REFUTED (a) P2：掉了 `  - ` 前綴的講法子項曾靜默落入 content_units）
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bad_line", [
+    '{text: "王先生問A7棟能不能先試用", source: "traffic:202609#7", status: approved}',  # 掉縮排＋破折號的 phrasing 子項
+    "sources: [kb:9999]",                                                             # 掉破折號的屬性行
+    "policy: deliberate_no",
+])
+def test_attr_shaped_line_without_dash_is_rejected_not_content(bad_line):
+    bad = SAMPLE.replace("- instance_applicability: general\n金箍棒把物件", f"- instance_applicability: general\n{bad_line}\n金箍棒把物件")
+    with pytest.raises(CanonFormatError) as ei:
+        parse_canon_text(bad)
+    assert "不落內容" in str(ei.value) or "屬性形狀" in str(ei.value)
+    # 內容區之後出現同形狀也擋
+    bad2 = SAMPLE.replace("想知道適不適合，先了解您管幾間。", f"想知道適不適合，先了解您管幾間。\n{bad_line}")
+    with pytest.raises(CanonFormatError):
+        parse_canon_text(bad2)
+
+
+def test_phrasing_leak_check_ignores_inserted_whitespace():
+    doc = parse_canon_text(SAMPLE)
+    assert phrasing_leaks(doc, text="…你們系統 適合我嗎…") == ["prospect/A/positioning: 你們系統適合我嗎"]
+    assert phrasing_leaks(doc, text="…你們系統\u3000適合我　嗎…") == ["prospect/A/positioning: 你們系統適合我嗎"]

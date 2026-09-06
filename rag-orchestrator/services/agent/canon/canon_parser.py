@@ -48,6 +48,9 @@ PHRASING_ITEM_RE = re.compile(
 REVIEWED_RE = re.compile(r"^\{\s*by\s*:\s*([A-Za-z0-9_.@-]+)\s*,\s*at\s*:\s*(\d{4}-\d{2}-\d{2})\s*\}$")
 LIST_RE = re.compile(r"^\[(.*)\]$")
 TRAFFIC_DIGITS_RE = re.compile(r"\d{4,}")
+# 「屬性形狀」的行（F8 守門，verifier 2026-09-06 P2）：掉了 `- ` 前綴的屬性行、掉了 `  - ` 前綴的 phrasing 子項，
+# 不論出現在屬性區塊尾端或內容區，一律 raise、⛔ 不落 content_units。
+ATTR_SHAPED_RE = re.compile(r"^\s*(?:\{|[A-Za-z_]+\s*:\s)")
 TRAFFIC_MAX_CHARS = 20
 
 
@@ -121,7 +124,8 @@ def _sha256_text(s: str) -> str:
 
 
 def _nfkc(s: str) -> str:
-    return unicodedata.normalize("NFKC", s).strip()
+    """NFKC＋去除所有空白（含全形）：守門比對不因插入空白而繞過（verifier 2026-09-06 advisory 1）。"""
+    return "".join(unicodedata.normalize("NFKC", s).split())
 
 
 def _parse_list(raw: str, lineno: int, what: str) -> tuple[str, ...]:
@@ -365,14 +369,14 @@ def parse_canon_text(text: str, source_path: Optional[str] = None) -> CanonDoc:
                     raise CanonFormatError(lineno, f"縮排子項只允許在 phrasings 底下：{line.strip()!r}")
                 attrs["phrasings"].append(_parse_phrasing_item(cont.group(1), lineno))
                 continue
-            if line.startswith("-") or line[0].isspace():
+            if line.startswith("-") or line[0].isspace() or ATTR_SHAPED_RE.match(line):
                 raise CanonFormatError(lineno, f"屬性區塊內無法解析的行（⛔ 不落內容）：{line.strip()!r}")
             # 第一個內容行：屬性區塊結束
             in_attr_block = False
             open_list_key = None
 
         # 內容區
-        if am or cont or line.startswith("-") or line[0].isspace():
+        if am or cont or line.startswith("-") or line[0].isspace() or ATTR_SHAPED_RE.match(line):
             raise CanonFormatError(lineno, f"內容區出現屬性形狀的行（屬性須在內容之前）：{line.strip()!r}")
         unit = line.strip()
         if len(split_sentences(unit)) != 1:

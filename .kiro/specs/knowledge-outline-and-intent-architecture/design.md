@@ -534,7 +534,7 @@ flowchart LR
 ### 決策 7：skill＝hook（紀律）＋Workflow（判者／提議）＋腳本（其餘）；預算分步（初值，M-a 後核定）
 **決定**：只有兩步進 Workflow；四道閘門三個 hook 事件；最小試作先做可答性一步（以臨時細目集合跑，見附錄 C M-a）。**理由**：業主 2026-09-06 定向；Workflow 的價值在判者隔離與 schema 強制，決定性步驟進 Workflow 只增加成本；預算分步為初值、業主核。**參考**：research 主題 3。
 
-**修訂（2026-09-06，1.5 試作後業主裁）**：判者隔離與 schema 強制**不依賴 Workflow**——skill 改為腳本直打 Messages API（`answerability_judge.py`：每判者獨立請求＝互不可見；`output_config.format=json_schema`＝schema 強制；rubric＋候選當共用快取前綴 `cache_control`；journal jsonl 續跑）。理由：8 GB 機器跑 Workflow 多子代理三次整機重開；且 Workflow 子代理之間不共享快取前綴，每判者 ≈60k cache write，44 格 $15.84（步預算 $3 的 5 倍），直打 API 估 <$2。**1.5 的 44 格 Workflow 結果不作廢**（業主裁：只用腳本補批 5 C45–C55，`--layout workflow` 讓 prompt 逐位元相同才能合併）；`outline-curation.js` 留檔作參考、不再是 skill 的執行路徑（是否刪除待裁）；2.3 結構提議同樣改腳本直打 API（三角度＝三個獨立請求、合成＝第四個請求）。證據：`inputs/m-a-trial-20260906.md` §4–§5。
+**修訂（2026-09-06，1.5 試作後業主裁）**：判者隔離與 schema 強制**不依賴 Workflow**——skill 改為腳本直打 Messages API（`answerability_judge.py`：每判者獨立請求＝互不可見；`output_config.format=json_schema`＝schema 強制；rubric＋候選當共用快取前綴 `cache_control`；journal jsonl 續跑）。理由：8 GB 機器跑 Workflow 多子代理三次整機重開；且 Workflow 子代理之間不共享快取前綴，每判者 ≈60k cache write，44 格 $15.84（步預算 $3 的 5 倍），直打 API 估 <$2。**1.5 的 44 格 Workflow 結果不作廢**（業主裁：只用腳本補批 5 C45–C55，`--layout workflow` 讓 prompt 逐位元相同才能合併）；`outline-curation.js` 留檔作參考、不再是 skill 的執行路徑（是否刪除待裁）；2.3 結構提議業主再裁（同日）：**⛔ 不打 API、用 Claude Code 子代理**（3 角度各一子代理互不可見、第 4 個合成；`structure_propose.py` 只做 prompt／驗證／打包的決定性外殼）——只有 4 次呼叫，記憶體撐得住，且合成需要較強推理。證據：`inputs/m-a-trial-20260906.md` §4–§5。
 
 ### 決策 8：審核狀態以既有欄位值域區分，不加欄位
 **決定**：`outline_approved_by ∈ {<reviewer>, "pool-marked-<date>"}`；`content_reviewed_predicate` 為第二單一來源。**理由**：零 migration；`help_center_pages` 已有「可引用必有人核可」先例；D1 執行時只是一筆 UPDATE 的值改變。

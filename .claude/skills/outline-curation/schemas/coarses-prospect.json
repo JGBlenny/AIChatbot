@@ -1,0 +1,13 @@
+{
+  "_note": "售前受眾粗目切法（業主定案，spec.json project_description：原 presales-kb 的 A–F 加 G「現有不足」）。步 2 結構提議只提細目與歸屬，⛔ 不改粗目；LINE／業者受眾另定，⛔ 不套本表。",
+  "audience": "prospect",
+  "coarses": [
+    {"id": "A", "title": "產品基本盤"},
+    {"id": "B", "title": "適配"},
+    {"id": "C", "title": "六大模組"},
+    {"id": "D", "title": "方案試用"},
+    {"id": "E", "title": "競品"},
+    {"id": "F", "title": "導流"},
+    {"id": "G", "title": "現有不足"}
+  ]
+}

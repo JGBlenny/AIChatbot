@@ -69,7 +69,7 @@
   - 需求：1.8, 2.5, 5.5
   - 執行：executor／effort 中——D3 預設已定，識別碼類別封閉；⚠️ 個資觸發 ⇒ 完成後派 fresh verifier
   - 驗收：目標＝講法有出處、已去識別、相似細目只出待審｜成果＝兩支工具＋PII 掃描測試｜做法＝去識別先於任何 agent 呼叫｜驗證＝[代理驗證]（claim：塞入各類識別碼皆被擋、`raw/` 未進版控）
-- [ ] 2.3 (P) 結構提議（**形態改腳本直打 API**，決策 7 修訂 2026-09-06；Workflow 留參考）＋`apply_proposal.py`：3 角度（使用者提問路徑／內容邊界／受眾層級）＝3 個獨立請求各出 `structure-proposal` schema → 第 4 個請求合成（三份原提案留 journal）；`apply_proposal.py` 把提議決定性套成正本 Markdown 草稿＋id 對應表（拆／併／移／新增各有前後對照；未附對應表 ⇒ exit 2）。測試：合成輸出 schema 校驗；`apply_proposal` 同輸入兩次逐位元相等；缺對應表必擋。 **schema（定義不足已補）**：`structure-proposal.json`＝`{coarses:[{id,title}], fines:[{id, coarse_id, title, slug, merge_of:[kb id|draft n], split_from:[…], moved_from:[…], reason}], id_map:[{old, new, op∈{keep,split,merge,move,new}}], angle}`；合成 agent 輸出同 schema 外加 `rejected_alternatives[]`（每條一句理由）。
+- [x] 2.3 (P) 結構提議（**形態＝Claude Code 子代理、⛔ 不打 API**，業主 2026-09-06 裁；`structure_propose.py prepare／validate／synth-prompt／package` 決定性外殼，2026-09-06 主 session 親做、7 unit 綠）＋`apply_proposal.py`：3 角度（使用者提問路徑／內容邊界／受眾層級）＝3 個子代理各出 `structure-proposal` schema → 第 4 個子代理合成（三份原提案留 raw/）；`apply_proposal.py` 把提議決定性套成正本 Markdown 草稿＋id 對應表（拆／併／移／新增各有前後對照；未附對應表 ⇒ exit 2）。測試：合成輸出 schema 校驗；`apply_proposal` 同輸入兩次逐位元相等；缺對應表必擋。 **schema（定義不足已補）**：`structure-proposal.json`＝`{coarses:[{id,title}], fines:[{id, coarse_id, title, slug, merge_of:[kb id|draft n], split_from:[…], moved_from:[…], reason}], id_map:[{old, new, op∈{keep,split,merge,move,new}}], angle}`；合成 agent 輸出同 schema 外加 `rejected_alternatives[]`（每條一句理由）。
   - 需求：1.1, 1.3, 1.5
   - 執行：executor／effort 高——結構提議是唯一「LLM 決定結構」的步，非決定性標記與 journal 保留要做對
   - 驗收：目標＝結構由三角度提議、人審合成、id 對應表強制｜成果＝Structure phase＋`apply_proposal.py`｜做法＝judge panel＋決定性套用｜驗證＝[自驗]
