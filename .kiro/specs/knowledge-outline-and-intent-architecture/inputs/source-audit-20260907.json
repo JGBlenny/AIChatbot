@@ -1,6 +1,6 @@
 {
   "step": "source_audit",
-  "coverage_map_sha": "62633c7b46d273e32976eaa00a2b44e67114f731431c7422134cd7a49bb8bf00",
+  "coverage_map_sha": "491f370f837b091908748e846db0ba4d1356d187f5ed1ab59bde58c54122f1b7",
   "audited_at": "2026-09-07",
   "authority_sources": [
     "code:/Users/lenny/jgb/project/jgb/jgb2 (master 2026-09-04, clean)",

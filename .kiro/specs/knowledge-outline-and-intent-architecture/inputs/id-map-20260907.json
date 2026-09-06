@@ -1,0 +1,218 @@
+[
+ {
+  "old_kb_id": "",
+  "fine_id": "prospect/G/utility-split-advice",
+  "op": "new",
+  "source": "owner_decision:C31"
+ },
+ {
+  "old_kb_id": "draft:1",
+  "fine_id": "prospect/A/pain-points",
+  "op": "merge"
+ },
+ {
+  "old_kb_id": "draft:10",
+  "fine_id": "prospect/C/contract-history-retention",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:11",
+  "fine_id": "prospect/C/bill-contents-extra-fees",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:12",
+  "fine_id": "prospect/C/payment-gateway-options",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:13",
+  "fine_id": "prospect/C/credit-card-rent-payment",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:14",
+  "fine_id": "prospect/C/role-permission-granularity",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:15",
+  "fine_id": "prospect/C/notification-channels",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:16",
+  "fine_id": "prospect/D/account-registration",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:17",
+  "fine_id": "prospect/F/contact-sales-demo",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:18",
+  "fine_id": "prospect/C/owner-report-collection-remit",
+  "op": "merge"
+ },
+ {
+  "old_kb_id": "draft:2",
+  "fine_id": "prospect/C/what-is-owner-landlord",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:3",
+  "fine_id": "prospect/D/property-quota-limit",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:4",
+  "fine_id": "prospect/D/subscription-change-renewal",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:5",
+  "fine_id": "prospect/C/property-status-meaning",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:6",
+  "fine_id": "prospect/C/community-batch-create",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:7",
+  "fine_id": "prospect/C/rental-storefront-vr",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:8",
+  "fine_id": "prospect/A/dashboard-overview",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "draft:9",
+  "fine_id": "prospect/C/contract-templates",
+  "op": "merge"
+ },
+ {
+  "old_kb_id": "kb:3584",
+  "fine_id": "prospect/B/team-company-fit",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:3585",
+  "fine_id": "prospect/A/product-overview",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:3596",
+  "fine_id": "prospect/B/individual-landlord-scale-fit",
+  "op": "merge"
+ },
+ {
+  "old_kb_id": "kb:3597",
+  "fine_id": "prospect/B/individual-landlord-scale-fit",
+  "op": "merge"
+ },
+ {
+  "old_kb_id": "kb:3598",
+  "fine_id": "prospect/B/individual-landlord-scale-fit",
+  "op": "merge"
+ },
+ {
+  "old_kb_id": "kb:3599",
+  "fine_id": "prospect/C/property-management-overview",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:3600",
+  "fine_id": "prospect/C/contract-esign-flow",
+  "op": "split"
+ },
+ {
+  "old_kb_id": "kb:3600",
+  "fine_id": "prospect/C/contract-modify-after-sign",
+  "op": "split"
+ },
+ {
+  "old_kb_id": "kb:3600",
+  "fine_id": "prospect/C/contract-templates",
+  "op": "split"
+ },
+ {
+  "old_kb_id": "kb:3601",
+  "fine_id": "prospect/C/billing-overview",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:3602",
+  "fine_id": "prospect/C/team-management-overview",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:3603",
+  "fine_id": "prospect/C/smart-meter-lock-iot",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:3604",
+  "fine_id": "prospect/C/owner-report-collection-remit",
+  "op": "merge"
+ },
+ {
+  "old_kb_id": "kb:3605",
+  "fine_id": "prospect/C/repair-system",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:3606",
+  "fine_id": "prospect/A/pain-points",
+  "op": "merge"
+ },
+ {
+  "old_kb_id": "kb:3607",
+  "fine_id": "prospect/E/competitor-comparison",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:3608",
+  "fine_id": "prospect/A/why-choose-jgb",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:3609",
+  "fine_id": "prospect/E/competitor-neutrality",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:3610",
+  "fine_id": "prospect/D/pricing-plans",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:3611",
+  "fine_id": "prospect/D/free-trial",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:5378",
+  "fine_id": "prospect/C/overdue-reminder-late-fee",
+  "op": "keep"
+ },
+ {
+  "old_kb_id": "kb:5379",
+  "fine_id": "prospect/B/data-migration",
+  "op": "split"
+ },
+ {
+  "old_kb_id": "kb:5379",
+  "fine_id": "prospect/G/migration-limits",
+  "op": "split"
+ },
+ {
+  "old_kb_id": "kb:5380",
+  "fine_id": "prospect/C/bill-format-customize",
+  "op": "keep"
+ }
+]

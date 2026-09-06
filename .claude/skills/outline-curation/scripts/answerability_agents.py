@@ -232,6 +232,9 @@ def cmd_collect(a) -> int:
     out = reconcile(results, {"frozenAt": m["frozenAt"], "rubricSha": m["rubricSha"], "inputsSha": m["inputsSha"]}, print)
     out["usage"] = {"provider": "claude-code-subagent", "groups": len(m["groups"]), "cellsPerAgent": m["cellsPerAgent"],
                     "agents": len(m["groups"]) * 2 + (1 if need_third else 0), "note": "token 由 harness 計，此處不估"}
+    # 🔴 2026-09-07 verifier P3：reconcile 的 agents_used 是「verdict 條數」（55×2＋3＝113），不是代理數；
+    # finalize 拿它均攤 usd、cost_ledger 拿它算 agents 上限，兩邊都被灌水。子代理版代理數＝組數×2＋第 3 判者。
+    out["agentsUsed"] = out["usage"]["agents"]
     out["usd"] = None
     _env.write_json(a.out, out)
     print(f"[answerability_agents] collect ok total={out['total']} agree={out['agree']} rate={out['agreementRate']:.3f} "

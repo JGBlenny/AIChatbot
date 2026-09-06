@@ -458,6 +458,36 @@ def _object_under_test_approved(project_dir: str, rel_path: str) -> bool:
     return bool(m and m.group(2).strip())
 
 
+MAX_UNCHANGED_STOP_BLOCKS = 3
+_STOP_BLOCK_KEY = "_stop_block"
+
+
+def _bump_stop_block(project_dir: str, reasons_key: str) -> int:
+    """同一組未滿足條件的連續擋次數（存 session.json `_stop_block`）；條件變了就從 1 重數。"""
+    state = _load_state(project_dir) or {}
+    rec = state.get(_STOP_BLOCK_KEY) or {}
+    n = int(rec.get("count") or 0) + 1 if rec.get("key") == reasons_key else 1
+    state[_STOP_BLOCK_KEY] = {"key": reasons_key, "count": n}
+    _write_state(project_dir, state)
+    return n
+
+
+def _clear_stop_block(project_dir: str) -> None:
+    state = _load_state(project_dir)
+    if state and _STOP_BLOCK_KEY in state:
+        state.pop(_STOP_BLOCK_KEY, None)
+        _write_state(project_dir, state)
+
+
+def _write_state(project_dir: str, state: dict) -> None:
+    path = _state_path(project_dir)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(state, f, ensure_ascii=False, indent=2, sort_keys=True)
+    os.replace(tmp, path)
+
+
 def check_stop(project_dir: str) -> list:
     """回未滿足條件的原因清單；空＝放行。"""
     state = _load_state(project_dir)
@@ -508,11 +538,20 @@ def main() -> int:
     if hook_event == "Stop":
         reasons = check_stop(project_dir)
         if reasons:
+            # 2026-09-07 死結實測：cost.over_budget 這類條件只有**業主**能解，但 Stop 擋住回合 ⇒ 業主永遠回不了。
+            # 沿用 ~/.claude/canon/finishgate.py 的設計：同一組條件連擋 MAX_UNCHANGED 次沒有任何改變 ⇒ 交還給人、
+            # 不再擋（⛔ 不是把 stop_hook_active 當放行條件——那會退化成一次性通知）。條件一變、計數歸零。
+            n = _bump_stop_block(project_dir, "|".join(reasons))
+            if n > MAX_UNCHANGED_STOP_BLOCKS:
+                sys.stderr.write(f"[outline_gate] ⚠️ PAUSED：同一組條件連續 {n - 1} 次未變，交還給人判斷（不再擋）："
+                                 + "；".join(reasons) + "\n")
+                return 0
             payload = {"decision": "block", "reason": "；".join(reasons)}
             print(json.dumps(payload, ensure_ascii=False))
             # verifier F4：exit 2 時 harness 回饋給模型的是 stderr；理由兩邊都寫，⛔ 不能只靠 stdout JSON
             sys.stderr.write("[outline_gate] Stop 擋回合：" + "；".join(reasons) + "\n")
             return 2
+        _clear_stop_block(project_dir)
         return 0
 
     tool_input = ev.get("tool_input") or {}

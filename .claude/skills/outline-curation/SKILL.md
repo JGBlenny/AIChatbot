@@ -60,6 +60,7 @@ budgets:
 - **G0 前提／權威來源核對**：見 [`../retrieval-improvement-loop/rules/`](../retrieval-improvement-loop/README.md)（步 1 intake 對齊）
 - **G2 量測管線自證**：見同上（步 5 reweigh 對齊）
 - **G4 獨立驗證**：宣稱療效／數字／尺一律派 fresh verifier（步 6 diff／cost_ledger 對齊）
+- **成本帳範圍**（2026-09-07 業主裁 (a)）：`cost_ledger.py` 只讀 `journal/` 頂層 `*.json`；M-a 試作帳（usd 15.84，業主 2026-09-06 已接受超支）封存在 `journal/m-a-archive/`（gitignored），⛔ 不要移回頂層——會讓每次收案的 Stop 以 over_budget 擋。`agentsUsed`＝代理數（組數×2＋第 3 判者），⛔ 不是 verdict 條數。
 - **Stop 閘**：`.claude/hooks/outline_gate.py`——`object_under_test` 未核可、材料 sha 未凍結、或 `cost.json` 任一層超支 ⇒ 擋；步 5 有 not_available／owner_decision 格、已產 diff_report 而 `source_audit` 未核對 ⇒ 擋（步 5b）
 
 ## 成本表（初值，M-a 試作後由業主核定）

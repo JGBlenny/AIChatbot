@@ -55,6 +55,16 @@
 
 **verifier CONFIRMED（步 5b）附帶已知債（P3，不擋）**：`source_audit.py check` 的證據只驗形狀（`path:symbol`）不解析路徑是否存在；`owner_decided` 只需 `owner_decision` 字串、不需證據——閘門證明「有紀錄」不證明「查過」，查過與否靠主 session 親自對碼的紀律；`diff_report` 用真值判斷（空 dict 會繞過，實務不會空）。
 
+## 4d. 步 6 diff：售前草稿 v3（2026-09-07；fresh verifier CONFIRMED）
+
+- 草稿：`inputs/prospect.draft.v3-20260907.md`（38 細目；**11 個帶對碼標記** `docs:knowledge/jgb-product-facts.md#…`；PII 掃描 0 命中、正對照命中）。⛔ 未放 `rag-orchestrator/canon/`、未入庫——交業主審後步 7 才放。
+- 改了什麼：10 個細目回填事實（C22 簽章不收費、C03 包租 vs 代管、C24／C54 發票自動開與載具、C29 儲值金、C25 差額發票、C39 兩型門鎖、C52 沒有「系統管理」＋掛講法、C15 標籤、C07 免費 5 物件、C43 匯入範圍改正）＋新增 `G/utility-split-advice`（C31 業主一句）。verifier 抓兩句越過帳本邊界（「屬方案內容的一部分」「不用人工對帳」）已收緊。
+- diff-report：`runs/2026-09-06T00-00-00Z/diff-report.json`——新增 1 細目、無刪無改名；`replacements[]` 43（content 35＝keep 29＋split 5＋new 1、merged_into 8）；id_map `inputs/id-map-20260907.json` 由步 2 `prospect.idmap2.json` 決定性轉換（42＋1）。
+- ⚠️ 判者裁定綁的是 v2 sha（`da786d73…`）；v3 內容變了，**改動的 11 細目對應的格要重跑步 4 才能更新 coverage-map 的對碼標記**（reweigh 的 sha fail-loud 會擋 v3，這是對的）。
+- **成本帳擋收案**：`cost_ledger` 彙總 journal 全部檔案，M-a 試作 $15.84（步預算 $3、整案 $6）⇒ `cost.over_budget=true`、Stop hook 擋。design E4「預算初值待 M-a 後核」未做。待業主：(a) M-a 3 份 journal 移 `journal/m-a-archive/`＋修 P3 agents 計數（建議）／(b) 重設 SKILL 預算／(c) 維持。
+- **業主裁（2026-09-07）**：成本帳選 (a)——M-a 三份 journal 封存 `journal/m-a-archive/`，P3 計數已修（journal agents 113→23、cost agents 27／usd 0、over_budget=false）；**C46 算可答**（「6 國語系」句），已在 v3 掛講法「有多語系介面嗎」「外籍租客能用嗎」。
+- hook 補防死結：Stop 同一組條件連擋 3 次未變 ⇒ 第 4 次交還給人（`_stop_block`），回歸鎖 `test_gate5_stop_unchanged_blocks_pause_after_three`。
+
 ## 5. 下一步
 
 步 6 `diff_report.py`（`replacements[]` old kb id → fine id；用本檔 `fines_referenced` 與 kb 來源對照）→ `rag-orchestrator/canon/prospect.md` 草稿＋`export_json` → 交業主（⛔ 不 commit 正本、⛔ 不入庫）。業主已裁（2026-09-07）：C53 不管、C31 一句說法、C15 寫；其餘 8 格依帳本改寫成售前層級。仍待：C46 核句（帳本無此條，why-choose-jgb 第 1 句含「6 國語系」）。

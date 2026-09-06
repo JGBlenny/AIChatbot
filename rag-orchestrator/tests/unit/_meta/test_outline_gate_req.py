@@ -423,6 +423,29 @@ def test_gate5_stop_source_audit_required_before_handoff(tmp_path):
     assert run_hook(repo, _stop_event()).returncode == 0
 
 
+def test_gate5_stop_unchanged_blocks_pause_after_three(tmp_path):
+    """2026-09-07 死結：只有業主能解的條件（cost.over_budget）連擋 3 次未變 ⇒ 第 4 次交還給人（exit 0、stderr PAUSED）；
+    條件一變（多一條理由）⇒ 計數歸零重擋；條件解除 ⇒ 計數清掉。⛔ 不是 stop_hook_active 放行。"""
+    repo = _mk_repo(tmp_path)
+    base = {"evals_ran": [], "answerability": {"path": "a.json", "needs_rubric_revision": False},
+            "cost": {"path": "c.json", "over_budget": True}}
+    _write_session(repo, base)
+    codes = [run_hook(repo, _stop_event()).returncode for _ in range(3)]
+    assert codes == [2, 2, 2]
+    proc = run_hook(repo, _stop_event())
+    assert proc.returncode == 0 and "PAUSED" in proc.stderr
+    # 條件變了 ⇒ 重新擋（正對照：不是放行一次就永遠放行）
+    state = json.load(open(os.path.join(repo, ".claude", "hooks", "state", "outline-gate", "session.json"), encoding="utf-8"))
+    state["answerability"]["needs_rubric_revision"] = True
+    _write_session(repo, state)
+    assert run_hook(repo, _stop_event()).returncode == 2
+    # 條件解除 ⇒ 放行且計數清掉
+    _write_session(repo, dict(base, cost={"path": "c.json", "over_budget": False}))
+    assert run_hook(repo, _stop_event()).returncode == 0
+    state = json.load(open(os.path.join(repo, ".claude", "hooks", "state", "outline-gate", "session.json"), encoding="utf-8"))
+    assert "_stop_block" not in state
+
+
 def test_gate5_stop_over_budget_blocks(tmp_path):
     """紅：cost.over_budget=true ⇒ exit 2（與 evals_ran 是否跑過無關）。"""
     repo = _mk_repo(tmp_path)

@@ -8,25 +8,32 @@
   },
   "deterministic": true,
   "inputs_sha": {
-    "skill": "b6fd9757c1713a8e60d47fa5f9afda82ff4cf83b4b749d4cf0aa6b0899ea329e"
+    "skill": "033db112fb5b6b2c19e987567eb07948af613287ab34a36e39949e8c257bce24"
   },
   "payload": {
     "by_step": {
       "answerability": {
-        "agents": 101,
-        "completion_tokens": 48437,
-        "prompt_tokens": 11525555,
-        "usd": 15.84,
-        "wall_s": 3056.5
+        "agents": 23,
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "usd": 0.0,
+        "wall_s": 0.0
+      },
+      "structure": {
+        "agents": 4,
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "usd": 0.0,
+        "wall_s": 0.0
       }
     },
-    "over_budget": true,
+    "over_budget": false,
     "total": {
-      "agents": 101,
-      "completion_tokens": 48437,
-      "prompt_tokens": 11525555,
-      "usd": 15.84,
-      "wall_s": 3056.5
+      "agents": 27,
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0,
+      "wall_s": 0.0
     }
   },
   "raw_outputs_path": null,
