@@ -1,0 +1,92 @@
+{
+  "cost": {
+    "agents": 6,
+    "completion_tokens": 2669,
+    "prompt_tokens": 676576,
+    "usd": 0.0,
+    "wall_s": 221.4
+  },
+  "deterministic": false,
+  "inputs_sha": {
+    "cells": "32607587028474caf015e63024f6f31d8a07a166354d31dac4408b725756e669",
+    "drafts": "4cc0feb8d2f476ccc26f76f3193af2e6bde0c2fb66e68bdbec8b704616f3ddfd",
+    "kbRows": "4a17038c97627e8f82cbd9b0d0eea710c369aa66d85a9df4caeca899a29cd26d",
+    "rubric": "251d7948609481e0fefa960770acc2d287d646c95770b82d068d0b0fc601a173"
+  },
+  "payload": {
+    "labels": [
+      {
+        "cell_id": "C01",
+        "confidence": "high",
+        "evidence_unit": 2,
+        "fine_id": "tmp:kb:3585",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C01",
+            "confidence": "medium",
+            "evidence_unit": 2,
+            "fine_id": "tmp:kb:3585",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C01",
+            "confidence": "high",
+            "evidence_unit": 2,
+            "fine_id": "tmp:kb:3585",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C01",
+            "confidence": "medium",
+            "evidence_unit": 2,
+            "fine_id": "tmp:kb:3585",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C02",
+        "confidence": "medium",
+        "evidence_unit": 2,
+        "fine_id": "tmp:kb:3601",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C02",
+            "confidence": "medium",
+            "evidence_unit": 2,
+            "fine_id": "tmp:kb:3601",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C02",
+            "confidence": "medium",
+            "evidence_unit": 2,
+            "fine_id": "tmp:kb:5378",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C02",
+            "confidence": "medium",
+            "evidence_unit": 2,
+            "fine_id": "tmp:kb:5378",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      }
+    ],
+    "needs_rubric_revision": true
+  },
+  "raw_outputs_path": ".claude/skills/outline-curation/journal/wf_44d75ae7-af1.json",
+  "skill_version": "0.1.0",
+  "step": "answerability"
+}
