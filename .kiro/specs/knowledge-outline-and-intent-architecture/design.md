@@ -739,6 +739,7 @@ flowchart LR
 | P3 | design 元件 4 範例含 `- exit: handoff`，`ATTR_KEYS` 無 `exit`（verifier advisory）：範例過期或補鍵 | canon 格式 |
 | P4 | `.claude/workflows/outline-curation.js` 留參考或刪除（API 判者已刪；JS 是 Claude Code 機制但實測撐不住） | repo 整潔 |
 | P5 | rubric 0.3.0（`partial` 子問題定義）是否補：門檻已降為可選 | 判者一致性 |
+| P6 | **待定義清單（業主 2026-09-07：先列、不用現在處理）**：(a) 三個無來源問題各一句答案——C22 簽約另外收費嗎、C39 私人門鎖 vs 共用門鎖差別、C53 單合約 vs 雙合約差別；(b) C25 差額發票（kb 3798 等）、C29 儲值金回充（kb 3417）、C46 多語系（kb 3798／4652）、C54 發票載具（kb 3414／3423／3419）知識在庫但不在售前池：開放列給 prospect 或另寫售前版細目；(c) C52「系統管理模組」名稱對照句 | G 現有不足與 5 格覆蓋；2.4b 這些格預期 no_source，不算判者錯 |
 
 ### D. 變更歷史
 | 日期 | 版本 | 變更內容 | 修改者 |
