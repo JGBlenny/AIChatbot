@@ -58,7 +58,7 @@ def _run_result(agreement_rate_labels):
         "total": total,
         "agree": agree,
         "agreementRate": rate,
-        "needs_rubric_revision": rate < 0.90,
+        "needs_rubric_revision": rate < 0.80,
         "agentsUsed": total * 2,
         "labels": labels,
     }
@@ -124,7 +124,7 @@ def test_agreement_1_0_passes_schema_and_exit_0(tmp_path):
 
 
 def test_agreement_0_5_exit_2_flag_true_but_file_still_written(tmp_path):
-    """正對照：一致率 0.5 <0.90 ⇒ needs_rubric_revision=true、exit 2，但檔案與 journal 仍寫出。"""
+    """正對照：一致率 0.5 <0.80 ⇒ needs_rubric_revision=true、exit 2，但檔案與 journal 仍寫出。"""
     _skip_if_missing()
     run_result = _run_result([("C01", "answerable", "answerable"),
                                ("C02", "no_source", "no_source"),

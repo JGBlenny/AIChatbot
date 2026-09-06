@@ -48,7 +48,7 @@
   - 需求：1.5, 3.4, 6.5
   - 執行：executor／effort 高——本 repo Workflow 首例；判者隔離與 schema 是這一步的全部價值
   - 驗收：目標＝判者隔離＋schema 強制的 Workflow 首例可續跑｜成果＝`outline-curation.js`＋rubric＋2 格乾跑報告｜做法＝pipeline 三階段、臨時細目集合｜驗證＝[業主審核] rubric；[自驗] 乾跑續跑 100%
-- [x] 1.5 M-a 試作實跑與報告（1.4 後；2026-09-06 跑 44／55 格、一致率 0.841 ⇒ 出口＝回修 rubric、usd $15.84 超支，見 inputs/m-a-trial-20260906.md）：55 格 × 2 判者（不一致加第 3）跑一次；`cost_ledger` 出 `cost.json`；報告 `inputs/m-a-trial-20260906.md`：總 token／usd、wall、一致率、續跑命中率、每格 verdict 分佈；對照 design 附錄 C M-a done ①–⑦ 逐條打勾（一致率 <0.90 ⇒ 出口＝回修 rubric，⛔ 不算通過；重跑前回主 session 重核預算）。預算初值（步／整案）交業主核定。
+- [x] 1.5 M-a 試作實跑與報告（1.4 後；2026-09-06 跑 44／55 格、一致率 0.841；業主同日裁 0.841 可接受 ⇒ 門檻改 0.80、done ③ 過；usd $15.84 超支待裁，見 inputs/m-a-trial-20260906.md §7）：55 格 × 2 判者（不一致加第 3）跑一次；`cost_ledger` 出 `cost.json`；報告 `inputs/m-a-trial-20260906.md`：總 token／usd、wall、一致率、續跑命中率、每格 verdict 分佈；對照 design 附錄 C M-a done ①–⑦ 逐條打勾（一致率 <0.90 ⇒ 出口＝回修 rubric，⛔ 不算通過；重跑前回主 session 重核預算）。預算初值（步／整案）交業主核定。
   - 需求：1.5, 1.7
   - 執行：main／effort 中——收案判斷與預算呈核屬主 session；⚠️ 這裡的 verdict 全為 `provisional`，⛔ 不進正本、不進地圖
   - 驗收：目標＝量出試作成本／一致率，定預算初值｜成果＝`inputs/m-a-trial-20260906.md`＋done ①–⑦ 打勾表｜做法＝跑一次 55 格｜驗證＝[代理驗證]（claim：一致率與成本數字可由 journal 重算一致）；[業主親跑] 核定預算；[業主審核] 報告

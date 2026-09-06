@@ -50,3 +50,18 @@ def test_merge_rejects_duplicate_cells():
     e = {"cell_id": "C01", "label": "partial", "verdicts": [_v("partial"), _v("partial")]}
     with pytest.raises(SystemExit):
         m.merge([_batch([e], 1, 2), _batch([e], 1, 2)])
+
+
+def test_threshold_is_0_80_owner_ruling_20260906():
+    """門檻 0.80（業主 2026-09-06 裁：0.841 可接受）；0.79 仍紅、0.841 綠。與 outline-curation.js 同值。"""
+    m = _mod()
+    assert m.AGREEMENT_THRESHOLD == 0.80
+    ok = [{"cell_id": f"C{i:02d}", "label": "answerable", "verdicts": [_v("answerable"), _v("answerable")]} for i in range(37)]
+    bad = [{"cell_id": f"C{i:02d}", "label": "no_source", "verdicts": [_v("partial"), _v("no_source"), _v("no_source")]} for i in range(37, 44)]
+    r = m.merge([_batch(ok + bad, 37, 37 * 2 + 7 * 3)])
+    assert r["agreementRate"] == pytest.approx(37 / 44) and r["needs_rubric_revision"] is False
+    low = ok[:31] + [dict(b, cell_id=f"D{i:02d}") for i, b in enumerate(bad + bad)]  # 31 一致／45 格＝0.69
+    r2 = m.merge([_batch(low, 31, 0)])
+    assert r2["needs_rubric_revision"] is True
+    js = open(os.path.join(_REPO, ".claude", "workflows", "outline-curation.js"), encoding="utf-8").read()
+    assert "const AGREEMENT_THRESHOLD = 0.80" in js

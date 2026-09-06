@@ -2,11 +2,13 @@
 """合併多批 Workflow Reconcile 回傳（分批 fresh run 取代 resume），輸出單一 run_result 給 finalize_answerability.py。
 
 決定性：labels 依 cell_id 排序；total／agree／agentsUsed 逐批相加；agreementRate＝agree/total；
-needs_rubric_revision＝agreementRate < 0.90（與 outline-curation.js 同一門檻）。
+needs_rubric_revision＝agreementRate < AGREEMENT_THRESHOLD（0.80；與 outline-curation.js 同一門檻；原 0.90，2026-09-06 業主裁改）。
 批與批的 frozenAt／rubricSha／inputsSha 必須完全一致，否則 exit 2（不同凍結材料不能併成一份試作）。
 另附 fineIdAgreementRate（同一格兩位一致判者 fine_id 相同的比率；label 不一致格不計）——只供報告，⛔ 不進門檻。
 """
 import argparse, json, sys
+
+AGREEMENT_THRESHOLD = 0.80  # 2026-09-06 業主裁：1.5 實測 0.841 可接受（原 0.90）
 
 
 def merge(batches: list) -> dict:
@@ -32,7 +34,7 @@ def merge(batches: list) -> dict:
         "total": total,
         "agree": agree,
         "agreementRate": rate,
-        "needs_rubric_revision": rate < 0.90,
+        "needs_rubric_revision": rate < AGREEMENT_THRESHOLD,
         "agentsUsed": agents,
         "labels": labels,
         "batches": len(batches),

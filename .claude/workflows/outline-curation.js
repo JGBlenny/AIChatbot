@@ -109,7 +109,9 @@ if (droppedCells > 0) {
 
 const total = labels.length
 const agreementRate = total > 0 ? agree / total : 0
-const needs_rubric_revision = agreementRate < 0.90
+// 門檻 0.80：原 0.90（design 附錄 C ③）；2026-09-06 業主裁 1.5 實測 0.841 可接受 ⇒ 改 0.80（design D. 1.4）
+const AGREEMENT_THRESHOLD = 0.80
+const needs_rubric_revision = agreementRate < AGREEMENT_THRESHOLD
 
 return {
   step: 'answerability',

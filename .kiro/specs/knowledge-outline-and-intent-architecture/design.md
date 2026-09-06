@@ -152,7 +152,7 @@ export const meta = {
 ```
 - **Structure**：`parallel(ANGLES.map(a => () => agent(prompt(a), {phase:'Structure', schema: STRUCTURE_SCHEMA})))` → 一個合成 agent 產 `structure-proposal.json`（保留三份原提案於 journal）。
 - **Answerability**：`pipeline(cells, c => agent(judgePrompt(c,1), {phase:'Answerability', schema: ANSWERABILITY_SCHEMA}), (v1,c) => agent(judgePrompt(c,2), …).then(v2 => ({c, v1, v2})), r => r.v1.label===r.v2.label ? r : agent(judgePrompt(r.c,3), …).then(v3 => ({...r, v3})))`（各階段參數形狀 `(prevResult, originalItem, index)` 已對過本 session 載入的 `workflow-authoring` 規約）——判者 prompt 含：格的問句、**候選細目＝由程式列舉的正本草稿全部細目（id＋標題＋內容），⛔ 不經 FineIndex 或任何被驗檢索排序（裁定 10；E3）**、rubric；⛔ 不含系統判定、⛔ 不含其他判者輸出。`fine_id` 值域＝該草稿的細目 id 集合（schema `enum` 於組裝時注入）。unit：判者 prompt 組裝函式的輸入不含任何分數／排序／系統判定欄位（正對照：塞一個 `score` 鍵必紅）。
-- **Reconcile**：純程式：一致率＝`agree/total`；`<0.90` ⇒ payload `needs_rubric_revision=true` **且** skill 步 5 腳本讀到此旗標即 exit 2、元件 3 Stop hook 亦擋（E6）——「停下回主 session」是機制不是叮嚀。
+- **Reconcile**：純程式：一致率＝`agree/total`；`<0.80` ⇒ payload `needs_rubric_revision=true` **且** skill 步 5 腳本讀到此旗標即 exit 2、元件 3 Stop hook 亦擋（E6）——「停下回主 session」是機制不是叮嚀。
 - `agent()` 一律 `effort: 'low'`（判者）／預設（合成）；`agentType` 省略（沿用 workflow 子代理）；⛔ 不用 `Date.now()`（時間戳由 `args.frozenAt` 傳入）。
 - 判者輸出 schema（節錄）：
 ```python
@@ -568,7 +568,7 @@ flowchart LR
 | 索引未就緒／sha 不符／查詢逾時 | `select` 回 None ⇒ 整份正本＋violation；health `not_ready`／`absent` 紅 |
 | selector 例外 | `except Exception` ⇒ 整份正本＋`candidate_selector_error`（與 fallback 分開） |
 | 未審細目被引用 | `citable=False` ⇒ Verifier `SOURCE_NOT_CITABLE`（既有） |
-| Workflow 判者不一致 | 第 3 判者；一致率 <0.90 ⇒ `needs_rubric_revision` 停下回主 session（R6.2） |
+| Workflow 判者不一致 | 第 3 判者；一致率 <0.80 ⇒ `needs_rubric_revision` 停下回主 session（R6.2） |
 | 預算超支 | `cost_ledger` exit 2；Stop hook 擋 |
 
 ## 測試策略
@@ -612,7 +612,7 @@ flowchart LR
 |---|---|---|---|
 | 售前原稿不存在，E 競品單薄 | 高 | 高 | skill 首跑產 G「現有不足」；E 只用既有來源；業主審草稿時補 |
 | 標題＋講法匹配上限低於預期 | 高 | 中 | R6 步 1 三臂先量（$0）；低於臂間 10 點差則加內文臂或增講法密度，⛔ 不調 K |
-| 判者變異 | 中 | 高 | 兩判者＋第三判者；一致率 <0.90 停下修 rubric |
+| 判者變異 | 中 | 高 | 兩判者＋第三判者；一致率 <0.80 停下修 rubric |
 | Workflow／hook 首例成本 | 中 | 中 | 最小試作一步先量 |
 | 平台票未排 | 高 | 中 | 票 B／C／D 已收窄為 enum／白名單／一行謂詞；票 A 只在 D2 允許時 |
 | LINE 可見集合未實查 | 中 | 中 | 元件 11 契約測試前先一次 SQL 對照（正對照：pm 可見 285） |
@@ -639,10 +639,10 @@ flowchart LR
 ### C. 里程碑與 done 條件（供 tasks 切分；依賴順序）
 1. **M-a 機制**（A1–A4）：元件 3 hooks＋元件 2 Workflow 最小試作（可答性，**以臨時細目集合跑**：F2 的 21 列＋18 筆草稿，`fine_id=tmp:*`、verdict `provisional=true`，⛔ 不進正本）＋元件 1 步 1／4／6 腳本。
    - **prerequisites**：不需 `canon/prospect.md`；需 `inputs/` 三檔＋缺口地圖 v2.1。
-   - **done（可證偽）**：① hook 接線實跑印出 `CLAUDE_PROJECT_DIR` 與腳本路徑；② hooks 自證 5 違反各紅（含 `needs_rubric_revision`）、5 合規各綠；③ 試作一致率 ≥0.90（否則出口＝回修 rubric，⛔ 不算通過）；④ `resumeFromRunId`（Workflow 工具的既有參數，本 session 工具 schema 實證；tasks 起手再以一次乾跑確認）續跑快取命中＝100%；⑤ **單次**試作代理數 ≤180、usd ≤3——一致率 <0.90 的重跑不計入此上限，重跑前回主 session 重核預算（r2 M-a #2）；⑥ `intake.py`／`diff_report.py` 決定性 unit 綠（同輸入兩次逐位元相等）；⑦ `cost_ledger` 超支必 exit 2（正對照）。
+   - **done（可證偽）**：① hook 接線實跑印出 `CLAUDE_PROJECT_DIR` 與腳本路徑；② hooks 自證 5 違反各紅（含 `needs_rubric_revision`）、5 合規各綠；③ 試作一致率 ≥0.80（原 0.90；2026-09-06 業主裁 1.5 實測 0.841 可接受 ⇒ 門檻改 0.80，見 D. 1.4；否則出口＝回修 rubric，⛔ 不算通過）；④ `resumeFromRunId`（Workflow 工具的既有參數，本 session 工具 schema 實證；tasks 起手再以一次乾跑確認）續跑快取命中＝100%；⑤ **單次**試作代理數 ≤180、usd ≤3——一致率 <0.80 的重跑不計入此上限，重跑前回主 session 重核預算（r2 M-a #2）；⑥ `intake.py`／`diff_report.py` 決定性 unit 綠（同輸入兩次逐位元相等）；⑦ `cost_ledger` 超支必 exit 2（正對照）。
    - **獨佔檔案**：`.claude/settings.json`、`.claude/hooks/**`、`.claude/workflows/**`、`.claude/skills/outline-curation/**`、`.gitignore`（本 slice 內不得有他線同時改）。
    - **rollback**：移除 `.claude/settings.json` 對應 hook 條目（單檔 revert）；Workflow／skill 目錄可整目錄刪。
-   - **stops**：自證或試作出現**非目標路徑被 hook 擋**（任何 `rag-orchestrator/canon/`、`.claude/skills/outline-curation/runs/` 以外的 Edit／Stop 被擋）⇒ 立即停用該條目、回主 session；一致率 <0.90 ⇒ 停下修 rubric。
+   - **stops**：自證或試作出現**非目標路徑被 hook 擋**（任何 `rag-orchestrator/canon/`、`.claude/skills/outline-curation/runs/` 以外的 Edit／Stop 被擋）⇒ 立即停用該條目、回主 session；一致率 <0.80 ⇒ 停下修 rubric。
 2. **M-b 正本**：元件 4 parser＋元件 1 全七步首跑（售前）→ done：`canon/prospect.md` 草稿＋diff-report 交業主審；步 0 出口（無去向格＝0）。
 3. **M-c 組裝與索引**：元件 5＋6＋票 D → done：health 三 sha；步 1 三臂結果；決策 5 定案。
 4. **M-d 回合接線**：元件 7＋票 B／C → done：步 2 探針；契約測試綠。
@@ -711,6 +711,7 @@ flowchart LR
 | 2026-09-06T10:13:36+0800 | 1.0 | 初始版本（需求 v2 核可、R1.5 定向後） | AI |
 | 2026-09-06 | 1.1 | security-reviewer 20 條處置（附錄 E）：sha 重算、匯入 fail-closed、白名單謂詞、可見性補洞、身分強制覆寫、hook 變數與接線測試、D3 落地、三軸欄位 | AI |
 | 2026-09-06 | 1.3 | plan-verifier r2 REVISE 6 條處置（附錄 G）：正本目錄全文統一為 `rag-orchestrator/canon/`、hook matcher 改完整相對路徑＋負對照、自證五種、done ⑤ 單次上限 | AI |
+| 2026-09-06 | 1.4 | 一致率門檻 0.90→**0.80**（業主裁：1.5 試作 44 格實測 0.841 可接受；`outline-curation.js`／`merge_answerability_batches.py` 同步；預算超支另裁，見 inputs/m-a-trial-20260906.md §7） | 業主／AI |
 | 2026-09-06 | 1.2 | plan-verifier r1 REVISE 11 條處置（附錄 F）：啟動呼叫鏈寫死、正本目錄移入 rag-orchestrator、不變量 33 收窄、判者候選程式列舉、預算分步、M-a 改臨時細目集合並補可證偽 done／rollback／stops | AI |
 
 ---

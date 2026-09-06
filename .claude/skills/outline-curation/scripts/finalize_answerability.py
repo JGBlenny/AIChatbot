@@ -126,7 +126,7 @@ def main() -> int:
         print(f"[finalize_answerability] 警告：找不到 repo 根，跳過狀態檔寫入（{e}）", file=sys.stderr)
 
     if needs_rubric_revision:
-        print("[finalize_answerability] needs_rubric_revision=true——一致率 <0.90，"
+        print("[finalize_answerability] needs_rubric_revision=true——一致率 <0.80（門檻，2026-09-06 業主裁），"
               "回主 session 回修 rubric（新 readiness epoch），⛔ 不進正本、不進地圖", file=sys.stderr)
         return 2
 
