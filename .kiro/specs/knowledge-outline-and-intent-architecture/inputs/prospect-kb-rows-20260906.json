@@ -1,0 +1,326 @@
+{
+  "_meta": {
+    "db": "aichatbot_admin (local)",
+    "exported_at": "2026-09-06",
+    "n": 21,
+    "note": "M-a 試作臨時細目集合 F2 的 21 列；⛔ 不是正本、只供 answerability 判者候選",
+    "source": "knowledge_base WHERE outline_approved_by IS NOT NULL AND is_active AND target_user @> {prospect}"
+  },
+  "rows": [
+    {
+      "answer": "公司或團隊（包租代管、物管）通常要多人分工，還得對業主交報表，需求比個人房東複雜。金箍棒的全模組方案正好對應這種規模——除了物件、合約、帳務，還有團隊權限管理讓成員分工，以及大房東報表，把代收代付與營運狀況整理好、對業主交代清楚；若有現場抄電表或換門鎖的需求，智慧電錶／門鎖也能依需求整合（細節由專人說明）。實際適合的模組組合與費用會依團隊規模而不同，建議直接預約 demo，由專人陪您盤點需求並提供報價。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前顧問"
+      ],
+      "kb_id": 3584,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "公司團隊方案 包租代管物管 全模組 團隊權限 大房東報表 適合",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "金箍棒智慧物管能把物件、合約、收租對帳到智慧設備集中在一個系統管理。想知道適不適合您，先讓我了解一下您的狀況。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前顧問"
+      ],
+      "kb_id": 3585,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "想了解金箍棒 你們系統介紹 適不適合我用 合不合用 想看看你們 怎麼用 物業管理 售前",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "管 10 間左右的個人房東，最花時間的通常是收租對帳和合約來回。金箍棒把物件、合約、帳務集中在一個系統：線上電子簽章簽約、自動產帳單與金流代收、收租對帳一條龍，取代 Excel 與 LINE 的零散作業，也能發租客通知、處理報修。建議先用免費試用一個月實際跑跑看；正式方案級距與費用調整中，可於定價頁(https://www.jgbsmart.com/pricing)查看或由專人為您說明，這裡不報數字。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前方案"
+      ],
+      "kb_id": 3596,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "個人房東 約10戶 方案 物件合約帳務 收租對帳 免費試用",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "管到 20 間左右，帳單與對帳的量明顯變大、人工容易出錯。金箍棒的帳務模組（自動帳單、多元金流代收、電子發票、儲值金）能把收租對帳自動化，搭配物件管理、電子簽章合約、租客通知與修繕，讓一個人也管得動這個規模。可先免費試用一個月感受效率差異；方案級距與費用請見定價頁(https://www.jgbsmart.com/pricing)或由專人提供，這裡不報過時數字。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前方案"
+      ],
+      "kb_id": 3597,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "個人房東 約20戶 方案 帳務自動化 多元金流 免費試用",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "管到 30 間左右，已接近個人經營的規模上限，物件與帳務都相當可觀；未來若開始多人協作或要對業主交報表，會很快需要團隊管理與大房東報表。金箍棒在這階段能用物件、合約、帳務的完整自動化撐住現有規模，並可平順銜接到團隊方案。建議先免費試用一個月；正式級距與費用調整中，請見定價頁(https://www.jgbsmart.com/pricing)或由專人為您盤點，這裡不直接報價。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前方案"
+      ],
+      "kb_id": 3598,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "個人房東 約30戶 方案 規模化 銜接團隊大房東報表 免費試用",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "物件多、資料分散難管？金箍棒的房源管理把所有物件集中：物件建檔、社區歸戶、批次上傳，還有招租公開頁與 VR 看屋連結，取代散落的 Excel。想看實際畫面可預約 demo。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前模組"
+      ],
+      "kb_id": 3599,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "房源管理 物件集中 社區歸戶 批次上傳 VR看屋",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "合約多、怕簽錯、紙本來回慢？金箍棒的租約管理把一般租賃合約從建約到簽署搬到線上，一頁看完重點：\n【建約方式】三種：電子合約（公版範本）、電子合約（客製化契約書）、紙本簽約（把既有的紙本合約上傳留存）。上傳的既存合約與系統制式合約效力相同，後續合約、帳務、修繕一樣可追蹤。\n【範本】電子合約通用範本共 12 種（另有三種特殊用途範本，非一般房東可選）：內政部中文版、內政部英文版、公會中文版各有原房東／包租業／代租代管三種身分版本，另有英泰文版與英越文版。法人團隊 12 種都能選；個人房東可選內政部中文版、內政部英文版、英泰文版、公會中文版（皆為原房東版本）。\n【流程】只有「刊登中」的物件能建約。系統以表單引導逐項填寫（租金、收款方式、傢俱與修繕責任、公證、附件、補充條款等），全部填完可先「預覽合約」確認合約文本，再寄送給租客；送出簽約邀請後，租客會收到簡訊／Email 等邀請通知，點連結線上電子簽名（不用手寫紙本），管理者回簽即完成。租客可選擇免註冊（由管理方代填資料），或直接在邀請流程中完成註冊。\n【時效】簽約邀請有效 72 小時（同時也是租客的契約審閱期），逾期連結失效、合約退回待發送，需重填租客資料再發。\n【修改】未發送的合約可直接編輯；已送出邀請要先取消再改（管理者主動取消會保留已填的租客資料；逾期或租客不同意退回則會清空）；租客已簽回但管理方尚未回簽時，可取消簽名後修改重發；雙方都簽完後不可直接修改，只能複製該合約重建新約重簽，或走資料異動申請。合約 PDF 上的簽署參數（租金、電價、租期等）簽後不可更動；資料異動申請調整的是系統資料，不重簽則 PDF 與實際收款會不一致。\n【身分】建約時可用個人或法人（團隊）身分；團隊建約會把大小章、租賃管理人員、公司聯繫資訊一併帶進合約。\n【社會住宅】社會住宅另有專屬流程：因公證為必要程序，須列印紙本完成公證後上傳歸檔，並非線上完成簽署。\n【其他】建立新約需逐份進行（不支援批次匯入既有合約）；續約則可在執行中合約一次勾選多筆批次處理（正在提前解約申請中、點交中、點退中的合約無法納入）。方案與費用請見 [查看方案與費用](https://www.jgbsmart.com/pricing) 或由專人說明。想看實際建約畫面可預約 demo。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前模組"
+      ],
+      "kb_id": 3600,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "建立合約 線上電子簽約 合約範本 簽約邀請 修改合約 上傳既有合約",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "收租、對帳很亂、催繳費時？金箍棒的帳務管理自動產帳單、線上金流代收（藍新/永豐/中信/國泰/愛金卡）、開電子發票，還有儲值金與押金設算息，收租對帳一條龍，不再用 Excel 人工對。想看實際操作可預約 demo。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前模組"
+      ],
+      "kb_id": 3601,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "帳務管理 收租對帳 自動帳單 金流代收 電子發票 儲值金",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "人多、管不動？金箍棒的團隊管理支援多人帳號與角色權限，讓代管團隊分工協作，並提供大房東報表對業主交代。想了解團隊方案可預約 demo 由專人說明。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前模組"
+      ],
+      "kb_id": 3602,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "團隊管理 多人協作 角色權限 大房東報表",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "現場抄電表、換門鎖很煩？金箍棒有整合智慧電錶（抄表可自動帶入帳單）與智慧門鎖，屬硬體設備，實際支援範圍、安裝與費用由專人為您說明。可留資由專人與您聯絡。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前模組"
+      ],
+      "kb_id": 3603,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "智慧電錶 智慧門鎖 抄表 換鎖 IoT 硬體",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "要定期跟業主交報表很花時間？金箍棒的大房東報表能把代收代付、月結與營運狀況整理成報表，並可排程自動寄送給業主，省去人工彙整。想看報表內容可預約 demo。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前模組"
+      ],
+      "kb_id": 3604,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "大房東報表 代收代付 月結 對業主交報表 自動寄送",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "報修處理慢、追蹤不易？金箍棒的修繕系統讓租客線上報修、房東與管理方追蹤處理進度，把報修流程數位化。想看實際流程可預約 demo。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前模組"
+      ],
+      "kb_id": 3605,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "修繕系統 線上報修 進度追蹤",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "管理租賃常見的收租對帳、合約、人多協作、報修等問題，金箍棒都有對應的模組。想知道我們怎麼解決您的狀況，先選一個您最想改善的：",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前顧問"
+      ],
+      "kb_id": 3606,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "管理困擾 痛點 你們能解決什麼問題 收租 合約 報修 團隊",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "同類的租賃管理系統還有 Bananas、屋我也，三者都做物件、合約、帳務，差異主要在合約類型廣度、金流、IoT 整合與適用場景。以公開官網可查的事實來說：金箍棒的合約類型較完整（涵蓋一般租賃、社會住宅、委託），金流支援多元（藍新／永豐／中信／國泰／愛金卡），並有智慧門鎖／電錶整合（硬體細節由專人說明）與大房東報表，適合社宅委託、需多元收款、要對業主交報表的代管團隊。對方官網未明確提及的功能，我們無法替他們確認，建議您直接向對方詢問。若想實際比較，歡迎預約 demo。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前競品"
+      ],
+      "kb_id": 3607,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "金箍棒 跟 Bananas 屋我也 差異 比較 租賃管理系統 競品",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "選金箍棒的主要理由在「合約類型廣 + 多元金流 + IoT 整合 + 規模化團隊管理」：合約涵蓋一般／社會住宅／委託（社宅與委託代管尤其完整）、金流支援藍新／永豐／中信／國泰／愛金卡、可串接智慧門鎖／電錶（細節由專人說明）、多人權限搭配大房東報表方便對業主交代，另有押金設算息、VR 看屋、6 國語系等加值，且新帳號享免費試用一個月。想實際體驗可直接開試用或預約 demo。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前競品"
+      ],
+      "kb_id": 3608,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "為什麼選金箍棒 優勢 強項 差異化 好處",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "我們不會評論同業的好壞或內部狀況，只就公開可查的事實、以及金箍棒實際適合的情境提供中立資訊；對方未明確提供的功能，建議您直接向對方確認，我們不會替他們斷言有或沒有。若想實際比較，最準的方式是預約 demo 或直接開免費試用體驗。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前競品"
+      ],
+      "kb_id": 3609,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "你們會評論競爭對手嗎 怎麼看同業 會說對手壞話嗎 中立",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "金箍棒採訂閱制，方案依管理規模（物件數）以及是否需要團隊、大房東報表、IoT 等功能分級。目前方案與價格正在調整，為避免提供過時數字，實際級距與費用請參考線上定價頁(https://www.jgbsmart.com/pricing)，或留下聯絡方式由專人為您報價。也歡迎先用免費試用一個月實際體驗。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前價格"
+      ],
+      "kb_id": 3610,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "金箍棒 怎麼收費 多少錢 方案 費用 價格 報價",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "可以，新帳號享有免費試用一個月，註冊即可開始，先實際用過再決定。需要協助開通可以留個聯絡方式，或直接預約 demo 由專人帶您看。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前價格"
+      ],
+      "kb_id": 3611,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "可以免費試用嗎 試用多久 免費 試用",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "怕租客忘記繳、拖著不繳？金箍棒的帳務管理會在帳單到期前五日、三日、一日自動發 Email 與 LINE 提醒給租客，逾期後改為每日通知；逾期帳單在系統上會以紅字與「逾期」標籤標示，房東首頁也會即時更新逾期帳款。另外系統有滯納金機制（延遲金或逾期金，依團隊設定啟用）。想看實際催繳畫面可預約 demo。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前模組"
+      ],
+      "kb_id": 5378,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "租客不繳租金怎麼辦 逾期 催繳 提醒 遲繳 拖欠",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "換系統最怕重建資料。金箍棒可以用 Excel 範本批次匯入：物件（一般與社會住宅）、租客、社區、大房東聯絡簿；團隊（法人房東）帳號還能批次匯入帳單，匯入後會成為待發送的新帳單。要特別說明的是：合約目前不支援批次匯入，需要逐筆建立（線上電子簽新約，或上傳既有紙本合約 PDF 存檔）；舊系統已繳完的歷史帳單也沒有搬移功能。搬遷細節可預約 demo，由專人依您的資料量評估。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前模組"
+      ],
+      "kb_id": 5379,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "舊系統資料可以匯進來嗎 批次匯入 搬資料 房東租客合約帳單 哪些能匯 合約能不能匯",
+      "target_user": [
+        "prospect"
+      ]
+    },
+    {
+      "answer": "帳單能調的是內容，版面是選不是畫。內容方面：帳單標題與備註、計費起訖日、繳費期限、費用品項（租金、水電度數、生活費用等，可增刪、改單價數量）、收款帳戶、收款章、排定發送日都可以在系統設定。版面方面：收據版式可在「一般收據」與「財政部包租業租金收據」（可雙版或不檢附）之間選擇，但 logo、欄位排列等不開放任意自訂；電子發票的格式則由發票廠商（ezPay／eCloud）決定，系統只設定廠商與稅率。有特殊版面需求可預約 demo 由專人評估。",
+      "business_types": [
+        "system_provider"
+      ],
+      "categories": [
+        "售前模組"
+      ],
+      "kb_id": 5380,
+      "outline_approved_by": "owner-20260905",
+      "question_summary": "帳單格式能不能自己設定 帳單版面 收據樣式 自訂帳單 客製帳單 品項 抬頭",
+      "target_user": [
+        "prospect"
+      ]
+    }
+  ]
+}

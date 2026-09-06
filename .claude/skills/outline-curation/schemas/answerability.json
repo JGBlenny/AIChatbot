@@ -16,7 +16,21 @@
       "required": ["labels", "needs_rubric_revision"],
       "additionalProperties": false,
       "properties": {
-        "labels": {"type": "array", "items": {"type": "object"}},
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["cell_id", "label", "fine_id", "evidence_unit", "confidence", "provisional"],
+            "properties": {
+              "cell_id": {"type": "string"},
+              "label": {"type": "string", "enum": ["answerable", "partial", "no_source", "deliberate_no"]},
+              "fine_id": {"type": ["string", "null"]},
+              "evidence_unit": {"type": ["integer", "null"]},
+              "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+              "provisional": {"type": "boolean", "enum": [true]}
+            }
+          }
+        },
         "needs_rubric_revision": {"type": "boolean"}
       }
     }
