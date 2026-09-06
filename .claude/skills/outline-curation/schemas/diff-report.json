@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "outline-curation/schemas/diff-report.json",
+  "type": "object",
+  "required": ["step", "skill_version", "inputs_sha", "deterministic", "raw_outputs_path", "cost", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "step": {"type": "string", "enum": ["diff"]},
+    "skill_version": {"type": "string"},
+    "inputs_sha": {
+      "type": "object",
+      "required": ["new_canon"],
+      "properties": {
+        "new_canon": {"type": "string"},
+        "old_canon": {"type": ["string", "null"]}
+      }
+    },
+    "deterministic": {"type": "boolean", "enum": [true]},
+    "raw_outputs_path": {"type": ["string", "null"]},
+    "cost": {"type": "object"},
+    "payload": {
+      "type": "object",
+      "required": ["structure_diff", "id_map", "replacements"],
+      "additionalProperties": false,
+      "properties": {
+        "structure_diff": {
+          "type": "object",
+          "required": ["headings_added", "headings_removed", "headings_renamed"],
+          "properties": {
+            "headings_added": {"type": "array", "items": {"type": "object"}},
+            "headings_removed": {"type": "array", "items": {"type": "object"}},
+            "headings_renamed": {"type": "array", "items": {"type": "object"}}
+          }
+        },
+        "id_map": {"type": "array", "items": {"type": "object"}},
+        "replacements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["old_kb_id", "fine_id", "how"],
+            "additionalProperties": false,
+            "properties": {
+              "old_kb_id": {"type": "string"},
+              "fine_id": {"type": "string"},
+              "how": {"type": "string", "enum": ["content", "merged_into", "phrasing_only"]}
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "outline-curation/schemas/cost.json",
+  "type": "object",
+  "required": ["step", "skill_version", "inputs_sha", "deterministic", "raw_outputs_path", "cost", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "step": {"type": "string", "enum": ["intake", "structure", "phrasing", "answerability", "reweigh", "diff", "import"]},
+    "skill_version": {"type": "string"},
+    "inputs_sha": {"type": "object"},
+    "deterministic": {"type": "boolean"},
+    "raw_outputs_path": {"type": ["string", "null"]},
+    "cost": {
+      "type": "object",
+      "required": ["agents", "prompt_tokens", "completion_tokens", "usd", "wall_s"],
+      "additionalProperties": false,
+      "properties": {
+        "agents": {"type": "integer"},
+        "prompt_tokens": {"type": "integer"},
+        "completion_tokens": {"type": "integer"},
+        "usd": {"type": "number"},
+        "wall_s": {"type": "number"}
+      }
+    },
+    "payload": {
+      "type": "object",
+      "required": ["by_step", "total", "over_budget"],
+      "additionalProperties": false,
+      "properties": {
+        "by_step": {"type": "object"},
+        "total": {"type": "object"},
+        "over_budget": {"type": "boolean"}
+      }
+    }
+  }
+}

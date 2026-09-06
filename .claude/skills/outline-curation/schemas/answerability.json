@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "outline-curation/schemas/answerability.json",
+  "type": "object",
+  "required": ["step", "skill_version", "inputs_sha", "deterministic", "raw_outputs_path", "cost", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "step": {"type": "string", "enum": ["answerability"]},
+    "skill_version": {"type": "string"},
+    "inputs_sha": {"type": "object"},
+    "deterministic": {"type": "boolean", "enum": [false]},
+    "raw_outputs_path": {"type": "string"},
+    "cost": {"type": "object"},
+    "payload": {
+      "type": "object",
+      "required": ["labels", "needs_rubric_revision"],
+      "additionalProperties": false,
+      "properties": {
+        "labels": {"type": "array", "items": {"type": "object"}},
+        "needs_rubric_revision": {"type": "boolean"}
+      }
+    }
+  }
+}
