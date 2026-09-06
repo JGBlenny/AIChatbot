@@ -528,6 +528,8 @@ flowchart LR
 ### 決策 5：匹配鍵預設＝標題向量＋講法向量取最大；內文向量為量測臂
 **決定**：線上不用內文向量直到 R6 步 1。**理由**：圖書館法（索引目錄不索引內容）；F10 的 86% 是內文代替品，⛔ 不得沿用為停損線。
 
+**適用範圍（2026-09-06 補明，業主問）**：本決策的匹配鍵（標題向量＋講法向量取最大、細目＝檢索單位、top-K 候選、第二次機會）**只實作在 agent 路徑**（元件 6 `FineIndex`／`CandidateSelector`，M-c／M-d）。**舊鏈（`routers/chat.py`）不改檢索邏輯**：它只經元件 8 入庫拿到「一細目一列」（`question`＝標題、`answer`＝內容句），仍是一列一向量的既有檢索；講法首批不寫 `keywords`（F16），所以舊鏈得到更乾淨的知識、得不到講法匹配。⇒ 影子對照若只換知識不切路徑，量到的是知識品質不是本決策；本決策的效果以 M-c 步 1 三臂（標題／講法／內文）與 M-d 步 2 探針證明。
+
 ### 決策 6：身分預填＝每回合由 `Identity` 派生進 prompt，不落 DB
 **問題**：`slots_set` 對無 `COLLECTING` 列回 NO_MATCH，預填時機不可靠。**決定**：派生（`entry` 來源）優先於 DB 值的 audience 層級；子身分（identity 細分、team、pain、interested）仍由模型經 `slots_set` 寫入。**理由**：入口身分是上游信任輸入（DSP-011），不需持久化就能保證「不重問」；R8.2 票因此縮為 enum 擴充。
 
@@ -713,6 +715,7 @@ flowchart LR
 | 2026-09-06T10:13:36+0800 | 1.0 | 初始版本（需求 v2 核可、R1.5 定向後） | AI |
 | 2026-09-06 | 1.1 | security-reviewer 20 條處置（附錄 E）：sha 重算、匯入 fail-closed、白名單謂詞、可見性補洞、身分強制覆寫、hook 變數與接線測試、D3 落地、三軸欄位 | AI |
 | 2026-09-06 | 1.3 | plan-verifier r2 REVISE 6 條處置（附錄 G）：正本目錄全文統一為 `rag-orchestrator/canon/`、hook matcher 改完整相對路徑＋負對照、自證五種、done ⑤ 單次上限 | AI |
+| 2026-09-06 | 1.6 | 決策 5 補「適用範圍」：講法向量匹配只在 agent 路徑；舊鏈只經入庫得一細目一列、不改檢索（業主問後補明） | AI |
 | 2026-09-06 | 1.5 | 決策 7 修訂：判者改腳本直打 API（`answerability_judge.py`，共用快取前綴、structured outputs、journal 續跑）；Workflow 留參考；2.3 同改（業主裁：硬體撐不住 Workflow） | 業主／AI |
 | 2026-09-06 | 1.4 | 一致率門檻 0.90→**0.80**（業主裁：1.5 試作 44 格實測 0.841 可接受；`outline-curation.js`／`merge_answerability_batches.py` 同步；預算超支另裁，見 inputs/m-a-trial-20260906.md §7） | 業主／AI |
 | 2026-09-06 | 1.2 | plan-verifier r1 REVISE 11 條處置（附錄 F）：啟動呼叫鏈寫死、正本目錄移入 rag-orchestrator、不變量 33 收窄、判者候選程式列舉、預算分步、M-a 改臨時細目集合並補可證偽 done／rollback／stops | AI |
