@@ -104,7 +104,7 @@ class StepEnvelope(TypedDict):
   steps/01-intake.md … 07-import.md
   schemas/*.json
   scripts/_envelope.py intake.py structure_propose.py apply_proposal.py phrasing_map.py similar_items.py
-          attach_phrasings.py answerability_args.py answerability_agents.py finalize_answerability.py
+          attach_phrasings.py answerability_args.py answerability_agents.py save_verdict.py finalize_answerability.py
           merge_answerability_batches.py reweigh.py source_audit.py diff_report.py cost_ledger.py
           raw_purge.py canon_source_check.py
   journal/            （gitignored；各步成本 journal（cost_ledger 讀）；步 2／4 原始輸出在 raw/落點）

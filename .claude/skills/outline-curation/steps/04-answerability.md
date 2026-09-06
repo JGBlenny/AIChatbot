@@ -2,7 +2,7 @@
 
 **輸入**：`phrasing-map.json`。
 **輸出 schema**：`../schemas/answerability.json`。
-**形態**（業主 2026-09-06 裁：skill 流程用 Claude Code 子代理；模型 API 只在真實對話使用，⛔ 不留 API 判者）：`../scripts/answerability_agents.py prepare` 把格分組（預設 5 格一組，共用 rubric＋候選 prompt）→ 每組 2 個 slot 的 prompt 逐位元相同 → 主 session 每次最多 4 個子代理並行（8 GB 機器 ≥10 並行會整機重開）→ 回傳 JSON 存 `verdicts/<組>-s<slot>.json` → `collect`：事後驗證、不一致格產第 3 判者 prompt（`third.prompt.md`）、齊了就 Reconcile（與 1.4 定義等價、門檻 0.80）→ result JSON → `finalize_answerability.py`。`deterministic=false`；原始 prompt／回傳留 `../raw/answerability-<日期>/`。Workflow 版（`../../../workflows/outline-curation.js`，1.4）留參考。
+**形態**（業主 2026-09-06 裁：skill 流程用 Claude Code 子代理；模型 API 只在真實對話使用，⛔ 不留 API 判者）：`../scripts/answerability_agents.py prepare` 把格分組（預設 5 格一組，共用 rubric＋候選 prompt）→ 每組 2 個 slot 的 prompt 逐位元相同 → 主 session 每次最多 4 個子代理並行（8 GB 機器 ≥10 並行會整機重開）→ 回傳 JSON 存 `verdicts/<組>-s<slot>.json`（用 `../scripts/save_verdict.py <組>-s<slot> <子代理 transcript.jsonl> --out-dir <prepare 的 --out-dir>`：取最後一則 assistant 文字、容忍圍欄與散文、無文字 exit 2）→ `collect`：事後驗證、不一致格產第 3 判者 prompt（`third.prompt.md`）、齊了就 Reconcile（與 1.4 定義等價、門檻 0.80）→ result JSON → `finalize_answerability.py`。`deterministic=false`；原始 prompt／回傳留 `../raw/answerability-<日期>/`。Workflow 版（`../../../workflows/outline-curation.js`，1.4）留參考。
 **出口條件**：`needs_rubric_revision=false`（為 `true` 時 Stop hook 擋）；成本落在步 4 上限（≤180 代理／$3）內。
 
 ## 實作對應（1.4）
