@@ -37,7 +37,7 @@
 /usr/bin/python3 -m pytest tests/unit/_meta/test_outline_gate_wiring_req.py -q   → 5 passed
 ```
 
-⚠️ 測試容器（`docker-compose.dev.yml`）只掛 `rag-orchestrator`／`docs`／`.kiro`／`scripts`／`.github`，看不到 repo 根 `.claude/`，容器內跑本檔會 `[env]` skip 並印明原因（不靜默綠）。要讓 `make test` 也驗接線，需在 compose 補掛 `./.claude:/.claude:ro`——列為 1.2 的處置選項，本任務不動 compose。
+⚠️ 測試容器（`docker-compose.dev.yml`）原只掛 `rag-orchestrator`／`docs`／`.kiro`／`scripts`／`.github`，看不到 repo 根 `.claude/`，容器內跑本檔只能 `[env]` skip。已於同日補掛 `./.claude:/.claude:ro`（唯讀），容器內實跑 `scripts/run-tests.sh unit tests/unit/_meta/test_outline_gate_wiring_req.py` ⇒ 5 passed／0 skipped；1.2 的 hook 自證與 1.3 的 skill 腳本 unit 皆從此掛載點 import。
 
 ## 4. 對照組（非實跑，僅證明 command 字串與腳本本身可用）
 

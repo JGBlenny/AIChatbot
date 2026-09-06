@@ -38,6 +38,10 @@ services:
       # 同理：runner 層契約（第三層）要純文字解析 run-tests.sh 與 CI workflow。
       - ./scripts:/scripts:ro
       - ./.github:/.github:ro
+      # knowledge-outline-and-intent-architecture（任務 1.1 實測）：repo 層 hooks 與 skill 腳本住 `.claude/`，
+      # `_meta/test_outline_gate_wiring_req.py`、1.2 的 hook 自證、1.3 的 skill 腳本 unit 都要從這裡 import；
+      # 不掛則這些測試在容器內只能 `[env]` skip（假綠）。唯讀，且測試一律用 `$CLAUDE_PROJECT_DIR`／repo 根計算路徑。
+      - ./.claude:/.claude:ro
       # DSP-034：`nli_model/` 為離線抽審工具（已撤出線上路徑、⛔ 不在 compose 服務、⛔ 不接 Verifier），
       # 其 `tests/test_api_server.py` 用**假模型物件**驗 canary 與
       # handler 邏輯（⛔ 不載 torch、⛔ 不觸網），跑在這個容器裡即可。
