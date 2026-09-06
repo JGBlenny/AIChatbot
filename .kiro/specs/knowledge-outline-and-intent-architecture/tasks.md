@@ -1,7 +1,7 @@
 # 實作任務：knowledge-outline-and-intent-architecture（大綱正本、口語多意圖架構、小量先於放量）
 
 > 建立時間：2026-09-06
-> 需求：requirements.md v2（R1–R8，64 子項；業主 2026-09-06 核可，R1.5 定向 hook＋Workflow）｜設計：design.md **1.3**（12 元件、10 決策、不變量 32–34；security-reviewer 20 條→附錄 E、plan-verifier r1 11 條→附錄 F、r2 6 條→附錄 G、closing **READY**，餘 N1–N3 三條 P3 由 1.2 吸收）｜研究：research.md｜缺口：validation_gap.md
+> 需求：requirements.md v2（R1–R8，64 子項；業主 2026-09-06 核可，R1.5 定向 hook＋Workflow；v2.1 改 API 判者＋子代理提議）｜設計：design.md **1.3**（12 元件、10 決策、不變量 32–34；security-reviewer 20 條→附錄 E、plan-verifier r1 11 條→附錄 F、r2 6 條→附錄 G、closing **READY**，餘 N1–N3 三條 P3 由 1.2 吸收）｜研究：research.md｜缺口：validation_gap.md
 > 標記：`(P)` = 可與同層其他 `(P)` 平行；`- [ ]*` = 可延後的補充測試
 > ⚠️ 規則／模板缺席：`.kiro/settings/rules/tasks-*.md` 與 `templates/specs/tasks.md` 不存在，格式沿用 `agentic-mcp-orchestration/tasks.md`。
 > 鐵律：**正本＝system prompt 寫入權（R2.9／DSP-012）——正本只在 git、走 code review，DB 為衍生物**；**正本目錄＝`rag-orchestrator/canon/`（design 路徑約定）**；**隔離謂詞單一來源 `build_visibility_predicate`，b2b ⛔ 不加 `IS NULL`；「內容已審」為第二單一來源 `review_state.content_reviewed_predicate`（正向白名單 `reviewed:`）**；**引用單位＝正本細目的行（DSP-029a unit），Verifier 尺 ⛔ 不動（DSP-034 重提條件）**；**⛔ LLM 查詢改寫（裁定 8）**；**判「已覆蓋」⛔ 用被驗系統排序（裁定 10）**；**凍結題 ⛔ 入講法（裁定 11）**；**trace ⛔ 落原文、⛔ 落講法 id**；**DB 寫入／migration 執行由業主授權（D1）**；⛔ 不 push；⛔ 不動線上；`*.sql` `git add -f`；一次性腳本不 commit；材料 sha 跑前凍結、比較性結論 ≥30 題；TDD 先紅後綠、容器內跑（`make test`）；破壞性操作給指令＋預期輸出由業主跑。
@@ -18,7 +18,7 @@
 
 | 階段 | 這階段要證明的一件事 | 你會拿到 | 你拿它做什麼 |
 |---|---|---|---|
-| **M-a 機制**（§1） | 流程紀律靠 hook／Workflow 跑得起來，不靠叮嚀 | ① `inputs/hook-probe-20260906.md`：hook 真的接上線的實跑證據 ② 可答性 rubric（四值判準）③ `inputs/m-a-trial-20260906.md`：55 格試作的成本／一致率／續跑命中率 ④ 預算初值（每步／整案） | 核 rubric；看試作報告核預算上限；此時**沒有任何正本、沒動產品程式** |
+| **M-a 機制**（§1） | 流程紀律靠 hook／隔離判者跑得起來，不靠叮嚀（Workflow 試作後改 API 判者） | ① `inputs/hook-probe-20260906.md`：hook 真的接上線的實跑證據 ② 可答性 rubric（四值判準）③ `inputs/m-a-trial-20260906.md`：55 格試作的成本／一致率／續跑命中率 ④ 預算初值（每步／整案） | 核 rubric；看試作報告核預算上限；此時**沒有任何正本、沒動產品程式** |
 | **M-b 售前正本**（§2） | 21 列＋18 草稿能變成一份你看得懂、能逐條審的大綱 | ① `rag-orchestrator/canon/prospect.md` 草稿（A–G 粗目；每細目標題／講法／內容句／來源／審核者欄）② `diff-report.json`：舊 kb 列→細目的取代對應表 ③ `coverage-map.json`：55 格每格去向（進哪個細目／現有不足／刻意不補／待你裁） | 逐粗目審草稿、改講法、裁 `owner_decision` 格；**你審過並簽 reviewer 的那份才是正本** |
 | **M-c 組裝與索引**（§3） | 程式能決定性組裝正本、口語能對到細目 | ① health 三個 sha（正本／講法集／索引）② 步 1 三臂數字：標題／標題＋講法／＋內文 各自 recall@1/3/5，依粗目×問法型 ③ 決策 5 定案文 | 看數字點頭「線上用哪個匹配鍵」；這是**第一個免費就能回答的命題**（口語→細目的上限在哪） |
 | **M-d 回合接線**（§4） | 候選細目＋入口身分能讓「查無」變成「回答」而不猜 | ① `inputs/object-under-test.md`＋假設表（跑前給你核）② 凍結的 ≥30 題探針集 ③ 步 2 探針報告：翻轉率、對照組是否仍轉人、引用細目＝正解比率、盲標無據率（兩判者） | 跑前核受測物與推翻條件；跑後看三個數字決定是否進 M-e；推翻條件命中就停 |
@@ -28,9 +28,9 @@
 
 一句話：**M-a 給「流程可信」的證據、M-b 給「可審的正本草稿」、M-c 給「口語能不能對到細目」的數字、M-d 給「候選有沒有用」的數字、M-e 給「對話對不對」的契約、M-f 給 LINE 草稿、M-g 給上版包。** 你要出手的 14 個點見各任務 `驗收：` 行的 `[業主審核]`／`[業主親跑]` 標記。
 
-## 1. M-a 機制：hook 閘門、Workflow 最小試作、skill 骨架（1.1 先做；1.2／1.3 平行；1.4 後 1.5）
+## 1. M-a 機制：hook 閘門、判者最小試作（Workflow→API）、skill 骨架（1.1 先做；1.2／1.3 平行；1.4 後 1.5 後 1.6）——**全部完成**
 
-> **階段目標**：證明「流程紀律靠機制」在本 repo 跑得起來——hook 接得上線、Workflow 判者可回放、成本可量。**成果**：可用的閘門＋一次試作報告＋預算初值。**⛔ 不產正本、不動產品程式。**
+> **階段目標**：證明「流程紀律靠機制」在本 repo 跑得起來——hook 接得上線、判者可回放、成本可量（Workflow 版量出不可行 ⇒ 1.6 改 API 判者）。**成果**：可用的閘門＋一次試作報告＋預算初值。**⛔ 不產正本、不動產品程式。**
 
 - [x] 1.1 hook 接線實跑（⛔ 首件，不憑文件）：建 repo 層 `.claude/settings.json`（`PreToolUse`／`PostToolUse` matcher `Edit|Write`、`Stop`；command 形狀 `sh -c '[ -f "$CLAUDE_PROJECT_DIR/.claude/hooks/outline_gate.py" ] && exec python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/outline_gate.py" || exit 0'`）與 `outline_gate.py` 探測骨架（只印 `CLAUDE_PROJECT_DIR`、事件名、事件原始 `file_path` 的形狀（絕對／相對）到 `.claude/hooks/state/outline-gate/probe.log`，⛔ 不擋任何事）；先 Write 建 `rag-orchestrator/canon/README.md`（占位檔，內容＝路徑約定一句）再對它做一次 Edit 觸發並讀 log；結果落 `inputs/hook-probe-20260906.md`。`.gitignore` 補 `.claude/hooks/state/`、`.claude/skills/outline-curation/raw/`、Workflow journal 路徑。
   - 需求：1.4
@@ -73,7 +73,7 @@
   - 需求：1.1, 1.3, 1.5
   - 執行：executor／effort 高——結構提議是唯一「LLM 決定結構」的步，非決定性標記與 journal 保留要做對
   - 驗收：目標＝結構由三角度提議、人審合成、id 對應表強制｜成果＝Structure phase＋`apply_proposal.py`｜做法＝judge panel＋決定性套用｜驗證＝[自驗]
-- [ ] 2.4 售前首跑（2.1–2.3 後）：輸入＝F2 的 21 列 prospect（8 列 `IS NULL` 業者列 ⛔ 排除）＋18 筆草稿（`scripts/knowledge-batches/presales-gapmap-batch2-20260904.json`）＋缺口地圖 v2.1；**分兩段派工**：2.4a 步 1–3（intake、Structure 提議＋合成、講法掛載）→ 產結構草稿＋講法提案，主 session 檢視後才起 2.4b；2.4b 步 4–6（可答性判者、重量、diff）→ `rag-orchestrator/canon/prospect.md` 草稿（**細目內容取自某幫助中心文章者，其 `sources` 必併入 `helpcenter:<slug>`——這是 3.4 gold 的唯一生產者**）（A–G；G「現有不足」每格一句對外說法＋出口、E 只用既有來源、缺者標不足）、`diff-report.json`（含 `replacements[]` old kb id → fine id）、`cost.json`；交業主審草稿（⛔ 不 commit 正本、⛔ 不入庫）。
+- [ ] 2.4 售前首跑（2.1–2.3 後）：輸入＝F2 的 21 列 prospect（8 列 `IS NULL` 業者列 ⛔ 排除）＋18 筆草稿（`scripts/knowledge-batches/presales-gapmap-batch2-20260904.json`）＋缺口地圖 v2.1；**分兩段派工**：2.4a 步 1–3（intake、Structure 提議＋合成、講法掛載）→ 產結構草稿＋講法提案，主 session 檢視後才起 2.4b；2.4b 步 4–6（可答性判者＝`answerability_judge.py`，模型依附錄 H P1 裁定、重量、diff）→ `rag-orchestrator/canon/prospect.md` 草稿（**細目內容取自某幫助中心文章者，其 `sources` 必併入 `helpcenter:<slug>`——這是 3.4 gold 的唯一生產者**）（A–G；G「現有不足」每格一句對外說法＋出口、E 只用既有來源、缺者標不足）、`diff-report.json`（含 `replacements[]` old kb id → fine id）、`cost.json`；交業主審草稿（⛔ 不 commit 正本、⛔ 不入庫）。
   - 需求：1.9, 2.2, 2.10, 3.6, 3.7
   - 執行：main／effort 高——首跑的每一步輸出都是業主要審的東西，主 session 親跑並逐步檢視
   - 驗收：目標＝第一份售前正本草稿｜成果＝`prospect.md` 草稿＋diff-report＋replacements＋cost｜做法＝主 session 親跑步 1–6｜驗證＝[業主審核] 草稿逐粗目（⛔ 未審不 commit）

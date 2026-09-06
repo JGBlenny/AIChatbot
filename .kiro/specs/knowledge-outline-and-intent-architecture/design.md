@@ -1,15 +1,15 @@
 # 技術設計：knowledge-outline-and-intent-architecture
 
 > 建立時間：2026-09-06T10:13:36+0800（1.0；HEAD `138084fa`）　本版：**1.3**（readiness epoch 2：plan-verifier r2 REVISE 6 條全處置，見附錄 G；closing 審用此版）　1.2（r1，附錄 F）　1.1（2026-09-06，security-reviewer 20 條全數處置——6 P1 FIX、P2 全 FIX、P3 ACCEPT＋補文字；處置表見附錄 E）
-> 需求文件：requirements.md（v2，業主 2026-09-06 核可；R1.5 定向 hook＋Workflow）　研究記錄：research.md　缺口分析：validation_gap.md
+> 需求文件：requirements.md（v2，業主 2026-09-06 核可；R1.5 定向 hook＋Workflow；**v2.1 改判者＝API、提議＝子代理，Workflow 留參考**）　研究記錄：research.md　缺口分析：validation_gap.md
 > 發現流程：**light**（既有 agent 路徑擴展；無新外部服務）。平台層（Runtime／Verifier／MCP／trace 本體）留在 `agentic-mcp-orchestration`，本 spec 只開需求票（R8）。
 > 需求引用寫 `[需求 n.m]`，對應 requirements.md 的 `Rn.m`。
 
 ## 概述
 
 ### 設計目標
-把「知識怎麼被找到」從**程式讀 kb 列自動分類**改成**人審正本（粗目／細目／講法）→ 程式組裝與索引 → 模型只在被給的細目內判意圖與組話**，並讓建立與重切正本的流程由機制（hook 閘門＋Workflow 判者）而非叮嚀文保證一致。三個支柱各對一組元件：
-1. **完善大綱 skill**（元件 1–3）：每步 schema 輸出、四道閘門靠 hook、判者 fan-out 靠 Workflow、可回放、記成本。[需求 1]
+把「知識怎麼被找到」從**程式讀 kb 列自動分類**改成**人審正本（粗目／細目／講法）→ 程式組裝與索引 → 模型只在被給的細目內判意圖與組話**，並讓建立與重切正本的流程由機制（hook 閘門＋隔離判者／schema 強制；原 Workflow，2026-09-06 改 API 判者＋子代理提議）而非叮嚀文保證一致。三個支柱各對一組元件：
+1. **完善大綱 skill**（元件 1–3）：每步 schema 輸出、四道閘門靠 hook、判者 fan-out 靠獨立 API 請求（原 Workflow）、可回放、記成本。[需求 1]
 2. **正本與索引**（元件 4–6）：Markdown 正本 → 決定性 JSON → `OutlineDoc`（沿用既有組裝器）＋ `FineIndex`（細目標題向量＋講法向量取最大）→ 回合前程式選候選細目注入。[需求 2, 5]
 3. **對話與驗證**（元件 7–11）：身分由程式預填、對話邏輯以定義搬入 agent、CTA／handoff 由程式與設定供給；每個變更先有受測物定義清單與假設表，免費的先做。[需求 4, 6, 7]
 
@@ -36,7 +36,7 @@
 graph TD
     subgraph CUR["完善大綱流程（離線，Claude Code）"]
         IN[輸入：kb 列／草稿／缺口地圖／既有正本] --> SK[元件 1 skill outline-curation<br/>決定性腳本各步 schema 輸出]
-        SK --> WF[元件 2 Workflow<br/>結構提議 judge panel／可答性判者 fan-out]
+        SK --> WF[元件 2 判者／提議執行形態<br/>結構提議＝子代理 panel／可答性＝API 判者 fan-out]
         WF --> SK
         HK[元件 3 hooks outline_gate.py<br/>PreToolUse／PostToolUse／Stop] -. 閘門 .-> SK
         SK --> CANON[(canon/&lt;audience&gt;.md 正本<br/>版控＋code review)]
@@ -75,7 +75,7 @@ graph TD
 ### Technology Stack & Alignment
 | 層級 | 技術 | 版本 | 對齊說明 |
 |---|---|---|---|
-| 流程機制 | Claude Code hooks（repo 層 `.claude/settings.json`）、Workflow（`.claude/workflows/*.js`）、skill（`.claude/skills/outline-curation/`） | 既有 harness | hook 形狀複製 `~/.claude/settings.json` 的 CANON 樣板；Workflow 依 `workflow-authoring` 規約（`meta` 純字面、`schema` 強制輸出、`pipeline()` 預設） |
+| 流程機制 | Claude Code hooks（repo 層 `.claude/settings.json`）、判者腳本直打 API＋子代理提議（`.claude/workflows/*.js` 留參考）、skill（`.claude/skills/outline-curation/`） | 既有 harness | hook 形狀複製 `~/.claude/settings.json` 的 CANON 樣板；Workflow 依 `workflow-authoring` 規約（`meta` 純字面、`schema` 強制輸出、`pipeline()` 預設） |
 | 正本 | Markdown＋固定五鍵 front matter；自寫 parser | — | 版控＋code review＝寫入權（R2.9／DSP-012） |
 | 組裝／索引 | Python 3.11、pydantic ≥2.13、`tiktoken` 0.14.0、`EmbeddingClient` | 既有 | `OutlineDoc`／`OutlineSection` 沿用；索引記憶體內、啟動 prepare |
 | 回合 | `AgentRuntime`、`PromptAssembler`、`OutputVerifier` | 既有 | 只加 selector 呼叫、槽位派生、CTA／handoff 接線 |
@@ -102,7 +102,9 @@ graph TD
     phrasing_map.py            question_summary 關鍵字／幫助中心／問法正本 → 講法提案（status=proposed）
     reweigh.py                 呼叫 tools/gapmap/coverage_map.py 重量
     diff_report.py             結構差異＋影響清單＋取代對應表
-    cost_ledger.py             彙總 Workflow journal 與 provider usage → cost.json
+    cost_ledger.py             彙總各步 journal 與 provider usage → cost.json
+    answerability_judge.py     步 4 判者：直打 API（1.6）
+    structure_propose.py／apply_proposal.py  步 2 提議外殼（子代理執行）＋決定性套用（2.3）
     similar_items.py           細目標題（含講法）向量兩兩相似 → 待審清單（⛔ 不合併）
 ```
 
@@ -110,9 +112,9 @@ graph TD
 | 步 | 內容 | 形態 | 輸出 schema |
 |---|---|---|---|
 | 1 intake | 讀輸入、凍結 sha、產「受測物定義清單」骨架 | 腳本 | `intake.json` |
-| 2 structure | 提議粗目／細目結構變更（拆／併／移／新增） | **Workflow judge panel**（N=3 角度：使用者提問路徑／內容邊界／受眾層級）→ 合成 | `structure-proposal.json` |
+| 2 structure | 提議粗目／細目結構變更（拆／併／移／新增） | **子代理 judge panel**（N=3 角度：使用者提問路徑／內容邊界／受眾層級，互不可見）→ 第 4 個子代理合成（原 Workflow，2.3 改） | `structure-proposal.json` |
 | 3 phrasing | 講法與缺口格重新掛到細目；相似細目待審清單 | 腳本＋人審 | `phrasing-map.json` |
-| 4 answerability | 每格／每細目可答性標籤 | **Workflow 判者 fan-out**（每格 2 判者、不一致加第 3） | `answerability.json` |
+| 4 answerability | 每格／每細目可答性標籤 | **API 判者 fan-out**（每格 2 個獨立請求、不一致加第 3；strict json_schema；原 Workflow，1.6 改） | `answerability.json` |
 | 5 reweigh | 重量覆蓋（格去向） | 腳本 | `coverage-reweigh.json` |
 | 6 diff | 結構差異、id 對應表、取代對應表、成本 | 腳本 | `diff-report.json`＋`cost.json` |
 | 7 import | 業主核可後：正本 commit → `export_batch` → `import_facet_knowledge` | 腳本；⛔ 需業主授權（D1） | rollback SQL |
@@ -126,20 +128,23 @@ class StepEnvelope(TypedDict):
     skill_version: str                 # SKILL.md front matter version
     inputs_sha: dict[str, str]         # {"canon": ..., "gapmap": ..., "drafts": ..., "phrasings": ...}
     deterministic: bool                # LLM 參與 ⇒ False，並附 raw_outputs_path
-    raw_outputs_path: str | None       # Workflow journal 路徑（非決定性步必填）
+    raw_outputs_path: str | None       # 原始輸出 journal／raw 路徑（非決定性步必填）
     cost: "StepCost"
     payload: dict                      # 該步 schema 的本體
 
 class StepCost(TypedDict):
     agents: int; prompt_tokens: int; completion_tokens: int; usd: float; wall_s: float
 ```
-**可回放** [需求 1.6]：`inputs_sha`＋`skill_version` 相同 ⇒ 決定性步輸出逐位元相同（unit 測試）；非決定性步以 Workflow `resumeFromRunId` 續跑、原始輸出留 journal。
+**可回放** [需求 1.6]：`inputs_sha`＋`skill_version` 相同 ⇒ 決定性步輸出逐位元相同（unit 測試）；非決定性步以 journal key（prompt sha＋slot）續跑、原始輸出留 journal（原設計為 Workflow `resumeFromRunId`）。
 **預算** [需求 1.7]（E4）：分「每步上限」與「整案上限」兩層，皆為 **初值、M-a 試作後由業主核定**：步 2 structure ≤ 6 代理／$0.5；步 4 answerability ≤ 180 代理／$3（55 格×2＋不一致第 3 判者 ≤ 55）；整案 ≤ 240 代理／$6。`cost_ledger.py` 任一層超支 ⇒ exit 2 並在 Stop hook 擋。unit：以 110 代理的假 journal 驗步 4 不誤擋、以 181 代理驗必擋（正對照）。
 **取代規則** [需求 1.9]：`diff-report.json.replacements[]`＝`{old_kb_id, fine_id, how: "content"|"merged_into"|"phrasing_only"}`；首跑輸入＝21 列 prospect＋18 筆草稿；8 列 `IS NULL` 業者列 ⛔ 不進售前正本。
 **與既有 skill 整合** [需求 1.10]：`retrieval-improvement-loop` 的 G0／G2／G4 閘門在本 skill 的 steps/05／06 引用同一份 `rules/`（連結，不複製）；`agent_eval` 以細目為單位重跑（元件 10）。
 
-### 元件 2：`.claude/workflows/outline-curation.js` — 判者 fan-out 與結構提議
-**責任**：把兩個需要獨立判斷的步驟（結構提議、可答性）做成固定順序、schema 強制輸出、判者互不可見的管線；可續跑。[需求 1.5, 3.4, 6.5]
+### 元件 2：判者 fan-out 與結構提議的執行形態（原 `.claude/workflows/outline-curation.js`）
+
+> **現行（2026-09-06 業主裁，見決策 7 修訂）**：可答性判者＝`scripts/answerability_judge.py` 直打模型 API（每判者獨立請求、strict json_schema、journal 續跑、`--layout workflow` 與 Workflow 判者 prompt 逐位元相同）；結構提議＝`scripts/structure_propose.py` 產 prompt → 主 session 派 3 個 Claude Code 子代理＋1 個合成子代理 → `validate`／`package`。以下 Workflow 腳本形狀**留檔作參考**（1.4 已實作並乾跑；本機 8 GB 撐不住多子代理、判者間不共享快取）。
+
+**責任（原文）**：把兩個需要獨立判斷的步驟（結構提議、可答性）做成固定順序、schema 強制輸出、判者互不可見的管線；可續跑。[需求 1.5, 3.4, 6.5]
 
 **腳本形狀（依 `workflow-authoring` 規約；純 JS）**：
 ```javascript
@@ -494,7 +499,7 @@ sequenceDiagram
 ### 正本生命週期
 ```mermaid
 flowchart LR
-    A[kb 21 列＋18 草稿＋缺口地圖] --> B[skill 步 1–6<br/>Workflow 判者]
+    A[kb 21 列＋18 草稿＋缺口地圖] --> B[skill 步 1–6<br/>API 判者／子代理提議]
     B --> C{業主審 diff-report}
     C -- 核可 --> D[canon/prospect.md commit<br/>code review]
     D --> E[parser → canon/prospect.json（同 sha）]
@@ -552,7 +557,7 @@ flowchart LR
 ### 效能考量
 - `run_turn` p95 ≤ 6 s（每回合多一次查詢 embedding，本機 50–100 ms）；上下文由整份 3,078 tokens 降至 K=5 細目≈500–800 字＋toc ≤300 字。
 - 啟動 prepare ≤ 2k 句、每批 8；失敗 ⇒ `not_ready`、回合走整份正本；health 紅。
-- Workflow：55 格×2 判者≈110 子代理，16 併發≈7 輪；`effort: low`。
+- 判者：55 格×2 判者≈110 個獨立 API 請求（實測 gpt-4o-mini 107 請求 ≈$0.10）；原 Workflow 估 110 子代理 16 併發≈7 輪已作廢（實測 44 格 $15.84、整機重開）。
 
 ### 安全性設計
 - 正本＝system prompt 一部分：只在 git、review 合併；DB 為衍生；`kb.get` 整數路徑受 `content_reviewed_predicate`。
@@ -563,7 +568,7 @@ flowchart LR
 ### 可擴展性
 - 新受眾＝新 `canon/<audience>.md`＋front matter；組裝／索引／匯入零改程式。
 - 講法量超過檔案可承受（>5k）⇒ 升級為 pgvector 表（選型 2／3 的升級路徑，另立 slice）。
-- 新判者角度／新 rubric＝改 Workflow `args`／schema，不改流程骨架。
+- 新判者角度／新 rubric＝改 `answerability_args.py` 產出的 args／rubric 檔與 schema，不改流程骨架。
 
 ### 錯誤處理
 | 情況 | 行為 |
@@ -572,7 +577,7 @@ flowchart LR
 | 索引未就緒／sha 不符／查詢逾時 | `select` 回 None ⇒ 整份正本＋violation；health `not_ready`／`absent` 紅 |
 | selector 例外 | `except Exception` ⇒ 整份正本＋`candidate_selector_error`（與 fallback 分開） |
 | 未審細目被引用 | `citable=False` ⇒ Verifier `SOURCE_NOT_CITABLE`（既有） |
-| Workflow 判者不一致 | 第 3 判者；一致率 <0.80 ⇒ `needs_rubric_revision` 停下回主 session（R6.2） |
+| 判者不一致 | 第 3 判者；一致率 <0.80 ⇒ `needs_rubric_revision` 停下回主 session（R6.2） |
 | 預算超支 | `cost_ledger` exit 2；Stop hook 擋 |
 
 ## 測試策略
@@ -596,7 +601,7 @@ flowchart LR
 
 ### 端對端／驗證
 - 元件 10 步 0–3（步 0／1 免費先做；步 2／3 需 `OPENAI_API_KEY`，規模與費用如表）；每步跑前凍結材料 sha 與假設表；比較性結論 ≥30 題。
-- 最小試作（Workflow 可答性）：報 usd／時間／一致率／續跑命中率。
+- 最小試作（可答性；Workflow 版 1.5、API 版 1.6）：報 usd／時間／一致率／續跑命中率。
 
 ## 部署考量
 ### 環境需求
@@ -617,7 +622,7 @@ flowchart LR
 | 售前原稿不存在，E 競品單薄 | 高 | 高 | skill 首跑產 G「現有不足」；E 只用既有來源；業主審草稿時補 |
 | 標題＋講法匹配上限低於預期 | 高 | 中 | R6 步 1 三臂先量（$0）；低於臂間 10 點差則加內文臂或增講法密度，⛔ 不調 K |
 | 判者變異 | 中 | 高 | 兩判者＋第三判者；一致率 <0.80 停下修 rubric |
-| Workflow／hook 首例成本 | 中 | 中 | 最小試作一步先量 |
+| Workflow／hook 首例成本 | 中 | 中 | 最小試作一步先量（結果：Workflow 成本與記憶體不可行 ⇒ 改 API 判者） |
 | 平台票未排 | 高 | 中 | 票 B／C／D 已收窄為 enum／白名單／一行謂詞；票 A 只在 D2 允許時 |
 | LINE 可見集合未實查 | 中 | 中 | 元件 11 契約測試前先一次 SQL 對照（正對照：pm 可見 285） |
 | 舊鏈與 agent 路徑對同一 kb 列的雙軌語義 | 中 | 中 | 決策 9：標記不刪；不變量 33 對帳 |
@@ -709,12 +714,34 @@ flowchart LR
 | 查不到：`resumeFromRunId` | — | 本 session Workflow 工具 schema 有此參數（實證）；tasks 起手乾跑再證 | 附錄 C done ④ |
 | 查不到：`workflow-authoring` 規約檔 | — | 該規約以 Skill 工具載入、非檔案（本 session 已載）；元件 2 已註記 | 元件 2 |
 
+### H. 2026-09-06 業主裁決彙整與待裁（M-a 收案／M-b 進行中）
+
+**已裁（同日，均已落到對應段落）**：
+| # | 裁決 | 落點 |
+|---|---|---|
+| H1 | 一致率門檻 0.90 → 0.80（1.5 實測 0.841 可接受） | 附錄 C ③、`outline-curation.js`／`merge_answerability_batches.py`／`answerability_judge.py` 同值、unit 鎖 |
+| H2 | 可答性判者改腳本直打 API；用產品既有 OpenAI 金鑰、`gpt-4o-mini`、容器內跑；金鑰四道防線 | 決策 7 修訂、元件 2 現行、1.6 |
+| H3 | 1.5 的 44 格 Workflow 結果不作廢（`--layout workflow` 逐位元同 prompt 才可合併） | 決策 7 修訂、`inputs/m-a-trial-20260906.md` §7 |
+| H4 | 結構提議（步 2）⛔ 不打 API、用 Claude Code 子代理（3 角度＋合成） | 決策 7 修訂、2.3、`steps/02-structure.md` |
+| H5 | 決策 5 匹配鍵只在 agent 路徑；舊鏈不改檢索、只經入庫得一細目一列 | 決策 5 適用範圍 |
+| H6 | 先用售前大綱驗證有效（4.4 探針＋7.4 放量），業主點頭後才補其他受眾大綱 | 決策 10、tasks 6.2 前置 |
+
+**待裁**：
+| # | 問題 | 影響 |
+|---|---|---|
+| P1 | 1.5／1.6 以哪把尺為準：sonnet 44 格（＋補 11 格需 Anthropic 金鑰）或 gpt-4o-mini 55 格（跨模型同 33／44，mini 較寬） | 2.4b 重跑用哪個判者模型；建議抽審 11 格差異後定 |
+| P2 | 步 4 預算數字：API 判者 55 格 ≈$0.10，步上限 $3 是否維持；usd 牌價待對帳單 | SKILL.md budgets |
+| P3 | design 元件 4 範例含 `- exit: handoff`，`ATTR_KEYS` 無 `exit`（verifier advisory）：範例過期或補鍵 | canon 格式 |
+| P4 | `.claude/workflows/outline-curation.js` 留參考或刪除（同一把尺兩個實作的維護風險） | repo 整潔 |
+| P5 | rubric 0.3.0（`partial` 子問題定義）是否補：門檻已降為可選 | 判者一致性 |
+
 ### D. 變更歷史
 | 日期 | 版本 | 變更內容 | 修改者 |
 |---|---|---|---|
 | 2026-09-06T10:13:36+0800 | 1.0 | 初始版本（需求 v2 核可、R1.5 定向後） | AI |
 | 2026-09-06 | 1.1 | security-reviewer 20 條處置（附錄 E）：sha 重算、匯入 fail-closed、白名單謂詞、可見性補洞、身分強制覆寫、hook 變數與接線測試、D3 落地、三軸欄位 | AI |
 | 2026-09-06 | 1.3 | plan-verifier r2 REVISE 6 條處置（附錄 G）：正本目錄全文統一為 `rag-orchestrator/canon/`、hook matcher 改完整相對路徑＋負對照、自證五種、done ⑤ 單次上限 | AI |
+| 2026-09-06 | 1.8 | 文件整併：Workflow 用語全面改「API 判者／子代理提議」、元件 2 標現行與參考、附錄 H 裁決彙整與待裁（業主 2026-09-06 要求） | AI |
 | 2026-09-06 | 1.7 | 決策 10 補時序：售前大綱先驗證（4.4 探針＋7.4 放量）有效，業主點頭後才補其他受眾大綱、開始切；tasks 6.2 加前置、不再與 M-b～M-e 並行 | 業主／AI |
 | 2026-09-06 | 1.6 | 決策 5 補「適用範圍」：講法向量匹配只在 agent 路徑；舊鏈只經入庫得一細目一列、不改檢索（業主問後補明） | AI |
 | 2026-09-06 | 1.5 | 決策 7 修訂：判者改腳本直打 API（`answerability_judge.py`，共用快取前綴、structured outputs、journal 續跑）；Workflow 留參考；2.3 同改（業主裁：硬體撐不住 Workflow） | 業主／AI |

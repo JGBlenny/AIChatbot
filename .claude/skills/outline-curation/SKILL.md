@@ -85,7 +85,7 @@ class StepEnvelope(TypedDict):
 ```
 
 決定性步（1／3／5／6／7）：`inputs_sha`＋`skill_version` 相同 ⇒ 輸出逐位元相同。
-非決定性步（2／4）：`deterministic=false`，原始輸出留 Workflow journal（`raw_outputs_path`）。
+非決定性步（2／4）：`deterministic=false`，原始輸出留 `raw/`／journal（`raw_outputs_path`；步 2 子代理、步 4 API 判者）。
 
 ## 目錄
 
@@ -95,6 +95,6 @@ class StepEnvelope(TypedDict):
   steps/01-intake.md … 07-import.md
   schemas/*.json
   scripts/_envelope.py intake.py diff_report.py cost_ledger.py
-  journal/            （gitignored；1.4 對齊——Workflow judge panel／fan-out 的原始輸出落點）
+  journal/            （gitignored；各步成本 journal（cost_ledger 讀）；步 2／4 原始輸出在 raw/落點）
   raw/                （gitignored；講法出處原文，去識別前）
 ```
