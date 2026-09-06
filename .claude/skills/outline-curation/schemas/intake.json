@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "outline-curation/schemas/intake.json",
+  "type": "object",
+  "required": ["step", "skill_version", "inputs_sha", "deterministic", "raw_outputs_path", "cost", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "step": {"type": "string", "enum": ["intake"]},
+    "skill_version": {"type": "string"},
+    "inputs_sha": {
+      "type": "object",
+      "required": ["kb"],
+      "properties": {
+        "kb": {"type": "string"},
+        "drafts": {"type": "string"},
+        "gapmap": {"type": "string"},
+        "canon": {"type": ["string", "null"]}
+      }
+    },
+    "deterministic": {"type": "boolean", "enum": [true]},
+    "raw_outputs_path": {"type": ["string", "null"]},
+    "cost": {"type": "object"},
+    "payload": {
+      "type": "object",
+      "required": ["frozen_at", "kb_rows", "drafts", "gapmap_cells", "object_under_test"],
+      "additionalProperties": false,
+      "properties": {
+        "frozen_at": {"type": "string"},
+        "kb_rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "question_summary"],
+            "properties": {
+              "id": {"type": "string"},
+              "question_summary": {"type": "string"}
+            }
+          }
+        },
+        "drafts": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "gapmap_cells": {"type": "integer"},
+        "object_under_test": {
+          "type": "object",
+          "required": ["materials", "frozen_at", "approved_by"],
+          "additionalProperties": false,
+          "properties": {
+            "materials": {"type": "array", "items": {"type": "string"}},
+            "frozen_at": {"type": "string"},
+            "approved_by": {"type": "string"}
+          }
+        }
+      }
+    }
+  }
+}
