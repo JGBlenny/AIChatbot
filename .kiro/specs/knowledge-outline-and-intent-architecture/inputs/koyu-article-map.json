@@ -1,0 +1,513 @@
+{
+  "articles": {
+    "Landlordonboarding": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "Landlordonboarding"
+    },
+    "Landlordonboarding00": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/A/dashboard-overview",
+        "prospect/C/owner-report-collection-remit",
+        "prospect/C/what-is-owner-landlord"
+      ],
+      "slug": "Landlordonboarding00"
+    },
+    "Landlordonboarding00phone": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "Landlordonboarding00phone"
+    },
+    "Landlordonboarding01": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/D/account-registration"
+      ],
+      "slug": "Landlordonboarding01"
+    },
+    "Landlordonboarding02": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/D/subscription-change-renewal"
+      ],
+      "slug": "Landlordonboarding02"
+    },
+    "Landlordonboarding06Finance": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/notification-channels"
+      ],
+      "slug": "Landlordonboarding06Finance"
+    },
+    "Landlordonboarding08Device": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "Landlordonboarding08Device"
+    },
+    "TOFILL-beike": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "beike"
+    },
+    "TOFILL-repair": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/repair-system"
+      ],
+      "slug": "repair"
+    },
+    "advanced12": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/payment-gateway-options"
+      ],
+      "slug": "advanced12"
+    },
+    "contract_review_period": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "contract_review_period"
+    },
+    "landlordonboarding05Paymentsettings": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "landlordonboarding05Paymentsettings"
+    },
+    "law20250520": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "law20250520"
+    },
+    "onboarding1": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/D/account-registration"
+      ],
+      "slug": "onboarding1"
+    },
+    "onboarding10": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/contract-esign-flow",
+        "prospect/C/contract-modify-after-sign",
+        "prospect/C/contract-templates"
+      ],
+      "slug": "onboarding10"
+    },
+    "onboarding11": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "onboarding11"
+    },
+    "onboarding12": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "onboarding12"
+    },
+    "onboarding13": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "onboarding13"
+    },
+    "onboarding14": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/bill-format-customize"
+      ],
+      "slug": "onboarding14"
+    },
+    "onboarding2": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "onboarding2"
+    },
+    "onboarding3": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "onboarding3"
+    },
+    "onboarding4": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/community-batch-create"
+      ],
+      "slug": "onboarding4"
+    },
+    "onboarding5": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "onboarding5"
+    },
+    "onboarding6": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/B/data-migration",
+        "prospect/G/migration-limits"
+      ],
+      "slug": "onboarding6"
+    },
+    "onboarding7": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/contract-esign-flow",
+        "prospect/C/contract-modify-after-sign",
+        "prospect/C/contract-templates"
+      ],
+      "slug": "onboarding7"
+    },
+    "onboarding8": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/billing-overview"
+      ],
+      "slug": "onboarding8"
+    },
+    "onboarding9-1": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/contract-esign-flow",
+        "prospect/C/contract-modify-after-sign",
+        "prospect/C/contract-templates"
+      ],
+      "slug": "onboarding9-1"
+    },
+    "onboarding9-2": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/contract-esign-flow",
+        "prospect/C/contract-modify-after-sign",
+        "prospect/C/contract-templates"
+      ],
+      "slug": "onboarding9-2"
+    },
+    "property（原": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "property"
+    },
+    "propmarket2": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "propmarket2"
+    },
+    "qa01": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "qa01"
+    },
+    "qa04": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "qa04"
+    },
+    "qa05": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/B/data-migration",
+        "prospect/G/migration-limits"
+      ],
+      "slug": "qa05"
+    },
+    "qa06": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/B/data-migration",
+        "prospect/C/contract-templates",
+        "prospect/G/migration-limits"
+      ],
+      "slug": "qa06"
+    },
+    "qa07": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "qa07"
+    },
+    "qa15": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "qa15"
+    },
+    "qa21": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/bill-format-customize"
+      ],
+      "slug": "qa21"
+    },
+    "qa23": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/role-permission-granularity",
+        "prospect/C/team-management-overview"
+      ],
+      "slug": "qa23"
+    },
+    "qa27": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/billing-overview"
+      ],
+      "slug": "qa27"
+    },
+    "rent3": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "rent3"
+    },
+    "rentallaw.pt1": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "rentallaw.pt1"
+    },
+    "rentallaw.pt2": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "rentallaw.pt2"
+    },
+    "rentallaw.pt3": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "rentallaw.pt3"
+    },
+    "rentallaw.pt5": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "rentallaw.pt5"
+    },
+    "slug00": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug00"
+    },
+    "slug01": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug01"
+    },
+    "slug02": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug02"
+    },
+    "slug03": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/overdue-reminder-late-fee"
+      ],
+      "slug": "slug03"
+    },
+    "slug1": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug1"
+    },
+    "slug10": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug10"
+    },
+    "slug100": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug100"
+    },
+    "slug101": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug101"
+    },
+    "slug102": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/credit-card-rent-payment"
+      ],
+      "slug": "slug102"
+    },
+    "slug103": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug103"
+    },
+    "slug104": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug104"
+    },
+    "slug12": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug12"
+    },
+    "slug13": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug13"
+    },
+    "slug15": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/contract-history-retention"
+      ],
+      "slug": "slug15"
+    },
+    "slug17": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug17"
+    },
+    "slug20": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug20"
+    },
+    "slug20250612": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug20250612"
+    },
+    "slug21": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug21"
+    },
+    "slug22": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug22"
+    },
+    "slug24": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug24"
+    },
+    "slug27": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug27"
+    },
+    "slug28": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug28"
+    },
+    "slug29": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug29"
+    },
+    "slug39": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/property-status-meaning"
+      ],
+      "slug": "slug39"
+    },
+    "slug48": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug48"
+    },
+    "slug66": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug66"
+    },
+    "slug71": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug71"
+    },
+    "slug73": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug73"
+    },
+    "slug75": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug75"
+    },
+    "slug76": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/billing-overview"
+      ],
+      "slug": "slug76"
+    },
+    "slug78": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/bill-contents-extra-fees"
+      ],
+      "slug": "slug78"
+    },
+    "slug79": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/bill-contents-extra-fees"
+      ],
+      "slug": "slug79"
+    },
+    "slug84": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug84"
+    },
+    "slug86": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/credit-card-rent-payment"
+      ],
+      "slug": "slug86"
+    },
+    "slug88": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug88"
+    },
+    "slug90": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/property-management-overview",
+        "prospect/C/rental-storefront-vr"
+      ],
+      "slug": "slug90"
+    },
+    "slug92": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/team-management-overview"
+      ],
+      "slug": "slug92"
+    },
+    "slug93": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug93"
+    },
+    "slug95": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "slug95"
+    },
+    "slug99": {
+      "file_exists": true,
+      "fine_ids": [
+        "prospect/C/bill-format-customize"
+      ],
+      "slug": "slug99"
+    },
+    "tenantintro.register": {
+      "file_exists": true,
+      "fine_ids": [],
+      "slug": "tenantintro.register"
+    }
+  },
+  "unresolved": [
+    "TOFILL-beike",
+    "TOFILL-repair",
+    "property（原"
+  ],
+  "unresolved_after_alias": []
+}
